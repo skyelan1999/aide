@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "strategy": "manual",
+  "strategy": "auto",
   "activeProfile": "u-rjaq1w",
   "profiles": [
     {

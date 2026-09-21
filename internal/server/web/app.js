@@ -1,6 +1,6 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files' };
 const fragment = new URLSearchParams(location.hash.slice(1));
 if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); history.replaceState(null, '', location.pathname); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -110,7 +110,7 @@ document.querySelectorAll('.mode-switch button').forEach(b => b.onclick = () => 
 document.querySelectorAll('.starter').forEach(b => b.onclick = () => { $('prompt').value = b.dataset.prompt; setMode(b.dataset.mode || 'chat'); $('prompt').focus(); });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
 document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { state.root = b.dataset.root; state.dir = '.'; document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); await loadFiles(); }));
-$('files-toggle').onclick = () => { if (innerWidth <= 950) $('file-panel').classList.toggle('mobile-open'); else document.body.classList.toggle('files-hidden'); };
+$('files-toggle').onclick = () => { document.body.classList.remove('plugins-mode'); state.panel = 'files'; $('plugins-toggle').classList.remove('active'); if (innerWidth <= 950) $('file-panel').classList.toggle('mobile-open'); else document.body.classList.toggle('files-hidden'); };
 $('parent-dir').onclick = action(async () => { state.dir = state.dir.includes('/') ? state.dir.slice(0, state.dir.lastIndexOf('/')) : '.'; await loadFiles(); });
 $('task-form').onsubmit = action(async event => {
   event.preventDefault(); const prompt = $('prompt').value.trim(); if (!prompt || state.busy) return;
@@ -542,5 +542,84 @@ function estimateContext() {
   $('context-fill').classList.toggle('warn', pct > 90);
   $('context-detail').textContent = (included ? '最近 ' + included + ' 条消息' : '当前会话暂无内容') + ' · 4 字符/词估算';
 }
+/* ── 插件系统（FR-72~75，协议 doc/plugin-protocol.md）：右侧面板 + 上传/搜索/启停/删除/surface ── */
+async function loadPluginsPanel() {
+  const data = await api('/plugins');
+  state.plugins = data.plugins || [];
+  renderPluginList();
+  const surface = await api('/plugin-surface');
+  renderPluginSurface(surface.plugins || []);
+}
+function renderPluginList() {
+  const query = $('plugin-search').value.trim().toLowerCase();
+  const host = $('plugin-list');
+  host.replaceChildren();
+  const matched = state.plugins.filter(p => !query || (p.name + ' ' + (p.description || '') + ' ' + p.id).toLowerCase().includes(query));
+  $('plugin-count').textContent = matched.length + ' / ' + state.plugins.length;
+  if (!matched.length) { host.append(el('p', 'muted', query ? '没有匹配的插件' : '还没有插件。点击「＋ 上传」添加（协议 v1，DSH 形态）。')); return; }
+  for (const p of matched) {
+    const card = el('div', 'plugin-card' + (p.enabled ? '' : ' disabled'));
+    const head = el('div', 'plugin-card-head');
+    head.append(el('span', 'plugin-name', p.name), el('span', 'plugin-badge', p.id + (p.version ? ' · v' + p.version : '')));
+    const del = el('button', 'plugin-delete', '－');
+    del.type = 'button'; del.title = '删除插件';
+    del.onclick = () => { if (confirm(`删除插件「${p.name}」？`)) action(async () => { await api('/plugins/' + encodeURIComponent(p.id), { method: 'DELETE' }); await loadPluginsPanel(); toast('插件已删除'); })(); };
+    head.append(del);
+    card.append(head);
+    if (p.description) card.append(el('p', 'plugin-desc', p.description));
+    if (p.error) card.append(el('p', 'task-error', '⚠ ' + p.error));
+    const foot = el('div', 'plugin-card-foot');
+    const toggle = el('button', 'plugin-toggle' + (p.enabled ? ' on' : ''), p.enabled ? '✓ 使用中' : '停用');
+    toggle.type = 'button';
+    toggle.onclick = action(async () => {
+      await api('/plugins/' + encodeURIComponent(p.id), { method: 'PUT', body: JSON.stringify({ enabled: !p.enabled }) });
+      await loadPluginsPanel();
+      toast(p.enabled ? '已停用插件：' + p.name : '已启用插件：' + p.name);
+    });
+    foot.append(el('small', '', p.enabled ? '启用' : '停用'), toggle);
+    card.append(foot);
+    host.append(card);
+  }
+}
+function renderPluginSurface(entries) {
+  const host = $('plugin-surface');
+  host.replaceChildren();
+  const active = entries.filter(e => !e.error);
+  if (!entries.length) { host.append(el('p', 'muted', '暂无启用的插件。')); return; }
+  for (const e of entries) {
+    const box = el('div', 'surface-item');
+    box.append(el('strong', '', e.name));
+    if (e.error) { box.append(el('p', 'task-error', '⚠ ' + e.error)); host.append(box); continue; }
+    const chips = el('div', 'surface-chips');
+    for (const t of e.tools || []) chips.append(el('span', 'surface-chip tool', '⚒ ' + t.name));
+    for (const sl of e.slots || []) chips.append(el('span', 'surface-chip slot', '▦ ' + sl.name));
+    for (const sv of e.provided || []) chips.append(el('span', 'surface-chip service', '◈ ' + sv));
+    box.append(chips);
+    host.append(box);
+  }
+  void active;
+}
+$('plugins-toggle').onclick = action(async () => {
+  document.body.classList.add('plugins-mode');
+  state.panel = 'plugins';
+  $('plugins-toggle').classList.add('active');
+  if (innerWidth <= 950) $('file-panel').classList.remove('mobile-open');
+  await loadPluginsPanel();
+});
+$('refresh-plugins').onclick = action(loadPluginsPanel);
+$('plugin-search').addEventListener('input', renderPluginList);
+$('plugin-upload').onclick = () => { $('plugin-upload-form').reset(); $('plugin-file-name').textContent = ''; $('plugin-upload-dialog').showModal(); };
+$('plugin-file-pick').addEventListener('change', () => { $('plugin-file-name').textContent = $('plugin-file-pick').files[0] ? '已选择：' + $('plugin-file-pick').files[0].name : ''; });
+$('plugin-upload-form').onsubmit = action(async event => {
+  event.preventDefault();
+  const file = $('plugin-file-pick').files[0];
+  if (!file) { toast('请选择插件文件'); return; }
+  if (file.size > 256 * 1024) { toast('插件文件超过 256 KiB 限制'); return; }
+  const code = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('读取文件失败')); reader.readAsText(file); });
+  await api('/plugins', { method: 'POST', body: JSON.stringify({ name: $('plugin-name').value.trim() || file.name.replace(/\.js$/, ''), description: $('plugin-desc').value.trim(), code }) });
+  $('plugin-upload-dialog').close();
+  await loadPluginsPanel();
+  toast('插件已上传并启用');
+});
 async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles(), loadProfiles()]); }
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });

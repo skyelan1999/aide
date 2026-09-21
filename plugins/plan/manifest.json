@@ -1,0 +1,10 @@
+{
+  "id": "plan",
+  "name": "计划",
+  "description": "DSH plan 能力预设：任务计划与步骤分解",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "installedAt": "2026-09-21T17:54:58Z"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "goal",
+  "name": "目标",
+  "description": "DSH goal 能力预设：长程目标与阶段跟踪",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "installedAt": "2026-09-21T17:54:58Z"
+}

@@ -1,0 +1,10 @@
+{
+  "id": "feedback",
+  "name": "反馈",
+  "description": "DSH feedback 能力预设：用户反馈采集与沉淀",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "installedAt": "2026-09-21T17:54:58Z"
+}

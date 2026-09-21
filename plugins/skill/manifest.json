@@ -1,0 +1,10 @@
+{
+  "id": "skill",
+  "name": "技能",
+  "description": "DSH skill 能力预设：可复用技能的定义与调度",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "installedAt": "2026-09-21T17:54:58Z"
+}
