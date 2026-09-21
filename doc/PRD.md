@@ -4,7 +4,7 @@
 
 | 项目 | 值 |
 | --- | --- |
-| 文档版本 | v1.5 |
+| 文档版本 | v1.6 |
 | 建立日期 | 2026-09-21 |
 | 对应源码基线 | `bb2d1b6`（功能基线 `4e0da10`） |
 | 运行容器 | `aide-aide-1` / `aide:local` / healthy / `127.0.0.1:8097` |
@@ -198,6 +198,8 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | FR-61 | 模型参数配置 | 设置面板新增「模型参数」分组：temperature、top_p、max_tokens、frequency_penalty、presence_penalty、response_format、stop 均可配置；参数随模型调用生效 | 已实现·已验证 |
 | FR-62 | 配置 Profile 管理 | 3 个内置系统配置（default／precise／creative）**不可修改、不可删除**；用户配置可 ＋ 添加、－ 删除、自定义命名；全部配置以 JSON 持久化于**工程目录** `profiles.json`（运行时保存写回主机）；非法参数被拒绝 | 已实现·已验证 |
 | FR-69 | 侧栏模型选择 | 左侧新增模型选择入口（参考 DSH 模型选择器）：展示当前模型，点击弹出模型列表切换，立即生效于后续任务；任务记录本次所用模型 | 已实现·已验证 |
+| FR-71 | 深度研究思考入口 | 新建任务首页 starter 卡片新增「深度研究思考」：点击填入深度研究提示词（chat 模式），覆盖背景梳理、多角度权衡与可验证结论 | 未实现 |
+| FR-72 | 插件面板开关 | 顶栏「文件」按钮左侧新增「插件」按钮；点击后右侧文件面板切换为插件面板，再点文件按钮恢复 | 未实现 |
 | FR-70 | 上下文统计 | 左侧新增上下文统计卡（参考 DSH token-meter）：按 4 字符/词 + 每条消息 4 token 开销估算已用 tokens，进度条对照当前模型的上下文窗口；随会话加载/发送/轮询更新 | 已实现·已验证 |
 | FR-63 | 聊天栏策略按钮 | 聊天输入栏左侧小按钮选择策略：`auto`（自动路由）或手动指定某一个 profile；默认手动选择 `default` 配置；任务记录展示本次实际使用的配置 | 已实现·已验证 |
 | FR-64 | auto 路由策略 | auto 模式下按工程目录的策略文件（`routing-policy.json` 优先，`routing-policy.md` 内 ```json 块兜底）规则路由到对应 profile：支持按 mode 与 prompt 关键词匹配；无规则命中／文件缺失时回落 `default` | 已实现·已验证 |
@@ -215,6 +217,14 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | FR-48 | 远程仓库与协作 | 用户指定 remote 后推送 | 未配置 remote |
 | FR-65 | 版本号与 Release Note 管理 | 四位版本号（产品级·重大·大版本·日常）+ RC 补丁号，呈现格式 `X.Y.Z.W RCn`（RC 默认 RC1，同版本补丁 +1）；工程目录 `version.md` 承载当前版本与 release note；`scripts/version.sh` 托管升级（bump 四档 / patch / note / tag / check / install-hooks）；**版本升级以 git tag `vX.Y.Z.W-RCn` 打在对应提交上，且仅 main 分支打 tag**（非 main 分支拒绝执行 bump/patch/note/tag）；git 钩子自动为每次提交（含功能分支）标注当前版本号 | 已实现·已验证 |
 | FR-66 | 版本展示 | `/api/config` 返回当前版本；侧栏运行卡片与设置面板底部显示；version.md 缺失时显示 dev | 已实现·已验证 |
+
+### 4.8 插件系统
+
+| 编号 | 需求 | 验收标准 | 状态 |
+| --- | --- | --- | --- |
+| FR-73 | 插件生命周期 | 上传（JS 代码 + 元数据）→ 语法与 DSH 形态校验 → 存入工程目录 `plugins/`；列表、搜索、启用/停用、删除；协议见 `doc/plugin-protocol.md` | 未实现 |
+| FR-74 | 插件协议标准输出 | `doc/plugin-protocol.md`（v1：DSH/Cordis 兼容子集，ctx 支持表、校验规则、surface 格式、安全模型、演进规则）；Node 宿主随二进制 embed | 未实现 |
+| FR-75 | 默认预装 DSH 插件集 | 随仓库默认预装 8 个 DSH 能力预设插件（skill/goal/plan/todo/feedback/subagent/terminal/workflow，v1 形态兼容，默认启用，surface 可展示） | 未实现 |
 
 ---
 
@@ -315,6 +325,8 @@ running → interrupted                      服务重启后的恢复标记
 | LIM-21 | 设置存储 | 键名固定 `aide.ui`，单一 JSON 文档（`{"version":1,"theme":"light"|"dark"|"system"}`）；仅 localStorage，不入 cookie、不入服务端；主题枚举仍为 light/dark/system | `web/settings-init.js` |
 | LIM-22 | 模型参数取值 | temperature/top_p/penalty 见 FR-61 表：temperature 0–2；top_p 0–1；max_tokens 1–8192；frequency/presence_penalty −2–2；response_format ∈ {text, json_object}；stop ≤16 项 | `profiles.go` |
 | LIM-23 | Profile 文件 | 工程目录 `profiles.json`（用户配置 + strategy + activeProfile；系统配置定义在代码中不可改）；策略文件 `routing-policy.json` / `routing-policy.md`；用户配置 ≤20 个；id 匹配 `^[A-Za-z0-9_-]{1,64}$`，名称 1–32 字符 | `profiles.go` |
+| LIM-26 | 插件 | 插件数 ≤50；单个插件代码 ≤256 KiB；验证/加载超时 10s；聚合 surface ≤2 MiB；插件 id `^[A-Za-z0-9_-]{1,64}$` | `plugins.go` |
+| LIM-27 | 插件协议 v1 | ctx 仅支持 logger/effect/on/provide/tool/slot（见 `doc/plugin-protocol.md` §3）；不注入其他服务、不执行 effect/on 副作用、不接入模型工具循环 | `plugin_host.js` |
 | LIM-25 | 多模型 | 模型数 ≤20；模型 id 1–64 字符；名称 ≤32（缺省=id）；上下文窗口 1024–1,048,576（缺省 65,536）；`/api/models` 超时 30s、响应 ≤2 MiB | `server.go` / `provider.go` |
 | LIM-24 | 版本管理 | 版本号正则 `^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ RC[0-9]+$`；`version.md` 位于工程目录根，结构：标题行 `# aide 版本记录` + 行 `**当前版本：X.Y.Z.W RCn**` + 每版一节 `## X.Y.Z.W RCn（日期）` + 列表式 release note；bump 低位清零、patch 只加 RC；git tag 命名 `vX.Y.Z.W-RCn`（annotated），**仅 main 分支打 tag** | `scripts/version.sh` |
 
@@ -437,6 +449,7 @@ AI_API_KEY=
 | 2026-09-21 | v1.3 | 登记模型参数 Profile 系统 FR-61~FR-64 与 LIM-22/23（参数配置、系统/用户 Profile、工程目录 JSON 持久化、聊天栏策略按钮、auto 路由策略） | 编码助手 |
 | 2026-09-21 | v1.4 | 登记版本管理需求 FR-65/66 与 LIM-24（四位版本号 + RC、version.md + release note、version.sh 托管、提交自动标注、界面版本展示） | 编码助手 |
 | 2026-09-21 | v1.5 | 登记多模型与上下文统计 FR-67~FR-70 与 LIM-25（多模型管理、模型名自动获取、侧栏模型选择、DSH 风格上下文统计卡） | 编码助手 |
+| 2026-09-21 | v1.6 | 登记插件系统 FR-71~FR-75 与 LIM-26/27（深度研究入口卡、插件面板、上传/搜索/启停、DSH 兼容协议 v1 文档输出、默认预装 DSH 插件集） | 编码助手 |
 
 ---
 
