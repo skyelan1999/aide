@@ -1,0 +1,9 @@
+.git
+.env
+.data
+test-results
+bin
+context
+workspace
+*.log
+docker-images

@@ -1,0 +1,33 @@
+name: aide
+services:
+  aide:
+    image: aide:local
+    init: true
+    build: .
+    ports:
+      - "127.0.0.1:${AIDE_PORT:-8097}:8080"
+    environment:
+      AI_BASE_URL: ${AI_BASE_URL:-https://api.deepseek.com}
+      AI_MODEL: ${AI_MODEL:-}
+      AI_API_KEY: ${AI_API_KEY:-}
+    volumes:
+      - type: bind
+        source: ${AIDE_WORKSPACE:-.}
+        target: /workspace
+      - type: bind
+        source: ${AIDE_CONTEXT:-../Harness}
+        target: /context
+        read_only: true
+      - aide-data:/data
+      - aide-home:/home/aide
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 256
+    mem_limit: 2g
+    cpus: 2
+volumes:
+  aide-data:
+  aide-home:

@@ -1,0 +1,8 @@
+.env
+.data/
+.DS_Store
+bin/
+test-results/
+*.log
+docker-images/*.tar*
+docker-images/*.sha256
