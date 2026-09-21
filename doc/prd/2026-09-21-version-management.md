@@ -18,8 +18,8 @@
 
 | 编号 | 需求 | 验收标准 | 状态 |
 | --- | --- | --- | --- |
-| FR-65 | 版本号与 Release Note 管理 | 四位版本号（产品级·重大·大版本·日常）+ RC 补丁号，呈现 `X.Y.Z.W RCn`；工程目录 `version.md` 承载当前版本与 release note；`scripts/version.sh` 提供 show/bump/patch/note/tag/check/install-hooks；**版本升级以 git tag（`vX.Y.Z.W-RCn`）打在对应提交上，且仅在 main 分支打 tag**（bump/patch/note/tag 在非 main 分支拒绝执行）；git 钩子（prepare-commit-msg）自动为每次提交标注当前版本号（含功能分支） | 未实现 |
-| FR-66 | 版本展示 | `/api/config` 返回 version（读工程目录 `version.md`，缺失返回空 → 界面显示 dev）；侧栏运行卡片与设置面板底部显示当前版本 | 未实现 |
+| FR-65 | 版本号与 Release Note 管理 | 四位版本号（产品级·重大·大版本·日常）+ RC 补丁号，呈现 `X.Y.Z.W RCn`；工程目录 `version.md` 承载当前版本与 release note；`scripts/version.sh` 提供 show/bump/patch/note/tag/check/install-hooks；**版本升级以 git tag（`vX.Y.Z.W-RCn`）打在对应提交上，且仅在 main 分支打 tag**（bump/patch/note/tag 在非 main 分支拒绝执行）；git 钩子（prepare-commit-msg）自动为每次提交标注当前版本号（含功能分支） | 已实现·已验证 |
+| FR-66 | 版本展示 | `/api/config` 返回 version（读工程目录 `version.md`，缺失返回空 → 界面显示 dev）；侧栏运行卡片与设置面板底部显示当前版本 | 已实现·已验证 |
 
 ## 3. 关键决策
 

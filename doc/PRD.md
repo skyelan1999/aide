@@ -209,8 +209,8 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | FR-46 | 持久化验收脚本 | `verify_runtime.py` 与 `--check` 验证重启后令牌/会话/文件仍在 | 已实现·已验证（会写测试数据，非只读） |
 | FR-47 | 异机恢复演练 | 在另一台机器用新项目名/新端口/新卷恢复并验收 | **未实现·未验收（P0）** |
 | FR-48 | 远程仓库与协作 | 用户指定 remote 后推送 | 未配置 remote |
-| FR-65 | 版本号与 Release Note 管理 | 四位版本号（产品级·重大·大版本·日常）+ RC 补丁号，呈现格式 `X.Y.Z.W RCn`（RC 默认 RC1，同版本补丁 +1）；工程目录 `version.md` 承载当前版本与 release note；`scripts/version.sh` 托管升级（bump 四档 / patch / note / tag / check / install-hooks）；**版本升级以 git tag `vX.Y.Z.W-RCn` 打在对应提交上，且仅 main 分支打 tag**（非 main 分支拒绝执行 bump/patch/note/tag）；git 钩子自动为每次提交（含功能分支）标注当前版本号 | 未实现 |
-| FR-66 | 版本展示 | `/api/config` 返回当前版本；侧栏运行卡片与设置面板底部显示；version.md 缺失时显示 dev | 未实现 |
+| FR-65 | 版本号与 Release Note 管理 | 四位版本号（产品级·重大·大版本·日常）+ RC 补丁号，呈现格式 `X.Y.Z.W RCn`（RC 默认 RC1，同版本补丁 +1）；工程目录 `version.md` 承载当前版本与 release note；`scripts/version.sh` 托管升级（bump 四档 / patch / note / tag / check / install-hooks）；**版本升级以 git tag `vX.Y.Z.W-RCn` 打在对应提交上，且仅 main 分支打 tag**（非 main 分支拒绝执行 bump/patch/note/tag）；git 钩子自动为每次提交（含功能分支）标注当前版本号 | 已实现·已验证 |
+| FR-66 | 版本展示 | `/api/config` 返回当前版本；侧栏运行卡片与设置面板底部显示；version.md 缺失时显示 dev | 已实现·已验证 |
 
 ---
 
@@ -361,7 +361,7 @@ AI_API_KEY=
 | 模型 | FR-20 ~ FR-22（模拟）、FR-61、FR-64 | FR-23（**真实模型**） | FR-24 |
 | 工作流 | FR-25 ~ FR-31（模拟） | FR-23（真实 JSON 遵循能力） | FR-32、FR-33 |
 | 界面 | FR-34 ~ FR-39、FR-58 ~ FR-60、FR-62、FR-63 | — | FR-40、FR-41 |
-| 部署 | FR-42 ~ FR-46、FR-48 部分 | FR-47（**异机恢复**） | FR-48（remote） |
+| 部署 | FR-42 ~ FR-46、FR-65、FR-66 | FR-47（**异机恢复**） | FR-48（remote） |
 
 **一句话结论**：文件和命令功能可用；**真实 AI 功能未验收**——模型 ID 为空、`configured=false`、`hasKey=false`，等待用户配置有效账户。
 
