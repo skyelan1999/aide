@@ -249,13 +249,14 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | 文件 | 行数 | 责任 |
 | --- | --- | --- |
 | `cmd/aide/main.go` | 12 | 应用入口，`server.Run()` 出错即退出 |
-| `internal/server/server.go` | 333 | 鉴权中间件、路由、配置、会话持久化、优雅关闭 |
-| `internal/server/provider.go` | 58 | 单次 Chat Completions 请求、超时、错误处理 |
-| `internal/server/workflow.go` | 347 | 任务状态机、三个模型步骤、提案校验、文件应用 |
+| `internal/server/server.go` | 342 | 鉴权中间件、路由、配置、会话持久化、Profile 加载、优雅关闭 |
+| `internal/server/provider.go` | 88 | 单次 Chat Completions 请求、Profile 参数透传、reasoner 参数剔除、超时、错误处理 |
+| `internal/server/workflow.go` | 364 | 任务状态机、三个模型步骤、策略解析、提案校验、文件应用 |
 | `internal/server/files.go` | 200 | `os.Root` 沙箱、大小限制、哈希校验、原子写入 |
 | `internal/server/command.go` | 134 | 进程组管理、精简环境、NDJSON 流、超时终止 |
-| `internal/server/server_test.go` | 278 | 9 个测试函数 |
-| `internal/server/web/` | — | `index.html` / `app.js` / `style.css` |
+| `internal/server/profiles.go` | 342 | 系统/用户 Profile、参数校验、`profiles.json` 持久化、auto 路由策略 |
+| `internal/server/server_test.go` / `profiles_test.go` | 278 / 211 | 14 个测试函数 |
+| `internal/server/web/` | — | `index.html` / `app.js` / `style.css` / `settings-init.js` / `settings-schema.json` / `themes/` |
 
 ### 6.3 任务状态机
 
@@ -361,7 +362,7 @@ AI_API_KEY=
 
 **一句话结论**：文件和命令功能可用；**真实 AI 功能未验收**——模型 ID 为空、`configured=false`、`hasKey=false`，等待用户配置有效账户。
 
-后端 9 个测试函数覆盖：鉴权与 Origin、文件边界与冲突、密钥不返回、工作流审批冲突与持久化、未附加文件拒绝、Provider 错误与取消、命令执行与退出码、重启中断标记、对话历史与取消端点。
+后端 14 个测试函数覆盖：鉴权与 Origin、文件边界与冲突、密钥不返回、工作流审批冲突与持久化、未附加文件拒绝、Provider 错误与取消、命令执行与退出码、重启中断标记、对话历史与取消端点，以及新增的 Profile 系统（系统配置不可变、参数校验、用户配置持久化、auto 路由策略、参数透传与 reasoner 剔除、任务策略记录）。
 
 ---
 
