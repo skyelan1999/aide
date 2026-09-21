@@ -152,5 +152,17 @@ $('command-stop').onclick = () => state.commandAbort?.abort();
 $('login-dialog').addEventListener('cancel', event => event.preventDefault());
 $('login-form').onsubmit = async event => { event.preventDefault(); state.token = $('access-token').value.trim(); try { await initialize(); localStorage.setItem('aide-token', state.token); $('access-token').value = ''; $('login-dialog').close(); } catch (error) { $('login-error').textContent = error.message; } };
 document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && !document.querySelector('dialog[open]')) action(newSession)(); });
+/* ── 主题切换控件（方案无关：只认 data-choice，不枚举具体方案；主题状态一律经 window.aideTheme）──
+   必须位于 initialize() 之外：未登录时 initialize() 会抛错返回，控件与主题仍需可用。
+   禁止直接读写 localStorage['aide.theme']、禁止直接调用 matchMedia（§10.2 契约）。 */
+function syncThemeChoices(pref) {
+  document.querySelectorAll('.theme-switch .theme-choice').forEach(button => button.setAttribute('aria-pressed', button.dataset.choice === pref ? 'true' : 'false'));
+}
+if (window.aideTheme && window.aideTheme.valid) {
+  const themeSwitch = document.querySelector('.theme-switch');
+  if (themeSwitch) themeSwitch.addEventListener('click', event => { const choice = event.target.closest('[data-choice]'); if (choice) syncThemeChoices(window.aideTheme.set(choice.dataset.choice)); });
+  window.aideTheme.subscribe(syncThemeChoices);
+  syncThemeChoices(window.aideTheme.pref());
+}
 async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles()]); }
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });

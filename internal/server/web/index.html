@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>aide · AI 开发工作台</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><script src="/theme-init.js"></script><meta name="color-scheme" content="dark light"><title>aide · AI 开发工作台</title><link rel="stylesheet" href="/themes/dark/tokens.css"><link rel="stylesheet" href="/themes/light/tokens.css"><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
 <body>
 <aside class="sidebar">
   <a class="brand" href="/"><span class="brand-icon">a</span><span>aide<span class="brand-dot">.</span></span><small>LOCAL</small></a>
@@ -12,7 +12,7 @@
   <div class="sidebar-footer"><div class="runtime-card"><span class="live-dot"></span><span>Docker 环境<small>Go / Python / Node.js / Git</small></span><span class="runtime-tag">LOCAL</span></div><button id="settings-button" class="settings-button"><span>⚙</span> 模型设置 <span id="model-status">未配置</span></button></div>
 </aside>
 <main>
-  <header class="topbar"><div class="breadcrumb">工作台 <span>/</span> <strong id="session-title">开始新的探索</strong></div><div class="top-actions"><span id="connection" class="connection">连接中</span><button id="files-toggle" class="quiet">▤ 文件</button></div></header>
+  <header class="topbar"><div class="breadcrumb">工作台 <span>/</span> <strong id="session-title">开始新的探索</strong></div><div class="top-actions"><span id="connection" class="connection">连接中</span><div class="theme-switch" role="group" aria-label="界面主题"><button type="button" class="theme-choice" data-choice="light" title="明亮主题" aria-pressed="false">明</button><button type="button" class="theme-choice" data-choice="dark" title="暗色主题" aria-pressed="false">暗</button><button type="button" class="theme-choice" data-choice="system" title="跟随系统外观" aria-pressed="true">跟随系统</button></div><button id="files-toggle" class="quiet">▤ 文件</button></div></header>
   <section class="conversation" id="conversation" aria-live="polite">
     <div class="welcome" id="welcome"><div class="eyebrow"><span class="live-dot"></span> YOUR LOCAL AI WORKSPACE</div><h1>从一个想法，<br>到一次<span>实现。</span></h1><p>和 AI 一起理解代码、制定计划、构建项目。<br>文件、命令与工作流，都在你的本地环境中。</p><div class="starter-grid"><button class="starter" data-prompt="请分析已附加的项目文件，介绍架构和关键模块。"><span>⌘</span><strong>理解项目</strong><small>梳理架构与代码逻辑 <b>↗</b></small></button><button class="starter" data-prompt="请为当前项目设计一个小型功能，给出实现计划、文件修改方案和验证命令。" data-mode="workflow"><span>◈</span><strong>构建功能</strong><small>从计划到可审阅的修改 <b>↗</b></small></button><button class="starter" data-prompt="请审查已附加的代码，找出可能的缺陷，按严重性列出依据和修复建议。"><span>⌕</span><strong>检查代码</strong><small>发现问题与改进空间 <b>↗</b></small></button></div><div class="welcome-foot"><span>01 选择文件</span><i>→</i><span>02 描述任务</span><i>→</i><span>03 审阅结果</span></div></div>
     <div id="timeline"></div>
