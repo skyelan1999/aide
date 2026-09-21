@@ -28,10 +28,56 @@ import (
 //go:embed web/*
 var assets embed.FS
 
+type ModelRef struct {
+	ID            string `json:"id"`
+	Name          string `json:"name,omitempty"`
+	ContextWindow int    `json:"contextWindow,omitempty"`
+}
 type Settings struct {
-	BaseURL string `json:"baseURL"`
-	Model   string `json:"model"`
-	APIKey  string `json:"apiKey,omitempty"`
+	BaseURL     string     `json:"baseURL"`
+	Model       string     `json:"model"`
+	APIKey      string     `json:"apiKey,omitempty"`
+	Models      []ModelRef `json:"models,omitempty"`
+	ActiveModel string     `json:"activeModel,omitempty"`
+}
+
+const (
+	defaultContextWindow = 65536
+	maxModels            = 20
+)
+
+// normalizeModels 校验并补全模型列表（LIM-25）；返回错误时列表不被采纳。
+func normalizeModels(models []ModelRef) ([]ModelRef, error) {
+	if len(models) > maxModels {
+		return nil, fmt.Errorf("模型最多 %d 个", maxModels)
+	}
+	seen := map[string]bool{}
+	out := make([]ModelRef, 0, len(models))
+	for _, m := range models {
+		m.ID = strings.TrimSpace(m.ID)
+		if m.ID == "" || len(m.ID) > 64 {
+			return nil, errors.New("模型 id 不能为空且最长 64 字符")
+		}
+		if seen[m.ID] {
+			return nil, fmt.Errorf("模型 id %s 重复", m.ID)
+		}
+		seen[m.ID] = true
+		m.Name = strings.TrimSpace(m.Name)
+		if m.Name == "" {
+			m.Name = m.ID
+		}
+		if len([]rune(m.Name)) > 32 {
+			return nil, fmt.Errorf("模型名称 %q 最长 32 个字符", m.Name)
+		}
+		if m.ContextWindow == 0 {
+			m.ContextWindow = defaultContextWindow
+		}
+		if m.ContextWindow < 1024 || m.ContextWindow > 1048576 {
+			return nil, fmt.Errorf("模型 %s 的上下文窗口须在 1024–1048576 之间", m.ID)
+		}
+		out = append(out, m)
+	}
+	return out, nil
 }
 type Message struct {
 	Role    string `json:"role"`
@@ -165,6 +211,26 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, err
 	}
+	if len(a.settings.Models) == 0 && a.settings.Model != "" {
+		// 旧格式迁移：单模型 → 模型列表 + 当前模型（FR-67 / D1）
+		a.settings.Models = []ModelRef{{ID: a.settings.Model, Name: a.settings.Model, ContextWindow: defaultContextWindow}}
+		a.settings.ActiveModel = a.settings.Model
+	}
+	if a.settings.ActiveModel == "" {
+		a.settings.ActiveModel = a.settings.Model
+	}
+	if a.settings.Models != nil {
+		normalized, err := normalizeModels(a.settings.Models)
+		if err != nil {
+			a.Close()
+			return nil, fmt.Errorf("settings.json: %w", err)
+		}
+		a.settings.Models = normalized
+	}
+	if a.settings.ActiveModel == "" && len(a.settings.Models) > 0 {
+		a.settings.ActiveModel = a.settings.Models[0].ID
+		a.settings.Model = a.settings.ActiveModel
+	}
 	a.profilesPath = filepath.Join(work, profilesFileName)
 	if err := a.loadProfiles(); err != nil {
 		a.Close()
@@ -213,6 +279,7 @@ func (a *App) Handler() http.Handler {
 	})
 	mux.HandleFunc("GET /api/config", a.config)
 	mux.HandleFunc("PUT /api/settings", a.updateSettings)
+	mux.HandleFunc("GET /api/models", a.listModels)
 	mux.HandleFunc("GET /api/profiles", a.listProfiles)
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
 	mux.HandleFunc("GET /api/files", a.listFiles)
@@ -252,7 +319,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "workspace": "/workspace", "context": "/context", "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -263,20 +330,55 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	// 前端部分更新（如仅切换 activeModel）时，用已存值补全后再校验
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if in.BaseURL == "" {
+		in.BaseURL = a.settings.BaseURL
+	}
+	if in.APIKey == "" && !in.ClearKey {
+		in.APIKey = a.settings.APIKey
+	}
+	if in.Models == nil {
+		in.Models = a.settings.Models
+	}
 	u, err := url.Parse(in.BaseURL)
 	if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		fail(w, 400, errors.New("请输入有效的 HTTP(S) API Base URL"))
 		return
 	}
-	if in.Model == "" {
-		fail(w, 400, errors.New("请填写模型名称"))
+	if in.Model == "" && in.ActiveModel == "" {
+		fail(w, 400, errors.New("请至少配置一个模型"))
 		return
 	}
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	if in.APIKey == "" && !in.ClearKey {
-		in.APIKey = a.settings.APIKey
+	// 旧式单模型请求兼容：model 字段 → 模型列表 + 当前模型（FR-67 / D1）
+	if len(in.Models) == 0 && in.Model != "" {
+		in.Models = []ModelRef{{ID: in.Model, Name: in.Model, ContextWindow: defaultContextWindow}}
+		if in.ActiveModel == "" {
+			in.ActiveModel = in.Model
+		}
 	}
+	models, err := normalizeModels(in.Models)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	in.Models = models
+	if in.ActiveModel == "" && len(in.Models) > 0 {
+		in.ActiveModel = in.Models[0].ID
+	}
+	activeFound := false
+	for _, m := range in.Models {
+		if m.ID == in.ActiveModel {
+			activeFound = true
+			break
+		}
+	}
+	if !activeFound {
+		fail(w, 400, errors.New("当前模型不在模型列表中"))
+		return
+	}
+	in.Model = in.ActiveModel // Model 保留为当前生效模型 id（Provider 与旧逻辑零改动）
 	in.BaseURL = strings.TrimRight(in.BaseURL, "/")
 	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), in.Settings); err != nil {
 		fail(w, 500, err)

@@ -41,6 +41,7 @@ type Task struct {
 	Applied     bool         `json:"applied"`
 	Attachments []Attachment `json:"attachments"`
 	Strategy    string       `json:"strategy,omitempty"` // manual | auto（FR-63）
+	Model       string       `json:"model,omitempty"`    // 本次任务使用的模型（FR-69）
 	Profile     string       `json:"profile,omitempty"`  // 本次生效的 profile id
 }
 
@@ -127,7 +128,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{ID: newID(), Mode: in.Mode, Prompt: in.Prompt, Status: "running", Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID}
+	task := &Task{ID: newID(), Mode: in.Mode, Prompt: in.Prompt, Status: "running", Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model}
 	oldTitle := s.Title
 	if len(s.Messages) == 0 {
 		title := []rune(in.Prompt)
