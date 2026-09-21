@@ -1,6 +1,6 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null };
 const fragment = new URLSearchParams(location.hash.slice(1));
 if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); history.replaceState(null, '', location.pathname); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -50,7 +50,7 @@ function renderSession() {
   for (const run of state.session?.runs || []) {
     if (run.status === 'running') state.busy = true;
     const box = el('article', 'run'); box.append(el('div', 'user-message', run.prompt));
-    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? '◈ AIDE WORKFLOW · 规划 → 方案 → 审查' : '◌ AIDE ASSISTANT'), el('span', 'run-status', statuses[run.status] || run.status)); box.append(meta);
+    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? '◈ AIDE WORKFLOW · 规划 → 方案 → 审查' : '◌ AIDE ASSISTANT'), el('span', 'run-status', statuses[run.status] || run.status)); if (run.strategy) meta.append(el('span', 'run-strategy', '策略: ' + (run.strategy === 'auto' ? '自动 → ' + profileName(run.profile) : '手动 · ' + profileName(run.profile)))); box.append(meta);
     if (run.attachments?.length) box.append(el('p', 'muted', '已附加：' + run.attachments.map(a => a.root + '/' + a.path).join('、')));
     if (!run.steps.length) box.append(el('p', 'muted', '正在准备模型请求…'));
     run.steps.forEach((step, index) => {
@@ -111,7 +111,8 @@ $('task-form').onsubmit = action(async event => {
   $('send').disabled = true;
   try {
     if (!state.session) state.session = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: '新会话' }) });
-    await api(`/sessions/${state.session.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments }) });
+    const strategy = state.profiles?.strategy || 'manual';
+    await api(`/sessions/${state.session.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default') }) });
     $('prompt').value = ''; state.attachments = []; renderAttachments(); await selectSession(state.session.id); $('conversation').scrollTop = $('conversation').scrollHeight;
   } finally { $('send').disabled = false; }
 });
@@ -200,7 +201,7 @@ function renderSegmentedControl(control) {
   requestAnimationFrame(apply);
   return wrap;
 }
-const controlRenderers = { segmented: renderSegmentedControl };
+const controlRenderers = { segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager };
 function renderSettingsSheet() {
   const host = $('settings-sections');
   host.replaceChildren();
@@ -243,5 +244,179 @@ bindSettingsTrigger($('brand-mini'));
 $('settings-sheet-close').onclick = closeSettingsSheet;
 $('settings-backdrop').onclick = closeSettingsSheet;
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && $('settings-sheet').classList.contains('open') && !document.querySelector('dialog[open]')) closeSettingsSheet(); });
-async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles()]); }
+/* ── 模型参数 Profile 与策略路由（FR-61~FR-64）：数据经 GET/PUT /api/profiles，
+   持久化于工程目录 profiles.json；聊天栏策略按钮可选 auto 或手动 profile。 ── */
+async function loadProfiles() { state.profiles = await api('/profiles'); refreshStrategyUI(); }
+function profileName(id) { return state.profiles?.profiles.find(p => p.id === id)?.name || id; }
+function profilesPayloadFrom(source) {
+  return {
+    strategy: source?.strategy || 'manual',
+    activeProfile: source?.activeProfile || 'default',
+    profiles: (source?.profiles || []).filter(p => !p.system)
+  };
+}
+async function saveProfilesFrom(source) {
+  const saved = await api('/profiles', { method: 'PUT', body: JSON.stringify(profilesPayloadFrom(source)) });
+  state.profiles = saved;
+  refreshStrategyUI();
+  return saved;
+}
+/* 设置面板里的 Profile 管理器：本地编辑副本 + 防抖保存；系统配置只读（FR-62） */
+const profilesManager = { local: null, timer: null, host: null };
+const paramDefs = [
+  { key: 'temperature', label: '温度 temperature', min: 0, max: 2, step: 0.1, placeholder: '1' },
+  { key: 'top_p', label: 'Top P', min: 0, max: 1, step: 0.05, placeholder: '1' },
+  { key: 'max_tokens', label: '最大 Tokens', min: 1, max: 8192, step: 1, placeholder: '4096', integer: true },
+  { key: 'frequency_penalty', label: '频率惩罚', min: -2, max: 2, step: 0.1, placeholder: '0' },
+  { key: 'presence_penalty', label: '存在惩罚', min: -2, max: 2, step: 0.1, placeholder: '0' }
+];
+profilesManager.refresh = function () {
+  this.local = JSON.parse(JSON.stringify(state.profiles || { strategy: 'manual', activeProfile: 'default', profiles: [] }));
+  if (this.host) this.render();
+};
+profilesManager.scheduleSave = function () {
+  clearTimeout(this.timer);
+  this.timer = setTimeout(action(async () => { try { await saveProfilesFrom(this.local); } catch (error) { this.refresh(); } }), 700);
+};
+profilesManager.save = function () {
+  clearTimeout(this.timer);
+  return saveProfilesFrom(this.local).catch(error => { this.refresh(); throw error; });
+};
+profilesManager.flush = async function () {
+  clearTimeout(this.timer);
+  if (this.local) await saveProfilesFrom(this.local);
+};
+profilesManager.render = function () {
+  const host = this.host;
+  if (!host || !this.local) return;
+  host.replaceChildren();
+  for (const profile of this.local.profiles || []) host.append(this.card(profile));
+};
+profilesManager.card = function (profile) {
+  const isSystem = !!profile.system;
+  const card = el('div', 'profile-card' + (isSystem ? ' system' : ''));
+  const head = el('div', 'profile-card-head');
+  if (isSystem) {
+    head.append(el('span', 'profile-name', profile.name), el('span', 'profile-badge', '🔒 系统配置 · 不可修改'));
+  } else {
+    const nameInput = el('input', 'profile-name-input');
+    nameInput.value = profile.name || ''; nameInput.maxLength = 32; nameInput.setAttribute('aria-label', '配置名称');
+    nameInput.addEventListener('input', () => { profile.name = nameInput.value.trim(); this.scheduleSave(); });
+    head.append(nameInput, el('span', 'profile-badge', profile.id));
+    const del = el('button', 'profile-delete', '－');
+    del.type = 'button'; del.title = '删除配置'; del.setAttribute('aria-label', '删除配置 ' + profile.name);
+    del.onclick = () => { if (confirm(`删除配置「${profile.name}」？`)) { const index = this.local.profiles.indexOf(profile); if (index >= 0) this.local.profiles.splice(index, 1); this.render(); this.save(); } };
+    head.append(del);
+  }
+  const grid = el('div', 'profile-params');
+  for (const def of paramDefs) {
+    const label = el('label', 'param-field');
+    label.append(el('span', '', def.label));
+    const input = el('input');
+    input.type = 'number'; input.min = def.min; input.max = def.max; input.step = def.step; input.placeholder = def.placeholder;
+    input.disabled = isSystem;
+    const raw = profile.params[def.key];
+    input.value = (raw === undefined || raw === null) ? '' : raw;
+    input.addEventListener('input', () => {
+      const text = input.value.trim();
+      if (text === '') { delete profile.params[def.key]; }
+      else { const value = def.integer ? parseInt(text, 10) : parseFloat(text); if (!Number.isNaN(value)) profile.params[def.key] = value; }
+      this.scheduleSave();
+    });
+    label.append(input);
+    grid.append(label);
+  }
+  const rfLabel = el('label', 'param-field');
+  rfLabel.append(el('span', '', '输出格式'));
+  const select = el('select');
+  for (const v of ['text', 'json_object']) { const o = el('option', '', v === 'text' ? '文本 text' : 'JSON 对象 json_object'); o.value = v; select.append(o); }
+  select.value = profile.params.response_format || 'text';
+  select.disabled = isSystem;
+  select.addEventListener('change', () => { profile.params.response_format = select.value; this.scheduleSave(); });
+  rfLabel.append(select);
+  grid.append(rfLabel);
+  const stopLabel = el('label', 'param-field wide');
+  stopLabel.append(el('span', '', '停止词 stop（逗号分隔）'));
+  const stopInput = el('input');
+  stopInput.type = 'text'; stopInput.placeholder = '无'; stopInput.disabled = isSystem;
+  stopInput.value = (profile.params.stop || []).join(', ');
+  stopInput.addEventListener('input', () => {
+    const parts = stopInput.value.split(/[,，]/).map(s => s.trim()).filter(Boolean).slice(0, 16);
+    if (parts.length) profile.params.stop = parts; else delete profile.params.stop;
+    this.scheduleSave();
+  });
+  stopLabel.append(stopInput);
+  grid.append(stopLabel);
+  card.append(head, grid);
+  return card;
+};
+function renderProfilesManager(control) {
+  const wrap = el('div', 'settings-control profiles-manager');
+  const head = el('div', 'control-label');
+  head.append(el('span', '', control.label));
+  const add = el('button', 'profiles-add', '＋ 新建配置');
+  add.type = 'button';
+  add.onclick = action(async () => {
+    await profilesManager.load();
+    const def = (state.profiles.profiles.find(p => p.id === 'default') || {}).params || {};
+    profilesManager.local.profiles.push({ id: 'u-' + Math.random().toString(36).slice(2, 8), name: '自定义配置', params: JSON.parse(JSON.stringify(def)) });
+    profilesManager.render();
+    await profilesManager.save();
+    toast('已添加配置，可修改名称与参数');
+  });
+  head.append(add);
+  const list = el('div', 'profile-list');
+  wrap.append(head, list);
+  profilesManager.host = list;
+  profilesManager.load = async function () { if (!state.profiles) await loadProfiles(); };
+  profilesManager.load().then(() => profilesManager.refresh()).catch(error => toast(error.message));
+  return wrap;
+}
+/* 聊天栏策略按钮（FR-63） */
+function refreshStrategyUI() {
+  const p = state.profiles;
+  if (!p) return;
+  const label = p.strategy === 'auto' ? '策略 · 自动' : '策略 · ' + profileName(p.activeProfile);
+  $('strategy-label').textContent = label;
+  const menu = $('strategy-menu');
+  menu.replaceChildren();
+  menu.append(strategyMenuOption('auto', '', '自动路由', '按 routing-policy.json 规则匹配', p.strategy === 'auto'));
+  menu.append(el('div', 'strategy-menu-sep', '手动'));
+  for (const profile of p.profiles) {
+    const selected = p.strategy === 'manual' && p.activeProfile === profile.id;
+    menu.append(strategyMenuOption('profile', profile.id, profile.name, profile.system ? '系统配置' : '自定义配置', selected));
+  }
+}
+function strategyMenuOption(kind, value, name, desc, selected) {
+  const b = el('button', 'strategy-option' + (selected ? ' selected' : ''));
+  b.type = 'button';
+  b.setAttribute('role', 'menuitemradio');
+  b.setAttribute('aria-checked', String(selected));
+  b.append(el('span', 'strategy-option-check', selected ? '✓' : ''), el('span', '', name), el('small', '', desc));
+  b.onclick = action(async () => {
+    await profilesManager.flush();
+    const source = profilesManager.local || state.profiles;
+    if (kind === 'auto') source.strategy = 'auto';
+    else { source.strategy = 'manual'; source.activeProfile = value; }
+    await saveProfilesFrom(source);
+    closeStrategyMenu();
+    toast(kind === 'auto' ? '已切换为自动路由策略' : '已切换为手动策略 · ' + profileName(value));
+  });
+  return b;
+}
+function openStrategyMenu() {
+  $('strategy-menu').classList.remove('hidden');
+  $('strategy-button').setAttribute('aria-expanded', 'true');
+}
+function closeStrategyMenu() {
+  $('strategy-menu').classList.add('hidden');
+  $('strategy-button').setAttribute('aria-expanded', 'false');
+}
+$('strategy-button').onclick = async () => {
+  if (!$('strategy-menu').classList.contains('hidden')) { closeStrategyMenu(); return; }
+  try { if (!state.profiles) await loadProfiles(); refreshStrategyUI(); openStrategyMenu(); } catch (error) { toast(error.message); }
+};
+document.addEventListener('click', event => { if (!$('strategy-menu').classList.contains('hidden') && !event.target.closest('.strategy-picker')) closeStrategyMenu(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$('strategy-menu').classList.contains('hidden')) closeStrategyMenu(); });
+async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles(), loadProfiles()]); }
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });

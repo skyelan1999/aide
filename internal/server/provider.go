@@ -14,11 +14,41 @@ import (
 
 // The provider boundary is intentionally small: any Chat Completions compatible
 // endpoint can be used, including a local model through host.docker.internal.
-func complete(ctx context.Context, cfg Settings, messages []Message) (string, error) {
+// params 是本次任务的采样参数（FR-61），未设置字段不进入请求体；
+// deepseek-reasoner 不支持的参数会被剔除，避免上游 400。
+func complete(ctx context.Context, cfg Settings, messages []Message, params ProfileParams) (string, error) {
 	if cfg.BaseURL == "" || cfg.Model == "" {
 		return "", errors.New("请先在模型设置中配置 API 地址和模型")
 	}
-	b, err := json.Marshal(map[string]any{"model": cfg.Model, "messages": messages, "stream": false})
+	body := map[string]any{"model": cfg.Model, "messages": messages, "stream": false}
+	if params.Temperature != nil {
+		body["temperature"] = *params.Temperature
+	}
+	if params.TopP != nil {
+		body["top_p"] = *params.TopP
+	}
+	if params.MaxTokens != 0 {
+		body["max_tokens"] = params.MaxTokens
+	}
+	if params.FrequencyPenalty != nil {
+		body["frequency_penalty"] = *params.FrequencyPenalty
+	}
+	if params.PresencePenalty != nil {
+		body["presence_penalty"] = *params.PresencePenalty
+	}
+	if params.ResponseFormat != "" {
+		body["response_format"] = map[string]string{"type": params.ResponseFormat}
+	}
+	if len(params.Stop) > 0 {
+		body["stop"] = params.Stop
+	}
+	if strings.Contains(strings.ToLower(cfg.Model), "reasoner") {
+		delete(body, "temperature")
+		delete(body, "top_p")
+		delete(body, "frequency_penalty")
+		delete(body, "presence_penalty")
+	}
+	b, err := json.Marshal(body)
 	if err != nil {
 		return "", err
 	}
