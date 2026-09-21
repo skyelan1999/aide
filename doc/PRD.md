@@ -4,7 +4,7 @@
 
 | 项目 | 值 |
 | --- | --- |
-| 文档版本 | v1.3 |
+| 文档版本 | v1.4 |
 | 建立日期 | 2026-09-21 |
 | 对应源码基线 | `bb2d1b6`（功能基线 `4e0da10`） |
 | 运行容器 | `aide-aide-1` / `aide:local` / healthy / `127.0.0.1:8097` |
@@ -209,6 +209,8 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | FR-46 | 持久化验收脚本 | `verify_runtime.py` 与 `--check` 验证重启后令牌/会话/文件仍在 | 已实现·已验证（会写测试数据，非只读） |
 | FR-47 | 异机恢复演练 | 在另一台机器用新项目名/新端口/新卷恢复并验收 | **未实现·未验收（P0）** |
 | FR-48 | 远程仓库与协作 | 用户指定 remote 后推送 | 未配置 remote |
+| FR-65 | 版本号与 Release Note 管理 | 四位版本号（产品级·重大·大版本·日常）+ RC 补丁号，呈现格式 `X.Y.Z.W RCn`（RC 默认 RC1，同版本补丁 +1）；工程目录 `version.md` 承载当前版本与 release note；`scripts/version.sh` 托管升级（bump 四档 / patch / note / tag / check / install-hooks）；**版本升级以 git tag `vX.Y.Z.W-RCn` 打在对应提交上，且仅 main 分支打 tag**（非 main 分支拒绝执行 bump/patch/note/tag）；git 钩子自动为每次提交（含功能分支）标注当前版本号 | 未实现 |
+| FR-66 | 版本展示 | `/api/config` 返回当前版本；侧栏运行卡片与设置面板底部显示；version.md 缺失时显示 dev | 未实现 |
 
 ---
 
@@ -309,6 +311,7 @@ running → interrupted                      服务重启后的恢复标记
 | LIM-21 | 设置存储 | 键名固定 `aide.ui`，单一 JSON 文档（`{"version":1,"theme":"light"|"dark"|"system"}`）；仅 localStorage，不入 cookie、不入服务端；主题枚举仍为 light/dark/system | `web/settings-init.js` |
 | LIM-22 | 模型参数取值 | temperature/top_p/penalty 见 FR-61 表：temperature 0–2；top_p 0–1；max_tokens 1–8192；frequency/presence_penalty −2–2；response_format ∈ {text, json_object}；stop ≤16 项 | `profiles.go` |
 | LIM-23 | Profile 文件 | 工程目录 `profiles.json`（用户配置 + strategy + activeProfile；系统配置定义在代码中不可改）；策略文件 `routing-policy.json` / `routing-policy.md`；用户配置 ≤20 个；id 匹配 `^[A-Za-z0-9_-]{1,64}$`，名称 1–32 字符 | `profiles.go` |
+| LIM-24 | 版本管理 | 版本号正则 `^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ RC[0-9]+$`；`version.md` 位于工程目录根，结构：标题行 `# aide 版本记录` + 行 `**当前版本：X.Y.Z.W RCn**` + 每版一节 `## X.Y.Z.W RCn（日期）` + 列表式 release note；bump 低位清零、patch 只加 RC；git tag 命名 `vX.Y.Z.W-RCn`（annotated），**仅 main 分支打 tag** | `scripts/version.sh` |
 
 ### 6.6 挂载与存储
 
@@ -406,6 +409,7 @@ AI_API_KEY=
 - [ ] `git status --short` 干净，或在开工前已明确交代当前未提交改动
 - [ ] `git log -3 --oneline` 基线未被他人的提交推移
 - [ ] 本次开发已从 `main` 创建独立功能分支（见 0.4）；验证通过后才允许合并回 `main`
+- [ ] 版本号与 release note 已按 `scripts/version.sh` 更新（FR-65 / LIM-24）
 - [ ] 本次要做的需求已有 `FR-xx` 编号；没有就先补到第 4 节
 - [ ] 该 FR 的当前状态与代码实际情况一致（不轻信文档里写的"已完成"）
 - [ ] 本次改动**不在第 3.2 节非目标列表**内；若在，先改需求
@@ -426,6 +430,7 @@ AI_API_KEY=
 | 2026-09-21 | v1.1 | 按用户要求新增 0.4「分支与合并约定」（每功能一分支、验证成功后再合并回 main）并同步更新第 10 节核对清单；记录主题切换工作的历史例外 | 编码助手 |
 | 2026-09-21 | v1.2 | 登记设置中心需求 FR-58~FR-60 与 LIM-21（品牌设置入口、设置 JSON 管理、玻璃质感滑动 UI）；主题系统 FR-49~57 已登记在 `feat/theme-switching` 分支增量 PRD（`doc/prd/2026-09-21-theme-switching.md`），编号从此延续 | 编码助手 |
 | 2026-09-21 | v1.3 | 登记模型参数 Profile 系统 FR-61~FR-64 与 LIM-22/23（参数配置、系统/用户 Profile、工程目录 JSON 持久化、聊天栏策略按钮、auto 路由策略） | 编码助手 |
+| 2026-09-21 | v1.4 | 登记版本管理需求 FR-65/66 与 LIM-24（四位版本号 + RC、version.md + release note、version.sh 托管、提交自动标注、界面版本展示） | 编码助手 |
 
 ---
 
