@@ -1,6 +1,6 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null };
 const fragment = new URLSearchParams(location.hash.slice(1));
 if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); history.replaceState(null, '', location.pathname); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -21,6 +21,9 @@ async function refreshConfig() {
   $('settings-sheet-version').textContent = ' · aide ' + versionText;
   $('model-status').textContent = state.config.configured ? '已配置' : '未配置';
   $('model-name').textContent = state.config.configured ? state.config.model + ' · API 已配置' : '先配置模型，即可开始真实 AI 对话';
+  const activeName = state.config.models?.find(m => m.id === state.config.activeModel)?.name || state.config.model || '未配置模型';
+  $('model-picker-label').textContent = activeName;
+  estimateContext();
 }
 async function loadSessions() {
   const sessions = await api('/sessions'); $('sessions').replaceChildren();
@@ -53,7 +56,7 @@ function renderSession() {
   for (const run of state.session?.runs || []) {
     if (run.status === 'running') state.busy = true;
     const box = el('article', 'run'); box.append(el('div', 'user-message', run.prompt));
-    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? '◈ AIDE WORKFLOW · 规划 → 方案 → 审查' : '◌ AIDE ASSISTANT'), el('span', 'run-status', statuses[run.status] || run.status)); if (run.strategy) meta.append(el('span', 'run-strategy', '策略: ' + (run.strategy === 'auto' ? '自动 → ' + profileName(run.profile) : '手动 · ' + profileName(run.profile)))); box.append(meta);
+    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? '◈ AIDE WORKFLOW · 规划 → 方案 → 审查' : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', statuses[run.status] || run.status)); if (run.strategy) meta.append(el('span', 'run-strategy', '策略: ' + (run.strategy === 'auto' ? '自动 → ' + profileName(run.profile) : '手动 · ' + profileName(run.profile)))); box.append(meta);
     if (run.attachments?.length) box.append(el('p', 'muted', '已附加：' + run.attachments.map(a => a.root + '/' + a.path).join('、')));
     if (!run.steps.length) box.append(el('p', 'muted', '正在准备模型请求…'));
     run.steps.forEach((step, index) => {
@@ -82,6 +85,7 @@ function renderSession() {
   }
   $('send').classList.toggle('hidden', state.busy); $('cancel').classList.toggle('hidden', !state.busy); $('prompt').disabled = state.busy;
   if (nearBottom) $('conversation').scrollTop = $('conversation').scrollHeight; else $('conversation').scrollTop = previousScroll;
+  estimateContext();
 }
 function renderAttachments() {
   $('attachment-chips').replaceChildren();
@@ -121,9 +125,9 @@ $('task-form').onsubmit = action(async event => {
 });
 $('prompt').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('task-form').requestSubmit(); } });
 $('cancel').onclick = action(async () => { const run = state.session?.runs.find(r => r.status === 'running'); if (run) { await api(`/sessions/${state.session.id}/runs/${run.id}/cancel`, { method: 'POST', body: '{}' }); toast('已请求停止'); } });
-function openSettings() { $('base-url').value = state.config?.baseURL || 'https://api.deepseek.com'; $('model').value = state.config?.model || ''; $('api-key').value = ''; $('api-key').placeholder = state.config?.hasKey ? '已保存密钥；留空保留' : '云端 API 通常需要密钥；本地模型可不填'; $('clear-key').checked = false; $('settings-dialog').showModal(); }
+function openSettings() { $('base-url').value = state.config?.baseURL || 'https://api.deepseek.com'; $('api-key').value = ''; $('api-key').placeholder = state.config?.hasKey ? '已保存密钥；留空保留' : '云端 API 通常需要密钥；本地模型可不填'; $('clear-key').checked = false; state.modelDraft = { models: JSON.parse(JSON.stringify(state.config?.models || [])), activeModel: state.config?.activeModel || '' }; renderModelList(); $('settings-dialog').showModal(); }
 $('settings-button').onclick = openSettings;
-$('settings-form').onsubmit = action(async event => { event.preventDefault(); await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), model: $('model').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast('模型设置已保存，发送任务时会调用该模型'); });
+$('settings-form').onsubmit = action(async event => { event.preventDefault(); if (!state.modelDraft.models.length) { toast('请至少添加一个模型'); return; } await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked, models: state.modelDraft.models, activeModel: state.modelDraft.activeModel }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast('模型设置已保存，发送任务时会调用当前模型'); });
 $('save-file').onclick = action(async () => { const data = await api('/file', { method: 'PUT', body: JSON.stringify({ path: state.file.path, content: $('editor').value, hash: state.file.hash }) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; $('editor-status').textContent = '✓ 已保存到本地工作目录'; await loadFiles(); });
 $('attach-file').onclick = () => {
   if (state.file.content !== $('editor').value) { toast('请先保存修改，再附加到任务'); return; }
@@ -421,5 +425,122 @@ $('strategy-button').onclick = async () => {
 };
 document.addEventListener('click', event => { if (!$('strategy-menu').classList.contains('hidden') && !event.target.closest('.strategy-picker')) closeStrategyMenu(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$('strategy-menu').classList.contains('hidden')) closeStrategyMenu(); });
+/* ── 侧栏模型选择器（FR-69，参考 DSH 模型选择器） ── */
+function activeModel() { return state.config?.models?.find(m => m.id === state.config.activeModel); }
+function renderModelPickerMenu() {
+  const menu = $('model-picker-menu');
+  menu.replaceChildren();
+  for (const m of state.config?.models || []) {
+    const b = el('button', 'model-picker-option' + (m.id === state.config.activeModel ? ' selected' : ''));
+    b.type = 'button';
+    b.setAttribute('role', 'menuitemradio');
+    b.setAttribute('aria-checked', String(m.id === state.config.activeModel));
+    b.append(el('span', 'model-picker-check', m.id === state.config.activeModel ? '✓' : ''), el('span', '', m.name), el('small', '', m.id + ' · ' + (m.contextWindow || 65536) / 1024 + 'K 上下文'));
+    b.onclick = action(async () => {
+      await api('/settings', { method: 'PUT', body: JSON.stringify({ activeModel: m.id }) });
+      closeModelPickerMenu();
+      await refreshConfig();
+      toast('已切换到模型：' + m.name);
+    });
+    menu.append(b);
+  }
+  const manage = el('button', 'model-picker-manage', '⚙ 管理模型…');
+  manage.type = 'button';
+  manage.onclick = () => { closeModelPickerMenu(); openSettings(); };
+  menu.append(manage);
+}
+function openModelPickerMenu() { renderModelPickerMenu(); $('model-picker-menu').classList.remove('hidden'); $('model-picker-button').setAttribute('aria-expanded', 'true'); }
+function closeModelPickerMenu() { $('model-picker-menu').classList.add('hidden'); $('model-picker-button').setAttribute('aria-expanded', 'false'); }
+$('model-picker-button').onclick = () => { if ($('model-picker-menu').classList.contains('hidden')) openModelPickerMenu(); else closeModelPickerMenu(); };
+document.addEventListener('click', event => { if (!$('model-picker-menu').classList.contains('hidden') && !event.target.closest('.model-picker')) closeModelPickerMenu(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$('model-picker-menu').classList.contains('hidden')) closeModelPickerMenu(); });
+/* ── 模型列表管理（FR-67 / FR-68）：设置弹窗内增删、标记当前、自动获取候选 ── */
+function renderModelList() {
+  const host = $('model-list');
+  host.replaceChildren();
+  for (const m of state.modelDraft?.models || []) {
+    const row = el('div', 'model-row');
+    const radio = el('button', 'model-active' + (m.id === state.modelDraft.activeModel ? ' active' : ''));
+    radio.type = 'button';
+    radio.title = '设为当前模型';
+    radio.setAttribute('aria-pressed', String(m.id === state.modelDraft.activeModel));
+    radio.textContent = m.id === state.modelDraft.activeModel ? '●' : '○';
+    radio.onclick = () => { state.modelDraft.activeModel = m.id; renderModelList(); };
+    const nameInput = el('input', 'model-name-input');
+    nameInput.value = m.name || m.id;
+    nameInput.maxLength = 32;
+    nameInput.setAttribute('aria-label', '模型名称');
+    nameInput.addEventListener('input', () => { m.name = nameInput.value.trim() || m.id; });
+    const idText = el('span', 'model-id-text', m.id);
+    const windowLabel = el('label', 'model-window-label', '窗口');
+    const windowInput = el('input', 'model-window-input');
+    windowInput.type = 'number';
+    windowInput.min = 1024;
+    windowInput.max = 1048576;
+    windowInput.step = 1024;
+    windowInput.value = m.contextWindow || 65536;
+    windowInput.setAttribute('aria-label', '上下文窗口');
+    windowInput.addEventListener('input', () => { const v = parseInt(windowInput.value, 10); if (!Number.isNaN(v)) m.contextWindow = v; });
+    windowLabel.append(windowInput);
+    const del = el('button', 'model-delete', '－');
+    del.type = 'button';
+    del.title = '删除模型';
+    del.onclick = () => {
+      const index = state.modelDraft.models.indexOf(m);
+      if (index >= 0) state.modelDraft.models.splice(index, 1);
+      if (state.modelDraft.activeModel === m.id) state.modelDraft.activeModel = state.modelDraft.models[0]?.id || '';
+      renderModelList();
+    };
+    row.append(radio, nameInput, idText, windowLabel, del);
+    host.append(row);
+  }
+  if (!(state.modelDraft?.models || []).length) host.append(el('p', 'muted', '尚未添加模型。可输入模型 ID 添加，或用「自动获取」从 API 拉取候选。'));
+}
+$('add-model').onclick = () => {
+  const id = $('new-model-id').value.trim();
+  if (!id) { toast('请输入模型 ID'); return; }
+  if (state.modelDraft.models.some(m => m.id === id)) { toast('该模型已存在'); return; }
+  state.modelDraft.models.push({ id, name: id, contextWindow: 65536 });
+  if (!state.modelDraft.activeModel) state.modelDraft.activeModel = id;
+  $('new-model-id').value = '';
+  renderModelList();
+};
+$('fetch-models').onclick = action(async () => {
+  const button = $('fetch-models');
+  button.disabled = true;
+  button.textContent = '⟳ 获取中…';
+  try {
+    const data = await api('/models');
+    const list = $('model-datalist');
+    list.replaceChildren();
+    (data.models || []).forEach(id => list.append(new Option(id, id)));
+    toast('已获取 ' + (data.models || []).length + ' 个可用模型，在输入框中选择即可');
+  } finally {
+    button.disabled = false;
+    button.textContent = '⟳ 自动获取';
+  }
+});
+/* ── 上下文统计（FR-70，参考 DSH token-meter：4 字符/词 + 每消息 4 开销） ── */
+function fmtTokens(n) { return n < 1000 ? String(n) : (n / 1024).toFixed(1) + 'K'; }
+function estimateContext() {
+  const model = activeModel();
+  const limit = model?.contextWindow || 65536;
+  let used = 0;
+  let included = 0;
+  const messages = state.session?.messages || [];
+  let budget = 0;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const size = (messages[i].content || '').length;
+    if (budget > 0 && budget + size >= 60000) break; // 与后端 60,000 字符回放预算一致（近似）
+    budget += size;
+    used += Math.ceil(size / 4) + 4;
+    included++;
+  }
+  const pct = Math.min(100, Math.round((used / limit) * 100));
+  $('context-stat').textContent = fmtTokens(used) + ' / ' + fmtTokens(limit) + ' tokens';
+  $('context-fill').style.width = pct + '%';
+  $('context-fill').classList.toggle('warn', pct > 90);
+  $('context-detail').textContent = (included ? '最近 ' + included + ' 条消息' : '当前会话暂无内容') + ' · 4 字符/词估算';
+}
 async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles(), loadProfiles()]); }
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });

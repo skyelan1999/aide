@@ -86,3 +86,61 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	}
 	return out.Choices[0].Message.Content, nil
 }
+
+// listModels 代理 GET {baseURL}/models 拉取可用模型 id 列表（FR-68 / LIM-25）。
+// 返回 OpenAI 兼容格式 {models:[id,…]}；上游失败或格式不符时给出友好错误。
+func (a *App) listModels(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	baseURL, key := a.settings.BaseURL, a.settings.APIKey
+	a.mu.Unlock()
+	if baseURL == "" {
+		fail(w, 400, errors.New("请先在模型设置中填写 API Base URL"))
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "GET", strings.TrimRight(baseURL, "/")+"/models", nil)
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	if key != "" {
+		req.Header.Set("Authorization", "Bearer "+key)
+	}
+	client := &http.Client{Timeout: 30 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
+	resp, err := client.Do(req)
+	if err != nil {
+		fail(w, 400, fmt.Errorf("获取模型列表失败: %w", err))
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		fail(w, 400, fmt.Errorf("模型列表接口返回 HTTP %d（该服务可能不支持模型列表）", resp.StatusCode))
+		return
+	}
+	b, err := io.ReadAll(io.LimitReader(resp.Body, 2<<20))
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	var out struct {
+		Data []struct {
+			ID string `json:"id"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(b, &out); err != nil {
+		fail(w, 400, errors.New("模型列表返回格式无法解析"))
+		return
+	}
+	ids := make([]string, 0, len(out.Data))
+	for _, m := range out.Data {
+		if m.ID != "" {
+			ids = append(ids, m.ID)
+		}
+	}
+	if len(ids) == 0 {
+		fail(w, 400, errors.New("未获取到模型列表"))
+		return
+	}
+	jsonOut(w, 200, map[string]any{"models": ids})
+}
