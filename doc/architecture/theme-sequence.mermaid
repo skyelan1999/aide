@@ -1,0 +1,47 @@
+sequenceDiagram
+    autonumber
+    participant U as 用户
+    participant B as 浏览器渲染引擎
+    participant H as index.html
+    participant S as /settings-init.js（原 theme-init.js）
+    participant L as localStorage['aide.ui']（JSON 文档）
+    participant M as matchMedia(prefers-color-scheme)
+    participant C as /themes/*/tokens.css
+    participant P as 设置面板（app.js 渲染）
+
+    Note over B,H: ① 冷启动首屏（必须早于首次内容绘制）
+    B->>H: 解析 <head>
+    H-->>B: <meta name="color-scheme" content="dark light">
+    H->>S: 同步外链脚本，立即执行（无 defer / async）
+    S->>L: getItem('aide.ui')；旧键 aide.theme 存在则迁移（LIM-21）
+    L-->>S: JSON {"version":1,"theme":"system"|"light"|"dark"} 或 null 或 损坏
+    alt 非法值 / 损坏 JSON
+        S->>L: setItem('aide.ui', 规范化文档)   （LIM-21 / LIM-15 语义）
+    end
+    S->>M: matches ?
+    M-->>S: true | false
+    S->>H: documentElement.dataset.theme = <生效主题>
+    S->>H: documentElement.dataset.themePref = <偏好>
+    S->>M: addEventListener('change', onSystemChange)
+    H->>C: 解析 3 个渲染阻塞 <link>（令牌 2 个 + style.css）
+    C-->>B: 令牌生效（html[data-theme=…] 命中）
+    B-->>U: 首帧即为目标主题 —— 无闪烁（FR-55 / A10）
+
+    Note over U,C: ② 用户在设置面板切换（零网络请求 / 不重载）
+    U->>P: 点击分段控件选项（明 / 暗 / 跟随系统）
+    P->>S: aideUI.set('theme', choice)   （经 window.aideUI JSON 门面）
+    S->>L: setItem('aide.ui', 新 JSON 文档)    （FR-53 语义，LIM-21）
+    S->>H: 更新 data-theme / data-theme-pref
+    C-->>B: 同一批已加载 CSS 重算变量（无 fetch）   （NFR-17 / B7）
+    S-->>P: 通知订阅者
+    P->>P: 同步 aria-pressed 与滑动 thumb（恰 1 个选中态）   （FR-52 语义 / FR-60）
+
+    Note over M,S: ③ 系统外观变化（仅 pref=system）
+    M->>S: change 事件
+    alt 当前偏好 == 'system'
+        S->>H: 重算并更新 data-theme
+        C-->>B: ≤1s 内自动跟随   （FR-54 / A8）
+        S-->>P: 通知订阅者
+    else 当前偏好 == light 或 dark
+        S->>S: 忽略该事件，用户显式选择不变   （A9）
+    end
