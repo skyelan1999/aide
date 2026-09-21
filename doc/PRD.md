@@ -4,7 +4,7 @@
 
 | 项目 | 值 |
 | --- | --- |
-| 文档版本 | v1.4 |
+| 文档版本 | v1.5 |
 | 建立日期 | 2026-09-21 |
 | 对应源码基线 | `bb2d1b6`（功能基线 `4e0da10`） |
 | 运行容器 | `aide-aide-1` / `aide:local` / healthy / `127.0.0.1:8097` |
@@ -163,6 +163,8 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | FR-22 | 密钥不回传前端 | `GET /api/config` 只返回 `hasKey`；配置文件权限 0600 | 已实现·已验证 |
 | FR-23 | 真实模型端到端验收 | 真实账户下：短对话、三阶段 JSON 提案、应用、人工验证各成功一次 | **未实现·未验收（P0）** |
 | FR-24 | 流式输出（SSE） | Provider 增量响应与前端消费一致，取消/重连/持久化都有测试 | 未实现 |
+| FR-67 | 多模型管理 | 模型设置支持多模型列表（id＋名称＋上下文窗口），可增删、标记当前；旧 `settings.json` 单模型格式自动迁移；模型数 ≤20 | 未实现 |
+| FR-68 | 模型名称自动获取 | `GET /api/models` 代理 `{baseURL}/models` 拉取可用模型列表（转发密钥，30s 超时）；前端「自动获取」填入候选列表；不支持/失败时友好提示 | 未实现 |
 
 ### 4.5 AI 工作流
 
@@ -195,6 +197,8 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | FR-60 | 玻璃质感滑动 UI | 设置面板为毛玻璃圆角卡片（backdrop blur＋半透明背景＋高光描边），弹性缓动滑入／滑出；主题三态为分段控件，带滑动指示块动画；切换主题 ≤100 ms、无网络请求、不重载页面 | 已实现·已验证 |
 | FR-61 | 模型参数配置 | 设置面板新增「模型参数」分组：temperature、top_p、max_tokens、frequency_penalty、presence_penalty、response_format、stop 均可配置；参数随模型调用生效 | 已实现·已验证 |
 | FR-62 | 配置 Profile 管理 | 3 个内置系统配置（default／precise／creative）**不可修改、不可删除**；用户配置可 ＋ 添加、－ 删除、自定义命名；全部配置以 JSON 持久化于**工程目录** `profiles.json`（运行时保存写回主机）；非法参数被拒绝 | 已实现·已验证 |
+| FR-69 | 侧栏模型选择 | 左侧新增模型选择入口（参考 DSH 模型选择器）：展示当前模型，点击弹出模型列表切换，立即生效于后续任务；任务记录本次所用模型 | 未实现 |
+| FR-70 | 上下文统计 | 左侧新增上下文统计卡（参考 DSH token-meter）：按 4 字符/词 + 每条消息 4 token 开销估算已用 tokens，进度条对照当前模型的上下文窗口；随会话加载/发送/轮询更新 | 未实现 |
 | FR-63 | 聊天栏策略按钮 | 聊天输入栏左侧小按钮选择策略：`auto`（自动路由）或手动指定某一个 profile；默认手动选择 `default` 配置；任务记录展示本次实际使用的配置 | 已实现·已验证 |
 | FR-64 | auto 路由策略 | auto 模式下按工程目录的策略文件（`routing-policy.json` 优先，`routing-policy.md` 内 ```json 块兜底）规则路由到对应 profile：支持按 mode 与 prompt 关键词匹配；无规则命中／文件缺失时回落 `default` | 已实现·已验证 |
 
@@ -311,6 +315,7 @@ running → interrupted                      服务重启后的恢复标记
 | LIM-21 | 设置存储 | 键名固定 `aide.ui`，单一 JSON 文档（`{"version":1,"theme":"light"|"dark"|"system"}`）；仅 localStorage，不入 cookie、不入服务端；主题枚举仍为 light/dark/system | `web/settings-init.js` |
 | LIM-22 | 模型参数取值 | temperature/top_p/penalty 见 FR-61 表：temperature 0–2；top_p 0–1；max_tokens 1–8192；frequency/presence_penalty −2–2；response_format ∈ {text, json_object}；stop ≤16 项 | `profiles.go` |
 | LIM-23 | Profile 文件 | 工程目录 `profiles.json`（用户配置 + strategy + activeProfile；系统配置定义在代码中不可改）；策略文件 `routing-policy.json` / `routing-policy.md`；用户配置 ≤20 个；id 匹配 `^[A-Za-z0-9_-]{1,64}$`，名称 1–32 字符 | `profiles.go` |
+| LIM-25 | 多模型 | 模型数 ≤20；模型 id 1–64 字符；名称 ≤32（缺省=id）；上下文窗口 1024–1,048,576（缺省 65,536）；`/api/models` 超时 30s、响应 ≤2 MiB | `server.go` / `provider.go` |
 | LIM-24 | 版本管理 | 版本号正则 `^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ RC[0-9]+$`；`version.md` 位于工程目录根，结构：标题行 `# aide 版本记录` + 行 `**当前版本：X.Y.Z.W RCn**` + 每版一节 `## X.Y.Z.W RCn（日期）` + 列表式 release note；bump 低位清零、patch 只加 RC；git tag 命名 `vX.Y.Z.W-RCn`（annotated），**仅 main 分支打 tag** | `scripts/version.sh` |
 
 ### 6.6 挂载与存储
@@ -431,6 +436,7 @@ AI_API_KEY=
 | 2026-09-21 | v1.2 | 登记设置中心需求 FR-58~FR-60 与 LIM-21（品牌设置入口、设置 JSON 管理、玻璃质感滑动 UI）；主题系统 FR-49~57 已登记在 `feat/theme-switching` 分支增量 PRD（`doc/prd/2026-09-21-theme-switching.md`），编号从此延续 | 编码助手 |
 | 2026-09-21 | v1.3 | 登记模型参数 Profile 系统 FR-61~FR-64 与 LIM-22/23（参数配置、系统/用户 Profile、工程目录 JSON 持久化、聊天栏策略按钮、auto 路由策略） | 编码助手 |
 | 2026-09-21 | v1.4 | 登记版本管理需求 FR-65/66 与 LIM-24（四位版本号 + RC、version.md + release note、version.sh 托管、提交自动标注、界面版本展示） | 编码助手 |
+| 2026-09-21 | v1.5 | 登记多模型与上下文统计 FR-67~FR-70 与 LIM-25（多模型管理、模型名自动获取、侧栏模型选择、DSH 风格上下文统计卡） | 编码助手 |
 
 ---
 
