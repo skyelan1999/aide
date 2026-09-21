@@ -209,3 +209,50 @@ func TestTaskRecordsStrategyAndProfile(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 	}
 }
+
+func TestVersionFromVersionFile(t *testing.T) {
+	// 直接测解析器：缺失 / 非法 / 合法
+	if v := readVersionFile(filepath.Join(t.TempDir(), "missing.md")); v != "" {
+		t.Fatalf("missing file must give empty version, got %q", v)
+	}
+	dir := t.TempDir()
+	bad := filepath.Join(dir, "bad.md")
+	if err := os.WriteFile(bad, []byte("没有版本号"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if v := readVersionFile(bad); v != "" {
+		t.Fatalf("invalid file must give empty version, got %q", v)
+	}
+	good := filepath.Join(dir, "version.md")
+	if err := os.WriteFile(good, []byte("# aide 版本记录\n\n**当前版本：0.1.0.0 RC1**\n\n## 0.1.0.0 RC1（2026-09-21）\n\n- 初始版本\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if v := readVersionFile(good); v != "0.1.0.0 RC1" {
+		t.Fatalf("want 0.1.0.0 RC1, got %q", v)
+	}
+	// 端到端：New() 加载 version.md → /api/config 返回；缺失时返回空
+	root := t.TempDir()
+	work := filepath.Join(root, "work")
+	if err := os.MkdirAll(work, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(work, "version.md"), []byte("**当前版本：0.2.3.4 RC2**\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	a, err := New(work, filepath.Join(root, "ref"), filepath.Join(root, "data"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer a.Close()
+	w := request(a, "GET", "/api/config", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"version":"0.2.3.4 RC2"`) {
+		t.Fatalf("config missing version: %s", w.Body.String())
+	}
+	a2 := testApp(t)
+	w = request(a2, "GET", "/api/config", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"version":""`) {
+		t.Fatalf("missing version.md must yield empty version: %s", w.Body.String())
+	}
+}

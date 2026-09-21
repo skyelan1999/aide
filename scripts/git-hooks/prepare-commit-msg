@@ -1,0 +1,11 @@
+#!/bin/sh
+# aide 版本自动标注钩子（FR-65）：把当前版本号追加到每次提交信息末尾。
+# 由 `bash scripts/version.sh install-hooks` 安装到 .git/hooks/prepare-commit-msg。
+# 仅在 version.md 存在时生效；已含相同标注则跳过（去重）。
+msg_file="$1"
+top="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+ver="$(grep -oE '[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ RC[0-9]+' "$top/version.md" 2>/dev/null | head -1)"
+if [ -n "$ver" ] && ! grep -qF "[版本 $ver]" "$msg_file"; then
+  printf '\n[版本 %s]\n' "$ver" >> "$msg_file"
+fi
+exit 0

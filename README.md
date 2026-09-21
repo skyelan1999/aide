@@ -71,6 +71,24 @@ docker compose up -d --build  # 更新源代码后的重建
 
 前端由 Go embed 编译进二进制；修改界面或后端后需重新构建镜像。项目默认无需 npm install，前端使用原生 JavaScript/CSS，没有 CDN 运行依赖。
 
+## 版本管理
+
+每次提交自动标注当前版本号（git 钩子）；版本升级在 **main 分支**执行并自动打 git tag：
+
+```bash
+bash scripts/version.sh                    # 显示当前版本（如 0.1.0.0 RC1）
+bash scripts/version.sh bump <档位> -m "说明"  # 升级：product / major / feature / daily
+bash scripts/version.sh patch -m "说明"     # 同一版本补丁：仅 RC+1
+bash scripts/version.sh note -m "说明"      # 追加 release note
+bash scripts/version.sh tag                # 为当前版本打 tag（幂等）
+bash scripts/version.sh check              # 校验 version.md
+bash scripts/version.sh install-hooks      # 新克隆后执行一次，安装提交标注钩子
+```
+
+- 版本号四位：`产品级.重大.大版本.日常`，呈现 `X.Y.Z.W RCn`（RC 默认 RC1，补丁 +1）。
+- 当前版本与 release note 记录在工程目录 `version.md`；tag 命名 `vX.Y.Z.W-RCn`，**仅打在 main 分支**。
+- 界面左下角运行卡片与设置面板底部显示当前版本（`/api/config` 的 `version` 字段）。
+
 ## 当前边界
 
 - 面向单用户本地开发，Compose 端口仅绑定 `127.0.0.1`；API 使用随机访问令牌，并拒绝跨站 Origin。
