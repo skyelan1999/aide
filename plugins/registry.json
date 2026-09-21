@@ -9,7 +9,7 @@
       "author": "aide",
       "main": "index.js",
       "enabled": true,
-      "installedAt": "2026-09-21T17:54:58Z"
+      "installedAt": "2026-09-21T18:00:34Z"
     },
     {
       "id": "goal",
@@ -19,7 +19,7 @@
       "author": "aide",
       "main": "index.js",
       "enabled": true,
-      "installedAt": "2026-09-21T17:54:58Z"
+      "installedAt": "2026-09-21T18:00:34Z"
     },
     {
       "id": "plan",
@@ -29,7 +29,7 @@
       "author": "aide",
       "main": "index.js",
       "enabled": true,
-      "installedAt": "2026-09-21T17:54:58Z"
+      "installedAt": "2026-09-21T18:00:34Z"
     },
     {
       "id": "todo",
@@ -39,7 +39,7 @@
       "author": "aide",
       "main": "index.js",
       "enabled": true,
-      "installedAt": "2026-09-21T17:54:58Z"
+      "installedAt": "2026-09-21T18:00:34Z"
     },
     {
       "id": "feedback",
@@ -49,7 +49,7 @@
       "author": "aide",
       "main": "index.js",
       "enabled": true,
-      "installedAt": "2026-09-21T17:54:58Z"
+      "installedAt": "2026-09-21T18:00:34Z"
     },
     {
       "id": "subagent",
@@ -59,7 +59,7 @@
       "author": "aide",
       "main": "index.js",
       "enabled": true,
-      "installedAt": "2026-09-21T17:54:58Z"
+      "installedAt": "2026-09-21T18:00:34Z"
     },
     {
       "id": "terminal",
@@ -69,7 +69,7 @@
       "author": "aide",
       "main": "index.js",
       "enabled": true,
-      "installedAt": "2026-09-21T17:54:58Z"
+      "installedAt": "2026-09-21T18:00:34Z"
     },
     {
       "id": "workflow",
@@ -79,7 +79,7 @@
       "author": "aide",
       "main": "index.js",
       "enabled": true,
-      "installedAt": "2026-09-21T17:54:58Z"
+      "installedAt": "2026-09-21T18:00:34Z"
     }
   ]
 }

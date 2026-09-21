@@ -4,9 +4,9 @@ module.exports = {
   name: 'terminal',
   apply(ctx) {
     ctx.logger.info('终端 预设已加载');
-    ctx.tool({ name: 'terminal-run', description: '在容器终端执行命令' });,
-    ctx.tool({ name: 'terminal-history', description: '查看命令历史' });;
-    ctx.slot({ id: 'terminal-panel', name: '终端面板' });;
-    ctx.provide('terminal');;
+    ctx.tool({ name: 'terminal-run', description: '在容器终端执行命令' });
+    ctx.tool({ name: 'terminal-history', description: '查看命令历史' });
+    ctx.slot({ id: 'terminal-panel', name: '终端面板' });
+    ctx.provide('terminal');
   },
 };

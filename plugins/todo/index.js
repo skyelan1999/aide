@@ -4,9 +4,9 @@ module.exports = {
   name: 'todo',
   apply(ctx) {
     ctx.logger.info('任务清单 预设已加载');
-    ctx.tool({ name: 'todo-list', description: '列出当前任务清单' });,
-    ctx.tool({ name: 'todo-update', description: '更新任务状态' });;
-    ctx.slot({ id: 'todo-panel', name: '任务清单面板' });;
-    ctx.provide('todo');;
+    ctx.tool({ name: 'todo-list', description: '列出当前任务清单' });
+    ctx.tool({ name: 'todo-update', description: '更新任务状态' });
+    ctx.slot({ id: 'todo-panel', name: '任务清单面板' });
+    ctx.provide('todo');
   },
 };
