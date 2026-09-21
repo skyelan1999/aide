@@ -18,10 +18,10 @@
 
 | 编号 | 需求 | 验收标准 | 状态 |
 | --- | --- | --- | --- |
-| FR-61 | 模型参数配置 | 设置面板「模型参数」分组可配置 temperature / top_p / max_tokens / frequency_penalty / presence_penalty / response_format / stop；参数随模型调用生效 | 未实现 |
-| FR-62 | 配置 Profile 管理 | 内置 3 个系统配置 default／precise／creative，不可修改、不可删除；用户配置 ＋ 添加、－ 删除、自定义命名；全部配置持久化于工程目录 `profiles.json`（运行时保存写回主机，原子写入）；参数越界被拒绝 | 未实现 |
-| FR-63 | 聊天栏策略按钮 | 聊天输入栏左侧小按钮弹出策略选择：`auto` 或手动指定某一 profile；默认手动选择 `default`；任务记录展示本次实际使用的配置 | 未实现 |
-| FR-64 | auto 路由策略 | auto 模式下按工程目录策略文件路由：`routing-policy.json` 优先，`routing-policy.md` 内 ```json 代码块兜底；规则支持按 `mode` 与 `promptContains` 匹配；无命中／文件缺失回落 `default` | 未实现 |
+| FR-61 | 模型参数配置 | 设置面板「模型参数」分组可配置 temperature / top_p / max_tokens / frequency_penalty / presence_penalty / response_format / stop；参数随模型调用生效 | 已实现·已验证 |
+| FR-62 | 配置 Profile 管理 | 内置 3 个系统配置 default／precise／creative，不可修改、不可删除；用户配置 ＋ 添加、－ 删除、自定义命名；全部配置持久化于工程目录 `profiles.json`（运行时保存写回主机，原子写入）；参数越界被拒绝 | 已实现·已验证 |
+| FR-63 | 聊天栏策略按钮 | 聊天输入栏左侧小按钮弹出策略选择：`auto` 或手动指定某一 profile；默认手动选择 `default`；任务记录展示本次实际使用的配置 | 已实现·已验证 |
+| FR-64 | auto 路由策略 | auto 模式下按工程目录策略文件路由：`routing-policy.json` 优先，`routing-policy.md` 内 ```json 代码块兜底；规则支持按 `mode` 与 `promptContains` 匹配；无命中／文件缺失回落 `default` | 已实现·已验证 |
 
 ## 3. 关键决策
 

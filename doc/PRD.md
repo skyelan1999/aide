@@ -193,10 +193,10 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | FR-58 | 品牌设置入口 | 点击左上角 brand 图标打开设置面板；键盘可达；Esc／点击遮罩／关闭按钮均可关闭并归还焦点；窄屏（侧栏隐藏）下顶栏提供等效入口 | 已实现·已验证 |
 | FR-59 | 设置 JSON 管理 | 界面设置以单一 JSON 文档持久化于 localStorage 键 `aide.ui`（含 version，非法值回退默认）；旧键 `aide.theme` 自动迁移；设置面板由 `settings-schema.json` 数据驱动渲染，新增设置只需增加 schema 条目；主题收纳为面板「外观」分组首个控件，移除顶栏独立主题按钮 | 已实现·已验证 |
 | FR-60 | 玻璃质感滑动 UI | 设置面板为毛玻璃圆角卡片（backdrop blur＋半透明背景＋高光描边），弹性缓动滑入／滑出；主题三态为分段控件，带滑动指示块动画；切换主题 ≤100 ms、无网络请求、不重载页面 | 已实现·已验证 |
-| FR-61 | 模型参数配置 | 设置面板新增「模型参数」分组：temperature、top_p、max_tokens、frequency_penalty、presence_penalty、response_format、stop 均可配置；参数随模型调用生效 | 未实现 |
-| FR-62 | 配置 Profile 管理 | 3 个内置系统配置（default／precise／creative）**不可修改、不可删除**；用户配置可 ＋ 添加、－ 删除、自定义命名；全部配置以 JSON 持久化于**工程目录** `profiles.json`（运行时保存写回主机）；非法参数被拒绝 | 未实现 |
-| FR-63 | 聊天栏策略按钮 | 聊天输入栏左侧小按钮选择策略：`auto`（自动路由）或手动指定某一个 profile；默认手动选择 `default` 配置；任务记录展示本次实际使用的配置 | 未实现 |
-| FR-64 | auto 路由策略 | auto 模式下按工程目录的策略文件（`routing-policy.json` 优先，`routing-policy.md` 内 ```json 块兜底）规则路由到对应 profile：支持按 mode 与 prompt 关键词匹配；无规则命中／文件缺失时回落 `default` | 未实现 |
+| FR-61 | 模型参数配置 | 设置面板新增「模型参数」分组：temperature、top_p、max_tokens、frequency_penalty、presence_penalty、response_format、stop 均可配置；参数随模型调用生效 | 已实现·已验证 |
+| FR-62 | 配置 Profile 管理 | 3 个内置系统配置（default／precise／creative）**不可修改、不可删除**；用户配置可 ＋ 添加、－ 删除、自定义命名；全部配置以 JSON 持久化于**工程目录** `profiles.json`（运行时保存写回主机）；非法参数被拒绝 | 已实现·已验证 |
+| FR-63 | 聊天栏策略按钮 | 聊天输入栏左侧小按钮选择策略：`auto`（自动路由）或手动指定某一个 profile；默认手动选择 `default` 配置；任务记录展示本次实际使用的配置 | 已实现·已验证 |
+| FR-64 | auto 路由策略 | auto 模式下按工程目录的策略文件（`routing-policy.json` 优先，`routing-policy.md` 内 ```json 块兜底）规则路由到对应 profile：支持按 mode 与 prompt 关键词匹配；无规则命中／文件缺失时回落 `default` | 已实现·已验证 |
 
 ### 4.7 部署与运维
 
@@ -354,9 +354,9 @@ AI_API_KEY=
 | 会话 | FR-01 ~ FR-05 | — | — |
 | 文件 | FR-06 ~ FR-12 | — | FR-13 |
 | 命令 | FR-14 ~ FR-18 | — | FR-19 |
-| 模型 | FR-20 ~ FR-22（模拟） | FR-23（**真实模型**） | FR-24 |
+| 模型 | FR-20 ~ FR-22（模拟）、FR-61、FR-64 | FR-23（**真实模型**） | FR-24 |
 | 工作流 | FR-25 ~ FR-31（模拟） | FR-23（真实 JSON 遵循能力） | FR-32、FR-33 |
-| 界面 | FR-34 ~ FR-39、FR-58 ~ FR-60 | — | FR-40、FR-41 |
+| 界面 | FR-34 ~ FR-39、FR-58 ~ FR-60、FR-62、FR-63 | — | FR-40、FR-41 |
 | 部署 | FR-42 ~ FR-46、FR-48 部分 | FR-47（**异机恢复**） | FR-48（remote） |
 
 **一句话结论**：文件和命令功能可用；**真实 AI 功能未验收**——模型 ID 为空、`configured=false`、`hasKey=false`，等待用户配置有效账户。
