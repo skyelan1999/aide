@@ -10,7 +10,7 @@
 | 作者 | 架构师（高见远） |
 | 状态 | 待工程师实施 |
 
-> **事实核对说明**：本文所有"现状"数据均由脚本对 `internal/server/web/style.css`（14,317 B / 3 行 / 153 个 `{}` 块 / 93 处 hex / 89 个不同色值）实读得出；Go `embed` 行为由容器内**实际运行**验证（见第 4 节），非凭记忆推断。
+> **事实核对说明**：本文所有"现状"数据均由脚本对**基线 `fbe45b2`** 的 `internal/server/web/style.css`（14,317 B / **单行压缩格式，仅 2 个换行符** / **153 个顶层样式块**（其中 5 个为 `@media`；全文 `{` 共 197 个）/ **93 处 hex** / **89 个不同色值**）实读得出；Go `embed` 行为由容器内**实际运行**验证（见第 4 节），非凭记忆推断。
 
 ---
 
@@ -34,7 +34,7 @@ flowchart TB
         NEXT["themes/新方案/tokens.css<br/>未来第 3/4 套（本期不建）"]
     end
 
-    CONTRACT["① 令牌契约层：79 个语义令牌名（冻结接口 FR-56）<br/>背景层级 18 · 边框 13 · 文字 28 · 主色 9 · 语义状态 4 · 其他 7"]
+    CONTRACT["① 令牌契约层：79 个语义令牌名（已裁决冻结，LIM-20）<br/>背景层级 18 · 边框 14 · 文字 28 · 主色 8 · 语义状态 4 · 其他 7"]
 
     INIT["theme-init.js<br/>读偏好 → 定生效主题 → 写 html 属性<br/>监听系统外观；产出 window.aideTheme"]
     LS[("localStorage<br/>aide.theme")]
@@ -106,7 +106,7 @@ flowchart TB
 | 稳定性 | 一经落地即为接口；**后续方案不得改名、不得删键、不得增键**（FR-56 + LIM-20） |
 | 保真阈值 | **Δ≤2/255，已裁决不放宽**（NFR-16 / B6） |
 | 作用域 | 由主题目录通过 `html[data-theme="…"]` 命中，不在 `style.css` 落地任何色值 |
-| `dark` 取值来源 | 除 5 个显式新增项（`--field-border`、`--focus-ring`、`--success`、`--selection`、`--scrollbar-*`）外，**全部取自改造前字面量本身或其中位色**；已验证每个旧字面量与所属令牌 `dark` 值的**逐通道偏差 ≤2/255**（NFR-16 / B6） |
+| `dark` 取值来源 | 除 **6 个显式新增项**（`--field-border`、`--focus-ring`、`--success`、`--selection`、`--scrollbar-thumb`、`--scrollbar-track`；其中前 3 个由 §7.4 消费，后 3 个为**预留**）外，**全部取自改造前字面量本身或其中位色**；已验证每个旧字面量与所属令牌 `dark` 值的**逐通道偏差 ≤2/255**（NFR-16 / B6） |
 
 ### 3.2 完整令牌表（79 个）
 
@@ -569,7 +569,7 @@ sequenceDiagram
 
 ### 7.2 93 处字面量如何逐类映射到令牌
 
-93 处 hex 分布（脚本实测）：`background*` 类 **21** 处、`border*` 类 **19** 处、`color` 类 **41** 处、`box-shadow` 类 **5** 处、`dialog::backdrop` 背景 **1** 处，另含 `:root` 内 **8** 处变量定义（改由主题目录提供）。逐类映射规则：
+93 处 hex 分布（脚本实测，基线 `fbe45b2`）：`color` 类 **46** 处、`background*` 类 **20** 处（**含 `dialog::backdrop` 1 处**）、`border*` 类 **15** 处、`box-shadow` 类 **4** 处，另含 `:root` 内 **8** 处变量定义（改由主题目录提供）。**46 + 20 + 15 + 4 + 8 = 93 ✓**。逐类映射规则：
 
 | 字面量类别 | 出现位置（示例选择器） | 映射令牌 | 处理方式 |
 | --- | --- | --- | --- |
@@ -579,7 +579,7 @@ sequenceDiagram
 | **主色 / on-色** | `button.primary`、`.brand-icon`、`.send-button`、`.starter>span`、`.starter b`、`.mode-switch button.active`、`.chip`、`.toast` | `--brand` / `--brand-hi` / `--brand-text` / `--brand-text-chip` / `--brand-text-2` / `--accent-text` / `--on-brand` / `--on-accent` / `--on-toast` | 同上 |
 | **语义状态** | `.task-error,.error`、`.danger` | `--danger` / `--warn` | 同上 |
 | **阴影 / 遮罩** | `.composer` `#0002`、`dialog` `#0008`、`.toast` `#0008`、`@media(max-width:950px)` `#0006`、`dialog::backdrop` `#050b08b5` | `--shadow-1` / `--shadow-2` / `--shadow-3` / `--backdrop` | 同上 |
-| **变量引用（本就无字面量，保留）** | `var(--green)` 11 处、`var(--accent)` 3 处、`var(--muted)`、`var(--line)` 等 | ⚠️ **需改名对齐**：`--green`→`--brand`、`--green`(聚焦环处)→`--focus-ring`、`--accent`→`--accent`（保留） | 见 7.4 特例 |
+| **变量引用（本就无字面量，保留）** | `var(--green)` **11 处**、`var(--accent)` **3 处**、`var(--muted)` 14 处、`var(--line)` 8 处、`var(--text)` 4 处、`var(--bg)` 1 处 | ⚠️ **需改名对齐**（见 §7.4 #3 / #4）：`--green` 11 处 → **1 处 `--focus-ring` + 10 处 `--brand`**；`--accent` 3 处 → **2 处保留 `--accent` + 1 处（`.connection.ready`）改 `--success`** | §7.4 #3 / #4 |
 
 ### 7.3 可执行的批量替换脚本（供工程师直接使用）
 
@@ -650,8 +650,27 @@ grep -rEo '#[0-9a-fA-F]{3,8}' internal/server/web/themes | wc -l                
 | --- | --- | --- | --- | --- |
 | 1 | `:root{…}` | `color-scheme:dark;--bg:…;--soft:…;font-family:…;font-size:14px` | `:root{font-family:…;font-size:14px}` —— 删除全部颜色声明与 `color-scheme` | FR-49：`style.css` 零色值；`color-scheme` 移入各主题目录（明/暗各自声明） |
 | 2 | `input,textarea{border:1px solid var(--line)}` | 输入框边界用通用分隔线 `--line` | 改为 `var(--field-border)` | 明色下需 ≥3:1 的**交互控件边界**；`--field-border` 的 dark 值仍是 `#29312c`（**暗色零变化**），light 值 `#6f8a7a`（3.76:1 ✅）。这是唯一一处"非 1:1 语义再定向" |
-| 3 | `var(--green)` 的 11 处引用 | 同一变量承担"焦点环"与"主按钮底/图标"两种语义 | 按用途拆分：`button:focus-visible` / `:focus-visible` → `var(--focus-ring)`；`.brand-icon` / `button.primary` / `.brand-dot` / `.folder-icon` / `.session-item.active` / `h1 span` / `.send-button` / `.shell-prompt` → `var(--brand)` | 明色下焦点环与主按钮需要不同取值（焦点环要 ≥3:1 于任意背景，主按钮底要配白字 ≥4.5:1）。拆名后 `dark` 两者仍都是 `#b4efcc`，**暗色零变化** |
+| 3 | `var(--green)` 的 **11 处**引用（**1 处焦点环 + 10 处品牌用途**） | 同一变量承担"焦点环"与"主色文字/图标/底色"两种语义 | 按用途拆分：<br>**→ `var(--focus-ring)`（1 处）**：`button:focus-visible,a:focus-visible`（`outline:2px solid var(--green)`）<br>**→ `var(--brand)`（10 处）**：`button.primary`、`.brand-icon`、`.brand-dot`、`.folder-icon`、`.session-item.active`、`h1 span`、`.send-button`、`.shell-prompt`、**`.run-status`**、**`.dialog-eyebrow`** | 明色下焦点环与主按钮需要不同取值（焦点环要 ≥3:1 于任意背景，主按钮底要配白字 ≥4.5:1）。拆名后 `dark` 两者仍都是 `#b4efcc`，**暗色零变化（偏差 0）**。<br>⚠️ **`.run-status` 不得归入 `--success`**：语义上"状态色"看似更贴切，但 `--success` 的 dark 值是 `#83d9a8`，与原 `#b4efcc` 的最大通道差 **49/255**（R 180↔131、G 239↔217、B 204↔168），**会直接破坏 NFR-16**。故 `.run-status` 归入 `--brand` 是**保真必需**，而非偏好选择。 |
 | 4 | `.connection.ready{color:var(--accent)}` | 连接就绪状态复用 `--accent` | 改为 `var(--success)` | 语义归位：让"success 状态"有独立令牌；`--success` 与 `--accent` 的 **dark 值相同**（均 `#83d9a8`）⇒ **暗色零变化**；light 下 `--success` 用 `#1a6b42`，对比度 6.11:1 |
+
+**§7.4 #3 的 11 处引用逐条核对表**（工程师可直接对照 grep 结果，基线 `fbe45b2`）
+
+| # | 选择器 | 声明 | 归入令牌 |
+| --- | --- | --- | --- |
+| 1 | `button:focus-visible,a:focus-visible` | `outline:2px solid var(--green)` | `--focus-ring` |
+| 2 | `button.primary` | `background:var(--green)` | `--brand` |
+| 3 | `.brand-icon` | `background:var(--green)` | `--brand` |
+| 4 | `.brand-dot` | `color:var(--green)` | `--brand` |
+| 5 | `.folder-icon` | `color:var(--green)` | `--brand` |
+| 6 | `.session-item.active` | `color:var(--green)` | `--brand` |
+| 7 | `h1 span` | `color:var(--green)` | `--brand` |
+| 8 | `.send-button` | `background:var(--green)` | `--brand` |
+| 9 | `.shell-prompt` | `color:var(--green)` | `--brand` |
+| 10 | **`.run-status`** | `color:var(--green)` | `--brand` |
+| 11 | **`.dialog-eyebrow`** | `color:var(--green)` | `--brand` |
+
+> 合计 **11 处 = 11 个不同选择器**（每个恰好出现 1 次）：`--focus-ring` **1** 处 + `--brand` **10** 处。第 10、11 项为初版文档遗漏项，已按交付总监裁决归入 `--brand`。
+> 核对命令（基线）：`git show fbe45b2:internal/server/web/style.css | grep -o 'var(--green)' | wc -l` → 期望 **11**。
 
 ### 7.5 新增 CSS（追加到单行末尾，不破坏既有结构）
 
@@ -741,7 +760,7 @@ MDN 同时明确：「Component authors must use the `prefers-color-scheme` medi
 #### T03 切换控件与主题交互（P0）
 - **涉及文件**：`internal/server/web/index.html`（顶栏）、`internal/server/web/style.css`（`§7.5` 规则）、`internal/server/web/app.js`（顶层主题片段）
 - **依赖**：T01
-- **内容**：按 §5.5 加 `.theme-switch` DOM；加 §7.5 的控件样式与 `@media(max-width:600px)` 规则；`app.js` 加**顶层** `<script>` 片段：容器事件委托 → `window.aideTheme.set(choice)` → 同步 `aria-pressed`；必须位于 `initialize()` 之外
+- **内容**：按 **§5.4** 加 `.theme-switch` DOM；加 §7.5 的控件样式与 `@media(max-width:600px)` 规则；`app.js` 加**顶层** `<script>` 片段：容器事件委托 → `window.aideTheme.set(choice)` → 同步 `aria-pressed`；必须位于 `initialize()` 之外
 - **完成判据**：① 三按钮文本逐字为 `明` / `暗` / `跟随系统`，任意时刻**恰 1 个** `aria-pressed="true"`（A4）；② Tab 可聚焦、Enter 可切换（A4）；③ 1280×720 与 **375 px** 无溢出（A5）；④ 刷新后保持（A6）；⑤ 手改 `aide.theme='blue'` 刷新 → 按系统渲染且键写回 `system`、Console 无报错（A7）；⑥ 「跟随系统」下改系统外观 ≤1 s 生效（A8）；⑦ 固定明/暗后改系统外观**不跟随**（A9）；⑧ 切换时 Network 面板**零请求**、无重载、轮询不中断（B7/NFR-17）；⑨ 未登录（登录弹窗）状态下主题与控件仍正常
 
 #### T04 明色主题打磨与对比度达标（P1）
@@ -889,3 +908,19 @@ bash scripts/aide.sh status           # 2 期望 Up (healthy)
 | 4 | **§5.3 的 4 处改动面** | 按原稿**定稿**，不再压缩 | §5.3 标题与结论段标注「已定稿」 |
 
 > 裁决时间：2026-09-21（由交付总监下发，依据用户决策）。本文其余内容（Q1 实证、Q2/Q3/Q5 决策、Q7 待 QA 实测项、T01~T05 任务列表）未变更。
+
+### 附录 B.2：修订记录 R2（计数一致性修订，2026-09-21）
+
+工程师实施 §7.4 #3 时发现枚举不完整，据此做了一轮**计数一致性**全量核查与修订（**仅文档，未动源码**）：
+
+| # | 位置 | 问题 | 修订 |
+| --- | --- | --- | --- |
+| 1 | **§7.4 #3** | 声称 `var(--green)` **11 处**，正文只枚举 **9 个**选择器（漏 `.run-status`、`.dialog-eyebrow`） | 补全为 **11 处 = 1 `--focus-ring` + 10 `--brand`**；新增「11 处逐条核对表」与 grep 核对命令；补 `⚠️ .run-status 不得归入 --success`（dark 偏差 49/255）的说明 |
+| 2 | **§1.1 分层图 CONTRACT 节点** | 分类计数写错：边框类**少计 1**、主色类**多计 1** | 改为 **`边框 14`、`主色 8`**（与 §3.2 表逐行统计一致；18+14+28+8+4+7 = 79） |
+| 3 | **§3.1 「`dark` 取值来源」** | 声称「5 个显式新增项」但只列 5 个（其中 `--scrollbar-*` 实为 2 个令牌） | 改为 **6 个**并逐个列全（`--field-border`、`--focus-ring`、`--success`、`--selection`、`--scrollbar-thumb`、`--scrollbar-track`），并标注前 3 个已消费 / 后 3 个预留 |
+| 4 | **§7.2 hex 分布** | `21 / 19 / 41 / 5 / 1`，与实测不符且口径含糊 | 改为实测值 **`color` 46 · `background*` 20（含 `dialog::backdrop` 1）· `border*` 15 · `box-shadow` 4 · `:root` 8**，并给出 `46+20+15+4+8 = 93 ✓` |
+| 5 | **§7.2 变量引用行** | `--green` 处理描述与 #3 不一致；未给出可靠计数 | 补准确计数（`--green` 11 / `--accent` 3 / `--muted` 14 / `--line` 8 / `--text` 4 / `--bg` 1）与拆分去向 |
+| 6 | **文首「事实核对说明」** | `3 行` / `153 个 {} 块` 口径含糊（实际 2 个换行符；153 为顶层块，`{` 共 197） | 改为「单行压缩格式，仅 2 个换行符 / 153 个顶层样式块（含 5 个 `@media`；全文 `{` 197 个）」，并注明基线 `fbe45b2` |
+| 7 | **§9.1 T03 内容行** | 交叉引用笔误：控件 DOM 契约实际在 §5.4，原误引为相邻编号 | 改为 **§5.4**（全文已无残留误引） |
+
+> 核对方式：脚本解析 §3.2 全部 79 行令牌表按类别计数，与文中所有「N 类 / N 处」断言逐条比对；hex 分类与变量计数均从**基线提交** `git show fbe45b2:internal/server/web/style.css` 实读（工作区已被工程师并发改token 化，不能作为基线）。
