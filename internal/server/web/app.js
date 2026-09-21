@@ -110,7 +110,7 @@ document.querySelectorAll('.mode-switch button').forEach(b => b.onclick = () => 
 document.querySelectorAll('.starter').forEach(b => b.onclick = () => { $('prompt').value = b.dataset.prompt; setMode(b.dataset.mode || 'chat'); $('prompt').focus(); });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
 document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { state.root = b.dataset.root; state.dir = '.'; document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); await loadFiles(); }));
-$('files-toggle').onclick = () => { document.body.classList.remove('plugins-mode'); state.panel = 'files'; $('plugins-toggle').classList.remove('active'); if (innerWidth <= 950) $('file-panel').classList.toggle('mobile-open'); else document.body.classList.toggle('files-hidden'); };
+$('files-toggle').onclick = () => { document.body.classList.remove('plugins-mode'); state.panel = 'files'; $('plugins-toggle').classList.remove('active'); $('plugins-toggle').setAttribute('aria-pressed', 'false'); $('files-toggle').classList.add('active'); $('files-toggle').setAttribute('aria-pressed', 'true'); if (innerWidth <= 950) $('file-panel').classList.toggle('mobile-open'); else document.body.classList.toggle('files-hidden'); };
 $('parent-dir').onclick = action(async () => { state.dir = state.dir.includes('/') ? state.dir.slice(0, state.dir.lastIndexOf('/')) : '.'; await loadFiles(); });
 $('task-form').onsubmit = action(async event => {
   event.preventDefault(); const prompt = $('prompt').value.trim(); if (!prompt || state.busy) return;
@@ -603,6 +603,9 @@ $('plugins-toggle').onclick = action(async () => {
   document.body.classList.add('plugins-mode');
   state.panel = 'plugins';
   $('plugins-toggle').classList.add('active');
+  $('plugins-toggle').setAttribute('aria-pressed', 'true');
+  $('files-toggle').classList.remove('active');
+  $('files-toggle').setAttribute('aria-pressed', 'false');
   if (innerWidth <= 950) $('file-panel').classList.remove('mobile-open');
   await loadPluginsPanel();
 });
