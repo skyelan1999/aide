@@ -16,6 +16,9 @@ function setMode(mode) { state.mode = mode; document.querySelectorAll('.mode-swi
 async function refreshConfig() {
   state.config = await api('/config');
   $('connection').textContent = '● 本地服务已连接'; $('connection').classList.add('ready');
+  const versionText = state.config.version ? 'v' + state.config.version : 'dev';
+  $('app-version').textContent = versionText;
+  $('settings-sheet-version').textContent = ' · aide ' + versionText;
   $('model-status').textContent = state.config.configured ? '已配置' : '未配置';
   $('model-name').textContent = state.config.configured ? state.config.model + ' · API 已配置' : '先配置模型，即可开始真实 AI 对话';
 }

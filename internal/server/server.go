@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -54,6 +55,7 @@ type App struct {
 	commands                  chan struct{}
 	profilesPath              string
 	profileState              ProfilesState
+	version                   string
 }
 
 func env(key, fallback string) string {
@@ -62,6 +64,17 @@ func env(key, fallback string) string {
 	}
 	return fallback
 }
+var versionRE = regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ RC[0-9]+`)
+
+// readVersionFile 从工程目录 version.md 取当前版本（FR-66 / LIM-24）；缺失或非法返回空串。
+func readVersionFile(path string) string {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		return ""
+	}
+	return versionRE.FindString(string(b))
+}
+
 func newID() string {
 	b := make([]byte, 16)
 	if _, err := rand.Read(b); err != nil {
@@ -157,6 +170,7 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, err
 	}
+	a.version = readVersionFile(filepath.Join(work, "version.md"))
 	entries, err := filepath.Glob(filepath.Join(data, "session-*.json"))
 	if err != nil {
 		a.Close()
@@ -238,7 +252,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "workspace": "/workspace", "context": "/context", "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "workspace": "/workspace", "context": "/context", "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
