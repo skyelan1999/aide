@@ -93,9 +93,31 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
 	defer cancel()
+	if a.workspaceMode() == "ssh" {
+		if err := a.ensureSSHSession(ctx); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		stream := &streamWriter{w: w}
+		start := time.Now()
+		code, runErr := a.execRemote(ctx, in.Command, stream, stream)
+		message := ""
+		if runErr != nil {
+			message = runErr.Error()
+		}
+		if ctx.Err() != nil {
+			message = "命令已取消或超过 60 秒"
+		}
+		stream.event(map[string]any{"type": "exit", "code": code, "error": message, "elapsedMS": time.Since(start).Milliseconds()})
+		return
+	}
 	cmd := exec.CommandContext(ctx, "bash", "--noprofile", "--norc", "-c", in.Command)
 	cmd.Dir = dir
-	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=/home/aide/.cache/go-build", "GOPATH=/home/aide/go"}
+	cacheEnv := "/home/aide/.cache/go-build"
+	if c := a.wsConfig.Cache.Path; c != "" {
+		cacheEnv = filepath.Join(a.workPath, filepath.FromSlash(c))
+	}
+	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=" + cacheEnv, "GOPATH=/home/aide/go", "AIDE_CACHE=" + cacheEnv}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {

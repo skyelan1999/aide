@@ -75,12 +75,17 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	contextText := ""
 	versions := map[string]Change{}
 	for _, att := range in.Attachments {
-		root, err := a.root(att.Root)
-		if err != nil {
-			fail(w, 400, err)
-			return
+		var b []byte
+		var err error
+		if (att.Root == "workspace" || att.Root == "") && a.workspaceMode() == "ssh" {
+			b, err = a.readWorkspaceText(att.Path)
+		} else {
+			var root *os.Root
+			root, err = a.root(att.Root)
+			if err == nil {
+				b, err = readText(root, att.Path)
+			}
 		}
-		b, err := readText(root, att.Path)
 		if err != nil {
 			fail(w, 400, err)
 			return
@@ -274,7 +279,7 @@ func (a *App) acceptProposal(s *Session, task *Task, raw string, versions map[st
 			f.BaseHash = v.BaseHash
 			f.Before = v.Before
 		} else {
-			if _, err := a.workspace.Stat(f.Path); !errors.Is(err, os.ErrNotExist) {
+			if a.workspaceStatExists(f.Path) {
 				return fmt.Errorf("现有文件 %s 未附加到任务，请先附加再生成修改", f.Path)
 			}
 			f.BaseHash = ""
@@ -330,7 +335,17 @@ func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 		if f.Applied {
 			continue
 		}
-		if err := checkVersion(a.workspace, f.Path, f.BaseHash); err != nil {
+		if a.workspaceMode() == "ssh" {
+			current, readErr := a.readWorkspaceText(f.Path)
+			if readErr == nil && hash(current) != f.BaseHash {
+				fail(w, 409, fmt.Errorf("%s: 文件已改变，请重新生成提案", f.Path))
+				return
+			}
+			if readErr != nil && f.BaseHash != "" {
+				fail(w, 409, fmt.Errorf("%s: 文件已被删除，请重新生成提案", f.Path))
+				return
+			}
+		} else if err := checkVersion(a.workspace, f.Path, f.BaseHash); err != nil {
 			fail(w, 409, fmt.Errorf("%s: %w", f.Path, err))
 			return
 		}
@@ -342,7 +357,7 @@ func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 		if f.Applied {
 			continue
 		}
-		if err := putText(a.workspace, f.Path, []byte(f.Content)); err != nil {
+		if err := a.writeWorkspaceText(f.Path, []byte(f.Content)); err != nil {
 			task.Error = "部分应用失败: " + err.Error()
 			_ = a.save(s)
 			fail(w, 500, errors.New(task.Error))

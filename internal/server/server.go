@@ -105,6 +105,11 @@ type App struct {
 	pluginsPath               string
 	pluginRegistry            pluginRegistry
 	pluginSurface             []byte
+	wsConfigPath              string
+	wsSecretsPath             string
+	wsConfig                  WorkspaceConfig
+	wsSecrets                 workspaceSecrets
+	sshBin, sftpBin           string
 }
 
 func env(key, fallback string) string {
@@ -248,6 +253,12 @@ func New(work, reference, data string) (*App, error) {
 		a.pluginsPath = filepath.Join(work, pluginsDirName)
 	}
 	a.runPluginHost(context.Background())
+	a.sshBin = "ssh"
+	a.sftpBin = "sftp"
+	if err := a.loadWorkspaceConfig(); err != nil {
+		a.Close()
+		return nil, err
+	}
 	entries, err := filepath.Glob(filepath.Join(data, "session-*.json"))
 	if err != nil {
 		a.Close()
@@ -297,6 +308,8 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("PUT /api/plugins/{id}", a.togglePlugin)
 	mux.HandleFunc("DELETE /api/plugins/{id}", a.deletePlugin)
 	mux.HandleFunc("GET /api/plugin-surface", a.pluginSurfaceHandler)
+	mux.HandleFunc("GET /api/workspace-config", a.getWorkspaceConfig)
+	mux.HandleFunc("PUT /api/workspace-config", a.updateWorkspaceConfig)
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
 	mux.HandleFunc("GET /api/files", a.listFiles)
 	mux.HandleFunc("GET /api/file", a.readFile)
