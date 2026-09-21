@@ -185,13 +185,13 @@ func TestProviderErrorsAndCancellation(t *testing.T) {
 		_, _ = w.Write([]byte("secret upstream data"))
 	}))
 	defer p.Close()
-	_, err := complete(context.Background(), Settings{BaseURL: p.URL, Model: "test"}, nil)
+	_, err := complete(context.Background(), Settings{BaseURL: p.URL, Model: "test"}, nil, ProfileParams{})
 	if err == nil || strings.Contains(err.Error(), "secret upstream") {
 		t.Fatal("provider error handling")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := complete(ctx, Settings{BaseURL: p.URL, Model: "test"}, nil); err == nil {
+	if _, err := complete(ctx, Settings{BaseURL: p.URL, Model: "test"}, nil, ProfileParams{}); err == nil {
 		t.Fatal("cancel ignored")
 	}
 }

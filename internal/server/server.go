@@ -52,6 +52,8 @@ type App struct {
 	sessions                  map[string]*Session
 	cancels                   map[string]context.CancelFunc
 	commands                  chan struct{}
+	profilesPath              string
+	profileState              ProfilesState
 }
 
 func env(key, fallback string) string {
@@ -150,6 +152,11 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, err
 	}
+	a.profilesPath = filepath.Join(work, profilesFileName)
+	if err := a.loadProfiles(); err != nil {
+		a.Close()
+		return nil, err
+	}
 	entries, err := filepath.Glob(filepath.Join(data, "session-*.json"))
 	if err != nil {
 		a.Close()
@@ -192,6 +199,8 @@ func (a *App) Handler() http.Handler {
 	})
 	mux.HandleFunc("GET /api/config", a.config)
 	mux.HandleFunc("PUT /api/settings", a.updateSettings)
+	mux.HandleFunc("GET /api/profiles", a.listProfiles)
+	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
 	mux.HandleFunc("GET /api/files", a.listFiles)
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)

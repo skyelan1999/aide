@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "rules": [
+    { "when": { "mode": "workflow" }, "use": "precise" },
+    { "when": { "promptContains": ["审查", "review", "缺陷", "bug", "安全", "测试"] }, "use": "precise" },
+    { "when": { "promptContains": ["创意", "文案", "命名", "头脑风暴", "brainstorm"] }, "use": "creative" }
+  ],
+  "default": "default"
+}
