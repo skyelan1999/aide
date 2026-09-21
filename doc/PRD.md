@@ -198,8 +198,8 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | FR-61 | 模型参数配置 | 设置面板新增「模型参数」分组：temperature、top_p、max_tokens、frequency_penalty、presence_penalty、response_format、stop 均可配置；参数随模型调用生效 | 已实现·已验证 |
 | FR-62 | 配置 Profile 管理 | 3 个内置系统配置（default／precise／creative）**不可修改、不可删除**；用户配置可 ＋ 添加、－ 删除、自定义命名；全部配置以 JSON 持久化于**工程目录** `profiles.json`（运行时保存写回主机）；非法参数被拒绝 | 已实现·已验证 |
 | FR-69 | 侧栏模型选择 | 左侧新增模型选择入口（参考 DSH 模型选择器）：展示当前模型，点击弹出模型列表切换，立即生效于后续任务；任务记录本次所用模型 | 已实现·已验证 |
-| FR-71 | 深度研究思考入口 | 新建任务首页 starter 卡片新增「深度研究思考」：点击填入深度研究提示词（chat 模式），覆盖背景梳理、多角度权衡与可验证结论 | 未实现 |
-| FR-72 | 插件面板开关 | 顶栏「文件」按钮左侧新增「插件」按钮；点击后右侧文件面板切换为插件面板，再点文件按钮恢复 | 未实现 |
+| FR-71 | 深度研究思考入口 | 新建任务首页 starter 卡片新增「深度研究思考」：点击填入深度研究提示词（chat 模式），覆盖背景梳理、多角度权衡与可验证结论 | 已实现·已验证 |
+| FR-72 | 插件面板开关 | 顶栏「文件」按钮左侧新增「插件」按钮；点击后右侧文件面板切换为插件面板，再点文件按钮恢复 | 已实现·已验证 |
 | FR-70 | 上下文统计 | 左侧新增上下文统计卡（参考 DSH token-meter）：按 4 字符/词 + 每条消息 4 token 开销估算已用 tokens，进度条对照当前模型的上下文窗口；随会话加载/发送/轮询更新 | 已实现·已验证 |
 | FR-63 | 聊天栏策略按钮 | 聊天输入栏左侧小按钮选择策略：`auto`（自动路由）或手动指定某一个 profile；默认手动选择 `default` 配置；任务记录展示本次实际使用的配置 | 已实现·已验证 |
 | FR-64 | auto 路由策略 | auto 模式下按工程目录的策略文件（`routing-policy.json` 优先，`routing-policy.md` 内 ```json 块兜底）规则路由到对应 profile：支持按 mode 与 prompt 关键词匹配；无规则命中／文件缺失时回落 `default` | 已实现·已验证 |
@@ -222,9 +222,9 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 
 | 编号 | 需求 | 验收标准 | 状态 |
 | --- | --- | --- | --- |
-| FR-73 | 插件生命周期 | 上传（JS 代码 + 元数据）→ 语法与 DSH 形态校验 → 存入工程目录 `plugins/`；列表、搜索、启用/停用、删除；协议见 `doc/plugin-protocol.md` | 未实现 |
-| FR-74 | 插件协议标准输出 | `doc/plugin-protocol.md`（v1：DSH/Cordis 兼容子集，ctx 支持表、校验规则、surface 格式、安全模型、演进规则）；Node 宿主随二进制 embed | 未实现 |
-| FR-75 | 默认预装 DSH 插件集 | 随仓库默认预装 8 个 DSH 能力预设插件（skill/goal/plan/todo/feedback/subagent/terminal/workflow，v1 形态兼容，默认启用，surface 可展示） | 未实现 |
+| FR-73 | 插件生命周期 | 上传（JS 代码 + 元数据）→ 语法与 DSH 形态校验 → 存入工程目录 `plugins/`；列表、搜索、启用/停用、删除；协议见 `doc/plugin-protocol.md` | 已实现·已验证 |
+| FR-74 | 插件协议标准输出 | `doc/plugin-protocol.md`（v1：DSH/Cordis 兼容子集，ctx 支持表、校验规则、surface 格式、安全模型、演进规则）；Node 宿主随二进制 embed | 已实现·已验证 |
+| FR-75 | 默认预装 DSH 插件集 | 随仓库默认预装 8 个 DSH 能力预设插件（skill/goal/plan/todo/feedback/subagent/terminal/workflow，v1 形态兼容，默认启用，surface 可展示） | 已实现·已验证 |
 
 ---
 
@@ -377,8 +377,9 @@ AI_API_KEY=
 | 命令 | FR-14 ~ FR-18 | — | FR-19 |
 | 模型 | FR-20 ~ FR-22（模拟）、FR-61、FR-64、FR-67、FR-68 | FR-23（**真实模型**） | FR-24 |
 | 工作流 | FR-25 ~ FR-31（模拟） | FR-23（真实 JSON 遵循能力） | FR-32、FR-33 |
-| 界面 | FR-34 ~ FR-39、FR-58 ~ FR-60、FR-62、FR-63、FR-69、FR-70 | — | FR-40、FR-41 |
+| 界面 | FR-34 ~ FR-39、FR-58 ~ FR-60、FR-62、FR-63、FR-69 ~ FR-72 | — | FR-40、FR-41 |
 | 部署 | FR-42 ~ FR-46、FR-65、FR-66 | FR-47（**异机恢复**） | FR-48（remote） |
+| 插件 | FR-73 ~ FR-75 | — | — |
 
 **一句话结论**：文件和命令功能可用；**真实 AI 功能未验收**——模型 ID 为空、`configured=false`、`hasKey=false`，等待用户配置有效账户。
 
