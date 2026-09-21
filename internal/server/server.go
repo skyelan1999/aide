@@ -102,6 +102,9 @@ type App struct {
 	profilesPath              string
 	profileState              ProfilesState
 	version                   string
+	pluginsPath               string
+	pluginRegistry            pluginRegistry
+	pluginSurface             []byte
 }
 
 func env(key, fallback string) string {
@@ -237,6 +240,14 @@ func New(work, reference, data string) (*App, error) {
 		return nil, err
 	}
 	a.version = readVersionFile(filepath.Join(work, "version.md"))
+	if err := a.loadPlugins(); err != nil {
+		a.Close()
+		return nil, err
+	}
+	if a.pluginsPath == "" {
+		a.pluginsPath = filepath.Join(work, pluginsDirName)
+	}
+	a.runPluginHost(context.Background())
 	entries, err := filepath.Glob(filepath.Join(data, "session-*.json"))
 	if err != nil {
 		a.Close()
@@ -281,6 +292,11 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("PUT /api/settings", a.updateSettings)
 	mux.HandleFunc("GET /api/models", a.listModels)
 	mux.HandleFunc("GET /api/profiles", a.listProfiles)
+	mux.HandleFunc("GET /api/plugins", a.listPlugins)
+	mux.HandleFunc("POST /api/plugins", a.uploadPlugin)
+	mux.HandleFunc("PUT /api/plugins/{id}", a.togglePlugin)
+	mux.HandleFunc("DELETE /api/plugins/{id}", a.deletePlugin)
+	mux.HandleFunc("GET /api/plugin-surface", a.pluginSurfaceHandler)
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
 	mux.HandleFunc("GET /api/files", a.listFiles)
 	mux.HandleFunc("GET /api/file", a.readFile)
