@@ -4,7 +4,7 @@
 
 | 项目 | 值 |
 | --- | --- |
-| 文档版本 | v1.2 |
+| 文档版本 | v1.3 |
 | 建立日期 | 2026-09-21 |
 | 对应源码基线 | `bb2d1b6`（功能基线 `4e0da10`） |
 | 运行容器 | `aide-aide-1` / `aide:local` / healthy / `127.0.0.1:8097` |
@@ -193,6 +193,10 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | FR-58 | 品牌设置入口 | 点击左上角 brand 图标打开设置面板；键盘可达；Esc／点击遮罩／关闭按钮均可关闭并归还焦点；窄屏（侧栏隐藏）下顶栏提供等效入口 | 已实现·已验证 |
 | FR-59 | 设置 JSON 管理 | 界面设置以单一 JSON 文档持久化于 localStorage 键 `aide.ui`（含 version，非法值回退默认）；旧键 `aide.theme` 自动迁移；设置面板由 `settings-schema.json` 数据驱动渲染，新增设置只需增加 schema 条目；主题收纳为面板「外观」分组首个控件，移除顶栏独立主题按钮 | 已实现·已验证 |
 | FR-60 | 玻璃质感滑动 UI | 设置面板为毛玻璃圆角卡片（backdrop blur＋半透明背景＋高光描边），弹性缓动滑入／滑出；主题三态为分段控件，带滑动指示块动画；切换主题 ≤100 ms、无网络请求、不重载页面 | 已实现·已验证 |
+| FR-61 | 模型参数配置 | 设置面板新增「模型参数」分组：temperature、top_p、max_tokens、frequency_penalty、presence_penalty、response_format、stop 均可配置；参数随模型调用生效 | 未实现 |
+| FR-62 | 配置 Profile 管理 | 3 个内置系统配置（default／precise／creative）**不可修改、不可删除**；用户配置可 ＋ 添加、－ 删除、自定义命名；全部配置以 JSON 持久化于**工程目录** `profiles.json`（运行时保存写回主机）；非法参数被拒绝 | 未实现 |
+| FR-63 | 聊天栏策略按钮 | 聊天输入栏左侧小按钮选择策略：`auto`（自动路由）或手动指定某一个 profile；默认手动选择 `default` 配置；任务记录展示本次实际使用的配置 | 未实现 |
+| FR-64 | auto 路由策略 | auto 模式下按工程目录的策略文件（`routing-policy.json` 优先，`routing-policy.md` 内 ```json 块兜底）规则路由到对应 profile：支持按 mode 与 prompt 关键词匹配；无规则命中／文件缺失时回落 `default` | 未实现 |
 
 ### 4.7 部署与运维
 
@@ -302,6 +306,8 @@ running → interrupted                      服务重启后的恢复标记
 | LIM-13 | 模型响应体 | 读取上限 2 MiB | `provider.go` |
 | LIM-14 | 容器资源 | 2 CPU / 2 GiB / 256 PID | `compose.yaml` |
 | LIM-21 | 设置存储 | 键名固定 `aide.ui`，单一 JSON 文档（`{"version":1,"theme":"light"|"dark"|"system"}`）；仅 localStorage，不入 cookie、不入服务端；主题枚举仍为 light/dark/system | `web/settings-init.js` |
+| LIM-22 | 模型参数取值 | temperature/top_p/penalty 见 FR-61 表：temperature 0–2；top_p 0–1；max_tokens 1–8192；frequency/presence_penalty −2–2；response_format ∈ {text, json_object}；stop ≤16 项 | `profiles.go` |
+| LIM-23 | Profile 文件 | 工程目录 `profiles.json`（用户配置 + strategy + activeProfile；系统配置定义在代码中不可改）；策略文件 `routing-policy.json` / `routing-policy.md`；用户配置 ≤20 个；id 匹配 `^[A-Za-z0-9_-]{1,64}$`，名称 1–32 字符 | `profiles.go` |
 
 ### 6.6 挂载与存储
 
@@ -418,6 +424,7 @@ AI_API_KEY=
 | 2026-09-21 | v1.0 | 依据 `bb2d1b6` 基线与运行实例核对结果建立本文档 | 编码助手 |
 | 2026-09-21 | v1.1 | 按用户要求新增 0.4「分支与合并约定」（每功能一分支、验证成功后再合并回 main）并同步更新第 10 节核对清单；记录主题切换工作的历史例外 | 编码助手 |
 | 2026-09-21 | v1.2 | 登记设置中心需求 FR-58~FR-60 与 LIM-21（品牌设置入口、设置 JSON 管理、玻璃质感滑动 UI）；主题系统 FR-49~57 已登记在 `feat/theme-switching` 分支增量 PRD（`doc/prd/2026-09-21-theme-switching.md`），编号从此延续 | 编码助手 |
+| 2026-09-21 | v1.3 | 登记模型参数 Profile 系统 FR-61~FR-64 与 LIM-22/23（参数配置、系统/用户 Profile、工程目录 JSON 持久化、聊天栏策略按钮、auto 路由策略） | 编码助手 |
 
 ---
 
