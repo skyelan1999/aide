@@ -1,5 +1,5 @@
 /* aide 暗色配色方案 · 全部 79 个语义令牌（§3.2 / FR-56 / LIM-18 / LIM-20）
- * 作用域 :root 兼作零 JS 降级：theme-init.js 万一未执行时回落为改造前的暗色外观。
+ * 作用域 :root 兼作零 JS 降级：settings-init.js 万一未执行时回落为改造前的暗色外观。
  * color-scheme:dark 同时声明于 :root 与 html[data-theme="dark"]（同一条规则）。
  * 令牌名是冻结接口：不得改名 / 不得删减 / 不得新增。 */
 :root,html[data-theme="dark"]{

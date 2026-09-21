@@ -151,18 +151,97 @@ $('command-form').onsubmit = action(async event => {
 $('command-stop').onclick = () => state.commandAbort?.abort();
 $('login-dialog').addEventListener('cancel', event => event.preventDefault());
 $('login-form').onsubmit = async event => { event.preventDefault(); state.token = $('access-token').value.trim(); try { await initialize(); localStorage.setItem('aide-token', state.token); $('access-token').value = ''; $('login-dialog').close(); } catch (error) { $('login-error').textContent = error.message; } };
-document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && !document.querySelector('dialog[open]')) action(newSession)(); });
-/* ── 主题切换控件（方案无关：只认 data-choice，不枚举具体方案；主题状态一律经 window.aideTheme）──
-   必须位于 initialize() 之外：未登录时 initialize() 会抛错返回，控件与主题仍需可用。
-   禁止直接读写 localStorage['aide.theme']、禁止直接调用 matchMedia（§10.2 契约）。 */
-function syncThemeChoices(pref) {
-  document.querySelectorAll('.theme-switch .theme-choice').forEach(button => button.setAttribute('aria-pressed', button.dataset.choice === pref ? 'true' : 'false'));
+document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && !document.querySelector('dialog[open]') && !$('settings-sheet').classList.contains('open')) action(newSession)(); });
+/* ── 设置面板（FR-58~FR-60）：品牌 logo 入口；结构由 /settings-schema.json 数据驱动；
+   设置值一律经 window.aideUI 的 JSON 文档管理。必须位于 initialize() 之外：
+   未登录时 initialize() 会抛错返回，设置面板仍需可用。 ── */
+const settingsPanel = { schema: null, rendered: false, trigger: null, refreshers: [] };
+async function loadSettingsSchema() {
+  if (!settingsPanel.schema) {
+    const response = await fetch('/settings-schema.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error('设置面板定义加载失败');
+    settingsPanel.schema = await response.json();
+  }
+  return settingsPanel.schema;
 }
-if (window.aideTheme && window.aideTheme.valid) {
-  const themeSwitch = document.querySelector('.theme-switch');
-  if (themeSwitch) themeSwitch.addEventListener('click', event => { const choice = event.target.closest('[data-choice]'); if (choice) syncThemeChoices(window.aideTheme.set(choice.dataset.choice)); });
-  window.aideTheme.subscribe(syncThemeChoices);
-  syncThemeChoices(window.aideTheme.pref());
+function renderSegmentedControl(control) {
+  const wrap = el('div', 'settings-control');
+  const head = el('div', 'control-label');
+  const value = el('span', 'control-value');
+  head.append(el('span', '', control.label), value);
+  const track = el('div', 'segmented');
+  track.setAttribute('role', 'group');
+  track.setAttribute('aria-label', control.label);
+  const thumb = el('span', 'segmented-thumb');
+  thumb.setAttribute('aria-hidden', 'true');
+  const buttons = (control.options || []).map(option => {
+    const b = el('button', '', option.label);
+    b.type = 'button';
+    b.dataset.value = option.value;
+    b.setAttribute('aria-pressed', 'false');
+    return b;
+  });
+  const apply = () => {
+    const current = window.aideUI ? window.aideUI.get(control.id) : (control.options[0] || {}).value;
+    const active = buttons.find(b => b.dataset.value === current) || buttons[0];
+    buttons.forEach(b => b.setAttribute('aria-pressed', b === active ? 'true' : 'false'));
+    const match = (control.options || []).find(o => o.value === current);
+    value.textContent = match ? match.label : (current || '');
+    thumb.style.width = active.offsetWidth + 'px';
+    thumb.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+  };
+  track.addEventListener('click', event => {
+    const b = event.target.closest('button[data-value]');
+    if (b && window.aideUI) window.aideUI.set(control.id, b.dataset.value);
+  });
+  if (window.aideUI) { window.aideUI.subscribe(apply); window.addEventListener('resize', apply); settingsPanel.refreshers.push(apply); }
+  track.append(thumb, ...buttons);
+  wrap.append(head, track);
+  requestAnimationFrame(apply);
+  return wrap;
 }
+const controlRenderers = { segmented: renderSegmentedControl };
+function renderSettingsSheet() {
+  const host = $('settings-sections');
+  host.replaceChildren();
+  for (const section of settingsPanel.schema?.sections || []) {
+    const box = el('section', 'settings-section');
+    box.append(el('h3', '', section.title));
+    if (section.description) box.append(el('p', 'section-desc', section.description));
+    for (const control of section.controls || []) {
+      const renderer = controlRenderers[control.type];
+      if (renderer) box.append(renderer(control));
+    }
+    host.append(box);
+  }
+  settingsPanel.rendered = true;
+}
+function setSettingsOpen(open) {
+  $('settings-backdrop').classList.toggle('open', open);
+  $('settings-sheet').classList.toggle('open', open);
+  document.querySelectorAll('[aria-controls="settings-sheet"]').forEach(b => b.setAttribute('aria-expanded', String(open)));
+  if (open) $('settings-sheet-close').focus();
+}
+async function openSettingsSheet() {
+  await loadSettingsSchema();
+  if (!settingsPanel.rendered) renderSettingsSheet();
+  setSettingsOpen(true);
+  // 面板可见后重测 thumb 几何（关闭状态下 offsetWidth 为 0）
+  requestAnimationFrame(() => settingsPanel.refreshers.forEach(fn => fn()));
+}
+function closeSettingsSheet() {
+  setSettingsOpen(false);
+  if (settingsPanel.trigger) settingsPanel.trigger.focus();
+  settingsPanel.trigger = null;
+}
+function bindSettingsTrigger(button) {
+  if (!button) return;
+  button.onclick = action(async () => { settingsPanel.trigger = button; await openSettingsSheet(); });
+}
+bindSettingsTrigger($('brand-button'));
+bindSettingsTrigger($('brand-mini'));
+$('settings-sheet-close').onclick = closeSettingsSheet;
+$('settings-backdrop').onclick = closeSettingsSheet;
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && $('settings-sheet').classList.contains('open') && !document.querySelector('dialog[open]')) closeSettingsSheet(); });
 async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles()]); }
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
