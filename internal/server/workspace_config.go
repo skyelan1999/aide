@@ -350,9 +350,14 @@ func (a *App) writeWorkspaceText(p string, b []byte) error {
 	return putText(a.workspace, p, b)
 }
 func (a *App) workspaceStatExists(p string) bool {
-	if a.workspaceMode() == "ssh" {
-		return a.sftpExists(a.workspaceRemotePath(p))
+	a.mu.Lock()
+	mode := a.workspaceMode()
+	root := a.workspace
+	remoteBase := a.wsConfig.Workspace.Path
+	a.mu.Unlock()
+	if mode == "ssh" {
+		return a.sftpExists(pathJoinRemote(remoteBase, p))
 	}
-	_, err := a.workspace.Stat(p)
+	_, err := root.Stat(p)
 	return err == nil
 }
