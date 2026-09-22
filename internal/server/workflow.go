@@ -28,6 +28,12 @@ type Change struct {
 	Before   string `json:"before"`
 	Applied  bool   `json:"applied,omitempty"`
 }
+type ToolUse struct {
+	Tool   string `json:"tool"`
+	Args   string `json:"args,omitempty"`
+	Result string `json:"result,omitempty"`
+}
+
 type Task struct {
 	ID          string       `json:"id"`
 	Mode        string       `json:"mode"`
@@ -41,6 +47,7 @@ type Task struct {
 	Applied     bool         `json:"applied"`
 	Attachments []Attachment `json:"attachments"`
 	Strategy    string       `json:"strategy,omitempty"` // manual | auto（FR-63）
+	ToolUses    []ToolUse    `json:"toolUses,omitempty"` // 工具调用记录（FR-81）
 	Model       string       `json:"model,omitempty"`    // 本次任务使用的模型（FR-69）
 	Profile     string       `json:"profile,omitempty"`  // 本次生效的 profile id
 }
@@ -429,7 +436,7 @@ func (a *App) executablePluginTools() []string {
 
 // toolLoop 与模型交互并执行工具调用（≤6 轮）；写操作只生成提案（P2/P3 原则保留）。
 func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task, versions map[string]Change, stepIndex int) (string, error) {
-	for round := 0; round < 6; round++ {
+	for round := 0; round < 10; round++ {
 		out, calls, err := complete(ctx, cfg, input, params, tools)
 		if err != nil {
 			return "", err
@@ -441,12 +448,19 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		for _, call := range calls {
 			result := a.executeToolCall(call, task, versions)
 			input = append(input, Message{Role: "tool", ToolCallID: call.ID, Content: result})
+			display := result
+			if len(display) > 2000 {
+				display = display[:2000] + "…（结果已截断）"
+			}
+			a.mu.Lock()
+			task.ToolUses = append(task.ToolUses, ToolUse{Tool: call.Function.Name, Args: call.Function.Arguments, Result: display})
+			a.mu.Unlock()
 		}
 		a.mu.Lock()
 		task.Steps[stepIndex].Content = "工具调用中：" + strings.Join(toolCallNames(calls), ", ")
 		a.mu.Unlock()
 	}
-	return "", errors.New("工具调用轮次超过 6 轮，请缩小任务范围")
+	return "", errors.New("工具调用轮次超过 10 轮，请缩小任务范围")
 }
 
 func toolCallNames(calls []ToolCall) []string {

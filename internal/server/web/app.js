@@ -45,6 +45,14 @@ async function newSession() {
   clearTimeout(state.poll); state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus();
 }
 const labels = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', chat: 'aide' };
+function toolSummaryBrief(use) {
+  try {
+    const args = JSON.parse(use.args || '{}');
+    const brief = Object.values(args)[0];
+    if (typeof brief === 'string') return ' · ' + brief.slice(0, 60);
+  } catch (error) { /* 非 JSON 参数直接忽略 */ }
+  return '';
+}
 const statuses = { running: '运行中', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断', awaiting_approval: '等待应用' };
 function renderSession() {
   const previousScroll = $('conversation').scrollTop;
@@ -80,6 +88,18 @@ function renderSession() {
     if (run.commands?.length) {
       box.append(el('p', 'muted', '建议验证命令（尚未运行）'));
       run.commands.forEach(command => { const row = el('div', 'suggested-command'); const button = el('button', 'quiet', '填入命令面板'); button.onclick = () => { $('terminal-body').classList.remove('hidden'); $('terminal-state').textContent = '收起 −'; $('command').value = command; $('command').focus(); }; row.append(el('code', '', command), button); box.append(row); });
+    }
+    if (run.toolUses?.length) {
+      run.toolUses.forEach((use, toolIndex) => {
+        const details = el('details', 'tool-use');
+        details.dataset.key = run.id + ':tool:' + toolIndex;
+        details.open = false; // 默认折叠，点击展开细节
+        const summary = el('summary', '', '⚒ 工具调用 · ' + use.tool);
+        summary.append(el('span', '', toolSummaryBrief(use)));
+        const pre = el('pre', 'tool-use-detail', '参数：' + (use.args || '无') + '\n\n结果：\n' + (use.result || '（无）'));
+        details.append(summary, pre);
+        box.append(details);
+      });
     }
     if (run.error) box.append(el('p', 'task-error', run.error)); $('timeline').append(box);
   }
