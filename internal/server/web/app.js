@@ -957,28 +957,49 @@ function renderMarkdown(src) {
   return html;
 }
 
-/* ── 单文件视图（新标签页）：只显示一个文件的路径与内容，md 自动渲染 ── */
+/* ── 单文件视图（新标签页）：路径 + 可编辑内容（保存带哈希校验）+ md 渲染预览 ── */
+const fileView = { spec: null, hash: '' };
+function setFileViewMode(mode) {
+  const preview = mode === 'preview';
+  $('file-view-editor').classList.toggle('hidden', preview);
+  $('file-view-preview').classList.toggle('hidden', !preview);
+  $('fv-edit').classList.toggle('active', !preview);
+  $('fv-preview').classList.toggle('active', preview);
+  if (preview) { $('file-view-preview').innerHTML = renderMarkdown($('file-view-editor').value); $('file-view-preview').scrollTop = 0; }
+}
 async function openFileViewMode() {
   let spec = null;
   try { spec = JSON.parse(decodeURIComponent(new URLSearchParams(location.hash.slice(1)).get('file') || '')); } catch (e) { spec = null; }
   if (!spec) return;
   document.body.classList.add('file-view-mode');
   $('file-view').classList.remove('hidden');
+  fileView.spec = spec;
   $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;
   const query = spec.source
     ? '/file?source=' + encodeURIComponent(spec.source) + '&path=' + encodeURIComponent(spec.path)
     : '/file?root=' + encodeURIComponent(spec.root) + '&path=' + encodeURIComponent(spec.path);
   const data = await api(query);
-  const host = $('file-view-content');
-  host.replaceChildren();
-  if (isMarkdownPath(spec.path)) {
-    const md = el('div', 'md-body');
-    md.innerHTML = renderMarkdown(data.content);
-    host.append(md);
-  } else {
-    host.append(el('pre', 'file-view-pre', data.content));
-  }
+  fileView.hash = data.hash;
+  const md = isMarkdownPath(spec.path);
+  $('file-view-mode-switch').classList.toggle('hidden', !md);
+  const readOnly = spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true);
+  $('file-view-editor').value = data.content;
+  $('file-view-editor').readOnly = readOnly;
+  $('file-view-save').disabled = readOnly;
+  $('file-view-status').textContent = readOnly ? '只读' : '可编辑 · 保存后同步';
+  setFileViewMode('edit');
+  $('file-view-toolbar').classList.remove('hidden');
+  $('file-view-content').replaceChildren();
 }
+$('fv-edit').onclick = () => setFileViewMode('edit');
+$('fv-preview').onclick = () => setFileViewMode('preview');
+$('file-view-save').onclick = action(async () => {
+  const body = { path: fileView.spec.path, content: $('file-view-editor').value, hash: fileView.hash };
+  if (fileView.spec.source) body.source = fileView.spec.source;
+  const res = await api('/file', { method: 'PUT', body: JSON.stringify(body) });
+  fileView.hash = res.hash;
+  $('file-view-status').textContent = '✓ 已保存';
+});
 async function initialize() {
   await refreshConfig();
   const fragment = new URLSearchParams(location.hash.slice(1));
