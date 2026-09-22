@@ -9,8 +9,21 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"time"
 )
+
+// TokenUsage 一次模型调用的用量（FR-90）；Estimated 表示上游未返回 usage 时的估算值。
+type TokenUsage struct {
+	Prompt     int    `json:"prompt"`
+	Completion int    `json:"completion"`
+	Total      int    `json:"total"`
+	Estimated  bool   `json:"estimated,omitempty"`
+	Model      string `json:"model,omitempty"`
+}
+
+// tokenUsageRecorder 由 New() 注入（atomic 防并行测试竞态）；complete() 成功后调用。
+var tokenUsageRecorder atomic.Value // func(TokenUsage)
 
 // The provider boundary is intentionally small: any Chat Completions compatible
 // endpoint can be used, including a local model through host.docker.internal.
@@ -21,6 +34,10 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		return "", nil, errors.New("请先在模型设置中配置 API 地址和模型")
 	}
 	body := map[string]any{"model": cfg.Model, "messages": messages, "stream": false}
+	promptChars := 0
+	for _, m := range messages {
+		promptChars += len(m.Content)
+	}
 	if len(tools) > 0 {
 		body["tools"] = tools
 	}
@@ -83,6 +100,11 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 				ToolCalls []ToolCall `json:"tool_calls"`
 			} `json:"message"`
 		} `json:"choices"`
+		Usage struct {
+			PromptTokens     int `json:"prompt_tokens"`
+			CompletionTokens int `json:"completion_tokens"`
+			TotalTokens      int `json:"total_tokens"`
+		} `json:"usage"`
 	}
 	if err = json.Unmarshal(b, &out); err != nil {
 		return "", nil, errors.New("模型返回了无效 JSON")
@@ -93,6 +115,17 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	msg := out.Choices[0].Message
 	if strings.TrimSpace(msg.Content) == "" && len(msg.ToolCalls) == 0 {
 		return "", nil, errors.New("模型没有返回文本内容")
+	}
+	usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model}
+	if usage.Total == 0 {
+		// 上游未返回 usage → 4 字符/词估算并标记
+		usage.Prompt = promptChars / 4
+		usage.Completion = len(msg.Content) / 4
+		usage.Total = usage.Prompt + usage.Completion
+		usage.Estimated = true
+	}
+	if rec := tokenUsageRecorder.Load(); rec != nil {
+		rec.(func(TokenUsage))(usage)
 	}
 	return msg.Content, msg.ToolCalls, nil
 }

@@ -4,7 +4,7 @@
 
 | 项目 | 值 |
 | --- | --- |
-| 文档版本 | v1.12 |
+| 文档版本 | v1.13 |
 | 建立日期 | 2026-09-21 |
 | 对应源码基线 | `bb2d1b6`（功能基线 `4e0da10`） |
 | 运行容器 | `aide-aide-1` / `aide:local` / healthy / `127.0.0.1:8097` |
@@ -200,6 +200,7 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | FR-69 | 侧栏模型选择 | 左侧新增模型选择入口（参考 DSH 模型选择器）：展示当前模型，点击弹出模型列表切换，立即生效于后续任务；任务记录本次所用模型 | 已实现·已验证 |
 | FR-71 | 深度研究思考入口 | 新建任务首页 starter 卡片新增「深度研究思考」：点击填入深度研究提示词（chat 模式），覆盖背景梳理、多角度权衡与可验证结论 | 已实现·已验证 |
 | FR-87 | 策略弹层整合模型选择 | 策略按钮弹层两栏：策略（auto/手动 profile）+ 模型（单选切换 + 管理入口）；移除侧栏独立模型选择器；按钮标签显示 策略·配置·模型 | 已实现·已验证 |
+| FR-90 | Token 消耗统计 | 设置面板「消耗统计」分组以 git 提交热力图样式展示最近 16 周每日 Token 消耗（强度分级 + 悬停明细 + 今日/累计/调用次数）；每次模型调用记录 usage（上游缺失时按 4 字符/词估算并标记）；统计持久化于 `/data/token-stats.json` | 已实现·已验证 |
 | FR-89 | 文件打开 Markdown 渲染与新标签页视图 | 采用公共方案 marked v12（MIT，本地 vendor）实现 GFM 全特性渲染（表格含行内代码/围栏、任务列表、嵌套列表等）+ DOM 消毒 + JS/TS 高亮后处理 | 已实现·已验证 |
 | FR-88 | 任务主题自动总结 | 每次新任务先以轻量调用（max_tokens ≤64）总结当前主题（≤32 字）并更新会话标题；失败保留原标题、不阻断任务 | 已实现·已验证 |
 | FR-86 | AI 回复 Markdown 渲染与上下文卡压缩 | AI 回复（chat 与 plan/review 步骤）渲染 Markdown（标题/列表/引用/链接/代码块），JavaScript/TS 代码块语法高亮；零依赖原生实现、全量转义防注入；侧栏上下文统计卡压缩为单行 + 细进度条 | 已实现·已验证 |
@@ -351,6 +352,7 @@ running → interrupted                      服务重启后的恢复标记
 | LIM-22 | 模型参数取值 | temperature/top_p/penalty 见 FR-61 表：temperature 0–2；top_p 0–1；max_tokens 1–8192；frequency/presence_penalty −2–2；response_format ∈ {text, json_object}；stop ≤16 项 | `profiles.go` |
 | LIM-23 | Profile 文件 | 工程目录 `profiles.json`（用户配置 + strategy + activeProfile；系统配置定义在代码中不可改）；策略文件 `routing-policy.json` / `routing-policy.md`；用户配置 ≤20 个；id 匹配 `^[A-Za-z0-9_-]{1,64}$`，名称 1–32 字符 | `profiles.go` |
 | LIM-26 | 插件 | 插件数 ≤50；单个插件代码 ≤256 KiB；验证/加载超时 10s；聚合 surface ≤2 MiB；插件 id `^[A-Za-z0-9_-]{1,64}$` | `plugins.go` |
+| LIM-31 | Token 统计 | 统计文件 `/data/token-stats.json`（按 UTC 日期累计，含 calls 与估算标记）；热力图展示最近 16 周 | `provider.go` / `server.go` |
 | LIM-30 | 来源注册表 | 来源 ≤20；登记文件位于缓存目录 `sources.json`；来源密码/密钥存 `/data/sources-secrets.json`（0600）且 API 不回传；curl 通道 30s 超时、响应 ≤2 MiB；sftp 来源每来源独立 ControlMaster socket | `sources.go` |
 | LIM-29 | 工具循环 | 每任务工具调用 ≤10 轮（每轮为一次真实模型调用：计费与延迟成本 + 防循环失控；整体任务仍受 6 分钟超时约束）；工具结果回传模型继续推理 | `workflow.go: toolLoop` |
 | LIM-28 | 工作空间连接 | SSH 会话同时仅 1 个（旧 master 复用/替换）；远程命令 ≤60s、输出 ≤128 KiB（与本地一致）；密码/私钥仅存 `/data/workspace-secrets.json`（0600）且 API 不回传；最近路径每组 ≤3 条；sftp 单次批次 ≤2000 行 | `ssh_session.go` / `workspace_config.go` |
@@ -487,6 +489,7 @@ AI_API_KEY=
 | 2026-09-21 | v1.10 | 登记界面增强 FR-86（AI 回复 Markdown 渲染 + JS 语法高亮 + 上下文卡压缩） | 编码助手 |
 | 2026-09-21 | v1.11 | 登记 FR-87（策略弹层整合模型选择）与 FR-88（任务主题自动总结更新标题） | 编码助手 |
 | 2026-09-21 | v1.12 | 登记 FR-89（文件打开 Markdown 渲染预览 + 新标签页单文件视图） | 编码助手 |
+| 2026-09-21 | v1.13 | 登记 FR-90（Token 消耗统计热力图，git 提交图样式） | 编码助手 |
 
 ---
 

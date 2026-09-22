@@ -281,7 +281,7 @@ function renderSegmentedControl(control) {
   requestAnimationFrame(apply);
   return wrap;
 }
-const controlRenderers = { segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager };
+const controlRenderers = { segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats };
 function renderSettingsSheet() {
   const host = $('settings-sections');
   host.replaceChildren();
@@ -523,6 +523,66 @@ $('strategy-button').onclick = async () => {
 };
 document.addEventListener('click', event => { if (!$('strategy-menu').classList.contains('hidden') && !event.target.closest('.strategy-picker')) closeStrategyMenu(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$('strategy-menu').classList.contains('hidden')) closeStrategyMenu(); });
+/* ── Token 消耗统计（FR-90）：git 提交热力图样式 ── */
+function fmtStatTokens(n) { return n < 1000 ? String(n) : (n / 1000).toFixed(1) + 'K'; }
+function renderTokenStats(control) {
+  const wrap = el('div', 'settings-control token-stats');
+  const head = el('div', 'control-label');
+  head.append(el('span', '', control.label), el('span', 'control-value', ''));
+  wrap.append(head);
+  const totals = el('p', 'token-totals', '加载中…');
+  const grid = el('div', 'token-heatmap');
+  grid.setAttribute('role', 'img');
+  grid.setAttribute('aria-label', 'Token 消耗热力图');
+  const legend = el('div', 'token-legend');
+  wrap.append(totals, grid, legend);
+  action(async () => {
+    const data = await api('/token-stats');
+    const days = data.days || {};
+    const totalsObj = data.totals || {};
+    head.querySelector('.control-value').textContent = fmtStatTokens(totalsObj.total || 0) + ' tokens · ' + (totalsObj.calls || 0) + ' 次调用';
+    const t = data.today || {};
+    totals.textContent = '今日 ' + fmtStatTokens(t.total || 0) + ' · 累计 ' + fmtStatTokens(totalsObj.total || 0) + (totalsObj.estimated ? '（含估算）' : '');
+    grid.replaceChildren();
+    // 最近 16 周（112 天），列=周、行=星期（周一~周日）
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 111);
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); // 对齐到周一
+    const cols = [];
+    let cursor = new Date(start);
+    while (cursor <= today) {
+      const col = [];
+      for (let dow = 0; dow < 7; dow++) {
+        const d = new Date(cursor);
+        d.setDate(d.getDate() + dow);
+        col.push(d);
+      }
+      cols.push(col);
+      cursor.setDate(cursor.getDate() + 7);
+    }
+    const maxVal = Math.max(1, ...Object.values(days).map(d => d.total || 0));
+    const level = v => v <= 0 ? 0 : v <= maxVal * 0.25 ? 1 : v <= maxVal * 0.5 ? 2 : v <= maxVal * 0.75 ? 3 : 4;
+    for (const col of cols) {
+      const colEl = el('div', 'token-week');
+      for (const d of col) {
+        const key = d.toISOString().slice(0, 10);
+        const day = days[key] || {};
+        const cell = el('span', 'token-cell tk-' + level(day.total || 0));
+        cell.title = key + ' · ' + fmtStatTokens(day.total || 0) + ' tokens · ' + (day.calls || 0) + ' 次调用' + (day.estimated ? '（估算）' : '');
+        if (d > today) cell.classList.add('future');
+        colEl.append(cell);
+      }
+      grid.append(colEl);
+    }
+    legend.replaceChildren();
+    legend.append(el('span', '', '少'));
+    for (let i = 1; i <= 4; i++) { const c = el('span', 'token-cell tk-' + i); legend.append(c); }
+    legend.append(el('span', '', '多'));
+    if (totalsObj.estimated) legend.append(el('small', '', '· 上游未返回 usage 时按 4 字符/词估算'));
+  })();
+  return wrap;
+}
 /* ── 模型列表管理（FR-67 / FR-68）：设置弹窗内增删、标记当前、自动获取候选 ── */
 function renderModelList() {
   const host = $('model-list');

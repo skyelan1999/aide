@@ -127,6 +127,16 @@ type App struct {
 	curlBin                   string
 	sourceRegistry            sourcesRegistry
 	sourceSecrets             sourcesSecrets
+	tokenStats                map[string]TokenDay
+}
+
+// TokenDay 单日 Token 消耗（FR-90）。
+type TokenDay struct {
+	Prompt     int  `json:"prompt"`
+	Completion int  `json:"completion"`
+	Total      int  `json:"total"`
+	Calls      int  `json:"calls"`
+	Estimated  bool `json:"estimated,omitempty"`
 }
 
 func env(key, fallback string) string {
@@ -291,6 +301,16 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, err
 	}
+	a.tokenStats = map[string]TokenDay{}
+	if b, err := os.ReadFile(filepath.Join(data, "token-stats.json")); err == nil {
+		var saved struct {
+			Days map[string]TokenDay `json:"days"`
+		}
+		if err := json.Unmarshal(b, &saved); err == nil && saved.Days != nil {
+			a.tokenStats = saved.Days
+		}
+	}
+	tokenUsageRecorder.Store(func(u TokenUsage) { a.recordTokenUsage(u) })
 	entries, err := filepath.Glob(filepath.Join(data, "session-*.json"))
 	if err != nil {
 		a.Close()
@@ -342,6 +362,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/plugin-surface", a.pluginSurfaceHandler)
 	mux.HandleFunc("GET /api/workspace-config", a.getWorkspaceConfig)
 	mux.HandleFunc("GET /api/sources", a.listSources)
+	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)
 	mux.HandleFunc("PUT /api/sources", a.updateSources)
 	mux.HandleFunc("PUT /api/workspace-config", a.updateWorkspaceConfig)
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
@@ -518,4 +539,42 @@ func Run() error {
 		return nil
 	}
 	return err
+}
+
+// recordTokenUsage 累计当日 Token 消耗并持久化到 /data/token-stats.json（FR-90）。
+func (a *App) recordTokenUsage(u TokenUsage) {
+	a.mu.Lock()
+	day := time.Now().UTC().Format("2006-01-02")
+	d := a.tokenStats[day]
+	d.Prompt += u.Prompt
+	d.Completion += u.Completion
+	d.Total += u.Total
+	d.Calls++
+	if u.Estimated {
+		d.Estimated = true
+	}
+	a.tokenStats[day] = d
+	saveErr := atomicJSON(filepath.Join(a.dataPath, "token-stats.json"), map[string]any{"version": 1, "days": a.tokenStats})
+	a.mu.Unlock()
+	_ = saveErr
+}
+
+func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	totals := TokenDay{}
+	for _, d := range a.tokenStats {
+		totals.Prompt += d.Prompt
+		totals.Completion += d.Completion
+		totals.Total += d.Total
+		totals.Calls += d.Calls
+		if d.Estimated {
+			totals.Estimated = true
+		}
+	}
+	jsonOut(w, 200, map[string]any{
+		"days":   a.tokenStats,
+		"totals": totals,
+		"today":  a.tokenStats[time.Now().UTC().Format("2006-01-02")],
+	})
 }

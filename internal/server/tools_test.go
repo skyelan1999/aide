@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -205,4 +206,40 @@ func TestToolLoopWriteUnattachedRejected(t *testing.T) {
 	if b, _ := a.workspace.ReadFile("existing.txt"); string(b) != "important" {
 		t.Fatal("file must remain unchanged")
 	}
+}
+
+// FR-90：Token 消耗统计（usage 记录 + 估算回退 + 接口聚合）
+func TestTokenStats(t *testing.T) {
+	a := testApp(t)
+	var usageCalls int
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		usageCalls++
+		msg := map[string]any{"role": "assistant", "content": "ok"}
+		resp := map[string]any{"choices": []any{map[string]any{"message": msg}}}
+		if usageCalls == 1 {
+			resp["usage"] = map[string]any{"prompt_tokens": 100, "completion_tokens": 50, "total_tokens": 150}
+		}
+		jsonOut(w, 200, resp)
+	}))
+	defer provider.Close()
+	a.settings = Settings{BaseURL: provider.URL, Model: "test"}
+	// 第一轮带 usage；第二轮不带（估算）
+	for i := 0; i < 2; i++ {
+		if _, _, err := a.completeCall(provider.URL); err != nil {
+			t.Fatal(err)
+		}
+	}
+	w := request(a, "GET", "/api/token-stats", nil)
+	requireStatus(t, w, 200)
+	body := w.Body.String()
+	if !strings.Contains(body, `"calls":2`) || !strings.Contains(body, `"total":150`) {
+		t.Fatalf("token stats: %s", body)
+	}
+	if !strings.Contains(body, `"estimated":true`) {
+		t.Fatalf("estimated flag missing: %s", body)
+	}
+}
+
+func (a *App) completeCall(baseURL string) (string, []ToolCall, error) {
+	return complete(context.Background(), Settings{BaseURL: baseURL, Model: "test"}, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil)
 }
