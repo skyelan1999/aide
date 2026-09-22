@@ -123,6 +123,10 @@ type App struct {
 	localRoot                 *os.Root
 	hostLocal                 string
 	workspaceDisplay          string
+	cacheContainer            string
+	curlBin                   string
+	sourceRegistry            sourcesRegistry
+	sourceSecrets             sourcesSecrets
 }
 
 func env(key, fallback string) string {
@@ -268,6 +272,7 @@ func New(work, reference, data string) (*App, error) {
 	a.runPluginHost(context.Background())
 	a.sshBin = "ssh"
 	a.sftpBin = "sftp"
+	a.curlBin = "curl"
 	a.hostLocal = env("AIDE_HOST_LOCAL", os.Getenv("HOME"))
 	localRoot, localErr := os.OpenRoot("/local")
 	if localErr != nil {
@@ -279,6 +284,10 @@ func New(work, reference, data string) (*App, error) {
 	}
 	a.localRoot = localRoot
 	if err := a.loadWorkspaceConfig(); err != nil {
+		a.Close()
+		return nil, err
+	}
+	if err := a.loadSources(); err != nil {
 		a.Close()
 		return nil, err
 	}
@@ -332,6 +341,8 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/plugins/{id}", a.deletePlugin)
 	mux.HandleFunc("GET /api/plugin-surface", a.pluginSurfaceHandler)
 	mux.HandleFunc("GET /api/workspace-config", a.getWorkspaceConfig)
+	mux.HandleFunc("GET /api/sources", a.listSources)
+	mux.HandleFunc("PUT /api/sources", a.updateSources)
 	mux.HandleFunc("PUT /api/workspace-config", a.updateWorkspaceConfig)
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
 	mux.HandleFunc("GET /api/files", a.listFiles)

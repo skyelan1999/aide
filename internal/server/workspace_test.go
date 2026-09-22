@@ -230,6 +230,7 @@ func waitTaskDone(t *testing.T, a *App, sessionID string) {
 		var s Session
 		_ = json.Unmarshal(w.Body.Bytes(), &s)
 		if s.Runs[0].Status != "running" {
+			time.Sleep(100 * time.Millisecond) // 等待 execute 协程完成最终 save，避免与 TempDir 清理竞态
 			return
 		}
 		time.Sleep(10 * time.Millisecond)

@@ -175,12 +175,13 @@ func (a *App) applyWorkspaceConfig() error {
 			_ = disp
 		}
 	}
-	// 缓存目录（自动创建）
+	// 缓存目录（自动创建；来源注册表存于此）
 	cacheContainer := filepath.Join(a.workPath, ".cache")
 	if cp, _, err := a.resolveHostPath(a.wsConfig.Cache.Path); err == nil && cp != "" {
 		cacheContainer = cp
 	}
 	_ = os.MkdirAll(cacheContainer, 0755)
+	a.cacheContainer = cacheContainer
 	a.killSSHSession()
 	return nil
 }
@@ -312,6 +313,7 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
+	_ = a.upsertSystemDocs() // 自动系统文档挂载为读写来源（FR-82）
 	jsonOut(w, 200, a.workspaceConfigOut())
 }
 

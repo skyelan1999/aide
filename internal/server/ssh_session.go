@@ -219,3 +219,136 @@ func (a *App) sftpExists(remoteFile string) bool {
 func shellQuoteRemote(s string) string {
 	return `"` + strings.ReplaceAll(s, `"`, `\"`) + `"`
 }
+
+// ── 来源级 SFTP（每来源独立 ControlMaster socket；复用 ensure 语义） ──
+
+func sourceSocket(id string) string { return "/tmp/aide-src-" + id + ".sock" }
+
+func (a *App) sftpTargetOf(src Source) string {
+	u := src.Config.Username
+	if u == "" {
+		u = "root"
+	}
+	return u + "@" + src.Config.Host
+}
+
+func (a *App) ensureSourceSession(ctx context.Context, src Source) error {
+	if src.Config.Host == "" {
+		return fmt.Errorf("未配置主机")
+	}
+	sock := sourceSocket(src.ID)
+	port := src.Config.Port
+	if port == 0 {
+		port = 22
+	}
+	base := []string{"-o", "ControlPath=" + sock, "-o", "StrictHostKeyChecking=accept-new", "-o", "UserKnownHostsFile=/home/aide/.ssh/known_hosts", "-o", "ConnectTimeout=10", "-o", "LogLevel=ERROR", "-p", fmt.Sprint(port)}
+	if err := exec.CommandContext(ctx, a.sshBin, append([]string{"-S", sock, "-O", "check"}, append(base, a.sftpTargetOf(src))...)...).Run(); err == nil {
+		return nil
+	}
+	args := append([]string{"-fNM", "-o", "ControlMaster=yes", "-o", "ControlPersist=600"}, append(base, a.sftpTargetOf(src))...)
+	env := []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	sec := a.sourceSecrets.Secrets[src.ID]
+	if src.Config.Auth == "key" && sec.Key != "" {
+		keyPath := sock + ".key"
+		if err := os.WriteFile(keyPath, []byte(sec.Key), 0600); err != nil {
+			return err
+		}
+		args = append([]string{"-i", keyPath}, args...)
+	} else if src.Config.Auth == "password" && sec.Password != "" {
+		ask := sock + ".askpass"
+		if err := os.WriteFile(ask, []byte("#!/bin/sh\necho "+shellQuote(sec.Password)+"\n"), 0700); err != nil {
+			return err
+		}
+		env = append(env, "SSH_ASKPASS="+ask, "SSH_ASKPASS_REQUIRE=force", "DISPLAY=aide:0")
+		args = append([]string{"-o", "NumberOfPasswordPrompts=1"}, args...)
+	}
+	cmd := exec.CommandContext(ctx, a.sshBin, args...)
+	cmd.Env = env
+	cmd.Dir = "/home/aide"
+	if out, err := cmd.CombinedOutput(); err != nil {
+		return fmt.Errorf("SFTP 连接失败: %s", strings.TrimSpace(string(out)))
+	}
+	return nil
+}
+
+func (a *App) sftpBatchSource(src Source, batch string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sftpTimeout)
+	defer cancel()
+	if err := a.ensureSourceSession(ctx, src); err != nil {
+		return "", err
+	}
+	port := src.Config.Port
+	if port == 0 {
+		port = 22
+	}
+	args := []string{"-o", "ControlPath=" + sourceSocket(src.ID), "-o", "BatchMode=yes", "-o", "LogLevel=ERROR", "-P", fmt.Sprint(port), a.sftpTargetOf(src), "-b", "-"}
+	cmd := exec.CommandContext(ctx, a.sftpBin, args...)
+	cmd.Stdin = strings.NewReader(batch)
+	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "", fmt.Errorf("SFTP 失败: %s", strings.TrimSpace(string(out)))
+	}
+	return string(out), nil
+}
+
+func (a *App) sftpListSource(src Source, p string) ([]map[string]any, error) {
+	remoteDir := pathJoinRemote(src.Config.Path, p)
+	out, err := a.sftpBatchSource(src, "cd "+shellQuoteRemote(remoteDir)+"\nls -l\n")
+	if err != nil {
+		return nil, err
+	}
+	items := []map[string]any{}
+	for _, line := range strings.Split(out, "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "sftp>") {
+			continue
+		}
+		fields := strings.Fields(line)
+		if len(fields) < 9 || (fields[0][0] != 'd' && fields[0][0] != '-' && fields[0][0] != 'l') {
+			continue
+		}
+		name := strings.Join(fields[8:], " ")
+		items = append(items, map[string]any{"name": name, "path": name, "dir": fields[0][0] == 'd'})
+		if len(items) >= 2000 {
+			break
+		}
+	}
+	return items, nil
+}
+
+func (a *App) sftpReadSource(src Source, p string) ([]byte, error) {
+	remoteFile := pathJoinRemote(src.Config.Path, p)
+	tmp, err := os.CreateTemp("", "aide-src-sftp-*")
+	if err != nil {
+		return nil, err
+	}
+	tmpPath := tmp.Name()
+	tmp.Close()
+	defer os.Remove(tmpPath)
+	if _, err := a.sftpBatchSource(src, "get "+shellQuoteRemote(remoteFile)+" "+shellQuoteRemote(tmpPath)+"\n"); err != nil {
+		return nil, err
+	}
+	return os.ReadFile(tmpPath)
+}
+
+func (a *App) sftpWriteSource(src Source, p string, b []byte) error {
+	remoteFile := pathJoinRemote(src.Config.Path, p)
+	tmp, err := os.CreateTemp("", "aide-src-sftp-*")
+	if err != nil {
+		return err
+	}
+	tmpPath := tmp.Name()
+	if _, err := tmp.Write(b); err != nil {
+		tmp.Close()
+		os.Remove(tmpPath)
+		return err
+	}
+	tmp.Close()
+	defer os.Remove(tmpPath)
+	tmpRemote := remoteFile + ".aide-tmp"
+	if _, err := a.sftpBatchSource(src, "put -P "+shellQuoteRemote(tmpPath)+" "+shellQuoteRemote(tmpRemote)+"\nrename "+shellQuoteRemote(tmpRemote)+" "+shellQuoteRemote(remoteFile)+"\n"); err != nil {
+		return err
+	}
+	return nil
+}
