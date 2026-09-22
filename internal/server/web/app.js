@@ -564,7 +564,10 @@ function renderTokenStats(control) {
   const tip = el('div', 'token-tip');
   const detail = el('div', 'token-day-detail hidden');
   wrap.append(head, chips, grid, legend, tip, detail);
+  const failBox = el('p', 'task-error', '');
+  wrap.append(failBox);
   action(async () => {
+    failBox.textContent = '';
     const data = await api('/token-stats');
     const days = data.days || {};
     const totalsObj = data.totals || {};
@@ -580,11 +583,21 @@ function renderTokenStats(control) {
       try {
         const bal = await api('/balance');
         const infos = (bal && bal.balance_infos) || [];
+        if (!infos.length) {
+          const chip = el('span', 'token-chip', '余额不可查');
+          chip.title = '接口未返回余额信息（部分账户/服务不支持）';
+          chips.append(chip);
+          return;
+        }
         const parts = infos.map(i => (i.total_balance ?? '?') + ' ' + (i.currency || '')).join(' · ');
         const chip = el('span', 'token-chip balance', '余额 ' + parts);
-        chip.title = '来自 API 的账户余额（部分账户可能不支持）';
+        chip.title = '来自 API 的账户余额';
         chips.append(chip);
-      } catch (error) { /* 余额不可查时静默跳过 */ }
+      } catch (error) {
+        const chip = el('span', 'token-chip', '余额不可查');
+        chip.title = '查询失败: ' + error.message;
+        chips.append(chip);
+      }
     })();
     grid.replaceChildren();
     const today = new Date();
@@ -619,7 +632,7 @@ function renderTokenStats(control) {
       tip.classList.add('show');
       const rect = cell.getBoundingClientRect();
       const sheetRect = $('settings-sheet').getBoundingClientRect();
-      tip.style.left = Math.min(rect.left - sheetRect.left, sheetRect.width - 180) + 'px';
+      tip.style.left = Math.min(Math.max(rect.left - sheetRect.left, 0), sheetRect.width - 180) + 'px';
       tip.style.top = (rect.top - sheetRect.top - tip.offsetHeight - 8) + 'px';
     };
     for (const col of cols) {
@@ -650,7 +663,7 @@ function renderTokenStats(control) {
     legend.append(el('span', '', '少'));
     for (let i = 1; i <= 4; i++) legend.append(el('span', 'token-cell tk-' + i));
     legend.append(el('span', '', '多'), el('small', '', '费用按官方刊例价估算 · 悬停查看明细'));
-  })();
+  }).call(null);
   return wrap;
 }
 
