@@ -77,6 +77,22 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	if srcID := r.URL.Query().Get("source"); srcID != "" {
+		a.mu.Lock()
+		src, ok := a.findSource(srcID)
+		a.mu.Unlock()
+		if !ok || !src.Enabled {
+			fail(w, 400, errors.New("来源不存在或已停用"))
+			return
+		}
+		items, err := a.listSourceDir(src, p)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		jsonOut(w, 200, items)
+		return
+	}
 	which := r.URL.Query().Get("root")
 	if which == "workspace" && a.workspaceMode() == "ssh" {
 		items, err := a.listWorkspaceDir(p)
@@ -133,6 +149,22 @@ func (a *App) listLocalDir(root *os.Root, p string) ([]map[string]any, error) {
 func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
 	var b []byte
 	var err error
+	if srcID := r.URL.Query().Get("source"); srcID != "" {
+		a.mu.Lock()
+		src, ok := a.findSource(srcID)
+		a.mu.Unlock()
+		if !ok || !src.Enabled {
+			fail(w, 400, errors.New("来源不存在或已停用"))
+			return
+		}
+		b, err = a.readSourceText(src, r.URL.Query().Get("path"))
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b)})
+		return
+	}
 	if r.URL.Query().Get("root") == "workspace" && a.workspaceMode() == "ssh" {
 		b, err = a.readWorkspaceText(r.URL.Query().Get("path"))
 	} else {
@@ -154,6 +186,7 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 		Path    string `json:"path"`
 		Content string `json:"content"`
 		Hash    string `json:"hash"`
+		Source  string `json:"source"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -165,6 +198,25 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(in.Content) > maxFile {
 		fail(w, 400, errors.New("文件太大"))
+		return
+	}
+	if in.Source != "" {
+		a.mu.Lock()
+		src, ok := a.findSource(in.Source)
+		a.mu.Unlock()
+		if !ok || !src.Enabled {
+			fail(w, 400, errors.New("来源不存在或已停用"))
+			return
+		}
+		if !src.RW {
+			fail(w, 403, errors.New("该来源为只读"))
+			return
+		}
+		if err := a.writeSourceText(src, in.Path, []byte(in.Content)); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		jsonOut(w, 200, map[string]string{"hash": hash([]byte(in.Content))})
 		return
 	}
 	a.filesMu.Lock()

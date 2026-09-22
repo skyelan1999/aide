@@ -13,8 +13,9 @@ import (
 )
 
 type Attachment struct {
-	Root string `json:"root"`
-	Path string `json:"path"`
+	Root   string `json:"root"`
+	Path   string `json:"path"`
+	Source string `json:"source,omitempty"`
 }
 type Step struct {
 	Name    string `json:"name"`
@@ -91,7 +92,16 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	for _, att := range in.Attachments {
 		var b []byte
 		var err error
-		if (att.Root == "workspace" || att.Root == "") && a.workspaceMode() == "ssh" {
+		if att.Root == "source" {
+			a.mu.Lock()
+			src, ok := a.findSource(att.Source)
+			a.mu.Unlock()
+			if !ok || !src.Enabled {
+				fail(w, 400, errors.New("来源不存在或已停用"))
+				return
+			}
+			b, err = a.readSourceText(src, att.Path)
+		} else if (att.Root == "workspace" || att.Root == "") && a.workspaceMode() == "ssh" {
 			b, err = a.readWorkspaceText(att.Path)
 		} else {
 			var root *os.Root

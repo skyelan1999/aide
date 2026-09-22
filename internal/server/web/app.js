@@ -1,6 +1,6 @@
 'use strict';
 const $ = id => document.getElementById(id);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files' };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '' };
 const fragment = new URLSearchParams(location.hash.slice(1));
 if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); history.replaceState(null, '', location.pathname); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -126,24 +126,33 @@ function renderAttachments() {
   state.attachments.forEach((a, index) => { const chip = el('span', 'chip', (a.root === 'context' ? '参考 · ' : '') + a.path); const b = el('button', '', '×'); b.setAttribute('aria-label', '移除附件 ' + a.path); b.onclick = () => { state.attachments.splice(index, 1); renderAttachments(); }; chip.append(b); $('attachment-chips').append(chip); });
 }
 async function loadFiles() {
-  const files = await api('/files?root=' + state.root + '&path=' + encodeURIComponent(state.dir));
-  $('file-path').textContent = '/' + state.root + (state.dir === '.' ? '' : '/' + state.dir); $('file-path').title = $('file-path').textContent;
+  const query = state.root === 'context' && state.source ? '/files?source=' + encodeURIComponent(state.source) + '&path=' : '/files?root=' + state.root + '&path=';
+  const files = await api(query + encodeURIComponent(state.dir));
+  const label = state.root === 'context' && state.source ? 'sources/' + (state.sources.find(x => x.id === state.source)?.name || state.source) : state.root;
+  $('file-path').textContent = '/' + label + (state.dir === '.' ? '' : '/' + state.dir); $('file-path').title = $('file-path').textContent;
   $('new-file').disabled = state.root === 'context'; $('files').replaceChildren();
   if (!files.length) $('files').append(el('p', 'muted', '目录为空'));
   files.forEach(file => { const b = el('button', 'file-item'); b.append(el('span', 'file-icon', file.dir ? '▱' : '≡'), el('span', 'file-name', file.name)); if (file.dir) b.append(el('small', '', '›')); b.title = file.path; b.onclick = action(async () => { if (file.dir) { state.dir = file.path; await loadFiles(); } else await openFile(file.path); }); $('files').append(b); });
 }
 async function openFile(path) {
-  const data = await api('/file?root=' + state.root + '&path=' + encodeURIComponent(path)); state.file = { ...data, path, root: state.root, fresh: false }; showEditor();
+  const query = state.root === 'context' && state.source ? '/file?source=' + encodeURIComponent(state.source) + '&path=' : '/file?root=' + state.root + '&path=';
+  const data = await api(query + encodeURIComponent(path)); state.file = { ...data, path, root: state.root, source: state.root === 'context' ? state.source : '', fresh: false }; showEditor();
+}
+function sourceIsRW() {
+  if (state.file.root !== 'context' || !state.file.source) return false;
+  return state.sources.find(x => x.id === state.file.source)?.rw === true;
 }
 function showEditor() {
-  $('editor-title').textContent = state.file.path; $('editor').value = state.file.content; $('editor').readOnly = state.file.root === 'context'; $('save-file').disabled = state.file.root === 'context'; $('attach-file').disabled = state.file.fresh;
-  $('editor-status').textContent = state.file.root === 'context' ? '辅助目录 · 只读' : '工作目录 · 保存后同步到主机'; $('editor-dialog').showModal();
+  $('editor-title').textContent = state.file.path; $('editor').value = state.file.content;
+  const readOnly = state.file.root === 'context' && !sourceIsRW();
+  $('editor').readOnly = readOnly; $('save-file').disabled = readOnly; $('attach-file').disabled = state.file.fresh;
+  $('editor-status').textContent = state.file.root === 'context' ? (sourceIsRW() ? '辅助资料 · 读写来源' : '辅助资料 · 只读') : '工作目录 · 保存后同步到主机'; $('editor-dialog').showModal();
 }
 $('new-session').onclick = action(newSession); $('refresh-sessions').onclick = action(loadSessions); $('refresh-files').onclick = action(loadFiles);
 document.querySelectorAll('.mode-switch button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
 document.querySelectorAll('.starter').forEach(b => b.onclick = () => { $('prompt').value = b.dataset.prompt; setMode(b.dataset.mode || 'chat'); $('prompt').focus(); });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
-document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { state.root = b.dataset.root; state.dir = '.'; document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); await loadFiles(); }));
+document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { state.root = b.dataset.root; state.dir = '.'; if (state.root === 'context') state.source = ''; document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); renderSourceChips(); await loadFiles(); }));
 $('files-toggle').onclick = () => { document.body.classList.remove('plugins-mode'); state.panel = 'files'; $('plugins-toggle').classList.remove('active'); $('plugins-toggle').setAttribute('aria-pressed', 'false'); $('files-toggle').classList.add('active'); $('files-toggle').setAttribute('aria-pressed', 'true'); if (innerWidth <= 950) $('file-panel').classList.toggle('mobile-open'); else document.body.classList.toggle('files-hidden'); };
 $('parent-dir').onclick = action(async () => { state.dir = state.dir.includes('/') ? state.dir.slice(0, state.dir.lastIndexOf('/')) : '.'; await loadFiles(); });
 $('task-form').onsubmit = action(async event => {
@@ -162,10 +171,10 @@ $('cancel').onclick = action(async () => { const run = state.session?.runs.find(
 function openSettings() { $('base-url').value = state.config?.baseURL || 'https://api.deepseek.com'; $('api-key').value = ''; $('api-key').placeholder = state.config?.hasKey ? '已保存密钥；留空保留' : '云端 API 通常需要密钥；本地模型可不填'; $('clear-key').checked = false; state.modelDraft = { models: JSON.parse(JSON.stringify(state.config?.models || [])), activeModel: state.config?.activeModel || '' }; renderModelList(); $('settings-dialog').showModal(); }
 $('settings-button').onclick = openSettings;
 $('settings-form').onsubmit = action(async event => { event.preventDefault(); if (!state.modelDraft.models.length) { toast('请至少添加一个模型'); return; } await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked, models: state.modelDraft.models, activeModel: state.modelDraft.activeModel }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast('模型设置已保存，发送任务时会调用当前模型'); });
-$('save-file').onclick = action(async () => { const data = await api('/file', { method: 'PUT', body: JSON.stringify({ path: state.file.path, content: $('editor').value, hash: state.file.hash }) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; $('editor-status').textContent = '✓ 已保存到本地工作目录'; await loadFiles(); });
+$('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; $('editor-status').textContent = '✓ 已保存'; await loadFiles(); });
 $('attach-file').onclick = () => {
   if (state.file.content !== $('editor').value) { toast('请先保存修改，再附加到任务'); return; }
-  if (!state.attachments.some(a => a.root === state.file.root && a.path === state.file.path)) { if (state.attachments.length >= 8) { toast('最多附加 8 个文件'); return; } state.attachments.push({ root: state.file.root, path: state.file.path }); }
+  const att = { root: state.file.root, path: state.file.path }; if (state.file.source) { att.root = 'source'; att.source = state.file.source; } if (!state.attachments.some(a => a.root === att.root && a.path === att.path && (a.source || '') === (att.source || ''))) { if (state.attachments.length >= 8) { toast('最多附加 8 个文件'); return; } state.attachments.push(att); }
   renderAttachments(); $('editor-dialog').close(); $('prompt').focus();
 };
 $('new-file').onclick = () => { $('new-file-path').value = state.dir === '.' ? '' : state.dir + '/'; $('new-file-dialog').showModal(); };
@@ -801,5 +810,66 @@ $('cache-browse').onclick = () => openBrowse('cache-path');
 $('ws-browse-parent').onclick = () => { const b = wsState.browse; b.dir = b.dir.includes('/') ? b.dir.slice(0, b.dir.lastIndexOf('/')) : '.'; action(loadBrowseDir)(); };
 $('ws-browse-select').onclick = () => { const b = wsState.browse; $(b.field).value = hostPathOf(b.dir); $('ws-browse-dialog').close(); };
 
-async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig()]); }
+/* ── 辅助资料多来源（FR-82~84） ── */
+async function loadSourcesList() { state.sources = (await api('/sources')).sources || []; renderSourceChips(); }
+function renderSourceChips() {
+  const host = $('source-chips');
+  const visible = state.root === 'context';
+  host.classList.toggle('hidden', !visible);
+  if (!visible) return;
+  host.replaceChildren();
+  state.sources.filter(x => x.enabled).forEach(src => {
+    const chip = el('button', 'source-chip' + (state.source === src.id ? ' active' : ''), (src.rw ? '✎ ' : '') + src.name + (src.builtin ? ' 🔒' : ''));
+    chip.title = src.type + (src.config.path || src.config.url || src.config.host || '') + (src.rw ? ' · 读写' : ' · 只读');
+    chip.onclick = () => { state.source = src.id; state.dir = '.'; state.attachments = []; renderAttachments(); renderSourceChips(); action(loadFiles)(); };
+    host.append(chip);
+    if (!src.builtin) {
+      const del = el('button', 'source-chip-x', '×');
+      del.title = '删除来源 ' + src.name;
+      del.onclick = () => { if (confirm('删除来源「' + src.name + '」？')) action(async () => { await api('/sources', { method: 'PUT', body: JSON.stringify({ sources: state.sources.filter(x => x.id !== src.id) }) }); await loadSourcesList(); if (state.source === src.id) { state.source = ''; state.dir = '.'; await loadFiles(); } })(); };
+      host.append(del);
+    }
+  });
+  const add = el('button', 'source-chip-add', '＋ 来源');
+  add.onclick = () => { $('source-form').reset(); renderSourceFields(); $('source-dialog').showModal(); };
+  host.append(add);
+}
+function renderSourceFields() {
+  const type = $('src-type').value;
+  const host = $('src-fields');
+  host.replaceChildren();
+  const addField = (labelText, id, placeholder) => { const label = el('label', '', labelText); const input = el('input', ''); input.id = id; input.placeholder = placeholder || ''; input.autocomplete = 'off'; label.append(input); host.append(label); return input; };
+  if (type === 'local' || type === 'skill') addField('本机路径（绝对路径）', 'src-path', '/Users/you/…');
+  else if (type === 'link' || type === 'ftp' || type === 'ftps' || type === 'smb') addField('URL（如 ftp://host/dir 或 https://…）', 'src-url', type + '://');
+  else if (type === 'mcp') { addField('启动命令', 'src-command', 'npx -y @modelcontextprotocol/server-…'); addField('或 URL', 'src-url', ''); }
+  else if (type === 'sftp') {
+    addField('主机', 'src-host', '192.168.1.10');
+    addField('端口', 'src-port', '22').type = 'number';
+    addField('用户名', 'src-user', 'root');
+    addField('远程目录', 'src-remote', '/srv/refs');
+    addField('密码（可选）', 'src-password', '留空 = 无密码认证').type = 'password';
+    addField('私钥（可选，优先于密码）', 'src-key', '粘贴私钥内容').type = 'password';
+  }
+}
+$('src-type').addEventListener('change', renderSourceFields);
+$('source-form').onsubmit = action(async event => {
+  event.preventDefault();
+  const type = $('src-type').value;
+  const name = $('src-name').value.trim();
+  const id = 's-' + Math.random().toString(36).slice(2, 8);
+  const src = { id, name, type, enabled: true, rw: $('src-rw').checked, config: {} };
+  const secrets = {};
+  if (type === 'local' || type === 'skill') src.config.path = $('src-path').value.trim();
+  else if (type === 'mcp') { src.config.command = ($('src-command')?.value || '').trim(); src.config.url = ($('src-url')?.value || '').trim(); }
+  else if (type === 'sftp') { src.config = { path: $('src-remote').value.trim(), host: $('src-host').value.trim(), port: parseInt($('src-port').value, 10) || 22, username: $('src-user').value.trim(), auth: $('src-key').value ? 'key' : $('src-password').value ? 'password' : 'none' }; const pw = $('src-password').value, key = $('src-key').value; if (pw || key) secrets[id] = { password: pw, key }; }
+  else src.config.url = $('src-url').value.trim();
+  const payload = { sources: [...state.sources.filter(x => !x.builtin), src] };
+  if (Object.keys(secrets).length) payload.secrets = secrets;
+  await api('/sources', { method: 'PUT', body: JSON.stringify(payload) });
+  $('source-dialog').close();
+  await loadSourcesList();
+  state.source = id; state.dir = '.'; await loadFiles();
+  toast('已添加来源：' + name);
+});
+async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]); }
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
