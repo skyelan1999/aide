@@ -1003,7 +1003,7 @@ $('file-view-save').onclick = action(async () => {
 async function initialize() {
   await refreshConfig();
   const fragment = new URLSearchParams(location.hash.slice(1));
-  if (fragment.has('file')) { await openFileViewMode(); return; }
+  if (fragment.has('file')) { await Promise.all([loadWorkspaceConfig(), loadSourcesList()]); await openFileViewMode(); return; }
   await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
 }
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
