@@ -14,3 +14,4 @@ docker-images/*.sha256
 .idea/
 plugins/surface.json
 workspace-config.json
+.cache/
