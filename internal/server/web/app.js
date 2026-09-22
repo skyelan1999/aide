@@ -153,12 +153,31 @@ function sourceIsRW() {
   if (state.file.root !== 'context' || !state.file.source) return false;
   return state.sources.find(x => x.id === state.file.source)?.rw === true;
 }
+function isMarkdownPath(path) { return /\.(md|markdown)$/i.test(path || ''); }
+function setEditorMode(mode) {
+  const preview = mode === 'preview';
+  $('editor').classList.toggle('hidden', preview);
+  $('editor-preview').classList.toggle('hidden', !preview);
+  $('editor-mode-edit').classList.toggle('active', !preview);
+  $('editor-mode-preview').classList.toggle('active', preview);
+  if (preview) { $('editor-preview').innerHTML = renderMarkdown($('editor').value); $('editor-preview').scrollTop = 0; }
+}
 function showEditor() {
   $('editor-title').textContent = state.file.path; $('editor').value = state.file.content;
   const readOnly = state.file.root === 'context' && !sourceIsRW();
   $('editor').readOnly = readOnly; $('save-file').disabled = readOnly; $('attach-file').disabled = state.file.fresh;
-  $('editor-status').textContent = state.file.root === 'context' ? (sourceIsRW() ? '辅助资料 · 读写来源' : '辅助资料 · 只读') : '工作目录 · 保存后同步到主机'; $('editor-dialog').showModal();
+  $('editor-status').textContent = state.file.root === 'context' ? (sourceIsRW() ? '辅助资料 · 读写来源' : '辅助资料 · 只读') : '工作目录 · 保存后同步到主机';
+  const md = isMarkdownPath(state.file.path);
+  $('editor-mode-switch').classList.toggle('hidden', !md);
+  setEditorMode('edit');
+  $('editor-dialog').showModal();
 }
+$('editor-mode-edit').onclick = () => setEditorMode('edit');
+$('editor-mode-preview').onclick = () => setEditorMode('preview');
+$('open-new-tab').onclick = () => {
+  const spec = { root: state.file.source ? 'source' : state.file.root, source: state.file.source || '', path: state.file.path };
+  window.open(location.pathname + '#file=' + encodeURIComponent(JSON.stringify(spec)), '_blank', 'noopener');
+};
 $('new-session').onclick = action(newSession); $('refresh-sessions').onclick = action(loadSessions); $('refresh-files').onclick = action(loadFiles);
 document.querySelectorAll('.mode-switch button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
 document.querySelectorAll('.starter').forEach(b => b.onclick = () => { $('prompt').value = b.dataset.prompt; setMode(b.dataset.mode || 'chat'); $('prompt').focus(); });
@@ -938,5 +957,32 @@ function renderMarkdown(src) {
   return html;
 }
 
-async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]); }
+/* ── 单文件视图（新标签页）：只显示一个文件的路径与内容，md 自动渲染 ── */
+async function openFileViewMode() {
+  let spec = null;
+  try { spec = JSON.parse(decodeURIComponent(new URLSearchParams(location.hash.slice(1)).get('file') || '')); } catch (e) { spec = null; }
+  if (!spec) return;
+  document.body.classList.add('file-view-mode');
+  $('file-view').classList.remove('hidden');
+  $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;
+  const query = spec.source
+    ? '/file?source=' + encodeURIComponent(spec.source) + '&path=' + encodeURIComponent(spec.path)
+    : '/file?root=' + encodeURIComponent(spec.root) + '&path=' + encodeURIComponent(spec.path);
+  const data = await api(query);
+  const host = $('file-view-content');
+  host.replaceChildren();
+  if (isMarkdownPath(spec.path)) {
+    const md = el('div', 'md-body');
+    md.innerHTML = renderMarkdown(data.content);
+    host.append(md);
+  } else {
+    host.append(el('pre', 'file-view-pre', data.content));
+  }
+}
+async function initialize() {
+  await refreshConfig();
+  const fragment = new URLSearchParams(location.hash.slice(1));
+  if (fragment.has('file')) { await openFileViewMode(); return; }
+  await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
+}
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
