@@ -562,7 +562,8 @@ function renderTokenStats(control) {
   const grid = el('div', 'token-heatmap');
   const legend = el('div', 'token-legend');
   const tip = el('div', 'token-tip');
-  wrap.append(head, chips, grid, legend, tip);
+  const detail = el('div', 'token-day-detail hidden');
+  wrap.append(head, chips, grid, legend, tip, detail);
   action(async () => {
     const data = await api('/token-stats');
     const days = data.days || {};
@@ -609,6 +610,8 @@ function renderTokenStats(control) {
       tip.append(
         el('strong', '', date + ' · ' + fmtStatTokens(day.total || 0) + ' tokens'),
         el('br'),
+        el('span', '', '输入 ' + fmtStatTokens(day.prompt || 0) + ' · 输出 ' + fmtStatTokens(day.completion || 0)),
+        el('br'),
         el('span', '', '调用 ' + (day.calls || 0) + ' 次 · ≈¥' + costOf(day).toFixed(4)),
         el('br'),
         el('span', '', '所在周合计 ' + fmtStatTokens(weekTotal) + ' tokens')
@@ -629,6 +632,16 @@ function renderTokenStats(control) {
         if (d > today) cell.classList.add('future');
         cell.addEventListener('mouseenter', () => showTip(cell, key, day, weekTotal));
         cell.addEventListener('mouseleave', () => tip.classList.remove('show'));
+        cell.addEventListener('click', () => {
+          detail.classList.remove('hidden');
+          detail.replaceChildren();
+          detail.append(
+            el('strong', '', key),
+            el('span', '', '输入 ' + fmtStatTokens(day.prompt || 0) + ' tokens · 输出 ' + fmtStatTokens(day.completion || 0) + ' tokens'),
+            el('span', '', '调用 ' + (day.calls || 0) + ' 次 · 合计 ' + fmtStatTokens(day.total || 0) + ' tokens'),
+            el('span', '', '费用 ≈¥' + costOf(day).toFixed(4) + '（刊例价估算' + (day.estimated ? '，上游未返回 usage' : '') + '）')
+          );
+        });
         colEl.append(cell);
       }
       grid.append(colEl);
