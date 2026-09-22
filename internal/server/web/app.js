@@ -236,7 +236,7 @@ document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 
 /* ── 设置面板（FR-58~FR-60）：品牌 logo 入口；结构由 /settings-schema.json 数据驱动；
    设置值一律经 window.aideUI 的 JSON 文档管理。必须位于 initialize() 之外：
    未登录时 initialize() 会抛错返回，设置面板仍需可用。 ── */
-const settingsPanel = { schema: null, rendered: false, trigger: null, refreshers: [] };
+const settingsPanel = { schema: null, rendered: false, trigger: null, refreshers: [], active: '', activeChild: '' };
 async function loadSettingsSchema() {
   if (!settingsPanel.schema) {
     const response = await fetch('/settings-schema.json', { cache: 'no-store' });
@@ -282,18 +282,44 @@ function renderSegmentedControl(control) {
   return wrap;
 }
 const controlRenderers = { segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats };
+function renderControlsInto(host, controls, description) {
+  if (description) host.append(el('p', 'section-desc', description));
+  for (const control of controls || []) {
+    const renderer = controlRenderers[control.type];
+    if (renderer) host.append(renderer(control));
+  }
+}
 function renderSettingsSheet() {
-  const host = $('settings-sections');
-  host.replaceChildren();
-  for (const section of settingsPanel.schema?.sections || []) {
-    const box = el('section', 'settings-section');
-    box.append(el('h3', '', section.title));
-    if (section.description) box.append(el('p', 'section-desc', section.description));
-    for (const control of section.controls || []) {
-      const renderer = controlRenderers[control.type];
-      if (renderer) box.append(renderer(control));
+  const nav = $('settings-nav');
+  const content = $('settings-content');
+  nav.replaceChildren();
+  content.replaceChildren();
+  const sections = settingsPanel.schema?.sections || [];
+  if (!sections.length) return;
+  if (!sections.some(x => x.id === settingsPanel.active)) settingsPanel.active = sections[0].id;
+  for (const section of sections) {
+    const b = el('button', 'settings-nav-item' + (section.id === settingsPanel.active ? ' active' : ''), section.title);
+    b.type = 'button';
+    b.onclick = () => { settingsPanel.active = section.id; settingsPanel.activeChild = ''; renderSettingsSheet(); };
+    nav.append(b);
+  }
+  const section = sections.find(x => x.id === settingsPanel.active);
+  if (!section) return;
+  if (section.children?.length) {
+    const sub = el('div', 'settings-subnav');
+    const children = section.children;
+    if (!children.some(c => c.id === settingsPanel.activeChild)) settingsPanel.activeChild = children[0].id;
+    for (const child of children) {
+      const cb = el('button', 'settings-subnav-item' + (child.id === settingsPanel.activeChild ? ' active' : ''), child.title);
+      cb.type = 'button';
+      cb.onclick = () => { settingsPanel.activeChild = child.id; renderSettingsSheet(); };
+      sub.append(cb);
     }
-    host.append(box);
+    content.append(sub);
+    const child = children.find(c => c.id === settingsPanel.activeChild);
+    renderControlsInto(content, child?.controls || [], child?.description || '');
+  } else {
+    renderControlsInto(content, section.controls || [], section.description);
   }
   settingsPanel.rendered = true;
 }

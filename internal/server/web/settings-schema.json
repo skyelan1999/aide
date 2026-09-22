@@ -11,30 +11,49 @@
           "type": "segmented",
           "label": "主题颜色",
           "options": [
-            { "value": "light", "label": "明" },
-            { "value": "dark", "label": "暗" },
-            { "value": "system", "label": "跟随系统" }
+            {
+              "value": "light",
+              "label": "明"
+            },
+            {
+              "value": "dark",
+              "label": "暗"
+            },
+            {
+              "value": "system",
+              "label": "跟随系统"
+            }
           ]
         }
       ]
     },
     {
-      "id": "token-usage",
+      "id": "stats",
       "title": "消耗统计",
       "description": "模型 Token 消耗（git 提交热力图样式）",
       "controls": [
-        { "id": "token-stats", "type": "token-stats", "label": "Token 消耗" }
+        {
+          "id": "token-stats",
+          "type": "token-stats",
+          "label": "Token 消耗"
+        }
       ]
     },
     {
-      "id": "model-params",
+      "id": "model",
       "title": "模型参数",
-      "description": "管理模型调用参数配置（Profile）。系统配置不可修改；用户配置可增删、自定义命名。保存到工程目录 profiles.json。",
-      "controls": [
+      "description": "管理模型调用参数配置（Profile）",
+      "children": [
         {
           "id": "model-profiles",
-          "type": "profiles-manager",
-          "label": "参数配置"
+          "title": "参数配置",
+          "controls": [
+            {
+              "id": "model-profiles",
+              "type": "profiles-manager",
+              "label": "参数配置"
+            }
+          ]
         }
       ]
     }
