@@ -49,6 +49,7 @@ type Task struct {
 	Attachments []Attachment `json:"attachments"`
 	Strategy    string       `json:"strategy,omitempty"` // manual | auto（FR-63）
 	ToolUses    []ToolUse    `json:"toolUses,omitempty"` // 工具调用记录（FR-81）
+	Usage       TokenUsage   `json:"usage,omitempty"`    // 本任务累计 token 用量（轨迹）
 	Model       string       `json:"model,omitempty"`    // 本次任务使用的模型（FR-69）
 	Profile     string       `json:"profile,omitempty"`  // 本次生效的 profile id
 }
@@ -278,7 +279,12 @@ func (a *App) summarizeTopic(ctx context.Context, s *Session, task *Task, cfg Se
 		{Role: "system", Content: "你只输出一个不超过 12 个字的主题短语，概括用户当前任务的唯一主题。不要解释、不要标点、不要引号。"},
 		{Role: "user", Content: task.Prompt},
 	}
-	topic, _, err := complete(ctx, cfg, input, summaryParams, nil)
+	topic, _, usage, err := complete(ctx, cfg, input, summaryParams, nil)
+	if err == nil {
+		a.mu.Lock()
+		task.Usage = addUsage(task.Usage, usage)
+		a.mu.Unlock()
+	}
 	if err != nil || strings.TrimSpace(topic) == "" {
 		return
 	}
@@ -473,10 +479,13 @@ func (a *App) executablePluginTools() []string {
 // toolLoop 与模型交互并执行工具调用（≤6 轮）；写操作只生成提案（P2/P3 原则保留）。
 func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task, versions map[string]Change, stepIndex int) (string, error) {
 	for round := 0; round < 10; round++ {
-		out, calls, err := complete(ctx, cfg, input, params, tools)
+		out, calls, usage, err := complete(ctx, cfg, input, params, tools)
 		if err != nil {
 			return "", err
 		}
+		a.mu.Lock()
+		task.Usage = addUsage(task.Usage, usage)
+		a.mu.Unlock()
 		if len(calls) == 0 {
 			return out, nil
 		}
@@ -497,6 +506,19 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		a.mu.Unlock()
 	}
 	return "", errors.New("工具调用轮次超过 10 轮，请缩小任务范围")
+}
+
+func addUsage(base, add TokenUsage) TokenUsage {
+	base.Prompt += add.Prompt
+	base.Completion += add.Completion
+	base.Total += add.Total
+	if add.Estimated {
+		base.Estimated = true
+	}
+	if base.Model == "" {
+		base.Model = add.Model
+	}
+	return base
 }
 
 func toolCallNames(calls []ToolCall) []string {
