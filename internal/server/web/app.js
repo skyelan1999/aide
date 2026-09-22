@@ -539,11 +539,11 @@ function renderTokenStats(control) {
     const data = await api('/token-stats');
     const days = data.days || {};
     const totalsObj = data.totals || {};
-    const today = data.today || {};
+    const todayStats = data.today || {};
     head.querySelector('.control-value').textContent = fmtStatTokens(totalsObj.total || 0) + ' tokens';
     chips.replaceChildren();
     chips.append(
-      el('span', 'token-chip', '今日 ' + fmtStatTokens(today.total || 0)),
+      el('span', 'token-chip', '今日 ' + fmtStatTokens(todayStats.total || 0)),
       el('span', 'token-chip', '累计 ' + fmtStatTokens(totalsObj.total || 0)),
       el('span', 'token-chip', (totalsObj.calls || 0) + ' 次调用'),
       totalsObj.estimated ? el('span', 'token-chip', '含估算') : el('span', 'token-chip', '精确统计')
