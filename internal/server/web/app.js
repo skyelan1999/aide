@@ -169,7 +169,7 @@ function showEditor() {
   $('editor-status').textContent = state.file.root === 'context' ? (sourceIsRW() ? '辅助资料 · 读写来源' : '辅助资料 · 只读') : '工作目录 · 保存后同步到主机';
   const md = isMarkdownPath(state.file.path);
   $('editor-mode-switch').classList.toggle('hidden', !md);
-  setEditorMode('edit');
+  setEditorMode(md ? 'preview' : 'edit'); // md 文件打开即渲染预览（含表格）
   $('editor-dialog').showModal();
 }
 $('editor-mode-edit').onclick = () => setEditorMode('edit');
@@ -998,7 +998,7 @@ async function openFileViewMode() {
   $('file-view-editor').readOnly = readOnly;
   $('file-view-save').disabled = readOnly;
   $('file-view-status').textContent = readOnly ? '只读' : '可编辑 · 保存后同步';
-  setFileViewMode('edit');
+  setFileViewMode(md ? 'preview' : 'edit'); // md 默认渲染预览
   $('file-view-toolbar').classList.remove('hidden');
   $('file-view-content').replaceChildren();
 }
