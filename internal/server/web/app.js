@@ -68,10 +68,23 @@ function renderSession() {
     if (run.attachments?.length) box.append(el('p', 'muted', '已附加：' + run.attachments.map(a => a.root + '/' + a.path).join('、')));
     if (!run.steps.length) box.append(el('p', 'muted', '正在准备模型请求…'));
     run.steps.forEach((step, index) => {
-      if (run.mode === 'chat') { box.append(el('div', 'chat-answer', step.content || (step.status === 'running' ? '正在思考…' : '未返回回答'))); return; }
+      if (run.mode === 'chat') {
+        const ans = el('div', 'chat-answer md-body');
+        ans.innerHTML = renderMarkdown(step.content || (step.status === 'running' ? '正在思考…' : '未返回回答'));
+        box.append(ans);
+        return;
+      }
       const details = el('details', 'step'); details.dataset.key = run.id + ':' + step.name;
       details.open = openDetails.has(details.dataset.key) || (index === run.steps.length - 1 && step.name !== 'propose');
-      const summary = el('summary', '', labels[step.name]); summary.append(el('span', '', statuses[step.status])); details.append(summary, el('pre', 'step-content', step.content || '正在调用模型…')); box.append(details);
+      const summary = el('summary', '', labels[step.name]); summary.append(el('span', '', statuses[step.status]));
+      if (step.name === 'propose') {
+        details.append(summary, el('pre', 'step-content', step.content || '正在调用模型…'));
+      } else {
+        const md = el('div', 'step-content md-body');
+        md.innerHTML = renderMarkdown(step.content || '正在调用模型…');
+        details.append(summary, md);
+      }
+      box.append(details);
     });
     if (run.files?.length) {
       const proposal = el('div', 'proposal'); proposal.append(el('h4', '', `文件修改 · ${run.files.length} 个文件`));
@@ -580,10 +593,10 @@ function estimateContext() {
     included++;
   }
   const pct = Math.min(100, Math.round((used / limit) * 100));
-  $('context-stat').textContent = fmtTokens(used) + ' / ' + fmtTokens(limit) + ' tokens';
+  $('context-stat').textContent = fmtTokens(used) + ' / ' + fmtTokens(limit);
   $('context-fill').style.width = pct + '%';
   $('context-fill').classList.toggle('warn', pct > 90);
-  $('context-detail').textContent = (included ? '最近 ' + included + ' 条消息' : '当前会话暂无内容') + ' · 4 字符/词估算';
+  $('context-card').title = (included ? '最近 ' + included + ' 条消息' : '当前会话暂无内容') + ' · 4 字符/词估算 · tokens 已用/窗口';
 }
 /* ── 插件系统（FR-72~75，协议 doc/plugin-protocol.md）：右侧面板 + 上传/搜索/启停/删除/surface ── */
 async function loadPluginsPanel() {
@@ -871,5 +884,65 @@ $('source-form').onsubmit = action(async event => {
   state.source = id; state.dir = '.'; await loadFiles();
   toast('已添加来源：' + name);
 });
+/* ── Markdown 渲染（零依赖、全量转义防注入）+ JavaScript 语法高亮 ── */
+function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+const JS_KEYWORDS = 'const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|class|extends|new|try|catch|finally|throw|async|await|import|export|from|default|typeof|instanceof|in|of|yield|delete|void|this|super|null|undefined|true|false|static|get|set';
+function highlightCode(code, lang) {
+  let esc = escapeHtml(code);
+  if (!/^(js|javascript|jsx|ts|typescript|mjs)$/i.test(lang || '')) return esc;
+  // 先做关键词/数字高亮，再保护注释与字符串（避免占位符数字被数字高亮污染）
+  esc = esc.replace(new RegExp('\\b(' + JS_KEYWORDS + ')\\b', 'g'), '<span class="tok-k">$1</span>');
+  esc = esc.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-n">$1</span>');
+  const protectedSegments = [];
+  esc = esc.replace(/(\/\/[^\n]*)|(\/\*[\s\S]*?\*\/)|(&quot;(?:[^&]|&(?!quot;))*?&quot;|&#39;(?:[^&]|&(?!#39;))*?&#39;|`[^`]*`)/g, (m, comment) => {
+    const index = protectedSegments.length;
+    protectedSegments.push('<span class="' + (comment ? 'tok-c' : 'tok-s') + '">' + m + '</span>');
+    return '\u0001' + index + '\u0002';
+  });
+  esc = esc.replace(/\u0001(\d+)\u0002/g, (_, i) => protectedSegments[+i]);
+  return esc;
+}
+function mdInline(text) {
+  let out = escapeHtml(text);
+  out = out.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  out = out.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  out = out.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+  out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  return out;
+}
+function mdBlocks(text) {
+  const out = [];
+  let list = null;
+  let para = [];
+  const flushPara = () => { if (para.length) { out.push('<p>' + para.map(mdInline).join('<br>') + '</p>'); para = []; } };
+  const closeList = () => { if (list) { out.push('</' + list + '>'); list = null; } };
+  for (const line of String(text).split('\n')) {
+    const heading = line.match(/^(#{1,3})\s+(.*)/);
+    if (heading) { flushPara(); closeList(); const level = heading[1].length + 2; out.push('<h' + level + '>' + mdInline(heading[2]) + '</h' + level + '>'); continue; }
+    if (/^\s*[-*]\s+/.test(line)) { flushPara(); if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; } out.push('<li>' + mdInline(line.replace(/^\s*[-*]\s+/, '')) + '</li>'); continue; }
+    if (/^\s*\d+[.)]\s+/.test(line)) { flushPara(); if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; } out.push('<li>' + mdInline(line.replace(/^\s*\d+[.)]\s+/, '')) + '</li>'); continue; }
+    if (/^\s*>\s?/.test(line)) { flushPara(); closeList(); out.push('<blockquote>' + mdInline(line.replace(/^\s*>\s?/, '')) + '</blockquote>'); continue; }
+    if (/^\s*(---+|\*\*\*+)\s*$/.test(line)) { flushPara(); closeList(); out.push('<hr>'); continue; }
+    if (line.trim() === '') { flushPara(); closeList(); continue; }
+    para.push(line);
+  }
+  flushPara();
+  closeList();
+  return out.join('');
+}
+function renderMarkdown(src) {
+  const parts = String(src || '').split(/```([\w+-]*)\n?([\s\S]*?)(?:```|$)/);
+  let html = '';
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 3 === 0) html += mdBlocks(parts[i]);
+    else if (i % 3 === 2) {
+      const lang = parts[i - 1] || '';
+      const label = escapeHtml(lang);
+      html += '<div class="code-block"><div class="code-label">' + (label || 'code') + '</div><pre><code>' + highlightCode(String(parts[i]).replace(/\n$/, ''), lang) + '</code></pre></div>';
+    }
+  }
+  return html;
+}
+
 async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]); }
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
