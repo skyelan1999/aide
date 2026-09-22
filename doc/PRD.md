@@ -6,7 +6,7 @@
 | --- | --- |
 | 文档版本 | v1.15 |
 | 建立日期 | 2026-09-21 |
-| 对应源码基线 | `bb2d1b6`（功能基线 `4e0da10`） |
+| 对应源码基线 | `33712f1`（v0.1.5.0-RC2） |
 | 运行容器 | `aide-aide-1` / `aide:local` / healthy / `127.0.0.1:8097` |
 | 上游文档 | [HANDOVER.md](../HANDOVER.md)（交接与运维）、[docs/architecture.md](../docs/architecture.md)（架构）、[docs/verification.md](../docs/verification.md)（验证记录） |
 | 维护约定 | 需求变更先改本文，再改代码；状态标记必须与实测结果一致 |
