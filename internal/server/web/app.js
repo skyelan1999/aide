@@ -90,14 +90,28 @@ function renderSession() {
       run.commands.forEach(command => { const row = el('div', 'suggested-command'); const button = el('button', 'quiet', '填入命令面板'); button.onclick = () => { $('terminal-body').classList.remove('hidden'); $('terminal-state').textContent = '收起 −'; $('command').value = command; $('command').focus(); }; row.append(el('code', '', command), button); box.append(row); });
     }
     if (run.toolUses?.length) {
-      run.toolUses.forEach((use, toolIndex) => {
+      // 文件类调用合并展示（只显示路径，轻量）；命令与其他工具单独折叠显示细节
+      const fileUses = run.toolUses.filter(u => u.tool === 'read_file' || u.tool === 'list_files');
+      const otherUses = run.toolUses.filter(u => u.tool !== 'read_file' && u.tool !== 'list_files');
+      if (fileUses.length) {
+        const details = el('details', 'tool-use');
+        details.dataset.key = run.id + ':files';
+        const summary = el('summary', '', '⚒ 文件查看 · ' + fileUses.length + ' 次');
+        const paths = fileUses.map(u => { try { return JSON.parse(u.args || '{}').path || '.'; } catch (e) { return '.'; } }).join('\n');
+        details.append(summary, el('pre', 'tool-use-detail', paths));
+        box.append(details);
+      }
+      otherUses.forEach((use, toolIndex) => {
         const details = el('details', 'tool-use');
         details.dataset.key = run.id + ':tool:' + toolIndex;
-        details.open = false; // 默认折叠，点击展开细节
-        const summary = el('summary', '', '⚒ 工具调用 · ' + use.tool);
+        details.open = false;
+        const isCommand = use.tool === 'run_shell';
+        const summary = el('summary', '', isCommand ? '⚒ 建议命令' : '⚒ 工具调用 · ' + use.tool);
         summary.append(el('span', '', toolSummaryBrief(use)));
-        const pre = el('pre', 'tool-use-detail', '参数：' + (use.args || '无') + '\n\n结果：\n' + (use.result || '（无）'));
-        details.append(summary, pre);
+        const detail = isCommand
+          ? '命令：\n' + toolSummaryBrief(use) + '\n\n结果：\n' + (use.result || '（无）')
+          : '参数：' + (use.args || '无') + '\n\n结果：\n' + (use.result || '（无）');
+        details.append(summary, el('pre', 'tool-use-detail', detail));
         box.append(details);
       });
     }

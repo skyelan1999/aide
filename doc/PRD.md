@@ -342,6 +342,7 @@ running → interrupted                      服务重启后的恢复标记
 | LIM-22 | 模型参数取值 | temperature/top_p/penalty 见 FR-61 表：temperature 0–2；top_p 0–1；max_tokens 1–8192；frequency/presence_penalty −2–2；response_format ∈ {text, json_object}；stop ≤16 项 | `profiles.go` |
 | LIM-23 | Profile 文件 | 工程目录 `profiles.json`（用户配置 + strategy + activeProfile；系统配置定义在代码中不可改）；策略文件 `routing-policy.json` / `routing-policy.md`；用户配置 ≤20 个；id 匹配 `^[A-Za-z0-9_-]{1,64}$`，名称 1–32 字符 | `profiles.go` |
 | LIM-26 | 插件 | 插件数 ≤50；单个插件代码 ≤256 KiB；验证/加载超时 10s；聚合 surface ≤2 MiB；插件 id `^[A-Za-z0-9_-]{1,64}$` | `plugins.go` |
+| LIM-29 | 工具循环 | 每任务工具调用 ≤10 轮（每轮为一次真实模型调用：计费与延迟成本 + 防循环失控；整体任务仍受 6 分钟超时约束）；工具结果回传模型继续推理 | `workflow.go: toolLoop` |
 | LIM-28 | 工作空间连接 | SSH 会话同时仅 1 个（旧 master 复用/替换）；远程命令 ≤60s、输出 ≤128 KiB（与本地一致）；密码/私钥仅存 `/data/workspace-secrets.json`（0600）且 API 不回传；最近路径每组 ≤3 条；sftp 单次批次 ≤2000 行 | `ssh_session.go` / `workspace_config.go` |
 | LIM-27 | 插件协议 v1 | ctx 仅支持 logger/effect/on/provide/tool/slot（见 `doc/plugin-protocol.md` §3）；不注入其他服务、不执行 effect/on 副作用、不接入模型工具循环 | `plugin_host.js` |
 | LIM-25 | 多模型 | 模型数 ≤20；模型 id 1–64 字符；名称 ≤32（缺省=id）；上下文窗口 1024–1,048,576（缺省 65,536）；`/api/models` 超时 30s、响应 ≤2 MiB | `server.go` / `provider.go` |
