@@ -108,6 +108,10 @@ func TestLocalWorkspacePathAIReadFix(t *testing.T) {
 	if !strings.Contains(captured, "configured-root-content") {
 		t.Fatalf("AI 未读到配置根内容（FR-79 回归）: %s", captured)
 	}
+	// 系统提示必须注入工作目录快照（路径 + 目录清单）
+	if !strings.Contains(captured, "当前工作目录") || !strings.Contains(captured, "hello.txt") {
+		t.Fatalf("AI 系统提示缺工作目录快照: %s", captured)
+	}
 	// 恢复默认根，避免影响其他用例
 	requireStatus(t, request(a, "PUT", "/api/workspace-config", map[string]any{
 		"workspace": map[string]any{"mode": "local", "path": ""},

@@ -142,7 +142,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		}
 		s.Title = string(title)
 	}
-	history := []Message{{Role: "system", Content: systemPrompt + "\n当前工作目录（宿主视角）: " + a.workspaceDisplay}}
+	history := []Message{{Role: "system", Content: systemPrompt + "\n" + a.workspaceSnapshot()}}
 	// Bound replay size, preserving recent conversation in chronological order.
 	start, total := len(s.Messages), 0
 	for start > 0 && total+len(s.Messages[start-1].Content) < 60000 {
@@ -165,6 +165,36 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	go a.execute(ctx, s, task, a.settings, history, versions, params)
 	jsonOut(w, 202, task)
 }
+// workspaceSnapshot 生成注入系统提示的工作目录快照（FR-79 修复）：
+// 路径 + 顶层目录清单（≤100 项、≤4 KB）；读取具体文件仍需用户显式附加（P3 原则不变）。
+// 远程模式走 SFTP 列表，本地模式走本地列表。
+func (a *App) workspaceSnapshot() string {
+	head := "当前工作目录: " + a.workspaceDisplay
+	items, err := a.listWorkspaceDir(".")
+	if err != nil {
+		return head + "\n（工作目录列表获取失败: " + err.Error() + "）"
+	}
+	var b strings.Builder
+	b.WriteString(head)
+	b.WriteString("\n工作目录顶层内容（读取具体文件请让用户附加；你无权自行执行命令）:\n")
+	count := 0
+	for _, item := range items {
+		if count >= 100 || b.Len() > 4<<10 {
+			b.WriteString("…（目录列表已截断）\n")
+			break
+		}
+		name, _ := item["name"].(string)
+		dir, _ := item["dir"].(bool)
+		if dir {
+			b.WriteString("- " + name + "/\n")
+		} else {
+			b.WriteString("- " + name + "\n")
+		}
+		count++
+	}
+	return b.String()
+}
+
 func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings, messages []Message, versions map[string]Change, params ProfileParams) {
 	defer func() {
 		a.mu.Lock()
