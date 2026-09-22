@@ -114,8 +114,10 @@ func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 		content := "审查结束：未执行测试。"
 		switch calls.Add(1) {
 		case 1:
-			content = "计划：修改 hello.txt，再验证内容。"
+			content = "更新主题"
 		case 2:
+			content = "计划：修改 hello.txt，再验证内容。"
+		case 3:
 			content = `{"summary":"change","files":[{"path":"hello.txt","content":"new"}],"commands":["cat hello.txt"]}`
 		}
 		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: content}}}})
@@ -143,7 +145,7 @@ func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	if task.Status != "awaiting_approval" || calls.Load() != 3 {
+	if task.Status != "awaiting_approval" || calls.Load() != 4 {
 		t.Fatalf("task: %+v calls %d", task, calls.Load())
 	}
 	b, _ := a.workspace.ReadFile("hello.txt")
@@ -229,7 +231,12 @@ func TestChatHistoryAndCancelEndpoint(t *testing.T) {
 	var calls atomic.Int32
 	p := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = io.Copy(io.Discard, r.Body)
-		if calls.Add(1) == 1 {
+		n := calls.Add(1)
+		if n == 1 {
+			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "主题标题"}}}})
+			return
+		}
+		if n == 2 {
 			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "first reply"}}}})
 			return
 		}
@@ -253,6 +260,9 @@ func TestChatHistoryAndCancelEndpoint(t *testing.T) {
 	}
 	if len(s.Messages) != 2 || s.Messages[1].Content != "first reply" {
 		t.Fatal("chat not saved")
+	}
+	if s.Title != "主题标题" {
+		t.Fatalf("topic summary title: %s", s.Title)
 	}
 	w = request(a, "POST", url, map[string]string{"mode": "chat", "prompt": "second"})
 	requireStatus(t, w, 202)

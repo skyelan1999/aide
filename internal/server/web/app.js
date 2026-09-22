@@ -21,8 +21,6 @@ async function refreshConfig() {
   $('settings-sheet-version').textContent = ' · aide ' + versionText;
   $('model-status').textContent = state.config.configured ? '已配置' : '未配置';
   $('model-name').textContent = state.config.configured ? state.config.model + ' · API 已配置' : '先配置模型，即可开始真实 AI 对话';
-  const activeName = state.config.models?.find(m => m.id === state.config.activeModel)?.name || state.config.model || '未配置模型';
-  $('model-picker-label').textContent = activeName;
   estimateContext();
 }
 async function loadSessions() {
@@ -311,6 +309,7 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && !d
    持久化于工程目录 profiles.json；聊天栏策略按钮可选 auto 或手动 profile。 ── */
 async function loadProfiles() { state.profiles = await api('/profiles'); refreshStrategyUI(); }
 function profileName(id) { return state.profiles?.profiles.find(p => p.id === id)?.name || id; }
+function activeModel() { return state.config?.models?.find(m => m.id === state.config.activeModel); }
 function profilesPayloadFrom(source) {
   return {
     strategy: source?.strategy || 'manual',
@@ -439,16 +438,32 @@ function renderProfilesManager(control) {
 function refreshStrategyUI() {
   const p = state.profiles;
   if (!p) return;
-  const label = p.strategy === 'auto' ? '策略 · 自动' : '策略 · ' + profileName(p.activeProfile);
+  const modelName = state.config?.models?.find(m => m.id === state.config.activeModel)?.name || state.config?.model || '';
+  const label = (p.strategy === 'auto' ? '策略 · 自动' : '策略 · ' + profileName(p.activeProfile)) + (modelName ? ' · ' + modelName : '');
   $('strategy-label').textContent = label;
+  $('strategy-label').title = label;
   const menu = $('strategy-menu');
   menu.replaceChildren();
-  menu.append(strategyMenuOption('auto', '', '自动路由', '按 routing-policy.json 规则匹配', p.strategy === 'auto'));
-  menu.append(el('div', 'strategy-menu-sep', '手动'));
+  // 左栏：策略；右栏：模型（各自独立滚动，互不挤压）
+  const left = el('div', 'strategy-menu-col');
+  left.append(el('div', 'strategy-menu-sep', '策略'));
+  left.append(strategyMenuOption('auto', '', '自动路由', '按 routing-policy.json 规则匹配', p.strategy === 'auto'));
+  left.append(el('div', 'strategy-menu-sep', '手动'));
   for (const profile of p.profiles) {
     const selected = p.strategy === 'manual' && p.activeProfile === profile.id;
-    menu.append(strategyMenuOption('profile', profile.id, profile.name, profile.system ? '系统配置' : '自定义配置', selected));
+    left.append(strategyMenuOption('profile', profile.id, profile.name, profile.system ? '系统配置' : '自定义配置', selected));
   }
+  const right = el('div', 'strategy-menu-col');
+  right.append(el('div', 'strategy-menu-sep', '模型'));
+  for (const m of state.config?.models || []) {
+    const selected = state.config.activeModel === m.id;
+    right.append(strategyMenuOption('model', m.id, m.name, m.id + ' · ' + (m.contextWindow || 65536) / 1024 + 'K 上下文', selected));
+  }
+  const manageModels = el('button', 'model-picker-manage', '⚙ 管理模型…');
+  manageModels.type = 'button';
+  manageModels.onclick = () => { closeStrategyMenu(); openSettings(); };
+  right.append(manageModels);
+  menu.append(left, right);
 }
 function strategyMenuOption(kind, value, name, desc, selected) {
   const b = el('button', 'strategy-option' + (selected ? ' selected' : ''));
@@ -459,6 +474,14 @@ function strategyMenuOption(kind, value, name, desc, selected) {
   b.onclick = action(async () => {
     await profilesManager.flush();
     const source = profilesManager.local || state.profiles;
+    if (kind === 'model') {
+      await api('/settings', { method: 'PUT', body: JSON.stringify({ activeModel: value }) });
+      closeStrategyMenu();
+      await refreshConfig();
+      const modelName = state.config.models?.find(m => m.id === value)?.name || value;
+      toast('已切换模型：' + modelName);
+      return;
+    }
     if (kind === 'auto') source.strategy = 'auto';
     else { source.strategy = 'manual'; source.activeProfile = value; }
     await saveProfilesFrom(source);
@@ -481,35 +504,6 @@ $('strategy-button').onclick = async () => {
 };
 document.addEventListener('click', event => { if (!$('strategy-menu').classList.contains('hidden') && !event.target.closest('.strategy-picker')) closeStrategyMenu(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$('strategy-menu').classList.contains('hidden')) closeStrategyMenu(); });
-/* ── 侧栏模型选择器（FR-69，参考 DSH 模型选择器） ── */
-function activeModel() { return state.config?.models?.find(m => m.id === state.config.activeModel); }
-function renderModelPickerMenu() {
-  const menu = $('model-picker-menu');
-  menu.replaceChildren();
-  for (const m of state.config?.models || []) {
-    const b = el('button', 'model-picker-option' + (m.id === state.config.activeModel ? ' selected' : ''));
-    b.type = 'button';
-    b.setAttribute('role', 'menuitemradio');
-    b.setAttribute('aria-checked', String(m.id === state.config.activeModel));
-    b.append(el('span', 'model-picker-check', m.id === state.config.activeModel ? '✓' : ''), el('span', '', m.name), el('small', '', m.id + ' · ' + (m.contextWindow || 65536) / 1024 + 'K 上下文'));
-    b.onclick = action(async () => {
-      await api('/settings', { method: 'PUT', body: JSON.stringify({ activeModel: m.id }) });
-      closeModelPickerMenu();
-      await refreshConfig();
-      toast('已切换到模型：' + m.name);
-    });
-    menu.append(b);
-  }
-  const manage = el('button', 'model-picker-manage', '⚙ 管理模型…');
-  manage.type = 'button';
-  manage.onclick = () => { closeModelPickerMenu(); openSettings(); };
-  menu.append(manage);
-}
-function openModelPickerMenu() { renderModelPickerMenu(); $('model-picker-menu').classList.remove('hidden'); $('model-picker-button').setAttribute('aria-expanded', 'true'); }
-function closeModelPickerMenu() { $('model-picker-menu').classList.add('hidden'); $('model-picker-button').setAttribute('aria-expanded', 'false'); }
-$('model-picker-button').onclick = () => { if ($('model-picker-menu').classList.contains('hidden')) openModelPickerMenu(); else closeModelPickerMenu(); };
-document.addEventListener('click', event => { if (!$('model-picker-menu').classList.contains('hidden') && !event.target.closest('.model-picker')) closeModelPickerMenu(); });
-document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$('model-picker-menu').classList.contains('hidden')) closeModelPickerMenu(); });
 /* ── 模型列表管理（FR-67 / FR-68）：设置弹窗内增删、标记当前、自动获取候选 ── */
 function renderModelList() {
   const host = $('model-list');
