@@ -153,12 +153,31 @@ function sourceIsRW() {
   if (state.file.root !== 'context' || !state.file.source) return false;
   return state.sources.find(x => x.id === state.file.source)?.rw === true;
 }
+function isMarkdownPath(path) { return /\.(md|markdown)$/i.test(path || ''); }
+function setEditorMode(mode) {
+  const preview = mode === 'preview';
+  $('editor').classList.toggle('hidden', preview);
+  $('editor-preview').classList.toggle('hidden', !preview);
+  $('editor-mode-edit').classList.toggle('active', !preview);
+  $('editor-mode-preview').classList.toggle('active', preview);
+  if (preview) { $('editor-preview').innerHTML = renderMarkdown($('editor').value); $('editor-preview').scrollTop = 0; }
+}
 function showEditor() {
   $('editor-title').textContent = state.file.path; $('editor').value = state.file.content;
   const readOnly = state.file.root === 'context' && !sourceIsRW();
   $('editor').readOnly = readOnly; $('save-file').disabled = readOnly; $('attach-file').disabled = state.file.fresh;
-  $('editor-status').textContent = state.file.root === 'context' ? (sourceIsRW() ? '辅助资料 · 读写来源' : '辅助资料 · 只读') : '工作目录 · 保存后同步到主机'; $('editor-dialog').showModal();
+  $('editor-status').textContent = state.file.root === 'context' ? (sourceIsRW() ? '辅助资料 · 读写来源' : '辅助资料 · 只读') : '工作目录 · 保存后同步到主机';
+  const md = isMarkdownPath(state.file.path);
+  $('editor-mode-switch').classList.toggle('hidden', !md);
+  setEditorMode(md ? 'preview' : 'edit'); // md 文件打开即渲染预览（含表格）
+  $('editor-dialog').showModal();
 }
+$('editor-mode-edit').onclick = () => setEditorMode('edit');
+$('editor-mode-preview').onclick = () => setEditorMode('preview');
+$('open-new-tab').onclick = () => {
+  const spec = { root: state.file.source ? 'source' : state.file.root, source: state.file.source || '', path: state.file.path };
+  window.open(location.pathname + '#file=' + encodeURIComponent(JSON.stringify(spec)), '_blank', 'noopener');
+};
 $('new-session').onclick = action(newSession); $('refresh-sessions').onclick = action(loadSessions); $('refresh-files').onclick = action(loadFiles);
 document.querySelectorAll('.mode-switch button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
 document.querySelectorAll('.starter').forEach(b => b.onclick = () => { $('prompt').value = b.dataset.prompt; setMode(b.dataset.mode || 'chat'); $('prompt').focus(); });
@@ -878,13 +897,14 @@ $('source-form').onsubmit = action(async event => {
   state.source = id; state.dir = '.'; await loadFiles();
   toast('已添加来源：' + name);
 });
-/* ── Markdown 渲染（零依赖、全量转义防注入）+ JavaScript 语法高亮 ── */
+/* ── Markdown 渲染：基于 marked v12（MIT，vendor/marked.min.js，GFM 全特性）
+     输出经 DOM 消毒（去 script/style/iframe/事件属性/javascript: 链接），
+     JS/TS 代码块后处理语法高亮；marked 不可用时回退纯文本转义。 ── */
 function escapeHtml(str) { return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 const JS_KEYWORDS = 'const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|class|extends|new|try|catch|finally|throw|async|await|import|export|from|default|typeof|instanceof|in|of|yield|delete|void|this|super|null|undefined|true|false|static|get|set';
 function highlightCode(code, lang) {
   let esc = escapeHtml(code);
   if (!/^(js|javascript|jsx|ts|typescript|mjs)$/i.test(lang || '')) return esc;
-  // 先做关键词/数字高亮，再保护注释与字符串（避免占位符数字被数字高亮污染）
   esc = esc.replace(new RegExp('\\b(' + JS_KEYWORDS + ')\\b', 'g'), '<span class="tok-k">$1</span>');
   esc = esc.replace(/\b(\d+(?:\.\d+)?)\b/g, '<span class="tok-n">$1</span>');
   const protectedSegments = [];
@@ -896,47 +916,78 @@ function highlightCode(code, lang) {
   esc = esc.replace(/\u0001(\d+)\u0002/g, (_, i) => protectedSegments[+i]);
   return esc;
 }
-function mdInline(text) {
-  let out = escapeHtml(text);
-  out = out.replace(/`([^`\n]+)`/g, '<code>$1</code>');
-  out = out.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
-  out = out.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
-  out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
-  return out;
-}
-function mdBlocks(text) {
-  const out = [];
-  let list = null;
-  let para = [];
-  const flushPara = () => { if (para.length) { out.push('<p>' + para.map(mdInline).join('<br>') + '</p>'); para = []; } };
-  const closeList = () => { if (list) { out.push('</' + list + '>'); list = null; } };
-  for (const line of String(text).split('\n')) {
-    const heading = line.match(/^(#{1,3})\s+(.*)/);
-    if (heading) { flushPara(); closeList(); const level = heading[1].length + 2; out.push('<h' + level + '>' + mdInline(heading[2]) + '</h' + level + '>'); continue; }
-    if (/^\s*[-*]\s+/.test(line)) { flushPara(); if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; } out.push('<li>' + mdInline(line.replace(/^\s*[-*]\s+/, '')) + '</li>'); continue; }
-    if (/^\s*\d+[.)]\s+/.test(line)) { flushPara(); if (list !== 'ol') { closeList(); out.push('<ol>'); list = 'ol'; } out.push('<li>' + mdInline(line.replace(/^\s*\d+[.)]\s+/, '')) + '</li>'); continue; }
-    if (/^\s*>\s?/.test(line)) { flushPara(); closeList(); out.push('<blockquote>' + mdInline(line.replace(/^\s*>\s?/, '')) + '</blockquote>'); continue; }
-    if (/^\s*(---+|\*\*\*+)\s*$/.test(line)) { flushPara(); closeList(); out.push('<hr>'); continue; }
-    if (line.trim() === '') { flushPara(); closeList(); continue; }
-    para.push(line);
-  }
-  flushPara();
-  closeList();
-  return out.join('');
+const BLOCKED_TAGS = new Set(['script', 'style', 'iframe', 'object', 'embed', 'form', 'meta', 'link', 'base', 'svg', 'math']);
+function sanitizeHtml(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.body.querySelectorAll('*').forEach(el => {
+    if (BLOCKED_TAGS.has(el.tagName.toLowerCase())) { el.remove(); return; }
+    for (const attr of [...el.attributes]) {
+      const name = attr.name.toLowerCase();
+      if (name.startsWith('on')) { el.removeAttribute(attr.name); continue; }
+      if ((name === 'href' || name === 'src') && /^\s*(javascript|vbscript|data:text\/html)/i.test(attr.value)) el.removeAttribute(attr.name);
+    }
+  });
+  return doc.body;
 }
 function renderMarkdown(src) {
-  const parts = String(src || '').split(/```([\w+-]*)\n?([\s\S]*?)(?:```|$)/);
-  let html = '';
-  for (let i = 0; i < parts.length; i++) {
-    if (i % 3 === 0) html += mdBlocks(parts[i]);
-    else if (i % 3 === 2) {
-      const lang = parts[i - 1] || '';
-      const label = escapeHtml(lang);
-      html += '<div class="code-block"><div class="code-label">' + (label || 'code') + '</div><pre><code>' + highlightCode(String(parts[i]).replace(/\n$/, ''), lang) + '</code></pre></div>';
-    }
+  if (window.marked && typeof window.marked.parse === 'function') {
+    const html = window.marked.parse(String(src || ''), { gfm: true, breaks: false });
+    const body = sanitizeHtml(html);
+    body.querySelectorAll('pre > code[class*="language-"]').forEach(codeEl => {
+      const lang = (codeEl.className.match(/language-([\w+-]+)/) || [])[1] || '';
+      if (/^(js|javascript|jsx|ts|typescript|mjs)$/i.test(lang)) codeEl.innerHTML = highlightCode(codeEl.textContent, lang);
+    });
+    return body.innerHTML;
   }
-  return html;
+  return '<pre>' + escapeHtml(String(src || '')) + '</pre>';
 }
-
-async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]); }
+/* ── 单文件视图（新标签页）：路径 + 可编辑内容（保存带哈希校验）+ md 渲染预览 ── */
+const fileView = { spec: null, hash: '' };
+function setFileViewMode(mode) {
+  const preview = mode === 'preview';
+  $('file-view-editor').classList.toggle('hidden', preview);
+  $('file-view-preview').classList.toggle('hidden', !preview);
+  $('fv-edit').classList.toggle('active', !preview);
+  $('fv-preview').classList.toggle('active', preview);
+  if (preview) { $('file-view-preview').innerHTML = renderMarkdown($('file-view-editor').value); $('file-view-preview').scrollTop = 0; }
+}
+async function openFileViewMode() {
+  let spec = null;
+  try { spec = JSON.parse(decodeURIComponent(new URLSearchParams(location.hash.slice(1)).get('file') || '')); } catch (e) { spec = null; }
+  if (!spec) return;
+  document.body.classList.add('file-view-mode');
+  $('file-view').classList.remove('hidden');
+  fileView.spec = spec;
+  $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;
+  const query = spec.source
+    ? '/file?source=' + encodeURIComponent(spec.source) + '&path=' + encodeURIComponent(spec.path)
+    : '/file?root=' + encodeURIComponent(spec.root) + '&path=' + encodeURIComponent(spec.path);
+  const data = await api(query);
+  fileView.hash = data.hash;
+  const md = isMarkdownPath(spec.path);
+  $('file-view-mode-switch').classList.toggle('hidden', !md);
+  const readOnly = spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true);
+  $('file-view-editor').value = data.content;
+  $('file-view-editor').readOnly = readOnly;
+  $('file-view-save').disabled = readOnly;
+  $('file-view-status').textContent = readOnly ? '只读' : '可编辑 · 保存后同步';
+  setFileViewMode(md ? 'preview' : 'edit'); // md 默认渲染预览
+  $('file-view-toolbar').classList.remove('hidden');
+  $('file-view-content').replaceChildren();
+}
+$('fv-edit').onclick = () => setFileViewMode('edit');
+$('fv-preview').onclick = () => setFileViewMode('preview');
+$('file-view-save').onclick = action(async () => {
+  const body = { path: fileView.spec.path, content: $('file-view-editor').value, hash: fileView.hash };
+  if (fileView.spec.source) body.source = fileView.spec.source;
+  const res = await api('/file', { method: 'PUT', body: JSON.stringify(body) });
+  fileView.hash = res.hash;
+  $('file-view-status').textContent = '✓ 已保存';
+});
+async function initialize() {
+  await refreshConfig();
+  const fragment = new URLSearchParams(location.hash.slice(1));
+  if (fragment.has('file')) { await Promise.all([loadWorkspaceConfig(), loadSourcesList()]); await openFileViewMode(); return; }
+  await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
+}
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
