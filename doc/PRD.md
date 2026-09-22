@@ -4,7 +4,7 @@
 
 | 项目 | 值 |
 | --- | --- |
-| 文档版本 | v1.8 |
+| 文档版本 | v1.9 |
 | 建立日期 | 2026-09-21 |
 | 对应源码基线 | `bb2d1b6`（功能基线 `4e0da10`） |
 | 运行容器 | `aide-aide-1` / `aide:local` / healthy / `127.0.0.1:8097` |
@@ -232,6 +232,11 @@ aide 是一个**运行在本地 Docker 中、以浏览器为界面的 AI 开发�
 | FR-77 | 本地与 SSH/SFTP 连接 | 工作空间支持本地或 SSH/SFTP 远程映射；host/端口/用户名/密码/私钥均可选（密码与密钥存 `/data` 卷 0600，不落工程目录）；远程模式下命令面板走 SSH 命令输入，**仅允许一个 SSH 会话**（ControlMaster 复用） | 已实现·已验证 |
 | FR-78 | 远程文件与 AI 读取 | 远程模式下文件面板浏览/读取/编辑保存、附加与工作流提案应用经 SFTP 完成；AI 附件读取走同一通道 | 已实现·已验证 |
 | FR-79 | 本地路径 AI 读取修复 | 配置自定义本地工作空间路径后，文件面板与 AI 附件/提案读取按配置根生效（根目录动态切换）；回归测试覆盖「配置路径 → 附加 → 工作流读到内容」 | 已实现·已验证 |
+| FR-82 | 辅助资料来源注册表 | 辅助资料可添加多个来源并自由命名、启停、删除；登记记录存于缓存文件夹 `sources.json`；自动系统文档自动挂载为内置来源并**标记读写**（不可删除） | 未实现 |
+| FR-83 | 多类型来源接入 | 来源类型：local/skill（本地目录，宿主机路径语义）、sftp（复用 SSH 通道）、ftp/ftps/smb/link（curl 通道，只读）、MCP（登记与校验；协议接入标未实现） | 未实现 |
+| FR-84 | 来源浏览与附件 | 文件面板辅助资料按来源浏览/读取/附加；AI 附件经来源通道读取（参考资料语义）；读写标记的本地来源支持编辑器保存 | 未实现 |
+| FR-85 | 预留 | 自动系统文档自动生成机制（本期仅挂载与读写标记） | 未实现 |
+
 | FR-81 | 模型工具闭环 | 内置工具 `list_files`/`read_file` 直接执行、`write_file`/`run_shell` 生成待批准提案；插件协议 v1.1 可执行工具（handler + api）经 Node 宿主调用并回传模型（≤6 轮）；未附加文件不可写（P3）、提案经用户批准才落盘（P2） | 已实现·已验证 |
 
 ### 4.10 预留
@@ -342,6 +347,7 @@ running → interrupted                      服务重启后的恢复标记
 | LIM-22 | 模型参数取值 | temperature/top_p/penalty 见 FR-61 表：temperature 0–2；top_p 0–1；max_tokens 1–8192；frequency/presence_penalty −2–2；response_format ∈ {text, json_object}；stop ≤16 项 | `profiles.go` |
 | LIM-23 | Profile 文件 | 工程目录 `profiles.json`（用户配置 + strategy + activeProfile；系统配置定义在代码中不可改）；策略文件 `routing-policy.json` / `routing-policy.md`；用户配置 ≤20 个；id 匹配 `^[A-Za-z0-9_-]{1,64}$`，名称 1–32 字符 | `profiles.go` |
 | LIM-26 | 插件 | 插件数 ≤50；单个插件代码 ≤256 KiB；验证/加载超时 10s；聚合 surface ≤2 MiB；插件 id `^[A-Za-z0-9_-]{1,64}$` | `plugins.go` |
+| LIM-30 | 来源注册表 | 来源 ≤20；登记文件位于缓存目录 `sources.json`；来源密码/密钥存 `/data/sources-secrets.json`（0600）且 API 不回传；curl 通道 30s 超时、响应 ≤2 MiB；sftp 来源每来源独立 ControlMaster socket | `sources.go` |
 | LIM-29 | 工具循环 | 每任务工具调用 ≤10 轮（每轮为一次真实模型调用：计费与延迟成本 + 防循环失控；整体任务仍受 6 分钟超时约束）；工具结果回传模型继续推理 | `workflow.go: toolLoop` |
 | LIM-28 | 工作空间连接 | SSH 会话同时仅 1 个（旧 master 复用/替换）；远程命令 ≤60s、输出 ≤128 KiB（与本地一致）；密码/私钥仅存 `/data/workspace-secrets.json`（0600）且 API 不回传；最近路径每组 ≤3 条；sftp 单次批次 ≤2000 行 | `ssh_session.go` / `workspace_config.go` |
 | LIM-27 | 插件协议 v1 | ctx 仅支持 logger/effect/on/provide/tool/slot（见 `doc/plugin-protocol.md` §3）；不注入其他服务、不执行 effect/on 副作用、不接入模型工具循环 | `plugin_host.js` |
@@ -472,6 +478,7 @@ AI_API_KEY=
 | 2026-09-21 | v1.6 | 登记插件系统 FR-71~FR-75 与 LIM-26/27（深度研究入口卡、插件面板、上传/搜索/启停、DSH 兼容协议 v1 文档输出、默认预装 DSH 插件集） | 编码助手 |
 | 2026-09-21 | v1.7 | 登记工作空间与连接 FR-76~FR-80 与 LIM-28（工作空间配置面板、本地/SSH/SFTP、单 SSH 会话控制台、远程文件与 AI 读取、本地路径读取修复） | 编码助手 |
 | 2026-09-21 | v1.8 | 登记模型工具闭环 FR-81（内置四工具、插件协议 v1.1 可执行工具、提案审批保留 P2/P3） | 编码助手 |
+| 2026-09-21 | v1.9 | 登记辅助资料多来源 FR-82~FR-85 与 LIM-30（来源注册表存缓存目录、系统文档自动挂载读写、多协议接入） | 编码助手 |
 
 ---
 
