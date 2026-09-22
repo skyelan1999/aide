@@ -13,3 +13,4 @@ docker-images/*.sha256
 # IDE 本地配置
 .idea/
 plugins/surface.json
+workspace-config.json

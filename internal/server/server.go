@@ -79,9 +79,19 @@ func normalizeModels(models []ModelRef) ([]ModelRef, error) {
 	}
 	return out, nil
 }
+type ToolCall struct {
+	ID       string `json:"id,omitempty"`
+	Type     string `json:"type,omitempty"`
+	Function struct {
+		Name      string `json:"name"`
+		Arguments string `json:"arguments"`
+	} `json:"function"`
+}
 type Message struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role       string     `json:"role"`
+	Content    string     `json:"content"`
+	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
+	ToolCallID string     `json:"tool_call_id,omitempty"`
 }
 type Session struct {
 	ID       string    `json:"id"`
@@ -105,6 +115,14 @@ type App struct {
 	pluginsPath               string
 	pluginRegistry            pluginRegistry
 	pluginSurface             []byte
+	wsConfigPath              string
+	wsSecretsPath             string
+	wsConfig                  WorkspaceConfig
+	wsSecrets                 workspaceSecrets
+	sshBin, sftpBin           string
+	localRoot                 *os.Root
+	hostLocal                 string
+	workspaceDisplay          string
 }
 
 func env(key, fallback string) string {
@@ -248,6 +266,22 @@ func New(work, reference, data string) (*App, error) {
 		a.pluginsPath = filepath.Join(work, pluginsDirName)
 	}
 	a.runPluginHost(context.Background())
+	a.sshBin = "ssh"
+	a.sftpBin = "sftp"
+	a.hostLocal = env("AIDE_HOST_LOCAL", os.Getenv("HOME"))
+	localRoot, localErr := os.OpenRoot("/local")
+	if localErr != nil {
+		localRoot, localErr = os.OpenRoot(work)
+		if localErr != nil {
+			a.Close()
+			return nil, localErr
+		}
+	}
+	a.localRoot = localRoot
+	if err := a.loadWorkspaceConfig(); err != nil {
+		a.Close()
+		return nil, err
+	}
 	entries, err := filepath.Glob(filepath.Join(data, "session-*.json"))
 	if err != nil {
 		a.Close()
@@ -297,6 +331,8 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("PUT /api/plugins/{id}", a.togglePlugin)
 	mux.HandleFunc("DELETE /api/plugins/{id}", a.deletePlugin)
 	mux.HandleFunc("GET /api/plugin-surface", a.pluginSurfaceHandler)
+	mux.HandleFunc("GET /api/workspace-config", a.getWorkspaceConfig)
+	mux.HandleFunc("PUT /api/workspace-config", a.updateWorkspaceConfig)
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
 	mux.HandleFunc("GET /api/files", a.listFiles)
 	mux.HandleFunc("GET /api/file", a.readFile)
@@ -335,7 +371,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {

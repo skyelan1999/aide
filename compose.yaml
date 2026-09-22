@@ -10,6 +10,7 @@ services:
       AI_BASE_URL: ${AI_BASE_URL:-https://api.deepseek.com}
       AI_MODEL: ${AI_MODEL:-}
       AI_API_KEY: ${AI_API_KEY:-}
+      AIDE_HOST_LOCAL: ${AIDE_LOCAL_ROOT:-$HOME}
     volumes:
       - type: bind
         source: ${AIDE_WORKSPACE:-.}
@@ -18,6 +19,9 @@ services:
         source: ${AIDE_CONTEXT:-../Harness}
         target: /context
         read_only: true
+      - type: bind
+        source: ${AIDE_LOCAL_ROOT:-$HOME}
+        target: /local
       - aide-data:/data
       - aide-home:/home/aide
     extra_hosts:

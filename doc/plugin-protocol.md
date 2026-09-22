@@ -2,7 +2,7 @@
 
 | 项 | 值 |
 | --- | --- |
-| 协议版本 | v1（2026-09-21） |
+| 协议版本 | v1.1（2026-09-21；新增可执行工具与工具 api） |
 | 形态来源 | DeepSeek Harness（DSH）/ Cordis 插件形态的**兼容子集** |
 | 宿主 | aide 容器内 Node.js 宿主（`internal/server/plugin_host.js`，随 Go 二进制 embed） |
 | 存储 | 工程目录 `plugins/<id>/`（manifest.json + index.js + 可选资源） |
@@ -60,7 +60,7 @@ module.exports = () => ({
 | `ctx.effect` | `() => disposer` | 登记生命周期清理（**v1 不执行**，登记即返回空 disposer） | 无 |
 | `ctx.on` | `(event, fn) => disposer` | 事件订阅（**v1 无事件源**，登记即返回空 disposer） | 无 |
 | `ctx.provide` | `(name, value) => disposer` | 声明插件对外提供的服务名 | 记入 surface |
-| `ctx.tool` | `(def) => void` | 声明工具（读取 `def.name` / `def.description`） | 记入 surface |
+| `ctx.tool` | `(def) => void` | 注册工具：`def.name` / `def.description` / `def.parameters`（JSON Schema）/ `def.handler(args, api)`；**v1.1：带 handler 的工具可被模型调用**（surface 标记 `executable: true`） | 记入 surface |
 | `ctx.slot` | `(def) => void` | 声明 UI 槽位（读取 `def.id` / `def.name`） | 记入 surface |
 
 v1 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通过加载），不执行副作用；`tool/slot` 声明会被收集进插件 surface，供界面展示与后续协议版本接入模型工具循环。除上表 API 外，插件访问任何其他 ctx 属性将得到 `undefined`（不注入、不伪造）。
@@ -113,6 +113,18 @@ v1 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通过
 }
 ```
 
+## 5.1 工具执行（v1.1）
+
+带 `handler` 的工具由 Node 宿主执行（`call` 命令，60s 超时）。handler 第二参数 `api` 提供受限能力：
+
+| api | 行为 |
+| --- | --- |
+| `api.readFile(rel)` / `api.listFiles(rel)` | **直接执行**（仅限容器内 /workspace；路径越界报错） |
+| `api.proposeWrite(rel, content)` / `api.proposeCommand(cmd)` | **只生成提案**（返回 `{proposal:{type:"file"|"command",…}}`），由 Go 侧转为待批准提案（P2 原则），模型不得宣称已写入/已执行 |
+| `api.log(...)` | 输出宿主日志 |
+
+aide 内置四个系统工具与插件工具同环：`list_files`/`read_file` 直接执行，`write_file`/`run_shell` 仅生成提案；模型工具循环 ≤6 轮；写文件仅允许新文件或已附加文件（P3 原则保留）。工具调用结果经 `role:"tool"` 消息回传模型继续推理。
+
 ## 6. 安全模型（与 aide 既有边界一致）
 
 - 插件代码由 **Node.js 在容器内以 `aide` 用户**执行，权限与命令面板一致（可信单用户工作台前提）；无额外沙箱、无网络/文件系统禁令（v1 不注入特权，但不阻止插件自行动用 Node 能力）。
@@ -123,7 +135,7 @@ v1 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通过
 
 - v1 目标是「DSH 插件的**形态兼容**」：可以上传、校验、启用、停用并展示其声明的工具/槽位；**不等于** DSH 运行时兼容。
 - 协议版本升级规则：新增 ctx API → 小版本（v1.1）；变更既有 API 语义或校验规则 → 大版本（v2.0）。历史插件按 manifest 记录兼容性说明。
-- 后续路线：v1.1 `ctx.tool` 接入工作流工具循环；v1.2 Slot 渲染与面板注册；v2 服务注入与多插件依赖。
+- 后续路线：v1.2 Slot 渲染与面板注册；v2 服务注入与多插件依赖。
 
 ## 8. 默认预装：DSH 支持插件集（官方预设）
 

@@ -63,6 +63,9 @@ func (a *App) root(which string) (*os.Root, error) {
 	if which == "context" {
 		return a.reference, nil
 	}
+	if which == "local" {
+		return a.localRoot, nil
+	}
 	return nil, errors.New("未知根目录")
 }
 func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
@@ -74,21 +77,39 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	root, err := a.root(r.URL.Query().Get("root"))
+	which := r.URL.Query().Get("root")
+	if which == "workspace" && a.workspaceMode() == "ssh" {
+		items, err := a.listWorkspaceDir(p)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		jsonOut(w, 200, items)
+		return
+	}
+	root, err := a.root(which)
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
-	f, err := root.Open(p)
+	items, err := a.listLocalDir(root, p)
 	if err != nil {
 		fail(w, 400, err)
 		return
+	}
+	jsonOut(w, 200, items)
+}
+
+// listLocalDir 列本地目录（目录优先、名称升序；≤2000 项）。
+func (a *App) listLocalDir(root *os.Root, p string) ([]map[string]any, error) {
+	f, err := root.Open(p)
+	if err != nil {
+		return nil, err
 	}
 	defer f.Close()
 	entries, err := f.ReadDir(2000)
 	if err != nil && err != io.EOF {
-		fail(w, 400, err)
-		return
+		return nil, err
 	}
 	items := []map[string]any{}
 	for _, e := range entries {
@@ -107,15 +128,21 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 		}
 		return items[i]["name"].(string) < items[j]["name"].(string)
 	})
-	jsonOut(w, 200, items)
+	return items, nil
 }
 func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
-	root, err := a.root(r.URL.Query().Get("root"))
-	if err != nil {
-		fail(w, 400, err)
-		return
+	var b []byte
+	var err error
+	if r.URL.Query().Get("root") == "workspace" && a.workspaceMode() == "ssh" {
+		b, err = a.readWorkspaceText(r.URL.Query().Get("path"))
+	} else {
+		root, rootErr := a.root(r.URL.Query().Get("root"))
+		if rootErr != nil {
+			fail(w, 400, rootErr)
+			return
+		}
+		b, err = readText(root, r.URL.Query().Get("path"))
 	}
-	b, err := readText(root, r.URL.Query().Get("path"))
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -142,6 +169,23 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	}
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
+	if a.workspaceMode() == "ssh" {
+		current, readErr := a.readWorkspaceText(in.Path)
+		if readErr == nil && hash(current) != in.Hash {
+			fail(w, 409, errors.New("文件已改变或已存在，请重新打开后再保存"))
+			return
+		}
+		if readErr != nil && in.Hash != "" {
+			fail(w, 409, errors.New("文件已被删除，请重新打开"))
+			return
+		}
+		if err := a.writeWorkspaceText(in.Path, []byte(in.Content)); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		jsonOut(w, 200, map[string]string{"hash": hash([]byte(in.Content))})
+		return
+	}
 	if err := checkVersion(a.workspace, in.Path, in.Hash); err != nil {
 		fail(w, 409, err)
 		return

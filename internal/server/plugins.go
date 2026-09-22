@@ -284,6 +284,72 @@ func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {
 	fail(w, 404, errors.New("插件不存在"))
 }
 
+// callPluginTool 调用启用插件的可执行工具（协议 v1.1，60s 超时）。
+func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (any, error) {
+	req, err := json.Marshal(map[string]any{"plugin": pluginID, "tool": toolName, "args": args})
+	if err != nil {
+		return nil, err
+	}
+	outFile := filepath.Join(os.TempDir(), "aide-plugin-call-"+newID()+".json")
+	defer os.Remove(outFile)
+	ctx, cancel := context.WithTimeout(context.Background(), 70*time.Second)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "node", "-e", pluginHostJS, "call", a.pluginsPath, string(req), outFile)
+	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	if out, runErr := cmd.CombinedOutput(); runErr != nil && ctx.Err() != nil {
+		return nil, errors.New("插件工具执行超时")
+	} else if runErr != nil {
+		return nil, fmt.Errorf("插件宿主失败: %s", strings.TrimSpace(string(out)))
+	}
+	b, err := os.ReadFile(outFile)
+	if err != nil {
+		return nil, fmt.Errorf("工具结果读取失败: %w", err)
+	}
+	var result struct {
+		OK     bool   `json:"ok"`
+		Result any    `json:"result"`
+		Error  string `json:"error"`
+	}
+	if err := json.Unmarshal(b, &result); err != nil {
+		return nil, errors.New("工具结果解析失败")
+	}
+	if !result.OK {
+		return nil, errors.New(result.Error)
+	}
+	return result.Result, nil
+}
+
+// normalizePluginResult 归一化插件工具结果：文本摘要 + 提案列表。
+func normalizePluginResult(raw any) (string, []map[string]any) {
+	text := "插件工具已执行。"
+	proposals := []map[string]any{}
+	collect := func(v any) {
+		switch t := v.(type) {
+		case string:
+			if t != "" {
+				text = t
+			}
+		case map[string]any:
+			if prop, ok := t["proposal"].(map[string]any); ok {
+				proposals = append(proposals, prop)
+			} else if s, ok := t["text"].(string); ok {
+				text = s
+			}
+		}
+	}
+	if list, ok := raw.([]any); ok {
+		for _, item := range list {
+			collect(item)
+		}
+	} else {
+		collect(raw)
+	}
+	if len(proposals) > 0 {
+		text += "（含 " + fmt.Sprint(len(proposals)) + " 条提案，等待用户批准）"
+	}
+	return text, proposals
+}
+
 func (a *App) pluginSurfaceHandler(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()

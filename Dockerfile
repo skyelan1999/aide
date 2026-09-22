@@ -18,8 +18,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 FROM toolchain AS runtime
 COPY --from=build /usr/local/bin/aide /usr/local/bin/aide
 RUN groupadd -g 1000 aide && useradd -m -u 1000 -g aide aide \
-    && mkdir -p /data /workspace /context /home/aide/.cache/go-build /home/aide/go \
-    && chown -R aide:aide /data /workspace /context /home/aide
+    && mkdir -p /data /workspace /context /local /home/aide/.cache/go-build /home/aide/go \
+    && chown -R aide:aide /data /workspace /context /local /home/aide
 ENV AIDE_ADDR=0.0.0.0:8080 AIDE_WORKSPACE=/workspace AIDE_CONTEXT=/context AIDE_DATA=/data
 ENV GOCACHE=/home/aide/.cache/go-build GOPATH=/home/aide/go
 USER aide

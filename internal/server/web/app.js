@@ -45,6 +45,14 @@ async function newSession() {
   clearTimeout(state.poll); state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus();
 }
 const labels = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', chat: 'aide' };
+function toolSummaryBrief(use) {
+  try {
+    const args = JSON.parse(use.args || '{}');
+    const brief = Object.values(args)[0];
+    if (typeof brief === 'string') return ' · ' + brief.slice(0, 60);
+  } catch (error) { /* 非 JSON 参数直接忽略 */ }
+  return '';
+}
 const statuses = { running: '运行中', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断', awaiting_approval: '等待应用' };
 function renderSession() {
   const previousScroll = $('conversation').scrollTop;
@@ -80,6 +88,32 @@ function renderSession() {
     if (run.commands?.length) {
       box.append(el('p', 'muted', '建议验证命令（尚未运行）'));
       run.commands.forEach(command => { const row = el('div', 'suggested-command'); const button = el('button', 'quiet', '填入命令面板'); button.onclick = () => { $('terminal-body').classList.remove('hidden'); $('terminal-state').textContent = '收起 −'; $('command').value = command; $('command').focus(); }; row.append(el('code', '', command), button); box.append(row); });
+    }
+    if (run.toolUses?.length) {
+      // 文件类调用合并展示（只显示路径，轻量）；命令与其他工具单独折叠显示细节
+      const fileUses = run.toolUses.filter(u => u.tool === 'read_file' || u.tool === 'list_files');
+      const otherUses = run.toolUses.filter(u => u.tool !== 'read_file' && u.tool !== 'list_files');
+      if (fileUses.length) {
+        const details = el('details', 'tool-use');
+        details.dataset.key = run.id + ':files';
+        const summary = el('summary', '', '⚒ 文件查看 · ' + fileUses.length + ' 次');
+        const paths = fileUses.map(u => { try { return JSON.parse(u.args || '{}').path || '.'; } catch (e) { return '.'; } }).join('\n');
+        details.append(summary, el('pre', 'tool-use-detail', paths));
+        box.append(details);
+      }
+      otherUses.forEach((use, toolIndex) => {
+        const details = el('details', 'tool-use');
+        details.dataset.key = run.id + ':tool:' + toolIndex;
+        details.open = false;
+        const isCommand = use.tool === 'run_shell';
+        const summary = el('summary', '', isCommand ? '⚒ 建议命令' : '⚒ 工具调用 · ' + use.tool);
+        summary.append(el('span', '', toolSummaryBrief(use)));
+        const detail = isCommand
+          ? '命令：\n' + toolSummaryBrief(use) + '\n\n结果：\n' + (use.result || '（无）')
+          : '参数：' + (use.args || '无') + '\n\n结果：\n' + (use.result || '（无）');
+        details.append(summary, el('pre', 'tool-use-detail', detail));
+        box.append(details);
+      });
     }
     if (run.error) box.append(el('p', 'task-error', run.error)); $('timeline').append(box);
   }
@@ -249,8 +283,8 @@ function bindSettingsTrigger(button) {
 bindSettingsTrigger($('brand-button'));
 bindSettingsTrigger($('brand-mini'));
 $('settings-sheet-close').onclick = closeSettingsSheet;
-$('settings-backdrop').onclick = closeSettingsSheet;
-document.addEventListener('keydown', event => { if (event.key === 'Escape' && $('settings-sheet').classList.contains('open') && !document.querySelector('dialog[open]')) closeSettingsSheet(); });
+$('settings-backdrop').onclick = () => { if ($('workspace-sheet').classList.contains('open')) closeWorkspaceSheet(); else closeSettingsSheet(); };
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !document.querySelector('dialog[open]')) { if ($('workspace-sheet').classList.contains('open')) closeWorkspaceSheet(); else if ($('settings-sheet').classList.contains('open')) closeSettingsSheet(); } });
 /* ── 模型参数 Profile 与策略路由（FR-61~FR-64）：数据经 GET/PUT /api/profiles，
    持久化于工程目录 profiles.json；聊天栏策略按钮可选 auto 或手动 profile。 ── */
 async function loadProfiles() { state.profiles = await api('/profiles'); refreshStrategyUI(); }
@@ -624,5 +658,148 @@ $('plugin-upload-form').onsubmit = action(async event => {
   await loadPluginsPanel();
   toast('插件已上传并启用');
 });
-async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles(), loadProfiles()]); }
+
+/* ── 工作空间配置（FR-76~80）：点侧栏工作空间卡片弹出；本地/SSH·SFTP、文档、缓存、最近路径 ── */
+const wsState = { config: null, browse: { field: '', root: 'workspace', dir: '.' } };
+async function loadWorkspaceConfig() { wsState.config = await api('/workspace-config'); renderWorkspaceSummary(); }
+function renderWorkspaceSummary() {
+  const w = wsState.config?.workspace || {};
+  $('workspace-summary').textContent = w.mode === 'ssh' ? (w.host || '远程') + ' · SSH/SFTP' : (state.config?.workspaceDisplay || '/workspace') + ' · 本地';
+  $('command-mode').textContent = w.mode === 'ssh' ? 'SSH · ' + (w.host || '未配置主机') : '本地';
+}
+function setWsMode(mode) {
+  document.querySelectorAll('.ws-seg:not(.ws-auth) [data-mode]').forEach(b => { const on = b.dataset.mode === mode; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
+  $('ws-local-fields').classList.toggle('hidden', mode !== 'local');
+  $('ws-ssh-fields').classList.toggle('hidden', mode !== 'ssh');
+}
+function setWsAuth(auth) {
+  document.querySelectorAll('.ws-auth [data-auth]').forEach(b => { const on = b.dataset.auth === auth; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
+  $('ws-password-field').classList.toggle('hidden', auth !== 'password');
+  $('ws-key-field').classList.toggle('hidden', auth !== 'key');
+}
+function renderWsRecent(id, list) {
+  const host = $(id);
+  host.replaceChildren();
+  if (!list.length) { host.append(el('p', 'muted', '暂无最近路径')); return; }
+  list.forEach(value => {
+    const chip = el('button', 'ws-recent-chip', value);
+    chip.type = 'button';
+    chip.title = '点击挂载：' + value;
+    chip.onclick = action(async () => {
+      const field = id === 'ws-recent' ? 'ws-path' : id === 'docs-recent' ? 'docs-path' : 'cache-path';
+      $(field).value = value;
+      await saveWorkspaceConfig();
+      toast('已挂载路径：' + value);
+    });
+    host.append(chip);
+  });
+}
+function fillWorkspaceSheet() {
+  const c = wsState.config;
+  const w = c.workspace || {};
+  setWsMode(w.mode || 'local');
+  $('ws-path').value = w.mode === 'local' ? (w.path || '') : '';
+  $('ws-host').value = w.host || '';
+  $('ws-port').value = w.port || 22;
+  $('ws-user').value = w.username || '';
+  $('ws-remote-path').value = w.mode === 'ssh' ? (w.path || '') : '';
+  setWsAuth(w.auth || 'password');
+  $('ws-password').value = ''; $('ws-key').value = '';
+  $('ws-password').placeholder = c.hasPassword ? '已保存密码；留空保留' : '设置远程密码';
+  $('ws-key').placeholder = c.hasKey ? '已保存私钥；留空保留' : '粘贴私钥内容';
+  $('docs-path').value = c.docs?.path || '';
+  $('cache-path').value = c.cache?.path || '';
+  $('ws-clear-secrets').checked = false;
+  renderWsRecent('ws-recent', c.recent?.workspace || []);
+  renderWsRecent('docs-recent', c.recent?.docs || []);
+  renderWsRecent('cache-recent', c.recent?.cache || []);
+}
+function collectWsConfig() {
+  const mode = document.querySelector('.ws-seg:not(.ws-auth) [data-mode].active')?.dataset.mode || 'local';
+  const auth = document.querySelector('.ws-auth [data-auth].active')?.dataset.auth || 'password';
+  return {
+    workspace: { mode, path: mode === 'local' ? $('ws-path').value.trim() : $('ws-remote-path').value.trim(), host: $('ws-host').value.trim(), port: parseInt($('ws-port').value, 10) || 22, username: $('ws-user').value.trim(), auth },
+    docs: { path: $('docs-path').value.trim() },
+    cache: { path: $('cache-path').value.trim() },
+    password: $('ws-password').value,
+    key: $('ws-key').value,
+    clearPassword: $('ws-clear-secrets').checked,
+    clearKey: $('ws-clear-secrets').checked
+  };
+}
+async function saveWorkspaceConfig() {
+  wsState.config = await api('/workspace-config', { method: 'PUT', body: JSON.stringify(collectWsConfig()) });
+  renderWorkspaceSummary();
+  fillWorkspaceSheet();
+  await loadFiles();
+}
+function openWorkspaceSheet() {
+  closeSettingsSheet();
+  fillWorkspaceSheet();
+  $('workspace-sheet').classList.add('open');
+  $('settings-backdrop').classList.add('open');
+}
+function closeWorkspaceSheet() {
+  $('workspace-sheet').classList.remove('open');
+  $('settings-backdrop').classList.remove('open');
+}
+$('workspace-config-button').onclick = () => { action(async () => { if (!wsState.config) await loadWorkspaceConfig(); openWorkspaceSheet(); })(); };
+$('workspace-sheet-close').onclick = closeWorkspaceSheet;
+$('ws-save').onclick = action(async () => { await saveWorkspaceConfig(); closeWorkspaceSheet(); toast('工作空间配置已保存'); });
+document.querySelectorAll('.ws-seg:not(.ws-auth) [data-mode]').forEach(b => b.onclick = () => setWsMode(b.dataset.mode));
+document.querySelectorAll('.ws-auth [data-auth]').forEach(b => b.onclick = () => setWsAuth(b.dataset.auth));
+/* 目录选择器：按宿主机真实目录浏览（root=local），显示与回填均为本机路径 */
+function hostPathOf(dir) {
+  const base = state.config?.hostLocal || '/local';
+  if (dir === '.' || dir === '') return base;
+  return base.replace(/\/$/, '') + '/' + dir;
+}
+/* 从输入值推导浏览起点：宿主机路径 → 本地挂载相对路径；空值/其他前缀回退根 */
+function browseDirFromValue(value) {
+  if (!value) return '.';
+  const base = state.config?.hostLocal || '/local';
+  if (value.startsWith(base)) {
+    const rel = value.slice(base.length).replace(/^\/+/, '');
+    return rel || '.';
+  }
+  return '.';
+}
+/* 当前路径不可用时逐级向上找到可用目录 */
+async function resolveExistingDir(dir) {
+  for (;;) {
+    try {
+      await api('/files?root=local&path=' + encodeURIComponent(dir));
+      return dir;
+    } catch (error) {
+      if (dir === '.' || !dir.includes('/')) return '.';
+      dir = dir.slice(0, dir.lastIndexOf('/'));
+    }
+  }
+}
+function openBrowse(field) {
+  action(async () => {
+    const start = browseDirFromValue($(field).value);
+    const dir = await resolveExistingDir(start);
+    wsState.browse = { field, dir };
+    $('ws-browse-dialog').showModal();
+    await loadBrowseDir();
+  })();
+}
+async function loadBrowseDir() {
+  const b = wsState.browse;
+  const files = await api('/files?root=local&path=' + encodeURIComponent(b.dir));
+  $('ws-browse-path').textContent = hostPathOf(b.dir);
+  const list = $('ws-browse-list');
+  list.replaceChildren();
+  const dirs = files.filter(f => f.dir);
+  if (!dirs.length) list.append(el('p', 'muted', '没有子目录'));
+  dirs.forEach(d => { const row = el('button', 'ws-browse-item', '▱ ' + d.name); row.onclick = () => { b.dir = d.path; action(loadBrowseDir)(); }; list.append(row); });
+}
+$('ws-browse').onclick = () => openBrowse('ws-path');
+$('docs-browse').onclick = () => openBrowse('docs-path');
+$('cache-browse').onclick = () => openBrowse('cache-path');
+$('ws-browse-parent').onclick = () => { const b = wsState.browse; b.dir = b.dir.includes('/') ? b.dir.slice(0, b.dir.lastIndexOf('/')) : '.'; action(loadBrowseDir)(); };
+$('ws-browse-select').onclick = () => { const b = wsState.browse; $(b.field).value = hostPathOf(b.dir); $('ws-browse-dialog').close(); };
+
+async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig()]); }
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
