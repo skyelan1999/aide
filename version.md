@@ -4,6 +4,9 @@
 
 ## 0.1.5.0 RC2（2026-09-23）
 
+- PRD 全量核对：FR-23 真实模型端到端验收通过（deepseek-v4-pro）；propose 步骤强制 response_format=json_object 修复偶发方案 JSON 失败；FR-33 状态修正（FR-81 已落地）
+
+
 - 日常更新
 
 
