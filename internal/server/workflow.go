@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"time"
 )
@@ -168,6 +169,9 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		s.Title = string(title)
 	}
 	history := []Message{{Role: "system", Content: systemPrompt + "\n当前工作目录: " + a.workspaceDisplay + "\n可用工具: " + a.toolListHint()}}
+	if s.Compact != "" {
+		history = append(history, Message{Role: "system", Content: "历史摘要（已压缩 " + fmt.Sprint(s.CompactedMessages) + " 条消息）:\n" + s.Compact})
+	}
 	// Bound replay size, preserving recent conversation in chronological order.
 	start, total := len(s.Messages), 0
 	for start > 0 && total+len(s.Messages[start-1].Content) < 60000 {
@@ -269,6 +273,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		task.Status = "failed"
 		task.Error = "会话保存失败: " + err.Error()
 	}
+	a.maybeAutoCompact(s, cfg)
 }
 // summarizeTopic 每次新任务先总结当前主题并更新会话标题（FR-88）。
 // 独立轻量调用（max_tokens ≤64），失败时保留原标题，不阻断任务。
@@ -714,4 +719,198 @@ func (a *App) pluginOwnerOf(toolName string) string {
 		}
 	}
 	return ""
+}
+
+// ── 全局搜索（FR-92）：标题加权 + 正文片段 ──
+
+func (a *App) searchSessions(w http.ResponseWriter, r *http.Request) {
+	q := strings.TrimSpace(r.URL.Query().Get("q"))
+	if q == "" || len(q) > 200 {
+		fail(w, 400, errors.New("请输入 1–200 字符的搜索词"))
+		return
+	}
+	lower := strings.ToLower(q)
+	type result struct {
+		SessionID string `json:"sessionId"`
+		Title     string `json:"title"`
+		Snippet   string `json:"snippet"`
+		Created   string `json:"created"`
+		Score     int    `json:"-"`
+	}
+	results := []result{}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	for _, sess := range a.sessions {
+		score := 0
+		snippet := ""
+		if strings.Contains(strings.ToLower(sess.Title), lower) {
+			score = 2
+			snippet = sess.Title
+		}
+		if strings.Contains(strings.ToLower(sess.Compact), lower) && score < 2 {
+			score = 1
+			snippet = "（历史摘要）" + clip(sess.Compact, 120)
+		}
+		for _, m := range sess.Messages {
+			if strings.Contains(strings.ToLower(m.Content), lower) {
+				if score < 2 {
+					score = 1
+				}
+				idx := strings.Index(strings.ToLower(m.Content), lower)
+				start := idx - 40
+				if start < 0 {
+					start = 0
+				}
+				snippet = "…" + clip(m.Content[start:], 160)
+				break
+			}
+		}
+		if score > 0 {
+			results = append(results, result{SessionID: sess.ID, Title: sess.Title, Snippet: snippet, Created: sess.Created, Score: score})
+		}
+	}
+	sort.Slice(results, func(i, j int) bool {
+		if results[i].Score != results[j].Score {
+			return results[i].Score > results[j].Score
+		}
+		return results[i].Created > results[j].Created
+	})
+	if len(results) > 10 {
+		results = results[:10]
+	}
+	jsonOut(w, 200, map[string]any{"results": results})
+}
+
+func clip(s string, n int) string {
+	r := []rune(s)
+	if len(r) <= n {
+		return s
+	}
+	return string(r[:n]) + "…"
+}
+
+// ── 会话压缩（FR-93，参考 DSH compaction 与 Codex 结构化摘要） ──
+
+const (
+	compactKeepBytes  = 24000 // 保留最近消息的字节预算
+	compactAutoBytes  = 48000 // 超过该总量时自动压缩
+	compactMaxFolded  = 400   // 单次最多折叠消息数
+)
+
+func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	sess := a.sessions[r.PathValue("id")]
+	if sess == nil {
+		a.mu.Unlock()
+		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	if a.settings.Model == "" {
+		a.mu.Unlock()
+		fail(w, 400, errors.New("请先配置模型"))
+		return
+	}
+	total := 0
+	for _, m := range sess.Messages {
+		total += len(m.Content)
+	}
+	if total <= compactKeepBytes {
+		a.mu.Unlock()
+		jsonOut(w, 200, map[string]any{"ok": true, "folded": 0, "compact": sess.Compact})
+		return
+	}
+	// 分割点：从后向前保留 compactKeepBytes
+	split := len(sess.Messages)
+	keep := 0
+	for split > 0 && keep < compactKeepBytes {
+		split--
+		keep += len(sess.Messages[split].Content)
+	}
+	if split == 0 || split > compactMaxFolded {
+		split = compactMaxFolded
+		if split >= len(sess.Messages) {
+			split = len(sess.Messages) / 2
+		}
+	}
+	folded := sess.Messages[:split]
+	cfg := a.settings
+	a.mu.Unlock()
+	summary, err := a.buildCompactionSummary(folded, cfg)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	a.mu.Lock()
+	sess.Compact = summary
+	sess.CompactedMessages += len(folded)
+	sess.CompactedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	sess.Messages = sess.Messages[split:]
+	saveErr := a.save(sess)
+	a.mu.Unlock()
+	if saveErr != nil {
+		fail(w, 500, saveErr)
+		return
+	}
+	jsonOut(w, 200, map[string]any{"ok": true, "folded": len(folded), "compact": summary, "compactedMessages": sess.CompactedMessages})
+}
+
+// buildCompactionSummary 用模型把折叠消息压成结构化摘要（Codex 风格）。
+func (a *App) buildCompactionSummary(folded []Message, cfg Settings) (string, error) {
+	var b strings.Builder
+	b.WriteString("以下是需要压缩的历史对话：\n")
+	for _, m := range folded {
+		b.WriteString(m.Role + ": " + clip(m.Content, 4000) + "\n")
+	}
+	instruction := `把以上历史对话压缩为结构化摘要。只输出一个 JSON 对象（不要 markdown 围栏）：
+{"goal":"整体目标","decisions":["关键决策"],"files":["涉及文件"],"facts":["重要事实"],"pending":["未完成事项"]}
+中文、简洁、每条不超过 40 字。`
+	params := ProfileParams{MaxTokens: 1024}
+	out, _, _, err := complete(context.Background(), cfg, []Message{{Role: "system", Content: instruction}, {Role: "user", Content: b.String()}}, params, nil)
+	if err != nil {
+		return "", fmt.Errorf("压缩失败: %w", err)
+	}
+	out = strings.TrimSpace(out)
+	out = strings.TrimPrefix(out, "```json")
+	out = strings.TrimPrefix(out, "```")
+	out = strings.TrimSuffix(strings.TrimSpace(out), "```")
+	var parsed map[string]any
+	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
+		// 非 JSON 时保留原文摘要
+		return clip(out, 6000), nil
+	}
+	return clip(out, 6000), nil
+}
+
+// maybeAutoCompact 任务结束后若历史超阈值则自动压缩（FR-93）。
+func (a *App) maybeAutoCompact(s *Session, cfg Settings) {
+	total := 0
+	for _, m := range s.Messages {
+		total += len(m.Content)
+	}
+	if total <= compactAutoBytes || cfg.Model == "" {
+		return
+	}
+	_, _ = a.compactSessionInternal(s, cfg)
+}
+
+func (a *App) compactSessionInternal(s *Session, cfg Settings) (int, error) {
+	split := len(s.Messages)
+	keep := 0
+	for split > 0 && keep < compactKeepBytes {
+		split--
+		keep += len(s.Messages[split].Content)
+	}
+	if split <= 0 {
+		return 0, nil
+	}
+	folded := s.Messages[:split]
+	summary, err := a.buildCompactionSummary(folded, cfg)
+	if err != nil {
+		return 0, err
+	}
+	s.Compact = summary
+	s.CompactedMessages += len(folded)
+	s.CompactedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	s.Messages = s.Messages[split:]
+	return len(folded), a.save(s)
 }
