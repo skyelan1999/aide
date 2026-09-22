@@ -190,6 +190,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 202, task)
 }
 func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings, messages []Message, versions map[string]Change, params ProfileParams) {
+	a.summarizeTopic(ctx, s, task, cfg, params)
 	defer func() {
 		a.mu.Lock()
 		if cancel := a.cancels[task.ID]; cancel != nil {
@@ -268,6 +269,31 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		task.Error = "会话保存失败: " + err.Error()
 	}
 }
+// summarizeTopic 每次新任务先总结当前主题并更新会话标题（FR-88）。
+// 独立轻量调用（max_tokens ≤64），失败时保留原标题，不阻断任务。
+func (a *App) summarizeTopic(ctx context.Context, s *Session, task *Task, cfg Settings, params ProfileParams) {
+	summaryParams := params
+	summaryParams.MaxTokens = 64
+	input := []Message{
+		{Role: "system", Content: "你只输出一个不超过 12 个字的主题短语，概括用户当前任务的唯一主题。不要解释、不要标点、不要引号。"},
+		{Role: "user", Content: task.Prompt},
+	}
+	topic, _, err := complete(ctx, cfg, input, summaryParams, nil)
+	if err != nil || strings.TrimSpace(topic) == "" {
+		return
+	}
+	topic = strings.TrimSpace(topic)
+	runes := []rune(topic)
+	if len(runes) > 32 {
+		runes = runes[:32]
+	}
+	a.mu.Lock()
+	s.Title = string(runes)
+	saveErr := a.save(s)
+	a.mu.Unlock()
+	_ = saveErr
+}
+
 func (a *App) acceptProposal(s *Session, task *Task, raw string, versions map[string]Change) error {
 	raw = strings.TrimSpace(raw)
 	if strings.HasPrefix(raw, "```") {

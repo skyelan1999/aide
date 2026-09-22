@@ -18,6 +18,8 @@ type toolProvider struct {
 	idx      int
 }
 
+func (p *toolProvider) requestsEmpty() int { return len(p.requests) }
+
 func newToolProvider(t *testing.T, script []func() (string, []ToolCall)) *toolProvider {
 	p := &toolProvider{script: script}
 	p.Server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -26,13 +28,16 @@ func newToolProvider(t *testing.T, script []func() (string, []ToolCall)) *toolPr
 			Tools    []any     `json:"tools"`
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
+		first := len(p.requests) == 0
 		p.requests = append(p.requests, body.Messages)
-		if len(body.Tools) == 0 {
+		if !first && len(body.Tools) == 0 {
 			t.Error("tools not sent to provider")
 		}
 		var content string
 		var calls []ToolCall
-		if p.idx < len(p.script) {
+		if first {
+			content, calls = "主题", nil // 首个调用是任务主题总结（FR-88）
+		} else if p.idx < len(p.script) {
 			content, calls = p.script[p.idx]()
 			p.idx++
 		}

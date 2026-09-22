@@ -7,8 +7,6 @@
   <button id="new-session" class="primary new-session"><span>＋</span> 新建会话 <kbd>N</kbd></button>
   <div class="section-label">工作空间</div>
   <button type="button" id="workspace-config-button" class="workspace-label" title="工作空间配置"><span class="folder-icon">◇</span><span class="ws-label-text"><strong>aide workspace</strong><small id="workspace-summary">/workspace · 本地</small></span><span class="live-dot"></span></button>
-  <div class="section-label">模型</div>
-  <div class="model-picker"><button type="button" id="model-picker-button" class="model-picker-button" aria-haspopup="menu" aria-expanded="false" title="选择模型"><span class="model-dot"></span><span id="model-picker-label">未配置模型</span><span class="model-caret">▾</span></button><div id="model-picker-menu" class="model-picker-menu hidden" role="menu" aria-label="选择模型"></div></div>
   <div class="section-label session-label">最近会话 <button id="refresh-sessions" class="icon-button" aria-label="刷新会话">↻</button></div>
   <nav id="sessions" class="sessions" aria-label="会话列表"></nav>
   <div class="sidebar-footer"><div class="context-card" id="context-card" title="估算 · 4 字符/词 · 最近 60K 回放预算"><div class="context-head"><span>上下文</span><span id="context-stat">—</span></div><div class="context-bar" role="progressbar" aria-label="上下文占用"><div id="context-fill" class="context-fill"></div></div></div><div class="runtime-card"><span class="live-dot"></span><span>Docker 环境<small>Go / Python / Node.js / Git</small><small id="app-version" class="app-version">版本加载中…</small></span><span class="runtime-tag">LOCAL</span></div><button id="settings-button" class="settings-button"><span>⚙</span> 模型设置 <span id="model-status">未配置</span></button></div>
