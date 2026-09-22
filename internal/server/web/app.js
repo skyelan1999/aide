@@ -444,22 +444,26 @@ function refreshStrategyUI() {
   $('strategy-label').title = label;
   const menu = $('strategy-menu');
   menu.replaceChildren();
-  menu.append(strategyMenuOption('auto', '', '自动路由', '按 routing-policy.json 规则匹配', p.strategy === 'auto'));
-  menu.append(el('div', 'strategy-menu-sep', '手动'));
+  // 左栏：策略；右栏：模型（各自独立滚动，互不挤压）
+  const left = el('div', 'strategy-menu-col');
+  left.append(el('div', 'strategy-menu-sep', '策略'));
+  left.append(strategyMenuOption('auto', '', '自动路由', '按 routing-policy.json 规则匹配', p.strategy === 'auto'));
+  left.append(el('div', 'strategy-menu-sep', '手动'));
   for (const profile of p.profiles) {
     const selected = p.strategy === 'manual' && p.activeProfile === profile.id;
-    menu.append(strategyMenuOption('profile', profile.id, profile.name, profile.system ? '系统配置' : '自定义配置', selected));
+    left.append(strategyMenuOption('profile', profile.id, profile.name, profile.system ? '系统配置' : '自定义配置', selected));
   }
-  // 第二栏：模型选择（FR-87）
-  menu.append(el('div', 'strategy-menu-sep', '模型'));
+  const right = el('div', 'strategy-menu-col');
+  right.append(el('div', 'strategy-menu-sep', '模型'));
   for (const m of state.config?.models || []) {
     const selected = state.config.activeModel === m.id;
-    menu.append(strategyMenuOption('model', m.id, m.name, m.id + ' · ' + (m.contextWindow || 65536) / 1024 + 'K 上下文', selected));
+    right.append(strategyMenuOption('model', m.id, m.name, m.id + ' · ' + (m.contextWindow || 65536) / 1024 + 'K 上下文', selected));
   }
   const manageModels = el('button', 'model-picker-manage', '⚙ 管理模型…');
   manageModels.type = 'button';
   manageModels.onclick = () => { closeStrategyMenu(); openSettings(); };
-  menu.append(manageModels);
+  right.append(manageModels);
+  menu.append(left, right);
 }
 function strategyMenuOption(kind, value, name, desc, selected) {
   const b = el('button', 'strategy-option' + (selected ? ' selected' : ''));
