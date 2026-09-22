@@ -923,13 +923,23 @@ function mdInline(text) {
   out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   return out;
 }
+function mdTable(rows) {
+  const parse = line => line.replace(/^\s*\||\|\s*$/g, '').split('|').map(c => mdInline(c.trim()));
+  let html = '<table><thead><tr>' + parse(rows[0]).map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>';
+  for (let i = 2; i < rows.length; i++) html += '<tr>' + parse(rows[i]).map(c => '<td>' + c + '</td>').join('') + '</tr>';
+  return html + '</tbody></table>';
+}
 function mdBlocks(text) {
   const out = [];
   let list = null;
   let para = [];
+  let table = [];
   const flushPara = () => { if (para.length) { out.push('<p>' + para.map(mdInline).join('<br>') + '</p>'); para = []; } };
   const closeList = () => { if (list) { out.push('</' + list + '>'); list = null; } };
+  const flushTable = () => { if (table.length) { if (table.length >= 2 && /^\|[\s:|-]+\|$/.test(table[1])) out.push(mdTable(table)); else table.forEach(l => para.push(l)); table = []; } };
   for (const line of String(text).split('\n')) {
+    if (/^\s*\|.*\|\s*$/.test(line)) { flushPara(); closeList(); table.push(line); continue; }
+    flushTable();
     const heading = line.match(/^(#{1,3})\s+(.*)/);
     if (heading) { flushPara(); closeList(); const level = heading[1].length + 2; out.push('<h' + level + '>' + mdInline(heading[2]) + '</h' + level + '>'); continue; }
     if (/^\s*[-*]\s+/.test(line)) { flushPara(); if (list !== 'ul') { closeList(); out.push('<ul>'); list = 'ul'; } out.push('<li>' + mdInline(line.replace(/^\s*[-*]\s+/, '')) + '</li>'); continue; }
@@ -939,6 +949,7 @@ function mdBlocks(text) {
     if (line.trim() === '') { flushPara(); closeList(); continue; }
     para.push(line);
   }
+  flushTable();
   flushPara();
   closeList();
   return out.join('');
