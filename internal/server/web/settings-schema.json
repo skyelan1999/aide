@@ -30,7 +30,7 @@
     {
       "id": "stats",
       "title": "消耗统计",
-      "description": "模型 Token 消耗（git 提交热力图样式）",
+      "description": "模型调用 Token 消耗与费用趋势",
       "controls": [
         {
           "id": "token-stats",

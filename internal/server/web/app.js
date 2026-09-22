@@ -573,8 +573,7 @@ function renderTokenStats(control) {
     chips.replaceChildren();
     chips.append(
       el('span', 'token-chip', '今日 ' + fmtStatTokens(todayStats.total || 0) + ' · ≈¥' + costOf(todayStats).toFixed(2)),
-      el('span', 'token-chip', (totalsObj.calls || 0) + ' 次调用'),
-      el('span', 'token-chip', '费用按官方刊例价估算')
+      el('span', 'token-chip', '调用 ' + (totalsObj.calls || 0) + ' 次')
     );
     action(async () => {
       try {
@@ -637,7 +636,7 @@ function renderTokenStats(control) {
     legend.replaceChildren();
     legend.append(el('span', '', '少'));
     for (let i = 1; i <= 4; i++) legend.append(el('span', 'token-cell tk-' + i));
-    legend.append(el('span', '', '多'), el('small', '', '· 悬停查看每日明细与所在周合计'));
+    legend.append(el('span', '', '多'), el('small', '', '费用按官方刊例价估算 · 悬停查看明细'));
   })();
   return wrap;
 }
