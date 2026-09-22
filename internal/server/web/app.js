@@ -720,7 +720,37 @@ function hostPathOf(dir) {
   if (dir === '.' || dir === '') return base;
   return base.replace(/\/$/, '') + '/' + dir;
 }
-function openBrowse(field) { wsState.browse = { field, dir: '.' }; $('ws-browse-dialog').showModal(); action(loadBrowseDir)(); }
+/* 从输入值推导浏览起点：宿主机路径 → 本地挂载相对路径；空值/其他前缀回退根 */
+function browseDirFromValue(value) {
+  if (!value) return '.';
+  const base = state.config?.hostLocal || '/local';
+  if (value.startsWith(base)) {
+    const rel = value.slice(base.length).replace(/^\/+/, '');
+    return rel || '.';
+  }
+  return '.';
+}
+/* 当前路径不可用时逐级向上找到可用目录 */
+async function resolveExistingDir(dir) {
+  for (;;) {
+    try {
+      await api('/files?root=local&path=' + encodeURIComponent(dir));
+      return dir;
+    } catch (error) {
+      if (dir === '.' || !dir.includes('/')) return '.';
+      dir = dir.slice(0, dir.lastIndexOf('/'));
+    }
+  }
+}
+function openBrowse(field) {
+  action(async () => {
+    const start = browseDirFromValue($(field).value);
+    const dir = await resolveExistingDir(start);
+    wsState.browse = { field, dir };
+    $('ws-browse-dialog').showModal();
+    await loadBrowseDir();
+  })();
+}
 async function loadBrowseDir() {
   const b = wsState.browse;
   const files = await api('/files?root=local&path=' + encodeURIComponent(b.dir));
