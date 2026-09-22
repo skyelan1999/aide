@@ -29,9 +29,9 @@ var tokenUsageRecorder atomic.Value // func(TokenUsage)
 // endpoint can be used, including a local model through host.docker.internal.
 // params 是本次任务的采样参数（FR-61），未设置字段不进入请求体；
 // deepseek-reasoner 不支持的参数会被剔除，避免上游 400。
-func complete(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any) (string, []ToolCall, error) {
+func complete(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any) (string, []ToolCall, TokenUsage, error) {
 	if cfg.BaseURL == "" || cfg.Model == "" {
-		return "", nil, errors.New("请先在模型设置中配置 API 地址和模型")
+		return "", nil, TokenUsage{}, errors.New("请先在模型设置中配置 API 地址和模型")
 	}
 	body := map[string]any{"model": cfg.Model, "messages": messages, "stream": false}
 	promptChars := 0
@@ -70,11 +70,11 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	}
 	b, err := json.Marshal(body)
 	if err != nil {
-		return "", nil, err
+		return "", nil, TokenUsage{}, err
 	}
 	req, err := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(cfg.BaseURL, "/")+"/chat/completions", bytes.NewReader(b))
 	if err != nil {
-		return "", nil, err
+		return "", nil, TokenUsage{}, err
 	}
 	req.Header.Set("Content-Type", "application/json")
 	if cfg.APIKey != "" {
@@ -83,15 +83,15 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	client := &http.Client{Timeout: 120 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", nil, fmt.Errorf("模型连接失败: %w", err)
+		return "", nil, TokenUsage{}, fmt.Errorf("模型连接失败: %w", err)
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return "", nil, fmt.Errorf("模型 API 返回 HTTP %d；请检查地址、模型、密钥和额度", resp.StatusCode)
+		return "", nil, TokenUsage{}, fmt.Errorf("模型 API 返回 HTTP %d；请检查地址、模型、密钥和额度", resp.StatusCode)
 	}
 	b, err = io.ReadAll(io.LimitReader(resp.Body, 2<<20))
 	if err != nil {
-		return "", nil, err
+		return "", nil, TokenUsage{}, err
 	}
 	var out struct {
 		Choices []struct {
@@ -107,14 +107,14 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		} `json:"usage"`
 	}
 	if err = json.Unmarshal(b, &out); err != nil {
-		return "", nil, errors.New("模型返回了无效 JSON")
+		return "", nil, TokenUsage{}, errors.New("模型返回了无效 JSON")
 	}
 	if len(out.Choices) == 0 {
-		return "", nil, errors.New("模型没有返回内容")
+		return "", nil, TokenUsage{}, errors.New("模型没有返回内容")
 	}
 	msg := out.Choices[0].Message
 	if strings.TrimSpace(msg.Content) == "" && len(msg.ToolCalls) == 0 {
-		return "", nil, errors.New("模型没有返回文本内容")
+		return "", nil, TokenUsage{}, errors.New("模型没有返回文本内容")
 	}
 	usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model}
 	if usage.Total == 0 {
@@ -127,7 +127,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	if rec := tokenUsageRecorder.Load(); rec != nil {
 		rec.(func(TokenUsage))(usage)
 	}
-	return msg.Content, msg.ToolCalls, nil
+	return msg.Content, msg.ToolCalls, usage, nil
 }
 
 // listModels 代理 GET {baseURL}/models 拉取可用模型 id 列表（FR-68 / LIM-25）。

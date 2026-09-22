@@ -225,7 +225,7 @@ func TestTokenStats(t *testing.T) {
 	a.settings = Settings{BaseURL: provider.URL, Model: "test"}
 	// 第一轮带 usage；第二轮不带（估算）
 	for i := 0; i < 2; i++ {
-		if _, _, err := a.completeCall(provider.URL); err != nil {
+		if _, _, _, err := a.completeCall(provider.URL); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -240,6 +240,6 @@ func TestTokenStats(t *testing.T) {
 	}
 }
 
-func (a *App) completeCall(baseURL string) (string, []ToolCall, error) {
+func (a *App) completeCall(baseURL string) (string, []ToolCall, TokenUsage, error) {
 	return complete(context.Background(), Settings{BaseURL: baseURL, Model: "test"}, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil)
 }
