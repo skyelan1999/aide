@@ -95,7 +95,32 @@ func (a *App) loadSources() error {
 			Key      string `json:"key,omitempty"`
 		}{}
 	}
+	// 系统文档来源缺失时补挂载（空路径 → 默认 /context 参考根）
+	found := false
+	for _, src := range a.sourceRegistry.Sources {
+		if src.ID == systemDocsSource {
+			found = true
+			break
+		}
+	}
+	if !found {
+		entry := Source{ID: systemDocsSource, Name: "自动系统文档", Type: "local", Enabled: true, RW: true, Builtin: true}
+		entry.Config.Path = a.wsConfig.Docs.Path
+		a.sourceRegistry.Sources = append([]Source{entry}, a.sourceRegistry.Sources...)
+	}
 	return nil
+}
+
+// localSourceRoot 本地类来源根：空路径回落参考根（/context）。
+func (a *App) localSourceRoot(src Source) (*os.Root, error) {
+	if strings.TrimSpace(src.Config.Path) == "" {
+		return os.OpenRoot(a.reference.Name())
+	}
+	cp, _, err := a.resolveHostPath(src.Config.Path)
+	if err != nil {
+		return nil, err
+	}
+	return os.OpenRoot(cp)
 }
 func (a *App) saveSources() error {
 	if err := os.MkdirAll(filepath.Dir(a.sourcesPath()), 0755); err != nil {
@@ -135,11 +160,7 @@ func (a *App) upsertSystemDocs() error {
 func (a *App) listSourceDir(src Source, p string) ([]map[string]any, error) {
 	switch src.Type {
 	case "local", "skill":
-		cp, _, err := a.resolveHostPath(src.Config.Path)
-		if err != nil {
-			return nil, err
-		}
-		root, err := os.OpenRoot(cp)
+		root, err := a.localSourceRoot(src)
 		if err != nil {
 			return nil, err
 		}
@@ -158,11 +179,7 @@ func (a *App) listSourceDir(src Source, p string) ([]map[string]any, error) {
 func (a *App) readSourceText(src Source, p string) ([]byte, error) {
 	switch src.Type {
 	case "local", "skill":
-		cp, _, err := a.resolveHostPath(src.Config.Path)
-		if err != nil {
-			return nil, err
-		}
-		root, err := os.OpenRoot(cp)
+		root, err := a.localSourceRoot(src)
 		if err != nil {
 			return nil, err
 		}
@@ -184,11 +201,7 @@ func (a *App) writeSourceText(src Source, p string, b []byte) error {
 	}
 	switch src.Type {
 	case "local", "skill":
-		cp, _, err := a.resolveHostPath(src.Config.Path)
-		if err != nil {
-			return err
-		}
-		root, err := os.OpenRoot(cp)
+		root, err := a.localSourceRoot(src)
 		if err != nil {
 			return err
 		}
