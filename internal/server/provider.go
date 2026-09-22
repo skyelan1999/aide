@@ -187,3 +187,48 @@ func (a *App) listModels(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonOut(w, 200, map[string]any{"models": ids})
 }
+
+// listBalance 代理 GET {baseURL}/user/balance 查询账户余额（DeepSeek 官方接口）。
+func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	baseURL, key := a.settings.BaseURL, a.settings.APIKey
+	a.mu.Unlock()
+	if baseURL == "" {
+		fail(w, 400, errors.New("请先在模型设置中填写 API Base URL"))
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "GET", strings.TrimRight(baseURL, "/")+"/user/balance", nil)
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	if key != "" {
+		req.Header.Set("Authorization", "Bearer "+key)
+	}
+	client := &http.Client{Timeout: 30 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
+	resp, err := client.Do(req)
+	if err != nil {
+		fail(w, 400, fmt.Errorf("余额查询失败: %w", err))
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		fail(w, 400, fmt.Errorf("余额接口返回 HTTP %d（该服务可能不支持余额查询）", resp.StatusCode))
+		return
+	}
+	b, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	var out map[string]any
+	if err := json.Unmarshal(b, &out); err != nil {
+		fail(w, 400, errors.New("余额返回格式无法解析"))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, _ = w.Write(b)
+}

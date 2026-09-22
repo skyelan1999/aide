@@ -354,6 +354,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/config", a.config)
 	mux.HandleFunc("PUT /api/settings", a.updateSettings)
 	mux.HandleFunc("GET /api/models", a.listModels)
+	mux.HandleFunc("GET /api/balance", a.listBalance)
 	mux.HandleFunc("GET /api/profiles", a.listProfiles)
 	mux.HandleFunc("GET /api/plugins", a.listPlugins)
 	mux.HandleFunc("POST /api/plugins", a.uploadPlugin)
