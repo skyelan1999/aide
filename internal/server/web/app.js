@@ -18,7 +18,7 @@ async function refreshConfig() {
   $('connection').textContent = '● 本地服务已连接'; $('connection').classList.add('ready');
   const versionText = state.config.version ? 'v' + state.config.version : 'dev';
   $('app-version').textContent = versionText;
-  $('settings-sheet-version').textContent = ' · aide ' + versionText + ' · ui14';
+  $('settings-sheet-version').textContent = ' · aide ' + versionText + ' · ui15';
   $('model-status').textContent = state.config.configured ? '已配置' : '未配置';
   $('model-name').textContent = state.config.configured ? state.config.model + ' · API 已配置' : '先配置模型，即可开始真实 AI 对话';
   estimateContext();
@@ -331,7 +331,7 @@ function setSettingsOpen(open) {
 }
 async function openSettingsSheet() {
   await loadSettingsSchema();
-  if (!settingsPanel.rendered) renderSettingsSheet();
+  renderSettingsSheet(); // 每次打开强制重渲染，保证数据新鲜
   setSettingsOpen(true);
   // 面板可见后重测 thumb 几何（关闭状态下 offsetWidth 为 0）
   requestAnimationFrame(() => settingsPanel.refreshers.forEach(fn => fn()));
