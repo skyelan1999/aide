@@ -243,3 +243,62 @@ func TestTokenStats(t *testing.T) {
 func (a *App) completeCall(baseURL string) (string, []ToolCall, TokenUsage, error) {
 	return complete(context.Background(), Settings{BaseURL: baseURL, Model: "test"}, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil)
 }
+
+// FR-92/93：全局搜索与会话压缩
+func TestSearchAndCompaction(t *testing.T) {
+	a := testApp(t)
+	// 两个会话：一个含关键词
+	s1 := createSession(t, a)
+	_ = a.sessions[s1.ID]
+	a.mu.Lock()
+	a.sessions[s1.ID].Title = "登录模块设计"
+	a.sessions[s1.ID].Messages = []Message{{Role: "user", Content: "实现登录与鉴权"}, {Role: "assistant", Content: "好的，使用 JWT 方案"}}
+	_ = a.save(a.sessions[s1.ID])
+	a.mu.Unlock()
+	// 搜索
+	w := request(a, "GET", "/api/search?q=%E9%89%B4%E6%9D%83", nil) // 鉴权
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), "登录模块设计") || !strings.Contains(w.Body.String(), "登录与鉴权") {
+		t.Fatalf("search: %s", w.Body.String())
+	}
+	w = request(a, "GET", "/api/search?q=JWT", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), "JWT") {
+		t.Fatalf("search JWT: %s", w.Body.String())
+	}
+	// 压缩：mock provider 返回结构化摘要
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": `{"goal":"登录模块","decisions":["JWT"],"files":[],"facts":[],"pending":[]}`}}}})
+	}))
+	defer provider.Close()
+	a.mu.Lock()
+	a.settings = Settings{BaseURL: provider.URL, Model: "test"}
+	a.mu.Unlock()
+	big := createSession(t, a)
+	a.mu.Lock()
+	var msgs []Message
+	for i := 0; i < 10; i++ {
+		msgs = append(msgs, Message{Role: "user", Content: strings.Repeat("x", 8000)}, Message{Role: "assistant", Content: strings.Repeat("y", 8000)})
+	}
+	a.sessions[big.ID].Messages = msgs
+	_ = a.save(a.sessions[big.ID])
+	a.mu.Unlock()
+	w = request(a, "POST", "/api/sessions/"+big.ID+"/compact", map[string]any{})
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"folded":`) || !strings.Contains(w.Body.String(), "登录模块") {
+		t.Fatalf("compact: %s", w.Body.String())
+	}
+	a.mu.Lock()
+	after := len(a.sessions[big.ID].Messages)
+	compact := a.sessions[big.ID].Compact
+	a.mu.Unlock()
+	if after == 0 || after >= len(msgs) || compact == "" {
+		t.Fatalf("compaction state: after=%d compact=%q", after, compact)
+	}
+	// 摘要进入压缩会话检索
+	w = request(a, "GET", "/api/search?q=%E7%99%BB%E5%BD%95%E6%A8%A1%E5%9D%97", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), "（历史摘要）") {
+		t.Fatalf("compact search: %s", w.Body.String())
+	}
+}

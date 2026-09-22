@@ -30,7 +30,7 @@ async function loadSessions() {
   return sessions;
 }
 async function selectSession(id) {
-  clearTimeout(state.poll); state.session = await api('/sessions/' + id); renderSession(); await loadSessions(); schedulePoll();
+  clearTimeout(state.poll); state.session = await api('/sessions/' + id); renderSession(); refreshCompactInfo(); await loadSessions(); schedulePoll();
 }
 function schedulePoll() {
   clearTimeout(state.poll);
@@ -1382,6 +1382,43 @@ function closeTrajectory() {
 $('trajectory-toggle').onclick = () => { if ($('trajectory-sheet').classList.contains('open')) closeTrajectory(); else openTrajectory(); };
 $('trajectory-sheet-close').onclick = closeTrajectory;
 
+/* ── 全局搜索（FR-92）：⌘K 聚焦，防抖检索会话缓存 ── */
+let searchTimer = null;
+$('global-search').addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  const q = $('global-search').value.trim();
+  if (!q) { $('search-results').classList.add('hidden'); return; }
+  searchTimer = setTimeout(action(async () => {
+    const data = await api('/search?q=' + encodeURIComponent(q));
+    const host = $('search-results');
+    host.replaceChildren();
+    if (!data.results?.length) { host.append(el('p', 'muted', '没有匹配的聊天')); }
+    data.results.forEach(res => {
+      const row = el('button', 'search-result', '');
+      row.append(el('strong', '', res.title), el('span', '', res.snippet));
+      row.onclick = () => { $('search-results').classList.add('hidden'); $('global-search').value = ''; action(() => selectSession(res.sessionId))(); };
+      host.append(row);
+    });
+    host.classList.remove('hidden');
+  }), 300);
+});
+document.addEventListener('keydown', event => {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); $('global-search').focus(); $('global-search').select(); }
+  if (event.key === 'Escape') $('search-results').classList.add('hidden');
+});
+document.addEventListener('click', event => { if (!event.target.closest('.global-search')) $('search-results').classList.add('hidden'); });
+/* ── 手动压缩（FR-93） ── */
+function refreshCompactInfo() {
+  const sess = state.session;
+  $('compact-info').textContent = sess?.compactedMessages ? '已折叠 ' + sess.compactedMessages + ' 条消息' : '';
+}
+$('compact-button').onclick = action(async () => {
+  if (!state.session) { toast('请先选择会话'); return; }
+  const res = await api('/sessions/' + state.session.id + '/compact', { method: 'POST', body: '{}' });
+  toast(res.folded ? '已压缩 ' + res.folded + ' 条历史消息' : '历史未超阈值，无需压缩');
+  await selectSession(state.session.id);
+  refreshCompactInfo();
+});
 async function initialize() {
   await refreshConfig();
   const fragment = new URLSearchParams(location.hash.slice(1));

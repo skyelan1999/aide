@@ -94,11 +94,14 @@ type Message struct {
 	ToolCallID string     `json:"tool_call_id,omitempty"`
 }
 type Session struct {
-	ID       string    `json:"id"`
-	Title    string    `json:"title"`
-	Created  string    `json:"created"`
-	Messages []Message `json:"messages"`
-	Runs     []*Task   `json:"runs"`
+	ID                string    `json:"id"`
+	Title             string    `json:"title"`
+	Created           string    `json:"created"`
+	Messages          []Message `json:"messages"`
+	Runs              []*Task   `json:"runs"`
+	Compact           string    `json:"compact,omitempty"`           // 压缩摘要（compaction）
+	CompactedMessages int       `json:"compactedMessages,omitempty"` // 已折叠消息数
+	CompactedAt       string    `json:"compactedAt,omitempty"`
 }
 type App struct {
 	mu                        sync.Mutex
@@ -364,6 +367,8 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/workspace-config", a.getWorkspaceConfig)
 	mux.HandleFunc("GET /api/sources", a.listSources)
 	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)
+	mux.HandleFunc("GET /api/search", a.searchSessions)
+	mux.HandleFunc("POST /api/sessions/{id}/compact", a.compactSession)
 	mux.HandleFunc("PUT /api/sources", a.updateSources)
 	mux.HandleFunc("PUT /api/workspace-config", a.updateWorkspaceConfig)
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
