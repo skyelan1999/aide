@@ -120,7 +120,12 @@ func (a *App) resolveHostPath(p string) (string, string, error) {
 		return filepath.Join(a.localRoot.Name(), filepath.FromSlash(trimmed("/local"))), p, nil
 	}
 	if !strings.HasPrefix(p, "/") {
-		return filepath.Join(a.workPath, filepath.FromSlash(p)), p, nil
+		joined := filepath.Join(a.workPath, filepath.FromSlash(p))
+		rel, err := filepath.Rel(a.workPath, joined)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return "", "", fmt.Errorf("相对路径 %s 越出工作区", p)
+		}
+		return joined, p, nil
 	}
 	rel, err := filepath.Rel(a.hostLocal, p)
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
@@ -243,16 +248,18 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("认证方式只支持 password / key / none"))
 		return
 	}
-	// 本地挂载路径用 safePath 校验；远程工作空间路径允许绝对路径（远端语义）
-	if in.Workspace.Mode == "local" && strings.TrimSpace(in.Workspace.Path) != "" {
-		if err := safePath(in.Workspace.Path); err != nil {
+	// 路径安全由 resolveHostPath 统一约束：
+	// 宿主机绝对路径仅允许落在 AIDE_LOCAL_ROOT（默认 $HOME）之下；
+	// 容器路径仅允许 /workspace | /context | /local 前缀；相对路径落在 /workspace 下。
+	if in.Workspace.Mode != "ssh" && strings.TrimSpace(in.Workspace.Path) != "" {
+		if _, _, err := a.resolveHostPath(in.Workspace.Path); err != nil {
 			fail(w, 400, err)
 			return
 		}
 	}
 	for _, p := range []string{in.Docs.Path, in.Cache.Path} {
 		if strings.TrimSpace(p) != "" {
-			if err := safePath(p); err != nil {
+			if _, _, err := a.resolveHostPath(p); err != nil {
 				fail(w, 400, err)
 				return
 			}

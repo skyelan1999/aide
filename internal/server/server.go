@@ -261,7 +261,7 @@ func New(work, reference, data string) (*App, error) {
 	a.hostLocal = env("AIDE_HOST_LOCAL", os.Getenv("HOME"))
 	localRoot, localErr := os.OpenRoot("/local")
 	if localErr != nil {
-		localRoot, localErr = os.OpenRoot("/workspace")
+		localRoot, localErr = os.OpenRoot(work)
 		if localErr != nil {
 			a.Close()
 			return nil, localErr
