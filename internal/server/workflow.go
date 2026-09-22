@@ -218,7 +218,13 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		if withTools {
 			tools = append(tools, builtinTools...)
 		}
-		out, err := a.toolLoop(ctx, cfg, input, params, tools, task, versions, index)
+		stepParams := params
+		if name == "propose" {
+			// 提案步骤强制 JSON 输出（FR-23 可靠性）：实测中自由文本模式
+			// 偶发返回非 JSON 导致整个任务失败；propose 不带工具，约束不冲突。
+			stepParams.ResponseFormat = "json_object"
+		}
+		out, err := a.toolLoop(ctx, cfg, input, stepParams, tools, task, versions, index)
 		a.mu.Lock()
 		task.Steps[index].Content = out
 		task.Steps[index].Status = "completed"
