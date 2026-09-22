@@ -923,8 +923,24 @@ function mdInline(text) {
   out = out.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
   return out;
 }
+function splitTableRow(line) {
+  // 按 | 切列，但忽略反引号内的管道与 \| 转义
+  const raw = line.replace(/^\s*\||\|\s*$/g, '');
+  const cells = [];
+  let cur = '';
+  let inCode = false;
+  for (let i = 0; i < raw.length; i++) {
+    const ch = raw[i];
+    if (ch === '`') { inCode = !inCode; cur += ch; continue; }
+    if (ch === '|' && !inCode) { cells.push(cur.trim()); cur = ''; continue; }
+    if (ch === '\\' && raw[i + 1] === '|') { cur += '|'; i++; continue; }
+    cur += ch;
+  }
+  cells.push(cur.trim());
+  return cells;
+}
 function mdTable(rows) {
-  const parse = line => line.replace(/^\s*\||\|\s*$/g, '').split('|').map(c => mdInline(c.trim()));
+  const parse = line => splitTableRow(line).map(c => mdInline(c));
   let html = '<table><thead><tr>' + parse(rows[0]).map(c => '<th>' + c + '</th>').join('') + '</tr></thead><tbody>';
   for (let i = 2; i < rows.length; i++) html += '<tr>' + parse(rows[i]).map(c => '<td>' + c + '</td>').join('') + '</tr>';
   return html + '</tbody></table>';
