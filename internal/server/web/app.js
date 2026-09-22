@@ -552,9 +552,10 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$
 /* ── Token 消耗统计（FR-90）：git 提交热力图样式 ── */
 function fmtStatTokens(n) { return n < 1000 ? String(n) : (n / 1000).toFixed(1) + 'K'; }
 function renderTokenStats(control) {
-  // 费用估算（DeepSeek 官方刊例价：输入 ¥2/百万、输出 ¥8/百万；reasoner 4/16——缓存命中优惠未计）
-  const PRICE_IN = 2, PRICE_OUT = 8;
-  const costOf = d => ((d.prompt || 0) * PRICE_IN + (d.completion || 0) * PRICE_OUT) / 1e6;
+  // 费用估算：计价可配置（默认刊例价 ¥2/¥8 每百万；缓存命中优惠与账户差异请自行调整）
+  const priceIn = () => Number(window.aideUI?.get('priceIn')) || 2;
+  const priceOut = () => Number(window.aideUI?.get('priceOut')) || 8;
+  const costOf = d => ((d.prompt || 0) * priceIn() + (d.completion || 0) * priceOut()) / 1e6;
   const wrap = el('div', 'settings-control token-stats');
   const head = el('div', 'token-head');
   head.append(el('span', 'token-title', 'Token 消耗'), el('span', 'control-value', ''));
@@ -563,10 +564,11 @@ function renderTokenStats(control) {
   const legend = el('div', 'token-legend');
   const tip = el('div', 'token-tip');
   const detail = el('div', 'token-day-detail hidden');
-  wrap.append(head, chips, grid, legend, tip, detail);
+  const priceRow = el('div', 'token-price-row');
+  wrap.append(head, chips, priceRow, grid, legend, tip, detail);
   const failBox = el('p', 'task-error', '');
   wrap.append(failBox);
-  action(async () => {
+  const loadStats = async () => {
     failBox.textContent = '';
     const data = await api('/token-stats');
     const days = data.days || {};
@@ -662,8 +664,30 @@ function renderTokenStats(control) {
     legend.replaceChildren();
     legend.append(el('span', '', '少'));
     for (let i = 1; i <= 4; i++) legend.append(el('span', 'token-cell tk-' + i));
-    legend.append(el('span', '', '多'), el('small', '', '费用按官方刊例价估算 · 悬停查看明细'));
-  }).call(null);
+    legend.append(el('span', '', '多'), el('small', '', '计价可配置 · 悬停查看明细'));
+  };
+  action(loadStats).call(null);
+  const mkPrice = (key, label) => {
+    const lab = el('label', '', label);
+    const input = el('input', '');
+    input.type = 'number';
+    input.min = 0;
+    input.step = 0.1;
+    input.value = key === 'priceIn' ? priceIn() : priceOut();
+    input.setAttribute('aria-label', label);
+    input.addEventListener('change', () => {
+      const v = parseFloat(input.value);
+      if (!Number.isNaN(v) && v >= 0) {
+        if (window.aideUI) window.aideUI.set(key, v);
+        action(loadStats).call(null);
+      } else {
+        input.value = key === 'priceIn' ? priceIn() : priceOut();
+      }
+    });
+    lab.append(input);
+    return lab;
+  };
+  priceRow.append(mkPrice('priceIn', '输入 ¥/百万'), mkPrice('priceOut', '输出 ¥/百万'), el('small', '', '按你的账户实际刊例价填写（含缓存命中优惠时可调低输入价）'));
   return wrap;
 }
 
