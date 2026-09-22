@@ -9,8 +9,21 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync/atomic"
 	"time"
 )
+
+// TokenUsage 一次模型调用的用量（FR-90）；Estimated 表示上游未返回 usage 时的估算值。
+type TokenUsage struct {
+	Prompt     int    `json:"prompt"`
+	Completion int    `json:"completion"`
+	Total      int    `json:"total"`
+	Estimated  bool   `json:"estimated,omitempty"`
+	Model      string `json:"model,omitempty"`
+}
+
+// tokenUsageRecorder 由 New() 注入（atomic 防并行测试竞态）；complete() 成功后调用。
+var tokenUsageRecorder atomic.Value // func(TokenUsage)
 
 // The provider boundary is intentionally small: any Chat Completions compatible
 // endpoint can be used, including a local model through host.docker.internal.
@@ -21,6 +34,10 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		return "", nil, errors.New("请先在模型设置中配置 API 地址和模型")
 	}
 	body := map[string]any{"model": cfg.Model, "messages": messages, "stream": false}
+	promptChars := 0
+	for _, m := range messages {
+		promptChars += len(m.Content)
+	}
 	if len(tools) > 0 {
 		body["tools"] = tools
 	}
@@ -83,6 +100,11 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 				ToolCalls []ToolCall `json:"tool_calls"`
 			} `json:"message"`
 		} `json:"choices"`
+		Usage struct {
+			PromptTokens     int `json:"prompt_tokens"`
+			CompletionTokens int `json:"completion_tokens"`
+			TotalTokens      int `json:"total_tokens"`
+		} `json:"usage"`
 	}
 	if err = json.Unmarshal(b, &out); err != nil {
 		return "", nil, errors.New("模型返回了无效 JSON")
@@ -93,6 +115,17 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	msg := out.Choices[0].Message
 	if strings.TrimSpace(msg.Content) == "" && len(msg.ToolCalls) == 0 {
 		return "", nil, errors.New("模型没有返回文本内容")
+	}
+	usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model}
+	if usage.Total == 0 {
+		// 上游未返回 usage → 4 字符/词估算并标记
+		usage.Prompt = promptChars / 4
+		usage.Completion = len(msg.Content) / 4
+		usage.Total = usage.Prompt + usage.Completion
+		usage.Estimated = true
+	}
+	if rec := tokenUsageRecorder.Load(); rec != nil {
+		rec.(func(TokenUsage))(usage)
 	}
 	return msg.Content, msg.ToolCalls, nil
 }
@@ -153,4 +186,49 @@ func (a *App) listModels(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonOut(w, 200, map[string]any{"models": ids})
+}
+
+// listBalance 代理 GET {baseURL}/user/balance 查询账户余额（DeepSeek 官方接口）。
+func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	baseURL, key := a.settings.BaseURL, a.settings.APIKey
+	a.mu.Unlock()
+	if baseURL == "" {
+		fail(w, 400, errors.New("请先在模型设置中填写 API Base URL"))
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, "GET", strings.TrimRight(baseURL, "/")+"/user/balance", nil)
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	if key != "" {
+		req.Header.Set("Authorization", "Bearer "+key)
+	}
+	client := &http.Client{Timeout: 30 * time.Second, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
+	resp, err := client.Do(req)
+	if err != nil {
+		fail(w, 400, fmt.Errorf("余额查询失败: %w", err))
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != 200 {
+		fail(w, 400, fmt.Errorf("余额接口返回 HTTP %d（该服务可能不支持余额查询）", resp.StatusCode))
+		return
+	}
+	b, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	var out map[string]any
+	if err := json.Unmarshal(b, &out); err != nil {
+		fail(w, 400, errors.New("余额返回格式无法解析"))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, _ = w.Write(b)
 }

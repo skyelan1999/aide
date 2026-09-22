@@ -18,7 +18,7 @@ async function refreshConfig() {
   $('connection').textContent = '● 本地服务已连接'; $('connection').classList.add('ready');
   const versionText = state.config.version ? 'v' + state.config.version : 'dev';
   $('app-version').textContent = versionText;
-  $('settings-sheet-version').textContent = ' · aide ' + versionText;
+  $('settings-sheet-version').textContent = ' · aide ' + versionText + ' · ui15';
   $('model-status').textContent = state.config.configured ? '已配置' : '未配置';
   $('model-name').textContent = state.config.configured ? state.config.model + ' · API 已配置' : '先配置模型，即可开始真实 AI 对话';
   estimateContext();
@@ -236,7 +236,7 @@ document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 
 /* ── 设置面板（FR-58~FR-60）：品牌 logo 入口；结构由 /settings-schema.json 数据驱动；
    设置值一律经 window.aideUI 的 JSON 文档管理。必须位于 initialize() 之外：
    未登录时 initialize() 会抛错返回，设置面板仍需可用。 ── */
-const settingsPanel = { schema: null, rendered: false, trigger: null, refreshers: [] };
+const settingsPanel = { schema: null, rendered: false, trigger: null, refreshers: [], active: '', activeChild: '' };
 async function loadSettingsSchema() {
   if (!settingsPanel.schema) {
     const response = await fetch('/settings-schema.json', { cache: 'no-store' });
@@ -281,19 +281,45 @@ function renderSegmentedControl(control) {
   requestAnimationFrame(apply);
   return wrap;
 }
-const controlRenderers = { segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager };
+const controlRenderers = { segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats };
+function renderControlsInto(host, controls, description) {
+  if (description) host.append(el('p', 'section-desc', description));
+  for (const control of controls || []) {
+    const renderer = controlRenderers[control.type];
+    if (renderer) host.append(renderer(control));
+  }
+}
 function renderSettingsSheet() {
-  const host = $('settings-sections');
-  host.replaceChildren();
-  for (const section of settingsPanel.schema?.sections || []) {
-    const box = el('section', 'settings-section');
-    box.append(el('h3', '', section.title));
-    if (section.description) box.append(el('p', 'section-desc', section.description));
-    for (const control of section.controls || []) {
-      const renderer = controlRenderers[control.type];
-      if (renderer) box.append(renderer(control));
+  const nav = $('settings-nav');
+  const content = $('settings-content');
+  nav.replaceChildren();
+  content.replaceChildren();
+  const sections = settingsPanel.schema?.sections || [];
+  if (!sections.length) return;
+  if (!sections.some(x => x.id === settingsPanel.active)) settingsPanel.active = sections[0].id;
+  for (const section of sections) {
+    const b = el('button', 'settings-nav-item' + (section.id === settingsPanel.active ? ' active' : ''), section.title);
+    b.type = 'button';
+    b.onclick = () => { settingsPanel.active = section.id; settingsPanel.activeChild = ''; renderSettingsSheet(); };
+    nav.append(b);
+  }
+  const section = sections.find(x => x.id === settingsPanel.active);
+  if (!section) return;
+  if (section.children?.length) {
+    const sub = el('div', 'settings-subnav');
+    const children = section.children;
+    if (!children.some(c => c.id === settingsPanel.activeChild)) settingsPanel.activeChild = children[0].id;
+    for (const child of children) {
+      const cb = el('button', 'settings-subnav-item' + (child.id === settingsPanel.activeChild ? ' active' : ''), child.title);
+      cb.type = 'button';
+      cb.onclick = () => { settingsPanel.activeChild = child.id; renderSettingsSheet(); };
+      sub.append(cb);
     }
-    host.append(box);
+    content.append(sub);
+    const child = children.find(c => c.id === settingsPanel.activeChild);
+    renderControlsInto(content, child?.controls || [], child?.description || '');
+  } else {
+    renderControlsInto(content, section.controls || [], section.description);
   }
   settingsPanel.rendered = true;
 }
@@ -305,7 +331,7 @@ function setSettingsOpen(open) {
 }
 async function openSettingsSheet() {
   await loadSettingsSchema();
-  if (!settingsPanel.rendered) renderSettingsSheet();
+  renderSettingsSheet(); // 每次打开强制重渲染，保证数据新鲜
   setSettingsOpen(true);
   // 面板可见后重测 thumb 几何（关闭状态下 offsetWidth 为 0）
   requestAnimationFrame(() => settingsPanel.refreshers.forEach(fn => fn()));
@@ -523,6 +549,305 @@ $('strategy-button').onclick = async () => {
 };
 document.addEventListener('click', event => { if (!$('strategy-menu').classList.contains('hidden') && !event.target.closest('.strategy-picker')) closeStrategyMenu(); });
 document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$('strategy-menu').classList.contains('hidden')) closeStrategyMenu(); });
+/* ── Token 消耗统计（FR-90）：git 提交热力图样式 ── */
+function fmtStatTokens(n) { return n < 1000 ? String(n) : (n / 1000).toFixed(1) + 'K'; }
+function renderTokenStats(control) {
+  // 费用估算：计价可配置（默认刊例价 ¥2/¥8 每百万；缓存命中优惠与账户差异请自行调整）
+  const priceIn = () => Number(window.aideUI?.get('priceIn')) || 2;
+  const priceOut = () => Number(window.aideUI?.get('priceOut')) || 8;
+  const costOf = d => ((d.prompt || 0) * priceIn() + (d.completion || 0) * priceOut()) / 1e6;
+  const wrap = el('div', 'settings-control token-stats');
+  const head = el('div', 'token-head');
+  head.append(el('span', 'token-title', 'Token 消耗'), el('span', 'control-value', ''));
+  const chips = el('div', 'token-chips');
+  const grid = el('div', 'token-heatmap');
+  const legend = el('div', 'token-legend');
+  const tip = el('div', 'token-tip');
+  const detail = el('div', 'token-day-detail hidden');
+  const priceRow = el('div', 'token-price-row');
+  wrap.append(head, chips, priceRow, grid, legend, tip, detail);
+  const failBox = el('p', 'task-error', '');
+  wrap.append(failBox);
+  const loadStats = async () => {
+    failBox.textContent = '';
+    const data = await api('/token-stats');
+    const days = data.days || {};
+    const totalsObj = data.totals || {};
+    const todayStats = data.today || {};
+    const cost = costOf(totalsObj);
+    head.querySelector('.control-value').textContent = '累计 ' + fmtStatTokens(totalsObj.total || 0) + ' tokens · ≈¥' + cost.toFixed(2);
+    chips.replaceChildren();
+    chips.append(
+      el('span', 'token-chip', '今日 ' + fmtStatTokens(todayStats.total || 0) + ' · ≈¥' + costOf(todayStats).toFixed(2)),
+      el('span', 'token-chip', '调用 ' + (totalsObj.calls || 0) + ' 次')
+    );
+    action(async () => {
+      try {
+        const bal = await api('/balance');
+        const infos = (bal && bal.balance_infos) || [];
+        if (!infos.length) {
+          const chip = el('span', 'token-chip', '余额不可查');
+          chip.title = '接口未返回余额信息（部分账户/服务不支持）';
+          chips.append(chip);
+          return;
+        }
+        const parts = infos.map(i => (i.total_balance ?? '?') + ' ' + (i.currency || '')).join(' · ');
+        const chip = el('span', 'token-chip balance', '余额 ' + parts);
+        chip.title = '来自 API 的账户余额';
+        chips.append(chip);
+      } catch (error) {
+        const chip = el('span', 'token-chip', '余额不可查');
+        chip.title = '查询失败: ' + error.message;
+        chips.append(chip);
+      }
+    })();
+    grid.replaceChildren();
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 111);
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+    const cols = [];
+    let cursor = new Date(start);
+    while (cursor <= today) {
+      const col = [];
+      for (let dow = 0; dow < 7; dow++) {
+        const d = new Date(cursor);
+        d.setDate(d.getDate() + dow);
+        col.push(d);
+      }
+      cols.push(col);
+      cursor.setDate(cursor.getDate() + 7);
+    }
+    const maxVal = Math.max(1, ...Object.values(days).map(d => d.total || 0));
+    const level = v => v <= 0 ? 0 : v <= maxVal * 0.25 ? 1 : v <= maxVal * 0.5 ? 2 : v <= maxVal * 0.75 ? 3 : 4;
+    const showTip = (cell, date, day, weekTotal) => {
+      tip.replaceChildren();
+      tip.append(
+        el('strong', '', date + ' · ' + fmtStatTokens(day.total || 0) + ' tokens'),
+        el('br'),
+        el('span', '', '输入 ' + fmtStatTokens(day.prompt || 0) + ' · 输出 ' + fmtStatTokens(day.completion || 0)),
+        el('br'),
+        el('span', '', '调用 ' + (day.calls || 0) + ' 次 · ≈¥' + costOf(day).toFixed(4)),
+        el('br'),
+        el('span', '', '所在周合计 ' + fmtStatTokens(weekTotal) + ' tokens')
+      );
+      tip.classList.add('show');
+      const rect = cell.getBoundingClientRect();
+      const sheetRect = $('settings-sheet').getBoundingClientRect();
+      tip.style.left = Math.min(Math.max(rect.left - sheetRect.left, 0), sheetRect.width - 180) + 'px';
+      tip.style.top = (rect.top - sheetRect.top - tip.offsetHeight - 8) + 'px';
+    };
+    for (const col of cols) {
+      const colEl = el('div', 'token-week');
+      const weekTotal = col.reduce((sum, d) => sum + ((days[d.toISOString().slice(0, 10)] || {}).total || 0), 0);
+      for (const d of col) {
+        const key = d.toISOString().slice(0, 10);
+        const day = days[key] || {};
+        const cell = el('span', 'token-cell tk-' + level(day.total || 0));
+        if (d > today) cell.classList.add('future');
+        cell.addEventListener('mouseenter', () => showTip(cell, key, day, weekTotal));
+        cell.addEventListener('mouseleave', () => tip.classList.remove('show'));
+        cell.addEventListener('click', () => {
+          detail.classList.remove('hidden');
+          detail.replaceChildren();
+          detail.append(
+            el('strong', '', key),
+            el('span', '', '输入 ' + fmtStatTokens(day.prompt || 0) + ' tokens · 输出 ' + fmtStatTokens(day.completion || 0) + ' tokens'),
+            el('span', '', '调用 ' + (day.calls || 0) + ' 次 · 合计 ' + fmtStatTokens(day.total || 0) + ' tokens'),
+            el('span', '', '费用 ≈¥' + costOf(day).toFixed(4) + '（刊例价估算' + (day.estimated ? '，上游未返回 usage' : '') + '）')
+          );
+        });
+        colEl.append(cell);
+      }
+      grid.append(colEl);
+    }
+    legend.replaceChildren();
+    legend.append(el('span', '', '少'));
+    for (let i = 1; i <= 4; i++) legend.append(el('span', 'token-cell tk-' + i));
+    legend.append(el('span', '', '多'), el('small', '', '计价可配置 · 悬停查看明细'));
+  };
+  action(loadStats).call(null);
+  const mkPrice = (key, label) => {
+    const lab = el('label', '', label);
+    const input = el('input', '');
+    input.type = 'number';
+    input.min = 0;
+    input.step = 0.1;
+    input.value = key === 'priceIn' ? priceIn() : priceOut();
+    input.setAttribute('aria-label', label);
+    input.addEventListener('change', () => {
+      const v = parseFloat(input.value);
+      if (!Number.isNaN(v) && v >= 0) {
+        if (window.aideUI) window.aideUI.set(key, v);
+        action(loadStats).call(null);
+      } else {
+        input.value = key === 'priceIn' ? priceIn() : priceOut();
+      }
+    });
+    lab.append(input);
+    return lab;
+  };
+  priceRow.append(mkPrice('priceIn', '输入 ¥/百万'), mkPrice('priceOut', '输出 ¥/百万'), el('small', '', '按你的账户实际刊例价填写（含缓存命中优惠时可调低输入价）'));
+  return wrap;
+}
+
+function renderProfilesManager(control) {
+  const wrap = el('div', 'settings-control profiles-manager');
+  const head = el('div', 'control-label');
+  head.append(el('span', '', control.label));
+  const add = el('button', 'profiles-add', '＋ 新建配置');
+  add.type = 'button';
+  add.onclick = action(async () => {
+    await profilesManager.load();
+    const def = (state.profiles.profiles.find(p => p.id === 'default') || {}).params || {};
+    profilesManager.local.profiles.push({ id: 'u-' + Math.random().toString(36).slice(2, 8), name: '自定义配置', params: JSON.parse(JSON.stringify(def)) });
+    profilesManager.render();
+    await profilesManager.save();
+    toast('已添加配置，可修改名称与参数');
+  });
+  head.append(add);
+  const list = el('div', 'profile-list');
+  wrap.append(head, list);
+  profilesManager.host = list;
+  profilesManager.load = async function () { if (!state.profiles) await loadProfiles(); };
+  profilesManager.load().then(() => profilesManager.refresh()).catch(error => toast(error.message));
+  return wrap;
+}
+/* 聊天栏策略按钮（FR-63） */
+function refreshStrategyUI() {
+  const p = state.profiles;
+  if (!p) return;
+  const modelName = state.config?.models?.find(m => m.id === state.config.activeModel)?.name || state.config?.model || '';
+  const label = (p.strategy === 'auto' ? '策略 · 自动' : '策略 · ' + profileName(p.activeProfile)) + (modelName ? ' · ' + modelName : '');
+  $('strategy-label').textContent = label;
+  $('strategy-label').title = label;
+  const menu = $('strategy-menu');
+  menu.replaceChildren();
+  // 左栏：策略；右栏：模型（各自独立滚动，互不挤压）
+  const left = el('div', 'strategy-menu-col');
+  left.append(el('div', 'strategy-menu-sep', '策略'));
+  left.append(strategyMenuOption('auto', '', '自动路由', '按 routing-policy.json 规则匹配', p.strategy === 'auto'));
+  left.append(el('div', 'strategy-menu-sep', '手动'));
+  for (const profile of p.profiles) {
+    const selected = p.strategy === 'manual' && p.activeProfile === profile.id;
+    left.append(strategyMenuOption('profile', profile.id, profile.name, profile.system ? '系统配置' : '自定义配置', selected));
+  }
+  const right = el('div', 'strategy-menu-col');
+  right.append(el('div', 'strategy-menu-sep', '模型'));
+  for (const m of state.config?.models || []) {
+    const selected = state.config.activeModel === m.id;
+    right.append(strategyMenuOption('model', m.id, m.name, m.id + ' · ' + (m.contextWindow || 65536) / 1024 + 'K 上下文', selected));
+  }
+  const manageModels = el('button', 'model-picker-manage', '⚙ 管理模型…');
+  manageModels.type = 'button';
+  manageModels.onclick = () => { closeStrategyMenu(); openSettings(); };
+  right.append(manageModels);
+  menu.append(left, right);
+}
+function strategyMenuOption(kind, value, name, desc, selected) {
+  const b = el('button', 'strategy-option' + (selected ? ' selected' : ''));
+  b.type = 'button';
+  b.setAttribute('role', 'menuitemradio');
+  b.setAttribute('aria-checked', String(selected));
+  b.append(el('span', 'strategy-option-check', selected ? '✓' : ''), el('span', '', name), el('small', '', desc));
+  b.onclick = action(async () => {
+    await profilesManager.flush();
+    const source = profilesManager.local || state.profiles;
+    if (kind === 'model') {
+      await api('/settings', { method: 'PUT', body: JSON.stringify({ activeModel: value }) });
+      closeStrategyMenu();
+      await refreshConfig();
+      const modelName = state.config.models?.find(m => m.id === value)?.name || value;
+      toast('已切换模型：' + modelName);
+      return;
+    }
+    if (kind === 'auto') source.strategy = 'auto';
+    else { source.strategy = 'manual'; source.activeProfile = value; }
+    await saveProfilesFrom(source);
+    closeStrategyMenu();
+    toast(kind === 'auto' ? '已切换为自动路由策略' : '已切换为手动策略 · ' + profileName(value));
+  });
+  return b;
+}
+function openStrategyMenu() {
+  $('strategy-menu').classList.remove('hidden');
+  $('strategy-button').setAttribute('aria-expanded', 'true');
+}
+function closeStrategyMenu() {
+  $('strategy-menu').classList.add('hidden');
+  $('strategy-button').setAttribute('aria-expanded', 'false');
+}
+$('strategy-button').onclick = async () => {
+  if (!$('strategy-menu').classList.contains('hidden')) { closeStrategyMenu(); return; }
+  try { if (!state.profiles) await loadProfiles(); refreshStrategyUI(); openStrategyMenu(); } catch (error) { toast(error.message); }
+};
+document.addEventListener('click', event => { if (!$('strategy-menu').classList.contains('hidden') && !event.target.closest('.strategy-picker')) closeStrategyMenu(); });
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$('strategy-menu').classList.contains('hidden')) closeStrategyMenu(); });
+/* ── Token 消耗统计（FR-90）：git 提交热力图样式 ── */
+function fmtStatTokens(n) { return n < 1000 ? String(n) : (n / 1000).toFixed(1) + 'K'; }
+function renderTokenStats(control) {
+  const wrap = el('div', 'settings-control token-stats');
+  const head = el('div', 'token-head');
+  head.append(el('span', 'token-title', control.label), el('span', 'control-value', ''));
+  const chips = el('div', 'token-chips');
+  const grid = el('div', 'token-heatmap');
+  grid.setAttribute('role', 'img');
+  grid.setAttribute('aria-label', 'Token 消耗热力图');
+  const legend = el('div', 'token-legend');
+  wrap.append(head, chips, grid, legend);
+  action(async () => {
+    const data = await api('/token-stats');
+    const days = data.days || {};
+    const totalsObj = data.totals || {};
+    const todayStats = data.today || {};
+    head.querySelector('.control-value').textContent = fmtStatTokens(totalsObj.total || 0) + ' tokens';
+    chips.replaceChildren();
+    chips.append(
+      el('span', 'token-chip', '今日 ' + fmtStatTokens(todayStats.total || 0)),
+      el('span', 'token-chip', '累计 ' + fmtStatTokens(totalsObj.total || 0)),
+      el('span', 'token-chip', (totalsObj.calls || 0) + ' 次调用'),
+      totalsObj.estimated ? el('span', 'token-chip', '含估算') : el('span', 'token-chip', '精确统计')
+    );
+    grid.replaceChildren();
+    // 最近 16 周（112 天），列=周、行=星期（周一~周日）
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 111);
+    start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); // 对齐到周一
+    const cols = [];
+    let cursor = new Date(start);
+    while (cursor <= today) {
+      const col = [];
+      for (let dow = 0; dow < 7; dow++) {
+        const d = new Date(cursor);
+        d.setDate(d.getDate() + dow);
+        col.push(d);
+      }
+      cols.push(col);
+      cursor.setDate(cursor.getDate() + 7);
+    }
+    const maxVal = Math.max(1, ...Object.values(days).map(d => d.total || 0));
+    const level = v => v <= 0 ? 0 : v <= maxVal * 0.25 ? 1 : v <= maxVal * 0.5 ? 2 : v <= maxVal * 0.75 ? 3 : 4;
+    for (const col of cols) {
+      const colEl = el('div', 'token-week');
+      for (const d of col) {
+        const key = d.toISOString().slice(0, 10);
+        const day = days[key] || {};
+        const cell = el('span', 'token-cell tk-' + level(day.total || 0));
+        cell.title = key + ' · ' + fmtStatTokens(day.total || 0) + ' tokens · ' + (day.calls || 0) + ' 次调用' + (day.estimated ? '（估算）' : '');
+        if (d > today) cell.classList.add('future');
+        colEl.append(cell);
+      }
+      grid.append(colEl);
+    }
+    legend.replaceChildren();
+    legend.append(el('span', '', '少'));
+    for (let i = 1; i <= 4; i++) { const c = el('span', 'token-cell tk-' + i); legend.append(c); }
+    legend.append(el('span', '', '多'));
+    if (totalsObj.estimated) legend.append(el('small', '', '· 上游未返回 usage 时按 4 字符/词估算'));
+  })();
+  return wrap;
+}
 /* ── 模型列表管理（FR-67 / FR-68）：设置弹窗内增删、标记当前、自动获取候选 ── */
 function renderModelList() {
   const host = $('model-list');
