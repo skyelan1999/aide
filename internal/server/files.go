@@ -63,6 +63,9 @@ func (a *App) root(which string) (*os.Root, error) {
 	if which == "context" {
 		return a.reference, nil
 	}
+	if which == "local" {
+		return a.localRoot, nil
+	}
 	return nil, errors.New("未知根目录")
 }
 func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {

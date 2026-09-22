@@ -98,65 +98,84 @@ func (a *App) saveWorkspaceSecrets() error {
 	return atomicJSON(a.wsSecretsPath, a.wsSecrets)
 }
 
-// applyWorkspaceConfig 按配置切换本地根目录与参考根，并清理旧 SSH 会话（FR-79 / FR-80）。
-func (a *App) applyWorkspaceConfig() error {
-	w, err := os.OpenRoot(a.workPath)
-	if err != nil {
-		return err
+// resolveHostPath 把用户填写的路径翻译为容器路径（FR-79 核心修复）：
+// 宿主机绝对路径 → /local 挂载下；容器绝对路径（/workspace|/context|/local）与相对路径（相对 /workspace）向后兼容。
+// 返回容器路径与「展示路径」（宿主机视角，用于 AI 提示与界面）。
+func (a *App) resolveHostPath(p string) (string, string, error) {
+	p = strings.TrimSpace(p)
+	if p == "" {
+		return "", "", nil
 	}
-	if a.wsConfig.Workspace.Mode == "local" && strings.TrimSpace(a.wsConfig.Workspace.Path) != "" {
-		if err := safePath(a.wsConfig.Workspace.Path); err != nil {
-			w.Close()
-			return fmt.Errorf("工作空间路径无效: %w", err)
+	if strings.HasPrefix(p, "~/") {
+		p = strings.TrimRight(a.hostLocal, "/") + strings.TrimPrefix(p, "~")
+	}
+	trimmed := func(prefix string) string { return strings.TrimPrefix(p, prefix) }
+	if strings.HasPrefix(p, "/workspace") {
+		return filepath.Join(a.workPath, filepath.FromSlash(trimmed("/workspace"))), p, nil
+	}
+	if strings.HasPrefix(p, "/context") {
+		return filepath.Join(a.reference.Name(), filepath.FromSlash(trimmed("/context"))), p, nil
+	}
+	if strings.HasPrefix(p, "/local") {
+		return filepath.Join(a.localRoot.Name(), filepath.FromSlash(trimmed("/local"))), p, nil
+	}
+	if !strings.HasPrefix(p, "/") {
+		return filepath.Join(a.workPath, filepath.FromSlash(p)), p, nil
+	}
+	rel, err := filepath.Rel(a.hostLocal, p)
+	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", "", fmt.Errorf("路径 %s 不在可访问范围内（本机目录根：%s）", p, a.hostLocal)
+	}
+	return filepath.Join("/local", rel), p, nil
+}
+
+// applyWorkspaceConfig 按配置切换工作空间/文档/缓存根，并清理旧 SSH 会话（FR-79 / FR-80）。
+func (a *App) applyWorkspaceConfig() error {
+	display := "/workspace"
+	if a.wsConfig.Workspace.Mode == "ssh" {
+		target := a.wsConfig.Workspace.Host
+		if a.wsConfig.Workspace.Username != "" {
+			target = a.wsConfig.Workspace.Username + "@" + target
 		}
-		if _, err := w.Stat(a.wsConfig.Workspace.Path); err != nil {
-			w.Close()
-			return fmt.Errorf("工作空间路径不存在: %s", a.wsConfig.Workspace.Path)
-		}
-		sub, err := os.OpenRoot(filepath.Join(a.workPath, filepath.FromSlash(a.wsConfig.Workspace.Path)))
+		display = target + ":" + a.wsConfig.Workspace.Path
+	} else {
+		cp, disp, err := a.resolveHostPath(a.wsConfig.Workspace.Path)
 		if err != nil {
-			w.Close()
 			return err
 		}
-		w.Close()
-		w = sub
-	}
-	old := a.workspace
-	a.workspace = w
-	if old != nil {
-		old.Close()
-	}
-	// 系统文档参考根
-	r, err := os.OpenRoot(a.workPath)
-	if err != nil {
-		return err
-	}
-	if strings.TrimSpace(a.wsConfig.Docs.Path) != "" {
-		docsBase := filepath.Join(a.workPath, "..", "context")
-		root, err := os.OpenRoot(docsBase)
-		if err == nil {
-			if _, statErr := root.Stat(a.wsConfig.Docs.Path); statErr == nil {
-				sub, subErr := os.OpenRoot(filepath.Join(docsBase, filepath.FromSlash(a.wsConfig.Docs.Path)))
-				if subErr == nil {
-					r.Close()
-					r = sub
-				} else {
-					root.Close()
-				}
-			} else {
-				root.Close()
+		if disp != "" {
+			display = disp
+		}
+		if cp != "" {
+			w, err := os.OpenRoot(cp)
+			if err != nil {
+				return fmt.Errorf("工作空间路径不可用: %w", err)
+			}
+			old := a.workspace
+			a.workspace = w
+			if old != nil {
+				old.Close()
 			}
 		}
 	}
-	oldRef := a.reference
-	a.reference = r
-	if oldRef != nil {
-		oldRef.Close()
+	a.workspaceDisplay = display
+	// 系统文档参考根
+	if dp, disp, err := a.resolveHostPath(a.wsConfig.Docs.Path); err == nil && dp != "" {
+		if r, err := os.OpenRoot(dp); err == nil {
+			oldRef := a.reference
+			a.reference = r
+			if oldRef != nil {
+				oldRef.Close()
+			}
+			_ = disp
+		}
 	}
-	// 缓存目录
-	if strings.TrimSpace(a.wsConfig.Cache.Path) != "" && safePath(a.wsConfig.Cache.Path) == nil {
-		_ = os.MkdirAll(filepath.Join(a.workPath, filepath.FromSlash(a.wsConfig.Cache.Path)), 0755)
+	// 缓存目录（自动创建）
+	cacheContainer := filepath.Join(a.workPath, ".cache")
+	if cp, _, err := a.resolveHostPath(a.wsConfig.Cache.Path); err == nil && cp != "" {
+		cacheContainer = cp
 	}
+	_ = os.MkdirAll(cacheContainer, 0755)
 	a.killSSHSession()
 	return nil
 }

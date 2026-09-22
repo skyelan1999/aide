@@ -110,6 +110,9 @@ type App struct {
 	wsConfig                  WorkspaceConfig
 	wsSecrets                 workspaceSecrets
 	sshBin, sftpBin           string
+	localRoot                 *os.Root
+	hostLocal                 string
+	workspaceDisplay          string
 }
 
 func env(key, fallback string) string {
@@ -255,6 +258,16 @@ func New(work, reference, data string) (*App, error) {
 	a.runPluginHost(context.Background())
 	a.sshBin = "ssh"
 	a.sftpBin = "sftp"
+	a.hostLocal = env("AIDE_HOST_LOCAL", os.Getenv("HOME"))
+	localRoot, localErr := os.OpenRoot("/local")
+	if localErr != nil {
+		localRoot, localErr = os.OpenRoot("/workspace")
+		if localErr != nil {
+			a.Close()
+			return nil, localErr
+		}
+	}
+	a.localRoot = localRoot
 	if err := a.loadWorkspaceConfig(); err != nil {
 		a.Close()
 		return nil, err
@@ -348,7 +361,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {

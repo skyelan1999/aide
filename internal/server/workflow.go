@@ -142,7 +142,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		}
 		s.Title = string(title)
 	}
-	history := []Message{{Role: "system", Content: systemPrompt}}
+	history := []Message{{Role: "system", Content: systemPrompt + "\n当前工作目录（宿主视角）: " + a.workspaceDisplay}}
 	// Bound replay size, preserving recent conversation in chronological order.
 	start, total := len(s.Messages), 0
 	for start > 0 && total+len(s.Messages[start-1].Content) < 60000 {

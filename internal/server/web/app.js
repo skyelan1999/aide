@@ -630,7 +630,7 @@ const wsState = { config: null, browse: { field: '', root: 'workspace', dir: '.'
 async function loadWorkspaceConfig() { wsState.config = await api('/workspace-config'); renderWorkspaceSummary(); }
 function renderWorkspaceSummary() {
   const w = wsState.config?.workspace || {};
-  $('workspace-summary').textContent = w.mode === 'ssh' ? (w.host || '远程') + ' · SSH/SFTP' : '/workspace' + (w.path ? '/' + w.path : '') + ' · 本地';
+  $('workspace-summary').textContent = w.mode === 'ssh' ? (w.host || '远程') + ' · SSH/SFTP' : (state.config?.workspaceDisplay || '/workspace') + ' · 本地';
   $('command-mode').textContent = w.mode === 'ssh' ? 'SSH · ' + (w.host || '未配置主机') : '本地';
 }
 function setWsMode(mode) {
@@ -714,23 +714,28 @@ $('workspace-sheet-close').onclick = closeWorkspaceSheet;
 $('ws-save').onclick = action(async () => { await saveWorkspaceConfig(); closeWorkspaceSheet(); toast('工作空间配置已保存'); });
 document.querySelectorAll('.ws-seg:not(.ws-auth) [data-mode]').forEach(b => b.onclick = () => setWsMode(b.dataset.mode));
 document.querySelectorAll('.ws-auth [data-auth]').forEach(b => b.onclick = () => setWsAuth(b.dataset.auth));
-/* 目录选择器 */
-function openBrowse(field, root) { wsState.browse = { field, root, dir: '.' }; $('ws-browse-dialog').showModal(); action(loadBrowseDir)(); }
+/* 目录选择器：按宿主机真实目录浏览（root=local），显示与回填均为本机路径 */
+function hostPathOf(dir) {
+  const base = state.config?.hostLocal || '/local';
+  if (dir === '.' || dir === '') return base;
+  return base.replace(/\/$/, '') + '/' + dir;
+}
+function openBrowse(field) { wsState.browse = { field, dir: '.' }; $('ws-browse-dialog').showModal(); action(loadBrowseDir)(); }
 async function loadBrowseDir() {
   const b = wsState.browse;
-  const files = await api('/files?root=' + b.root + '&path=' + encodeURIComponent(b.dir));
-  $('ws-browse-path').textContent = '/' + b.root + (b.dir === '.' ? '' : '/' + b.dir);
+  const files = await api('/files?root=local&path=' + encodeURIComponent(b.dir));
+  $('ws-browse-path').textContent = hostPathOf(b.dir);
   const list = $('ws-browse-list');
   list.replaceChildren();
   const dirs = files.filter(f => f.dir);
   if (!dirs.length) list.append(el('p', 'muted', '没有子目录'));
   dirs.forEach(d => { const row = el('button', 'ws-browse-item', '▱ ' + d.name); row.onclick = () => { b.dir = d.path; action(loadBrowseDir)(); }; list.append(row); });
 }
-$('ws-browse').onclick = () => openBrowse('ws-path', 'workspace');
-$('docs-browse').onclick = () => openBrowse('docs-path', 'context');
-$('cache-browse').onclick = () => openBrowse('cache-path', 'workspace');
+$('ws-browse').onclick = () => openBrowse('ws-path');
+$('docs-browse').onclick = () => openBrowse('docs-path');
+$('cache-browse').onclick = () => openBrowse('cache-path');
 $('ws-browse-parent').onclick = () => { const b = wsState.browse; b.dir = b.dir.includes('/') ? b.dir.slice(0, b.dir.lastIndexOf('/')) : '.'; action(loadBrowseDir)(); };
-$('ws-browse-select').onclick = () => { const b = wsState.browse; $(b.field).value = b.dir === '.' ? '' : b.dir; $('ws-browse-dialog').close(); };
+$('ws-browse-select').onclick = () => { const b = wsState.browse; $(b.field).value = hostPathOf(b.dir); $('ws-browse-dialog').close(); };
 
 async function initialize() { await refreshConfig(); await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig()]); }
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
