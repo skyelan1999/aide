@@ -330,6 +330,7 @@ function setSettingsOpen(open) {
   if (open) $('settings-sheet-close').focus();
 }
 async function openSettingsSheet() {
+  closeTrajectory();
   await loadSettingsSchema();
   renderSettingsSheet(); // 每次打开强制重渲染，保证数据新鲜
   setSettingsOpen(true);
@@ -348,8 +349,8 @@ function bindSettingsTrigger(button) {
 bindSettingsTrigger($('brand-button'));
 bindSettingsTrigger($('brand-mini'));
 $('settings-sheet-close').onclick = closeSettingsSheet;
-$('settings-backdrop').onclick = () => { if ($('workspace-sheet').classList.contains('open')) closeWorkspaceSheet(); else closeSettingsSheet(); };
-document.addEventListener('keydown', event => { if (event.key === 'Escape' && !document.querySelector('dialog[open]')) { if ($('workspace-sheet').classList.contains('open')) closeWorkspaceSheet(); else if ($('settings-sheet').classList.contains('open')) closeSettingsSheet(); } });
+$('settings-backdrop').onclick = () => { if ($('trajectory-sheet').classList.contains('open')) closeTrajectory(); else if ($('workspace-sheet').classList.contains('open')) closeWorkspaceSheet(); else closeSettingsSheet(); };
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !document.querySelector('dialog[open]')) { if ($('trajectory-sheet').classList.contains('open')) closeTrajectory(); else if ($('workspace-sheet').classList.contains('open')) closeWorkspaceSheet(); else if ($('settings-sheet').classList.contains('open')) closeSettingsSheet(); } });
 /* ── 模型参数 Profile 与策略路由（FR-61~FR-64）：数据经 GET/PUT /api/profiles，
    持久化于工程目录 profiles.json；聊天栏策略按钮可选 auto 或手动 profile。 ── */
 async function loadProfiles() { state.profiles = await api('/profiles'); refreshStrategyUI(); }
@@ -1094,6 +1095,7 @@ async function saveWorkspaceConfig() {
   await loadFiles();
 }
 function openWorkspaceSheet() {
+  closeTrajectory();
   closeSettingsSheet();
   fillWorkspaceSheet();
   $('workspace-sheet').classList.add('open');
@@ -1309,6 +1311,77 @@ $('file-view-save').onclick = action(async () => {
   fileView.hash = res.hash;
   $('file-view-status').textContent = '✓ 已保存';
 });
+/* ── 会话轨迹（DSH TrajectoryView 风格：turn-aware 事件时间线） ── */
+function trajectoryEvent(dot, title, bodyNode, kind) {
+  const ev = el('div', 'traj-event ' + (kind || ''));
+  const head = el('div', 'traj-event-head');
+  head.append(el('span', 'traj-dot', dot), el('strong', '', title));
+  ev.append(head);
+  if (bodyNode) ev.append(bodyNode);
+  return ev;
+}
+function renderTrajectory() {
+  const host = $('trajectory-content');
+  host.replaceChildren();
+  const session = state.session;
+  if (!session || !session.runs?.length) {
+    host.append(el('p', 'muted', '当前会话还没有任务。发送任务后，这里会按事件时间线记录完整轨迹。'));
+    return;
+  }
+  for (const run of session.runs) {
+    const card = el('div', 'traj-run');
+    const head = el('div', 'traj-run-head');
+    head.append(el('span', 'traj-run-time', (run.created || '').replace('T', ' ').slice(0, 16)));
+    const meta = [];
+    meta.push(run.mode === 'workflow' ? '工作流' : '对话');
+    if (run.strategy) meta.push(run.strategy === 'auto' ? '自动路由 → ' + profileName(run.profile) : '手动 · ' + profileName(run.profile));
+    if (run.model) meta.push(run.model);
+    meta.push(statuses[run.status] || run.status);
+    if (run.usage?.total) meta.push(fmtStatTokens(run.usage.total) + ' tokens' + (run.usage.estimated ? '（估）' : ''));
+    head.append(el('span', 'traj-run-meta', meta.join(' · ')));
+    card.append(head);
+    card.append(trajectoryEvent('💬', '用户任务', el('div', 'traj-body', run.prompt)));
+    run.steps?.forEach(step => {
+      const body = el('div', 'traj-body md-body');
+      if (step.name === 'propose') { const pre = el('pre', 'traj-pre', step.content || ''); body.append(pre); }
+      else body.innerHTML = renderMarkdown(step.content || '（无内容）');
+      card.append(trajectoryEvent('◈', labels[step.name] || step.name + ' · ' + statuses[step.status], body));
+    });
+    run.toolUses?.forEach(use => {
+      let argsBrief = '';
+      try { const a = JSON.parse(use.args || '{}'); const v = Object.values(a)[0]; if (typeof v === 'string') argsBrief = ' · ' + v.slice(0, 40); } catch (e) { /* 忽略 */ }
+      const body = el('div', 'traj-body');
+      body.append(el('p', '', '参数：' + (use.args || '无')), el('pre', 'traj-pre', use.result || '（无结果）'));
+      card.append(trajectoryEvent('⚒', use.tool + argsBrief, body, 'tool'));
+    });
+    if (run.files?.length) {
+      const body = el('div', 'traj-body');
+      run.files.forEach(f => body.append(el('p', '', (f.applied ? '✓ 已应用 ' : '→ 提案 ') + f.path)));
+      card.append(trajectoryEvent('📝', '文件提案 · ' + run.files.length + ' 个', body));
+    }
+    if (run.commands?.length) {
+      const body = el('div', 'traj-body');
+      run.commands.forEach(c => body.append(el('pre', 'traj-pre', c)));
+      card.append(trajectoryEvent('❯', '建议命令 · ' + run.commands.length + ' 条（未运行）', body));
+    }
+    if (run.error) card.append(trajectoryEvent('✖', '错误', el('div', 'traj-body task-error', run.error), 'error'));
+    host.append(card);
+  }
+}
+function openTrajectory() {
+  closeSettingsSheet();
+  closeWorkspaceSheet();
+  renderTrajectory();
+  $('trajectory-sheet').classList.add('open');
+  $('settings-backdrop').classList.add('open');
+}
+function closeTrajectory() {
+  $('trajectory-sheet').classList.remove('open');
+  $('settings-backdrop').classList.remove('open');
+}
+$('trajectory-toggle').onclick = () => { if ($('trajectory-sheet').classList.contains('open')) closeTrajectory(); else openTrajectory(); };
+$('trajectory-sheet-close').onclick = closeTrajectory;
+
 async function initialize() {
   await refreshConfig();
   const fragment = new URLSearchParams(location.hash.slice(1));
