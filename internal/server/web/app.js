@@ -527,22 +527,26 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$
 function fmtStatTokens(n) { return n < 1000 ? String(n) : (n / 1000).toFixed(1) + 'K'; }
 function renderTokenStats(control) {
   const wrap = el('div', 'settings-control token-stats');
-  const head = el('div', 'control-label');
-  head.append(el('span', '', control.label), el('span', 'control-value', ''));
-  wrap.append(head);
+  // 折叠菜单形式：收起为一行摘要，展开显示热力图卡片
+  const menu = el('details', 'token-menu');
+  const summary = el('summary', '');
+  summary.append(el('span', '', control.label), el('span', 'control-value', '加载中…'));
+  menu.append(summary);
+  const card = el('div', 'token-card');
   const totals = el('p', 'token-totals', '加载中…');
   const grid = el('div', 'token-heatmap');
   grid.setAttribute('role', 'img');
   grid.setAttribute('aria-label', 'Token 消耗热力图');
   const legend = el('div', 'token-legend');
-  wrap.append(totals, grid, legend);
+  card.append(totals, grid, legend);
+  menu.append(card);
+  wrap.append(menu);
   action(async () => {
     const data = await api('/token-stats');
     const days = data.days || {};
     const totalsObj = data.totals || {};
-    head.querySelector('.control-value').textContent = fmtStatTokens(totalsObj.total || 0) + ' tokens · ' + (totalsObj.calls || 0) + ' 次调用';
-    const t = data.today || {};
-    totals.textContent = '今日 ' + fmtStatTokens(t.total || 0) + ' · 累计 ' + fmtStatTokens(totalsObj.total || 0) + (totalsObj.estimated ? '（含估算）' : '');
+    summary.querySelector('.control-value').textContent = fmtStatTokens(totalsObj.total || 0) + ' tokens · 今日 ' + fmtStatTokens((data.today || {}).total || 0);
+    totals.textContent = '今日 ' + fmtStatTokens((data.today || {}).total || 0) + ' · 累计 ' + fmtStatTokens(totalsObj.total || 0) + ' · ' + (totalsObj.calls || 0) + ' 次调用' + (totalsObj.estimated ? ' · 含估算' : '');
     grid.replaceChildren();
     // 最近 16 周（112 天），列=周、行=星期（周一~周日）
     const today = new Date();
