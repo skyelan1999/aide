@@ -1,0 +1,71 @@
+{
+  "id": "english-support",
+  "request": "软件和文档添加英文支持",
+  "baseline": "7ff083aa65e6d3ed9d61c5a8378af155c0290670",
+  "initial_status": "",
+  "acceptance": [
+    "Settings offers Chinese/English buttons with immediate switching and persisted preference",
+    "User content is not translated or overwritten",
+    "English sidebar label fits narrow layout; brand mark has hover motion with reduced-motion support",
+    "Local root is configurable and aide host path is browsable",
+    "Documentation links and full verification pass"
+  ],
+  "scope": [
+    "frontend localization and UI",
+    "English README, installation and user guides",
+    "local-root configuration script",
+    "tests and task documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User clarification: settings language buttons; sidebar fit, logo motion and configurable aide path.",
+      "evidence": [
+        "docs/reviews/2026-09-23/english-support-verification.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Explicit product-only translation catalog; browser-local preference; Docker root configured outside container.",
+      "evidence": [
+        "docs/reviews/2026-09-23/english-support-verification.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Chinese/English switch, layout fixes, motion and path configuration implemented.",
+      "evidence": [
+        "docs/reviews/2026-09-23/english-support-verification.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Full route pass; localization/path tests; frontend VM 3/3; real browser language persistence, draft preservation, mock completion, directory listing and selection.",
+      "evidence": [
+        "docs/reviews/2026-09-23/english-support-verification.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "English entry/install/user guides; advanced references explicitly remain canonical Chinese.",
+      "evidence": [
+        "docs/reviews/2026-09-23/english-support-verification.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped changes; no tokens, .env, runtime files or image archives staged.",
+      "evidence": [
+        "docs/reviews/2026-09-23/english-support-verification.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "User authorized commit, merge and push; no new tag, image release or production restart in this integration.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "测试一下，没问题先更新下合了推送吧",
+  "rollback": "Revert integration commit; restore previous AIDE_LOCAL_ROOT if changing an existing runtime mount.",
+  "handoff": "Preview 18121 uses current frontend and RC4 backend with mock provider. Production 8097 unchanged. Local .env updated separately, not tracked. English advanced-reference translation remains outside delivered scope."
+}

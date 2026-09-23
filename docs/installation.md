@@ -76,3 +76,16 @@ macOS 脚本自动打开带本地登录令牌的浏览器；Linux 有 xdg-open �
 | 重启后没有旧会话 | 检查 Compose 项目名及 /data 卷，不要创建新卷代替恢复 |
 
 停止：`bash scripts/aide.sh stop`。查看状态：`bash scripts/aide.sh status`。日志：`bash scripts/aide.sh logs`。不要使用 `docker compose down -v` 清除数据。备份与回滚见 [交接手册](../HANDOVER.md)。
+
+### 配置可浏览的本地目录
+
+工作空间配置中的「浏览」只能访问挂载到 `/local` 的宿主目录。在 aide 仓库根目录执行：
+
+```bash
+# 将当前 aide 仓库设为本地浏览根目录
+python3 scripts/configure-local-root.py
+# 或指定其他已存在的目录（含空格时加引号）
+python3 scripts/configure-local-root.py --path "/absolute/path/to/projects"
+```
+
+脚本只更新 `.env` 的 `AIDE_LOCAL_ROOT`，保留其他配置，不自动重启服务。确认当前任务结束后，执行 `docker compose up -d --no-build --pull never` 重建容器以应用挂载；服务会短暂中断，命名数据卷保留。使用「工作空间配置 → 本机路径 → 浏览」选择目录并保存。浏览器显示并回填电脑上的真实路径；不能通过「上一级」越过配置的浏览根目录。应用内切换目录只能选择已挂载范围内的位置，扩大范围须重新配置并重建容器。

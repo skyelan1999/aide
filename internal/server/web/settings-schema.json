@@ -49,6 +49,16 @@
       ]
     },
     {
+      "id": "language",
+      "title": "语言",
+      "controls": [
+        {
+          "type": "language",
+          "id": "language"
+        }
+      ]
+    },
+    {
       "id": "stats",
       "title": "消耗统计",
       "description": "模型调用 Token 消耗与费用趋势",

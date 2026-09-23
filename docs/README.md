@@ -1,5 +1,7 @@
 # aide 文档中心
 
+[English](en/README.md) · 简体中文
+
 全部项目文档统一在 `docs/`。根目录仅保留 README、HANDOVER、version、许可证及客户端入口。不再创建 `doc/`。
 
 ## 从这里开始

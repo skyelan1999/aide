@@ -1,5 +1,7 @@
 <div align="center">
 
+[English](README.en.md) · 简体中文
+
 # aide
 
 ### AI+IDE，让想法成为下一步。

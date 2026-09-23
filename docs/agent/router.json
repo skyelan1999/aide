@@ -75,6 +75,24 @@
       [
         "python3",
         "scripts/test_install.py"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/i18n.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/locales/en.js"
+      ],
+      [
+        "node",
+        "scripts/test_i18n.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_local_root.py"
       ]
     ],
     "full": [

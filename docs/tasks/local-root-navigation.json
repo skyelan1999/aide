@@ -1,0 +1,19 @@
+{
+  "id": "local-root-navigation",
+  "request": "当前 aide 路径可导航，支持可配置",
+  "scope": [
+    "scripts/configure-local-root.py",
+    "scripts/test_local_root.py",
+    "internal/server/web/app.js",
+    "docs/installation.md",
+    "local ignored .env",
+    "isolated preview container"
+  ],
+  "verification": {
+    "python": "2 unittest cases passed",
+    "path_mapping": "6 Node assertions passed",
+    "browser": "18121: browser lists actual aide child directories and selection fills host path"
+  },
+  "deployment": "Preview recreated with aide mounted at /local. Production unchanged. .env root applies to production only on next container recreation.",
+  "release": "not_run"
+}

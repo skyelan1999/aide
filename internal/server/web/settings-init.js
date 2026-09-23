@@ -28,7 +28,8 @@
   var LEGACY_KEY = 'aide.theme';
   var VERSION = 1;
   var VALID_THEME = ['light', 'dark', 'system']; // 主题枚举唯一来源
-  var DEFAULT_PREF = 'system';                   // 缺省偏好
+  var DEFAULT_PREF = 'system';
+  function normalizeLanguage(value) { return ['zh-CN', 'en', 'system'].indexOf(value) >= 0 ? value : 'system'; }                   // 缺省偏好
   var DEFAULT_DOC = { version: VERSION, theme: DEFAULT_PREF, palette: 'blue' };
   var SYSTEM_QUERY = '(prefers-color-scheme: dark)';
 
@@ -90,6 +91,7 @@
       if (Object.prototype.hasOwnProperty.call(parsed, key)) doc[key] = parsed[key];
     }
     doc.version = VERSION;
+    doc.language = normalizeLanguage(parsed.language);
     doc.theme = parsed.theme === 'classic' ? 'light' : theme;
     doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : 'blue';
     var normalized = JSON.stringify(doc);
@@ -108,6 +110,7 @@
     root.setAttribute('data-theme', effectiveOf(doc.theme));
     root.setAttribute('data-theme-pref', doc.theme);
     root.setAttribute('data-palette', doc.palette);
+    root.lang = doc.language === 'en' || (doc.language === 'system' && /^en(?:-|$)/i.test(window.navigator && window.navigator.language || '')) ? 'en' : 'zh-CN';
   }
 
   /* ── 通知：单个订阅者异常不得影响设置本身 ── */
@@ -172,6 +175,7 @@
         if (Object.prototype.hasOwnProperty.call(parsed, key)) doc[key] = parsed[key];
       }
       doc.version = VERSION;
+    doc.language = normalizeLanguage(parsed.language);
       doc.theme = parsed.theme === 'classic' ? 'light' : theme;
     doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : 'blue';
       applyTheme();
@@ -201,9 +205,9 @@
       notifyAll();
     },
     set: function (name, value) {
-      doc[name] = name === 'theme' ? normalizeTheme(value) : value;
+      doc[name] = name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : value;
       persist();
-      if (name === 'theme') applyTheme();
+      if (name === 'theme' || name === 'language') applyTheme();
       notifyAll();
       return doc[name];
     },
