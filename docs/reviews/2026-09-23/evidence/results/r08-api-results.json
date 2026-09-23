@@ -37,16 +37,6 @@
         "evidencePreserved": true,
         "diagnosable": true
       }
-    },
-    {
-      "check": "R08-04-context-preview",
-      "status": "BLOCKED",
-      "detail": "candidate has no context-preview API/feature; not in remediation scope"
-    },
-    {
-      "check": "R08-browser-recheck",
-      "status": "NOT_RUN",
-      "detail": "requires real browser; API/unit/VM-level evidence only"
     }
   ]
 }
