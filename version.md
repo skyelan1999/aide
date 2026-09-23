@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.6.0 RC2**
+**当前版本：0.1.6.0 RC3**
+
+## 0.1.6.0 RC3（2026-09-23）
+
+- AI + IDE for focused professional work; unified agent workflow, installer and Docker delivery
+
 
 ## 0.1.6.0 RC2（2026-09-23）
 
