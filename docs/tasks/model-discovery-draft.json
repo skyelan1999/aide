@@ -3,6 +3,13 @@
   "request": "修复模型设置自动获取失败",
   "cause": "GET /api/models used saved settings instead of current form draft; preview mock did not implement GET /models.",
   "implementation": "POST /api/models accepts draft endpoint/key without persisting; saved key reused only for unchanged endpoint; GET retained for compatibility.",
-  "verification": ["TestModelDiscoveryDraft passes with race: draft endpoint, explicit key, clear key, saved-key scope, no persistence, invalid URL", "Browser 18121: model-datalist contains preview-model after clicking Fetch models", "Full route verification passed"],
-  "limits": "Mock provider used; no real DeepSeek credentials exercised. Preview updated, production unchanged."
+  "verification": [
+    "TestModelDiscoveryDraft passes with race: draft endpoint, explicit key, clear key, saved-key scope, no persistence, invalid URL",
+    "Browser 18121: model-datalist contains preview-model after clicking Fetch models",
+    "Full route verification passed",
+    "Live DeepSeek discovery through aide POST /api/models: HTTP 200; deepseek-flash and deepseek-v4-pro returned",
+    "Direct DeepSeek chat/completions smoke: deepseek-flash returned aide connection OK; 37 prompt + 29 completion = 66 total tokens"
+  ],
+  "limits": "Live discovery exercised aide backend; live completion called provider directly, not the full aide task workflow. Browser workflow used mock provider. Credentials omitted from repository and application configuration. Preview updated; production unchanged.",
+  "evidence": "docs/reviews/2026-09-23/model-discovery-verification.md"
 }
