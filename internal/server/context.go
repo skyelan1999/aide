@@ -280,7 +280,7 @@ func (a *App) runRequestsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	for _, t := range s.Runs {
-		if t.ID == r.PathValue("rid") {
+		if t.ID == r.PathValue("run") {
 			jsonOut(w, 200, map[string]any{
 				"run":       t.ID,
 				"snapshots": t.RequestSnapshots,
