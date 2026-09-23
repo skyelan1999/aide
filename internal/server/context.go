@@ -128,6 +128,9 @@ func (a *App) attachmentContext(atts []Attachment) (string, map[string]Change, e
 // s 为 nil 时表示新会话（无历史与摘要）。调用方需持有 a.mu。
 func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, cfg Settings, params ProfileParams, includeBody bool) *ContextPreview {
 	history := []Message{{Role: "system", Content: systemPrompt + "\n当前工作目录: " + a.workspaceDisplay + "\n可用工具: " + a.toolListHint()}}
+	if guide := a.environmentGuide(); guide != "" {
+		history[0].Content += "\n" + guide
+	}
 	var bd ContextBreakdown
 	bd.SystemChars = len(history[0].Content)
 	if s != nil && s.Compact != "" {
@@ -175,6 +178,7 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	total := inputEstimate + outputReserve
 
 	fp := sha256.New()
+	fp.Write([]byte(history[0].Content))
 	fp.Write([]byte(cfg.Model))
 	fp.Write([]byte(prompt))
 	fp.Write([]byte(mode))

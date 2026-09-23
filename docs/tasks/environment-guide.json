@@ -1,0 +1,79 @@
+{
+  "id": "environment-guide",
+  "request": "插件让AI自动了解工作目录、辅助资料及用途与使用方式",
+  "baseline": "07ee89e05fee68bf236ff8ad73820fe306eedbba",
+  "initial_status": "",
+  "acceptance": [
+    "Enabled plugin injects workspace/reference inventory in canonical task context",
+    "Disabled plugin injects nothing",
+    "No file bodies, source URLs, credentials or disabled sources included",
+    "Bounded inventory is budgeted and fingerprinted",
+    "Plugin visible and active in browser"
+  ],
+  "scope": [
+    "plugins/environment-guide",
+    "plugins/registry.json",
+    "internal/server/context.go",
+    "internal/server/environment_guide.go",
+    "internal/server/environment_guide_test.go",
+    "documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Automatic environment awareness with plugin toggle.",
+      "evidence": [
+        "plugins/environment-guide/README.md",
+        "internal/server/environment_guide_test.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Go-generated bounded metadata in canonical task context; remote I/O excluded.",
+      "evidence": [
+        "plugins/environment-guide/README.md",
+        "internal/server/environment_guide_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Plugin registration, guide builder, budget/fingerprint integration.",
+      "evidence": [
+        "plugins/environment-guide/README.md",
+        "internal/server/environment_guide_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Full route passed; race tests cover toggle, exclusions and builder. Preview API confirms injection and systemChars=3979; browser plugin active.",
+      "evidence": [
+        "plugins/environment-guide/README.md",
+        "internal/server/environment_guide_test.go"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Plugin README and user/protocol documentation updated.",
+      "evidence": [
+        "plugins/environment-guide/README.md",
+        "internal/server/environment_guide_test.go"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only scoped source/docs included; preview runtime files remain outside repository.",
+      "evidence": [
+        "plugins/environment-guide/README.md",
+        "internal/server/environment_guide_test.go"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Preview updated; no release or production deployment requested.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "18121 preview updated. No model call made for this feature acceptance. Branch includes preceding standalone file-height fix."
+}

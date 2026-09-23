@@ -1,0 +1,9 @@
+{
+  "id": "environment-guide",
+  "name": "环境说明 / Environment guide",
+  "description": "自动向AI提供当前工作目录、顶层文件、辅助资料来源和使用方式；不读取文件正文或自动连接远程来源。",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true
+}
