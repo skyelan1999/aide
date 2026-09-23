@@ -293,15 +293,30 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	for _, p := range []string{in.Docs.Path, in.Cache.Path} {
-		if strings.TrimSpace(p) != "" {
-			if _, _, err := a.resolveHostPath(p); err != nil {
-				fail(w, 400, err)
-				return
-			}
+	// R03 原子性预检：docs/cache 若已存在必须是目录；workspace 路径必须能实际打开。
+	// 失败时配置、根、recent 均不变。
+	if strings.TrimSpace(in.Docs.Path) != "" {
+		dp, _, err := a.resolveHostPath(in.Docs.Path)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		if info, err := os.Stat(dp); err == nil && !info.IsDir() {
+			fail(w, 400, errors.New("系统文档路径不是目录"))
+			return
 		}
 	}
-	// R03 原子性预检：本地新路径必须能实际打开；失败时配置、根、recent 均不变
+	if strings.TrimSpace(in.Cache.Path) != "" {
+		cp, _, err := a.resolveHostPath(in.Cache.Path)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		if info, err := os.Stat(cp); err == nil && !info.IsDir() {
+			fail(w, 400, errors.New("缓存路径不是目录"))
+			return
+		}
+	}
 	if in.Workspace.Mode != "ssh" && strings.TrimSpace(in.Workspace.Path) != "" {
 		cp, _, err := a.resolveHostPath(in.Workspace.Path)
 		if err != nil {
