@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"path"
@@ -668,7 +669,10 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 		if cmd == "" {
 			return "缺少 command 参数"
 		}
-		msg, _ := a.recordToolProposal(task, versions, map[string]any{"type": "command", "command": cmd})
+		msg, err := a.recordToolProposal(task, versions, map[string]any{"type": "command", "command": cmd})
+		if err != nil {
+			return "命令建议被拒绝: " + err.Error()
+		}
 		return msg
 	default:
 		// 插件工具（协议 v1.1）
@@ -1050,5 +1054,8 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings) {
 	s.CompactedMessages = snap.prevCount + split
 	s.CompactedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	s.Messages = append([]Message{}, s.Messages[split:]...)
+	if err := a.save(s); err != nil {
+		log.Printf("自动压缩保存失败: %v", err)
+	}
 }
 
