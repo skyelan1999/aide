@@ -28,6 +28,6 @@
 
 `AIDE_LOCAL_ROOT` 默认 `$HOME` 可写挂载保持现状（用户此前要求的功能）；本轮未收紧挂载、未扩大授权。默认/实际权限：Compose 仅绑定 `127.0.0.1`，API 随机令牌 + 同源检查；`/context` 只读；文件 API 隐藏 `.git`/`.env`/`.data`。若后续收紧挂载，将随附迁移说明与验收清单（HANDOVER §9）。
 
-## 状态：可发布候选就绪，等待用户审阅发布
+## 状态：已发布（2026-09-23，0.1.5.0 RC5）
 
-不合并 main、不升版、不重建生产容器。发布与回滚步骤见 HANDOVER §9（发布：审阅证据 → 合并 → version.sh 升版 → tag → 重建镜像 → 先备份两卷 → 起服务 → verify_runtime；回滚：停服务 → 卷备份恢复 → 回退镜像/tag）。生产容器 `aide-aide-1` 未受本轮影响。
+用户审阅后指示合入并继续完整发布。已执行：合并 `8724afc`（main）→ 发布基建 `2b2ee01`（Dockerfile 构建身份注入）→ 升版 `0.1.5.0 RC5`（提交 `905d261`，tag `v0.1.5.0-RC5`）→ 备份两卷（`~/aide-backups/20260923-195334/`）→ 重建镜像 `aide:local`（ID `sha256:8f4455dfe822…`，已导出归档并更新校验和）→ `docker compose up -d --build` 重启生产 → 容器内 `verify_runtime.py --check` PASS；`/api/config` `version=0.1.5.0-RC5`、`revision=905d261…`；`/healthz` 200；`aide-aide-1` healthy。发布记录见 `docs/verification.md`；回滚步骤见 HANDOVER §9（卷备份已在发布前落盘）。

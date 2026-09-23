@@ -89,3 +89,11 @@ go vet ./...
 - 此前实测发现的真实模型偶发失败「模型方案不是有效 JSON」（自由文本输出所致）已通过 propose 步骤强制 `response_format=json_object` 修复，并有测试断言（TestWorkflowApprovalConflictAndPersistence 校验第 3 次调用 response_format）。
 - 历史「工具调用轮次超过 10 轮」失败为 LIM-29 设计上限触顶，非缺陷。
 - `go test -race -count=1 ./...` 与 `go vet ./...` 通过（容器 go1.26.8）。
+
+## 整改批次发布（2026-09-23，0.1.5.0 RC5）
+
+- 发布链：`remediate/r01-r07` 合入 `main`（合并提交 `8724afc`）→ 发布基建提交 `2b2ee01`（Dockerfile 构建身份 ARG）→ `scripts/version.sh patch` 升版 `0.1.5.0 RC5`（提交 `905d261`，tag `v0.1.5.0-RC5`）。
+- 镜像重建：`AIDE_VERSION=0.1.5.0-RC5 AIDE_COMMIT=905d261… docker compose up -d --build`；镜像 `aide:local` ID `sha256:8f4455dfe822…`，已导出 `docker-images/aide-local.tar.gz` 并更新 `.sha256`。
+- 生产验证：`aide-aide-1` healthy；`/api/config` `version=0.1.5.0-RC5`、`revision=buildCommit=905d261…`；`/healthz` 200；容器内 `verify_runtime.py --check` PASS（令牌/会话/工作区文件跨重启完好）。
+- 卷备份：`~/aide-backups/20260923-195334/{aide-data.tgz,aide-home.tgz}`（sha256 已记录于备份目录内输出）。
+- 整改验收证据：`docs/reviews/2026-09-23/`（11 套独立验收全 PASS + 真实 Chromium 浏览器 12/12 + race/vet/gofmt 干净）。
