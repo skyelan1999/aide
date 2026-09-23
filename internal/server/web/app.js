@@ -678,6 +678,11 @@ function renderTokenStats(control) {
     const unpriced = data.unpricedTotals || {};
     pricing = data.pricing || pricing;
     const cost = data.cost ?? 0;
+    // 服务端费率加载完成后同步输入框显示（未聚焦时），避免停留在初始默认值
+    const inEl = wrap.querySelector('input[aria-label="输入 ¥/百万"]');
+    const outEl = wrap.querySelector('input[aria-label="输出 ¥/百万"]');
+    if (inEl && document.activeElement !== inEl) inEl.value = pricing.priceIn;
+    if (outEl && document.activeElement !== outEl) outEl.value = pricing.priceOut;
     const callRecords = data.callRecords || [];
     const dayCost = {};
     callRecords.forEach(c => { const k = (c.time || '').slice(0, 10); dayCost[k] = (dayCost[k] || 0) + (c.cost || 0); });
