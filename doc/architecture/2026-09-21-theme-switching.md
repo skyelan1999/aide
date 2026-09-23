@@ -5,17 +5,10 @@
 | 文档类型 | 系统设计（System Design）+ 任务分解 |
 | 日期 | 2026-09-21 |
 | 上游依据 | `doc/prd/2026-09-21-theme-switching.md`（增量 PRD）+ `doc/PRD.md` v1.1 |
-| 对应分支 | `feat/theme-switching`（设计原案）；代码经 `feat/settings-panel` 落地于 main |
+| 对应分支 | `feat/theme-switching` |
 | 功能基线 | `fbe45b2` |
 | 作者 | 架构师（高见远） |
-| 状态 | 已落地（见下方「落地状态」） |
-
-> **落地状态（2026-09-21 更新，以 main 现状为准）**：本设计的主体已实现。以下演进由设置中心（FR-58~60）与模型参数 Profile（FR-61~64）两个功能带来，**本设计原案的其余部分仍按原文执行**：
-> 1. `theme-init.js` 更名 **`settings-init.js`**：职责扩展为「界面设置 JSON 存储 + 主题引擎」，对外增加 `window.aideUI` JSON 门面，保留 `window.aideTheme` 兼容门面。
-> 2. 存储键由 `localStorage['aide.theme']`（字符串）升级为 **`localStorage['aide.ui']`（JSON 文档 `{"version":1,"theme":…}`）**，旧键自动迁移——**LIM-16 被 `doc/PRD.md` 的 LIM-21 取代**。
-> 3. FR-52 三态切换控件位置由顶栏移入**设置面板「外观」分组**（分段控件 + 滑动 thumb），顶栏 `.theme-switch` 与相关 CSS 已移除；方案无关的 `VALID` 枚举与 §10.2 契约语义保留。
-> 4. 序列图以 [`theme-sequence.mermaid`](theme-sequence.mermaid) 的最新版为准（参与者已同步为 settings-init.js / aide.ui）。
-> 5. 其余结论（`web/*` 递归 embed、CSP 禁内联脚本、双静态 `<link>` 零网络切换、79 令牌冻结、暗色 ≤2/255 保真、不对称作用域设计）**仍成立且为现行实现依据**。
+| 状态 | 待工程师实施 |
 
 > **事实核对说明**：本文所有"现状"数据均由脚本对**基线 `fbe45b2`** 的 `internal/server/web/style.css`（14,317 B / **单行压缩格式，仅 2 个换行符** / **153 个顶层样式块**（其中 5 个为 `@media`；全文 `{` 共 197 个）/ **93 处 hex** / **89 个不同色值**）实读得出；Go `embed` 行为由容器内**实际运行**验证（见第 4 节），非凭记忆推断。
 
