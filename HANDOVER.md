@@ -14,7 +14,7 @@ bash scripts/version.sh show
 bash scripts/aide.sh status
 ```
 
-本次交付目标 `v0.1.6.0-RC4`：新版 UI、主题、关于、Agent 开发路由、统一 docs，以及 Docker 镜像附件。aide 定位为 AI + IDE 专业工作台；开发 Agent 路由用于维护与场景扩展，见 [定制指南](docs/customization.md)。
+本次交付目标 `v0.1.7.0-RC1`：新版 UI、主题、关于、Agent 开发路由、统一 docs，以及 Docker 镜像附件。aide 定位为 AI + IDE 专业工作台；开发 Agent 路由用于维护与场景扩展，见 [定制指南](docs/customization.md)。
 
 发布只交付 GitHub 源码/tag/Release/镜像；不自动替换本机 8097 的生产服务。镜像导入启动见 [镜像说明](docker-images/README.md)。
 
@@ -109,4 +109,4 @@ shasum -a 256 "$AIDE_BACKUP_DIR"/*.tgz "$AIDE_BACKUP_DIR/aide-source.bundle"
 - macOS 共享根、范围限制与切换方式见 [工作目录配置](docs/workspace-paths.md)。
 - 目录弹窗采用与父面板一致的紧凑布局；地址栏与前往按钮等高；保存配置后刷新目录。
 - 已在实际 8097 Safari 页面验证；临时预览容器已移除，数据保留。
-- 本轮交付为当前分支提交与推送，不包含 main 合并、版本升级、tag 或 GitHub Release。
+- 本轮发布目标为 v0.1.7.0-RC1，包含 main 合并、tag、GitHub 预发布及 arm64 镜像附件。

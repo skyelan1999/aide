@@ -4,18 +4,18 @@
 
 ## 下载与启动
 
-从 [GitHub Releases](https://github.com/skyelan1999/aide/releases) 下载同版源码、`aide-0.1.6.0-RC4-linux-arm64.tar.gz` 与 `SHA256SUMS`，将归档放在本目录。此次提供 **linux/arm64（Apple Silicon）** 镜像；x86/amd64 请从源码本机构建，不把 ARM 镜像当作原生 x86 版本。
+从 [GitHub Releases](https://github.com/skyelan1999/aide/releases) 下载同版源码、`aide-0.1.7.0-RC1-linux-arm64.tar.gz` 与 `SHA256SUMS`，将归档放在本目录。此次提供 **linux/arm64（Apple Silicon）** 镜像；x86/amd64 请从源码本机构建，不把 ARM 镜像当作原生 x86 版本。
 
 ```bash
 # 在归档所在目录验证，再导入
 shasum -a 256 -c SHA256SUMS
-docker load -i aide-0.1.6.0-RC4-linux-arm64.tar.gz
+docker load -i aide-0.1.7.0-RC1-linux-arm64.tar.gz
 ```
 
 进入源码根目录，首次复制 `.env.example` 为 `.env`，创建 context 目录，设置已存在的目录：
 
 ```dotenv
-AIDE_IMAGE=aide:0.1.6.0-RC4
+AIDE_IMAGE=aide:0.1.7.0-RC1
 AIDE_PORT=8097
 AIDE_WORKSPACE=.
 AIDE_CONTEXT=./context

@@ -16,7 +16,7 @@ AI and an integrated work environment · Understand information · Analyze probl
 
 ![aide workbench with conversations, project files, and task input](docs/images/workbench-preview.jpg)
 
-> The latest published baseline is **0.1.6.0 RC4**. English interface support is a subsequent source change and is not included in that existing image. Screenshots use an isolated demonstration environment. See [Releases](https://github.com/skyelan1999/aide/releases) for published artifacts and their exact versions.
+> The latest published baseline is **0.1.7.0 RC1**. This version includes Chinese/English switching, reference-source tools and unified startup. Screenshots use an isolated demonstration environment. See [Releases](https://github.com/skyelan1999/aide/releases) for published artifacts and their exact versions.
 
 ## Focus on your professional work
 
