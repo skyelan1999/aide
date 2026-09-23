@@ -11,6 +11,7 @@
 | 了解定位、安装与主要功能 | [项目首页](../README.md) |
 | 让 AI 定制专属工作台 | [场景定制指南](customization.md) |
 | 安装环境与首次启动 | [安装说明](installation.md) |
+| 工作目录、共享范围与上级导航 | [工作目录配置](workspace-paths.md) |
 | 学会使用项目、模型、文件、轨迹、统计 | [使用指南](user-guide.md) |
 | 运维、备份、恢复与发布 | [交接手册](../HANDOVER.md) |
 | 看需求范围与实际状态 | [现行 PRD](PRD.md) |

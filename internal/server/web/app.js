@@ -1186,6 +1186,9 @@ async function saveWorkspaceConfig() {
   wsState.config = await api('/workspace-config', { method: 'PUT', body: JSON.stringify(collectWsConfig()) });
   renderWorkspaceSummary();
   fillWorkspaceSheet();
+  state.dir = '.';
+  await refreshConfig();
+  await loadSourcesList();
   await loadFiles();
 }
 function openWorkspaceSheet() {
@@ -1199,7 +1202,7 @@ function closeWorkspaceSheet() {
   $('workspace-sheet').classList.remove('open');
   $('settings-backdrop').classList.remove('open');
 }
-$('workspace-config-button').onclick = () => { action(async () => { if (!wsState.config) await loadWorkspaceConfig(); openWorkspaceSheet(); })(); };
+$('workspace-config-button').onclick = () => { action(async () => { await loadWorkspaceConfig(); openWorkspaceSheet(); })(); };
 $('workspace-sheet-close').onclick = closeWorkspaceSheet;
 $('ws-save').onclick = action(async () => { await saveWorkspaceConfig(); closeWorkspaceSheet(); toast(t("工作空间配置已保存")); });
 document.querySelectorAll('.ws-seg:not(.ws-auth) [data-mode]').forEach(b => b.onclick = () => setWsMode(b.dataset.mode));
@@ -1229,6 +1232,7 @@ function browseDirFromValue(value) {
       return clean.join('/') || '.';
     }
   }
+  if (value && value !== '/workspace' && value !== '/context') throw new Error(t('该路径不在 Docker 挂载范围内，请先配置 AIDE_LOCAL_ROOT 并重新创建容器。'));
   return '.';
 }
 
@@ -1256,13 +1260,28 @@ function openBrowse(field) {
 async function loadBrowseDir() {
   const b = wsState.browse;
   const files = await api('/files?root=local&path=' + encodeURIComponent(b.dir));
-  $('ws-browse-path').textContent = hostPathOf(b.dir);
+  $('ws-browse-path').textContent = t('可访问范围：{0}', hostPathOf('.'));
+  $('ws-browse-address').value = hostPathOf(b.dir);
+  $('ws-browse-parent').disabled = b.dir === '.';
+  $('ws-browse-status').textContent = '';
   const list = $('ws-browse-list');
   list.replaceChildren();
   const dirs = files.filter(f => f.dir);
   if (!dirs.length) list.append(el('p', 'muted', t("没有子目录")));
   dirs.forEach(d => { const row = el('button', 'ws-browse-item', '▱ ' + d.name); row.onclick = () => { b.dir = d.path; action(loadBrowseDir)(); }; list.append(row); });
 }
+async function browseAddress() {
+  const b = wsState.browse, previous = b.dir;
+  try {
+    b.dir = browseDirFromValue($('ws-browse-address').value);
+    await loadBrowseDir();
+  } catch (error) {
+    b.dir = previous;
+    $('ws-browse-status').textContent = error.message;
+  }
+}
+$('ws-browse-go').onclick = browseAddress;
+$('ws-browse-address').onkeydown = event => { if (event.key === 'Enter') { event.preventDefault(); browseAddress(); } };
 $('ws-browse').onclick = () => openBrowse('ws-path');
 $('docs-browse').onclick = () => openBrowse('docs-path');
 $('cache-browse').onclick = () => openBrowse('cache-path');

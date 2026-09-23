@@ -24,6 +24,10 @@ for(const [key,value] of Object.entries(ctx.window.aideEnglish)) {
 }
 const source=fs.readFileSync('internal/server/web/app.js','utf8');
 const start=source.indexOf('function browseDirFromValue(value) {');
-vm.runInContext(source.slice(start,source.indexOf('async function resolveExistingDir',start)), Object.assign(ctx,{state:{config:{hostLocal:'/Users/me/aide'}}}));
-for(const [value,want] of [['/Users/me/aide/docs','docs'],['/Users/me/aide-other/docs','.'],['/local/docs','docs'],['~/docs','docs'],['/local/../secret','.'],['/local/docs/../internal','internal']]) assert.equal(ctx.browseDirFromValue(value),want);
+vm.runInContext(source.slice(start,source.indexOf('async function resolveExistingDir',start)), Object.assign(ctx,{t:x=>x,state:{config:{hostLocal:'/Users/me/aide'}}}));
+for(const [value,want] of [['/Users/me/aide/docs','docs'],['/local/docs','docs'],['~/docs','docs'],['/local/../secret','.'],['/local/docs/../internal','internal']]) assert.equal(ctx.browseDirFromValue(value),want);
 console.log('PASS: localization, placeholder integrity, schema ownership, locale fallback and path mapping');
+
+assert.throws(()=>ctx.browseDirFromValue('/Users/me/aide-other/docs'));
+ctx.state.config.hostLocal='/';
+assert.equal(ctx.browseDirFromValue('/Users/me/Project'),'Users/me/Project');

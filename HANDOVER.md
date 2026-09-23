@@ -1,5 +1,7 @@
 # aide 开发与运维交接
 
+> **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](docs/workspace-paths.md)。
+
 更新：2026-09-23。本文是现行操作入口。历史测试结果保留在 [验证记录](docs/verification.md)，不能据此推定今天的运行服务状态。
 
 ## 接手时先确认什么
@@ -100,3 +102,11 @@ shasum -a 256 "$AIDE_BACKUP_DIR"/*.tgz "$AIDE_BACKUP_DIR/aide-source.bundle"
 ## 交接输出
 
 报告任务 ID、修改范围、代码/镜像身份、测试命令与证据、未验证范围、数据迁移、当前服务、发布和回滚状态。不要写“全部完成”掩盖未发布或未实测的步骤。
+
+## 2026-09-24 启动与目录选择交接
+
+- 日常入口统一为 `start.command`，默认端口 8097；`.env` 保存端口与 Compose 组合。
+- macOS 共享根、范围限制与切换方式见 [工作目录配置](docs/workspace-paths.md)。
+- 目录弹窗采用与父面板一致的紧凑布局；地址栏与前往按钮等高；保存配置后刷新目录。
+- 已在实际 8097 Safari 页面验证；临时预览容器已移除，数据保留。
+- 本轮交付为当前分支提交与推送，不包含 main 合并、版本升级、tag 或 GitHub Release。

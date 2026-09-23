@@ -366,3 +366,21 @@ html[lang="en"] .settings-nav-item { white-space: normal; text-align: left; }
 .source-path-row { display: flex; gap: 8px; align-items: center; }
 .source-path-row input { flex: 1; min-width: 0; }
 .source-path-row button { flex-shrink: 0; margin-top: 7px; }
+
+/* Directory picker matches the parent workspace sheet's compact controls. */
+#ws-browse-dialog { width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 22px; }
+#ws-browse-dialog .dialog-heading { margin-bottom: 14px; }
+#ws-browse-dialog .dialog-heading h2 { font-size: 16px; }
+#ws-browse-dialog .ws-row { align-items: stretch; gap: 7px; margin: 0 0 10px; }
+#ws-browse-address { min-width: 0; width: 100%; height: 34px; box-sizing: border-box; margin: 0; padding: 7px 9px; font: 12px/1.5 ui-monospace, SFMono-Regular, monospace; }
+#ws-browse-dialog .ws-browse-path { direction: ltr; white-space: normal; overflow-wrap: anywhere; overflow: visible; text-overflow: clip; font-size: 11px; line-height: 1.5; margin: 0 0 10px; }
+#ws-browse-dialog .ws-browse-list { max-height: min(36dvh, 300px); gap: 0; }
+#ws-browse-dialog .ws-browse-item { min-height: 30px; padding: 6px 9px; font-size: 12px; overflow-wrap: anywhere; flex-shrink: 0; }
+#ws-browse-dialog .editor-footer { flex-wrap: wrap; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+#ws-browse-dialog .editor-footer button { min-height: 34px; padding: 7px 12px; font-size: 12px; }
+#ws-browse-status { overflow-wrap: anywhere; color: var(--muted); }
+#ws-browse-status:not(:empty) { flex-basis: 100%; }
+#ws-browse-go { flex: 0 0 auto; min-width: 56px; height: 34px; padding: 0 12px; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; line-height: 1; border: 1px solid var(--field-border); border-radius: 8px; background: var(--bg-inset); color: var(--text); }
+#ws-browse-go:hover { background: var(--hover); }
+#ws-browse-go:focus-visible { outline: 2px solid var(--brand-text); outline-offset: 2px; }
+@media (max-width: 540px) { #ws-browse-dialog { padding: 18px; } }

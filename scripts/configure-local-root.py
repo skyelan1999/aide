@@ -2,6 +2,7 @@
 """Configure the Docker-visible host directory without restarting services."""
 import argparse
 import os
+import sys
 from pathlib import Path
 
 
@@ -17,9 +18,13 @@ def configure(project, directory):
     lines = source.read_text().splitlines()
     # Single quotes preserve spaces and literal $ characters in Compose dotenv.
     entry = "AIDE_LOCAL_ROOT='" + value + "'"
+    shared = sys.platform == "darwin" and value == "/"
+    compose = "compose.yaml:compose.macos-root.yaml" if shared else "compose.yaml"
     replaced = False
     output = []
     for line in lines:
+        if line.strip().startswith('COMPOSE_FILE='):
+            continue
         if line.strip().startswith('AIDE_LOCAL_ROOT='):
             if not replaced:
                 output.append(entry)
@@ -28,6 +33,9 @@ def configure(project, directory):
             output.append(line)
     if not replaced:
         output.append(entry)
+    output.append("COMPOSE_FILE=" + compose)
+    if shared:
+        (Path(project) / ".agent-state" / "host-root").mkdir(parents=True, exist_ok=True)
     temp = target.with_name('.env.local-root-tmp')
     fd = os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:

@@ -1,0 +1,59 @@
+{
+  "id": "workspace-picker",
+  "request": "工作目录要支持自由配置，现在选不了",
+  "baseline": "8ab525240dbb5a7837dba9364aafbc477021844f",
+  "initial_status": "",
+  "acceptance": [
+    "从宿主机根目录选择工作目录（受操作系统权限约束）",
+    "地址栏可以输入路径并跳转；越界不静默回退",
+    "保存后刷新配置与目录列表"
+  ],
+  "scope": [
+    "工作目录选择前端",
+    "本地 Docker 挂载配置",
+    "回归测试与任务文档"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求从 macOS 根目录自由选择。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "区分宿主机共享根和活动工作目录；不能将 Docker Linux 根伪装成 macOS 根。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "路径地址栏、范围提示、保存后刷新；新增 macOS 共享目录组合配置。 Compact picker aligned with parent sheet: 520px width, 34px controls, 30px directory rows; consolidated CSS.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final full regression PASS (Go race/vet, frontend checks, installer and path mapping tests, docs links). Actual Safari 8097 compact picker verified in prior interaction.",
+      "evidence": [
+        ".agent-state/verify-20260923T161801555042Z.log",
+        "f4c8cd41fe013d18a5bbce7f9601ab25c9de7076686550f8ac815efe37087976"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Current Chinese/English startup, installation, architecture, handover and PRD documents use the same .env configuration. Historical reports retained.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed both temporary preview containers; preserved their data and unrelated services.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Commit and push authorized for fix/reference-sources; version/tag/GitHub Release outside this delivery.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User requested commit documentation and push on 2026-09-24; no merge/tag/release requested.",
+  "rollback": "Backup: .agent-state/backups/data-before-unified-20260924.tar.gz. Previous image: aide:before-unified-start. Run AIDE_IMAGE=aide:before-unified-start docker compose up -d --no-build to restore image.",
+  "handoff": "8097 uses unified start.command and COMPOSE_FILE; compact picker visually verified; docs path migrated to docs. This commit is prepared for push on fix/reference-sources; no main merge or release tag."
+}

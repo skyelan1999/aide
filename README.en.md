@@ -1,5 +1,7 @@
 <div align="center">
 
+> **Startup configuration:** `.env` is the local source of truth. `start.command` → `scripts/aide.sh` → Docker Compose, using `AIDE_PORT` (default 8097) and `COMPOSE_FILE`. Temporary review ports are not user startup entries. See [workspace mount modes](docs/workspace-paths.md).
+
 # aide
 
 ### AI+IDE. Turn ideas into your next step.

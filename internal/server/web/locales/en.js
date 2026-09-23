@@ -1,6 +1,11 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "目录路径": "Directory path",
+  "前往": "Go",
+  "可访问范围：{0}": "Accessible root: {0}",
+  "该路径不在 Docker 挂载范围内，请先配置 AIDE_LOCAL_ROOT 并重新创建容器。": "This path is outside the Docker mount. Configure AIDE_LOCAL_ROOT and recreate the container first.",
+
  "MCP（仅登记）": "MCP (registration only)",
  "SMB1（文件 URL）": "SMB1 (file URL)",
  "MCP 仅支持登记，尚未接入协议调用。": "MCP registration only; protocol execution is not implemented.",

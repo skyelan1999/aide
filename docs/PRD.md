@@ -185,3 +185,7 @@ README 介绍产品，用户指南写操作，HANDOVER 写运维，架构写实�
 ## 追加：中英文界面与路径配置（源码集成，未发布镜像）
 
 设置 → 语言提供「中文 / English」按钮，即时切换并在当前浏览器保存。仅转换产品界面，不翻译用户输入、文件、会话和模型回复。英文长按钮适配窄侧栏；标志悬停左倾放大，遵循减少动态效果偏好。本地浏览范围由 `.env` 的 `AIDE_LOCAL_ROOT` 配置，新增 `scripts/configure-local-root.py` 辅助设置，修改挂载范围须重建容器。现有 RC4 镜像不自动获得这些源码变更。验收与范围见 [本次记录](reviews/2026-09-23/english-support-verification.md)。
+
+## 启动配置统一（2026-09-24）
+
+正常启动入口为 start.command → scripts/aide.sh → Docker Compose；.env 的 AIDE_PORT 与 COMPOSE_FILE 为端口和挂载组合的唯一配置来源。macOS 共享根模式显式映射 Users、Volumes、private，不能声称完整系统目录均已开放。临时预览不是用户入口。详见 [工作目录配置](workspace-paths.md)。

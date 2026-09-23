@@ -1,5 +1,7 @@
 # aide 架构与接口索引
 
+> **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
+
 核对日期：2026-09-23。本次交付目标 0.1.6.0 RC4；aide 融合 AI 与 IDE，让人更专注于专业工作；架构采用 Go、浏览器与 Docker，支持按场景扩展。历史验收保留于 verification.md，发布身份由 tag 与镜像记录确认。
 
 ## 系统结构

@@ -1,0 +1,19 @@
+# Docker Desktop for macOS: expose shared host directories under their real paths.
+# Run together with compose.yaml. This does not expose the Linux VM root.
+services:
+  aide:
+    environment:
+      AIDE_HOST_LOCAL: /
+    volumes:
+      - type: bind
+        source: ./.agent-state/host-root
+        target: /local
+      - type: bind
+        source: /Users
+        target: /local/Users
+      - type: bind
+        source: /Volumes
+        target: /local/Volumes
+      - type: bind
+        source: /private
+        target: /local/private
