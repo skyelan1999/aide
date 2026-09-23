@@ -156,7 +156,7 @@ async function loadFiles() {
 }
 async function openFile(path) {
   const query = state.root === 'context' && state.source ? '/file?source=' + encodeURIComponent(state.source) + '&path=' : '/file?root=' + state.root + '&path=';
-  const data = await api(query + encodeURIComponent(path)); state.file = { ...data, path, root: state.root, source: state.root === 'context' ? state.source : '', wsId: data.wsId || '', fresh: false }; showEditor();
+  const data = await api(query + encodeURIComponent(path)); state.file = { ...data, path, root: state.root, source: state.root === 'context' ? state.source : '', wsId: data.workspaceId || data.wsId || '', fresh: false }; showEditor();
 }
 function sourceIsRW() {
   if (state.file.root !== 'context' || !state.file.source) return false;
@@ -207,8 +207,10 @@ $('task-form').onsubmit = action(async event => {
     if (state.session?.id === target.id) { // 仅当用户仍停留在发送会话时清空草稿
       $('prompt').value = ''; state.attachments = []; renderAttachments();
     }
-    await selectSession(target.id);
-    if (state.session?.id === target.id) $('conversation').scrollTop = $('conversation').scrollHeight;
+    if (state.session?.id === target.id) { // R07：提交完成后不得抢走用户已切换到的会话
+      await selectSession(target.id);
+      $('conversation').scrollTop = $('conversation').scrollHeight;
+    }
   } finally { $('send').disabled = false; }
 });
 $('prompt').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('task-form').requestSubmit(); } });
@@ -216,7 +218,7 @@ $('cancel').onclick = action(async () => { const run = state.session?.runs.find(
 function openSettings() { $('base-url').value = state.config?.baseURL || 'https://api.deepseek.com'; $('api-key').value = ''; $('api-key').placeholder = state.config?.hasKey ? '已保存密钥；留空保留' : '云端 API 通常需要密钥；本地模型可不填'; $('clear-key').checked = false; state.modelDraft = { models: JSON.parse(JSON.stringify(state.config?.models || [])), activeModel: state.config?.activeModel || '' }; renderModelList(); $('settings-dialog').showModal(); }
 $('settings-button').onclick = openSettings;
 $('settings-form').onsubmit = action(async event => { event.preventDefault(); if (!state.modelDraft.models.length) { toast('请至少添加一个模型'); return; } await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked, models: state.modelDraft.models, activeModel: state.modelDraft.activeModel }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast('模型设置已保存，发送任务时会调用当前模型'); });
-$('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; if (state.file.wsId) body.wsId = state.file.wsId; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; $('editor-status').textContent = '✓ 已保存'; await loadFiles(); });
+$('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; if (state.file.wsId) body.workspaceId = state.file.wsId; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; $('editor-status').textContent = '✓ 已保存'; await loadFiles(); });
 $('attach-file').onclick = () => {
   if (state.file.content !== $('editor').value) { toast('请先保存修改，再附加到任务'); return; }
   const att = { root: state.file.root, path: state.file.path }; if (state.file.source) { att.root = 'source'; att.source = state.file.source; } if (!state.attachments.some(a => a.root === att.root && a.path === att.path && (a.source || '') === (att.source || ''))) { if (state.attachments.length >= 8) { toast('最多附加 8 个文件'); return; } state.attachments.push(att); }
@@ -1154,7 +1156,7 @@ async function openFileViewMode() {
     ? '/file?source=' + encodeURIComponent(spec.source) + '&path=' + encodeURIComponent(spec.path)
     : '/file?root=' + encodeURIComponent(spec.root) + '&path=' + encodeURIComponent(spec.path);
   const data = await api(query);
-  fileView.hash = data.hash; fileView.wsId = data.wsId || '';
+  fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
   const md = isMarkdownPath(spec.path);
   $('file-view-mode-switch').classList.toggle('hidden', !md);
   const readOnly = spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true);
@@ -1170,7 +1172,7 @@ $('fv-edit').onclick = () => setFileViewMode('edit');
 $('fv-preview').onclick = () => setFileViewMode('preview');
 $('file-view-save').onclick = action(async () => {
   const body = { path: fileView.spec.path, content: $('file-view-editor').value, hash: fileView.hash };
-  if (fileView.spec.source) body.source = fileView.spec.source; if (fileView.wsId) body.wsId = fileView.wsId;
+  if (fileView.spec.source) body.source = fileView.spec.source; if (fileView.wsId) body.workspaceId = fileView.wsId;
   const res = await api('/file', { method: 'PUT', body: JSON.stringify(body) });
   fileView.hash = res.hash;
   $('file-view-status').textContent = '✓ 已保存';

@@ -162,7 +162,7 @@ func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, err)
 			return
 		}
-		jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b), "wsId": "source:" + srcID})
+		jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b), "workspaceId": "source:" + srcID})
 		return
 	}
 	if r.URL.Query().Get("root") == "workspace" && a.workspaceMode() == "ssh" {
@@ -181,18 +181,18 @@ func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
 	}
 	which := r.URL.Query().Get("root")
 	if which == "workspace" {
-		jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b), "wsId": a.wsID()})
+		jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b), "workspaceId": a.wsID()})
 		return
 	}
 	jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b)})
 }
 func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Path    string `json:"path"`
-		Content string `json:"content"`
-		Hash    string `json:"hash"`
-		Source  string `json:"source"`
-		WsID    string `json:"wsId"`
+		Path        string `json:"path"`
+		Content     string `json:"content"`
+		Hash        string `json:"hash"`
+		Source      string `json:"source"`
+		WorkspaceID string `json:"workspaceId"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -208,16 +208,16 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	}
 	// R02：保存必须携带读取时的工作区身份；缺失身份仅允许新建文件
 	if in.Source == "" {
-		if in.WsID != "" && in.WsID != a.wsID() {
+		if in.WorkspaceID != "" && in.WorkspaceID != a.wsID() {
 			fail(w, 409, errors.New("工作区已切换：该文件属于其他项目，请重新打开后再保存"))
 			return
 		}
-		if in.WsID == "" && in.Hash != "" && a.wsID() != defaultWorkspaceID {
+		if in.WorkspaceID == "" && in.Hash != "" && a.wsID() != defaultWorkspaceID {
 			// 缺失身份仅当工作区从未定制（默认根）时兼容放行；定制后必须显式携带
 			fail(w, 409, errors.New("缺少工作区身份：请重新打开文件后再保存"))
 			return
 		}
-	} else if in.WsID != "" && in.WsID != "source:"+in.Source {
+	} else if in.WorkspaceID != "" && in.WorkspaceID != "source:"+in.Source {
 		fail(w, 409, errors.New("来源已切换：请重新打开文件后再保存"))
 		return
 	}
