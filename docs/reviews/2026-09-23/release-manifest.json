@@ -1,0 +1,124 @@
+{
+  "version": "0.1.6.0 RC4",
+  "tag": "v0.1.6.0-RC4",
+  "commit": "fec97d3b4b8b2691f93a0296be7b252b783dcde8",
+  "image": {
+    "tag": "aide:0.1.6.0-RC4",
+    "id": "sha256:061e0fb85bd06c022cf0b48cf6f02bdf0476ca302102cfaedf1815d6c66ddba5",
+    "os": "linux",
+    "architecture": "arm64",
+    "archive": "aide-0.1.6.0-RC4-linux-arm64.tar.gz",
+    "sha256": "c91c90748b2006d5dcb840d7dd650dcc4d77dfe2c64b55e91c58ae9840ec541a"
+  },
+  "verification": {
+    "full": {
+      "profile": "full",
+      "status": "pass",
+      "fingerprint": "a4529ceeafe09f3285b81a11eb90f15ddffe6883fd629a882a116ac7dc702ab1",
+      "head": "f082c3239ba9bf346e15057577183fa2deb53c4f",
+      "time": "20260923T140032413334Z",
+      "results": [
+        {
+          "command": [
+            "git",
+            "diff",
+            "--check"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/app.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "node",
+            "--check",
+            "internal/server/web/settings-init.js"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "bash",
+            "scripts/version.sh",
+            "check"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_agent_route.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/check_docs.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "bash",
+            "-n",
+            "scripts/install.sh"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "bash",
+            "-n",
+            "scripts/aide.sh"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "python3",
+            "scripts/test_install.py"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "bash",
+            "scripts/aide.sh",
+            "test"
+          ],
+          "exit": 0
+        }
+      ],
+      "log": ".agent-state/verify-20260923T140032413334Z.log"
+    },
+    "api": {
+      "/healthz": 200,
+      "/api/config": 200,
+      "identity": {
+        "version": "0.1.6.0 RC4",
+        "commit": "fec97d3b4b8b2691f93a0296be7b252b783dcde8"
+      },
+      "/api/sessions": 200,
+      "/settings-schema.json": 200,
+      "/macos.css": 200,
+      "unauthenticated": 401
+    },
+    "fresh_install": "PASS: exported archive checksum + docker load + fresh source archive + new .env/context + isolated Compose volumes and port 18120; auto-open suppressed in test, browser token login tested separately",
+    "browser": "PASS: embedded UI, first login, two-row appearance settings, About tagline/version/repository; screenshot attached",
+    "frontend_vm": "3/3 PASS"
+  },
+  "limits": [
+    "linux/arm64 tested on Apple Silicon Docker Desktop; Windows/x86 not tested",
+    "No real paid model calls",
+    "Production port 8097 not replaced",
+    "RC1/RC2/RC3 were local candidates; only RC4 is published"
+  ],
+  "cleanup": "22 iCloud numbered duplicate files moved reversibly to temporary quarantine; no runtime data deleted"
+}

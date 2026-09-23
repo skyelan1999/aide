@@ -19,3 +19,15 @@
 发布后的版本/SHA/镜像校验和和最终冒烟结果记录在 GitHub Release 附件 release-manifest.json；不在源码中预先声称上传已完成。
 
 构建发现并修复 Dockerfile 的 Go ldflags 版本含空格引用缺陷。RC1 仅为本地失败候选，不推送、不发布；正式交付 RC2。
+
+## Published result
+
+已发布 v0.1.6.0-RC4；源码、tag、5 个附件完成推送，远端附件 SHA256 与本地一致。镜像首次安装、鉴权、构建身份和浏览器通过。生产 8097 未替换。
+
+- Release: https://github.com/skyelan1999/aide/releases/tag/v0.1.6.0-RC4
+- Tag commit: fec97d3b4b8b2691f93a0296be7b252b783dcde8
+- Published: 2026-09-23T14:07:11Z (RC prerelease)
+- Image: aide:0.1.6.0-RC4 / linux/arm64 / 348273410 bytes compressed
+- SHA256: c91c90748b2006d5dcb840d7dd650dcc4d77dfe2c64b55e91c58ae9840ec541a
+- Independent install services and synthetic volumes removed; production unchanged.
+- RC1, RC2, RC3 are local unpublished candidates.
