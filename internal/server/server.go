@@ -174,6 +174,8 @@ func env(key, fallback string) string {
 	}
 	return fallback
 }
+var buildVersion, buildCommit string
+
 var versionRE = regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ RC[0-9]+`)
 
 // readVersionFile 从工程目录 version.md 取当前版本（FR-66 / LIM-24）；缺失或非法返回空串。
@@ -301,6 +303,8 @@ func New(work, reference, data string) (*App, error) {
 		return nil, err
 	}
 	a.version = readVersionFile(filepath.Join(work, "version.md"))
+	a.buildVersion = buildVersion
+	a.buildCommit = buildCommit
 	if err := a.loadPlugins(); err != nil {
 		a.Close()
 		return nil, err
