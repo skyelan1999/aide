@@ -3,7 +3,11 @@ services:
   aide:
     image: aide:local
     init: true
-    build: .
+    build:
+      context: .
+      args:
+        AIDE_VERSION: ${AIDE_VERSION:-dev}
+        AIDE_COMMIT: ${AIDE_COMMIT:-unknown}
     ports:
       - "127.0.0.1:${AIDE_PORT:-8097}:8080"
     environment:

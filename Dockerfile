@@ -12,8 +12,13 @@ WORKDIR /src
 COPY go.mod ./
 COPY cmd ./cmd
 COPY internal ./internal
+# R09：构建期身份（版本/commit）经 ldflags 注入；版本格式与 version.md 一致（如 0.1.5.0 RC5）
+ARG AIDE_VERSION=dev
+ARG AIDE_COMMIT=unknown
 RUN --mount=type=cache,target=/root/.cache/go-build \
-    go test ./... && go vet ./... && CGO_ENABLED=0 go build -trimpath -o /usr/local/bin/aide ./cmd/aide
+    go test ./... && go vet ./... && CGO_ENABLED=0 go build -trimpath \
+    -ldflags "-s -w -X aide/internal/server.buildVersion=${AIDE_VERSION} -X aide/internal/server.buildCommit=${AIDE_COMMIT}" \
+    -o /usr/local/bin/aide ./cmd/aide
 
 FROM toolchain AS runtime
 COPY --from=build /usr/local/bin/aide /usr/local/bin/aide
