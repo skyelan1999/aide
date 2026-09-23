@@ -570,9 +570,8 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$
 /* ── Token 消耗统计（FR-90）：git 提交热力图样式 ── */
 function fmtStatTokens(n) { return n < 1000 ? String(n) : (n / 1000).toFixed(1) + 'K'; }
 function renderTokenStats(control) {
-  // 费用估算：计价可配置（默认刊例价 ¥2/¥8 每百万；缓存命中优惠与账户差异请自行调整）
+  // R08：计价与费用是服务端事实源（/api/token-pricing + 逐调用快照），前端只展示
   let pricing = { priceIn: 2, priceOut: 8 };
-  const costOf = d => ((d.prompt || 0) * pricing.priceIn + (d.completion || 0) * pricing.priceOut) / 1e6;
   const wrap = el('div', 'settings-control token-stats');
   const head = el('div', 'token-head');
   head.append(el('span', 'token-title', 'Token 消耗'), el('span', 'control-value', ''));
@@ -591,14 +590,24 @@ function renderTokenStats(control) {
     const days = data.days || {};
     const totalsObj = data.totals || {};
     const todayStats = data.today || {};
+    const unpriced = data.unpricedTotals || {};
     pricing = data.pricing || pricing;
     const cost = data.cost ?? 0;
-    head.querySelector('.control-value').textContent = '累计 ' + fmtStatTokens(totalsObj.total || 0) + ' tokens · ≈¥' + cost.toFixed(2);
+    const callRecords = data.callRecords || [];
+    const dayCost = {};
+    callRecords.forEach(c => { const k = (c.time || '').slice(0, 10); dayCost[k] = (dayCost[k] || 0) + (c.cost || 0); });
+    // R08：费用仅由服务端逐调用记录汇总；未计价历史（旧版汇总）单独提示，不并入费用
+    head.querySelector('.control-value').textContent = '累计 ' + fmtStatTokens(totalsObj.total || 0) + ' tokens · 已计价费用 ¥' + cost.toFixed(2);
     chips.replaceChildren();
     chips.append(
-      el('span', 'token-chip', '今日 ' + fmtStatTokens(todayStats.total || 0) + ' · ≈¥' + costOf(todayStats).toFixed(2)),
+      el('span', 'token-chip', '今日 ' + fmtStatTokens(todayStats.total || 0) + ' tokens' + (todayStats.priced !== false ? ' · ¥' + (dayCost[Object.keys(days).sort().pop()] || 0).toFixed(2) : ' · 未计价')),
       el('span', 'token-chip', '调用 ' + (totalsObj.calls || 0) + ' 次')
     );
+    if (unpriced.total) {
+      const chip = el('span', 'token-chip', '未计价历史 ' + fmtStatTokens(unpriced.total) + ' tokens · ' + (unpriced.calls || 0) + ' 次');
+      chip.title = '旧版统计没有逐调用与计价证据，费用未知；未按当前费率冒充已发生费用';
+      chips.append(chip);
+    }
     action(async () => {
       try {
         const bal = await api('/balance');
@@ -640,12 +649,14 @@ function renderTokenStats(control) {
     const level = v => v <= 0 ? 0 : v <= maxVal * 0.25 ? 1 : v <= maxVal * 0.5 ? 2 : v <= maxVal * 0.75 ? 3 : 4;
     const showTip = (cell, date, day, weekTotal) => {
       tip.replaceChildren();
+      const pricedDay = day.priced !== false;
+      const fee = pricedDay ? '费用 ¥' + (dayCost[date] || 0).toFixed(4) : '费用未知（旧数据未计价）';
       tip.append(
         el('strong', '', date + ' · ' + fmtStatTokens(day.total || 0) + ' tokens'),
         el('br'),
         el('span', '', '输入 ' + fmtStatTokens(day.prompt || 0) + ' · 输出 ' + fmtStatTokens(day.completion || 0)),
         el('br'),
-        el('span', '', '调用 ' + (day.calls || 0) + ' 次 · ≈¥' + costOf(day).toFixed(4)),
+        el('span', '', '调用 ' + (day.calls || 0) + ' 次 · ' + fee + (day.estimated ? '（用量为估算）' : '')),
         el('br'),
         el('span', '', '所在周合计 ' + fmtStatTokens(weekTotal) + ' tokens')
       );
@@ -675,11 +686,13 @@ function renderTokenStats(control) {
         cell.addEventListener('click', () => {
           detail.classList.remove('hidden');
           detail.replaceChildren();
+          const pricedDay = day.priced !== false;
+          const fee = pricedDay ? '费用 ¥' + (dayCost[key] || 0).toFixed(4) + '（按调用时刻计价快照）' : '费用未知：旧数据没有逐调用与计价证据，未按当前费率冒充';
           detail.append(
             el('strong', '', key),
             el('span', '', '输入 ' + fmtStatTokens(day.prompt || 0) + ' tokens · 输出 ' + fmtStatTokens(day.completion || 0) + ' tokens'),
-            el('span', '', '调用 ' + (day.calls || 0) + ' 次 · 合计 ' + fmtStatTokens(day.total || 0) + ' tokens'),
-            el('span', '', '费用 ≈¥' + costOf(day).toFixed(4) + '（刊例价估算' + (day.estimated ? '，上游未返回 usage' : '') + '）')
+            el('span', '', '调用 ' + (day.calls || 0) + ' 次 · 合计 ' + fmtStatTokens(day.total || 0) + ' tokens' + (day.estimated ? '（用量为估算）' : '')),
+            el('span', '', fee)
           );
         });
         colEl.append(cell);
@@ -701,18 +714,34 @@ function renderTokenStats(control) {
     input.value = key === 'priceIn' ? pricing.priceIn : pricing.priceOut;
     input.setAttribute('aria-label', label);
     input.addEventListener('change', () => {
-      const v = parseFloat(input.value);
-      if (!Number.isNaN(v) && v >= 0) {
-        if (window.aideUI) window.aideUI.set(key, v);
-        action(loadStats).call(null);
-      } else {
+      // R08：费率是服务端事实源；留空/非法必须显式拒绝（0 是合法免费，不等于留空）
+      if (input.value.trim() === '') {
+        toast('费率不能留空：0 表示免费，请输入明确的数字');
         input.value = key === 'priceIn' ? pricing.priceIn : pricing.priceOut;
+        return;
       }
+      const v = parseFloat(input.value);
+      if (Number.isNaN(v) || v < 0) {
+        toast('费率必须是 ≥ 0 的数字');
+        input.value = key === 'priceIn' ? pricing.priceIn : pricing.priceOut;
+        return;
+      }
+      const next = { priceIn: pricing.priceIn, priceOut: pricing.priceOut };
+      next[key] = v;
+      action(async () => {
+        try {
+          pricing = await api('/token-pricing', { method: 'PUT', body: JSON.stringify(next) });
+          action(loadStats).call(null);
+        } catch (error) {
+          toast('费率保存失败: ' + error.message);
+          action(loadStats).call(null);
+        }
+      })();
     });
     lab.append(input);
     return lab;
   };
-  priceRow.append(mkPrice('priceIn', '输入 ¥/百万'), mkPrice('priceOut', '输出 ¥/百万'), el('small', '', '按你的账户实际刊例价填写（含缓存命中优惠时可调低输入价）'));
+  priceRow.append(mkPrice('priceIn', '输入 ¥/百万'), mkPrice('priceOut', '输出 ¥/百万'), el('small', '', '0 = 免费；留空无效。费率由服务端保存，历史费用按调用时刻快照不变'));
   return wrap;
 }
 /* ── 模型列表管理（FR-67 / FR-68）：设置弹窗内增删、标记当前、自动获取候选 ── */

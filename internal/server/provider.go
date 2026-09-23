@@ -20,6 +20,7 @@ type TokenUsage struct {
 	Total      int    `json:"total"`
 	Estimated  bool   `json:"estimated,omitempty"`
 	Model      string `json:"model,omitempty"`
+	Provider   string `json:"provider,omitempty"` // R08：调用归属的 provider（baseURL 快照）
 }
 
 // tokenUsageRecorder 由 New() 注入（atomic 防并行测试竞态）；complete() 成功后调用。
@@ -116,7 +117,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	if strings.TrimSpace(msg.Content) == "" && len(msg.ToolCalls) == 0 {
 		return "", nil, TokenUsage{}, errors.New("模型没有返回文本内容")
 	}
-	usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model}
+	usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model, Provider: cfg.BaseURL}
 	if usage.Total == 0 {
 		// 上游未返回 usage → 4 字符/词估算并标记
 		usage.Prompt = promptChars / 4

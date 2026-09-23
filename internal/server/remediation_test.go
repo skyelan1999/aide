@@ -345,3 +345,115 @@ func TestRemediationSessionAPIStableDuringRun(t *testing.T) {
 }
 
 var _ = context.Background
+
+// R08-01：0 费率必须是真实 0（非缺省回退），负值必须拒绝，留空语义由前端显式拒绝。
+func TestR08ZeroPricingIsRealZero(t *testing.T) {
+	a := testApp(t)
+	w := request(a, "GET", "/api/token-pricing", nil)
+	requireStatus(t, w, 200)
+	var def Pricing
+	if err := json.Unmarshal(w.Body.Bytes(), &def); err != nil || def.PriceIn <= 0 || def.PriceOut <= 0 {
+		t.Fatalf("default pricing should be positive: %v %v", w.Body.String(), err)
+	}
+	w = request(a, "PUT", "/api/token-pricing", Pricing{PriceIn: -1, PriceOut: 0})
+	requireStatus(t, w, 400)
+	w = request(a, "PUT", "/api/token-pricing", Pricing{PriceIn: 0, PriceOut: 0})
+	requireStatus(t, w, 200)
+	a.recordTokenUsage(TokenUsage{Prompt: 2000000, Completion: 300000, Total: 2300000, Model: "local-free", Provider: "http://mock"})
+	a.tokenStatsMu.Lock()
+	cost := 0.0
+	for _, c := range a.tokenCalls {
+		cost += c.Cost
+	}
+	day := a.tokenStats[time.Now().UTC().Format("2006-01-02")]
+	a.tokenStatsMu.Unlock()
+	if cost != 0 {
+		t.Fatalf("0-price call cost %v, want 0", cost)
+	}
+	if !day.Priced {
+		t.Fatal("0-price call still has a price snapshot and must be priced")
+	}
+	w = request(a, "GET", "/api/token-pricing", nil)
+	requireStatus(t, w, 200)
+	var back Pricing
+	_ = json.Unmarshal(w.Body.Bytes(), &back)
+	if back.PriceIn != 0 || back.PriceOut != 0 {
+		t.Fatalf("0 price did not round-trip: %+v", back)
+	}
+}
+
+// R08-02：改价不得覆盖历史调用快照；新调用按新价。
+func TestR08PriceSnapshotStable(t *testing.T) {
+	a := testApp(t)
+	requireStatus(t, request(a, "PUT", "/api/token-pricing", Pricing{PriceIn: 2, PriceOut: 8}), 200)
+	a.recordTokenUsage(TokenUsage{Prompt: 1000000, Completion: 250000, Total: 1250000, Model: "model-a"})
+	a.recordTokenUsage(TokenUsage{Prompt: 500000, Completion: 125000, Total: 625000, Model: "model-b"})
+	requireStatus(t, request(a, "PUT", "/api/token-pricing", Pricing{PriceIn: 20, PriceOut: 80}), 200)
+	a.recordTokenUsage(TokenUsage{Prompt: 1000000, Completion: 250000, Total: 1250000, Model: "model-a"})
+	a.tokenStatsMu.Lock()
+	defer a.tokenStatsMu.Unlock()
+	if len(a.tokenCalls) != 3 {
+		t.Fatalf("want 3 calls, got %d", len(a.tokenCalls))
+	}
+	if a.tokenCalls[0].Cost != 4 || a.tokenCalls[1].Cost != 10 || a.tokenCalls[2].Cost != 40 {
+		t.Fatalf("snapshot costs wrong: %+v", a.tokenCalls)
+	}
+	if a.tokenCalls[0].PriceIn != 2 || a.tokenCalls[2].PriceIn != 20 {
+		t.Fatal("price change rewrote historical snapshots")
+	}
+}
+
+// R08-03：旧版汇总迁移保留用量与 estimated 标记；费用未知（不虚构 0 或现价），重启不重复累加。
+func TestR08LegacyMigration(t *testing.T) {
+	root := t.TempDir()
+	data := filepath.Join(root, "data")
+	if err := os.MkdirAll(data, 0755); err != nil {
+		t.Fatal(err)
+	}
+	legacy := `{"version":1,"days":{"2026-09-20":{"prompt":1200,"completion":300,"total":1500,"calls":2,"estimated":true},"2026-09-21":{"prompt":2400,"completion":600,"total":3000,"calls":3,"estimated":false}}}`
+	if err := os.WriteFile(filepath.Join(data, "token-stats.json"), []byte(legacy), 0644); err != nil {
+		t.Fatal(err)
+	}
+	check := func(a *App) {
+		t.Helper()
+		w := request(a, "GET", "/api/token-stats", nil)
+		requireStatus(t, w, 200)
+		var out struct {
+			Totals   TokenDay            `json:"totals"`
+			Unpriced TokenDay            `json:"unpricedTotals"`
+			Days     map[string]TokenDay `json:"days"`
+			Cost     float64             `json:"cost"`
+			Calls    int                 `json:"calls"`
+		}
+		if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
+			t.Fatal(err)
+		}
+		if out.Totals.Total != 4500 || out.Totals.Calls != 5 {
+			t.Fatalf("legacy totals wrong: %+v", out.Totals)
+		}
+		if out.Unpriced.Total != 4500 || out.Unpriced.Calls != 5 {
+			t.Fatalf("legacy days must be unpriced: %+v", out.Unpriced)
+		}
+		if out.Cost != 0 || out.Calls != 0 {
+			t.Fatalf("no fabricated cost/calls allowed: cost=%v calls=%d", out.Cost, out.Calls)
+		}
+		if !out.Days["2026-09-20"].Estimated || out.Days["2026-09-21"].Estimated {
+			t.Fatalf("estimated flags not preserved: %+v", out.Days)
+		}
+		if out.Days["2026-09-20"].Priced || out.Days["2026-09-21"].Priced {
+			t.Fatal("legacy days must not be marked priced")
+		}
+	}
+	a1, err := New(filepath.Join(root, "work"), filepath.Join(root, "ref"), data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	check(a1)
+	a1.Close()
+	a2, err := New(filepath.Join(root, "work"), filepath.Join(root, "ref"), data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	check(a2) // 重启不重复累加、不清零
+	a2.Close()
+}

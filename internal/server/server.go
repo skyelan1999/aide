@@ -152,6 +152,7 @@ type Pricing struct {
 type TokenCallRec struct {
 	Time       string  `json:"time"`
 	Model      string  `json:"model"`
+	Provider   string  `json:"provider,omitempty"`
 	Prompt     int     `json:"prompt"`
 	Completion int     `json:"completion"`
 	Total      int     `json:"total"`
@@ -161,13 +162,15 @@ type TokenCallRec struct {
 	Cost       float64 `json:"cost"`
 }
 
-// TokenDay 单日 Token 消耗（FR-90）。
+// TokenDay 单日 Token 消耗（FR-90）。Priced 表示该日累计时存在计价快照；
+// 旧版汇总（v1）没有逐调用与计价证据，Priced=false，UI 必须显示为未计价。
 type TokenDay struct {
 	Prompt     int  `json:"prompt"`
 	Completion int  `json:"completion"`
 	Total      int  `json:"total"`
 	Calls      int  `json:"calls"`
 	Estimated  bool `json:"estimated,omitempty"`
+	Priced     bool `json:"priced,omitempty"`
 }
 
 func env(key, fallback string) string {
@@ -345,11 +348,27 @@ func New(work, reference, data string) (*App, error) {
 	}
 	a.tokenStats = map[string]TokenDay{}
 	if b, err := os.ReadFile(filepath.Join(data, "token-stats.json")); err == nil {
-		var saved struct {
-			Days map[string]TokenDay `json:"days"`
+		var raw struct {
+			Version int    `json:"version"`
+			Legacy  *struct {
+				Version int                 `json:"version"`
+				Days    map[string]TokenDay `json:"days"`
+			} `json:"legacyStatsV1"`
+			Days  map[string]TokenDay `json:"days"`
+			Calls []TokenCallRec      `json:"calls"`
 		}
-		if err := json.Unmarshal(b, &saved); err == nil && saved.Days != nil {
-			a.tokenStats = saved.Days
+		if err := json.Unmarshal(b, &raw); err != nil {
+			// R08：损坏或未知版本保留原文件并可诊断，绝不静默清零
+			log.Printf("token-stats.json 无法解析（保留原文件，未迁移）: %v", err)
+		} else if raw.Legacy != nil && raw.Legacy.Days != nil {
+			// 旧版汇总：保留用量与 estimated 标记；无逐调用与计价证据，Priced=false（未计价）
+			a.tokenStats = raw.Legacy.Days
+			log.Printf("token-stats.json 为旧版汇总（legacyStatsV1）：已迁移用量，历史费用标记为未计价")
+		} else if raw.Days != nil {
+			a.tokenStats = raw.Days
+			a.tokenCalls = raw.Calls
+		} else {
+			log.Printf("token-stats.json 缺少有效 days（保留原文件，未清零）")
 		}
 	}
 	a.pricing = Pricing{PriceIn: 2, PriceOut: 8}
@@ -357,16 +376,6 @@ func New(work, reference, data string) (*App, error) {
 		var pr Pricing
 		if json.Unmarshal(b, &pr) == nil && pr.PriceIn >= 0 && pr.PriceOut >= 0 {
 			a.pricing = pr
-		}
-	}
-	if b, err := os.ReadFile(filepath.Join(data, "token-stats.json")); err == nil {
-		var saved struct {
-			Days  map[string]TokenDay `json:"days"`
-			Calls []TokenCallRec      `json:"calls,omitempty"`
-		}
-		if json.Unmarshal(b, &saved) == nil && saved.Days != nil {
-			a.tokenStats = saved.Days
-			a.tokenCalls = saved.Calls
 		}
 	}
 	tokenUsageRecorder.Store(func(u TokenUsage) { a.recordTokenUsage(u) })
@@ -623,11 +632,12 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 	d.Completion += u.Completion
 	d.Total += u.Total
 	d.Calls++
+	d.Priced = true // 本次累计存在计价快照与逐调用证据
 	if u.Estimated {
 		d.Estimated = true
 	}
 	a.tokenStats[day] = d
-	rec := TokenCallRec{Time: time.Now().UTC().Format(time.RFC3339Nano), Model: u.Model, Prompt: u.Prompt, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, PriceIn: a.pricing.PriceIn, PriceOut: a.pricing.PriceOut}
+	rec := TokenCallRec{Time: time.Now().UTC().Format(time.RFC3339Nano), Model: u.Model, Provider: u.Provider, Prompt: u.Prompt, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, PriceIn: a.pricing.PriceIn, PriceOut: a.pricing.PriceOut}
 	rec.Cost = float64(rec.Prompt)*rec.PriceIn/1e6 + float64(rec.Completion)*rec.PriceOut/1e6
 	a.tokenCalls = append(a.tokenCalls, rec)
 	if len(a.tokenCalls) > 5000 {
@@ -670,6 +680,8 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 	a.tokenStatsMu.Lock()
 	defer a.tokenStatsMu.Unlock()
 	totals := TokenDay{}
+	priced := TokenDay{}
+	unpriced := TokenDay{}
 	for _, d := range a.tokenStats {
 		totals.Prompt += d.Prompt
 		totals.Completion += d.Completion
@@ -677,6 +689,17 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		totals.Calls += d.Calls
 		if d.Estimated {
 			totals.Estimated = true
+		}
+		tgt := &unpriced
+		if d.Priced {
+			tgt = &priced
+		}
+		tgt.Prompt += d.Prompt
+		tgt.Completion += d.Completion
+		tgt.Total += d.Total
+		tgt.Calls += d.Calls
+		if d.Estimated {
+			tgt.Estimated = true
 		}
 	}
 	totalCost := 0.0
@@ -693,5 +716,9 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		"modelCost": modelCost,
 		"pricing":   a.pricing,
 		"calls":     len(a.tokenCalls),
+		// R08：已计价/未计价拆分；旧版汇总没有逐调用与计价证据，费用必须显示为未知
+		"pricedTotals":   priced,
+		"unpricedTotals": unpriced,
+		"callRecords":    a.tokenCalls,
 	})
 }
