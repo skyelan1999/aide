@@ -1,6 +1,6 @@
 # 安装与首次启动
 
-aide 是可由 AI 定制的本地工作台基座。先运行发行版体验，再按 [定制指南](customization.md) 修改源码。安装脚本负责环境检查、首次配置、校验镜像和启动应用；不会静默安装收费软件、请求 sudo、覆盖已有 .env 或删除数据卷。
+aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。可直接使用发行版，需要扩展时再按 [定制指南](customization.md) 修改源码。安装脚本负责环境检查、首次配置、校验镜像和启动应用；不会静默安装收费软件、请求 sudo、覆盖已有 .env 或删除数据卷。
 
 ## 1. 安装宿主环境
 
@@ -18,7 +18,7 @@ aide 是可由 AI 定制的本地工作台基座。先运行发行版体验，�
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
-git checkout v0.1.6.0-RC2
+git checkout v0.1.6.0-RC3
 bash scripts/install.sh --check
 ```
 
@@ -29,7 +29,7 @@ bash scripts/install.sh --check
 从 [Release](https://github.com/skyelan1999/aide/releases) 下载镜像和 SHA256SUMS，放在同一目录，例如 aide/docker-images/：
 
 ```bash
-bash scripts/install.sh --image docker-images/aide-0.1.6.0-RC2-linux-arm64.tar.gz
+bash scripts/install.sh --image docker-images/aide-0.1.6.0-RC3-linux-arm64.tar.gz
 ```
 
 脚本先检查校验和，再导入镜像并检查架构，最后使用 `--no-build --pull never` 启动。版本不匹配、校验失败或架构不匹配会停止，不会偷偷重建。
@@ -47,7 +47,7 @@ bash scripts/install.sh --source
 首次默认使用源码目录作为工作区。如需其他目录，修改 .env 后重新启动；路径必须存在，推荐绝对路径：
 
 ```dotenv
-AIDE_IMAGE=aide:0.1.6.0-RC2
+AIDE_IMAGE=aide:0.1.6.0-RC3
 AIDE_PORT=8097
 AIDE_WORKSPACE=/absolute/path/to/project
 AIDE_CONTEXT=/absolute/path/to/reference
