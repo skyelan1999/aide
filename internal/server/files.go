@@ -28,6 +28,17 @@ func safePath(p string) error {
 	return nil
 }
 func hash(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
+
+// validateTextContent 统一内容策略（R03）：256 KiB 上限、UTF-8、无 NUL。
+func validateTextContent(b []byte) error {
+	if len(b) > maxFile {
+		return fmt.Errorf("文件超过 %d KB 限制", maxFile/1024)
+	}
+	if !utf8.Valid(b) || strings.ContainsRune(string(b), 0) {
+		return errors.New("不支持二进制文件")
+	}
+	return nil
+}
 func readText(root *os.Root, p string) ([]byte, error) {
 	if err := safePath(p); err != nil {
 		return nil, err
@@ -162,7 +173,7 @@ func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, err)
 			return
 		}
-		jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b)})
+		jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b), "workspaceId": "source:" + srcID})
 		return
 	}
 	if r.URL.Query().Get("root") == "workspace" && a.workspaceMode() == "ssh" {
@@ -179,14 +190,20 @@ func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	which := r.URL.Query().Get("root")
+	if which == "workspace" {
+		jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b), "workspaceId": a.wsID()})
+		return
+	}
 	jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b)})
 }
 func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Path    string `json:"path"`
-		Content string `json:"content"`
-		Hash    string `json:"hash"`
-		Source  string `json:"source"`
+		Path        string `json:"path"`
+		Content     string `json:"content"`
+		Hash        string `json:"hash"`
+		Source      string `json:"source"`
+		WorkspaceID string `json:"workspaceId"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -198,6 +215,21 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	}
 	if len(in.Content) > maxFile {
 		fail(w, 400, errors.New("文件太大"))
+		return
+	}
+	// R02：保存必须携带读取时的工作区身份；缺失身份仅允许新建文件
+	if in.Source == "" {
+		if in.WorkspaceID != "" && in.WorkspaceID != a.wsID() {
+			fail(w, 409, errors.New("工作区已切换：该文件属于其他项目，请重新打开后再保存"))
+			return
+		}
+		if in.WorkspaceID == "" && in.Hash != "" && a.wsID() != defaultWorkspaceID {
+			// 缺失身份仅当工作区从未定制（默认根）时兼容放行；定制后必须显式携带
+			fail(w, 409, errors.New("缺少工作区身份：请重新打开文件后再保存"))
+			return
+		}
+	} else if in.WorkspaceID != "" && in.WorkspaceID != "source:"+in.Source {
+		fail(w, 409, errors.New("来源已切换：请重新打开文件后再保存"))
 		return
 	}
 	if in.Source != "" {

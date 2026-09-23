@@ -20,6 +20,7 @@ type TokenUsage struct {
 	Total      int    `json:"total"`
 	Estimated  bool   `json:"estimated,omitempty"`
 	Model      string `json:"model,omitempty"`
+	Provider   string `json:"provider,omitempty"` // R08：调用归属的 provider（baseURL 快照）
 }
 
 // tokenUsageRecorder 由 New() 注入（atomic 防并行测试竞态）；complete() 成功后调用。
@@ -29,7 +30,8 @@ var tokenUsageRecorder atomic.Value // func(TokenUsage)
 // endpoint can be used, including a local model through host.docker.internal.
 // params 是本次任务的采样参数（FR-61），未设置字段不进入请求体；
 // deepseek-reasoner 不支持的参数会被剔除，避免上游 400。
-func complete(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any) (string, []ToolCall, TokenUsage, error) {
+// rec 为可选的请求体记录回调（R08-04 请求快照）；在真正发出前以已序列化字节调用。
+func complete(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte)) (string, []ToolCall, TokenUsage, error) {
 	if cfg.BaseURL == "" || cfg.Model == "" {
 		return "", nil, TokenUsage{}, errors.New("请先在模型设置中配置 API 地址和模型")
 	}
@@ -71,6 +73,9 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	b, err := json.Marshal(body)
 	if err != nil {
 		return "", nil, TokenUsage{}, err
+	}
+	if rec != nil {
+		rec(b)
 	}
 	req, err := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(cfg.BaseURL, "/")+"/chat/completions", bytes.NewReader(b))
 	if err != nil {
@@ -116,7 +121,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	if strings.TrimSpace(msg.Content) == "" && len(msg.ToolCalls) == 0 {
 		return "", nil, TokenUsage{}, errors.New("模型没有返回文本内容")
 	}
-	usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model}
+	usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model, Provider: cfg.BaseURL}
 	if usage.Total == 0 {
 		// 上游未返回 usage → 4 字符/词估算并标记
 		usage.Prompt = promptChars / 4

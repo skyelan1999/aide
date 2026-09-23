@@ -12,7 +12,7 @@ async function api(path, options = {}) {
   return data;
 }
 function action(fn) { return async (...args) => { try { await fn(...args); } catch (e) { toast(e.message); } }; }
-function setMode(mode) { state.mode = mode; document.querySelectorAll('.mode-switch button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode)); }
+function setMode(mode) { state.mode = mode; document.querySelectorAll('.mode-switch button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode)); if (typeof scheduleContextPreview === 'function') scheduleContextPreview(); }
 async function refreshConfig() {
   state.config = await api('/config');
   $('connection').textContent = '● 本地服务已连接'; $('connection').classList.add('ready');
@@ -22,6 +22,7 @@ async function refreshConfig() {
   $('model-status').textContent = state.config.configured ? '已配置' : '未配置';
   $('model-name').textContent = state.config.configured ? state.config.model + ' · API 已配置' : '先配置模型，即可开始真实 AI 对话';
   estimateContext();
+  if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
 async function loadSessions() {
   const sessions = await api('/sessions'); $('sessions').replaceChildren();
@@ -29,8 +30,18 @@ async function loadSessions() {
   sessions.forEach(s => { const b = el('button', 'session-item' + (state.session?.id === s.id ? ' active' : ''), '◌  ' + s.title); b.title = s.title; b.onclick = action(() => selectSession(s.id)); $('sessions').append(b); });
   return sessions;
 }
+const sessionSeq = { value: 0 }; // R07：递增请求序号，旧响应不得覆盖新选择
 async function selectSession(id) {
-  clearTimeout(state.poll); state.session = await api('/sessions/' + id); renderSession(); refreshCompactInfo(); await loadSessions(); schedulePoll();
+  const seq = ++sessionSeq.value;
+  clearTimeout(state.poll);
+  const loaded = await api('/sessions/' + id);
+  if (seq !== sessionSeq.value) return; // 已有更新的选择，丢弃本次过期响应
+  state.session = loaded;
+  renderSession();
+  refreshCompactInfo();
+  await loadSessions();
+  schedulePoll();
+  if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
 function schedulePoll() {
   clearTimeout(state.poll);
@@ -40,7 +51,7 @@ function schedulePoll() {
   }), 1200);
 }
 async function newSession() {
-  clearTimeout(state.poll); state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus();
+  clearTimeout(state.poll); state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
 }
 const labels = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', chat: 'aide' };
 function toolSummaryBrief(use) {
@@ -134,6 +145,7 @@ function renderSession() {
 }
 function renderAttachments() {
   $('attachment-chips').replaceChildren();
+  if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
   state.attachments.forEach((a, index) => { const chip = el('span', 'chip', (a.root === 'context' ? '参考 · ' : '') + a.path); const b = el('button', '', '×'); b.setAttribute('aria-label', '移除附件 ' + a.path); b.onclick = () => { state.attachments.splice(index, 1); renderAttachments(); }; chip.append(b); $('attachment-chips').append(chip); });
 }
 async function loadFiles() {
@@ -147,7 +159,7 @@ async function loadFiles() {
 }
 async function openFile(path) {
   const query = state.root === 'context' && state.source ? '/file?source=' + encodeURIComponent(state.source) + '&path=' : '/file?root=' + state.root + '&path=';
-  const data = await api(query + encodeURIComponent(path)); state.file = { ...data, path, root: state.root, source: state.root === 'context' ? state.source : '', fresh: false }; showEditor();
+  const data = await api(query + encodeURIComponent(path)); state.file = { ...data, path, root: state.root, source: state.root === 'context' ? state.source : '', wsId: data.workspaceId || data.wsId || '', fresh: false }; showEditor();
 }
 function sourceIsRW() {
   if (state.file.root !== 'context' || !state.file.source) return false;
@@ -188,20 +200,110 @@ $('parent-dir').onclick = action(async () => { state.dir = state.dir.includes('/
 $('task-form').onsubmit = action(async event => {
   event.preventDefault(); const prompt = $('prompt').value.trim(); if (!prompt || state.busy) return;
   if (!state.config?.configured) { openSettings(); return; }
+  if (state.previewOverLimit) { toast('上下文预算超限：请缩短任务或减少附件后再发送'); return; }
   $('send').disabled = true;
+  const draftSession = state.session; // R07：捕获发送时对象，后续等待不得覆盖新选择
   try {
-    if (!state.session) state.session = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: '新会话' }) });
+    if (!draftSession) state.session = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: '新会话' }) });
+    const target = draftSession || state.session;
     const strategy = state.profiles?.strategy || 'manual';
-    await api(`/sessions/${state.session.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default') }) });
-    $('prompt').value = ''; state.attachments = []; renderAttachments(); await selectSession(state.session.id); $('conversation').scrollTop = $('conversation').scrollHeight;
-  } finally { $('send').disabled = false; }
+    await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default') }) });
+    if (state.session?.id === target.id) { // 仅当用户仍停留在发送会话时清空草稿
+      $('prompt').value = ''; state.attachments = []; renderAttachments();
+    }
+    if (state.session?.id === target.id) { // R07：提交完成后不得抢走用户已切换到的会话
+      await selectSession(target.id);
+      $('conversation').scrollTop = $('conversation').scrollHeight;
+    }
+  } finally { updateSendEnabled(); }
 });
 $('prompt').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('task-form').requestSubmit(); } });
+
+/* ── R08-04 上下文预览：与真实请求共用服务端构建器，口径如实标注为估算 ── */
+state.previewSeq = { value: 0 };
+state.previewTimer = 0;
+state.previewFingerprint = '';
+state.previewOverLimit = false;
+function updateSendEnabled() {
+  $('send').disabled = !!state.busy || !!state.previewOverLimit;
+  if (state.previewOverLimit) {
+    $('composer-hint').textContent = '⚠ 上下文预算超限：请缩短任务或减少附件';
+  } else {
+    $('composer-hint').textContent = 'Enter 发送 · Shift + Enter 换行';
+  }
+}
+function hideContextPreview() {
+  state.previewOverLimit = false;
+  state.previewFingerprint = '';
+  $('context-preview').classList.add('hidden');
+  updateSendEnabled();
+}
+function renderContextPreview(data) {
+  if (!data || !data.breakdown) return;
+  state.previewFingerprint = data.fingerprint || '';
+  state.previewOverLimit = !!data.overLimit;
+  const bd = data.breakdown;
+  const overText = data.overLimit ? ' · ⚠ 超限 ' + Math.max(0, data.totalEstimate - data.contextWindow) : '';
+  $('cp-summary').textContent = '输入估算 ' + data.inputEstimate + ' tokens + 输出预留 ' + data.outputReserve + ' = ' + data.totalEstimate + ' / 窗口 ' + data.contextWindow + overText;
+  const detail = $('cp-detail');
+  detail.replaceChildren();
+  const rows = [
+    ['系统指令', bd.systemChars],
+    ['历史摘要', bd.summaryChars],
+    ['历史消息 ' + (bd.historyMessages || 0) + ' 条', bd.historyChars],
+    ['任务输入', bd.promptChars],
+    ['附件 ' + (bd.attachmentFiles || 0) + ' 个', bd.attachmentChars],
+    ['阶段指令', bd.instructionChars],
+    ['工具定义 ' + (bd.toolCount || 0) + ' 个', bd.toolSchemaChars]
+  ];
+  rows.forEach(([label, chars]) => {
+    if (chars) detail.append(el('div', 'cp-row', el('span', '', label), el('span', '', chars + ' 字符 ≈ ' + Math.floor(chars / 4) + ' tokens')));
+  });
+  detail.append(el('p', 'cp-note', data.estimationNote || ''));
+  $('context-preview').classList.remove('hidden');
+  updateSendEnabled();
+}
+async function refreshContextPreview() {
+  const seq = ++state.previewSeq.value;
+  const prompt = $('prompt').value.trim();
+  if (!prompt || !state.config?.configured) { hideContextPreview(); return; }
+  $('context-preview').classList.remove('hidden');
+  $('cp-summary').textContent = '上下文预算计算中…（估算）';
+  try {
+    const data = await api('/context-preview', { method: 'POST', body: JSON.stringify({ sessionId: state.session?.id || '', prompt, mode: state.mode, attachments: state.attachments }) });
+    if (seq !== state.previewSeq.value) return; // 过期响应不得覆盖新预览（R08-04 草稿失效）
+    renderContextPreview(data);
+  } catch (error) {
+    if (seq !== state.previewSeq.value) return;
+    if (error && String(error.message).includes('上下文预算超限')) {
+      const m = String(error.message);
+      state.previewOverLimit = true;
+      $('cp-summary').textContent = '⚠ ' + m;
+      $('context-preview').classList.add('over');
+      $('context-preview').classList.remove('hidden');
+      updateSendEnabled();
+      return;
+    }
+    hideContextPreview();
+  }
+}
+function scheduleContextPreview() {
+  clearTimeout(state.previewTimer);
+  state.previewFingerprint = '';
+  state.previewTimer = setTimeout(() => action(refreshContextPreview).call(null), 300);
+}
+$('prompt').addEventListener('input', scheduleContextPreview);
+$('cp-toggle').onclick = () => {
+  const detail = $('cp-detail');
+  const open = detail.classList.toggle('hidden');
+  $('cp-toggle').textContent = open ? '组成明细 ▾' : '组成明细 ▴';
+  $('cp-toggle').setAttribute('aria-expanded', String(!open));
+};
 $('cancel').onclick = action(async () => { const run = state.session?.runs.find(r => r.status === 'running'); if (run) { await api(`/sessions/${state.session.id}/runs/${run.id}/cancel`, { method: 'POST', body: '{}' }); toast('已请求停止'); } });
 function openSettings() { $('base-url').value = state.config?.baseURL || 'https://api.deepseek.com'; $('api-key').value = ''; $('api-key').placeholder = state.config?.hasKey ? '已保存密钥；留空保留' : '云端 API 通常需要密钥；本地模型可不填'; $('clear-key').checked = false; state.modelDraft = { models: JSON.parse(JSON.stringify(state.config?.models || [])), activeModel: state.config?.activeModel || '' }; renderModelList(); $('settings-dialog').showModal(); }
 $('settings-button').onclick = openSettings;
-$('settings-form').onsubmit = action(async event => { event.preventDefault(); if (!state.modelDraft.models.length) { toast('请至少添加一个模型'); return; } await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked, models: state.modelDraft.models, activeModel: state.modelDraft.activeModel }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast('模型设置已保存，发送任务时会调用当前模型'); });
-$('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; $('editor-status').textContent = '✓ 已保存'; await loadFiles(); });
+$('settings-form').onsubmit = action(async event => { event.preventDefault(); if (!state.modelDraft.models.length) { toast('请至少添加一个模型'); return; } await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked, models: state.modelDraft.models, activeModel: state.modelDraft.activeModel }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast('模型设置已保存，发送任务时会调用当前模型'); if (typeof scheduleContextPreview === 'function') scheduleContextPreview(); });
+$('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; if (state.file.wsId) body.workspaceId = state.file.wsId; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; $('editor-status').textContent = '✓ 已保存'; await loadFiles(); });
 $('attach-file').onclick = () => {
   if (state.file.content !== $('editor').value) { toast('请先保存修改，再附加到任务'); return; }
   const att = { root: state.file.root, path: state.file.path }; if (state.file.source) { att.root = 'source'; att.source = state.file.source; } if (!state.attachments.some(a => a.root === att.root && a.path === att.path && (a.source || '') === (att.source || ''))) { if (state.attachments.length >= 8) { toast('最多附加 8 个文件'); return; } state.attachments.push(att); }
@@ -553,10 +655,8 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$
 /* ── Token 消耗统计（FR-90）：git 提交热力图样式 ── */
 function fmtStatTokens(n) { return n < 1000 ? String(n) : (n / 1000).toFixed(1) + 'K'; }
 function renderTokenStats(control) {
-  // 费用估算：计价可配置（默认刊例价 ¥2/¥8 每百万；缓存命中优惠与账户差异请自行调整）
-  const priceIn = () => Number(window.aideUI?.get('priceIn')) || 2;
-  const priceOut = () => Number(window.aideUI?.get('priceOut')) || 8;
-  const costOf = d => ((d.prompt || 0) * priceIn() + (d.completion || 0) * priceOut()) / 1e6;
+  // R08：计价与费用是服务端事实源（/api/token-pricing + 逐调用快照），前端只展示
+  let pricing = { priceIn: 2, priceOut: 8 };
   const wrap = el('div', 'settings-control token-stats');
   const head = el('div', 'token-head');
   head.append(el('span', 'token-title', 'Token 消耗'), el('span', 'control-value', ''));
@@ -575,13 +675,35 @@ function renderTokenStats(control) {
     const days = data.days || {};
     const totalsObj = data.totals || {};
     const todayStats = data.today || {};
-    const cost = costOf(totalsObj);
-    head.querySelector('.control-value').textContent = '累计 ' + fmtStatTokens(totalsObj.total || 0) + ' tokens · ≈¥' + cost.toFixed(2);
+    const unpriced = data.unpricedTotals || {};
+    pricing = data.pricing || pricing;
+    const cost = data.cost ?? 0;
+    // 服务端费率加载完成后同步输入框显示（未聚焦时），避免停留在初始默认值
+    const inEl = wrap.querySelector('input[aria-label="输入 ¥/百万"]');
+    const outEl = wrap.querySelector('input[aria-label="输出 ¥/百万"]');
+    if (inEl && document.activeElement !== inEl) inEl.value = pricing.priceIn;
+    if (outEl && document.activeElement !== outEl) outEl.value = pricing.priceOut;
+    const callRecords = data.callRecords || [];
+    const dayCost = {};
+    callRecords.forEach(c => { const k = (c.time || '').slice(0, 10); dayCost[k] = (dayCost[k] || 0) + (c.cost || 0); });
+    // R08：费用仅由服务端逐调用记录汇总；未计价历史（旧版汇总）单独提示，不并入费用
+    const estimatedCost = data.estimatedCost ?? 0;
+    head.querySelector('.control-value').textContent = '累计 ' + fmtStatTokens(totalsObj.total || 0) + ' tokens · 已计价费用 ¥' + cost.toFixed(2) + (estimatedCost > 0 ? ' · 刊例价估算 ¥' + estimatedCost.toFixed(2) : '');
     chips.replaceChildren();
     chips.append(
-      el('span', 'token-chip', '今日 ' + fmtStatTokens(todayStats.total || 0) + ' · ≈¥' + costOf(todayStats).toFixed(2)),
+      el('span', 'token-chip', '今日 ' + fmtStatTokens(todayStats.total || 0) + ' tokens' + (todayStats.priced !== false ? ' · ¥' + (dayCost[Object.keys(days).sort().pop()] || 0).toFixed(2) : ' · 未计价')),
       el('span', 'token-chip', '调用 ' + (totalsObj.calls || 0) + ' 次')
     );
+    Object.entries(data.modelCost || {}).forEach(([model, mc]) => {
+      const chip = el('span', 'token-chip', model + ' ¥' + mc.toFixed(2));
+      chip.title = '该模型逐调用计价快照合计';
+      chips.append(chip);
+    });
+    if (unpriced.total) {
+      const chip = el('span', 'token-chip', '未计价历史 ' + fmtStatTokens(unpriced.total) + ' tokens · ' + (unpriced.calls || 0) + ' 次');
+      chip.title = '旧版统计没有逐调用与计价证据，费用未知；未按当前费率冒充已发生费用';
+      chips.append(chip);
+    }
     action(async () => {
       try {
         const bal = await api('/balance');
@@ -623,12 +745,14 @@ function renderTokenStats(control) {
     const level = v => v <= 0 ? 0 : v <= maxVal * 0.25 ? 1 : v <= maxVal * 0.5 ? 2 : v <= maxVal * 0.75 ? 3 : 4;
     const showTip = (cell, date, day, weekTotal) => {
       tip.replaceChildren();
+      const pricedDay = day.priced !== false;
+      const fee = pricedDay ? '费用 ¥' + (dayCost[date] || 0).toFixed(4) : '费用未知（旧数据未计价）';
       tip.append(
         el('strong', '', date + ' · ' + fmtStatTokens(day.total || 0) + ' tokens'),
         el('br'),
         el('span', '', '输入 ' + fmtStatTokens(day.prompt || 0) + ' · 输出 ' + fmtStatTokens(day.completion || 0)),
         el('br'),
-        el('span', '', '调用 ' + (day.calls || 0) + ' 次 · ≈¥' + costOf(day).toFixed(4)),
+        el('span', '', '调用 ' + (day.calls || 0) + ' 次 · ' + fee + (day.estimated ? '（用量为估算）' : '')),
         el('br'),
         el('span', '', '所在周合计 ' + fmtStatTokens(weekTotal) + ' tokens')
       );
@@ -658,11 +782,13 @@ function renderTokenStats(control) {
         cell.addEventListener('click', () => {
           detail.classList.remove('hidden');
           detail.replaceChildren();
+          const pricedDay = day.priced !== false;
+          const fee = pricedDay ? '费用 ¥' + (dayCost[key] || 0).toFixed(4) + '（按调用时刻计价快照）' : '费用未知：旧数据没有逐调用与计价证据，未按当前费率冒充';
           detail.append(
             el('strong', '', key),
             el('span', '', '输入 ' + fmtStatTokens(day.prompt || 0) + ' tokens · 输出 ' + fmtStatTokens(day.completion || 0) + ' tokens'),
-            el('span', '', '调用 ' + (day.calls || 0) + ' 次 · 合计 ' + fmtStatTokens(day.total || 0) + ' tokens'),
-            el('span', '', '费用 ≈¥' + costOf(day).toFixed(4) + '（刊例价估算' + (day.estimated ? '，上游未返回 usage' : '') + '）')
+            el('span', '', '调用 ' + (day.calls || 0) + ' 次 · 合计 ' + fmtStatTokens(day.total || 0) + ' tokens' + (day.estimated ? '（用量为估算）' : '')),
+            el('span', '', fee)
           );
         });
         colEl.append(cell);
@@ -681,21 +807,39 @@ function renderTokenStats(control) {
     input.type = 'number';
     input.min = 0;
     input.step = 0.1;
-    input.value = key === 'priceIn' ? priceIn() : priceOut();
+    input.value = key === 'priceIn' ? pricing.priceIn : pricing.priceOut;
     input.setAttribute('aria-label', label);
     input.addEventListener('change', () => {
-      const v = parseFloat(input.value);
-      if (!Number.isNaN(v) && v >= 0) {
-        if (window.aideUI) window.aideUI.set(key, v);
-        action(loadStats).call(null);
-      } else {
-        input.value = key === 'priceIn' ? priceIn() : priceOut();
+      // R08：费率是服务端事实源；留空/非法必须显式拒绝（0 是合法免费，不等于留空）
+      if (input.value.trim() === '') {
+        toast('费率不能留空：0 表示免费，请输入明确的数字');
+        input.value = key === 'priceIn' ? pricing.priceIn : pricing.priceOut;
+        return;
       }
+      const v = parseFloat(input.value);
+      if (Number.isNaN(v) || v < 0) {
+        toast('费率必须是 ≥ 0 的数字');
+        input.value = key === 'priceIn' ? pricing.priceIn : pricing.priceOut;
+        return;
+      }
+      // 以两个输入框的当前值为准（避免第二次修改用过期的模块缓存覆盖第一次的值）
+      const readOther = label => { const raw = wrap.querySelector('input[aria-label="' + label + '"]')?.value; const n = parseFloat(raw); return Number.isFinite(n) && n >= 0 ? n : pricing[label === '输入 ¥/百万' ? 'priceIn' : 'priceOut']; };
+      const next = { priceIn: readOther('输入 ¥/百万'), priceOut: readOther('输出 ¥/百万') };
+      next[key] = v;
+      action(async () => {
+        try {
+          pricing = await api('/token-pricing', { method: 'PUT', body: JSON.stringify(next) });
+          action(loadStats).call(null);
+        } catch (error) {
+          toast('费率保存失败: ' + error.message);
+          action(loadStats).call(null);
+        }
+      })();
     });
     lab.append(input);
     return lab;
   };
-  priceRow.append(mkPrice('priceIn', '输入 ¥/百万'), mkPrice('priceOut', '输出 ¥/百万'), el('small', '', '按你的账户实际刊例价填写（含缓存命中优惠时可调低输入价）'));
+  priceRow.append(mkPrice('priceIn', '输入 ¥/百万'), mkPrice('priceOut', '输出 ¥/百万'), el('small', '', '0 = 免费；留空无效。费率由服务端保存，历史费用按调用时刻快照不变'));
   return wrap;
 }
 /* ── 模型列表管理（FR-67 / FR-68）：设置弹窗内增删、标记当前、自动获取候选 ── */
@@ -1133,13 +1277,13 @@ async function openFileViewMode() {
   if (!spec) return;
   document.body.classList.add('file-view-mode');
   $('file-view').classList.remove('hidden');
-  fileView.spec = spec;
+  fileView.spec = spec; fileView.wsId = '';
   $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;
   const query = spec.source
     ? '/file?source=' + encodeURIComponent(spec.source) + '&path=' + encodeURIComponent(spec.path)
     : '/file?root=' + encodeURIComponent(spec.root) + '&path=' + encodeURIComponent(spec.path);
   const data = await api(query);
-  fileView.hash = data.hash;
+  fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
   const md = isMarkdownPath(spec.path);
   $('file-view-mode-switch').classList.toggle('hidden', !md);
   const readOnly = spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true);
@@ -1155,7 +1299,7 @@ $('fv-edit').onclick = () => setFileViewMode('edit');
 $('fv-preview').onclick = () => setFileViewMode('preview');
 $('file-view-save').onclick = action(async () => {
   const body = { path: fileView.spec.path, content: $('file-view-editor').value, hash: fileView.hash };
-  if (fileView.spec.source) body.source = fileView.spec.source;
+  if (fileView.spec.source) body.source = fileView.spec.source; if (fileView.wsId) body.workspaceId = fileView.wsId;
   const res = await api('/file', { method: 'PUT', body: JSON.stringify(body) });
   fileView.hash = res.hash;
   $('file-view-status').textContent = '✓ 已保存';
@@ -1200,7 +1344,7 @@ function renderTrajectory() {
       let argsBrief = '';
       try { const a = JSON.parse(use.args || '{}'); const v = Object.values(a)[0]; if (typeof v === 'string') argsBrief = ' · ' + v.slice(0, 40); } catch (e) { /* 忽略 */ }
       const body = el('div', 'traj-body');
-      body.append(el('p', '', '参数：' + (use.args || '无')), el('pre', 'traj-pre', use.result || '（无结果）'));
+      body.append(el('p', '', '参数：' + (use.args || '无')), el('pre', 'traj-pre', use.preview || use.result || '（无结果）'));
       card.append(trajectoryEvent('⚒', use.tool + argsBrief, body, 'tool'));
     });
     if (run.files?.length) {

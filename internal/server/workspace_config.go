@@ -109,15 +109,35 @@ func (a *App) resolveHostPath(p string) (string, string, error) {
 	if strings.HasPrefix(p, "~/") {
 		p = strings.TrimRight(a.hostLocal, "/") + strings.TrimPrefix(p, "~")
 	}
-	trimmed := func(prefix string) string { return strings.TrimPrefix(p, prefix) }
+	// R03：容器虚拟路径必须带边界匹配（/workspaceXYZ 不算 /workspace），且 Join 后必须仍在根内
+	joinWithin := func(base, prefix string) (string, bool) {
+		if p != prefix && !strings.HasPrefix(p, prefix+"/") {
+			return "", false
+		}
+		joined := filepath.Join(base, filepath.FromSlash(strings.TrimPrefix(p, prefix)))
+		rel, err := filepath.Rel(base, joined)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return "", false
+		}
+		return joined, true
+	}
 	if strings.HasPrefix(p, "/workspace") {
-		return filepath.Join(a.workPath, filepath.FromSlash(trimmed("/workspace"))), p, nil
+		if joined, ok := joinWithin(a.workPath, "/workspace"); ok {
+			return joined, p, nil
+		}
+		return "", "", fmt.Errorf("路径 %s 越出工作区根", p)
 	}
 	if strings.HasPrefix(p, "/context") {
-		return filepath.Join(a.reference.Name(), filepath.FromSlash(trimmed("/context"))), p, nil
+		if joined, ok := joinWithin(a.reference.Name(), "/context"); ok {
+			return joined, p, nil
+		}
+		return "", "", fmt.Errorf("路径 %s 越出参考根", p)
 	}
 	if strings.HasPrefix(p, "/local") {
-		return filepath.Join(a.localRoot.Name(), filepath.FromSlash(trimmed("/local"))), p, nil
+		if joined, ok := joinWithin(a.localRoot.Name(), "/local"); ok {
+			return joined, p, nil
+		}
+		return "", "", fmt.Errorf("路径 %s 越出本地根", p)
 	}
 	if !strings.HasPrefix(p, "/") {
 		joined := filepath.Join(a.workPath, filepath.FromSlash(p))
@@ -134,8 +154,19 @@ func (a *App) resolveHostPath(p string) (string, string, error) {
 	return filepath.Join("/local", rel), p, nil
 }
 
+// defaultWorkspaceID 是「从未定制工作区」时的身份（local、空路径、空主机）。
+const defaultWorkspaceID = "local||"
+
+// wsID 返回当前工作区身份（模式+宿主机路径/主机+远程路径），供提案绑定（R02）。
+func (a *App) wsID() string {
+	w := a.wsConfig.Workspace
+	return w.Mode + "|" + w.Path + "|" + w.Host
+}
+
 // applyWorkspaceConfig 按配置切换工作空间/文档/缓存根，并清理旧 SSH 会话（FR-79 / FR-80）。
+// 每次成功切换递增 wsRevision：旧提案/命令的身份校验依赖该版本（R02）。
 func (a *App) applyWorkspaceConfig() error {
+	a.wsRevision++
 	display := "/workspace"
 	if a.wsConfig.Workspace.Mode == "ssh" {
 		target := a.wsConfig.Workspace.Host
@@ -151,18 +182,22 @@ func (a *App) applyWorkspaceConfig() error {
 		if disp != "" {
 			display = disp
 		}
-		if cp != "" {
-			w, err := os.OpenRoot(cp)
-			if err != nil {
-				return fmt.Errorf("工作空间路径不可用: %w", err)
-			}
-			old := a.workspace
-			a.workspace = w
-			if old != nil {
-				old.Close()
-			}
+		if cp == "" {
+			cp = a.workPath // 空路径恢复默认根（R02）
+		}
+		w, err := os.OpenRoot(cp)
+		if err != nil {
+			return fmt.Errorf("工作空间路径不可用: %w", err)
+		}
+		old := a.workspace
+		a.workspace = w
+		if old != nil {
+			// 运行中的任务可能仍持有旧句柄快照：延后到 Close 统一释放（R02 运行中切换）
+			a.retiredRoots = append(a.retiredRoots, old)
 		}
 	}
+	// R02：登记当前工作区身份 → 根，运行中任务的工具据此解析原工作区根
+	a.wsRoots[a.wsID()] = a.workspace
 	a.workspaceDisplay = display
 	// 系统文档参考根
 	if dp, disp, err := a.resolveHostPath(a.wsConfig.Docs.Path); err == nil && dp != "" {
@@ -193,11 +228,11 @@ func (a *App) workspaceConfigOut() map[string]any {
 			"host": a.wsConfig.Workspace.Host, "port": a.wsConfig.Workspace.Port,
 			"username": a.wsConfig.Workspace.Username, "auth": a.wsConfig.Workspace.Auth,
 		},
-		"docs":       map[string]any{"path": a.wsConfig.Docs.Path},
-		"cache":      map[string]any{"path": a.wsConfig.Cache.Path},
-		"recent":     a.wsConfig.Recent,
+		"docs":        map[string]any{"path": a.wsConfig.Docs.Path},
+		"cache":       map[string]any{"path": a.wsConfig.Cache.Path},
+		"recent":      a.wsConfig.Recent,
 		"hasPassword": a.wsSecrets.Password != "",
-		"hasKey":     a.wsSecrets.Key != "",
+		"hasKey":      a.wsSecrets.Key != "",
 	}
 }
 
@@ -217,12 +252,12 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 			Username string `json:"username"`
 			Auth     string `json:"auth"`
 		} `json:"workspace"`
-		Docs  struct{ Path string } `json:"docs"`
-		Cache struct{ Path string } `json:"cache"`
-		Password    string `json:"password"`
-		Key         string `json:"key"`
-		ClearPassword bool `json:"clearPassword"`
-		ClearKey     bool  `json:"clearKey"`
+		Docs          struct{ Path string } `json:"docs"`
+		Cache         struct{ Path string } `json:"cache"`
+		Password      string                `json:"password"`
+		Key           string                `json:"key"`
+		ClearPassword bool                  `json:"clearPassword"`
+		ClearKey      bool                  `json:"clearKey"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -258,13 +293,42 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	for _, p := range []string{in.Docs.Path, in.Cache.Path} {
-		if strings.TrimSpace(p) != "" {
-			if _, _, err := a.resolveHostPath(p); err != nil {
-				fail(w, 400, err)
-				return
-			}
+	// R03 原子性预检：docs/cache 若已存在必须是目录；workspace 路径必须能实际打开。
+	// 失败时配置、根、recent 均不变。
+	if strings.TrimSpace(in.Docs.Path) != "" {
+		dp, _, err := a.resolveHostPath(in.Docs.Path)
+		if err != nil {
+			fail(w, 400, err)
+			return
 		}
+		if info, err := os.Stat(dp); err == nil && !info.IsDir() {
+			fail(w, 400, errors.New("系统文档路径不是目录"))
+			return
+		}
+	}
+	if strings.TrimSpace(in.Cache.Path) != "" {
+		cp, _, err := a.resolveHostPath(in.Cache.Path)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		if info, err := os.Stat(cp); err == nil && !info.IsDir() {
+			fail(w, 400, errors.New("缓存路径不是目录"))
+			return
+		}
+	}
+	if in.Workspace.Mode != "ssh" && strings.TrimSpace(in.Workspace.Path) != "" {
+		cp, _, err := a.resolveHostPath(in.Workspace.Path)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		probe, err := os.OpenRoot(cp)
+		if err != nil {
+			fail(w, 400, fmt.Errorf("工作空间路径不可用: %w", err))
+			return
+		}
+		probe.Close()
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -294,11 +358,16 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
+	oldID := a.wsID()
+	oldRoot := a.workspace
 	a.wsConfig = cfg
 	if err := a.applyWorkspaceConfig(); err != nil {
 		fail(w, 400, err)
 		return
 	}
+	// R02：旧工作区身份的根继续可用，供运行中任务的工具调用解析
+	a.wsRoots[oldID] = oldRoot
+	a.wsRoots[a.wsID()] = a.workspace
 	// 最近路径：只记录「生效路径」非空的
 	if cfg.Workspace.Path != "" {
 		a.wsConfig.Recent.Workspace = pushRecent(a.wsConfig.Recent.Workspace, cfg.Workspace.Path)
@@ -341,7 +410,18 @@ func (a *App) listWorkspaceDir(p string) ([]map[string]any, error) {
 }
 func (a *App) readWorkspaceText(p string) ([]byte, error) {
 	if a.workspaceMode() == "ssh" {
-		return a.sftpRead(a.workspaceRemotePath(p))
+		// R03：路径校验必须先于任何 SFTP 传输；内容策略与本地读取一致
+		if err := safePath(p); err != nil {
+			return nil, err
+		}
+		b, err := a.sftpRead(a.workspaceRemotePath(p))
+		if err != nil {
+			return nil, err
+		}
+		if err := validateTextContent(b); err != nil {
+			return nil, err
+		}
+		return b, nil
 	}
 	return readText(a.workspace, p)
 }

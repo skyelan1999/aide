@@ -241,9 +241,9 @@ func (a *App) updateProfiles(w http.ResponseWriter, r *http.Request) {
 // ── auto 路由策略（FR-64） ──
 
 type routingPolicy struct {
-	Version int          `json:"version"`
+	Version int           `json:"version"`
 	Rules   []routingRule `json:"rules"`
-	Default string       `json:"default"`
+	Default string        `json:"default"`
 }
 type routingRule struct {
 	When struct {

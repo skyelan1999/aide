@@ -188,7 +188,9 @@ func TestToolLoopWriteUnattachedRejected(t *testing.T) {
 	a := testApp(t)
 	_ = a.workspace.WriteFile("existing.txt", []byte("important"), 0644)
 	provider := newToolProvider(t, []func() (string, []ToolCall){
-		func() (string, []ToolCall) { return "", []ToolCall{readCall("write_file", `{"path":"existing.txt","content":"evil"}`)} },
+		func() (string, []ToolCall) {
+			return "", []ToolCall{readCall("write_file", `{"path":"existing.txt","content":"evil"}`)}
+		},
 		func() (string, []ToolCall) { return "收到。", nil },
 	})
 	defer provider.Close()
@@ -241,7 +243,7 @@ func TestTokenStats(t *testing.T) {
 }
 
 func (a *App) completeCall(baseURL string) (string, []ToolCall, TokenUsage, error) {
-	return complete(context.Background(), Settings{BaseURL: baseURL, Model: "test"}, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil)
+	return complete(context.Background(), Settings{BaseURL: baseURL, Model: "test"}, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil, nil)
 }
 
 // FR-92/93：全局搜索与会话压缩

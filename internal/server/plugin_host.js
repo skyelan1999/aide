@@ -57,7 +57,9 @@ function makeCtx(surface, registry) {
     tool: def => {
       const d = def && typeof def === 'object' ? def : {};
       const name = String(d.name || '匿名工具').slice(0, 128);
-      surface.tools.push({ name, description: String(d.description || '').slice(0, 512), executable: typeof d.handler === 'function' });
+      const toolEntry = { name, description: String(d.description || '').slice(0, 512), executable: typeof d.handler === 'function' };
+      if (d.parameters && typeof d.parameters === 'object') toolEntry.parameters = d.parameters;
+      surface.tools.push(toolEntry);
       if (typeof d.handler === 'function' && registry) {
         registry.set(name, { handler: d.handler, plugin: surface.__pluginId || '' });
       }

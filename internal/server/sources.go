@@ -19,11 +19,11 @@ import (
 // 登记记录存缓存目录 sources.json；密码/密钥存 /data/sources-secrets.json（0600）。
 
 const (
-	sourcesFileName   = "sources.json"
-	sourcesSecretsFN  = "sources-secrets.json"
-	maxSources        = 20
-	systemDocsSource  = "system-docs"
-	curlTimeout       = 30 * time.Second
+	sourcesFileName  = "sources.json"
+	sourcesSecretsFN = "sources-secrets.json"
+	maxSources       = 20
+	systemDocsSource = "system-docs"
+	curlTimeout      = 30 * time.Second
 )
 
 var sourceIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
@@ -186,7 +186,18 @@ func (a *App) readSourceText(src Source, p string) ([]byte, error) {
 		defer root.Close()
 		return readText(root, p)
 	case "sftp":
-		return a.sftpReadSource(src, p)
+		// R03：路径校验先于 SFTP 传输；内容策略统一
+		if err := safePath(p); err != nil {
+			return nil, err
+		}
+		b, err := a.sftpReadSource(src, p)
+		if err != nil {
+			return nil, err
+		}
+		if err := validateTextContent(b); err != nil {
+			return nil, err
+		}
+		return b, nil
 	case "link", "ftp", "ftps", "smb":
 		return a.curlReadSource(src, p)
 	case "mcp":

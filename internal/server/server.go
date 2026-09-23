@@ -79,6 +79,7 @@ func normalizeModels(models []ModelRef) ([]ModelRef, error) {
 	}
 	return out, nil
 }
+
 type ToolCall struct {
 	ID       string `json:"id,omitempty"`
 	Type     string `json:"type,omitempty"`
@@ -131,15 +132,53 @@ type App struct {
 	sourceRegistry            sourcesRegistry
 	sourceSecrets             sourcesSecrets
 	tokenStats                map[string]TokenDay
+	tokenStatsMu              sync.Mutex
+	wsRevision                uint64
+	compactingSessions        map[string]bool
+	retiredRoots              []*os.Root
+	wsRoots                   map[string]*os.Root // 工作区身份 → 打开中的根（R02 运行中任务的工具绑定）
+	pricing                   PricingState
+	tokenCalls                []TokenCallRec
+	buildVersion, buildCommit string
 }
 
-// TokenDay 单日 Token 消耗（FR-90）。
+// Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
+type Pricing struct {
+	PriceIn  float64 `json:"priceIn"`
+	PriceOut float64 `json:"priceOut"`
+}
+
+// PricingState 服务端计价状态：按模型费率 + 未配置模型的刊例默认价。
+// 显式配置（含 0/0 免费）优先于默认；默认价仅用于从未配置过的模型，且记录必须标记 defaulted。
+type PricingState struct {
+	Rates   map[string]Pricing `json:"rates"`
+	Default Pricing            `json:"default"`
+}
+
+// TokenCallRec 逐调用记录（R08）：来源、模型、计价快照、费用。
+type TokenCallRec struct {
+	Time       string  `json:"time"`
+	Model      string  `json:"model"`
+	Provider   string  `json:"provider,omitempty"`
+	Prompt     int     `json:"prompt"`
+	Completion int     `json:"completion"`
+	Total      int     `json:"total"`
+	Estimated  bool    `json:"estimated,omitempty"`
+	Defaulted  bool    `json:"defaulted,omitempty"` // 该模型未配置费率，费用按刊例默认价（估算性质）
+	PriceIn    float64 `json:"priceIn"`
+	PriceOut   float64 `json:"priceOut"`
+	Cost       float64 `json:"cost"`
+}
+
+// TokenDay 单日 Token 消耗（FR-90）。Priced 表示该日累计时存在计价快照；
+// 旧版汇总（v1）没有逐调用与计价证据，Priced=false，UI 必须显示为未计价。
 type TokenDay struct {
 	Prompt     int  `json:"prompt"`
 	Completion int  `json:"completion"`
 	Total      int  `json:"total"`
 	Calls      int  `json:"calls"`
 	Estimated  bool `json:"estimated,omitempty"`
+	Priced     bool `json:"priced,omitempty"`
 }
 
 func env(key, fallback string) string {
@@ -148,6 +187,9 @@ func env(key, fallback string) string {
 	}
 	return fallback
 }
+
+var buildVersion, buildCommit string
+
 var versionRE = regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ RC[0-9]+`)
 
 // readVersionFile 从工程目录 version.md 取当前版本（FR-66 / LIM-24）；缺失或非法返回空串。
@@ -224,7 +266,7 @@ func New(work, reference, data string) (*App, error) {
 		w.Close()
 		return nil, err
 	}
-	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4)}
+	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}}
 	b, err := os.ReadFile(filepath.Join(data, "access-token"))
 	if errors.Is(err, os.ErrNotExist) {
 		b = []byte(newID() + newID())
@@ -274,7 +316,15 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, err
 	}
-	a.version = readVersionFile(filepath.Join(work, "version.md"))
+	// R09：版本为构建期身份（ldflags 注入），不得被工作区内的 version.md 覆盖；
+	// 仅在开发构建（未注入）时回退读取工程 version.md（FR-66 / LIM-24）。
+	if buildVersion != "" {
+		a.version = buildVersion
+	} else {
+		a.version = readVersionFile(filepath.Join(work, "version.md"))
+	}
+	a.buildVersion = buildVersion
+	a.buildCommit = buildCommit
 	if err := a.loadPlugins(); err != nil {
 		a.Close()
 		return nil, err
@@ -306,11 +356,57 @@ func New(work, reference, data string) (*App, error) {
 	}
 	a.tokenStats = map[string]TokenDay{}
 	if b, err := os.ReadFile(filepath.Join(data, "token-stats.json")); err == nil {
-		var saved struct {
-			Days map[string]TokenDay `json:"days"`
+		var raw struct {
+			Version int `json:"version"`
+			Legacy  *struct {
+				Version int                 `json:"version"`
+				Days    map[string]TokenDay `json:"days"`
+			} `json:"legacyStatsV1"`
+			Days  map[string]TokenDay `json:"days"`
+			Calls []TokenCallRec      `json:"calls"`
 		}
-		if err := json.Unmarshal(b, &saved); err == nil && saved.Days != nil {
-			a.tokenStats = saved.Days
+		if err := json.Unmarshal(b, &raw); err != nil {
+			// R08：损坏或未知版本保留原文件并可诊断，绝不静默清零
+			log.Printf("token-stats.json 无法解析（保留原文件，未迁移）: %v", err)
+		} else if raw.Legacy != nil && raw.Legacy.Days != nil {
+			// 旧版汇总：保留用量与 estimated 标记；无逐调用与计价证据，Priced=false（未计价）
+			a.tokenStats = raw.Legacy.Days
+			log.Printf("token-stats.json 为旧版汇总（legacyStatsV1）：已迁移用量，历史费用标记为未计价")
+		} else if raw.Days != nil {
+			a.tokenStats = raw.Days
+			a.tokenCalls = raw.Calls
+		} else {
+			log.Printf("token-stats.json 缺少有效 days（保留原文件，未清零）")
+		}
+	}
+	a.pricing = PricingState{Rates: map[string]Pricing{}, Default: Pricing{PriceIn: 2, PriceOut: 8}}
+	if b, err := os.ReadFile(filepath.Join(data, "token-pricing.json")); err == nil {
+		var raw map[string]json.RawMessage
+		if json.Unmarshal(b, &raw) != nil {
+			log.Printf("token-pricing.json 无法解析（保留原文件，使用默认刊例价）")
+		} else if _, ok := raw["rates"]; !ok {
+			// 旧单费率格式：整体迁移为默认刊例价，不冒充任何模型的精确费率
+			var legacy Pricing
+			if json.Unmarshal(b, &legacy) == nil && legacy.PriceIn >= 0 && legacy.PriceOut >= 0 {
+				a.pricing.Default = legacy
+				log.Printf("token-pricing.json 旧单费率已迁移为默认刊例价")
+			}
+		} else {
+			var pr PricingState
+			if json.Unmarshal(b, &pr) == nil {
+				if pr.Rates == nil {
+					pr.Rates = map[string]Pricing{}
+				}
+				for m, v := range pr.Rates {
+					if v.PriceIn < 0 || v.PriceOut < 0 {
+						delete(pr.Rates, m) // 非法费率不采纳
+					}
+				}
+				if pr.Default.PriceIn < 0 || pr.Default.PriceOut < 0 {
+					pr.Default = Pricing{PriceIn: 2, PriceOut: 8}
+				}
+				a.pricing = pr
+			}
 		}
 	}
 	tokenUsageRecorder.Store(func(u TokenUsage) { a.recordTokenUsage(u) })
@@ -327,8 +423,8 @@ func New(work, reference, data string) (*App, error) {
 		}
 		var s Session
 		if err := json.Unmarshal(b, &s); err != nil {
-			a.Close()
-			return nil, fmt.Errorf("读取会话 %s: %w", filepath.Base(path), err)
+			log.Printf("跳过损坏会话文件 %s: %v", filepath.Base(path), err) // R09：坏文件不阻断启动
+			continue
 		}
 		a.sessions[s.ID] = &s
 		for _, task := range s.Runs {
@@ -344,7 +440,16 @@ func New(work, reference, data string) (*App, error) {
 	}
 	return a, nil
 }
-func (a *App) Close() { a.workspace.Close(); a.reference.Close() }
+func (a *App) Close() {
+	a.workspace.Close()
+	a.reference.Close()
+	if a.localRoot != nil {
+		a.localRoot.Close()
+	}
+	for _, r := range a.retiredRoots {
+		r.Close()
+	}
+}
 func (a *App) save(s *Session) error {
 	return atomicJSON(filepath.Join(a.dataPath, "session-"+s.ID+".json"), s)
 }
@@ -367,6 +472,8 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/workspace-config", a.getWorkspaceConfig)
 	mux.HandleFunc("GET /api/sources", a.listSources)
 	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)
+	mux.HandleFunc("GET /api/token-pricing", a.tokenPricingHandler)
+	mux.HandleFunc("PUT /api/token-pricing", a.tokenPricingHandler)
 	mux.HandleFunc("GET /api/search", a.searchSessions)
 	mux.HandleFunc("POST /api/sessions/{id}/compact", a.compactSession)
 	mux.HandleFunc("PUT /api/sources", a.updateSources)
@@ -381,6 +488,8 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
+	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/requests", a.runRequestsHandler)
+	mux.HandleFunc("POST /api/context-preview", a.contextPreviewHandler)
 	mux.HandleFunc("POST /api/command", a.command)
 	web, _ := fs.Sub(assets, "web")
 	mux.Handle("/", http.FileServer(http.FS(web)))
@@ -409,7 +518,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -549,26 +658,93 @@ func Run() error {
 
 // recordTokenUsage 累计当日 Token 消耗并持久化到 /data/token-stats.json（FR-90）。
 func (a *App) recordTokenUsage(u TokenUsage) {
-	a.mu.Lock()
+	a.tokenStatsMu.Lock()
 	day := time.Now().UTC().Format("2006-01-02")
 	d := a.tokenStats[day]
 	d.Prompt += u.Prompt
 	d.Completion += u.Completion
 	d.Total += u.Total
 	d.Calls++
+	d.Priced = true // 本次累计存在计价快照与逐调用证据
 	if u.Estimated {
 		d.Estimated = true
 	}
 	a.tokenStats[day] = d
-	saveErr := atomicJSON(filepath.Join(a.dataPath, "token-stats.json"), map[string]any{"version": 1, "days": a.tokenStats})
-	a.mu.Unlock()
+	entry, configured := a.pricing.Rates[u.Model]
+	if !configured {
+		entry = a.pricing.Default
+	}
+	rec := TokenCallRec{Time: time.Now().UTC().Format(time.RFC3339Nano), Model: u.Model, Provider: u.Provider, Prompt: u.Prompt, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, Defaulted: !configured, PriceIn: entry.PriceIn, PriceOut: entry.PriceOut}
+	rec.Cost = float64(rec.Prompt)*rec.PriceIn/1e6 + float64(rec.Completion)*rec.PriceOut/1e6
+	a.tokenCalls = append(a.tokenCalls, rec)
+	if len(a.tokenCalls) > 5000 {
+		a.tokenCalls = a.tokenCalls[len(a.tokenCalls)-5000:]
+	}
+	saveErr := atomicJSON(filepath.Join(a.dataPath, "token-stats.json"), map[string]any{"version": 2, "days": a.tokenStats, "calls": a.tokenCalls})
+	a.tokenStatsMu.Unlock()
 	_ = saveErr
 }
 
+func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		a.tokenStatsMu.Lock()
+		p := a.pricing
+		active := a.settings.Model
+		a.tokenStatsMu.Unlock()
+		entry, configured := p.Rates[active]
+		if !configured {
+			entry = p.Default
+		}
+		jsonOut(w, 200, map[string]any{
+			"priceIn":   entry.PriceIn,
+			"priceOut":  entry.PriceOut,
+			"model":     active,
+			"defaulted": !configured,
+			"rates":     p.Rates,
+			"default":   p.Default,
+		})
+		return
+	}
+	var in struct {
+		Model    string  `json:"model"`
+		PriceIn  float64 `json:"priceIn"`
+		PriceOut float64 `json:"priceOut"`
+	}
+	if err := decode(w, r, &in); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	in.Model = strings.TrimSpace(in.Model)
+	if in.Model == "" {
+		a.mu.Lock()
+		in.Model = a.settings.Model
+		a.mu.Unlock()
+	}
+	if in.Model == "" {
+		fail(w, 400, errors.New("请先配置当前模型，或显式指定 model"))
+		return
+	}
+	if in.PriceIn < 0 || in.PriceOut < 0 {
+		fail(w, 400, errors.New("费率必须 ≥ 0（0 为合法免费，不等于留空）"))
+		return
+	}
+	a.tokenStatsMu.Lock()
+	a.pricing.Rates[in.Model] = Pricing{PriceIn: in.PriceIn, PriceOut: in.PriceOut}
+	err := atomicJSON(filepath.Join(a.dataPath, "token-pricing.json"), a.pricing)
+	a.tokenStatsMu.Unlock()
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	jsonOut(w, 200, map[string]any{"model": in.Model, "priceIn": in.PriceIn, "priceOut": in.PriceOut})
+}
+
 func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
+	a.tokenStatsMu.Lock()
+	defer a.tokenStatsMu.Unlock()
 	totals := TokenDay{}
+	priced := TokenDay{}
+	unpriced := TokenDay{}
 	for _, d := range a.tokenStats {
 		totals.Prompt += d.Prompt
 		totals.Completion += d.Completion
@@ -577,10 +753,52 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		if d.Estimated {
 			totals.Estimated = true
 		}
+		tgt := &unpriced
+		if d.Priced {
+			tgt = &priced
+		}
+		tgt.Prompt += d.Prompt
+		tgt.Completion += d.Completion
+		tgt.Total += d.Total
+		tgt.Calls += d.Calls
+		if d.Estimated {
+			tgt.Estimated = true
+		}
+	}
+	totalCost := 0.0
+	estimatedCost := 0.0
+	modelCost := map[string]float64{}
+	for _, c := range a.tokenCalls {
+		if c.Defaulted {
+			estimatedCost += c.Cost // 未配置费率的模型：刊例默认价估算，不算精确费用
+			continue
+		}
+		totalCost += c.Cost
+		modelCost[c.Model] += c.Cost
+	}
+	active := a.settings.Model
+	entry, configured := a.pricing.Rates[active]
+	if !configured {
+		entry = a.pricing.Default
 	}
 	jsonOut(w, 200, map[string]any{
-		"days":   a.tokenStats,
-		"totals": totals,
-		"today":  a.tokenStats[time.Now().UTC().Format("2006-01-02")],
+		"days":          a.tokenStats,
+		"totals":        totals,
+		"today":         a.tokenStats[time.Now().UTC().Format("2006-01-02")],
+		"cost":          totalCost,
+		"estimatedCost": estimatedCost,
+		"modelCost":     modelCost,
+		"pricing": map[string]any{
+			"priceIn":   entry.PriceIn,
+			"priceOut":  entry.PriceOut,
+			"defaulted": !configured,
+			"rates":     a.pricing.Rates,
+			"default":   a.pricing.Default,
+		},
+		"calls": len(a.tokenCalls),
+		// R08：已计价/未计价拆分；旧版汇总没有逐调用与计价证据，费用必须显示为未知
+		"pricedTotals":   priced,
+		"unpricedTotals": unpriced,
+		"callRecords":    a.tokenCalls,
 	})
 }
