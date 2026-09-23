@@ -154,6 +154,9 @@ func (a *App) resolveHostPath(p string) (string, string, error) {
 	return filepath.Join("/local", rel), p, nil
 }
 
+// defaultWorkspaceID 是「从未定制工作区」时的身份（local、空路径、空主机）。
+const defaultWorkspaceID = "local||"
+
 // wsID 返回当前工作区身份（模式+宿主机路径/主机+远程路径），供提案绑定（R02）。
 func (a *App) wsID() string {
 	w := a.wsConfig.Workspace
@@ -179,16 +182,18 @@ func (a *App) applyWorkspaceConfig() error {
 		if disp != "" {
 			display = disp
 		}
-		if cp != "" {
-			w, err := os.OpenRoot(cp)
-			if err != nil {
-				return fmt.Errorf("工作空间路径不可用: %w", err)
-			}
-			old := a.workspace
-			a.workspace = w
-			if old != nil {
-				old.Close()
-			}
+		if cp == "" {
+			cp = a.workPath // 空路径恢复默认根（R02）
+		}
+		w, err := os.OpenRoot(cp)
+		if err != nil {
+			return fmt.Errorf("工作空间路径不可用: %w", err)
+		}
+		old := a.workspace
+		a.workspace = w
+		if old != nil {
+			// 运行中的任务可能仍持有旧句柄快照：延后到 Close 统一释放（R02 运行中切换）
+			a.retiredRoots = append(a.retiredRoots, old)
 		}
 	}
 	a.workspaceDisplay = display

@@ -87,7 +87,7 @@ func (a *App) compactForTest(s *Session) (int, error) {
 	if split == 0 {
 		return 0, nil
 	}
-	summary, err := a.buildCompactionSummary(snap.messages, cfg, snap.prevCompact)
+	summary, err := a.buildCompactionSummary(context.Background(), snap.messages, cfg, snap.prevCompact)
 	if err != nil {
 		return 0, err
 	}

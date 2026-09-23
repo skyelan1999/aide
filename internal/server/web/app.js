@@ -156,7 +156,7 @@ async function loadFiles() {
 }
 async function openFile(path) {
   const query = state.root === 'context' && state.source ? '/file?source=' + encodeURIComponent(state.source) + '&path=' : '/file?root=' + state.root + '&path=';
-  const data = await api(query + encodeURIComponent(path)); state.file = { ...data, path, root: state.root, source: state.root === 'context' ? state.source : '', fresh: false }; showEditor();
+  const data = await api(query + encodeURIComponent(path)); state.file = { ...data, path, root: state.root, source: state.root === 'context' ? state.source : '', wsId: data.wsId || '', fresh: false }; showEditor();
 }
 function sourceIsRW() {
   if (state.file.root !== 'context' || !state.file.source) return false;
@@ -216,7 +216,7 @@ $('cancel').onclick = action(async () => { const run = state.session?.runs.find(
 function openSettings() { $('base-url').value = state.config?.baseURL || 'https://api.deepseek.com'; $('api-key').value = ''; $('api-key').placeholder = state.config?.hasKey ? '已保存密钥；留空保留' : '云端 API 通常需要密钥；本地模型可不填'; $('clear-key').checked = false; state.modelDraft = { models: JSON.parse(JSON.stringify(state.config?.models || [])), activeModel: state.config?.activeModel || '' }; renderModelList(); $('settings-dialog').showModal(); }
 $('settings-button').onclick = openSettings;
 $('settings-form').onsubmit = action(async event => { event.preventDefault(); if (!state.modelDraft.models.length) { toast('请至少添加一个模型'); return; } await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked, models: state.modelDraft.models, activeModel: state.modelDraft.activeModel }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast('模型设置已保存，发送任务时会调用当前模型'); });
-$('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; $('editor-status').textContent = '✓ 已保存'; await loadFiles(); });
+$('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; if (state.file.wsId) body.wsId = state.file.wsId; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; $('editor-status').textContent = '✓ 已保存'; await loadFiles(); });
 $('attach-file').onclick = () => {
   if (state.file.content !== $('editor').value) { toast('请先保存修改，再附加到任务'); return; }
   const att = { root: state.file.root, path: state.file.path }; if (state.file.source) { att.root = 'source'; att.source = state.file.source; } if (!state.attachments.some(a => a.root === att.root && a.path === att.path && (a.source || '') === (att.source || ''))) { if (state.attachments.length >= 8) { toast('最多附加 8 个文件'); return; } state.attachments.push(att); }
@@ -569,9 +569,8 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && !$
 function fmtStatTokens(n) { return n < 1000 ? String(n) : (n / 1000).toFixed(1) + 'K'; }
 function renderTokenStats(control) {
   // 费用估算：计价可配置（默认刊例价 ¥2/¥8 每百万；缓存命中优惠与账户差异请自行调整）
-  const priceIn = () => Number(window.aideUI?.get('priceIn')) || 2;
-  const priceOut = () => Number(window.aideUI?.get('priceOut')) || 8;
-  const costOf = d => ((d.prompt || 0) * priceIn() + (d.completion || 0) * priceOut()) / 1e6;
+  let pricing = { priceIn: 2, priceOut: 8 };
+  const costOf = d => ((d.prompt || 0) * pricing.priceIn + (d.completion || 0) * pricing.priceOut) / 1e6;
   const wrap = el('div', 'settings-control token-stats');
   const head = el('div', 'token-head');
   head.append(el('span', 'token-title', 'Token 消耗'), el('span', 'control-value', ''));
@@ -590,7 +589,8 @@ function renderTokenStats(control) {
     const days = data.days || {};
     const totalsObj = data.totals || {};
     const todayStats = data.today || {};
-    const cost = costOf(totalsObj);
+    pricing = data.pricing || pricing;
+    const cost = data.cost ?? 0;
     head.querySelector('.control-value').textContent = '累计 ' + fmtStatTokens(totalsObj.total || 0) + ' tokens · ≈¥' + cost.toFixed(2);
     chips.replaceChildren();
     chips.append(
@@ -696,7 +696,7 @@ function renderTokenStats(control) {
     input.type = 'number';
     input.min = 0;
     input.step = 0.1;
-    input.value = key === 'priceIn' ? priceIn() : priceOut();
+    input.value = key === 'priceIn' ? pricing.priceIn : pricing.priceOut;
     input.setAttribute('aria-label', label);
     input.addEventListener('change', () => {
       const v = parseFloat(input.value);
@@ -704,7 +704,7 @@ function renderTokenStats(control) {
         if (window.aideUI) window.aideUI.set(key, v);
         action(loadStats).call(null);
       } else {
-        input.value = key === 'priceIn' ? priceIn() : priceOut();
+        input.value = key === 'priceIn' ? pricing.priceIn : pricing.priceOut;
       }
     });
     lab.append(input);
@@ -1148,13 +1148,13 @@ async function openFileViewMode() {
   if (!spec) return;
   document.body.classList.add('file-view-mode');
   $('file-view').classList.remove('hidden');
-  fileView.spec = spec;
+  fileView.spec = spec; fileView.wsId = '';
   $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;
   const query = spec.source
     ? '/file?source=' + encodeURIComponent(spec.source) + '&path=' + encodeURIComponent(spec.path)
     : '/file?root=' + encodeURIComponent(spec.root) + '&path=' + encodeURIComponent(spec.path);
   const data = await api(query);
-  fileView.hash = data.hash;
+  fileView.hash = data.hash; fileView.wsId = data.wsId || '';
   const md = isMarkdownPath(spec.path);
   $('file-view-mode-switch').classList.toggle('hidden', !md);
   const readOnly = spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true);
@@ -1170,7 +1170,7 @@ $('fv-edit').onclick = () => setFileViewMode('edit');
 $('fv-preview').onclick = () => setFileViewMode('preview');
 $('file-view-save').onclick = action(async () => {
   const body = { path: fileView.spec.path, content: $('file-view-editor').value, hash: fileView.hash };
-  if (fileView.spec.source) body.source = fileView.spec.source;
+  if (fileView.spec.source) body.source = fileView.spec.source; if (fileView.wsId) body.wsId = fileView.wsId;
   const res = await api('/file', { method: 'PUT', body: JSON.stringify(body) });
   fileView.hash = res.hash;
   $('file-view-status').textContent = '✓ 已保存';

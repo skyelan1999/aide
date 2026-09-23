@@ -219,6 +219,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		var tools []any
 		if withTools {
 			tools = append(tools, builtinTools...)
+			tools = append(tools, a.pluginToolSchemas()...)
 		}
 		stepParams := params
 		if name == "propose" {
@@ -282,7 +283,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 	}
 	a.mu.Unlock()
 	// R01：模型调用必须发生在全局锁之外；自动压缩改为释放锁后执行
-	a.maybeAutoCompact(s, cfg)
+	a.maybeAutoCompact(ctx, s, cfg)
 }
 // summarizeTopic 每次新任务先总结当前主题并更新会话标题（FR-88）。
 // 独立轻量调用（max_tokens ≤64），失败时保留原标题，不阻断任务。
@@ -403,9 +404,15 @@ func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("任务当前不可应用"))
 		return
 	}
-	// R02：提案只能写回生成时的工作区（以工作区身份判定；路径/主机变化即身份变化）
-	if task.WorkspaceID != "" && task.WorkspaceID != a.wsID() {
-		fail(w, 409, errors.New("工作区已切换：该提案属于其他项目，请切回原工作区后再应用"))
+	// R02：提案只能写回生成时的工作区（以工作区身份判定；路径/主机变化即身份变化）。
+	// 旧提案缺身份时仅允许在从未定制的默认工作区应用，定制后一律拒绝（不可静默改绑）。
+	if task.WorkspaceID != "" {
+		if task.WorkspaceID != a.wsID() {
+			fail(w, 409, errors.New("工作区已切换：该提案属于其他项目，请切回原工作区后再应用"))
+			return
+		}
+	} else if a.wsID() != defaultWorkspaceID {
+		fail(w, 409, errors.New("该提案缺少工作区身份且工作区已定制，无法安全应用"))
 		return
 	}
 	a.filesMu.Lock()
@@ -459,6 +466,41 @@ func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 }
 
 // toolListHint 生成系统提示里的工具清单行（协议 v1.1 / FR-33）。
+// pluginToolSchemas 把启用插件的可执行工具（含 parameters）纳入模型工具 schema（R05）。
+func (a *App) pluginToolSchemas() []any {
+	var surface struct {
+		Plugins []struct {
+			Error string `json:"error"`
+			Tools []struct {
+				Name        string         `json:"name"`
+				Executable  bool           `json:"executable"`
+				Description string         `json:"description"`
+				Parameters  map[string]any `json:"parameters"`
+			} `json:"tools"`
+		} `json:"plugins"`
+	}
+	if err := json.Unmarshal(a.pluginSurface, &surface); err != nil {
+		return nil
+	}
+	out := []any{}
+	for _, p := range surface.Plugins {
+		if p.Error != "" {
+			continue
+		}
+		for _, t := range p.Tools {
+			if !t.Executable {
+				continue
+			}
+			fnDef := map[string]any{"name": t.Name, "description": t.Description}
+			if t.Parameters != nil {
+				fnDef["parameters"] = t.Parameters
+			}
+			out = append(out, map[string]any{"type": "function", "function": fnDef})
+		}
+	}
+	return out
+}
+
 func (a *App) toolListHint() string {
 	hint := "list_files, read_file（直接执行）; write_file, run_shell（仅生成提案，等待用户批准/手动运行）"
 	for _, p := range a.executablePluginTools() {
@@ -665,6 +707,18 @@ func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[s
 		if len(content) > maxFile {
 			return "", errors.New("文件内容超过 256 KiB")
 		}
+		if len(task.Files) >= 10 {
+			return "", errors.New("文件提案超过 10 个上限")
+		}
+		totalBytes := len(content)
+		for _, f := range task.Files {
+			if f.Path != pathStr {
+				totalBytes += len(f.Content)
+			}
+		}
+		if totalBytes > 512<<10 {
+			return "", errors.New("提案内容总量超过 512 KiB")
+		}
 		change := Change{Path: pathStr, Content: content, Applied: false}
 		if v, ok := versions[pathStr]; ok {
 			change.BaseHash = v.BaseHash
@@ -701,6 +755,9 @@ func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[s
 			if existing == cmd {
 				return "命令已记录（建议，尚未运行）", nil
 			}
+		}
+		if len(task.Commands) >= 20 {
+			return "", errors.New("建议命令超过 20 条上限")
 		}
 		task.Commands = append(task.Commands, cmd)
 		return "命令已记录为建议，不会自动执行；用户检查后可手动运行。", nil
@@ -852,6 +909,7 @@ func (a *App) snapshotForCompact(sess *Session) (compactSnapshot, int) {
 }
 
 func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	sessionID := r.PathValue("id")
 	a.mu.Lock()
 	sess := a.sessions[sessionID]
@@ -884,7 +942,7 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"ok": true, "folded": 0, "compact": snap.prevCompact})
 		return
 	}
-	summary, err := a.buildCompactionSummary(snap.messages, cfg, snap.prevCompact)
+	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact)
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -914,7 +972,7 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 }
 
 // buildCompactionSummary 压缩为结构化摘要；输入包含上一版摘要（R04 连续链）。
-func (a *App) buildCompactionSummary(folded []Message, cfg Settings, prevCompact string) (string, error) {
+func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg Settings, prevCompact string) (string, error) {
 	var b strings.Builder
 	if prevCompact != "" {
 		b.WriteString("【上一版历史摘要（必须保留其中的约束与事实）】\n" + prevCompact + "\n\n")
@@ -927,7 +985,7 @@ func (a *App) buildCompactionSummary(folded []Message, cfg Settings, prevCompact
 {"goal":"整体目标","decisions":["关键决策"],"files":["涉及文件"],"facts":["重要事实"],"pending":["未完成事项"]}
 要求：上一版摘要中的约束、事实、未完成事项必须保留；中文、简洁、每条不超过 40 字。`
 	params := ProfileParams{MaxTokens: 1024}
-	out, _, _, err := complete(context.Background(), cfg, []Message{{Role: "system", Content: instruction}, {Role: "user", Content: b.String()}}, params, nil)
+	out, _, _, err := complete(ctx, cfg, []Message{{Role: "system", Content: instruction}, {Role: "user", Content: b.String()}}, params, nil)
 	if err != nil {
 		return "", fmt.Errorf("压缩失败: %w", err)
 	}
@@ -942,10 +1000,21 @@ func (a *App) buildCompactionSummary(folded []Message, cfg Settings, prevCompact
 	return clip(out, 6000), nil
 }
 
-func (a *App) maybeAutoCompact(s *Session, cfg Settings) {
+func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings) {
 	if cfg.Model == "" {
 		return
 	}
+	// R01：自动压缩必须超过 48,000 字节触发阈值
+	a.mu.Lock()
+	total := 0
+	for _, m := range s.Messages {
+		total += len(m.Content)
+	}
+	if total <= compactAutoBytes {
+		a.mu.Unlock()
+		return
+	}
+	a.mu.Unlock()
 	a.mu.Lock()
 	if a.compactingSessions[s.ID] {
 		a.mu.Unlock()
@@ -963,7 +1032,7 @@ func (a *App) maybeAutoCompact(s *Session, cfg Settings) {
 	if split == 0 {
 		return
 	}
-	summary, err := a.buildCompactionSummary(snap.messages, cfg, snap.prevCompact)
+	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact)
 	if err != nil {
 		return
 	}

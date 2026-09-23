@@ -64,6 +64,40 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	if in.Cwd == "" {
 		in.Cwd = "."
 	}
+	if a.workspaceMode() == "ssh" {
+		// R02/R03：远程模式不做本地 cwd 校验；命令进入绑定的远程目录
+		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+		defer cancel()
+		if err := a.ensureSSHSession(ctx); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		remote := in.Command
+		if rp := strings.TrimSpace(a.wsConfig.Workspace.Path); rp != "" {
+			remote = "cd " + shellQuote(rp) + " && " + remote
+		}
+		select {
+		case a.commands <- struct{}{}:
+			defer func() { <-a.commands }()
+		default:
+			fail(w, 429, errors.New("同时最多运行 4 个命令"))
+			return
+		}
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		w.Header().Set("X-Accel-Buffering", "no")
+		stream := &streamWriter{w: w}
+		start := time.Now()
+		code, runErr := a.execRemote(ctx, remote, stream, stream)
+		message := ""
+		if runErr != nil {
+			message = runErr.Error()
+		}
+		if ctx.Err() != nil {
+			message = "命令已取消或超过 60 秒"
+		}
+		stream.event(map[string]any{"type": "exit", "code": code, "error": message, "elapsedMS": time.Since(start).Milliseconds()})
+		return
+	}
 	if err := safePath(in.Cwd); err != nil {
 		fail(w, 400, err)
 		return
@@ -96,28 +130,6 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
 	defer cancel()
-	if a.workspaceMode() == "ssh" {
-		if err := a.ensureSSHSession(ctx); err != nil {
-			fail(w, 400, err)
-			return
-		}
-		remote := in.Command
-		if rp := strings.TrimSpace(a.wsConfig.Workspace.Path); rp != "" {
-			remote = "cd " + shellQuote(rp) + " && " + remote // R02：远程命令进入绑定目录
-		}
-		stream := &streamWriter{w: w}
-		start := time.Now()
-		code, runErr := a.execRemote(ctx, remote, stream, stream)
-		message := ""
-		if runErr != nil {
-			message = runErr.Error()
-		}
-		if ctx.Err() != nil {
-			message = "命令已取消或超过 60 秒"
-		}
-		stream.event(map[string]any{"type": "exit", "code": code, "error": message, "elapsedMS": time.Since(start).Milliseconds()})
-		return
-	}
 	cmd := exec.CommandContext(ctx, "bash", "--noprofile", "--norc", "-c", in.Command)
 	cmd.Dir = dir
 	cacheEnv := "/home/aide/.cache/go-build"

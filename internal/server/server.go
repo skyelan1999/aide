@@ -134,6 +134,29 @@ type App struct {
 	tokenStatsMu              sync.Mutex
 	wsRevision                uint64
 	compactingSessions        map[string]bool
+	retiredRoots              []*os.Root
+	pricing                   Pricing
+	tokenCalls                []TokenCallRec
+	buildVersion, buildCommit string
+}
+
+// Pricing 服务端计价（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
+type Pricing struct {
+	PriceIn  float64 `json:"priceIn"`
+	PriceOut float64 `json:"priceOut"`
+}
+
+// TokenCallRec 逐调用记录（R08）：来源、模型、计价快照、费用。
+type TokenCallRec struct {
+	Time       string  `json:"time"`
+	Model      string  `json:"model"`
+	Prompt     int     `json:"prompt"`
+	Completion int     `json:"completion"`
+	Total      int     `json:"total"`
+	Estimated  bool    `json:"estimated,omitempty"`
+	PriceIn    float64 `json:"priceIn"`
+	PriceOut   float64 `json:"priceOut"`
+	Cost       float64 `json:"cost"`
 }
 
 // TokenDay 单日 Token 消耗（FR-90）。
@@ -316,6 +339,23 @@ func New(work, reference, data string) (*App, error) {
 			a.tokenStats = saved.Days
 		}
 	}
+	a.pricing = Pricing{PriceIn: 2, PriceOut: 8}
+	if b, err := os.ReadFile(filepath.Join(data, "token-pricing.json")); err == nil {
+		var pr Pricing
+		if json.Unmarshal(b, &pr) == nil && pr.PriceIn >= 0 && pr.PriceOut >= 0 {
+			a.pricing = pr
+		}
+	}
+	if b, err := os.ReadFile(filepath.Join(data, "token-stats.json")); err == nil {
+		var saved struct {
+			Days  map[string]TokenDay `json:"days"`
+			Calls []TokenCallRec     `json:"calls,omitempty"`
+		}
+		if json.Unmarshal(b, &saved) == nil && saved.Days != nil {
+			a.tokenStats = saved.Days
+			a.tokenCalls = saved.Calls
+		}
+	}
 	tokenUsageRecorder.Store(func(u TokenUsage) { a.recordTokenUsage(u) })
 	entries, err := filepath.Glob(filepath.Join(data, "session-*.json"))
 	if err != nil {
@@ -330,8 +370,8 @@ func New(work, reference, data string) (*App, error) {
 		}
 		var s Session
 		if err := json.Unmarshal(b, &s); err != nil {
-			a.Close()
-			return nil, fmt.Errorf("读取会话 %s: %w", filepath.Base(path), err)
+			log.Printf("跳过损坏会话文件 %s: %v", filepath.Base(path), err) // R09：坏文件不阻断启动
+			continue
 		}
 		a.sessions[s.ID] = &s
 		for _, task := range s.Runs {
@@ -347,7 +387,16 @@ func New(work, reference, data string) (*App, error) {
 	}
 	return a, nil
 }
-func (a *App) Close() { a.workspace.Close(); a.reference.Close() }
+func (a *App) Close() {
+	a.workspace.Close()
+	a.reference.Close()
+	if a.localRoot != nil {
+		a.localRoot.Close()
+	}
+	for _, r := range a.retiredRoots {
+		r.Close()
+	}
+}
 func (a *App) save(s *Session) error {
 	return atomicJSON(filepath.Join(a.dataPath, "session-"+s.ID+".json"), s)
 }
@@ -370,6 +419,8 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/workspace-config", a.getWorkspaceConfig)
 	mux.HandleFunc("GET /api/sources", a.listSources)
 	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)
+	mux.HandleFunc("GET /api/token-pricing", a.tokenPricingHandler)
+	mux.HandleFunc("PUT /api/token-pricing", a.tokenPricingHandler)
 	mux.HandleFunc("GET /api/search", a.searchSessions)
 	mux.HandleFunc("POST /api/sessions/{id}/compact", a.compactSession)
 	mux.HandleFunc("PUT /api/sources", a.updateSources)
@@ -412,7 +463,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -563,9 +614,43 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 		d.Estimated = true
 	}
 	a.tokenStats[day] = d
-	saveErr := atomicJSON(filepath.Join(a.dataPath, "token-stats.json"), map[string]any{"version": 1, "days": a.tokenStats})
+	rec := TokenCallRec{Time: time.Now().UTC().Format(time.RFC3339Nano), Model: u.Model, Prompt: u.Prompt, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, PriceIn: a.pricing.PriceIn, PriceOut: a.pricing.PriceOut}
+	rec.Cost = float64(rec.Prompt)*rec.PriceIn/1e6 + float64(rec.Completion)*rec.PriceOut/1e6
+	a.tokenCalls = append(a.tokenCalls, rec)
+	if len(a.tokenCalls) > 5000 {
+		a.tokenCalls = a.tokenCalls[len(a.tokenCalls)-5000:]
+	}
+	saveErr := atomicJSON(filepath.Join(a.dataPath, "token-stats.json"), map[string]any{"version": 2, "days": a.tokenStats, "calls": a.tokenCalls})
 	a.tokenStatsMu.Unlock()
 	_ = saveErr
+}
+
+func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		a.tokenStatsMu.Lock()
+		p := a.pricing
+		a.tokenStatsMu.Unlock()
+		jsonOut(w, 200, p)
+		return
+	}
+	var in Pricing
+	if err := decode(w, r, &in); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if in.PriceIn < 0 || in.PriceOut < 0 {
+		fail(w, 400, errors.New("费率必须 ≥ 0（0 为合法免费）"))
+		return
+	}
+	a.tokenStatsMu.Lock()
+	a.pricing = in
+	err := atomicJSON(filepath.Join(a.dataPath, "token-pricing.json"), a.pricing)
+	a.tokenStatsMu.Unlock()
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	jsonOut(w, 200, in)
 }
 
 func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
@@ -581,9 +666,19 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 			totals.Estimated = true
 		}
 	}
+	totalCost := 0.0
+	modelCost := map[string]float64{}
+	for _, c := range a.tokenCalls {
+		totalCost += c.Cost
+		modelCost[c.Model] += c.Cost
+	}
 	jsonOut(w, 200, map[string]any{
-		"days":   a.tokenStats,
-		"totals": totals,
-		"today":  a.tokenStats[time.Now().UTC().Format("2006-01-02")],
+		"days":      a.tokenStats,
+		"totals":    totals,
+		"today":     a.tokenStats[time.Now().UTC().Format("2006-01-02")],
+		"cost":      totalCost,
+		"modelCost": modelCost,
+		"pricing":   a.pricing,
+		"calls":     len(a.tokenCalls),
 	})
 }
