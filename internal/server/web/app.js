@@ -634,9 +634,16 @@ function renderTokenStats(control) {
       );
       tip.classList.add('show');
       const rect = cell.getBoundingClientRect();
-      const sheetRect = $('settings-sheet').getBoundingClientRect();
-      tip.style.left = Math.min(Math.max(rect.left - sheetRect.left, 0), sheetRect.width - 180) + 'px';
-      tip.style.top = (rect.top - sheetRect.top - tip.offsetHeight - 8) + 'px';
+      // 浮窗的定位上下文是 .token-stats（position:relative），坐标必须相对它而非 settings-sheet
+      const parentRect = tip.offsetParent.getBoundingClientRect();
+      const tipW = tip.offsetWidth;
+      const tipH = tip.offsetHeight;
+      const centerX = rect.left - parentRect.left + rect.width / 2;
+      const left = Math.min(Math.max(centerX - tipW / 2, 0), Math.max(parentRect.width - tipW, 0));
+      let top = rect.top - parentRect.top - tipH - 8;
+      if (top < 0) top = rect.bottom - parentRect.top + 8; // 上方放不下时翻到格子下方
+      tip.style.left = left + 'px';
+      tip.style.top = top + 'px';
     };
     for (const col of cols) {
       const colEl = el('div', 'token-week');
