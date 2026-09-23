@@ -1,0 +1,44 @@
+{
+  "commit": "adf0fa0768bbf406e3adcb2b9497ca93a84ac526",
+  "results": [
+    {
+      "check": "R08-04-first-call-preview-equals-actual",
+      "status": "PASS",
+      "detail": {
+        "previewMatchesActual": true,
+        "allMarkers": true,
+        "reserve4096": true,
+        "snapshots": 1
+      }
+    },
+    {
+      "check": "R08-04-unicode-history-same-selection",
+      "status": "PASS",
+      "detail": {
+        "utf16": 25000,
+        "utf8": 75000,
+        "sameSelection": true,
+        "historyIncludedUnderBudget": false
+      }
+    },
+    {
+      "check": "R08-04-tool-second-round-matches",
+      "status": "PASS",
+      "detail": {
+        "secondRoundMatches": true,
+        "toolCallIdPreserved": true,
+        "toolResultFull": 2540
+      }
+    },
+    {
+      "check": "R08-04-draft-refresh-and-overflow-blocked",
+      "status": "PASS",
+      "detail": {
+        "fingerprintInvalidation": true,
+        "overLimitDetected": true,
+        "sendBlockedExplainably": true,
+        "providerMainCalls": 0
+      }
+    }
+  ]
+}

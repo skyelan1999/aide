@@ -1,0 +1,49 @@
+{
+  "commit": "adf0fa0768bbf406e3adcb2b9497ca93a84ac526",
+  "results": [
+    {
+      "check": "r09-01-produce-state",
+      "status": "PASS",
+      "detail": {
+        "session": "5722ec6b2389ccf345766d3d046db64f",
+        "run": "ceb166536cf78a5910e7a536c46d484d",
+        "tokens": 100,
+        "token": "0d498b83…"
+      }
+    },
+    {
+      "check": "r09-02-backup-created",
+      "status": "PASS",
+      "detail": {
+        "backup": "/private/tmp/aide-independent-acceptance/frontend/r09-drill-run-adf0fa0768bb/data-backup.tar.gz",
+        "bytes": 2404
+      }
+    },
+    {
+      "check": "r09-03-destroyed",
+      "status": "PASS",
+      "detail": {}
+    },
+    {
+      "check": "r09-04-restored",
+      "status": "PASS",
+      "detail": {
+        "tokenMatch": true
+      }
+    },
+    {
+      "check": "r09-05-recovered-service",
+      "status": "PASS",
+      "detail": {
+        "sessionIntact": true,
+        "runCompleted": true,
+        "pricingIntact": true,
+        "statsIdentical": 100,
+        "health": {
+          "service": "aide",
+          "status": "ok"
+        }
+      }
+    }
+  ]
+}

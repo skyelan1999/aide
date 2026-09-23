@@ -1,0 +1,30 @@
+[
+  {
+    "case": "positive_editor_proposal_and_pwd",
+    "status": "PASS"
+  },
+  {
+    "case": "stale_proposal_identical_A_B",
+    "status": "PASS"
+  },
+  {
+    "case": "stale_editor_identical_A_B",
+    "status": "PASS"
+  },
+  {
+    "case": "running_task_switch_and_tool_binding",
+    "status": "PASS"
+  },
+  {
+    "case": "restore_default_workspace",
+    "status": "PASS"
+  },
+  {
+    "case": "bound_proposal_restart",
+    "status": "PASS"
+  },
+  {
+    "case": "legacy_proposal_restart",
+    "status": "PASS"
+  }
+]

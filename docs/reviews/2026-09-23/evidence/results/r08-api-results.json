@@ -1,0 +1,52 @@
+{
+  "commit": "adf0fa0768bbf406e3adcb2b9497ca93a84ac526",
+  "results": [
+    {
+      "check": "R08-01-zero-price",
+      "status": "PASS",
+      "detail": {
+        "zeroAccepted": true,
+        "negativeRejected": true,
+        "restartStable": true
+      }
+    },
+    {
+      "check": "R08-02-per-model-rates",
+      "status": "PASS",
+      "detail": {
+        "perModelRates": true,
+        "changePersisted": true,
+        "statsContract": true
+      }
+    },
+    {
+      "check": "R08-03-legacy-migration",
+      "status": "PASS",
+      "detail": {
+        "usagePreserved": true,
+        "estimatedFlags": true,
+        "unpricedMarked": true,
+        "restartIdempotent": true
+      }
+    },
+    {
+      "check": "R08-03b-corrupt-preserved",
+      "status": "PASS",
+      "detail": {
+        "serviceAvailable": true,
+        "evidencePreserved": true,
+        "diagnosable": true
+      }
+    },
+    {
+      "check": "R08-04-context-preview",
+      "status": "BLOCKED",
+      "detail": "candidate has no context-preview API/feature; not in remediation scope"
+    },
+    {
+      "check": "R08-browser-recheck",
+      "status": "NOT_RUN",
+      "detail": "requires real browser; API/unit/VM-level evidence only"
+    }
+  ]
+}

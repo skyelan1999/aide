@@ -1,105 +1,63 @@
 {
-  "commit": "ee763764d0fc260367a2ae4e7a630c4a959855f5",
+  "commit": "adf0fa0768bbf406e3adcb2b9497ca93a84ac526",
   "branch": "remediate/r01-r07",
-  "candidateBinary": "/private/tmp/aide-independent-acceptance/candidates/ee763764d0fc/out/aide",
+  "candidateBinary": "/private/tmp/aide-independent-acceptance/candidates/adf0fa0768bb/out/aide",
   "buildIdentity": {
     "buildVersion": "0.1.5.0-RC4",
-    "buildCommit": "ee763764d0fc260367a2ae4e7a630c4a959855f5",
+    "buildCommit": "adf0fa0768bbf406e3adcb2b9497ca93a84ac526",
     "revisionField": "/api/config.revision"
   },
+  "freezeChecks": {
+    "gofmt": "clean (no files listed)",
+    "goVet": "clean",
+    "goTestRace": "ok aide/internal/server (race -count=1 ./...)",
+    "exitCodes": 0
+  },
   "perSuite": [
-    {
-      "suite": "workflow R01/R04/R06",
-      "file": "results-ee763764d0fc-20260923-075943.json",
-      "statuses": {
-        "PASS": 6
-      },
-      "total": 6
-    },
-    {
-      "suite": "R01 lifecycle",
-      "file": "results-r01-lifecycle-ee763764d0fc-20260923-075943.json",
-      "statuses": {
-        "PASS": 3
-      },
-      "total": 3
-    },
-    {
-      "suite": "R05 tool schemas/budgets",
-      "file": "results-r05-ee763764d0fc-20260923-080018.json",
-      "statuses": {
-        "PASS": 26
-      },
-      "total": 26
-    },
-    {
-      "suite": "R02 workspace identity",
-      "file": "results.json",
-      "statuses": {
-        "PASS": 7
-      },
-      "total": 7
-    },
-    {
-      "suite": "R03/R09 path perms & build identity",
-      "file": "results.json",
-      "statuses": {
-        "PASS": 4
-      },
-      "total": 4
-    },
-    {
-      "suite": "R08 stats truthfulness (API)",
-      "file": "r08-results.json",
-      "statuses": {
-        "PASS": 4,
-        "BLOCKED": 1,
-        "NOT_RUN": 1
-      },
-      "total": 6
-    },
-    {
-      "suite": "frontend VM (R02/R07)",
-      "file": "frontend stdout",
-      "statuses": {
-        "PASS": 3
-      },
-      "total": 3,
-      "command": "node /private/tmp/aide-independent-acceptance/frontend/acceptance.cjs <repo>",
-      "note": "FRONT-001/002/003 PASS; head ee76376"
-    },
-    {
-      "suite": "Go unit/regression tests",
-      "file": "container go test",
-      "statuses": {
-        "PASS": 1
-      },
-      "total": 1,
-      "command": "docker run --rm --network none --entrypoint sh aide:local -c 'cd /src && go test ./internal/server/'"
-    }
+    {"suite": "workflow R01/R04/R06", "statuses": {"PASS": 6}, "total": 6, "exit": 0,
+     "evidence": "docs/reviews/2026-09-23/evidence/results/results-adf0fa0768bb-20260923-110852.json"},
+    {"suite": "R01 lifecycle", "statuses": {"PASS": 3}, "total": 3, "exit": 0,
+     "evidence": "docs/reviews/2026-09-23/evidence/results/results-r01-lifecycle-adf0fa0768bb-20260923-110856.json"},
+    {"suite": "R05 tool schemas/budgets", "statuses": {"PASS": 26}, "total": 26, "exit": 0,
+     "evidence": "docs/reviews/2026-09-23/evidence/results/results-r05-adf0fa0768bb-20260923-110925.json"},
+    {"suite": "R02 workspace identity", "statuses": {"PASS": 7}, "total": 7, "exit": 0,
+     "evidence": "docs/reviews/2026-09-23/evidence/results/r02-results.json"},
+    {"suite": "R03/R09 path perms & build identity", "statuses": {"PASS": 4}, "total": 4, "exit": 0,
+     "evidence": "docs/reviews/2026-09-23/evidence/results/r03-r09-results.json"},
+    {"suite": "R08 stats truthfulness (API)", "statuses": {"PASS": 4}, "total": 4, "exit": 0,
+     "evidence": "docs/reviews/2026-09-23/evidence/results/r08-api-results.json"},
+    {"suite": "R08-04 context preview (API, r08-acceptance.md)", "statuses": {"PASS": 4}, "total": 4, "exit": 0,
+     "evidence": "docs/reviews/2026-09-23/evidence/results/r08-04-results.json"},
+    {"suite": "R03 remote SFTP independent seed", "statuses": {"PASS": 2}, "total": 2, "exit": 0,
+     "evidence": "docs/reviews/2026-09-23/evidence/seed/seed-run.log",
+     "note": "disposable candidate copy + seed; --network none; no real SSH"},
+    {"suite": "R09 backup-restore drill", "statuses": {"PASS": 5}, "total": 5, "exit": 0,
+     "evidence": "docs/reviews/2026-09-23/evidence/drill/r09-results.json",
+     "note": "produce state -> tar backup -> destroy -> restore -> restart verify"},
+    {"suite": "frontend VM (R02/R07)", "statuses": {"PASS": 3}, "total": 3, "exit": 0,
+     "evidence": "docs/reviews/2026-09-23/evidence/results/frontend-vm.log",
+     "note": "FRONT-001/002/003 PASS; head adf0fa0"},
+    {"suite": "real Chromium browser recheck", "statuses": {"PASS": 12}, "total": 12, "exit": 0,
+     "evidence": "docs/reviews/2026-09-23/evidence/browser/results.json + 10 screenshots + console.json",
+     "note": "chromium-headless-shell 153.0.8010.12; isolated candidate + loopback mock; web assets byte-identical between run candidate f508bd52 and final adf0fa0; AIDE served on 127.0.0.1:18097"}
   ],
   "commands": [
-    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/workflow/accept_workflow.py --binary <candidate>/out/aide --commit ee763764d0fc260367a2ae4e7a630c4a959855f5",
-    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/workflow/accept_r01_lifecycle.py --binary <candidate>/out/aide --commit ee763764d0fc260367a2ae4e7a630c4a959855f5",
-    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/workflow/accept_r05.py --binary <candidate>/out/aide --commit ee763764d0fc260367a2ae4e7a630c4a959855f5",
-    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/workspace/r02_api_acceptance.py --binary <candidate>/out/aide --root /private/tmp/aide-independent-acceptance/workspace/r02-run-ee763764",
-    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/workspace/r03_r09_api_acceptance.py --binary <candidate>/out/aide --root /private/tmp/aide-independent-acceptance/workspace/batch2-run-ee763764 --expected-revision ee763764d0fc260367a2ae4e7a630c4a959855f5 --revision-field revision --expected-version 0.1.5.0-RC4",
-    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/frontend/r08_api_checks.py --binary <candidate>/out/aide --root /private/tmp/aide-independent-acceptance/frontend/r08-run-ee763764 --expected-revision ee763764d0fc260367a2ae4e7a630c4a959855f5",
+    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/workflow/accept_workflow.py --binary <candidate>/out/aide --commit adf0fa0768bbf406e3adcb2b9497ca93a84ac526",
+    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/workflow/accept_r01_lifecycle.py --binary <candidate>/out/aide --commit adf0fa0768bbf406e3adcb2b9497ca93a84ac526",
+    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/workflow/accept_r05.py --binary <candidate>/out/aide --commit adf0fa0768bbf406e3adcb2b9497ca93a84ac526",
+    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/workspace/r02_api_acceptance.py --binary <candidate>/out/aide --root /private/tmp/aide-independent-acceptance/workspace/r02-run-adf0fa0768bb",
+    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/workspace/r03_r09_api_acceptance.py --binary <candidate>/out/aide --root /private/tmp/aide-independent-acceptance/workspace/batch2-run-adf0fa0768bb --expected-revision adf0fa0768bbf406e3adcb2b9497ca93a84ac526 --revision-field revision --expected-version 0.1.5.0-RC4",
+    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/frontend/r08_api_checks.py --binary <candidate>/out/aide --root /private/tmp/aide-independent-acceptance/frontend/r08-run-adf0fa0768bb --expected-revision adf0fa0768bbf406e3adcb2b9497ca93a84ac526",
+    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/frontend/r08_04_api_checks.py --binary <candidate>/out/aide --root /private/tmp/aide-independent-acceptance/frontend/r08-04-run-adf0fa0768bb --expected-revision adf0fa0768bbf406e3adcb2b9497ca93a84ac526",
+    "docker run --rm --network none --entrypoint python3 -v /private/tmp/aide-independent-acceptance:/private/tmp/aide-independent-acceptance aide:local -u /private/tmp/aide-independent-acceptance/frontend/r09_drill.py --binary <candidate>/out/aide --root /private/tmp/aide-independent-acceptance/frontend/r09-drill-run-adf0fa0768bb --expected-revision adf0fa0768bbf406e3adcb2b9497ca93a84ac526",
+    "docker run --rm --network none --entrypoint sh -v <seed-copy>:/src aide:local -c 'cd /src && go test -run TestIndependent -v ./internal/server/'",
     "node /private/tmp/aide-independent-acceptance/frontend/acceptance.cjs <repo>",
-    "docker run --rm --network none --entrypoint sh aide:local -c 'cd /src && go test ./internal/server/'  (candidate src mounted at /src)"
+    "docker run --rm --network none --entrypoint sh aide:local -c 'cd /src && gofmt -l internal/ cmd/; go vet ./...; go test -race -count=1 ./...'"
   ],
-  "logs": {
-    "workflowResults": "/private/tmp/aide-independent-acceptance/workflow/results-ee763764d0fc-*.json",
-    "r02Results": "/private/tmp/aide-independent-acceptance/workspace/r02-run-ee763764/results.json",
-    "r03r09Results": "/private/tmp/aide-independent-acceptance/workspace/batch2-run-ee763764/results.json",
-    "r08Results": "/private/tmp/aide-independent-acceptance/frontend/r08-run-ee763764/r08-results.json",
-    "frontendLog": "/private/tmp/aide-independent-acceptance/frontend/acceptance.cjs stdout"
-  },
   "unverifiedScope": [
-    "R08-04 上下文预览：候选无该 API/功能，BLOCKED（未实施）",
-    "R08 浏览器最短补验（真实浏览器打开统计设置/发消息/抓主请求）：NOT_RUN，仅 API/单测/VM 级证据",
     "真实付费模型调用：未发生（全部为隔离 Mock，符合约束）",
     "生产容器/真实数据：未触碰（aide-aide-1 健康，未重启/未改卷）",
-    "R10 正式文档 PR 与发布流程：留待用户审阅后执行（未合并 main、未升版、未重建生产容器）"
+    "发布流程：未合并 main、未升版、未重建生产容器（待用户审阅后按 HANDOVER §9 发布与回滚步骤执行）",
+    "浏览器补验的运行候选为 f508bd52（web 资产与最终提交 adf0fa0 逐字节一致；后端差异仅为 R03 远程策略与文档，不影响浏览器断言面）"
   ]
 }

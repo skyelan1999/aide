@@ -1,39 +1,33 @@
 # 整改状态（Remediation Status）
 
-审查基线：`6a4e441`（0.1.5.0 RC4）。整改分支：`remediate/r01-r07`。最终候选提交：`ee763764`（git 树 gofmt 干净、`go test ./internal/server` 通过）。本文档由实施方（aide 编码助手）维护，Codex 独立验收。
+审查基线：`6a4e441`（0.1.5.0 RC4）。整改分支：`remediate/r01-r07`。**最终候选提交：`adf0fa0`**（race/vet/gofmt 干净）。本文档由实施方（aide 编码助手）维护，Codex 独立验收。
 
-## 完成情况：R01–R09 已实施并通过验收，R10 文档对齐，R08-04/R10 部分为 BLOCKED/NOT_RUN（见下）
+## 状态：R01–R10 全部闭环，无 BLOCKED/NOT_RUN 残留
 
-| 编号 | 修复 | 关键实现 | 验收 |
+| 编号 | 修复 | 关键实现 | 验收（最终候选 `adf0fa0`） |
 | --- | --- | --- | --- |
-| R01 | 压缩死锁/并发/阈值/持久化 | 模型调用全部在 `a.mu` 外；每会话 `compactingSessions` 互斥（并发第二个 409）；提交校验消息快照；>48,000 字节才自动压缩；压缩结果 `a.save` 持久化（立即重启不丢）；取消任务后压缩请求对端关闭 | 6/6 workflow + 3/3 lifecycle PASS |
-| R02 | 工作区身份/运行中切换 | `Task` 携带 `WorkspaceID/WorkspaceMode/WorkspaceRemotePath`；`wsRoots` 身份→根注册表，运行中任务工具调用仍读原工作区；旧提案/旧编辑器 409；空路径恢复默认根；`/file` 契约字段统一为 `workspaceId`（前端携带打开时身份） | 7/7 PASS + FRONT-003 PASS |
-| R03 | 统一路径权限/原子配置 | 边界前缀匹配 + `filepath.Rel` 包含性；工作区/docs/cache 预检（路径必须可打开且为目录），失败时配置/根/recent 全不变，重启安全 | 4/4 PASS（含原子性与重启安全） |
-| R04 | 摘要连续性/失败不变性 | 压缩指令含「上一版历史摘要」连续链；压缩失败 400 且 messages/compact/compactedMessages/compactedAt 全不变 | 2/2 PASS（三轮链 + 失败） |
-| R05 | 工具 schema/预算 | 插件工具 `parameters` 进入模型请求；三条入口统一预算（≤10 文件、≤512KiB、≤20 命令）；超限必须显式拒绝（run_shell 不再吞错）；工具原始结果跨步骤保留（plan→propose→review 证据链），`ToolUse.Result` 存全文、`Preview` 供界面 | 26/26 PASS |
-| R06 | 正文空白字节保留 | `write_file` content 原字节；7 类空白/换行/CRLF/Unicode 逐字节断言 | PASS |
-| R07 | 前端竞态/草稿隔离 | `selectSession` 序号守卫；提交完成不再抢走用户已切换的会话，B 草稿与附件不被覆盖 | FRONT-001/002 PASS |
-| R08 | 统计真实性 | 按模型费率（`rates`+显式默认），0 是真实 0 且 ≠ 留空；逐调用快照（model/provider/时间/费率/费用），改价不动历史；旧版汇总迁移保留用量与 estimated、标记未计价，不虚构费用；损坏文件保留 + 可诊断日志；前端从服务端取费率（PUT `/api/token-pricing`），未计价历史单独显示 | R08 API 4/4 PASS + Go 测试 3 项 PASS；R08-04 上下文预览 BLOCKED（候选无此功能） |
-| R09 | 恢复/构建身份 | 损坏会话文件跳过启动并保留证据；版本为构建期身份（ldflags 优先，工作区 version.md 无法覆盖）；`/api/config` 暴露 `revision`/`buildCommit`/`buildVersion` | 4/4 PASS |
-| R10 | 文档/职责 | README/HANDOVER/PRD 与实现对齐、模块职责说明 | 本轮以代码注释与本文档完成一致性核对，正式文档 PR 留待用户审阅后随发布进行（NOT_RUN） |
+| R01 | 压缩死锁/并发/阈值/持久化 | 模型调用在 `a.mu` 外；每会话互斥（并发 409）；快照提交校验；>48,000 字节才自动压缩；压缩落盘（重启不丢）；取消关断 | workflow 6/6 + lifecycle 3/3 PASS |
+| R02 | 工作区身份/运行中切换 | `Task` 携带工作区身份与模式；`wsRoots` 注册表；旧提案/旧编辑器 409；空路径恢复默认根；`/file` 契约 `workspaceId`（前端携带打开时身份） | 7/7 + FRONT-003 + 浏览器文件标签拒绝误写 PASS |
+| R03 | 统一路径权限/原子配置/远程策略 | 虚拟根边界匹配；workspace/docs/cache 原子预检；**远程（SSH/SFTP）读取 safePath 先于传输 + 256KiB/UTF-8/无 NUL 统一内容策略** | r03/r09 4/4 + SFTP 独立种子 2/2 PASS |
+| R04 | 摘要连续性/失败不变性 | 连续摘要链；失败 400 且消息/摘要/计数/时间全不变 | workflow 2/2 PASS |
+| R05 | 工具 schema/预算/证据链 | 插件 parameters 入请求；三入口统一预算；超限显式拒绝；工具原始结果跨步骤保留（`ToolUse.Result` 全文） | 26/26 PASS |
+| R06 | 正文空白字节保留 | content 原字节；7 类空白/CRLF/Unicode 逐字节断言 | PASS |
+| R07 | 前端竞态/草稿隔离 | 序号守卫；提交完成不抢走用户已切换会话 | FRONT-001/002 + 真实浏览器 12/12 PASS |
+| R08 | 统计真实性 | 按模型费率（0=真实 0≠留空）；逐调用快照（model/provider/时间/费率/费用），改价不动历史；旧版迁移保留用量与 estimated、标记未计价；损坏文件保留可诊断；前端费率以服务端为事实源 | R08 API 4/4 + Go 测试 3 项 + 浏览器费用/0价/按模型持久化 PASS |
+| R08-04 | 上下文预览（原 BLOCKED，已闭环） | 与真实请求共用构建器：系统指令/历史/摘要/附件/工具定义/阶段指令 + 输出预留；组成与估算口径（4字符≈1token，非精确 tokenizer 如实标注）；草稿/附件/模型/摘要变更指纹失效 + 序号防旧响应覆盖；输入+预留超窗口时前后端双重拦截（Provider 不收调用）；逐轮请求快照（SHA-256+完整 body）供对照 | R08-04 验收 4/4 + 浏览器预览/估算一致 12/12 PASS |
+| R09 | 恢复/构建身份 | 坏文件隔离启动；ldflags 版本/commit（version.md 无法覆盖）；`/api/config.revision`；**隔离备份恢复演练**（产生状态→tar 备份→销毁→恢复→重启校验） | r03/r09 4/4 + 演练 5/5 PASS |
+| R10 | 文档/职责/发布回滚 | README 边界、HANDOVER 状态/限制/模块职责/发布与回滚步骤、PRD v1.18 变更记录 | 已更新（本分支） |
 
-## 回归测试
+## 验收汇总（最终候选 `adf0fa0`，全部在隔离容器/临时目录，无真实模型调用）
 
-`internal/server/remediation_test.go` 共 11 项（R01×2、R02 提案/命令、R03 穿越、R04 链、R06 空白、R07 会话稳定、R08×3：0 价、快照、旧版迁移），全部通过；容器内 `gofmt -l internal/ cmd/` 为空。
+- workflow 6/6、R01 lifecycle 3/3、R05 26/26、R02 7/7、R03/R09 4/4、R08 API 4/4、R08-04 4/4、SFTP 独立种子 2/2、R09 演练 5/5、前端 VM 3/3、**真实 Chromium 浏览器 12/12**（chromium-headless-shell 153.0.8010.12，隔离候选 + 循环 Mock，10 张截图 + 断言 + 控制台证据）。
+- 冻结检查：`gofmt -l` 空、`go vet ./...` 干净、`go test -race -count=1 ./...` 通过；所有退出码 0。
+- 证据与命令见 `acceptance-summary.json`；脚本/结果/截图持久保存于 `evidence/`（本目录，已提交入库，不再依赖 /tmp）。
 
-## 验收汇总
+## 兼容迁移与权限范围（HOME 挂载，本轮未改动）
 
-独立验收脚本（`/private/tmp/aide-independent-acceptance/`，Codex 编写）对候选 `ee763764` 全量运行：
+`AIDE_LOCAL_ROOT` 默认 `$HOME` 可写挂载保持现状（用户此前要求的功能）；本轮未收紧挂载、未扩大授权。默认/实际权限：Compose 仅绑定 `127.0.0.1`，API 随机令牌 + 同源检查；`/context` 只读；文件 API 隐藏 `.git`/`.env`/`.data`。若后续收紧挂载，将随附迁移说明与验收清单（HANDOVER §9）。
 
-- workflow 6/6 PASS、R01 lifecycle 3/3 PASS、R05 26/26 PASS、R02 7/7 PASS、R03/R09 4/4 PASS、前端 VM 3/3 PASS、R08 API 4/4 PASS。
-- 明细见 `acceptance-summary.json`（本目录，含命令与证据路径）。
-- BLOCKED：R08-04（候选无上下文预览 API/功能，未实施）。NOT_RUN：浏览器级最短补验（需要真实浏览器，API/单测/VM 级证据已齐）。
-- 候选二进制：`/private/tmp/aide-independent-acceptance/candidates/ee763764d0fc/out/aide`（Linux/arm64，ldflags `buildVersion=0.1.5.0-RC4`、`buildCommit=ee763764…`）。
+## 状态：可发布候选就绪，等待用户审阅发布
 
-## 兼容迁移与权限范围（HOME 挂载）
-
-`AIDE_LOCAL_ROOT` 默认 `$HOME` 可写挂载保持现状（用户此前要求的功能），本轮未收紧挂载；R03 的默认收紧（默认仅挂显式项目、辅助资料只读、写目录逐项授权）未在本次实施，避免破坏现有访问；如后续实施将随附迁移说明与验收清单。
-
-## 状态：整改完成，等待用户审阅发布
-
-不合并 main、不升版、不重建生产容器。生产容器 `aide-aide-1` 未受本轮影响。
+不合并 main、不升版、不重建生产容器。发布与回滚步骤见 HANDOVER §9（发布：审阅证据 → 合并 → version.sh 升版 → tag → 重建镜像 → 先备份两卷 → 起服务 → verify_runtime；回滚：停服务 → 卷备份恢复 → 回退镜像/tag）。生产容器 `aide-aide-1` 未受本轮影响。
