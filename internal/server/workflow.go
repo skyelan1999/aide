@@ -981,7 +981,7 @@ func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg 
 	for _, m := range folded {
 		b.WriteString(m.Role + ": " + clip(m.Content, 4000) + "\n")
 	}
-	instruction := `把上述"上一版摘要"与"新历史对话"合并为一份结构化摘要。只输出一个 JSON 对象（不要 markdown 围栏）：
+	instruction := `把上述"上一版摘要"与"新历史对话"压缩合并为一份结构化摘要。只输出一个 JSON 对象（不要 markdown 围栏）：
 {"goal":"整体目标","decisions":["关键决策"],"files":["涉及文件"],"facts":["重要事实"],"pending":["未完成事项"]}
 要求：上一版摘要中的约束、事实、未完成事项必须保留；中文、简洁、每条不超过 40 字。`
 	params := ProfileParams{MaxTokens: 1024}

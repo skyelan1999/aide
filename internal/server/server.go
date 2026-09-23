@@ -302,7 +302,13 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, err
 	}
-	a.version = readVersionFile(filepath.Join(work, "version.md"))
+	// R09：版本为构建期身份（ldflags 注入），不得被工作区内的 version.md 覆盖；
+	// 仅在开发构建（未注入）时回退读取工程 version.md（FR-66 / LIM-24）。
+	if buildVersion != "" {
+		a.version = buildVersion
+	} else {
+		a.version = readVersionFile(filepath.Join(work, "version.md"))
+	}
 	a.buildVersion = buildVersion
 	a.buildCommit = buildCommit
 	if err := a.loadPlugins(); err != nil {
@@ -467,7 +473,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
