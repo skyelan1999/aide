@@ -63,12 +63,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Preparing v0.1.7.0-RC1 on main with arm64 image and checksums.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Merged main, tagged and pushed v0.1.7.0-RC1; GitHub prerelease published with arm64 image, SHA256SUMS and all 19 verified version tags.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.7.0-RC1",
+        "3f3d248b3c38ecbf15e9a598a24916ae7ebe1694",
+        "docs/releases/version-tags.json"
+      ]
     }
   },
   "release_authorization": "2026-09-24: user requested completion of main merge, tag and GitHub Release after commit/push.",
   "rollback": "Backup: .agent-state/backups/data-before-unified-20260924.tar.gz. Previous image: aide:before-unified-start. Run AIDE_IMAGE=aide:before-unified-start docker compose up -d --no-build to restore image.",
-  "handoff": "Main fast-forwarded. Preparing v0.1.7.0-RC1 release; normal startup uses 8097 and .env. Existing live service retains its tested working build until explicitly upgraded."
+  "handoff": "Release 0.1.7.0 RC1 published. Image smoke passed with embedded UI and exact commit. Existing 8097 working build was not replaced during release. Historical missing tags 0.1.6.0 RC1/RC2/RC3 pushed without moving existing tags."
 }

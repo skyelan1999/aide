@@ -1,0 +1,78 @@
+[
+  {
+    "tag": "v0.1.0.0-RC1",
+    "commit": "03386dbe26a55c98e3a92fccc65b75f5e6b3ce46"
+  },
+  {
+    "tag": "v0.1.1.0-RC1",
+    "commit": "549d672ff7aaf47e0277e5c2330a3e7136c4f8d5"
+  },
+  {
+    "tag": "v0.1.2.0-RC1",
+    "commit": "bb674ab1179355bb16c0da280732d85ceb9c9d8e"
+  },
+  {
+    "tag": "v0.1.3.0-RC1",
+    "commit": "367ee4580e76103eca851650f41cc9fb3246dda8"
+  },
+  {
+    "tag": "v0.1.4.0-RC1",
+    "commit": "d9c6afb5832def906cbc6587dce35b36f939a279"
+  },
+  {
+    "tag": "v0.1.4.1-RC1",
+    "commit": "1a9b94d37836cc7ec7c77cb142b207ae691c35a6"
+  },
+  {
+    "tag": "v0.1.4.2-RC1",
+    "commit": "b48122f30462ad5ebc3a942147ac840f336e7b47"
+  },
+  {
+    "tag": "v0.1.4.3-RC1",
+    "commit": "529caadc881f5a2ebd96c2c186f08e610132d09b"
+  },
+  {
+    "tag": "v0.1.4.4-RC1",
+    "commit": "55b68d4d533034fc5c660cbd46a6e86ef9d88db4"
+  },
+  {
+    "tag": "v0.1.5.0-RC1",
+    "commit": "529e6cb38f73786aa721f6939a635b877d065897"
+  },
+  {
+    "tag": "v0.1.5.0-RC2",
+    "commit": "33712f16b29231a7eac561096e428fde2aa32825"
+  },
+  {
+    "tag": "v0.1.5.0-RC3",
+    "commit": "2b9805e41b42986b9ee8e1c159959e9b4ecbc6f5"
+  },
+  {
+    "tag": "v0.1.5.0-RC4",
+    "commit": "6a4e441912aade4177537f07d9fb63c98918fad7"
+  },
+  {
+    "tag": "v0.1.5.0-RC5",
+    "commit": "905d261f3afa6f20247d96eb5a04aa92477c0bda"
+  },
+  {
+    "tag": "v0.1.6.0-RC1",
+    "commit": "ad042aba1d652cc7e32d868bc9708626aeea819f"
+  },
+  {
+    "tag": "v0.1.6.0-RC2",
+    "commit": "a5dfd891334164e92a0802c82e0c8eab01cb7943"
+  },
+  {
+    "tag": "v0.1.6.0-RC3",
+    "commit": "a3f2b3ca11490e4eccc60d3942164b20dcfe8b63"
+  },
+  {
+    "tag": "v0.1.6.0-RC4",
+    "commit": "fec97d3b4b8b2691f93a0296be7b252b783dcde8"
+  },
+  {
+    "tag": "v0.1.7.0-RC1",
+    "commit": "3f3d248b3c38ecbf15e9a598a24916ae7ebe1694"
+  }
+]
