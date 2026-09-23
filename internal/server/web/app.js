@@ -29,8 +29,17 @@ async function loadSessions() {
   sessions.forEach(s => { const b = el('button', 'session-item' + (state.session?.id === s.id ? ' active' : ''), '◌  ' + s.title); b.title = s.title; b.onclick = action(() => selectSession(s.id)); $('sessions').append(b); });
   return sessions;
 }
+const sessionSeq = { value: 0 }; // R07：递增请求序号，旧响应不得覆盖新选择
 async function selectSession(id) {
-  clearTimeout(state.poll); state.session = await api('/sessions/' + id); renderSession(); refreshCompactInfo(); await loadSessions(); schedulePoll();
+  const seq = ++sessionSeq.value;
+  clearTimeout(state.poll);
+  const loaded = await api('/sessions/' + id);
+  if (seq !== sessionSeq.value) return; // 已有更新的选择，丢弃本次过期响应
+  state.session = loaded;
+  renderSession();
+  refreshCompactInfo();
+  await loadSessions();
+  schedulePoll();
 }
 function schedulePoll() {
   clearTimeout(state.poll);
@@ -189,11 +198,17 @@ $('task-form').onsubmit = action(async event => {
   event.preventDefault(); const prompt = $('prompt').value.trim(); if (!prompt || state.busy) return;
   if (!state.config?.configured) { openSettings(); return; }
   $('send').disabled = true;
+  const draftSession = state.session; // R07：捕获发送时对象，后续等待不得覆盖新选择
   try {
-    if (!state.session) state.session = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: '新会话' }) });
+    if (!draftSession) state.session = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: '新会话' }) });
+    const target = draftSession || state.session;
     const strategy = state.profiles?.strategy || 'manual';
-    await api(`/sessions/${state.session.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default') }) });
-    $('prompt').value = ''; state.attachments = []; renderAttachments(); await selectSession(state.session.id); $('conversation').scrollTop = $('conversation').scrollHeight;
+    await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default') }) });
+    if (state.session?.id === target.id) { // 仅当用户仍停留在发送会话时清空草稿
+      $('prompt').value = ''; state.attachments = []; renderAttachments();
+    }
+    await selectSession(target.id);
+    if (state.session?.id === target.id) $('conversation').scrollTop = $('conversation').scrollHeight;
   } finally { $('send').disabled = false; }
 });
 $('prompt').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('task-form').requestSubmit(); } });

@@ -68,12 +68,15 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	dir, err := filepath.EvalSymlinks(filepath.Join(a.workPath, in.Cwd))
+	a.mu.Lock()
+	wsRoot := a.workspace.Name() // R02：命令目录必须跟随当前工作区
+	a.mu.Unlock()
+	dir, err := filepath.EvalSymlinks(filepath.Join(wsRoot, in.Cwd))
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
-	base, err := filepath.EvalSymlinks(a.workPath)
+	base, err := filepath.EvalSymlinks(wsRoot)
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -98,9 +101,13 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, err)
 			return
 		}
+		remote := in.Command
+		if rp := strings.TrimSpace(a.wsConfig.Workspace.Path); rp != "" {
+			remote = "cd " + shellQuote(rp) + " && " + remote // R02：远程命令进入绑定目录
+		}
 		stream := &streamWriter{w: w}
 		start := time.Now()
-		code, runErr := a.execRemote(ctx, in.Command, stream, stream)
+		code, runErr := a.execRemote(ctx, remote, stream, stream)
 		message := ""
 		if runErr != nil {
 			message = runErr.Error()

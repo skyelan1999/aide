@@ -193,8 +193,8 @@ exit 0
 	// 远程命令（单会话）
 	w = request(a, "POST", "/api/command", map[string]string{"command": "echo hi"})
 	requireStatus(t, w, 200)
-	if !strings.Contains(w.Body.String(), "remote:echo hi") {
-		t.Fatalf("remote command output: %s", w.Body.String())
+	if !strings.Contains(w.Body.String(), "remote:cd") || !strings.Contains(w.Body.String(), "echo hi") {
+		t.Fatalf("remote command must enter remote dir: %s", w.Body.String())
 	}
 	// 会话只建立一次（master 复用）
 	if b, _ := os.ReadFile(sshLog); strings.Count(string(b), "-fNM") != 1 {

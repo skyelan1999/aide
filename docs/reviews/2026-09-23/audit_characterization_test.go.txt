@@ -1,0 +1,133 @@
+package server
+
+import (
+ "encoding/json"
+ "fmt"
+ "sync/atomic"
+ "net/http"
+ "net/http/httptest"
+ "os"
+ "path/filepath"
+ "strings"
+ "testing"
+ "time"
+)
+
+// These characterization tests PASS when the reviewed defect is observed.
+// Run only in the isolated audit copy, never with production data.
+func TestAuditAutoCompactionBlockedByHeldAppMutex(t *testing.T) {
+ a := testApp(t)
+ replied := make(chan struct{}, 1)
+ provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+  jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role:"assistant", Content:`{"goal":"audit"}`}}}})
+  replied <- struct{}{}
+ }))
+ defer provider.Close()
+ s := &Session{ID:"audit-compact"}
+ for i:=0;i<10;i++ { s.Messages = append(s.Messages, Message{Role:"user",Content:strings.Repeat("x",6000)}) }
+ done := make(chan struct{})
+ a.mu.Lock() // execute() holds this same lock around maybeAutoCompact().
+ go func(){ a.maybeAutoCompact(s, Settings{BaseURL:provider.URL,Model:"mock"});close(done) }()
+ select { case <-replied: case <-time.After(3*time.Second):a.mu.Unlock();t.Fatal("mock not reached") }
+ select { case <-done:a.mu.Unlock();t.Fatal("expected lock contention did not occur"); case <-time.After(200*time.Millisecond): }
+ health := request(a,"GET","/healthz",nil)
+ requireStatus(t,health,200)
+ a.mu.Unlock() // Release the artificial caller-held lock to cleanly finish audit.
+ select { case <-done:case <-time.After(3*time.Second):t.Fatal("did not finish after caller mutex released") }
+ t.Log("CONFIRMED: successful auto-summary waits for caller-held app mutex; healthz still returns 200; releasing that mutex allows completion")
+}
+
+func TestAuditOldProposalAppliedToNewWorkspace(t *testing.T) {
+ a := testApp(t)
+ s := createSession(t,a)
+ task := &Task{ID:"audit-run",Status:"awaiting_approval",Files:[]Change{{Path:"new.txt",Content:"belongs to original workspace"}}}
+ a.mu.Lock();a.sessions[s.ID].Runs=append(a.sessions[s.ID].Runs,task);a.mu.Unlock()
+ second := filepath.Join(a.workPath,"project-b")
+ if err:=os.MkdirAll(second,0755);err!=nil {t.Fatal(err)}
+ a.wsConfig.Workspace.Path="project-b"
+ if err:=a.applyWorkspaceConfig();err!=nil {t.Fatal(err)}
+ requireStatus(t,request(a,"POST","/api/sessions/"+s.ID+"/runs/"+task.ID+"/apply",nil),200)
+ b,err:=os.ReadFile(filepath.Join(second,"new.txt"));if err!=nil||string(b)!=task.Files[0].Content {t.Fatalf("expected wrong-project write: %s %v",b,err)}
+ if _,err:=os.Stat(filepath.Join(a.workPath,"new.txt"));!os.IsNotExist(err) {t.Fatal("unexpected original project file")}
+ t.Log("CONFIRMED: proposal created for project A was applied into project B after workspace switch")
+}
+
+func TestAuditCommandStillUsesOriginalWorkspace(t *testing.T) {
+ a:=testApp(t)
+ second:=filepath.Join(a.workPath,"project-b")
+ if err:=os.MkdirAll(second,0755);err!=nil{t.Fatal(err)}
+ a.wsConfig.Workspace.Path="project-b"
+ if err:=a.applyWorkspaceConfig();err!=nil{t.Fatal(err)}
+ w:=request(a,"POST","/api/command",map[string]string{"command":"pwd"})
+ requireStatus(t,w,200)
+ if !strings.Contains(w.Body.String(),a.workPath+`\n`) || strings.Contains(w.Body.String(),second+`\n`) {t.Fatalf("unexpected pwd: %s",w.Body.String())}
+ t.Log("CONFIRMED: file workspace is project B, command pwd remains the original project A")
+}
+
+func TestAuditVirtualRootTraversal(t *testing.T) {
+ a:=testApp(t)
+ got,_,err:=a.resolveHostPath("/workspace/../data")
+ if err!=nil || got!=a.dataPath {t.Fatalf("unexpected resolver result %q %v",got,err)}
+ t.Log("CONFIRMED: /workspace/../data resolves outside workspace to application data directory")
+}
+
+func TestAuditWriteToolTrimsContent(t *testing.T) {
+ a:=testApp(t)
+ task:=&Task{ID:"audit-trim"}
+ original:="  indented first line\n"
+ args,_:=json.Marshal(map[string]string{"path":"new.txt","content":original})
+ result:=a.executeToolCall(readCall("write_file",string(args)),task,map[string]Change{})
+ if len(task.Files)!=1 || task.Files[0].Content!="indented first line" {t.Fatalf("unexpected proposal: %s %+v",result,task.Files)}
+ t.Log("CONFIRMED: write_file strips leading spaces and trailing newline from file content")
+}
+
+func TestAuditCompactionOmitsPreviousSummary(t *testing.T) {
+ a:=testApp(t)
+ marker:="EARLY_CONSTRAINT_UNIQUE_7391"
+ received:=make(chan string,1)
+ provider:=httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
+  var body struct{Messages []Message `json:"messages"`};json.NewDecoder(r.Body).Decode(&body)
+  b,_:=json.Marshal(body.Messages);received<-string(b)
+  jsonOut(w,200,map[string]any{"choices":[]any{map[string]any{"message":Message{Role:"assistant",Content:`{"goal":"recent only"}`}}}})
+ }))
+ defer provider.Close()
+ s:=&Session{ID:"audit-memory",Compact:marker}
+ for i:=0;i<10;i++ {s.Messages=append(s.Messages,Message{Role:"user",Content:strings.Repeat("x",6000)})}
+ _,err:=a.compactSessionInternal(s,Settings{BaseURL:provider.URL,Model:"mock"});if err!=nil{t.Fatal(err)}
+ if strings.Contains(<-received,marker)||strings.Contains(s.Compact,marker){t.Fatal("previous summary unexpectedly preserved")}
+ t.Log("CONFIRMED: previous summary is absent from summarization request and replaced in stored compact state")
+}
+
+func TestAuditConcurrentCompactionPanicsAndLeavesMutexLocked(t *testing.T) {
+ a:=testApp(t)
+ releases:=[]chan struct{}{make(chan struct{}),make(chan struct{})}
+ arrived:=make(chan int,2)
+ var calls atomic.Int32
+ provider:=httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
+  n:=int(calls.Add(1))-1
+  arrived<-n
+  <-releases[n]
+  jsonOut(w,200,map[string]any{"choices":[]any{map[string]any{"message":Message{Role:"assistant",Content:`{"goal":"summary"}`}}}})
+ }))
+ defer provider.Close()
+ a.settings=Settings{BaseURL:provider.URL,Model:"mock"}
+ sess:=createSession(t,a)
+ for i:=0;i<20;i++ {a.sessions[sess.ID].Messages=append(a.sessions[sess.ID].Messages,Message{Role:"user",Content:strings.Repeat("x",8000)})}
+ outcomes:=make(chan string,2)
+ run:=func(){
+  defer func(){if p:=recover();p!=nil{outcomes<-fmt.Sprint("panic: ",p)}}()
+  w:=request(a,"POST","/api/sessions/"+sess.ID+"/compact",nil)
+  outcomes<-fmt.Sprint("status: ",w.Code)
+ }
+ go run();go run()
+ for i:=0;i<2;i++{select{case <-arrived:case <-time.After(3*time.Second):t.Fatal("requests not concurrently dispatched")}}
+ close(releases[0])
+ first:=<-outcomes
+ if first!="status: 200"{t.Fatalf("first outcome %s",first)}
+ close(releases[1])
+ second:=<-outcomes
+ if !strings.Contains(second,"slice bounds out of range"){t.Fatalf("second outcome %s",second)}
+ if a.mu.TryLock(){a.mu.Unlock();t.Fatal("expected retained mutex after panic")}
+ a.mu.Unlock()
+ t.Log("CONFIRMED: two compactions snapshot the same 17-message prefix; second panics slicing the 3 remaining messages and leaves global mutex locked")
+}

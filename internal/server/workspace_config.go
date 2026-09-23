@@ -109,15 +109,35 @@ func (a *App) resolveHostPath(p string) (string, string, error) {
 	if strings.HasPrefix(p, "~/") {
 		p = strings.TrimRight(a.hostLocal, "/") + strings.TrimPrefix(p, "~")
 	}
-	trimmed := func(prefix string) string { return strings.TrimPrefix(p, prefix) }
+	// R03：容器虚拟路径必须带边界匹配（/workspaceXYZ 不算 /workspace），且 Join 后必须仍在根内
+	joinWithin := func(base, prefix string) (string, bool) {
+		if p != prefix && !strings.HasPrefix(p, prefix+"/") {
+			return "", false
+		}
+		joined := filepath.Join(base, filepath.FromSlash(strings.TrimPrefix(p, prefix)))
+		rel, err := filepath.Rel(base, joined)
+		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return "", false
+		}
+		return joined, true
+	}
 	if strings.HasPrefix(p, "/workspace") {
-		return filepath.Join(a.workPath, filepath.FromSlash(trimmed("/workspace"))), p, nil
+		if joined, ok := joinWithin(a.workPath, "/workspace"); ok {
+			return joined, p, nil
+		}
+		return "", "", fmt.Errorf("路径 %s 越出工作区根", p)
 	}
 	if strings.HasPrefix(p, "/context") {
-		return filepath.Join(a.reference.Name(), filepath.FromSlash(trimmed("/context"))), p, nil
+		if joined, ok := joinWithin(a.reference.Name(), "/context"); ok {
+			return joined, p, nil
+		}
+		return "", "", fmt.Errorf("路径 %s 越出参考根", p)
 	}
 	if strings.HasPrefix(p, "/local") {
-		return filepath.Join(a.localRoot.Name(), filepath.FromSlash(trimmed("/local"))), p, nil
+		if joined, ok := joinWithin(a.localRoot.Name(), "/local"); ok {
+			return joined, p, nil
+		}
+		return "", "", fmt.Errorf("路径 %s 越出本地根", p)
 	}
 	if !strings.HasPrefix(p, "/") {
 		joined := filepath.Join(a.workPath, filepath.FromSlash(p))
@@ -134,8 +154,16 @@ func (a *App) resolveHostPath(p string) (string, string, error) {
 	return filepath.Join("/local", rel), p, nil
 }
 
+// wsID 返回当前工作区身份（模式+宿主机路径/主机+远程路径），供提案绑定（R02）。
+func (a *App) wsID() string {
+	w := a.wsConfig.Workspace
+	return w.Mode + "|" + w.Path + "|" + w.Host
+}
+
 // applyWorkspaceConfig 按配置切换工作空间/文档/缓存根，并清理旧 SSH 会话（FR-79 / FR-80）。
+// 每次成功切换递增 wsRevision：旧提案/命令的身份校验依赖该版本（R02）。
 func (a *App) applyWorkspaceConfig() error {
+	a.wsRevision++
 	display := "/workspace"
 	if a.wsConfig.Workspace.Mode == "ssh" {
 		target := a.wsConfig.Workspace.Host

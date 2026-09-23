@@ -131,6 +131,9 @@ type App struct {
 	sourceRegistry            sourcesRegistry
 	sourceSecrets             sourcesSecrets
 	tokenStats                map[string]TokenDay
+	tokenStatsMu              sync.Mutex
+	wsRevision                uint64
+	compactingSessions        map[string]bool
 }
 
 // TokenDay 单日 Token 消耗（FR-90）。
@@ -224,7 +227,7 @@ func New(work, reference, data string) (*App, error) {
 		w.Close()
 		return nil, err
 	}
-	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4)}
+	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}}
 	b, err := os.ReadFile(filepath.Join(data, "access-token"))
 	if errors.Is(err, os.ErrNotExist) {
 		b = []byte(newID() + newID())
@@ -549,7 +552,7 @@ func Run() error {
 
 // recordTokenUsage 累计当日 Token 消耗并持久化到 /data/token-stats.json（FR-90）。
 func (a *App) recordTokenUsage(u TokenUsage) {
-	a.mu.Lock()
+	a.tokenStatsMu.Lock()
 	day := time.Now().UTC().Format("2006-01-02")
 	d := a.tokenStats[day]
 	d.Prompt += u.Prompt
@@ -561,13 +564,13 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 	}
 	a.tokenStats[day] = d
 	saveErr := atomicJSON(filepath.Join(a.dataPath, "token-stats.json"), map[string]any{"version": 1, "days": a.tokenStats})
-	a.mu.Unlock()
+	a.tokenStatsMu.Unlock()
 	_ = saveErr
 }
 
 func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
+	a.tokenStatsMu.Lock()
+	defer a.tokenStatsMu.Unlock()
 	totals := TokenDay{}
 	for _, d := range a.tokenStats {
 		totals.Prompt += d.Prompt

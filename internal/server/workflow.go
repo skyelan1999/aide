@@ -51,6 +51,8 @@ type Task struct {
 	Strategy    string       `json:"strategy,omitempty"` // manual | auto（FR-63）
 	ToolUses    []ToolUse    `json:"toolUses,omitempty"` // 工具调用记录（FR-81）
 	Usage       TokenUsage   `json:"usage,omitempty"`    // 本任务累计 token 用量（轨迹）
+	WorkspaceID string       `json:"workspaceId,omitempty"` // 提案归属的工作区身份（R02）
+	WorkspaceRev uint64     `json:"workspaceRev,omitempty"`
 	Model       string       `json:"model,omitempty"`    // 本次任务使用的模型（FR-69）
 	Profile     string       `json:"profile,omitempty"`  // 本次生效的 profile id
 }
@@ -159,7 +161,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{ID: newID(), Mode: in.Mode, Prompt: in.Prompt, Status: "running", Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model}
+	task := &Task{ID: newID(), Mode: in.Mode, Prompt: in.Prompt, Status: "running", Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision}
 	oldTitle := s.Title
 	if len(s.Messages) == 0 {
 		title := []rune(in.Prompt)
@@ -260,7 +262,6 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		}
 	}
 	a.mu.Lock()
-	defer a.mu.Unlock()
 	if err != nil {
 		task.Status = "failed"
 		task.Error = err.Error()
@@ -275,10 +276,12 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		}
 		s.Messages = append(s.Messages, Message{Role: "assistant", Content: answer})
 	}
-	if err := a.save(s); err != nil {
+	if saveErr := a.save(s); saveErr != nil {
 		task.Status = "failed"
-		task.Error = "会话保存失败: " + err.Error()
+		task.Error = "会话保存失败: " + saveErr.Error()
 	}
+	a.mu.Unlock()
+	// R01：模型调用必须发生在全局锁之外；自动压缩改为释放锁后执行
 	a.maybeAutoCompact(s, cfg)
 }
 // summarizeTopic 每次新任务先总结当前主题并更新会话标题（FR-88）。
@@ -398,6 +401,11 @@ func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if task.Status != "awaiting_approval" {
 		fail(w, 409, errors.New("任务当前不可应用"))
+		return
+	}
+	// R02：提案只能写回生成时的工作区（以工作区身份判定；路径/主机变化即身份变化）
+	if task.WorkspaceID != "" && task.WorkspaceID != a.wsID() {
+		fail(w, 409, errors.New("工作区已切换：该提案属于其他项目，请切回原工作区后再应用"))
 		return
 	}
 	a.filesMu.Lock()
@@ -554,6 +562,7 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 		args = map[string]any{}
 	}
 	str := func(k string) string { v, _ := args[k].(string); return strings.TrimSpace(v) }
+	rawStr := func(k string) string { v, _ := args[k].(string); return v } // 正文等字段按原字节保留（R06）
 	listDir := func(p string) ([]map[string]any, error) {
 		if mode == "ssh" {
 			return a.sftpList(pathJoinRemote(remotePath, p))
@@ -606,7 +615,7 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 		}
 		return string(b)
 	case "write_file":
-		pathStr, content := str("path"), str("content")
+		pathStr, content := str("path"), rawStr("content")
 		msg, err := a.recordToolProposal(task, versions, map[string]any{"type": "file", "path": pathStr, "content": content})
 		if err != nil {
 			return "写入提案被拒绝: " + err.Error()
@@ -795,17 +804,57 @@ func clip(s string, n int) string {
 	return string(r[:n]) + "…"
 }
 
-// ── 会话压缩（FR-93，参考 DSH compaction 与 Codex 结构化摘要） ──
+
+// ── 会话压缩（FR-93；R01/R04 整改版）──
+// 锁纪律：模型调用一律在 a.mu 之外；提交时校验消息快照未被并发修改；
+// 每会话同时只允许一个压缩进行中（第二个请求返回 409 冲突）；
+// 新摘要输入包含上一版摘要，形成连续摘要链（早期约束不丢失）。
 
 const (
-	compactKeepBytes  = 24000 // 保留最近消息的字节预算
-	compactAutoBytes  = 48000 // 超过该总量时自动压缩
-	compactMaxFolded  = 400   // 单次最多折叠消息数
+	compactKeepBytes = 24000 // 保留最近消息的字节预算
+	compactAutoBytes = 48000 // 超过该总量时自动压缩
+	compactMaxFolded = 400   // 单次最多折叠消息数
 )
 
+type compactSnapshot struct {
+	prevCompact string
+	prevCount   int
+	messages    []Message
+}
+
+func (a *App) snapshotForCompact(sess *Session) (compactSnapshot, int) {
+	total := 0
+	for _, m := range sess.Messages {
+		total += len(m.Content)
+	}
+	if total <= compactKeepBytes {
+		return compactSnapshot{}, 0
+	}
+	split := len(sess.Messages)
+	keep := 0
+	for split > 0 && keep < compactKeepBytes {
+		split--
+		keep += len(sess.Messages[split].Content)
+	}
+	if split <= 0 {
+		return compactSnapshot{}, 0
+	}
+	if split > compactMaxFolded {
+		split = compactMaxFolded
+	}
+	if split >= len(sess.Messages) {
+		split = len(sess.Messages) - 1 // R01：绝不切片越界
+	}
+	if split <= 0 {
+		return compactSnapshot{}, 0
+	}
+	return compactSnapshot{prevCompact: sess.Compact, prevCount: sess.CompactedMessages, messages: append([]Message{}, sess.Messages[:split]...)}, split
+}
+
 func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
+	sessionID := r.PathValue("id")
 	a.mu.Lock()
-	sess := a.sessions[r.PathValue("id")]
+	sess := a.sessions[sessionID]
 	if sess == nil {
 		a.mu.Unlock()
 		fail(w, 404, errors.New("会话不存在"))
@@ -816,60 +865,67 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("请先配置模型"))
 		return
 	}
-	total := 0
-	for _, m := range sess.Messages {
-		total += len(m.Content)
-	}
-	if total <= compactKeepBytes {
+	if a.compactingSessions[sessionID] {
 		a.mu.Unlock()
-		jsonOut(w, 200, map[string]any{"ok": true, "folded": 0, "compact": sess.Compact})
+		fail(w, 409, errors.New("该会话正在压缩，请稍后重试"))
 		return
 	}
-	// 分割点：从后向前保留 compactKeepBytes
-	split := len(sess.Messages)
-	keep := 0
-	for split > 0 && keep < compactKeepBytes {
-		split--
-		keep += len(sess.Messages[split].Content)
-	}
-	if split == 0 || split > compactMaxFolded {
-		split = compactMaxFolded
-		if split >= len(sess.Messages) {
-			split = len(sess.Messages) / 2
-		}
-	}
-	folded := sess.Messages[:split]
+	a.compactingSessions[sessionID] = true
+	snap, split := a.snapshotForCompact(sess)
 	cfg := a.settings
+	baseLen := len(sess.Messages)
 	a.mu.Unlock()
-	summary, err := a.buildCompactionSummary(folded, cfg)
+	defer func() {
+		a.mu.Lock()
+		delete(a.compactingSessions, sessionID)
+		a.mu.Unlock()
+	}()
+	if split == 0 {
+		jsonOut(w, 200, map[string]any{"ok": true, "folded": 0, "compact": snap.prevCompact})
+		return
+	}
+	summary, err := a.buildCompactionSummary(snap.messages, cfg, snap.prevCompact)
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
 	a.mu.Lock()
-	sess.Compact = summary
-	sess.CompactedMessages += len(folded)
-	sess.CompactedAt = time.Now().UTC().Format(time.RFC3339Nano)
-	sess.Messages = sess.Messages[split:]
-	saveErr := a.save(sess)
-	a.mu.Unlock()
-	if saveErr != nil {
-		fail(w, 500, saveErr)
+	defer a.mu.Unlock()
+	// 提交校验：消息前缀必须仍与快照一致（未被并发修改）
+	if len(sess.Messages) != baseLen {
+		fail(w, 409, errors.New("会话已被修改，压缩取消；请重试"))
 		return
 	}
-	jsonOut(w, 200, map[string]any{"ok": true, "folded": len(folded), "compact": summary, "compactedMessages": sess.CompactedMessages})
+	for i := 0; i < split; i++ {
+		if sess.Messages[i].Content != snap.messages[i].Content || sess.Messages[i].Role != snap.messages[i].Role {
+			fail(w, 409, errors.New("会话已被修改，压缩取消；请重试"))
+			return
+		}
+	}
+	sess.Compact = summary
+	sess.CompactedMessages = snap.prevCount + split
+	sess.CompactedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	sess.Messages = append([]Message{}, sess.Messages[split:]...)
+	if err := a.save(sess); err != nil {
+		fail(w, 500, err)
+		return
+	}
+	jsonOut(w, 200, map[string]any{"ok": true, "folded": split, "compact": summary, "compactedMessages": sess.CompactedMessages})
 }
 
-// buildCompactionSummary 用模型把折叠消息压成结构化摘要（Codex 风格）。
-func (a *App) buildCompactionSummary(folded []Message, cfg Settings) (string, error) {
+// buildCompactionSummary 压缩为结构化摘要；输入包含上一版摘要（R04 连续链）。
+func (a *App) buildCompactionSummary(folded []Message, cfg Settings, prevCompact string) (string, error) {
 	var b strings.Builder
-	b.WriteString("以下是需要压缩的历史对话：\n")
+	if prevCompact != "" {
+		b.WriteString("【上一版历史摘要（必须保留其中的约束与事实）】\n" + prevCompact + "\n\n")
+	}
+	b.WriteString("【本次需要压缩的新历史对话】\n")
 	for _, m := range folded {
 		b.WriteString(m.Role + ": " + clip(m.Content, 4000) + "\n")
 	}
-	instruction := `把以上历史对话压缩为结构化摘要。只输出一个 JSON 对象（不要 markdown 围栏）：
+	instruction := `把上述"上一版摘要"与"新历史对话"合并为一份结构化摘要。只输出一个 JSON 对象（不要 markdown 围栏）：
 {"goal":"整体目标","decisions":["关键决策"],"files":["涉及文件"],"facts":["重要事实"],"pending":["未完成事项"]}
-中文、简洁、每条不超过 40 字。`
+要求：上一版摘要中的约束、事实、未完成事项必须保留；中文、简洁、每条不超过 40 字。`
 	params := ProfileParams{MaxTokens: 1024}
 	out, _, _, err := complete(context.Background(), cfg, []Message{{Role: "system", Content: instruction}, {Role: "user", Content: b.String()}}, params, nil)
 	if err != nil {
@@ -881,42 +937,49 @@ func (a *App) buildCompactionSummary(folded []Message, cfg Settings) (string, er
 	out = strings.TrimSuffix(strings.TrimSpace(out), "```")
 	var parsed map[string]any
 	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
-		// 非 JSON 时保留原文摘要
 		return clip(out, 6000), nil
 	}
 	return clip(out, 6000), nil
 }
 
-// maybeAutoCompact 任务结束后若历史超阈值则自动压缩（FR-93）。
 func (a *App) maybeAutoCompact(s *Session, cfg Settings) {
-	total := 0
-	for _, m := range s.Messages {
-		total += len(m.Content)
-	}
-	if total <= compactAutoBytes || cfg.Model == "" {
+	if cfg.Model == "" {
 		return
 	}
-	_, _ = a.compactSessionInternal(s, cfg)
-}
-
-func (a *App) compactSessionInternal(s *Session, cfg Settings) (int, error) {
-	split := len(s.Messages)
-	keep := 0
-	for split > 0 && keep < compactKeepBytes {
-		split--
-		keep += len(s.Messages[split].Content)
+	a.mu.Lock()
+	if a.compactingSessions[s.ID] {
+		a.mu.Unlock()
+		return
 	}
-	if split <= 0 {
-		return 0, nil
+	a.compactingSessions[s.ID] = true
+	snap, split := a.snapshotForCompact(s)
+	baseLen := len(s.Messages)
+	a.mu.Unlock()
+	defer func() {
+		a.mu.Lock()
+		delete(a.compactingSessions, s.ID)
+		a.mu.Unlock()
+	}()
+	if split == 0 {
+		return
 	}
-	folded := s.Messages[:split]
-	summary, err := a.buildCompactionSummary(folded, cfg)
+	summary, err := a.buildCompactionSummary(snap.messages, cfg, snap.prevCompact)
 	if err != nil {
-		return 0, err
+		return
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if len(s.Messages) != baseLen {
+		return // 会话已变化，放弃本轮自动压缩
+	}
+	for i := 0; i < split; i++ {
+		if s.Messages[i].Content != snap.messages[i].Content || s.Messages[i].Role != snap.messages[i].Role {
+			return
+		}
 	}
 	s.Compact = summary
-	s.CompactedMessages += len(folded)
+	s.CompactedMessages = snap.prevCount + split
 	s.CompactedAt = time.Now().UTC().Format(time.RFC3339Nano)
-	s.Messages = s.Messages[split:]
-	return len(folded), a.save(s)
+	s.Messages = append([]Message{}, s.Messages[split:]...)
 }
+
