@@ -1,0 +1,77 @@
+{
+  "id": "agent-workflow-docs",
+  "request": "统一所有开发 AI 的需求到发布路由；核对并正式化项目文档与 README；合并 doc/docs 到 docs。",
+  "baseline": "c2dd38a637584cf380f3ec5cef0f39b3f30b383a",
+  "initial_status": "M .dockerignore\n M .gitignore\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n?? AGENTS.md\n?? CLAUDE.md\n?? CODEBUDDY.md\n?? docs/agent/\n?? docs/design/\n?? internal/server/web/macos.css\n?? internal/server/web/themes/green.css\n?? scripts/agent-route.py\n?? scripts/test_agent_route.py",
+  "acceptance": [
+    "五类客户端共用工作流，明确自动与手工接入边界",
+    "路由有可执行检查、发布失败门禁和受限清理",
+    "现行文档与源码核对，历史记录保留且标适用基线",
+    "README 含定位、操作步骤、功能边界、真实预览图",
+    "仅有 docs 目录，文档链接与图片可解析"
+  ],
+  "scope": [
+    "AGENTS.md/CLAUDE.md/CODEBUDDY.md",
+    "scripts/agent-route.py/test_agent_route.py/check_docs.py",
+    ".gitignore/.dockerignore",
+    "README.md/HANDOVER.md/docs/**",
+    "doc/** -> docs/**",
+    "源码与插件中的文档路径注释"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "根据用户连续三项请求定义范围和验收；继承 UI 未提交改动。",
+      "evidence": [
+        "docs/reviews/2026-09-23/documentation-review.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "一个共享工作流 + 客户端薄入口；统一 docs；历史与现行分离。",
+      "evidence": [
+        "docs/reviews/2026-09-23/documentation-review.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增路由 CLI/回归/文档检查，迁移13个文件；README和指南含真实预览图片。",
+      "evidence": [
+        "docs/reviews/2026-09-23/documentation-review.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "quick 六项检查通过；3项路由回归；30份 Markdown、106条本地链接、图片与FR检查通过；浏览器查看README及快速开始导航。未做全量发布验收。",
+      "evidence": [
+        "docs/reviews/2026-09-23/documentation-review.md",
+        "docs/reviews/2026-09-23/development-route-checks.json",
+        "docs/reviews/2026-09-23/development-route-checks.txt"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已更新现行PRD/架构/交接/用户指南/协议及逐文件核对报告，历史设计带替代说明。",
+      "evidence": [
+        "docs/reviews/2026-09-23/documentation-review.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅删6个可再生 .DS_Store，合并空 doc；所有源码、数据、私人记忆与旧证据保留。",
+      "evidence": [
+        "docs/reviews/2026-09-23/documentation-review.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "用户已授权；正在提交与正式镜像验收，结果记录在Release清单",
+      "evidence": [
+        "docs/reviews/2026-09-23/release-0.1.6.0.md"
+      ]
+    }
+  },
+  "release_authorization": "用户：做好了提commit打tag发布新release推送；补充环境安装脚本与启动安装说明。",
+  "rollback": "不替换生产8097；源码可回退到 v0.1.5.0-RC5；镜像/数据分别备份，不删除用户卷。",
+  "handoff": "本轮功能随0.1.6.0 RC1交付；最终上传/镜像/验证结果见GitHub Release清单，生产服务不替换。"
+}

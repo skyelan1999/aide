@@ -1,118 +1,177 @@
+<div align="center">
+
 # aide
 
-一个以 Go 为后端、在浏览器中使用的本地 AI 开发工作台。参考 DeepSeek Harness（DSH）的会话、模型适配、工具与工作流分层思路，以独立代码实现基础功能。
+### 一个基座，定制属于你的 AI 工作台。
 
-**每次开发前**请先阅读 [产品需求文档 PRD](doc/PRD.md)，核对本次要做的需求编号、状态标记与范围边界；其中第 0 节和第 10 节是开工前的核对流程与清单。
+让 AI 根据你的场景快速定制 aide · Go 服务 · 浏览器界面 · Docker 工具环境
 
-开发与运维接手请先阅读 [项目交接文档](HANDOVER.md)，其中包含当前基线、部署配置、备份恢复、排障和后续开发事项。
+[安装说明](docs/installation.md) · [快速开始](#快速开始) · [使用指南](docs/user-guide.md) · [开发工作流](docs/agent/WORKFLOW.md) · [版本记录](version.md) · [GitHub](https://github.com/skyelan1999/aide)
 
-## 启动
+</div>
 
-macOS 双击 **start.command**。它会启动 Docker Desktop、构建镜像、启动容器并在浏览器中自动登录。
+![aide 工作台预览：会话、项目文件与 AI 任务输入](docs/images/workbench-preview.jpg)
 
-也可以在本目录运行：
+> **版本**：本次交付 `0.1.6.0 RC1`，包含新版外观、统一 Agent 开发路由和 Docker 镜像附件。截图来自同套界面的隔离示例环境，截图内 RC5 是拍摄时的后端版本。安装包与发布状态以 [GitHub Releases](https://github.com/skyelan1999/aide/releases) 为准。
+
+## 为什么选择 aide
+
+aide 既是开箱可用的本地工作台，也是供 AI 二次开发的产品基座。你提供业务场景、资料来源、工具和验收标准，AI 按仓库内统一流程修改源码、验证并交付属于你的 aide。定制需要兼容的 AI 开发客户端或人工开发，并非一键自动生成成品。
+
+aide 把项目文件、AI 对话、修改提案、运行轨迹与命令执行放在同一个工作空间。它面向希望在本机掌握文件与执行环境的开发者：用 AI 理解项目、梳理方案，再由自己审阅和应用改动。
+
+- **围绕真实项目工作**：连接本地目录或 SSH/SFTP 工作区，浏览、编辑、附加文本文件。
+- **过程可检查**：查看规划、工具调用、文件提案和模型审查；写入和命令执行需要明确操作。
+- **环境可迁移**：Go、Python、Node.js、Git 随 Docker 环境提供，源码、镜像、工作文件与会话数据分别管理。
+
+项目数据在本机持久化；使用云端模型时，任务内容、上下文和工具读取结果会发送到所配置的提供商。aide 是独立项目，借鉴 DeepSeek Harness 的设计思路，不是 DeepSeek 官方产品，也不提供完整 DSH/Cordis 运行时兼容。
+
+## 可以完成什么
+
+| 能力 | 使用方式 | 当前边界 |
+| --- | --- | --- |
+| AI 对话与开发工作流 | 选择对话，或按规划 → 提案 → 审查生成改动 | 模型审查不等于测试通过；响应按步骤展示 |
+| 文件与 Markdown | 浏览、编辑、保存、预览、新标签页打开、附加到任务 | 文本文件有大小与编码限制；保存有哈希冲突校验 |
+| 工作区与辅助资料 | 本地、SSH/SFTP；本地资料、Skill 目录、链接、FTP/FTPS/SMB 来源 | MCP 当前只有登记入口；系统文档来源不等于自动生成文档 |
+| 模型与策略 | 多模型列表、参数 Profile、手动/自动策略 | 模型共享当前提供商连接；兼容性依赖上游 API |
+| 轨迹、搜索与压缩 | 查看任务步骤与工具记录；搜索聊天；压缩历史上下文 | 压缩是摘要化，不是 ZIP，也不保证磁盘体积缩小 |
+| Token 与费用 | 热力图、单日明细、按模型费率快照、余额查询 | 区分已计价、估算、未计价；不是提供商正式账单 |
+| 容器命令面板 | 手动运行命令，查看输出、退出码，取消任务 | 独立 shell，无 PTY，不适合交互式编辑器或常驻服务 |
+| 插件 | 上传、启停、展示工具；带 handler 的工具进入调用循环 | 仅兼容形态子集；插件是可信代码，不是安全沙箱 |
+| 外观与关于 | 专业/经典两排，各选浅色、深色或跟随系统；显示版本与仓库入口 | 偏好保存在当前浏览器，未同步到服务端 |
+
+![设置预览：专业与经典两种风格，分别支持三种外观模式](docs/images/appearance-preview.jpg)
+
+## 让 AI 定制属于你的 aide
+
+把 aide 作为起点，而不是从零拼装聊天、文件、工具与运行环境。可以面向软件研发、技术资料分析、团队内部工作流程等场景，调整界面、提示策略、插件及外部系统连接。
+
+1. Fork 或克隆源码，保留 MIT 许可证；为定制建立独立分支。
+2. 填写 [场景定制指南](docs/customization.md) 中的需求模板，明确哪些目录、资料和工具可以使用。
+3. 让 AI 先读 `AGENTS.md`，按需求 → 设计 → 实现 → 测试 → 文档 → Release 的路由开发。
+4. 在隔离环境检查真实界面和结果，再构建自己的 Docker 镜像；源码、镜像和数据卷分别交付。
+
+**源码用于定制，镜像用于快速运行。** 发行镜像包含运行工具链与已编译应用，不替代源码仓库；源码修改后重新构建镜像。[下载 Docker 镜像与校验和](https://github.com/skyelan1999/aide/releases) · [镜像导入与启动](docker-images/README.md)。
+
+## 快速开始
+
+需要 Git、Docker Engine 与 Docker Compose。macOS 可使用 Docker Desktop。当前已有 Apple Silicon 环境验证记录；其他平台应自行构建并检查。宿主机不需要先安装 Go 或 npm 依赖。
+
+也可以直接使用环境检查与安装脚本：`bash scripts/install.sh --check`，然后选择 `--source` 或 `--image 归档路径`。完整前置环境、首次登录和故障处理见 [安装说明](docs/installation.md)。
+
+### 1. 获取项目
+
+```bash
+git clone https://github.com/skyelan1999/aide.git
+cd aide
+```
+
+仓库若要求访问权限，请使用有权限的 GitHub 账户。
+
+### 2. 配置本地目录
+
+首次配置才复制 `.env.example`；已有 `.env` 时直接编辑，避免覆盖。
+
+```bash
+cp -n .env.example .env
+mkdir -p context
+```
+
+将 `.env` 中目录改成实际存在的路径。下面使用 aide 本身作为工作区、`context/` 作为只读资料目录，并将本地浏览范围限制到你的开发目录：
+
+```dotenv
+AIDE_PORT=8097
+AIDE_WORKSPACE=.
+AIDE_CONTEXT=./context
+AIDE_LOCAL_ROOT=/absolute/path/to/your/projects
+```
+
+**挂载范围要点**：仓库的 Compose 默认 `AIDE_LOCAL_ROOT=$HOME`，即将整个用户主目录可读写挂载到 `/local`。按需改为较小的已存在目录；容器命令和可信插件能访问其权限内的挂载内容。`/context` 保持只读。
+
+### 3. 启动并登录
 
 ```bash
 bash scripts/aide.sh start
 ```
 
-默认地址：<http://127.0.0.1:8097>。通过普通链接打开时，需要访问令牌；`start.command` 自动从容器读取令牌并使用 URL fragment 完成登录。令牌保存在浏览器 localStorage，地址栏随即清除 fragment。
+macOS 也可以双击 `start.command`。脚本会构建并启动容器，打开浏览器完成本地令牌登录。默认地址为 `http://127.0.0.1:8097`。首次构建需要下载基础镜像；启动会重建当前源码，不是只读查看操作。
 
-## 第一轮使用
+本地登录令牌和模型 API Key 是两种凭据。不要分享带令牌的地址或将令牌贴到问题单。普通开发构建可能显示 `dev`/`unknown`；正式版本需要构建身份，见[发布与维护](HANDOVER.md)。
 
-1. 打开左下角 **模型设置**，填写 API Base URL、模型 ID 和 API Key。DeepSeek 地址通常为 `https://api.deepseek.com`；模型名称以自己的账户及提供商当前支持列表为准。
-2. 在右侧打开工作目录或辅助资料，选择文件，点击 **附加到任务**。每次任务最多 8 个文件、合计 80 KB；单个可编辑文本文件上限 256 KB。
-3. **对话**用于提问与代码分析。**AI 工作流**按“规划 → JSON 文件提案 → 审查”执行三个模型步骤。
-4. 展开文件提案查看修改前后内容，点击 **应用这些文件修改** 写回本地项目。已有文件必须已附加；若主机上的文件已经改变，应用会拒绝覆盖。
-5. 将建议命令填入底部 **命令面板**，检查后点击运行。实时展示 stdout/stderr 和退出码。
+### 4. 配置模型
 
-未配置模型时不会伪造 AI 回答。自动测试使用受控的本地模拟 API；真实云端回答和计费需要自己的有效 API 配置。密钥仅写入数据卷内的权限为 0600 的配置文件，不返回到前端，不进入 Git。
+打开左下角 **模型设置**，填写提供商的 Base URL、API Key，添加模型 ID 与上下文窗口，保存当前模型。支持兼容 Chat Completions 的服务；具体地址、模型名称和费用以你的提供商为准。
 
-## 目录挂载
+“已配置”仅表示配置字段就绪，不代表连接成功。先发送不含私有资料的简短问题确认可用。无模型时文件与命令功能仍可使用。
 
-| 主机路径（默认） | 容器路径 | 用途 |
+### 5. 完成第一项任务
+
+1. 点工作空间卡片，确认当前项目路径；打开右侧 **文件**。
+2. 打开目标文件，选择 **附加到任务**；补充所需的辅助资料。
+3. 在 **策略** 中选择模型与 Profile，输入目标和验收条件。
+4. 先用 **对话** 理解项目；需要改动时选择 **AI 工作流**。
+5. 检查提案和审查结果，确认后应用文件修改。已有文件须符合附件与版本校验要求。
+6. 将建议命令填入命令面板，审阅后手动运行；根据实际输出判断任务是否完成。
+
+![从需求到验证的六步工作流](docs/images/development-flow.svg)
+
+详细操作、资料来源、费用、搜索与压缩说明见[使用指南](docs/user-guide.md)。
+
+## 数据与运行环境
+
+| 容器位置 | 内容 | 默认来源 |
 | --- | --- | --- |
-| 当前 `aide/` | `/workspace` | 可读写项目，浏览器保存会同步到本地 |
-| 上一级 `Harness/` | `/context` | 只读辅助资料，包含已有 DSH 等参考源码 |
-| Docker `aide_aide-data` 卷 | `/data` | 会话、工作流状态、访问令牌、模型配置 |
-| Docker `aide_aide-home` 卷 | `/home/aide` | 开发工具缓存和用户环境 |
+| `/workspace` | 可读写项目 | 当前仓库或 `AIDE_WORKSPACE` |
+| `/context` | 只读辅助目录 | `../Harness` 或 `AIDE_CONTEXT` |
+| `/local` | 可读写宿主目录浏览范围 | `$HOME` 或 `AIDE_LOCAL_ROOT` |
+| `/data` | 会话、模型配置、令牌、费率与统计 | 命名卷 `aide_aide-data` |
+| `/home/aide` | 用户环境与开发缓存 | 命名卷 `aide_aide-home` |
 
-需要修改挂载时，复制 `.env.example` 为 `.env`，将 `AIDE_WORKSPACE`、`AIDE_CONTEXT` 设置为已有的本地目录（支持带空格的绝对路径），再运行启动命令。Compose 必须从本目录运行。`.env` 已被 Git 忽略。
-
-```dotenv
-AIDE_PORT=8097
-AIDE_WORKSPACE=.
-AIDE_CONTEXT=../Harness
-```
-
-首次使用时可以从环境变量预置模型：`AI_BASE_URL`、`AI_MODEL`、`AI_API_KEY`。在浏览器保存设置后，数据卷中的设置优先于环境变量。连接 Mac 本机的兼容模型服务时可使用 `http://host.docker.internal:11434/v1`，模型服务须允许来自 Docker 的连接。
-
-## 镜像与运行环境
-
-Dockerfile、Compose 和导出的镜像均位于此项目目录中。Docker 引擎管理实际运行镜像，项目目录保存可迁移的归档。
+Go 服务使用 `go:embed` 分发前端；前端为原生 JS/CSS，Markdown 解析器随仓库本地分发，无 CDN 和 npm 安装步骤。修改源码后需要重建发布镜像。镜像归档位于 `docker-images/`，不包含挂载目录和数据卷。
 
 ```bash
-bash scripts/aide.sh export  # docker-images/aide-local.tar.gz
-bash scripts/aide.sh load    # 恢复到 Docker 引擎
-docker compose up -d --no-build
+bash scripts/aide.sh status   # 查看服务状态
+bash scripts/aide.sh logs     # 查看近期日志
+bash scripts/aide.sh test     # 一次性容器中运行 Go race / vet
+bash scripts/aide.sh export   # 导出本机 aide:local 镜像
+bash scripts/aide.sh stop     # 停止服务，保留数据卷
 ```
 
-镜像包含 Go 1.26 系列工具链、Python 3.12 + pip + venv、Node.js 24 + npm、Git、curl、bash（Compose 启用 init）。Linux ARM64 镜像可用于 Apple Silicon Docker Desktop。基础镜像版本按 Dockerfile 定义；精确构建信息见 `docs/verification.md`。
+## 参与开发
 
-常用命令：
+所有开发 Agent 从 [AGENTS.md](AGENTS.md) 进入同一个流程：
+
+**需求 → 设计 → 实现 → 测试 → 文档 → 清理 → Release**
 
 ```bash
-bash scripts/aide.sh status
-bash scripts/aide.sh logs
-bash scripts/aide.sh test
-bash scripts/aide.sh stop
-docker compose up -d --build  # 更新源代码后的重建
+python3 scripts/agent-route.py start my-feature --request "需求与目标"
+python3 scripts/agent-route.py check
+python3 scripts/agent-route.py verify quick
+python3 scripts/agent-route.py audit
 ```
 
-前端由 Go embed 编译进二进制；修改界面或后端后需重新构建镜像。项目默认无需 npm install，前端使用原生 JavaScript/CSS，没有 CDN 运行依赖。
+支持 Codex、Claude Code、DeepSeek DSH 的项目入口，以及豆包和 WorkBuddy 的显式启动指令。它是仓库开发规范与检查工具，不是产品内的多 Agent 调度功能。客户端适配方式与能力边界见[接入说明](docs/agent/ADAPTERS.md)。
 
-## 版本管理
+## 使用边界
 
-每次提交自动标注当前版本号（git 钩子）；版本升级在 **main 分支**执行并自动打 git tag：
+- 适用于可信单用户本地工作台，默认端口仅绑定回环地址；不面向公网或多用户托管。
+- AI 可以通过读工具读取授权工作区，不能再把“只有显式附件会进入模型”视为保证。
+- 文件应用逐文件原子写入，不是跨文件事务；已应用的修改不会因后续失败自动回滚。
+- 尚无逐 token SSE、交互式 PTY、完整 MCP、向量检索或完整 DSH 插件兼容。
+- 上下文与缺失 usage 的 Token 数量为启发式估算；压缩可能丢失细节，重要事实应回查原文件和轨迹。
 
-```bash
-bash scripts/version.sh                    # 显示当前版本（如 0.1.0.0 RC1）
-bash scripts/version.sh bump <档位> -m "说明"  # 升级：product / major / feature / daily
-bash scripts/version.sh patch -m "说明"     # 同一版本补丁：仅 RC+1
-bash scripts/version.sh note -m "说明"      # 追加 release note
-bash scripts/version.sh tag                # 为当前版本打 tag（幂等）
-bash scripts/version.sh check              # 校验 version.md
-bash scripts/version.sh install-hooks      # 新克隆后执行一次，安装提交标注钩子
-```
+## 文档导航
 
-- 版本号四位：`产品级.重大.大版本.日常`，呈现 `X.Y.Z.W RCn`（RC 默认 RC1，补丁 +1）。
-- 当前版本与 release note 记录在工程目录 `version.md`；tag 命名 `vX.Y.Z.W-RCn`，**仅打在 main 分支**。
-- 界面左下角运行卡片与设置面板底部显示当前版本（`/api/config` 的 `version` 字段）。
+| 文档 | 面向谁 |
+| --- | --- |
+| [使用指南](docs/user-guide.md) | 第一次使用与日常操作 |
+| [交接与运维](HANDOVER.md) | 部署、升级、备份、恢复与排障 |
+| [架构与 API](docs/architecture.md) | 开发和扩展 |
+| [产品需求](docs/PRD.md) | 需求范围、编号、状态与限制 |
+| [插件协议](docs/plugin-protocol.md) | 编写和评估插件 |
+| [文档索引与有效性](docs/README.md) | 区分现行文档与历史证据 |
+| [版本记录](version.md) | 已发布版本及变更 |
 
-## 当前边界
+## 许可与致谢
 
-- 面向单用户本地开发，Compose 端口仅绑定 `127.0.0.1`；API 使用随机访问令牌，并拒绝跨站 Origin。
-- 命令面板是逐次运行的 shell，不是 PTY；不支持 vim、交互密码输入或跨命令保持 `cd`。单次最长 60 秒、最多 128 KB 输出。停止会终止进程组；此处不用于守护进程。
-- 模型步骤异步执行，浏览器轮询进度；模型响应按步骤显示，尚未提供逐 token 流式输出。
-- 工作流不会自动执行模型生成的命令。文件应用是逐文件原子替换，不是跨文件事务；部分失败会保留已应用标记。主机外部编辑、手动命令与文件应用之间不存在全局事务锁。
-- `/context` 在 Docker 层只读；文件 API 使用 `os.Root` 防止目录逃逸。文件 API 隐藏 `.git`、`.env`、`.data` 和镜像归档目录，命令面板则具有容器用户的正常权限。
-- 这是一个可信用户工作台。手动 shell 可以读写其有权限访问的容器数据和挂载目录；不要将服务暴露给不可信用户。未挂载 Docker socket、主机 HOME 或其他无关目录。
-- 每次只将显式附加的文件提交给模型；历史回放有 60 KB 文本预算。附件中的指令被视为资料内容，系统提示明确要求以用户任务为准。
-- 发送任务前界面展示**上下文预算预览**（组成明细 + 输入估算 + 输出预留 + 模型窗口）。估算口径如实标注：4 字符 ≈ 1 token（UTF-8 字节），非精确 tokenizer；超限时发送被可解释地拦截（服务端同样拦截，模型不会收到被拦截的调用）。
-- Token 费用以服务端为事实源：按模型配置费率（`/api/token-pricing`），0 是合法免费费率且与留空区分；历史费用按调用时刻快照，改价不回溯；未配置费率的调用按刊例默认价并标记为估算；旧版统计迁移为「未计价」，不虚构历史费用。
-- 远程工作区/SFTP 来源读取与本地一致：路径校验先于传输（拒绝 `..`、绝对路径、`.env`/`.git`），内容统一 256 KiB / UTF-8 / 无 NUL 限制。
-- 尚未实现 DSH 的完整 Cordis 插件兼容、MCP、多用户、向量检索、多 agent 调度或自动代码验证。后续扩展点见 [架构说明](docs/architecture.md)。
-
-## 源码
-
-```text
-cmd/aide/                  Go 应用入口
-internal/server/           HTTP API、文件工具、命令运行器、模型适配、工作流
-internal/server/web/       原生浏览器界面（embed）
-internal/server/*_test.go   HTTP / 工作流 / 文件边界 / 持久化测试
-docs/                      架构与验证记录
-scripts/                   启动、测试和镜像归档
-docker-images/             可迁移镜像归档（大文件不进入 Git）
-```
-
-参考资料：[DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)、[DeepSeek Chat Completions API](https://api-docs.deepseek.com/api/create-chat-completion/)、[Go os.Root](https://go.dev/src/os/root.go)。参考源码仅用于理解架构，没有将其文档指令作为本项目用户需求。
+项目使用 [MIT License](LICENSE)。本地分发的第三方组件保留各自许可证。感谢 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) 提供设计参考。

@@ -1,5 +1,5 @@
 'use strict';
-/* aide 插件协议 v1 宿主（doc/plugin-protocol.md）
+/* aide 插件协议 v1 宿主（docs/plugin-protocol.md）
  *
  * 用法（由 Go 以 -e 方式调用，无 shell）：
  *   node -e <本脚本> validate <pluginFile>

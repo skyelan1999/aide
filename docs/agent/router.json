@@ -1,0 +1,112 @@
+{
+  "version": 1,
+  "workflow": "docs/agent/WORKFLOW.md",
+  "stages": [
+    "requirements",
+    "design",
+    "implementation",
+    "verification",
+    "documentation",
+    "cleanup",
+    "release"
+  ],
+  "clients": {
+    "codex": {
+      "entry": "AGENTS.md",
+      "mode": "native-project-instructions"
+    },
+    "claude": {
+      "entry": "CLAUDE.md",
+      "mode": "native-project-instructions-or-manual"
+    },
+    "deepseek": {
+      "entry": "AGENTS.md",
+      "mode": "dsh-project-instructions-or-manual"
+    },
+    "doubao": {
+      "entry": "AGENTS.md",
+      "mode": "manual-bootstrap"
+    },
+    "workbuddy": {
+      "entry": "CODEBUDDY.md",
+      "mode": "client-handshake-required"
+    }
+  },
+  "checks": {
+    "quick": [
+      [
+        "git",
+        "diff",
+        "--check"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/app.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/settings-init.js"
+      ],
+      [
+        "bash",
+        "scripts/version.sh",
+        "check"
+      ],
+      [
+        "python3",
+        "scripts/test_agent_route.py"
+      ],
+      [
+        "python3",
+        "scripts/check_docs.py"
+      ],
+      [
+        "bash",
+        "-n",
+        "scripts/install.sh"
+      ],
+      [
+        "bash",
+        "-n",
+        "scripts/aide.sh"
+      ],
+      [
+        "python3",
+        "scripts/test_install.py"
+      ]
+    ],
+    "full": [
+      [
+        "bash",
+        "scripts/aide.sh",
+        "test"
+      ]
+    ]
+  },
+  "required_files": [
+    "AGENTS.md",
+    "CLAUDE.md",
+    "CODEBUDDY.md",
+    "docs/agent/WORKFLOW.md",
+    "docs/agent/ADAPTERS.md",
+    "scripts/agent-route.py",
+    "scripts/test_agent_route.py",
+    "docs/README.md",
+    "scripts/check_docs.py"
+  ],
+  "cleanup": {
+    "automatic_delete_basename": ".DS_Store",
+    "protected_roots": [
+      ".git",
+      ".data",
+      ".cache",
+      ".idea",
+      ".workbuddy",
+      ".agent-state",
+      "docker-images",
+      "test-results"
+    ]
+  }
+}

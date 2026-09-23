@@ -1,0 +1,76 @@
+{
+  "id": "customizable-base-release",
+  "request": "修改所有文件，把docker的image也搞进去，说明是要让ai根据这个基座和自己所需要的场景快速定制属于自己的aide，做好了提commit打tag发布新release推送",
+  "baseline": "c2dd38a637584cf380f3ec5cef0f39b3f30b383a",
+  "initial_status": "M .dockerignore\n M .gitignore\n M HANDOVER.md\n M README.md\n D doc/PRD.md\n D doc/architecture/2026-09-21-model-profiles.md\n D doc/architecture/2026-09-21-multi-model-context.md\n D doc/architecture/2026-09-21-settings-panel.md\n D doc/architecture/2026-09-21-theme-switching.md\n D doc/architecture/2026-09-21-version-management.md\n D doc/architecture/theme-sequence.mermaid\n D doc/plugin-protocol.md\n D doc/prd/2026-09-21-model-profiles.md\n D doc/prd/2026-09-21-multi-model-context.md\n D doc/prd/2026-09-21-settings-panel.md\n D doc/prd/2026-09-21-theme-switching.md\n D doc/prd/2026-09-21-version-management.md\n M docs/architecture.md\n M docs/reviews/2026-09-23/remediation-status.md\n M \"docs/reviews/2026-09-23/\\347\\263\\273\\347\\273\\237\\345\\212\\237\\350\\203\\275\\345\\210\\206\\346\\236\\220\\344\\270\\216\\346\\225\\264\\346\\224\\271\\345\\273\\272\\350\\256\\256.md\"\n M docs/verification.md\n M internal/server/plugin_host.js\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n M plugins/feedback/index.js\n M plugins/goal/index.js\n M plugins/plan/index.js\n M plugins/skill/index.js\n M plugins/subagent/index.js\n M plugins/terminal/index.js\n M plugins/todo/index.js\n M plugins/workflow/index.js\n?? AGENTS.md\n?? CLAUDE.md\n?? CODEBUDDY.md\n?? docs/PRD.md\n?? docs/README.md\n?? docs/agent/\n?? docs/architecture/\n?? docs/archive/\n?? docs/design/\n?? docs/images/\n?? docs/plugin-protocol.md\n?? docs/prd/\n?? docs/reviews/2026-09-23/development-route-checks.json\n?? docs/reviews/2026-09-23/development-route-checks.txt\n?? docs/reviews/2026-09-23/documentation-review.md\n?? docs/tasks/\n?? docs/user-guide.md\n?? internal/server/web/macos.css\n?? internal/server/web/themes/green.css\n?? scripts/agent-route.py\n?? scripts/check_docs.py\n?? scripts/test_agent_route.py",
+  "acceptance": [
+    "统一可定制基座定位与指南",
+    "安装脚本保留配置并验证镜像",
+    "full门禁及正式镜像冒烟",
+    "推送main与tag，Release附镜像和校验和"
+  ],
+  "scope": [
+    "本轮UI、文档、Agent路由全部已授权改动",
+    "安装/启动脚本、Compose、镜像附件、版本、Release"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户场景定制与发布授权已明确",
+      "evidence": [
+        "docs/reviews/2026-09-23/release-0.1.6.0.md",
+        "docs/reviews/2026-09-23/release-full-checks.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "源码定制与镜像运行分离，安装保留现有配置",
+      "evidence": [
+        "docs/reviews/2026-09-23/release-0.1.6.0.md",
+        "docs/reviews/2026-09-23/release-full-checks.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "定位、安装脚本、Compose镜像参数和文档就绪",
+      "evidence": [
+        "docs/reviews/2026-09-23/release-0.1.6.0.md",
+        "docs/reviews/2026-09-23/release-full-checks.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "full通过；正式镜像冒烟在版本化构建后执行",
+      "evidence": [
+        "docs/reviews/2026-09-23/release-0.1.6.0.md",
+        "docs/reviews/2026-09-23/release-full-checks.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "安装、定制、镜像和现行文档已更新",
+      "evidence": [
+        "docs/reviews/2026-09-23/release-0.1.6.0.md",
+        "docs/reviews/2026-09-23/release-full-checks.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "源码/文档纳管；运行数据与镜像归档不入Git",
+      "evidence": [
+        "docs/reviews/2026-09-23/release-0.1.6.0.md",
+        "docs/reviews/2026-09-23/release-full-checks.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "用户已授权；正在提交与正式镜像验收，结果记录在Release清单",
+      "evidence": [
+        "docs/reviews/2026-09-23/release-0.1.6.0.md"
+      ]
+    }
+  },
+  "release_authorization": "用户：做好了提commit打tag发布新release推送；补充环境安装脚本与启动安装说明。",
+  "rollback": "不替换生产8097；源码可回退到 v0.1.5.0-RC5；镜像/数据分别备份，不删除用户卷。",
+  "handoff": "本轮功能随0.1.6.0 RC1交付；最终上传/镜像/验证结果见GitHub Release清单，生产服务不替换。"
+}

@@ -4,20 +4,41 @@
     {
       "id": "appearance",
       "title": "外观",
-      "description": "调整界面主题的明暗外观",
+      "description": "选择适合此刻的外观，让专注更舒适。",
       "controls": [
         {
           "id": "theme",
           "type": "segmented",
-          "label": "主题颜色",
+          "label": "专业",
+          "palette": "blue",
           "options": [
             {
               "value": "light",
-              "label": "明"
+              "label": "浅色"
             },
             {
               "value": "dark",
-              "label": "暗"
+              "label": "深色"
+            },
+            {
+              "value": "system",
+              "label": "跟随系统"
+            }
+          ]
+        },
+        {
+          "id": "theme",
+          "type": "segmented",
+          "label": "经典",
+          "palette": "green",
+          "options": [
+            {
+              "value": "light",
+              "label": "浅色"
+            },
+            {
+              "value": "dark",
+              "label": "深色"
             },
             {
               "value": "system",
@@ -54,6 +75,17 @@
               "label": "参数配置"
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "about",
+      "title": "关于",
+      "controls": [
+        {
+          "id": "about-project",
+          "type": "about-project",
+          "repository": "https://github.com/skyelan1999/aide"
         }
       ]
     }

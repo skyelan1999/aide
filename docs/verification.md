@@ -1,5 +1,7 @@
 # aide 验证记录
 
+> **历史证据**：以下日期、提交、测试数量、镜像和运行状态只适用于各节记录时点。本轮文档核对不重新认定这些结果，现行操作请读仓库根 HANDOVER.md；原审查报告中的“缺陷已复现”不代表当前代码仍存在该缺陷。
+
 验证日期：2026-09-21，Apple Silicon Mac / Docker Desktop，linux/arm64。
 
 ## 实际部署
@@ -82,7 +84,7 @@ go vet ./...
 
 ## 真实模型端到端验收（2026-09-22，FR-23）
 
-- 账户：用户自配 DeepSeek 账户（`deepseek-v4-pro`，密钥不记录）；余额接口 `/api/balance` 实测返回 CNY 51.57。
+- 账户：用户自配 DeepSeek 账户（`deepseek-v4-pro`，密钥不记录）；余额接口 `/api/balance` 的历史实测返回成功（不保留账户余额数值）。
 - 短对话：chat 任务「1+1等于几」→ 回答正确；`run.usage` 记录真实用量（977 tokens，上游返回）；会话标题自动总结（FR-88/91 同时验证）。
 - 三阶段工作流：任务「新建 test-aide-proposal.txt」→ plan/propose/review 全部 completed，提案为有效 JSON，进入 awaiting_approval。
 - 应用与人工验证：POST apply → completed、applied=true；宿主机读回文件内容 `hello aide` 一致。

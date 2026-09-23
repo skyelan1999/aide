@@ -1,0 +1,56 @@
+{
+  "profile": "quick",
+  "status": "pass",
+  "fingerprint": "b64d31a22092d18f19debb954c02d9556488d6256a9d778afaf4ece2e4a57ff3",
+  "head": "c2dd38a637584cf380f3ec5cef0f39b3f30b383a",
+  "time": "20260923T133812208561Z",
+  "results": [
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/app.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/settings-init.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/version.sh",
+        "check"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_agent_route.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_docs.py"
+      ],
+      "exit": 0
+    }
+  ],
+  "log": ".agent-state/verify-20260923T133812208561Z.log"
+}

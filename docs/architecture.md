@@ -1,108 +1,106 @@
-# aide 架构
+# aide 架构与接口索引
 
-> 本文描述 aide 的**当前实现**（main 分支，PRD v1.3）。增量设计文档见 [`doc/architecture/`](../doc/architecture/)：主题系统（`2026-09-21-theme-switching.md`）、设置中心（`2026-09-21-settings-panel.md`）、模型参数 Profile 与策略路由（`2026-09-21-model-profiles.md`）。
+核对日期：2026-09-23。本次交付目标 0.1.6.0 RC1；aide 是可由 AI 按场景扩展的 Go/浏览器/Docker 基座。历史验收保留于 verification.md，发布身份由 tag 与镜像记录确认。
 
-## 设计
-
-浏览器界面通过带 Bearer token 的同源 REST API 访问单个 Go 服务。服务以 `go:embed` 提供静态资源（含 `web/` 下递归子目录），不需要前端开发服务器。Docker 是工具执行环境，本地 bind mount 提供工作项目及只读上下文。
-
-前端分三层：**令牌主题层**（`themes/{light,dark}/tokens.css`，79 个冻结语义令牌）→ **设置存储层**（`settings-init.js`，`<head>` 首位同步脚本，唯一事实源）→ **应用层**（原生 JS/CSS）。界面设置以 JSON 文档持久化于 `localStorage['aide.ui']`；设置面板由 `settings-schema.json` 数据驱动渲染。模型调用参数由 Profile（`profiles.json`）与策略（`routing-policy.json`）在服务端解析。
+## 系统结构
 
 ```mermaid
-flowchart LR
-    UI[浏览器工作台] --> HTTP[Go HTTP API / 鉴权]
-    HTTP --> Sessions[会话与任务状态]
-    HTTP --> Files[文件工具 / os.Root]
-    HTTP --> Shell[命令运行器 / 超时与取消]
-    HTTP --> Profiles[模型参数 Profile / 策略路由]
-    Sessions --> Plan[规划]
-    Plan --> Propose[生成文件提案]
-    Propose --> Review[审查]
-    Review --> Approval[用户应用]
-    Approval --> Files
-    Plan --> Model[兼容 Chat Completions 的模型]
-    Propose --> Model
-    Review --> Model
-    Profiles --> Model
-    Profiles --> Policy[profiles.json / routing-policy.json]
-    Files --> Work[/workspace 可读写挂载]
-    Files --> Ref[/context 只读挂载]
-    Sessions --> Data[/data 持久卷]
-    Shell --> Runtime[Docker 内 Go / Python / Node / Git]
+flowchart TB
+    Browser[浏览器：会话 / 文件 / 设置 / 轨迹] --> API[Go HTTP API：令牌与同源校验]
+    API --> Runs[任务与上下文构造器]
+    API --> Workspace[工作区身份 / 本地与 SSH 驱动]
+    API --> Storage[会话 / 设置 / 来源 / 统计]
+    Runs --> Provider[Chat Completions 提供商]
+    Runs --> Tools[内置工具 / Node 插件宿主]
+    Tools --> Proposals[待批准文件与命令提案]
+    Proposals --> Approval[用户确认]
+    Approval --> Workspace
+    Workspace --> Mounts[/workspace · /context · /local]
+    Storage --> Data[/data 持久卷]
 ```
 
-## 模块边界
+Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行。前端使用原生 JS/CSS 和本地 vendor Markdown 库，由 `go:embed` 编入二进制。Node 插件宿主是可信代码执行器，不是权限沙箱。
 
-| 文件 | 责任 | 后续扩展 |
+## 模块职责
+
+| 文件 | 责任 |
+| --- | --- |
+| `cmd/aide/main.go` | 启动与退出 |
+| `internal/server/server.go` | 路由、鉴权、配置、会话存储、统计与费率、构建身份 |
+| `workflow.go` | 任务状态、工具循环、提案、应用、摘要压缩 |
+| `context.go` | 上下文预览、预算拦截、请求快照 |
+| `provider.go` | 模型请求、参数、usage、超时；当前非 SSE |
+| `profiles.go` | 内置/用户 Profile、策略文件、参数校验 |
+| `workspace_config.go` / `ssh_session.go` | 工作区身份、本地映射、SSH/SFTP 生命周期 |
+| `files.go` / `sources.go` | 路径/内容策略、读写冲突、辅助资料驱动 |
+| `command.go` | 非交互 shell、NDJSON 输出、超时与取消 |
+| `plugins.go` / `plugin_host.js` | 插件登记、加载、schema 和 handler |
+| `web/settings-init.js` | 同步首帧外观、`aide.ui`、系统外观响应与跨标签同步 |
+| `web/settings-schema.json` / `app.js` | 设置导航、控件与应用交互 |
+| `web/themes/**` / `style.css` / `macos.css` | 颜色变量、既有样式与新版表现层 |
+
+文件名省略前缀时均位于 `internal/server/`。不维护容易过时的文件行数/测试数量，查当前源码与本次测试输出。
+
+## 两种路由不能混淆
+
+- 产品模型路由：`profiles.json` + `routing-policy.json`，选择模型参数 Profile。
+- 开发 Agent 路由：`AGENTS.md` → `docs/agent/WORKFLOW.md` + `router.json`，管理需求到发布的开发过程，不参与用户模型任务执行。
+
+## 数据与权限
+
+会话写入 `/data/session-<id>.json`；模型连接配置、令牌、Token 统计/费率等也在数据卷。`profiles.json` 与模型策略位于工程目录。来源登记在配置的缓存路径，秘密在数据卷；UI 外观在浏览器 `localStorage['aide.ui']`。
+
+Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/context`；`/local` 默认是可写 HOME。`os.Root` 和路径检查约束文件 API，但手动命令/Node 插件仍具有容器用户可访问的目录权限。插件 helper 当前读取 `/workspace`，不能把它等同于所有远程工作区的统一文件驱动。
+
+任务快照记录工作区身份；旧提案、编辑器保存需要通过身份和哈希检查。文件应用为逐文件原子替换，可能部分成功。压缩用结构化摘要与近期历史构造后续请求，不保证删除 Runs 或缩小磁盘。
+
+## API 索引
+
+除静态资源、`/healthz` 外，`/api/` 路由需要 Bearer token；以 `server.go: Handler` 为完整注册表。
+
+| 方法 | 路由 | 用途 |
 | --- | --- | --- |
-| `server.go` | 路由、认证、配置、会话持久化、Profile 加载、关闭处理 | 用户与项目隔离、数据库存储 |
-| `profiles.go` | 系统/用户 Profile、参数校验、`profiles.json` 持久化、auto 路由策略解析 | 策略表达式引擎、Profile 导入导出 |
-| `provider.go` | 单次 Chat Completions 请求、Profile 参数透传、reasoner 参数剔除、超时与错误处理 | SSE 流式、工具调用协议 |
-| `workflow.go` | 任务状态、上下文、规划/提案/审查、应用、策略解析与任务记录 | 可配置 DAG、工具注册、审批策略 |
-| `files.go` | 根目录约束、文本大小限制、版本哈希、原子替换 | 精确 diff、文件搜索、补丁应用 |
-| `command.go` | Linux shell 运行、输出流、并发上限、取消进程组 | PTY/WebSocket、命令日志与重放 |
-| `server_test.go` / `profiles_test.go` | 14 个测试函数：鉴权、文件、设置、工作流、Provider、命令、恢复、Profile、路由 | — |
-| `web/index.html` / `app.js` / `style.css` | 会话、任务、文件、模型设置、命令面板、设置面板（Glass UI）、策略按钮 | Monaco 编辑器、可视工作流画布 |
-| `web/settings-init.js` | 界面设置 JSON 存储（`aide.ui`）+ 主题引擎（首帧前同步应用） | 更多设置字段 |
-| `web/settings-schema.json` | 设置面板结构定义（数据驱动渲染） | 新增分组/控件类型 |
-| `web/themes/{dark,light}/tokens.css` | 79 个语义令牌的暗/明两套取值 | 第 3/4 套方案（架构支持 ≤8） |
+| GET | `/api/config` | 脱敏配置、version/revision/buildCommit |
+| PUT | `/api/settings` | 模型连接与模型列表 |
+| GET | `/api/models`、`/api/balance` | 提供商代理；支持程度依赖上游 |
+| GET / PUT | `/api/profiles` | Profile 与当前策略 |
+| GET / PUT | `/api/workspace-config` | 工作目录、文档、缓存、远程连接 |
+| GET / PUT | `/api/sources` | 辅助资料注册表 |
+| GET | `/api/files`、`/api/file` | 目录/文本读取 |
+| PUT | `/api/file` | 保存；包含路径、正文、哈希和工作区身份 |
+| GET / POST | `/api/sessions` | 会话列表/创建 |
+| GET | `/api/sessions/{id}` | 会话、消息与任务 |
+| POST | `/api/sessions/{id}/runs` | 启动对话或工作流 |
+| POST | `/api/sessions/{id}/runs/{run}/cancel`、`/apply` | 取消/应用 |
+| GET | `/api/sessions/{id}/runs/{run}/requests` | 请求快照 |
+| POST | `/api/context-preview` | 与运行请求共用构造器的预算预览 |
+| GET | `/api/search` | 会话全文搜索 |
+| POST | `/api/sessions/{id}/compact` | 手动摘要压缩 |
+| GET | `/api/token-stats` | 用量与费用汇总 |
+| GET / PUT | `/api/token-pricing` | 费率管理 |
+| GET / POST | `/api/plugins` | 插件列表/上传 |
+| PUT / DELETE | `/api/plugins/{id}` | 启停/删除 |
+| GET | `/api/plugin-surface` | 插件能力清单 |
+| POST | `/api/command` | 命令执行，NDJSON 输出 |
 
-不为初版引入 Cordis 兼容层；DSH 是参考对象，aide 的运行时与代码独立。当前顺序工作流在 Go goroutine 中执行，无外部编排服务依赖。
+这里是导航索引，不代替每个 handler 中的完整请求结构、验证与错误码。
 
-## 数据与状态
+## 任务与工具
 
-会话单独存成 `/data/session-<id>.json`，先写临时文件、fsync，再 rename。状态包含用户输入、助手回答、任务、各步骤产物、文件提案、建议命令、应用标记，以及本次任务的 `strategy`/`profile`。`settings.json` 存储模型配置，`access-token` 保存本地访问令牌；权限均为 0600。
+`running → completed / awaiting_approval / failed / cancelled`；待审批提案应用后 completed；服务重启将运行任务标记 interrupted。
 
-工程目录（工作区根）另有两份运行时可保存的 JSON：
+规划、提案、审查每个阶段可进入模型工具循环，当前循环最多 10 轮。`list_files`/`read_file` 直接读，`write_file`/`run_shell` 产生提案。工具结果回传模型；已有文件写入仍需显式附件快照。插件参数 schema 进入工具声明，但可信插件本身能直接使用 Node 能力，不能声称写操作都被安全沙箱阻止。
 
-- `profiles.json`：策略与用户 Profile（`{"version":1,"strategy":"manual"|"auto","activeProfile":"<id>","profiles":[…]}`）。3 个系统 Profile（`default`/`precise`/`creative`）**硬编码在 Go**，文件无法篡改；写入沿用原子 JSON。
-- `routing-policy.json`（或 `routing-policy.md` 内 ```json 块）：auto 路由规则 `{rules:[{when:{mode|promptContains},use}],default}`，首个命中生效，无命中/文件缺失回落 `default`。
-
-任务流转：
-
-```text
-running → completed                    对话或无文件方案
-running → awaiting_approval → completed 有文件方案，由用户应用
-running → failed / cancelled            模型错误、协议错误、停止、超时
-running → interrupted                   服务重启后的恢复标记
-```
-
-每个会话最多一个运行任务，全服务最多四个模型任务；命令最多四个并发。模型请求最长两分钟，整个任务最长六分钟，命令最长一分钟。
-
-Profile 参数在 `startTask` 时解析为 `ProfileParams`（temperature 0–2、top_p 0–1、max_tokens 1–8192、两个 penalty −2–2、response_format text/json_object、stop ≤16 项，LIM-22），随 `complete()` 合并进请求体；模型名含 `reasoner` 时自动剔除 temperature/top_p/penalty。`startTask` 缺省 strategy=manual、profile=default，行为与改造前一致。
-
-工作流 JSON 格式：
+## 界面设置
 
 ```json
-{"summary":"实现说明","files":[{"path":"relative/path.go","content":"完整文件内容"}],"commands":["go test ./..."]}
+{"version":1,"theme":"system","palette":"blue"}
 ```
 
-模型提供的 `baseHash`、`before`、`applied` 不可信，服务使用真实附件快照覆盖它们。已有文件必须包含在本次任务附件中；新文件必须尚不存在。用户应用前，服务重新验证内容哈希。应用是逐文件原子写入，进度逐文件持久化。
+`theme` 为 light/dark/system，`palette` 为 blue/green。页面 `data-theme` 是解析后的明暗，`data-theme-pref` 是用户选择，`data-palette` 是风格。专业与经典各一排三项，通过 `aideUI.setAppearance()` 一次保存组合。旧 `aide.theme` 和中间版本 classic 偏好迁移；设置 schema 还包含消耗统计、模型参数、关于。
 
-## 前端与设置
+## 验证与扩展
 
-- **主题**：`settings-init.js` 在 `<head>` 首位同步执行（CSP 禁内联），首帧前写 `html[data-theme]`/`data-theme-pref`；`localStorage['aide.ui']` 为唯一 JSON 设置文档（旧键 `aide.theme` 自动迁移），`window.aideUI` 为 JSON 门面、`window.aideTheme` 为兼容门面；明/暗/跟随系统三态收纳在设置面板分段控件中。
-- **设置面板**：品牌 logo 打开 Glass 面板（backdrop blur + 弹性缓动），内容由 `settings-schema.json` 驱动；新增控件类型只需注册渲染器（`controlRenderers`）。
-- **策略按钮**：聊天栏左侧弹层选择 `auto` 或手动 Profile，选择即 PUT `/api/profiles`；发送任务时携带 strategy/profile，任务记录展示实际生效配置。
+变更前读取 [统一开发工作流](agent/WORKFLOW.md)。新前端须验证浏览器实际交互；正式发布须在没有 `/web` 挂载的构建镜像中验证 embed 资源。早期预览使用 RC5 后端 + 工作区静态文件；本次发布另行验证无静态目录覆盖的镜像。
 
-## API
-
-除静态资源与 `/healthz` 外，所有 API 需要 `Authorization: Bearer <token>`。
-
-| 方法 | 路径 | 用途 |
-| --- | --- | --- |
-| GET | `/api/config` | 不含密钥的配置与运行信息 |
-| PUT | `/api/settings` | 保存 API 地址、模型和密钥 |
-| GET | `/api/profiles` | 合并列表（3 系统 + 用户 Profile）+ strategy + activeProfile |
-| PUT | `/api/profiles` | `{strategy,activeProfile,profiles}`；系统 id 不可改；参数越界/未知 id 400 |
-| GET | `/api/files?root=workspace&path=.` | 列目录；root 也可为 context |
-| GET | `/api/file?root=workspace&path=README.md` | 读文本与版本哈希 |
-| PUT | `/api/file` | `{path,content,hash}`；hash 为空仅允许新文件 |
-| GET / POST | `/api/sessions` | 列出/创建会话 |
-| GET | `/api/sessions/{id}` | 完整会话及任务状态 |
-| POST | `/api/sessions/{id}/runs` | `{prompt,mode,attachments,strategy,profile}`；后两者可选，缺省 manual/default |
-| POST | `/api/sessions/{id}/runs/{run}/cancel` | 取消任务 |
-| POST | `/api/sessions/{id}/runs/{run}/apply` | 应用已审查的文件方案 |
-| POST | `/api/command` | `{command,cwd}`，返回 NDJSON 输出与退出状态 |
-
-附件格式为 `[{"root":"workspace","path":"README.md"}]`。只有工作区可写；辅助资料仅可读。运行模型调用需要显式用户任务；保存配置不会自动发出调用。
+待独立规划：SSE、PTY、目录分页、会话归档、真实 MCP、统一插件文件驱动。不要把登记入口或预设名称当成这些能力已经存在。

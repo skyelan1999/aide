@@ -1,10 +1,12 @@
 # 模型参数 Profile 与策略路由 · 系统设计（增量）
 
+> **历史设计（2026-09-21）**：Profile 与规则仍存在；工具循环和模型选择入口以后续实现为准。 当前状态见 [现行 PRD](../PRD.md) 与 [架构](../architecture.md)。下文“待实施/已验证”仅代表原设计时间点，不能用于今天的发布判断。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 系统设计（System Design） |
 | 日期 | 2026-09-21 |
-| 上游依据 | `doc/prd/2026-09-21-model-profiles.md`（增量 PRD）+ `doc/PRD.md` v1.3 |
+| 上游依据 | `docs/prd/2026-09-21-model-profiles.md`（增量 PRD）+ `docs/PRD.md` v1.3 |
 | 对应分支 | `feat/model-profiles` |
 | 功能基线 | `9a47983` |
 | 作者 | 编码助手 |
@@ -86,7 +88,7 @@ type Profile struct { ID, Name string; System bool; Params ProfileParams }
 | `web/style.css` | 配置卡片、锁定态、策略按钮与弹层样式（只引用既有令牌） |
 | `profiles.json` | 种子文件（strategy=manual, activeProfile=default, 空用户配置），提交进仓库 |
 | `routing-policy.json` | 种子文件（示例规则 + default 回落），提交进仓库 |
-| `doc/PRD.md` + 增量文档 | v1.3，FR-61~64、LIM-22/23 |
+| `docs/PRD.md` + 增量文档 | v1.3，FR-61~64、LIM-22/23 |
 
 ## 6. 约束自查
 

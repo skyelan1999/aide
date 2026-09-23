@@ -1,0 +1,87 @@
+{
+  "profile": "full",
+  "status": "pass",
+  "fingerprint": "db9b208cf00a8baf792e3232fdaf1a018246820f83db79f9ffc63f1c67049d20",
+  "head": "c2dd38a637584cf380f3ec5cef0f39b3f30b383a",
+  "time": "20260923T135105075715Z",
+  "results": [
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/app.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--check",
+        "internal/server/web/settings-init.js"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/version.sh",
+        "check"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_agent_route.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/check_docs.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "scripts/install.sh"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "bash",
+        "-n",
+        "scripts/aide.sh"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "python3",
+        "scripts/test_install.py"
+      ],
+      "exit": 0
+    },
+    {
+      "command": [
+        "bash",
+        "scripts/aide.sh",
+        "test"
+      ],
+      "exit": 0
+    }
+  ],
+  "log": ".agent-state/verify-20260923T135105075715Z.log"
+}

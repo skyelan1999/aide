@@ -18,7 +18,7 @@ async function refreshConfig() {
   $('connection').textContent = '● 本地服务已连接'; $('connection').classList.add('ready');
   const versionText = state.config.version ? 'v' + state.config.version : 'dev';
   $('app-version').textContent = versionText;
-  $('settings-sheet-version').textContent = ' · aide ' + versionText + ' · ui15';
+  $('settings-sheet-version').textContent = ' · aide ' + versionText;
   $('model-status').textContent = state.config.configured ? '已配置' : '未配置';
   $('model-name').textContent = state.config.configured ? state.config.model + ' · API 已配置' : '先配置模型，即可开始真实 AI 对话';
   estimateContext();
@@ -27,7 +27,7 @@ async function refreshConfig() {
 async function loadSessions() {
   const sessions = await api('/sessions'); $('sessions').replaceChildren();
   if (!sessions.length) $('sessions').append(el('p', 'sessions-empty', '还没有会话。\n从一个想法开始吧。'));
-  sessions.forEach(s => { const b = el('button', 'session-item' + (state.session?.id === s.id ? ' active' : ''), '◌  ' + s.title); b.title = s.title; b.onclick = action(() => selectSession(s.id)); $('sessions').append(b); });
+  sessions.forEach(s => { const b = el('button', 'session-item' + (state.session?.id === s.id ? ' active' : ''), s.title); b.title = s.title; b.onclick = action(() => selectSession(s.id)); $('sessions').append(b); });
   return sessions;
 }
 const sessionSeq = { value: 0 }; // R07：递增请求序号，旧响应不得覆盖新选择
@@ -195,7 +195,34 @@ document.querySelectorAll('.mode-switch button').forEach(b => b.onclick = () => 
 document.querySelectorAll('.starter').forEach(b => b.onclick = () => { $('prompt').value = b.dataset.prompt; setMode(b.dataset.mode || 'chat'); $('prompt').focus(); });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
 document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { state.root = b.dataset.root; state.dir = '.'; if (state.root === 'context') state.source = ''; document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); renderSourceChips(); await loadFiles(); }));
-$('files-toggle').onclick = () => { document.body.classList.remove('plugins-mode'); state.panel = 'files'; $('plugins-toggle').classList.remove('active'); $('plugins-toggle').setAttribute('aria-pressed', 'false'); $('files-toggle').classList.add('active'); $('files-toggle').setAttribute('aria-pressed', 'true'); if (innerWidth <= 950) $('file-panel').classList.toggle('mobile-open'); else document.body.classList.toggle('files-hidden'); };
+function syncPanelButtons() {
+  const plugins = document.body.classList.contains('plugins-mode');
+  const files = !plugins && (innerWidth <= 950 ? $('file-panel').classList.contains('mobile-open') : !document.body.classList.contains('files-hidden'));
+  for (const [id, selected] of [['files-toggle', files], ['plugins-toggle', plugins]]) {
+    $(id).classList.toggle('active', selected);
+    $(id).setAttribute('aria-pressed', String(selected));
+  }
+}
+function closeSidePanels() {
+  document.body.classList.remove('plugins-mode');
+  document.body.classList.add('files-hidden');
+  $('file-panel').classList.remove('mobile-open');
+  syncPanelButtons();
+}
+$('files-toggle').onclick = () => {
+  const fromPlugins = document.body.classList.contains('plugins-mode');
+  document.body.classList.remove('plugins-mode');
+  state.panel = 'files';
+  if (innerWidth <= 950) {
+    document.body.classList.remove('files-hidden');
+    $('file-panel').classList.toggle('mobile-open', fromPlugins || !$('file-panel').classList.contains('mobile-open'));
+  } else if (fromPlugins) document.body.classList.remove('files-hidden');
+  else document.body.classList.toggle('files-hidden');
+  syncPanelButtons();
+};
+$('file-panel-close').onclick = () => { closeSidePanels(); $('files-toggle').focus(); };
+$('plugin-panel-close').onclick = () => { closeSidePanels(); $('plugins-toggle').focus(); };
+window.addEventListener('resize', syncPanelButtons);
 $('parent-dir').onclick = action(async () => { state.dir = state.dir.includes('/') ? state.dir.slice(0, state.dir.lastIndexOf('/')) : '.'; await loadFiles(); });
 $('task-form').onsubmit = action(async event => {
   event.preventDefault(); const prompt = $('prompt').value.trim(); if (!prompt || state.busy) return;
@@ -353,6 +380,8 @@ function renderSegmentedControl(control) {
   const value = el('span', 'control-value');
   head.append(el('span', '', control.label), value);
   const track = el('div', 'segmented');
+  track.setAttribute('data-control', control.id);
+  if (control.palette) track.dataset.palette = control.palette;
   track.setAttribute('role', 'group');
   track.setAttribute('aria-label', control.label);
   const thumb = el('span', 'segmented-thumb');
@@ -366,16 +395,20 @@ function renderSegmentedControl(control) {
   });
   const apply = () => {
     const current = window.aideUI ? window.aideUI.get(control.id) : (control.options[0] || {}).value;
-    const active = buttons.find(b => b.dataset.value === current) || buttons[0];
+    const rowActive = !control.palette || window.aideUI?.get('palette') === control.palette;
+    const active = rowActive ? (buttons.find(b => b.dataset.value === current) || buttons[0]) : null;
     buttons.forEach(b => b.setAttribute('aria-pressed', b === active ? 'true' : 'false'));
     const match = (control.options || []).find(o => o.value === current);
-    value.textContent = match ? match.label : (current || '');
-    thumb.style.width = active.offsetWidth + 'px';
-    thumb.style.transform = 'translateX(' + active.offsetLeft + 'px)';
+    value.textContent = rowActive ? (match ? match.label : (current || '')) : '';
+    thumb.style.width = (active ? active.offsetWidth : 0) + 'px';
+    thumb.style.transform = 'translateX(' + (active ? active.offsetLeft : 0) + 'px)';
   };
   track.addEventListener('click', event => {
     const b = event.target.closest('button[data-value]');
-    if (b && window.aideUI) window.aideUI.set(control.id, b.dataset.value);
+    if (b && window.aideUI) {
+      if (control.palette) window.aideUI.setAppearance(control.palette, b.dataset.value);
+      else window.aideUI.set(control.id, b.dataset.value);
+    }
   });
   if (window.aideUI) { window.aideUI.subscribe(apply); window.addEventListener('resize', apply); settingsPanel.refreshers.push(apply); }
   track.append(thumb, ...buttons);
@@ -383,7 +416,28 @@ function renderSegmentedControl(control) {
   requestAnimationFrame(apply);
   return wrap;
 }
-const controlRenderers = { segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats };
+function renderAboutProject(control) {
+  const card = el('div', 'about-project');
+  const hero = el('div', 'about-identity');
+  const mark = el('span', 'about-mark', 'a');
+  mark.setAttribute('aria-hidden', 'true');
+  const identity = el('div');
+  identity.append(el('h4', 'about-name', 'aide'), el('p', 'about-description', '由 AI 按你的场景定制的工作台基座'));
+  hero.append(mark, identity);
+  const version = el('div', 'about-version');
+  version.append(el('span', '', '当前版本'), el('span', '', state.config?.version ? 'v' + state.config.version : '开发版本'));
+  const link = el('a', 'about-repository');
+  link.href = control.repository;
+  link.target = '_blank';
+  link.rel = 'noopener noreferrer';
+  link.setAttribute('aria-label', '在新标签页打开 aide 的 GitHub 仓库');
+  const text = el('span');
+  text.append(el('strong', '', 'GitHub'), el('span', 'about-repository-path', 'skyelan1999 / aide'));
+  link.append(text, el('span', 'about-external', '↗'));
+  card.append(hero, version, link);
+  return card;
+}
+const controlRenderers = { 'about-project': renderAboutProject, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats };
 function renderControlsInto(host, controls, description) {
   if (description) host.append(el('p', 'section-desc', description));
   for (const control of controls || []) {
@@ -407,6 +461,7 @@ function renderSettingsSheet() {
   }
   const section = sections.find(x => x.id === settingsPanel.active);
   if (!section) return;
+  content.append(el('h3', 'settings-page-title', section.title));
   if (section.children?.length) {
     const sub = el('div', 'settings-subnav');
     const children = section.children;
@@ -688,7 +743,16 @@ function renderTokenStats(control) {
     callRecords.forEach(c => { const k = (c.time || '').slice(0, 10); dayCost[k] = (dayCost[k] || 0) + (c.cost || 0); });
     // R08：费用仅由服务端逐调用记录汇总；未计价历史（旧版汇总）单独提示，不并入费用
     const estimatedCost = data.estimatedCost ?? 0;
-    head.querySelector('.control-value').textContent = '累计 ' + fmtStatTokens(totalsObj.total || 0) + ' tokens · 已计价费用 ¥' + cost.toFixed(2) + (estimatedCost > 0 ? ' · 刊例价估算 ¥' + estimatedCost.toFixed(2) : '');
+    const metrics = head.querySelector('.control-value');
+    metrics.replaceChildren();
+    const metric = (label, value, caption) => {
+      const card = el('div', 'usage-metric');
+      card.append(el('span', 'usage-label', label), el('strong', 'usage-value', value), el('small', 'usage-caption', caption));
+      return card;
+    };
+    metrics.append(metric('累计用量', fmtStatTokens(totalsObj.total || 0), 'tokens · ' + (totalsObj.calls || 0) + ' 次调用'),
+      metric('已计价费用', '¥' + cost.toFixed(2), '按调用时刻的费率快照'));
+    if (estimatedCost > 0) metrics.append(metric('刊例价估算', '¥' + estimatedCost.toFixed(2), '与已计价费用分开统计'));
     chips.replaceChildren();
     chips.append(
       el('span', 'token-chip', '今日 ' + fmtStatTokens(todayStats.total || 0) + ' tokens' + (todayStats.priced !== false ? ' · ¥' + (dayCost[Object.keys(days).sort().pop()] || 0).toFixed(2) : ' · 未计价')),
@@ -775,11 +839,26 @@ function renderTokenStats(control) {
       for (const d of col) {
         const key = d.toISOString().slice(0, 10);
         const day = days[key] || {};
-        const cell = el('span', 'token-cell tk-' + level(day.total || 0));
-        if (d > today) cell.classList.add('future');
+        const cell = el('button', 'token-cell tk-' + level(day.total || 0));
+        cell.type = 'button';
+        cell.setAttribute('aria-label', key + ' · ' + fmtStatTokens(day.total || 0) + ' tokens，查看当日明细');
+        cell.addEventListener('focus', () => showTip(cell, key, day, weekTotal));
+        cell.addEventListener('blur', () => tip.classList.remove('show'));
+        if (d > today) { cell.classList.add('future'); cell.disabled = true; }
+        cell.tabIndex = key === today.toISOString().slice(0, 10) ? 0 : -1;
+        cell.addEventListener('keydown', event => {
+          const delta = { ArrowUp: -1, ArrowDown: 1, ArrowLeft: -7, ArrowRight: 7 }[event.key];
+          if (delta === undefined) return;
+          event.preventDefault();
+          const cells = [...grid.querySelectorAll('button:not(:disabled)')];
+          const next = cells[Math.max(0, Math.min(cells.length - 1, cells.indexOf(cell) + delta))];
+          cells.forEach(item => { item.tabIndex = item === next ? 0 : -1; });
+          next.focus();
+        });
         cell.addEventListener('mouseenter', () => showTip(cell, key, day, weekTotal));
         cell.addEventListener('mouseleave', () => tip.classList.remove('show'));
         cell.addEventListener('click', () => {
+          grid.querySelectorAll('button').forEach(item => { item.tabIndex = item === cell ? 0 : -1; });
           detail.classList.remove('hidden');
           detail.replaceChildren();
           const pricedDay = day.priced !== false;
@@ -790,6 +869,8 @@ function renderTokenStats(control) {
             el('span', '', '调用 ' + (day.calls || 0) + ' 次 · 合计 ' + fmtStatTokens(day.total || 0) + ' tokens' + (day.estimated ? '（用量为估算）' : '')),
             el('span', '', fee)
           );
+          tip.classList.remove('show');
+          detail.scrollIntoView({ block: 'nearest' });
         });
         colEl.append(cell);
       }
@@ -930,7 +1011,7 @@ function estimateContext() {
   $('context-fill').classList.toggle('warn', pct > 90);
   $('context-card').title = (included ? '最近 ' + included + ' 条消息' : '当前会话暂无内容') + ' · 4 字符/词估算 · tokens 已用/窗口';
 }
-/* ── 插件系统（FR-72~75，协议 doc/plugin-protocol.md）：右侧面板 + 上传/搜索/启停/删除/surface ── */
+/* ── 插件系统（FR-72~75，协议 docs/plugin-protocol.md）：右侧面板 + 上传/搜索/启停/删除/surface ── */
 async function loadPluginsPanel() {
   const data = await api('/plugins');
   state.plugins = data.plugins || [];
@@ -988,13 +1069,12 @@ function renderPluginSurface(entries) {
   void active;
 }
 $('plugins-toggle').onclick = action(async () => {
+  if (document.body.classList.contains('plugins-mode')) { closeSidePanels(); return; }
+  document.body.classList.remove('files-hidden');
   document.body.classList.add('plugins-mode');
   state.panel = 'plugins';
-  $('plugins-toggle').classList.add('active');
-  $('plugins-toggle').setAttribute('aria-pressed', 'true');
-  $('files-toggle').classList.remove('active');
-  $('files-toggle').setAttribute('aria-pressed', 'false');
-  if (innerWidth <= 950) $('file-panel').classList.remove('mobile-open');
+  $('file-panel').classList.remove('mobile-open');
+  syncPanelButtons();
   await loadPluginsPanel();
 });
 $('refresh-plugins').onclick = action(loadPluginsPanel);
@@ -1413,9 +1493,49 @@ $('compact-button').onclick = action(async () => {
   refreshCompactInfo();
 });
 async function initialize() {
+  syncPanelButtons();
   await refreshConfig();
   const fragment = new URLSearchParams(location.hash.slice(1));
   if (fragment.has('file')) { await Promise.all([loadWorkspaceConfig(), loadSourcesList()]); await openFileViewMode(); return; }
   await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
 }
 initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
+
+/* Compact-window navigation. Keeps session navigation reachable on iPhone/iPad. */
+function closeSidebarNavigation() {
+  document.body.classList.remove('sidebar-open');
+  $('sidebar-scrim').hidden = true;
+  $('sidebar-toggle').setAttribute('aria-expanded', 'false');
+  $('sidebar-toggle').setAttribute('aria-label', '展开会话导航');
+}
+$('sidebar-toggle').onclick = () => {
+  const open = !document.body.classList.contains('sidebar-open');
+  document.body.classList.toggle('sidebar-open', open);
+  $('sidebar-scrim').hidden = !open;
+  $('sidebar-toggle').setAttribute('aria-expanded', String(open));
+  $('sidebar-toggle').setAttribute('aria-label', open ? '收起会话导航' : '展开会话导航');
+  if (open) $('new-session').focus();
+};
+$('sidebar-scrim').onclick = () => { closeSidebarNavigation(); $('sidebar-toggle').focus(); };
+$('sessions').addEventListener('click', event => { if (event.target.closest('button')) closeSidebarNavigation(); });
+$('new-session').addEventListener('click', closeSidebarNavigation);
+window.addEventListener('resize', () => { if (innerWidth > 700) closeSidebarNavigation(); });
+// Utility windows are modal for keyboard users as well as pointer users.
+document.addEventListener('keydown', event => {
+  if (document.querySelector('dialog[open]')) return;
+  const sheet = document.querySelector('.settings-sheet.open');
+  const sidebar = document.body.classList.contains('sidebar-open') ? $('sidebar') : null;
+  if (event.key === 'Escape' && sidebar && !sheet) {
+    closeSidebarNavigation(); $('sidebar-toggle').focus(); return;
+  }
+  if (event.key !== 'Tab' || !(sheet || sidebar)) return;
+  const controls = [...(sheet || sidebar).querySelectorAll('button, input, select, textarea, a[href], [tabindex="0"]')]
+    .filter(node => !node.disabled && node.tabIndex >= 0 && node.getClientRects().length);
+  if (!controls.length) return;
+  const first = controls[0], last = controls[controls.length - 1];
+  if (event.shiftKey && (document.activeElement === first || !(sheet || sidebar).contains(document.activeElement))) {
+    event.preventDefault(); last.focus();
+  } else if (!event.shiftKey && (document.activeElement === last || !(sheet || sidebar).contains(document.activeElement))) {
+    event.preventDefault(); first.focus();
+  }
+});

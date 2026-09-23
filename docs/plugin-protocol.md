@@ -1,4 +1,4 @@
-# aide 插件协议标准（Plugin Protocol v1）
+# aide 插件协议标准（Plugin Protocol v1.1）
 
 | 项 | 值 |
 | --- | --- |
@@ -63,7 +63,7 @@ module.exports = () => ({
 | `ctx.tool` | `(def) => void` | 注册工具：`def.name` / `def.description` / `def.parameters`（JSON Schema）/ `def.handler(args, api)`；**v1.1：带 handler 的工具可被模型调用**（surface 标记 `executable: true`） | 记入 surface |
 | `ctx.slot` | `(def) => void` | 声明 UI 槽位（读取 `def.id` / `def.name`） | 记入 surface |
 
-v1 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通过加载），不执行副作用；`tool/slot` 声明会被收集进插件 surface，供界面展示与后续协议版本接入模型工具循环。除上表 API 外，插件访问任何其他 ctx 属性将得到 `undefined`（不注入、不伪造）。
+v1.1 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通过加载），不执行副作用；`tool/slot` 声明会被收集进插件 surface，供界面展示；带 handler 与参数声明的工具可进入模型工具循环。除上表 API 外，插件访问任何其他 ctx 属性将得到 `undefined`（不注入、不伪造）。
 
 ## 4. 清单（manifest）
 
@@ -119,11 +119,11 @@ v1 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通过
 
 | api | 行为 |
 | --- | --- |
-| `api.readFile(rel)` / `api.listFiles(rel)` | **直接执行**（仅限容器内 /workspace；路径越界报错） |
+| `api.readFile(rel)` / `api.listFiles(rel)` | **直接执行**（helper 基于容器 /workspace，拒绝绝对路径和 ..；不跟随所有远程根，且不是独立权限沙箱） |
 | `api.proposeWrite(rel, content)` / `api.proposeCommand(cmd)` | **只生成提案**（返回 `{proposal:{type:"file"|"command",…}}`），由 Go 侧转为待批准提案（P2 原则），模型不得宣称已写入/已执行 |
 | `api.log(...)` | 输出宿主日志 |
 
-aide 内置四个系统工具与插件工具同环：`list_files`/`read_file` 直接执行，`write_file`/`run_shell` 仅生成提案；模型工具循环 ≤6 轮；写文件仅允许新文件或已附加文件（P3 原则保留）。工具调用结果经 `role:"tool"` 消息回传模型继续推理。
+aide 内置四个系统工具与插件工具同环：`list_files`/`read_file` 直接执行，`write_file`/`run_shell` 仅生成提案；每个阶段的模型工具循环 ≤10 轮；写文件仅允许新文件或已附加文件（P3 原则保留）。工具调用结果经 `role:"tool"` 消息回传模型继续推理。
 
 ## 6. 安全模型（与 aide 既有边界一致）
 
@@ -137,11 +137,11 @@ aide 内置四个系统工具与插件工具同环：`list_files`/`read_file` �
 - 协议版本升级规则：新增 ctx API → 小版本（v1.1）；变更既有 API 语义或校验规则 → 大版本（v2.0）。历史插件按 manifest 记录兼容性说明。
 - 后续路线：v1.2 Slot 渲染与面板注册；v2 服务注入与多插件依赖。
 
-## 8. 默认预装：DSH 支持插件集（官方预设）
+## 8. 默认预装：DSH 形态参考预设（aide 内置）
 
 aide 随仓库默认预装一组 **DSH 能力预设插件**（工程目录 `plugins/`，默认启用），覆盖 DSH 的核心插件目录：`skill`（技能）、`goal`（目标）、`plan`（计划）、`todo`（任务清单）、`feedback`（反馈）、`subagent`（子代理）、`terminal`（终端）、`workflow`（工作流）。
 
-诚实边界：DSH 官方插件以 TypeScript 编译产物分发并依赖完整 Cordis 服务注入，**无法在协议 v1 宿主中直接运行**；本预装集是按其能力与命名用 **v1 协议重写的形态兼容预设**——可上传校验、启用/停用、展示其声明的工具与槽位，但不执行 DSH 原版逻辑。接入真实运行时能力需协议 v1.1（工具循环）与 v2（服务注入）落地后逐步替换。
+诚实边界：DSH 官方插件以 TypeScript 编译产物分发并依赖完整 Cordis 服务注入，**无法在协议 v1 宿主中直接运行**；本预装集是按其能力与命名用 **v1 协议重写的形态兼容预设**——可上传校验、启用/停用、展示其声明的工具与槽位，但不执行 DSH 原版逻辑。v1.1 已支持带 handler 的工具调用（terminal 预设含实现）；其他声明不等于相应 DSH 能力已经实现，v2 服务注入仍未落地。
 
 ## 9. 示例（可上传验证）
 

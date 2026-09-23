@@ -12,8 +12,14 @@ if ! "$DOCKER_BIN" info >/dev/null 2>&1; then
   "$DOCKER_BIN" info >/dev/null
 fi
 case "${1:-start}" in
-  start)
-    "$DOCKER_BIN" compose up -d --build
+  start|start-image)
+    if [[ "${1:-start}" == start-image ]]; then
+      "$DOCKER_BIN" compose up -d --no-build --pull never
+    else
+      export AIDE_VERSION="${AIDE_VERSION:-$(bash scripts/version.sh show)}"
+      export AIDE_COMMIT="${AIDE_COMMIT:-$(git rev-parse HEAD)}"
+      "$DOCKER_BIN" compose up -d --build
+    fi
     for attempt in {1..60}; do if "$DOCKER_BIN" compose exec -T aide curl -fsS http://127.0.0.1:8080/healthz >/dev/null 2>&1; then break; fi; sleep 1; done
     "$DOCKER_BIN" compose exec -T aide curl -fsS http://127.0.0.1:8080/healthz >/dev/null
     ADDRESS="$("$DOCKER_BIN" compose port aide 8080)"
@@ -37,5 +43,5 @@ case "${1:-start}" in
     echo "镜像已导出：$ARCHIVE"
     ;;
   load) "$DOCKER_BIN" image load -i "$PROJECT_DIR/docker-images/aide-local.tar.gz" ;;
-  *) echo "用法：scripts/aide.sh {start|stop|status|logs|test|export|load}" >&2; exit 1 ;;
+  *) echo "用法：scripts/aide.sh {start|start-image|stop|status|logs|test|export|load}" >&2; exit 1 ;;
 esac

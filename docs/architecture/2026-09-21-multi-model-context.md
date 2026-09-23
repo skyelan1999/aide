@@ -1,10 +1,12 @@
 # 多模型管理与上下文统计 · 系统设计（增量）
 
+> **历史设计（2026-09-21）**：模型选择已移入策略弹层；预算预览已增加服务端构造器，旧侧栏公式不是完整请求预算。 当前状态见 [现行 PRD](../PRD.md) 与 [架构](../architecture.md)。下文“待实施/已验证”仅代表原设计时间点，不能用于今天的发布判断。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 系统设计（System Design） |
 | 日期 | 2026-09-21 |
-| 上游依据 | `doc/prd/2026-09-21-multi-model-context.md`（增量 PRD）+ `doc/PRD.md` v1.5 |
+| 上游依据 | `docs/prd/2026-09-21-multi-model-context.md`（增量 PRD）+ `docs/PRD.md` v1.5 |
 | 对应分支 | `feat/multi-model-context` |
 | 功能基线 | `03386db` |
 | 作者 | 编码助手 |
@@ -62,7 +64,7 @@
 | `internal/server/web/index.html` | 侧栏模型选择器 + 上下文统计卡；设置弹窗模型列表区 |
 | `internal/server/web/app.js` | 上述三个交互模块 + 估算函数 |
 | `internal/server/web/style.css` | 新组件样式（令牌化） |
-| `doc/PRD.md` + 增量文档 | v1.5，FR-67~70、LIM-25 |
+| `docs/PRD.md` + 增量文档 | v1.5，FR-67~70、LIM-25 |
 
 ## 5. 约束自查
 

@@ -1,0 +1,21 @@
+
+$ git diff --check
+
+$ node --check internal/server/web/app.js
+
+$ node --check internal/server/web/settings-init.js
+
+$ bash scripts/version.sh check
+校验通过：当前版本 0.1.5.0 RC5
+
+$ python3 scripts/test_agent_route.py
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.034s
+
+OK
+
+$ python3 scripts/check_docs.py
+PASS: 30 Markdown files, 106 local links, JPEG signatures, FR-01..98
+
+release-check: BLOCKED as expected (no release authorization/full receipt; feature branch; uncommitted changes).

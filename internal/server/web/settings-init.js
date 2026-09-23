@@ -29,7 +29,7 @@
   var VERSION = 1;
   var VALID_THEME = ['light', 'dark', 'system']; // 主题枚举唯一来源
   var DEFAULT_PREF = 'system';                   // 缺省偏好
-  var DEFAULT_DOC = { version: VERSION, theme: DEFAULT_PREF };
+  var DEFAULT_DOC = { version: VERSION, theme: DEFAULT_PREF, palette: 'blue' };
   var SYSTEM_QUERY = '(prefers-color-scheme: dark)';
 
   var root = document.documentElement;
@@ -84,13 +84,14 @@
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) parsed = {};
     var theme = typeof parsed.theme === 'string' ? normalizeTheme(parsed.theme) : DEFAULT_PREF;
     if (legacy !== null && typeof parsed.theme !== 'string') theme = normalizeTheme(legacy);
-    // 保留未知字段（向前兼容），只规范 version 与 theme
+    // 保留未知字段（向前兼容），规范 version、theme、palette；兼容旧 classic 偏好
     var doc = {};
     for (var key in parsed) {
       if (Object.prototype.hasOwnProperty.call(parsed, key)) doc[key] = parsed[key];
     }
     doc.version = VERSION;
-    doc.theme = theme;
+    doc.theme = parsed.theme === 'classic' ? 'light' : theme;
+    doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : 'blue';
     var normalized = JSON.stringify(doc);
     if (stored !== normalized) rawSet(KEY, normalized);
     return doc;
@@ -106,6 +107,7 @@
   function applyTheme() {
     root.setAttribute('data-theme', effectiveOf(doc.theme));
     root.setAttribute('data-theme-pref', doc.theme);
+    root.setAttribute('data-palette', doc.palette);
   }
 
   /* ── 通知：单个订阅者异常不得影响设置本身 ── */
@@ -170,7 +172,8 @@
         if (Object.prototype.hasOwnProperty.call(parsed, key)) doc[key] = parsed[key];
       }
       doc.version = VERSION;
-      doc.theme = theme;
+      doc.theme = parsed.theme === 'classic' ? 'light' : theme;
+    doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : 'blue';
       applyTheme();
       notifyAll();
     } else if (event.key === LEGACY_KEY) {
@@ -190,6 +193,13 @@
       return doc[name];
     },
     getAll: snapshot,
+    setAppearance: function (palette, theme) {
+      doc.palette = palette === 'green' ? 'green' : 'blue';
+      doc.theme = normalizeTheme(theme);
+      persist();
+      applyTheme();
+      notifyAll();
+    },
     set: function (name, value) {
       doc[name] = name === 'theme' ? normalizeTheme(value) : value;
       persist();

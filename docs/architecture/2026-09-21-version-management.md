@@ -1,10 +1,12 @@
 # 版本号管理与自动流程托管 · 系统设计（增量）
 
+> **历史设计（2026-09-21）**：版本脚本仍复用；运行版本已改由构建 ldflags 注入，不再读取工作区 version.md。 当前状态见 [现行 PRD](../PRD.md) 与 [架构](../architecture.md)。下文“待实施/已验证”仅代表原设计时间点，不能用于今天的发布判断。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 系统设计（System Design） |
 | 日期 | 2026-09-21 |
-| 上游依据 | `doc/prd/2026-09-21-version-management.md`（增量 PRD）+ `doc/PRD.md` v1.4 |
+| 上游依据 | `docs/prd/2026-09-21-version-management.md`（增量 PRD）+ `docs/PRD.md` v1.4 |
 | 对应分支 | `feat/version-management` |
 | 功能基线 | `672969e` |
 | 作者 | 编码助手 |
@@ -68,7 +70,7 @@
 | `internal/server/web/index.html` | 侧栏运行卡片增 `#app-version`；设置面板底部增 `#settings-sheet-version` |
 | `internal/server/web/app.js` | refreshConfig 后写入两处版本显示 |
 | `internal/server/web/style.css` | `.app-version` 等展示样式（沿用令牌） |
-| `doc/PRD.md` + 增量文档 | v1.4：FR-65/66、LIM-24 |
+| `docs/PRD.md` + 增量文档 | v1.4：FR-65/66、LIM-24 |
 | `README.md` | 「版本管理」小节：version.sh 用法与钩子安装 |
 
 ## 4. 约束与边界

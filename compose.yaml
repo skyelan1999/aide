@@ -1,7 +1,7 @@
 name: aide
 services:
   aide:
-    image: aide:local
+    image: ${AIDE_IMAGE:-aide:local}
     init: true
     build:
       context: .

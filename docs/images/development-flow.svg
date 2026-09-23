@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="270" viewBox="0 0 1120 270" role="img" aria-labelledby="title desc">
+<title id="title">aide：从需求到验证</title><desc id="desc">明确目标、选择上下文、规划与读取、提案与审查、确认应用、运行验证。模型的建议需要经过人工判断和实际验证。</desc>
+<rect width="1120" height="270" rx="22" fill="#f5f7fa"/>
+<g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">
+<text x="32" y="43" font-size="13" fill="#596577" letter-spacing="2">AIDE · DEVELOPMENT WORKFLOW</text>
+<text x="32" y="79" font-size="24" font-weight="600" fill="#172334">让每一步，都有依据。</text>
+<g fill="#fff" stroke="#dce3ec">
+<rect x="32" y="108" width="158" height="104" rx="12"/><rect x="210" y="108" width="158" height="104" rx="12"/><rect x="388" y="108" width="158" height="104" rx="12"/><rect x="566" y="108" width="158" height="104" rx="12"/><rect x="744" y="108" width="158" height="104" rx="12"/><rect x="922" y="108" width="166" height="104" rx="12"/>
+</g>
+<g fill="#3277db" font-size="12" font-weight="600"><text x="48" y="133">01 · 需求</text><text x="226" y="133">02 · 上下文</text><text x="404" y="133">03 · 规划</text><text x="582" y="133">04 · 提案</text><text x="760" y="133">05 · 应用</text><text x="938" y="133">06 · 验证</text></g>
+<g fill="#172334" font-size="17" font-weight="600"><text x="48" y="165">定义验收目标</text><text x="226" y="165">选择项目资料</text><text x="404" y="165">理解与工具读取</text><text x="582" y="165">检查改动方案</text><text x="760" y="165">确认后写入</text><text x="938" y="165">测试真实结果</text></g>
+<g fill="#627083" font-size="12"><text x="48" y="189">明确范围与约束</text><text x="226" y="189">文件、附件与来源</text><text x="404" y="189">保留步骤与轨迹</text><text x="582" y="189">模型审查 + 人工判断</text><text x="760" y="189">校验版本与冲突</text><text x="938" y="189">输出、退出码与证据</text></g>
+<g fill="#9aa8bb" font-size="18"><text x="195" y="166">›</text><text x="373" y="166">›</text><text x="551" y="166">›</text><text x="729" y="166">›</text><text x="907" y="166">›</text></g>
+<text x="32" y="244" font-size="12" fill="#627083">模型完成回答，不等于测试通过。修改是否生效，由文件与执行结果证明。</text>
+</g></svg>

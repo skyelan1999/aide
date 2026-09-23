@@ -1,12 +1,36 @@
-# aide 镜像归档
+# Docker 镜像交付
 
-运行 `bash scripts/aide.sh export` 会在这里生成：
+发行镜像是 aide 可定制工作台的运行基座：内置 Go、Python、Node.js、Git 与已编译应用。场景定制使用源码和 [Agent 工作流](../docs/customization.md)，完成后重建自己的镜像。
 
-- `aide-local.tar.gz`：可通过 Docker 导入的镜像归档。
-- `aide-local.tar.gz.sha256`：归档校验和。
+## 下载与启动
 
-归档被 Git 和 Docker 构建上下文忽略，避免将大型二进制文件提交到源码库。
+从 [GitHub Releases](https://github.com/skyelan1999/aide/releases) 下载同版源码、`aide-0.1.6.0-RC1-linux-arm64.tar.gz` 与 `SHA256SUMS`，将归档放在本目录。此次提供 **linux/arm64（Apple Silicon）** 镜像；x86/amd64 请从源码本机构建，不把 ARM 镜像当作原生 x86 版本。
 
-恢复：`bash scripts/aide.sh load`，然后 `docker compose up -d --no-build`。
+```bash
+# 在归档所在目录验证，再导入
+shasum -a 256 -c SHA256SUMS
+docker load -i aide-0.1.6.0-RC1-linux-arm64.tar.gz
+```
 
-镜像仅包含运行环境与应用，不包含挂载的项目文件、辅助目录、API 密钥和会话数据。会话与模型设置在 `aide_aide-data` 数据卷中，需要单独备份。Apple Silicon 构建的镜像为 linux/arm64；x86 主机建议从源码重新构建。
+进入源码根目录，首次复制 `.env.example` 为 `.env`，创建 context 目录，设置已存在的目录：
+
+```dotenv
+AIDE_IMAGE=aide:0.1.6.0-RC1
+AIDE_PORT=8097
+AIDE_WORKSPACE=.
+AIDE_CONTEXT=./context
+AIDE_LOCAL_ROOT=/absolute/path/to/your/projects
+```
+
+```bash
+mkdir -p context
+bash scripts/aide.sh start-image
+```
+
+`start-image` 只启动已导入的镜像，不重建、不拉取，并沿用浏览器令牌登录流程。`start` 是源码重建入口。不要用新版本标签构建未验证的自定义代码；定制时将 AIDE_IMAGE 改为自己的名称（如 my-aide:local）。
+
+## 本地导出与数据边界
+
+`bash scripts/aide.sh export` 仍将本地开发镜像 aide:local 导出为 aide-local.tar.gz 与校验和；`load` 导入该开发归档。正式 Release 使用独立的版本化归档和标签，避免混淆。
+
+大型归档保留在 aide/docker-images，上传到 Release 附件，不进入 Git 或 Docker 构建上下文。镜像不包含宿主工作文件、辅助目录、API 密钥、访问令牌或会话数据。数据卷另行备份；加载镜像不会恢复数据卷。升级/回滚前阅读 [交接手册](../HANDOVER.md)。

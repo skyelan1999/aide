@@ -1,10 +1,12 @@
 # 设置中心 · 系统设计（增量）
 
+> **历史设计（2026-09-21）**：设置已演进为导航面板，主题为专业/经典两排，thumb 动画不是当前布局要求。 当前状态见 [现行 PRD](../PRD.md) 与 [架构](../architecture.md)。下文“待实施/已验证”仅代表原设计时间点，不能用于今天的发布判断。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 系统设计（System Design） |
 | 日期 | 2026-09-21 |
-| 上游依据 | `doc/prd/2026-09-21-settings-panel.md`（增量 PRD）+ `doc/PRD.md` v1.2 |
+| 上游依据 | `docs/prd/2026-09-21-settings-panel.md`（增量 PRD）+ `docs/PRD.md` v1.2 |
 | 对应分支 | `feat/settings-panel` |
 | 功能基线 | `a5f2032` |
 | 作者 | 编码助手 |
@@ -68,8 +70,8 @@
 | `web/index.html` | head 脚本更名；brand 改 `<button>`；移除顶栏 theme-switch；顶栏加窄屏迷你入口；新增面板/遮罩标记 |
 | `web/app.js` | 删除顶栏主题控件逻辑；新增设置面板模块（schema 渲染 + 开合 + 焦点 + thumb） |
 | `web/style.css` | 追加玻璃面板、分段控件、迷你入口样式（只引用既有 79 令牌） |
-| `doc/PRD.md` | v1.2：FR-58~60、LIM-21、变更记录 |
-| `doc/prd/2026-09-21-settings-panel.md`、`doc/architecture/2026-09-21-settings-panel.md` | 本文档 |
+| `docs/PRD.md` | v1.2：FR-58~60、LIM-21、变更记录 |
+| `docs/prd/2026-09-21-settings-panel.md`、`docs/architecture/2026-09-21-settings-panel.md` | 本文档 |
 
 Go 后端零改动；`//go:embed web/*` 已实证递归包含子目录，`settings-schema.json` 自动嵌入。
 
