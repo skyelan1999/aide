@@ -79,6 +79,7 @@ func normalizeModels(models []ModelRef) ([]ModelRef, error) {
 	}
 	return out, nil
 }
+
 type ToolCall struct {
 	ID       string `json:"id,omitempty"`
 	Type     string `json:"type,omitempty"`
@@ -175,6 +176,7 @@ func env(key, fallback string) string {
 	}
 	return fallback
 }
+
 var buildVersion, buildCommit string
 
 var versionRE = regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ RC[0-9]+`)
@@ -360,7 +362,7 @@ func New(work, reference, data string) (*App, error) {
 	if b, err := os.ReadFile(filepath.Join(data, "token-stats.json")); err == nil {
 		var saved struct {
 			Days  map[string]TokenDay `json:"days"`
-			Calls []TokenCallRec     `json:"calls,omitempty"`
+			Calls []TokenCallRec      `json:"calls,omitempty"`
 		}
 		if json.Unmarshal(b, &saved) == nil && saved.Days != nil {
 			a.tokenStats = saved.Days

@@ -228,11 +228,11 @@ func (a *App) workspaceConfigOut() map[string]any {
 			"host": a.wsConfig.Workspace.Host, "port": a.wsConfig.Workspace.Port,
 			"username": a.wsConfig.Workspace.Username, "auth": a.wsConfig.Workspace.Auth,
 		},
-		"docs":       map[string]any{"path": a.wsConfig.Docs.Path},
-		"cache":      map[string]any{"path": a.wsConfig.Cache.Path},
-		"recent":     a.wsConfig.Recent,
+		"docs":        map[string]any{"path": a.wsConfig.Docs.Path},
+		"cache":       map[string]any{"path": a.wsConfig.Cache.Path},
+		"recent":      a.wsConfig.Recent,
 		"hasPassword": a.wsSecrets.Password != "",
-		"hasKey":     a.wsSecrets.Key != "",
+		"hasKey":      a.wsSecrets.Key != "",
 	}
 }
 
@@ -252,12 +252,12 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 			Username string `json:"username"`
 			Auth     string `json:"auth"`
 		} `json:"workspace"`
-		Docs  struct{ Path string } `json:"docs"`
-		Cache struct{ Path string } `json:"cache"`
-		Password    string `json:"password"`
-		Key         string `json:"key"`
-		ClearPassword bool `json:"clearPassword"`
-		ClearKey     bool  `json:"clearKey"`
+		Docs          struct{ Path string } `json:"docs"`
+		Cache         struct{ Path string } `json:"cache"`
+		Password      string                `json:"password"`
+		Key           string                `json:"key"`
+		ClearPassword bool                  `json:"clearPassword"`
+		ClearKey      bool                  `json:"clearKey"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)

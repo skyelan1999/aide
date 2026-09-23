@@ -19,11 +19,11 @@ import (
 // 登记记录存缓存目录 sources.json；密码/密钥存 /data/sources-secrets.json（0600）。
 
 const (
-	sourcesFileName   = "sources.json"
-	sourcesSecretsFN  = "sources-secrets.json"
-	maxSources        = 20
-	systemDocsSource  = "system-docs"
-	curlTimeout       = 30 * time.Second
+	sourcesFileName  = "sources.json"
+	sourcesSecretsFN = "sources-secrets.json"
+	maxSources       = 20
+	systemDocsSource = "system-docs"
+	curlTimeout      = 30 * time.Second
 )
 
 var sourceIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)

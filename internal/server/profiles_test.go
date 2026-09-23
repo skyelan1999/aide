@@ -20,8 +20,8 @@ func TestSystemProfilesImmutability(t *testing.T) {
 		"strategy":      "manual",
 		"activeProfile": "default",
 		"profiles": []map[string]any{{
-			"id":   "default",
-			"name": "篡改",
+			"id":     "default",
+			"name":   "篡改",
 			"params": map[string]any{"temperature": 0},
 		}},
 	})

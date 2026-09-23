@@ -169,7 +169,9 @@ func TestRemediationOldProposalRejectedOnNewWorkspace(t *testing.T) {
 	s := createSession(t, a)
 	// 通过 write_file 工具在 A 生成新文件提案（走任务）
 	provider := newToolProvider(t, []func() (string, []ToolCall){
-		func() (string, []ToolCall) { return "", []ToolCall{readCall("write_file", `{"path":"new.txt","content":"from-A"}`)} },
+		func() (string, []ToolCall) {
+			return "", []ToolCall{readCall("write_file", `{"path":"new.txt","content":"from-A"}`)}
+		},
 		func() (string, []ToolCall) { return "完成。", nil },
 	})
 	defer provider.Close()
@@ -285,7 +287,9 @@ func TestRemediationWriteToolPreservesWhitespace(t *testing.T) {
 	a := testApp(t)
 	const content = "  indented first line\nsecond\tline\n\n"
 	provider := newToolProvider(t, []func() (string, []ToolCall){
-		func() (string, []ToolCall) { return "", []ToolCall{readCall("write_file", `{"path":"ws.txt","content":"  indented first line\nsecond\tline\n\n"}`)} },
+		func() (string, []ToolCall) {
+			return "", []ToolCall{readCall("write_file", `{"path":"ws.txt","content":"  indented first line\nsecond\tline\n\n"}`)}
+		},
 		func() (string, []ToolCall) { return "完成。", nil },
 	})
 	defer provider.Close()

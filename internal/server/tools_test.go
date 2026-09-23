@@ -188,7 +188,9 @@ func TestToolLoopWriteUnattachedRejected(t *testing.T) {
 	a := testApp(t)
 	_ = a.workspace.WriteFile("existing.txt", []byte("important"), 0644)
 	provider := newToolProvider(t, []func() (string, []ToolCall){
-		func() (string, []ToolCall) { return "", []ToolCall{readCall("write_file", `{"path":"existing.txt","content":"evil"}`)} },
+		func() (string, []ToolCall) {
+			return "", []ToolCall{readCall("write_file", `{"path":"existing.txt","content":"evil"}`)}
+		},
 		func() (string, []ToolCall) { return "收到。", nil },
 	})
 	defer provider.Close()

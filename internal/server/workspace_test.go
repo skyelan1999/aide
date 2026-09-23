@@ -22,9 +22,9 @@ func TestWorkspaceConfigCRUD(t *testing.T) {
 	// 本地路径 + 密码 + 最近路径
 	requireStatus(t, request(a, "PUT", "/api/workspace-config", map[string]any{
 		"workspace": map[string]any{"mode": "local", "path": "", "host": "", "port": 22, "username": "", "auth": "password"},
-		"docs":     map[string]any{"path": "doc"},
-		"cache":    map[string]any{"path": ".cache"},
-		"password": "secret-pw",
+		"docs":      map[string]any{"path": "doc"},
+		"cache":     map[string]any{"path": ".cache"},
+		"password":  "secret-pw",
 	}), 200)
 	w = request(a, "GET", "/api/workspace-config", nil)
 	requireStatus(t, w, 200)
