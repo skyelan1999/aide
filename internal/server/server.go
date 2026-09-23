@@ -135,6 +135,7 @@ type App struct {
 	wsRevision                uint64
 	compactingSessions        map[string]bool
 	retiredRoots              []*os.Root
+	wsRoots                   map[string]*os.Root // 工作区身份 → 打开中的根（R02 运行中任务的工具绑定）
 	pricing                   Pricing
 	tokenCalls                []TokenCallRec
 	buildVersion, buildCommit string
@@ -252,7 +253,7 @@ func New(work, reference, data string) (*App, error) {
 		w.Close()
 		return nil, err
 	}
-	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}}
+	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}}
 	b, err := os.ReadFile(filepath.Join(data, "access-token"))
 	if errors.Is(err, os.ErrNotExist) {
 		b = []byte(newID() + newID())

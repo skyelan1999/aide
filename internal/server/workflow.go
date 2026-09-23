@@ -32,9 +32,10 @@ type Change struct {
 	Applied  bool   `json:"applied,omitempty"`
 }
 type ToolUse struct {
-	Tool   string `json:"tool"`
-	Args   string `json:"args,omitempty"`
-	Result string `json:"result,omitempty"`
+	Tool    string `json:"tool"`
+	Args    string `json:"args,omitempty"`
+	Result  string `json:"result,omitempty"`  // 完整原始结果（R05 证据链：计量与验收依据）
+	Preview string `json:"preview,omitempty"` // 界面展示用截断预览
 }
 
 type Task struct {
@@ -54,6 +55,8 @@ type Task struct {
 	Usage       TokenUsage   `json:"usage,omitempty"`    // 本任务累计 token 用量（轨迹）
 	WorkspaceID string       `json:"workspaceId,omitempty"` // 提案归属的工作区身份（R02）
 	WorkspaceRev uint64     `json:"workspaceRev,omitempty"`
+	WorkspaceMode string     `json:"workspaceMode,omitempty"`       // 任务创建时的工作区模式（工具绑定，R02）
+	WorkspaceRemotePath string `json:"workspaceRemotePath,omitempty"` // 任务创建时的远程路径（ssh 工具绑定，R02）
 	Model       string       `json:"model,omitempty"`    // 本次任务使用的模型（FR-69）
 	Profile     string       `json:"profile,omitempty"`  // 本次生效的 profile id
 }
@@ -162,7 +165,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{ID: newID(), Mode: in.Mode, Prompt: in.Prompt, Status: "running", Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision}
+	task := &Task{ID: newID(), Mode: in.Mode, Prompt: in.Prompt, Status: "running", Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path}
 	oldTitle := s.Title
 	if len(s.Messages) == 0 {
 		title := []rune(in.Prompt)
@@ -228,7 +231,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 			// 偶发返回非 JSON 导致整个任务失败；propose 不带工具，约束不冲突。
 			stepParams.ResponseFormat = "json_object"
 		}
-		out, err := a.toolLoop(ctx, cfg, input, stepParams, tools, task, versions, index)
+		out, chain, err := a.toolLoop(ctx, cfg, input, stepParams, tools, task, versions, index)
 		a.mu.Lock()
 		task.Steps[index].Content = out
 		task.Steps[index].Status = "completed"
@@ -243,7 +246,8 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		if saveErr != nil {
 			return "", saveErr
 		}
-		messages = append(input, Message{Role: "assistant", Content: out})
+		// 完整对话链（含工具调用与原始结果）进入下一阶段请求（R05 证据链）
+		messages = append(chain, Message{Role: "assistant", Content: out})
 		return out, nil
 	}
 	var answer string
@@ -538,18 +542,19 @@ func (a *App) executablePluginTools() []string {
 	return names
 }
 
-// toolLoop 与模型交互并执行工具调用（≤6 轮）；写操作只生成提案（P2/P3 原则保留）。
-func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task, versions map[string]Change, stepIndex int) (string, error) {
+// toolLoop 与模型交互并执行工具调用（≤10 轮）；写操作只生成提案（P2/P3 原则保留）。
+// 返回最终答复与该步骤的完整对话链（含工具调用与原始结果，R05 证据链跨步骤保留）。
+func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task, versions map[string]Change, stepIndex int) (string, []Message, error) {
 	for round := 0; round < 10; round++ {
 		out, calls, usage, err := complete(ctx, cfg, input, params, tools)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 		a.mu.Lock()
 		task.Usage = addUsage(task.Usage, usage)
 		a.mu.Unlock()
 		if len(calls) == 0 {
-			return out, nil
+			return out, input, nil
 		}
 		input = append(input, Message{Role: "assistant", Content: out, ToolCalls: calls})
 		for _, call := range calls {
@@ -560,14 +565,15 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				display = display[:2000] + "…（结果已截断）"
 			}
 			a.mu.Lock()
-			task.ToolUses = append(task.ToolUses, ToolUse{Tool: call.Function.Name, Args: call.Function.Arguments, Result: display})
+			// Result 保留完整原始结果（计量/验收依据）；Preview 供界面展示
+			task.ToolUses = append(task.ToolUses, ToolUse{Tool: call.Function.Name, Args: call.Function.Arguments, Result: result, Preview: display})
 			a.mu.Unlock()
 		}
 		a.mu.Lock()
 		task.Steps[stepIndex].Content = "工具调用中：" + strings.Join(toolCallNames(calls), ", ")
 		a.mu.Unlock()
 	}
-	return "", errors.New("工具调用轮次超过 10 轮，请缩小任务范围")
+	return "", nil, errors.New("工具调用轮次超过 10 轮，请缩小任务范围")
 }
 
 func addUsage(base, add TokenUsage) TokenUsage {
@@ -592,12 +598,22 @@ func toolCallNames(calls []ToolCall) []string {
 }
 
 // executeToolCall 执行一次工具调用并返回给模型的结果文本（FR-33 工具闭环）。
-// 为并发安全：先快照工作空间根与模式（os.Root 本身并发安全），任务写入走 a.mu。
+// R02：工具绑定任务创建时的工作区——先解析任务身份对应的根/模式/远程路径；
+// 找不到对应根时回退当前工作区（重启后旧任务降级，不越界到其他工作区根）。
 func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Change) string {
 	a.mu.Lock()
-	mode := a.workspaceMode()
-	wsRoot := a.workspace
-	remotePath := a.wsConfig.Workspace.Path
+	mode := task.WorkspaceMode
+	if mode == "" {
+		mode = a.workspaceMode()
+	}
+	wsRoot := a.wsRoots[task.WorkspaceID]
+	if wsRoot == nil {
+		wsRoot = a.workspace
+	}
+	remotePath := task.WorkspaceRemotePath
+	if remotePath == "" {
+		remotePath = a.wsConfig.Workspace.Path
+	}
 	a.mu.Unlock()
 	var args map[string]any
 	_ = json.Unmarshal([]byte(call.Function.Arguments), &args)

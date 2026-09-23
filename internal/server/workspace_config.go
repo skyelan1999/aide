@@ -196,6 +196,8 @@ func (a *App) applyWorkspaceConfig() error {
 			a.retiredRoots = append(a.retiredRoots, old)
 		}
 	}
+	// R02：登记当前工作区身份 → 根，运行中任务的工具据此解析原工作区根
+	a.wsRoots[a.wsID()] = a.workspace
 	a.workspaceDisplay = display
 	// 系统文档参考根
 	if dp, disp, err := a.resolveHostPath(a.wsConfig.Docs.Path); err == nil && dp != "" {
@@ -299,6 +301,20 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	// R03 原子性预检：本地新路径必须能实际打开；失败时配置、根、recent 均不变
+	if in.Workspace.Mode != "ssh" && strings.TrimSpace(in.Workspace.Path) != "" {
+		cp, _, err := a.resolveHostPath(in.Workspace.Path)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		probe, err := os.OpenRoot(cp)
+		if err != nil {
+			fail(w, 400, fmt.Errorf("工作空间路径不可用: %w", err))
+			return
+		}
+		probe.Close()
+	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	cfg := a.wsConfig
@@ -327,11 +343,16 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
+	oldID := a.wsID()
+	oldRoot := a.workspace
 	a.wsConfig = cfg
 	if err := a.applyWorkspaceConfig(); err != nil {
 		fail(w, 400, err)
 		return
 	}
+	// R02：旧工作区身份的根继续可用，供运行中任务的工具调用解析
+	a.wsRoots[oldID] = oldRoot
+	a.wsRoots[a.wsID()] = a.workspace
 	// 最近路径：只记录「生效路径」非空的
 	if cfg.Workspace.Path != "" {
 		a.wsConfig.Recent.Workspace = pushRecent(a.wsConfig.Recent.Workspace, cfg.Workspace.Path)

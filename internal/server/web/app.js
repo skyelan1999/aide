@@ -1215,7 +1215,7 @@ function renderTrajectory() {
       let argsBrief = '';
       try { const a = JSON.parse(use.args || '{}'); const v = Object.values(a)[0]; if (typeof v === 'string') argsBrief = ' · ' + v.slice(0, 40); } catch (e) { /* 忽略 */ }
       const body = el('div', 'traj-body');
-      body.append(el('p', '', '参数：' + (use.args || '无')), el('pre', 'traj-pre', use.result || '（无结果）'));
+      body.append(el('p', '', '参数：' + (use.args || '无')), el('pre', 'traj-pre', use.preview || use.result || '（无结果）'));
       card.append(trajectoryEvent('⚒', use.tool + argsBrief, body, 'tool'));
     });
     if (run.files?.length) {
