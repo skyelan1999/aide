@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.6.0 RC3**
+**当前版本：0.1.6.0 RC4**
+
+## 0.1.6.0 RC4（2026-09-23）
+
+- Final product tagline, professional workbench UI, agent workflow and installer
+
 
 ## 0.1.6.0 RC3（2026-09-23）
 
