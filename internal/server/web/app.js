@@ -822,7 +822,9 @@ function renderTokenStats(control) {
         input.value = key === 'priceIn' ? pricing.priceIn : pricing.priceOut;
         return;
       }
-      const next = { priceIn: pricing.priceIn, priceOut: pricing.priceOut };
+      // 以两个输入框的当前值为准（避免第二次修改用过期的模块缓存覆盖第一次的值）
+      const readOther = label => { const raw = wrap.querySelector('input[aria-label="' + label + '"]')?.value; const n = parseFloat(raw); return Number.isFinite(n) && n >= 0 ? n : pricing[label === '输入 ¥/百万' ? 'priceIn' : 'priceOut']; };
+      const next = { priceIn: readOther('输入 ¥/百万'), priceOut: readOther('输出 ¥/百万') };
       next[key] = v;
       action(async () => {
         try {
