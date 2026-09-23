@@ -139,3 +139,50 @@ func TestTaskRecordsModel(t *testing.T) {
 		t.Fatalf("task model not recorded: %+v", task)
 	}
 }
+
+func TestModelDiscoveryDraft(t *testing.T) {
+	var auth string
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/models" {
+			t.Errorf("unexpected path %s", r.URL.Path)
+		}
+		auth = r.Header.Get("Authorization")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data":[{"id":"draft-model"}]}`))
+	}))
+	defer provider.Close()
+	a := testApp(t)
+	a.settings.BaseURL = "http://old-provider.invalid"
+	a.settings.APIKey = "old-secret"
+	for _, tc := range []struct {
+		name, base, key string
+		clear           bool
+		want            string
+	}{
+		{"new address no old key", provider.URL, "", false, ""},
+		{"draft key", provider.URL, "new-secret", false, "Bearer new-secret"},
+		{"clear key", provider.URL, "ignored", true, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w := request(a, "POST", "/api/models", map[string]any{"baseURL": tc.base, "apiKey": tc.key, "clearKey": tc.clear})
+			requireStatus(t, w, 200)
+			if auth != tc.want {
+				t.Fatal("incorrect credential selection")
+			}
+			if !strings.Contains(w.Body.String(), "draft-model") {
+				t.Fatal("missing discovered model")
+			}
+			if a.settings.BaseURL != "http://old-provider.invalid" || a.settings.APIKey != "old-secret" {
+				t.Fatal("discovery persisted draft")
+			}
+		})
+	}
+	a.settings.BaseURL = provider.URL
+	w := request(a, "POST", "/api/models", map[string]any{"baseURL": provider.URL + "/"})
+	requireStatus(t, w, 200)
+	if auth != "Bearer old-secret" {
+		t.Fatal("same endpoint should retain saved key")
+	}
+	w = request(a, "POST", "/api/models", map[string]any{"baseURL": "file:///etc/passwd"})
+	requireStatus(t, w, 400)
+}

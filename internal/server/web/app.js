@@ -1000,7 +1000,7 @@ $('fetch-models').onclick = action(async () => {
   button.disabled = true;
   button.textContent = t("⟳ 获取中…");
   try {
-    const data = await api('/models');
+    const data = await api('/models', { method: 'POST', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked }) });
     const list = $('model-datalist');
     list.replaceChildren();
     (data.models || []).forEach(id => list.append(new Option(id, id)));

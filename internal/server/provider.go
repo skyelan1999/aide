@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -141,6 +142,30 @@ func (a *App) listModels(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	baseURL, key := a.settings.BaseURL, a.settings.APIKey
 	a.mu.Unlock()
+	if r.Method == http.MethodPost {
+		var in struct {
+			BaseURL  string `json:"baseURL"`
+			APIKey   string `json:"apiKey"`
+			ClearKey bool   `json:"clearKey"`
+		}
+		if err := decode(w, r, &in); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		requested := strings.TrimRight(strings.TrimSpace(in.BaseURL), "/")
+		if requested != strings.TrimRight(baseURL, "/") || in.ClearKey {
+			key = ""
+		}
+		baseURL = requested
+		if !in.ClearKey && strings.TrimSpace(in.APIKey) != "" {
+			key = strings.TrimSpace(in.APIKey)
+		}
+	}
+	u, parseErr := url.Parse(baseURL)
+	if parseErr != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+		fail(w, 400, errors.New("请输入有效的 HTTP(S) API Base URL"))
+		return
+	}
 	if baseURL == "" {
 		fail(w, 400, errors.New("请先在模型设置中填写 API Base URL"))
 		return

@@ -1,0 +1,8 @@
+{
+  "id": "model-discovery-draft",
+  "request": "修复模型设置自动获取失败",
+  "cause": "GET /api/models used saved settings instead of current form draft; preview mock did not implement GET /models.",
+  "implementation": "POST /api/models accepts draft endpoint/key without persisting; saved key reused only for unchanged endpoint; GET retained for compatibility.",
+  "verification": ["TestModelDiscoveryDraft passes with race: draft endpoint, explicit key, clear key, saved-key scope, no persistence, invalid URL", "Browser 18121: model-datalist contains preview-model after clicking Fetch models", "Full route verification passed"],
+  "limits": "Mock provider used; no real DeepSeek credentials exercised. Preview updated, production unchanged."
+}

@@ -79,3 +79,7 @@ Upload a trusted `.js`, `.mjs`, or `.cjs` file, name it, and enable it. Shape va
 - Missing context after compaction: return to original files and recorded tasks.
 
 See [Operations](../../HANDOVER.md) for backups and upgrades.
+
+### Discover models before saving
+
+Fetch models uses the current Base URL and API Key fields without saving the draft. A blank key reuses the saved key only when the endpoint is unchanged. When changing providers, enter that provider's key; the previous provider's key is not forwarded. Clear saved key requests discovery without credentials. Choose a returned model in the model ID field, add it, then save settings. The provider must support `{Base URL}/models`.
