@@ -12,7 +12,7 @@ async function api(path, options = {}) {
   return data;
 }
 function action(fn) { return async (...args) => { try { await fn(...args); } catch (e) { toast(e.message); } }; }
-function setMode(mode) { state.mode = mode; document.querySelectorAll('.mode-switch button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode)); }
+function setMode(mode) { state.mode = mode; document.querySelectorAll('.mode-switch button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode)); if (typeof scheduleContextPreview === 'function') scheduleContextPreview(); }
 async function refreshConfig() {
   state.config = await api('/config');
   $('connection').textContent = '● 本地服务已连接'; $('connection').classList.add('ready');
@@ -22,6 +22,7 @@ async function refreshConfig() {
   $('model-status').textContent = state.config.configured ? '已配置' : '未配置';
   $('model-name').textContent = state.config.configured ? state.config.model + ' · API 已配置' : '先配置模型，即可开始真实 AI 对话';
   estimateContext();
+  if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
 async function loadSessions() {
   const sessions = await api('/sessions'); $('sessions').replaceChildren();
@@ -40,6 +41,7 @@ async function selectSession(id) {
   refreshCompactInfo();
   await loadSessions();
   schedulePoll();
+  if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
 function schedulePoll() {
   clearTimeout(state.poll);
@@ -49,7 +51,7 @@ function schedulePoll() {
   }), 1200);
 }
 async function newSession() {
-  clearTimeout(state.poll); state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus();
+  clearTimeout(state.poll); state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
 }
 const labels = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', chat: 'aide' };
 function toolSummaryBrief(use) {
@@ -143,6 +145,7 @@ function renderSession() {
 }
 function renderAttachments() {
   $('attachment-chips').replaceChildren();
+  if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
   state.attachments.forEach((a, index) => { const chip = el('span', 'chip', (a.root === 'context' ? '参考 · ' : '') + a.path); const b = el('button', '', '×'); b.setAttribute('aria-label', '移除附件 ' + a.path); b.onclick = () => { state.attachments.splice(index, 1); renderAttachments(); }; chip.append(b); $('attachment-chips').append(chip); });
 }
 async function loadFiles() {
@@ -197,6 +200,7 @@ $('parent-dir').onclick = action(async () => { state.dir = state.dir.includes('/
 $('task-form').onsubmit = action(async event => {
   event.preventDefault(); const prompt = $('prompt').value.trim(); if (!prompt || state.busy) return;
   if (!state.config?.configured) { openSettings(); return; }
+  if (state.previewOverLimit) { toast('上下文预算超限：请缩短任务或减少附件后再发送'); return; }
   $('send').disabled = true;
   const draftSession = state.session; // R07：捕获发送时对象，后续等待不得覆盖新选择
   try {
@@ -211,13 +215,94 @@ $('task-form').onsubmit = action(async event => {
       await selectSession(target.id);
       $('conversation').scrollTop = $('conversation').scrollHeight;
     }
-  } finally { $('send').disabled = false; }
+  } finally { updateSendEnabled(); }
 });
 $('prompt').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('task-form').requestSubmit(); } });
+
+/* ── R08-04 上下文预览：与真实请求共用服务端构建器，口径如实标注为估算 ── */
+state.previewSeq = { value: 0 };
+state.previewTimer = 0;
+state.previewFingerprint = '';
+state.previewOverLimit = false;
+function updateSendEnabled() {
+  $('send').disabled = !!state.busy || !!state.previewOverLimit;
+  if (state.previewOverLimit) {
+    $('composer-hint').textContent = '⚠ 上下文预算超限：请缩短任务或减少附件';
+  } else {
+    $('composer-hint').textContent = 'Enter 发送 · Shift + Enter 换行';
+  }
+}
+function hideContextPreview() {
+  state.previewOverLimit = false;
+  state.previewFingerprint = '';
+  $('context-preview').classList.add('hidden');
+  updateSendEnabled();
+}
+function renderContextPreview(data) {
+  if (!data || !data.breakdown) return;
+  state.previewFingerprint = data.fingerprint || '';
+  state.previewOverLimit = !!data.overLimit;
+  const bd = data.breakdown;
+  const overText = data.overLimit ? ' · ⚠ 超限 ' + Math.max(0, data.totalEstimate - data.contextWindow) : '';
+  $('cp-summary').textContent = '输入估算 ' + data.inputEstimate + ' tokens + 输出预留 ' + data.outputReserve + ' = ' + data.totalEstimate + ' / 窗口 ' + data.contextWindow + overText;
+  const detail = $('cp-detail');
+  detail.replaceChildren();
+  const rows = [
+    ['系统指令', bd.systemChars],
+    ['历史摘要', bd.summaryChars],
+    ['历史消息 ' + (bd.historyMessages || 0) + ' 条', bd.historyChars],
+    ['任务输入', bd.promptChars],
+    ['附件 ' + (bd.attachmentFiles || 0) + ' 个', bd.attachmentChars],
+    ['阶段指令', bd.instructionChars],
+    ['工具定义 ' + (bd.toolCount || 0) + ' 个', bd.toolSchemaChars]
+  ];
+  rows.forEach(([label, chars]) => {
+    if (chars) detail.append(el('div', 'cp-row', el('span', '', label), el('span', '', chars + ' 字符 ≈ ' + Math.floor(chars / 4) + ' tokens')));
+  });
+  detail.append(el('p', 'cp-note', data.estimationNote || ''));
+  $('context-preview').classList.remove('hidden');
+  updateSendEnabled();
+}
+async function refreshContextPreview() {
+  const seq = ++state.previewSeq.value;
+  const prompt = $('prompt').value.trim();
+  if (!prompt || !state.config?.configured) { hideContextPreview(); return; }
+  $('context-preview').classList.remove('hidden');
+  $('cp-summary').textContent = '上下文预算计算中…（估算）';
+  try {
+    const data = await api('/context-preview', { method: 'POST', body: JSON.stringify({ sessionId: state.session?.id || '', prompt, mode: state.mode, attachments: state.attachments }) });
+    if (seq !== state.previewSeq.value) return; // 过期响应不得覆盖新预览（R08-04 草稿失效）
+    renderContextPreview(data);
+  } catch (error) {
+    if (seq !== state.previewSeq.value) return;
+    if (error && String(error.message).includes('上下文预算超限')) {
+      const m = String(error.message);
+      state.previewOverLimit = true;
+      $('cp-summary').textContent = '⚠ ' + m;
+      $('context-preview').classList.add('over');
+      $('context-preview').classList.remove('hidden');
+      updateSendEnabled();
+      return;
+    }
+    hideContextPreview();
+  }
+}
+function scheduleContextPreview() {
+  clearTimeout(state.previewTimer);
+  state.previewFingerprint = '';
+  state.previewTimer = setTimeout(() => action(refreshContextPreview).call(null), 300);
+}
+$('prompt').addEventListener('input', scheduleContextPreview);
+$('cp-toggle').onclick = () => {
+  const detail = $('cp-detail');
+  const open = detail.classList.toggle('hidden');
+  $('cp-toggle').textContent = open ? '组成明细 ▾' : '组成明细 ▴';
+  $('cp-toggle').setAttribute('aria-expanded', String(!open));
+};
 $('cancel').onclick = action(async () => { const run = state.session?.runs.find(r => r.status === 'running'); if (run) { await api(`/sessions/${state.session.id}/runs/${run.id}/cancel`, { method: 'POST', body: '{}' }); toast('已请求停止'); } });
 function openSettings() { $('base-url').value = state.config?.baseURL || 'https://api.deepseek.com'; $('api-key').value = ''; $('api-key').placeholder = state.config?.hasKey ? '已保存密钥；留空保留' : '云端 API 通常需要密钥；本地模型可不填'; $('clear-key').checked = false; state.modelDraft = { models: JSON.parse(JSON.stringify(state.config?.models || [])), activeModel: state.config?.activeModel || '' }; renderModelList(); $('settings-dialog').showModal(); }
 $('settings-button').onclick = openSettings;
-$('settings-form').onsubmit = action(async event => { event.preventDefault(); if (!state.modelDraft.models.length) { toast('请至少添加一个模型'); return; } await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked, models: state.modelDraft.models, activeModel: state.modelDraft.activeModel }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast('模型设置已保存，发送任务时会调用当前模型'); });
+$('settings-form').onsubmit = action(async event => { event.preventDefault(); if (!state.modelDraft.models.length) { toast('请至少添加一个模型'); return; } await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked, models: state.modelDraft.models, activeModel: state.modelDraft.activeModel }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast('模型设置已保存，发送任务时会调用当前模型'); if (typeof scheduleContextPreview === 'function') scheduleContextPreview(); });
 $('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; if (state.file.wsId) body.workspaceId = state.file.wsId; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; $('editor-status').textContent = '✓ 已保存'; await loadFiles(); });
 $('attach-file').onclick = () => {
   if (state.file.content !== $('editor').value) { toast('请先保存修改，再附加到任务'); return; }
