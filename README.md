@@ -71,6 +71,24 @@ docker compose up -d --build  # 更新源代码后的重建
 
 前端由 Go embed 编译进二进制；修改界面或后端后需重新构建镜像。项目默认无需 npm install，前端使用原生 JavaScript/CSS，没有 CDN 运行依赖。
 
+## 版本管理
+
+每次提交自动标注当前版本号（git 钩子）；版本升级在 **main 分支**执行并自动打 git tag：
+
+```bash
+bash scripts/version.sh                    # 显示当前版本（如 0.1.0.0 RC1）
+bash scripts/version.sh bump <档位> -m "说明"  # 升级：product / major / feature / daily
+bash scripts/version.sh patch -m "说明"     # 同一版本补丁：仅 RC+1
+bash scripts/version.sh note -m "说明"      # 追加 release note
+bash scripts/version.sh tag                # 为当前版本打 tag（幂等）
+bash scripts/version.sh check              # 校验 version.md
+bash scripts/version.sh install-hooks      # 新克隆后执行一次，安装提交标注钩子
+```
+
+- 版本号四位：`产品级.重大.大版本.日常`，呈现 `X.Y.Z.W RCn`（RC 默认 RC1，补丁 +1）。
+- 当前版本与 release note 记录在工程目录 `version.md`；tag 命名 `vX.Y.Z.W-RCn`，**仅打在 main 分支**。
+- 界面左下角运行卡片与设置面板底部显示当前版本（`/api/config` 的 `version` 字段）。
+
 ## 当前边界
 
 - 面向单用户本地开发，Compose 端口仅绑定 `127.0.0.1`；API 使用随机访问令牌，并拒绝跨站 Origin。
@@ -80,6 +98,9 @@ docker compose up -d --build  # 更新源代码后的重建
 - `/context` 在 Docker 层只读；文件 API 使用 `os.Root` 防止目录逃逸。文件 API 隐藏 `.git`、`.env`、`.data` 和镜像归档目录，命令面板则具有容器用户的正常权限。
 - 这是一个可信用户工作台。手动 shell 可以读写其有权限访问的容器数据和挂载目录；不要将服务暴露给不可信用户。未挂载 Docker socket、主机 HOME 或其他无关目录。
 - 每次只将显式附加的文件提交给模型；历史回放有 60 KB 文本预算。附件中的指令被视为资料内容，系统提示明确要求以用户任务为准。
+- 发送任务前界面展示**上下文预算预览**（组成明细 + 输入估算 + 输出预留 + 模型窗口）。估算口径如实标注：4 字符 ≈ 1 token（UTF-8 字节），非精确 tokenizer；超限时发送被可解释地拦截（服务端同样拦截，模型不会收到被拦截的调用）。
+- Token 费用以服务端为事实源：按模型配置费率（`/api/token-pricing`），0 是合法免费费率且与留空区分；历史费用按调用时刻快照，改价不回溯；未配置费率的调用按刊例默认价并标记为估算；旧版统计迁移为「未计价」，不虚构历史费用。
+- 远程工作区/SFTP 来源读取与本地一致：路径校验先于传输（拒绝 `..`、绝对路径、`.env`/`.git`），内容统一 256 KiB / UTF-8 / 无 NUL 限制。
 - 尚未实现 DSH 的完整 Cordis 插件兼容、MCP、多用户、向量检索、多 agent 调度或自动代码验证。后续扩展点见 [架构说明](docs/architecture.md)。
 
 ## 源码

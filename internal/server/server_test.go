@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -100,22 +101,28 @@ func TestSettingsNeverReturnKey(t *testing.T) {
 func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 	a := testApp(t)
 	var calls atomic.Int32
+	var formats sync.Map // call index -> response_format type
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/chat/completions" || r.Header.Get("Authorization") != "Bearer fake" {
 			t.Error("provider contract")
 		}
 		var body struct {
-			Messages []Message `json:"messages"`
+			Messages       []Message         `json:"messages"`
+			ResponseFormat map[string]string `json:"response_format"`
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		if len(body.Messages) < 2 {
 			t.Error("missing messages")
 		}
+		n := calls.Add(1)
+		formats.Store(n, body.ResponseFormat["type"])
 		content := "审查结束：未执行测试。"
-		switch calls.Add(1) {
+		switch n {
 		case 1:
-			content = "计划：修改 hello.txt，再验证内容。"
+			content = "更新主题"
 		case 2:
+			content = "计划：修改 hello.txt，再验证内容。"
+		case 3:
 			content = `{"summary":"change","files":[{"path":"hello.txt","content":"new"}],"commands":["cat hello.txt"]}`
 		}
 		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: content}}}})
@@ -143,8 +150,15 @@ func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	if task.Status != "awaiting_approval" || calls.Load() != 3 {
+	if task.Status != "awaiting_approval" || calls.Load() != 4 {
 		t.Fatalf("task: %+v calls %d", task, calls.Load())
+	}
+	// 第 3 次调用是 propose 步骤：必须强制 JSON 输出（FR-23 可靠性）
+	if f, _ := formats.Load(int32(3)); f != "json_object" {
+		t.Fatalf("propose response_format = %v, want json_object", f)
+	}
+	if f, _ := formats.Load(int32(2)); f == "json_object" {
+		t.Fatal("plan 步骤不应强制 json_object")
 	}
 	b, _ := a.workspace.ReadFile("hello.txt")
 	if string(b) != "old" {
@@ -185,13 +199,13 @@ func TestProviderErrorsAndCancellation(t *testing.T) {
 		_, _ = w.Write([]byte("secret upstream data"))
 	}))
 	defer p.Close()
-	_, err := complete(context.Background(), Settings{BaseURL: p.URL, Model: "test"}, nil)
+	_, _, _, err := complete(context.Background(), Settings{BaseURL: p.URL, Model: "test"}, nil, ProfileParams{}, nil, nil)
 	if err == nil || strings.Contains(err.Error(), "secret upstream") {
 		t.Fatal("provider error handling")
 	}
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := complete(ctx, Settings{BaseURL: p.URL, Model: "test"}, nil); err == nil {
+	if _, _, _, err := complete(ctx, Settings{BaseURL: p.URL, Model: "test"}, nil, ProfileParams{}, nil, nil); err == nil {
 		t.Fatal("cancel ignored")
 	}
 }
@@ -229,7 +243,12 @@ func TestChatHistoryAndCancelEndpoint(t *testing.T) {
 	var calls atomic.Int32
 	p := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, _ = io.Copy(io.Discard, r.Body)
-		if calls.Add(1) == 1 {
+		n := calls.Add(1)
+		if n == 1 {
+			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "主题标题"}}}})
+			return
+		}
+		if n == 2 {
 			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "first reply"}}}})
 			return
 		}
@@ -253,6 +272,9 @@ func TestChatHistoryAndCancelEndpoint(t *testing.T) {
 	}
 	if len(s.Messages) != 2 || s.Messages[1].Content != "first reply" {
 		t.Fatal("chat not saved")
+	}
+	if s.Title != "主题标题" {
+		t.Fatalf("topic summary title: %s", s.Title)
 	}
 	w = request(a, "POST", url, map[string]string{"mode": "chat", "prompt": "second"})
 	requireStatus(t, w, 202)

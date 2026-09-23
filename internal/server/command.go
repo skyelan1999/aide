@@ -64,16 +64,53 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	if in.Cwd == "" {
 		in.Cwd = "."
 	}
+	if a.workspaceMode() == "ssh" {
+		// R02/R03：远程模式不做本地 cwd 校验；命令进入绑定的远程目录
+		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+		defer cancel()
+		if err := a.ensureSSHSession(ctx); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		remote := in.Command
+		if rp := strings.TrimSpace(a.wsConfig.Workspace.Path); rp != "" {
+			remote = "cd " + shellQuote(rp) + " && " + remote
+		}
+		select {
+		case a.commands <- struct{}{}:
+			defer func() { <-a.commands }()
+		default:
+			fail(w, 429, errors.New("同时最多运行 4 个命令"))
+			return
+		}
+		w.Header().Set("Content-Type", "application/x-ndjson")
+		w.Header().Set("X-Accel-Buffering", "no")
+		stream := &streamWriter{w: w}
+		start := time.Now()
+		code, runErr := a.execRemote(ctx, remote, stream, stream)
+		message := ""
+		if runErr != nil {
+			message = runErr.Error()
+		}
+		if ctx.Err() != nil {
+			message = "命令已取消或超过 60 秒"
+		}
+		stream.event(map[string]any{"type": "exit", "code": code, "error": message, "elapsedMS": time.Since(start).Milliseconds()})
+		return
+	}
 	if err := safePath(in.Cwd); err != nil {
 		fail(w, 400, err)
 		return
 	}
-	dir, err := filepath.EvalSymlinks(filepath.Join(a.workPath, in.Cwd))
+	a.mu.Lock()
+	wsRoot := a.workspace.Name() // R02：命令目录必须跟随当前工作区
+	a.mu.Unlock()
+	dir, err := filepath.EvalSymlinks(filepath.Join(wsRoot, in.Cwd))
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
-	base, err := filepath.EvalSymlinks(a.workPath)
+	base, err := filepath.EvalSymlinks(wsRoot)
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -95,7 +132,11 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "bash", "--noprofile", "--norc", "-c", in.Command)
 	cmd.Dir = dir
-	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=/home/aide/.cache/go-build", "GOPATH=/home/aide/go"}
+	cacheEnv := "/home/aide/.cache/go-build"
+	if c := a.wsConfig.Cache.Path; c != "" {
+		cacheEnv = filepath.Join(a.workPath, filepath.FromSlash(c))
+	}
+	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=" + cacheEnv, "GOPATH=/home/aide/go", "AIDE_CACHE=" + cacheEnv}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error {
 		if cmd.Process == nil {

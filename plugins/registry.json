@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "plugins": [
+    {
+      "id": "skill",
+      "name": "技能",
+      "description": "DSH skill 能力预设：可复用技能的定义与调度",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-09-21T18:00:34Z"
+    },
+    {
+      "id": "goal",
+      "name": "目标",
+      "description": "DSH goal 能力预设：长程目标与阶段跟踪",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-09-21T18:00:34Z"
+    },
+    {
+      "id": "plan",
+      "name": "计划",
+      "description": "DSH plan 能力预设：任务计划与步骤分解",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-09-21T18:00:34Z"
+    },
+    {
+      "id": "todo",
+      "name": "任务清单",
+      "description": "DSH todo 能力预设：结构化任务清单管理",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-09-21T18:00:34Z"
+    },
+    {
+      "id": "feedback",
+      "name": "反馈",
+      "description": "DSH feedback 能力预设：用户反馈采集与沉淀",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-09-21T18:00:34Z"
+    },
+    {
+      "id": "subagent",
+      "name": "子代理",
+      "description": "DSH subagent 能力预设：子代理调度与结果回收",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-09-21T18:00:34Z"
+    },
+    {
+      "id": "terminal",
+      "name": "终端",
+      "description": "DSH terminal 能力预设：终端会话与命令执行",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-09-21T18:00:34Z"
+    },
+    {
+      "id": "workflow",
+      "name": "工作流",
+      "description": "DSH workflow 能力预设：多阶段工作流编排",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-09-21T18:00:34Z"
+    }
+  ]
+}

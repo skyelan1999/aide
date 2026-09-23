@@ -17,7 +17,8 @@
 | 项目 | 当前值／结论 | 依据 |
 | --- | --- | --- |
 | 项目绝对路径 | `/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide` | 本地文件系统 |
-| Git 分支 | `main` | 本轮 `git branch --show-current` |
+| Git 分支 | `remediate/r01-r07`（整改分支，验收完成、待用户发布；`main` 仍为基线 6a4e441 + RC 系列） | 本轮 `git branch --show-current` |
+| 整改候选提交 | `966ff5f`（R01–R10 整改链最终候选，含 race/vet/gofmt 与全套独立验收证据） | 本轮 `git log` |
 | 功能基线提交 | `4e0da10`，首次提交 | 本轮 `git log` |
 | 远程仓库 | 尚未配置 remote，源码当前仅在本地 | 本轮 `git remote` 无输出 |
 | 浏览器入口 | `http://127.0.0.1:8097` | Compose 与当前容器端口 |
@@ -75,6 +76,10 @@ export PATH="$HOME/.docker/bin:$PATH"
 | 文件应用 | 附件快照哈希检查、逐文件原子替换、应用标记 | 未批准不写入，外部改动会产生冲突 |
 | 容器部署 | 构建、健康检查、非 root、挂载、持久卷 | 本机 ARM64 部署通过；未在另一台机器恢复验收 |
 | 访问控制 | 随机令牌、同源 Origin 检查、本机端口绑定 | 对应后端测试通过；适用范围为可信单用户本地工作台 |
+| 上下文预览（FR-94） | 与真实请求共用服务端构建器；组成/估算口径/超限拦截 | R08-04 验收 4/4、真实 Chromium 浏览器 12/12、Mock 请求对照一致 |
+| Token 统计（FR-90/R08） | 服务端按模型费率、逐调用快照、0 价合法、旧版未计价 | R08 API 4/4、浏览器费用/0 价/按模型持久化/热力图通过 |
+| 远程读取（R03） | 路径校验先于 SFTP 传输；256KiB/UTF-8/无 NUL | 独立 SFTP 种子测试 2/2 通过 |
+| 恢复与构建身份（R09） | 坏文件隔离、ldflags 版本/commit、备份恢复演练 | 隔离容器演练 5/5 通过（备份→损坏→恢复→重启校验） |
 
 “审查完成”仅表示模型步骤返回了文字。当前没有解析审查结论形成自动放行／阻断判据，接手者仍须审阅文件提案。“方案生成”和“文件已应用”也不等于编译、测试或业务验收通过。
 
@@ -87,8 +92,11 @@ export PATH="$HOME/.docker/bin:$PATH"
 | `cmd/aide/main.go` | 应用启动 | 错误返回时终止服务 |
 | `internal/server/server.go` | `New`、`Handler`、`updateSettings`、`atomicJSON` | 配置优先级、鉴权、路由、会话加载、原子 JSON 保存 |
 | `internal/server/provider.go` | `complete` | 拼接 `/chat/completions`；`stream=false`；返回 `choices[0].message.content` |
-| `internal/server/workflow.go` | `startTask` → `execute` → `acceptProposal`；`applyTask` | 附件读取、历史回放、三个模型步骤、提案验证及应用 |
-| `internal/server/files.go` | `safePath`、`readText`、`checkVersion`、`putText` | `os.Root`、文本上限、路径限制、哈希、临时文件 rename |
+| `internal/server/workflow.go` | `startTask` → `execute` → `acceptProposal`；`applyTask`；会话压缩；`toolLoop` | 附件读取、历史回放、三个模型步骤、提案验证及应用；请求快照（R08-04） |
+| `internal/server/context.go` | `buildContextPreview`、`contextPreviewHandler`、`runRequestsHandler` | 与真实请求共用构建器；预览组成/估算/指纹/超限拦截；逐轮请求快照证据 |
+| `internal/server/files.go` | `safePath`、`readText`、`checkVersion`、`putText`、`validateTextContent` | `os.Root`、文本上限、路径限制、哈希、临时文件 rename；远程/本地统一内容策略 |
+| `internal/server/workspace_config.go` | `resolveHostPath`、`applyWorkspaceConfig`、工作区身份 | 虚拟根边界、原子预检、wsID/wsRoots（R02/R03） |
+| `internal/server/plugin_host.js` | 插件宿主（Node，协议 v1.1） | 可执行工具 + parameters；嵌入二进制运行 |
 | `internal/server/command.go` | `command`、`streamWriter` | 子进程组、精简环境变量、请求断开、NDJSON、超时终止 |
 | `internal/server/web/index.html` | 页面结构 | 会话、编辑器、设置弹窗、命令面板 |
 | `internal/server/web/app.js` | `api`、`schedulePoll`、`renderSession` 等 | 令牌存储、1.2 秒轮询、浏览器输入和状态更新 |
@@ -154,6 +162,11 @@ Base URL 填到 API 根路径即可，服务会追加 `/chat/completions`。本�
 | 单个文本文件 | 256 KiB；拒绝非 UTF-8／含 NUL 的读取内容 | `files.go: readText` |
 | 文件提案 | 最多 10 个文件，总内容不超过 512 KiB；最多 20 条建议命令 | `acceptProposal` |
 | 历史回放 | 从最近消息向前收集，文本总量小于 60,000 字节 | `startTask`；不会因此删除磁盘历史 |
+| 上下文预览 | 输入估算 = 组成字符总数 ÷ 4（UTF-8 字节，非精确 tokenizer，界面如实标注）；输出预留 = profile `max_tokens`；输入估算+预留 > 模型窗口时发送被拦截（服务端 400，模型不收调用） | `context.go: buildContextPreview`；`workflow.go: startTask` |
+| 请求快照 | 每任务保留前 12 轮实际 Provider 请求体（SHA-256 + 完整 messages/tools），超出截断标记 | `workflow.go: toolLoop` |
+| 费率与费用 | 服务端按模型费率；0 为合法免费且与留空区分；未配置费率按默认刊例价并标记 defaulted（估算）；旧版汇总显示为未计价 | `server.go: PricingState/tokenPricingHandler/recordTokenUsage` |
+| 远程读取 | 与本地一致：safePath 先于 SFTP 传输；256 KiB / UTF-8 / 无 NUL | `files.go: validateTextContent`；`workspace_config.go: readWorkspaceText` |
+| 构建身份 | 版本与 commit 由 ldflags 注入；工作区内的 version.md 不覆盖运行中版本；`/api/config` 暴露 `revision`/`buildCommit` | `server.go: buildVersion/buildCommit` |
 | 模型并发 | 每会话最多 1 个运行任务；全服务最多 4 个 | `startTask` |
 | 模型时限 | 单次请求 120 秒；整体任务 6 分钟 | `provider.go`、`workflow.go` |
 | 命令 | 最多 4 个并发；最长 60 秒；输出上限 128 KiB | `command.go` |
@@ -250,6 +263,12 @@ Git bundle 只包含已提交历史；当前未提交改动、`.env`、镜像归
 ### 回退原则
 
 更新前保存镜像 tag、源码提交和数据备份。若没有变更会话格式，可在隔离实例先验证旧镜像与现有数据的兼容性；若变更了数据格式，按配套数据备份恢复。当前应用尚无数据库或会话结构版本迁移机制。
+
+### 发布与回滚步骤（随整改分支发布时执行）
+
+1. 发布：审阅 `docs/reviews/2026-09-23/` 下验收证据 → 合并 `remediate/r01-r07` 到 `main` → `scripts/version.sh bump` 升版（如 `0.1.5.0 RC5`）并 `note` 记录 → 打 tag（仅 main）→ 重建镜像（`docker compose build`）→ 按上述「备份范围」先备份两个卷 → `docker compose up -d` → `scripts/verify_runtime.py --check`。
+2. 回滚：`docker compose stop aide` → 从步骤 1 的卷备份恢复 `aide-data.tgz`/`aide-home.tgz` → 回退镜像（`docker tag aide:rollback aide:local` 或 `scripts/aide.sh load` 旧归档）→ `git` 切回上一个发布 tag（如需回退源码）→ `docker compose up -d` → 验证 health 与登录令牌。
+3. 恢复演练已在隔离容器验证（2026-09-23，候选 `966ff5f`，5/5 通过：产生状态→tar 备份→销毁数据目录→恢复→重启校验会话/任务/费率/统计/health 完全一致）；生产环境恢复仍建议先在隔离副本演练一次。
 
 单独回退镜像不会撤销 `/workspace` 已写入的文件。业务文件的恢复应依据 Git diff 或文件备份处理。保留数据时不要执行 `docker compose down -v`，也不要清理这两个命名卷。
 

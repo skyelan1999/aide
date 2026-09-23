@@ -1,0 +1,10 @@
+{
+  "id": "terminal",
+  "name": "终端",
+  "description": "DSH terminal 能力预设：终端会话与命令执行",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "installedAt": "2026-09-21T18:00:34Z"
+}

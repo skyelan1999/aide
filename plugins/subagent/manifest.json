@@ -1,0 +1,10 @@
+{
+  "id": "subagent",
+  "name": "子代理",
+  "description": "DSH subagent 能力预设：子代理调度与结果回收",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "installedAt": "2026-09-21T18:00:34Z"
+}

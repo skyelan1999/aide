@@ -1,0 +1,10 @@
+{
+  "id": "workflow",
+  "name": "工作流",
+  "description": "DSH workflow 能力预设：多阶段工作流编排",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "installedAt": "2026-09-21T18:00:34Z"
+}

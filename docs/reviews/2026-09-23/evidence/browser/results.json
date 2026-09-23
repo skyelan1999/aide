@@ -1,0 +1,147 @@
+{
+  "browser": "chromium",
+  "headless": true,
+  "aideURL": "http://127.0.0.1:18097",
+  "results": [
+    {
+      "check": "browser-00-load",
+      "status": "PASS",
+      "detail": {
+        "url": "http://127.0.0.1:18097",
+        "title": "aide · AI 开发工作台"
+      }
+    },
+    {
+      "check": "browser-01-preview-visible",
+      "status": "PASS",
+      "detail": {
+        "cpSummary": "输入估算 464 tokens + 输出预留 4096 = 4560 / 窗口 65536"
+      }
+    },
+    {
+      "check": "browser-01-preview-breakdown",
+      "status": "PASS",
+      "detail": {
+        "rows": 4,
+        "note": "输入用量为估算：4 字符 ≈ 1 token（按 UTF-8 字节），非精确 tokenizer；输出预留为 max_tokens 采样参数。"
+      }
+    },
+    {
+      "check": "browser-01-preview-estimate-consistent",
+      "status": "PASS",
+      "detail": {
+        "estimate": 464,
+        "realRequestChars": 1858,
+        "mainRequests": 2
+      }
+    },
+    {
+      "check": "browser-02-cost-visible",
+      "status": "PASS",
+      "detail": {
+        "head": "累计 2.6K tokens · 已计价费用 ¥0.03 · 刊例价估算 ¥0.00"
+      }
+    },
+    {
+      "check": "browser-02-zero-price-saved",
+      "status": "PASS",
+      "detail": {
+        "pricing": {
+          "default": {
+            "priceIn": 2,
+            "priceOut": 8
+          },
+          "defaulted": false,
+          "model": "model-b",
+          "priceIn": 0,
+          "priceOut": 0,
+          "rates": {
+            "browser-model": {
+              "priceIn": 0,
+              "priceOut": 0
+            },
+            "model-b": {
+              "priceIn": 0,
+              "priceOut": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "check": "browser-02-heatmap-tooltip-day-detail",
+      "status": "PASS",
+      "detail": {
+        "tip": true,
+        "dayDetail": "2026-09-23输入 2.1K tokens · 输出 530 tokens调用 53 次 · 合计 2.6K tokens费用 ¥0.0304（按调用时刻"
+      }
+    },
+    {
+      "check": "browser-02-zero-price-reload-stable",
+      "status": "PASS",
+      "detail": {
+        "pricing": {
+          "default": {
+            "priceIn": 2,
+            "priceOut": 8
+          },
+          "defaulted": false,
+          "model": "model-b",
+          "priceIn": 0,
+          "priceOut": 0,
+          "rates": {
+            "browser-model": {
+              "priceIn": 0,
+              "priceOut": 0
+            },
+            "model-b": {
+              "priceIn": 0,
+              "priceOut": 0
+            }
+          }
+        }
+      }
+    },
+    {
+      "check": "browser-02-per-model-rates-persist",
+      "status": "PASS",
+      "detail": {
+        "rates": {
+          "browser-model": {
+            "priceIn": 0,
+            "priceOut": 0
+          },
+          "model-b": {
+            "priceIn": 10,
+            "priceOut": 40
+          }
+        }
+      }
+    },
+    {
+      "check": "browser-03-old-file-tab-refused",
+      "status": "PASS",
+      "detail": {
+        "toast": "工作区已切换：该文件属于其他项目，请重新打开后再保存",
+        "wsIdAtOpen": "local|A|"
+      }
+    },
+    {
+      "check": "browser-04-session-switch-draft-isolated",
+      "status": "PASS",
+      "detail": {
+        "draft": "B 会话的未发送草稿",
+        "title": "开始新的探索"
+      }
+    },
+    {
+      "check": "browser-05-console-clean",
+      "status": "PASS",
+      "detail": {
+        "runtimeErrors": [],
+        "expectedNetwork4xx": 12,
+        "totalConsole": 12
+      }
+    }
+  ]
+}

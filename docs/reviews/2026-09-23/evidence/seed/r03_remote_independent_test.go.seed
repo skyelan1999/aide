@@ -1,0 +1,108 @@
+// Copy this seed into internal/server ONLY IN A DISPOSABLE CANDIDATE SOURCE COPY.
+// Requires the repository's existing testApp/request/requireStatus helpers.
+// Run inside an ephemeral --network none container, TMPDIR inside the disposable
+// acceptance root. No real SSH server or credentials are used.
+package server
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/url"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"testing"
+)
+
+func TestIndependentVirtualRootBoundaries(t *testing.T) {
+	a := testApp(t)
+	for _, test := range []struct{ path string; valid bool }{
+		{"/workspace", true}, {"/workspace/A", true}, {"/context", true}, {"/local", true},
+		{"/workspaceevil", false}, {"/contextual", false}, {"/locality", false},
+		{"/workspace/../outside", false}, {"/context/../outside", false}, {"/local/../outside", false},
+		{"../outside", false},
+	} {
+		t.Run(test.path, func(t *testing.T) {
+			_, _, err := a.resolveHostPath(test.path)
+			if test.valid && err != nil { t.Fatalf("valid virtual path rejected: %v", err) }
+			if !test.valid && err == nil { t.Fatalf("virtual root must require complete path component and reject .. escape: %q", test.path) }
+		})
+	}
+}
+
+func independentFakeRemote(t *testing.T, a *App) string {
+	t.Helper()
+	dir := t.TempDir()
+	log := filepath.Join(dir, "sftp-batches.jsonl")
+	ssh := filepath.Join(dir, "ssh")
+	sftp := filepath.Join(dir, "sftp")
+	// The SSH stub succeeds only locally. ControlMaster checks do not establish
+	// any connection and skip real authentication/known_hosts preparation.
+	if err := os.WriteFile(ssh, []byte("#!/bin/sh\nexit 0\n"), 0700); err != nil { t.Fatal(err) }
+	stub := fmt.Sprintf(`#!/usr/bin/env python3
+import json, shlex, sys
+from pathlib import Path
+batch=sys.stdin.read()
+with open(%s, 'a') as log: log.write(json.dumps(batch)+'\n')
+for line in batch.splitlines():
+    parts=shlex.split(line)
+    if not parts: continue
+    if parts[0]=='get':
+        remote,dest=parts[-2:]
+        if remote.endswith('/oversize.txt'): content=b'x'*(256*1024+1)
+        elif remote.endswith('/at-limit.txt'): content=b'x'*(256*1024)
+        elif remote.endswith('/binary.txt'): content=b'abc\x00def'
+        elif remote.endswith('/invalid-utf8.txt'): content=b'abc\xffdef'
+        else: content=b'REMOTE-FIXTURE-ONLY\n'
+        Path(dest).write_bytes(content)
+    elif parts[0]=='ls':
+        target=parts[-1]
+        size=256*1024+1 if target.endswith('/oversize.txt') else 20
+        print('-rw-r--r-- 1 fixture fixture %%d Jan 1 00:00 %%s' %% (size, target.rsplit('/',1)[-1]))
+`, strconv.Quote(log))
+	if err := os.WriteFile(sftp, []byte(stub), 0700); err != nil { t.Fatal(err) }
+	a.sshBin, a.sftpBin = ssh, sftp
+	a.wsConfig.Workspace.Mode = "ssh"
+	a.wsConfig.Workspace.Host = "fixture.invalid"
+	a.wsConfig.Workspace.Port = 22
+	a.wsConfig.Workspace.Username = "fixture"
+	a.wsConfig.Workspace.Auth = "none"
+	a.wsConfig.Workspace.Path = "/srv/fixture"
+	src := Source{ID:"independent-sftp", Name:"fixture", Type:"sftp", Enabled:true}
+	src.Config.Host, src.Config.Username, src.Config.Auth = "fixture.invalid", "fixture", "none"
+	src.Config.Path, src.Config.Port = "/srv/fixture", 22
+	a.sourceRegistry.Sources = append(a.sourceRegistry.Sources, src)
+	return log
+}
+
+func TestIndependentRemoteReadBoundaries(t *testing.T) {
+	a := testApp(t)
+	log := independentFakeRemote(t, a)
+	for _, query := range []string{"root=workspace", "source=independent-sftp"} {
+		t.Run(query, func(t *testing.T) {
+			for _, bad := range []string{"../outside.txt", "/absolute.txt", `..\outside.txt`, ".env", ".git/config"} {
+				before, _ := os.ReadFile(log)
+				w := request(a, "GET", "/api/file?"+query+"&path="+url.QueryEscape(bad), nil)
+				if w.Code != 400 { t.Errorf("unsafe remote path %q got %d: %s", bad, w.Code, w.Body.String()) }
+				after, _ := os.ReadFile(log)
+				if string(after) != string(before) { t.Errorf("unsafe path reached SFTP transport: %q", bad) }
+			}
+			for _, name := range []string{"oversize.txt", "binary.txt", "invalid-utf8.txt"} {
+				w := request(a, "GET", "/api/file?"+query+"&path="+name, nil)
+				if w.Code != 400 { t.Errorf("unsupported remote content %s got %d", name, w.Code) }
+			}
+			for _, name := range []string{"normal.txt", "at-limit.txt"} {
+				w := request(a, "GET", "/api/file?"+query+"&path="+name, nil)
+				requireStatus(t, w, 200)
+				var body map[string]any
+				if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil { t.Fatal(err) }
+				content, _ := body["content"].(string)
+				if name == "normal.txt" && content != "REMOTE-FIXTURE-ONLY\n" { t.Fatalf("wrong positive remote content: %q", content) }
+				if name == "at-limit.txt" && len(content) != maxFile { t.Fatalf("boundary-sized file rejected or truncated: %d", len(content)) }
+			}
+		})
+	}
+	batch, _ := os.ReadFile(log)
+	if !strings.Contains(string(batch), "/srv/fixture/normal.txt") { t.Fatal("normal file did not use configured remote root") }
+}

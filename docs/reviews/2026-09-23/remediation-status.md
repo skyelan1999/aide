@@ -1,0 +1,33 @@
+# 整改状态（Remediation Status）
+
+审查基线：`6a4e441`（0.1.5.0 RC4）。整改分支：`remediate/r01-r07`。**最终候选提交：`adf0fa0`**（race/vet/gofmt 干净）。本文档由实施方（aide 编码助手）维护，Codex 独立验收。
+
+## 状态：R01–R10 全部闭环，无 BLOCKED/NOT_RUN 残留
+
+| 编号 | 修复 | 关键实现 | 验收（最终候选 `adf0fa0`） |
+| --- | --- | --- | --- |
+| R01 | 压缩死锁/并发/阈值/持久化 | 模型调用在 `a.mu` 外；每会话互斥（并发 409）；快照提交校验；>48,000 字节才自动压缩；压缩落盘（重启不丢）；取消关断 | workflow 6/6 + lifecycle 3/3 PASS |
+| R02 | 工作区身份/运行中切换 | `Task` 携带工作区身份与模式；`wsRoots` 注册表；旧提案/旧编辑器 409；空路径恢复默认根；`/file` 契约 `workspaceId`（前端携带打开时身份） | 7/7 + FRONT-003 + 浏览器文件标签拒绝误写 PASS |
+| R03 | 统一路径权限/原子配置/远程策略 | 虚拟根边界匹配；workspace/docs/cache 原子预检；**远程（SSH/SFTP）读取 safePath 先于传输 + 256KiB/UTF-8/无 NUL 统一内容策略** | r03/r09 4/4 + SFTP 独立种子 2/2 PASS |
+| R04 | 摘要连续性/失败不变性 | 连续摘要链；失败 400 且消息/摘要/计数/时间全不变 | workflow 2/2 PASS |
+| R05 | 工具 schema/预算/证据链 | 插件 parameters 入请求；三入口统一预算；超限显式拒绝；工具原始结果跨步骤保留（`ToolUse.Result` 全文） | 26/26 PASS |
+| R06 | 正文空白字节保留 | content 原字节；7 类空白/CRLF/Unicode 逐字节断言 | PASS |
+| R07 | 前端竞态/草稿隔离 | 序号守卫；提交完成不抢走用户已切换会话 | FRONT-001/002 + 真实浏览器 12/12 PASS |
+| R08 | 统计真实性 | 按模型费率（0=真实 0≠留空）；逐调用快照（model/provider/时间/费率/费用），改价不动历史；旧版迁移保留用量与 estimated、标记未计价；损坏文件保留可诊断；前端费率以服务端为事实源 | R08 API 4/4 + Go 测试 3 项 + 浏览器费用/0价/按模型持久化 PASS |
+| R08-04 | 上下文预览（原 BLOCKED，已闭环） | 与真实请求共用构建器：系统指令/历史/摘要/附件/工具定义/阶段指令 + 输出预留；组成与估算口径（4字符≈1token，非精确 tokenizer 如实标注）；草稿/附件/模型/摘要变更指纹失效 + 序号防旧响应覆盖；输入+预留超窗口时前后端双重拦截（Provider 不收调用）；逐轮请求快照（SHA-256+完整 body）供对照 | R08-04 验收 4/4 + 浏览器预览/估算一致 12/12 PASS |
+| R09 | 恢复/构建身份 | 坏文件隔离启动；ldflags 版本/commit（version.md 无法覆盖）；`/api/config.revision`；**隔离备份恢复演练**（产生状态→tar 备份→销毁→恢复→重启校验） | r03/r09 4/4 + 演练 5/5 PASS |
+| R10 | 文档/职责/发布回滚 | README 边界、HANDOVER 状态/限制/模块职责/发布与回滚步骤、PRD v1.18 变更记录 | 已更新（本分支） |
+
+## 验收汇总（最终候选 `adf0fa0`，全部在隔离容器/临时目录，无真实模型调用）
+
+- workflow 6/6、R01 lifecycle 3/3、R05 26/26、R02 7/7、R03/R09 4/4、R08 API 4/4、R08-04 4/4、SFTP 独立种子 2/2、R09 演练 5/5、前端 VM 3/3、**真实 Chromium 浏览器 12/12**（chromium-headless-shell 153.0.8010.12，隔离候选 + 循环 Mock，10 张截图 + 断言 + 控制台证据）。
+- 冻结检查：`gofmt -l` 空、`go vet ./...` 干净、`go test -race -count=1 ./...` 通过；所有退出码 0。
+- 证据与命令见 `acceptance-summary.json`；脚本/结果/截图持久保存于 `evidence/`（本目录，已提交入库，不再依赖 /tmp）。
+
+## 兼容迁移与权限范围（HOME 挂载，本轮未改动）
+
+`AIDE_LOCAL_ROOT` 默认 `$HOME` 可写挂载保持现状（用户此前要求的功能）；本轮未收紧挂载、未扩大授权。默认/实际权限：Compose 仅绑定 `127.0.0.1`，API 随机令牌 + 同源检查；`/context` 只读；文件 API 隐藏 `.git`/`.env`/`.data`。若后续收紧挂载，将随附迁移说明与验收清单（HANDOVER §9）。
+
+## 状态：已发布（2026-09-23，0.1.5.0 RC5）
+
+用户审阅后指示合入并继续完整发布。已执行：合并 `8724afc`（main）→ 发布基建 `2b2ee01`（Dockerfile 构建身份注入）→ 升版 `0.1.5.0 RC5`（提交 `905d261`，tag `v0.1.5.0-RC5`）→ 备份两卷（`~/aide-backups/20260923-195334/`）→ 重建镜像 `aide:local`（ID `sha256:8f4455dfe822…`，已导出归档并更新校验和）→ `docker compose up -d --build` 重启生产 → 容器内 `verify_runtime.py --check` PASS；`/api/config` `version=0.1.5.0-RC5`、`revision=905d261…`；`/healthz` 200；`aide-aide-1` healthy。发布记录见 `docs/verification.md`；回滚步骤见 HANDOVER §9（卷备份已在发布前落盘）。

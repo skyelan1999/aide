@@ -1,0 +1,18 @@
+[
+  {
+    "case": "virtual_root_prefix_and_parent_boundaries",
+    "status": "PASS"
+  },
+  {
+    "case": "failed_configuration_is_atomic_and_restart_safe",
+    "status": "PASS"
+  },
+  {
+    "case": "binary_revision_immune_to_mounted_version",
+    "status": "PASS"
+  },
+  {
+    "case": "corrupt_session_quarantined_and_service_available",
+    "status": "PASS"
+  }
+]

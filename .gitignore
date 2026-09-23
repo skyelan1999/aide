@@ -9,3 +9,12 @@ docker-images/*.sha256
 
 # 编码助手本地记忆，仅保留在本机，不进入版本库
 .workbuddy/
+
+# IDE 本地配置
+.idea/
+plugins/surface.json
+workspace-config.json
+.cache/
+
+# 演练备份示例（含合成令牌，仅保留在本机验收目录，不入库）
+docs/reviews/*/evidence/drill/*.tar.gz

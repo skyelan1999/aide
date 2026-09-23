@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "sections": [
+    {
+      "id": "appearance",
+      "title": "外观",
+      "description": "调整界面主题的明暗外观",
+      "controls": [
+        {
+          "id": "theme",
+          "type": "segmented",
+          "label": "主题颜色",
+          "options": [
+            {
+              "value": "light",
+              "label": "明"
+            },
+            {
+              "value": "dark",
+              "label": "暗"
+            },
+            {
+              "value": "system",
+              "label": "跟随系统"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "stats",
+      "title": "消耗统计",
+      "description": "模型调用 Token 消耗与费用趋势",
+      "controls": [
+        {
+          "id": "token-stats",
+          "type": "token-stats",
+          "label": "Token 消耗"
+        }
+      ]
+    },
+    {
+      "id": "model",
+      "title": "模型参数",
+      "description": "管理模型调用参数配置（Profile）",
+      "children": [
+        {
+          "id": "model-profiles",
+          "title": "参数配置",
+          "controls": [
+            {
+              "id": "model-profiles",
+              "type": "profiles-manager",
+              "label": "参数配置"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
