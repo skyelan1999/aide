@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.6.0 RC4**
+**当前版本：0.1.7.0 RC1**
+
+## 0.1.7.0 RC1（2026-09-24）
+
+- Reference source tools and environment guide; unified startup and compact workspace navigation
+
 
 ## 0.1.6.0 RC4（2026-09-23）
 
