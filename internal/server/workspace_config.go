@@ -410,7 +410,18 @@ func (a *App) listWorkspaceDir(p string) ([]map[string]any, error) {
 }
 func (a *App) readWorkspaceText(p string) ([]byte, error) {
 	if a.workspaceMode() == "ssh" {
-		return a.sftpRead(a.workspaceRemotePath(p))
+		// R03：路径校验必须先于任何 SFTP 传输；内容策略与本地读取一致
+		if err := safePath(p); err != nil {
+			return nil, err
+		}
+		b, err := a.sftpRead(a.workspaceRemotePath(p))
+		if err != nil {
+			return nil, err
+		}
+		if err := validateTextContent(b); err != nil {
+			return nil, err
+		}
+		return b, nil
 	}
 	return readText(a.workspace, p)
 }

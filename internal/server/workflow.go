@@ -624,13 +624,27 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 	rawStr := func(k string) string { v, _ := args[k].(string); return v } // 正文等字段按原字节保留（R06）
 	listDir := func(p string) ([]map[string]any, error) {
 		if mode == "ssh" {
+			if err := safePath(p); err != nil {
+				return nil, err
+			}
 			return a.sftpList(pathJoinRemote(remotePath, p))
 		}
 		return a.listLocalDir(wsRoot, p)
 	}
 	readTextFile := func(p string) ([]byte, error) {
 		if mode == "ssh" {
-			return a.sftpRead(pathJoinRemote(remotePath, p))
+			// R03：工具读取同样先校验路径、再校验内容（与本地一致）
+			if err := safePath(p); err != nil {
+				return nil, err
+			}
+			b, err := a.sftpRead(pathJoinRemote(remotePath, p))
+			if err != nil {
+				return nil, err
+			}
+			if err := validateTextContent(b); err != nil {
+				return nil, err
+			}
+			return b, nil
 		}
 		return readText(wsRoot, p)
 	}

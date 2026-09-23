@@ -28,6 +28,17 @@ func safePath(p string) error {
 	return nil
 }
 func hash(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
+
+// validateTextContent 统一内容策略（R03）：256 KiB 上限、UTF-8、无 NUL。
+func validateTextContent(b []byte) error {
+	if len(b) > maxFile {
+		return fmt.Errorf("文件超过 %d KB 限制", maxFile/1024)
+	}
+	if !utf8.Valid(b) || strings.ContainsRune(string(b), 0) {
+		return errors.New("不支持二进制文件")
+	}
+	return nil
+}
 func readText(root *os.Root, p string) ([]byte, error) {
 	if err := safePath(p); err != nil {
 		return nil, err
