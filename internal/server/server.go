@@ -357,7 +357,7 @@ func New(work, reference, data string) (*App, error) {
 	a.tokenStats = map[string]TokenDay{}
 	if b, err := os.ReadFile(filepath.Join(data, "token-stats.json")); err == nil {
 		var raw struct {
-			Version int    `json:"version"`
+			Version int `json:"version"`
 			Legacy  *struct {
 				Version int                 `json:"version"`
 				Days    map[string]TokenDay `json:"days"`
@@ -780,12 +780,12 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		entry = a.pricing.Default
 	}
 	jsonOut(w, 200, map[string]any{
-		"days":      a.tokenStats,
-		"totals":    totals,
-		"today":     a.tokenStats[time.Now().UTC().Format("2006-01-02")],
-		"cost":      totalCost,
+		"days":          a.tokenStats,
+		"totals":        totals,
+		"today":         a.tokenStats[time.Now().UTC().Format("2006-01-02")],
+		"cost":          totalCost,
 		"estimatedCost": estimatedCost,
-		"modelCost": modelCost,
+		"modelCost":     modelCost,
 		"pricing": map[string]any{
 			"priceIn":   entry.PriceIn,
 			"priceOut":  entry.PriceOut,
