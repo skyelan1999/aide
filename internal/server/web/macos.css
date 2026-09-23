@@ -353,3 +353,12 @@ html[lang="en"] .settings-nav-item { white-space: normal; text-align: left; }
 .language-buttons button { flex: 1; padding: 12px 22px; border: 1px solid transparent; border-radius: 10px; background: transparent; color: var(--text); font: inherit; cursor: pointer; }
 .language-buttons button[aria-pressed="true"] { background: color-mix(in srgb, var(--brand) 12%, var(--panel)); border-color: var(--brand); color: var(--brand-text); font-weight: 600; }
 .language-buttons button:focus-visible { outline: 2px solid var(--brand); outline-offset: 3px; }
+
+/* The legacy content host must not share the document's remaining height. */
+.file-view-content:empty { display: none; }
+.file-view-editor, .file-view-preview, .file-view-content { min-height: 0; }
+.file-view-head > div { flex: 1; }
+@media (max-width: 600px) {
+  .file-view-head { flex-wrap: wrap; }
+  .file-view-head > div { order: 3; flex-basis: 100%; }
+}

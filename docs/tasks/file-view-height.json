@@ -1,0 +1,8 @@
+{
+  "id": "file-view-height",
+  "request": "单文件视图只显示半页，修复高度",
+  "cause": "Empty legacy file-view-content retained flex:1 and consumed half of the available height alongside the preview/editor.",
+  "change": "Hide the legacy host only when empty; give scrollable document panes min-height:0. Header path flexes and wraps onto its own row on narrow screens.",
+  "verification": "Browser 18121 actual docs/architecture.md preview and edit mode both visually fill remaining viewport height at 1280x720; git diff --check passed.",
+  "deployment": "Live preview CSS updated; no production restart or release."
+}
