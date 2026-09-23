@@ -150,7 +150,7 @@ func TestProfileParamsReachProvider(t *testing.T) {
 	}))
 	defer provider.Close()
 	params := ProfileParams{Temperature: fp(0.5), TopP: fp(0.8), MaxTokens: 1234, FrequencyPenalty: fp(0.1), PresencePenalty: fp(-0.2), ResponseFormat: "json_object", Stop: []string{"END"}}
-	if _, _, _, err := complete(context.Background(), Settings{BaseURL: provider.URL, Model: "deepseek-chat"}, nil, params, nil); err != nil {
+	if _, _, _, err := complete(context.Background(), Settings{BaseURL: provider.URL, Model: "deepseek-chat"}, nil, params, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	for key, want := range map[string]any{"temperature": 0.5, "top_p": 0.8, "max_tokens": float64(1234), "frequency_penalty": 0.1, "presence_penalty": -0.2} {
@@ -162,7 +162,7 @@ func TestProfileParamsReachProvider(t *testing.T) {
 		t.Fatal("response_format missing")
 	}
 	// reasoner：不支持参数被剔除
-	if _, _, _, err := complete(context.Background(), Settings{BaseURL: provider.URL, Model: "deepseek-reasoner"}, nil, params, nil); err != nil {
+	if _, _, _, err := complete(context.Background(), Settings{BaseURL: provider.URL, Model: "deepseek-reasoner"}, nil, params, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	for _, key := range []string{"temperature", "top_p", "frequency_penalty", "presence_penalty"} {

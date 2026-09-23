@@ -488,6 +488,8 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
+	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/requests", a.runRequestsHandler)
+	mux.HandleFunc("POST /api/context-preview", a.contextPreviewHandler)
 	mux.HandleFunc("POST /api/command", a.command)
 	web, _ := fs.Sub(assets, "web")
 	mux.Handle("/", http.FileServer(http.FS(web)))

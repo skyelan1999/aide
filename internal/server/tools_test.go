@@ -243,7 +243,7 @@ func TestTokenStats(t *testing.T) {
 }
 
 func (a *App) completeCall(baseURL string) (string, []ToolCall, TokenUsage, error) {
-	return complete(context.Background(), Settings{BaseURL: baseURL, Model: "test"}, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil)
+	return complete(context.Background(), Settings{BaseURL: baseURL, Model: "test"}, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil, nil)
 }
 
 // FR-92/93：全局搜索与会话压缩

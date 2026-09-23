@@ -30,7 +30,8 @@ var tokenUsageRecorder atomic.Value // func(TokenUsage)
 // endpoint can be used, including a local model through host.docker.internal.
 // params 是本次任务的采样参数（FR-61），未设置字段不进入请求体；
 // deepseek-reasoner 不支持的参数会被剔除，避免上游 400。
-func complete(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any) (string, []ToolCall, TokenUsage, error) {
+// rec 为可选的请求体记录回调（R08-04 请求快照）；在真正发出前以已序列化字节调用。
+func complete(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte)) (string, []ToolCall, TokenUsage, error) {
 	if cfg.BaseURL == "" || cfg.Model == "" {
 		return "", nil, TokenUsage{}, errors.New("请先在模型设置中配置 API 地址和模型")
 	}
@@ -72,6 +73,9 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	b, err := json.Marshal(body)
 	if err != nil {
 		return "", nil, TokenUsage{}, err
+	}
+	if rec != nil {
+		rec(b)
 	}
 	req, err := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(cfg.BaseURL, "/")+"/chat/completions", bytes.NewReader(b))
 	if err != nil {
