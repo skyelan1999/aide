@@ -349,6 +349,7 @@ var _ = context.Background
 // R08-01：0 费率必须是真实 0（非缺省回退），负值必须拒绝，留空语义由前端显式拒绝。
 func TestR08ZeroPricingIsRealZero(t *testing.T) {
 	a := testApp(t)
+	a.settings.Model = "local-free"
 	w := request(a, "GET", "/api/token-pricing", nil)
 	requireStatus(t, w, 200)
 	var def Pricing
@@ -364,6 +365,9 @@ func TestR08ZeroPricingIsRealZero(t *testing.T) {
 	cost := 0.0
 	for _, c := range a.tokenCalls {
 		cost += c.Cost
+		if c.Defaulted {
+			t.Fatal("explicitly configured 0-rate call must not be defaulted")
+		}
 	}
 	day := a.tokenStats[time.Now().UTC().Format("2006-01-02")]
 	a.tokenStatsMu.Unlock()
@@ -382,13 +386,14 @@ func TestR08ZeroPricingIsRealZero(t *testing.T) {
 	}
 }
 
-// R08-02：改价不得覆盖历史调用快照；新调用按新价。
+// R08-02：按模型费率快照；改价不得覆盖历史，新调用按新价。
 func TestR08PriceSnapshotStable(t *testing.T) {
 	a := testApp(t)
-	requireStatus(t, request(a, "PUT", "/api/token-pricing", Pricing{PriceIn: 2, PriceOut: 8}), 200)
+	requireStatus(t, request(a, "PUT", "/api/token-pricing", map[string]any{"model": "model-a", "priceIn": 2, "priceOut": 8}), 200)
+	requireStatus(t, request(a, "PUT", "/api/token-pricing", map[string]any{"model": "model-b", "priceIn": 10, "priceOut": 40}), 200)
 	a.recordTokenUsage(TokenUsage{Prompt: 1000000, Completion: 250000, Total: 1250000, Model: "model-a"})
 	a.recordTokenUsage(TokenUsage{Prompt: 500000, Completion: 125000, Total: 625000, Model: "model-b"})
-	requireStatus(t, request(a, "PUT", "/api/token-pricing", Pricing{PriceIn: 20, PriceOut: 80}), 200)
+	requireStatus(t, request(a, "PUT", "/api/token-pricing", map[string]any{"model": "model-a", "priceIn": 20, "priceOut": 80}), 200)
 	a.recordTokenUsage(TokenUsage{Prompt: 1000000, Completion: 250000, Total: 1250000, Model: "model-a"})
 	a.tokenStatsMu.Lock()
 	defer a.tokenStatsMu.Unlock()
@@ -398,8 +403,11 @@ func TestR08PriceSnapshotStable(t *testing.T) {
 	if a.tokenCalls[0].Cost != 4 || a.tokenCalls[1].Cost != 10 || a.tokenCalls[2].Cost != 40 {
 		t.Fatalf("snapshot costs wrong: %+v", a.tokenCalls)
 	}
-	if a.tokenCalls[0].PriceIn != 2 || a.tokenCalls[2].PriceIn != 20 {
+	if a.tokenCalls[0].PriceIn != 2 || a.tokenCalls[1].PriceIn != 10 || a.tokenCalls[2].PriceIn != 20 {
 		t.Fatal("price change rewrote historical snapshots")
+	}
+	if a.tokenCalls[0].Defaulted || a.tokenCalls[1].Defaulted || a.tokenCalls[2].Defaulted {
+		t.Fatal("explicitly configured models must not be defaulted")
 	}
 }
 

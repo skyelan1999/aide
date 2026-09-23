@@ -597,12 +597,18 @@ function renderTokenStats(control) {
     const dayCost = {};
     callRecords.forEach(c => { const k = (c.time || '').slice(0, 10); dayCost[k] = (dayCost[k] || 0) + (c.cost || 0); });
     // R08：费用仅由服务端逐调用记录汇总；未计价历史（旧版汇总）单独提示，不并入费用
-    head.querySelector('.control-value').textContent = '累计 ' + fmtStatTokens(totalsObj.total || 0) + ' tokens · 已计价费用 ¥' + cost.toFixed(2);
+    const estimatedCost = data.estimatedCost ?? 0;
+    head.querySelector('.control-value').textContent = '累计 ' + fmtStatTokens(totalsObj.total || 0) + ' tokens · 已计价费用 ¥' + cost.toFixed(2) + (estimatedCost > 0 ? ' · 刊例价估算 ¥' + estimatedCost.toFixed(2) : '');
     chips.replaceChildren();
     chips.append(
       el('span', 'token-chip', '今日 ' + fmtStatTokens(todayStats.total || 0) + ' tokens' + (todayStats.priced !== false ? ' · ¥' + (dayCost[Object.keys(days).sort().pop()] || 0).toFixed(2) : ' · 未计价')),
       el('span', 'token-chip', '调用 ' + (totalsObj.calls || 0) + ' 次')
     );
+    Object.entries(data.modelCost || {}).forEach(([model, mc]) => {
+      const chip = el('span', 'token-chip', model + ' ¥' + mc.toFixed(2));
+      chip.title = '该模型逐调用计价快照合计';
+      chips.append(chip);
+    });
     if (unpriced.total) {
       const chip = el('span', 'token-chip', '未计价历史 ' + fmtStatTokens(unpriced.total) + ' tokens · ' + (unpriced.calls || 0) + ' 次');
       chip.title = '旧版统计没有逐调用与计价证据，费用未知；未按当前费率冒充已发生费用';

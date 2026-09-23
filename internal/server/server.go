@@ -137,15 +137,22 @@ type App struct {
 	compactingSessions        map[string]bool
 	retiredRoots              []*os.Root
 	wsRoots                   map[string]*os.Root // 工作区身份 → 打开中的根（R02 运行中任务的工具绑定）
-	pricing                   Pricing
+	pricing                   PricingState
 	tokenCalls                []TokenCallRec
 	buildVersion, buildCommit string
 }
 
-// Pricing 服务端计价（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
+// Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
 type Pricing struct {
 	PriceIn  float64 `json:"priceIn"`
 	PriceOut float64 `json:"priceOut"`
+}
+
+// PricingState 服务端计价状态：按模型费率 + 未配置模型的刊例默认价。
+// 显式配置（含 0/0 免费）优先于默认；默认价仅用于从未配置过的模型，且记录必须标记 defaulted。
+type PricingState struct {
+	Rates   map[string]Pricing `json:"rates"`
+	Default Pricing            `json:"default"`
 }
 
 // TokenCallRec 逐调用记录（R08）：来源、模型、计价快照、费用。
@@ -157,6 +164,7 @@ type TokenCallRec struct {
 	Completion int     `json:"completion"`
 	Total      int     `json:"total"`
 	Estimated  bool    `json:"estimated,omitempty"`
+	Defaulted  bool    `json:"defaulted,omitempty"` // 该模型未配置费率，费用按刊例默认价（估算性质）
 	PriceIn    float64 `json:"priceIn"`
 	PriceOut   float64 `json:"priceOut"`
 	Cost       float64 `json:"cost"`
@@ -371,11 +379,34 @@ func New(work, reference, data string) (*App, error) {
 			log.Printf("token-stats.json 缺少有效 days（保留原文件，未清零）")
 		}
 	}
-	a.pricing = Pricing{PriceIn: 2, PriceOut: 8}
+	a.pricing = PricingState{Rates: map[string]Pricing{}, Default: Pricing{PriceIn: 2, PriceOut: 8}}
 	if b, err := os.ReadFile(filepath.Join(data, "token-pricing.json")); err == nil {
-		var pr Pricing
-		if json.Unmarshal(b, &pr) == nil && pr.PriceIn >= 0 && pr.PriceOut >= 0 {
-			a.pricing = pr
+		var raw map[string]json.RawMessage
+		if json.Unmarshal(b, &raw) != nil {
+			log.Printf("token-pricing.json 无法解析（保留原文件，使用默认刊例价）")
+		} else if _, ok := raw["rates"]; !ok {
+			// 旧单费率格式：整体迁移为默认刊例价，不冒充任何模型的精确费率
+			var legacy Pricing
+			if json.Unmarshal(b, &legacy) == nil && legacy.PriceIn >= 0 && legacy.PriceOut >= 0 {
+				a.pricing.Default = legacy
+				log.Printf("token-pricing.json 旧单费率已迁移为默认刊例价")
+			}
+		} else {
+			var pr PricingState
+			if json.Unmarshal(b, &pr) == nil {
+				if pr.Rates == nil {
+					pr.Rates = map[string]Pricing{}
+				}
+				for m, v := range pr.Rates {
+					if v.PriceIn < 0 || v.PriceOut < 0 {
+						delete(pr.Rates, m) // 非法费率不采纳
+					}
+				}
+				if pr.Default.PriceIn < 0 || pr.Default.PriceOut < 0 {
+					pr.Default = Pricing{PriceIn: 2, PriceOut: 8}
+				}
+				a.pricing = pr
+			}
 		}
 	}
 	tokenUsageRecorder.Store(func(u TokenUsage) { a.recordTokenUsage(u) })
@@ -637,7 +668,11 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 		d.Estimated = true
 	}
 	a.tokenStats[day] = d
-	rec := TokenCallRec{Time: time.Now().UTC().Format(time.RFC3339Nano), Model: u.Model, Provider: u.Provider, Prompt: u.Prompt, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, PriceIn: a.pricing.PriceIn, PriceOut: a.pricing.PriceOut}
+	entry, configured := a.pricing.Rates[u.Model]
+	if !configured {
+		entry = a.pricing.Default
+	}
+	rec := TokenCallRec{Time: time.Now().UTC().Format(time.RFC3339Nano), Model: u.Model, Provider: u.Provider, Prompt: u.Prompt, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, Defaulted: !configured, PriceIn: entry.PriceIn, PriceOut: entry.PriceOut}
 	rec.Cost = float64(rec.Prompt)*rec.PriceIn/1e6 + float64(rec.Completion)*rec.PriceOut/1e6
 	a.tokenCalls = append(a.tokenCalls, rec)
 	if len(a.tokenCalls) > 5000 {
@@ -652,28 +687,54 @@ func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
 		a.tokenStatsMu.Lock()
 		p := a.pricing
+		active := a.settings.Model
 		a.tokenStatsMu.Unlock()
-		jsonOut(w, 200, p)
+		entry, configured := p.Rates[active]
+		if !configured {
+			entry = p.Default
+		}
+		jsonOut(w, 200, map[string]any{
+			"priceIn":   entry.PriceIn,
+			"priceOut":  entry.PriceOut,
+			"model":     active,
+			"defaulted": !configured,
+			"rates":     p.Rates,
+			"default":   p.Default,
+		})
 		return
 	}
-	var in Pricing
+	var in struct {
+		Model    string  `json:"model"`
+		PriceIn  float64 `json:"priceIn"`
+		PriceOut float64 `json:"priceOut"`
+	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
 		return
 	}
+	in.Model = strings.TrimSpace(in.Model)
+	if in.Model == "" {
+		a.mu.Lock()
+		in.Model = a.settings.Model
+		a.mu.Unlock()
+	}
+	if in.Model == "" {
+		fail(w, 400, errors.New("请先配置当前模型，或显式指定 model"))
+		return
+	}
 	if in.PriceIn < 0 || in.PriceOut < 0 {
-		fail(w, 400, errors.New("费率必须 ≥ 0（0 为合法免费）"))
+		fail(w, 400, errors.New("费率必须 ≥ 0（0 为合法免费，不等于留空）"))
 		return
 	}
 	a.tokenStatsMu.Lock()
-	a.pricing = in
+	a.pricing.Rates[in.Model] = Pricing{PriceIn: in.PriceIn, PriceOut: in.PriceOut}
 	err := atomicJSON(filepath.Join(a.dataPath, "token-pricing.json"), a.pricing)
 	a.tokenStatsMu.Unlock()
 	if err != nil {
 		fail(w, 500, err)
 		return
 	}
-	jsonOut(w, 200, in)
+	jsonOut(w, 200, map[string]any{"model": in.Model, "priceIn": in.PriceIn, "priceOut": in.PriceOut})
 }
 
 func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
@@ -703,19 +764,36 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	totalCost := 0.0
+	estimatedCost := 0.0
 	modelCost := map[string]float64{}
 	for _, c := range a.tokenCalls {
+		if c.Defaulted {
+			estimatedCost += c.Cost // 未配置费率的模型：刊例默认价估算，不算精确费用
+			continue
+		}
 		totalCost += c.Cost
 		modelCost[c.Model] += c.Cost
+	}
+	active := a.settings.Model
+	entry, configured := a.pricing.Rates[active]
+	if !configured {
+		entry = a.pricing.Default
 	}
 	jsonOut(w, 200, map[string]any{
 		"days":      a.tokenStats,
 		"totals":    totals,
 		"today":     a.tokenStats[time.Now().UTC().Format("2006-01-02")],
 		"cost":      totalCost,
+		"estimatedCost": estimatedCost,
 		"modelCost": modelCost,
-		"pricing":   a.pricing,
-		"calls":     len(a.tokenCalls),
+		"pricing": map[string]any{
+			"priceIn":   entry.PriceIn,
+			"priceOut":  entry.PriceOut,
+			"defaulted": !configured,
+			"rates":     a.pricing.Rates,
+			"default":   a.pricing.Default,
+		},
+		"calls": len(a.tokenCalls),
 		// R08：已计价/未计价拆分；旧版汇总没有逐调用与计价证据，费用必须显示为未知
 		"pricedTotals":   priced,
 		"unpricedTotals": unpriced,
