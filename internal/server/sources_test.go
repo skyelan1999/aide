@@ -1,6 +1,8 @@
 package server
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -124,5 +126,77 @@ exit 0
 	requireStatus(t, w, 400)
 	if !strings.Contains(w.Body.String(), "待实现") {
 		t.Fatalf("mcp honest error: %s", w.Body.String())
+	}
+}
+
+func TestLinkSourceUsesExactURL(t *testing.T) {
+	a := testApp(t)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/document" || r.URL.Query().Get("v") != "1" {
+			w.WriteHeader(404)
+			return
+		}
+		w.Write([]byte("reference text"))
+	}))
+	defer server.Close()
+	requireStatus(t, request(a, "PUT", "/api/sources", map[string]any{"sources": []any{sourceBody("web", "Website", "link", map[string]any{"url": server.URL + "/document?v=1"}, false)}}), 200)
+	w := request(a, "GET", "/api/files?source=web&path=.", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), "resource.txt") {
+		t.Fatal(w.Body.String())
+	}
+	w = request(a, "GET", "/api/file?source=web&path=resource.txt", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), "reference text") {
+		t.Fatal(w.Body.String())
+	}
+	requireStatus(t, request(a, "PUT", "/api/sources", map[string]any{"sources": []any{sourceBody("bad", "Bad", "link", map[string]any{"url": "file:///etc/passwd"}, false)}}), 400)
+	requireStatus(t, request(a, "PUT", "/api/sources", map[string]any{"sources": []any{sourceBody("bad", "Bad", "ftp", map[string]any{"url": "ftp://example.com"}, true)}}), 400)
+}
+func TestFTPSourceNestedListing(t *testing.T) {
+	a := testApp(t)
+	stub := filepath.Join(t.TempDir(), "curl")
+	os.WriteFile(stub, []byte("#!/bin/sh\nprintf '%s\\n' 'drwxr-xr-x 2 user group 1 Jan 01 2026 child folder' '-rw-r--r-- 1 user group 1 Jan 01 2026 design notes.md'\n"), 0700)
+	a.curlBin = stub
+	src := Source{ID: "ftp", Type: "ftp"}
+	src.Config.URL = "ftp://example.com/pub"
+	entries, err := a.curlListSource(src, "nested")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(entries) != 2 || entries[0]["path"] != "nested/child folder" || entries[0]["dir"] != true || entries[1]["path"] != "nested/design notes.md" {
+		t.Fatalf("bad listing: %v", entries)
+	}
+	args := a.curlArgs(src, "nested/design notes.md")
+	if !strings.Contains(args[len(args)-1], "design%20notes.md") {
+		t.Fatal("path not encoded")
+	}
+}
+
+func TestAIReferenceAccess(t *testing.T) {
+	a := testApp(t)
+	os.MkdirAll(filepath.Join(a.workPath, "refs"), 0755)
+	os.WriteFile(filepath.Join(a.workPath, "refs", "note.md"), []byte("AI reference body"), 0600)
+	requireStatus(t, request(a, "PUT", "/api/sources", map[string]any{"sources": []any{sourceBody("ref", "AI refs", "local", map[string]any{"path": "refs"}, true)}}), 200)
+	task := &Task{}
+	result := a.executeToolCall(readCall("list_sources", `{}`), task, nil)
+	if !strings.Contains(result, `"id":"ref"`) {
+		t.Fatal(result)
+	}
+	result = a.executeToolCall(readCall("read_file", `{"source":"ref","path":"note.md"}`), task, nil)
+	if result != "AI reference body" {
+		t.Fatal(result)
+	}
+	result = a.executeToolCall(readCall("write_file", `{"source":"ref","path":"note.md","content":"bad"}`), task, nil)
+	if !strings.Contains(result, "read-only") {
+		t.Fatal(result)
+	}
+	result = a.executeToolCall(readCall("read_file", `{"source":"missing","path":"note.md"}`), task, nil)
+	if !strings.Contains(result, "disabled") {
+		t.Fatal(result)
+	}
+	result = a.executeToolCall(readCall("read_file", `{"source":"ref","path":"../note.md"}`), task, nil)
+	if strings.Contains(result, "AI reference body") {
+		t.Fatal("escaped source root")
 	}
 }

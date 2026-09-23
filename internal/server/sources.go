@@ -6,8 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"sort"
@@ -226,23 +228,39 @@ func (a *App) writeSourceText(src Source, p string, b []byte) error {
 
 // curl 通道（ftp/ftps/smb/link）：只读；列目录用 curl 目录页解析，读文件直接取文本。
 func (a *App) curlArgs(src Source, p string) []string {
-	url := strings.TrimRight(src.Config.URL, "/")
-	if p != "" && p != "." {
-		url += "/" + strings.TrimPrefix(p, "/")
+	target := src.Config.URL
+	if p != "" && p != "." && src.Type != "link" && src.Type != "smb" {
+		u, err := url.Parse(target)
+		if err == nil {
+			u.Path = strings.TrimRight(u.Path, "/") + "/" + strings.TrimPrefix(p, "/")
+			u.RawPath = ""
+			target = u.String()
+		}
 	}
-	args := []string{"-sS", "--max-time", "30", "-L"}
+	args := []string{"-sS", "--fail", "--max-time", "30", "-L", "--proto", "=http,https,ftp,ftps,smb,smbs", "--proto-redir", "=http,https,ftp,ftps,smb,smbs"}
 	if src.Type == "ftps" {
 		args = append(args, "--ssl-reqd")
 	}
 	if src.Config.Username != "" {
+		a.mu.Lock()
 		secret := a.sourceSecrets.Secrets[src.ID].Password
+		a.mu.Unlock()
 		args = append(args, "-u", src.Config.Username+":"+secret)
 	}
-	args = append(args, url)
+	args = append(args, target)
 	return args
 }
 
 func (a *App) curlListSource(src Source, p string) ([]map[string]any, error) {
+	if err := safePath(p); err != nil {
+		return nil, err
+	}
+	if src.Type == "link" || src.Type == "smb" {
+		if p != "." {
+			return nil, errors.New("该来源是单个资源，不支持目录浏览")
+		}
+		return []map[string]any{{"name": "resource.txt", "path": "resource.txt", "dir": false}}, nil
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), curlTimeout)
 	defer cancel()
 	args := a.curlArgs(src, p)
@@ -256,15 +274,29 @@ func (a *App) curlListSource(src Source, p string) ([]map[string]any, error) {
 	items := []map[string]any{}
 	for _, line := range strings.Split(string(out), "\n") {
 		name := strings.TrimSpace(line)
-		if name == "" || strings.Contains(name, " ") {
+		dir := strings.HasSuffix(name, "/")
+		fields := strings.Fields(name)
+		if len(fields) >= 9 && len(fields[0]) == 10 && (fields[0][0] == 'd' || fields[0][0] == '-') {
+			dir = fields[0][0] == 'd'
+			rest := name
+			for n := 0; n < 8; n++ {
+				rest = strings.TrimLeft(rest, " \t")
+				i := strings.IndexAny(rest, " \t")
+				if i < 0 {
+					rest = ""
+					break
+				}
+				rest = rest[i:]
+			}
+			name = strings.TrimSpace(rest)
+		} else if strings.HasPrefix(name, "total ") || strings.HasPrefix(name, "l") && len(fields) >= 9 {
 			continue
 		}
-		if strings.HasSuffix(name, "/") {
-			name = strings.TrimSuffix(name, "/")
-			items = append(items, map[string]any{"name": name, "path": name, "dir": true})
-		} else {
-			items = append(items, map[string]any{"name": name, "path": name, "dir": false})
+		name = strings.TrimSuffix(name, "/")
+		if name == "" || name == "." || strings.Contains(name, "/") || safePath(name) != nil {
+			continue
 		}
+		items = append(items, map[string]any{"name": name, "path": path.Join(p, name), "dir": dir})
 		if len(items) >= 2000 {
 			break
 		}
@@ -279,21 +311,22 @@ func (a *App) curlListSource(src Source, p string) ([]map[string]any, error) {
 }
 
 func (a *App) curlReadSource(src Source, p string) ([]byte, error) {
+	if err := safePath(p); err != nil {
+		return nil, err
+	}
+	if (src.Type == "link" || src.Type == "smb") && p != "resource.txt" {
+		return nil, errors.New("未知资源路径")
+	}
 	ctx, cancel := context.WithTimeout(context.Background(), curlTimeout)
 	defer cancel()
 	out, err := exec.CommandContext(ctx, a.curlBin, a.curlArgs(src, p)...).Output()
 	if err != nil {
 		return nil, fmt.Errorf("读取失败: %v", err)
 	}
-	if len(out) > 2<<20 {
-		return nil, errors.New("内容超过 2 MiB")
+	if err := validateTextContent(out); err != nil {
+		return nil, err
 	}
-	if !json.Valid([]byte(`"` + strings.ReplaceAll(string(out), `"`, `\"`) + `"`)) {
-		// 非文本内容直接拒绝（含 NUL）
-		if strings.ContainsRune(string(out), 0) {
-			return nil, errors.New("不支持二进制内容")
-		}
-	}
+
 	return out, nil
 }
 
@@ -371,6 +404,30 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 				s.Config.Auth = "none"
 			}
 		case "link", "ftp", "ftps", "smb", "mcp":
+			if s.Type != "mcp" {
+				u, err := url.Parse(strings.TrimSpace(s.Config.URL))
+				valid := err == nil && u.Host != "" && u.User == nil
+				if valid {
+					switch s.Type {
+					case "link":
+						valid = u.Scheme == "http" || u.Scheme == "https"
+					case "ftp":
+						valid = u.Scheme == "ftp"
+					case "ftps":
+						valid = u.Scheme == "ftps" || u.Scheme == "ftp"
+					case "smb":
+						valid = u.Scheme == "smb" || u.Scheme == "smbs"
+					}
+				}
+				if !valid {
+					fail(w, 400, errors.New("URL 协议必须与来源类型匹配；账号密码请使用独立字段"))
+					return
+				}
+			}
+			if s.RW {
+				fail(w, 400, errors.New("该来源类型只支持读取或登记，不能标记读写"))
+				return
+			}
 			if strings.TrimSpace(s.Config.URL) == "" && strings.TrimSpace(s.Config.Command) == "" {
 				fail(w, 400, errors.New("该类型来源需要 URL 或启动命令"))
 				return

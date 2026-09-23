@@ -1,6 +1,9 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+ "MCP（仅登记）": "MCP (registration only)",
+ "SMB1（文件 URL）": "SMB1 (file URL)",
+ "MCP 仅支持登记，尚未接入协议调用。": "MCP registration only; protocol execution is not implemented.",
   "请求失败": "Request failed",
   "● 本地服务已连接": "● Local service connected",
   "已配置": "Configured",

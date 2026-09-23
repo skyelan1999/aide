@@ -46,7 +46,7 @@ func (a *App) environmentGuide() string {
 		if !src.Enabled {
 			continue
 		}
-		row := item{ID: src.ID, Name: guideLabel(src.Name), Kind: src.Type, Access: "read-only", Usage: "Browse this source in Auxiliary materials and attach relevant files. Registration does not mean its contents have been read.", Inventory: "Not scanned: remote source metadata only."}
+		row := item{ID: src.ID, Name: guideLabel(src.Name), Kind: src.Type, Access: "read-only", Usage: "Use list_files/read_file with this source ID and a relative path; or attach files through Auxiliary materials. Registration does not mean contents have been read.", Inventory: "Not scanned: remote source metadata only."}
 		if src.RW {
 			row.Access = "registered read/write; actual mount and server permissions still apply"
 		}

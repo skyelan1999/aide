@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 )
@@ -247,7 +248,9 @@ func (a *App) ensureSourceSession(ctx context.Context, src Source) error {
 	}
 	args := append([]string{"-fNM", "-o", "ControlMaster=yes", "-o", "ControlPersist=600"}, append(base, a.sftpTargetOf(src))...)
 	env := []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	a.mu.Lock()
 	sec := a.sourceSecrets.Secrets[src.ID]
+	a.mu.Unlock()
 	if src.Config.Auth == "key" && sec.Key != "" {
 		keyPath := sock + ".key"
 		if err := os.WriteFile(keyPath, []byte(sec.Key), 0600); err != nil {
@@ -281,7 +284,7 @@ func (a *App) sftpBatchSource(src Source, batch string) (string, error) {
 	if port == 0 {
 		port = 22
 	}
-	args := []string{"-o", "ControlPath=" + sourceSocket(src.ID), "-o", "BatchMode=yes", "-o", "LogLevel=ERROR", "-P", fmt.Sprint(port), a.sftpTargetOf(src), "-b", "-"}
+	args := []string{"-o", "ControlPath=" + sourceSocket(src.ID), "-o", "BatchMode=yes", "-o", "LogLevel=ERROR", "-P", fmt.Sprint(port), "-b", "-", a.sftpTargetOf(src)}
 	cmd := exec.CommandContext(ctx, a.sftpBin, args...)
 	cmd.Stdin = strings.NewReader(batch)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
@@ -309,7 +312,10 @@ func (a *App) sftpListSource(src Source, p string) ([]map[string]any, error) {
 			continue
 		}
 		name := strings.Join(fields[8:], " ")
-		items = append(items, map[string]any{"name": name, "path": name, "dir": fields[0][0] == 'd'})
+		if fields[0][0] == 'l' || name == "." || name == ".." || safePath(name) != nil {
+			continue
+		}
+		items = append(items, map[string]any{"name": name, "path": path.Join(p, name), "dir": fields[0][0] == 'd'})
 		if len(items) >= 2000 {
 			break
 		}

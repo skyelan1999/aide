@@ -362,3 +362,7 @@ html[lang="en"] .settings-nav-item { white-space: normal; text-align: left; }
   .file-view-head { flex-wrap: wrap; }
   .file-view-head > div { order: 3; flex-basis: 100%; }
 }
+
+.source-path-row { display: flex; gap: 8px; align-items: center; }
+.source-path-row input { flex: 1; min-width: 0; }
+.source-path-row button { flex-shrink: 0; margin-top: 7px; }

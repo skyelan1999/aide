@@ -120,7 +120,7 @@ function renderSession() {
         const details = el('details', 'tool-use');
         details.dataset.key = run.id + ':files';
         const summary = el('summary', '', t("⚒ 文件查看 · ") + fileUses.length + t(" 次"));
-        const paths = fileUses.map(u => { try { return JSON.parse(u.args || '{}').path || '.'; } catch (e) { return '.'; } }).join('\n');
+        const paths = fileUses.map(u => { try { const a = JSON.parse(u.args || '{}'); return (a.source ? 'sources/' + a.source + ' · ' : '') + (a.path || '.'); } catch (e) { return '.'; } }).join('\n');
         details.append(summary, el('pre', 'tool-use-detail', paths));
         box.append(details);
       }
@@ -1295,11 +1295,20 @@ function renderSourceChips() {
 }
 function renderSourceFields() {
   const type = $('src-type').value;
+  $('src-rw').disabled = !['local', 'skill', 'sftp'].includes(type);
+  if ($('src-rw').disabled) $('src-rw').checked = false;
   const host = $('src-fields');
   host.replaceChildren();
   const addField = (labelText, id, placeholder) => { const label = el('label', '', labelText); const input = el('input', ''); input.id = id; input.placeholder = placeholder || ''; input.autocomplete = 'off'; label.append(input); host.append(label); return input; };
-  if (type === 'local' || type === 'skill') addField(t("本机路径（绝对路径）"), 'src-path', '/Users/you/…');
-  else if (type === 'link' || type === 'ftp' || type === 'ftps' || type === 'smb') addField(t("URL（如 ftp://host/dir 或 https://…）"), 'src-url', type + '://');
+  if (type === 'local' || type === 'skill') {
+    const input = addField(t("本机路径（绝对路径）"), 'src-path', state.config?.hostLocal || '/local');
+    const row = el('div', 'source-path-row'); input.parentNode.append(row); row.append(input);
+    const browse = el('button', 'quiet', t('浏览…')); browse.type = 'button'; browse.onclick = () => openBrowse('src-path'); row.append(browse);
+  }
+  else if (type === 'link' || type === 'ftp' || type === 'ftps' || type === 'smb') {
+    addField(t("URL（如 ftp://host/dir 或 https://…）"), 'src-url', type === 'link' ? 'https://' : type + '://');
+    if (type !== 'link') { addField(t('用户名'), 'src-user', ''); addField(t('密码（可选）'), 'src-password', '').type = 'password'; }
+  }
   else if (type === 'mcp') { addField(t("启动命令"), 'src-command', 'npx -y @modelcontextprotocol/server-…'); addField(t("或 URL"), 'src-url', ''); }
   else if (type === 'sftp') {
     addField(t("主机"), 'src-host', '192.168.1.10');
@@ -1321,13 +1330,13 @@ $('source-form').onsubmit = action(async event => {
   if (type === 'local' || type === 'skill') src.config.path = $('src-path').value.trim();
   else if (type === 'mcp') { src.config.command = ($('src-command')?.value || '').trim(); src.config.url = ($('src-url')?.value || '').trim(); }
   else if (type === 'sftp') { src.config = { path: $('src-remote').value.trim(), host: $('src-host').value.trim(), port: parseInt($('src-port').value, 10) || 22, username: $('src-user').value.trim(), auth: $('src-key').value ? 'key' : $('src-password').value ? 'password' : 'none' }; const pw = $('src-password').value, key = $('src-key').value; if (pw || key) secrets[id] = { password: pw, key }; }
-  else src.config.url = $('src-url').value.trim();
+  else { src.config.url = $('src-url').value.trim(); if ($('src-user')) src.config.username = $('src-user').value.trim(); if ($('src-password')?.value) secrets[id] = { password: $('src-password').value }; }
   const payload = { sources: [...state.sources.filter(x => !x.builtin), src] };
   if (Object.keys(secrets).length) payload.secrets = secrets;
   await api('/sources', { method: 'PUT', body: JSON.stringify(payload) });
   $('source-dialog').close();
   await loadSourcesList();
-  state.source = id; state.dir = '.'; await loadFiles();
+  state.source = id; state.dir = '.'; if (type !== 'mcp') await loadFiles(); else $('files').replaceChildren(el('p', 'muted', t('MCP 仅支持登记，尚未接入协议调用。')));
   toast(t("已添加来源：") + name);
 });
 /* ── Markdown 渲染：基于 marked v12（MIT，vendor/marked.min.js，GFM 全特性）
