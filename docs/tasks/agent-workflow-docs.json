@@ -73,5 +73,5 @@
   },
   "release_authorization": "用户：做好了提commit打tag发布新release推送；补充环境安装脚本与启动安装说明。",
   "rollback": "不替换生产8097；源码可回退到 v0.1.5.0-RC5；镜像/数据分别备份，不删除用户卷。",
-  "handoff": "本轮功能随0.1.6.0 RC3交付；最终上传/镜像/验证结果见GitHub Release清单，生产服务不替换。"
+  "handoff": "本轮功能随0.1.6.0 RC4交付；最终上传/镜像/验证结果见GitHub Release清单，生产服务不替换。"
 }

@@ -18,7 +18,7 @@ aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。可直�
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
-git checkout v0.1.6.0-RC3
+git checkout v0.1.6.0-RC4
 bash scripts/install.sh --check
 ```
 
@@ -29,7 +29,7 @@ bash scripts/install.sh --check
 从 [Release](https://github.com/skyelan1999/aide/releases) 下载镜像和 SHA256SUMS，放在同一目录，例如 aide/docker-images/：
 
 ```bash
-bash scripts/install.sh --image docker-images/aide-0.1.6.0-RC3-linux-arm64.tar.gz
+bash scripts/install.sh --image docker-images/aide-0.1.6.0-RC4-linux-arm64.tar.gz
 ```
 
 脚本先检查校验和，再导入镜像并检查架构，最后使用 `--no-build --pull never` 启动。版本不匹配、校验失败或架构不匹配会停止，不会偷偷重建。
@@ -47,7 +47,7 @@ bash scripts/install.sh --source
 首次默认使用源码目录作为工作区。如需其他目录，修改 .env 后重新启动；路径必须存在，推荐绝对路径：
 
 ```dotenv
-AIDE_IMAGE=aide:0.1.6.0-RC3
+AIDE_IMAGE=aide:0.1.6.0-RC4
 AIDE_PORT=8097
 AIDE_WORKSPACE=/absolute/path/to/project
 AIDE_CONTEXT=/absolute/path/to/reference

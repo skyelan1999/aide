@@ -422,7 +422,7 @@ function renderAboutProject(control) {
   const mark = el('span', 'about-mark', 'a');
   mark.setAttribute('aria-hidden', 'true');
   const identity = el('div');
-  identity.append(el('h4', 'about-name', 'aide'), el('p', 'about-description', 'AI + IDE，让你更专注于专业工作'));
+  identity.append(el('h4', 'about-name', 'aide'), el('p', 'about-description', 'AI+IDE，让想法成为下一步'));
   hero.append(mark, identity);
   const version = el('div', 'about-version');
   version.append(el('span', '', '当前版本'), el('span', '', state.config?.version ? 'v' + state.config.version : '开发版本'));

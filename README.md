@@ -2,7 +2,7 @@
 
 # aide
 
-### AI + IDE，让你更专注于专业工作。
+### AI+IDE，让想法成为下一步。
 
 融合 AI 与集成工作环境 · 理解资料 · 分析问题 · 完成任务
 
@@ -12,7 +12,7 @@
 
 ![aide 工作台预览：会话、项目文件与 AI 任务输入](docs/images/workbench-preview.jpg)
 
-> **版本**：本次交付 `0.1.6.0 RC3`，包含新版外观、统一 Agent 开发路由和 Docker 镜像附件。截图来自同套界面的隔离示例环境，截图内 RC5 是拍摄时的后端版本。安装包与发布状态以 [GitHub Releases](https://github.com/skyelan1999/aide/releases) 为准。
+> **版本**：本次交付 `0.1.6.0 RC4`，包含新版外观、统一 Agent 开发路由和 Docker 镜像附件。截图来自同套界面的隔离示例环境，截图内 RC5 是拍摄时的后端版本。安装包与发布状态以 [GitHub Releases](https://github.com/skyelan1999/aide/releases) 为准。
 
 ## 为什么选择 aide
 
