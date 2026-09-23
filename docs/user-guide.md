@@ -1,6 +1,6 @@
 # aide 使用指南
 
-适用：0.1.6.0 RC1。aide 可直接使用，也可交给 AI 按 [场景定制指南](customization.md) 改造成专属工作台。启动配置见 [README](../README.md)。
+适用：0.1.6.0 RC2。aide 可直接使用，也可交给 AI 按 [场景定制指南](customization.md) 改造成专属工作台。启动配置见 [README](../README.md)。
 
 ## 1. 认识工作台
 

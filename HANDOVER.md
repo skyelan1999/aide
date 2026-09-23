@@ -12,7 +12,7 @@ bash scripts/version.sh show
 bash scripts/aide.sh status
 ```
 
-本次交付目标 `v0.1.6.0-RC1`：新版 UI、主题、关于、Agent 开发路由、统一 docs，以及 Docker 镜像附件。aide 定位为可由 AI 按用户场景定制的基座，见 [定制指南](docs/customization.md)。
+本次交付目标 `v0.1.6.0-RC2`：新版 UI、主题、关于、Agent 开发路由、统一 docs，以及 Docker 镜像附件。aide 定位为可由 AI 按用户场景定制的基座，见 [定制指南](docs/customization.md)。
 
 发布只交付 GitHub 源码/tag/Release/镜像；不自动替换本机 8097 的生产服务。镜像导入启动见 [镜像说明](docker-images/README.md)。
 

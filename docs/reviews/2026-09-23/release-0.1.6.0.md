@@ -1,4 +1,4 @@
-# 0.1.6.0 RC1 发布验收
+# 0.1.6.0 RC2 发布验收
 
 ## 范围
 
@@ -17,3 +17,5 @@
 生产 8097 不替换。此次发布目标为 GitHub main、版本 tag、Release 和镜像附件；归档保留 docker-images，不提交大型镜像到 Git。源码可回到此前 tag；运行升级前另行备份业务目录与数据卷，镜像不含用户数据。
 
 发布后的版本/SHA/镜像校验和和最终冒烟结果记录在 GitHub Release 附件 release-manifest.json；不在源码中预先声称上传已完成。
+
+构建发现并修复 Dockerfile 的 Go ldflags 版本含空格引用缺陷。RC1 仅为本地失败候选，不推送、不发布；正式交付 RC2。
