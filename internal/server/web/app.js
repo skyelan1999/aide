@@ -598,6 +598,28 @@ function renderContextPreview(data) {
   rows.forEach(([label, chars]) => {
     if (chars) detail.append(el('div', 'cp-row', el('span', '', label), el('span', '', chars + t(" 字符 ≈ ") + Math.floor(chars / 4) + ' tokens')));
   });
+  // 堆叠条形图：按 token 占比着色，hover 高亮显示详情
+  const segments = [
+    { label: t("系统指令"), chars: bd.systemChars, color: "#6366f1" },
+    { label: t("历史摘要"), chars: bd.summaryChars, color: "#8b5cf6" },
+    { label: t("历史消息"), chars: bd.historyChars, color: "#06b6d4" },
+    { label: t("任务输入"), chars: bd.promptChars, color: "#22c55e" },
+    { label: t("附件"), chars: bd.attachmentChars, color: "#f59e0b" },
+    { label: t("阶段指令"), chars: bd.instructionChars, color: "#ec4899" },
+    { label: t("工具定义"), chars: bd.toolSchemaChars, color: "#64748b" },
+  ].filter(x => x.chars > 0);
+  const total = segments.reduce((sum, x) => sum + x.chars, 0) || 1;
+  const bar = el('div', 'ctx-bar');
+  for (const seg of segments) {
+    const pct = ((seg.chars / total) * 100).toFixed(1);
+    const cell = el('div', 'ctx-bar-cell');
+    cell.style.width = pct + '%';
+    cell.style.background = seg.color;
+    const tokens = Math.floor(seg.chars / 4);
+    cell.title = seg.label + " · " + tokens + " tokens (" + pct + "%)";
+    bar.append(cell);
+  }
+  detail.append(bar);
   detail.append(el('p', 'cp-note', data.estimationNote || ''));
   $('context-preview').classList.remove('hidden');
   updateSendEnabled();
