@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
@@ -85,6 +86,8 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "write_file", "description": "生成文件修改提案（不直接写入；需用户批准应用）", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}}, "required": []string{"path", "content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox and return its stdout/stderr/exit code", "parameters": map[string]any{"type": "object", "properties": map[string]any{"command": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}}}, "required": []string{"task"}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "read_memory", "description": "Read persistent memory file", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "write_memory", "description": "Append to persistent memory", "parameters": map[string]any{"type": "object", "properties": map[string]any{"content": map[string]any{"type": "string"}}, "required": []string{"content"}}}},
 }
 
 func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
@@ -867,6 +870,28 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt string) (string, string,
 	return subID, subSess.Title, nil
 }
 
+func (a *App) memoryPath() string {
+	return a.cacheContainer + "/memory.md"
+}
+func (a *App) readMemory() string {
+	b, err := os.ReadFile(a.memoryPath())
+	if err != nil {
+		return "(记忆文件为空或不存在，使用 write_memory 开始记录)"
+	}
+	return string(b)
+}
+func (a *App) writeMemory(content string) string {
+	existing, _ := os.ReadFile(a.memoryPath())
+	f, err := os.OpenFile(a.memoryPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return "写入记忆失败: " + err.Error()
+	}
+	defer f.Close()
+	if len(existing) > 0 && existing[len(existing)-1] != '\n' { f.WriteString("\n") }
+	f.WriteString("\n- " + content + "\n")
+	return "已写入记忆。"
+}
+
 // execShellCommand 在容器沙箱内实际执行一条 shell 命令（run_shell 工具）。
 // 复用 /api/command 的沙箱约束：bash --norc、60s 超时、受限 env、工作目录锁定在 workspace 内。
 // 返回收集到的 stdout+stderr（截断）和退出码；远程 SSH 模式暂不支持自动执行。
@@ -1108,6 +1133,14 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 			return "子会话创建失败: " + err.Error()
 		}
 		return fmt.Sprintf("子会话已创建: %s (标题: %s)。子会话独立运行，完成后自动归档，结果会关联到当前会话。", subID, subTitle)
+	case "read_memory":
+		return a.readMemory()
+	case "write_memory":
+		content := str("content")
+		if content == "" {
+			return "缺少 content 参数"
+		}
+		return a.writeMemory(content)
 	default:
 		// 插件工具（协议 v1.1）
 		pluginID := a.pluginOwnerOf(call.Function.Name)
