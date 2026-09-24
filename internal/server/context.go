@@ -135,6 +135,12 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	if mem := a.readMemory(); mem != "" && !strings.HasPrefix(mem, "(记忆文件为空") {
 		history[0].Content += "\n\n## 持久记忆\n以下是你之前记下的用户偏好和项目约定，请在回答中参考：\n" + mem
 	}
+	// 注入性格（如果开启且已解锁）
+	if cfg.PersonaEnabled && a.personaKey != "" && cfg.PersonaCipher != "" {
+		if persona, err := decryptPersona(cfg.PersonaCipher, a.personaKey); err == nil && persona != "" {
+			history[0].Content += "\n\n## 你的性格\n" + persona
+		}
+	}
 	var bd ContextBreakdown
 	bd.SystemChars = len(history[0].Content)
 	if s != nil && s.Compact != "" {

@@ -41,6 +41,8 @@ type Settings struct {
 	ActiveModel string     `json:"activeModel,omitempty"`
 	SandboxMode string     `json:"sandboxMode,omitempty"` // read-only | workspace-write | danger-full-access
 	ToolMaxRounds int      `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
+	PersonaEnabled bool     `json:"personaEnabled,omitempty"`
+	PersonaCipher          string `json:"personaCipher,omitempty"` // AES-256-GCM 加密后的性格内容（base64）
 }
 
 const (
@@ -151,6 +153,7 @@ type App struct {
 	buildVersion, buildCommit string
 	eventMu                   sync.Mutex
 	eventSubs                 map[string]map[chan streamEvent]struct{} // SSE 订阅：taskID → subscriber set
+	personaKey               string // 内存中的性格解密密码，不持久化
 }
 
 // Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
@@ -491,6 +494,10 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/sources", a.listSources)
 	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)
 	mux.HandleFunc("POST /api/feedback", a.feedbackHandler)
+	mux.HandleFunc("POST /api/persona/unlock", a.personaUnlock)
+	mux.HandleFunc("POST /api/persona/save", a.personaSave)
+	mux.HandleFunc("POST /api/persona/reset", a.personaReset)
+	mux.HandleFunc("GET /api/persona", a.personaGet)
 	mux.HandleFunc("GET /api/token-pricing", a.tokenPricingHandler)
 	mux.HandleFunc("PUT /api/token-pricing", a.tokenPricingHandler)
 	mux.HandleFunc("GET /api/search", a.searchSessions)
