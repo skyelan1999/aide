@@ -39,6 +39,7 @@ type Settings struct {
 	APIKey      string     `json:"apiKey,omitempty"`
 	Models      []ModelRef `json:"models,omitempty"`
 	ActiveModel string     `json:"activeModel,omitempty"`
+	SandboxMode string     `json:"sandboxMode,omitempty"` // read-only | workspace-write | danger-full-access
 }
 
 const (

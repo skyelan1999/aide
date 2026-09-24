@@ -769,9 +769,50 @@ func shellBlocked(command string) (string, bool) {
 // execShellCommand 在容器沙箱内实际执行一条 shell 命令（run_shell 工具）。
 // 复用 /api/command 的沙箱约束：bash --norc、60s 超时、受限 env、工作目录锁定在 workspace 内。
 // 返回收集到的 stdout+stderr（截断）和退出码；远程 SSH 模式暂不支持自动执行。
+// readOnlyAllowed 在 read-only 沙箱模式下允许的只读命令。
+// 用精确命令前缀匹配，避免 "go build" 被当成 "go" 放行。
+func readOnlyAllowed(command string) bool {
+	low := strings.TrimSpace(strings.ToLower(command))
+	// 有任何重定向/管道/后台符号，直接判定为非只读
+	if strings.ContainsAny(low, ">&|<") {
+		return false
+	}
+	allowed := []string{
+		"ls", "cat", "head", "tail", "wc", "stat", "file", "find", "grep", "rg",
+		"pwd", "echo", "which", "type", "true", "false", "test", "du", "df",
+		"git status", "git diff", "git log", "git show", "git blame", "git branch",
+		"git remote", "git config --get", "git rev-parse", "git ls-files",
+	}
+	for _, a := range allowed {
+		if low == a || strings.HasPrefix(low, a+" ") {
+			return true
+		}
+	}
+	return false
+}
+
 func (a *App) execShellCommand(command string) (string, int, error) {
-	if reason, bad := shellBlocked(command); bad {
-		return "", -1, errors.New("权限策略拦截：" + reason + "（破坏性命令需你手动在终端运行）")
+	a.mu.Lock()
+	mode := a.settings.SandboxMode
+	a.mu.Unlock()
+	if mode == "" {
+		mode = "workspace-write"
+	}
+	switch mode {
+	case "read-only":
+		if !readOnlyAllowed(command) {
+			return "", -1, errors.New("沙箱模式 read-only：只允许只读命令（ls/cat/grep/git status 等），写操作请切换到 workspace-write 模式")
+		}
+	case "workspace-write":
+		if reason, bad := shellBlocked(command); bad {
+			return "", -1, errors.New("权限策略拦截：" + reason + "（破坏性命令需你手动在终端运行）")
+		}
+	case "danger-full-access":
+		// 不拦截
+	default:
+		if reason, bad := shellBlocked(command); bad {
+			return "", -1, errors.New("权限策略拦截：" + reason)
+		}
 	}
 	if a.workspaceMode() == "ssh" {
 		return "", -1, errors.New("远程工作区模式暂不支持 run_shell 自动执行，请手动在终端运行")
