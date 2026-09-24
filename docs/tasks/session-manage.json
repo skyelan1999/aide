@@ -1,0 +1,85 @@
+{
+  "id": "session-manage",
+  "request": "会话列表管理：每个会话项右侧添加三个点（⋯）按钮，点击弹出 置顶/归档/删除 操作；置顶会话排最前、归档会话在默认列表隐藏（侧栏「归档」切换视图可找回）、删除带确认且磁盘同步移除。",
+  "baseline": "ad044aa（v0.1.9.0-RC1 发布后，用户回退了此前的未提交实现后重新落地）",
+  "initial_status": "用户回退全部未提交改动后重新实现；上一版缺陷（删除路径错误、归档无入口、运行中删除复活）均已规避并加测试。",
+  "acceptance": [
+    "每个会话项有 ⋯ 按钮，菜单含 置顶/归档/删除（删除有确认）",
+    "置顶会话排在列表最前；归档会话不在默认列表，可在「归档」视图看到并取消归档",
+    "删除会话：内存与磁盘同步移除；删除运行中会话先取消任务；任务收尾保存不复活文件；重启不复活；重复删除 404",
+    "置顶/归档状态随会话持久化（重启保留）",
+    "go test -race 全过（含会话管理测试）；无头浏览器 UI 检查 PASS",
+    "设置面板「归档」窗格：列出归档会话，支持恢复/删除；栏目顺序：消耗统计→外观→语言→模型参数→归档→关于",
+    "「全部导出」按钮：GET /api/export 下载全部会话 JSON（含归档，不含访问令牌/API Key）",
+    "三点菜单图层在最顶：菜单打开时所在会话项 z-index 提升，不被后续兄弟项遮挡（elementFromPoint 采样验证）"
+  ],
+  "scope": [
+    "internal/server/server.go: Session.Pinned/Archived/Deleted；listSessions 过滤与排序；PATCH/DELETE /api/sessions/{id}；save/加载删除墓碑",
+    "internal/server/web/app.js: loadSessions ⋯ 菜单与归档过滤视图",
+    "internal/server/web/index.html / style.css: 归档过滤按钮、会话项与菜单样式",
+    "internal/server/session_manage_test.go、scripts/ui_queue_check.cjs SESSION_MGMT 断言",
+    "不在范围内：批量操作、拖拽排序、回收站、归档会话的搜索"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目标与非目标明确；删除语义（含运行中任务与磁盘文件）与归档视图已登记。",
+      "evidence": [
+        "docs/tasks/session-manage.json acceptance/scope"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Session 增 Pinned/Archived/Deleted；listSessions 按 archived 参数过滤、pinned 优先排序；deleteSession 置墓碑→取消运行任务→移出内存→删磁盘文件（save/加载跳过墓碑）；前端 ⋯ 菜单 + 归档过滤按钮。菜单图层：会话项 overflow 恢复可见；菜单默认向下弹，靠近列表底部时自动向上弹（menu-up），z-index 200 置于最顶。",
+      "evidence": [
+        "internal/server/server.go",
+        "缺陷预防：落盘路径 session-<id>.json 与墓碑机制"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "后端路由与墓碑、前端 ⋯ 菜单与归档视图、2 个会话管理测试、UI 检查 SESSION_MGMT 断言。",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/web/app.js / index.html / style.css",
+        "internal/server/session_manage_test.go（新增）"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "go test -race 全过（含导出测试：含归档、attachment 头、不泄漏令牌）；无头 Chromium UI 检查 PASS：设置栏目顺序（消耗统计/外观/语言/模型参数/归档/关于）、归档窗格（列表/恢复/全部导出含归档）、菜单无遮挡（elementFromPoint 命中菜单，itemZ=300）、会话管理全链路。",
+      "evidence": [
+        "go test -race -count=3 -run TestSessionPinArchive/TestSessionDelete → ok",
+        "go test -race -count=1 ./... → ok；go vet 通过",
+        "node scripts/ui_queue_check.cjs → SESSION_MGMT 全断言 true",
+        "node scripts/ui_queue_check.cjs ×2 → SESSION_MGMT 全断言 true（menuDownVisible/menuUpVisible/pinned/goneFromDefault/inArchivedView/backInDefault）",
+        "TestExportSessions → ok",
+        "node scripts/ui_queue_check.cjs → SETTINGS {order 正确, hasExportBtn, hasRestoreBtn, exportOk, restored} 与 MENU_OCCLUSION {onTop:true, itemZ:300} 全断言通过"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "任务账本与 HANDOVER 记录；PRD 待发布时更新。",
+      "evidence": [
+        "docs/tasks/session-manage.json",
+        "HANDOVER.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "无临时残留；改动均可归属。",
+      "evidence": [
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "未获提交/发布授权；待用户实测后指示。",
+      "evidence": []
+    },
+    "handoff": "全新落地（用户已回退旧实现）：每会话 ⋯ 菜单（置顶/归档/删除，删除带确认）、归档过滤视图（防归档后无法找回）、删除墓碑机制（取消运行任务 + 防收尾写盘复活 + 重启不复活）。验证：2 个 Go 测试 race×3、全量 race+vet、无头 UI SESSION_MGMT 全断言 PASS；8097 已重建（?v=41）。待用户实测后授权提交与发布。状态点与排序增强：点缩小至 4px；完成后蓝点+标题 800 超级加粗；点击后点变无色、加粗取消（active 权重 400）；会话列表按活动时间排序（完成/跟进置顶，置顶会话永不被顶下，touch PATCH 更新活动时间）。新增 TestSessionOrderByActivity。资源版本 ?v=52，8097 已重建。"
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "全新落地（用户已回退旧实现）：每会话 ⋯ 菜单（置顶/归档/删除，删除带确认）、归档过滤视图（防归档后无法找回）、删除墓碑机制（取消运行任务 + 防收尾写盘复活 + 重启不复活）。验证：2 个 Go 测试 race×3、全量 race+vet、无头 UI SESSION_MGMT 全断言 PASS；8097 已重建（?v=41）。待用户实测后授权提交与发布。\n迭代：会话状态灯全量落地（绿闪运行/黄审批/红失败/蓝点+加粗=完成待查看，查看后熄灭并持久化），会话菜单 fixed 定位修复遮挡，归档页+全部导出。验证：无头 UI 全断言 PASS（STATUS_DOT/SESSION_MGMT/SETTINGS/MENU_OCCLUSION）。\n迭代（用户反馈）：①点击卡顿→check PATCH 改发后不管(fire-and-forget)+同会话数据未变时跳过时间线重渲染（点击延迟实测 46ms）；②完成后标题不刷新→done/轮询兜底路径增加 scheduleTitleSync 两轮延时同步（1.5s/4s，adoptSessionIfChanged 去重），主题总结落库后侧栏与头部标题自动更新。验证：新会话标题由提问原文「标题自动刷新验证」自动变为 AI 概括「【QA 模拟对话】已验证浏览器…」；全量回归 ui_queue_check 全 PASS；8097 已重建（?v=62）。待用户实测确认后授权提交与发布。\n迭代（用户反馈：点击会话有概率莫名跳到新会话）三路修复：①发送空壳劫持——从空白页发送时 POST /sessions 直接覆盖 state.session，点击若落在创建请求飞行期即被抢回空壳，改为仅当用户仍停留在空白页时才接管，任务归属也改用创建对象不再重读状态；②僵尸会话——任务启动失败(如并发上限429)后刚建的空壳会话残留在侧栏，点击即空白“新会话”，失败时 DELETE 空壳+退回空白页；③快捷键误触——点会话后焦点在 body，敲拼音首字母 n 触发全局新建会话，现 n 快捷键仅当焦点在 BODY/HTML 时生效，且点击会话后自动聚焦输入框。验证：无头脚本 verify_race PASS（429 后无空壳残留/点击后焦点进输入框/敲 n 只输入不跳转），全量回归 ui_queue_check 全 PASS；8097 已重建（?v=63）。待用户实测确认。 用户授权提交与推送（先合入，修改文档并推送），升版与 Release 待授权。"
+}

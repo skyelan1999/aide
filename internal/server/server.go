@@ -103,6 +103,11 @@ type Session struct {
 	Compact           string    `json:"compact,omitempty"`           // 压缩摘要（compaction）
 	CompactedMessages int       `json:"compactedMessages,omitempty"` // 已折叠消息数
 	CompactedAt       string    `json:"compactedAt,omitempty"`
+	Pinned            bool      `json:"pinned,omitempty"`   // 置顶：列表排序优先（活动排序不会把置顶顶下去）
+	Archived          bool      `json:"archived,omitempty"` // 归档：默认列表隐藏
+	Deleted           bool      `json:"deleted,omitempty"`  // 删除墓碑：save/加载跳过，防写盘复活
+	Updated           string    `json:"updated,omitempty"`  // 最近活动时间：完成/跟进按时间置顶
+	Checked           bool      `json:"checked,omitempty"`  // 已完成高亮（蓝点+加粗）是否已被用户查看；新完成时复位
 }
 type App struct {
 	mu                        sync.Mutex
@@ -428,6 +433,9 @@ func New(work, reference, data string) (*App, error) {
 			log.Printf("跳过损坏会话文件 %s: %v", filepath.Base(path), err) // R09：坏文件不阻断启动
 			continue
 		}
+		if s.Deleted {
+			continue // 删除墓碑残留：不载入
+		}
 		a.sessions[s.ID] = &s
 		for _, task := range s.Runs {
 			if task.Status == "running" {
@@ -453,6 +461,9 @@ func (a *App) Close() {
 	}
 }
 func (a *App) save(s *Session) error {
+	if s.Deleted {
+		return nil // 已删除会话不再落盘（运行中任务取消后的收尾保存同样跳过）
+	}
 	return atomicJSON(filepath.Join(a.dataPath, "session-"+s.ID+".json"), s)
 }
 
@@ -488,6 +499,9 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/sessions", a.listSessions)
 	mux.HandleFunc("POST /api/sessions", a.createSession)
 	mux.HandleFunc("GET /api/sessions/{id}", a.getSession)
+	mux.HandleFunc("GET /api/export", a.exportSessions)
+	mux.HandleFunc("DELETE /api/sessions/{id}", a.deleteSession)
+	mux.HandleFunc("PATCH /api/sessions/{id}", a.patchSession)
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
@@ -596,15 +610,77 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	a.settings = in.Settings
 	jsonOut(w, 200, map[string]bool{"ok": true})
 }
+
+// exportSessions 全部导出：所有会话（含归档）打包为 JSON 下载，不包含访问令牌与 API Key。
+func (a *App) exportSessions(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	sessions := make([]*Session, 0, len(a.sessions))
+	for _, s := range a.sessions {
+		sessions = append(sessions, s)
+	}
+	a.mu.Unlock()
+	sort.Slice(sessions, func(i, j int) bool { return sessions[i].Created > sessions[j].Created })
+	payload := map[string]any{
+		"version":    1,
+		"app":        "aide",
+		"exportedAt": time.Now().UTC().Format(time.RFC3339Nano),
+		"count":      len(sessions),
+		"sessions":   sessions,
+	}
+	b, err := json.MarshalIndent(payload, "", "  ")
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	name := "aide-sessions-" + time.Now().Format("20060102-150405") + ".json"
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.Header().Set("Content-Disposition", `attachment; filename="`+name+`"`)
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(200)
+	_, _ = w.Write(b)
+}
+
 func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	items := []map[string]string{}
-	for _, s := range a.sessions {
-		items = append(items, map[string]string{"id": s.ID, "title": s.Title, "created": s.Created})
+	showArchived := r.URL.Query().Get("archived") == "1"
+	type item struct {
+		ID, Title, Created, Status, Updated string
+		Pinned, Archived, Checked           bool
 	}
-	sort.Slice(items, func(i, j int) bool { return items[i]["created"] > items[j]["created"] })
-	jsonOut(w, 200, items)
+	items := []item{}
+	for _, sess := range a.sessions {
+		if sess.Archived != showArchived {
+			continue
+		}
+		status := ""
+		for i := len(sess.Runs) - 1; i >= 0; i-- {
+			if sess.Runs[i].Status != "" {
+				status = sess.Runs[i].Status
+				break
+			}
+		}
+		items = append(items, item{sess.ID, sess.Title, sess.Created, status, sess.Updated, sess.Pinned, sess.Archived, sess.Checked})
+	}
+	// 置顶永远最前（活动排序不会把置顶顶下去）；非置顶按最近活动时间倒序
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].Pinned != items[j].Pinned {
+			return items[i].Pinned
+		}
+		ui, uj := items[i].Updated, items[j].Updated
+		if ui == "" {
+			ui = items[i].Created
+		}
+		if uj == "" {
+			uj = items[j].Created
+		}
+		return ui > uj
+	})
+	out := make([]map[string]any, len(items))
+	for i, it := range items {
+		out[i] = map[string]any{"id": it.ID, "title": it.Title, "created": it.Created, "status": it.Status, "updated": it.Updated, "pinned": it.Pinned, "archived": it.Archived, "checked": it.Checked}
+	}
+	jsonOut(w, 200, out)
 }
 func (a *App) createSession(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -617,7 +693,8 @@ func (a *App) createSession(w http.ResponseWriter, r *http.Request) {
 	if strings.TrimSpace(in.Title) == "" {
 		in.Title = "新会话"
 	}
-	s := &Session{ID: newID(), Title: in.Title, Created: time.Now().UTC().Format(time.RFC3339Nano), Messages: []Message{}, Runs: []*Task{}}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	s := &Session{ID: newID(), Title: in.Title, Created: now, Updated: now, Messages: []Message{}, Runs: []*Task{}}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if err := a.save(s); err != nil {
@@ -626,6 +703,73 @@ func (a *App) createSession(w http.ResponseWriter, r *http.Request) {
 	}
 	a.sessions[s.ID] = s
 	jsonOut(w, 201, s)
+}
+
+// patchSession 会话属性更新：pinned / archived（指针字段，缺省不动）。
+func (a *App) patchSession(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Pinned   *bool `json:"pinned"`
+		Archived *bool `json:"archived"`
+		Touch    bool  `json:"touch"`
+		Check    bool  `json:"check"`
+	}
+	if err := decode(w, r, &in); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	s := a.sessions[r.PathValue("id")]
+	if s == nil {
+		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	if in.Pinned != nil {
+		s.Pinned = *in.Pinned
+	}
+	if in.Archived != nil {
+		s.Archived = *in.Archived
+	}
+	if in.Touch {
+		s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
+	}
+	if in.Check {
+		s.Checked = true
+	}
+	if err := a.save(s); err != nil {
+		fail(w, 500, err)
+		return
+	}
+	jsonOut(w, 200, s)
+}
+
+// deleteSession 删除会话：置墓碑、取消运行中任务、移出内存、删磁盘文件。
+// 墓碑使 execute 的收尾保存直接跳过，避免任务取消后的写盘把会话文件复活。
+func (a *App) deleteSession(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	id := r.PathValue("id")
+	s := a.sessions[id]
+	if s == nil {
+		a.mu.Unlock()
+		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	s.Deleted = true
+	for _, t := range s.Runs {
+		if t.Status == "running" {
+			if cancel := a.cancels[t.ID]; cancel != nil {
+				cancel()
+				delete(a.cancels, t.ID)
+			}
+		}
+	}
+	delete(a.sessions, id)
+	a.mu.Unlock()
+	// save() 落盘路径为 dataPath/session-<id>.json（直接位于数据目录）
+	if err := os.Remove(filepath.Join(a.dataPath, "session-"+id+".json")); err != nil && !os.IsNotExist(err) {
+		log.Printf("删除会话文件失败: %v", err)
+	}
+	jsonOut(w, 200, map[string]any{"ok": true})
 }
 func (a *App) getSession(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()

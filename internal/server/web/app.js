@@ -28,7 +28,50 @@ async function refreshConfig() {
 async function loadSessions() {
   const sessions = await api('/sessions'); $('sessions').replaceChildren();
   if (!sessions.length) $('sessions').append(el('p', 'sessions-empty', t("还没有会话。\n从一个想法开始吧。")));
-  sessions.forEach(s => { const b = el('button', 'session-item' + (state.session?.id === s.id ? ' active' : ''), s.title); b.title = s.title; b.onclick = action(() => selectSession(s.id)); $('sessions').append(b); });
+  sessions.forEach(s => {
+    const isActive = state.session?.id === s.id;
+    // 高亮（蓝点+加粗）只给“完成且未被查看”的会话；查看后由后端 checked 持久化清除
+    const highlight = s.status === 'completed' && !s.checked;
+    const item = el('div', 'session-item' + (isActive ? ' active' : '') + (s.pinned ? ' pinned' : '') + (highlight ? ' status-completed' : ''));
+    item.title = s.title;
+    // 状态机：运行中=荧光绿闪烁、等待审批=黄常亮、失败=红常亮、完成=蓝；其余无点。
+    // 选中会话由 CSS 转为无色点 + 正常字重（点击检查后加粗与蓝点消失）
+    const dotClass = { running: 'dot-running', failed: 'dot-failed', awaiting_approval: 'dot-await', completed: 'dot-done' }[s.status] || '';
+    // 完成且已查看：不显示蓝点；运行/审批/失败灯始终显示（点击运行中绿灯不消失）
+    if (dotClass && !(s.status === 'completed' && s.checked)) item.append(el('span', 'session-dot ' + dotClass, ''));
+    const label = el('span', 'session-label', s.title);
+    label.onclick = action(() => selectSession(s.id));
+    const more = el('button', 'session-more', '⋯');
+    more.setAttribute('aria-label', t("会话操作"));
+    more.onclick = e => {
+      e.stopPropagation();
+      document.querySelectorAll('.session-menu').forEach(m => m.remove());
+      const menu = el('div', 'session-menu');
+      const closeMenu = () => { menu.remove(); };
+      const pinBtn = el('button', 'menu-item', s.pinned ? t("取消置顶") : t("置顶"));
+      pinBtn.onclick = action(async () => { await api(`/sessions/${s.id}`, { method: 'PATCH', body: JSON.stringify({ pinned: !s.pinned }) }); closeMenu(); await loadSessions(); });
+      const archBtn = el('button', 'menu-item', s.archived ? t("取消归档") : t("归档"));
+      archBtn.onclick = action(async () => { await api(`/sessions/${s.id}`, { method: 'PATCH', body: JSON.stringify({ archived: !s.archived }) }); closeMenu(); await loadSessions(); });
+      const delBtn = el('button', 'menu-item danger', t("删除"));
+      delBtn.onclick = action(async () => {
+        if (!confirm(t("确定删除这个会话？此操作不可撤销。"))) return;
+        await api(`/sessions/${s.id}`, { method: 'DELETE' });
+        closeMenu();
+        if (state.session?.id === s.id) { clearTimeout(state.poll); closeStream(); state.session = null; state.sessionJSON = ''; renderSession(); }
+        await loadSessions();
+      });
+      menu.append(pinBtn, archBtn, delBtn);
+      // 挂到 body 用 fixed 定位：测量尺寸后贴 ⋯ 按钮，空间不足则向上翻，不受侧栏滚动裁切
+      document.body.append(menu);
+      const btnRect = more.getBoundingClientRect();
+      const mw = menu.offsetWidth, mh = menu.offsetHeight;
+      menu.style.left = Math.min(Math.max(8, btnRect.right - mw), window.innerWidth - mw - 8) + 'px';
+      menu.style.top = (btnRect.bottom + mh + 8 <= window.innerHeight ? btnRect.bottom + 4 : Math.max(8, btnRect.top - mh - 4)) + 'px';
+      setTimeout(() => { const close = () => { closeMenu(); document.removeEventListener('click', close); }; document.addEventListener('click', close); }, 0);
+    };
+    item.append(label, more);
+    $('sessions').append(item);
+  });
   return sessions;
 }
 const sessionSeq = { value: 0 }; // R07：递增请求序号，旧响应不得覆盖新选择
@@ -36,6 +79,8 @@ async function selectSession(id) {
   const seq = ++sessionSeq.value;
   const sameSession = state.session?.id === id;
   clearTimeout(state.poll); closeStream();
+  // 查看完成会话：清除“蓝点+加粗”高亮（持久化；不阻塞会话加载，失败静默）
+  api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) }).catch(() => {});
   if (!sameSession) {
     // live 文本按 run 归属：切换会话才失效；同会话刷新（排队/插话等）保留流式状态，
     // 避免打断正在流式渲染的回答（closeStream 后 schedulePoll 会重连，live 丢失会造成文本回退）
@@ -43,12 +88,14 @@ async function selectSession(id) {
   }
   const loaded = await api('/sessions/' + id);
   if (seq !== sessionSeq.value) return; // 已有更新的选择，丢弃本次过期响应
+  const changed = JSON.stringify(loaded) !== state.sessionJSON;
   state.session = loaded;
   state.sessionJSON = JSON.stringify(loaded);
-  renderSession();
+  if (changed || !sameSession) renderSession(); // 数据未变时跳过重渲染，点击更轻快
   refreshCompactInfo();
   await loadSessions();
   schedulePoll();
+  $('prompt').focus(); // 点击会话后直接可输入；焦点离开 body 也避免误触全局快捷键
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
 function closeStream() {
@@ -85,7 +132,13 @@ function openStream(run) {
       const id = state.session?.id; if (!id) return;
       const s = await api('/sessions/' + id); if (state.session?.id !== id) return;
       if (adoptSessionIfChanged(s)) renderSession();
+      // 正在查看的会话完成 → 视为已检查，直接清除高亮；后台完成的会话保持蓝点+加粗待点击
+      if (s.runs.some(r => r.status === 'completed')) {
+        try { await api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) }); } catch (err) {}
+      }
+      await loadSessions(); // 任务完成：AI 已更新标题，同步侧栏会话列表
       schedulePoll();
+      scheduleTitleSync(id); // 主题总结是后台异步调用：稍后补一次同步标题
     })();
   });
   // 流断开：保留已积累的 live 文本，短暂退避后由轮询兜底重开；最终状态仍以会话接口为准
@@ -163,6 +216,20 @@ function renderLiveTool(runId) {
   }
   row.textContent = '⚒ ' + t.tool + (t.preview ? ' · ' + String(t.preview).slice(0, 80) : '');
 }
+let titleSyncTimers = [];
+function scheduleTitleSync(id) {
+  titleSyncTimers.forEach(clearTimeout); titleSyncTimers = [];
+  // 主题总结是后台异步调用，可能在任务完成之后才落库：分两轮补同步（无变化时不会重渲染）
+  for (const delay of [1500, 4000]) {
+    titleSyncTimers.push(setTimeout(action(async () => {
+      if (state.session?.id !== id) return;
+      const s2 = await api('/sessions/' + id);
+      if (state.session?.id !== id) return;
+      if (adoptSessionIfChanged(s2)) renderSession();
+      await loadSessions();
+    }), delay));
+  }
+}
 let refreshSoonTimer = 0;
 function refreshSessionSoon() {
   clearTimeout(refreshSoonTimer);
@@ -179,7 +246,15 @@ function schedulePoll() {
     if ((!state.stream || state.stream._runId !== running.id) && (!state.streamRetryAt || Date.now() >= state.streamRetryAt)) openStream(running);
     state.poll = setTimeout(action(async () => {
       const id = state.session.id; const s = await api('/sessions/' + id); if (state.session?.id !== id) return;
+      const hadRunning = !!state.session?.runs?.find(r => r.status === 'running');
       if (adoptSessionIfChanged(s)) renderSession();
+      if (hadRunning && !s.runs.some(r => r.status === 'running')) {
+        if (s.runs.some(r => r.status === 'completed')) {
+          try { await api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) }); } catch (err) {}
+        }
+        await loadSessions(); // 轮询兜底路径：完成时同步列表
+        scheduleTitleSync(id);
+      }
       schedulePoll();
     }), 1500);
   } else {
@@ -446,9 +521,13 @@ $('task-form').onsubmit = action(async event => {
   if (state.previewOverLimit) { toast(t("上下文预算超限：请缩短任务或减少附件后再发送")); return; }
   $('send').disabled = true;
   const draftSession = state.session; // R07：捕获发送时对象，后续等待不得覆盖新选择
+  let created = null;
   try {
-    if (!draftSession) state.session = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: t("新会话") }) });
-    const target = draftSession || state.session;
+    if (!draftSession) {
+      created = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: t("新会话") }) });
+      if (!state.session) state.session = created; // 仅当用户仍停留在空白页时接管；点击已切走的会话不被空壳抢占
+    }
+    const target = draftSession || created;
     const strategy = state.profiles?.strategy || 'manual';
     await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued: state.queueMode }) });
     if (state.session?.id === target.id) { // 仅当用户仍停留在发送会话时清空草稿
@@ -458,6 +537,14 @@ $('task-form').onsubmit = action(async event => {
       await selectSession(target.id);
       $('conversation').scrollTo({ top: $('conversation').scrollHeight, behavior: 'instant' });
     }
+  } catch (err) {
+    // 任务未启动成功：删掉刚创建的空壳会话，避免侧栏残留“新会话”空项；正展示时退回空白页
+    if (created) {
+      if (state.session?.id === created.id) { state.session = null; state.sessionJSON = ''; renderSession(); }
+      await api(`/sessions/${created.id}`, { method: 'DELETE' }).catch(() => {});
+      await loadSessions().catch(() => {});
+    }
+    throw err;
   } finally { updateSendEnabled(); }
 });
   $('queue-toggle')?.addEventListener('click', () => { state.queueMode = !state.queueMode; $('queue-toggle').classList.toggle('active', state.queueMode); });
@@ -605,7 +692,7 @@ $('command-form').onsubmit = action(async event => {
 $('command-stop').onclick = () => state.commandAbort?.abort();
 $('login-dialog').addEventListener('cancel', event => event.preventDefault());
 $('login-form').onsubmit = async event => { event.preventDefault(); state.token = $('access-token').value.trim(); try { await initialize(); localStorage.setItem('aide-token', state.token); $('access-token').value = ''; $('login-dialog').close(); } catch (error) { $('login-error').textContent = error.message; } };
-document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName) && !document.querySelector('dialog[open]') && !$('settings-sheet').classList.contains('open')) action(newSession)(); });
+document.addEventListener('keydown', event => { if (event.key.toLowerCase() === 'n' && !event.metaKey && !event.ctrlKey && ['BODY', 'HTML'].includes(document.activeElement.tagName) && !document.querySelector('dialog[open]') && !$('settings-sheet').classList.contains('open')) action(newSession)(); });
 /* ── 设置面板（FR-58~FR-60）：品牌 logo 入口；结构由 /settings-schema.json 数据驱动；
    设置值一律经 window.aideUI 的 JSON 文档管理。必须位于 initialize() 之外：
    未登录时 initialize() 会抛错返回，设置面板仍需可用。 ── */
@@ -699,7 +786,58 @@ function renderLanguageControl() {
   return wrap;
 }
 
-const controlRenderers = { language: renderLanguageControl, 'about-project': renderAboutProject, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats };
+const controlRenderers = { language: renderLanguageControl, 'about-project': renderAboutProject, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage };
+
+// 设置面板「会话与数据」：归档会话列表（恢复/删除）+ 全部导出按钮
+function renderSessionsManage() {
+  const wrap = el('div', 'settings-control sessions-manage');
+  const head = el('div', 'sessions-manage-head');
+  const exportBtn = el('button', 'primary', t("全部导出"));
+  exportBtn.title = t("导出全部会话数据为 JSON 文件（含归档）");
+  exportBtn.onclick = action(async () => {
+    const res = await fetch('/api/export', { headers: { 'Authorization': 'Bearer ' + state.token } });
+    if (!res.ok) throw new Error(t("导出失败"));
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const cd = res.headers.get('Content-Disposition') || '';
+    const m = cd.match(/filename="([^"]+)"/);
+    a.download = m ? m[1] : 'aide-sessions.json';
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    toast(t("已导出全部会话数据"));
+  });
+  const refresh = el('button', 'quiet', t("刷新"));
+  refresh.onclick = action(renderArchivedList);
+  head.append(exportBtn, refresh);
+  const list = el('div', 'archived-list');
+  async function renderArchivedList() {
+    const items = await api('/sessions?archived=1');
+    list.replaceChildren();
+    if (!items.length) { list.append(el('p', 'muted', t("没有已归档会话。"))); return; }
+    for (const it of items) {
+      const row = el('div', 'archived-item');
+      const label = el('span', 'archived-title', it.title);
+      label.title = it.title;
+      const restore = el('button', 'quiet', t("恢复"));
+      restore.onclick = action(async () => { await api(`/sessions/${it.id}`, { method: 'PATCH', body: JSON.stringify({ archived: false }) }); await renderArchivedList(); await loadSessions(); });
+      const del = el('button', 'quiet danger-text', t("删除"));
+      del.onclick = action(async () => {
+        if (!confirm(t("确定删除这个会话？此操作不可撤销。"))) return;
+        await api(`/sessions/${it.id}`, { method: 'DELETE' });
+        await renderArchivedList();
+        await loadSessions();
+        if (state.session?.id === it.id) { clearTimeout(state.poll); closeStream(); state.session = null; state.sessionJSON = ''; renderSession(); }
+      });
+      row.append(label, restore, del);
+      list.append(row);
+    }
+  }
+  wrap.append(head, list);
+  renderArchivedList();
+  return wrap;
+}
 function renderControlsInto(host, controls, description) {
   if (description) host.append(el('p', 'section-desc', description));
   for (const control of controls || []) {

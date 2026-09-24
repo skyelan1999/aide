@@ -138,6 +138,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt})
+			s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 			existing.Steers = append(existing.Steers, SteerMsg{Content: in.Prompt, Queued: in.Queued, At: time.Now().UTC().Format(time.RFC3339Nano)})
 			if in.Queued {
 				existing.Queue = append(existing.Queue, in.Prompt)
@@ -185,6 +186,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...) // 去掉末条指令（execute 首轮再加）
 	firstInput := preview.Messages
 	s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt})
+	s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 	s.Runs = append(s.Runs, task)
 	if err := a.save(s); err != nil {
 		s.Messages = s.Messages[:len(s.Messages)-1]
@@ -289,6 +291,8 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		}
 		s.Messages = append(s.Messages, Message{Role: "assistant", Content: answer})
 	}
+	s.Updated = time.Now().UTC().Format(time.RFC3339Nano) // 完成时刻：列表按完成先后置顶
+	s.Checked = false                                     // 新完成重新点亮“蓝点+加粗”高亮
 	if saveErr := a.save(s); saveErr != nil {
 		task.Status = "failed"
 		task.Error = "会话保存失败: " + saveErr.Error()
@@ -472,6 +476,7 @@ func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 	task.Applied = true
 	task.Status = "completed"
 	task.Error = ""
+	s.Checked = false // 审批应用完成：重新点亮“蓝点+加粗”高亮
 	if err := a.save(s); err != nil {
 		fail(w, 500, err)
 		return

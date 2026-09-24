@@ -3,6 +3,7 @@
 .DS_Store
 bin/
 test-results/
+tmp/
 *.log
 docker-images/*.tar*
 docker-images/*.sha256

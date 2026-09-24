@@ -2,6 +2,18 @@
   "version": 1,
   "sections": [
     {
+      "id": "stats",
+      "title": "消耗统计",
+      "description": "模型调用 Token 消耗与费用趋势",
+      "controls": [
+        {
+          "id": "token-stats",
+          "type": "token-stats",
+          "label": "Token 消耗"
+        }
+      ]
+    },
+    {
       "id": "appearance",
       "title": "外观",
       "description": "选择适合此刻的外观，让专注更舒适。",
@@ -59,18 +71,6 @@
       ]
     },
     {
-      "id": "stats",
-      "title": "消耗统计",
-      "description": "模型调用 Token 消耗与费用趋势",
-      "controls": [
-        {
-          "id": "token-stats",
-          "type": "token-stats",
-          "label": "Token 消耗"
-        }
-      ]
-    },
-    {
       "id": "model",
       "title": "模型参数",
       "description": "管理模型调用参数配置（Profile）",
@@ -85,6 +85,18 @@
               "label": "参数配置"
             }
           ]
+        }
+      ]
+    },
+    {
+      "id": "sessions-data",
+      "title": "归档",
+      "description": "归档会话管理与会话数据全部导出",
+      "controls": [
+        {
+          "id": "sessions-manage",
+          "type": "sessions-manage",
+          "label": "会话数据"
         }
       ]
     },
