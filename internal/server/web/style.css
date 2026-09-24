@@ -35,3 +35,11 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .cp-detail { margin-top: 0.35rem; display: grid; gap: 0.15rem; }
 .cp-row { display: flex; justify-content: space-between; gap: 1rem; color: var(--muted, #8a8f98); }
 .cp-note { margin: 0.3rem 0 0; color: var(--muted, #8a8f98); font-size: 0.75rem; }
+
+/* ── SSE 流式输出：DSH/Codex 风格实时显示 ── */
+.stream-cursor { color: var(--brand, #4c8dff); animation: aide-cur 1s steps(2, start) infinite; }
+@keyframes aide-cur { to { visibility: hidden; } }
+.thinking-dot { animation: aide-th 1.2s ease-in-out infinite; }
+@keyframes aide-th { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
+.live-tool { display: flex; align-items: center; gap: 8px; font-size: 10px; color: var(--muted, #8a8f98); padding: 6px 0 8px; border-bottom: 1px dashed var(--line-faint, rgba(128,128,128,.25)); }
+.live-tool .live-dot { animation: aide-th 1s ease-in-out infinite; }

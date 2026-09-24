@@ -1,7 +1,7 @@
 'use strict';
 const t = (key, ...args) => window.aideI18n ? window.aideI18n.t(key, ...args) : String(key).replace(/\{(\d+)\}/g, (m, i) => args[i] ?? m);
 const $ = id => document.getElementById(id);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '' };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveRound: {}, liveTool: {}, streamRetryAt: 0 };
 const fragment = new URLSearchParams(location.hash.slice(1));
 if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); history.replaceState(null, '', location.pathname); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -34,25 +34,127 @@ async function loadSessions() {
 const sessionSeq = { value: 0 }; // R07：递增请求序号，旧响应不得覆盖新选择
 async function selectSession(id) {
   const seq = ++sessionSeq.value;
-  clearTimeout(state.poll);
+  clearTimeout(state.poll); closeStream();
+  state.live = {}; state.liveRound = {}; state.liveTool = {}; state.streamRetryAt = 0; // live 文本按 run 归属，切换会话即失效
   const loaded = await api('/sessions/' + id);
   if (seq !== sessionSeq.value) return; // 已有更新的选择，丢弃本次过期响应
   state.session = loaded;
+  state.sessionJSON = JSON.stringify(loaded);
   renderSession();
   refreshCompactInfo();
   await loadSessions();
   schedulePoll();
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
+function closeStream() {
+  if (state.stream) { try { state.stream.close(); } catch (e) {} state.stream = null; }
+}
+function openStream(run) {
+  closeStream();
+  const es = new EventSource('/api/sessions/' + state.session.id + '/runs/' + run.id + '/events?access_token=' + encodeURIComponent(state.token));
+  es._runId = run.id;
+  state.stream = es;
+  state.streamRetryAt = 0;
+  es.addEventListener('step', () => refreshSessionSoon());
+  es.addEventListener('tool', e => {
+    let d; try { d = JSON.parse(e.data); } catch (err) { return; }
+    state.liveTool[run.id] = d;
+    renderLiveTool(run.id);
+    refreshSessionSoon();
+  });
+  es.addEventListener('delta', e => {
+    let d; try { d = JSON.parse(e.data); } catch (err) { return; }
+    const target = state.session?.runs?.find(r => r.id === run.id);
+    if (target?.mode !== 'chat') return; // workflow 步骤不渲染 live 文本
+    // 同一步骤内每轮 toolLoop 会重开一次模型请求：轮次变化时重置，避免拼接上一轮的叙述
+    if (typeof d.round === 'number' && state.liveRound[run.id] !== d.round) {
+      state.live[run.id] = ''; state.liveRound[run.id] = d.round;
+    }
+    state.live[run.id] = (state.live[run.id] || '') + (d.text || '');
+    scheduleLiveRender(run.id); // 按动画帧批量渲染，避免逐 token 全量 markdown 解析
+  });
+  es.addEventListener('done', () => {
+    delete state.live[run.id]; delete state.liveRound[run.id]; delete state.liveTool[run.id];
+    closeStream(); state.streamRetryAt = 0;
+    action(async () => {
+      const id = state.session?.id; if (!id) return;
+      const s = await api('/sessions/' + id); if (state.session?.id !== id) return;
+      if (adoptSessionIfChanged(s)) renderSession();
+      schedulePoll();
+    })();
+  });
+  // 流断开：保留已积累的 live 文本，短暂退避后由轮询兜底重开；最终状态仍以会话接口为准
+  es.onerror = () => { closeStream(); state.streamRetryAt = Date.now() + 5000; };
+}
+// 流式渲染节流：delta 先累积，按动画帧批量渲染（每帧最多一次全量解析）
+const liveRenderScheduled = new Set();
+function scheduleLiveRender(runId) {
+  if (liveRenderScheduled.has(runId)) return;
+  liveRenderScheduled.add(runId);
+  requestAnimationFrame(() => {
+    liveRenderScheduled.delete(runId);
+    renderLiveAnswer(runId);
+  });
+}
+function renderLiveAnswer(runId) {
+  const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
+  const all = document.querySelectorAll('#timeline .chat-answer');
+  const ans = box?.querySelector('.chat-answer') || (all.length ? all[all.length - 1] : null);
+  if (!ans) return;
+  // 运行中的 chat 步骤以 live 文本为准（step.content 可能还是“工具调用中”或尚未提交）
+  const run = state.session?.runs?.find(r => r.id === runId);
+  const step = run?.steps?.[run.steps.length - 1];
+  const live = state.live[runId] || '';
+  const full = live || (step?.content || '');
+  // live 渲染跳过代码高亮（每帧高亮大段代码代价高），完成态由 renderSession 全量渲染
+  ans.innerHTML = (full ? renderMarkdown(full, true) : '') + '<span class="stream-cursor" aria-hidden="true">▍</span>';
+  const c = $('conversation'); c.scrollTop = c.scrollHeight;
+}
+// 会话快照未变化时跳过整页重渲染（流式期间 step.content/usage 未变，轮询只做轻量校验）
+function adoptSessionIfChanged(s) {
+  const next = JSON.stringify(s);
+  if (next === state.sessionJSON) return false;
+  state.sessionJSON = next;
+  state.session = s;
+  return true;
+}
+function renderLiveTool(runId) {
+  const t = state.liveTool[runId];
+  const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
+  if (!box || !t) return;
+  let row = box.querySelector('.live-tool');
+  if (!row) {
+    const ans = box.querySelector('.chat-answer');
+    row = el('div', 'live-tool');
+    if (ans) ans.insertAdjacentElement('afterend', row); else box.append(row);
+  }
+  row.textContent = '⚒ ' + t.tool + (t.preview ? ' · ' + String(t.preview).slice(0, 80) : '');
+}
+let refreshSoonTimer = 0;
+function refreshSessionSoon() {
+  clearTimeout(refreshSoonTimer);
+  refreshSoonTimer = setTimeout(action(async () => {
+    const id = state.session?.id; if (!id) return;
+    const s = await api('/sessions/' + id); if (state.session?.id !== id) return;
+    if (adoptSessionIfChanged(s)) renderSession();
+  }), 250);
+}
 function schedulePoll() {
   clearTimeout(state.poll);
-  if (state.session?.runs.some(r => r.status === 'running')) state.poll = setTimeout(action(async () => {
-    const id = state.session.id; const s = await api('/sessions/' + id); if (state.session?.id !== id) return;
-    state.session = s; renderSession(); schedulePoll();
-  }), 1200);
+  const running = state.session?.runs?.find(r => r.status === 'running');
+  if (running) {
+    if ((!state.stream || state.stream._runId !== running.id) && (!state.streamRetryAt || Date.now() >= state.streamRetryAt)) openStream(running);
+    state.poll = setTimeout(action(async () => {
+      const id = state.session.id; const s = await api('/sessions/' + id); if (state.session?.id !== id) return;
+      if (adoptSessionIfChanged(s)) renderSession();
+      schedulePoll();
+    }), 1500);
+  } else {
+    closeStream();
+  }
 }
 async function newSession() {
-  clearTimeout(state.poll); state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
+  clearTimeout(state.poll); closeStream(); state.live = {}; state.liveRound = {}; state.liveTool = {}; state.streamRetryAt = 0; state.sessionJSON = ''; state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
 }
 const labels = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', chat: 'aide' };
 function toolSummaryBrief(use) {
@@ -73,15 +175,31 @@ function renderSession() {
   $('timeline').replaceChildren(); state.busy = false;
   for (const run of state.session?.runs || []) {
     if (run.status === 'running') state.busy = true;
-    const box = el('article', 'run'); box.append(el('div', 'user-message', run.prompt));
+    const box = el('article', 'run'); box.dataset.run = run.id; box.append(el('div', 'user-message', run.prompt));
     const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? t("◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', t("策略: ") + (run.strategy === 'auto' ? t("自动 → ") + profileName(run.profile) : t("手动 · ") + profileName(run.profile)))); box.append(meta);
     if (run.attachments?.length) box.append(el('p', 'muted', t("已附加：") + run.attachments.map(a => a.root + '/' + a.path).join('、')));
     if (!run.steps.length) box.append(el('p', 'muted', t("正在准备模型请求…")));
     run.steps.forEach((step, index) => {
       if (run.mode === 'chat') {
         const ans = el('div', 'chat-answer md-body');
-        ans.innerHTML = renderMarkdown(step.content || (step.status === 'running' ? t("正在思考…") : t("未返回回答")));
+        const running = run.status === 'running';
+        const liveText = state.live[run.id] || '';
+        // 运行中优先显示实时增量（step.content 尚未提交，可能还是“工具调用中”），
+        // 结束后只用持久化内容，避免 live 与 content 重复拼接
+        const text = running && liveText ? liveText : (step.content || '');
+        if (text) {
+          ans.innerHTML = renderMarkdown(text) + (running ? '<span class="stream-cursor" aria-hidden="true">▍</span>' : '');
+        } else if (running) {
+          // DSH/Codex 风格：首 token 前显示呼吸的思考点
+          ans.innerHTML = t("正在思考") + '<span class="thinking-dot" aria-hidden="true">.</span><span class="thinking-dot" aria-hidden="true" style="animation-delay:.2s">.</span><span class="thinking-dot" aria-hidden="true" style="animation-delay:.4s">.</span>';
+        } else {
+          ans.textContent = t("未返回回答");
+        }
         box.append(ans);
+        if (running && state.liveTool[run.id]) {
+          const t2 = state.liveTool[run.id];
+          box.append(el('div', 'live-tool', '⚒ ' + t2.tool + (t2.preview ? ' · ' + String(t2.preview).slice(0, 80) : '')));
+        }
         return;
       }
       const details = el('details', 'step'); details.dataset.key = run.id + ':' + step.name;
@@ -1390,11 +1508,12 @@ function sanitizeHtml(html) {
   });
   return doc.body;
 }
-function renderMarkdown(src) {
+function renderMarkdown(src, live) {
   if (window.marked && typeof window.marked.parse === 'function') {
     const html = window.marked.parse(String(src || ''), { gfm: true, breaks: false });
     const body = sanitizeHtml(html);
-    body.querySelectorAll('pre > code[class*="language-"]').forEach(codeEl => {
+    // live（流式渲染）跳过代码高亮：每帧全量高亮代价高，完成态由 renderSession 补全
+    if (!live) body.querySelectorAll('pre > code[class*="language-"]').forEach(codeEl => {
       const lang = (codeEl.className.match(/language-([\w+-]+)/) || [])[1] || '';
       if (/^(js|javascript|jsx|ts|typescript|mjs)$/i.test(lang)) codeEl.innerHTML = highlightCode(codeEl.textContent, lang);
     });
