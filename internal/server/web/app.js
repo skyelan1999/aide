@@ -1394,12 +1394,46 @@ function renderModelList() {
     const windowInput = el('input', 'model-window-input');
     windowInput.type = 'number';
     windowInput.min = 1024;
-    windowInput.max = 1048576;
+    windowInput.max = 2097152;
     windowInput.step = 1024;
     windowInput.value = m.contextWindow || 65536;
     windowInput.setAttribute('aria-label', t("上下文窗口"));
-    windowInput.addEventListener('input', () => { const v = parseInt(windowInput.value, 10); if (!Number.isNaN(v)) m.contextWindow = v; });
-    windowLabel.append(windowInput);
+    windowInput.addEventListener('input', () => {
+      const v = parseInt(windowInput.value, 10);
+      if (!Number.isNaN(v)) {
+        m.contextWindow = v;
+        // 高亮匹配的预设
+        windowHost.querySelectorAll('.win-preset').forEach(b => {
+          b.classList.toggle('active', parseInt(b.dataset.k, 10) === v);
+        });
+      }
+    });
+    const presets = [
+      {k: 32768, label: '32K'},
+      {k: 65536, label: '64K'},
+      {k: 128000, label: '128K'},
+      {k: 200000, label: '200K'},
+      {k: 256000, label: '256K'},
+      {k: 1000000, label: '1M'},
+    ];
+    const windowHost = el('span', 'model-window-host');
+    const presetRow = el('span', 'win-preset-row');
+    presets.forEach(p => {
+      const btn = el('button', 'win-preset', p.label);
+      btn.type = 'button';
+      btn.dataset.k = p.k;
+      btn.title = p.label + t(" 上下文");
+      if (m.contextWindow === p.k) btn.classList.add('active');
+      btn.onclick = () => {
+        m.contextWindow = p.k;
+        windowInput.value = p.k;
+        presetRow.querySelectorAll('.win-preset').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      };
+      presetRow.append(btn);
+    });
+    windowHost.append(presetRow, windowInput);
+    windowLabel.append(windowHost);
     const del = el('button', 'model-delete', '－');
     del.type = 'button';
     del.title = t("删除模型");
