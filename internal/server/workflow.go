@@ -651,8 +651,10 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		stepName = task.Steps[stepIndex].Name
 	}
 	a.mu.Unlock()
+	maxRounds := a.settings.ToolMaxRounds
+	if maxRounds <= 0 { maxRounds = 60 }
 	consecutiveFail := map[string]int{} // 工具名 → 连续失败次数
-	for round := 0; round < 10; round++ {
+	for round := 0; round < maxRounds; round++ {
 		rec := func(body []byte) {
 			sum := sha256.Sum256(body)
 			a.mu.Lock()
@@ -742,7 +744,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		task.Steps[stepIndex].Content = "工具调用中：" + strings.Join(toolCallNames(calls), ", ")
 		a.mu.Unlock()
 	}
-	return "", nil, errors.New("工具调用轮次超过 10 轮，请缩小任务范围")
+	return "", nil, errors.New("工具调用轮次达到上限，请缩小任务范围或在设置里调大轮次")
 }
 
 func addUsage(base, add TokenUsage) TokenUsage {

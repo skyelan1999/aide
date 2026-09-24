@@ -40,6 +40,7 @@ type Settings struct {
 	Models      []ModelRef `json:"models,omitempty"`
 	ActiveModel string     `json:"activeModel,omitempty"`
 	SandboxMode string     `json:"sandboxMode,omitempty"` // read-only | workspace-write | danger-full-access
+	ToolMaxRounds int      `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
 }
 
 const (

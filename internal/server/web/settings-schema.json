@@ -128,6 +128,15 @@
           "id": "permission-manager",
           "type": "permission-manager",
           "label": "工具权限"
+        },
+        {
+          "id": "toolMaxRounds",
+          "type": "number",
+          "label": "工具调用最大轮次",
+          "min": 5,
+          "max": 200,
+          "step": 5,
+          "placeholder": "60"
         }
       ]
     },
