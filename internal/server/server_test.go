@@ -100,8 +100,7 @@ func TestSettingsNeverReturnKey(t *testing.T) {
 }
 func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 	a := testApp(t)
-	var calls atomic.Int32
-	var formats sync.Map // call index -> response_format type
+	var formats sync.Map // step name -> response_format type
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/chat/completions" || r.Header.Get("Authorization") != "Bearer fake" {
 			t.Error("provider contract")
@@ -114,17 +113,30 @@ func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 		if len(body.Messages) < 2 {
 			t.Error("missing messages")
 		}
-		n := calls.Add(1)
-		formats.Store(n, body.ResponseFormat["type"])
-		content := "审查结束：未执行测试。"
-		switch n {
-		case 1:
-			content = "更新主题"
-		case 2:
-			content = "计划：修改 hello.txt，再验证内容。"
-		case 3:
-			content = `{"summary":"change","files":[{"path":"hello.txt","content":"new"}],"commands":["cat hello.txt"]}`
+		// summarizeTopic 与任务并发执行：不能按调用序号分派，按消息内容识别步骤。
+		// 注意优先级：plan/propose 指令会作为历史回显在后继步骤调用里，
+		// 而 review 的特征指令只出现在 review 调用；先匹配 review，再 propose，最后 plan。
+		joined := ""
+		for _, m := range body.Messages {
+			joined += m.Content
 		}
+		step := "review"
+		content := "审查结束：未执行测试。"
+		switch {
+		case strings.Contains(joined, "主题短语"):
+			step = "topic"
+			content = "更新主题"
+		case strings.Contains(joined, "审查上述计划"):
+			step = "review"
+			content = "审查结束：未执行测试。"
+		case strings.Contains(joined, "Generate an implementation proposal"):
+			step = "propose"
+			content = `{"summary":"change","files":[{"path":"hello.txt","content":"new"}],"commands":["cat hello.txt"]}`
+		case strings.Contains(joined, "制定简短的实施计划"):
+			step = "plan"
+			content = "计划：修改 hello.txt，再验证内容。"
+		}
+		formats.Store(step, body.ResponseFormat["type"])
 		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: content}}}})
 	}))
 	defer provider.Close()
@@ -150,15 +162,27 @@ func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	if task.Status != "awaiting_approval" || calls.Load() != 4 {
-		t.Fatalf("task: %+v calls %d", task, calls.Load())
+	if task.Status != "awaiting_approval" {
+		t.Fatalf("task: %+v", task)
 	}
-	// 第 3 次调用是 propose 步骤：必须强制 JSON 输出（FR-23 可靠性）
-	if f, _ := formats.Load(int32(3)); f != "json_object" {
+	// propose 步骤必须强制 JSON 输出（FR-23 可靠性）；plan 不强制
+	if f, _ := formats.Load("propose"); f != "json_object" {
 		t.Fatalf("propose response_format = %v, want json_object", f)
 	}
-	if f, _ := formats.Load(int32(2)); f == "json_object" {
+	if f, _ := formats.Load("plan"); f == "json_object" {
 		t.Fatal("plan 步骤不应强制 json_object")
+	}
+	// 主题总结并发执行：标题异步落库
+	for i := 0; i < 300; i++ {
+		w = request(a, "GET", "/api/sessions/"+s.ID, nil)
+		_ = json.Unmarshal(w.Body.Bytes(), &s)
+		if s.Title == "更新主题" {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if s.Title != "更新主题" {
+		t.Fatalf("topic title: %s", s.Title)
 	}
 	b, _ := a.workspace.ReadFile("hello.txt")
 	if string(b) != "old" {
@@ -272,6 +296,15 @@ func TestChatHistoryAndCancelEndpoint(t *testing.T) {
 	}
 	if len(s.Messages) != 2 || s.Messages[1].Content != "first reply" {
 		t.Fatal("chat not saved")
+	}
+	// summarizeTopic 与任务并发执行：标题异步落库，轮询等待（响应体标题更新前有极小窗口）
+	for i := 0; i < 300; i++ {
+		w = request(a, "GET", "/api/sessions/"+s.ID, nil)
+		_ = json.Unmarshal(w.Body.Bytes(), &s)
+		if s.Title == "主题标题" {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 	if s.Title != "主题标题" {
 		t.Fatalf("topic summary title: %s", s.Title)

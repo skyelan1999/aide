@@ -170,7 +170,9 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 202, task)
 }
 func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings, messages []Message, firstInput []Message, versions map[string]Change, params ProfileParams) {
-	a.summarizeTopic(ctx, s, task, cfg, params)
+	// 主题总结改为并发执行：原先串行会阻塞首个回答 token（多一次完整模型调用延迟）。
+	// summarizeTopic 只读写 s.Title/task.Usage（均在 a.mu 内），与主流程无竞态。
+	go a.summarizeTopic(ctx, s, task, cfg, params)
 	defer func() {
 		a.mu.Lock()
 		if cancel := a.cancels[task.ID]; cancel != nil {
@@ -185,6 +187,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		index := len(task.Steps) - 1
 		err := a.save(s)
 		a.mu.Unlock()
+		a.publishStream(task.ID, streamEvent{Event: "step", Step: name, Status: "running"})
 		if err != nil {
 			return "", err
 		}
@@ -214,6 +217,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		}
 		saveErr := a.save(s)
 		a.mu.Unlock()
+		a.publishStream(task.ID, streamEvent{Event: "step", Step: name, Status: task.Steps[index].Status})
 		if err != nil {
 			return "", err
 		}
@@ -261,6 +265,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		task.Error = "会话保存失败: " + saveErr.Error()
 	}
 	a.mu.Unlock()
+	a.finishStream(task.ID, task.Status, task.Error)
 	// R01：模型调用必须发生在全局锁之外；自动压缩改为释放锁后执行
 	a.maybeAutoCompact(ctx, s, cfg)
 }
@@ -517,6 +522,74 @@ func (a *App) executablePluginTools() []string {
 	return names
 }
 
+// streamEvent 推送给 SSE 订阅者的事件；event 取值：step | delta | tool | status | done。
+// SSE 是实时增强层，最终任务状态仍由 GET /sessions/{id} 持久化兜底。
+type streamEvent struct {
+	Event   string `json:"event"`
+	Step    string `json:"step,omitempty"`
+	Status  string `json:"status,omitempty"`
+	Text    string `json:"text,omitempty"`
+	Tool    string `json:"tool,omitempty"`
+	Preview string `json:"preview,omitempty"`
+	Error   string `json:"error,omitempty"`
+	Round   int    `json:"round,omitempty"` // toolLoop 轮次：前端按轮次重置 live 文本，避免跨轮拼接
+}
+
+// subscribeStream 订阅某任务的实时事件；返回 channel 与取消函数。
+// 每 subscriber 一个带缓冲 channel（64），单用户本地场景下极少积压。
+func (a *App) subscribeStream(taskID string) (<-chan streamEvent, func()) {
+	ch := make(chan streamEvent, 64)
+	a.eventMu.Lock()
+	if a.eventSubs[taskID] == nil {
+		a.eventSubs[taskID] = map[chan streamEvent]struct{}{}
+	}
+	a.eventSubs[taskID][ch] = struct{}{}
+	a.eventMu.Unlock()
+	return ch, func() {
+		a.eventMu.Lock()
+		if subs, ok := a.eventSubs[taskID]; ok {
+			delete(subs, ch)
+			if len(subs) == 0 {
+				delete(a.eventSubs, taskID)
+			}
+		}
+		a.eventMu.Unlock()
+	}
+}
+
+// publishStream 非阻塞广播事件。发送与 finishStream 的关闭都在 eventMu 内进行，
+// 保证不存在“向已关闭 channel 发送”的竞态；慢订阅者可能丢弃增量事件（缓冲 64），
+// 但终态通过 channel close 可靠送达，最终状态仍由会话轮询兜底。
+func (a *App) publishStream(taskID string, ev streamEvent) {
+	a.eventMu.Lock()
+	defer a.eventMu.Unlock()
+	for ch := range a.eventSubs[taskID] {
+		select {
+		case ch <- ev:
+		default:
+		}
+	}
+}
+
+// finishStream 任务终态：广播 status + done 后关闭并清理该任务的所有订阅。
+// close(ch) 是不可被缓冲丢弃的终态信号；订阅者据此退出，不依赖 done 事件送达。
+func (a *App) finishStream(taskID, status, errMsg string) {
+	a.eventMu.Lock()
+	defer a.eventMu.Unlock()
+	for ch := range a.eventSubs[taskID] {
+		select {
+		case ch <- streamEvent{Event: "status", Status: status, Error: errMsg}:
+		default:
+		}
+		select {
+		case ch <- streamEvent{Event: "done"}:
+		default:
+		}
+		close(ch)
+	}
+	delete(a.eventSubs, taskID)
+}
+
 // toolLoop 与模型交互并执行工具调用（≤10 轮）；写操作只生成提案（P2/P3 原则保留）。
 // 返回最终答复与该步骤的完整对话链（含工具调用与原始结果，R05 证据链跨步骤保留）。
 // 每轮实际发出的请求体以快照记录（R08-04：预览与真实请求的可比证据）。
@@ -547,7 +620,8 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			}
 			a.mu.Unlock()
 		}
-		out, calls, usage, err := complete(ctx, cfg, input, params, tools, rec)
+		onDelta := func(delta string) { a.publishStream(task.ID, streamEvent{Event: "delta", Text: delta, Round: round}) }
+		out, calls, usage, err := completeStream(ctx, cfg, input, params, tools, rec, onDelta)
 		if err != nil {
 			return "", nil, err
 		}
@@ -569,6 +643,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			// Result 保留完整原始结果（计量/验收依据）；Preview 供界面展示
 			task.ToolUses = append(task.ToolUses, ToolUse{Tool: call.Function.Name, Args: call.Function.Arguments, Result: result, Preview: display})
 			a.mu.Unlock()
+			a.publishStream(task.ID, streamEvent{Event: "tool", Tool: call.Function.Name, Preview: display})
 		}
 		a.mu.Lock()
 		task.Steps[stepIndex].Content = "工具调用中：" + strings.Join(toolCallNames(calls), ", ")
@@ -1120,5 +1195,80 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings) {
 	s.Messages = append([]Message{}, s.Messages[split:]...)
 	if err := a.save(s); err != nil {
 		log.Printf("自动压缩保存失败: %v", err)
+	}
+}
+
+// runEvents 以 SSE 推送给定 run 的实时事件（step/delta/tool/status/done）。
+// EventSource 无法设置 Authorization 头，故鉴权在中间件兼容 ?access_token=（仅 events 路由）。
+// 先订阅、后复查任务状态：任务在“检查状态”与“订阅”之间结束时，订阅者仍能通过
+// channel close 或复查得到终态，不会永久挂起；订阅时已结束的任务立即回发 status+done 并关闭。
+func (a *App) runEvents(w http.ResponseWriter, r *http.Request) {
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		fail(w, 500, errors.New("streaming unsupported"))
+		return
+	}
+	sessionID := r.PathValue("id")
+	runID := r.PathValue("run")
+	a.mu.Lock()
+	s := a.sessions[sessionID]
+	var task *Task
+	if s != nil {
+		for _, t := range s.Runs {
+			if t.ID == runID {
+				task = t
+				break
+			}
+		}
+	}
+	a.mu.Unlock()
+	if task == nil {
+		fail(w, 404, errors.New("任务不存在"))
+		return
+	}
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Connection", "keep-alive")
+	w.Header().Set("X-Accel-Buffering", "no")
+	w.WriteHeader(200)
+
+	writeEvent := func(ev streamEvent) {
+		body, _ := json.Marshal(ev)
+		fmt.Fprintf(w, "event: %s\ndata: %s\n\n", ev.Event, body)
+		flusher.Flush()
+	}
+
+	// 先订阅再复查状态：execute 先写终态（a.mu 内）后调 finishStream，
+	// 因此复查到非 running 时 finishStream 必已清理订阅，需由这里补发终态；
+	// 复查到 running 时本订阅必然先于 finishStream 注册，终态经 channel 送达或 close 兜底。
+	ch, unsub := a.subscribeStream(runID)
+	defer unsub()
+	a.mu.Lock()
+	status, errMsg := task.Status, task.Error
+	a.mu.Unlock()
+	if status != "running" {
+		writeEvent(streamEvent{Event: "status", Status: status, Error: errMsg})
+		writeEvent(streamEvent{Event: "done"})
+		return
+	}
+
+	heartbeat := time.NewTicker(15 * time.Second)
+	defer heartbeat.Stop()
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		case <-heartbeat.C:
+			fmt.Fprintf(w, ": ping\n\n")
+			flusher.Flush()
+		case ev, open := <-ch:
+			if !open {
+				return
+			}
+			writeEvent(ev)
+			if ev.Event == "done" {
+				return
+			}
+		}
 	}
 }

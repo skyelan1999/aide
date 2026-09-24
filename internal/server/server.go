@@ -140,6 +140,8 @@ type App struct {
 	pricing                   PricingState
 	tokenCalls                []TokenCallRec
 	buildVersion, buildCommit string
+	eventMu                   sync.Mutex
+	eventSubs                 map[string]map[chan streamEvent]struct{} // SSE 订阅：taskID → subscriber set
 }
 
 // Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
@@ -266,7 +268,7 @@ func New(work, reference, data string) (*App, error) {
 		w.Close()
 		return nil, err
 	}
-	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}}
+	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}}
 	b, err := os.ReadFile(filepath.Join(data, "access-token"))
 	if errors.Is(err, os.ErrNotExist) {
 		b = []byte(newID() + newID())
@@ -490,6 +492,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/requests", a.runRequestsHandler)
+	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/events", a.runEvents)
 	mux.HandleFunc("POST /api/context-preview", a.contextPreviewHandler)
 	mux.HandleFunc("POST /api/command", a.command)
 	web, _ := fs.Sub(assets, "web")
@@ -508,6 +511,11 @@ func (a *App) Handler() http.Handler {
 				}
 			}
 			token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+			// EventSource 无法设置 Authorization 头，仅 events 路由允许 ?access_token=；
+			// 其余 API 不收 URL 中的凭据，避免令牌进入日志/代理记录。
+			if token == "" && r.Method == http.MethodGet && strings.HasSuffix(r.URL.Path, "/events") {
+				token = r.URL.Query().Get("access_token")
+			}
 			if subtle.ConstantTimeCompare([]byte(token), []byte(a.token)) != 1 {
 				fail(w, 401, errors.New("请输入访问令牌，或用 start.command 打开"))
 				return
