@@ -83,14 +83,16 @@
     },
     "release": {
       "status": "pending",
-      "summary": "已获用户授权提交与合并 main（2026-09-24 会话原话「你先提交合并吧」）；提交/推送完成后由 git log 记录实际 SHA。升版 0.1.8.0、候选镜像构建与 GitHub Release 未授权，待用户指示。真实模型浏览器观感由用户在 8097 确认。",
+      "summary": "已获用户授权提交与合并 main（2026-09-24 会话原话「你先提交合并吧」）：提交 554434e（后端）/538e468（前端）/4ccddb8（脚本文档构建）已推送 origin/main。agent-route.py verify full PASS；release-check PASS: local release prerequisites。升版 0.1.8.0、候选镜像构建与 GitHub Release 未授权，待用户指示。真实模型浏览器观感由用户在 8097 确认。",
       "evidence": [
         "用户授权原话记录于 release_authorization",
-        "release-check 门禁在升版前执行并记录结果"
+        "git push origin main → 4a1876e..4ccddb8（2026-09-24）",
+        "agent-route.py verify full PASS（.agent-state/verify-20260924T024203099654Z.log）",
+        "agent-route.py release-check sse-streaming → PASS: local release prerequisites"
       ]
     }
   },
   "release_authorization": "2026-09-24 会话，用户原话：「你先提交合并吧」（授权范围：提交并合并/推送 main；未授权升版、镜像构建与 GitHub Release）。",
-  "rollback": "提交前回退：git reset --hard origin/main 前先备份工作区。提交后回退：git revert <提交> 或 git push --force-with-lease origin main（须另行确认）。镜像回滚用旧 tag（aide:0.1.7.0-RC1 等），不覆盖数据卷。",
-  "handoff": "代码已提交 main 并推送 origin（SHA 见 git log）。缺陷修复：事件 hub 发送/关闭竞态、晚订阅者永久挂起、前端 chat 答案重复渲染、**前端 EventSource URL 漏写 /events 导致流式 401 失效**（无头浏览器探针复现并修复）；另收窄 query token 鉴权范围、增加 stream_options 400 重试与流错误退避。DSH/Codex 风格显示：首 token 前呼吸思考点、流式文本+闪烁光标、live 工具行、按轮次重置；性能优化：rAF 批量渲染、流式期跳过代码高亮（2.85KB 基准 12.2ms→0.7ms）、会话快照去重、summarizeTopic 并发化（index.html 资源版本 ?v=32）。验证：单测（race）全过、agent-route verify quick 全过（含 test_stream_url.cjs 回归）、无头 Chromium UI 检查 PASS（scripts/ui_stream_check.cjs chat/tool 两种模式）、8097 生产服务已用新镜像运行。剩余：用户在 8097 用真实模型确认观感；升版 0.1.8.0、候选镜像构建与 GitHub Release 待用户授权。"
+  "rollback": "提交前回退：git reset --hard origin/main 前先备份工作区。提交后回退：git revert 554434e 538e468 4ccddb8 或 git push --force-with-lease origin main（须另行确认）。镜像回滚用旧 tag（aide:0.1.7.0-RC1 等），不覆盖数据卷。",
+  "handoff": "代码已提交 main 并推送 origin：554434e（SSE 后端）/538e468（前端流式显示）/4ccddb8（脚本文档构建）。缺陷修复：事件 hub 发送/关闭竞态、晚订阅者永久挂起、前端 chat 答案重复渲染、**前端 EventSource URL 漏写 /events 导致流式 401 失效**（无头浏览器探针复现并修复）；另收窄 query token 鉴权范围、增加 stream_options 400 重试与流错误退避。DSH/Codex 风格显示：首 token 前呼吸思考点、流式文本+闪烁光标、live 工具行、按轮次重置；性能优化：rAF 批量渲染、流式期跳过代码高亮（2.85KB 基准 12.2ms→0.7ms）、会话快照去重、summarizeTopic 并发化（index.html 资源版本 ?v=32）。验证：单测（race×5）全过、agent-route verify quick/full 全过（含 test_stream_url.cjs 回归）、无头 Chromium UI 检查 PASS（scripts/ui_stream_check.cjs chat/tool 两种模式）、8097 生产服务已用新镜像运行。剩余：用户在 8097 用真实模型确认观感；升版 0.1.8.0、候选镜像构建与 GitHub Release 待用户授权。"
 }
