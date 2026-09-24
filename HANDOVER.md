@@ -4,6 +4,25 @@
 
 更新：2026-09-23。本文是现行操作入口。历史测试结果保留在 [验证记录](docs/verification.md)，不能据此推定今天的运行服务状态。
 
+## 本轮实验性改进（2026-09-24，分支 feature/permission-panel，未合并 main）
+
+在 main (0.1.10.0) 之上连续交付 6 项改进，已合并为一条线：
+1. run_shell 从"只生成提案"改为容器沙箱内实际执行（execShellCommand，bash --norc，60s 超时，128KB 截断）
+2. 设置面板新增「权限管理」栏，展示各工具权限
+3. run_shell 入口加危险命令黑名单 shellBlocked()（递归删除/提权/推送远端/pipe-to-shell 等）
+4. 归档当前会话后自动回新会话页
+5. 运行中插话/排队消息加 wrapSteer() 上下文包装，避免模型误判新话题
+6. 运行中发送默认排队模式（state.queueMode 默认 true，按钮默认高亮）
+
+验证：docker compose build 通过，go test ./... 全绿（含 TestShellBlocked、更新后的 TestToolLoopWriteProposalAndShellExec）；/healthz、/api/config、/api/command(echo) 冒烟通过。
+
+未完成 / 已知边界：
+- md 文件里 mermaid 流程图不渲染（未接 mermaid.js）；md 内相对路径链接点击 404（未拦截成 aide 内部 openFile）
+- 远程 SSH 工作区的 run_shell 自动执行未打通
+- 权限管理栏目前是只读展示，未做 per-tool 开关持久化
+- 尚未接在线网页搜索（web_search 工具）；已调研 DDG 爬取 / SearXNG / Tavily 三条路径
+- 架构总览图见 docs/architecture-overview.html
+
 ## 接手时先确认什么
 
 ```bash
