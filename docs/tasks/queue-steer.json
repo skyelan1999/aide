@@ -72,14 +72,14 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "已获用户授权提交与推送（2026-09-24 会话原话「修一下文档，合并推送吧」）；提交 SHA 以 git log 为准。升版与 GitHub Release 待用户另行指示。",
+      "status": "in_progress",
+      "summary": "已获用户授权完整发布（「做啊」）：升版 0.1.9.0 RC1、打 tag、候选镜像、GitHub 预发布与镜像附件；8097 不自动替换。",
       "evidence": [
         "用户授权原话记录于 release_authorization"
       ]
     }
   },
-  "release_authorization": "2026-09-24 会话，用户原话：「修一下文档，合并推送吧」（授权范围：文档更新、提交与推送 main；未授权升版与 GitHub Release）。",
+  "release_authorization": "2026-09-24 会话，用户原话：「修一下文档，合并推送吧」（授权文档更新、提交与推送 main）；随后「做啊」（回应“升版与 GitHub Release 未做”，授权完整发布流程：升版、打 tag、构建候选镜像、GitHub Release 与镜像附件；8097 生产服务不自动替换）。",
   "rollback": "提交后回退：git revert <提交 SHA> 或 git push --force-with-lease origin main（须另行确认）。镜像回滚用旧 tag，不覆盖数据卷。",
   "handoff": "功能与界面定型：排队 FIFO + 插话优先（通道 4，满 429 且不脏记），队列条 Codex 风格悬于输入框上方，插话入时间线，发送/停止同按钮切换（↑→■，运行中插话/排队用 Enter），一键回底 sticky 居中、滚离约一屏出现、点击平滑回底。修复豆包初版缺陷（429 脏记录、live 被清空、发送隐藏、编辑双提交、CSS 未定义变量、回底按钮 absolute 滚出屏幕等）。验证：3 个 Go 测试 race×3、全量 race+vet、无头 Chromium UI 检查全断言 PASS。8097 已用新代码运行。剩余：升版与 GitHub Release 待授权。"
 }
