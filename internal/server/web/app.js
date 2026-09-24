@@ -1944,13 +1944,25 @@ async function openFileViewMode() {
   const data = await api(query);
   fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
   const md = isMarkdownPath(spec.path);
+  const isDrawio = /\.drawio$/i.test(spec.path || '');
   $('file-view-mode-switch').classList.toggle('hidden', !md);
   const readOnly = spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true);
   $('file-view-editor').value = data.content;
   $('file-view-editor').readOnly = readOnly;
   $('file-view-save').disabled = readOnly;
   $('file-view-status').textContent = readOnly ? t("只读") : t("可编辑 · 保存后同步");
-  setFileViewMode(md ? 'preview' : 'edit'); // md 默认渲染预览
+  if (isDrawio) {
+    // draw.io 文件：用 embed.diagrams.net 渲染
+    $('file-view-editor').classList.add('hidden');
+    $('file-view-preview').innerHTML = '<iframe src="https://embed.diagrams.net/?embed=1&proto=json&spin=1" style="width:100%;height:85vh;border:0"></iframe>';
+    $('file-view-preview').classList.remove('hidden');
+    const iframe = $('file-view-preview').querySelector('iframe');
+    iframe.onload = () => {
+      iframe.contentWindow.postMessage(JSON.stringify({action: 'load', xml: data.content}), '*');
+    };
+  } else {
+    setFileViewMode(md ? 'preview' : 'edit');
+  }
   $('file-view-toolbar').classList.remove('hidden');
   $('file-view-content').replaceChildren();
 }
