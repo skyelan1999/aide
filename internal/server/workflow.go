@@ -624,6 +624,14 @@ func (a *App) finishStream(taskID, status, errMsg string) {
 	delete(a.eventSubs, taskID)
 }
 
+// wrapSteer 给运行中插话/排队消息加上下文包装：模型刚以为回答结束，
+// 裸 user 消息会被误判成全新话题，导致接不住上文。包装后明确告知这是
+// 对上文的补充或调整，需承接前面已给出的内容继续作答。
+func wrapSteer(content string) string {
+	return "【你回答过程中用户插话】" + strings.TrimSpace(content) +
+		"\n\n请把这条视为对上文的补充或调整，承接前面已经给出的内容继续作答，不要当作全新话题从头开始。"
+}
+
 // toolLoop 与模型交互并执行工具调用（≤10 轮）；写操作只生成提案（P2/P3 原则保留）。
 // 返回最终答复与该步骤的完整对话链（含工具调用与原始结果，R05 证据链跨步骤保留）。
 // 每轮实际发出的请求体以快照记录（R08-04：预览与真实请求的可比证据）。
@@ -665,8 +673,11 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		if len(calls) == 0 {
 			select {
 			case steer := <-task.Steer:
-				input = append(input, Message{Role: "assistant", Content: out})
-				input = append(input, Message{Role: "user", Content: steer})
+				// out 为空时不追加空 assistant 消息，避免上下文里出现空白轮次
+				if strings.TrimSpace(out) != "" {
+					input = append(input, Message{Role: "assistant", Content: out})
+				}
+				input = append(input, Message{Role: "user", Content: wrapSteer(steer)})
 				continue
 			default:
 			}
@@ -675,8 +686,10 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				queued := task.Queue[0]
 				task.Queue = task.Queue[1:]
 				a.mu.Unlock()
-				input = append(input, Message{Role: "assistant", Content: out})
-				input = append(input, Message{Role: "user", Content: queued})
+				if strings.TrimSpace(out) != "" {
+					input = append(input, Message{Role: "assistant", Content: out})
+				}
+				input = append(input, Message{Role: "user", Content: wrapSteer(queued)})
 				continue
 			}
 			a.mu.Unlock()
