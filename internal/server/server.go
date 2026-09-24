@@ -43,10 +43,17 @@ type Settings struct {
 	ToolMaxRounds int      `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
 	ShellTimeout  int      `json:"shellTimeout,omitempty"` // run_shell 超时秒数，默认 60，最大 300
 	PersonaEnabled bool     `json:"personaEnabled,omitempty"`
-	PersonaCipher          string `json:"personaCipher,omitempty"` // AES-256-GCM 加密后的性格内容（base64）
+	PersonaCipher          string `json:"personaCipher,omitempty"` // 兼容旧字段：单人格时代的性格密文
+	ActivePersona          string            `json:"activePersona,omitempty"` // 当前活动人格 id（aide | xiaomi），默认 aide
+	PersonaCiphers         map[string]string `json:"personaCiphers,omitempty"` // 每人格自定义性格密文（personaID -> AES-256-GCM base64）
 	DisabledTools          []string `json:"disabledTools,omitempty"` // 被禁用的工具名列表
 	ReasoningEffort        string   `json:"reasoningEffort,omitempty"`   // 推理强度：auto/off/low/medium/high
 	VoiceAssistantName     string   `json:"voiceAssistantName,omitempty"` // 语音小秘名字，默认"小秘"
+	VoiceReplyEnabled      bool     `json:"voiceReplyEnabled,omitempty"` // 双向语音：语音回复模式
+	VoiceReplyGender       string   `json:"voiceReplyGender,omitempty"`  // 回复音色 male | female
+	UserName               string   `json:"userName,omitempty"`          // 账户用户名（锁屏欢迎语用，可空）
+	UserPasswordHash       string   `json:"userPasswordHash,omitempty"`  // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
+	LockTimeoutSec         int      `json:"lockTimeoutSec,omitempty"`    // 空闲锁屏秒数，0 = 不锁屏
 }
 
 const (
@@ -80,8 +87,8 @@ func normalizeModels(models []ModelRef) ([]ModelRef, error) {
 		if m.ContextWindow == 0 {
 			m.ContextWindow = defaultContextWindow
 		}
-		if m.ContextWindow < 1024 || m.ContextWindow > 1048576 {
-			return nil, fmt.Errorf("模型 %s 的上下文窗口须在 1024–1048576 之间", m.ID)
+		if m.ContextWindow < 1024 || m.ContextWindow > 2097152 {
+			return nil, fmt.Errorf("模型 %s 的上下文窗口须在 1024–2097152 之间", m.ID)
 		}
 		out = append(out, m)
 	}
@@ -157,7 +164,8 @@ type App struct {
 	buildVersion, buildCommit string
 	eventMu                   sync.Mutex
 	eventSubs                 map[string]map[chan streamEvent]struct{} // SSE 订阅：taskID → subscriber set
-	personaKey               string // 内存中的性格解密密码，不持久化
+	personaKey               string // 内存中的性格解密密码（= 账户密码），不持久化
+	personaCustom            map[string]string // 解锁后：personaID -> 解密出的自定义性格明文
 	voiceAgent               *VoiceAgent // 语音小秘 agent（记忆+历史）
 }
 
@@ -320,6 +328,13 @@ func New(work, reference, data string) (*App, error) {
 	}
 	if a.settings.VoiceAssistantName == "" {
 		a.settings.VoiceAssistantName = "小秘"
+	}
+	// 兼容旧版单人格：把旧 PersonaCipher 迁移为 aide 人格的自定义性格密文
+	if a.settings.PersonaCipher != "" && a.settings.PersonaCiphers == nil {
+		a.settings.PersonaCiphers = map[string]string{personaAide: a.settings.PersonaCipher}
+	}
+	if a.settings.VoiceReplyGender == "" {
+		a.settings.VoiceReplyGender = "female"
 	}
 	a.voiceAgent = newVoiceAgent(data)
 	if a.settings.Models != nil {
@@ -507,6 +522,8 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/persona/save", a.personaSave)
 	mux.HandleFunc("POST /api/persona/reset", a.personaReset)
 	mux.HandleFunc("GET /api/persona", a.personaGet)
+	mux.HandleFunc("GET /api/personas", a.personasList)
+	mux.HandleFunc("POST /api/personas/active", a.personasActive)
 	mux.HandleFunc("GET /api/token-pricing", a.tokenPricingHandler)
 	mux.HandleFunc("PUT /api/token-pricing", a.tokenPricingHandler)
 	mux.HandleFunc("GET /api/search", a.searchSessions)
@@ -523,11 +540,13 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/sessions/{id}", a.getSession)
 	mux.HandleFunc("GET /api/export", a.exportSessions)
 	mux.HandleFunc("DELETE /api/sessions/{id}", a.deleteSession)
+	mux.HandleFunc("DELETE /api/sessions/archived/all", a.deleteAllArchived)
 	mux.HandleFunc("PATCH /api/sessions/{id}", a.patchSession)
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/retry", a.retryTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
+	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/answer", a.answerTask)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/requests", a.runRequestsHandler)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/events", a.runEvents)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/queue/{index}", a.queueUpdate)
@@ -536,6 +555,12 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/voice-filter", a.voiceFilter)
 	mux.HandleFunc("GET /api/voice-history", a.voiceHistory)
 	mux.HandleFunc("DELETE /api/voice-history", a.voiceHistoryClear)
+	mux.HandleFunc("POST /api/voice-history/enable", a.voiceHistoryEnable)
+	mux.HandleFunc("POST /api/voice-history/unlock", a.voiceHistoryUnlock)
+	mux.HandleFunc("POST /api/voice-history/lock", a.voiceHistoryLock)
+	mux.HandleFunc("POST /api/voice-history/change-password", a.voiceHistoryChangePassword)
+	mux.HandleFunc("POST /api/voice-history/disable", a.voiceHistoryDisable)
+	mux.HandleFunc("POST /api/account/verify-password", a.accountVerifyPassword)
 	web, _ := fs.Sub(assets, "web")
 	mux.Handle("/", http.FileServer(http.FS(web)))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -568,12 +593,19 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "hasPassword": a.settings.UserPasswordHash != "", "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Settings
-		ClearKey bool `json:"clearKey"`
+		ClearKey          bool   `json:"clearKey"`
+		VoiceReplyEnabled *bool  `json:"voiceReplyEnabled,omitempty"`
+		VoiceReplyGender  string `json:"voiceReplyGender,omitempty"`
+		// 账户：外层同名字段覆盖内嵌 Settings（与 VoiceReplyEnabled 同模式），以便区分"未传"与"传空/0"
+		UserName       string `json:"userName,omitempty"`
+		LockTimeoutSec *int   `json:"lockTimeoutSec,omitempty"`
+		OldPassword    string `json:"oldPassword,omitempty"`
+		NewPassword    string `json:"newPassword,omitempty"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -600,6 +632,39 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if in.VoiceAssistantName == "" {
 		in.VoiceAssistantName = a.settings.VoiceAssistantName
 	}
+	// 人格状态由专用接口管理，settings PUT 不覆盖：保留当前活动人格与每人格自定义密文
+	in.Settings.ActivePersona = a.settings.ActivePersona
+	in.Settings.PersonaCiphers = a.settings.PersonaCiphers
+	in.Settings.PersonaEnabled = a.settings.PersonaEnabled
+	if in.VoiceReplyEnabled != nil {
+		in.Settings.VoiceReplyEnabled = *in.VoiceReplyEnabled
+	} else {
+		in.Settings.VoiceReplyEnabled = a.settings.VoiceReplyEnabled
+	}
+	if in.VoiceReplyGender == "" {
+		in.Settings.VoiceReplyGender = a.settings.VoiceReplyGender
+	} else {
+		in.Settings.VoiceReplyGender = in.VoiceReplyGender
+	}
+	// 账户字段：未传则保留已存值；密码哈希永远不接受前端直传，只经 OldPassword/NewPassword 流程变更
+	if in.UserName == "" {
+		in.Settings.UserName = a.settings.UserName
+	} else {
+		in.Settings.UserName = strings.TrimSpace(in.UserName)
+	}
+	if in.LockTimeoutSec != nil {
+		sec := *in.LockTimeoutSec
+		if sec < 0 {
+			sec = 0
+		}
+		if sec > 86400 {
+			sec = 86400
+		}
+		in.Settings.LockTimeoutSec = sec
+	} else {
+		in.Settings.LockTimeoutSec = a.settings.LockTimeoutSec
+	}
+	in.Settings.UserPasswordHash = a.settings.UserPasswordHash
 	u, err := url.Parse(in.BaseURL)
 	if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		fail(w, 400, errors.New("请输入有效的 HTTP(S) API Base URL"))
@@ -638,12 +703,51 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	in.Model = in.ActiveModel // Model 保留为当前生效模型 id（Provider 与旧逻辑零改动）
 	in.BaseURL = strings.TrimRight(in.BaseURL, "/")
+	// 密码变更：账户密码即小秘历史加密密钥。旧密码已设置时必须验证；新密码同步重加密小秘历史。
+	if in.NewPassword != "" {
+		hasPw := a.settings.UserPasswordHash != ""
+		if hasPw && sha256Hex(in.OldPassword) != a.settings.UserPasswordHash {
+			fail(w, 400, errors.New("原密码错误"))
+			return
+		}
+		if va := a.voiceAgent; va != nil {
+			if st := va.encStatus(); st["encrypted"] == true {
+				if st["unlocked"] != true {
+					_ = va.unlock(in.OldPassword) // 锁定态先用旧密码解开（同密钥，应成功）
+				}
+				_ = va.changePassword(in.OldPassword, in.NewPassword) // 用新密钥重加密历史
+			} else {
+				_ = va.enable(in.NewPassword) // 首次设置密码：自动启用小秘历史加密
+			}
+		}
+		in.Settings.UserPasswordHash = sha256Hex(in.NewPassword)
+		// 账户密码即人格自定义性格密钥：用新密钥重加密已解锁的人格自定义内容
+		if len(a.personaCustom) > 0 {
+			if in.Settings.PersonaCiphers == nil {
+				in.Settings.PersonaCiphers = map[string]string{}
+			}
+			for id, plain := range a.personaCustom {
+				if ct, err := encryptPersona(plain, in.NewPassword); err == nil {
+					in.Settings.PersonaCiphers[id] = ct
+				}
+			}
+			a.personaKey = in.NewPassword
+		}
+	}
 	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), in.Settings); err != nil {
 		fail(w, 500, err)
 		return
 	}
 	a.settings = in.Settings
 	jsonOut(w, 200, map[string]bool{"ok": true})
+}
+
+// voiceReplyGender 归一化回复音色，非法值回落 female。
+func voiceReplyGender(g string) string {
+	if g == "male" || g == "female" {
+		return g
+	}
+	return "female"
 }
 
 // voiceFilter 语音小秘：把浏览器 Web Speech API 的转写文本交给小秘 agent 分析决策。
@@ -681,25 +785,92 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, entry)
 }
 
-// voiceHistory 返回小秘 agent 的决策时间线（最新在前），供设置页查看。
+// voiceHistory 返回小秘决策时间线。加密且未解锁时只回状态、不返回任何内容。
 func (a *App) voiceHistory(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	va := a.voiceAgent
 	a.mu.Unlock()
 	if va == nil {
-		jsonOut(w, 200, []VoiceHistoryEntry{})
+		jsonOut(w, 200, map[string]any{"encrypted": false, "unlocked": true, "history": []VoiceHistoryEntry{}})
 		return
 	}
-	jsonOut(w, 200, va.historyDesc())
+	st := va.encStatus()
+	if enc, _ := st["encrypted"].(bool); enc {
+		if unlocked, _ := st["unlocked"].(bool); !unlocked {
+			jsonOut(w, 200, map[string]any{"encrypted": true, "unlocked": false})
+			return
+		}
+	}
+	st["history"] = va.historyDesc()
+	jsonOut(w, 200, st)
 }
 
-// voiceHistoryClear 清空小秘历史（保留长期记忆文件）。
+// voiceHistoryClear 清空小秘历史（保留长期记忆文件）。加密态下同样生效。
 func (a *App) voiceHistoryClear(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	va := a.voiceAgent
 	a.mu.Unlock()
 	if va != nil {
 		va.clearHistory()
+	}
+	jsonOut(w, 200, map[string]bool{"ok": true})
+}
+
+func (a *App) voiceHistoryEnable(w http.ResponseWriter, r *http.Request) {
+	var in struct{ Password string `json:"password"` }
+	if decode(w, r, &in) != nil { return }
+	a.mu.Lock(); va := a.voiceAgent; a.mu.Unlock()
+	if va == nil { fail(w, 500, errors.New("小秘未初始化")); return }
+	if err := va.enable(in.Password); err != nil { fail(w, 400, err); return }
+	jsonOut(w, 200, map[string]any{"ok": true, "encrypted": true, "unlocked": true})
+}
+
+func (a *App) voiceHistoryUnlock(w http.ResponseWriter, r *http.Request) {
+	var in struct{ Password string `json:"password"` }
+	if decode(w, r, &in) != nil { return }
+	a.mu.Lock(); va := a.voiceAgent; a.mu.Unlock()
+	if va == nil { fail(w, 500, errors.New("小秘未初始化")); return }
+	if err := va.unlock(in.Password); err != nil { fail(w, 401, err); return }
+	jsonOut(w, 200, map[string]any{"ok": true, "encrypted": true, "unlocked": true})
+}
+
+func (a *App) voiceHistoryLock(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock(); va := a.voiceAgent; a.mu.Unlock()
+	if va != nil { va.lock() }
+	jsonOut(w, 200, map[string]any{"ok": true, "encrypted": true, "unlocked": false})
+}
+
+func (a *App) voiceHistoryChangePassword(w http.ResponseWriter, r *http.Request) {
+	var in struct{ OldPassword string `json:"oldPassword"`; NewPassword string `json:"newPassword"` }
+	if decode(w, r, &in) != nil { return }
+	a.mu.Lock(); va := a.voiceAgent; a.mu.Unlock()
+	if va == nil { fail(w, 500, errors.New("小秘未初始化")); return }
+	if err := va.changePassword(in.OldPassword, in.NewPassword); err != nil { fail(w, 400, err); return }
+	jsonOut(w, 200, map[string]any{"ok": true})
+}
+
+func (a *App) voiceHistoryDisable(w http.ResponseWriter, r *http.Request) {
+	var in struct{ Password string `json:"password"` }
+	if decode(w, r, &in) != nil { return }
+	a.mu.Lock(); va := a.voiceAgent; a.mu.Unlock()
+	if va == nil { fail(w, 500, errors.New("小秘未初始化")); return }
+	if err := va.disable(in.Password); err != nil { fail(w, 400, err); return }
+	jsonOut(w, 200, map[string]any{"ok": true, "encrypted": false, "unlocked": true})
+}
+
+// accountVerifyPassword 校验账户密码（解锁锁屏 / 小秘历史二次确认共用）。
+// 只比对 SHA-256 哈希，不返回任何敏感信息；未设置密码时一律拒绝。
+func (a *App) accountVerifyPassword(w http.ResponseWriter, r *http.Request) {
+	var in struct{ Password string `json:"password"` }
+	if decode(w, r, &in) != nil {
+		return
+	}
+	a.mu.Lock()
+	hash := a.settings.UserPasswordHash
+	a.mu.Unlock()
+	if hash == "" || sha256Hex(in.Password) != hash {
+		fail(w, 401, errors.New("密码错误"))
+		return
 	}
 	jsonOut(w, 200, map[string]bool{"ok": true})
 }
@@ -864,6 +1035,38 @@ func (a *App) deleteSession(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonOut(w, 200, map[string]any{"ok": true})
 }
+
+// deleteAllArchived 批量删除所有归档会话，只删 Archived=true 的，不影响活跃会话。
+func (a *App) deleteAllArchived(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	deleted := 0
+	failed := 0
+	var failedIDs []string
+	for id, s := range a.sessions {
+		if !s.Archived {
+			continue
+		}
+		s.Deleted = true
+		for _, t := range s.Runs {
+			if t.Status == "running" {
+				if cancel := a.cancels[t.ID]; cancel != nil {
+					cancel()
+					delete(a.cancels, t.ID)
+				}
+			}
+		}
+		delete(a.sessions, id)
+		if err := os.Remove(filepath.Join(a.dataPath, "session-"+id+".json")); err != nil && !os.IsNotExist(err) {
+			failed++
+			failedIDs = append(failedIDs, id)
+			log.Printf("删除归档会话文件失败 %s: %v", id, err)
+		} else {
+			deleted++
+		}
+	}
+	a.mu.Unlock()
+	jsonOut(w, 200, map[string]any{"ok": true, "deleted": deleted, "failed": failed, "failedIds": failedIDs})
+}
 func (a *App) getSession(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -1015,7 +1218,14 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 	totalCost := 0.0
 	estimatedCost := 0.0
 	modelCost := map[string]float64{}
+	perModel := map[string]TokenDay{}
 	for _, c := range a.tokenCalls {
+		m := perModel[c.Model]
+		m.Prompt += c.Prompt
+		m.Completion += c.Completion
+		m.Total += c.Total
+		m.Calls++
+		perModel[c.Model] = m
 		if c.Defaulted {
 			estimatedCost += c.Cost // 未配置费率的模型：刊例默认价估算，不算精确费用
 			continue
@@ -1035,6 +1245,7 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		"cost":          totalCost,
 		"estimatedCost": estimatedCost,
 		"modelCost":     modelCost,
+		"perModel":      perModel,
 		"pricing": map[string]any{
 			"priceIn":   entry.PriceIn,
 			"priceOut":  entry.PriceOut,

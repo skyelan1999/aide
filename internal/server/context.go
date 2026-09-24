@@ -140,7 +140,8 @@ func (a *App) attachmentContext(atts []Attachment) (string, map[string]Change, e
 // buildContextPreview 构造与真实首轮请求一致的消息/工具并给出预算估算。
 // s 为 nil 时表示新会话（无历史与摘要）。调用方需持有 a.mu。
 func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, cfg Settings, params ProfileParams, includeBody bool) *ContextPreview {
-	history := []Message{{Role: "system", Content: systemPrompt + "\n当前工作目录: " + a.workspaceDisplay + "\n可用工具: " + a.toolListHint()}}
+	// 按当前活动人格选择基础 system 设定（aide 工作 / 小秘 生活）
+	history := []Message{{Role: "system", Content: a.baseSystemPrompt() + "\n当前工作目录: " + a.workspaceDisplay + "\n可用工具: " + a.toolListHint()}}
 	if guide := a.environmentGuide(); guide != "" {
 		history[0].Content += "\n" + guide
 	}
@@ -148,10 +149,10 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	if mem := a.readMemory(); mem != "" && !strings.HasPrefix(mem, "(记忆文件为空") {
 		history[0].Content += "\n\n## 持久记忆\n以下是你之前记下的用户偏好和项目约定，请在回答中参考：\n" + mem
 	}
-	// 注入性格（如果开启且已解锁）
-	if cfg.PersonaEnabled && a.personaKey != "" && cfg.PersonaCipher != "" {
-		if persona, err := decryptPersona(cfg.PersonaCipher, a.personaKey); err == nil && persona != "" {
-			history[0].Content += "\n\n## 你的性格\n" + persona
+	// 注入当前活动人格的自定义性格补充（若开启且已解锁）
+	if cfg.PersonaEnabled && a.personaKey != "" {
+		if custom := a.personaCustom[a.activePersonaID()]; strings.TrimSpace(custom) != "" {
+			history[0].Content += "\n\n## 你的性格\n" + custom
 		}
 	}
 	var bd ContextBreakdown

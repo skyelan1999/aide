@@ -141,6 +141,30 @@
       ]
     },
     {
+      "id": "account",
+      "title": "账户",
+      "description": "设置用户名与锁屏密码；锁屏密码同时作为小秘对话历史的加密密钥。不设密码则不锁屏。",
+      "controls": [
+        {
+          "id": "account",
+          "type": "account",
+          "label": "账户与锁屏"
+        }
+      ]
+    },
+    {
+      "id": "persona",
+      "title": "人格",
+      "description": "同一套系统承载工作(aide)与生活(小秘)两个独立人格，各自的语气、记忆与历史互不干扰。",
+      "controls": [
+        {
+          "id": "personaSwitch",
+          "type": "persona-switch",
+          "label": "活动人格"
+        }
+      ]
+    },
+    {
       "id": "voice",
       "title": "语音小秘",
       "description": "输入框旁的麦克风可边说边转写，AI 自动过滤背景声与闲聊。",
@@ -154,6 +178,11 @@
           "id": "voiceHistory",
           "type": "voice-history",
           "label": "小秘对话历史"
+        },
+        {
+          "id": "voiceReply",
+          "type": "voice-reply",
+          "label": "语音回复"
         }
       ]
     },

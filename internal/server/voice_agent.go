@@ -14,11 +14,13 @@ import (
 
 // VoiceHistoryEntry 小秘 agent 的一条决策记录：听到了什么、怎么分析、做了什么。
 type VoiceHistoryEntry struct {
-	Time   string `json:"time"`
-	Heard  string `json:"heard"`
-	Action string `json:"action"` // send | ignore | standby
-	Text   string `json:"text"`   // action=send 时清洗后发送给 aide 的指令
-	Reason string `json:"reason"` // 小秘的分析理由
+	Time       string `json:"time"`
+	Heard      string `json:"heard"`      // 原始听到的口语
+	Summarized string `json:"summarized"`  // 总结后的清晰意图
+	Action     string `json:"action"`     // send | ignore | standby | ask
+	Text       string `json:"text"`        // action=send 时=总结后的意图（前端据此发送）
+	Ask        string `json:"ask"`         // action=ask 时的单个追问
+	Reason     string `json:"reason"`      // 小秘的分析理由
 }
 
 // VoiceMemory 小秘的长期记忆：与主记忆区分，记录用户习惯/偏好。
@@ -32,17 +34,41 @@ const voiceHistoryMax = 200
 // VoiceAgent 小秘本身：一个有独立 system prompt、记忆与上下文的语音秘书 agent。
 // 它不直接持有工具，而是判断"该不该把这句话转达给当前会话"——
 // 判定为 send 的句子由前端发到当前会话，那里的主 agent 拥有全部工具与委派能力。
+// voiceHistoryFile 历史落盘信封：未加密时直接存 History；加密时存 Cipher（AES-256-GCM，base64）。
+type voiceHistoryFile struct {
+	Encrypted bool                `json:"encrypted"`
+	Cipher    string              `json:"cipher,omitempty"`
+	History   []VoiceHistoryEntry `json:"history,omitempty"`
+}
+
 type VoiceAgent struct {
-	mu       sync.Mutex
-	history  []VoiceHistoryEntry
-	memory   VoiceMemory
-	dataPath string
+	mu           sync.Mutex
+	history      []VoiceHistoryEntry // 未加密恒在内存；加密后仅解锁时持有
+	memory       VoiceMemory
+	encrypted    bool   // 历史是否启用加密
+	cachedCipher string // 加密落盘密文，锁定时保留供解锁
+	key          []byte // 内存密钥，锁定为 nil
+	dataPath     string
 }
 
 func newVoiceAgent(dataPath string) *VoiceAgent {
 	va := &VoiceAgent{dataPath: dataPath}
 	if b, err := os.ReadFile(filepath.Join(dataPath, "voice-history.json")); err == nil {
-		_ = json.Unmarshal(b, &va.history)
+		var f voiceHistoryFile
+		if json.Unmarshal(b, &f) == nil && (f.Encrypted || f.History != nil) {
+			va.encrypted = f.Encrypted
+			if f.Encrypted {
+				va.cachedCipher = f.Cipher // 锁定态：不持有明文
+			} else {
+				va.history = f.History
+			}
+		} else {
+			// 兼容裸数组格式
+			var hist []VoiceHistoryEntry
+			if json.Unmarshal(b, &hist) == nil {
+				va.history = hist
+			}
+		}
 	}
 	if b, err := os.ReadFile(filepath.Join(dataPath, "voice-memory.json")); err == nil {
 		_ = json.Unmarshal(b, &va.memory)
@@ -50,8 +76,20 @@ func newVoiceAgent(dataPath string) *VoiceAgent {
 	return va
 }
 
+// persistLocked 调用方需已持锁。
 func (va *VoiceAgent) persistLocked() {
-	b, _ := json.Marshal(va.history)
+	f := voiceHistoryFile{Encrypted: va.encrypted}
+	switch {
+	case va.encrypted && len(va.key) > 0:
+		if b, err := json.Marshal(va.history); err == nil {
+			f.Cipher, _ = encryptWithKey(va.key, b)
+		}
+	case va.encrypted:
+		f.Cipher = va.cachedCipher // 锁定：保留原密文
+	default:
+		f.History = va.history
+	}
+	b, _ := json.Marshal(f)
 	_ = os.WriteFile(filepath.Join(va.dataPath, "voice-history.json"), b, 0o600)
 }
 
@@ -100,20 +138,20 @@ func (va *VoiceAgent) analyze(ctx context.Context, cfg Settings, heard string) (
 	}
 	va.mu.Unlock()
 
-	system := fmt.Sprintf(`你是「%s」，用户的私人语音秘书，不是关键词过滤器。你像一个戴着耳机、懂分寸的真人秘书那样听用户周围的声音，需要自己分析判断。
+	system := fmt.Sprintf(`你是「%s」，用户的私人语音秘书。用户用很口语、啰嗦、重复、带口头禅和停顿的方式说话，周围还常有背景声和旁人插话。你要像一个聪明的真人秘书那样听懂他真正想做什么，而不是机械转述。
 
 请先在心里分析（不要输出分析过程）：
-1. 说话人是谁——用户本人对 AI 工作台(aide)下指令/提问？用户在和身边真人或打电话？还是电视/视频/广播的声音？
-2. 这句话的意图——任务安排、提问、随口评论、背景台词、还是与工作无关的寒暄？
-3. 该不该转达给 aide——只有"用户对 aide 下的指令/提问/安排任务"才值得发送；拿不准时宁可忽略，绝不要误发。
-4. 该不该退下——用户正在和身边真人深入交谈或打电话时，你应安静退下不录入，直到用户重新对 aide 说话。
+1. 这段声音里：哪些是用户本人对 AI 工作台(aide)说的？哪些是电视/视频/广播的背景声？哪些是用户在和身边真人打电话/闲聊？
+2. 如果是背景声或旁人闲聊：action 用 ignore 或 standby（深入交谈/打电话时 standby 退下）。
+3. 如果是用户对 aide 说话：把啰嗦、重复、口头禅、语气词全部去掉，总结成一句清晰、结构化、可直接执行的"真实意图"放进 summarized。总结要保留关键对象、动作和约束，不要编造用户没说的信息。
+4. 如果意图还不清楚（缺对象、缺要做什么、含糊）：不要乱猜，action 用 ask，用一句话向用户追问（只问最关键的一个问题）。
 
 你的长期记忆：%s
 你最近处理过的上下文：
 %s
 
 只输出一个 JSON 对象（不要 markdown 围栏、不要任何多余文字）：
-{"action":"send|ignore|standby","text":"清洗后要发给 aide 的指令原文（ignore/standby 时为空字符串）","reason":"一句话说明你为什么这样判断，写给用户看"}`, name, voiceMemorySummary(mem), voiceRecentSummary(recent))
+{"action":"send|ignore|standby|ask","summarized":"总结后的清晰意图（仅 send 时填写，其余为空）","ask":"单个简短追问（仅 action=ask 时填写）","reason":"一句话说明你的判断，写给用户看"}`, name, voiceMemorySummary(mem), voiceRecentSummary(recent))
 
 	params := ProfileParams{MaxTokens: 320, Temperature: fp(0.2)}
 	out, _, _, err := complete(ctx, cfg, []Message{
@@ -128,31 +166,37 @@ func (va *VoiceAgent) analyze(ctx context.Context, cfg Settings, heard string) (
 	out = strings.TrimPrefix(out, "```")
 	out = strings.TrimSuffix(out, "```")
 	var parsed struct {
-		Action string `json:"action"`
-		Text   string `json:"text"`
-		Reason string `json:"reason"`
+		Action    string `json:"action"`
+		Summarized string `json:"summarized"`
+		Ask       string `json:"ask"`
+		Reason    string `json:"reason"`
 	}
 	if err := json.Unmarshal([]byte(out), &parsed); err != nil {
 		return VoiceHistoryEntry{}, errors.New("模型返回无法解析")
 	}
 	switch parsed.Action {
-	case "send", "ignore", "standby":
+	case "send", "ignore", "standby", "ask":
 	default:
 		parsed.Action = "ignore"
 	}
 	entry := VoiceHistoryEntry{
-		Time:   time.Now().Format("2006-01-02 15:04:05"),
-		Heard:  heard,
-		Action: parsed.Action,
-		Text:   strings.TrimSpace(parsed.Text),
-		Reason: strings.TrimSpace(parsed.Reason),
+		Time:       time.Now().Format("2006-01-02 15:04:05"),
+		Heard:      heard,
+		Summarized: strings.TrimSpace(parsed.Summarized),
+		Action:     parsed.Action,
+		Text:       strings.TrimSpace(parsed.Summarized), // 前端发送的是总结后的意图
+		Ask:        strings.TrimSpace(parsed.Ask),
+		Reason:     strings.TrimSpace(parsed.Reason),
 	}
+	// 加密但锁定时不持有明文、不落盘；其余情况记录并持久化
 	va.mu.Lock()
-	va.history = append(va.history, entry)
-	if len(va.history) > voiceHistoryMax {
-		va.history = va.history[len(va.history)-voiceHistoryMax:]
+	if !va.encrypted || len(va.key) > 0 {
+		va.history = append(va.history, entry)
+		if len(va.history) > voiceHistoryMax {
+			va.history = va.history[len(va.history)-voiceHistoryMax:]
+		}
+		va.persistLocked()
 	}
-	va.persistLocked()
 	va.mu.Unlock()
 	return entry, nil
 }
@@ -174,4 +218,111 @@ func (va *VoiceAgent) clearHistory() {
 	va.history = nil
 	va.persistLocked()
 	va.mu.Unlock()
+}
+
+// encStatus 返回历史加密/解锁状态（不泄露内容）。
+func (va *VoiceAgent) encStatus() map[string]any {
+	va.mu.Lock()
+	defer va.mu.Unlock()
+	return map[string]any{
+		"encrypted": va.encrypted,
+		"unlocked":  !va.encrypted || len(va.key) > 0,
+		"count":     len(va.history),
+	}
+}
+
+// enable 启用加密并迁移已有历史。
+func (va *VoiceAgent) enable(password string) error {
+	if password == "" {
+		return errors.New("请设置密钥")
+	}
+	va.mu.Lock()
+	defer va.mu.Unlock()
+	if va.encrypted {
+		return errors.New("已启用加密")
+	}
+	va.key = deriveKey(password)
+	va.encrypted = true
+	va.persistLocked()
+	return nil
+}
+
+// unlock 用密钥解锁并解密恢复历史。
+func (va *VoiceAgent) unlock(password string) error {
+	if password == "" {
+		return errors.New("请输入密钥")
+	}
+	va.mu.Lock()
+	defer va.mu.Unlock()
+	if !va.encrypted {
+		return errors.New("未启用加密")
+	}
+	key := deriveKey(password)
+	if va.cachedCipher == "" {
+		va.key = key
+		return nil
+	}
+	b, err := decryptWithKey(key, va.cachedCipher)
+	if err != nil {
+		return errors.New("密钥错误或数据损坏")
+	}
+	var hist []VoiceHistoryEntry
+	if err := json.Unmarshal(b, &hist); err != nil {
+		return errors.New("数据损坏")
+	}
+	va.key = key
+	va.history = hist
+	return nil
+}
+
+// lock 锁定：清内存密钥与明文历史。
+func (va *VoiceAgent) lock() {
+	va.mu.Lock()
+	defer va.mu.Unlock()
+	va.key = nil
+	va.history = nil
+}
+
+// changePassword 修改密钥（需先解锁并能解开现有密文）。
+func (va *VoiceAgent) changePassword(oldPw, newPw string) error {
+	if newPw == "" {
+		return errors.New("请设置新密钥")
+	}
+	va.mu.Lock()
+	defer va.mu.Unlock()
+	if len(va.key) == 0 {
+		return errors.New("请先解锁")
+	}
+	if va.cachedCipher != "" {
+		if _, err := decryptWithKey(va.key, va.cachedCipher); err != nil {
+			return errors.New("原密钥错误")
+		}
+	}
+	va.key = deriveKey(newPw)
+	va.persistLocked()
+	return nil
+}
+
+// disable 关闭加密（需验证密钥）：解密回明文落盘。
+func (va *VoiceAgent) disable(password string) error {
+	va.mu.Lock()
+	defer va.mu.Unlock()
+	if !va.encrypted {
+		return nil
+	}
+	if va.cachedCipher != "" {
+		b, err := decryptWithKey(deriveKey(password), va.cachedCipher)
+		if err != nil {
+			return errors.New("密钥错误，无法解密回明文")
+		}
+		var hist []VoiceHistoryEntry
+		if json.Unmarshal(b, &hist) == nil {
+			va.history = hist
+		}
+	}
+	va.encrypted = false
+	va.key = nil
+	va.cachedCipher = ""
+	va.persistLocked()
+	return nil
 }

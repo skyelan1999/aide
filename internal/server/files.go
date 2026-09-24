@@ -67,6 +67,36 @@ func readText(root *os.Root, p string) ([]byte, error) {
 	}
 	return b, nil
 }
+
+// maxRawFile 为原始字节端点（图片/STL 等二进制查看器）的上限。
+const maxRawFile = 64 << 20
+
+// readRawBytes 返回文件的原始字节，不做 UTF-8/文本校验（供 /api/file/raw 查看器使用）。
+func readRawBytes(root *os.Root, p string) ([]byte, error) {
+	if err := safePath(p); err != nil {
+		return nil, err
+	}
+	f, err := root.Open(p)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, errors.New("只支持普通文件")
+	}
+	b, err := io.ReadAll(io.LimitReader(f, maxRawFile+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(b) > maxRawFile {
+		return nil, fmt.Errorf("文件超过 %d MB 限制", maxRawFile/(1<<20))
+	}
+	return b, nil
+}
 func (a *App) root(which string) (*os.Root, error) {
 	if which == "" || which == "workspace" {
 		return a.workspace, nil
@@ -168,16 +198,21 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, errors.New("来源不存在或已停用"))
 			return
 		}
-		b, err = a.readSourceText(src, r.URL.Query().Get("path"))
+		b, err = a.readSourceRaw(src, r.URL.Query().Get("path"))
 	} else if r.URL.Query().Get("root") == "workspace" && a.workspaceMode() == "ssh" {
-		b, err = a.readWorkspaceText(r.URL.Query().Get("path"))
+		pth := r.URL.Query().Get("path")
+		if err := safePath(pth); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		b, err = a.sftpRead(a.workspaceRemotePath(pth))
 	} else {
 		root, rootErr := a.root(r.URL.Query().Get("root"))
 		if rootErr != nil {
 			fail(w, 400, rootErr)
 			return
 		}
-		b, err = readText(root, r.URL.Query().Get("path"))
+		b, err = readRawBytes(root, r.URL.Query().Get("path"))
 	}
 	if err != nil {
 		fail(w, 400, err)
@@ -191,7 +226,8 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 		".pdf": "application/pdf", ".html": "text/html; charset=utf-8",
 		".css": "text/css; charset=utf-8", ".js": "application/javascript",
 		".json": "application/json", ".txt": "text/plain; charset=utf-8",
-		".md": "text/markdown; charset=utf-8",
+		".md": "text/markdown; charset=utf-8", ".drawio": "application/xml; charset=utf-8",
+		".stl": "model/stl",
 	}[ext]
 	if ct == "" {
 		ct = "application/octet-stream"

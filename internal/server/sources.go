@@ -208,6 +208,29 @@ func (a *App) readSourceText(src Source, p string) ([]byte, error) {
 	return nil, errors.New("未知来源类型")
 }
 
+// readSourceRaw 返回来源文件的原始字节（不做文本校验），供 /api/file/raw 查看器使用。
+func (a *App) readSourceRaw(src Source, p string) ([]byte, error) {
+	switch src.Type {
+	case "local", "skill":
+		root, err := a.localSourceRoot(src)
+		if err != nil {
+			return nil, err
+		}
+		defer root.Close()
+		return readRawBytes(root, p)
+	case "sftp":
+		if err := safePath(p); err != nil {
+			return nil, err
+		}
+		return a.sftpReadSource(src, p)
+	case "link", "ftp", "ftps", "smb":
+		return a.curlReadSource(src, p)
+	case "mcp":
+		return nil, errors.New("MCP 协议接入待实现")
+	}
+	return nil, errors.New("未知来源类型")
+}
+
 func (a *App) writeSourceText(src Source, p string, b []byte) error {
 	if !src.RW {
 		return errors.New("该来源为只读")

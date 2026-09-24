@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -68,7 +69,7 @@ func TestSourcesLiveProtocols(t *testing.T) {
 			var call ToolCall
 			raw, _ := json.Marshal(map[string]any{"id": "source-read", "type": "function", "function": map[string]string{"name": "read_file", "arguments": `{"source":"` + id + `","path":"` + strings.ReplaceAll(p, "%20", " ") + `"}`}})
 			json.Unmarshal(raw, &call)
-			result := a.executeToolCall(call, &Task{}, map[string]Change{})
+			result := a.executeToolCall(context.Background(), call, &Task{}, map[string]Change{})
 			if !strings.Contains(result, "real protocol reference") {
 				t.Fatal("AI tool did not receive actual source body:", result)
 			}

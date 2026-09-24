@@ -29,6 +29,26 @@ type TokenUsage struct {
 // tokenUsageRecorder 由 New() 注入（atomic 防并行测试竞态）；complete() 成功后调用。
 var tokenUsageRecorder atomic.Value // func(TokenUsage)
 
+// emptyCompletionError 上游正常结束（HTTP 200、流跑完）但既无正文也无工具调用。
+// 这是“空返回”根因分类里的 d 类：模型在长工具链后什么都没说就停了。
+// toolLoop 据此区分“可兜底续接”与“真·上游错误”，避免盲重试把空响应原样重放。
+type emptyCompletionError struct {
+	finish string // 上游最后一个 finish_reason（stop/length/content_filter/…），可能为空
+}
+
+func (e *emptyCompletionError) Error() string {
+	if e.finish != "" {
+		return "模型没有返回文本内容（finish_reason=" + e.finish + "）"
+	}
+	return "模型没有返回文本内容"
+}
+
+// isEmptyCompletionErr 判断 err 是否为 d 类空响应（含包装）。
+func isEmptyCompletionErr(err error) bool {
+	var e *emptyCompletionError
+	return errors.As(err, &e)
+}
+
 // The provider boundary is intentionally small: any Chat Completions compatible
 // endpoint can be used, including a local model through host.docker.internal.
 // params 是本次任务的采样参数（FR-61），未设置字段不进入请求体；
@@ -122,7 +142,8 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	}
 	var out struct {
 		Choices []struct {
-			Message struct {
+			FinishReason string `json:"finish_reason"`
+			Message      struct {
 				Content   string     `json:"content"`
 				ToolCalls []ToolCall `json:"tool_calls"`
 			} `json:"message"`
@@ -141,7 +162,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	}
 	msg := out.Choices[0].Message
 	if strings.TrimSpace(msg.Content) == "" && len(msg.ToolCalls) == 0 {
-		return "", nil, TokenUsage{}, errors.New("模型没有返回文本内容")
+		return "", nil, TokenUsage{}, &emptyCompletionError{finish: out.Choices[0].FinishReason}
 	}
 	usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model, Provider: cfg.BaseURL}
 	if usage.Total == 0 {
@@ -161,7 +182,8 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 type streamChunk struct {
 	Choices []struct {
 		Delta struct {
-			Content   string `json:"content"`
+			Content          string `json:"content"`
+			ReasoningContent string `json:"reasoning_content"` // DeepSeek 等模型的思考链：独立于正文，不进最终回答
 			ToolCalls []struct {
 				Index    int    `json:"index"`
 				ID       string `json:"id"`
@@ -172,6 +194,7 @@ type streamChunk struct {
 				} `json:"function"`
 			} `json:"tool_calls"`
 		} `json:"delta"`
+		FinishReason string `json:"finish_reason"` // stop/length/content_filter/tool_calls：区分“真结束”与“被截断/空”
 	} `json:"choices"`
 	Usage *struct {
 		PromptTokens     int `json:"prompt_tokens"`
@@ -184,7 +207,7 @@ type streamChunk struct {
 // onDelta 在收到文本增量时被同步调用（不写网络、不加锁即可）；它把增量交给上层推给 SSE 订阅者。
 // 返回值与 complete() 一致：最终文本、工具调用、用量、错误。非流式响应或上游不支持 SSE 时自动回退。
 // 部分兼容网关会拒绝 stream_options（OpenAI 可选扩展）：HTTP 400 时去掉该字段重试一次，仍失败则按错误返回。
-func completeStream(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte), onDelta func(textDelta string)) (string, []ToolCall, TokenUsage, error) {
+func completeStream(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte), onDelta func(textDelta string), onReasoning func(reasoningDelta string)) (string, []ToolCall, TokenUsage, error) {
 	if cfg.BaseURL == "" || cfg.Model == "" {
 		return "", nil, TokenUsage{}, errors.New("请先在模型设置中配置 API 地址和模型")
 	}
@@ -282,6 +305,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 
 	var content strings.Builder
 	toolCallsByIndex := map[int]*ToolCall{}
+	var finishReason string
 	var usage *struct {
 		PromptTokens     int `json:"prompt_tokens"`
 		CompletionTokens int `json:"completion_tokens"`
@@ -318,6 +342,15 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 			continue
 		}
 		delta := chunk.Choices[0].Delta
+		if fr := chunk.Choices[0].FinishReason; fr != "" {
+			finishReason = fr // 记录最后一个非空 finish_reason，空响应时据此给出可解释原因
+		}
+		if delta.ReasoningContent != "" {
+			// 思考链：只实时透传给前端折叠区，不并入最终正文 content
+			if onReasoning != nil {
+				onReasoning(delta.ReasoningContent)
+			}
+		}
 		if delta.Content != "" {
 			content.WriteString(delta.Content)
 			if onDelta != nil {
@@ -360,7 +393,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 	}
 	text := content.String()
 	if strings.TrimSpace(text) == "" && len(calls) == 0 {
-		return "", nil, TokenUsage{}, errors.New("模型没有返回文本内容")
+		return "", nil, TokenUsage{}, &emptyCompletionError{finish: finishReason}
 	}
 	tu := TokenUsage{Model: cfg.Model, Provider: cfg.BaseURL}
 	if usage != nil {

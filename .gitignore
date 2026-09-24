@@ -21,3 +21,6 @@ __pycache__/
 
 # 演练备份示例（含合成令牌，仅保留在本机验收目录，不入库）
 docs/reviews/*/evidence/drill/*.tar.gz
+
+# 本地验证二进制产物
+.verify-bin/

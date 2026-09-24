@@ -1,7 +1,7 @@
 'use strict';
 const t = (key, ...args) => window.aideI18n ? window.aideI18n.t(key, ...args) : String(key).replace(/\{(\d+)\}/g, (m, i) => args[i] ?? m);
 const $ = id => document.getElementById(id);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveRound: {}, liveTool: {}, streamRetryAt: 0, queueMode: true, autoScroll: true, jumpAnimating: false };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveRound: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: true, autoScroll: true, jumpAnimating: false };
 const fragment = new URLSearchParams(location.hash.slice(1));
 if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); history.replaceState(null, '', location.pathname); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -51,21 +51,8 @@ document.querySelectorAll('.phase-btn').forEach(btn => {
     updateAutoModeUI();
   };
 });
-// 自动编排模式：AI 工作流下未选任何阶段时，显示 Lead 自动调度多智能体的指示
-function updateAutoModeUI() {
-  const bar = $('workflow-phases');
-  if (!bar) return;
-  let hint = $('auto-mode-hint');
-  if (!hint) {
-    hint = el('div');
-    hint.id = 'auto-mode-hint';
-    hint.style.cssText = 'flex-basis:100%;font-size:10px;color:var(--muted);text-align:center;margin:0 0 2px;';
-    bar.prepend(hint);
-  }
-  const auto = state.mode === 'workflow' && !state.workflowPhase;
-  hint.textContent = auto ? t("🤖 自动编排中：Lead 将依次调度 需求→设计→实施→验证 子智能体") : '';
-  hint.style.display = auto ? '' : 'none';
-}
+// 自动编排模式：AI 工作流下未选任何阶段时，由后端 autoModePrompt 处理，前端不显示描述
+function updateAutoModeUI() {}
 async function refreshConfig() {
   state.config = await api('/config');
   $('connection').textContent = t("● 本地服务已连接"); $('connection').classList.add('ready');
@@ -74,6 +61,7 @@ async function refreshConfig() {
   $('settings-sheet-version').textContent = ' · aide ' + versionText;
   $('model-status').textContent = state.config.configured ? t("已配置") : t("未配置");
   $('model-name').textContent = state.config.configured ? state.config.model + t(" · API 已配置") : t("先配置模型，即可开始真实 AI 对话");
+  if (typeof resetIdleTimer === "function") resetIdleTimer();
   estimateContext();
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
@@ -177,12 +165,13 @@ async function selectSession(id) {
   const seq = ++sessionSeq.value;
   const sameSession = state.session?.id === id;
   clearTimeout(state.poll); closeStream();
+  ttsCancel();
   // 查看完成会话：清除“蓝点+加粗”高亮（持久化；不阻塞会话加载，失败静默）
   api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) }).catch(() => {});
   if (!sameSession) {
     // live 文本按 run 归属：切换会话才失效；同会话刷新（排队/插话等）保留流式状态，
     // 避免打断正在流式渲染的回答（closeStream 后 schedulePoll 会重连，live 丢失会造成文本回退）
-    state.live = {}; state.liveRound = {}; state.liveTool = {}; state.streamRetryAt = 0;
+    state.live = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0;
   }
   const loaded = await api('/sessions/' + id);
   if (seq !== sessionSeq.value) return; // 已有更新的选择，丢弃本次过期响应
@@ -205,15 +194,46 @@ function openStream(run) {
   es._runId = run.id;
   state.stream = es;
   state.streamRetryAt = 0;
-  es.addEventListener('step', () => refreshSessionSoon());
+  ensureRunPhase(run.id);
+  es.addEventListener('step', () => { touchRunActivity(run.id); refreshSessionSoon(); });
   es.addEventListener('tool', e => {
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
     state.liveTool[run.id] = d;
-    renderLiveTool(run.id);
+    const ph = state.runPhase[run.id];
+    if (ph) {
+      const row = ph.tools.find(x => x.callId === d.callId) || ph.tools[ph.tools.length - 1];
+      if (row) { row.endedAt = Date.now(); row.ok = !!d.ok; row.status = d.ok ? 'done' : 'err'; }
+      ph.phase = 'reasoning'; ph.toolName = '';
+      touchRunActivity(run.id); renderRunStatus(run.id);
+    }
     refreshSessionSoon();
   });
+  es.addEventListener('intent', e => {
+    let d; try { d = JSON.parse(e.data); } catch (err) { return; }
+    const ph = state.runPhase[run.id];
+    if (ph) {
+      ph.tools.push({ callId: d.callId || ('c'+Date.now()+Math.random()), tool: d.tool, args: d.args || '', startedAt: Date.now(), status: 'running' });
+      ph.phase = 'tool'; ph.toolName = d.tool;
+      touchRunActivity(run.id); renderRunStatus(run.id);
+    }
+  });
+  es.addEventListener('reasoning', e => {
+    let d; try { d = JSON.parse(e.data); } catch (err) { return; }
+    state.liveReasoning[run.id] = (state.liveReasoning[run.id] || '') + (d.reasoning || '');
+    const ph = state.runPhase[run.id];
+    if (ph) { ph.phase = 'reasoning'; touchRunActivity(run.id); renderRunStatus(run.id); }
+  });
+  es.addEventListener('heartbeat', () => touchRunActivity(run.id)); // 长命令心跳：证明活着，看门狗复位
+  es.addEventListener('note', e => {
+    let d; try { d = JSON.parse(e.data); } catch (err) { return; }
+    const ph = state.runPhase[run.id];
+    if (ph) { ph.note = d.text || ''; touchRunActivity(run.id); renderRunStatus(run.id); }
+  }); // 空响应自动续接提示
+  es.addEventListener('clarification', () => refreshSessionSoon());
   es.addEventListener('delta', e => {
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
+    const ph = state.runPhase[run.id];
+    if (ph) { ph.phase = 'generating'; touchRunActivity(run.id); }
     const target = state.session?.runs?.find(r => r.id === run.id);
     if (target?.mode !== 'chat') return; // workflow 步骤不渲染 live 文本
     // 同一步骤内每轮 toolLoop 会重开一次模型请求：轮次变化时重置，避免拼接上一轮的叙述
@@ -224,7 +244,8 @@ function openStream(run) {
     scheduleLiveRender(run.id); // 按动画帧批量渲染，避免逐 token 全量 markdown 解析
   });
   es.addEventListener('done', () => {
-    delete state.live[run.id]; delete state.liveRound[run.id]; delete state.liveTool[run.id];
+    delete state.live[run.id]; delete state.liveRound[run.id]; delete state.liveTool[run.id]; delete state.liveReasoning[run.id];
+    if (state.runPhase[run.id]) state.runPhase[run.id].done = true;
     closeStream(); state.streamRetryAt = 0;
     action(async () => {
       const id = state.session?.id; if (!id) return;
@@ -314,6 +335,111 @@ function renderLiveTool(runId) {
   }
   row.textContent = '⚒ ' + t.tool + (t.preview ? ' · ' + String(t.preview).slice(0, 80) : '');
 }
+
+// ── 统一运行状态面板：阶段指示 / 秒表 / 工具逐项 / 思考折叠 / 卡死看门狗 ──
+const STALL_MS = 90000; // 完全无事件超时阈值（可在此调整；工具执行期间有 heartbeat 不算超时）
+function ensureRunPhase(runId) {
+  if (!state.runPhase[runId]) {
+    state.runPhase[runId] = { startedAt: Date.now(), phase: 'waiting', toolName: '', tools: [], lastActivity: Date.now(), stalled: false, done: false };
+  }
+  return state.runPhase[runId];
+}
+function touchRunActivity(runId) {
+  const ph = state.runPhase[runId];
+  if (!ph) return;
+  ph.lastActivity = Date.now(); ph.stalled = false;
+}
+function phaseLabel(ph) {
+  if (ph.phase === 'reasoning') return t('模型思考中');
+  if (ph.phase === 'tool') return t('正在调用 ') + (ph.toolName || t('工具'));
+  if (ph.phase === 'generating') return t('正在生成回答');
+  return t('等待模型响应');
+}
+function formatElapsed(startedAt) {
+  const sec = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+  const m = Math.floor(sec / 60);
+  return m > 0 ? m + ':' + String(sec % 60).padStart(2, '0') : sec + 's';
+}
+function renderToolRow(tool) {
+  const row = el('div', 'rsp-tool' + (tool.status === 'running' ? ' running' : tool.status === 'err' ? ' err' : ''));
+  const icon = tool.status === 'running' ? '◌' : tool.status === 'err' ? '✗' : '✓';
+  row.append(el('span', 'rsp-tool-icon', icon));
+  row.append(el('span', 'rsp-tool-name', tool.tool));
+  if (tool.args) row.append(el('span', 'rsp-tool-args', tool.args));
+  row.append(el('span', 'rsp-tool-dur', tool.endedAt ? Math.round((tool.endedAt - tool.startedAt) / 1000) + 's' : ''));
+  return row;
+}
+function stopRunById(runId) {
+  api('/sessions/' + state.session.id + '/runs/' + runId + '/cancel', { method: 'POST', body: '{}' }).then(() => toast(t('已请求停止'))).catch(() => {});
+}
+function retryRunById(runId) {
+  api('/sessions/' + state.session.id + '/runs/' + runId + '/retry', { method: 'POST', body: '{}' }).then(() => selectSession(state.session.id)).catch(() => {});
+}
+function renderRunStatusInto(box, runId) {
+  const ph = state.runPhase[runId];
+  if (!box || !ph) return;
+  let panel = box.querySelector('.run-status-panel');
+  if (!panel) {
+    panel = el('div', 'run-status-panel');
+    const meta = box.querySelector('.run-meta');
+    if (meta) meta.insertAdjacentElement('afterend', panel); else box.prepend(panel);
+  }
+  // 头部：spinner + 阶段 + 计时
+  let head = panel.querySelector('.rsp-head');
+  if (!head) { head = el('div', 'rsp-head'); panel.append(head); }
+  head.replaceChildren(el('span', 'rsp-spinner'), el('span', 'rsp-phase', phaseLabel(ph)), el('span', 'rsp-elapsed', formatElapsed(ph.startedAt)));
+  let noteEl = panel.querySelector('.run-note');
+  if (ph.note) {
+    if (!noteEl) { noteEl = el('div', 'run-note'); panel.append(noteEl); }
+    noteEl.textContent = ph.note;
+  } else if (noteEl) { noteEl.remove(); }
+  // 卡死横幅
+  let banner = panel.querySelector('.rsp-banner');
+  if (ph.stalled) {
+    if (!banner) { banner = el('div', 'rsp-banner'); panel.append(banner); }
+    banner.replaceChildren();
+    banner.append(el('div', 'rsp-banner-msg', t('长时间无响应，可能已卡住')));
+    const actions = el('div', 'rsp-banner-actions');
+    const stop = el('button', 'quiet', t('停止')); stop.onclick = () => stopRunById(runId);
+    const wait = el('button', 'quiet', t('继续等待')); wait.onclick = () => { ph.stalled = false; ph.lastActivity = Date.now(); renderRunStatus(runId); };
+    const retry = el('button', 'quiet', t('重试')); retry.onclick = () => retryRunById(runId);
+    actions.append(stop, wait, retry);
+    banner.append(actions);
+  } else if (banner) { banner.remove(); }
+  // 思考折叠区（流式实时追加；运行中默认展开窥测）
+  const reasoning = state.liveReasoning[runId] || '';
+  let det = panel.querySelector('.rsp-thinking');
+  if (reasoning) {
+    if (!det) { det = el('details', 'rsp-thinking'); det.open = true; panel.append(det); }
+    const sum = el('summary', '', (ph.done ? t('思考过程') : t('思考中…')));
+    const body = el('div', 'rsp-think-body'); body.textContent = reasoning;
+    det.replaceChildren(sum, body);
+  } else if (det) { det.remove(); }
+  // 工具逐项列表
+  let list = panel.querySelector('.rsp-tools');
+  if (ph.tools.length) {
+    if (!list) { list = el('div', 'rsp-tools'); panel.append(list); }
+    list.replaceChildren();
+    ph.tools.forEach(tool => list.append(renderToolRow(tool)));
+  } else if (list) { list.remove(); }
+}
+function renderRunStatus(runId) {
+  const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
+  renderRunStatusInto(box, runId);
+}
+// 1s 心跳：刷新计时数字 + 看门狗超时检测
+setInterval(() => {
+  const now = Date.now();
+  for (const runId in state.runPhase) {
+    const ph = state.runPhase[runId];
+    if (!ph || ph.done) continue;
+    const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
+    if (!box) continue;
+    const el2 = box.querySelector('.rsp-elapsed');
+    if (el2) el2.textContent = formatElapsed(ph.startedAt);
+    if (!ph.stalled && now - ph.lastActivity > STALL_MS) { ph.stalled = true; renderRunStatus(runId); }
+  }
+}, 1000);
 let titleSyncTimers = [];
 function scheduleTitleSync(id) {
   titleSyncTimers.forEach(clearTimeout); titleSyncTimers = [];
@@ -360,7 +486,7 @@ function schedulePoll() {
   }
 }
 async function newSession() {
-  clearTimeout(state.poll); closeStream(); state.live = {}; state.liveRound = {}; state.liveTool = {}; state.streamRetryAt = 0; state.sessionJSON = ''; state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
+  clearTimeout(state.poll); closeStream(); state.live = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0; state.sessionJSON = ''; state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
 }
 const labels = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', chat: 'aide' };
 function toolSummaryBrief(use) {
@@ -371,7 +497,38 @@ function toolSummaryBrief(use) {
   } catch (error) { /* 非 JSON 参数直接忽略 */ }
   return '';
 }
-const statuses = { running: '运行中', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断', awaiting_approval: '等待应用' };
+const statuses = { running: '运行中', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断', awaiting_approval: '等待应用', awaiting_clarification: '等待澄清' };
+// 澄清卡片：在会话流中渲染单个交互问题（选项/输入/确认条），点击即作为应答
+function renderClarification(run, box) {
+  if (!run.pendingQuestion) return;
+  let q; try { q = typeof run.pendingQuestion === 'string' ? JSON.parse(run.pendingQuestion) : run.pendingQuestion; } catch (e) { return; }
+  const card = el('div', 'clarify-card');
+  if (q.progressTotal) card.append(el('div', 'clarify-progress', t('澄清 {0}/{1}', q.progressCurrent || 1, q.progressTotal)));
+  card.append(el('div', 'clarify-question', q.question));
+  const answer = async (text) => {
+    card.querySelectorAll('button,input').forEach(x => x.disabled = true);
+    try { await api(`/sessions/${state.session.id}/runs/${run.id}/answer`, { method: 'POST', body: JSON.stringify({ answer: text }) }); await selectSession(state.session.id); schedulePoll(); }
+    catch (e) { toast(e.message); card.querySelectorAll('button,input').forEach(x => x.disabled = false); }
+  };
+  if (q.type === 'confirm') {
+    const row = el('div', 'clarify-actions');
+    const ok = el('button', 'primary', t('确认，继续')); ok.onclick = () => answer('确认');
+    const adj = el('button', 'quiet', t('需要调整')); adj.onclick = () => answer('需要调整');
+    row.append(ok, adj); card.append(row);
+  } else if (q.type === 'input') {
+    const row = el('div', 'clarify-actions');
+    const input = el('input', 'clarify-input'); input.placeholder = t('输入你的回答…');
+    const send = el('button', 'primary', t('发送')); send.onclick = () => answer(input.value.trim() || '(空)');
+    input.onkeydown = e => { if (e.key === 'Enter') answer(input.value.trim() || '(空)'); };
+    row.append(input, send); card.append(row);
+  } else {
+    (q.options || []).forEach(o => { const b = el('button', 'clarify-option', o); b.onclick = () => answer(o); card.append(b); });
+    const other = el('button', 'clarify-option clarify-other', t('其他 / 我自己说'));
+    other.onclick = () => { $('prompt').focus(); toast(t('直接在输入框回答后发送即可')); };
+    card.append(other);
+  }
+  box.append(card);
+}
 function renderSession() {
   const previousScroll = $('conversation').scrollTop;
   const nearBottom = $('conversation').scrollHeight - previousScroll - $('conversation').clientHeight < 100;
@@ -390,10 +547,13 @@ function renderSession() {
       box.append(msg);
     }
     const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? t("◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', t("策略: ") + (run.strategy === 'auto' ? t("自动 → ") + profileName(run.profile) : t("手动 · ") + profileName(run.profile)))); box.append(meta);
+    if (run.status === 'running' && state.runPhase[run.id]) renderRunStatusInto(box, run.id);
     if (run.attachments?.length) box.append(el('p', 'muted', t("已附加：") + run.attachments.map(a => a.root + '/' + a.path).join('、')));
+    renderClarification(run, box);
     if (!run.steps.length) box.append(el('p', 'muted', t("正在准备模型请求…")));
     run.steps.forEach((step, index) => {
       if (run.mode === 'chat') {
+        if (step.reasoning) { const rd = el('details', 'rsp-thinking rsp-thinking-done'); rd.append(el('summary', '', t("思考过程")), el('div', 'rsp-think-body', step.reasoning)); box.append(rd); }
         const ans = el('div', 'chat-answer md-body');
         const running = run.status === 'running';
         const liveText = state.live[run.id] || '';
@@ -405,39 +565,41 @@ function renderSession() {
         } else if (running) {
           // DSH/Codex 风格：首 token 前显示呼吸的思考点
           ans.innerHTML = t("正在思考") + '<span class="thinking-dot" aria-hidden="true">.</span><span class="thinking-dot" aria-hidden="true" style="animation-delay:.2s">.</span><span class="thinking-dot" aria-hidden="true" style="animation-delay:.4s">.</span>';
+        } else if (run.error) {
+          // 真·失败：显示具体原因（上游错误/超时/取消），不再是光秃秃的“未返回回答”
+          ans.classList.add('chat-answer-error');
+          ans.textContent = '⚠ ' + run.error;
         } else {
-          ans.textContent = t("未返回回答");
+          ans.classList.add('chat-answer-empty');
+          ans.textContent = t("未返回回答") + '（' + (run.toolUses?.length ? t("已完成 {0} 次工具调用", run.toolUses.length) : t("模型未生成正文")) + '）';
         }
         box.append(ans);
-        // 消息操作按钮：复制 / 重试 / 继续 / 👍 / 👎
-        if (!running && text) {
+        // 消息操作按钮：结束后（无论有无正文/是否失败）都给「重试 / 继续」，
+        // 让用户在“做了一堆工具却没结论”时能直接续接；复制/好/坏仅在有正文时可用
+        if (!running) {
           const actions = el('div', 'msg-actions');
-          const mk = (icon, label, fn) => {
+          const mk = (label, fn) => {
             const b = el('button', 'msg-btn', label);
             b.type = 'button';
             b.onclick = fn;
             return b;
           };
-          actions.append(
-            mk('📋', t("复制"), () => { navigator.clipboard.writeText(text).then(() => toast(t("已复制"))); }),
-            mk('🔄', t("重试"), () => { api(`/sessions/${state.session.id}/runs/${run.id}/retry`, { method: 'POST', body: '{}' }).then(() => selectSession(state.session.id)); }),
-            mk('⏵', t("继续"), () => { $('prompt').value = ''; sendPrompt(t("继续")); }),
-            mk('👍', t("好"), () => {
+          if (text) actions.append(mk(t("复制"), () => { navigator.clipboard.writeText(text).then(() => toast(t("已复制"))); }));
+          actions.append(mk(t("重试"), () => { api(`/sessions/${state.session.id}/runs/${run.id}/retry`, { method: 'POST', body: '{}' }).then(() => selectSession(state.session.id)); }));
+          actions.append(mk(t("继续"), () => { $('prompt').value = ''; sendPrompt(t("继续")); }));
+          if (text) {
+            actions.append(mk(t("好"), () => {
               api('/feedback', { method: 'POST', body: JSON.stringify({ runId: run.id, prompt: run.prompt, answer: text, rating: 'good' }) })
                 .then(() => toast(t("已记录到记忆")))
                 .catch(() => toast(t("记录失败")));
-            }),
-            mk('👎', t("有问题"), () => {
+            }));
+            actions.append(mk(t("有问题"), () => {
               api('/feedback', { method: 'POST', body: JSON.stringify({ runId: run.id, prompt: run.prompt, answer: text, rating: 'bad' }) })
                 .then(() => toast(t("已记录到记忆")))
                 .catch(() => toast(t("记录失败")));
-            }),
-          );
+            }));
+          }
           box.append(actions);
-        }
-        if (running && state.liveTool[run.id]) {
-          const t2 = state.liveTool[run.id];
-          box.append(el('div', 'live-tool', '⚒ ' + t2.tool + (t2.preview ? ' · ' + String(t2.preview).slice(0, 80) : '')));
         }
         return;
       }
@@ -581,6 +743,8 @@ function sourceIsRW() {
   return state.sources.find(x => x.id === state.file.source)?.rw === true;
 }
 function isMarkdownPath(path) { return /\.(md|markdown)$/i.test(path || ''); }
+function isImagePath(path) { return /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i.test(path || ''); }
+function isStlPath(path) { return /\.stl$/i.test(path || ''); }
 function setEditorMode(mode) {
   const preview = mode === 'preview';
   $('editor').classList.toggle('hidden', preview);
@@ -596,8 +760,18 @@ function showEditor() {
   $('editor-status').textContent = state.file.root === 'context' ? (sourceIsRW() ? t("辅助资料 · 读写来源") : t("辅助资料 · 只读")) : t("工作目录 · 保存后同步到主机");
   const md = isMarkdownPath(state.file.path);
   const isDrawio = /\.drawio$/i.test(state.file.path || '');
+  const isImg = isImagePath(state.file.path);
+  const isStl = isStlPath(state.file.path);
   $('editor-mode-switch').classList.toggle('hidden', !md);
-  if (isDrawio) {
+  if (isStl) {
+    $('editor').classList.add('hidden');
+    $('editor-preview').classList.remove('hidden');
+    setupStlPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
+  } else if (isImg) {
+    $('editor').classList.add('hidden');
+    $('editor-preview').classList.remove('hidden');
+    setupImagePreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
+  } else if (isDrawio) {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
     setupDrawioFrame($('editor-preview'), state.file.content, (xml) => {
@@ -1064,12 +1238,25 @@ function renderSessionsManage() {
   });
   const refresh = el('button', 'quiet', t("刷新"));
   refresh.onclick = action(renderArchivedList);
-  head.append(exportBtn, refresh);
+  const delAll = el('button', 'danger-outline', t("全部删除"));
+  delAll.title = t("永久删除全部归档会话");
+  delAll.onclick = action(async () => {
+    const items = await api('/sessions?archived=1');
+    const count = items.length;
+    if (count === 0) { toast(t("没有已归档会话")); return; }
+    if (!confirm(t("将永久删除全部 {0} 个归档会话，此操作不可恢复，是否继续？", count))) return;
+    const res = await api('/sessions/archived/all', { method: 'DELETE' });
+    if (res.failed > 0) { toast(t("已删除 {0} 个，{1} 个失败", res.deleted, res.failed)); }
+    else { toast(t("已删除全部 {0} 个归档会话", res.deleted)); }
+    await renderArchivedList();
+    await loadSessions();
+  });
+  head.append(exportBtn, refresh, delAll);
   const list = el('div', 'archived-list');
   async function renderArchivedList() {
     const items = await api('/sessions?archived=1');
     list.replaceChildren();
-    if (!items.length) { list.append(el('p', 'muted', t("没有已归档会话。"))); return; }
+    if (!items.length) { list.append(el('p', 'muted', t("没有已归档会话。"))); delAll.disabled = true; delAll.style.opacity = '0.4'; delAll.style.cursor = 'not-allowed'; return; } else { delAll.disabled = false; delAll.style.opacity = ''; delAll.style.cursor = ''; }
     for (const it of items) {
       const row = el('div', 'archived-item');
       const label = el('span', 'archived-title', it.title);
@@ -1224,7 +1411,7 @@ profilesManager.card = function (profile) {
     head.append(nameInput, el('span', 'profile-badge', profile.id));
     const del = el('button', 'profile-delete', '－');
     del.type = 'button'; del.title = t("删除配置"); del.setAttribute('aria-label', t("删除配置 ") + profile.name);
-    del.onclick = () => { if (confirm(t("删除配置「{0}」？", profile.name))) { const index = this.local.profiles.indexOf(profile); if (index >= 0) this.local.profiles.splice(index, 1); this.render(); this.save(); } };
+    del.onclick = () => { if (confirm(t("删除配置「{0}」？", profile.name))) { const index = this.local.profiles.indexOf(profile); if (index >= 0) { this.local.profiles.splice(index, 1); if (this.local.activeProfile === profile.id) this.local.activeProfile = 'default'; } this.render(); this.save(); } };
     head.append(del);
   }
   const grid = el('div', 'profile-params');
@@ -1389,6 +1576,9 @@ function renderTokenStats(control) {
   const detail = el('div', 'token-day-detail hidden');
   const priceRow = el('div', 'token-price-row');
   wrap.append(head, chips, priceRow, grid, legend, tip, detail);
+  const pieWrap = el('div', 'model-pie-wrap');
+  pieWrap.innerHTML = '<div class="model-pie-title">模型 Token 占比</div><div class="model-pie-body"><svg class="model-pie-svg" viewBox="0 0 200 200"></svg><div class="model-pie-legend"></div></div><div class="model-pie-empty hidden">暂无模型调用数据</div>';
+  wrap.append(pieWrap);
   const failBox = el('p', 'task-error', '');
   wrap.append(failBox);
   const loadStats = async () => {
@@ -1434,6 +1624,60 @@ function renderTokenStats(control) {
       const chip = el('span', 'token-chip', t("未计价历史 ") + fmtStatTokens(unpriced.total) + ' tokens · ' + (unpriced.calls || 0) + t(" 次"));
       chip.title = t("旧版统计没有逐调用与计价证据，费用未知；未按当前费率冒充已发生费用");
       chips.append(chip);
+    }
+    // 模型 Token 占比饼图
+    const pm = data.perModel || {};
+    const pmEntries = Object.entries(pm).sort((x, y) => (y[1].total || 0) - (x[1].total || 0));
+    const pmTotal = pmEntries.reduce((s, e) => s + (e[1].total || 0), 0);
+    const pieSvg = pieWrap.querySelector('.model-pie-svg');
+    const pieLegend = pieWrap.querySelector('.model-pie-legend');
+    const pieEmpty = pieWrap.querySelector('.model-pie-empty');
+    pieSvg.innerHTML = '';
+    pieLegend.innerHTML = '';
+    if (pmEntries.length === 0 || pmTotal === 0) {
+      pieSvg.classList.add('hidden');
+      pieLegend.classList.add('hidden');
+      pieEmpty.classList.remove('hidden');
+    } else {
+      pieSvg.classList.remove('hidden');
+      pieLegend.classList.remove('hidden');
+      pieEmpty.classList.add('hidden');
+      const colors = ['#3b82f6','#f59e0b','#8b5cf6','#10b981','#ef4444','#06b6d4','#ec4899','#84cc16','#f97316','#6366f1'];
+      const cx = 100, cy = 100, r = 70;
+      let angle = -Math.PI / 2;
+      pmEntries.forEach(([model, stats], i) => {
+        const frac = (stats.total || 0) / pmTotal;
+        const sweep = frac * Math.PI * 2;
+        const x1 = cx + r * Math.cos(angle), y1 = cy + r * Math.sin(angle);
+        const x2 = cx + r * Math.cos(angle + sweep), y2 = cy + r * Math.sin(angle + sweep);
+        const large = sweep > Math.PI ? 1 : 0;
+        const color = colors[i % colors.length];
+        if (frac >= 0.999) {
+          // 单模型 100%：画整圆
+          const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+          c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
+          c.setAttribute('fill', color); c.setAttribute('class', 'pie-slice');
+          c.setAttribute('data-model', model);
+          pieSvg.appendChild(c);
+        } else {
+          const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+          path.setAttribute('d', `M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z`);
+          path.setAttribute('fill', color); path.setAttribute('class', 'pie-slice');
+          path.setAttribute('data-model', model);
+          pieSvg.appendChild(path);
+        }
+        angle += sweep;
+        // 图例
+        const item = el('div', 'pie-legend-item');
+        item.innerHTML = `<span class="pie-dot" style="background:${color}"></span><span class="pie-model">${model}</span><span class="pie-tokens">${fmtStatTokens(stats.total || 0)}</span><span class="pie-pct">${(frac*100).toFixed(1)}%</span>`;
+        item.title = `${model}: ${stats.total || 0} tokens · ${stats.calls || 0} 次调用 · ${(frac*100).toFixed(1)}%`;
+        pieLegend.appendChild(item);
+      });
+      // hover 高亮
+      pieSvg.querySelectorAll('.pie-slice').forEach(slice => {
+        slice.addEventListener('mouseenter', () => { slice.setAttribute('opacity', '0.8'); });
+        slice.addEventListener('mouseleave', () => { slice.setAttribute('opacity', '1'); });
+      });
     }
     action(async () => {
       try {
@@ -2077,7 +2321,7 @@ function sanitizeHtml(html) {
 function setupDrawioFrame(container, xml, onSave, handlerKey) {
   container.innerHTML = '';
   const iframe = document.createElement('iframe');
-  iframe.src = 'https://embed.diagrams.net/?embed=1&proto=json&spin=1';
+  iframe.src = '/vendor/drawio/?embed=1&proto=json&spin=1';
   iframe.style.cssText = 'width:100%;height:75vh;min-height:400px;border:0;border-radius:8px;';
   iframe.setAttribute('allow', 'fullscreen');
   container.appendChild(iframe);
@@ -2086,7 +2330,7 @@ function setupDrawioFrame(container, xml, onSave, handlerKey) {
   const timeoutId = setTimeout(() => {
     if (!loaded) {
       timedOut = true;
-      container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim);"><p>📐 draw.io 加载超时</p><p style="font-size:12px;margin-top:8px;">需要联网访问 embed.diagrams.net，请检查网络后重试</p></div>';
+      container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim);"><p>📐 draw.io 加载超时</p><p style="font-size:12px;margin-top:8px;">本地 draw.io 加载失败，请刷新页面重试</p></div>';
     }
   }, 15000);
   if (window[handlerKey]) window.removeEventListener('message', window[handlerKey]);
@@ -2097,7 +2341,7 @@ function setupDrawioFrame(container, xml, onSave, handlerKey) {
     if (msg.event === 'init') {
       clearTimeout(timeoutId);
       loaded = true;
-      iframe.contentWindow.postMessage(JSON.stringify({ action: 'load', xml: xml || '<mxfile host="embed.diagrams.net"><diagram></diagram></mxfile>' }), '*');
+      iframe.contentWindow.postMessage(JSON.stringify({ action: 'load', xml: xml || '<mxfile host="aide-local"><diagram></diagram></mxfile>' }), '*');
     } else if (msg.event === 'save') {
       const newXml = msg.xml;
       if (newXml && onSave) {
@@ -2109,6 +2353,127 @@ function setupDrawioFrame(container, xml, onSave, handlerKey) {
     }
   };
   window.addEventListener('message', window[handlerKey]);
+}
+
+/* 图片预览器：缩放/平移/适应窗口/原始大小 */
+function setupImagePreview(container, filePath, root, source) {
+  container.innerHTML = '';
+  const token = state.token || (state.config && state.config.accessToken) || '';
+  const params = new URLSearchParams();
+  params.set('path', filePath);
+  if (source) params.set('source', source);
+  else params.set('root', root || 'workspace');
+  if (token) params.set('access_token', token);
+  const imgUrl = '/api/file/raw?' + params.toString();
+  const viewer = el('div', 'img-viewer');
+  const toolbar = el('div', 'img-toolbar');
+  const info = el('span', 'img-info', filePath.split('/').pop());
+  const dims = el('span', 'img-dims', '');
+  const btnZoomIn = el('button', 'img-ctrl', '＋');
+  const btnZoomOut = el('button', 'img-ctrl', '－');
+  const btnFit = el('button', 'img-ctrl', '适应');
+  const btnOrig = el('button', 'img-ctrl', '1:1');
+  const btnClose = el('button', 'img-ctrl', '✕');
+  btnZoomIn.title = '放大'; btnZoomOut.title = '缩小'; btnFit.title = '适应窗口'; btnOrig.title = '原始大小'; btnClose.title = '关闭';
+  toolbar.append(info, dims, btnZoomOut, btnZoomIn, btnFit, btnOrig, btnClose);
+  const canvas = el('div', 'img-canvas');
+  const img = el('img', 'img-preview');
+  img.alt = filePath;
+  img.src = imgUrl;
+  canvas.append(img);
+  viewer.append(toolbar, canvas);
+  container.append(viewer);
+  let scale = 1, tx = 0, ty = 0, dragging = false, startX = 0, startY = 0;
+  const apply = () => { img.style.transform = `translate(${tx}px,${ty}px) scale(${scale})`; };
+  const fit = () => {
+    const cw = canvas.clientWidth, ch = canvas.clientHeight;
+    const iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    if (iw && ih) { scale = Math.min(cw / iw, ch / ih, 1); tx = 0; ty = 0; apply(); }
+  };
+  img.onload = () => { dims.textContent = img.naturalWidth + '×' + img.naturalHeight; fit(); };
+  img.onerror = () => { canvas.innerHTML = '<div style="color:var(--warn);padding:40px;text-align:center;">图片加载失败</div>'; };
+  btnZoomIn.onclick = () => { scale = Math.min(scale * 1.25, 8); apply(); };
+  btnZoomOut.onclick = () => { scale = Math.max(scale / 1.25, 0.1); apply(); };
+  btnFit.onclick = fit;
+  btnOrig.onclick = () => { scale = 1; tx = 0; ty = 0; apply(); };
+  btnClose.onclick = () => {
+    const dlg = container.closest('dialog');
+    if (dlg) dlg.close();
+    else if (document.body.classList.contains('file-view-mode')) { history.back(); }
+  };
+  canvas.onwheel = (e) => { e.preventDefault(); const f = e.deltaY < 0 ? 1.1 : 0.9; scale = Math.max(0.1, Math.min(8, scale * f)); apply(); };
+  canvas.onmousedown = (e) => { dragging = true; startX = e.clientX - tx; startY = e.clientY - ty; canvas.style.cursor = 'grabbing'; };
+  window.addEventListener('mousemove', (e) => { if (dragging) { tx = e.clientX - startX; ty = e.clientY - startY; apply(); } });
+  window.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'grab'; });
+  canvas.style.cursor = 'grab';
+}
+
+/* STL 3D 模型预览器：Three.js + STLLoader + OrbitControls */
+function setupStlPreview(container, filePath, root, source) {
+  container.innerHTML = '';
+  if (typeof THREE === 'undefined' || !THREE.STLLoader) {
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">Three.js 未加载，无法预览 3D 模型</div>';
+    return;
+  }
+  const viewer = el('div', 'stl-viewer');
+  const toolbar = el('div', 'stl-toolbar');
+  const info = el('span', 'stl-info', filePath.split('/').pop());
+  const meta = el('span', 'stl-meta', '加载中…');
+  const btnReset = el('button', 'stl-ctrl', '重置视角');
+  const btnClose = el('button', 'stl-ctrl', '✕');
+  toolbar.append(info, meta, btnReset, btnClose);
+  const canvasWrap = el('div', 'stl-canvas');
+  viewer.append(toolbar, canvasWrap);
+  container.append(viewer);
+  btnClose.onclick = () => {
+    const dlg = container.closest('dialog');
+    if (dlg) dlg.close();
+    else if (document.body.classList.contains('file-view-mode')) history.back();
+  };
+  try {
+    const testC = document.createElement('canvas');
+    if (!testC.getContext('webgl') && !testC.getContext('experimental-webgl')) {
+      canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">当前浏览器不支持 WebGL</div>';
+      meta.textContent = 'WebGL 不可用'; return;
+    }
+  } catch (e) { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">WebGL 检测失败</div>'; return; }
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1a1a2e);
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 10000);
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(window.devicePixelRatio);
+  canvasWrap.appendChild(renderer.domElement);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(5, 10, 7); scene.add(dl);
+  const dl2 = new THREE.DirectionalLight(0xffffff, 0.3); dl2.position.set(-5, -3, -5); scene.add(dl2);
+  const grid = new THREE.GridHelper(20, 20, 0x444466, 0x333355); scene.add(grid);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  const token = state.token || (state.config && state.config.accessToken) || '';
+  const params = new URLSearchParams();
+  params.set('path', filePath);
+  if (source) params.set('source', source); else params.set('root', root || 'workspace');
+  if (token) params.set('access_token', token);
+  fetch('/api/file/raw?' + params.toString()).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+    .then(buf => {
+      const geometry = new THREE.STLLoader().parse(buf);
+      geometry.computeVertexNormals(); geometry.computeBoundingBox();
+      const mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ color: 0x60a5fa, specular: 0x111111, shininess: 80 }));
+      const bb = geometry.boundingBox; const center = new THREE.Vector3(); bb.getCenter(center);
+      mesh.position.sub(center); scene.add(mesh);
+      grid.position.y = bb.min.y - center.y;
+      const size = new THREE.Vector3(); bb.getSize(size);
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const camDist = Math.abs(maxDim / 2 / Math.tan(camera.fov * Math.PI / 360)) * 1.8;
+      camera.position.set(camDist, camDist * 0.7, camDist);
+      camera.near = camDist / 100; camera.far = camDist * 100; camera.updateProjectionMatrix();
+      controls.target.set(0, 0, 0); controls.update();
+      meta.textContent = Math.round(geometry.attributes.position.count / 3) + ' 三角面 · ' + size.x.toFixed(2) + '×' + size.y.toFixed(2) + '×' + size.z.toFixed(2);
+      btnReset.onclick = () => { camera.position.set(camDist, camDist * 0.7, camDist); controls.target.set(0, 0, 0); controls.update(); };
+      (function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
+      const resize = () => { const w = canvasWrap.clientWidth, h = canvasWrap.clientHeight; if (w > 0 && h > 0) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); } };
+      resize(); new ResizeObserver(resize).observe(canvasWrap);
+    }).catch(err => { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">STL 加载失败: ' + err.message + '</div>'; meta.textContent = '解析失败'; });
 }
 function renderMarkdown(src, live, basePath) {
   if (window.marked && typeof window.marked.parse === 'function') {
@@ -2180,13 +2545,23 @@ async function openFileViewMode() {
   fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
   const md = isMarkdownPath(spec.path);
   const isDrawio = /\.drawio$/i.test(spec.path || '');
+  const isImg = isImagePath(spec.path);
+  const isStl = isStlPath(spec.path);
   $('file-view-mode-switch').classList.toggle('hidden', !md);
   const readOnly = spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true);
   $('file-view-editor').value = data.content;
   $('file-view-editor').readOnly = readOnly;
   $('file-view-save').disabled = readOnly;
   $('file-view-status').textContent = readOnly ? t("只读") : t("可编辑 · 保存后同步");
-  if (isDrawio) {
+  if (isStl) {
+    $('file-view-editor').classList.add('hidden');
+    $('file-view-preview').classList.remove('hidden');
+    setupStlPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+  } else if (isImg) {
+    $('file-view-editor').classList.add('hidden');
+    $('file-view-preview').classList.remove('hidden');
+    setupImagePreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+  } else if (isDrawio) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
     setupDrawioFrame($('file-view-preview'), data.content, (xml) => {
@@ -2448,17 +2823,19 @@ $('trajectory-export').onclick = action(() => {
     toast(t("已导出会话为 Markdown"));
   }
 });
-// 导出格式切换按钮（在轨迹面板中动态创建）
+// 导出格式分段控件（Markdown / JSON）
 function ensureExportFormatBtn() {
-  const bar = $('trajectory-export').parentElement;
-  if (!bar.querySelector('.export-format')) {
-    const sel = document.createElement('select');
-    sel.className = 'export-format';
-    sel.innerHTML = '<option value="md">Markdown</option><option value="json">JSON</option>';
-    sel.value = exportFormat;
-    sel.onchange = () => { exportFormat = sel.value; };
-    bar.insertBefore(sel, $('trajectory-export'));
-  }
+  const seg = document.querySelector('.traj-format-seg');
+  if (!seg || seg.dataset.bound) return;
+  seg.dataset.bound = '1';
+  seg.querySelectorAll('.traj-seg-btn').forEach(btn => {
+    btn.onclick = () => {
+      seg.querySelectorAll('.traj-seg-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      exportFormat = btn.dataset.format;
+      $('trajectory-export').title = exportFormat === 'json' ? '导出会话为 JSON' : '导出会话为 Markdown';
+    };
+  });
 }
 
 /* ── 全局搜索（FR-92）：⌘K 聚焦，防抖检索会话缓存 ── */
@@ -2607,7 +2984,8 @@ function voiceRenderLog() {
   host.replaceChildren();
   for (const item of voice.log) {
     const line = el('div', 'voice-log-line ' + (item.type === 'sent' ? 'is-sent' : item.type === 'ignored' ? 'is-ignored' : 'is-standby'));
-    const tag = el('span', 'voice-log-tag', item.type === 'sent' ? t('已发送') : item.type === 'ignored' ? t('已忽略') : t('已退下'));
+    const label = item.type === 'sent' ? t('已发送') : item.type === 'ignored' ? t('已忽略') : item.type === 'ask' ? t('追问') : t('已退下');
+    const tag = el('span', 'voice-log-tag', label);
     const right = el('span', 'voice-log-text');
     if (item.text) right.append(el('span', '', item.text));
     if (item.reason) right.append(el('small', 'voice-log-reason', item.reason));
@@ -2659,8 +3037,20 @@ async function voiceFilterOne(sentence) {
   catch (_) { result = { action: 'ignore', text: sentence, reason: t('甄别失败') }; }
   if (result.action === 'send') {
     const text = (result.text || sentence).trim();
-    try { await voiceSend(text); voiceLog('sent', text, result.reason); }
+    try {
+      if (state.config && state.config.voiceReplyEnabled) {
+        await typeIntoPrompt(text);
+        $('task-form').requestSubmit();
+      } else {
+        await voiceSend(text);
+      }
+      voiceLog('sent', text, result.reason);
+    }
     catch (e) { voiceLog('ignored', text + '（' + e.message + '）'); }
+  } else if (result.action === 'ask') {
+    voiceLog('ask', result.ask || result.text, result.reason);
+    voiceSetStatus('standby', (result.ask || t('请补充说明你想做什么')));
+    // 保持聆听，用户口头补充后进入下一轮分析，不发送
   } else if (result.action === 'standby') {
     voice.standby = true;
     voiceLog('standby', result.reason || t('和他人闲聊，已退下'));
@@ -2681,17 +3071,55 @@ async function voiceDrainQueue() {
   } finally { voice.sending = false; }
 }
 
+/* ── 双向语音：打字机输入 + TTS 朗读（浏览器原生 SpeechSynthesis，预留后端 TTS 替换） ── */
+function ttsCancel() { try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (_) {} }
+function pickVoiceForGender(gender) {
+  if (!('speechSynthesis' in window)) return null;
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+  const maleKw = ['male', '男', 'kangkang', 'yunjian', 'yunxi', 'yunyang', 'yunxia'];
+  const femaleKw = ['female', '女', 'tingting', 'xiaoxiao', 'xiaoyi', 'xiaomei', 'sinji', 'mei-jia', 'huihui', 'yaoyao'];
+  const kws = gender === 'male' ? maleKw : femaleKw;
+  let v = voices.find(x => /zh|cmn/i.test(x.lang || '') && kws.some(k => (x.name || '').toLowerCase().includes(k)));
+  if (!v) v = voices.find(x => /zh|cmn/i.test(x.lang || ''));
+  return v || null;
+}
+function speakReply(text) {
+  if (!state.config || !state.config.voiceReplyEnabled) return;
+  if (!text || !('speechSynthesis' in window)) return;
+  const flat = text.replace(/[#*`>\-\[\]]/g, ' ').replace(/\s+/g, ' ').slice(0, 600).trim();
+  if (!flat) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(flat);
+  u.lang = 'zh-CN';
+  const v = pickVoiceForGender(state.config.voiceReplyGender);
+  if (v) u.voice = v;
+  u.rate = 1.05;
+  window.speechSynthesis.speak(u);
+}
+async function typeIntoPrompt(text) {
+  const prompt = $('prompt');
+  prompt.value = '';
+  prompt.focus();
+  for (let i = 1; i <= text.length; i++) {
+    prompt.value = text.slice(0, i);
+    prompt.scrollTop = prompt.scrollHeight;
+    await new Promise(r => setTimeout(r, 22));
+  }
+}
+
 function voiceStart() {
   if (!voice.supported) { toast(t("当前浏览器不支持语音识别，请用 Chrome/Edge，并通过 HTTPS 或 localhost 访问")); return; }
   const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
   const rec = new Ctor();
   rec.lang = 'zh-CN'; rec.continuous = true; rec.interimResults = true;
   voice.recognition = rec;
+  ttsCancel();
   voice.buffer = ''; voice.interim = ''; voice.standby = false; voice.queue = []; voice.log = [];
   $('voice-title').textContent = voice.name();
   voiceRenderLog();
   voiceSetStatus('listening', t("聆听中…说完一句会自动发送"));
-  if (!$('voice-dialog').open) $('voice-dialog').showModal();
+  $('voice-panel').classList.remove('hidden');
   rec.onresult = (e) => {
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -2731,16 +3159,15 @@ function voiceStopAndFlush() {
 }
 function voiceClose() {
   clearTimeout(voice.timer);
+  ttsCancel();
   voice.listening = false; voice.standby = false;
   if (voice.recognition) { try { voice.recognition.onend = null; voice.recognition.abort(); } catch (_) {} }
   $('voice-btn').classList.remove('recording');
-  if ($('voice-dialog').open) $('voice-dialog').close();
+  $('voice-panel').classList.add('hidden');
 }
 
 $('voice-btn').onclick = action(() => { voice.listening ? voiceStopAndFlush() : voiceStart(); });
 $('voice-stop').onclick = action(voiceStopAndFlush);
-$('voice-close').onclick = () => voiceClose();
-$('voice-form').addEventListener('submit', (e) => e.preventDefault());
 
 // 设置面板：语音小秘名字输入
 function renderVoiceNameControl() {
@@ -2770,43 +3197,292 @@ function renderVoiceHistoryControl() {
   const wrap = el('div', 'settings-control');
   const head = el('div', 'control-label');
   head.append(el('span', '', t('小秘对话历史')));
-  const bar = el('div', 'voice-history-bar');
-  const refreshBtn = el('button', 'quiet', t('刷新'));
-  refreshBtn.type = 'button';
-  const clearBtn = el('button', 'quiet', t('清空'));
-  clearBtn.type = 'button';
-  bar.append(refreshBtn, clearBtn);
   const list = el('div', 'voice-history-list');
   async function load() {
     list.replaceChildren();
     list.append(el('p', 'muted', t('加载中…')));
-    try {
-      const items = await api('/voice-history');
-      list.replaceChildren();
-      if (!items.length) { list.append(el('p', 'muted', t('暂无记录。点麦克风说话后，小秘的判断会记录在这里。'))); return; }
-      for (const it of items) {
-        const row = el('div', 'voice-history-item');
-        const meta = el('div', 'vh-meta');
-        const label = it.action === 'send' ? t('已发送') : it.action === 'standby' ? t('退下') : t('忽略');
-        const tag = el('span', 'vh-tag ' + (it.action === 'send' ? 'is-sent' : it.action === 'standby' ? 'is-standby' : 'is-ignored'), label);
-        meta.append(tag, el('span', 'vh-time', it.time || ''));
-        row.append(meta, el('div', 'vh-heard', t('听到：') + (it.heard || '')));
-        if (it.text) row.append(el('div', 'vh-text', t('发送：') + it.text));
-        if (it.reason) row.append(el('div', 'vh-reason', it.reason));
-        list.append(row);
-      }
-    } catch (e) { list.replaceChildren(el('p', 'muted', e.message)); }
+    let res;
+    try { res = await api('/voice-history'); }
+    catch (e) { list.replaceChildren(el('p', 'muted', e.message)); return; }
+    list.replaceChildren();
+
+    // 隐私二次校验：即使系统已解锁，查看加密小秘历史也要再输一次账户密码
+    if (res.encrypted && !list._authPassed && state.config && state.config.hasPassword) {
+      list.append(el('p', 'muted', t('查看小秘对话历史需再次输入账户密码确认身份。')));
+      const pw = el('input'); pw.type = 'password'; pw.placeholder = t('账户密码');
+      const go = el('button', 'primary', t('查看历史')); go.type = 'button';
+      go.onclick = action(async () => {
+        if (!pw.value) return toast(t('请输入密码'));
+        try {
+          await api('/account/verify-password', { method: 'POST', body: JSON.stringify({ password: pw.value }) });
+          try { await api('/voice-history/unlock', { method: 'POST', body: JSON.stringify({ password: pw.value }) }); } catch (_) {}
+          list._authPassed = true;
+          load();
+        } catch (e) { toast(t('密码错误')); }
+      });
+      const row = el('div', 'voice-lock-row'); row.append(pw, go);
+      list.append(row);
+      return;
+    }
+
+    // 加密但未解锁：只显示锁定占位 + 解锁
+    if (res.encrypted && !res.unlocked) {
+      list.append(el('p', 'muted', t('历史已加密，需输入密钥解锁。密钥丢失无法恢复，只能清空重置。')));
+      const pw = el('input'); pw.type = 'password'; pw.placeholder = t('密钥');
+      const un = el('button', 'primary', t('解锁')); un.type = 'button';
+      un.onclick = action(async () => {
+        if (!pw.value) return toast(t('请输入密钥'));
+        try { await api('/voice-history/unlock', { method: 'POST', body: JSON.stringify({ password: pw.value }) }); toast(t('已解锁')); load(); }
+        catch (e) { toast(t('密钥错误')); }
+      });
+      const row = el('div', 'voice-lock-row'); row.append(pw, un);
+      list.append(row);
+      return;
+    }
+
+    // 未加密：提供启用加密
+    if (!res.encrypted) {
+      list.append(el('p', 'muted', t('历史当前为明文。可启用 AES-256-GCM 加密，密钥只留内存、不落盘。')));
+      const pw0 = el('input'); pw0.type = 'password'; pw0.placeholder = t('设置加密密钥');
+      const en = el('button', 'quiet', t('启用加密')); en.type = 'button';
+      en.onclick = action(async () => {
+        if (!pw0.value) return toast(t('请设置密钥'));
+        await api('/voice-history/enable', { method: 'POST', body: JSON.stringify({ password: pw0.value }) });
+        toast(t('已启用加密')); load();
+      });
+      const row = el('div', 'voice-lock-row'); row.append(pw0, en);
+      list.append(row);
+    }
+
+    // 工具条
+    const tool = el('div', 'voice-history-bar');
+    const refreshBtn = el('button', 'quiet', t('刷新')); refreshBtn.type = 'button';
+    refreshBtn.onclick = action(load);
+    tool.append(refreshBtn);
+    if (res.encrypted) {
+      const lockBtn = el('button', 'quiet', t('锁定')); lockBtn.type = 'button';
+      lockBtn.onclick = action(async () => { await api('/voice-history/lock', { method: 'POST' }); toast(t('已锁定')); load(); });
+      const chgBtn = el('button', 'quiet', t('修改密钥')); chgBtn.type = 'button';
+      chgBtn.onclick = action(async () => {
+        const oldPw = prompt(t('原密钥')); if (oldPw == null) return;
+        const newPw = prompt(t('新密钥')); if (!newPw) return toast(t('请输入新密钥'));
+        try { await api('/voice-history/change-password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw }) }); toast(t('密钥已修改')); }
+        catch (e) { toast(t('修改失败：' + e.message)); }
+      });
+      const disBtn = el('button', 'quiet', t('关闭加密')); disBtn.type = 'button';
+      disBtn.onclick = action(async () => {
+        const pw = prompt(t('输入密钥以解密回明文')); if (pw == null) return;
+        try { await api('/voice-history/disable', { method: 'POST', body: JSON.stringify({ password: pw }) }); toast(t('已关闭加密')); load(); }
+        catch (e) { toast(t('失败：' + e.message)); }
+      });
+      tool.append(lockBtn, chgBtn, disBtn);
+    }
+    const clearBtn = el('button', 'quiet', t('清空')); clearBtn.type = 'button';
+    clearBtn.onclick = action(async () => {
+      if (!confirm(t('确定清空小秘的全部历史记录？'))) return;
+      await api('/voice-history', { method: 'DELETE' }); toast(t('已清空')); load();
+    });
+    tool.append(clearBtn);
+    list.append(tool);
+
+    const items = res.history || [];
+    if (!items.length) { list.append(el('p', 'muted', t('暂无记录。点麦克风说话后，小秘的判断会记录在这里。'))); return; }
+    for (const it of items) {
+      const row = el('div', 'voice-history-item');
+      const meta = el('div', 'vh-meta');
+      const label = it.action === 'send' ? t('已发送') : it.action === 'standby' ? t('退下') : it.action === 'ask' ? t('追问') : t('忽略');
+      const tag = el('span', 'vh-tag ' + (it.action === 'send' ? 'is-sent' : it.action === 'standby' ? 'is-standby' : 'is-ignored'), label);
+      meta.append(tag, el('span', 'vh-time', it.time || ''));
+      row.append(meta, el('div', 'vh-heard', t('听到：') + (it.heard || '')));
+      if (it.action === 'ask' && it.ask) row.append(el('div', 'vh-text', t('追问：') + it.ask));
+      else if (it.text) row.append(el('div', 'vh-text', t('总结发送：') + it.text));
+      if (it.reason) row.append(el('div', 'vh-reason', it.reason));
+      list.append(row);
+    }
   }
-  refreshBtn.onclick = action(load);
-  clearBtn.onclick = action(async () => {
-    if (!confirm(t('确定清空小秘的全部历史记录？'))) return;
-    await api('/voice-history', { method: 'DELETE' });
-    toast(t('已清空'));
-    load();
-  });
-  wrap.append(head, bar, list, el('small', '', t('小秘听到了什么、如何判断、发送了什么，按时间线记录；重启后仍保留。')));
+  wrap.append(head, list, el('small', '', t('小秘听到了什么、如何判断、发送了什么，按时间线记录；重启后仍保留。')));
   load();
   return wrap;
 }
 controlRenderers['voice-history'] = renderVoiceHistoryControl;
+function renderVoiceReplyControl() {
+  const wrap = el('div', 'settings-control');
+  const head = el('div', 'control-label');
+  head.append(el('span', '', t('语音回复')));
+  const row = el('div', 'voice-reply-row');
+  const toggle = el('input'); toggle.type = 'checkbox';
+  toggle.checked = !!(state.config && state.config.voiceReplyEnabled);
+  const gender = el('select');
+  const optF = el('option', '', t('女声')); optF.value = 'female';
+  const optM = el('option', '', t('男声')); optM.value = 'male';
+  gender.append(optF, optM);
+  gender.value = (state.config && state.config.voiceReplyGender) || 'female';
+  const save = el('button', 'primary', t('保存'));
+  save.type = 'button';
+  save.onclick = action(async () => {
+    await api('/settings', { method: 'PUT', body: JSON.stringify({ voiceReplyEnabled: toggle.checked, voiceReplyGender: gender.value, activeModel: state.config ? state.config.activeModel : '' }) });
+    await refreshConfig();
+    if (toggle.checked && !('speechSynthesis' in window)) toast(t('当前浏览器不支持语音朗读'));
+    else toast(t('语音回复设置已保存'));
+  });
+  row.append(toggle, el('span', '', t('语音回复')), gender, save);
+  wrap.append(head, row, el('small', '', t('开启后：口述总结的意图以打字机效果填入输入框并自动发送；模型回复会被朗读（音色可选男女）。')));
+  return wrap;
+}
+controlRenderers['voice-reply'] = renderVoiceReplyControl;
 controlRenderers['voice-name'] = renderVoiceNameControl;
+
+// 设置面板：人格切换（aide 工作 / 小秘 生活）
+function renderPersonaSwitchControl() {
+  const wrap = el('div', 'settings-control');
+  const head = el('div', 'control-label');
+  head.append(el('span', '', t('活动人格')));
+  const list = el('div', 'persona-switch-list');
+  const personas = (state.config && state.config.personas) || [];
+  const activeId = (state.config && state.config.activePersona) || 'aide';
+  const cards = [];
+  for (const p of personas) {
+    const card = el('button', 'persona-card' + (p.id === activeId ? ' active' : ''));
+    card.type = 'button';
+    const nm = el('strong', '', p.name);
+    const sub = el('small', '', p.role === 'life' ? t('生活向 · 私人秘书') : t('工作向 · 开发助手'));
+    card.append(nm, sub);
+    card.onclick = action(async () => {
+      await api('/personas/active', { method: 'POST', body: JSON.stringify({ id: p.id }) });
+      await refreshConfig();
+      cards.forEach(c => c.classList.toggle('active', c.dataset.pid === p.id));
+      const greet = p.role === 'life'
+        ? t('已切到 {0}，有什么生活上的事想聊聊、记下或提醒吗？', p.name)
+        : t('已切回 {0}，专注工作。', p.name);
+      toast(greet);
+      speakReply(greet);
+    });
+    card.dataset.pid = p.id;
+    cards.push(card);
+    list.append(card);
+  }
+  if (!personas.length) list.append(el('p', 'muted', t('加载中…')));
+  wrap.append(head, list, el('small', '', t('主会话默认 aide 工作人格；语音听写与锁屏解锁后自动进入小秘生活人格。')));
+  return wrap;
+}
+controlRenderers['persona-switch'] = renderPersonaSwitchControl;
+
+
+/* ── 账户锁屏：空闲糊化遮罩（纯视觉层，不停止后端任务；小秘暂停听写/朗读） ── */
+const lockScreen = { timer: null, locked: false, wasVoiceListening: false };
+function lockTimeoutActive() {
+  return !!(state.config && state.config.hasPassword && (state.config.lockTimeoutSec || 0) > 0);
+}
+function resetIdleTimer() {
+  clearTimeout(lockScreen.timer);
+  lockScreen.timer = null;
+  if (lockScreen.locked) return;
+  if (!lockTimeoutActive()) return;
+  lockScreen.timer = setTimeout(lockScreenNow, (state.config.lockTimeoutSec || 0) * 1000);
+}
+function refreshLockStatus() {
+  const host = $('lock-status');
+  if (!host) return;
+  let running = null;
+  for (const rid in state.runPhase) {
+    const ph = state.runPhase[rid];
+    if (ph && !ph.done) { running = ph; break; }
+  }
+  host.textContent = running
+    ? t('运行中 · ') + phaseLabel(running) + ' · ' + formatElapsed(running.startedAt)
+    : t('空闲 · 后台任务不受锁屏影响');
+}
+function lockScreenNow() {
+  if (lockScreen.locked) return;
+  if (!state.config || !state.config.hasPassword) return;
+  lockScreen.locked = true;
+  clearTimeout(lockScreen.timer); lockScreen.timer = null;
+  // 小秘退下：停止听写 + 取消朗读（解锁后按原状态恢复）
+  lockScreen.wasVoiceListening = !!voice.listening;
+  if (voice.listening) voiceClose();
+  ttsCancel();
+  $('lock-screen').hidden = false;
+  $('lock-password').value = '';
+  $('lock-error').textContent = '';
+  refreshLockStatus();
+  setTimeout(() => { try { $('lock-password').focus(); } catch (_) {} }, 60);
+}
+function unlockScreen(pw) {
+  return api('/account/verify-password', { method: 'POST', body: JSON.stringify({ password: pw }) }).then(() => {
+    lockScreen.locked = false;
+    $('lock-screen').hidden = true;
+    const name = (state.config && state.config.userName) || '';
+    const xm = (state.config && state.config.voiceAssistantName) || '小秘';
+    // 解锁后由小秘人格亲切欢迎
+    const welcome = name ? t('欢迎回来，{0}，我是{1}。', name, xm) : t('欢迎回来，我是{0}。', xm);
+    toast(welcome);
+    speakReply(welcome); // 内部按 voiceReplyEnabled 判断是否朗读
+    if (lockScreen.wasVoiceListening) { lockScreen.wasVoiceListening = false; voiceStart(); }
+    resetIdleTimer();
+  });
+}
+$('lock-form').onsubmit = action(async e => {
+  e.preventDefault();
+  try {
+    await unlockScreen($('lock-password').value);
+    $('lock-password').value = '';
+  } catch (err) {
+    $('lock-error').textContent = t('密码错误');
+    try { $('lock-password').select(); } catch (_) {}
+  }
+});
+['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(ev =>
+  window.addEventListener(ev, resetIdleTimer, { passive: true }));
+setInterval(() => { if (lockScreen.locked) refreshLockStatus(); }, 1000);
+
+// 设置面板「账户」：用户名 / 锁屏密码 / 锁屏时间 / 立即锁屏
+function renderAccountControl() {
+  const wrap = el('div', 'settings-control account-control');
+  const cfg = state.config || {};
+  const hasPw = !!cfg.hasPassword;
+  // Docker 环境块手动锁屏蒙版：仅已设密码时启用
+  const rc = $('runtime-card');
+  if (rc) { rc.classList.toggle('lock-enabled', hasPw); }
+  const uRow = el('div', 'account-row');
+  uRow.append(el('span', '', t('用户名')));
+  const uInput = el('input'); uInput.type = 'text'; uInput.maxLength = 24; uInput.placeholder = t('可选，用于欢迎语'); uInput.value = cfg.userName || '';
+  uRow.append(uInput);
+  const tRow = el('div', 'account-row');
+  tRow.append(el('span', '', t('锁屏时间(秒)')));
+  const tInput = el('input'); tInput.type = 'number'; tInput.min = 0; tInput.max = 86400; tInput.placeholder = '0'; tInput.value = cfg.lockTimeoutSec || 0;
+  tRow.append(tInput);
+  const oldRow = el('div', 'account-row');
+  oldRow.append(el('span', '', t('原密码')));
+  const oldPw = el('input'); oldPw.type = 'password'; oldPw.autocomplete = 'off';
+  oldPw.placeholder = hasPw ? t('已设置，改密需输入') : t('未设置'); oldPw.disabled = !hasPw;
+  oldRow.append(oldPw);
+  const newRow = el('div', 'account-row');
+  newRow.append(el('span', '', t('新密码')));
+  const newPw = el('input'); newPw.type = 'password'; newPw.autocomplete = 'off';
+  newPw.placeholder = hasPw ? t('留空不修改') : t('设置后用于解锁');
+  newRow.append(newPw);
+  const actions = el('div', 'account-actions');
+  const save = el('button', 'primary', t('保存')); save.type = 'button';
+  save.onclick = action(async () => {
+    const body = { userName: uInput.value.trim(), lockTimeoutSec: parseInt(tInput.value, 10) || 0, activeModel: cfg.activeModel || '' };
+    if (newPw.value) {
+      body.newPassword = newPw.value;
+      if (hasPw) body.oldPassword = oldPw.value;
+    }
+    await api('/settings', { method: 'PUT', body: JSON.stringify(body) });
+    await refreshConfig();
+    newPw.value = ''; oldPw.value = '';
+    toast(t('账户设置已保存'));
+    resetIdleTimer();
+  });
+  const lockBtn = el('button', 'quiet', t('立即锁屏')); lockBtn.type = 'button';
+  lockBtn.onclick = action(lockScreenNow);
+  // Docker 环境块蒙版点击锁屏
+  const ov = $('runtime-lock-overlay');
+  if (ov) { ov.addEventListener('click', (e) => { e.stopPropagation(); if (state.config && state.config.hasPassword) lockScreenNow(); }); }
+  actions.append(save, lockBtn);
+  wrap.append(uRow, tRow, oldRow, newRow, actions,
+    el('small', '', t('不设密码且锁屏时间为 0 时不锁屏。密码同时作为小秘对话历史的 AES-256-GCM 加密密钥，只存哈希、不明文回显。')));
+  return wrap;
+}
+controlRenderers['account'] = renderAccountControl;
