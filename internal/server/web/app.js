@@ -1906,15 +1906,11 @@ function renderMarkdown(src, live) {
       const lang = (codeEl.className.match(/language-([\w+-]+)/) || [])[1] || '';
       if (/^(js|javascript|jsx|ts|typescript|mjs)$/i.test(lang)) codeEl.innerHTML = highlightCode(codeEl.textContent, lang);
     });
-    // 拦截相对路径链接：点击时在 aide 内部打开文件，不跳浏览器 404
+    // 标记相对路径链接（事件委托在 timeline 上统一处理）
     body.querySelectorAll('a[href]').forEach(a => {
       const href = a.getAttribute('href') || '';
-      if (/^(https?:|mailto:|#|data:)/.test(href)) return; // 外部链接正常跳转
-      a.addEventListener('click', e => {
-        e.preventDefault();
-        const path = href.replace(/^\.\//, '').split('#')[0];
-        if (path) openFile(path).catch(() => toast(t("打不开文件: ") + path));
-      });
+      if (/^(https?:|mailto:|#|data:)/.test(href)) return;
+      a.dataset.internalLink = href;
     });
     return body.innerHTML;
   }
@@ -2168,7 +2164,18 @@ document.addEventListener('keydown', event => {
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); $('global-search').focus(); $('global-search').select(); }
   if (event.key === 'Escape') $('search-results').classList.add('hidden');
 });
-document.addEventListener('click', event => { if (!event.target.closest('.global-search')) $('search-results').classList.add('hidden'); });
+document.addEventListener('click', event => {
+  // md 相对路径链接：在 aide 内部打开
+  const link = event.target.closest('a[data-internal-link]');
+  if (link) {
+    event.preventDefault();
+    const href = link.dataset.internalLink;
+    const path = href.replace(/^\.\//, '').split('#')[0];
+    if (path) openFile(path).catch(() => toast(t("打不开文件: ") + path));
+    return;
+  }
+  if (!event.target.closest('.global-search')) $('search-results').classList.add('hidden');
+});
 /* ── 手动压缩（FR-93） ── */
 function refreshCompactInfo() {
   const sess = state.session;
