@@ -23,6 +23,7 @@ bash scripts/aide.sh status
 ## 配置与运行
 
 - Dockerfile：Go 1.26、Python 3.12、Node.js 24 工具链，Git/curl/bash，非 root 用户；精确版本由构建镜像决定。
+- 基础镜像与离线构建：node/golang 按 digest 固定；python 基础镜像用 `ARG PYTHON_BASE`（默认本地 tag `python:3.12-slim-bookworm`）。本机该 tag 从既有构建产物提取（与固定 digest `392307d2...` 内容一致），避免受限网络下按 digest 拉取 metadata 卡死 `start.command`。重新提取：`docker run --rm --entrypoint tar aide:local -C / --exclude usr/local/go --exclude usr/local/include/node --exclude usr/local/lib/node_modules --exclude usr/local/bin/node --exclude usr/local/bin/npm --exclude usr/local/bin/npx --exclude usr/local/bin/corepack --exclude usr/local/bin/yarn -cf - usr/local | docker import - python:3.12-slim-bookworm`。发布构建可传 `--build-arg PYTHON_BASE=python:3.12-slim-bookworm@sha256:...` 恢复固定。
 - Compose：本机端口、cap_drop、no-new-privileges、2 CPU / 2 GiB / 256 PID。
 - `/workspace` 可写；`/context` 只读；`/local` 默认为可写 HOME。`.env` 可以缩小本地根目录范围。
 - `/data` 和 `/home/aide` 为命名卷；切换挂载目录不是迁移数据卷。
@@ -110,3 +111,15 @@ shasum -a 256 "$AIDE_BACKUP_DIR"/*.tgz "$AIDE_BACKUP_DIR/aide-source.bundle"
 - 目录弹窗采用与父面板一致的紧凑布局；地址栏与前往按钮等高；保存配置后刷新目录。
 - 已在实际 8097 Safari 页面验证；临时预览容器已移除，数据保留。
 - 本轮发布目标为 v0.1.7.0-RC1，包含 main 合并、tag、GitHub 预发布及 arm64 镜像附件。
+
+## 2026-09-24 SSE 流式输出修复与验收交接
+
+- 任务 `sse-streaming`（[任务账本](docs/tasks/sse-streaming.json)）：模型响应改为逐 token SSE 推送，`GET /api/sessions/{id}/runs/{run}/events`（step/delta/tool/status/done），`?access_token=` 仅对该路由生效；最终状态仍由会话接口兜底。
+- 修复初版三处运行时缺陷：事件 hub 发送/关闭竞态（统一 eventMu 内操作，close 为终态信号）、晚订阅者永久挂起（runEvents 先订阅后复查状态）、前端 chat 答案重复渲染（运行中只渲染 live 文本，delta 带 round 按轮重置）。
+- 前端致命缺陷与显示升级：EventSource URL 曾漏写 `/events` 段导致流式请求 401 失效（界面只剩“正在思考”）；已修复并加 `scripts/test_stream_url.cjs` 回归检查（进 quick 门禁）。显示按 DSH/Codex 风格：首 token 前呼吸思考点、流式文本+闪烁光标、live 工具行（⚒ 实时显示）、按轮次重置；index.html 资源版本升 `?v=32`。
+- 生成速度优化：delta 渲染改为 requestAnimationFrame 批量（每帧最多一次全量解析，原为逐 token 全量）；live 渲染跳过代码高亮（2.85KB 基准 12.2ms→0.7ms，完成态补全高亮）；轮询/刷新在会话 JSON 未变时跳过整页重渲染；summarizeTopic 改并发执行，不再阻塞首 token（对应测试改为轮询等待标题）。
+- 无头浏览器验收资产：`scripts/ui_stream_check.cjs`（需 playwright-core + CHROME_PATH，缺依赖自动 SKIP）+ `scripts/fixtures/tool_stream_mock.py`（带工具调用的流式 QA mock）；本机已用 Chromium headless 实测 PASS（chat/tool 两种模式）。
+- 其他加固：stream_options 被网关 400 拒绝时自动去字段重试一次；前端流错误 5s 退避后由轮询兜底重开；`scripts/mock_provider.py` 支持流式（QA fixture，QA_BIND/QA_DELAY/QA_START_DELAY 可控）。
+- 验证：`go test -race -count=1 ./... && go vet`（aide:local 官方路径）全过，新增 10 个流式/事件测试；`agent-route.py verify quick` 全过；容器端到端冒烟（chat 流式 14 个 delta、workflow 三阶段 step 事件、取消晚订阅立即关闭、鉴权收窄 401）通过；无头 Chromium UI 检查 PASS。
+- start.command 卡死修复：本机无 `python:3.12-slim-bookworm` 镜像且 Docker Hub 不可达，按 digest 拉 metadata 永久挂起；已从 aide:local 提取等价本地 tag 镜像，Dockerfile 改为 `ARG PYTHON_BASE`（默认 tag，发布可恢复 digest），`docker compose build aide` 2.8s 离线完成；8097 服务已用新镜像拉起并验证 healthz/config/events 鉴权。
+- 发布状态：已获用户授权提交并合并 main（原话「你先提交合并吧」，2026-09-24 会话）；代码已提交并推送 origin/main，提交 SHA 以 git log 为准。剩余：8097 用真实模型确认观感（首 token 延迟、工具实时状态、取消、断网降级）；升版 0.1.8.0、候选镜像构建与 GitHub Release 待用户另行授权。

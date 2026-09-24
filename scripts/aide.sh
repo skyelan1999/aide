@@ -22,7 +22,7 @@ case "${1:-start}" in
         if [[ -n "$(git status --porcelain)" ]]; then AIDE_COMMIT="${AIDE_COMMIT}-dirty"; fi
         export AIDE_COMMIT
       fi
-      "$DOCKER_BIN" compose up -d --build
+      "$DOCKER_BIN" compose up -d --build --pull never
     fi
     for attempt in {1..60}; do if "$DOCKER_BIN" compose exec -T aide curl -fsS http://127.0.0.1:8080/healthz >/dev/null 2>&1; then break; fi; sleep 1; done
     "$DOCKER_BIN" compose exec -T aide curl -fsS http://127.0.0.1:8080/healthz >/dev/null

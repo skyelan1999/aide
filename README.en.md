@@ -107,7 +107,7 @@ bash scripts/aide.sh stop
 
 Go embeds the frontend; rebuilding the image is necessary after source changes. Images do not contain mounted project files, API keys, or session data. Back up data volumes separately.
 
-This is a trusted, single-user local workbench, not public multi-user hosting. AI read tools may read beyond explicitly attached files. File application is atomic per file, not a multi-file transaction. Plugins can use Node capabilities. Full MCP, SSE token streaming, PTY, and complete DSH compatibility are not implemented. Token estimates and compaction can lose precision or detail.
+This is a trusted, single-user local workbench, not public multi-user hosting. AI read tools may read beyond explicitly attached files. File application is atomic per file, not a multi-file transaction. Plugins can use Node capabilities. Per-token SSE streaming is supported (chat mode updates live). Full MCP, PTY, and complete DSH compatibility are not implemented. Token estimates and compaction can lose precision or detail.
 
 [Documentation index](docs/en/README.md) · [Architecture](docs/architecture.md) · [Operations](HANDOVER.md) · [Plugin protocol](docs/plugin-protocol.md) · [Requirements](docs/PRD.md)
 

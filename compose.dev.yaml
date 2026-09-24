@@ -1,0 +1,21 @@
+# 开发模式覆盖：挂载源码到 golang 容器，go run 热启动，不 build 镜像。
+# 用法：bash scripts/dev.sh
+# 退出：Ctrl+C
+services:
+  aide:
+    build: !reset null
+    image: golang:1.26-bookworm
+    user: "1000:1000"
+    working_dir: /src
+    command: ["go", "run", "./cmd/aide"]
+    environment:
+      CGO_ENABLED: "0"
+      GOFLAGS: "-mod=mod"
+      GOCACHE: "/tmp/gocache"
+      GOPATH: "/tmp/gopath"
+      AIDE_ADDR: "0.0.0.0:8080"
+      AIDE_WORKSPACE: /workspace
+      AIDE_CONTEXT: /context
+      AIDE_DATA: /data
+    volumes:
+      - .:/src

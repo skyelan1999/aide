@@ -21,7 +21,7 @@ flowchart TB
     Storage --> Data[/data 持久卷]
 ```
 
-Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行。前端使用原生 JS/CSS 和本地 vendor Markdown 库，由 `go:embed` 编入二进制。Node 插件宿主是可信代码执行器，不是权限沙箱。
+Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token 通过 SSE（`GET /api/sessions/{id}/runs/{run}/events`）增量推送到浏览器，最终任务状态仍由 `GET /sessions/{id}` 持久化兜底。前端使用原生 JS/CSS 和本地 vendor Markdown 库，由 `go:embed` 编入二进制。Node 插件宿主是可信代码执行器，不是权限沙箱。
 
 ## 模块职责
 
@@ -31,14 +31,14 @@ Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行。前端使用原
 | `internal/server/server.go` | 路由、鉴权、配置、会话存储、统计与费率、构建身份 |
 | `workflow.go` | 任务状态、工具循环、提案、应用、摘要压缩 |
 | `context.go` | 上下文预览、预算拦截、请求快照 |
-| `provider.go` | 模型请求、参数、usage、超时；当前非 SSE |
+| `provider.go` | 模型请求、参数、usage、超时；complete（非流式）+ completeStream（SSE，400 时去 stream_options 重试） |
 | `profiles.go` | 内置/用户 Profile、策略文件、参数校验 |
 | `workspace_config.go` / `ssh_session.go` | 工作区身份、本地映射、SSH/SFTP 生命周期 |
 | `files.go` / `sources.go` | 路径/内容策略、读写冲突、辅助资料驱动 |
 | `command.go` | 非交互 shell、NDJSON 输出、超时与取消 |
 | `plugins.go` / `plugin_host.js` | 插件登记、加载、schema 和 handler |
 | `web/settings-init.js` | 同步首帧外观、`aide.ui`、系统外观响应与跨标签同步 |
-| `web/settings-schema.json` / `app.js` | 设置导航、控件与应用交互 |
+| `web/settings-schema.json` / `app.js` | 设置导航、控件与应用交互；SSE 流式渲染（rAF 批量、live 文本/光标/工具行、会话快照去重） |
 | `web/themes/**` / `style.css` / `macos.css` | 颜色变量、既有样式与新版表现层 |
 
 文件名省略前缀时均位于 `internal/server/`。不维护容易过时的文件行数/测试数量，查当前源码与本次测试输出。
@@ -75,6 +75,7 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 | POST | `/api/sessions/{id}/runs` | 启动对话或工作流 |
 | POST | `/api/sessions/{id}/runs/{run}/cancel`、`/apply` | 取消/应用 |
 | GET | `/api/sessions/{id}/runs/{run}/requests` | 请求快照 |
+| GET | `/api/sessions/{id}/runs/{run}/events` | SSE 实时事件（step/delta/tool/status/done）；EventSource 经 `?access_token=` 鉴权 |
 | POST | `/api/context-preview` | 与运行请求共用构造器的预算预览 |
 | GET | `/api/search` | 会话全文搜索 |
 | POST | `/api/sessions/{id}/compact` | 手动摘要压缩 |
@@ -105,4 +106,4 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 
 变更前读取 [统一开发工作流](agent/WORKFLOW.md)。新前端须验证浏览器实际交互；正式发布须在没有 `/web` 挂载的构建镜像中验证 embed 资源。早期预览使用 RC5 后端 + 工作区静态文件；本次发布另行验证无静态目录覆盖的镜像。
 
-待独立规划：SSE、PTY、目录分页、会话归档、真实 MCP、统一插件文件驱动。不要把登记入口或预设名称当成这些能力已经存在。
+待独立规划：PTY、目录分页、会话归档、真实 MCP、统一插件文件驱动。不要把登记入口或预设名称当成这些能力已经存在。SSE 已落地。

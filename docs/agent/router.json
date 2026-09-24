@@ -91,6 +91,10 @@
         "scripts/test_i18n.cjs"
       ],
       [
+        "node",
+        "scripts/test_stream_url.cjs"
+      ],
+      [
         "python3",
         "scripts/test_local_root.py"
       ]

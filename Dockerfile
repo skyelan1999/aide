@@ -1,5 +1,9 @@
+# python 基础镜像默认引用本地 tag，避免受限网络下按 digest 拉取 metadata 卡死。
+# 本机 tag 镜像与下述 digest 内容一致（从既有构建产物提取，见 HANDOVER）。
+# 发布构建可重新固定：--build-arg PYTHON_BASE=python:3.12-slim-bookworm@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e
+ARG PYTHON_BASE=python:3.12-slim-bookworm
 FROM node:24-bookworm-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6 AS node
-FROM python:3.12-slim-bookworm@sha256:392307d22300de8b5986851a12d9176dfc0fc073e65bf6523ebd7dcbeb23564e AS python
+FROM ${PYTHON_BASE} AS python
 FROM golang:1.26-bookworm@sha256:a688600ca24f8a4d3ca77f95b0dd40704a9fc787c826660eb7ba0b641b8b175d AS toolchain
 COPY --from=python /usr/local /usr/local
 RUN ldconfig

@@ -1,0 +1,96 @@
+{
+  "id": "sse-streaming",
+  "request": "为 aide 的模型响应增加 SSE 流式输出：当前 provider.go 一次性 complete() 返回完整响应，前端只能等待 6 分钟超时转圈。需要在保持现有工具循环、提案人审、错误处理不变的前提下，让模型文本 token 增量推送到浏览器，并支持运行中取消。",
+  "baseline": "4a1876eb03803ea88ed4b8e0055e2bb3513ce5d5",
+  "initial_status": "",
+  "acceptance": [
+    "模型文本响应以 SSE 增量推送到浏览器，前端在首 token 出现后 1 秒内开始显示，不再等到整段生成完毕",
+    "新增 GET /api/sessions/{id}/runs/{run}/events，Content-Type: text/event-stream，事件含 step/delta/tool/status/done",
+    "工具循环（≤10 轮、工具调用、write_file/run_shell 提案人审、propose json_object）行为与非流式路径完全一致",
+    "运行中取消（POST .../cancel）能立即中断流式 HTTP body 读取并关闭 SSE 流",
+    "EventSource 因鉴权/网络断开时，前端保留现有轮询兜底，刷新页面后仍能看到完整结果",
+    "后端流式请求失败（非 SSE 响应、HTTP 错误、ctx 取消）时回退到现有非流式错误路径，不产生半成品",
+    "summarizeTopic、压缩等后台轻量调用仍走非流式，不受影响",
+    "go build / go vet 通过，现有测试不破坏"
+  ],
+  "scope": [
+    "internal/server/provider.go: 新增 completeStream，请求 stream:true，逐行解析 SSE，合并分片 tool_calls",
+    "internal/server/workflow.go: 新增 per-task 事件 hub；toolLoop 走 completeStream 并在 delta/step/tool 节点发事件",
+    "internal/server/server.go: 注册 events 路由；鉴权中间件兼容 ?access_token= query（EventSource 无法设 header）",
+    "internal/server/web/app.js: run 创建后开 EventSource，增量渲染 delta，done 关闭；轮询作为兜底保留",
+    "scripts/mock_provider.py: QA fixture 支持 stream:true 的 SSE 响应（向后兼容）",
+    "docs/architecture.md、README.md、docs/user-guide.md 中关于'非 SSE'的边界描述更新为现状",
+    "不在范围内：reasoning_content 思考流、逐 token 计费精度、PTY、MCP、subagent 插件填充"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目标、非目标与验收已明确。SSE 是实时增强层而非唯一真相源：最终任务状态仍由 GET /sessions/{id} 持久化兜底。",
+      "evidence": [
+        "docs/tasks/sse-streaming.json acceptance/scope 已填"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "最终方案：1) provider.go 加 completeStream()，签名与 complete() 一致，请求 stream:true，按行读 'data: {...}'，delta.content 累加为文本，delta.tool_calls 按 index 合并 id/name/arguments；非 SSE 响应回退非流式解析；stream_options 被拒绝（HTTP 400）时去掉该字段重试一次。2) workflow.go 加 per-task 事件 hub：publish 与 finish 都在 eventMu 内执行，finish 广播 status+done 后 close(channel) 作为不可丢弃的终态信号，杜绝向已关闭 channel 发送；toolLoop 改调 completeStream，onDelta 携带轮次 round 推文本增量；step 开始/结束、tool 调用记录时发结构化事件。3) runEvents 先订阅、后复查任务状态：晚订阅已结束任务立即回发 status+done；15s 心跳注释行。4) server.go 注册 GET .../events；?access_token= 仅对 events 路由生效（避免 URL 凭据进入日志）。5) 前端 run 创建后开 EventSource；运行中 chat 步骤只渲染 live 文本（不与 step.content 拼接，防重复），delta 按 round 重置；done/error 关闭，流错误 5s 退避后由轮询兜底重开。",
+      "evidence": [
+        "internal/server/provider.go complete() 现状为 stream:false 一次性 ReadAll",
+        "internal/server/web/app.js schedulePoll 轮询为现状",
+        "鉴权中间件在 Handler() 内统一校验 Bearer token",
+        "初版实现的两个缺陷（修复依据）：finishStream 在锁外 close 与 publish 存在竞态；runEvents 检查状态与订阅之间任务结束会让订阅者永久挂起"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "completeStream()（含 400 去 stream_options 重试）、事件 hub（eventMu 内 publish/close）、runEvents（订阅后复查状态）、前端 EventSource 接入（live 优先渲染、round 重置、退避重连）完成；工具循环/提案人审/错误路径不变",
+      "evidence": [
+        "internal/server/provider.go completeStream/buildChatBody",
+        "internal/server/workflow.go subscribeStream/publishStream/finishStream/runEvents/streamEvent.Round",
+        "internal/server/server.go events 路由 + 仅 events 收 query token",
+        "internal/server/web/app.js openStream/closeStream/renderLiveAnswer/schedulePoll 退避",
+        "internal/server/stream_events_test.go（新增）",
+        "scripts/mock_provider.py（新增流式支持）"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "go test -race -count=1 ./... && go vet 通过（aide:local 官方路径）；新增 10 个流式/事件单测全过。agent-route verify quick 全过（含新增 test_stream_url.cjs）。端到端冒烟：真实二进制 + 流式 mock 验证 delta 推送、取消、鉴权收窄。无头 Chromium（playwright-core + 本机缓存）实测 UI：修复前端 EventSource 漏写 /events 导致 401 失效的缺陷后，验证 chat 思考点→流式文本+闪烁光标→完成持久化一致，工具流 live 工具行 + 轮次重置 + 最终回答不含叙述（scripts/ui_stream_check.cjs PASS 两种模式）。浏览器真实模型体验仍需用户在 8097 确认",
+      "evidence": [
+        "go test -race -count=1 ./... → ok aide/internal/server 3.765s",
+        "TestCompleteStreamTextDeltas/NonSSEFallback/ToolCallAssembly/HTTPError 全 PASS",
+        "TestRunEventsLiveStreamingChat/FinishedTaskCloses/AuthScoping/CancelMidStream 全 PASS",
+        "TestStreamHubCloseIsTerminal/TestCompleteStreamRetryWithoutStreamOptions/TestCompleteStreamCancelMidStream 全 PASS",
+        "agent-route.py verify quick exit 0（含 scripts/test_stream_url.cjs）",
+        "无头浏览器 UI：scripts/ui_stream_check.cjs chat PASS（thinking=true cursor=true）、tool PASS（thinking=true cursor=true tool=true reset=true，最终回答不含第 1 轮叙述）",
+        "端到端冒烟（aide:local + scripts/mock_provider.py）：delta 逐块推送、status+done、取消晚订阅立即关闭、query token 仅 events 生效",
+        "修复依据（无头浏览器探针复现）：EventSource URL 漏 /events → 401；修复后 200 + open→done"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "architecture.md 更新架构说明、API 索引加 events 路由、待规划清单移除 SSE；README.md 使用边界改为已支持 SSE",
+      "evidence": [
+        "docs/architecture.md",
+        "README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "diff 含 7 改 + 3 新文件（任务账本、provider_stream_test.go、stream_events_test.go），无临时 patch/截图；未跟踪文件均有归属；冒烟容器已清理",
+      "evidence": [
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "已获用户授权提交与合并 main（2026-09-24 会话原话「你先提交合并吧」）；提交/推送完成后由 git log 记录实际 SHA。升版 0.1.8.0、候选镜像构建与 GitHub Release 未授权，待用户指示。真实模型浏览器观感由用户在 8097 确认。",
+      "evidence": [
+        "用户授权原话记录于 release_authorization",
+        "release-check 门禁在升版前执行并记录结果"
+      ]
+    }
+  },
+  "release_authorization": "2026-09-24 会话，用户原话：「你先提交合并吧」（授权范围：提交并合并/推送 main；未授权升版、镜像构建与 GitHub Release）。",
+  "rollback": "提交前回退：git reset --hard origin/main 前先备份工作区。提交后回退：git revert <提交> 或 git push --force-with-lease origin main（须另行确认）。镜像回滚用旧 tag（aide:0.1.7.0-RC1 等），不覆盖数据卷。",
+  "handoff": "代码已提交 main 并推送 origin（SHA 见 git log）。缺陷修复：事件 hub 发送/关闭竞态、晚订阅者永久挂起、前端 chat 答案重复渲染、**前端 EventSource URL 漏写 /events 导致流式 401 失效**（无头浏览器探针复现并修复）；另收窄 query token 鉴权范围、增加 stream_options 400 重试与流错误退避。DSH/Codex 风格显示：首 token 前呼吸思考点、流式文本+闪烁光标、live 工具行、按轮次重置；性能优化：rAF 批量渲染、流式期跳过代码高亮（2.85KB 基准 12.2ms→0.7ms）、会话快照去重、summarizeTopic 并发化（index.html 资源版本 ?v=32）。验证：单测（race）全过、agent-route verify quick 全过（含 test_stream_url.cjs 回归）、无头 Chromium UI 检查 PASS（scripts/ui_stream_check.cjs chat/tool 两种模式）、8097 生产服务已用新镜像运行。剩余：用户在 8097 用真实模型确认观感；升版 0.1.8.0、候选镜像构建与 GitHub Release 待用户授权。"
+}
