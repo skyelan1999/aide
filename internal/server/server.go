@@ -109,6 +109,8 @@ type Session struct {
 	Deleted           bool      `json:"deleted,omitempty"`  // 删除墓碑：save/加载跳过，防写盘复活
 	Updated           string    `json:"updated,omitempty"`  // 最近活动时间：完成/跟进按时间置顶
 	Checked           bool      `json:"checked,omitempty"`  // 已完成高亮（蓝点+加粗）是否已被用户查看；新完成时复位
+	ParentID          string    `json:"parentId,omitempty"` // 子会话：指向主会话 ID
+	AutoArchived      bool      `json:"autoArchived,omitempty"` // 子会话完成后自动归档
 }
 type App struct {
 	mu                        sync.Mutex
@@ -646,8 +648,8 @@ func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 	defer a.mu.Unlock()
 	showArchived := r.URL.Query().Get("archived") == "1"
 	type item struct {
-		ID, Title, Created, Status, Updated string
-		Pinned, Archived, Checked           bool
+		ID, Title, Created, Status, Updated, ParentID string
+		Pinned, Archived, Checked, AutoArchived       bool
 	}
 	items := []item{}
 	for _, sess := range a.sessions {
@@ -661,7 +663,7 @@ func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 		}
-		items = append(items, item{sess.ID, sess.Title, sess.Created, status, sess.Updated, sess.Pinned, sess.Archived, sess.Checked})
+		items = append(items, item{sess.ID, sess.Title, sess.Created, status, sess.Updated, sess.ParentID, sess.Pinned, sess.Archived, sess.Checked, sess.AutoArchived})
 	}
 	// 置顶永远最前（活动排序不会把置顶顶下去）；非置顶按最近活动时间倒序
 	sort.Slice(items, func(i, j int) bool {

@@ -84,6 +84,7 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_file", "description": "读取工作目录内文本文件内容（UTF-8）", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Optional reference source ID from list_sources; omitted means workspace"}, "path": map[string]any{"type": "string", "description": "相对路径"}}, "required": []string{"path"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "write_file", "description": "生成文件修改提案（不直接写入；需用户批准应用）", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}}, "required": []string{"path", "content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox and return its stdout/stderr/exit code", "parameters": map[string]any{"type": "object", "properties": map[string]any{"command": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}}}, "required": []string{"task"}}},
 }
 
 func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
@@ -296,6 +297,11 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 	}
 	s.Updated = time.Now().UTC().Format(time.RFC3339Nano) // 完成时刻：列表按完成先后置顶
 	s.Checked = false                                     // 新完成重新点亮“蓝点+加粗”高亮
+	// 子会话完成后自动归档（保留在归档列表中，关联主会话）
+	if s.ParentID != "" && task.Status == "completed" {
+		s.Archived = true
+		s.AutoArchived = true
+	}
 	if saveErr := a.save(s); saveErr != nil {
 		task.Status = "failed"
 		task.Error = "会话保存失败: " + saveErr.Error()
@@ -786,6 +792,79 @@ func shellBlocked(command string) (string, bool) {
 	return "", false
 }
 
+// spawnSubagent 创建一个子会话并启动 run，ParentID 指向当前会话。
+// 子会话完成后自动归档（在 execute() 末尾检查 ParentID）。
+func (a *App) spawnSubagent(parentTask *Task, subPrompt string) (string, string, error) {
+	a.mu.Lock()
+	// 找 parent session
+	var parentSess *Session
+	for _, sess := range a.sessions {
+		for _, r := range sess.Runs {
+			if r.ID == parentTask.ID {
+				parentSess = sess
+				break
+			}
+		}
+		if parentSess != nil {
+			break
+		}
+	}
+	if parentSess == nil {
+		a.mu.Unlock()
+		return "", "", errors.New("找不到父会话")
+	}
+	parentID := parentSess.ID
+
+	// 创建子会话
+	subID := newID()
+	title := []rune(subPrompt)
+	if len(title) > 24 {
+		title = title[:24]
+	}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	subSess := &Session{
+		ID:          subID,
+		Title:       "子: " + string(title),
+		Created:     now,
+		Updated:     now,
+		ParentID:    parentID,
+		Messages:    []Message{},
+		Runs:        []*Task{},
+	}
+	a.sessions[subID] = subSess
+
+	// 创建子任务
+	params := ProfileParams{MaxTokens: 2048}
+	subTask := &Task{
+		ID: newID(), Mode: "chat", Prompt: subPrompt, Status: "running",
+		Steer: make(chan string, 4), Created: now,
+		Steps: []Step{}, Files: []Change{}, Commands: []string{},
+		Strategy: "manual", Model: a.settings.Model,
+		WorkspaceID: parentTask.WorkspaceID, WorkspaceRev: parentTask.WorkspaceRev,
+		WorkspaceMode: parentTask.WorkspaceMode, WorkspaceRemotePath: parentTask.WorkspaceRemotePath,
+	}
+	subSess.Runs = append(subSess.Runs, subTask)
+	subSess.Messages = append(subSess.Messages, Message{Role: "user", Content: subPrompt})
+	a.mu.Unlock()
+
+	// 构建上下文
+	preview := a.buildContextPreview(subSess, subPrompt, "chat", "", a.settings, params, true)
+	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...)
+	firstInput := preview.Messages
+
+	if err := a.save(subSess); err != nil {
+		return "", "", err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+	a.mu.Lock()
+	a.cancels[subTask.ID] = cancel
+	a.mu.Unlock()
+	go a.execute(ctx, subSess, subTask, a.settings, history, firstInput, map[string]Change{}, params)
+
+	return subID, subSess.Title, nil
+}
+
 // execShellCommand 在容器沙箱内实际执行一条 shell 命令（run_shell 工具）。
 // 复用 /api/command 的沙箱约束：bash --norc、60s 超时、受限 env、工作目录锁定在 workspace 内。
 // 返回收集到的 stdout+stderr（截断）和退出码；远程 SSH 模式暂不支持自动执行。
@@ -1017,6 +1096,16 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 			res += "\nerror: " + err.Error()
 		}
 		return res
+	case "spawn_subagent":
+		subTask := str("task")
+		if subTask == "" {
+			return "缺少 task 参数"
+		}
+		subID, subTitle, err := a.spawnSubagent(task, subTask)
+		if err != nil {
+			return "子会话创建失败: " + err.Error()
+		}
+		return fmt.Sprintf("子会话已创建: %s (标题: %s)。子会话独立运行，完成后自动归档，结果会关联到当前会话。", subID, subTitle)
 	default:
 		// 插件工具（协议 v1.1）
 		pluginID := a.pluginOwnerOf(call.Function.Name)
