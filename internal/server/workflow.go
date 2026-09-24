@@ -645,6 +645,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		stepName = task.Steps[stepIndex].Name
 	}
 	a.mu.Unlock()
+	consecutiveFail := map[string]int{} // 工具名 → 连续失败次数
 	for round := 0; round < 10; round++ {
 		rec := func(body []byte) {
 			sum := sha256.Sum256(body)
@@ -667,6 +668,10 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		}
 		onDelta := func(delta string) { a.publishStream(task.ID, streamEvent{Event: "delta", Text: delta, Round: round}) }
 		out, calls, usage, err := completeStream(ctx, cfg, input, params, tools, rec, onDelta)
+		if err != nil && ctx.Err() == nil {
+			// 网络/API 抖动：自动重试一次再放弃
+			out, calls, usage, err = completeStream(ctx, cfg, input, params, tools, rec, onDelta)
+		}
 		if err != nil {
 			return "", nil, err
 		}
@@ -701,6 +706,21 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		input = append(input, Message{Role: "assistant", Content: out, ToolCalls: calls})
 		for _, call := range calls {
 			result := a.executeToolCall(call, task, versions)
+			// 失败反馈循环：检测工具是否返回错误结果，连续失败时注入明确提示
+			isErr := strings.HasPrefix(result, "权限策略拦截") ||
+				strings.HasPrefix(result, "沙箱模式") ||
+				strings.HasPrefix(result, "错误") ||
+				strings.Contains(result, "no such file") ||
+				strings.Contains(result, "permission denied")
+			if isErr {
+				consecutiveFail[call.Function.Name]++
+				if consecutiveFail[call.Function.Name] >= 2 {
+					result += "\n\n[系统提示] 你连续对 " + call.Function.Name + " 调用失败了 " +
+						fmt.Sprint(consecutiveFail[call.Function.Name]) + " 次。请停止重复同样的尝试，换一种方式或向用户说明你需要什么帮助。"
+				}
+			} else {
+				consecutiveFail[call.Function.Name] = 0
+			}
 			input = append(input, Message{Role: "tool", ToolCallID: call.ID, Content: result})
 			display := result
 			if len(display) > 2000 {
