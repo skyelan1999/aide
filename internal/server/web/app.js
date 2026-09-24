@@ -1822,10 +1822,26 @@ function renderMarkdown(src, live) {
   if (window.marked && typeof window.marked.parse === 'function') {
     const html = window.marked.parse(String(src || ''), { gfm: true, breaks: false });
     const body = sanitizeHtml(html);
+    // mermaid 流程图：把 ```mermaid 代码块替换成 <div class="mermaid"> 供后续渲染
+    body.querySelectorAll('pre > code.language-mermaid').forEach(codeEl => {
+      const pre = codeEl.parentElement;
+      const div = el('div', 'mermaid', codeEl.textContent);
+      pre.replaceWith(div);
+    });
     // live（流式渲染）跳过代码高亮：每帧全量高亮代价高，完成态由 renderSession 补全
     if (!live) body.querySelectorAll('pre > code[class*="language-"]').forEach(codeEl => {
       const lang = (codeEl.className.match(/language-([\w+-]+)/) || [])[1] || '';
       if (/^(js|javascript|jsx|ts|typescript|mjs)$/i.test(lang)) codeEl.innerHTML = highlightCode(codeEl.textContent, lang);
+    });
+    // 拦截相对路径链接：点击时在 aide 内部打开文件，不跳浏览器 404
+    body.querySelectorAll('a[href]').forEach(a => {
+      const href = a.getAttribute('href') || '';
+      if (/^(https?:|mailto:|#|data:)/.test(href)) return; // 外部链接正常跳转
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        const path = href.replace(/^\.\//, '').split('#')[0];
+        if (path) openFile(path).catch(() => toast(t("打不开文件: ") + path));
+      });
     });
     return body.innerHTML;
   }
@@ -2134,7 +2150,21 @@ window.addEventListener('aide:language', () => {
   if (state.config) action(refreshConfig)();
   renderSession(); renderAttachments(); renderTrajectory(); renderSourceChips();
   refreshStrategyUI(); refreshCompactInfo(); estimateContext(); renderWorkspaceSummary(); updateSendEnabled();
-  if (!document.body.classList.contains('file-view-mode') && state.config) { action(loadSessions)(); action(loadFiles)(); }
+  // mermaid 初始化
+if (window.mermaid) mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });
+async function renderMermaid() {
+  if (!window.mermaid) return;
+  document.querySelectorAll('div.mermaid:not([data-processed])').forEach(async el => {
+    try {
+      const { svg } = await mermaid.render('m' + Math.random().toString(36).slice(2), el.textContent);
+      el.innerHTML = svg; el.dataset.processed = '1';
+    } catch (e) { el.innerHTML = '<pre style="color:#f87171">流程图渲染失败</pre>'; el.dataset.processed = '1'; }
+  });
+}
+if (!document.body.classList.contains('file-view-mode') && state.config) { action(loadSessions)(); action(loadFiles)(); }
+// 每次 renderMarkdown 后触发 mermaid 渲染
+const _origRender = renderMarkdown;
+renderMarkdown = function(src, live) { const html = _origRender(src, live); setTimeout(renderMermaid, 50); return html; };
   if (fileView.spec) $('file-view-status').textContent = $('file-view-editor').readOnly ? t('只读') : t('可编辑 · 保存后同步');
   if (!$('strategy-menu').classList.contains('hidden')) openStrategyMenu();
   if (state.contextPreview) renderContextPreview(state.contextPreview);
