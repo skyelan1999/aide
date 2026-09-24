@@ -493,6 +493,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/requests", a.runRequestsHandler)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/events", a.runEvents)
+	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/queue/{index}", a.queueUpdate)
 	mux.HandleFunc("POST /api/context-preview", a.contextPreviewHandler)
 	mux.HandleFunc("POST /api/command", a.command)
 	web, _ := fs.Sub(assets, "web")
