@@ -88,6 +88,8 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}}}, "required": []string{"task"}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_memory", "description": "Read persistent memory file", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "write_memory", "description": "Append to persistent memory", "parameters": map[string]any{"type": "object", "properties": map[string]any{"content": map[string]any{"type": "string"}}, "required": []string{"content"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "search_text", "description": "Keyword search in workspace files, supports regex", "parameters": map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}, "path": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "semantic_search", "description": "Semantic vector search by meaning", "parameters": map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}}, "required": []string{"query"}}}},
 }
 
 func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
@@ -901,6 +903,64 @@ func (a *App) writeMemory(content string) string {
 	return "已写入记忆。"
 }
 
+// readOfficeFile 用 python 解析 Office 文件为纯文本
+func (a *App) readOfficeFile(path string) string {
+	script := `
+import sys
+path = sys.argv[1]
+try:
+    if path.endswith('.docx'):
+        from docx import Document
+        d = Document(path)
+        for p in d.paragraphs: print(p.text)
+    elif path.endswith('.xlsx'):
+        import openpyxl
+        wb = openpyxl.load_workbook(path, read_only=True)
+        for ws in wb.worksheets:
+            print(f"=== Sheet: {ws.title} ===")
+            for row in ws.iter_rows(values_only=True):
+                print("\t".join(str(c) if c is not None else "" for c in row))
+    elif path.endswith('.pptx'):
+        from pptx import Presentation
+        prs = Presentation(path)
+        for i, slide in enumerate(prs.slides):
+            print(f"=== Slide {i+1} ===")
+            for shape in slide.shapes:
+                if shape.has_text_frame:
+                    for para in shape.text_frame.paragraphs: print(para.text)
+except Exception as e:
+    print(f"解析失败: {e}", file=sys.stderr)
+    sys.exit(1)
+`
+	cmd := exec.Command("python3", "-c", script, path)
+	cmd.Dir = "/workspace"
+	out, err := cmd.Output()
+	if err != nil {
+		return "Office 文件解析失败: " + err.Error()
+	}
+	result := string(out)
+	if len(result) > 60<<10 { result = result[:60<<10] + "\n…（已截断）" }
+	return result
+}
+
+// searchText 关键字搜索工作目录
+func (a *App) searchText(query, path string) string {
+	if query == "" { return "缺少 query" }
+	if path == "" { path = "." }
+	// 用 grep -rn 递归搜索
+	cmd := exec.Command("bash", "--norc", "-c",
+		"cd /workspace && grep -rn --include='*.txt' --include='*.md' --include='*.go' --include='*.js' --include='*.py' --include='*.json' --include='*.html' --include='*.css' -i " +
+			shellQuote(query) + " " + shellQuote(path) + " 2>/dev/null | head -50")
+	out, err := cmd.Output()
+	if err != nil { return "未找到匹配: " + query }
+	return string(out)
+}
+
+// semanticSearch 语义搜索（先返回提示，后续接 embedding）
+func (a *App) semanticSearch(query string) string {
+	return "语义搜索暂未配置 embedding 模型。当前可用关键字搜索（search_text）。"
+}
+
 // feedbackHandler 记录用户对回答的评价（好/有问题），写入记忆文件用于重训练
 func (a *App) feedbackHandler(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -1126,6 +1186,10 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 		if p == "" {
 			return "缺少 path 参数"
 		}
+		// Office 文件用 python 解析成文本
+		if strings.HasSuffix(p, ".docx") || strings.HasSuffix(p, ".xlsx") || strings.HasSuffix(p, ".pptx") {
+			return a.readOfficeFile(p)
+		}
 		b, err := readTextFile(p)
 		if err != nil {
 			return "读取失败: " + err.Error()
@@ -1173,6 +1237,10 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 			return "缺少 content 参数"
 		}
 		return a.writeMemory(content)
+	case "search_text":
+		return a.searchText(str("query"), str("path"))
+	case "semantic_search":
+		return a.semanticSearch(str("query"))
 	default:
 		// 插件工具（协议 v1.1）
 		pluginID := a.pluginOwnerOf(call.Function.Name)
