@@ -72,10 +72,14 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "已获用户授权完整发布（「做啊」）：升版 0.1.9.0 RC1、打 tag、候选镜像、GitHub 预发布与镜像附件；8097 不自动替换。",
+      "status": "pass",
+      "summary": "发布完成（2026-09-24）：升版 0.1.9.0 RC1（提交 2260cfe，tag v0.1.9.0-RC1 已推送）；候选镜像 aide:0.1.9.0-RC1 身份 0.1.9.0 RC1 @ 2260cfeba74dcb91b5510cb1ea599a9dc9df6e60 冒烟通过（healthz/config 身份、chat 完成、插话记录持久化）；GitHub 预发布 https://github.com/skyelan1999/aide/releases/tag/v0.1.9.0-RC1 已创建，附 arm64 镜像与 SHA-256；8097 生产服务未自动替换。",
       "evidence": [
-        "用户授权原话记录于 release_authorization"
+        "用户授权原话记录于 release_authorization",
+        "git push origin main → 046aafc..2260cfe；git push origin v0.1.9.0-RC1（2026-09-24）",
+        "agent-route.py verify full PASS（.agent-state/verify-20260924T064235110408Z.log）；release-check queue-steer PASS",
+        "候选镜像冒烟：healthz OK；/api/config buildVersion=0.1.9.0 RC1、buildCommit=2260cfeba74d…；chat 完成 + steer 记录持久化",
+        "docker-images/aide-0.1.9.0-RC1-linux-arm64.tar.gz + aide-0.1.9.0-RC1.sha256 已上传 GitHub Release"
       ]
     }
   },
