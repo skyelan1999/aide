@@ -13,7 +13,59 @@ async function api(path, options = {}) {
   return data;
 }
 function action(fn) { return async (...args) => { try { await fn(...args); } catch (e) { toast(e.message); } }; }
-function setMode(mode) { state.mode = mode; document.querySelectorAll('.mode-switch button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode)); if (typeof scheduleContextPreview === 'function') scheduleContextPreview(); }
+function setMode(mode) {
+  state.mode = mode;
+  document.querySelectorAll('.mode-switch button').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+  const phaseBar = $('workflow-phases');
+  if (phaseBar) {
+    if (mode === 'workflow') {
+      phaseBar.classList.remove('hidden');
+      phaseBar.querySelectorAll('.phase-btn').forEach((btn, i) => {
+        btn.style.animation = 'none';
+        btn.offsetHeight; // reflow
+        btn.style.animation = 'phaseIn 0.35s ease forwards ' + (i * 70) + 'ms';
+      });
+    } else {
+      phaseBar.querySelectorAll('.phase-btn').forEach((btn, i) => {
+        btn.style.animation = 'phaseOut 0.25s ease forwards ' + ((3 - i) * 50) + 'ms';
+      });
+      setTimeout(() => { if (state.mode !== 'workflow') phaseBar.classList.add('hidden'); }, 400);
+    }
+  }
+  updateAutoModeUI();
+  if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
+}
+// AI 工作流四阶段
+state.workflowPhase = state.workflowPhase || '';
+document.querySelectorAll('.phase-btn').forEach(btn => {
+  btn.onclick = () => {
+    const phase = btn.dataset.phase;
+    if (state.workflowPhase === phase) {
+      state.workflowPhase = '';
+      btn.classList.remove('selected');
+    } else {
+      state.workflowPhase = phase;
+      document.querySelectorAll('.phase-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    }
+    updateAutoModeUI();
+  };
+});
+// 自动编排模式：AI 工作流下未选任何阶段时，显示 Lead 自动调度多智能体的指示
+function updateAutoModeUI() {
+  const bar = $('workflow-phases');
+  if (!bar) return;
+  let hint = $('auto-mode-hint');
+  if (!hint) {
+    hint = el('div');
+    hint.id = 'auto-mode-hint';
+    hint.style.cssText = 'flex-basis:100%;font-size:10px;color:var(--muted);text-align:center;margin:0 0 2px;';
+    bar.prepend(hint);
+  }
+  const auto = state.mode === 'workflow' && !state.workflowPhase;
+  hint.textContent = auto ? t("🤖 自动编排中：Lead 将依次调度 需求→设计→实施→验证 子智能体") : '';
+  hint.style.display = auto ? '' : 'none';
+}
 async function refreshConfig() {
   state.config = await api('/config');
   $('connection').textContent = t("● 本地服务已连接"); $('connection').classList.add('ready');
@@ -25,22 +77,30 @@ async function refreshConfig() {
   estimateContext();
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
+const subGroupState = {}; // 主会话 id -> { collapsed, expandAll }：已归档子会话折叠组状态，跨 loadSessions 重渲染保留
 async function loadSessions() {
-  const sessions = await api('/sessions'); $('sessions').replaceChildren();
+  const [sessions, archived] = await Promise.all([api('/sessions'), api('/sessions?archived=1')]);
+  $('sessions').replaceChildren();
+  // 层级：无 parentId 为主会话；有 parentId 为子会话。active 列表里的子会话=运行中（未归档），archived 列表里的=完成后自动归档。
+  const childrenOf = {}, doneChildrenOf = {}, mains = [];
+  sessions.forEach(s => { if (s.parentId) (childrenOf[s.parentId] = childrenOf[s.parentId] || []).push(s); else mains.push(s); });
+  archived.forEach(s => { if (s.parentId) (doneChildrenOf[s.parentId] = doneChildrenOf[s.parentId] || []).push(s); });
   if (!sessions.length) $('sessions').append(el('p', 'sessions-empty', t("还没有会话。\n从一个想法开始吧。")));
-  sessions.forEach(s => {
+
+  // 单个会话条目（主/子共用）：主会话原样；子会话加 sub-session 缩进类与 ↳ 前缀
+  const buildItem = (s, isSub) => {
     const isActive = state.session?.id === s.id;
     // 高亮（蓝点+加粗）只给“完成且未被查看”的会话；查看后由后端 checked 持久化清除
     const highlight = s.status === 'completed' && !s.checked;
-    const item = el('div', 'session-item' + (isActive ? ' active' : '') + (s.pinned ? ' pinned' : '') + (highlight ? ' status-completed' : ''));
+    const item = el('div', 'session-item' + (isActive ? ' active' : '') + (s.pinned ? ' pinned' : '') + (highlight ? ' status-completed' : '') + (isSub ? ' sub-session' : ''));
     item.title = s.title;
     // 状态机：运行中=荧光绿闪烁、等待审批=黄常亮、失败=红常亮、完成=蓝；其余无点。
-    // 选中会话由 CSS 转为无色点 + 正常字重（点击检查后加粗与蓝点消失）
     const dotClass = { running: 'dot-running', failed: 'dot-failed', awaiting_approval: 'dot-await', completed: 'dot-done' }[s.status] || '';
-    // 完成且已查看：不显示蓝点；运行/审批/失败灯始终显示（点击运行中绿灯不消失）
-    if (dotClass && !(s.status === 'completed' && s.checked)) item.append(el('span', 'session-dot ' + dotClass, ''));
-    const label = el('span', 'session-label', s.title);
+    // 完成且已查看：不显示蓝点；已自动归档的子会话用灰标签替代蓝点
+    if (dotClass && !(s.status === 'completed' && s.checked) && !(isSub && s.autoArchived)) item.append(el('span', 'session-dot ' + dotClass, ''));
+    const label = el('span', 'session-label' + (isSub ? ' sub-session-label' : ''), s.title);
     label.onclick = action(() => selectSession(s.id));
+    if (isSub && s.autoArchived) label.append(el('span', 'sub-session-badge', t("已完成")));
     const more = el('button', 'session-more', '⋯');
     more.setAttribute('aria-label', t("会话操作"));
     more.onclick = e => {
@@ -77,7 +137,38 @@ async function loadSessions() {
       setTimeout(() => { const close = () => { closeMenu(); document.removeEventListener('click', close); }; document.addEventListener('click', close); }, 0);
     };
     item.append(label, more);
-    $('sessions').append(item);
+    return item;
+  };
+
+  const renderedMains = new Set(mains.map(m => m.id));
+  mains.forEach(m => {
+    $('sessions').append(buildItem(m, false));
+    // 运行中子会话（未归档）：直接缩进列出，运行灯复用 dot-running
+    (childrenOf[m.id] || []).forEach(c => $('sessions').append(buildItem(c, true)));
+    // 完成后自动归档的子会话：折叠组，默认展开最近 3 个
+    const done = doneChildrenOf[m.id] || [];
+    if (done.length) {
+      const st = subGroupState[m.id] = subGroupState[m.id] || { collapsed: false, expandAll: false };
+      const toggle = el('div', 'sub-group-toggle');
+      toggle.onclick = () => { st.collapsed = !st.collapsed; loadSessions(); };
+      toggle.append(el('span', 'sub-group-caret', st.collapsed ? '▸' : '▾'));
+      toggle.append(el('span', 'sub-group-title', t("子会话") + ' (' + done.length + ')'));
+      $('sessions').append(toggle);
+      if (!st.collapsed) {
+        const shown = st.expandAll ? done : done.slice(0, 3);
+        shown.forEach(c => $('sessions').append(buildItem(c, true)));
+        if (done.length > 3) {
+          const more = el('div', 'sub-group-toggle sub-group-more');
+          more.onclick = e => { e.stopPropagation(); st.expandAll = !st.expandAll; loadSessions(); };
+          more.append(el('span', '', st.expandAll ? t("收起") : t("展开全部 (+" + (done.length - 3) + ")")));
+          $('sessions').append(more);
+        }
+      }
+    }
+  });
+  // 父会话已归档而子会话仍在活动列表中的孤儿子会话：顶层兜底渲染，避免丢失
+  Object.keys(childrenOf).forEach(pid => {
+    if (!renderedMains.has(pid)) childrenOf[pid].forEach(c => $('sessions').append(buildItem(c, true)));
   });
   return sessions;
 }
@@ -322,7 +413,7 @@ function renderSession() {
         if (!running && text) {
           const actions = el('div', 'msg-actions');
           const mk = (icon, label, fn) => {
-            const b = el('button', 'msg-btn', icon + ' ' + label);
+            const b = el('button', 'msg-btn', label);
             b.type = 'button';
             b.onclick = fn;
             return b;
@@ -496,7 +587,7 @@ function setEditorMode(mode) {
   $('editor-preview').classList.toggle('hidden', !preview);
   $('editor-mode-edit').classList.toggle('active', !preview);
   $('editor-mode-preview').classList.toggle('active', preview);
-  if (preview) { $('editor-preview').innerHTML = renderMarkdown($('editor').value); $('editor-preview').scrollTop = 0; }
+  if (preview) { $('editor-preview').innerHTML = renderMarkdown($('editor').value, false, state.file ? state.file.path : ''); $('editor-preview').scrollTop = 0; }
 }
 function showEditor() {
   $('editor-title').textContent = state.file.path; $('editor').value = state.file.content;
@@ -507,15 +598,13 @@ function showEditor() {
   const isDrawio = /\.drawio$/i.test(state.file.path || '');
   $('editor-mode-switch').classList.toggle('hidden', !md);
   if (isDrawio) {
-    // draw.io 文件：用 embed.diagrams.net 渲染
     $('editor').classList.add('hidden');
-    $('editor-preview').innerHTML = '<iframe src="https://embed.diagrams.net/?embed=1&proto=json&spin=1" style="width:100%;height:90vh;border:0"></iframe>';
     $('editor-preview').classList.remove('hidden');
-    // 加载后 postMessage 发送 XML
-    const iframe = $('editor-preview').querySelector('iframe');
-    iframe.onload = () => {
-      iframe.contentWindow.postMessage(JSON.stringify({action: 'load', xml: state.file.content}), '*');
-    };
+    setupDrawioFrame($('editor-preview'), state.file.content, (xml) => {
+      $('editor').value = xml;
+      $('save-file').click();
+      toast(t('draw.io 已保存'));
+    }, '_editorDrawioHandler');
   } else {
     setEditorMode(md ? 'preview' : 'edit');
   }
@@ -531,6 +620,8 @@ $('new-session').onclick = action(newSession); $('refresh-sessions').onclick = a
 document.querySelectorAll('.mode-switch button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
 document.querySelectorAll('.starter').forEach(b => b.onclick = () => { $('prompt').value = b.dataset.prompt; setMode(b.dataset.mode || 'chat'); $('prompt').focus(); });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
+// 点击 dialog 遮罩关闭弹窗（事件委托，覆盖所有静态及动态 dialog）
+document.addEventListener('click', e => { if (e.target.tagName === 'DIALOG' && e.target.open) e.target.close(); });
 document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { state.root = b.dataset.root; state.dir = '.'; if (state.root === 'context') state.source = ''; document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); renderSourceChips(); await loadFiles(); }));
 function syncPanelButtons() {
   const plugins = document.body.classList.contains('plugins-mode');
@@ -575,7 +666,7 @@ $('task-form').onsubmit = action(async event => {
     }
     const target = draftSession || created;
     const strategy = state.profiles?.strategy || 'manual';
-    await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued: state.queueMode }) });
+    await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued: state.queueMode, workflowPhase: state.workflowPhase || '' }) });
     if (state.session?.id === target.id) { // 仅当用户仍停留在发送会话时清空草稿
       $('prompt').value = ''; state.attachments = []; renderAttachments();
     }
@@ -615,6 +706,29 @@ function hideContextPreview() {
   $('context-preview').classList.add('hidden');
   updateSendEnabled();
 }
+// ctx-bar 浮动 tooltip
+let _ctxTooltip = null;
+function showCtxTooltip(e, label, tokens, pct, color) {
+  if (!_ctxTooltip) {
+    _ctxTooltip = document.createElement('div');
+    _ctxTooltip.className = 'ctx-tooltip';
+    document.body.append(_ctxTooltip);
+  }
+  _ctxTooltip.innerHTML = '<strong style="color:' + color + '">' + label + '</strong><br>' + tokens + ' tokens · ' + pct + '%';
+  _ctxTooltip.style.display = 'block';
+  moveCtxTooltip(e);
+}
+function moveCtxTooltip(e) {
+  if (!_ctxTooltip) return;
+  const x = Math.min(e.clientX + 12, window.innerWidth - 160);
+  const y = Math.min(e.clientY + 12, window.innerHeight - 60);
+  _ctxTooltip.style.left = x + 'px';
+  _ctxTooltip.style.top = y + 'px';
+}
+function hideCtxTooltip() {
+  if (_ctxTooltip) _ctxTooltip.style.display = 'none';
+}
+
 function renderContextPreview(data) {
   if (!data || !data.breakdown) return;
   state.contextPreview = data;
@@ -635,7 +749,11 @@ function renderContextPreview(data) {
     [t("工具定义 ") + (bd.toolCount || 0) + t(" 个"), bd.toolSchemaChars]
   ];
   rows.forEach(([label, chars]) => {
-    if (chars) detail.append(el('div', 'cp-row', el('span', '', label), el('span', '', chars + t(" 字符 ≈ ") + Math.floor(chars / 4) + ' tokens')));
+    if (chars) {
+      const row = el('div', 'cp-row');
+      row.append(el('span', '', label), el('span', '', chars + t(" 字符 ≈ ") + Math.floor(chars / 4) + ' tokens'));
+      detail.append(row);
+    }
   });
   // 堆叠条形图：按 token 占比着色，hover 高亮显示详情
   const segments = [
@@ -649,16 +767,45 @@ function renderContextPreview(data) {
   ].filter(x => x.chars > 0);
   const total = segments.reduce((sum, x) => sum + x.chars, 0) || 1;
   const bar = el('div', 'ctx-bar');
+  const cells = [];
   for (const seg of segments) {
     const pct = ((seg.chars / total) * 100).toFixed(1);
     const cell = el('div', 'ctx-bar-cell');
     cell.style.width = pct + '%';
     cell.style.background = seg.color;
     const tokens = Math.floor(seg.chars / 4);
-    cell.title = seg.label + " · " + tokens + " tokens (" + pct + "%)";
+    cell.dataset.label = seg.label;
+    cell.dataset.tokens = tokens;
+    cell.dataset.pct = pct;
+    cell.dataset.color = seg.color;
+    cell.addEventListener('mouseenter', (e) => {
+      cells.forEach(c => { if (c !== cell) c.classList.add('dimmed'); });
+      showCtxTooltip(e, seg.label, tokens, pct, seg.color);
+    });
+    cell.addEventListener('mousemove', (e) => moveCtxTooltip(e));
+    cell.addEventListener('mouseleave', () => {
+      cells.forEach(c => c.classList.remove('dimmed'));
+      hideCtxTooltip();
+    });
+    cells.push(cell);
     bar.append(cell);
   }
   detail.append(bar);
+  // 图例：可点击切换显示/隐藏
+  const legend = el('div', 'ctx-legend');
+  segments.forEach(seg => {
+    const tokens = Math.floor(seg.chars / 4);
+    const item = el('div', 'ctx-legend-item');
+    item.append(el('span', 'ctx-legend-dot', ''), el('span', '', seg.label + ' · ' + tokens + 't'));
+    item.querySelector('.ctx-legend-dot').style.background = seg.color;
+    item.onclick = () => {
+      item.classList.toggle('hidden');
+      const idx = segments.indexOf(seg);
+      if (cells[idx]) cells[idx].style.display = item.classList.contains('hidden') ? 'none' : '';
+    };
+    legend.append(item);
+  });
+  detail.append(legend);
   detail.append(el('p', 'cp-note', data.estimationNote || ''));
   $('context-preview').classList.remove('hidden');
   updateSendEnabled();
@@ -856,20 +1003,40 @@ function renderLanguageControl() {
 
 function renderPermissionManager() {
   const wrap = el('div', 'settings-control permission-panel');
-  const rows = [
-    ['run_shell', t('执行 shell 命令'), t('沙箱内自动执行（60s 超时、受限环境），危险命令自动拦截'), 'auto-blocked'],
-    ['write_file', t('写入文件'), t('生成修改提案，需你手动批准后才落盘'), 'approval'],
-    ['list_files / read_file', t('列目录 / 读文件'), t('直接执行，结果返回给模型'), 'auto'],
-    ['plugin tools', t('插件工具'), t('已启用插件声明的能力，按插件协议执行'), 'plugin'],
+  const tools = [
+    ['run_shell', t('执行 shell 命令'), t('沙箱内自动执行（60s 超时、受限环境），危险命令自动拦截')],
+    ['write_file', t('写入文件'), t('生成修改提案，需你手动批准后才落盘')],
+    ['list_files', t('列目录'), t('列出工作目录内容，结果返回给模型')],
+    ['read_file', t('读文件'), t('读取文件内容返回给模型')],
+    ['search_text', t('关键字搜索'), t('工作区文件正则关键字搜索')],
+    ['semantic_search', t('语义搜索'), t('本地 TF-IDF 语义检索文件片段')],
+    ['web_search', t('网页搜索'), t('DuckDuckGo 在线搜索当前信息')],
+    ['spawn_subagent', t('子代理'), t('派生独立子会话处理子任务')],
+    ['read_memory', t('读记忆'), t('读取持久化记忆文件')],
+    ['write_memory', t('写记忆'), t('追加持久化记忆')],
+    ['create_diagram', t('建图表'), t('创建 draw.io 图表文件')],
   ];
-  for (const [tool, label, desc, badge] of rows) {
+  const disabled = new Set(state.config && state.config.disabledTools ? state.config.disabledTools : []);
+  for (const [tool, label, desc] of tools) {
     const row = el('div', 'perm-row');
     const head = el('div', 'perm-head');
-    head.append(el('code', 'perm-tool', tool), el('span', 'perm-badge perm-' + badge, label));
+    const code = el('code', 'perm-tool', tool);
+    const toggle = el('input');
+    toggle.type = 'checkbox';
+    toggle.checked = !disabled.has(tool);
+    toggle.title = t('取消勾选即禁用该工具');
+    toggle.onchange = action(async () => {
+      const set = new Set(state.config && state.config.disabledTools ? state.config.disabledTools : []);
+      if (toggle.checked) set.delete(tool); else set.add(tool);
+      await api('/settings', { method: 'PUT', body: JSON.stringify({ disabledTools: Array.from(set), activeModel: state.config ? state.config.activeModel : '' }) });
+      await refreshConfig();
+      toast(t('工具权限已更新'));
+    });
+    head.append(code, toggle, el('span', 'perm-badge', label));
     row.append(head, el('p', 'perm-desc', desc));
     wrap.append(row);
   }
-  wrap.append(el('p', 'section-desc', t('破坏性命令（递归删除、提权、推送远端、磁盘格式化、结束进程等）会被自动拦截，模型收到拒绝提示后会建议你手动运行。')));
+  wrap.append(el('p', 'section-desc', t('取消勾选后模型将看不到该工具，即使调用也会被拒绝。破坏性命令仍会被自动拦截。')));
   return wrap;
 }
 
@@ -1153,7 +1320,13 @@ function refreshStrategyUI() {
   manageModels.type = 'button';
   manageModels.onclick = () => { closeStrategyMenu(); openSettings(); };
   right.append(manageModels);
-  menu.append(left, right);
+  const reasoningCol = el('div', 'strategy-menu-col');
+  reasoningCol.append(el('div', 'strategy-menu-sep', t("推理强度")));
+  const curEffort = state.config?.reasoningEffort || 'auto';
+  for (const [val, name, desc] of [['auto', t("自动"), t("按任务自动选择")], ['off', t("关闭"), t("不启用推理")], ['low', t("低"), t("快速响应")], ['medium', t("中"), t("均衡")], ['high', t("高"), t("深度推理")]]) {
+    reasoningCol.append(strategyMenuOption('reasoning', val, name, desc, curEffort === val));
+  }
+  menu.append(left, right, reasoningCol);
 }
 function strategyMenuOption(kind, value, name, desc, selected) {
   const b = el('button', 'strategy-option' + (selected ? ' selected' : ''));
@@ -1170,6 +1343,13 @@ function strategyMenuOption(kind, value, name, desc, selected) {
       await refreshConfig();
       const modelName = state.config.models?.find(m => m.id === value)?.name || value;
       toast(t("已切换模型：") + modelName);
+      return;
+    }
+    if (kind === 'reasoning') {
+      await api('/settings', { method: 'PUT', body: JSON.stringify({ reasoningEffort: value }) });
+      closeStrategyMenu();
+      await refreshConfig();
+      toast(t("已切换推理强度：") + ({auto:t("自动"),off:t("关闭"),low:t("低"),medium:t("中"),high:t("高")}[value] || value));
       return;
     }
     if (kind === 'auto') source.strategy = 'auto';
@@ -1416,12 +1596,13 @@ function renderModelList() {
   const host = $('model-list');
   host.replaceChildren();
   for (const m of state.modelDraft?.models || []) {
-    const row = el('div', 'model-row');
-    const radio = el('button', 'model-active' + (m.id === state.modelDraft.activeModel ? ' active' : ''));
+    const isActive = m.id === state.modelDraft.activeModel;
+    const row = el('div', 'model-row' + (isActive ? ' active-model' : ''));
+    const radio = el('button', 'model-active' + (isActive ? ' active' : ''));
     radio.type = 'button';
     radio.title = t("设为当前模型");
-    radio.setAttribute('aria-pressed', String(m.id === state.modelDraft.activeModel));
-    radio.textContent = m.id === state.modelDraft.activeModel ? '●' : '○';
+    radio.setAttribute('aria-pressed', String(isActive));
+    radio.textContent = isActive ? '●' : '○';
     radio.onclick = () => { state.modelDraft.activeModel = m.id; renderModelList(); };
     const nameInput = el('input', 'model-name-input');
     nameInput.value = m.name || m.id;
@@ -1429,24 +1610,7 @@ function renderModelList() {
     nameInput.setAttribute('aria-label', t("模型名称"));
     nameInput.addEventListener('input', () => { m.name = nameInput.value.trim() || m.id; });
     const idText = el('span', 'model-id-text', m.id);
-    const windowLabel = el('label', 'model-window-label', t("窗口"));
-    const windowInput = el('input', 'model-window-input');
-    windowInput.type = 'number';
-    windowInput.min = 1024;
-    windowInput.max = 2097152;
-    windowInput.step = 1024;
-    windowInput.value = m.contextWindow || 65536;
-    windowInput.setAttribute('aria-label', t("上下文窗口"));
-    windowInput.addEventListener('input', () => {
-      const v = parseInt(windowInput.value, 10);
-      if (!Number.isNaN(v)) {
-        m.contextWindow = v;
-        // 高亮匹配的预设
-        windowHost.querySelectorAll('.win-preset').forEach(b => {
-          b.classList.toggle('active', parseInt(b.dataset.k, 10) === v);
-        });
-      }
-    });
+    const windowLabel = el('span', 'model-window-label', t("上下文窗口"));
     const presets = [
       {k: 32768, label: '32K'},
       {k: 65536, label: '64K'},
@@ -1455,7 +1619,6 @@ function renderModelList() {
       {k: 256000, label: '256K'},
       {k: 1000000, label: '1M'},
     ];
-    const windowHost = el('span', 'model-window-host');
     const presetRow = el('span', 'win-preset-row');
     presets.forEach(p => {
       const btn = el('button', 'win-preset', p.label);
@@ -1471,8 +1634,23 @@ function renderModelList() {
       };
       presetRow.append(btn);
     });
-    windowHost.append(presetRow, windowInput);
-    windowLabel.append(windowHost);
+    const windowInput = el('input', 'model-window-input');
+    windowInput.type = 'number';
+    windowInput.min = 1024;
+    windowInput.max = 2097152;
+    windowInput.step = 1024;
+    windowInput.value = m.contextWindow || 65536;
+    windowInput.setAttribute('aria-label', t("上下文窗口"));
+    windowInput.addEventListener('input', () => {
+      const v = parseInt(windowInput.value, 10);
+      if (!Number.isNaN(v)) {
+        m.contextWindow = v;
+        // 高亮匹配的预设
+        presetRow.querySelectorAll('.win-preset').forEach(b => {
+          b.classList.toggle('active', parseInt(b.dataset.k, 10) === v);
+        });
+      }
+    });
     const del = el('button', 'model-delete', '－');
     del.type = 'button';
     del.title = t("删除模型");
@@ -1482,7 +1660,11 @@ function renderModelList() {
       if (state.modelDraft.activeModel === m.id) state.modelDraft.activeModel = state.modelDraft.models[0]?.id || '';
       renderModelList();
     };
-    row.append(radio, nameInput, idText, windowLabel, del);
+    const rowHead = el('div', 'model-row-head');
+    rowHead.append(radio, nameInput, idText, del);
+    const rowWin = el('div', 'model-row-window');
+    rowWin.append(windowLabel, presetRow, windowInput);
+    row.append(rowHead, rowWin);
     host.append(row);
   }
   if (!(state.modelDraft?.models || []).length) host.append(el('p', 'muted', t("尚未添加模型。可输入模型 ID 添加，或用「自动获取」从 API 拉取候选。")));
@@ -1891,7 +2073,44 @@ function sanitizeHtml(html) {
   });
   return doc.body;
 }
-function renderMarkdown(src, live) {
+/* draw.io embed 正确协议：等 init 事件后再 load，save 事件回写 */
+function setupDrawioFrame(container, xml, onSave, handlerKey) {
+  container.innerHTML = '';
+  const iframe = document.createElement('iframe');
+  iframe.src = 'https://embed.diagrams.net/?embed=1&proto=json&spin=1';
+  iframe.style.cssText = 'width:100%;height:75vh;min-height:400px;border:0;border-radius:8px;';
+  iframe.setAttribute('allow', 'fullscreen');
+  container.appendChild(iframe);
+  let loaded = false;
+  let timedOut = false;
+  const timeoutId = setTimeout(() => {
+    if (!loaded) {
+      timedOut = true;
+      container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim);"><p>📐 draw.io 加载超时</p><p style="font-size:12px;margin-top:8px;">需要联网访问 embed.diagrams.net，请检查网络后重试</p></div>';
+    }
+  }, 15000);
+  if (window[handlerKey]) window.removeEventListener('message', window[handlerKey]);
+  window[handlerKey] = (ev) => {
+    if (ev.source !== iframe.contentWindow) return;
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch (e) { return; }
+    if (msg.event === 'init') {
+      clearTimeout(timeoutId);
+      loaded = true;
+      iframe.contentWindow.postMessage(JSON.stringify({ action: 'load', xml: xml || '<mxfile host="embed.diagrams.net"><diagram></diagram></mxfile>' }), '*');
+    } else if (msg.event === 'save') {
+      const newXml = msg.xml;
+      if (newXml && onSave) {
+        onSave(newXml);
+        iframe.contentWindow.postMessage(JSON.stringify({ action: 'status', message: '已保存' }), '*');
+      }
+    } else if (msg.event === 'exit') {
+      // draw.io 请求关闭，忽略（由用户控制弹窗）
+    }
+  };
+  window.addEventListener('message', window[handlerKey]);
+}
+function renderMarkdown(src, live, basePath) {
   if (window.marked && typeof window.marked.parse === 'function') {
     const html = window.marked.parse(String(src || ''), { gfm: true, breaks: false });
     const body = sanitizeHtml(html);
@@ -1912,6 +2131,26 @@ function renderMarkdown(src, live) {
       if (/^(https?:|mailto:|#|data:)/.test(href)) return;
       a.dataset.internalLink = href;
     });
+    // 相对路径图片：改写为 /api/file/raw 原始字节端点（img 无法带 Authorization 头，用 access_token 查询参数）
+    if (basePath) {
+      const baseDir = basePath.includes('/') ? basePath.slice(0, basePath.lastIndexOf('/')) : '';
+      body.querySelectorAll('img[src]').forEach(img => {
+        const orig = img.getAttribute('src') || '';
+        if (/^(https?:|data:|blob:|\/\/)/.test(orig)) return;
+        let resolved = orig;
+        if (baseDir) {
+          const parts = [];
+          for (const seg of (baseDir + '/' + orig).split('/')) {
+            if (seg === '' || seg === '.') continue;
+            if (seg === '..') { parts.pop(); continue; }
+            parts.push(seg);
+          }
+          resolved = parts.join('/');
+        }
+        img.src = '/api/file/raw?root=workspace&path=' + encodeURIComponent(resolved) + '&access_token=' + encodeURIComponent(state.token);
+        img.onerror = () => { img.style.opacity = '0.4'; img.title = '图片加载失败: ' + orig; };
+      });
+    }
     return body.innerHTML;
   }
   return '<pre>' + escapeHtml(String(src || '')) + '</pre>';
@@ -1924,7 +2163,7 @@ function setFileViewMode(mode) {
   $('file-view-preview').classList.toggle('hidden', !preview);
   $('fv-edit').classList.toggle('active', !preview);
   $('fv-preview').classList.toggle('active', preview);
-  if (preview) { $('file-view-preview').innerHTML = renderMarkdown($('file-view-editor').value); $('file-view-preview').scrollTop = 0; }
+  if (preview) { $('file-view-preview').innerHTML = renderMarkdown($('file-view-editor').value, false, fileView.spec ? fileView.spec.path : ''); $('file-view-preview').scrollTop = 0; }
 }
 async function openFileViewMode() {
   let spec = null;
@@ -1948,14 +2187,13 @@ async function openFileViewMode() {
   $('file-view-save').disabled = readOnly;
   $('file-view-status').textContent = readOnly ? t("只读") : t("可编辑 · 保存后同步");
   if (isDrawio) {
-    // draw.io 文件：用 embed.diagrams.net 渲染
     $('file-view-editor').classList.add('hidden');
-    $('file-view-preview').innerHTML = '<iframe src="https://embed.diagrams.net/?embed=1&proto=json&spin=1" style="width:100%;height:85vh;border:0"></iframe>';
     $('file-view-preview').classList.remove('hidden');
-    const iframe = $('file-view-preview').querySelector('iframe');
-    iframe.onload = () => {
-      iframe.contentWindow.postMessage(JSON.stringify({action: 'load', xml: data.content}), '*');
-    };
+    setupDrawioFrame($('file-view-preview'), data.content, (xml) => {
+      $('file-view-editor').value = xml;
+      $('file-view-save').click();
+      toast(t('draw.io 已保存'));
+    }, '_fileViewDrawioHandler');
   } else {
     setFileViewMode(md ? 'preview' : 'edit');
   }
@@ -2039,63 +2277,89 @@ function renderTrajectory() {
     host.append(card);
   }
 }
-let callFilter = { tool: '', agent: 'all' };
+let callFilter = { tool: '', agent: 'all', type: 'all', time: 'all' };
+const CALL_TYPES = {
+  file: ['list_files','read_file','write_file','create_diagram'],
+  shell: ['run_shell'],
+  search: ['search_text','semantic_search','web_search'],
+  memory: ['read_memory','write_memory'],
+  subagent: ['spawn_subagent'],
+};
+function callTypeOf(tool) {
+  for (const [t, tools] of Object.entries(CALL_TYPES)) { if (tools.includes(tool)) return t; }
+  return 'other';
+}
 function renderCallsAnalysis(host, session) {
-  // 收集主会话工具调用
   const calls = [];
   for (const run of (session.runs || [])) {
     for (const tu of (run.toolUses || [])) {
-      calls.push({ agent: 'main', time: run.created, tool: tu.tool, args: tu.args, result: tu.preview || tu.result });
+      calls.push({ agent: 'main', agentName: t('主 Agent'), time: run.created, tool: tu.tool, args: tu.args, result: tu.preview || tu.result });
     }
   }
-  // 收集子会话工具调用
   const subs = (state.sessions || []).filter(x => x.parentId === session.id);
   for (const sub of subs) {
-    // 子会话详情需要拉取
-    calls.push({ agent: 'sub', time: sub.created, tool: '(子会话启动)', args: sub.id, result: sub.title });
+    calls.push({ agent: 'sub', agentName: sub.title || t('子 Agent'), time: sub.created, tool: '(子会话启动)', args: sub.id, result: sub.title });
+    (async () => {
+      try {
+        const detail = await api('/sessions/' + sub.id);
+        for (const r of (detail.runs || [])) {
+          for (const tu of (r.toolUses || [])) {
+            calls.push({ agent: 'sub', agentName: sub.title || t('子 Agent'), time: r.created, tool: tu.tool, args: tu.args, result: tu.preview || tu.result });
+          }
+        }
+        renderCallsTable(host, calls);
+      } catch(e) {}
+    })();
   }
-  // 工具名列表
+  renderCallsTable(host, calls);
+}
+function renderCallsTable(host, calls) {
+  host.replaceChildren();
   const toolNames = [...new Set(calls.map(c => c.tool))].sort();
-  // filter UI
   const bar = el('div', 'call-filter-bar');
-  const toolSel = el('select', 'call-filter-select');
-  toolSel.append(el('option', '', '全部工具'));
-  for (const t of toolNames) {
-    const opt = el('option', '', t); opt.value = t;
-    if (callFilter.tool === t) opt.selected = true;
-    toolSel.append(opt);
-  }
-  const agentSel = el('select', 'call-filter-select');
-  for (const [v, lbl] of [['all','全部'],['main','主 Agent'],['sub','子 Agent']]) {
-    const opt = el('option', '', lbl); opt.value = v;
-    if (callFilter.agent === v) opt.selected = true;
-    agentSel.append(opt);
-  }
-  toolSel.onchange = () => { callFilter.tool = toolSel.value === '全部工具' ? '' : toolSel.value; renderTrajectory(); };
-  agentSel.onchange = () => { callFilter.agent = agentSel.value; renderTrajectory(); };
-  bar.append(toolSel, agentSel);
+  bar.append(el('span', 'muted', t('筛选：')));
+  const mkSel = (opts, val, onChange) => {
+    const sel = el('select', 'call-filter-select');
+    opts.forEach(([v,l]) => { const o = el('option', '', l); o.value = v; if (v === val) o.selected = true; sel.append(o); });
+    sel.onchange = onChange;
+    return sel;
+  };
+  bar.append(mkSel([['',t('全部工具')], ...toolNames.map(n => [n,n])], callFilter.tool, () => { callFilter.tool = bar.children[1].value; renderCallsTable(host, calls); }));
+  bar.append(mkSel([['all',t('全部类型')],['file',t('文件')],['shell',t('命令')],['search',t('搜索')],['memory',t('记忆')],['subagent',t('子Agent')],['other',t('其他')]], callFilter.type, () => { callFilter.type = bar.children[2].value; renderCallsTable(host, calls); }));
+  bar.append(mkSel([['all',t('全部时间')],['1h',t('1小时')],['24h',t('24小时')],['7d',t('7天')]], callFilter.time, () => { callFilter.time = bar.children[3].value; renderCallsTable(host, calls); }));
+  bar.append(mkSel([['all',t('全部')],['main',t('主Agent')],['sub',t('子Agent')]], callFilter.agent, () => { callFilter.agent = bar.children[4].value; renderCallsTable(host, calls); }));
   host.append(bar);
-  // 过滤
-  const filtered = calls.filter(c =>
-    (!callFilter.tool || c.tool === callFilter.tool) &&
-    (callFilter.agent === 'all' || c.agent === callFilter.agent)
-  );
-  if (!filtered.length) {
-    host.append(el('p', 'muted', t("没有匹配的调用记录")));
-    return;
-  }
-  // 表格
+  const mainN = calls.filter(c => c.agent === 'main').length;
+  const subN = calls.filter(c => c.agent === 'sub').length;
+  const failN = calls.filter(c => /失败|error|拒绝|fail/i.test(String(c.result || ''))).length;
+  host.append(el('div', 'call-summary', t('共 ') + calls.length + t(' 次 · 主') + mainN + t(' 子') + subN + t(' 失败') + failN));
+  const now = Date.now();
+  const tms = { '1h': 3600000, '24h': 86400000, '7d': 604800000 };
+  const filtered = calls.filter(c => {
+    if (callFilter.tool && c.tool !== callFilter.tool) return false;
+    if (callFilter.agent !== 'all' && c.agent !== callFilter.agent) return false;
+    if (callFilter.type !== 'all' && callTypeOf(c.tool) !== callFilter.type) return false;
+    if (callFilter.time !== 'all' && c.time && now - new Date(c.time).getTime() > tms[callFilter.time]) return false;
+    return true;
+  });
+  if (!filtered.length) { host.append(el('p', 'muted', t("没有匹配的调用记录"))); return; }
   const table = el('table', 'call-table');
-  table.append(el('thead', '', el('tr', '',
-    el('th', '', t("时间")), el('th', '', t("谁")), el('th', '', t("工具")), el('th', '', t("参数/结果"))
-  )));
+  const headRow = el('tr', '');
+  headRow.append(
+    el('th', '', t("时间")), el('th', '', t("谁")), el('th', '', t("工具")), el('th', '', t("类型")), el('th', '', t("状态")), el('th', '', t("结果"))
+  );
+  const thead = el('thead', ''); thead.append(headRow); table.append(thead);
   const tbody = el('tbody', '');
+  const typeLbl = { file: t('文件'), shell: t('命令'), search: t('搜索'), memory: t('记忆'), subagent: t('子Agent'), other: t('其他') };
   for (const c of filtered) {
+    const fail = /失败|error|拒绝|fail/i.test(String(c.result || ''));
     const tr = el('tr', c.agent === 'sub' ? 'call-sub' : '');
     tr.append(
       el('td', 'call-time', (c.time || '').slice(11, 19)),
-      el('td', '', c.agent === 'sub' ? t("子 Agent") : t("主 Agent")),
+      el('td', '', c.agentName || (c.agent === 'sub' ? t("子 Agent") : t("主 Agent"))),
       el('td', 'call-tool', c.tool),
+      el('td', '', typeLbl[callTypeOf(c.tool)] || callTypeOf(c.tool)),
+      el('td', fail ? 'call-fail' : 'call-ok', fail ? '✖' : '✓'),
       el('td', 'call-result', String(c.result || '').slice(0, 120))
     );
     tbody.append(tr);
@@ -2107,6 +2371,7 @@ function renderCallsAnalysis(host, session) {
 function openTrajectory() {
   closeSettingsSheet();
   closeWorkspaceSheet();
+  ensureExportFormatBtn();
   renderTrajectory();
   $('trajectory-sheet').classList.add('open');
   $('settings-backdrop').classList.add('open');
@@ -2117,27 +2382,84 @@ function closeTrajectory() {
 }
 $('trajectory-toggle').onclick = () => { if ($('trajectory-sheet').classList.contains('open')) closeTrajectory(); else openTrajectory(); };
 $('trajectory-sheet-close').onclick = closeTrajectory;
+let exportFormat = 'md';
 $('trajectory-export').onclick = action(() => {
   if (!state.session) return toast(t("没有可导出的会话"));
   const s = state.session;
-  let md = "# " + (s.title || "未命名会话") + "\n\n";
-  md += "> 导出时间：" + new Date().toLocaleString() + " · 会话 ID：" + s.id + "\n\n---\n\n";
-  for (const r of (s.runs || [])) {
-    md += "## 任务 · " + (r.created || "") + "\n\n";
-    md += "**用户：** " + (r.prompt || "") + "\n\n";
-    if (r.steps) for (const st of r.steps) md += "- " + st.name + " · " + st.status + (st.content ? "\n  > " + String(st.content).slice(0,500) : "") + "\n";
-    if (r.toolUses) for (const tu of r.toolUses) md += "**工具 " + tu.tool + "：**\n```\n" + String(tu.preview || "").slice(0, 1000) + "\n```\n\n";
-    if (r.error) md += "**错误：** " + r.error + "\n\n";
-    md += "\n---\n\n";
+  const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
+  const base = (s.title || "session").slice(0, 30).replace(/[\/:*?"<>|]/g, "_");
+  const subs = (state.sessions || []).filter(x => x.parentId === s.id);
+  if (exportFormat === 'json') {
+    const data = {
+      exportedAt: new Date().toISOString(),
+      session: { id: s.id, title: s.title, created: s.created, updated: s.updated, parentId: s.parentId },
+      runs: (s.runs || []).map(r => ({
+        id: r.id, created: r.created, prompt: r.prompt, mode: r.mode, model: r.model,
+        status: r.status, error: r.error, usage: r.usage,
+        steps: r.steps, toolUses: r.toolUses, files: r.files, commands: r.commands
+      })),
+      subSessions: subs.map(sub => ({ id: sub.id, title: sub.title, created: sub.created, runs: sub.runs })),
+      timeline: []
+    };
+    // 构建时间线
+    for (const r of (s.runs || [])) {
+      data.timeline.push({ time: r.created, type: 'user', content: r.prompt });
+      for (const st of (r.steps || [])) data.timeline.push({ time: r.created, type: 'step', name: st.name, status: st.status });
+      for (const tu of (r.toolUses || [])) data.timeline.push({ time: r.created, type: 'tool', tool: tu.tool, args: tu.args, result: tu.preview || tu.result });
+    }
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = base + "_" + ts + ".json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(t("已导出会话为 JSON"));
+  } else {
+    let md = "# " + (s.title || "未命名会话") + "\n\n";
+    md += "> 导出时间：" + new Date().toLocaleString() + " · 会话 ID：" + s.id + "\n\n---\n\n";
+    for (const r of (s.runs || [])) {
+      md += "## 任务 · " + (r.created || "") + "\n\n";
+      md += "**用户：** " + (r.prompt || "") + "\n\n";
+      if (r.usage?.total) md += "**Token 消耗：** " + r.usage.total + (r.usage.estimated ? "（估）" : "") + "\n\n";
+      if (r.steps) for (const st of r.steps) md += "- " + st.name + " · " + st.status + (st.content ? "\n  > " + String(st.content).slice(0,500) : "") + "\n";
+      if (r.toolUses) for (const tu of r.toolUses) {
+        md += "**工具 " + tu.tool + "：**\n```\n" + String(tu.preview || tu.result || "") + "\n```\n\n";
+      }
+      if (r.error) md += "**错误：** " + r.error + "\n\n";
+      md += "\n---\n\n";
+    }
+    // 子会话
+    for (const sub of subs) {
+      md += "## 子会话：" + (sub.title || sub.id) + "\n\n";
+      for (const r of (sub.runs || [])) {
+        md += "### " + (r.created || "") + "\n\n";
+        md += "**用户：** " + (r.prompt || "") + "\n\n";
+        if (r.toolUses) for (const tu of r.toolUses) md += "- " + tu.tool + ": " + String(tu.preview || tu.result || "").slice(0, 200) + "\n";
+        md += "\n";
+      }
+      md += "---\n\n";
+    }
+    const blob = new Blob([md], {type: "text/markdown;charset=utf-8"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = base + "_" + ts + ".md";
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast(t("已导出会话为 Markdown"));
   }
-  const blob = new Blob([md], {type: "text/markdown;charset=utf-8"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = (s.title || "session").slice(0, 30).replace(/[\/:*?"<>|]/g, "_") + ".md";
-  a.click();
-  URL.revokeObjectURL(a.href);
-  toast(t("已导出会话为 Markdown"));
 });
+// 导出格式切换按钮（在轨迹面板中动态创建）
+function ensureExportFormatBtn() {
+  const bar = $('trajectory-export').parentElement;
+  if (!bar.querySelector('.export-format')) {
+    const sel = document.createElement('select');
+    sel.className = 'export-format';
+    sel.innerHTML = '<option value="md">Markdown</option><option value="json">JSON</option>';
+    sel.value = exportFormat;
+    sel.onchange = () => { exportFormat = sel.value; };
+    bar.insertBefore(sel, $('trajectory-export'));
+  }
+}
 
 /* ── 全局搜索（FR-92）：⌘K 聚焦，防抖检索会话缓存 ── */
 let searchTimer = null;
@@ -2262,3 +2584,229 @@ renderMarkdown = function(src, live) { const html = _origRender(src, live); setT
   if (!$('strategy-menu').classList.contains('hidden')) openStrategyMenu();
   if (state.contextPreview) renderContextPreview(state.contextPreview);
 });
+
+/* ── 语音小秘（Web Speech API 实时断句 + AI 甄别 + 直接发送）──────────
+   边说边断：按句末标点/停顿自动成句 → 后端甄别 → 判定为指令的句子直接
+   发送到当前会话（与手动提交同一 run 入口，兼容排队/工作流模式）；
+   背景声自动忽略；与他人闲聊自动退下。语音框记录「已发送/已忽略」。 */
+const voice = {
+  recognition: null, listening: false, standby: false,
+  buffer: '', interim: '', timer: null, sending: false, queue: [], log: []
+};
+voice.name = () => (state.config && state.config.voiceAssistantName) || '小秘';
+voice.supported = ('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window);
+
+function voiceSetStatus(mode, text) {
+  const box = $('voice-status');
+  box.classList.remove('listening', 'ignored', 'standby');
+  if (mode) box.classList.add(mode);
+  $('voice-status-text').textContent = text;
+}
+function voiceRenderLog() {
+  const host = $('voice-text');
+  host.replaceChildren();
+  for (const item of voice.log) {
+    const line = el('div', 'voice-log-line ' + (item.type === 'sent' ? 'is-sent' : item.type === 'ignored' ? 'is-ignored' : 'is-standby'));
+    const tag = el('span', 'voice-log-tag', item.type === 'sent' ? t('已发送') : item.type === 'ignored' ? t('已忽略') : t('已退下'));
+    const right = el('span', 'voice-log-text');
+    if (item.text) right.append(el('span', '', item.text));
+    if (item.reason) right.append(el('small', 'voice-log-reason', item.reason));
+    line.append(tag, right);
+    host.append(line);
+  }
+  if (voice.interim) host.append(el('div', 'voice-log-interim', '… ' + voice.interim));
+  host.scrollTop = host.scrollHeight;
+}
+function voiceLog(type, text, reason) {
+  voice.log.push({ type, text, reason });
+  if (voice.log.length > 40) voice.log.shift();
+  voiceRenderLog();
+}
+// 从未处理 buffer 中按句末标点切出完整句子，残句留在 buffer
+function voiceExtractSentences() {
+  const re = /[^。！？!?；;\n]+[。！？!?；;\n]+/g;
+  const out = [];
+  let m;
+  while ((m = re.exec(voice.buffer)) !== null) out.push(m[0]);
+  if (out.length) voice.buffer = voice.buffer.slice(out.join('').length);
+  return out.map(x => x.trim()).filter(Boolean);
+}
+// 停顿成句：1.1s 无新结果且残句足够长，按完整一句话处理
+function voiceArmPauseFlush() {
+  clearTimeout(voice.timer);
+  voice.timer = setTimeout(() => {
+    const rest = voice.buffer.trim();
+    voice.buffer = '';
+    if (rest.length >= 6) { voice.queue.push(rest); voiceDrainQueue(); }
+  }, 1100);
+}
+// 与手动提交同一 run 入口，尊重排队模式/工作流模式
+async function voiceSend(text) {
+  if (!state.config?.configured) throw new Error(t('请先配置模型'));
+  let target = state.session, created = null;
+  if (!target) {
+    created = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: t('新会话') }) });
+    if (!state.session) state.session = created;
+    target = created;
+  }
+  const strategy = state.profiles?.strategy || 'manual';
+  await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt: text, mode: state.mode, attachments: [], strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued: state.queueMode, workflowPhase: state.workflowPhase || '' }) });
+  if (state.session?.id === target.id) await selectSession(target.id);
+}
+async function voiceFilterOne(sentence) {
+  let result = { action: 'ignore', text: sentence, reason: '' };
+  try { result = await api('/voice-filter', { method: 'POST', body: JSON.stringify({ text: sentence }) }); }
+  catch (_) { result = { action: 'ignore', text: sentence, reason: t('甄别失败') }; }
+  if (result.action === 'send') {
+    const text = (result.text || sentence).trim();
+    try { await voiceSend(text); voiceLog('sent', text, result.reason); }
+    catch (e) { voiceLog('ignored', text + '（' + e.message + '）'); }
+  } else if (result.action === 'standby') {
+    voice.standby = true;
+    voiceLog('standby', result.reason || t('和他人闲聊，已退下'));
+    voiceSetStatus('standby', t('已退下 · 检测到对 AI 说话可重新点击麦克风唤起'));
+    if (voice.recognition) { try { voice.recognition.onend = null; voice.recognition.stop(); } catch (_) {} }
+  } else {
+    voiceLog('ignored', sentence, result.reason);
+  }
+}
+async function voiceDrainQueue() {
+  if (voice.sending) return;
+  voice.sending = true;
+  try {
+    while (voice.queue.length && !voice.standby) {
+      const sentence = voice.queue.shift();
+      await voiceFilterOne(sentence);
+    }
+  } finally { voice.sending = false; }
+}
+
+function voiceStart() {
+  if (!voice.supported) { toast(t("当前浏览器不支持语音识别，请用 Chrome/Edge，并通过 HTTPS 或 localhost 访问")); return; }
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const rec = new Ctor();
+  rec.lang = 'zh-CN'; rec.continuous = true; rec.interimResults = true;
+  voice.recognition = rec;
+  voice.buffer = ''; voice.interim = ''; voice.standby = false; voice.queue = []; voice.log = [];
+  $('voice-title').textContent = voice.name();
+  voiceRenderLog();
+  voiceSetStatus('listening', t("聆听中…说完一句会自动发送"));
+  if (!$('voice-dialog').open) $('voice-dialog').showModal();
+  rec.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) voice.buffer += r[0].transcript;
+      else interim += r[0].transcript;
+    }
+    voice.interim = interim;
+    voice.queue.push(...voiceExtractSentences());
+    voiceRenderLog();
+    voiceDrainQueue();
+    voiceArmPauseFlush();
+  };
+  rec.onerror = (e) => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      toast(t("麦克风权限被拒绝，请在浏览器地址栏允许麦克风访问"));
+      voiceClose();
+    }
+  };
+  rec.onend = () => {
+    if (voice.listening && !voice.standby) { try { rec.start(); } catch (_) {} }
+  };
+  try { rec.start(); voice.listening = true; $('voice-btn').classList.add('recording'); }
+  catch (_) { toast(t("无法启动语音识别，请检查麦克风")); }
+}
+function voiceStopAndFlush() {
+  clearTimeout(voice.timer);
+  voice.listening = false;
+  if (voice.recognition) { try { voice.recognition.onend = null; voice.recognition.stop(); } catch (_) {} }
+  $('voice-btn').classList.remove('recording');
+  voice.interim = '';
+  const rest = voice.buffer.trim();
+  voice.buffer = '';
+  if (rest.length >= 2) { voice.queue.push(rest); voiceDrainQueue(); }
+  voiceSetStatus(null, t("已停止 · 可继续说话或关闭"));
+  voiceRenderLog();
+}
+function voiceClose() {
+  clearTimeout(voice.timer);
+  voice.listening = false; voice.standby = false;
+  if (voice.recognition) { try { voice.recognition.onend = null; voice.recognition.abort(); } catch (_) {} }
+  $('voice-btn').classList.remove('recording');
+  if ($('voice-dialog').open) $('voice-dialog').close();
+}
+
+$('voice-btn').onclick = action(() => { voice.listening ? voiceStopAndFlush() : voiceStart(); });
+$('voice-stop').onclick = action(voiceStopAndFlush);
+$('voice-close').onclick = () => voiceClose();
+$('voice-form').addEventListener('submit', (e) => e.preventDefault());
+
+// 设置面板：语音小秘名字输入
+function renderVoiceNameControl() {
+  const wrap = el('div', 'settings-control');
+  const head = el('div', 'control-label');
+  head.append(el('span', '', t('小秘名字')));
+  const input = el('input');
+  input.type = 'text';
+  input.maxLength = 12;
+  input.placeholder = '小秘';
+  input.value = (state.config && state.config.voiceAssistantName) || '小秘';
+  input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); saveBtn.click(); } };
+  const saveBtn = el('button', 'primary', t('保存'));
+  saveBtn.type = 'button';
+  saveBtn.onclick = action(async () => {
+    const name = input.value.trim() || '小秘';
+    await api('/settings', { method: 'PUT', body: JSON.stringify({ voiceAssistantName: name, activeModel: state.config ? state.config.activeModel : '' }) });
+    await refreshConfig();
+    toast(t('小秘名字已保存'));
+  });
+  const row = el('div', 'voice-name-row');
+  row.append(input, saveBtn);
+  wrap.append(head, row, el('small', '', t('语音弹框标题使用这个名字，默认「小秘」。')));
+  return wrap;
+}
+function renderVoiceHistoryControl() {
+  const wrap = el('div', 'settings-control');
+  const head = el('div', 'control-label');
+  head.append(el('span', '', t('小秘对话历史')));
+  const bar = el('div', 'voice-history-bar');
+  const refreshBtn = el('button', 'quiet', t('刷新'));
+  refreshBtn.type = 'button';
+  const clearBtn = el('button', 'quiet', t('清空'));
+  clearBtn.type = 'button';
+  bar.append(refreshBtn, clearBtn);
+  const list = el('div', 'voice-history-list');
+  async function load() {
+    list.replaceChildren();
+    list.append(el('p', 'muted', t('加载中…')));
+    try {
+      const items = await api('/voice-history');
+      list.replaceChildren();
+      if (!items.length) { list.append(el('p', 'muted', t('暂无记录。点麦克风说话后，小秘的判断会记录在这里。'))); return; }
+      for (const it of items) {
+        const row = el('div', 'voice-history-item');
+        const meta = el('div', 'vh-meta');
+        const label = it.action === 'send' ? t('已发送') : it.action === 'standby' ? t('退下') : t('忽略');
+        const tag = el('span', 'vh-tag ' + (it.action === 'send' ? 'is-sent' : it.action === 'standby' ? 'is-standby' : 'is-ignored'), label);
+        meta.append(tag, el('span', 'vh-time', it.time || ''));
+        row.append(meta, el('div', 'vh-heard', t('听到：') + (it.heard || '')));
+        if (it.text) row.append(el('div', 'vh-text', t('发送：') + it.text));
+        if (it.reason) row.append(el('div', 'vh-reason', it.reason));
+        list.append(row);
+      }
+    } catch (e) { list.replaceChildren(el('p', 'muted', e.message)); }
+  }
+  refreshBtn.onclick = action(load);
+  clearBtn.onclick = action(async () => {
+    if (!confirm(t('确定清空小秘的全部历史记录？'))) return;
+    await api('/voice-history', { method: 'DELETE' });
+    toast(t('已清空'));
+    load();
+  });
+  wrap.append(head, bar, list, el('small', '', t('小秘听到了什么、如何判断、发送了什么，按时间线记录；重启后仍保留。')));
+  load();
+  return wrap;
+}
+controlRenderers['voice-history'] = renderVoiceHistoryControl;
+controlRenderers['voice-name'] = renderVoiceNameControl;

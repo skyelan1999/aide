@@ -41,8 +41,12 @@ type Settings struct {
 	ActiveModel string     `json:"activeModel,omitempty"`
 	SandboxMode string     `json:"sandboxMode,omitempty"` // read-only | workspace-write | danger-full-access
 	ToolMaxRounds int      `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
+	ShellTimeout  int      `json:"shellTimeout,omitempty"` // run_shell 超时秒数，默认 60，最大 300
 	PersonaEnabled bool     `json:"personaEnabled,omitempty"`
 	PersonaCipher          string `json:"personaCipher,omitempty"` // AES-256-GCM 加密后的性格内容（base64）
+	DisabledTools          []string `json:"disabledTools,omitempty"` // 被禁用的工具名列表
+	ReasoningEffort        string   `json:"reasoningEffort,omitempty"`   // 推理强度：auto/off/low/medium/high
+	VoiceAssistantName     string   `json:"voiceAssistantName,omitempty"` // 语音小秘名字，默认"小秘"
 }
 
 const (
@@ -154,6 +158,7 @@ type App struct {
 	eventMu                   sync.Mutex
 	eventSubs                 map[string]map[chan streamEvent]struct{} // SSE 订阅：taskID → subscriber set
 	personaKey               string // 内存中的性格解密密码，不持久化
+	voiceAgent               *VoiceAgent // 语音小秘 agent（记忆+历史）
 }
 
 // Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
@@ -313,6 +318,10 @@ func New(work, reference, data string) (*App, error) {
 	if a.settings.ActiveModel == "" {
 		a.settings.ActiveModel = a.settings.Model
 	}
+	if a.settings.VoiceAssistantName == "" {
+		a.settings.VoiceAssistantName = "小秘"
+	}
+	a.voiceAgent = newVoiceAgent(data)
 	if a.settings.Models != nil {
 		normalized, err := normalizeModels(a.settings.Models)
 		if err != nil {
@@ -506,6 +515,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("PUT /api/workspace-config", a.updateWorkspaceConfig)
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
 	mux.HandleFunc("GET /api/files", a.listFiles)
+	mux.HandleFunc("GET /api/file/raw", a.readFileRaw)
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)
 	mux.HandleFunc("GET /api/sessions", a.listSessions)
@@ -515,6 +525,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/sessions/{id}", a.deleteSession)
 	mux.HandleFunc("PATCH /api/sessions/{id}", a.patchSession)
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
+	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/retry", a.retryTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/requests", a.runRequestsHandler)
@@ -522,6 +533,9 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/queue/{index}", a.queueUpdate)
 	mux.HandleFunc("POST /api/context-preview", a.contextPreviewHandler)
 	mux.HandleFunc("POST /api/command", a.command)
+	mux.HandleFunc("POST /api/voice-filter", a.voiceFilter)
+	mux.HandleFunc("GET /api/voice-history", a.voiceHistory)
+	mux.HandleFunc("DELETE /api/voice-history", a.voiceHistoryClear)
 	web, _ := fs.Sub(assets, "web")
 	mux.Handle("/", http.FileServer(http.FS(web)))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -538,9 +552,9 @@ func (a *App) Handler() http.Handler {
 				}
 			}
 			token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-			// EventSource 无法设置 Authorization 头，仅 events 路由允许 ?access_token=；
+			// EventSource / img 标签无法设置 Authorization 头，events 和 file/raw 路由允许 ?access_token=；
 			// 其余 API 不收 URL 中的凭据，避免令牌进入日志/代理记录。
-			if token == "" && r.Method == http.MethodGet && strings.HasSuffix(r.URL.Path, "/events") {
+			if token == "" && r.Method == http.MethodGet && (strings.HasSuffix(r.URL.Path, "/events") || strings.HasSuffix(r.URL.Path, "/api/file/raw")) {
 				token = r.URL.Query().Get("access_token")
 			}
 			if subtle.ConstantTimeCompare([]byte(token), []byte(a.token)) != 1 {
@@ -554,7 +568,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -576,6 +590,15 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	if in.Models == nil {
 		in.Models = a.settings.Models
+	}
+	if in.DisabledTools == nil {
+		in.DisabledTools = a.settings.DisabledTools
+	}
+	if in.ReasoningEffort == "" {
+		in.ReasoningEffort = a.settings.ReasoningEffort
+	}
+	if in.VoiceAssistantName == "" {
+		in.VoiceAssistantName = a.settings.VoiceAssistantName
 	}
 	u, err := url.Parse(in.BaseURL)
 	if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
@@ -620,6 +643,64 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.settings = in.Settings
+	jsonOut(w, 200, map[string]bool{"ok": true})
+}
+
+// voiceFilter 语音小秘：把浏览器 Web Speech API 的转写文本交给小秘 agent 分析决策。
+// 小秘结合记忆与上下文判断 send（对 aide 的指令，直接发到当前会话）/ ignore（背景声）/ standby（与人闲聊退下）。
+// 任何失败都降级为 send 原文，保证语音录入在模型不可用时仍可用。
+func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Text string `json:"text"`
+	}
+	if err := decode(w, r, &in); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	text := strings.TrimSpace(in.Text)
+	if text == "" {
+		jsonOut(w, 200, map[string]any{"action": "ignore", "text": "", "reason": "空文本"})
+		return
+	}
+	a.mu.Lock()
+	cfg := a.settings
+	va := a.voiceAgent
+	a.mu.Unlock()
+	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
+		jsonOut(w, 200, map[string]any{"action": "send", "text": text, "reason": "未配置模型，直接发送"})
+		return
+	}
+	entry, err := va.analyze(r.Context(), cfg, text)
+	if err != nil {
+		jsonOut(w, 200, map[string]any{"action": "send", "text": text, "reason": "小秘分析失败，直接发送: " + err.Error()})
+		return
+	}
+	if entry.Action == "send" && strings.TrimSpace(entry.Text) == "" {
+		entry.Text = text
+	}
+	jsonOut(w, 200, entry)
+}
+
+// voiceHistory 返回小秘 agent 的决策时间线（最新在前），供设置页查看。
+func (a *App) voiceHistory(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	va := a.voiceAgent
+	a.mu.Unlock()
+	if va == nil {
+		jsonOut(w, 200, []VoiceHistoryEntry{})
+		return
+	}
+	jsonOut(w, 200, va.historyDesc())
+}
+
+// voiceHistoryClear 清空小秘历史（保留长期记忆文件）。
+func (a *App) voiceHistoryClear(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	va := a.voiceAgent
+	a.mu.Unlock()
+	if va != nil {
+		va.clearHistory()
+	}
 	jsonOut(w, 200, map[string]bool{"ok": true})
 }
 
@@ -690,7 +771,7 @@ func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 	})
 	out := make([]map[string]any, len(items))
 	for i, it := range items {
-		out[i] = map[string]any{"id": it.ID, "title": it.Title, "created": it.Created, "status": it.Status, "updated": it.Updated, "pinned": it.Pinned, "archived": it.Archived, "checked": it.Checked}
+		out[i] = map[string]any{"id": it.ID, "title": it.Title, "created": it.Created, "status": it.Status, "updated": it.Updated, "pinned": it.Pinned, "archived": it.Archived, "checked": it.Checked, "parentId": it.ParentID, "autoArchived": it.AutoArchived}
 	}
 	jsonOut(w, 200, out)
 }

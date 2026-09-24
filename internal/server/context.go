@@ -68,9 +68,22 @@ type RequestSnapshot struct {
 	At        string          `json:"at"`
 }
 
-// contextTools 任务可用工具（与 toolLoop 使用的完全一致）。
+// contextTools 任务可用工具（与 toolLoop 使用的完全一致）；按设置过滤被禁用的工具。
+// 调用方必须持有 a.mu（startTask/contextPreviewHandler 均在持锁状态调用；step 函数调用处自行加锁）。
 func (a *App) contextTools() []any {
-	tools := append([]any{}, builtinTools...)
+	disabled := make(map[string]bool, len(a.settings.DisabledTools))
+	for _, dt := range a.settings.DisabledTools {
+		disabled[dt] = true
+	}
+	tools := make([]any, 0, len(builtinTools))
+	for _, t := range builtinTools {
+		if fn, ok := t.(map[string]any)["function"].(map[string]any); ok {
+			if name, _ := fn["name"].(string); disabled[name] {
+				continue
+			}
+		}
+		tools = append(tools, t)
+	}
 	tools = append(tools, a.pluginToolSchemas()...)
 	return tools
 }

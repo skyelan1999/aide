@@ -62,6 +62,14 @@ func buildChatBody(cfg Settings, messages []Message, params ProfileParams, tools
 	if len(params.Stop) > 0 {
 		body["stop"] = params.Stop
 	}
+	// 推理强度：auto 不传；off 显式关闭；low/medium/high 开启 thinking + 设 effort
+	switch cfg.ReasoningEffort {
+	case "off":
+		body["thinking"] = map[string]string{"type": "disabled"}
+	case "low", "medium", "high":
+		body["thinking"] = map[string]string{"type": "enabled"}
+		body["reasoning_effort"] = cfg.ReasoningEffort
+	}
 	if strings.Contains(strings.ToLower(cfg.Model), "reasoner") {
 		delete(body, "temperature")
 		delete(body, "top_p")

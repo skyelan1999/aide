@@ -157,6 +157,49 @@ func (a *App) listLocalDir(root *os.Root, p string) ([]map[string]any, error) {
 	})
 	return items, nil
 }
+func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
+	var b []byte
+	var err error
+	if srcID := r.URL.Query().Get("source"); srcID != "" {
+		a.mu.Lock()
+		src, ok := a.findSource(srcID)
+		a.mu.Unlock()
+		if !ok || !src.Enabled {
+			fail(w, 400, errors.New("来源不存在或已停用"))
+			return
+		}
+		b, err = a.readSourceText(src, r.URL.Query().Get("path"))
+	} else if r.URL.Query().Get("root") == "workspace" && a.workspaceMode() == "ssh" {
+		b, err = a.readWorkspaceText(r.URL.Query().Get("path"))
+	} else {
+		root, rootErr := a.root(r.URL.Query().Get("root"))
+		if rootErr != nil {
+			fail(w, 400, rootErr)
+			return
+		}
+		b, err = readText(root, r.URL.Query().Get("path"))
+	}
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	ext := strings.ToLower(path.Ext(r.URL.Query().Get("path")))
+	ct := map[string]string{
+		".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+		".gif": "image/gif", ".svg": "image/svg+xml", ".webp": "image/webp",
+		".ico": "image/x-icon", ".bmp": "image/bmp",
+		".pdf": "application/pdf", ".html": "text/html; charset=utf-8",
+		".css": "text/css; charset=utf-8", ".js": "application/javascript",
+		".json": "application/json", ".txt": "text/plain; charset=utf-8",
+		".md": "text/markdown; charset=utf-8",
+	}[ext]
+	if ct == "" {
+		ct = "application/octet-stream"
+	}
+	w.Header().Set("Content-Type", ct)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Write(b)
+}
 func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
 	var b []byte
 	var err error

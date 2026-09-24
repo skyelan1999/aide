@@ -7,15 +7,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
+	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
+	"unicode"
 )
 
 type Attachment struct {
@@ -52,6 +57,7 @@ type Task struct {
 	Files               []Change          `json:"files"`
 	Commands            []string          `json:"commands"`
 	Error               string            `json:"error,omitempty"`
+	Failures            int               `json:"failures,omitempty"` // 工具失败累计次数（失败反馈循环）
 	Applied             bool              `json:"applied"`
 	Attachments         []Attachment      `json:"attachments"`
 	Strategy            string            `json:"strategy,omitempty"`    // manual | auto（FR-63）
@@ -85,12 +91,17 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_file", "description": "读取工作目录内文本文件内容（UTF-8）", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Optional reference source ID from list_sources; omitted means workspace"}, "path": map[string]any{"type": "string", "description": "相对路径"}}, "required": []string{"path"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "write_file", "description": "生成文件修改提案（不直接写入；需用户批准应用）", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}}, "required": []string{"path", "content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox and return its stdout/stderr/exit code", "parameters": map[string]any{"type": "object", "properties": map[string]any{"command": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
-	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}}}, "required": []string{"task"}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}, "profile": map[string]any{"type": "string", "description": "Optional profile id (default/precise/creative/...) chosen by matching ACTUAL sampling params (temperature/top_p/max_tokens) to the subtask; omit to use defaults"}}}, "required": []string{"task"}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_memory", "description": "Read persistent memory file", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "write_memory", "description": "Append to persistent memory", "parameters": map[string]any{"type": "object", "properties": map[string]any{"content": map[string]any{"type": "string"}}, "required": []string{"content"}}}},
-	map[string]any{"type": "function", "function": map[string]any{"name": "search_text", "description": "Keyword search in workspace files, supports regex", "parameters": map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}, "path": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "search_text", "description": "Keyword search in workspace files, supports regex", "parameters": map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}, "path": map[string]any{"type": "string"}}, "required": []string{"query"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "semantic_search", "description": "Semantic vector search by meaning", "parameters": map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}}, "required": []string{"query"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "create_diagram", "description": "Create a draw.io diagram (.drawio XML file). Use for flowcharts, architecture diagrams, UML, network diagrams. User can view and edit it in the built-in draw.io viewer.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string", "description": "Output file path, e.g. architecture.drawio"}, "xml": map[string]any{"type": "string", "description": "draw.io mxGraphModel XML content"}}, "required": []string{"path", "xml"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "web_search", "description": "Search the web for current information. Returns top results with title, URL and snippet.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string", "description": "Search query"}}, "required": []string{"query"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "create_requirement", "description": "需求分析阶段专用：根据用户需求创建结构化需求文档，自动分配 REQ-xxx 唯一编号并更新需求索引。需求阶段必须调用此工具建档，不可跳过。content 请用 markdown 子标题组织：## 需求描述、## 目标、## 范围、## 验收标准、## 技术考量。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"title": map[string]any{"type": "string", "description": "需求名称（简明概括，由 AI 自动生成）"}, "content": map[string]any{"type": "string", "description": "需求分析完整内容，含 ## 需求描述 / ## 目标 / ## 范围 / ## 验收标准 / ## 技术考量"}, "related": map[string]any{"type": "string", "description": "关联需求编号（如 REQ-001），可选"}}, "required": []string{"title", "content"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "create_design", "description": "设计阶段专用：创建/更新方案设计文档，自动分配 DESIGN-xxx 编号并更新设计索引。须先阅读相关 REQ-xxx 需求文档。content 用 ## 开发流程、## 依赖条件、## 架构需求、## 待确认项、## 变更记录 组织。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"title": map[string]any{"type": "string", "description": "设计名称"}, "content": map[string]any{"type": "string", "description": "设计内容，含上述子标题"}, "reqId": map[string]any{"type": "string", "description": "关联需求编号（如 REQ-001），可选"}, "related": map[string]any{"type": "string", "description": "其他关联，可选"}}, "required": []string{"title", "content"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "record_implementation", "description": "实施阶段专用：在 /workspace 实际写代码并运行编译/测试后，记录实施结果，自动分配 IMPL-xxx 编号。content 记录实现内容、修改的文件、基于真实运行的验证结果。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"title": map[string]any{"type": "string", "description": "实施项名称"}, "content": map[string]any{"type": "string", "description": "实现内容、修改文件、验证结果"}, "reqId": map[string]any{"type": "string", "description": "关联需求编号，可选"}, "designId": map[string]any{"type": "string", "description": "关联设计编号（如 DESIGN-001），可选"}}, "required": []string{"title", "content"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "record_verification", "description": "验证阶段专用：编写并真实运行自动化测试后，记录测试报告，自动分配 TEST-xxx 编号。报告必须基于真实运行结果，禁止把计划写成通过。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"title": map[string]any{"type": "string", "description": "验证项名称"}, "content": map[string]any{"type": "string", "description": "测试报告：环境、用例、真实运行结果、结论"}, "reqId": map[string]any{"type": "string", "description": "关联需求编号，可选"}, "designId": map[string]any{"type": "string", "description": "关联设计编号，可选"}, "implId": map[string]any{"type": "string", "description": "关联实施编号（如 IMPL-001），可选"}}, "required": []string{"title", "content"}}}},
 }
 
 func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
@@ -99,8 +110,9 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		Mode        string       `json:"mode"`
 		Attachments []Attachment `json:"attachments"`
 		Strategy    string       `json:"strategy"`
-		Profile     string       `json:"profile"`
-		Queued      bool         `json:"queued"`
+		Profile       string       `json:"profile"`
+		Queued        bool         `json:"queued"`
+		WorkflowPhase string       `json:"workflowPhase,omitempty"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -192,6 +204,23 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, fmt.Errorf("上下文预算超限：输入估算 %d tokens + 输出预留 %d tokens = %d，超过模型窗口 %d；请缩短任务、减少附件或调大窗口后重试", preview.InputEstimate, preview.OutputReserve, preview.TotalEstimate, preview.ContextWindow))
 		return
 	}
+	if len(preview.Messages) > 0 {
+		switch in.WorkflowPhase {
+		case "requirement":
+			preview.Messages[0].Content += requirementPhasePrompt
+		case "design":
+			preview.Messages[0].Content += designPhasePrompt
+		case "implementation":
+			preview.Messages[0].Content += implementationPhasePrompt
+		case "verify":
+			preview.Messages[0].Content += verifyPhasePrompt
+		}
+	}
+	// 自动编排模式：AI 工作流下未手动选阶段时，由前台 Lead 调度多智能体闭环
+	if in.Mode == "workflow" && (in.WorkflowPhase == "" || in.WorkflowPhase == "auto") && len(preview.Messages) > 0 {
+		preview.Messages[0].Content += autoModePrompt
+		preview.Messages[0].Content += a.profileInventoryPrompt()
+	}
 	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...) // 去掉末条指令（execute 首轮再加）
 	firstInput := preview.Messages
 	s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt})
@@ -241,7 +270,9 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		}
 		var tools []any
 		if withTools {
+			a.mu.Lock()
 			tools = a.contextTools()
+			a.mu.Unlock()
 		}
 		stepParams := params
 		if name == "propose" {
@@ -399,6 +430,70 @@ func (a *App) acceptProposal(s *Session, task *Task, raw string, versions map[st
 	task.Files = p.Files
 	task.Commands = p.Commands
 	return a.save(s)
+}
+func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	s := a.sessions[r.PathValue("id")]
+	if s == nil {
+		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	var orig *Task
+	for _, t := range s.Runs {
+		if t.ID == r.PathValue("run") {
+			orig = t
+		}
+	}
+	if orig == nil {
+		fail(w, 404, errors.New("任务不存在"))
+		return
+	}
+	if orig.Status == "running" {
+		fail(w, 409, errors.New("任务运行中，无法重试"))
+		return
+	}
+	if a.settings.Model == "" {
+		fail(w, 400, errors.New("请先配置模型"))
+		return
+	}
+	if len(a.cancels) >= 4 {
+		fail(w, 429, errors.New("运行中的任务过多"))
+		return
+	}
+	strategy := orig.Strategy
+	if strategy == "" {
+		strategy = "manual"
+	}
+	profileID, params, err := a.resolveProfile(strategy, orig.Profile, orig.Prompt, orig.Mode)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	contextText, versions, err := a.attachmentContext(orig.Attachments)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	task := &Task{ID: newID(), Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path}
+	preview := a.buildContextPreview(s, orig.Prompt, orig.Mode, contextText, a.settings, params, true)
+	if preview.OverLimit {
+		fail(w, 400, errors.New("上下文预算超限，重试失败"))
+		return
+	}
+	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...)
+	firstInput := preview.Messages
+	s.Messages = append(s.Messages, Message{Role: "user", Content: orig.Prompt})
+	s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
+	s.Runs = append(s.Runs, task)
+	if err := a.save(s); err != nil {
+		fail(w, 500, err)
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+	a.cancels[task.ID] = cancel
+	go a.execute(ctx, s, task, a.settings, history, firstInput, versions, params)
+	jsonOut(w, 202, task)
 }
 func (a *App) cancelTask(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
@@ -727,16 +822,19 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		for _, call := range calls {
 			result := a.executeToolCall(call, task, versions)
 			// 失败反馈循环：检测工具是否返回错误结果，连续失败时注入明确提示
-			isErr := strings.HasPrefix(result, "权限策略拦截") ||
+			isErr := strings.Contains(result, "⚠ 命令执行失败") ||
+				strings.HasPrefix(result, "权限策略拦截") ||
 				strings.HasPrefix(result, "沙箱模式") ||
 				strings.HasPrefix(result, "错误") ||
 				strings.Contains(result, "no such file") ||
 				strings.Contains(result, "permission denied")
 			if isErr {
 				consecutiveFail[call.Function.Name]++
-				if consecutiveFail[call.Function.Name] >= 2 {
-					result += "\n\n[系统提示] 你连续对 " + call.Function.Name + " 调用失败了 " +
-						fmt.Sprint(consecutiveFail[call.Function.Name]) + " 次。请停止重复同样的尝试，换一种方式或向用户说明你需要什么帮助。"
+				a.mu.Lock()
+				task.Failures++
+				a.mu.Unlock()
+				if consecutiveFail[call.Function.Name] >= 3 {
+					result += "\n\n[系统提示] 该工具（" + call.Function.Name + "）已连续失败3次，建议换一种方式或请求用户协助。"
 				}
 			} else {
 				consecutiveFail[call.Function.Name] = 0
@@ -806,12 +904,59 @@ func shellBlocked(command string) (string, bool) {
 			return "检测到破坏性操作模式（" + strings.TrimSpace(pat) + "）", true
 		}
 	}
+	// 新增：更精确的危险模式，命中时返回可解释的具体原因
+	if strings.Contains(low, "--no-preserve-root") {
+		return "检测到极端删除模式（--no-preserve-root，绕过根目录保护）", true
+	}
+	if hasShellWord(low, "eval") {
+		return "检测到 eval 动态执行（可能被注入任意命令）", true
+	}
+	if hasShellWord(low, "exec") {
+		return "检测到 exec 危险用法（替换当前 shell 进程）", true
+	}
+	// 远程脚本执行：curl/wget/fetch 下载内容直接管道给 shell
+	if strings.Contains(low, "curl") || strings.Contains(low, "wget") || strings.Contains(low, "fetch") {
+		for _, sh := range []string{"|bash", "| bash", "|sh", "| sh", "|zsh", "| zsh", "|ash", "| ash", "|ksh", "| ksh", "|fish", "| fish"} {
+			if strings.Contains(low, sh) {
+				return "检测到远程脚本执行模式（curl/wget 管道给 " + strings.TrimSpace(sh) + "，未经校验直接执行下载内容）", true
+			}
+		}
+	}
+	// 环境变量泄露：env/printenv 配合管道或网络外传
+	if (hasShellWord(low, "env") || hasShellWord(low, "printenv")) &&
+		(strings.Contains(low, "http://") || strings.Contains(low, "https://") ||
+			strings.Contains(low, "|curl") || strings.Contains(low, "| curl") ||
+			strings.Contains(low, "|wget") || strings.Contains(low, "| wget") ||
+			strings.Contains(low, "|nc") || strings.Contains(low, "| nc") ||
+			strings.Contains(low, "/dev/tcp/")) {
+		return "检测到环境变量泄露外传模式（env/printenv 经管道或网络输出）", true
+	}
 	return "", false
+}
+
+// hasShellWord 判断 low 中是否把 w 当作独立 shell 关键字出现（前后为非单词字符或串边界）。
+// 用于 eval/exec 等检测，避免误判 execute.py、evaluate 这类文件名。
+func hasShellWord(low, w string) bool {
+	n := len(w)
+	isWord := func(c byte) bool {
+		return c == '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')
+	}
+	for i := 0; i+n <= len(low); i++ {
+		if low[i:i+n] != w {
+			continue
+		}
+		leftOK := i == 0 || !isWord(low[i-1])
+		rightOK := i+n >= len(low) || !isWord(low[i+n])
+		if leftOK && rightOK {
+			return true
+		}
+	}
+	return false
 }
 
 // spawnSubagent 创建一个子会话并启动 run，ParentID 指向当前会话。
 // 子会话完成后自动归档（在 execute() 末尾检查 ParentID）。
-func (a *App) spawnSubagent(parentTask *Task, subPrompt string) (string, string, error) {
+func (a *App) spawnSubagent(parentTask *Task, subPrompt, profileID string) (string, string, error) {
 	a.mu.Lock()
 	// 找 parent session
 	var parentSess *Session
@@ -850,8 +995,16 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt string) (string, string,
 	}
 	a.sessions[subID] = subSess
 
-	// 创建子任务
+	// 创建子任务：按 Lead 选定的 profile id 解析采样参数（找不到则回退默认）
 	params := ProfileParams{MaxTokens: 2048}
+	if profileID != "" {
+		if p, ok := a.findProfile(profileID); ok {
+			params = p.Params
+			if params.MaxTokens == 0 {
+				params.MaxTokens = 2048
+			}
+		}
+	}
 	subTask := &Task{
 		ID: newID(), Mode: "chat", Prompt: subPrompt, Status: "running",
 		Steer: make(chan string, 4), Created: now,
@@ -862,22 +1015,20 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt string) (string, string,
 	}
 	subSess.Runs = append(subSess.Runs, subTask)
 	subSess.Messages = append(subSess.Messages, Message{Role: "user", Content: subPrompt})
-	a.mu.Unlock()
-
-	// 构建上下文
-	preview := a.buildContextPreview(subSess, subPrompt, "chat", "", a.settings, params, true)
+	// 构建上下文必须在锁内：contextTools() 读 a.settings.DisabledTools 要求调用方持锁
+	cfg := a.settings
+	preview := a.buildContextPreview(subSess, subPrompt, "chat", "", cfg, params, true)
 	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...)
 	firstInput := preview.Messages
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+	a.cancels[subTask.ID] = cancel
+	a.mu.Unlock()
 
 	if err := a.save(subSess); err != nil {
 		return "", "", err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
-	a.mu.Lock()
-	a.cancels[subTask.ID] = cancel
-	a.mu.Unlock()
-	go a.execute(ctx, subSess, subTask, a.settings, history, firstInput, map[string]Change{}, params)
+	go a.execute(ctx, subSess, subTask, cfg, history, firstInput, map[string]Change{}, params)
 
 	return subID, subSess.Title, nil
 }
@@ -902,6 +1053,417 @@ func (a *App) writeMemory(content string) string {
 	if len(existing) > 0 && existing[len(existing)-1] != '\n' { f.WriteString("\n") }
 	f.WriteString("\n- " + content + "\n")
 	return "已写入记忆。"
+}
+
+// requirementPhasePrompt 需求阶段强流程提示（注入 system prompt 末尾）。
+const requirementPhasePrompt = `
+【需求阶段强流程】你当前处于需求分析阶段。必须严格执行：
+1. 分析用户需求，调用 create_requirement 工具创建需求文档（必须调用，不可跳过）
+2. 工具会自动分配唯一编号（REQ-xxx）和文件名
+3. 创建成功后，回复用户：需求编号、需求名称、文档位置
+4. 不要直接回答需求内容而不建档`
+
+// autoModePrompt 自动编排模式强流程提示（workflow 模式下未手动选阶段时注入）。
+const autoModePrompt = `
+【自动编排模式 · 多智能体协作】你是前台 Lead 智能体，用户唯一直接与你对话。你负责理解用户意图并调度专业子智能体分工，而不是独自包揽全部环节。必须按以下闭环执行：
+1. 先澄清需求：理解有歧义、缺关键约束时，直接向用户追问，不要盲目开工。
+2. 自动路由：阅读下方「当前可用参数配置」，按实际 temperature/top_p/max_tokens 数值为每个阶段挑选 profile（严谨代码/验证→低 temperature、稳定；开放需求/设计→可适度高 temperature）。必须核对真实数值，不能只看配置名叫"精确/创意"。若现有配置实际参数都不满足任务（如需要更大上下文窗口、不同模型或特定工具权限），不要硬选——暂停调度，明确向用户建议应配置什么参数并说明原因，等用户配置好后再重新核对、满足才启动子 agent。
+3. 调用 spawn_subagent 依次召唤专业子智能体，每次 subTask 都要自包含（背景、目标、产出要求），并用 profile 参数传入第 2 步选定的配置 id；不要假设子智能体能看到本会话上下文：
+   - 需求分析子智能体：产出结构化需求 markdown 文档到 workspace；
+   - 设计子智能体：基于需求产出技术方案/设计文档；
+   - 实施子智能体：基于设计把可运行代码写盘到 workspace（不要只在回复里贴代码）；
+   - 验证子智能体：运行构建/测试命令并如实报告结果，失败要说明原因。
+4. 子智能体在后台独立运行（侧栏层级可见，完成后自动归档），产出落盘到 workspace。
+5. 调度完成后，你读取 workspace 中的产出文件，面向用户逐条汇总核对：每个子智能体做了什么、产出在哪、用了哪个配置、是否满足用户原始意图；不满足的项，说明并重新 spawn_subagent 补做。
+强约束：必须真正多次调用 spawn_subagent 分工，参数必须真实核对和传递，配置不足必须暂停建议、不能凑合启动；最终必须有你面向用户的逐条核对。`
+
+// profileInventoryPrompt 列出当前所有参数配置的实际采样值，供 Lead 按数值（而非名称）自动路由。
+func (a *App) profileInventoryPrompt() string {
+	var b strings.Builder
+	b.WriteString("\n【当前可用参数配置（必须按实际数值匹配，不要只看名称）】\n")
+	for _, p := range a.allProfiles() {
+		t, tp, mt := "未设置", "未设置", "未设置"
+		if p.Params.Temperature != nil { t = fmt.Sprintf("%.2f", *p.Params.Temperature) }
+		if p.Params.TopP != nil { tp = fmt.Sprintf("%.2f", *p.Params.TopP) }
+		if p.Params.MaxTokens != 0 { mt = fmt.Sprintf("%d", p.Params.MaxTokens) }
+		fmt.Fprintf(&b, "- id=%s（%s）: temperature=%s, top_p=%s, max_tokens=%s\n", p.ID, p.Name, t, tp, mt)
+	}
+	fmt.Fprintf(&b, "当前模型: %s\n", a.settings.Model)
+	b.WriteString("调用 spawn_subagent 时用 profile 参数传入选定的 id。严谨/代码环节选低 temperature；若现有配置都不满足，暂停并向用户建议应配置的参数后再启动。\n")
+	return b.String()
+}
+
+func (a *App) requirementsDir() string {
+	return a.cacheContainer + "/system-docs/requirements"
+}
+
+// nextRequirementNumber 扫描需求目录已有 REQ-*.md，返回下一个可用编号（从 1 开始）。
+func (a *App) nextRequirementNumber(dir string) int {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return 1
+	}
+	re := regexp.MustCompile(`^REQ-(\d+)-`)
+	max := 0
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		m := re.FindStringSubmatch(e.Name())
+		if m == nil {
+			continue
+		}
+		var n int
+		if _, err := fmt.Sscanf(m[1], "%d", &n); err == nil && n > max {
+			max = n
+		}
+	}
+	return max + 1
+}
+
+// sanitizeReqTitle 把标题清洗成安全文件名片段（保留中文/字母/数字/连字符）。
+func sanitizeReqTitle(title string) string {
+	re := regexp.MustCompile(`[^\p{Han}\w-]+`)
+	s := re.ReplaceAllString(title, "-")
+	s = strings.Trim(s, "-")
+	for strings.Contains(s, "--") {
+		s = strings.ReplaceAll(s, "--", "-")
+	}
+	if rs := []rune(s); len(rs) > 40 {
+		s = string(rs[:40])
+	}
+	if s == "" {
+		s = "untitled"
+	}
+	return s
+}
+
+// requirementSection 从 content 中提取指定 ## 标题下的正文；缺失返回空串。
+func requirementSection(content, name string) string {
+	lines := strings.Split(content, "\n")
+	var buf []string
+	capturing := false
+	for _, ln := range lines {
+		t := strings.TrimSpace(ln)
+		if strings.HasPrefix(t, "## ") {
+			heading := strings.TrimSpace(strings.TrimPrefix(t, "## "))
+			if capturing {
+				break
+			}
+			if heading == name {
+				capturing = true
+				continue
+			}
+		}
+		if capturing {
+			buf = append(buf, ln)
+		}
+	}
+	return strings.TrimSpace(strings.Join(buf, "\n"))
+}
+
+// createRequirement 创建需求文档并更新索引（需求阶段强流程工具）。
+func (a *App) createRequirement(title, content, related string) string {
+	title = strings.TrimSpace(title)
+	if title == "" {
+		return "缺少 title 参数"
+	}
+	dir := a.requirementsDir()
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "创建需求目录失败: " + err.Error()
+	}
+	num := a.nextRequirementNumber(dir)
+	id := fmt.Sprintf("REQ-%03d", num)
+	fileName := fmt.Sprintf("REQ-%03d-%s.md", num, sanitizeReqTitle(title))
+	filePath := filepath.Join(dir, fileName)
+	now := time.Now().Format("2006-01-02 15:04:05")
+	relatedDisp := strings.TrimSpace(related)
+	if relatedDisp == "" {
+		relatedDisp = "无"
+	}
+	desc := requirementSection(content, "需求描述")
+	if desc == "" && !strings.Contains(content, "## 需求描述") {
+		desc = strings.TrimSpace(content)
+	}
+	if desc == "" {
+		desc = "（待补充）"
+	}
+	section := func(name string) string {
+		v := requirementSection(content, name)
+		if v == "" {
+			return "（待补充）"
+		}
+		return v
+	}
+	doc := fmt.Sprintf(`# %s · %s
+
+- 编号：%s
+- 创建时间：%s
+- 状态：待评审
+- 关联需求：%s
+
+## 需求描述
+%s
+
+## 目标
+%s
+
+## 范围
+%s
+
+## 验收标准
+%s
+
+## 技术考量
+%s
+`, id, title, id, now, relatedDisp, desc, section("目标"), section("范围"), section("验收标准"), section("技术考量"))
+	if err := os.WriteFile(filePath, []byte(doc), 0644); err != nil {
+		return "写入需求文档失败: " + err.Error()
+	}
+	if err := a.rewriteRequirementsIndex(dir); err != nil {
+		return "需求已建档，但索引更新失败: " + err.Error()
+	}
+	return fmt.Sprintf("需求已建档：%s · %s\n文件：%s\n索引已更新", id, title, filePath)
+}
+
+// rewriteRequirementsIndex 扫描目录下所有 REQ-*.md，重写 requirements-index.md。
+func (a *App) rewriteRequirementsIndex(dir string) error {
+	type info struct {
+		num                                int
+		id, name, status, created, related string
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	re := regexp.MustCompile(`^REQ-(\d+)-`)
+	var list []info
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		m := re.FindStringSubmatch(e.Name())
+		if m == nil {
+			continue
+		}
+		var n int
+		fmt.Sscanf(m[1], "%d", &n)
+		row := info{num: n, id: fmt.Sprintf("REQ-%03d", n), name: strings.TrimSuffix(e.Name(), ".md"), status: "待评审", created: "", related: "无"}
+		if b, err := os.ReadFile(filepath.Join(dir, e.Name())); err == nil {
+			for _, ln := range strings.Split(string(b), "\n") {
+				t := strings.TrimSpace(ln)
+				switch {
+				case strings.HasPrefix(t, "# REQ-"):
+					if i := strings.Index(t, "·"); i >= 0 {
+						row.name = strings.TrimSpace(t[i+1:])
+					}
+				case strings.HasPrefix(t, "- 状态："):
+					row.status = strings.TrimSpace(strings.TrimPrefix(t, "- 状态："))
+				case strings.HasPrefix(t, "- 创建时间："):
+					row.created = strings.TrimSpace(strings.TrimPrefix(t, "- 创建时间："))
+				case strings.HasPrefix(t, "- 关联需求："):
+					row.related = strings.TrimSpace(strings.TrimPrefix(t, "- 关联需求："))
+				}
+			}
+		}
+		if len(row.created) >= 10 {
+			row.created = row.created[:10]
+		}
+		list = append(list, row)
+	}
+	sort.Slice(list, func(i, j int) bool { return list[i].num < list[j].num })
+	var b strings.Builder
+	b.WriteString("# 需求索引\n\n| 编号 | 名称 | 状态 | 创建时间 | 关联 |\n|------|------|------|----------|------|\n")
+	for _, r := range list {
+		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s |\n", r.id, r.name, r.status, r.created, r.related)
+	}
+	fmt.Fprintf(&b, "\n共 %d 个需求\n", len(list))
+	return os.WriteFile(filepath.Join(dir, "requirements-index.md"), []byte(b.String()), 0644)
+}
+
+// designPhasePrompt 设计阶段强流程提示。
+const designPhasePrompt = `
+【设计阶段强流程】你当前处于方案设计阶段。必须严格执行：
+1. 先用 read_file 阅读 system-docs/requirements/ 下相关的 REQ-xxx 需求文档（尤其关联需求）
+2. 调用 create_design 工具创建/更新设计文档（必须调用，不可跳过）
+3. 主动列举关键决策点、可选方案及其取舍；涉及复杂结构用 create_diagram 生成 .drawio 图
+4. 文档须覆盖：开发流程、依赖条件、架构需求、待确认项（主动澄清）、变更记录
+5. 完成后回复用户设计编号（DESIGN-xxx）、名称与文档位置`
+
+// implementationPhasePrompt 实施阶段强流程提示。
+const implementationPhasePrompt = `
+【实施阶段强流程】你当前处于编码实施阶段。必须严格执行：
+1. 在工作目录 /workspace 内实际编写/修改代码，自动安装依赖，不能只描述不写代码
+2. 实现后必须用 run_shell 实际运行编译与测试（如 go build ./...、go test ./...），依据真实输出迭代
+3. 完成后调用 record_implementation 记录：实现内容、修改的文件、验证结果（必须基于真实运行）
+4. 完成后回复用户实施编号（IMPL-xxx）与结果摘要`
+
+// verifyPhasePrompt 验证阶段强流程提示。
+const verifyPhasePrompt = `
+【验证阶段强流程】你当前处于质量验证阶段。必须严格执行：
+1. 先用 read_file 阅读相关 REQ-xxx / DESIGN-xxx / IMPL-xxx 文档
+2. 在工作目录编写真实的自动化测试代码，并用 run_shell 真实运行（go test、curl、编译等）
+3. 测试报告必须基于真实运行结果，禁止把"计划执行/未运行"写成"通过"
+4. 调用 record_verification 记录测试报告，回复用户验证编号（TEST-xxx）与真实结论`
+
+// phaseDocSpec 描述一个"文档驱动"工作流阶段的编号/目录/索引/章节约定。
+type phaseDocSpec struct {
+	prefix     string   // REQ / DESIGN / IMPL / TEST
+	subdir     string   // system-docs 下子目录名
+	indexFile  string   // 索引文件名
+	indexTitle string   // 索引标题
+	sections   []string // 文档模板章节
+}
+
+// nextDocNumber 扫描 dir 下 {PREFIX}-(\d+)- 文件，返回下一个可用编号（从 1 开始）。
+func nextDocNumber(dir, prefix string) int {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return 1
+	}
+	re := regexp.MustCompile("^" + regexp.QuoteMeta(prefix) + `-(\d+)-`)
+	max := 0
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		m := re.FindStringSubmatch(e.Name())
+		if m == nil {
+			continue
+		}
+		var n int
+		if _, err := fmt.Sscanf(m[1], "%d", &n); err == nil && n > max {
+			max = n
+		}
+	}
+	return max + 1
+}
+
+// rewriteDocIndex 扫描 dir 下所有 {PREFIX}-*.md，按编号升序重写索引文件。
+func rewriteDocIndex(dir, prefix, indexFile, indexTitle string) error {
+	type row struct {
+		num                                int
+		id, name, status, created, related string
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+	re := regexp.MustCompile("^" + regexp.QuoteMeta(prefix) + `-(\d+)-`)
+	var list []row
+	for _, e := range entries {
+		if e.IsDir() {
+			continue
+		}
+		m := re.FindStringSubmatch(e.Name())
+		if m == nil {
+			continue
+		}
+		var n int
+		fmt.Sscanf(m[1], "%d", &n)
+		r := row{num: n, id: fmt.Sprintf("%s-%03d", prefix, n), name: strings.TrimSuffix(e.Name(), ".md"), status: "待评审", created: "", related: "无"}
+		if body, err := os.ReadFile(filepath.Join(dir, e.Name())); err == nil {
+			for _, ln := range strings.Split(string(body), "\n") {
+				t := strings.TrimSpace(ln)
+				switch {
+				case strings.HasPrefix(t, "# "+prefix+"-"):
+					if i := strings.Index(t, "·"); i >= 0 {
+						r.name = strings.TrimSpace(t[i+1:])
+					}
+				case strings.HasPrefix(t, "- 状态："):
+					r.status = strings.TrimSpace(strings.TrimPrefix(t, "- 状态："))
+				case strings.HasPrefix(t, "- 创建时间："):
+					r.created = strings.TrimSpace(strings.TrimPrefix(t, "- 创建时间："))
+				case strings.HasPrefix(t, "- 关联："):
+					r.related = strings.TrimSpace(strings.TrimPrefix(t, "- 关联："))
+				}
+			}
+		}
+		if len(r.created) >= 10 {
+			r.created = r.created[:10]
+		}
+		list = append(list, r)
+	}
+	sort.Slice(list, func(i, j int) bool { return list[i].num < list[j].num })
+	var b strings.Builder
+	fmt.Fprintf(&b, "# %s\n\n| 编号 | 名称 | 状态 | 创建时间 | 关联 |\n|------|------|------|----------|------|\n", indexTitle)
+	for _, r := range list {
+		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s |\n", r.id, r.name, r.status, r.created, r.related)
+	}
+	fmt.Fprintf(&b, "\n共 %d 个文档\n", len(list))
+	return os.WriteFile(filepath.Join(dir, indexFile), []byte(b.String()), 0644)
+}
+
+// createDoc 文档驱动阶段的通用建档：分配编号、写模板、重写索引。
+func (a *App) createDoc(spec phaseDocSpec, title, content, related string) string {
+	title = strings.TrimSpace(title)
+	if title == "" {
+		return "缺少 title 参数"
+	}
+	dir := a.cacheContainer + "/system-docs/" + spec.subdir
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "创建文档目录失败: " + err.Error()
+	}
+	num := nextDocNumber(dir, spec.prefix)
+	id := fmt.Sprintf("%s-%03d", spec.prefix, num)
+	fileName := fmt.Sprintf("%s-%03d-%s.md", spec.prefix, num, sanitizeReqTitle(title))
+	filePath := filepath.Join(dir, fileName)
+	now := time.Now().Format("2006-01-02 15:04:05")
+	relatedDisp := strings.TrimSpace(related)
+	if relatedDisp == "" {
+		relatedDisp = "无"
+	}
+	var b strings.Builder
+	fmt.Fprintf(&b, "# %s · %s\n\n- 编号：%s\n- 创建时间：%s\n- 状态：待评审\n- 关联：%s\n", id, title, id, now, relatedDisp)
+	for _, sec := range spec.sections {
+		v := requirementSection(content, sec)
+		if v == "" {
+			v = "（待补充）"
+		}
+		fmt.Fprintf(&b, "\n## %s\n%s\n", sec, v)
+	}
+	if err := os.WriteFile(filePath, []byte(b.String()), 0644); err != nil {
+		return "写入文档失败: " + err.Error()
+	}
+	if err := rewriteDocIndex(dir, spec.prefix, spec.indexFile, spec.indexTitle); err != nil {
+		return "已建档，但索引更新失败: " + err.Error()
+	}
+	return fmt.Sprintf("已建档：%s · %s\n文件：%s\n索引已更新", id, title, filePath)
+}
+
+// joinRelated 合并非空关联编号为逗号分隔串。
+func joinRelated(parts ...string) string {
+	var out []string
+	for _, p := range parts {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return strings.Join(out, ", ")
+}
+
+// createDesign 设计阶段建档工具。
+func (a *App) createDesign(title, content, reqId, related string) string {
+	return a.createDoc(phaseDocSpec{
+		prefix: "DESIGN", subdir: "designs", indexFile: "designs-index.md", indexTitle: "设计索引",
+		sections: []string{"开发流程", "依赖条件", "架构需求", "待确认项", "变更记录"},
+	}, title, content, joinRelated(reqId, related))
+}
+
+// recordImplementation 实施阶段记录工具。
+func (a *App) recordImplementation(title, content, reqId, designId string) string {
+	return a.createDoc(phaseDocSpec{
+		prefix: "IMPL", subdir: "implementations", indexFile: "implementations-index.md", indexTitle: "实施索引",
+		sections: []string{"实现内容", "修改文件", "验证结果", "遗留事项"},
+	}, title, content, joinRelated(reqId, designId))
+}
+
+// recordVerification 验证阶段记录工具。
+func (a *App) recordVerification(title, content, reqId, designId, implId string) string {
+	return a.createDoc(phaseDocSpec{
+		prefix: "TEST", subdir: "verifications", indexFile: "verifications-index.md", indexTitle: "验证索引",
+		sections: []string{"测试环境", "测试用例", "运行结果", "结论与缺陷"},
+	}, title, content, joinRelated(reqId, designId, implId))
 }
 
 // readOfficeFile 用 python 解析 Office 文件为纯文本
@@ -982,9 +1544,289 @@ func (a *App) createDiagram(path, xml string) string {
 	return "图表已创建: " + path + "（可在文件面板中点击打开查看和编辑）"
 }
 
-// semanticSearch 语义搜索（先返回提示，后续接 embedding）
+// webSearch 在线搜索（DuckDuckGo HTML 爬取，限流时 fallback SearXNG 公共 JSON 实例）。
+func (a *App) webSearch(query string) string {
+	if strings.TrimSpace(query) == "" {
+		return "缺少 query"
+	}
+	client := &http.Client{Timeout: 10 * time.Second}
+	ddgURL := "https://html.duckduckgo.com/html/?q=" + url.QueryEscape(query)
+	req, _ := http.NewRequest("GET", ddgURL, nil)
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
+	resp, err := client.Do(req)
+	if err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode == 200 {
+			if body, rerr := io.ReadAll(resp.Body); rerr == nil {
+				if out := parseDuckDuckGoHTML(string(body)); out != "" {
+					return out + "\n（来源: DuckDuckGo）"
+				}
+			}
+		}
+	}
+	// fallback: SearXNG 公共实例 JSON
+	sxURL := "https://search.bus-hit.me/search?q=" + url.QueryEscape(query) + "&format=json"
+	req2, _ := http.NewRequest("GET", sxURL, nil)
+	req2.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
+	resp2, err2 := client.Do(req2)
+	if err2 != nil {
+		return "搜索失败: " + err2.Error() + "，可尝试用 search_text 搜索本地文件"
+	}
+	defer resp2.Body.Close()
+	if resp2.StatusCode != 200 {
+		return "搜索失败: HTTP " + resp2.Status + "，可尝试用 search_text 搜索本地文件"
+	}
+	var sj struct {
+		Results []struct {
+			Title   string `json:"title"`
+			URL     string `json:"url"`
+			Content string `json:"content"`
+		} `json:"results"`
+	}
+	if err := json.NewDecoder(resp2.Body).Decode(&sj); err != nil {
+		return "搜索失败: " + err.Error() + "，可尝试用 search_text 搜索本地文件"
+	}
+	var b strings.Builder
+	for i, r := range sj.Results {
+		if i >= 8 { break }
+		if r.Title == "" { continue }
+		b.WriteString(fmt.Sprintf("%d. %s\n   URL: %s\n   摘要: %s\n\n", i+1, stripTags(r.Title), r.URL, stripTags(r.Content)))
+	}
+	if b.Len() == 0 {
+		return "未找到相关结果，可尝试用 search_text 搜索本地文件"
+	}
+	return b.String() + "（来源: SearXNG）"
+}
+
+var ddgLinkRe = regexp.MustCompile(`(?s)<a[^>]*class="result__a"[^>]*href="([^"]*)"[^>]*>(.*?)</a>`)
+var ddgSnippetRe = regexp.MustCompile(`(?s)class="result__snippet"[^>]*>(.*?)</(?:a|div|span)>`)
+
+func parseDuckDuckGoHTML(html string) string {
+	links := ddgLinkRe.FindAllStringSubmatch(html, -1)
+	snips := ddgSnippetRe.FindAllStringSubmatch(html, -1)
+	if len(links) == 0 {
+		return ""
+	}
+	var b strings.Builder
+	n := 0
+	for i, m := range links {
+		if n >= 8 { break }
+		href := m[1]
+		// DuckDuckGo 跳转链接：//duckduckgo.com/l/?uddg=<encoded>
+		if strings.HasPrefix(href, "//") {
+			href = "https:" + href
+		}
+		if u, err := url.Parse(href); err == nil {
+			if u.Query().Get("uddg") != "" {
+				if dec, derr := url.QueryUnescape(u.Query().Get("uddg")); derr == nil {
+					href = dec
+				}
+			}
+		}
+		title := stripTags(m[2])
+		snip := ""
+		if i < len(snips) {
+			snip = stripTags(snips[i][1])
+		}
+		if title == "" { continue }
+		b.WriteString(fmt.Sprintf("%d. %s\n   URL: %s\n   摘要: %s\n\n", n+1, title, href, snip))
+		n++
+	}
+	return b.String()
+}
+
+var tagRe = regexp.MustCompile(`<[^>]*>`)
+
+func stripTags(s string) string {
+	s = tagRe.ReplaceAllString(s, "")
+	s = strings.ReplaceAll(s, "&amp;", "&")
+	s = strings.ReplaceAll(s, "&lt;", "<")
+	s = strings.ReplaceAll(s, "&gt;", ">")
+	s = strings.ReplaceAll(s, "&quot;", `"`)
+	s = strings.ReplaceAll(s, "&#39;", "'")
+	s = strings.ReplaceAll(s, "&nbsp;", " ")
+	return strings.TrimSpace(s)
+}
+
+// tfidfStopwords 中英文停用词。
+var tfidfStopwords = map[string]bool{
+	"the": true, "a": true, "an": true, "is": true, "are": true, "was": true, "were": true,
+	"的": true, "了": true, "在": true, "是": true, "我": true, "有": true, "和": true,
+	"就": true, "不": true, "人": true, "都": true, "一": true, "上": true, "也": true,
+	"很": true, "到": true, "说": true, "要": true, "去": true, "你": true, "会": true,
+	"着": true, "没有": true, "看": true, "好": true, "自己": true, "这": true,
+}
+
+// tokenizeTFIDF 英文按空格/标点切词（小写），中文按单字 + 相邻 bigram。
+func tokenizeTFIDF(s string) []string {
+	var out []string
+	var buf []rune
+	flushWord := func() {
+		if len(buf) == 0 { return }
+		w := strings.ToLower(string(buf))
+		if !tfidfStopwords[w] && len(w) > 1 {
+			out = append(out, w)
+		}
+		buf = nil
+	}
+	var hanRun []rune
+	flushHan := func() {
+		for i, r := range hanRun {
+			ch := string(r)
+			if !tfidfStopwords[ch] {
+				out = append(out, ch)
+			}
+			if i+1 < len(hanRun) {
+				bg := string(hanRun[i]) + string(hanRun[i+1])
+				out = append(out, bg)
+			}
+		}
+		hanRun = nil
+	}
+	for _, r := range s {
+		switch {
+		case unicode.IsLetter(r) || unicode.IsDigit(r):
+			flushHan()
+			buf = append(buf, r)
+		case unicode.Is(unicode.Han, r):
+			flushWord()
+			hanRun = append(hanRun, r)
+		default:
+			flushWord()
+			flushHan()
+		}
+	}
+	flushWord()
+	flushHan()
+	return out
+}
+
+type tfidfDoc struct {
+	path       string
+	start, end int
+	text       string
+	tf         map[string]float64
+}
+
+// semanticSearch 离线 TF-IDF 余弦相似度（非向量 embedding）。
 func (a *App) semanticSearch(query string) string {
-	return "语义搜索暂未配置 embedding 模型。当前可用关键字搜索（search_text）。"
+	if strings.TrimSpace(query) == "" {
+		return "缺少 query"
+	}
+	exts := map[string]bool{".go": true, ".js": true, ".md": true, ".txt": true, ".py": true, ".json": true, ".css": true, ".html": true, ".sh": true}
+	skipDirs := map[string]bool{".git": true, "vendor": true, "node_modules": true, "drawio": true}
+	var docs []tfidfDoc
+	fileCount := 0
+	const maxFiles = 200
+	// 递归遍历工作区（复用 listLocalDir / readText，与其它工具同一路径校验）
+	var walkDir func(dir string)
+	walkDir = func(dir string) {
+		if fileCount >= maxFiles { return }
+		items, err := a.listLocalDir(a.workspace, dir)
+		if err != nil { return }
+		for _, it := range items {
+			if fileCount >= maxFiles || len(docs) >= 1500 { return }
+			name, _ := it["name"].(string)
+			p, _ := it["path"].(string)
+			isDir, _ := it["dir"].(bool)
+			if isDir {
+				if skipDirs[name] { continue }
+				walkDir(p)
+				continue
+			}
+			ext := strings.ToLower(filepath.Ext(name))
+			if !exts[ext] { continue }
+			fileCount++
+			b, rerr := readText(a.workspace, p)
+			if rerr != nil || len(b) > 200*1024 { continue }
+			content := string(b)
+			lines := strings.Split(content, "\n")
+			var buf []string
+			startLine := 1
+			flush := func(endLine int) {
+				if len(buf) == 0 { return }
+				para := strings.TrimSpace(strings.Join(buf, "\n"))
+				if len([]rune(para)) < 10 || len(docs) >= 1500 { return }
+				toks := tokenizeTFIDF(para)
+				if len(toks) == 0 { return }
+				tf := map[string]float64{}
+				for _, tk := range toks { tf[tk]++ }
+				docs = append(docs, tfidfDoc{path: p, start: startLine, end: endLine, text: para, tf: tf})
+			}
+			for i, line := range lines {
+				if strings.TrimSpace(line) == "" {
+					flush(i) // i 是 0-based；上一个内容行的 1-based 行号 = i
+					buf = nil
+					startLine = i + 2
+				} else {
+					buf = append(buf, line)
+				}
+			}
+			flush(len(lines))
+		}
+	}
+	walkDir(".")
+	if len(docs) == 0 {
+		return "工作区中未扫描到可索引的文本片段。（本地 TF-IDF 语义搜索，非向量 embedding）"
+	}
+	// document frequency
+	df := map[string]int{}
+	for _, d := range docs {
+		seen := map[string]bool{}
+		for tk := range d.tf {
+			if !seen[tk] { df[tk]++; seen[tk] = true }
+		}
+	}
+	N := float64(len(docs))
+	idf := func(tk string) float64 {
+		return math.Log(N/float64(1+df[tk])) + 1
+	}
+	// score each doc against query
+	qtoks := tokenizeTFIDF(query)
+	if len(qtoks) == 0 {
+		return "查询未提取到有效词元。（本地 TF-IDF 语义搜索，非向量 embedding）"
+	}
+	qvec := map[string]float64{}
+	for _, tk := range qtoks { qvec[tk]++ }
+	var qnorm float64
+	for tk, f := range qvec {
+		qvec[tk] = f * idf(tk)
+		qnorm += qvec[tk] * qvec[tk]
+	}
+	qnorm = math.Sqrt(qnorm)
+	type scored struct {
+		idx   int
+		score float64
+	}
+	var ranks []scored
+	for i, d := range docs {
+		var dot, dnorm float64
+		for tk, w := range d.tf {
+			dw := (1 + math.Log(w)) * idf(tk)
+			dnorm += dw * dw
+			if qv, ok := qvec[tk]; ok {
+				dot += dw * qv
+			}
+		}
+		dnorm = math.Sqrt(dnorm)
+		if dnorm == 0 || qnorm == 0 { continue }
+		ranks = append(ranks, scored{idx: i, score: dot / (dnorm * qnorm)})
+	}
+	sort.Slice(ranks, func(i, j int) bool { return ranks[i].score > ranks[j].score })
+	var b strings.Builder
+	limit := 5
+	if len(ranks) < limit { limit = len(ranks) }
+	for i := 0; i < limit; i++ {
+		d := docs[ranks[i].idx]
+		preview := d.text
+		if len([]rune(preview)) > 200 {
+			preview = string([]rune(preview)[:200]) + "…"
+		}
+		preview = strings.ReplaceAll(preview, "\n", " ")
+		b.WriteString(fmt.Sprintf("%d. 文件:%s (行%d-%d)\n   相似度: %.2f\n   内容预览: %s\n\n", i+1, d.path, d.start, d.end, ranks[i].score, preview))
+	}
+	b.WriteString("（本地 TF-IDF 语义搜索，非向量 embedding）")
+	return b.String()
 }
 
 // feedbackHandler 记录用户对回答的评价（好/有问题），写入记忆文件用于重训练
@@ -1026,6 +1868,9 @@ func readOnlyAllowed(command string) bool {
 		"pwd", "echo", "which", "type", "true", "false", "test", "du", "df",
 		"git status", "git diff", "git log", "git show", "git blame", "git branch",
 		"git remote", "git config --get", "git rev-parse", "git ls-files",
+		"go env", "go version", "go list", "go doc",
+		"python3 --version", "python --version", "pip --version",
+		"node --version", "npm --version", "yarn --version",
 	}
 	for _, a := range allowed {
 		if low == a || strings.HasPrefix(low, a+" ") {
@@ -1038,9 +1883,16 @@ func readOnlyAllowed(command string) bool {
 func (a *App) execShellCommand(command string) (string, int, error) {
 	a.mu.Lock()
 	mode := a.settings.SandboxMode
+	timeoutSec := a.settings.ShellTimeout
 	a.mu.Unlock()
 	if mode == "" {
 		mode = "workspace-write"
+	}
+	if timeoutSec <= 0 {
+		timeoutSec = 60
+	}
+	if timeoutSec > 300 {
+		timeoutSec = 300
 	}
 	switch mode {
 	case "read-only":
@@ -1049,13 +1901,13 @@ func (a *App) execShellCommand(command string) (string, int, error) {
 		}
 	case "workspace-write":
 		if reason, bad := shellBlocked(command); bad {
-			return "", -1, errors.New("权限策略拦截：" + reason + "（破坏性命令需你手动在终端运行）")
+			return "", -1, errors.New("权限策略拦截：" + reason + "。建议：该命令需要你手动在终端运行，或切换到 danger-full-access 模式")
 		}
 	case "danger-full-access":
 		// 不拦截
 	default:
 		if reason, bad := shellBlocked(command); bad {
-			return "", -1, errors.New("权限策略拦截：" + reason)
+			return "", -1, errors.New("权限策略拦截：" + reason + "。建议：该命令需要你手动在终端运行，或切换到 danger-full-access 模式")
 		}
 	}
 	if a.workspaceMode() == "ssh" {
@@ -1068,7 +1920,7 @@ func (a *App) execShellCommand(command string) (string, int, error) {
 	if err != nil {
 		return "", -1, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSec)*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "bash", "--noprofile", "--norc", "-c", command)
 	cmd.Dir = dir
@@ -1076,14 +1928,25 @@ func (a *App) execShellCommand(command string) (string, int, error) {
 	if c := a.wsConfig.Cache.Path; c != "" {
 		cacheEnv = filepath.Join(a.workPath, filepath.FromSlash(c))
 	}
-	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=" + cacheEnv, "GOPATH=/home/aide/go", "AIDE_CACHE=" + cacheEnv}
-	var buf strings.Builder
-	cmd.Stdout = &buf
-	cmd.Stderr = &buf
+	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=" + cacheEnv, "GOPATH=/home/aide/go", "AIDE_CACHE=" + cacheEnv, "AIDE_SANDBOX=1"}
+	var stdoutBuf, stderrBuf strings.Builder
+	cmd.Stdout = &stdoutBuf
+	cmd.Stderr = &stderrBuf
 	err = cmd.Run()
-	out := buf.String()
-	if len(out) > 128<<10 {
-		out = out[:128<<10] + "\n…（输出已截断 128KB）"
+	stdout := stdoutBuf.String()
+	stderr := stderrBuf.String()
+	if len(stdout) > 64<<10 {
+		stdout = stdout[:64<<10] + "\n…（stdout已截断 64KB）"
+	}
+	if len(stderr) > 64<<10 {
+		stderr = stderr[:64<<10] + "\n…（stderr已截断 64KB）"
+	}
+	out := stdout
+	if strings.TrimSpace(stderr) != "" {
+		if out != "" {
+			out += "\n"
+		}
+		out += "[stderr]\n" + stderr
 	}
 	code := 0
 	if err != nil {
@@ -1094,9 +1957,69 @@ func (a *App) execShellCommand(command string) (string, int, error) {
 		}
 	}
 	if ctx.Err() != nil {
-		err = errors.New("命令超过 60 秒已终止")
+		err = fmt.Errorf("命令超过 %d 秒已终止", timeoutSec)
 	}
 	return out, code, err
+}
+
+// analyzeShellFailure 基于关键词把命令失败翻译成「原因 + 建议」，喂给模型做下一次决策（失败反馈循环）。
+// 覆盖常见 shell 错误：命令缺失、权限、路径、语法、超时、沙箱拦截；其余走通用建议。
+func analyzeShellFailure(command, output string, code int, err error) string {
+	errMsg := ""
+	if err != nil {
+		errMsg = strings.TrimSpace(err.Error())
+	}
+	hay := strings.ToLower(output + " " + errMsg)
+
+	// 错误摘要：优先取 [stderr] 末尾，其次 error 信息，截到 200 字符
+	summ := errMsg
+	if i := strings.LastIndex(output, "[stderr]"); i >= 0 {
+		if tail := strings.TrimSpace(output[i+len("[stderr]"):]); tail != "" {
+			summ = tail
+		}
+	}
+	if r := []rune(summ); len(r) > 200 {
+		summ = string(r[len(r)-200:])
+	}
+
+	// 命令预览：前 80 字符
+	cmdPreview := command
+	if r := []rune(cmdPreview); len(r) > 80 {
+		cmdPreview = string(r[:80]) + "…"
+	}
+
+	causeTitle, causeFix := "命令以非零退出码结束", "查看下方输出定位具体报错，检查参数、依赖和当前目录；修改后重试"
+	switch {
+	case strings.Contains(hay, "权限策略拦截") || strings.Contains(hay, "沙箱模式 read-only"):
+		causeTitle = "被沙箱权限策略拦截（破坏性/写操作在当前模式被禁止）"
+		causeFix = "该命令需要你手动在终端运行，或切换到 danger-full-access 模式后重试"
+	case strings.Contains(hay, "超时") || strings.Contains(hay, "context deadline exceeded"):
+		causeTitle = "命令执行超时被终止"
+		causeFix = "简化命令（去掉全量构建/测试/下载），或在设置里调大 ShellTimeout 后重试"
+	case strings.Contains(hay, "command not found"):
+		causeTitle = "命令不存在或不在 PATH 中"
+		causeFix = "检查命令拼写；确认工具已安装（容器内 PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin）；必要时用绝对路径"
+	case strings.Contains(hay, "permission denied"):
+		causeTitle = "权限不足"
+		causeFix = "对目标文件/目录 chmod，或检查是否对只读路径写；必要时切换沙箱模式"
+	case strings.Contains(hay, "no such file or directory"):
+		causeTitle = "路径不存在（文件或目录写错）"
+		causeFix = "先用 ls/find 确认实际路径，注意工作目录锁定在 workspace 内，使用相对路径"
+	case strings.Contains(hay, "syntax error") || strings.Contains(hay, "unexpected token"):
+		causeTitle = "shell 语法错误"
+		causeFix = "检查引号/管道/重定向是否闭合，命令是否被错误拆成多行"
+	}
+
+	var b strings.Builder
+	fmt.Fprintf(&b, "⚠ 命令执行失败（exit code: %d）\n", code)
+	fmt.Fprintf(&b, "命令: %s\n", cmdPreview)
+	if summ != "" {
+		fmt.Fprintf(&b, "错误摘要: %s\n", summ)
+	}
+	b.WriteString("可能原因分析:\n1. " + causeTitle + "\n")
+	b.WriteString("建议修复:\n- " + causeFix + "\n")
+	b.WriteString("你可以修改命令后重试，或告知用户手动执行。")
+	return b.String()
 }
 
 func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Change) string {
@@ -1121,6 +2044,15 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 	}
 	str := func(k string) string { v, _ := args[k].(string); return strings.TrimSpace(v) }
 	rawStr := func(k string) string { v, _ := args[k].(string); return v } // 正文等字段按原字节保留（R06）
+	// per-tool 权限：被禁用的工具直接拒绝
+	a.mu.Lock()
+	disabled := a.settings.DisabledTools
+	a.mu.Unlock()
+	for _, dt := range disabled {
+		if dt == call.Function.Name {
+			return "工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用"
+		}
+	}
 	listDir := func(p string) ([]map[string]any, error) {
 		if mode == "ssh" {
 			if err := safePath(p); err != nil {
@@ -1237,12 +2169,16 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 			return "缺少 command 参数"
 		}
 		out, code, err := a.execShellCommand(command)
+		if err != nil || code != 0 {
+			fb := analyzeShellFailure(command, out, code, err)
+			if strings.TrimSpace(out) != "" {
+				fb += "\n\n--- 原始输出 ---\n" + out
+			}
+			return fb
+		}
 		res := "exit code: " + fmt.Sprint(code)
 		if strings.TrimSpace(out) != "" {
 			res += "\n" + out
-		}
-		if err != nil {
-			res += "\nerror: " + err.Error()
 		}
 		return res
 	case "spawn_subagent":
@@ -1250,11 +2186,11 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 		if subTask == "" {
 			return "缺少 task 参数"
 		}
-		subID, subTitle, err := a.spawnSubagent(task, subTask)
+		subID, subTitle, err := a.spawnSubagent(task, subTask, str("profile"))
 		if err != nil {
 			return "子会话创建失败: " + err.Error()
 		}
-		return fmt.Sprintf("子会话已创建: %s (标题: %s)。子会话独立运行，完成后自动归档，结果会关联到当前会话。", subID, subTitle)
+		return fmt.Sprintf("子会话已创建: %s (标题: %s, 参数配置: %s)。子会话独立运行，完成后自动归档，结果会关联到当前会话。", subID, subTitle, str("profile"))
 	case "read_memory":
 		return a.readMemory()
 	case "write_memory":
@@ -1267,8 +2203,18 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 		return a.searchText(str("query"), str("path"))
 	case "semantic_search":
 		return a.semanticSearch(str("query"))
+	case "web_search":
+		return a.webSearch(str("query"))
 	case "create_diagram":
 		return a.createDiagram(str("path"), str("xml"))
+	case "create_requirement":
+		return a.createRequirement(str("title"), rawStr("content"), str("related"))
+	case "create_design":
+		return a.createDesign(str("title"), rawStr("content"), str("reqId"), str("related"))
+	case "record_implementation":
+		return a.recordImplementation(str("title"), rawStr("content"), str("reqId"), str("designId"))
+	case "record_verification":
+		return a.recordVerification(str("title"), rawStr("content"), str("reqId"), str("designId"), str("implId"))
 	default:
 		// 插件工具（协议 v1.1）
 		pluginID := a.pluginOwnerOf(call.Function.Name)

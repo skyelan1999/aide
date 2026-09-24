@@ -141,6 +141,23 @@
       ]
     },
     {
+      "id": "voice",
+      "title": "语音小秘",
+      "description": "输入框旁的麦克风可边说边转写，AI 自动过滤背景声与闲聊。",
+      "controls": [
+        {
+          "id": "voiceAssistantName",
+          "type": "voice-name",
+          "label": "小秘名字"
+        },
+        {
+          "id": "voiceHistory",
+          "type": "voice-history",
+          "label": "小秘对话历史"
+        }
+      ]
+    },
+    {
       "id": "about",
       "title": "关于",
       "controls": [
