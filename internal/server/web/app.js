@@ -504,8 +504,21 @@ function showEditor() {
   $('editor').readOnly = readOnly; $('save-file').disabled = readOnly; $('attach-file').disabled = state.file.fresh;
   $('editor-status').textContent = state.file.root === 'context' ? (sourceIsRW() ? t("辅助资料 · 读写来源") : t("辅助资料 · 只读")) : t("工作目录 · 保存后同步到主机");
   const md = isMarkdownPath(state.file.path);
+  const isDrawio = /\.drawio$/i.test(state.file.path || '');
   $('editor-mode-switch').classList.toggle('hidden', !md);
-  setEditorMode(md ? 'preview' : 'edit'); // md 文件打开即渲染预览（含表格）
+  if (isDrawio) {
+    // draw.io 文件：用 embed.diagrams.net 渲染
+    $('editor').classList.add('hidden');
+    $('editor-preview').innerHTML = '<iframe src="https://embed.diagrams.net/?embed=1&proto=json&spin=1" style="width:100%;height:90vh;border:0"></iframe>';
+    $('editor-preview').classList.remove('hidden');
+    // 加载后 postMessage 发送 XML
+    const iframe = $('editor-preview').querySelector('iframe');
+    iframe.onload = () => {
+      iframe.contentWindow.postMessage(JSON.stringify({action: 'load', xml: state.file.content}), '*');
+    };
+  } else {
+    setEditorMode(md ? 'preview' : 'edit');
+  }
   $('editor-dialog').showModal();
 }
 $('editor-mode-edit').onclick = () => setEditorMode('edit');

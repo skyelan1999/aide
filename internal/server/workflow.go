@@ -90,6 +90,7 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "write_memory", "description": "Append to persistent memory", "parameters": map[string]any{"type": "object", "properties": map[string]any{"content": map[string]any{"type": "string"}}, "required": []string{"content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "search_text", "description": "Keyword search in workspace files, supports regex", "parameters": map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}, "path": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "semantic_search", "description": "Semantic vector search by meaning", "parameters": map[string]any{"type": "object", "properties": map[string]any{"query": map[string]any{"type": "string"}}, "required": []string{"query"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "create_diagram", "description": "Create a draw.io diagram (.drawio XML file). Use for flowcharts, architecture diagrams, UML, network diagrams. User can view and edit it in the built-in draw.io viewer.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string", "description": "Output file path, e.g. architecture.drawio"}, "xml": map[string]any{"type": "string", "description": "draw.io mxGraphModel XML content"}}, "required": []string{"path", "xml"}}}},
 }
 
 func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
@@ -956,6 +957,31 @@ func (a *App) searchText(query, path string) string {
 	return string(out)
 }
 
+// createDiagram 写 .drawio 文件
+func (a *App) createDiagram(path, xml string) string {
+	if path == "" || xml == "" { return "缺少 path 或 xml" }
+	// 包一层 mxfile
+	if !strings.HasPrefix(xml, "<mxfile") {
+		xml = `<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="page1">
+    <mxGraphModel dx="800" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+` + xml + `
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>`
+	}
+	f, err := a.workspace.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil { return "创建失败: " + err.Error() }
+	defer f.Close()
+	f.WriteString(xml)
+	return "图表已创建: " + path + "（可在文件面板中点击打开查看和编辑）"
+}
+
 // semanticSearch 语义搜索（先返回提示，后续接 embedding）
 func (a *App) semanticSearch(query string) string {
 	return "语义搜索暂未配置 embedding 模型。当前可用关键字搜索（search_text）。"
@@ -1241,6 +1267,8 @@ func (a *App) executeToolCall(call ToolCall, task *Task, versions map[string]Cha
 		return a.searchText(str("query"), str("path"))
 	case "semantic_search":
 		return a.semanticSearch(str("query"))
+	case "create_diagram":
+		return a.createDiagram(str("path"), str("xml"))
 	default:
 		// 插件工具（协议 v1.1）
 		pluginID := a.pluginOwnerOf(call.Function.Name)
