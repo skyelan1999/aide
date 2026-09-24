@@ -1922,6 +1922,27 @@ function closeTrajectory() {
 }
 $('trajectory-toggle').onclick = () => { if ($('trajectory-sheet').classList.contains('open')) closeTrajectory(); else openTrajectory(); };
 $('trajectory-sheet-close').onclick = closeTrajectory;
+$('trajectory-export').onclick = action(() => {
+  if (!state.session) return toast(t("没有可导出的会话"));
+  const s = state.session;
+  let md = "# " + (s.title || "未命名会话") + "\n\n";
+  md += "> 导出时间：" + new Date().toLocaleString() + " · 会话 ID：" + s.id + "\n\n---\n\n";
+  for (const r of (s.runs || [])) {
+    md += "## 任务 · " + (r.created || "") + "\n\n";
+    md += "**用户：** " + (r.prompt || "") + "\n\n";
+    if (r.steps) for (const st of r.steps) md += "- " + st.name + " · " + st.status + (st.content ? "\n  > " + String(st.content).slice(0,500) : "") + "\n";
+    if (r.toolUses) for (const tu of r.toolUses) md += "**工具 " + tu.tool + "：**\n```\n" + String(tu.preview || "").slice(0, 1000) + "\n```\n\n";
+    if (r.error) md += "**错误：** " + r.error + "\n\n";
+    md += "\n---\n\n";
+  }
+  const blob = new Blob([md], {type: "text/markdown;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = (s.title || "session").slice(0, 30).replace(/[\/:*?"<>|]/g, "_") + ".md";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast(t("已导出会话为 Markdown"));
+});
 
 /* ── 全局搜索（FR-92）：⌘K 聚焦，防抖检索会话缓存 ── */
 let searchTimer = null;
