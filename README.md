@@ -16,7 +16,7 @@
 
 ![aide 工作台预览：会话、项目文件与 AI 任务输入](docs/images/workbench-preview.jpg)
 
-> **版本**：本次交付 `0.1.7.0 RC1`，包含新版外观、统一 Agent 开发路由和 Docker 镜像附件。截图来自同套界面的隔离示例环境，截图内 RC5 是拍摄时的后端版本。安装包与发布状态以 [GitHub Releases](https://github.com/skyelan1999/aide/releases) 为准。
+> **版本**：本次交付 `0.1.8.0 RC1`，包含逐 token SSE 流式输出与 DSH/Codex 风格实时显示、离线基础镜像与启动修复，以及 Docker 镜像附件。截图来自同套界面的隔离示例环境，截图内 RC5 是拍摄时的后端版本。安装包与发布状态以 [GitHub Releases](https://github.com/skyelan1999/aide/releases) 为准。
 
 ## 为什么选择 aide
 

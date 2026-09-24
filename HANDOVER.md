@@ -14,7 +14,7 @@ bash scripts/version.sh show
 bash scripts/aide.sh status
 ```
 
-本次交付目标 `v0.1.7.0-RC1`：新版 UI、主题、关于、Agent 开发路由、统一 docs，以及 Docker 镜像附件。aide 定位为 AI + IDE 专业工作台；开发 Agent 路由用于维护与场景扩展，见 [定制指南](docs/customization.md)。
+本次交付目标 `v0.1.8.0-RC1`（2026-09-24 已发布：tag + GitHub 预发布 + arm64 镜像附件）：逐 token SSE 流式输出与 DSH/Codex 风格实时显示、性能优化、离线基础镜像与启动修复。上一轮 v0.1.7.0-RC1 为新版 UI、主题、关于、Agent 开发路由与统一 docs。aide 定位为 AI + IDE 专业工作台；开发 Agent 路由用于维护与场景扩展，见 [定制指南](docs/customization.md)。
 
 发布只交付 GitHub 源码/tag/Release/镜像；不自动替换本机 8097 的生产服务。镜像导入启动见 [镜像说明](docker-images/README.md)。
 
@@ -122,4 +122,4 @@ shasum -a 256 "$AIDE_BACKUP_DIR"/*.tgz "$AIDE_BACKUP_DIR/aide-source.bundle"
 - 其他加固：stream_options 被网关 400 拒绝时自动去字段重试一次；前端流错误 5s 退避后由轮询兜底重开；`scripts/mock_provider.py` 支持流式（QA fixture，QA_BIND/QA_DELAY/QA_START_DELAY 可控）。
 - 验证：`go test -race -count=1 ./... && go vet`（aide:local 官方路径）全过，新增 10 个流式/事件测试；`agent-route.py verify quick` 全过；容器端到端冒烟（chat 流式 14 个 delta、workflow 三阶段 step 事件、取消晚订阅立即关闭、鉴权收窄 401）通过；无头 Chromium UI 检查 PASS。
 - start.command 卡死修复：本机无 `python:3.12-slim-bookworm` 镜像且 Docker Hub 不可达，按 digest 拉 metadata 永久挂起；已从 aide:local 提取等价本地 tag 镜像，Dockerfile 改为 `ARG PYTHON_BASE`（默认 tag，发布可恢复 digest），`docker compose build aide` 2.8s 离线完成；8097 服务已用新镜像拉起并验证 healthz/config/events 鉴权。
-- 发布状态：已获用户授权提交并合并 main（原话「你先提交合并吧」，2026-09-24 会话）；提交 554434e / 538e468 / 4ccddb8 已推送 origin/main；`agent-route.py verify full` PASS、`release-check sse-streaming` PASS（local release prerequisites）。剩余：8097 用真实模型确认观感（首 token 延迟、工具实时状态、取消、断网降级）；升版 0.1.8.0、候选镜像构建与 GitHub Release 待用户另行授权。
+- 发布状态：已发布 `v0.1.8.0-RC1`（2026-09-24）：提交 47bec0e 与 tag 已推送 origin；GitHub 预发布 https://github.com/skyelan1999/aide/releases/tag/v0.1.8.0-RC1 含 arm64 镜像附件 + SHA-256；候选镜像 aide:0.1.8.0-RC1 冒烟通过（healthz/config 身份、chat SSE 14 事件）；`verify full` 与 `release-check` PASS。8097 生产服务未自动替换（同代码以开发身份运行）。剩余：8097 用真实模型确认观感（首 token 延迟、工具实时状态、取消、断网降级）。

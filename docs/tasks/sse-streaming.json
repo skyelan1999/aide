@@ -82,17 +82,19 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "用户已授权完整发布流程（「可以」）：升版 0.1.8.0、打 tag、构建候选镜像、GitHub Release 与镜像附件；8097 生产服务不自动替换。步骤：release-check → version.sh bump feature → 推送 tag → 构建含正式身份的候选镜像 → 冒烟验证 → gh release 创建（预发布）→ 文档同步。",
+      "status": "pass",
+      "summary": "发布完成（2026-09-24）：升版 0.1.8.0 RC1（提交 47bec0e，tag v0.1.8.0-RC1 已推送）；候选镜像 aide:0.1.8.0-RC1 构建（身份 0.1.8.0 RC1 @ 47bec0e4a6a8ca2b0bcbecd9ce3d1419782d57e1）并通过冒烟（healthz/config 身份、chat SSE 14 事件、任务 completed）；GitHub 预发布 https://github.com/skyelan1999/aide/releases/tag/v0.1.8.0-RC1 已创建，附 arm64 镜像与 SHA-256；8097 生产服务未自动替换（同代码以开发身份运行）。真实模型浏览器观感仍待用户确认（不影响发布交付）。",
       "evidence": [
         "用户授权原话记录于 release_authorization",
-        "git push origin main → 4a1876e..4ccddb8（2026-09-24）",
-        "agent-route.py verify full PASS（.agent-state/verify-20260924T024203099654Z.log）",
-        "agent-route.py release-check sse-streaming → PASS: local release prerequisites"
+        "git push origin main → 72b037d..47bec0e；git push origin v0.1.8.0-RC1（2026-09-24）",
+        "agent-route.py verify full PASS（.agent-state/verify-20260924T024557426959Z.log，升版后重跑）",
+        "agent-route.py release-check sse-streaming → PASS: local release prerequisites",
+        "候选镜像冒烟：healthz OK；/api/config buildVersion=0.1.8.0 RC1、buildCommit=47bec0e4…；chat SSE 14 事件（delta/status/done）、final status completed",
+        "docker-images/aide-0.1.8.0-RC1-linux-arm64.tar.gz + aide-0.1.8.0-RC1.sha256 已上传 GitHub Release"
       ]
     }
   },
   "release_authorization": "2026-09-24 会话，用户原话：「你先提交合并吧」（授权提交并合并/推送 main）；随后「可以」（授权发布流程：升版 0.1.8.0、打 tag、构建候选镜像、GitHub Release 与镜像附件；8097 生产服务不自动替换）。",
-  "rollback": "提交前回退：git reset --hard origin/main 前先备份工作区。提交后回退：git revert 554434e 538e468 4ccddb8 或 git push --force-with-lease origin main（须另行确认）。镜像回滚用旧 tag（aide:0.1.7.0-RC1 等），不覆盖数据卷。",
-  "handoff": "代码已提交 main 并推送 origin：554434e（SSE 后端）/538e468（前端流式显示）/4ccddb8（脚本文档构建）。缺陷修复：事件 hub 发送/关闭竞态、晚订阅者永久挂起、前端 chat 答案重复渲染、**前端 EventSource URL 漏写 /events 导致流式 401 失效**（无头浏览器探针复现并修复）；另收窄 query token 鉴权范围、增加 stream_options 400 重试与流错误退避。DSH/Codex 风格显示：首 token 前呼吸思考点、流式文本+闪烁光标、live 工具行、按轮次重置；性能优化：rAF 批量渲染、流式期跳过代码高亮（2.85KB 基准 12.2ms→0.7ms）、会话快照去重、summarizeTopic 并发化（index.html 资源版本 ?v=32）。验证：单测（race×5）全过、agent-route verify quick/full 全过（含 test_stream_url.cjs 回归）、无头 Chromium UI 检查 PASS（scripts/ui_stream_check.cjs chat/tool 两种模式）、8097 生产服务已用新镜像运行。剩余：用户在 8097 用真实模型确认观感；升版 0.1.8.0、候选镜像构建与 GitHub Release 待用户授权。"
+  "rollback": "回滚发布：删除 GitHub Release 与 tag（gh release delete v0.1.8.0-RC1；git push origin :refs/tags/v0.1.8.0-RC1，须另行确认），代码回退用 git revert 554434e 538e468 4ccddb8 或 force-with-lease（须另行确认）。镜像回滚用旧 tag（aide:0.1.7.0-RC1 等），不覆盖数据卷；8097 未替换，无生产回滚项。",
+  "handoff": "发布完成：v0.1.8.0-RC1（提交 47bec0e，tag 已推送，GitHub 预发布 + arm64 镜像附件）。内容：SSE 流式输出（events 路由、事件 hub、鉴权收窄、stream_options 重试、summarizeTopic 并发化）+ DSH/Codex 风格显示（思考点/光标/live 工具行/轮次重置）+ 性能优化（rAF 批量、流式期跳过高亮、快照去重）+ 离线 python 基础镜像与启动修复。验证：单测 race×5 全过、verify quick/full 与 release-check PASS、无头 Chromium UI 检查 PASS、候选镜像 SSE 冒烟通过。剩余：用户在 8097 用真实模型确认观感（8097 服务以同代码开发身份运行，未自动替换）。"
 }
