@@ -201,3 +201,14 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .session-refresh:hover { color: var(--brand-text, var(--brand)); background: var(--hover, rgba(128,128,128,.1)); }
 .session-refresh:hover svg { transform: rotate(120deg); }
 .session-refresh:active svg { transform: rotate(240deg); }
+
+.permission-panel { display:flex; flex-direction:column; gap:12px; }
+.perm-row { border:1px solid var(--line-mid,#d1d1d6); border-radius:10px; padding:10px 12px; }
+.perm-head { display:flex; align-items:center; gap:8px; margin-bottom:4px; }
+.perm-tool { font-family:ui-monospace,Menlo,monospace; font-size:12px; background:rgba(99,102,241,.1); color:#6366f1; padding:2px 6px; border-radius:6px; }
+.perm-badge { font-size:11px; padding:2px 8px; border-radius:10px; }
+.perm-auto { background:rgba(34,197,94,.12); color:#16a34a; }
+.perm-approval { background:rgba(245,158,11,.12); color:#d97706; }
+.perm-auto-blocked { background:rgba(99,102,241,.12); color:#6366f1; }
+.perm-plugin { background:rgba(148,163,184,.15); color:#64748b; }
+.perm-desc { margin:0; font-size:12px; color:var(--muted,#8e8e93); }

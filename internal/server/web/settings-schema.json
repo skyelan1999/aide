@@ -101,6 +101,18 @@
       ]
     },
     {
+      "id": "permissions",
+      "title": "权限管理",
+      "description": "控制 AI 在工作区里能自动做什么",
+      "controls": [
+        {
+          "id": "permission-manager",
+          "type": "permission-manager",
+          "label": "工具权限"
+        }
+      ]
+    },
+    {
       "id": "about",
       "title": "关于",
       "controls": [

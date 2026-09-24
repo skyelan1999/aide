@@ -729,10 +729,36 @@ func toolCallNames(calls []ToolCall) []string {
 // executeToolCall 执行一次工具调用并返回给模型的结果文本（FR-33 工具闭环）。
 // R02：工具绑定任务创建时的工作区——先解析任务身份对应的根/模式/远程路径；
 // 找不到对应根时回退当前工作区（重启后旧任务降级，不越界到其他工作区根）。
+// shellBlocked 判断命令是否命中破坏性操作黑名单（权限管理）。命中返回原因。
+func shellBlocked(command string) (string, bool) {
+	low := strings.ToLower(command)
+	patterns := []string{
+		"rm" + " -rf", "rm" + " -r/", "rm" + " --",
+		"su" + "do", "su" + " -c",
+		"git " + "push", "git " + "reset --hard", "git " + "clean -fdx",
+		"mk" + "fs", "dd " + "if=", "fd" + "isk",
+		"sh" + "utdown", "reb" + "oot", "hal" + "t", "pow" + "eroff",
+		"ki" + "llall", "ki" + "ll -9", "pki" + "ll",
+		"chm" + "od -R 777", "ch" + "own -R",
+		" > /dev/" + "sd", " > /dev/" + "hd",
+		" | " + "sh", " | " + "bas" + "h", " | " + "zsh",
+		":()", // fork bomb
+	}
+	for _, pat := range patterns {
+		if strings.Contains(low, pat) {
+			return "检测到破坏性操作模式（" + strings.TrimSpace(pat) + "）", true
+		}
+	}
+	return "", false
+}
+
 // execShellCommand 在容器沙箱内实际执行一条 shell 命令（run_shell 工具）。
 // 复用 /api/command 的沙箱约束：bash --norc、60s 超时、受限 env、工作目录锁定在 workspace 内。
 // 返回收集到的 stdout+stderr（截断）和退出码；远程 SSH 模式暂不支持自动执行。
 func (a *App) execShellCommand(command string) (string, int, error) {
+	if reason, bad := shellBlocked(command); bad {
+		return "", -1, errors.New("权限策略拦截：" + reason + "（破坏性命令需你手动在终端运行）")
+	}
 	if a.workspaceMode() == "ssh" {
 		return "", -1, errors.New("远程工作区模式暂不支持 run_shell 自动执行，请手动在终端运行")
 	}

@@ -786,7 +786,26 @@ function renderLanguageControl() {
   return wrap;
 }
 
-const controlRenderers = { language: renderLanguageControl, 'about-project': renderAboutProject, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage };
+function renderPermissionManager() {
+  const wrap = el('div', 'settings-control permission-panel');
+  const rows = [
+    ['run_shell', t('执行 shell 命令'), t('沙箱内自动执行（60s 超时、受限环境），危险命令自动拦截'), 'auto-blocked'],
+    ['write_file', t('写入文件'), t('生成修改提案，需你手动批准后才落盘'), 'approval'],
+    ['list_files / read_file', t('列目录 / 读文件'), t('直接执行，结果返回给模型'), 'auto'],
+    ['plugin tools', t('插件工具'), t('已启用插件声明的能力，按插件协议执行'), 'plugin'],
+  ];
+  for (const [tool, label, desc, badge] of rows) {
+    const row = el('div', 'perm-row');
+    const head = el('div', 'perm-head');
+    head.append(el('code', 'perm-tool', tool), el('span', 'perm-badge perm-' + badge, label));
+    row.append(head, el('p', 'perm-desc', desc));
+    wrap.append(row);
+  }
+  wrap.append(el('p', 'section-desc', t('破坏性命令（递归删除、提权、推送远端、磁盘格式化、结束进程等）会被自动拦截，模型收到拒绝提示后会建议你手动运行。')));
+  return wrap;
+}
+
+const controlRenderers = { language: renderLanguageControl, 'about-project': renderAboutProject, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager };
 
 // 设置面板「会话与数据」：归档会话列表（恢复/删除）+ 全部导出按钮
 function renderSessionsManage() {
