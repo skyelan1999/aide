@@ -51,7 +51,14 @@ async function loadSessions() {
       const pinBtn = el('button', 'menu-item', s.pinned ? t("取消置顶") : t("置顶"));
       pinBtn.onclick = action(async () => { await api(`/sessions/${s.id}`, { method: 'PATCH', body: JSON.stringify({ pinned: !s.pinned }) }); closeMenu(); await loadSessions(); });
       const archBtn = el('button', 'menu-item', s.archived ? t("取消归档") : t("归档"));
-      archBtn.onclick = action(async () => { await api(`/sessions/${s.id}`, { method: 'PATCH', body: JSON.stringify({ archived: !s.archived }) }); closeMenu(); await loadSessions(); });
+      archBtn.onclick = action(async () => {
+        const willArchive = !s.archived;
+        await api(`/sessions/${s.id}`, { method: 'PATCH', body: JSON.stringify({ archived: willArchive }) });
+        closeMenu();
+        // 归档当前正在查看的会话后，自动回到新会话输入界面（与删除当前会话行为一致）；取消归档不打断当前视图
+        if (willArchive && state.session?.id === s.id) { await newSession(); return; }
+        await loadSessions();
+      });
       const delBtn = el('button', 'menu-item danger', t("删除"));
       delBtn.onclick = action(async () => {
         if (!confirm(t("确定删除这个会话？此操作不可撤销。"))) return;
