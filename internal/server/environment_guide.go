@@ -30,7 +30,7 @@ func (a *App) environmentGuide() string {
 		Entries   []string `json:"topLevelEntries,omitempty"`
 		Inventory string   `json:"inventory"`
 	}
-	workspace := item{ID: "workspace", Name: "工作目录 / Workspace", Kind: a.workspaceMode(), Path: guideLabel(a.workspaceDisplay), Access: "file/command proposals require approval", Usage: "Use list_files and read_file with workspace-relative paths; read README or relevant files before describing project-specific usage."}
+	workspace := item{ID: "workspace", Name: "工作目录 / Workspace", Kind: a.workspaceMode(), Path: guideLabel(a.workspaceDisplay), Access: "file writes need approval; run_shell executes in sandbox", Usage: "Use list_files and read_file with workspace-relative paths; read README or relevant files before describing project-specific usage."}
 	if workspace.Kind == "ssh" {
 		workspace.Inventory = "Remote directory not scanned; use workspace tools on demand."
 	} else {
