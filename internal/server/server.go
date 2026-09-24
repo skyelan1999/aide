@@ -490,6 +490,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/workspace-config", a.getWorkspaceConfig)
 	mux.HandleFunc("GET /api/sources", a.listSources)
 	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)
+	mux.HandleFunc("POST /api/feedback", a.feedbackHandler)
 	mux.HandleFunc("GET /api/token-pricing", a.tokenPricingHandler)
 	mux.HandleFunc("PUT /api/token-pricing", a.tokenPricingHandler)
 	mux.HandleFunc("GET /api/search", a.searchSessions)

@@ -901,6 +901,29 @@ func (a *App) writeMemory(content string) string {
 	return "已写入记忆。"
 }
 
+// feedbackHandler 记录用户对回答的评价（好/有问题），写入记忆文件用于重训练
+func (a *App) feedbackHandler(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		RunID  string `json:"runId"`
+		Prompt string `json:"prompt"`
+		Answer string `json:"answer"`
+		Rating string `json:"rating"` // good | bad
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		http.Error(w, err.Error(), 400)
+		return
+	}
+	tag := "👍好的回答"
+	if in.Rating == "bad" { tag = "👎有问题的回答" }
+	entry := fmt.Sprintf("%s [%s] Q: %s | A: %s", tag, in.RunID,
+		strings.ReplaceAll(in.Prompt, "\n", " "),
+		strings.ReplaceAll(in.Answer, "\n", " "))
+	if len(entry) > 2000 { entry = entry[:2000] + "…" }
+	a.writeMemory(entry)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write([]byte(`{"ok":true}`))
+}
+
 // execShellCommand 在容器沙箱内实际执行一条 shell 命令（run_shell 工具）。
 // 复用 /api/command 的沙箱约束：bash --norc、60s 超时、受限 env、工作目录锁定在 workspace 内。
 // 返回收集到的 stdout+stderr（截断）和退出码；远程 SSH 模式暂不支持自动执行。

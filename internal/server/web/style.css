@@ -244,3 +244,12 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .win-preset:hover { border-color: var(--accent); }
 .win-preset.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 #model-window-input { width: 100px; }
+
+/* 消息操作按钮 */
+.msg-actions { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.msg-btn {
+  padding: 2px 8px; border: 1px solid var(--border); border-radius: 4px;
+  background: var(--bg); color: var(--text); font-size: 11px; cursor: pointer;
+  opacity: 0.6;
+}
+.msg-btn:hover { opacity: 1; border-color: var(--accent); }

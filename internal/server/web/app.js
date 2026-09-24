@@ -318,6 +318,32 @@ function renderSession() {
           ans.textContent = t("未返回回答");
         }
         box.append(ans);
+        // 消息操作按钮：复制 / 重试 / 继续 / 👍 / 👎
+        if (!running && text) {
+          const actions = el('div', 'msg-actions');
+          const mk = (icon, label, fn) => {
+            const b = el('button', 'msg-btn', icon + ' ' + label);
+            b.type = 'button';
+            b.onclick = fn;
+            return b;
+          };
+          actions.append(
+            mk('📋', t("复制"), () => { navigator.clipboard.writeText(text).then(() => toast(t("已复制"))); }),
+            mk('🔄', t("重试"), () => { api(`/sessions/${state.session.id}/runs/${run.id}/retry`, { method: 'POST', body: '{}' }).then(() => selectSession(state.session.id)); }),
+            mk('⏵', t("继续"), () => { $('prompt').value = ''; sendPrompt(t("继续")); }),
+            mk('👍', t("好"), () => {
+              api('/feedback', { method: 'POST', body: JSON.stringify({ runId: run.id, prompt: run.prompt, answer: text, rating: 'good' }) })
+                .then(() => toast(t("已记录到记忆")))
+                .catch(() => toast(t("记录失败")));
+            }),
+            mk('👎', t("有问题"), () => {
+              api('/feedback', { method: 'POST', body: JSON.stringify({ runId: run.id, prompt: run.prompt, answer: text, rating: 'bad' }) })
+                .then(() => toast(t("已记录到记忆")))
+                .catch(() => toast(t("记录失败")));
+            }),
+          );
+          box.append(actions);
+        }
         if (running && state.liveTool[run.id]) {
           const t2 = state.liveTool[run.id];
           box.append(el('div', 'live-tool', '⚒ ' + t2.tool + (t2.preview ? ' · ' + String(t2.preview).slice(0, 80) : '')));
