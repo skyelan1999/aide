@@ -1310,6 +1310,7 @@ func (a *App) searchSessions(w http.ResponseWriter, r *http.Request) {
 		Title     string `json:"title"`
 		Snippet   string `json:"snippet"`
 		Created   string `json:"created"`
+		Archived  bool   `json:"archived"`
 		Score     int    `json:"-"`
 	}
 	results := []result{}
@@ -1341,7 +1342,7 @@ func (a *App) searchSessions(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if score > 0 {
-			results = append(results, result{SessionID: sess.ID, Title: sess.Title, Snippet: snippet, Created: sess.Created, Score: score})
+			results = append(results, result{SessionID: sess.ID, Title: sess.Title, Snippet: snippet, Created: sess.Created, Archived: sess.Archived, Score: score})
 		}
 	}
 	sort.Slice(results, func(i, j int) bool {

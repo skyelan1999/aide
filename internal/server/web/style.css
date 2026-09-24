@@ -253,3 +253,4 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
   opacity: 0.6;
 }
 .msg-btn:hover { opacity: 1; border-color: var(--accent); }
+.archived-badge { font-size: 10px; padding: 1px 5px; border-radius: 3px; background: var(--border); color: var(--muted); margin-left: 6px; }

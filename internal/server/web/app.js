@@ -2131,7 +2131,8 @@ $('global-search').addEventListener('input', () => {
     if (!data.results?.length) { host.append(el('p', 'muted', t("没有匹配的聊天"))); }
     data.results.forEach(res => {
       const row = el('button', 'search-result', '');
-      row.append(el('strong', '', res.title), el('span', '', res.snippet));
+      const badge = res.archived ? el('span', 'archived-badge', t('已归档')) : null;
+      row.append(el('strong', '', res.title), badge, el('span', '', res.snippet));
       row.onclick = () => { $('search-results').classList.add('hidden'); $('global-search').value = ''; action(() => selectSession(res.sessionId))(); };
       host.append(row);
     });
