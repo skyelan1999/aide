@@ -657,6 +657,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 	maxRounds := a.settings.ToolMaxRounds
 	if maxRounds <= 0 { maxRounds = 60 }
 	consecutiveFail := map[string]int{} // 工具名 → 连续失败次数
+	var lastOut string
 	for round := 0; round < maxRounds; round++ {
 		rec := func(body []byte) {
 			sum := sha256.Sum256(body)
@@ -684,10 +685,15 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			out, calls, usage, err = completeStream(ctx, cfg, input, params, tools, rec, onDelta)
 		}
 		if err != nil {
+			// 用户主动停止：保留已流式输出的部分内容
+			if ctx.Err() != nil && strings.TrimSpace(out) != "" {
+				return out + "\n\n---\n> ⏹ 已手动停止", input, nil
+			}
 			return "", nil, err
 		}
 		a.mu.Lock()
 		task.Usage = addUsage(task.Usage, usage)
+		lastOut = out
 		a.mu.Unlock()
 		if len(calls) == 0 {
 			select {
@@ -747,7 +753,10 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		task.Steps[stepIndex].Content = "工具调用中：" + strings.Join(toolCallNames(calls), ", ")
 		a.mu.Unlock()
 	}
-	return "", nil, errors.New("工具调用轮次达到上限，请缩小任务范围或在设置里调大轮次")
+	if strings.TrimSpace(lastOut) == "" {
+		return "", nil, errors.New("工具调用轮次达到上限，且未产生文本输出。请缩小任务范围或在设置里调大轮次。")
+	}
+	return lastOut + "\n\n---\n> ⚠️ 工具调用轮次达到上限，回答被截断。已有内容如上，可在设置→权限管理里调大轮次。", input, nil
 }
 
 func addUsage(base, add TokenUsage) TokenUsage {

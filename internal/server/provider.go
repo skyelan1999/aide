@@ -284,7 +284,8 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 	for scanner.Scan() {
 		select {
 		case <-ctx.Done():
-			return "", nil, TokenUsage{}, ctx.Err()
+			// 用户主动停止：保留已流式输出的部分内容
+			return content.String(), nil, TokenUsage{}, ctx.Err()
 		default:
 		}
 		line := scanner.Text()
