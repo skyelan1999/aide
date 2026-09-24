@@ -1861,14 +1861,25 @@ function trajectoryEvent(dot, title, bodyNode, kind) {
   if (bodyNode) ev.append(bodyNode);
   return ev;
 }
+let trajView = "timeline"; // timeline | calls
 function renderTrajectory() {
   const host = $('trajectory-content');
   host.replaceChildren();
   const session = state.session;
+  // 视图切换
+  const tabs = el('div', 'traj-tabs');
+  tabs.append(
+    el('button', trajView === 'timeline' ? 'active' : '', t("时间线")),
+    el('button', trajView === 'calls' ? 'active' : '', t("调用分析"))
+  );
+  tabs.children[0].onclick = () => { trajView = 'timeline'; renderTrajectory(); };
+  tabs.children[1].onclick = () => { trajView = 'calls'; renderTrajectory(); };
+  host.append(tabs);
   if (!session || !session.runs?.length) {
     host.append(el('p', 'muted', t("当前会话还没有任务。发送任务后，这里会按事件时间线记录完整轨迹。")));
     return;
   }
+  if (trajView === 'calls') { renderCallsAnalysis(host, session); return; }
   for (const run of session.runs) {
     const card = el('div', 'traj-run');
     const head = el('div', 'traj-run-head');
@@ -1909,6 +1920,71 @@ function renderTrajectory() {
     host.append(card);
   }
 }
+let callFilter = { tool: '', agent: 'all' };
+function renderCallsAnalysis(host, session) {
+  // 收集主会话工具调用
+  const calls = [];
+  for (const run of (session.runs || [])) {
+    for (const tu of (run.toolUses || [])) {
+      calls.push({ agent: 'main', time: run.created, tool: tu.tool, args: tu.args, result: tu.preview || tu.result });
+    }
+  }
+  // 收集子会话工具调用
+  const subs = (state.sessions || []).filter(x => x.parentId === session.id);
+  for (const sub of subs) {
+    // 子会话详情需要拉取
+    calls.push({ agent: 'sub', time: sub.created, tool: '(子会话启动)', args: sub.id, result: sub.title });
+  }
+  // 工具名列表
+  const toolNames = [...new Set(calls.map(c => c.tool))].sort();
+  // filter UI
+  const bar = el('div', 'call-filter-bar');
+  const toolSel = el('select', 'call-filter-select');
+  toolSel.append(el('option', '', '全部工具'));
+  for (const t of toolNames) {
+    const opt = el('option', '', t); opt.value = t;
+    if (callFilter.tool === t) opt.selected = true;
+    toolSel.append(opt);
+  }
+  const agentSel = el('select', 'call-filter-select');
+  for (const [v, lbl] of [['all','全部'],['main','主 Agent'],['sub','子 Agent']]) {
+    const opt = el('option', '', lbl); opt.value = v;
+    if (callFilter.agent === v) opt.selected = true;
+    agentSel.append(opt);
+  }
+  toolSel.onchange = () => { callFilter.tool = toolSel.value === '全部工具' ? '' : toolSel.value; renderTrajectory(); };
+  agentSel.onchange = () => { callFilter.agent = agentSel.value; renderTrajectory(); };
+  bar.append(toolSel, agentSel);
+  host.append(bar);
+  // 过滤
+  const filtered = calls.filter(c =>
+    (!callFilter.tool || c.tool === callFilter.tool) &&
+    (callFilter.agent === 'all' || c.agent === callFilter.agent)
+  );
+  if (!filtered.length) {
+    host.append(el('p', 'muted', t("没有匹配的调用记录")));
+    return;
+  }
+  // 表格
+  const table = el('table', 'call-table');
+  table.append(el('thead', '', el('tr', '',
+    el('th', '', t("时间")), el('th', '', t("谁")), el('th', '', t("工具")), el('th', '', t("参数/结果"))
+  )));
+  const tbody = el('tbody', '');
+  for (const c of filtered) {
+    const tr = el('tr', c.agent === 'sub' ? 'call-sub' : '');
+    tr.append(
+      el('td', 'call-time', (c.time || '').slice(11, 19)),
+      el('td', '', c.agent === 'sub' ? t("子 Agent") : t("主 Agent")),
+      el('td', 'call-tool', c.tool),
+      el('td', 'call-result', String(c.result || '').slice(0, 120))
+    );
+    tbody.append(tr);
+  }
+  table.append(tbody);
+  host.append(table);
+}
+
 function openTrajectory() {
   closeSettingsSheet();
   closeWorkspaceSheet();

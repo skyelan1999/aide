@@ -212,3 +212,19 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .perm-auto-blocked { background:rgba(99,102,241,.12); color:#6366f1; }
 .perm-plugin { background:rgba(148,163,184,.15); color:#64748b; }
 .perm-desc { margin:0; font-size:12px; color:var(--muted,#8e8e93); }
+
+/* 轨迹：视图切换 tab */
+.traj-tabs { display:flex; gap:4px; margin-bottom:12px; }
+.traj-tabs button { padding:4px 12px; border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer; border-radius:6px; font-size:12px; }
+.traj-tabs button.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+/* 调用分析 */
+.call-filter-bar { display:flex; gap:8px; margin-bottom:10px; }
+.call-filter-select { padding:4px 8px; background:var(--panel2); border:1px solid var(--line); color:var(--text); border-radius:6px; font-size:12px; }
+.call-table { width:100%; border-collapse:collapse; font-size:12px; }
+.call-table th, .call-table td { padding:6px 8px; text-align:left; border-bottom:1px solid var(--line); }
+.call-table th { color:var(--muted); font-weight:500; }
+.call-table .call-time { color:var(--muted); white-space:nowrap; font-family:monospace; }
+.call-table .call-tool { color:#a5b4fc; font-family:monospace; white-space:nowrap; }
+.call-table .call-result { color:var(--muted); max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.call-table tr.call-sub { background:rgba(245,158,11,.08); }
