@@ -73,9 +73,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "未获提交/发布授权；待用户实测后指示。",
-      "evidence": []
+      "status": "pass",
+      "summary": "发布完成（2026-09-24）：升版 0.1.10.0 RC1（提交 0e6716d，tag v0.1.10.0-RC1 已推送）；候选镜像 aide:0.1.10.0-RC1 身份 0.1.10.0 RC1 @ 0e6716db9d532dd4e36522f3ad366368c06e2192 冒烟通过（healthz / config 身份 / 无头浏览器全量 UI 检查 PASS）；GitHub 预发布 https://github.com/skyelan1999/aide/releases/tag/v0.1.10.0-RC1 已创建，附 arm64 镜像与 SHA-256；8097 生产服务未自动替换。",
+      "evidence": [
+        "用户授权原话记录于 release_authorization",
+        "git push origin main → c9575b8..0e6716d；git push origin v0.1.10.0-RC1（2026-09-24）",
+        "agent-route.py verify full PASS；release-check session-manage PASS",
+        "go test -race -count=1 ./... 全过（含 session_manage_test.go）",
+        "候选镜像冒烟：healthz OK；/api/config buildVersion=0.1.10.0 RC1、buildCommit=0e6716db9d532…；无头 UI 全量检查 PASS",
+        "docker-images/aide-0.1.10.0-RC1-linux-arm64.tar.gz + aide-0.1.10.0-RC1.sha256 已上传 GitHub Release"
+      ]
     },
     "handoff": "全新落地（用户已回退旧实现）：每会话 ⋯ 菜单（置顶/归档/删除，删除带确认）、归档过滤视图（防归档后无法找回）、删除墓碑机制（取消运行任务 + 防收尾写盘复活 + 重启不复活）。验证：2 个 Go 测试 race×3、全量 race+vet、无头 UI SESSION_MGMT 全断言 PASS；8097 已重建（?v=41）。待用户实测后授权提交与发布。状态点与排序增强：点缩小至 4px；完成后蓝点+标题 800 超级加粗；点击后点变无色、加粗取消（active 权重 400）；会话列表按活动时间排序（完成/跟进置顶，置顶会话永不被顶下，touch PATCH 更新活动时间）。新增 TestSessionOrderByActivity。资源版本 ?v=52，8097 已重建。"
   },

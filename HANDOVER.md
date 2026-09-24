@@ -14,7 +14,7 @@ bash scripts/version.sh show
 bash scripts/aide.sh status
 ```
 
-本次交付目标 `v0.1.9.0-RC1`（2026-09-24 已发布：tag + GitHub 预发布 + arm64 镜像附件）：运行中排队与插话、Codex 风格队列面板、发送/停止同键、一键回底。此前 v0.1.8.0-RC1 为逐 token SSE 流式输出与启动修复。上一轮 v0.1.7.0-RC1 为新版 UI、主题、关于、Agent 开发路由与统一 docs。aide 定位为 AI + IDE 专业工作台；开发 Agent 路由用于维护与场景扩展，见 [定制指南](docs/customization.md)。
+本次交付目标 `v0.1.10.0-RC1`（2026-09-24 已发布：tag + GitHub 预发布 + arm64 镜像附件）：会话管理（置顶/归档/删除/导出）与会话状态灯（运行绿闪/审批黄/失败红/完成蓝点加粗）、完成后标题自动概括、点击轻量化与竞态修复。此前 v0.1.9.0-RC1 为运行中排队与插话、发送/停止同键、一键回底。aide 定位为 AI + IDE 专业工作台；开发 Agent 路由用于维护与场景扩展，见 [定制指南](docs/customization.md)。
 
 发布只交付 GitHub 源码/tag/Release/镜像；不自动替换本机 8097 的生产服务。镜像导入启动见 [镜像说明](docker-images/README.md)。
 

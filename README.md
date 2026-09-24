@@ -16,7 +16,7 @@
 
 ![aide 工作台预览：会话、项目文件与 AI 任务输入](docs/images/workbench-preview.jpg)
 
-> **版本**：本次交付 `0.1.9.0 RC1`，包含运行中排队与插话、Codex 风格队列面板、发送/停止同键、一键回底，以及 0.1.8.0 的逐 token SSE 流式输出与启动修复；附 Docker 镜像附件。截图来自同套界面的隔离示例环境，截图内 RC5 是拍摄时的后端版本。安装包与发布状态以 [GitHub Releases](https://github.com/skyelan1999/aide/releases) 为准。
+ > **版本**：本次交付 `0.1.10.0 RC1`，包含会话管理（置顶/归档/删除/导出）与会话状态灯（运行绿闪/审批黄/失败红/完成蓝点加粗）、完成后标题自动概括与交互竞态修复；此前版本已含排队/插话、SSE 流式输出等；附 Docker 镜像附件。截图来自同套界面的隔离示例环境，截图内 RC5 是拍摄时的后端版本。安装包与发布状态以 [GitHub Releases](https://github.com/skyelan1999/aide/releases) 为准。
 
 ## 为什么选择 aide
 
