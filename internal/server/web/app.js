@@ -227,7 +227,7 @@ let titleSyncTimers = [];
 function scheduleTitleSync(id) {
   titleSyncTimers.forEach(clearTimeout); titleSyncTimers = [];
   // 主题总结是后台异步调用，可能在任务完成之后才落库：分两轮补同步（无变化时不会重渲染）
-  for (const delay of [1500, 4000]) {
+  for (const delay of [2000, 5000, 9000]) {
     titleSyncTimers.push(setTimeout(action(async () => {
       if (state.session?.id !== id) return;
       const s2 = await api('/sessions/' + id);
