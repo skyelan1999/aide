@@ -195,3 +195,7 @@ README 介绍产品，用户指南写操作，HANDOVER 写运维，架构写实�
 ## 追加：SSE 流式输出与 DSH/Codex 风格显示（2026-09-24，源码集成，未发布镜像）
 
 模型文本响应改为逐 token SSE 推送：新增 `GET /api/sessions/{id}/runs/{run}/events`（step/delta/tool/status/done），`?access_token=` 仅对该路由生效；任务终态仍由会话接口持久化兜底，EventSource 断开时轮询自动降级，运行中取消立即中断流。前端按 DSH/Codex 风格显示：首 token 前呼吸思考点、流式文本+闪烁光标、工具调用实时活动行、多轮工具按轮次重置；delta 渲染按动画帧批量并跳过流式期代码高亮（完成时补全），会话快照未变时跳过整页重渲染；summarizeTopic 并发执行，不再阻塞首 token。配套修复：事件 hub 发送/关闭竞态与晚订阅挂起、流式请求 HTTP 400 时自动去 stream_options 重试一次、EventSource URL 回归检查（进 quick 门禁）；Dockerfile python 基础镜像改为本地 tag 引用（ARG PYTHON_BASE），避免受限网络下按 digest 拉 metadata 卡死启动构建。验收与范围见 [任务账本](tasks/sse-streaming.json)；现有 RC1 镜像不自动获得这些源码变更。
+
+## 追加：排队与插话、发送/停止同键、一键回底（2026-09-24，源码集成，未发布镜像）
+
+任务运行中可继续发送：`queued=true` 进 FIFO 队列、`queued=false` 插话（通道容量 4，满 429 不脏记）；模型每轮返回后先消费插话、再取队首；排队项支持修改/删除/升级插话（`POST /api/sessions/{id}/runs/{run}/queue/{index}`）。界面：队列条参照 Codex pending_input_preview 悬于输入框上方（分区标题 + ↳ 条目 + 提示行）；插话消息带标签入时间线；发送按钮空闲为 ↑、运行中原位切换 ■ 停止（插话/排队经 Enter 或「排队」+Enter）；一键回底按钮 sticky 居中粘于会话区可视底部，滚离约一屏出现、点击平滑回底。验收与范围见 [任务账本](tasks/queue-steer.json)；现有 RC1 镜像不自动获得这些源码变更。

@@ -123,3 +123,11 @@ shasum -a 256 "$AIDE_BACKUP_DIR"/*.tgz "$AIDE_BACKUP_DIR/aide-source.bundle"
 - 验证：`go test -race -count=1 ./... && go vet`（aide:local 官方路径）全过，新增 10 个流式/事件测试；`agent-route.py verify quick` 全过；容器端到端冒烟（chat 流式 14 个 delta、workflow 三阶段 step 事件、取消晚订阅立即关闭、鉴权收窄 401）通过；无头 Chromium UI 检查 PASS。
 - start.command 卡死修复：本机无 `python:3.12-slim-bookworm` 镜像且 Docker Hub 不可达，按 digest 拉 metadata 永久挂起；已从 aide:local 提取等价本地 tag 镜像，Dockerfile 改为 `ARG PYTHON_BASE`（默认 tag，发布可恢复 digest），`docker compose build aide` 2.8s 离线完成；8097 服务已用新镜像拉起并验证 healthz/config/events 鉴权。
 - 发布状态：已发布 `v0.1.8.0-RC1`（2026-09-24）：提交 47bec0e 与 tag 已推送 origin；GitHub 预发布 https://github.com/skyelan1999/aide/releases/tag/v0.1.8.0-RC1 含 arm64 镜像附件 + SHA-256；候选镜像 aide:0.1.8.0-RC1 冒烟通过（healthz/config 身份、chat SSE 14 事件）；`verify full` 与 `release-check` PASS。8097 生产服务未自动替换（同代码以开发身份运行）。剩余：8097 用真实模型确认观感（首 token 延迟、工具实时状态、取消、断网降级）。
+
+## 2026-09-24 排队与插话（queue/steer）交接
+
+- 任务 `queue-steer`（[任务账本](docs/tasks/queue-steer.json)）：任务运行中可继续发送——`queued=true` 进 FIFO 队列、`queued=false` 插话（通道容量 4，满 429）；toolLoop 每轮模型返回后先消费插话、再取队首；排队项支持修改/删除/升级插话（`POST /api/sessions/{id}/runs/{run}/queue/{index}`）。
+- 界面定型：队列条参照 Codex pending_input_preview 风格悬于输入框上方（分区标题 + ↳ 弱化条目 + 提示行）；插话消息带标签入时间线；发送按钮空闲 ↑、运行中原地切 ■ 停止（插话/排队经 Enter 或「排队」+Enter）；一键回底 sticky 粘会话区底部并水平居中，滚离约一屏出现、点击平滑回底（内部滚动恢复全部瞬时，防 smooth 拉锯）。
+- 修复豆包初版缺陷：429 路径先记录后拒收（先探通道再记录）；selectSession 清空 live 打断流式（同会话刷新保留）；运行中发送隐藏；队列条编辑双提交；CSS 未定义变量与死代码；回底按钮 absolute 随内容滚出屏幕（改 sticky）；插话未入时间线；后端零测试。
+- 验证：3 个 Go 测试 race×3 全过；全量 race + vet 过；`scripts/ui_queue_check.cjs` 无头浏览器全断言 PASS（模式切换/停止取消/队列条/插话/回底）。资源版本 ?v=40。
+- 状态：已获用户授权提交与推送（「修一下文档，合并推送吧」）；升版与 GitHub Release 待授权。8097 以 dev 身份运行。已知边界：steer 中间回答折叠进最终答案；任务结束瞬间到达的排队消息可能不获回答；每轮限 10 次模型调用，多轮插话/排队消耗轮次。

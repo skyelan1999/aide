@@ -38,7 +38,7 @@ Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token �
 | `command.go` | 非交互 shell、NDJSON 输出、超时与取消 |
 | `plugins.go` / `plugin_host.js` | 插件登记、加载、schema 和 handler |
 | `web/settings-init.js` | 同步首帧外观、`aide.ui`、系统外观响应与跨标签同步 |
-| `web/settings-schema.json` / `app.js` | 设置导航、控件与应用交互；SSE 流式渲染（rAF 批量、live 文本/光标/工具行、会话快照去重） |
+| `web/settings-schema.json` / `app.js` | 设置导航、控件与应用交互；SSE 流式渲染（rAF 批量、live 文本/光标/工具行、会话快照去重）；排队/插话（Codex 风格队列条、发送/停止同键、一键回底） |
 | `web/themes/**` / `style.css` / `macos.css` | 颜色变量、既有样式与新版表现层 |
 
 文件名省略前缀时均位于 `internal/server/`。不维护容易过时的文件行数/测试数量，查当前源码与本次测试输出。

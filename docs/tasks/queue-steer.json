@@ -1,0 +1,85 @@
+{
+  "id": "queue-steer",
+  "request": "为 aide 增加运行中排队与插话：任务运行期间用户可继续发送消息——插话（steer）在模型当前轮结束后立即插队处理，排队（queued）按先进先出顺序在当前回答后处理；排队项支持修改、删除与手动升级为插话；前端提供排队条与时间线展示。",
+  "baseline": "2042e45（v0.1.8.0-RC1 发布后）",
+  "initial_status": "豆包已完成初版实现（未提交、无测试、无任务账本）；本次修复其缺陷并补全验证。",
+  "acceptance": [
+    "任务运行中提交新消息：queued=true 进入队列（FIFO），queued=false 立即投递插话通道，均在当前模型轮结束后被消费，插话优先于排队",
+    "插话通道容量 4：满时返回 429，且不得记录未投递的消息（内存与持久化一致）",
+    "排队项支持 edit / delete / steer（升级插队），越界与未知操作返回 400，任务结束后 404",
+    "队列与插话记录随会话持久化（重启后可恢复；运行任务重启标记 interrupted 后不可再投递）",
+    "运行中发送按钮保持可见；排队条展示排队项与修改/删除/插话操作；插话消息渲染进时间线",
+    "排队/插话操作不重置正在流式渲染的回答（live 文本保持）",
+    "go test -race 全过（新增队列/插话测试）；agent-route verify quick 全过；无头浏览器 UI 检查 PASS"
+  ],
+  "scope": [
+    "internal/server/workflow.go: Task 增 Steer 通道/Queue/Steers；startTask 运行中分支；toolLoop 轮末消费插话/排队；queueUpdate 队列管理路由",
+    "internal/server/server.go: 注册 POST /api/sessions/{id}/runs/{run}/queue/{index}",
+    "internal/server/web/app.js: 运行中保持发送、queueMode、renderQueueBar 与操作、steer 消息入时间线、selectSession 同会话保留 live",
+    "internal/server/web/index.html / style.css: 发送按钮/排队条/回底部按钮/插话样式",
+    "scripts/ui_queue_check.cjs + scripts/fixtures 复用：无头浏览器验收",
+    "不在范围内：多任务并行排队、跨会话排队、排队项排序拖拽、steer 回答的多段时间线渲染（中间回答折叠进最终答案）"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目标与非目标明确；排队 FIFO、插话优先、容量 4、队列管理与持久化语义已登记。",
+      "evidence": [
+        "docs/tasks/queue-steer.json acceptance/scope"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "per-task buffered channel(4) + 内存 Queue + Steers 展示记录；toolLoop 在每轮无工具调用的模型返回后先消费插话、再取队首，续轮直至清空；startTask 运行中分支先探通道容量再记录；queueUpdate 同步维护 Queue 与 Steers 一致性。前端参照 Codex pending_input_preview：队列条悬于输入框上方（分区标题 + ↳ 弱化条目 + 提示行，修改/删除/插话三项操作）；插话消息带标签渲染进时间线；发送按钮空闲为 ↑、运行中原地切换为 ■ 停止（插话/排队经 Enter 或「排队」+Enter 提交）；一键回底按钮 sticky 粘在会话区可视底部并水平居中，滚离约一屏出现、点击平滑回底并恢复自动跟随（内部滚动恢复全部瞬时，避免 smooth 动画与用户滚动拉锯）。",
+      "evidence": [
+        "internal/server/workflow.go startTask/toolLoop/queueUpdate",
+        "内部缺陷修复依据：429 路径曾先记录后拒收，内存态脏；selectSession 曾清空 live 打断流式显示"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "后端排队/插话分支、toolLoop 续轮、queueUpdate 路由；前端排队条/时间线渲染/live 保留；修复 429 脏记录、发送按钮隐藏、编辑双提交、未定义 CSS 变量等缺陷；新增 3 个 Go 测试与 UI 验收脚本。",
+      "evidence": [
+        "internal/server/workflow.go / server.go",
+        "internal/server/web/app.js / index.html / style.css",
+        "internal/server/queue_steer_test.go（新增）",
+        "scripts/ui_queue_check.cjs（新增）"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "go test -race -count=3 队列测试全过（toolLoop 插话/排队续轮、startTask 分支含 429 一致性、queueUpdate 全操作）；全量 race 与 vet 过；无头 Chromium UI 检查 PASS：发送/停止模式切换（运行中 ■、点击取消、结束恢复 ↑）、Codex 风格队列条（标题/↳/提示行/三项操作）、Enter 插话与排队、插话入时间线、live 不重置、任务完成 2 条记录、回底按钮（不足一屏隐藏、滚离后真实可见于屏幕内且水平居中、点击平滑回底并恢复自动跟随）。",
+      "evidence": [
+        "go test -race -count=3 -run TestToolLoopSteerAndQueue/TestStartTaskSteerAndQueueBranch/TestQueueUpdateActions → ok",
+        "go test -race -count=1 ./... → ok；go vet 通过",
+        "node scripts/ui_queue_check.cjs → PASS（SEND_MODE_SWAP_RUNNING/QUEUE_BAR/CODEX_STYLE/LIVE_LEN/STEER_MSGS/FINAL/JUMP/STOP_PRE/STOP_RESULT 全断言通过）",
+        "index.html 资源版本 ?v=40"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "任务账本与 HANDOVER 记录；PRD 待功能合入发布时更新。",
+      "evidence": [
+        "docs/tasks/queue-steer.json",
+        "HANDOVER.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "无临时文件残留；无头验收环境（tmp-pw）已清理；改动均可归属。",
+      "evidence": [
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "已获用户授权提交与推送（2026-09-24 会话原话「修一下文档，合并推送吧」）；提交 SHA 以 git log 为准。升版与 GitHub Release 待用户另行指示。",
+      "evidence": [
+        "用户授权原话记录于 release_authorization"
+      ]
+    }
+  },
+  "release_authorization": "2026-09-24 会话，用户原话：「修一下文档，合并推送吧」（授权范围：文档更新、提交与推送 main；未授权升版与 GitHub Release）。",
+  "rollback": "提交后回退：git revert <提交 SHA> 或 git push --force-with-lease origin main（须另行确认）。镜像回滚用旧 tag，不覆盖数据卷。",
+  "handoff": "功能与界面定型：排队 FIFO + 插话优先（通道 4，满 429 且不脏记），队列条 Codex 风格悬于输入框上方，插话入时间线，发送/停止同按钮切换（↑→■，运行中插话/排队用 Enter），一键回底 sticky 居中、滚离约一屏出现、点击平滑回底。修复豆包初版缺陷（429 脏记录、live 被清空、发送隐藏、编辑双提交、CSS 未定义变量、回底按钮 absolute 滚出屏幕等）。验证：3 个 Go 测试 race×3、全量 race+vet、无头 Chromium UI 检查全断言 PASS。8097 已用新代码运行。剩余：升版与 GitHub Release 待授权。"
+}
