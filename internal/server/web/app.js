@@ -3850,14 +3850,18 @@ function renderAccessibilityControl() {
   const row = el('div', 'voice-reply-row');
   const toggle = el('input'); toggle.type = 'checkbox';
   toggle.checked = !!(state.config && state.config.accessibilityAutoRead);
-  const save = el('button', 'primary', t('保存')); save.type = 'button';
-  save.onclick = action(async () => {
-    await api('/settings', { method: 'PUT', body: JSON.stringify({ accessibilityAutoRead: toggle.checked, activeModel: state.config ? state.config.activeModel : '' }) });
-    await refreshConfig();
-    toast(t('无障碍设置已保存'));
+  let busy = false;
+  // 勾选/取消即自动保存，无需再点保存按钮
+  toggle.onchange = action(async () => {
+    if (busy) return; busy = true;
+    try {
+      await api('/settings', { method: 'PUT', body: JSON.stringify({ accessibilityAutoRead: toggle.checked, activeModel: state.config ? state.config.activeModel : '' }) });
+      await refreshConfig();
+      toast(toggle.checked ? t('已开启：输出完成后自动朗读') : t('已关闭自动朗读'));
+    } finally { busy = false; }
   });
-  row.append(toggle, el('span', '', t('输出完成后自动朗读')), save);
-  wrap.append(head, row, el('small', '', t('开启后：每次模型输出完成，由小秘自动滚动、打开相关文件并口头讲解本次输出；aide 主会话本身不发声。')));
+  row.append(toggle, el('span', '', t('输出完成后自动朗读')));
+  wrap.append(head, row, el('small', '', t('勾选即自动保存。开启后：每次模型输出完成，由小秘自动滚动、打开相关文件并口头讲解本次输出；aide 主会话本身不发声。')));
   return wrap;
 }
 controlRenderers['accessibility-read'] = renderAccessibilityControl;
