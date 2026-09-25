@@ -195,6 +195,11 @@
           "id": "voiceReply",
           "type": "voice-reply",
           "label": "语音回复"
+        },
+        {
+          "id": "ttsEngine",
+          "type": "tts-engine",
+          "label": "语音引擎"
         }
       ]
     },

@@ -32,6 +32,45 @@ The settings panel is organized into sections: Usage stats (§8), Appearance, La
 - **Account**: username and lock-screen password (stored as SHA-256); no password means no lock. The password also encrypts the voice-assistant conversation history.
 - **Voice assistant**: the microphone button uses the browser Web Speech API for live transcription; the backend distinguishes "for the AI" from background noise and small talk and automatically drops chit-chat. The assistant name is customizable.
 
+#### Speech engine & naturalness
+
+The assistant's read-aloud no longer relies only on the browser's built-in Web Speech — on macOS it often falls back to a mechanical old voice like Ting-Ting. Since 0.1.10.2 RC1, read-aloud preferentially uses the backend **edge-tts neural voice** (the same engine as Microsoft Edge "Read aloud", with noticeably more natural Chinese voices such as Xiaoxiao and Yunxi), and automatically falls back to browser speech when it is unavailable.
+
+```mermaid
+flowchart TD
+    A[Assistant needs to read text] --> B{Already colloquial?}
+    B -- Raw chat reply --> C[Backend LLM colloquial rewrite<br/>short sentences / strip markdown / speak numbers<br/>LRU cache]
+    B -- Guided narration already rewritten --> D[Synthesize directly]
+    C --> E[Provider selection]
+    D --> E
+    E --> F{Engine}
+    F -- auto/edge --> G[edge-tts neural voice<br/>WSS to MP3 stream]
+    F -- webspeech --> H[Browser Web Speech<br/>local fallback]
+    G --> I[Frontend TTSPlayer<br/>queue & play sentence by sentence]
+    H --> I
+    G -.first-byte timeout/failure.-> H
+```
+
+| Engine | Naturalness | Voices | Network needed | Privacy |
+| --- | --- | --- | --- | --- |
+| edge-tts (default) | High (neural) | Xiaoxiao/Yunxi/Xiaoyi and ~10 more Chinese voices | Yes | Spoken text is sent to Microsoft |
+| Browser Web Speech | Low (macOS often Ting-Ting mechanical) | Depends on OS | No | Fully local, never leaves device |
+| Cloud / local OSS (reserved) | High | Extensible | Depends | Depends |
+
+**Colloquializing & prosody**: chat replies are lightly rewritten by an LLM before being read — short sentences, markdown stripped, numbers read aloud, natural filler words. The result is cached in an in-memory LRU keyed by the original text, so the same reply never costs tokens twice. Guided narration is already colloquialized by the backend `voice-narrate` path and is not rewritten again. Speed and expressiveness map to SSML `prosody` / `express-as` on edge-tts.
+
+**Settings**: Settings → Voice assistant → **Speech engine**:
+
+- **TTS engine**: Auto (recommended) / edge-tts / Browser speech.
+- **Voice**: pick Xiaoxiao (female) / Yunxi (male) / Xiaoyi etc. when edge-tts is chosen; otherwise mapped by the male/female preference.
+- **Speed**: 0.8–1.3×.
+- **Expressiveness**: 0–1, mapped to edge-tts style intensity.
+- **Preview**: synthesize a one-line sample with the current choices.
+
+**Offline & privacy**: edge-tts needs network; offline it degrades to browser speech (fully local). Because edge-tts sends spoken text to Microsoft, **choose "Browser speech" manually in classified environments**. An API key is only for future cloud engines; edge-tts needs none and is never echoed back.
+
+**What is unaffected**: the "Read aloud" button on every main-chat message is a flat mechanical reader for arbitrary text; it still uses raw browser Web Speech and is unaffected by the speech-engine setting.
+
 #### Multi-tab lock semantics
 
 The lock state is coordinated between the main workspace tab and file-view tabs (`#file=…`) by three rules, instead of locking each tab independently:

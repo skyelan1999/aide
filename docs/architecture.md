@@ -150,6 +150,56 @@ flowchart LR
   A -. "3s 无心跳 → election" .-> B
 ```
 
+## TTS 分层架构
+
+小蜜朗读是可插拔管线：后端 `internal/server/tts` 定义 `TTSProvider` 接口（`Name/Synth/Format/Available`），`NewProvider(name, Config)` 按名注册。当前实现 edge-tts——用标准库手写最小 RFC6455 WebSocket 客户端直连微软 Read-Aloud（`wss://speech.platform.bing.com/...`，公开 token + 时间派生的 `Sec-MS-GEC`，无需 key），SSML 映射语速/情感，回流式 MP3。Web Speech 是纯浏览器能力，后端不合成（`ErrBrowserOnly`），始终在前端兜底。
+
+**音频流路径**：
+
+```mermaid
+sequenceDiagram
+  participant U as 前端 TTSPlayer
+  participant H as /api/tts/*
+  participant C as colloquialize(LLM)
+  participant P as tts.Provider(edge)
+  participant MS as 微软 WSS
+  U->>H: POST /tts/colloquialize {text}
+  H->>C: LLM 改写(可命中 LRU)
+  C-->>U: spoken
+  U->>U: ttsSegments 按句切分
+  loop 逐句
+    U->>H: POST /tts/synthesize {text,voice,...}
+    H->>P: Synth(ctx, seg, opts)
+    P->>MS: WSS 握手+speech.config+ssml
+    MS-->>P: 二进制 MP3 帧
+    P-->>H: io.ReadCloser(MP3)
+    H-->>U: audio/mpeg 分块
+    U->>U: Audio 入队顺序播放
+  end
+```
+
+**降级链**：选定引擎 → edge-tts（首包 1.5s 无数据即失败）→ 浏览器 Web Speech。前端 `ttsSpeak` 在 fetch/首包失败时用同一段文本改走 `webSpeakReply`/`webSpeakAwait`；显式选 webspeech 时后端直接 400、前端不发请求。
+
+```mermaid
+stateDiagram-v2
+  [*] --> Idle
+  Idle --> EdgeSynth: speak(text)
+  EdgeSynth --> EdgePlaying: 首包到达(<1.5s)
+  EdgeSynth --> WebSpeechFallback: 超时/错误/选webspeech
+  EdgePlaying --> EdgePlaying: 下一句
+  EdgePlaying --> Done: 全部播完
+  WebSpeechFallback --> WebPlaying
+  WebPlaying --> Done
+  EdgePlaying --> Cancelled: cancel() abort+audio.pause
+  WebPlaying --> Cancelled
+  Cancelled --> [*]
+  Done --> [*]
+```
+
+**口语化预处理**：对话回复（`speakReply`）在合成前先经 `App.colloquialize` 调 `complete()` 改写为口语稿，按 `sha1(model+原文)` 存内存 LRU（256 条）。导览讲解（`speakAwait`）的文本已由 `voice-narrate` 口语化，跳过这步，避免双重改写。主聊天"朗读"按钮走裸 Web Speech，不进此管线。
+
+**设置与回显**：`Settings` 新增 `ttsProvider/ttsVoice/ttsEndpoint/ttsAPIKey/ttsRate/ttsExpressiveness`；`ttsAPIKey` 同 `apiKey` 模式不回显，`/config` 只给 `hasTTSKey` 布尔与 `ttsVoices` 音色列表。
+
 ## 验证与扩展
 
 变更前读取 [统一开发工作流](agent/WORKFLOW.md)。新前端须验证浏览器实际交互；正式发布须在没有 `/web` 挂载的构建镜像中验证 embed 资源。早期预览使用 RC5 后端 + 工作区静态文件；本次发布另行验证无静态目录覆盖的镜像。

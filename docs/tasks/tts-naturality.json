@@ -1,0 +1,88 @@
+{
+  "id": "tts-naturality",
+  "request": "小蜜语音 TTS 自然度增强：可插拔 TTS Provider 抽象 + edge-tts 接入 + 口语化预处理 + 前端 TTSPlayer",
+  "baseline": "ec5ab40328679e45ff72cc5e33e617eb02d2d2b0",
+  "initial_status": "M internal/server/web/app.js\n M profiles.json\n?? proposals/\n?? web-i18n-refactor-plan.md",
+  "acceptance": [
+    "后端存在 internal/server/tts 包：TTSProvider 接口(Name/Synth/Format/Available)、SynthOpts、注册表与 NewProvider 工厂",
+    "edge-tts Provider 用标准库直连微软 Read-Aloud WSS，无需 key；支持中文音色 zh-CN-XiaoxiaoNeural/YunxiNeural/XiaoyiNeural；输出 MP3 流式",
+    "POST /api/tts/synthesize 接收 {text,voice,rate,style,gender}，响应 audio/mpeg 分块；首包 1.5s 无数据返回错误供前端降级",
+    "Settings 新增 TTSProvider/TTSVoice/TTSEndpoint/TTSAPIKey/TTSRate/TTSExpressiveness；API key 不回显（仅 hasTTSKey 布尔）；updateSettings 指针覆盖",
+    "对话回复路径补 LLM 口语化改写（复用 complete()），hash(原文)→口语化文本 内存 LRU 缓存；讲解路径不重复处理",
+    "前端 TTSPlayer 类：speak(text,opts)/cancel/pause/resume，按句切分 fetch /api/tts/synthesize → Audio 队列顺序播放；失败/超时自动降级 speakWebSpeech",
+    "设置页语音引擎折叠组：引擎下拉(自动/edge-tts/浏览器Web Speech)、音色下拉、语速 0.8-1.3、表现力 0-1、试听按钮",
+    "主聊天机械朗读按钮 toggleMechanicalRead 保持裸 Web Speech 不动",
+    "docs/user-guide.md 与 docs/en/user-guide.md 新增「语音引擎与自然度」；docs/architecture.md 新增「TTS 分层架构」；3 张 mermaid（分层 flowchart/流式 sequence/降级 stateDiagram）中英各一套",
+    "docker go build -mod=vendor ./... 通过；go vet 通过；node --check app.js 与 en.js 通过",
+    "edge-tts 与 Web Speech 同文对比音频样本落盘交用户盲听；不主观自评自然度"
+  ],
+  "scope": [
+    "internal/server/tts/provider.go (新增)",
+    "internal/server/tts/edge.go (新增，含标准库最小 WebSocket 客户端)",
+    "internal/server/tts/colloquial.go (新增，口语化改写+LRU)",
+    "internal/server/server.go (Settings 字段、/api/tts/synthesize 端点、/config 回显、updateSettings 覆盖)",
+    "internal/server/web/app.js (TTSPlayer、speak* 换底层、renderTTSEngineControl 新增控件)",
+    "internal/server/web/settings-schema.json (voice 分区追加 tts-engine 控件)",
+    "internal/server/web/locales/en.js (新词条)",
+    "docs/user-guide.md, docs/en/user-guide.md, docs/architecture.md (中文 architecture 一张，mermaid 双语)",
+    "docs/tasks/tts-naturality.json (任务账本)"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目标：把小蜜对话/导览朗读从浏览器机械 Web Speech 升级为可插拔 TTS，MVP 接 edge-tts 神经音；对话回复补 LLM 口语化。非目标：主聊天机械朗读按钮不动、不 commit/push、离线不引入新 Go 依赖（手写 stdlib WebSocket）。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "tts 子包定义 Provider 接口；edge 用标准库手写 RFC6455 客户端（无新依赖，离线优先）；colloquialize 放 package server 复用 complete() 避免循环依赖；前端 TTSPlayer 句级 fetch+Audio 队列，失败降级 Web Speech。",
+      "evidence": [
+        "internal/server/tts/provider.go",
+        "internal/server/tts/edge.go",
+        "internal/server/colloquial.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "后端 tts 包 + /api/tts/synthesize + /api/tts/colloquialize + Settings 6 字段；前端 TTSPlayer 接管 speakReply/speakAwait（调用点零改动），新增语音引擎设置控件；主聊天机械朗读按钮未动。",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "internal/server/web/settings-schema.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "docker go build -mod=vendor ./... 通过；go vet 通过；node --check app.js/en.js 通过；i18n 测试通过；edge-tts 连通性 live 测试 PASS（Go 手写 WSS 拿到 MP3 同步字 ff f3）。",
+      "evidence": [
+        "BUILD_OK/VET_OK",
+        "TestEdgeLiveDial PASS 29376B mp3",
+        "test-results/tts-samples/{edge-xiaoxiao,edge-yunxi,edge-xiaoyi,go-zh-CN-XiaoxiaoNeural,go-zh-CN-YunxiNeural}.mp3"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英 user-guide 新增「语音引擎与自然度」，architecture 新增「TTS 分层架构」；3 张 mermaid（flowchart/sequenceDiagram/stateDiagram）。",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "删除一次性样本测试；test-results/ 已 gitignore；未 commit/push，profiles.json/proposals/ 等既有未跟踪物未动。",
+      "evidence": [
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户硬约束：不 commit/不 merge/不 push/不改 tag；发布门禁未执行。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "完成：tts Provider 抽象+edge-tts+口语化+前端 TTSPlayer+设置控件+双语文档。验证：go build/vet/node check 全过，edge-tts 实时合成 PASS，对比样本已落 test-results/tts-samples 供盲听。NOT_RUN：浏览器内 UI 实机验收（无浏览器自动化能力）、Web Speech 同文样本（浏览器侧无法无头生成）、主观自然度评分（按要求交用户盲听）。check_docs.py 报 PRD FR 编号问题为基线已有，与本任务无关。"
+}

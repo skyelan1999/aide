@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"aide/internal/server/tts"
 	"strings"
 	"sync"
 	"syscall"
@@ -57,6 +58,13 @@ type Settings struct {
 	UserPasswordHash       string   `json:"userPasswordHash,omitempty"`  // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
 	LockTimeoutSec         int      `json:"lockTimeoutSec,omitempty"`    // 空闲锁屏秒数，0 = 不锁屏
 	AccessibilityAutoRead  bool     `json:"accessibilityAutoRead,omitempty"` // 无障碍：输出完成后由小秘自动朗读讲解
+	// ── TTS 自然度：可插拔引擎（edge-tts 神经音 + 浏览器 Web Speech 兜底）──
+	TTSProvider       string   `json:"ttsProvider,omitempty"`        // auto | edge | webspeech
+	TTSVoice          string   `json:"ttsVoice,omitempty"`           // edge 音色 id，空=按性别映射
+	TTSEndpoint       string   `json:"ttsEndpoint,omitempty"`        // 预留：自定义 edge/云端端点
+	TTSAPIKey         string   `json:"ttsAPIKey,omitempty"`          // 预留：云端引擎 key（edge 不需要，不回显）
+	TTSRate           float64  `json:"ttsRate,omitempty"`             // 语速倍率 0.8-1.3，默认 1.0
+	TTSExpressiveness float64  `json:"ttsExpressiveness,omitempty"`   // 表现力 0-1，映射 edge styledegree
 }
 
 const (
@@ -175,6 +183,7 @@ type App struct {
 	bgCancel                context.CancelFunc
 	bgWg                    sync.WaitGroup // fire-and-forget 后台 goroutine（标题总结等）追踪，Close 时等待
 	webAuthn                *webAuthnManager // Touch ID / WebAuthn 解锁管理器
+	colloqCache             *colloquialCache // 口语化朗读稿 LRU 缓存
 }
 
 // Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
@@ -346,6 +355,7 @@ func New(work, reference, data string) (*App, error) {
 		a.settings.VoiceReplyGender = "female"
 	}
 	a.voiceAgent = newVoiceAgent(data)
+	a.colloqCache = newColloquialCache()
 	a.webAuthn = newWebAuthnManager(data) // Touch ID / WebAuthn 解锁
 	if a.settings.Models != nil {
 		normalized, err := normalizeModels(a.settings.Models)
@@ -580,6 +590,8 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/command", a.command)
 	mux.HandleFunc("POST /api/voice-filter", a.voiceFilter)
 	mux.HandleFunc("POST /api/voice-narrate", a.voiceNarrate)
+	mux.HandleFunc("POST /api/tts/synthesize", a.ttsSynthesize)
+	mux.HandleFunc("POST /api/tts/colloquialize", a.ttsColloquialize)
 	mux.HandleFunc("GET /api/voice-history", a.voiceHistory)
 	mux.HandleFunc("DELETE /api/voice-history", a.voiceHistoryClear)
 	mux.HandleFunc("POST /api/voice-history/enable", a.voiceHistoryEnable)
@@ -631,7 +643,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "hasPassword": a.settings.UserPasswordHash != "", "webAuthnReady": a.webAuthn.enabled(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "hasPassword": a.settings.UserPasswordHash != "", "webAuthnReady": a.webAuthn.enabled(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -727,6 +739,25 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	} else {
 		in.Settings.VoiceInputDevice = a.settings.VoiceInputDevice
 	}
+	// TTS 引擎：未传（零值/空）保留已存值；TTSAPIKey 同 apiKey 模式，空且未 clear 时保留
+	if in.Settings.TTSProvider == "" {
+		in.Settings.TTSProvider = a.settings.TTSProvider
+	}
+	if in.Settings.TTSVoice == "" {
+		in.Settings.TTSVoice = a.settings.TTSVoice
+	}
+	if in.Settings.TTSEndpoint == "" {
+		in.Settings.TTSEndpoint = a.settings.TTSEndpoint
+	}
+	if in.Settings.TTSAPIKey == "" {
+		in.Settings.TTSAPIKey = a.settings.TTSAPIKey
+	}
+	if in.Settings.TTSRate == 0 {
+		in.Settings.TTSRate = a.settings.TTSRate
+	}
+	if in.Settings.TTSExpressiveness == 0 {
+		in.Settings.TTSExpressiveness = a.settings.TTSExpressiveness
+	}
 	u, err := url.Parse(in.BaseURL)
 	if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		fail(w, 400, errors.New("请输入有效的 HTTP(S) API Base URL"))
@@ -811,6 +842,26 @@ func voiceReplyGender(g string) string {
 	}
 	return "female"
 }
+// ttsProviderName 归一化 TTS 引擎名，空=auto。
+func ttsProviderName(p string) string {
+	switch strings.ToLower(strings.TrimSpace(p)) {
+	case "edge", "edge-tts", "edgetts":
+		return "edge"
+	case "webspeech", "browser", "web":
+		return "webspeech"
+	default:
+		return "auto"
+	}
+}
+
+// ttsRateVal 归一化语速倍率，非法值回退 1.0。
+func ttsRateVal(r float64) float64 {
+	if r < 0.5 || r > 2.0 {
+		return 1.0
+	}
+	return r
+}
+
 
 // voiceFilter 语音小秘：把浏览器 Web Speech API 的转写文本交给小秘 agent 分析决策。
 // 小秘结合记忆与上下文判断 send（对 aide 的指令，直接发到当前会话）/ ignore（背景声）/ standby（与人闲聊退下）。
@@ -1387,4 +1438,118 @@ func (a *App) voiceNarrate(w http.ResponseWriter, r *http.Request) {
 		sp = fallbackSpeaks()
 	}
 	jsonOut(w, 200, map[string]any{"speaks": sp})
+}
+
+// ttsSynthesize 把文本合成为 MP3 音频流（edge-tts 神经音）。
+// 响应 Content-Type: audio/mpeg，分块流式返回。首包 1.5s 未到则返回 502，前端自动降级浏览器 Web Speech。
+// 选 webspeech 引擎时本端点不合成，返回 400 让前端直接走浏览器朗读。
+func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Text     string  `json:"text"`
+		Voice    string  `json:"voice"`
+		Rate     float64 `json:"rate"`
+		Style    string  `json:"style"`
+		Gender   string  `json:"gender"`
+		Provider string  `json:"provider"`
+	}
+	if err := decode(w, r, &in); err != nil {
+		return
+	}
+	text := strings.TrimSpace(in.Text)
+	if text == "" {
+		fail(w, 400, errors.New("text 不能为空"))
+		return
+	}
+	a.mu.Lock()
+	cfg := a.settings
+	a.mu.Unlock()
+
+	providerName := strings.TrimSpace(in.Provider)
+	if providerName == "" {
+		providerName = cfg.TTSProvider
+	}
+	if strings.ToLower(providerName) == "webspeech" {
+		fail(w, 400, tts.ErrBrowserOnly)
+		return
+	}
+
+	rate := in.Rate
+	if rate == 0 {
+		rate = cfg.TTSRate
+	}
+	if rate == 0 {
+		rate = 1.0
+	}
+	gender := in.Gender
+	if gender == "" {
+		gender = cfg.VoiceReplyGender
+	}
+	pcfg := tts.Config{
+		Provider:       providerName,
+		Voice:          in.Voice,
+		Endpoint:       cfg.TTSEndpoint,
+		APIKey:         cfg.TTSAPIKey,
+		Rate:           rate,
+		Expressiveness: cfg.TTSExpressiveness,
+		Gender:         gender,
+	}
+	if pcfg.Voice == "" {
+		pcfg.Voice = cfg.TTSVoice
+	}
+	prov, err := tts.NewProvider(providerName, pcfg)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	opts := tts.SynthOpts{
+		Voice:          pcfg.Voice,
+		Rate:           rate,
+		Style:          in.Style,
+		Gender:         gender,
+		Expressiveness: cfg.TTSExpressiveness,
+	}
+	rc, err := prov.Synth(r.Context(), text, opts)
+	if err != nil {
+		fail(w, 502, err)
+		return
+	}
+	defer rc.Close()
+
+	// 先读首包再决定是否 200：首包超时/失败时回 502，前端据此降级 Web Speech。
+	var first [8192]byte
+	n, err := rc.Read(first[:])
+	if n == 0 {
+		fail(w, 502, fmt.Errorf("TTS 首包超时或失败：%w", err))
+		return
+	}
+	w.Header().Set("Content-Type", "audio/mpeg")
+	w.Header().Set("Cache-Control", "no-store")
+	w.WriteHeader(200)
+	w.Write(first[:n])
+	if err == nil {
+		_, _ = io.Copy(w, rc)
+	}
+}
+
+// ttsColloquialize 把书面回复改写为适合朗读的口语稿（带 LRU 缓存）。
+// 失败时原样返回，不阻断朗读。
+func (a *App) ttsColloquialize(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Text string `json:"text"`
+	}
+	if err := decode(w, r, &in); err != nil {
+		return
+	}
+	text := strings.TrimSpace(in.Text)
+	if text == "" {
+		jsonOut(w, 200, map[string]string{"spoken": ""})
+		return
+	}
+	spoken, err := a.colloquialize(r.Context(), text)
+	if err != nil {
+		// 改写失败：返回原文，前端照读
+		jsonOut(w, 200, map[string]string{"spoken": text, "fallback": "1"})
+		return
+	}
+	jsonOut(w, 200, map[string]string{"spoken": spoken})
 }
