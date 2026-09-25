@@ -3202,25 +3202,56 @@ function pickVoiceForGender(gender) {
   if (!('speechSynthesis' in window)) return null;
   const voices = window.speechSynthesis.getVoices() || [];
   if (!voices.length) return null;
-  const maleKw = ['male', '男', 'kangkang', 'yunjian', 'yunxi', 'yunyang', 'yunxia'];
-  const femaleKw = ['female', '女', 'tingting', 'xiaoxiao', 'xiaoyi', 'xiaomei', 'sinji', 'mei-jia', 'huihui', 'yaoyao'];
+  const zh = voices.filter(x => /zh|cmn|chinese|mandarin/i.test((x.lang || '') + ' ' + (x.name || '')));
+  const pool = zh.length ? zh : voices;
+  const femaleKw = ['xiaoxiao','xiaoyi','xiaomei','huihui','yaoyao','tingting','mei-jia','sinji','female','女'];
+  const maleKw = ['yunxi','yunjian','yunyang','yunxia','kangkang','male','男'];
   const kws = gender === 'male' ? maleKw : femaleKw;
-  let v = voices.find(x => /zh|cmn/i.test(x.lang || '') && kws.some(k => (x.name || '').toLowerCase().includes(k)));
-  if (!v) v = voices.find(x => /zh|cmn/i.test(x.lang || ''));
-  return v || null;
+  const isQuality = v => /neural|online|google|natural|云|网络/i.test(v.name || '');
+  // 质量优先：神经网络/在线/Google 音色远比本地老式合成自然
+  let v = pool.find(x => isQuality(x) && kws.some(k => (x.name || '').toLowerCase().includes(k)));
+  if (!v) v = pool.find(x => kws.some(k => (x.name || '').toLowerCase().includes(k)));
+  if (!v) v = pool.find(x => isQuality(x));
+  if (!v) v = zh[0];
+  return v || pool[0] || null;
+}
+// 韵律分句：按标点切成短段（同时规避 Chrome 长 utterance ~15s 卡死）
+function ttsSegments(text) {
+  const flat = text.replace(/[#*`>\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+  const out = [];
+  const re = /[^，。！？；：、,.!?;:…]+[，。！？；：、,.!?;:…]?/g;
+  let m; while ((m = re.exec(flat))) { const t = m[0].trim(); if (t) out.push(t.slice(0, 120)); }
+  return out.slice(0, 40);
 }
 function speakReply(text) {
   if (!state.config || !state.config.voiceReplyEnabled) return;
   if (!text || !('speechSynthesis' in window)) return;
-  const flat = text.replace(/[#*`>\-\[\]]/g, ' ').replace(/\s+/g, ' ').slice(0, 600).trim();
-  if (!flat) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(flat);
-  u.lang = 'zh-CN';
-  const v = pickVoiceForGender(state.config.voiceReplyGender);
-  if (v) u.voice = v;
-  u.rate = 1.05;
-  window.speechSynthesis.speak(u);
+  const segs = ttsSegments(text);
+  if (!segs.length) return;
+  const synth = window.speechSynthesis;
+  synth.cancel();
+  const voice = pickVoiceForGender(state.config.voiceReplyGender);
+  const isMale = state.config.voiceReplyGender === 'male';
+  const basePitch = isMale ? 0.99 : 1.1;   // 女声略提音调，更明亮灵动
+  const baseRate = 1.04;
+  let i = 0;
+  function next() {
+    if (i >= segs.length) return;
+    const seg = segs[i];
+    const u = new SpeechSynthesisUtterance(seg);
+    u.lang = 'zh-CN';
+    if (voice) u.voice = voice;
+    const ask = /[?？]\s*$/.test(seg);
+    const exclaim = /[!！]\s*$/.test(seg);
+    const clause = /[，,、；;：:]\s*$/.test(seg);
+    u.pitch = ask ? basePitch + 0.14 : exclaim ? basePitch + 0.06 : basePitch;
+    u.rate = exclaim ? baseRate + 0.07 : ask ? baseRate - 0.04 : baseRate;
+    u.volume = 1;
+    u.onend = () => { const pause = ask ? 200 : clause ? 95 : 175; i++; setTimeout(next, pause); };
+    u.onerror = () => { i++; next(); };
+    synth.speak(u);
+  }
+  next();
 }
 async function typeIntoPrompt(text) {
   const prompt = $('prompt');
