@@ -8,6 +8,7 @@ package tts
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -38,6 +39,16 @@ type Config struct {
 	Rate           float64
 	Expressiveness float64
 	Gender         string
+	AzureKey       string // Azure 官方 Speech 订阅 key（可选；填了即作为 edge 的后备引擎）
+	AzureRegion    string // Azure region，如 eastasia / eastus
+	// ── 本地离线 sherpa-onnx（#44）：二进制打进镜像，模型外置 /data/tts ──
+	SherpaBin string // sherpa-onnx-offline-tts 路径（空=默认 /usr/local/bin，可用 SHERPA_BIN 覆盖）
+	SherpaDir string // 模型目录（空=默认 /data/tts，可用 SHERPA_TTS_DIR 覆盖）
+	// ── 少样本音色克隆（#36）：自托管克隆服务接入 ──
+	CloneBaseURL  string // 克隆服务 BaseURL（如 http://127.0.0.1:9880）；空=未配置
+	CloneAPIKey   string // 克隆服务 Bearer token（可选，不回显）
+	CloneVoiceID  string // 克隆出的音色 ID（创建音色后由克隆服务返回）
+	CloneBackend  string // openai | gpt-sovits | indextts2 | cosyvoice2 | openvoice
 }
 
 // TTSProvider 一个具体的语音合成引擎。实现必须是并发安全的（每次 Synth 独立连接/会话）。
@@ -99,14 +110,20 @@ func ResolveVoice(voice, gender string) string {
 
 // NewProvider 按名字创建引擎。"auto" 解析为 edge（edge 不可用时返回 error，由前端降级 Web Speech）。
 // "webspeech" 是浏览器端能力，后端不合成，返回 ErrBrowserOnly。
+// "clone" 是少样本音色克隆（#36）：返回克隆 Provider，未配 BaseURL 时 Synth 返回 ErrCloneNotConfigured。
+// "sherpa"/"local" 是本地离线引擎（#44）：模型未安装时 Synth 返回 ErrNotConfigured。
 func NewProvider(name string, cfg Config) (TTSProvider, error) {
 	switch strings.ToLower(strings.TrimSpace(name)) {
 	case "", "auto":
 		return newEdge(cfg), nil
 	case "edge", "edge-tts", "edgetts":
 		return newEdge(cfg), nil
+	case "sherpa", "local", "offline", "sherpa-onnx":
+		return newSherpa(cfg.SherpaBin, cfg.SherpaDir), nil
 	case "webspeech", "browser", "web":
 		return nil, ErrBrowserOnly
+	case "clone", "voice-clone", "cloned":
+		return newClone(cfg), nil
 	default:
 		return nil, fmt.Errorf("未知 TTS 引擎：%s", name)
 	}
@@ -118,3 +135,57 @@ var ErrBrowserOnly = fmt.Errorf("该引擎由浏览器本地合成，后端不�
 // ErrUnavailable 表示引擎当前不可用（连接/握手/首包超时、网络不通等），应降级浏览器 Web Speech。
 // edge 在超时类错误重试耗尽后包装返回；非超时错误（如 403 认证失败）不包装此错误。
 var ErrUnavailable = fmt.Errorf("TTS 引擎不可用")
+
+// ChainSynth 多引擎自动编排（#44 优先级）：
+//
+//	auto → 本地 sherpa(离线) → edge(联网) → Azure(配 key) → 全部失败返回 ErrUnavailable（前端降级浏览器 Web Speech）。
+//
+// sherpa 无模型时 Synth 返回 ErrNotConfigured，本函数自动跳过进入 edge（不向用户报错）。
+// 显式选 sherpa 时链里只有 sherpa，未安装则直接报错（前端提示安装，不静默降级 edge）。
+// 返回成功的音频流、实际生效的引擎名；全部失败返回聚合的 ErrUnavailable。
+// 任一引擎返回 ErrBrowserOnly 直接跳过（浏览器引擎由前端处理）。
+func ChainSynth(ctx context.Context, text string, opts SynthOpts, cfg Config) (io.ReadCloser, string, error) {
+	engines := buildChain(cfg)
+	var errs []string
+	for _, eng := range engines {
+		rc, err := eng.Synth(ctx, text, opts)
+		if err == nil {
+			return rc, eng.Name(), nil
+		}
+		errs = append(errs, eng.Name()+": "+err.Error())
+		if errors.Is(err, ErrBrowserOnly) {
+			continue
+		}
+	}
+	return nil, "", fmt.Errorf("%w: %s", ErrUnavailable, strings.Join(errs, "; "))
+}
+
+// buildChain 构造优先级引擎链（#44：本地离线 sherpa 默认优先）。
+//   - provider=auto/空：sherpa 第一（无模型自动跳过）→ edge → Azure(配 key)。
+//   - provider=sherpa/local：只用 sherpa（未安装直接报错，不静默降级 edge）。
+//   - provider=edge：edge → Azure（不走本地，用户明确要联网神经音）。
+//   - provider=clone：克隆音色优先（#36），失败/未配置降级 edge；不进入 auto 链。
+func buildChain(cfg Config) []TTSProvider {
+	var chain []TTSProvider
+	switch strings.ToLower(strings.TrimSpace(cfg.Provider)) {
+	case "clone", "voice-clone", "cloned":
+		if c := newClone(cfg); c.Available() {
+			chain = append(chain, c)
+		}
+		chain = append(chain, newEdge(cfg)) // 克隆不可达时降级 edge
+	case "sherpa", "local", "offline", "sherpa-onnx":
+		chain = append(chain, newSherpa(cfg.SherpaBin, cfg.SherpaDir))
+	case "edge", "edge-tts", "edgetts":
+		chain = append(chain, newEdge(cfg))
+	default: // "", "auto"
+		chain = append(chain, newSherpa(cfg.SherpaBin, cfg.SherpaDir)) // 本地离线优先；无模型自动跳过
+		chain = append(chain, newEdge(cfg))
+	}
+	if cfg.AzureKey != "" {
+		chain = append(chain, newAzure(cfg))
+	}
+	return chain
+}
+
+// ErrNotConfigured 该引擎未配置/未启用（如 sherpa-onnx 阶段2未接入）。
+var ErrNotConfigured = fmt.Errorf("引擎未配置")

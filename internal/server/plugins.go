@@ -36,6 +36,7 @@ type PluginManifest struct {
 	Author      string `json:"author,omitempty"`
 	Main        string `json:"main"`
 	Enabled     bool   `json:"enabled"`
+	Daemon      bool   `json:"daemon,omitempty"` // 协议 v1.2：常驻守护插件
 	InstalledAt string `json:"installedAt"`
 }
 
@@ -256,6 +257,13 @@ func (a *App) togglePlugin(w http.ResponseWriter, r *http.Request) {
 				fail(w, 500, err)
 				return
 			}
+			if a.daemons != nil && a.isDaemonPlugin(r.PathValue("id")) {
+				if in.Enabled {
+					_ = a.daemons.Start(r.PathValue("id"))
+				} else {
+					_ = a.daemons.Stop(r.PathValue("id"))
+				}
+			}
 			a.runPluginHost(context.Background())
 			jsonOut(w, 200, map[string]any{"id": r.PathValue("id"), "enabled": in.Enabled, "error": a.pluginError(r.PathValue("id"))})
 			return
@@ -271,6 +279,9 @@ func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {
 	for i := range a.pluginRegistry.Plugins {
 		if a.pluginRegistry.Plugins[i].ID == id {
 			a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins[:i], a.pluginRegistry.Plugins[i+1:]...)
+			if a.daemons != nil && a.isDaemonPlugin(id) {
+				_ = a.daemons.Stop(id) // 终止常驻进程并释放端口
+			}
 			_ = os.RemoveAll(filepath.Join(a.pluginsPath, id))
 			if err := a.savePluginRegistry(); err != nil {
 				fail(w, 500, err)
@@ -284,8 +295,12 @@ func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {
 	fail(w, 404, errors.New("插件不存在"))
 }
 
-// callPluginTool 调用启用插件的可执行工具（协议 v1.1，60s 超时）。
+// callPluginTool 调用启用插件的可执行工具。
+// 协议 v1.2：声明 daemon:true 的插件走常驻 DaemonManager（IPC），其余保持 v1.1 短命进程（向后兼容）。
 func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (any, error) {
+	if a.daemons != nil && a.isDaemonPlugin(pluginID) {
+		return a.daemons.Call(pluginID, toolName, args)
+	}
 	req, err := json.Marshal(map[string]any{"plugin": pluginID, "tool": toolName, "args": args})
 	if err != nil {
 		return nil, err

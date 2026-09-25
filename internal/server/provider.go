@@ -184,7 +184,7 @@ type streamChunk struct {
 		Delta struct {
 			Content          string `json:"content"`
 			ReasoningContent string `json:"reasoning_content"` // DeepSeek 等模型的思考链：独立于正文，不进最终回答
-			ToolCalls []struct {
+			ToolCalls        []struct {
 				Index    int    `json:"index"`
 				ID       string `json:"id"`
 				Type     string `json:"type"`
@@ -205,11 +205,13 @@ type streamChunk struct {
 
 // completeStream 以 stream:true 发起 Chat Completions，逐 token 聚合响应。
 // onDelta 在收到文本增量时被同步调用（不写网络、不加锁即可）；它把增量交给上层推给 SSE 订阅者。
-// 返回值与 complete() 一致：最终文本、工具调用、用量、错误。非流式响应或上游不支持 SSE 时自动回退。
+// 返回值：最终文本、工具调用、用量、上游最后一个 finish_reason（stop/length/tool_calls/…，空=未返回）、错误。
+// finish_reason 透传给 toolLoop，用于区分“真结束(stop/tool_calls)”与“被输出上限截断(length)”，
+// 后者可能意味着工具调用 arguments 还没写完——需要续写补全而不是执行半成品。
 // 部分兼容网关会拒绝 stream_options（OpenAI 可选扩展）：HTTP 400 时去掉该字段重试一次，仍失败则按错误返回。
-func completeStream(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte), onDelta func(textDelta string), onReasoning func(reasoningDelta string)) (string, []ToolCall, TokenUsage, error) {
+func completeStream(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte), onDelta func(textDelta string), onReasoning func(reasoningDelta string)) (string, []ToolCall, TokenUsage, string, error) {
 	if cfg.BaseURL == "" || cfg.Model == "" {
-		return "", nil, TokenUsage{}, errors.New("请先在模型设置中配置 API 地址和模型")
+		return "", nil, TokenUsage{}, "", errors.New("请先在模型设置中配置 API 地址和模型")
 	}
 	body := buildChatBody(cfg, messages, params, tools, true)
 	promptChars := 0
@@ -231,14 +233,14 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 	}
 	b, err := json.Marshal(body)
 	if err != nil {
-		return "", nil, TokenUsage{}, err
+		return "", nil, TokenUsage{}, "", err
 	}
 	if rec != nil {
 		rec(b)
 	}
 	resp, err := send(b)
 	if err != nil {
-		return "", nil, TokenUsage{}, fmt.Errorf("模型连接失败: %w", err)
+		return "", nil, TokenUsage{}, "", fmt.Errorf("模型连接失败: %w", err)
 	}
 	if resp.StatusCode == 400 {
 		// 兼容性重试：去掉 stream_options 再试一次（只重试 400，且只此一次）。
@@ -246,14 +248,14 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		delete(body, "stream_options")
 		b, err = json.Marshal(body)
 		if err != nil {
-			return "", nil, TokenUsage{}, err
+			return "", nil, TokenUsage{}, "", err
 		}
 		if rec != nil {
 			rec(b) // 请求快照记录最终生效的请求体
 		}
 		resp, err = send(b)
 		if err != nil {
-			return "", nil, TokenUsage{}, fmt.Errorf("模型连接失败: %w", err)
+			return "", nil, TokenUsage{}, "", fmt.Errorf("模型连接失败: %w", err)
 		}
 	}
 	defer resp.Body.Close()
@@ -263,13 +265,14 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		if len(detail) > 300 {
 			detail = detail[:300] + "…"
 		}
-		return "", nil, TokenUsage{}, fmt.Errorf("模型 API 返回 HTTP %d：%s", resp.StatusCode, detail)
+		return "", nil, TokenUsage{}, "", fmt.Errorf("模型 API 返回 HTTP %d：%s", resp.StatusCode, detail)
 	}
 	// 兼容：上游声称流式但实际返回完整 JSON（少数网关如此）时，回退到非流式解析。
 	if ct := resp.Header.Get("Content-Type"); !strings.Contains(ct, "event-stream") {
 		var out struct {
 			Choices []struct {
-				Message struct {
+				FinishReason string `json:"finish_reason"`
+				Message      struct {
 					Content   string     `json:"content"`
 					ToolCalls []ToolCall `json:"tool_calls"`
 				} `json:"message"`
@@ -281,10 +284,10 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 			} `json:"usage"`
 		}
 		if err := json.NewDecoder(io.LimitReader(resp.Body, 8<<20)).Decode(&out); err != nil {
-			return "", nil, TokenUsage{}, errors.New("模型返回了无效 JSON")
+			return "", nil, TokenUsage{}, "", errors.New("模型返回了无效 JSON")
 		}
 		if len(out.Choices) == 0 {
-			return "", nil, TokenUsage{}, errors.New("模型没有返回内容")
+			return "", nil, TokenUsage{}, "", errors.New("模型没有返回内容")
 		}
 		msg := out.Choices[0].Message
 		if onDelta != nil && msg.Content != "" {
@@ -300,7 +303,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		if rec := tokenUsageRecorder.Load(); rec != nil {
 			rec.(func(TokenUsage))(usage)
 		}
-		return msg.Content, msg.ToolCalls, usage, nil
+		return msg.Content, msg.ToolCalls, usage, out.Choices[0].FinishReason, nil
 	}
 
 	var content strings.Builder
@@ -317,7 +320,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		select {
 		case <-ctx.Done():
 			// 用户主动停止：保留已流式输出的部分内容
-			return content.String(), nil, TokenUsage{}, ctx.Err()
+			return content.String(), nil, TokenUsage{}, "", ctx.Err()
 		default:
 		}
 		line := scanner.Text()
@@ -377,9 +380,9 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 	}
 	if err := scanner.Err(); err != nil {
 		if ctx.Err() != nil {
-			return "", nil, TokenUsage{}, ctx.Err()
+			return "", nil, TokenUsage{}, "", ctx.Err()
 		}
-		return "", nil, TokenUsage{}, fmt.Errorf("读取模型流式响应失败: %w", err)
+		return "", nil, TokenUsage{}, "", fmt.Errorf("读取模型流式响应失败: %w", err)
 	}
 	// 按 index 顺序还原 tool_calls
 	callIndexes := make([]int, 0, len(toolCallsByIndex))
@@ -393,7 +396,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 	}
 	text := content.String()
 	if strings.TrimSpace(text) == "" && len(calls) == 0 {
-		return "", nil, TokenUsage{}, &emptyCompletionError{finish: finishReason}
+		return "", nil, TokenUsage{}, "", &emptyCompletionError{finish: finishReason}
 	}
 	tu := TokenUsage{Model: cfg.Model, Provider: cfg.BaseURL}
 	if usage != nil {
@@ -410,7 +413,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 	if rec := tokenUsageRecorder.Load(); rec != nil {
 		rec.(func(TokenUsage))(tu)
 	}
-	return text, calls, tu, nil
+	return text, calls, tu, finishReason, nil
 }
 
 // listModels 代理 GET {baseURL}/models 拉取可用模型 id 列表（FR-68 / LIM-25）。

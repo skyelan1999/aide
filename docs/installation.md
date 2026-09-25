@@ -90,7 +90,31 @@ flowchart TD
   K --> L["模型指向局域网/本地 provider<br/>web_search 离线降级为 search_text"]
 ```
 
-## 4. 配置自己的项目
+## 4. 构建、测试与发布门禁（源码开发）
+
+日常 `bash scripts/aide.sh start` 已针对启动热路径优化，无需理解以下细节即可使用；本节说明其工作方式与离线/发布注意事项。
+
+**两种启动模式**
+
+| 命令 | 行为 | 适用 |
+| --- | --- | --- |
+| `bash scripts/aide.sh start` | 源码构建启动。计算 Go 源码集合（cmd+internal+go.mod/go.sum/vendor + Dockerfile/compose.yaml）哈希，写入镜像 label `aide.srcsha`；二次启动若哈希未变则 `--no-build` 直起（跳过 buildkit，数秒到可访问），变化才 `--build` | 改了源码后本地开发 |
+| `bash scripts/aide.sh start-image` | 用已导入镜像 `--no-build --pull never` 直起，绝不 build/pull | 发行镜像 / 离线机 |
+
+**测试与发布门禁（#43）**
+
+- 日常 `start` 的 Docker 构建**默认不跑全量 `go test`**（`AIDE_RUN_TESTS=0`），只做 `go vet` + 增量 `go build`。改前端/Go 后层缓存命中，vet+build 约 5s、端到端约 12s；无改动二次启动走快捷路径约 3s。
+- 全量 `go test` 从「每次启动」移到「发布门禁」：`scripts/docker-release.sh` 与 CI 构建必须带 `--build-arg AIDE_RUN_TESTS=1`，强制跑全量测试（约 160s）才放行。门禁不绕过。
+- 需要本地全量测试（含 race 检测）时手动跑：`bash scripts/aide.sh test`（容器内 `go test -race -count=1 ./... && go vet ./...`）。
+- 临时在构建中打开测试：`AIDE_RUN_TESTS=1 bash scripts/aide.sh start`。
+
+**运行时 pip 层缓存与离线（#46）**
+
+- runtime stage 把稳定层（系统用户 + Office 文档解析 pip 依赖）放在 `COPY` 业务二进制**之前**，把随代码变化的二进制放到最后。这样改 Go/前端只失效最末 COPY 层，pip 层稳定 `CACHED`、不重复联网下载；运行期镜像自包含、绝不联网 pip。
+- 依赖版本已锁定（python-docx==1.2.0、openpyxl==3.1.5、python-pptx==1.0.2、ezdxf==1.4.4），pip 下载经 BuildKit cache mount 复用。
+- **离线/air-gap 首次构建**：联网机先 `bash scripts/prebuild-wheels.sh` 把 manylinux/arm64 wheel 预下载到 `docker/wheels/`，随源码带到离线构建机，构建时加 `--build-arg PIP_OFFLINE=1`（`pip install --no-index --find-links=/wheels`，纯本地、零联网）。`docker/wheels/` 默认仅含 `.gitkeep`；在线构建忽略它。
+
+## 5. 配置自己的项目
 
 首次默认使用源码目录作为工作区。如需其他目录，修改 .env 后重新启动；路径必须存在，推荐绝对路径：
 
@@ -104,9 +128,9 @@ AIDE_LOCAL_ROOT=/absolute/path/to/projects
 
 发行镜像后续运行用 `bash scripts/aide.sh start-image`；自定义源码改动后将 AIDE_IMAGE 设为自己的镜像名，用 `bash scripts/aide.sh start` 重建。不要使用 Docker 命令直接覆盖当前业务目录；升级前备份数据卷。
 
-## 5. 登录与连接模型
+## 6. 登录与连接模型
 
-macOS 脚本自动打开带本地登录令牌的浏览器；Linux 有 xdg-open 时同样处理。无桌面时访问 `https://localhost:8097`，在本机终端运行 `docker compose exec -T aide cat /data/access-token`，复制令牌到登录框。不要把令牌或带令牌的 URL 分享出去。
+macOS 脚本自动打开带本地登录令牌的浏览器；Linux 有 xdg-open 时同样处理。无桌面时访问 `https://localhost:8097`，在本机终端运行 `docker compose exec -T aide cat /data/auth/access-token`，复制令牌到登录框。不要把令牌或带令牌的 URL 分享出去。
 
 > aide 自 0.1.11 起主端口走 **HTTPS**：首次启动自动在数据目录生成仅本机回环可用的自签证书，浏览器会提示"连接不是私密连接"，点 **高级 → 继续前往 localhost** 即可（例外对本机这张证书长期有效）。请用 `localhost` 而非 `127.0.0.1` 打开，WebAuthn / Touch ID 的 RP ID 不支持 IP 字面量。命令行健康检查用 `curl -k https://...` 跳过自签校验。离线环境证书本地生成，不受影响。详见 [安全：HTTPS/TLS 入口加固](security/tls.md)。
 
@@ -139,3 +163,9 @@ python3 scripts/configure-local-root.py --path "/absolute/path/to/projects"
 ```
 
 脚本更新 `.env` 的 `AIDE_LOCAL_ROOT` 和 `COMPOSE_FILE`，保留其他配置，不自动重启服务。确认当前任务结束后，执行 `docker compose up -d --no-build --pull never` 重建容器以应用挂载；服务会短暂中断，命名数据卷保留。使用「工作空间配置 → 本机路径 → 浏览」选择目录并保存。浏览器显示并回填电脑上的真实路径；不能通过「上一级」越过配置的浏览根目录；macOS 要从 `/` 浏览已共享目录，运行 `python3 scripts/configure-local-root.py --path /` 后照常启动。应用内切换目录只能选择已挂载范围内的位置，扩大范围须重新配置并重建容器。
+
+### 本地离线语音（可选）
+
+镜像已内置 sherpa-onnx 合成器（Apache-2.0，离线），但中文音色模型外置在 `/data/tts/` 以控体积。
+联网环境在容器内执行 `scripts/tts-setup --model huayan` 下载默认女声（约 67MB，含 SHA256 校验）；
+保密/空气隙环境按 [本地离线 TTS](security/tts-local.md) 手动放入模型。装完重启后，设置页「语音引擎」选「自动」即优先本地离线，文本不出本机。

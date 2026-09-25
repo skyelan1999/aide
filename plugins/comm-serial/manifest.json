@@ -1,0 +1,19 @@
+{
+  "id": "comm-serial",
+  "name": "串口通讯",
+  "description": "基于 serialport 的常驻守护插件：真实串口读写 + 虚拟串口对（pty，用于测试/模拟设备）；默认禁用，无设备映射时为空操作",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "daemon": true,
+  "enabled": false,
+  "tools": [
+    { "name": "serial_list", "kind": "read", "readonlyDefault": true },
+    { "name": "serial_open", "kind": "open", "readonlyDefault": false },
+    { "name": "serial_write", "kind": "write", "readonlyDefault": false },
+    { "name": "serial_close", "kind": "close", "readonlyDefault": false },
+    { "name": "serial_virtual_create", "kind": "virtual", "readonlyDefault": false },
+    { "name": "serial_virtual_destroy", "kind": "virtual", "readonlyDefault": false },
+    { "name": "serial_replay", "kind": "write", "readonlyDefault": false }
+  ]
+}

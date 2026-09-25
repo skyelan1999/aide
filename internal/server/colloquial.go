@@ -76,7 +76,8 @@ func (c *colloquialCache) touchLocked(key string) {
 
 // colloquialize 把一段书面回复改写成适合朗读的口语稿。失败时返回原文与 error，
 // 调用方应降级朗读原文（不阻断语音）。
-func (a *App) colloquialize(ctx context.Context, text string) (string, error) {
+// mode: "brief"=简要概括（抓结论/数字/决策，强保真）；"full"=完整朗读（只口语化不删减）。
+func (a *App) colloquialize(ctx context.Context, text string, mode string) (string, error) {
 	text = strings.TrimSpace(text)
 	if text == "" {
 		return "", errors.New("空文本")
@@ -92,8 +93,9 @@ func (a *App) colloquialize(ctx context.Context, text string) (string, error) {
 	if cfg.BaseURL == "" || cfg.Model == "" || cache == nil {
 		return text, nil // 未配置模型：直接读原文
 	}
+	full := mode == "full"
 
-	key := colloquialKey(cfg.Model, text)
+	key := colloquialKey(cfg.Model+"|"+mode, text)
 	if cached, ok := cache.get(key); ok {
 		return cached, nil
 	}
@@ -102,15 +104,26 @@ func (a *App) colloquialize(ctx context.Context, text string) (string, error) {
 	if name == "" {
 		name = "小秘"
 	}
-	system := fmt.Sprintf(`你是「%s」，用户的语音秘书。下面是 AI 工作台刚给用户的一段书面回复。请把它改写成【适合口头朗读】的口语稿，像真人秘书当面跟用户说话一样：
-- 拆成短句，一句话别太长；
-- 去掉所有 markdown（标题、加粗、代码块、列表符号、链接、表格）；
-- 数字、百分比、金额、代码符号按口语读法念出来（如 100%% 念"百分之百"，¥99 念"九十九元"）；
-- 保留关键信息，不要新增事实、不要道歉、不要复述指令；
-- 可以加自然的语气词（如"好的""你看""这边"），但不要油腻；
-- 只输出改写后的口语稿本身，不要任何解释或前后缀。`, name)
+	systemBrief := fmt.Sprintf(`你是「%s」，用户的语音秘书。下面是 AI 工作台刚给用户的一段书面回复。请做【简要语音概括】，像真人秘书当面口头汇报一样：
+- 先抓住【核心结论 + 关键数字/决策/下一步】，再用自然口语说出来；
+- 强保真：只基于原文，不添加任何原文没有的事实，不改变结论，不道歉，不复述指令；
+- 关键数字、百分比、金额、专有名词、决策结论必须保留，不得丢失或臆测；
+- 拆成短句，去掉所有 markdown，数字按口语念（100%% 念"百分之百"）；
+- 简短但要点齐全——宁可稍长也不要漏掉结论；
+- 只输出概括稿本身，不要任何解释或前后缀。`, name)
+	systemFull := fmt.Sprintf(`你是「%s」，用户的语音秘书。下面是 AI 工作台刚给用户的一段书面回复。请【完整口语化朗读稿】，不要删减任何内容：
+- 把书面语转成自然口语，但保留原文全部要点，不概括、不省略；
+- 拆成短句，去掉 markdown，数字按口语念；
+- 长文请完整输出，不要中途停下；
+- 只输出口语稿本身，不要解释或前后缀。`, name)
+	system := systemBrief
+	maxTok := 600
+	if full {
+		system = systemFull
+		maxTok = 2000 // 完整朗读避免截断
+	}
 
-	params := ProfileParams{MaxTokens: 600, Temperature: fp(0.4)}
+	params := ProfileParams{MaxTokens: maxTok, Temperature: fp(0.4)}
 	out, _, _, err := complete(ctx, cfg, []Message{
 		{Role: "system", Content: system},
 		{Role: "user", Content: text},

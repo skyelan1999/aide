@@ -73,15 +73,24 @@ func (a *App) exportConfigBackup(w http.ResponseWriter, r *http.Request) {
 		Settings:         sb,
 	}
 	if in.IncludeSecrets {
-		if b, e := os.ReadFile(filepath.Join(a.dataPath, sourcesSecretsFN)); e == nil {
+		if b, e := os.ReadFile(SourcesSecretsPath(a.dataPath)); e == nil {
 			bk.SourcesSecrets = b
 		}
-		if b, e := os.ReadFile(filepath.Join(a.dataPath, wsSecretsFile)); e == nil {
-			bk.WorkspaceSecrets = b
+		// #38：工作空间 SSH 凭据随附【加密信封】（/data/secrets/vault.enc），绝不回退成明文。
+		// 旧安装（无 vault 文件）回退读旧明文文件，仅作迁移过渡。
+		if a.vault != nil {
+			if b, e := os.ReadFile(a.vault.Path()); e == nil && len(b) > 0 {
+				bk.WorkspaceSecrets = b
+			}
+		}
+		if len(bk.WorkspaceSecrets) == 0 {
+			if b, e := os.ReadFile(WorkspaceSecretsPath(a.dataPath)); e == nil {
+				bk.WorkspaceSecrets = b
+			}
 		}
 	}
 	if in.IncludeVoiceData {
-		if b, e := os.ReadFile(filepath.Join(a.dataPath, "voice-history.json")); e == nil {
+		if b, e := os.ReadFile(VoiceHistoryPath(a.dataPath)); e == nil {
 			bk.VoiceHistory = b
 		}
 	}
@@ -142,7 +151,7 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 
 	// 回滚点：导入前把当前完整设置另存，便于手动恢复。
 	if rb, e := json.MarshalIndent(a.settings, "", "  "); e == nil {
-		_ = os.WriteFile(filepath.Join(a.dataPath, "settings.json.pre-import"), rb, 0600)
+		_ = os.WriteFile(filepath.Join(ConfigBackupsDir(a.dataPath), "settings.json.pre-import"), rb, 0600)
 	}
 
 	// 敏感字段：默认保留当前值（即便是脱敏备份里的空串也不会清空现网密钥），
@@ -170,22 +179,30 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		merged.PersonaCiphers = bkCiphers
 		merged.PersonaCipher = bkCipher
 		if len(bk.SourcesSecrets) != 0 {
-			_ = os.WriteFile(filepath.Join(a.dataPath, sourcesSecretsFN), bk.SourcesSecrets, 0600)
+			_ = os.WriteFile(SourcesSecretsPath(a.dataPath), bk.SourcesSecrets, 0600)
 		}
+		// #38：工作空间凭据随附的是加密信封——合并进 vault（保持密文，不回退明文）。
+		// 旧备份若是明文 workspaceSecrets JSON，则仍写回旧文件，下次解锁时迁移入 vault。
 		if len(bk.WorkspaceSecrets) != 0 {
-			_ = os.WriteFile(filepath.Join(a.dataPath, wsSecretsFile), bk.WorkspaceSecrets, 0600)
+			if a.vault != nil && IsEnvelope(bk.WorkspaceSecrets) {
+				if n, e := a.vault.ImportEnvelope(bk.WorkspaceSecrets); e == nil && n > 0 {
+					_ = a.vault.Save()
+				}
+			} else {
+				_ = os.WriteFile(WorkspaceSecretsPath(a.dataPath), bk.WorkspaceSecrets, 0600)
+			}
 		}
 	}
 
 	a.settings = merged
-	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), merged); err != nil {
+	if err := atomicJSON(SettingsPath(a.dataPath), merged); err != nil {
 		fail(w, 500, err)
 		return
 	}
 
 	voiceImported := false
 	if req.ImportVoice && bk.IncludeVoiceData && len(bk.VoiceHistory) != 0 {
-		if e := os.WriteFile(filepath.Join(a.dataPath, "voice-history.json"), bk.VoiceHistory, 0600); e == nil {
+		if e := os.WriteFile(VoiceHistoryPath(a.dataPath), bk.VoiceHistory, 0600); e == nil {
 			voiceImported = true
 			a.voiceAgent = newVoiceAgent(a.dataPath) // 重新从文件加载小秘历史
 		}

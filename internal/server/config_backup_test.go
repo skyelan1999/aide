@@ -63,7 +63,7 @@ func TestConfigBackupExportImport(t *testing.T) {
 	if cur.APIKey != "secret-key-123" {
 		t.Fatal("未导入敏感时应保留当前 apiKey")
 	}
-	if _, err := os.Stat(filepath.Join(a.dataPath, "settings.json.pre-import")); err != nil {
+	if _, err := os.Stat(filepath.Join(ConfigBackupsDir(a.dataPath), "settings.json.pre-import")); err != nil {
 		t.Fatal("导入前应生成回滚点")
 	}
 }

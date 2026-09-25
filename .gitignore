@@ -27,3 +27,10 @@ docs/reviews/*/evidence/drill/*.tar.gz
 
 # html skill self-check screenshots (non-deliverable)
 _shots/
+
+# 插件 node_modules（可 npm install 重建，不入库）
+node_modules/
+plugins/*/node_modules/
+
+# 运行时配置（含本地密钥/令牌，不入库）
+profiles.json

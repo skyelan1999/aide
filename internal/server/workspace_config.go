@@ -25,6 +25,13 @@ type WorkspaceConfig struct {
 		Port     int    `json:"port"`
 		Username string `json:"username"`
 		Auth     string `json:"auth"` // password | key | none
+		// 私钥存储模式（#38）：
+		//   "" / "paste" = 粘贴私钥，密文存 vault（ws:ssh-key）
+		//   "ref"        = 仅引用宿主机/容器内路径，运行时直接读取，私钥不入库
+		//   "copy"       = 导入副本：把文件内容加密存入 vault
+		KeyMode       string `json:"keyMode,omitempty"`
+		KeyRefPath    string `json:"keyRefPath,omitempty"`    // ref/copy 时的容器路径（/workspace|/context|/local 内）
+		KeyFingerprint string `json:"keyFingerprint,omitempty"` // 公钥 SHA256 指纹（元数据，界面展示，不回显私钥）
 	} `json:"workspace"`
 	Docs struct {
 		Path string `json:"path"` // /context 下相对路径
@@ -71,7 +78,7 @@ func pushRecent(list []string, value string) []string {
 
 func (a *App) loadWorkspaceConfig() error {
 	a.wsConfigPath = filepath.Join(a.workPath, wsConfigFile)
-	a.wsSecretsPath = filepath.Join(a.dataPath, wsSecretsFile)
+	a.wsSecretsPath = WorkspaceSecretsPath(a.dataPath)
 	a.wsConfig = defaultWorkspaceConfig()
 	if b, err := os.ReadFile(a.wsConfigPath); err == nil {
 		if err := json.Unmarshal(b, &a.wsConfig); err != nil {
@@ -80,6 +87,8 @@ func (a *App) loadWorkspaceConfig() error {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
+	// 旧版明文凭证（/data/workspace-secrets.json）仅作只读迁移源加载。
+	// 新凭证一律进加密 vault；解锁后 migrateLegacyWorkspaceSecrets 会把旧明文迁入并归档。
 	a.wsSecrets = workspaceSecrets{}
 	if b, err := os.ReadFile(a.wsSecretsPath); err == nil {
 		if err := json.Unmarshal(b, &a.wsSecrets); err != nil {
@@ -94,8 +103,36 @@ func (a *App) loadWorkspaceConfig() error {
 func (a *App) saveWorkspaceConfig() error {
 	return atomicJSON(a.wsConfigPath, a.wsConfig)
 }
-func (a *App) saveWorkspaceSecrets() error {
-	return atomicJSON(a.wsSecretsPath, a.wsSecrets)
+
+// migrateLegacyWorkspaceSecrets 在 vault 解锁后调用：把旧明文凭证迁入加密 vault，
+// 成功后把旧明文文件改名为 *.migrated（0600），避免再次被当作明文读取。
+// 幂等：vault 已有对应条目则跳过；旧文件缺失也视为完成。
+func (a *App) migrateLegacyWorkspaceSecrets() {
+	if a.vault == nil || !a.vault.Unlocked() {
+		return
+	}
+	migrated := false
+	if pw := strings.TrimSpace(a.wsSecrets.Password); pw != "" && !a.vault.Has(VaultIDWSPassword) {
+		if err := a.vault.Put(VaultIDWSPassword, VaultTypeSSHPassword, "SSH 登录密码", []byte(pw), ""); err == nil {
+			migrated = true
+		}
+	}
+	if key := strings.TrimSpace(a.wsSecrets.Key); key != "" && !a.vault.Has(VaultIDWSKey) {
+		fp, _ := sshKeyFingerprint([]byte(key), "")
+		if err := a.vault.Put(VaultIDWSKey, VaultTypeSSHKey, "SSH 私钥", []byte(key), fp); err == nil {
+			migrated = true
+		}
+	}
+	if migrated {
+		_ = a.vault.Save()
+		// 归档旧明文文件（不删除，保留可追溯；改名后不再被加载）
+		if st, err := os.Stat(a.wsSecretsPath); err == nil && !st.IsDir() {
+			_ = os.Rename(a.wsSecretsPath, a.wsSecretsPath+".migrated")
+		}
+		// 内存中清掉明文，避免长期驻留
+		a.wsSecrets.Password = ""
+		a.wsSecrets.Key = ""
+	}
 }
 
 // resolveHostPath 把用户填写的路径翻译为容器路径（FR-79 核心修复）：
@@ -222,18 +259,33 @@ func (a *App) applyWorkspaceConfig() error {
 }
 
 func (a *App) workspaceConfigOut() map[string]any {
-	return map[string]any{
+	out := map[string]any{
 		"workspace": map[string]any{
 			"mode": a.wsConfig.Workspace.Mode, "path": a.wsConfig.Workspace.Path,
 			"host": a.wsConfig.Workspace.Host, "port": a.wsConfig.Workspace.Port,
 			"username": a.wsConfig.Workspace.Username, "auth": a.wsConfig.Workspace.Auth,
+			"keyMode":        a.wsConfig.Workspace.KeyMode,
+			"keyRefPath":     a.wsConfig.Workspace.KeyRefPath,
+			"keyFingerprint": a.wsConfig.Workspace.KeyFingerprint,
 		},
 		"docs":        map[string]any{"path": a.wsConfig.Docs.Path},
 		"cache":       map[string]any{"path": a.wsConfig.Cache.Path},
 		"recent":      a.wsConfig.Recent,
-		"hasPassword": a.wsSecrets.Password != "",
-		"hasKey":      a.wsSecrets.Key != "",
 	}
+	// vault 元数据（绝不返回明文/密文）
+	hasPassword, hasKey := false, false
+	fp := a.wsConfig.Workspace.KeyFingerprint
+	vaultLocked := a.vault == nil || !a.vault.Unlocked()
+	if a.vault != nil {
+		hasPassword = a.vault.Has(VaultIDWSPassword)
+		hasKey = a.vault.Has(VaultIDWSKey) || a.wsConfig.Workspace.KeyMode == "ref"
+	}
+	out["hasPassword"] = hasPassword
+	out["hasKey"] = hasKey
+	out["keyFingerprint"] = fp
+	out["vaultLocked"] = vaultLocked
+	out["hasAccountPassword"] = a.settings.UserPasswordHash != ""
+	return out
 }
 
 func (a *App) getWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
@@ -252,12 +304,17 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 			Username string `json:"username"`
 			Auth     string `json:"auth"`
 		} `json:"workspace"`
-		Docs          struct{ Path string } `json:"docs"`
-		Cache         struct{ Path string } `json:"cache"`
-		Password      string                `json:"password"`
-		Key           string                `json:"key"`
-		ClearPassword bool                  `json:"clearPassword"`
-		ClearKey      bool                  `json:"clearKey"`
+		Docs            struct{ Path string } `json:"docs"`
+		Cache           struct{ Path string } `json:"cache"`
+		Password        string                `json:"password"`         // SSH 登录密码
+		Key             string                `json:"key"`              // 粘贴的私钥正文
+		Passphrase      string                `json:"passphrase"`       // 私钥口令
+		KeyMode         string                `json:"keyMode"`          // paste | ref | copy
+		KeyRefPath      string                `json:"keyRefPath"`       // ref/copy 的容器路径（/workspace|/context|/local 内）
+		VaultPassword   string                `json:"vaultPassword"`    // 账户密码（vault 锁定时解锁用）
+		ClearPassword   bool                  `json:"clearPassword"`
+		ClearKey        bool                  `json:"clearKey"`
+		ClearPassphrase bool                  `json:"clearPassphrase"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -341,22 +398,121 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 	cfg.Workspace.Auth = in.Workspace.Auth
 	cfg.Docs.Path = strings.TrimSpace(in.Docs.Path)
 	cfg.Cache.Path = strings.TrimSpace(in.Cache.Path)
-	// 秘钥更新（存 /data 卷，0600）
-	if in.ClearPassword {
-		a.wsSecrets.Password = ""
+
+	// ── 凭证处理（#38：统一加密 vault，拒绝明文落盘）──
+	// needUnlock = 写入新凭证（密码/私钥/口令/选择文件）；清除操作无需解锁。
+	needUnlock := in.Password != "" || in.Key != "" || in.Passphrase != "" ||
+		strings.TrimSpace(in.KeyMode) == "ref" || strings.TrimSpace(in.KeyMode) == "copy"
+	if needUnlock {
+		if a.settings.UserPasswordHash == "" {
+			fail(w, 400, errors.New("请先在「设置→账户」设置登录密码以加密存储 SSH 凭据"))
+			return
+		}
+		if a.vault == nil {
+			fail(w, 500, errors.New("凭证保险库未初始化"))
+			return
+		}
+		if !a.vault.Unlocked() {
+			switch {
+			case in.VaultPassword != "":
+				if ok, _ := VerifyPassword(in.VaultPassword, a.settings.UserPasswordHash); !ok {
+					fail(w, 401, errors.New("账户密码错误，无法解锁凭证保险库"))
+					return
+				}
+				a.unlockVault(in.VaultPassword)
+			case a.personaKey != "":
+				a.unlockVault(a.personaKey)
+			default:
+				fail(w, 401, errors.New("凭证保险库已锁定，请输入账户密码解锁后再保存"))
+				return
+			}
+		}
 	}
-	if in.Password != "" {
-		a.wsSecrets.Password = in.Password
-	}
-	if in.ClearKey {
-		a.wsSecrets.Key = ""
-	}
-	if in.Key != "" {
-		a.wsSecrets.Key = in.Key
-	}
-	if err := a.saveWorkspaceSecrets(); err != nil {
-		fail(w, 500, err)
-		return
+	if a.vault != nil {
+		// 登录密码
+		if in.ClearPassword {
+			a.vault.Delete(VaultIDWSPassword)
+		}
+		if in.Password != "" {
+			if err := a.vault.Put(VaultIDWSPassword, VaultTypeSSHPassword, "SSH 登录密码", []byte(in.Password), ""); err != nil {
+				fail(w, 500, err)
+				return
+			}
+		}
+		// 私钥：粘贴 / 引用路径 / 导入副本 三选一；未提供则保留现有。
+		newKeyMode := strings.TrimSpace(in.KeyMode)
+		newKeyRefPath := ""
+		newFingerprint := cfg.Workspace.KeyFingerprint
+		switch {
+		case in.Key != "":
+			fp, err := sshKeyFingerprint([]byte(in.Key), in.Passphrase)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			if err := a.vault.Put(VaultIDWSKey, VaultTypeSSHKey, "SSH 私钥", []byte(in.Key), fp); err != nil {
+				fail(w, 500, err)
+				return
+			}
+			newKeyMode, newKeyRefPath, newFingerprint = "paste", "", fp
+		case newKeyMode == "ref" && strings.TrimSpace(in.KeyRefPath) != "":
+			rp := strings.TrimSpace(in.KeyRefPath)
+			realPath, _, err := a.resolveHostPath(rp)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			if _, err := os.Stat(realPath); err != nil {
+				fail(w, 400, fmt.Errorf("私钥文件不可访问: %w", err))
+				return
+			}
+			fp, err := sshKeygenFingerprintFile(realPath, in.Passphrase)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			a.vault.Delete(VaultIDWSKey) // 引用模式不存副本，运行时直接读路径
+			newKeyRefPath, newFingerprint = rp, fp
+		case newKeyMode == "copy" && strings.TrimSpace(in.KeyRefPath) != "":
+			rp := strings.TrimSpace(in.KeyRefPath)
+			material, err := a.readKeyFileInRoots(rp)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			fp, err := sshKeyFingerprint(material, in.Passphrase)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			if err := a.vault.Put(VaultIDWSKey, VaultTypeSSHKey, "SSH 私钥（导入副本）", material, fp); err != nil {
+				fail(w, 500, err)
+				return
+			}
+			newKeyRefPath, newFingerprint = "", fp
+		}
+		if in.ClearKey {
+			a.vault.Delete(VaultIDWSKey)
+			newKeyMode, newKeyRefPath, newFingerprint = "", "", ""
+		}
+		// 私钥口令
+		if in.ClearPassphrase {
+			a.vault.Delete(VaultIDWSPassphrase)
+		}
+		if in.Passphrase != "" {
+			if err := a.vault.Put(VaultIDWSPassphrase, VaultTypeSSHPassphrase, "私钥口令", []byte(in.Passphrase), ""); err != nil {
+				fail(w, 500, err)
+				return
+			}
+		}
+		if err := a.vault.Save(); err != nil {
+			fail(w, 500, err)
+			return
+		}
+		a.vaultAudit("workspace-secret-saved")
+		cfg.Workspace.KeyMode = newKeyMode
+		cfg.Workspace.KeyRefPath = newKeyRefPath
+		cfg.Workspace.KeyFingerprint = newFingerprint
 	}
 	oldID := a.wsID()
 	oldRoot := a.workspace

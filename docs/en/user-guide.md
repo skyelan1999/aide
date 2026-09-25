@@ -31,6 +31,8 @@ The settings panel is organized into sections: Usage stats (§8), Appearance, La
 - **Permissions**: three sandbox modes — read-only (read-only commands such as `ls`/`cat`/`git status` only), workspace-write (default; writes still go through proposal approval and dangerous commands are blocked), and danger-full-access (not recommended for daily use). Tool rounds default to 60, range 5–200; when the limit is reached, already streamed output is kept and you can continue.
 - **Account**: username and lock-screen password, stored as an **Argon2id** slow hash (OWASP-recommended: 64 MB memory, 3 iterations, 4 threads); no password means no lock. The password also derives an AES-256 key that encrypts persona custom personalities and the voice-assistant conversation history. Users upgrading from older versions are migrated automatically on first login: the legacy SHA-256 hash is upgraded to Argon2id and existing ciphertexts are transparently re-wrapped with the new key. **Transport**: since 0.1.11 the main port speaks HTTPS/TLS (TLS 1.2 minimum, AEAD forward-secret ciphers); a loopback-only self-signed certificate is generated on first start, so tokens and conversation content no longer travel in clear text. See [Security: password hashing & key derivation](../security/password-hashing.md) and [Security: HTTPS/TLS entry hardening](../security/tls.md).
 - **Voice assistant**: the microphone button uses the browser Web Speech API for live transcription; the backend distinguishes "for the AI" from background noise and small talk and automatically drops chit-chat. The assistant name is customizable.
+- **Data storage & integrity**: all your private state (sessions, memory, voice assistant, config, keys) lives in the `/data` named volume, decoupled from any project — it survives upgrades and project switches and is never written into a project directory or committed to git. Since 0.1.11, `/data` is automatically organized from the legacy 30+ flat files into semantic subdirectories (`auth/` `sessions/` `assistant/` `memory/` `config/` `stats/` `audit/` `secrets/` `certs/`). Legacy volumes migrate automatically on first boot: everything is backed up first, copied and checksum-verified before being moved, and the migration is rollback-safe and re-entrant — no manual step. A boot check plus a 5-minute runtime patrol verify program integrity and key-file readability: missing directories are rebuilt, regenerable data is cleared and rebuilt, and corrupted user data is moved into `.quarantine/` (never auto-deleted). If the program appears tampered with, `/healthz` is marked `degraded` and redeployment is suggested. The `integrity` field of `GET /healthz` reports the current status (ok / degraded / corrupted). See [Architecture: data directory layering & self-healing](../architecture/data-layout.md).
+
 
 #### Speech engine & naturalness
 
@@ -57,15 +59,25 @@ flowchart TD
 | Browser Web Speech | Low (macOS often Ting-Ting mechanical) | Depends on OS | No | Fully local, never leaves device |
 | Cloud / local OSS (reserved) | High | Extensible | Depends | Depends |
 
+**Neural voice vs. browser mechanical voice**: edge-tts sends text to Microsoft's "Read aloud" channel and streams back a natural neural MP3; browser Web Speech synthesizes locally and works offline, but on macOS it often collapses to a single mechanical voice like Ting-Ting. This was the root cause of "no matter which voice I pick, it sounds the same": not that the voice setting was ignored, but that a too-short first-byte timeout mistakenly degraded to browser speech, so every sentence used the OS mechanical voice.
+
+**Robustness: layered timeouts & auto-retry**: edge-tts connection is timed out in three independent stages so a slightly slow first handshake is no longer treated as "unavailable":
+
+- TCP/TLS connect 5s; WSS handshake 5s; **first audio packet 5s** (was 1.5s — the first connection plus GEC token generation often exceeds 1.5s, so it was relaxed).
+- Any timeout retries once with a fresh connection ID; only then does it fall back to browser speech. Non-timeout errors (e.g. 403 auth failure) are not retried.
+- The backend caches edge availability for 60s: a lightweight probe runs at startup / before the first synth; `/api/config` and `/api/debug/overview` expose `edgeAvailable` and the last failure reason. The cache is re-probed after expiry, so it switches back to the neural voice seamlessly once connectivity returns.
+
+**Degradation notice**: when edge is unavailable and a read falls back to the browser mechanical voice, a toast appears ("neural voice temporarily unavailable, using browser speech"); the settings page also shows a persistent red warning (with the reason) that disappears once edge recovers.
+
 **Colloquializing & prosody**: chat replies are lightly rewritten by an LLM before being read — short sentences, markdown stripped, numbers read aloud, natural filler words. The result is cached in an in-memory LRU keyed by the original text, so the same reply never costs tokens twice. Guided narration is already colloquialized by the backend `voice-narrate` path and is not rewritten again. Speed and expressiveness map to SSML `prosody` / `express-as` on edge-tts.
 
 **Settings**: Settings → Voice assistant → **Speech engine**:
 
 - **TTS engine**: Auto (recommended) / edge-tts / Browser speech.
-- **Voice**: pick Xiaoxiao (female) / Yunxi (male) / Xiaoyi etc. when edge-tts is chosen; otherwise mapped by the male/female preference.
+- **Voice**: listed grouped by female/male; pick Xiaoxiao (female) / Yunxi (male) / Xiaoyi etc. when edge-tts is chosen. "Default (by gender)" maps female→Xiaoxiao, male→Yunxi, neutral→Xiaoyi.
 - **Speed**: 0.8–1.3×.
 - **Expressiveness**: 0–1, mapped to edge-tts style intensity.
-- **Preview**: synthesize a one-line sample with the current choices.
+- **Preview / Save**: preview uses exactly the dropdown's current voice (it does not touch the saved config, and the button restores after playback); click **Save** to persist. After switching voice, the sentence currently playing finishes on the old voice; the next sentence uses the new one.
 
 **Offline & privacy**: edge-tts needs network; offline it degrades to browser speech (fully local). Because edge-tts sends spoken text to Microsoft, **choose "Browser speech" manually in classified environments**. An API key is only for future cloud engines; edge-tts needs none and is never echoed back.
 
@@ -124,6 +136,13 @@ stateDiagram-v2
   }
 ```
 - **Configuration backup**: export all settings to a file, or restore from a backup. A backup exported by an older version imports into the new release with defaults auto-filled for any newly added fields, while explicit backup values (including explicit zeros) are preserved; out-of-range numbers and invalid enums fall back to a safe default. The result takes effect immediately, no restart needed, and matches the post-restart state. Backups from a newer version are rejected. See [Security: config backup & cross-version compatibility](security/config-backup.md).
+- **Danger zone — Factory reset**: reset aide's settings and local data by scope, in **Settings → Danger zone → Factory reset**. Scopes are optional and safe by default:
+  - *Settings* (checked by default): restore model / TTS / theme / permissions / tool rounds / reasoning effort / sandbox / workflow / accessibility to the current defaults. Credential fields (API key, login password hash, debug token) are **preserved** unless *Credentials & keys* is also checked.
+  - *Sessions & memory* (opt-in): clear all sessions (active / archived / assistant), aide core memory, and voice history/memory, and reset personality to default; a fresh assistant system session is recreated automatically.
+  - *Credentials & keys* (opt-in): clear login password hash, API key, SSH/vault credentials, source secrets, debug token, WebAuthn, and KDF salt, and **rotate the access-token**, then return to login / first-run.
+  - *Workspace config* (opt-in): restore the workspace connection config to local defaults; no user files are deleted.
+
+  **Strong confirmation**: you must check "I understand this cannot be undone" and type "reset" before running. If *Credentials & keys* or *Sessions & memory* (which includes voice history) is selected and you have a login password, you must re-enter it to confirm identity; a wrong password is rejected. **Safety net**: before anything is erased, a full backup (including the encrypted secrets envelope and voice history) is written to `/data/config/backups/factory-reset-<timestamp>.json` and shown in the dialog; it can be restored via *Configuration backup → Import*. **Your files are never touched**: your code and documents under `/workspace` and `/context` are never deleted; reset only affects aide's config and local data volume. Every run is appended to `/data/audit/factory-reset-audit.jsonl` (time, scope, backup path, result — never any secret material). After resetting credentials, set a new password and reconnect your model.
 
 ## 3. Configure models and strategies
 
@@ -135,7 +154,7 @@ Use **Strategy** near the task input to select automatic routing or a manual par
 
 ## 4. Workspaces and references
 
-Click the workspace card to configure local directories or SSH/SFTP. The directory browser starts at the current value and walks upward when the path is unavailable. Configure system-document and cache paths separately. Saved secrets stay in the data volume.
+Click the workspace card to configure local directories or SSH/SFTP. The directory browser starts at the current value and walks upward when the path is unavailable. Configure system-document and cache paths separately. Saved secrets stay in the data volume. Remote SSH/SFTP passwords, private keys, and key passphrases are stored in a unified encrypted secret vault (AES-256-GCM; the master key is derived from the account password via Argon2id). A private key can be pasted or picked from a file (within /workspace, /context, /local); file mode can reference the path only (not stored) or import an encrypted copy. The UI never echoes the key and shows the public-key SHA-256 fingerprint after save. Saving SSH credentials is rejected until an account password is set. See [Security: Unified Secret Vault](security/secret-vault.md).
 
 Under **References**, add named sources: local path, Skill directory, URL, SFTP, FTP, FTPS, or SMB. MCP currently supports registration only. The built-in system-document source follows the document path; registration does not automatically generate documentation. Read/write flags cannot override a read-only Docker mount or remote permissions.
 
@@ -162,6 +181,95 @@ Plugins are trusted Node code and do not gain an independent security sandbox fr
 Open **Trajectory** for tasks, steps, tools, proposals, suggested commands, errors, and token usage. Expand details as needed. Search from the top bar or use **⌘K / Ctrl+K** to find conversations by title or cached content.
 
 Compaction summarizes older history into structured context for later requests. It may be automatic above the threshold or triggered manually. It is not ZIP compression and does not guarantee less disk usage or lossless recall. Reopen source files and task history for precise facts.
+
+### Session numbers
+
+Every regular session (including child sessions) gets an incrementing number `#N` at creation, shown before the title in the session list and global search results (e.g. `#3 Project discussion`).
+
+- Numbers start at `#1` and only increase; deleting a session **never** reuses its number.
+- Numbers persist in settings across restarts. Sessions created before this feature have no number; only new sessions carry one.
+- Global search (⌘K) results also show the `#N` prefix for quick lookup.
+
+### Assistant system session
+
+Pinned permanently at the very top of the sidebar is the 🤖 assistant system session — the chat view for your voice secretary:
+
+- **Always pinned**: it sits above every user-pinned session and cannot be archived or deleted (no archive/delete menu).
+- **Name follows settings**: its title equals the voice-assistant name in settings; renaming updates it automatically.
+- **Password gate**: clicking it first asks for your account password (the lock-screen password). Once unlocked, the state lasts for the tab; locking the screen forces re-authentication.
+- **Cross-session tools**: inside its own view the assistant can call four tools — `search_sessions` (keyword search across all sessions, including archived), `get_session` (read by `#N` or session ID), `follow_session` (mark for follow-up reminders), and `push_to_session` (push a note/summary into a target session). These tools are never exposed in regular sessions.
+
+```mermaid
+flowchart TD
+    A[Click assistant session in sidebar] --> B{Already unlocked this tab?}
+    B -- Yes --> C[Open assistant session view]
+    B -- No --> D[Show password gate modal]
+    D --> E{Enter account password}
+    E -- Correct --> F[POST unlock-assistant 200]
+    F --> C
+    E -- Wrong --> G[Shake + error, stay on gate]
+    H[Lock screen / reopen tab] --> I[Clear in-memory unlock]
+    I --> D
+```
+
+### The assistant's self-identity
+
+Across every scene — voice transcription, narrating results, and chatting with you directly — the assistant shares one stable sense of "who I am." This identity core is generated in one place on the backend, `voiceIdentityPrompt`, which reads the configured voice-assistant name and is prepended to the system prompt of every request.
+
+- **First-person self**: the assistant calls itself by `{name}` and always speaks as "I" — "I'm {name}" — rather than referring to itself as aide or as some generic assistant.
+- **Division of labor with aide**: aide is the AI workbench that actually does the hands-on work (writing code, running commands, editing files, producing formal output); its main chat stays silent. The assistant is the bridge between you and aide — listening, understanding your real intent, routing that intent to aide, summarizing results, explaining in plain language, and following up with reminders — while also acting as your life assistant and companion. Formal output is left to aide; the assistant does not overstep and write code for it.
+- **Capabilities**: voice-intent judgment (`send`/`ignore`/`standby`/`ask`); cross-session scheduling (`search_sessions`/`get_session`/`follow_session`/`push_to_session`, by `#number` or session ID, including archived); scrolling the screen and opening files; summarizing and narrating; rewriting written replies into spoken scripts; and handing tasks to a sub-agent or aide when needed.
+- **Continuity and memory**: the assistant has its own long-term memory and conversation history (stored encrypted), can reference things you said before, and keeps its tone, stance, and naming consistent; it lives pinned at the top of the session list.
+- **Boundaries**: it does not produce formal output on aide's behalf; it does not fabricate information you never said or abilities it does not have; it protects your privacy and confirms before key or irreversible actions.
+- **Renaming follows immediately**: after you change the voice-assistant name in settings, the assistant's next reply uses the new self-identity and self-name; the assistant-session title follows along.
+
+```mermaid
+flowchart TD
+    CFG["Settings VoiceAssistantName (default 小秘)"] --> ID["voiceIdentityPrompt identity core<br/>first-person / aide split / abilities / continuity / boundaries"]
+    ID --> A["analyze voice-transcription system prompt"]
+    ID --> N["narrate results system prompt"]
+    ID --> D["assistant chat baseSystemPrompt"]
+    A --> R[Model: who I am + current task instruction]
+    N --> R
+    D --> R
+```
+
+### Queue vs. interrupt dispatch
+
+When the assistant relays an understood intent to aide, it now decides for itself whether to **interrupt (insert)** or **queue (queue)** — instead of always cutting in on the current answer.
+
+**Decision signals** (part of the analyze decision):
+- **insert (interrupt the current run right away)**: explicit urgency (right now / immediately / hurry / do it now); abort or stop-loss (stop / hold on / cancel / abort / no that's wrong / not this way / wait a second); strongly time-sensitive, must be handled now; or a follow-up tightly tied to the ongoing context that needs an immediate reply.
+- **queue (wait for the current answer to finish, then run in order; this is the default)**: an independent new task/request; non-urgent, can wait for the current answer; a follow-up or later item (then / in a bit / by the way / next).
+- When unsure, always queue (conservative default).
+
+**How it relates to the manual queue/interrupt modes**: insert equals the manual "steer" — it goes straight onto the current run's steer channel and affects the current turn immediately; queue equals the manual "queue" — it enters the run's Queue and is picked up automatically after the current answer finishes. It reuses the existing mechanism, nothing new.
+
+**Abort handling**: when you say "stop / no / that's wrong / cancel", the assistant always inserts and interrupts the current run immediately; output already streamed is never lost (it relies on the StreamBroker's interrupted state).
+
+**Interrupt cooldown**: to avoid model misjudgements cutting in too often, a *non-abort* interrupt repeated within the cooldown window is auto-downgraded to queue. The window is set by "interrupt sensitivity" — conservative 5s, normal 3s, aggressive 1s. Explicit abort commands are never throttled and always interrupt.
+
+**Settings** (Settings → Voice assistant → Dispatch):
+- **Default send mode**: queue (default) / insert. Used when the assistant is unsure or the model omits mode.
+- **Interrupt sensitivity**: conservative (default) / normal / aggressive — sets the cooldown window length.
+
+**Observability**: in the assistant history and the voice panel log, every sent message is tagged "插队/Interrupt" or "排队/Queue", together with the assistant's reason, so you can review what was interrupted and why.
+
+```mermaid
+flowchart TD
+    V[Speech sentence split] --> AF["analyze assistant decision<br/>identity core + send/ignore/standby/ask + mode"]
+    AF -->|ignore/standby/ask| H[Ignore / step back / ask]
+    AF -->|send| M{mode decision}
+    M -->|urgent / abort / immediate follow-up| INS[insert]
+    M -->|new task / non-urgent / later / unsure| QUE[queue]
+    INS --> ST{abort stop?}
+    ST -->|yes| DO1[Go to Steer channel<br/>interrupt run, no cooldown]
+    ST -->|no| CD{repeat within cooldown?}
+    CD -->|no| DO1
+    CD -->|yes| DO2[Downgrade to queue]
+    QUE --> DO3[Enter run Queue<br/>after current answer]
+    DO2 --> DO3
+```
 
 ## 8. Usage and pricing
 

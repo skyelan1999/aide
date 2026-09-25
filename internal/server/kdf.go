@@ -19,7 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"golang.org/x/crypto/argon2"
@@ -39,10 +38,10 @@ const (
 // 为空时（如未调用 ensureKdfSalt 的单元测试）派生退化为 SHA-256，保证既有测试确定性。
 var kdfSalt []byte
 
-// ensureKdfSalt 确保 data/kdf-salt.bin 存在并加载到包级 kdfSalt。
+// ensureKdfSalt 确保 auth/kdf-salt.bin 存在并加载到包级 kdfSalt。
 // 首次生成 16B crypto/rand，权限 0600；已存在则原样读取（禁止重新生成，否则既有密文全部失效）。
 func ensureKdfSalt(dataDir string) error {
-	p := filepath.Join(dataDir, "kdf-salt.bin")
+	p := KdfSaltPath(dataDir)
 	if b, err := os.ReadFile(p); err == nil {
 		if len(b) >= argon2SaltLen {
 			kdfSalt = b[:argon2SaltLen]
@@ -166,3 +165,4 @@ func mustHashPassword(password string) string {
 	}
 	return h
 }
+

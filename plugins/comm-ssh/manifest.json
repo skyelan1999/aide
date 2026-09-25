@@ -1,0 +1,24 @@
+{
+  "id": "comm-ssh",
+  "name": "SSH 通讯",
+  "description": "基于 ssh2 的常驻 SSH 客户端：命令执行、SFTP 上传下载、本地端口转发/隧道，并内置可脚本化的模拟 SSH 服务端（用于测试与演练）。默认禁用，仅绑回环。",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "daemon": true,
+  "enabled": false,
+  "installedAt": "2026-09-25T21:30:00Z",
+  "tools": [
+    { "name": "ssh_connect", "kind": "write", "readonlyDefault": false },
+    { "name": "ssh_exec", "kind": "write", "readonlyDefault": false },
+    { "name": "ssh_sftp_list", "kind": "read", "readonlyDefault": true },
+    { "name": "ssh_sftp_get", "kind": "read", "readonlyDefault": true },
+    { "name": "ssh_sftp_put", "kind": "write", "readonlyDefault": false },
+    { "name": "ssh_tunnel_start", "kind": "write", "readonlyDefault": false },
+    { "name": "ssh_tunnel_stop", "kind": "write", "readonlyDefault": false },
+    { "name": "ssh_close", "kind": "write", "readonlyDefault": false },
+    { "name": "ssh_simulate_start", "kind": "write", "readonlyDefault": false },
+    { "name": "ssh_simulate_stop", "kind": "write", "readonlyDefault": false },
+    { "name": "ssh_simulate_set_rule", "kind": "write", "readonlyDefault": false }
+  ]
+}

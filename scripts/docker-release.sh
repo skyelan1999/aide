@@ -39,10 +39,13 @@ echo "  COMMIT  = $COMMIT"
 echo "  TAG     = $TAG"
 
 # 1) 构建（注入版本/commit；基础镜像在联网阶段拉取并固化进产物）
-echo "== [1/4] docker build =="
+#    #43 发布门禁：强制 --build-arg AIDE_RUN_TESTS=1，把全量 go test 拉回发布构建。
+#    日常 scripts/aide.sh start 默认 =0（层缓存秒级），但 release 不得绕过测试。
+echo "== [1/4] docker build（AIDE_RUN_TESTS=1 强制全量测试）=="
 "$DOCKER_BIN" build \
   --build-arg AIDE_VERSION="$VER_RAW" \
   --build-arg AIDE_COMMIT="$COMMIT" \
+  --build-arg AIDE_RUN_TESTS=1 \
   -t "$TAG" .
 
 # 2) 冒烟测试：容器内 healthz 通过才算可交付

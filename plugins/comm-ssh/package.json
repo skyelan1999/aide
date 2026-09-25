@@ -1,0 +1,10 @@
+{
+  "name": "aide-plugin-comm-ssh",
+  "version": "1.0.0",
+  "private": true,
+  "description": "aide daemon plugin: SSH client + SFTP + port forwarding + mock SSH server (ssh2)",
+  "main": "index.js",
+  "dependencies": {
+    "ssh2": "^1.17.0"
+  }
+}

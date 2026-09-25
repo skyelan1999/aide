@@ -9,9 +9,11 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -266,4 +268,54 @@ func TestVoiceDistinctMD5(t *testing.T) {
 		}
 	}
 	t.Logf("md5: %v", sums)
+}
+
+// ── 多引擎编排 + close 分类（#42 扩展）──
+
+// fakeProvider 测试桩：可定制 name / 是否成功 / 返回错误。
+type fakeProvider struct {
+	name string
+	err  error
+}
+
+func (f *fakeProvider) Name() string         { return f.name }
+func (f *fakeProvider) Format() string       { return "mp3" }
+func (f *fakeProvider) Available() bool      { return true }
+func (f *fakeProvider) Synth(ctx context.Context, text string, opts SynthOpts) (io.ReadCloser, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return io.NopCloser(strings.NewReader("FAKEAUDIO")), nil
+}
+
+func TestChainSynthFallback(t *testing.T) {
+	// 直接覆盖 buildChain 不易，改测 ChainSynth 聚合逻辑：edge 不可用且无 azure key → ErrUnavailable。
+	cfg := Config{Provider: "edge"}
+	_, _, err := ChainSynth(context.Background(), "你好", SynthOpts{}, cfg)
+	// edge 无网（ci/离线）时必然失败；断言返回 ErrUnavailable 包装。
+	if err == nil {
+		// 若恰好用了网成功也算通过（不应发生于离线 ci，但容错）
+		t.Log("edge reachable in this env, chain returned ok")
+		return
+	}
+	if !errors.Is(err, ErrUnavailable) {
+		t.Fatalf("期望 ErrUnavailable 包装，实际 %v", err)
+	}
+}
+
+func TestErrEdgeClosedClassified(t *testing.T) {
+	// close code 错误必须被判为服务端断连（不可重试），区别于超时。
+	c := &ErrEdgeClosed{Code: 1008, Reason: "Policy violation"}
+	if !isEdgeClosed(c) {
+		t.Fatal("ErrEdgeClosed 应被 isEdgeClosed 识别")
+	}
+	if isEdgeTimeout(c) {
+		t.Fatal("ErrEdgeClosed 不应被判为超时")
+	}
+	// 包装后仍可 errors.As 取出 code
+	wrapped := fmt.Errorf("%w: %w", ErrUnavailable, c)
+	var ec *ErrEdgeClosed
+	if !errors.As(wrapped, &ec) || ec.Code != 1008 {
+		t.Fatalf("包装后应能还原 close code，实际 %v", wrapped)
+	}
 }

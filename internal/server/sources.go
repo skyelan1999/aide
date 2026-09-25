@@ -66,7 +66,7 @@ func (a *App) sourcesPath() string {
 	}
 	return filepath.Join(a.workPath, ".cache", sourcesFileName)
 }
-func (a *App) sourcesSecretsPath() string { return filepath.Join(a.dataPath, sourcesSecretsFN) }
+func (a *App) sourcesSecretsPath() string { return SourcesSecretsPath(a.dataPath) }
 
 func (a *App) loadSources() error {
 	a.sourceRegistry = sourcesRegistry{Version: 1, Sources: []Source{}}

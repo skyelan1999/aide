@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -20,7 +19,7 @@ func TestVoiceFallbackRecordPlaintext(t *testing.T) {
 	if got := len(va.historyDesc()); got != 1 {
 		t.Fatalf("historyDesc len = %d, want 1", got)
 	}
-	b, err := os.ReadFile(filepath.Join(dir, "voice-history.json"))
+	b, err := os.ReadFile(VoiceHistoryPath(dir))
 	if err != nil {
 		t.Fatalf("persist file missing: %v", err)
 	}
@@ -51,7 +50,7 @@ func TestVoiceEncryptLifecycle(t *testing.T) {
 	if got := len(va.historyDesc()); got != 2 {
 		t.Fatalf("unlocked len = %d, want 2", got)
 	}
-	b, _ := os.ReadFile(filepath.Join(dir, "voice-history.json"))
+	b, _ := os.ReadFile(VoiceHistoryPath(dir))
 	bs := string(b)
 	if !strings.Contains(bs, `"encrypted":true`) {
 		t.Fatalf("file not marked encrypted: %s", bs)

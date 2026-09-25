@@ -1,9 +1,11 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"crypto/subtle"
+	"encoding/csv"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -12,8 +14,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -53,13 +55,14 @@ type providerHealth struct {
 
 // debugAuditEntry 一条接入审计记录（落盘 JSONL）。
 type debugAuditEntry struct {
-	Time   string `json:"time"`
-	IP     string `json:"ip,omitempty"`
-	UA     string `json:"ua,omitempty"`
-	Method string `json:"method"`
-	Path   string `json:"path"`
-	Owner  bool   `json:"owner,omitempty"` // true=普通 access-token；false=调试令牌
-	Result string `json:"result"`
+	Time    string `json:"time"`
+	IP      string `json:"ip,omitempty"`
+	UA      string `json:"ua,omitempty"`
+	Method  string `json:"method"`
+	Path    string `json:"path"`
+	Owner   bool   `json:"owner,omitempty"`   // true=普通 access-token；false=调试令牌
+	TokenFP string `json:"tokenFp,omitempty"` // 调试令牌短指纹（前 8 位）；owner 请求为空，绝不存完整令牌
+	Result  string `json:"result"`
 }
 
 // pushError 把一条错误放入环形缓冲（线程安全）。message 调用方需已脱敏。
@@ -97,14 +100,14 @@ func (a *App) serveDebug(w http.ResponseWriter, r *http.Request) {
 	allowOrigins := append([]string{}, a.settings.DebugAllowOrigins...)
 	a.mu.Unlock()
 
-	// 段1：总开关。关闭即整体 404，不区分是否携带令牌，避免暴露接口存在性。
+	// 段1：总开关。关闭即整体 404，不区分是否携带令牌，避免暴露接口存在性；静默不写审计（外部轮询时不制造噪声）。
 	if !enabled {
-		a.debugAuditWrite(r, false, "404_disabled")
 		http.NotFound(w, r)
 		return
 	}
 
-	isAdmin := strings.HasPrefix(path, "/api/debug/admin/") || path == "/api/debug/audit"
+	// 管理面：令牌管理 + 审计查看/导出，只认普通 access-token。
+	isAdmin := strings.HasPrefix(path, "/api/debug/admin/") || strings.HasPrefix(path, "/api/debug/audit")
 
 	// 段2：独立鉴权。调试令牌走 Authorization: Bearer；SSE（EventSource 无法带头）允许 ?access_token=。
 	token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
@@ -124,29 +127,34 @@ func (a *App) serveDebug(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
+	// 短指纹：仅取调试令牌前 8 位，用于区分不同外部程序；绝不回显/落盘完整令牌。
+	tokenFP := ""
+	if debugOK && len(token) >= 8 {
+		tokenFP = token[:8]
+	}
 
 	// 来源白名单：仅当携带浏览器 Origin 头且配置了白名单时校验；curl 无 Origin 不受影响。
 	if origin := r.Header.Get("Origin"); origin != "" && len(allowOrigins) > 0 && !originAllowed(origin, allowOrigins) {
-		a.debugAuditWrite(r, ownerOK, "403_origin")
+		a.debugAuditWrite(r, ownerOK, tokenFP, "403_origin")
 		fail(w, 403, errors.New("来源不在调试白名单"))
 		return
 	}
 
 	// 管理面只认普通 access-token；调试令牌不得管理或读取审计。
 	if isAdmin && !ownerOK {
-		a.debugAuditWrite(r, false, "401_admin_denied")
+		a.debugAuditWrite(r, false, tokenFP, "401_admin_denied")
 		fail(w, 401, errors.New("管理面需要普通访问令牌"))
 		return
 	}
 	// 只读/动作端点：普通 access-token（owner）或有效调试令牌均可。
 	if !isAdmin && !ownerOK && !debugOK {
-		a.debugAuditWrite(r, false, "401_unauthorized")
+		a.debugAuditWrite(r, false, tokenFP, "401_unauthorized")
 		fail(w, 401, errors.New("调试令牌无效或已过期"))
 		return
 	}
 
-	// 段3：审计（成功）+ 段4：分发到 mux。
-	a.debugAuditWrite(r, ownerOK, "200_ok")
+	// 段3：审计（按降噪规则决定是否记录）+ 段4：分发到 mux。
+	a.debugAuditWrite(r, ownerOK, tokenFP, "200_ok")
 	a.routes.ServeHTTP(w, r)
 }
 
@@ -173,23 +181,54 @@ func originAllowed(origin string, allow []string) bool {
 	return false
 }
 
-// debugAuditWrite 追加一条审计记录到 data/debug-audit.jsonl（失败仅记日志，不阻断请求）。
-func (a *App) debugAuditWrite(r *http.Request, owner bool, result string) {
+// debugAuditShouldWrite 审计降噪：决定本次请求是否落盘。
+//
+//	绝不记录：查看/导出审计自身（/api/debug/audit、/api/debug/audit/*）——否则每点一次"查看审计"就自刷一条。
+//	必记：所有失败/拒绝（401/403）；调试令牌(owner=false)对数据端点的每次实际访问；owner 的写操作（令牌生成/吊销/开关等非 GET）。
+//	默认不记：owner（本机普通 access-token）的只读 GET 轮询（/overview、/stats、/sessions、/errors 等）。
+func debugAuditShouldWrite(r *http.Request, owner bool, result string) bool {
+	path := r.URL.Path
+	// 1) 审计自身的查看/导出：绝不记录。
+	if path == "/api/debug/audit" || strings.HasPrefix(path, "/api/debug/audit/") {
+		return false
+	}
+	// 2) 所有失败/拒绝必记。
+	if result != "200_ok" {
+		return true
+	}
+	// 3) 成功：外部调试令牌每次实际访问都记（"谁调了什么"）。
+	if !owner {
+		return true
+	}
+	// 4) 成功：owner 的写操作记。
+	if r.Method != http.MethodGet {
+		return true
+	}
+	// 5) owner 本机只读 GET 轮询：不记。
+	return false
+}
+
+// debugAuditWrite 按降噪规则追加一条审计记录到 audit/debug-audit.jsonl（失败仅记日志，不阻断请求）。
+func (a *App) debugAuditWrite(r *http.Request, owner bool, tokenFP, result string) {
+	if !debugAuditShouldWrite(r, owner, result) {
+		return
+	}
 	entry := debugAuditEntry{
-		Time:   time.Now().UTC().Format(time.RFC3339Nano),
-		IP:     r.RemoteAddr,
-		UA:     r.UserAgent(),
-		Method: r.Method,
-		Path:   r.URL.Path,
-		Owner:  owner,
-		Result: result,
+		Time:    time.Now().UTC().Format(time.RFC3339Nano),
+		IP:      r.RemoteAddr,
+		UA:      r.UserAgent(),
+		Method:  r.Method,
+		Path:    r.URL.Path,
+		Owner:   owner,
+		TokenFP: tokenFP,
+		Result:  result,
 	}
 	b, err := json.Marshal(entry)
 	if err != nil {
 		return
 	}
 	a.debugMu.Lock()
-	f, err := os.OpenFile(filepath.Join(a.dataPath, debugAuditFile), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	f, err := os.OpenFile(DebugAuditPath(a.dataPath), os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 	if err == nil {
 		_, _ = f.Write(append(b, '\n'))
 		_ = f.Close()
@@ -198,6 +237,29 @@ func (a *App) debugAuditWrite(r *http.Request, owner bool, result string) {
 	if err != nil {
 		log.Printf("debug-audit 写入失败: %v", err)
 	}
+}
+
+// readDebugAudit 读取并解析全部审计记录（文件不存在返回空切片）。
+func (a *App) readDebugAudit() ([]debugAuditEntry, error) {
+	b, err := os.ReadFile(DebugAuditPath(a.dataPath))
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return []debugAuditEntry{}, nil
+		}
+		return nil, err
+	}
+	out := []debugAuditEntry{}
+	for _, line := range strings.Split(strings.TrimRight(string(b), "\n"), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		var e debugAuditEntry
+		if json.Unmarshal([]byte(line), &e) == nil {
+			out = append(out, e)
+		}
+	}
+	return out, nil
 }
 
 // ──────────────────────────── 只读端点 ────────────────────────────
@@ -229,21 +291,44 @@ func (a *App) debugOverview(w http.ResponseWriter, r *http.Request) {
 	ph := a.providerHealth
 	a.debugMu.Unlock()
 
+	edgeAvail, edgeErr, edgeChecked := a.edgeHealthSnapshot()
+
+	// #34：性格演化可观测——状态（evolutions/上次尝试/自上次计数）在 /api/debug 可见。
+	a.mu.Lock()
+	pers := map[string]any{}
+	for _, id := range []string{personaAide, personaXiaomi} {
+		p := a.personalityLocked(id)
+		st := a.personalityStateLocked(id)
+		pers[id] = map[string]any{
+			"enabled":           p.Enabled,
+			"evolutions":        p.Evolutions,
+			"updatedAt":         p.UpdatedAt,
+			"countSinceEvolve":  st.CountSinceEvolve,
+			"lastEvolvedAt":     st.LastEvolvedAt,
+			"lastAttemptResult": st.LastAttemptResult,
+			"lastAttemptAt":     st.LastAttemptAt,
+			"lastAttemptNote":   st.LastAttemptNote,
+		}
+	}
+	a.mu.Unlock()
+
 	host := baseURL
 	if u, err := url.Parse(baseURL); err == nil && u.Host != "" {
 		host = u.Host // 只回主机名，不回完整 baseURL 路径
 	}
 
+	istatus := a.integrityStatus()
 	jsonOut(w, 200, map[string]any{
-		"status":      "ok",
-		"version":     a.version,
+		"status":       "ok",
+		"integrity":    istatus,
+		"version":      a.version,
 		"buildVersion": a.buildVersion,
-		"revision":    a.buildCommit,
-		"uptimeSec":   int64(time.Since(a.startedAt).Seconds()),
+		"revision":     a.buildCommit,
+		"uptimeSec":    int64(time.Since(a.startedAt).Seconds()),
 		"startedAt":    a.startedAt.UTC().Format(time.RFC3339Nano),
 		"config": map[string]any{
 			"providerHost": host,
-			"model":       activeModel,
+			"model":        activeModel,
 			"hasKey":       hasKey,
 			"hasPassword":  hasPassword,
 		},
@@ -258,28 +343,34 @@ func (a *App) debugOverview(w http.ResponseWriter, r *http.Request) {
 			"lastProbeMs": ph.lastProbeMs,
 			"checkedAt":   ph.checkedAt.UTC().Format(time.RFC3339Nano),
 		},
+		"tts": map[string]any{
+			"edgeAvailable": edgeAvail,
+			"edgeLastError": edgeErr,
+			"checkedAt":     edgeChecked.UTC().Format(time.RFC3339Nano),
+		},
+		"personality": pers,
 	})
 }
 
 // debugSessionView 会话+最近 run 的脱敏摘要。
 type debugSessionView struct {
-	ID      string `json:"id"`
-	Title   string `json:"title"`
-	Status  string `json:"status"`
-	Updated string `json:"updated,omitempty"`
-	Runs    int    `json:"runs"`
+	ID      string        `json:"id"`
+	Title   string        `json:"title"`
+	Status  string        `json:"status"`
+	Updated string        `json:"updated,omitempty"`
+	Runs    int           `json:"runs"`
 	LastRun *debugRunView `json:"lastRun,omitempty"`
 }
 
 type debugRunView struct {
-	ID        string     `json:"id"`
-	Created   string     `json:"created"`
-	Status    string     `json:"status"`
-	Mode      string     `json:"mode,omitempty"`
-	Model     string     `json:"model,omitempty"`
-	Failures  int        `json:"failures,omitempty"`
-	Error     string     `json:"error,omitempty"`
-	Usage     TokenUsage `json:"usage,omitempty"`
+	ID       string     `json:"id"`
+	Created  string     `json:"created"`
+	Status   string     `json:"status"`
+	Mode     string     `json:"mode,omitempty"`
+	Model    string     `json:"model,omitempty"`
+	Failures int        `json:"failures,omitempty"`
+	Error    string     `json:"error,omitempty"`
+	Usage    TokenUsage `json:"usage,omitempty"`
 }
 
 func (a *App) debugSessions(w http.ResponseWriter, r *http.Request) {
@@ -480,19 +571,19 @@ func (a *App) debugDiagnosticBundle(w http.ResponseWriter, r *http.Request) {
 		Error     string `json:"error,omitempty"`
 	}
 	type bundle struct {
-		GeneratedAt string       `json:"generatedAt"`
-		Version     string       `json:"version"`
-		Revision    string       `json:"revision"`
-		UptimeSec   int64        `json:"uptimeSec"`
-		ProviderHost string       `json:"providerHost"`
-		Errors      []recentError `json:"recentErrors"`
-		Runs        []bundleRun  `json:"recentRuns"`
+		GeneratedAt  string        `json:"generatedAt"`
+		Version      string        `json:"version"`
+		Revision     string        `json:"revision"`
+		UptimeSec    int64         `json:"uptimeSec"`
+		ProviderHost string        `json:"providerHost"`
+		Errors       []recentError `json:"recentErrors"`
+		Runs         []bundleRun   `json:"recentRuns"`
 	}
 	b := bundle{
-		GeneratedAt: time.Now().UTC().Format(time.RFC3339Nano),
-		Version:     a.version,
-		Revision:    a.buildCommit,
-		UptimeSec:   int64(time.Since(a.startedAt).Seconds()),
+		GeneratedAt:  time.Now().UTC().Format(time.RFC3339Nano),
+		Version:      a.version,
+		Revision:     a.buildCommit,
+		UptimeSec:    int64(time.Since(a.startedAt).Seconds()),
 		ProviderHost: host,
 	}
 	a.debugMu.Lock()
@@ -548,7 +639,7 @@ func (a *App) debugAdminToken(w http.ResponseWriter, r *http.Request) {
 	a.settings.DebugTokenHash = sha256Hex(plain)
 	a.settings.DebugTokenCreatedAt = now.Format(time.RFC3339Nano)
 	a.settings.DebugTokenExpiresAt = exp.Format(time.RFC3339Nano)
-	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings); err != nil {
+	if err := atomicJSON(SettingsPath(a.dataPath), a.settings); err != nil {
 		a.mu.Unlock()
 		fail(w, 500, err)
 		return
@@ -568,7 +659,7 @@ func (a *App) debugAdminRevoke(w http.ResponseWriter, r *http.Request) {
 	a.settings.DebugTokenHash = ""
 	a.settings.DebugTokenCreatedAt = ""
 	a.settings.DebugTokenExpiresAt = ""
-	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings); err != nil {
+	if err := atomicJSON(SettingsPath(a.dataPath), a.settings); err != nil {
 		a.mu.Unlock()
 		fail(w, 500, err)
 		return
@@ -593,7 +684,7 @@ func (a *App) debugAdminToggle(w http.ResponseWriter, r *http.Request) {
 		a.settings.DebugTokenCreatedAt = ""
 		a.settings.DebugTokenExpiresAt = ""
 	}
-	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings); err != nil {
+	if err := atomicJSON(SettingsPath(a.dataPath), a.settings); err != nil {
 		a.mu.Unlock()
 		fail(w, 500, err)
 		return
@@ -602,31 +693,64 @@ func (a *App) debugAdminToggle(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, map[string]bool{"enabled": a.settings.DebugAccessEnabled})
 }
 
-// debugAudit 读取最近审计记录（管理面，普通 access-token）。
+// debugAudit 读取最近审计记录（管理面，普通 access-token）。仅返回最近 20 条用于面板预览；
+// 完整日志走 /api/debug/audit/export 下载。
 func (a *App) debugAudit(w http.ResponseWriter, r *http.Request) {
-	b, err := os.ReadFile(filepath.Join(a.dataPath, debugAuditFile))
+	out, err := a.readDebugAudit()
 	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			jsonOut(w, 200, []debugAuditEntry{})
-			return
-		}
 		fail(w, 500, err)
 		return
-	}
-	lines := strings.Split(strings.TrimRight(string(b), "\n"), "\n")
-	out := []debugAuditEntry{}
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		var e debugAuditEntry
-		if json.Unmarshal([]byte(line), &e) == nil {
-			out = append(out, e)
-		}
 	}
 	if len(out) > 20 {
 		out = out[len(out)-20:]
 	}
 	jsonOut(w, 200, out)
+}
+
+// debugAuditExport 导出完整审计日志（管理面，普通 access-token，附件下载）。
+// format=jsonl（默认，逐行 JSON）| json（JSON 数组）| csv（带 BOM，便于 Excel 打开）。
+// 导出本身不写审计（见 debugAuditShouldWrite：审计自身的查看/导出不记录）。
+func (a *App) debugAuditExport(w http.ResponseWriter, r *http.Request) {
+	entries, err := a.readDebugAudit()
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	format := r.URL.Query().Get("format")
+	if format == "" {
+		format = "jsonl"
+	}
+	switch format {
+	case "jsonl":
+		w.Header().Set("Content-Type", "application/x-ndjson; charset=utf-8")
+		w.Header().Set("Content-Disposition", `attachment; filename="debug-audit.jsonl"`)
+		for _, e := range entries {
+			if b, merr := json.Marshal(e); merr == nil {
+				_, _ = w.Write(append(b, '\n'))
+			}
+		}
+	case "json":
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.Header().Set("Content-Disposition", `attachment; filename="debug-audit.json"`)
+		jsonOut(w, 200, entries)
+	case "csv":
+		var buf bytes.Buffer
+		buf.WriteString("\xEF\xBB\xBF") // UTF-8 BOM，Excel 正确识别中文
+		cw := csv.NewWriter(&buf)
+		_ = cw.Write([]string{"time", "ip", "ua", "method", "path", "owner", "tokenFp", "result"})
+		for _, e := range entries {
+			src := "owner"
+			if !e.Owner {
+				src = "token"
+			}
+			_ = cw.Write([]string{e.Time, e.IP, e.UA, e.Method, e.Path, src, e.TokenFP, e.Result})
+		}
+		cw.Flush()
+		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+		w.Header().Set("Content-Disposition", `attachment; filename="debug-audit.csv"`)
+		w.Header().Set("Content-Length", strconv.Itoa(buf.Len()))
+		_, _ = w.Write(buf.Bytes())
+	default:
+		fail(w, 400, errors.New("format 仅支持 jsonl|json|csv"))
+	}
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -204,7 +203,7 @@ func TestImportNoRestartNeeded(t *testing.T) {
 	inMem := curSettings(a)
 
 	// 从磁盘重读 settings.json，走与 New() 启动加载完全相同的收敛流程
-	diskB, err := os.ReadFile(filepath.Join(a.dataPath, "settings.json"))
+	diskB, err := os.ReadFile(SettingsPath(a.dataPath))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -136,7 +136,8 @@
           "min": 5,
           "max": 200,
           "step": 5,
-          "placeholder": "60"
+          "placeholder": "60",
+          "description": "模型连续自动调用工具的最大轮数；达到上限后自动停止并提示继续。范围 5–200，默认 60。"
         }
       ]
     },
@@ -197,9 +198,19 @@
           "label": "语音回复"
         },
         {
+          "id": "voiceDispatch",
+          "type": "voice-dispatch",
+          "label": "发送调度"
+        },
+        {
           "id": "ttsEngine",
           "type": "tts-engine",
           "label": "语音引擎"
+        },
+        {
+          "id": "voiceClone",
+          "type": "voice-clone",
+          "label": "个性化音色（声音克隆）"
         }
       ]
     },
@@ -227,6 +238,17 @@
           "id": "config-backup",
           "type": "config-backup",
           "label": "配置导出与导入"
+        }
+      ]
+    },
+    {
+      "id": "danger",
+      "title": "危险操作",
+      "controls": [
+        {
+          "id": "factory-reset",
+          "type": "factory-reset",
+          "label": "恢复出厂设置"
         }
       ]
     },

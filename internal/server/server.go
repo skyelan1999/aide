@@ -2,6 +2,7 @@ package server
 
 import (
 	"aide/internal/server/tts"
+	"bufio"
 	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
@@ -61,7 +62,10 @@ type Settings struct {
 	VoiceAssistantName    string                 `json:"voiceAssistantName,omitempty"`    // 语音小秘名字，默认"小秘"
 	VoiceReplyEnabled     bool                   `json:"voiceReplyEnabled,omitempty"`     // 双向语音：语音回复模式
 	VoiceReplyGender      string                 `json:"voiceReplyGender,omitempty"`      // 回复音色 male | female
+	VoiceReplyVerbosity   string                 `json:"voiceReplyVerbosity,omitempty"`   // 语音回复详细度 brief(默认) | full
 	VoiceInputDevice      string                 `json:"voiceInputDevice,omitempty"`      // 小秘语音输入设备 deviceId，空=系统默认
+	VoiceDefaultSendMode  string                 `json:"voiceDefaultSendMode,omitempty"`  // #41：小秘默认发送调度 queue(默认,排队) | insert(插队)；模型拿不准时回落此值
+	VoiceInsertSensitivity string                `json:"voiceInsertSensitivity,omitempty"` // #41：插队敏感度 conservative(默认,5s冷却) | normal(3s) | aggressive(1s)
 	UserName              string                 `json:"userName,omitempty"`              // 账户用户名（锁屏欢迎语用，可空）
 	UserPasswordHash      string                 `json:"userPasswordHash,omitempty"`      // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
 	LockTimeoutSec        int                    `json:"lockTimeoutSec,omitempty"`        // 空闲锁屏秒数，0 = 不锁屏
@@ -79,6 +83,14 @@ type Settings struct {
 	TTSAPIKey         string  `json:"ttsAPIKey,omitempty"`         // 预留：云端引擎 key（edge 不需要，不回显）
 	TTSRate           float64 `json:"ttsRate,omitempty"`           // 语速倍率 0.8-1.3，默认 1.0
 	TTSExpressiveness float64 `json:"ttsExpressiveness,omitempty"` // 表现力 0-1，映射 edge styledegree
+	TTSAzureKey       string  `json:"ttsAzureKey,omitempty"`       // Azure 官方 Speech key（可选，edge 后备；不回显）
+	TTSAzureRegion    string  `json:"ttsAzureRegion,omitempty"`    // Azure region，如 eastasia
+	// ── 少样本音色克隆（#36）：自托管克隆服务接入，仅小秘可选；未配置不影响 edge/webspeech ──
+	CloneTTSBaseURL string `json:"cloneTTSBaseURL,omitempty"` // 克隆服务 BaseURL（如 http://127.0.0.1:9880），空=未配置
+	CloneTTSAPIKey  string `json:"cloneTTSAPIKey,omitempty"`  // 克隆服务 Bearer token（可选，不回显）
+	CloneVoiceID    string `json:"cloneVoiceID,omitempty"`    // 克隆出的音色 ID（创建音色后由克隆服务返回）
+	CloneTTSBackend string `json:"cloneTTSBackend,omitempty"` // openai | gpt-sovits | indextts2 | cosyvoice2 | openvoice
+	NextSessionSeq    int     `json:"nextSessionSeq,omitempty"`    // 下一个会话编号（单调递增，删除不复用，持久化）
 }
 
 const (
@@ -159,6 +171,17 @@ func validateSettings(s *Settings) {
 	default:
 		s.SandboxMode = "workspace-write"
 	}
+	// #41：小秘发送调度枚举合法性回退（非法值一律保守排队）
+	switch s.VoiceDefaultSendMode {
+	case "insert":
+	default:
+		s.VoiceDefaultSendMode = "queue"
+	}
+	switch s.VoiceInsertSensitivity {
+	case "normal", "aggressive":
+	default:
+		s.VoiceInsertSensitivity = "conservative"
+	}
 }
 
 // normalizeLoadedSettings 把从磁盘或备份读入的 Settings 收敛到运行态一致：
@@ -216,22 +239,30 @@ type Message struct {
 	ToolCallID string     `json:"tool_call_id,omitempty"`
 }
 type Session struct {
-	ID                string    `json:"id"`
-	Title             string    `json:"title"`
-	Created           string    `json:"created"`
-	Messages          []Message `json:"messages"`
-	Runs              []*Task   `json:"runs"`
-	Compact           string    `json:"compact,omitempty"`           // 压缩摘要（compaction）
-	CompactedMessages int       `json:"compactedMessages,omitempty"` // 已折叠消息数
-	CompactedAt       string    `json:"compactedAt,omitempty"`
-	Pinned            bool      `json:"pinned,omitempty"`       // 置顶：列表排序优先（活动排序不会把置顶顶下去）
-	Archived          bool      `json:"archived,omitempty"`     // 归档：默认列表隐藏
-	Deleted           bool      `json:"deleted,omitempty"`      // 删除墓碑：save/加载跳过，防写盘复活
-	Updated           string    `json:"updated,omitempty"`      // 最近活动时间：完成/跟进按时间置顶
-	Checked           bool      `json:"checked,omitempty"`      // 已完成高亮（蓝点+加粗）是否已被用户查看；新完成时复位
-	ParentID          string    `json:"parentId,omitempty"`     // 子会话：指向主会话 ID
-	AutoArchived      bool      `json:"autoArchived,omitempty"` // 子会话完成后自动归档
+	ID                  string    `json:"id"`
+	Title               string    `json:"title"`
+	Created             string    `json:"created"`
+	Messages            []Message `json:"messages"`
+	Runs                []*Task   `json:"runs"`
+	Compact             string    `json:"compact,omitempty"`           // 压缩摘要（compaction）
+	CompactedMessages   int       `json:"compactedMessages,omitempty"` // 已折叠消息数
+	CompactedAt         string    `json:"compactedAt,omitempty"`
+	Pinned              bool      `json:"pinned,omitempty"`              // 置顶：列表排序优先（活动排序不会把置顶顶下去）
+	Archived            bool      `json:"archived,omitempty"`            // 归档：默认列表隐藏
+	Deleted             bool      `json:"deleted,omitempty"`             // 删除墓碑：save/加载跳过，防写盘复活
+	Updated             string    `json:"updated,omitempty"`             // 最近活动时间：完成/跟进按时间置顶
+	Checked             bool      `json:"checked,omitempty"`             // 已完成高亮（蓝点+加粗）是否已被用户查看；新完成时复位
+	ParentID            string    `json:"parentId,omitempty"`            // 子会话：指向主会话 ID
+	AutoArchived        bool      `json:"autoArchived,omitempty"`        // 子会话完成后自动归档
+	Number              int       `json:"number,omitempty"`              // 会话编号 #N：单调递增、删除不复用
+	Kind                string    `json:"kind,omitempty"`                // 空=普通会话；"assistant"=小秘系统会话（永久置顶、密码进入）
+	FollowedByAssistant bool      `json:"followedByAssistant,omitempty"` // 小秘已标记跟进：该会话有更新时提醒
+	FollowNote          string    `json:"followNote,omitempty"`          // 小秘跟进备注
 }
+
+// assistantSessionKind 小秘系统会话的 Kind 标记。全应用恰好一个，永久置顶、不可归档/删除。
+const assistantSessionKind = "assistant"
+
 type App struct {
 	mu                        sync.Mutex
 	filesMu                   sync.Mutex
@@ -247,10 +278,12 @@ type App struct {
 	pluginsPath               string
 	pluginRegistry            pluginRegistry
 	pluginSurface             []byte
+	daemons                   *DaemonManager // 协议 v1.2：常驻守护插件管理器
 	wsConfigPath              string
 	wsSecretsPath             string
 	wsConfig                  WorkspaceConfig
 	wsSecrets                 workspaceSecrets
+	vault                     *SecretVault // 统一加密凭证保险库（#38）
 	sshBin, sftpBin           string
 	localRoot                 *os.Root
 	hostLocal                 string
@@ -270,10 +303,13 @@ type App struct {
 	buildVersion, buildCommit string
 	eventMu                   sync.Mutex
 	eventSubs                 map[string]map[chan streamEvent]struct{} // SSE 订阅：taskID → subscriber set
-	personaKey                string                                   // 内存中的性格解密密码（= 账户密码），不持久化
-	personaCustom             map[string]string                        // 解锁后：personaID -> 解密出的自定义性格明文
-	voiceAgent                *VoiceAgent                              // 语音小秘 agent（记忆+历史）
-	voiceSendSinceEvolve      int                                      // 小秘自上次性格演化以来的 send 计数（内存）
+	liveBroker                *StreamBroker                            // #35：aide 主会话实时输出 → 小秘拉取
+	liveTaskMu                sync.Mutex
+	liveTaskSess              map[string]string    // #35：taskID → sessionID（把 SSE 增量桥到会话维度）
+	personaKey                string               // 内存中的性格解密密码（= 账户密码），不持久化
+	personaCustom             map[string]string    // 解锁后：personaID -> 解密出的自定义性格明文
+	voiceAgent                *VoiceAgent          // 语音小秘 agent（记忆+历史）
+	personalityState          personalityStateFile // 性格演化触发计数/回滚历史（#34，持久化 config/personality-state.json）
 	bgCtx                     context.Context
 	bgCancel                  context.CancelFunc
 	bgWg                      sync.WaitGroup   // fire-and-forget 后台 goroutine（标题总结等）追踪，Close 时等待
@@ -286,6 +322,101 @@ type App struct {
 	debugMu        sync.Mutex     // 保护 errorRing / providerHealth / 审计写
 	errorRing      []recentError  // 最近错误环形缓冲（容量 debugErrorRingCap）
 	providerHealth providerHealth // 最近一次 Provider 连通性探测缓存
+	// ── edge-tts 健康探测缓存（#42）──
+	edgeMu        sync.Mutex
+	edgeHealth    edgeHealthState
+	ttsLastEngine string // 最近一次后端合成实际命中的引擎（edge/azure/unavailable）
+	// ── 小秘系统会话密码门（#30）：内存解锁态，锁屏后失效，不持久化 ──
+	assistantUnlockMu sync.Mutex
+	assistantUnlocked map[string]bool
+	// ── 数据完整性（启动校验 + 周期巡检结果）──
+	integrityMu  sync.Mutex
+	integrityRep IntegrityReport
+}
+
+// setIntegrity 记录最近一次完整性校验/自愈报告（healthz 与 /api/debug 读取）。
+func (a *App) setIntegrity(rep IntegrityReport) {
+	a.integrityMu.Lock()
+	a.integrityRep = rep
+	a.integrityMu.Unlock()
+}
+
+// integrityStatus 返回最近一次完整性状态（ok/degraded/corrupted）。
+func (a *App) integrityStatus() IntegrityStatus {
+	a.integrityMu.Lock()
+	defer a.integrityMu.Unlock()
+	if a.integrityRep.Status == "" {
+		return IntegrityOK
+	}
+	return a.integrityRep.Status
+}
+
+// edgeHealthState 最近一次 edge-tts 可用性探测/合成结果缓存。TTL 内不重探，过期后下次合成或 /api/config 触发轻量探测。
+type edgeHealthState struct {
+	available bool
+	lastError string
+	checkedAt time.Time
+}
+
+const edgeHealthTTL = 60 * time.Second
+
+// updateEdgeHealth 记录一次 edge 合成/探测结果。
+func (a *App) updateEdgeHealth(available bool, err error) {
+	a.edgeMu.Lock()
+	defer a.edgeMu.Unlock()
+	a.edgeHealth.available = available
+	if err != nil {
+		a.edgeHealth.lastError = err.Error()
+	} else {
+		a.edgeHealth.lastError = ""
+	}
+	a.edgeHealth.checkedAt = time.Now().UTC()
+}
+
+// edgeHealthSnapshot 返回当前 edge 健康缓存（available / lastError / checkedAt）。
+func (a *App) edgeHealthSnapshot() (bool, string, time.Time) {
+	a.edgeMu.Lock()
+	defer a.edgeMu.Unlock()
+	return a.edgeHealth.available, a.edgeHealth.lastError, a.edgeHealth.checkedAt
+}
+
+// setTTSEngine 记录最近一次后端合成实际命中的引擎。
+func (a *App) setTTSEngine(name string) {
+	a.edgeMu.Lock()
+	defer a.edgeMu.Unlock()
+	a.ttsLastEngine = name
+}
+
+// ttsEngineSnapshot 返回最近一次合成命中的引擎名。
+func (a *App) ttsEngineSnapshot() string {
+	a.edgeMu.Lock()
+	defer a.edgeMu.Unlock()
+	return a.ttsLastEngine
+}
+
+// probeEdgeAsync 若缓存过期则后台轻量探测 edge（不阻塞调用方；用户选浏览器合成时跳过）。
+func (a *App) probeEdgeAsync() {
+	a.edgeMu.Lock()
+	fresh := !a.edgeHealth.checkedAt.IsZero() && time.Since(a.edgeHealth.checkedAt) < edgeHealthTTL
+	a.edgeMu.Unlock()
+	if fresh {
+		return
+	}
+	a.mu.Lock()
+	provider := a.settings.TTSProvider
+	cfg := tts.Config{Provider: provider, Voice: a.settings.TTSVoice, Endpoint: a.settings.TTSEndpoint, Gender: a.settings.VoiceReplyGender}
+	a.mu.Unlock()
+	if strings.ToLower(strings.TrimSpace(provider)) == "webspeech" {
+		return // 用户明确选浏览器合成，不探测 edge
+	}
+	a.bgWg.Add(1)
+	go func() {
+		defer a.bgWg.Done()
+		ctx, cancel := context.WithTimeout(a.bgCtx, 15*time.Second)
+		defer cancel()
+		err := tts.ProbeEdge(ctx, cfg)
+		a.updateEdgeHealth(err == nil, err)
+	}()
 }
 
 // Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
@@ -403,6 +534,17 @@ func New(work, reference, data string) (*App, error) {
 			return nil, err
 		}
 	}
+	// 数据分层：建立分层目录骨架，并把旧平铺 /data 一次性迁移到分层布局（幂等、复制→校验→隔离，可回滚）。
+	if err := EnsureDirs(data); err != nil {
+		return nil, err
+	}
+	if err := MigrateFlatToLayered(data); err != nil {
+		return nil, fmt.Errorf("数据分层迁移失败: %w", err)
+	}
+	// TLS 证书目录对齐：旧 data/tls/ → data/certs/（#31 规范，见 migrateLegacyTLSDir）。
+	if err := migrateLegacyTLSDir(data); err != nil {
+		log.Printf("迁移旧 tls/ 证书到 certs/ 失败（继续，将在 certs/ 重新生成）: %v", err)
+	}
 	w, err := os.OpenRoot(work)
 	if err != nil {
 		return nil, err
@@ -412,13 +554,17 @@ func New(work, reference, data string) (*App, error) {
 		w.Close()
 		return nil, err
 	}
-	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}}
+	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}, liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}}
 	a.startedAt = time.Now().UTC()
 	a.bgCtx, a.bgCancel = context.WithCancel(context.Background())
-	b, err := os.ReadFile(filepath.Join(data, "access-token"))
+	// 完整性：首次生成程序基线（已存在则跳过），启动校验并自愈，结果供 healthz 上报；后台周期巡检。
+	_ = BuildBaseline(data)
+	a.setIntegrity(SelfHeal(data, VerifyIntegrity(data)))
+	go RunPeriodicIntegrity(a.bgCtx.Done(), data, 5*time.Minute, a.setIntegrity)
+	b, err := os.ReadFile(AccessTokenPath(data))
 	if errors.Is(err, os.ErrNotExist) {
 		b = []byte(newID() + newID())
-		err = os.WriteFile(filepath.Join(data, "access-token"), b, 0600)
+		err = os.WriteFile(AccessTokenPath(data), b, 0600)
 	}
 	if err != nil {
 		a.Close()
@@ -441,7 +587,7 @@ func New(work, reference, data string) (*App, error) {
 	if v := os.Getenv("AI_API_KEY"); v != "" {
 		a.settings.APIKey = v
 	}
-	if b, err := os.ReadFile(filepath.Join(data, "settings.json")); err == nil {
+	if b, err := os.ReadFile(SettingsPath(data)); err == nil {
 		if err = json.Unmarshal(b, &a.settings); err != nil {
 			a.Close()
 			return nil, err
@@ -455,13 +601,26 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, fmt.Errorf("settings.json: %w", err)
 	}
+	// #34：加载性格演化触发计数/回滚历史（config/personality-state.json），重启不清零。
+	a.loadPersonalityState()
 	// KDF：确保本机固定的 Argon2id salt（data/kdf-salt.bin, 0600）存在并加载，
 	// 之后 deriveKey() 一律走 Argon2id；旧 SHA-256 密文在登录时经 re-wrap 平滑迁移。
 	if err := ensureKdfSalt(data); err != nil {
 		a.Close()
 		return nil, fmt.Errorf("kdf-salt: %w", err)
 	}
+	// 统一加密凭证保险库（#38）：/data/secrets/vault.enc（目录 0700、文件 0600）。
+	// 启动时仅载入密文信封（保持锁定）；主密钥在用户会话中解锁时由账户密码派生。
+	if a.vault, err = newSecretVault(data); err != nil {
+		a.Close()
+		return nil, fmt.Errorf("secret-vault: %w", err)
+	}
+	if err := a.vault.Load(); err != nil {
+		a.Close()
+		return nil, fmt.Errorf("secret-vault load: %w", err)
+	}
 	a.voiceAgent = newVoiceAgent(data)
+	a.voiceAgent.attachBroker(a.liveBroker) // #35：小秘据此拉取 aide 实时输出
 	a.colloqCache = newColloquialCache()
 	a.webAuthn = newWebAuthnManager(data) // Touch ID / WebAuthn 解锁
 	a.profilesPath = filepath.Join(work, profilesFileName)
@@ -486,6 +645,9 @@ func New(work, reference, data string) (*App, error) {
 		a.pluginsPath = filepath.Join(work, pluginsDirName)
 	}
 	a.runPluginHost(context.Background())
+	// 协议 v1.2：初始化常驻守护管理器，并按注册表期望状态自动恢复 enabled 的 daemon 插件
+	a.daemons = newDaemonManager(a)
+	a.daemons.restore()
 	a.sshBin = "ssh"
 	a.sftpBin = "sftp"
 	a.curlBin = "curl"
@@ -508,7 +670,7 @@ func New(work, reference, data string) (*App, error) {
 		return nil, err
 	}
 	a.tokenStats = map[string]TokenDay{}
-	if b, err := os.ReadFile(filepath.Join(data, "token-stats.json")); err == nil {
+	if b, err := os.ReadFile(TokenStatsPath(data)); err == nil {
 		var raw struct {
 			Version int `json:"version"`
 			Legacy  *struct {
@@ -533,7 +695,7 @@ func New(work, reference, data string) (*App, error) {
 		}
 	}
 	a.pricing = PricingState{Rates: map[string]Pricing{}, Default: Pricing{PriceIn: 2, PriceOut: 8}}
-	if b, err := os.ReadFile(filepath.Join(data, "token-pricing.json")); err == nil {
+	if b, err := os.ReadFile(TokenPricingPath(data)); err == nil {
 		var raw map[string]json.RawMessage
 		if json.Unmarshal(b, &raw) != nil {
 			log.Printf("token-pricing.json 无法解析（保留原文件，使用默认刊例价）")
@@ -563,10 +725,14 @@ func New(work, reference, data string) (*App, error) {
 		}
 	}
 	tokenUsageRecorder.Store(func(u TokenUsage) { a.recordTokenUsage(u) })
-	entries, err := filepath.Glob(filepath.Join(data, "session-*.json"))
-	if err != nil {
-		a.Close()
-		return nil, err
+	var entries []string
+	for _, d := range sessionBucketDirs(data) {
+		got, gerr := filepath.Glob(filepath.Join(d, "session-*.json"))
+		if gerr != nil {
+			a.Close()
+			return nil, gerr
+		}
+		entries = append(entries, got...)
 	}
 	for _, path := range entries {
 		b, err := os.ReadFile(path)
@@ -594,6 +760,8 @@ func New(work, reference, data string) (*App, error) {
 			return nil, err
 		}
 	}
+	// #30：启动幂等确保恰好一个小秘系统会话（永久置顶、密码进入）。
+	a.ensureAssistantSession()
 	return a, nil
 }
 func (a *App) Close() {
@@ -601,6 +769,9 @@ func (a *App) Close() {
 		a.bgCancel() // 通知后台 goroutine 停止（中断其 HTTP 请求）
 	}
 	a.bgWg.Wait() // 等后台写盘结束，避免与临时目录清理竞争
+	if a.daemons != nil {
+		a.daemons.StopAll() // 协议 v1.2：终止常驻插件子进程并释放端口
+	}
 	a.workspace.Close()
 	a.reference.Close()
 	if a.localRoot != nil {
@@ -620,13 +791,91 @@ func (a *App) save(s *Session) error {
 	if s.Deleted {
 		return nil // 已删除会话不再落盘（运行中任务取消后的收尾保存同样跳过）
 	}
-	return atomicJSON(filepath.Join(a.dataPath, "session-"+s.ID+".json"), s)
+	return atomicJSON(SessionPath(a.dataPath, s.ID, "active"), s)
+}
+
+// assignSessionNumber 给会话分配下一个编号 #N：单调递增、删除不复用，分配后立即持久化 settings。
+// 调用方必须已持有 a.mu（与 createSession / 子会话创建 / 启动幂等同一把锁）。
+func (a *App) assignSessionNumber(s *Session) {
+	s.Number = a.settings.NextSessionSeq
+	if s.Number <= 0 {
+		s.Number = 1
+	}
+	a.settings.NextSessionSeq = s.Number + 1
+	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings); err != nil {
+		log.Printf("持久化 nextSessionSeq 失败: %v", err)
+	}
+}
+
+// assistantNameLocked 返回当前小秘名字（空回退"小秘"）。调用方持 a.mu。
+func (a *App) assistantNameLocked() string {
+	if n := strings.TrimSpace(a.settings.VoiceAssistantName); n != "" {
+		return n
+	}
+	return "小秘"
+}
+
+// syncAssistantTitleLocked 让小秘系统会话标题跟随 VoiceAssistantName。调用方持 a.mu。
+func (a *App) syncAssistantTitleLocked(s *Session) {
+	name := a.assistantNameLocked()
+	if s.Title != name {
+		s.Title = name
+		_ = a.save(s)
+	}
+}
+
+// ensureAssistantSession 启动幂等：全应用恰好一个 Kind=assistant 的永久置顶会话。
+// 缺失则创建（编号取下一个 NextSessionSeq）；已存在则校正标题跟随名字、强制置顶。
+// 无并发（New() 单线程阶段调用）；内部自取 a.mu。
+func (a *App) ensureAssistantSession() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	for _, s := range a.sessions {
+		if s.Kind == assistantSessionKind {
+			s.Pinned = true // 永久置顶
+			syncName := s.Title
+			if want := a.assistantNameLocked(); syncName != want {
+				s.Title = want
+				_ = a.save(s)
+			}
+			return
+		}
+	}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	s := &Session{
+		ID: newID(), Title: a.assistantNameLocked(),
+		Created: now, Updated: now,
+		Messages: []Message{}, Runs: []*Task{},
+		Kind: assistantSessionKind, Pinned: true,
+	}
+	a.assignSessionNumber(s)
+	a.sessions[s.ID] = s
+	if err := a.save(s); err != nil {
+		log.Printf("创建小秘系统会话失败: %v", err)
+	}
+}
+
+// assistantUnlockMark 记录小秘会话已解锁（内存，锁屏后由 lockScreen 触发 clear 失效）。
+func (a *App) markAssistantUnlocked(id string) {
+	a.assistantUnlockMu.Lock()
+	defer a.assistantUnlockMu.Unlock()
+	if a.assistantUnlocked == nil {
+		a.assistantUnlocked = map[string]bool{}
+	}
+	a.assistantUnlocked[id] = true
+}
+
+// clearAssistantUnlock 锁屏/登出时清空小秘会话内存解锁态。
+func (a *App) clearAssistantUnlock() {
+	a.assistantUnlockMu.Lock()
+	defer a.assistantUnlockMu.Unlock()
+	a.assistantUnlocked = map[string]bool{}
 }
 
 func (a *App) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
-		jsonOut(w, 200, map[string]string{"status": "ok", "service": "aide"})
+		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
 	mux.HandleFunc("PUT /api/settings", a.updateSettings)
@@ -639,7 +888,15 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("PUT /api/plugins/{id}", a.togglePlugin)
 	mux.HandleFunc("DELETE /api/plugins/{id}", a.deletePlugin)
 	mux.HandleFunc("GET /api/plugin-surface", a.pluginSurfaceHandler)
+	mux.HandleFunc("GET /api/plugins/daemons", a.listDaemons)
+	mux.HandleFunc("POST /api/plugins/daemons/{id}/start", a.daemonStartHandler)
+	mux.HandleFunc("POST /api/plugins/daemons/{id}/stop", a.daemonStopHandler)
+	mux.HandleFunc("POST /api/plugins/daemons/{id}/restart", a.daemonRestartHandler)
+	mux.HandleFunc("GET /api/plugins/daemons/{id}/events", a.daemonEventsHandler)
 	mux.HandleFunc("GET /api/workspace-config", a.getWorkspaceConfig)
+	mux.HandleFunc("GET /api/workspace/secrets", a.listWorkspaceSecrets)
+	mux.HandleFunc("DELETE /api/workspace/secrets/{id}", a.deleteWorkspaceSecret)
+	mux.HandleFunc("POST /api/workspace/unlock-vault", a.unlockWorkspaceVault)
 	mux.HandleFunc("GET /api/sources", a.listSources)
 	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)
 	mux.HandleFunc("POST /api/feedback", a.feedbackHandler)
@@ -652,6 +909,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/personality", a.personalityGet)
 	mux.HandleFunc("PUT /api/personality", a.personalitySave)
 	mux.HandleFunc("POST /api/personality/reset", a.personalityReset)
+	mux.HandleFunc("POST /api/personality/rollback", a.personalityRollback)
 	mux.HandleFunc("POST /api/personality/evolve", a.personalityEvolve)
 	mux.HandleFunc("GET /api/token-pricing", a.tokenPricingHandler)
 	mux.HandleFunc("PUT /api/token-pricing", a.tokenPricingHandler)
@@ -670,11 +928,14 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/sessions/{id}", a.getSession)
 	mux.HandleFunc("GET /api/export", a.exportSessions)
 	mux.HandleFunc("POST /api/config/export", a.exportConfigBackup)
+	mux.HandleFunc("GET /api/factory-reset/preview", a.previewFactoryReset)
+	mux.HandleFunc("POST /api/factory-reset", a.postFactoryReset)
 	mux.HandleFunc("POST /api/config/import", a.importConfigBackup)
 	mux.HandleFunc("DELETE /api/sessions/{id}", a.deleteSession)
 	mux.HandleFunc("DELETE /api/sessions/archived/all", a.deleteAllArchived)
 	mux.HandleFunc("PATCH /api/sessions/{id}", a.patchSession)
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
+	mux.HandleFunc("POST /api/sessions/{id}/unlock-assistant", a.unlockAssistantSession) // #30 小秘会话密码门
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/retry", a.retryTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
@@ -688,6 +949,15 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/voice-narrate", a.voiceNarrate)
 	mux.HandleFunc("POST /api/tts/synthesize", a.ttsSynthesize)
 	mux.HandleFunc("POST /api/tts/colloquialize", a.ttsColloquialize)
+	// ── 少样本音色克隆 + 性格推断（#36）──
+	mux.HandleFunc("POST /api/voice-sample/upload", a.voiceSampleUpload)
+	mux.HandleFunc("GET /api/voice-samples", a.voiceSamplesList)
+	mux.HandleFunc("DELETE /api/voice-sample/{id}", a.voiceSampleDelete)
+	mux.HandleFunc("GET /api/voice-sample/{id}/audio", a.voiceSampleAudio)
+	mux.HandleFunc("POST /api/voice-samples/wipe", a.voiceSamplesWipe)
+	mux.HandleFunc("POST /api/voice-clone/create", a.voiceCloneCreate)
+	mux.HandleFunc("POST /api/voice-personality/infer", a.voicePersonalityInfer)
+	mux.HandleFunc("POST /api/voice-personality/adopt", a.voicePersonalityAdopt)
 	mux.HandleFunc("GET /api/voice-history", a.voiceHistory)
 	mux.HandleFunc("DELETE /api/voice-history", a.voiceHistoryClear)
 	mux.HandleFunc("POST /api/voice-history/enable", a.voiceHistoryEnable)
@@ -696,6 +966,9 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/voice-history/change-password", a.voiceHistoryChangePassword)
 	mux.HandleFunc("POST /api/voice-history/disable", a.voiceHistoryDisable)
 	mux.HandleFunc("POST /api/account/verify-password", a.accountVerifyPassword)
+	// ── 锁屏集群权威状态（后端持久化，选举/veil/看门狗以后端为准）──
+	mux.HandleFunc("GET /api/lock-state", a.lockStateGet)
+	mux.HandleFunc("PUT /api/lock-state", a.lockStatePut)
 	mux.HandleFunc("POST /api/webauthn/register/start", a.webAuthnRegisterStart)
 	mux.HandleFunc("POST /api/webauthn/register/finish", a.webAuthnRegisterFinish)
 	mux.HandleFunc("GET /api/webauthn/credentials", a.webAuthnListCredentials)
@@ -713,12 +986,20 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/debug/actions/ping-provider", a.debugPingProvider)
 	mux.HandleFunc("POST /api/debug/actions/diagnostic-bundle", a.debugDiagnosticBundle)
 	mux.HandleFunc("GET /api/debug/audit", a.debugAudit)
+	mux.HandleFunc("GET /api/debug/audit/export", a.debugAuditExport)
 	mux.HandleFunc("POST /api/debug/admin/token", a.debugAdminToken)
 	mux.HandleFunc("POST /api/debug/admin/revoke", a.debugAdminRevoke)
 	mux.HandleFunc("POST /api/debug/admin/toggle", a.debugAdminToggle)
 	a.routes = mux
 	web, _ := fs.Sub(assets, "web")
-	mux.Handle("/", http.FileServer(http.FS(web)))
+	fileServer := http.FileServer(http.FS(web))
+	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// ES 模块（pdf.js 的 .mjs）必须以 JS MIME 提供，否则动态 import() / module worker 被浏览器严格 MIME 检查拦截
+		if strings.HasSuffix(r.URL.Path, ".mjs") {
+			w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+		}
+		fileServer.ServeHTTP(w, r)
+	}))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 鉴权现状：全程 Bearer Token（Authorization 头 / 受信路径上的 ?access_token=），不使用 Cookie。
 		// 未来若引入 Cookie，必须同时设置 Secure、HttpOnly、SameSite=Lax，且仅在 HTTPS 连接下发。
@@ -727,7 +1008,7 @@ func (a *App) Handler() http.Handler {
 		if strings.HasPrefix(r.URL.Path, "/vendor/drawio/") {
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'none'")
 		} else {
-			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'")
+			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'")
 		}
 		// HSTS：仅在非回环的真实 HTTPS 站点下发；localhost/127.0.0.1 不加，避免浏览器把本机
 		// http://localhost 永久强制改写。max-age 取短值 300s，本地自签场景可快速回收。
@@ -762,9 +1043,15 @@ func (a *App) Handler() http.Handler {
 	})
 }
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
+	// edge 健康：先快照（edgeMu），再按需后台探测，最后才拿 a.mu——避免 edgeMu/a.mu 反向加锁死锁。
+	edgeAvail, edgeErr, _ := a.edgeHealthSnapshot()
+	a.probeEdgeAsync()
+	// 本地离线 sherpa-onnx（#44）：探测二进制+已安装模型，回显给前端（文件系统 stat/readdir，极快）。
+	sherpaBinOK, sherpaVoices := tts.SherpaModelInfo("", "")
+	sherpaInstalled := sherpaBinOK && len(sherpaVoices) > 0
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "hasPassword": a.settings.UserPasswordHash != "", "webAuthnReady": a.webAuthn.enabled(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "hasPassword": a.settings.UserPasswordHash != "", "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -816,6 +1103,9 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		in.Settings.VoiceReplyEnabled = *in.VoiceReplyEnabled
 	} else {
 		in.Settings.VoiceReplyEnabled = a.settings.VoiceReplyEnabled
+	}
+	if in.VoiceReplyVerbosity == "" {
+		in.Settings.VoiceReplyVerbosity = a.settings.VoiceReplyVerbosity
 	}
 	if in.VoiceReplyGender == "" {
 		in.Settings.VoiceReplyGender = a.settings.VoiceReplyGender
@@ -902,6 +1192,26 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if in.Settings.TTSExpressiveness == 0 {
 		in.Settings.TTSExpressiveness = a.settings.TTSExpressiveness
 	}
+	// Azure key 同 TTSAPIKey：空且未 clear 时保留已存值
+	if in.Settings.TTSAzureKey == "" {
+		in.Settings.TTSAzureKey = a.settings.TTSAzureKey
+	}
+	if in.Settings.TTSAzureRegion == "" {
+		in.Settings.TTSAzureRegion = a.settings.TTSAzureRegion
+	}
+	// 克隆音色配置：空则保留已存值；APIKey 不回显，前端留空=不改动
+	if in.Settings.CloneTTSBaseURL == "" {
+		in.Settings.CloneTTSBaseURL = a.settings.CloneTTSBaseURL
+	}
+	if in.Settings.CloneTTSAPIKey == "" {
+		in.Settings.CloneTTSAPIKey = a.settings.CloneTTSAPIKey
+	}
+	if in.Settings.CloneVoiceID == "" {
+		in.Settings.CloneVoiceID = a.settings.CloneVoiceID
+	}
+	if in.Settings.CloneTTSBackend == "" {
+		in.Settings.CloneTTSBackend = a.settings.CloneTTSBackend
+	}
 	u, err := url.Parse(in.BaseURL)
 	if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		fail(w, 400, errors.New("请输入有效的 HTTP(S) API Base URL"))
@@ -961,6 +1271,16 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		in.Settings.UserPasswordHash = mustHashPassword(in.NewPassword)
+		// 凭证保险库（#38）：改密码时重加密。首次设置密码时 vault 为空（无密码不允许存凭据），
+		// 直接以新密钥解锁；已有密码时用旧密钥解开、新密钥重封。ReWrap 显式传入旧密钥，不依赖当前解锁态。
+		if a.vault != nil {
+			newVaultKey := deriveKey(in.NewPassword)
+			if len(a.vault.List()) > 0 && hasPw {
+				_ = a.vault.ReWrap(deriveKey(in.OldPassword), newVaultKey)
+			} else {
+				a.vault.Unlock(newVaultKey)
+			}
+		}
 		// 账户密码即人格自定义性格密钥：用新密钥重加密已解锁的人格自定义内容
 		if len(a.personaCustom) > 0 {
 			if in.Settings.PersonaCiphers == nil {
@@ -974,11 +1294,18 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 			a.personaKey = in.NewPassword
 		}
 	}
-	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), in.Settings); err != nil {
+	if err := atomicJSON(SettingsPath(a.dataPath), in.Settings); err != nil {
 		fail(w, 500, err)
 		return
 	}
 	a.settings = in.Settings
+	// #30：VoiceAssistantName 变更后，小秘系统会话标题跟随
+	for _, sess := range a.sessions {
+		if sess.Kind == assistantSessionKind {
+			a.syncAssistantTitleLocked(sess)
+			break
+		}
+	}
 	jsonOut(w, 200, map[string]bool{"ok": true})
 }
 
@@ -995,8 +1322,12 @@ func ttsProviderName(p string) string {
 	switch strings.ToLower(strings.TrimSpace(p)) {
 	case "edge", "edge-tts", "edgetts":
 		return "edge"
+	case "sherpa", "local", "offline", "sherpa-onnx":
+		return "sherpa"
 	case "webspeech", "browser", "web":
 		return "webspeech"
+	case "clone", "voice-clone", "cloned":
+		return "clone"
 	default:
 		return "auto"
 	}
@@ -1008,6 +1339,24 @@ func ttsRateVal(r float64) float64 {
 		return 1.0
 	}
 	return r
+}
+
+// cloneBackendName 归一化克隆后端标识，空=默认 openai。
+func cloneBackendName(b string) string {
+	switch strings.ToLower(strings.TrimSpace(b)) {
+	case "gpt-sovits", "gpt_sovits", "gptsovits":
+		return "gpt-sovits"
+	case "indextts2", "index-tts2", "indextts":
+		return "indextts2"
+	case "cosyvoice2", "cosyvoice":
+		return "cosyvoice2"
+	case "openvoice":
+		return "openvoice"
+	case "", "openai":
+		return "openai"
+	default:
+		return strings.ToLower(strings.TrimSpace(b))
+	}
 }
 
 // voiceFilter 语音小秘：把浏览器 Web Speech API 的转写文本交给小秘 agent 分析决策。
@@ -1054,15 +1403,16 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		entry.Text = text
 	}
 	if entry.Action == "send" {
+		// #34：小秘有效交互计数持久化（personality-state.json），达到阈值后台演化，用真实语音历史样本。
 		a.mu.Lock()
-		a.voiceSendSinceEvolve++
-		fire := a.voiceSendSinceEvolve >= 15
+		fire, trigger := a.onPersonalityInteractLocked(personaXiaomi)
+		var sample string
 		if fire {
-			a.voiceSendSinceEvolve = 0
+			sample = a.personalitySampleLocked(personaXiaomi)
 		}
 		a.mu.Unlock()
 		if fire {
-			go a.autoEvolvePersonality(personaXiaomi, "")
+			go a.runAutoEvolve(personaXiaomi, modeRefine, trigger, sample)
 		}
 	}
 	jsonOut(w, 200, entry)
@@ -1220,8 +1570,49 @@ func (a *App) accountVerifyPassword(w http.ResponseWriter, r *http.Request) {
 	upgraded := false
 	if needsUpgrade {
 		upgraded = a.migratePasswordHash(in.Password)
+	} else {
+		a.unlockVault(in.Password) // 密码校验通过：解锁凭证保险库供 SSH 运行时使用
 	}
 	jsonOut(w, 200, map[string]any{"ok": true, "upgraded": upgraded})
+}
+
+// unlockAssistantSession 小秘系统会话密码门（#30）：进入 Kind=assistant 会话需账户密码授权。
+// 复用 kdf.VerifyPassword（Argon2id，兼容旧 SHA-256 自动迁移）；校验通过记录内存解锁态（锁屏后失效）。
+func (a *App) unlockAssistantSession(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Password string `json:"password"`
+	}
+	if decode(w, r, &in) != nil {
+		return
+	}
+	a.mu.Lock()
+	s := a.sessions[r.PathValue("id")]
+	hash := a.settings.UserPasswordHash
+	a.mu.Unlock()
+	if s == nil {
+		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	if s.Kind != assistantSessionKind {
+		fail(w, 404, errors.New("不是小秘系统会话"))
+		return
+	}
+	if hash == "" {
+		log.Printf("小秘会话密码门拒绝：未设置账户密码 id=%s", s.ID)
+		fail(w, 401, errors.New("未设置账户密码"))
+		return
+	}
+	valid, needsUpgrade := VerifyPassword(in.Password, hash)
+	if !valid {
+		log.Printf("小秘会话密码门失败：密码错误 id=%s", s.ID) // 审计：失败不记录密码
+		fail(w, 401, errors.New("密码错误"))
+		return
+	}
+	if needsUpgrade {
+		a.migratePasswordHash(in.Password) // 旧 SHA-256 命中：升级 Argon2id 并重加密
+	}
+	a.markAssistantUnlocked(s.ID)
+	jsonOut(w, 200, map[string]any{"ok": true})
 }
 
 // migratePasswordHash 把旧 SHA-256 密码哈希升级为 Argon2id PHC，并用新密钥重加密所有密文。
@@ -1262,7 +1653,8 @@ func (a *App) migratePasswordHash(password string) bool {
 	// 3) 更新密码哈希并持久化；内存密码同步为新密码（派生即新密钥）
 	a.settings.UserPasswordHash = newHash
 	a.personaKey = password
-	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings); err != nil {
+	a.unlockVault(password) // 凭证保险库随之解锁（同密码派生，无需 re-wrap）
+	if err := atomicJSON(SettingsPath(a.dataPath), a.settings); err != nil {
 		return false
 	}
 	return true
@@ -1303,6 +1695,8 @@ func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 	showArchived := r.URL.Query().Get("archived") == "1"
 	type item struct {
 		ID, Title, Created, Status, Updated, ParentID string
+		Number                                        int
+		Kind                                          string
 		Pinned, Archived, Checked, AutoArchived       bool
 	}
 	items := []item{}
@@ -1317,10 +1711,14 @@ func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 				break
 			}
 		}
-		items = append(items, item{sess.ID, sess.Title, sess.Created, status, sess.Updated, sess.ParentID, sess.Pinned, sess.Archived, sess.Checked, sess.AutoArchived})
+		items = append(items, item{sess.ID, sess.Title, sess.Created, status, sess.Updated, sess.ParentID, sess.Number, sess.Kind, sess.Pinned, sess.Archived, sess.Checked, sess.AutoArchived})
 	}
-	// 置顶永远最前（活动排序不会把置顶顶下去）；非置顶按最近活动时间倒序
+	// #30：小秘系统会话永远最顶（先于普通置顶）；然后普通置顶；再按最近活动时间倒序
 	sort.Slice(items, func(i, j int) bool {
+		ai, aj := items[i].Kind == assistantSessionKind, items[j].Kind == assistantSessionKind
+		if ai != aj {
+			return ai
+		}
 		if items[i].Pinned != items[j].Pinned {
 			return items[i].Pinned
 		}
@@ -1335,7 +1733,7 @@ func (a *App) listSessions(w http.ResponseWriter, r *http.Request) {
 	})
 	out := make([]map[string]any, len(items))
 	for i, it := range items {
-		out[i] = map[string]any{"id": it.ID, "title": it.Title, "created": it.Created, "status": it.Status, "updated": it.Updated, "pinned": it.Pinned, "archived": it.Archived, "checked": it.Checked, "parentId": it.ParentID, "autoArchived": it.AutoArchived}
+		out[i] = map[string]any{"id": it.ID, "title": it.Title, "created": it.Created, "status": it.Status, "updated": it.Updated, "pinned": it.Pinned, "archived": it.Archived, "checked": it.Checked, "parentId": it.ParentID, "autoArchived": it.AutoArchived, "number": it.Number, "kind": it.Kind}
 	}
 	jsonOut(w, 200, out)
 }
@@ -1354,6 +1752,7 @@ func (a *App) createSession(w http.ResponseWriter, r *http.Request) {
 	s := &Session{ID: newID(), Title: in.Title, Created: now, Updated: now, Messages: []Message{}, Runs: []*Task{}}
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	a.assignSessionNumber(s) // #30：普通会话分配递增编号
 	if err := a.save(s); err != nil {
 		fail(w, 500, err)
 		return
@@ -1381,10 +1780,17 @@ func (a *App) patchSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
-	if in.Pinned != nil {
+	// #30：小秘系统会话永久置顶、不可归档
+	if s.Kind == assistantSessionKind {
+		if in.Archived != nil && *in.Archived {
+			fail(w, 400, errors.New("小秘系统会话不可归档"))
+			return
+		}
+		s.Pinned = true
+	} else if in.Pinned != nil {
 		s.Pinned = *in.Pinned
 	}
-	if in.Archived != nil {
+	if s.Kind != assistantSessionKind && in.Archived != nil {
 		s.Archived = *in.Archived
 	}
 	if in.Touch {
@@ -1411,6 +1817,11 @@ func (a *App) deleteSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
+	if s.Kind == assistantSessionKind {
+		a.mu.Unlock()
+		fail(w, 403, errors.New("小秘系统会话不可删除"))
+		return
+	}
 	s.Deleted = true
 	for _, t := range s.Runs {
 		if t.Status == "running" {
@@ -1423,7 +1834,7 @@ func (a *App) deleteSession(w http.ResponseWriter, r *http.Request) {
 	delete(a.sessions, id)
 	a.mu.Unlock()
 	// save() 落盘路径为 dataPath/session-<id>.json（直接位于数据目录）
-	if err := os.Remove(filepath.Join(a.dataPath, "session-"+id+".json")); err != nil && !os.IsNotExist(err) {
+	if err := os.Remove(SessionPath(a.dataPath, id, "active")); err != nil && !os.IsNotExist(err) {
 		log.Printf("删除会话文件失败: %v", err)
 	}
 	jsonOut(w, 200, map[string]any{"ok": true})
@@ -1554,16 +1965,88 @@ func strictTransportSecurity(r *http.Request) string {
 	return "max-age=300"
 }
 
-// httpsRedirectHandler 把明文 HTTP 请求 301 跳转到同主机的 HTTPS 端口，保留路径与查询串。
-func httpsRedirectHandler(tlsPort string) http.Handler {
+// httpsRedirectHandler 把明文 HTTP 请求 308 跳转到同主机同 URI 的 HTTPS。
+// Location 直接用 r.Host（含宿主映射端口，如 localhost:8097），不写死容器 8080；
+// 308 保留方法与请求体（浏览器旧标签的 API POST 会以 POST 重放到 https）。
+func httpsRedirectHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		host := r.Host
-		if h, _, err := net.SplitHostPort(host); err == nil {
-			host = h
-		}
-		target := "https://" + net.JoinHostPort(host, tlsPort) + r.URL.RequestURI()
-		http.Redirect(w, r, target, http.StatusMovedPermanently)
+		target := "https://" + r.Host + r.URL.RequestURI()
+		http.Redirect(w, r, target, http.StatusPermanentRedirect)
 	})
+}
+
+// protoListener 协议分流后某一协议的 net.Listener：Accept 从 channel 取已分流连接。
+type protoListener struct {
+	addr  net.Addr
+	conns chan net.Conn
+	done  chan struct{}
+}
+
+func (l *protoListener) Accept() (net.Conn, error) {
+	select {
+	case c := <-l.conns:
+		return c, nil
+	case <-l.done:
+		return nil, net.ErrClosed
+	}
+}
+
+func (l *protoListener) Close() error {
+	select {
+	case <-l.done:
+	default:
+		close(l.done)
+	}
+	return nil
+}
+
+func (l *protoListener) Addr() net.Addr { return l.addr }
+
+// peekedConn 把 bufio.Peek 缓冲的首字节与底层 conn 合成单一连接，
+// 使上层 TLS 握手能读到被 Peek 走的 0x16；其余读写透传到底层 conn。
+type peekedConn struct {
+	net.Conn
+	br *bufio.Reader
+}
+
+func (c *peekedConn) Read(p []byte) (int, error) { return c.br.Read(p) }
+
+// splitProto 在 raw 上 Accept 后用首字节分流：0x16(TLS record)→tlsLn，其余明文→plainLn。
+// 每连接独立 goroutine Peek(1)，不批量缓冲，SSE/HTTP2 长连接不被截断或延迟。
+func splitProto(raw net.Listener) (tlsLn, plainLn *protoListener) {
+	tlsLn = &protoListener{addr: raw.Addr(), conns: make(chan net.Conn), done: make(chan struct{})}
+	plainLn = &protoListener{addr: raw.Addr(), conns: make(chan net.Conn), done: make(chan struct{})}
+	go func() {
+		for {
+			c, err := raw.Accept()
+			if err != nil {
+				tlsLn.Close()
+				plainLn.Close()
+				return
+			}
+			go routeConn(c, tlsLn, plainLn)
+		}
+	}()
+	return tlsLn, plainLn
+}
+
+func routeConn(c net.Conn, tlsLn, plainLn *protoListener) {
+	br := bufio.NewReader(c)
+	b, err := br.Peek(1)
+	if err != nil {
+		_ = c.Close()
+		return
+	}
+	wrapped := &peekedConn{Conn: c, br: br}
+	target := plainLn
+	if b[0] == 0x16 {
+		target = tlsLn
+	}
+	select {
+	case target.conns <- wrapped:
+	case <-target.done:
+		_ = c.Close()
+	}
 }
 
 func Run() error {
@@ -1572,23 +2055,27 @@ func Run() error {
 		return err
 	}
 	defer a.Close()
-	// 主端口只做 HTTPS；自签证书缺失时在数据目录 tls/ 自动生成（见 ensureTLSCert）。
-	certFile, keyFile, err := ensureTLSCert(filepath.Join(a.dataPath, "tls"))
+	// 证书统一落在 #31 规范的 data/certs/；旧 data/tls/ 由 migrateLegacyTLSDir 自动迁入。
+	certFile, keyFile, err := ensureTLSCert(CertsDir(a.dataPath))
 	if err != nil {
 		return err
 	}
 	s := &http.Server{Addr: env("AIDE_ADDR", "127.0.0.1:8097"), Handler: a.Handler(), ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10, TLSConfig: tlsConfig()}
-	// 可选：明文 HTTP → HTTPS 跳转。默认 127.0.0.1:8081，把 http:// 入口引导到 HTTPS 主端口；
-	// 置空 AIDE_HTTP_ADDR 可关闭。容器内不向宿主机暴露该端口。
-	tlsPort := ""
-	if _, port, perr := net.SplitHostPort(s.Addr); perr == nil {
-		tlsPort = port
+
+	// 单端口协议自适应：同一端口先 Peek 首字节分流，
+	// 0x16=TLS 走主 server（保持 HTTP/2 + SSE 长连接），其余明文 → 308 跳 https（r.Host 自适应宿主端口）。
+	// 取代旧的 AIDE_HTTP_ADDR/8081 独立跳转端口。
+	rawLn, err := net.Listen("tcp", s.Addr)
+	if err != nil {
+		return err
 	}
-	var redirectSrv *http.Server
-	if httpAddr := env("AIDE_HTTP_ADDR", "127.0.0.1:8081"); httpAddr != "" {
-		redirectSrv = &http.Server{Addr: httpAddr, Handler: httpsRedirectHandler(tlsPort), ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 15 * time.Second}
-		go func() { _ = redirectSrv.ListenAndServe() }()
-	}
+	tlsLn, plainLn := splitProto(rawLn)
+	redirectSrv := &http.Server{Handler: httpsRedirectHandler(), ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 15 * time.Second}
+
+	serveErr := make(chan error, 2)
+	go func() { serveErr <- s.ServeTLS(tlsLn, certFile, keyFile) }()
+	go func() { serveErr <- redirectSrv.Serve(plainLn) }()
+
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	go func() {
@@ -1601,16 +2088,19 @@ func Run() error {
 		c, done := context.WithTimeout(context.Background(), 8*time.Second)
 		defer done()
 		_ = s.Shutdown(c)
-		if redirectSrv != nil {
-			_ = redirectSrv.Close()
-		}
+		_ = redirectSrv.Close()
+		_ = rawLn.Close()
 	}()
-	log.Printf("aide listening on https://%s; cert=%s; token saved in %s/access-token", s.Addr, certFile, a.dataPath)
-	err = s.ListenAndServeTLS(certFile, keyFile)
-	if errors.Is(err, http.ErrServerClosed) {
+	log.Printf("aide listening on https://%s (单端口自适应 http→https 308); cert=%s; token saved in %s", s.Addr, certFile, AccessTokenPath(a.dataPath))
+	select {
+	case <-ctx.Done():
 		return nil
+	case err := <-serveErr:
+		if errors.Is(err, http.ErrServerClosed) {
+			return nil
+		}
+		return err
 	}
-	return err
 }
 
 // recordTokenUsage 累计当日 Token 消耗并持久化到 /data/token-stats.json（FR-90）。
@@ -1637,7 +2127,7 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 	if len(a.tokenCalls) > 5000 {
 		a.tokenCalls = a.tokenCalls[len(a.tokenCalls)-5000:]
 	}
-	saveErr := atomicJSON(filepath.Join(a.dataPath, "token-stats.json"), map[string]any{"version": 2, "days": a.tokenStats, "calls": a.tokenCalls})
+	saveErr := atomicJSON(TokenStatsPath(a.dataPath), map[string]any{"version": 2, "days": a.tokenStats, "calls": a.tokenCalls})
 	a.tokenStatsMu.Unlock()
 	_ = saveErr
 }
@@ -1687,7 +2177,7 @@ func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	a.tokenStatsMu.Lock()
 	a.pricing.Rates[in.Model] = Pricing{PriceIn: in.PriceIn, PriceOut: in.PriceOut}
-	err := atomicJSON(filepath.Join(a.dataPath, "token-pricing.json"), a.pricing)
+	err := atomicJSON(TokenPricingPath(a.dataPath), a.pricing)
 	a.tokenStatsMu.Unlock()
 	if err != nil {
 		fail(w, 500, err)
@@ -1863,14 +2353,17 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 		Rate:           rate,
 		Expressiveness: cfg.TTSExpressiveness,
 		Gender:         gender,
+		AzureKey:       cfg.TTSAzureKey,
+		AzureRegion:    cfg.TTSAzureRegion,
+		CloneBaseURL:   cfg.CloneTTSBaseURL,
+		CloneAPIKey:    cfg.CloneTTSAPIKey,
+		CloneVoiceID:   cfg.CloneVoiceID,
+		CloneBackend:   cfg.CloneTTSBackend,
+		SherpaBin:      "", // 空=默认 /usr/local/bin；可用 SHERPA_BIN 环境变量覆盖
+		SherpaDir:      "", // 空=默认 /data/tts；可用 SHERPA_TTS_DIR 环境变量覆盖
 	}
 	if pcfg.Voice == "" {
 		pcfg.Voice = cfg.TTSVoice
-	}
-	prov, err := tts.NewProvider(providerName, pcfg)
-	if err != nil {
-		fail(w, 400, err)
-		return
 	}
 	opts := tts.SynthOpts{
 		Voice:          pcfg.Voice,
@@ -1879,8 +2372,11 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 		Gender:         gender,
 		Expressiveness: cfg.TTSExpressiveness,
 	}
-	rc, err := prov.Synth(r.Context(), text, opts)
+	// 多引擎编排：edge → azure(若配 key)。任一可用即返回实际引擎。
+	rc, engineUsed, err := tts.ChainSynth(r.Context(), text, opts, pcfg)
 	if err != nil {
+		a.updateEdgeHealth(false, err)
+		a.setTTSEngine("unavailable")
 		fail(w, 502, err)
 		return
 	}
@@ -1890,10 +2386,19 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 	var first [8192]byte
 	n, err := rc.Read(first[:])
 	if n == 0 {
+		a.updateEdgeHealth(false, err)
 		fail(w, 502, fmt.Errorf("TTS 首包超时或失败：%w", err))
 		return
 	}
-	w.Header().Set("Content-Type", "audio/mpeg")
+	a.updateEdgeHealth(true, nil) // 首包到达：edge 可用，刷新健康缓存
+	a.setTTSEngine(engineUsed)
+	w.Header().Set("X-TTS-Engine", engineUsed)
+	// sherpa 本地离线输出 WAV；edge/azure 输出 MP3。前端经 blob 播放，按此 Content-Type 正确解码。
+	ct := "audio/mpeg"
+	if engineUsed == "sherpa" {
+		ct = "audio/wav"
+	}
+	w.Header().Set("Content-Type", ct)
 	w.Header().Set("Cache-Control", "no-store")
 	w.WriteHeader(200)
 	w.Write(first[:n])
@@ -1907,6 +2412,7 @@ func (a *App) ttsSynthesize(w http.ResponseWriter, r *http.Request) {
 func (a *App) ttsColloquialize(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Text string `json:"text"`
+		Mode string `json:"mode"` // brief(默认) | full
 	}
 	if err := decode(w, r, &in); err != nil {
 		return
@@ -1916,7 +2422,7 @@ func (a *App) ttsColloquialize(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]string{"spoken": ""})
 		return
 	}
-	spoken, err := a.colloquialize(r.Context(), text)
+	spoken, err := a.colloquialize(r.Context(), text, in.Mode)
 	if err != nil {
 		// 改写失败：返回原文，前端照读
 		jsonOut(w, 200, map[string]string{"spoken": text, "fallback": "1"})

@@ -14,6 +14,9 @@ import (
 
 func TestWorkspaceConfigCRUD(t *testing.T) {
 	a := testApp(t)
+	// #38：先设置账户密码并解锁凭证保险库，否则 SSH 凭据保存会被拒绝。
+	a.settings.UserPasswordHash = mustHashPassword("test-pw")
+	a.unlockVault("test-pw")
 	w := request(a, "GET", "/api/workspace-config", nil)
 	requireStatus(t, w, 200)
 	if !strings.Contains(w.Body.String(), `"mode":"local"`) {
@@ -35,9 +38,16 @@ func TestWorkspaceConfigCRUD(t *testing.T) {
 	if !strings.Contains(body, `"doc"`) {
 		t.Fatalf("recent docs missing: %s", body)
 	}
-	// 秘钥落在 /data 卷
-	if b, err := os.ReadFile(filepath.Join(a.dataPath, wsSecretsFile)); err != nil || !strings.Contains(string(b), "secret-pw") {
-		t.Fatalf("secrets file: %s %v", b, err)
+	// #38：凭据落在加密 vault（/data/secrets/vault.enc），不再回退明文 workspace-secrets.json。
+	if b, err := os.ReadFile(WorkspaceSecretsPath(a.dataPath)); err == nil && strings.Contains(string(b), "secret-pw") {
+		t.Fatalf("明文 secrets 文件不应再包含密码: %s", b)
+	}
+	vaultB, err := os.ReadFile(filepath.Join(a.dataPath, "secrets", "vault.enc"))
+	if err != nil {
+		t.Fatalf("vault.enc 应存在: %v", err)
+	}
+	if strings.Contains(string(vaultB), "secret-pw") {
+		t.Fatalf("vault 信封不应含明文密码: %s", vaultB)
 	}
 	// 工程目录配置文件存在且不含密码
 	if b, err := os.ReadFile(filepath.Join(a.workPath, wsConfigFile)); err != nil || strings.Contains(string(b), "secret-pw") {

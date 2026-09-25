@@ -33,7 +33,7 @@ func TestCompleteStreamTextDeltas(t *testing.T) {
 
 	var deltas []string
 	cfg := Settings{BaseURL: srv.URL, Model: "test-model"}
-	text, calls, usage, err := completeStream(context.Background(), cfg, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil, nil, func(d string) { deltas = append(deltas, d) }, nil)
+	text, calls, usage, _, err := completeStream(context.Background(), cfg, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil, nil, func(d string) { deltas = append(deltas, d) }, nil)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestCompleteStreamToolCallAssembly(t *testing.T) {
 	defer srv.Close()
 
 	cfg := Settings{BaseURL: srv.URL, Model: "test-model"}
-	text, calls, _, err := completeStream(context.Background(), cfg, []Message{}, ProfileParams{}, builtinTools[:1], nil, func(string) {}, nil)
+	text, calls, _, _, err := completeStream(context.Background(), cfg, []Message{}, ProfileParams{}, builtinTools[:1], nil, func(string) {}, nil)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestCompleteStreamNonSSEFallback(t *testing.T) {
 	defer srv.Close()
 
 	cfg := Settings{BaseURL: srv.URL, Model: "test-model"}
-	text, _, _, err := completeStream(context.Background(), cfg, []Message{}, ProfileParams{}, nil, nil, func(string) {}, nil)
+	text, _, _, _, err := completeStream(context.Background(), cfg, []Message{}, ProfileParams{}, nil, nil, func(string) {}, nil)
 	if err != nil {
 		t.Fatalf("unexpected err: %v", err)
 	}
@@ -118,7 +118,7 @@ func TestCompleteStreamHTTPError(t *testing.T) {
 	defer srv.Close()
 
 	cfg := Settings{BaseURL: srv.URL, Model: "test-model"}
-	_, _, _, err := completeStream(context.Background(), cfg, []Message{}, ProfileParams{}, nil, nil, func(string) {}, nil)
+	_, _, _, _, err := completeStream(context.Background(), cfg, []Message{}, ProfileParams{}, nil, nil, func(string) {}, nil)
 	if err == nil || !strings.Contains(err.Error(), "401") {
 		t.Fatalf("err = %v", err)
 	}

@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -31,14 +30,14 @@ import (
 const (
 	webAuthnCredsFileName = "webauthn-credentials.json"
 	webAuthnUserHandleStr = "aide-local-v1" // userHandle，固定 ≤64 字节
-	webAuthnSessionTTL     = 120 * time.Second
+	webAuthnSessionTTL    = 120 * time.Second
 )
 
 // webAuthnCredEntry 一条已注册的平台认证器凭证（公钥材料，无私钥）。
 type webAuthnCredEntry struct {
-	ID         string             `json:"id"` // base64url credential ID
-	Name       string             `json:"name"`
-	CreatedAt  int64              `json:"createdAt"`
+	ID         string              `json:"id"` // base64url credential ID
+	Name       string              `json:"name"`
+	CreatedAt  int64               `json:"createdAt"`
 	Credential webauthn.Credential `json:"credential"`
 }
 
@@ -61,9 +60,9 @@ type localWebAuthnUser struct {
 	creds []webauthn.Credential
 }
 
-func (u localWebAuthnUser) WebAuthnID() []byte           { return []byte(webAuthnUserHandleStr) }
-func (u localWebAuthnUser) WebAuthnName() string         { return "aide-local" }
-func (u localWebAuthnUser) WebAuthnDisplayName() string   { return "aide local" }
+func (u localWebAuthnUser) WebAuthnID() []byte                         { return []byte(webAuthnUserHandleStr) }
+func (u localWebAuthnUser) WebAuthnName() string                       { return "aide-local" }
+func (u localWebAuthnUser) WebAuthnDisplayName() string                { return "aide local" }
 func (u localWebAuthnUser) WebAuthnCredentials() []webauthn.Credential { return u.creds }
 
 // newWebAuthnManager 初始化 WebAuthn 管理器；RPID 固定 localhost（IP 字面量不合法）。
@@ -73,14 +72,19 @@ func newWebAuthnManager(dataPath string) *webAuthnManager {
 		dataPath: dataPath,
 		sessions: map[string]*webauthn.SessionData{},
 	}
-	// RPID 固定 localhost；origin 白名单含 localhost:8097。
-	// 127.0.0.1 origin 允许注册但前端隐藏解锁按钮（RP ID 不支持 IP 字面量）。
+	// RPID 固定 localhost（IP 字面量不合法）。
+	// Origin 白名单同时覆盖 http/https × localhost/127.0.0.1：页面已切 HTTPS（自签），
+	// 但浏览器旧标签缓存仍可能以 http:// 发起 register/finish，缺 https origin 会被
+	// WebAuthn 以 "origin not allowed" 拒绝。端口取宿主映射 AIDE_PORT（默认 8097）。
+	port := env("AIDE_PORT", "8097")
 	cfg := &webauthn.Config{
 		RPID:          "localhost",
 		RPDisplayName: "aide",
 		RPOrigins: []string{
-			"http://localhost:8097",
-			"http://127.0.0.1:8097",
+			"https://localhost:" + port,
+			"https://127.0.0.1:" + port,
+			"http://localhost:" + port,
+			"http://127.0.0.1:" + port,
 		},
 	}
 	wa, err := webauthn.New(cfg)
@@ -95,9 +99,19 @@ func newWebAuthnManager(dataPath string) *webAuthnManager {
 
 func (m *webAuthnManager) enabled() bool { return m != nil && m.wa != nil }
 
+// hasPlatformCredential 是否已注册至少一把平台凭证（只读布尔，不泄露凭证细节）。
+func (m *webAuthnManager) hasPlatformCredential() bool {
+	if m == nil || !m.enabled() {
+		return false
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return len(m.store.Credentials) > 0
+}
+
 func (m *webAuthnManager) loadLocked() {
 	m.store = webAuthnStore{Version: 1, RPID: "localhost"}
-	b, err := os.ReadFile(filepath.Join(m.dataPath, webAuthnCredsFileName))
+	b, err := os.ReadFile(WebAuthnCredsPath(m.dataPath))
 	if err != nil {
 		return
 	}
@@ -105,7 +119,7 @@ func (m *webAuthnManager) loadLocked() {
 }
 
 func (m *webAuthnManager) saveLocked() error {
-	path := filepath.Join(m.dataPath, webAuthnCredsFileName)
+	path := WebAuthnCredsPath(m.dataPath)
 	return atomicJSON(path, &m.store)
 }
 
@@ -187,8 +201,17 @@ func (a *App) webAuthnRegisterStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 以 challenge 的 base64url 字符串为 key 存会话。
-	challengeB64 := base64.RawURLEncoding.EncodeToString([]byte(session.Challenge))
-	a.webAuthn.sessions[challengeB64] = session
+	//
+	// 根因（go-webauthn v0.18.2 SessionData 语义）：SessionData.Challenge 是 string，
+	// 库在 registration.go:125 已将其赋值为 creation.Response.Challenge.String()——
+	// 即对原始 challenge 字节做单层 base64url 编码后的字符串，与 JSON 下发给前端、
+	// 前端 finish 时原样回传的值严格一致。旧代码又对 session.Challenge 这个字符串
+	// 再做一次 base64.RawURLEncoding.EncodeToString([]byte(...))，等于对"已编码的
+	// base64 文本"再编码一次（双重编码），导致 map key 与前端回传值永远对不上，
+	// finish 一律 400"会话无效或已过期"。这里直接用 Response.Challenge.String() 作 key，
+	// 保证与下发值逐字节一致。
+	challengeKey := creation.Response.Challenge.String()
+	a.webAuthn.sessions[challengeKey] = session
 	jsonOut(w, 200, creation.Response)
 }
 
@@ -371,8 +394,11 @@ func (a *App) webAuthnAssertionStart(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
-	challengeB64 := base64.RawURLEncoding.EncodeToString([]byte(session.Challenge))
-	a.webAuthn.sessions[challengeB64] = session
+	// 同 register start：SessionData.Challenge 在 v0.18.2 已是单层 base64url 字符串
+	// （login.go:142 赋值为 assertion.Response.Challenge.String()），必须直接用它作 key，
+	// 不得再二次 base64 编码，否则前端回传值命中不了会话（双重编码 bug）。
+	challengeKey := assertion.Response.Challenge.String()
+	a.webAuthn.sessions[challengeKey] = session
 	jsonOut(w, 200, assertion.Response)
 }
 

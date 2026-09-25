@@ -51,6 +51,27 @@ var (
 	ErrEdgeFirstByteTimeout = errors.New("edge-tts 首包超时")
 )
 
+// ErrEdgeClosed 服务端在返回音频前主动关闭 WSS（带 close code+reason）。
+// 与超时不同：这通常是微软风控/拒绝（如 1008 policy violation、1011 server error），
+// 重试无意义，应直接标记 edge 不可用并切下一引擎/降级浏览器。
+type ErrEdgeClosed struct {
+	Code   int    // WebSocket close code（RFC6455 §7.4）
+	Reason string // 服务端给出的关闭原因文本
+}
+
+func (e *ErrEdgeClosed) Error() string {
+	return fmt.Sprintf("edge-tts 服务端关闭连接(code=%d, %s)", e.Code, e.Reason)
+}
+
+// isEdgeClosed 判断是否为服务端主动断连（含裸 EOF，即对端未发 close 帧直接断）。
+func isEdgeClosed(err error) bool {
+	var c *ErrEdgeClosed
+	if errors.As(err, &c) {
+		return true
+	}
+	return errors.Is(err, io.EOF)
+}
+
 // edgeDial 是建连钩子：生产用标准库 TLS Dialer；测试可替换为 net.Pipe 制造慢响应。
 var edgeDial = func(ctx context.Context, network, addr, serverName string) (net.Conn, error) {
 	d := &tls.Dialer{Config: &tls.Config{ServerName: serverName}}
@@ -95,13 +116,13 @@ func (e *edge) Synth(ctx context.Context, text string, opts SynthOpts) (io.ReadC
 			return &prependReader{first: first, rest: rest}, nil
 		}
 		lastErr = err
-		// 非超时错误立即返回（不重试）；最后一次尝试的超时错误也返回。
+		// 仅超时类错误重试；服务端断连(风控)、403 等不重试，立即返回。
 		if !isEdgeTimeout(err) || attempt == edgeMaxRetries {
 			break
 		}
 	}
-	// 超时类错误重试耗尽 → 包装为 ErrUnavailable，供上层降级 + 健康标记。
-	if isEdgeTimeout(lastErr) {
+	// 超时(重试耗尽)或服务端主动断连 → 包装为 ErrUnavailable，切下一引擎/降级。
+	if isEdgeTimeout(lastErr) || isEdgeClosed(lastErr) {
 		return nil, fmt.Errorf("%w: %w", ErrUnavailable, lastErr)
 	}
 	return nil, lastErr
@@ -185,8 +206,12 @@ func (e *edge) synthOnce(ctx context.Context, text string, opts SynthOpts) (firs
 		opcode, payload, rerr := ws.readMessage()
 		if rerr != nil {
 			ws.Close()
+			var closed *ErrEdgeClosed
+			if errors.As(rerr, &closed) {
+				return nil, nil, closed // 服务端风控/拒绝，带 code+reason
+			}
 			if errors.Is(rerr, io.EOF) {
-				return nil, nil, fmt.Errorf("edge-tts 连接提前关闭")
+				return nil, nil, &ErrEdgeClosed{Code: 0, Reason: "对端裸关闭(无 close 帧)"}
 			}
 			if isDeadlineErr(rerr) {
 				return nil, nil, ErrEdgeFirstByteTimeout
@@ -511,7 +536,15 @@ func (w *wsConn) readMessage() (byte, []byte, error) {
 		case opPong:
 			continue
 		case opClose:
-			return 0, nil, io.EOF
+			// 解析 close 帧：前 2 字节大端 uint16 = close code，其后为 UTF-8 reason。
+			code := 1000
+			reason := ""
+			if len(payload) >= 2 {
+				code = int(binary.BigEndian.Uint16(payload[:2]))
+				reason = strings.TrimSpace(string(payload[2:]))
+			}
+			_ = w.writeFrame(opClose, payload) // 回 close 帧
+			return 0, nil, &ErrEdgeClosed{Code: code, Reason: reason}
 		case opContinuation:
 			buf = append(buf, payload...)
 		default:

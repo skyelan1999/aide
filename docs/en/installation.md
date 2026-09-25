@@ -99,7 +99,31 @@ flowchart TD
   K --> L["Model -> LAN/local provider<br/>web_search degrades to search_text"]
 ```
 
-## 4. Select your directories
+## 4. Build, test, and release gate (source development)
+
+`bash scripts/aide.sh start` is already optimized for the startup hot path; you do not need the details below to use it. They describe how it works and the offline/release caveats.
+
+**Two launch modes**
+
+| Command | Behavior | Use when |
+| --- | --- | --- |
+| `bash scripts/aide.sh start` | Build from source. Hashes the Go source set (cmd+internal+go.mod/go.sum/vendor + Dockerfile/compose.yaml) and stores it in the image label `aide.srcsha`; on a second launch with an unchanged hash it goes straight up with `--no-build` (skips buildkit, seconds to ready), and rebuilds only when the hash changes | You changed source locally |
+| `bash scripts/aide.sh start-image` | Start the imported image with `--no-build --pull never`; never builds/pulls | Release image / offline machine |
+
+**Tests and the release gate (#43)**
+
+- The default `start` Docker build **does not run the full `go test`** (`AIDE_RUN_TESTS=0`); it only runs `go vet` + incremental `go build`. After a frontend/Go change the layer cache hits, so vet+build is ~5s and end-to-end ~12s; an unchanged second start takes the quick path at ~3s.
+- The full `go test` moved from "every startup" to "the release gate": `scripts/docker-release.sh` and CI builds **must** pass `--build-arg AIDE_RUN_TESTS=1` to force the full suite (~160s) before shipping. The gate is not bypassed.
+- To run the full suite locally (with the race detector) manually: `bash scripts/aide.sh test` (in-container `go test -race -count=1 ./... && go vet ./...`).
+- To enable tests for one build: `AIDE_RUN_TESTS=1 bash scripts/aide.sh start`.
+
+**Runtime pip layer caching and offline (#46)**
+
+- The runtime stage puts its stable layers (system user + Office-parsing pip dependencies) **before** the `COPY` of the business binary, and the binary (which changes on every code/frontend edit) last. Thus a Go/frontend change only invalidates the final COPY layer; the pip layer stays `CACHED` and never re-downloads online. The shipped image is self-contained and never pip-installs at runtime.
+- Dependencies are pinned (python-docx==1.2.0, openpyxl==3.1.5, python-pptx==1.0.2, ezdxf==1.4.4); pip downloads are reused via a BuildKit cache mount.
+- **Offline / air-gap first build**: on a networked machine run `bash scripts/prebuild-wheels.sh` to pre-download the manylinux/arm64 wheels into `docker/wheels/`, carry them to the offline build machine, and build with `--build-arg PIP_OFFLINE=1` (`pip install --no-index --find-links=/wheels`, fully local, zero network). `docker/wheels/` ships with only `.gitkeep`; online builds ignore it.
+
+## 5. Select your directories
 
 Use existing paths, preferably absolute:
 
@@ -115,12 +139,12 @@ For subsequent image runs use `bash scripts/aide.sh start-image`. For custom sou
 
 The workspace and local roots are writable. References mounted at `/context` are read-only. Sessions, keys, rates, and configuration are in the `/data` volume; development caches are in `/home/aide`. An image archive is not a data backup.
 
-## 5. Sign in and connect a model
+## 6. Sign in and connect a model
 
 Open `https://localhost:8097`. macOS opens a token-authenticated URL automatically; Linux uses xdg-open when available. Without a desktop opener, retrieve the token locally:
 
 ```bash
-docker compose exec -T aide cat /data/access-token
+docker compose exec -T aide cat /data/auth/access-token
 ```
 
 Paste it into the login form. Never share the token or token-bearing URL. This is not your model API key.
@@ -144,3 +168,11 @@ Open **Model settings**, set a Base URL, model ID, and provider key. Installatio
 | Language selector missing | Check the running image version; use the current release image |
 
 `status`, `logs`, and `stop` are supported by `scripts/aide.sh`. Do not use `docker compose down -v` as an ordinary upgrade step. See [Operations](../../HANDOVER.md).
+
+### Local offline voice (optional)
+
+The image bundles the sherpa-onnx synthesizer (Apache-2.0, offline); Chinese voice models are externalized
+to `/data/tts/` to keep the image small. On a networked host run `scripts/tts-setup --model huayan` inside the
+container to download the default female voice (~67MB, SHA256-verified); for air-gapped setups place the model
+manually per [Local offline TTS](../en/security/tts-local.md). After install + restart, pick "Auto" in Settings →
+TTS engine to prefer local offline synthesis (text never leaves the machine).

@@ -33,7 +33,7 @@ func TestCompleteStreamEmptyIsSentinel(t *testing.T) {
 	defer srv.Close()
 
 	cfg := Settings{BaseURL: srv.URL, Model: "test"}
-	_, _, _, err := completeStream(context.Background(), cfg, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil, nil, func(string) {}, nil)
+	_, _, _, _, err := completeStream(context.Background(), cfg, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil, nil, func(string) {}, nil)
 	if !isEmptyCompletionErr(err) {
 		t.Fatalf("err = %v, want emptyCompletionErr", err)
 	}
@@ -51,7 +51,7 @@ func TestCompleteStreamEmptyCarriesFinishReason(t *testing.T) {
 	defer srv.Close()
 
 	cfg := Settings{BaseURL: srv.URL, Model: "test"}
-	_, _, _, err := completeStream(context.Background(), cfg, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil, nil, func(string) {}, nil)
+	_, _, _, _, err := completeStream(context.Background(), cfg, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil, nil, func(string) {}, nil)
 	if !isEmptyCompletionErr(err) {
 		t.Fatalf("err = %v, want emptyCompletionErr", err)
 	}

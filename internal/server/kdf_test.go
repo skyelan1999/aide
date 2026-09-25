@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -168,7 +167,8 @@ func TestReWrapAllVoice(t *testing.T) {
 		t.Fatalf("encrypt: %v", err)
 	}
 	env, _ := json.Marshal(voiceHistoryFile{Encrypted: true, Cipher: cipher})
-	if err := os.WriteFile(filepath.Join(dir, "voice-history.json"), env, 0600); err != nil {
+	_ = os.MkdirAll(AssistantDir(dir), 0700)
+	if err := os.WriteFile(VoiceHistoryPath(dir), env, 0600); err != nil {
 		t.Fatalf("write: %v", err)
 	}
 
@@ -285,7 +285,7 @@ func TestMigrationIntegration(t *testing.T) {
 	}
 
 	// 落盘 settings.json 里也是 PHC
-	onDisk, err := os.ReadFile(filepath.Join(a.dataPath, "settings.json"))
+	onDisk, err := os.ReadFile(SettingsPath(a.dataPath))
 	if err != nil {
 		t.Fatalf("read settings: %v", err)
 	}

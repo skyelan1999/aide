@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -13,7 +12,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -127,17 +125,17 @@ func decryptWithKey(key []byte, b64 string) ([]byte, error) {
 // 框架可扩展：在 builtinPersonas 追加条目即可新增更多人格。
 
 const (
-	personaAide   = "aide"  // 工作人格
+	personaAide   = "aide"   // 工作人格
 	personaXiaomi = "xiaomi" // 生活人格
 )
 
 // Persona 一个独立人格的定义与运行态。
 type Persona struct {
 	ID       string `json:"id"`
-	Name     string `json:"name"`      // 显示名（小秘可被用户改名）
-	Role     string `json:"role"`      // work | life
-	Builtin  bool   `json:"builtin"`   // 是否内置人格
-	Editable bool   `json:"editable"`   // 自定义性格是否可编辑/重置
+	Name     string `json:"name"`     // 显示名（小秘可被用户改名）
+	Role     string `json:"role"`     // work | life
+	Builtin  bool   `json:"builtin"`  // 是否内置人格
+	Editable bool   `json:"editable"` // 自定义性格是否可编辑/重置
 	// Cipher 为持久化密文（settings.json，AES-256-GCM，base64），保存该人格的自定义性格补充。
 	Cipher string `json:"cipher,omitempty"`
 	// custom 为运行态明文（不落盘），仅解锁后持有。
@@ -183,9 +181,16 @@ func (a *App) activePersonaID() string {
 }
 
 // baseSystemPrompt 返回当前活动人格的基础 system 提示词。
+// 小秘人格在生活向设定前先拼接集中身份核心（voiceIdentityPrompt），
+// 与语音听写(analyze)、讲解(narrate)保持同一套"我是谁"。
 func (a *App) baseSystemPrompt() string {
 	if a.activePersonaID() == personaXiaomi {
-		return fmt.Sprintf(xiaomiMainPrompt, a.personaDisplayName(personaXiaomi))
+		p := voiceIdentityPrompt(a.settings) + "\n\n" + fmt.Sprintf(xiaomiMainPrompt, a.personaDisplayName(personaXiaomi))
+		// #35：小秘对话时附加 aide 长期记忆（只读参考，与小秘私有记忆分块）。
+		if a.voiceAgent != nil {
+			p += "\n\n【aide 的长期记忆（你只读参考、绝不修改；它是 aide 记下的用户偏好/项目约定，不是你自己的记忆）】\n" + a.voiceAgent.readAideMemory()
+		}
+		return p
 	}
 	return systemPrompt // aide 工作人格的开发助手设定（workflow.go）
 }
@@ -196,14 +201,14 @@ func (a *App) personaListOut() []map[string]any {
 	for _, p := range builtinPersonas {
 		_, hasCustom := a.settings.PersonaCiphers[p.ID]
 		out = append(out, map[string]any{
-			"id":       p.ID,
-			"name":     a.personaDisplayName(p.ID),
-			"role":     p.Role,
-			"builtin":  p.Builtin,
-			"editable": p.Editable,
-			"active":   p.ID == a.activePersonaID(),
+			"id":        p.ID,
+			"name":      a.personaDisplayName(p.ID),
+			"role":      p.Role,
+			"builtin":   p.Builtin,
+			"editable":  p.Editable,
+			"active":    p.ID == a.activePersonaID(),
 			"hasCustom": hasCustom,
-			"unlocked": a.personaKey != "",
+			"unlocked":  a.personaKey != "",
 		})
 	}
 	return out
@@ -233,7 +238,9 @@ func (a *App) personaGet(w http.ResponseWriter, r *http.Request) {
 
 // personaUnlock 用密码解锁性格系统（同时解锁所有人格的自定义性格）
 func (a *App) personaUnlock(w http.ResponseWriter, r *http.Request) {
-	var in struct{ Password string `json:"password"` }
+	var in struct {
+		Password string `json:"password"`
+	}
 	json.NewDecoder(r.Body).Decode(&in)
 	if len(a.settings.PersonaCiphers) == 0 {
 		// 首次：接受密码作为密钥（自定义性格可后续在设置里填写）
@@ -297,7 +304,7 @@ func (a *App) personaSave(w http.ResponseWriter, r *http.Request) {
 		delete(a.personaCustom, id)
 	}
 	a.mu.Lock()
-	atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings)
+	atomicJSON(SettingsPath(a.dataPath), a.settings)
 	a.mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"ok": true})
@@ -329,7 +336,7 @@ func (a *App) personaReset(w http.ResponseWriter, r *http.Request) {
 	delete(a.personaCustom, id)
 	a.personaKey = in.Password
 	a.mu.Lock()
-	atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings)
+	atomicJSON(SettingsPath(a.dataPath), a.settings)
 	a.mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"ok": true})
@@ -337,7 +344,9 @@ func (a *App) personaReset(w http.ResponseWriter, r *http.Request) {
 
 // personasActive 切换当前活动人格
 func (a *App) personasActive(w http.ResponseWriter, r *http.Request) {
-	var in struct{ ID string `json:"id"` }
+	var in struct {
+		ID string `json:"id"`
+	}
 	if decode(w, r, &in) != nil {
 		return
 	}
@@ -354,7 +363,7 @@ func (a *App) personasActive(w http.ResponseWriter, r *http.Request) {
 	}
 	a.settings.ActivePersona = id
 	a.mu.Lock()
-	atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings)
+	atomicJSON(SettingsPath(a.dataPath), a.settings)
 	a.mu.Unlock()
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]any{"ok": true, "active": id, "name": a.personaDisplayName(id)})
@@ -434,7 +443,7 @@ func (a *App) personalityLocked(id string) Personality {
 
 // persistPersonalitiesLocked 写回 settings.json。调用方需持 a.mu。
 func (a *App) persistPersonalitiesLocked() {
-	atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings)
+	atomicJSON(SettingsPath(a.dataPath), a.settings)
 }
 
 // ── HTTP ──────────────────────────────────────────────────────────────────
@@ -446,7 +455,7 @@ func (a *App) personalityGet(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, map[string]any{
 		"id": id, "enabled": p.Enabled, "prompt": p.Prompt,
 		"defaultPrompt": defaultPersonalityPrompt(id),
-		"evolutions": p.Evolutions, "updatedAt": p.UpdatedAt,
+		"evolutions":    p.Evolutions, "updatedAt": p.UpdatedAt,
 		"estTokens": (len(p.Prompt) + 3) / 4,
 	})
 }
@@ -481,19 +490,40 @@ func (a *App) personalitySave(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) personalityReset(w http.ResponseWriter, r *http.Request) {
-	var in struct{ ID string `json:"id"` }
+	var in struct {
+		ID string `json:"id"`
+	}
 	json.NewDecoder(r.Body).Decode(&in)
 	id := validPersonalityID(in.ID)
 	a.mu.Lock()
-	delete(a.settings.Personalities, id)
-	a.persistPersonalitiesLocked()
+	a.personalityResetLocked(id) // #34：清空性格 + 回滚历史 + 计数
 	p := a.personalityLocked(id)
 	a.mu.Unlock()
 	jsonOut(w, 200, map[string]any{"ok": true, "enabled": p.Enabled, "prompt": p.Prompt})
 }
 
+// personalityRollback 恢复上一版性格（#34 回滚上限）。
+func (a *App) personalityRollback(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		ID string `json:"id"`
+	}
+	json.NewDecoder(r.Body).Decode(&in)
+	id := validPersonalityID(in.ID)
+	a.mu.Lock()
+	p, ok := a.personalityRollbackLocked(id)
+	a.mu.Unlock()
+	if !ok {
+		fail(w, 404, errPersonalityNoHistory)
+		return
+	}
+	jsonOut(w, 200, map[string]any{"ok": true, "enabled": p.Enabled, "prompt": p.Prompt, "evolutions": p.Evolutions})
+}
+
+// personalityEvolve 手动触发一次常规演化（同步返回结果）。#34：采纳/拒绝均写审计。
 func (a *App) personalityEvolve(w http.ResponseWriter, r *http.Request) {
-	var in struct{ ID string `json:"id"` }
+	var in struct {
+		ID string `json:"id"`
+	}
 	json.NewDecoder(r.Body).Decode(&in)
 	id := validPersonalityID(in.ID)
 	a.mu.Lock()
@@ -501,49 +531,40 @@ func (a *App) personalityEvolve(w http.ResponseWriter, r *http.Request) {
 	cfg := a.settings
 	sample := a.personalitySampleLocked(id)
 	a.mu.Unlock()
-	np, err := a.evolvePersonality(id, cur, cfg, sample)
-	if err != nil {
-		fail(w, 400, err)
+	if countSampleLines(sample) < personalityMinSampleMsgs {
+		a.finishPersonalityAttempt(id, "manual", "insufficient_sample", cur, cur, "手动演化：样本不足")
+		fail(w, 400, fmt.Errorf("有效样本不足 %d 条，暂不演化", personalityMinSampleMsgs))
+		return
+	}
+	res := a.evolvePersonality(id, cur, cfg, sample, modeRefine)
+	if res.Status != "adopted" {
+		a.finishPersonalityAttempt(id, "manual", res.Status, cur, cur, res.Note)
+		fail(w, 400, fmt.Errorf("%s：%s", res.Status, res.Note))
 		return
 	}
 	a.mu.Lock()
 	if a.settings.Personalities == nil {
 		a.settings.Personalities = map[string]Personality{}
 	}
-	a.settings.Personalities[id] = np
+	st := a.personalityStateLocked(id)
+	st.History = appendHistory(st.History, strings.TrimSpace(cur.Prompt))
+	st.LastEvolvedAt = res.Personality.UpdatedAt
+	a.settings.Personalities[id] = res.Personality
+	a.personalityState.Entries[id] = st
 	a.persistPersonalitiesLocked()
+	a.persistPersonalityStateLocked()
 	a.mu.Unlock()
+	a.finishPersonalityAttempt(id, "manual", "success", cur, res.Personality, res.Note)
 	jsonOut(w, 200, map[string]any{
-		"ok": true, "enabled": np.Enabled, "prompt": np.Prompt,
-		"evolutions": np.Evolutions, "updatedAt": np.UpdatedAt,
+		"ok": true, "enabled": res.Personality.Enabled, "prompt": res.Personality.Prompt,
+		"evolutions": res.Personality.Evolutions, "updatedAt": res.Personality.UpdatedAt,
 	})
 }
 
-// autoEvolvePersonality 后台自动演化（压缩 / 语音累计触发），失败静默。
+// autoEvolvePersonality 后台自动演化（refine 模式）。#34：失败/拒绝/无变化均写审计，不再静默。
+// 兼容旧调用点；新代码请直接用 runAutoEvolve 指定模式与触发原因。
 func (a *App) autoEvolvePersonality(id, sample string) {
-	defer func() { _ = recover() }()
-	a.mu.Lock()
-	cur := a.personalityLocked(id)
-	if !cur.Enabled {
-		a.mu.Unlock()
-		return
-	}
-	cfg := a.settings
-	if sample == "" {
-		sample = a.personalitySampleLocked(id)
-	}
-	a.mu.Unlock()
-	np, err := a.evolvePersonality(id, cur, cfg, sample)
-	if err != nil {
-		return
-	}
-	a.mu.Lock()
-	if a.settings.Personalities == nil {
-		a.settings.Personalities = map[string]Personality{}
-	}
-	a.settings.Personalities[id] = np
-	a.persistPersonalitiesLocked()
-	a.mu.Unlock()
+	a.runAutoEvolve(id, modeRefine, "manual", sample)
 }
 
 // personalitySampleLocked 构造演化用的近期真实样本。调用方需持 a.mu。
@@ -587,53 +608,6 @@ func (a *App) personalitySampleLocked(id string) string {
 		b.WriteString(m.Role + ": " + clip(m.Content, 400) + "\n")
 	}
 	return clip(b.String(), 4000)
-}
-
-// evolvePersonality 让模型把性格提示词重写为更短、信息更密的版本；结果必须更短才采纳。
-func (a *App) evolvePersonality(id string, cur Personality, cfg Settings, sample string) (Personality, error) {
-	old := strings.TrimSpace(cur.Prompt)
-	if old == "" {
-		old = defaultPersonalityPrompt(id)
-	}
-	sys := `你在帮助一个 AI 助手精炼它自己的"性格提示词"。只输出重写后的提示词正文，不要解释、标题、引号或 markdown 围栏。`
-	usr := fmt.Sprintf(`当前性格提示词（%d 字符）：
-"""
-%s
-"""
-
-近期真实对话样本（仅用于校准风格、提炼用户稳定且反复出现的偏好；不要写入一次性琐事）：
-"""
-%s
-"""
-
-要求：
-1. 完整保留核心人格、语气、原则，以及用户明确且反复出现的偏好。
-2. 删除重复、空话、可由系统其它部分提供的内容；合并近义条目；用更短的句子。
-3. 新提示词字符数必须严格少于当前（只减不增），信息密度更高，不要新增任何要求。
-4. 直接输出新提示词正文。`, len(old), old, sample)
-	params := ProfileParams{Temperature: fp(0.2), MaxTokens: 2048}
-	out, _, _, err := complete(context.Background(), cfg, []Message{
-		{Role: "system", Content: sys},
-		{Role: "user", Content: usr},
-	}, params, nil, nil)
-	if err != nil {
-		return cur, fmt.Errorf("演化调用失败: %w", err)
-	}
-	got := strings.TrimSpace(out)
-	got = strings.TrimPrefix(got, "```")
-	got = strings.TrimSuffix(got, "```")
-	got = strings.Trim(got, "\""+"\n")
-	got = strings.TrimSpace(got)
-	if got == "" {
-		return cur, errors.New("演化结果为空，已保留原版本")
-	}
-	if len(got) >= len(old) {
-		return cur, errors.New("演化后未更精简，已保留原版本")
-	}
-	cur.Prompt = got
-	cur.Evolutions++
-	cur.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
-	return cur, nil
 }
 
 // messagesSample 把一批消息拼成演化样本（截断）。

@@ -251,7 +251,7 @@ aide = **AI + IDE**，面向**可信单用户**的本地 AI 开发工作台。�
 | DP-03 | 数据卷分离 | `/workspace` RW、`/context` RO、`/local` 宿主范围、`/data`（会话/配置/令牌/费率）、`/home/aide` 缓存 | 数据卷独立备份 | P1 | 已实现 |
 | DP-04 | 镜像导入导出 | `scripts/aide.sh export` 导出镜像；`docker-images/` 归档 + SHA256；版本号来自 ldflags | 异机可导入启动 | P1 | 已实现 |
 | DP-05 | 健康检查 | `GET /healthz` | 健康检查返回正常 | P1 | 已实现 |
-| DP-06 | 本地令牌登录 | 首次粘贴 `/data/access-token`；401 弹登录框 | 未带令牌访问被引导登录 | P1 | 已实现 |
+| DP-06 | 本地令牌登录 | 首次粘贴 `/data/auth/access-token`；401 弹登录框 | 未带令牌访问被引导登录 | P1 | 已实现 |
 
 ---
 

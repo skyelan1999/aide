@@ -9,8 +9,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
+	"time"
 )
 
 // TestAutoGenerateCert：ensureTLSCert 在空目录生成自签证书，
@@ -97,25 +97,115 @@ func TestTLSConfig(t *testing.T) {
 	}
 }
 
-// TestHTTPRedirect：明文 HTTP 请求被 301 跳转到 https 同主机、保留路径与查询串。
+// TestHTTPRedirect：明文 HTTP 请求被 308 跳转到 https://同 r.Host、保留完整路径与查询串。
 func TestHTTPRedirect(t *testing.T) {
-	h := httpsRedirectHandler("8443")
-	req := httptest.NewRequest(http.MethodGet, "http://localhost:8081/healthz?x=1", nil)
-	req.Host = "localhost:8081"
+	h := httpsRedirectHandler()
+	req := httptest.NewRequest(http.MethodGet, "http://localhost:8097/healthz?x=1", nil)
+	req.Host = "localhost:8097"
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, req)
-	if rec.Code != http.StatusMovedPermanently {
-		t.Fatalf("code=%d, want 301", rec.Code)
+	if rec.Code != http.StatusPermanentRedirect {
+		t.Fatalf("code=%d, want 308", rec.Code)
 	}
 	loc := rec.Header().Get("Location")
-	if !strings.HasPrefix(loc, "https://") {
-		t.Fatalf("Location=%q 应以 https:// 开头", loc)
+	want := "https://localhost:8097/healthz?x=1"
+	if loc != want {
+		t.Fatalf("Location=%q, want %q（用 r.Host 自适应宿主端口，不写死容器端口）", loc, want)
 	}
-	if !strings.Contains(loc, "localhost:8443") {
-		t.Fatalf("Location=%q 应指向 https://localhost:8443", loc)
+}
+
+// acceptOnce 在独立 goroutine 上 Accept 一次，便于在 select 中等待分流结果。
+func acceptOnce(l *protoListener) <-chan net.Conn {
+	ch := make(chan net.Conn, 1)
+	go func() {
+		c, err := l.Accept()
+		if err == nil {
+			ch <- c
+		}
+	}()
+	return ch
+}
+
+// TestSplitProtoClassification：首字节 0x16(TLS record) 归 TLS 通道，明文首字节归 HTTP 通道。
+func TestSplitProtoClassification(t *testing.T) {
+	raw, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
 	}
-	if !strings.HasSuffix(loc, "/healthz?x=1") {
-		t.Fatalf("Location=%q 未保留路径与查询串", loc)
+	tlsLn, httpLn := splitProto(raw)
+	defer func() { raw.Close(); tlsLn.Close(); httpLn.Close() }()
+
+	// TLS 客户端首字节 0x16 → tlsLn
+	tc, err := net.Dial("tcp", raw.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tc.Write([]byte{0x16, 0x03, 0x01, 0x00, 0x05}); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case c := <-acceptOnce(tlsLn):
+		c.Close()
+		tc.Close()
+	case <-time.After(2 * time.Second):
+		t.Fatal("0x16 连接未被分流到 TLS 通道")
+	}
+
+	// 明文 GET 首字节 'G' → httpLn
+	hc, err := net.Dial("tcp", raw.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := hc.Write([]byte("GET / HTTP/1.1\r\nHost: x\r\n\r\n")); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case c := <-acceptOnce(httpLn):
+		c.Close()
+		hc.Close()
+	case <-time.After(2 * time.Second):
+		t.Fatal("明文连接未被分流到 HTTP 通道")
+	}
+}
+
+// TestMigrateLegacyTLSDir：旧 tls/ 下证书原样迁到 certs/（同内容、权限 cert 0644/key 0600），
+// 迁完删空 tls/；certs/ 已有则幂等跳过。
+func TestMigrateLegacyTLSDir(t *testing.T) {
+	data := t.TempDir()
+	legacy := filepath.Join(data, "tls")
+	if err := os.MkdirAll(legacy, 0700); err != nil {
+		t.Fatal(err)
+	}
+	oldCert := []byte("-----BEGIN CERTIFICATE-----\nOLD\n-----END CERTIFICATE-----\n")
+	oldKey := []byte("-----BEGIN EC PRIVATE KEY-----\nOLD\n-----END EC PRIVATE KEY-----\n")
+	if err := os.WriteFile(filepath.Join(legacy, "cert.pem"), oldCert, 0644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(legacy, "key.pem"), oldKey, 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := migrateLegacyTLSDir(data); err != nil {
+		t.Fatal(err)
+	}
+	if b, err := os.ReadFile(TLSCertPath(data)); err != nil || string(b) != string(oldCert) {
+		t.Fatalf("cert 未迁移或内容变化: %v", err)
+	}
+	if b, err := os.ReadFile(TLSKeyPath(data)); err != nil || string(b) != string(oldKey) {
+		t.Fatalf("key 未迁移或内容变化: %v", err)
+	}
+	if st, _ := os.Stat(TLSKeyPath(data)); st.Mode().Perm() != 0600 {
+		t.Fatalf("key 权限 %o，期望 0600", st.Mode().Perm())
+	}
+	if st, _ := os.Stat(TLSCertPath(data)); st.Mode().Perm() != 0644 {
+		t.Fatalf("cert 权限 %o，期望 0644", st.Mode().Perm())
+	}
+	if _, err := os.Stat(legacy); !os.IsNotExist(err) {
+		t.Fatalf("旧 tls/ 应已删除: %v", err)
+	}
+	// 幂等：certs/ 已有 → 再调 no-op
+	if err := migrateLegacyTLSDir(data); err != nil {
+		t.Fatalf("二次调用应幂等: %v", err)
 	}
 }
 

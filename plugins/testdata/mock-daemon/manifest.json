@@ -1,0 +1,10 @@
+{
+  "id": "mock-daemon",
+  "name": "Mock Daemon",
+  "description": "协议 v1.2 daemon 宿主端到端测试插件（不发布）",
+  "version": "0.0.1",
+  "author": "aide-test",
+  "main": "index.js",
+  "daemon": true,
+  "enabled": false
+}

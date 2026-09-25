@@ -1,0 +1,19 @@
+{
+  "id": "comm-udp",
+  "name": "UDP 通讯",
+  "description": "基于 Node 内置 dgram 模块的常驻 UDP 通讯插件：绑定收包、发送、规则模拟应答、组播加入/离开；零第三方依赖，默认禁用，仅绑回环 127.0.0.1",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "daemon": true,
+  "enabled": false,
+  "tools": [
+    { "name": "udp_bind", "kind": "write", "readonlyDefault": false },
+    { "name": "udp_send", "kind": "write", "readonlyDefault": false },
+    { "name": "udp_close", "kind": "write", "readonlyDefault": false },
+    { "name": "udp_simulate_set", "kind": "write", "readonlyDefault": false },
+    { "name": "udp_simulate_clear", "kind": "write", "readonlyDefault": false },
+    { "name": "udp_multicast_join", "kind": "write", "readonlyDefault": false },
+    { "name": "udp_multicast_leave", "kind": "write", "readonlyDefault": false }
+  ]
+}

@@ -94,7 +94,7 @@ func TestSettingsNeverReturnKey(t *testing.T) {
 	if strings.Contains(w.Body.String(), "secret-test-key") {
 		t.Fatal("key leaked")
 	}
-	if mode, err := os.Stat(filepath.Join(a.dataPath, "settings.json")); err != nil || mode.Mode().Perm() != 0600 {
+	if mode, err := os.Stat(SettingsPath(a.dataPath)); err != nil || mode.Mode().Perm() != 0600 {
 		t.Fatal("settings permissions")
 	}
 }

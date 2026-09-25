@@ -11,6 +11,14 @@ services:
       args:
         AIDE_VERSION: ${AIDE_VERSION:-dev}
         AIDE_COMMIT: ${AIDE_COMMIT:-unknown}
+        # #43：默认 start 不跑全量 go test（仅 vet+build，层缓存秒级）；
+        # 发布门禁（scripts/docker-release.sh / CI）必须显式置 1 强制跑全量测试。
+        AIDE_RUN_TESTS: ${AIDE_RUN_TESTS:-0}
+        # #43：由 scripts/aide.sh start 计算的 Go 源码哈希，写进镜像 label aide.srcsha，供快捷路径比对。
+        AIDE_SRC_SHA: ${AIDE_SRC_SHA:-unknown}
+        # #46：pip 依赖源；离线/air-gap 首次构建先 scripts/prebuild-wheels.sh 再置 PIP_OFFLINE=1。
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}
+        PIP_OFFLINE: ${PIP_OFFLINE:-0}
     ports:
       # 容器内 8080 现为 HTTPS（自签证书自动生成）；宿主机仅回环绑定。
       # 8081 明文跳转端口不向宿主机暴露，用户直接用 https://localhost:${AIDE_PORT} 访问。
