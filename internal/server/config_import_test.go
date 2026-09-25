@@ -169,7 +169,7 @@ func TestImportInvalidMaxToolRounds(t *testing.T) {
 func TestImportSensitiveFieldsNotImported(t *testing.T) {
 	a := testApp(t)
 	a.mu.Lock()
-	a.settings.APIKey = "cur-key"
+	a.storeModelAPIKeyPlaintextLocked("cur-key") // key 存加密 vault
 	a.settings.TTSAPIKey = "cur-tts-key"
 	a.mu.Unlock()
 
@@ -178,8 +178,8 @@ func TestImportSensitiveFieldsNotImported(t *testing.T) {
 	requireStatus(t, importBackupRaw(t, a, raw, configBackupVersion, configSettingsVersion, false), 200)
 
 	s := curSettings(a)
-	if s.APIKey != "cur-key" {
-		t.Fatalf("未导入密钥时应保留当前 APIKey, got %q", s.APIKey)
+	if k, _ := a.modelAPIKeyLocked(); k != "cur-key" {
+		t.Fatalf("未导入密钥时应保留当前 APIKey (vault), got %q", k)
 	}
 	if s.TTSAPIKey != "cur-tts-key" {
 		t.Fatalf("未导入密钥时应保留当前 TTSAPIKey, got %q", s.TTSAPIKey)

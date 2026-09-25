@@ -89,6 +89,8 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .stream-cursor { color: var(--brand, #4c8dff); animation: aide-cur 1s steps(2, start) infinite; }
 @keyframes aide-cur { to { visibility: hidden; } }
 .thinking-dot { animation: aide-th 1.2s ease-in-out infinite; }
+.thinking-dot:nth-of-type(2) { animation-delay: .2s; }
+.thinking-dot:nth-of-type(3) { animation-delay: .4s; }
 @keyframes aide-th { 0%, 100% { opacity: .2; } 50% { opacity: 1; } }
 .live-tool { display: flex; align-items: center; gap: 8px; font-size: 10px; color: var(--muted, #8a8f98); padding: 6px 0 8px; border-bottom: 1px dashed var(--line-faint, rgba(128,128,128,.25)); }
 .live-tool .live-dot { animation: aide-th 1s ease-in-out infinite; }
@@ -718,7 +720,8 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 body.file-view-mode .file-view-preview{padding:0;display:flex;flex-direction:column;overflow:hidden}
 body.file-view-mode .file-view-preview .stl-viewer,
 body.file-view-mode .file-view-preview .img-viewer,
-body.file-view-mode .file-view-preview .pdf-viewer{flex:1;width:100%;height:100%;min-height:0;border-radius:0}
+body.file-view-mode .file-view-preview .pdf-viewer,
+body.file-view-mode .file-view-preview .dxf-viewer{flex:1;width:100%;height:100%;min-height:0;border-radius:0}
 body.file-view-mode .file-view-preview iframe{flex:1;width:100%;height:100%;min-height:0;border:0;border-radius:0}
 
 .file-rename{flex:1;min-width:0;padding:2px 6px;margin:0;font-size:12px;font-family:inherit;color:var(--text);background:var(--field);border:1px solid var(--accent);border-radius:5px;height:auto}
@@ -860,9 +863,82 @@ body.file-view-mode .file-view-preview iframe{flex:1;width:100%;height:100%;min-
 .pdf-ctrl:hover{background:var(--selected-alt)}
 .pdf-page-input{width:44px;height:24px;padding:0 4px;text-align:center;font-size:11px;border:1px solid var(--line-mid,var(--line));border-radius:5px;background:var(--field);color:var(--text)}
 .pdf-page-total{font-size:10px;color:var(--muted)}
-.pdf-scroll{flex:1;min-height:0;overflow:auto;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:14px}
+.pdf-scroll{position:relative;flex:1;min-height:0;overflow:auto;padding:16px 12px;display:flex;flex-direction:column;align-items:center;gap:14px}
 .pdf-page{position:relative;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,.35);border-radius:2px;flex-shrink:0}
 .pdf-canvas{display:block}
 .pdf-error{padding:40px 24px;color:var(--warn);font-size:13px;text-align:center;line-height:1.8;max-width:560px}
 /* 预留：后续批注覆盖层（绝对定位叠加在页面上方，本次不实现） */
 .pdf-annot-overlay{position:absolute;inset:0;pointer-events:none;z-index:5}
+
+/* ── DXF 矢量查看器 ── */
+.dxf-viewer{display:flex;flex-direction:column;height:100%;min-height:400px}
+.dxf-toolbar{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line-faint);flex-shrink:0}
+.dxf-info{font-size:11px;font-weight:600;color:var(--text);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dxf-meta{font-size:10px;color:var(--muted);font-family:ui-monospace,monospace}
+.dxf-ctrl{padding:3px 10px;font-size:11px;border:1px solid var(--line-mid);border-radius:5px;color:var(--text-settings);background:var(--surface);min-width:28px}
+.dxf-ctrl:hover{background:var(--hover)}
+.dxf-ctrl:last-child{margin-left:auto}
+.dxf-canvas{flex:1;min-height:0;position:relative;background:var(--bg-inset);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.dxf-canvas.grab{cursor:grab}
+.dxf-canvas.grabbing{cursor:grabbing}
+.dxf-svg{width:100%;height:100%;display:block}
+.dxf-svg line,.dxf-svg path,.dxf-svg circle{vector-effect:non-scaling-stroke}
+.dxf-error{padding:40px;text-align:center;color:var(--warn);font-size:13px;line-height:1.6}
+:root{--dxf-fg:var(--text)}
+
+/* ── 编辑器标题栏：操作归置到标题栏右侧，删除独占第二行 ── */
+.editor-dialog-head{align-items:center;gap:10px;margin-bottom:0}
+.editor-dialog-head h2{margin:0;font-size:14px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dialog-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.quiet-sm{padding:4px 10px;font-size:11px}
+.primary-sm{padding:5px 12px;font-size:11px}
+.ro-badge{display:inline-flex;align-items:center;padding:2px 8px;font-size:10px;font-weight:600;border-radius:9px;background:var(--chip-bg,var(--bg-inset));color:var(--muted);border:1px solid var(--line-mid);letter-spacing:.3px;white-space:nowrap}
+.ro-badge.hidden{display:none!important}
+.editor-dialog .dialog-heading{padding-bottom:12px;border-bottom:1px solid var(--line-faint)}
+.editor-dialog #editor,.editor-dialog .editor-preview{margin-top:12px}
+/* file-view 头部：路径 + badge + 操作 */
+.file-view-head-path{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.file-view-head-path .sheet-eyebrow{margin:0;flex-shrink:0}
+.file-view-head-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.file-view-head-actions .quiet-sm{padding:4px 10px;font-size:11px}
+@media(max-width:720px){.editor-dialog-head h2{font-size:12px}.quiet-sm{padding:3px 7px;font-size:10px}.primary-sm{padding:4px 8px;font-size:10px}}
+
+/* ── 子任务1：模型 API Key 状态行 ── */
+.apikey-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0}
+.apikey-row>span:first-child{font-size:13px}
+.apikey-status{display:inline-flex;align-items:center;gap:8px}
+.ak-badge{display:inline-flex;align-items:center;padding:2px 9px;font-size:11px;font-weight:600;border-radius:9px;letter-spacing:.3px;white-space:nowrap}
+.ak-badge.ak-ok{background:rgba(60,200,120,.15);color:#4cd98a;border:1px solid rgba(60,200,120,.35)}
+.ak-badge.ak-locked{background:rgba(255,180,80,.14);color:#ffc65c;border:1px solid rgba(255,180,80,.35)}
+.ak-badge.ak-none{background:var(--chip-bg,var(--bg-inset));color:var(--muted);border:1px solid var(--line-mid)}
+.ak-unlock,.ak-change{padding:2px 10px;font-size:11px}
+#apikey-edit{display:flex;flex-direction:column;gap:8px;margin-bottom:8px}
+
+/* ── 子任务2：统一主身份认证弹窗（#43）── */
+dialog.master-auth{width:min(380px,90vw)}
+.master-auth-box{display:flex;flex-direction:column;gap:10px}
+.master-auth-title{font-size:16px;font-weight:600}
+.master-auth-box input{margin-top:0}
+.master-auth-error{color:var(--danger);font-size:12px;min-height:16px}
+.master-auth-box .editor-footer{justify-content:flex-end}
+.master-auth-fp{padding:8px 14px;font-size:12px;border-radius:8px;border:1px solid var(--line-composer);background:var(--chip-bg,var(--bg-inset));color:var(--text)}
+.master-auth-fp.disabled{opacity:.45;cursor:not-allowed}
+.ws-vault-fp{margin-top:8px}
+
+/* ── 子任务4：小秘独立侧栏条目（#62）── */
+.assistant-entry{display:flex;align-items:center;gap:8px;width:calc(100% - 16px);margin:2px 8px;padding:0.25em 0.8em;border:none;border-radius:7px;background:transparent;color:var(--text);cursor:pointer;font-size:12px;line-height:1;min-height:20px}
+.assistant-entry:hover{background:var(--chip-bg,var(--bg-inset))}
+.assistant-entry.active{background:var(--chip-active,var(--accent));color:var(--text-on-accent,#fff)}
+.assistant-entry-icon{display:inline-flex;width:1.5em;height:1.5em;align-items:center;justify-content:center;flex:0 0 1.5em;color:var(--accent)}
+.assistant-entry.active .assistant-entry-icon{color:inherit}
+.assistant-entry-icon svg{width:1.35em;height:1.35em}
+.assistant-entry-name{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.assistant-entry-dot{width:7px;height:7px;border-radius:50%;background:var(--line-mid);flex:0 0 7px}
+.assistant-entry-dot.live{background:#4cd98a;box-shadow:0 0 6px rgba(76,217,138,.7)}
+/* ── 子任务4：小蜜专属空状态 ── */
+.assistant-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:60px 20px;color:var(--muted)}
+.assistant-empty-icon{width:56px;height:56px;border-radius:16px;background:var(--chip-bg,var(--bg-inset));display:flex;align-items:center;justify-content:center}
+.assistant-empty-icon::before{content:'';width:28px;height:28px;border-radius:50%;border:2px solid var(--accent);border-top-color:transparent;animation:pulse-ring 1.6s ease-in-out infinite}
+.assistant-empty-title{font-size:16px;font-weight:600;color:var(--text);margin:6px 0 0}
+.assistant-empty-sub{font-size:13px;margin:0}
+@keyframes pulse-ring{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}

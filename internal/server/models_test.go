@@ -158,7 +158,9 @@ func TestModelDiscoveryDraft(t *testing.T) {
 	defer provider.Close()
 	a := testApp(t)
 	a.settings.BaseURL = "http://old-provider.invalid"
-	a.settings.APIKey = "old-secret"
+	a.mu.Lock()
+	a.storeModelAPIKeyPlaintextLocked("old-secret") // key 存加密 vault
+	a.mu.Unlock()
 	for _, tc := range []struct {
 		name, base, key string
 		clear           bool
@@ -177,8 +179,8 @@ func TestModelDiscoveryDraft(t *testing.T) {
 			if !strings.Contains(w.Body.String(), "draft-model") {
 				t.Fatal("missing discovered model")
 			}
-			if a.settings.BaseURL != "http://old-provider.invalid" || a.settings.APIKey != "old-secret" {
-				t.Fatal("discovery persisted draft")
+			if a.settings.BaseURL != "http://old-provider.invalid" || !a.hasModelAPIKey() {
+				t.Fatal("discovery should not clobber saved baseURL/key")
 			}
 		})
 	}

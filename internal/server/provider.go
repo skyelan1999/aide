@@ -420,7 +420,8 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 // 返回 OpenAI 兼容格式 {models:[id,…]}；上游失败或格式不符时给出友好错误。
 func (a *App) listModels(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
-	baseURL, key := a.settings.BaseURL, a.settings.APIKey
+	baseURL := a.settings.BaseURL
+	key, _ := a.modelAPIKeyLocked() // 存储的 key 从加密 vault 取；未配置/未解锁时为空，由显式入参覆盖
 	a.mu.Unlock()
 	if r.Method == http.MethodPost {
 		var in struct {
@@ -501,7 +502,8 @@ func (a *App) listModels(w http.ResponseWriter, r *http.Request) {
 // listBalance 代理 GET {baseURL}/user/balance 查询账户余额（DeepSeek 官方接口）。
 func (a *App) listBalance(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
-	baseURL, key := a.settings.BaseURL, a.settings.APIKey
+	baseURL := a.settings.BaseURL
+	key, _ := a.modelAPIKeyLocked() // 存储的 key 从加密 vault 取；未配置/未解锁时为空，由显式入参覆盖
 	a.mu.Unlock()
 	if baseURL == "" {
 		fail(w, 400, errors.New("请先在模型设置中填写 API Base URL"))

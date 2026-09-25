@@ -92,7 +92,7 @@ const systemPrompt = `You are aide, a careful coding assistant. Answer in the us
 var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "list_sources", "description": "List enabled reference source IDs and capabilities, without credentials. Use source ID in list_files/read_file to access reference contents.", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "list_files", "description": "列出当前工作目录（或指定相对路径）的内容", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Optional reference source ID from list_sources; omitted means workspace"}, "path": map[string]any{"type": "string", "description": "相对路径，默认 ."}}}}},
-	map[string]any{"type": "function", "function": map[string]any{"name": "read_file", "description": "读取工作目录内文本文件内容（UTF-8）", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Optional reference source ID from list_sources; omitted means workspace"}, "path": map[string]any{"type": "string", "description": "相对路径"}}, "required": []string{"path"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "read_file", "description": "读取工作目录内文本文件内容（UTF-8）。默认返回全文（受上下文大小自动截断）；对大文件用 offset(0 起始行号)/limit(行数) 分段读取，逐段翻页，避免一次读入超大文件。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Optional reference source ID from list_sources; omitted means workspace"}, "path": map[string]any{"type": "string", "description": "相对路径"}, "offset": map[string]any{"type": "integer", "description": "可选：起始行号（0 起始），仅本地工作区文件支持"}, "limit": map[string]any{"type": "integer", "description": "可选：最多返回行数，仅本地工作区文件支持"}}, "required": []string{"path"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "write_file", "description": "生成文件修改提案（不直接写入；需用户批准应用）", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}}, "required": []string{"path", "content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox and return its stdout/stderr/exit code", "parameters": map[string]any{"type": "object", "properties": map[string]any{"command": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}, "profile": map[string]any{"type": "string", "description": "Optional profile id (default/precise/creative/...) chosen by matching ACTUAL sampling params (temperature/top_p/max_tokens) to the subtask; omit to use defaults"}}}, "required": []string{"task"}}},
@@ -266,9 +266,26 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
 	a.cancels[task.ID] = cancel
 	go a.execute(ctx, s, task, a.settings, history, firstInput, versions, params)
+	a.broadcastSessionsChanged(s.ID) // #60：run 启动，会话状态变更
 	jsonOut(w, 202, task)
 }
 func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings, messages []Message, firstInput []Message, versions map[string]Change, params ProfileParams) {
+	// 模型 API Key 从加密 vault 解密注入 cfg。已配置 key 但 vault 未解锁时明确失败，
+	// 不静默发空 Authorization 让上游回 401。
+	a.mu.Lock()
+	modelKey, keyErr := a.modelAPIKeyLocked()
+	a.mu.Unlock()
+	cfg.APIKey = modelKey
+	if keyErr != nil {
+		a.mu.Lock()
+		task.Status = "failed"
+		task.Error = keyErr.Error()
+		a.mu.Unlock()
+		a.beginLiveRun(s.ID, task.ID)
+		a.finishLiveRun(s.ID, task.ID, task.Status)
+		a.finishStream(task.ID, task.Status, task.Error)
+		return
+	}
 	// 主题总结改为并发执行：原先串行会阻塞首个回答 token（多一次完整模型调用延迟）。
 	// summarizeTopic 只读写 s.Title/task.Usage（均在 a.mu 内），与主流程无竞态。
 	// 标题总结用独立 ctx：不随主 run 结束被 cancel，否则短任务会把标题总结掐断
@@ -443,8 +460,8 @@ func (a *App) acceptProposal(s *Session, task *Task, raw string, versions map[st
 		}
 		seen[f.Path] = true
 		total += len(f.Content)
-		if len(f.Content) > maxFile || total > 512<<10 {
-			return errors.New("方案文件太大")
+		if len(f.Content) > maxFile || total > maxProposalTotal {
+			return fmt.Errorf("方案文件太大（单文件 %d MiB / 提案合计 %d MiB 上限）", maxFile>>20, maxProposalTotal>>20)
 		}
 		f.Applied = false
 		if v, ok := versions[f.Path]; ok {
@@ -526,6 +543,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
 	a.cancels[task.ID] = cancel
 	go a.execute(ctx, s, task, a.settings, history, firstInput, versions, params)
+	a.broadcastSessionsChanged(s.ID) // #60：run 启动，会话状态变更
 	jsonOut(w, 202, task)
 }
 func (a *App) cancelTask(w http.ResponseWriter, r *http.Request) {
@@ -2501,6 +2519,16 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	}
 	str := func(k string) string { v, _ := args[k].(string); return strings.TrimSpace(v) }
 	rawStr := func(k string) string { v, _ := args[k].(string); return v } // 正文等字段按原字节保留（R06）
+	toolInt := func(k string) int {
+		switch v := args[k].(type) {
+		case float64:
+			if v < 0 {
+				return 0
+			}
+			return int(v)
+		}
+		return 0
+	}
 	// per-tool 权限：被禁用的工具直接拒绝
 	a.mu.Lock()
 	disabled := a.settings.DisabledTools
@@ -2536,7 +2564,8 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		}
 		return readText(wsRoot, p)
 	}
-	if sourceID := str("source"); sourceID != "" {
+	sourceID := str("source")
+	if sourceID != "" {
 		if call.Function.Name != "list_files" && call.Function.Name != "read_file" {
 			return "Reference sources are read-only for AI tools"
 		}
@@ -2604,6 +2633,16 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		// Office 文件用 python 解析成文本
 		if strings.HasSuffix(p, ".docx") || strings.HasSuffix(p, ".xlsx") || strings.HasSuffix(p, ".pptx") {
 			return a.readOfficeFile(p)
+		}
+		// 本地工作区大文件分段：offset(行,0起)/limit(行数) 流式只读窗口，不全量入上下文
+		if sourceID == "" && mode != "ssh" {
+			if off, lim := toolInt("offset"), toolInt("limit"); off > 0 || lim > 0 {
+				pb, total, rerr := readTextLines(wsRoot, p, off, lim)
+				if rerr != nil {
+					return "读取失败: " + rerr.Error()
+				}
+				return fmt.Sprintf("（%s 共 %d 行，以下从第 %d 行起）\n%s", p, total, off+1, string(pb))
+			}
 		}
 		b, err := readTextFile(p)
 		if err != nil {
@@ -2765,7 +2804,7 @@ func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[s
 			return "", errors.New("无效路径")
 		}
 		if len(content) > maxFile {
-			return "", errors.New("文件内容超过 256 KiB")
+			return "", fmt.Errorf("文件内容超过 %d MiB", maxFile>>20)
 		}
 		if len(task.Files) >= 10 {
 			return "", errors.New("文件提案超过 10 个上限")
@@ -2776,8 +2815,8 @@ func (a *App) recordToolProposal(task *Task, versions map[string]Change, p map[s
 				totalBytes += len(f.Content)
 			}
 		}
-		if totalBytes > 512<<10 {
-			return "", errors.New("提案内容总量超过 512 KiB")
+		if totalBytes > maxProposalTotal {
+			return "", fmt.Errorf("提案内容总量超过 %d MiB", maxProposalTotal>>20)
 		}
 		change := Change{Path: pathStr, Content: content, Applied: false}
 		if v, ok := versions[pathStr]; ok {
@@ -2992,6 +3031,13 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 	a.compactingSessions[sessionID] = true
 	snap, split := a.snapshotForCompact(sess)
 	cfg := a.settings
+	if modelKey, keyErr := a.modelAPIKeyLocked(); keyErr != nil {
+		a.mu.Unlock()
+		fail(w, 400, keyErr)
+		return
+	} else {
+		cfg.APIKey = modelKey
+	}
 	baseLen := len(sess.Messages)
 	a.mu.Unlock()
 	defer func() {

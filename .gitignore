@@ -34,3 +34,4 @@ plugins/*/node_modules/
 
 # 运行时配置（含本地密钥/令牌，不入库）
 profiles.json
+.backup-assistant/

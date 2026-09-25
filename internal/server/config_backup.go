@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -45,6 +46,9 @@ func (a *App) exportConfigBackup(w http.ResponseWriter, r *http.Request) {
 	exportSettings := a.settings
 	version := a.version
 	a.mu.Unlock()
+
+	// 模型 API Key 已迁至加密 vault（随 WorkspaceSecrets 信封加密导出），任何导出都不含明文。
+	exportSettings.APIKey = ""
 
 	if !in.IncludeSecrets {
 		// 剔除敏感字段，得到可较安全分享的设置快照。
@@ -194,6 +198,13 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// 旧备份可能仍带明文 API Key：收敛进加密 vault（未解锁则暂存待解锁迁移），settings.json 不留明文。
+	migratedKey := false
+	if key := strings.TrimSpace(merged.APIKey); key != "" {
+		a.storeModelAPIKeyPlaintextLocked(key)
+		migratedKey = true
+	}
+	merged.APIKey = ""
 	a.settings = merged
 	if err := atomicJSON(SettingsPath(a.dataPath), merged); err != nil {
 		fail(w, 500, err)
@@ -210,7 +221,7 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 
 	jsonOut(w, 200, map[string]any{
 		"ok": true, "passwordChanged": passwordChanged,
-		"voiceImported": voiceImported,
+		"voiceImported": voiceImported, "migratedKey": migratedKey,
 		"exportedAt":    bk.ExportedAt, "appVersion": bk.AppVersion,
 	})
 }

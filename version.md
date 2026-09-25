@@ -1,6 +1,18 @@
 # aide 版本记录
 
-**当前版本：0.1.11.0 RC1**
+**当前版本：0.1.11.0 RC2**
+
+## 0.1.11.0 RC2（2026-09-26）
+
+- 安全加固：API Key 从 settings.json 明文迁移到 AES-256-GCM vault（主密钥分层：有密码 Argon2id 派生 / 无密码机器绑定随机主密钥 0600），旧明文启动自动迁移+安全擦除，前端不回显明文（已配置/更换态），导出无明文/导入自动迁移
+- 统一指纹身份认证：POST /api/auth/verify 密码或 WebAuthn 二选一+审计，requestMasterAuth 统一组件，A 类 6 处本机身份认证接入指纹（锁屏/小秘历史×3/改密码/vault解锁/assistant-gate），B 类（APIKey/SSH/PDF密码等）不动
+- 会话列表实时刷新：后端 SSE /api/events 广播 sessions-changed（创建/归档/标题/状态/run启动），前端 300ms 节流监听自动刷新，保留折叠状态不打断输入
+- 小蜜会话闭环：kind=assistant 专属视图（隐藏通用 welcome、专属空状态）、历史持久化、稳定单例防串扰、侧边栏独立条目（2/3 高度、耳机线性 SVG 替代 🤖）、污染 run 剥离复位
+- DXF 矢量渲染器：vendor dxf-parser 1.1.2（MIT，go:embed 离线），SVG 渲染（Y翻转/包围盒自适应/常见实体/ACI颜色/图层/线宽），缩放±/适应窗口，只读禁用保存
+- 编辑器布局优化：删除独占第二行，只读 badge/保存/新标签页/附加任务并入标题栏，只读类型不显示可用保存按钮
+- 取消文本文件 256KiB 限制：maxFile→64MiB，零拷贝校验，GET /api/file 支持 offset/limit 字节窗口，read_file 支持行分段
+- 查看器修复：PDF 翻页按钮平滑滚动竞态修复；DXF/PDF/STL/图片/drawio/md 全类型回归通过
+- 代码质量：全量 go test -race 通过（270s，0 FAIL，0 DATA RACE），修复 3 处 data race
 
 ## 0.1.11.0 RC1（2026-09-25）
 

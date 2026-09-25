@@ -39,6 +39,71 @@ function passwordPrompt(title) {
     input.focus();
   });
 }
+// requestMasterAuth({reason}) 统一主身份认证弹窗（#43）：密码输入 + 指纹授权按钮。
+// 已注册指纹（hasPlatformCredential=true）则按钮可点并自动发起 WebAuthn assertion；未注册置灰。
+// 返回 Promise<string|null>：输入密码且验证通过→密码串；指纹通过→'success'；取消→null（失败已 toast/内联提示，不锁死）。
+function requestMasterAuth({ reason } = {}) {
+  return new Promise(resolve => {
+    const dlg = el('dialog', 'master-auth');
+    const box = el('div', 'master-auth-box');
+    box.append(el('div', 'master-auth-title', t('身份验证')));
+    if (reason) box.append(el('p', 'muted', reason));
+    const input = el('input'); input.type = 'password'; input.autocomplete = 'off'; input.spellcheck = false; input.placeholder = t('输入账户密码');
+    const err = el('div', 'master-auth-error', '');
+    const actions = el('div', 'editor-footer');
+    const cancel = el('button', 'quiet', t('取消')); cancel.type = 'button';
+    const fp = el('button', 'master-auth-fp', t('指纹授权')); fp.type = 'button';
+    const ok = el('button', 'primary', t('确认')); ok.type = 'button';
+    actions.append(cancel, fp, ok);
+    box.append(input, err, actions);
+    dlg.append(box);
+    let settled = false;
+    const done = v => { if (settled) return; settled = true; dlg.close(); dlg.remove(); resolve(v); };
+    cancel.onclick = () => done(null);
+    dlg.addEventListener('cancel', () => done(null));
+    dlg.addEventListener('click', e => { if (e.target === dlg) done(null); });
+    const doPassword = async () => {
+      const pw = input.value;
+      if (!pw) { err.textContent = t('请输入密码'); input.focus(); return; }
+      try {
+        await api('/auth/verify', { method: 'POST', body: JSON.stringify({ password: pw }) });
+        done(pw);
+      } catch (e) { err.textContent = t('密码错误'); input.value = ''; input.focus(); }
+    };
+    ok.onclick = () => action(doPassword)();
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); action(doPassword)(); }
+      else if (e.key === 'Escape') { e.preventDefault(); done(null); }
+    });
+    const hasCred = !!(state.config && state.config.hasPlatformCredential);
+    const waReady = !!(state.config && state.config.webAuthnReady);
+    const canFp = hasCred && waReady && location.hostname === 'localhost';
+    fp.disabled = !canFp; fp.classList.toggle('disabled', !canFp);
+    if (!canFp && !hasCred) fp.title = t('未注册指纹，可在设置 → 账号中绑定');
+    fp.onclick = action(async () => {
+      fp.disabled = true; err.textContent = '';
+      try {
+        const start = await api('/webauthn/assertion/start', { method: 'POST', body: '{}' });
+        if (!start.allowCredentials || !start.allowCredentials.length) { err.textContent = t('未注册指纹设备'); fp.disabled = false; return; }
+        const options = {
+          challenge: b64uToBuf(start.challenge), rpId: start.rpId,
+          allowCredentials: start.allowCredentials.map(c => ({ type: c.type, id: b64uToBuf(c.id), transports: c.transports })),
+          userVerification: start.userVerification || 'preferred', timeout: 120000,
+        };
+        const assertion = await navigator.credentials.get({ publicKey: options });
+        if (!assertion) { fp.disabled = false; return; }
+        await api('/auth/verify', { method: 'POST', body: JSON.stringify({ challenge: start.challenge, assertion: assertionToJSON(assertion) }) });
+        done('success');
+      } catch (e) {
+        if (e && e.name === 'NotAllowedError') { fp.disabled = false; return; }
+        err.textContent = t('指纹验证失败，请重试'); fp.disabled = false;
+      }
+    });
+    document.body.append(dlg);
+    if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+    input.focus();
+  });
+}
 async function api(path, options = {}) {
   const response = await fetch('/api' + path, { ...options, headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json', ...options.headers } });
   const data = await response.json();
@@ -107,12 +172,26 @@ async function refreshConfig() {
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
 const subGroupState = {}; // 主会话 id -> { collapsed, expandAll }：已归档子会话折叠组状态，跨 loadSessions 重渲染保留
+let assistantEntrySession = null; // #62：小秘单例会话引用（独立侧栏槽位）
+function renderAssistantEntry(s) {
+  assistantEntrySession = s;
+  const entry = $('assistant-entry');
+  if (!entry) return;
+  entry.querySelector('.assistant-entry-name').textContent = s.title || t('小秘');
+  entry.classList.toggle('active', state.session?.id === s.id);
+  const running = s.status === 'running';
+  entry.querySelector('.assistant-entry-dot').classList.toggle('live', running);
+  entry.onclick = action(() => openAssistantGate(s.id, s.title));
+}
 async function loadSessions() {
   const [sessions, archived] = await Promise.all([api('/sessions'), api('/sessions?archived=1')]);
   $('sessions').replaceChildren();
   // 层级：无 parentId 为主会话；有 parentId 为子会话。active 列表里的子会话=运行中（未归档），archived 列表里的=完成后自动归档。
   const childrenOf = {}, doneChildrenOf = {}, mains = [];
-  sessions.forEach(s => { if (s.parentId) (childrenOf[s.parentId] = childrenOf[s.parentId] || []).push(s); else mains.push(s); });
+  sessions.forEach(s => {
+    if (s.kind === 'assistant') { renderAssistantEntry(s); return; } // 小秘走独立槽位，不进普通列表
+    if (s.parentId) (childrenOf[s.parentId] = childrenOf[s.parentId] || []).push(s); else mains.push(s);
+  });
   archived.forEach(s => { if (s.parentId) (doneChildrenOf[s.parentId] = doneChildrenOf[s.parentId] || []).push(s); });
   if (!sessions.length) $('sessions').append(el('p', 'sessions-empty', t("还没有会话。\n从一个想法开始吧。")));
 
@@ -121,22 +200,16 @@ async function loadSessions() {
     const isActive = state.session?.id === s.id;
     // 高亮（蓝点+加粗）只给“完成且未被查看”的会话；查看后由后端 checked 持久化清除
     const highlight = s.status === 'completed' && !s.checked;
-    const isAssistant = s.kind === 'assistant';
-    const item = el('div', 'session-item' + (isActive ? ' active' : '') + (s.pinned ? ' pinned' : '') + (highlight ? ' status-completed' : '') + (isSub ? ' sub-session' : '') + (isAssistant ? ' assistant-session' : ''));
-    item.title = isAssistant ? (s.title + ' · ' + t("小秘系统会话")) : s.title;
+    const item = el('div', 'session-item' + (isActive ? ' active' : '') + (s.pinned ? ' pinned' : '') + (highlight ? ' status-completed' : '') + (isSub ? ' sub-session' : ''));
+    item.title = s.title;
     // 状态机：运行中=荧光绿闪烁、等待审批=黄常亮、失败=红常亮、完成=蓝；其余无点。
     const dotClass = { running: 'dot-running', failed: 'dot-failed', awaiting_approval: 'dot-await', completed: 'dot-done' }[s.status] || '';
     // 完成且已查看：不显示蓝点；已自动归档的子会话用灰标签替代蓝点
     if (dotClass && !(s.status === 'completed' && s.checked) && !(isSub && s.autoArchived)) item.append(el('span', 'session-dot ' + dotClass, ''));
     const label = el('span', 'session-label' + (isSub ? ' sub-session-label' : ''));
-    if (isAssistant) {
-      label.append(el('span', 'assistant-icon', '🤖'), el('span', '', s.title));
-    } else {
-      label.textContent = s.number > 0 ? '#' + s.number + ' ' + s.title : s.title;
-    }
-    label.onclick = action(() => { if (isAssistant) openAssistantGate(s.id, s.title); else selectSession(s.id); });
+    label.textContent = s.number > 0 ? '#' + s.number + ' ' + s.title : s.title;
+    label.onclick = action(() => selectSession(s.id));
     if (isSub && s.autoArchived) label.append(el('span', 'sub-session-badge', t("已完成")));
-    if (isAssistant) { item.append(label); return item; }
     const more = el('button', 'session-more', '⋯');
     more.setAttribute('aria-label', t("会话操作"));
     more.onclick = e => {
@@ -208,37 +281,42 @@ async function loadSessions() {
   });
   return sessions;
 }
+// 全局 SSE（#60）：后端在会话创建/归档/置顶/状态变更时广播 sessions-changed，前端自动刷新侧栏。
+// - 300ms 节流合并；subGroupState 跨重渲染保留（折叠/展开不丢）；
+// - 仅刷新侧栏列表，不抢输入焦点、不打断正在流式查看的会话；
+// - 运行中的 run 完成由各自 SSE 处理本会话视图，这里只同步列表。
+let sessionsEv = null, sessionsEvTimer = 0;
+function scheduleSessionsRefresh() {
+  if (sessionsEvTimer) return; // 300ms 内多次事件合并为一次
+  sessionsEvTimer = setTimeout(() => {
+    sessionsEvTimer = 0;
+    const focused = document.activeElement === $('prompt'); // 输入框聚焦时跳过本次，避免打断打字；下个事件再刷新
+    if (focused) return;
+    action(loadSessions)().catch(() => {});
+  }, 300);
+}
+function setupGlobalEvents() {
+  if (sessionsEv || typeof EventSource !== 'function') return;
+  try {
+    sessionsEv = new EventSource('/api/events?access_token=' + encodeURIComponent(state.token));
+    sessionsEv.addEventListener('sessions-changed', () => scheduleSessionsRefresh());
+    sessionsEv.onerror = () => { /* 浏览器自动重连；不关闭 */ };
+  } catch (_) { sessionsEv = null; }
+}
 
 /* ── 小秘系统会话密码门（#30）：点击小秘会话先验证账户密码，通过后才进入；锁屏后需重新验证 ── */
 function openAssistantGate(id, title) {
   if (sessionStorage.getItem('assistantUnlocked_' + id)) { selectSession(id); return; }
-  const overlay = el('div', 'assistant-gate-overlay');
-  const box = el('div', 'assistant-gate-box');
-  box.append(el('div', 'assistant-gate-title', '🤖 ' + (title || t('小秘'))));
-  box.append(el('p', 'muted', t("进入小秘会话需要账户密码")));
-  const input = el('input', 'assistant-gate-input');
-  input.type = 'password'; input.placeholder = t('输入密码');
-  const err = el('div', 'assistant-gate-error', '');
-  const submit = async () => {
-    try {
-      const resp = await fetch('/api/sessions/' + id + '/unlock-assistant', {
-        method: 'POST', headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: input.value }),
-      });
-      if (!resp.ok) { box.classList.add('shake'); setTimeout(() => box.classList.remove('shake'), 400); err.textContent = t('密码错误'); input.value = ''; input.focus(); return; }
-      sessionStorage.setItem('assistantUnlocked_' + id, '1');
-      overlay.remove();
-      selectSession(id);
-    } catch (e) { err.textContent = t('请求失败'); }
-  };
-  input.onkeydown = e => { if (e.key === 'Enter') submit(); };
-  const btn = el('button', 'primary', t('解锁'));
-  btn.onclick = action(submit);
-  box.append(input, err, btn);
-  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
-  overlay.append(box);
-  document.body.append(overlay);
-  input.focus();
+  action(async () => {
+    const res = await requestMasterAuth({ reason: t('进入小秘会话需要验证身份') });
+    if (res === null) return; // 取消
+    // 身份已由 requestMasterAuth 验证（密码或指纹）；密码路径补一次后端审计解锁态
+    if (typeof res === 'string' && res !== 'success') {
+      try { await api('/sessions/' + id + '/unlock-assistant', { method: 'POST', body: JSON.stringify({ password: res }) }); } catch (_) {}
+    }
+    sessionStorage.setItem('assistantUnlocked_' + id, '1');
+    selectSession(id);
+  })();
 }
 // 锁屏时清空小秘会话内存解锁态
 function clearAssistantGate() { Object.keys(sessionStorage).filter(k => k.indexOf('assistantUnlocked_') === 0).forEach(k => sessionStorage.removeItem(k)); }
@@ -729,9 +807,21 @@ function renderSession() {
   const previousScroll = $('conversation').scrollTop;
   const nearBottom = $('conversation').scrollHeight - previousScroll - $('conversation').clientHeight < 100;
   const openDetails = new Set([...$('timeline').querySelectorAll('details[open][data-key]')].map(d => d.dataset.key));
+  const isAssistantSess = state.session?.kind === 'assistant';
+  document.body.classList.toggle('assistant-mode', !!isAssistantSess);
   $('session-title').textContent = state.session?.title || t("开始新的探索");
-  $('welcome').classList.toggle('hidden', !!state.session?.runs.length);
+  // #62：小秘会话始终隐藏通用 welcome（及其 4 个快捷入口），改渲染小蜜专属时间线/空状态
+  $('welcome').classList.toggle('hidden', isAssistantSess || !!state.session?.runs.length);
   $('timeline').replaceChildren(); state.busy = false;
+  // #62：小蜜空状态——历史为空时显示专属引导，绝不显示通用欢迎页
+  if (isAssistantSess && !(state.session?.runs || []).length && !(state.session?.messages || []).length) {
+    const es = el('div', 'assistant-empty');
+    es.append(el('div', 'assistant-empty-icon'));
+    es.append(el('p', 'assistant-empty-title', state.session?.title || t('小秘')));
+    es.append(el('p', 'assistant-empty-sub', t('还没有对话，点麦克风开始')));
+    $('timeline').append(es);
+    return;
+  }
   for (const run of state.session?.runs || []) {
     if (run.status === 'running') state.busy = true;
     const box = el('article', 'run'); box.dataset.run = run.id; box.append(el('div', 'user-message', run.prompt));
@@ -760,7 +850,8 @@ function renderSession() {
           ans.innerHTML = renderMarkdown(text) + (running ? '<span class="stream-cursor" aria-hidden="true">▍</span>' : '');
         } else if (running) {
           // DSH/Codex 风格：首 token 前显示呼吸的思考点
-          ans.innerHTML = t("正在思考") + '<span class="thinking-dot" aria-hidden="true">.</span><span class="thinking-dot" aria-hidden="true" style="animation-delay:.2s">.</span><span class="thinking-dot" aria-hidden="true" style="animation-delay:.4s">.</span>';
+          ans.textContent = t("正在思考");
+          for (let _di = 1; _di <= 3; _di++) { const _dot = el('span', 'thinking-dot', '.'); _dot.setAttribute('aria-hidden', 'true'); ans.append(_dot); }
         } else if (run.error) {
           // 真·失败：显示具体原因（上游错误/超时/取消），不再是光秃秃的“未返回回答”
           ans.classList.add('chat-answer-error');
@@ -1001,7 +1092,7 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
 
 async function openFile(path) {
   // 图片 / STL / PDF 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
-  if (isImagePath(path) || isStlPath(path) || isPdfPath(path)) {
+  if (isImagePath(path) || isStlPath(path) || isPdfPath(path) || isDxfPath(path)) {
     state.file = { path, root: state.root, source: state.root === 'context' ? state.source : '', content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
     showEditor();
     return;
@@ -1033,11 +1124,13 @@ function showEditor() {
   const isImg = isImagePath(state.file.path);
   const isStl = isStlPath(state.file.path);
   const isPdf = isPdfPath(state.file.path);
+  const isDxf = isDxfPath(state.file.path);
   $('editor').readOnly = readOnly;
   // 图片 / STL / PDF 为只读可视化查看器，无文本可保存，禁用保存（避免空内容覆盖原文件）；drawio 可保存
-  $('save-file').disabled = readOnly || isImg || isStl || isPdf;
+  $('save-file').disabled = readOnly || isImg || isStl || isPdf || isDxf;
   $('attach-file').disabled = state.file.fresh;
-  $('editor-status').textContent = state.file.root === 'context' ? (sourceIsRW() ? t("辅助资料 · 读写来源") : t("辅助资料 · 只读")) : t("工作目录 · 保存后同步到主机");
+  $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf));
+  $("editor-ro-badge").title = (readOnly && state.file.root === "context") ? (sourceIsRW() ? t("辅助资料 · 读写来源") : t("辅助资料 · 只读")) : (isImg || isStl || isPdf || isDxf ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"));
   $('editor-mode-switch').classList.toggle('hidden', !md);
   if (isStl) {
     $('editor').classList.add('hidden');
@@ -1047,6 +1140,10 @@ function showEditor() {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
     setupPdfPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
+  } else if (isDxf) {
+    $('editor').classList.add('hidden');
+    $('editor-preview').classList.remove('hidden');
+    setupDxfPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
   } else if (isImg) {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
@@ -1171,7 +1268,10 @@ function showCtxTooltip(e, label, tokens, pct, color) {
     _ctxTooltip.className = 'ctx-tooltip';
     document.body.append(_ctxTooltip);
   }
-  _ctxTooltip.innerHTML = '<strong style="color:' + color + '">' + label + '</strong><br>' + tokens + ' tokens · ' + pct + '%';
+  _ctxTooltip.replaceChildren();
+  const _ttStrong = el('strong', '', label);
+  _ttStrong.style.color = color;
+  _ctxTooltip.append(_ttStrong, document.createElement('br'), document.createTextNode(tokens + ' tokens · ' + pct + '%'));
   _ctxTooltip.style.display = 'block';
   moveCtxTooltip(e);
 }
@@ -1330,10 +1430,42 @@ $('send').addEventListener('click', event => {
     }
   })();
 });
-function openSettings() { $('base-url').value = state.config?.baseURL || 'https://api.deepseek.com'; $('api-key').value = ''; $('api-key').placeholder = state.config?.hasKey ? t("已保存密钥；留空保留") : t("云端 API 通常需要密钥；本地模型可不填"); $('clear-key').checked = false; state.modelDraft = { models: JSON.parse(JSON.stringify(state.config?.models || [])), activeModel: state.config?.activeModel || '' }; renderModelList(); $('settings-dialog').showModal(); }
+function renderApiKeyStatus() {
+  const cfg = state.config || {};
+  const status = $('apikey-status'); const edit = $('apikey-edit');
+  if (!status || !edit) return;
+  $('api-key').value = ''; $('clear-key').checked = false;
+  status.replaceChildren();
+  const hasKey = !!cfg.hasKey; const unlocked = !!cfg.vaultUnlocked; const hasPw = !!cfg.hasPassword;
+  if (!hasKey) {
+    status.append(el('span', 'ak-badge ak-none', t('未配置')));
+    edit.classList.remove('hidden');
+    return;
+  }
+  if (!unlocked && hasPw) {
+    status.append(el('span', 'ak-badge ak-locked', t('需解锁')));
+    const un = el('button', 'quiet ak-unlock', t('解锁')); un.type = 'button';
+    un.onclick = action(async () => {
+      const res = await requestMasterAuth({ reason: t('解锁模型 API 密钥') });
+      if (res === 'cancel') return;
+      if (res !== 'success') { toast(t('验证失败')); return; }
+      // 后端 /api/auth/verify 通过后已解锁 vault
+      await refreshConfig(); renderApiKeyStatus(); toast(t('保险库已解锁'));
+    });
+    status.append(un);
+    edit.classList.add('hidden');
+    return;
+  }
+  status.append(el('span', 'ak-badge ak-ok', t('已配置')));
+  const chg = el('button', 'quiet ak-change', t('更换')); chg.type = 'button';
+  chg.onclick = () => { edit.classList.toggle('hidden'); if (!edit.classList.contains('hidden')) $('api-key').focus(); };
+  status.append(chg);
+  edit.classList.add('hidden');
+}
+function openSettings() { $('base-url').value = state.config?.baseURL || 'https://api.deepseek.com'; state.modelDraft = { models: JSON.parse(JSON.stringify(state.config?.models || [])), activeModel: state.config?.activeModel || '' }; renderModelList(); renderApiKeyStatus(); $('settings-dialog').showModal(); }
 $('settings-button').onclick = openSettings;
 $('settings-form').onsubmit = action(async event => { event.preventDefault(); if (!state.modelDraft.models.length) { toast(t("请至少添加一个模型")); return; } await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked, models: state.modelDraft.models, activeModel: state.modelDraft.activeModel }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast(t("模型设置已保存，发送任务时会调用当前模型")); if (typeof scheduleContextPreview === 'function') scheduleContextPreview(); });
-$('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; if (state.file.wsId) body.workspaceId = state.file.wsId; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; $('editor-status').textContent = t("✓ 已保存"); await loadFiles(); });
+$('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; if (state.file.wsId) body.workspaceId = state.file.wsId; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; toast(t("✓ 已保存")); await loadFiles(); });
 $('attach-file').onclick = () => {
   if (state.file.content !== $('editor').value) { toast(t("请先保存修改，再附加到任务")); return; }
   const att = { root: state.file.root, path: state.file.path }; if (state.file.source) { att.root = 'source'; att.source = state.file.source; } if (!state.attachments.some(a => a.root === att.root && a.path === att.path && (a.source || '') === (att.source || ''))) { if (state.attachments.length >= 8) { toast(t("最多附加 8 个文件")); return; } state.attachments.push(att); }
@@ -2554,7 +2686,20 @@ function fillWorkspaceSheet() {
   const hint = $('ws-vault-hint');
   const vpField = $('ws-vault-password-field');
   if (!c.hasAccountPassword) { hint.textContent = t("请先在设置→账户设置密码，才能加密存储 SSH 凭据"); hint.classList.remove('hidden'); vpField.classList.add('hidden'); }
-  else if (c.vaultLocked) { hint.textContent = t("凭证保险库已锁定：保存前请在下方输入账户密码解锁"); hint.classList.remove('hidden'); vpField.classList.remove('hidden'); }
+  else if (c.vaultLocked) {
+    hint.textContent = t("凭证保险库已锁定：保存前请验证身份解锁"); hint.classList.remove('hidden'); vpField.classList.remove('hidden');
+    vpField.querySelector('.ws-vault-fp')?.remove();
+    if (state.config && state.config.hasPlatformCredential) {
+      const fp = el('button', 'quiet ws-vault-fp'); fp.type = 'button'; fp.textContent = t('指纹解锁');
+      fp.onclick = action(async () => {
+        const res = await requestMasterAuth({ reason: t('解锁凭证保险库') });
+        if (res === null) return;
+        if (typeof res === 'string' && res !== 'success') { $('ws-vault-password').value = res; }
+        await refreshConfig(); await fillWorkspaceSheet();
+      });
+      vpField.append(fp);
+    }
+  }
   else { hint.textContent = ''; hint.classList.add('hidden'); vpField.classList.add('hidden'); }
   $('docs-path').value = c.docs?.path || '';
   $('cache-path').value = c.cache?.path || '';
@@ -3198,15 +3343,15 @@ async function setupPdfPreview(container, filePath, root, source) {
     }
   }
 
-  let scrollTimer = 0;
-  scroll.onscroll = () => { clearTimeout(scrollTimer); scrollTimer = setTimeout(updateCurrentPage, 120); };
+  let scrollTimer = 0, _gotoLock = false;
+  scroll.onscroll = () => { if (_gotoLock) return; clearTimeout(scrollTimer); scrollTimer = setTimeout(updateCurrentPage, 120); };
   function updateCurrentPage() {
     const top = scroll.scrollTop;
     let best = 1, dist = Infinity;
     for (let i = 1; i <= numPages; i++) { const d = Math.abs(holders[i].el.offsetTop - top); if (d < dist) { dist = d; best = i; } }
     pageInput.value = best;
   }
-  function gotoPage(i) { i = Math.max(1, Math.min(numPages, i | 0)); holders[i].el.scrollIntoView({ behavior: 'smooth', block: 'start' }); pageInput.value = i; }
+  function gotoPage(i) { i = Math.max(1, Math.min(numPages, i | 0)); _gotoLock = true; clearTimeout(scrollTimer); scroll.scrollTop = holders[i].el.offsetTop; pageInput.value = i; setTimeout(() => { _gotoLock = false; }, 200); }
   btnPrev.onclick = () => gotoPage((parseInt(pageInput.value, 10) || 1) - 1);
   btnNext.onclick = () => gotoPage((parseInt(pageInput.value, 10) || 1) + 1);
   pageInput.onchange = () => gotoPage(parseInt(pageInput.value, 10) || 1);
@@ -3214,6 +3359,316 @@ async function setupPdfPreview(container, filePath, root, source) {
   btnZoomOut.onclick = () => { scale = Math.max(0.4, scale / 1.2); layoutPages(); };
   btnFit.onclick = () => { scale = fitWidthScale(); layoutPages(); };
   new ResizeObserver(() => { /* 宽度变化时维持适应宽度 */ }).observe(scroll);
+}
+
+/* ── DXF 矢量渲染器：dxf-parser + SVG 离线渲染 ── */
+function isDxfPath(path) { return /\.dxf$/i.test(path || ''); }
+let _dxfParserPromise = null;
+function ensureDxfParser() {
+  if (_dxfParserPromise) return _dxfParserPromise;
+  _dxfParserPromise = ensureVendorScript('/vendor/dxf-parser/dxf-parser.js', () => typeof DxfParser !== 'undefined');
+  return _dxfParserPromise;
+}
+const DXF_SVG_NS = 'http://www.w3.org/2000/svg';
+function dxfSvgEl(tag, attrs) {
+  const e = document.createElementNS(DXF_SVG_NS, tag);
+  if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+// ACI colorIndex → CSS 颜色；7(白/黑 auto) 与 byLayer 回退到主题变量
+function dxfEntityColor(ent, layers) {
+  const ci = ent.colorIndex;
+  if (ci != null && ci !== 0 && ci !== 256 && ci !== 7 && ent.color != null) {
+    return '#' + (ent.color >>> 0).toString(16).padStart(6, '0');
+  }
+  if (ci === 7) return 'var(--dxf-fg)'; // auto 色：随主题明暗
+  if (ent.layer && layers && layers[ent.layer] && layers[ent.layer].color != null) {
+    const lc = layers[ent.layer].color;
+    return '#' + (lc >>> 0).toString(16).padStart(6, '0');
+  }
+  return 'var(--dxf-fg)';
+}
+// 多边形顶点 bulge 弧段 → 插值点序列
+function bulgePts(x1, y1, x2, y2, bulge) {
+  if (!bulge || Math.abs(bulge) < 1e-9) return [[x1, y1], [x2, y2]];
+  const dx = x2 - x1, dy = y2 - y1, chord = Math.hypot(dx, dy);
+  if (chord < 1e-9) return [[x1, y1], [x2, y2]];
+  const angle = 4 * Math.atan(Math.abs(bulge));
+  const R = chord / (2 * Math.sin(angle / 2));
+  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+  const ux = -dy / chord, uy = dx / chord; // 弦的单位法向
+  const side = bulge > 0 ? 1 : -1;
+  const cd = R * Math.cos(angle / 2);
+  const cx = mx - ux * cd * side, cy = my - uy * cd * side;
+  const steps = Math.max(4, Math.min(48, Math.ceil(angle * 14)));
+  const a0 = Math.atan2(y1 - cy, x1 - cx), a1 = Math.atan2(y2 - cy, x2 - cx);
+  let da = a1 - a0;
+  while (bulge > 0 && da < 0) da += 2 * Math.PI;
+  while (bulge > 0 && da > 2 * Math.PI) da -= 2 * Math.PI;
+  while (bulge < 0 && da > 0) da -= 2 * Math.PI;
+  while (bulge < 0 && da < -2 * Math.PI) da += 2 * Math.PI;
+  const pts = [];
+  for (let i = 0; i <= steps; i++) { const a = a0 + da * i / steps; pts.push([cx + R * Math.cos(a), cy + R * Math.sin(a)]); }
+  return pts;
+}
+
+async function setupDxfPreview(container, filePath, root, source) {
+  container.innerHTML = '';
+  const token = state.token || (state.config && state.config.accessToken) || '';
+  const qp = new URLSearchParams();
+  qp.set('path', filePath);
+  if (source) qp.set('source', source); else qp.set('root', root || 'workspace');
+  if (token) qp.set('access_token', token);
+  const rawUrl = '/api/file/raw?' + qp.toString();
+
+  const viewer = el('div', 'dxf-viewer');
+  const toolbar = el('div', 'dxf-toolbar');
+  const info = el('span', 'dxf-info', filePath.split('/').pop());
+  const meta = el('span', 'dxf-meta', t('加载中…'));
+  const btnZoomOut = el('button', 'dxf-ctrl', '－');
+  const btnZoomIn = el('button', 'dxf-ctrl', '＋');
+  const btnFit = el('button', 'dxf-ctrl', t('适应'));
+  const btnClose = el('button', 'dxf-ctrl', '✕');
+  btnZoomOut.title = t('缩小'); btnZoomIn.title = t('放大'); btnFit.title = t('适应窗口'); btnClose.title = t('关闭');
+  toolbar.append(info, meta, btnZoomOut, btnZoomIn, btnFit, btnClose);
+  const canvas = el('div', 'dxf-canvas');
+  viewer.append(toolbar, canvas);
+  container.append(viewer);
+
+  const close = () => {
+    const dlg = container.closest('dialog');
+    if (dlg) dlg.close();
+    else if (document.body.classList.contains('file-view-mode')) history.back();
+  };
+  btnClose.onclick = close;
+
+  let text;
+  try {
+    await ensureDxfParser();
+    const r = await fetch(rawUrl);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    text = await r.text();
+  } catch (e) {
+    meta.textContent = t('加载失败');
+    canvas.innerHTML = '';
+    canvas.append(el('div', 'dxf-error', t('DXF 加载失败：') + ' ' + escapeHtml(e.message)));
+    return;
+  }
+
+  let doc;
+  try {
+    doc = new DxfParser().parseSync(text);
+  } catch (e) {
+    meta.textContent = t('解析失败');
+    canvas.innerHTML = '';
+    canvas.append(el('div', 'dxf-error', t('DXF 解析失败：') + ' ' + escapeHtml(e.message)));
+    return;
+  }
+  const entities = (doc && doc.entities) || [];
+  const blocks = (doc && doc.blocks) || {};
+  const layers = (doc && doc.tables && doc.tables.layers) || {};
+  if (!entities.length) {
+    meta.textContent = t('无实体');
+    canvas.innerHTML = '';
+    canvas.append(el('div', 'dxf-error', t('该 DXF 文件没有可显示的实体')));
+    return;
+  }
+
+  // 包围盒（DXF Y-up 坐标）
+  const bb = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity };
+  const grow = (x, y) => { if (!isFinite(x) || !isFinite(y)) return; if (x < bb.minX) bb.minX = x; if (x > bb.maxX) bb.maxX = x; if (y < bb.minY) bb.minY = y; if (y > bb.maxY) bb.maxY = y; };
+
+  const svg = dxfSvgEl('svg', { class: 'dxf-svg', preserveAspectRatio: 'xMidYMid meet' });
+  const content = dxfSvgEl('g', { transform: 'scale(1,-1)' }); // DXF Y-up → SVG Y-down
+  svg.appendChild(content);
+  canvas.appendChild(svg);
+
+  const penWidth = 0.35; // 模型单位下的默认线宽
+  function strokeAttrs(ent) {
+    return { stroke: dxfEntityColor(ent, layers), 'stroke-width': penWidth, fill: 'none', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' };
+  }
+  function renderEntity(ent, parent, xform) {
+    const tx = (xform ? xform.dx : 0), ty = (xform ? xform.dy : 0);
+    const sxp = (xform ? xform.sx : 1), syp = (xform ? xform.sy : 1);
+    const rot = (xform ? (xform.rotDeg || 0) * Math.PI / 180 : 0);
+    const xf = (x, y) => {
+      if (!xform) return [x, y];
+      const rx = x * sxp, ry = y * syp;
+      return [tx + rx * Math.cos(rot) - ry * Math.sin(rot), ty + rx * Math.sin(rot) + ry * Math.cos(rot)];
+    };
+    try {
+      switch (ent.type) {
+        case 'LINE': {
+          const v = ent.vertices || [];
+          if (v.length >= 2) {
+            const [x1, y1] = xf(v[0].x, v[0].y), [x2, y2] = xf(v[1].x, v[1].y);
+            parent.appendChild(dxfSvgEl('line', { ...strokeAttrs(ent), x1, y1, x2, y2 }));
+            grow(x1, y1); grow(x2, y2);
+          }
+          break;
+        }
+        case 'POINT': {
+          const p = ent.position || {};
+          const [x, y] = xf(p.x || 0, p.y || 0);
+          parent.appendChild(dxfSvgEl('circle', { cx: x, cy: y, r: penWidth * 2, fill: dxfEntityColor(ent, layers), stroke: 'none' }));
+          grow(x, y);
+          break;
+        }
+        case 'CIRCLE': {
+          const c = ent.center || {};
+          const [cx, cy] = xf(c.x || 0, c.y || 0);
+          const r = (ent.radius || 0) * (Math.abs(sxp + syp) / 2 || 1);
+          parent.appendChild(dxfSvgEl('circle', { ...strokeAttrs(ent), cx, cy, r }));
+          grow(cx - r, cy - r); grow(cx + r, cy + r);
+          break;
+        }
+        case 'ARC': {
+          const c = ent.center || {}, r = ent.radius || 0;
+          const a0 = ent.startAngle || 0, a1 = ent.endAngle || 0;
+          const sa = xf(c.x + r * Math.cos(a0), c.y + r * Math.sin(a0));
+          const ea = xf(c.x + r * Math.cos(a1), c.y + r * Math.sin(a1));
+          const large = (ent.angleLength || 0) > Math.PI ? 1 : 0;
+          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d: 'M ' + sa[0] + ' ' + sa[1] + ' A ' + r + ' ' + r + ' 0 ' + large + ' 0 ' + ea[0] + ' ' + ea[1] }));
+          const steps = 48;
+          for (let i = 0; i <= steps; i++) { const a = a0 + (a1 - a0) * i / steps; const pt = xf(c.x + r * Math.cos(a), c.y + r * Math.sin(a)); grow(pt[0], pt[1]); }
+          break;
+        }
+        case 'ELLIPSE': {
+          const c = ent.center || {}, v = ent.majorAxisEndPoint || {};
+          const vmx = v.x || 0, vmy = v.y || 0;
+          const Ra = Math.hypot(vmx, vmy), Rb = Ra * (ent.axisRatio || 0);
+          const theta = Math.atan2(vmy, vmx);
+          const ux = Math.cos(theta), uy = Math.sin(theta);
+          const wx = -Math.sin(theta), wy = Math.cos(theta);
+          const t0 = ent.startAngle || 0, t1 = ent.endAngle || Math.PI * 2;
+          const steps = 80;
+          let d = '';
+          for (let i = 0; i <= steps; i++) {
+            const t = t0 + (t1 - t0) * i / steps;
+            const lx = Ra * Math.cos(t), ly = Rb * Math.sin(t);
+            const px = c.x + lx * ux + ly * wx, py = c.y + lx * uy + ly * wy;
+            const pt = xf(px, py);
+            d += (i === 0 ? 'M ' : ' L ') + pt[0] + ' ' + pt[1];
+            grow(pt[0], pt[1]);
+          }
+          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d }));
+          break;
+        }
+        case 'LWPOLYLINE':
+        case 'POLYLINE': {
+          const verts = ent.vertices || [];
+          if (verts.length < 2) break;
+          let d = '', started = false;
+          for (let i = 0; i < verts.length; i++) {
+            const a = verts[i], b = verts[(i + 1) % verts.length];
+            const bulge = a.bulge || 0;
+            const seg = bulgePts(a.x, a.y, b.x, b.y, bulge);
+            for (let j = 0; j < seg.length; j++) {
+              const pt = xf(seg[j][0], seg[j][1]);
+              d += (started ? ' L ' : 'M ') + pt[0] + ' ' + pt[1];
+              started = true;
+              grow(pt[0], pt[1]);
+            }
+            if (!ent.shape && i === verts.length - 1) break;
+          }
+          if (ent.shape) d += ' Z';
+          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d }));
+          break;
+        }
+        case 'SPLINE': {
+          const pts = ent.fitPoints && ent.fitPoints.length ? ent.fitPoints : (ent.controlPoints || []);
+          if (pts.length < 2) break;
+          let d = '';
+          pts.forEach((p, i) => { const pt = xf(p.x || 0, p.y || 0); d += (i ? ' L ' : 'M ') + pt[0] + ' ' + pt[1]; grow(pt[0], pt[1]); });
+          if (ent.closed) d += ' Z';
+          parent.appendChild(dxfSvgEl('path', { ...strokeAttrs(ent), d }));
+          break;
+        }
+        case 'TEXT':
+        case 'MTEXT': {
+          const p = ent.startPoint || ent.position || {};
+          const pt = xf(p.x || 0, p.y || 0);
+          const h = ent.textHeight || ent.height || 1;
+          const rot = ent.rotation || 0;
+          const g = dxfSvgEl('g', { transform: 'translate(' + pt[0] + ' ' + pt[1] + ') scale(1,-1)' });
+          const tx2 = dxfSvgEl('text', { 'font-size': h, fill: dxfEntityColor(ent, layers), 'text-anchor': 'start', 'dominant-baseline': 'alphabetic', 'font-family': 'var(--dxf-font, sans-serif)', transform: 'rotate(' + rot + ')' });
+          tx2.textContent = ent.text || '';
+          g.appendChild(tx2);
+          parent.appendChild(g);
+          grow(pt[0] - h, pt[1] - h); grow(pt[0] + h * (ent.text || '').length, pt[1] + h);
+          break;
+        }
+        case 'INSERT': {
+          const blk = blocks[ent.name];
+          if (!blk || !blk.entities) break;
+          const p = ent.position || {};
+          const pt = xf(p.x || 0, p.y || 0);
+          const sub = dxfSvgEl('g', {});
+          parent.appendChild(sub);
+          blk.entities.forEach(e2 => renderEntity(e2, sub, { dx: pt[0], dy: pt[1], rotDeg: ent.rotation || 0, sx: ent.xScale || 1, sy: ent.yScale || 1 }));
+          break;
+        }
+        case 'DIMENSION': {
+          if (ent.block && blocks[ent.block] && blocks[ent.block].entities) {
+            const p = ent.anchorPoint || ent.middleOfText || {};
+            const pt = xf(p.x || 0, p.y || 0);
+            const sub = dxfSvgEl('g', {});
+            parent.appendChild(sub);
+            blocks[ent.block].entities.forEach(e2 => renderEntity(e2, sub, { dx: pt[0], dy: pt[1], rotDeg: 0, sx: 1, sy: 1 }));
+          }
+          break;
+        }
+        case 'SOLID': {
+          const pts = ent.points || [];
+          if (pts.length >= 3) {
+            let d = '';
+            pts.slice(0, 4).forEach((p, i) => { const pt = xf(p.x || 0, p.y || 0); d += (i ? ' L ' : 'M ') + pt[0] + ' ' + pt[1]; grow(pt[0], pt[1]); });
+            d += ' Z';
+            parent.appendChild(dxfSvgEl('path', { d, fill: dxfEntityColor(ent, layers), stroke: 'none', opacity: '0.6' }));
+          }
+          break;
+        }
+        default:
+          break;
+      }
+    } catch (e) { /* 单实体异常不中断整图 */ }
+  }
+
+  entities.forEach(ent => renderEntity(ent, content, null));
+
+  if (!isFinite(bb.minX) || bb.minX === bb.maxX) { bb.minX -= 1; bb.maxX += 1; }
+  if (!isFinite(bb.minY) || bb.minY === bb.maxY) { bb.minY -= 1; bb.maxY += 1; }
+  const pad = Math.max((bb.maxX - bb.minX), (bb.maxY - bb.minY)) * 0.05 || 1;
+  bb.minX -= pad; bb.maxX += pad; bb.minY -= pad; bb.maxY += pad;
+
+  // viewBox：DXF Y-up → SVG Y-down（y 取负）
+  const fitVb = { x: bb.minX, y: -bb.maxY, w: bb.maxX - bb.minX, h: bb.maxY - bb.minY };
+  let s = 1, cxv = fitVb.x + fitVb.w / 2, cyv = fitVb.y + fitVb.h / 2;
+  const applyVb = () => {
+    const w = fitVb.w / s, h = fitVb.h / s;
+    svg.setAttribute('viewBox', (cxv - w / 2) + ' ' + (cyv - h / 2) + ' ' + w + ' ' + h);
+  };
+  const fit = () => { s = 1; cxv = fitVb.x + fitVb.w / 2; cyv = fitVb.y + fitVb.h / 2; applyVb(); };
+  fit();
+  btnZoomIn.onclick = () => { s = Math.min(200, s * 1.3); applyVb(); };
+  btnZoomOut.onclick = () => { s = Math.max(0.05, s / 1.3); applyVb(); };
+  btnFit.onclick = fit;
+  canvas.onwheel = (e) => { e.preventDefault(); const f = e.deltaY < 0 ? 1.15 : 1 / 1.15; s = Math.max(0.05, Math.min(200, s * f)); applyVb(); };
+  let dragging = false, lastX = 0, lastY = 0;
+  canvas.onmousedown = (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.classList.add('grabbing'); };
+  window.addEventListener('mousemove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    const vbW = fitVb.w / s, vbH = fitVb.h / s;
+    const cw = canvas.clientWidth || 1, ch = canvas.clientHeight || 1;
+    cxv -= dx * vbW / cw; cyv -= dy * vbH / ch;
+    applyVb();
+  });
+  window.addEventListener('mouseup', () => { dragging = false; canvas.classList.remove('grabbing'); });
+  canvas.classList.add('grab');
+
+  meta.textContent = entities.length + ' ' + t('个实体');
 }
 
 function renderMarkdown(src, live, basePath) {
@@ -3284,9 +3739,10 @@ async function openFileViewMode() {
   const isImg = isImagePath(spec.path);
   const isStl = isStlPath(spec.path);
   const isPdf = isPdfPath(spec.path);
-  // 图片 / STL / PDF 走独立 raw 查看器，跳过只支持文本、会拒绝二进制的 /api/file
+  const isDxf = isDxfPath(spec.path);
+  // 图片 / STL / PDF / DXF 走独立 raw 查看器，跳过只支持文本、会拒绝二进制的 /api/file
   let data;
-  if (isImg || isStl || isPdf) {
+  if (isImg || isStl || isPdf || isDxf) {
     data = { content: '', hash: '', workspaceId: '', wsId: '' };
   } else {
     const query = spec.source
@@ -3300,8 +3756,8 @@ async function openFileViewMode() {
   $('file-view-editor').value = data.content;
   $('file-view-editor').readOnly = readOnly;
   // 图片 / STL / PDF 只读查看器禁用保存；drawio 可保存
-  $('file-view-save').disabled = readOnly || isImg || isStl || isPdf;
-  $('file-view-status').textContent = readOnly ? t("只读") : t("可编辑 · 保存后同步");
+  $('file-view-save').disabled = readOnly || isImg || isStl || isPdf || isDxf;
+  $("file-view-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf));
   if (isStl) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
@@ -3310,6 +3766,10 @@ async function openFileViewMode() {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
     setupPdfPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+  } else if (isDxf) {
+    $('file-view-editor').classList.add('hidden');
+    $('file-view-preview').classList.remove('hidden');
+    setupDxfPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
   } else if (isImg) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
@@ -3325,7 +3785,6 @@ async function openFileViewMode() {
   } else {
     setFileViewMode(md ? 'preview' : 'edit');
   }
-  $('file-view-toolbar').classList.remove('hidden');
   $('file-view-content').replaceChildren();
 }
 $('fv-edit').onclick = () => setFileViewMode('edit');
@@ -3335,7 +3794,7 @@ $('file-view-save').onclick = action(async () => {
   if (fileView.spec.source) body.source = fileView.spec.source; if (fileView.wsId) body.workspaceId = fileView.wsId;
   const res = await api('/file', { method: 'PUT', body: JSON.stringify(body) });
   fileView.hash = res.hash;
-  $('file-view-status').textContent = t("✓ 已保存");
+  toast(t("✓ 已保存"));
 });
 /* ── 会话轨迹（DSH TrajectoryView 风格：turn-aware 事件时间线） ── */
 function trajectoryEvent(dot, title, bodyNode, kind) {
@@ -3481,10 +3940,6 @@ function renderCallsTable(host, calls) {
   bar.append(mkSel([['all',t('全部时间')],['1h',t('1小时')],['24h',t('24小时')],['7d',t('7天')]], callFilter.time, () => { callFilter.time = bar.children[3].value; renderCallsTable(host, calls); }));
   bar.append(mkSel([['all',t('全部')],['main',t('主Agent')],['sub',t('子Agent')]], callFilter.agent, () => { callFilter.agent = bar.children[4].value; renderCallsTable(host, calls); }));
   host.append(bar);
-  const mainN = calls.filter(c => c.agent === 'main').length;
-  const subN = calls.filter(c => c.agent === 'sub').length;
-  const failN = calls.filter(c => /失败|error|拒绝|fail/i.test(String(c.result || ''))).length;
-  host.append(el('div', 'call-summary', t('共 {0} 次 · 主 {1} 子 {2} 失败 {3}', calls.length, mainN, subN, failN)));
   const now = Date.now();
   const tms = { '1h': 3600000, '24h': 86400000, '7d': 604800000 };
   const filtered = calls.filter(c => {
@@ -3494,6 +3949,11 @@ function renderCallsTable(host, calls) {
     if (callFilter.time !== 'all' && c.time && now - new Date(c.time).getTime() > tms[callFilter.time]) return false;
     return true;
   });
+  // BUG-1 修复：统计跟随筛选结果（而非全量 calls）
+  const mainN = filtered.filter(c => c.agent === 'main').length;
+  const subN = filtered.filter(c => c.agent === 'sub').length;
+  const failN = filtered.filter(c => /失败|error|拒绝|fail/i.test(String(c.result || ''))).length;
+  host.append(el('div', 'call-summary', t('共 {0} 次 · 主 {1} 子 {2} 失败 {3}', filtered.length, mainN, subN, failN)));
   if (!filtered.length) { host.append(el('p', 'muted', t("没有匹配的调用记录"))); return; }
   const table = el('table', 'call-table');
   const headRow = el('tr', '');
@@ -3643,6 +4103,7 @@ async function initialize() {
   const fragment = new URLSearchParams(location.hash.slice(1));
   if (fragment.has('file')) { await Promise.all([loadWorkspaceConfig(), loadSourcesList()]); await openFileViewMode(); return; }
   await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
+  setupGlobalEvents(); // #60
 }
 initialize()
   .then(() => {
@@ -3732,7 +4193,7 @@ if (!document.body.classList.contains('file-view-mode') && state.config) { actio
 // 每次 renderMarkdown 后触发 mermaid 渲染
 const _origRender = renderMarkdown;
 renderMarkdown = function(src, live) { const html = _origRender(src, live); setTimeout(renderMermaid, 50); return html; };
-  if (fileView.spec) $('file-view-status').textContent = $('file-view-editor').readOnly ? t('只读') : t('可编辑 · 保存后同步');
+  if (fileView.spec) $('file-view-ro-badge').classList.toggle('hidden', !$('file-view-editor').readOnly);
   if (!$('strategy-menu').classList.contains('hidden')) openStrategyMenu();
   if (state.contextPreview) renderContextPreview(state.contextPreview);
 });
@@ -4437,37 +4898,35 @@ function renderVoiceHistoryControl() {
     catch (e) { list.replaceChildren(el('p', 'muted', e.message)); return; }
     list.replaceChildren();
 
-    // 隐私二次校验：即使系统已解锁，查看加密小秘历史也要再输一次账户密码
+    // 隐私二次校验：即使系统已解锁，查看加密小秘历史也要再验证一次身份（#43 统一组件）
     if (res.encrypted && !list._authPassed && state.config && state.config.hasPassword) {
-      list.append(el('p', 'muted', t('查看小秘对话历史需再次输入账户密码确认身份。')));
-      const pw = el('input'); pw.type = 'password'; pw.placeholder = t('账户密码');
+      list.append(el('p', 'muted', t('查看小秘对话历史需再次验证身份。')));
       const go = el('button', 'primary', t('查看历史')); go.type = 'button';
       go.onclick = action(async () => {
-        if (!pw.value) return toast(t('请输入密码'));
-        try {
-          await api('/account/verify-password', { method: 'POST', body: JSON.stringify({ password: pw.value }) });
-          try { await api('/voice-history/unlock', { method: 'POST', body: JSON.stringify({ password: pw.value }) }); } catch (_) {}
-          list._authPassed = true;
-          load();
-        } catch (e) { toast(t('密码错误')); }
+        const pw = await requestMasterAuth({ reason: t('查看小秘对话历史需再次验证身份') });
+        if (pw === null) return;
+        if (typeof pw === 'string' && pw !== 'success') {
+          try { await api('/voice-history/unlock', { method: 'POST', body: JSON.stringify({ password: pw }) }); } catch (_) {}
+        }
+        list._authPassed = true;
+        load();
       });
-      const row = el('div', 'voice-lock-row'); row.append(pw, go);
-      list.append(row);
+      list.append(go);
       return;
     }
 
-    // 加密但未解锁：只显示锁定占位 + 解锁
+    // 加密但未解锁：验证身份后解锁（#43；指纹无法解密历史密钥，故解锁须用密码）
     if (res.encrypted && !res.unlocked) {
-      list.append(el('p', 'muted', t('历史已加密，需输入密钥解锁。密钥丢失无法恢复，只能清空重置。')));
-      const pw = el('input'); pw.type = 'password'; pw.placeholder = t('密钥');
+      list.append(el('p', 'muted', t('历史已加密，需输入账户密码解锁。密钥丢失无法恢复，只能清空重置。')));
       const un = el('button', 'primary', t('解锁')); un.type = 'button';
       un.onclick = action(async () => {
-        if (!pw.value) return toast(t('请输入密钥'));
-        try { await api('/voice-history/unlock', { method: 'POST', body: JSON.stringify({ password: pw.value }) }); toast(t('已解锁')); load(); }
+        const pw = await requestMasterAuth({ reason: t('解锁小秘对话历史') });
+        if (pw === null) return;
+        if (typeof pw !== 'string' || pw === 'success') { toast(t('请用密码解锁历史（指纹无法解密历史密钥）')); return; }
+        try { await api('/voice-history/unlock', { method: 'POST', body: JSON.stringify({ password: pw }) }); toast(t('已解锁')); load(); }
         catch (e) { toast(t('密钥错误')); }
       });
-      const row = el('div', 'voice-lock-row'); row.append(pw, un);
-      list.append(row);
+      list.append(un);
       return;
     }
 
@@ -4502,7 +4961,8 @@ function renderVoiceHistoryControl() {
       });
       const disBtn = el('button', 'quiet', t('关闭加密')); disBtn.type = 'button';
       disBtn.onclick = action(async () => {
-        const pw = await passwordPrompt(t('输入密钥以解密回明文')); if (pw == null) return;
+        const pw = await requestMasterAuth({ reason: t('输入账户密码以解密回明文') }); if (pw == null) return;
+        if (typeof pw !== 'string' || pw === 'success') { toast(t('请用密码解密（指纹无法导出历史密钥）')); return; }
         try { await api('/voice-history/disable', { method: 'POST', body: JSON.stringify({ password: pw }) }); toast(t('已关闭加密')); load(); }
         catch (e) { toast(t('失败：{0}', e.message)); }
       });
@@ -5549,7 +6009,7 @@ function renderBackupControl() {
   const sec = el('input'); sec.type = 'checkbox';
   secBox.append(sec, el('span', '', t('包含敏感凭据（API Key、登录密码哈希、性格密文、来源密钥）')));
   exp.append(secBox);
-  exp.append(el('p', 'backup-warn', t('注意：该文件将包含明文 API Key，请妥善保管，不要分享或上传到公共位置。')));
+  exp.append(el('p', 'backup-warn', t('注意：API Key 等密钥以加密信封导出、不含明文；仍请妥善保管备份文件，不要分享或上传到公共位置。')));
   const voiceBox = el('label', 'backup-check');
   const vc = el('input'); vc.type = 'checkbox';
   voiceBox.append(vc, el('span', '', t('包含语音小秘的对话历史')));
@@ -5634,6 +6094,7 @@ function renderBackupControl() {
       const res = await api('/config/import', { method: 'POST', body: JSON.stringify({ backup: parsed, importSecrets: impSec.checked, importVoice: impVoice.checked }) });
       await refreshConfig();
       if (res.passwordChanged) toast(t('导入完成：登录密码已变更为备份时的密码，请使用该密码解锁'));
+      else if (res.migratedKey) toast(t('配置导入完成，API Key 已安全迁移至加密保险库'));
       else toast(t('配置导入完成'));
       parsed = null; fileInput.value = ''; info.classList.add('hidden');
       delete impBtn.dataset.armed; impBtn.textContent = t('确认导入');

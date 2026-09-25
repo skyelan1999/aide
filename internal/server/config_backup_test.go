@@ -34,14 +34,14 @@ func TestConfigBackupExportImport(t *testing.T) {
 		t.Fatalf("非敏感设置丢失: %+v", s)
 	}
 
-	// 导出（含敏感）：API Key 保留
+	// 导出（含敏感）：API Key 明文不再随 settings 导出（已加密在 vault.enc 信封里），settings 中不留明文
 	w2 := request(a, "POST", "/api/config/export", map[string]any{"includeSecrets": true})
 	var bk2 configBackup
 	_ = json.Unmarshal(w2.Body.Bytes(), &bk2)
 	var s2 Settings
 	_ = json.Unmarshal(bk2.Settings, &s2)
-	if s2.APIKey != "secret-key-123" {
-		t.Fatal("含敏感导出应保留 apiKey")
+	if s2.APIKey != "" {
+		t.Fatal("含敏感导出也不应在 settings 中保留 apiKey 明文")
 	}
 
 	// 改坏非敏感配置（apiKey 因补全仍保留）
@@ -60,8 +60,8 @@ func TestConfigBackupExportImport(t *testing.T) {
 	if cur.Model != "m1" || cur.SandboxMode != "workspace-write" || cur.VoiceAssistantName != "小秘" {
 		t.Fatalf("导入未恢复非敏感设置: %+v", cur)
 	}
-	if cur.APIKey != "secret-key-123" {
-		t.Fatal("未导入敏感时应保留当前 apiKey")
+	if k, _ := a.modelAPIKeyLocked(); k != "secret-key-123" {
+		t.Fatalf("未导入敏感时应保留当前 apiKey (in vault), got %q", k)
 	}
 	if _, err := os.Stat(filepath.Join(ConfigBackupsDir(a.dataPath), "settings.json.pre-import")); err != nil {
 		t.Fatal("导入前应生成回滚点")
@@ -85,9 +85,10 @@ func TestConfigBackupImportSecretsSwitch(t *testing.T) {
 	requireStatus(t, w0, 200)
 	a.mu.Lock()
 	k0 := a.settings.APIKey
+	has0 := a.hasModelAPIKey()
 	a.mu.Unlock()
-	if k0 != "" {
-		t.Fatalf("importSecrets=false 不应导入 apiKey, got %q", k0)
+	if k0 != "" || has0 {
+		t.Fatalf("importSecrets=false 不应导入 apiKey, settings=%q hasVault=%v", k0, has0)
 	}
 
 	// importSecrets=true：密钥采用备份值
@@ -97,9 +98,10 @@ func TestConfigBackupImportSecretsSwitch(t *testing.T) {
 	requireStatus(t, w1, 200)
 	a.mu.Lock()
 	k1 := a.settings.APIKey
+	vaultKey, _ := a.modelAPIKeyLocked()
 	a.mu.Unlock()
-	if k1 != "backup-key" {
-		t.Fatalf("importSecrets=true 应导入 apiKey, got %q", k1)
+	if k1 != "" || vaultKey != "backup-key" {
+		t.Fatalf("importSecrets=true 应把 apiKey 迁入 vault, settings=%q vault=%q", k1, vaultKey)
 	}
 
 	// 拒绝非 aide 备份

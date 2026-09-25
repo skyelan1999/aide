@@ -141,6 +141,9 @@ func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 	}))
 	defer provider.Close()
 	a.settings = Settings{BaseURL: provider.URL, Model: "test", APIKey: "fake"}
+	a.mu.Lock()
+	a.storeModelAPIKeyPlaintextLocked("fake") // API Key 现存加密 vault，不再明文于 settings
+	a.mu.Unlock()
 	if err := a.workspace.WriteFile("hello.txt", []byte("old"), 0644); err != nil {
 		t.Fatal(err)
 	}

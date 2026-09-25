@@ -284,6 +284,9 @@ type App struct {
 	wsConfig                  WorkspaceConfig
 	wsSecrets                 workspaceSecrets
 	vault                     *SecretVault // 统一加密凭证保险库（#38）
+	// 旧明文模型 API Key 暂存：启动时从 settings.json/环境变量检出、内存暂存待 vault 解锁后加密入库；
+	// 不落盘（内存中即 settings.APIKey 的待迁移副本），解锁入库后清空。
+	pendingLegacyAPIKey       string
 	sshBin, sftpBin           string
 	localRoot                 *os.Root
 	hostLocal                 string
@@ -303,6 +306,7 @@ type App struct {
 	buildVersion, buildCommit string
 	eventMu                   sync.Mutex
 	eventSubs                 map[string]map[chan streamEvent]struct{} // SSE 订阅：taskID → subscriber set
+	globalSubs                map[chan string]struct{}                 // #60 全局 SSE 订阅者（sessions-changed）
 	liveBroker                *StreamBroker                            // #35：aide 主会话实时输出 → 小秘拉取
 	liveTaskMu                sync.Mutex
 	liveTaskSess              map[string]string    // #35：taskID → sessionID（把 SSE 增量桥到会话维度）
@@ -556,7 +560,7 @@ func New(work, reference, data string) (*App, error) {
 		w.Close()
 		return nil, err
 	}
-	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}, liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}}
+	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}, globalSubs: map[chan string]struct{}{}, liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}}
 	a.startedAt = time.Now().UTC()
 	a.bgCtx, a.bgCancel = context.WithCancel(context.Background())
 	// 完整性：首次生成程序基线（已存在则跳过），启动校验并自愈，结果供 healthz 上报；后台周期巡检。
@@ -621,6 +625,14 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, fmt.Errorf("secret-vault load: %w", err)
 	}
+	// 主密钥分层：有密码→保持锁定待解锁；无密码→机器绑定随机密钥自动解锁。
+	if err := a.unlockVaultAtStartup(); err != nil {
+		a.Close()
+		return nil, fmt.Errorf("vault master-key: %w", err)
+	}
+	// 检出旧明文 API Key（settings.json / AI_API_KEY），内存暂存；能解锁则立即加密入库并擦除落盘明文。
+	a.stageLegacyAPIKeyMigration()
+	a.migratePendingLegacyAPIKeyLocked()
 	a.voiceAgent = newVoiceAgent(data)
 	a.voiceAgent.attachBroker(a.liveBroker) // #35：小秘据此拉取 aide 实时输出
 	a.colloqCache = newColloquialCache()
@@ -906,6 +918,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/workspace/secrets", a.listWorkspaceSecrets)
 	mux.HandleFunc("DELETE /api/workspace/secrets/{id}", a.deleteWorkspaceSecret)
 	mux.HandleFunc("POST /api/workspace/unlock-vault", a.unlockWorkspaceVault)
+	mux.HandleFunc("POST /api/unlock", a.unlockApp)
+	mux.HandleFunc("POST /api/auth/verify", a.verifyMasterIdentity) // #43 统一主身份认证（密码/指纹二选一）
 	mux.HandleFunc("GET /api/sources", a.listSources)
 	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)
 	mux.HandleFunc("POST /api/feedback", a.feedbackHandler)
@@ -932,6 +946,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)
 	mux.HandleFunc("POST /api/file/rename", a.renameFile)
+	mux.HandleFunc("GET /api/events", a.globalEvents) // #60 全局 SSE：会话列表变更广播
 	mux.HandleFunc("GET /api/sessions", a.listSessions)
 	mux.HandleFunc("POST /api/sessions", a.createSession)
 	mux.HandleFunc("GET /api/sessions/{id}", a.getSession)
@@ -1060,7 +1075,7 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	sherpaInstalled := sherpaBinOK && len(sherpaVoices) > 0
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "hasPassword": a.settings.UserPasswordHash != "", "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "models": a.modelConfigOut(), "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -1089,9 +1104,18 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if in.BaseURL == "" {
 		in.BaseURL = a.settings.BaseURL
 	}
-	if in.APIKey == "" && !in.ClearKey {
-		in.APIKey = a.settings.APIKey
+	// 模型 API Key 不再明文落 settings.json：非空→加密入 vault；空+clearKey→删 vault；空未 clear→保持现状。
+	switch {
+	case strings.TrimSpace(in.APIKey) != "":
+		if !a.vaultIsUnlocked() {
+			fail(w, 400, errVaultLocked)
+			return
+		}
+		a.storeModelAPIKeyPlaintextLocked(in.APIKey)
+	case in.ClearKey:
+		a.clearModelAPIKeyLocked()
 	}
+	in.Settings.APIKey = "" // 永不把明文写回 settings.json
 	if in.Models == nil {
 		in.Models = a.settings.Models
 	}
@@ -1284,8 +1308,15 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		// 直接以新密钥解锁；已有密码时用旧密钥解开、新密钥重封。ReWrap 显式传入旧密钥，不依赖当前解锁态。
 		if a.vault != nil {
 			newVaultKey := deriveKey(in.NewPassword)
-			if len(a.vault.List()) > 0 && hasPw {
-				_ = a.vault.ReWrap(deriveKey(in.OldPassword), newVaultKey)
+			if len(a.vault.List()) > 0 {
+				if hasPw {
+					_ = a.vault.ReWrap(deriveKey(in.OldPassword), newVaultKey)
+				} else {
+					// 首次设置密码：vault 当前由机器绑定随机密钥解锁，把全部条目重封到密码派生密钥。
+					if mk, mkErr := ensureMachineMasterKey(a.dataPath); mkErr == nil {
+						_ = a.vault.ReWrap(mk, newVaultKey)
+					}
+				}
 			} else {
 				a.vault.Unlock(newVaultKey)
 			}
@@ -1767,6 +1798,7 @@ func (a *App) createSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.sessions[s.ID] = s
+	a.broadcastSessionsChanged(s.ID) // #60
 	jsonOut(w, 201, s)
 }
 
@@ -1812,6 +1844,7 @@ func (a *App) patchSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
+	a.broadcastSessionsChanged(s.ID) // #60
 	jsonOut(w, 200, s)
 }
 
@@ -1846,6 +1879,7 @@ func (a *App) deleteSession(w http.ResponseWriter, r *http.Request) {
 	if err := os.Remove(SessionPath(a.dataPath, id, "active")); err != nil && !os.IsNotExist(err) {
 		log.Printf("删除会话文件失败: %v", err)
 	}
+	a.broadcastSessionsChanged(id) // #60
 	jsonOut(w, 200, map[string]any{"ok": true})
 }
 
