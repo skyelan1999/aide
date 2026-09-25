@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -14,6 +15,7 @@ import (
 	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // deriveKey 从用户密码派生 32 字节 AES-256 密钥
@@ -379,4 +381,273 @@ func (a *App) personaEditable(id string) bool {
 		}
 	}
 	return false
+}
+
+// ════════════════════════════════════════════════════════════════════════
+// 可演化性格系统（明文，无需密码）
+// 把旧的"人格切换"升级为两个独立、可开关、可编辑、会自我精简的性格：
+//   aide  → 作用于基本聊天（性格设置页）
+//   小秘  → 作用于语音小秘（语音小秘设置页）
+// 性格提示词只影响对话风格；随使用（压缩 / 语音累计）自动重写为更短、信息更密的版本以节约 token。
+// ════════════════════════════════════════════════════════════════════════
+
+// Personality 一个可演化性格的运行态与持久态（明文存 settings.json）。
+type Personality struct {
+	Enabled    bool   `json:"enabled"`
+	Prompt     string `json:"prompt"`
+	Evolutions int    `json:"evolutions"`
+	UpdatedAt  string `json:"updatedAt,omitempty"`
+}
+
+const defaultAidePersonality = `你是 aide，一名资深 AI 软件架构师兼开发搭档，服务于专注专业工作的用户。
+- 专业务实：先给结论与可执行方案，再补必要细节，不写空话套话。
+- 严谨：不确定的事实标注为推测；数字、命令、改动先核对再输出。
+- 主动澄清：需求有歧义或缺关键信息时，一次只问最关键的问题，确认后再继续。
+- 工程审美：代码安全、可读、可验证；UI/交互改动必须实际验证，不凭想象宣称完成。
+- 默认中文、术语保留英文，回答紧凑，用结构化排版让重点一目了然。`
+
+const defaultXiaomiPersonality = `你是用户的私人生活秘书「小秘」，也是熟悉他日常习惯的老朋友。
+- 温暖自然、口语：先共情，再给一两条实在建议，不堆术语、不写成文档。
+- 体贴：主动记事、提醒、安排日程，留意用户说过的偏好与待办。
+- 简洁：日常闲聊轻松有趣、回答短；遇到工作/代码温和提醒切回 aide。
+- 分寸：尊重隐私，背景声与旁人闲聊自动忽略，不打断、不乱传话。`
+
+func defaultPersonalityPrompt(id string) string {
+	if id == personaXiaomi {
+		return defaultXiaomiPersonality
+	}
+	return defaultAidePersonality
+}
+
+func validPersonalityID(id string) string {
+	if strings.TrimSpace(id) == personaXiaomi {
+		return personaXiaomi
+	}
+	return personaAide
+}
+
+// personalityLocked 返回性格当前态（无记录则给默认，不落盘）。调用方需持 a.mu。
+func (a *App) personalityLocked(id string) Personality {
+	if a.settings.Personalities != nil {
+		if p, ok := a.settings.Personalities[id]; ok {
+			if strings.TrimSpace(p.Prompt) == "" {
+				p.Prompt = defaultPersonalityPrompt(id)
+			}
+			return p
+		}
+	}
+	return Personality{Prompt: defaultPersonalityPrompt(id)}
+}
+
+// persistPersonalitiesLocked 写回 settings.json。调用方需持 a.mu。
+func (a *App) persistPersonalitiesLocked() {
+	atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings)
+}
+
+// ── HTTP ──────────────────────────────────────────────────────────────────
+func (a *App) personalityGet(w http.ResponseWriter, r *http.Request) {
+	id := validPersonalityID(r.URL.Query().Get("id"))
+	a.mu.Lock()
+	p := a.personalityLocked(id)
+	a.mu.Unlock()
+	jsonOut(w, 200, map[string]any{
+		"id": id, "enabled": p.Enabled, "prompt": p.Prompt,
+		"defaultPrompt": defaultPersonalityPrompt(id),
+		"evolutions": p.Evolutions, "updatedAt": p.UpdatedAt,
+		"estTokens": (len(p.Prompt) + 3) / 4,
+	})
+}
+
+func (a *App) personalitySave(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		ID      string `json:"id"`
+		Enabled bool   `json:"enabled"`
+		Prompt  string `json:"prompt"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
+		fail(w, 400, errors.New("请求格式错误"))
+		return
+	}
+	id := validPersonalityID(in.ID)
+	prompt := strings.TrimSpace(in.Prompt)
+	if prompt == "" {
+		prompt = defaultPersonalityPrompt(id)
+	}
+	a.mu.Lock()
+	p := a.personalityLocked(id)
+	p.Enabled = in.Enabled
+	p.Prompt = prompt
+	p.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	if a.settings.Personalities == nil {
+		a.settings.Personalities = map[string]Personality{}
+	}
+	a.settings.Personalities[id] = p
+	a.persistPersonalitiesLocked()
+	a.mu.Unlock()
+	jsonOut(w, 200, map[string]any{"ok": true, "enabled": p.Enabled, "prompt": p.Prompt})
+}
+
+func (a *App) personalityReset(w http.ResponseWriter, r *http.Request) {
+	var in struct{ ID string `json:"id"` }
+	json.NewDecoder(r.Body).Decode(&in)
+	id := validPersonalityID(in.ID)
+	a.mu.Lock()
+	delete(a.settings.Personalities, id)
+	a.persistPersonalitiesLocked()
+	p := a.personalityLocked(id)
+	a.mu.Unlock()
+	jsonOut(w, 200, map[string]any{"ok": true, "enabled": p.Enabled, "prompt": p.Prompt})
+}
+
+func (a *App) personalityEvolve(w http.ResponseWriter, r *http.Request) {
+	var in struct{ ID string `json:"id"` }
+	json.NewDecoder(r.Body).Decode(&in)
+	id := validPersonalityID(in.ID)
+	a.mu.Lock()
+	cur := a.personalityLocked(id)
+	cfg := a.settings
+	sample := a.personalitySampleLocked(id)
+	a.mu.Unlock()
+	np, err := a.evolvePersonality(id, cur, cfg, sample)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	a.mu.Lock()
+	if a.settings.Personalities == nil {
+		a.settings.Personalities = map[string]Personality{}
+	}
+	a.settings.Personalities[id] = np
+	a.persistPersonalitiesLocked()
+	a.mu.Unlock()
+	jsonOut(w, 200, map[string]any{
+		"ok": true, "enabled": np.Enabled, "prompt": np.Prompt,
+		"evolutions": np.Evolutions, "updatedAt": np.UpdatedAt,
+	})
+}
+
+// autoEvolvePersonality 后台自动演化（压缩 / 语音累计触发），失败静默。
+func (a *App) autoEvolvePersonality(id, sample string) {
+	defer func() { _ = recover() }()
+	a.mu.Lock()
+	cur := a.personalityLocked(id)
+	if !cur.Enabled {
+		a.mu.Unlock()
+		return
+	}
+	cfg := a.settings
+	if sample == "" {
+		sample = a.personalitySampleLocked(id)
+	}
+	a.mu.Unlock()
+	np, err := a.evolvePersonality(id, cur, cfg, sample)
+	if err != nil {
+		return
+	}
+	a.mu.Lock()
+	if a.settings.Personalities == nil {
+		a.settings.Personalities = map[string]Personality{}
+	}
+	a.settings.Personalities[id] = np
+	a.persistPersonalitiesLocked()
+	a.mu.Unlock()
+}
+
+// personalitySampleLocked 构造演化用的近期真实样本。调用方需持 a.mu。
+func (a *App) personalitySampleLocked(id string) string {
+	if id == personaXiaomi {
+		if va := a.voiceAgent; va != nil {
+			hist := va.snapshotHistory()
+			start := len(hist) - 12
+			if start < 0 {
+				start = 0
+			}
+			var b strings.Builder
+			for _, h := range hist[start:] {
+				src := h.Summarized
+				if src == "" {
+					src = h.Heard
+				}
+				b.WriteString("用户: " + clip(src, 400) + "\n")
+			}
+			return clip(b.String(), 4000)
+		}
+		return ""
+	}
+	var latest *Session
+	var latestT time.Time
+	for _, s := range a.sessions {
+		t, _ := time.Parse(time.RFC3339Nano, s.Updated)
+		if latest == nil || t.After(latestT) {
+			latest, latestT = s, t
+		}
+	}
+	if latest == nil {
+		return ""
+	}
+	start := len(latest.Messages) - 12
+	if start < 0 {
+		start = 0
+	}
+	var b strings.Builder
+	for _, m := range latest.Messages[start:] {
+		b.WriteString(m.Role + ": " + clip(m.Content, 400) + "\n")
+	}
+	return clip(b.String(), 4000)
+}
+
+// evolvePersonality 让模型把性格提示词重写为更短、信息更密的版本；结果必须更短才采纳。
+func (a *App) evolvePersonality(id string, cur Personality, cfg Settings, sample string) (Personality, error) {
+	old := strings.TrimSpace(cur.Prompt)
+	if old == "" {
+		old = defaultPersonalityPrompt(id)
+	}
+	sys := `你在帮助一个 AI 助手精炼它自己的"性格提示词"。只输出重写后的提示词正文，不要解释、标题、引号或 markdown 围栏。`
+	usr := fmt.Sprintf(`当前性格提示词（%d 字符）：
+"""
+%s
+"""
+
+近期真实对话样本（仅用于校准风格、提炼用户稳定且反复出现的偏好；不要写入一次性琐事）：
+"""
+%s
+"""
+
+要求：
+1. 完整保留核心人格、语气、原则，以及用户明确且反复出现的偏好。
+2. 删除重复、空话、可由系统其它部分提供的内容；合并近义条目；用更短的句子。
+3. 新提示词字符数必须严格少于当前（只减不增），信息密度更高，不要新增任何要求。
+4. 直接输出新提示词正文。`, len(old), old, sample)
+	params := ProfileParams{Temperature: fp(0.2), MaxTokens: 2048}
+	out, _, _, err := complete(context.Background(), cfg, []Message{
+		{Role: "system", Content: sys},
+		{Role: "user", Content: usr},
+	}, params, nil, nil)
+	if err != nil {
+		return cur, fmt.Errorf("演化调用失败: %w", err)
+	}
+	got := strings.TrimSpace(out)
+	got = strings.TrimPrefix(got, "```")
+	got = strings.TrimSuffix(got, "```")
+	got = strings.Trim(got, "\""+"\n")
+	got = strings.TrimSpace(got)
+	if got == "" {
+		return cur, errors.New("演化结果为空，已保留原版本")
+	}
+	if len(got) >= len(old) {
+		return cur, errors.New("演化后未更精简，已保留原版本")
+	}
+	cur.Prompt = got
+	cur.Evolutions++
+	cur.UpdatedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	return cur, nil
+}
+
+// messagesSample 把一批消息拼成演化样本（截断）。
+func messagesSample(ms []Message) string {
+	var b strings.Builder
+	for _, m := range ms {
+		b.WriteString(m.Role + ": " + clip(m.Content, 400) + "\n")
+	}
+	return clip(b.String(), 4000)
 }

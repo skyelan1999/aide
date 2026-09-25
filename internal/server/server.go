@@ -46,6 +46,7 @@ type Settings struct {
 	PersonaCipher          string `json:"personaCipher,omitempty"` // 兼容旧字段：单人格时代的性格密文
 	ActivePersona          string            `json:"activePersona,omitempty"` // 当前活动人格 id（aide | xiaomi），默认 aide
 	PersonaCiphers         map[string]string `json:"personaCiphers,omitempty"` // 每人格自定义性格密文（personaID -> AES-256-GCM base64）
+	Personalities         map[string]Personality `json:"personalities,omitempty"` // 可演化性格（aide/xiaomi），明文
 	DisabledTools          []string `json:"disabledTools,omitempty"` // 被禁用的工具名列表
 	ReasoningEffort        string   `json:"reasoningEffort,omitempty"`   // 推理强度：auto/off/low/medium/high
 	VoiceAssistantName     string   `json:"voiceAssistantName,omitempty"` // 语音小秘名字，默认"小秘"
@@ -167,6 +168,7 @@ type App struct {
 	personaKey               string // 内存中的性格解密密码（= 账户密码），不持久化
 	personaCustom            map[string]string // 解锁后：personaID -> 解密出的自定义性格明文
 	voiceAgent               *VoiceAgent // 语音小秘 agent（记忆+历史）
+	voiceSendSinceEvolve    int        // 小秘自上次性格演化以来的 send 计数（内存）
 }
 
 // Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
@@ -524,6 +526,10 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/persona", a.personaGet)
 	mux.HandleFunc("GET /api/personas", a.personasList)
 	mux.HandleFunc("POST /api/personas/active", a.personasActive)
+	mux.HandleFunc("GET /api/personality", a.personalityGet)
+	mux.HandleFunc("PUT /api/personality", a.personalitySave)
+	mux.HandleFunc("POST /api/personality/reset", a.personalityReset)
+	mux.HandleFunc("POST /api/personality/evolve", a.personalityEvolve)
 	mux.HandleFunc("GET /api/token-pricing", a.tokenPricingHandler)
 	mux.HandleFunc("PUT /api/token-pricing", a.tokenPricingHandler)
 	mux.HandleFunc("GET /api/search", a.searchSessions)
@@ -786,6 +792,18 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	}
 	if entry.Action == "send" && strings.TrimSpace(entry.Text) == "" {
 		entry.Text = text
+	}
+	if entry.Action == "send" {
+		a.mu.Lock()
+		a.voiceSendSinceEvolve++
+		fire := a.voiceSendSinceEvolve >= 15
+		if fire {
+			a.voiceSendSinceEvolve = 0
+		}
+		a.mu.Unlock()
+		if fire {
+			go a.autoEvolvePersonality(personaXiaomi, "")
+		}
 	}
 	jsonOut(w, 200, entry)
 }

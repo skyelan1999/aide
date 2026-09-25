@@ -326,3 +326,10 @@ func (va *VoiceAgent) disable(password string) error {
 	va.persistLocked()
 	return nil
 }
+
+// snapshotHistory 返回历史副本（加密时仅解锁后有内容），供性格演化取样。
+func (va *VoiceAgent) snapshotHistory() []VoiceHistoryEntry {
+	va.mu.Lock()
+	defer va.mu.Unlock()
+	return append([]VoiceHistoryEntry{}, va.history...)
+}

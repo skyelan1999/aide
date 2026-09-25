@@ -149,11 +149,9 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	if mem := a.readMemory(); mem != "" && !strings.HasPrefix(mem, "(记忆文件为空") {
 		history[0].Content += "\n\n## 持久记忆\n以下是你之前记下的用户偏好和项目约定，请在回答中参考：\n" + mem
 	}
-	// 注入当前活动人格的自定义性格补充（若开启且已解锁）
-	if cfg.PersonaEnabled && a.personaKey != "" {
-		if custom := a.personaCustom[a.activePersonaID()]; strings.TrimSpace(custom) != "" {
-			history[0].Content += "\n\n## 你的性格\n" + custom
-		}
+	// 注入 aide 性格（仅影响对话风格；可演化、只作用于基本聊天）
+	if pa := a.personalityLocked(personaAide); pa.Enabled && strings.TrimSpace(pa.Prompt) != "" {
+		history[0].Content += "\n\n## 你的性格（仅影响对话风格）\n" + strings.TrimSpace(pa.Prompt)
 	}
 	var bd ContextBreakdown
 	bd.SystemChars = len(history[0].Content)

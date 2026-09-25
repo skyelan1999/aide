@@ -3475,6 +3475,76 @@ function renderPersonaSwitchControl() {
 }
 controlRenderers['persona-switch'] = renderPersonaSwitchControl;
 
+// 设置：可演化性格系统（aide 基本聊天 / 小秘语音页），开关 + 提示词 + 保存/重置/演化
+function renderPersonalityControl(control) {
+  const pid = control.persona || 'aide';
+  const wrap = el('div', 'settings-control personality-panel');
+  const head = el('div', 'control-label');
+  head.append(el('span', '', t(control.label || (pid === 'xiaomi' ? '小秘性格系统' : 'aide 性格系统'))));
+
+  const top = el('div', 'personality-top');
+  const toggle = el('label', 'switch');
+  const cb = el('input'); cb.type = 'checkbox';
+  toggle.append(cb, el('span', 'switch-slider'));
+  const stateLbl = el('span', 'personality-state', t('已关闭'));
+  top.append(toggle, stateLbl);
+
+  const ta = el('textarea', 'personality-prompt');
+  ta.rows = 8;
+  ta.placeholder = t('性格提示词：定义语气、风格与做事方式…');
+
+  const btns = el('div', 'personality-btns');
+  const mk = (cls, txt) => { const b = el('button', cls, txt); b.type = 'button'; return b; };
+  const saveBtn = mk('primary', t('保存'));
+  const resetBtn = mk('quiet', t('重置默认'));
+  const evolveBtn = mk('quiet', t('立即演化'));
+  btns.append(saveBtn, resetBtn, evolveBtn);
+
+  const meta = el('div', 'personality-meta');
+  wrap.append(head, top, ta, btns, meta);
+
+  const renderMeta = (p) => {
+    meta.replaceChildren();
+    meta.append(el('span', '', t('已演化 {0} 次 · 约 {1} tokens', p.evolutions ?? 0, p.estTokens ?? 0)));
+    if (p.updatedAt) meta.append(el('span', '', ' · ' + new Date(p.updatedAt).toLocaleString()));
+  };
+  const apply = (p) => {
+    cb.checked = !!p.enabled; ta.value = p.prompt || '';
+    stateLbl.textContent = p.enabled ? t('已启用') : t('已关闭');
+    renderMeta(p);
+  };
+
+  api('/personality?id=' + pid).then(apply).catch((e) => toast(e.message || String(e)));
+
+  cb.onchange = action(async () => {
+    const p = await api('/personality', { method: 'PUT', body: JSON.stringify({ id: pid, enabled: cb.checked, prompt: ta.value }) });
+    stateLbl.textContent = p.enabled ? t('已启用') : t('已关闭');
+    toast(p.enabled ? t('性格已启用') : t('性格已关闭'));
+  });
+  saveBtn.onclick = action(async () => {
+    const p = await api('/personality', { method: 'PUT', body: JSON.stringify({ id: pid, enabled: cb.checked, prompt: ta.value }) });
+    apply({ ...p, estTokens: Math.ceil((p.prompt || '').length / 4), evolutions: p.evolutions });
+    toast(t('已保存'));
+  });
+  resetBtn.onclick = action(async () => {
+    if (!confirm(t('确定重置为默认性格？自定义与演化结果会被清除。'))) return;
+    const p = await api('/personality/reset', { method: 'POST', body: JSON.stringify({ id: pid }) });
+    apply({ ...p, estTokens: Math.ceil((p.prompt || '').length / 4), evolutions: 0 });
+    toast(t('已重置'));
+  });
+  evolveBtn.onclick = action(async () => {
+    evolveBtn.disabled = true; const orig = evolveBtn.textContent; evolveBtn.textContent = t('演化中…');
+    try {
+      const p = await api('/personality/evolve', { method: 'POST', body: JSON.stringify({ id: pid }) });
+      apply({ ...p, estTokens: Math.ceil((p.prompt || '').length / 4) });
+      toast(t('性格已精简演化'));
+    } catch (e) { toast(e.message || String(e)); }
+    finally { evolveBtn.disabled = false; evolveBtn.textContent = orig; }
+  });
+  return wrap;
+}
+controlRenderers['personality'] = renderPersonalityControl;
+
 
 /* ── 账户锁屏：空闲糊化遮罩（纯视觉层，不停止后端任务；小秘暂停听写/朗读） ── */
 const lockScreen = { timer: null, locked: false, wasVoiceListening: false };

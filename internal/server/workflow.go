@@ -2756,6 +2756,11 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
+	// 压缩整理后，若 aide 性格已启用，后台自动精简演化（不阻塞响应）
+	if a.personalityLocked(personaAide).Enabled {
+		sample := messagesSample(snap.messages)
+		go a.autoEvolvePersonality(personaAide, sample)
+	}
 	jsonOut(w, 200, map[string]any{"ok": true, "folded": split, "compact": summary, "compactedMessages": sess.CompactedMessages})
 }
 
