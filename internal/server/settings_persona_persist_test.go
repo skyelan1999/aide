@@ -17,6 +17,10 @@ func TestSettingsPartialPutPreservesFields(t *testing.T) {
 	requireStatus(t, request(a, "PUT", "/api/personality", map[string]any{
 		"id": "xiaomi", "enabled": true, "prompt": "性格原文-小秘",
 	}), 200)
+	// 同时启用 aide 性格（两个性格的开关都应被记住）
+	requireStatus(t, request(a, "PUT", "/api/personality", map[string]any{
+		"id": "aide", "enabled": true, "prompt": "性格原文-aide",
+	}), 200)
 	// 沙箱 / 轮次 / 设备
 	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{
 		"sandboxMode": "workspace-write", "toolMaxRounds": 80,
@@ -32,6 +36,14 @@ func TestSettingsPartialPutPreservesFields(t *testing.T) {
 	_ = json.Unmarshal(w.Body.Bytes(), &p)
 	if p["enabled"] != true || p["prompt"] != "性格原文-小秘" {
 		t.Fatalf("personality lost after partial PUT: %v", p)
+	}
+	// aide 性格启用态与提示词同样保留
+	wa := request(a, "GET", "/api/personality?id=aide", nil)
+	requireStatus(t, wa, 200)
+	var pa map[string]any
+	_ = json.Unmarshal(wa.Body.Bytes(), &pa)
+	if pa["enabled"] != true || pa["prompt"] != "性格原文-aide" {
+		t.Fatalf("aide personality lost after partial PUT: %v", pa)
 	}
 	// 沙箱/轮次/设备保留
 	a.mu.Lock()
