@@ -1,17 +1,26 @@
 package server
 
 import (
+	"aide/internal/server/tts"
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/subtle"
+	"crypto/tls"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"embed"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
 	"io/fs"
 	"log"
+	"math/big"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,7 +28,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
-	"aide/internal/server/tts"
 	"strings"
 	"sync"
 	"syscall"
@@ -35,42 +43,42 @@ type ModelRef struct {
 	ContextWindow int    `json:"contextWindow,omitempty"`
 }
 type Settings struct {
-	BaseURL     string     `json:"baseURL"`
-	Model       string     `json:"model"`
-	APIKey      string     `json:"apiKey,omitempty"`
-	Models      []ModelRef `json:"models,omitempty"`
-	ActiveModel string     `json:"activeModel,omitempty"`
-	SandboxMode string     `json:"sandboxMode,omitempty"` // read-only | workspace-write | danger-full-access
-	ToolMaxRounds int      `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
-	ShellTimeout  int      `json:"shellTimeout,omitempty"` // run_shell 超时秒数，默认 60，最大 300
-	PersonaEnabled bool     `json:"personaEnabled,omitempty"`
-	PersonaCipher          string `json:"personaCipher,omitempty"` // 兼容旧字段：单人格时代的性格密文
-	ActivePersona          string            `json:"activePersona,omitempty"` // 当前活动人格 id（aide | xiaomi），默认 aide
-	PersonaCiphers         map[string]string `json:"personaCiphers,omitempty"` // 每人格自定义性格密文（personaID -> AES-256-GCM base64）
-	Personalities         map[string]Personality `json:"personalities,omitempty"` // 可演化性格（aide/xiaomi），明文
-	DisabledTools          []string `json:"disabledTools,omitempty"` // 被禁用的工具名列表
-	ReasoningEffort        string   `json:"reasoningEffort,omitempty"`   // 推理强度：auto/off/low/medium/high
-	VoiceAssistantName     string   `json:"voiceAssistantName,omitempty"` // 语音小秘名字，默认"小秘"
-	VoiceReplyEnabled      bool     `json:"voiceReplyEnabled,omitempty"` // 双向语音：语音回复模式
-	VoiceReplyGender       string   `json:"voiceReplyGender,omitempty"`  // 回复音色 male | female
-	VoiceInputDevice       string   `json:"voiceInputDevice,omitempty"`  // 小秘语音输入设备 deviceId，空=系统默认
-	UserName               string   `json:"userName,omitempty"`          // 账户用户名（锁屏欢迎语用，可空）
-	UserPasswordHash       string   `json:"userPasswordHash,omitempty"`  // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
-	LockTimeoutSec         int      `json:"lockTimeoutSec,omitempty"`    // 空闲锁屏秒数，0 = 不锁屏
-	AccessibilityAutoRead  bool     `json:"accessibilityAutoRead,omitempty"` // 无障碍：输出完成后由小秘自动朗读讲解
+	BaseURL               string                 `json:"baseURL"`
+	Model                 string                 `json:"model"`
+	APIKey                string                 `json:"apiKey,omitempty"`
+	Models                []ModelRef             `json:"models,omitempty"`
+	ActiveModel           string                 `json:"activeModel,omitempty"`
+	SandboxMode           string                 `json:"sandboxMode,omitempty"`   // read-only | workspace-write | danger-full-access
+	ToolMaxRounds         int                    `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
+	ShellTimeout          int                    `json:"shellTimeout,omitempty"`  // run_shell 超时秒数，默认 60，最大 300
+	PersonaEnabled        bool                   `json:"personaEnabled,omitempty"`
+	PersonaCipher         string                 `json:"personaCipher,omitempty"`         // 兼容旧字段：单人格时代的性格密文
+	ActivePersona         string                 `json:"activePersona,omitempty"`         // 当前活动人格 id（aide | xiaomi），默认 aide
+	PersonaCiphers        map[string]string      `json:"personaCiphers,omitempty"`        // 每人格自定义性格密文（personaID -> AES-256-GCM base64）
+	Personalities         map[string]Personality `json:"personalities,omitempty"`         // 可演化性格（aide/xiaomi），明文
+	DisabledTools         []string               `json:"disabledTools,omitempty"`         // 被禁用的工具名列表
+	ReasoningEffort       string                 `json:"reasoningEffort,omitempty"`       // 推理强度：auto/off/low/medium/high
+	VoiceAssistantName    string                 `json:"voiceAssistantName,omitempty"`    // 语音小秘名字，默认"小秘"
+	VoiceReplyEnabled     bool                   `json:"voiceReplyEnabled,omitempty"`     // 双向语音：语音回复模式
+	VoiceReplyGender      string                 `json:"voiceReplyGender,omitempty"`      // 回复音色 male | female
+	VoiceInputDevice      string                 `json:"voiceInputDevice,omitempty"`      // 小秘语音输入设备 deviceId，空=系统默认
+	UserName              string                 `json:"userName,omitempty"`              // 账户用户名（锁屏欢迎语用，可空）
+	UserPasswordHash      string                 `json:"userPasswordHash,omitempty"`      // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
+	LockTimeoutSec        int                    `json:"lockTimeoutSec,omitempty"`        // 空闲锁屏秒数，0 = 不锁屏
+	AccessibilityAutoRead bool                   `json:"accessibilityAutoRead,omitempty"` // 无障碍：输出完成后由小秘自动朗读讲解
 	// ── 外部 AI 诊断接口（/api/debug）：默认关、只读、独立令牌、审计脱敏 ──
 	DebugAccessEnabled  bool     `json:"debugAccessEnabled,omitempty"`  // 总开关，默认 false；关闭时 /api/debug/* 整体 404
 	DebugTokenHash      string   `json:"debugTokenHash,omitempty"`      // 调试令牌 SHA-256 哈希（绝不存明文）
-	DebugTokenCreatedAt string   `json:"debugTokenCreatedAt,omitempty"`  // 调试令牌创建时间 RFC3339
+	DebugTokenCreatedAt string   `json:"debugTokenCreatedAt,omitempty"` // 调试令牌创建时间 RFC3339
 	DebugTokenExpiresAt string   `json:"debugTokenExpiresAt,omitempty"` // 调试令牌过期时间 RFC3339
 	DebugAllowOrigins   []string `json:"debugAllowOrigins,omitempty"`   // 浏览器来源白名单（curl 无 Origin 不受限）
 	// ── TTS 自然度：可插拔引擎（edge-tts 神经音 + 浏览器 Web Speech 兜底）──
-	TTSProvider       string   `json:"ttsProvider,omitempty"`        // auto | edge | webspeech
-	TTSVoice          string   `json:"ttsVoice,omitempty"`           // edge 音色 id，空=按性别映射
-	TTSEndpoint       string   `json:"ttsEndpoint,omitempty"`        // 预留：自定义 edge/云端端点
-	TTSAPIKey         string   `json:"ttsAPIKey,omitempty"`          // 预留：云端引擎 key（edge 不需要，不回显）
-	TTSRate           float64  `json:"ttsRate,omitempty"`             // 语速倍率 0.8-1.3，默认 1.0
-	TTSExpressiveness float64  `json:"ttsExpressiveness,omitempty"`   // 表现力 0-1，映射 edge styledegree
+	TTSProvider       string  `json:"ttsProvider,omitempty"`       // auto | edge | webspeech
+	TTSVoice          string  `json:"ttsVoice,omitempty"`          // edge 音色 id，空=按性别映射
+	TTSEndpoint       string  `json:"ttsEndpoint,omitempty"`       // 预留：自定义 edge/云端端点
+	TTSAPIKey         string  `json:"ttsAPIKey,omitempty"`         // 预留：云端引擎 key（edge 不需要，不回显）
+	TTSRate           float64 `json:"ttsRate,omitempty"`           // 语速倍率 0.8-1.3，默认 1.0
+	TTSExpressiveness float64 `json:"ttsExpressiveness,omitempty"` // 表现力 0-1，映射 edge styledegree
 }
 
 const (
@@ -112,6 +120,87 @@ func normalizeModels(models []ModelRef) ([]ModelRef, error) {
 	return out, nil
 }
 
+// defaultSettings 返回当前版本的完整默认 Settings。
+// New() 启动加载与 importConfigBackup 跨版本导入共用同一份默认底，
+// 保证"旧备份缺失字段自动补当前默认"与"首次安装默认"完全一致。
+// 注意：敏感字段（APIKey/TTSAPIKey/UserPasswordHash/PersonaCiphers/DebugTokenHash）
+// 一律留空，由环境变量、持久化文件或用户显式导入决定，绝不在此处预置。
+func defaultSettings() Settings {
+	return Settings{
+		BaseURL:            "https://api.deepseek.com",
+		SandboxMode:        "workspace-write",
+		ToolMaxRounds:      60, // 工具循环最大轮次
+		ShellTimeout:       60, // run_shell 超时秒数（上限 300）
+		LockTimeoutSec:     0,  // 0 = 不锁屏
+		ReasoningEffort:    "auto",
+		VoiceAssistantName: "小秘",
+		VoiceReplyGender:   "female",
+		ActivePersona:      personaAide,
+		TTSProvider:        "auto",
+		TTSRate:            1.0,
+		DebugAccessEnabled: false,
+	}
+}
+
+// validateSettings 对从外部（备份）读入的关键数值/枚举做合法性校验，非法值回落当前版本默认。
+// 缺失字段补默认已由"默认底 + Unmarshal 覆盖"完成；这里只兜底"显式给出但越界/非法"的值。
+func validateSettings(s *Settings) {
+	if s.ToolMaxRounds <= 0 || s.ToolMaxRounds > 200 {
+		s.ToolMaxRounds = 60
+	}
+	if s.ShellTimeout <= 0 || s.ShellTimeout > 300 {
+		s.ShellTimeout = 60
+	}
+	if s.LockTimeoutSec < 0 {
+		s.LockTimeoutSec = 0
+	}
+	switch s.SandboxMode {
+	case "read-only", "workspace-write", "danger-full-access":
+	default:
+		s.SandboxMode = "workspace-write"
+	}
+}
+
+// normalizeLoadedSettings 把从磁盘或备份读入的 Settings 收敛到运行态一致：
+// 旧格式迁移 → 文案/人格默认 → 合法性回退 → 模型列表归一化 → ActiveModel/Model 同步。
+// New()（启动加载）与 importConfigBackup（导入）共用，
+// 确保"导入后无需重启即生效"且与"重启后状态"完全一致。
+func normalizeLoadedSettings(s *Settings) error {
+	// 旧格式迁移：单 model 字段 → 模型列表 + 当前模型（FR-67 / D1）
+	if len(s.Models) == 0 && s.Model != "" {
+		s.Models = []ModelRef{{ID: s.Model, Name: s.Model, ContextWindow: defaultContextWindow}}
+		s.ActiveModel = s.Model
+	}
+	if s.ActiveModel == "" {
+		s.ActiveModel = s.Model
+	}
+	if s.VoiceAssistantName == "" {
+		s.VoiceAssistantName = "小秘"
+	}
+	// 兼容旧版单人格：把旧 PersonaCipher 迁移为 aide 人格的自定义性格密文
+	if s.PersonaCipher != "" && s.PersonaCiphers == nil {
+		s.PersonaCiphers = map[string]string{personaAide: s.PersonaCipher}
+	}
+	if s.VoiceReplyGender == "" {
+		s.VoiceReplyGender = "female"
+	}
+	// 关键数值/枚举合法性回退（非法值回落当前版本默认）
+	validateSettings(s)
+	// 模型列表归一化（含每模型上下文窗口 1024–2097152 校验、0→默认 65536）
+	if s.Models != nil {
+		normalized, err := normalizeModels(s.Models)
+		if err != nil {
+			return err
+		}
+		s.Models = normalized
+	}
+	if s.ActiveModel == "" && len(s.Models) > 0 {
+		s.ActiveModel = s.Models[0].ID
+		s.Model = s.ActiveModel
+	}
+	return nil
+}
+
 type ToolCall struct {
 	ID       string `json:"id,omitempty"`
 	Type     string `json:"type,omitempty"`
@@ -135,12 +224,12 @@ type Session struct {
 	Compact           string    `json:"compact,omitempty"`           // 压缩摘要（compaction）
 	CompactedMessages int       `json:"compactedMessages,omitempty"` // 已折叠消息数
 	CompactedAt       string    `json:"compactedAt,omitempty"`
-	Pinned            bool      `json:"pinned,omitempty"`   // 置顶：列表排序优先（活动排序不会把置顶顶下去）
-	Archived          bool      `json:"archived,omitempty"` // 归档：默认列表隐藏
-	Deleted           bool      `json:"deleted,omitempty"`  // 删除墓碑：save/加载跳过，防写盘复活
-	Updated           string    `json:"updated,omitempty"`  // 最近活动时间：完成/跟进按时间置顶
-	Checked           bool      `json:"checked,omitempty"`  // 已完成高亮（蓝点+加粗）是否已被用户查看；新完成时复位
-	ParentID          string    `json:"parentId,omitempty"` // 子会话：指向主会话 ID
+	Pinned            bool      `json:"pinned,omitempty"`       // 置顶：列表排序优先（活动排序不会把置顶顶下去）
+	Archived          bool      `json:"archived,omitempty"`     // 归档：默认列表隐藏
+	Deleted           bool      `json:"deleted,omitempty"`      // 删除墓碑：save/加载跳过，防写盘复活
+	Updated           string    `json:"updated,omitempty"`      // 最近活动时间：完成/跟进按时间置顶
+	Checked           bool      `json:"checked,omitempty"`      // 已完成高亮（蓝点+加粗）是否已被用户查看；新完成时复位
+	ParentID          string    `json:"parentId,omitempty"`     // 子会话：指向主会话 ID
 	AutoArchived      bool      `json:"autoArchived,omitempty"` // 子会话完成后自动归档
 }
 type App struct {
@@ -181,22 +270,22 @@ type App struct {
 	buildVersion, buildCommit string
 	eventMu                   sync.Mutex
 	eventSubs                 map[string]map[chan streamEvent]struct{} // SSE 订阅：taskID → subscriber set
-	personaKey               string // 内存中的性格解密密码（= 账户密码），不持久化
-	personaCustom            map[string]string // 解锁后：personaID -> 解密出的自定义性格明文
-	voiceAgent               *VoiceAgent // 语音小秘 agent（记忆+历史）
-	voiceSendSinceEvolve    int        // 小秘自上次性格演化以来的 send 计数（内存）
-	bgCtx                   context.Context
-	bgCancel                context.CancelFunc
-	bgWg                    sync.WaitGroup // fire-and-forget 后台 goroutine（标题总结等）追踪，Close 时等待
-	webAuthn                *webAuthnManager  // Touch ID / WebAuthn 解锁管理器
-	colloqCache             *colloquialCache  // 口语化朗读稿 LRU 缓存
+	personaKey                string                                   // 内存中的性格解密密码（= 账户密码），不持久化
+	personaCustom             map[string]string                        // 解锁后：personaID -> 解密出的自定义性格明文
+	voiceAgent                *VoiceAgent                              // 语音小秘 agent（记忆+历史）
+	voiceSendSinceEvolve      int                                      // 小秘自上次性格演化以来的 send 计数（内存）
+	bgCtx                     context.Context
+	bgCancel                  context.CancelFunc
+	bgWg                      sync.WaitGroup   // fire-and-forget 后台 goroutine（标题总结等）追踪，Close 时等待
+	webAuthn                  *webAuthnManager // Touch ID / WebAuthn 解锁管理器
+	colloqCache               *colloquialCache // 口语化朗读稿 LRU 缓存
 	// ── 外部 AI 诊断接口（/api/debug）──
-	startedAt               time.Time        // 进程启动时间（uptime 来源）
-	refPath                 string           // 参考/context 目录宿主路径（挂载摘要用）
-	routes                  *http.ServeMux   // 主路由 mux（debug 鉴权后分发复用）
-	debugMu                 sync.Mutex       // 保护 errorRing / providerHealth / 审计写
-	errorRing               []recentError    // 最近错误环形缓冲（容量 debugErrorRingCap）
-	providerHealth          providerHealth   // 最近一次 Provider 连通性探测缓存
+	startedAt      time.Time      // 进程启动时间（uptime 来源）
+	refPath        string         // 参考/context 目录宿主路径（挂载摘要用）
+	routes         *http.ServeMux // 主路由 mux（debug 鉴权后分发复用）
+	debugMu        sync.Mutex     // 保护 errorRing / providerHealth / 审计写
+	errorRing      []recentError  // 最近错误环形缓冲（容量 debugErrorRingCap）
+	providerHealth providerHealth // 最近一次 Provider 连通性探测缓存
 }
 
 // Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
@@ -340,7 +429,18 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, errors.New("access-token 无效")
 	}
-	a.settings = Settings{BaseURL: env("AI_BASE_URL", "https://api.deepseek.com"), Model: os.Getenv("AI_MODEL"), APIKey: os.Getenv("AI_API_KEY")}
+	// 以当前版本默认 Settings 打底，再叠加环境变量与磁盘持久化值（文件 > 环境 > 默认）。
+	// 旧版 settings.json 缺失的新字段由此自动获得当前版本默认值，与配置导入共用同一份默认底。
+	a.settings = defaultSettings()
+	if v := os.Getenv("AI_BASE_URL"); v != "" {
+		a.settings.BaseURL = v
+	}
+	if v := os.Getenv("AI_MODEL"); v != "" {
+		a.settings.Model = v
+	}
+	if v := os.Getenv("AI_API_KEY"); v != "" {
+		a.settings.APIKey = v
+	}
 	if b, err := os.ReadFile(filepath.Join(data, "settings.json")); err == nil {
 		if err = json.Unmarshal(b, &a.settings); err != nil {
 			a.Close()
@@ -350,23 +450,10 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, err
 	}
-	if len(a.settings.Models) == 0 && a.settings.Model != "" {
-		// 旧格式迁移：单模型 → 模型列表 + 当前模型（FR-67 / D1）
-		a.settings.Models = []ModelRef{{ID: a.settings.Model, Name: a.settings.Model, ContextWindow: defaultContextWindow}}
-		a.settings.ActiveModel = a.settings.Model
-	}
-	if a.settings.ActiveModel == "" {
-		a.settings.ActiveModel = a.settings.Model
-	}
-	if a.settings.VoiceAssistantName == "" {
-		a.settings.VoiceAssistantName = "小秘"
-	}
-	// 兼容旧版单人格：把旧 PersonaCipher 迁移为 aide 人格的自定义性格密文
-	if a.settings.PersonaCipher != "" && a.settings.PersonaCiphers == nil {
-		a.settings.PersonaCiphers = map[string]string{personaAide: a.settings.PersonaCipher}
-	}
-	if a.settings.VoiceReplyGender == "" {
-		a.settings.VoiceReplyGender = "female"
+	// 旧格式迁移 + 文案/人格默认 + 合法性回退 + 模型归一化（与配置导入共用同一函数，保证状态一致）
+	if err := normalizeLoadedSettings(&a.settings); err != nil {
+		a.Close()
+		return nil, fmt.Errorf("settings.json: %w", err)
 	}
 	// KDF：确保本机固定的 Argon2id salt（data/kdf-salt.bin, 0600）存在并加载，
 	// 之后 deriveKey() 一律走 Argon2id；旧 SHA-256 密文在登录时经 re-wrap 平滑迁移。
@@ -377,18 +464,6 @@ func New(work, reference, data string) (*App, error) {
 	a.voiceAgent = newVoiceAgent(data)
 	a.colloqCache = newColloquialCache()
 	a.webAuthn = newWebAuthnManager(data) // Touch ID / WebAuthn 解锁
-	if a.settings.Models != nil {
-		normalized, err := normalizeModels(a.settings.Models)
-		if err != nil {
-			a.Close()
-			return nil, fmt.Errorf("settings.json: %w", err)
-		}
-		a.settings.Models = normalized
-	}
-	if a.settings.ActiveModel == "" && len(a.settings.Models) > 0 {
-		a.settings.ActiveModel = a.settings.Models[0].ID
-		a.settings.Model = a.settings.ActiveModel
-	}
 	a.profilesPath = filepath.Join(work, profilesFileName)
 	if err := a.loadProfiles(); err != nil {
 		a.Close()
@@ -535,6 +610,7 @@ func (a *App) Close() {
 		r.Close()
 	}
 }
+
 // background 启动可追踪的 fire-and-forget 后台 goroutine；Close 会先取消 bgCtx 再等待其结束。
 func (a *App) background(fn func()) {
 	a.bgWg.Add(1)
@@ -644,12 +720,19 @@ func (a *App) Handler() http.Handler {
 	web, _ := fs.Sub(assets, "web")
 	mux.Handle("/", http.FileServer(http.FS(web)))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// 鉴权现状：全程 Bearer Token（Authorization 头 / 受信路径上的 ?access_token=），不使用 Cookie。
+		// 未来若引入 Cookie，必须同时设置 Secure、HttpOnly、SameSite=Lax，且仅在 HTTPS 连接下发。
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")
 		if strings.HasPrefix(r.URL.Path, "/vendor/drawio/") {
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'none'")
 		} else {
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'")
+		}
+		// HSTS：仅在非回环的真实 HTTPS 站点下发；localhost/127.0.0.1 不加，避免浏览器把本机
+		// http://localhost 永久强制改写。max-age 取短值 300s，本地自签场景可快速回收。
+		if hsts := strictTransportSecurity(r); hsts != "" {
+			w.Header().Set("Strict-Transport-Security", hsts)
 		}
 		w.Header().Set("Cache-Control", "no-store")
 		if strings.HasPrefix(r.URL.Path, "/api/debug/") {
@@ -686,16 +769,16 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Settings
-		ClearKey          bool   `json:"clearKey"`
-		VoiceReplyEnabled   *bool `json:"voiceReplyEnabled,omitempty"`
-		AccessibilityAutoRead *bool `json:"accessibilityAutoRead,omitempty"`
-		VoiceReplyGender    string `json:"voiceReplyGender,omitempty"`
+		ClearKey              bool   `json:"clearKey"`
+		VoiceReplyEnabled     *bool  `json:"voiceReplyEnabled,omitempty"`
+		AccessibilityAutoRead *bool  `json:"accessibilityAutoRead,omitempty"`
+		VoiceReplyGender      string `json:"voiceReplyGender,omitempty"`
 		// 账户：外层同名字段覆盖内嵌 Settings（与 VoiceReplyEnabled 同模式），以便区分"未传"与"传空/0"
 		UserName         string  `json:"userName,omitempty"`
 		LockTimeoutSec   *int    `json:"lockTimeoutSec,omitempty"`
 		VoiceInputDevice *string `json:"voiceInputDevice,omitempty"`
-		OldPassword    string `json:"oldPassword,omitempty"`
-		NewPassword    string `json:"newPassword,omitempty"`
+		OldPassword      string  `json:"oldPassword,omitempty"`
+		NewPassword      string  `json:"newPassword,omitempty"`
 		// 外部 AI 调试接口：总开关用指针区分"未传/传 false"；白名单 nil=保留
 		DebugAccessEnabled *bool    `json:"debugAccessEnabled,omitempty"`
 		DebugAllowOrigins  []string `json:"debugAllowOrigins,omitempty"`
@@ -906,6 +989,7 @@ func voiceReplyGender(g string) string {
 	}
 	return "female"
 }
+
 // ttsProviderName 归一化 TTS 引擎名，空=auto。
 func ttsProviderName(p string) string {
 	switch strings.ToLower(strings.TrimSpace(p)) {
@@ -925,7 +1009,6 @@ func ttsRateVal(r float64) float64 {
 	}
 	return r
 }
-
 
 // voiceFilter 语音小秘：把浏览器 Web Speech API 的转写文本交给小秘 agent 分析决策。
 // 小秘结合记忆与上下文判断 send（对 aide 的指令，直接发到当前会话）/ ignore（背景声）/ standby（与人闲聊退下）。
@@ -1017,44 +1100,97 @@ func (a *App) voiceHistoryClear(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) voiceHistoryEnable(w http.ResponseWriter, r *http.Request) {
-	var in struct{ Password string `json:"password"` }
-	if decode(w, r, &in) != nil { return }
-	a.mu.Lock(); va := a.voiceAgent; a.mu.Unlock()
-	if va == nil { fail(w, 500, errors.New("小秘未初始化")); return }
-	if err := va.enable(in.Password); err != nil { fail(w, 400, err); return }
+	var in struct {
+		Password string `json:"password"`
+	}
+	if decode(w, r, &in) != nil {
+		return
+	}
+	a.mu.Lock()
+	va := a.voiceAgent
+	a.mu.Unlock()
+	if va == nil {
+		fail(w, 500, errors.New("小秘未初始化"))
+		return
+	}
+	if err := va.enable(in.Password); err != nil {
+		fail(w, 400, err)
+		return
+	}
 	jsonOut(w, 200, map[string]any{"ok": true, "encrypted": true, "unlocked": true})
 }
 
 func (a *App) voiceHistoryUnlock(w http.ResponseWriter, r *http.Request) {
-	var in struct{ Password string `json:"password"` }
-	if decode(w, r, &in) != nil { return }
-	a.mu.Lock(); va := a.voiceAgent; a.mu.Unlock()
-	if va == nil { fail(w, 500, errors.New("小秘未初始化")); return }
-	if err := va.unlock(in.Password); err != nil { fail(w, 401, err); return }
+	var in struct {
+		Password string `json:"password"`
+	}
+	if decode(w, r, &in) != nil {
+		return
+	}
+	a.mu.Lock()
+	va := a.voiceAgent
+	a.mu.Unlock()
+	if va == nil {
+		fail(w, 500, errors.New("小秘未初始化"))
+		return
+	}
+	if err := va.unlock(in.Password); err != nil {
+		fail(w, 401, err)
+		return
+	}
 	jsonOut(w, 200, map[string]any{"ok": true, "encrypted": true, "unlocked": true})
 }
 
 func (a *App) voiceHistoryLock(w http.ResponseWriter, r *http.Request) {
-	a.mu.Lock(); va := a.voiceAgent; a.mu.Unlock()
-	if va != nil { va.lock() }
+	a.mu.Lock()
+	va := a.voiceAgent
+	a.mu.Unlock()
+	if va != nil {
+		va.lock()
+	}
 	jsonOut(w, 200, map[string]any{"ok": true, "encrypted": true, "unlocked": false})
 }
 
 func (a *App) voiceHistoryChangePassword(w http.ResponseWriter, r *http.Request) {
-	var in struct{ OldPassword string `json:"oldPassword"`; NewPassword string `json:"newPassword"` }
-	if decode(w, r, &in) != nil { return }
-	a.mu.Lock(); va := a.voiceAgent; a.mu.Unlock()
-	if va == nil { fail(w, 500, errors.New("小秘未初始化")); return }
-	if err := va.changePassword(in.OldPassword, in.NewPassword); err != nil { fail(w, 400, err); return }
+	var in struct {
+		OldPassword string `json:"oldPassword"`
+		NewPassword string `json:"newPassword"`
+	}
+	if decode(w, r, &in) != nil {
+		return
+	}
+	a.mu.Lock()
+	va := a.voiceAgent
+	a.mu.Unlock()
+	if va == nil {
+		fail(w, 500, errors.New("小秘未初始化"))
+		return
+	}
+	if err := va.changePassword(in.OldPassword, in.NewPassword); err != nil {
+		fail(w, 400, err)
+		return
+	}
 	jsonOut(w, 200, map[string]any{"ok": true})
 }
 
 func (a *App) voiceHistoryDisable(w http.ResponseWriter, r *http.Request) {
-	var in struct{ Password string `json:"password"` }
-	if decode(w, r, &in) != nil { return }
-	a.mu.Lock(); va := a.voiceAgent; a.mu.Unlock()
-	if va == nil { fail(w, 500, errors.New("小秘未初始化")); return }
-	if err := va.disable(in.Password); err != nil { fail(w, 400, err); return }
+	var in struct {
+		Password string `json:"password"`
+	}
+	if decode(w, r, &in) != nil {
+		return
+	}
+	a.mu.Lock()
+	va := a.voiceAgent
+	a.mu.Unlock()
+	if va == nil {
+		fail(w, 500, errors.New("小秘未初始化"))
+		return
+	}
+	if err := va.disable(in.Password); err != nil {
+		fail(w, 400, err)
+		return
+	}
 	jsonOut(w, 200, map[string]any{"ok": true, "encrypted": false, "unlocked": true})
 }
 
@@ -1063,7 +1199,9 @@ func (a *App) voiceHistoryDisable(w http.ResponseWriter, r *http.Request) {
 // 自动升级为 Argon2id 并重加密所有已有密文（persona + 小秘历史），实现平滑迁移。
 // 不返回任何敏感信息；未设置密码时一律拒绝。
 func (a *App) accountVerifyPassword(w http.ResponseWriter, r *http.Request) {
-	var in struct{ Password string `json:"password"` }
+	var in struct {
+		Password string `json:"password"`
+	}
 	if decode(w, r, &in) != nil {
 		return
 	}
@@ -1333,13 +1471,124 @@ func (a *App) getSession(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, s)
 }
 
+// tlsConfig 构造严格的服务端 TLS 配置：最低 TLS 1.2，仅保留 ECDHE 前向保密 + AES-GCM AEAD 套件。
+// TLS 1.3 套件由 Go 自动协商，不在此列出；显式列举的 CipherSuites 只作用于 TLS 1.2。
+func tlsConfig() *tls.Config {
+	return &tls.Config{
+		MinVersion: tls.VersionTLS12,
+		CipherSuites: []uint16{
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		},
+		PreferServerCipherSuites: true,
+	}
+}
+
+// ensureTLSCert 确保 dir 下存在 cert.pem/key.pem；缺失时自动生成仅本机回环可用的自签证书。
+// SAN 固定含 DNS:localhost 与 IP:127.0.0.1，有效期 3650 天，私钥 ECDSA P-256、权限 0600。
+// 已存在则复用、不轮换（重启不打断浏览器已信任的例外）。
+func ensureTLSCert(dir string) (certFile, keyFile string, err error) {
+	certFile = filepath.Join(dir, "cert.pem")
+	keyFile = filepath.Join(dir, "key.pem")
+	if st, e := os.Stat(certFile); e == nil && !st.IsDir() {
+		if _, e := os.Stat(keyFile); e == nil {
+			return certFile, keyFile, nil
+		}
+	}
+	if err = os.MkdirAll(dir, 0700); err != nil {
+		return "", "", err
+	}
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return "", "", err
+	}
+	tmpl := x509.Certificate{
+		SerialNumber:          big.NewInt(time.Now().UnixNano()),
+		Subject:               pkix.Name{CommonName: "aide-local"},
+		NotBefore:             time.Now().Add(-time.Hour),
+		NotAfter:              time.Now().Add(3650 * 24 * time.Hour),
+		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageKeyEncipherment,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		DNSNames:              []string{"localhost"},
+		IPAddresses:           []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
+		BasicConstraintsValid: true,
+	}
+	der, err := x509.CreateCertificate(rand.Reader, &tmpl, &tmpl, &key.PublicKey, key)
+	if err != nil {
+		return "", "", err
+	}
+	certPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der})
+	keyDER, err := x509.MarshalECPrivateKey(key)
+	if err != nil {
+		return "", "", err
+	}
+	keyPEM := pem.EncodeToMemory(&pem.Block{Type: "EC PRIVATE KEY", Bytes: keyDER})
+	if err := os.WriteFile(certFile, certPEM, 0644); err != nil {
+		return "", "", err
+	}
+	if err := os.WriteFile(keyFile, keyPEM, 0600); err != nil {
+		return "", "", err
+	}
+	return certFile, keyFile, nil
+}
+
+// isLoopbackHost 判断 Host 头是否指向本机回环（localhost / 127.0.0.1 / ::1，可带端口）。
+func isLoopbackHost(host string) bool {
+	if h, _, err := net.SplitHostPort(host); err == nil {
+		host = h
+	}
+	switch strings.ToLower(strings.TrimSpace(host)) {
+	case "localhost", "127.0.0.1", "::1":
+		return true
+	}
+	return false
+}
+
+// strictTransportSecurity 返回应下发的 HSTS 值；非 HTTPS 或回环主机返回空串（不加 HSTS）。
+func strictTransportSecurity(r *http.Request) string {
+	if r.TLS == nil || isLoopbackHost(r.Host) {
+		return ""
+	}
+	return "max-age=300"
+}
+
+// httpsRedirectHandler 把明文 HTTP 请求 301 跳转到同主机的 HTTPS 端口，保留路径与查询串。
+func httpsRedirectHandler(tlsPort string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		host := r.Host
+		if h, _, err := net.SplitHostPort(host); err == nil {
+			host = h
+		}
+		target := "https://" + net.JoinHostPort(host, tlsPort) + r.URL.RequestURI()
+		http.Redirect(w, r, target, http.StatusMovedPermanently)
+	})
+}
+
 func Run() error {
 	a, err := New(env("AIDE_WORKSPACE", "."), env("AIDE_CONTEXT", "context"), env("AIDE_DATA", ".data"))
 	if err != nil {
 		return err
 	}
 	defer a.Close()
-	s := &http.Server{Addr: env("AIDE_ADDR", "127.0.0.1:8097"), Handler: a.Handler(), ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}
+	// 主端口只做 HTTPS；自签证书缺失时在数据目录 tls/ 自动生成（见 ensureTLSCert）。
+	certFile, keyFile, err := ensureTLSCert(filepath.Join(a.dataPath, "tls"))
+	if err != nil {
+		return err
+	}
+	s := &http.Server{Addr: env("AIDE_ADDR", "127.0.0.1:8097"), Handler: a.Handler(), ReadHeaderTimeout: 10 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10, TLSConfig: tlsConfig()}
+	// 可选：明文 HTTP → HTTPS 跳转。默认 127.0.0.1:8081，把 http:// 入口引导到 HTTPS 主端口；
+	// 置空 AIDE_HTTP_ADDR 可关闭。容器内不向宿主机暴露该端口。
+	tlsPort := ""
+	if _, port, perr := net.SplitHostPort(s.Addr); perr == nil {
+		tlsPort = port
+	}
+	var redirectSrv *http.Server
+	if httpAddr := env("AIDE_HTTP_ADDR", "127.0.0.1:8081"); httpAddr != "" {
+		redirectSrv = &http.Server{Addr: httpAddr, Handler: httpsRedirectHandler(tlsPort), ReadHeaderTimeout: 5 * time.Second, IdleTimeout: 15 * time.Second}
+		go func() { _ = redirectSrv.ListenAndServe() }()
+	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	go func() {
@@ -1352,9 +1601,12 @@ func Run() error {
 		c, done := context.WithTimeout(context.Background(), 8*time.Second)
 		defer done()
 		_ = s.Shutdown(c)
+		if redirectSrv != nil {
+			_ = redirectSrv.Close()
+		}
 	}()
-	log.Printf("aide listening on %s; token saved in %s/access-token", s.Addr, a.dataPath)
-	err = s.ListenAndServe()
+	log.Printf("aide listening on https://%s; cert=%s; token saved in %s/access-token", s.Addr, certFile, a.dataPath)
+	err = s.ListenAndServeTLS(certFile, keyFile)
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil
 	}

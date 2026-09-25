@@ -29,7 +29,7 @@ Under **Appearance**, select Professional or Classic, each with Light, Dark, and
 The settings panel is organized into sections: Usage stats (§8), Appearance, Language, Model parameters (custom profiles, §3), Archives (session export), Permissions, Account, Persona, Voice assistant, Accessibility, Configuration backup, and About. Reasoning effort (auto/off/low/medium/high) is switched in the strategy popup near the task input, not in the settings panel.
 
 - **Permissions**: three sandbox modes — read-only (read-only commands such as `ls`/`cat`/`git status` only), workspace-write (default; writes still go through proposal approval and dangerous commands are blocked), and danger-full-access (not recommended for daily use). Tool rounds default to 60, range 5–200; when the limit is reached, already streamed output is kept and you can continue.
-- **Account**: username and lock-screen password, stored as an **Argon2id** slow hash (OWASP-recommended: 64 MB memory, 3 iterations, 4 threads); no password means no lock. The password also derives an AES-256 key that encrypts persona custom personalities and the voice-assistant conversation history. Users upgrading from older versions are migrated automatically on first login: the legacy SHA-256 hash is upgraded to Argon2id and existing ciphertexts are transparently re-wrapped with the new key. See [Security: password hashing & key derivation](../security/password-hashing.md).
+- **Account**: username and lock-screen password, stored as an **Argon2id** slow hash (OWASP-recommended: 64 MB memory, 3 iterations, 4 threads); no password means no lock. The password also derives an AES-256 key that encrypts persona custom personalities and the voice-assistant conversation history. Users upgrading from older versions are migrated automatically on first login: the legacy SHA-256 hash is upgraded to Argon2id and existing ciphertexts are transparently re-wrapped with the new key. **Transport**: since 0.1.11 the main port speaks HTTPS/TLS (TLS 1.2 minimum, AEAD forward-secret ciphers); a loopback-only self-signed certificate is generated on first start, so tokens and conversation content no longer travel in clear text. See [Security: password hashing & key derivation](../security/password-hashing.md) and [Security: HTTPS/TLS entry hardening](../security/tls.md).
 - **Voice assistant**: the microphone button uses the browser Web Speech API for live transcription; the backend distinguishes "for the AI" from background noise and small talk and automatically drops chit-chat. The assistant name is customizable.
 
 #### Speech engine & naturalness
@@ -123,7 +123,7 @@ stateDiagram-v2
     dismissed --> followMaster: master broadcasts lock again
   }
 ```
-- **Configuration backup**: export all settings to a file, or restore from a backup.
+- **Configuration backup**: export all settings to a file, or restore from a backup. A backup exported by an older version imports into the new release with defaults auto-filled for any newly added fields, while explicit backup values (including explicit zeros) are preserved; out-of-range numbers and invalid enums fall back to a safe default. The result takes effect immediately, no restart needed, and matches the post-restart state. Backups from a newer version are rejected. See [Security: config backup & cross-version compatibility](security/config-backup.md).
 
 ## 3. Configure models and strategies
 
@@ -180,7 +180,7 @@ On MacBooks with Touch ID (or a Touch ID Magic Keyboard), you can unlock the loc
 **Requirements**:
 - MacBook with Touch ID or external Touch ID Magic Keyboard;
 - macOS 13+, Chrome 120+ or Safari 16+;
-- **Open aide via `http://localhost:8097`** — WebAuthn RP ID does not allow IP literals. The button is hidden when opened via `127.0.0.1`.
+- **Open aide via `https://localhost:8097`** — WebAuthn RP ID does not allow IP literals. The button is hidden when opened via `127.0.0.1`. Since 0.1.11 the main port is HTTPS; dismiss the self-signed-cert warning to continue.
 
 **Enrollment** (Settings → Account → Touch ID / Passkey):
 1. Click "Register new device" and confirm with your lock-screen password;

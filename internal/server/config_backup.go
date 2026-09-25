@@ -12,6 +12,9 @@ import (
 const (
 	configBackupFormat  = "aide-config-backup"
 	configBackupVersion = 1
+	// configSettingsVersion 标记导出信封里 settings 的结构版本（semver 主.次.修订）。
+	// 导入时据此跑跨版本语义迁移钩子；缺失该字段视为 0.1.11 之前的旧备份（v0）。
+	configSettingsVersion = "0.1.11.0"
 )
 
 // configBackup 配置备份信封。Settings 为完整设置快照；敏感字段按 IncludeSecrets 决定是否随附；
@@ -19,6 +22,7 @@ const (
 type configBackup struct {
 	Format           string          `json:"format"`
 	FormatVersion    int             `json:"formatVersion"`
+	SettingsVersion  string          `json:"settingsVersion,omitempty"` // 导出时的设置结构版本，供跨版本迁移判断
 	ExportedAt       string          `json:"exportedAt"`
 	AppVersion       string          `json:"appVersion"`
 	IncludeSecrets   bool            `json:"includeSecrets"`
@@ -61,6 +65,7 @@ func (a *App) exportConfigBackup(w http.ResponseWriter, r *http.Request) {
 	bk := configBackup{
 		Format:           configBackupFormat,
 		FormatVersion:    configBackupVersion,
+		SettingsVersion:  configSettingsVersion,
 		ExportedAt:       time.Now().UTC().Format(time.RFC3339Nano),
 		AppVersion:       version,
 		IncludeSecrets:   in.IncludeSecrets,
@@ -117,9 +122,18 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("该备份来自更新版本的 aide，当前版本无法导入"))
 		return
 	}
-	var imp Settings
-	if err := json.Unmarshal(bk.Settings, &imp); err != nil {
+	// 跨版本兼容：以当前版本默认 Settings 打底，再用备份 JSON 覆盖。
+	// 旧备份缺失的新字段自动获得当前默认值；备份显式出现的字段（含显式零值）覆盖默认。
+	merged := defaultSettings()
+	if err := json.Unmarshal(bk.Settings, &merged); err != nil {
 		fail(w, 400, errors.New("备份中的设置解析失败："+err.Error()))
+		return
+	}
+	// 语义迁移钩子：只管字段重命名/枚举转换/拆分；缺失字段补默认已由"默认底"自动完成。
+	migrateSettings(bk.SettingsVersion, &merged)
+	// 旧格式迁移 + 合法性回退 + 模型归一化（与 New() 启动加载同一函数，导入即生效、无需重启）。
+	if err := normalizeLoadedSettings(&merged); err != nil {
+		fail(w, 400, errors.New("备份设置校验失败："+err.Error()))
 		return
 	}
 
@@ -131,22 +145,30 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		_ = os.WriteFile(filepath.Join(a.dataPath, "settings.json.pre-import"), rb, 0600)
 	}
 
-	// 非敏感设置：完整采用备份快照（零值也是有效状态，如锁屏时间 0=不锁屏）。
-	merged := imp
-	// 敏感字段：默认保留当前值，仅在用户允许且备份确实随附时采用备份值。
+	// 敏感字段：默认保留当前值（即便是脱敏备份里的空串也不会清空现网密钥），
+	// 仅在用户勾选"导入密钥"且备份确实随附敏感数据时才采用备份值。
+	// 先暂存备份侧敏感值，再用当前值覆盖。
+	bkAPIKey := merged.APIKey
+	bkTTSAPIKey := merged.TTSAPIKey
+	bkPasswordHash := merged.UserPasswordHash
+	bkCiphers := merged.PersonaCiphers
+	bkCipher := merged.PersonaCipher
 	merged.APIKey = a.settings.APIKey
+	merged.TTSAPIKey = a.settings.TTSAPIKey
 	merged.UserPasswordHash = a.settings.UserPasswordHash
 	merged.PersonaCiphers = a.settings.PersonaCiphers
 	merged.PersonaCipher = a.settings.PersonaCipher
+	merged.DebugTokenHash = a.settings.DebugTokenHash
 	passwordChanged := false
 	if req.ImportSecrets && bk.IncludeSecrets {
-		merged.APIKey = imp.APIKey
-		if imp.UserPasswordHash != "" {
-			merged.UserPasswordHash = imp.UserPasswordHash
+		merged.APIKey = bkAPIKey
+		merged.TTSAPIKey = bkTTSAPIKey
+		if bkPasswordHash != "" {
+			merged.UserPasswordHash = bkPasswordHash
 			passwordChanged = true
 		}
-		merged.PersonaCiphers = imp.PersonaCiphers
-		merged.PersonaCipher = imp.PersonaCipher
+		merged.PersonaCiphers = bkCiphers
+		merged.PersonaCipher = bkCipher
 		if len(bk.SourcesSecrets) != 0 {
 			_ = os.WriteFile(filepath.Join(a.dataPath, sourcesSecretsFN), bk.SourcesSecrets, 0600)
 		}
@@ -172,6 +194,35 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, map[string]any{
 		"ok": true, "passwordChanged": passwordChanged,
 		"voiceImported": voiceImported,
-		"exportedAt": bk.ExportedAt, "appVersion": bk.AppVersion,
+		"exportedAt":    bk.ExportedAt, "appVersion": bk.AppVersion,
 	})
+}
+
+// migrateSettings 跨版本设置迁移钩子：按备份导出时的 settingsVersion 逐段处理语义变化
+// （字段重命名 / 枚举转换 / 字段拆分）。
+//
+// 设计边界：
+//   - 缺失字段补默认由"默认底 + Unmarshal 覆盖"自动完成，本函数不负责补默认；
+//   - 非法数值/枚举回退由 validateSettings 负责，本函数只管语义迁移；
+//   - 备份来自更高版本已在信封层拒绝（FormatVersion 校验），这里只处理更早版本。
+//
+// 未来新增破坏性变更时，在此按版本追加 case 即可，保持可扩展。
+func migrateSettings(fromVersion string, merged *Settings) {
+	switch fromVersion {
+	case "":
+		// 无 settingsVersion 标签 = 0.1.11 之前的旧备份（记为 v0）。
+		migrateV0ToV1(merged)
+		// 未来示例：
+		// case "0.1.11.0":
+		// 	migrateV1ToV2(merged)
+	}
+}
+
+// migrateV0ToV1 示例迁移：v0（单人格 personaCipher 字符串）→ v1（personaCiphers 映射）。
+// 把旧单人格时代的性格密文播种为 aide 人格的自定义密文，字段形状由 string 拆分为 map。
+// （normalizeLoadedSettings 内有同款兜底，此处作为迁移钩子的可测示例，幂等重复执行无副作用。）
+func migrateV0ToV1(merged *Settings) {
+	if merged.PersonaCipher != "" && merged.PersonaCiphers == nil {
+		merged.PersonaCiphers = map[string]string{personaAide: merged.PersonaCipher}
+	}
 }
