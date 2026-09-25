@@ -62,6 +62,14 @@ async function refreshConfig() {
   $('model-status').textContent = state.config.configured ? t("已配置") : t("未配置");
   $('model-name').textContent = state.config.configured ? state.config.model + t(" · API 已配置") : t("先配置模型，即可开始真实 AI 对话");
   if (typeof resetIdleTimer === "function") resetIdleTimer();
+  // 左下角 Docker 块锁定蒙版：仅已设密码时启用，点击即锁屏（不依赖是否打开过设置面板）
+  const rcLock = $('runtime-card');
+  if (rcLock) rcLock.classList.toggle('lock-enabled', !!(state.config && state.config.hasPassword));
+  const ovLock = $('runtime-lock-overlay');
+  if (ovLock && !ovLock.dataset.lockBound) {
+    ovLock.dataset.lockBound = '1';
+    ovLock.addEventListener('click', (e) => { e.stopPropagation(); if (state.config && state.config.hasPassword) lockScreenNow(); });
+  }
   estimateContext();
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
@@ -4078,9 +4086,6 @@ function renderAccountControl() {
   const wrap = el('div', 'settings-control account-control');
   const cfg = state.config || {};
   const hasPw = !!cfg.hasPassword;
-  // Docker 环境块手动锁屏蒙版：仅已设密码时启用
-  const rc = $('runtime-card');
-  if (rc) { rc.classList.toggle('lock-enabled', hasPw); }
   const uRow = el('div', 'account-row');
   uRow.append(el('span', '', t('用户名')));
   const uInput = el('input'); uInput.type = 'text'; uInput.maxLength = 24; uInput.placeholder = t('可选，用于欢迎语'); uInput.value = cfg.userName || '';
@@ -4115,9 +4120,6 @@ function renderAccountControl() {
   });
   const lockBtn = el('button', 'quiet', t('立即锁屏')); lockBtn.type = 'button';
   lockBtn.onclick = action(lockScreenNow);
-  // Docker 环境块蒙版点击锁屏
-  const ov = $('runtime-lock-overlay');
-  if (ov) { ov.addEventListener('click', (e) => { e.stopPropagation(); if (state.config && state.config.hasPassword) lockScreenNow(); }); }
   actions.append(save, lockBtn);
   wrap.append(uRow, tRow, oldRow, newRow, actions,
     el('small', '', t('不设密码且锁屏时间为 0 时不锁屏。密码同时作为小秘对话历史的 AES-256-GCM 加密密钥，只存哈希、不明文回显。')));
