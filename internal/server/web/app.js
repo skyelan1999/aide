@@ -2334,23 +2334,34 @@ function renderSourceChips() {
   const visible = state.root === 'context';
   host.classList.toggle('hidden', !visible);
   if (!visible) return;
-  host.replaceChildren();
+  const track = $('source-track');
+  track.replaceChildren();
   state.sources.filter(x => x.enabled).forEach(src => {
     const chip = el('button', 'source-chip' + (state.source === src.id ? ' active' : ''), (src.rw ? '✎ ' : '') + (src.builtin ? t(src.name) : src.name) + (src.builtin ? ' 🔒' : ''));
     chip.title = src.type + (src.config.path || src.config.url || src.config.host || '') + (src.rw ? t(" · 读写") : t(" · 只读"));
     chip.onclick = () => { state.source = src.id; state.dir = '.'; state.attachments = []; renderAttachments(); renderSourceChips(); action(loadFiles)(); };
-    host.append(chip);
+    track.append(chip);
     if (!src.builtin) {
       const del = el('button', 'source-chip-x', '×');
       del.title = t("删除来源 ") + src.name;
       del.onclick = () => { if (confirm(t('删除来源「{0}」？', src.name))) action(async () => { await api('/sources', { method: 'PUT', body: JSON.stringify({ sources: state.sources.filter(x => x.id !== src.id) }) }); await loadSourcesList(); if (state.source === src.id) { state.source = ''; state.dir = '.'; await loadFiles(); } })(); };
-      host.append(del);
+      track.append(del);
     }
   });
   const add = el('button', 'source-chip-add', t("＋ 来源"));
   add.onclick = () => { $('source-form').reset(); renderSourceFields(); $('source-dialog').showModal(); };
-  host.append(add);
+  track.append(add);
 }
+function applySourcePin(on) {
+  $('files-scroll').classList.toggle('pinned', on);
+  const b = $('source-pin');
+  b.classList.toggle('pinned', on);
+  b.setAttribute('aria-pressed', on ? 'true' : 'false');
+  try { localStorage.setItem('aide.sourcePinned', on ? '1' : '0'); } catch (err) {}
+}
+$('source-pin').onclick = () => applySourcePin(!$('files-scroll').classList.contains('pinned'));
+try { if (localStorage.getItem('aide.sourcePinned') === '1') applySourcePin(true); } catch (err) {}
+
 function renderSourceFields() {
   const type = $('src-type').value;
   $('src-rw').disabled = !['local', 'skill', 'sftp'].includes(type);
