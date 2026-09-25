@@ -89,6 +89,16 @@
       "author": "aide",
       "main": "index.js",
       "enabled": true
+    },
+    {
+      "id": "sqlite",
+      "name": "SQLite 数据库",
+      "description": "读写 SQLite 数据库文件（参数化查询、事务、schema、导出）；零第三方依赖，基于 node:sqlite，默认只读",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-09-25T20:45:00Z"
     }
   ]
 }

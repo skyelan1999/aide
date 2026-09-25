@@ -173,6 +173,10 @@ Changing a rate affects subsequent calls, not historical snapshots. Provider bal
 
 Upload a trusted `.js`, `.mjs`, or `.cjs` file, name it, and enable it. Shape validation, loading, and tool declarations do not imply full DSH compatibility. Tools with handlers can participate in the model loop. See the [protocol](../plugin-protocol.md).
 
+### SQLite plugin
+
+The preinstalled **SQLite** plugin (`sqlite`) uses Node's built-in `node:sqlite` with zero dependencies and works offline, reading/writing SQLite files inside the authorized mount roots: parameterized queries, transactions, migrations, schema introspection, and CSV/backup export. Tools are read-only by default; writes require explicit `readonly=false`. Database paths are confined to `/workspace`, `/context`, `/local`, queries are parameterized, and results are truncated by default. See [plugins/sqlite.md](plugins/sqlite.md).
+
 ### Touch ID Unlock (macOS)
 
 On MacBooks with Touch ID (or a Touch ID Magic Keyboard), you can unlock the lock screen with a fingerprint instead of a password.
