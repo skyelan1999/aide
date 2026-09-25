@@ -264,6 +264,7 @@ function openStream(run) {
         try { await api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) }); } catch (err) {}
       }
       await loadSessions(); // 任务完成：AI 已更新标题，同步侧栏会话列表
+      loadFiles(true).catch(()=>{}); // AI 可能写入了新文件，自动刷新右侧项目文件
       schedulePoll();
       scheduleTitleSync(id); // 主题总结是后台异步调用：稍后补一次同步标题
     })();
@@ -485,6 +486,7 @@ function schedulePoll() {
           try { await api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) }); } catch (err) {}
         }
         await loadSessions(); // 轮询兜底路径：完成时同步列表
+        loadFiles(true).catch(()=>{}); // 自动刷新右侧项目文件
         scheduleTitleSync(id);
       }
       schedulePoll();
@@ -738,7 +740,8 @@ function renderAttachments() {
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
   state.attachments.forEach((a, index) => { const chip = el('span', 'chip', (a.root === 'context' ? t("参考 · ") : '') + a.path); const b = el('button', '', '×'); b.setAttribute('aria-label', t("移除附件 ") + a.path); b.onclick = () => { state.attachments.splice(index, 1); renderAttachments(); }; chip.append(b); $('attachment-chips').append(chip); });
 }
-async function loadFiles() {
+async function loadFiles(auto) {
+  if (auto) { const _r = document.querySelector('#files input.file-rename'); if (_r && document.activeElement === _r) return; } // 自动刷新且正在重命名 → 跳过，不打断
   const query = state.root === 'context' && state.source ? '/files?source=' + encodeURIComponent(state.source) + '&path=' : '/files?root=' + state.root + '&path=';
   const files = await api(query + encodeURIComponent(state.dir));
   const label = state.root === 'context' && state.source ? 'sources/' + (state.sources.find(x => x.id === state.source)?.name || state.source) : state.root;
