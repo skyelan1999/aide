@@ -1155,6 +1155,31 @@ function renderAboutProject(control) {
   text.append(el('strong', '', 'GitHub'), el('span', 'about-repository-path', 'skyelan1999 / aide'));
   link.append(text, el('span', 'about-external', '↗'));
   card.append(hero, version, link);
+  // 第三方开源软件许可
+  const deps = el('div', 'about-deps');
+  deps.append(el('h5', '', t("第三方开源软件")));
+  const depList = el('div', 'about-dep-list');
+  const deps_data = [
+    {name: "draw.io / diagrams.net", ver: "v31.5.2", license: "Apache-2.0", url: "https://github.com/jgraph/drawio", note: t("内嵌静态 webapp，离线图表编辑")},
+    {name: "Three.js", ver: "0.128.0", license: "MIT", url: "https://github.com/mrdoob/three.js", note: t("STL 3D 模型预览")},
+    {name: "marked.js", ver: "bundled", license: "MIT", url: "https://github.com/markedjs/marked", note: t("Markdown 渲染")},
+    {name: "mermaid.js", ver: "bundled", license: "MIT", url: "https://github.com/mermaid-js/mermaid", note: t("流程图渲染")},
+  ];
+  for (const d of deps_data) {
+    const row = el('div', 'about-dep-row');
+    const left = el('div', 'about-dep-left');
+    left.append(el('strong', '', d.name), el('span', 'about-dep-ver', d.ver));
+    const right = el('div', 'about-dep-right');
+    const lic = el('span', 'about-dep-license', d.license);
+    const a_link = el('a', 'about-dep-url', d.url);
+    a_link.href = d.url; a_link.target = '_blank'; a_link.rel = 'noopener noreferrer';
+    right.append(lic, a_link);
+    row.append(left, right);
+    if (d.note) row.append(el('p', 'about-dep-note', d.note));
+    depList.append(row);
+  }
+  deps.append(depList);
+  card.append(deps);
   return card;
 }
 function renderLanguageControl() {
