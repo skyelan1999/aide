@@ -1,6 +1,16 @@
 # aide 版本记录
 
-**当前版本：0.1.10.2 RC1**
+**当前版本：0.1.11.0 RC1**
+
+## 0.1.11.0 RC1（2026-09-25）
+
+- 界面英文化：Web 前端全站中英双语；i18n 片段拼接收口为整句 + 占位符，en.js 词条随各新模块同步补全
+- 离线 Docker release：compose 固化 pull_policy:never、新增 scripts/docker-release.sh，start.command 离线导入不再联网拉取；web_search 端点改为 env 配置（AIDE_WEBSEARCH_URL），离线/保密环境优雅降级
+- 锁屏主从层级联动：BroadcastChannel 选举，主界面锁定/解锁驱动所有从界面，从界面单独解锁不影响主界面
+- Touch ID / WebAuthn 解锁：注册/断言端点、凭证管理与锁屏指纹按钮（须经 localhost、RP ID 不可用 IP，不满足时给出提示）
+- 会话工具调用紧凑化：历史工具调用由大而空的虚线框重做为对齐流式风格的可折叠工具组（外层按 run 聚合计数 + 内层单条命令/结果），参数完整不截断、长结果内部滚动；list_files「当前目录」、搜索 query 等折叠摘要正确识别；辅助资料来源条精致化（统一类型图标、RW/锁标记、紧凑胶囊，触摸/桌面兼顾）
+- iPad 移动控制台方案：proposals/ipad 单文件方案（iPad 经 Tailscale 零公网组网连常驻 aide 主机、Safari PWA；仅方案不实施）
+- 在途（本版本未完成）：TTS 自然度（edge-tts 神经音 + Web Speech 降级前端已入库，后端在途，待盲听样本定默认音色）；外部 AI 调试接口（无障碍开关，排队中）
 
 ## 0.1.10.2 RC1（2026-09-24）
 

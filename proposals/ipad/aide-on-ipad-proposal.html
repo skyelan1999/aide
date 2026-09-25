@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>aide 运行于 iPad · 可行性方案</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230d9488'/%3E%3Ctext x='16' y='22' font-size='18' font-family='sans-serif' font-weight='800' fill='white' text-anchor='middle'%3Ea%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f6f7f8; --panel:#ffffff; --panel-2:#f1f4f5; --ink:#16202a; --muted:#5c6b78; --faint:#8494a0;
+  --line:#e2e8ec; --line-2:#eef2f4; --accent:#0d9488; --accent-soft:#e6f4f2; --accent-ink:#0b726a;
+  --warn:#b45309; --warn-soft:#fdf3e3; --danger:#b91c1c; --danger-soft:#fdecec; --ok:#15803d; --ok-soft:#e9f6ec;
+  --info:#1d4ed8; --info-soft:#e9f0fe; --radius:14px; --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px -12px rgba(16,24,40,.12);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0e151b; --panel:#141d25; --panel-2:#10181f; --ink:#e6edf3; --muted:#9fb0bd; --faint:#6b7d8b;
+  --line:#24313c; --line-2:#1b2731; --accent:#2dd4bf; --accent-soft:#10302d; --accent-ink:#5eead4;
+  --warn:#fbbf24; --warn-soft:#2c2007; --danger:#f87171; --danger-soft:#331515; --ok:#4ade80; --ok-soft:#0e2a18;
+  --info:#93b4fc; --info-soft:#13213a; --shadow:0 1px 2px rgba(0,0,0,.3),0 12px 32px -16px rgba(0,0,0,.6);
+}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.75 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 80px}
+a{color:var(--accent-ink)}
+/* hero */
+.hero{padding:64px 0 28px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.eyebrow{font-size:12px;letter-spacing:2.4px;color:var(--accent-ink);font-weight:700;text-transform:uppercase}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.18;letter-spacing:-.6px;margin:14px 0 12px;font-weight:700}
+.hero p.sub{font-size:18px;color:var(--muted);margin:0 0 20px;max-width:720px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pill{font-size:12px;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--muted)}
+.pill.live{background:var(--warn-soft);color:var(--warn);border-color:transparent;font-weight:600}
+/* toc */
+.toc{display:flex;flex-wrap:wrap;gap:8px;padding:18px 0 6px}
+.toc a{font-size:13px;text-decoration:none;color:var(--muted);background:var(--panel);border:1px solid var(--line);padding:5px 12px;border-radius:999px}
+.toc a:hover{color:var(--accent-ink);border-color:var(--accent)}
+/* sections */
+section{padding:34px 0 6px}
+h2{font-size:24px;letter-spacing:-.3px;margin:0 0 4px;display:flex;align-items:baseline;gap:12px}
+h2 .no{font-size:13px;color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums}
+.sec-desc{color:var(--muted);margin:0 0 18px}
+h3{font-size:16px;margin:0 0 6px}
+p{margin:8px 0}
+.lead{background:var(--accent-soft);border:1px solid transparent;border-left:3px solid var(--accent);border-radius:12px;padding:18px 20px;margin:16px 0}
+.lead h3{color:var(--accent-ink)}
+.lead ul{margin:8px 0 0}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.card .ico{width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent-ink);display:grid;place-items:center;margin-bottom:10px}
+.card p{color:var(--muted);font-size:14px;margin:6px 0 0}
+.card ul{margin:8px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+.card li{margin:3px 0}
+/* table */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);box-shadow:var(--shadow)}
+table{border-collapse:collapse;width:100%;table-layout:fixed;min-width:720px}
+th,td{padding:11px 14px;text-align:left;border-bottom:1px solid var(--line-2);font-size:13.5px;vertical-align:top}
+th{background:var(--panel-2);font-weight:650;font-size:12.5px}
+tr:last-child td{border-bottom:0}
+.tag{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:999px}
+.t-ok{background:var(--ok-soft);color:var(--ok)}.t-info{background:var(--info-soft);color:var(--info)}
+.t-warn{background:var(--warn-soft);color:var(--warn)}.t-no{background:var(--danger-soft);color:var(--danger)}
+/* architecture / topology diagrams */
+.diagram{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow);overflow-x:auto}
+.dzone{border:1.5px dashed var(--line);border-radius:12px;padding:14px;margin:10px 0;position:relative}
+.dzone>.zlabel{position:absolute;top:-10px;left:14px;background:var(--panel);padding:0 8px;font-size:11px;letter-spacing:1px;color:var(--faint);text-transform:uppercase}
+.dzone.secure{border-style:solid;border-color:var(--accent)}
+.dzone.secure>.zlabel{color:var(--accent-ink)}
+.drow{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:stretch}
+.dnode{flex:1;min-width:120px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;text-align:center}
+.dnode strong{display:block;font-size:13.5px}
+.dnode small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px}
+.dnode.hl{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.darrow{display:grid;place-items:center;color:var(--faint);flex:0 0 auto}
+.darrow svg{display:block}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw-dash{width:22px;border-top:2px dashed var(--faint)}
+.sw-solid{width:22px;border-top:2px solid var(--accent)}
+/* timeline */
+.timeline{position:relative;margin:8px 0}
+.tl{display:grid;grid-template-columns:120px 34px 1fr;gap:0 14px;padding:0 0 4px}
+.tl .when{font-size:12.5px;color:var(--muted);text-align:right;padding-top:2px}
+.tl .axis{display:flex;justify-content:center}
+.tl .dot{width:14px;height:14px;border-radius:50%;background:var(--panel);border:3px solid var(--accent);margin-top:5px;z-index:1}
+.tl .body{padding:0 0 20px;border-left:2px solid var(--line);margin-left:-17px;padding-left:24px}
+.tl:last-child .body{border-left-color:transparent}
+.tl .body h3{font-size:15px}
+.tl .body p{font-size:13.5px;color:var(--muted);margin:4px 0}
+.tl .body ul{font-size:13px;color:var(--muted);margin:6px 0 0;padding-left:18px}
+.phase-tag{font-size:11px;font-weight:700;color:var(--accent-ink);letter-spacing:.5px}
+/* checklist */
+.check{list-style:none;padding:0;margin:10px 0}
+.check li{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--line-2);font-size:14px}
+.check li:last-child{border-bottom:0}
+.check .mk{flex:0 0 auto;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;margin-top:2px}
+.mk.y{background:var(--ok-soft);color:var(--ok)}.mk.x{background:var(--danger-soft);color:var(--danger)}.mk.q{background:var(--warn-soft);color:var(--warn)}
+/* risk */
+.risk{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:12px;padding:14px 16px;margin:10px 0}
+.risk h4{margin:0 0 4px;font-size:14px}
+.risk p{margin:0;font-size:13px;color:var(--muted)}
+.callout{background:var(--info-soft);border-radius:10px;padding:12px 16px;font-size:13.5px;color:var(--ink);margin:14px 0}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.kpi b{font-size:22px;display:block;letter-spacing:-.3px}.kpi span{font-size:12px;color:var(--muted)}
+footer{margin-top:50px;padding-top:22px;border-top:1px solid var(--line);color:var(--faint);font-size:12.5px}
+@media(max-width:820px){
+  .g3,.g4{grid-template-columns:repeat(2,1fr)}
+  .tl{grid-template-columns:28px 1fr}.tl .when{grid-column:2;text-align:left;font-weight:600;color:var(--accent-ink);padding:0 0 4px}
+  .tl .axis{grid-row:2}.tl .body{grid-column:2;grid-row:2}
+}
+@media(max-width:560px){.g2,.g3,.g4{grid-template-columns:1fr}.kpis{grid-template-columns:1fr}.hero{padding:40px 0 20px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="eyebrow">AIDE · 可行性方案（仅方案，不实施）</div>
+    <h1>让 aide 运行在 iPad 上</h1>
+    <p class="sub">面向移动办公、现场讲解与随时随地派活的端到端方案：远程后端 + 安全组网 + iPad PWA（可选原生壳）。</p>
+    <div class="meta">
+      <span class="pill live">待你审阅</span>
+      <span class="pill">对应版本 0.1.10.2 RC1</span>
+      <span class="pill">日期 2026-09-25</span>
+      <span class="pill">编制 AI 架构组</span>
+    </div>
+    <nav class="toc">
+      <a href="#s1">1 · 核心结论</a><a href="#s2">2 · 现状与约束</a><a href="#s3">3 · 能力矩阵</a>
+      <a href="#s4">4 · 路线对比</a><a href="#s5">5 · 目标架构</a><a href="#s6">6 · 网络与安全</a>
+      <a href="#s7">7 · iPad 适配清单</a><a href="#s8">8 · 分阶段路线图</a><a href="#s9">9 · 风险与未知</a>
+      <a href="#s10">10 · 待决策</a>
+    </nav>
+  </header>
+
+  <section id="s1">
+    <h2><span class="no">01</span>核心结论</h2>
+    <p class="sec-desc">一句话：iPad 不本地跑后端，而是作为 aide 的移动控制台，连接一台常驻主机。</p>
+    <div class="lead">
+      <h3>推荐方案：远程常驻 aide 主机 + Tailscale 组网 + iPad「添加到主屏」PWA</h3>
+      <ul>
+        <li><strong>执行在主机，交互在 iPad：</strong>aide 的执行核心（Docker、命令行、文件读写、构建、插件）必须运行在一台真正的计算机；iPadOS 不提供容器、也不允许常驻后端。模型本就走云端，iPad 只负责对话、呈现与触控，体验可与桌面一致。</li>
+        <li><strong>改造成本可控：</strong>前端已具备响应式骨架（viewport 安全区、多档断点、抽屉式面板），主要补齐 PWA、触摸手势与文件进出。</li>
+        <li><strong>安全且零公网端口：</strong>用 Tailscale 端到端加密组网，iPad 在外也能安全回家，配合强密码、锁屏与 Face ID。</li>
+        <li><strong>原生壳为可选项：</strong>需要 Face ID 解锁、系统推送、更稳后台时，再做 SwiftUI + WKWebView 壳，可走 TestFlight。</li>
+      </ul>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><b>阶段 1–2</b><span>即可在 iPad 获得完整可用体验</span></div>
+      <div class="kpi"><b>0 个</b><span>需要开放的公网入站端口（Tailscale）</span></div>
+      <div class="kpi"><b>不推荐</b><span>在 iPad 本地完整运行后端（系统限制）</span></div>
+    </div>
+  </section>
+
+  <section id="s2">
+    <h2><span class="no">02</span>现状与约束</h2>
+    <p class="sec-desc">基于当前代码实际盘点，区分「已具备」与「iPad 限制」。</p>
+    <div class="grid g2">
+      <div class="card">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M7 14h4"/></svg></div>
+        <h3>aide 当前架构</h3>
+        <p>Go 标准库 HTTP 单体，前端 go:embed 编入二进制，Docker Compose 部署；SSE 增量推送。</p>
+        <ul>
+          <li>工具：命令面板 run_shell、文件读写（/workspace、/context、/local）、SSH/SFTP 驱动、Node 插件宿主</li>
+          <li>模型：DeepSeek 等兼容 Chat Completions，云端调用</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>
+        <h3>前端已具备的移动基础</h3>
+        <ul>
+          <li>viewport 含 viewport-fit=cover（适配刘海/圆角安全区）</li>
+          <li>响应式断点 1600 / 1150 / 950 / 600</li>
+          <li>≤950 文件面板改右侧抽屉；≤600 侧栏隐藏 + 遮罩 + 迷你 Logo</li>
+          <li>渲染库本地 vendor（marked / mermaid / three），不依赖 CDN</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7Z"/><circle cx="12" cy="9" r="2.5"/></svg></div>
+        <h3>iPadOS 提供的能力</h3>
+        <ul>
+          <li>PWA：添加到主屏、全屏、离线缓存；Web Push（16.4+）</li>
+          <li>WebAuthn：可调用 Face ID / 触控 ID 做平台认证</li>
+          <li>Files App 文件提供者、Apple Pencil、麦克风/语音合成</li>
+          <li>妙控键盘 / 触控板指针、分屏与台前调度</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></div>
+        <h3>iPadOS 的关键限制</h3>
+        <ul>
+          <li>无 Docker / 无任意可执行二进制、无常驻后台服务</li>
+          <li>第三方浏览器统一使用 WebKit 内核</li>
+          <li>后台标签会被挂起/回收，长连接受限</li>
+          <li>a-Shell / iSH 等本地终端能力弱、后台即停，仅适合降级</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="s3">
+    <h2><span class="no">03</span>功能能力矩阵</h2>
+    <p class="sec-desc">逐项核对每个功能在 iPad 上的可行性与落地方式；关键认知：所有“执行”发生在主机，iPad 是控制台。</p>
+    <div class="tablewrap">
+      <table>
+        <colgroup><col style="width:21%"><col style="width:30%"><col style="width:15%"><col style="width:34%"></colgroup>
+        <thead><tr><th>功能模块</th><th>当前 Mac 实现</th><th>iPad 可行性</th><th>落地方式</th></tr></thead>
+        <tbody>
+          <tr><td>对话与流式输出</td><td>SSE 增量推送</td><td><span class="tag t-ok">完全可行</span></td><td>EventSource 保持连接，切后台断连后自动重连并续上</td></tr>
+          <tr><td>AI 工作流四阶段</td><td>需求/设计/实施/验证 + 子 Agent</td><td><span class="tag t-ok">完全可行</span></td><td>后端调度，iPad 呈现阶段、确认条与文档</td></tr>
+          <tr><td>命令面板 run_shell</td><td>容器内执行命令</td><td><span class="tag t-info">主机执行</span></td><td>iPad 发起并实时看输出，命令在远程主机容器内运行</td></tr>
+          <tr><td>文件读写 / 工作目录</td><td>/workspace 读写、自动刷新</td><td><span class="tag t-info">主机执行</span></td><td>iPad 浏览/编辑/重命名；文件经 Files、iCloud 进出</td></tr>
+          <tr><td>辅助资料 /context</td><td>只读挂载、来源钉选</td><td><span class="tag t-ok">完全可行</span></td><td>触摸选择来源、附加到任务，图钉逻辑保留</td></tr>
+          <tr><td>插件宿主（Node）</td><td>独立 Node 子进程</td><td><span class="tag t-info">主机执行</span></td><td>插件在主机运行，iPad 调用与查看结果</td></tr>
+          <tr><td>drawio / STL / 图片</td><td>mermaid / three / 图片预览</td><td><span class="tag t-ok">完全可行</span></td><td>Pencil 触摸绘图与标注，双指旋转/缩放 STL</td></tr>
+          <tr><td>语音小秘</td><td>麦克风 + 语音合成 + 讲解</td><td><span class="tag t-ok">完全可行</span></td><td>iPad 麦克风/扬声器，输入源可选，支持语音回复</td></tr>
+          <tr><td>轨迹 / 消耗统计</td><td>时间线 + 热力图 / 饼图</td><td><span class="tag t-ok">完全可行</span></td><td>触摸筛选调用记录，横滑查看，饼图统计模型占比</td></tr>
+          <tr><td>锁屏与鉴权</td><td>密码 + 蒙版</td><td><span class="tag t-ok">完全可行</span></td><td>密码 + Face ID（WebAuthn），主从标签锁定联动</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="s4">
+    <h2><span class="no">04</span>三条候选路线对比</h2>
+    <p class="sec-desc">先看路线，再看维度评分；推荐 A 先行、B 按需、C 仅做降级。</p>
+    <div class="grid g3">
+      <div class="card">
+        <h3>路线 A · 远程后端 + PWA <span class="tag t-ok">推荐</span></h3>
+        <p>aide 跑在常驻主机，iPad 用 Safari“添加到主屏”，全屏、离线外壳、安全接入。</p>
+        <ul><li>无需上架，改造量小</li><li>能力与桌面一致</li><li>依赖网络连接主机</li></ul>
+      </div>
+      <div class="card">
+        <h3>路线 B · 原生 App 壳 <span class="tag t-info">后期增强</span></h3>
+        <p>SwiftUI + WKWebView 封装，壳负责 Face ID、钥匙串、推送、Files、更稳后台。</p>
+        <ul><li>体验与安全最佳</li><li>需 Swift 开发与签名</li><li>可 TestFlight 分发</li></ul>
+      </div>
+      <div class="card">
+        <h3>路线 C · iPad 本地运行 <span class="tag t-no">不推荐</span></h3>
+        <p>尝试 a-Shell / iSH 在本地跑工具，受沙箱与后台限制，能力残缺。</p>
+        <ul><li>仅适合只读/演示降级</li><li>无容器、后台即停</li><li>投入高、收益低</li></ul>
+      </div>
+    </div>
+    <div class="tablewrap" style="margin-top:14px">
+      <table>
+        <colgroup><col style="width:20%"><col style="width:27%"><col style="width:27%"><col style="width:26%"></colgroup>
+        <thead><tr><th>对比维度</th><th>A 远程 + PWA</th><th>B 原生壳</th><th>C 本地运行</th></tr></thead>
+        <tbody>
+          <tr><td>离线可用性</td><td>外壳可缓存，操作需连主机</td><td>外壳可缓存，操作需连主机</td><td>可离线，但能力残缺</td></tr>
+          <tr><td>体验完整度</td><td><span class="tag t-ok">高</span></td><td><span class="tag t-ok">很高</span></td><td><span class="tag t-no">低</span></td></tr>
+          <tr><td>开发量</td><td><span class="tag t-ok">低–中</span></td><td><span class="tag t-warn">中–高（Swift）</span></td><td><span class="tag t-no">高且受限</span></td></tr>
+          <tr><td>安全性</td><td>Tailscale + 鉴权，高</td><td>钥匙串 + Face ID，很高</td><td>数据在设备，中</td></tr>
+          <tr><td>后台能力</td><td>由主机承担，强</td><td>系统推送，中</td><td>后台即停，弱</td></tr>
+          <tr><td>分发方式</td><td>无需上架</td><td>TestFlight / 商店</td><td>无需上架</td></tr>
+          <tr><td>保密环境适配</td><td>主机内网 + 本地模型</td><td>同 A</td><td>无容器，难满足</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="s5">
+    <h2><span class="no">05</span>推荐目标架构</h2>
+    <p class="sec-desc">iPad 为移动客户端，经加密 tailnet 连接常驻主机；模型与语音可云端或本地切换。</p>
+    <div class="diagram">
+      <div class="dzone">
+        <span class="zlabel">iPad · 移动客户端</span>
+        <div class="drow">
+          <div class="dnode hl"><strong>Safari PWA</strong><small>添加到主屏 · 全屏 · 离线外壳</small></div>
+          <div class="dnode"><strong>原生壳（可选）</strong><small>Face ID · 推送 · 钥匙串</small></div>
+          <div class="dnode"><strong>Files / iCloud</strong><small>文件导入导出</small></div>
+        </div>
+      </div>
+      <div class="darrow"><svg width="26" height="34" viewBox="0 0 26 34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3v22"/><path d="M6 9l7-6 7 6"/><path d="M6 25l7 6 7-6"/></svg></div>
+      <div class="dzone secure">
+        <span class="zlabel">Tailscale tailnet · WireGuard 端到端加密 · 零公网端口</span>
+        <div class="drow">
+          <div class="dnode"><strong>iPad 节点身份</strong><small>设备密钥</small></div>
+          <div class="dnode"><strong>主机节点身份</strong><small>mTLS 校验</small></div>
+          <div class="dnode"><strong>ACL 访问控制</strong><small>仅放行 aide 端口</small></div>
+        </div>
+      </div>
+      <div class="darrow"><svg width="26" height="34" viewBox="0 0 26 34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3v22"/><path d="M6 9l7-6 7 6"/><path d="M6 25l7 6 7-6"/></svg></div>
+      <div class="dzone">
+        <span class="zlabel">常驻 aide 主机 · Mac mini / 小主机 / NAS / 云服务器</span>
+        <div class="drow">
+          <div class="dnode hl"><strong>aide 容器</strong><small>Go 后端 + go:embed 前端</small></div>
+          <div class="dnode"><strong>工作区文件</strong><small>/workspace · /context · /local</small></div>
+          <div class="dnode"><strong>命令执行</strong><small>run_shell / SSH</small></div>
+          <div class="dnode"><strong>Node 插件宿主</strong><small>drawio 等插件</small></div>
+        </div>
+      </div>
+      <div class="darrow"><svg width="26" height="34" viewBox="0 0 26 34" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3v22"/><path d="M6 9l7-6 7 6"/><path d="M6 25l7 6 7-6"/></svg></div>
+      <div class="dzone">
+        <span class="zlabel">模型与语音 · 云端或本地可切换</span>
+        <div class="drow">
+          <div class="dnode"><strong>云端 DeepSeek</strong><small>SSE 流式</small></div>
+          <div class="dnode"><strong>本地模型 Ollama</strong><small>保密/离线环境</small></div>
+          <div class="dnode"><strong>TTS 语音</strong><small>云 / edge-tts / 本地</small></div>
+        </div>
+      </div>
+      <div class="legend">
+        <span><i class="sw-solid"></i>加密 tailnet 链路</span>
+        <span><i class="sw-dash"></i>逻辑分组边界</span>
+        <span>绿色高亮：iPad 主入口与 aide 核心</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="s6">
+    <h2><span class="no">06</span>网络拓扑与安全</h2>
+    <p class="sec-desc">零公网入站端口：iPad 从任意网络经加密 tailnet 回家；主机只主动出站访问模型。</p>
+    <div class="diagram">
+      <div class="drow" style="align-items:center">
+        <div class="dnode hl" style="max-width:180px"><strong>iPad</strong><small>蜂窝 / 家庭 / 公共 Wi-Fi</small></div>
+        <div class="darrow"><svg width="46" height="26" viewBox="0 0 46 26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h34"/><path d="M30 6l7 7-7 7"/></svg></div>
+        <div class="dzone secure" style="flex:2;margin:0">
+          <span class="zlabel">Tailscale · 优先 P2P 打洞，必要时 DERP 中继</span>
+          <div class="drow"><div class="dnode"><strong>加密隧道</strong><small>WireGuard</small></div><div class="dnode"><strong>ACL</strong><small>仅 aide 端口</small></div></div>
+        </div>
+        <div class="darrow"><svg width="46" height="26" viewBox="0 0 46 26" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13h34"/><path d="M30 6l7 7-7 7"/></svg></div>
+        <div class="dnode" style="max-width:200px"><strong>常驻主机</strong><small>aide 仅监听 tailnet IP · 防火墙拒绝公网入站</small></div>
+      </div>
+      <div class="callout" style="margin-bottom:0">模型 / TTS 为<strong>主机主动出站</strong>访问（云端），或直接走<strong>本地模型</strong>；任何情况下都不需要在路由器做端口转发，也不把 aide 暴露到公网。</div>
+    </div>
+    <div class="grid g2" style="margin-top:14px">
+      <div class="card">
+        <h3>接入与传输</h3>
+        <ul class="check">
+          <li><span class="mk y"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg></span>aide 端口仅绑定 tailnet 地址（100.x.x.x），不监听 0.0.0.0</li>
+          <li><span class="mk y"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg></span>Tailscale MagicDNS + 自动 HTTPS 证书，避免自签证书告警</li>
+          <li><span class="mk y"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg></span>ACL 最小权限：iPad 只能访问主机 aide 端口</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>鉴权与数据</h3>
+        <ul class="check">
+          <li><span class="mk y"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg></span>用户密码（哈希存储）+ 访问令牌；外部 AI 调试接口默认关闭</li>
+          <li><span class="mk y"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg></span>Face ID 走 WebAuthn，仅存公钥，私钥与生物特征不离设备</li>
+          <li><span class="mk y"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg></span>会话与小秘历史 AES-256 加密；多设备登录可审计、可吊销</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="s7">
+    <h2><span class="no">07</span>iPad 端体验适配清单</h2>
+    <p class="sec-desc">以下为待实施适配项（方案阶段），按模块分组；触摸与文件进出是重点。</p>
+    <div class="grid g2">
+      <div class="card">
+        <h3>布局与触摸</h3>
+        <ul class="check">
+          <li><span class="mk q">!</span>三栏在窄屏转为抽屉：侧栏与文件面板抽屉 + 遮罩，点空白回主界面</li>
+          <li><span class="mk q">!</span>触摸目标 ≥44pt；适配安全区 env(safe-area-inset-*)</li>
+          <li><span class="mk q">!</span>禁止双击缩放误触；长按呼出菜单；边缘滑动返回</li>
+          <li><span class="mk q">!</span>适配分屏/台前调度（1/3、1/2、全屏）与横竖屏切换</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Pencil、键盘与外设</h3>
+        <ul class="check">
+          <li><span class="mk q">!</span>Apple Pencil 在 drawio 中触摸绘图与手写标注</li>
+          <li><span class="mk q">!</span>支持随手写（Scribble）文本输入</li>
+          <li><span class="mk q">!</span>妙控键盘/触控板指针与快捷键（⌘K 搜索等）</li>
+          <li><span class="mk q">!</span>双指旋转/缩放 STL，手势控制 3D 预览</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>文件进出</h3>
+        <ul class="check">
+          <li><span class="mk q">!</span>Files App / iCloud 双向导入导出，支持拖拽到窗口</li>
+          <li><span class="mk q">!</span>单击打开、双击重命名（单击/双击语义与桌面一致）</li>
+          <li><span class="mk q">!</span>主机生成新文件后项目列表自动刷新</li>
+          <li><span class="mk q">!</span>不支持保存的类型（图片/STL）禁用保存按钮</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>小秘与语音</h3>
+        <ul class="check">
+          <li><span class="mk q">!</span>麦克风权限与输入源选择；动态断句后直接发送</li>
+          <li><span class="mk q">!</span>语音回复男女声、自然度增强；“讲解”勾控屏滚动/开文件</li>
+          <li><span class="mk q">!</span>无障碍：输出完成后自动朗读（可开关）</li>
+          <li><span class="mk q">!</span>小秘历史完整落盘、加密、可审核</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>PWA 能力</h3>
+        <ul class="check">
+          <li><span class="mk q">!</span>Web App Manifest：图标 180/192/512、apple-touch-icon、standalone、theme-color</li>
+          <li><span class="mk q">!</span>Service Worker 缓存 App Shell，离线可打开外壳</li>
+          <li><span class="mk q">!</span>Web Push 通知（任务完成/子会话归档）</li>
+          <li><span class="mk q">!</span>“添加到主屏”引导与首次运行说明</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>连接与状态</h3>
+        <ul class="check">
+          <li><span class="mk q">!</span>SSE 切后台断连后自动重连、续上已有内容</li>
+          <li><span class="mk q">!</span>运行状态可见（思考透明、折叠可窥），打断不丢已输出内容</li>
+          <li><span class="mk q">!</span>锁屏主从联动；Face ID 解锁；锁屏糊化但任务继续</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section id="s8">
+    <h2><span class="no">08</span>分阶段路线图</h2>
+    <p class="sec-desc">阶段 1–2 即可获得完整 iPad 体验；阶段 3–4 为可选增强与保密降级。</p>
+    <div class="timeline">
+      <div class="tl">
+        <div class="when">约 0.5 周</div><div class="axis"><span class="dot"></span></div>
+        <div class="body"><span class="phase-tag">阶段 0</span><h3>评估与基线</h3>
+          <p>真机与模拟器走查现状，登记兼容缺陷，确定验收口径。</p>
+          <ul><li>产出：移动兼容基线清单、逐功能验收标准</li></ul>
+        </div>
+      </div>
+      <div class="tl">
+        <div class="when">约 0.5–1 周</div><div class="axis"><span class="dot"></span></div>
+        <div class="body"><span class="phase-tag">阶段 1</span><h3>安全接入</h3>
+          <p>常驻主机部署 aide，双端登录 Tailscale，配置 ACL、HTTPS 证书与强密码。</p>
+          <ul><li>验收：iPad 在任意网络可安全打开；零公网端口；断网有明确提示</li></ul>
+        </div>
+      </div>
+      <div class="tl">
+        <div class="when">约 1–2 周</div><div class="axis"><span class="dot"></span></div>
+        <div class="body"><span class="phase-tag">阶段 2</span><h3>PWA、触摸与文件</h3>
+          <p>Manifest + Service Worker、抽屉布局、触摸目标、Pencil/drawio、Files/iCloud 进出、小秘麦克风、SSE 重连。</p>
+          <ul><li>验收：添加到主屏全屏运行；切后台断连可恢复；文件双向进出；Pencil 可绘图</li></ul>
+        </div>
+      </div>
+      <div class="tl">
+        <div class="when">可选 · 2–4 周</div><div class="axis"><span class="dot"></span></div>
+        <div class="body"><span class="phase-tag">阶段 3</span><h3>原生壳增强（路线 B）</h3>
+          <p>SwiftUI + WKWebView 壳，集成 Face ID、Web Push、钥匙串与更稳后台，TestFlight 分发。</p>
+          <ul><li>验收：Face ID 解锁、推送到达、后台任务状态可恢复</li></ul>
+        </div>
+      </div>
+      <div class="tl">
+        <div class="when">可选</div><div class="axis"><span class="dot"></span></div>
+        <div class="body"><span class="phase-tag">阶段 4</span><h3>降级与保密</h3>
+          <p>只读离线外壳、本地模型与本地 TTS、空气间隙离线镜像（联动离线 Docker release）。</p>
+          <ul><li>验收：断网可打开外壳；内网本地模型可用；离线 load→up 无 pull</li></ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s9">
+    <h2><span class="no">09</span>风险与未知情况（红队）</h2>
+    <p class="sec-desc">提前列出可能踩坑的点与应对，避免实施时返工。</p>
+    <div class="grid g2">
+      <div class="risk"><h4>后台标签挂起，SSE 被断</h4><p>切走后连接中断、任务在主机继续。需给事件编号，重连后按序号增量回放，否则用户误判“卡死”。</p></div>
+      <div class="risk"><h4>PWA 存储被系统清理</h4><p>存储紧张时 iOS 可能清理 PWA 数据。关键数据只存主机，iPad 仅做缓存，不做唯一副本。</p></div>
+      <div class="risk"><h4>WebAuthn 起源一致性</h4><p>RP ID 必须与固定域名一致，IP 直连无法注册。需固定 Tailscale MagicDNS 域名与有效证书。</p></div>
+      <div class="risk"><h4>Tailscale 登录与中继延迟</h4><p>首次需登录并加入 tailnet；打洞失败走 DERP 会增加延迟，必要时自建 DERP 节点。</p></div>
+      <div class="risk"><h4>主机休眠或宕机</h4><p>主机不可用则 iPad 不可访问。设置断电自启、休眠唤醒、健康检查与异常通知。</p></div>
+      <div class="risk"><h4>浏览器内核与 PWA 差异</h4><p>iOS 全为 WebKit，PWA 以 Safari 为准；Chrome for iOS 不能添加完整 PWA，需引导用 Safari。</p></div>
+      <div class="risk"><h4>音频会话被打断</h4><p>来电或其他音频会中断小秘，需监听中断事件并支持手动/自动恢复。</p></div>
+      <div class="risk"><h4>多端同时操作竞争</h4><p>iPad 与桌面操作同一工作区，依赖文件自动刷新与主从锁定规则避免覆盖与状态错乱。</p></div>
+    </div>
+  </section>
+
+  <section id="s10">
+    <h2><span class="no">10</span>需要你决策的点</h2>
+    <div class="callout">
+      <ol style="margin:0;padding-left:20px">
+        <li><strong>常驻主机选型：</strong>现有 Mac 常开 / Mac mini / 小主机或 NAS / 云服务器？</li>
+        <li><strong>组网方式：</strong>Tailscale（推荐）还是自建 WireGuard / VPN？</li>
+        <li><strong>模型策略：</strong>继续云端 DeepSeek，保密场景是否切本地模型？</li>
+        <li><strong>是否做原生壳（路线 B）</strong>及其上线节奏。</li>
+        <li><strong>小秘默认语音引擎：</strong>待团队产出 2–4 个引擎对比样本后由你盲听确定。</li>
+        <li><strong>是否需要本方案的英文版</strong>（可同步产出）。</li>
+      </ol>
+    </div>
+  </section>
+
+  <footer>
+    本文件为方案评审稿，<strong>不含任何代码改动</strong>，对应 aide 0.1.10.2 RC1；图为逻辑示意，最终以实施设计为准。<br>
+    aide · iPad 可行性方案 · 2026-09-25
+  </footer>
+
+</div>
+</body>
+</html>

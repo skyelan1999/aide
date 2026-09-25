@@ -24,3 +24,6 @@ docs/reviews/*/evidence/drill/*.tar.gz
 
 # 本地验证二进制产物
 .verify-bin/
+
+# html skill self-check screenshots (non-deliverable)
+_shots/
