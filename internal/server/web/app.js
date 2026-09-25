@@ -148,7 +148,7 @@ async function loadSessions() {
       const toggle = el('div', 'sub-group-toggle');
       toggle.onclick = () => { st.collapsed = !st.collapsed; loadSessions(); };
       toggle.append(el('span', 'sub-group-caret', st.collapsed ? '▸' : '▾'));
-      toggle.append(el('span', 'sub-group-title', t("子会话") + ' (' + done.length + ')'));
+      toggle.append(el('span', 'sub-group-title', t("子会话 ({0})", done.length)));
       $('sessions').append(toggle);
       if (!st.collapsed) {
         const shown = st.expandAll ? done : done.slice(0, 3);
@@ -591,7 +591,7 @@ function renderSession() {
           ans.textContent = '⚠ ' + run.error;
         } else {
           ans.classList.add('chat-answer-empty');
-          ans.textContent = t("未返回回答") + '（' + (run.toolUses?.length ? t("已完成 {0} 次工具调用", run.toolUses.length) : t("模型未生成正文")) + '）';
+          ans.textContent = run.toolUses?.length ? t("未返回回答（已完成 {0} 次工具调用）", run.toolUses.length) : t("未返回回答（模型未生成正文）");
         }
         box.append(ans);
         // 消息操作按钮：结束后（无论有无正文/是否失败）都给「重试 / 继续」，
@@ -1030,8 +1030,8 @@ function renderContextPreview(data) {
   state.previewFingerprint = data.fingerprint || '';
   state.previewOverLimit = !!data.overLimit;
   const bd = data.breakdown;
-  const overText = data.overLimit ? t(" · ⚠ 超限 {0}", Math.max(0, data.totalEstimate - data.contextWindow)) : '';
-  $('cp-summary').textContent = t("输入估算 {0} tokens + 输出预留 {1} = {2} / 窗口 {3}{4}", data.inputEstimate, data.outputReserve, data.totalEstimate, data.contextWindow, overText);
+  const overText = data.overLimit ? ' · ' + t("⚠ 超限 {0}", Math.max(0, data.totalEstimate - data.contextWindow)) : '';
+  $('cp-summary').textContent = t("输入估算 {0} tokens + 输出预留 {1} = {2} / 窗口 {3}", data.inputEstimate, data.outputReserve, data.totalEstimate, data.contextWindow) + overText;
   const detail = $('cp-detail');
   detail.replaceChildren();
   const rows = [
@@ -1556,7 +1556,7 @@ profilesManager.card = function (profile) {
     nameInput.addEventListener('input', () => { profile.name = nameInput.value.trim(); this.scheduleSave(); });
     head.append(nameInput, el('span', 'profile-badge', profile.id));
     const del = el('button', 'profile-delete', '－');
-    del.type = 'button'; del.title = t("删除配置"); del.setAttribute('aria-label', t("删除配置 ") + profile.name);
+    del.type = 'button'; del.title = t("删除配置"); del.setAttribute('aria-label', t("删除配置 {0}", profile.name));
     del.onclick = () => { if (confirm(t("删除配置「{0}」？", profile.name))) { const index = this.local.profiles.indexOf(profile); if (index >= 0) { this.local.profiles.splice(index, 1); if (this.local.activeProfile === profile.id) this.local.activeProfile = 'default'; } this.render(); this.save(); } };
     head.append(del);
   }
@@ -1647,7 +1647,7 @@ function refreshStrategyUI() {
   right.append(el('div', 'strategy-menu-sep', t("模型")));
   for (const m of state.config?.models || []) {
     const selected = state.config.activeModel === m.id;
-    right.append(strategyMenuOption('model', m.id, m.name, m.id + ' · ' + (m.contextWindow || 65536) / 1024 + t("K 上下文"), selected));
+    right.append(strategyMenuOption('model', m.id, m.name, t("{0} · {1}K 上下文", m.id, (m.contextWindow || 65536) / 1024), selected));
   }
   const manageModels = el('button', 'model-picker-manage', t("⚙ 管理模型…"));
   manageModels.type = 'button';
@@ -1675,14 +1675,15 @@ function strategyMenuOption(kind, value, name, desc, selected) {
       closeStrategyMenu();
       await refreshConfig();
       const modelName = state.config.models?.find(m => m.id === value)?.name || value;
-      toast(t("已切换模型：") + modelName);
+      toast(t("已切换模型：{0}", modelName));
       return;
     }
     if (kind === 'reasoning') {
       await api('/settings', { method: 'PUT', body: JSON.stringify({ reasoningEffort: value }) });
       closeStrategyMenu();
       await refreshConfig();
-      toast(t("已切换推理强度：") + ({auto:t("自动"),off:t("关闭"),low:t("低"),medium:t("中"),high:t("高")}[value] || value));
+      const eff = ({auto:t("自动"),off:t("关闭"),low:t("低"),medium:t("中"),high:t("高")}[value] || value);
+      toast(t("已切换推理强度：{0}", eff));
       return;
     }
     if (kind === 'auto') source.strategy = 'auto';
@@ -1867,7 +1868,7 @@ function renderTokenStats(control) {
     const showTip = (cell, date, day, weekTotal) => {
       tip.replaceChildren();
       const pricedDay = day.priced !== false;
-      const fee = pricedDay ? t("费用 ¥") + (dayCost[date] || 0).toFixed(4) : t("费用未知（旧数据未计价）");
+      const fee = pricedDay ? t("费用 ¥{0}", (dayCost[date] || 0).toFixed(4)) : t("费用未知（旧数据未计价）");
       tip.append(
         el('strong', '', date + ' · ' + fmtStatTokens(day.total || 0) + ' tokens'),
         el('br'),
@@ -1919,7 +1920,7 @@ function renderTokenStats(control) {
           detail.classList.remove('hidden');
           detail.replaceChildren();
           const pricedDay = day.priced !== false;
-          const fee = pricedDay ? t("费用 ¥") + (dayCost[key] || 0).toFixed(4) + t("（按调用时刻计价快照）") : t("费用未知：旧数据没有逐调用与计价证据，未按当前费率冒充");
+          const fee = pricedDay ? t("费用 ¥{0}（按调用时刻计价快照）", (dayCost[key] || 0).toFixed(4)) : t("费用未知：旧数据没有逐调用与计价证据，未按当前费率冒充");
           detail.append(
             el('strong', '', key),
             el('span', '', t("输入 {0} tokens · 输出 {1} tokens", fmtStatTokens(day.prompt || 0), fmtStatTokens(day.completion || 0))),
@@ -2014,7 +2015,7 @@ function renderModelList() {
       const btn = el('button', 'win-preset', p.label);
       btn.type = 'button';
       btn.dataset.k = p.k;
-      btn.title = p.label + t(" 上下文");
+      btn.title = t("{0} 上下文", p.label);
       if (m.contextWindow === p.k) btn.classList.add('active');
       btn.onclick = () => {
         m.contextWindow = p.k;
@@ -2363,6 +2364,15 @@ $('ws-browse-select').onclick = () => { const b = wsState.browse; $(b.field).val
 
 /* ── 辅助资料多来源（FR-82~84） ── */
 async function loadSourcesList() { state.sources = (await api('/sources')).sources || []; renderSourceChips(); }
+function sourceIconSVG(type) {
+  const p = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+  if (type === 'local' || type === 'skill') return p + '<path d="M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>';
+  if (type === 'sftp' || type === 'ftp' || type === 'ftps') return p + '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>';
+  if (type === 'link') return p + '<path d="M10 13a5 5 0 0 0 7.07.5l2-2a5 5 0 0 0-7.07-7.07l-1 1"/><path d="M14 11a5 5 0 0 0-7.07-.5l-2 2a5 5 0 0 0 7.07 7.07l1-1"/></svg>';
+  if (type === 'smb') return p + '<rect x="2" y="9" width="20" height="11" rx="2"/><path d="M6 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/><path d="M6 13h.01"/></svg>';
+  if (type === 'mcp') return p + '<path d="M9 3v4M15 3v4M7 7h10v4a5 5 0 0 1-10 0Z"/><path d="M12 16v5"/></svg>';
+  return p + '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/></svg>';
+}
 function renderSourceChips() {
   const host = $('source-chips');
   const visible = state.root === 'context';
@@ -2371,18 +2381,33 @@ function renderSourceChips() {
   const track = $('source-track');
   track.replaceChildren();
   state.sources.filter(x => x.enabled).forEach(src => {
-    const chip = el('button', 'source-chip' + (state.source === src.id ? ' active' : ''), (src.rw ? '✎ ' : '') + (src.builtin ? t(src.name) : src.name) + (src.builtin ? ' 🔒' : ''));
-    chip.title = (src.rw ? t("{0} · 读写", src.type + (src.config.path || src.config.url || src.config.host || '')) : t("{0} · 只读", src.type + (src.config.path || src.config.url || src.config.host || '')));
-    chip.onclick = () => { state.source = src.id; state.dir = '.'; state.attachments = []; renderAttachments(); renderSourceChips(); action(loadFiles)(); };
-    track.append(chip);
+    const displayName = src.builtin ? t(src.name) : src.name;
+    const loc = src.config.path || src.config.url || (src.config.host ? ('//' + src.config.host + (src.config.path || '')) : '');
+    const wrap = el('div', 'src-chip' + (state.source === src.id ? ' active' : ''));
+    const main = el('button', 'src-main');
+    main.type = 'button';
+    main.title = t(src.rw ? '{0} · 读写' : '{0} · 只读', (src.type ? src.type + ' · ' : '') + (loc || displayName));
+    main.setAttribute('aria-pressed', state.source === src.id ? 'true' : 'false');
+    main.onclick = () => { state.source = src.id; state.dir = '.'; state.attachments = []; renderAttachments(); renderSourceChips(); action(loadFiles)(); };
+    main.insertAdjacentHTML('beforeend', '<span class="src-ico">' + sourceIconSVG(src.type) + '</span>');
+    main.append(el('span', 'src-name', displayName));
+    if (src.rw) main.insertAdjacentHTML('beforeend', '<span class="src-rw">RW</span>');
+    if (src.builtin) main.insertAdjacentHTML('beforeend', '<span class="src-lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>');
+    wrap.append(main);
     if (!src.builtin) {
-      const del = el('button', 'source-chip-x', '×');
-      del.title = t("删除来源 {0}", src.name);
-      del.onclick = () => { if (confirm(t('删除来源「{0}」？', src.name))) action(async () => { await api('/sources', { method: 'PUT', body: JSON.stringify({ sources: state.sources.filter(x => x.id !== src.id) }) }); await loadSourcesList(); if (state.source === src.id) { state.source = ''; state.dir = '.'; await loadFiles(); } })(); };
-      track.append(del);
+      const del = el('button', 'src-del');
+      del.type = 'button';
+      del.title = t("删除来源 {0}", displayName);
+      del.setAttribute('aria-label', t("删除来源 {0}", displayName));
+      del.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+      del.onclick = ev => { ev.stopPropagation(); if (confirm(t('删除来源「{0}」？', displayName))) action(async () => { await api('/sources', { method: 'PUT', body: JSON.stringify({ sources: state.sources.filter(x => x.id !== src.id) }) }); await loadSourcesList(); if (state.source === src.id) { state.source = ''; state.dir = '.'; await loadFiles(); } })(); };
+      wrap.append(del);
     }
+    track.append(wrap);
   });
-  const add = el('button', 'source-chip-add', t("＋ 来源"));
+  const add = el('button', 'src-add');
+  add.type = 'button';
+  add.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span>' + t("来源") + '</span>';
   add.onclick = () => { $('source-form').reset(); renderSourceFields(); $('source-dialog').showModal(); };
   track.append(add);
 }
@@ -2440,7 +2465,7 @@ $('source-form').onsubmit = action(async event => {
   $('source-dialog').close();
   await loadSourcesList();
   state.source = id; state.dir = '.'; if (type !== 'mcp') await loadFiles(); else $('files').replaceChildren(el('p', 'muted', t('MCP 仅支持登记，尚未接入协议调用。')));
-  toast(t("已添加来源：") + name);
+  toast(t("已添加来源：{0}", name));
 });
 /* ── Markdown 渲染：基于 marked v12（MIT，vendor/marked.min.js，GFM 全特性）
      输出经 DOM 消毒（去 script/style/iframe/事件属性/javascript: 链接），
@@ -3106,8 +3131,17 @@ async function initialize() {
   await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
 }
 initialize()
-  .then(() => { // 已配置密码：每次刷新/打开页面立即锁屏（安全默认，独立于空闲自动锁）
-    if (state.config && state.config.hasPassword && !lockScreen.locked) lockScreenNow();
+  .then(() => {
+    // 已配置密码：先入集群，加入窗口期显示中性面纱，等选举结果再决定遮罩。
+    // ① master 未锁 → slave 不锁；② master 锁 → slave 跟随；③ slave 单解不回传。
+    if (state.config && state.config.hasPassword && !lockScreen.locked && typeof LockCluster !== 'undefined') {
+      showJoiningVeil();
+      LockCluster.onReady().then(effective => {
+        if (effective) applyLockVisual(); else releaseLockVisual();
+      });
+    } else if (state.config && state.config.hasPassword && !lockScreen.locked) {
+      lockScreenNow(); // 降级（无 LockCluster）：旧行为本地即锁
+    }
   })
   .catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
 
@@ -3185,7 +3219,7 @@ const voice = {
   recognition: null, listening: false, standby: false, awaitingReply: false,
   buffer: '', interim: '', timer: null, sending: false, queue: [], log: [], micStream: null
 };
-voice.name = () => (state.config && state.config.voiceAssistantName) || '小秘';
+voice.name = () => (state.config && state.config.voiceAssistantName) || t('小秘');
 voice.supported = ('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window);
 try {
   if ('speechSynthesis' in window) {
@@ -3698,13 +3732,13 @@ function renderVoiceNameControl() {
   const input = el('input');
   input.type = 'text';
   input.maxLength = 12;
-  input.placeholder = '小秘';
-  input.value = (state.config && state.config.voiceAssistantName) || '小秘';
+  input.placeholder = t('小秘');
+  input.value = (state.config && state.config.voiceAssistantName) || t('小秘');
   input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); saveBtn.click(); } };
   const saveBtn = el('button', 'primary', t('保存'));
   saveBtn.type = 'button';
   saveBtn.onclick = action(async () => {
-    const name = input.value.trim() || '小秘';
+    const name = input.value.trim() || t('小秘');
     await api('/settings', { method: 'PUT', body: JSON.stringify({ voiceAssistantName: name, activeModel: state.config ? state.config.activeModel : '' }) });
     await refreshConfig();
     toast(t('小秘名字已保存'));
@@ -4019,9 +4053,11 @@ const lockScreen = { timer: null, locked: false, wasVoiceListening: false };
 function lockTimeoutActive() {
   return !!(state.config && state.config.hasPassword && (state.config.lockTimeoutSec || 0) > 0);
 }
+// 空闲定时器只在 master 持有；slave 的活动经 ping 续 master 的表。
 function resetIdleTimer() {
   clearTimeout(lockScreen.timer);
   lockScreen.timer = null;
+  if (typeof LockCluster !== 'undefined' && !LockCluster.isMaster()) return;
   if (lockScreen.locked) return;
   if (!lockTimeoutActive()) return;
   lockScreen.timer = setTimeout(lockScreenNow, (state.config.lockTimeoutSec || 0) * 1000);
@@ -4038,32 +4074,61 @@ function refreshLockStatus() {
     ? t('运行中 · {0} · {1}', phaseLabel(running), formatElapsed(running.startedAt))
     : t('空闲 · 后台任务不受锁屏影响');
 }
-function lockScreenNow() {
-  if (lockScreen.locked) return;
+/* 视觉层：把 effectiveLocked=true 落到本地遮罩 + 小秘退下（幂等，可重复调用）。 */
+function applyLockVisual() {
   if (!state.config || !state.config.hasPassword) return;
+  const veil = $('lock-screen');
+  if (lockScreen.locked) { refreshLockStatus(); return; }
   lockScreen.locked = true;
   clearTimeout(lockScreen.timer); lockScreen.timer = null;
   // 小秘退下：停止听写 + 取消朗读（解锁后按原状态恢复）
   lockScreen.wasVoiceListening = !!voice.listening;
   if (voice.listening) voiceClose();
   ttsCancel();
-  $('lock-screen').hidden = false;
+  veil.hidden = false;
+  veil.classList.remove('joining');
   $('lock-password').value = '';
   $('lock-error').textContent = '';
   refreshLockStatus();
   setTimeout(() => { try { $('lock-password').focus(); } catch (_) {} }, 60);
 }
+/* 视觉层：把 effectiveLocked=false 落到本地（仅藏遮罩；欢迎语/麦克风恢复只在输密码的 tab）。 */
+function releaseLockVisual() {
+  if (!lockScreen.locked) return;
+  lockScreen.locked = false;
+  const veil = $('lock-screen');
+  veil.hidden = true;
+  veil.classList.remove('joining');
+}
+/* 加入窗口期中性面纱：不露内容、不抢密码框。 */
+function showJoiningVeil() {
+  const veil = $('lock-screen');
+  veil.hidden = false;
+  veil.classList.add('joining');
+  $('lock-error').textContent = '';
+  $('lock-status').textContent = t('正在确认安全状态…');
+}
+/* 升锁入口：master 写 masterLocked 并广播；slave 转 req-lock 给 master。 */
+function lockScreenNow() {
+  if (!state.config || !state.config.hasPassword) return;
+  if (typeof LockCluster !== 'undefined') LockCluster.requestLock('manual');
+  else applyLockVisual();
+}
 function unlockScreen(pw) {
   return api('/account/verify-password', { method: 'POST', body: JSON.stringify({ password: pw }) }).then(() => {
+    // 本 tab 本地恢复（欢迎语、麦克风只在输入密码的那个 tab，避免多 tab 合唱）
     lockScreen.locked = false;
     $('lock-screen').hidden = true;
+    $('lock-screen').classList.remove('joining');
     const name = (state.config && state.config.userName) || '';
-    const xm = (state.config && state.config.voiceAssistantName) || '小秘';
+    const xm = (state.config && state.config.voiceAssistantName) || t('小秘');
     // 解锁后由小秘人格亲切欢迎
     const welcome = name ? t('欢迎回来，{0}，我是{1}。', name, xm) : t('欢迎回来，我是{0}。', xm);
     toast(welcome);
     speakReply(welcome); // 内部按 voiceReplyEnabled 判断是否朗读
     if (lockScreen.wasVoiceListening) { lockScreen.wasVoiceListening = false; voiceStart(); }
+    // 集群同步：master 广播 unlock；slave 仅置 localDismiss，不回传
+    if (typeof LockCluster !== 'undefined') LockCluster.handleUnlockSuccess();
     resetIdleTimer();
   });
 }
@@ -4077,8 +4142,17 @@ $('lock-form').onsubmit = action(async e => {
     try { $('lock-password').select(); } catch (_) {}
   }
 });
+// 集群把 effectiveLocked 映射到本地视觉（master 自身、slave 收到 lock/unlock 均走这里）
+if (typeof LockCluster !== 'undefined') {
+  LockCluster.on('effective', locked => { if (locked) applyLockVisual(); else releaseLockVisual(); });
+  LockCluster.setRemoteActivityHook(() => resetIdleTimer()); // master 续表
+}
 ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(ev =>
-  window.addEventListener(ev, resetIdleTimer, { passive: true }));
+  window.addEventListener(ev, () => {
+    // master 自己活动即续表；slave 活动节流发 ping，由 master 续表
+    if (typeof LockCluster !== 'undefined') LockCluster.noteActivity();
+    resetIdleTimer();
+  }, { passive: true }));
 setInterval(() => { if (lockScreen.locked) refreshLockStatus(); }, 1000);
 
 // 设置面板「账户」：用户名 / 锁屏密码 / 锁屏时间 / 立即锁屏

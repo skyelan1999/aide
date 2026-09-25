@@ -663,6 +663,7 @@ window.aideEnglish = {
   "确认导入": "Confirm import",
   "确认，继续": "Confirm, continue",
   "空闲 · 后台任务不受锁屏影响": "Idle · background tasks are unaffected by the lock screen",
+  "正在确认安全状态…": "Confirming security state…",
   "立即演化": "Evolve now",
   "立即锁屏": "Lock now",
   "第三方开源软件": "Third-party open-source software",
@@ -847,5 +848,20 @@ window.aideEnglish = {
   "输入估算 {0} tokens + 输出预留 {1} = {2} / 窗口 {3}{4}": "Input est. {0} tokens + output reserve {1} = {2} / window {3}{4}",
   "运行中 · {0} · {1}": "Running · {0} · {1}",
   "附件 {0} 个": "{0} attachments",
+  "子会话 ({0})": "Sub-sessions ({0})",
+  "未返回回答（已完成 {0} 次工具调用）": "No response returned ({0} tool call(s) completed)",
+  "未返回回答（模型未生成正文）": "No response returned (model produced no text)",
+  "⚠ 超限 {0}": "⚠ Over by {0}",
+  "输入估算 {0} tokens + 输出预留 {1} = {2} / 窗口 {3}": "Est. input {0} tokens + output reserve {1} = {2} / window {3}",
+  "删除配置 {0}": "Delete profile {0}",
+  "{0} · {1}K 上下文": "{0} · {1}K context",
+  "已切换模型：{0}": "Model switched to: {0}",
+  "已切换推理强度：{0}": "Reasoning effort changed: {0}",
+  "费用 ¥{0}": "Cost ¥{0}",
+  "费用 ¥{0}（按调用时刻计价快照）": "Cost ¥{0} (per-call rate snapshots)",
+  "{0} 上下文": "{0} context",
+  "已添加来源：{0}": "Source added: {0}",
+  "等待澄清": "Awaiting clarification",
+  "来源": "Source"
 
 };
