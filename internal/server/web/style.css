@@ -677,3 +677,21 @@ body.file-view-mode .file-view-preview iframe{flex:1;width:100%;height:100%;min-
 .voice-narrate-toggle .vnt-check{display:none;font-size:10px;line-height:1}
 .voice-narrate-toggle.active{background:var(--brand);color:var(--on-accent);border-color:var(--brand)}
 .voice-narrate-toggle.active .vnt-check{display:inline-block}
+
+/* 配置备份：导出 / 导入引导 */
+.backup-control{display:flex;flex-direction:column;gap:14px}
+.backup-block{display:flex;flex-direction:column;gap:9px}
+.backup-block-title{font-size:13px;font-weight:650}
+.backup-desc{font-size:11px;line-height:1.7;color:var(--muted);margin:0}
+.backup-check{display:flex;gap:9px;align-items:flex-start;font-size:12px;cursor:pointer}
+.backup-check input{margin-top:2px}
+.backup-warn{font-size:11px;line-height:1.6;color:var(--danger);margin:0}
+.backup-note{font-size:11px;line-height:1.6;color:var(--muted);margin:0}
+.backup-divider{height:1px;background:var(--line);margin:2px 0}
+.backup-info{display:flex;flex-direction:column;gap:9px;margin-top:6px;padding:12px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}
+.backup-info.hidden{display:none}
+.backup-meta{display:flex;flex-direction:column;gap:5px;font-size:11px;color:var(--text);padding-bottom:8px;border-bottom:1px dashed var(--line-mid)}
+.backup-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.backup-tag{font-size:10px;padding:2px 8px;border-radius:20px;border:1px solid var(--line-mid);color:var(--muted);background:var(--panel-alt)}
+.backup-tag.tag-secret{color:var(--danger);border-color:var(--danger-line)}
+.backup-tag.tag-voice{color:var(--brand);border-color:var(--line-accent)}

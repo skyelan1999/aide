@@ -210,6 +210,17 @@
       ]
     },
     {
+      "id": "backup",
+      "title": "配置备份",
+      "controls": [
+        {
+          "id": "config-backup",
+          "type": "config-backup",
+          "label": "配置导出与导入"
+        }
+      ]
+    },
+    {
       "id": "about",
       "title": "关于",
       "controls": [

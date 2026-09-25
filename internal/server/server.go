@@ -561,6 +561,8 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/sessions", a.createSession)
 	mux.HandleFunc("GET /api/sessions/{id}", a.getSession)
 	mux.HandleFunc("GET /api/export", a.exportSessions)
+	mux.HandleFunc("POST /api/config/export", a.exportConfigBackup)
+	mux.HandleFunc("POST /api/config/import", a.importConfigBackup)
 	mux.HandleFunc("DELETE /api/sessions/{id}", a.deleteSession)
 	mux.HandleFunc("DELETE /api/sessions/archived/all", a.deleteAllArchived)
 	mux.HandleFunc("PATCH /api/sessions/{id}", a.patchSession)

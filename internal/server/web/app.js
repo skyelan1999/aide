@@ -4126,3 +4126,112 @@ function renderAccountControl() {
   return wrap;
 }
 controlRenderers['account'] = renderAccountControl;
+
+// ===== 配置备份：导出 / 导入引导 =====
+function renderBackupControl() {
+  const wrap = el('div', 'settings-control backup-control');
+
+  // ---------- 导出 ----------
+  const exp = el('div', 'backup-block');
+  exp.append(el('div', 'backup-block-title', t('导出配置')));
+  exp.append(el('p', 'backup-desc', t('将模型、沙箱、性格、语音、账户等全部配置导出为一个 JSON 备份文件，便于迁移或恢复。')));
+  const secBox = el('label', 'backup-check');
+  const sec = el('input'); sec.type = 'checkbox';
+  secBox.append(sec, el('span', '', t('包含敏感凭据（API Key、登录密码哈希、性格密文、来源密钥）')));
+  exp.append(secBox);
+  exp.append(el('p', 'backup-warn', t('注意：该文件将包含明文 API Key，请妥善保管，不要分享或上传到公共位置。')));
+  const voiceBox = el('label', 'backup-check');
+  const vc = el('input'); vc.type = 'checkbox';
+  voiceBox.append(vc, el('span', '', t('包含语音小秘的对话历史')));
+  exp.append(voiceBox);
+  const expBtn = el('button', 'primary', t('导出配置'));
+  exp.append(expBtn);
+  expBtn.onclick = action(async () => {
+    expBtn.disabled = true;
+    try {
+      const res = await fetch('/api/config/export', { method: 'POST', headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ includeSecrets: sec.checked, includeVoiceData: vc.checked }) });
+      if (!res.ok) { toast(t('导出失败：') + res.status); return; }
+      const blob = await res.blob();
+      let fn = 'aide-config.json';
+      const m = (res.headers.get('Content-Disposition') || '').match(/filename="?([^"]+)"?/);
+      if (m) fn = m[1];
+      const url = URL.createObjectURL(blob);
+      const a = el('a'); a.href = url; a.download = fn;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+      toast(t('配置已导出：') + fn);
+    } finally { expBtn.disabled = false; }
+  });
+
+  // ---------- 导入 ----------
+  const imp = el('div', 'backup-block');
+  imp.append(el('div', 'backup-block-title', t('导入配置')));
+  imp.append(el('p', 'backup-desc', t('选择此前导出的 aide 配置备份文件，确认内容后导入。')));
+  const fileInput = el('input'); fileInput.type = 'file'; fileInput.accept = '.json,application/json'; fileInput.style.display = 'none';
+  const chooseBtn = el('button', 'quiet', t('选择备份文件'));
+  imp.append(chooseBtn, fileInput);
+  const info = el('div', 'backup-info hidden');
+  const impSecBox = el('label', 'backup-check');
+  const impSec = el('input'); impSec.type = 'checkbox';
+  impSecBox.append(impSec, el('span', '', t('导入敏感凭据')));
+  const impVoiceBox = el('label', 'backup-check');
+  const impVoice = el('input'); impVoice.type = 'checkbox';
+  impVoiceBox.append(impVoice, el('span', '', t('导入小秘对话历史')));
+  const impNote = el('p', 'backup-note', t('导入前会自动把当前配置另存为回滚点 settings.json.pre-import。'));
+  const pwNote = el('p', 'backup-warn', t('若导入含密码哈希的备份，登录密码将变为备份时的密码，之后需用该密码解锁。'));
+  const impBtn = el('button', 'primary', t('确认导入')); impBtn.disabled = true;
+  info.append(impSecBox, impVoiceBox, impNote, pwNote, impBtn);
+  imp.append(info);
+  let parsed = null, armTimer = null;
+
+  chooseBtn.onclick = () => fileInput.click();
+  fileInput.onchange = () => {
+    const f = fileInput.files[0];
+    if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        parsed = JSON.parse(rd.result);
+        if (parsed.format !== 'aide-config-backup') { toast(t('不是有效的 aide 配置备份文件')); parsed = null; return; }
+        info.classList.remove('hidden');
+        info.querySelector('.backup-meta')?.remove();
+        const meta = el('div', 'backup-meta');
+        meta.append(el('div', '', t('来源版本') + '：' + (parsed.appVersion || '?')));
+        meta.append(el('div', '', t('导出时间') + '：' + fmtBackupTime(parsed.exportedAt)));
+        const tags = el('div', 'backup-tags');
+        if (parsed.includeSecrets) tags.append(el('span', 'backup-tag tag-secret', t('含敏感凭据')));
+        if (parsed.includeVoiceData) tags.append(el('span', 'backup-tag tag-voice', t('含小秘历史')));
+        if (!tags.children.length) tags.append(el('span', 'backup-tag', t('仅配置')));
+        meta.append(tags);
+        info.prepend(meta);
+        impSec.disabled = !parsed.includeSecrets; impSec.checked = !!parsed.includeSecrets;
+        impVoice.disabled = !parsed.includeVoiceData; impVoice.checked = !!parsed.includeVoiceData;
+        impBtn.disabled = false;
+      } catch (e) { toast(t('文件解析失败，请选择有效的 JSON 备份')); parsed = null; }
+    };
+    rd.readAsText(f);
+  };
+
+  impBtn.onclick = action(async () => {
+    if (!impBtn.dataset.armed) {
+      impBtn.dataset.armed = '1'; impBtn.textContent = t('再次点击以确认导入');
+      armTimer = setTimeout(() => { delete impBtn.dataset.armed; impBtn.textContent = t('确认导入'); }, 3500);
+      return;
+    }
+    clearTimeout(armTimer);
+    impBtn.disabled = true;
+    try {
+      const res = await api('/config/import', { method: 'POST', body: JSON.stringify({ backup: parsed, importSecrets: impSec.checked, importVoice: impVoice.checked }) });
+      await refreshConfig();
+      if (res.passwordChanged) toast(t('导入完成：登录密码已变更为备份时的密码，请使用该密码解锁'));
+      else toast(t('配置导入完成'));
+      parsed = null; fileInput.value = ''; info.classList.add('hidden');
+      delete impBtn.dataset.armed; impBtn.textContent = t('确认导入');
+    } catch (e) { toast(t('导入失败：') + (e.message || e)); impBtn.disabled = false; }
+  });
+
+  wrap.append(exp, el('div', 'backup-divider'), imp);
+  return wrap;
+}
+controlRenderers['config-backup'] = renderBackupControl;
+function fmtBackupTime(iso) { try { return new Date(iso).toLocaleString(); } catch { return iso || ''; } }
