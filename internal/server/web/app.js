@@ -2745,9 +2745,15 @@ function renderTrajectory() {
   const fmtSeg = $('traj-fmt-seg');
   if (trajView === 'calls') { if (fmtSeg) fmtSeg.classList.add('hidden'); renderCallsAnalysis(host, session); return; }
   if (fmtSeg) fmtSeg.classList.remove('hidden');
-  const pre = el('pre', 'traj-raw-view');
-  pre.textContent = trajFmt === 'json' ? buildTrajectoryJSON(session) : buildTrajectoryMarkdown(session);
-  host.append(pre);
+  if (trajFmt === 'json') {
+    const pre = el('pre', 'traj-raw-view');
+    pre.textContent = buildTrajectoryJSON(session); // JSON 看原始源码
+    host.append(pre);
+  } else {
+    const md = el('div', 'traj-md-view md-body');
+    md.innerHTML = renderMarkdown(buildTrajectoryMarkdown(session)); // Markdown 渲染为 HTML（含 mermaid）
+    host.append(md);
+  }
 }
 function buildTrajectoryMarkdown(s) {
   const subs = (state.sessions || []).filter(x => x.parentId === s.id);
