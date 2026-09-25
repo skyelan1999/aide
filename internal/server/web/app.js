@@ -60,7 +60,7 @@ async function refreshConfig() {
   $('app-version').textContent = versionText;
   $('settings-sheet-version').textContent = ' · aide ' + versionText;
   $('model-status').textContent = state.config.configured ? t("已配置") : t("未配置");
-  $('model-name').textContent = state.config.configured ? state.config.model + t(" · API 已配置") : t("先配置模型，即可开始真实 AI 对话");
+  $('model-name').textContent = state.config.configured ? t("{0} · API 已配置", state.config.model) : t("先配置模型，即可开始真实 AI 对话");
   if (typeof resetIdleTimer === "function") resetIdleTimer();
   // 左下角 Docker 块锁定蒙版：仅已设密码时启用，点击即锁屏（不依赖是否打开过设置面板）
   const rcLock = $('runtime-card');
@@ -369,7 +369,7 @@ function touchRunActivity(runId) {
 }
 function phaseLabel(ph) {
   if (ph.phase === 'reasoning') return t('模型思考中');
-  if (ph.phase === 'tool') return t('正在调用 ') + (ph.toolName || t('工具'));
+  if (ph.phase === 'tool') return t('正在调用 {0}', ph.toolName || t('工具'));
   if (ph.phase === 'generating') return t('正在生成回答');
   return t('等待模型响应');
 }
@@ -566,7 +566,7 @@ function renderSession() {
       msg.append(el('span', 'steer-tag', t("插话")), document.createTextNode(st.content));
       box.append(msg);
     }
-    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? t("◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', t("策略: ") + (run.strategy === 'auto' ? t("自动 → ") + profileName(run.profile) : t("手动 · ") + profileName(run.profile)))); box.append(meta);
+    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? t("◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile)))); box.append(meta);
     if (run.status === 'running' && state.runPhase[run.id]) renderRunStatusInto(box, run.id);
     if (run.attachments?.length) box.append(el('p', 'muted', t("已附加：") + run.attachments.map(a => a.root + '/' + a.path).join('、')));
     renderClarification(run, box);
@@ -663,7 +663,7 @@ function renderSession() {
       if (fileUses.length) {
         const details = el('details', 'tool-use');
         details.dataset.key = run.id + ':files';
-        const summary = el('summary', '', t("⚒ 文件查看 · ") + fileUses.length + t(" 次"));
+        const summary = el('summary', '', t("⚒ 文件查看 · {0} 次", fileUses.length));
         const paths = fileUses.map(u => { try { const a = JSON.parse(u.args || '{}'); return (a.source ? 'sources/' + a.source + ' · ' : '') + (a.path || '.'); } catch (e) { return '.'; } }).join('\n');
         details.append(summary, el('pre', 'tool-use-detail', paths));
         box.append(details);
@@ -673,7 +673,7 @@ function renderSession() {
         details.dataset.key = run.id + ':tool:' + toolIndex;
         details.open = false;
         const isCommand = use.tool === 'run_shell';
-        const summary = el('summary', '', isCommand ? t("⚒ 建议命令") : t("⚒ 工具调用 · ") + use.tool);
+        const summary = el('summary', '', isCommand ? t("⚒ 建议命令") : t("⚒ 工具调用 · {0}", use.tool));
         summary.append(el('span', '', toolSummaryBrief(use)));
         const detail = isCommand
           ? t("命令：\n") + toolSummaryBrief(use) + t("\n\n结果：\n") + (use.result || t("（无）"))
@@ -748,7 +748,7 @@ function renderQueueBar() {
 function renderAttachments() {
   $('attachment-chips').replaceChildren();
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
-  state.attachments.forEach((a, index) => { const chip = el('span', 'chip', (a.root === 'context' ? t("参考 · ") : '') + a.path); const b = el('button', '', '×'); b.setAttribute('aria-label', t("移除附件 ") + a.path); b.onclick = () => { state.attachments.splice(index, 1); renderAttachments(); }; chip.append(b); $('attachment-chips').append(chip); });
+  state.attachments.forEach((a, index) => { const chip = el('span', 'chip', a.root === 'context' ? t("参考 · {0}", a.path) : a.path); const b = el('button', '', '×'); b.setAttribute('aria-label', t("移除附件 {0}", a.path)); b.onclick = () => { state.attachments.splice(index, 1); renderAttachments(); }; chip.append(b); $('attachment-chips').append(chip); });
 }
 async function loadFiles(auto) {
   if (auto) { const _r = document.querySelector('#files input.file-rename'); if (_r && document.activeElement === _r) return; } // 自动刷新且正在重命名 → 跳过，不打断
@@ -1030,23 +1030,23 @@ function renderContextPreview(data) {
   state.previewFingerprint = data.fingerprint || '';
   state.previewOverLimit = !!data.overLimit;
   const bd = data.breakdown;
-  const overText = data.overLimit ? t(" · ⚠ 超限 ") + Math.max(0, data.totalEstimate - data.contextWindow) : '';
-  $('cp-summary').textContent = t("输入估算 ") + data.inputEstimate + t(" tokens + 输出预留 ") + data.outputReserve + ' = ' + data.totalEstimate + t(" / 窗口 ") + data.contextWindow + overText;
+  const overText = data.overLimit ? t(" · ⚠ 超限 {0}", Math.max(0, data.totalEstimate - data.contextWindow)) : '';
+  $('cp-summary').textContent = t("输入估算 {0} tokens + 输出预留 {1} = {2} / 窗口 {3}{4}", data.inputEstimate, data.outputReserve, data.totalEstimate, data.contextWindow, overText);
   const detail = $('cp-detail');
   detail.replaceChildren();
   const rows = [
     [t("系统指令"), bd.systemChars],
     [t("历史摘要"), bd.summaryChars],
-    [t("历史消息 ") + (bd.historyMessages || 0) + t(" 条"), bd.historyChars],
+    [t("历史消息 {0} 条", bd.historyMessages || 0), bd.historyChars],
     [t("任务输入"), bd.promptChars],
-    [t("附件 ") + (bd.attachmentFiles || 0) + t(" 个"), bd.attachmentChars],
+    [t("附件 {0} 个", bd.attachmentFiles || 0), bd.attachmentChars],
     [t("阶段指令"), bd.instructionChars],
-    [t("工具定义 ") + (bd.toolCount || 0) + t(" 个"), bd.toolSchemaChars]
+    [t("工具定义 {0} 个", bd.toolCount || 0), bd.toolSchemaChars]
   ];
   rows.forEach(([label, chars]) => {
     if (chars) {
       const row = el('div', 'cp-row');
-      row.append(el('span', '', label), el('span', '', chars + t(" 字符 ≈ ") + Math.floor(chars / 4) + ' tokens'));
+      row.append(el('span', '', label), el('span', '', t("{0} 字符 ≈ {1} tokens", chars, Math.floor(chars / 4))));
       detail.append(row);
     }
   });
@@ -1629,7 +1629,7 @@ function refreshStrategyUI() {
   const p = state.profiles;
   if (!p) return;
   const modelName = state.config?.models?.find(m => m.id === state.config.activeModel)?.name || state.config?.model || '';
-  const label = (p.strategy === 'auto' ? t("策略 · 自动") : t("策略 · ") + profileName(p.activeProfile)) + (modelName ? ' · ' + modelName : '');
+  const label = (p.strategy === 'auto' ? t("策略 · 自动") : t("策略 · {0}", profileName(p.activeProfile))) + (modelName ? ' · ' + modelName : '');
   $('strategy-label').textContent = label;
   $('strategy-label').title = label;
   const menu = $('strategy-menu');
@@ -1689,7 +1689,7 @@ function strategyMenuOption(kind, value, name, desc, selected) {
     else { source.strategy = 'manual'; source.activeProfile = value; }
     await saveProfilesFrom(source);
     closeStrategyMenu();
-    toast(kind === 'auto' ? t("已切换为自动路由策略") : t("已切换为手动策略 · ") + profileName(value));
+    toast(kind === 'auto' ? t("已切换为自动路由策略") : t("已切换为手动策略 · {0}", profileName(value)));
   });
   return b;
 }
@@ -1753,13 +1753,13 @@ function renderTokenStats(control) {
       card.append(el('span', 'usage-label', label), el('strong', 'usage-value', value), el('small', 'usage-caption', caption));
       return card;
     };
-    metrics.append(metric(t("累计用量"), fmtStatTokens(totalsObj.total || 0), 'tokens · ' + (totalsObj.calls || 0) + t(" 次调用")),
+    metrics.append(metric(t("累计用量"), fmtStatTokens(totalsObj.total || 0), t("tokens · {0} 次调用", totalsObj.calls || 0)),
       metric(t("已计价费用"), '¥' + cost.toFixed(2), t("按调用时刻的费率快照")));
     if (estimatedCost > 0) metrics.append(metric(t("刊例价估算"), '¥' + estimatedCost.toFixed(2), t("与已计价费用分开统计")));
     chips.replaceChildren();
     chips.append(
-      el('span', 'token-chip', t("今日 ") + fmtStatTokens(todayStats.total || 0) + ' tokens' + (todayStats.priced !== false ? ' · ¥' + (dayCost[Object.keys(days).sort().pop()] || 0).toFixed(2) : t(" · 未计价"))),
-      el('span', 'token-chip', t("调用 ") + (totalsObj.calls || 0) + t(" 次"))
+      el('span', 'token-chip', todayStats.priced !== false ? t("今日 {0} tokens · ¥{1}", fmtStatTokens(todayStats.total || 0), (dayCost[Object.keys(days).sort().pop()] || 0).toFixed(2)) : t("今日 {0} tokens · 未计价", fmtStatTokens(todayStats.total || 0))),
+      el('span', 'token-chip', t("调用 {0} 次", totalsObj.calls || 0))
     );
     Object.entries(data.modelCost || {}).forEach(([model, mc]) => {
       const chip = el('span', 'token-chip', model + ' ¥' + mc.toFixed(2));
@@ -1767,7 +1767,7 @@ function renderTokenStats(control) {
       chips.append(chip);
     });
     if (unpriced.total) {
-      const chip = el('span', 'token-chip', t("未计价历史 ") + fmtStatTokens(unpriced.total) + ' tokens · ' + (unpriced.calls || 0) + t(" 次"));
+      const chip = el('span', 'token-chip', t("未计价历史 {0} tokens · {1} 次", fmtStatTokens(unpriced.total), unpriced.calls || 0));
       chip.title = t("旧版统计没有逐调用与计价证据，费用未知；未按当前费率冒充已发生费用");
       chips.append(chip);
     }
@@ -1836,12 +1836,12 @@ function renderTokenStats(control) {
           return;
         }
         const parts = infos.map(i => (i.total_balance ?? '?') + ' ' + (i.currency || '')).join(' · ');
-        const chip = el('span', 'token-chip balance', t("余额 ") + parts);
+        const chip = el('span', 'token-chip balance', t("余额 {0}", parts));
         chip.title = t("来自 API 的账户余额");
         chips.append(chip);
       } catch (error) {
         const chip = el('span', 'token-chip', t("余额不可查"));
-        chip.title = t("查询失败: ") + error.message;
+        chip.title = t("查询失败: {0}", error.message);
         chips.append(chip);
       }
     })();
@@ -1871,11 +1871,11 @@ function renderTokenStats(control) {
       tip.append(
         el('strong', '', date + ' · ' + fmtStatTokens(day.total || 0) + ' tokens'),
         el('br'),
-        el('span', '', t("输入 ") + fmtStatTokens(day.prompt || 0) + t(" · 输出 ") + fmtStatTokens(day.completion || 0)),
+        el('span', '', t("输入 {0} · 输出 {1}", fmtStatTokens(day.prompt || 0), fmtStatTokens(day.completion || 0))),
         el('br'),
-        el('span', '', t("调用 ") + (day.calls || 0) + t(" 次 · ") + fee + (day.estimated ? t("（用量为估算）") : '')),
+        el('span', '', t("调用 {0} 次 · {1}{2}", day.calls || 0, fee, day.estimated ? t("（用量为估算）") : '')),
         el('br'),
-        el('span', '', t("所在周合计 ") + fmtStatTokens(weekTotal) + ' tokens')
+        el('span', '', t("所在周合计 {0} tokens", fmtStatTokens(weekTotal)))
       );
       tip.classList.add('show');
       const rect = cell.getBoundingClientRect();
@@ -1898,7 +1898,7 @@ function renderTokenStats(control) {
         const day = days[key] || {};
         const cell = el('button', 'token-cell tk-' + level(day.total || 0));
         cell.type = 'button';
-        cell.setAttribute('aria-label', key + ' · ' + fmtStatTokens(day.total || 0) + t(" tokens，查看当日明细"));
+        cell.setAttribute('aria-label', t("{0} · {1} tokens，查看当日明细", key, fmtStatTokens(day.total || 0)));
         cell.addEventListener('focus', () => showTip(cell, key, day, weekTotal));
         cell.addEventListener('blur', () => tip.classList.remove('show'));
         if (d > today) { cell.classList.add('future'); cell.disabled = true; }
@@ -1922,8 +1922,8 @@ function renderTokenStats(control) {
           const fee = pricedDay ? t("费用 ¥") + (dayCost[key] || 0).toFixed(4) + t("（按调用时刻计价快照）") : t("费用未知：旧数据没有逐调用与计价证据，未按当前费率冒充");
           detail.append(
             el('strong', '', key),
-            el('span', '', t("输入 ") + fmtStatTokens(day.prompt || 0) + t(" tokens · 输出 ") + fmtStatTokens(day.completion || 0) + ' tokens'),
-            el('span', '', t("调用 ") + (day.calls || 0) + t(" 次 · 合计 ") + fmtStatTokens(day.total || 0) + ' tokens' + (day.estimated ? t("（用量为估算）") : '')),
+            el('span', '', t("输入 {0} tokens · 输出 {1} tokens", fmtStatTokens(day.prompt || 0), fmtStatTokens(day.completion || 0))),
+            el('span', '', t("调用 {0} 次 · 合计 {1} tokens{2}", day.calls || 0, fmtStatTokens(day.total || 0), day.estimated ? t("（用量为估算）") : '')),
             el('span', '', fee)
           );
           tip.classList.remove('show');
@@ -1970,7 +1970,7 @@ function renderTokenStats(control) {
           pricing = await api('/token-pricing', { method: 'PUT', body: JSON.stringify(next) });
           action(loadStats).call(null);
         } catch (error) {
-          toast(t("费率保存失败: ") + error.message);
+          toast(t("费率保存失败: {0}", error.message));
           action(loadStats).call(null);
         }
       })();
@@ -2077,7 +2077,7 @@ $('fetch-models').onclick = action(async () => {
     const list = $('model-datalist');
     list.replaceChildren();
     (data.models || []).forEach(id => list.append(new Option(id, id)));
-    toast(t("已获取 ") + (data.models || []).length + t(" 个可用模型，在输入框中选择即可"));
+    toast(t("已获取 {0} 个可用模型，在输入框中选择即可", (data.models || []).length));
   } finally {
     button.disabled = false;
     button.textContent = t("⟳ 自动获取");
@@ -2103,7 +2103,7 @@ function estimateContext() {
   $('context-stat').textContent = fmtTokens(used) + ' / ' + fmtTokens(limit);
   $('context-fill').style.width = pct + '%';
   $('context-fill').classList.toggle('warn', pct > 90);
-  $('context-card').title = (included ? t("最近 ") + included + t(" 条消息") : t("当前会话暂无内容")) + t(" · 4 字符/词估算 · tokens 已用/窗口");
+  $('context-card').title = included ? t("最近 {0} 条消息 · 4 字符/词估算 · tokens 已用/窗口", included) : t("当前会话暂无内容 · 4 字符/词估算 · tokens 已用/窗口");
 }
 /* ── 插件系统（FR-72~75，协议 docs/plugin-protocol.md）：右侧面板 + 上传/搜索/启停/删除/surface ── */
 async function loadPluginsPanel() {
@@ -2192,7 +2192,7 @@ const wsState = { config: null, browse: { field: '', root: 'workspace', dir: '.'
 async function loadWorkspaceConfig() { wsState.config = await api('/workspace-config'); renderWorkspaceSummary(); }
 function renderWorkspaceSummary() {
   const w = wsState.config?.workspace || {};
-  $('workspace-summary').textContent = w.mode === 'ssh' ? (w.host || t("远程")) + ' · SSH/SFTP' : (state.config?.workspaceDisplay || '/workspace') + t(" · 本地");
+  $('workspace-summary').textContent = w.mode === 'ssh' ? (w.host || t("远程")) + ' · SSH/SFTP' : t("{0} · 本地", state.config?.workspaceDisplay || '/workspace');
   $('command-mode').textContent = w.mode === 'ssh' ? 'SSH · ' + (w.host || t("未配置主机")) : t("本地");
 }
 function setWsMode(mode) {
@@ -2372,12 +2372,12 @@ function renderSourceChips() {
   track.replaceChildren();
   state.sources.filter(x => x.enabled).forEach(src => {
     const chip = el('button', 'source-chip' + (state.source === src.id ? ' active' : ''), (src.rw ? '✎ ' : '') + (src.builtin ? t(src.name) : src.name) + (src.builtin ? ' 🔒' : ''));
-    chip.title = src.type + (src.config.path || src.config.url || src.config.host || '') + (src.rw ? t(" · 读写") : t(" · 只读"));
+    chip.title = (src.rw ? t("{0} · 读写", src.type + (src.config.path || src.config.url || src.config.host || '')) : t("{0} · 只读", src.type + (src.config.path || src.config.url || src.config.host || '')));
     chip.onclick = () => { state.source = src.id; state.dir = '.'; state.attachments = []; renderAttachments(); renderSourceChips(); action(loadFiles)(); };
     track.append(chip);
     if (!src.builtin) {
       const del = el('button', 'source-chip-x', '×');
-      del.title = t("删除来源 ") + src.name;
+      del.title = t("删除来源 {0}", src.name);
       del.onclick = () => { if (confirm(t('删除来源「{0}」？', src.name))) action(async () => { await api('/sources', { method: 'PUT', body: JSON.stringify({ sources: state.sources.filter(x => x.id !== src.id) }) }); await loadSourcesList(); if (state.source === src.id) { state.source = ''; state.dir = '.'; await loadFiles(); } })(); };
       track.append(del);
     }
@@ -2946,7 +2946,7 @@ function renderCallsTable(host, calls) {
   const mainN = calls.filter(c => c.agent === 'main').length;
   const subN = calls.filter(c => c.agent === 'sub').length;
   const failN = calls.filter(c => /失败|error|拒绝|fail/i.test(String(c.result || ''))).length;
-  host.append(el('div', 'call-summary', t('共 ') + calls.length + t(' 次 · 主') + mainN + t(' 子') + subN + t(' 失败') + failN));
+  host.append(el('div', 'call-summary', t('共 {0} 次 · 主 {1} 子 {2} 失败 {3}', calls.length, mainN, subN, failN)));
   const now = Date.now();
   const tms = { '1h': 3600000, '24h': 86400000, '7d': 604800000 };
   const filtered = calls.filter(c => {
@@ -3081,7 +3081,7 @@ document.addEventListener('click', event => {
     event.preventDefault();
     const href = link.dataset.internalLink;
     const path = href.replace(/^\.\//, '').split('#')[0];
-    if (path) openFile(path).catch(() => toast(t("打不开文件: ") + path));
+    if (path) openFile(path).catch(() => toast(t("打不开文件: {0}", path)));
     return;
   }
   if (!event.target.closest('.global-search')) $('search-results').classList.add('hidden');
@@ -3089,12 +3089,12 @@ document.addEventListener('click', event => {
 /* ── 手动压缩（FR-93） ── */
 function refreshCompactInfo() {
   const sess = state.session;
-  $('compact-info').textContent = sess?.compactedMessages ? t("已折叠 ") + sess.compactedMessages + t(" 条消息") : '';
+  $('compact-info').textContent = sess?.compactedMessages ? t("已折叠 {0} 条消息", sess.compactedMessages) : '';
 }
 $('compact-button').onclick = action(async () => {
   if (!state.session) { toast(t("请先选择会话")); return; }
   const res = await api('/sessions/' + state.session.id + '/compact', { method: 'POST', body: '{}' });
-  toast(res.folded ? t("已压缩 ") + res.folded + t(" 条历史消息") : t("历史未超阈值，无需压缩"));
+  toast(res.folded ? t("已压缩 {0} 条历史消息", res.folded) : t("历史未超阈值，无需压缩"));
   await selectSession(state.session.id);
   refreshCompactInfo();
 });
@@ -4035,7 +4035,7 @@ function refreshLockStatus() {
     if (ph && !ph.done) { running = ph; break; }
   }
   host.textContent = running
-    ? t('运行中 · ') + phaseLabel(running) + ' · ' + formatElapsed(running.startedAt)
+    ? t('运行中 · {0} · {1}', phaseLabel(running), formatElapsed(running.startedAt))
     : t('空闲 · 后台任务不受锁屏影响');
 }
 function lockScreenNow() {

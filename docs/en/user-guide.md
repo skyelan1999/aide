@@ -18,6 +18,8 @@ Open the aide logo → **Settings → Language**. Click **中文** or **English*
 
 Language switching updates product-owned text and starter prompts. It does **not** translate conversations, filenames, file contents, custom names, model responses, terminal output, plugin descriptions, or unknown provider/server diagnostics. Existing draft text remains unchanged. To request an English model answer, write your request in English or explicitly ask the model to answer in English.
 
+**English coverage (0.1.10.2 RC1):** all product-owned UI strings are localized. The 52 previously fragmented strings—whole sentences split into concatenated `t()` pieces—have been consolidated into complete sentences with `{0}`/`{1}` placeholders, so English mode no longer falls back to mixed Chinese fragments.
+
 The login screen and standalone file view also provide a language selector. UI language does not convert currencies: CNY pricing remains CNY.
 
 Under **Appearance**, select Professional or Classic, each with Light, Dark, and System modes. System appearance and browser-default language are independent settings. **About** shows the running build version and the GitHub repository.

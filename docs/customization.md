@@ -42,6 +42,29 @@ python3 scripts/agent-route.py prompt codex  # 可换 claude/deepseek/doubao/wor
 
 配置和插件可以复用现有能力；完整 MCP 协议调用、PTY 交互式终端等缺失能力仍需实现，不能因为登记了来源就宣称接入成功。插件执行可信代码，不提供独立安全沙箱。
 
+## 界面文案 i18n 规范
+
+产品自有界面文案统一走宿主 `internal/server/web/i18n.js` 的 `t(key, ...args)`（`window.aideI18n.t`）。中文原文即 key；英文模式查 `locales/en.js`，未命中则回退中文原文。
+
+- **必须走 `t()`**：所有产品界面文案（按钮、提示、标签、aria-label、title、placeholder）都应经 `t()` 输出，不要在 JS 里硬编码中文后再直接拼到 DOM。
+- **整句 + 占位符**：动态值用 `{0}`、`{1}`… 占位，例如 `t("已获取 {0} 个可用模型", n)`，不要写成 `t("已获取 ")+n+t(" 个可用模型")`。
+- **禁止片段拼接**：不得把一个完整句子拆成多个 `t("片段A") + 变量 + t("片段B")`。拼接会破坏英文语序、量词/复数与符号，也无法被覆盖率脚本识别。
+- **新增词条同时补英文**：新增整句 key 时，必须在 `internal/server/web/locales/en.js` 同步加自然英文翻译；中文原文即 key，不要另起英文 key。
+- **符号与格式保留**：货币 `¥`、`tokens`、`⚒ · ⚠` 等符号在英文译文中保留；注意 null/undefined/0、数字格式与英文语序。
+- **验收**：`python3 scripts/check_docs.py` 与 `python3 /tmp/check_i18n_coverage.py` 需报告缺失为 0；`node --check internal/server/web/app.js internal/server/web/locales/en.js` 通过。
+
+`t(key, ...args)` 的判定与回退流程：
+
+```mermaid
+flowchart TD
+    A["t(key, ...args)"] --> B{"语言判定 == en?"}
+    B -->|否（中文）| C["返回中文 key"]
+    B -->|是| D{"catalog 命中 en.js?"}
+    D -->|是| E["占位符 {0}{1} 替换"]
+    E --> F["返回英文"]
+    D -->|否| G["返回中文 key（回退）"]
+```
+
 ## 交付与升级
 
 完成文档与检查后，授权发布者使用现有 version.sh 升版，构建带版本/SHA 的镜像，保存到 docker-images 并上传 Release；归档不进 Git。见 [交接手册](../HANDOVER.md)。同一次交付保留源码 tag、镜像校验和、测试记录和回滚说明。定制分支升级上游时先合并并验证，不直接覆盖业务数据。
