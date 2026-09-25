@@ -746,9 +746,22 @@ async function loadFiles() {
     b.append(el('span', 'file-icon', file.dir ? '▱' : '≡'), nameSpan);
     if (file.dir) b.append(el('small', '', '›'));
     b.title = file.path;
-    b.onclick = action(async () => { if (file.dir) { state.dir = file.path; await loadFiles(); } else await openFile(file.path); });
-    // 点击文件名文字 → 内联重命名（阻止冒泡触发打开）；失焦或回车自动保存，Esc 取消
-    nameSpan.onclick = (ev) => { ev.stopPropagation(); beginInlineRename(b, nameSpan, file); };
+    b._last = 0;
+    // 电脑文件管理器模型：单击选中；快速双击打开（文件→新标签页，文件夹→进入）；慢速双次点击名字重命名
+    b.onclick = (ev) => {
+      const now = Date.now(), prev = b._last || 0; b._last = now;
+      const onName = ev.target === nameSpan || nameSpan.contains(ev.target);
+      if (prev && now - prev <= FILE_DBLCLICK_MS) {
+        b._last = 0; selectFileRow(b);
+        if (file.dir) { state.dir = file.path; loadFiles().catch(e => toast(e.message)); }
+        else openFileInNewTab(file);
+        return;
+      }
+      if (prev && now - prev > FILE_DBLCLICK_MS && now - prev <= FILE_RENAME_MS && onName) {
+        b._last = 0; beginInlineRename(b, nameSpan, file); return;
+      }
+      selectFileRow(b); // 单击：仅选中
+    };
     $('files').append(b);
   });
 }
@@ -779,6 +792,16 @@ function beginInlineRename(rowBtn, nameSpan, file) {
     if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
     else if (ev.key === 'Escape') { settled = true; restore(); }
   };
+}
+const FILE_DBLCLICK_MS = 450, FILE_RENAME_MS = 1600;
+function selectFileRow(b){
+  document.querySelectorAll('#files .file-item.selected').forEach(x => x.classList.remove('selected'));
+  b.classList.add('selected');
+}
+function openFileInNewTab(file){
+  const source = state.root === 'context' ? state.source : '';
+  const spec = { root: source ? 'source' : state.root, source, path: file.path };
+  window.open(location.pathname + '#file=' + encodeURIComponent(JSON.stringify(spec)), '_blank', 'noopener');
 }
 
 async function openFile(path) {
