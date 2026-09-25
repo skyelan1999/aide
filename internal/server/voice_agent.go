@@ -274,6 +274,7 @@ func (va *VoiceAgent) enable(password string) error {
 }
 
 // unlock 用密钥解锁并解密恢复历史。
+// 先用新派生密钥（Argon2id）；失败回退旧 SHA-256 密钥，兼容迁移中途密文。
 func (va *VoiceAgent) unlock(password string) error {
 	if password == "" {
 		return errors.New("请输入密钥")
@@ -283,21 +284,62 @@ func (va *VoiceAgent) unlock(password string) error {
 	if !va.encrypted {
 		return errors.New("未启用加密")
 	}
-	key := deriveKey(password)
 	if va.cachedCipher == "" {
-		va.key = key
+		va.key = deriveKey(password)
 		return nil
 	}
-	b, err := decryptWithKey(key, va.cachedCipher)
+	key, hist, err := va.decryptCached(password)
 	if err != nil {
-		return errors.New("密钥错误或数据损坏")
-	}
-	var hist []VoiceHistoryEntry
-	if err := json.Unmarshal(b, &hist); err != nil {
-		return errors.New("数据损坏")
+		return err
 	}
 	va.key = key
 	va.history = hist
+	return nil
+}
+
+// decryptCached 尝试用新密钥（Argon2id）解密密文；失败回退旧 SHA-256 密钥。
+// 返回成功使用的密钥与解析出的历史。调用方需持 va.mu。
+func (va *VoiceAgent) decryptCached(password string) ([]byte, []VoiceHistoryEntry, error) {
+	candidates := []struct{ key []byte }{
+		{deriveKey(password)},
+		{DeriveAESKeyLegacy(password)},
+	}
+	for _, c := range candidates {
+		b, err := decryptWithKey(c.key, va.cachedCipher)
+		if err != nil {
+			continue
+		}
+		var hist []VoiceHistoryEntry
+		if json.Unmarshal(b, &hist) != nil {
+			continue
+		}
+		return c.key, hist, nil
+	}
+	return nil, nil, errors.New("密钥错误或数据损坏")
+}
+
+// ReWrapAll 用 oldKey 解密现有密文、再用 newKey 重加密并落盘。
+// 用于密码哈希升级（SHA-256→Argon2id）时平滑迁移小秘历史密文；无密文时跳过。
+// 若当前已解锁持有明文，同步把内存密钥切到 newKey。
+func (va *VoiceAgent) ReWrapAll(oldKey, newKey []byte) error {
+	va.mu.Lock()
+	defer va.mu.Unlock()
+	if !va.encrypted || va.cachedCipher == "" {
+		return nil // 无密文，跳过
+	}
+	b, err := decryptWithKey(oldKey, va.cachedCipher)
+	if err != nil {
+		return errors.New("旧密钥解密小秘历史失败")
+	}
+	newCipher, err := encryptWithKey(newKey, b)
+	if err != nil {
+		return err
+	}
+	va.cachedCipher = newCipher
+	if len(va.key) > 0 {
+		va.key = newKey
+	}
+	va.persistLocked()
 	return nil
 }
 
@@ -337,7 +379,11 @@ func (va *VoiceAgent) disable(password string) error {
 		return nil
 	}
 	if va.cachedCipher != "" {
+		// 新密钥失败回退旧 SHA-256 密钥，兼容迁移中途密文
 		b, err := decryptWithKey(deriveKey(password), va.cachedCipher)
+		if err != nil {
+			b, err = decryptWithKey(DeriveAESKeyLegacy(password), va.cachedCipher)
+		}
 		if err != nil {
 			return errors.New("密钥错误，无法解密回明文")
 		}

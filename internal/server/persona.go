@@ -18,16 +18,24 @@ import (
 	"time"
 )
 
-// deriveKey 从用户密码派生 32 字节 AES-256 密钥
+// deriveKey 从用户密码派生 32 字节 AES-256 密钥。
+// 生产环境（New 已加载 kdf-salt.bin）使用 Argon2id(固定salt)；
+// 未加载 salt 的测试环境退化为 SHA-256，保持既有测试确定性。
+// 旧版密文（SHA-256 密钥）在登录迁移时通过 re-wrap 统一转为新密钥；
+// decryptPersona / voice_agent.unlock 仍会在新密钥失败时回退旧密钥，兼容迁移中途状态。
 func deriveKey(password string) []byte {
-	sum := sha256.Sum256([]byte(password))
-	return sum[:]
+	if len(kdfSalt) > 0 {
+		return DeriveAESKey(password, kdfSalt)
+	}
+	return DeriveAESKeyLegacy(password)
 }
 
-// sha256Hex 返回密码的 SHA-256 十六进制摘要，用于账户密码校验（不存明文）。
-// 与 deriveKey 同源：账户密码即小秘历史加密密钥。
-func sha256Hex(password string) string {
-	return hex.EncodeToString(deriveKey(password))
+// sha256Hex 返回输入的 SHA-256 十六进制摘要。
+// 用于：① 旧版账户密码哈希（64hex，迁移用）；② 高熵随机 token（access-token / debug-token）的存储哈希。
+// 高熵 token 本身不可暴力枚举，不需要慢 KDF，故保持裸 SHA-256。
+func sha256Hex(s string) string {
+	sum := sha256.Sum256([]byte(s))
+	return hex.EncodeToString(sum[:])
 }
 
 // encryptPersona AES-256-GCM 加密明文，返回 base64(nonce+ciphertext)
@@ -52,34 +60,19 @@ func encryptPersona(plaintext, password string) (string, error) {
 	return base64.StdEncoding.EncodeToString(ct), nil
 }
 
-// decryptPersona 解密
+// decryptPersona 解密。先用新派生密钥（Argon2id），失败回退旧 SHA-256 密钥，
+// 兼容迁移中途（密文尚未 re-wrap）状态。
 func decryptPersona(b64, password string) (string, error) {
 	if b64 == "" {
 		return "", nil
 	}
-	data, err := base64.StdEncoding.DecodeString(b64)
-	if err != nil {
-		return "", err
+	if pt, err := decryptWithKey(deriveKey(password), b64); err == nil {
+		return string(pt), nil
 	}
-	key := deriveKey(password)
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return "", err
+	if pt, err := decryptWithKey(DeriveAESKeyLegacy(password), b64); err == nil {
+		return string(pt), nil
 	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", err
-	}
-	ns := gcm.NonceSize()
-	if len(data) < ns {
-		return "", errors.New("数据损坏")
-	}
-	nonce, ct := data[:ns], data[ns:]
-	pt, err := gcm.Open(nil, nonce, ct, nil)
-	if err != nil {
-		return "", errors.New("密码错误或数据损坏")
-	}
-	return string(pt), nil
+	return "", errors.New("密码错误或数据损坏")
 }
 
 // encryptWithKey 用已派生的 32 字节 AES-256 密钥加密，返回 base64(nonce+ciphertext)。

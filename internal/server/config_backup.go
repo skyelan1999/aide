@@ -43,11 +43,15 @@ func (a *App) exportConfigBackup(w http.ResponseWriter, r *http.Request) {
 	a.mu.Unlock()
 
 	if !in.IncludeSecrets {
-		// 剔除敏感字段，得到可较安全分享的设置快照
+		// 剔除敏感字段，得到可较安全分享的设置快照。
+		// 除密码哈希外，还需清除：API Key、人格/小秘历史密文、调试令牌哈希等任何可解密封面的材料。
 		exportSettings.APIKey = ""
+		exportSettings.TTSAPIKey = ""
 		exportSettings.UserPasswordHash = ""
 		exportSettings.PersonaCiphers = nil
 		exportSettings.PersonaCipher = ""
+		exportSettings.DebugTokenHash = ""
+		// 小秘历史密文仅在显式 IncludeVoiceData 时随附；非敏感导出不带任何密文引用。
 	}
 	sb, err := json.MarshalIndent(exportSettings, "", "  ")
 	if err != nil {

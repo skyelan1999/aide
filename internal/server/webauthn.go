@@ -152,7 +152,7 @@ func (a *App) webAuthnRegisterStart(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	hash := a.settings.UserPasswordHash
 	a.mu.Unlock()
-	if hash == "" || sha256Hex(in.OldPassword) != hash {
+	if valid, _ := VerifyPassword(in.OldPassword, hash); !valid {
 		fail(w, 401, errors.New("密码错误"))
 		return
 	}
@@ -320,7 +320,7 @@ func (a *App) webAuthnDeleteCredential(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	hash := a.settings.UserPasswordHash
 	a.mu.Unlock()
-	if hash == "" || sha256Hex(in.OldPassword) != hash {
+	if valid, _ := VerifyPassword(in.OldPassword, hash); !valid {
 		fail(w, 401, errors.New("密码错误"))
 		return
 	}

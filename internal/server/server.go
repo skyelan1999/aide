@@ -368,6 +368,12 @@ func New(work, reference, data string) (*App, error) {
 	if a.settings.VoiceReplyGender == "" {
 		a.settings.VoiceReplyGender = "female"
 	}
+	// KDF：确保本机固定的 Argon2id salt（data/kdf-salt.bin, 0600）存在并加载，
+	// 之后 deriveKey() 一律走 Argon2id；旧 SHA-256 密文在登录时经 re-wrap 平滑迁移。
+	if err := ensureKdfSalt(data); err != nil {
+		a.Close()
+		return nil, fmt.Errorf("kdf-salt: %w", err)
+	}
 	a.voiceAgent = newVoiceAgent(data)
 	a.colloqCache = newColloquialCache()
 	a.webAuthn = newWebAuthnManager(data) // Touch ID / WebAuthn 解锁
@@ -854,9 +860,12 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	// 密码变更：账户密码即小秘历史加密密钥。旧密码已设置时必须验证；新密码同步重加密小秘历史。
 	if in.NewPassword != "" {
 		hasPw := a.settings.UserPasswordHash != ""
-		if hasPw && sha256Hex(in.OldPassword) != a.settings.UserPasswordHash {
-			fail(w, 400, errors.New("原密码错误"))
-			return
+		if hasPw {
+			valid, _ := VerifyPassword(in.OldPassword, a.settings.UserPasswordHash)
+			if !valid {
+				fail(w, 400, errors.New("原密码错误"))
+				return
+			}
 		}
 		if va := a.voiceAgent; va != nil {
 			if st := va.encStatus(); st["encrypted"] == true {
@@ -868,7 +877,7 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 				_ = va.enable(in.NewPassword) // 首次设置密码：自动启用小秘历史加密
 			}
 		}
-		in.Settings.UserPasswordHash = sha256Hex(in.NewPassword)
+		in.Settings.UserPasswordHash = mustHashPassword(in.NewPassword)
 		// 账户密码即人格自定义性格密钥：用新密钥重加密已解锁的人格自定义内容
 		if len(a.personaCustom) > 0 {
 			if in.Settings.PersonaCiphers == nil {
@@ -1050,7 +1059,9 @@ func (a *App) voiceHistoryDisable(w http.ResponseWriter, r *http.Request) {
 }
 
 // accountVerifyPassword 校验账户密码（解锁锁屏 / 小秘历史二次确认共用）。
-// 只比对 SHA-256 哈希，不返回任何敏感信息；未设置密码时一律拒绝。
+// 支持 Argon2id(PHC) 与旧 64hex(SHA-256) 两种格式；命中旧格式且密码正确时，
+// 自动升级为 Argon2id 并重加密所有已有密文（persona + 小秘历史），实现平滑迁移。
+// 不返回任何敏感信息；未设置密码时一律拒绝。
 func (a *App) accountVerifyPassword(w http.ResponseWriter, r *http.Request) {
 	var in struct{ Password string `json:"password"` }
 	if decode(w, r, &in) != nil {
@@ -1059,11 +1070,64 @@ func (a *App) accountVerifyPassword(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	hash := a.settings.UserPasswordHash
 	a.mu.Unlock()
-	if hash == "" || sha256Hex(in.Password) != hash {
+	if hash == "" {
 		fail(w, 401, errors.New("密码错误"))
 		return
 	}
-	jsonOut(w, 200, map[string]bool{"ok": true})
+	valid, needsUpgrade := VerifyPassword(in.Password, hash)
+	if !valid {
+		fail(w, 401, errors.New("密码错误"))
+		return
+	}
+	upgraded := false
+	if needsUpgrade {
+		upgraded = a.migratePasswordHash(in.Password)
+	}
+	jsonOut(w, 200, map[string]any{"ok": true, "upgraded": upgraded})
+}
+
+// migratePasswordHash 把旧 SHA-256 密码哈希升级为 Argon2id PHC，并用新密钥重加密所有密文。
+// 调用方已确认密码正确（旧格式校验通过）。无密文时 re-wrap 自然跳过。返回是否成功落盘。
+func (a *App) migratePasswordHash(password string) bool {
+	newHash := mustHashPassword(password)
+	if newHash == "" {
+		return false
+	}
+	oldKey := DeriveAESKeyLegacy(password) // = 旧 SHA-256 派生密钥
+	newKey := DeriveAESKey(password, kdfSalt)
+
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	// 1) 重加密人格自定义性格密文（旧密钥解 → 新密钥封）
+	for id, cipher := range a.settings.PersonaCiphers {
+		if cipher == "" {
+			continue
+		}
+		if plain, err := decryptWithKey(oldKey, cipher); err == nil {
+			if nc, err := encryptWithKey(newKey, plain); err == nil {
+				a.settings.PersonaCiphers[id] = nc
+			}
+		}
+	}
+	// 兼容旧单人格字段
+	if a.settings.PersonaCipher != "" {
+		if plain, err := decryptWithKey(oldKey, a.settings.PersonaCipher); err == nil {
+			if nc, err := encryptWithKey(newKey, plain); err == nil {
+				a.settings.PersonaCipher = nc
+			}
+		}
+	}
+	// 2) 重加密小秘历史密文
+	if va := a.voiceAgent; va != nil {
+		_ = va.ReWrapAll(oldKey, newKey)
+	}
+	// 3) 更新密码哈希并持久化；内存密码同步为新密码（派生即新密钥）
+	a.settings.UserPasswordHash = newHash
+	a.personaKey = password
+	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings); err != nil {
+		return false
+	}
+	return true
 }
 
 // exportSessions 全部导出：所有会话（含归档）打包为 JSON 下载，不包含访问令牌与 API Key。
