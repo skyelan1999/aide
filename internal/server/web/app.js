@@ -762,12 +762,15 @@ function setEditorMode(mode) {
 function showEditor() {
   $('editor-title').textContent = state.file.path; $('editor').value = state.file.content;
   const readOnly = state.file.root === 'context' && !sourceIsRW();
-  $('editor').readOnly = readOnly; $('save-file').disabled = readOnly; $('attach-file').disabled = state.file.fresh;
-  $('editor-status').textContent = state.file.root === 'context' ? (sourceIsRW() ? t("辅助资料 · 读写来源") : t("辅助资料 · 只读")) : t("工作目录 · 保存后同步到主机");
   const md = isMarkdownPath(state.file.path);
   const isDrawio = /\.drawio$/i.test(state.file.path || '');
   const isImg = isImagePath(state.file.path);
   const isStl = isStlPath(state.file.path);
+  $('editor').readOnly = readOnly;
+  // 图片 / STL 为只读可视化查看器，无文本可保存，禁用保存（避免空内容覆盖原文件）；drawio 可保存
+  $('save-file').disabled = readOnly || isImg || isStl;
+  $('attach-file').disabled = state.file.fresh;
+  $('editor-status').textContent = state.file.root === 'context' ? (sourceIsRW() ? t("辅助资料 · 读写来源") : t("辅助资料 · 只读")) : t("工作目录 · 保存后同步到主机");
   $('editor-mode-switch').classList.toggle('hidden', !md);
   if (isStl) {
     $('editor').classList.add('hidden');
@@ -2636,7 +2639,8 @@ async function openFileViewMode() {
   const readOnly = spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true);
   $('file-view-editor').value = data.content;
   $('file-view-editor').readOnly = readOnly;
-  $('file-view-save').disabled = readOnly;
+  // 图片 / STL 只读查看器禁用保存；drawio 可保存
+  $('file-view-save').disabled = readOnly || isImg || isStl;
   $('file-view-status').textContent = readOnly ? t("只读") : t("可编辑 · 保存后同步");
   if (isStl) {
     $('file-view-editor').classList.add('hidden');
