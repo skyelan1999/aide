@@ -604,3 +604,9 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .about-dep-url{font-size:11px;color:var(--text-dim);text-decoration:none;word-break:break-all}
 .about-dep-url:hover{color:var(--accent)}
 .about-dep-note{margin:4px 0 0;font-size:11px;color:var(--text-dim)}
+
+/* 全屏文件视图：图片/STL/drawio 沉浸式铺满，去除 padding 与留白 */
+body.file-view-mode .file-view-preview{padding:0;display:flex;flex-direction:column;overflow:hidden}
+body.file-view-mode .file-view-preview .stl-viewer,
+body.file-view-mode .file-view-preview .img-viewer{flex:1;width:100%;height:100%;min-height:0;border-radius:0}
+body.file-view-mode .file-view-preview iframe{flex:1;width:100%;height:100%;min-height:0;border:0;border-radius:0}

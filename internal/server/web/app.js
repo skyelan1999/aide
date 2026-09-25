@@ -2356,7 +2356,10 @@ function setupDrawioFrame(container, xml, onSave, handlerKey) {
   container.innerHTML = '';
   const iframe = document.createElement('iframe');
   iframe.src = '/vendor/drawio/?embed=1&proto=json&spin=1';
-  iframe.style.cssText = 'width:100%;height:75vh;min-height:400px;border:0;border-radius:8px;';
+  const immersive = document.body.classList.contains('file-view-mode');
+  iframe.style.cssText = immersive
+    ? 'width:100%;height:100%;border:0;'
+    : 'width:100%;height:75vh;min-height:400px;border:0;border-radius:8px';
   iframe.setAttribute('allow', 'fullscreen');
   container.appendChild(iframe);
   let loaded = false;
