@@ -1,6 +1,8 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "当前目录": "Current directory",
+  "上一级目录": "Parent directory",
   "目录路径": "Directory path",
   "前往": "Go",
   "可访问范围：{0}": "Accessible root: {0}",
@@ -875,5 +877,17 @@ window.aideEnglish = {
   "删除设备请输入原密码": "Enter your password to remove this device",
   "注册触控 ID 需验证原密码": "Verify your password to set up Touch ID",
   "触控 ID 已绑定": "Touch ID enrolled",
-  "注册失败": "Enrollment failed"
+  "注册失败": "Enrollment failed",
+  "语音引擎": "Speech engine",
+  "TTS引擎": "TTS engine",
+  "edge-tts": "edge-tts",
+  "浏览器合成": "Browser speech",
+  "音色": "Voice",
+  "按性别自动选择": "Auto by gender",
+  "语速": "Speed",
+  "表现力": "Expressiveness",
+  "试听": "Preview",
+  "语音引擎设置已保存": "Speech engine settings saved",
+  "正在合成…": "Synthesizing…",
+  "优先使用 edge-tts 神经音（需联网，文本会发送给微软）；不可用时自动降级浏览器合成。保密环境请选「浏览器合成」。主聊天的机械朗读按钮不受此设置影响。": "Prefers edge-tts neural voices (needs network; text is sent to Microsoft); falls back to browser speech when unavailable. For classified environments choose \"Browser speech\". The mechanical read-aloud button in the main chat is unaffected.",
 };

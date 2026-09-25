@@ -530,12 +530,22 @@ function toolDisplayName(tool) {
   const map = { read_file: '读取文件', list_files: '列出文件', run_shell: '执行命令', write_file: '写入文件', edit_file: '编辑文件', web_search: '在线搜索', search_text: '搜索资料' };
   return map[tool] || tool;
 }
+function prettyPath(p) {
+  if (p === '.' || p === './') return t('当前目录');
+  if (p === '..' || p === '../') return t('上一级目录');
+  return p;
+}
 function toolArgText(use) {
   try {
     const a = JSON.parse(use.args || '{}');
     if (use.tool === 'run_shell') return a.command || '';
-    if (a.path) return (a.source ? '[' + a.source + '] ' : '') + a.path;
-    if (a.query) return a.query;
+    // 搜索类：query 才是主体，path 仅为搜索范围（path 为当前目录时省略）
+    if (use.tool === 'search_text' || use.tool === 'web_search') {
+      let q = a.query || '';
+      if (use.tool === 'search_text' && a.path && a.path !== '.' && a.path !== './') q += '  ·  ' + prettyPath(a.path);
+      return q;
+    }
+    if (a.path) return (a.source ? '[' + a.source + '] ' : '') + prettyPath(a.path);
     if (a.url) return a.url;
     const v = Object.values(a).find(x => typeof x === 'string');
     return v || '';
@@ -3382,8 +3392,11 @@ async function voiceDrainQueue() {
   } finally { voice.sending = false; }
 }
 
-/* ── 双向语音：打字机输入 + TTS 朗读（浏览器原生 SpeechSynthesis，预留后端 TTS 替换） ── */
-function ttsCancel() { try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (_) {} }
+/* ── 双向语音：小蜜朗读。优先后端 edge-tts 神经音（TTSPlayer），失败/超时自动降级浏览器 Web Speech ── */
+function ttsCancel() {
+  try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (_) {}
+  ttsPlayer.halt();
+}
 function pickVoiceForGender(gender) {
   if (!('speechSynthesis' in window)) return null;
   const voices = window.speechSynthesis.getVoices() || [];
@@ -3409,16 +3422,99 @@ function ttsSegments(text) {
   let m; while ((m = re.exec(flat))) { const t = m[0].trim(); if (t) out.push(t.slice(0, 120)); }
   return out.slice(0, 40);
 }
-function speakReply(text) {
-  if (!state.config || !state.config.voiceReplyEnabled) return;
+/* TTSPlayer：逐句 fetch /api/tts/synthesize → Audio 队列顺序播放；可中断/暂停/继续 */
+const ttsPlayer = {
+  cancelled: false, paused: false,
+  _ctrl: null, _audio: null, _wake: null,
+  halt() {
+    this.cancelled = true; this.paused = false;
+    if (this._ctrl) { try { this._ctrl.abort(); } catch (_) {} this._ctrl = null; }
+    if (this._audio) { try { this._audio.pause(); } catch (_) {} this._audio = null; }
+    if (this._wake) { const w = this._wake; this._wake = null; w(); }
+  },
+  setPaused(p) {
+    this.paused = p;
+    if (p) { if (this._audio) try { this._audio.pause(); } catch (_) {} }
+    else { if (this._audio) this._audio.play().catch(() => {}); if (this._wake) { const w = this._wake; this._wake = null; w(); } }
+  },
+};
+function ttsWantsEdge() {
+  const p = (state.config && state.config.ttsProvider) || 'auto';
+  return p !== 'webspeech'; // auto/edge 都先走 edge，失败自动降级
+}
+async function ttsEdgeSynthOne(seg) {
+  const ctrl = new AbortController();
+  ttsPlayer._ctrl = ctrl;
+  const res = await fetch('/api/tts/synthesize', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + state.token },
+    body: JSON.stringify({ text: seg, voice: (state.config && state.config.ttsVoice) || '', gender: (state.config && state.config.voiceReplyGender) || 'female' }),
+    signal: ctrl.signal,
+  });
+  ttsPlayer._ctrl = null;
+  if (!res.ok) throw new Error('edge-tts http ' + res.status);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+function ttsPlayOne(url) {
+  return new Promise((resolve) => {
+    const a = new Audio(url);
+    ttsPlayer._audio = a;
+    let done = false;
+    const finish = () => { if (done) return; done = true; ttsPlayer._audio = null; URL.revokeObjectURL(url); resolve(); };
+    a.onended = finish;
+    a.onerror = finish;
+    const timer = setInterval(() => {
+      if (done) { clearInterval(timer); return; }
+      if (ttsPlayer.cancelled) { a.pause(); clearInterval(timer); finish(); return; }
+      if (ttsPlayer.paused) { if (!a.paused) a.pause(); }
+      else if (a.paused && !a.ended) a.play().catch(() => {});
+    }, 150);
+    a.play().catch(finish);
+  });
+}
+// 朗读入口：awaitMode=true 返回 Promise（导览讲解），否则即发即忘（对话回复）。
+// colloquial=true 时先经后端 LLM 口语化改写。任何 edge 失败都降级浏览器 Web Speech。
+async function ttsSpeak(text, { awaitMode = false, colloquial = false } = {}) {
+  ttsPlayer.cancelled = false;
+  ttsPlayer.paused = false;
+  if (!text) return;
+  if (!ttsWantsEdge()) { return awaitMode ? webSpeakAwait(text) : webSpeakReply(text); }
+  let spoken = text;
+  if (colloquial) {
+    try {
+      const r = await api('/tts/colloquialize', { method: 'POST', body: JSON.stringify({ text }) });
+      if (r && r.spoken) spoken = r.spoken;
+    } catch (_) { spoken = text; }
+  }
+  const segs = ttsSegments(spoken);
+  if (!segs.length) return;
+  try {
+    for (let i = 0; i < segs.length; i++) {
+      if (ttsPlayer.cancelled) return;
+      if (awaitMode && narration.paused) await new Promise(res => { ttsPlayer._wake = res; });
+      if (ttsPlayer.cancelled) return;
+      const url = await ttsEdgeSynthOne(segs[i]);
+      if (ttsPlayer.cancelled) { URL.revokeObjectURL(url); return; }
+      await ttsPlayOne(url);
+    }
+  } catch (_) {
+    // edge 不可用/超时 → 降级浏览器 Web Speech（用口语化后的文本）
+    if (awaitMode) return webSpeakAwait(spoken);
+    return webSpeakReply(spoken);
+  }
+}
+
+/* ── 浏览器 Web Speech 兜底（macOS 常回落 Ting-Ting 机械音，仅作降级） ── */
+function webSpeakReply(text) {
   if (!text || !('speechSynthesis' in window)) return;
   const segs = ttsSegments(text);
   if (!segs.length) return;
   const synth = window.speechSynthesis;
   synth.cancel();
-  const voice = pickVoiceForGender(state.config.voiceReplyGender);
-  const isMale = state.config.voiceReplyGender === 'male';
-  const basePitch = isMale ? 0.99 : 1.1;   // 女声略提音调，更明亮灵动
+  const voice = pickVoiceForGender(state.config && state.config.voiceReplyGender);
+  const isMale = (state.config && state.config.voiceReplyGender) === 'male';
+  const basePitch = isMale ? 0.99 : 1.1;
   const baseRate = 1.04;
   let i = 0;
   function next() {
@@ -3438,6 +3534,11 @@ function speakReply(text) {
     synth.speak(u);
   }
   next();
+}
+// 对话回复入口（调用点零改动）：先口语化改写，再 edge 神经音，失败降级 Web Speech。
+function speakReply(text) {
+  if (!state.config || !state.config.voiceReplyEnabled) return;
+  ttsSpeak(text, { awaitMode: false, colloquial: true });
 }
 async function typeIntoPrompt(text) {
   const prompt = $('prompt');
@@ -3577,7 +3678,8 @@ function narrationGate(){
     })();
   });
 }
-function speakAwait(text){
+// 浏览器 Web Speech 导览讲解兜底（await 版）
+function webSpeakAwait(text){
   return new Promise(resolve=>{
     if(!('speechSynthesis' in window)){ narrSleep(500).then(res); return; }
     const segs = ttsSegments(text);
@@ -3616,6 +3718,10 @@ function speakAwait(text){
     }
     next();
   });
+}
+// 导览讲解入口（调用点零改动）：edge 神经音，文本已由 voice-narrate 口语化，不再改写；失败降级 Web Speech。
+function speakAwait(text){
+  return ttsSpeak(text, { awaitMode: true, colloquial: false });
 }
 async function focusRunInChat(runId){
   if($('editor-dialog').open){ try{ $('editor-dialog').close(); }catch(_){} await narrSleep(260); }
@@ -3695,6 +3801,7 @@ $('narr-play').onclick = action(()=>{
   if(!narration.active) return;
   narration.paused = !narration.paused;
   try{ narration.paused ? window.speechSynthesis.pause() : window.speechSynthesis.resume(); }catch(_){}
+  ttsPlayer.setPaused(narration.paused);
   updateNarrationBar();
 });
 $('narr-prev').onclick = action(()=>narrationJump(-1));
@@ -3918,6 +4025,81 @@ function renderVoiceReplyControl() {
   return wrap;
 }
 controlRenderers['voice-reply'] = renderVoiceReplyControl;
+
+// 设置 → 语音引擎：edge-tts 神经音 / 浏览器 Web Speech 兜底
+function renderTTSEngineControl() {
+  const wrap = el('div', 'settings-control');
+  const head = el('div', 'control-label');
+  head.append(el('span', '', t('语音引擎')));
+  const cfg = state.config || {};
+
+  // 引擎下拉
+  const engRow = el('div', 'voice-reply-row');
+  engRow.append(el('span', '', t('TTS引擎')));
+  const eng = el('select');
+  [['auto', t('自动')], ['edge', t('edge-tts')], ['webspeech', t('浏览器合成')]].forEach(([v, label]) => {
+    const o = el('option', '', label); o.value = v; eng.append(o);
+  });
+  eng.value = cfg.ttsProvider || 'auto';
+  engRow.append(eng);
+
+  // 音色下拉（edge 音色列表）
+  const voiceRow = el('div', 'voice-reply-row');
+  voiceRow.append(el('span', '', t('音色')));
+  const voice = el('select');
+  const voices = cfg.ttsVoices || [];
+  const autoOpt = el('option', '', t('按性别自动选择')); autoOpt.value = ''; voice.append(autoOpt);
+  voices.forEach(v => {
+    const o = el('option', '', v.name); o.value = v.id; voice.append(o);
+  });
+  voice.value = cfg.ttsVoice || '';
+  voiceRow.append(voice);
+
+  // 语速滑块
+  const rateRow = el('div', 'voice-reply-row');
+  rateRow.append(el('span', '', t('语速')));
+  const rate = el('input'); rate.type = 'range'; rate.min = '0.8'; rate.max = '1.3'; rate.step = '0.05';
+  rate.value = cfg.ttsRate || 1.0;
+  const rateVal = el('span', '', Number(rate.value).toFixed(2) + 'x');
+  rate.oninput = () => { rateVal.textContent = Number(rate.value).toFixed(2) + 'x'; };
+  rateRow.append(rate, rateVal);
+
+  // 表现力滑块
+  const expRow = el('div', 'voice-reply-row');
+  expRow.append(el('span', '', t('表现力')));
+  const exp = el('input'); exp.type = 'range'; exp.min = '0'; exp.max = '1'; exp.step = '0.1';
+  exp.value = cfg.ttsExpressiveness || 0.5;
+  const expVal = el('span', '', Number(exp.value).toFixed(1));
+  exp.oninput = () => { expVal.textContent = Number(exp.value).toFixed(1); };
+  expRow.append(exp, expVal);
+
+  // 保存 + 试听
+  const btnRow = el('div', 'voice-reply-row');
+  const save = el('button', 'primary', t('保存')); save.type = 'button';
+  const preview = el('button', 'quiet', t('试听')); preview.type = 'button';
+  save.onclick = action(async () => {
+    await api('/settings', { method: 'PUT', body: JSON.stringify({
+      ttsProvider: eng.value, ttsVoice: voice.value,
+      ttsRate: parseFloat(rate.value), ttsExpressiveness: parseFloat(exp.value),
+      activeModel: state.config ? state.config.activeModel : '',
+    }) });
+    await refreshConfig();
+    toast(t('语音引擎设置已保存'));
+  });
+  preview.onclick = action(async () => {
+    ttsCancel();
+    toast(t('正在合成…'));
+    // 用当前选择即时试听（先临时应用）
+    state.config.ttsProvider = eng.value; state.config.ttsVoice = voice.value;
+    ttsSpeak('你好，我是小秘，这是试听效果。', { awaitMode: false, colloquial: false });
+  });
+  btnRow.append(save, preview);
+
+  wrap.append(head, engRow, voiceRow, rateRow, expRow, btnRow,
+    el('small', '', t('优先使用 edge-tts 神经音（需联网，文本会发送给微软）；不可用时自动降级浏览器合成。保密环境请选「浏览器合成」。主聊天的机械朗读按钮不受此设置影响。')));
+  return wrap;
+}
+controlRenderers['tts-engine'] = renderTTSEngineControl;
 // 设置 → 无障碍：输出完成后由小秘自动朗读讲解
 function renderAccessibilityControl() {
   const wrap = el('div', 'settings-control');
