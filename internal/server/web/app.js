@@ -267,6 +267,7 @@ function openStream(run) {
       loadFiles(true).catch(()=>{}); // AI 可能写入了新文件，自动刷新右侧项目文件
       schedulePoll();
       scheduleTitleSync(id); // 主题总结是后台异步调用：稍后补一次同步标题
+      maybeAutoNarrate(run.id); // 无障碍/讲解模式：输出完成后由小秘自动讲解（aide 本身不发声）
     })();
   });
   // 流断开：保留已积累的 live 文本，短暂退避后由轮询兜底重开；最终状态仍以会话接口为准
@@ -488,6 +489,7 @@ function schedulePoll() {
         await loadSessions(); // 轮询兜底路径：完成时同步列表
         loadFiles(true).catch(()=>{}); // 自动刷新右侧项目文件
         scheduleTitleSync(id);
+        maybeAutoNarrate(running.id); // 轮询兜底：输出完成自动讲解
       }
       schedulePoll();
     }), 1500);
@@ -3242,9 +3244,22 @@ async function voiceSend(text) {
   await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt: text, mode: state.mode, attachments: [], strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued: state.queueMode, workflowPhase: state.workflowPhase || '' }) });
   if (state.session?.id === target.id) await selectSession(target.id);
 }
+// 提取主会话近期对话（供小秘对话/讲解感知 aide 内容）
+function buildAideContextText(){
+  const s=state.session; if(!s) return '';
+  const out=[]; let len=0;
+  for(const m of (s.messages||[])){
+    const c=String(m.content||'').trim(); if(!c) continue;
+    const line = m.role==='user' ? '用户：'+c : m.role==='assistant' ? 'aide：'+c : '';
+    if(!line) continue;
+    out.push(line); len+=line.length;
+    if(len>2600) break;
+  }
+  return out.slice(-10).join('\n').slice(-2600);
+}
 async function voiceFilterOne(sentence) {
   let result = { action: 'ignore', text: sentence, reason: '' };
-  try { result = await api('/voice-filter', { method: 'POST', body: JSON.stringify({ text: sentence }) }); }
+  try { result = await api('/voice-filter', { method: 'POST', body: JSON.stringify({ text: sentence, context: buildAideContextText() }) }); }
   catch (_) { result = { action: 'ignore', text: sentence, reason: t('甄别失败') }; }
   if (result.action === 'send') {
     const text = (result.text || sentence).trim();
@@ -3452,10 +3467,11 @@ function toolPathOf(tu){
   try { const a = JSON.parse(tu.args||'{}'); return { path:a.path, source:a.source, root:a.root }; }
   catch(_){ return { path:'' }; }
 }
-function buildNarrationSteps(){
+function buildNarrationSteps(scopeRunId){
   const s = state.session; const steps=[];
   if(!s) return steps;
   for(const run of (s.runs||[])){
+    if(scopeRunId && run.id !== scopeRunId) continue;
     let md='';
     for(const st of (run.steps||[])) if(st.content) md += st.content+'\n';
     const text = stripMarkdownForSpeech(md).trim();
@@ -3544,15 +3560,22 @@ function updateNarrationBar(){
 }
 function showNarrationBar(){ $('narration-bar').classList.remove('hidden'); }
 function hideNarrationBar(){ $('narration-bar').classList.add('hidden'); }
-async function startNarration(){
-  if(narration.active) return;
-  const steps = buildNarrationSteps();
-  if(!steps.length){ toast(t('当前会话暂无可讲解的内容')); return; }
+async function startNarration(scopeRunId){
+  if(narration.active){ narration.cancelled=true; ttsCancel(); await narrSleep(120); }
+  let steps = buildNarrationSteps(scopeRunId);
+  if(!steps.length){ toast(t('当前会话暂无可讲解的内容')); return false; }
+  let speaks = null;
+  try {
+    const r = await api('/voice-narrate', { method:'POST', body: JSON.stringify({ steps: steps.map(st=>({ kind:st.kind, path:st.path||'', text:st.text||'' })) }) });
+    speaks = r.speaks;
+  } catch(_) { speaks = null; }
+  steps = steps.map((st,i)=>({ ...st, speak: (speaks && speaks[i]) ? speaks[i] : (st.text || (t('我们先来看：')+(st.path||''))) }));
   narration.active=true;
-  Object.assign(narration,{steps,index:0,paused:false,cancelled:false,jump:0});
+  Object.assign(narration,{steps,index:0,paused:false,cancelled:false,jump:0,userStopped:false});
   $('voice-panel').classList.remove('hidden');
   showNarrationBar(); updateNarrationBar();
-  await runLoop(0);
+  runLoop(0);
+  return true;
 }
 async function runLoop(from){
   let i=from;
@@ -3561,21 +3584,22 @@ async function runLoop(from){
     await narrationGate();
     if(narration.cancelled) break;
     const st=narration.steps[i];
-    if(st.kind==='openFile'){ await doOpenForNarration(st); await narrSleep(450); }
-    else { await focusRunInChat(st.runId); await narrationGate(); if(narration.cancelled)break; await speakAwait(st.text); }
+    if(st.kind==='openFile'){ await doOpenForNarration(st); await narrationGate(); if(narration.cancelled)break; if(st.speak) await speakAwait(st.speak); await narrSleep(200); }
+    else { await focusRunInChat(st.runId); await narrationGate(); if(narration.cancelled)break; await speakAwait(st.speak); }
     if(narration.cancelled) break;
     if(narration.jump){ i=narration.jump; narration.jump=0; continue; }
     i++;
   }
-  endNarration();
+  endNarration(!narration.userStopped); // 自然播完保持讲解模式；用户停止则取消
 }
-function endNarration(){
+function endNarration(keepMode){
   narration.active=false; narration.paused=false; narration.jump=0;
   ttsCancel();
   document.querySelectorAll('.narration-highlight').forEach(x=>x.classList.remove('narration-highlight'));
   if($('editor-dialog').open){ try{ $('editor-dialog').close(); }catch(_){} }
   hideNarrationBar();
-  if(!voice.listening) $('voice-panel').classList.add('hidden');
+  if(!keepMode) setNarrateModeUI(false);
+  if(!voice.listening && !narrateModeOn()) $('voice-panel').classList.add('hidden');
 }
 function narrationJump(d){
   if(!narration.active) return;
@@ -3584,7 +3608,7 @@ function narrationJump(d){
   try{ window.speechSynthesis.resume(); }catch(_){}
   ttsCancel();
 }
-$('voice-narrate').onclick = action(startNarration);
+$('voice-narrate').onclick = action(toggleNarrateMode);
 $('narr-play').onclick = action(()=>{
   if(!narration.active) return;
   narration.paused = !narration.paused;
@@ -3594,10 +3618,34 @@ $('narr-play').onclick = action(()=>{
 $('narr-prev').onclick = action(()=>narrationJump(-1));
 $('narr-next').onclick = action(()=>narrationJump(1));
 $('narr-stop').onclick = action(()=>{
-  narration.cancelled=true; narration.paused=false; narration.jump=0;
+  narration.cancelled=true; narration.userStopped=true; narration.paused=false; narration.jump=0;
   try{ window.speechSynthesis.resume(); }catch(_){}
   ttsCancel();
 });
+
+// ===== 讲解模式（勾选）：勾选后小秘主动滚动/开文件并口语讲解，输出完成自动朗读 =====
+function narrateModeOn(){ return $('voice-narrate').classList.contains('active'); }
+function setNarrateModeUI(on){
+  const b=$('voice-narrate');
+  b.classList.toggle('active',on);
+  b.setAttribute('aria-pressed',on?'true':'false');
+  try{ localStorage.setItem('aide.narrateMode',on?'1':'0'); }catch(_){}
+}
+async function toggleNarrateMode(){
+  if(narrateModeOn()){ narration.cancelled=true; narration.userStopped=true; ttsCancel(); }
+  else { setNarrateModeUI(true); const ok=await startNarration(); if(!ok) setNarrateModeUI(false); }
+}
+// 输出完成后自动讲解（无障碍自动朗读 或 讲解模式开启）；取消的会话不讲
+function maybeAutoNarrate(runId){
+  const want = state.config?.accessibilityAutoRead || narrateModeOn();
+  if(!want || !runId) return;
+  setTimeout(action(async()=>{
+    if(state.session?.runs?.find(r=>r.id===runId)?.status==='cancelled') return;
+    if(state.config?.accessibilityAutoRead && !narrateModeOn()) setNarrateModeUI(true);
+    startNarration(runId);
+  }),650);
+}
+try{ if(localStorage.getItem('aide.narrateMode')==='1') setNarrateModeUI(true); }catch(_){}
 
 // ===== 主聊天消息「朗读」：显式点击触发，平直机械音（区别于小秘的灵动韵律 TTS）=====
 const mech = { speaking:false, btn:null };
@@ -3788,6 +3836,24 @@ function renderVoiceReplyControl() {
   return wrap;
 }
 controlRenderers['voice-reply'] = renderVoiceReplyControl;
+// 设置 → 无障碍：输出完成后由小秘自动朗读讲解
+function renderAccessibilityControl() {
+  const wrap = el('div', 'settings-control');
+  const head = el('div', 'control-label'); head.append(el('span', '', t('无障碍')));
+  const row = el('div', 'voice-reply-row');
+  const toggle = el('input'); toggle.type = 'checkbox';
+  toggle.checked = !!(state.config && state.config.accessibilityAutoRead);
+  const save = el('button', 'primary', t('保存')); save.type = 'button';
+  save.onclick = action(async () => {
+    await api('/settings', { method: 'PUT', body: JSON.stringify({ accessibilityAutoRead: toggle.checked, activeModel: state.config ? state.config.activeModel : '' }) });
+    await refreshConfig();
+    toast(t('无障碍设置已保存'));
+  });
+  row.append(toggle, el('span', '', t('输出完成后自动朗读')), save);
+  wrap.append(head, row, el('small', '', t('开启后：每次模型输出完成，由小秘自动滚动、打开相关文件并口头讲解本次输出；aide 主会话本身不发声。')));
+  return wrap;
+}
+controlRenderers['accessibility-read'] = renderAccessibilityControl;
 // 设置：小秘麦克风输入源选择
 function renderVoiceInputSourceControl() {
   const wrap = el('div', 'settings-control');

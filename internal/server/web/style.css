@@ -672,3 +672,8 @@ body.file-view-mode .file-view-preview iframe{flex:1;width:100%;height:100%;min-
 .file-ctx-item{display:block;width:100%;text-align:left;padding:7px 10px;font-size:12px;border-radius:7px;color:var(--text);background:none;border:0;cursor:pointer}
 .file-ctx-item:hover{background:var(--bg-inset)}
 .file-ctx-item.disabled{opacity:.45;cursor:not-allowed}
+
+.voice-narrate-toggle{display:inline-flex;align-items:center;gap:4px}
+.voice-narrate-toggle .vnt-check{display:none;font-size:10px;line-height:1}
+.voice-narrate-toggle.active{background:var(--brand);color:var(--on-accent);border-color:var(--brand)}
+.voice-narrate-toggle.active .vnt-check{display:inline-block}

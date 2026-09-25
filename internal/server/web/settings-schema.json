@@ -199,6 +199,17 @@
       ]
     },
     {
+      "id": "accessibility",
+      "title": "无障碍",
+      "controls": [
+        {
+          "id": "accessibilityAutoRead",
+          "type": "accessibility-read",
+          "label": "输出完成后自动朗读"
+        }
+      ]
+    },
+    {
       "id": "about",
       "title": "关于",
       "controls": [

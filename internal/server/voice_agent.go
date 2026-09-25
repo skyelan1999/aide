@@ -120,7 +120,7 @@ func voiceRecentSummary(recent []VoiceHistoryEntry) string {
 
 // analyze 让小秘结合记忆与近期历史，像真人秘书一样推理判断这句听到的话如何处理。
 // 决策结果会追加到历史并落盘。
-func (va *VoiceAgent) analyze(ctx context.Context, cfg Settings, heard string) (VoiceHistoryEntry, error) {
+func (va *VoiceAgent) analyze(ctx context.Context, cfg Settings, heard, aideCtx string) (VoiceHistoryEntry, error) {
 	name := cfg.VoiceAssistantName
 	if name == "" {
 		name = "小秘"
@@ -138,7 +138,11 @@ func (va *VoiceAgent) analyze(ctx context.Context, cfg Settings, heard string) (
 	}
 	va.mu.Unlock()
 
-	system := fmt.Sprintf(`你是「%s」，用户的私人语音秘书。用户用很口语、啰嗦、重复、带口头禅和停顿的方式说话，周围还常有背景声和旁人插话。你要像一个聪明的真人秘书那样听懂他真正想做什么，而不是机械转述。
+	aideSection := ""
+	if strings.TrimSpace(aideCtx) != "" {
+		aideSection = fmt.Sprintf("aide 主工作台最近与用户的对话内容如下（用户可能让你讲解、总结或接着讨论；你要据此回答，不要声称看不到）：\n%s\n\n", aideCtx)
+	}
+	system := fmt.Sprintf(`你是「%s」，用户的私人语音秘书。用户用很口语、啰嗦、重复、带口头禅和停顿的方式说话，周围还常有背景声和旁人插话。你要像一个聪明的真人秘书那样听懂他真正想什么，而不是机械转述。
 
 请先在心里分析（不要输出分析过程）：
 1. 这段声音里：哪些是用户本人对 AI 工作台(aide)说的？哪些是电视/视频/广播的背景声？哪些是用户在和身边真人打电话/闲聊？
@@ -146,12 +150,12 @@ func (va *VoiceAgent) analyze(ctx context.Context, cfg Settings, heard string) (
 3. 如果是用户对 aide 说话：把啰嗦、重复、口头禅、语气词全部去掉，总结成一句清晰、结构化、可直接执行的"真实意图"放进 summarized。总结要保留关键对象、动作和约束，不要编造用户没说的信息。
 4. 如果意图还不清楚（缺对象、缺要做什么、含糊）：不要乱猜，action 用 ask，用一句话向用户追问（只问最关键的一个问题）。
 
-你的长期记忆：%s
+%s你的长期记忆：%s
 你最近处理过的上下文：
 %s
 
 只输出一个 JSON 对象（不要 markdown 围栏、不要任何多余文字）：
-{"action":"send|ignore|standby|ask","summarized":"总结后的清晰意图（仅 send 时填写，其余为空）","ask":"单个简短追问（仅 action=ask 时填写）","reason":"一句话说明你的判断，写给用户看"}`, name, voiceMemorySummary(mem), voiceRecentSummary(recent))
+{"action":"send|ignore|standby|ask","summarized":"总结后的清晰意图（仅 send 时填写，其余为空）","ask":"单个简短追问（仅 action=ask 时填写）","reason":"一句话说明你的判断，写给用户看"}`, name, aideSection, voiceMemorySummary(mem), voiceRecentSummary(recent))
 
 	params := ProfileParams{MaxTokens: 320, Temperature: fp(0.2)}
 	out, _, _, err := complete(ctx, cfg, []Message{
@@ -332,4 +336,79 @@ func (va *VoiceAgent) snapshotHistory() []VoiceHistoryEntry {
 	va.mu.Lock()
 	defer va.mu.Unlock()
 	return append([]VoiceHistoryEntry{}, va.history...)
+}
+
+// NarrationStepInput 讲解环节（前端确定性骨架）：openFile=打开文件，speak=聚焦讲解。
+type NarrationStepInput struct {
+	Kind string `json:"kind"`
+	Path string `json:"path"`
+	Text string `json:"text"`
+}
+
+// narrate 让小蜜为每个演示环节生成一句口语化讲解词，返回与 steps 等长、顺序对齐的数组。
+func (va *VoiceAgent) narrate(ctx context.Context, cfg Settings, steps []NarrationStepInput) ([]string, error) {
+	name := cfg.VoiceAssistantName
+	if name == "" {
+		name = "小秘"
+	}
+	var sb strings.Builder
+	for i, st := range steps {
+		if st.Kind == "openFile" {
+			sb.WriteString(fmt.Sprintf("环节%d（打开文件）：%s\n", i+1, st.Path))
+		} else {
+			txt := strings.TrimSpace(st.Text)
+			if len(txt) > 1400 {
+				txt = txt[:1400]
+			}
+			sb.WriteString(fmt.Sprintf("环节%d（讲解内容）：%s\n", i+1, txt))
+		}
+	}
+	system := fmt.Sprintf(`你是「%s」，用户的私人秘书。aide 刚完成了一些工作，用户希望你边演示边为他口头讲解。
+下面按顺序列出了 %d 个演示环节（有的是打开某个文件，有的是讲解一段内容）。请你为【每个环节】写一句口语化、自然、亲切、简短的讲解词，就像坐在用户旁边讲解一样：可以适当概括和上下串联，不要照念原文，不要 markdown，不要输出编号或任何额外内容。
+严格只输出一个 JSON 字符串数组，条数必须恰好等于环节数 %d，顺序与环节一一对应：
+["环节1讲解","环节2讲解"]
+
+环节清单：
+%s`, name, len(steps), len(steps), sb.String())
+	params := ProfileParams{MaxTokens: 1000, Temperature: fp(0.45)}
+	out, _, _, err := complete(ctx, cfg, []Message{{Role: "system", Content: system}}, params, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	out = strings.TrimSpace(out)
+	out = strings.TrimPrefix(out, "```json")
+	out = strings.TrimPrefix(out, "```")
+	out = strings.TrimSuffix(strings.TrimSpace(out), "```")
+	var speaks []string
+	if err := json.Unmarshal([]byte(out), &speaks); err != nil {
+		return nil, errors.New("讲解稿无法解析")
+	}
+	for i := range steps {
+		if i < len(speaks) && strings.TrimSpace(speaks[i]) != "" {
+			continue
+		}
+		fallback := ""
+		if steps[i].Kind == "openFile" {
+			fallback = "我们先来看这个文件：" + steps[i].Path
+		} else {
+			fallback = clip(stripMdForNarrate(steps[i].Text), 200)
+		}
+		if i >= len(speaks) {
+			speaks = append(speaks, fallback)
+		} else {
+			speaks[i] = fallback
+		}
+	}
+	if len(speaks) > len(steps) {
+		speaks = speaks[:len(steps)]
+	}
+	return speaks, nil
+}
+
+// stripMdForNarrate 仅用于讲解词兜底：粗略剥除 markdown 符号。
+func stripMdForNarrate(s string) string {
+	for _, rep := range []string{"**", "##", "`", "#", "[", "]", "*"} {
+		s = strings.ReplaceAll(s, rep, "")
+	}
+	return strings.TrimSpace(s)
 }

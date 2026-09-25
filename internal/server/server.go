@@ -56,6 +56,7 @@ type Settings struct {
 	UserName               string   `json:"userName,omitempty"`          // 账户用户名（锁屏欢迎语用，可空）
 	UserPasswordHash       string   `json:"userPasswordHash,omitempty"`  // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
 	LockTimeoutSec         int      `json:"lockTimeoutSec,omitempty"`    // 空闲锁屏秒数，0 = 不锁屏
+	AccessibilityAutoRead  bool     `json:"accessibilityAutoRead,omitempty"` // 无障碍：输出完成后由小秘自动朗读讲解
 }
 
 const (
@@ -574,6 +575,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/context-preview", a.contextPreviewHandler)
 	mux.HandleFunc("POST /api/command", a.command)
 	mux.HandleFunc("POST /api/voice-filter", a.voiceFilter)
+	mux.HandleFunc("POST /api/voice-narrate", a.voiceNarrate)
 	mux.HandleFunc("GET /api/voice-history", a.voiceHistory)
 	mux.HandleFunc("DELETE /api/voice-history", a.voiceHistoryClear)
 	mux.HandleFunc("POST /api/voice-history/enable", a.voiceHistoryEnable)
@@ -618,14 +620,15 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceInputDevice": a.settings.VoiceInputDevice, "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "hasPassword": a.settings.UserPasswordHash != "", "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "hasPassword": a.settings.UserPasswordHash != "", "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Settings
 		ClearKey          bool   `json:"clearKey"`
-		VoiceReplyEnabled *bool  `json:"voiceReplyEnabled,omitempty"`
-		VoiceReplyGender  string `json:"voiceReplyGender,omitempty"`
+		VoiceReplyEnabled   *bool `json:"voiceReplyEnabled,omitempty"`
+		AccessibilityAutoRead *bool `json:"accessibilityAutoRead,omitempty"`
+		VoiceReplyGender    string `json:"voiceReplyGender,omitempty"`
 		// 账户：外层同名字段覆盖内嵌 Settings（与 VoiceReplyEnabled 同模式），以便区分"未传"与"传空/0"
 		UserName       string `json:"userName,omitempty"`
 		LockTimeoutSec *int   `json:"lockTimeoutSec,omitempty"`
@@ -670,6 +673,11 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		in.Settings.VoiceReplyGender = a.settings.VoiceReplyGender
 	} else {
 		in.Settings.VoiceReplyGender = in.VoiceReplyGender
+	}
+	if in.AccessibilityAutoRead != nil {
+		in.Settings.AccessibilityAutoRead = *in.AccessibilityAutoRead
+	} else {
+		in.Settings.AccessibilityAutoRead = a.settings.AccessibilityAutoRead
 	}
 	// 账户字段：未传则保留已存值；密码哈希永远不接受前端直传，只经 OldPassword/NewPassword 流程变更
 	if in.UserName == "" {
@@ -780,7 +788,8 @@ func voiceReplyGender(g string) string {
 // 任何失败都降级为 send 原文，保证语音录入在模型不可用时仍可用。
 func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Text string `json:"text"`
+		Text    string `json:"text"`
+		Context string `json:"context"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -799,7 +808,7 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"action": "send", "text": text, "reason": "未配置模型，直接发送"})
 		return
 	}
-	entry, err := va.analyze(r.Context(), cfg, text)
+	entry, err := va.analyze(r.Context(), cfg, text, in.Context)
 	if err != nil {
 		jsonOut(w, 200, map[string]any{"action": "send", "text": text, "reason": "小秘分析失败，直接发送: " + err.Error()})
 		return
@@ -1296,4 +1305,47 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		"unpricedTotals": unpriced,
 		"callRecords":    a.tokenCalls,
 	})
+}
+
+// voiceNarrate 接收前端确定性讲解骨架，返回小蜜生成的逐环节口语讲解词。
+func (a *App) voiceNarrate(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Steps []NarrationStepInput `json:"steps"`
+	}
+	if err := decode(w, r, &in); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if len(in.Steps) == 0 {
+		fail(w, 400, errors.New("没有可讲解的环节"))
+		return
+	}
+	if len(in.Steps) > 40 {
+		fail(w, 400, errors.New("讲解环节过多"))
+		return
+	}
+	fallbackSpeaks := func() []string {
+		sp := make([]string, len(in.Steps))
+		for i, st := range in.Steps {
+			if st.Kind == "openFile" {
+				sp[i] = "我们先来看：" + st.Path
+			} else {
+				sp[i] = clip(stripMdForNarrate(st.Text), 200)
+			}
+		}
+		return sp
+	}
+	a.mu.Lock()
+	cfg := a.settings
+	va := a.voiceAgent
+	a.mu.Unlock()
+	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
+		jsonOut(w, 200, map[string]any{"speaks": fallbackSpeaks()})
+		return
+	}
+	sp, err := va.narrate(r.Context(), cfg, in.Steps)
+	if err != nil {
+		sp = fallbackSpeaks()
+	}
+	jsonOut(w, 200, map[string]any{"speaks": sp})
 }
