@@ -2593,64 +2593,69 @@ function trajectoryEvent(dot, title, bodyNode, kind) {
   if (bodyNode) ev.append(bodyNode);
   return ev;
 }
-let trajView = "timeline"; // timeline | calls
+let trajView = "md"; // md | json | calls
 function renderTrajectory() {
   const host = $('trajectory-content');
   host.replaceChildren();
   const session = state.session;
-  // 视图切换
-  const tabs = el('div', 'traj-tabs');
-  tabs.append(
-    el('button', trajView === 'timeline' ? 'active' : '', t("时间线")),
-    el('button', trajView === 'calls' ? 'active' : '', t("调用分析"))
-  );
-  tabs.children[0].onclick = () => { trajView = 'timeline'; renderTrajectory(); };
-  tabs.children[1].onclick = () => { trajView = 'calls'; renderTrajectory(); };
-  host.append(tabs);
   if (!session || !session.runs?.length) {
     host.append(el('p', 'muted', t("当前会话还没有任务。发送任务后，这里会按事件时间线记录完整轨迹。")));
     return;
   }
   if (trajView === 'calls') { renderCallsAnalysis(host, session); return; }
-  for (const run of session.runs) {
-    const card = el('div', 'traj-run');
-    const head = el('div', 'traj-run-head');
-    head.append(el('span', 'traj-run-time', (run.created || '').replace('T', ' ').slice(0, 16)));
-    const meta = [];
-    meta.push(run.mode === 'workflow' ? t("工作流") : t("对话"));
-    if (run.strategy) meta.push(run.strategy === 'auto' ? t("自动路由 → ") + profileName(run.profile) : t("手动 · ") + profileName(run.profile));
-    if (run.model) meta.push(run.model);
-    meta.push(t(statuses[run.status] || run.status));
-    if (run.usage?.total) meta.push(fmtStatTokens(run.usage.total) + ' tokens' + (run.usage.estimated ? t("（估）") : ''));
-    head.append(el('span', 'traj-run-meta', meta.join(' · ')));
-    card.append(head);
-    card.append(trajectoryEvent('💬', t("用户任务"), el('div', 'traj-body', run.prompt)));
-    run.steps?.forEach(step => {
-      const body = el('div', 'traj-body md-body');
-      if (step.name === 'propose') { const pre = el('pre', 'traj-pre', step.content || ''); body.append(pre); }
-      else body.innerHTML = renderMarkdown(step.content || t("（无内容）"));
-      card.append(trajectoryEvent('◈', t(labels[step.name]) || step.name + ' · ' + t(statuses[step.status]), body));
-    });
-    run.toolUses?.forEach(use => {
-      let argsBrief = '';
-      try { const a = JSON.parse(use.args || '{}'); const v = Object.values(a)[0]; if (typeof v === 'string') argsBrief = ' · ' + v.slice(0, 40); } catch (e) { /* 忽略 */ }
-      const body = el('div', 'traj-body');
-      body.append(el('p', '', t("参数：") + (use.args || t("无"))), el('pre', 'traj-pre', use.preview || use.result || t("（无结果）")));
-      card.append(trajectoryEvent('⚒', use.tool + argsBrief, body, 'tool'));
-    });
-    if (run.files?.length) {
-      const body = el('div', 'traj-body');
-      run.files.forEach(f => body.append(el('p', '', (f.applied ? t("✓ 已应用 ") : t("→ 提案 ")) + f.path)));
-      card.append(trajectoryEvent('📝', t("文件提案 · ") + run.files.length + t(" 个"), body));
-    }
-    if (run.commands?.length) {
-      const body = el('div', 'traj-body');
-      run.commands.forEach(c => body.append(el('pre', 'traj-pre', c)));
-      card.append(trajectoryEvent('❯', t("建议命令 · ") + run.commands.length + t(" 条（未运行）"), body));
-    }
-    if (run.error) card.append(trajectoryEvent('✖', t("错误"), el('div', 'traj-body task-error', run.error), 'error'));
-    host.append(card);
+  if (trajView === 'md' || trajView === 'json') {
+    const pre = el('pre', 'traj-raw-view');
+    pre.textContent = trajView === 'json' ? buildTrajectoryJSON(session) : buildTrajectoryMarkdown(session);
+    host.append(pre);
+    return;
   }
+}
+function buildTrajectoryMarkdown(s) {
+  const subs = (state.sessions || []).filter(x => x.parentId === s.id);
+  let md = "# " + (s.title || "未命名会话") + "\n\n";
+  md += "> 导出时间：" + new Date().toLocaleString() + " · 会话 ID：" + s.id + "\n\n---\n\n";
+  for (const r of (s.runs || [])) {
+    md += "## 任务 · " + (r.created || "") + "\n\n";
+    md += "**用户：** " + (r.prompt || "") + "\n\n";
+    if (r.usage?.total) md += "**Token 消耗：** " + r.usage.total + (r.usage.estimated ? "（估）" : "") + "\n\n";
+    if (r.steps) for (const st of r.steps) md += "- " + st.name + " · " + st.status + (st.content ? "\n  > " + String(st.content).slice(0,500) : "") + "\n";
+    if (r.toolUses) for (const tu of r.toolUses) {
+      md += "**工具 " + tu.tool + "：**\n```\n" + String(tu.preview || tu.result || "") + "\n```\n\n";
+    }
+    if (r.error) md += "**错误：** " + r.error + "\n\n";
+    md += "\n---\n\n";
+  }
+  for (const sub of subs) {
+    md += "## 子会话：" + (sub.title || sub.id) + "\n\n";
+    for (const r of (sub.runs || [])) {
+      md += "### " + (r.created || "") + "\n\n";
+      md += "**用户：** " + (r.prompt || "") + "\n\n";
+      if (r.toolUses) for (const tu of r.toolUses) md += "- " + tu.tool + ": " + String(tu.preview || tu.result || "").slice(0, 200) + "\n";
+      md += "\n";
+    }
+    md += "---\n\n";
+  }
+  return md;
+}
+function buildTrajectoryJSON(s) {
+  const subs = (state.sessions || []).filter(x => x.parentId === s.id);
+  const data = {
+    exportedAt: new Date().toISOString(),
+    session: { id: s.id, title: s.title, created: s.created, updated: s.updated, parentId: s.parentId },
+    runs: (s.runs || []).map(r => ({
+      id: r.id, created: r.created, prompt: r.prompt, mode: r.mode, model: r.model,
+      status: r.status, error: r.error, usage: r.usage,
+      steps: r.steps, toolUses: r.toolUses, files: r.files, commands: r.commands
+    })),
+    subSessions: subs.map(sub => ({ id: sub.id, title: sub.title, created: sub.created, runs: sub.runs })),
+    timeline: []
+  };
+  for (const r of (s.runs || [])) {
+    data.timeline.push({ time: r.created, type: 'user', content: r.prompt });
+    for (const st of (r.steps || [])) data.timeline.push({ time: r.created, type: 'step', name: st.name, status: st.status });
+    for (const tu of (r.toolUses || [])) data.timeline.push({ time: r.created, type: 'tool', tool: tu.tool, args: tu.args, result: tu.preview || tu.result });
+  }
+  return JSON.stringify(data, null, 2);
 }
 let callFilter = { tool: '', agent: 'all', type: 'all', time: 'all' };
 const CALL_TYPES = {
@@ -2763,26 +2768,9 @@ $('trajectory-export').onclick = action(() => {
   const s = state.session;
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
   const base = (s.title || "session").slice(0, 30).replace(/[\/:*?"<>|]/g, "_");
-  const subs = (state.sessions || []).filter(x => x.parentId === s.id);
-  if (exportFormat === 'json') {
-    const data = {
-      exportedAt: new Date().toISOString(),
-      session: { id: s.id, title: s.title, created: s.created, updated: s.updated, parentId: s.parentId },
-      runs: (s.runs || []).map(r => ({
-        id: r.id, created: r.created, prompt: r.prompt, mode: r.mode, model: r.model,
-        status: r.status, error: r.error, usage: r.usage,
-        steps: r.steps, toolUses: r.toolUses, files: r.files, commands: r.commands
-      })),
-      subSessions: subs.map(sub => ({ id: sub.id, title: sub.title, created: sub.created, runs: sub.runs })),
-      timeline: []
-    };
-    // 构建时间线
-    for (const r of (s.runs || [])) {
-      data.timeline.push({ time: r.created, type: 'user', content: r.prompt });
-      for (const st of (r.steps || [])) data.timeline.push({ time: r.created, type: 'step', name: st.name, status: st.status });
-      for (const tu of (r.toolUses || [])) data.timeline.push({ time: r.created, type: 'tool', tool: tu.tool, args: tu.args, result: tu.preview || tu.result });
-    }
-    const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json;charset=utf-8"});
+  const fmt = (trajView === 'json') ? 'json' : 'md';
+  if (fmt === 'json') {
+    const blob = new Blob([buildTrajectoryJSON(s)], {type: "application/json;charset=utf-8"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = base + "_" + ts + ".json";
@@ -2790,31 +2778,7 @@ $('trajectory-export').onclick = action(() => {
     URL.revokeObjectURL(a.href);
     toast(t("已导出会话为 JSON"));
   } else {
-    let md = "# " + (s.title || "未命名会话") + "\n\n";
-    md += "> 导出时间：" + new Date().toLocaleString() + " · 会话 ID：" + s.id + "\n\n---\n\n";
-    for (const r of (s.runs || [])) {
-      md += "## 任务 · " + (r.created || "") + "\n\n";
-      md += "**用户：** " + (r.prompt || "") + "\n\n";
-      if (r.usage?.total) md += "**Token 消耗：** " + r.usage.total + (r.usage.estimated ? "（估）" : "") + "\n\n";
-      if (r.steps) for (const st of r.steps) md += "- " + st.name + " · " + st.status + (st.content ? "\n  > " + String(st.content).slice(0,500) : "") + "\n";
-      if (r.toolUses) for (const tu of r.toolUses) {
-        md += "**工具 " + tu.tool + "：**\n```\n" + String(tu.preview || tu.result || "") + "\n```\n\n";
-      }
-      if (r.error) md += "**错误：** " + r.error + "\n\n";
-      md += "\n---\n\n";
-    }
-    // 子会话
-    for (const sub of subs) {
-      md += "## 子会话：" + (sub.title || sub.id) + "\n\n";
-      for (const r of (sub.runs || [])) {
-        md += "### " + (r.created || "") + "\n\n";
-        md += "**用户：** " + (r.prompt || "") + "\n\n";
-        if (r.toolUses) for (const tu of r.toolUses) md += "- " + tu.tool + ": " + String(tu.preview || tu.result || "").slice(0, 200) + "\n";
-        md += "\n";
-      }
-      md += "---\n\n";
-    }
-    const blob = new Blob([md], {type: "text/markdown;charset=utf-8"});
+    const blob = new Blob([buildTrajectoryMarkdown(s)], {type: "text/markdown;charset=utf-8"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = base + "_" + ts + ".md";
@@ -2823,7 +2787,7 @@ $('trajectory-export').onclick = action(() => {
     toast(t("已导出会话为 Markdown"));
   }
 });
-// 导出格式分段控件（Markdown / JSON）
+// 轨迹视图分段控件（Markdown / JSON / 调用分析）
 function ensureExportFormatBtn() {
   const seg = document.querySelector('.traj-format-seg');
   if (!seg || seg.dataset.bound) return;
@@ -2832,8 +2796,9 @@ function ensureExportFormatBtn() {
     btn.onclick = () => {
       seg.querySelectorAll('.traj-seg-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      exportFormat = btn.dataset.format;
-      $('trajectory-export').title = exportFormat === 'json' ? '导出会话为 JSON' : '导出会话为 Markdown';
+      trajView = btn.dataset.view;
+      $('trajectory-export').title = trajView === 'json' ? '导出会话为 JSON' : '导出会话为 Markdown';
+      renderTrajectory();
     };
   });
 }

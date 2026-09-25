@@ -587,3 +587,7 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .persona-card small{color:var(--muted,#888);font-size:12px;}
 .persona-card:hover{border-color:var(--accent,#4f7cff);}
 .persona-card.active{border-color:var(--accent,#4f7cff);background:color-mix(in srgb,var(--accent,#4f7cff) 8%,transparent);}
+
+.traj-raw-view{margin:0;padding:16px;background:var(--bg-sub);border-radius:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-all;max-height:100%;overflow-y:auto;color:var(--text)}
+.traj-export-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;height:30px;font-size:12px;font-weight:500;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--text);cursor:pointer;transition:background .15s,border-color .15s;white-space:nowrap}
+.traj-export-btn:hover{background:var(--bg-hover);border-color:var(--line-strong)}
