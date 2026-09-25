@@ -170,6 +170,9 @@ type App struct {
 	personaCustom            map[string]string // 解锁后：personaID -> 解密出的自定义性格明文
 	voiceAgent               *VoiceAgent // 语音小秘 agent（记忆+历史）
 	voiceSendSinceEvolve    int        // 小秘自上次性格演化以来的 send 计数（内存）
+	bgCtx                   context.Context
+	bgCancel                context.CancelFunc
+	bgWg                    sync.WaitGroup // fire-and-forget 后台 goroutine（标题总结等）追踪，Close 时等待
 }
 
 // Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
@@ -297,6 +300,7 @@ func New(work, reference, data string) (*App, error) {
 		return nil, err
 	}
 	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}}
+	a.bgCtx, a.bgCancel = context.WithCancel(context.Background())
 	b, err := os.ReadFile(filepath.Join(data, "access-token"))
 	if errors.Is(err, os.ErrNotExist) {
 		b = []byte(newID() + newID())
@@ -485,6 +489,10 @@ func New(work, reference, data string) (*App, error) {
 	return a, nil
 }
 func (a *App) Close() {
+	if a.bgCancel != nil {
+		a.bgCancel() // 通知后台 goroutine 停止（中断其 HTTP 请求）
+	}
+	a.bgWg.Wait() // 等后台写盘结束，避免与临时目录清理竞争
 	a.workspace.Close()
 	a.reference.Close()
 	if a.localRoot != nil {
@@ -493,6 +501,11 @@ func (a *App) Close() {
 	for _, r := range a.retiredRoots {
 		r.Close()
 	}
+}
+// background 启动可追踪的 fire-and-forget 后台 goroutine；Close 会先取消 bgCtx 再等待其结束。
+func (a *App) background(fn func()) {
+	a.bgWg.Add(1)
+	go func() { defer a.bgWg.Done(); fn() }()
 }
 func (a *App) save(s *Session) error {
 	if s.Deleted {

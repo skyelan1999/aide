@@ -265,7 +265,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 	// 主题总结改为并发执行：原先串行会阻塞首个回答 token（多一次完整模型调用延迟）。
 	// summarizeTopic 只读写 s.Title/task.Usage（均在 a.mu 内），与主流程无竞态。
 	// 标题总结用独立 ctx：不随主 run 结束被 cancel，否则短任务会把标题总结掐断
-	go a.summarizeTopic(context.Background(), s, task, cfg, params)
+	a.background(func() { a.summarizeTopic(a.bgCtx, s, task, cfg, params) })
 	defer func() {
 		a.mu.Lock()
 		if cancel := a.cancels[task.ID]; cancel != nil {
