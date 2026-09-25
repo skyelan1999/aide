@@ -182,6 +182,11 @@
           "label": "小秘名字"
         },
         {
+          "id": "voiceInputSource",
+          "type": "voice-input-source",
+          "label": "麦克风输入源"
+        },
+        {
           "id": "voiceHistory",
           "type": "voice-history",
           "label": "小秘对话历史"

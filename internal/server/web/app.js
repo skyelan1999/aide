@@ -3084,7 +3084,7 @@ renderMarkdown = function(src, live) { const html = _origRender(src, live); setT
    背景声自动忽略；与他人闲聊自动退下。语音框记录「已发送/已忽略」。 */
 const voice = {
   recognition: null, listening: false, standby: false, awaitingReply: false,
-  buffer: '', interim: '', timer: null, sending: false, queue: [], log: []
+  buffer: '', interim: '', timer: null, sending: false, queue: [], log: [], micStream: null
 };
 voice.name = () => (state.config && state.config.voiceAssistantName) || '小秘';
 voice.supported = ('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window);
@@ -3233,8 +3233,9 @@ async function typeIntoPrompt(text) {
   }
 }
 
-function voiceStart() {
+async function voiceStart() {
   if (!voice.supported) { toast(t("当前浏览器不支持语音识别，请用 Chrome/Edge，并通过 HTTPS 或 localhost 访问")); return; }
+  await voiceOpenMicStream();
   const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
   const rec = new Ctor();
   rec.lang = 'zh-CN'; rec.continuous = true; rec.interimResults = true;
@@ -3272,6 +3273,7 @@ function voiceStart() {
 }
 function voiceStopAndFlush() {
   clearTimeout(voice.timer);
+  voiceReleaseMicStream();
   voice.listening = false;
   if (voice.recognition) { try { voice.recognition.onend = null; voice.recognition.stop(); } catch (_) {} }
   $('voice-btn').classList.remove('recording');
@@ -3284,6 +3286,7 @@ function voiceStopAndFlush() {
 }
 function voiceClose() {
   clearTimeout(voice.timer);
+  voiceReleaseMicStream();
   ttsCancel();
   voice.listening = false; voice.standby = false;
   if (voice.recognition) { try { voice.recognition.onend = null; voice.recognition.abort(); } catch (_) {} }
@@ -3291,6 +3294,21 @@ function voiceClose() {
   $('voice-panel').classList.add('hidden');
 }
 
+// 选定麦克风：getUserMedia 以 exact deviceId 建立并持有音频流，把音频路由锁定到该设备
+async function voiceOpenMicStream() {
+  voiceReleaseMicStream();
+  const dev = state.config && state.config.voiceInputDevice;
+  if (!dev || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  try {
+    voice.micStream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: dev } } });
+  } catch (_) {
+    voice.micStream = null;
+    toast(t('无法使用所选麦克风，将使用系统默认'));
+  }
+}
+function voiceReleaseMicStream() {
+  if (voice.micStream) { try { voice.micStream.getTracks().forEach(tk => tk.stop()); } catch (_) {} voice.micStream = null; }
+}
 $('voice-btn').onclick = action(() => { voice.listening ? voiceStopAndFlush() : voiceStart(); });
 $('voice-stop').onclick = action(voiceStopAndFlush);
 
@@ -3455,6 +3473,39 @@ function renderVoiceReplyControl() {
   return wrap;
 }
 controlRenderers['voice-reply'] = renderVoiceReplyControl;
+// 设置：小秘麦克风输入源选择
+function renderVoiceInputSourceControl() {
+  const wrap = el('div', 'settings-control');
+  const head = el('div', 'control-label'); head.append(el('span', '', t('麦克风输入源')));
+  const row = el('div', 'voice-input-row');
+  const sel = el('select', 'voice-input-select');
+  const refresh = el('button', 'quiet', t('刷新')); refresh.type = 'button';
+  row.append(sel, refresh);
+  const note = el('small', '', t('默认用系统麦克风。Web Speech 标准不直接支持指定设备，这里通过 getUserMedia 锁定该设备的音频路由。'));
+  wrap.append(head, row, note);
+  async function populate() {
+    sel.replaceChildren();
+    const def = el('option'); def.value = ''; def.textContent = t('系统默认'); sel.append(def);
+    try {
+      let mics = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput');
+      if (mics.length && !mics.some(d => d.label)) {
+        try { const st = await navigator.mediaDevices.getUserMedia({ audio: true }); st.getTracks().forEach(tk => tk.stop());
+          mics = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'audioinput'); } catch (_) {}
+      }
+      mics.forEach((d, i) => { const o = el('option'); o.value = d.deviceId; o.textContent = d.label || (t('麦克风') + (i + 1)); sel.append(o); });
+    } catch (_) {}
+    sel.value = (state.config && state.config.voiceInputDevice) || '';
+  }
+  sel.onchange = action(async () => {
+    await api('/settings', { method: 'PUT', body: JSON.stringify({ voiceInputDevice: sel.value, activeModel: state.config ? state.config.activeModel : '' }) });
+    await refreshConfig();
+    toast(sel.value ? t('已选择麦克风，下次语音生效') : t('已切回系统默认麦克风'));
+  });
+  refresh.onclick = action(populate);
+  populate();
+  return wrap;
+}
+controlRenderers['voice-input-source'] = renderVoiceInputSourceControl;
 controlRenderers['voice-name'] = renderVoiceNameControl;
 
 // 设置面板：人格切换（aide 工作 / 小秘 生活）
