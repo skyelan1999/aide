@@ -211,6 +211,11 @@
           "id": "accessibilityAutoRead",
           "type": "accessibility-read",
           "label": "输出完成后自动朗读"
+        },
+        {
+          "id": "debug-access",
+          "type": "debug-access",
+          "label": "允许外部 AI 接入调试"
         }
       ]
     },

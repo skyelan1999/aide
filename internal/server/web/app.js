@@ -3156,8 +3156,9 @@ document.addEventListener('click', event => {
 });
 /* ── 手动压缩（FR-93） ── */
 function refreshCompactInfo() {
-  const sess = state.session;
-  $('compact-info').textContent = sess?.compactedMessages ? t("已折叠 {0} 条消息", sess.compactedMessages) : '';
+  const btn = $('compact-button');
+  if (!btn) return;
+  btn.classList.toggle('has-compacted', (state.session?.compactedMessages || 0) > 0);
 }
 $('compact-button').onclick = action(async () => {
   if (!state.session) { toast(t("请先选择会话")); return; }
@@ -4122,6 +4123,93 @@ function renderAccessibilityControl() {
   return wrap;
 }
 controlRenderers['accessibility-read'] = renderAccessibilityControl;
+// 设置：外部 AI 机器可读诊断接口（/api/debug）——默认关、只读、独立令牌、审计脱敏
+function renderDebugAccessControl() {
+  const wrap = el('div', 'settings-control');
+  const head = el('div', 'control-label'); head.append(el('span', '', t('允许外部 AI 接入调试')));
+  const row = el('div', 'voice-reply-row');
+  const toggle = el('input'); toggle.type = 'checkbox';
+  toggle.checked = !!(state.config && state.config.debugAccessEnabled);
+  let busy = false;
+  toggle.onchange = action(async () => {
+    if (busy) return; busy = true;
+    try {
+      await api('/settings', { method: 'PUT', body: JSON.stringify({ debugAccessEnabled: toggle.checked, activeModel: state.config ? state.config.activeModel : '' }) });
+      await refreshConfig();
+      toast(toggle.checked ? t('已开启外部 AI 调试') : t('已关闭外部 AI 调试'));
+      renderBody();
+    } finally { busy = false; }
+  });
+  row.append(toggle, el('span', '', t('只读诊断')));
+  const warn = el('small', '', t('高危开关：开启后，任何持有调试令牌的外部程序都能只读查看会话、错误、用量与 Provider 连通性。默认关闭；关闭时本接口整体不可达，且立即清空已发令牌。'));
+  warn.style.color = '#c0392b';
+
+  const body = el('div');
+  async function renderBody() {
+    body.replaceChildren();
+    const enabled = !!(state.config && state.config.debugAccessEnabled);
+    if (!enabled) { body.append(el('small', '', t('当前已关闭'))); return; }
+
+    // 令牌状态区
+    const tokRow = el('div', 'voice-reply-row');
+    const hasTok = !!(state.config && state.config.hasDebugToken);
+    tokRow.append(el('span', '', hasTok ? t('调试令牌：已生成') : t('调试令牌：未生成')));
+    const genBtn = el('button', 'quiet', hasTok ? t('重新生成') : t('生成调试令牌')); genBtn.type = 'button';
+    const revBtn = el('button', 'quiet', t('立即吊销')); revBtn.type = 'button';
+    revBtn.style.display = hasTok ? '' : 'none';
+    tokRow.append(genBtn, revBtn);
+    body.append(tokRow);
+
+    const tokenBox = el('div');
+    body.append(tokenBox);
+    genBtn.onclick = action(async () => {
+      const r = await api('/debug/admin/token', { method: 'POST', body: '{}' });
+      tokenBox.replaceChildren();
+      tokenBox.append(el('small', '', t('明文令牌仅此一次显示，请立即复制保存：')));
+      const code = el('div', '', r.token); code.style.fontFamily = 'monospace'; code.style.wordBreak = 'all'; code.style.background = '#f5f5f5'; code.style.padding = '6px';
+      const copy = el('button', 'quiet', t('复制')); copy.type = 'button';
+      copy.onclick = () => { navigator.clipboard && navigator.clipboard.writeText(r.token); toast(t('已复制')); };
+      tokenBox.append(code, copy, el('small', '', t('有效期至 {0}', r.expiresAt)));
+      await refreshConfig();
+    });
+    revBtn.onclick = action(async () => {
+      await api('/debug/admin/revoke', { method: 'POST', body: '{}' });
+      await refreshConfig(); toast(t('已吊销调试令牌')); renderBody();
+    });
+
+    // 来源白名单
+    const wlRow = el('div', 'voice-reply-row');
+    const wl = el('input'); wl.type = 'text'; wl.placeholder = t('来源白名单（可选，逗号分隔）');
+    wl.value = (state.config && state.config.debugAllowOrigins || []).join(', ');
+    const wlSave = el('button', 'quiet', t('保存')); wlSave.type = 'button';
+    wlSave.onclick = action(async () => {
+      const origins = wl.value.split(',').map(s => s.trim()).filter(Boolean);
+      await api('/settings', { method: 'PUT', body: JSON.stringify({ debugAllowOrigins: origins, activeModel: state.config ? state.config.activeModel : '' }) });
+      await refreshConfig(); toast(t('已保存来源白名单'));
+    });
+    wlRow.append(wl, wlSave);
+    body.append(wlRow, el('small', '', t('仅校验浏览器 Origin；纯 curl 请求不带 Origin，不受此限制。留空表示不限制来源。')));
+
+    // 接入审计
+    const auditBtn = el('button', 'quiet', t('查看接入审计')); auditBtn.type = 'button';
+    const auditBox = el('div'); body.append(auditBtn, auditBox);
+    auditBtn.onclick = action(async () => {
+      const rows = await api('/debug/audit', {});
+      auditBox.replaceChildren();
+      if (!rows.length) { auditBox.append(el('small', '', t('暂无审计记录'))); return; }
+      rows.slice(-20).reverse().forEach(e => {
+        const line = el('small', '', `${e.time}  ${e.method} ${e.path}  -> ${e.result}${e.owner ? ' (owner)' : ''}`);
+        line.style.display = 'block';
+        auditBox.append(line);
+      });
+    });
+  }
+  renderBody();
+  wrap.append(head, row, warn, body);
+  return wrap;
+}
+controlRenderers['debug-access'] = renderDebugAccessControl;
+
 // 设置：小秘麦克风输入源选择
 function renderVoiceInputSourceControl() {
   const wrap = el('div', 'settings-control');

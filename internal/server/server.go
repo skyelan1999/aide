@@ -58,6 +58,12 @@ type Settings struct {
 	UserPasswordHash       string   `json:"userPasswordHash,omitempty"`  // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
 	LockTimeoutSec         int      `json:"lockTimeoutSec,omitempty"`    // 空闲锁屏秒数，0 = 不锁屏
 	AccessibilityAutoRead  bool     `json:"accessibilityAutoRead,omitempty"` // 无障碍：输出完成后由小秘自动朗读讲解
+	// ── 外部 AI 诊断接口（/api/debug）：默认关、只读、独立令牌、审计脱敏 ──
+	DebugAccessEnabled  bool     `json:"debugAccessEnabled,omitempty"`  // 总开关，默认 false；关闭时 /api/debug/* 整体 404
+	DebugTokenHash      string   `json:"debugTokenHash,omitempty"`      // 调试令牌 SHA-256 哈希（绝不存明文）
+	DebugTokenCreatedAt string   `json:"debugTokenCreatedAt,omitempty"`  // 调试令牌创建时间 RFC3339
+	DebugTokenExpiresAt string   `json:"debugTokenExpiresAt,omitempty"` // 调试令牌过期时间 RFC3339
+	DebugAllowOrigins   []string `json:"debugAllowOrigins,omitempty"`   // 浏览器来源白名单（curl 无 Origin 不受限）
 	// ── TTS 自然度：可插拔引擎（edge-tts 神经音 + 浏览器 Web Speech 兜底）──
 	TTSProvider       string   `json:"ttsProvider,omitempty"`        // auto | edge | webspeech
 	TTSVoice          string   `json:"ttsVoice,omitempty"`           // edge 音色 id，空=按性别映射
@@ -182,8 +188,15 @@ type App struct {
 	bgCtx                   context.Context
 	bgCancel                context.CancelFunc
 	bgWg                    sync.WaitGroup // fire-and-forget 后台 goroutine（标题总结等）追踪，Close 时等待
-	webAuthn                *webAuthnManager // Touch ID / WebAuthn 解锁管理器
-	colloqCache             *colloquialCache // 口语化朗读稿 LRU 缓存
+	webAuthn                *webAuthnManager  // Touch ID / WebAuthn 解锁管理器
+	colloqCache             *colloquialCache  // 口语化朗读稿 LRU 缓存
+	// ── 外部 AI 诊断接口（/api/debug）──
+	startedAt               time.Time        // 进程启动时间（uptime 来源）
+	refPath                 string           // 参考/context 目录宿主路径（挂载摘要用）
+	routes                  *http.ServeMux   // 主路由 mux（debug 鉴权后分发复用）
+	debugMu                 sync.Mutex       // 保护 errorRing / providerHealth / 审计写
+	errorRing               []recentError    // 最近错误环形缓冲（容量 debugErrorRingCap）
+	providerHealth          providerHealth   // 最近一次 Provider 连通性探测缓存
 }
 
 // Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
@@ -310,7 +323,8 @@ func New(work, reference, data string) (*App, error) {
 		w.Close()
 		return nil, err
 	}
-	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}}
+	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}}
+	a.startedAt = time.Now().UTC()
 	a.bgCtx, a.bgCancel = context.WithCancel(context.Background())
 	b, err := os.ReadFile(filepath.Join(data, "access-token"))
 	if errors.Is(err, os.ErrNotExist) {
@@ -607,6 +621,20 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("DELETE /api/webauthn/credentials/{id}", a.webAuthnDeleteCredential)
 	mux.HandleFunc("POST /api/webauthn/assertion/start", a.webAuthnAssertionStart)
 	mux.HandleFunc("POST /api/webauthn/assertion/finish", a.webAuthnAssertionFinish)
+	// ── 外部 AI 诊断接口（独立鉴权，见 serveDebug）──
+	mux.HandleFunc("GET /api/debug/overview", a.debugOverview)
+	mux.HandleFunc("GET /api/debug/sessions", a.debugSessions)
+	mux.HandleFunc("GET /api/debug/sessions/{id}/runs/{run}", a.debugRunDetail)
+	mux.HandleFunc("GET /api/debug/sessions/{id}/runs/{run}/events", a.runEvents)
+	mux.HandleFunc("GET /api/debug/errors", a.debugErrors)
+	mux.HandleFunc("GET /api/debug/stats", a.tokenStatsHandler)
+	mux.HandleFunc("POST /api/debug/actions/ping-provider", a.debugPingProvider)
+	mux.HandleFunc("POST /api/debug/actions/diagnostic-bundle", a.debugDiagnosticBundle)
+	mux.HandleFunc("GET /api/debug/audit", a.debugAudit)
+	mux.HandleFunc("POST /api/debug/admin/token", a.debugAdminToken)
+	mux.HandleFunc("POST /api/debug/admin/revoke", a.debugAdminRevoke)
+	mux.HandleFunc("POST /api/debug/admin/toggle", a.debugAdminToggle)
+	a.routes = mux
 	web, _ := fs.Sub(assets, "web")
 	mux.Handle("/", http.FileServer(http.FS(web)))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -618,6 +646,10 @@ func (a *App) Handler() http.Handler {
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'")
 		}
 		w.Header().Set("Cache-Control", "no-store")
+		if strings.HasPrefix(r.URL.Path, "/api/debug/") {
+			a.serveDebug(w, r) // 独立令牌/审计/脱敏；不走下方普通 access-token 校验
+			return
+		}
 		if strings.HasPrefix(r.URL.Path, "/api/") {
 			if origin := r.Header.Get("Origin"); origin != "" {
 				u, err := url.Parse(origin)
@@ -643,7 +675,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "hasPassword": a.settings.UserPasswordHash != "", "webAuthnReady": a.webAuthn.enabled(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "hasPassword": a.settings.UserPasswordHash != "", "webAuthnReady": a.webAuthn.enabled(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -658,6 +690,9 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		VoiceInputDevice *string `json:"voiceInputDevice,omitempty"`
 		OldPassword    string `json:"oldPassword,omitempty"`
 		NewPassword    string `json:"newPassword,omitempty"`
+		// 外部 AI 调试接口：总开关用指针区分"未传/传 false"；白名单 nil=保留
+		DebugAccessEnabled *bool    `json:"debugAccessEnabled,omitempty"`
+		DebugAllowOrigins  []string `json:"debugAllowOrigins,omitempty"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -702,6 +737,26 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		in.Settings.AccessibilityAutoRead = *in.AccessibilityAutoRead
 	} else {
 		in.Settings.AccessibilityAutoRead = a.settings.AccessibilityAutoRead
+	}
+	// 调试接口：令牌哈希只由 /api/debug/admin/* 管理，普通 PUT 永不覆盖；
+	// 白名单未传则保留；总开关用指针判定。关闭时立即清空令牌哈希（无凭据残留）。
+	in.Settings.DebugTokenHash = a.settings.DebugTokenHash
+	in.Settings.DebugTokenCreatedAt = a.settings.DebugTokenCreatedAt
+	in.Settings.DebugTokenExpiresAt = a.settings.DebugTokenExpiresAt
+	if in.DebugAllowOrigins != nil {
+		in.Settings.DebugAllowOrigins = in.DebugAllowOrigins
+	} else {
+		in.Settings.DebugAllowOrigins = a.settings.DebugAllowOrigins
+	}
+	if in.DebugAccessEnabled != nil {
+		in.Settings.DebugAccessEnabled = *in.DebugAccessEnabled
+	} else {
+		in.Settings.DebugAccessEnabled = a.settings.DebugAccessEnabled
+	}
+	if !in.Settings.DebugAccessEnabled {
+		in.Settings.DebugTokenHash = ""
+		in.Settings.DebugTokenCreatedAt = ""
+		in.Settings.DebugTokenExpiresAt = ""
 	}
 	// 账户字段：未传则保留已存值；密码哈希永远不接受前端直传，只经 OldPassword/NewPassword 流程变更
 	if in.UserName == "" {

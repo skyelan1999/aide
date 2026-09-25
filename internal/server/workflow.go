@@ -829,6 +829,9 @@ func (a *App) publishStream(taskID string, ev streamEvent) {
 // finishStream 任务终态：广播 status + done 后关闭并清理该任务的所有订阅。
 // close(ch) 是不可被缓冲丢弃的终态信号；订阅者据此退出，不依赖 done 事件送达。
 func (a *App) finishStream(taskID, status, errMsg string) {
+	if status == "failed" && errMsg != "" {
+		a.pushError("task-failed", "", taskID, errMsg)
+	}
 	a.eventMu.Lock()
 	defer a.eventMu.Unlock()
 	for ch := range a.eventSubs[taskID] {

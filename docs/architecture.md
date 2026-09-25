@@ -205,3 +205,14 @@ stateDiagram-v2
 变更前读取 [统一开发工作流](agent/WORKFLOW.md)。新前端须验证浏览器实际交互；正式发布须在没有 `/web` 挂载的构建镜像中验证 embed 资源。早期预览使用 RC5 后端 + 工作区静态文件；本次发布另行验证无静态目录覆盖的镜像。
 
 待独立规划：PTY、目录分页、真实 MCP、统一插件文件驱动。会话归档（pinned/archived、子会话自动归档与折叠组）、SSE 流式输出已落地。不要把登记入口或预设名称当成这些待规划能力已经存在。
+
+## 外部 AI 诊断接口（/api/debug）
+
+`App.Handler()` 外层对 `/api/debug/` 前缀做独立分流，**先于**普通 access-token 校验进入 `serveDebug`，四段中间件顺序执行：
+
+1. **开关判定**：读 `settings.DebugAccessEnabled`；关即整体 `404`（不暴露存在性），仍记一条审计。
+2. **独立鉴权**：调试令牌走 `Authorization: Bearer`，常量时间比对 `sha256(token)` 与 `settings.DebugTokenHash`；校验过期时间；SSE `/events` 例外允许 `?access_token=`。普通 access-token（owner）放行全部；调试令牌仅放行非 `/admin`、非 `/audit` 端点。
+3. **审计**：每条访问（含 401/404/403）追加 `data/debug-audit.jsonl`（time/ip/ua/method/path/owner/result）。
+4. **分发+脱敏**：通过 `a.routes` 分发到 mux；handler 内白名单聚合——只回 `hasKey/hasPassword`、baseURL 主机名、模型 id、挂载与用量，绝不回 key/密码哈希/人格密文/请求快照正文/access-token。
+
+状态落点：`App.startedAt`（uptime）、`App.errorRing`（失败终态由 `finishStream` 落一条）、`App.providerHealth`（ping-provider 探测缓存）。令牌哈希只由 `/api/debug/admin/*` 管理；关闭总开关或吊销即即时清空哈希。详见 [debug-api.md](debug-api.md)。
