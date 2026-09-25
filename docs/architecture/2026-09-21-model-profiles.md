@@ -2,6 +2,11 @@
 
 > **历史设计（2026-09-21）**：Profile 与规则仍存在；工具循环和模型选择入口以后续实现为准。 当前状态见 [现行 PRD](../PRD.md) 与 [架构](../architecture.md)。下文“待实施/已验证”仅代表原设计时间点，不能用于今天的发布判断。
 
+> **现状核对（2026-09-25，对应当前版本 0.1.10.2 RC1）**：采样参数 Profile 系统（`internal/server/profiles.go`、GET/PUT `/api/profiles`、`profiles.json`、`routing-policy.json/.md` 兜底）与本文设计一致，已落地。以下为与本文初稿的偏差：
+> - **策略浮层已扩为三列**：原设计「左栏单选 auto／手动 profile」保留（左列＝策略），但浮层另加了**中列＝模型选择**（`models[]`/`activeModel`，详见多模型文档）与**右列＝推理强度**（`reasoningEffort` auto/off/low/medium/high）。模型切换走 `PUT /api/settings {activeModel}`，推理强度走 `PUT /api/settings {reasoningEffort}`，均不经 `/api/profiles`。
+> - **settings-schema 实际嵌套**：本节落在 `sections[]` 中 `id:"model"`（标题「模型参数」）之下的 `children[]`，子项 `id:"model-profiles"`、`type:"profiles-manager"`、标题「参数配置」（不是与「模型参数」同名的平级分组）。
+> - 聊天栏策略按钮仍为 composer 旁 `#strategy-label` + `#strategy-menu`；选中 profile/auto 仍经 `PUT /api/profiles` 防抖保存。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 系统设计（System Design） |
@@ -10,7 +15,7 @@
 | 对应分支 | `feat/model-profiles` |
 | 功能基线 | `9a47983` |
 | 作者 | 编码助手 |
-| 状态 | 待实施 |
+| 状态 | 已落地（采样参数部分）；模型列表/推理强度为后续扩展 |
 
 ## 1. 分层架构
 
@@ -28,10 +33,12 @@
    workflow.go   startTask 接收 strategy/profile → 解析并记录 Task.Strategy/Task.Profile → execute 透传
 
 ③ 前端层
-   设置面板「模型参数」：profiles-manager 渲染器（app.js）
+   设置面板「模型参数」分组：profiles-manager 渲染器（app.js）
      ＋ 新建（复制 default 参数）／－ 删除（仅用户配置）／名称编辑（仅用户配置）／参数编辑
      系统配置卡片显示 🔒 锁定态；参数变更防抖 700ms 自动 PUT /api/profiles
-   聊天栏策略按钮（composer-toolbar 左侧）：弹层单选 auto／手动 profile；选择即 PUT 保存
+   聊天栏策略按钮（composer-toolbar 旁）：#strategy-label + #strategy-menu 弹层
+     左列＝策略（auto 自动路由／手动各 profile）；后续版本另加中列＝模型、右列＝推理强度
+     选 auto／手动 profile 即 PUT /api/profiles 保存；选模型/推理强度则 PUT /api/settings
    发送任务 payload 增加 strategy/profile；run-meta 展示「策略：自动→precise」等
 ```
 
@@ -66,7 +73,7 @@ type Profile struct { ID, Name string; System bool; Params ProfileParams }
 
 ## 4. 前端结构
 
-- `settings-schema.json` 新增分组：`{"id":"model-profiles","type":"profiles-manager","label":"模型参数"}`。
+- `settings-schema.json` 在 `sections[]` 新增 `id:"model"`（标题「模型参数」），其 `children[]` 内放 `{"id":"model-profiles","type":"profiles-manager","title":"参数配置"}`。
 - `controlRenderers.profilesManager`：加载 GET /api/profiles → 渲染卡片列表；编辑态本地缓存 + 防抖 PUT；错误 toast 并回滚到最近成功快照。
 - 策略按钮：`#strategy-button` + 弹层 `#strategy-menu`（列表：自动路由 auto + 各 profile）；选中 ✓；点击后 PUT（保留 profiles 数组原样）。
 - 发送 payload：`{prompt, mode, attachments, strategy, profile}`（strategy=auto 时 profile 为空，由后端解析）。

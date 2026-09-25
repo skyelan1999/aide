@@ -2,6 +2,11 @@
 
 > **历史设计（2026-09-21）**：模型选择已移入策略弹层；预算预览已增加服务端构造器，旧侧栏公式不是完整请求预算。 当前状态见 [现行 PRD](../PRD.md) 与 [架构](../architecture.md)。下文“待实施/已验证”仅代表原设计时间点，不能用于今天的发布判断。
 
+> **现状核对（2026-09-25，版本 0.1.10.2 RC1）**：多模型与上下文统计已落地。对本文的事实修正：
+> - **上下文窗口上限为 2,097,152（2M），不是本文所写 1,048,576（1M）**：见 `internal/server/server.go` `normalizeModels`（`server.go:93`），范围 1024–2,097,152、缺省 65536；前端 `windowInput.max=2097152`。预设按钮为 32K/64K/128K/200K/256K/1M（`app.js` `renderModelList`）。
+> - **`/api/models` 同时注册 GET 与 POST**（`server.go:525-526`）；前端「自动获取」实际用 **POST**，请求体携带 `{baseURL, apiKey, clearKey}` 以在保存前试连候选配置。
+> - **模型选择入口已从独立侧栏选择器并入策略浮层右列**（`refreshStrategyUI`），「⚙ 管理模型…」仍打开模型设置弹窗；上下文预算另有服务端 `POST /api/context-preview`（`context.go`，与真实请求共用构建器）与 `GET /api/token-stats`。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 系统设计（System Design） |
@@ -10,7 +15,7 @@
 | 对应分支 | `feat/multi-model-context` |
 | 功能基线 | `03386db` |
 | 作者 | 编码助手 |
-| 状态 | 待实施 |
+| 状态 | 已落地 |
 
 ## 1. 架构总览
 
@@ -19,7 +24,7 @@
    Settings{BaseURL, APIKey, Model, Models []ModelRef, ActiveModel}
      ModelRef{ID, Name, ContextWindow}
    迁移：旧 settings.json（单模型）→ Models=[{ID:Model,Name:Model,ContextWindow:65536}], ActiveModel=Model
-   校验（LIM-25）：≤20 个、id 1–64、名称 ≤32（缺省=id）、窗口 1024–1,048,576（缺省 65,536）、active ∈ 列表
+   校验（LIM-25）：≤20 个、id 1–64、名称 ≤32（缺省=id）、窗口 1024–2,097,152（缺省 65,536）、active ∈ 列表
    GET /api/config → + models + activeModel（model 字段保留 = activeModel，兼容旧前端语义）
    GET /api/models → 代理 {baseURL}/models（Authorization 转发，30s 超时，≤2 MiB）→ 解析 OpenAI {data:[{id}]} → {models:[id…]}
    startTask → task.Model = a.settings.Model（快照记录）
@@ -41,7 +46,7 @@
 
 | 方法 | 路径 | 用途 |
 | --- | --- | --- |
-| GET | `/api/models` | 代理拉取上游可用模型 id 列表；上游非 200/解析失败 → 400 错误信息 |
+| GET/POST | `/api/models` | 代理拉取上游可用模型 id 列表；POST 可在 body 带 `{baseURL,apiKey,clearKey}` 试连候选配置；上游非 200/解析失败 → 400 错误信息 |
 | PUT | `/api/settings` | 增加 `models`、`activeModel` 字段；省略时保留旧值（兼容） |
 | GET | `/api/config` | 增加 `models`、`activeModel`；`configured = activeModel != ""` |
 

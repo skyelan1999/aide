@@ -2,6 +2,11 @@
 
 > **历史设计（2026-09-21）**：旧 aide.theme、theme-init.js、单排控件和暗色保真约束已被设置中心及 2026-09-23 新版 UI 修订。 当前状态见 [现行 PRD](../PRD.md) 与 [架构](../architecture.md)。下文“待实施/已验证”仅代表原设计时间点，不能用于今天的发布判断。
 
+> **现状核对（2026-09-25，版本 0.1.10.2 RC1）**：
+> - **主题扩展为「两套调色板 × 三态」**：本文只设计了 light/dark/system（绿色系）。现 `appearance` 分区有两个分段控件——**「专业」(`palette=blue`，默认)** 与 **「经典」(`palette=green`)**，各自再选 light/dark/system。实现：`themes/light/tokens.css`、`themes/dark/tokens.css` 为基准**蓝**调色板（各 79 令牌）；`themes/green.css`（158 令牌）在 `html[data-palette="green"]` 上叠加经典绿取值。`<html>` 现写 `data-theme`、`data-theme-pref`、`data-palette` 三个属性。
+> - **文件与键名**：`theme-init.js` 已更名 `settings-init.js`；存储键由 `aide.theme`（字符串）改为 `localStorage['aide.ui']`（JSON，含 `theme`/`palette`/`language`）。旧键 `aide.theme` 与旧值 `classic` 仍被迁移吸收。
+> - 79 个语义令牌冻结约定保留（`themes/light|dark/tokens.css` 各 79 条）。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 系统设计（System Design）+ 任务分解 |
@@ -10,7 +15,7 @@
 | 对应分支 | `feat/theme-switching` |
 | 功能基线 | `fbe45b2` |
 | 作者 | 架构师（高见远） |
-| 状态 | 待工程师实施 |
+| 状态 | 已落地；后续新增 blue/green 双调色板 |
 
 > **事实核对说明**：本文所有"现状"数据均由脚本对**基线 `fbe45b2`** 的 `internal/server/web/style.css`（14,317 B / **单行压缩格式，仅 2 个换行符** / **153 个顶层样式块**（其中 5 个为 `@media`；全文 `{` 共 197 个）/ **93 处 hex** / **89 个不同色值**）实读得出；Go `embed` 行为由容器内**实际运行**验证（见第 4 节），非凭记忆推断。
 

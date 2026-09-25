@@ -2,6 +2,8 @@
 
 > **历史设计（2026-09-21）**：旧 aide.theme、theme-init.js、单排控件和暗色保真约束已被设置中心及 2026-09-23 新版 UI 修订。 当前状态见 [现行 PRD](../PRD.md) 与 [架构](../architecture.md)。下文“待实施/已验证”仅代表原设计时间点，不能用于今天的发布判断。
 
+> **现状核对（2026-09-25，版本 0.1.10.2 RC1）**：FR-49~FR-57 已落地（令牌化、light/dark/system 三态、首屏无闪烁、跟随系统）。后续扩展：外观分区现含**两套调色板**——「专业」(`palette=blue`，默认基准) 与「经典」(`palette=green`，由 `themes/green.css` 叠加)，每套各 light/dark/system 三态；存储键升级为 `localStorage['aide.ui']`（含 `theme`/`palette`/`language`），初始化脚本更名 `settings-init.js`。79 令牌冻结约定保留。
+
 > 本文是 `docs/PRD.md` v1.1 / v1.2 的**增量需求说明**，供下游架构师消费。需求编号的唯一权威登记处是 `docs/PRD.md` 第 4 / 5 / 6.5 节，本文不引入新编号，只做结构化展开与判定口径细化。**冲突时以 `docs/PRD.md` 为准。**
 
 | 项 | 值 |
