@@ -251,6 +251,14 @@ function openStream(run) {
       const id = state.session?.id; if (!id) return;
       const s = await api('/sessions/' + id); if (state.session?.id !== id) return;
       if (adoptSessionIfChanged(s)) renderSession();
+      // 小秘语音发起的 run 完成且开启语音回复 → 朗读最后一条 assistant 回复
+      if (voice.awaitingReply) {
+        voice.awaitingReply = false;
+        if (state.config && state.config.voiceReplyEnabled) {
+          const last = [...(s.messages || [])].reverse().find(m => m.role === 'assistant' && m.content && m.content.trim());
+          if (last) speakReply(last.content);
+        }
+      }
       // 正在查看的会话完成 → 视为已检查，直接清除高亮；后台完成的会话保持蓝点+加粗待点击
       if (s.runs.some(r => r.status === 'completed')) {
         try { await api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) }); } catch (err) {}
@@ -3075,11 +3083,17 @@ renderMarkdown = function(src, live) { const html = _origRender(src, live); setT
    发送到当前会话（与手动提交同一 run 入口，兼容排队/工作流模式）；
    背景声自动忽略；与他人闲聊自动退下。语音框记录「已发送/已忽略」。 */
 const voice = {
-  recognition: null, listening: false, standby: false,
+  recognition: null, listening: false, standby: false, awaitingReply: false,
   buffer: '', interim: '', timer: null, sending: false, queue: [], log: []
 };
 voice.name = () => (state.config && state.config.voiceAssistantName) || '小秘';
 voice.supported = ('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window);
+try {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.getVoices();
+    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+  }
+} catch (_) {}
 
 function voiceSetStatus(mode, text) {
   const box = $('voice-status');
@@ -3145,6 +3159,7 @@ async function voiceFilterOne(sentence) {
   catch (_) { result = { action: 'ignore', text: sentence, reason: t('甄别失败') }; }
   if (result.action === 'send') {
     const text = (result.text || sentence).trim();
+    voice.awaitingReply = true; // 标记本次由小秘语音发起，run 完成后据开关朗读回复
     try {
       if (state.config && state.config.voiceReplyEnabled) {
         await typeIntoPrompt(text);
