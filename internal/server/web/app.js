@@ -592,7 +592,12 @@ function renderSession() {
             b.onclick = fn;
             return b;
           };
-          if (text) actions.append(mk(t("复制"), () => { navigator.clipboard.writeText(text).then(() => toast(t("已复制"))); }));
+          if (text) {
+            actions.append(mk(t("复制"), () => { navigator.clipboard.writeText(text).then(() => toast(t("已复制"))); }));
+            const rb = mk(t("朗读"), () => toggleMechanicalRead(rb, text));
+            rb.classList.add('msg-btn-mech');
+            actions.append(rb);
+          }
           actions.append(mk(t("重试"), () => { api(`/sessions/${state.session.id}/runs/${run.id}/retry`, { method: 'POST', body: '{}' }).then(() => selectSession(state.session.id)); }));
           actions.append(mk(t("继续"), () => { $('prompt').value = ''; sendPrompt(t("继续")); }));
           if (text) {
@@ -3555,6 +3560,34 @@ $('narr-stop').onclick = action(()=>{
   try{ window.speechSynthesis.resume(); }catch(_){}
   ttsCancel();
 });
+
+// ===== 主聊天消息「朗读」：显式点击触发，平直机械音（区别于小秘的灵动韵律 TTS）=====
+const mech = { speaking:false, btn:null };
+function mechanicalParts(text){
+  const flat = String(text||'').replace(/```[\s\S]*?```/g,'，代码，').replace(/[#*`>_~|]/g,'');
+  const out=[]; const re=/[^。！？.!?\n]+[。！？.!?\n]?/g; let m;
+  while((m=re.exec(flat))){ const x=m[0].trim(); if(x) out.push(x.slice(0,200)); }
+  return out.slice(0,60);
+}
+function resetMechButtons(){ document.querySelectorAll('.msg-btn-mech').forEach(b=>b.textContent=t('朗读')); }
+function toggleMechanicalRead(btn, text){
+  if(mech.speaking && mech.btn===btn){ ttsCancel(); mech.speaking=false; btn.textContent=t('朗读'); return; }
+  if(!('speechSynthesis' in window)){ toast(t('当前浏览器不支持语音合成')); return; }
+  resetMechButtons(); ttsCancel();
+  const parts = mechanicalParts(text);
+  if(!parts.length){ toast(t('没有可朗读的文本')); return; }
+  mech.btn=btn; mech.speaking=true; btn.textContent=t('停止');
+  let i=0;
+  function next(){
+    if(i>=parts.length){ mech.speaking=false; btn.textContent=t('朗读'); mech.btn=null; return; }
+    const u=new SpeechSynthesisUtterance(parts[i]);
+    u.lang='zh-CN'; u.rate=1; u.pitch=1; u.volume=1; // 固定参数、无停顿无语气 → 机械
+    u.onend=()=>{ i++; next(); };
+    u.onerror=()=>{ i++; next(); };
+    window.speechSynthesis.speak(u);
+  }
+  next();
+}
 
 // 设置面板：语音小秘名字输入
 function renderVoiceNameControl() {
