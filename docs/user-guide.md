@@ -122,6 +122,59 @@
 
 **语音小秘**：输入框旁麦克风调用浏览器 Web Speech API 实时转写，后端自动甄别"传达给 AI / 背景噪声 / 与他人闲聊"，识别闲聊自动退下；名字可自定义。
 
+### 多标签页锁屏语义
+
+主界面（工作台标签页）与文件查看器（`#file=…` 从标签页）之间，锁屏状态按以下三条规则联动，不再各自为政：
+
+1. **主界面未锁，从界面绝不锁**：主界面处于解锁态时，新打开或刷新的从标签页不会被遮罩。
+2. **主界面锁定，所有从界面跟随锁**：主界面一旦锁定（加载即锁、空闲超时、或点"立即锁屏"），所有从标签页同步糊化遮罩，小秘在各标签页同步退下。
+3. **从界面单独解锁只解自己**：在某个从标签页输入密码解锁，只解除该标签页的遮罩；主界面与其他从标签页仍保持锁定，不回传主界面。
+
+实现上由浏览器 `BroadcastChannel`（频道 `aide-lock-v1`）在前端做一次 leader election：优先级 `(role: 主界面=0 < 文件查看器=1, bootTs, tabId)` 选出一个 **master**，`masterLocked` 只在 master 写入；其余标签页为 **slave**，各自记录 `localDismiss`。某标签页"是否真的被遮罩" = `masterLocked && !localDismiss`。
+
+- **空闲计时只在 master**：`lockTimeoutSec` 的倒计时只在主界面跑；任意标签页的鼠标/键盘活动都会节流（≥1s）发 ping 给 master 续表，避免你在从界面看文件时主界面超时锁上。
+- **加入窗口期**：新标签页打开时先显示"正在确认安全状态…"中性面纱（约 0.6s），既不泄露内容也不抢密码框；确认主界面锁态后再决定遮罩。
+- **主界面崩溃/刷新后重选**：slave 约 3s 收不到 master 心跳即发起选举，优先级最高的现存标签页接任 master，并继承"最后已知的集群锁态"——集群原本锁着就继续锁，不会因为主标签被关就集体解锁。
+- **降级**：浏览器不支持 `BroadcastChannel`（极旧环境）时退回各标签页独立锁，行为同旧版。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant M as 主界面 (master)
+  participant S1 as 从界面 1 (slave)
+  participant S2 as 从界面 2 (slave)
+  Note over S1: 新从标签页加入
+  S1->>M: hello (我的优先级)
+  M-->>S1: welcome(masterLocked=false)
+  Note over S1: 不遮罩（规则①）
+  Note over M: 主界面锁定（加载即锁/空闲/手动）
+  M->>S1: lock (masterLocked=true, gen+1)
+  M->>S2: lock (masterLocked=true, gen+1)
+  Note over S1,S2: 跟随遮罩，清 localDismiss（规则②）
+  Note over S1: 在从界面1输入密码解锁
+  S1->>S1: localDismiss=true（不广播）
+  Note over S1: 仅从界面1揭开；M 与 S2 仍锁（规则③）
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> joining
+  joining --> master: 加入窗口内无更高优先者 / 选举胜出
+  joining --> slave: 收到 master 的 welcome
+  master --> slave: 出现更高优先者，退位
+  slave --> joining: 3s 无 master 心跳 → 重选
+  state master {
+    [*] --> unlocked
+    unlocked --> locked: requestLock（加载/空闲/立即锁屏）
+    locked --> unlocked: 密码校验成功，广播 unlock
+  }
+  state slave {
+    [*] --> followMaster
+    followMaster --> dismissed: 本标签页密码解锁（localDismiss=true，不回传）
+    dismissed --> followMaster: master 广播 lock 重新升锁
+  }
+```
+
 ## 9. 常见问题
 
 | 现象 | 建议 |

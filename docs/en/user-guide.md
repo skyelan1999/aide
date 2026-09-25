@@ -31,6 +31,59 @@ The settings panel is organized into sections: Usage stats (§8), Appearance, La
 - **Permissions**: three sandbox modes — read-only (read-only commands such as `ls`/`cat`/`git status` only), workspace-write (default; writes still go through proposal approval and dangerous commands are blocked), and danger-full-access (not recommended for daily use). Tool rounds default to 60, range 5–200; when the limit is reached, already streamed output is kept and you can continue.
 - **Account**: username and lock-screen password (stored as SHA-256); no password means no lock. The password also encrypts the voice-assistant conversation history.
 - **Voice assistant**: the microphone button uses the browser Web Speech API for live transcription; the backend distinguishes "for the AI" from background noise and small talk and automatically drops chit-chat. The assistant name is customizable.
+
+#### Multi-tab lock semantics
+
+The lock state is coordinated between the main workspace tab and file-view tabs (`#file=…`) by three rules, instead of locking each tab independently:
+
+1. **Main unlocked ⇒ no slave locks.** When the main tab is unlocked, newly opened or refreshed slave tabs are never veiled.
+2. **Main locked ⇒ all slaves follow.** Once the main tab locks (on load, on idle timeout, or via "Lock now"), every slave tab is blurred and veiled, and the voice assistant steps back on every tab.
+3. **Unlocking a slave only unlocks that slave.** Entering the password on one slave tab removes only that tab's veil; the main tab and other slaves stay locked, and the unlock is not reported back.
+
+A `BroadcastChannel` (channel `aide-lock-v1`) runs a frontend-only leader election. Priority tuple `(role: main=0 < file=1, bootTs, tabId)` elects one **master**; `masterLocked` is writable only there. Other tabs are **slaves** and keep their own `localDismiss`. A tab's visible veil = `masterLocked && !localDismiss`.
+
+- **Idle timer lives on the master only**: `lockTimeoutSec` counts down only on the main tab. Activity on any tab throttles (≥1 s) a `ping` to the master to reset it, so reading files in a slave tab won't let the main tab time out.
+- **Joining window**: a new tab first shows a neutral "Confirming security state…" veil (~0.6 s) — it neither reveals content nor grabs the password box — before adopting the cluster's lock state.
+- **Re-election after the main tab crashes/refreshes**: a slave that hears no master heartbeat for ~3 s starts an election; the highest-priority surviving tab becomes master and inherits the cluster's last known lock state (a locked cluster stays locked rather than unlocking together).
+- **Fallback**: on browsers without `BroadcastChannel`, tabs fall back to independent locking, as in older versions.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant M as Main (master)
+  participant S1 as Slave 1
+  participant S2 as Slave 2
+  Note over S1: New slave tab joins
+  S1->>M: hello (my priority)
+  M-->>S1: welcome(masterLocked=false)
+  Note over S1: no veil (rule 1)
+  Note over M: Main locks (load / idle / manual)
+  M->>S1: lock (masterLocked=true, gen+1)
+  M->>S2: lock (masterLocked=true, gen+1)
+  Note over S1,S2: follow veil, clear localDismiss (rule 2)
+  Note over S1: enter password on slave 1
+  S1->>S1: localDismiss=true (no broadcast)
+  Note over S1: only slave 1 unveiled; M and S2 stay locked (rule 3)
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> joining
+  joining --> master: wins election / no higher-priority peer
+  joining --> slave: receives master welcome
+  master --> slave: a higher-priority peer appears
+  slave --> joining: 3 s without master heartbeat → re-elect
+  state master {
+    [*] --> unlocked
+    unlocked --> locked: requestLock (load / idle / lock now)
+    locked --> unlocked: password verified, broadcast unlock
+  }
+  state slave {
+    [*] --> followMaster
+    followMaster --> dismissed: local password unlock (localDismiss=true, no broadcast)
+    dismissed --> followMaster: master broadcasts lock again
+  }
+```
 - **Configuration backup**: export all settings to a file, or restore from a backup.
 
 ## 3. Configure models and strategies

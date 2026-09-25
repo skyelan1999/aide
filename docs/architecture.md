@@ -114,6 +114,42 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 
 `theme` 为 light/dark/system，`palette` 为 blue/green。页面 `data-theme` 是解析后的明暗，`data-theme-pref` 是用户选择，`data-palette` 是风格。专业与经典各一排三项，通过 `aideUI.setAppearance()` 一次保存组合。旧 `aide.theme` 和中间版本 classic 偏好迁移；`settings-schema.json` 侧边分区为：消耗统计(stats)/外观(appearance)/语言(language)/模型(model)/会话数据(sessions-data)/权限(permissions)/账户(account)/性格(persona)/语音(voice)/无障碍(accessibility)/备份(backup)/关于(about)。
 
+## 锁屏集群
+
+锁屏状态跨标签页（主界面 ↔ 文件查看器）联动，纯前端零后端改动，实现见 `internal/server/web/lock-cluster.js`，频道 `aide-lock-v1`。后端 `/account/verify-password` 仍无状态，只比对 SHA-256；锁屏状态不入库、不回服务端。
+
+每 tab 启动生成 `tabId`（`crypto.randomUUID` 降级）+ `bootTs`；`role` 由 `location.hash` 是否含 `#file=` 决定（`ws`/`file`）。优先级元组 `P=(role: ws=0 < file=1, bootTs, tabId)`，小者胜，**ws 主界面优先当 master**。master 是 `masterLocked` 的唯一写入点；slave 各自维护 `localDismiss`。每 tab 可见遮罩 = `masterLocked && !localDismiss`。
+
+消息协议（均带 `gen` 代际，slave 只接受 `gen` 单调递增）：
+
+| 消息 | 方向 | 语义 |
+| --- | --- | --- |
+| `hello` | 任意 → 集群 | 新 tab 加入，携带自身优先级 |
+| `welcome` | master → hello 者 | 回执当前 `masterLocked` 与 `gen`；slave 据此采用状态 |
+| `assert` | master → 集群 | 心跳（1.5s），携带 `masterLocked`；slave 续看门狗 |
+| `lock` | master → 集群 | 升锁；slave 清 `localDismiss` 并本地遮罩+语音退下 |
+| `unlock` | master → 集群 | 解锁；slave 揭遮罩（不播欢迎语、不恢复麦克风） |
+| `bye` | 任意 → 集群 | tab 关闭；slave 发现 master bye 立即重选 |
+| `election` | candidate → 集群 | 竞选；对方优先级更高则退让，否则反发 |
+| `ping` | slave → master | 活动中继（≥1s 节流），master 续空闲表 |
+| `req-lock` | slave → master | slave 点"立即锁屏"，请 master 升锁并广播 |
+
+选举：加入窗口 600ms 内无 `welcome`/`assert` 即发 `election`；收到更强优先级的 `election` 则退让等对方 `assert`，400ms 无人反超即当选 master。新当选 master 继承"最后已知集群锁态"，从未见过 master（首个 tab / 刷新主 tab）则默认锁。slave 3s 收不到心跳触发重选；`lockTimeoutSec` 只在 master 计时，任意 tab 活动经 `ping` 续表。`BroadcastChannel` 不可用时降级为各 tab 独立锁。
+
+```mermaid
+flowchart LR
+  subgraph tabs
+    A[主界面 ws<br/>master]
+    B[从界面 file<br/>slave]
+    C[从界面 file<br/>slave]
+  end
+  A -- "assert/lock/unlock 广播" --> B
+  A -- "assert/lock/unlock 广播" --> C
+  B -- "ping/req-lock 上行" --> A
+  C -- "ping/req-lock 上行" --> A
+  A -. "3s 无心跳 → election" .-> B
+```
+
 ## 验证与扩展
 
 变更前读取 [统一开发工作流](agent/WORKFLOW.md)。新前端须验证浏览器实际交互；正式发布须在没有 `/web` 挂载的构建镜像中验证 embed 资源。早期预览使用 RC5 后端 + 工作区静态文件；本次发布另行验证无静态目录覆盖的镜像。
