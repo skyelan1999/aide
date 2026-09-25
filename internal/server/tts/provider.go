@@ -76,12 +76,16 @@ func ChineseVoices() []Voice {
 	}
 }
 
-// DefaultVoice 按性别挑一个默认中文神经音。
+// DefaultVoice 按性别挑一个默认中文神经音：male→云希，neutral→晓伊，其余（female/空）→晓晓。
 func DefaultVoice(gender string) string {
-	if gender == "male" {
+	switch gender {
+	case "male":
 		return "zh-CN-YunxiNeural"
+	case "neutral":
+		return "zh-CN-XiaoyiNeural"
+	default:
+		return "zh-CN-XiaoxiaoNeural"
 	}
-	return "zh-CN-XiaoxiaoNeural"
 }
 
 // ResolveVoice 归一化音色：显式 Voice 优先；否则按 Gender 映射默认。
@@ -110,3 +114,7 @@ func NewProvider(name string, cfg Config) (TTSProvider, error) {
 
 // ErrBrowserOnly 表示该引擎只能在浏览器端跑（Web Speech），后端不提供合成。
 var ErrBrowserOnly = fmt.Errorf("该引擎由浏览器本地合成，后端不提供音频流")
+
+// ErrUnavailable 表示引擎当前不可用（连接/握手/首包超时、网络不通等），应降级浏览器 Web Speech。
+// edge 在超时类错误重试耗尽后包装返回；非超时错误（如 403 认证失败）不包装此错误。
+var ErrUnavailable = fmt.Errorf("TTS 引擎不可用")

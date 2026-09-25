@@ -29,9 +29,49 @@ const (
 	edgeUserAgent       = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0"
 	edgeOrigin          = "chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold"
 	edgeGECVersion      = "1-143.0.3650.75"
-	// firstByteTimeout 首包（第一个音频字节）超时：超过即认为 edge 不可用，供前端降级 Web Speech。
-	firstByteTimeout = 1500 * time.Millisecond
+	// edgeMaxRetries 连接/握手/首包超时后用新 ConnectionId 自动重试次数（仍失败才交上层降级）。
+	edgeMaxRetries = 1
 )
+
+// 超时分层（#42）：区分连接 / 握手 / 首包三类，避免首包稍慢即误判 edge 不可用而降级浏览器机械音。
+// 用 var 便于测试注入短超时。生产值：
+//   dialTimeout      TCP/TLS 建连 5s
+//   handshakeTimeout WSS 升级握手 5s（含本地 Sec-MS-GEC 生成，不含音频）
+//   firstByteTimeout 第一个音频字节 5s（WSS 握手 + GEC + 首次连接常超 1.5s，放宽到 5s）
+var (
+	dialTimeout      = 5 * time.Second
+	handshakeTimeout = 5 * time.Second
+	firstByteTimeout = 5000 * time.Millisecond
+)
+
+// 超时分类错误：供上层区分"瞬时抖动可重试"与"认证失败/配置错误不重试"。
+var (
+	ErrEdgeDialTimeout      = errors.New("edge-tts 连接超时")
+	ErrEdgeHandshakeTimeout = errors.New("edge-tts 握手超时")
+	ErrEdgeFirstByteTimeout = errors.New("edge-tts 首包超时")
+)
+
+// edgeDial 是建连钩子：生产用标准库 TLS Dialer；测试可替换为 net.Pipe 制造慢响应。
+var edgeDial = func(ctx context.Context, network, addr, serverName string) (net.Conn, error) {
+	d := &tls.Dialer{Config: &tls.Config{ServerName: serverName}}
+	return d.DialContext(ctx, network, addr)
+}
+
+// isDeadlineErr 判断是否超时类错误（net.Error.Timeout 或 ctx 超时）。
+func isDeadlineErr(err error) bool {
+	var ne net.Error
+	if errors.As(err, &ne) && ne.Timeout() {
+		return true
+	}
+	return errors.Is(err, context.DeadlineExceeded)
+}
+
+// isEdgeTimeout 判断是否属于可重试的超时类错误（连接/握手/首包）。
+func isEdgeTimeout(err error) bool {
+	return errors.Is(err, ErrEdgeDialTimeout) ||
+		errors.Is(err, ErrEdgeHandshakeTimeout) ||
+		errors.Is(err, ErrEdgeFirstByteTimeout)
+}
 
 // edge 是 edge-tts Provider。无状态：每次 Synth 新建一条 WSS 连接。
 type edge struct {
@@ -45,39 +85,74 @@ func (e *edge) Format() string   { return "mp3" }
 func (e *edge) Available() bool  { return true } // 联网可用性在 Synth 时探测
 
 // Synth 建立一条 edge-tts 会话并把 MP3 字节流作为 ReadCloser 返回。
-// 读取端 Close 会中断连接。
+// 读取端 Close 会中断连接。连接/握手/首包超时自动用新 ConnectionId 重试 edgeMaxRetries 次；
+// 非超时错误（如 403 认证失败）不重试，直接返回。
 func (e *edge) Synth(ctx context.Context, text string, opts SynthOpts) (io.ReadCloser, error) {
+	var lastErr error
+	for attempt := 0; attempt <= edgeMaxRetries; attempt++ {
+		first, rest, err := e.synthOnce(ctx, text, opts)
+		if err == nil {
+			return &prependReader{first: first, rest: rest}, nil
+		}
+		lastErr = err
+		// 非超时错误立即返回（不重试）；最后一次尝试的超时错误也返回。
+		if !isEdgeTimeout(err) || attempt == edgeMaxRetries {
+			break
+		}
+	}
+	// 超时类错误重试耗尽 → 包装为 ErrUnavailable，供上层降级 + 健康标记。
+	if isEdgeTimeout(lastErr) {
+		return nil, fmt.Errorf("%w: %w", ErrUnavailable, lastErr)
+	}
+	return nil, lastErr
+}
+
+// synthOnce 完成一次完整尝试：建连→握手→发 speech.config/ssml→阻塞读到第一个音频字节。
+// 成功时返回第一个音频片段 first 与后续字节流 rest；首包未在 firstByteTimeout 内到达返回 ErrEdgeFirstByteTimeout。
+func (e *edge) synthOnce(ctx context.Context, text string, opts SynthOpts) (first []byte, rest io.ReadCloser, err error) {
 	text = strings.TrimSpace(text)
 	if text == "" {
-		return nil, errors.New("合成文本为空")
+		return nil, nil, errors.New("合成文本为空")
 	}
 	endpoint := strings.TrimSpace(e.cfg.Endpoint)
 	if endpoint == "" {
 		endpoint = edgeDefaultEndpoint
 	}
 	u, err := url.Parse(endpoint)
-	if err != nil || u.Scheme != "wss" && u.Scheme != "https" {
-		return nil, fmt.Errorf("非法 TTS 端点：%s", endpoint)
+	if err != nil || (u.Scheme != "wss" && u.Scheme != "https") {
+		return nil, nil, fmt.Errorf("非法 TTS 端点：%s", endpoint)
 	}
 	if u.Scheme == "https" {
 		u.Scheme = "wss"
 	}
 	q := u.Query()
 	q.Set("TrustedClientToken", edgeClientToken)
-	q.Set("ConnectionId", randHex(16))
+	q.Set("ConnectionId", randHex(16)) // 每次尝试用新 ConnectionId
 	q.Set("Sec-MS-GEC", secMsgGEC())
 	q.Set("Sec-MS-GEC-Version", edgeGECVersion)
 	u.RawQuery = q.Encode()
 
-	dialer := &tls.Dialer{Config: &tls.Config{ServerName: u.Hostname()}}
-	conn, err := dialer.DialContext(ctx, "tcp", net.JoinHostPort(u.Hostname(), portOf(u)))
-	if err != nil {
-		return nil, fmt.Errorf("edge-tts 连接失败：%w", err)
+	// 1) TCP/TLS 建连（带独立超时）
+	dialCtx, dialCancel := context.WithTimeout(ctx, dialTimeout)
+	conn, derr := edgeDial(dialCtx, "tcp", net.JoinHostPort(u.Hostname(), portOf(u)), u.Hostname())
+	dialCancel()
+	if derr != nil {
+		if isDeadlineErr(derr) || errors.Is(derr, context.DeadlineExceeded) {
+			return nil, nil, ErrEdgeDialTimeout
+		}
+		return nil, nil, fmt.Errorf("edge-tts 连接失败：%w", derr)
 	}
-	ws, err := edgeHandshake(conn, u, "muid="+strings.ToUpper(randHex(16))+";")
-	if err != nil {
+
+	// 2) WSS 握手（带独立超时，覆盖写请求+读 101 响应）
+	_ = conn.SetDeadline(time.Now().Add(handshakeTimeout))
+	ws, herr := edgeHandshake(conn, u, "muid="+strings.ToUpper(randHex(16))+";")
+	_ = conn.SetDeadline(time.Time{})
+	if herr != nil {
 		conn.Close()
-		return nil, err
+		if isDeadlineErr(herr) {
+			return nil, nil, ErrEdgeHandshakeTimeout
+		}
+		return nil, nil, herr
 	}
 
 	voice := ResolveVoice(opts.Voice, opts.Gender)
@@ -86,34 +161,65 @@ func (e *edge) Synth(ctx context.Context, text string, opts SynthOpts) (io.ReadC
 	}
 	ssml := buildSSML(text, voice, opts)
 
-	// 1) speech.config
+	// 3) speech.config
 	configBody := `{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false","sessionEndWaitTimeout":"300ms"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}`
 	if err := ws.writeText("Path:speech.config\r\nContent-Type:application/json; charset=utf-8\r\n\r\n" + configBody); err != nil {
 		ws.Close()
-		return nil, err
+		return nil, nil, err
 	}
-	// 2) ssml
+	// 4) ssml
 	ssmlMsg := fmt.Sprintf("X-RequestId:%s\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:%s GMT\r\nPath:ssml\r\n\r\n%s",
 		randHex(16), time.Now().Format("02 Jan 2006 15:04:05"), ssml)
 	if err := ws.writeText(ssmlMsg); err != nil {
 		ws.Close()
-		return nil, err
+		return nil, nil, err
 	}
 
-	pr, pw := io.Pipe()
-	go func() {
-		err := e.pump(ctx, ws, pw)
-		pw.CloseWithError(err)
-	}()
-	return pr, nil
+	// 5) 同步读到第一个音频字节（首包超时在此判定）
+	_ = ws.setReadDeadline(time.Now().Add(firstByteTimeout))
+	for {
+		if err := ctx.Err(); err != nil {
+			ws.Close()
+			return nil, nil, err
+		}
+		opcode, payload, rerr := ws.readMessage()
+		if rerr != nil {
+			ws.Close()
+			if errors.Is(rerr, io.EOF) {
+				return nil, nil, fmt.Errorf("edge-tts 连接提前关闭")
+			}
+			if isDeadlineErr(rerr) {
+				return nil, nil, ErrEdgeFirstByteTimeout
+			}
+			return nil, nil, rerr
+		}
+		switch opcode {
+		case opText:
+			if strings.Contains(string(payload), "Path:turn.end") {
+				ws.Close()
+				return nil, nil, fmt.Errorf("edge-tts 未返回音频")
+			}
+			// turn.start / response 等元数据帧：继续等音频
+		case opBinary:
+			audio := extractAudio(payload)
+			if len(audio) == 0 {
+				continue
+			}
+			// 首包到达：取消读超时，后续帧交给 goroutine 流式写入 pipe。
+			_ = ws.setReadDeadline(time.Time{})
+			pr, pw := io.Pipe()
+			go func() {
+				err := e.pumpRest(ctx, ws, pw)
+				pw.CloseWithError(err)
+			}()
+			return audio, pr, nil
+		}
+	}
 }
 
-// pump 读取 WSS 帧，把 MP3 数据写入 pipe；turn.end 后正常关闭。
-func (e *edge) pump(ctx context.Context, ws *wsConn, pw *io.PipeWriter) error {
+// pumpRest 首包到达后继续读取 WSS 帧，把 MP3 数据写入 pipe；turn.end 后正常关闭。
+func (e *edge) pumpRest(ctx context.Context, ws *wsConn, pw *io.PipeWriter) error {
 	defer ws.Close()
-	// 首包超时：在收到第一个音频字节前用 deadline 兜底；收到后取消。
-	_ = ws.setReadDeadline(time.Now().Add(firstByteTimeout))
-	gotAudio := false
 	for {
 		select {
 		case <-ctx.Done():
@@ -132,21 +238,48 @@ func (e *edge) pump(ctx context.Context, ws *wsConn, pw *io.PipeWriter) error {
 			if strings.Contains(string(payload), "Path:turn.end") {
 				return nil
 			}
-			// turn.start / response 等元数据帧：忽略内容
 		case opBinary:
 			audio := extractAudio(payload)
 			if len(audio) == 0 {
 				continue
-			}
-			if !gotAudio {
-				gotAudio = true
-				_ = ws.setReadDeadline(time.Time{}) // 首包到达，取消超时
 			}
 			if _, err := pw.Write(audio); err != nil {
 				return err
 			}
 		}
 	}
+}
+
+// prependReader 先吐出 first（首包音频），再透传 rest（后续流），Close 时关闭 rest。
+type prependReader struct {
+	first []byte
+	rest  io.ReadCloser
+	off   int
+}
+
+func (p *prependReader) Read(b []byte) (int, error) {
+	if p.off < len(p.first) {
+		n := copy(b, p.first[p.off:])
+		p.off += n
+		return n, nil
+	}
+	return p.rest.Read(b)
+}
+
+func (p *prependReader) Close() error { return p.rest.Close() }
+
+// ProbeEdge 轻量探测 edge-tts 可用性：合成一句固定短文本。成功返回 nil，失败返回错误（含超时分类）。
+// 供 server 层做健康探测/预热；不抛出 ErrUnavailable，由调用方据错误类型决定状态。
+func ProbeEdge(ctx context.Context, cfg Config) error {
+	p := newEdge(cfg)
+	voice := ResolveVoice(cfg.Voice, cfg.Gender)
+	rc, err := p.Synth(ctx, "你好", SynthOpts{Voice: voice, Rate: 1.0})
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+	_, err = io.Copy(io.Discard, rc)
+	return err
 }
 
 // extractAudio 从 edge-tts 二进制帧取 MP3 负载：
