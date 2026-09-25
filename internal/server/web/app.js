@@ -3261,6 +3261,13 @@ async function voiceFilterOne(sentence) {
   let result = { action: 'ignore', text: sentence, reason: '' };
   try { result = await api('/voice-filter', { method: 'POST', body: JSON.stringify({ text: sentence, context: buildAideContextText() }) }); }
   catch (_) { result = { action: 'ignore', text: sentence, reason: t('甄别失败') }; }
+  if (result.action === 'locked') {
+    voiceLog('ignored', sentence, result.reason);
+    if (voice.recognition) { try { voice.recognition.onend = null; voice.recognition.stop(); } catch (_) {} }
+    $('voice-panel').classList.add('hidden');
+    toast(result.reason || t('小秘对话历史已锁定，请先在设置中解锁'));
+    return;
+  }
   if (result.action === 'send') {
     const text = (result.text || sentence).trim();
     voice.awaitingReply = true; // 标记本次由小秘语音发起，run 完成后据开关朗读回复

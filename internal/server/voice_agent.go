@@ -157,7 +157,7 @@ func (va *VoiceAgent) analyze(ctx context.Context, cfg Settings, heard, aideCtx 
 只输出一个 JSON 对象（不要 markdown 围栏、不要任何多余文字）：
 {"action":"send|ignore|standby|ask","summarized":"总结后的清晰意图（仅 send 时填写，其余为空）","ask":"单个简短追问（仅 action=ask 时填写）","reason":"一句话说明你的判断，写给用户看"}`, name, aideSection, voiceMemorySummary(mem), voiceRecentSummary(recent))
 
-	params := ProfileParams{MaxTokens: 320, Temperature: fp(0.2)}
+	params := ProfileParams{MaxTokens: 700, Temperature: fp(0.2)} // 320 在 JSON 较长时易被 length 截断导致解析失败
 	out, _, _, err := complete(ctx, cfg, []Message{
 		{Role: "system", Content: system},
 		{Role: "user", Content: "刚听到：" + heard},
@@ -203,6 +203,28 @@ func (va *VoiceAgent) analyze(ctx context.Context, cfg Settings, heard, aideCtx 
 	}
 	va.mu.Unlock()
 	return entry, nil
+}
+
+// recordFallback 在 AI 分析未能完成（模型报错/截断/未配置）时也落一条决策，
+// 保证"听到了什么、最终怎么处理"在审核时间线中不丢事件；兜底按原文发送。
+func (va *VoiceAgent) recordFallback(heard, reason string) VoiceHistoryEntry {
+	entry := VoiceHistoryEntry{
+		Time:   time.Now().Format("2006-01-02 15:04:05"),
+		Heard:  heard,
+		Action: "send",
+		Text:   heard,
+		Reason: reason,
+	}
+	va.mu.Lock()
+	if !va.encrypted || len(va.key) > 0 {
+		va.history = append(va.history, entry)
+		if len(va.history) > voiceHistoryMax {
+			va.history = va.history[len(va.history)-voiceHistoryMax:]
+		}
+		va.persistLocked()
+	}
+	va.mu.Unlock()
+	return entry
 }
 
 // historyDesc 返回倒序（最新在前）的历史副本，供设置页时间线展示。
