@@ -123,7 +123,7 @@ v1.1 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通�
 | `api.proposeWrite(rel, content)` / `api.proposeCommand(cmd)` | **只生成提案**（返回 `{proposal:{type:"file"|"command",…}}`），由 Go 侧转为待批准提案（P2 原则），模型不得宣称已写入/已执行 |
 | `api.log(...)` | 输出宿主日志 |
 
-aide 内置四个系统工具与插件工具同环：`list_files`/`read_file` 直接执行，`write_file`/`run_shell` 仅生成提案；每个阶段的模型工具循环 ≤10 轮；写文件仅允许新文件或已附加文件（P3 原则保留）。工具调用结果经 `role:"tool"` 消息回传模型继续推理。
+aide 内置系统工具与插件工具同环：`list_files`/`read_file` 直接执行；`run_shell` 在容器沙箱内实际执行并回传 stdout/stderr/退出码（受沙箱模式约束：只读模式仅放行 `ls`/`cat`/`git status` 等只读命令，工作区可写模式拦截危险命令，完全访问模式不拦截）；`write_file` 生成提案待用户批准；模型工具循环轮次在 设置→权限管理 配置，默认 60（范围 5–200）。写文件仅允许新文件或已附加文件（P3 原则保留）。工具调用结果经 `role:"tool"` 消息回传模型继续推理。
 
 ## 6. 安全模型（与 aide 既有边界一致）
 

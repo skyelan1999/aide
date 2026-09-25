@@ -2,7 +2,7 @@
 
 [简体中文](../user-guide.md) · **English**
 
-This guide covers the 0.1.6.0 RC4 functional baseline plus the subsequent language-support source change. See [Installation](installation.md) for version boundaries.
+This guide covers the 0.1.10.2 RC1 functional baseline. See [Installation](installation.md) for version boundaries.
 
 ## 1. Find your way around
 
@@ -21,6 +21,15 @@ Language switching updates product-owned text and starter prompts. It does **not
 The login screen and standalone file view also provide a language selector. UI language does not convert currencies: CNY pricing remains CNY.
 
 Under **Appearance**, select Professional or Classic, each with Light, Dark, and System modes. System appearance and browser-default language are independent settings. **About** shows the running build version and the GitHub repository.
+
+### Settings overview
+
+The settings panel is organized into sections: Usage stats (§8), Appearance, Language, Model parameters (custom profiles, §3), Archives (session export), Permissions, Account, Persona, Voice assistant, Accessibility, Configuration backup, and About. Reasoning effort (auto/off/low/medium/high) is switched in the strategy popup near the task input, not in the settings panel.
+
+- **Permissions**: three sandbox modes — read-only (read-only commands such as `ls`/`cat`/`git status` only), workspace-write (default; writes still go through proposal approval and dangerous commands are blocked), and danger-full-access (not recommended for daily use). Tool rounds default to 60, range 5–200; when the limit is reached, already streamed output is kept and you can continue.
+- **Account**: username and lock-screen password (stored as SHA-256); no password means no lock. The password also encrypts the voice-assistant conversation history.
+- **Voice assistant**: the microphone button uses the browser Web Speech API for live transcription; the backend distinguishes "for the AI" from background noise and small talk and automatically drops chit-chat. The assistant name is customizable.
+- **Configuration backup**: export all settings to a file, or restore from a backup.
 
 ## 3. Configure models and strategies
 
@@ -50,7 +59,7 @@ Select **Attach to task** to include saved text in the next request (up to eight
 
 **Chat** is useful for explanation and analysis. **AI workflow** runs Plan → Propose → Review. Inspect proposed file contents and the review before applying changes. Existing-file proposals require a matching attachment snapshot. Applying files is not proof that tests passed.
 
-Built-in read tools execute directly. Write and shell tools create proposals. Suggested commands are not executed automatically: insert a command into the panel, inspect it, then run it. Each command has a separate non-interactive shell, a time limit, output/exit-code reporting, and cancellation. There is no persistent `cd`, PTY, or interactive terminal application support.
+Built-in read tools and `run_shell` execute directly: shell commands run in a separate non-interactive sandbox shell with a time limit, output/exit-code reporting, and cancellation (a read-only sandbox allows only read-only commands; dangerous commands are blocked in workspace-write mode). `write_file` creates a proposal for approval. In AI workflow mode, suggested test commands are not executed automatically—insert them into the panel, inspect, then run. There is no persistent `cd`, PTY, or interactive terminal application support.
 
 Plugins are trusted Node code and do not gain an independent security sandbox from this proposal workflow.
 

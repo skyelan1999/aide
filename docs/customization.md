@@ -40,7 +40,7 @@ python3 scripts/agent-route.py prompt codex  # 可换 claude/deepseek/doubao/wor
 | API、来源与工作流 | internal/server | 权限、并发、持久化、取消与重启 |
 | 运行工具链 | Dockerfile | 目标架构、非 root、健康检查和镜像重建 |
 
-配置和插件可以复用现有能力；完整 MCP、PTY、流式输出等缺失能力仍需实现，不能因为登记了来源就宣称接入成功。插件执行可信代码，不提供独立安全沙箱。
+配置和插件可以复用现有能力；完整 MCP 协议调用、PTY 交互式终端等缺失能力仍需实现，不能因为登记了来源就宣称接入成功。插件执行可信代码，不提供独立安全沙箱。
 
 ## 交付与升级
 
