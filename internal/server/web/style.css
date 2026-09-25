@@ -576,9 +576,14 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .account-control .account-actions .quiet { padding: 7px 14px; font-size: 12px; }
 
 .runtime-card{position:relative;overflow:hidden}
-.runtime-lock-overlay{position:absolute;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s ease;z-index:2;border-radius:inherit}
-.runtime-lock-overlay span{color:#fff;font-size:11px;font-weight:500;letter-spacing:.3px}
-.runtime-card.lock-enabled:hover .runtime-lock-overlay{opacity:1;pointer-events:auto;cursor:pointer}
+.runtime-lock-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;z-index:3;border-radius:inherit;background:linear-gradient(135deg,rgba(21,96,238,.94),rgba(11,52,175,.95));backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);transition:opacity .24s cubic-bezier(.22,1,.36,1);outline:none}
+.runtime-card.lock-enabled:hover .runtime-lock-overlay,.runtime-lock-overlay:focus-visible{opacity:1;pointer-events:auto;cursor:pointer}
+.rlo-inner{display:flex;align-items:center;gap:7px;color:#fff;transform:translateY(3px);transition:transform .26s cubic-bezier(.22,1,.36,1)}
+.runtime-card.lock-enabled:hover .rlo-inner{transform:translateY(0)}
+.rlo-icon{display:grid;place-items:center;width:21px;height:21px;border-radius:50%;background:rgba(255,255,255,.17);border:1px solid rgba(255,255,255,.3);color:#fff;transition:background .2s ease,transform .2s cubic-bezier(.22,1,.36,1)}
+.rlo-icon svg{width:11px;height:11px;display:block}
+.runtime-card.lock-enabled:hover .rlo-icon{background:rgba(255,255,255,.3);transform:scale(1.06)}
+.rlo-text{font-size:11px;font-weight:600;letter-spacing:.4px}
 
 /* ── 人格切换卡片 ─────────────────────────── */
 .persona-switch-list{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0;}
