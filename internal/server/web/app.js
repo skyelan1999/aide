@@ -2434,52 +2434,100 @@ function setupImagePreview(container, filePath, root, source) {
 }
 
 /* STL 3D 模型预览器：Three.js + STLLoader + OrbitControls */
-function setupStlPreview(container, filePath, root, source) {
+/* 动态确保 vendor 脚本加载（兜底 defer 未生效 / 缓存失败） */
+function ensureVendorScript(src, check) {
+  return new Promise((resolve, reject) => {
+    if (check()) return resolve();
+    const sc = document.createElement('script');
+    sc.src = src; sc.async = false;
+    sc.onload = () => (check() ? resolve() : reject(new Error(src + ' 加载后仍不可用')));
+    sc.onerror = () => reject(new Error('无法加载 ' + src));
+    document.head.appendChild(sc);
+  });
+}
+async function ensureThreeStack() {
+  await ensureVendorScript('/vendor/three.min.js', () => typeof THREE !== 'undefined');
+  await ensureVendorScript('/vendor/STLLoader.js', () => typeof THREE !== 'undefined' && !!THREE.STLLoader);
+  await ensureVendorScript('/vendor/OrbitControls.js', () => typeof THREE !== 'undefined' && !!THREE.OrbitControls);
+}
+/* 探测可用 WebGL 上下文（允许软件渲染降级），返回类型名或 null */
+function detectWebGLContext() {
+  const c = document.createElement('canvas');
+  const opts = { failIfMajorPerformanceCaveat: false, antialias: true };
+  for (const ty of ['webgl2', 'webgl', 'experimental-webgl']) {
+    try { if (c.getContext(ty, opts)) return ty; } catch (e) {}
+  }
+  return null;
+}
+/* STL 3D 模型预览器：Three.js + STLLoader + OrbitControls */
+async function setupStlPreview(container, filePath, root, source) {
   container.innerHTML = '';
-  if (typeof THREE === 'undefined' || !THREE.STLLoader) {
-    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">Three.js 未加载，无法预览 3D 模型</div>';
+  const loading = el('div', 'stl-loading', t('正在加载 3D 预览组件…'));
+  loading.style.cssText = 'padding:40px;text-align:center;color:var(--text-dim)';
+  container.append(loading);
+
+  let glType = null;
+  try {
+    await ensureThreeStack();
+    glType = detectWebGLContext();
+  } catch (e) {
+    loading.remove();
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">3D ' + t('预览组件加载失败：') + escapeHtml(e.message) + '</div>';
     return;
   }
+
+  const token = state.token || (state.config && state.config.accessToken) || '';
+  const qp = new URLSearchParams();
+  qp.set('path', filePath);
+  if (source) qp.set('source', source); else qp.set('root', root || 'workspace');
+  if (token) qp.set('access_token', token);
+  const rawUrl = '/api/file/raw?' + qp.toString();
+
+  if (!glType) {
+    loading.remove();
+    const box = el('div', 'stl-nowebgl');
+    box.style.cssText = 'padding:36px 32px;text-align:center;';
+    box.innerHTML =
+      '<div style="font-size:14px;font-weight:600;color:var(--warn);margin-bottom:8px;">' + t('当前浏览器未启用 WebGL，无法渲染 3D 模型') + '</div>' +
+      '<div style="font-size:12px;color:var(--text-dim);margin-bottom:18px;line-height:1.7;">' + t('可改用系统浏览器打开，或在浏览器设置中开启硬件加速（GPU）。') + '</div>';
+    const dl = el('a', 'stl-download', t('下载该 STL 文件'));
+    dl.href = rawUrl;
+    box.append(dl);
+    container.append(box);
+    return;
+  }
+
   const viewer = el('div', 'stl-viewer');
   const toolbar = el('div', 'stl-toolbar');
   const info = el('span', 'stl-info', filePath.split('/').pop());
-  const meta = el('span', 'stl-meta', '加载中…');
-  const btnReset = el('button', 'stl-ctrl', '重置视角');
+  const meta = el('span', 'stl-meta', t('加载中…'));
+  const btnReset = el('button', 'stl-ctrl', t('重置视角'));
   const btnClose = el('button', 'stl-ctrl', '✕');
   toolbar.append(info, meta, btnReset, btnClose);
   const canvasWrap = el('div', 'stl-canvas');
   viewer.append(toolbar, canvasWrap);
+  loading.remove();
   container.append(viewer);
   btnClose.onclick = () => {
     const dlg = container.closest('dialog');
     if (dlg) dlg.close();
     else if (document.body.classList.contains('file-view-mode')) history.back();
   };
-  try {
-    const testC = document.createElement('canvas');
-    if (!testC.getContext('webgl') && !testC.getContext('experimental-webgl')) {
-      canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">当前浏览器不支持 WebGL</div>';
-      meta.textContent = 'WebGL 不可用'; return;
-    }
-  } catch (e) { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">WebGL 检测失败</div>'; return; }
+
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x1a1a2e);
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 10000);
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({ antialias: true, failIfMajorPerformanceCaveat: false });
   renderer.setPixelRatio(window.devicePixelRatio);
   canvasWrap.appendChild(renderer.domElement);
   scene.add(new THREE.AmbientLight(0xffffff, 0.5));
-  const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(5, 10, 7); scene.add(dl);
+  const dl1 = new THREE.DirectionalLight(0xffffff, 0.8); dl1.position.set(5, 10, 7); scene.add(dl1);
   const dl2 = new THREE.DirectionalLight(0xffffff, 0.3); dl2.position.set(-5, -3, -5); scene.add(dl2);
   const grid = new THREE.GridHelper(20, 20, 0x444466, 0x333355); scene.add(grid);
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; controls.dampingFactor = 0.08;
-  const token = state.token || (state.config && state.config.accessToken) || '';
-  const params = new URLSearchParams();
-  params.set('path', filePath);
-  if (source) params.set('source', source); else params.set('root', root || 'workspace');
-  if (token) params.set('access_token', token);
-  fetch('/api/file/raw?' + params.toString()).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+
+  fetch(rawUrl).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
     .then(buf => {
       const geometry = new THREE.STLLoader().parse(buf);
       geometry.computeVertexNormals(); geometry.computeBoundingBox();
@@ -2493,12 +2541,12 @@ function setupStlPreview(container, filePath, root, source) {
       camera.position.set(camDist, camDist * 0.7, camDist);
       camera.near = camDist / 100; camera.far = camDist * 100; camera.updateProjectionMatrix();
       controls.target.set(0, 0, 0); controls.update();
-      meta.textContent = Math.round(geometry.attributes.position.count / 3) + ' 三角面 · ' + size.x.toFixed(2) + '×' + size.y.toFixed(2) + '×' + size.z.toFixed(2);
+      meta.textContent = Math.round(geometry.attributes.position.count / 3) + ' ' + t('三角面') + ' · ' + size.x.toFixed(2) + '×' + size.y.toFixed(2) + '×' + size.z.toFixed(2);
       btnReset.onclick = () => { camera.position.set(camDist, camDist * 0.7, camDist); controls.target.set(0, 0, 0); controls.update(); };
       (function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
       const resize = () => { const w = canvasWrap.clientWidth, h = canvasWrap.clientHeight; if (w > 0 && h > 0) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); } };
       resize(); new ResizeObserver(resize).observe(canvasWrap);
-    }).catch(err => { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">STL 加载失败: ' + err.message + '</div>'; meta.textContent = '解析失败'; });
+    }).catch(err => { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">' + t('STL 加载失败：') + escapeHtml(err.message) + '</div>'; meta.textContent = t('解析失败'); });
 }
 function renderMarkdown(src, live, basePath) {
   if (window.marked && typeof window.marked.parse === 'function') {
