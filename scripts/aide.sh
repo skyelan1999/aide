@@ -24,14 +24,15 @@ case "${1:-start}" in
       fi
       "$DOCKER_BIN" compose up -d --build --pull never
     fi
-    for attempt in {1..60}; do if "$DOCKER_BIN" compose exec -T aide curl -fsS http://127.0.0.1:8080/healthz >/dev/null 2>&1; then break; fi; sleep 1; done
-    "$DOCKER_BIN" compose exec -T aide curl -fsS http://127.0.0.1:8080/healthz >/dev/null
+    for attempt in {1..60}; do if "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null 2>&1; then break; fi; sleep 1; done
+    "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null
     ADDRESS="$("$DOCKER_BIN" compose port aide 8080)"
+    HOSTPORT="${ADDRESS##*:}"
     TOKEN="$("$DOCKER_BIN" compose exec -T aide cat /data/access-token)"
-    echo "aide 已就绪：http://$ADDRESS"
-    if [[ "$(uname -s)" == Darwin ]]; then open "http://$ADDRESS/#token=$TOKEN";
-    elif command -v xdg-open >/dev/null; then xdg-open "http://$ADDRESS/#token=$TOKEN";
-    else echo "在浏览器打开地址，并使用容器 /data/access-token 中的令牌登录。"; fi
+    echo "aide 已就绪：https://$ADDRESS （自签证书，浏览器告警请选 继续/高级→仍要访问）"
+    if [[ "$(uname -s)" == Darwin ]]; then open "https://localhost:$HOSTPORT/#token=$TOKEN";
+    elif command -v xdg-open >/dev/null; then xdg-open "https://localhost:$HOSTPORT/#token=$TOKEN";
+    else echo "在浏览器打开 https://localhost:$HOSTPORT ，并使用容器 /data/access-token 中的令牌登录；自签证书浏览器会告警，选择继续。"; fi
     ;;
   stop) "$DOCKER_BIN" compose stop ;;
   status) "$DOCKER_BIN" compose ps ;;

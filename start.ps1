@@ -29,13 +29,13 @@ docker compose up -d --build --pull never
 Write-Host "等待健康检查…"
 $ready = $false
 for ($i = 0; $i -lt 60; $i++) {
-    docker compose exec -T aide curl -fsS http://127.0.0.1:8080/healthz 2>$null | Out-Null
+    docker compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz 2>$null | Out-Null
     if ($?) { $ready = $true; break }
     Start-Sleep -Seconds 1
 }
 if (-not $ready) { Write-Warning "健康检查未通过，请用 'docker compose logs aide' 排查。" }
 
 $Token = (docker compose exec -T aide cat /data/access-token 2>$null | Out-String).Trim()
-$Url = "http://localhost:$Port/#token=$Token"
-Write-Host "aide 已就绪：$Url"
+$Url = "https://localhost:$Port/#token=$Token"
+Write-Host "aide 已就绪：$Url （自签证书，浏览器告警请选 继续/高级→仍要访问）"
 Start-Process $Url

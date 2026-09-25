@@ -64,7 +64,7 @@ docker load -i docker-images/aide-0.1.10.2-RC1-linux-aarch64.tar.gz
 #   AI_BASE_URL=http://<局域网模型地址>
 #   AIDE_WEBSEARCH_URL=        # 留空：web_search 离线降级
 bash scripts/aide.sh start-image          # = --no-build --pull never，绝不 build/pull
-curl -fsS http://127.0.0.1:8097/healthz   # 健康检查
+curl -fsSk https://127.0.0.1:8097/healthz   # 健康检查（-k 跳过自签证书校验）
 ```
 
 离线行为说明：
@@ -106,7 +106,9 @@ AIDE_LOCAL_ROOT=/absolute/path/to/projects
 
 ## 5. 登录与连接模型
 
-macOS 脚本自动打开带本地登录令牌的浏览器；Linux 有 xdg-open 时同样处理。无桌面时访问 http://127.0.0.1:8097，在本机终端运行 `docker compose exec -T aide cat /data/access-token`，复制令牌到登录框。不要把令牌或带令牌的 URL 分享出去。
+macOS 脚本自动打开带本地登录令牌的浏览器；Linux 有 xdg-open 时同样处理。无桌面时访问 `https://localhost:8097`，在本机终端运行 `docker compose exec -T aide cat /data/access-token`，复制令牌到登录框。不要把令牌或带令牌的 URL 分享出去。
+
+> aide 自 0.1.11 起主端口走 **HTTPS**：首次启动自动在数据目录生成仅本机回环可用的自签证书，浏览器会提示"连接不是私密连接"，点 **高级 → 继续前往 localhost** 即可（例外对本机这张证书长期有效）。请用 `localhost` 而非 `127.0.0.1` 打开，WebAuthn / Touch ID 的 RP ID 不支持 IP 字面量。命令行健康检查用 `curl -k https://...` 跳过自签校验。离线环境证书本地生成，不受影响。详见 [安全：HTTPS/TLS 入口加固](security/tls.md)。
 
 然后在模型设置填写 Base URL、API Key 和模型 ID。安装不会调用模型；模型费用取决于提供商。先用非敏感问题测试连接，再打开实际资料。
 

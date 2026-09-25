@@ -12,6 +12,8 @@ services:
         AIDE_VERSION: ${AIDE_VERSION:-dev}
         AIDE_COMMIT: ${AIDE_COMMIT:-unknown}
     ports:
+      # 容器内 8080 现为 HTTPS（自签证书自动生成）；宿主机仅回环绑定。
+      # 8081 明文跳转端口不向宿主机暴露，用户直接用 https://localhost:${AIDE_PORT} 访问。
       - "127.0.0.1:${AIDE_PORT:-8097}:8080"
     environment:
       AI_BASE_URL: ${AI_BASE_URL:-https://api.deepseek.com}

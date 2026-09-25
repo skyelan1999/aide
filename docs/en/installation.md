@@ -73,7 +73,7 @@ docker load -i docker-images/aide-0.1.10.2-RC1-linux-aarch64.tar.gz
 #   AI_BASE_URL=http://<lan-model-address>
 #   AIDE_WEBSEARCH_URL=        # leave empty: web_search degrades offline
 bash scripts/aide.sh start-image           # = --no-build --pull never; never builds/pulls
-curl -fsS http://127.0.0.1:8097/healthz    # health check
+curl -fsSk https://127.0.0.1:8097/healthz    # health check (-k skips self-signed cert)
 ```
 
 Offline behavior notes:
@@ -117,13 +117,15 @@ The workspace and local roots are writable. References mounted at `/context` are
 
 ## 5. Sign in and connect a model
 
-Open `http://127.0.0.1:8097`. macOS opens a token-authenticated URL automatically; Linux uses xdg-open when available. Without a desktop opener, retrieve the token locally:
+Open `https://localhost:8097`. macOS opens a token-authenticated URL automatically; Linux uses xdg-open when available. Without a desktop opener, retrieve the token locally:
 
 ```bash
 docker compose exec -T aide cat /data/access-token
 ```
 
 Paste it into the login form. Never share the token or token-bearing URL. This is not your model API key.
+
+> Since 0.1.11 the main port is **HTTPS**: on first start a loopback-only self-signed certificate is generated in the data directory. The browser warns "your connection is not private" — click **Advanced → Proceed to localhost**. Use `localhost` rather than `127.0.0.1` (the WebAuthn RP ID does not allow IP literals). For CLI checks use `curl -k https://...`. Offline installs are unaffected (the cert is generated locally). See [Security: HTTPS/TLS entry hardening](../security/tls.md).
 
 Open **Model settings**, set a Base URL, model ID, and provider key. Installation makes no model calls. Test with a non-sensitive prompt before using private material. In a language-enabled build, change the interface using the login selector or **Settings → Language**.
 
