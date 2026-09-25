@@ -630,8 +630,9 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		AccessibilityAutoRead *bool `json:"accessibilityAutoRead,omitempty"`
 		VoiceReplyGender    string `json:"voiceReplyGender,omitempty"`
 		// 账户：外层同名字段覆盖内嵌 Settings（与 VoiceReplyEnabled 同模式），以便区分"未传"与"传空/0"
-		UserName       string `json:"userName,omitempty"`
-		LockTimeoutSec *int   `json:"lockTimeoutSec,omitempty"`
+		UserName         string  `json:"userName,omitempty"`
+		LockTimeoutSec   *int    `json:"lockTimeoutSec,omitempty"`
+		VoiceInputDevice *string `json:"voiceInputDevice,omitempty"`
 		OldPassword    string `json:"oldPassword,omitempty"`
 		NewPassword    string `json:"newPassword,omitempty"`
 	}
@@ -698,6 +699,23 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		in.Settings.LockTimeoutSec = a.settings.LockTimeoutSec
 	}
 	in.Settings.UserPasswordHash = a.settings.UserPasswordHash
+	// 局部 PUT（仅改某一项）不携带以下字段，未传一律保留已存值，避免性格启用态/沙箱/轮次/设备被静默重置。
+	in.Settings.Personalities = a.settings.Personalities
+	in.Settings.PersonaCipher = a.settings.PersonaCipher
+	if in.Settings.SandboxMode == "" {
+		in.Settings.SandboxMode = a.settings.SandboxMode
+	}
+	if in.Settings.ToolMaxRounds == 0 {
+		in.Settings.ToolMaxRounds = a.settings.ToolMaxRounds
+	}
+	if in.Settings.ShellTimeout == 0 {
+		in.Settings.ShellTimeout = a.settings.ShellTimeout
+	}
+	if in.VoiceInputDevice != nil {
+		in.Settings.VoiceInputDevice = *in.VoiceInputDevice // 显式传空=切回系统默认
+	} else {
+		in.Settings.VoiceInputDevice = a.settings.VoiceInputDevice
+	}
 	u, err := url.Parse(in.BaseURL)
 	if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
 		fail(w, 400, errors.New("请输入有效的 HTTP(S) API Base URL"))
