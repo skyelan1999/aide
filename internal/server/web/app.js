@@ -3365,6 +3365,173 @@ function voiceReleaseMicStream() {
 }
 $('voice-btn').onclick = action(() => { voice.listening ? voiceStopAndFlush() : voiceStart(); });
 $('voice-stop').onclick = action(voiceStopAndFlush);
+// ===== 小秘语音导览：朗读 AI 输出并自动滚动跟随；讲方案时先打开产物文件再讲解 =====
+const narration = { active:false, steps:[], index:0, paused:false, cancelled:false, jump:0 };
+function narrSleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+function stripMarkdownForSpeech(src){
+  let s = String(src||'');
+  s = s.replace(/```mermaid[\s\S]*?```/gi, '，流程图如下，');
+  s = s.replace(/```[a-zA-Z]*[\s\S]*?```/g, '，相关代码见屏幕，');
+  s = s.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
+  s = s.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
+  s = s.replace(/^\s{0,3}#{1,6}\s*/gm, '');
+  s = s.replace(/^\s*> ?/gm, '');
+  s = s.replace(/[*_~|`]/g, '');
+  s = s.replace(/^\s*[-+]\s+/gm, '');
+  s = s.replace(/<\/?[a-zA-Z][^>]*>/g, '');
+  s = s.replace(/[ \t]+\n/g,'\n').replace(/\n{2,}/g,'。').replace(/\n/g,'，');
+  return s.replace(/，{2,}/g,'，').replace(/。{2,}/g,'。').replace(/\s+/g,' ');
+}
+function toolPathOf(tu){
+  try { const a = JSON.parse(tu.args||'{}'); return { path:a.path, source:a.source, root:a.root }; }
+  catch(_){ return { path:'' }; }
+}
+function buildNarrationSteps(){
+  const s = state.session; const steps=[];
+  if(!s) return steps;
+  for(const run of (s.runs||[])){
+    let md='';
+    for(const st of (run.steps||[])) if(st.content) md += st.content+'\n';
+    const text = stripMarkdownForSpeech(md).trim();
+    const opened = new Set();
+    for(const tu of (run.toolUses||[])){
+      if(/create_diagram|write_file/.test(tu.tool||'')){
+        const p = toolPathOf(tu);
+        if(p.path && !opened.has(p.path)){ opened.add(p.path); steps.push({kind:'openFile', path:p.path, source:p.source||'', root:p.root||'workspace'}); }
+      }
+    }
+    if(text) steps.push({kind:'speak', runId:run.id, text:text.slice(0,4000)});
+  }
+  return steps;
+}
+function narrationGate(){
+  return new Promise(res=>{
+    (function chk(){
+      if(narration.cancelled) return res();
+      if(!narration.paused) return res();
+      setTimeout(chk,180);
+    })();
+  });
+}
+function speakAwait(text){
+  return new Promise(resolve=>{
+    if(!('speechSynthesis' in window)){ narrSleep(500).then(res); return; }
+    const segs = ttsSegments(text);
+    if(!segs.length) return res();
+    const synth = window.speechSynthesis; synth.cancel();
+    const vc = pickVoiceForGender(state.config && state.config.voiceReplyGender);
+    const isMale = (state.config && state.config.voiceReplyGender)==='male';
+    const basePitch = isMale?0.99:1.1, baseRate=1.04;
+    let i=0;
+    function step(){
+      if(narration.cancelled){ try{synth.cancel();}catch(_){} return res(); }
+      if(i>=segs.length) return res();
+      const seg=segs[i];
+      const u=new SpeechSynthesisUtterance(seg);
+      u.lang='zh-CN'; if(vc)u.voice=vc;
+      const ask=/[?？]\s*$/.test(seg), ex=/[!！]\s*$/.test(seg), clause=/[，,、；;：:]\s*$/.test(seg);
+      u.pitch=ask?basePitch+0.14:ex?basePitch+0.06:basePitch;
+      u.rate=ex?baseRate+0.07:ask?baseRate-0.04:baseRate;
+      u.onend=()=>{ const pause=ask?200:clause?95:175; i++; setTimeout(next,pause); };
+      u.onerror=()=>{ i++; next(); };
+      synth.speak(u);
+    }
+    function next(){
+      if(narration.cancelled){ try{synth.cancel();}catch(_){} return res(); }
+      if(narration.paused){
+        try{ synth.pause(); }catch(_){}
+        (function w(){
+          if(narration.cancelled){ try{synth.cancel();}catch(_){} return res(); }
+          if(narration.paused) return setTimeout(w,180);
+          try{ synth.resume(); }catch(_){}
+          step();
+        })();
+        return;
+      }
+      step();
+    }
+    next();
+  });
+}
+async function focusRunInChat(runId){
+  if($('editor-dialog').open){ try{ $('editor-dialog').close(); }catch(_){} await narrSleep(260); }
+  document.querySelectorAll('.narration-highlight').forEach(x=>x.classList.remove('narration-highlight'));
+  const art = document.querySelector('article.run[data-run="'+CSS.escape(runId)+'"]');
+  if(art){
+    art.classList.add('narration-highlight');
+    art.scrollIntoView({behavior:'smooth', block:'center'});
+    await narrSleep(480);
+  } else {
+    $('conversation').scrollTo({top:$('conversation').scrollHeight, behavior:'smooth'});
+  }
+}
+async function doOpenForNarration(st){
+  state.root = st.root || 'workspace';
+  state.source = st.source || '';
+  try{ await openFile(st.path); }
+  catch(e){ toast(t('打开文件失败：')+st.path); }
+  await narrSleep(650);
+}
+function updateNarrationBar(){
+  $('narr-progress').textContent = (narration.index+1)+' / '+narration.steps.length;
+  $('narr-play').textContent = narration.paused ? '▶' : '❚❚';
+}
+function showNarrationBar(){ $('narration-bar').classList.remove('hidden'); }
+function hideNarrationBar(){ $('narration-bar').classList.add('hidden'); }
+async function startNarration(){
+  if(narration.active) return;
+  const steps = buildNarrationSteps();
+  if(!steps.length){ toast(t('当前会话暂无可讲解的内容')); return; }
+  narration.active=true;
+  Object.assign(narration,{steps,index:0,paused:false,cancelled:false,jump:0});
+  $('voice-panel').classList.remove('hidden');
+  showNarrationBar(); updateNarrationBar();
+  await runLoop(0);
+}
+async function runLoop(from){
+  let i=from;
+  while(i<narration.steps.length){
+    narration.index=i; updateNarrationBar();
+    await narrationGate();
+    if(narration.cancelled) break;
+    const st=narration.steps[i];
+    if(st.kind==='openFile'){ await doOpenForNarration(st); await narrSleep(450); }
+    else { await focusRunInChat(st.runId); await narrationGate(); if(narration.cancelled)break; await speakAwait(st.text); }
+    if(narration.cancelled) break;
+    if(narration.jump){ i=narration.jump; narration.jump=0; continue; }
+    i++;
+  }
+  endNarration();
+}
+function endNarration(){
+  narration.active=false; narration.paused=false; narration.jump=0;
+  ttsCancel();
+  document.querySelectorAll('.narration-highlight').forEach(x=>x.classList.remove('narration-highlight'));
+  if($('editor-dialog').open){ try{ $('editor-dialog').close(); }catch(_){} }
+  hideNarrationBar();
+  if(!voice.listening) $('voice-panel').classList.add('hidden');
+}
+function narrationJump(d){
+  if(!narration.active) return;
+  const t=Math.max(0,Math.min(narration.steps.length-1, narration.index+d));
+  narration.paused=false; narration.jump=t;
+  try{ window.speechSynthesis.resume(); }catch(_){}
+  ttsCancel();
+}
+$('voice-narrate').onclick = action(startNarration);
+$('narr-play').onclick = action(()=>{
+  if(!narration.active) return;
+  narration.paused = !narration.paused;
+  try{ narration.paused ? window.speechSynthesis.pause() : window.speechSynthesis.resume(); }catch(_){}
+  updateNarrationBar();
+});
+$('narr-prev').onclick = action(()=>narrationJump(-1));
+$('narr-next').onclick = action(()=>narrationJump(1));
+$('narr-stop').onclick = action(()=>{
+  narration.cancelled=true; narration.paused=false; narration.jump=0;
+  try{ window.speechSynthesis.resume(); }catch(_){}
+  ttsCancel();
+});
 
 // 设置面板：语音小秘名字输入
 function renderVoiceNameControl() {
