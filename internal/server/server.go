@@ -174,6 +174,7 @@ type App struct {
 	bgCtx                   context.Context
 	bgCancel                context.CancelFunc
 	bgWg                    sync.WaitGroup // fire-and-forget 后台 goroutine（标题总结等）追踪，Close 时等待
+	webAuthn                *webAuthnManager // Touch ID / WebAuthn 解锁管理器
 }
 
 // Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
@@ -345,6 +346,7 @@ func New(work, reference, data string) (*App, error) {
 		a.settings.VoiceReplyGender = "female"
 	}
 	a.voiceAgent = newVoiceAgent(data)
+	a.webAuthn = newWebAuthnManager(data) // Touch ID / WebAuthn 解锁
 	if a.settings.Models != nil {
 		normalized, err := normalizeModels(a.settings.Models)
 		if err != nil {
@@ -586,6 +588,13 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("POST /api/voice-history/change-password", a.voiceHistoryChangePassword)
 	mux.HandleFunc("POST /api/voice-history/disable", a.voiceHistoryDisable)
 	mux.HandleFunc("POST /api/account/verify-password", a.accountVerifyPassword)
+	mux.HandleFunc("POST /api/webauthn/register/start", a.webAuthnRegisterStart)
+	mux.HandleFunc("POST /api/webauthn/register/finish", a.webAuthnRegisterFinish)
+	mux.HandleFunc("GET /api/webauthn/credentials", a.webAuthnListCredentials)
+	mux.HandleFunc("PUT /api/webauthn/credentials/{id}", a.webAuthnRenameCredential)
+	mux.HandleFunc("DELETE /api/webauthn/credentials/{id}", a.webAuthnDeleteCredential)
+	mux.HandleFunc("POST /api/webauthn/assertion/start", a.webAuthnAssertionStart)
+	mux.HandleFunc("POST /api/webauthn/assertion/finish", a.webAuthnAssertionFinish)
 	web, _ := fs.Sub(assets, "web")
 	mux.Handle("/", http.FileServer(http.FS(web)))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -622,7 +631,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "hasPassword": a.settings.UserPasswordHash != "", "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.settings.APIKey != "", "models": a.settings.Models, "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "hasPassword": a.settings.UserPasswordHash != "", "webAuthnReady": a.webAuthn.enabled(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {

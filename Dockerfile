@@ -13,14 +13,17 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 FROM toolchain AS build
 WORKDIR /src
+ENV GOPROXY=https://goproxy.cn,direct GOSUMDB=sum.golang.google.cn
 COPY go.mod ./
+COPY go.sum ./
+COPY vendor ./vendor
 COPY cmd ./cmd
 COPY internal ./internal
 # R09：构建期身份（版本/commit）经 ldflags 注入；版本格式与 version.md 一致（如 0.1.5.0 RC5）
 ARG AIDE_VERSION=dev
 ARG AIDE_COMMIT=unknown
 RUN --mount=type=cache,target=/root/.cache/go-build \
-    go test ./... && go vet ./... && CGO_ENABLED=0 go build -trimpath \
+    go test -mod=vendor ./... && go vet -mod=vendor ./... && CGO_ENABLED=0 go build -mod=vendor -trimpath \
     -ldflags "-s -w -X 'aide/internal/server.buildVersion=${AIDE_VERSION}' -X 'aide/internal/server.buildCommit=${AIDE_COMMIT}'" \
     -o /usr/local/bin/aide ./cmd/aide
 

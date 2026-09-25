@@ -607,6 +607,24 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .lock-card .primary { padding: 9px 16px; font-size: 13px; border: none; border-radius: 9px; cursor: pointer; }
 .lock-hint { font-size: 11px; color: var(--muted); margin: 14px 0 0; }
 #lock-error { color: var(--danger); font-size: 12px; min-height: 16px; margin: 8px 0 0; }
+.touchid-btn {
+  display: block; width: 100%; margin: 10px 0 0; padding: 10px;
+  font-size: 13px; cursor: pointer; border-radius: 9px;
+  background: var(--field); color: var(--text);
+  border: 1px solid var(--field-border);
+}
+.touchid-btn:hover { border-color: var(--accent, #4f8ef7); }
+.touchid-btn[hidden] { display: none; }
+.touchid-hint { font-size: 11px; color: var(--muted); margin: 6px 0 0; text-align: center; }
+.touchid-hint[hidden] { display: none; }
+.lock-screen.joining .touchid-btn,
+.lock-screen.joining .touchid-hint { display: none; }
+/* WebAuthn 凭证管理列表 */
+.wa-cred-list { margin: 8px 0; }
+.wa-cred-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--field-border); }
+.wa-cred-item:last-child { border-bottom: none; }
+.wa-cred-name { flex: 1; font-size: 12px; }
+.wa-cred-meta { font-size: 10px; color: var(--muted); }
 /* 加入窗口期中性态：不露内容、不抢密码框 */
 .lock-screen.joining form,
 .lock-screen.joining .lock-hint,

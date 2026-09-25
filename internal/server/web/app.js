@@ -517,6 +517,62 @@ function toolSummaryBrief(use) {
   } catch (error) { /* 非 JSON 参数直接忽略 */ }
   return '';
 }
+function toolIconSVG(tool) {
+  const p = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
+  if (tool === 'run_shell') return p + '<path d="M4 17l6-5-6-5"/><path d="M12 19h8"/></svg>';
+  if (tool === 'read_file') return p + '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M9 12h6M9 16h4"/></svg>';
+  if (tool === 'list_files') return p + '<path d="M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>';
+  if (tool === 'write_file' || tool === 'edit_file') return p + '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  if (tool === 'web_search') return p + '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>';
+  return p + '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>';
+}
+function toolDisplayName(tool) {
+  const map = { read_file: '读取文件', list_files: '列出文件', run_shell: '执行命令', write_file: '写入文件', edit_file: '编辑文件', web_search: '在线搜索', search_text: '搜索资料' };
+  return map[tool] || tool;
+}
+function toolArgText(use) {
+  try {
+    const a = JSON.parse(use.args || '{}');
+    if (use.tool === 'run_shell') return a.command || '';
+    if (a.path) return (a.source ? '[' + a.source + '] ' : '') + a.path;
+    if (a.query) return a.query;
+    if (a.url) return a.url;
+    const v = Object.values(a).find(x => typeof x === 'string');
+    return v || '';
+  } catch (e) { return ''; }
+}
+function buildToolUses(run) {
+  const group = el('details', 'tool-group');
+  group.dataset.key = run.id + ':tools';
+  const uses = run.toolUses || [];
+  const firstText = toolArgText(uses[0]) || toolDisplayName(uses[0].tool);
+  const head = el('summary', 'tg-head');
+  head.insertAdjacentHTML('beforeend', '<svg class="tg-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>');
+  head.insertAdjacentHTML('beforeend', '<span class="tg-ico">' + toolIconSVG('run_shell') + '</span>');
+  head.append(el('span', 'tg-title', t('工具调用')));
+  head.append(el('span', 'tg-count', String(uses.length)));
+  const firstEl = el('span', 'tg-first', firstText); firstEl.title = firstText; head.append(firstEl);
+  const body = el('div', 'tg-body');
+  uses.forEach(use => {
+    const item = el('details', 'tl');
+    const h = el('summary', 'tl-head');
+    h.insertAdjacentHTML('beforeend', '<span class="tl-ico">' + toolIconSVG(use.tool) + '</span>');
+    h.append(el('span', 'tl-name', toolDisplayName(use.tool)));
+    const argsEl = el('code', 'tl-args', toolArgText(use)); argsEl.title = argsEl.textContent; h.append(argsEl);
+    h.insertAdjacentHTML('beforeend', '<svg class="tl-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>');
+    const b = el('div', 'tl-body');
+    const isCommand = use.tool === 'run_shell';
+    b.append(el('div', 'tl-label', isCommand ? t('命令') : t('参数')));
+    const headText = isCommand ? toolArgText(use) : (use.args || '');
+    b.append(el('pre', 'tl-pre tl-cmd', headText || t('（无）')));
+    b.append(el('div', 'tl-label', t('结果')));
+    b.append(el('pre', 'tl-pre tl-result', use.result || t('（无结果）')));
+    item.append(h, b);
+    body.append(item);
+  });
+  group.append(head, body);
+  return group;
+}
 const statuses = { running: '运行中', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断', awaiting_approval: '等待应用', awaiting_clarification: '等待澄清' };
 // 澄清卡片：在会话流中渲染单个交互问题（选项/输入/确认条），点击即作为应答
 function renderClarification(run, box) {
@@ -657,30 +713,7 @@ function renderSession() {
       run.commands.forEach(command => { const row = el('div', 'suggested-command'); const button = el('button', 'quiet', t("填入命令面板")); button.onclick = () => { $('terminal-body').classList.remove('hidden'); $('terminal-state').textContent = t("收起 −"); $('command').value = command; $('command').focus(); }; row.append(el('code', '', command), button); box.append(row); });
     }
     if (run.toolUses?.length) {
-      // 文件类调用合并展示（只显示路径，轻量）；命令与其他工具单独折叠显示细节
-      const fileUses = run.toolUses.filter(u => u.tool === 'read_file' || u.tool === 'list_files');
-      const otherUses = run.toolUses.filter(u => u.tool !== 'read_file' && u.tool !== 'list_files');
-      if (fileUses.length) {
-        const details = el('details', 'tool-use');
-        details.dataset.key = run.id + ':files';
-        const summary = el('summary', '', t("⚒ 文件查看 · {0} 次", fileUses.length));
-        const paths = fileUses.map(u => { try { const a = JSON.parse(u.args || '{}'); return (a.source ? 'sources/' + a.source + ' · ' : '') + (a.path || '.'); } catch (e) { return '.'; } }).join('\n');
-        details.append(summary, el('pre', 'tool-use-detail', paths));
-        box.append(details);
-      }
-      otherUses.forEach((use, toolIndex) => {
-        const details = el('details', 'tool-use');
-        details.dataset.key = run.id + ':tool:' + toolIndex;
-        details.open = false;
-        const isCommand = use.tool === 'run_shell';
-        const summary = el('summary', '', isCommand ? t("⚒ 建议命令") : t("⚒ 工具调用 · {0}", use.tool));
-        summary.append(el('span', '', toolSummaryBrief(use)));
-        const detail = isCommand
-          ? t("命令：\n") + toolSummaryBrief(use) + t("\n\n结果：\n") + (use.result || t("（无）"))
-          : t("参数：") + (use.args || t("无")) + t("\n\n结果：\n") + (use.result || t("（无）"));
-        details.append(summary, el('pre', 'tool-use-detail', detail));
-        box.append(details);
-      });
+      box.append(buildToolUses(run));
     }
     if (run.error) box.append(el('p', 'task-error', run.error)); $('timeline').append(box);
   }
@@ -4091,6 +4124,7 @@ function applyLockVisual() {
   $('lock-error').textContent = '';
   refreshLockStatus();
   setTimeout(() => { try { $('lock-password').focus(); } catch (_) {} }, 60);
+  updateTouchIdButton();
 }
 /* 视觉层：把 effectiveLocked=false 落到本地（仅藏遮罩；欢迎语/麦克风恢复只在输密码的 tab）。 */
 function releaseLockVisual() {
@@ -4114,23 +4148,103 @@ function lockScreenNow() {
   if (typeof LockCluster !== 'undefined') LockCluster.requestLock('manual');
   else applyLockVisual();
 }
+/* dismissAfterUnlock：密码与触控 ID 解锁共用的唯一收尾出口——保证两路径行为逐字节一致。 */
+function dismissAfterUnlock() {
+  // 本 tab 本地恢复（欢迎语、麦克风只在解锁的那个 tab，避免多 tab 合唱）
+  lockScreen.locked = false;
+  $('lock-screen').hidden = true;
+  $('lock-screen').classList.remove('joining');
+  const name = (state.config && state.config.userName) || '';
+  const xm = (state.config && state.config.voiceAssistantName) || t('小秘');
+  const welcome = name ? t('欢迎回来，{0}，我是{1}。', name, xm) : t('欢迎回来，我是{0}。', xm);
+  toast(welcome);
+  speakReply(welcome);
+  if (lockScreen.wasVoiceListening) { lockScreen.wasVoiceListening = false; voiceStart(); }
+  if (typeof LockCluster !== 'undefined') LockCluster.handleUnlockSuccess();
+  resetIdleTimer();
+}
 function unlockScreen(pw) {
-  return api('/account/verify-password', { method: 'POST', body: JSON.stringify({ password: pw }) }).then(() => {
-    // 本 tab 本地恢复（欢迎语、麦克风只在输入密码的那个 tab，避免多 tab 合唱）
-    lockScreen.locked = false;
-    $('lock-screen').hidden = true;
-    $('lock-screen').classList.remove('joining');
-    const name = (state.config && state.config.userName) || '';
-    const xm = (state.config && state.config.voiceAssistantName) || t('小秘');
-    // 解锁后由小秘人格亲切欢迎
-    const welcome = name ? t('欢迎回来，{0}，我是{1}。', name, xm) : t('欢迎回来，我是{0}。', xm);
-    toast(welcome);
-    speakReply(welcome); // 内部按 voiceReplyEnabled 判断是否朗读
-    if (lockScreen.wasVoiceListening) { lockScreen.wasVoiceListening = false; voiceStart(); }
-    // 集群同步：master 广播 unlock；slave 仅置 localDismiss，不回传
-    if (typeof LockCluster !== 'undefined') LockCluster.handleUnlockSuccess();
-    resetIdleTimer();
-  });
+  return api('/account/verify-password', { method: 'POST', body: JSON.stringify({ password: pw }) }).then(dismissAfterUnlock);
+}
+
+/* ── 触控 ID / WebAuthn 解锁 ── */
+function b64uToBuf(b64url) {
+  const pad = '='.repeat((4 - (b64url.length % 4)) % 4);
+  const bin = atob(b64url.replace(/-/g, '+').replace(/_/g, '/') + pad);
+  return Uint8Array.from(bin, c => c.charCodeAt(0)).buffer;
+}
+function bufToB64u(buf) {
+  const bytes = new Uint8Array(buf);
+  let bin = '';
+  bytes.forEach(b => bin += String.fromCharCode(b));
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+async function touchIdAvailable() {
+  if (!state.config || !state.config.webAuthnReady) return { ok: false, reason: 'not-ready' };
+  if (location.hostname !== 'localhost') return { ok: false, reason: 'use-localhost' };
+  if (!window.PublicKeyCredential) return { ok: false, reason: 'unsupported' };
+  try {
+    const ok = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+    return ok ? { ok: true } : { ok: false, reason: 'no-touchid' };
+  } catch { return { ok: false, reason: 'unsupported' }; }
+}
+/* 锁屏时根据探测结果显示/隐藏触控 ID 按钮。 */
+async function updateTouchIdButton() {
+  const btn = $('touchid-unlock-btn');
+  const hint = $('touchid-hint');
+  if (!btn) return;
+  const res = await touchIdAvailable();
+  if (res.ok) { btn.hidden = false; if (hint) hint.hidden = true; }
+  else {
+    btn.hidden = true;
+    if (hint) { hint.hidden = res.reason !== 'use-localhost'; }
+  }
+}
+function assertionToJSON(a) {
+  return {
+    id: a.id, rawId: bufToB64u(a.rawId), type: a.type,
+    response: {
+      clientDataJSON: bufToB64u(a.response.clientDataJSON),
+      authenticatorData: bufToB64u(a.response.authenticatorData),
+      signature: bufToB64u(a.response.signature),
+      userHandle: a.response.userHandle ? bufToB64u(a.response.userHandle) : null,
+    },
+  };
+}
+async function unlockByTouchId() {
+  const btn = $('touchid-unlock-btn');
+  if (btn) btn.disabled = true;
+  try {
+    const start = await api('/webauthn/assertion/start', { method: 'POST', body: '{}' });
+    if (!start.allowCredentials || !start.allowCredentials.length) {
+      $('lock-error').textContent = t('未注册触控 ID 设备，请先在设置中绑定');
+      return;
+    }
+    const options = {
+      challenge: b64uToBuf(start.challenge),
+      rpId: start.rpId,
+      allowCredentials: start.allowCredentials.map(c => ({ type: c.type, id: b64uToBuf(c.id), transports: c.transports })),
+      userVerification: start.userVerification || 'preferred',
+      timeout: 120000,
+    };
+    const assertion = await navigator.credentials.get({ publicKey: options });
+    if (!assertion) { $('lock-error').textContent = ''; return; }
+    const finishRes = await fetch('/api/webauthn/assertion/finish?challenge=' + encodeURIComponent(start.challenge), {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(assertionToJSON(assertion)),
+    });
+    if (!finishRes.ok) {
+      const err = await finishRes.json().catch(() => ({}));
+      throw new Error(t(err.error || '验证失败，请重试'));
+    }
+    dismissAfterUnlock();
+  } catch (e) {
+    if (e && e.name === 'NotAllowedError') { $('lock-error').textContent = ''; return; }
+    $('lock-error').textContent = t('验证失败，请重试');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 $('lock-form').onsubmit = action(async e => {
   e.preventDefault();
@@ -4142,6 +4256,8 @@ $('lock-form').onsubmit = action(async e => {
     try { $('lock-password').select(); } catch (_) {}
   }
 });
+const touchidBtn = $('touchid-unlock-btn');
+if (touchidBtn) touchidBtn.onclick = action(unlockByTouchId);
 // 集群把 effectiveLocked 映射到本地视觉（master 自身、slave 收到 lock/unlock 均走这里）
 if (typeof LockCluster !== 'undefined') {
   LockCluster.on('effective', locked => { if (locked) applyLockVisual(); else releaseLockVisual(); });
@@ -4195,7 +4311,78 @@ function renderAccountControl() {
   const lockBtn = el('button', 'quiet', t('立即锁屏')); lockBtn.type = 'button';
   lockBtn.onclick = action(lockScreenNow);
   actions.append(save, lockBtn);
-  wrap.append(uRow, tRow, oldRow, newRow, actions,
+  wrap.append(uRow, tRow, oldRow, newRow, actions);
+
+  // ── 触控 ID / Passkey 管理 ──
+  if (cfg.webAuthnReady) {
+    const waSection = el('div', 'wa-section');
+    waSection.append(el('div', 'control-label', t('触控 ID / Passkey')));
+    const waList = el('div', 'wa-cred-list');
+    const regBtn = el('button', 'quiet', t('注册新设备')); regBtn.type = 'button';
+
+    async function refreshWaList() {
+      waList.replaceChildren();
+      try {
+        const creds = await api('/webauthn/credentials');
+        if (!creds.length) waList.append(el('div', 'wa-cred-meta', t('未注册设备')));
+        creds.forEach(c => {
+          const item = el('div', 'wa-cred-item');
+          const nameEl = el('span', 'wa-cred-name', c.name);
+          const meta = el('span', 'wa-cred-meta', new Date((c.createdAt || 0) * 1000).toLocaleDateString());
+          const delBtn = el('button', 'quiet', t('删除')); delBtn.type = 'button';
+          delBtn.onclick = action(async () => {
+            const pw = prompt(t('删除设备请输入原密码'));
+            if (!pw) return;
+            await api('/webauthn/credentials/' + encodeURIComponent(c.id), { method: 'DELETE', body: JSON.stringify({ oldPassword: pw }) });
+            toast(t('设备已删除'));
+            refreshWaList();
+          });
+          item.append(nameEl, meta, delBtn);
+          waList.append(item);
+        });
+      } catch (_) {}
+    }
+    refreshWaList();
+
+    regBtn.onclick = action(async () => {
+      if (location.hostname !== 'localhost') { toast(t('请用 localhost 打开以使用 Touch ID')); return; }
+      const pw = prompt(t('注册触控 ID 需验证原密码'));
+      if (!pw) return;
+      const start = await api('/webauthn/register/start', { method: 'POST', body: JSON.stringify({ oldPassword: pw }) });
+      const options = {
+        challenge: b64uToBuf(start.challenge),
+        rp: { id: start.rp.id, name: start.rp.name },
+        user: { id: b64uToBuf(start.user.id), name: start.user.name, displayName: start.user.displayName },
+        pubKeyCredParams: start.pubKeyCredParams,
+        authenticatorSelection: start.authenticatorSelection,
+        excludeCredentials: (start.excludeCredentials || []).map(c => ({ type: c.type, id: b64uToBuf(c.id), transports: c.transports })),
+        timeout: 120000,
+        attestation: start.attestation || 'none',
+      };
+      const cred = await navigator.credentials.create({ publicKey: options });
+      if (!cred) return;
+      const credJSON = {
+        id: cred.id, rawId: bufToB64u(cred.rawId), type: cred.type,
+        response: {
+          attestationObject: bufToB64u(cred.response.attestationObject),
+          clientDataJSON: bufToB64u(cred.response.clientDataJSON),
+        },
+      };
+      const finishRes = await fetch('/api/webauthn/register/finish?challenge=' + encodeURIComponent(start.challenge), {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json' },
+        body: JSON.stringify(credJSON),
+      });
+      if (!finishRes.ok) { const e = await finishRes.json().catch(()=>({})); toast(t(e.error || '注册失败')); return; }
+      toast(t('触控 ID 已绑定'));
+      refreshWaList();
+    });
+
+    waSection.append(waList, regBtn);
+    wrap.append(waSection);
+  }
+
+  wrap.append(
     el('small', '', t('不设密码且锁屏时间为 0 时不锁屏。密码同时作为小秘对话历史的 AES-256-GCM 加密密钥，只存哈希、不明文回显。')));
   return wrap;
 }

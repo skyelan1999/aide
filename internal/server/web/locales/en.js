@@ -862,6 +862,18 @@ window.aideEnglish = {
   "{0} 上下文": "{0} context",
   "已添加来源：{0}": "Source added: {0}",
   "等待澄清": "Awaiting clarification",
-  "来源": "Source"
-
+  "来源": "Source",
+  "触控 ID 解锁": "Touch ID Unlock",
+  "请用 localhost 打开以使用 Touch ID": "Open via localhost to use Touch ID",
+  "验证失败，请重试": "Verification failed, please try again",
+  "未注册触控 ID 设备，请先在设置中绑定": "No Touch ID device registered. Bind one in Settings first.",
+  "触控 ID / Passkey": "Touch ID / Passkey",
+  "注册新设备": "Register new device",
+  "未注册设备": "No devices registered",
+  "删除": "Delete",
+  "设备已删除": "Device removed",
+  "删除设备请输入原密码": "Enter your password to remove this device",
+  "注册触控 ID 需验证原密码": "Verify your password to set up Touch ID",
+  "触控 ID 已绑定": "Touch ID enrolled",
+  "注册失败": "Enrollment failed"
 };

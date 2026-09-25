@@ -134,6 +134,67 @@ Changing a rate affects subsequent calls, not historical snapshots. Provider bal
 
 Upload a trusted `.js`, `.mjs`, or `.cjs` file, name it, and enable it. Shape validation, loading, and tool declarations do not imply full DSH compatibility. Tools with handlers can participate in the model loop. See the [protocol](../plugin-protocol.md).
 
+### Touch ID Unlock (macOS)
+
+On MacBooks with Touch ID (or a Touch ID Magic Keyboard), you can unlock the lock screen with a fingerprint instead of a password.
+
+**Requirements**:
+- MacBook with Touch ID or external Touch ID Magic Keyboard;
+- macOS 13+, Chrome 120+ or Safari 16+;
+- **Open aide via `http://localhost:8097`** — WebAuthn RP ID does not allow IP literals. The button is hidden when opened via `127.0.0.1`.
+
+**Enrollment** (Settings → Account → Touch ID / Passkey):
+1. Click "Register new device" and confirm with your lock-screen password;
+2. When the Touch ID prompt appears, rest your finger on the sensor;
+3. The device appears in the enrolled list.
+
+**Unlocking**: on the lock screen, click "Touch ID Unlock" and rest your finger. Cancelling the fingerprint prompt silently falls back to password entry. The fingerprint unlock uses the exact same dismiss path as password unlock.
+
+**Security**: the private key never leaves the Secure Enclave / iCloud Keychain; the backend stores only the public key and a monotonically increasing signature counter.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as User (unlocked)
+  participant FE as Settings panel
+  participant BE as aide backend
+  participant OS as macOS Touch ID
+  U->>FE: Click "Register new device"
+  FE->>U: Prompt for password
+  U->>FE: Enter password
+  FE->>BE: POST /api/webauthn/register/start {oldPassword}
+  BE->>BE: Verify password → generate challenge
+  BE-->>FE: CreationOptions
+  FE->>OS: navigator.credentials.create(Touch ID)
+  OS-->>U: Touch ID prompt
+  U->>OS: Fingerprint
+  OS-->>FE: attestation
+  FE->>BE: POST /api/webauthn/register/finish {response}
+  BE->>BE: Verify → store public key
+  BE-->>FE: {ok:true}
+  FE-->>U: toast "Touch ID enrolled"
+```
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as User
+  participant FE as Lock screen
+  participant BE as aide backend
+  participant OS as macOS Touch ID
+  FE->>BE: POST /api/webauthn/assertion/start
+  BE->>BE: List credential IDs → generate challenge
+  BE-->>FE: RequestOptions
+  FE->>OS: navigator.credentials.get(Touch ID)
+  OS-->>U: Touch ID prompt
+  U->>OS: Fingerprint
+  OS-->>FE: assertion
+  FE->>BE: POST /api/webauthn/assertion/finish {response}
+  BE->>BE: Verify signature/origin/challenge/signCount
+  BE-->>FE: {ok:true}
+  FE->>FE: dismissAfterUnlock() — same exit as password unlock
+```
+
 ## 10. Common recovery actions
 
 - Repeated login: verify the instance, port, and local access token.

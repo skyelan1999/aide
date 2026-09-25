@@ -175,6 +175,69 @@ stateDiagram-v2
   }
 ```
 
+### 触控 ID 解锁（macOS）
+
+在带 Touch ID 的 Mac 上，可以用指纹代替密码解锁锁屏遮罩。
+
+**要求**：
+- MacBook 自带 Touch ID 或外接带 Touch ID 的妙控键盘；
+- macOS 13+，Chrome 120+ 或 Safari 16+；
+- **必须用 `http://localhost:8097` 打开 aide**——WebAuthn 的 RP ID 不支持 IP 字面量，`127.0.0.1` 地址栏下按钮自动隐藏并提示改用 localhost。
+
+**注册步骤**（设置 → 账户 → 触控 ID / Passkey）：
+1. 点「注册新设备」，输入原锁屏密码确认；
+2. 系统弹出 Touch ID 对话框，按指纹完成验证；
+3. 提示「触控 ID 已绑定」，设备名出现在列表中。
+
+**解锁步骤**：锁屏页点「触控 ID 解锁」按钮，按指纹即可，与密码解锁走同一套 dismiss 逻辑。取消指纹弹窗则静默回退密码输入。
+
+**多设备管理**：设置 → 账户中可查看已注册设备列表、删除设备（需再次输入密码）。
+
+**安全说明**：指纹对应的私钥存于 macOS Secure Enclave / iCloud Keychain，后端仅存公钥与签名计数；每次解锁校验签名计数单调递增以防凭证克隆。触控 ID 解锁与密码解锁安全边界一致——都只解除本机锁屏遮罩，不改变后端 API 鉴权。
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as 用户(已解锁)
+  participant FE as 设置面板
+  participant BE as aide 后端
+  participant OS as macOS Touch ID
+  U->>FE: 账户面板点「注册新设备」
+  FE->>U: 弹窗输入原密码
+  U->>FE: 输入密码
+  FE->>BE: POST /api/webauthn/register/start {oldPassword}
+  BE->>BE: 校验密码 → 生成 challenge
+  BE-->>FE: CreationOptions
+  FE->>OS: navigator.credentials.create(Touch ID)
+  OS-->>U: 指纹对话框
+  U->>OS: 按压指纹
+  OS-->>FE: attestation
+  FE->>BE: POST /api/webauthn/register/finish {response}
+  BE->>BE: 验签 → 存公钥到 webauthn-credentials.json
+  BE-->>FE: {ok:true}
+  FE-->>U: toast「触控 ID 已绑定」
+```
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor U as 用户
+  participant FE as 锁屏页
+  participant BE as aide 后端
+  participant OS as macOS Touch ID
+  FE->>BE: POST /api/webauthn/assertion/start
+  BE->>BE: 列出凭证 ID → 生成 challenge
+  BE-->>FE: RequestOptions
+  FE->>OS: navigator.credentials.get(Touch ID)
+  OS-->>U: 指纹对话框
+  U->>OS: 按压指纹
+  OS-->>FE: assertion
+  FE->>BE: POST /api/webauthn/assertion/finish {response}
+  BE->>BE: 验签名/origin/challenge/signCount
+  BE-->>FE: {ok:true}
+  FE->>FE: dismissAfterUnlock()——与密码解锁同一出口
+```
+
 ## 9. 常见问题
 
 | 现象 | 建议 |
