@@ -3029,7 +3029,11 @@ async function initialize() {
   if (fragment.has('file')) { await Promise.all([loadWorkspaceConfig(), loadSourcesList()]); await openFileViewMode(); return; }
   await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
 }
-initialize().catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
+initialize()
+  .then(() => { // 已配置密码：每次刷新/打开页面立即锁屏（安全默认，独立于空闲自动锁）
+    if (state.config && state.config.hasPassword && !lockScreen.locked) lockScreenNow();
+  })
+  .catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
 
 /* Compact-window navigation. Keeps session navigation reachable on iPhone/iPad. */
 function closeSidebarNavigation() {
