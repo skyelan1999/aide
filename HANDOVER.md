@@ -2,7 +2,7 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](docs/workspace-paths.md)。
 
-更新：2026-09-23。本文是现行操作入口。历史测试结果保留在 [验证记录](docs/verification.md)，不能据此推定今天的运行服务状态。
+更新：2026-09-25。本文是现行操作入口。历史测试结果保留在 [验证记录](docs/verification.md)，不能据此推定今天的运行服务状态。
 
 ## 本轮实验性改进（2026-09-24，分支 feature/permission-panel，未合并 main）
 
@@ -16,11 +16,10 @@
 
 验证：docker compose build 通过，go test ./... 全绿（含 TestShellBlocked、更新后的 TestToolLoopWriteProposalAndShellExec）；/healthz、/api/config、/api/command(echo) 冒烟通过。
 
+后续在 0.1.10.1 / 0.1.10.2 继续交付：run_shell 容器内实际执行、设置面板「权限管理」栏与 per-tool 开关持久化、md/Mermaid 渲染修复与相对路径链接内部打开、在线网页搜索（web_search 走 DDG HTML 抓取、SearXNG 兜底；semantic_search 本地 TF-IDF）、draw.io 插件、持久记忆、模型上下文预设按钮、工具轮次默认 60、轨迹导出与调用分析、上下文预览堆叠图、子 Agent（spawn_subagent）、失败反馈循环、三级沙箱、AI 工作流四阶段与自动模式、推理强度五档、语音小秘、配置备份、锁屏与性格持久化。
+
 未完成 / 已知边界：
-- md 文件里 mermaid 流程图不渲染（未接 mermaid.js）；md 内相对路径链接点击 404（未拦截成 aide 内部 openFile）
 - 远程 SSH 工作区的 run_shell 自动执行未打通
-- 权限管理栏目前是只读展示，未做 per-tool 开关持久化
-- 尚未接在线网页搜索（web_search 工具）；已调研 DDG 爬取 / SearXNG / Tavily 三条路径
 - 架构总览图见 docs/architecture-overview.html
 
 ## 接手时先确认什么
@@ -33,7 +32,7 @@ bash scripts/version.sh show
 bash scripts/aide.sh status
 ```
 
-本次交付目标 `v0.1.10.0-RC1`（2026-09-24 已发布：tag + GitHub 预发布 + arm64 镜像附件）：会话管理（置顶/归档/删除/导出）与会话状态灯（运行绿闪/审批黄/失败红/完成蓝点加粗）、完成后标题自动概括、点击轻量化与竞态修复。此前 v0.1.9.0-RC1 为运行中排队与插话、发送/停止同键、一键回底。aide 定位为 AI + IDE 专业工作台；开发 Agent 路由用于维护与场景扩展，见 [定制指南](docs/customization.md)。
+当前版本 `v0.1.10.2-RC1`（tag 已打在对应提交）：在会话管理（置顶/归档/删除/导出）、会话状态灯（运行绿闪/审批黄/失败红/完成蓝点加粗）、运行中排队/插话、SSE 流式输出之上，本轮新增持久记忆、模型上下文预设按钮、工具轮次默认 60、md/Mermaid 渲染修复、轨迹导出与调用分析、上下文预览堆叠图、子 Agent（spawn_subagent）、失败反馈循环、三级沙箱、提前停止保留输出、AI 工作流四阶段与自动模式、推理强度五档、语音小秘、per-tool 权限开关、配置备份、锁屏与性格持久化。aide 定位为 AI + IDE 专业工作台；开发 Agent 路由用于维护与场景扩展，见 [定制指南](docs/customization.md)。
 
 发布只交付 GitHub 源码/tag/Release/镜像；不自动替换本机 8097 的生产服务。镜像导入启动见 [镜像说明](docker-images/README.md)。
 

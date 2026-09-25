@@ -27,20 +27,20 @@ bash scripts/install.sh --check
 
 A source ZIP is also usable for image installation. Keep its scripts, Compose file, and `version.md`: an image tarball is not a standalone desktop installer.
 
-The latest published baseline is **v0.1.7.0-RC1**. This release includes the language selector and reference-source tools.
+The current baseline is **v0.1.10.2-RC1**. This release adds persistent memory, model context-window presets, a 60 default tool-call round limit, fixed Markdown/Mermaid rendering, trajectory export and call analysis, sub-agents, a three-level sandbox, a four-phase AI workflow with auto mode, five reasoning-effort levels, a voice assistant, per-tool permission toggles, configuration backup, lock screen, and persistent personas.
 
 ## 3A. Install the published ARM64 image
 
 Use the source and assets from the **same release**:
 
 ```bash
-git checkout v0.1.7.0-RC1
+git checkout v0.1.10.2-RC1
 ```
 
-Download `aide-0.1.7.0-RC1-linux-arm64.tar.gz` and `SHA256SUMS` from [Releases](https://github.com/skyelan1999/aide/releases), placing both in `docker-images/`:
+Download `aide-0.1.10.2-RC1-linux-arm64.tar.gz` and `SHA256SUMS` from [Releases](https://github.com/skyelan1999/aide/releases), placing both in `docker-images/`:
 
 ```bash
-bash scripts/install.sh --image docker-images/aide-0.1.7.0-RC1-linux-arm64.tar.gz
+bash scripts/install.sh --image docker-images/aide-0.1.10.2-RC1-linux-arm64.tar.gz
 ```
 
 The script verifies SHA256, loads the image, checks its architecture, and starts with `--no-build --pull never`. A failed checksum, missing tag, or incompatible architecture stops installation. Existing `.env` is preserved; inspect it if you are upgrading.
@@ -58,7 +58,7 @@ Use a Git checkout for source identity. First builds download base images. If `.
 Use existing paths, preferably absolute:
 
 ```dotenv
-AIDE_IMAGE=aide:0.1.7.0-RC1
+AIDE_IMAGE=aide:0.1.10.2-RC1
 AIDE_PORT=8097
 AIDE_WORKSPACE=/absolute/path/to/project
 AIDE_CONTEXT=/absolute/path/to/references
