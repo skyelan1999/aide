@@ -732,8 +732,47 @@ async function loadFiles() {
   $('file-path').textContent = '/' + label + (state.dir === '.' ? '' : '/' + state.dir); $('file-path').title = $('file-path').textContent;
   $('new-file').disabled = state.root === 'context'; $('files').replaceChildren();
   if (!files.length) $('files').append(el('p', 'muted', t("目录为空")));
-  files.forEach(file => { const b = el('button', 'file-item'); b.append(el('span', 'file-icon', file.dir ? '▱' : '≡'), el('span', 'file-name', file.name)); if (file.dir) b.append(el('small', '', '›')); b.title = file.path; b.onclick = action(async () => { if (file.dir) { state.dir = file.path; await loadFiles(); } else await openFile(file.path); }); $('files').append(b); });
+  files.forEach(file => {
+    const b = el('button', 'file-item');
+    const nameSpan = el('span', 'file-name', file.name);
+    b.append(el('span', 'file-icon', file.dir ? '▱' : '≡'), nameSpan);
+    if (file.dir) b.append(el('small', '', '›'));
+    b.title = file.path;
+    b.onclick = action(async () => { if (file.dir) { state.dir = file.path; await loadFiles(); } else await openFile(file.path); });
+    // 点击文件名文字 → 内联重命名（阻止冒泡触发打开）；失焦或回车自动保存，Esc 取消
+    nameSpan.onclick = (ev) => { ev.stopPropagation(); beginInlineRename(b, nameSpan, file); };
+    $('files').append(b);
+  });
 }
+/* 文件名内联重命名：点击名称进入编辑，失焦/回车保存，Esc 取消 */
+function beginInlineRename(rowBtn, nameSpan, file) {
+  if (rowBtn.querySelector('input.file-rename')) return;
+  const original = file.name;
+  const input = el('input', 'file-rename');
+  input.value = original;
+  nameSpan.replaceWith(input);
+  input.focus();
+  const dot = file.dir ? -1 : original.lastIndexOf('.');
+  if (!file.dir && dot > 0) input.setSelectionRange(0, dot); else input.select();
+  let settled = false;
+  const restore = () => input.replaceWith(nameSpan);
+  const commit = action(async () => {
+    if (settled) return; settled = true;
+    const nn = input.value.trim();
+    if (nn === '' || nn === original) { restore(); return; }
+    if (nn.includes('/') || nn.includes('\\')) { toast(t('文件名不能包含 / 或 \\')); restore(); return; }
+    try {
+      await api('/file/rename', { method: 'POST', body: JSON.stringify({ root: state.root, path: file.path, newName: nn }) });
+      await loadFiles();
+    } catch (e) { restore(); toast(e.message || String(e)); }
+  });
+  input.onblur = commit;
+  input.onkeydown = (ev) => {
+    if (ev.key === 'Enter') { ev.preventDefault(); input.blur(); }
+    else if (ev.key === 'Escape') { settled = true; restore(); }
+  };
+}
+
 async function openFile(path) {
   // 图片 / STL 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
   if (isImagePath(path) || isStlPath(path)) {

@@ -535,6 +535,7 @@ func (a *App) Handler() http.Handler {
 	mux.HandleFunc("GET /api/file/raw", a.readFileRaw)
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)
+	mux.HandleFunc("POST /api/file/rename", a.renameFile)
 	mux.HandleFunc("GET /api/sessions", a.listSessions)
 	mux.HandleFunc("POST /api/sessions", a.createSession)
 	mux.HandleFunc("GET /api/sessions/{id}", a.getSession)

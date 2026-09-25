@@ -3,6 +3,7 @@ package server
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -404,4 +405,54 @@ func putText(root *os.Root, p string, b []byte) error {
 		return closeErr
 	}
 	return root.Rename(tmp, p)
+}
+
+// renameFile 在同一目录内重命名文件/文件夹（不允许跨目录移动、不允许覆盖已存在目标）。
+func (a *App) renameFile(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Root    string `json:"root"`
+		Source  string `json:"source"`
+		Path    string `json:"path"`
+		NewName string `json:"newName"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		fail(w, 400, errors.New("请求格式错误"))
+		return
+	}
+	if err := safePath(body.Path); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	newName := strings.TrimSpace(body.NewName)
+	if newName == "" || newName == "." || newName == ".." ||
+		strings.ContainsAny(newName, `/\`+"\x00") {
+		fail(w, 400, errors.New("文件名无效"))
+		return
+	}
+	dir := path.Dir(body.Path)
+	newPath := path.Join(dir, newName)
+	if err := safePath(newPath); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if body.Source != "" {
+		fail(w, 400, errors.New("该辅助资料来源暂不支持重命名"))
+		return
+	}
+	root, err := a.root(body.Root)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+
+	// 显式预检目标是否存在：Unix rename(2) 会原子替换已存在目标而不报错，必须先拦截
+	if _, err := root.Stat(newPath); err == nil {
+		fail(w, 409, errors.New("已存在同名文件或文件夹"))
+		return
+	}
+	if err := root.Rename(body.Path, newPath); err != nil {
+		fail(w, 500, err)
+		return
+	}
+	jsonOut(w, 200, map[string]any{"path": newPath, "name": newName})
 }
