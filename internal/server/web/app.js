@@ -755,21 +755,24 @@ async function loadFiles(auto) {
     if (file.dir) b.append(el('small', '', '›'));
     b.title = file.path;
     b._last = 0;
-    // 电脑文件管理器模型：单击选中；快速双击打开（文件→新标签页，文件夹→进入）；慢速双次点击名字重命名
+    // 单击打开（文件→当前标签查看，文件夹→进入）；快速双击文件→新标签打开；右键→菜单（重命名）
+    b._clickTimer = 0;
     b.onclick = (ev) => {
       const now = Date.now(), prev = b._last || 0; b._last = now;
-      const onName = ev.target === nameSpan || nameSpan.contains(ev.target);
+      clearTimeout(b._clickTimer);
       if (prev && now - prev <= FILE_DBLCLICK_MS) {
         b._last = 0; selectFileRow(b);
         if (file.dir) { state.dir = file.path; loadFiles().catch(e => toast(e.message)); }
         else openFileInNewTab(file);
         return;
       }
-      if (prev && now - prev > FILE_DBLCLICK_MS && now - prev <= FILE_RENAME_MS && onName) {
-        b._last = 0; beginInlineRename(b, nameSpan, file); return;
-      }
-      selectFileRow(b); // 单击：仅选中
+      selectFileRow(b);
+      b._clickTimer = setTimeout(() => { // 短延迟以区分双击；随后打开/进入
+        if (file.dir) { state.dir = file.path; loadFiles().catch(e => toast(e.message)); }
+        else openFile(file.path).catch(e => toast(e.message || String(e)));
+      }, FILE_CLICK_OPEN_MS);
     };
+    b.oncontextmenu = (ev) => { ev.preventDefault(); openFileContextMenu(ev, b, nameSpan, file); };
     $('files').append(b);
   });
 }
@@ -801,7 +804,7 @@ function beginInlineRename(rowBtn, nameSpan, file) {
     else if (ev.key === 'Escape') { settled = true; restore(); }
   };
 }
-const FILE_DBLCLICK_MS = 450, FILE_RENAME_MS = 1600;
+const FILE_DBLCLICK_MS = 450, FILE_RENAME_MS = 1600, FILE_CLICK_OPEN_MS = 240;
 function selectFileRow(b){
   document.querySelectorAll('#files .file-item.selected').forEach(x => x.classList.remove('selected'));
   b.classList.add('selected');
@@ -810,6 +813,27 @@ function openFileInNewTab(file){
   const source = state.root === 'context' ? state.source : '';
   const spec = { root: source ? 'source' : state.root, source, path: file.path };
   window.open(location.pathname + '#file=' + encodeURIComponent(JSON.stringify(spec)), '_blank', 'noopener');
+}
+let fileCtxMenuEl = null;
+function closeFileContextMenu() {
+  if (!fileCtxMenuEl) return;
+  fileCtxMenuEl.remove(); fileCtxMenuEl = null;
+  document.removeEventListener('click', closeFileContextMenu);
+  document.removeEventListener('keydown', onFileCtxKey);
+}
+function onFileCtxKey(ev) { if (ev.key === 'Escape') closeFileContextMenu(); }
+function openFileContextMenu(ev, rowBtn, nameSpan, file) {
+  closeFileContextMenu();
+  const m = el('div', 'file-ctx-menu');
+  const ren = el('button', 'file-ctx-item', t('重命名'));
+  if (state.root === 'context') { ren.classList.add('disabled'); ren.disabled = true; ren.title = t('只读来源不可重命名'); }
+  ren.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); selectFileRow(rowBtn); beginInlineRename(rowBtn, nameSpan, file); };
+  m.append(ren);
+  document.body.append(m);
+  fileCtxMenuEl = m;
+  m.style.left = Math.min(ev.clientX, innerWidth - 160) + 'px';
+  m.style.top = Math.min(ev.clientY, innerHeight - 60) + 'px';
+  setTimeout(() => { document.addEventListener('click', closeFileContextMenu); document.addEventListener('keydown', onFileCtxKey); }, 0);
 }
 
 async function openFile(path) {
