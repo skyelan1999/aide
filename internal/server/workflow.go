@@ -1720,9 +1720,15 @@ func (a *App) createDiagram(path, xml string) string {
 }
 
 // webSearch 在线搜索（DuckDuckGo HTML 爬取，限流时 fallback SearXNG 公共 JSON 实例）。
+// 端点由环境变量 AIDE_WEBSEARCH_URL（SearXNG 兼容 JSON 端点）配置；未配置（离线/空气 gap
+// 部署）时优雅降级：不发起任何外联，提示改用本地 search_text，不崩溃。配置后保持原有搜索行为。
 func (a *App) webSearch(query string) string {
 	if strings.TrimSpace(query) == "" {
 		return "缺少 query"
+	}
+	sxBase := strings.TrimSpace(os.Getenv("AIDE_WEBSEARCH_URL"))
+	if sxBase == "" {
+		return "离线环境不可用在线搜索，请用 search_text 搜索本地文件"
 	}
 	client := &http.Client{Timeout: 10 * time.Second}
 	ddgURL := "https://html.duckduckgo.com/html/?q=" + url.QueryEscape(query)
@@ -1739,8 +1745,12 @@ func (a *App) webSearch(query string) string {
 			}
 		}
 	}
-	// fallback: SearXNG 公共实例 JSON
-	sxURL := "https://search.bus-hit.me/search?q=" + url.QueryEscape(query) + "&format=json"
+	// fallback: SearXNG JSON 端点（来自环境变量 AIDE_WEBSEARCH_URL）
+	sxSep := "?"
+	if strings.Contains(sxBase, "?") {
+		sxSep = "&"
+	}
+	sxURL := sxBase + sxSep + "q=" + url.QueryEscape(query) + "&format=json"
 	req2, _ := http.NewRequest("GET", sxURL, nil)
 	req2.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
 	resp2, err2 := client.Do(req2)

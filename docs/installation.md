@@ -44,6 +44,52 @@ bash scripts/install.sh --source
 
 首次构建需联网下载基础镜像。脚本创建 context/，仅在 .env 不存在时复制模板，并把本地浏览范围限制到仓库目录。镜像内包含应用与工具链，宿主目录通过挂载提供。
 
+## 3C. 离线 / 空气 Gap 安装（目标机零联网）
+
+适用于完全不连公网的内网/隔离环境。**核心原则：目标机只 `docker load` 已导入镜像并用 `start-image` 启动，绝不执行 `start`**——`start` 会触发 `docker build`，进而拉取基础镜像，在离线机上必然失败或挂起。Compose 已设 `pull_policy: never`，双保险防止裸跑 `compose up` 意外拉取；缺镜像会立即报错而非联网等待。
+
+交付物三件套（来自同一版本 tag，如 0.1.10.2 RC1）：
+
+1. 同 tag 源码（或源码 ZIP，内含 Compose、scripts、version.md）；
+2. 自包含镜像归档 `aide-0.1.10.2-RC1-linux-aarch64.tar.gz`（x86 机为 `amd64`；Docker 内部架构标识为 arm64，归档文件名统一用 aarch64/amd64）；
+3. 同目录清单 `SHA256SUMS`（单文件；历史零散 `*.sha256` 已废弃）。
+
+```bash
+# 目标离线机：校验 → 导入 → 配置 → 启动
+cd aide                                   # 同 tag 源码根目录
+shasum -a 256 -c docker-images/SHA256SUMS # 校验归档完整性，失败即停
+docker load -i docker-images/aide-0.1.10.2-RC1-linux-aarch64.tar.gz
+# 复制模板并指定已导入镜像 tag、局域网模型地址（见 .env.example 注释）
+#   AIDE_IMAGE=aide:0.1.10.2-RC1
+#   AI_BASE_URL=http://<局域网模型地址>
+#   AIDE_WEBSEARCH_URL=        # 留空：web_search 离线降级
+bash scripts/aide.sh start-image          # = --no-build --pull never，绝不 build/pull
+curl -fsS http://127.0.0.1:8097/healthz   # 健康检查
+```
+
+离线行为说明：
+
+- **模型必须指向局域网/本地 provider**（内网网关、本地 vLLM 等），`AI_BASE_URL` 不可填公网地址。
+- **`web_search` 离线不可用**：未配置 `AIDE_WEBSEARCH_URL` 时该工具直接返回“离线环境不可用在线搜索，请用 search_text 搜本地”，不发起任何外联、不崩溃；需要联网检索时改用本地 `search_text`，或在内网自建 SearXNG 后把地址填入 `AIDE_WEBSEARCH_URL`。
+- 前端、drawio、Office 解析等全部内置镜像，无 CDN/外部字体依赖；镜像自包含运行工具链。
+
+离线部署流程：
+
+```mermaid
+flowchart TD
+  A["联网构建机"] --> B["docker build（固定 tag<br/>注入版本/commit）"]
+  B --> C["docker save"]
+  C --> D["gzip 压缩"]
+  D --> E["shasum 生成 SHA256SUMS"]
+  E --> F[("介质拷贝<br/>U盘 / 内网文件分发")]
+  F --> G["目标离线机：shasum -c 校验"]
+  G --> H["docker load 导入镜像"]
+  H --> I["配 .env：AIDE_IMAGE=aide:版本<br/>AI_BASE_URL=局域网模型"]
+  I --> J["bash scripts/aide.sh start-image<br/>--no-build --pull never"]
+  J --> K["curl healthz 健康检查"]
+  K --> L["模型指向局域网/本地 provider<br/>web_search 离线降级为 search_text"]
+```
+
 ## 4. 配置自己的项目
 
 首次默认使用源码目录作为工作区。如需其他目录，修改 .env 后重新启动；路径必须存在，推荐绝对路径：

@@ -2,6 +2,9 @@ name: aide
 services:
   aide:
     image: ${AIDE_IMAGE:-aide:local}
+    # 双保险：已导入镜像后绝不联网 pull。缺镜像立即报错，而非挂起等待拉取。
+    # 离线/空气 gap 机只 docker load + start-image；此处 never 防止裸跑 compose up 意外拉取。
+    pull_policy: never
     init: true
     build:
       context: .
@@ -15,6 +18,9 @@ services:
       AI_MODEL: ${AI_MODEL:-}
       AI_API_KEY: ${AI_API_KEY:-}
       AIDE_HOST_LOCAL: ${AIDE_LOCAL_ROOT:-$HOME}
+      # 在线搜索端点（SearXNG 兼容 JSON）。留空=离线优雅降级（web_search 提示用 search_text 搜本地，不发外联）。
+      # 联网部署填公开/自建实例以恢复 DuckDuckGo 在线搜索能力；空气 gap 机务必留空。
+      AIDE_WEBSEARCH_URL: ${AIDE_WEBSEARCH_URL:-}
     volumes:
       - type: bind
         source: ${AIDE_WORKSPACE:-.}

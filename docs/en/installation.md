@@ -53,6 +53,52 @@ bash scripts/install.sh --source
 
 Use a Git checkout for source identity. First builds download base images. If `.env` does not exist, the installer creates it, makes `context/`, and restricts local directory browsing to the repository. It does not overwrite an existing configuration.
 
+## 3C. Offline / air-gap install (target machine has no internet)
+
+For fully isolated intranet/disconnected environments. **Golden rule: on the target machine only `docker load` the imported image and launch it with `start-image`; never run `start`** — `start` triggers `docker build`, which pulls base images and will fail or hang offline. Compose sets `pull_policy: never` as a second guard so a bare `compose up` cannot pull; a missing image fails fast instead of hanging on a fetch.
+
+Three delivery artifacts (all from the same version tag, e.g. 0.1.10.2 RC1):
+
+1. Matching-tag source (or a source ZIP with the Compose file, scripts, and version.md);
+2. Self-contained image archive `aide-0.1.10.2-RC1-linux-aarch64.tar.gz` (use `amd64` on x86; Docker reports the architecture as arm64 internally while archive filenames uniformly use aarch64/amd64);
+3. A single `SHA256SUMS` manifest in the same directory (legacy per-archive `*.sha256` files are deprecated).
+
+```bash
+# On the offline target: verify -> load -> configure -> start
+cd aide                                    # matching-tag source root
+shasum -a 256 -c docker-images/SHA256SUMS  # verify integrity; stop on mismatch
+docker load -i docker-images/aide-0.1.10.2-RC1-linux-aarch64.tar.gz
+# Copy .env.example to .env and set:
+#   AIDE_IMAGE=aide:0.1.10.2-RC1
+#   AI_BASE_URL=http://<lan-model-address>
+#   AIDE_WEBSEARCH_URL=        # leave empty: web_search degrades offline
+bash scripts/aide.sh start-image           # = --no-build --pull never; never builds/pulls
+curl -fsS http://127.0.0.1:8097/healthz    # health check
+```
+
+Offline behavior notes:
+
+- **Point the model at a LAN/local provider** (intranet gateway, local vLLM, etc.); `AI_BASE_URL` must not point to the public internet.
+- **`web_search` is unavailable offline**: with `AIDE_WEBSEARCH_URL` unset the tool returns "offline environment, online search unavailable; use search_text to search locally" — it makes no outbound call and does not crash. Use local `search_text`, or self-host SearXNG on the intranet and put its URL in `AIDE_WEBSEARCH_URL`.
+- The frontend, drawio, and Office parsing are all bundled into the image (no CDN/external fonts); the image is self-contained with the runtime toolchain.
+
+Offline deployment flow:
+
+```mermaid
+flowchart TD
+  A["Online build machine"] --> B["docker build (fixed tag<br/>inject version/commit)"]
+  B --> C["docker save"]
+  C --> D["gzip"]
+  D --> E["shasum -> SHA256SUMS"]
+  E --> F[("Media transfer<br/>USB / intranet file share")]
+  F --> G["Offline target: shasum -c verify"]
+  G --> H["docker load image"]
+  H --> I[".env: AIDE_IMAGE=aide:version<br/>AI_BASE_URL=LAN model"]
+  I --> J["bash scripts/aide.sh start-image<br/>--no-build --pull never"]
+  J --> K["curl healthz"]
+  K --> L["Model -> LAN/local provider<br/>web_search degrades to search_text"]
+```
+
 ## 4. Select your directories
 
 Use existing paths, preferably absolute:
