@@ -19,6 +19,7 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 	"unicode"
 )
@@ -2054,7 +2055,7 @@ func readOnlyAllowed(command string) bool {
 	return false
 }
 
-func (a *App) execShellCommand(command string) (string, int, error) {
+func (a *App) execShellCommand(parent context.Context, command string) (string, int, error) {
 	a.mu.Lock()
 	mode := a.settings.SandboxMode
 	timeoutSec := a.settings.ShellTimeout
@@ -2094,10 +2095,20 @@ func (a *App) execShellCommand(command string) (string, int, error) {
 	if err != nil {
 		return "", -1, err
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeoutSec)*time.Second)
+	// 命令 ctx 派生自 run ctx：用户点停止时立即取消；ShellTimeout 作为单条命令上限。
+	ctx, cancel := context.WithTimeout(parent, time.Duration(timeoutSec)*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "bash", "--noprofile", "--norc", "-c", command)
 	cmd.Dir = dir
+	// 独立进程组，取消时杀掉整个进程组（含 find 等 bash 子进程），避免孤儿继续运行。
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Cancel = func() error {
+		if cmd.Process == nil {
+			return nil
+		}
+		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	}
+	cmd.WaitDelay = 2 * time.Second
 	cacheEnv := "/home/aide/.cache/go-build"
 	if c := a.wsConfig.Cache.Path; c != "" {
 		cacheEnv = filepath.Join(a.workPath, filepath.FromSlash(c))
@@ -2353,7 +2364,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		if command == "" {
 			return "缺少 command 参数"
 		}
-		out, code, err := a.execShellCommand(command)
+		out, code, err := a.execShellCommand(ctx, command)
 		if err != nil || code != 0 {
 			fb := analyzeShellFailure(command, out, code, err)
 			if strings.TrimSpace(out) != "" {
