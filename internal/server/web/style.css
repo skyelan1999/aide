@@ -638,3 +638,9 @@ body.file-view-mode .file-view-preview iframe{flex:1;width:100%;height:100%;min-
 
 .voice-input-row{display:flex;gap:8px;align-items:center}
 .voice-input-select{flex:1;min-width:0;padding:6px 8px;font-size:12px;font-family:inherit;color:var(--text);background:var(--field);border:1px solid var(--line-soft-2);border-radius:7px}
+
+.json-view .json-key{color:#0f62fe}
+.json-view .json-string{color:#0f7b3f}
+.json-view .json-number{color:#b35a00}
+.json-view .json-boolean{color:#8a3ffc}
+.json-view .json-null{color:#8a8f98;font-style:italic}

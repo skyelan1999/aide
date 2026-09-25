@@ -2746,8 +2746,8 @@ function renderTrajectory() {
   if (trajView === 'calls') { if (fmtSeg) fmtSeg.classList.add('hidden'); renderCallsAnalysis(host, session); return; }
   if (fmtSeg) fmtSeg.classList.remove('hidden');
   if (trajFmt === 'json') {
-    const pre = el('pre', 'traj-raw-view');
-    pre.textContent = buildTrajectoryJSON(session); // JSON 看原始源码
+    const pre = el('pre', 'traj-raw-view json-view');
+    pre.innerHTML = highlightJSON(buildTrajectoryJSON(session)); // JSON 语法高亮
     host.append(pre);
   } else {
     const md = el('div', 'traj-md-view md-body');
@@ -2801,6 +2801,19 @@ function buildTrajectoryJSON(s) {
     for (const tu of (r.toolUses || [])) data.timeline.push({ time: r.created, type: 'tool', tool: tu.tool, args: tu.args, result: tu.preview || tu.result });
   }
   return JSON.stringify(data, null, 2);
+}
+// JSON 语法高亮：先转义防 XMS/破坏，再给 key/string/number/boolean/null 上色
+function highlightJSON(json) {
+  const esc = String(json).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return esc.replace(
+    /("(?:\u[a-fA-F0-9]{4}|\[^u]|[^\\"])*"(?:\s*:)?|\b(?:true|false|null)\b|-?\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?)/g,
+    (m) => {
+      let cls = 'json-number';
+      if (m.startsWith('"')) cls = /:\s*$/.test(m) ? 'json-key' : 'json-string';
+      else if (/true|false/.test(m)) cls = 'json-boolean';
+      else if (/null/.test(m)) cls = 'json-null';
+      return '<span class="' + cls + '">' + m + '</span>';
+    });
 }
 let callFilter = { tool: '', agent: 'all', type: 'all', time: 'all' };
 const CALL_TYPES = {
