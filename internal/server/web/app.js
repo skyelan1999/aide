@@ -156,7 +156,7 @@ async function loadSessions() {
         if (done.length > 3) {
           const more = el('div', 'sub-group-toggle sub-group-more');
           more.onclick = e => { e.stopPropagation(); st.expandAll = !st.expandAll; loadSessions(); };
-          more.append(el('span', '', st.expandAll ? t("收起") : t("展开全部 (+" + (done.length - 3) + ")")));
+          more.append(el('span', '', st.expandAll ? t("收起") : t("展开全部 (+{0})", done.length - 3)));
           $('sessions').append(more);
         }
       }
@@ -538,8 +538,8 @@ function renderClarification(run, box) {
   } else if (q.type === 'input') {
     const row = el('div', 'clarify-actions');
     const input = el('input', 'clarify-input'); input.placeholder = t('输入你的回答…');
-    const send = el('button', 'primary', t('发送')); send.onclick = () => answer(input.value.trim() || '(空)');
-    input.onkeydown = e => { if (e.key === 'Enter') answer(input.value.trim() || '(空)'); };
+    const send = el('button', 'primary', t('发送')); send.onclick = () => answer(input.value.trim() || t('(空)'));
+    input.onkeydown = e => { if (e.key === 'Enter') answer(input.value.trim() || t('(空)')); };
     row.append(input, send); card.append(row);
   } else {
     (q.options || []).forEach(o => { const b = el('button', 'clarify-option', o); b.onclick = () => answer(o); card.append(b); });
@@ -1723,7 +1723,7 @@ function renderTokenStats(control) {
   const priceRow = el('div', 'token-price-row');
   wrap.append(head, chips, priceRow, grid, legend, tip, detail);
   const pieWrap = el('div', 'model-pie-wrap');
-  pieWrap.innerHTML = '<div class="model-pie-title">模型 Token 占比</div><div class="model-pie-body"><svg class="model-pie-svg" viewBox="0 0 200 200"></svg><div class="model-pie-legend"></div></div><div class="model-pie-empty hidden">暂无模型调用数据</div>';
+  pieWrap.innerHTML = `<div class="model-pie-title">${t('模型 Token 占比')}</div><div class="model-pie-body"><svg class="model-pie-svg" viewBox="0 0 200 200"></svg><div class="model-pie-legend"></div></div><div class="model-pie-empty hidden">${t('暂无模型调用数据')}</div>`;
   wrap.append(pieWrap);
   const failBox = el('p', 'task-error', '');
   wrap.append(failBox);
@@ -1816,7 +1816,7 @@ function renderTokenStats(control) {
         // 图例
         const item = el('div', 'pie-legend-item');
         item.innerHTML = `<span class="pie-dot" style="background:${color}"></span><span class="pie-model">${model}</span><span class="pie-tokens">${fmtStatTokens(stats.total || 0)}</span><span class="pie-pct">${(frac*100).toFixed(1)}%</span>`;
-        item.title = `${model}: ${stats.total || 0} tokens · ${stats.calls || 0} 次调用 · ${(frac*100).toFixed(1)}%`;
+        item.title = t("{0}: {1} tokens · {2} 次调用 · {3}%", model, stats.total || 0, stats.calls || 0, (frac*100).toFixed(1));
         pieLegend.appendChild(item);
       });
       // hover 高亮
@@ -2490,7 +2490,7 @@ function setupDrawioFrame(container, xml, onSave, handlerKey) {
   const timeoutId = setTimeout(() => {
     if (!loaded) {
       timedOut = true;
-      container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-dim);"><p>📐 draw.io 加载超时</p><p style="font-size:12px;margin-top:8px;">本地 draw.io 加载失败，请刷新页面重试</p></div>';
+      container.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-dim);"><p>📐 ${t('draw.io 加载超时')}</p><p style="font-size:12px;margin-top:8px;">${t('本地 draw.io 加载失败，请刷新页面重试')}</p></div>`;
     }
   }, 15000);
   if (window[handlerKey]) window.removeEventListener('message', window[handlerKey]);
@@ -2531,10 +2531,10 @@ function setupImagePreview(container, filePath, root, source) {
   const dims = el('span', 'img-dims', '');
   const btnZoomIn = el('button', 'img-ctrl', '＋');
   const btnZoomOut = el('button', 'img-ctrl', '－');
-  const btnFit = el('button', 'img-ctrl', '适应');
+  const btnFit = el('button', 'img-ctrl', t('适应'));
   const btnOrig = el('button', 'img-ctrl', '1:1');
   const btnClose = el('button', 'img-ctrl', '✕');
-  btnZoomIn.title = '放大'; btnZoomOut.title = '缩小'; btnFit.title = '适应窗口'; btnOrig.title = '原始大小'; btnClose.title = '关闭';
+  btnZoomIn.title = t('放大'); btnZoomOut.title = t('缩小'); btnFit.title = t('适应窗口'); btnOrig.title = t('原始大小'); btnClose.title = t('关闭');
   toolbar.append(info, dims, btnZoomOut, btnZoomIn, btnFit, btnOrig, btnClose);
   const canvas = el('div', 'img-canvas');
   const img = el('img', 'img-preview');
@@ -2551,7 +2551,7 @@ function setupImagePreview(container, filePath, root, source) {
     if (iw && ih) { scale = Math.min(cw / iw, ch / ih, 1); tx = 0; ty = 0; apply(); }
   };
   img.onload = () => { dims.textContent = img.naturalWidth + '×' + img.naturalHeight; fit(); };
-  img.onerror = () => { canvas.innerHTML = '<div style="color:var(--warn);padding:40px;text-align:center;">图片加载失败</div>'; };
+  img.onerror = () => { canvas.innerHTML = `<div style="color:var(--warn);padding:40px;text-align:center;">${t('图片加载失败')}</div>`; };
   btnZoomIn.onclick = () => { scale = Math.min(scale * 1.25, 8); apply(); };
   btnZoomOut.onclick = () => { scale = Math.max(scale / 1.25, 0.1); apply(); };
   btnFit.onclick = fit;
@@ -2575,8 +2575,8 @@ function ensureVendorScript(src, check) {
     if (check()) return resolve();
     const sc = document.createElement('script');
     sc.src = src; sc.async = false;
-    sc.onload = () => (check() ? resolve() : reject(new Error(src + ' 加载后仍不可用')));
-    sc.onerror = () => reject(new Error('无法加载 ' + src));
+    sc.onload = () => (check() ? resolve() : reject(new Error(t('{0} 加载后仍不可用', src))));
+    sc.onerror = () => reject(new Error(t('无法加载 {0}', src)));
     document.head.appendChild(sc);
   });
 }
@@ -2721,7 +2721,7 @@ function renderMarkdown(src, live, basePath) {
           resolved = parts.join('/');
         }
         img.src = '/api/file/raw?root=workspace&path=' + encodeURIComponent(resolved) + '&access_token=' + encodeURIComponent(state.token);
-        img.onerror = () => { img.style.opacity = '0.4'; img.title = '图片加载失败: ' + orig; };
+        img.onerror = () => { img.style.opacity = '0.4'; img.title = t('图片加载失败: {0}', orig); };
       });
     }
     return body.innerHTML;
@@ -2833,24 +2833,24 @@ function renderTrajectory() {
 }
 function buildTrajectoryMarkdown(s) {
   const subs = (state.sessions || []).filter(x => x.parentId === s.id);
-  let md = "# " + (s.title || "未命名会话") + "\n\n";
-  md += "> 导出时间：" + new Date().toLocaleString() + " · 会话 ID：" + s.id + "\n\n---\n\n";
+  let md = "# " + (s.title || t("未命名会话")) + "\n\n";
+  md += t("> 导出时间：{0} · 会话 ID：{1}\n\n---\n\n", new Date().toLocaleString(), s.id);
   for (const r of (s.runs || [])) {
-    md += "## 任务 · " + (r.created || "") + "\n\n";
-    md += "**用户：** " + (r.prompt || "") + "\n\n";
-    if (r.usage?.total) md += "**Token 消耗：** " + r.usage.total + (r.usage.estimated ? "（估）" : "") + "\n\n";
+    md += t("## 任务 · {0}\n\n", r.created || "");
+    md += t("**用户：** {0}\n\n", r.prompt || "");
+    if (r.usage?.total) md += t("**Token 消耗：** {0}{1}\n\n", r.usage.total, r.usage.estimated ? t("（估）") : "");
     if (r.steps) for (const st of r.steps) md += "- " + st.name + " · " + st.status + (st.content ? "\n  > " + String(st.content).slice(0,500) : "") + "\n";
     if (r.toolUses) for (const tu of r.toolUses) {
-      md += "**工具 " + tu.tool + "：**\n```\n" + String(tu.preview || tu.result || "") + "\n```\n\n";
+      md += t("**工具 {0}：**\n```\n", tu.tool) + String(tu.preview || tu.result || "") + "\n```\n\n";
     }
-    if (r.error) md += "**错误：** " + r.error + "\n\n";
+    if (r.error) md += t("**错误：** {0}\n\n", r.error);
     md += "\n---\n\n";
   }
   for (const sub of subs) {
-    md += "## 子会话：" + (sub.title || sub.id) + "\n\n";
+    md += t("## 子会话：{0}\n\n", sub.title || sub.id);
     for (const r of (sub.runs || [])) {
       md += "### " + (r.created || "") + "\n\n";
-      md += "**用户：** " + (r.prompt || "") + "\n\n";
+      md += t("**用户：** {0}\n\n", r.prompt || "");
       if (r.toolUses) for (const tu of r.toolUses) md += "- " + tu.tool + ": " + String(tu.preview || tu.result || "").slice(0, 200) + "\n";
       md += "\n";
     }
@@ -2912,7 +2912,7 @@ function renderCallsAnalysis(host, session) {
   }
   const subs = (state.sessions || []).filter(x => x.parentId === session.id);
   for (const sub of subs) {
-    calls.push({ agent: 'sub', agentName: sub.title || t('子 Agent'), time: sub.created, tool: '(子会话启动)', args: sub.id, result: sub.title });
+    calls.push({ agent: 'sub', agentName: sub.title || t('子 Agent'), time: sub.created, tool: t('(子会话启动)'), args: sub.id, result: sub.title });
     (async () => {
       try {
         const detail = await api('/sessions/' + sub.id);
@@ -3165,7 +3165,7 @@ async function renderMermaid() {
     try {
       const { svg } = await mermaid.render('m' + Math.random().toString(36).slice(2), el.textContent);
       el.innerHTML = svg; el.dataset.processed = '1';
-    } catch (e) { el.innerHTML = '<pre style="color:#f87171">流程图渲染失败</pre>'; el.dataset.processed = '1'; }
+    } catch (e) { el.innerHTML = `<pre style="color:#f87171">${t('流程图渲染失败')}</pre>`; el.dataset.processed = '1'; }
   });
 }
 if (!document.body.classList.contains('file-view-mode') && state.config) { action(loadSessions)(); action(loadFiles)(); }
@@ -3466,8 +3466,8 @@ const narration = { active:false, steps:[], index:0, paused:false, cancelled:fal
 function narrSleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
 function stripMarkdownForSpeech(src){
   let s = String(src||'');
-  s = s.replace(/```mermaid[\s\S]*?```/gi, '，流程图如下，');
-  s = s.replace(/```[a-zA-Z]*[\s\S]*?```/g, '，相关代码见屏幕，');
+  s = s.replace(/```mermaid[\s\S]*?```/gi, t('，流程图如下，'));
+  s = s.replace(/```[a-zA-Z]*[\s\S]*?```/g, t('，相关代码见屏幕，'));
   s = s.replace(/!\[[^\]]*\]\([^)]*\)/g, '');
   s = s.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
   s = s.replace(/^\s{0,3}#{1,6}\s*/gm, '');
@@ -3665,7 +3665,7 @@ try{ if(localStorage.getItem('aide.narrateMode')==='1') setNarrateModeUI(true); 
 // ===== 主聊天消息「朗读」：显式点击触发，平直机械音（区别于小秘的灵动韵律 TTS）=====
 const mech = { speaking:false, btn:null };
 function mechanicalParts(text){
-  const flat = String(text||'').replace(/```[\s\S]*?```/g,'，代码，').replace(/[#*`>_~|]/g,'');
+  const flat = String(text||'').replace(/```[\s\S]*?```/g,t('，代码，')).replace(/[#*`>_~|]/g,'');
   const out=[]; const re=/[^。！？.!?\n]+[。！？.!?\n]?/g; let m;
   while((m=re.exec(flat))){ const x=m[0].trim(); if(x) out.push(x.slice(0,200)); }
   return out.slice(0,60);
@@ -3788,13 +3788,13 @@ function renderVoiceHistoryControl() {
         const oldPw = prompt(t('原密钥')); if (oldPw == null) return;
         const newPw = prompt(t('新密钥')); if (!newPw) return toast(t('请输入新密钥'));
         try { await api('/voice-history/change-password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw }) }); toast(t('密钥已修改')); }
-        catch (e) { toast(t('修改失败：' + e.message)); }
+        catch (e) { toast(t('修改失败：{0}', e.message)); }
       });
       const disBtn = el('button', 'quiet', t('关闭加密')); disBtn.type = 'button';
       disBtn.onclick = action(async () => {
         const pw = prompt(t('输入密钥以解密回明文')); if (pw == null) return;
         try { await api('/voice-history/disable', { method: 'POST', body: JSON.stringify({ password: pw }) }); toast(t('已关闭加密')); load(); }
-        catch (e) { toast(t('失败：' + e.message)); }
+        catch (e) { toast(t('失败：{0}', e.message)); }
       });
       tool.append(lockBtn, chgBtn, disBtn);
     }
