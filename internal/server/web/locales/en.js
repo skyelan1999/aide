@@ -915,4 +915,6 @@ window.aideEnglish = {
   "语音引擎设置已保存": "Speech engine settings saved",
   "正在合成…": "Synthesizing…",
   "优先使用 edge-tts 神经音（需联网，文本会发送给微软）；不可用时自动降级浏览器合成。保密环境请选「浏览器合成」。主聊天的机械朗读按钮不受此设置影响。": "Prefers edge-tts neural voices (needs network; text is sent to Microsoft); falls back to browser speech when unavailable. For classified environments choose \"Browser speech\". The mechanical read-aloud button in the main chat is unaffected.",
+  "工具调用": "Tool call",
+  "参数": "Arguments"
 };
