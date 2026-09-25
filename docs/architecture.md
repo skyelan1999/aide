@@ -2,7 +2,7 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-核对日期：2026-09-23。本次交付目标 0.1.6.0 RC4；aide 融合 AI 与 IDE，让人更专注于专业工作；架构采用 Go、浏览器与 Docker，支持按场景扩展。历史验收保留于 verification.md，发布身份由 tag 与镜像记录确认。
+核对日期：2026-09-25。当前版本 0.1.10.2 RC1（分支 feature/permission-panel）；aide 融合 AI 与 IDE，让人更专注于专业工作；架构采用 Go、浏览器与 Docker，支持按场景扩展。历史验收保留于 verification.md，发布身份由 tag 与镜像记录确认。
 
 ## 系统结构
 
@@ -36,6 +36,10 @@ Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token �
 | `workspace_config.go` / `ssh_session.go` | 工作区身份、本地映射、SSH/SFTP 生命周期 |
 | `files.go` / `sources.go` | 路径/内容策略、读写冲突、辅助资料驱动 |
 | `command.go` | 非交互 shell、NDJSON 输出、超时与取消 |
+| `persona.go` / `settings_persona_persist` | 性格系统：多人格（activePersona）、AES-256-GCM 密文（personaCiphers）、可演化 personalities、解锁/保存/重置 |
+| `config_backup.go` | 配置备份信封 `aide-config-backup`：导出/导入设置快照、来源与工作区密钥、小秘历史 |
+| `voice_agent.go` | 语音小秘：send/ignore/standby 研判、VoiceHistoryEntry 记录、AES-256-GCM 历史加解密、双向朗读 |
+| `environment_guide.go` | 系统文档自动挂载与环境引导 |
 | `plugins.go` / `plugin_host.js` | 插件登记、加载、schema 和 handler |
 | `web/settings-init.js` | 同步首帧外观、`aide.ui`、系统外观响应与跨标签同步 |
 | `web/settings-schema.json` / `app.js` | 设置导航、控件与应用交互；SSE 流式渲染（rAF 批量、live 文本/光标/工具行、会话快照去重）；排队/插话（Codex 风格队列条、发送/停止同键、一键回底） |
@@ -85,14 +89,22 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 | PUT / DELETE | `/api/plugins/{id}` | 启停/删除 |
 | GET | `/api/plugin-surface` | 插件能力清单 |
 | POST | `/api/command` | 命令执行，NDJSON 输出 |
+| POST | `/api/config/export`、`/api/config/import` | 配置备份导出/导入（信封 `aide-config-backup`，可选含密钥/语音历史） |
+| POST | `/api/sessions/{id}/runs/{run}/retry`、`/answer`、`/queue/{index}` | 重试/回答澄清问题/排队项改删升级 |
+| GET | `/api/file/raw`、POST `/api/file/rename` | 文件原始字节（md 相对图片/img 经 access_token 取）/重命名 |
+| PATCH / DELETE | `/api/sessions/{id}`、`/api/sessions/archived/all` | 改 pinned/archived/删除/清空归档 |
+| POST | `/api/persona/*`（unlock/save/reset/GET）、`/api/personas/*`（GET/active）、`/api/personality/*`（GET/PUT/reset/evolve） | 性格加解密、多人格切换、性格演化 |
+| POST | `/api/voice-filter`、`/api/voice-narrate` | 小秘研判 send/ignore/standby、双向朗读 |
+| GET/DELETE/POST | `/api/voice-history`（list/clear/enable/unlock/lock/change-password/disable） | 小秘工作历史与加锁 |
+| POST | `/api/account/verify-password` | 账户密码 SHA-256 校验（锁屏/历史口令） |
 
-这里是导航索引，不代替每个 handler 中的完整请求结构、验证与错误码。
+这里是导航索引，不代替每个 handler 中的完整请求结构、验证与错误码。完整注册表以 `server.go` mux 注册为准。
 
 ## 任务与工具
 
 `running → completed / awaiting_approval / failed / cancelled`；待审批提案应用后 completed；服务重启将运行任务标记 interrupted。
 
-规划、提案、审查每个阶段可进入模型工具循环，当前循环最多 10 轮。`list_files`/`read_file` 直接读，`write_file`/`run_shell` 产生提案。工具结果回传模型；已有文件写入仍需显式附件快照。插件参数 schema 进入工具声明，但可信插件本身能直接使用 Node 能力，不能声称写操作都被安全沙箱阻止。
+规划、提案、审查每个阶段（及 AI 工作流四阶段/自动模式）可进入模型工具循环，循环上限 `ToolMaxRounds` 默认 60、可配 5–200。`list_files`/`read_file` 直接读，`write_file`/`run_shell` 产生提案。工具结果回传模型；已有文件写入仍需显式附件快照。插件参数 schema 进入工具声明，但可信插件本身能直接使用 Node 能力，不能声称写操作都被安全沙箱阻止。
 
 ## 界面设置
 
@@ -100,10 +112,10 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 {"version":1,"theme":"system","palette":"blue"}
 ```
 
-`theme` 为 light/dark/system，`palette` 为 blue/green。页面 `data-theme` 是解析后的明暗，`data-theme-pref` 是用户选择，`data-palette` 是风格。专业与经典各一排三项，通过 `aideUI.setAppearance()` 一次保存组合。旧 `aide.theme` 和中间版本 classic 偏好迁移；设置 schema 还包含消耗统计、模型参数、关于。
+`theme` 为 light/dark/system，`palette` 为 blue/green。页面 `data-theme` 是解析后的明暗，`data-theme-pref` 是用户选择，`data-palette` 是风格。专业与经典各一排三项，通过 `aideUI.setAppearance()` 一次保存组合。旧 `aide.theme` 和中间版本 classic 偏好迁移；`settings-schema.json` 侧边分区为：消耗统计(stats)/外观(appearance)/语言(language)/模型(model)/会话数据(sessions-data)/权限(permissions)/账户(account)/性格(persona)/语音(voice)/无障碍(accessibility)/备份(backup)/关于(about)。
 
 ## 验证与扩展
 
 变更前读取 [统一开发工作流](agent/WORKFLOW.md)。新前端须验证浏览器实际交互；正式发布须在没有 `/web` 挂载的构建镜像中验证 embed 资源。早期预览使用 RC5 后端 + 工作区静态文件；本次发布另行验证无静态目录覆盖的镜像。
 
-待独立规划：PTY、目录分页、会话归档、真实 MCP、统一插件文件驱动。不要把登记入口或预设名称当成这些能力已经存在。SSE 已落地。
+待独立规划：PTY、目录分页、真实 MCP、统一插件文件驱动。会话归档（pinned/archived、子会话自动归档与折叠组）、SSE 流式输出已落地。不要把登记入口或预设名称当成这些待规划能力已经存在。
