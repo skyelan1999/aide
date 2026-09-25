@@ -735,6 +735,12 @@ async function loadFiles() {
   files.forEach(file => { const b = el('button', 'file-item'); b.append(el('span', 'file-icon', file.dir ? '▱' : '≡'), el('span', 'file-name', file.name)); if (file.dir) b.append(el('small', '', '›')); b.title = file.path; b.onclick = action(async () => { if (file.dir) { state.dir = file.path; await loadFiles(); } else await openFile(file.path); }); $('files').append(b); });
 }
 async function openFile(path) {
+  // 图片 / STL 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
+  if (isImagePath(path) || isStlPath(path)) {
+    state.file = { path, root: state.root, source: state.root === 'context' ? state.source : '', content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
+    showEditor();
+    return;
+  }
   const query = state.root === 'context' && state.source ? '/file?source=' + encodeURIComponent(state.source) + '&path=' : '/file?root=' + state.root + '&path=';
   const data = await api(query + encodeURIComponent(path)); state.file = { ...data, path, root: state.root, source: state.root === 'context' ? state.source : '', wsId: data.workspaceId || data.wsId || '', fresh: false }; showEditor();
 }
@@ -2611,15 +2617,21 @@ async function openFileViewMode() {
   $('file-view').classList.remove('hidden');
   fileView.spec = spec; fileView.wsId = '';
   $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;
-  const query = spec.source
-    ? '/file?source=' + encodeURIComponent(spec.source) + '&path=' + encodeURIComponent(spec.path)
-    : '/file?root=' + encodeURIComponent(spec.root) + '&path=' + encodeURIComponent(spec.path);
-  const data = await api(query);
-  fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
   const md = isMarkdownPath(spec.path);
   const isDrawio = /\.drawio$/i.test(spec.path || '');
   const isImg = isImagePath(spec.path);
   const isStl = isStlPath(spec.path);
+  // 图片 / STL 走独立 raw 查看器，跳过只支持文本、会拒绝二进制的 /api/file
+  let data;
+  if (isImg || isStl) {
+    data = { content: '', hash: '', workspaceId: '', wsId: '' };
+  } else {
+    const query = spec.source
+      ? '/file?source=' + encodeURIComponent(spec.source) + '&path=' + encodeURIComponent(spec.path)
+      : '/file?root=' + encodeURIComponent(spec.root) + '&path=' + encodeURIComponent(spec.path);
+    data = await api(query);
+  }
+  fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
   $('file-view-mode-switch').classList.toggle('hidden', !md);
   const readOnly = spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true);
   $('file-view-editor').value = data.content;
