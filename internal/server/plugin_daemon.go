@@ -286,28 +286,29 @@ func (p *daemonProc) spawn() {
 		p.mu.Unlock()
 		return
 	}
+	doneCh := make(chan struct{})
 	p.stdin = stdin
 	p.pending = map[int64]chan rpcResp{}
-	p.doneCh = make(chan struct{})
+	p.doneCh = doneCh
 	p.mu.Unlock()
 
 	if err := cmd.Start(); err != nil {
 		log.Printf("[daemon] %s 启动失败: %v", p.id, err)
 		p.setStatus(dsCrashed)
-		close(p.doneCh)
+		close(doneCh)
 		return
 	}
 	p.cmd = cmd
 	p.startedAt = time.Now()
 	p.setStatus(dsRunning)
-	go p.readLoop(stdout)
-	go p.heartbeat()
+	go p.readLoop(stdout, doneCh)
+	go p.heartbeat(doneCh)
 	go func() { _ = cmd.Wait() }() // 回收进程；stdout EOF 由 readLoop 处理
 }
 
 // readLoop 逐行解析子进程 stdout：响应路由到 pending，事件入缓存，pong 更新心跳。
-func (p *daemonProc) readLoop(stdout io.ReadCloser) {
-	defer close(p.doneCh)
+func (p *daemonProc) readLoop(stdout io.ReadCloser, doneCh chan struct{}) {
+	defer close(doneCh)
 	sc := bufio.NewScanner(stdout)
 	sc.Buffer(make([]byte, 1<<20), 4<<20)
 	for sc.Scan() {
@@ -355,14 +356,17 @@ func (p *daemonProc) readLoop(stdout io.ReadCloser) {
 }
 
 // heartbeat 周期 ping；超时未 pong 视为崩溃，杀掉进程触发重启。
-func (p *daemonProc) heartbeat() {
+func (p *daemonProc) heartbeat(doneCh chan struct{}) {
+	p.mu.Lock()
+	stopCh := p.stopCh
+	p.mu.Unlock()
 	t := time.NewTicker(daemonPingInterval)
 	defer t.Stop()
 	for {
 		select {
-		case <-p.doneCh:
+		case <-doneCh:
 			return
-		case <-p.stopCh:
+		case <-stopCh:
 			return
 		case <-t.C:
 		}
@@ -378,7 +382,7 @@ func (p *daemonProc) heartbeat() {
 			log.Printf("[daemon] %s 心跳超时，判定崩溃", p.id)
 			p.kill()
 			return
-		case <-p.doneCh:
+		case <-doneCh:
 			return
 		}
 	}
@@ -496,6 +500,7 @@ func (p *daemonProc) call(tool string, args map[string]any) (any, error) {
 	ch := make(chan rpcResp, 1)
 	p.mu.Lock()
 	p.pending[id] = ch
+	doneCh := p.doneCh
 	p.mu.Unlock()
 	p.send(map[string]any{"jsonrpc": "2.0", "id": id, "method": "tool.call", "params": map[string]any{"tool": tool, "args": args}})
 	select {
@@ -515,7 +520,7 @@ func (p *daemonProc) call(tool string, args map[string]any) (any, error) {
 		delete(p.pending, id)
 		p.mu.Unlock()
 		return nil, errors.New("daemon 工具调用超时")
-	case <-p.doneCh:
+	case <-doneCh:
 		return nil, errors.New("daemon 进程已退出")
 	}
 }

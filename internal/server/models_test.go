@@ -126,7 +126,9 @@ func TestTaskRecordsModel(t *testing.T) {
 		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "ok"}}}})
 	}))
 	defer provider.Close()
+	a.mu.Lock()
 	a.settings = Settings{BaseURL: provider.URL, Model: "deepseek-chat", Models: []ModelRef{{ID: "deepseek-chat", ContextWindow: defaultContextWindow}}, ActiveModel: "deepseek-chat"}
+	a.mu.Unlock()
 	w := request(a, "POST", "/api/sessions", map[string]string{})
 	requireStatus(t, w, 201)
 	var s Session
@@ -138,6 +140,9 @@ func TestTaskRecordsModel(t *testing.T) {
 	if task.Model != "deepseek-chat" {
 		t.Fatalf("task model not recorded: %+v", task)
 	}
+	// 等待异步 execute 协程结束，避免 testApp cleanup 调 Close() 时与仍在运行的
+	// background()/summarizeTopic 协程竞争 bgWg/bgCtx（data race）。
+	waitTaskDone(t, a, s.ID)
 }
 
 func TestModelDiscoveryDraft(t *testing.T) {
