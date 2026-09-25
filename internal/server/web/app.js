@@ -3162,8 +3162,10 @@ async function voiceFilterOne(sentence) {
   } else if (result.action === 'standby') {
     voice.standby = true;
     voiceLog('standby', result.reason || t('和他人闲聊，已退下'));
-    voiceSetStatus('standby', t('已退下 · 检测到对 AI 说话可重新点击麦克风唤起'));
     if (voice.recognition) { try { voice.recognition.onend = null; voice.recognition.stop(); } catch (_) {} }
+    // 退下即收起面板，仅短暂 toast 提示
+    $('voice-panel').classList.add('hidden');
+    toast(result.reason || t('小秘已退下，点麦克风可重新唤起'));
   } else {
     voiceLog('ignored', sentence, result.reason);
   }
@@ -3262,8 +3264,8 @@ function voiceStopAndFlush() {
   const rest = voice.buffer.trim();
   voice.buffer = '';
   if (rest.length >= 2) { voice.queue.push(rest); voiceDrainQueue(); }
-  voiceSetStatus(null, t("已停止 · 可继续说话或关闭"));
-  voiceRenderLog();
+  // 停止即收起：自动隐藏小秘面板（剩余句子仍会异步发送），下次点麦克风重新唤起
+  $('voice-panel').classList.add('hidden');
 }
 function voiceClose() {
   clearTimeout(voice.timer);
