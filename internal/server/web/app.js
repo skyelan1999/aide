@@ -2724,7 +2724,8 @@ function trajectoryEvent(dot, title, bodyNode, kind) {
   if (bodyNode) ev.append(bodyNode);
   return ev;
 }
-let trajView = "md"; // md | json | calls
+let trajView = "history"; // history | calls（一级）
+let trajFmt = "md"; // md | json（历史视图格式，二级）
 function renderTrajectory() {
   const host = $('trajectory-content');
   host.replaceChildren();
@@ -2733,13 +2734,12 @@ function renderTrajectory() {
     host.append(el('p', 'muted', t("当前会话还没有任务。发送任务后，这里会按事件时间线记录完整轨迹。")));
     return;
   }
-  if (trajView === 'calls') { renderCallsAnalysis(host, session); return; }
-  if (trajView === 'md' || trajView === 'json') {
-    const pre = el('pre', 'traj-raw-view');
-    pre.textContent = trajView === 'json' ? buildTrajectoryJSON(session) : buildTrajectoryMarkdown(session);
-    host.append(pre);
-    return;
-  }
+  const fmtSeg = $('traj-fmt-seg');
+  if (trajView === 'calls') { if (fmtSeg) fmtSeg.classList.add('hidden'); renderCallsAnalysis(host, session); return; }
+  if (fmtSeg) fmtSeg.classList.remove('hidden');
+  const pre = el('pre', 'traj-raw-view');
+  pre.textContent = trajFmt === 'json' ? buildTrajectoryJSON(session) : buildTrajectoryMarkdown(session);
+  host.append(pre);
 }
 function buildTrajectoryMarkdown(s) {
   const subs = (state.sessions || []).filter(x => x.parentId === s.id);
@@ -2882,7 +2882,7 @@ function renderCallsTable(host, calls) {
 function openTrajectory() {
   closeSettingsSheet();
   closeWorkspaceSheet();
-  ensureExportFormatBtn();
+  ensureTrajectoryTabs();
   renderTrajectory();
   $('trajectory-sheet').classList.add('open');
   $('settings-backdrop').classList.add('open');
@@ -2899,7 +2899,7 @@ $('trajectory-export').onclick = action(() => {
   const s = state.session;
   const ts = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
   const base = (s.title || "session").slice(0, 30).replace(/[\/:*?"<>|]/g, "_");
-  const fmt = (trajView === 'json') ? 'json' : 'md';
+  const fmt = (trajView === 'history' && trajFmt === 'json') ? 'json' : 'md';
   if (fmt === 'json') {
     const blob = new Blob([buildTrajectoryJSON(s)], {type: "application/json;charset=utf-8"});
     const a = document.createElement("a");
@@ -2918,20 +2918,32 @@ $('trajectory-export').onclick = action(() => {
     toast(t("已导出会话为 Markdown"));
   }
 });
-// 轨迹视图分段控件（Markdown / JSON / 调用分析）
-function ensureExportFormatBtn() {
-  const seg = document.querySelector('.traj-format-seg');
-  if (!seg || seg.dataset.bound) return;
-  seg.dataset.bound = '1';
-  seg.querySelectorAll('.traj-seg-btn').forEach(btn => {
-    btn.onclick = () => {
-      seg.querySelectorAll('.traj-seg-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      trajView = btn.dataset.view;
-      $('trajectory-export').title = trajView === 'json' ? '导出会话为 JSON' : '导出会话为 Markdown';
-      renderTrajectory();
-    };
-  });
+// 轨迹一级视图：历史 / 调用记录；历史二级格式：Markdown / JSON
+function ensureTrajectoryTabs() {
+  const mainSeg = document.querySelector('.traj-main-seg');
+  if (mainSeg && !mainSeg.dataset.bound) {
+    mainSeg.dataset.bound = '1';
+    mainSeg.querySelectorAll('.traj-seg-btn').forEach(btn => {
+      btn.onclick = () => {
+        mainSeg.querySelectorAll('.traj-seg-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        trajView = btn.dataset.view;
+        renderTrajectory();
+      };
+    });
+  }
+  const fmtSeg = $('traj-fmt-seg');
+  if (fmtSeg && !fmtSeg.dataset.bound) {
+    fmtSeg.dataset.bound = '1';
+    fmtSeg.querySelectorAll('.traj-seg-btn').forEach(btn => {
+      btn.onclick = () => {
+        fmtSeg.querySelectorAll('.traj-seg-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        trajFmt = btn.dataset.fmt;
+        renderTrajectory();
+      };
+    });
+  }
 }
 
 /* ── 全局搜索（FR-92）：⌘K 聚焦，防抖检索会话缓存 ── */
