@@ -506,9 +506,9 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .traj-seg-btn{padding:4px 10px;font-size:10px;font-weight:500;color:var(--muted);border-radius:5px;transition:background .15s,color .15s;line-height:1.4}
 .traj-seg-btn:hover{color:var(--text)}
 .traj-seg-btn.active{background:var(--soft);color:var(--text);box-shadow:0 1px 2px var(--shadow-1)}
-.traj-export-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;font-size:11px;font-weight:500;color:var(--on-brand);background:var(--brand);border-radius:7px;transition:background .15s,opacity .15s}
-.traj-export-btn:hover{background:var(--brand-hi);opacity:.92}
-.traj-export-btn svg{flex-shrink:0}
+.traj-export-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;height:30px;font-size:12px;font-weight:550;color:var(--on-brand);background:var(--brand);border-radius:7px;transition:background .15s,opacity .15s;white-space:nowrap}
+.traj-export-btn:hover{background:var(--brand-hi);opacity:.94}
+.traj-export-btn svg{flex-shrink:0;width:14px;height:14px}
 
 /* ── 统一运行状态面板：阶段/计时/工具逐项/思考折叠/卡死横幅 ── */
 .run-status-panel { margin: 4px 0 12px; padding: 10px 12px; border: 1px solid var(--line-soft, rgba(128,128,128,.18)); border-radius: 9px; background: var(--surface-alt, rgba(128,128,128,.05)); }
@@ -662,8 +662,11 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .persona-card.active{border-color:var(--accent,#4f7cff);background:color-mix(in srgb,var(--accent,#4f7cff) 8%,transparent);}
 
 .traj-raw-view{margin:0;padding:16px;background:var(--bg-sub);border-radius:8px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.6;white-space:pre-wrap;word-break:break-all;max-height:100%;overflow-y:auto;color:var(--text)}
-.traj-export-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;height:30px;font-size:12px;font-weight:500;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--text);cursor:pointer;transition:background .15s,border-color .15s;white-space:nowrap}
-.traj-export-btn:hover{background:var(--bg-hover);border-color:var(--line-strong)}
+.traj-ctrl-divider{width:1px;height:18px;background:var(--line-soft-2);flex-shrink:0}
+.traj-icon-action{display:inline-grid;place-items:center;width:30px;height:30px;padding:0;border-radius:7px;border:1px solid var(--line);background:var(--bg);color:var(--muted);transition:background .15s,color .15s,border-color .15s}
+.traj-icon-action:hover{background:var(--bg-hover);color:var(--text);border-color:var(--line-strong)}
+.traj-icon-action.has-compacted{color:var(--brand-text);border-color:color-mix(in srgb,var(--brand-text) 38%,var(--line))}
+.traj-icon-action svg{width:15px;height:15px}
 
 .about-deps{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .about-deps h5{margin:0 0 10px;font-size:12px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em}
@@ -685,8 +688,6 @@ body.file-view-mode .file-view-preview .img-viewer{flex:1;width:100%;height:100%
 body.file-view-mode .file-view-preview iframe{flex:1;width:100%;height:100%;min-height:0;border:0;border-radius:0}
 
 .file-rename{flex:1;min-width:0;padding:2px 6px;margin:0;font-size:12px;font-family:inherit;color:var(--text);background:var(--field);border:1px solid var(--accent);border-radius:5px;height:auto}
-.traj-fmt-seg{margin-right:2px;background:transparent;border-color:transparent;padding:1px}
-.traj-fmt-seg .traj-seg-btn{padding:3px 8px}
 .traj-fmt-seg.hidden{display:none}
 
 /* 可演化性格系统 */
