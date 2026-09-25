@@ -154,7 +154,7 @@
     },
     {
       "id": "persona",
-      "title": "性格",
+      "title": "aide 性格",
       "description": "aide 性格系统，仅作用于基本聊天。可自定义性格提示词，系统会随使用自动精简演化以节约 token。",
       "controls": [
         {
