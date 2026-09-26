@@ -2992,7 +2992,7 @@ function applySourcePin(on) {
   try { localStorage.setItem('aide.sourcePinned', on ? '1' : '0'); } catch (err) {}
 }
 $('source-pin').onclick = () => applySourcePin(!$('files-scroll').classList.contains('pinned'));
-try { if (localStorage.getItem('aide.sourcePinned') === '1') applySourcePin(true); } catch (err) {}
+try { applySourcePin(localStorage.getItem('aide.sourcePinned') !== '0'); } catch (err) { applySourcePin(true); }
 $('source-add').onclick = () => { $('source-form').reset(); renderSourceFields(); $('source-dialog').showModal(); };
 function updateSourceTrackScroll() {
   const host = $('source-chips'); if (!host) return;
