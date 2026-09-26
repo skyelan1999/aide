@@ -2630,6 +2630,29 @@ async function loadPluginsPanel() {
   const surface = await api('/plugin-surface');
   renderPluginSurface(surface.plugins || []);
 }
+const PLUGIN_I18N = {
+  "技能": { en: "Skill" },
+  "目标": { en: "Goal" },
+  "计划": { en: "Plan" },
+  "任务清单": { en: "Todo" },
+  "反馈": { en: "Feedback" },
+  "子代理": { en: "Sub-agent" },
+  "终端": { en: "Terminal" },
+  "工作流": { en: "Workflow" },
+  "环境说明": { en: "Environment guide" },
+  "SQLite 数据库": { en: "SQLite database" },
+  "TCP 通讯": { en: "TCP communication" },
+  "UDP 通讯": { en: "UDP communication" }
+};
+function trPlugin(text) {
+  if (!text) return text;
+  let out = text;
+  for (const [zh, en] of Object.entries(PLUGIN_I18N)) {
+    out = out.split(zh).join(en.en);
+  }
+  return out;
+}
+
 function renderPluginList() {
   const query = $('plugin-search').value.trim().toLowerCase();
   const host = $('plugin-list');
@@ -2640,13 +2663,13 @@ function renderPluginList() {
   for (const p of matched) {
     const card = el('div', 'plugin-card' + (p.enabled ? '' : ' disabled'));
     const head = el('div', 'plugin-card-head');
-    head.append(el('span', 'plugin-name', p.name), el('span', 'plugin-badge', p.id + (p.version ? ' · v' + p.version : '')));
+    head.append(el('span', 'plugin-name', trPlugin(p.name)), el('span', 'plugin-badge', p.id + (p.version ? ' · v' + p.version : '')));
     const del = el('button', 'plugin-delete', '－');
     del.type = 'button'; del.title = t("删除插件");
     del.onclick = () => { if (confirm(t("删除插件「{0}」？", p.name))) action(async () => { await api('/plugins/' + encodeURIComponent(p.id), { method: 'DELETE' }); await loadPluginsPanel(); toast(t("插件已删除")); })(); };
     head.append(del);
     card.append(head);
-    if (p.description) card.append(el('p', 'plugin-desc', p.description));
+    if (p.description) card.append(el('p', 'plugin-desc', trPlugin(p.description)));
     if (p.error) card.append(el('p', 'task-error', '⚠ ' + p.error));
     const foot = el('div', 'plugin-card-foot');
     const toggle = el('button', 'plugin-toggle' + (p.enabled ? ' on' : ''), p.enabled ? t("✓ 使用中") : t("停用"));
