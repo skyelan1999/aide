@@ -3808,49 +3808,138 @@ async function setupDocxPreview(container, filePath, root, source) {
     });
     loading.remove();
 
-    // ── 批注面板 ──
+    // ── 批注：跨节点 Range 定位 + 高亮 + 联动 ──
+    await new Promise(r => setTimeout(r, 300)); // 等 docx-preview DOM 稳定
     const listEl = commentPanel.querySelector('.dcp-list');
     let comments = [];
     const docHash = btoa(String(buf.byteLength)).slice(0, 16);
+
+    // 在容器内跨节点查找 quote 第 N 次出现，返回 Range
+    function findTextRange(container, quote, wantIndex) {
+      if (!quote) return null;
+      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+      const nodes = [];
+      while (walker.nextNode()) nodes.push(walker.currentNode);
+      let fullText = '';
+      const map = []; // char offset → {node, offsetInNode}
+      for (const node of nodes) {
+        const t = node.textContent;
+        for (let i = 0; i < t.length; i++) {
+          map.push({ node, off: i });
+          fullText += t[i];
+        }
+      }
+      // 规范化空白
+      const norm = fullText.replace(/\s+/g, ' ');
+      const normQuote = quote.trim().replace(/\s+/g, ' ');
+      let found = 0, pos = 0;
+      while (true) {
+        const idx = norm.indexOf(normQuote, pos);
+        if (idx < 0) break;
+        if (found === wantIndex) {
+          const startMap = map[idx], endMap = map[idx + normQuote.length - 1];
+          if (startMap && endMap) {
+            const range = document.createRange();
+            range.setStart(startMap.node, startMap.off);
+            range.setEnd(endMap.node, endMap.off + 1);
+            return range;
+          }
+        }
+        found++;
+        pos = idx + 1;
+      }
+      return null;
+    }
+
+    function clearHighlights() {
+      docxBody.querySelectorAll('.comment-anchor-hl').forEach(el => {
+        const parent = el.parentNode;
+        parent.replaceChild(document.createTextNode(el.textContent), el);
+        parent.normalize();
+      });
+    }
+
+    function highlightComment(c) {
+      clearHighlights();
+      const range = findTextRange(docxBody, c.anchorQuote, c.anchorIndex || 0);
+      if (!range) { c.stale = true; return; }
+      c.stale = false;
+      try {
+        const hl = document.createElement('mark');
+        hl.className = 'comment-anchor-hl';
+        range.surroundContents(hl);
+      } catch (e) {
+        // surroundContents fails when range spans multiple nodes; extract/insert
+        try {
+          const frag = range.extractContents();
+          const hl = document.createElement('mark');
+          hl.className = 'comment-anchor-hl';
+          hl.appendChild(frag);
+          range.insertNode(hl);
+        } catch (e2) {}
+      }
+    }
 
     async function loadComments() {
       try {
         const r2 = await api('/comments?path=' + encodeURIComponent(filePath));
         comments = r2.comments || [];
-        renderComments();
       } catch (e) { comments = []; }
+      renderComments();
+      // 高亮所有批注锚点
+      comments.forEach(c => { if (c.status !== 'resolved') highlightComment(c); });
     }
+
     function renderComments() {
       listEl.innerHTML = '';
       if (!comments.length) { listEl.innerHTML = '<p class="muted" style="padding:12px">' + t('暂无批注') + '</p>'; return; }
       comments.forEach(c => {
         const card = el('div', 'comment-card' + (c.status === 'resolved' ? ' resolved' : '') + (c.stale ? ' stale' : ''));
-        card.innerHTML = '<div class="cc-text"></div><div class="cc-meta"></div>';
+        card.innerHTML = '<div class="cc-text"></div><div class="cc-meta"></div><div class="cc-actions"></div>';
         card.querySelector('.cc-text').textContent = c.text;
-        const meta = c.author ? c.author : '';
-        card.querySelector('.cc-meta').textContent = meta + (c.stale ? ' · ' + t('锚点可能失效') : '');
+        card.querySelector('.cc-meta').textContent = (c.author ? c.author : '') + (c.stale ? ' · ' + t('锚点可能失效') : '');
+        // 点击批注 → 滚动到高亮
+        card.style.cursor = 'pointer';
+        card.onclick = () => {
+          highlightComment(c);
+          const hl = docxBody.querySelector('.comment-anchor-hl');
+          if (hl) hl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
         listEl.append(card);
       });
     }
+
     btnToggleComments.onclick = () => {
       commentPanel.classList.toggle('hidden');
       if (!commentPanel.classList.contains('hidden')) loadComments();
     };
     commentPanel.querySelector('.dcp-close').onclick = () => commentPanel.classList.add('hidden');
 
-    // ── 文本选中 → 添加批注 ──
+    // 文本选中 → 添加批注
     docxBody.addEventListener('mouseup', async () => {
       const sel = window.getSelection();
       const text = sel.toString().trim();
-      if (!text || text.length < 1) return;
+      if (!text || text.length < 2) return;
       const quote = text.slice(0, 80);
-      const anchorIndex = (docxBody.innerText.split(quote).length - 1);
+      // 计算 anchorIndex：quote 在全文第几次出现
+      const norm = docxBody.innerText.replace(/\s+/g, ' ');
+      const normQuote = quote.replace(/\s+/g, ' ');
+      let anchorIndex = 0, pos = 0;
+      while (true) {
+        const idx = norm.indexOf(normQuote, pos);
+        if (idx < 0) break;
+        anchorIndex = anchorIndex; // 当前就是选中的这次
+        pos = idx + 1;
+      }
       const comment = prompt(t('添加批注：') + quote.slice(0, 40) + '…', '');
-      if (!comment) return;
+      if (!comment) { sel.removeAllRanges(); return; }
       try {
         await api('/comments', { method: 'POST', body: JSON.stringify({ path: filePath, hash: docHash, anchorQuote: quote, anchorIndex, text: comment }) });
         toast(t('批注已添加'));
-        loadComments();
+        await loadComments();
+        // 高亮刚加的
+        const last = comments[comments.length - 1];
+        if (last) highlightComment(last);
       } catch (e) { toast(e.message); }
       sel.removeAllRanges();
     });

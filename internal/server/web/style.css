@@ -999,3 +999,5 @@ dialog.master-auth{width:min(380px,90vw)}
 [data-theme="dark"] .hljs-attr,.hljs-attribute,.hljs-variable,.hljs-template-variable{color:#ffa657}
 [data-theme="dark"] .hljs-meta,.hljs-deletion{color:#ff9580}
 [data-theme="dark"] .hljs-decorator,.hljs-symbol{color:#f97583}
+.comment-anchor-hl{background:color-mix(in srgb, var(--accent) 25%, transparent);border-radius:2px;padding:1px 0;cursor:pointer}
+.comment-anchor-hl:hover{background:color-mix(in srgb, var(--accent) 40%, transparent)}
