@@ -907,7 +907,7 @@ body.file-view-mode .file-view-preview iframe{flex:1;width:100%;height:100%;min-
 .ro-badge{display:inline-flex;align-items:center;padding:2px 8px;font-size:10px;font-weight:600;border-radius:9px;background:var(--chip-bg,var(--bg-inset));color:var(--muted);border:1px solid var(--line-mid);letter-spacing:.3px;white-space:nowrap}
 .ro-badge.hidden{display:none!important}
 .editor-dialog .dialog-heading{padding-bottom:12px;border-bottom:1px solid var(--line-faint)}.primary:disabled{opacity:.45;cursor:not-allowed}
-.editor-dialog #editor,.editor-dialog .editor-preview{margin-top:12px}
+.editor-dialog #editor,.editor-dialog .editor-preview{margin-top:12px}.editor-dialog>.code-wrapper{height:58vh;height:58dvh;flex:none;margin-top:12px}.editor-dialog>.code-wrapper>#editor{height:100%;margin-top:0}
 /* file-view 头部：路径 + badge + 操作 */
 .file-view-head-path{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
 .file-view-head-path .sheet-eyebrow{margin:0;flex-shrink:0}
@@ -991,7 +991,7 @@ dialog.master-auth{width:min(380px,90vw)}
 
 /* #64: code syntax highlighting overlay */
 textarea#editor,textarea#file-view-editor{position:relative}
-.code-highlight-overlay{position:absolute;pointer-events:none;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.6;padding:17px 18px;margin:0;overflow:auto;background:transparent !important;color:var(--text);z-index:0;display:block;border:0 !important;box-shadow:none !important;border-radius:0 !important}
+.code-highlight-overlay{position:absolute;pointer-events:none;white-space:pre-wrap;word-break:break-word;margin:0;overflow:auto;background:transparent !important;color:var(--text);z-index:0;display:block;border:0 !important;box-shadow:none !important;border-radius:0 !important}
 .code-editable{position:relative;z-index:1 !important;background:transparent !important;color:transparent !important;-webkit-text-fill-color:transparent !important;caret-color:var(--text) !important;border:0 !important;outline:none !important;box-shadow:none !important;border-radius:0 !important}
 .code-highlight-overlay code{font-family:inherit;padding:0;background:transparent}
 /* hljs theme colors - light (muted for editor) */
@@ -1018,5 +1018,5 @@ textarea#editor,textarea#file-view-editor{position:relative}
 [data-theme="dark"] .hljs-decorator,[data-theme="dark"] .hljs-symbol{color:#f97583}
 .comment-anchor-hl{background:color-mix(in srgb, var(--accent) 25%, transparent);border-radius:2px;padding:1px 0;cursor:pointer}
 .comment-anchor-hl:hover{background:color-mix(in srgb, var(--accent) 40%, transparent)}
-.code-wrapper{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+.code-wrapper{position:relative;flex:1;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
 .code-wrapper textarea{flex:1;min-height:0}

@@ -1134,6 +1134,7 @@ function isPdfPath(path) { return /\.pdf$/i.test(path || ''); }
 function setEditorMode(mode) {
   const preview = mode === 'preview';
   $('editor').classList.toggle('hidden', preview);
+  if ($('editor').parentNode.classList.contains('code-wrapper')) $('editor').parentNode.classList.toggle('hidden', preview);
   $('editor-preview').classList.toggle('hidden', !preview);
   $('editor-mode-edit').classList.toggle('active', !preview);
   $('editor-mode-preview').classList.toggle('active', preview);
@@ -3469,19 +3470,32 @@ function codeLang(path) {
 }
 function setupCodeHighlight(textarea, lang) {
   if (!window.hljs || !lang) return;
+  var wrapper = document.createElement('div');
+  wrapper.className = 'code-wrapper';
+  textarea.parentNode.insertBefore(wrapper, textarea);
+  wrapper.appendChild(textarea);
   var pre = document.createElement('pre');
   pre.className = 'code-highlight-overlay';
   pre.setAttribute('aria-hidden', 'true');
   var code = document.createElement('code');
   code.className = 'language-' + lang;
   pre.appendChild(code);
-  textarea.parentNode.insertBefore(pre, textarea);
+  wrapper.insertBefore(pre, textarea);
   textarea.classList.add('code-editable');
   function positionOverlay() {
-    pre.style.top = textarea.offsetTop + 'px';
-    pre.style.left = textarea.offsetLeft + 'px';
-    pre.style.width = textarea.offsetWidth + 'px';
-    pre.style.height = textarea.offsetHeight + 'px';
+    var style = window.getComputedStyle(textarea);
+    pre.style.top = '0';
+    pre.style.left = '0';
+    pre.style.width = '100%';
+    pre.style.height = '100%';
+    pre.style.font = style.font;
+    pre.style.lineHeight = style.lineHeight;
+    pre.style.letterSpacing = style.letterSpacing;
+    pre.style.padding = style.padding;
+    pre.style.tabSize = style.tabSize;
+    pre.style.whiteSpace = style.whiteSpace;
+    pre.style.wordBreak = style.wordBreak;
+    pre.style.boxSizing = style.boxSizing;
   }
   function render() {
     positionOverlay();
@@ -3500,9 +3514,6 @@ function setupCodeHighlight(textarea, lang) {
   render();
 }
 function teardownCodeHighlight(textarea) {
-  textarea.classList.remove('code-editable');
-  var pre = textarea.parentNode && textarea.parentNode.querySelector('.code-highlight-overlay');
-  if (pre) pre.remove();
   textarea.classList.remove('code-editable');
   var wrapper = textarea.parentNode;
   if (wrapper && wrapper.classList.contains('code-wrapper')) {
@@ -4067,6 +4078,7 @@ const fileView = { spec: null, hash: '' };
 function setFileViewMode(mode) {
   const preview = mode === 'preview';
   $('file-view-editor').classList.toggle('hidden', preview);
+  if ($('file-view-editor').parentNode.classList.contains('code-wrapper')) $('file-view-editor').parentNode.classList.toggle('hidden', preview);
   $('file-view-preview').classList.toggle('hidden', !preview);
   $('fv-edit').classList.toggle('active', !preview);
   $('fv-preview').classList.toggle('active', preview);
