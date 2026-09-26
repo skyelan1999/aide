@@ -1086,4 +1086,12 @@ window.aideEnglish = {
   "配置导入完成，API Key 已安全迁移至加密保险库": "Config import complete; API keys safely migrated to encrypted vault",
   "开始重置…": "Start reset…",
   "输入": "Input"
+,
+  "粘贴私钥": "Paste private key",
+  "选择文件": "Choose file",
+  "仅引用路径": "Reference path only",
+  "导入加密副本": "Import encrypted copy",
+  "私钥口令（passphrase，可选）": "Private key passphrase (optional)",
+  "账户密码（解锁凭证保险库）": "Account password (unlock credential vault)",
+  "Language / 语言": "Language"
 };
