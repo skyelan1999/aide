@@ -1,8 +1,8 @@
 # Security: Unified Secret Vault
 
-- Version: 0.1.11.0-RC1
-- Date: 2026-09-25
-- Scope: workspace SSH/SFTP credentials (password, private key, key passphrase); future comm-ssh (#37) reuses the same vault
+- Version: 0.1.11.0-RC3
+- Date: 2026-09-26
+- Scope: workspace SSH/SFTP credentials (password, private key, key passphrase); **model Provider API key** (merged into this vault since RC2); future comm-ssh (#37) reuses the same vault
 - Related: [password-hashing.md](./password-hashing.md) (Argon2id master-key derivation), [config-backup.md](./config-backup.md)
 
 ## 1. Problem and goals
@@ -12,10 +12,12 @@ Previously the workspace SSH login password and private key were stored in plain
 0.1.11 introduces a unified encrypted secret vault:
 
 - **At-rest encryption**: every secret is sealed with **AES-256-GCM**, each entry using an independent random nonce;
-- **Master key**: derived from the **account password via Argon2id** (reusing `kdf.go`), resident only in memory at runtime, never written to disk;
-- **Secure by default**: saving any SSH credential is **rejected when no account password is set**;
+- **Two-tier master key (since RC2)**:
+  - *Account password set*: the master key is **derived from the account password via Argon2id** (reusing `kdf.go`), resident only in memory at runtime and never written to disk. After a restart the vault stays locked until `POST /api/unlock` (password) or `/api/auth/verify` (password/WebAuthn) unlocks it before the model can use the key.
+  - *No account password*: a machine-bound random 32-byte master key (`crypto/rand`) is written `0600` to `/data/secrets/master-key.bin` and auto-loaded at boot to unlock the vault. The plaintext API key still **never** lands in `settings.json`; copying `settings.json` alone cannot reveal the key without the local `master-key.bin`.
+- **Secure by default**: saving any SSH credential is **rejected when no account password is set**; the model API key works passwordless, protected by the machine key;
 - **Minimal runtime exposure**: a private key is decrypted only transiently into a controlled temp file when a connection is established, then deleted;
-- **One vault**: workspace SSH and the future comm-ssh (#37) share the same store — no second encryption scheme.
+- **One vault**: workspace SSH, the model API key, and the future comm-ssh (#37) share the same store — no second encryption scheme.
 
 ## 2. Architecture
 
@@ -26,11 +28,25 @@ account password ──Argon2id(kdfSalt)──► master key (32B, memory only)
                                /data/secrets/vault.enc   (dir 0700 / file 0600, JSON ciphertext envelope)
 ```
 
-- File: `/data/secrets/vault.enc`, directory `0700`, file `0600`;
+- File: `/data/secrets/vault.enc`, directory `0700`, file `0600`; the machine master key `/data/secrets/master-key.bin` is also `0600`;
 - Envelope: `{ "version":1, "entries":[{id,type,name,ciphertext_b64,nonce_b64,fingerprint,createdAt,updatedAt}] }`;
-- Entry types: `ssh-password`, `ssh-key` (encrypted key copy), `ssh-passphrase`;
-- Fixed IDs: `ws:ssh-password`, `ws:ssh-key`, `ws:ssh-passphrase`;
+- Entry types: `ssh-password`, `ssh-key` (encrypted key copy), `ssh-passphrase`, `model-api-key` (model Provider API key, added RC2);
+- Fixed IDs: `ws:ssh-password`, `ws:ssh-key`, `ws:ssh-passphrase`, `model:api-key`;
 - `List()` returns metadata and the public-key fingerprint only — **never ciphertext or plaintext**.
+
+### 2.1 Model API key migration (RC2, alongside #43)
+
+Previously the model Provider API key was stored in plaintext in `/data/config/settings.json`. Since RC2 it lives in this vault:
+
+- **Startup auto-migration**: `New()` detects a plaintext key in `settings.json` (or the `AI_API_KEY` env var), immediately clears it from the in-memory settings (so a later `atomicJSON` cannot rewrite it to disk), and stages it in memory as `pendingLegacyAPIKey`. Once the vault unlocks (password users via `/api/unlock` or `/api/auth/verify`; passwordless users auto-unlock at boot via the machine key), the plaintext is sealed as a `model:api-key` entry, and `shredFile` best-effort overwrites `settings.json` with random bytes before rewriting a clean version (it defeats casual forensic/backup reads; SSD wear-leveling means it is not a physical guarantee).
+- **Idempotent**: if a `model:api-key` entry already exists, migration is skipped; if the vault is still locked, the staged copy waits until the next unlock.
+- **First password set later**: all vault entries are re-wrapped from the machine-bound key to the Argon2id password-derived key (same `ReWrap` mechanism as SSH).
+- **HTTP surface**:
+  - `POST /api/unlock` body `{password}`: password users unlock the vault; success `{ok:true, unlocked:true}` and any staged legacy plaintext key is migrated. Passwordless users get `{ok:true, unlocked:true, passwordless:true}`.
+  - `GET /api/config`: top-level `hasKey` and per-model `models[].hasApiKey` report "configured" without ever echoing the plaintext; `vaultUnlocked` reports whether the master key is resident in memory.
+  - `PUT /api/settings`: a non-empty `apiKey` is sealed into the vault; `clearKey=true` deletes the vault entry; empty without `clearKey` keeps the current value. The `apiKey` field in `settings.json` is always empty — never plaintext on disk.
+- **Runtime key retrieval**: `provider.go`/`workflow.go` no longer read `settings.APIKey`; they call `modelAPIKeyLocked()`. If a key is configured but the vault is locked, the model call fails explicitly with "please unlock to use the model" — never silently.
+- **Export/import**: `config_backup.go` exports **no** plaintext key; importing a legacy backup's plaintext `apiKey` stages it into the vault on unlock (see [config-backup.md](./config-backup.md)).
 
 ## 3. Dual-input for SSH private key
 

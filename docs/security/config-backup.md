@@ -1,6 +1,6 @@
 # 安全：配置备份与跨版本兼容
 
-> 适用版本：0.1.11.0-RC1
+> 适用版本：0.1.11.0-RC3
 
 配置备份（`POST /api/config/export` / `POST /api/config/import`）把 aide 的全部设置打包成一个 JSON 信封。本文说明跨版本导入的兼容机制、非法值回退规则与敏感字段脱敏清单。
 
@@ -97,7 +97,7 @@ flowchart TD
 
 | 字段 | 含义 |
 | --- | --- |
-| `apiKey` | 模型 Provider API Key |
+| `apiKey` | 模型 Provider API Key（RC2 起已迁入 AES-256-GCM vault，`settings.json` 恒不存明文；导出包**任何情况下**都不含明文 key，仅在勾选"包含密钥"时随附 `vault.enc` 加密信封） |
 | `ttsAPIKey` | TTS 引擎密钥（预留） |
 | `userPasswordHash` | 锁屏密码 Argon2id 哈希 |
 | `personaCipher` | 旧单人格性格密文 |
@@ -105,3 +105,11 @@ flowchart TD
 | `debugTokenHash` | 外部调试接口令牌哈希 |
 
 导入侧对称处理：未勾选"导入密钥"时，上述字段**一律保留当前值**——即使脱敏备份里这些是空串，也不会把现网密钥清空。仅当用户显式勾选且备份确随附敏感数据时才采用备份值。小秘历史密文仅在显式勾选"导入语音数据"时随附。
+
+### 6.1 旧明文 API Key 导入（RC2）
+
+RC1 及更早版本的备份里 `apiKey` 是明文。RC3 导入这类备份时：
+
+- 若用户**未勾选"导入密钥"**：`apiKey` 字段被忽略，保留现网 vault 里的 key 不变；
+- 若用户**勾选了"导入密钥"**：备份里的明文 `apiKey` 不直接写回 `settings.json`，而是暂存内存 `pendingLegacyAPIKey`，待 vault 解锁（有密码用户经 `/api/unlock` 输密码；无密码用户启动即由机器密钥解锁）后自动加密为 `model:api-key` 条目入库，随后 `settings.json` 仍不留明文。
+- 由此"旧备份明文导入"与"旧 settings.json 启动迁移"走同一条入 vault 路径，幂等可重入。

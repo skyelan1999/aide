@@ -1,6 +1,6 @@
 # 数据目录分层与完整性自愈
 
-> 版本：0.1.11.0-RC1 · 分支：feature/permission-panel · 关联：#29 安全 / #30 编号会话 / #38 保险库
+> 版本：0.1.11.0-RC3 · 分支：feature/permission-panel · 关联：#29 安全 / #30 编号会话 / #38 保险库 / #43 API Key vault / #63 侧车批注
 > 权威方案：`proposals/data-integrity/data-layering-and-self-healing.html`
 
 aide 把数据分为三类边界：**程序（镜像只读）/ 项目（绑定挂载，用户所有）/ 状态（命名卷，aide 私有）**。
@@ -18,7 +18,7 @@ aide 把数据分为三类边界：**程序（镜像只读）/ 项目（绑定�
 ├─ sessions/                 会话数据
 │   ├─ active/session-*.json    活动会话
 │   ├─ archived/session-*.json  归档会话
-│   └─ assistant/session-*.json  小蜜系统会话（#30）
+│   └─ assistant/session-*.json  小蜜系统会话（#30，含 runs/messages 持久化，#62）
 ├─ assistant/                小蜜私有区（全局、加密）
 │   ├─ voice-history.json   小蜜对话历史信封
 │   └─ voice-memory.json     小蜜长期记忆
@@ -36,10 +36,14 @@ aide 把数据分为三类边界：**程序（镜像只读）/ 项目（绑定�
 ├─ audit/                    审计日志（追加写，只增不删）
 │   ├─ debug-audit.jsonl     外部接入审计
 │   └─ security-audit.jsonl  安全/恢复审计
-├─ secrets/                  第三方来源/工作区密钥（加密）
-│   ├─ vault.enc
+├─ secrets/                  第三方来源/工作区/模型密钥（AES-256-GCM 加密）
+│   ├─ vault.enc             统一保险库信封（SSH 凭据 + model:api-key，#43）
+│   ├─ master-key.bin        无密码兜底的机器绑定随机主密钥（32B，0600，#43）
 │   ├─ sources-secrets.json
 │   └─ workspace-secrets.json
+├─ comments/                 #63 侧车批注（跨格式 docx/xlsx/pptx/pdf 通用，目录 0700 / 文件 0600）
+│   ├─ index.json            id → docPath 索引（原子写）
+│   └─ <sha256(docPath)>/<commentID>.json   单条批注（含 replies）
 ├─ certs/                    TLS 证书与私钥（#29，0600）
 │   ├─ cert.pem
 │   └─ key.pem

@@ -143,3 +143,72 @@ comments/
 - 容器内无 LibreOffice/antiword（已探测）。若后续要高保真转换，可选：
   镜像加装 `soffice`（+~400MB，MPL-2.0），新增 `/api/file/convert?to=pdf`，前端复用 PDF.js。
   **是否加装待用户决定**，本期不实施。
+
+---
+
+## #63 前端集成（RC3 已落地）
+
+> 后端契约见上 §1–§5。本节记录前端侧已落地的 vendor 与集成点，与 PDF 查看器同模式。
+
+### 1. vendor 清单（离线，go:embed）
+
+| 库 | 版本 | 许可 | 位置 |
+| --- | --- | --- | --- |
+| docx-preview | 0.3.2 | Apache-2.0 | `internal/server/web/vendor/docx-preview/` |
+| JSZip | 3.10.1 | MIT | `internal/server/web/vendor/jszip/`（docx-preview 解包 .docx 所需） |
+| dxf-parser | 1.1.2 | MIT | `internal/server/web/vendor/dxf-parser/`（#57，见下） |
+
+均经 `//go:embed web/*` 打包，不访问 CDN；固定版本 + CHECKSUMS。
+
+### 2. 三处 isDocx 分支
+
+- `isDocxPath(path) = /\.docx$/i.test(path)`（`isDxfPath` 同模式，`/\.dxf$/i`）。
+- `openFile()` 与 file-view（`#file=…` 从标签页）两处分支把 `.docx`/`.dxf` 归入"走 `/api/file/raw` 取 ArrayBuffer、跳过 `/api/file` 文本端点"的集合。
+- 编辑器标题栏：`isImg || isStl || isPdf || isDxf || isDocx` 时隐藏保存按钮、显示"只读 · 可视化查看器"badge（#59 收口：只读文件不显示保存）。
+
+### 3. docx-preview 渲染行为
+
+- 经 `/api/file/raw?path=…&access_token=…` 取 ArrayBuffer → `docx.renderAsync(blob, container)`；
+- 保留原排版：标题/段落/表格/列表/图片；内部滚动不撑乱布局（复用 PDF 查看器 flex 滚动容器）；
+- 只读：不回写 `.docx`，工具栏不显示保存；
+- 批注侧车：前端拿到渲染 DOM 后，按 `anchorQuote` 在文本中查找、`anchorIndex` 消歧高亮，调 §2 的 CRUD 端点增/删/回复/解决；`stale=true` 时给"锚点可能失效"提示，不删除批注。
+
+### 4. DXF 渲染器（#57，RC2）
+
+- `ensureVendorScript('/vendor/dxf-parser/dxf-parser.js')` 懒加载；
+- SVG 渲染：Y 翻转、包围盒自适应窗口、支持 LINE/CIRCLE/ARC/ELLIPSE/LWPOLYLINE/POLYLINE/SPLINE/TEXT/MTEXT/INSERT 递归/DIMENSION；
+- ACI 颜色、图层、线宽映射；工具栏缩放 ± / 适应窗口；只读禁用保存。
+
+## 附件文本提取与图片多模态（#63 扩展，后端）
+
+原 `attachmentContext` 只接受 UTF-8 文本，docx/pdf/xlsx/pptx 一律报"不支持二进制文件"。本次后端补齐：
+
+### 1. 可解析文档 → 后端提取文本（不依赖模型视觉）
+
+- 扩展名 `.docx/.pdf/.xlsx/.pptx` 在附加时由后端调 `scripts/office/extract_text.py` 提取纯文本，
+  包进 `<untrusted-file>` 文本上下文随首条 user 消息发给模型。
+- 库：docx=python-docx、xlsx=openpyxl（只读+data_only）、pptx=python-pptx、pdf=pypdf（Dockerfile 已加 pypdf==6.19.0）。
+- 提取脚本与现有 office 工具同一查找链：`$AIDE_OFFICE_SCRIPTS → /workspace/scripts/office → /opt/aide/office-scripts`。
+- 边界：单文档提取上限 `maxDocExtractChars=60000` rune，超出截断并标注「…已截断，共 N 字」；
+  全部附件上下文总上限 `maxAttachmentChars=200000`；提取失败明确报错（不静默丢内容）；
+  SSH 工作区 / 参考来源库暂不支持（脚本跑在容器内），返回明确提示。
+- 确实无法解析的二进制（非上述类型）改文案："…aide 暂不能解析的二进制格式；可让 aide 直接在工作区打开该文件"。
+
+### 2. 图片 → 按模型视觉能力多模态
+
+- 扩展名 `.png/.jpg/.jpeg/.gif/.webp`：后端读字节编为 `data:<mime>;base64,…`。
+- 视觉判定 `modelSupportsVision(modelID, models)`：先看模型列表显式 `vision` 字段，
+  再按已知视觉模型清单兜底（gpt-4o/4.1、qwen-vl、glm-4v、deepseek-vl、gemini、claude-3/4 等）。
+- 支持 → `Message.Images` 在 outgoing 时由 `outgoingMessages` 把该 user 消息 content
+  从字符串改为 `[{type:text},{type:image_url,image_url:{url:dataURL}}]` 多模态数组；
+  `Images` 带 `json:"-"`，不持久化、不进 UI 历史（每次 run 重新附加）。
+- 不支持 → 在发送前由 `visionGateLocked` 返回可操作错误：
+  "当前模型 X 不支持图片输入，请切换到支持视觉的模型（如 gpt-4o、qwen-vl-max…）"。
+
+### 3. 与前端接口约定（前端需配合）
+
+- `GET /api/config` 新增：`vision`(bool，当前模型是否支持图片)、`visionRecommend`(string[]，推荐视觉模型)；
+  `models[]` 每项新增 `vision`(bool)。前端据此在选图附件时：模型不支持则置灰/提示切换。
+- 附件上传/附加仍走既有 `attachments:[{root,path,source}]`，无需新端点；后端自动按扩展名分流。
+- 附件 chip 的保留/×删除仍由前端负责；后端只提供提取与发送能力。
+- 「不支持」的二进制 chip：前端据 400 错误文案标记不可发送即可。

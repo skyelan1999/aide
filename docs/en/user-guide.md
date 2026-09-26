@@ -2,7 +2,7 @@
 
 [简体中文](../user-guide.md) · **English**
 
-This guide covers the 0.1.10.2 RC1 functional baseline. See [Installation](installation.md) for version boundaries.
+This guide covers the 0.1.11.0 RC3 functional baseline. See [Installation](installation.md) for version boundaries.
 
 ## 1. Find your way around
 
@@ -148,6 +148,8 @@ stateDiagram-v2
 
 Open **Model settings**. Enter the provider's Chat Completions-compatible Base URL, add model IDs, choose the active model, and save. Cloud providers normally require a key; compatible local services may not. A blank key preserves the existing secret; explicitly select the clear option to remove it.
 
+**API key encryption (since 0.1.11.0-RC2)**: the model API key is no longer written to `settings.json` in plaintext — it is sealed with AES-256-GCM into the unified secret vault at `/data/secrets/vault.enc`. The UI only shows whether a key is configured (`hasApiKey`) and **never echoes it**. On a machine with an account password, the vault stays locked after a restart; before the first model call you are prompted to unlock (account password, or Touch ID on supported Macs — see Touch ID below). Without a password, a machine-bound random master key at `/data/secrets/master-key.bin` (0600) unlocks the vault automatically. On upgrade, any legacy plaintext key in `settings.json` migrates into the vault on first unlock and the old file is securely shredded. See [Security: Unified Secret Vault](security/secret-vault.md).
+
 **Fetch models** queries the provider's `/models` endpoint. A configured status confirms fields, not successful connectivity. Model IDs and context windows must match the provider.
 
 Use **Strategy** near the task input to select automatic routing or a manual parameter profile. The right column selects the model. System profiles are read-only; custom names are user data and are not translated. Routing rules live in `routing-policy.json`.
@@ -167,6 +169,15 @@ Open a text file to edit it. Markdown opens in preview; switch to **Edit** to ch
 Saves use the original file hash and workspace identity. If a file changed externally or the workspace changed, reopen it rather than bypassing a conflict. Unsaved content is not translated or rewritten by a language switch.
 
 Select **Attach to task** to include saved text in the next request (up to eight files). AI read tools may also read authorized workspace files; attachments are not the complete boundary of model context. Avoid including sensitive material you do not want the configured provider to receive.
+
+**Text size limit (since RC2)**: the editor/model-tool text cap was raised from 256 KiB to **64 MiB** (UTF-8, no NUL). Large files are streamed via byte-range windows on `GET /api/file` (`offset`/`limit`) and line windows in `read_file`, instead of being loaded whole.
+
+**Editor title bar (#59, RC2/RC3)**: the standalone second row was removed; the read-only badge now lives in the title bar, and Save / New tab / Attach-to-task sit right-aligned at the far edge. Read-only viewers (image/PDF/STL/drawio/DXF/Word) hide the Save button.
+
+**Inline viewers**: beyond images/PDF/STL/drawio, 0.1.11 adds two read-only inline viewers:
+
+- **DXF vector drawing (#57)**: `.dxf` is parsed offline via the vendored `dxf-parser` (MIT) into SVG, covering LINE/CIRCLE/ARC/ELLIPSE/LWPOLYLINE/POLYLINE/SPLINE/TEXT/MTEXT/INSERT/DIMENSION with ACI colors, layers, and line widths; toolbar zoom ± and fit-to-window; read-only, save disabled.
+- **Word document (#63)**: `.docx` is rendered offline via vendored `docx-preview` 0.3.2 (Apache-2.0) + JSZip 3.10.1 (MIT), preserving headings/tables/lists/images. Sidecar comments are supported (select text to comment, reply, mark resolved; a comment whose anchor no longer matches is flagged stale rather than deleted). Legacy `.doc` binaries prompt you to save-as `.docx`. Comments live in `/data/comments/`, separate from the document body.
 
 ## 6. Chat, workflows, and commands
 
@@ -190,14 +201,20 @@ Every regular session (including child sessions) gets an incrementing number `#N
 - Numbers persist in settings across restarts. Sessions created before this feature have no number; only new sessions carry one.
 - Global search (⌘K) results also show the `#N` prefix for quick lookup.
 
+### Real-time session-list refresh (#60)
+
+The session list no longer needs manual refresh. The frontend opens one `GET /api/events` SSE stream; the backend broadcasts a `sessions-changed` event on session create/archive/pin/title/state changes and run start (15 s heartbeat). The frontend reloads at most every 300 ms, **preserves your collapsed groups**, and defers the refresh while you are typing in the focused input box. The stream auto-reconnects on drop.
+
 ### Assistant system session
 
-Pinned permanently at the very top of the sidebar is the 🤖 assistant system session — the chat view for your voice secretary:
+Pinned at the very top of the sidebar is the assistant system session — the chat view for your voice secretary (since RC2 it uses a headphone line SVG instead of the 🤖 emoji):
 
-- **Always pinned**: it sits above every user-pinned session and cannot be archived or deleted (no archive/delete menu).
-- **Name follows settings**: its title equals the voice-assistant name in settings; renaming updates it automatically.
-- **Password gate**: clicking it first asks for your account password (the lock-screen password). Once unlocked, the state lasts for the tab; locking the screen forces re-authentication.
-- **Cross-session tools**: inside its own view the assistant can call four tools — `search_sessions` (keyword search across all sessions, including archived), `get_session` (read by `#N` or session ID), `follow_session` (mark for follow-up reminders), and `push_to_session` (push a note/summary into a target session). These tools are never exposed in regular sessions.
+- **Edge-to-edge card (#62, RC3)**: the workspace block and the assistant entry share one card with zero gap, joined by a small triangle filling the top-right corner; the assistant shows a light-blue bottom accent edge (not a full blue block) to distinguish it from regular sessions.
+- **Fixed title**: the title always shows the configured assistant name and is not overwritten by a prompt.
+- **Master-auth gate**: clicking it first asks for master identity — account password **or** Touch ID fingerprint (see unified master auth below). Once unlocked, the state lasts for the tab; locking the screen forces re-authentication.
+- **Unified history timeline (#62, RC3)**: the old standalone "settings → voice assistant → history" view is removed; voice turns and typed messages are persisted together into the assistant session's runs/messages timeline.
+- **Text = voice (#62, RC3)**: typing in the assistant session goes through the same `analyze` intent pipeline as voice transcription (`POST /api/sessions/{id}/assistant-message`), including send/ignore/standby and insert/queue decisions.
+- **Cross-session tools (#30 now live)**: inside its own view the assistant can call `search_sessions` (keyword search across all sessions, including archived), `get_session` (by `#N` or session ID), `follow_session` (mark for follow-up), and `push_to_session` (push a note/summary into a target session), and can create/control other sessions via `spawn_subagent`. These tools are never exposed in regular sessions; assistant sessions always use the assistant persona.
 
 ```mermaid
 flowchart TD
@@ -284,6 +301,10 @@ Upload a trusted `.js`, `.mjs`, or `.cjs` file, name it, and enable it. Shape va
 ### SQLite plugin
 
 The preinstalled **SQLite** plugin (`sqlite`) uses Node's built-in `node:sqlite` with zero dependencies and works offline, reading/writing SQLite files inside the authorized mount roots: parameterized queries, transactions, migrations, schema introspection, and CSV/backup export. Tools are read-only by default; writes require explicit `readonly=false`. Database paths are confined to `/workspace`, `/context`, `/local`, queries are parameterized, and results are truncated by default. See [plugins/sqlite.md](plugins/sqlite.md).
+
+### Unified master identity (#43, RC2)
+
+Every "prove it's you" sensitive action now goes through one endpoint, `POST /api/auth/verify`: **password or Touch ID fingerprint, either one passes**, returning `{ok:true, scope:"master"}` and writing an audit record. The shared `requestMasterAuth()` component prefers the fingerprint prompt and falls back to a password box. It backs six A-class actions: lock-screen unlock, assistant-history views (×3), password change, vault unlock (before the first model call after restart), and the assistant-session gate. B-class actions (save/clear API key, SSH credentials, PDF open password, etc.) keep their own existing flows. Passwordless users are considered identified by default; the vault unlocks automatically via the machine key.
 
 ### Touch ID Unlock (macOS)
 

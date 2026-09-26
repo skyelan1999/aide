@@ -48,6 +48,7 @@ aide is a **local-first** AI workbench: the backend runs as a single container, 
 - **Code**: `internal/server/server.go:49,83,86,90`; `internal/server/server.go:508-530`; `internal/server/paths.go:142-143`.
 - **Assessment**: the APIKey is not inside the AES-256-GCM vault (which currently holds only SSH credentials, `secret_vault.go:36-40`). It relies on 0600 file + 0700 dir + private Docker volume; it is readable if the volume is acquired by read-only forensics. This is inconsistent with how SSH credentials are handled.
 - **Risk**: **Medium**.
+- **RC2 follow-up (closed in 0.1.11.0-RC2)**: the model API key now lives in the unified vault (entry `model:api-key`); `settings.json` never holds plaintext. The master key is two-tier (password set → Argon2id-derived; passwordless → machine-bound `/data/secrets/master-key.bin` at 0600); legacy plaintext auto-migrates on startup with `shredFile` erasure; `GET /api/config` returns only `hasKey`/`hasApiKey`/`vaultUnlocked`. This Medium risk is closed — see [secret-vault.md](./secret-vault.md) §2.1.
 
 ### #2 Config backup export masking
 
@@ -197,7 +198,7 @@ aide is a **local-first** AI workbench: the backend runs as a single container, 
 4. **eIDAS not applicable**: aide is a self-hosted local tool; it provides no electronic signature or remote identity service and is not a Qualified Trust Service Provider under eIDAS.
 5. **edge-tts server-side throttling**: edge-tts reuses Microsoft Edge's online TTS endpoint and is subject to its rate limits / risk control; this is external-service availability, not an aide flaw.
 6. **No CAP_NET_RAW (optional)**: comm plugins currently are not granted raw-socket capability; any future plugin needing packet capture must be explicitly authorized and re-evaluated.
-7. **APIKey plaintext in settings.json**: see #1, not moved into the AES vault.
+7. ~~**APIKey plaintext in settings.json**: see #1, not moved into the AES vault.~~ **Closed in RC2**: the model API key moved into the vault (see #1 RC2 follow-up).
 8. **voice-memory.json plaintext**: see #7, the long-term memory does not use an encryption envelope.
 9. **WebAuthn includes http://localhost origin**: see #16, an intentional accommodation for stale tabs.
 10. **Plugin audit not in structured logs**: see #14, plugin lifecycle events go to stdout, not the audit JSONL.
@@ -206,7 +207,7 @@ aide is a **local-first** AI workbench: the backend runs as a single container, 
 
 ## 5. Recommendations
 
-1. Move AI `APIKey/TTSAPIKey/TTSAzureKey/CloneTTSAPIKey` into the unified vault (or apply application-layer encryption to the sensitive settings fields), aligning with SSH-credential handling (see #1).
+1. ~~Move the AI `APIKey` into the unified vault, aligning with SSH-credential handling (see #1).~~ **Done in RC2** (model API key in the vault; `TTSAPIKey/TTSAzureKey/CloneTTSAPIKey` remain reserved fields, migrate later if needed).
 2. Give `voice-memory.json` an AES-256-GCM envelope consistent with voice-history (see #7).
 3. Add an `X-Frame-Options: DENY` header for legacy-browser coverage (see #6).
 4. Append plugin lifecycle events to `audit/security-audit.jsonl`, unifying with the debug/security audit system (see #14).

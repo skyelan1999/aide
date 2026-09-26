@@ -1,6 +1,6 @@
 # Data Directory Layering & Integrity Self-Healing
 
-> Version: 0.1.11.0-RC1 · Branch: feature/permission-panel · Related: #29 security / #30 numbered sessions / #38 vault
+> Version: 0.1.11.0-RC3 · Branch: feature/permission-panel · Related: #29 security / #30 numbered sessions / #38 vault / #43 API key vault / #63 sidecar comments
 > Authoritative design: `proposals/data-integrity/data-layering-and-self-healing.html`
 
 aide separates storage into three boundaries: **program (read-only image) / projects (bind-mounted, user-owned) / state (named volume, aide-private)**.
@@ -18,7 +18,7 @@ This document describes the target layout that refactors the legacy flat `/data`
 ├─ sessions/                 sessions
 │   ├─ active/session-*.json    active sessions
 │   ├─ archived/session-*.json archived sessions
-│   └─ assistant/session-*.json  assistant system sessions (#30)
+│   └─ assistant/session-*.json  assistant system sessions (#30, incl. runs/messages persistence, #62)
 ├─ assistant/                voice-assistant private area (global, encrypted)
 │   ├─ voice-history.json   conversation history envelope
 │   └─ voice-memory.json     long-term memory
@@ -36,10 +36,14 @@ This document describes the target layout that refactors the legacy flat `/data`
 ├─ audit/                    audit logs (append-only)
 │   ├─ debug-audit.jsonl     external-access audit
 │   └─ security-audit.jsonl  security/recovery audit
-├─ secrets/                  third-party / workspace secrets (encrypted)
-│   ├─ vault.enc
+├─ secrets/                  third-party / workspace / model keys (AES-256-GCM encrypted)
+│   ├─ vault.enc             unified vault envelope (SSH creds + model:api-key, #43)
+│   ├─ master-key.bin         passwordless machine-bound random master key (32B, 0600, #43)
 │   ├─ sources-secrets.json
 │   └─ workspace-secrets.json
+├─ comments/                 #63 sidecar comments (format-agnostic docx/xlsx/pptx/pdf, dir 0700 / file 0600)
+│   ├─ index.json            id → docPath index (atomic write)
+│   └─ <sha256(docPath)>/<commentID>.json   one comment per file (incl. replies)
 ├─ certs/                    TLS cert & private key (#29, 0600)
 │   ├─ cert.pem
 │   └─ key.pem

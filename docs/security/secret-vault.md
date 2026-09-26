@@ -1,8 +1,8 @@
 # 安全：统一凭证保险库（Secret Vault）
 
-- 版本：0.1.11.0-RC1
-- 日期：2026-09-25
-- 适用范围：工作空间 SSH/SFTP 凭据（密码、私钥、私钥口令）；未来 comm-ssh（#37）共用同一保险库
+- 版本：0.1.11.0-RC3
+- 日期：2026-09-26
+- 适用范围：工作空间 SSH/SFTP 凭据（密码、私钥、私钥口令）；**模型 Provider API Key**（RC2 起并入本保险库）；未来 comm-ssh（#37）共用同一保险库
 - 关联文档：[password-hashing.md](./password-hashing.md)（Argon2id 主密钥派生）、[config-backup.md](./config-backup.md)
 
 ## 1. 问题与目标
@@ -12,25 +12,42 @@
 0.1.11 起引入**统一加密凭证保险库**：
 
 - 静态加密：所有凭据以 **AES-256-GCM** 信封落盘，每条目独立随机 nonce；
-- 主密钥：由**账户密码经 Argon2id 派生**（复用 `kdf.go`），运行时只驻留内存、绝不落盘；
-- 零信任默认：未设置账户密码时**不允许保存任何 SSH 凭据**；
+- 主密钥分层（RC2 起）：
+  - **已设账户密码**：主密钥由**账户密码经 Argon2id 派生**（复用 `kdf.go`），运行时只驻留内存、绝不落盘；重启后 vault 保持锁定，须经 `POST /api/unlock`（密码）或 `/api/auth/verify`（密码/WebAuthn）解锁才能取 key 调模型。
+  - **未设账户密码**：生成机器绑定随机主密钥（32 字节，`crypto/rand`），以 `0600` 落盘 `/data/secrets/master-key.bin`，启动时自动加载并解锁 vault。明文 API Key 仍**不入** `settings.json`；即便 `settings.json` 被拷走，无本机 `master-key.bin` 也解不出 key。
+- 零信任默认：未设置账户密码时**不允许保存任何 SSH 凭据**；模型 API Key 在无密码场景由机器密钥保护，可正常使用；
 - 运行时最小暴露：私钥仅在建立连接时短暂解密到受控临时文件，用完即删；
-- 单一保险库：工作空间 SSH 与未来 comm-ssh（#37）共用同一存储，不出现第二套加密。
+- 单一保险库：工作空间 SSH、模型 API Key 与未来 comm-ssh（#37）共用同一存储，不出现第二套加密。
 
 ## 2. 架构
 
 ```
-账户密码 ──Argon2id(kdfSalt)──► 主密钥(32B, 内存)
-                                   │  seal/open (AES-256-GCM, 12B nonce)
-                                   ▼
-                         /data/secrets/vault.enc   (目录 0700 / 文件 0600, JSON 密文信封)
+已设密码：  账户密码 ──Argon2id(kdfSalt)──► 主密钥(32B, 内存, 重启后锁定)
+未设密码：  /data/secrets/master-key.bin (32B, 0600, 机器绑定, 启动自动加载)
+                                        │  seal/open (AES-256-GCM, 12B nonce)
+                                        ▼
+                              /data/secrets/vault.enc   (目录 0700 / 文件 0600, JSON 密文信封)
 ```
 
-- 文件：`/data/secrets/vault.enc`，目录权限 `0700`、文件权限 `0600`；
+- 文件：`/data/secrets/vault.enc`，目录权限 `0700`、文件权限 `0600`；机器主密钥 `/data/secrets/master-key.bin` 同为 `0600`；
 - 信封格式：`{ "version":1, "entries":[{id,type,name,ciphertext_b64,nonce_b64,fingerprint,createdAt,updatedAt}] }`；
-- 条目类型：`ssh-password`（登录密码）、`ssh-key`（私钥加密副本）、`ssh-passphrase`（私钥口令）；
-- 固定条目 ID：`ws:ssh-password`、`ws:ssh-key`、`ws:ssh-passphrase`；
+- 条目类型：`ssh-password`（登录密码）、`ssh-key`（私钥加密副本）、`ssh-passphrase`（私钥口令）、`model-api-key`（模型 Provider API Key，RC2 新增）；
+- 固定条目 ID：`ws:ssh-password`、`ws:ssh-key`、`ws:ssh-passphrase`、`model:api-key`；
 - `List()` 只返回元数据与公钥指纹，**永不返回密文或明文**。
+
+### 2.1 模型 API Key 迁移（RC2，#43 配套）
+
+旧版把模型 Provider API Key 明文写在 `/data/config/settings.json`。RC2 起迁入本保险库：
+
+- **启动自动迁移**：`New()` 检测 `settings.json`（或 `AI_API_KEY` 环境变量）里的明文 key，先把明文从内存 settings 清空（防止后续 `atomicJSON` 把明文回写磁盘），暂存内存 `pendingLegacyAPIKey`；vault 一旦解锁（有密码用户经 `/api/unlock` 或 `/api/auth/verify` 输密码；无密码用户启动即由机器密钥解锁），立即把明文加密为 `model:api-key` 条目入库，并用 `shredFile` 把 `settings.json` 原地覆写为等长随机字节后再写回无明文版本（best-effort 擦除，防普通取证/备份读到旧明文；SSD 磨损均衡下不保证物理销毁）。
+- **幂等**：vault 已有 `model:api-key` 条目即跳过；vault 未解锁时保留暂存，下次解锁再迁。
+- **后续首次设密码**：vault 全部条目从机器绑定主密钥 re-wrap 到 Argon2id 密码派生主密钥（与 SSH vault 的 `ReWrap` 同一机制）。
+- **HTTP 接口**：
+  - `POST /api/unlock` body `{password}`：有密码用户解锁 vault；成功 `{ok:true, unlocked:true}`，并顺带迁移暂存的旧明文 key。无密码用户直接 `{ok:true, unlocked:true, passwordless:true}`。
+  - `GET /api/config`：`hasKey`（顶层）与 `models[].hasApiKey` 报告"是否已配置"，**绝不回显明文**；同时返回 `vaultUnlocked`（主密钥是否已驻留内存）。
+  - `PUT /api/settings`：body 中 `apiKey` 非空 → 加密入 vault；`clearKey=true` → 删除 vault 条目；空且未 `clearKey` → 保持现状。`settings.json` 的 `apiKey` 字段恒为空，永不落明文。
+- **运行时取 key**：`provider.go`/`workflow.go` 不再读 `settings.APIKey`，改经 `modelAPIKeyLocked()` 从 vault 解密；已配置但 vault 未解锁时返回明确错误"请先解锁以使用模型"（不静默失败）。
+- **导出/导入**：`config_backup.go` 导出**不含**任何明文 key；导入旧备份里的明文 `apiKey` 时自动暂存、解锁后入 vault（见 [config-backup.md](./config-backup.md)）。
 
 ## 3. SSH 私钥双输入
 

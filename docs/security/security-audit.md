@@ -48,6 +48,7 @@ aide 是**本地优先（local-first）**的 AI 工作台：后端以单容器�
 - **代码位置**：`internal/server/server.go:49,83,86,90`；`internal/server/server.go:508-530`；`internal/server/paths.go:142-143`。
 - **评估**：APIKey 未进入 AES-256-GCM vault（vault 目前只收 SSH 凭据，见 `secret_vault.go:36-40`）。它靠 0600 文件 + 0700 目录 + Docker 私有卷三层隔离保护；卷被只读取证时可被读出。这是与 SSH 凭据处理不一致的地方。
 - **风险等级**：**中**。
+- **RC2 后续（0.1.11.0-RC2 已闭环）**：模型 API Key 已迁入统一 vault（条目 `model:api-key`），`settings.json` 恒不存明文；主密钥分层（有密码 Argon2id 派生 / 无密码机器绑定 `/data/secrets/master-key.bin` 0600），旧明文启动自动迁移 + `shredFile` 擦除，`GET /api/config` 仅回 `hasKey`/`hasApiKey`/`vaultUnlocked`。本条"中"风险已消解，详见 [secret-vault.md](./secret-vault.md) §2.1。
 
 ### #2 配置备份导出脱敏
 
@@ -197,7 +198,7 @@ aide 是**本地优先（local-first）**的 AI 工作台：后端以单容器�
 4. **eIDAS 不适用**：aide 是本地自托管工具，不提供电子签名/远程身份认证服务，不构成 eIDAS 下的合格信任服务提供商（QTSP）。
 5. **edge-tts 服务端风控**：edge-tts 复用微软 Edge 在线朗读端点，受其服务端限流/风控影响；这是外部服务可用性问题，非 aide 安全缺陷。
 6. **插件无 CAP_NET_RAW（可选）**：当前 comm 插件不授予 raw socket capability；若未来某插件确需抓包能力，须单独显式授权并重新评估。
-7. **APIKey 明文落 settings.json**：见 #1，未纳入 AES vault。
+7. ~~**APIKey 明文落 settings.json**：见 #1，未纳入 AES vault。~~ **RC2 已闭环**：模型 API Key 迁入 vault（见 #1 RC2 后续）。
 8. **voice-memory.json 明文**：见 #7，长期记忆未走加密信封。
 9. **WebAuthn 含 http://localhost origin**：见 #16，为兼容旧标签的有意取舍。
 10. **插件审计未入结构化日志**：见 #14，插件生命周期事件走 stdout，未进 audit JSONL。
@@ -206,7 +207,7 @@ aide 是**本地优先（local-first）**的 AI 工作台：后端以单容器�
 
 ## 5. 后续建议
 
-1. 将 AI `APIKey/TTSAPIKey/TTSAzureKey/CloneTTSAPIKey` 迁入统一 vault 或对 settings.json 敏感字段做应用层加密，与 SSH 凭据对齐（对应 #1）。
+1. ~~将 AI `APIKey` 迁入统一 vault，与 SSH 凭据对齐（对应 #1）。~~ **RC2 已完成**（模型 API Key 入 vault；`TTSAPIKey/TTSAzureKey/CloneTTSAPIKey` 仍为预留字段，后续按需迁移）。
 2. 为 `voice-memory.json` 增加与 voice-history 一致的 AES-256-GCM 加密信封（对应 #7）。
 3. 补一个 `X-Frame-Options: DENY` 头覆盖旧浏览器（对应 #6）。
 4. 插件生命周期事件追加写入 `audit/security-audit.jsonl`，与 debug/security 审计体系统一（对应 #14）。

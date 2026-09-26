@@ -1,6 +1,6 @@
 # Security: config backup & cross-version compatibility
 
-> Applies to: 0.1.11.0-RC1
+> Applies to: 0.1.11.0-RC3
 
 Config backup (`POST /api/config/export` / `POST /api/config/import`) packs all aide settings into a single JSON envelope. This page documents the cross-version import compatibility, illegal-value fallback rules, and the sensitive-field desensitization list.
 
@@ -97,7 +97,7 @@ Non-secret export (`includeSecrets=false`) clears any keying material before pac
 
 | Field | Meaning |
 | --- | --- |
-| `apiKey` | Provider API key |
+| `apiKey` | Provider API key (since RC2 it lives in the AES-256-GCM vault and `settings.json` never holds plaintext; exports contain **no** plaintext key in any case, and attach the `vault.enc` encrypted envelope only when "include secrets" is checked) |
 | `ttsAPIKey` | TTS engine key (reserved) |
 | `userPasswordHash` | Lock-screen Argon2id password hash |
 | `personaCipher` | Legacy single-persona personality cipher |
@@ -105,3 +105,11 @@ Non-secret export (`includeSecrets=false`) clears any keying material before pac
 | `debugTokenHash` | External debug API token hash |
 
 On import this is mirrored: when "import secrets" is unchecked, the above fields **always keep their current value** — even if a desensitized backup carries empty strings, live keys are not wiped. Backup secrets are adopted only when the user explicitly opts in and the backup actually bundled them. Voice-history ciphertext is bundled only when "import voice data" is explicitly checked.
+
+### 6.1 Importing a legacy plaintext API key (RC2)
+
+Backups from RC1 and earlier carry a plaintext `apiKey`. On RC3 import:
+
+- If "import secrets" is **unchecked**: the `apiKey` field is ignored and the live vault key is left untouched;
+- If "import secrets" is **checked**: the backup's plaintext `apiKey` is **not** written back to `settings.json`. It is staged in memory (`pendingLegacyAPIKey`) and, once the vault unlocks (password users via `/api/unlock`; passwordless users auto-unlock at boot via the machine key), sealed as a `model:api-key` entry. `settings.json` stays plaintext-free.
+- This reuses the exact same vault-entry path as the legacy `settings.json` startup migration, and is idempotent/re-entrant.

@@ -354,3 +354,42 @@ sequenceDiagram
 ### 未验证项（NOT_RUN）
 
 - 真机 Touch ID 按压注册 → 锁屏 → 指纹解锁 → 删凭证全流程，必须用户本人完成。
+
+---
+
+## 13. 统一主身份认证（#43，RC2 收口）
+
+RC2 在 WebAuthn 之上加了一层**统一本机主身份认证**入口，把"证明本人在场"的所有 A 类敏感动作收敛到同一个端点与同一个前端组件。
+
+### 13.1 端点
+
+`POST /api/auth/verify`（挂在既有 Bearer 中间件后）：
+
+```jsonc
+// body（密码 或 WebAuthn 断言二选一）
+{ "password": "<账户密码>" }                       // 密码路径
+// 或
+{ "assertion": { …浏览器 assertionToJSON 原始 JSON… }, "challenge": "<base64url>" }
+```
+
+- 成功返回 `{ "ok": true, "scope": "master", "unlocked": true }`（无密码用户返回 `unlocked: <vault 当前态>`）；
+- 失败 401：`密码错误` / `指纹验证失败`；两者均写审计 `master-auth:failed:password|webauthn`；
+- 成功路径写审计 `master-auth:password` / `master-auth:webauthn` / `master-auth:passwordless`。
+- 密码路径额外动作：派生主密钥解锁 vault + 迁移暂存的旧明文 API Key（与 `/api/unlock` 同一逻辑）；
+- 断言路径：复用 `/api/webauthn/assertion/finish` 的同一 `ValidateLogin` 校验流程（origin/RP ID/challenge/signCount），**不接触主密钥**，只证明本机用户在场；授权范围与输主密码完全一致（`scope:"master"`），不扩大。
+
+### 13.2 前端组件
+
+新增 `requestMasterAuth()` 统一组件：优先弹 Touch ID/WebAuthn（若 `webAuthnReady && hostname==='localhost' && 有可用平台凭证`），失败或不可用回退密码输入框；二选一通过即 resolve，用于所有 A 类动作。
+
+### 13.3 A 类接入点（6 处）
+
+| 位置 | 原认证方式 | 现在 |
+| --- | --- | --- |
+| 锁屏解锁 | 密码 | 密码或 Touch ID 二选一（共用 dismissAfterUnlock） |
+| 小秘历史查看 ×3 | 密码门 | `requestMasterAuth`（密码或指纹） |
+| 改密码 | 原密码 | `requestMasterAuth` |
+| vault 解锁（重启后调模型） | 密码弹窗 | `requestMasterAuth` |
+| assistant-gate（小蜜会话进入） | `POST /api/sessions/{id}/unlock-assistant` 密码门 | `requestMasterAuth` |
+
+B 类敏感动作（API Key 保存/清除、SSH 凭据、PDF 打开密码等）**不经**此统一组件，沿用各自原流程，不扩大认证面。

@@ -1,8 +1,8 @@
 # Security: Password Hashing & Key Derivation (KDF)
 
-- Version: 0.1.11.0-RC1
-- Date: 2026-09-25
-- Scope: lock-screen password storage, persona custom-personality encryption, voice-assistant history encryption
+- Version: 0.1.11.0-RC3
+- Date: 2026-09-26
+- Scope: lock-screen password storage, persona custom-personality encryption, voice-assistant history encryption, unified vault master-key derivation
 
 ## 1. Why we changed it
 
@@ -40,6 +40,14 @@ $argon2id$v=19$m=65536,t=3,p=4$<base64 salt>$<base64 hash>
   - voice-assistant history ciphertext (`voice-history.json`).
 
 The fixed salt provides **domain separation**: it stops cross-site rainbow tables from landing on the data key and decouples the login-hash random salt from the data key. The fixed salt is not a secret — its leak does not directly expose the key — but the password is still required to derive it.
+
+### 3.1 Vault master-key tiers (RC2)
+
+The unified secret vault (SSH credentials + model API key, see [secret-vault.md](./secret-vault.md)) uses a master key chosen by whether a password is set:
+
+- *Password set*: master key = `DeriveAESKey(password, kdfSalt)` (the data encryption key above). After a restart it is not resident in memory until `POST /api/unlock` (password) or `POST /api/auth/verify` (password or WebAuthn assertion) unlocks the vault.
+- *No password*: a random 32-byte `crypto/rand` master key is stored `0600` at `/data/secrets/master-key.bin` and auto-loaded at boot. This machine-bound fallback is not derived from a password, but as long as it stays on the local `/data` volume, passwordless users can use stored API keys transparently; copying `settings.json` alone cannot reveal the key.
+- When the user later sets a password for the first time, all vault entries are re-wrapped from the machine key to the Argon2id password-derived key (`ReWrap`); `master-key.bin` no longer participates in sealing.
 
 ## 4. Smooth migration for existing users
 
