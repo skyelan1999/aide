@@ -976,3 +976,26 @@ dialog.master-auth{width:min(380px,90vw)}
 .am-reply{font-size:13px;line-height:1.6;color:var(--text-dim);margin-top:4px;padding-left:10px;border-left:2px solid var(--line-mid)}
 .am-dispatched{display:block;width:100%;margin-top:6px;padding:8px 12px;border:1px solid var(--accent);border-radius:6px;background:color-mix(in srgb, var(--accent) 8%, transparent);color:var(--accent);font-size:12px;cursor:pointer;text-align:left}
 .am-dispatched:hover{background:color-mix(in srgb, var(--accent) 15%, transparent)}
+
+/* #64: code syntax highlighting overlay */
+.code-highlight-overlay{position:absolute;pointer-events:none;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.6;padding:17px 18px;margin:0;overflow:auto;background:transparent;color:var(--text);z-index:0}
+.code-editable{position:relative;z-index:1;background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:var(--text)}
+.editor-dialog textarea#editor,.file-view textarea#file-view-editor{position:relative;z-index:1}
+.code-highlight-overlay code{font-family:inherit;padding:0;background:transparent}
+/* hljs theme colors - light */
+.hljs-comment,.hljs-quote{color:#6a9955}
+.hljs-keyword,.hljs-selector-tag,.hljs-addition{color:#cf222e}
+.hljs-string,.hljs-doctag,.hljs-regexp{color:#0a3069}
+.hljs-number,.hljs-literal,.hljs-built_in,.hljs-builtin-name{color:#0550ae}
+.hljs-function .hljs-title,.hljs-section,.hljs-name{color:#8250df}
+.hljs-attr,.hljs-attribute,.hljs-variable,.hljs-template-variable{color:#953800}
+.hljs-meta,.hljs-deletion{color:#b35900}
+.hljs-decorator,.hljs-symbol{color:#e11d78}
+[data-theme="dark"] .hljs-comment,.hljs-quote{color:#7ee787}
+[data-theme="dark"] .hljs-keyword,.hljs-selector-tag,.hljs-addition{color:#ff7b72}
+[data-theme="dark"] .hljs-string,.hljs-doctag,.hljs-regexp{color:#a5d6ff}
+[data-theme="dark"] .hljs-number,.hljs-literal,.hljs-built_in,.hljs-builtin-name{color:#79c0ff}
+[data-theme="dark"] .hljs-function .hljs-title,.hljs-section,.hljs-name{color:#d2a8ff}
+[data-theme="dark"] .hljs-attr,.hljs-attribute,.hljs-variable,.hljs-template-variable{color:#ffa657}
+[data-theme="dark"] .hljs-meta,.hljs-deletion{color:#ff9580}
+[data-theme="dark"] .hljs-decorator,.hljs-symbol{color:#f97583}

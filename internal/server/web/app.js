@@ -1150,6 +1150,10 @@ function showEditor() {
   const isDxf = isDxfPath(state.file.path);
   const isDocx = isDocxPath(state.file.path);
   $('editor').readOnly = readOnly;
+  // #64: code syntax highlighting
+  teardownCodeHighlight($('editor'));
+  var _cl = codeLang(state.file.path);
+  if (_cl) setupCodeHighlight($('editor'), _cl);
   // 图片 / STL / PDF 为只读可视化查看器，无文本可保存，禁用保存（避免空内容覆盖原文件）；drawio 可保存
   // 可视化查看器（图片/STL/PDF/DXF）无文本可保存 → 隐藏保存按钮；只读来源的文本文件 → 禁用
   $("save-file").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx);
@@ -3405,6 +3409,45 @@ async function setupPdfPreview(container, filePath, root, source) {
 function isDxfPath(path) { return /\.dxf$/i.test(path || ''); }
 function isDocxPath(path) { return /\.docx$/i.test(path || ''); }
 function isDocPath(path) { return /\.doc$/i.test(path || ''); }
+function codeLang(path) {
+  var ext = (path || '').split('.').pop().toLowerCase();
+  var map = { py:'python', pyw:'python', go:'go', js:'javascript', mjs:'javascript', cjs:'javascript',
+    ts:'typescript', tsx:'typescript', jsx:'javascript', json:'json', sh:'bash', bash:'bash', zsh:'bash',
+    yaml:'yaml', yml:'yaml', sql:'sql', md:'markdown', mkd:'markdown' };
+  return map[ext] || '';
+}
+function setupCodeHighlight(textarea, lang) {
+  if (!window.hljs || !lang) return;
+  // Create overlay pre behind textarea
+  var pre = document.createElement('pre');
+  pre.className = 'code-highlight-overlay';
+  pre.setAttribute('aria-hidden', 'true');
+  var code = document.createElement('code');
+  code.className = 'language-' + lang;
+  pre.appendChild(code);
+  // Insert before textarea
+  textarea.parentNode.insertBefore(pre, textarea);
+  // Style: textarea transparent bg, pre behind
+  textarea.classList.add('code-editable');
+  function render() {
+    var text = textarea.value;
+    if (text.length > 500000) { code.textContent = text; return; } // large file: plain
+    try {
+      var res = window.hljs.highlight(text, { language: lang, ignoreIllegals: true });
+      code.innerHTML = res.value;
+    } catch (e) { code.textContent = text; }
+    pre.scrollTop = textarea.scrollTop;
+    pre.scrollLeft = textarea.scrollLeft;
+  }
+  textarea.addEventListener('scroll', render);
+  textarea.addEventListener('input', render);
+  render();
+}
+function teardownCodeHighlight(textarea) {
+  textarea.classList.remove('code-editable');
+  var pre = textarea.parentNode && textarea.parentNode.querySelector('.code-highlight-overlay');
+  if (pre) pre.remove();
+}
 let _dxfParserPromise = null;
 function ensureDxfParser() {
   if (_dxfParserPromise) return _dxfParserPromise;
@@ -3905,6 +3948,10 @@ async function openFileViewMode() {
   const readOnly = spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true);
   $('file-view-editor').value = data.content;
   $('file-view-editor').readOnly = readOnly;
+  // #64: code syntax highlighting
+  teardownCodeHighlight($('file-view-editor'));
+  var _fvcl = codeLang(spec.path);
+  if (_fvcl) setupCodeHighlight($('file-view-editor'), _fvcl);
   // 图片 / STL / PDF 只读查看器禁用保存；drawio 可保存
   $("file-view-save").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx);
   $("file-view-save").disabled = readOnly;
