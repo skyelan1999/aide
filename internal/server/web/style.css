@@ -979,8 +979,8 @@ dialog.master-auth{width:min(380px,90vw)}
 
 /* #64: code syntax highlighting overlay */
 textarea#editor,textarea#file-view-editor{position:relative}
-.code-highlight-overlay{position:absolute;inset:0;pointer-events:none;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.6;padding:17px 18px;margin:0;overflow:auto;background:var(--surface);color:var(--text);z-index:0;display:block}
-.code-editable{position:relative;z-index:1 !important;background:transparent !important;color:transparent !important;-webkit-text-fill-color:transparent !important;caret-color:var(--text) !important}
+.code-highlight-overlay{position:absolute;inset:0;pointer-events:none;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.6;padding:17px 18px;margin:0;overflow:auto;background:transparent !important;color:var(--text);z-index:0;display:block;border:0 !important;box-shadow:none !important;border-radius:0 !important}
+.code-editable{position:relative;z-index:1 !important;background:transparent !important;color:transparent !important;-webkit-text-fill-color:transparent !important;caret-color:var(--text) !important;border:0 !important;outline:none !important;box-shadow:none !important;border-radius:0 !important}
 .code-highlight-overlay code{font-family:inherit;padding:0;background:transparent}
 /* hljs theme colors - light */
 .hljs-comment,.hljs-quote{color:#6a9955}
