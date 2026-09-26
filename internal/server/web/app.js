@@ -5533,21 +5533,7 @@ function renderVoiceNameControl() {
   wrap.append(head, row, el('small', '', t('语音弹框标题使用这个名字，默认「小秘」。')));
   return wrap;
 }
-function renderVoiceHistoryControl() {
-  const wrap = el('div', 'settings-control');
-  const head = el('div', 'control-label');
-  head.append(el('span', '', t('小秘对话')));
-  const btn = el('button', 'primary', t('打开小秘')); btn.type = 'button';
-  btn.onclick = action(() => {
-    closeSettings && closeSettings();
-    const as = (state.sessions || []).find(x => x.kind === 'assistant');
-    if (as) openAssistantGate(as.id, as.title);
-    else toast(t('暂无小秘会话'));
-  });
-  wrap.append(head, btn, el('small', '', t('历史已归位到小秘会话视图，点击上方按钮进入。')));
-  return wrap;
-}
-controlRenderers['voice-history'] = renderVoiceHistoryControl;
+// voice-history 控制项已移除：小秘对话入口从设置面板删除
 function renderVoiceReplyControl() {
   const wrap = el('div', 'settings-control');
   const head = el('div', 'control-label');
