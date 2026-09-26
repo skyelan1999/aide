@@ -6227,7 +6227,7 @@ function renderAccountControl() {
         if (!creds.length) waList.append(el('div', 'wa-cred-meta', t('未注册设备')));
         creds.forEach(c => {
           const item = el('div', 'wa-cred-item');
-          const nameEl = el('span', 'wa-cred-name', c.name);
+          const nameEl = el('span', 'wa-cred-name', t(c.name));
           const meta = el('span', 'wa-cred-meta', new Date((c.createdAt || 0) * 1000).toLocaleDateString());
           const delBtn = el('button', 'quiet', t('删除')); delBtn.type = 'button';
           delBtn.onclick = action(async () => {
