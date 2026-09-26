@@ -4512,7 +4512,7 @@ async function voiceFilterOne(sentence) {
     voiceLog('ignored', sentence, result.reason);
     if (voice.recognition) { try { voice.recognition.onend = null; voice.recognition.stop(); } catch (_) {} }
     $('voice-panel').classList.add('hidden');
-    toast(result.reason || t('小秘对话历史已锁定，请先在设置中解锁'));
+    toast(result.reason || t('小秘已锁定，请在小秘会话中解锁'));
     return;
   }
   if (result.action === 'send') {
@@ -4823,7 +4823,42 @@ async function voiceOpenMicStream() {
 function voiceReleaseMicStream() {
   if (voice.micStream) { try { voice.micStream.getTracks().forEach(tk => tk.stop()); } catch (_) {} voice.micStream = null; }
 }
-$('voice-btn').onclick = action(() => { voice.listening ? voiceStopAndFlush() : voiceStart(); });
+$('voice-btn').onclick = action(() => {
+  // #62: 主会话=语音听写填输入框；小秘会话=小秘管线
+  if (state.session?.kind === 'assistant') {
+    voice.listening ? voiceStopAndFlush() : voiceStart();
+  } else {
+    dictation.listening ? dictationStop() : dictationStart();
+  }
+});
+// #62: 主会话语音听写（Web Speech API → 填入 #prompt）
+const dictation = { listening: false, recognition: null, finalText: '' };
+function dictationStart() {
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Ctor) { toast(t('浏览器不支持语音识别')); return; }
+  const rec = new Ctor();
+  rec.lang = 'zh-CN'; rec.continuous = true; rec.interimResults = true;
+  dictation.recognition = rec;
+  dictation.finalText = $('prompt').value;
+  rec.onresult = (e) => {
+    let interim = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) dictation.finalText += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    $('prompt').value = dictation.finalText + (interim ? ' ' + interim : '');
+    $('prompt').dispatchEvent(new Event('input', { bubbles: true }));
+  };
+  rec.onerror = (e) => { if (e.error === 'not-allowed') toast(t('麦克风权限被拒绝')); dictationStop(); };
+  rec.onend = () => { if (dictation.listening) { try { rec.start(); } catch(_){} } };
+  try { rec.start(); dictation.listening = true; $('voice-btn').classList.add('recording'); }
+  catch (_) { toast(t('无法启动语音识别')); }
+}
+function dictationStop() {
+  dictation.listening = false;
+  if (dictation.recognition) { try { dictation.recognition.onend = null; dictation.recognition.stop(); } catch(_){} }
+  $('voice-btn').classList.remove('recording');
+}
 $('voice-stop').onclick = action(voiceHardStop);
 // ===== 小秘语音导览：朗读 AI 输出并自动滚动跟随；讲方案时先打开产物文件再讲解 =====
 const narration = { active:false, steps:[], index:0, paused:false, cancelled:false, jump:0 };
