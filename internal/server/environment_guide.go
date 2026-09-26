@@ -36,15 +36,16 @@ func (a *App) environmentGuide() string {
 	} else {
 		workspace.Entries, workspace.Inventory = guideEntries(a.workspace)
 	}
-	reference := item{ID: "context", Name: "辅助资料 / Reference directory", Kind: "local", Path: guideLabel(a.wsConfig.Docs.Path), Access: "read-only reference", Usage: "Browse Auxiliary materials and attach relevant files to the task; do not assume reference files were already read."}
-	if reference.Path == "" {
-		reference.Path = "/context"
-	}
+	// /context 内置参考根常驻（#53）：恒为 AIDE_CONTEXT，不随 Docs.Path/工作区切换变化。
+	reference := item{ID: "context", Name: "辅助资料 / Reference directory", Kind: "local", Path: "/context", Access: "read-only reference", Usage: "Browse Auxiliary materials and attach relevant files to the task; do not assume reference files were already read."}
 	reference.Entries, reference.Inventory = guideEntries(a.reference)
 	items := []item{workspace, reference}
 	for _, src := range a.sourceRegistry.Sources {
 		if !src.Enabled {
 			continue
+		}
+		if src.ID == contextSource {
+			continue // /context 已由上方 reference 条目呈现，避免重复（#53）
 		}
 		row := item{ID: src.ID, Name: guideLabel(src.Name), Kind: src.Type, Access: "read-only", Usage: "Use list_files/read_file with this source ID and a relative path; or attach files through Auxiliary materials. Registration does not mean contents have been read.", Inventory: "Not scanned: remote source metadata only."}
 		if src.RW {
