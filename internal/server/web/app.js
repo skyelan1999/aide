@@ -3418,20 +3418,24 @@ function codeLang(path) {
 }
 function setupCodeHighlight(textarea, lang) {
   if (!window.hljs || !lang) return;
-  // Create overlay pre behind textarea
   var pre = document.createElement('pre');
   pre.className = 'code-highlight-overlay';
   pre.setAttribute('aria-hidden', 'true');
   var code = document.createElement('code');
   code.className = 'language-' + lang;
   pre.appendChild(code);
-  // Insert before textarea
   textarea.parentNode.insertBefore(pre, textarea);
-  // Style: textarea transparent bg, pre behind
   textarea.classList.add('code-editable');
+  function positionOverlay() {
+    pre.style.top = textarea.offsetTop + 'px';
+    pre.style.left = textarea.offsetLeft + 'px';
+    pre.style.width = textarea.offsetWidth + 'px';
+    pre.style.height = textarea.offsetHeight + 'px';
+  }
   function render() {
+    positionOverlay();
     var text = textarea.value;
-    if (text.length > 500000) { code.textContent = text; return; } // large file: plain
+    if (text.length > 500000) { code.textContent = text; return; }
     try {
       var res = window.hljs.highlight(text, { language: lang, ignoreIllegals: true });
       code.innerHTML = res.value;
@@ -3439,6 +3443,7 @@ function setupCodeHighlight(textarea, lang) {
     pre.scrollTop = textarea.scrollTop;
     pre.scrollLeft = textarea.scrollLeft;
   }
+  window.addEventListener('resize', positionOverlay);
   textarea.addEventListener('scroll', render);
   textarea.addEventListener('input', render);
   render();
@@ -3447,6 +3452,15 @@ function teardownCodeHighlight(textarea) {
   textarea.classList.remove('code-editable');
   var pre = textarea.parentNode && textarea.parentNode.querySelector('.code-highlight-overlay');
   if (pre) pre.remove();
+  textarea.classList.remove('code-editable');
+  var wrapper = textarea.parentNode;
+  if (wrapper && wrapper.classList.contains('code-wrapper')) {
+    var pre = wrapper.querySelector('.code-highlight-overlay');
+    if (pre) pre.remove();
+    // Unwrap: move textarea back to original parent
+    wrapper.parentNode.insertBefore(textarea, wrapper);
+    wrapper.remove();
+  }
 }
 let _dxfParserPromise = null;
 function ensureDxfParser() {

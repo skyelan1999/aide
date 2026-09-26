@@ -868,7 +868,7 @@ body.file-view-mode .file-view-preview iframe{flex:1;width:100%;height:100%;min-
 .pdf-canvas{display:block}
 .pdf-error{padding:40px 24px;color:var(--warn);font-size:13px;text-align:center;line-height:1.8;max-width:560px}
 /* 预留：后续批注覆盖层（绝对定位叠加在页面上方，本次不实现） */
-.pdf-annot-overlay{position:absolute;inset:0;pointer-events:none;z-index:5}
+.pdf-annot-overlay{position:absolute;pointer-events:none;z-index:5}
 
 /* ── DXF 矢量查看器 ── */
 .dxf-viewer{display:flex;flex-direction:column;height:100%;min-height:400px}
@@ -979,7 +979,7 @@ dialog.master-auth{width:min(380px,90vw)}
 
 /* #64: code syntax highlighting overlay */
 textarea#editor,textarea#file-view-editor{position:relative}
-.code-highlight-overlay{position:absolute;inset:0;pointer-events:none;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.6;padding:17px 18px;margin:0;overflow:auto;background:transparent !important;color:var(--text);z-index:0;display:block;border:0 !important;box-shadow:none !important;border-radius:0 !important}
+.code-highlight-overlay{position:absolute;pointer-events:none;white-space:pre-wrap;word-break:break-word;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;line-height:1.6;padding:17px 18px;margin:0;overflow:auto;background:transparent !important;color:var(--text);z-index:0;display:block;border:0 !important;box-shadow:none !important;border-radius:0 !important}
 .code-editable{position:relative;z-index:1 !important;background:transparent !important;color:transparent !important;-webkit-text-fill-color:transparent !important;caret-color:var(--text) !important;border:0 !important;outline:none !important;box-shadow:none !important;border-radius:0 !important}
 .code-highlight-overlay code{font-family:inherit;padding:0;background:transparent}
 /* hljs theme colors - light */
@@ -1001,3 +1001,5 @@ textarea#editor,textarea#file-view-editor{position:relative}
 [data-theme="dark"] .hljs-decorator,.hljs-symbol{color:#f97583}
 .comment-anchor-hl{background:color-mix(in srgb, var(--accent) 25%, transparent);border-radius:2px;padding:1px 0;cursor:pointer}
 .comment-anchor-hl:hover{background:color-mix(in srgb, var(--accent) 40%, transparent)}
+.code-wrapper{position:relative;flex:1;min-height:0;display:flex;flex-direction:column}
+.code-wrapper textarea{flex:1;min-height:0}
