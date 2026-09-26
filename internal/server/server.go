@@ -891,6 +891,15 @@ func (a *App) clearAssistantUnlock() {
 	a.assistantUnlocked = map[string]bool{}
 }
 
+// isAssistantUnlocked 返回小秘会话是否已通过密码门解锁（内存态，锁屏后由 clearAssistantUnlock 失效）。
+// #62：assistant-message 与 voice-filter 的发送门统一查这里，与 unlockAssistantSession 写的同一把锁，
+// 不再误用 voice-history 的加密锁定（va.encStatus）——两者独立。
+func (a *App) isAssistantUnlocked(id string) bool {
+	a.assistantUnlockMu.Lock()
+	defer a.assistantUnlockMu.Unlock()
+	return a.assistantUnlocked[id]
+}
+
 func (a *App) Handler() http.Handler {
 	a.handlerOnce.Do(a.buildHandler)
 	return a.handler
@@ -1431,6 +1440,7 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	cfg := a.settings
 	va := a.voiceAgent
+	as := a.findAssistantSessionLocked() // #62：语音输入与文字消息走同一把密码门
 	a.mu.Unlock()
 	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
 		if va != nil {
@@ -1445,10 +1455,10 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	// 历史加密且锁定（如容器重启后未解锁）：不持有明文、无法落盘记录，
-	// 明确返回 locked 引导解锁，而非静默发送造成"以为记录了实则丢失"。
-	if hst := va.encStatus(); func() bool { e, _ := hst["encrypted"].(bool); u, _ := hst["unlocked"].(bool); return e && !u }() {
-		jsonOut(w, 200, map[string]any{"action": "locked", "text": "", "reason": "小秘对话历史已锁定，请在设置→语音小秘中点「解锁」输入密钥后再发言；解锁前内容不会被记录"})
+	// #62 修复：语音输入与文字消息走同一把密码门（assistantUnlocked），与 unlockAssistantSession 一致。
+	// voice-history 的加密锁定（va.encStatus）仅用于设置页历史查看，与此处独立。
+	if as == nil || !a.isAssistantUnlocked(as.ID) {
+		jsonOut(w, 200, map[string]any{"action": "locked", "text": "", "reason": "小秘已锁定，请在小秘会话中解锁"})
 		return
 	}
 	// #62 升级：语音也走小秘 agentic 自主决策管线（与文字同一循环）。

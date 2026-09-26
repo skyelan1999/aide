@@ -58,6 +58,7 @@ func TestAssistantAgenticChatNoDispatch(t *testing.T) {
 	a.settings.BaseURL = srv.URL
 	a.settings.Model = "test"
 	a.mu.Unlock()
+	unlockAssistantSessionForTest(t, a) // #62：agentic 路径需先过小秘密码门
 	assistantID := assistantSessionID(t, a)
 
 	beforeSessions := 0
@@ -111,6 +112,7 @@ func TestAssistantAgenticDispatch(t *testing.T) {
 	a.settings.BaseURL = srv.URL
 	a.settings.Model = "test"
 	a.mu.Unlock()
+	unlockAssistantSessionForTest(t, a) // #62：agentic 路径需先过小秘密码门
 	assistantID := assistantSessionID(t, a)
 
 	w := request(a, "POST", "/api/sessions/"+assistantID+"/assistant-message",
@@ -155,6 +157,7 @@ func TestAssistantAgenticSilent(t *testing.T) {
 	a.settings.BaseURL = srv.URL
 	a.settings.Model = "test"
 	a.mu.Unlock()
+	unlockAssistantSessionForTest(t, a) // #62：voice-filter 需先过小秘密码门
 
 	beforeSessions := 0
 	a.mu.Lock()

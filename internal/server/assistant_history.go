@@ -174,9 +174,10 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		runFallback()
 		return
 	}
-	// 历史加密锁定：不持有明文，不记录也不派发
-	if st := va.encStatus(); func() bool { e, _ := st["encrypted"].(bool); u, _ := st["unlocked"].(bool); return e && !u }() {
-		jsonOut(w, 200, map[string]any{"action": "locked", "reply": "", "reason": "小蜜对话历史已锁定，请先在设置中解锁后再发言"})
+	// #62 修复：与 unlockAssistantSession 同一把锁（a.assistantUnlocked），不再误用 voice-history
+	// 的加密锁定（va.encStatus）——后者仅用于设置页历史查看，两者独立。
+	if !a.isAssistantUnlocked(s.ID) {
+		jsonOut(w, 200, map[string]any{"action": "locked", "reply": "", "reason": "小秘已锁定，请在小秘会话中解锁"})
 		return
 	}
 	// 注入模型 API Key（与 execute 一致），跑 agentic 自主决策循环

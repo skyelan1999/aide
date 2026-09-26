@@ -219,6 +219,7 @@ func TestVoiceFilterSurfacesMode(t *testing.T) {
 	a := testApp(t)
 	a.settings = Settings{BaseURL: srv.URL, Model: "test"}
 	a.voiceAgent = newVoiceAgent(t.TempDir())
+	unlockAssistantSessionForTest(t, a) // #62：voice-filter 需先过小秘密码门
 	w := request(a, "POST", "/api/voice-filter", map[string]any{"text": "立刻停", "context": ""})
 	requireStatus(t, w, 200)
 	var got map[string]any

@@ -19,6 +19,20 @@ func assistantSessionID(t *testing.T, a *App) string {
 	return s.ID
 }
 
+// unlockAssistantSessionForTest 模拟前端通过小秘密码门：标记唯一小秘会话为已解锁。
+// #62 后 assistant-message / voice-filter 的发送门查 a.assistantUnlocked，跑 agentic
+// 路径的测试需先解锁；未解锁的门控测试则不调用本函数。
+func unlockAssistantSessionForTest(t *testing.T, a *App) {
+	t.Helper()
+	a.mu.Lock()
+	s := a.findAssistantSessionLocked()
+	a.mu.Unlock()
+	if s == nil {
+		t.Fatal("assistant session not created at startup")
+	}
+	a.markAssistantUnlocked(s.ID)
+}
+
 // TestContextToolsForAssistantOnly 跨会话工具只在小秘系统会话注入，普通会话不可见。
 func TestContextToolsForAssistantOnly(t *testing.T) {
 	a := testApp(t)
@@ -173,6 +187,7 @@ func TestAssistantMessageAgenticFallsBackToAnalyze(t *testing.T) {
 	a.settings.BaseURL = srv.URL
 	a.settings.Model = "test"
 	a.mu.Unlock()
+	unlockAssistantSessionForTest(t, a) // #62：agentic 路径需先过小秘密码门
 	assistantID := assistantSessionID(t, a)
 
 	w := request(a, "POST", "/api/sessions/"+assistantID+"/assistant-message",
@@ -185,5 +200,69 @@ func TestAssistantMessageAgenticFallsBackToAnalyze(t *testing.T) {
 	}
 	if body["dispatched"] != nil {
 		t.Fatalf("ask must not dispatch, got %v", body["dispatched"])
+	}
+}
+
+// TestAssistantMessageGateLockedUnlockedClear #62：assistant-message 走 assistantUnlocked 门。
+// 未解锁→locked(新文案)；解锁后放行；clearAssistantUnlock(锁屏)后再次 locked。
+// 门在调用模型前拦截，故 BaseURL 指向不可达地址也能验证门本身。
+func TestAssistantMessageGateLockedUnlockedClear(t *testing.T) {
+	a := testApp(t)
+	a.mu.Lock()
+	a.settings.BaseURL = "http://127.0.0.1:1"
+	a.settings.Model = "test"
+	a.mu.Unlock()
+	assistantID := assistantSessionID(t, a)
+
+	// 1) 未解锁：返回 locked + 新文案
+	w := request(a, "POST", "/api/sessions/"+assistantID+"/assistant-message", map[string]string{"text": "你好"})
+	requireStatus(t, w, 200)
+	var body map[string]any
+	_ = json.Unmarshal(w.Body.Bytes(), &body)
+	if body["action"] != "locked" {
+		t.Fatalf("before unlock: expected action=locked, got %v", body)
+	}
+	if reason, _ := body["reason"].(string); reason != "小秘已锁定，请在小秘会话中解锁" {
+		t.Fatalf("lock reason = %q, want 新文案", reason)
+	}
+
+	// 2) 解锁后：绝不再返回 locked（模型不可达会回落到 fallback，但不是 locked）
+	unlockAssistantSessionForTest(t, a)
+	w2 := request(a, "POST", "/api/sessions/"+assistantID+"/assistant-message", map[string]string{"text": "你好"})
+	requireStatus(t, w2, 200)
+	var body2 map[string]any
+	_ = json.Unmarshal(w2.Body.Bytes(), &body2)
+	if body2["action"] == "locked" {
+		t.Fatalf("after unlock: must NOT be locked, got %v", body2)
+	}
+
+	// 3) 锁屏清空内存解锁态：再次 locked
+	a.clearAssistantUnlock()
+	w3 := request(a, "POST", "/api/sessions/"+assistantID+"/assistant-message", map[string]string{"text": "你好"})
+	requireStatus(t, w3, 200)
+	var body3 map[string]any
+	_ = json.Unmarshal(w3.Body.Bytes(), &body3)
+	if body3["action"] != "locked" {
+		t.Fatalf("after lockscreen clear: expected locked, got %v", body3)
+	}
+}
+
+// TestVoiceFilterGateLocked #62：voice-filter 与文字同一把锁，未解锁返回 locked + 新文案。
+func TestVoiceFilterGateLocked(t *testing.T) {
+	a := testApp(t)
+	a.mu.Lock()
+	a.settings.BaseURL = "http://127.0.0.1:1"
+	a.settings.Model = "test"
+	a.mu.Unlock()
+
+	w := request(a, "POST", "/api/voice-filter", map[string]string{"text": "测试语音"})
+	requireStatus(t, w, 200)
+	var body map[string]any
+	_ = json.Unmarshal(w.Body.Bytes(), &body)
+	if body["action"] != "locked" {
+		t.Fatalf("voice-filter before unlock: expected locked, got %v", body)
+	}
+	if reason, _ := body["reason"].(string); reason != "小秘已锁定，请在小秘会话中解锁" {
+		t.Fatalf("voice-filter lock reason = %q, want 新文案", reason)
 	}
 }
