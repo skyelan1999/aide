@@ -306,7 +306,7 @@ function setupGlobalEvents() {
 
 /* ── 小秘系统会话密码门（#30）：点击小秘会话先验证账户密码，通过后才进入；锁屏后需重新验证 ── */
 function openAssistantGate(id, title) {
-  if (sessionStorage.getItem('assistantUnlocked_' + id)) { selectSession(id); return; }
+  if (localStorage.getItem('assistantUnlocked_' + id)) { selectSession(id); return; }
   action(async () => {
     const res = await requestMasterAuth({ reason: t('进入小秘会话需要验证身份') });
     if (res === null) return; // 取消
@@ -314,12 +314,12 @@ function openAssistantGate(id, title) {
     if (typeof res === 'string' && res !== 'success') {
       try { await api('/sessions/' + id + '/unlock-assistant', { method: 'POST', body: JSON.stringify({ password: res }) }); } catch (_) {}
     }
-    sessionStorage.setItem('assistantUnlocked_' + id, '1');
+    localStorage.setItem('assistantUnlocked_' + id, '1');
     selectSession(id);
   })();
 }
 // 锁屏时清空小秘会话内存解锁态
-function clearAssistantGate() { Object.keys(sessionStorage).filter(k => k.indexOf('assistantUnlocked_') === 0).forEach(k => sessionStorage.removeItem(k)); }
+function clearAssistantGate() { Object.keys(localStorage).filter(k => k.indexOf('assistantUnlocked_') === 0).forEach(k => localStorage.removeItem(k)); }
 const sessionSeq = { value: 0 }; // R07：递增请求序号，旧响应不得覆盖新选择
 async function selectSession(id) {
   const seq = ++sessionSeq.value;
@@ -5093,6 +5093,7 @@ function renderVoiceHistoryControl() {
   head.append(el('span', '', t('小秘对话')));
   const btn = el('button', 'primary', t('打开小秘')); btn.type = 'button';
   btn.onclick = action(() => {
+    closeSettings && closeSettings();
     const as = (state.sessions || []).find(x => x.kind === 'assistant');
     if (as) openAssistantGate(as.id, as.title);
     else toast(t('暂无小秘会话'));
