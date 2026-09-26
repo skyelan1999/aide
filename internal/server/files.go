@@ -1,8 +1,11 @@
 package server
 
 import (
+	"bufio"
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -10,11 +13,20 @@ import (
 	"os"
 	"path"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
 
-const maxFile = 256 << 10
+// maxFile 为文本文件单次读/写的上限（UTF-8 文本，编辑器与模型工具共用）。
+// 与 maxRawFile(64 MiB) 对齐：原始字节查看器能打开的文件，文本端点也应能读取。
+// OOM 防护由两路构成：文件读取用 LimitReader(maxFile+1) 不越界；
+// 校验为零拷贝（utf8.Valid 直接扫 []byte，NUL 用 bytes.IndexByte，不再 string(b) 复制一份）。
+const maxFile = 64 << 20
+
+// maxProposalTotal 为单次写文件提案（write_file 工具/方案解析）的内容合计上限。
+// 远小于单文件上限：提案由模型逐次产出，主要防一次性灌入过大的多文件方案。
+const maxProposalTotal = 8 << 20
 
 func safePath(p string) error {
 	if p == "" || strings.Contains(p, "\\") || strings.HasPrefix(p, "/") {
@@ -29,12 +41,14 @@ func safePath(p string) error {
 }
 func hash(b []byte) string { h := sha256.Sum256(b); return hex.EncodeToString(h[:]) }
 
-// validateTextContent 统一内容策略（R03）：256 KiB 上限、UTF-8、无 NUL。
+// validateTextContent 统一内容策略（R03）：maxFile 上限、UTF-8、无 NUL。
+// 入参均为已落地的 []byte/string 缓冲（HTTP 已解码、文件已读入），此处做零拷贝校验，
+// 不再 string(b) 复制一份大缓冲。
 func validateTextContent(b []byte) error {
 	if len(b) > maxFile {
-		return fmt.Errorf("文件超过 %d KB 限制", maxFile/1024)
+		return fmt.Errorf("文件超过 %d MiB 限制", maxFile>>20)
 	}
-	if !utf8.Valid(b) || strings.ContainsRune(string(b), 0) {
+	if !utf8.Valid(b) || bytes.IndexByte(b, 0) >= 0 {
 		return errors.New("不支持二进制文件")
 	}
 	return nil
@@ -60,10 +74,144 @@ func readText(root *os.Root, p string) ([]byte, error) {
 		return nil, err
 	}
 	if len(b) > maxFile {
-		return nil, fmt.Errorf("文件超过 %d KB 限制", maxFile/1024)
+		return nil, fmt.Errorf("文件超过 %d MiB 限制", maxFile>>20)
 	}
-	if !utf8.Valid(b) || strings.ContainsRune(string(b), 0) {
+	if !utf8.Valid(b) || bytes.IndexByte(b, 0) >= 0 {
 		return nil, errors.New("不支持二进制文件")
+	}
+	return b, nil
+}
+
+// readTextLines 按行流式读取（模型 read_file 工具的分段模式）。
+// offset 为 0 起始行号，limit 为最多返回行数（<=0 表示读到 EOF）。
+// 全程只缓冲目标窗口，逐行扫描时同时检测整个文件是否含 NUL（二进制拒绝），
+// 对返回窗口做 UTF-8 校验。返回：窗口内容、文件总行数。
+func readTextLines(root *os.Root, p string, offset, limit int) ([]byte, int, error) {
+	if err := safePath(p); err != nil {
+		return nil, 0, err
+	}
+	f, err := root.Open(p)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return nil, 0, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, 0, errors.New("只支持普通文本文件")
+	}
+	if info.Size() > maxFile {
+		return nil, 0, fmt.Errorf("文件超过 %d MiB 限制", maxFile>>20)
+	}
+	if offset < 0 {
+		offset = 0
+	}
+	br := bufio.NewReaderSize(f, 64<<10)
+	total := 0
+	var out bytes.Buffer
+	sawNUL := false
+	for {
+		line, rerr := br.ReadBytes('\n')
+		if len(line) > 0 {
+			total++
+			if bytes.IndexByte(line, 0) >= 0 {
+				sawNUL = true
+			}
+			if total > offset && (limit <= 0 || total-offset <= limit) {
+				out.Write(line)
+			}
+		}
+		if rerr == io.EOF {
+			break
+		}
+		if rerr != nil {
+			return nil, 0, rerr
+		}
+	}
+	if sawNUL {
+		return nil, 0, errors.New("不支持二进制文件")
+	}
+	if out.Len() > 0 && !utf8.Valid(out.Bytes()) {
+		return nil, 0, errors.New("不支持二进制文件")
+	}
+	return out.Bytes(), total, nil
+}
+
+// readTextRange 按字节区间读取（GET /api/file 的懒加载分段模式）。
+// off/limit 为字节偏移与长度（limit<=0 表示读到文件尾）。
+// 返回窗口内容与文件总字节数；对窗口做 NUL/UTF-8 校验。
+func readTextRange(root *os.Root, p string, off, limit int64) ([]byte, int64, error) {
+	if err := safePath(p); err != nil {
+		return nil, 0, err
+	}
+	f, err := root.Open(p)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return nil, 0, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, 0, errors.New("只支持普通文本文件")
+	}
+	size := info.Size()
+	if size > maxFile {
+		return nil, 0, fmt.Errorf("文件超过 %d MiB 限制", maxFile>>20)
+	}
+	if off < 0 {
+		off = 0
+	}
+	if off > size {
+		off = size
+	}
+	if limit <= 0 || off+limit > size {
+		limit = size - off
+	}
+	b := make([]byte, limit)
+	n, rerr := f.ReadAt(b, off)
+	if rerr != nil && rerr != io.EOF {
+		return nil, 0, rerr
+	}
+	b = b[:n]
+	if bytes.IndexByte(b, 0) >= 0 {
+		return nil, 0, errors.New("不支持二进制文件")
+	}
+	if !utf8.Valid(b) {
+		return nil, 0, errors.New("不支持二进制文件")
+	}
+	return b, size, nil
+}
+
+// maxRawFile 为原始字节端点（图片/STL 等二进制查看器）的上限。
+const maxRawFile = 64 << 20
+
+// readRawBytes 返回文件的原始字节，不做 UTF-8/文本校验（供 /api/file/raw 查看器使用）。
+func readRawBytes(root *os.Root, p string) ([]byte, error) {
+	if err := safePath(p); err != nil {
+		return nil, err
+	}
+	f, err := root.Open(p)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	info, err := f.Stat()
+	if err != nil {
+		return nil, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, errors.New("只支持普通文件")
+	}
+	b, err := io.ReadAll(io.LimitReader(f, maxRawFile+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(b) > maxRawFile {
+		return nil, fmt.Errorf("文件超过 %d MB 限制", maxRawFile/(1<<20))
 	}
 	return b, nil
 }
@@ -157,7 +305,66 @@ func (a *App) listLocalDir(root *os.Root, p string) ([]map[string]any, error) {
 	})
 	return items, nil
 }
+func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
+	// #63：旧版 .doc 二进制在线查看不支持，尽早返回明确提示
+	if pth := r.URL.Query().Get("path"); r.URL.Query().Get("source") == "" && isLegacyDoc(pth) {
+		fail(w, 400, legacyDocError(pth))
+		return
+	}
+	var b []byte
+	var err error
+	if srcID := r.URL.Query().Get("source"); srcID != "" {
+		a.mu.Lock()
+		src, ok := a.findSource(srcID)
+		a.mu.Unlock()
+		if !ok || !src.Enabled {
+			fail(w, 400, errors.New("来源不存在或已停用"))
+			return
+		}
+		b, err = a.readSourceRaw(src, r.URL.Query().Get("path"))
+	} else if r.URL.Query().Get("root") == "workspace" && a.workspaceMode() == "ssh" {
+		pth := r.URL.Query().Get("path")
+		if err := safePath(pth); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		b, err = a.sftpRead(a.workspaceRemotePath(pth))
+	} else {
+		root, rootErr := a.root(r.URL.Query().Get("root"))
+		if rootErr != nil {
+			fail(w, 400, rootErr)
+			return
+		}
+		b, err = readRawBytes(root, r.URL.Query().Get("path"))
+	}
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	ext := strings.ToLower(path.Ext(r.URL.Query().Get("path")))
+	ct := map[string]string{
+		".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+		".gif": "image/gif", ".svg": "image/svg+xml", ".webp": "image/webp",
+		".ico": "image/x-icon", ".bmp": "image/bmp",
+		".pdf": "application/pdf", ".html": "text/html; charset=utf-8",
+		".css": "text/css; charset=utf-8", ".js": "application/javascript",
+		".json": "application/json", ".txt": "text/plain; charset=utf-8",
+		".md": "text/markdown; charset=utf-8", ".drawio": "application/xml; charset=utf-8",
+		".stl": "model/stl",
+	}[ext]
+	if ct == "" {
+		ct = "application/octet-stream"
+	}
+	w.Header().Set("Content-Type", ct)
+	w.Header().Set("Cache-Control", "no-store")
+	w.Write(b)
+}
 func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
+	// #63：旧版 .doc 二进制在线查看不支持，尽早返回明确提示
+	if pth := r.URL.Query().Get("path"); r.URL.Query().Get("source") == "" && isLegacyDoc(pth) {
+		fail(w, 400, legacyDocError(pth))
+		return
+	}
 	var b []byte
 	var err error
 	if srcID := r.URL.Query().Get("source"); srcID != "" {
@@ -184,7 +391,26 @@ func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, rootErr)
 			return
 		}
-		b, err = readText(root, r.URL.Query().Get("path"))
+		pth := r.URL.Query().Get("path")
+		// 懒加载分段：带 offset 参数时按字节窗口返回（前端编辑器后续配合）。
+		if _, hasOff := r.URL.Query()["offset"]; hasOff {
+			off, _ := strconv.ParseInt(r.URL.Query().Get("offset"), 10, 64)
+			lim, _ := strconv.ParseInt(r.URL.Query().Get("limit"), 10, 64)
+			var window []byte
+			var size int64
+			window, size, err = readTextRange(root, pth, off, lim)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			jsonOut(w, 200, map[string]any{
+				"content": string(window), "offset": off, "limit": len(window),
+				"size": size, "partial": true,
+				"workspaceId": a.wsID(),
+			})
+			return
+		}
+		b, err = readText(root, pth)
 	}
 	if err != nil {
 		fail(w, 400, err)
@@ -205,8 +431,16 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 		Source      string `json:"source"`
 		WorkspaceID string `json:"workspaceId"`
 	}
-	if err := decode(w, r, &in); err != nil {
+	// writeFile 允许大文本：body 上限放宽到 maxFile + JSON 信封开销（默认 decode 仅 1 MiB）。
+	r.Body = http.MaxBytesReader(w, r.Body, maxFile+1<<20)
+	d := json.NewDecoder(r.Body)
+	if err := d.Decode(&in); err != nil {
 		fail(w, 400, err)
+		return
+	}
+	var extra any
+	if err := d.Decode(&extra); err != io.EOF {
+		fail(w, 400, errors.New("请求必须是单个 JSON 对象"))
 		return
 	}
 	if err := safePath(in.Path); err != nil {
@@ -214,7 +448,7 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(in.Content) > maxFile {
-		fail(w, 400, errors.New("文件太大"))
+		fail(w, 400, fmt.Errorf("文件超过 %d MiB 限制", maxFile>>20))
 		return
 	}
 	// R02：保存必须携带读取时的工作区身份；缺失身份仅允许新建文件
@@ -325,4 +559,54 @@ func putText(root *os.Root, p string, b []byte) error {
 		return closeErr
 	}
 	return root.Rename(tmp, p)
+}
+
+// renameFile 在同一目录内重命名文件/文件夹（不允许跨目录移动、不允许覆盖已存在目标）。
+func (a *App) renameFile(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Root    string `json:"root"`
+		Source  string `json:"source"`
+		Path    string `json:"path"`
+		NewName string `json:"newName"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		fail(w, 400, errors.New("请求格式错误"))
+		return
+	}
+	if err := safePath(body.Path); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	newName := strings.TrimSpace(body.NewName)
+	if newName == "" || newName == "." || newName == ".." ||
+		strings.ContainsAny(newName, `/\`+"\x00") {
+		fail(w, 400, errors.New("文件名无效"))
+		return
+	}
+	dir := path.Dir(body.Path)
+	newPath := path.Join(dir, newName)
+	if err := safePath(newPath); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if body.Source != "" {
+		fail(w, 400, errors.New("该辅助资料来源暂不支持重命名"))
+		return
+	}
+	root, err := a.root(body.Root)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+
+	// 显式预检目标是否存在：Unix rename(2) 会原子替换已存在目标而不报错，必须先拦截
+	if _, err := root.Stat(newPath); err == nil {
+		fail(w, 409, errors.New("已存在同名文件或文件夹"))
+		return
+	}
+	if err := root.Rename(body.Path, newPath); err != nil {
+		fail(w, 500, err)
+		return
+	}
+	jsonOut(w, 200, map[string]any{"path": newPath, "name": newName})
 }

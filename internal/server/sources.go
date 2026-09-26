@@ -25,6 +25,10 @@ const (
 	sourcesSecretsFN = "sources-secrets.json"
 	maxSources       = 20
 	systemDocsSource = "system-docs"
+	// contextSource 是内置只读 /context 来源（AIDE_CONTEXT 常驻挂载）：
+	// 恒存在、不可移除、不被 Docs.Path/工作区切换覆盖。Config.Path 恒空，
+	// localSourceRoot 据此回落 a.reference（真实 /context）。
+	contextSource    = "context"
 	curlTimeout      = 30 * time.Second
 )
 
@@ -66,7 +70,7 @@ func (a *App) sourcesPath() string {
 	}
 	return filepath.Join(a.workPath, ".cache", sourcesFileName)
 }
-func (a *App) sourcesSecretsPath() string { return filepath.Join(a.dataPath, sourcesSecretsFN) }
+func (a *App) sourcesSecretsPath() string { return SourcesSecretsPath(a.dataPath) }
 
 func (a *App) loadSources() error {
 	a.sourceRegistry = sourcesRegistry{Version: 1, Sources: []Source{}}
@@ -76,6 +80,8 @@ func (a *App) loadSources() error {
 	}{}}
 	b, err := os.ReadFile(a.sourcesPath())
 	if errors.Is(err, os.ErrNotExist) {
+		// 全新部署：注册表为空，先补内置来源（#53）
+		a.ensureBuiltinSources()
 		return nil
 	}
 	if err != nil {
@@ -97,20 +103,49 @@ func (a *App) loadSources() error {
 			Key      string `json:"key,omitempty"`
 		}{}
 	}
-	// 系统文档来源缺失时补挂载（空路径 → 默认 /context 参考根）
-	found := false
-	for _, src := range a.sourceRegistry.Sources {
-		if src.ID == systemDocsSource {
-			found = true
-			break
+	// 内置来源常驻兜底：/context（只读参考根）+ 自动系统文档（Docs.Path 读写挂载）
+	a.ensureBuiltinSources()
+	return nil
+}
+
+// ensureBuiltinSources 保证两个内置来源常驻且语义正确（#53）：
+//   - contextSource：只读、内置、路径恒空 → localSourceRoot 回落 a.reference（真实 /context）。
+//     任何工作区切换/Docs.Path 改动都不改变它，用户不可删除。
+//   - systemDocsSource：读写、内置、路径跟随 wsConfig.Docs.Path（空路径亦回落 /context）。
+//
+// 新增/缺失时补回；已存在时就地校正为内置标记。调用方负责并发（loadSources 启动单线程；
+// updateSources 已持 a.mu）。
+func (a *App) ensureBuiltinSources() {
+	hasCtx, hasSys := false, false
+	for i := range a.sourceRegistry.Sources {
+		switch a.sourceRegistry.Sources[i].ID {
+		case contextSource:
+			hasCtx = true
+			s := &a.sourceRegistry.Sources[i]
+			s.Name = "辅助资料"
+			s.Type = "local"
+			s.Enabled = true
+			s.RW = false // /context 只读参考
+			s.Builtin = true
+			s.Config.Path = "" // 恒指向 /context，不被 Docs.Path 覆盖
+		case systemDocsSource:
+			hasSys = true
+			s := &a.sourceRegistry.Sources[i]
+			s.Builtin = true
+			s.RW = true
+			s.Config.Path = a.wsConfig.Docs.Path // Docs.Path 叠加为读写来源
 		}
 	}
-	if !found {
+	if !hasSys {
 		entry := Source{ID: systemDocsSource, Name: "自动系统文档", Type: "local", Enabled: true, RW: true, Builtin: true}
 		entry.Config.Path = a.wsConfig.Docs.Path
+		a.sourceRegistry.Sources = append(a.sourceRegistry.Sources, entry)
+	}
+	if !hasCtx {
+		entry := Source{ID: contextSource, Name: "辅助资料", Type: "local", Enabled: true, RW: false, Builtin: true}
+		// 路径恒空 → 回落 a.reference（/context）；置顶
 		a.sourceRegistry.Sources = append([]Source{entry}, a.sourceRegistry.Sources...)
 	}
-	return nil
 }
 
 // localSourceRoot 本地类来源根：空路径回落参考根（/context）。
@@ -200,6 +235,29 @@ func (a *App) readSourceText(src Source, p string) ([]byte, error) {
 			return nil, err
 		}
 		return b, nil
+	case "link", "ftp", "ftps", "smb":
+		return a.curlReadSource(src, p)
+	case "mcp":
+		return nil, errors.New("MCP 协议接入待实现")
+	}
+	return nil, errors.New("未知来源类型")
+}
+
+// readSourceRaw 返回来源文件的原始字节（不做文本校验），供 /api/file/raw 查看器使用。
+func (a *App) readSourceRaw(src Source, p string) ([]byte, error) {
+	switch src.Type {
+	case "local", "skill":
+		root, err := a.localSourceRoot(src)
+		if err != nil {
+			return nil, err
+		}
+		defer root.Close()
+		return readRawBytes(root, p)
+	case "sftp":
+		if err := safePath(p); err != nil {
+			return nil, err
+		}
+		return a.sftpReadSource(src, p)
 	case "link", "ftp", "ftps", "smb":
 		return a.curlReadSource(src, p)
 	case "mcp":
@@ -369,6 +427,10 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, errors.New("自动系统文档来源由系统管理，不可修改 id"))
 			return
 		}
+		if s.ID == contextSource && !s.Builtin {
+			fail(w, 400, errors.New("内置 /context 来源由系统管理，不可移除或降级"))
+			return
+		}
 		if !sourceIDPattern.MatchString(s.ID) {
 			fail(w, 400, errors.New("来源 id 只能含字母、数字、-、_，长度 1–64"))
 			return
@@ -462,27 +524,8 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.sourceRegistry.Sources = in.Sources
-	// 系统文档来源必须存在且读写
-	found := false
-	for i := range a.sourceRegistry.Sources {
-		if a.sourceRegistry.Sources[i].ID == systemDocsSource {
-			found = true
-			a.sourceRegistry.Sources[i].Builtin = true
-			a.sourceRegistry.Sources[i].RW = true
-			a.sourceRegistry.Sources[i].Config.Path = a.wsConfig.Docs.Path
-		}
-	}
-	if !found {
-		a.sourceRegistry.Sources = append(a.sourceRegistry.Sources, Source{ID: systemDocsSource, Name: "自动系统文档", Type: "local", Enabled: true, RW: true, Builtin: true, Config: struct {
-			Path     string `json:"path,omitempty"`
-			URL      string `json:"url,omitempty"`
-			Host     string `json:"host,omitempty"`
-			Port     int    `json:"port,omitempty"`
-			Username string `json:"username,omitempty"`
-			Auth     string `json:"auth,omitempty"`
-			Command  string `json:"command,omitempty"`
-		}{Path: a.wsConfig.Docs.Path}})
-	}
+	// 内置来源常驻：/context（只读）+ 自动系统文档（Docs.Path 读写）；被客户端漏提交时补回
+	a.ensureBuiltinSources()
 	if err := a.saveSources(); err != nil {
 		fail(w, 500, err)
 		return

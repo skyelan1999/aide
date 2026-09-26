@@ -2,6 +2,12 @@
 
 > **历史设计（2026-09-21）**：设置已演进为导航面板，主题为专业/经典两排，thumb 动画不是当前布局要求。 当前状态见 [现行 PRD](../PRD.md) 与 [架构](../architecture.md)。下文“待实施/已验证”仅代表原设计时间点，不能用于今天的发布判断。
 
+> **现状核对（2026-09-25，版本 0.1.10.2 RC1）**：设置中心已从「仅收纳主题」扩展为**导航式 12 分区面板**（`internal/server/web/settings-schema.json`），存储仍由 `settings-init.js` 管理：
+> - 分区顺序：`stats`(消耗统计) → `appearance`(外观) → `language`(语言) → `model`(模型参数) → `sessions-data`(归档) → `permissions`(权限管理：沙箱模式+工具权限+工具轮数) → `account`(账户/锁屏) → `persona`(aide 性格) → `voice`(语音小秘) → `accessibility`(无障碍) → `backup`(配置备份) → `about`(关于)。
+> - `localStorage['aide.ui']` 文档现为 `{"version":1,"theme":"system","palette":"blue","language":...}`：在本文 `{version,theme}` 基础上**新增 `palette`（blue=专业 / green=经典，默认 blue）与 `language`**；`<html>` 上除 `data-theme`/`data-theme-pref` 外另写 `data-palette`。
+> - 服务端持久化的设置（模型列表、沙箱、人格、语音、账户、无障碍、工具开关、推理强度等）经 `PUT /api/settings` 落库，**不在** localStorage；localStorage 只承载外观/语言等纯界面偏好。
+> - 配置备份分区走 `POST /api/config/export`、`POST /api/config/import`。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 系统设计（System Design） |
@@ -10,7 +16,7 @@
 | 对应分支 | `feat/settings-panel` |
 | 功能基线 | `a5f2032` |
 | 作者 | 编码助手 |
-| 状态 | 待实施 |
+| 状态 | 已落地，并后续扩展为 12 分区 |
 
 ## 1. 分层架构
 
@@ -41,8 +47,10 @@
 ## 2. 存储契约（LIM-21）
 
 ```json
-{ "version": 1, "theme": "system" }
+{ "version": 1, "theme": "system", "palette": "blue", "language": "system" }
 ```
+
+> 现状：在本文 `{version, theme}` 基础上已扩展 `palette`（`blue`=专业 / `green`=经典，默认 `blue`）与 `language`（`zh-CN`/`en`/`system`）；其余界面设置经 `PUT /api/settings` 落服务端，不入此键。
 
 - 键名固定 `aide.ui`；`version` 为将来迁移预留。
 - 读失败（隐私模式/损坏 JSON）→ 全默认并尽力回写；任何字段缺失 → 用默认值补全。

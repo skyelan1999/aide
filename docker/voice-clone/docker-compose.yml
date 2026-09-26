@@ -1,0 +1,37 @@
+# docker-compose.voice-clone.yml — 可选：自托管少样本音色克隆服务（#36）
+#
+# 这是**可选**服务，默认不随 aide 主栈启动。只在你要让小秘用克隆音色时才起它。
+# 它和 aide 主镜像完全解耦：aide 只通过 HTTP 访问下面暴露的 9880 端口。
+#
+# 快速试跑（mock 模式，无 GPU、无权重）：
+#   docker compose -f docker/voice-clone/docker-compose.yml up --build
+#   # 然后在 aide 设置：语音引擎=clone，服务地址=http://127.0.0.1:9880
+#
+# 接真实模型：把 image/command 换成你部署的 IndexTTS2 / CosyVoice2 / GPT-SoVITS 容器，
+# 保证它对外暴露 OpenAI 兼容 POST /audio/speech（或 GPT-SoVITS 的 GET /tts）即可。
+#
+# 硬件要求：实时克隆推荐 NVIDIA GPU ≥ 6GB VRAM；CPU 可跑但首包慢。
+# 模型权重不进 Git，请自行下载并校验 SHA256（见 docs/security/voice-cloning.md）。
+
+services:
+  # 默认用 mock 容器（仅用于联调链路，不产生真实克隆音色）。
+  # 接真实模型时注释掉本 service，改为你的克隆服务容器，并确保：
+  #   - 监听 9880
+  #   - POST /audio/speech 返回 audio/mpeg（OpenAI 兼容）
+  #   - POST /voices 返回 {"voice_id":"...","status":"ready"}
+  voice-clone-mock:
+    build:
+      context: ./mock
+    image: aide-voice-clone-mock:dev
+    container_name: aide-voice-clone-mock
+    ports:
+      - "127.0.0.1:9880:9880"   # 只绑回环，不暴露到局域网
+    restart: "no"              # 显式可选，不自动拉起
+    # 真实 GPU 示例（IndexTTS2，按你的镜像调整）：
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]

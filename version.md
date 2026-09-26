@@ -1,6 +1,68 @@
 # aide 版本记录
 
-**当前版本：0.1.10.0 RC1**
+**当前版本：0.1.11.0 RC3**
+
+## 0.1.11.0 RC3（2026-09-26）
+
+- #59 编辑器布局收口：顶部操作按钮右对齐贴右缘，只读文件（PDF/DXF/图片/STL/drawio）隐藏保存按钮，可写文本保留保存
+- #62 小蜜包边卡片：工作空间方块与小蜜条目包进同一张卡片（零间距/边框相连），小蜜呈底部浅蓝强调边（非全蓝实心），标题固定显示设定名不被 prompt 覆盖
+- #63 Word 查看+批注：vendor docx-preview 0.3.2(Apache-2.0)+JSZip 3.10.1(MIT)，三处 isDocx 分支渲染（标题/表格/列表），侧车批注持久化（/data/comments，CRUD 端点+锚点容错+stale 检测），python-docx 原生批注读写工具（docx_structure/list_comments/add_comment/resolve_comment），.doc 明确提示另存为 .docx
+- #62 扩展：小蜜历史归位（设置页独立历史移除→并入小蜜会话统一时间线），文字=语音（POST /assistant-message 走 analyze 管线），小蜜可创建/控制其他对话（#30 跨会话工具从死代码接入工具循环+spawn_subagent），assistant 会话恒用小秘人格+跨会话工具，语音往来持久化进 assistant 会话
+- 全量 go test -race 296.7s 全绿（0 FAIL 0 DATA RACE）
+
+## 0.1.11.0 RC2（2026-09-26）
+
+- 安全加固：API Key 从 settings.json 明文迁移到 AES-256-GCM vault（主密钥分层：有密码 Argon2id 派生 / 无密码机器绑定随机主密钥 0600），旧明文启动自动迁移+安全擦除，前端不回显明文（已配置/更换态），导出无明文/导入自动迁移
+- 统一指纹身份认证：POST /api/auth/verify 密码或 WebAuthn 二选一+审计，requestMasterAuth 统一组件，A 类 6 处本机身份认证接入指纹（锁屏/小秘历史×3/改密码/vault解锁/assistant-gate），B 类（APIKey/SSH/PDF密码等）不动
+- 会话列表实时刷新：后端 SSE /api/events 广播 sessions-changed（创建/归档/标题/状态/run启动），前端 300ms 节流监听自动刷新，保留折叠状态不打断输入
+- 小蜜会话闭环：kind=assistant 专属视图（隐藏通用 welcome、专属空状态）、历史持久化、稳定单例防串扰、侧边栏独立条目（2/3 高度、耳机线性 SVG 替代 🤖）、污染 run 剥离复位
+- DXF 矢量渲染器：vendor dxf-parser 1.1.2（MIT，go:embed 离线），SVG 渲染（Y翻转/包围盒自适应/常见实体/ACI颜色/图层/线宽），缩放±/适应窗口，只读禁用保存
+- 编辑器布局优化：删除独占第二行，只读 badge/保存/新标签页/附加任务并入标题栏，只读类型不显示可用保存按钮
+- 取消文本文件 256KiB 限制：maxFile→64MiB，零拷贝校验，GET /api/file 支持 offset/limit 字节窗口，read_file 支持行分段
+- 查看器修复：PDF 翻页按钮平滑滚动竞态修复；DXF/PDF/STL/图片/drawio/md 全类型回归通过
+- 代码质量：全量 go test -race 通过（270s，0 FAIL，0 DATA RACE），修复 3 处 data race
+
+## 0.1.11.0 RC1（2026-09-25）
+
+- 界面英文化：Web 前端全站中英双语；i18n 片段拼接收口为整句 + 占位符，en.js 词条随各新模块同步补全
+- 离线 Docker release：compose 固化 pull_policy:never、新增 scripts/docker-release.sh，start.command 离线导入不再联网拉取；web_search 端点改为 env 配置（AIDE_WEBSEARCH_URL），离线/保密环境优雅降级
+- 锁屏主从层级联动：BroadcastChannel 选举，主界面锁定/解锁驱动所有从界面，从界面单独解锁不影响主界面
+- Touch ID / WebAuthn 解锁：注册/断言端点、凭证管理与锁屏指纹按钮（须经 localhost、RP ID 不可用 IP，不满足时给出提示）
+- 会话工具调用紧凑化：历史工具调用由大而空的虚线框重做为对齐流式风格的可折叠工具组（外层按 run 聚合计数 + 内层单条命令/结果），参数完整不截断、长结果内部滚动；list_files「当前目录」、搜索 query 等折叠摘要正确识别；辅助资料来源条精致化（统一类型图标、RW/锁标记、紧凑胶囊，触摸/桌面兼顾）
+- ~~iPad 移动控制台方案~~（proposals/ipad，仅存档）——**2026-09-25 经评审已否决，不再推进、不实施**
+- 在途（本版本未完成）：TTS 自然度（edge-tts 神经音 + Web Speech 降级前端已入库，后端在途，待盲听样本定默认音色）；外部 AI 调试接口（无障碍开关，排队中）
+
+## 0.1.10.2 RC1（2026-09-24）
+
+- 持久记忆系统：read_memory/write_memory 工具，记忆文件存缓存目录，每次会话自动注入系统提示
+- 模型设置窗口加预设按钮：32K/64K/128K/200K/256K/1M 一键选，也可自定义输入
+- 工具调用轮次从硬编码 10 改为默认 60，设置→权限管理可配（5-200）
+- md 渲染修复：vendor mermaid@10 流程图自动渲染 SVG；md 相对路径链接拦截为 aide 内部打开，不再 404
+- 轨迹面板加导出按钮（一键导出 Markdown）；加调用分析视图，主/子 Agent 调用表格支持按工具和谁过滤
+- 上下文预览加彩色堆叠条形图，按 token 占比着色，hover 高亮显示详情
+- 子 Agent：spawn_subagent 工具创建关联主会话的子会话，完成后自动归档
+- 失败反馈循环：API 抖动自动重试一次；同一工具连续失败 3 次注入止损提示
+- Codex 风格三级沙箱：read-only / workspace-write（默认）/ danger-full-access，权限面板可切
+- 提前停止或轮次超限时保留已有流式输出，不再显示"未返回任何内容"
+- AI 工作流模式：输入框上方弹出需求/设计/实施/验证四个彩色阶段按钮（蓝/橙/紫/绿，依次弹入动画，对话模式隐藏）；各阶段强流程自动建档，REQ/DESIGN/IMPL/TEST 唯一编号并维护索引与差异/变更记录
+- 自动模式：不选阶段时由 lead 智能体调度专业子 agent 并行完成四阶段，最终由前台接需求 agent 逐条讲解核对形成闭环；自动路由按各配置实际参数（而非名称）匹配并传给子 agent，配置不足时暂停启动并给出参数建议
+- 推理强度选择：策略浮层新增自动/关闭/低/中/高五档，按 DeepSeek 实际参数映射 thinking / reasoning_effort
+- 语音小秘：麦克风按钮调用浏览器 Web Speech API 实时转写，后端 AI 甄别"传达给 AI / 背景噪声 / 与他人闲聊"（send/ignore/standby），识别闲聊自动退下，名字可在设置自定义
+- 权限管理：设置中 per-tool 开关可单独禁用各内置工具并持久化，后端在工具列表构建与执行两处双重拦截
+- 搜索能力：web_search 走 DuckDuckGo HTML 抓取并以 SearXNG 兜底（不依赖百度类商业 API）；semantic_search 用本地 TF-IDF 余弦相似度做离线语义检索；全局会话搜索同时覆盖归档内容
+- draw.io 插件：create_diagram 生成 .drawio，文件视图以 iframe 渲染，可在视窗内编辑并保存回写，支持多类型文件关联
+- 模型设置卡片重排为两行结构（单选+名称+删除 / 上下文窗口预设+自定义），选中蓝框高亮；所有模态弹窗支持点击遮罩空白关闭
+- 消息操作：每条消息下提供复制/重试/继续/好的回答/有问题的回答，好/坏反馈写入记忆用于后续优化
+- 默认排队模式：会话中继续输入默认排队而非插入；会话结束后左侧标题自动分析刷新
+- 修复：contextTools 自死锁、spawnSubagent 数据竞争、调用分析表头 [object] 渲染、retry 路由 404、search_text 必填字段、策略浮层"自动路由"换行
+
+## 0.1.10.1 RC1（2026-09-24）
+
+- run_shell 工具从"只生成提案"改为在容器沙箱内实际执行并返回 stdout/退出码；write_file 仍保持提案审批；systemPrompt 与工具描述同步更新
+- 归档当前正在查看的会话后自动回到新会话输入页（与删除当前会话一致）；取消归档不打断当前视图
+- 运行中插话/排队消息加上下文包装：明确告知模型这是回答过程中的补充而非新话题，避免接不住上文；空输出轮次不再写入空 assistant 消息
+- 运行中输入新消息默认走排队模式（按钮默认高亮），需要插话时再点一下切到即时插入
+- 设置面板新增「权限管理」栏，展示各工具当前权限；run_shell 入口加危险命令黑名单（递归删除/提权/推送远端/pipe-to-shell 等），命中即拒绝执行
 
 ## 0.1.10.0 RC1（2026-09-24）
 

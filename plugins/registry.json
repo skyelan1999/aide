@@ -89,6 +89,60 @@
       "author": "aide",
       "main": "index.js",
       "enabled": true
+    },
+    {
+      "id": "sqlite",
+      "name": "SQLite 数据库",
+      "description": "读写 SQLite 数据库文件（参数化查询、事务、schema、导出）；零第三方依赖，基于 node:sqlite，默认只读",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-09-25T20:45:00Z"
+    },
+    {
+      "id": "comm-tcp",
+      "name": "TCP 通讯",
+      "description": "常驻 TCP 通讯：监听/连接/收发、本地代理录制、规则模拟应答、录制回放与 fuzz；零第三方依赖，默认禁用，仅绑回环",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "daemon": true,
+      "enabled": false,
+      "installedAt": "2026-09-25T21:35:00Z"
+    },
+    {
+      "id": "comm-udp",
+      "name": "UDP 通讯",
+      "description": "常驻 UDP 通讯：绑定收包、发送、规则模拟应答、组播加入/离开；零第三方依赖，默认禁用，仅绑回环",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "daemon": true,
+      "enabled": false,
+      "installedAt": "2026-09-25T21:35:00Z"
+    },
+    {
+      "id": "comm-serial",
+      "name": "串口通讯",
+      "description": "常驻守护插件（serialport）：真实串口读写 + 虚拟串口对(pty)用于测试/模拟设备；默认禁用，无设备映射",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "daemon": true,
+      "enabled": false,
+      "installedAt": "2026-09-25T21:40:00Z"
+    },
+    {
+      "id": "comm-ssh",
+      "name": "SSH 通讯",
+      "description": "基于 ssh2 的常驻 SSH 客户端：命令执行、SFTP 上传下载、本地端口转发/隧道，并内置可脚本化的模拟 SSH 服务端。默认禁用，仅绑回环。",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "daemon": true,
+      "enabled": false,
+      "installedAt": "2026-09-25T21:30:00Z"
     }
   ]
 }

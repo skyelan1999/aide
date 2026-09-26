@@ -72,16 +72,46 @@ func (a *App) ensureSSHSession(ctx context.Context) error {
 	}
 	args := append([]string{"-fNM", "-o", "ControlMaster=yes", "-o", "ControlPersist=600"}, append(a.sshCommonArgs(), a.sshTarget())...)
 	env := []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	// 凭据从加密 vault 解密（#38）；ref 模式直接引用已校验路径，不写临时文件。
 	auth := a.wsConfig.Workspace.Auth
-	if auth == "key" && a.wsSecrets.Key != "" {
-		keyPath := sshControlSocket + ".key"
-		if err := os.WriteFile(keyPath, []byte(a.wsSecrets.Key), 0600); err != nil {
-			return fmt.Errorf("写入密钥文件失败: %w", err)
+	password, keyMaterial, passphrase, directKeyPath := a.wsRuntimeCredentials()
+	if auth == "key" {
+		switch {
+		case directKeyPath != "":
+			// 引用路径模式：直接使用（保存时已校验在挂载根内），私钥不落地副本
+			args = append([]string{"-i", directKeyPath}, args...)
+		case keyMaterial != "":
+			// 粘贴/导入副本：解密后写入受控临时文件（0600），defer 用完即删
+			tmpDir := a.ensureSecretsTmpDir()
+			tmp, err := os.CreateTemp(tmpDir, "aide-sshkey-*")
+			if err != nil {
+				return fmt.Errorf("创建临时密钥文件失败: %w", err)
+			}
+			tmpPath := tmp.Name()
+			if _, err := tmp.WriteString(keyMaterial); err != nil {
+				tmp.Close()
+				os.Remove(tmpPath)
+				return fmt.Errorf("写入临时密钥失败: %w", err)
+			}
+			tmp.Close()
+			_ = os.Chmod(tmpPath, 0600)
+			defer os.Remove(tmpPath) // 主连接建立后立即删除，私钥不留存
+			args = append([]string{"-i", tmpPath}, args...)
+		default:
+			return fmt.Errorf("SSH 密钥未配置或凭证保险库已锁定（请在工作空间设置中解锁）")
 		}
-		args = append([]string{"-i", keyPath}, args...)
-	} else if auth == "password" && a.wsSecrets.Password != "" {
+		// 私钥口令经 SSH_ASKPASS 注入（不写命令行参数）
+		if passphrase != "" {
+			ask := sshControlSocket + ".askpass"
+			script := "#!/bin/sh\necho " + shellQuote(passphrase) + "\n"
+			if err := os.WriteFile(ask, []byte(script), 0700); err != nil {
+				return fmt.Errorf("写入 askpass 失败: %w", err)
+			}
+			env = append(env, "SSH_ASKPASS="+ask, "SSH_ASKPASS_REQUIRE=force", "DISPLAY=aide:0")
+		}
+	} else if auth == "password" && password != "" {
 		ask := sshControlSocket + ".askpass"
-		script := "#!/bin/sh\necho " + shellQuote(a.wsSecrets.Password) + "\n"
+		script := "#!/bin/sh\necho " + shellQuote(password) + "\n"
 		if err := os.WriteFile(ask, []byte(script), 0700); err != nil {
 			return fmt.Errorf("写入 askpass 失败: %w", err)
 		}
@@ -107,6 +137,40 @@ func (a *App) ensureSSHSession(ctx context.Context) error {
 
 func shellQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
+}
+
+// wsRuntimeCredentials 为运行时取 SSH 凭据：优先从加密 vault 解密；未解锁时回退旧明文（迁移过渡）。
+// 返回：登录密码、私钥正文（ref 模式为空）、私钥口令、直接使用的密钥路径（ref 模式非空）。
+// 返回的明文由调用方（ensureSSHSession）尽快消费；这里用完即清切片。
+func (a *App) wsRuntimeCredentials() (password, keyMaterial, passphrase, directKeyPath string) {
+	if a.vault != nil && a.vault.Unlocked() {
+		if b, e := a.vault.Get(VaultIDWSPassword); e == nil {
+			password = string(b)
+			zeroBytes(b)
+		}
+		if b, e := a.vault.Get(VaultIDWSKey); e == nil {
+			keyMaterial = string(b)
+			zeroBytes(b)
+		}
+		if b, e := a.vault.Get(VaultIDWSPassphrase); e == nil {
+			passphrase = string(b)
+			zeroBytes(b)
+		}
+	}
+	// 旧明文回退（vault 未解锁/迁移前）
+	if password == "" {
+		password = a.wsSecrets.Password
+	}
+	if keyMaterial == "" {
+		keyMaterial = a.wsSecrets.Key
+	}
+	// 引用路径模式：直接使用保存时校验过的容器路径（翻译到真实 fs 路径）
+	if a.wsConfig.Workspace.KeyMode == "ref" && strings.TrimSpace(a.wsConfig.Workspace.KeyRefPath) != "" {
+		if realPath, _, err := a.resolveHostPath(a.wsConfig.Workspace.KeyRefPath); err == nil {
+			directKeyPath = realPath
+		}
+	}
+	return
 }
 
 // execRemote 通过唯一 master 会话执行远程命令；输出经 io.Writer 流式返回。

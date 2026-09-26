@@ -77,8 +77,9 @@ func TestToolLoopSteerAndQueue(t *testing.T) {
 	if strings.Join(roles, ",") != "user,assistant,user,assistant,user" {
 		t.Fatalf("chain roles = %v", roles)
 	}
-	if chain[len(chain)-1].Content != "排队问题" {
-		t.Fatalf("chain tail = %q", chain[len(chain)-1].Content)
+	tail := chain[len(chain)-1].Content
+	if !strings.Contains(tail, "排队问题") || !strings.HasPrefix(tail, "【你回答过程中用户插话】") {
+		t.Fatalf("chain tail = %q, should be wrapped steer containing 排队问题", tail)
 	}
 }
 

@@ -101,6 +101,158 @@
       ]
     },
     {
+      "id": "permissions",
+      "title": "权限管理",
+      "description": "控制 AI 在工作区里能自动做什么",
+      "controls": [
+        {
+          "id": "sandboxMode",
+          "type": "segmented",
+          "label": "沙箱模式",
+          "options": [
+            {
+              "value": "read-only",
+              "label": "只读"
+            },
+            {
+              "value": "workspace-write",
+              "label": "工作区可写"
+            },
+            {
+              "value": "danger-full-access",
+              "label": "完全访问"
+            }
+          ]
+        },
+        {
+          "id": "permission-manager",
+          "type": "permission-manager",
+          "label": "工具权限"
+        },
+        {
+          "id": "toolMaxRounds",
+          "type": "number",
+          "label": "工具调用最大轮次",
+          "min": 5,
+          "max": 200,
+          "step": 5,
+          "placeholder": "60",
+          "description": "模型连续自动调用工具的最大轮数；达到上限后自动停止并提示继续。范围 5–200，默认 60。"
+        }
+      ]
+    },
+    {
+      "id": "account",
+      "title": "账户",
+      "description": "设置用户名与锁屏密码；锁屏密码同时作为小秘对话历史的加密密钥。不设密码则不锁屏。",
+      "controls": [
+        {
+          "id": "account",
+          "type": "account",
+          "label": "账户与锁屏"
+        }
+      ]
+    },
+    {
+      "id": "persona",
+      "title": "aide 性格",
+      "description": "aide 性格系统，仅作用于基本聊天。可自定义性格提示词，系统会随使用自动精简演化以节约 token。",
+      "controls": [
+        {
+          "id": "personalityAide",
+          "type": "personality",
+          "persona": "aide",
+          "label": "aide 性格系统"
+        }
+      ]
+    },
+    {
+      "id": "voice",
+      "title": "语音小秘",
+      "description": "输入框旁的麦克风可边说边转写，AI 自动过滤背景声与闲聊。",
+      "controls": [
+        {
+          "id": "personalityXiaomi",
+          "type": "personality",
+          "persona": "xiaomi",
+          "label": "小秘性格系统"
+        },
+        {
+          "id": "voiceAssistantName",
+          "type": "voice-name",
+          "label": "小秘名字"
+        },
+        {
+          "id": "voiceInputSource",
+          "type": "voice-input-source",
+          "label": "麦克风输入源"
+        },
+        {
+          "id": "voiceHistory",
+          "type": "voice-history",
+          "label": "小秘对话历史"
+        },
+        {
+          "id": "voiceReply",
+          "type": "voice-reply",
+          "label": "语音回复"
+        },
+        {
+          "id": "voiceDispatch",
+          "type": "voice-dispatch",
+          "label": "发送调度"
+        },
+        {
+          "id": "ttsEngine",
+          "type": "tts-engine",
+          "label": "语音引擎"
+        },
+        {
+          "id": "voiceClone",
+          "type": "voice-clone",
+          "label": "个性化音色（声音克隆）"
+        }
+      ]
+    },
+    {
+      "id": "accessibility",
+      "title": "无障碍",
+      "controls": [
+        {
+          "id": "accessibilityAutoRead",
+          "type": "accessibility-read",
+          "label": "输出完成后自动朗读"
+        },
+        {
+          "id": "debug-access",
+          "type": "debug-access",
+          "label": "允许外部 AI 接入调试"
+        }
+      ]
+    },
+    {
+      "id": "backup",
+      "title": "配置备份",
+      "controls": [
+        {
+          "id": "config-backup",
+          "type": "config-backup",
+          "label": "配置导出与导入"
+        }
+      ]
+    },
+    {
+      "id": "danger",
+      "title": "恢复出厂设置",
+      "controls": [
+        {
+          "id": "factory-reset",
+          "type": "factory-reset",
+          "label": "恢复出厂设置"
+        }
+      ]
+    },
+    {
       "id": "about",
       "title": "关于",
       "controls": [

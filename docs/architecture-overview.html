@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>aide 软件架构总览 · 0.1.10</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#161a22; --panel2:#1c2230; --line:#2a3142;
+    --text:#e6e8ee; --muted:#9aa3b5; --accent:#6366f1; --green:#22c55e;
+    --amber:#f59e0b; --red:#ef4444; --cyan:#06b6d4; --pink:#ec4899;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;padding:32px 40px}
+  h1{font-size:26px;margin:0 0 4px}
+  .sub{color:var(--muted);margin:0 0 28px}
+  h2{font-size:17px;margin:36px 0 14px;color:var(--text);border-left:3px solid var(--accent);padding-left:10px}
+  .layer{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:12px}
+  .layer-title{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .box{flex:1;min-width:150px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+  .box b{display:block;font-size:13px;margin-bottom:3px}
+  .box span{font-size:11.5px;color:var(--muted);display:block}
+  .box.fe{border-top:2px solid var(--cyan)}
+  .box.be{border-top:2px solid var(--accent)}
+  .box.tool{border-top:2px solid var(--green)}
+  .box.data{border-top:2px solid var(--amber)}
+  .box.ext{border-top:2px solid var(--pink)}
+  .arrow{text-align:center;color:var(--muted);font-size:18px;margin:2px 0}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border-radius:10px;overflow:hidden}
+  th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);font-size:13px;vertical-align:top}
+  th{background:var(--panel2);color:var(--muted);font-weight:500;font-size:12px}
+  td code{background:rgba(99,102,241,.12);color:#a5b4fc;padding:1px 5px;border-radius:4px;font-size:12px}
+  .tag{display:inline-block;font-size:10.5px;padding:1px 7px;border-radius:9px;margin-right:4px}
+  .tag.g{background:rgba(34,197,94,.15);color:#4ade80}
+  .tag.b{background:rgba(99,102,241,.15);color:#a5b4fc}
+  .tag.a{background:rgba(245,158,11,.15);color:#fbbf24}
+  .tag.r{background:rgba(239,68,68,.15);color:#f87171}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .card h3{margin:0 0 8px;font-size:14px}
+  .card ul{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px}
+  .card li{margin:3px 0}
+  .foot{color:var(--muted);font-size:12px;margin-top:30px;border-top:1px solid var(--line);padding-top:14px}
+</style>
+</head>
+<body>
+
+<h1>aide 软件架构总览</h1>
+<p class="sub">AI + IDE 工作台 · Go 单体后端 + 内嵌前端 + Docker 沙箱 · 版本 0.1.10.1 RC1</p>
+
+<h2>一、分层架构图</h2>
+
+<div class="layer">
+  <div class="layer-title">① 客户端层 · Browser（原生 JS，无框架）</div>
+  <div class="row">
+    <div class="box fe"><b>会话与聊天</b><span>SSE 流式渲染 / rAF 批量 / 插队·排队 / 一键回底</span></div>
+    <div class="box fe"><b>文件浏览器与编辑器</b><span>双栏面板 / md 预览 / 哈希保存 / 新标签页只读视图</span></div>
+    <div class="box fe"><b>设置抽屉</b><span>schema 驱动导航：消耗统计 / 外观 / 语言 / 模型 / 归档 / 权限</span></div>
+    <div class="box fe"><b>轨迹 / 搜索</b><span>事件时间线 / 全文搜索 / 上下文压缩</span></div>
+  </div>
+</div>
+<div class="arrow">▼ Bearer Token · HTTPS 同源 · SSE (EventSource)</div>
+
+<div class="layer">
+  <div class="layer-title">② 接入层 · Go net/http 单体（cmd/aide）</div>
+  <div class="row">
+    <div class="box be"><b>路由与鉴权</b><span>server.go mux · /healthz 公开 · /api/* 全量 Bearer 校验</span></div>
+    <div class="box be"><b>静态资源</b><span>//go:embed web/* · no-store 缓存 · 前端随二进制分发</span></div>
+    <div class="box be"><b>SSE 推送</b><span>GET /runs/{id}/events · step/delta/tool/status/done 事件</span></div>
+    <div class="box be"><b>并发控制</b><span>commands chan cap=4 · run 级 context.CancelFunc · 工作区 mu 锁</span></div>
+  </div>
+</div>
+<div class="arrow">▼</div>
+
+<div class="layer">
+  <div class="layer-title">③ 核心服务层</div>
+  <div class="row">
+    <div class="box be"><b>workflow.go · Tool Loop</b><span>≤10 轮 function calling 循环 · 状态机 queued/running/awaiting_approval/done/failed</span></div>
+    <div class="box be"><b>provider.go</b><span>Chat Completions 兼容协议 · complete + completeStream · 400 自动降级去 stream_options</span></div>
+    <div class="box be"><b>context.go</b><span>上下文预算预览 · 请求快照 · 60K 回放窗口 · 超限拦截</span></div>
+    <div class="box be"><b>profiles.go</b><span>参数 Profile + routing-policy.json · 手动/自动选模型</span></div>
+    <div class="box be"><b>session_manage</b><span>会话 CRUD · 置顶/归档/删除/导出 · 标题自动概括</span></div>
+  </div>
+</div>
+<div class="arrow">▼</div>
+
+<div class="layer">
+  <div class="layer-title">④ 工具与执行层</div>
+  <div class="row">
+    <div class="box tool"><b>list_files / read_file</b><span>os.Root 沙箱 · 直接执行</span></div>
+    <div class="box tool"><b>write_file</b><span>生成提案 → awaiting_approval → 用户 apply 落盘（带哈希校验）</span></div>
+    <div class="box tool"><b>run_shell</b><span>execShellCommand · bash --norc · 60s 超时 · 危险命令黑名单拦截</span></div>
+    <div class="box tool"><b>plugins.go</b><span>Node 插件宿主 (DSH/Cordis 形态) · 协议 v1.1 · handler 注册进 toolLoop</span></div>
+  </div>
+</div>
+<div class="arrow">▼</div>
+
+<div class="layer">
+  <div class="layer-title">⑤ 数据与外部层</div>
+  <div class="row">
+    <div class="box data"><b>/data 卷</b><span>session-*.json · settings · 统计 · sources 登记</span></div>
+    <div class="box data"><b>/workspace (RW)</b><span>本地目录绑定 或 SSH/SFTP 远程工作区</span></div>
+    <div class="box data"><b>/context (RO)</b><span>辅助资料：本地路径 / Skill / URL / MCP(登记) / SFTP·FTP·SMB</span></div>
+    <div class="box ext"><b>模型提供商</b><span>DeepSeek 或任意 OpenAI 兼容 Chat Completions 端点</span></div>
+  </div>
+</div>
+
+<h2>二、关键功能 → 实现技术 / 协议 / 算法</h2>
+<table>
+<tr><th style="width:22%">功能</th><th style="width:30%">实现方式</th><th>为什么这样设计（优势）</th></tr>
+<tr>
+  <td>流式输出</td>
+  <td><code>text/event-stream</code> SSE；后端逐 token 推 <code>delta</code>，前端 rAF 批量 innerHTML，避免每帧全量 markdown 解析</td>
+  <td><span class="tag b">协议</span>比 WebSocket 简单、走 HTTP 自动穿透；rAF 节流让 1000 token/s 也不卡 UI</td>
+</tr>
+<tr>
+  <td>AI Tool Loop</td>
+  <td>OpenAI function calling 协议；循环 ≤10 轮，工具结果以 <code>role:tool</code> 回灌</td>
+  <td><span class="tag b">协议</span>标准 Chat Completions，任意兼容后端都能接；轮次上限防爆 token 黑洞</td>
+</tr>
+<tr>
+  <td>写文件双阶段</td>
+  <td>write_file 只构造提案（JSON files[]），任务进 <code>awaiting_approval</code>；用户点 apply 才逐文件原子替换，带 SHA 哈希比对</td>
+  <td><span class="tag a">安全</span>模型不会静默改你的代码；哈希冲突检测防止覆盖你手动改过的文件</td>
+</tr>
+<tr>
+  <td>Shell 沙箱执行</td>
+  <td><code>bash --norc -c</code>，受限 PATH/HOME，60s ctx 超时，输出 128KB 截断，危险命令前缀黑名单（rm -rf / sudo / git push / pipe-to-sh …）直接拒绝</td>
+  <td><span class="tag a">安全</span>Docker 已 cap_drop [ALL]+no-new-privileges；黑名单拦高危；普通 ls/go test 等只读命令自动跑</td>
+</tr>
+<tr>
+  <td>运行中插话 vs 排队</td>
+  <td>Steer 通道即时打断当前 toolLoop；Queue 通道 FIFO 排队，当前轮结束后按序处理；前端 Codex 风格队列条可上移/删除/编辑</td>
+  <td><span class="tag g">体验</span>打断不丢上下文；排队消息用 <code>【你回答过程中用户插话】</code> 包装喂回模型，避免被当成新话题</td>
+</tr>
+<tr>
+  <td>上下文管理</td>
+  <td>请求前 context-preview 算预算；接近上限时触发结构化摘要压缩（旧历史 → summary），保留最近 60K 回放窗口</td>
+  <td><span class="tag b">算法</span>不是粗暴截断，是分层摘要；前端实时显示 tokens/64K 进度条</td>
+</tr>
+<tr>
+  <td>工作区身份绑定</td>
+  <td>wsID = 模式+主机+路径+revision；旧提案在切换工作区后拒绝应用（R02/R03）</td>
+  <td><span class="tag a">安全</span>防止 A 项目的文件提案被误写到 B 项目</td>
+</tr>
+<tr>
+  <td>插件系统</td>
+  <td>DSH/Cordis 形态 <code>module.exports={apply(ctx){ctx.tool(...)}}</code>；Node 宿主加载，handler 结果经 normalizePluginResult 归一化成 tool 消息</td>
+  <td><span class="tag b">协议</span>用户可上传 JS 扩展工具面；但插件是可信代码，不是安全边界</td>
+</tr>
+<tr>
+  <td>远程工作区</td>
+  <td>SSH 长连接 + SFTP 批处理；shell 命令通过 <code>ssh target "cd dir && cmd"</code> 执行</td>
+  <td><span class="tag g">兼容</span>本地文件 API 对前端透明，远程/本地同一套 UI</td>
+</tr>
+<tr>
+  <td>会话持久化</td>
+  <td>每个会话一个 JSON 文件（/data/session-&lt;id&gt;.json），记录 runs/messages/proposals；启动时全量加载</td>
+  <td><span class="tag g">简单</span>无外部 DB，单文件易备份/导出；SSE 断线后用 GET 会话状态兜底</td>
+</tr>
+<tr>
+  <td>鉴权</td>
+  <td>启动时生成一次性 access-token 写 /data/access-token；前端 Bearer 携带；SSE 用 ?access_token=</td>
+  <td><span class="tag a">安全</span>本地工具不需要用户体系；令牌不进前端 localStorage 持久域</td>
+</tr>
+</table>
+
+<h2>三、技术栈与部署</h2>
+<div class="grid2">
+  <div class="card">
+    <h3>后端</h3>
+    <ul>
+      <li>Go 1.22+ 标准库 net/http（Go 1.22 method 路由），无框架</li>
+      <li>goroutine 跑每个 run；context.WithCancel 支持取消</li>
+      <li>//go:embed 把整个 web/ 目录编进二进制，单文件分发</li>
+      <li>测试：标准 testing + httptest + mock_provider.py</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>前端</h3>
+    <ul>
+      <li>原生 ES2020 JS，无 React/Vue；marked v12 渲染 GFM</li>
+      <li>i18n.js 双语（zh-CN/en）；CSS 变量双主题</li>
+      <li>EventSource 订阅 SSE；URL hash 路由 file-view</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>容器</h3>
+    <ul>
+      <li>Docker Compose 单容器；Go/Python/Node/Git 工具链内置</li>
+      <li>cap_drop [ALL] + no-new-privileges + pids_limit + mem_limit</li>
+      <li>端口 127.0.0.1:8097 → 8080，不暴露公网</li>
+      <li>/workspace RW、/context RO、/data 持久卷分别挂载</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>外部依赖</h3>
+    <ul>
+      <li>仅一个：OpenAI 兼容 Chat Completions API（DeepSeek 或本地 vLLM 等）</li>
+      <li>无 DB、无 Redis、无消息队列、无 OSS</li>
+      <li>插件宿主需要 Node（容器内已装）</li>
+    </ul>
+  </div>
+</div>
+
+<h2>四、设计优势与当前边界</h2>
+<div class="grid2">
+  <div class="card">
+    <h3 style="color:#4ade80">✓ 优势</h3>
+    <ul>
+      <li><b>单二进制 + 单容器</b>：启动一条命令，数据全在 /data，迁移即拷贝卷</li>
+      <li><b>写操作可控</b>：AI 只读+自动跑只读命令，写文件必须人点批准，符合"人在回路"</li>
+      <li><b>流式体验</b>：SSE + rAF 批量，长回答不卡 UI；运行中可插队可排队</li>
+      <li><b>工作区身份隔离</b>：切换项目后旧提案自动失效，不会写错地方</li>
+      <li><b>协议开放</b>：模型端是标准 Chat Completions，换模型=改一行 BaseURL</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3 style="color:#fbbf24">! 边界 / 后续可改</h3>
+    <ul>
+      <li>run_shell 无 PTY，跑不了 vim/top 等交互命令</li>
+      <li>危险命令黑名单是前缀匹配，可被绕路；正式版建议加 allowlist 模式</li>
+      <li>会话 JSON 单文件，会话数上千后启动加载会变慢（未做分页）</li>
+      <li>MCP 仅登记入口，未真正接 MCP 协议</li>
+      <li>远程 SSH 工作区的 run_shell 自动执行尚未打通</li>
+      <li>权限管理目前是只读说明面板，还没做 per-user 开关持久化</li>
+    </ul>
+  </div>
+</div>
+
+<p class="foot">
+  生成依据：当前分支 HEAD <code>15a5f82</code> · 源码 internal/server/*.go + web/*.js · 已合并 6 个改进 feature。<br>
+  本图为审阅用途，与 docs/architecture.md 同步更新；如某模块描述与最新代码不符，以代码为准。
+</p>
+
+</body>
+</html>

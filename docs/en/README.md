@@ -19,6 +19,6 @@
 
 English documents explain current operation and development. Dated historical reviews, task ledgers, and release notes retain their original language and evidence; they are not presented as newly executed tests. Repository-wide requirements remain in the canonical [PRD](../PRD.md), and workflow gates are defined by [router.json](../agent/router.json). Changes to interfaces, installation, or workflow should update both current-language guides.
 
-English UI support is newer than the published 0.1.6.0 RC4 baseline. An existing RC4 image will not gain it from a browser refresh. Until a new release is published, build the source checkout containing this change.
+English UI support is included from the published 0.1.7.0 RC1 baseline onward (it was absent from 0.1.6.0 RC4). An older RC4 image will not gain it from a browser refresh; use the 0.1.7.0 RC1 release or a current source build, then switch language under Settings → Language.
 
 Installation and the user guide are available in English. The linked architecture, operations, requirements, plugin and development references currently retain their canonical Chinese text.

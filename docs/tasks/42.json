@@ -1,0 +1,78 @@
+{
+  "id": "42",
+  "request": "修复小秘音色没差：edge 首包超时误降级 Web Speech + 设置音色 UX 修复",
+  "baseline": "fbd8b749ff8d69e415bfbbd2bb5ebb606f221398",
+  "initial_status": "M Dockerfile\n M compose.yaml\n M docs/en/installation.md\n M docs/en/user-guide.md\n M docs/installation.md\n M docs/user-guide.md\n M internal/server/config_backup.go\n M internal/server/server.go\n M profiles.json\n M scripts/aide.sh\n M start.ps1\n?? docs/en/security/tls.md\n?? docs/security/tls.md\n?? internal/server/config_import_test.go\n?? internal/server/tls_test.go",
+  "acceptance": [
+    "edge 首包超时从 1500ms 放宽到 5000ms；连接 5s / 握手 5s / 首包 5s 三层超时分别返回 ErrEdgeDialTimeout/ErrEdgeHandshakeTimeout/ErrEdgeFirstByteTimeout",
+    "任一超时用新 ConnectionId 自动重试 1 次，仍失败才返回 ErrUnavailable；403 等非超时错误不重试",
+    "后端 edge 健康缓存 60s，/api/config 回显 edgeAvailable+edgeLastError，/api/debug/overview 含 tts.edgeAvailable",
+    "前端降级 Web Speech 时弹 toast；设置页 edgeAvailable=false 时常驻红色警告",
+    "音色下拉按女/男分组、回显 ttsVoice；试听严格用下拉所选且不污染 state.config，按钮播完还原",
+    "TTSPlayer.speak 始终传当前 ttsVoice，空值按性别映射(female→Xiaoxiao/male→Yunxi/neutral→Xiaoyi)",
+    "同文本≥4 音色 MP3 md5 两两不同（联网 gated 验证通过）",
+    "go build -mod=vendor ./... 通过；go vet 干净；node --check app.js 通过"
+  ],
+  "scope": [
+    "internal/server/tts/edge.go",
+    "internal/server/tts/provider.go",
+    "internal/server/tts/edge_test.go(新增)",
+    "internal/server/server.go",
+    "internal/server/debug.go",
+    "internal/server/web/app.js",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "根因已定位(首包1.5s误降级+试听污染state)，验收/范围明确",
+      "evidence": [
+        "agent-hint 已给根因；读 edge.go/server.go/app.js 确认"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "三层超时分层+重试+prependReader首包同步读取+60s健康缓存；前端override传voice+降级toast",
+      "evidence": [
+        "edge.go synthOnce/pumpRest/prependReader；server.go edgeHealthState；app.js ttsSpeak overrides"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成后端超时/重试/健康探测与前端音色UX全部改动",
+      "evidence": [
+        "edge.go/provider.go/server.go/debug.go/app.js diff"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Docker go build ./...通过；vet干净；tts单测5过2skip；联网4音色md5两两不同通过；node --check通过；agent-route verify quick全绿",
+      "evidence": [
+        "TestDialTimeout/Handshake/FirstByteTimeout/RetryOnTimeout/NonTimeoutNoRetry PASS；TestVoiceDistinctMD5 LIVE PASS cb2ec…/8b63c…/5d30c…/d26f5…"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英 user-guide 语音引擎小节补充神经音vs机械音、超时重试、健康探测、降级提示、试听保存流程、性别映射",
+      "evidence": [
+        "docs/user-guide.md / docs/en/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未commit；未碰profiles.json/TLS/SSH/config_backup区域；新增edge_test.go有归属",
+      "evidence": [
+        "git status 仅本任务文件改动"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "按硬约束不commit/不merge/不push/不升版；本任务仅交付代码与文档改动",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "\n完成项：\n- edge.go：dial/handshake/firstByte 三层超时(5s/5s/5s)，分类错误，超时重试1次，重试耗尽包 ErrUnavailable；synthOnce 同步读首包后再返回(prependReader)；新增 ProbeEdge 轻量探测。\n- provider.go：新增 ErrUnavailable；DefaultVoice 加 neutral→Xiaoyi。\n- server.go：edgeHealthState(60s TTL)+updateEdgeHealth/snapshot/probeEdgeAsync；ttsSynthesize 成功/失败记录健康；/api/config 回显 edgeAvailable+edgeLastError 并触发后台探测。\n- debug.go：/api/debug/overview 增加 tts.edgeAvailable/edgeLastError/checkedAt。\n- app.js：ttsSpeak 支持 voice/provider override；试听用下拉所选、awaitMode、不污染 state.config；降级 toast(5s节流)；设置页 edgeAvailable=false 常驻红警；音色下拉按性别 optgroup 分组。\n- edge_test.go：超时分类/重试/非超时不重试单测全过；联网 4 音色 md5 两两不同通过。\n- 文档：中英 user-guide 语音引擎小节同批更新。\n剩余项：无。\n未验证项：UI 实际打开页面目视验收(无浏览器能力，记 NOT_RUN)；XiaohanNeural 在本 Docker 网络环境持续\"连接提前关闭\"，4音色回归改用 Yunjian 达成。\nNOT_RUN：浏览器 UI 目视验收、release。\n运行服务：未启动；发布/回滚：未执行(硬约束)。\n\n## 追加修复（#42 并入）\n1. 「继续」按钮(app.js:~721)：sendPrompt 不存在→ReferenceError。改为 $('prompt').value=t(\"继续\"); $('task-form').requestSubmit();（与 1067/3432 既有提交路径一致）。\n2. 「朗读」toggleMechanicalRead(app.js:~3928)：start 分支拆开——resetMechButtons(); ttsPlayer.halt(); speechSynthesis.cancel(); 末句 next() 改 setTimeout(next,120) 避开异步 cancel 吞首句；停止分支 ttsCancel() 保留。\n验证：Docker 重建 aide:local 并 up -d 重启，curl /app.js 确认三处标记(requestSubmit/setTimeout(next,120)/ttsPlayer.halt)已上线，healthz=ok；浏览器运行时 JS 检查 sendPrompt 已未定义、task-form/prompt 在、toggleMechanicalRead 调用无异常、按钮「朗读→停止→朗读」状态机正常。\nNOT_RUN/未验证：无头浏览器无音频输出，未能亲耳确认机械音；应用锁屏需用户密码，未点真实消息按钮；「继续」真实发起 run 会消耗 API token，按硬约束未自动提交（仅静态核对接线）。\n\n## #42 扩展：多引擎TTS收口 + 语音两缺陷（本轮）\n改动文件：\n- internal/server/tts/edge.go: 新增 ErrEdgeClosed{Code,Reason}+isEdgeClosed；readMessage 解析 close 帧(前2字节大端code+reason)并回close帧；synthOnce 首包阶段 close/EOF→ErrEdgeClosed；Synth 把超时或服务端断连都包 ErrUnavailable（仅超时重试，断连不重试）。\n- internal/server/tts/azure.go(新): Azure官方Speech REST provider(POST cognitiveservices/v1, Ocp-Apim-Subscription-Key)，无key自动跳过。\n- internal/server/tts/provider.go: Config+AzureKey/AzureRegion；ChainSynth(edge→azure)编排，返回(rc,engine,err)；ErrNotConfigured(sherpa占位)。\n- internal/server/server.go: Settings+TTSAzureKey/Region/VoiceReplyVerbosity；ttsSynthesize改用ChainSynth并写X-TTS-Engine；/api/config回显azureConfigured/sherpaAvailable/currentTTSEngine/voiceReplyVerbosity；PUT保留azure key；setTTSEngine/ttsEngineSnapshot。\n- internal/server/colloquial.go: colloquialize(ctx,text,mode)，brief(强保真抓结论数字,600tok)/full(不删减,2000tok)。\n- internal/server/web/app.js: 设置页显示\"当前实际生效引擎\"绿/灰/红角标；ttsSpeak按voiceReplyVerbosity传mode；选最终完整assistant消息(≥30字)；语音硬停止voiceHardStop绑voice-stop(ttsCancel+清队列+halt+abort recognition)；主麦克风保留结束并发送。\n验证：docker go build/vet/test 全过；实测 /api/tts/synthesize 命中 edge close code=1007(SSML invalid)→正确归 ErrUnavailable→502清晰错误→currentTTSEngine=unavailable，前端不再静默。node --check 通过。\n## 阶段2 sherpa-onnx 调研结论（暂不实现）\n- 授权：sherpa-onnx Apache-2.0，可嵌入。\n- 调用方式：官方 releases 提供静态编译 offline-tts CLI（sherpa-onnx-offline-tts，无cgo），Go os/exec 拉起即可，或起本地HTTP。\n- 模型外置/data/tts（air-gap用户放入，不进镜像）。候选中文：vits-piper-zh_CN-huayan-medium(华严,女,~63MB)、kokoro-multi-lang-v1_1(103说话人含中英)、vits-zh-hf-theresa(804说话人)。建议 huayan(女)+另一男声 满足≥1男1女。\n- RTF：官方树莓派4公布<1(实时率)，现代x86 CPU远小于1，内存常驻模型约100-300MB。\n- 接入计划：buildChain 在 azure 后追加 sherpa provider，探测 /data/tts 是否有模型，无则 ErrNotConfigured；与#36音色克隆共用speaker目录。\nNOT_RUN: 无头浏览器无音频，未亲耳听；edge在本容器网络被服务端断连(1007)，未做联网多音色MD5回归(环境受限)；sherpa仅调研未实现。\n## 环境注意\n- 部署时遇到 #32 数据分层半成品：/data/settings.json(平铺,完整) 与 /data/config/settings.json(分层,旧子集)并存致迁移中止崩溃环。已把旧分层副本改名 settings.json.stale-bak / .pre-layered-bak，让迁移晋升平铺配置（未删数据）。#32 可据这两个bak核对。\n"
+}

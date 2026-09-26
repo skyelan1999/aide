@@ -1,0 +1,48 @@
+{
+  "id": "43",
+  "request": "Docker构建热路径去全量go test + aide.sh快捷路径(srcsha label) + 发布门禁强制AIDE_RUN_TESTS=1；串行并入#46 runtime层重排与pip离线优化",
+  "baseline": "307e2508ec7ce48b5578ef087334765b6f769e07",
+  "initial_status": "M docs/en/security/tls.md\n M docs/en/user-guide.md\n M docs/security/tls.md\n M docs/user-guide.md\n M internal/server/colloquial.go\n M internal/server/config_backup.go\n M internal/server/config_backup_test.go\n M internal/server/config_import_test.go\n M internal/server/debug.go\n M internal/server/kdf.go\n M internal/server/kdf_test.go\n M internal/server/persona.go\n M internal/server/plugin_host.js\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/server_test.go\n M internal/server/session_manage_test.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/tls_test.go\n M internal/server/tts/edge.go\n M internal/server/tts/edge_test.go\n M internal/server/tts/provider.go\n M internal/server/voice_agent.go\n M internal/server/voice_agent_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M internal/server/workspace_test.go\n M plugins/registry.json\n M profiles.json\n?? docker/\n?? docs/architecture/data-layout.md\n?? docs/architecture/memory-access.md\n?? docs/architecture/personality-evolution.md\n?? docs/en/architecture/\n?? docs/en/plugins/comm-serial.md\n?? docs/en/plugins/comm-ssh.md\n?? docs/en/plugins/comm-tcp.md\n?? docs/en/plugins/comm-udp.md\n?? docs/en/plugins/daemon-protocol.md\n?? docs/en/security/dpia-template.md\n?? docs/en/security/eu-compliance.md\n?? docs/en/security/privacy-policy-template.md\n?? docs/en/security/secret-vault.md\n?? docs/en/security/security-audit.md\n?? docs/en/security/voice-cloning.md\n?? docs/plugins/comm-serial.md\n?? docs/plugins/comm-ssh.md\n?? docs/plugins/comm-tcp.md\n?? docs/plugins/comm-udp.md\n?? docs/plugins/daemon-protocol.md\n?? docs/security/dpia-template.md\n?? docs/security/eu-compliance.md\n?? docs/security/privacy-policy-template.md\n?? docs/security/secret-vault.md\n?? docs/security/security-audit.md\n?? docs/security/voice-cloning.md\n?? docs/tasks/30.json\n?? docs/tasks/35.json\n?? docs/tasks/36.json\n?? docs/tasks/37.json\n?? docs/tasks/42.json\n?? internal/server/cross_session_tools.go\n?? internal/server/factory_reset.go\n?? internal/server/factory_reset_test.go\n?? internal/server/integrity.go\n?? internal/server/integrity_test.go\n?? internal/server/memory_access.go\n?? internal/server/memory_access_test.go\n?? internal/server/migration.go\n?? internal/server/migration_test.go\n?? internal/server/paths.go\n?? internal/server/paths_test.go\n?? internal/server/personality_evolution.go\n?? internal/server/personality_evolution_test.go\n?? internal/server/plugin_daemon.go\n?? internal/server/plugin_daemon_test.go\n?? internal/server/secret_vault.go\n?? internal/server/secret_vault_test.go\n?? internal/server/session_number_test.go\n?? internal/server/ssh_keyutil.go\n?? internal/server/stream_broker.go\n?? internal/server/stream_broker_test.go\n?? internal/server/tts/azure.go\n?? internal/server/tts/clone.go\n?? internal/server/tts/clone_test.go\n?? internal/server/vault_app.go\n?? internal/server/voice_identity_test.go\n?? internal/server/voice_personality.go\n?? internal/server/voice_personality_test.go\n?? internal/server/voice_queue_test.go\n?? internal/server/voice_samples.go\n?? internal/server/voice_samples_test.go\n?? plugins/comm-serial/\n?? plugins/comm-ssh/\n?? plugins/comm-tcp/\n?? plugins/comm-udp/\n?? plugins/testdata/\n?? scripts/mock_clone_server.py",
+  "acceptance": [],
+  "scope": [],
+  "stages": {
+    "requirements": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

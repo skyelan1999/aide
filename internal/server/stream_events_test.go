@@ -359,9 +359,9 @@ func TestCompleteStreamRetryWithoutStreamOptions(t *testing.T) {
 
 	var recorded [][]byte
 	var recMu sync.Mutex
-	text, _, _, err := completeStream(context.Background(), Settings{BaseURL: provider.URL, Model: "test"}, []Message{}, ProfileParams{}, nil,
+	text, _, _, _, err := completeStream(context.Background(), Settings{BaseURL: provider.URL, Model: "test"}, []Message{}, ProfileParams{}, nil,
 		func(b []byte) { recMu.Lock(); recorded = append(recorded, b); recMu.Unlock() },
-		func(string) {})
+		func(string) {}, nil)
 	if err != nil {
 		t.Fatalf("retry failed: %v", err)
 	}
@@ -402,7 +402,7 @@ func TestCompleteStreamCancelMidStream(t *testing.T) {
 		time.Sleep(50 * time.Millisecond)
 		cancel()
 	}()
-	_, _, _, err := completeStream(ctx, Settings{BaseURL: provider.URL, Model: "test"}, []Message{}, ProfileParams{}, nil, nil, func(string) {})
+	_, _, _, _, err := completeStream(ctx, Settings{BaseURL: provider.URL, Model: "test"}, []Message{}, ProfileParams{}, nil, nil, func(string) {}, nil)
 	if err == nil || !errors.Is(err, context.Canceled) {
 		t.Fatalf("err = %v, want context.Canceled", err)
 	}

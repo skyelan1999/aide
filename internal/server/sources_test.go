@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -179,23 +180,23 @@ func TestAIReferenceAccess(t *testing.T) {
 	os.WriteFile(filepath.Join(a.workPath, "refs", "note.md"), []byte("AI reference body"), 0600)
 	requireStatus(t, request(a, "PUT", "/api/sources", map[string]any{"sources": []any{sourceBody("ref", "AI refs", "local", map[string]any{"path": "refs"}, true)}}), 200)
 	task := &Task{}
-	result := a.executeToolCall(readCall("list_sources", `{}`), task, nil)
+	result := a.executeToolCall(context.Background(), readCall("list_sources", `{}`), task, nil)
 	if !strings.Contains(result, `"id":"ref"`) {
 		t.Fatal(result)
 	}
-	result = a.executeToolCall(readCall("read_file", `{"source":"ref","path":"note.md"}`), task, nil)
+	result = a.executeToolCall(context.Background(), readCall("read_file", `{"source":"ref","path":"note.md"}`), task, nil)
 	if result != "AI reference body" {
 		t.Fatal(result)
 	}
-	result = a.executeToolCall(readCall("write_file", `{"source":"ref","path":"note.md","content":"bad"}`), task, nil)
+	result = a.executeToolCall(context.Background(), readCall("write_file", `{"source":"ref","path":"note.md","content":"bad"}`), task, nil)
 	if !strings.Contains(result, "read-only") {
 		t.Fatal(result)
 	}
-	result = a.executeToolCall(readCall("read_file", `{"source":"missing","path":"note.md"}`), task, nil)
+	result = a.executeToolCall(context.Background(), readCall("read_file", `{"source":"missing","path":"note.md"}`), task, nil)
 	if !strings.Contains(result, "disabled") {
 		t.Fatal(result)
 	}
-	result = a.executeToolCall(readCall("read_file", `{"source":"ref","path":"../note.md"}`), task, nil)
+	result = a.executeToolCall(context.Background(), readCall("read_file", `{"source":"ref","path":"../note.md"}`), task, nil)
 	if strings.Contains(result, "AI reference body") {
 		t.Fatal("escaped source root")
 	}

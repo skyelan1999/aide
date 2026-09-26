@@ -1,0 +1,18 @@
+{
+  "id": "sqlite",
+  "name": "SQLite 数据库",
+  "description": "读写 SQLite 数据库文件（参数化查询、事务、schema、导出）；零第三方依赖，基于 node:sqlite，默认只读",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "installedAt": "2026-09-25T20:45:00Z",
+  "tools": [
+    { "name": "sqlite_query", "kind": "read|write", "readonlyDefault": true },
+    { "name": "sqlite_transaction", "kind": "write", "readonlyDefault": false },
+    { "name": "sqlite_execute", "kind": "write", "readonlyDefault": false },
+    { "name": "sqlite_tables", "kind": "read", "readonlyDefault": true },
+    { "name": "sqlite_schema", "kind": "read", "readonlyDefault": true },
+    { "name": "sqlite_export", "kind": "read|write", "readonlyDefault": true }
+  ]
+}

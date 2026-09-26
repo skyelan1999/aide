@@ -29,7 +29,7 @@ func TestEnvironmentGuide(t *testing.T) {
 			t.Fatalf("leaked %s", bad)
 		}
 	}
-	preview := a.buildContextPreview(nil, "Explain workspace", "chat", "", a.settings, ProfileParams{MaxTokens: 512}, true)
+	preview := a.buildContextPreview(nil, "Explain workspace", "chat", "", nil, a.settings, ProfileParams{MaxTokens: 512}, true)
 	if !strings.Contains(preview.Messages[0].Content, "Environment guide plugin") {
 		t.Fatal("not in actual request builder")
 	}
