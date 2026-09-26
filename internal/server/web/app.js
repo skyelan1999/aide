@@ -2931,7 +2931,7 @@ function renderSourceChips() {
   if (!visible) return;
   const track = $('source-track');
   track.replaceChildren();
-  state.sources.filter(x => x.enabled).forEach(src => {
+  state.sources.filter(x => x.enabled).sort((a, b) => (b.builtin ? 1 : 0) - (a.builtin ? 1 : 0)).forEach(src => {
     const displayName = src.builtin ? t(src.name) : src.name;
     const loc = src.config.path || src.config.url || (src.config.host ? ('//' + src.config.host + (src.config.path || '')) : '');
     const wrap = el('div', 'src-chip' + (state.source === src.id ? ' active' : ''));
