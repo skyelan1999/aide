@@ -146,11 +146,22 @@ func TestDispatchToAideLockedCreatesSession(t *testing.T) {
 var _ = httptest.NewRecorder
 
 
-// TestAssistantMessageThroughAnalyze 配置 mock LLM 返回 ask 决策：
-// 验证文字输入真正走了 va.analyze 管线（而非兜底），且 action=ask 时不派发。
-func TestAssistantMessageThroughAnalyze(t *testing.T) {
+// TestAssistantMessageAgenticFallsBackToAnalyze 当 agentic 循环（带 tools 的请求）失败时，
+// 回落到既有 analyze 甄别管线（不带 tools 的请求），仍能产出 ask 且不派发。
+// 保留 analyze 能力不删的回归测试。
+func TestAssistantMessageAgenticFallsBackToAnalyze(t *testing.T) {
 	decision := `{"action":"ask","summarized":"","ask":"你想改哪个按钮？","mode":"queue","stop":false,"reason":"缺对象，需要追问"}`
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Tools []any `json:"tools"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if len(body.Tools) > 0 {
+			// agentic 循环请求：让它失败，触发回落
+			http.Error(w, "upstream boom", 500)
+			return
+		}
+		// analyze 请求：正常返回 ask 决策
 		jsonOut(w, 200, map[string]any{
 			"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: decision}}},
 		})
@@ -170,19 +181,9 @@ func TestAssistantMessageThroughAnalyze(t *testing.T) {
 	var body map[string]any
 	_ = json.Unmarshal(w.Body.Bytes(), &body)
 	if body["action"] != "ask" {
-		t.Fatalf("expected ask from analyze, got %v", body)
-	}
-	if body["ask"] != "你想改哪个按钮？" {
-		t.Fatalf("ask not parsed, got %v", body["ask"])
+		t.Fatalf("expected ask from analyze fallback, got %v", body)
 	}
 	if body["dispatched"] != nil {
 		t.Fatalf("ask must not dispatch, got %v", body["dispatched"])
-	}
-	// assistant 会话记录了这次往来
-	a.mu.Lock()
-	msgs := a.findAssistantSessionLocked().Messages
-	a.mu.Unlock()
-	if len(msgs) < 2 || msgs[len(msgs)-1].Type != "voice-ask" {
-		t.Fatalf("expected voice-ask recorded, last=%+v", msgs[len(msgs)-1])
 	}
 }

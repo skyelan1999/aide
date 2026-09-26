@@ -193,9 +193,28 @@ func TestInterruptedOutputPreserved(t *testing.T) {
 	}
 }
 
-// TestVoiceFilterSurfacesMode voiceFilter 处理器把 analyze 得到的 mode 原样返回给前端。
+// TestVoiceFilterSurfacesMode voiceFilter 把小秘 agentic 决策（dispatch_to_aide + urgent）
+// 的 mode=insert/stop 原样返回给前端（语音据此刻插队打断当前 run）。
 func TestVoiceFilterSurfacesMode(t *testing.T) {
-	srv := voiceDecisionSrv(t, dec("send", "insert", true, "立刻停"))
+	idx := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		i := idx
+		idx++
+		if i == 0 {
+			// 小秘第一轮：调用 dispatch_to_aide（紧急中止→insert）
+			calls := []ToolCall{{ID: "c1", Type: "function"}}
+			calls[0].Function.Name = "dispatch_to_aide"
+			calls[0].Function.Arguments = `{"summary":"立刻停","mode":"insert","urgent":true}`
+			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{
+				"role": "assistant", "content": "", "tool_calls": calls,
+			}}}})
+			return
+		}
+		// 第二轮：工具结果回来后小秘收尾
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{
+			"role": "assistant", "content": "好，已通知停止。",
+		}}}})
+	}))
 	defer srv.Close()
 	a := testApp(t)
 	a.settings = Settings{BaseURL: srv.URL, Model: "test"}
@@ -211,6 +230,9 @@ func TestVoiceFilterSurfacesMode(t *testing.T) {
 	}
 	if got["action"] != "send" {
 		t.Fatalf("action = %v", got["action"])
+	}
+	if got["text"] != "立刻停" {
+		t.Fatalf("dispatch text = %v", got["text"])
 	}
 }
 

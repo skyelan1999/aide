@@ -2,27 +2,27 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
 )
 
-// ── #62：小蜜历史归位 + 文字=语音 ─────────────────────────────────────────────
-// 此前小蜜语音往来只存在 voice-history.json（独立加密信封），assistant 会话是空的；
-// 设置页另起一个时间线。这里把语音/文字往来统一写进 assistant 会话的 messages，
-// 让小蜜会话时间线本身就是历史；并新增端点让小蜜会话视图的文字输入走与语音相同的
-// analyze 管线（理解意图→甄别/总结→转交 aide 或追问/回应）。
+// ── #62：小蜜历史归位 + 文字=语音 + agentic 自主决策 ──────────────────────────
+// 小秘语音/文字往来统一写进 assistant 会话 messages；文字与语音都走小秘 agentic
+// 自主决策管线（assistant_agent.go）：小秘自己用工具决定 陪聊/转交 aide/静默/追问，
+// 不再由后端写死 analyze 的 send/ignore/standby 分支。analyze 保留为兜底能力。
 
 // 消息类型（Message.Type）取值，前端据此区分渲染：
 const (
 	msgTypeVoiceIn   = "voice-in"  // 用户听到的原话
 	msgTypeVoiceNote = "voice-note" // 小蜜的甄别结论/转交说明
 	msgTypeVoiceAsk  = "voice-ask"  // 小蜜的追问
-	msgTypeTextIn    = "text-in"   // 小蜜会话视图里用户手敲的文字（同样过 analyze）
+	msgTypeTextIn    = "text-in"   // 小蜜会话视图里用户手敲的文字
 )
 
-// recordAssistantExchangeLocked 把一次小蜜交互（用户听到/输入的原话 + 小蜜决策）
-// 追加到小蜜系统会话的 messages，并落盘。调用方必须持有 a.mu。
+// recordAssistantExchangeLocked 把一次小秘交互（用户听到/输入的原话 + 小秘决策）
+// 追加到小秘系统会话的 messages，并落盘。调用方必须持有 a.mu。
 // source 标记来源："voice" 或 "text"。不触发任何向 aide 的派发（派发由调用方/前端负责）。
 func (a *App) recordAssistantExchangeLocked(heard string, entry VoiceHistoryEntry, source string) {
 	s := a.findAssistantSessionLocked()
@@ -39,7 +39,7 @@ func (a *App) recordAssistantExchangeLocked(heard string, entry VoiceHistoryEntr
 		Content: strings.TrimSpace(heard),
 		Type:    inType,
 	})
-	// 2) 小蜜的决策/说明
+	// 2) 小秘的决策/说明
 	note := describeVoiceEntry(entry)
 	noteType := msgTypeVoiceNote
 	if entry.Action == "ask" {
@@ -54,7 +54,7 @@ func (a *App) recordAssistantExchangeLocked(heard string, entry VoiceHistoryEntr
 	_ = a.save(s)
 }
 
-// describeVoiceEntry 把一条小蜜决策翻译成给用户看的一句话说明。
+// describeVoiceEntry 把一条小秘决策翻译成给用户看的一句话说明。
 func describeVoiceEntry(e VoiceHistoryEntry) string {
 	switch e.Action {
 	case "send":
@@ -82,10 +82,55 @@ func describeVoiceEntry(e VoiceHistoryEntry) string {
 	}
 }
 
+// recordAgenticExchangeLocked 把一次小秘 agentic 交互落进 assistant 会话时间线。
+// source="voice"|"text"。dispatch 的实际派发给 aide 由调用方另做（这里只记录往来）。
+// 调用方持 a.mu。
+func (a *App) recordAgenticExchangeLocked(heard string, dec assistantDecision, source string) {
+	s := a.findAssistantSessionLocked()
+	if s == nil {
+		return
+	}
+	inType := msgTypeTextIn
+	if source == "voice" {
+		inType = msgTypeVoiceIn
+	}
+	s.Messages = append(s.Messages, Message{
+		Role: "user", Content: strings.TrimSpace(heard), Type: inType,
+	})
+	// 小秘回复：陪聊=正文气泡；dispatch/ask/silent 沿用既有 voice-note/voice-ask 样式。
+	outType := msgTypeVoiceNote
+	outContent := dec.Reply
+	switch dec.Action {
+	case "dispatch":
+		outContent = "已转交 aide：" + dec.DispatchText
+		if strings.TrimSpace(dec.Reason) != "" {
+			outContent += "（" + dec.Reason + "）"
+		}
+	case "ask":
+		outType = msgTypeVoiceAsk
+		outContent = dec.Ask
+	case "silent":
+		outContent = "（背景声/与他人对话，已静默）"
+		if strings.TrimSpace(dec.Reason) != "" {
+			outContent += "：" + dec.Reason
+		}
+	case "chat":
+		outType = "" // 普通聊天气泡
+		if outContent == "" {
+			outContent = "我在。"
+		}
+	}
+	s.Messages = append(s.Messages, Message{
+		Role: "assistant", Content: outContent, Type: outType,
+	})
+	s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
+	_ = a.save(s)
+}
+
 // assistantMessageHandler POST /api/sessions/{id}/assistant-message
-// 小蜜系统会话视图的文字输入：走与语音完全相同的 analyze 管线。
-// 入参 {text, context?}；返回小蜜决策 + 回复文本 +（send 时）转交的 aide 会话信息。
-// 与语音不同：send 时由后端直接新建 aide 会话承接（小蜜控制其他对话）。
+// 小秘系统会话视图的文字输入：走小秘 agentic 自主决策管线（#62 升级）。
+// 入参 {text, context?}；返回小秘决策 + 回复文本 +（dispatch 时）转交的 aide 会话信息。
+// dispatch 由后端直接新建 aide 会话承接；chat/ask/silent 只留在小秘会话。
 func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	s := a.sessions[r.PathValue("id")]
 	if s == nil {
@@ -134,21 +179,49 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"action": "locked", "reply": "", "reason": "小蜜对话历史已锁定，请先在设置中解锁后再发言"})
 		return
 	}
-	entry, err := va.analyze(r.Context(), cfg, text, in.Context)
+	// 注入模型 API Key（与 execute 一致），跑 agentic 自主决策循环
+	cfg.APIKey, _ = a.modelAPIKeyLocked()
+	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context)
 	if err != nil {
-		runFallback()
+		// 兜底：agentic 循环失败则回落到既有 analyze 甄别（保留该能力不删）
+		entry, aerr := va.analyze(r.Context(), cfg, text, in.Context)
+		if aerr != nil {
+			runFallback()
+			return
+		}
+		if entry.Action == "send" && strings.TrimSpace(entry.Text) == "" {
+			entry.Text = text
+		}
+		var disp map[string]any
+		a.mu.Lock()
+		a.recordAssistantExchangeLocked(text, entry, "text")
+		if entry.Action == "send" {
+			disp = a.dispatchToAideLocked(entry.Text)
+			fire, trigger := a.onPersonalityInteractLocked(personaXiaomi)
+			var sample string
+			if fire {
+				sample = a.personalitySampleLocked(personaXiaomi)
+			}
+			a.mu.Unlock()
+			if fire {
+				go a.runAutoEvolve(personaXiaomi, modeRefine, trigger, sample)
+			}
+		} else {
+			a.mu.Unlock()
+		}
+		jsonOut(w, 200, map[string]any{
+			"action": entry.Action, "text": entry.Text, "ask": entry.Ask,
+			"mode": entry.Mode, "reason": entry.Reason, "reply": describeVoiceEntry(entry),
+			"dispatched": disp,
+		})
 		return
 	}
-	if entry.Action == "send" && strings.TrimSpace(entry.Text) == "" {
-		entry.Text = text
-	}
+
 	var disp map[string]any
-	reply := describeVoiceEntry(entry)
 	a.mu.Lock()
-	a.recordAssistantExchangeLocked(text, entry, "text")
-	if entry.Action == "send" {
-		disp = a.dispatchToAideLocked(entry.Text)
-		// 小蜜有效交互计数（与语音一致，触发性格演化）
+	a.recordAgenticExchangeLocked(text, dec, "text")
+	if dec.Action == "dispatch" {
+		disp = a.dispatchToAideLocked(dec.DispatchText)
 		fire, trigger := a.onPersonalityInteractLocked(personaXiaomi)
 		var sample string
 		if fire {
@@ -161,14 +234,21 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		a.mu.Unlock()
 	}
+	replyOut := dec.Reply
+	if dec.Action == "dispatch" {
+		replyOut = "好，我已经把这件事交给 aide 了。"
+		if n, ok := disp["number"]; ok {
+			replyOut = fmt.Sprintf("好，我已经把这件事交给 aide 在 #%v 那边做了，我帮你盯着。", n)
+		}
+	}
 	jsonOut(w, 200, map[string]any{
-		"action": entry.Action, "text": entry.Text, "ask": entry.Ask,
-		"mode": entry.Mode, "reason": entry.Reason, "reply": reply,
-		"dispatched": disp,
+		"action": dec.Action, "text": dec.DispatchText, "ask": dec.Ask,
+		"mode": dec.Mode, "reason": dec.Reason, "reply": replyOut,
+		"dispatched": disp, "toolsUsed": dec.ToolsUsed,
 	})
 }
 
-// dispatchToAideLocked 小蜜把一条意图转交给 aide：新建一个普通会话承接并落盘。
+// dispatchToAideLocked 小秘把一条意图转交给 aide：新建一个普通会话承接并落盘。
 // 返回新会话的 #编号/ID/标题。调用方持 a.mu。
 func (a *App) dispatchToAideLocked(intent string) map[string]any {
 	intent = strings.TrimSpace(intent)
