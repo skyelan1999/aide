@@ -57,7 +57,7 @@ func isEmptyCompletionErr(err error) bool {
 // buildChatBody 构造 Chat Completions 请求体；stream 控制是否要求上游流式返回。
 // deepseek-reasoner 不支持的采样参数会被剔除，避免上游 400。
 func buildChatBody(cfg Settings, messages []Message, params ProfileParams, tools []any, stream bool) map[string]any {
-	body := map[string]any{"model": cfg.Model, "messages": messages, "stream": stream}
+	body := map[string]any{"model": cfg.Model, "messages": outgoingMessages(messages), "stream": stream}
 	if len(tools) > 0 {
 		body["tools"] = tools
 	}

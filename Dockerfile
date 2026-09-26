@@ -62,11 +62,11 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     if [ "${PIP_OFFLINE}" = "1" ]; then \
       echo "[runtime] 离线模式：从 /wheels 安装（--no-index）"; \
       pip install --no-index --find-links=/wheels \
-        python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4; \
+        python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf==6.19.0; \
     else \
       echo "[runtime] 在线模式：从 ${PIP_INDEX_URL} 安装"; \
       pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
-        python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4; \
+        python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf==6.19.0; \
     fi
 
 # 2.5) 本地离线 TTS：sherpa-onnx 预编译 CPU 二进制（#44，Apache-2.0，无 cgo）——稳定层

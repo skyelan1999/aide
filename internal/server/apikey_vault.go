@@ -198,6 +198,7 @@ type modelConfigItem struct {
 	Name          string `json:"name,omitempty"`
 	ContextWindow int    `json:"contextWindow,omitempty"`
 	HasAPIKey     bool   `json:"hasApiKey"`
+	Vision        bool   `json:"vision"` // #63 扩展：该模型是否支持图片输入
 }
 
 // modelConfigOut 把 a.settings.Models 转成带 hasApiKey 标记的输出列表。调用方持有 a.mu。
@@ -206,7 +207,7 @@ func (a *App) modelConfigOut() []modelConfigItem {
 	has := a.hasModelAPIKey()
 	for _, m := range a.settings.Models {
 		out = append(out, modelConfigItem{
-			ID: m.ID, Name: m.Name, ContextWindow: m.ContextWindow, HasAPIKey: has,
+			ID: m.ID, Name: m.Name, ContextWindow: m.ContextWindow, HasAPIKey: has, Vision: m.Vision,
 		})
 	}
 	return out
