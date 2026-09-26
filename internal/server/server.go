@@ -42,6 +42,7 @@ type ModelRef struct {
 	ID            string `json:"id"`
 	Name          string `json:"name,omitempty"`
 	ContextWindow int    `json:"contextWindow,omitempty"`
+	Vision        bool   `json:"vision,omitempty"` // #63 扩展：是否支持图片多模态输入
 }
 type Settings struct {
 	BaseURL               string                 `json:"baseURL"`
@@ -91,6 +92,7 @@ type Settings struct {
 	CloneVoiceID    string `json:"cloneVoiceID,omitempty"`    // 克隆出的音色 ID（创建音色后由克隆服务返回）
 	CloneTTSBackend string `json:"cloneTTSBackend,omitempty"` // openai | gpt-sovits | indextts2 | cosyvoice2 | openvoice
 	NextSessionSeq    int     `json:"nextSessionSeq,omitempty"`    // 下一个会话编号（单调递增，删除不复用，持久化）
+	AgentCWDMode    string `json:"agentCWDMode,omitempty"`   // #61：""=新行为(报容器内 ContainerAbs)；"legacy"=回退旧宿主路径提示
 }
 
 const (
@@ -236,6 +238,7 @@ type Message struct {
 	Role       string     `json:"role"`
 	Content    string     `json:"content"`
 	Type       string     `json:"type,omitempty"` // #62：消息类型区分；空=普通聊天。voice-in=语音听到；voice-note=小蜜决策/转交说明；voice-ask=小蜜追问
+	Images     []MessageImage `json:"-"` // #63 扩展：多模态图片，仅 outgoing 首轮用户消息附带，不持久化/不进 UI
 	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
 	ToolCallID string     `json:"tool_call_id,omitempty"`
 }
@@ -292,6 +295,7 @@ type App struct {
 	localRoot                 *os.Root
 	hostLocal                 string
 	workspaceDisplay          string
+	containerAbs              string // #61：当前工作区在容器内的绝对路径（EvalSymlinks(workspace.Name())），给模型/run_shell 当 CWD
 	cacheContainer            string
 	curlBin                   string
 	sourceRegistry            sourcesRegistry
@@ -1082,7 +1086,7 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	sherpaInstalled := sherpaBinOK && len(sherpaVoices) > 0
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "models": a.modelConfigOut(), "activeModel": a.settings.ActiveModel, "workspace": "/workspace", "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
@@ -1446,23 +1450,58 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"action": "locked", "text": "", "reason": "小秘对话历史已锁定，请在设置→语音小秘中点「解锁」输入密钥后再发言；解锁前内容不会被记录"})
 		return
 	}
-	entry, err := va.analyze(r.Context(), cfg, text, in.Context)
-	if err != nil {
-		fb := va.recordFallback(text, "小秘分析失败，直接发送: "+err.Error())
+	// #62 升级：语音也走小秘 agentic 自主决策管线（与文字同一循环）。
+	// 注入模型 API Key 后跑循环；失败则回落到既有 analyze 甄别（保留能力不删）。
+	cfg.APIKey, _ = a.modelAPIKeyLocked()
+	dec, aerr := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context)
+	if aerr != nil {
+		entry, err := va.analyze(r.Context(), cfg, text, in.Context)
+		if err != nil {
+			fb := va.recordFallback(text, "小秘分析失败，直接发送: "+err.Error())
+			a.mu.Lock()
+			a.recordAssistantExchangeLocked(text, fb, "voice")
+			a.mu.Unlock()
+			jsonOut(w, 200, fb)
+			return
+		}
+		if entry.Action == "send" && strings.TrimSpace(entry.Text) == "" {
+			entry.Text = text
+		}
 		a.mu.Lock()
-		a.recordAssistantExchangeLocked(text, fb, "voice")
-		a.mu.Unlock()
-		jsonOut(w, 200, fb)
+		a.recordAssistantExchangeLocked(text, entry, "voice")
+		if entry.Action == "send" {
+			fire, trigger := a.onPersonalityInteractLocked(personaXiaomi)
+			var sample string
+			if fire {
+				sample = a.personalitySampleLocked(personaXiaomi)
+			}
+			a.mu.Unlock()
+			if fire {
+				go a.runAutoEvolve(personaXiaomi, modeRefine, trigger, sample)
+			}
+		} else {
+			a.mu.Unlock()
+		}
+		jsonOut(w, 200, entry)
 		return
 	}
+	// agentic 决策映射回既有 voice-filter 前端契约（send/ask/standby/ignore）
+	entry := decisionToVoiceEntry(dec, text)
 	if entry.Action == "send" && strings.TrimSpace(entry.Text) == "" {
 		entry.Text = text
 	}
-	// #62：语音往来归位到 assistant 会话时间线（与 voice-history.json 双写，向后兼容）
+	// 回写 voice-history.json（向后兼容设置页时间线），并归位到 assistant 会话
 	a.mu.Lock()
-	a.recordAssistantExchangeLocked(text, entry, "voice")
+	if !va.encrypted || len(va.key) > 0 {
+		va.history = append(va.history, entry)
+		if len(va.history) > voiceHistoryMax {
+			va.history = va.history[len(va.history)-voiceHistoryMax:]
+		}
+		va.persistLocked()
+	}
+	a.recordAgenticExchangeLocked(text, dec, "voice")
 	if entry.Action == "send" {
-		// #34：小秘有效交互计数持久化（personality-state.json），达到阈值后台演化，用真实语音历史样本。
+		// #34：小秘有效交互计数持久化，达到阈值后台演化。
 		fire, trigger := a.onPersonalityInteractLocked(personaXiaomi)
 		var sample string
 		if fire {

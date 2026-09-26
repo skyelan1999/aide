@@ -120,3 +120,37 @@ func shellTouchesAssistantZone(command string) (string, bool) {
 	}
 	return "", false
 }
+
+// shellPathGuard 是 run_shell 的路径白名单（#61，防呆非强隔离）。
+// 在 shellBlocked 之后、命令真正执行前粗筛：
+//   - 拒绝读宿主敏感 dotfile（.ssh/.docker/.kube/.aws/.gnupg/.zsh_history/.zsh_sessions/Library/Keychains）
+//   - 拒绝写/改产品目录 A（/workspace）与配置目录 /data（仅当工程目录 B 不是 A 时）
+//   - 拒绝读写 B 之外的 /local/... 绝对路径
+// 注意：命令串字符串过滤天生可绕过（cd 后用相对路径、$(...) 等），这是"防呆+提示"，不是强隔离。
+func shellPathGuard(command, containerAbs string) (string, bool) {
+	if containerAbs == "" {
+		return "", false // ssh 模式或未知：不粗筛
+	}
+	low := strings.ToLower(command)
+	// 1) 敏感凭证 dotfile：credential 泄露面，一律拦
+	for _, s := range []string{"/.ssh/", "/.docker/", "/.kube/", "/.aws/", "/.gnupg/",
+		"/.zsh_history", "/.zsh_sessions", "/library/keychains"} {
+		if strings.Contains(low, s) {
+			return "禁止访问宿主敏感凭证目录（" + s + "）：超出工程目录，防呆拦截。请改用相对路径在工程目录内操作", true
+		}
+	}
+	// 2) 产品安装目录 A 与配置 /data：仅当当前工程目录 B 不是 A 时才需要保护（B==A 为默认工作区，向后兼容）
+	if containerAbs != "/workspace" {
+		if strings.Contains(low, "/workspace") {
+			return "禁止写/改产品安装目录 /workspace（它是 aide 自身代码与配置）：请用相对路径在工程目录内操作，防呆拦截", true
+		}
+		if strings.Contains(low, "/data/") {
+			return "禁止访问配置/会话目录 /data：工程目录之外，防呆拦截", true
+		}
+	}
+	// 3) B 之外的 /local/... 绝对路径：命令里出现 /local/ 但不在工程目录 B 内即拦截
+	if strings.Contains(low, "/local/") && !strings.Contains(low, strings.ToLower(containerAbs)) {
+		return "禁止读写工程目录之外的宿主路径（/local/...）：请使用相对路径，防呆拦截", true
+	}
+	return "", false
+}

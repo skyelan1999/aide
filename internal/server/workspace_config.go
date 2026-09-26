@@ -200,6 +200,49 @@ func (a *App) wsID() string {
 	return w.Mode + "|" + w.Path + "|" + w.Host
 }
 
+// snapshotAgentRootLocked 在任务创建时对当前工作区根做快照（#61）。调用方须持 a.mu。
+// 运行中切工作区不影响已建任务的 CWD；子 agent 整份继承父任务快照。
+func (a *App) snapshotAgentRootLocked() AgentRoot {
+	return AgentRoot{
+		DisplayHost:  a.workspaceDisplay,
+		ContainerAbs: a.containerAbs,
+		ID:           a.wsID(),
+	}
+}
+
+// taskContainerAbs 返回任务应使用的容器内 CWD：优先任务创建时快照，回退全局当前值。
+// 旧任务（无快照）回退全局，保持向后兼容。调用方无需持锁。
+func (a *App) taskContainerAbs(t *Task) string {
+	if t != nil && t.AgentRoot.ContainerAbs != "" {
+		return t.AgentRoot.ContainerAbs
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.containerAbs
+}
+
+// statusWorkspaceLabelLocked 状态 API 暴露的工程目录标签（#61）。调用方须持 a.mu。
+// 默认工作区时仍是 /workspace（向后兼容）；选了自定义工程目录后报容器内真实绝对路径。
+func (a *App) statusWorkspaceLabelLocked() string {
+	if a.containerAbs == "" {
+		return "/workspace"
+	}
+	return a.containerAbs
+}
+
+// cwdPromptLineLocked 系统提示中的「当前工作目录」行（#61）。调用方须持 a.mu。
+// 新行为报容器内真实绝对路径并禁止写 /workspace；agentCWDMode=legacy 回退旧宿主路径提示。
+func (a *App) cwdPromptLineLocked() string {
+	if a.settings.AgentCWDMode == "legacy" {
+		return "当前工作目录: " + a.workspaceDisplay
+	}
+	dir := a.containerAbs
+	if dir == "" {
+		dir = "/workspace"
+	}
+	return "当前工作目录(容器内绝对路径)=" + dir + "。所有文件操作使用相对路径；禁止使用 /workspace 绝对路径，/workspace 是产品安装目录，不得写入。"
+}
+
 // applyWorkspaceConfig 按配置切换工作空间/文档/缓存根，并清理旧 SSH 会话（FR-79 / FR-80）。
 // 每次成功切换递增 wsRevision：旧提案/命令的身份校验依赖该版本（R02）。
 func (a *App) applyWorkspaceConfig() error {
@@ -236,21 +279,29 @@ func (a *App) applyWorkspaceConfig() error {
 	// R02：登记当前工作区身份 → 根，运行中任务的工具据此解析原工作区根
 	a.wsRoots[a.wsID()] = a.workspace
 	a.workspaceDisplay = display
-	// 系统文档参考根
-	if dp, disp, err := a.resolveHostPath(a.wsConfig.Docs.Path); err == nil && dp != "" {
-		if r, err := os.OpenRoot(dp); err == nil {
-			oldRef := a.reference
-			a.reference = r
-			if oldRef != nil {
-				oldRef.Close()
-			}
-			_ = disp
+	// #61：记录容器内绝对路径（给模型/run_shell 当真实 CWD）。ssh 模式无容器路径，留空。
+	a.containerAbs = ""
+	if a.wsConfig.Workspace.Mode != "ssh" && a.workspace != nil {
+		if resolved, err := filepath.EvalSymlinks(a.workspace.Name()); err == nil {
+			a.containerAbs = resolved
+		} else {
+			a.containerAbs = a.workspace.Name()
 		}
 	}
-	// 缓存目录（自动创建；来源注册表存于此）
+	// /context 内置参考根常驻（#53 根因修复）：
+	// a.reference 自 New() 起恒指向 AIDE_CONTEXT，任何工作区/Docs.Path 切换都不得替换或 Close 它，
+	// 否则内置辅助资料（Harness 挂载目录）会被关闭、列表变空。
+	// Docs.Path 不再“替换”参考根，而是作为 system-docs 读写来源叠加进来源注册表：
+	// 空路径 → localSourceRoot 回落 a.reference（/context）；非空路径 → 独立打开该目录（可显示“目录为空”）。
+	_ = a.reference
+	// 缓存目录（自动创建；来源注册表存于此）。
+	// #61：默认落产品目录 A（a.workPath/.cache）向后兼容；当用户选了非默认工程目录 B
+	// 且未显式指定 cache.path 时，默认改落 B/.cache，避免把 Go 构建缓存/来源注册表写进产品仓库。
 	cacheContainer := filepath.Join(a.workPath, ".cache")
 	if cp, _, err := a.resolveHostPath(a.wsConfig.Cache.Path); err == nil && cp != "" {
 		cacheContainer = cp
+	} else if a.containerAbs != "" && a.containerAbs != a.workPath {
+		cacheContainer = filepath.Join(a.containerAbs, ".cache")
 	}
 	_ = os.MkdirAll(cacheContainer, 0755)
 	a.cacheContainer = cacheContainer

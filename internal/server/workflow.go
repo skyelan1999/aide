@@ -49,6 +49,15 @@ type ToolUse struct {
 	Preview string `json:"preview,omitempty"` // 界面展示用截断预览
 }
 
+// AgentRoot 是任务创建时对工作区根的快照（#61），替代散落的
+// workPath/workspace/localRoot/hostLocal/workspaceDisplay 对模型的暴露。
+// GoRoot 仍经 wsRoots[ID] 回查（*os.Root 不可序列化）；这里只存可序列化字符串标签。
+type AgentRoot struct {
+	DisplayHost  string `json:"displayHost,omitempty"`  // 给人看：宿主路径或 ssh host:path
+	ContainerAbs string `json:"containerAbs,omitempty"`  // 给模型/run_shell：容器内绝对路径
+	ID           string `json:"id,omitempty"`            // = wsID()
+}
+
 type Task struct {
 	ID                  string            `json:"id"`
 	Mode                string            `json:"mode"`
@@ -69,6 +78,7 @@ type Task struct {
 	WorkspaceRev        uint64            `json:"workspaceRev,omitempty"`
 	WorkspaceMode       string            `json:"workspaceMode,omitempty"`       // 任务创建时的工作区模式（工具绑定，R02）
 	WorkspaceRemotePath string            `json:"workspaceRemotePath,omitempty"` // 任务创建时的远程路径（ssh 工具绑定，R02）
+	AgentRoot           AgentRoot         `json:"agentRoot,omitempty"`           // #61：任务创建时快照的工作区根（CWD/子 agent 继承）
 	Model               string            `json:"model,omitempty"`               // 本次任务使用的模型（FR-69）
 	Profile             string            `json:"profile,omitempty"`             // 本次生效的 profile id
 	RequestSnapshots    []RequestSnapshot `json:"requestSnapshots,omitempty"`    // R08-04：实际发出的 Provider 请求快照（首轮+工具续跑）
@@ -140,7 +150,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("最多附加 8 个文件"))
 		return
 	}
-	contextText, versions, err := a.attachmentContext(in.Attachments)
+	contextText, images, versions, err := a.attachmentContext(in.Attachments)
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -154,6 +164,10 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if a.settings.Model == "" {
 		fail(w, 400, errors.New("请先打开模型设置，配置 API 和模型"))
+		return
+	}
+	if err := a.visionGateLocked(images); err != nil {
+		fail(w, 400, err)
 		return
 	}
 	// 澄清门禁：run 正在等待用户回答时，本次输入直接作为应答，不开新 run
@@ -217,7 +231,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{ID: newID(), Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path}
+	task := &Task{ID: newID(), Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	oldTitle := s.Title
 	if len(s.Messages) == 0 {
 		title := []rune(in.Prompt)
@@ -227,7 +241,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		s.Title = string(title)
 	}
 	// R08-04：与 /api/context-preview 共用同一构建器；超限在此可解释拦截（Provider 不会收到该调用）
-	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, a.settings, params, true)
+	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true)
 	if preview.OverLimit {
 		fail(w, 400, fmt.Errorf("上下文预算超限：输入估算 %d tokens + 输出预留 %d tokens = %d，超过模型窗口 %d；请缩短任务、减少附件或调大窗口后重试", preview.InputEstimate, preview.OutputReserve, preview.TotalEstimate, preview.ContextWindow))
 		return
@@ -524,13 +538,17 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	contextText, versions, err := a.attachmentContext(orig.Attachments)
+	contextText, images, versions, err := a.attachmentContext(orig.Attachments)
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{ID: newID(), Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path}
-	preview := a.buildContextPreview(s, orig.Prompt, orig.Mode, contextText, a.settings, params, true)
+	if err := a.visionGateLocked(images); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	task := &Task{ID: newID(), Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	preview := a.buildContextPreview(s, orig.Prompt, orig.Mode, contextText, images, a.settings, params, true)
 	if preview.OverLimit {
 		fail(w, 400, errors.New("上下文预算超限，重试失败"))
 		return
@@ -1365,12 +1383,13 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt, profileID string) (stri
 		Strategy: "manual", Model: a.settings.Model,
 		WorkspaceID: parentTask.WorkspaceID, WorkspaceRev: parentTask.WorkspaceRev,
 		WorkspaceMode: parentTask.WorkspaceMode, WorkspaceRemotePath: parentTask.WorkspaceRemotePath,
+		AgentRoot: parentTask.AgentRoot,
 	}
 	subSess.Runs = append(subSess.Runs, subTask)
 	subSess.Messages = append(subSess.Messages, Message{Role: "user", Content: subPrompt})
 	// 构建上下文必须在锁内：contextTools() 读 a.settings.DisabledTools 要求调用方持锁
 	cfg := a.settings
-	preview := a.buildContextPreview(subSess, subPrompt, "chat", "", cfg, params, true)
+	preview := a.buildContextPreview(subSess, subPrompt, "chat", "", nil, cfg, params, true)
 	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...)
 	firstInput := preview.Messages
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
@@ -1855,8 +1874,8 @@ func (a *App) recordVerification(title, content, reqId, designId, implId string)
 	}, title, content, joinRelated(reqId, designId, implId))
 }
 
-// readOfficeFile 用 python 解析 Office 文件为纯文本
-func (a *App) readOfficeFile(path string) string {
+// readOfficeFile 用 python 解析 Office 文件为纯文本（#61：工作目录绑定任务快照 ContainerAbs）
+func (a *App) readOfficeFile(dir, path string) string {
 	script := `
 import sys
 path = sys.argv[1]
@@ -1885,7 +1904,9 @@ except Exception as e:
     sys.exit(1)
 `
 	cmd := exec.Command("python3", "-c", script, path)
-	cmd.Dir = "/workspace"
+	if dir != "" {
+		cmd.Dir = dir
+	}
 	out, err := cmd.Output()
 	if err != nil {
 		return "Office 文件解析失败: " + err.Error()
@@ -1897,8 +1918,8 @@ except Exception as e:
 	return result
 }
 
-// searchText 关键字搜索工作目录
-func (a *App) searchText(query, path string) string {
+// searchText 关键字搜索工作目录（#61：搜索根绑定任务快照 ContainerAbs，不再硬编码 /workspace）
+func (a *App) searchText(dir, query, path string) string {
 	if query == "" {
 		return "缺少 query"
 	}
@@ -1907,7 +1928,7 @@ func (a *App) searchText(query, path string) string {
 	}
 	// 用 grep -rn 递归搜索
 	cmd := exec.Command("bash", "--norc", "-c",
-		"cd /workspace && grep -rn --include='*.txt' --include='*.md' --include='*.go' --include='*.js' --include='*.py' --include='*.json' --include='*.html' --include='*.css' -i "+
+		"cd "+shellQuote(dir)+" && grep -rn --include='*.txt' --include='*.md' --include='*.go' --include='*.js' --include='*.py' --include='*.json' --include='*.html' --include='*.css' -i "+
 			shellQuote(query)+" "+shellQuote(path)+" 2>/dev/null | head -50")
 	out, err := cmd.Output()
 	if err != nil {
@@ -2334,7 +2355,7 @@ func readOnlyAllowed(command string) bool {
 	return false
 }
 
-func (a *App) execShellCommand(parent context.Context, command string) (string, int, error) {
+func (a *App) execShellCommand(parent context.Context, task *Task, command string) (string, int, error) {
 	a.mu.Lock()
 	mode := a.settings.SandboxMode
 	timeoutSec := a.settings.ShellTimeout
@@ -2371,17 +2392,29 @@ func (a *App) execShellCommand(parent context.Context, command string) (string, 
 	if a.workspaceMode() == "ssh" {
 		return "", -1, errors.New("远程工作区模式暂不支持 run_shell 自动执行，请手动在终端运行")
 	}
-	a.mu.Lock()
-	wsRoot := a.workspace.Name()
-	a.mu.Unlock()
-	dir, err := filepath.EvalSymlinks(wsRoot)
+	// #61：CWD 绑定任务创建时快照的 ContainerAbs（消除运行中切工作区错位）。
+	dir := a.taskContainerAbs(task)
+	if dir == "" {
+		a.mu.Lock()
+		dir = a.workspace.Name()
+		a.mu.Unlock()
+	}
+	dir, err := filepath.EvalSymlinks(dir)
 	if err != nil {
 		return "", -1, err
 	}
+	// #61：路径白名单（防呆非强隔离）。danger-full-access 不做路径粗筛（用户显式全权）。
+	if mode != "danger-full-access" {
+		if reason, bad := shellPathGuard(command, dir); bad {
+			return "", -1, errors.New("路径白名单拦截：" + reason)
+		}
+	}
+	// #61：命令体前加 cd 保护，确保嵌套 shell/脚本也以工程目录 B 为 CWD。
+	wrapped := "cd " + shellQuote(dir) + " 2>/dev/null; " + command
 	// 命令 ctx 派生自 run ctx：用户点停止时立即取消；ShellTimeout 作为单条命令上限。
 	ctx, cancel := context.WithTimeout(parent, time.Duration(timeoutSec)*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "bash", "--noprofile", "--norc", "-c", command)
+	cmd := exec.CommandContext(ctx, "bash", "--noprofile", "--norc", "-c", wrapped)
 	cmd.Dir = dir
 	// 独立进程组，取消时杀掉整个进程组（含 find 等 bash 子进程），避免孤儿继续运行。
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -2392,9 +2425,11 @@ func (a *App) execShellCommand(parent context.Context, command string) (string, 
 		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 	}
 	cmd.WaitDelay = 2 * time.Second
-	cacheEnv := "/home/aide/.cache/go-build"
-	if c := a.wsConfig.Cache.Path; c != "" {
-		cacheEnv = filepath.Join(a.workPath, filepath.FromSlash(c))
+	a.mu.Lock()
+	cacheEnv := a.cacheContainer
+	a.mu.Unlock()
+	if cacheEnv == "" {
+		cacheEnv = "/home/aide/.cache/go-build"
 	}
 	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=" + cacheEnv, "GOPATH=/home/aide/go", "AIDE_CACHE=" + cacheEnv, "AIDE_SANDBOX=1"}
 	var stdoutBuf, stderrBuf strings.Builder
@@ -2462,7 +2497,7 @@ func analyzeShellFailure(command, output string, code int, err error) string {
 	// dwg 闭源格式探测失败：直接引导换 dxf/ezdxf，停止无效空转（本次 bug 的直接诱因）
 	case strings.Contains(lowCmd, "dwgwrite") || strings.Contains(lowCmd, "dwg2dxf") || strings.Contains(lowCmd, "libredwg") || strings.Contains(lowCmd, ".dwg"):
 		causeTitle = "dwg 是闭源二进制格式，容器内无法直接生成或转换"
-		causeFix = "不要再探测/安装 dwgwrite、dwg2dxf、libredwg。直接用容器已装的 ezdxf 生成 .dxf（AutoCAD/ZWCAD/GstarCAD 可直接打开），例如：python3 -c 'import ezdxf; doc=ezdxf.new(\"R2010\"); msp=doc.modelspace(); msp.add_line((0,0),(100,0)); doc.saveas(\"/workspace/户型.dxf\")'"
+		causeFix = "不要再探测/安装 dwgwrite、dwg2dxf、libredwg。直接用容器已装的 ezdxf 生成 .dxf（AutoCAD/ZWCAD/GstarCAD 可直接打开），例如：python3 -c 'import ezdxf; doc=ezdxf.new(\"R2010\"); msp=doc.modelspace(); msp.add_line((0,0),(100,0)); doc.saveas(\"户型.dxf\")'"
 	case strings.Contains(lowCmd, "apt-get") || strings.Contains(lowCmd, "apt ") || strings.Contains(lowCmd, "dpkg") || strings.Contains(lowCmd, "sudo"):
 		causeTitle = "容器内无 root 权限，无法用 apt/sudo 安装系统包"
 		causeFix = "不要重复 apt-get install / sudo。需要系统库时告知用户在镜像里预装；Python 能力优先用容器已装的包（如 ezdxf），pip 全局安装通常也无写权限"
@@ -2599,7 +2634,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		rows := []map[string]any{}
 		for _, src := range a.sourceRegistry.Sources {
 			if src.Enabled {
-				rows = append(rows, map[string]any{"id": src.ID, "name": guideLabel(src.Name), "type": src.Type, "readable": src.Type != "mcp", "aiAccess": "read-only"})
+				rows = append(rows, map[string]any{"id": src.ID, "name": guideLabel(src.Name), "type": src.Type, "readable": src.Type != "mcp", "builtin": src.Builtin, "aiAccess": "read-only"})
 			}
 		}
 		raw, _ := json.Marshal(rows)
@@ -2636,7 +2671,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		}
 		// Office 文件用 python 解析成文本
 		if strings.HasSuffix(p, ".docx") || strings.HasSuffix(p, ".xlsx") || strings.HasSuffix(p, ".pptx") {
-			return a.readOfficeFile(p)
+			return a.readOfficeFile(wsRoot.Name(), p)
 		}
 		// 本地工作区大文件分段：offset(行,0起)/limit(行数) 流式只读窗口，不全量入上下文
 		if sourceID == "" && mode != "ssh" {
@@ -2676,7 +2711,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		if command == "" {
 			return "缺少 command 参数"
 		}
-		out, code, err := a.execShellCommand(ctx, command)
+		out, code, err := a.execShellCommand(ctx, task, command)
 		if err != nil || code != 0 {
 			fb := analyzeShellFailure(command, out, code, err)
 			if strings.TrimSpace(out) != "" {
@@ -2849,7 +2884,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		}
 		return a.writeMemory(content)
 	case "search_text":
-		return a.searchText(str("query"), str("path"))
+		return a.searchText(wsRoot.Name(), str("query"), str("path"))
 	case "semantic_search":
 		return a.semanticSearch(str("query"))
 	case "web_search":

@@ -19,7 +19,7 @@ func TestExecShellCommandCancellable(t *testing.T) {
 	done := make(chan error, 1)
 	start := time.Now()
 	go func() {
-		_, _, err := a.execShellCommand(ctx, "sleep 30")
+		_, _, err := a.execShellCommand(ctx, nil, "sleep 30")
 		done <- err
 	}()
 	time.Sleep(600 * time.Millisecond) // 等命令启动
@@ -46,7 +46,7 @@ func TestExecShellCommandStillHonorsTimeout(t *testing.T) {
 	a := testApp(t)
 	start := time.Now()
 	// ShellTimeout 默认 60s，这里用一条正常快速命令确认链路正常返回。
-	_, code, err := a.execShellCommand(context.Background(), "echo hello-aide")
+	_, code, err := a.execShellCommand(context.Background(), nil, "echo hello-aide")
 	if err != nil || code != 0 {
 		t.Fatalf("普通命令执行失败 code=%d err=%v", code, err)
 	}

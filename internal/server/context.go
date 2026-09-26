@@ -98,12 +98,52 @@ func (a *App) modelWindow(modelID string) int {
 	return defaultContextWindow
 }
 
-// attachmentContext 读取任务附件（与 startTask 实际使用同一条路径），
-// 返回附加文本与 workspace 版本快照。
-func (a *App) attachmentContext(atts []Attachment) (string, map[string]Change, error) {
+// attachmentContext 读取任务附件（与 startTask 实际使用同一条路径）。
+// 返回注入上下文的文本、需随消息发送的多模态图片、workspace 版本快照。
+// 可解析文档（docx/pdf/xlsx/pptx）由后端提取文本，不依赖模型视觉；
+// 图片作为多模态附件返回，视觉能力门禁由调用方持锁后调 visionGateLocked 完成
+// （不在此加锁，避免与已持锁的 retryTask 死锁）。
+func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[string]Change, error) {
 	contextText := ""
+	var images []MessageImage
 	versions := map[string]Change{}
+	addText := func(root, apath, body string) error {
+		contextText += fmt.Sprintf("\n<untrusted-file root=%q path=%q>\n%s\n</untrusted-file>\n", root, apath, body)
+		if len(contextText) > maxAttachmentChars {
+			return fmt.Errorf("附件总量超过 %d KB，请减少附件或缩短文件", maxAttachmentChars>>10)
+		}
+		return nil
+	}
 	for _, att := range atts {
+		ext := strings.ToLower(path.Ext(att.Path))
+
+		// 1) 图片 → 多模态（是否可发送由调用方 visionGateLocked 判定）
+		if _, isImg := imageAttachmentTypes[ext]; isImg {
+			img, err := a.readLocalImage(att)
+			if err != nil {
+				return "", nil, nil, err
+			}
+			images = append(images, img)
+			if err := addText(att.Root, att.Path, "[图片附件 "+path.Base(att.Path)+"，已作为视觉输入随消息发送]"); err != nil {
+				return "", nil, nil, err
+			}
+			continue
+		}
+
+		// 2) 可解析文档 → 后端提取文本，不依赖模型视觉
+		if _, isDoc := documentAttachmentExts[ext]; isDoc {
+			text, err := a.extractDocumentText(att)
+			if err != nil {
+				return "", nil, nil, err
+			}
+			text = truncateExtract(text)
+			if err := addText(att.Root, att.Path, text); err != nil {
+				return "", nil, nil, err
+			}
+			continue
+		}
+
+		// 3) 普通文本文件（原逻辑）
 		var b []byte
 		var err error
 		if att.Root == "source" {
@@ -111,30 +151,29 @@ func (a *App) attachmentContext(atts []Attachment) (string, map[string]Change, e
 			src, ok := a.findSource(att.Source)
 			a.mu.Unlock()
 			if !ok || !src.Enabled {
-				return "", nil, errors.New("来源不存在或已停用")
+				return "", nil, nil, errors.New("来源不存在或已停用")
 			}
 			b, err = a.readSourceText(src, att.Path)
 		} else if (att.Root == "workspace" || att.Root == "") && a.workspaceMode() == "ssh" {
 			b, err = a.readWorkspaceText(att.Path)
 		} else {
-			var root *os.Root
-			root, err = a.root(att.Root)
+			var r *os.Root
+			r, err = a.root(att.Root)
 			if err == nil {
-				b, err = readText(root, att.Path)
+				b, err = readText(r, att.Path)
 			}
 		}
 		if err != nil {
-			return "", nil, err
+			return "", nil, nil, friendlyAttachError(att.Path, err)
 		}
-		contextText += fmt.Sprintf("\n<untrusted-file root=%q path=%q>\n%s\n</untrusted-file>\n", att.Root, att.Path, string(b))
-		if len(contextText) > 80000 {
-			return "", nil, errors.New("附件总量超过 80 KB，请选择较小文件")
+		if err := addText(att.Root, att.Path, string(b)); err != nil {
+			return "", nil, nil, err
 		}
 		if att.Root == "workspace" || att.Root == "" {
 			versions[path.Clean(att.Path)] = Change{BaseHash: hash(b), Before: string(b)}
 		}
 	}
-	return contextText, versions, nil
+	return contextText, images, versions, nil
 }
 
 // systemPromptForSession 按会话 Kind 选 system 设定：
@@ -153,9 +192,9 @@ func (a *App) systemPromptForSession(s *Session) string {
 
 // buildContextPreview 构造与真实首轮请求一致的消息/工具并给出预算估算。
 // s 为 nil 时表示新会话（无历史与摘要）。调用方需持有 a.mu。
-func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, cfg Settings, params ProfileParams, includeBody bool) *ContextPreview {
+func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, images []MessageImage, cfg Settings, params ProfileParams, includeBody bool) *ContextPreview {
 	// 按会话 Kind 选基础 system 设定（小秘系统会话恒为小秘人格；普通会话跟随全局活动人格）
-	history := []Message{{Role: "system", Content: a.systemPromptForSession(s) + "\n当前工作目录: " + a.workspaceDisplay + "\n可用工具: " + a.toolListHint()}}
+	history := []Message{{Role: "system", Content: a.systemPromptForSession(s) + "\n" + a.cwdPromptLineLocked() + "\n可用工具: " + a.toolListHint()}}
 	if guide := a.environmentGuide(); guide != "" {
 		history[0].Content += "\n" + guide
 	}
@@ -184,7 +223,7 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 		historyCount = len(s.Messages) - start
 	}
 	historyStart := len(history) // 回放段起点（含摘要之后的第一条历史）
-	history = append(history, Message{Role: "user", Content: prompt + contextText})
+	history = append(history, Message{Role: "user", Content: prompt + contextText, Images: images})
 	instruction := chatInstruction
 	if mode == "workflow" {
 		instruction = planInstruction
@@ -281,7 +320,7 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("最多附加 8 个文件"))
 		return
 	}
-	contextText, _, err := a.attachmentContext(in.Attachments)
+	contextText, images, _, err := a.attachmentContext(in.Attachments)
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -290,6 +329,10 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 	defer a.mu.Unlock()
 	if a.settings.Model == "" {
 		fail(w, 400, errors.New("请先打开模型设置，配置 API 和模型"))
+		return
+	}
+	if err := a.visionGateLocked(images); err != nil {
+		fail(w, 400, err)
 		return
 	}
 	var s *Session
@@ -306,7 +349,7 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = profileID
-	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, a.settings, params, true)
+	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true)
 	jsonOut(w, 200, preview)
 }
 
