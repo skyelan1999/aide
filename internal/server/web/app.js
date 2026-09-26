@@ -3467,9 +3467,85 @@ function isDocxPath(path) { return /\.docx$/i.test(path || ''); }
 function isDocPath(path) { return /\.doc$/i.test(path || ''); }
 function codeLang(path) {
   var ext = (path || '').split('.').pop().toLowerCase();
-  var map = { py:'python', pyw:'python', go:'go', js:'javascript', mjs:'javascript', cjs:'javascript',
-    ts:'typescript', tsx:'typescript', jsx:'javascript', json:'json', sh:'bash', bash:'bash', zsh:'bash',
-    yaml:'yaml', yml:'yaml', sql:'sql', md:'markdown', mkd:'markdown' };
+  var map = {
+    // Python
+    py:'python', pyw:'python', py3:'python', pyx:'python',
+    // Go
+    go:'go',
+    // JavaScript / TypeScript
+    js:'javascript', mjs:'javascript', cjs:'javascript', jsx:'javascript',
+    ts:'typescript', tsx:'typescript',
+    // JSON
+    json:'json', jsonc:'json',
+    // Shell
+    sh:'bash', bash:'bash', zsh:'bash', fish:'bash',
+    // YAML / TOML / INI
+    yaml:'yaml', yml:'yaml', toml:'ini', ini:'ini', cfg:'ini', conf:'ini',
+    // SQL
+    sql:'sql', pgsql:'sql', mysql:'sql',
+    // Markdown
+    md:'markdown', mkd:'markdown', markdown:'markdown',
+    // C / C++
+    c:'c', h:'c', cc:'cpp', cpp:'cpp', cxx:'cpp', hpp:'cpp', hh:'cpp',
+    // Java
+    java:'java',
+    // Kotlin
+    kt:'kotlin', kts:'kotlin',
+    // Swift
+    swift:'swift',
+    // Rust
+    rs:'rust',
+    // Ruby
+    rb:'ruby', erb:'ruby',
+    // PHP
+    php:'php', phtml:'php',
+    // C#
+    cs:'csharp',
+    // Scala
+    scala:'scala', sc:'scala',
+    // Lua
+    lua:'lua',
+    // Dart
+    dart:'dart',
+    // R
+    r:'r', R:'r',
+    // MATLAB
+    m:'matlab',
+    // Haskell
+    hs:'haskell',
+    // Clojure
+    clj:'clojure', cljs:'clojurescript',
+    // Elixir
+    ex:'elixir', exs:'elixir',
+    // Erlang
+    erl:'erlang', hrl:'erlang',
+    // F#
+    fs:'fsharp',
+    // Groovy
+    groovy:'groovy', gvy:'groovy',
+    // Perl
+    pl:'perl', pm:'perl',
+    // Vue
+    vue:'xml',
+    // HTML / XML
+    html:'xml', htm:'xml', xml:'xml', svg:'xml',
+    // CSS / SCSS / Less
+    css:'css', scss:'scss', less:'less',
+    // GraphQL
+    gql:'graphql', graphql:'graphql',
+    // Protocol Buffers
+    proto:'protobuf',
+    // Dockerfile
+    dockerfile:'dockerfile',
+    // Makefile
+    makefile:'makefile', mk:'makefile',
+    // Vim script
+    vim:'vim',
+    // Nginx
+    nginx:'nginx',
+    // Apache
+    htaccess:'apache',
+  };
   return map[ext] || '';
 }
 function setupCodeHighlight(textarea, lang) {
