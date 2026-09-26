@@ -1512,7 +1512,22 @@ $('settings-form').onsubmit = action(async event => { event.preventDefault(); if
 $('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; if (state.file.wsId) body.workspaceId = state.file.wsId; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; toast(t("✓ 已保存")); await loadFiles(); });
 $('attach-file').onclick = () => {
   if (state.file.content !== $('editor').value) { toast(t("请先保存修改，再附加到任务")); return; }
-  const att = { root: state.file.root, path: state.file.path }; if (state.file.source) { att.root = 'source'; att.source = state.file.source; } if (!state.attachments.some(a => a.root === att.root && a.path === att.path && (a.source || '') === (att.source || ''))) { if (state.attachments.length >= 8) { toast(t("最多附加 8 个文件")); return; } state.attachments.push(att); }
+  const fp = state.file.path || '';
+  const ext = fp.split('.').pop().toLowerCase();
+  const att = { root: state.file.root, path: fp }; if (state.file.source) { att.root = 'source'; att.source = state.file.source; }
+  // 图片附件：检查模型视觉能力
+  if (isImagePath(fp)) {
+    const vision = state.config && state.config.vision;
+    if (!vision) {
+      const rec = (state.config && state.config.visionRecommend || []).join('、');
+      toast(t("当前模型不支持图片输入，请切换到支持视觉的模型") + (rec ? "（推荐：" + rec + "）" : ""));
+      return;
+    }
+  }
+  if (!state.attachments.some(a => a.root === att.root && a.path === att.path && (a.source || '') === (att.source || ''))) {
+    if (state.attachments.length >= 8) { toast(t("最多附加 8 个文件")); return; }
+    state.attachments.push(att);
+  }
   renderAttachments(); $('editor-dialog').close(); $('prompt').focus();
 };
 $('new-file').onclick = () => { $('new-file-path').value = state.dir === '.' ? '' : state.dir + '/'; $('new-file-dialog').showModal(); };
