@@ -93,6 +93,10 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "list_sources", "description": "List enabled reference source IDs and capabilities, without credentials. Use source ID in list_files/read_file to access reference contents.", "parameters": map[string]any{"type": "object", "properties": map[string]any{}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "list_files", "description": "列出当前工作目录（或指定相对路径）的内容", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Optional reference source ID from list_sources; omitted means workspace"}, "path": map[string]any{"type": "string", "description": "相对路径，默认 ."}}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_file", "description": "读取工作目录内文本文件内容（UTF-8）。默认返回全文（受上下文大小自动截断）；对大文件用 offset(0 起始行号)/limit(行数) 分段读取，逐段翻页，避免一次读入超大文件。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Optional reference source ID from list_sources; omitted means workspace"}, "path": map[string]any{"type": "string", "description": "相对路径"}, "offset": map[string]any{"type": "integer", "description": "可选：起始行号（0 起始），仅本地工作区文件支持"}, "limit": map[string]any{"type": "integer", "description": "可选：最多返回行数，仅本地工作区文件支持"}}, "required": []string{"path"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "docx_structure", "description": "读取 .docx 的结构（标题层级/段落前50字/表格行列数/原生批注数）。处理 Word 文档时先调用本工具了解结构，再用 docx_list_comments 读批注。仅支持本地工作区的 .docx。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string", "description": "工作区相对路径，如 方案.docx"}}, "required": []string{"path"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "docx_list_comments", "description": "列出 .docx 文件内的原生 Word 批注（作者/时间/正文）。先 docx_structure 了解文档，再读批注。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}}, "required": []string{"path"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "docx_add_comment", "description": "给 .docx 添加原生 Word 批注：把 quote（原文片段）所在段落锚定批注。修改文档后建议用 docx_list_comments 复核、用 docx_resolve_comment 标记解决。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "quote": map[string]any{"type": "string", "description": "文档中已存在的原文片段"}, "text": map[string]any{"type": "string", "description": "批注内容"}, "author": map[string]any{"type": "string", "description": "可选，默认 aide"}, "anchorIndex": map[string]any{"type": "integer", "description": "可选：quote 第几次出现（0 起始），默认 0"}}, "required": []string{"path", "quote", "text"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "docx_resolve_comment", "description": "把 .docx 的原生批注标记为已解决（Word 2016+ commentsExtended 格式）。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "id": map[string]any{"type": "string", "description": "批注 id（docx_list_comments 返回的 id）"}}, "required": []string{"path", "id"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "write_file", "description": "生成文件修改提案（不直接写入；需用户批准应用）", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}}, "required": []string{"path", "content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox and return its stdout/stderr/exit code", "parameters": map[string]any{"type": "object", "properties": map[string]any{"command": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "spawn_subagent", "description": "Spawn a sub-agent session to handle an independent subtask. The sub-agent runs in a separate session linked to this one; when it finishes it auto-archives. Returns the sub-session ID and title.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"task": map[string]any{"type": "string", "description": "The subtask instruction for the sub-agent"}, "profile": map[string]any{"type": "string", "description": "Optional profile id (default/precise/creative/...) chosen by matching ACTUAL sampling params (temperature/top_p/max_tokens) to the subtask; omit to use defaults"}}}, "required": []string{"task"}}},
@@ -320,7 +324,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		var tools []any
 		if withTools {
 			a.mu.Lock()
-			tools = a.contextTools()
+			tools = a.contextToolsFor(s)
 			a.mu.Unlock()
 		}
 		stepParams := params
@@ -2652,6 +2656,14 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			b = b[:60<<10]
 		}
 		return string(b)
+	case "docx_structure":
+		return a.docxTool(wsRoot, mode, str("path"), "docx_structure.py")
+	case "docx_list_comments":
+		return a.docxTool(wsRoot, mode, str("path"), "docx_list_comments.py")
+	case "docx_add_comment":
+		return a.docxTool(wsRoot, mode, str("path"), "docx_add_comment.py", str("quote"), str("text"), str("author"), fmt.Sprint(toolInt("anchorIndex")))
+	case "docx_resolve_comment":
+		return a.docxTool(wsRoot, mode, str("path"), "docx_resolve_comment.py", str("id"))
 	case "write_file":
 		pathStr, content := str("path"), rawStr("content")
 		msg, err := a.recordToolProposal(task, versions, map[string]any{"type": "file", "path": pathStr, "content": content})
@@ -2687,6 +2699,89 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			return "子会话创建失败: " + err.Error()
 		}
 		return fmt.Sprintf("子会话已创建: %s (标题: %s, 参数配置: %s)。子会话独立运行，完成后自动归档，结果会关联到当前会话。", subID, subTitle, str("profile"))
+
+	// ── #62：小秘跨会话工具（仅 Kind=assistant 会话注入 schema；普通会话不会触发）──
+	case "search_sessions":
+		incArchived := true
+		if v, ok := args["includeArchived"].(bool); ok {
+			incArchived = v
+		}
+		a.mu.Lock()
+		res := a.searchSessionsTool(str("keyword"), incArchived)
+		a.mu.Unlock()
+		b, _ := json.Marshal(res)
+		return string(b)
+	case "get_session":
+		a.mu.Lock()
+		gs, gerr := a.getSessionTool(str("ref"))
+		a.mu.Unlock()
+		if gerr != nil {
+			return gerr.Error()
+		}
+		// 只回摘要+最近消息，避免把整段历史灌进上下文
+		recent := gs.Messages
+		if len(recent) > 10 {
+			recent = recent[len(recent)-10:]
+		}
+		rb, _ := json.Marshal(map[string]any{
+			"number": gs.Number, "id": gs.ID, "title": gs.Title,
+			"pinned": gs.Pinned, "archived": gs.Archived, "kind": gs.Kind,
+			"followed": gs.FollowedByAssistant, "followNote": gs.FollowNote,
+			"updated": gs.Updated,
+			"recentMessages": recent,
+		})
+		return string(rb)
+	case "follow_session":
+		a.mu.Lock()
+		fs, ferr := a.followSessionTool(str("ref"), str("note"))
+		a.mu.Unlock()
+		if ferr != nil {
+			return ferr.Error()
+		}
+		return fmt.Sprintf("已标记跟进会话 #%d %s（备注：%s）。", fs.Number, fs.Title, fs.FollowNote)
+	case "push_to_session":
+		msg := strings.TrimSpace(rawStr("message"))
+		if msg == "" {
+			return "缺少 message 参数"
+		}
+		ref := str("ref")
+		a.mu.Lock()
+		var target *Session
+		var created bool
+		if ref == "" || ref == "new" {
+			// 新建一个普通会话承接小秘转交的任务
+			now := time.Now().UTC().Format(time.RFC3339Nano)
+			titleRunes := []rune(msg)
+			if len(titleRunes) > 24 {
+				titleRunes = titleRunes[:24]
+			}
+			target = &Session{
+				ID: newID(), Title: string(titleRunes), Created: now, Updated: now,
+				Messages: []Message{{Role: "user", Content: msg}},
+				Runs:     []*Task{},
+			}
+			a.assignSessionNumber(target)
+			a.sessions[target.ID] = target
+			created = true
+			_ = a.save(target)
+		} else {
+			target = a.resolveSessionRef(ref)
+			if target == nil {
+				a.mu.Unlock()
+				return "会话不存在: " + ref
+			}
+			target.Messages = append(target.Messages, Message{
+				Role:    "user",
+				Content: "[小秘转交] " + msg,
+			})
+			target.Updated = time.Now().UTC().Format(time.RFC3339Nano)
+			_ = a.save(target)
+		}
+		a.mu.Unlock()
+		if created {
+			return fmt.Sprintf("已新建会话 #%d（%s）并写入任务：%s。用户可在该会话让 aide 接手；如需现在就跑，提示用户去那里发送。", target.Number, target.Title, msg)
+		}
+		return fmt.Sprintf("已向会话 #%d（%s）推送：%s", target.Number, target.Title, msg)
 	case "ask_user":
 		question := str("question")
 		qtype := str("type")

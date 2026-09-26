@@ -177,7 +177,7 @@ function renderAssistantEntry(s) {
   assistantEntrySession = s;
   const entry = $('assistant-entry');
   if (!entry) return;
-  entry.querySelector('.assistant-entry-name').textContent = s.title || t('小秘');
+  entry.querySelector('.assistant-entry-name').textContent = (state.config && state.config.assistantName) || t('小秘');
   entry.classList.toggle('active', state.session?.id === s.id);
   const running = s.status === 'running';
   entry.querySelector('.assistant-entry-dot').classList.toggle('live', running);
@@ -809,6 +809,7 @@ function renderSession() {
   const openDetails = new Set([...$('timeline').querySelectorAll('details[open][data-key]')].map(d => d.dataset.key));
   const isAssistantSess = state.session?.kind === 'assistant';
   document.body.classList.toggle('assistant-mode', !!isAssistantSess);
+  $('prompt').placeholder = isAssistantSess ? t('对小蜜说点什么…') : '';
   $('session-title').textContent = state.session?.title || t("开始新的探索");
   // #62：小秘会话始终隐藏通用 welcome（及其 4 个快捷入口），改渲染小蜜专属时间线/空状态
   $('welcome').classList.toggle('hidden', isAssistantSess || !!state.session?.runs.length);
@@ -821,6 +822,28 @@ function renderSession() {
     es.append(el('p', 'assistant-empty-sub', t('还没有对话，点麦克风开始')));
     $('timeline').append(es);
     return;
+  }
+
+  // #62扩展：小蜜会话渲染 messages 时间线（voice-in/text-in/voice-note/voice-ask）
+  if (isAssistantSess && (state.session?.messages || []).length) {
+    for (const msg of state.session.messages) {
+      const type = msg.type || '';
+      const row = el('div', 'assistant-msg am-' + (type || 'chat'));
+      const iconMap = { 'voice-in': '🎤', 'text-in': '⌨️', 'voice-note': '💬', 'voice-ask': '📋' };
+      const icon = iconMap[type] || '💬';
+      row.append(el('span', 'am-icon', icon));
+      const body = el('div', 'am-body');
+      if (msg.text) body.append(el('div', 'am-text', msg.text));
+      if (msg.reply) body.append(el('div', 'am-reply', msg.reply));
+      if (msg.dispatched) {
+        const card = el('button', 'am-dispatched');
+        card.textContent = t('已创建会话 #{0}：{1}', msg.dispatched.number || '?', msg.dispatched.title || '');
+        card.onclick = action(() => selectSession(msg.dispatched.sessionId));
+        body.append(card);
+      }
+      row.append(body);
+      $('timeline').append(row);
+    }
   }
   for (const run of state.session?.runs || []) {
     if (run.status === 'running') state.busy = true;
@@ -1092,7 +1115,7 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
 
 async function openFile(path) {
   // 图片 / STL / PDF 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
-  if (isImagePath(path) || isStlPath(path) || isPdfPath(path) || isDxfPath(path)) {
+  if (isImagePath(path) || isStlPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path)) {
     state.file = { path, root: state.root, source: state.root === 'context' ? state.source : '', content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
     showEditor();
     return;
@@ -1125,12 +1148,15 @@ function showEditor() {
   const isStl = isStlPath(state.file.path);
   const isPdf = isPdfPath(state.file.path);
   const isDxf = isDxfPath(state.file.path);
+  const isDocx = isDocxPath(state.file.path);
   $('editor').readOnly = readOnly;
   // 图片 / STL / PDF 为只读可视化查看器，无文本可保存，禁用保存（避免空内容覆盖原文件）；drawio 可保存
-  $('save-file').disabled = readOnly || isImg || isStl || isPdf || isDxf;
+  // 可视化查看器（图片/STL/PDF/DXF）无文本可保存 → 隐藏保存按钮；只读来源的文本文件 → 禁用
+  $("save-file").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx);
+  $("save-file").disabled = readOnly;
   $('attach-file').disabled = state.file.fresh;
-  $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf));
-  $("editor-ro-badge").title = (readOnly && state.file.root === "context") ? (sourceIsRW() ? t("辅助资料 · 读写来源") : t("辅助资料 · 只读")) : (isImg || isStl || isPdf || isDxf ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"));
+  $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx));
+  $("editor-ro-badge").title = (readOnly && state.file.root === "context") ? (sourceIsRW() ? t("辅助资料 · 读写来源") : t("辅助资料 · 只读")) : (isImg || isStl || isPdf || isDxf || isDocx ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"));
   $('editor-mode-switch').classList.toggle('hidden', !md);
   if (isStl) {
     $('editor').classList.add('hidden');
@@ -1144,6 +1170,10 @@ function showEditor() {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
     setupDxfPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
+  } else if (isDocx) {
+    $('editor').classList.add('hidden');
+    $('editor-preview').classList.remove('hidden');
+    setupDocxPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
   } else if (isImg) {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
@@ -1216,6 +1246,16 @@ $('task-form').onsubmit = action(async event => {
       if (!state.session) state.session = created; // 仅当用户仍停留在空白页时接管；点击已切走的会话不被空壳抢占
     }
     const target = draftSession || created;
+    // #62扩展：小蜜会话文字输入走 assistant-message，非普通 /runs
+    if (target.kind === 'assistant') {
+      try {
+        const resp = await api(`/sessions/${target.id}/assistant-message`, { method: 'POST', body: JSON.stringify({ text: prompt }) });
+        $('prompt').value = ''; state.attachments = []; renderAttachments();
+        await selectSession(target.id);
+        toast(resp.reply || t('已发送'));
+        return;
+      } catch (err) { $('send').disabled = false; toast(err.message); return; }
+    }
     const strategy = state.profiles?.strategy || 'manual';
     // #41：小秘语音经 typeIntoPrompt 提交时，用 analyze 判定的 mode 一次性覆盖手动排队开关
     let queued = state.queueMode;
@@ -3363,6 +3403,8 @@ async function setupPdfPreview(container, filePath, root, source) {
 
 /* ── DXF 矢量渲染器：dxf-parser + SVG 离线渲染 ── */
 function isDxfPath(path) { return /\.dxf$/i.test(path || ''); }
+function isDocxPath(path) { return /\.docx$/i.test(path || ''); }
+function isDocPath(path) { return /\.doc$/i.test(path || ''); }
 let _dxfParserPromise = null;
 function ensureDxfParser() {
   if (_dxfParserPromise) return _dxfParserPromise;
@@ -3671,6 +3713,113 @@ async function setupDxfPreview(container, filePath, root, source) {
   meta.textContent = entities.length + ' ' + t('个实体');
 }
 
+/* ── docx-preview 渲染器：保留标题/表格/图片/列表，支持批注 ── */
+async function setupDocxPreview(container, filePath, root, source) {
+  container.innerHTML = '';
+  const loading = el('div', 'docx-loading', t('正在加载 Word 文档…'));
+  loading.style.cssText = 'padding:40px;text-align:center;color:var(--text-dim)';
+  container.append(loading);
+
+  // .doc 旧格式提示
+  if (isDocPath(filePath)) {
+    loading.remove();
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">' + t('旧版 .doc 格式不支持在线预览，建议在 Word/WPS 中另存为 .docx 后打开。') + '</div>';
+    return;
+  }
+
+  const token = state.token || (state.config && state.config.accessToken) || '';
+  const qp = new URLSearchParams();
+  qp.set('path', filePath);
+  if (source) qp.set('source', source); else qp.set('root', root || 'workspace');
+  if (token) qp.set('access_token', token);
+  const rawUrl = '/api/file/raw?' + qp.toString();
+
+  try {
+    const r = await fetch(rawUrl);
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const buf = await r.arrayBuffer();
+
+    const toolbar = el('div', 'docx-toolbar');
+    const info = el('span', 'docx-info', filePath.split('/').pop());
+    const btnToggleComments = el('button', 'docx-ctrl', t('批注'));
+    btnToggleComments.title = t('切换批注面板');
+    const btnClose = el('button', 'docx-ctrl', '✕');
+    toolbar.append(info, btnToggleComments, btnClose);
+
+    const docxBody = el('div', 'docx-body');
+    const commentPanel = el('div', 'docx-comment-panel hidden');
+    commentPanel.innerHTML = '<div class="dcp-head"><strong>' + t('批注') + '</strong><button class="dcp-close quiet">×</button></div><div class="dcp-list"></div>';
+
+    const wrap = el('div', 'docx-wrap');
+    wrap.append(toolbar, docxBody);
+    container.append(wrap, commentPanel);
+
+    btnClose.onclick = () => { const dlg = container.closest('dialog'); if (dlg) dlg.close(); else if (document.body.classList.contains('file-view-mode')) history.back(); };
+
+    await window.docx.renderAsync(buf, docxBody, null, {
+      className: 'docx-rendered',
+      inWrapper: true,
+      ignoreWidth: false,
+      ignoreHeight: false,
+      experimental: true,
+    });
+    loading.remove();
+
+    // ── 批注面板 ──
+    const listEl = commentPanel.querySelector('.dcp-list');
+    let comments = [];
+    const docHash = btoa(String(buf.byteLength)).slice(0, 16);
+
+    async function loadComments() {
+      try {
+        const r2 = await api('/comments?path=' + encodeURIComponent(filePath));
+        comments = r2.comments || [];
+        renderComments();
+      } catch (e) { comments = []; }
+    }
+    function renderComments() {
+      listEl.innerHTML = '';
+      if (!comments.length) { listEl.innerHTML = '<p class="muted" style="padding:12px">' + t('暂无批注') + '</p>'; return; }
+      comments.forEach(c => {
+        const card = el('div', 'comment-card' + (c.status === 'resolved' ? ' resolved' : '') + (c.stale ? ' stale' : ''));
+        card.innerHTML = '<div class="cc-text"></div><div class="cc-meta"></div>';
+        card.querySelector('.cc-text').textContent = c.text;
+        const meta = c.author ? c.author : '';
+        card.querySelector('.cc-meta').textContent = meta + (c.stale ? ' · ' + t('锚点可能失效') : '');
+        listEl.append(card);
+      });
+    }
+    btnToggleComments.onclick = () => {
+      commentPanel.classList.toggle('hidden');
+      if (!commentPanel.classList.contains('hidden')) loadComments();
+    };
+    commentPanel.querySelector('.dcp-close').onclick = () => commentPanel.classList.add('hidden');
+
+    // ── 文本选中 → 添加批注 ──
+    docxBody.addEventListener('mouseup', async () => {
+      const sel = window.getSelection();
+      const text = sel.toString().trim();
+      if (!text || text.length < 1) return;
+      const quote = text.slice(0, 80);
+      const anchorIndex = (docxBody.innerText.split(quote).length - 1);
+      const comment = prompt(t('添加批注：') + quote.slice(0, 40) + '…', '');
+      if (!comment) return;
+      try {
+        await api('/comments', { method: 'POST', body: JSON.stringify({ path: filePath, hash: docHash, anchorQuote: quote, anchorIndex, text: comment }) });
+        toast(t('批注已添加'));
+        loadComments();
+      } catch (e) { toast(e.message); }
+      sel.removeAllRanges();
+    });
+
+    await loadComments();
+  } catch (e) {
+    loading.remove();
+    container.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">' + t('Word 文档加载失败：') + escapeHtml(e.message) + '</div>';
+  }
+}
+
+
 function renderMarkdown(src, live, basePath) {
   if (window.marked && typeof window.marked.parse === 'function') {
     const html = window.marked.parse(String(src || ''), { gfm: true, breaks: false });
@@ -3740,9 +3889,10 @@ async function openFileViewMode() {
   const isStl = isStlPath(spec.path);
   const isPdf = isPdfPath(spec.path);
   const isDxf = isDxfPath(spec.path);
+  const isDocx = isDocxPath(spec.path);
   // 图片 / STL / PDF / DXF 走独立 raw 查看器，跳过只支持文本、会拒绝二进制的 /api/file
   let data;
-  if (isImg || isStl || isPdf || isDxf) {
+  if (isImg || isStl || isPdf || isDxf || isDocx) {
     data = { content: '', hash: '', workspaceId: '', wsId: '' };
   } else {
     const query = spec.source
@@ -3756,8 +3906,9 @@ async function openFileViewMode() {
   $('file-view-editor').value = data.content;
   $('file-view-editor').readOnly = readOnly;
   // 图片 / STL / PDF 只读查看器禁用保存；drawio 可保存
-  $('file-view-save').disabled = readOnly || isImg || isStl || isPdf || isDxf;
-  $("file-view-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf));
+  $("file-view-save").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx);
+  $("file-view-save").disabled = readOnly;
+  $("file-view-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx));
   if (isStl) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
@@ -3770,6 +3921,10 @@ async function openFileViewMode() {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
     setupDxfPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+  } else if (isDocx) {
+    $('file-view-editor').classList.add('hidden');
+    $('file-view-preview').classList.remove('hidden');
+    setupDocxPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
   } else if (isImg) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
@@ -4888,113 +5043,14 @@ function renderVoiceNameControl() {
 function renderVoiceHistoryControl() {
   const wrap = el('div', 'settings-control');
   const head = el('div', 'control-label');
-  head.append(el('span', '', t('小秘对话历史')));
-  const list = el('div', 'voice-history-list');
-  async function load() {
-    list.replaceChildren();
-    list.append(el('p', 'muted', t('加载中…')));
-    let res;
-    try { res = await api('/voice-history'); }
-    catch (e) { list.replaceChildren(el('p', 'muted', e.message)); return; }
-    list.replaceChildren();
-
-    // 隐私二次校验：即使系统已解锁，查看加密小秘历史也要再验证一次身份（#43 统一组件）
-    if (res.encrypted && !list._authPassed && state.config && state.config.hasPassword) {
-      list.append(el('p', 'muted', t('查看小秘对话历史需再次验证身份。')));
-      const go = el('button', 'primary', t('查看历史')); go.type = 'button';
-      go.onclick = action(async () => {
-        const pw = await requestMasterAuth({ reason: t('查看小秘对话历史需再次验证身份') });
-        if (pw === null) return;
-        if (typeof pw === 'string' && pw !== 'success') {
-          try { await api('/voice-history/unlock', { method: 'POST', body: JSON.stringify({ password: pw }) }); } catch (_) {}
-        }
-        list._authPassed = true;
-        load();
-      });
-      list.append(go);
-      return;
-    }
-
-    // 加密但未解锁：验证身份后解锁（#43；指纹无法解密历史密钥，故解锁须用密码）
-    if (res.encrypted && !res.unlocked) {
-      list.append(el('p', 'muted', t('历史已加密，需输入账户密码解锁。密钥丢失无法恢复，只能清空重置。')));
-      const un = el('button', 'primary', t('解锁')); un.type = 'button';
-      un.onclick = action(async () => {
-        const pw = await requestMasterAuth({ reason: t('解锁小秘对话历史') });
-        if (pw === null) return;
-        if (typeof pw !== 'string' || pw === 'success') { toast(t('请用密码解锁历史（指纹无法解密历史密钥）')); return; }
-        try { await api('/voice-history/unlock', { method: 'POST', body: JSON.stringify({ password: pw }) }); toast(t('已解锁')); load(); }
-        catch (e) { toast(t('密钥错误')); }
-      });
-      list.append(un);
-      return;
-    }
-
-    // 未加密：提供启用加密
-    if (!res.encrypted) {
-      list.append(el('p', 'muted', t('历史当前为明文。可启用 AES-256-GCM 加密，密钥只留内存、不落盘。')));
-      const pw0 = el('input'); pw0.type = 'password'; pw0.placeholder = t('设置加密密钥');
-      const en = el('button', 'quiet', t('启用加密')); en.type = 'button';
-      en.onclick = action(async () => {
-        if (!pw0.value) return toast(t('请设置密钥'));
-        await api('/voice-history/enable', { method: 'POST', body: JSON.stringify({ password: pw0.value }) });
-        toast(t('已启用加密')); load();
-      });
-      const row = el('div', 'voice-lock-row'); row.append(pw0, en);
-      list.append(row);
-    }
-
-    // 工具条
-    const tool = el('div', 'voice-history-bar');
-    const refreshBtn = el('button', 'quiet', t('刷新')); refreshBtn.type = 'button';
-    refreshBtn.onclick = action(load);
-    tool.append(refreshBtn);
-    if (res.encrypted) {
-      const lockBtn = el('button', 'quiet', t('锁定')); lockBtn.type = 'button';
-      lockBtn.onclick = action(async () => { await api('/voice-history/lock', { method: 'POST' }); toast(t('已锁定')); load(); });
-      const chgBtn = el('button', 'quiet', t('修改密钥')); chgBtn.type = 'button';
-      chgBtn.onclick = action(async () => {
-        const oldPw = prompt(t('原密钥')); if (oldPw == null) return;
-        const newPw = prompt(t('新密钥')); if (!newPw) return toast(t('请输入新密钥'));
-        try { await api('/voice-history/change-password', { method: 'POST', body: JSON.stringify({ oldPassword: oldPw, newPassword: newPw }) }); toast(t('密钥已修改')); }
-        catch (e) { toast(t('修改失败：{0}', e.message)); }
-      });
-      const disBtn = el('button', 'quiet', t('关闭加密')); disBtn.type = 'button';
-      disBtn.onclick = action(async () => {
-        const pw = await requestMasterAuth({ reason: t('输入账户密码以解密回明文') }); if (pw == null) return;
-        if (typeof pw !== 'string' || pw === 'success') { toast(t('请用密码解密（指纹无法导出历史密钥）')); return; }
-        try { await api('/voice-history/disable', { method: 'POST', body: JSON.stringify({ password: pw }) }); toast(t('已关闭加密')); load(); }
-        catch (e) { toast(t('失败：{0}', e.message)); }
-      });
-      tool.append(lockBtn, chgBtn, disBtn);
-    }
-    const clearBtn = el('button', 'quiet', t('清空')); clearBtn.type = 'button';
-    clearBtn.onclick = action(async () => {
-      if (!confirm(t('确定清空小秘的全部历史记录？'))) return;
-      await api('/voice-history', { method: 'DELETE' }); toast(t('已清空')); load();
-    });
-    tool.append(clearBtn);
-    list.append(tool);
-
-    const items = res.history || [];
-    if (!items.length) { list.append(el('p', 'muted', t('暂无记录。点麦克风说话后，小秘的判断会记录在这里。'))); return; }
-    for (const it of items) {
-      const row = el('div', 'voice-history-item');
-      const meta = el('div', 'vh-meta');
-      const label = it.action === 'send' ? t('已发送') : it.action === 'standby' ? t('退下') : it.action === 'ask' ? t('追问') : t('忽略');
-      const tag = el('span', 'vh-tag ' + (it.action === 'send' ? 'is-sent' : it.action === 'standby' ? 'is-standby' : 'is-ignored'), label);
-      meta.append(tag, el('span', 'vh-time', it.time || ''));
-      if (it.action === 'send' && it.mode === 'insert') meta.append(el('span', 'vh-mode is-insert', t('插队')));
-      else if (it.action === 'send' && it.mode === 'queue') meta.append(el('span', 'vh-mode is-queue', t('排队')));
-      row.append(meta, el('div', 'vh-heard', t('听到：') + (it.heard || '')));
-      if (it.action === 'ask' && it.ask) row.append(el('div', 'vh-text', t('追问：') + it.ask));
-      else if (it.text) row.append(el('div', 'vh-text', t('总结发送：') + it.text));
-      if (it.reason) row.append(el('div', 'vh-reason', it.reason));
-      list.append(row);
-    }
-  }
-  wrap.append(head, list, el('small', '', t('小秘听到了什么、如何判断、发送了什么，按时间线记录；重启后仍保留。')));
-  load();
+  head.append(el('span', '', t('小秘对话')));
+  const btn = el('button', 'primary', t('打开小秘')); btn.type = 'button';
+  btn.onclick = action(() => {
+    const as = (state.sessions || []).find(x => x.kind === 'assistant');
+    if (as) openAssistantGate(as.id, as.title);
+    else toast(t('暂无小秘会话'));
+  });
+  wrap.append(head, btn, el('small', '', t('历史已归位到小秘会话视图，点击上方按钮进入。')));
   return wrap;
 }
 controlRenderers['voice-history'] = renderVoiceHistoryControl;

@@ -306,6 +306,11 @@ func (a *App) listLocalDir(root *os.Root, p string) ([]map[string]any, error) {
 	return items, nil
 }
 func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
+	// #63：旧版 .doc 二进制在线查看不支持，尽早返回明确提示
+	if pth := r.URL.Query().Get("path"); r.URL.Query().Get("source") == "" && isLegacyDoc(pth) {
+		fail(w, 400, legacyDocError(pth))
+		return
+	}
 	var b []byte
 	var err error
 	if srcID := r.URL.Query().Get("source"); srcID != "" {
@@ -355,6 +360,11 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
+	// #63：旧版 .doc 二进制在线查看不支持，尽早返回明确提示
+	if pth := r.URL.Query().Get("path"); r.URL.Query().Get("source") == "" && isLegacyDoc(pth) {
+		fail(w, 400, legacyDocError(pth))
+		return
+	}
 	var b []byte
 	var err error
 	if srcID := r.URL.Query().Get("source"); srcID != "" {

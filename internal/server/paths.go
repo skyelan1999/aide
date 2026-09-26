@@ -73,6 +73,7 @@ const (
 	certsDirName      = "certs"
 	integrityDirName  = ".integrity"
 	quarantineDirName = ".quarantine"
+	commentsDirName   = "comments" // #63 侧车批注（跨格式：docx/xlsx/pptx/pdf 通用）
 )
 
 // 文件名常量（平铺期与分层期共用同一文件名，仅所在目录变化）。
@@ -120,6 +121,7 @@ func ConfigDir(data string) string        { return filepath.Join(data, configDir
 func ConfigBackupsDir(data string) string { return filepath.Join(data, configDirName, backupsDirName) }
 func StatsDir(data string) string         { return filepath.Join(data, statsDirName) }
 func AuditDir(data string) string         { return filepath.Join(data, auditDirName) }
+func CommentsDir(data string) string      { return filepath.Join(data, commentsDirName) } // #63 侧车批注根目录
 func SecretsDir(data string) string       { return filepath.Join(data, secretsDirName) }
 func CertsDir(data string) string         { return filepath.Join(data, certsDirName) }
 func IntegrityDir(data string) string     { return filepath.Join(data, integrityDirName) }
@@ -240,6 +242,7 @@ func layeredDirs(data string) []string {
 		ConfigDir(data), ConfigBackupsDir(data),
 		StatsDir(data),
 		AuditDir(data),
+		CommentsDir(data), // #63 侧车批注（0700）
 		SecretsDir(data),
 		CertsDir(data),
 		IntegrityDir(data),

@@ -1,0 +1,85 @@
+{
+  "id": "63",
+  "request": "Word 查看 + 批注功能（后端部分）：批注持久化层 CRUD、锚点容错、Office python-docx 工具、.doc 处理、前端接口约定、测试",
+  "baseline": "9b94938b09cb1896d501025c3c7579b7d11e5add",
+  "initial_status": "M internal/server/web/app.js\n M internal/server/web/style.css",
+  "acceptance": [
+    "GET/POST/PUT/DELETE /api/comments 走 Bearer 鉴权，CRUD 往返可用",
+    "批注落盘 /data/comments/<sha256(path)>/<id>.json，目录 0700 文件 0600",
+    "文档内容哈希变化 → 读取时 stale:true，不删除批注",
+    "audit/comments-audit.jsonl 记录 create/reply/status/delete",
+    "docx_structure/list_comments/add_comment/resolve_comment 四工具注册进 workflow 并实测通过",
+    ".doc（非 .docx）在 /api/file 与 /api/file/raw 返回明确提示",
+    "go vet + go test ./internal/server/ 全绿"
+  ],
+  "scope": [
+    "internal/server/comments.go / office.go / comments_test.go（新增）",
+    "internal/server/paths.go（CommentsDir 分层）",
+    "internal/server/server.go（4 条路由）",
+    "internal/server/files.go（.doc 拦截）",
+    "internal/server/workflow.go（4 工具 schema + dispatch）",
+    "scripts/office/*.py（4 个 python 脚本）",
+    "Dockerfile（scripts/office 拷贝到 /opt/aide/office-scripts）",
+    "docs/architecture/office-viewer.md（接口契约）",
+    "docs/tasks/63.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "明确：侧车批注跨格式通用，原生 docx 批注作为 aide 工具，.doc 只提示不转换",
+      "evidence": [
+        "docs/tasks/63.json acceptance/scope"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "每批注一文件+id→docPath 索引；stale 读时实算；python 脚本放 scripts/office，os/exec 调，查找顺序 env→/workspace→/opt",
+      "evidence": [
+        "internal/server/comments.go",
+        "internal/server/office.go",
+        "docs/architecture/office-viewer.md #63 节"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "CRUD+stale+审计+4 工具+.doc 拦截+Dockerfile 拷贝，未碰 web/ 前端文件",
+      "evidence": [
+        "git diff --stat"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "容器 aide:local 内：go vet ./internal/server/ 无告警；go build ./... 通过；go test ./internal/server/ 全量 ok（172s）；新增 8 个测试全 PASS（CRUD/stale/路径安全/权限/docx_structure/原生批注往返/docx 工具路径校验/.doc 拦截）；gofmt 新文件干净。运行中容器 aide-aide-1 未重建（串行前端共用环境），线上 API 冒烟 NOT_RUN。",
+      "evidence": [
+        "go vet -mod=vendor ./internal/server/ → exit 0",
+        "go test -mod=vendor -count=1 ./internal/server/ → ok 172s",
+        "TestCommentsCRUD/Stale/PathSafety/FilePerms PASS",
+        "TestDocxStructureTool/CommentRoundTrip/ToolPathSafety PASS",
+        "TestLegacyDocRejected PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "office-viewer.md 写清数据结构/端点/存储/python-docx 实测结论/.doc 局限",
+      "evidence": [
+        "docs/architecture/office-viewer.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "新增文件均有归属（comments.go/office.go/comments_test.go/scripts/office/4 脚本）；.agent-state 探针脚本已删；未碰 web/ 前端文件（app.js/index.html/style.css 改动属前端 agent）；未 commit/push/tag。",
+      "evidence": [
+        "git status --short",
+        "git diff --stat"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "不 commit/push/tag；发布由后续门禁决定",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

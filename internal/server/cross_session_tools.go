@@ -137,3 +137,61 @@ func (a *App) pushToSessionTool(ref, message string) (*Session, error) {
 	}
 	return s, nil
 }
+
+// ── #62：把跨会话工具真正接入 LLM 工具循环 ──────────────────────────────────
+// 此前 crossSessionToolsFor 只返回名字、既无 schema 也无 toolLoop case，是死代码。
+// 这里补齐 schema，并在 contextToolsFor 中按会话 Kind 注入；toolLoop 补充对应 case。
+
+// crossSessionToolSchemas 返回四个跨会话工具的 function-calling schema（仅小秘会话注入）。
+func crossSessionToolSchemas() []any {
+	return []any{
+		map[string]any{"type": "function", "function": map[string]any{
+			"name":        "search_sessions",
+			"description": "按关键词搜索历史会话（标题/内容，含归档），返回匹配会话的 #编号、ID、标题与摘要。想不起某个任务在哪、或要找出相关会话时先用本工具。",
+			"parameters": map[string]any{"type": "object", "properties": map[string]any{
+				"keyword":         map[string]any{"type": "string", "description": "搜索关键词；留空列出最近会话"},
+				"includeArchived": map[string]any{"type": "boolean", "description": "是否包含已归档会话，默认 true"},
+			}, "required": []string{"keyword"}}}},
+		map[string]any{"type": "function", "function": map[string]any{
+			"name":        "get_session",
+			"description": "按 #编号（如 #12）或会话 ID 读取某个会话的完整消息内容与状态。拿到 search_sessions 结果后用它深读。",
+			"parameters": map[string]any{"type": "object", "properties": map[string]any{
+				"ref": map[string]any{"type": "string", "description": "#编号 或 会话 ID"},
+			}, "required": []string{"ref"}}}},
+		map[string]any{"type": "function", "function": map[string]any{
+			"name":        "follow_session",
+			"description": "标记跟进某个会话：记下备注，该会话有更新时提醒用户。适合用户说\"帮我盯着这个\"\"跟进一下\"。",
+			"parameters": map[string]any{"type": "object", "properties": map[string]any{
+				"ref":  map[string]any{"type": "string", "description": "#编号 或 会话 ID"},
+				"note": map[string]any{"type": "string", "description": "跟进备注/原因"},
+			}, "required": []string{"ref"}}}},
+		map[string]any{"type": "function", "function": map[string]any{
+			"name":        "push_to_session",
+			"description": "向指定会话推送一条备注/任务消息（以系统消息形式加入该会话）。当你判断用户的任务应交给 aide、并想让 aide 在那个会话里接手时用它；ref 留空或\"new\"=新建一个会话承接。也用于把结论/待办写回某会话。",
+			"parameters": map[string]any{"type": "object", "properties": map[string]any{
+				"ref":     map[string]any{"type": "string", "description": "目标会话 #编号 或 ID；留空/\"new\"=新建会话承接"},
+				"message": map[string]any{"type": "string", "description": "要推送的内容（给 aide 的任务说明或给用户的备注）"},
+			}, "required": []string{"message"}}}},
+	}
+}
+
+// contextToolsFor 返回该会话 run 实际可用的工具：builtinTools（按 DisabledTools 过滤）+
+// 插件工具；仅当会话是小秘系统会话(Kind=assistant)时额外注入四个跨会话工具。
+// 调用方必须持有 a.mu。
+func (a *App) contextToolsFor(sess *Session) []any {
+	tools := a.contextTools()
+	if sess != nil && sess.Kind == assistantSessionKind {
+		tools = append(tools, crossSessionToolSchemas()...)
+	}
+	return tools
+}
+
+// findAssistantSessionLocked 返回唯一的小秘系统会话；不存在返回 nil。调用方持 a.mu。
+func (a *App) findAssistantSessionLocked() *Session {
+	for _, s := range a.sessions {
+		if s.Kind == assistantSessionKind && !s.Deleted {
+			return s
+		}
+	}
+	return nil
+}

@@ -235,6 +235,7 @@ type ToolCall struct {
 type Message struct {
 	Role       string     `json:"role"`
 	Content    string     `json:"content"`
+	Type       string     `json:"type,omitempty"` // #62：消息类型区分；空=普通聊天。voice-in=语音听到；voice-note=小蜜决策/转交说明；voice-ask=小蜜追问
 	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
 	ToolCallID string     `json:"tool_call_id,omitempty"`
 }
@@ -946,6 +947,11 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)
 	mux.HandleFunc("POST /api/file/rename", a.renameFile)
+	// ── 侧车批注（#63，跨格式通用；接口约定见 docs/architecture/office-viewer.md）──
+	mux.HandleFunc("GET /api/comments", a.listComments)
+	mux.HandleFunc("POST /api/comments", a.createComment)
+	mux.HandleFunc("PUT /api/comments/{id}", a.updateComment)
+	mux.HandleFunc("DELETE /api/comments/{id}", a.deleteComment)
 	mux.HandleFunc("GET /api/events", a.globalEvents) // #60 全局 SSE：会话列表变更广播
 	mux.HandleFunc("GET /api/sessions", a.listSessions)
 	mux.HandleFunc("POST /api/sessions", a.createSession)
@@ -960,6 +966,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("PATCH /api/sessions/{id}", a.patchSession)
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
 	mux.HandleFunc("POST /api/sessions/{id}/unlock-assistant", a.unlockAssistantSession) // #30 小秘会话密码门
+	mux.HandleFunc("POST /api/sessions/{id}/assistant-message", a.assistantMessageHandler)  // #62 小蜜会话文字=语音（走 analyze 管线）
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/retry", a.retryTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
@@ -1422,7 +1429,12 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	a.mu.Unlock()
 	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
 		if va != nil {
-			jsonOut(w, 200, va.recordFallback(text, "未配置模型，直接发送"))
+			entry := va.recordFallback(text, "未配置模型，直接发送")
+			// #62：语音往来归位到 assistant 会话时间线
+			a.mu.Lock()
+			a.recordAssistantExchangeLocked(text, entry, "voice")
+			a.mu.Unlock()
+			jsonOut(w, 200, entry)
 		} else {
 			jsonOut(w, 200, map[string]any{"action": "send", "text": text, "reason": "未配置模型，直接发送"})
 		}
@@ -1436,15 +1448,21 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	}
 	entry, err := va.analyze(r.Context(), cfg, text, in.Context)
 	if err != nil {
-		jsonOut(w, 200, va.recordFallback(text, "小秘分析失败，直接发送: "+err.Error()))
+		fb := va.recordFallback(text, "小秘分析失败，直接发送: "+err.Error())
+		a.mu.Lock()
+		a.recordAssistantExchangeLocked(text, fb, "voice")
+		a.mu.Unlock()
+		jsonOut(w, 200, fb)
 		return
 	}
 	if entry.Action == "send" && strings.TrimSpace(entry.Text) == "" {
 		entry.Text = text
 	}
+	// #62：语音往来归位到 assistant 会话时间线（与 voice-history.json 双写，向后兼容）
+	a.mu.Lock()
+	a.recordAssistantExchangeLocked(text, entry, "voice")
 	if entry.Action == "send" {
 		// #34：小秘有效交互计数持久化（personality-state.json），达到阈值后台演化，用真实语音历史样本。
-		a.mu.Lock()
 		fire, trigger := a.onPersonalityInteractLocked(personaXiaomi)
 		var sample string
 		if fire {
@@ -1454,6 +1472,8 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		if fire {
 			go a.runAutoEvolve(personaXiaomi, modeRefine, trigger, sample)
 		}
+	} else {
+		a.mu.Unlock()
 	}
 	jsonOut(w, 200, entry)
 }

@@ -137,11 +137,25 @@ func (a *App) attachmentContext(atts []Attachment) (string, map[string]Change, e
 	return contextText, versions, nil
 }
 
+// systemPromptForSession 按会话 Kind 选 system 设定：
+// 小秘系统会话(Kind=assistant)永远用小秘人格（不随全局 ActivePersona 漂移）；
+// 普通会话用全局活动人格(aide 工作 / 小秘 生活)。调用方持 a.mu。
+func (a *App) systemPromptForSession(s *Session) string {
+	if s != nil && s.Kind == assistantSessionKind {
+		p := voiceIdentityPrompt(a.settings) + "\n\n" + fmt.Sprintf(xiaomiMainPrompt, a.personaDisplayName(personaXiaomi))
+		if a.voiceAgent != nil {
+			p += "\n\n【aide 的长期记忆（你只读参考、绝不修改；它是 aide 记下的用户偏好/项目约定，不是你自己的记忆）】\n" + a.voiceAgent.readAideMemory()
+		}
+		return p
+	}
+	return a.baseSystemPrompt()
+}
+
 // buildContextPreview 构造与真实首轮请求一致的消息/工具并给出预算估算。
 // s 为 nil 时表示新会话（无历史与摘要）。调用方需持有 a.mu。
 func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, cfg Settings, params ProfileParams, includeBody bool) *ContextPreview {
-	// 按当前活动人格选择基础 system 设定（aide 工作 / 小秘 生活）
-	history := []Message{{Role: "system", Content: a.baseSystemPrompt() + "\n当前工作目录: " + a.workspaceDisplay + "\n可用工具: " + a.toolListHint()}}
+	// 按会话 Kind 选基础 system 设定（小秘系统会话恒为小秘人格；普通会话跟随全局活动人格）
+	history := []Message{{Role: "system", Content: a.systemPromptForSession(s) + "\n当前工作目录: " + a.workspaceDisplay + "\n可用工具: " + a.toolListHint()}}
 	if guide := a.environmentGuide(); guide != "" {
 		history[0].Content += "\n" + guide
 	}
@@ -176,7 +190,7 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 		instruction = planInstruction
 	}
 	first := append(append([]Message{}, history...), Message{Role: "user", Content: instruction})
-	tools := a.contextTools()
+	tools := a.contextToolsFor(s)
 
 	bd.HistoryChars = 0
 	for i := historyStart; i < len(history)-1; i++ {

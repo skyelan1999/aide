@@ -1,6 +1,14 @@
 # aide 版本记录
 
-**当前版本：0.1.11.0 RC2**
+**当前版本：0.1.11.0 RC3**
+
+## 0.1.11.0 RC3（2026-09-26）
+
+- #59 编辑器布局收口：顶部操作按钮右对齐贴右缘，只读文件（PDF/DXF/图片/STL/drawio）隐藏保存按钮，可写文本保留保存
+- #62 小蜜包边卡片：工作空间方块与小蜜条目包进同一张卡片（零间距/边框相连），小蜜呈底部浅蓝强调边（非全蓝实心），标题固定显示设定名不被 prompt 覆盖
+- #63 Word 查看+批注：vendor docx-preview 0.3.2(Apache-2.0)+JSZip 3.10.1(MIT)，三处 isDocx 分支渲染（标题/表格/列表），侧车批注持久化（/data/comments，CRUD 端点+锚点容错+stale 检测），python-docx 原生批注读写工具（docx_structure/list_comments/add_comment/resolve_comment），.doc 明确提示另存为 .docx
+- #62 扩展：小蜜历史归位（设置页独立历史移除→并入小蜜会话统一时间线），文字=语音（POST /assistant-message 走 analyze 管线），小蜜可创建/控制其他对话（#30 跨会话工具从死代码接入工具循环+spawn_subagent），assistant 会话恒用小秘人格+跨会话工具，语音往来持久化进 assistant 会话
+- 全量 go test -race 296.7s 全绿（0 FAIL 0 DATA RACE）
 
 ## 0.1.11.0 RC2（2026-09-26）
 

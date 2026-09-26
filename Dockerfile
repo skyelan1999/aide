@@ -111,6 +111,10 @@ RUN set -ux; \
     fi; \
     rm -rf /var/lib/apt/lists/*
 
+# 2.6) Office 工具脚本（#63）：aide 经 os/exec 调用（docx_structure/comments 等）。
+#      查找顺序：$AIDE_OFFICE_SCRIPTS → /workspace/scripts/office（dev 挂仓）→ 本目录。
+COPY scripts/office /opt/aide/office-scripts
+
 # 3) 业务二进制（随每次代码/前端改动变化）——最易失效的层放在最后
 COPY --from=build /usr/local/bin/aide /usr/local/bin/aide
 
