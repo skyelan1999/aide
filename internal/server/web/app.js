@@ -4232,30 +4232,28 @@ function callTypeOf(tool) {
   return 'other';
 }
 function renderCallsAnalysis(host, session) {
-  const calls = [];
-  for (const run of (session.runs || [])) {
-    for (const tu of (run.toolUses || [])) {
-      calls.push({ agent: 'main', agentName: t('主 Agent'), time: run.created, tool: tu.tool, args: tu.args, result: tu.preview || tu.result });
+  host.replaceChildren();
+  host.append(el('p', 'muted', t('加载调用记录…')));
+  (async () => {
+    try {
+      const resp = await api('/sessions/' + session.id + '/tool-calls?who=all');
+      const calls = (resp.calls || []).map(c => ({
+        agent: c.who === 'sub' ? 'sub' : 'main',
+        agentName: c.who === 'sub' ? (t('子 Agent · #{0}', c.childNumber || '?') + (c.childTitle ? ' ' + c.childTitle : '')) : t('主 Agent'),
+        time: c.time,
+        tool: c.tool,
+        args: c.args,
+        result: c.result,
+        ok: c.ok
+      }));
+      renderCallsTable(host, calls, resp.stats);
+    } catch(e) {
+      host.replaceChildren();
+      host.append(el('p', 'muted', t('加载失败：{0}', e.message)));
     }
-  }
-  const subs = (state.sessions || []).filter(x => x.parentId === session.id);
-  for (const sub of subs) {
-    calls.push({ agent: 'sub', agentName: sub.title || t('子 Agent'), time: sub.created, tool: t('(子会话启动)'), args: sub.id, result: sub.title });
-    (async () => {
-      try {
-        const detail = await api('/sessions/' + sub.id);
-        for (const r of (detail.runs || [])) {
-          for (const tu of (r.toolUses || [])) {
-            calls.push({ agent: 'sub', agentName: sub.title || t('子 Agent'), time: r.created, tool: tu.tool, args: tu.args, result: tu.preview || tu.result });
-          }
-        }
-        renderCallsTable(host, calls);
-      } catch(e) {}
-    })();
-  }
-  renderCallsTable(host, calls);
+  })();
 }
-function renderCallsTable(host, calls) {
+function renderCallsTable(host, calls, stats) {
   host.replaceChildren();
   const toolNames = [...new Set(calls.map(c => c.tool))].sort();
   const bar = el('div', 'call-filter-bar');
@@ -4280,10 +4278,10 @@ function renderCallsTable(host, calls) {
     if (callFilter.time !== 'all' && c.time && now - new Date(c.time).getTime() > tms[callFilter.time]) return false;
     return true;
   });
-  // BUG-1 修复：统计跟随筛选结果（而非全量 calls）
-  const mainN = filtered.filter(c => c.agent === 'main').length;
-  const subN = filtered.filter(c => c.agent === 'sub').length;
-  const failN = filtered.filter(c => /失败|error|拒绝|fail/i.test(String(c.result || ''))).length;
+  // 统计：优先用后端 stats，否则本地计算
+  const mainN = stats ? stats.mainCount : filtered.filter(c => c.agent === 'main').length;
+  const subN = stats ? stats.childCount : filtered.filter(c => c.agent === 'sub').length;
+  const failN = stats ? stats.failCount : filtered.filter(c => c.ok === false || /失败|error|拒绝|fail/i.test(String(c.result || ''))).length;
   host.append(el('div', 'call-summary', t('共 {0} 次 · 主 {1} 子 {2} 失败 {3}', filtered.length, mainN, subN, failN)));
   if (!filtered.length) { host.append(el('p', 'muted', t("没有匹配的调用记录"))); return; }
   const table = el('table', 'call-table');
