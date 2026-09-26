@@ -2646,11 +2646,7 @@ const PLUGIN_I18N = {
 };
 function trPlugin(text) {
   if (!text) return text;
-  let out = text;
-  for (const [zh, en] of Object.entries(PLUGIN_I18N)) {
-    out = out.split(zh).join(en.en);
-  }
-  return out;
+  return t(text);
 }
 
 function renderPluginList() {
@@ -2666,7 +2662,7 @@ function renderPluginList() {
     head.append(el('span', 'plugin-name', trPlugin(p.name)), el('span', 'plugin-badge', p.id + (p.version ? ' · v' + p.version : '')));
     const del = el('button', 'plugin-delete', '－');
     del.type = 'button'; del.title = t("删除插件");
-    del.onclick = () => { if (confirm(t("删除插件「{0}」？", p.name))) action(async () => { await api('/plugins/' + encodeURIComponent(p.id), { method: 'DELETE' }); await loadPluginsPanel(); toast(t("插件已删除")); })(); };
+    del.onclick = () => { if (confirm(t("删除插件「{0}」？", trPlugin(p.name)))) action(async () => { await api('/plugins/' + encodeURIComponent(p.id), { method: 'DELETE' }); await loadPluginsPanel(); toast(t("插件已删除")); })(); };
     head.append(del);
     card.append(head);
     if (p.description) card.append(el('p', 'plugin-desc', trPlugin(p.description)));
@@ -2691,11 +2687,11 @@ function renderPluginSurface(entries) {
   if (!entries.length) { host.append(el('p', 'muted', t("暂无启用的插件。"))); return; }
   for (const e of entries) {
     const box = el('div', 'surface-item');
-    box.append(el('strong', '', e.name));
+    box.append(el('strong', '', t(e.name)));
     if (e.error) { box.append(el('p', 'task-error', '⚠ ' + e.error)); host.append(box); continue; }
     const chips = el('div', 'surface-chips');
     for (const t of e.tools || []) chips.append(el('span', 'surface-chip tool', '⚒ ' + t.name));
-    for (const sl of e.slots || []) chips.append(el('span', 'surface-chip slot', '▦ ' + sl.name));
+    for (const sl of e.slots || []) chips.append(el('span', 'surface-chip slot', '▦ ' + t(sl.name)));
     for (const sv of e.provided || []) chips.append(el('span', 'surface-chip service', '◈ ' + sv));
     box.append(chips);
     host.append(box);
