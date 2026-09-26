@@ -1256,7 +1256,18 @@ $('task-form').onsubmit = action(async event => {
         const resp = await api(`/sessions/${target.id}/assistant-message`, { method: 'POST', body: JSON.stringify({ text: prompt }) });
         $('prompt').value = ''; state.attachments = []; renderAttachments();
         await selectSession(target.id);
-        toast(resp.reply || t('已发送'));
+        // 按 action 分流提示
+        if (resp.action === 'dispatch' && resp.dispatched) {
+          toast(t('已创建会话 #{0}', resp.dispatched.number || '?'));
+        } else if (resp.action === 'ask') {
+          toast(resp.reply || t('小秘想追问'));
+        } else if (resp.action === 'silent') {
+          toast(t('（已忽略）'));
+        } else if (resp.reply) {
+          toast(resp.reply);
+        } else {
+          toast(t('已发送'));
+        }
         return;
       } catch (err) { $('send').disabled = false; toast(err.message); return; }
     }
