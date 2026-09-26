@@ -2,47 +2,74 @@
   "id": "45",
   "request": "子 agent 工具调用登记到父会话（后端）：子会话执行过程中的工具调用上报并关联到父会话，在父会话调用记录中聚合展示",
   "baseline": "f5e61f0a1d4029e6a60f17dd6614a555f409846e",
-  "initial_status": "",
-  "acceptance": [],
-  "scope": [],
+  "initial_status": "## feature/permission-panel；工作区干净（仅本任务新增/改动 4 个 Go 文件）",
+  "acceptance": [
+    "spawn_subagent 归主 Agent（who=main）",
+    "子会话内部调用归子 Agent，带子会话编号/标题",
+    "父会话调用记录聚合含子 Agent 调用",
+    "查询端点支持 who=all|main|sub 与 childSessionId 过滤",
+    "统计 mainCount/childCount/failCount（主 N 子 M 失败 X）随筛选",
+    "子会话自动归档后父会话仍可查其调用",
+    "导出（/api/export）含子 Agent 调用与归属",
+    "go build + go vet + go test -race ./internal/server/ 通过",
+    "只改 Go 后端，不碰 web/，不 commit/push/tag"
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/server.go(路由注册)",
+    "internal/server/tool_calls.go(新增)",
+    "internal/server/tool_calls_test.go(新增)"
+  ],
   "stages": {
     "requirements": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "现有 toolLoop 在 task.ToolUses 记录 ToolUse；子会话经 spawnSubagent 创建，Session.ParentID 关联；前端已客户端 N+1 聚合。后端需提供权威聚合端点+归属字段。",
+      "evidence": [
+        "读 workflow.go toolLoop:1141/spawnSubagent:1329、server.go 路由与 Session 结构、app.js renderCallsAnalysis:4234"
+      ]
     },
     "design": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "采用「持久化归属字段 + 关联查询聚合」而非双写：主会话 runs + 按 ParentID 关联子会话 runs，不复制数据、归档安全、omitempty 向后兼容。新端点返回 calls+stats。",
+      "evidence": [
+        "tool_calls.go collectToolCallsLocked/sessionToolCalls"
+      ]
     },
     "implementation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "ToolUse/Task 加归属字段；toolLoop 按 ParentSessionId 打 who；spawnSubagent 打父子身份；新增聚合端点与路由；失败判定与前端一致。",
+      "evidence": [
+        "workflow.go/server.go/tool_calls.go diff"
+      ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "build/vet 通过；go test -race ./internal/server/ 全量 ok(226.9s)；7 个新测试覆盖 8 项验收。",
+      "evidence": [
+        "TestToolCallsAggregateMainAndSub/FilterWho/FilterChildSessionId/ArchivedChildStillQueriable/LegacyWhoDefaultsMain/NotFound/ExportIncludesSubCalls 全 PASS"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "接口约定与前端改动清单写入本任务 handoff；未改 PRD（后端内部聚合，无对外产品流程变更）。",
+      "evidence": [
+        "本文件 handoff 第七节"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "未 commit；未碰 web/ 及他任务在途文件；gofmt 重排无关行已撤销，diff 最小（server.go +1 行，workflow.go 仅本任务增量）。",
+      "evidence": [
+        "git diff --stat：server.go +1 / workflow.go +32-2"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
+      "status": "not_run",
+      "summary": "硬约束：不 commit/不 merge/不 push/不升版/不重启容器；仅交付后端代码与测试。",
       "evidence": []
     }
   },
   "release_authorization": "",
-  "rollback": "",
-  "handoff": ""
+  "rollback": "git checkout internal/server/server.go internal/server/workflow.go && rm internal/server/tool_calls.go internal/server/tool_calls_test.go",
+  "handoff": "完成项（仅 Go 后端，未碰 web/，未 commit/push/tag）：\n- ToolUse 结构加归属字段：Who(main|sub)、ChildSessionId、ChildNumber(#N)、ChildTitle（均 omitempty，旧数据 Who 为空按 main 处理，向后兼容）。\n- Task 结构加父子会话身份：ParentSessionId、ChildSessionId、ChildNumber、ChildTitle。\n- toolLoop（workflow.go）记录每次工具调用时：task.ParentSessionId 非空→Who=sub 并带子会话 ID/编号/标题；否则 Who=main（spawn_subagent 自然归主 Agent）。\n- spawnSubagent 创建子任务时打 ParentSessionId=父会话、ChildSessionId=子会话、ChildNumber=子会话编号、ChildTitle=子会话标题。\n- 新端点 GET /api/sessions/{id}/tool-calls（tool_calls.go）：关联查询聚合主会话 runs（含 spawn_subagent）+ 所有 ParentID==本会话 的子会话 runs（含已自动归档者）；按时间升序时间线。\n  · 过滤参数：who=all|main|sub（默认 all）；childSessionId=xxx（多子会话按编号/名字筛）。\n  · 响应：{ calls:[{who,childSessionId?,childNumber?,childTitle?,time,tool,args,result,ok}], stats:{mainCount,childCount,failCount} }；stats 随筛选结果计算（主 N 子 M 失败 X）。\n  · 失败判定与前端一致：结果含 失败/error/拒绝/fail（忽略大小写）。\n- 导出 GET /api/export 本就全量序列化所有会话（含归档子会话）；#45 后子会话 toolUses 自带 who/childSessionId 归属，导出 JSON 即含子 Agent 调用与归属。\n\n改动文件清单：\n- internal/server/workflow.go（ToolUse/Task 加字段；toolLoop 打 Who；spawnSubagent 打父子身份）\n- internal/server/server.go（注册 1 条路由）\n- internal/server/tool_calls.go（新增：DTO + collectToolCallsLocked + sessionToolCalls）\n- internal/server/tool_calls_test.go（新增：7 个测试）\n\n调用记录结构变化：\n- 持久化 ToolUse 新增 who/childSessionId/childNumber/childTitle（omitempty，落盘即随 /api/export 与 GET /api/sessions/{id} 携带）。\n- 查询响应 DTO：who（\"main\"|\"sub\"）、childSessionId、childNumber、childTitle、time、tool、args、result、ok。\n- 统计字段：mainCount / childCount / failCount。\n\n查询/导出端点变化：\n- 新增 GET /api/sessions/{id}/tool-calls?who=&childSessionId= （404 会话不存在）。\n- GET /api/export 无需改代码即含子 Agent 归属（子会话 toolUses 已落盘 who）。\n\n与前端接口约定（前端需做的改动，本次未实施）：\n- 现有 app.js renderCallsAnalysis 是客户端 N+1（先主 runs，再对每个子会话 await /api/sessions/{sub.id}）。建议改为单次 GET /api/sessions/{id}/tool-calls?who=...&childSessionId=...，直接渲染返回的 calls/stats，去除异步二次拉取与重复计数。\n- 筛选条「全部/主Agent/子Agent」改为传 who=all|main|sub；多子会话时用 childSessionId 下拉（数据来自各子会话的 childNumber/childTitle）。\n- 统计文案「共 X 次 · 主 N 子 M 失败 X」直接用 stats.mainCount/childCount/failCount，不再前端正则重算。\n- 「谁」列展示：sub 用 childTitle（含 #编号），main 显示「主 Agent」。\n- 轨迹导出（buildTrajectoryMarkdown/JSON）后续可改用该端点数据，使导出含归属；当前客户端导出已遍历 parentId 子会话，但子会话 runs 详情依赖列表项（列表不含 runs），切到该端点后即可完整。\n\n测试输出（Docker aide:local, GOPROXY=goproxy.cn）：\n- go build -buildvcs=false ./... 通过。\n- go vet -buildvcs=false ./internal/server/... 通过。\n- go test -buildvcs=false -race ./internal/server/ 全量 ok（226.9s，含新增 7 个 TestToolCalls*）。\n- 新增测试覆盖：①spawn_subagent 归 main；②子调用带 childNumber=7/childTitle；③父会话聚合含子调用；④who=main/sub/all 过滤；⑤childSessionId 多子会话过滤；⑥归档子会话仍可查；⑦历史 Who 空按 main；⑧404；⑨导出含子调用归属且不泄漏 token。\n\nNOT_RUN / 未验证：\n- 真实 spawn_subagent E2E（需 mock Provider 同时处理父子两轮模型响应）未跑；归属由「spawn 打字段 + toolLoop 判定 ParentSessionId」两段单测 + 编译保证串联。\n- 运行中容器 aide-aide-1（8097）仍为旧二进制，未重建/重启（属部署，硬约束不碰）；UI 目视验收 NOT_RUN（无浏览器能力）。\n- 未 commit/merge/push/tag（硬约束）。\n运行服务：未重启；发布/回滚：未执行。"
 }

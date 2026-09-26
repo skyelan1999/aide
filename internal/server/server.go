@@ -977,6 +977,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/answer", a.answerTask)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/requests", a.runRequestsHandler)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/events", a.runEvents)
+	mux.HandleFunc("GET /api/sessions/{id}/tool-calls", a.sessionToolCalls) // #45 调用记录聚合（主/子 Agent）
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/queue/{index}", a.queueUpdate)
 	mux.HandleFunc("POST /api/context-preview", a.contextPreviewHandler)
 	mux.HandleFunc("POST /api/command", a.command)

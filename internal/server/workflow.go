@@ -47,6 +47,12 @@ type ToolUse struct {
 	Args    string `json:"args,omitempty"`
 	Result  string `json:"result,omitempty"`  // 完整原始结果（R05 证据链：计量与验收依据）
 	Preview string `json:"preview,omitempty"` // 界面展示用截断预览
+	// #45 子 agent 调用归属：Who="main" 主 Agent 自身调用（含 spawn_subagent）；
+	// Who="sub" 子会话内部调用。历史数据 Who 为空时按 main 处理。
+	Who            string `json:"who,omitempty"`
+	ChildSessionID string `json:"childSessionId,omitempty"` // 子会话 ID（who=sub 时）
+	ChildNumber    int    `json:"childNumber,omitempty"`    // 子会话编号 #N
+	ChildTitle     string `json:"childTitle,omitempty"`     // 子会话标题
 }
 
 // AgentRoot 是任务创建时对工作区根的快照（#61），替代散落的
@@ -83,7 +89,13 @@ type Task struct {
 	Profile             string            `json:"profile,omitempty"`             // 本次生效的 profile id
 	RequestSnapshots    []RequestSnapshot `json:"requestSnapshots,omitempty"`    // R08-04：实际发出的 Provider 请求快照（首轮+工具续跑）
 	SnapshotsTruncated  bool              `json:"snapshotsTruncated,omitempty"`  // 快照达到上限后被截断
-	Steer               chan string       `json:"-"`                             // 运行中插话通道（立即影响当前轮）
+	// #45 子 agent 归属：spawn_subagent 派生的子任务在创建时打上父子会话身份，
+	// 供 toolLoop 记录 ToolUse.Who 及子会话编号/标题。主任务这些字段为空。
+	ParentSessionID  string `json:"parentSessionId,omitempty"` // 父会话 ID（子任务才有）
+	ChildSessionID   string `json:"childSessionId,omitempty"`  // 本子任务所属子会话 ID
+	ChildNumber      int    `json:"childNumber,omitempty"`     // 子会话编号 #N
+	ChildTitle       string `json:"childTitle,omitempty"`      // 子会话标题
+	Steer            chan string `json:"-"`                        // 运行中插话通道（立即影响当前轮）
 	Queue               []string          `json:"queue,omitempty"`               // 排队消息（当前回答完后再处理）
 	Steers              []SteerMsg        `json:"steers,omitempty"`              // 运行中插话/排队消息（UI 展示用）
 	PendingQuestion     json.RawMessage   `json:"pendingQuestion,omitempty"`     // 等待用户澄清的结构化问题
@@ -1138,7 +1150,18 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			}
 			a.mu.Lock()
 			// Result 保留完整原始结果（计量/验收依据）；Preview 供界面展示
-			task.ToolUses = append(task.ToolUses, ToolUse{Tool: call.Function.Name, Args: call.Function.Arguments, Result: result, Preview: display})
+			// #45：子任务记录的工具调用归属到对应子 Agent（带会话编号/标题），
+			// 主任务自身调用（含 spawn_subagent）归主 Agent。
+			tu := ToolUse{Tool: call.Function.Name, Args: call.Function.Arguments, Result: result, Preview: display}
+			if task.ParentSessionID != "" {
+				tu.Who = "sub"
+				tu.ChildSessionID = task.ChildSessionID
+				tu.ChildNumber = task.ChildNumber
+				tu.ChildTitle = task.ChildTitle
+			} else {
+				tu.Who = "main"
+			}
+			task.ToolUses = append(task.ToolUses, tu)
 			a.mu.Unlock()
 			a.publishStream(task.ID, streamEvent{Event: "tool", Tool: call.Function.Name, Preview: display, CallID: call.ID, OK: !isErr})
 		}
@@ -1384,6 +1407,11 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt, profileID string) (stri
 		WorkspaceID: parentTask.WorkspaceID, WorkspaceRev: parentTask.WorkspaceRev,
 		WorkspaceMode: parentTask.WorkspaceMode, WorkspaceRemotePath: parentTask.WorkspaceRemotePath,
 		AgentRoot: parentTask.AgentRoot,
+		// #45：打上父子会话身份，使子会话内部工具调用可归属到本子 Agent
+		ParentSessionID: parentID,
+		ChildSessionID:  subID,
+		ChildNumber:     subSess.Number,
+		ChildTitle:      subSess.Title,
 	}
 	subSess.Runs = append(subSess.Runs, subTask)
 	subSess.Messages = append(subSess.Messages, Message{Role: "user", Content: subPrompt})
