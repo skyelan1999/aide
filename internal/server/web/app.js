@@ -1254,6 +1254,12 @@ $('task-form').onsubmit = action(async event => {
     if (target.kind === 'assistant') {
       try {
         const resp = await api(`/sessions/${target.id}/assistant-message`, { method: 'POST', body: JSON.stringify({ text: prompt }) });
+        // locked：弹密码门，不清空输入，解锁后重发
+        if (resp.action === 'locked') {
+          toast(resp.reason || t('小秘已锁定，请在小秘会话中解锁'));
+          openAssistantGate(target.id, target.title || '小秘');
+          return;
+        }
         $('prompt').value = ''; state.attachments = []; renderAttachments();
         await selectSession(target.id);
         // 按 action 分流提示
