@@ -1,5 +1,155 @@
 # aide 开发与运维交接
 
+---
+
+# 【GPT 接手交接 · 2026-09-26】（本区块为最新权威入口，以下历史章节仅供溯源）
+
+用户已停止全部豆包子智能体（统筹 organizer 及其下属开发/测试 agent 均已 kill）。剩余工作由 GPT 接手。**请先读本区块，再按需翻下方历史。**
+
+## 0. 项目一句话
+
+aide = AI + IDE，本地优先、离线/air-gap 可用的 AI 专业开发工作台。后端 **Go（标准库为主）**，前端 **原生无框架 HTML/CSS/JS**，**Docker Compose** 部署；开源依赖全部 vendor 到仓库（MIT 等），**不用任何 CDN**。
+
+- 仓库根：`/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide`
+- 相邻参考项目：`../Harness`（只读挂载为内置上下文 `/context`）
+- 当前 Agent 工作目录（用户实际工作区）：宿主 `~/debug` ↔ 容器 `/local/Users/skyelan/debug`
+
+## 1. 当前精确快照（已实测）
+
+| 项 | 值 |
+|---|---|
+| 工作分支 | **`feature/permission-panel`**，working tree **clean**，已与 `origin/feature/permission-panel` 同步 |
+| HEAD commit | **`c978fd5`** i18n: wrap WebAuthn credential name with t() (#26) |
+| 版本（/api/config） | **0.1.11.0-RC3**，buildCommit=c978fd5，integrity=**ok** |
+| 访问入口 | **https://localhost:8097**（容器内 HTTPS 8080；http 单端口 308 跳 https；自签证书） |
+| 主容器 | `aide-aide-1` healthy（镜像 `aide:local`） |
+| 模型 | deepseek-v4-flash（非视觉），另有 deepseek-v4-pro；BaseURL https://api.deepseek.com |
+| 关键配置 | toolMaxRounds=60、shellTimeout=60、sandboxMode=workspace-write、reasoningEffort=auto |
+| 账户 | 已设密码、已注册 Touch ID 凭证（hasPlatformCredential=true）、用户名 SkyeLan |
+| TTS | edge 可用（edgeAvailable=true），sherpa 未安装；currentTTSEngine=unavailable |
+| 性格 | aide（work）/ 小秘 xiaomi（life）两套；voiceReplyEnabled=true |
+| Git tag | **v0.1.11.0-RC3 指向更早 commit 2d5e368（不是当前 HEAD）**；是否升 RC4 待用户拍板 |
+| main 分支 | 落后，**未获明确许可前严禁合入 main** |
+
+> 本地测试凭据不要写入仓库；需要自测时由用户在本机输入。
+
+## 2. 【最高优先 · 修复到一半被打断】小秘语音框回归
+
+**真机现象**：主会话（新建会话空白页）点麦克风，麦克风变红（语音在跑），但小秘的语音“框”不出现，转写/状态无处可看。用户原话：“小蜜的框没了啊”。
+
+**根因**：`internal/server/web/app.js` 的 `$('voice-btn').onclick`（约 **4978-4985**）按会话 kind 分流，把主会话降级成纯听写：
+```js
+if (state.session?.kind === 'assistant') { voice.listening ? voiceStopAndFlush() : voiceStart(); }
+else { dictation.listening ? dictationStop() : dictationStart(); }   // ← 主会话走 dictation
+```
+`dictationStart()`（约 4988）只把文字填进 `#prompt` 让人手动发：**不显示 `#voice-panel`、不做 AI 噪声甄别、不自动断句发送**——偏离用户原始诉求。
+
+**用户的明确诉求（验收口径）**：
+1. 点麦克风即唤起【小秘语音管线 voiceStart】，**主会话与小秘会话都要**显示小秘语音框；若保留“纯听写填框”，做成设置里的语音模式开关（默认=小秘助理，不要默认听写）；
+2. `#voice-panel` 显示要**提前/独立于麦克风成功**：点击先弹框显示“正在请求麦克风…”，再 `await voiceOpenMicStream()`；失败/拒绝给明确提示与重试，避免麦克风慢/失败时整个框不出现；
+3. 框 **内嵌在主要聊天框区域、不挡下面内容**，做成贴输入区/会话区上方的**薄条**（关联 #47），用主题 CSS 变量、不硬编码颜色；展示：小秘名字、聆听/停止状态、当前断句 interim、每条甄别结果（已发送/已忽略）、排队状态；停止即收起；
+4. 恢复**自动动态断句 + AI 甄别**（要传达的意图 vs 背景噪声/刷视频/与他人闲聊，闲聊自动退下）+ **直接发送**（不放进输入框手动发），发送沿用 #41（紧急/中止插队、新任务排队，小秘自判）；
+5. 现有可复用链路：`voiceExtractSentences / analyze / voiceDrainQueue / voiceArmPauseFlush`（voiceStart 内，约 4890-4927）。
+
+**验证**：无真实麦克风时用 mock（stub `getUserMedia` / `webkitSpeechRecognition`）做桌面 E2E——点击后面板立即显示、状态/断句/甄别渲染、发送被触发（#41 排队/插队）、停止后面板隐藏；附截图。**真实麦克风的实时甄别与发送属 NOT_RUN，需用户真机验收。** 约束：只改前端（app.js + 必要 CSS），`node --check` 通过。
+
+## 3. 任务 #29–#64 真实状态（很多已在代码落地，仅任务状态未关闭）
+
+实质已落地、真机或单测验证（GPT 可在回归后关闭任务）：
+- **#29** 安全/欧盟合规：TLS、Argon2id（kdf.go）、docs/security/eu-compliance.md
+- **#30** 会话编号 + 小秘置顶（assistant-entry）+ 跨会话 dispatch 卡片
+- **#31** 数据目录分层（docs/architecture/data-layout.md）+ 完整性基线 `/data/.integrity`（integrity=ok，可自愈）
+- **#32** 配置导入导出 + 跨版本默认回填/迁移
+- **#33** 小秘自我意识/统一身份核心提示词（assistant_agent.go）
+- **#35** 记忆单向可见（小秘可读 aide、aide 禁读小秘）+ 流式输出桥接（6 单测，docs/architecture/memory-access.md）
+- **#37** 通讯插件 comm-tcp/udp/serial/ssh（默认禁用、仅回环；docs/plugins/）
+- **#38** SSH 私钥路径/粘贴双输入 + 凭据加密（secret-vault）
+- **#39** SQLite 插件（node:sqlite，零依赖；docs/plugins/sqlite.md）
+- **#40** 恢复出厂设置（Factory reset 分区）
+- **#41** 小秘自判插队/排队（app.js 约 4673）
+- **#43** TLS 收口（https 单端口、WebAuthn https origins）
+- **#45** 硬停止 voiceHardStop + 概括设置
+- **#46** 启动提速（默认不跑全量 test、no-build 直起）
+- **#48** 外部 AI 调试接口（无障碍开关、表格化、日志下载；当前 debugAccessEnabled=true）
+- **#49** 设置 number 渲染器（toolMaxRounds 可见可配）
+- **#50** 模型 token 占比饼图（labelLine 引导线）
+- **#52** max_tokens 截断自动续写（DXF 已能生成）
+- **#55** 刷新不再误锁屏（锁定态后端持久化）
+- **#56** 集成测试收口（两层测试已大量执行；最终 tag/push 待真机终审）
+- **#58** 取消文本 256KiB（maxFile=64MiB，files.go）
+- **#59** 编辑器只读/保存归并顶部栏
+- **#60** 会话列表 SSE 实时刷新
+- **#61** 工作目录语义（AgentRoot 抽象 P0-P2 已实施，a93980a）
+- **#62** 小秘会话闭环（锁定门三态、历史、单例）——已完成
+- **#63** Word 查看 + 批注（docx-preview + /data/comments，test.docx 已验证）
+- **#64** 代码语法高亮（highlight.js 离线 vendor，93f4a47）——**实际已完成**
+
+部分落地、效果待真机/用户仍有反馈（勿轻易关闭）：
+- **#34** 性格“自主微调演化”：框架与文档在（personality-evolution.md / persona.go），长期演化效果未验证
+- **#36 / #42** 音色克隆与“音色没差”：克隆 Key 未配（hasCloneKey=false），edge 音色区分度用户仍不满意
+- **#44** 多引擎 TTS：edge 在、sherpa 未装，currentTTSEngine=unavailable
+- **#47** 小秘薄条 UI：左侧条目在，**语音内嵌薄条随第 2 项一起做**
+- **#51** 思考转圈/思考滚动：节点复用改过，用户后续仍有反馈，需回归
+- **#53** 辅助资料多来源：/context 常驻在，“新增来源按钮”用户反馈时有时无，需回归
+- **#54 / #57** PDF.js、DXF 渲染：内联在，用户多次反馈“看不了/无渲染”，**高优先回归**（注意可能是容器没用新镜像 force-recreate 造成的“假未修复”）
+
+## 4. NOT_RUN（需用户真机/真实环境，禁止写成 PASS）
+
+- Touch ID 按压解锁（凭证已注册，按压流程待真机）
+- 真实麦克风：实时聆听、断句、AI 甄别、直接发送
+- sherpa-onnx 离线 TTS（模型未下载，用 `scripts/tts-setup`）
+- xlsx/pptx 附件桌面 E2E（代码层单测已覆盖）
+- 64MiB 大文件降级桌面实测（代码层单测已覆盖）
+
+## 5. 测试遗留容器与游离分支（先确认再清理，勿擅自删）
+
+- 容器：`elegant_jepsen`(aide:local，随机名疑似构建测试遗留)、`nifty_ellis`(aide-serial-test)、`infallible_bhaskara`(node:24 插件测试)；`ai-jupyterlab` 可能是用户自己的，先保留确认。
+- 大量历史分支：`feat/*`、`fix/*`、`feature/*`、`experiment/*` 等（成果已并入 permission-panel）；用户曾要求“把游离子分支合起来”，GPT 核对后再决定清理，**不要 `git clean -fdx`、不要 `down -v`**。
+
+## 6. 铁律 / 关键约束
+
+1. **未获用户明确许可，`feature/permission-panel` 不合 main、不正式 release**；可 push 到远程 feature 分支（用户已授权“推上去不合 main”）。
+2. 离线优先：开源依赖 vendor 入仓（highlight.js / docx-preview+JSZip / dxf-parser / PDF.js / mermaid / marked / three.js 等），**禁止 CDN**；`start.command` 导入 Docker 后不得再拉外网。
+3. 原生无框架：Go 标准库 + 原生 JS，不引 React/Vue/构建链。
+4. 静态资源统一 `Cache-Control: no-store`（浏览器不缓存）。**判断新代码是否生效以 `/api/config` 的 buildCommit 为准。**
+5. 改前端必须重建并用新镜像重创建容器：
+   ```bash
+   export AIDE_VERSION="$(bash scripts/version.sh show)"
+   export AIDE_COMMIT="$(git rev-parse --short HEAD)"
+   docker compose build aide && docker compose up -d --force-recreate aide
+   ```
+   不能用 `docker start`（会复用旧容器/旧镜像）；注意历史上 `/data/settings.json` 新旧位置迁移曾导致容器 Exited，重建后留意日志。
+6. 配色用主题 CSS 变量，避免大量紫/靛蓝、避免高饱和整段着色；不泄露 token/密码/内部 ID。
+
+## 7. 命令速查
+
+- 启动：macOS `./start.command`（或 `bash scripts/aide.sh start`）；Linux `./start.sh`；Windows `start.ps1` / `start.bat`（**Win/Linux 未实际验证，局限已在 docs 标注**）。
+- 状态/日志：`bash scripts/aide.sh status|logs`。
+- 代码测试（容器内，整仓无 skip）：`go test -race -count=1 ./...`（server 约 228s + tts）、`go vet ./...`、`go build ./...`。
+- 路由门禁：`python3 scripts/agent-route.py verify quick|full`。
+- 版本：`bash scripts/version.sh show`；正式升版只在 main：`version.sh bump <档位> -m "..."`。
+- 前端 i18n 检查：`scripts/test_i18n.cjs`；UI 流式/队列无头检查：`scripts/ui_stream_check.cjs`、`scripts/ui_queue_check.cjs`（缺 playwright 自动 SKIP）。
+
+## 8. 文档地图（含中英）
+
+- 架构总览：`docs/architecture.md`、`docs/architecture-overview.html`；专题 `docs/architecture/`（data-layout / memory-access / office-viewer / personality-evolution / touchid…）
+- PRD：`docs/PRD.md`、`docs/prd/`
+- 安全/合规：`docs/security/`（eu-compliance、secret-vault、tls、password-hashing、voice-cloning、tts-local…）
+- 插件：`docs/plugin-protocol.md`、`docs/plugins/`、权威清单 `plugins/registry.json`
+- 工作目录：`docs/workspace-paths.md`；外部 AI 调试：`docs/debug-api.md`；验证记录：`docs/verification.md`；版本：`version.md`
+- **英文文档：`docs/en/`**（README、installation、user-guide、architecture、security、agent、plugins 配对）
+- drawio 示例：仓库根 **`demo.drawio`**；工作区 `~/debug` 下另有 `用户管理流程.drawio / 用户登录流程.drawio / 登录流程图.drawio`
+
+## 9. 建议接手顺序
+
+1. 读 `AGENTS.md` → `docs/agent/WORKFLOW.md`；`git status` + `/api/config` 确认与本快照一致；
+2. 先修 **第 2 项（小秘语音框）**，mock E2E 闭环；
+3. 高优先回归用户反复反馈的 **#54 PDF / #57 DXF / #53 来源按钮 / #51 思考**，每次以 buildCommit + force-recreate 确认，排除“假未修复”；
+4. 推进 #34/#36/#42/#44 等待真机项，约用户做第 4 节 NOT_RUN 终审；
+5. 全部闭环后，请用户决定 **push / 升 RC4 重新 tag / 合 main**，不得自行合 main。
+
+---
+
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](docs/workspace-paths.md)。
 
 更新：2026-09-25。本文是现行操作入口。历史测试结果保留在 [验证记录](docs/verification.md)，不能据此推定今天的运行服务状态。
