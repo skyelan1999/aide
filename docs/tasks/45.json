@@ -1,0 +1,48 @@
+{
+  "id": "45",
+  "request": "子 agent 工具调用登记到父会话（后端）：子会话执行过程中的工具调用上报并关联到父会话，在父会话调用记录中聚合展示",
+  "baseline": "f5e61f0a1d4029e6a60f17dd6614a555f409846e",
+  "initial_status": "",
+  "acceptance": [],
+  "scope": [],
+  "stages": {
+    "requirements": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}
