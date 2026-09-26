@@ -435,6 +435,7 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .voice-status.listening { color: var(--success, #22c55e); }
 .voice-status.ignored { color: var(--warn, #d97706); }
 .voice-status.standby { color: var(--muted, #888); }
+.voice-status.requesting { color: var(--muted, #888); }
 .voice-text {
   min-height: 72px; max-height: 200px; overflow-y: auto;
   font-size: 14px; line-height: 1.8; padding: 12px 14px;
@@ -571,6 +572,7 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .voice-panel.listening .voice-dot { background: var(--success, #22c55e); animation: voice-breathe 1.6s ease-in-out infinite; }
 .voice-panel.ignored .voice-dot { background: var(--warn, #d97706); }
 .voice-panel.standby .voice-dot { background: var(--muted, #888); }
+.voice-panel.requesting .voice-dot { background: var(--brand, #4c8dff); animation: voice-breathe 1.2s ease-in-out infinite; }
 @keyframes voice-breathe { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .45; transform: scale(.82); } }
 @media (prefers-reduced-motion: reduce) {
   .voice-panel:not(.hidden) { animation: none; }
@@ -584,7 +586,17 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
   font-size: 12px; font-weight: 500; color: var(--text, #222);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
 }
-.voice-panel .voice-text { display: none; }
+.voice-panel .voice-text {
+  min-height: 0; max-height: 72px; overflow-y: auto;
+  padding: 0 0 6px 16px; margin: 0; border-radius: 0;
+  background: transparent; font-size: 11px; line-height: 1.45;
+  white-space: normal; overflow-wrap: anywhere;
+}
+.voice-panel .voice-log-line { gap: 6px; padding: 2px 0; }
+.voice-panel .voice-log-line.is-sent .voice-log-tag { background: var(--success-bg, rgba(34,197,94,.15)); color: var(--success, #16a34a); }
+.voice-panel .voice-log-line.is-ignored .voice-log-tag { background: var(--warn-bg, rgba(217,119,6,.15)); color: var(--warn, #d97706); }
+.voice-panel .voice-log-line.is-standby .voice-log-tag { background: var(--bg-inset, rgba(127,127,127,.15)); color: var(--muted, #888); }
+.voice-queue-status { flex: 0 0 auto; color: var(--muted, #888); font-size: 10px; white-space: nowrap; }
 .voice-panel .quiet { font-size: 11px; padding: 3px 9px; flex-shrink: 0; }
 .voice-panel #voice-stop { color: var(--danger, #e5484d); }
 .voice-log-line.is-ask .voice-log-tag { background: rgba(99,102,241,.15); color: var(--brand, #6366f1); }

@@ -4557,7 +4557,7 @@ renderMarkdown = function(src, live) { const html = _origRender(src, live); setT
    发送到当前会话（与手动提交同一 run 入口，兼容排队/工作流模式）；
    背景声自动忽略；与他人闲聊自动退下。语音框记录「已发送/已忽略」。 */
 const voice = {
-  recognition: null, listening: false, standby: false, awaitingReply: false, halted: false,
+  recognition: null, listening: false, starting: false, startToken: 0, standby: false, awaitingReply: false, halted: false,
   buffer: '', interim: '', baseStatus: '', timer: null, sending: false, queue: [], log: [], micStream: null,
   queuedOverride: null // #41：小秘 analyze 判定的本次发送排队/插队（一次性，onsubmit 消费后清零）
 };
@@ -4572,18 +4572,21 @@ try {
 
 function voiceSetStatus(mode, text) {
   const box = $('voice-status');
-  box.classList.remove('listening', 'ignored', 'standby');
+  box.classList.remove('listening', 'ignored', 'standby', 'requesting');
   if (mode) box.classList.add(mode);
   voice.baseStatus = text;
   // 镜像 mode 到面板根：供左侧 8px 状态圆点按模式着色（仅视觉，不改行为）
   const panel = $('voice-panel');
-  panel.classList.remove('listening', 'ignored', 'standby');
+  panel.classList.remove('listening', 'ignored', 'standby', 'requesting');
   if (mode) panel.classList.add(mode);
   voiceRenderStatus();
 }
 // 状态文字单行内联：正在识别的 interim 以“… ”前缀显示于此，否则恢复基础状态；超长由 CSS ellipsis 截断
 function voiceRenderStatus() {
   $('voice-status-text').textContent = voice.interim ? '… ' + voice.interim : (voice.baseStatus || '');
+  const pending = voice.queue.length + (voice.sending ? 1 : 0);
+  $('voice-queue-status').textContent = pending ? t('待处理') + ' ' + pending : '';
+  $('voice-queue-status').classList.toggle('hidden', !pending);
 }
 function voiceRenderLog() {
   const host = $('voice-text');
@@ -4702,12 +4705,14 @@ async function voiceFilterOne(sentence) {
 async function voiceDrainQueue() {
   if (voice.sending) return;
   voice.sending = true;
+  voiceRenderStatus();
   try {
     while (voice.queue.length && !voice.standby && !voice.halted) {
       const sentence = voice.queue.shift();
+      voiceRenderStatus();
       await voiceFilterOne(sentence);
     }
-  } finally { voice.sending = false; }
+  } finally { voice.sending = false; voiceRenderStatus(); }
 }
 
 /* ── 双向语音：小蜜朗读。优先后端 edge-tts 神经音（TTSPlayer），失败/超时自动降级浏览器 Web Speech ── */
@@ -4888,19 +4893,48 @@ async function typeIntoPrompt(text) {
 }
 
 async function voiceStart() {
-  if (!voice.supported) { toast(t("当前浏览器不支持语音识别，请用 Chrome/Edge，并通过 HTTPS 或 localhost 访问")); return; }
-  await voiceOpenMicStream();
+  if (voice.starting || voice.listening) return;
   const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  voice.starting = true;
+  const startToken = ++voice.startToken;
+  voice.listening = false;
+  voice.standby = false;
+  voice.halted = false;
+  voice.buffer = ''; voice.interim = ''; voice.queue = []; voice.log = [];
+  $('voice-title').textContent = voice.name();
+  $('voice-panel').classList.remove('hidden');
+  voiceRenderLog();
+  voiceSetStatus('requesting', t('正在请求麦克风…'));
+  $('voice-btn').classList.remove('recording');
+  if (!voice.supported || !Ctor) {
+    voice.starting = false;
+    const message = t('当前浏览器不支持语音识别，请用 Chrome/Edge，并通过 HTTPS 或 localhost 访问');
+    voiceSetStatus('standby', message);
+    toast(message);
+    return;
+  }
+  try {
+    const micReady = await voiceOpenMicStream(startToken);
+    if (!micReady || !voice.starting || startToken !== voice.startToken) return;
+  } catch (_) {
+    voice.starting = false;
+    voiceSetStatus('standby', t('无法访问麦克风，请检查权限后重试'));
+    toast(t('无法访问麦克风，请检查权限后重试'));
+    return;
+  }
   const rec = new Ctor();
   rec.lang = 'zh-CN'; rec.continuous = true; rec.interimResults = true;
   voice.recognition = rec;
   ttsCancel();
-  voice.buffer = ''; voice.interim = ''; voice.standby = false; voice.queue = []; voice.log = []; voice.halted = false;
-  $('voice-title').textContent = voice.name();
-  voiceRenderLog();
-  voiceSetStatus('listening', t("聆听中…说完一句会自动发送"));
-  $('voice-panel').classList.remove('hidden');
+  rec.onstart = () => {
+    if (startToken !== voice.startToken || voice.recognition !== rec) return;
+    voice.starting = false;
+    voice.listening = true;
+    $('voice-btn').classList.add('recording');
+    voiceSetStatus('listening', t('聆听中…说完一句会自动发送'));
+  };
   rec.onresult = (e) => {
+    if (startToken !== voice.startToken) return;
     let interim = '';
     for (let i = e.resultIndex; i < e.results.length; i++) {
       const r = e.results[i];
@@ -4914,19 +4948,45 @@ async function voiceStart() {
     voiceArmPauseFlush();
   };
   rec.onerror = (e) => {
-    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-      toast(t("麦克风权限被拒绝，请在浏览器地址栏允许麦克风访问"));
-      voiceClose();
-    }
+    if (startToken !== voice.startToken) return;
+    voice.starting = false;
+    voice.listening = false;
+    voiceReleaseMicStream();
+    $('voice-btn').classList.remove('recording');
+    const denied = e.error === 'not-allowed' || e.error === 'service-not-allowed';
+    const message = denied ? t('麦克风权限被拒绝，请在浏览器地址栏允许麦克风访问后重试') : t('语音识别暂不可用，请检查麦克风后重试');
+    voiceSetStatus('standby', message);
+    toast(message);
   };
   rec.onend = () => {
+    if (startToken !== voice.startToken) return;
     if (voice.listening && !voice.standby) { try { rec.start(); } catch (_) {} }
   };
-  try { rec.start(); voice.listening = true; $('voice-btn').classList.add('recording'); }
-  catch (_) { toast(t("无法启动语音识别，请检查麦克风")); }
+  try {
+    const audioTrack = voice.micStream?.getAudioTracks?.()[0];
+    if (audioTrack) {
+      try { rec.start(audioTrack); }
+      catch (_) {
+        voiceReleaseMicStream();
+        toast(t('当前浏览器不支持所选麦克风，将使用系统默认'));
+        rec.start();
+      }
+    } else rec.start();
+  }
+  catch (_) {
+    voice.starting = false;
+    voice.listening = false;
+    voiceReleaseMicStream();
+    $('voice-btn').classList.remove('recording');
+    const message = t('无法启动语音识别，请检查麦克风后重试');
+    voiceSetStatus('standby', message);
+    toast(message);
+  }
 }
 function voiceStopAndFlush() {
   clearTimeout(voice.timer);
+  voice.starting = false;
+  voice.startToken++;
   voiceReleaseMicStream();
   voice.listening = false;
   if (voice.recognition) { try { voice.recognition.onend = null; voice.recognition.stop(); } catch (_) {} }
@@ -4941,6 +5001,8 @@ function voiceStopAndFlush() {
 // 硬停止：取消一切——停朗读、清空队列/缓冲、不再发送、不触发新 run。绑定面板"停止"按钮。
 function voiceHardStop() {
   clearTimeout(voice.timer);
+  voice.starting = false;
+  voice.startToken++;
   voiceReleaseMicStream();
   ttsCancel(); // 立即停神经音 + 浏览器机械音朗读
   voice.halted = true;
@@ -4952,6 +5014,8 @@ function voiceHardStop() {
 }
 function voiceClose() {
   clearTimeout(voice.timer);
+  voice.starting = false;
+  voice.startToken++;
   voiceReleaseMicStream();
   ttsCancel();
   voice.listening = false; voice.standby = false;
@@ -4960,57 +5024,31 @@ function voiceClose() {
   $('voice-panel').classList.add('hidden');
 }
 
-// 选定麦克风：getUserMedia 以 exact deviceId 建立并持有音频流，把音频路由锁定到该设备
-async function voiceOpenMicStream() {
+// 选定麦克风：获取 exact deviceId 的音频流；支持 start(audioTrack) 的浏览器会将所选轨道传给识别器。
+async function voiceOpenMicStream(startToken) {
   voiceReleaseMicStream();
   const dev = state.config && state.config.voiceInputDevice;
-  if (!dev || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+  if (!dev || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return true;
   try {
-    voice.micStream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: dev } } });
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: dev } } });
+    if (startToken !== voice.startToken || !voice.starting) {
+      try { stream.getTracks().forEach(tk => tk.stop()); } catch (_) {}
+      return false;
+    }
+    voice.micStream = stream;
   } catch (_) {
     voice.micStream = null;
     toast(t('无法使用所选麦克风，将使用系统默认'));
   }
+  return true;
 }
 function voiceReleaseMicStream() {
   if (voice.micStream) { try { voice.micStream.getTracks().forEach(tk => tk.stop()); } catch (_) {} voice.micStream = null; }
 }
 $('voice-btn').onclick = action(() => {
-  // #62: 主会话=语音听写填输入框；小秘会话=小秘管线
-  if (state.session?.kind === 'assistant') {
-    voice.listening ? voiceStopAndFlush() : voiceStart();
-  } else {
-    dictation.listening ? dictationStop() : dictationStart();
-  }
+  // 主会话和小秘会话统一进入小秘语音：实时断句、AI 甄别并直接发送。
+  (voice.listening || voice.starting) ? voiceStopAndFlush() : voiceStart();
 });
-// #62: 主会话语音听写（Web Speech API → 填入 #prompt）
-const dictation = { listening: false, recognition: null, finalText: '' };
-function dictationStart() {
-  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!Ctor) { toast(t('浏览器不支持语音识别')); return; }
-  const rec = new Ctor();
-  rec.lang = 'zh-CN'; rec.continuous = true; rec.interimResults = true;
-  dictation.recognition = rec;
-  dictation.finalText = $('prompt').value;
-  rec.onresult = (e) => {
-    let interim = '';
-    for (let i = e.resultIndex; i < e.results.length; i++) {
-      if (e.results[i].isFinal) dictation.finalText += e.results[i][0].transcript;
-      else interim += e.results[i][0].transcript;
-    }
-    $('prompt').value = dictation.finalText + (interim ? ' ' + interim : '');
-    $('prompt').dispatchEvent(new Event('input', { bubbles: true }));
-  };
-  rec.onerror = (e) => { if (e.error === 'not-allowed') toast(t('麦克风权限被拒绝')); dictationStop(); };
-  rec.onend = () => { if (dictation.listening) { try { rec.start(); } catch(_){} } };
-  try { rec.start(); dictation.listening = true; $('voice-btn').classList.add('recording'); }
-  catch (_) { toast(t('无法启动语音识别')); }
-}
-function dictationStop() {
-  dictation.listening = false;
-  if (dictation.recognition) { try { dictation.recognition.onend = null; dictation.recognition.stop(); } catch(_){} }
-  $('voice-btn').classList.remove('recording');
-}
 $('voice-stop').onclick = action(voiceHardStop);
 // ===== 小秘语音导览：朗读 AI 输出并自动滚动跟随；讲方案时先打开产物文件再讲解 =====
 const narration = { active:false, steps:[], index:0, paused:false, cancelled:false, jump:0 };
@@ -5822,7 +5860,7 @@ function renderVoiceInputSourceControl() {
   const sel = el('select', 'voice-input-select');
   const refresh = el('button', 'quiet', t('刷新')); refresh.type = 'button';
   row.append(sel, refresh);
-  const note = el('small', '', t('默认用系统麦克风。Web Speech 标准不直接支持指定设备，这里通过 getUserMedia 锁定该设备的音频路由。'));
+  const note = el('small', '', t('默认用系统麦克风。浏览器支持 SpeechRecognition.start(audioTrack) 时使用所选设备；不支持时回退系统默认。'));
   wrap.append(head, row, note);
   async function populate() {
     sel.replaceChildren();
@@ -6524,4 +6562,3 @@ function openFactoryResetDialog() {
 
   if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
 }
-
