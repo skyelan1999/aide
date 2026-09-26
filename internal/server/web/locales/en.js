@@ -1,6 +1,7 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "性格演化会使用小秘会话中的语音与文字历史，并从整段历史取样；加密语音历史需先在历史设置中解锁。": "Personality evolution samples voice and text interactions across the full assistant history. Unlock encrypted voice history in History settings first.",
   "历史展示格式": "History display format",
   "压缩历史：折叠超长上下文以节省 token": "Compact history: collapse long context to save tokens",
   "轨迹 = 本会话全部任务的事件时间线；Token 用量为真实统计（标注估算时除外）。压缩历史可折叠超长上下文以节省 token。": "Trajectory = event timeline of all tasks in this session; token usage is the real statistic except where marked estimated. Use Compact to collapse long context and save tokens.",
@@ -731,6 +732,10 @@ window.aideEnglish = {
   "语音回复设置已保存": "Voice reply settings saved",
   "语音弹框标题使用这个名字，默认「小秘」。": "The voice panel title uses this name; defaults to \"小秘\".",
   "语音输入": "Voice input",
+  "说完后可编辑并发送": "Finish speaking, then edit and send",
+  "语音已转写，可编辑后发送": "Speech transcribed. Edit it before sending.",
+  "请先停止语音转写，再检查并发送文字": "Stop dictation first, then review and send the text.",
+  "普通会话的麦克风会过滤背景声并把指令交给当前会话；小秘会话中麦克风先转写到输入框，编辑后再发送。": "In regular chats, the microphone filters background speech and routes commands to the current chat. In the Xiaomi chat, it transcribes into the input so you can edit before sending.",
   "请先配置模型": "Configure a model first",
   "请补充说明你想做什么": "Please add what you want to do",
   "请设置密钥": "Set a key",

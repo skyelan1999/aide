@@ -1992,6 +1992,14 @@ func (a *App) getSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
+	if s.Kind == assistantSessionKind {
+		// 旧版语音入口曾将历史单独保存在 voice-history.json；在小秘会话读取时
+		// 合并尚未迁入会话的历史，供时间线展示。仅改响应副本，不覆盖持久化会话。
+		view := *s
+		view.Messages = a.xiaomiHistoryLocked()
+		jsonOut(w, 200, &view)
+		return
+	}
 	jsonOut(w, 200, s)
 }
 

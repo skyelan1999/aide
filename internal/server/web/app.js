@@ -1,7 +1,7 @@
 'use strict';
 const t = (key, ...args) => window.aideI18n ? window.aideI18n.t(key, ...args) : String(key).replace(/\{(\d+)\}/g, (m, i) => args[i] ?? m);
 const $ = id => document.getElementById(id);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveRound: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: true, autoScroll: true, jumpAnimating: false };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveRound: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, autoScroll: true, jumpAnimating: false };
 const fragment = new URLSearchParams(location.hash.slice(1));
 if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); history.replaceState(null, '', location.pathname); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -324,6 +324,7 @@ const sessionSeq = { value: 0 }; // R07：递增请求序号，旧响应不得�
 async function selectSession(id) {
   const seq = ++sessionSeq.value;
   const sameSession = state.session?.id === id;
+  if (!sameSession && typeof stopXiaomiDictation === 'function') stopXiaomiDictation();
   clearTimeout(state.poll); closeStream();
   ttsCancel();
   // 查看完成会话：清除“蓝点+加粗”高亮（持久化；不阻塞会话加载，失败静默）
@@ -833,7 +834,8 @@ function renderSession() {
       const icon = iconMap[type] || '💬';
       row.append(el('span', 'am-icon', icon));
       const body = el('div', 'am-body');
-      if (msg.text) body.append(el('div', 'am-text', msg.text));
+      const content = msg.content || msg.text || '';
+      if (content) body.append(el('div', msg.role === 'assistant' ? 'am-reply' : 'am-text', content));
       if (msg.reply) body.append(el('div', 'am-reply', msg.reply));
       if (msg.dispatched) {
         const card = el('button', 'am-dispatched');
@@ -1239,7 +1241,9 @@ $('plugin-panel-close').onclick = () => { closeSidePanels(); $('plugins-toggle')
 window.addEventListener('resize', syncPanelButtons);
 $('parent-dir').onclick = action(async () => { state.dir = state.dir.includes('/') ? state.dir.slice(0, state.dir.lastIndexOf('/')) : '.'; await loadFiles(); });
 $('task-form').onsubmit = action(async event => {
-  event.preventDefault(); const prompt = $('prompt').value.trim(); if (!prompt) return;
+  event.preventDefault();
+  if (xiaomiDictation.active || xiaomiDictation.starting) { toast(t('请先停止语音转写，再检查并发送文字')); return; }
+  const prompt = $('prompt').value.trim(); if (!prompt) return;
   if (!state.config?.configured) { openSettings(); return; }
   if (state.previewOverLimit) { toast(t("上下文预算超限：请缩短任务或减少附件后再发送")); return; }
   $('send').disabled = true;
@@ -4904,6 +4908,131 @@ async function typeIntoPrompt(text) {
   }
 }
 
+// 小秘专属会话使用听写模式：识别结果先进入可编辑输入框，用户显式点击发送后才提交。
+const xiaomiDictation = { token: 0, recognition: null, stream: null, active: false, starting: false, finalText: '', interim: '', baseText: '', lastRendered: '' };
+function renderXiaomiDictationText() {
+  const prompt = $('prompt');
+  const recognized = xiaomiDictation.finalText + xiaomiDictation.interim;
+  const separator = xiaomiDictation.baseText && recognized && !/[\s\n]$/.test(xiaomiDictation.baseText) ? '\n' : '';
+  prompt.value = xiaomiDictation.baseText + separator + recognized;
+  xiaomiDictation.lastRendered = prompt.value;
+  const host = $('voice-text');
+  host.replaceChildren();
+  if (xiaomiDictation.finalText) host.append(el('div', 'voice-log-line', xiaomiDictation.finalText));
+  if (xiaomiDictation.interim) host.append(el('div', 'voice-log-interim', '… ' + xiaomiDictation.interim));
+  host.scrollTop = host.scrollHeight;
+}
+function releaseXiaomiDictationStream() {
+  if (xiaomiDictation.stream) {
+    try { xiaomiDictation.stream.getTracks().forEach(track => track.stop()); } catch (_) {}
+    xiaomiDictation.stream = null;
+  }
+}
+function finishXiaomiDictation(token, showResult = true) {
+  if (token !== xiaomiDictation.token) return;
+  xiaomiDictation.active = false;
+  xiaomiDictation.starting = false;
+  if (showResult && xiaomiDictation.interim.trim()) xiaomiDictation.finalText += xiaomiDictation.interim;
+  xiaomiDictation.interim = '';
+  if (xiaomiDictation.recognition) {
+    try { xiaomiDictation.recognition.onend = null; xiaomiDictation.recognition.stop(); } catch (_) {}
+    xiaomiDictation.recognition = null;
+  }
+  releaseXiaomiDictationStream();
+  xiaomiDictation.token++;
+  $('prompt').disabled = false;
+  $('voice-btn').classList.remove('recording');
+  $('voice-panel').classList.add('hidden');
+  renderXiaomiDictationText();
+  if (showResult && xiaomiDictation.finalText.trim()) toast(t('语音已转写，可编辑后发送'));
+}
+function stopXiaomiDictation() {
+  if (!xiaomiDictation.active && !xiaomiDictation.starting) return;
+  const token = xiaomiDictation.token;
+  xiaomiDictation.active = false;
+  xiaomiDictation.starting = false;
+  $('voice-btn').classList.remove('recording');
+  voiceSetStatus('standby', t('说完后可编辑并发送'));
+  if (xiaomiDictation.recognition) {
+    try { xiaomiDictation.recognition.stop(); } catch (_) {}
+    // 某些 Web Speech 实现不触发 onend；最终转写应保留，麦克风也要及时释放。
+    setTimeout(() => finishXiaomiDictation(token), 900);
+  } else finishXiaomiDictation(token);
+}
+async function startXiaomiDictation() {
+  if (xiaomiDictation.active || xiaomiDictation.starting) return;
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!voice.supported || !Ctor) {
+    const message = t('当前浏览器不支持语音识别，请用 Chrome/Edge，并通过 HTTPS 或 localhost 访问');
+    toast(message); return;
+  }
+  const token = ++xiaomiDictation.token;
+  xiaomiDictation.starting = true;
+  xiaomiDictation.active = false;
+  xiaomiDictation.finalText = '';
+  xiaomiDictation.interim = '';
+  xiaomiDictation.baseText = $('prompt').value;
+  $('prompt').disabled = true;
+  $('voice-title').textContent = voice.name();
+  $('voice-panel').classList.remove('hidden');
+  $('voice-btn').classList.remove('recording');
+  voiceSetStatus('requesting', t('正在请求麦克风…'));
+  renderXiaomiDictationText();
+  try {
+    const deviceId = state.config && state.config.voiceInputDevice;
+    if (deviceId && navigator.mediaDevices?.getUserMedia) {
+      try { xiaomiDictation.stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: { exact: deviceId } } }); }
+      catch (_) { toast(t('无法使用所选麦克风，将使用系统默认')); }
+    }
+    if (token !== xiaomiDictation.token || !xiaomiDictation.starting) {
+      releaseXiaomiDictationStream();
+      return;
+    }
+    const rec = new Ctor();
+    rec.lang = 'zh-CN'; rec.continuous = true; rec.interimResults = true;
+    xiaomiDictation.recognition = rec;
+    rec.onstart = () => {
+      if (token !== xiaomiDictation.token || xiaomiDictation.recognition !== rec) return;
+      if (!xiaomiDictation.starting) { finishXiaomiDictation(token); return; }
+      xiaomiDictation.starting = false; xiaomiDictation.active = true;
+      $('voice-btn').classList.add('recording');
+      voiceSetStatus('listening', t('说完后可编辑并发送'));
+    };
+    rec.onresult = event => {
+      if (token !== xiaomiDictation.token) return;
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        if (result.isFinal) xiaomiDictation.finalText += result[0].transcript;
+        else interim += result[0].transcript;
+      }
+      xiaomiDictation.interim = interim;
+      renderXiaomiDictationText();
+    };
+    rec.onerror = event => {
+      if (token !== xiaomiDictation.token) return;
+      const denied = event.error === 'not-allowed' || event.error === 'service-not-allowed';
+      const message = denied ? t('麦克风权限被拒绝，请在浏览器地址栏允许麦克风访问后重试') : t('语音识别暂不可用，请检查麦克风后重试');
+      finishXiaomiDictation(token, false);
+      toast(message);
+    };
+    rec.onend = () => {
+      if (token !== xiaomiDictation.token) return;
+      if (xiaomiDictation.active) { try { rec.start(); } catch (_) {} }
+      else finishXiaomiDictation(token);
+    };
+    ttsCancel();
+    const audioTrack = xiaomiDictation.stream?.getAudioTracks?.()[0];
+    if (audioTrack) {
+      try { rec.start(audioTrack); }
+      catch (_) { releaseXiaomiDictationStream(); toast(t('当前浏览器不支持所选麦克风，将使用系统默认')); rec.start(); }
+    } else rec.start();
+  } catch (_) {
+    finishXiaomiDictation(token, false);
+    toast(t('无法启动语音识别，请检查麦克风后重试'));
+  }
+}
+
 async function voiceStart() {
   if (voice.starting || voice.listening) return;
   const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -5058,10 +5187,14 @@ function voiceReleaseMicStream() {
   if (voice.micStream) { try { voice.micStream.getTracks().forEach(tk => tk.stop()); } catch (_) {} voice.micStream = null; }
 }
 $('voice-btn').onclick = action(() => {
+  if (state.session?.kind === 'assistant') {
+    (xiaomiDictation.active || xiaomiDictation.starting) ? stopXiaomiDictation() : startXiaomiDictation();
+    return;
+  }
   // 主会话和小秘会话统一进入小秘语音：实时断句、AI 甄别并直接发送。
   (voice.listening || voice.starting) ? voiceStopAndFlush() : voiceStart();
 });
-$('voice-stop').onclick = action(voiceHardStop);
+$('voice-stop').onclick = action(() => state.session?.kind === 'assistant' ? stopXiaomiDictation() : voiceHardStop());
 // ===== 小秘语音导览：朗读 AI 输出并自动滚动跟随；讲方案时先打开产物文件再讲解 =====
 const narration = { active:false, steps:[], index:0, paused:false, cancelled:false, jump:0 };
 function narrSleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
@@ -5961,6 +6094,9 @@ function renderPersonalityControl(control) {
 
   const meta = el('div', 'personality-meta');
   wrap.append(head, top, ta, btns, meta);
+  if (pid === 'xiaomi') {
+    wrap.append(el('small', 'muted', t('性格演化会使用小秘会话中的语音与文字历史，并从整段历史取样；加密语音历史需先在历史设置中解锁。')));
+  }
 
   const renderMeta = (p) => {
     meta.replaceChildren();
@@ -6056,6 +6192,7 @@ function applyLockVisual() {
   // 小秘退下：停止听写 + 取消朗读（解锁后按原状态恢复）
   lockScreen.wasVoiceListening = !!voice.listening;
   if (voice.listening) voiceClose();
+  if (xiaomiDictation.active || xiaomiDictation.starting) stopXiaomiDictation();
   ttsCancel();
   veil.hidden = false;
   veil.classList.remove('joining');

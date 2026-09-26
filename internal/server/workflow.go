@@ -423,6 +423,14 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		task.Error = "会话保存失败: " + saveErr.Error()
 	}
 	a.mu.Unlock()
+	// 关闭插话通道，避免悬挂 goroutine 向已结束 task 发消息
+	if task.Steer != nil {
+		select {
+		case <-task.Steer:
+		default:
+		}
+		close(task.Steer)
+	}
 	a.finishLiveRun(s.ID, task.ID, task.Status) // #35：done/interrupted/failed
 	a.finishStream(task.ID, task.Status, task.Error)
 	// R01：模型调用必须发生在全局锁之外；自动压缩改为释放锁后执行

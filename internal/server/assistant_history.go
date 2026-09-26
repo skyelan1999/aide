@@ -127,6 +127,51 @@ func (a *App) recordAgenticExchangeLocked(heard string, dec assistantDecision, s
 	_ = a.save(s)
 }
 
+// xiaomiHistoryLocked 返回小秘专属消息，加上 #62 之前尚未迁入会话的语音历史。
+// 旧语音历史受 VoiceAgent 自身加密锁控制；锁定时 snapshotHistory 为空，不绕过该锁。
+// 调用方持有 a.mu。
+func (a *App) xiaomiHistoryLocked() []Message {
+	s := a.findAssistantSessionLocked()
+	if s == nil {
+		return nil
+	}
+	current := append([]Message(nil), s.Messages...)
+	if a.voiceAgent == nil {
+		return current
+	}
+	history := a.voiceAgent.snapshotHistory()
+	if len(history) == 0 {
+		return current
+	}
+
+	// #62 之后语音对话同时写入 voice-history 与 assistant session；按原话出现次数
+	// 抵消重叠记录，避免重复。相同原话多次出现时按次数匹配，不丢弃重复轮次。
+	seen := make(map[string]int)
+	for _, msg := range current {
+		if msg.Type == msgTypeVoiceIn {
+			seen[strings.TrimSpace(msg.Content)]++
+		}
+	}
+	legacy := make([]Message, 0)
+	for _, entry := range history { // voice-history 保持旧到新的存储顺序
+		heard := strings.TrimSpace(entry.Heard)
+		if heard == "" {
+			continue
+		}
+		if seen[heard] > 0 {
+			seen[heard]--
+			continue
+		}
+		legacy = append(legacy, Message{Role: "user", Content: heard, Type: msgTypeVoiceIn})
+		noteType := msgTypeVoiceNote
+		if entry.Action == "ask" {
+			noteType = msgTypeVoiceAsk
+		}
+		legacy = append(legacy, Message{Role: "assistant", Content: describeVoiceEntry(entry), Type: noteType})
+	}
+	return append(legacy, current...)
+}
+
 // assistantMessageHandler POST /api/sessions/{id}/assistant-message
 // 小秘系统会话视图的文字输入：走小秘 agentic 自主决策管线（#62 升级）。
 // 入参 {text, context?}；返回小秘决策 + 回复文本 +（dispatch 时）转交的 aide 会话信息。

@@ -1,6 +1,14 @@
 # aide 版本记录
 
-**当前版本：0.1.11.0 RC3**
+**当前版本：0.1.11.0 RC4**
+
+## 0.1.11.0 RC4（2026-09-26）
+
+- fix: queueMode 默认改为 false（默认立即插话，不排队），修正用户发消息默认排队打断体验
+- fix: task 结束后 close Steer channel，避免悬挂 goroutine 向已结束 task 发消息
+- fix: queue-toggle 按钮初始状态去掉 active 高亮，与 queueMode=false 一致
+- 会话三点菜单完善：置顶/归档/删除，body fixed 定位，滚动不裁切
+- 队列管理 API：queue/index 的 delete/edit/steer 操作，同步 Steers 显示
 
 ## 0.1.11.0 RC3（2026-09-26）
 

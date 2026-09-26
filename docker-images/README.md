@@ -65,6 +65,12 @@ bash scripts/aide.sh start-image
 
 ## 本地导出与数据边界
 
-`bash scripts/aide.sh export` 仍将本地开发镜像 aide:local 导出为 aide-local.tar.gz 与校验和；`load` 导入该开发归档。正式 Release 使用 `scripts/docker-release.sh` 产出的版本化归档和 `SHA256SUMS`，避免混淆。
+`bash scripts/aide.sh export` 将本地开发镜像 aide:local 导出为 aide-local.tar.gz 与 SHA256SUMS；`load` 导入该开发归档。正式 Release 使用 `scripts/docker-release.sh` 产出的版本化归档和 `SHA256SUMS`，避免混淆。
+
+需要换电脑直接启动时，先通过 `start.command` 构建当前工作树，再执行 `bash scripts/aide.sh export-bundle`。这会导出当前 Compose 配置实际使用的镜像，并生成 `aide-<版本>-linux-<架构>-<镜像ID前12位>-offline.tar.gz` 与 SHA256SUMS。构建输入与镜像不一致时拒绝导出，防止误交付旧镜像。
+
+离线包包含运行镜像、独立 Compose、启动脚本、空工作目录模板和使用说明。目标电脑解压后双击包内 `start.command`（Linux/WSL：`bash start.command`），自动校验、导入并启动；无需源码、Go、Node 或 Python 宿主环境，不执行 build/pull。Docker/Compose、Bash、shasum 仍需由目标电脑提供。CPU 架构不符时明确停止。包使用独立的 `aide-offline` 项目；默认端口仍为 8097，和源码版同时运行时应在包内 .env 修改端口。
+
+这是当前构建快照的离线交付，不会自动打 Git 标签、推送或发布 GitHub Release。详见 [包内说明模板](../docker/OFFLINE.md)。
 
 大型归档保留在 aide/docker-images，上传到 Release 附件，不进入 Git 或 Docker 构建上下文（`docker-images/*.tar*`、`*.sha256` 已 gitignore）。镜像不包含宿主工作文件、辅助目录、API 密钥、访问令牌或会话数据。数据卷另行备份；加载镜像不会恢复数据卷。升级/回滚前阅读 [交接手册](../HANDOVER.md)。

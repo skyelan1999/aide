@@ -23,6 +23,11 @@ COPY go.sum ./
 COPY vendor ./vendor
 COPY cmd ./cmd
 COPY internal ./internal
+# Fail the build before shipping a page whose application script cannot parse.
+RUN node --check internal/server/web/app.js \
+    && node --check internal/server/web/settings-init.js \
+    && node --check internal/server/web/i18n.js \
+    && node --check internal/server/web/locales/en.js
 # R09：构建期身份（版本/commit）经 ldflags 注入；版本格式与 version.md 一致（如 0.1.5.0 RC5）
 ARG AIDE_VERSION=dev
 ARG AIDE_COMMIT=unknown

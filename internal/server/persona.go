@@ -574,26 +574,10 @@ func (a *App) autoEvolvePersonality(id, sample string) {
 	a.runAutoEvolve(id, modeRefine, "manual", sample)
 }
 
-// personalitySampleLocked 构造演化用的近期真实样本。调用方需持 a.mu。
+// personalitySampleLocked 构造演化用的真实样本。调用方需持 a.mu。
 func (a *App) personalitySampleLocked(id string) string {
 	if id == personaXiaomi {
-		if va := a.voiceAgent; va != nil {
-			hist := va.snapshotHistory()
-			start := len(hist) - 12
-			if start < 0 {
-				start = 0
-			}
-			var b strings.Builder
-			for _, h := range hist[start:] {
-				src := h.Summarized
-				if src == "" {
-					src = h.Heard
-				}
-				b.WriteString("用户: " + clip(src, 400) + "\n")
-			}
-			return clip(b.String(), 4000)
-		}
-		return ""
+		return xiaomiPersonalitySample(a.xiaomiHistoryLocked())
 	}
 	var latest *Session
 	var latestT time.Time
@@ -613,6 +597,43 @@ func (a *App) personalitySampleLocked(id string) string {
 	var b strings.Builder
 	for _, m := range latest.Messages[start:] {
 		b.WriteString(m.Role + ": " + clip(m.Content, 400) + "\n")
+	}
+	return clip(b.String(), 4000)
+}
+
+// xiaomiPersonalitySample takes a bounded, evenly spaced sample across the full
+// Xiaomi timeline so older and newer voice/text exchanges can both inform evolution.
+func xiaomiPersonalitySample(messages []Message) string {
+	eligible := make([]Message, 0, len(messages))
+	for _, msg := range messages {
+		if (msg.Role == "user" || msg.Role == "assistant") && strings.TrimSpace(msg.Content) != "" {
+			eligible = append(eligible, msg)
+		}
+	}
+	if len(eligible) == 0 {
+		return ""
+	}
+
+	const maxSampleMessages = 22 // 11 轮对话，留在既有 4000 字符预算内
+	count := len(eligible)
+	if count > maxSampleMessages {
+		count = maxSampleMessages
+	}
+	var b strings.Builder
+	last := -1
+	for i := 0; i < count; i++ {
+		idx := 0
+		if count == 1 {
+			idx = len(eligible) - 1
+		} else {
+			idx = i * (len(eligible) - 1) / (count - 1)
+		}
+		if idx == last {
+			continue
+		}
+		last = idx
+		msg := eligible[idx]
+		b.WriteString(msg.Role + ": " + clip(strings.TrimSpace(msg.Content), 160) + "\n")
 	}
 	return clip(b.String(), 4000)
 }

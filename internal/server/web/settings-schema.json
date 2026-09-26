@@ -169,7 +169,7 @@
     {
       "id": "voice",
       "title": "语音小秘",
-      "description": "输入框旁的麦克风可边说边转写，AI 自动过滤背景声与闲聊。",
+      "description": "普通会话的麦克风会过滤背景声并把指令交给当前会话；小秘会话中麦克风先转写到输入框，编辑后再发送。",
       "controls": [
         {
           "id": "personalityXiaomi",
