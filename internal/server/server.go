@@ -1708,8 +1708,10 @@ func (a *App) unlockAssistantSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if hash == "" {
-		log.Printf("小秘会话密码门拒绝：未设置账户密码 id=%s", s.ID)
-		fail(w, 401, errors.New("未设置账户密码"))
+		// 未设置账户密码：小秘会话无密码门，直接放行（避免 401 触发前端登录框）
+		log.Printf("小秘会话无密码门：未设置账户密码，直接放行 id=%s", s.ID)
+		a.markAssistantUnlocked(s.ID)
+		jsonOut(w, 200, map[string]any{"ok": true, "noPassword": true})
 		return
 	}
 	valid, needsUpgrade := VerifyPassword(in.Password, hash)

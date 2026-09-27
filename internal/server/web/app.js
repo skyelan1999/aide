@@ -308,9 +308,14 @@ function setupGlobalEvents() {
 function openAssistantGate(id, title) {
   if (localStorage.getItem('assistantUnlocked_' + id)) { selectSession(id); return; }
   action(async () => {
+    // 先试无密码放行（后端未设置账户密码时直接返回 noPassword）
+    try {
+      const r = await api('/sessions/' + id + '/unlock-assistant', { method: 'POST', body: JSON.stringify({ password: '' }) });
+      if (r && r.noPassword) { localStorage.setItem('assistantUnlocked_' + id, '1'); selectSession(id); return; }
+    } catch (_) {}
+    // 需要密码：弹身份验证框
     const res = await requestMasterAuth({ reason: t('进入小秘会话需要验证身份') });
     if (res === null) return; // 取消
-    // 身份已由 requestMasterAuth 验证（密码或指纹）；密码路径补一次后端审计解锁态
     if (typeof res === 'string' && res !== 'success') {
       try { await api('/sessions/' + id + '/unlock-assistant', { method: 'POST', body: JSON.stringify({ password: res }) }); } catch (_) {}
     }
