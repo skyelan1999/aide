@@ -5182,7 +5182,11 @@ async function voiceStart() {
   };
   rec.onend = () => {
     if (startToken !== voice.startToken) return;
-    if (voice.listening && !voice.standby) { try { rec.start(); } catch (_) {} }
+    // 不自动重启监听：说完一句后停止，需要用户手动点麦克风再次开始
+    voice.listening = false;
+    voiceReleaseMicStream();
+    $('voice-btn').classList.remove('recording');
+    voiceSetStatus('standby', t('聆听结束，点击麦克风再次开始'));
   };
   try {
     const audioTrack = voice.micStream?.getAudioTracks?.()[0];
