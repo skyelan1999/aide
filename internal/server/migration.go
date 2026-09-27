@@ -234,13 +234,15 @@ func copyVerified(src, dest, backupDir, name string) (bool, error) {
 			return false, err
 		}
 	}
-	// dest 已存在：哈希一致 → 跳过（幂等）；不一致 → 冲突中止
+	// dest 已存在：哈希一致 → 跳过（幂等）；不一致 → 保留目标（用户配置优先），删除源文件
 	if b, err := os.ReadFile(dest); err == nil {
 		destHash := sha256.Sum256(b)
 		if hex.EncodeToString(destHash[:]) == srcHash {
 			return false, nil
 		}
-		return false, fmt.Errorf("目标 %s 已存在但内容不一致", dest)
+		// 内容不一致：保留目标文件（用户已修改），删除旧源文件，不报错
+		_ = os.Remove(src)
+		return false, nil
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return false, err
 	}
