@@ -621,40 +621,42 @@ func isSqlitePath(pth string) bool {
 		strings.HasSuffix(strings.ToLower(pth), ".sqlite3")
 }
 
-// resolveSqlitePath 解析 sqlite 文件路径，返回可读的文件系统路径
+// resolveSqlitePath 解析 sqlite 文件，读取内容并写到临时文件，返回临时文件路径
 func (a *App) resolveSqlitePath(r *http.Request) (string, error) {
 	pth := r.URL.Query().Get("path")
 	if err := safePath(pth); err != nil {
 		return "", err
 	}
 	if srcID := r.URL.Query().Get("source"); srcID != "" {
-		a.mu.Lock()
-		src, ok := a.findSource(srcID)
-		a.mu.Unlock()
-		if !ok || !src.Enabled {
-			return "", errors.New("来源不存在或已停用")
-		}
-		// 辅助资料来源：需要挂载到本地路径
-		return "", errors.New("辅助资料暂不支持 SQLite 直接读取")
+		return "", errors.New("辅助资料暂不支持 SQLite")
 	}
 	root, err := a.root(r.URL.Query().Get("root"))
 	if err != nil {
 		return "", err
 	}
-	full, err := root.Join(pth)
+	b, err := readRawBytes(root, pth)
 	if err != nil {
 		return "", err
 	}
-	return full, nil
+	tmp, err := os.CreateTemp("", "aide-sqlite-*.db")
+	if err != nil {
+		return "", err
+	}
+	defer tmp.Close()
+	if _, err := tmp.Write(b); err != nil {
+		return "", err
+	}
+	return tmp.Name(), nil
 }
 
 // sqliteListTables 返回 sqlite 数据库的表列表
 func (a *App) sqliteListTables(w http.ResponseWriter, r *http.Request) {
-	full, err := a.resolveSqlitePath(r)
+	tmpPath, err := a.resolveSqlitePath(r)
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
+	defer os.Remove(tmpPath)
 	// 用 python3 sqlite3 读取表列表
 	cmd := exec.Command("python3", "-c", `
 import sqlite3, sys, json
@@ -669,7 +671,7 @@ for t in tables:
     result.append({"name": t, "rows": count})
 db.close()
 print(json.dumps(result))
-`, full)
+`, tmpPath)
 	out, err := cmd.Output()
 	if err != nil {
 		fail(w, 500, fmt.Errorf("读取 sqlite 失败: %w", err))
@@ -681,11 +683,6 @@ print(json.dumps(result))
 
 // sqliteQueryData 返回指定表的数据
 func (a *App) sqliteQueryData(w http.ResponseWriter, r *http.Request) {
-	full, err := a.resolveSqlitePath(r)
-	if err != nil {
-		fail(w, 400, err)
-		return
-	}
 	table := r.URL.Query().Get("table")
 	if table == "" {
 		fail(w, 400, errors.New("缺少 table 参数"))
@@ -699,6 +696,12 @@ func (a *App) sqliteQueryData(w http.ResponseWriter, r *http.Request) {
 	if offset == "" {
 		offset = "0"
 	}
+	tmpPath, err := a.resolveSqlitePath(r)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	defer os.Remove(tmpPath)
 	// 用 python3 sqlite3 读取表数据
 	cmd := exec.Command("python3", "-c", `
 import sqlite3, sys, json
@@ -716,7 +719,7 @@ cur.execute(f"SELECT COUNT(*) FROM [{sys.argv[2]}]")
 total = cur.fetchone()[0]
 db.close()
 print(json.dumps({"columns": cols, "rows": rows, "total": total}))
-`, full, table, limit, offset)
+`, tmpPath, table, limit, offset)
 	out, err := cmd.Output()
 	if err != nil {
 		fail(w, 500, fmt.Errorf("查询 sqlite 失败: %w", err))
