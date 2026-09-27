@@ -960,6 +960,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)
 	mux.HandleFunc("POST /api/file/rename", a.renameFile)
+	mux.HandleFunc("GET /api/sqlite/tables", a.sqliteListTables)
+	mux.HandleFunc("GET /api/sqlite/data", a.sqliteQueryData)
 	// ── 侧车批注（#63，跨格式通用；接口约定见 docs/architecture/office-viewer.md）──
 	mux.HandleFunc("GET /api/comments", a.listComments)
 	mux.HandleFunc("POST /api/comments", a.createComment)

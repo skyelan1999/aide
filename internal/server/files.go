@@ -11,6 +11,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path"
 	"sort"
 	"strconv"
@@ -609,4 +610,118 @@ func (a *App) renameFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonOut(w, 200, map[string]any{"path": newPath, "name": newName})
+}
+
+// ===== SQLite 查看器 API =====
+
+// isSqlitePath 判断是否为 SQLite 数据库文件
+func isSqlitePath(pth string) bool {
+	return strings.HasSuffix(strings.ToLower(pth), ".db") ||
+		strings.HasSuffix(strings.ToLower(pth), ".sqlite") ||
+		strings.HasSuffix(strings.ToLower(pth), ".sqlite3")
+}
+
+// resolveSqlitePath 解析 sqlite 文件路径，返回可读的文件系统路径
+func (a *App) resolveSqlitePath(r *http.Request) (string, error) {
+	pth := r.URL.Query().Get("path")
+	if err := safePath(pth); err != nil {
+		return "", err
+	}
+	if srcID := r.URL.Query().Get("source"); srcID != "" {
+		a.mu.Lock()
+		src, ok := a.findSource(srcID)
+		a.mu.Unlock()
+		if !ok || !src.Enabled {
+			return "", errors.New("来源不存在或已停用")
+		}
+		// 辅助资料来源：需要挂载到本地路径
+		return "", errors.New("辅助资料暂不支持 SQLite 直接读取")
+	}
+	root, err := a.root(r.URL.Query().Get("root"))
+	if err != nil {
+		return "", err
+	}
+	full, err := root.Join(pth)
+	if err != nil {
+		return "", err
+	}
+	return full, nil
+}
+
+// sqliteListTables 返回 sqlite 数据库的表列表
+func (a *App) sqliteListTables(w http.ResponseWriter, r *http.Request) {
+	full, err := a.resolveSqlitePath(r)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	// 用 python3 sqlite3 读取表列表
+	cmd := exec.Command("python3", "-c", `
+import sqlite3, sys, json
+db = sqlite3.connect(sys.argv[1])
+cur = db.cursor()
+cur.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+tables = [r[0] for r in cur.fetchall()]
+result = []
+for t in tables:
+    cur.execute(f"SELECT COUNT(*) FROM [{t}]")
+    count = cur.fetchone()[0]
+    result.append({"name": t, "rows": count})
+db.close()
+print(json.dumps(result))
+`, full)
+	out, err := cmd.Output()
+	if err != nil {
+		fail(w, 500, fmt.Errorf("读取 sqlite 失败: %w", err))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(out)
+}
+
+// sqliteQueryData 返回指定表的数据
+func (a *App) sqliteQueryData(w http.ResponseWriter, r *http.Request) {
+	full, err := a.resolveSqlitePath(r)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	table := r.URL.Query().Get("table")
+	if table == "" {
+		fail(w, 400, errors.New("缺少 table 参数"))
+		return
+	}
+	limit := r.URL.Query().Get("limit")
+	if limit == "" {
+		limit = "100"
+	}
+	offset := r.URL.Query().Get("offset")
+	if offset == "" {
+		offset = "0"
+	}
+	// 用 python3 sqlite3 读取表数据
+	cmd := exec.Command("python3", "-c", `
+import sqlite3, sys, json
+db = sqlite3.connect(sys.argv[1])
+db.row_factory = sqlite3.Row
+cur = db.cursor()
+# 获取列名
+cur.execute(f"PRAGMA table_info([{sys.argv[2]}])")
+cols = [{"name": r[1], "type": r[2]} for r in cur.fetchall()]
+# 获取数据
+cur.execute(f"SELECT * FROM [{sys.argv[2]}] LIMIT ? OFFSET ?", (int(sys.argv[3]), int(sys.argv[4])))
+rows = [dict(r) for r in cur.fetchall()]
+# 获取总行数
+cur.execute(f"SELECT COUNT(*) FROM [{sys.argv[2]}]")
+total = cur.fetchone()[0]
+db.close()
+print(json.dumps({"columns": cols, "rows": rows, "total": total}))
+`, full, table, limit, offset)
+	out, err := cmd.Output()
+	if err != nil {
+		fail(w, 500, fmt.Errorf("查询 sqlite 失败: %w", err))
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(out)
 }

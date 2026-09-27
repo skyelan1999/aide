@@ -1122,7 +1122,7 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
 
 async function openFile(path) {
   // 图片 / STL / PDF 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
-  if (isImagePath(path) || isStlPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path)) {
+  if (isImagePath(path) || isStlPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path) || isSqlitePath(path)) {
     state.file = { path, root: state.root, source: state.root === 'context' ? state.source : '', content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
     showEditor();
     return;
@@ -1138,6 +1138,7 @@ function isMarkdownPath(path) { return /\.(md|markdown)$/i.test(path || ''); }
 function isImagePath(path) { return /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i.test(path || ''); }
 function isStlPath(path) { return /\.stl$/i.test(path || ''); }
 function isPdfPath(path) { return /\.pdf$/i.test(path || ''); }
+function isSqlitePath(path) { return /\.(db|sqlite|sqlite3)$/i.test(path || ''); }
 function setEditorMode(mode) {
   const preview = mode === 'preview';
   $('editor').classList.toggle('hidden', preview);
@@ -1157,6 +1158,7 @@ function showEditor() {
   const isPdf = isPdfPath(state.file.path);
   const isDxf = isDxfPath(state.file.path);
   const isDocx = isDocxPath(state.file.path);
+  const isSqlite = isSqlitePath(state.file.path);
   $('editor').readOnly = readOnly;
   // #64: code syntax highlighting
   teardownCodeHighlight($('editor'));
@@ -1164,11 +1166,11 @@ function showEditor() {
   if (_cl) setupCodeHighlight($('editor'), _cl);
   // 图片 / STL / PDF 为只读可视化查看器，无文本可保存，禁用保存（避免空内容覆盖原文件）；drawio 可保存
   // 可视化查看器（图片/STL/PDF/DXF）无文本可保存 → 隐藏保存按钮；只读来源的文本文件 → 禁用
-  $("save-file").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx);
+  $("save-file").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx || isSqlite);
   $("save-file").disabled = readOnly;
   $('attach-file').disabled = state.file.fresh;
-  $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx));
-  $("editor-ro-badge").title = (readOnly && state.file.root === "context") ? (sourceIsRW() ? t("辅助资料 · 读写来源") : t("辅助资料 · 只读")) : (isImg || isStl || isPdf || isDxf || isDocx ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"));
+  $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx || isSqlite));
+  $("editor-ro-badge").title = (readOnly && state.file.root === "context") ? (sourceIsRW() ? t("辅助资料 · 读写来源") : t("辅助资料 · 只读")) : (isImg || isStl || isPdf || isDxf || isDocx || isSqlite ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"));
   $('editor-mode-switch').classList.toggle('hidden', !md);
   if (isStl) {
     $('editor').classList.add('hidden');
@@ -1186,6 +1188,10 @@ function showEditor() {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
     setupDocxPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
+  } else if (isSqlite) {
+    $('editor').classList.add('hidden');
+    $('editor-preview').classList.remove('hidden');
+    setupSqliteViewer($('editor-preview'), state.file.path, state.file.root);
   } else if (isImg) {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
@@ -6781,4 +6787,65 @@ function openFactoryResetDialog() {
   });
 
   if (typeof dlg.showModal === 'function') dlg.showModal(); else dlg.setAttribute('open', '');
+}
+
+// ===== SQLite 查看器 =====
+async function setupSqliteViewer(container, path, root) {
+  container.innerHTML = '<div style="padding:24px;color:var(--text-secondary);">正在加载数据库…</div>';
+  try {
+    // 获取表列表
+    const tables = await api('/sqlite/tables?root=' + root + '&path=' + encodeURIComponent(path));
+    if (!tables.length) {
+      container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-secondary);">数据库中没有表</div>';
+      return;
+    }
+    let html = '<div style="display:flex;gap:12px;height:100%;">';
+    // 左侧表列表
+    html += '<div style="width:200px;border-right:1px solid var(--border);overflow-y:auto;padding:8px;">';
+    tables.forEach((t, i) => {
+      html += `<div class="sqlite-table-item" data-table="${t.name}" style="padding:8px 12px;cursor:pointer;border-radius:6px;margin-bottom:2px;font-size:13px;">${t.name} <span style="color:var(--text-secondary);font-size:11px;">(${t.rows} rows)</span></div>`;
+    });
+    html += '</div>';
+    // 右侧数据区
+    html += '<div style="flex:1;overflow:auto;padding:16px;"><div class="sqlite-data-area">点击左侧表查看数据</div></div>';
+    html += '</div>';
+    container.innerHTML = html;
+    // 绑定表点击事件
+    container.querySelectorAll('.sqlite-table-item').forEach(item => {
+      item.onclick = async () => {
+        container.querySelectorAll('.sqlite-table-item').forEach(x => x.style.background = '');
+        item.style.background = 'var(--surface-hover)';
+        const table = item.dataset.table;
+        const dataArea = container.querySelector('.sqlite-data-area');
+        dataArea.innerHTML = '<div style="padding:24px;color:var(--text-secondary);">加载中…</div>';
+        try {
+          const data = await api('/sqlite/data?root=' + root + '&path=' + encodeURIComponent(path) + '&table=' + encodeURIComponent(table) + '&limit=100&offset=0');
+          let tableHtml = `<div style="margin-bottom:12px;font-size:13px;color:var(--text-secondary);">共 ${data.total} 行，显示前 ${data.rows.length} 行</div>`;
+          tableHtml += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
+          tableHtml += '<thead><tr>';
+          data.columns.forEach(col => {
+            tableHtml += `<th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);background:var(--surface);font-weight:600;">${col.name}<div style="font-size:11px;font-weight:400;color:var(--text-secondary);">${col.type}</div></th>`;
+          });
+          tableHtml += '</tr></thead><tbody>';
+          data.rows.forEach(row => {
+            tableHtml += '<tr>';
+            data.columns.forEach(col => {
+              const val = row[col.name];
+              tableHtml += `<td style="padding:8px 12px;border-bottom:1px solid var(--border);">${val === null ? '<span style="color:var(--text-secondary);">NULL</span>' : String(val)}</td>`;
+            });
+            tableHtml += '</tr>';
+          });
+          tableHtml += '</tbody></table></div>';
+          dataArea.innerHTML = tableHtml;
+        } catch (e) {
+          dataArea.innerHTML = '<div style="padding:24px;color:#e53e3e;">加载失败: ' + e.message + '</div>';
+        }
+      };
+    });
+    // 默认点击第一个表
+    const firstTable = container.querySelector('.sqlite-table-item');
+    if (firstTable) firstTable.click();
+  } catch (e) {
+    container.innerHTML = '<div style="padding:24px;color:#e53e3e;">加载失败: ' + e.message + '</div>';
+  }
 }
