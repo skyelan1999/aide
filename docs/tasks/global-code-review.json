@@ -3,18 +3,39 @@
   "title": "全局代码分析：分级缺陷清单 + 专家交叉评审 + Playwright/渲染/UI 走查 + 分级修复",
   "baseline": "190657f",
   "stages": {
-    "requirements": { "status": "pass", "summary": "全量审查 Go 后端 + JS 前端 + CSS，按 8 类（逻辑/代码异常/并发竞争/边界/错误处理/安全/资源泄漏/UX）产出 P0–P3 分级清单，每条含 文件:行、证据、修复建议", "evidence": "docs/reviews/2026-09-28-code-review/FINDINGS-SPEC.md" },
-    "design": { "status": "pass", "summary": "冻结统一缺陷契约（schema/口径/防误报清单），8 位只读专家 + 测试复核 + 3 组运行验证", "evidence": "FINDINGS-SPEC.md, findings/*.json" },
-    "implementation": { "status": "pass", "summary": "10 P1 全修；P2 17/25 修；P3 32/67 修；去重后 102 条唯一缺陷，59 已修 / 42 记录 / 1 非缺陷", "evidence": "master-findings-full.json, master-findings-table.md" },
-    "verification": { "status": "pass", "summary": "go vet/build 退出码 0；go test -race 0 DATA RACE / 0 panic；5 次重建后容器 healthy、API 200；Playwright 走查 18/22（走查时，4 FAIL 已全修）；渲染 10/10 查看器 + 42/42 语言高亮；深度 UI 8 维度全 PASS", "evidence": "evidence/final-race.log, evidence/runtime, evidence/render, evidence/ui" },
-    "documentation": { "status": "pass", "summary": "全局报告 README.md + 完整清单表 + 各专家 findings + 验证证据", "evidence": "docs/reviews/2026-09-28-code-review/" },
-    "release": { "status": "pass", "summary": "32 个逻辑批次提交并推送至 origin/feature/permission-panel（190657f..3d9d4b6）；feature 分支未 bump version.md、未打 tag" }
+    "requirements": {
+      "status": "pass",
+      "summary": "全量审查 Go 后端 + JS 前端 + CSS，按 8 类（逻辑/代码异常/并发竞争/边界/错误处理/安全/资源泄漏/UX）产出 P0–P3 分级清单，每条含 文件:行、证据、修复建议",
+      "evidence": "docs/reviews/2026-09-28-code-review/FINDINGS-SPEC.md"
+    },
+    "design": {
+      "status": "pass",
+      "summary": "冻结统一缺陷契约（schema/口径/防误报清单），8 位只读专家 + 测试复核 + 3 组运行验证",
+      "evidence": "FINDINGS-SPEC.md, findings/*.json"
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "10 P1 全修；P2 17/25 修；P3 32/67 修；去重后 102 条唯一缺陷，59 已修 / 42 记录 / 1 非缺陷",
+      "evidence": "master-findings-full.json, master-findings-table.md"
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "go vet/build 退出码 0；go test -race 0 DATA RACE / 0 panic；5 次重建后容器 healthy、API 200；Playwright 走查 18/22（走查时，4 FAIL 已全修）；渲染 10/10 查看器 + 42/42 语言高亮；深度 UI 8 维度全 PASS",
+      "evidence": "evidence/final-race.log, evidence/runtime, evidence/render, evidence/ui"
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "全局报告 README.md + 完整清单表 + 各专家 findings + 验证证据",
+      "evidence": "docs/reviews/2026-09-28-code-review/"
+    },
+    "release": {
+      "status": "pass",
+      "summary": "32 个逻辑批次提交并推送至 origin/feature/permission-panel（190657f..3d9d4b6）；feature 分支未 bump version.md、未打 tag"
+    }
   },
   "open_items": [
-    "per-source SFTP 凭据并入 vault（设计级，需决策）",
-    "plugin daemon 移出全局 a.mu（registry/surface 一致性需评估）",
-    "ask_user 陈旧应答竞态专项（backend-core-001）",
-    "save() 会话桶布局统一（archived/assistant 死目录）",
-    "工作流四阶段 --phase-* 令牌、personaSave 长度上限、安全 P3 加固项"
+    "save() 会话桶布局统一（archived/assistant 死目录）：仍开放。注：P2#8 f9c4e02 仅改 web/style.css 2 行（消息流/输入区列宽对齐），未触及 on-disk 会话存储，不可视为本项完成。",
+    "工作流四阶段 --phase-* 令牌、personaSave 长度上限、安全 P3 加固项：仍开放（本批 8 条 P2 不含此项）。",
+    "[2026-09-28 需求对齐已关闭] per-source SFTP 凭据并入 vault → e38e8ca(P2#1,backend-integrations-003) source_secrets_vault.go+test；plugin daemon 移出全局 a.mu → aeb1ca2(P2#2,backend-persona-004) plugin_daemon.go 自带锁/慢进程在锁外；ask_user 陈旧应答竞态 → afee71(P2#3,backend-core-001) answerRound 单调 nonce+每轮独立 channel。详见 docs/reviews/2026-09-28-requirements-alignment/"
   ]
 }
