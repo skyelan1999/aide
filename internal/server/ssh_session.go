@@ -372,6 +372,30 @@ func (a *App) sftpTargetOf(src Source) string {
 	return u + "@" + src.Config.Host
 }
 
+// sftpConnIdentity 取决定 ControlMaster 连接对象的关键字段；任一变化即应重建会话。
+func sftpConnIdentity(src Source) string {
+	return fmt.Sprintf("%s|%d|%s|%s", src.Config.Host, src.Config.Port, src.Config.Username, src.Config.Auth)
+}
+
+// killSourceSession 关闭某来源的 ControlMaster 并清理其 socket/凭据临时文件
+// （来源删除或连接参数变更时调用；清理失败静默忽略，绝不 panic）。
+func (a *App) killSourceSession(id, target string) {
+	if a.sshBin == "" {
+		return
+	}
+	sock := sourceSocket(id)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	args := []string{"-S", sock, "-O", "exit"}
+	if target != "" {
+		args = append(args, target)
+	}
+	_ = exec.CommandContext(ctx, a.sshBin, args...).Run()
+	_ = os.Remove(sock)
+	_ = os.Remove(sock + ".askpass")
+	_ = os.Remove(sock + ".key")
+}
+
 func (a *App) ensureSourceSession(ctx context.Context, src Source) error {
 	if src.Config.Host == "" {
 		return fmt.Errorf("未配置主机")
@@ -395,12 +419,17 @@ func (a *App) ensureSourceSession(ctx context.Context, src Source) error {
 		if err := os.WriteFile(keyPath, []byte(sec.Key), 0600); err != nil {
 			return err
 		}
+		// master 认证完成后（本函数返回时）立即删除：后续会话复用 ControlPath，
+		// 私钥正文不再需要落盘；master 若掉线，下次 ensureSourceSession 会重写。
+		defer os.Remove(keyPath)
 		args = append([]string{"-i", keyPath}, args...)
 	} else if src.Config.Auth == "password" && sec.Password != "" {
 		ask := sock + ".askpass"
 		if err := os.WriteFile(ask, []byte("#!/bin/sh\necho "+shellQuote(sec.Password)+"\n"), 0700); err != nil {
 			return err
 		}
+		// master 认证完成后立即删除 askpass，口令不长期驻留 /tmp。
+		defer os.Remove(ask)
 		env = append(env, "SSH_ASKPASS="+ask, "SSH_ASKPASS_REQUIRE=force", "DISPLAY=aide:0")
 		args = append([]string{"-o", "NumberOfPasswordPrompts=1"}, args...)
 	}
@@ -428,6 +457,9 @@ func (a *App) sftpBatchSource(src Source, batch string) (string, error) {
 	cmd.Stdin = strings.NewReader(batch)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	out, err := cmd.CombinedOutput()
+	if ctx.Err() != nil {
+		return "", fmt.Errorf("SFTP 操作超时")
+	}
 	if err != nil {
 		return "", fmt.Errorf("SFTP 失败: %s", strings.TrimSpace(string(out)))
 	}
