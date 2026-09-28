@@ -1,0 +1,42 @@
+{
+  "id": "reference-mcp-sources",
+  "request": "将“引用”来源改为可配置、测试和调用的通用 MCP 服务，以便支持 Docmost 等网站 MCP；不得硬编码部署资料中的地址、账号或登录信息。",
+  "baseline": "1a991f18c2618a30f4f11480ad4a2192b421939c",
+  "initial_status": "工作树含用户及前序任务的未提交改动，必须保留。此 Windows 主机没有 python3，agent-route 脚本无法运行；AIDE 后端运行在 Linux Docker 容器中，不能直接复用 Codex 桌面应用的 stdio MCP 进程。",
+  "acceptance": [
+    "用户可在“引用”中以程序和逐行参数注册 MCP stdio 服务，并可使用 Docmost 模板填入通用启动参数。",
+    "测试 MCP 会执行初始化和 tools/list，保存不含凭证的工具摘要；界面能显示该来源的工具说明。",
+    "AI 仅能通过通用 mcp_call 调用已发现且声明为只读的 MCP 工具；写入类工具被拒绝。",
+    "产品和文档不硬编码 Docmost 地址、账号或密码，并清楚说明 Docker 服务与 Codex 桌面 MCP 注册表相互隔离。",
+    "相关后端回归、前端语法与多语言检查有实际证据；若浏览器无法使用，UI 实测标记为 not_run。"
+  ],
+  "scope": [
+    "internal/server/sources.go",
+    "internal/server/mcp_source.go",
+    "internal/server/sources_test.go",
+    "internal/server/server.go",
+    "internal/server/workflow.go",
+    "internal/server/environment_guide.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "docs/architecture.md",
+    "docs/PRD.md",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "docs/tasks/reference-mcp-sources.json"
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "用户要求引用接口灵活支持公司 Docmost MCP。将其限定为通用 stdio MCP、工具发现与只读调用；不接收或固化部署资料中的敏感配置。", "evidence": ["用户提供的部署说明和本次请求"]},
+    "design": {"status": "pass", "summary": "采用通用 stdio MCP：结构化 command/args，不经 shell；测试执行 initialize/tools/list；模型仅以 mcp_call 调用服务实时声明为只读的工具。", "evidence": ["internal/server/mcp_source.go", "internal/server/workflow.go", "internal/server/environment_guide.go"]},
+    "implementation": {"status": "pass", "summary": "实现 MCP JSON-RPC stdio 客户端、来源测试路由、工具虚拟浏览、受限 mcp_call，以及程序/逐行参数/Docmost 模板/测试按钮 UI。", "evidence": ["internal/server/mcp_source.go", "internal/server/sources.go", "internal/server/server.go", "internal/server/web/app.js", "internal/server/web/style.css"]},
+    "verification": {"status": "pass", "summary": "MCP stub 回归、前端语法、多语言、diff 检查、Docker 重建及健康检查均已实际运行。浏览器视觉验收未运行：自动化仅返回空的 Codex 内置浏览器，没有用户 Edge 页面。", "evidence": ["docker run golang:1.26-bookworm go test -mod=vendor -run Test(MCPReferenceDiscoveryAndReadOnlyCall|SourcesRegistryAndBrowsing|AIReferenceAccess|EnvironmentGuide) -count=1 ./internal/server: ok (1.574s)", "node --check internal/server/web/app.js", "node --check internal/server/web/locales/en.js", "node scripts/test_i18n.cjs: PASS", "cmd /c start.bat: image built, aide-aide-1 recreated", "curl.exe -k -fsS https://localhost:8097/healthz: status ok, integrity degraded", "cua.getState: only empty Codex In-app Browser, no user Edge surface"]},
+    "documentation": {"status": "pass", "summary": "用户指南、英文指南、架构和 PRD 已更新，明确 stdio 边界、只读安全策略及 Docker 与 Codex 桌面 MCP 隔离。", "evidence": ["docs/user-guide.md", "docs/en/user-guide.md", "docs/architecture.md", "docs/PRD.md"]},
+    "cleanup": {"status": "pass", "summary": "已删除定向 Go 测试容器；保留所有既有未提交和未跟踪文件。", "evidence": ["docker rm aide-mcp-regression", "git status --short"]},
+    "release": {"status": "blocked", "summary": "功能提交已推送至 origin/feature/permission-panel；正式 release-check 被历史异常未跟踪运行时缓存阻断，尚未发布。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500", "release-check: git status blocked by malformed untracked runtime path"]}
+  },
+  "release_authorization": "用户原话：你先整理一下推上去吧",
+  "rollback": "删除本次 MCP 来源实现并恢复“仅登记”行为不会删除已有 sources.json；已发现工具摘要可安全忽略。",
+  "handoff": "已完成实现与自动化验证；服务 aide-aide-1 正在运行。未提交、未推送、未发布。浏览器视觉验收未运行。"
+}

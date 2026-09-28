@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -118,14 +119,53 @@ exit 0
 	if !strings.Contains(w.Body.String(), "curl-source-content") {
 		t.Fatalf("ftp read: %s", w.Body.String())
 	}
-	// MCP：诚实错误
+}
+
+func TestMCPReferenceDiscoveryAndReadOnlyCall(t *testing.T) {
+	a := testApp(t)
+	stub := filepath.Join(t.TempDir(), "mcp-stub")
+	if err := os.WriteFile(stub, []byte(`#!/bin/sh
+while IFS= read -r line; do
+  case "$line" in
+    *'"method":"initialize"'*)
+      echo '{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-03-26","capabilities":{},"serverInfo":{"name":"stub","version":"1"}}}'
+      ;;
+    *'"method":"tools/list"'*)
+      echo '{"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"read_note","description":"Read a note","annotations":{"readOnlyHint":true}},{"name":"write_note","description":"Write a note","annotations":{"readOnlyHint":false}}]}}'
+      ;;
+    *'"method":"tools/call"'*)
+      echo '{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"MCP read result"}]}}'
+      ;;
+  esac
+done
+`), 0700); err != nil {
+		t.Fatal(err)
+	}
 	requireStatus(t, request(a, "PUT", "/api/sources", map[string]any{
-		"sources": []any{sourceBody("mcp1", "MCP 服务器", "mcp", map[string]any{"command": "npx -y @modelcontextprotocol/server-filesystem"}, false)},
+		"sources": []any{sourceBody("mcp1", "MCP server", "mcp", map[string]any{"transport": "stdio", "command": stub, "args": []string{}}, false)},
 	}), 200)
-	w = request(a, "GET", "/api/files?source=mcp1&path=.", nil)
-	requireStatus(t, w, 400)
-	if !strings.Contains(w.Body.String(), "待实现") {
-		t.Fatalf("mcp honest error: %s", w.Body.String())
+	w := request(a, "POST", "/api/sources/mcp1/test", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"name":"read_note"`) || !strings.Contains(w.Body.String(), `"readOnly":true`) {
+		t.Fatalf("MCP discovery: %s", w.Body.String())
+	}
+	w = request(a, "GET", "/api/files?source=mcp1&path=tools", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), "read_note") {
+		t.Fatalf("MCP virtual tools: %s", w.Body.String())
+	}
+	task := &Task{}
+	result := a.executeToolCall(context.Background(), readCall("list_sources", `{}`), task, nil)
+	if !strings.Contains(result, `"mcpTools"`) || !strings.Contains(result, "read_note") {
+		t.Fatalf("MCP source list: %s", result)
+	}
+	result = a.executeToolCall(context.Background(), readCall("mcp_call", `{"source":"mcp1","tool":"read_note","arguments":{}}`), task, nil)
+	if !strings.Contains(result, "MCP read result") {
+		t.Fatalf("MCP read call: %s", result)
+	}
+	result = a.executeToolCall(context.Background(), readCall("mcp_call", `{"source":"mcp1","tool":"write_note","arguments":{}}`), task, nil)
+	if !strings.Contains(result, "只读") {
+		t.Fatalf("MCP write call was not rejected: %s", result)
 	}
 }
 
@@ -179,23 +219,23 @@ func TestAIReferenceAccess(t *testing.T) {
 	os.WriteFile(filepath.Join(a.workPath, "refs", "note.md"), []byte("AI reference body"), 0600)
 	requireStatus(t, request(a, "PUT", "/api/sources", map[string]any{"sources": []any{sourceBody("ref", "AI refs", "local", map[string]any{"path": "refs"}, true)}}), 200)
 	task := &Task{}
-	result := a.executeToolCall(readCall("list_sources", `{}`), task, nil)
+	result := a.executeToolCall(context.Background(), readCall("list_sources", `{}`), task, nil)
 	if !strings.Contains(result, `"id":"ref"`) {
 		t.Fatal(result)
 	}
-	result = a.executeToolCall(readCall("read_file", `{"source":"ref","path":"note.md"}`), task, nil)
+	result = a.executeToolCall(context.Background(), readCall("read_file", `{"source":"ref","path":"note.md"}`), task, nil)
 	if result != "AI reference body" {
 		t.Fatal(result)
 	}
-	result = a.executeToolCall(readCall("write_file", `{"source":"ref","path":"note.md","content":"bad"}`), task, nil)
+	result = a.executeToolCall(context.Background(), readCall("write_file", `{"source":"ref","path":"note.md","content":"bad"}`), task, nil)
 	if !strings.Contains(result, "read-only") {
 		t.Fatal(result)
 	}
-	result = a.executeToolCall(readCall("read_file", `{"source":"missing","path":"note.md"}`), task, nil)
+	result = a.executeToolCall(context.Background(), readCall("read_file", `{"source":"missing","path":"note.md"}`), task, nil)
 	if !strings.Contains(result, "disabled") {
 		t.Fatal(result)
 	}
-	result = a.executeToolCall(readCall("read_file", `{"source":"ref","path":"../note.md"}`), task, nil)
+	result = a.executeToolCall(context.Background(), readCall("read_file", `{"source":"ref","path":"../note.md"}`), task, nil)
 	if strings.Contains(result, "AI reference body") {
 		t.Fatal("escaped source root")
 	}

@@ -1,0 +1,61 @@
+{
+  "id": "startup-clean-room",
+  "request": "用户要求清空整个 Docker，包括 aide 会话与配置，不保留备份；从 start.command 重新分析并修复启动，最终封装可迁移镜像。",
+  "baseline": "6020e11e231ad474319049129126da0de3e764b2",
+  "initial_status": "M internal/server/assistant_history.go\n M internal/server/persona.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n?? docs/tasks/67.json",
+  "acceptance": [
+    "按用户明确授权清空 desktop-linux 上所有容器、镜像、数据卷、构建缓存，清空后各计数为 0。",
+    "从 start.command 无缓存启动，记录实际失败点，修复启动链路并确认 healthz 和浏览器设置交互。",
+    "完整运行镜像可导出并附校验清单、架构和内容身份；部署包从 start.command 启动时无需构建或拉取基础镜像。",
+    "已有未提交功能改动保留，用户密钥和会话数据不进入镜像交付包。"
+  ],
+  "scope": [
+    "start.command、scripts/aide.sh、Dockerfile、Compose 和镜像交付说明/任务记录；必要的启动相关回归检查。",
+    "Docker 清理和从零重建；用户确认清空会话与配置、不做备份。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认整个 Docker 全删，包括 aide 会话与配置，不保留备份；随后重新分析入口并封装镜像。",
+      "evidence": [
+        "当前对话用户的清理范围确认"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "先从未修改的 start.command 复现无缓存首次启动，再修复具体问题。",
+      "evidence": [
+        "start.command -> scripts/aide.sh start -> docker compose up --build --pull never",
+        "清理后 docker system df：Images/Containers/Local Volumes/Build Cache 均为 0。"
+      ]
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "数据卷按用户明确要求删除且不备份，旧会话与配置不可由此次操作恢复；源码原有改动未清除。",
+  "handoff": ""
+}

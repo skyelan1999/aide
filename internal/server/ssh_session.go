@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -72,16 +73,46 @@ func (a *App) ensureSSHSession(ctx context.Context) error {
 	}
 	args := append([]string{"-fNM", "-o", "ControlMaster=yes", "-o", "ControlPersist=600"}, append(a.sshCommonArgs(), a.sshTarget())...)
 	env := []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	// 凭据从加密 vault 解密（#38）；ref 模式直接引用已校验路径，不写临时文件。
 	auth := a.wsConfig.Workspace.Auth
-	if auth == "key" && a.wsSecrets.Key != "" {
-		keyPath := sshControlSocket + ".key"
-		if err := os.WriteFile(keyPath, []byte(a.wsSecrets.Key), 0600); err != nil {
-			return fmt.Errorf("写入密钥文件失败: %w", err)
+	password, keyMaterial, passphrase, directKeyPath := a.wsRuntimeCredentials()
+	if auth == "key" {
+		switch {
+		case directKeyPath != "":
+			// 引用路径模式：直接使用（保存时已校验在挂载根内），私钥不落地副本
+			args = append([]string{"-i", directKeyPath}, args...)
+		case keyMaterial != "":
+			// 粘贴/导入副本：解密后写入受控临时文件（0600），defer 用完即删
+			tmpDir := a.ensureSecretsTmpDir()
+			tmp, err := os.CreateTemp(tmpDir, "aide-sshkey-*")
+			if err != nil {
+				return fmt.Errorf("创建临时密钥文件失败: %w", err)
+			}
+			tmpPath := tmp.Name()
+			if _, err := tmp.WriteString(keyMaterial); err != nil {
+				tmp.Close()
+				os.Remove(tmpPath)
+				return fmt.Errorf("写入临时密钥失败: %w", err)
+			}
+			tmp.Close()
+			_ = os.Chmod(tmpPath, 0600)
+			defer os.Remove(tmpPath) // 主连接建立后立即删除，私钥不留存
+			args = append([]string{"-i", tmpPath}, args...)
+		default:
+			return fmt.Errorf("SSH 密钥未配置或凭证保险库已锁定（请在工作空间设置中解锁）")
 		}
-		args = append([]string{"-i", keyPath}, args...)
-	} else if auth == "password" && a.wsSecrets.Password != "" {
+		// 私钥口令经 SSH_ASKPASS 注入（不写命令行参数）
+		if passphrase != "" {
+			ask := sshControlSocket + ".askpass"
+			script := "#!/bin/sh\necho " + shellQuote(passphrase) + "\n"
+			if err := os.WriteFile(ask, []byte(script), 0700); err != nil {
+				return fmt.Errorf("写入 askpass 失败: %w", err)
+			}
+			env = append(env, "SSH_ASKPASS="+ask, "SSH_ASKPASS_REQUIRE=force", "DISPLAY=aide:0")
+		}
+	} else if auth == "password" && password != "" {
 		ask := sshControlSocket + ".askpass"
-		script := "#!/bin/sh\necho " + shellQuote(a.wsSecrets.Password) + "\n"
+		script := "#!/bin/sh\necho " + shellQuote(password) + "\n"
 		if err := os.WriteFile(ask, []byte(script), 0700); err != nil {
 			return fmt.Errorf("写入 askpass 失败: %w", err)
 		}
@@ -109,6 +140,40 @@ func shellQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
+// wsRuntimeCredentials 为运行时取 SSH 凭据：优先从加密 vault 解密；未解锁时回退旧明文（迁移过渡）。
+// 返回：登录密码、私钥正文（ref 模式为空）、私钥口令、直接使用的密钥路径（ref 模式非空）。
+// 返回的明文由调用方（ensureSSHSession）尽快消费；这里用完即清切片。
+func (a *App) wsRuntimeCredentials() (password, keyMaterial, passphrase, directKeyPath string) {
+	if a.vault != nil && a.vault.Unlocked() {
+		if b, e := a.vault.Get(VaultIDWSPassword); e == nil {
+			password = string(b)
+			zeroBytes(b)
+		}
+		if b, e := a.vault.Get(VaultIDWSKey); e == nil {
+			keyMaterial = string(b)
+			zeroBytes(b)
+		}
+		if b, e := a.vault.Get(VaultIDWSPassphrase); e == nil {
+			passphrase = string(b)
+			zeroBytes(b)
+		}
+	}
+	// 旧明文回退（vault 未解锁/迁移前）
+	if password == "" {
+		password = a.wsSecrets.Password
+	}
+	if keyMaterial == "" {
+		keyMaterial = a.wsSecrets.Key
+	}
+	// 引用路径模式：直接使用保存时校验过的容器路径（翻译到真实 fs 路径）
+	if a.wsConfig.Workspace.KeyMode == "ref" && strings.TrimSpace(a.wsConfig.Workspace.KeyRefPath) != "" {
+		if realPath, _, err := a.resolveHostPath(a.wsConfig.Workspace.KeyRefPath); err == nil {
+			directKeyPath = realPath
+		}
+	}
+	return
+}
+
 // execRemote 通过唯一 master 会话执行远程命令；输出经 io.Writer 流式返回。
 func (a *App) execRemote(ctx context.Context, command string, stdout, stderr *streamWriter) (int, error) {
 	args := append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
@@ -130,13 +195,20 @@ func (a *App) execRemote(ctx context.Context, command string, stdout, stderr *st
 // ── SFTP（经同一 master 会话，无需二次认证） ──
 
 func (a *App) sftpArgs() []string {
-	return append([]string{"-o", "ControlPath=" + sshControlSocket, "-o", "BatchMode=yes", "-o", "LogLevel=ERROR"}, append([]string{"-P", fmt.Sprint(a.wsConfig.Workspace.Port)}, a.sshTarget())...)
+	return []string{"-o", "ControlPath=" + sshControlSocket, "-o", "BatchMode=yes", "-o", "LogLevel=ERROR", "-P", fmt.Sprint(a.wsConfig.Workspace.Port)}
 }
 
 func (a *App) sftpBatch(batch string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sftpTimeout)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, a.sftpBin, append(a.sftpArgs(), "-b", "-")...)
+	// SFTP is deliberately non-interactive, so it must reuse the authenticated
+	// SSH control connection. Saving a workspace closes that connection; ensure
+	// it is available before the first subsequent refresh or directory browse.
+	if err := a.ensureSSHSession(ctx); err != nil {
+		return "", err
+	}
+	args := append(a.sftpArgs(), "-b", "-", a.sshTarget())
+	cmd := exec.CommandContext(ctx, a.sftpBin, args...)
 	cmd.Stdin = strings.NewReader(batch)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	out, err := cmd.CombinedOutput()
@@ -150,7 +222,18 @@ func (a *App) sftpBatch(batch string) (string, error) {
 }
 
 // sftpList 列远程目录：返回 {name, path, dir} 列表（与 listLocalDir 同构）。
-func (a *App) sftpList(remoteDir string) ([]map[string]any, error) {
+func (a *App) sftpList(p string) ([]map[string]any, error) {
+	return a.sftpListRemote(a.workspaceRemotePath(p), p)
+}
+
+// sftpListWorkspaceSource 通过当前工作区已验证的 SSH 会话列出自动系统文档目录。
+// base 和 p 都是相对于远程工作区的路径，返回的 path 仅保留来源内相对路径。
+func (a *App) sftpListWorkspaceSource(base, p string) ([]map[string]any, error) {
+	remoteDir := a.workspaceRemotePath(pathJoinRemote(base, p))
+	return a.sftpListRemote(remoteDir, p)
+}
+
+func (a *App) sftpListRemote(remoteDir, relativePath string) ([]map[string]any, error) {
 	out, err := a.sftpBatch("cd " + shellQuoteRemote(remoteDir) + "\nls -l\n")
 	if err != nil {
 		return nil, err
@@ -167,7 +250,11 @@ func (a *App) sftpList(remoteDir string) ([]map[string]any, error) {
 		}
 		name := strings.Join(fields[8:], " ")
 		dir := fields[0][0] == 'd'
-		items = append(items, map[string]any{"name": name, "path": name, "dir": dir})
+		if name == "." || name == ".." || safePath(name) != nil {
+			continue
+		}
+		size, _ := strconv.ParseInt(fields[4], 10, 64)
+		items = append(items, map[string]any{"name": name, "path": path.Join(relativePath, name), "dir": dir, "size": size, "modified": strings.Join(fields[5:8], " ")})
 		if len(items) >= 2000 {
 			break
 		}
@@ -217,6 +304,58 @@ func (a *App) sftpExists(remoteFile string) bool {
 	return true
 }
 
+func sftpCommandFailed(out string) bool {
+	low := strings.ToLower(out)
+	return strings.Contains(low, "couldn't") || strings.Contains(low, "failure") ||
+		strings.Contains(low, "permission denied") || strings.Contains(low, "no such file") ||
+		strings.Contains(low, "not a directory") || strings.Contains(low, "already exists")
+}
+
+// sftpMakeDirectory and sftpRenameDirectory are intentionally limited to
+// directory-picker operations. Their callers validate relative or remote
+// browse paths before composing these quoted SFTP commands.
+func (a *App) sftpMakeDirectory(remotePath string) error {
+	out, err := a.sftpBatch("mkdir " + shellQuoteRemote(remotePath) + "\n")
+	if err != nil {
+		return err
+	}
+	if sftpCommandFailed(out) {
+		return fmt.Errorf("SFTP 创建文件夹失败: %s", strings.TrimSpace(out))
+	}
+	return nil
+}
+
+func (a *App) sftpRenameDirectory(oldPath, newPath string) error {
+	if a.sftpExists(newPath) {
+		return fmt.Errorf("已存在同名文件或文件夹")
+	}
+	out, err := a.sftpBatch("rename " + shellQuoteRemote(oldPath) + " " + shellQuoteRemote(newPath) + "\n")
+	if err != nil {
+		return err
+	}
+	if sftpCommandFailed(out) {
+		return fmt.Errorf("SFTP 重命名文件夹失败: %s", strings.TrimSpace(out))
+	}
+	return nil
+}
+
+// sftpRemove removes one regular file or one empty directory. Recursive
+// deletion is deliberately not supported by the file panel.
+func (a *App) sftpRemove(remotePath string, dir bool) error {
+	command := "rm "
+	if dir {
+		command = "rmdir "
+	}
+	out, err := a.sftpBatch(command + shellQuoteRemote(remotePath) + "\n")
+	if err != nil {
+		return err
+	}
+	if sftpCommandFailed(out) {
+		return fmt.Errorf("SFTP 删除失败: %s", strings.TrimSpace(out))
+	}
+	return nil
+}
+
 func shellQuoteRemote(s string) string {
 	return `"` + strings.ReplaceAll(s, `"`, `\"`) + `"`
 }
@@ -231,6 +370,30 @@ func (a *App) sftpTargetOf(src Source) string {
 		u = "root"
 	}
 	return u + "@" + src.Config.Host
+}
+
+// sftpConnIdentity 取决定 ControlMaster 连接对象的关键字段；任一变化即应重建会话。
+func sftpConnIdentity(src Source) string {
+	return fmt.Sprintf("%s|%d|%s|%s", src.Config.Host, src.Config.Port, src.Config.Username, src.Config.Auth)
+}
+
+// killSourceSession 关闭某来源的 ControlMaster 并清理其 socket/凭据临时文件
+// （来源删除或连接参数变更时调用；清理失败静默忽略，绝不 panic）。
+func (a *App) killSourceSession(id, target string) {
+	if a.sshBin == "" {
+		return
+	}
+	sock := sourceSocket(id)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	args := []string{"-S", sock, "-O", "exit"}
+	if target != "" {
+		args = append(args, target)
+	}
+	_ = exec.CommandContext(ctx, a.sshBin, args...).Run()
+	_ = os.Remove(sock)
+	_ = os.Remove(sock + ".askpass")
+	_ = os.Remove(sock + ".key")
 }
 
 func (a *App) ensureSourceSession(ctx context.Context, src Source) error {
@@ -249,19 +412,24 @@ func (a *App) ensureSourceSession(ctx context.Context, src Source) error {
 	args := append([]string{"-fNM", "-o", "ControlMaster=yes", "-o", "ControlPersist=600"}, append(base, a.sftpTargetOf(src))...)
 	env := []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	a.mu.Lock()
-	sec := a.sourceSecrets.Secrets[src.ID]
+	secPassword, secKey := a.sourceCredentialLocked(src.ID)
 	a.mu.Unlock()
-	if src.Config.Auth == "key" && sec.Key != "" {
+	if src.Config.Auth == "key" && secKey != "" {
 		keyPath := sock + ".key"
-		if err := os.WriteFile(keyPath, []byte(sec.Key), 0600); err != nil {
+		if err := os.WriteFile(keyPath, []byte(secKey), 0600); err != nil {
 			return err
 		}
+		// master 认证完成后（本函数返回时）立即删除：后续会话复用 ControlPath，
+		// 私钥正文不再需要落盘；master 若掉线，下次 ensureSourceSession 会重写。
+		defer os.Remove(keyPath)
 		args = append([]string{"-i", keyPath}, args...)
-	} else if src.Config.Auth == "password" && sec.Password != "" {
+	} else if src.Config.Auth == "password" && secPassword != "" {
 		ask := sock + ".askpass"
-		if err := os.WriteFile(ask, []byte("#!/bin/sh\necho "+shellQuote(sec.Password)+"\n"), 0700); err != nil {
+		if err := os.WriteFile(ask, []byte("#!/bin/sh\necho "+shellQuote(secPassword)+"\n"), 0700); err != nil {
 			return err
 		}
+		// master 认证完成后立即删除 askpass，口令不长期驻留 /tmp。
+		defer os.Remove(ask)
 		env = append(env, "SSH_ASKPASS="+ask, "SSH_ASKPASS_REQUIRE=force", "DISPLAY=aide:0")
 		args = append([]string{"-o", "NumberOfPasswordPrompts=1"}, args...)
 	}
@@ -289,6 +457,9 @@ func (a *App) sftpBatchSource(src Source, batch string) (string, error) {
 	cmd.Stdin = strings.NewReader(batch)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	out, err := cmd.CombinedOutput()
+	if ctx.Err() != nil {
+		return "", fmt.Errorf("SFTP 操作超时")
+	}
 	if err != nil {
 		return "", fmt.Errorf("SFTP 失败: %s", strings.TrimSpace(string(out)))
 	}

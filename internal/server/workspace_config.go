@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,12 +26,21 @@ type WorkspaceConfig struct {
 		Port     int    `json:"port"`
 		Username string `json:"username"`
 		Auth     string `json:"auth"` // password | key | none
+		// 私钥存储模式（#38）：
+		//   "" / "paste" = 粘贴私钥，密文存 vault（ws:ssh-key）
+		//   "ref"        = 仅引用宿主机/容器内路径，运行时直接读取，私钥不入库
+		//   "copy"       = 导入副本：把文件内容加密存入 vault
+		KeyMode        string `json:"keyMode,omitempty"`
+		KeyRefPath     string `json:"keyRefPath,omitempty"`     // ref/copy 时的容器路径（/workspace|/context|/local 内）
+		KeyFingerprint string `json:"keyFingerprint,omitempty"` // 公钥 SHA256 指纹（元数据，界面展示，不回显私钥）
 	} `json:"workspace"`
 	Docs struct {
-		Path string `json:"path"` // /context 下相对路径
+		Path     string `json:"path"`               // local: 宿主路径；workspace: SFTP 工作区内相对/绝对路径
+		Location string `json:"location,omitempty"` // local | workspace
 	} `json:"docs"`
 	Cache struct {
-		Path string `json:"path"` // /workspace 下相对路径（自动创建）
+		Path     string `json:"path"`               // local: 宿主路径；workspace: SFTP 工作区内相对/绝对路径
+		Location string `json:"location,omitempty"` // local | workspace
 	} `json:"cache"`
 	Recent struct {
 		Workspace []string `json:"workspace"`
@@ -49,6 +59,8 @@ func defaultWorkspaceConfig() WorkspaceConfig {
 	c.Workspace.Mode = "local"
 	c.Workspace.Port = 22
 	c.Workspace.Auth = "password"
+	c.Docs.Location = "local"
+	c.Cache.Location = "local"
 	c.Recent.Workspace = []string{}
 	c.Recent.Docs = []string{}
 	c.Recent.Cache = []string{}
@@ -71,7 +83,7 @@ func pushRecent(list []string, value string) []string {
 
 func (a *App) loadWorkspaceConfig() error {
 	a.wsConfigPath = filepath.Join(a.workPath, wsConfigFile)
-	a.wsSecretsPath = filepath.Join(a.dataPath, wsSecretsFile)
+	a.wsSecretsPath = WorkspaceSecretsPath(a.dataPath)
 	a.wsConfig = defaultWorkspaceConfig()
 	if b, err := os.ReadFile(a.wsConfigPath); err == nil {
 		if err := json.Unmarshal(b, &a.wsConfig); err != nil {
@@ -80,6 +92,14 @@ func (a *App) loadWorkspaceConfig() error {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
+	if a.wsConfig.Docs.Location != "workspace" {
+		a.wsConfig.Docs.Location = "local"
+	}
+	if a.wsConfig.Cache.Location != "workspace" {
+		a.wsConfig.Cache.Location = "local"
+	}
+	// 旧版明文凭证（/data/workspace-secrets.json）仅作只读迁移源加载。
+	// 新凭证一律进加密 vault；解锁后 migrateLegacyWorkspaceSecrets 会把旧明文迁入并归档。
 	a.wsSecrets = workspaceSecrets{}
 	if b, err := os.ReadFile(a.wsSecretsPath); err == nil {
 		if err := json.Unmarshal(b, &a.wsSecrets); err != nil {
@@ -94,8 +114,36 @@ func (a *App) loadWorkspaceConfig() error {
 func (a *App) saveWorkspaceConfig() error {
 	return atomicJSON(a.wsConfigPath, a.wsConfig)
 }
-func (a *App) saveWorkspaceSecrets() error {
-	return atomicJSON(a.wsSecretsPath, a.wsSecrets)
+
+// migrateLegacyWorkspaceSecrets 在 vault 解锁后调用：把旧明文凭证迁入加密 vault，
+// 成功后把旧明文文件改名为 *.migrated（0600），避免再次被当作明文读取。
+// 幂等：vault 已有对应条目则跳过；旧文件缺失也视为完成。
+func (a *App) migrateLegacyWorkspaceSecrets() {
+	if a.vault == nil || !a.vault.Unlocked() {
+		return
+	}
+	migrated := false
+	if pw := strings.TrimSpace(a.wsSecrets.Password); pw != "" && !a.vault.Has(VaultIDWSPassword) {
+		if err := a.vault.Put(VaultIDWSPassword, VaultTypeSSHPassword, "SSH 登录密码", []byte(pw), ""); err == nil {
+			migrated = true
+		}
+	}
+	if key := strings.TrimSpace(a.wsSecrets.Key); key != "" && !a.vault.Has(VaultIDWSKey) {
+		fp, _ := sshKeyFingerprint([]byte(key), "")
+		if err := a.vault.Put(VaultIDWSKey, VaultTypeSSHKey, "SSH 私钥", []byte(key), fp); err == nil {
+			migrated = true
+		}
+	}
+	if migrated {
+		_ = a.vault.Save()
+		// 归档旧明文文件（不删除，保留可追溯；改名后不再被加载）
+		if st, err := os.Stat(a.wsSecretsPath); err == nil && !st.IsDir() {
+			_ = os.Rename(a.wsSecretsPath, a.wsSecretsPath+".migrated")
+		}
+		// 内存中清掉明文，避免长期驻留
+		a.wsSecrets.Password = ""
+		a.wsSecrets.Key = ""
+	}
 }
 
 // resolveHostPath 把用户填写的路径翻译为容器路径（FR-79 核心修复）：
@@ -139,6 +187,36 @@ func (a *App) resolveHostPath(p string) (string, string, error) {
 		}
 		return "", "", fmt.Errorf("路径 %s 越出本地根", p)
 	}
+	// 容器运行在 Linux，但 Windows Docker Desktop 会把 AIDE_HOST_LOCAL 传成
+	// C:\\Users\\name 这类宿主机路径。filepath 在 Linux 下会把它误判为相对路径，
+	// 造成工作区落到仓库内的字面量 "C:\\Users…" 目录。这里用 POSIX 词法路径
+	// 比较 Windows 盘符路径，再映射回已绑定的 /local。
+	isWindowsAbs := func(value string) bool {
+		return len(value) >= 3 && ((value[0] >= 'a' && value[0] <= 'z') || (value[0] >= 'A' && value[0] <= 'Z')) && value[1] == ':' && (value[2] == '\\' || value[2] == '/')
+	}
+	normalizeWindows := func(value string) string {
+		value = strings.ReplaceAll(value, "\\", "/")
+		for strings.Contains(value, "//") {
+			value = strings.ReplaceAll(value, "//", "/")
+		}
+		if len(value) == 2 && value[1] == ':' {
+			return value + "/"
+		}
+		return strings.TrimRight(value, "/")
+	}
+	if isWindowsAbs(p) {
+		base := normalizeWindows(a.hostLocal)
+		candidate := normalizeWindows(p)
+		basePrefix := strings.TrimRight(base, "/")
+		if strings.EqualFold(candidate, base) || strings.EqualFold(candidate, basePrefix) {
+			return "/local", p, nil
+		}
+		if !strings.HasPrefix(strings.ToLower(candidate), strings.ToLower(basePrefix)+"/") {
+			return "", "", fmt.Errorf("路径 %s 不在可访问范围内（本机目录根：%s）", p, a.hostLocal)
+		}
+		rel := candidate[len(basePrefix)+1:]
+		return filepath.Join("/local", filepath.FromSlash(rel)), p, nil
+	}
 	if !strings.HasPrefix(p, "/") {
 		joined := filepath.Join(a.workPath, filepath.FromSlash(p))
 		rel, err := filepath.Rel(a.workPath, joined)
@@ -161,6 +239,49 @@ const defaultWorkspaceID = "local||"
 func (a *App) wsID() string {
 	w := a.wsConfig.Workspace
 	return w.Mode + "|" + w.Path + "|" + w.Host
+}
+
+// snapshotAgentRootLocked 在任务创建时对当前工作区根做快照（#61）。调用方须持 a.mu。
+// 运行中切工作区不影响已建任务的 CWD；子 agent 整份继承父任务快照。
+func (a *App) snapshotAgentRootLocked() AgentRoot {
+	return AgentRoot{
+		DisplayHost:  a.workspaceDisplay,
+		ContainerAbs: a.containerAbs,
+		ID:           a.wsID(),
+	}
+}
+
+// taskContainerAbs 返回任务应使用的容器内 CWD：优先任务创建时快照，回退全局当前值。
+// 旧任务（无快照）回退全局，保持向后兼容。调用方无需持锁。
+func (a *App) taskContainerAbs(t *Task) string {
+	if t != nil && t.AgentRoot.ContainerAbs != "" {
+		return t.AgentRoot.ContainerAbs
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.containerAbs
+}
+
+// statusWorkspaceLabelLocked 状态 API 暴露的工程目录标签（#61）。调用方须持 a.mu。
+// 默认工作区时仍是 /workspace（向后兼容）；选了自定义工程目录后报容器内真实绝对路径。
+func (a *App) statusWorkspaceLabelLocked() string {
+	if a.containerAbs == "" {
+		return "/workspace"
+	}
+	return a.containerAbs
+}
+
+// cwdPromptLineLocked 系统提示中的「当前工作目录」行（#61）。调用方须持 a.mu。
+// 新行为报容器内真实绝对路径并禁止写 /workspace；agentCWDMode=legacy 回退旧宿主路径提示。
+func (a *App) cwdPromptLineLocked() string {
+	if a.settings.AgentCWDMode == "legacy" {
+		return "当前工作目录: " + a.workspaceDisplay
+	}
+	dir := a.containerAbs
+	if dir == "" {
+		dir = "/workspace"
+	}
+	return "当前工作目录(容器内绝对路径)=" + dir + "。所有文件操作使用相对路径；禁止使用 /workspace 绝对路径，/workspace 是产品安装目录，不得写入。"
 }
 
 // applyWorkspaceConfig 按配置切换工作空间/文档/缓存根，并清理旧 SSH 会话（FR-79 / FR-80）。
@@ -199,21 +320,33 @@ func (a *App) applyWorkspaceConfig() error {
 	// R02：登记当前工作区身份 → 根，运行中任务的工具据此解析原工作区根
 	a.wsRoots[a.wsID()] = a.workspace
 	a.workspaceDisplay = display
-	// 系统文档参考根
-	if dp, disp, err := a.resolveHostPath(a.wsConfig.Docs.Path); err == nil && dp != "" {
-		if r, err := os.OpenRoot(dp); err == nil {
-			oldRef := a.reference
-			a.reference = r
-			if oldRef != nil {
-				oldRef.Close()
-			}
-			_ = disp
+	// #61：记录容器内绝对路径（给模型/run_shell 当真实 CWD）。ssh 模式无容器路径，留空。
+	a.containerAbs = ""
+	if a.wsConfig.Workspace.Mode != "ssh" && a.workspace != nil {
+		if resolved, err := filepath.EvalSymlinks(a.workspace.Name()); err == nil {
+			a.containerAbs = resolved
+		} else {
+			a.containerAbs = a.workspace.Name()
 		}
 	}
-	// 缓存目录（自动创建；来源注册表存于此）
+	// /context 内置参考根常驻（#53 根因修复）：
+	// a.reference 自 New() 起恒指向 AIDE_CONTEXT，任何工作区/Docs.Path 切换都不得替换或 Close 它，
+	// 否则内置辅助资料（Harness 挂载目录）会被关闭、列表变空。
+	// Docs.Path 不再“替换”参考根，而是作为 system-docs 读写来源叠加进来源注册表：
+	// 空路径 → localSourceRoot 回落 a.reference（/context）；非空路径 → 独立打开该目录（可显示“目录为空”）。
+	_ = a.reference
+	// 缓存目录（自动创建；来源注册表存于此）。
+	// #61：默认落产品目录 A（a.workPath/.cache）向后兼容；当用户选了非默认工程目录 B
+	// 且未显式指定 cache.path 时，默认改落 B/.cache，避免把 Go 构建缓存/来源注册表写进产品仓库。
 	cacheContainer := filepath.Join(a.workPath, ".cache")
-	if cp, _, err := a.resolveHostPath(a.wsConfig.Cache.Path); err == nil && cp != "" {
+	if a.wsConfig.Cache.Location == "workspace" {
+		// 应用自身的 sources.json、任务快照等仍必须保存在容器本地；远程缓存位置
+		// 只注入 SSH 命令环境，避免把需要随机访问/原子写的内部状态错误写到 SFTP。
+		cacheContainer = filepath.Join(a.workPath, ".cache")
+	} else if cp, _, err := a.resolveHostPath(a.wsConfig.Cache.Path); err == nil && cp != "" {
 		cacheContainer = cp
+	} else if a.containerAbs != "" && a.containerAbs != a.workPath {
+		cacheContainer = filepath.Join(a.containerAbs, ".cache")
 	}
 	_ = os.MkdirAll(cacheContainer, 0755)
 	a.cacheContainer = cacheContainer
@@ -222,24 +355,75 @@ func (a *App) applyWorkspaceConfig() error {
 }
 
 func (a *App) workspaceConfigOut() map[string]any {
-	return map[string]any{
+	out := map[string]any{
 		"workspace": map[string]any{
 			"mode": a.wsConfig.Workspace.Mode, "path": a.wsConfig.Workspace.Path,
 			"host": a.wsConfig.Workspace.Host, "port": a.wsConfig.Workspace.Port,
 			"username": a.wsConfig.Workspace.Username, "auth": a.wsConfig.Workspace.Auth,
+			"keyMode":        a.wsConfig.Workspace.KeyMode,
+			"keyRefPath":     a.wsConfig.Workspace.KeyRefPath,
+			"keyFingerprint": a.wsConfig.Workspace.KeyFingerprint,
 		},
-		"docs":        map[string]any{"path": a.wsConfig.Docs.Path},
-		"cache":       map[string]any{"path": a.wsConfig.Cache.Path},
-		"recent":      a.wsConfig.Recent,
-		"hasPassword": a.wsSecrets.Password != "",
-		"hasKey":      a.wsSecrets.Key != "",
+		"docs":   map[string]any{"path": a.wsConfig.Docs.Path, "location": a.wsConfig.Docs.Location},
+		"cache":  map[string]any{"path": a.wsConfig.Cache.Path, "location": a.wsConfig.Cache.Location},
+		"recent": a.wsConfig.Recent,
 	}
+	// vault 元数据（绝不返回明文/密文）
+	hasPassword, hasKey := false, false
+	fp := a.wsConfig.Workspace.KeyFingerprint
+	vaultLocked := a.vault == nil || !a.vault.Unlocked()
+	if a.vault != nil {
+		hasPassword = a.vault.Has(VaultIDWSPassword)
+		hasKey = a.vault.Has(VaultIDWSKey) || a.wsConfig.Workspace.KeyMode == "ref"
+	}
+	out["hasPassword"] = hasPassword
+	out["hasKey"] = hasKey
+	out["keyFingerprint"] = fp
+	out["vaultLocked"] = vaultLocked
+	out["hasAccountPassword"] = a.settings.UserPasswordHash != ""
+	return out
 }
 
 func (a *App) getWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	jsonOut(w, 200, a.workspaceConfigOut())
+}
+
+// testWorkspaceConnection 只验证已保存的 SSH/SFTP 工作区能建立认证连接并列出根目录，
+// 不写入远端也不改变配置。凭据仍只从受保护的运行时 vault 读取。
+func (a *App) testWorkspaceConnection(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	mode := a.wsConfig.Workspace.Mode
+	remotePath := a.wsConfig.Workspace.Path
+	a.mu.Unlock()
+	if mode != "ssh" {
+		fail(w, 400, errors.New("请先切换到 SSH/SFTP 工作空间并保存配置"))
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), sshTimeout)
+	defer cancel()
+	if err := a.ensureSSHSession(ctx); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if _, err := a.sftpList("."); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if remotePath == "" {
+		remotePath = "~"
+	}
+	jsonOut(w, 200, map[string]any{"ok": true, "path": remotePath})
+}
+
+// validateWorkspaceRemotePath 约束由当前 SSH 工作区使用的目录字段；目录可为相对路径
+// （相对工作区）或远程绝对路径，但不能含控制字符以免影响 SFTP batch/远程 shell。
+func validateWorkspaceRemotePath(p string) error {
+	if strings.ContainsAny(p, "\x00\r\n") {
+		return errors.New("远程目录不能包含换行或空字符")
+	}
+	return nil
 }
 
 func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
@@ -252,12 +436,23 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 			Username string `json:"username"`
 			Auth     string `json:"auth"`
 		} `json:"workspace"`
-		Docs          struct{ Path string } `json:"docs"`
-		Cache         struct{ Path string } `json:"cache"`
-		Password      string                `json:"password"`
-		Key           string                `json:"key"`
-		ClearPassword bool                  `json:"clearPassword"`
-		ClearKey      bool                  `json:"clearKey"`
+		Docs struct {
+			Path     string `json:"path"`
+			Location string `json:"location"`
+		} `json:"docs"`
+		Cache struct {
+			Path     string `json:"path"`
+			Location string `json:"location"`
+		} `json:"cache"`
+		Password        string `json:"password"`      // SSH 登录密码
+		Key             string `json:"key"`           // 粘贴的私钥正文
+		Passphrase      string `json:"passphrase"`    // 私钥口令
+		KeyMode         string `json:"keyMode"`       // paste | ref | copy
+		KeyRefPath      string `json:"keyRefPath"`    // ref/copy 的容器路径（/workspace|/context|/local 内）
+		VaultPassword   string `json:"vaultPassword"` // 账户密码（vault 锁定时解锁用）
+		ClearPassword   bool   `json:"clearPassword"`
+		ClearKey        bool   `json:"clearKey"`
+		ClearPassphrase bool   `json:"clearPassphrase"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -284,6 +479,20 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("认证方式只支持 password / key / none"))
 		return
 	}
+	if in.Docs.Location == "" {
+		in.Docs.Location = "local"
+	}
+	if in.Cache.Location == "" {
+		in.Cache.Location = "local"
+	}
+	if in.Docs.Location != "local" && in.Docs.Location != "workspace" || in.Cache.Location != "local" && in.Cache.Location != "workspace" {
+		fail(w, 400, errors.New("目录位置只支持 local 或 workspace"))
+		return
+	}
+	if (in.Docs.Location == "workspace" || in.Cache.Location == "workspace") && in.Workspace.Mode != "ssh" {
+		fail(w, 400, errors.New("工作空间 SFTP 目录仅可用于 SSH/SFTP 工作空间"))
+		return
+	}
 	// 路径安全由 resolveHostPath 统一约束：
 	// 宿主机绝对路径仅允许落在 AIDE_LOCAL_ROOT（默认 $HOME）之下；
 	// 容器路径仅允许 /workspace | /context | /local 前缀；相对路径落在 /workspace 下。
@@ -295,7 +504,12 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	// R03 原子性预检：docs/cache 若已存在必须是目录；workspace 路径必须能实际打开。
 	// 失败时配置、根、recent 均不变。
-	if strings.TrimSpace(in.Docs.Path) != "" {
+	if in.Docs.Location == "workspace" {
+		if err := validateWorkspaceRemotePath(strings.TrimSpace(in.Docs.Path)); err != nil {
+			fail(w, 400, err)
+			return
+		}
+	} else if strings.TrimSpace(in.Docs.Path) != "" {
 		dp, _, err := a.resolveHostPath(in.Docs.Path)
 		if err != nil {
 			fail(w, 400, err)
@@ -306,7 +520,12 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if strings.TrimSpace(in.Cache.Path) != "" {
+	if in.Cache.Location == "workspace" {
+		if err := validateWorkspaceRemotePath(strings.TrimSpace(in.Cache.Path)); err != nil {
+			fail(w, 400, err)
+			return
+		}
+	} else if strings.TrimSpace(in.Cache.Path) != "" {
 		cp, _, err := a.resolveHostPath(in.Cache.Path)
 		if err != nil {
 			fail(w, 400, err)
@@ -340,23 +559,123 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 	cfg.Workspace.Username = strings.TrimSpace(in.Workspace.Username)
 	cfg.Workspace.Auth = in.Workspace.Auth
 	cfg.Docs.Path = strings.TrimSpace(in.Docs.Path)
+	cfg.Docs.Location = in.Docs.Location
 	cfg.Cache.Path = strings.TrimSpace(in.Cache.Path)
-	// 秘钥更新（存 /data 卷，0600）
-	if in.ClearPassword {
-		a.wsSecrets.Password = ""
+	cfg.Cache.Location = in.Cache.Location
+
+	// ── 凭证处理（#38：统一加密 vault，拒绝明文落盘）──
+	// needUnlock = 写入新凭证（密码/私钥/口令/选择文件）；清除操作无需解锁。
+	needUnlock := in.Password != "" || in.Key != "" || in.Passphrase != "" ||
+		strings.TrimSpace(in.KeyMode) == "ref" || strings.TrimSpace(in.KeyMode) == "copy"
+	if needUnlock {
+		if a.vault == nil {
+			fail(w, 500, errors.New("凭证保险库未初始化"))
+			return
+		}
+		if !a.vault.Unlocked() {
+			switch {
+			case in.VaultPassword != "":
+				if ok, _ := VerifyPassword(in.VaultPassword, a.settings.UserPasswordHash); !ok {
+					// 账户密码只用于本地 vault 解锁，不是本机 access-token。
+					// 不能返回 401：前端会把它误判为工作台登录过期并弹出登录框。
+					fail(w, http.StatusLocked, errors.New("账户密码错误，无法解锁凭证保险库"))
+					return
+				}
+				a.unlockVault(in.VaultPassword)
+			case a.personaKey != "":
+				a.unlockVault(a.personaKey)
+			default:
+				// 新版保险库由已验证的本机访问令牌解锁；仅旧版密码密钥才可能落到这里。
+				fail(w, http.StatusLocked, errors.New("凭证保险库仍为旧版密码加密，请输入账户密码完成迁移"))
+				return
+			}
+		}
 	}
-	if in.Password != "" {
-		a.wsSecrets.Password = in.Password
-	}
-	if in.ClearKey {
-		a.wsSecrets.Key = ""
-	}
-	if in.Key != "" {
-		a.wsSecrets.Key = in.Key
-	}
-	if err := a.saveWorkspaceSecrets(); err != nil {
-		fail(w, 500, err)
-		return
+	if a.vault != nil {
+		// 登录密码
+		if in.ClearPassword {
+			a.vault.Delete(VaultIDWSPassword)
+		}
+		if in.Password != "" {
+			if err := a.vault.Put(VaultIDWSPassword, VaultTypeSSHPassword, "SSH 登录密码", []byte(in.Password), ""); err != nil {
+				fail(w, 500, err)
+				return
+			}
+		}
+		// 私钥：粘贴 / 引用路径 / 导入副本 三选一；未提供则保留现有。
+		newKeyMode := strings.TrimSpace(in.KeyMode)
+		newKeyRefPath := ""
+		newFingerprint := cfg.Workspace.KeyFingerprint
+		switch {
+		case in.Key != "":
+			fp, err := sshKeyFingerprint([]byte(in.Key), in.Passphrase)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			if err := a.vault.Put(VaultIDWSKey, VaultTypeSSHKey, "SSH 私钥", []byte(in.Key), fp); err != nil {
+				fail(w, 500, err)
+				return
+			}
+			newKeyMode, newKeyRefPath, newFingerprint = "paste", "", fp
+		case newKeyMode == "ref" && strings.TrimSpace(in.KeyRefPath) != "":
+			rp := strings.TrimSpace(in.KeyRefPath)
+			realPath, _, err := a.resolveHostPath(rp)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			if _, err := os.Stat(realPath); err != nil {
+				fail(w, 400, fmt.Errorf("私钥文件不可访问: %w", err))
+				return
+			}
+			fp, err := sshKeygenFingerprintFile(realPath, in.Passphrase)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			a.vault.Delete(VaultIDWSKey) // 引用模式不存副本，运行时直接读路径
+			newKeyRefPath, newFingerprint = rp, fp
+		case newKeyMode == "copy" && strings.TrimSpace(in.KeyRefPath) != "":
+			rp := strings.TrimSpace(in.KeyRefPath)
+			material, err := a.readKeyFileInRoots(rp)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			fp, err := sshKeyFingerprint(material, in.Passphrase)
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+			if err := a.vault.Put(VaultIDWSKey, VaultTypeSSHKey, "SSH 私钥（导入副本）", material, fp); err != nil {
+				fail(w, 500, err)
+				return
+			}
+			newKeyRefPath, newFingerprint = "", fp
+		}
+		if in.ClearKey {
+			a.vault.Delete(VaultIDWSKey)
+			newKeyMode, newKeyRefPath, newFingerprint = "", "", ""
+		}
+		// 私钥口令
+		if in.ClearPassphrase {
+			a.vault.Delete(VaultIDWSPassphrase)
+		}
+		if in.Passphrase != "" {
+			if err := a.vault.Put(VaultIDWSPassphrase, VaultTypeSSHPassphrase, "私钥口令", []byte(in.Passphrase), ""); err != nil {
+				fail(w, 500, err)
+				return
+			}
+		}
+		if err := a.vault.Save(); err != nil {
+			fail(w, 500, err)
+			return
+		}
+		a.vaultAudit("workspace-secret-saved")
+		cfg.Workspace.KeyMode = newKeyMode
+		cfg.Workspace.KeyRefPath = newKeyRefPath
+		cfg.Workspace.KeyFingerprint = newFingerprint
 	}
 	oldID := a.wsID()
 	oldRoot := a.workspace
@@ -395,6 +714,19 @@ func (a *App) workspaceRemotePath(p string) string {
 	}
 	return pathJoinRemote(a.wsConfig.Workspace.Path, p)
 }
+
+// workspaceRemoteCachePath 返回远端命令使用的缓存目录。应用自身的状态缓存仍在容器本地，
+// 只有用户在 SSH 工作空间明确选择“工作空间 (SFTP)”时才把 AIDE_CACHE/GOCACHE 指到远端。
+func (a *App) workspaceRemoteCachePath() string {
+	if a.wsConfig.Workspace.Mode != "ssh" || a.wsConfig.Cache.Location != "workspace" {
+		return ""
+	}
+	p := strings.TrimSpace(a.wsConfig.Cache.Path)
+	if p == "" {
+		p = ".cache"
+	}
+	return a.workspaceRemotePath(p)
+}
 func pathJoinRemote(base, p string) string {
 	if strings.TrimSpace(base) == "" {
 		base = "."
@@ -404,7 +736,7 @@ func pathJoinRemote(base, p string) string {
 
 func (a *App) listWorkspaceDir(p string) ([]map[string]any, error) {
 	if a.workspaceMode() == "ssh" {
-		return a.sftpList(a.workspaceRemotePath(p))
+		return a.sftpList(p)
 	}
 	return a.listLocalDir(a.workspace, p)
 }

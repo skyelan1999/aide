@@ -2,6 +2,17 @@
 
 > **历史证据**：以下日期、提交、测试数量、镜像和运行状态只适用于各节记录时点。本轮文档核对不重新认定这些结果，现行操作请读仓库根 HANDOVER.md；原审查报告中的“缺陷已复现”不代表当前代码仍存在该缺陷。
 
+## 现行验证入口（2026-09-25）
+
+当前以统一开发工作流脚本为准，不以下文历史测试数量为准：
+
+- 快速门禁：`python3 scripts/agent-route.py verify quick`（git diff --check、`node --check` 前端 JS、`scripts/version.sh check`、`test_agent_route.py`、`check_docs.py`、`bash -n` 脚本、i18n/stream/local-root 回归等，清单见 `docs/agent/router.json` 的 `checks.quick`）。
+- 完整门禁：`python3 scripts/agent-route.py verify full` = quick + `bash scripts/aide.sh test`，后者在 `aide:local` 容器内跑 `go test -race -count=1 ./... && go vet ./...`。
+- 发布门禁：`python3 scripts/agent-route.py release-check <id>`（只检查不发布）。
+- 后端测试已从记录时点的 9 个函数增至 21 个 `*_test.go` 文件、约 90 个 `Test*` 函数（含 config_backup、voice_agent、queue_steer、remediation、stream_events、auto-routing 等新覆盖）。
+
+下文为历史记录，保留原始证据。
+
 验证日期：2026-09-21，Apple Silicon Mac / Docker Desktop，linux/arm64。
 
 ## 实际部署

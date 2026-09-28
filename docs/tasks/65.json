@@ -1,0 +1,75 @@
+{
+  "id": "65",
+  "request": "JSON 文件在编辑器中显示为空白、首个 { 漂移到文件名区域；修复语法高亮渲染和布局，并本地提交",
+  "baseline": "1c91c4e06e5ecf5a9bdccbb12efc0d65305c1977",
+  "initial_status": "仅新增 docs/tasks/65.json；现有工作区干净（分支本地 ahead 3）。",
+  "acceptance": [
+    "JSON 编辑器中的高亮内容与输入文本区域重合；首个 { 不再漂移到文件名/标题区域，编辑内容可见且可编辑。",
+    "主编辑弹窗与单文件视图都使用正确定位；切换 Markdown 编辑/预览时包装层正确显隐。",
+    "对相关 UI 逻辑运行有证据的回归验证；实际浏览器检查或明确记录 NOT_RUN。",
+    "只提交本任务相关文件到当前分支，不推送、不重启运行服务。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "docs/tasks/65.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户报告 JSON 内容空白且首个 { 漂移到标题区域；附件仅作为现象截图，不含额外指令。",
+      "evidence": [
+        "用户消息与 Safari appshot：demo_config.json 的可访问文本完整、视觉编辑区为空；a.txt 正常。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "高亮层绝对定位在 textarea 的兄弟位置，但 textarea 不能定位其兄弟；以共享 code-wrapper 作为定位容器，并按 textarea 计算样式同步高亮排版。",
+      "evidence": [
+        "internal/server/web/app.js setupCodeHighlight/teardownCodeHighlight",
+        "internal/server/web/style.css .code-highlight-overlay/.code-wrapper"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "语法高亮初始化时将 textarea 包入相对定位的 code-wrapper；覆盖层在 wrapper 内铺满并复制文本框计算排版属性；Markdown 编辑/预览切换同步包装层可见状态。",
+      "evidence": [
+        "internal/server/web/app.js setupCodeHighlight/setEditorMode/setFileViewMode",
+        "internal/server/web/style.css .code-wrapper/.code-highlight-overlay"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "仓库 quick 验证通过；页面级目视回归未运行：8097 服务未启动，Docker daemon 当前不可访问。",
+      "evidence": [
+        "python3 scripts/agent-route.py verify quick → PASS；fingerprint 84729c3f716f97b3942705a1591cb1db965375ef6d289d7455ae1e5c6b411d5d，14/14 checks passed。",
+        "NOT_RUN: https://localhost:8097/healthz connection refused；docker ps 无法连接 unix:///Users/skyelan/.docker/run/docker.sock；未启动或替换服务。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录用户验收标准、修复设计、验证结果与页面未验证限制。",
+      "evidence": [
+        "docs/tasks/65.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "复查 diff 与文件范围；仅包含 app.js、style.css 和 docs/tasks/65.json。",
+      "evidence": [
+        "git diff --check",
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "按用户先前授权完成当前分支本地提交；未推送、未重启运行服务。",
+      "evidence": [
+        "用户消息：修复并提交（本对话中）；本任务 commit 将在提交后由 git log 确认。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "代码已本地提交；待 aide 服务恢复后打开 demo_config.json，确认正文可见、高亮与输入位置重合，并检查 Markdown 编辑/预览切换。"
+}

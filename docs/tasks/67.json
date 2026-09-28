@@ -1,0 +1,56 @@
+{
+  "id": "67",
+  "request": "小秘会话应汇总展示小秘在其他会话中的全部沟通历史；输入框支持语音输入；所有历史可供小秘性格训练使用，并复用设置页现有训练接口。",
+  "baseline": "6020e11e231ad474319049129126da0de3e764b2",
+  "initial_status": "",
+  "acceptance": [
+    "小秘专属会话展示小秘在普通会话全局语音入口及专属文字入口中的沟通历史；旧版语音历史在可解锁时补入展示，已有记录不重复显示。",
+    "小秘会话的麦克风只负责语音转写并把文字放入可编辑输入框；用户显式发送后才提交小秘。普通会话原有语音甄别、自动发送行为保持不变。",
+    "设置页现有小秘性格演化接口从完整小秘沟通历史构造样本，覆盖语音与文字、历史前后段；样本不混入 aide 普通聊天内容且维持现有长度限制。",
+    "未解锁的加密旧语音历史不得被展示或送入性格演化；原有性格训练 API 与交互继续可用。"
+  ],
+  "scope": [
+    "小秘历史展示、旧版语音历史兼容读取、语音转写输入和小秘性格训练样本构造。",
+    "复用当前 assistant session、浏览器 SpeechRecognition 及 /personality/evolve API；不改普通会话处理链和设置页接口协议。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

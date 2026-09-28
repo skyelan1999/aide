@@ -1,0 +1,48 @@
+{
+  "id": "debug-api",
+  "request": "外部AI机器可读诊断接口 /api/debug 路由组：默认关、只读、独立令牌、全程审计、白名单脱敏",
+  "baseline": "9f6435a0bfc8c87708a3c17b0966445b40415c32",
+  "initial_status": "M profiles.json\n?? proposals/\n?? web-i18n-refactor-plan.md",
+  "acceptance": [],
+  "scope": [],
+  "stages": {
+    "requirements": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

@@ -1,0 +1,74 @@
+{
+  "id": "66",
+  "request": "修复 aide 辅助资料面板中逐条来源选择列表消失的问题，查明是否为回归并恢复可选来源列表",
+  "baseline": "e4ab5d3c251b52a7848b161d4cf8806045db5ccc",
+  "initial_status": "## feature/permission-panel...origin/feature/permission-panel [ahead 4]\n?? docs/tasks/66.json",
+  "acceptance": [
+    "进入“辅助资料”时逐条来源选择条默认保持可见，不随文件列表滚动离开视口。",
+    "来源条固定/取消固定仍可切换；已有明确保存的用户选择继续生效。",
+    "仓库 quick 验证通过；无法连接运行页面时将页面目视验收记录为 NOT_RUN。",
+    "仅修改来源条默认状态与本任务记录；不重启服务、不推送。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "docs/tasks/66.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户截图显示辅助资料根目录文件正常，但上方逐条来源选择条不在可视区；根据DOM/CSS核对，来源条与目录共用滚动容器。",
+      "evidence": [
+        "用户提供的 aide 截图（辅助资料 RO、路径 /context、来源条不显示）"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "首次使用默认固定来源条，避免它随着长目录滚动离开视口；若 localStorage 中已有 1/0 设置则沿用用户显式偏好。",
+      "evidence": [
+        "internal/server/web/app.js applySourcePin/localStorage initialization",
+        "internal/server/web/style.css .files-scroll.pinned"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "来源条首次默认固定；已有 aide.sourcePinned=0/1 的显式设置保持原值，且在无 localStorage 时也默认固定。",
+      "evidence": [
+        "internal/server/web/app.js applySourcePin initialization"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "项目 quick 验证 14 项通过；实际页面验收未运行：Safari/8097 当前无法连接，未重启服务。",
+      "evidence": [
+        "python3 scripts/agent-route.py verify quick → PASS；fingerprint 5c77a67113bf218e284951531edea61ca1fef31351794990ae76842e0c00c5b9。",
+        "NOT_RUN: Safari 显示无法连接 https://localhost:8097，curl localhost:8097/healthz connection refused。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "任务账本记录来源条默认固定行为、原有偏好兼容和页面验收限制。",
+      "evidence": [
+        "docs/tasks/66.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "范围限于前端一行默认行为及本任务账本；diff 检查通过。",
+      "evidence": [
+        "git diff --check",
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "依照本对话先前的本地修复提交授权提交；未推送或重启服务。",
+      "evidence": [
+        "用户先前消息：修复并提交（本对话）；git log 将记录本提交。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "服务恢复后重新载入 aide，进入“辅助资料”并滚动目录；来源条应保持可见。可点击图钉取消固定，显式取消状态仍保存在本机。"
+}

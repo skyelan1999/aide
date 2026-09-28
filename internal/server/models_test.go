@@ -126,7 +126,9 @@ func TestTaskRecordsModel(t *testing.T) {
 		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "ok"}}}})
 	}))
 	defer provider.Close()
+	a.mu.Lock()
 	a.settings = Settings{BaseURL: provider.URL, Model: "deepseek-chat", Models: []ModelRef{{ID: "deepseek-chat", ContextWindow: defaultContextWindow}}, ActiveModel: "deepseek-chat"}
+	a.mu.Unlock()
 	w := request(a, "POST", "/api/sessions", map[string]string{})
 	requireStatus(t, w, 201)
 	var s Session
@@ -138,6 +140,9 @@ func TestTaskRecordsModel(t *testing.T) {
 	if task.Model != "deepseek-chat" {
 		t.Fatalf("task model not recorded: %+v", task)
 	}
+	// 等待异步 execute 协程结束，避免 testApp cleanup 调 Close() 时与仍在运行的
+	// background()/summarizeTopic 协程竞争 bgWg/bgCtx（data race）。
+	waitTaskDone(t, a, s.ID)
 }
 
 func TestModelDiscoveryDraft(t *testing.T) {
@@ -153,7 +158,9 @@ func TestModelDiscoveryDraft(t *testing.T) {
 	defer provider.Close()
 	a := testApp(t)
 	a.settings.BaseURL = "http://old-provider.invalid"
-	a.settings.APIKey = "old-secret"
+	a.mu.Lock()
+	a.storeModelAPIKeyPlaintextLocked("old-secret") // key 存加密 vault
+	a.mu.Unlock()
 	for _, tc := range []struct {
 		name, base, key string
 		clear           bool
@@ -172,8 +179,8 @@ func TestModelDiscoveryDraft(t *testing.T) {
 			if !strings.Contains(w.Body.String(), "draft-model") {
 				t.Fatal("missing discovered model")
 			}
-			if a.settings.BaseURL != "http://old-provider.invalid" || a.settings.APIKey != "old-secret" {
-				t.Fatal("discovery persisted draft")
+			if a.settings.BaseURL != "http://old-provider.invalid" || !a.hasModelAPIKey() {
+				t.Fatal("discovery should not clobber saved baseURL/key")
 			}
 		})
 	}

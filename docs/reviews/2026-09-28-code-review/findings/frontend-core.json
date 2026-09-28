@@ -1,0 +1,91 @@
+{
+  "agent": "frontend-core",
+  "lens": "aide 原生 JS 前端核心（internal/server/web/app.js 1-3469+）：SSE/运行状态机、marked/innerHTML 渲染与消毒、Profile/模型/插件/工作空间逻辑、事件与定时器资源、边界与 UX",
+  "summary": "整体工程质量较高：SSE 断流后有 5s 退重重连 + 1.5s 轮询兜底 + STALL_MS 看门狗，切会话有序清理 live/runPhase，发送有 R07 序号防旧响应覆盖，渲染统一走 sanitizeHtml。主要问题集中在：设置面板每次打开重复挂载 resize/aideUI 订阅造成缓慢资源泄漏；mermaid 以 securityLevel:'loose' 渲染模型生成的图；sanitizeHtml 的 javascript: 过滤可被内嵌控制字符绕过；以及若干 P3 级别的内存残留、断网 toast 刷屏、clipboard 未捕获拒绝、时区导致热力图“今天”格偏移。未发现 P0/P1。",
+  "findings": [
+    {
+      "id": "frontend-core-001",
+      "title": "设置面板每次打开都重复挂载 window resize 监听与 aideUI 订阅，造成监听器/订阅累积泄漏",
+      "category": "资源泄漏",
+      "severity": "P2",
+      "file": "internal/server/web/app.js",
+      "line": "1772",
+      "evidence": "renderSegmentedControl() 内：`if (window.aideUI) { window.aideUI.subscribe(apply); window.addEventListener('resize', apply); settingsPanel.refreshers.push(apply); }`。而 openSettingsSheet()（2060 行注释“每次打开强制重渲染”）每次都调用 renderSettingsSheet() → 对每个 segmented 控制重新执行 renderSegmentedControl()，生成新的 apply 闭包并再次 addEventListener('resize') 与 subscribe。代码从不 removeEventListener / 退订，refreshers 只追加不退。结果：每开关一次设置面板就多挂一组 resize 与 aideUI 订阅；长时间使用后 resize/主题切换会重复触发 N 次重排，既浪费又可能让 thumb 几何被反复计算。",
+      "fix": "渲染前先退订/移除上一批 apply：把 resize 监听改为只挂一次（或记录 token 并 removeEventListener）；aideUI.subscribe 应保存返回的退订函数，在 renderSettingsSheet() 开头对 settingsPanel.refreshers 逐个退订后再清空数组。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "frontend-core-002",
+      "title": "mermaid 以 securityLevel:'loose' 渲染模型生成的图表文本，存在 HTML/脚本注入面",
+      "category": "安全",
+      "severity": "P2",
+      "file": "internal/server/web/app.js",
+      "line": "5112-5118",
+      "evidence": "`mermaid.initialize({ startOnLoad:false, theme:'neutral', securityLevel:'loose' })`，随后 `const { svg } = await mermaid.render(..., el.textContent); el.innerHTML = svg;`。el.textContent 来自模型回答里的 ```mermaid 代码块（4592-4595 取出）。securityLevel 'loose' 允许 label 中出现 HTML 并直接拼进 SVG，相比默认 'strict' 放宽了对标签内容的转义；模型（或被污染的上游）可在图里嵌入带事件/链接的 HTML。虽然是本地工具、模型来源相对可信，但属于“我方集成时主动放宽安全级别”，与同文件 sanitizeHtml 的谨慎态度不一致。",
+      "fix": "改为 securityLevel:'strict'（或 'antiscript'/'sandboxed'）；确需富文本 label 时再单独白名单放行，不要全局 loose。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "frontend-core-003",
+      "title": "sanitizeHtml 对 javascript: 链接的过滤未覆盖 scheme 内嵌控制字符（tab/换行/注释）的绕过",
+      "category": "安全",
+      "severity": "P2",
+      "file": "internal/server/web/app.js",
+      "line": "3497",
+      "evidence": "过滤规则：`if ((name==='href'||name==='src') && /^\\s*(javascript|vbscript|data:text\\/html)/i.test(attr.value)) el.removeAttribute(...)`。marked 会透传 markdown 里的原始 HTML，模型可写 `<a href=\"java\\tscript:alert(1)\">` 或 `java\\nscript:`、`/**/javascript:` 等；浏览器在解析 URL 时会剥掉 scheme 内的 tab/换行，正则却匹配不到 `java<TAB>script:`，属性被保留，点击即执行。仅匹配开头空白，未对 scheme 内部做归一化。",
+      "fix": "判定前先把 attr.value 做 `replace(/[\\u0000-\\u0020\\s]/g,'')`（并解码实体）后再测试 javascript:/vbscript:/data:；更稳妥的是直接改为：仅放行 http/https/mailto/#/相对路径，其余 href/src 一律移除或写死 rel/target。",
+      "confidence": "low",
+      "needs_user_decision": false
+    },
+    {
+      "id": "frontend-core-004",
+      "title": "state.runPhase[runId] 在 run 结束后只置 done=true，从不 delete，长时间会话逐 run 累积残留对象",
+      "category": "资源泄漏",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "415-416",
+      "evidence": "'done' 事件里 `delete state.live[runId]; delete state.liveStable[runId]; ...` 删了 live 系列，但只 `if (state.runPhase[runId]) state.runPhase[runId].done = true;`，没有 delete state.runPhase[runId]。Grep 全文件确认除切会话(342/784)整体清空外，没有任何按 runId 删除 runPhase 的路径。看门狗(718)虽会跳过 ph.done，但每个已完成 run 的 {startedAt,tools[],...} 一直留在内存里，随使用时长线性增长。",
+      "fix": "在 'done' 处理里一并 `delete state.runPhase[runId];`（或在 adoptSessionIfChanged/完成对账后清理已终态的 runId）。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "frontend-core-005",
+      "title": "运行中轮询兜底在后端不可用时每 1.5s 弹一次错误 toast，无法自停",
+      "category": "UX与交互逻辑",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "756-778",
+      "evidence": "schedulePoll 的 setTimeout 回调被 action() 包裹：`action(async () => { ... const s = await api('/sessions/'+id); ... })`，catch 后会 toast(e.message)；finally 里只要会话仍选中就 `schedulePoll()` 再次排程。服务一旦断连，api 每次抛错 → toast，finally 又 1.5s 后重排，形成无限循环的错误提示刷屏（toast.timer 只会不断刷新同一条，看起来像错误一直挂着且从不恢复）。",
+      "fix": "对运行轮询的 api 失败做静默退避（失败计数后拉长间隔，连续 N 次失败提示一次“服务已断开”并停轮询，而不是每次都 toast）；把轮询兜底与 action() 的 toast 解耦。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "frontend-core-006",
+      "title": "「复制」按钮 clipboard.writeText 未接 .catch，非安全上下文/剪贴板被拒时产生未处理 Promise 拒绝",
+      "category": "错误处理",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "986",
+      "evidence": "`navigator.clipboard.writeText(text).then(() => toast(t('已复制')));`。没有 .catch()。当页面跑在非 https/非 localhost 或浏览器拒绝剪贴板权限时，writeText 的 Promise 会 reject，控制台出现 unhandledrejection，且用户得不到“复制失败”反馈。",
+      "fix": "加 .catch(() => toast(t('复制失败')))，或降级用 textarea+execCommand 兜底。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "frontend-core-007",
+      "title": "Token 热力图“今天”格用 toISOString(UTC) 取日期，与本地时区相差一天导致高亮/键盘焦点格错位",
+      "category": "逻辑错误",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "2562-2570",
+      "evidence": "格子 key 与“今天”判定都走 `d.toISOString().slice(0,10)` / `today.toISOString().slice(0,10)`（UTC 日期串）。在 UTC+8 等正时区，本地凌晨 0:00–8:00 之间，UTC 日期仍是前一天，于是 `cell.tabIndex = key === today...` 与“今天”语义差一格；服务端 days 的 key 口径若按本地日期也会错位一格，影响当日高亮与方向键落点。",
+      "fix": "用本地年月日拼 key（`${y}-${m}-${d}`）或统一与服务端 days 的 key 口径一致；不要混用 toISOString。",
+      "confidence": "low",
+      "needs_user_decision": false
+    }
+  ]
+}

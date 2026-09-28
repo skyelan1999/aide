@@ -1,5 +1,7 @@
 # Language and local-path integration verification
 
+> 历史快照，当前以 version.md 为准。
+
 Date: 2026-09-23. Baseline: 7ff083a. Branch: feat/english-support.
 
 ## Checks executed

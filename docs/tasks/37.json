@@ -1,0 +1,13 @@
+{
+  "id": "37",
+  "title": "通讯协议插件套件（daemon 框架）",
+  "stages": {
+    "requirements": { "status": "pass", "summary": "子任务2：comm-tcp/comm-udp 两个常驻守护插件，基于已有 daemon 框架，零第三方依赖（net/dgram）", "evidence": "用户任务书 + docs/plugins/daemon-protocol.md" },
+    "design": { "status": "pass", "summary": "apply(ctx) 闭包维护 listeners/connections/proxies/simRules/recordings；stop() 经 self.__state 关闭全部套接字；事件走 ctx.emit('traffic'|'event'|'log')", "evidence": "plugins/comm-tcp/index.js, plugins/comm-udp/index.js" },
+    "implementation": { "status": "pass", "summary": "TCP 10 工具 + UDP 7 工具；registry 追加两项 enabled:false", "evidence": "plugins/comm-tcp, plugins/comm-udp, plugins/registry.json" },
+    "verification": { "status": "pass", "summary": "node --check 全部通过；容器 node:24 跑测试 TCP 19/19、UDP 10/10；宿主 run 聚合 surface 两插件无错误；仅 require net/dgram", "evidence": "docker run node:24-bookworm-slim ... test.js → ALL_TESTS_PASS" },
+    "documentation": { "status": "pass", "summary": "中英双语 docs/plugins/comm-{tcp,udp}.md + docs/en/plugins/comm-{tcp,udp}.md", "evidence": "docs/plugins/*.md, docs/en/plugins/*.md" },
+    "cleanup": { "status": "pass", "summary": "仅新增插件目录与文档，registry 追加；未触碰 server.go/plugin_daemon.go/plugin_host.js/voice_agent.go/app.js", "evidence": "git status" },
+    "release": { "status": "not_run", "summary": "按硬约束不 commit/不 push/不发版；交付物在工作区待审" }
+  }
+}

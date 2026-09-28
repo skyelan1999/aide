@@ -1,0 +1,88 @@
+{
+  "id": "fix-windows-bat-startup",
+  "request": "修一下本地的bat启动：双击 start.bat 无法启动。根因：本机 ~/.docker/config.json 缺 cliPluginsExtraDirs，docker CLI 找不到自带 compose/buildx 插件；另有 PS5.1 编码/绑定、BuildKit 未启用、../Harness 缺失等问题。",
+  "baseline": "1fd1be11f17d17f66e49b8e1637bf7f3486db9dd",
+  "initial_status": "",
+  "acceptance": [
+    "docker compose 插件不可用时自动修复 config.json（备份后仅追加 cliPluginsExtraDirs），修复后 docker compose 可用",
+    "compose 完全不可用时仍能回退独立版 docker-compose",
+    "start.ps1 带 UTF-8 BOM，PS 5.1 下解析通过",
+    "构建启用 BuildKit，Dockerfile 的 RUN --mount=type=cache 可执行",
+    "/context 绑定目录缺失时自动创建",
+    "健康检查通过后输出带令牌的访问 URL；失败返回非零退出码",
+    "start.ps1 -DryRun 可在无 Docker 环境自检",
+    "主机侧 docker compose up -d 起容器并通过 healthz，令牌可从 /data/auth/access-token 读到"
+  ],
+  "scope": [
+    "start.bat",
+    "start.ps1",
+    "docs/tasks/fix-windows-bat-startup.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户报修双击 start.bat 无法启动。实测定位四个真实故障：(1) ~/.docker/config.json 缺 cliPluginsExtraDirs，docker CLI 找不到 C:\\Program Files\\Docker\\cli-plugins 里的 compose/buildx，docker compose/buildx 均为 unknown command；(2) ps1 无 BOM 时 PS5.1 按 GBK 解析中文注释报 ParserError；(3) Dockerfile 的 RUN --mount=type=cache 需 BuildKit，独立版 compose 默认关闭；(4) compose 的 /context 绑定 ../Harness 不存在会直接报错。附带问题：powershell.exe 不在 PATH、token 路径已迁到 /data/auth/access-token。",
+      "evidence": [
+        "docker compose version → unknown command；加临时 cliPluginsExtraDirs 后 → Docker Compose version v5.5.1",
+        "docker buildx version → unknown command；修复后 → buildx v0.37.1",
+        "去掉 BOM 运行 ps1 → ParserError 行28/69/90",
+        "docker-compose up --build → the --mount option requires BuildKit",
+        "ls C:\\workstation\\aide → 只有 aide，无 Harness"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "start.bat 只做转发：绝对路径定位 PowerShell（优先 pwsh7，回退 System32 下的 powershell.exe）+ 纯 ASCII + 失败 pause。start.ps1 与 scripts/aide.sh start 对齐：docker/compose 双探测 + 自动修复 config.json + 独立版回退；强制 BuildKit；创建 /context 源目录；Docker Desktop 绝对路径兜底；健康检查失败 exit 1；用 compose port 取真实宿主端口；token 兼容 /data/auth/access-token 与旧路径；新增 -DryRun。PowerShell 侧统一用 Invoke-Native -Capture 回收文本+退出码，包 compose 的辅助函数不声明参数（避免 -c 前缀匹配到 -Capture）。",
+      "evidence": ["start.ps1/start.bat 全量重写", "根因对照实验：临时 USERPROFILE + cliPluginsExtraDirs 使 docker compose 立即可用"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "start.ps1（约 234 行，带 UTF-8 BOM）与 start.bat 重写完成；并修复用户 ~/.docker/config.json（原文件备份 config.json.bak-20260928105809）。BuildKit 与 Compose 均强制使用 plain 进度，避免双击启动时无效 Windows Console handle 使 compose up 失败。",
+      "evidence": [
+        "start.ps1 提供 Invoke-Native/Invoke-Compose/Get-ComposeResult/Get-DockerPluginDir/Repair-DockerPluginConfig/Test-Docker",
+        "start.bat 使用 %SystemRoot%\\System32\\WindowsPowerShell\\v1.0\\powershell.exe 绝对路径",
+        "C:\\Users\\lantxa\\.docker\\config.json 已含 cliPluginsExtraDirs",
+        "BUILDKIT_PROGRESS=plain、COMPOSE_PROGRESS=plain"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "真实引擎侧全链路验证通过；脚本侧语法/取值/修复逻辑验证通过；并在本机用 cmd /c start.bat 走通构建、启动、健康检查与 URL 输出。浏览器自动化不能绕过本地自签名 HTTPS 的证书安全页，故未执行页面交互验收。",
+      "evidence": [
+        "docker compose build → Image aide:local Built",
+        "docker compose up -d --no-build → aide-aide-1 Up (healthy) 127.0.0.1:8097->8080/tcp",
+        "容器内 curl -k https://127.0.0.1:8080/healthz → {\"integrity\":\"ok\",\"service\":\"aide\",\"status\":\"ok\"}",
+        "宿主 curl -k https://localhost:8097/healthz → 同一 JSON",
+        "docker compose port aide 8080 → 127.0.0.1:8097",
+        "docker compose exec -T aide sh -c 'cat /data/auth/access-token' → 读到 64 位十六进制令牌",
+        "start.ps1 语法解析 PASS（BOM=239,187,191）",
+        "start.ps1 -DryRun 输出：docker/compose/插件目录/context/端口/Docker Desktop 路径全部正确",
+        "一次性 USERPROFILE 下自动修复生成 {\"cliPluginsExtraDirs\":[\"C:\\\\Program Files\\\\Docker\\\\cli-plugins\"]}",
+        "等价辅助函数验证：exec -T aide sh -c '...'、up -d --build --pull never 参数收集无绑定错误",
+        "cmd /c start.bat（AIDE_OPEN_BROWSER=0）→ exit 0、构建/启动/健康检查通过；docker inspect：/local <- C:\\Users\\lantxa；宿主 curl -k healthz → HTTP 200",
+        "NOT_RUN：浏览器页面交互。自动化访问 https://localhost:8097/ 被 ERR_CERT_AUTHORITY_INVALID 拦截；按安全规则未绕过自签名证书页",
+        "NOT_RUN：仅独立 docker-compose 与 Docker 引擎关闭的分支；本机插件与引擎均可用，未作破坏性模拟",
+        "NOT_RUN：bash scripts/aide.sh test（本机缺 WSL /bin/bash）；等价 Docker race/vet 在服务测试中长时间无进展，已停止本次创建的临时 --rm 容器，未记为通过",
+        "无控制台等价复测：AIDE_OPEN_BROWSER=0 cmd /c start.bat 1>$null → exit 0；aide-aide-1 healthy；curl -k healthz → HTTP 200"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "start.ps1 头部注释写明 5 条兼容性要点与用法（含 -DryRun）；项目记忆写入 .workbuddy/memory 当日日志与 MEMORY.md（启动脚本约定、本机 Docker 环境、沙箱验证限制）。",
+      "evidence": ["start.ps1 注释", ".workbuddy/memory/2026-09-28.md", ".workbuddy/memory/MEMORY.md"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "删除调试用临时目录 .workbuddy/tmp（含诊断输出、临时 USERPROFILE 配置、构建日志），保留 .workbuddy/memory/；未触碰用户其它文件。",
+      "evidence": ["rm -rf .workbuddy/tmp"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户授权创建本地修复提交；按版本规则，功能分支只标注当前版本 0.1.11.0 RC4，不升版、不打 tag。未获推送或发布授权，完整仓库 race/vet 也未完成，因此未进入发布门禁。",
+      "evidence": ["scripts/version.sh show/check → 0.1.11.0 RC4", "scripts/version.sh install-hooks → prepare-commit-msg 自动标注版本", "本地提交：fix(windows): harden Docker Desktop startup；作者 skyelan <skyelan@outlook.com>；提交正文含 [版本 0.1.11.0 RC4]", "未推送、未打 tag、未发布"]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "start.bat / start.ps1 用 git checkout 还原；用户侧 docker 配置还原 C:\\Users\\lantxa\\.docker\\config.json.bak-20260928105809 → config.json；如需停服：docker compose down（本任务为修复启动，未改生产）。",
+  "handoff": "完成项：start.bat/start.ps1 重写（绝对路径 PowerShell、compose 探测+config 自动修复+独立版回退、BuildKit、context 目录、健康检查、端口/令牌改进、-DryRun、Windows HOME 到 USERPROFILE 回退）；cmd /c start.bat 实机通过。剩余项：在仅独立 docker-compose 与 Docker 引擎关闭的机器验证分支。未验证项：浏览器页面交互被本地自签名 HTTPS 证书页拦截，需用户在默认浏览器手动继续后检查。运行服务：aide 容器当前 Up (healthy)，访问 https://localhost:8097。发布/回滚：未发布；回滚为恢复 start.bat/start.ps1 至基线 1fd1be11f17d17f66e49b8e1637bf7f3486db9dd。"
+}

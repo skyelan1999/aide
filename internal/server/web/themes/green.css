@@ -80,6 +80,15 @@ html[data-palette="green"][data-theme="light"] {
 --shadow-3:#0000001c;
 --scrollbar-thumb:#b3cdbb;
 --scrollbar-track:#e7f0ea;
+/* 工作流四阶段选中态语义令牌（P2#5）：绿色浅色叠加层取值 */
+--phase-req-bg:rgba(37,99,235,.14);
+--phase-req-fg:#1e40af;
+--phase-design-bg:rgba(126,58,242,.14);
+--phase-design-fg:#5b21b6;
+--phase-impl-bg:rgba(180,120,10,.16);
+--phase-impl-fg:#7c4a03;
+--phase-verify-bg:rgba(22,101,52,.16);
+--phase-verify-fg:#14532d;
 }
 
 html[data-palette="green"][data-theme="dark"] {
@@ -162,4 +171,13 @@ html[data-palette="green"][data-theme="dark"] {
 --shadow-3:#0006;
 --scrollbar-thumb:#3e4b41;
 --scrollbar-track:#101611;
+/* 工作流四阶段选中态语义令牌（P2#5）：绿色暗色叠加层取值 */
+--phase-req-bg:rgba(96,165,250,.16);
+--phase-req-fg:#93c5fd;
+--phase-design-bg:rgba(167,139,250,.16);
+--phase-design-fg:#c4b5fd;
+--phase-impl-bg:rgba(251,191,36,.16);
+--phase-impl-fg:#fcd34d;
+--phase-verify-bg:rgba(52,211,153,.16);
+--phase-verify-fg:#6ee7b7;
 }

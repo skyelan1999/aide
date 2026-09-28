@@ -1,0 +1,151 @@
+{
+  "agent": "backend-persona",
+  "lens": "人格/语音/插件 daemon/office 转换/WebAuthn/批注的子进程安全、路径穿越、加密存储、并发与资源泄漏",
+  "summary": "整体安全模型（AES-256-GCM 加密音频、Bearer 鉴权、safePath 工作区限制、WebAuthn 一次性 challenge）设计得当，TTS 子进程用 argv 而非 shell、daemon 有退避重启与心跳超时。但存在若干可复现缺陷：office 脚本执行完全无超时（可永久挂起）、voice sample 的 profile/id 未做路径校验（可越目录读写 .enc）、personaReset 在无密文时跳过密码校验并覆盖内存密钥（可致锁死）、插件管理在持有全局 a.mu 时同步跑 node 子进程（10-15s 阻塞所有 HTTP）、callPluginTool 用 CombinedOutput 无界缓存插件 stdout。WebAuthn challenge 一次性与过期处理正确。",
+  "findings": [
+    {
+      "id": "backend-persona-001",
+      "title": "runOfficeScript 执行 python/soffice 子进程无超时，可永久挂起",
+      "category": "资源泄漏",
+      "severity": "P1",
+      "file": "internal/server/office.go",
+      "line": "71-91",
+      "evidence": "runOfficeScript 用 exec.Command(bin, append([]string{script}, args...)...) 然后 cmd.Output()，没有 context.WithTimeout、没有 SetTimeout、也没有 cmd.Wait 上下文。docxTool 在 line 115 被 aide 工具执行器调用，脚本内部若调 soffice 转换损坏/挂起的 .docx（soffice 在 headless 转换死锁、等待锁、或读 stdin），该 goroutine 会永久阻塞，且没有任何兜底超时。对比同仓库 sherpa.go:255 用 context.WithTimeout(ctx, sherpaSynthTimeout)、plugin_daemon 用 daemonCallTimeout，office 这条路径是唯一裸跑的子进程。",
+      "fix": "改为 exec.CommandContext(context.WithTimeout(ctx, 60*time.Second), bin, args...)，并在 cmd.Stderr 用有限 buffer（如 LimitReader 到 64KB）；超时后 ctx 会 Kill 子进程。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-persona-002",
+      "title": "voiceSampleUpload/Delete/Audio/Wipe 的 profile 与 id 未做路径校验，可越目录读写 .enc",
+      "category": "安全",
+      "severity": "P2",
+      "file": "internal/server/voice_samples.go",
+      "line": "56-61, 138-196, 209-264, 371-387",
+      "evidence": "voiceSamplesDir(profile) 直接 filepath.Join(AssistantDir(a.dataPath), \"voice-samples\", profile)，profile 来自 r.URL.Query().Get(\"profile\")，没有 safePath、没有字符白名单。voiceSampleDelete 用 id=r.PathValue(\"id\") 直接拼 filepath.Join(dir, id+\".enc\")。filepath.Join 会清洗 ../：profile=../../../../etc → 目录逃逸到 voice-samples 之外；id=../../foo → 删除任意 foo.enc。写路径（upload）会把加密音频写到逃逸目录，删路径会 unlink 任意 *.enc 文件。虽然要求 Bearer token 且单用户本机，但同代码库对 comments.DocPath、office p 都强制 safePath，这里漏了。",
+      "fix": "对 profile 加白名单（仅允许 [a-z0-9-]+，默认 xiaomi）；对 id 用 newID 生成的 hex 校验（^[a-f0-9]{16,}$），拒绝包含 / 或 .. 的值。或直接复用 safePath。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-persona-003",
+      "title": "personaReset 在目标人格无密文时跳过密码校验并覆盖内存 personaKey",
+      "category": "逻辑错误",
+      "severity": "P2",
+      "file": "internal/server/persona.go",
+      "line": "335-347",
+      "evidence": "代码：cipher := a.settings.PersonaCiphers[id]; if cipher != \"\" { 校验密码 }; ...; a.personaKey = in.Password。当某人格（如 aide）从未存过自定义性格（cipher==\"\"）但另一人格（小秘）有密文时，调用方传任意 in.Password 都会通过——因为 if cipher != \"\" 块整体被跳过——然后 line 344 把 a.personaKey 覆盖成这个错误密码。后果：当前已用正确密码 X 解锁的会话，内存密钥被偷换成错误密码；后续 personaSave 用错误密钥加密小秘密文，重启后 decryptPersona 用正确密码反而解不开，造成自定义性格数据损坏/锁死。",
+      "fix": "只要 a.settings.PersonaCiphers 非空（任意人格有密文），就必须校验 in.Password 至少能解开一个密文（复用 personaUnlock 的循环）；仅当 PersonaCiphers 整个 map 为空（首次设置）时才跳过校验。重置后不应改 personaKey 为新密码（除非用户显式改密）。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-persona-004",
+      "title": "插件 daemon Start/Stop 与 runPluginHost 在持有全局 a.mu 时同步阻塞 10-15s",
+      "category": "并发与数据竞争",
+      "severity": "P2",
+      "file": "internal/server/plugin_daemon.go",
+      "line": "166-216, 585-625",
+      "evidence": "daemonStartHandler/daemonStopHandler/daemonRestartHandler 都是 a.mu.Lock(); defer a.mu.Unlock() 然后调 a.daemons.Start(id)。Start 内部 line 197-214 忙等 readyCh，最长 daemonStartTimeout=15s。期间所有走 a.mu 的 HTTP（settings、sessions、personality 等）全部串行阻塞。同样 plugins.go uploadPlugin line 194-239 在 a.mu 下同步调 a.runPluginHost（pluginRunTimeout=10s，cmd.Run() 阻塞），togglePlugin/deletePlugin 同理。node 冷启动或 surface 聚合慢时，整个后端 API 冻结 10-15s。",
+      "fix": "把 a.daemons.Start/Stop 与 runPluginHost 移到 a.mu 临界区之外（先在锁内取必要快照，锁外同步或异步执行）；或改为异步触发（go Start）+ 立即返回 202，前端轮询状态。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-persona-005",
+      "title": "callPluginTool 用 cmd.CombinedOutput 无界缓存插件 stdout/stderr，可 OOM",
+      "category": "资源泄漏",
+      "severity": "P2",
+      "file": "internal/server/plugins.go",
+      "line": "312-318",
+      "evidence": "exec.CommandContext(ctx, \"node\", \"-e\", pluginHostJS, \"call\", ...).CombinedOutput() 把 stdout+stderr 全读进一个 []byte，没有 LimitReader。恶意或写坏的插件若向 stdout 狂写（如打印 base64 大文件、死循环 log），会无界增长内存直到 OOM。对比同文件 validatePluginCode line 112 用 .Output()（同样问题，但有 10s 超时兜底），call 路径虽然有 70s 超时，但 70s 内插件可以写 GB 级输出。",
+      "fix": "用 cmd.Stdout = io.MultiWriter(limitWriter, &bytes.Buffer{}) 或手动 io.ReadAll(io.LimitReader(stdout, 1<<20))；stderr 用独立 LimitReader 限到 64KB。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-persona-006",
+      "title": "assistantMessageHandler 在未持 a.mu 时读 a.sessions map，与 dispatch 写存在并发 map 读写风险",
+      "category": "并发与数据竞争",
+      "severity": "P2",
+      "file": "internal/server/assistant_history.go",
+      "line": "180",
+      "evidence": "line 180 `s := a.sessions[r.PathValue(\"id\")]` 在 a.mu.Lock()（line 201）之前执行。同仓库对照：server.go:1701 的 unlockAssistantSession 是先 a.mu.Lock() 再读 a.sessions。本 handler 后续 line 210/245/270/315 会在 a.mu 下 dispatchToAideLocked → a.sessions[target.ID] = target 写 map。若两个并发请求同时进来（一个读 line 180、一个写 a.sessions），Go map 并发读写会触发 fatal error: concurrent map read and map write。",
+      "fix": "把 line 180-204 的会话查找挪到 a.mu.Lock() 之后（与 server.go:1701 同模式），在锁内取 *Session 指针副本再释放锁。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-persona-007",
+      "title": "edge-tts WebSocket readMessage 对帧长度无上限，恶意/异常服务端可 OOM",
+      "category": "边界条件",
+      "severity": "P3",
+      "file": "internal/server/tts/edge.go",
+      "line": "503-526",
+      "evidence": "readMessage 从二进制帧头解析 l（最多 2^63-1），直接 payload := make([]byte, l) 然后 io.ReadFull。虽然默认连微软 speech.platform.bing.com 是可信端点，但 Config.Endpoint 允许用户自定义（Synth line 138 读取 e.cfg.Endpoint），若用户填了恶意/异常端点，一个声明 4GB 长度的帧会让进程试图分配 4GB。对比 plugin_daemon readLoop 用 bufio.Scanner 限制 4MB。",
+      "fix": "加硬上限，如 if l > 16<<20 { return error }；超过即断连。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-persona-008",
+      "title": "sherpa Synth 把用户文本作为最后一个 argv 直传，若以 -- 开头会被 CLI 当 flag",
+      "category": "边界条件",
+      "severity": "P3",
+      "file": "internal/server/tts/sherpa.go",
+      "line": "216-252",
+      "evidence": "args 组装完后 line 252 args = append(args, \"--output-filename=\"+outPath, text)。text 是要合成的文本，若以 \"--\" 开头（如 \"--help\"、\"--vits-model=/etc/passwd\"），sherpa-onnx-offline-tts 的 flag 解析器（通常用 flag 包或 getopt）会把它当未知 flag 报错或错误解析。虽然 exec.Command 不经 shell 无注入，但会导致合成失败或行为异常。",
+      "fix": "在 text 前加 \"--\" 终止符（绝大多数 Go flag 包支持），或检测 strings.HasPrefix(text, \"--\") 时前面加空格/转义。",
+      "confidence": "low",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-persona-009",
+      "title": "WebAuthn sessions map 仅在 start 时惰性清理，突发 start 可致内存增长",
+      "category": "资源泄漏",
+      "severity": "P3",
+      "file": "internal/server/webauthn.go",
+      "line": "127-134, 174-214, 372-402",
+      "evidence": "pruneSessionsLocked 只在 register/start 和 assertion/start 入口被调用。若客户端反复调 assertion/start（Bearer 鉴权后）但不调 finish，每个 challenge 在 map 里保留 120s（webAuthnSessionTTL）。没有后台 goroutine 定时清理。高并发下 map 条目数 = 120s 内 start QPS。单用户本机影响小，但属于可观测的资源点。",
+      "fix": "启动时起一个 time.Ticker 每 60s 调 pruneSessionsLocked；或在 finish/失败路径也顺便 prune。",
+      "confidence": "low",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-persona-010",
+      "title": "voice_agent.narrate 对 st.Text 按字节截断 1400，可能切断多字节 UTF-8 字符",
+      "category": "边界条件",
+      "severity": "P3",
+      "file": "internal/server/voice_agent.go",
+      "line": "539-542",
+      "evidence": "txt := strings.TrimSpace(st.Text); if len(txt) > 1400 { txt = txt[:1400] }。len 是字节数，对中文（UTF-8 3 字节/字）会在字符中间切断，留下乱码。仅影响讲解词兜底展示，不影响数据。",
+      "fix": "用 []rune(txt)[:1400] 截断，或在 1400 字节处回退到最后一个合法 rune 边界。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-persona-011",
+      "title": "personalitySave/personaSave 对用户输入的性格 prompt 无长度上限，可无限膨胀 settings.json",
+      "category": "边界条件",
+      "severity": "P3",
+      "file": "internal/server/persona.go",
+      "line": "281-318, 470-497",
+      "evidence": "personaSave 接受 in.Content 直接 encryptPersona 存进 PersonaCiphers，无长度校验；personalitySave 接受 in.Prompt 也无上限（虽然 evolve 路径有 personalityMaxPromptChars=4000，但用户手动保存路径不校验）。用户可粘贴 MB 级文本，导致 settings.json 无限膨胀，每次 atomicJSON 重写全量。",
+      "fix": "手动保存路径也加 maxPromptChars 校验（与演化路径一致），超 8000 字拒绝。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-persona-012",
+      "title": "comments.update 读-改-写无锁，并发 PUT 同一批注可丢更新",
+      "category": "并发与数据竞争",
+      "severity": "P3",
+      "file": "internal/server/comments.go",
+      "line": "274-322",
+      "evidence": "update() 先 cs.get(id) 读完整 Comment 到内存，改字段，再 cs.writeComment(c) 原子写回。两个并发 PUT（如同一批注同时加回复和改状态）会各自读到旧版本，后写覆盖先写，丢一条更新。单用户本机概率低，但代码层无任何互斥。",
+      "fix": "用 per-comment 文件锁（flock）或在 commentStore 加 sync.Map[commentID]*sync.Mutex 串行化同一 id 的 update。",
+      "confidence": "low",
+      "needs_user_decision": false
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "comm-tcp",
+  "name": "TCP 通讯",
+  "description": "基于 Node 内置 net 模块的常驻 TCP 通讯插件：监听/连接/收发、本地代理录制、规则模拟应答、录制回放与 fuzz；零第三方依赖，默认禁用，仅绑回环 127.0.0.1",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "daemon": true,
+  "enabled": false,
+  "tools": [
+    { "name": "tcp_listen", "kind": "write", "readonlyDefault": false },
+    { "name": "tcp_connect", "kind": "write", "readonlyDefault": false },
+    { "name": "tcp_send", "kind": "write", "readonlyDefault": false },
+    { "name": "tcp_close", "kind": "write", "readonlyDefault": false },
+    { "name": "tcp_proxy_start", "kind": "write", "readonlyDefault": false },
+    { "name": "tcp_proxy_stop", "kind": "write", "readonlyDefault": false },
+    { "name": "tcp_simulate_set", "kind": "write", "readonlyDefault": false },
+    { "name": "tcp_simulate_clear", "kind": "write", "readonlyDefault": false },
+    { "name": "tcp_replay", "kind": "write", "readonlyDefault": false },
+    { "name": "tcp_fuzz", "kind": "write", "readonlyDefault": false }
+  ]
+}

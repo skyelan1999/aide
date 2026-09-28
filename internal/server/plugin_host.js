@@ -201,9 +201,100 @@ function callCommand(pluginsDir, requestJSON, outFile) {
     });
 }
 
+/* 协议 v1.2：daemon <pluginPath>
+ * 长驻宿主：stdin/stdout 行分隔 JSON-RPC。stdout 仅输出 JSON-RPC 行（结果/错误/事件），
+ * 插件日志一律走 stderr。加载插件并缓存 require，工具调用经 IPC 转发到常驻 handler。
+ *
+ * 入站:  {"jsonrpc":"2.0","id":N,"method":"tool.call","params":{tool,args}}
+ * 入站:  {"jsonrpc":"2.0","id":N,"method":"ping"}            （心跳）
+ * 出站:  {"jsonrpc":"2.0","id":N,"result":<任意>}             （成功，result 即 handler 返回值）
+ * 出站:  {"jsonrpc":"2.0","id":N,"error":{code,message}}      （失败）
+ * 出站:  {"method":"event","params":{type,time,direction,length,payloadTruncated,...}}
+ * 生命周期：apply(ctx) → 可选 start() → ready 事件 → 服务 tool.call；stdin EOF / SIGTERM → 可选 stop() → 退出。
+ */
+function sendLine(obj) { process.stdout.write(JSON.stringify(obj) + '\n'); }
+
+function daemonCommand(pluginPath) {
+  let loaded;
+  try {
+    loaded = loadPlugin(pluginPath);
+  } catch (err) {
+    sendLine({ method: 'event', params: { type: 'log', level: 'error', message: '加载异常: ' + String(err && err.message).slice(0, 300), time: new Date().toISOString() } });
+    process.exit(1);
+  }
+  if (loaded.error) {
+    sendLine({ method: 'event', params: { type: 'log', level: 'error', message: '插件加载失败: ' + loaded.error, time: new Date().toISOString() } });
+    process.exit(1);
+  }
+  const plugin = loaded.plugin;
+  const registry = new Map();
+  const pluginId = path.basename(path.dirname(pluginPath));
+  const surface = { id: pluginId, name: plugin.name || pluginId, error: '', tools: [], slots: [], provided: [] };
+
+  /* 事件上报：type 限 traffic/event/log；其余字段透传（direction/length/payloadTruncated/subtype/message…）。 */
+  const emit = (type, fields) => {
+    if (!['traffic', 'event', 'log'].includes(type)) type = 'event';
+    const params = Object.assign({ type, time: new Date().toISOString() }, fields || {});
+    sendLine({ method: 'event', params });
+  };
+
+  const ctx = makeCtx(surface, registry);
+  ctx.emit = emit; // daemon 专有：插件上报流量/事件/日志
+
+  let stopped = false;
+  const shutdown = () => {
+    if (stopped) return;
+    stopped = true;
+    try { if (typeof plugin.stop === 'function') plugin.stop(); } catch (err) { log('stop() 异常:', err && err.message); }
+    process.exit(0);
+  };
+
+  Promise.resolve()
+    .then(() => plugin.apply(ctx))
+    .then(() => (typeof plugin.start === 'function' ? plugin.start() : undefined))
+    .then(() => {
+      sendLine({
+        method: 'event',
+        params: { type: 'event', subtype: 'ready', time: new Date().toISOString(), tools: Array.from(registry.keys()) },
+      });
+
+      const readline = require('readline');
+      const rl = readline.createInterface({ input: process.stdin });
+      rl.on('line', (line) => {
+        let msg;
+        try { msg = JSON.parse(line); } catch (_) { return; } // 跳过非法行
+        if (msg.method === 'ping') {
+          if (msg.id !== undefined && msg.id !== null) sendLine({ jsonrpc: '2.0', id: msg.id, result: 'pong' });
+          else sendLine({ method: 'pong' });
+          return;
+        }
+        if (msg.method === 'tool.call' && msg.id !== undefined && msg.id !== null) {
+          const params = msg.params || {};
+          const entry = registry.get(params.tool);
+          if (!entry) {
+            sendLine({ jsonrpc: '2.0', id: msg.id, error: { code: -32601, message: '工具未注册: ' + params.tool } });
+            return;
+          }
+          Promise.resolve()
+            .then(() => entry.handler(params.args || {}, makeToolAPI()))
+            .then((value) => sendLine({ jsonrpc: '2.0', id: msg.id, result: value === undefined ? null : value }))
+            .catch((err) => sendLine({ jsonrpc: '2.0', id: msg.id, error: { code: -32000, message: String(err && err.message).slice(0, 500) } }));
+        }
+      });
+      rl.on('close', shutdown);
+      process.on('SIGTERM', shutdown);
+      process.on('SIGINT', shutdown);
+    })
+    .catch((err) => {
+      emit('log', { level: 'error', message: 'daemon 启动失败: ' + String(err && err.message).slice(0, 300) });
+      process.exit(1);
+    });
+}
+
 if (command === 'validate') validateCommand(args[0]);
 else if (command === 'run') runCommand(args[0], args[1], args[2]);
 else if (command === 'call') callCommand(args[0], args[1], args[2]);
+else if (command === 'daemon') daemonCommand(args[0]);
 else {
   console.error('未知命令: ' + command);
   process.exit(2);

@@ -26,6 +26,8 @@ const source=fs.readFileSync('internal/server/web/app.js','utf8');
 const start=source.indexOf('function browseDirFromValue(value) {');
 vm.runInContext(source.slice(start,source.indexOf('async function resolveExistingDir',start)), Object.assign(ctx,{t:x=>x,state:{config:{hostLocal:'/Users/me/aide'}}}));
 for(const [value,want] of [['/Users/me/aide/docs','docs'],['/local/docs','docs'],['~/docs','docs'],['/local/../secret','.'],['/local/docs/../internal','internal']]) assert.equal(ctx.browseDirFromValue(value),want);
+ctx.state.config.hostLocal='C:\\Users\\me';
+for(const [value,want] of [['C:\\Users\\me\\docs','docs'],['C:/Users/me/docs','docs'],['c:\\users\\ME\\docs','docs']]) assert.equal(ctx.browseDirFromValue(value),want);
 console.log('PASS: localization, placeholder integrity, schema ownership, locale fallback and path mapping');
 
 assert.throws(()=>ctx.browseDirFromValue('/Users/me/aide-other/docs'));

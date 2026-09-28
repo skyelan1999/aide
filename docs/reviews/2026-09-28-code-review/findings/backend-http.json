@@ -1,0 +1,139 @@
+{
+  "agent": "backend-http",
+  "lens": "后端 HTTP/文件服务只读静态审查：路由鉴权、文件路径/挂载边界、错误处理、nil/类型断言、会话/记忆/附件 CRUD、资源关闭",
+  "summary": "整体鉴权统一（所有 /api/* 走 Bearer token，/api/debug/* 独立令牌），ZIP Slip 校验较完整，原子写与 temp 清理基本到位。但发现 2 个 P1：小秘会话密码门在 GET /api/sessions/{id} 被绕过；deleteAllArchived 仍用旧平铺路径删文件，导致已归档会话删不掉、重启后复活。另有若干 P2/P3：assistant agentic 循环对 voiceAgent 空指针防御不足、SSH 写文件哈希冲突校验对二进制旧文件失效、读文件不拒符号链接、SQLite 临时文件/表名等加固项。",
+  "findings": [
+    {
+      "id": "backend-http-001",
+      "title": "getSession 未校验小秘会话密码门，直接返回完整消息",
+      "category": "安全",
+      "severity": "P1",
+      "file": "internal/server/server.go",
+      "line": "2000-2017",
+      "evidence": "#30 设计：Kind=assistant 的小秘系统会话有密码门，unlockAssistantSession/voiceFilter/assistant-message 均通过 a.isAssistantUnlocked(as.ID) 校验后才放行。但 GET /api/sessions/{id} 在 s.Kind==assistant 分支直接 view.Messages = a.xiaomiHistoryLocked() 并 200 返回，全程没有 isAssistantUnlocked 检查。任何持有本机 access-token 的请求（或 XSS/被借设备）无需输入账户密码即可拉走小秘会话全部私聊/历史。对比 voiceFilter server.go:1462 与 assistant_history.go:224 均有门，此处漏网。",
+      "fix": "在 s.Kind==assistant 分支先校验 a.isAssistantUnlocked(s.ID)；未解锁时返回 403/451 或仅返回元数据（不含 Messages）。同时复核 listSessions 是否应隐藏 assistant 会话的未读标记等敏感字段。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-http-002",
+      "title": "deleteAllArchived 仍按旧平铺路径删文件，归档会话删不净、重启复活",
+      "category": "逻辑错误",
+      "severity": "P1",
+      "file": "internal/server/server.go",
+      "line": "1989",
+      "evidence": "save()（server.go:813）统一走 SessionPath(data, id, \"active\") = data/sessions/active/session-<id>.json（paths.go:104-106,214）。deleteSession（server.go:1962）也正确用 SessionPath(...,\"active\")。但 deleteAllArchived 在 server.go:1989 写的是 filepath.Join(a.dataPath, \"session-\"+id+\".json\")——这是数据分层迁移（#31）前的旧平铺路径。迁移后真实文件位于 sessions/active/，该 os.Remove 永远返回 IsNotExist，被 !os.IsNotExist 吞掉，deleted++ 却照常计数；内存里 delete(a.sessions,id) 删了，但磁盘文件残留，下次 New() 启动 Glob sessions/active/session-*.json（server.go:748-781）会把这些‘已删除归档’会话重新载入内存，用户看到刚批量删除的归档会话复活。",
+      "fix": "把 server.go:1989 改为 os.Remove(SessionPath(a.dataPath, id, \"active\"))，与 save()/deleteSession 对齐。同时审计是否还有其它地方硬编码 dataPath+\"session-\"+id+\".json\"。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-http-003",
+      "title": "runAssistantAgenticLoop 在 nil 检查前解引用 va.memory",
+      "category": "代码异常",
+      "severity": "P2",
+      "file": "internal/server/assistant_agent.go",
+      "line": "88-92",
+      "evidence": "line 86 va := a.voiceAgent；line 88-90 直接 a.mu.Lock(); mem := va.memory; a.mu.Unlock()，没有 if va==nil 守卫；随后 line 92 却又写 if va != nil { aideMem = va.readAideMemory() }。作者显然知道 va 可能为 nil，但 line 89 已经先解引用。当前两个调用方（server.go:1447、assistant_history.go:218）在调用前都判了 va==nil 并走 fallback，所以线上暂不可达；但这是一颗钉子——一旦未来新增调用方漏判（或测试中 a.voiceAgent 未初始化），直接 nil pointer panic。",
+      "fix": "把 line 88-90 包进 if va != nil { ... }，mem 零值；与 line 92 的判空保持一致。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-http-004",
+      "title": "SSH 工作区写文件：哈希冲突校验对已存在的二进制文件失效",
+      "category": "逻辑错误",
+      "severity": "P2",
+      "file": "internal/server/files.go",
+      "line": "1181-1197",
+      "evidence": "SSH 分支：current, readErr := a.readWorkspaceText(in.Path)。readWorkspaceText 底层走 readText（files.go:60-87），对非 UTF-8/含 NUL 文件返回 error(\"不支持二进制文件\")。若目标路径已存在一个二进制文件：readErr != nil 且不是 os.ErrNotExist，line 1187 只判 readErr!=nil && in.Hash!=\"\" 报‘文件已被删除’（错误提示本身也误导）；当 in.Hash==\"\"（前端把它当新文件保存）时直接落到 writeWorkspaceText 静默覆盖。本地分支 checkVersion（files.go:1208-1223）对 readText 的非 ErrNotExist 错误是 return err（409），反而安全；SSH 与本地行为不一致，二进制旧文件可被无冲突检测地覆盖。",
+      "fix": "SSH 分支区分错误类型：errors.Is(err, os.ErrNotExist) 才允许新建；其它错误（含二进制）一律 409 拒绝，与本地 checkVersion 对齐。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-http-005",
+      "title": "readRawBytes/readText 跟随符号链接，目录列表却隐藏符号链接",
+      "category": "安全",
+      "severity": "P2",
+      "file": "internal/server/files.go",
+      "line": "202-226",
+      "evidence": "listLocalDir/localDirItems（files.go:982-984）显式跳过 os.ModeSymlink，前端看不到 symlink；但 readRawBytes（files.go:206-217）与 readText（files.go:64-75）只做 root.Open + f.Stat().IsRegular()，f.Stat() 跟随 symlink，若 workspace 内存在一个指向 ~/.ssh/id_rsa 或 /etc/passwd 的 symlink（git clone / 用户手工 ln -s / 模型工具之前创建），GET /api/file/raw?path=that-link 会把目标文件内容吐给前端。safePath 只校验路径字符串，不查 inode。attachments.go:164 readLocalImage 同样只查 IsRegular()。",
+      "fix": "在 readText/readRawBytes/readLocalImage 里用 f.Lstat()（或 osRoot lstat）拒绝 ModeSymlink；或 Open 后再 Stat 前先 Readdir 校验 inode 与 Open 返回的 file descriptor 一致。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-http-006",
+      "title": "SQLite 临时文件在 Write 失败时泄漏",
+      "category": "资源泄漏",
+      "severity": "P3",
+      "file": "internal/server/files.go",
+      "line": "1349-1357",
+      "evidence": "resolveSqlitePath：tmp, err := os.CreateTemp(...); defer tmp.Close(); if _, err := tmp.Write(b); err != nil { return \"\", err }。调用方在成功后才 defer os.Remove(tmpPath)（files.go:1367,1412）。若 tmp.Write 失败，函数提前 return，临时文件留在系统 temp 目录永不清理。正常路径 Write 很少失败（64MB 上限内），但磁盘满/配额场景下会累积。",
+      "fix": "在 Write 失败分支 os.Remove(tmp.Name())，或在 resolveSqlitePath 内部用 err!=nil 时统一 Remove。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-http-007",
+      "title": "SQLite 表名拼入 f-string SQL，存在标识符注入面",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/files.go",
+      "line": "1420-1426",
+      "evidence": "table 来自 ?table= 查询参数，直接拼进 f\"PRAGMA table_info([{table}])\" 与 f\"SELECT ... FROM [{table}]\"。SQLite 用 [ ] 作为标识符引号，name 中出现 ] 可截断标识符；虽然 cur.execute 不支持多语句、且操作对象是 aide 自己复制到 /tmp 的 db 副本（不碰原库），但表名带 ]-- 仍可扭曲 PRAGMA/SELECT 语义。limit/offset 已用参数绑定，table 没有。",
+      "fix": "在 Go 侧对 table 做白名单校验（^[A-Za-z_][A-Za-z0-9_]*$，或拒绝 ] 字符），再传入 Python；或在 Python 侧用 identifier quoting 并拒绝 ]。",
+      "confidence": "low",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-http-008",
+      "title": "canAccessMemory 对‘既非 aide 也非 assistant’路径默认放行（fail-open）",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/memory_access.go",
+      "line": "93-95",
+      "evidence": "default 分支直接 return true, \"\"。注释说其它 /data 路径不归本策略管，但记忆工具入口的‘断言式越权检查’一旦因为路径拼接/符号链接/相对路径问题落到 default，就会放行。纵深防御应为 deny-by-default：未识别路径拒绝。当前依赖调用方只传固定路径（memory/core/），属于‘靠调用方自觉’。",
+      "fix": "default 分支返回 false + 错误信息；或显式只允许 isAideMemoryPath/isAssistantMemoryPath 两种命中。",
+      "confidence": "low",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-http-009",
+      "title": "readLocalImage 对非白名单扩展名产出空 MIME 的 data URL",
+      "category": "边界条件",
+      "severity": "P3",
+      "file": "internal/server/attachments.go",
+      "line": "174-178",
+      "evidence": "mt := imageAttachmentTypes[strings.ToLower(path.Ext(att.Path))]；若扩展名不在 .png/.jpg/.jpeg/.gif/.webp 表里，mt==\"\"，随后 DataURL = \"data:\" + mt + \";base64,...\" 拼出 \"data:;base64,...\"。调用方 context.go:189 之前是否过滤扩展名未在本文件内可见，但本函数自身不防御，传个 .bmp 进来就会把一个无效 data URL 发给 LLM。",
+      "fix": "mt==\"\" 时返回 error(\"不支持的图片格式\")，而不是构造空 MIME。",
+      "confidence": "low",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-http-010",
+      "title": "remember 工具写 voice-memory.json 在锁外、非原子、吞错",
+      "category": "资源泄漏",
+      "severity": "P3",
+      "file": "internal/server/assistant_agent.go",
+      "line": "200-209",
+      "evidence": "a.mu.Lock(); 修改 memory.Habits; b,_:=json.Marshal; mp:=VoiceMemoryPath; a.mu.Unlock(); 之后才 os.MkdirAll + os.WriteFile(mp,b,0600)。写盘在锁外，与其它并发 persistLocked 写同一文件存在交错覆盖风险；os.WriteFile 不是原子写（崩溃会留半截 JSON）；MkdirAll/WriteFile 错误均 _= 吞掉，用户看到‘已记入’但实际没落盘。",
+      "fix": "复用 atomicJSON(mp, memory) 在锁内写盘；或在锁外写但用临时文件+rename，并记录错误日志。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-http-011",
+      "title": "save() 永远写 active 桶，archived/assistant 目录成死目录",
+      "category": "逻辑错误",
+      "severity": "P3",
+      "file": "internal/server/server.go",
+      "line": "809-814",
+      "evidence": "save() 硬编码 SessionPath(a.dataPath, s.ID, \"active\")。paths.go 定义了 archived/assistant 三个桶，sessionBucketDirs 启动时 Glob 三个目录，但 patchSession 把 s.Archived=true 后仍走 save() 落到 active/，assistant 会话也落 active/。结果：sessions/archived/ 与 sessions/assistant/ 目录永远空着（除了测试），文档与实现不一致；未来若有人误以为 archived 会话落盘到 archived/ 而按该路径清理，会误删 active/ 下的活跃文件。",
+      "fix": "要么 save() 按 s.Archived/s.Kind 选择桶并在 patchSession 时迁移文件；要么删掉 paths.go 里 archived/assistant 桶，统一用 active/。二选一，不要留半死不活的布局。",
+      "confidence": "medium",
+      "needs_user_decision": true
+    }
+  ]
+}

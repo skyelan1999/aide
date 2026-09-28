@@ -1,5 +1,7 @@
 # 辅助资料真实协议与 AI 读取验收
 
+> 历史快照，当前以 docs/verification.md 为准。
+
 2026-09-23。执行 `bash scripts/test-source-protocols.sh`，七个子测试全部 PASS（Go race，2.52 秒测试逻辑）。不是只检查配置或使用 curl 替身。
 
 | 来源 | 实际服务/介质 | 验证 |

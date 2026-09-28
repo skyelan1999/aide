@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -26,7 +25,8 @@ func TestSessionPinArchiveListAndPersistence(t *testing.T) {
 	w = request(a, "GET", "/api/sessions", nil)
 	var list []map[string]any
 	_ = json.Unmarshal(w.Body.Bytes(), &list)
-	if len(list) != 1 || list[0]["id"] != s2.ID || list[0]["pinned"] != true {
+	// #30：列表首位永久是小秘系统会话（kind=assistant），其后才是普通会话
+	if len(list) != 2 || list[0]["kind"] != "assistant" || list[1]["id"] != s2.ID || list[1]["pinned"] != true {
 		t.Fatalf("default list = %v", list)
 	}
 	// archived=1：仅归档会话
@@ -62,7 +62,7 @@ func TestSessionDeleteRemovesFileAndCancelsRun(t *testing.T) {
 	if err := a.save(s); err != nil {
 		t.Fatal(err)
 	}
-	dataFile := filepath.Join(a.dataPath, "session-"+s.ID+".json")
+	dataFile := SessionPath(a.dataPath, s.ID, "active")
 	if _, err := os.Stat(dataFile); err != nil {
 		t.Fatal("session file not created")
 	}
@@ -112,7 +112,8 @@ func TestExportSessions(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
 		t.Fatalf("export json: %v", err)
 	}
-	if out.Count != 2 || len(out.Sessions) != 2 {
+	// #30：导出含永久置顶的小秘系统会话 + 2 个自建会话，共 3 个
+	if out.Count != 3 || len(out.Sessions) != 3 {
 		t.Fatalf("export = %+v", out)
 	}
 	var titles []string
@@ -136,20 +137,20 @@ func TestSessionOrderByActivity(t *testing.T) {
 	var sA, sB Session
 	_ = json.Unmarshal(request(a, "POST", "/api/sessions", map[string]string{"title": "A"}).Body.Bytes(), &sA)
 	_ = json.Unmarshal(request(a, "POST", "/api/sessions", map[string]string{"title": "B"}).Body.Bytes(), &sB)
-	// touch A → A 最新活动，排最前
+	// touch A → A 最新活动；列表首位是永久置顶的小秘会话，其后 A 排最前
 	requireStatus(t, request(a, "PATCH", "/api/sessions/"+sA.ID, map[string]any{"touch": true}), 200)
 	w := request(a, "GET", "/api/sessions", nil)
 	var list []map[string]any
 	_ = json.Unmarshal(w.Body.Bytes(), &list)
-	if list[0]["id"] != sA.ID {
+	if list[0]["kind"] != "assistant" || list[1]["id"] != sA.ID {
 		t.Fatalf("activity order = %v", list)
 	}
-	// 置顶 B → B 永远最前，即使 A 再活动
+	// 置顶 B → B 在小秘之后、A 之前
 	requireStatus(t, request(a, "PATCH", "/api/sessions/"+sB.ID, map[string]any{"pinned": true}), 200)
 	requireStatus(t, request(a, "PATCH", "/api/sessions/"+sA.ID, map[string]any{"touch": true}), 200)
 	w = request(a, "GET", "/api/sessions", nil)
 	_ = json.Unmarshal(w.Body.Bytes(), &list)
-	if list[0]["id"] != sB.ID || list[1]["id"] != sA.ID {
+	if list[0]["kind"] != "assistant" || list[1]["id"] != sB.ID || list[2]["id"] != sA.ID {
 		t.Fatalf("pinned should stay on top: %v", list)
 	}
 }
@@ -166,14 +167,30 @@ func TestSessionCheckedFlag(t *testing.T) {
 	w := request(a, "GET", "/api/sessions", nil)
 	var list []map[string]any
 	_ = json.Unmarshal(w.Body.Bytes(), &list)
-	if len(list) != 1 || list[0]["checked"] != false {
-		t.Fatalf("default checked = %v", list)
+	// #30：首位是小秘系统会话，其后是手动建的 s
+	found := false
+	for _, it := range list {
+		if it["id"] == s.ID {
+			found = true
+			if it["checked"] != false {
+				t.Fatalf("default checked = %v", it)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("default checked list missing s: %v", list)
 	}
 	// check → 清除
 	requireStatus(t, request(a, "PATCH", "/api/sessions/"+s.ID, map[string]any{"check": true}), 200)
 	w = request(a, "GET", "/api/sessions", nil)
 	_ = json.Unmarshal(w.Body.Bytes(), &list)
-	if list[0]["checked"] != true {
+	checkedOK := false
+	for _, it := range list {
+		if it["id"] == s.ID {
+			checkedOK = it["checked"] == true
+		}
+	}
+	if !checkedOK {
 		t.Fatalf("checked = %v", list)
 	}
 	// 持久化

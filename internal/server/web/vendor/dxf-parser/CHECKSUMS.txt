@@ -1,0 +1,4 @@
+# dxf-parser 1.1.2 — MIT (gdsestimating)
+# Source: https://cdn.jsdelivr.net/npm/dxf-parser@1.1.2/dist/dxf-parser.js
+445dd62529369a4ef32520d8b6232031ea8af01f1029b08b2d876ff6b7807b7b  dxf-parser.js
+56eb37102e6e49ce363e8021f017fe0a6de61d3705273bed307110a3386cb42f  LICENSE

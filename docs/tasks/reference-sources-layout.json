@@ -1,0 +1,35 @@
+{
+  "id": "reference-sources-layout",
+  "request": "修正右侧引用的工作状态：自动系统文档固定置顶；其他挂载来源一行一个；每个可管理来源右侧提供锁以快速切换只读/读写，以及 X 以删除来源。用户可见的“辅助资料”统一改名为“引用”，并同步环境说明插件。",
+  "baseline": "1a991f18c2618a30f4f11480ad4a2192b421939c",
+  "initial_status": "feature/permission-panel 存在用户及前序任务的未提交改动，均须保留；本 Windows 主机没有 python3，不能执行 agent-route 脚本。",
+  "acceptance": [
+    "切换到辅助资料时默认打开已启用的自动系统文档；来源切换会重置目录并刷新文件列表。",
+    "自动系统文档固定在来源区顶部并保留为内置来源；其他来源按一行一个的纵向布局显示。",
+    "非内置来源行右侧有锁按钮，可通过既有来源 API 在只读与读写间切换；有 X 按钮并在确认后删除。",
+    "内置来源不允许删除或改变其系统定义，且本地和 SSH/SFTP 工作区均沿用既有来源配置。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/sources.go",
+    "internal/server/environment_guide.go",
+    "internal/server/files.go",
+    "internal/server/workflow.go",
+    "docs/tasks/reference-sources-layout.json"
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "用户明确指定来源区的布局、固定系统文档、读写锁和删除行为。", "evidence": ["用户提供的 Edge 截图及原始请求"]},
+    "design": {"status": "pass", "summary": "复用现有 /api/sources 更新接口；进入辅助资料时默认选 system-docs，内置来源固定保留，外部来源使用行级锁和删除操作。", "evidence": ["internal/server/web/app.js", "internal/server/sources.go"]},
+    "implementation": {"status": "pass", "summary": "来源区改为垂直行列表，自动系统文档排在顶部；外部来源增加读写锁与删除按钮，来源切换和删除回退到默认系统文档。", "evidence": ["internal/server/web/app.js", "internal/server/web/index.html", "internal/server/web/style.css"]},
+    "verification": {"status": "not_run", "summary": "来源后端定向回归、JavaScript 语法、多语言与 diff 检查通过，Docker 镜像已重建并健康；当前自动化只能访问空的内置浏览器，无法实际操作用户的 Edge 页面完成视觉验收。", "evidence": ["docker run golang:1.26-bookworm go test -mod=vendor -run Test(ContextSource|ListSources|DefaultWorkspace|SourcesRegistry) -count=1 ./internal/server: ok (1.893s)", "node --check internal/server/web/app.js", "node --check internal/server/web/locales/en.js", "node scripts/test_i18n.cjs: PASS", "git diff --check", "cmd /c start.bat: aide:local rebuilt; aide-aide-1 health check passed"]},
+    "documentation": {"status": "pass", "summary": "任务账本记录了固定来源、行级权限与删除行为，以及“引用”命名和环境说明插件同步。", "evidence": ["docs/tasks/reference-sources-layout.json"]},
+    "cleanup": {"status": "pass", "summary": "已移除本次定向测试容器；保留用户既有的未提交与未跟踪文件。", "evidence": ["docker rm aide-sources-regression", "git status --short"]},
+    "release": {"status": "blocked", "summary": "功能提交已推送至 origin/feature/permission-panel；正式 release-check 被历史异常未跟踪运行时缓存阻断，尚未发布。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500", "release-check: git status blocked by malformed untracked runtime path"]}
+  },
+  "release_authorization": "用户原话：你先整理一下推上去吧",
+  "rollback": "恢复来源面板的前端渲染与样式；不会删除用户已保存的来源配置。",
+  "handoff": "进行中；未提交、未推送、未合并。"
+}

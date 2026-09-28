@@ -76,6 +76,9 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 		if rp := strings.TrimSpace(a.wsConfig.Workspace.Path); rp != "" {
 			remote = "cd " + shellQuote(rp) + " && " + remote
 		}
+		if cache := a.workspaceRemoteCachePath(); cache != "" {
+			remote = "mkdir -p " + shellQuote(cache) + " && export AIDE_CACHE=" + shellQuote(cache) + " GOCACHE=" + shellQuote(cache) + " && " + remote
+		}
 		select {
 		case a.commands <- struct{}{}:
 			defer func() { <-a.commands }()

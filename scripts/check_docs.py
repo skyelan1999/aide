@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check repository-owned Markdown links, local images and requirement IDs."""
+"""Check repository-owned Markdown links, local images and legacy FR coverage."""
 from pathlib import Path
 import re
 import sys
@@ -29,8 +29,15 @@ for path in sorted(set(files)):
 for image in (ROOT / 'docs/images').glob('*.jpg'):
     if not image.read_bytes().startswith(b'\xff\xd8\xff'):
         errors.append('Invalid JPEG: ' + str(image))
-ids = re.findall(r'^\| FR-(\d+) \|', (ROOT / 'docs/PRD.md').read_text().split('## 3.')[0], re.M)
-if len(ids) != len(set(ids)) or set(map(int, ids)) != set(range(1, 101)):
-    errors.append('PRD must preserve unique FR-01 through FR-100')
+prd = (ROOT / 'docs/PRD.md').read_text()
+appendix = prd.partition('## 附录 A：历史 FR 基线')[2]
+ranges = re.findall(r'^\| FR-(\d+)(?:~(?:FR-)?(\d+))? \|', appendix, re.M)
+covered = []
+for first, last in ranges:
+    start = int(first)
+    end = int(last) if last else start
+    covered.extend(range(start, end + 1))
+if not ranges or len(covered) != len(set(covered)) or set(covered) != set(range(1, 101)):
+    errors.append('PRD appendix must cover each legacy FR-01 through FR-100 exactly once')
 print('\n'.join(errors) if errors else f'PASS: {len(set(files))} Markdown files, {links} local links, JPEG signatures, FR-01..100')
 sys.exit(1 if errors else 0)

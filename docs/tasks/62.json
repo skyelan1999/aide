@@ -1,0 +1,48 @@
+{
+  "id": "62",
+  "request": "扩展后端：小蜜历史归位、文字=语音、小蜜可创建/控制其他对话",
+  "baseline": "9b94938b09cb1896d501025c3c7579b7d11e5add",
+  "initial_status": "M Dockerfile\n M docs/architecture/office-viewer.md\n M internal/server/files.go\n M internal/server/paths.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/style.css\n M internal/server/workflow.go\n?? docs/tasks/63.json\n?? internal/server/comments.go\n?? internal/server/comments_test.go\n?? internal/server/office.go\n?? internal/server/web/vendor/jszip.min.js\n?? scripts/office/",
+  "acceptance": [],
+  "scope": [],
+  "stages": {
+    "requirements": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

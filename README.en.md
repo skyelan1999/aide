@@ -16,7 +16,7 @@ AI and an integrated work environment · Understand information · Analyze probl
 
 ![aide workbench with conversations, project files, and task input](docs/images/workbench-preview.jpg)
 
-> The latest published baseline is **0.1.7.0 RC1**. This version includes Chinese/English switching, reference-source tools and unified startup. Screenshots use an isolated demonstration environment. See [Releases](https://github.com/skyelan1999/aide/releases) for published artifacts and their exact versions.
+> The current baseline is **0.1.10.2 RC1**. This adds persistent memory (read/write_memory injected into the system prompt each session), model context-window presets (32K/64K/128K/200K/256K/1M one-click), a default 60 tool-call round limit (tunable 5–200 in permissions), fixed Markdown/Mermaid rendering with internal handling of relative links, trajectory export and a call-analysis view, a stacked context-preview chart, sub-agents (spawn_subagent), automatic retry and stop-loss on failures, a three-level Codex-style sandbox, a four-phase AI workflow with auto mode, five reasoning-effort levels, a voice assistant, per-tool permission toggles, configuration backup, lock screen, and persistent personas. Session management, queue/interrupt, and SSE streaming landed earlier. Screenshots use an isolated demonstration environment. See [Releases](https://github.com/skyelan1999/aide/releases) for published artifacts and their exact versions.
 
 ## Focus on your professional work
 
@@ -41,7 +41,8 @@ Data is persisted locally. When using a cloud model, task content, context, and 
 | Trajectory, search, compaction | Inspect events, search conversation history, summarize old context | Compaction is summarization, not lossless compression or ZIP |
 | Usage and cost | Heatmap, daily details, rate snapshots, provider balance | Priced, estimated, and unpriced usage differ; this is not an invoice |
 | Command panel | Run, inspect, and cancel individual shell commands | No PTY or persistent shell session |
-| Plugins | Upload, enable, and call tools with executable handlers | Plugins are trusted code, not a security sandbox |
+| Plugins | Upload, enable, and call tools with executable handlers; built-in draw.io diagram tool | Plugins are trusted code, not a security sandbox |
+| Permissions, voice & personalization | Three-level sandbox (read-only/workspace-write/full-access), per-tool toggles, lock screen; voice transcription, persistent personas; config backup export/import | The sandbox bounds container privileges, not malicious plugins; speech recognition runs in the browser |
 | Appearance and language | Professional/Classic palettes; light/dark/system; Chinese/English | Browser-local preferences; language does not translate your content |
 
 ## Quick start

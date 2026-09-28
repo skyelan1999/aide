@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>aide · 数据分层与完整性自愈架构方案</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --panel-2:#fbfcfd; --inset:#f0f2f5;
+  --text:#16181d; --text-2:#3c424d; --muted:#6b7280; --faint:#9aa1ad;
+  --line:#e4e7ec; --line-2:#d6dae1;
+  --brand:#0e7c7b; --brand-hi:#0c6b6a; --brand-soft:#e3f1f0; --on-brand:#ffffff;
+  --secret:#c0455b; --secret-soft:#f8e7eb;
+  --sensitive:#b97a12; --sensitive-soft:#faf1df;
+  --normal:#0e7c7b; --normal-soft:#e3f1f0;
+  --regen:#5b6573; --regen-soft:#eceff3;
+  --shadow:0 1px 2px rgba(20,24,32,.05),0 8px 28px rgba(20,24,32,.07);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0e1014; --panel:#161a20; --panel-2:#1a1f26; --inset:#11141a;
+    --text:#e7eaef; --text-2:#c3c9d3; --muted:#939aa7; --faint:#6b7280;
+    --line:#262c35; --line-2:#333a45;
+    --brand:#35b3ad; --brand-hi:#4cc4bd; --brand-soft:#122a2a; --on-brand:#06201f;
+    --secret:#e06a82; --secret-soft:#2e1a20;
+    --sensitive:#d6a24a; --sensitive-soft:#2e2414;
+    --normal:#35b3ad; --normal-soft:#122a2a;
+    --regen:#94a0b0; --regen-soft:#20252d;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 34px rgba(0,0,0,.45);
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+  font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:40px 28px 80px}
+.eyebrow{font-size:11px;letter-spacing:2.5px;color:var(--brand);font-weight:650;text-transform:uppercase}
+h1{font-size:32px;line-height:1.25;letter-spacing:-.6px;margin:10px 0 8px;font-weight:680}
+.lead{color:var(--muted);font-size:15px;max-width:760px;margin:0 0 6px}
+.meta{font-size:12px;color:var(--faint);margin:14px 0 0}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;
+  border:1px solid var(--line-2);color:var(--muted);background:var(--panel)}
+h2{font-size:20px;letter-spacing:-.3px;margin:0 0 4px;font-weight:660}
+h3{font-size:14px;margin:22px 0 8px;font-weight:650}
+p{margin:8px 0}
+.section-head{margin:44px 0 16px}
+.section-head .sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+
+/* tabs */
+.tabs{position:sticky;top:0;z-index:20;display:flex;gap:4px;flex-wrap:wrap;
+  background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);
+  padding:10px 0;border-bottom:1px solid var(--line);margin:30px 0 8px}
+.tab{appearance:none;border:1px solid transparent;background:none;color:var(--muted);
+  padding:8px 15px;border-radius:9px;font-size:13px;font-weight:580;cursor:pointer;font-family:inherit;transition:.16s}
+.tab:hover{background:var(--panel);color:var(--text)}
+.tab.active{background:var(--brand-soft);color:var(--brand);border-color:color-mix(in srgb,var(--brand) 30%,transparent)}
+.view{display:none;animation:fade .3s ease}
+.view.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* boundary cards */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:18px 0}
+.bcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden}
+.bcard::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+.bcard.prog::before{background:var(--regen)}
+.bcard.proj::before{background:var(--brand)}
+.bcard.state::before{background:var(--sensitive)}
+.bcard .k{font-size:11px;letter-spacing:1px;color:var(--faint);text-transform:uppercase;font-weight:650}
+.bcard h4{margin:6px 0 4px;font-size:15px;font-weight:650}
+.bcard .where{font-family:var(--mono);font-size:11.5px;color:var(--brand);background:var(--inset);
+  border:1px solid var(--line);border-radius:6px;padding:3px 7px;display:inline-block;margin:4px 0 8px;word-break:break-all}
+.bcard ul{margin:6px 0 0;padding-left:17px}
+.bcard li{font-size:12.5px;color:var(--text-2);margin:3px 0}
+.rw{font-size:11px;font-weight:700;padding:1px 7px;border-radius:5px}
+.rw.ro{background:var(--regen-soft);color:var(--regen)}
+.rw.rw2{background:var(--sensitive-soft);color:var(--sensitive)}
+
+/* tree */
+.tree{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  padding:18px 20px;font-family:var(--mono);font-size:12.5px;line-height:1.55;overflow-x:auto;margin:16px 0}
+.tline{display:flex;align-items:baseline;gap:8px;padding:1.5px 6px;border-radius:6px;transition:background .12s;cursor:default;white-space:nowrap}
+.tline:hover{background:var(--inset)}
+.tline .indent{color:var(--line-2);user-select:none}
+.tline .nm{color:var(--text)}
+.tline.dir .nm{font-weight:600}
+.tline .cm{font-family:var(--sans);font-size:11px;color:var(--faint)}
+.tag{font-family:var(--sans);font-size:10px;font-weight:700;padding:1px 7px;border-radius:999px;flex-shrink:0}
+.tag.secret{background:var(--secret-soft);color:var(--secret)}
+.tag.sensitive{background:var(--sensitive-soft);color:var(--sensitive)}
+.tag.normal{background:var(--normal-soft);color:var(--normal)}
+.tag.regen{background:var(--regen-soft);color:var(--regen)}
+
+/* matrix table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);background:var(--panel)}
+table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:720px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{background:var(--panel-2);font-size:11.5px;font-weight:650;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;position:sticky;top:0}
+tr:last-child td{border-bottom:0}
+td code,.mono{font-family:var(--mono);font-size:11.5px}
+.loc{font-family:var(--mono);font-size:11.5px;color:var(--brand);font-weight:600;white-space:nowrap}
+.yes{color:var(--secret);font-weight:650}.no{color:var(--faint)}
+
+/* flow */
+.flow{display:flex;flex-direction:column;gap:0;margin:18px 0}
+.fstep{display:grid;grid-template-columns:44px 1fr;gap:14px;position:relative}
+.fstep .rail{display:flex;flex-direction:column;align-items:center}
+.fstep .dot{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:750;font-size:13px;
+  background:var(--brand);color:var(--on-brand);flex-shrink:0;z-index:1}
+.fstep .bar{width:2px;flex:1;background:var(--line-2);margin:3px 0}
+.fstep:last-child .bar{display:none}
+.fbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 15px;margin-bottom:12px;box-shadow:var(--shadow)}
+.fbox h4{margin:0 0 3px;font-size:14px;font-weight:650}
+.fbox p{margin:4px 0;font-size:12.5px;color:var(--text-2)}
+.fbox .kv{font-family:var(--mono);font-size:11.5px;background:var(--inset);border:1px solid var(--line);border-radius:7px;padding:8px 11px;margin:6px 0;white-space:pre-wrap}
+
+.callout{border:1px solid color-mix(in srgb,var(--brand) 30%,transparent);background:var(--brand-soft);
+  border-radius:12px;padding:13px 16px;font-size:13px;margin:16px 0;color:var(--text-2)}
+.callout strong{color:var(--brand)}
+.warn{border-color:color-mix(in srgb,var(--sensitive) 35%,transparent);background:var(--sensitive-soft)}
+.warn strong{color:var(--sensitive)}
+ul.clean{padding-left:20px}ul.clean li{margin:5px 0;font-size:13px;color:var(--text-2)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:10px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted)}
+.sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+.footer{margin-top:50px;padding-top:20px;border-top:1px solid var(--line);color:var(--faint);font-size:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Architecture Proposal · For Review</div>
+  <h1>aide 数据分层与核心组件完整性自愈方案</h1>
+  <p class="lead">明确「程序（镜像，只读）/ 项目（绑定挂载，用户所有）/ 状态（命名卷，aide 持久数据）」三类边界，把当前平铺的 <code>/data</code> 重构为语义化分层目录，并建立启动校验、运行时巡检与自动恢复闭环。</p>
+  <div class="meta">
+    <span class="pill">状态：待评审</span> &nbsp;
+    <span class="pill">分支：feature/permission-panel</span> &nbsp;
+    <span class="pill">2026-09-25</span> &nbsp;
+    <span class="pill">与 #29 安全 / #30 编号会话 协同</span>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-v="v1">① 三类边界与目录结构</button>
+    <button class="tab" data-v="v2">② 数据归属矩阵</button>
+    <button class="tab" data-v="v3">③ 完整性校验</button>
+    <button class="tab" data-v="v4">④ 自动恢复与迁移</button>
+    <button class="tab" data-v="v5">⑤ 跨平台启动</button>
+  </div>
+
+  <!-- ============ VIEW 1 ============ -->
+  <div class="view active" id="v1">
+    <div class="section-head"><h2>一、三类存储边界</h2>
+      <div class="sub">先回答「什么跟项目走、什么跟 aide 安装走、什么是不可变程序」。</div></div>
+    <div class="grid3">
+      <div class="bcard prog">
+        <div class="k">Immutable Program</div>
+        <h4>程序层 · 镜像内只读</h4>
+        <div class="where">/usr/local/bin/aide</div>
+        <div><span class="rw ro">只读</span></div>
+        <ul>
+          <li>Go 二进制（go:embed 已内联全部前端）</li>
+          <li>内置默认模板 / 基线 manifest（新增）</li>
+          <li>随版本发布，升级即整体替换，可重新部署</li>
+        </ul>
+      </div>
+      <div class="bcard proj">
+        <div class="k">User Projects · Bind Mount</div>
+        <h4>项目层 · 绑定挂载</h4>
+        <div class="where">/workspace · /context · /local</div>
+        <div><span class="rw rw2">用户可读写</span></div>
+        <ul>
+          <li>/workspace 工作产物，跟具体项目走</li>
+          <li>/context 辅助参考资料，跟项目走</li>
+          <li>/local 宿主机文件访问（只读视图）</li>
+        </ul>
+      </div>
+      <div class="bcard state">
+        <div class="k">Persistent State · Named Volume</div>
+        <h4>状态层 · 命名卷持久</h4>
+        <div class="where">/data · /home/aide</div>
+        <div><span class="rw ro">aide 私有</span></div>
+        <ul>
+          <li>/data 会话/记忆/小蜜/配置/密钥（跨项目）</li>
+          <li>/home/aide 工具链缓存（可再生）</li>
+          <li>升级、换项目都不丢；与项目解耦</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="section-head"><h2>二、/data 分层目录设计</h2>
+      <div class="sub">把当前 30+ 平铺文件归入语义子目录；徽章表示敏感度，鼠标悬停可看说明。</div></div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--secret)"></i>机密（加密/600）</span>
+      <span><i class="sw" style="background:var(--sensitive)"></i>敏感（600）</span>
+      <span><i class="sw" style="background:var(--normal)"></i>常规状态</span>
+      <span><i class="sw" style="background:var(--regen)"></i>可再生/缓存</span>
+    </div>
+    <div class="tree" id="treebox"></div>
+    <div class="callout"><strong>小蜜的加密会话放哪：</strong>小蜜是服务于「你这个人」的全局助理，不隶属于任何项目，因此其对话历史、记忆与性格统一放在状态卷 <code>/data/assistant/</code>，全部 AES-256-GCM 加密、密钥由你的密码经 Argon2id 派生；跨项目、跨升级持续可用，且不进入任何项目目录，避免随项目分享时泄露隐私。</div>
+  </div>
+
+  <!-- ============ VIEW 2 ============ -->
+  <div class="view" id="v2">
+    <div class="section-head"><h2>数据归属决策矩阵</h2>
+      <div class="sub">逐类数据明确位置、是否加密、是否可再生、备份与恢复来源。</div></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:21%">数据类型</th><th style="width:18%">位置</th><th style="width:9%">加密</th><th style="width:11%">可再生</th><th>备份 / 恢复来源</th></tr></thead>
+        <tbody id="matrixbody"></tbody>
+      </table>
+    </div>
+    <div class="callout warn"><strong>关键原则：</strong>跟「项目」走的只有用户自己的工作产物与参考资料；aide 的一切私有状态（会话、记忆、小蜜、密钥、统计）都在命名卷 <code>/data</code>，绝不写进用户项目目录，从而不会被 git 提交、打包或随项目外发。</div>
+  </div>
+
+  <!-- ============ VIEW 3 ============ -->
+  <div class="view" id="v3">
+    <div class="section-head"><h2>核心组件完整性校验</h2>
+      <div class="sub">分「程序层」与「数据层」两类对象，在启动 / 运行时 / 升级三个时机校验。</div></div>
+    <div class="flow">
+      <div class="fstep"><div class="rail"><div class="dot">1</div><div class="bar"></div></div>
+        <div class="fbox"><h4>构建期：生成基线清单（程序层）</h4>
+          <p>Docker 构建阶段对二进制、内置模板/脚本/插件计算 SHA-256，写入随镜像分发的 <code>manifest.json</code>（go:embed 前端已在二进制内，校验二进制哈希即覆盖前端）。</p>
+          <div class="kv">/app.manifest → { aide: sha256, templates/*: sha256, version, commit }</div></div></div>
+      <div class="fstep"><div class="rail"><div class="dot">2</div><div class="bar"></div></div>
+        <div class="fbox"><h4>启动校验（boot-time）</h4>
+          <p>① 比对程序层哈希与基线，防篡改；② 校验 /data 目录结构（缺失则建/迁移）；③ 关键文件可解析性（settings、sessions、证书、密钥格式）。</p></div></div>
+      <div class="fstep"><div class="rail"><div class="dot">3</div><div class="bar"></div></div>
+        <div class="fbox"><h4>运行时巡检（periodic / event）</h4>
+          <p>周期性轻量校验 + 敏感操作（解锁、外部接入）前校验；所有写入走原子写（temp+rename，已具备 atomicJSON），杜绝写一半损坏；版本升级时做 schema 迁移校验。</p></div></div>
+      <div class="fstep"><div class="rail"><div class="dot">4</div><div class="bar"></div></div>
+        <div class="fbox"><h4>状态上报与闭环</h4>
+          <p>/healthz 输出 integrity 状态（ok / degraded / recovering / quarantined）；外部 AI 调试接口 /api/debug 暴露校验结果与恢复历史，无浏览器也可诊断。</p></div></div>
+    </div>
+  </div>
+
+  <!-- ============ VIEW 4 ============ -->
+  <div class="view" id="v4">
+    <div class="section-head"><h2>自动恢复策略</h2>
+      <div class="sub">按数据性质选择恢复路径；用户数据只隔离、不自动删除。</div></div>
+    <div id="recoverybody"></div>
+    <div class="callout"><strong>恢复安全边界：</strong>自动恢复只作用于「有模板 / 有备份 / 可再生」的内容；会话、记忆、小蜜历史等用户数据一旦异常，移入 <code>/data/.quarantine/</code> 隔离并提示，绝不自动删除；每次校验与恢复都写入 <code>/data/.integrity/recovery.log</code>，恢复后再校验形成闭环。</div>
+
+    <h3>现有平铺 /data 的一次性迁移</h3>
+    <ul class="clean">
+      <li>启动时运行幂等迁移器：按映射把平铺文件移入对应子目录，移动采用「复制→校验→删除」，失败可重入、不丢数据。</li>
+      <li>迁移与 #29（Argon2id / re-wrap、TLS 证书目录）、#30（会话编号、小蜜系统会话）合并在同一次启动流程，按固定顺序执行：目录建立 → 文件迁移 → 密码/KDF 升级与密文 re-wrap → 编号分配 → 完整性校验。</li>
+      <li>保留 settings.json.pre-import 等历史副本到 <code>config/backups/</code>。</li>
+    </ul>
+  </div>
+
+  <!-- ============ VIEW 5 ============ -->
+  <div class="view" id="v5">
+    <div class="section-head"><h2>跨平台启动方式</h2>
+      <div class="sub">aide 以 Docker 为唯一运行底座，三平台入口对齐；Linux / Windows 暂未真机验证。</div></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:11%">平台</th><th style="width:25%">前置条件</th><th style="width:30%">启动入口</th><th style="width:18%">自动打开</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>macOS</td><td>Docker Desktop</td><td>双击 <code>start.command</code></td><td><code>open</code></td><td style="color:var(--normal);font-weight:650">已验证</td></tr>
+          <tr><td>Linux</td><td>Docker Engine；用户在 docker 组</td><td><code>./start.sh</code> 或 <code>bash scripts/aide.sh start</code></td><td><code>xdg-open</code></td><td class="no">NOT_RUN</td></tr>
+          <tr><td>Windows</td><td>Docker Desktop（WSL2 后端）</td><td>双击 <code>start.bat</code>（或 <code>start.ps1</code>）</td><td><code>Start-Process</code></td><td class="no">NOT_RUN</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="section-head"><h2>能力与局限对照</h2></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th style="width:24%">维度</th><th style="width:25%">macOS</th><th style="width:25%">Linux</th><th>Windows</th></tr></thead>
+        <tbody>
+          <tr><td>容器运行时</td><td>Docker Desktop（VM）</td><td>Docker Engine（原生）</td><td>Docker Desktop（WSL2/Hyper-V）</td></tr>
+          <tr><td>宿主机目录访问</td><td>macos-root：/Users /Volumes /private</td><td>需自定义覆盖 /home /media /mnt</td><td>需自定义，盘符需共享</td></tr>
+          <tr><td>生物识别解锁</td><td>Touch ID（已接入）</td><td>不支持（fprintd 未接入）</td><td>Windows Hello 未接入</td></tr>
+          <tr><td>语音输入 Web Speech</td><td>Safari / Chrome</td><td>需 Chrome / Chromium</td><td>需 Chrome / Edge</td></tr>
+          <tr><td>自签证书信任</td><td>Keychain</td><td>update-ca-certificates</td><td>certutil</td></tr>
+          <tr><td>路径大小写</td><td>不敏感（默认）</td><td>敏感</td><td>不敏感</td></tr>
+          <tr><td>脚本 / 换行</td><td>LF</td><td>LF</td><td>ps1/bat；WSL 内需 LF</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>各平台关键局限</h3>
+    <ul class="clean">
+      <li><strong>Linux：</strong>docker 组成员权限等价 root，脚本不自动 sudo / systemctl，引擎需自行确保运行；macos-root 不适用，默认仅能经 /local 访问 $HOME；无桌面服务器缺 xdg-open，需手动带令牌访问；Touch ID 不可用。</li>
+      <li><strong>Windows：</strong>须 WSL2 后端，绑定挂载需在 Docker Desktop 共享盘符；PowerShell 默认执行策略可能阻止 .ps1（已提供 start.bat 绕过）；/local 映射 Windows 用户目录路径特殊；Touch ID 不可用；CRLF 与路径不敏感可能与容器内行为不一致。</li>
+      <li><strong>通用：</strong>TLS 自签证书三平台均需手动信任，否则浏览器告警；服务端口绑定 127.0.0.1 仅本机可达，远程访问请用 SSH 隧道或 Tailscale。</li>
+    </ul>
+    <div class="callout warn"><strong>验证声明：</strong>macOS 为当前唯一真机验证平台；Linux 与 Windows 的启动脚本（start.sh / start.ps1 / start.bat）仅完成逻辑编写，标记 NOT_RUN，未在对应系统实际运行，后续需在该平台补测。</div>
+  </div>
+
+  <div class="footer">aide · 数据分层与完整性自愈架构方案（待评审）｜评审通过后由子智能体团队实施，全部在 feature/permission-panel，不合 main。</div>
+</div>
+
+<script>
+// ---- tabs ----
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  document.getElementById(t.dataset.v).classList.add('active');
+  window.scrollTo({top:document.querySelector('.tabs').offsetTop-12});
+}));
+
+// ---- directory tree ----
+const T=[
+ ["d","/data","","状态卷根（aide 私有，700）"],
+ ["d","  ├─ auth/","secret","认证凭据：access-token / password.phc / kdf.salt / debug-token.hash"],
+ ["f","  │   ├─ access-token","secret","本地访问令牌（明文仅本机，600）"],
+ ["f","  │   ├─ password.phc","secret","Argon2id 密码哈希 PHC（#29）"],
+ ["f","  │   └─ kdf.salt","secret","AES 密钥派生固定盐（600）"],
+ ["d","  ├─ sessions/","normal","会话数据"],
+ ["f","  │   ├─ active/session-*.json","normal","活动会话（含 #编号 字段，#30）"],
+ ["f","  │   └─ archived/session-*.json","normal","归档会话（归档时物理移入）"],
+ ["d","  ├─ assistant/","secret","小蜜私有区（全局、加密）"],
+ ["f","  │   ├─ voice-history.enc","secret","小蜜对话历史（AES-256-GCM）"],
+ ["f","  │   ├─ memory.json","sensitive","小蜜长期记忆"],
+ ["f","  │   └─ persona.enc","secret","小蜜性格（加密）"],
+ ["d","  ├─ memory/","normal","aide 主记忆系统"],
+ ["f","  │   ├─ core/","normal","核心记忆"],
+ ["f","  │   ├─ cache/","regen","嵌入/向量缓存（可再生）"],
+ ["f","  │   └─ feedback/","sensitive","好/坏回答反馈（训练用）"],
+ ["d","  ├─ config/","sensitive","配置"],
+ ["f","  │   ├─ settings.json","sensitive","全局设置（原子写）"],
+ ["f","  │   ├─ profiles.json","sensitive","模型自定义配置"],
+ ["f","  │   └─ backups/","regen","配置导入导出与历史副本"],
+ ["d","  ├─ stats/","regen","统计（可再生）"],
+ ["f","  │   ├─ token-stats.json","regen","Token 消耗明细"],
+ ["f","  │   └─ token-pricing.json","regen","模型计价表"],
+ ["d","  ├─ audit/","sensitive","审计日志"],
+ ["f","  │   ├─ debug-audit.jsonl","sensitive","外部接入审计"],
+ ["f","  │   └─ security-audit.jsonl","sensitive","安全/恢复审计"],
+ ["d","  ├─ secrets/","secret","第三方来源密钥（加密）"],
+ ["d","  ├─ certs/","secret","TLS 证书与私钥（#29，600）"],
+ ["d","  └─ .integrity/","regen","完整性清单与恢复日志"],
+ ["d","  .quarantine/","sensitive","损坏用户数据隔离区（不自动删）"]
+];
+const tb=document.getElementById('treebox');
+T.forEach(r=>{
+  const d=document.createElement('div');d.className='tline '+(r[0]==='d'?'dir':'file');
+  const parts=r[1].split(/([ ├─│└ ]+)/);
+  const tagLabel={secret:'机密',sensitive:'敏感',normal:'常规',regen:'可再生'}[r[2]];
+  d.innerHTML='<span class="indent"></span><span class="nm"></span>'+
+    (tagLabel?' <span class="tag '+r[2]+'">'+tagLabel+'</span>':'')+' <span class="cm"></span>';
+  const nm=r[1].trim();
+  d.querySelector('.indent').textContent=r[1].slice(0,r[1].indexOf(r[1].trim()[0]));
+  d.querySelector('.nm').textContent=(r[0]==='d'?'📁 ':'') ;
+  d.querySelector('.nm').textContent=(r[0]==='d'?'':'') ;
+  d.querySelector('.nm').textContent=nm;
+  d.querySelector('.cm').textContent='# '+r[3];
+  d.title=r[3];
+  tb.appendChild(d);
+});
+
+// ---- matrix ----
+const M=[
+ ["Go 二进制 + 内嵌前端","镜像 /usr/local/bin/aide",1,0,"重新拉取/构建镜像（基线校验）"],
+ ["默认模板 / 基线 manifest","镜像内（只读）",0,1,"从镜像恢复"],
+ ["用户工作产物","/workspace（bind 项目）",0,0,"用户项目自身版本控制"],
+ ["辅助参考资料","/context（bind 项目）",0,0,"用户自行管理"],
+ ["会话 session-*.json","/data/sessions/{active,archived}",0,0,"写前 .bak；损坏→隔离"],
+ ["小蜜对话历史 / 性格","/data/assistant/*.enc",1,0,"密文；密码丢失仅能重置"],
+ ["小蜜 / aide 记忆","/data/assistant, /data/memory",1,0,"核心记忆随配置备份导出"],
+ ["好/坏回答反馈","/data/memory/feedback",1,0,"随记忆备份"],
+ ["全局设置 settings.json","/data/config/settings.json",1,0,"写前备份 + 配置导入导出"],
+ ["模型自定义 profiles","/data/config/profiles.json",0,0,"配置备份导出"],
+ ["Token 统计 / 计价","/data/stats/",0,1,"可重建（计价表可重置）"],
+ ["审计日志","/data/audit/",0,0,"追加写，只增不删"],
+ ["来源/工作区密钥","/data/secrets/",1,0,"AES 加密；随配置备份（加密态）"],
+ ["TLS 证书私钥","/data/certs/",1,1,"缺失则自动重新生成自签证书"],
+ ["工具链/嵌入缓存","/home/aide/.cache",0,1,"删除后自动重建"]
+];
+const mb=document.getElementById('matrixbody');
+M.forEach(r=>{
+  const tr=document.createElement('tr');
+  tr.innerHTML='<td>'+r[0]+'</td><td class="loc">'+r[1]+'</td>'+
+   '<td class="'+(r[2]?'yes':'no')+'">'+(r[2]?'是':'否')+'</td>'+
+   '<td class="'+(r[3]?'':'no')+'">'+(r[3]?'是':'否')+'</td><td>'+r[4]+'</td>';
+  mb.appendChild(tr);
+});
+
+// ---- recovery decision ----
+const R=[
+ ["缺失目录 / 默认配置","从镜像只读模板 /app/templates 重新生成","安全，无数据损失"],
+ ["损坏的可再生数据（统计/缓存/审计）","清空并重建","不影响核心数据"],
+ ["损坏的关键数据（settings/sessions）","优先写前 .bak / 最近备份恢复；失败则 settings 用默认值，会话移入隔离区","保护其余数据，阻断最小化"],
+ ["程序层被篡改或缺失","健康检查标记 failed、拒绝敏感功能，提示重新部署镜像","程序在卷外，通常只读不可改"],
+ ["密码 / 密钥丢失","密码不可恢复→重置；access-token 丢失→重新生成","符合既有设计"],
+ ["小蜜历史 re-wrap 失败","保留旧密文与新密文双份，标记 degraded，不覆盖","防止历史丢失"]
+];
+const rb=document.getElementById('recoverybody');
+let ri=0;
+R.forEach(r=>{ri++;
+  const d=document.createElement('div');d.className='fstep';
+  d.innerHTML='<div class="rail"><div class="dot">'+ri+'</div><div class="bar"></div></div>'+
+   '<div class="fbox"><h4>'+r[0]+'</h4><div class="kv">动作：'+r[1]+'</div><p>'+r[2]+'</p></div>';
+  rb.appendChild(d);
+});
+</script>
+</body>
+</html>

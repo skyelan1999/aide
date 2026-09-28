@@ -1,0 +1,68 @@
+{
+  "id": "47",
+  "request": "修复主会话点击麦克风后小秘语音框不出现；主会话与小秘会话均显示面板，具备立即状态、实时断句、AI甄别、直接发送/排队插队、停止收起，并提供 mock 验收。",
+  "baseline": "5ac0997f5e6467f31cccd94da86c10dea26fa5a9",
+  "initial_status": "本轮开始时：M internal/server/web/app.js、internal/server/web/index.html、internal/server/web/locales/en.js、internal/server/web/style.css；?? docs/tasks/47.json、scripts/test_voice_panel.cjs（上一轮已开始 #47 实现）。",
+  "acceptance": [
+    "主会话和小秘会话点击麦克风均立即显示小秘语音面板；麦克风授权/识别失败时显示原因并可重试。",
+    "所选麦克风音轨传给 SpeechRecognition.start(audioTrack)；浏览器不支持时明确回退到系统默认。",
+    "实时断句后进入 AI 甄别；判定发送时直接创建 run，mode=queue/insert 分别映射 queued=true/false；忽略结果可见。",
+    "面板显示 interim、甄别结果和待处理数量；停止收起面板并停止麦克风轨道。",
+    "Node mock 验证启动、授权失败、识别结果、排队/插队发送、所选音轨/浏览器回退和停止；真实麦克风标记 NOT_RUN。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "HANDOFF-2026-09-26-RC3.md",
+    "scripts/check_docs.py",
+    "scripts/test_voice_panel.cjs",
+    "docs/tasks/47.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按 handoff §8 P0 收敛为主会话与小秘会话共用小秘语音；真实麦克风实时识别仍由用户真机验收。",
+      "evidence": ["HANDOFF-2026-09-26-RC3.md §8 P0；用户消息：开始做吧"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "统一 voiceStart 路径；先呈现请求/错误/重试状态，再启动 Web Speech；保留排队与甄别逻辑，并在薄条中显示结果和待处理数。",
+      "evidence": ["internal/server/web/app.js voiceStart/voiceDrainQueue 调用链"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已统一两个会话的麦克风入口；添加启动/授权错误与重试、薄条状态和甄别记录、待处理计数、取消过期请求保护，以及对支持 start(audioTrack) 浏览器的所选设备路由。",
+      "evidence": ["internal/server/web/app.js", "internal/server/web/index.html", "internal/server/web/style.css", "internal/server/web/locales/en.js", "scripts/test_voice_panel.cjs"]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Mock、语法、i18n、文档检查和完整 quick 验证均通过。本地 8097 未监听，浏览器 UI/截图与真实麦克风未运行。",
+      "evidence": [
+        "PASS: node scripts/test_voice_panel.cjs — 立即显示、权限拒绝/重试、主会话与小秘入口、实时转写、所选音轨传递/不支持时回退、queue/insert 映射、忽略结果、停止及释放麦克风轨道。",
+        "PASS: python3 scripts/agent-route.py verify quick — fingerprint f5e821be274c8390be187986233c0840251bf33157fcdd74f404d8dcc4ac0237；所有 14 项命令通过。",
+        "PASS: node --check internal/server/web/app.js; node --check internal/server/web/locales/en.js; node --check scripts/test_voice_panel.cjs; node scripts/test_i18n.cjs; python3 scripts/check_docs.py; git diff --check。",
+        "NOT_RUN: https://127.0.0.1:8097/healthz 连接拒绝；没有重启或替换容器。真实麦克风与页面截图需在本机服务可用后验收。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "新增任务验收账本；语音状态、失败回退和麦克风设置说明均补充英文翻译；修正 handoff 误触文档路径检测的问题，并让检查器按 FR 区间验证历史编号覆盖。",
+      "evidence": ["docs/tasks/47.json", "HANDOFF-2026-09-26-RC3.md", "scripts/check_docs.py", "internal/server/web/locales/en.js", "node scripts/test_i18n.cjs", "python3 scripts/check_docs.py"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅修改本任务 scope 内文件；HANDOVER.md 保持不变。用户已授权在当前分支本地提交，不推送。",
+      "evidence": ["git diff --check"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次仅修复 P0 并按用户请求本地提交；未重启服务、合并、推送、打 tag 或发布。",
+      "evidence": ["用户消息：开始做吧；用户消息：修复并提交；HANDOFF §3 发布约束"]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "未变更运行容器或持久化数据；若需撤回，可还原 scope 中 4 个前端文件，并移除本任务新加的 mock 脚本与 docs/tasks/47.json。",
+  "handoff": "等待本地 aide 服务可用后进行浏览器目视/截图验收，并由用户在真机确认麦克风、自动断句、真实 AI 甄别与发送。"
+}

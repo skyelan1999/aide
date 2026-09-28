@@ -2,6 +2,10 @@
 
 > **历史设计（2026-09-21）**：版本脚本仍复用；运行版本已改由构建 ldflags 注入，不再读取工作区 version.md。 当前状态见 [现行 PRD](../PRD.md) 与 [架构](../architecture.md)。下文“待实施/已验证”仅代表原设计时间点，不能用于今天的发布判断。
 
+> **现状核对（2026-09-25，当前版本 `0.1.10.2 RC1`）**：`scripts/version.sh` 的 show/bump/patch/note/tag/check/install-hooks、四位号 `X.Y.Z.W RCn`、仅 main 分支打 tag、tag 名 `vX.Y.Z.W-RCn` 均与本文一致。偏差：
+> - **运行时版本来源已改为构建期 ldflags 注入**（`Dockerfile` 用 `-X 'aide/internal/server.buildVersion=…' -X 'aide/internal/server.buildCommit=…'`）；生产构建以注入值为准，**不再读工作区 version.md**。仅当开发构建未注入 `buildVersion` 时，`New()` 才回退读工程目录 `version.md`（`server.go:365-370`，R09）。`/api/config` 返回 `version`/`buildVersion`/`buildCommit`/`revision`。
+> - `version.md` 在仓库根（非 `docs/` 下）；历史镜像存于 `docker-images/`，命名 `aide-<version>-linux-arm64.tar.gz`（附 `.sha256`）。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 系统设计（System Design） |
@@ -10,7 +14,7 @@
 | 对应分支 | `feat/version-management` |
 | 功能基线 | `672969e` |
 | 作者 | 编码助手 |
-| 状态 | 待实施 |
+| 状态 | 已落地；运行时身份改 ldflags 注入 |
 
 ## 1. 架构总览
 
@@ -37,10 +41,10 @@
     读取 version.md 当前版本 → 提交信息末尾追加一行 `[版本 X.Y.Z.W RCn]`
     （已含相同标注则不重复追加；version.md 缺失时静默跳过）
 
-③ 展示层    Go 后端：New() 启动时读 version.md → App.version（正则解析，失败为空）
-    GET /api/config 增加 "version" 字段
+③ 展示层    Go 后端：版本身份由构建 ldflags 注入（buildVersion/buildCommit，见 Dockerfile）；
+            生产构建以注入值为准，仅开发构建未注入时回退读工程目录 version.md（正则解析，失败为空→界面 dev）
+    GET /api/config 返回 "version"/"buildVersion"/"buildCommit"
     前端：refreshConfig 后 → 侧栏运行卡片 #app-version、设置面板底部 #settings-sheet-version
-    （缺失时显示 dev）
 
 ④ 工作流   功能分支：普通提交由 hook 自动标注版本号（不打 tag）
     合并回 main 后：version.sh bump <档位> -m "note" → 新版本 + release note + 提交 + tag

@@ -2,6 +2,8 @@
 
 > **历史设计（2026-09-21）**：版本脚本仍复用；运行版本已改由构建 ldflags 注入，不再读取工作区 version.md。 当前状态见 [现行 PRD](../PRD.md) 与 [架构](../architecture.md)。下文“待实施/已验证”仅代表原设计时间点，不能用于今天的发布判断。
 
+> **现状核对（2026-09-25，当前版本 `0.1.10.2 RC1`）**：FR-65/FR-66 已落地，四位号 `X.Y.Z.W RCn`、`version.sh` 子命令、仅 main 打 tag `vX.Y.Z.W-RCn`、prepare-commit-msg 钩子均与本文一致。偏差：D7「后端启动读 version.md」现仅为**开发构建回退**；生产镜像经 ldflags 注入 `buildVersion`/`buildCommit`（Dockerfile），`/api/config` 的 `version` 以注入值为准。本文 §6 所写「显示 v0.1.0.0 RC1」为初始版本示例，当前实际显示 0.1.10.2 RC1。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 增量 PRD（Incremental PRD） |
@@ -10,7 +12,7 @@
 | 对应分支 | `feat/version-management` |
 | 功能基线 | `672969e`（文档同步后 main HEAD） |
 | 作者 | 编码助手 |
-| 状态 | 待实施 |
+| 状态 | 已实现·已验证 |
 
 ## 1. 需求来源（用户原话）
 

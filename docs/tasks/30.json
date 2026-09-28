@@ -1,0 +1,48 @@
+{
+  "id": "30",
+  "request": "会话编号 + 小蜜置顶系统会话 + 跨会话跟进推送",
+  "baseline": "318d7a642f8806939358de61c2552efbf0d4de80",
+  "initial_status": "M internal/server/server.go\n M internal/server/ssh_session.go\n M internal/server/tts/edge.go\n M internal/server/tts/provider.go\n M internal/server/workspace_config.go\n M plugins/registry.json\n M profiles.json\n?? docs/tasks/42.json\n?? internal/server/secret_vault.go\n?? internal/server/ssh_keyutil.go\n?? internal/server/vault_app.go\n?? plugins/sqlite/",
+  "acceptance": [],
+  "scope": [],
+  "stages": {
+    "requirements": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

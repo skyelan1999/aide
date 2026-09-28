@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+# tts-setup — 本地离线 sherpa-onnx 中文模型安装与校验（#44）。
+#
+# 联网环境：把选定的中文音色模型下载到 /data/tts/，做 SHA256 / 体积校验。
+# 保密/空气隙环境：先在联网机下载，把 tar.bz2 拷进内网，用 --verify-only 校验并就地就位。
+# 模型外置在 /data/tts/（不进镜像控体积）；每个音色一个子目录，aide 启动后自动发现。
+set -euo pipefail
+
+BASE_URL="https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models"
+TARGET_DIR="/data/tts"
+
+# 模型注册表：name|tar包|约大小MB|gender|piper?|默认SHA256(空=下载后打印供锁定)
+MODELS="
+huayan|vits-piper-zh_CN-huayan-medium.tar.bz2|67.3|female|1|
+chaowen|vits-piper-zh_CN-chaowen-medium.tar.bz2|60.4|male|1|
+wnj|vits-zh-hf-fanchen-wnj.tar.bz2|119.2|male|0|
+theresa|vits-zh-hf-theresa.tar.bz2|120.6|female|0|
+"
+
+usage() {
+  cat <<'EOF'
+tts-setup — 本地离线 sherpa-onnx 中文模型安装与校验（#44）
+
+用法：
+  scripts/tts-setup --help                 本帮助
+  scripts/tts-setup --list                  列出可用音色
+  scripts/tts-setup --model huayan          下载安装华严(女,piper,~67MB)到 /data/tts/
+  scripts/tts-setup --model wnj --dir /data/tts
+  scripts/tts-setup --model huayan --mirror https://hf-mirror.com
+  scripts/tts-setup --verify-only /path/to/model.tar.bz2   仅校验已下载包（空气隙手动放入后用）
+
+可用模型：
+  huayan   华严（女，piper，~67MB，自然女声，推荐默认）
+  chaowen  超闻（男，piper，~60MB）
+  wnj      文nj（男，vits-zh-hf，~119MB，清晰男声）
+  theresa  多说话人（女系，vits-zh-hf，~120MB，804 speaker，Genshin 衍生注意许可）
+
+说明：
+  - piper 类（huayan/chaowen）自动附带 espeak-ng-data 音素库（~7MB，共享）。
+  - 安装后重启 aide，设置页「语音引擎」选「自动」即优先本地离线；未装模型自动回退 edge/浏览器。
+EOF
+}
+
+list_models() {
+  echo "可用本地音色（目标目录：${TARGET_DIR}）："
+  echo "${MODELS}" | grep -v '^$' | while IFS='|' read -r name tar size gender piper sha; do
+    [ -n "${name:-}" ] || continue
+    kind=vits; [ "${piper}" = "1" ] && kind=piper
+    echo "  - ${name}  (${tar}, ~${size}MB, ${gender}, ${kind})"
+  done
+}
+
+lookup() {
+  want="$1"
+  echo "${MODELS}" | grep -v '^$' | while IFS='|' read -r name tar size gender piper sha; do
+    if [ "${name}" = "${want}" ]; then echo "${tar}|${size}|${gender}|${piper}|${sha}"; break; fi
+  done
+}
+
+need_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "缺少命令：$1" >&2; exit 1; }; }
+
+verify_tarball() {
+  f="$1"; expsize="$2"; expsha="$3"
+  [ -f "${f}" ] || { echo "文件不存在：${f}" >&2; return 1; }
+  bytes="$(stat -f%z "${f}" 2>/dev/null || stat -c%s "${f}")"
+  actual_mb=$(awk -v b="${bytes}" 'BEGIN{printf "%.1f", b/1048576}')
+  echo "  大小：${actual_mb}MB（标称约 ${expsize}MB）"
+  sha="$(shasum -a 256 "${f}" | awk '{print $1}')"
+  echo "  SHA256：${sha}"
+  if [ -n "${expsha}" ]; then
+    if [ "${sha}" != "${expsha}" ]; then
+      echo "  x SHA256 不匹配！期望 ${expsha}" >&2; return 1
+    fi
+    echo "  OK SHA256 校验通过"
+  else
+    echo "  （注册表未固定哈希——请把上面的 SHA256 回填脚本 MODELS 表以复现）"
+  fi
+}
+
+install_model() {
+  name="$1"; mirror="$2"
+  IFS='|' read -r tar size gender piper sha <<<"$(lookup "${name}")"
+  [ -n "${tar:-}" ] || { echo "未知模型：${name}（--list 查看可用）" >&2; exit 1; }
+  need_cmd curl; need_cmd tar; need_cmd shasum
+
+  url="${mirror%/}/${tar}"
+  work="$(mktemp -d)"
+  echo "==> 下载 ${name} -> ${url}"
+  curl -fSL --retry 5 --retry-delay 3 -o "${work}/${tar}" "${url}"
+  echo "==> 校验"
+  verify_tarball "${work}/${tar}" "${size}" "${sha}"
+
+  echo "==> 解压到 ${TARGET_DIR}/${name}"
+  mkdir -p "${TARGET_DIR}/${name}"
+  tar xjf "${work}/${tar}" -C "${work}"
+  src="$(find "${work}" -maxdepth 1 -mindepth 1 -type d ! -name "$(basename "${work}")" | head -1)"
+  [ -d "${src}" ] || src="${work}"
+
+  cp "${src}"/*.onnx "${TARGET_DIR}/${name}/" 2>/dev/null || true
+  cp "${src}"/lexicon.txt "${TARGET_DIR}/${name}/" 2>/dev/null || true
+  cp "${src}"/tokens.txt "${TARGET_DIR}/${name}/" 2>/dev/null || true
+  cp "${src}"/*.fst "${TARGET_DIR}/${name}/" 2>/dev/null || true
+  [ -d "${src}/dict" ] && cp -R "${src}/dict" "${TARGET_DIR}/${name}/" || true
+  [ -d "${src}/espeak-ng-data" ] && cp -R "${src}/espeak-ng-data" "${TARGET_DIR}/${name}/" || true
+
+  onnx="$(find "${TARGET_DIR}/${name}" -maxdepth 1 -name '*.onnx' ! -name '*.int8.onnx' | head -1)"
+  if [ -n "${onnx}" ] && [ ! -e "${TARGET_DIR}/${name}/model.onnx" ]; then
+    ln -sf "$(basename "${onnx}")" "${TARGET_DIR}/${name}/model.onnx"
+  fi
+
+  if [ "${piper}" = "1" ] && [ ! -d "${TARGET_DIR}/${name}/espeak-ng-data" ]; then
+    echo "==> piper 模型需要 espeak-ng-data，下载共享包"
+    curl -fSL --retry 5 -o "${work}/espeak.tar.bz2" "${mirror%/}/espeak-ng-data.tar.bz2"
+    tar xjf "${work}/espeak.tar.bz2" -C "${TARGET_DIR}/${name}"
+  fi
+
+  piper_js=false; [ "${piper}" = "1" ] && piper_js=true
+  cat > "${TARGET_DIR}/${name}/meta.json" <<EOF
+{"name":"${name}","gender":"${gender}","nSpeakers":1,"piper":${piper_js}}
+EOF
+  rm -rf "${work}"
+  echo "==> 完成：${TARGET_DIR}/${name}"
+  echo "    重启 aide 后，设置页「语音引擎」选「自动」即优先使用本地离线（${name}，${gender}）。"
+}
+
+MODEL="huayan"; MIRROR="${BASE_URL}"; VERIFY_ONLY=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --help|-h) usage; exit 0;;
+    --list) list_models; exit 0;;
+    --model) MODEL="$2"; shift 2;;
+    --dir) TARGET_DIR="$2"; shift 2;;
+    --mirror) MIRROR="$2"; shift 2;;
+    --verify-only) VERIFY_ONLY="$2"; shift 2;;
+    *) echo "未知参数：$1" >&2; usage; exit 1;;
+  esac
+done
+
+if [ -n "${VERIFY_ONLY}" ]; then
+  echo "==> 仅校验已下载包：${VERIFY_ONLY}"
+  verify_tarball "${VERIFY_ONLY}" "?" ""
+  echo "请把该包解压到 ${TARGET_DIR}/<voice-name>/ 并保证含 model.onnx + tokens.txt"
+  exit 0
+fi
+
+install_model "${MODEL}" "${MIRROR}"

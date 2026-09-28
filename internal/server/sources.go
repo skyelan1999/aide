@@ -25,27 +25,45 @@ const (
 	sourcesSecretsFN = "sources-secrets.json"
 	maxSources       = 20
 	systemDocsSource = "system-docs"
-	curlTimeout      = 30 * time.Second
+	// contextSource 是内置只读 /context 来源（AIDE_CONTEXT 常驻挂载）：
+	// 恒存在、不可移除、不被 Docs.Path/工作区切换覆盖。Config.Path 恒空，
+	// localSourceRoot 据此回落 a.reference（真实 /context）。
+	contextSource = "context"
+	curlTimeout   = 30 * time.Second
 )
 
 var sourceIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 
 type Source struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Type    string `json:"type"` // local | skill | link | mcp | sftp | ftp | ftps | smb
-	Enabled bool   `json:"enabled"`
-	RW      bool   `json:"rw,omitempty"`
-	Builtin bool   `json:"builtin,omitempty"`
-	Config  struct {
-		Path     string `json:"path,omitempty"`     // local/skill 宿主机路径
-		URL      string `json:"url,omitempty"`      // link/ftp/ftps/smb/mcp
-		Host     string `json:"host,omitempty"`     // sftp
-		Port     int    `json:"port,omitempty"`     // sftp
-		Username string `json:"username,omitempty"` // sftp
-		Auth     string `json:"auth,omitempty"`     // sftp: password | key | none
-		Command  string `json:"command,omitempty"`  // mcp: 启动命令
-	} `json:"config"`
+	ID      string       `json:"id"`
+	Name    string       `json:"name"`
+	Type    string       `json:"type"` // local | skill | link | mcp | sftp | workspace-sftp | ftp | ftps | smb
+	Enabled bool         `json:"enabled"`
+	RW      bool         `json:"rw,omitempty"`
+	Builtin bool         `json:"builtin,omitempty"`
+	Config  SourceConfig `json:"config"`
+}
+
+// SourceConfig deliberately keeps an MCP command separate from its arguments.
+// A reference source is never executed through a shell, so spaces, quoting and
+// shell metacharacters in a command field cannot turn into an extra command.
+type SourceConfig struct {
+	Path      string    `json:"path,omitempty"`      // local/skill 宿主机路径
+	URL       string    `json:"url,omitempty"`       // link/ftp/ftps/smb
+	Host      string    `json:"host,omitempty"`      // sftp
+	Port      int       `json:"port,omitempty"`      // sftp
+	Username  string    `json:"username,omitempty"`  // sftp
+	Auth      string    `json:"auth,omitempty"`      // sftp: password | key | none
+	Command   string    `json:"command,omitempty"`   // mcp: executable only, never a shell string
+	Args      []string  `json:"args,omitempty"`      // mcp: one process argument per item
+	Transport string    `json:"transport,omitempty"` // mcp: currently stdio
+	MCPTools  []MCPTool `json:"mcpTools,omitempty"`  // safe, bounded discovery summary
+}
+
+type MCPTool struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	ReadOnly    bool   `json:"readOnly"`
 }
 
 type sourcesRegistry struct {
@@ -53,11 +71,14 @@ type sourcesRegistry struct {
 	Sources []Source `json:"sources"`
 }
 
+// sourceSecretEntry 单来源凭据（旧明文回退存储用；新凭据一律进加密 vault）。
+type sourceSecretEntry struct {
+	Password string `json:"password,omitempty"`
+	Key      string `json:"key,omitempty"`
+}
+
 type sourcesSecrets struct {
-	Secrets map[string]struct {
-		Password string `json:"password,omitempty"`
-		Key      string `json:"key,omitempty"`
-	} `json:"secrets"`
+	Secrets map[string]sourceSecretEntry `json:"secrets"`
 }
 
 func (a *App) sourcesPath() string {
@@ -66,16 +87,15 @@ func (a *App) sourcesPath() string {
 	}
 	return filepath.Join(a.workPath, ".cache", sourcesFileName)
 }
-func (a *App) sourcesSecretsPath() string { return filepath.Join(a.dataPath, sourcesSecretsFN) }
+func (a *App) sourcesSecretsPath() string { return SourcesSecretsPath(a.dataPath) }
 
 func (a *App) loadSources() error {
 	a.sourceRegistry = sourcesRegistry{Version: 1, Sources: []Source{}}
-	a.sourceSecrets = sourcesSecrets{Secrets: map[string]struct {
-		Password string `json:"password,omitempty"`
-		Key      string `json:"key,omitempty"`
-	}{}}
+	a.sourceSecrets = sourcesSecrets{Secrets: map[string]sourceSecretEntry{}}
 	b, err := os.ReadFile(a.sourcesPath())
 	if errors.Is(err, os.ErrNotExist) {
+		// 全新部署：注册表为空，先补内置来源（#53）
+		a.ensureBuiltinSources()
 		return nil
 	}
 	if err != nil {
@@ -84,33 +104,67 @@ func (a *App) loadSources() error {
 	if err := json.Unmarshal(b, &a.sourceRegistry); err != nil {
 		return fmt.Errorf("解析 %s: %w", sourcesFileName, err)
 	}
-	a.sourceSecrets = sourcesSecrets{Secrets: map[string]struct {
-		Password string `json:"password,omitempty"`
-		Key      string `json:"key,omitempty"`
-	}{}}
+	a.sourceSecrets = sourcesSecrets{Secrets: map[string]sourceSecretEntry{}}
 	if b, err := os.ReadFile(a.sourcesSecretsPath()); err == nil {
 		_ = json.Unmarshal(b, &a.sourceSecrets)
 	}
 	if a.sourceSecrets.Secrets == nil {
-		a.sourceSecrets.Secrets = map[string]struct {
-			Password string `json:"password,omitempty"`
-			Key      string `json:"key,omitempty"`
-		}{}
+		a.sourceSecrets.Secrets = map[string]sourceSecretEntry{}
 	}
-	// 系统文档来源缺失时补挂载（空路径 → 默认 /context 参考根）
-	found := false
-	for _, src := range a.sourceRegistry.Sources {
-		if src.ID == systemDocsSource {
-			found = true
-			break
+	// vault 已在启动时由 access-token 自动解锁：立即把旧明文来源凭据密封入 vault，
+	// 成功后清掉明文。vault 未解锁时静默保留明文，待后续 unlock 时重试（幂等）。
+	a.migrateLegacySourceSecretsLocked()
+	// 内置来源常驻兜底：/context（只读参考根）+ 自动系统文档（Docs.Path 读写挂载）
+	a.ensureBuiltinSources()
+	return nil
+}
+
+// ensureBuiltinSources 保证两个内置来源常驻且语义正确（#53）：
+//   - contextSource：只读、内置、路径恒空 → localSourceRoot 回落 a.reference（真实 /context）。
+//     任何工作区切换/Docs.Path 改动都不改变它，用户不可删除。
+//   - systemDocsSource：读写、内置、路径跟随 wsConfig.Docs.Path（空路径亦回落 /context）。
+//
+// 新增/缺失时补回；已存在时就地校正为内置标记。调用方负责并发（loadSources 启动单线程；
+// updateSources 已持 a.mu）。
+func (a *App) ensureBuiltinSources() {
+	hasCtx, hasSys := false, false
+	for i := range a.sourceRegistry.Sources {
+		switch a.sourceRegistry.Sources[i].ID {
+		case contextSource:
+			hasCtx = true
+			s := &a.sourceRegistry.Sources[i]
+			s.Name = "引用"
+			s.Type = "local"
+			s.Enabled = true
+			s.RW = false // /context 只读参考
+			s.Builtin = true
+			s.Config.Path = "" // 恒指向 /context，不被 Docs.Path 覆盖
+		case systemDocsSource:
+			hasSys = true
+			s := &a.sourceRegistry.Sources[i]
+			s.Builtin = true
+			s.RW = true
+			if a.wsConfig.Docs.Location == "workspace" && a.wsConfig.Workspace.Mode == "ssh" {
+				s.Type = "workspace-sftp"
+			} else {
+				s.Type = "local"
+			}
+			s.Config.Path = a.wsConfig.Docs.Path // Docs.Path 叠加为读写来源
 		}
 	}
-	if !found {
+	if !hasSys {
 		entry := Source{ID: systemDocsSource, Name: "自动系统文档", Type: "local", Enabled: true, RW: true, Builtin: true}
+		if a.wsConfig.Docs.Location == "workspace" && a.wsConfig.Workspace.Mode == "ssh" {
+			entry.Type = "workspace-sftp"
+		}
 		entry.Config.Path = a.wsConfig.Docs.Path
+		a.sourceRegistry.Sources = append(a.sourceRegistry.Sources, entry)
+	}
+	if !hasCtx {
+		entry := Source{ID: contextSource, Name: "引用", Type: "local", Enabled: true, RW: false, Builtin: true}
+		// 路径恒空 → 回落 a.reference（/context）；置顶
 		a.sourceRegistry.Sources = append([]Source{entry}, a.sourceRegistry.Sources...)
 	}
-	return nil
 }
 
 // localSourceRoot 本地类来源根：空路径回落参考根（/context）。
@@ -146,8 +200,12 @@ func (a *App) upsertSystemDocs() error {
 	docs := a.wsConfig.Docs.Path
 	entry := Source{ID: systemDocsSource, Name: "自动系统文档", Type: "local", Enabled: true, RW: true, Builtin: true}
 	entry.Config.Path = docs
+	if a.wsConfig.Docs.Location == "workspace" && a.wsConfig.Workspace.Mode == "ssh" {
+		entry.Type = "workspace-sftp"
+	}
 	for i := range a.sourceRegistry.Sources {
 		if a.sourceRegistry.Sources[i].ID == systemDocsSource {
+			a.sourceRegistry.Sources[i].Type = entry.Type
 			a.sourceRegistry.Sources[i].Config.Path = docs
 			a.sourceRegistry.Sources[i].Enabled = true
 			return a.saveSources()
@@ -170,10 +228,12 @@ func (a *App) listSourceDir(src Source, p string) ([]map[string]any, error) {
 		return a.listLocalDir(root, p)
 	case "sftp":
 		return a.sftpListSource(src, p)
+	case "workspace-sftp":
+		return a.sftpListWorkspaceSource(src.Config.Path, p)
 	case "link", "ftp", "ftps", "smb":
 		return a.curlListSource(src, p)
 	case "mcp":
-		return nil, errors.New("MCP 协议接入待实现（登记成功；v2 提供工具与资源访问）")
+		return mcpVirtualFiles(src, p)
 	}
 	return nil, errors.New("未知来源类型")
 }
@@ -200,10 +260,50 @@ func (a *App) readSourceText(src Source, p string) ([]byte, error) {
 			return nil, err
 		}
 		return b, nil
+	case "workspace-sftp":
+		if err := safePath(p); err != nil {
+			return nil, err
+		}
+		b, err := a.sftpRead(a.workspaceRemotePath(pathJoinRemote(src.Config.Path, p)))
+		if err != nil {
+			return nil, err
+		}
+		if err := validateTextContent(b); err != nil {
+			return nil, err
+		}
+		return b, nil
 	case "link", "ftp", "ftps", "smb":
 		return a.curlReadSource(src, p)
 	case "mcp":
-		return nil, errors.New("MCP 协议接入待实现")
+		return mcpVirtualFile(src, p)
+	}
+	return nil, errors.New("未知来源类型")
+}
+
+// readSourceRaw 返回来源文件的原始字节（不做文本校验），供 /api/file/raw 查看器使用。
+func (a *App) readSourceRaw(src Source, p string) ([]byte, error) {
+	switch src.Type {
+	case "local", "skill":
+		root, err := a.localSourceRoot(src)
+		if err != nil {
+			return nil, err
+		}
+		defer root.Close()
+		return readRawBytes(root, p)
+	case "sftp":
+		if err := safePath(p); err != nil {
+			return nil, err
+		}
+		return a.sftpReadSource(src, p)
+	case "workspace-sftp":
+		if err := safePath(p); err != nil {
+			return nil, err
+		}
+		return a.sftpRead(a.workspaceRemotePath(pathJoinRemote(src.Config.Path, p)))
+	case "link", "ftp", "ftps", "smb":
+		return a.curlReadSource(src, p)
+	case "mcp":
+		return nil, errors.New("MCP 引用工具没有原始文件内容")
 	}
 	return nil, errors.New("未知来源类型")
 }
@@ -222,6 +322,11 @@ func (a *App) writeSourceText(src Source, p string, b []byte) error {
 		return putText(root, p, b)
 	case "sftp":
 		return a.sftpWriteSource(src, p, b)
+	case "workspace-sftp":
+		if err := safePath(p); err != nil {
+			return err
+		}
+		return a.sftpWrite(a.workspaceRemotePath(pathJoinRemote(src.Config.Path, p)), b)
 	}
 	return errors.New("该类型来源不支持写入")
 }
@@ -243,7 +348,7 @@ func (a *App) curlArgs(src Source, p string) []string {
 	}
 	if src.Config.Username != "" {
 		a.mu.Lock()
-		secret := a.sourceSecrets.Secrets[src.ID].Password
+		secret, _ := a.sourceCredentialLocked(src.ID)
 		a.mu.Unlock()
 		args = append(args, "-u", src.Config.Username+":"+secret)
 	}
@@ -339,7 +444,7 @@ func (a *App) listSources(w http.ResponseWriter, r *http.Request) {
 	for _, s := range a.sourceRegistry.Sources {
 		items = append(items, map[string]any{
 			"id": s.ID, "name": s.Name, "type": s.Type, "enabled": s.Enabled, "rw": s.RW, "builtin": s.Builtin,
-			"config": s.Config, "hasSecret": a.sourceSecrets.Secrets[s.ID].Password != "" || a.sourceSecrets.Secrets[s.ID].Key != "",
+			"config": s.Config, "hasSecret": a.sourceHasSecretLocked(s.ID),
 		})
 	}
 	jsonOut(w, 200, map[string]any{"sources": items})
@@ -367,6 +472,10 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		s := &in.Sources[i]
 		if s.ID == systemDocsSource && !s.Builtin {
 			fail(w, 400, errors.New("自动系统文档来源由系统管理，不可修改 id"))
+			return
+		}
+		if s.ID == contextSource && !s.Builtin {
+			fail(w, 400, errors.New("内置 /context 来源由系统管理，不可移除或降级"))
 			return
 		}
 		if !sourceIDPattern.MatchString(s.ID) {
@@ -403,8 +512,17 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 			if s.Config.Auth == "" {
 				s.Config.Auth = "none"
 			}
-		case "link", "ftp", "ftps", "smb", "mcp":
-			if s.Type != "mcp" {
+		case "workspace-sftp":
+			if s.ID != systemDocsSource || !s.Builtin {
+				fail(w, 400, errors.New("仅自动系统文档可以使用工作空间 SFTP"))
+				return
+			}
+			if a.wsConfig.Workspace.Mode != "ssh" {
+				fail(w, 400, errors.New("工作空间未连接 SSH/SFTP"))
+				return
+			}
+		case "link", "ftp", "ftps", "smb":
+			{
 				u, err := url.Parse(strings.TrimSpace(s.Config.URL))
 				valid := err == nil && u.Host != "" && u.User == nil
 				if valid {
@@ -425,13 +543,19 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			if s.RW {
-				fail(w, 400, errors.New("该来源类型只支持读取或登记，不能标记读写"))
+				fail(w, 400, errors.New("该来源类型只支持读取，不能标记读写"))
 				return
 			}
-			if strings.TrimSpace(s.Config.URL) == "" && strings.TrimSpace(s.Config.Command) == "" {
-				fail(w, 400, errors.New("该类型来源需要 URL 或启动命令"))
+			if strings.TrimSpace(s.Config.URL) == "" {
+				fail(w, 400, errors.New("该类型来源需要 URL"))
 				return
 			}
+		case "mcp":
+			if err := validateMCPConfig(&s.Config); err != nil {
+				fail(w, 400, err)
+				return
+			}
+			s.RW = false
 		default:
 			fail(w, 400, errors.New("未知来源类型"))
 			return
@@ -451,38 +575,42 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		if sec.Key != "" {
 			entry.Key = sec.Key
 		}
-		if entry.Password != "" || entry.Key != "" {
-			a.sourceSecrets.Secrets[id] = entry
-		} else {
-			delete(a.sourceSecrets.Secrets, id)
-		}
+		// 同步收敛进加密 vault（已解锁则密封并清掉回退明文；未解锁则保留明文回退，稍后迁移）。
+		a.storeSourceCredentialLocked(id, entry.Password, entry.Key)
 	}
+	// 回退明文文件仍需落盘：vault 未解锁时它是唯一持久化凭据；已解锁时此处已无明文。
 	if err := a.saveSourcesSecrets(); err != nil {
 		fail(w, 500, err)
 		return
 	}
-	a.sourceRegistry.Sources = in.Sources
-	// 系统文档来源必须存在且读写
-	found := false
-	for i := range a.sourceRegistry.Sources {
-		if a.sourceRegistry.Sources[i].ID == systemDocsSource {
-			found = true
-			a.sourceRegistry.Sources[i].Builtin = true
-			a.sourceRegistry.Sources[i].RW = true
-			a.sourceRegistry.Sources[i].Config.Path = a.wsConfig.Docs.Path
+	// 来源被删除，或 SFTP 连接参数（主机/端口/用户/认证方式）变化时，关闭旧
+	// ControlMaster 并清理其临时凭据文件；否则 -O check 会命中指向旧主机的残留 socket，
+	// 后续 sftpBatchSource 仍走旧连接。下次使用时由 ensureSourceSession 以新参数重建。
+	oldSFTP := map[string]Source{}
+	for _, old := range a.sourceRegistry.Sources {
+		if old.Type == "sftp" {
+			oldSFTP[old.ID] = old
 		}
 	}
-	if !found {
-		a.sourceRegistry.Sources = append(a.sourceRegistry.Sources, Source{ID: systemDocsSource, Name: "自动系统文档", Type: "local", Enabled: true, RW: true, Builtin: true, Config: struct {
-			Path     string `json:"path,omitempty"`
-			URL      string `json:"url,omitempty"`
-			Host     string `json:"host,omitempty"`
-			Port     int    `json:"port,omitempty"`
-			Username string `json:"username,omitempty"`
-			Auth     string `json:"auth,omitempty"`
-			Command  string `json:"command,omitempty"`
-		}{Path: a.wsConfig.Docs.Path}})
+	newByID := make(map[string]Source, len(in.Sources))
+	for _, fresh := range in.Sources {
+		newByID[fresh.ID] = fresh
 	}
+	for id, old := range oldSFTP {
+		fresh, exists := newByID[id]
+		if !exists || fresh.Type != "sftp" || sftpConnIdentity(old) != sftpConnIdentity(fresh) {
+			a.killSourceSession(id, a.sftpTargetOf(old))
+		}
+	}
+	a.sourceRegistry.Sources = in.Sources
+	// 内置来源常驻：/context（只读）+ 自动系统文档（Docs.Path 读写）；被客户端漏提交时补回
+	a.ensureBuiltinSources()
+	// 来源被删除时，其凭据（vault 密文 + 回退明文）一并清除，无残留。
+	alive := make(map[string]bool, len(a.sourceRegistry.Sources))
+	for _, sr := range a.sourceRegistry.Sources {
+		alive[sr.ID] = true
+	}
+	a.sweepSourceCredentialsLocked(alive)
 	if err := a.saveSources(); err != nil {
 		fail(w, 500, err)
 		return
@@ -491,7 +619,7 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 	for _, src := range a.sourceRegistry.Sources {
 		items = append(items, map[string]any{
 			"id": src.ID, "name": src.Name, "type": src.Type, "enabled": src.Enabled, "rw": src.RW, "builtin": src.Builtin,
-			"config": src.Config, "hasSecret": a.sourceSecrets.Secrets[src.ID].Password != "" || a.sourceSecrets.Secrets[src.ID].Key != "",
+			"config": src.Config, "hasSecret": a.sourceHasSecretLocked(src.ID),
 		})
 	}
 	jsonOut(w, 200, map[string]any{"sources": items})

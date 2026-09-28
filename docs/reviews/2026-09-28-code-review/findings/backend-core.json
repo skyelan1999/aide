@@ -1,0 +1,67 @@
+{
+  "agent": "backend-core",
+  "lens": "aide 后端 agent/工作流循环与流式：并发与数据竞争、资源泄漏、流式与取消、状态机与排队插话、边界条件（workflow/context/provider/command/stream_broker/global_events/lock_state/tool_calls）",
+  "summary": "整体工程质量较高：SSE 发布/取消/订阅注册全部在 eventMu 内，无向已关闭 channel 发送的竞态；task.Steer 的发送端都持 a.mu 且 close 发生在 status 置为终态（持锁）之后，发送方在持锁期间观察到 running 才会发送，时序上无 send-on-closed；http body 均 defer Close；子进程用 Setpgid+Cancel 杀整组；上下文预览保证 preview.Messages 至少含 system+user+instruction，多处 Messages[:len-1] 切片不会越界。发现的主要是边界/并发窗口与资源上限缺失类问题，无 P0/P1 硬崩溃。",
+  "findings": [
+    {
+      "id": "backend-core-001",
+      "title": "ask_user 应答通道 buffered(1) 存在陈旧应答串到下一个澄清问题的竞态",
+      "category": "逻辑错误",
+      "severity": "P2",
+      "file": "internal/server/workflow.go",
+      "line": "2924-2932",
+      "evidence": "ask_user 在持锁时把 task.Status 置为 awaiting_clarification、创建 buffered(1) 的 task.AnswerCh（2902-2904），随后放锁并阻塞于 `select { case ans = <-task.AnswerCh: case <-ctx.Done() }`（2924-2928）。接收一旦拿到第一个应答，到 2929 重新持锁把 Status 改回 running 之间存在一个窗口：此时 Status 仍是 awaiting_clarification，而 AnswerCh 缓冲已被消费为空。并发的第二个 HTTP 请求（用户边等澄清边在输入框发消息走 startTask 澄清门禁 191-196，或重复点确认走 answerTask 615-620）会看到 Status==awaiting_clarification 并成功把第二个应答 send 进空缓冲。该 run 随后返回第一个应答、把 Status 置回 running；这个没人读的第二个应答留在 buffered(1) 里，下一次模型再调 ask_user 时（2902 复用同一非 nil AnswerCh）会立刻 `<-task.AnswerCh` 读到它，把它当成用户对【下一个还没展示的问题】的回答——模型带着错误的用户答复继续走流程。触发路径：澄清等待期间用户二次提交（输入框追问 + 确认按钮，或双击）。后果：澄清问答错位，后续工作流基于一个用户从未给出的答复推进。",
+      "fix": "在 `<-task.AnswerCh` 返回后、重新持锁期间，先把 AnswerCh 置为 nil 并新建一个 buffered(1) 通道，或在返回前非阻塞抽干残留 `select { case <-task.AnswerCh: default: }`；更稳妥的做法是每次 ask_user 都新建 AnswerCh 并在阻塞结束后丢弃旧通道，避免跨问题复用。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-core-002",
+      "title": "spawnSubagent 启动子 run 时未检查 a.cancels 并发上限，绕过了 4 路并发闸",
+      "category": "资源泄漏",
+      "severity": "P3",
+      "file": "internal/server/workflow.go",
+      "line": "1421-1422",
+      "evidence": "startTask(230) 与 retryTask(534) 在 launch 前都有 `if len(a.cancels) >= 4 { 429 }` 闸门；但 spawnSubagent 在 1421-1422 直接 `ctx, cancel := ...; a.cancels[subTask.ID] = cancel`，没有任何并发数检查。autoModePrompt 明确要求 Lead 依次 spawn 需求/设计/实施/验证多个子智能体，叠加 Lead 自身 run 即可突破 4 路上限；子 agent 自身还能再 spawn。每个 run 是一个独立 6 分钟模型循环 + HTTP 流。后果：本地单用户场景下被模型一次性拉起远超预期的并发模型调用，放大 API 花费与内存；但受 6 分钟超时与 maxRounds 上限约束，goroutine 最终会退出，不构成永久泄漏。",
+      "fix": "在 spawnSubagent 注册 cancel 前同样检查 `len(a.cancels) >= N`（可对 sub-agent 设一个更小的子并发上限，如 2-3），超限则把 spawn_subagent 工具返回“当前并发子任务已满，请等待已有子任务结束后再派下一个”，让模型排队。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-core-003",
+      "title": "命令在 cmd.Wait() 返回后再杀一次进程组，可能命中已被 OS 复用的 PGID",
+      "category": "资源泄漏",
+      "severity": "P3",
+      "file": "internal/server/command.go",
+      "line": "157-161",
+      "evidence": "本地分支 `cmd.Start(); err = cmd.Wait(); _ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)`。Wait() 返回时子进程已被 reap，cmd.Process.Pid 这个 PID 此时已可被 OS 重新分配给无关进程；再以该 PGID 为目标杀整组属于 best-effort 兜底，极端情况下会信号到一个无关进程组。正常退出路径下这一步本无必要（Cancel 回调已在 ctx 超时/取消时杀过组，WaitDelay=2s 也已兜底）。影响面小：仅在高频短命令、PID 快速回收时可能误信号，且 SIGKILL 给一个无关进程组概率极低。",
+      "fix": "仅在 ctx 已取消（err 为 context 类/ExitError 来自 Cancel）时才补这一次杀组；正常退出直接跳过，避免对已回收 PID 的二次信号。",
+      "confidence": "low",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-core-004",
+      "title": "run_shell 工具路径不占用 a.commands 信号量，与 /api/command 的 4 路并发约束不一致",
+      "category": "资源泄漏",
+      "severity": "P3",
+      "file": "internal/server/workflow.go",
+      "line": "2443-2464",
+      "evidence": "HTTP 端点 /api/command（command.go:127-133, 82-88）通过 `a.commands`(buffered 4) 把并发 shell 限到 4；但 agent 工具 run_shell 走 execShellCommand（2384 起）直接 exec.CommandContext，完全不 acquire 该信号量。单 run 内 shell 是串行的（toolLoop 逐次调用），但结合 002 中子 agent 不受并发上限约束，多 run 并发时 shell 总数可能超出设计预期。单条命令仍受 ShellTimeout(≤300s) 与进程组回收约束，不构成泄漏。",
+      "fix": "若希望统一 shell 并发上限，在 execShellCommand 里同样 select-acquire a.commands（defer release）；或明确把 a.commands 语义限定为“用户手动终端”，agent 工具另设一个更小的并发槽。",
+      "confidence": "low",
+      "needs_user_decision": false
+    },
+    {
+      "id": "backend-core-005",
+      "title": "(c) 类上游错误盲重试会把已流式输出的 delta 重复推给前端",
+      "category": "UX与交互逻辑",
+      "severity": "P3",
+      "file": "internal/server/workflow.go",
+      "line": "1035-1041",
+      "evidence": "completeStream 第一次调用因网络/5xx 返回错误时，若已吐出过部分 onDelta，toolLoop 立刻原地用同一 onDelta 再调一次 completeStream(1035)。重试成功后 onDelta 会把重试得到的正文再次推送，前端按 Round 重置 live 文本，因此不会永久拼接错，但同一轮里用户会先看到一段被丢弃的片段再出现完整正文，偶发闪烁/重复。空响应(d)与 length 分支都没有这个问题（前者是上游干净结束）。",
+      "fix": "重试前通过 publishStream 下发一个 round 递增或 note 事件让前端清空 live 文本，使两段输出不混在同一 live 块里；或在 onDelta 侧按本次 round 已吐长度做去重。",
+      "confidence": "low",
+      "needs_user_decision": false
+    }
+  ]
+}

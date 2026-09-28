@@ -1,0 +1,103 @@
+{
+  "agent": "security",
+  "lens": "横切安全审查：鉴权矩阵、路径穿越、命令注入、SSRF、XSS、密钥/令牌、ZIP Slip/反序列化/TLS-SSH、危险操作确认。仅静态分析，localhost 单用户自托管模型下区分按设计与真实可利用项。",
+  "summary": "整体安全姿态良好：所有 /api/* 走 Bearer 常量时间比对、Origin 同源校验、无 Cookie（天然抗 CSRF）；文件访问用 os.Root（抗符号链接逃逸）+ safePath 双重 containment；ZIP Slip 有完整校验；密钥走 AES-256-GCM vault（0600、Argon2id 派生、不落明文）；外发 HTTP 无 InsecureSkipVerify、重定向一律 ErrUseLastResponse；SSH 用 accept-new TOFU。未发现 P0/P1 级可直接远程利用的漏洞。主要真实风险集中在前端把模型/仓库内容注入 DOM 的两处未充分消毒面（mermaid loose、SQLite 查看器），叠加 access-token 存于 localStorage，一旦出现脚本执行即等于完整接管（含 /api/command 任意 shell）。",
+  "findings": [
+    {
+      "id": "security-001",
+      "title": "Mermaid 以 securityLevel=loose 渲染并把原始 SVG 直接 innerHTML 注入，绕过 Markdown 消毒",
+      "category": "安全",
+      "severity": "P2",
+      "file": "internal/server/web/app.js",
+      "line": "5112-5118",
+      "evidence": "renderMarkdown 产出的 HTML 先经 sanitizeHtml（该消毒器明确把 svg 列入 BLOCKED_TAGS 删除，见 3489/3493）。但 mermaid 渲染发生在消毒之后：取 div.mermaid 文本后 mermaid.render(...)，随后 el.innerHTML = svg 直接写回，完全不经过 sanitizeHtml。而 5112 行 mermaid.initialize({ securityLevel: 'loose' }) 主动降级了 mermaid 自身的输出消毒（loose 允许标签内未转义 HTML 与 click 交互，strict 才会转义）。攻击链：模型输出 ```mermaid graph TD; A[<img src=x onerror=...>]```（或用户打开含此类图的 .md/会话轨迹，4759 行 renderTrajectoryMarkdown 同样走此路径），生成的 SVG 内联 HTML 进入 DOM。缓解：全站 CSP script-src 'self'（无 unsafe-inline）使内联 onerror 被浏览器拦截，故暂不能直接弹脚本；但 (a) loose 是对 mermaid 默认安全级的主动削弱；(b) 工作区内可被攻击者（恶意仓库/被提示注入的外部内容）写入同-origin 的 .js/.html 文件，CSP script-src self 允许加载它们，构成潜在 CSP 绕过面；(c) 结合 token 在 localStorage（见 security-008），一旦脚本执行即完整接管。",
+      "fix": "将 mermaid securityLevel 改为 strict（或 antiscript），禁止未转义 HTML 标签与 click 回调；或在 renderMermaid 注入 SVG 前，对 mermaid.render 产出的 svg 再过一次 sanitizeHtml（移除 script/on*/foreignObject/html 标签与 javascript: 链接）。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "security-002",
+      "title": "SQLite 查看器把表名/列名/单元格值不经转义直接拼接 innerHTML",
+      "category": "安全",
+      "severity": "P2",
+      "file": "internal/server/web/app.js",
+      "line": "7279,7300,7307",
+      "evidence": "setupSqliteViewer 手工拼 HTML 字符串后 container.innerHTML = html（7285）与 dataArea.innerHTML = tableHtml（7312），全程不调用 escapeHtml/sanitizeHtml：表名 t.name（7279）、列名/类型 col.name/col.type（7300）、单元格 String(val)（7307）均原样插值。数据来自工作区内 .db 文件（resolveSqlitePath，files.go:1333 允许经 safePath 后的任意工作区文件）。恶意 SQLite 库（克隆恶意仓库、或被 AI 从外部拉取落盘的 db）只要在某单元格放入 <img src=x onerror=...>/<iframe ...> 等，用户点开该库即注入 DOM。缓解同上：CSP script-src self 拦截内联事件处理器；iframe 指向 /api/file/raw 因未携带 access_token 会得 401，故无法直接自举脚本。但这是一个零消毒的数据到 HTML 汇，仅靠 CSP 兜底，违反项目自身在 Markdown 路径已建立的消毒惯例。",
+      "fix": "所有插值到 innerHTML 的表名/列名/单元格值统一用 escapeHtml() 转义（项目已有该函数，3473）；或改用 textContent/创建 DOM 节点方式渲染表格。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "security-003",
+      "title": "GET /healthz 完全免鉴权，泄漏版本与完整性状态",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/server.go",
+      "line": "912-914",
+      "evidence": "buildHandler 中仅 /api/* 走 Bearer 校验（1078-1096）与 /api/debug/* 走独立校验（1074-1077）；GET /healthz 不在 /api/ 前缀下，无任何鉴权，直接返回 {status, service:aide, integrity: a.integrityStatus()}。本机回环模型下影响很小，但当服务被绑定到非回环接口（HTTPS 部署场景）时，未授权者可指纹化版本/完整性基线，辅助定向攻击。",
+      "fix": "healthz 仅返回 {status:ok} 或把版本/integrity 细节挪到需鉴权的 /api/config；非回环监听时尤其应精简。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "security-004",
+      "title": "access_token 经 URL 查询串传递（/api/file/raw、/download、/events），可进入日志/历史/代理",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/server.go",
+      "line": "1089-1091",
+      "evidence": "为兼容 EventSource/img 无法带 Authorization 头，对 GET 且路径以 /events、/api/file/raw、/api/file/download 结尾的请求接受 ?access_token=（1089-1091）；前端图片预览也显式把 token 拼进 URL（app.js:3551）。URL 查询串会落进浏览器历史、shell history（curl 示例）、反向代理/访问日志。代码注释已自知此取舍。localhost 单机影响有限，但 HTTPS 对外暴露或经代理时令牌暴露面扩大。",
+      "fix": "长期改为短时效一次性下载票据（后端签发、绑定会话、TTL 数十秒）替代长期令牌入 URL；或对 img 预览改用 fetch 取 Blob 再 ObjectURL，避免 token 出现在地址栏。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "security-005",
+      "title": "SQLite 接口把 table 查询参数以 f-string 拼进 Python SQL（仅方括号转义）",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/files.go",
+      "line": "1420,1426",
+      "evidence": "sqliteQueryData 用 cur.execute(f\"PRAGMA table_info([{sys.argv[2]}])\") 与 FROM [{sys.argv[2]}]，table 直接来自 HTTP 查询参数（1394）。以 ] 闭合的表名可越出方括号引号；所幸 (a) python sqlite3 的 execute() 不允许多语句堆叠，(b) limit/offset 经 int() 强制，(c) 操作对象是 resolveSqlitePath 复制到临时文件的 db 副本，不触及 aide 自身库。实际可利用性低（最多报错信息差异/单语句内子查询），但属不规范的标识符拼接。",
+      "fix": "表名先白名单校验（仅 [A-Za-z0-9_] 或先查 sqlite_master 得到合法名再比对），不要靠方括号转义用户输入。",
+      "confidence": "low",
+      "needs_user_decision": false
+    },
+    {
+      "id": "security-006",
+      "title": "主密码/解锁端点无失败限速与锁定",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/auth_verify.go",
+      "line": "50-55",
+      "evidence": "POST /api/auth/verify（密码路径）与 POST /api/unlock（apikey_vault.go:257）在密码错误时仅记录审计并 401，无指数退避/失败计数/临时锁定。虽每步都是 Argon2id（VerifyPassword，天然慢），且整体仍需先有 access-token 才能调用这些端点，但在锁屏态/令牌已泄漏场景下缺少在线爆破节流。",
+      "fix": "对同一会话/IP 的连续失败做计数与指数退避（如 5 次失败后冷却 60s），与现有 vaultAudit 审计联动。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "security-007",
+      "title": "外部调试令牌 TTL 长达 365 天，且仅存哈希、无异常频次告警",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/debug.go",
+      "line": "37,120-129",
+      "evidence": "debugTokenTTL=365*24h；调试令牌哈希落盘、明文仅创建时返回一次，设计合理。但超长有效期意味着一旦明文令牌泄漏（前端曾在某次响应/截图/日志中出现），一年可被外部程序持续拉取 /api/debug/sessions、run 事件（含标题/错误/工具预览）。审计虽记录每次外部访问，但无异常频次告警。",
+      "fix": "缩短默认 TTL（如 90 天）并在 admin 面板展示剩余有效期；复用已有 revoke 支持随时吊销，可考虑令牌每次使用时再启用。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "security-008",
+      "title": "访问令牌存于 localStorage，前端任意脚本执行即等于完整 API 接管（含 /api/command）",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "4,6,1722",
+      "evidence": "state.token 从 localStorage(aide-token) 读取并缓存（4），登录后写回（1722）。同源页面内任何成功的脚本执行都可 localStorage.getItem('aide-token') 拿到 Bearer 令牌，进而调用全部 /api/*，包括 POST /api/command（bash -c 任意命令，command.go:136）。这是把 security-001/002 从页面变形放大到 RCE 的杠杆。属无 Cookie 设计的已知取舍（注释 server.go:1059），非独立漏洞，但应作为 XSS 面的影响放大器纳入威胁评估。",
+      "fix": "短期维持 localStorage 时务必把前述 DOM 注入面全部消毒；长期可考虑 httpOnly+SameSite Cookie 会话，或把高风险写操作（/api/command、factory-reset、config/import）改为要求主身份二次校验（复用现有 verifyMasterIdentity）。",
+      "confidence": "high",
+      "needs_user_decision": false
+    }
+  ]
+}

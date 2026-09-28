@@ -1,0 +1,11 @@
+draw.io / diagrams.net
+Copyright (c) 2005-2024, JGraph Ltd
+Licensed under the Apache License, Version 2.0
+
+Source: https://github.com/jgraph/drawio
+Version: v31.5.2
+Downloaded: 2026-09-25
+SHA256(draw.war): abd58ad15baef57f43acb79a56350ba8900a8b6fabe94391d8906148fe64e264
+
+This product includes software developed by JGraph Ltd.
+Modifications: None (unmodified official static webapp build, vendored for offline use).

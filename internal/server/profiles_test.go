@@ -42,7 +42,8 @@ func TestProfileValidation(t *testing.T) {
 	for _, extra := range []map[string]any{
 		{"temperature": 3},
 		{"top_p": 1.5},
-		{"max_tokens": 9000},
+		{"max_tokens": 70000}, // 超过 maxTokensCeiling(65536) 才拒绝；9000 现在合法
+
 		{"frequency_penalty": -3},
 		{"presence_penalty": 3},
 		{"response_format": "xml"},

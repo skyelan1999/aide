@@ -25,17 +25,24 @@
 
 ```text
 docs/
-  PRD.md                 现行需求基线与编号
-  architecture.md        现行实现和 API 索引
+  README.md              本索引（中英文入口）
+  installation.md        安装与首次启动（英文版 en/installation.md）
   user-guide.md          用户操作指南
+  customization.md       场景定制指南
+  workspace-paths.md     工作目录、共享范围与挂载模式
+  architecture.md        现行实现和 API 索引
+  architecture-overview.html  架构总览图
+  PRD.md                 现行需求基线与编号
   plugin-protocol.md     插件协议
   agent/                 统一开发工作流与客户端入口说明
   tasks/                 可交接的任务记录
   design/                当前界面设计与验证范围
   images/                示例数据下的实际 UI 截图
+  en/                    英文文档（README/user-guide/installation/localization）
   prd/                   按日期保存的历史增量需求
   architecture/          按日期保存的历史增量设计
   reviews/               审查、验收证据与核对报告
+  releases/              发布附件与归档说明
   archive/               历史文档快照
   verification.md        分日期的历史运行验证记录
 ```
@@ -48,4 +55,4 @@ docs/
 4. 发布以 version/tag/构建身份/部署记录共同确认，不能只看截图角落的版本。
 5. 文档改动后运行 `python3 scripts/check_docs.py`；有截图更新时，使用示例数据并说明是预览还是发布版本。
 
-本次交付版本 0.1.6.0 RC4；截图使用此前隔离预览。此次没有把历史证据重新包装为当前测试结果。
+当前版本 0.1.10.2 RC1；截图使用此前隔离预览。此处不把历史证据重新包装为当前测试结果。

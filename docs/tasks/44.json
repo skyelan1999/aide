@@ -1,0 +1,83 @@
+{
+  "id": "44",
+  "request": "本地离线TTS设为默认优先——sherpa-onnx集成+模型外置+引擎状态+试听卡死修复",
+  "baseline": "307e2508ec7ce48b5578ef087334765b6f769e07",
+  "initial_status": "M Dockerfile\n M compose.yaml\n M docs/en/security/tls.md\n M docs/en/user-guide.md\n M docs/security/tls.md\n M docs/user-guide.md\n M internal/server/colloquial.go\n M internal/server/config_backup.go\n M internal/server/config_backup_test.go\n M internal/server/config_import_test.go\n M internal/server/debug.go\n M internal/server/kdf.go\n M internal/server/kdf_test.go\n M internal/server/persona.go\n M internal/server/plugin_host.js\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/server_test.go\n M internal/server/session_manage_test.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/tls_test.go\n M internal/server/tts/edge.go\n M internal/server/tts/edge_test.go\n M internal/server/tts/provider.go\n M internal/server/voice_agent.go\n M internal/server/voice_agent_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M internal/server/workspace_test.go\n M plugins/registry.json\n M profiles.json\n M scripts/aide.sh\n M scripts/docker-release.sh\n?? docker/\n?? docs/architecture/data-layout.md\n?? docs/architecture/memory-access.md\n?? docs/architecture/personality-evolution.md\n?? docs/en/architecture/\n?? docs/en/plugins/comm-serial.md\n?? docs/en/plugins/comm-ssh.md\n?? docs/en/plugins/comm-tcp.md\n?? docs/en/plugins/comm-udp.md\n?? docs/en/plugins/daemon-protocol.md\n?? docs/en/security/dpia-template.md\n?? docs/en/security/eu-compliance.md\n?? docs/en/security/privacy-policy-template.md\n?? docs/en/security/secret-vault.md\n?? docs/en/security/security-audit.md\n?? docs/en/security/voice-cloning.md\n?? docs/plugins/comm-serial.md\n?? docs/plugins/comm-ssh.md\n?? docs/plugins/comm-tcp.md\n?? docs/plugins/comm-udp.md\n?? docs/plugins/daemon-protocol.md\n?? docs/security/dpia-template.md\n?? docs/security/eu-compliance.md\n?? docs/security/privacy-policy-template.md\n?? docs/security/secret-vault.md\n?? docs/security/security-audit.md\n?? docs/security/voice-cloning.md\n?? docs/tasks/30.json\n?? docs/tasks/35.json\n?? docs/tasks/36.json\n?? docs/tasks/37.json\n?? docs/tasks/42.json\n?? docs/tasks/43.json\n?? internal/server/cross_session_tools.go\n?? internal/server/factory_reset.go\n?? internal/server/factory_reset_test.go\n?? internal/server/integrity.go\n?? internal/server/integrity_test.go\n?? internal/server/memory_access.go\n?? internal/server/memory_access_test.go\n?? internal/server/migration.go\n?? internal/server/migration_test.go\n?? internal/server/paths.go\n?? internal/server/paths_test.go\n?? internal/server/personality_evolution.go\n?? internal/server/personality_evolution_test.go\n?? internal/server/plugin_daemon.go\n?? internal/server/plugin_daemon_test.go\n?? internal/server/secret_vault.go\n?? internal/server/secret_vault_test.go\n?? internal/server/session_number_test.go\n?? internal/server/ssh_keyutil.go\n?? internal/server/stream_broker.go\n?? internal/server/stream_broker_test.go\n?? internal/server/tts/azure.go\n?? internal/server/tts/clone.go\n?? internal/server/tts/clone_test.go\n?? internal/server/vault_app.go\n?? internal/server/voice_identity_test.go\n?? internal/server/voice_personality.go\n?? internal/server/voice_personality_test.go\n?? internal/server/voice_queue_test.go\n?? internal/server/voice_samples.go\n?? internal/server/voice_samples_test.go\n?? plugins/comm-serial/\n?? plugins/comm-ssh/\n?? plugins/comm-tcp/\n?? plugins/comm-udp/\n?? plugins/testdata/\n?? scripts/mock_clone_server.py\n?? scripts/prebuild-wheels.sh",
+  "acceptance": [
+    "Provider优先级：auto链 = sherpa(本地离线)→edge→Azure；sherpa无模型自动跳过不报错",
+    "显式选 sherpa 未装模型时不静默降级 edge，前端红字提示运行 scripts/tts-setup",
+    "tts/sherpa.go：detect /data/tts 模型、CLI 调用 sherpa-onnx-offline-tts、多音色、WAV输出、无模型→ErrNotConfigured",
+    "Dockerfile runtime stage 加 sherpa shared-cpu 二进制层（含 onnxruntime 运行库），模型外置 /data/tts",
+    "scripts/tts-setup 可下载模型+SHA256校验+空气隙 --verify-only；--help/--list 可用",
+    "/api/config 回显 sherpaAvailable/sherpaBinOK/sherpaVoices；Content-Type 按引擎 wav/mp3",
+    "前端下拉加「本地离线」；当前引擎状态显示 sherpa✓/edge✓/降级提示；不静默降级 toast",
+    "试听按钮 8s 硬超时 + finally 复位（禁止卡「播放中…」）；fetch 20s 客户端超时",
+    "go build/vet/test tts 包通过；node --check app.js 通过；gofmt 干净",
+    "真实 sherpa 合成需下载模型+用户盲听，记 NOT_RUN"
+  ],
+  "scope": [
+    "internal/server/tts/sherpa.go(新增)",
+    "internal/server/tts/sherpa_test.go(新增)",
+    "internal/server/tts/provider.go",
+    "internal/server/server.go(TTS区)",
+    "internal/server/web/app.js(TTS UI区)",
+    "Dockerfile(sherpa层)",
+    "scripts/tts-setup(新增)",
+    "docker/sherpa/(新增离线包目录)",
+    "docs/security/tts-local.md(新增)",
+    "docs/en/security/tts-local.md(新增)",
+    "docs/installation.md / docs/en/installation.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "根因清晰：edge被服务端断连(1007)不可控，需本地离线默认；优先级=本地→edge→Web Speech",
+      "evidence": [
+        "agent-hint给定#42现状；读provider.go/edge.go/server.go/app.js确认"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "sherpa经os/exec调预编译CLI(无cgo)；模型外置/data/tts每音色一目录；buildChain sherpa首；WAV输出前端blob播放",
+      "evidence": [
+        "sherpa.go detect/discoverVoices/Synth；provider.go buildChain；server.go Content-Type按引擎"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成sherpa provider、优先级、Dockerfile层、tts-setup、server回显、前端下拉/状态/试听超时",
+      "evidence": [
+        "sherpa.go/sherpa_test.go/provider.go/server.go/app.js/Dockerfile/scripts/tts-setup diff"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "tts包go vet/test通过(4个新测试全PASS)；sherpa二进制在bookworm容器实测--help运行；node --check通过；gofmt干净",
+      "evidence": [
+        "TestSherpaNoModelNotConfigured/DetectFindsModelDir/ChainSynthExplicit/AutoSkips PASS；docker run sherpa-onnx-offline-tts --help OK；node --check app.js OK"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英 docs/(en/)security/tts-local.md；installation.md 双语补本地语音小节",
+      "evidence": [
+        "docs/security/tts-local.md, docs/en/security/tts-local.md, installation.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未commit；未碰profiles.json及其他任务在途文件；新增文件均有归属；docker/sherpa为离线包占位目录",
+      "evidence": [
+        "git status 仅本任务文件新增/改动；未删除任何在途文件"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "硬约束：不commit/不merge/不push/不升版；仅交付代码与文档改动",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "\n完成项：\n- provider.go：buildChain 优先级改为 auto=[sherpa,edge,azure?]；显式 sherpa=[sherpa]；edge=[edge,azure?]；clone 链不变。Config 加 SherpaBin/SherpaDir。NewProvider 加 sherpa/local/offline 分支。\n- tts/sherpa.go(新)：SherpaProvider，os/exec 调 sherpa-onnx-offline-tts（无cgo）；detect 扫描 /data/tts/*/model.onnx；支持 lexicon 类(vits-zh-hf)与 espeak-ng-data 类(piper)；自动收集 *.fst；--vits-length-scale=1/rate 映射语速；--sid 支持多speaker；输出WAV；无模型→ErrNotConfigured；SherpaModelInfo 回显( binOK, voices[] )。环境变量 SHERPA_BIN/SHERPA_TTS_DIR 可覆盖。\n- server.go：pcfg 传 SherpaBin/SherpaDir(空=默认)；Content-Type 按引擎(sherpa=audio/wav, 否则mp3)；/api/config 回显 sherpaAvailable/sherpaBinOK/sherpaVoices；ttsProviderName 加 sherpa。\n- Dockerfile：runtime stage step2.5 加 sherpa shared-cpu 层（下载 v1.13.8 linux-aarch64-shared-cpu.tar.bz2，含 bin/offline-tts + lib/libonnxruntime.so 等），装到 /usr/local/bin + /usr/local/lib，ldconfig；SHERPA_OFFLINE=1 时从 docker/sherpa/ 本地包。\n- scripts/tts-setup(新)：--help/--list/--model/--dir/--mirror/--verify-only；下载→SHA256/体积校验→解压→软链 model.onnx→写 meta.json；piper 自动补 espeak-ng-data。\n- app.js：下拉加「本地离线」「自动(本地离线优先)」；状态显示 sherpa✓(带音色名)/edge✓/未装红字引导；试听 8s 硬超时 Promise.race + finally ttsCancel复位；ttsEdgeSynthOne fetch 20s 客户端 abort 超时。\n- 文档：docs/(en/)security/tts-local.md 中英双语；installation.md 双语补本地语音小节。\n\nsherpa集成方案：Go 不链接 C 库，每次合成 os/exec 拉起 sherpa-onnx-offline-tts 子进程，输出临时WAV读回；模型外置 /data/tts。实测该 aarch64 包在 bookworm 容器内 --help 正常（onnxruntime cpuid 警告为 Mac VM 环境，真机无碍）。\n\n模型调研结论（真实下载链接，GitHub release tag=tts-models）：\n- huayan 华严(女,piper,67.3MB)：https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-zh_CN-huayan-medium.tar.bz2 （推荐默认）\n- chaowen 超闻(男,piper,60.4MB)：同目录 vits-piper-zh_CN-chaowen-medium.tar.bz2\n- wnj 文nj(男,vits,119.2MB)：同目录 vits-zh-hf-fanchen-wnj.tar.bz2\n- espeak-ng-data(共享,7.3MB,piper必备)：同目录 espeak-ng-data.tar.bz2\n二进制：https://github.com/k2-fsa/sherpa-onnx/releases/download/v1.13.8/sherpa-onnx-v1.13.8-linux-aarch64-shared-cpu.tar.bz2  SHA256=4e3734f82bc1379fd91f219f5869c7e9d03b7a4f7561907d8abca4849c51a789（单包含bin+lib，解压后~70MB）。\n模型 SHA256：本会话未下载67MB+模型，脚本首跑打印供回填；体积来自 GitHub release 元数据。\n镜像体积增量：sherpa 二进制层压缩~28MB（解压~70MB）；模型外置不进镜像。\n\n测试结果：\n- go vet/build ./internal/server/tts/... 通过；4 个新单测全 PASS（无模型ErrNotConfigured、发现模型目录meta、buildChain优先级、auto跳过未装sherpa）。\n- 完整 go test ./internal/server/tts/... ok。\n- node --check app.js 通过。\n- sherpa-onnx-offline-tts --help 在 bookworm 容器实测运行。\n- scripts/tts-setup --help/--list 输出正常。\n\nNOT_RUN/未验证：\n- 完整 go build ./... 被其他任务在途改动阻塞（internal/server/workflow.go:989/1007 undefined: finish、internal/server/provider.go:305 FinishReason undefined），非本任务文件，未触碰。\n- 真实 sherpa 合成（需下载67MB模型+容器内运行）与用户盲听：环境/时间所限，未跑；框架/脚本/降级路径已就绪。\n- 浏览器 UI 目视验收（无浏览器能力）；Docker 全量 build（sherpa层逻辑已用直接解包+容器运行验证）。\n- profiles.json 未提交；未 commit/merge/push/tag（硬约束）。\n运行服务：未启动；发布/回滚：未执行。\n"
+}

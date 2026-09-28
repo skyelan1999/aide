@@ -94,7 +94,7 @@ func TestSettingsNeverReturnKey(t *testing.T) {
 	if strings.Contains(w.Body.String(), "secret-test-key") {
 		t.Fatal("key leaked")
 	}
-	if mode, err := os.Stat(filepath.Join(a.dataPath, "settings.json")); err != nil || mode.Mode().Perm() != 0600 {
+	if mode, err := os.Stat(SettingsPath(a.dataPath)); err != nil || mode.Mode().Perm() != 0600 {
 		t.Fatal("settings permissions")
 	}
 }
@@ -141,6 +141,9 @@ func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 	}))
 	defer provider.Close()
 	a.settings = Settings{BaseURL: provider.URL, Model: "test", APIKey: "fake"}
+	a.mu.Lock()
+	a.storeModelAPIKeyPlaintextLocked("fake") // API Key 现存加密 vault，不再明文于 settings
+	a.mu.Unlock()
 	if err := a.workspace.WriteFile("hello.txt", []byte("old"), 0644); err != nil {
 		t.Fatal(err)
 	}

@@ -1,0 +1,85 @@
+{
+  "id": "35",
+  "request": "记忆单向可见 + aide流式输出桥接给小秘：(1)小秘记忆/历史对aide隔离；(2)小秘只读aide记忆；(3)小秘可读aide主会话流式输出(含进行中/被打断已产出部分)",
+  "baseline": "307e2508ec7ce48b5578ef087334765b6f769e07",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/config_backup.go\n M internal/server/config_backup_test.go\n M internal/server/config_import_test.go\n M internal/server/debug.go\n M internal/server/kdf.go\n M internal/server/kdf_test.go\n M internal/server/persona.go\n M internal/server/plugin_host.js\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/server_test.go\n M internal/server/session_manage_test.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/voice_agent.go\n M internal/server/voice_agent_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/style.css\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M internal/server/workspace_test.go\n M profiles.json\n?? docs/architecture/data-layout.md\n?? docs/en/architecture/\n?? docs/en/plugins/daemon-protocol.md\n?? docs/en/security/secret-vault.md\n?? docs/plugins/daemon-protocol.md\n?? docs/security/eu-compliance.md\n?? docs/security/secret-vault.md\n?? docs/tasks/30.json\n?? docs/tasks/42.json\n?? internal/server/cross_session_tools.go\n?? internal/server/integrity.go\n?? internal/server/integrity_test.go\n?? internal/server/migration.go\n?? internal/server/migration_test.go\n?? internal/server/paths.go\n?? internal/server/paths_test.go\n?? internal/server/plugin_daemon.go\n?? internal/server/plugin_daemon_test.go\n?? internal/server/secret_vault.go\n?? internal/server/secret_vault_test.go\n?? internal/server/session_number_test.go\n?? internal/server/ssh_keyutil.go\n?? internal/server/vault_app.go\n?? internal/server/voice_identity_test.go\n?? plugins/comm-tcp/\n?? plugins/testdata/",
+  "acceptance": [
+    "小秘记忆/历史(assistant/、voice-memory.json、voice-history.json)对aide工具与run_shell不可见（显式路径策略，非文件名）",
+    "小秘对aide记忆(memory/core/)只读：readAideMemory可读、无写方法（编译期保证）",
+    "小秘可按sessionID拉取aide主会话流式输出，含进行中与被打断已产出部分(interrupted保留)",
+    "权限矩阵有 docs/architecture/memory-access.md 中英双语",
+    "Docker go build -mod=vendor ./... 通过；go vet ./internal/server/ 通过；定向测试通过"
+  ],
+  "scope": [
+    "internal/server/memory_access.go(新增)",
+    "internal/server/stream_broker.go(新增)",
+    "internal/server/memory_access_test.go + stream_broker_test.go(新增)",
+    "internal/server/voice_agent.go(readAideMemory/getSessionLiveOutput/提示词注入)",
+    "internal/server/workflow.go(记忆路径对齐+权限守卫+onDelta桥接+run_shell拦截)",
+    "internal/server/server.go(liveBroker字段与初始化/attachBroker)",
+    "internal/server/persona.go(小秘对话注入aide记忆块)",
+    "docs/architecture/memory-access.md + docs/en/architecture/memory-access.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "三条单向规则+权限矩阵+桥接架构已明确",
+      "evidence": [
+        "三条规则来自用户原文"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "路径前缀策略层(memory_access.go)+按sessionID的内存broker(100KB/cap)+taskID→sessionID映射桥接",
+      "evidence": [
+        "withinDataBase用filepath.Rel防..逃逸",
+        "onDelta经liveSessionID桥到session维度"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "memory_access.go/stream_broker.go新增；voice_agent/workflow/server/persona接线完成；aide记忆归位memory/core并一次性迁移旧.cache/memory.md",
+      "evidence": [
+        "go build -mod=vendor ./... 通过",
+        "go vet ./internal/server/ 通过"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "14项定向测试全PASS(权限6+broker8)；既有语音/会话/身份回归PASS；gofmt干净",
+      "evidence": [
+        "TestAideCannotRead/WriteAssistantMemory PASS",
+        "TestAssistantCanReadAideMemory/TestAssistantCannotWriteAideMemory PASS",
+        "TestIsolationPolicy/TestShellTouchesAssistantZone PASS",
+        "TestStreamBroker Publish/GetLiveOutput/Interrupted/Done/MultipleSessions/Reset/Cap PASS",
+        "TestLiveRunHelpersWired(模拟开始→增量→取消→拉到interrupted残片) PASS",
+        "TestVoice*/TestSession*/TestCrossSession* 回归 PASS",
+        "NOT_RUN: 用mock_provider.py起真实流式run的live-server E2E——会与运行在8097的真实实例冲突，且tls_test.go被并发#29实时改写；桥接逻辑由TestLiveRunHelpersWired等单测等价覆盖",
+        "NOT_RUN: 完整 go test 全包——tls_test.go 当前被并发#29编辑中(imports/string literal瞬态)，非本任务代码"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英双语 memory-access.md：权限矩阵表、显式权限层、mermaid桥接图、与#30 get_session互补、隐私设计",
+      "evidence": [
+        "docs/architecture/memory-access.md",
+        "docs/en/architecture/memory-access.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "临时为跑测试补的tls_test.go一行已还原；未commit/未push/未动profiles.json；每个新增文件有归属",
+      "evidence": [
+        "tls_test.go经git核对还原(并发#29后续自行改写)"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "按硬约束不commit/不merge main/不push/不改tag；发布需用户授权",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "完成：三条单向规则均有显式权限层实现+单测证据。剩余：并发#29稳定后跑全量go test；mock_provider live E2E可在独立端口补做。未提交任何改动。"
+}

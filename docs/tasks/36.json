@@ -1,0 +1,93 @@
+{
+  "id": "36",
+  "request": "小秘个性化音色配置——少样本音色克隆 + 由声音推断性格。可插拔克隆音色框架 + 自托管克隆服务接入，无真实模型时用mock完整测试",
+  "baseline": "307e2508ec7ce48b5578ef087334765b6f769e07",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/config_backup.go\n M internal/server/config_backup_test.go\n M internal/server/config_import_test.go\n M internal/server/debug.go\n M internal/server/kdf.go\n M internal/server/kdf_test.go\n M internal/server/persona.go\n M internal/server/plugin_host.js\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/server_test.go\n M internal/server/session_manage_test.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/tls_test.go\n M internal/server/tts/edge.go\n M internal/server/tts/edge_test.go\n M internal/server/tts/provider.go\n M internal/server/voice_agent.go\n M internal/server/voice_agent_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/style.css\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M internal/server/workspace_test.go\n M plugins/registry.json\n M profiles.json\n?? docs/architecture/data-layout.md\n?? docs/architecture/memory-access.md\n?? docs/architecture/personality-evolution.md\n?? docs/en/architecture/\n?? docs/en/plugins/comm-serial.md\n?? docs/en/plugins/comm-ssh.md\n?? docs/en/plugins/comm-tcp.md\n?? docs/en/plugins/comm-udp.md\n?? docs/en/plugins/daemon-protocol.md\n?? docs/en/security/secret-vault.md\n?? docs/plugins/comm-serial.md\n?? docs/plugins/comm-ssh.md\n?? docs/plugins/comm-tcp.md\n?? docs/plugins/comm-udp.md\n?? docs/plugins/daemon-protocol.md\n?? docs/security/eu-compliance.md\n?? docs/security/secret-vault.md\n?? docs/tasks/30.json\n?? docs/tasks/35.json\n?? docs/tasks/37.json\n?? docs/tasks/42.json\n?? internal/server/cross_session_tools.go\n?? internal/server/integrity.go\n?? internal/server/integrity_test.go\n?? internal/server/memory_access.go\n?? internal/server/memory_access_test.go\n?? internal/server/migration.go\n?? internal/server/migration_test.go\n?? internal/server/paths.go\n?? internal/server/paths_test.go\n?? internal/server/personality_evolution.go\n?? internal/server/personality_evolution_test.go\n?? internal/server/plugin_daemon.go\n?? internal/server/plugin_daemon_test.go\n?? internal/server/secret_vault.go\n?? internal/server/secret_vault_test.go\n?? internal/server/session_number_test.go\n?? internal/server/ssh_keyutil.go\n?? internal/server/stream_broker.go\n?? internal/server/stream_broker_test.go\n?? internal/server/tts/azure.go\n?? internal/server/vault_app.go\n?? internal/server/voice_identity_test.go\n?? plugins/comm-serial/\n?? plugins/comm-ssh/\n?? plugins/comm-tcp/\n?? plugins/comm-udp/\n?? plugins/testdata/",
+  "acceptance": [
+    "tts/clone.go 实现 TTSProvider：OpenAI 兼容 /audio/speech 优先，适配 GPT-SoVITS/IndexTTS2/CosyVoice2/OpenVoice v2",
+    "未配置 CloneTTSBaseURL 时 Available()=false、Synth 返回 ErrCloneNotConfigured；不可达包装 ErrUnavailable，ChainSynth 降级 edge",
+    "Settings 增加 CloneTTSBaseURL/CloneTTSAPIKey/CloneVoiceID/CloneTTSBackend，/api/config 回显状态（不回显 key）",
+    "POST /api/voice-sample/upload 接收原始音频，AES-256-GCM 加密存 /data/assistant/voice-samples/xiaomi/<id>.enc",
+    "GET /api/voice-samples 只回元数据；DELETE /api/voice-sample/{id} 删密文无残留；POST /api/voice-samples/wipe 一键清空",
+    "POST /api/voice-clone/create 送样本到自托管克隆服务并绑定 voiceID",
+    "POST /api/voice-personality/infer 返回画像+提示词草稿；POST /adopt 校验小秘锚点后写入 settings.Personalities[xiaomi]",
+    "GDPR Art.9：录制前勾选同意（未勾选 400）、密钥只在内存、默认不发第三方云、导出不含样本",
+    "前端设置加个性化音色引导：MediaRecorder 录音、试听/重录/删除、创建音色、性格推断采纳",
+    "scripts/mock_clone_server.py 仿克隆服务；docker/voice-clone/docker-compose.yml 可选模板",
+    "docs/security/voice-cloning.md 与 docs/en/security/voice-cloning.md 中英双语",
+    "Docker go build -mod=vendor ./... 通过；go vet 干净；TestVoiceClone/TestVoicePersonality 通过；node --check app.js 通过"
+  ],
+  "scope": [
+    "internal/server/tts/clone.go (新增), internal/server/tts/clone_test.go (新增)",
+    "internal/server/tts/provider.go (加 Config 字段、NewProvider/ buildChain 注册 clone)",
+    "internal/server/server.go (Settings 4 字段、ttsSynthesize 传 pcfg、/api/config 回显、updateSettings 保留、8 条路由)",
+    "internal/server/voice_samples.go (新增) + voice_samples_test.go",
+    "internal/server/voice_personality.go (新增) + voice_personality_test.go",
+    "internal/server/web/app.js (引擎下拉加 clone、renderVoiceCloneControl)",
+    "internal/server/web/settings-schema.json (加 voice-clone 控制)",
+    "scripts/mock_clone_server.py (新增)",
+    "docs/security/voice-cloning.md + docs/en/security/voice-cloning.md",
+    "docker/voice-clone/docker-compose.yml + mock/Dockerfile"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "可插拔克隆框架+自托管接入；mock 可测；主聊天机械 TTS 不受影响；GDPR Art.9",
+      "evidence": [
+        "docs/tasks/36.json acceptance/scope"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "clone provider 在 tts 包；chain=[clone,edge] 仅当 provider=clone；样本用 deriveKey(personaKey) AES-GCM；性格推断复用 #34 锚点校验与回滚栈",
+      "evidence": [
+        "internal/server/tts/clone.go",
+        "internal/server/voice_samples.go",
+        "internal/server/voice_personality.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "clone provider + 4 端点样本管理 + 2 端点性格推断 + 前端录音 UI + mock 服务 + docker 模板",
+      "evidence": [
+        "git status 新增/修改文件清单"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Docker go build ./... OK；go vet 干净；TestVoiceClone* / TestVoiceSample* / TestVoicePersonality* 全过；node --check app.js OK；mock_clone_server.py 实测 healthz/audio.speech/voices OK",
+      "evidence": [
+        "go build -mod=vendor ./... → exit 0",
+        "go vet ./internal/server/... → 无输出",
+        "go test -run TestVoiceClone → PASS (2)",
+        "go test -run TestVoicePersonality → PASS (5)",
+        "go test ./internal/server/tts/ → ok 1.584s",
+        "node --check app.js → OK",
+        "curl mock_clone_server → /healthz 200, /audio/speech 200 audio/mpeg 320B, /voices 200 voice_id=mock-voice-001"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英双语 voice-cloning.md：后端选型对比、自托管部署、GDPR、性格流程、mock 说明、NOT_RUN",
+      "evidence": [
+        "docs/security/voice-cloning.md",
+        "docs/en/security/voice-cloning.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未 commit（硬约束）；未删他人在途改动；新增文件均有归属；check_docs.py 失败为分支 PRD 在途问题，与本任务无关",
+      "evidence": [
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "完成项：clone provider 框架 + 样本加密管理 + 性格推断 + 前端 UI + mock 服务 + 中英文档 + docker 模板。\n剩余项：真实克隆模型权重效果 NOT_RUN（需用户 GPU 环境）；浏览器真机录音未手测。\n未验证项：GPU 实时合成首包时延、声音相似度自然度。\n运行服务：未启动 aide；mock_clone_server.py 已实测可起 :9880。\n发布/回滚状态：未 commit/未 push/未打 tag（按硬约束）；回滚=还原本任务涉及文件即可。"
+}

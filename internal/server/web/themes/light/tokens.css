@@ -20,7 +20,7 @@ color-scheme:light;
 --selected-alt:#ffffff;
 --mode-active:#ffffff;
 --toast-bg:#252528;
---brand-hi:#0060cf;
+--brand-hi:#0064d2;  /* 主按钮实心底：白字 on 此蓝 5.59:1，达 AA */
 --backdrop:#18182038;
 --line:#e5e5ea;
 --field-border:#d5d5dc;
@@ -83,4 +83,29 @@ color-scheme:light;
 --shadow-3:#16162920;
 --scrollbar-thumb:#c7c7cc;
 --scrollbar-track:transparent;
+/* 兼容令牌：下列名称被 style.css / macos.css / app.js 内联样式引用但原未定义，
+   按既有语义体系补齐；取值一律引用既有令牌，green.css 覆盖基础色后自动继承。 */
+--faint:#6e6e76;  /* 小图标/9-10px 元信息：on white 5.05:1 */
+--border:var(--line);
+--bg-sub:var(--bg-inset);
+--bg-hover:var(--hover);
+--bg-elevated:var(--surface-alt);
+--accent-bg:var(--chip-bg);
+--text-dim:var(--muted);
+--text-secondary:var(--muted);
+--panel2:var(--panel);
+--surface-hover:var(--hover);
+--danger-soft:color-mix(in srgb, var(--danger) 9%, transparent);
+--success-bg:color-mix(in srgb, var(--success) 12%, transparent);
+--warn-bg:color-mix(in srgb, var(--warn) 12%, transparent);
+--radius-card:8px;  /* 卡片统一圆角（白卡上沿 / 小秘行下沿接缝） */
+/* 工作流四阶段选中态语义令牌（P2#5 / frontend-css-004）：每阶段背景+前景成对，随主题切换 */
+--phase-req-bg:rgba(59,130,246,.14);
+--phase-req-fg:#1d4ed8;
+--phase-design-bg:rgba(139,92,246,.14);
+--phase-design-fg:#5b21b6;
+--phase-impl-bg:rgba(245,158,11,.14);
+--phase-impl-fg:#92400e;
+--phase-verify-bg:rgba(16,185,129,.14);
+--phase-verify-fg:#065f46;
 }

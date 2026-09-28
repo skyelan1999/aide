@@ -22,12 +22,22 @@ const (
 
 var profileIDPattern = regexp.MustCompile(profileIDPatternSrc)
 
+// maxTokensDefault 系统 profile 的默认输出预算。旧值 4096 会把长脚本/长工具调用参数
+// 在中途截断（finish_reason=length 且 arguments JSON 不闭合→工具不执行）。DeepSeek
+// deepseek-flash / deepseek-v4-pro 最大输出 384K、legacy deepseek-chat 最大 8K，
+// 8192 对两者都是安全的较大值，既够一次写出中等脚本，又不至于空耗预算。
+const maxTokensDefault = 8192
+
+// maxTokensCeiling 设置里允许的最大值。flash/pro 实测支持到 384K；这里取 65536
+// 作为“超长脚本”的可调上限，再长就靠 length 自动续写补全（workflow.go）兜底。
+const maxTokensCeiling = 65536
+
 // ProfileParams 是 DeepSeek Chat Completions 的可选采样参数。
 // 数值字段用指针区分「未设置」与 0；omitempty 保证未设置时不进入请求体。
 type ProfileParams struct {
 	Temperature      *float64 `json:"temperature,omitempty"`       // 0 – 2
 	TopP             *float64 `json:"top_p,omitempty"`             // 0 – 1
-	MaxTokens        int      `json:"max_tokens,omitempty"`        // 1 – 8192；0 = 未设置
+	MaxTokens        int      `json:"max_tokens,omitempty"`        // 1 – maxTokensCeiling；0 = 未设置
 	FrequencyPenalty *float64 `json:"frequency_penalty,omitempty"` // −2 – 2
 	PresencePenalty  *float64 `json:"presence_penalty,omitempty"`  // −2 – 2
 	ResponseFormat   string   `json:"response_format,omitempty"`   // "" | text | json_object
@@ -55,9 +65,9 @@ func fp(v float64) *float64 { return &v }
 // systemProfiles 内置三个系统配置：不可修改、不可删除（LIM-23）。
 // default 与改造前行为完全一致（FR-63 默认值 / D6）。
 var systemProfiles = []Profile{
-	{ID: "default", Name: "默认", System: true, Params: ProfileParams{Temperature: fp(1), TopP: fp(1), MaxTokens: 4096, FrequencyPenalty: fp(0), PresencePenalty: fp(0), ResponseFormat: "text"}},
-	{ID: "precise", Name: "精确", System: true, Params: ProfileParams{Temperature: fp(0.2), TopP: fp(0.9), MaxTokens: 4096, FrequencyPenalty: fp(0), PresencePenalty: fp(0), ResponseFormat: "text"}},
-	{ID: "creative", Name: "创意", System: true, Params: ProfileParams{Temperature: fp(1.5), TopP: fp(0.95), MaxTokens: 4096, FrequencyPenalty: fp(0), PresencePenalty: fp(0), ResponseFormat: "text"}},
+	{ID: "default", Name: "默认", System: true, Params: ProfileParams{Temperature: fp(1), TopP: fp(1), MaxTokens: maxTokensDefault, FrequencyPenalty: fp(0), PresencePenalty: fp(0), ResponseFormat: "text"}},
+	{ID: "precise", Name: "精确", System: true, Params: ProfileParams{Temperature: fp(0.2), TopP: fp(0.9), MaxTokens: maxTokensDefault, FrequencyPenalty: fp(0), PresencePenalty: fp(0), ResponseFormat: "text"}},
+	{ID: "creative", Name: "创意", System: true, Params: ProfileParams{Temperature: fp(1.5), TopP: fp(0.95), MaxTokens: maxTokensDefault, FrequencyPenalty: fp(0), PresencePenalty: fp(0), ResponseFormat: "text"}},
 }
 
 func isSystemProfileID(id string) bool {
@@ -76,8 +86,8 @@ func validateProfileParams(p *ProfileParams) error {
 	if p.TopP != nil && (*p.TopP < 0 || *p.TopP > 1) {
 		return errors.New("top_p 必须在 0–1 之间")
 	}
-	if p.MaxTokens != 0 && (p.MaxTokens < 1 || p.MaxTokens > 8192) {
-		return errors.New("max_tokens 必须在 1–8192 之间")
+	if p.MaxTokens != 0 && (p.MaxTokens < 1 || p.MaxTokens > maxTokensCeiling) {
+		return fmt.Errorf("max_tokens 必须在 1–%d 之间", maxTokensCeiling)
 	}
 	if p.FrequencyPenalty != nil && (*p.FrequencyPenalty < -2 || *p.FrequencyPenalty > 2) {
 		return errors.New("frequency_penalty 必须在 -2–2 之间")
