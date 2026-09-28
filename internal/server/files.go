@@ -1179,24 +1179,27 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
 	if a.workspaceMode() == "ssh" {
-		// 与本地 checkVersion 对齐：先按存在性区分“新建”与“覆盖”。
-		// readWorkspaceText 对二进制/非 UTF-8 文件会报错（validateTextContent），
-		// 旧代码把这类错误一律当作“文件不存在”，导致已存在的二进制旧文件在
-		// in.Hash=="" 时被静默覆盖、绕过哈希冲突检测。
-		exists := a.sftpExists(a.workspaceRemotePath(in.Path))
+		// 与本地 checkVersion 对齐区分“新建/覆盖”，但不能用 sftpExists(ls -l)：
+		// sftp 的 `ls -l <file>` 在远端/桩里常退化为目录列表，无法可靠判断具体文件存在性。
+		// 改为依据 `get` 的结果文本分类：
+		//   - get 报 “No such file / Couldn't stat” → 远端确无此文件，允许新建；
+		//   - get 成功但 validateTextContent 判为二进制 → 文件存在、无可比对内容，409；
+		//   - get 成功且为文本 → 比对哈希，不一致 409。
 		current, readErr := a.readWorkspaceText(in.Path)
 		switch {
-		case !exists:
-			// 远端确实没有该文件：新建。若客户端却带了旧哈希，说明已被删，409。
+		case readErr == nil:
+			if hash(current) != in.Hash {
+				fail(w, 409, errors.New("文件已改变或已存在，请重新打开后再保存"))
+				return
+			}
+		case isSFTPNotExistErr(readErr):
+			// 远端确无此文件：新建。若客户端却带了旧哈希，说明已被删，409。
 			if in.Hash != "" {
 				fail(w, 409, errors.New("文件已被删除，请重新打开"))
 				return
 			}
-		case readErr != nil:
+		default:
 			// 文件存在但无法作为文本读取（二进制等）：不绕过冲突检测，409。
-			fail(w, 409, errors.New("文件已改变或已存在，请重新打开后再保存"))
-			return
-		case hash(current) != in.Hash:
 			fail(w, 409, errors.New("文件已改变或已存在，请重新打开后再保存"))
 			return
 		}
@@ -1217,6 +1220,17 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonOut(w, 200, map[string]string{"hash": hash([]byte(in.Content))})
 }
+// isSFTPNotExistErr 判断 sftp 读取失败是否因“远端文件不存在”。
+// sftpBatch 把 stdout+stderr 合并进错误文本；OpenSSH sftp 对缺失文件报
+// “Couldn't stat remote file: No such file”。以此与“存在但二进制不可读”区分。
+func isSFTPNotExistErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "No such file") || strings.Contains(msg, "Couldn't stat")
+}
+
 func checkVersion(root *os.Root, p, expected string) error {
 	b, err := readText(root, p)
 	if errors.Is(err, os.ErrNotExist) {
