@@ -92,7 +92,7 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 | POST | `/api/command` | 命令执行，NDJSON 输出 |
 | POST | `/api/config/export`、`/api/config/import` | 配置备份导出/导入（信封 `aide-config-backup`，可选含密钥/语音历史） |
 | POST | `/api/sessions/{id}/runs/{run}/retry`、`/answer`、`/queue/{index}` | 重试/回答澄清问题/排队项改删升级 |
-| GET | `/api/file/raw`、POST `/api/file/rename` | 文件原始字节（md 相对图片/img 经 access_token 取）/重命名 |
+| GET / POST | `/api/file/raw`、`/api/file/download`、`/api/file/extract`、`/api/file/rename` | 原始文件查看、文件/目录下载与 ZIP 导出、安全解压到新的工作目录、重命名；download/raw 允许 `access_token` 供浏览器资源请求使用 |
 | PATCH / DELETE | `/api/sessions/{id}`、`/api/sessions/archived/all` | 改 pinned/archived/删除/清空归档 |
 | POST | `/api/persona/*`（unlock/save/reset/GET）、`/api/personas/*`（GET/active）、`/api/personality/*`（GET/PUT/reset/evolve） | 性格加解密、多人格切换、性格演化 |
 | POST | `/api/voice-filter`、`/api/voice-narrate` | 小秘研判 send/ignore/standby、双向朗读 |

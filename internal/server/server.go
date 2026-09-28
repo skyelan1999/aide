@@ -961,6 +961,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/directory", a.createDirectory)
 	mux.HandleFunc("POST /api/directory/rename", a.renameDirectory)
 	mux.HandleFunc("GET /api/file/raw", a.readFileRaw)
+	mux.HandleFunc("GET /api/file/download", a.downloadFile)
+	mux.HandleFunc("POST /api/file/extract", a.extractArchive)
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)
 	mux.HandleFunc("POST /api/file/rename", a.renameFile)
@@ -1084,7 +1086,7 @@ func (a *App) buildHandler() {
 			token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 			// EventSource / img 标签无法设置 Authorization 头，events 和 file/raw 路由允许 ?access_token=；
 			// 其余 API 不收 URL 中的凭据，避免令牌进入日志/代理记录。
-			if token == "" && r.Method == http.MethodGet && (strings.HasSuffix(r.URL.Path, "/events") || strings.HasSuffix(r.URL.Path, "/api/file/raw")) {
+			if token == "" && r.Method == http.MethodGet && (strings.HasSuffix(r.URL.Path, "/events") || strings.HasSuffix(r.URL.Path, "/api/file/raw") || strings.HasSuffix(r.URL.Path, "/api/file/download")) {
 				token = r.URL.Query().Get("access_token")
 			}
 			if subtle.ConstantTimeCompare([]byte(token), []byte(a.token)) != 1 {

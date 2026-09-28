@@ -1122,27 +1122,49 @@ function closeFileContextMenu() {
   document.removeEventListener('keydown', onFileCtxKey);
 }
 function onFileCtxKey(ev) { if (ev.key === 'Escape') closeFileContextMenu(); }
+function fileRawUrl(filePath, root, source) {
+  const token = state.token || (state.config && state.config.accessToken) || '';
+  const qp = new URLSearchParams(); qp.set('path', filePath);
+  if (source) qp.set('source', source); else qp.set('root', root || 'workspace');
+  if (token) qp.set('access_token', token);
+  return '/api/file/raw?' + qp.toString();
+}
+function downloadFileEntry(file, archive) {
+  const token = state.token || (state.config && state.config.accessToken) || '';
+  const qp = new URLSearchParams(); qp.set('path', file.path);
+  if (state.root === 'context' && state.source) qp.set('source', state.source); else qp.set('root', state.root || 'workspace');
+  if (archive) qp.set('archive', '1'); if (token) qp.set('access_token', token);
+  const link = document.createElement('a'); link.href = '/api/file/download?' + qp.toString(); link.download = archive ? file.name + '.zip' : file.name;
+  link.style.display = 'none'; document.body.append(link); link.click(); setTimeout(() => link.remove(), 0);
+}
 function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   closeFileContextMenu();
   const m = el('div', 'file-ctx-menu');
+  const download = el('button', 'file-ctx-item', t('下载'));
+  const compress = el('button', 'file-ctx-item', t('压缩为 ZIP'));
+  const extract = el('button', 'file-ctx-item', t('解压到新文件夹'));
   const ren = el('button', 'file-ctx-item', t('重命名'));
   const props = el('button', 'file-ctx-item', t('属性'));
   const del = el('button', 'file-ctx-item danger-item', t('删除'));
-  if (state.root === 'context') [ren, props, del].forEach(x => { x.classList.add('disabled'); x.disabled = true; x.title = t('引用为只读'); });
+  if (state.root === 'context') [ren, props, del, extract].forEach(x => { x.classList.add('disabled'); x.disabled = true; x.title = t('引用为只读'); });
+  if (state.root !== 'context' && !isZipPath(file.path)) { extract.classList.add('disabled'); extract.disabled = true; extract.title = t('仅支持 ZIP 文件'); }
+  download.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); downloadFileEntry(file, !!file.dir); };
+  compress.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); downloadFileEntry(file, true); };
+  extract.onclick = async (e) => { e.stopPropagation(); closeFileContextMenu(); try { const out = await api('/file/extract', { method: 'POST', body: JSON.stringify({ root: 'workspace', path: file.path }) }); toast(t('已解压到：') + out.path); loadFiles(); } catch (err) { toast(err.message || String(err)); } };
   ren.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); selectFileRow(rowBtn); beginInlineRename(rowBtn, nameSpan, file); };
   props.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); showFileProperties(file); };
   del.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); deleteFileEntry(file); };
-  m.append(ren, props, del);
+  m.append(download, compress, extract, ren, props, del);
   document.body.append(m);
   fileCtxMenuEl = m;
-  m.style.left = Math.min(ev.clientX, innerWidth - 160) + 'px';
-  m.style.top = Math.min(ev.clientY, innerHeight - 60) + 'px';
+  m.style.left = Math.max(8, Math.min(ev.clientX, innerWidth - 198)) + 'px';
+  m.style.top = Math.max(8, Math.min(ev.clientY, innerHeight - 220)) + 'px';
   setTimeout(() => { document.addEventListener('click', closeFileContextMenu); document.addEventListener('keydown', onFileCtxKey); }, 0);
 }
 
 async function openFile(path) {
   // 图片 / STL / PDF 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
-  if (isImagePath(path) || isStlPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path) || isSqlitePath(path)) {
+  if (isImagePath(path) || isStlPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path) || isSqlitePath(path) || isZipPath(path)) {
     state.file = { path, root: state.root, source: state.root === 'context' ? state.source : '', content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
     showEditor();
     return;
@@ -1158,6 +1180,7 @@ function isMarkdownPath(path) { return /\.(md|markdown)$/i.test(path || ''); }
 function isImagePath(path) { return /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i.test(path || ''); }
 function isStlPath(path) { return /\.stl$/i.test(path || ''); }
 function isPdfPath(path) { return /\.pdf$/i.test(path || ''); }
+function isZipPath(path) { return /\.zip$/i.test(path || ''); }
 function isSqlitePath(path) { return /\.(db|sqlite|sqlite3)$/i.test(path || ''); }
 function setEditorMode(mode) {
   const preview = mode === 'preview';
@@ -1179,6 +1202,7 @@ function showEditor() {
   const isDxf = isDxfPath(state.file.path);
   const isDocx = isDocxPath(state.file.path);
   const isSqlite = isSqlitePath(state.file.path);
+  const isZip = isZipPath(state.file.path);
   $('editor').readOnly = readOnly;
   // #64: code syntax highlighting
   teardownCodeHighlight($('editor'));
@@ -1186,13 +1210,17 @@ function showEditor() {
   if (_cl) setupCodeHighlight($('editor'), _cl);
   // 图片 / STL / PDF 为只读可视化查看器，无文本可保存，禁用保存（避免空内容覆盖原文件）；drawio 可保存
   // 可视化查看器（图片/STL/PDF/DXF）无文本可保存 → 隐藏保存按钮；只读来源的文本文件 → 禁用
-  $("save-file").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx || isSqlite);
+  $("save-file").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx || isSqlite || isZip);
   $("save-file").disabled = readOnly;
   $('attach-file').disabled = state.file.fresh;
-  $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx || isSqlite));
-  $("editor-ro-badge").title = (readOnly && state.file.root === "context") ? (sourceIsRW() ? t("引用 · 读写来源") : t("引用 · 只读")) : (isImg || isStl || isPdf || isDxf || isDocx || isSqlite ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"));
+  $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx || isSqlite || isZip));
+  $("editor-ro-badge").title = (readOnly && state.file.root === "context") ? (sourceIsRW() ? t("引用 · 读写来源") : t("引用 · 只读")) : (isImg || isStl || isPdf || isDxf || isDocx || isSqlite || isZip ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"));
   $('editor-mode-switch').classList.toggle('hidden', !md);
-  if (isStl) {
+  if (isZip) {
+    $('editor').classList.add('hidden');
+    $('editor-preview').classList.remove('hidden');
+    setupZipPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
+  } else if (isStl) {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
     setupStlPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
@@ -3615,6 +3643,37 @@ async function setupStlPreview(container, filePath, root, source) {
       resize(); new ResizeObserver(resize).observe(canvasWrap);
     }).catch(err => { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">' + t('STL 加载失败：') + escapeHtml(err.message) + '</div>'; meta.textContent = t('解析失败'); });
 }
+/* ── ZIP 查看器：只列出目录，不会在浏览器中解压或执行归档内容。 ── */
+async function setupZipPreview(container, filePath, root, source) {
+  container.innerHTML = '';
+  const viewer = el('div', 'zip-viewer');
+  const toolbar = el('div', 'zip-toolbar');
+  const title = el('strong', '', filePath.split('/').pop());
+  const meta = el('span', 'zip-meta', t('正在读取压缩包…'));
+  const download = el('a', 'zip-download', t('下载 ZIP')); download.href = fileRawUrl(filePath, root, source); download.download = filePath.split('/').pop();
+  toolbar.append(title, meta, download);
+  const list = el('div', 'zip-list'); viewer.append(toolbar, list); container.append(viewer);
+  try {
+    if (!window.JSZip) throw new Error('JSZip unavailable');
+    const response = await fetch(fileRawUrl(filePath, root, source));
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const zip = await window.JSZip.loadAsync(await response.arrayBuffer(), { createFolders: true });
+    const entries = Object.values(zip.files).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+    let files = 0, dirs = 0;
+    for (const entry of entries) {
+      if (entry.dir) dirs++; else files++;
+      const row = el('div', 'zip-entry' + (entry.dir ? ' zip-entry-dir' : ''));
+      row.append(el('span', 'zip-entry-icon', entry.dir ? '▱' : '≡'), el('span', 'zip-entry-name', entry.name));
+      list.append(row);
+    }
+    meta.textContent = t('{0} 个文件 · {1} 个文件夹', files, dirs);
+    if (!entries.length) list.append(el('div', 'zip-empty', t('压缩包为空')));
+  } catch (err) {
+    meta.textContent = t('加载失败');
+    list.append(el('div', 'zip-error', t('压缩包加载失败：') + (err.message || String(err))));
+  }
+}
+
 /* ── PDF.js 内联预览器：离线 vendor、连续滚动、逐页 canvas、IntersectionObserver 懒渲染 ── */
 /* 动态 import 同源 ES 模块；仅在打开 PDF 时加载一次并缓存 Promise */
 let _pdfjsPromise = null;
@@ -4498,12 +4557,13 @@ async function openFileViewMode() {
   const isPdf = isPdfPath(spec.path);
   const isDxf = isDxfPath(spec.path);
   const isDocx = isDocxPath(spec.path);
+  const isZip = isZipPath(spec.path);
   // 只有二进制/画布查看器需要占满剩余空间并自行处理滚动；Markdown
   // 预览必须保留外层滚动容器，避免被沉浸式查看器样式锁死。
   $('file-view-preview').classList.toggle('file-view-immersive', isImg || isStl || isPdf || isDxf || isDocx || isDrawio);
   // 图片 / STL / PDF / DXF 走独立 raw 查看器，跳过只支持文本、会拒绝二进制的 /api/file
   let data;
-  if (isImg || isStl || isPdf || isDxf || isDocx) {
+  if (isImg || isStl || isPdf || isDxf || isDocx || isZip) {
     data = { content: '', hash: '', workspaceId: '', wsId: '' };
   } else {
     const query = spec.source
@@ -4521,10 +4581,14 @@ async function openFileViewMode() {
   var _fvcl = codeLang(spec.path);
   if (_fvcl) setupCodeHighlight($('file-view-editor'), _fvcl);
   // 图片 / STL / PDF 只读查看器禁用保存；drawio 可保存
-  $("file-view-save").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx);
+  $("file-view-save").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx || isZip);
   $("file-view-save").disabled = readOnly;
-  $("file-view-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx));
-  if (isStl) {
+  $("file-view-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx || isZip));
+  if (isZip) {
+    $('file-view-editor').classList.add('hidden');
+    $('file-view-preview').classList.remove('hidden');
+    setupZipPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+  } else if (isStl) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
     setupStlPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');

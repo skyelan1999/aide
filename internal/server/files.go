@@ -1,6 +1,7 @@
 package server
 
 import (
+	"archive/zip"
 	"bufio"
 	"bytes"
 	"crypto/sha256"
@@ -9,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
 	"os/exec"
@@ -191,6 +193,11 @@ func readTextRange(root *os.Root, p string, off, limit int64) ([]byte, int64, er
 // maxRawFile 为原始字节端点（图片/STL 等二进制查看器）的上限。
 const maxRawFile = 64 << 20
 
+const (
+	maxArchiveFiles = 1000
+	maxArchiveDepth = 32
+)
+
 // readRawBytes 返回文件的原始字节，不做 UTF-8/文本校验（供 /api/file/raw 查看器使用）。
 func readRawBytes(root *os.Root, p string) ([]byte, error) {
 	if err := safePath(p); err != nil {
@@ -216,6 +223,381 @@ func readRawBytes(root *os.Root, p string) ([]byte, error) {
 		return nil, fmt.Errorf("文件超过 %d MB 限制", maxRawFile/(1<<20))
 	}
 	return b, nil
+}
+
+type archiveItem struct {
+	name string
+	data []byte
+	dir  bool
+}
+
+func validArchivePath(p string) error {
+	if p == "" || p == "." || path.Clean(p) != p {
+		return errors.New("需要工作区内的文件或文件夹")
+	}
+	return safePath(p)
+}
+
+func archiveContentType(p string) string {
+	if ct := mime.TypeByExtension(strings.ToLower(path.Ext(p))); ct != "" {
+		return ct
+	}
+	return "application/octet-stream"
+}
+
+func archiveName(p string) string {
+	name := path.Base(p)
+	if name == "." || name == "/" || name == "" {
+		return "download"
+	}
+	return name
+}
+
+func (a *App) sourceEntry(src Source, p string) (map[string]any, error) {
+	items, err := a.listSourceDir(src, path.Dir(p))
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range items {
+		if item["name"] == path.Base(p) {
+			return item, nil
+		}
+	}
+	return nil, os.ErrNotExist
+}
+
+func checkedRaw(b []byte) ([]byte, error) {
+	if len(b) > maxRawFile {
+		return nil, fmt.Errorf("文件超过 %d MB 限制", maxRawFile/(1<<20))
+	}
+	return b, nil
+}
+
+func (a *App) downloadTarget(r *http.Request) (string, Source, bool, bool, error) {
+	p := r.URL.Query().Get("path")
+	if err := validArchivePath(p); err != nil {
+		return "", Source{}, false, false, err
+	}
+	if sourceID := r.URL.Query().Get("source"); sourceID != "" {
+		a.mu.Lock()
+		src, ok := a.findSource(sourceID)
+		a.mu.Unlock()
+		if !ok || !src.Enabled {
+			return "", Source{}, false, false, errors.New("来源不存在或已停用")
+		}
+		item, err := a.sourceEntry(src, p)
+		if err != nil {
+			return "", Source{}, false, false, err
+		}
+		dir, _ := item["dir"].(bool)
+		return p, src, true, dir, nil
+	}
+	if r.URL.Query().Get("root") != "workspace" {
+		return "", Source{}, false, false, errors.New("仅工作目录或引用支持下载")
+	}
+	info, err := a.workspaceFileProperties(p)
+	if err != nil {
+		return "", Source{}, false, false, err
+	}
+	dir, _ := info["dir"].(bool)
+	return p, Source{}, false, dir, nil
+}
+
+func (a *App) downloadRaw(p string, src Source, hasSource bool) ([]byte, error) {
+	var b []byte
+	var err error
+	if hasSource && src.Type == "mcp" {
+		b, err = a.readSourceText(src, p)
+	} else if hasSource {
+		b, err = a.readSourceRaw(src, p)
+	} else if a.workspaceMode() == "ssh" {
+		b, err = a.sftpRead(a.workspaceRemotePath(p))
+	} else {
+		b, err = readRawBytes(a.workspace, p)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return checkedRaw(b)
+}
+
+func (a *App) downloadChildren(p string, src Source, hasSource bool) ([]map[string]any, error) {
+	if hasSource {
+		return a.listSourceDir(src, p)
+	}
+	return a.listWorkspaceDir(p)
+}
+
+func (a *App) collectArchive(p string, src Source, hasSource, dir bool) ([]archiveItem, error) {
+	items := make([]archiveItem, 0)
+	total := 0
+	var walk func(string, string, bool, int) error
+	walk = func(actual, entry string, isDir bool, depth int) error {
+		if depth > maxArchiveDepth {
+			return errors.New("压缩目录层级超过限制")
+		}
+		if isDir {
+			items = append(items, archiveItem{name: strings.TrimSuffix(entry, "/") + "/", dir: true})
+			children, err := a.downloadChildren(actual, src, hasSource)
+			if err != nil {
+				return err
+			}
+			for _, child := range children {
+				childPath, ok := child["path"].(string)
+				if !ok || safePath(childPath) != nil {
+					return errors.New("目录包含无效路径")
+				}
+				childName, _ := child["name"].(string)
+				childDir, _ := child["dir"].(bool)
+				if err := walk(childPath, path.Join(entry, childName), childDir, depth+1); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+		if len(items) >= maxArchiveFiles {
+			return fmt.Errorf("压缩包最多包含 %d 个条目", maxArchiveFiles)
+		}
+		b, err := a.downloadRaw(actual, src, hasSource)
+		if err != nil {
+			return err
+		}
+		total += len(b)
+		if total > maxRawFile {
+			return fmt.Errorf("压缩内容超过 %d MB 限制", maxRawFile/(1<<20))
+		}
+		items = append(items, archiveItem{name: entry, data: b})
+		return nil
+	}
+	if err := walk(p, archiveName(p), dir, 0); err != nil {
+		return nil, err
+	}
+	if len(items) > maxArchiveFiles {
+		return nil, fmt.Errorf("压缩包最多包含 %d 个条目", maxArchiveFiles)
+	}
+	return items, nil
+}
+
+func (a *App) downloadFile(w http.ResponseWriter, r *http.Request) {
+	p, src, hasSource, dir, err := a.downloadTarget(r)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	archive := r.URL.Query().Get("archive") == "1" || dir
+	name := archiveName(p)
+	var body []byte
+	if archive {
+		items, err := a.collectArchive(p, src, hasSource, dir)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		var buf bytes.Buffer
+		zw := zip.NewWriter(&buf)
+		for _, item := range items {
+			hdr := &zip.FileHeader{Name: item.name, Method: zip.Deflate}
+			if item.dir {
+				hdr.SetMode(os.ModeDir | 0755)
+			}
+			out, e := zw.CreateHeader(hdr)
+			if e != nil {
+				fail(w, 500, e)
+				return
+			}
+			if !item.dir {
+				if _, e = out.Write(item.data); e != nil {
+					fail(w, 500, e)
+					return
+				}
+			}
+		}
+		if err := zw.Close(); err != nil {
+			fail(w, 500, err)
+			return
+		}
+		body = buf.Bytes()
+		name += ".zip"
+		w.Header().Set("Content-Type", "application/zip")
+	} else {
+		body, err = a.downloadRaw(p, src, hasSource)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		w.Header().Set("Content-Type", archiveContentType(p))
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	w.Header().Set("Content-Disposition", mime.FormatMediaType("attachment", map[string]string{"filename": name}))
+	w.Write(body)
+}
+
+type extractedArchiveFile struct {
+	path string
+	data []byte
+	dir  bool
+}
+
+func readArchiveFiles(data []byte) ([]extractedArchiveFile, error) {
+	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		return nil, errors.New("不是有效的 ZIP 文件")
+	}
+	if len(zr.File) == 0 {
+		return nil, errors.New("ZIP 文件为空")
+	}
+	if len(zr.File) > maxArchiveFiles {
+		return nil, fmt.Errorf("ZIP 最多包含 %d 个条目", maxArchiveFiles)
+	}
+	files := make([]extractedArchiveFile, 0, len(zr.File))
+	seen := map[string]bool{}
+	total := 0
+	for _, entry := range zr.File {
+		if strings.Contains(entry.Name, "\\") || strings.HasPrefix(entry.Name, "/") {
+			return nil, errors.New("ZIP 包含不安全路径")
+		}
+		name := strings.TrimSuffix(entry.Name, "/")
+		if name == "" || path.Clean(name) != name || safePath(name) != nil {
+			return nil, errors.New("ZIP 包含不安全路径")
+		}
+		if seen[name] {
+			return nil, errors.New("ZIP 包含重复路径")
+		}
+		seen[name] = true
+		isDir := entry.FileInfo().IsDir()
+		if entry.Mode()&os.ModeSymlink != 0 {
+			return nil, errors.New("ZIP 不支持符号链接")
+		}
+		f := extractedArchiveFile{path: name, dir: isDir}
+		if !isDir {
+			if entry.UncompressedSize64 > uint64(maxRawFile-total) {
+				return nil, fmt.Errorf("解压内容超过 %d MB 限制", maxRawFile/(1<<20))
+			}
+			rc, e := entry.Open()
+			if e != nil {
+				return nil, e
+			}
+			f.data, e = io.ReadAll(io.LimitReader(rc, int64(maxRawFile-total)+1))
+			rc.Close()
+			if e != nil {
+				return nil, e
+			}
+			total += len(f.data)
+			if total > maxRawFile {
+				return nil, fmt.Errorf("解压内容超过 %d MB 限制", maxRawFile/(1<<20))
+			}
+		}
+		files = append(files, f)
+	}
+	return files, nil
+}
+
+func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Root string `json:"root"`
+		Path string `json:"path"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Root != "workspace" || validArchivePath(body.Path) != nil || !strings.HasSuffix(strings.ToLower(body.Path), ".zip") {
+		fail(w, 400, errors.New("需要工作目录中的 ZIP 文件"))
+		return
+	}
+	b, err := a.downloadRaw(body.Path, Source{}, false)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	files, err := readArchiveFiles(b)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	dest := path.Join(path.Dir(body.Path), strings.TrimSuffix(path.Base(body.Path), path.Ext(body.Path)))
+	if err := validArchivePath(dest); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	a.filesMu.Lock()
+	defer a.filesMu.Unlock()
+	if a.workspaceMode() == "ssh" {
+		if a.sftpExists(a.workspaceRemotePath(dest)) {
+			fail(w, 409, errors.New("解压目标已存在"))
+			return
+		}
+		tmp := path.Join(path.Dir(dest), ".aide-unpack-"+newID())
+		if err := a.sftpMakeDirectory(a.workspaceRemotePath(tmp)); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		dirs := map[string]bool{}
+		for _, f := range files {
+			dir := f.path
+			if !f.dir {
+				dir = path.Dir(dir)
+			}
+			for dir != "." && dir != "" {
+				dirs[dir] = true
+				dir = path.Dir(dir)
+			}
+		}
+		ordered := make([]string, 0, len(dirs))
+		for dir := range dirs {
+			ordered = append(ordered, dir)
+		}
+		sort.Slice(ordered, func(i, j int) bool { return strings.Count(ordered[i], "/") < strings.Count(ordered[j], "/") })
+		for _, dir := range ordered {
+			if err := a.sftpMakeDirectory(a.workspaceRemotePath(path.Join(tmp, dir))); err != nil {
+				fail(w, 400, err)
+				return
+			}
+		}
+		for _, f := range files {
+			if f.dir {
+				continue
+			}
+			target := path.Join(tmp, f.path)
+			if err := a.sftpWrite(a.workspaceRemotePath(target), f.data); err != nil {
+				fail(w, 400, err)
+				return
+			}
+		}
+		if err := a.sftpRenameDirectory(a.workspaceRemotePath(tmp), a.workspaceRemotePath(dest)); err != nil {
+			fail(w, 400, err)
+			return
+		}
+	} else {
+		if _, err := a.workspace.Stat(dest); err == nil {
+			fail(w, 409, errors.New("解压目标已存在"))
+			return
+		}
+		tmp := path.Join(path.Dir(dest), ".aide-unpack-"+newID())
+		if err := a.workspace.Mkdir(tmp, 0755); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		for _, f := range files {
+			target := path.Join(tmp, f.path)
+			if f.dir {
+				if err := a.workspace.MkdirAll(target, 0755); err != nil {
+					fail(w, 500, err)
+					return
+				}
+			} else {
+				if err := a.workspace.MkdirAll(path.Dir(target), 0755); err != nil {
+					fail(w, 500, err)
+					return
+				}
+				if err := a.workspace.WriteFile(target, f.data, 0644); err != nil {
+					fail(w, 500, err)
+					return
+				}
+			}
+		}
+		if err := a.workspace.Rename(tmp, dest); err != nil {
+			fail(w, 500, err)
+			return
+		}
+	}
+	jsonOut(w, 200, map[string]string{"path": dest})
 }
 func (a *App) root(which string) (*os.Root, error) {
 	if which == "" || which == "workspace" {
@@ -313,11 +695,11 @@ func validateRemoteBrowsePath(p string) error {
 }
 
 type directoryRequest struct {
-	Root     string `json:"root"`
-	Path     string `json:"path"`
-	Parent   string `json:"parentPath"`
-	Name     string `json:"name"`
-	NewName  string `json:"newName"`
+	Root    string `json:"root"`
+	Path    string `json:"path"`
+	Parent  string `json:"parentPath"`
+	Name    string `json:"name"`
+	NewName string `json:"newName"`
 }
 
 func validDirectoryName(name string) (string, error) {
@@ -646,6 +1028,10 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	if _, err = checkedRaw(b); err != nil {
+		fail(w, 400, err)
+		return
+	}
 	ext := strings.ToLower(path.Ext(r.URL.Query().Get("path")))
 	ct := map[string]string{
 		".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
@@ -915,7 +1301,9 @@ func (a *App) renameFile(w http.ResponseWriter, r *http.Request) {
 		}
 		out, err := a.sftpBatch("rename " + shellQuoteRemote(a.workspaceRemotePath(body.Path)) + " " + shellQuoteRemote(a.workspaceRemotePath(newPath)) + "\n")
 		if err != nil || sftpCommandFailed(out) {
-			if err == nil { err = errors.New(strings.TrimSpace(out)) }
+			if err == nil {
+				err = errors.New(strings.TrimSpace(out))
+			}
 			fail(w, 400, err)
 			return
 		}
