@@ -172,6 +172,9 @@ func (a *App) readLocalImage(att Attachment) (MessageImage, error) {
 		return MessageImage{}, fmt.Errorf("图片超过 %d MB 上限", maxImageAttachment>>20)
 	}
 	mt := imageAttachmentTypes[strings.ToLower(path.Ext(att.Path))]
+	if mt == "" {
+		return MessageImage{}, errors.New("不支持的图片格式")
+	}
 	return MessageImage{
 		MediaType: mt,
 		DataURL:  "data:" + mt + ";base64," + base64.StdEncoding.EncodeToString(b),
