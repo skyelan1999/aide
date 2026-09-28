@@ -4601,16 +4601,25 @@ async function setupDocxPreview(container, filePath, root, source) {
       const text = sel.toString().trim();
       if (!text || text.length < 2) return;
       const quote = text.slice(0, 80);
-      // 计算 anchorIndex：quote 在全文第几次出现
-      const norm = docxBody.innerText.replace(/\s+/g, ' ');
+      // 计算 anchorIndex：选中片段是 quote 在规范化全文中的第几次出现（0 起始）。
+      // 用覆盖 docxBody 起点到选区起点(anchorNode,anchorOffset) 的 Range 取前缀文本并做与
+      // findTextRange 一致的空白规范化，统计 normQuote 在该前缀中的出现次数；选区起点处的
+      // 本次出现不计入前缀，天然得到正确 0-based 序号（修复原 anchorIndex 自赋值 no-op 恒为 0）。
       const normQuote = quote.replace(/\s+/g, ' ');
-      let anchorIndex = 0, pos = 0;
-      while (true) {
-        const idx = norm.indexOf(normQuote, pos);
-        if (idx < 0) break;
-        anchorIndex = anchorIndex; // 当前就是选中的这次
-        pos = idx + 1;
-      }
+      let anchorIndex = 0;
+      try {
+        const preRange = document.createRange();
+        preRange.setStart(docxBody, 0);
+        preRange.setEnd(sel.anchorNode, sel.anchorOffset);
+        const prefix = preRange.toString().replace(/\s+/g, ' ');
+        let pos = 0;
+        while (true) {
+          const idx = prefix.indexOf(normQuote, pos);
+          if (idx < 0) break;
+          anchorIndex++;
+          pos = idx + 1;
+        }
+      } catch (e) { anchorIndex = 0; }
       const comment = prompt(t('添加批注：') + quote.slice(0, 40) + '…', '');
       if (!comment) { sel.removeAllRanges(); return; }
       try {
