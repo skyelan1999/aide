@@ -4,7 +4,20 @@
 
 ## 0.1.12.0 RC1（2026-09-29）
 
-- release: 0.1.12.0 RC1 — MM-05/TR-09/全局审查修复/8 条 P2/需求对齐（明细见下）
+- release: 0.1.12.0 RC1 — 汇总 feature/permission-panel：MM-05/TR-09、全局代码审查修复、8 条 P2 决策项、需求对齐
+- MM-05 插件感知训练：plugin_learning.go 的能力提示 pluginCapabilityHint / 经验提示 pluginExperienceHint 注入系统提示（context.go），每次插件调用落 plugin-experience.md，附单测（PRD 原标「待开始」，经代码核实已交付）
+- TR-09 SSE 顺滑：runEvents 逐事件 flusher.Flush、X-Accel-Buffering:no、15s 心跳（后端 flush/代理缓冲已就绪，长回答逐字顺滑待 E2E 实测）
+- 全局代码审查修复：10 条 P1 全修，P2/P3 分级收口（详见 docs/reviews/2026-09-28-code-review/）
+- P2#1 每来源凭据（SFTP/SMB/FTPS）并入 AES-256-GCM vault：旧明文 sources-secrets.json 在启动/解锁时自动密封迁移、全部落盘后清空；vault 不可用时保留明文安全回退、下次重试，幂等不丢配置
+- P2#2 插件 daemon Start/Stop 与 runPluginHost 移出全局 a.mu：慢进程锁外执行，锁内仅快速更新注册表，启停毫秒级、不阻塞其它请求
+- P2#3 ask_user 每轮澄清独立通道 + answerRound 轮次绑定：迟到/错轮应答 409 丢弃，不串到下一问题
+- P2#4 ssh-keygen 私钥口令改经 SSH_ASKPASS + 管道 fd（ExtraFiles）传递，不进 argv/进程列表、不落地明文临时文件
+- P2#5 工作流四阶段选中态语义色改走主题令牌 --phase-{req/design/impl/verify}-{bg/fg}，深/浅/green 主题随切换，对比度全部达 WCAG AA
+- P2#6 docx 批注 anchorIndex 正确计算选中片段出现序号；findTextRange 排除 STYLE/SCRIPT 并对齐 norm↔偏移 map，重载高亮落正文；docHash 改 SHA-256 对齐服务端，新批注 stale 不再恒真
+- P2#7 PDF 渲染取消/代次/超时：每 holder 记录 RenderTask，新渲染取消旧任务，代次过期即停、单页 20s 超时兜底，离开视图取消在途渲染
+- P2#8 会话桶布局统一：共享 --content-max(840px)，style.css 与 macos.css 的 .run/.composer/.welcome 同列居中，1680/1280/600 下消息流与输入区左右边缘重合
+- 需求对齐：docs/reviews/2026-09-28-requirements-alignment/ 全量台账（111 点：108 已交付 / 3 部分 / 0 未开始，另 5 处文档与代码不一致），据代码核对 docs/tasks 账本与 PRD 追踪表
+- 验证：go vet/build 通过、go test -race 0 DATA RACE 0 panic（仅 golang 测试镜像缺 node 的环境性非回归）；docker compose 重建容器 healthy；Playwright 7 组回归全通过（证据 docs/reviews/2026-09-28-release-verification/）
 
 
 ## 0.1.11.0 RC4（2026-09-26）
