@@ -20,7 +20,7 @@
     "verification": {"status": "pass", "summary": "前端语法、多语言检查、Docker 重建、健康检查及调试接口复核均已通过。页面视觉验收为 NOT_RUN：自动化仅可见空的 Codex 内置浏览器，不能接管用户正在使用的 Edge 页面。", "evidence": ["node --check internal/server/web/app.js", "node scripts/test_i18n.cjs: PASS", "cmd /c start.bat: image built, aide-aide-1 recreated, health check passed", "GET /api/debug/sessions?status=running: 0", "POST /api/debug/actions/ping-provider: reachable=true, httpStatus=200", "cua.getState: only empty Codex In-app Browser, no user Edge surface"]},
     "documentation": {"status": "pass", "summary": "任务记录了故障判定和恢复不变量。", "evidence": ["docs/tasks/workflow-client-recovery.json"]},
     "cleanup": {"status": "pass", "summary": "未删除或覆盖任何既有未提交和未跟踪文件。", "evidence": ["git status --short"]},
-    "release": {"status": "pass", "summary": "用户已于 2026-09-28 授权提交并推送；功能提交已推送至 origin/feature/permission-panel。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500"]}
+    "release": {"status": "blocked", "summary": "功能提交已推送至 origin/feature/permission-panel；正式 release-check 被历史异常未跟踪运行时缓存阻断，尚未发布。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500", "release-check: git status blocked by malformed untracked runtime path"]}
   },
   "release_authorization": "用户原话：你先整理一下推上去吧",
   "rollback": "恢复 app.js 中 SSE error 与 schedulePoll 的旧逻辑；不会影响已持久化会话。",

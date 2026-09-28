@@ -20,7 +20,7 @@
     "verification": {"status": "not_run", "summary": "JS 语法、diff 检查和 Docker 重建健康检查已通过。实际 Edge 验收待刷新页面后再次发送小秘消息；当前自动化无法控制用户的 Edge 窗口。", "evidence": ["node --check internal/server/web/app.js → exit 0", "git diff --check → exit 0", "AIDE_OPEN_BROWSER=0 cmd /c start.bat → 健康检查通过"]},
     "documentation": {"status": "pass", "summary": "任务账本记录了后端状态优先的门控行为和浏览器验收限制。", "evidence": ["docs/tasks/assistant-lock-prompt.json"]},
     "cleanup": {"status": "pass", "summary": "未删除或纳入既有未跟踪运行时目录。", "evidence": ["git status --short"]},
-    "release": {"status": "pass", "summary": "用户已于 2026-09-28 授权提交并推送；功能提交已推送至 origin/feature/permission-panel。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500"]}
+    "release": {"status": "blocked", "summary": "功能提交已推送至 origin/feature/permission-panel；正式 release-check 被历史异常未跟踪运行时缓存阻断，尚未发布。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500", "release-check: git status blocked by malformed untracked runtime path"]}
   },
   "release_authorization": "用户原话：你先整理一下推上去吧",
   "rollback": "恢复 app.js 和 server.go 的小秘解锁流程即可。",

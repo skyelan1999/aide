@@ -20,7 +20,7 @@
     "verification": {"status": "not_run", "summary": "JavaScript 语法、i18n、diff 格式和服务健康检查通过；真实滚动交互未运行，因为自动化环境未暴露用户 Edge 窗口，内置浏览器又被本地自签 HTTPS 证书拦截。", "evidence": ["node --check internal/server/web/app.js (PASS)", "node scripts/test_i18n.cjs (PASS)", "git diff --check (PASS; 仅 CRLF 警告)", "cmd /c start.bat: 健康检查通过", "CUA getState: 无 Edge 目标窗口；IAB 无可用标签页"]},
     "documentation": {"status": "pass", "summary": "任务记录说明根因、滚动与查看器兼容约束及未运行的 UI 验收。", "evidence": ["docs/tasks/file-view-scroll-alignment.json"]},
     "cleanup": {"status": "pass", "summary": "未删除任何既有文件或缓存。", "evidence": ["git status --short"]},
-    "release": {"status": "pass", "summary": "用户已于 2026-09-28 授权提交并推送；功能提交已推送至 origin/feature/permission-panel。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500"]}
+    "release": {"status": "blocked", "summary": "功能提交已推送至 origin/feature/permission-panel；正式 release-check 被历史异常未跟踪运行时缓存阻断，尚未发布。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500", "release-check: git status blocked by malformed untracked runtime path"]}
   },
   "release_authorization": "用户原话：你先整理一下推上去吧",
   "rollback": "移除 file-view-immersive 状态类与对应限定样式，恢复此前文件预览布局。",

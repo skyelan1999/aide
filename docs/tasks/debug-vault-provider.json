@@ -24,7 +24,7 @@
     "verification": {"status": "pass", "summary": "已用外部调试接口完成总览、Provider 探测、错误和用量只读检查；定向 Go 回归、Docker 重建和修复后运行时复测均已通过。该任务没有页面交互改动。", "evidence": ["修复前 GET /api/debug/overview: hasKey=false（与保险库状态不符）", "修复前 POST /api/debug/actions/ping-provider: HTTP 200，upstream 401", "docker run aide-debug-regression: TestDebugUsesVaultBackedModelCredential/TestDebugPingUsesVaultBackedModelCredential/TestDebugAuditNoiseReduction/TestDebugAuditExport PASS", "cmd /c start.bat: image built, aide-aide-1 recreated, health check passed", "修复后 GET /api/debug/overview: hasKey=true, keyUsable=true", "修复后 POST /api/debug/actions/ping-provider: reachable=true, httpStatus=200"]},
     "documentation": {"status": "pass", "summary": "调试 API 文档明确 hasKey/keyUsable 语义及锁定时 409 行为；概览文档同步当前 MCP 能力边界。", "evidence": ["docs/debug-api.md", "README.md", "docs/architecture-overview.html"]},
     "cleanup": {"status": "pass", "summary": "保留既有未提交和未跟踪文件；仅移除本任务的定向测试容器。", "evidence": ["docker rm aide-debug-regression", "git status --short"]},
-    "release": {"status": "pass", "summary": "用户已于 2026-09-28 授权提交并推送；功能提交已推送至 origin/feature/permission-panel。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500"]}
+    "release": {"status": "blocked", "summary": "功能提交已推送至 origin/feature/permission-panel；正式 release-check 被历史异常未跟踪运行时缓存阻断，尚未发布。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500", "release-check: git status blocked by malformed untracked runtime path"]}
   },
   "release_authorization": "用户原话：你先整理一下推上去吧",
   "rollback": "恢复 debug.go 旧的 settings 字段读取会重新产生误诊，不建议；本修复不迁移或删除任何凭证。",
