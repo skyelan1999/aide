@@ -9,13 +9,27 @@ package server
 //    （dev 容器把仓库挂在 /workspace；发布镜像由 Dockerfile 拷贝到 /opt/aide/office-scripts）
 
 import (
+	"bytes"
+	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
 	"sync"
+	"syscall"
+	"time"
+)
+
+// officeScriptTimeout 单次 office 转换脚本执行上限（python3 + soffice 转换损坏文档可能死锁）。
+var officeScriptTimeout = 60 * time.Second
+
+// officeMaxStdout / officeMaxStderr 限制脚本输出，防止脚本狂写致内存膨胀。
+const (
+	officeMaxStdout = 1 << 20 // 1 MiB
+	officeMaxStderr = 64 << 10
 )
 
 // legacyDocExt 旧版二进制 Word 扩展名（.docx 不在此列）。
@@ -66,28 +80,89 @@ func officeScriptPath(name string) (string, error) {
 	return "", fmt.Errorf("office 脚本未找到: %s（设置 AIDE_OFFICE_SCRIPTS 指向 scripts/office 目录）", name)
 }
 
+// limitedBytesWriter 有界 bytes.Buffer：超过 limit 后丢弃后续字节，并在尾部标注截断。
+type limitedBytesWriter struct {
+	limit     int
+	buf       bytes.Buffer
+	truncated bool
+}
+
+func (w *limitedBytesWriter) Write(p []byte) (int, error) {
+	if w.truncated {
+		return len(p), nil
+	}
+	remaining := w.limit - w.buf.Len()
+	if remaining <= 0 {
+		w.truncated = true
+		w.buf.WriteString("…[truncated]")
+		return len(p), nil
+	}
+	if len(p) <= remaining {
+		return w.buf.Write(p)
+	}
+	w.buf.Write(p[:remaining])
+	w.truncated = true
+	w.buf.WriteString("…[truncated]")
+	return len(p), nil
+}
+
+func (w *limitedBytesWriter) String() string { return w.buf.String() }
+
 // runOfficeScript 执行 python3 <script> <args...>；workdir 为工作区根（生产即 /workspace）。
 // 返回 stdout；失败时把 stderr 带进错误信息，便于 aide 排障。
+// 带 officeScriptTimeout 超时；超时后 kill 整个进程组（python 可能 fork soffice），避免子进程泄漏。
 func runOfficeScript(workdir, script string, args ...string) (string, error) {
 	bin, err := exec.LookPath("python3")
 	if err != nil {
 		return "", errors.New("容器内无 python3")
 	}
-	cmd := exec.Command(bin, append([]string{script}, args...)...)
+	ctx, cancel := context.WithTimeout(context.Background(), officeScriptTimeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, bin, append([]string{script}, args...)...)
 	cmd.Dir = workdir
-	out, err := cmd.Output()
-	if err != nil {
-		var exitErr *exec.ExitError
-		stderr := ""
-		if errors.As(err, &exitErr) {
-			stderr = strings.TrimSpace(string(exitErr.Stderr))
+	// 独立进程组；超时/取消时 kill 整个组（含 soffice 子进程）。
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.Cancel = func() error {
+		if cmd.Process == nil {
+			return nil
 		}
-		if stderr == "" {
-			stderr = err.Error()
-		}
-		return "", errors.New("office 脚本失败: " + stderr)
+		return syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
 	}
-	return string(out), nil
+	cmd.WaitDelay = 2 * time.Second
+
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return "", err
+	}
+	stderrPipe, err := cmd.StderrPipe()
+	if err != nil {
+		return "", err
+	}
+	if err := cmd.Start(); err != nil {
+		return "", errors.New("office 脚本启动失败: " + err.Error())
+	}
+	stdoutBuf := &limitedBytesWriter{limit: officeMaxStdout}
+	stderrBuf := &limitedBytesWriter{limit: officeMaxStderr}
+	stderrDone := make(chan struct{})
+	go func() {
+		defer close(stderrDone)
+		_, _ = io.Copy(stderrBuf, stderrPipe)
+	}()
+	_, _ = io.Copy(stdoutBuf, stdoutPipe)
+	waitErr := cmd.Wait()
+	<-stderrDone
+
+	if ctx.Err() == context.DeadlineExceeded {
+		return "", fmt.Errorf("office 脚本超时（%s），已终止进程组", officeScriptTimeout)
+	}
+	if waitErr != nil {
+		stderrText := strings.TrimSpace(stderrBuf.String())
+		if stderrText == "" {
+			stderrText = waitErr.Error()
+		}
+		return "", errors.New("office 脚本失败: " + stderrText)
+	}
+	return stdoutBuf.String(), nil
 }
 
 // docxTool 是 aide 工具调用 .docx 脚本的统一入口：路径/扩展/存在性校验 + 执行。
