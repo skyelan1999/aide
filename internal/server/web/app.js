@@ -3866,10 +3866,17 @@ async function setupPdfPreview(container, filePath, root, source) {
   const pageList = [], holders = [];
   const dpr = window.devicePixelRatio || 1;
   let scale = 1, baseWidth = 0, numPages = 0;
+  let renderGeneration = 0; // 渲染代次：layoutPages/缩放使其递增，旧 renderVisible 循环发现过期即退出
 
   const setMeta = (txt) => { meta.textContent = txt; };
   const fail = (msg) => { scroll.innerHTML = ''; scroll.append(el('div', 'pdf-error', msg)); setMeta(t('加载失败')); };
-  const teardown = () => { cancelled = true; if (io) { io.disconnect(); io = null; } if (pdfDoc) { try { pdfDoc.destroy(); } catch (e) {} pdfDoc = null; } };
+  const teardown = () => {
+    cancelled = true;
+    renderGeneration++;
+    for (const h of holders) { if (h && h.renderTask) { try { h.renderTask.cancel(); } catch (e) {} h.renderTask = null; } }
+    if (io) { io.disconnect(); io = null; }
+    if (pdfDoc) { try { pdfDoc.destroy(); } catch (e) {} pdfDoc = null; }
+  };
   bindViewerTeardown(container, teardown);
 
   // 1) 取字节（复用图片/STL 的 raw 端点，带 access_token 查询参数）
@@ -3916,7 +3923,7 @@ async function setupPdfPreview(container, filePath, root, source) {
     const holder = el('div', 'pdf-page');
     holder.append(el('canvas', 'pdf-canvas'));
     scroll.append(holder);
-    holders[i] = { el: holder, canvas: holder.firstChild, page: i, renderedScale: 0, visible: false };
+    holders[i] = { el: holder, canvas: holder.firstChild, page: i, renderedScale: 0, visible: false, renderTask: null };
   }
   await layoutPages();
 
@@ -3931,9 +3938,17 @@ async function setupPdfPreview(container, filePath, root, source) {
 
   setMeta(numPages + ' ' + t('页'));
 
+  // 取消某 holder 上在途的渲染任务（与新渲染/拆构竞态安全：用身份判断避免误清新任务）
+  function cancelHolderRender(h) {
+    if (h && h.renderTask) { try { h.renderTask.cancel(); } catch (e) {} h.renderTask = null; }
+  }
   async function layoutPages() {
+    renderGeneration++; // 代次递增：旧 renderVisible 循环在下次检查时立即退出
+    for (const h of holders) cancelHolderRender(h);
     for (let i = 1; i <= numPages; i++) {
+      if (cancelled) return;
       const p = await getPage(i);
+      if (cancelled) return;
       const vp = p.getViewport({ scale });
       const h = holders[i];
       h.el.style.width = Math.floor(vp.width) + 'px';
@@ -3942,21 +3957,44 @@ async function setupPdfPreview(container, filePath, root, source) {
     }
     renderVisible();
   }
+  // 渲染单页：开始前取消同 holder 旧任务；带超时兜底；区分取消异常与真实错误
+  async function renderPage(h, gen) {
+    cancelHolderRender(h);
+    if (gen !== renderGeneration || cancelled) return;
+    const p = await getPage(h.page);
+    if (gen !== renderGeneration || cancelled) return;
+    const vp = p.getViewport({ scale });
+    const c = h.canvas;
+    c.width = Math.floor(vp.width * dpr);
+    c.height = Math.floor(vp.height * dpr);
+    c.style.width = Math.floor(vp.width) + 'px';
+    c.style.height = Math.floor(vp.height) + 'px';
+    const task = p.render({ canvasContext: c.getContext('2d'), viewport: vp, transform: [dpr, 0, 0, dpr, 0, 0] });
+    h.renderTask = task;
+    h.renderedScale = scale;
+    let timer = 0;
+    const timeout = new Promise((_, rej) => {
+      timer = setTimeout(() => { try { task.cancel(); } catch (e) {} rej(new Error('render-timeout')); }, 20000);
+    });
+    try {
+      await Promise.race([task.promise, timeout]);
+    } catch (e) {
+      // 取消（缩放/翻页/teardown）或超时：按失败处理，重置 renderedScale 以便后续重试
+      if ((e && e.name === 'RenderingCancelledException') || (e && e.message === 'render-timeout')) {
+        if (h.renderedScale === scale) h.renderedScale = 0;
+      }
+    } finally {
+      clearTimeout(timer);
+      if (h.renderTask === task) h.renderTask = null;
+    }
+  }
   async function renderVisible() {
+    const gen = renderGeneration;
     for (let i = 1; i <= numPages; i++) {
+      if (gen !== renderGeneration || cancelled) return; // 代次过期/已拆构：立即退出，不再渲染旧比例
       const h = holders[i];
       if (!h.visible || h.renderedScale === scale) continue;
-      h.renderedScale = scale;
-      try {
-        const p = pageList[i];
-        const vp = p.getViewport({ scale });
-        const c = h.canvas;
-        c.width = Math.floor(vp.width * dpr);
-        c.height = Math.floor(vp.height * dpr);
-        c.style.width = Math.floor(vp.width) + 'px';
-        c.style.height = Math.floor(vp.height) + 'px';
-        await p.render({ canvasContext: c.getContext('2d'), viewport: vp, transform: [dpr, 0, 0, dpr, 0, 0] }).promise;
-      } catch (e) { /* 缩放/翻页取消旧渲染属正常 */ }
+      await renderPage(h, gen);
     }
   }
 
