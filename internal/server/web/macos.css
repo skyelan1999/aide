@@ -106,8 +106,6 @@ h1 span { color: var(--brand); }
 .mode-switch button.active { color: var(--text); box-shadow: 0 1px 3px var(--shadow-1); }
 .send-group { margin-left: auto; flex-shrink: 0; }
 .send-group>span { display: none; }
-.send-button { width: 32px; height: 32px; border-radius: 50%; background: var(--brand); color: var(--on-brand); }
-.send-button:hover { background: var(--brand-hi); }
 .composer-note { font-size: 10px; margin: 9px 4px 0; line-height: 1.4; }
 .composer-note span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip { font-size: 11px; border-radius: 7px; max-width: 100%; overflow-wrap: anywhere; }
@@ -223,7 +221,6 @@ dialog label, dialog p { font-size: 12px; }
 .file-view-head a { white-space: nowrap; text-decoration: none; }
 .file-view-preview { max-width: 940px; width: 100%; margin: 0 auto; font-size: 14px !important; padding: 28px 36px; }
 .file-view-editor { font-size: 13px; line-height: 1.8; }
-.file-view-toolbar { padding: 12px 28px; }
 .toast { font-size: 13px; z-index: 60; border-radius: 10px; }
 @media (max-width: 1350px) { .connection { display: none; } .topbar { padding: 0 20px; gap: 12px; } .global-search { width: 160px; } }
 @media (min-width: 951px) and (max-width: 1150px) { body { grid-template-columns: 196px minmax(0,1fr) 230px; } body.files-hidden { grid-template-columns: 196px minmax(0,1fr); } .topbar { flex-wrap: wrap; height: 86px; gap: 6px 12px; padding: 10px 18px; } .breadcrumb { flex-basis: calc(100% - 185px); } .top-actions { margin-left: auto; } .global-search { width: 160px; } .composer-wrap { padding: 12px 20px; } .conversation { padding: 24px; } .composer-toolbar { flex-wrap: wrap; } .strategy-picker { flex-basis: calc(100% - 42px); } .mode-switch { order: 2; } .send-group { margin-left: auto; } .file-panel-heading, .plugin-panel-heading { height: 86px; } }
@@ -282,7 +279,6 @@ dialog label, dialog p { font-size: 12px; }
  .editor-footer .quiet, .editor-footer .primary { font-size: 11px; padding: 8px; }
  .editor-footer>div { gap: 6px; }
  .file-view-head { padding: 16px; }
- .file-view-toolbar { padding: 12px 16px; }
  .file-view-preview { padding: 20px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
