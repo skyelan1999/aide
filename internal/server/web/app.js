@@ -3,6 +3,8 @@ const t = (key, ...args) => window.aideI18n ? window.aideI18n.t(key, ...args) : 
 const $ = id => document.getElementById(id);
 const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveRound: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, autoScroll: true, jumpAnimating: false };
 const fragment = new URLSearchParams(location.hash.slice(1));
+// 纯前端「忽略此提案」集合（无后端拒绝端点）：仅在内存折叠卡片，不写盘、不影响会话
+const ignoredProposals = new Set();
 if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); history.replaceState(null, '', location.pathname); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 function toast(text) { const host = document.querySelector('dialog[open]') || document.body; host.append($('toast')); $('toast').textContent = text; $('toast').classList.remove('hidden'); clearTimeout(toast.timer); toast.timer = setTimeout(() => $('toast').classList.add('hidden'), 5000); }
@@ -1027,7 +1029,30 @@ function renderSession() {
         const diff = el('div', 'diff-columns'); const before = el('div'); before.append(el('small', '', t("原内容")), el('pre', '', file.before || t("（新文件）")));
         const after = el('div'); after.append(el('small', '', t("建议内容")), el('pre', '', file.content)); diff.append(before, after); details.append(diff); proposal.append(details);
       }
-      if (run.status === 'awaiting_approval') { const apply = el('button', 'primary', t("应用这些文件修改")); apply.onclick = action(async () => { apply.disabled = true; try { await api(`/sessions/${state.session.id}/runs/${run.id}/apply`, { method: 'POST', body: '{}' }); toast(t("文件修改已写入本地挂载目录")); await selectSession(state.session.id); await loadFiles(); } finally { apply.disabled = false; } }); proposal.append(el('p', 'muted', t("请展开检查文件内容。应用后会写入本地工作目录；验证命令需要单独运行。")), apply); }
+      if (run.status === 'awaiting_approval') {
+        if (ignoredProposals.has(run.id)) {
+          proposal.append(el('p', 'muted', t("已忽略此提案，未写入磁盘。")));
+        } else {
+          const apply = el('button', 'primary', t("应用这些文件修改"));
+          apply.onclick = async () => {
+            if (apply.disabled) return;
+            apply.disabled = true;
+            try {
+              await api(`/sessions/${state.session.id}/runs/${run.id}/apply`, { method: 'POST', body: '{}' });
+              toast(t("文件修改已写入本地挂载目录"));
+              await selectSession(state.session.id);
+              await loadFiles();
+            } catch (e) {
+              toast(e.message || t("应用失败，请稍后重试")); // 409 冲突等：把后端 error 透传给用户
+            } finally {
+              apply.disabled = false;
+            }
+          };
+          const ignore = el('button', 'quiet', t("忽略此提案"));
+          ignore.onclick = () => { ignoredProposals.add(run.id); renderSession(); };
+          proposal.append(el('p', 'muted', t("请展开检查文件内容。应用后会写入本地工作目录；验证命令需要单独运行。")), apply, ignore);
+        }
+      }
       else if (run.applied) proposal.append(el('p', 'muted', t("✓ 已应用文件修改。命令验证结果以命令面板为准。")));
       box.append(proposal);
     }
@@ -7328,23 +7353,23 @@ function openFactoryResetDialog() {
 
 // ===== SQLite 查看器 =====
 async function setupSqliteViewer(container, path, root) {
-  container.innerHTML = '<div style="padding:24px;color:var(--text-secondary);">正在加载数据库…</div>';
+  container.innerHTML = '<div class="sqlite-empty">正在加载数据库…</div>';
   try {
     // 获取表列表
     const tables = await api('/sqlite/tables?root=' + root + '&path=' + encodeURIComponent(path));
     if (!tables.length) {
-      container.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text-secondary);">数据库中没有表</div>';
+      container.innerHTML = '<div class="sqlite-empty-center">数据库中没有表</div>';
       return;
     }
-    let html = '<div style="display:flex;gap:12px;height:100%;">';
+    let html = '<div class="sqlite-layout">';
     // 左侧表列表
-    html += '<div style="width:200px;border-right:1px solid var(--border);overflow-y:auto;padding:8px;">';
+    html += '<div class="sqlite-table-list">';
     tables.forEach((t, i) => {
-      html += `<div class="sqlite-table-item" data-table="${escapeHtml(t.name)}" style="padding:8px 12px;cursor:pointer;border-radius:6px;margin-bottom:2px;font-size:13px;">${escapeHtml(t.name)} <span style="color:var(--text-secondary);font-size:11px;">(${t.rows} rows)</span></div>`;
+      html += `<div class="sqlite-table-item" data-table="${escapeHtml(t.name)}">${escapeHtml(t.name)} <span class="sqlite-table-count">(${t.rows} rows)</span></div>`;
     });
     html += '</div>';
     // 右侧数据区
-    html += '<div style="flex:1;overflow:auto;padding:16px;"><div class="sqlite-data-area">点击左侧表查看数据</div></div>';
+    html += '<div class="sqlite-data-pane"><div class="sqlite-data-area">点击左侧表查看数据</div></div>';
     html += '</div>';
     container.innerHTML = html;
     // 绑定表点击事件
@@ -7354,28 +7379,28 @@ async function setupSqliteViewer(container, path, root) {
         item.style.background = 'var(--surface-hover)';
         const table = item.dataset.table;
         const dataArea = container.querySelector('.sqlite-data-area');
-        dataArea.innerHTML = '<div style="padding:24px;color:var(--text-secondary);">加载中…</div>';
+        dataArea.innerHTML = '<div class="sqlite-empty">加载中…</div>';
         try {
           const data = await api('/sqlite/data?root=' + root + '&path=' + encodeURIComponent(path) + '&table=' + encodeURIComponent(table) + '&limit=100&offset=0');
-          let tableHtml = `<div style="margin-bottom:12px;font-size:13px;color:var(--text-secondary);">共 ${data.total} 行，显示前 ${data.rows.length} 行</div>`;
-          tableHtml += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
+          let tableHtml = `<div class="sqlite-meta">共 ${data.total} 行，显示前 ${data.rows.length} 行</div>`;
+          tableHtml += '<div class="sqlite-table-wrap"><table class="sqlite-table">';
           tableHtml += '<thead><tr>';
           data.columns.forEach(col => {
-            tableHtml += `<th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);background:var(--surface);font-weight:600;">${escapeHtml(col.name)}<div style="font-size:11px;font-weight:400;color:var(--text-secondary);">${escapeHtml(col.type)}</div></th>`;
+            tableHtml += `<th>${escapeHtml(col.name)}<div class="sqlite-col-type">${escapeHtml(col.type)}</div></th>`;
           });
           tableHtml += '</tr></thead><tbody>';
           data.rows.forEach(row => {
             tableHtml += '<tr>';
             data.columns.forEach(col => {
               const val = row[col.name];
-              tableHtml += `<td style="padding:8px 12px;border-bottom:1px solid var(--border);">${val === null ? '<span style="color:var(--text-secondary);">NULL</span>' : escapeHtml(val)}</td>`;
+              tableHtml += `<td>${val === null ? '<span class="sqlite-null">NULL</span>' : escapeHtml(val)}</td>`;
             });
             tableHtml += '</tr>';
           });
           tableHtml += '</tbody></table></div>';
           dataArea.innerHTML = tableHtml;
         } catch (e) {
-          dataArea.innerHTML = '<div style="padding:24px;color:#e53e3e;">加载失败: ' + escapeHtml(e.message || '') + '</div>';
+          dataArea.innerHTML = '<div class="sqlite-error">加载失败: ' + escapeHtml(e.message || '') + '</div>';
         }
       };
     });
@@ -7383,6 +7408,6 @@ async function setupSqliteViewer(container, path, root) {
     const firstTable = container.querySelector('.sqlite-table-item');
     if (firstTable) firstTable.click();
   } catch (e) {
-    container.innerHTML = '<div style="padding:24px;color:#e53e3e;">加载失败: ' + escapeHtml(e.message || '') + '</div>';
+    container.innerHTML = '<div class="sqlite-error">加载失败: ' + escapeHtml(e.message || '') + '</div>';
   }
 }
