@@ -20,7 +20,7 @@ color-scheme:dark;
 --selected-alt:#4a4a4e;
 --mode-active:#48484c;
 --toast-bg:#f1f1f3;
---brand-hi:#409cff;
+--brand-hi:#0066d6;  /* 主按钮实心底：白字 on 此蓝 5.42:1，达 AA */
 --backdrop:#00000066;
 --line:#38383b;
 --field-border:#49494e;
@@ -98,4 +98,5 @@ color-scheme:dark;
 --danger-soft:color-mix(in srgb, var(--danger) 16%, transparent);
 --success-bg:color-mix(in srgb, var(--success) 16%, transparent);
 --warn-bg:color-mix(in srgb, var(--warn) 16%, transparent);
+--radius-card:8px;
 }
