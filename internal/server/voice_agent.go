@@ -537,8 +537,8 @@ func (va *VoiceAgent) narrate(ctx context.Context, cfg Settings, steps []Narrati
 			sb.WriteString(fmt.Sprintf("环节%d（打开文件）：%s\n", i+1, st.Path))
 		} else {
 			txt := strings.TrimSpace(st.Text)
-			if len(txt) > 1400 {
-				txt = txt[:1400]
+			if runes := []rune(txt); len(runes) > 1400 {
+				txt = string(runes[:1400])
 			}
 			sb.WriteString(fmt.Sprintf("环节%d（讲解内容）：%s\n", i+1, txt))
 		}
