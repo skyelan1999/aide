@@ -4676,8 +4676,11 @@ function renderMarkdown(src, live, basePath) {
     if (!live) body.querySelectorAll('pre > code[class*="language-"]').forEach(codeEl => {
       const lang = (codeEl.className.match(/language-([\w+-]+)/) || [])[1] || '';
       if (!lang || !window.hljs || typeof window.hljs.getLanguage !== 'function') return;
-      if (!window.hljs.getLanguage(lang)) return; // 未注册语言保持原样，避免错误着色
-      try { codeEl.innerHTML = window.hljs.highlight(codeEl.textContent, { language: lang, ignoreIllegals: true }).value; }
+      // highlight.js 未单独提供 clojurescript 语法，回退到 clojure（语法超集）
+      const langAlias = { clojurescript: 'clojure' };
+      let hlLang = window.hljs.getLanguage(lang) ? lang : (langAlias[lang] && window.hljs.getLanguage(langAlias[lang]) ? langAlias[lang] : '');
+      if (!hlLang) return; // 未注册语言保持原样，避免错误着色
+      try { codeEl.innerHTML = window.hljs.highlight(codeEl.textContent, { language: hlLang, ignoreIllegals: true }).value; }
       catch (_) {}
     });
     // 标记相对路径链接（事件委托在 timeline 上统一处理）
