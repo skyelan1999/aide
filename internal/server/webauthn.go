@@ -94,7 +94,20 @@ func newWebAuthnManager(dataPath string) *webAuthnManager {
 	}
 	m.wa = wa
 	m.loadLocked()
+	// 后台每 60s 清理过期 challenge 会话，避免客户端只 start 不 finish 时 map 无限增长。
+	go m.pruneLoop()
 	return m
+}
+
+// pruneLoop 定时清理过期 WebAuthn challenge 会话。
+func (m *webAuthnManager) pruneLoop() {
+	t := time.NewTicker(60 * time.Second)
+	defer t.Stop()
+	for range t.C {
+		m.mu.Lock()
+		m.pruneSessionsLocked()
+		m.mu.Unlock()
+	}
 }
 
 func (m *webAuthnManager) enabled() bool { return m != nil && m.wa != nil }
