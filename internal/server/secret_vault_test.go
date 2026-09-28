@@ -2,7 +2,7 @@ package server
 
 // 统一加密凭证保险库（#38）单元测试：
 // 加密存/取、列表不泄明文、删除、改密码 ReWrap、文件权限、导出导入保持密文、
-// 公钥指纹、临时目录清理，以及无账户密码拒绝保存、路径越权拒绝。
+// 公钥指纹、临时目录清理、路径越权拒绝，以及无账户密码时 vault 自动解锁后亦可保存凭据。
 
 import (
 	"bytes"
@@ -148,13 +148,26 @@ func TestExportImportEncrypted(t *testing.T) {
 	}
 }
 
-func TestNoPasswordReject(t *testing.T) {
+// TestVaultAutoUnlockNoAccountPassword（原 TestNoPasswordReject，随 c536500 更新）：
+// vault 主密钥改为启动时由本机 access-token 自动解锁，无账户密码也可保存 SSH 凭据；
+// 响应回显 hasPassword=true、vaultLocked=false，且绝不回显明文。
+func TestVaultAutoUnlockNoAccountPassword(t *testing.T) {
 	a := testApp(t)
-	// 无账户密码：保存 SSH 凭据必须被拒
-	requireStatus(t, request(a, "PUT", "/api/workspace-config", map[string]any{
+	w := request(a, "PUT", "/api/workspace-config", map[string]any{
 		"workspace": map[string]any{"mode": "ssh", "host": "h", "port": 22, "username": "u", "auth": "password"},
 		"password":  "locked-pw",
-	}), 400)
+	})
+	requireStatus(t, w, 200)
+	body := w.Body.String()
+	if !strings.Contains(body, `"hasPassword":true`) {
+		t.Fatalf("应已保存 SSH 密码: %s", body)
+	}
+	if !strings.Contains(body, `"vaultLocked":false`) {
+		t.Fatalf("vault 应由 access-token 自动解锁: %s", body)
+	}
+	if strings.Contains(body, "locked-pw") {
+		t.Fatalf("响应不得回显明文密码: %s", body)
+	}
 }
 
 func TestPathValidationReject(t *testing.T) {

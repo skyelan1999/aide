@@ -129,7 +129,7 @@ func TestAssistantSessionTitleSync(t *testing.T) {
 	}
 }
 
-// TestAssistantSessionPasswordGate 无密码→401；正确密码→200；错误密码→401。
+// TestAssistantSessionPasswordGate 无密码→200 noPassword 放行；错误密码→401；正确密码→200。
 func TestAssistantSessionPasswordGate(t *testing.T) {
 	a := testApp(t)
 	a.mu.Lock()
@@ -141,9 +141,16 @@ func TestAssistantSessionPasswordGate(t *testing.T) {
 	id := as.ID
 	a.mu.Unlock()
 
-	// 未设置账户密码 → 401
-	requireStatus(t, request(a, "POST", "/api/sessions/"+id+"/unlock-assistant",
-		map[string]string{"password": "whatever"}), 401)
+	// 未设置账户密码（ac2ec2a 新行为）→ 200 放行，回显 noPassword:true
+	w := request(a, "POST", "/api/sessions/"+id+"/unlock-assistant",
+		map[string]string{"password": "whatever"})
+	requireStatus(t, w, 200)
+	if body := w.Body.String(); !strings.Contains(body, `"ok":true`) || !strings.Contains(body, `"noPassword":true`) {
+		t.Fatalf("未设账户密码应放行并回显 noPassword: %s", body)
+	}
+	// 上面的放行已在内存中标记解锁；设置账户密码后门需重新生效，
+	// 复位内存解锁态（等价于锁屏/重启后的干净门），后续 wrong/correct 断言才有意义。
+	a.clearAssistantUnlock()
 
 	// 设置账户密码
 	a.mu.Lock()

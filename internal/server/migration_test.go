@@ -125,21 +125,33 @@ func TestMigrationIdempotent(t *testing.T) {
 	}
 }
 
-// TestMigrationRollback 目标冲突时中止、原平铺文件保留、不丢数据。
+// TestMigrationRollback 分层目标已存在且内容不一致时（d4fda74 新冲突策略）：
+// 保留目标（用户配置优先）、备份平铺源后删除平铺源、不报错，全程不丢数据。
 func TestMigrationRollback(t *testing.T) {
 	data := t.TempDir()
 	writeFlat(t, data, "settings.json", `{"model":"orig"}`)
-	// 预置一个“已存在但内容不同”的分层目标 → 应判定冲突并中止
+	// 预置一个“已存在但内容不同”的分层目标 → 保留目标、备份后删除平铺源
 	EnsureDirs(data)
 	os.WriteFile(SettingsPath(data), []byte(`{"model":"conflicting"}`), 0600)
 
-	err := MigrateFlatToLayered(data)
-	if err == nil {
-		t.Fatal("期望冲突报错，实际 nil")
+	if err := MigrateFlatToLayered(data); err != nil {
+		t.Fatalf("冲突策略已改为不报错，实际: %v", err)
 	}
-	// 原平铺文件纹丝未动
-	if b, e := os.ReadFile(filepath.Join(data, "settings.json")); e != nil || !strings.Contains(string(b), `"orig"`) {
-		t.Errorf("原平铺文件被破坏: %s %v", b, e)
+	// 分层目标（用户配置）保持不变，不被旧平铺源覆盖
+	if b, e := os.ReadFile(SettingsPath(data)); e != nil || !strings.Contains(string(b), `"conflicting"`) {
+		t.Errorf("分层目标被改动: %s %v", b, e)
+	}
+	// 平铺源已被删除（不再保留在平铺根）
+	if _, e := os.Stat(filepath.Join(data, "settings.json")); !os.IsNotExist(e) {
+		t.Error("平铺源 settings.json 应已被删除")
+	}
+	// 但原件已备份到 .integrity/migration-backup-<ts>/，可恢复
+	matches, _ := filepath.Glob(filepath.Join(IntegrityDir(data), "migration-backup-*", "settings.json"))
+	if len(matches) != 1 {
+		t.Fatalf("期望恰好 1 份平铺 settings.json 备份, 实际 %d", len(matches))
+	}
+	if b, e := os.ReadFile(matches[0]); e != nil || !strings.Contains(string(b), `"orig"`) {
+		t.Errorf("备份应保留平铺原件: %s %v", b, e)
 	}
 }
 
