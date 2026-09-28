@@ -311,10 +311,20 @@ func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (an
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "node", "-e", pluginHostJS, "call", a.pluginsPath, string(req), outFile)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
-	if out, runErr := cmd.CombinedOutput(); runErr != nil && ctx.Err() != nil {
+	// 有界读取 stdout/stderr，防止坏插件狂写致 OOM（实际结果写入 outFile，此处仅用于排障）。
+	pluginStdout := &limitedBytesWriter{limit: 64 << 10}
+	pluginStderr := &limitedBytesWriter{limit: 64 << 10}
+	cmd.Stdout = pluginStdout
+	cmd.Stderr = pluginStderr
+	runErr := cmd.Run()
+	if ctx.Err() != nil && runErr != nil {
 		return nil, errors.New("插件工具执行超时")
 	} else if runErr != nil {
-		return nil, fmt.Errorf("插件宿主失败: %s", strings.TrimSpace(string(out)))
+		detail := strings.TrimSpace(pluginStderr.String())
+		if detail == "" {
+			detail = strings.TrimSpace(pluginStdout.String())
+		}
+		return nil, fmt.Errorf("插件宿主失败: %s", detail)
 	}
 	b, err := os.ReadFile(outFile)
 	if err != nil {
