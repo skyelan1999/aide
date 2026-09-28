@@ -224,6 +224,10 @@ func (a *App) applySessionsAndMemoryReset() {
 	// aide 核心记忆 + 反馈（可再生的 cache/ 保留）。
 	_ = removeGlob(MemoryCoreDir(a.dataPath), "*.json")
 	_ = removeGlob(MemoryFeedbackDir(a.dataPath), "*.json")
+	// 核心记忆为 Markdown 落盘（*.json 通配匹配不到）：显式删除核心记忆与插件经验，
+	// 否则「会话与记忆」重置后旧记忆仍会注入。
+	_ = os.Remove(a.memoryPath())
+	_ = a.resetPluginExperience()
 	// 小秘历史与长期记忆：删文件并让 voiceAgent 重新加载为空。
 	_ = os.Remove(VoiceHistoryPath(a.dataPath))
 	_ = os.Remove(VoiceMemoryPath(a.dataPath))

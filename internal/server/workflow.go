@@ -1137,6 +1137,10 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			} else {
 				consecutiveFail[call.Function.Name] = 0
 			}
+			// MM-05：插件工具调用结果沉淀为使用经验（此处不持锁；插件归属实时解析）
+			if pid := a.pluginOwnerOf(call.Function.Name); pid != "" {
+				a.recordPluginExperience(call.Function.Name, pid, !isErr, result)
+			}
 			input = append(input, Message{Role: "tool", ToolCallID: call.ID, Content: result})
 			display := result
 			if len(display) > 2000 {

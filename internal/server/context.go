@@ -273,6 +273,15 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	if pa := a.personalityLocked(personaAide); pa.Enabled && strings.TrimSpace(pa.Prompt) != "" {
 		history[0].Content += "\n\n## 你的性格（仅影响对话风格）\n" + strings.TrimSpace(pa.Prompt)
 	}
+	// MM-05：注入已启用插件的能力域感知与使用经验（小秘会话不直接持有插件工具，跳过）
+	if s == nil || s.Kind != assistantSessionKind {
+		if capHint := a.pluginCapabilityHint(); capHint != "" {
+			history[0].Content += "\n\n" + capHint
+		}
+		if expHint := a.pluginExperienceHint(); expHint != "" {
+			history[0].Content += "\n\n" + expHint
+		}
+	}
 	var bd ContextBreakdown
 	bd.System.Bytes = len(history[0].Content)
 	bd.SystemChars = bd.System.Bytes
