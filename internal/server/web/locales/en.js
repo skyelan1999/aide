@@ -678,6 +678,8 @@ window.aideEnglish = {
   "已发送": "Sent",
   "已启用": "On",
   "已启用加密": "Encryption enabled",
+  "搜索会话 (⌘K)": "Search sessions (⌘K)",
+  "输入关键字搜索聊天记录": "Type to search your chat history",
   "已复制": "Copied",
   "复制失败": "Copy failed",
   "已导出会话为 JSON": "Conversation exported as JSON",

@@ -1784,8 +1784,9 @@ function renderSegmentedControl(control) {
     const rowActive = !control.palette || window.aideUI?.get('palette') === control.palette;
     const active = rowActive ? (buttons.find(b => b.dataset.value === current) || buttons[0]) : null;
     buttons.forEach(b => b.setAttribute('aria-pressed', b === active ? 'true' : 'false'));
-    const match = (control.options || []).find(o => o.value === current);
-    value.textContent = rowActive ? (match ? match.label : (current || '')) : '';
+    // 不在头部右侧重复显示当前选项文字：分段按钮 + 滑块已表达选中态，
+    // 否则「跟随系统」会同时出现在头部右上与激活按钮上，造成重复且遮挡预览。
+    value.textContent = '';
     thumb.style.width = (active ? active.offsetWidth : 0) + 'px';
     thumb.style.transform = 'translateX(' + (active ? active.offsetLeft : 0) + 'px)';
   };
@@ -2101,7 +2102,9 @@ async function openSettingsSheet() {
 }
 function closeSettingsSheet() {
   setSettingsOpen(false);
-  if (settingsPanel.trigger) settingsPanel.trigger.focus();
+  // 鼠标点击打开设置后，关闭时不要再 focus() 触发按钮，否则品牌按钮会残留
+  // 3px 蓝色焦点环；blur 让焦点回到 body，键盘 Tab 的 :focus-visible 不受影响。
+  if (settingsPanel.trigger) settingsPanel.trigger.blur();
   settingsPanel.trigger = null;
 }
 function bindSettingsTrigger(button) {
@@ -5085,6 +5088,13 @@ $('global-search').addEventListener('input', () => {
     });
     host.classList.remove('hidden');
   }), 300);
+});
+// 聚焦即展开搜索面板：空输入时给出提示，消除「可输入但无反应」的假可点观感。
+$('global-search').addEventListener('focus', () => {
+  if ($('global-search').value.trim()) return;
+  const host = $('search-results');
+  host.replaceChildren(el('p', 'muted', t("输入关键字搜索聊天记录")));
+  host.classList.remove('hidden');
 });
 document.addEventListener('keydown', event => {
   if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); $('global-search').focus(); $('global-search').select(); }
