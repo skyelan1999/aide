@@ -83,4 +83,19 @@ color-scheme:dark;
 --shadow-3:#00000066;
 --scrollbar-thumb:#55555b;
 --scrollbar-track:transparent;
+/* 兼容令牌：下列名称被 style.css / macos.css / app.js 内联样式引用但原未定义，
+   按既有语义体系补齐；取值一律引用既有令牌，green.css 覆盖基础色后自动继承。 */
+--faint:#8a8a94;
+--border:var(--line);
+--bg-sub:var(--bg-inset);
+--bg-hover:var(--hover);
+--bg-elevated:var(--surface-alt);
+--accent-bg:var(--chip-bg);
+--text-dim:var(--muted);
+--text-secondary:var(--muted);
+--panel2:var(--panel);
+--surface-hover:var(--hover);
+--danger-soft:color-mix(in srgb, var(--danger) 16%, transparent);
+--success-bg:color-mix(in srgb, var(--success) 16%, transparent);
+--warn-bg:color-mix(in srgb, var(--warn) 16%, transparent);
 }
