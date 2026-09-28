@@ -34,7 +34,7 @@ button.primary { border-radius: 9px; font-weight: 600; box-shadow: 0 1px 2px var
 .section-label { font-size: 11px; letter-spacing: .2px; padding: 0 9px; margin-bottom: 8px; font-weight: 500; }
 button.workspace-label { background: var(--surface); border: 0; padding: 10px 9px; margin-bottom: 0; border-radius: 8px; gap: 10px; }
 button.workspace-label:hover { background: var(--surface); }
-.ws-assistant-card button.workspace-label { background: var(--surface); border-radius: 7px 7px 0 0; }
+.ws-assistant-card button.workspace-label { background: var(--surface); border-radius: var(--radius-card) var(--radius-card) 0 0; }
 .ws-assistant-card button.workspace-label:hover { background: var(--surface-alt); }
 .workspace-label strong { font-size: 13px; font-weight: 550; }
 .workspace-label small { font-size: 11px; margin-top: 4px; }
