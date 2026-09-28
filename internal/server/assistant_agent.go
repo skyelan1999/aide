@@ -85,11 +85,13 @@ func assistantAgentToolSchemas() []any {
 func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, aideCtx string) (assistantDecision, error) {
 	va := a.voiceAgent
 	// 组装 system prompt：身份核心前置 + 动作原则 + aide 记忆（只读）+ 小秘私有记忆
-	a.mu.Lock()
-	mem := va.memory
-	a.mu.Unlock()
+	// 注意：va 可能为 nil（未初始化/降级路径），必须先判空再解引用 va.memory。
+	var mem VoiceMemory
 	aideMem := ""
 	if va != nil {
+		a.mu.Lock()
+		mem = va.memory
+		a.mu.Unlock()
 		aideMem = va.readAideMemory()
 	}
 	aideSection := ""
