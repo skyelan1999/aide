@@ -1010,3 +1010,20 @@ textarea#editor,textarea#file-view-editor{position:relative}
 .ws-actions{grid-template-columns:minmax(0,1fr) 88px 88px}.ws-actions #ws-test,.ws-actions #ws-save{width:88px;min-height:36px;padding-left:6px;padding-right:6px}
 .ws-browse-dir-row{display:flex;gap:6px;align-items:center}.ws-browse-dir-row .ws-browse-item{flex:1;min-width:0}.ws-browse-rename{flex:0 0 auto;padding:5px 8px;font-size:10px}
 .context-detail-toggle{margin-left:2px;padding:0 2px;color:var(--faintest);font-size:10px;line-height:1}.context-detail-toggle:hover{color:var(--brand)}.context-card-detail{display:grid;gap:3px;margin-top:7px;padding-top:6px;border-top:1px solid var(--line-faint);font-size:8.5px;color:var(--muted)}.context-card-row{display:flex;align-items:center;justify-content:space-between;gap:5px}.context-card-row>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.context-card-row strong{color:var(--text-note);font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap}.context-card-dot{display:inline-block;width:5px;height:5px;border-radius:50%;margin:0 4px 1px 0}.context-card-kicker{color:var(--brand-text);font-size:8px}.context-card-reserve{padding-top:4px;margin-top:2px;border-top:1px dashed var(--line-faint)}.context-card-actual,.context-card-note{margin:4px 0 0;font-size:8px;line-height:1.45;color:var(--faintest)}.context-card-note{font-size:7.5px}
+
+/* SQLite 查看器：严格 CSP style-src 'self'，内联样式统一收敛为类（勿用 style="..." 属性） */
+.sqlite-empty{padding:24px;color:var(--text-secondary)}
+.sqlite-empty-center{padding:24px;text-align:center;color:var(--text-secondary)}
+.sqlite-layout{display:flex;gap:12px;height:100%}
+.sqlite-table-list{width:200px;border-right:1px solid var(--border);overflow-y:auto;padding:8px}
+.sqlite-table-item{padding:8px 12px;cursor:pointer;border-radius:6px;margin-bottom:2px;font-size:13px}
+.sqlite-table-count{color:var(--text-secondary);font-size:11px}
+.sqlite-data-pane{flex:1;overflow:auto;padding:16px}
+.sqlite-meta{margin-bottom:12px;font-size:13px;color:var(--text-secondary)}
+.sqlite-table-wrap{overflow-x:auto}
+.sqlite-table{width:100%;border-collapse:collapse;font-size:13px}
+.sqlite-table th{padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);background:var(--surface);font-weight:600}
+.sqlite-col-type{font-size:11px;font-weight:400;color:var(--text-secondary)}
+.sqlite-table td{padding:8px 12px;border-bottom:1px solid var(--border)}
+.sqlite-null{color:var(--text-secondary)}
+.sqlite-error{padding:24px;color:#e53e3e}
