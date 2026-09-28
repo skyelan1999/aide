@@ -413,7 +413,7 @@ function openStream(run) {
   });
   es.addEventListener('done', () => {
     delete state.live[run.id]; delete state.liveStable[run.id]; delete state.liveRound[run.id]; delete state.liveTool[run.id]; delete state.liveReasoning[run.id];
-    if (state.runPhase[run.id]) state.runPhase[run.id].done = true;
+    delete state.runPhase[run.id]; // run 终态，释放 phase 残留（看门狗/锁屏均跳过 done 项）
     closeStream(); state.streamRetryAt = 0;
     action(async () => {
       const id = state.session?.id; if (!id) return;
@@ -753,7 +753,7 @@ function schedulePoll() {
   const running = state.session?.runs?.find(r => r.status === 'running');
   if (running) {
     if ((!state.stream || state.stream._runId !== running.id) && (!state.streamRetryAt || Date.now() >= state.streamRetryAt)) openStream(running);
-    state.poll = setTimeout(action(async () => {
+    state.poll = setTimeout(async () => {
       const id = state.session?.id;
       if (!id) return;
       try {
@@ -770,12 +770,13 @@ function schedulePoll() {
           scheduleTitleSync(id);
           maybeAutoNarrate(running.id); // 轮询兜底：输出完成自动讲解
         }
+      } catch (e) {
+        // 轮询兜底：后端暂不可达时静默退避，避免每 1.5s 弹错误 toast 刷屏
       } finally {
-        // action() 会把异常转成 toast；重排必须在 finally 中，避免一次请求
-        // 短暂失败后永远不再同步运行状态。
+        // 重排必须在 finally 中，避免一次请求短暂失败后永远不再同步运行状态
         if (state.session?.id === id) schedulePoll();
       }
-    }), 1500);
+    }, 1500);
   } else {
     closeStream();
   }
@@ -983,7 +984,7 @@ function renderSession() {
             return b;
           };
           if (text) {
-            actions.append(mk(t("复制"), () => { navigator.clipboard.writeText(text).then(() => toast(t("已复制"))); }));
+            actions.append(mk(t("复制"), () => { navigator.clipboard.writeText(text).then(() => toast(t("已复制"))).catch(() => toast(t("复制失败"))); }));
             const rb = mk(t("朗读"), () => toggleMechanicalRead(rb, text));
             rb.classList.add('msg-btn-mech');
             actions.append(rb);
@@ -1271,6 +1272,7 @@ function showEditor() {
   $('editor').readOnly = readOnly;
   // #64: code syntax highlighting
   teardownCodeHighlight($('editor'));
+  teardownViewer($('editor-preview')); // 切文件前回收上一个可视化查看器（WebGL/PDF/Observer）
   var _cl = codeLang(state.file.path);
   if (_cl) setupCodeHighlight($('editor'), _cl);
   // 图片 / STL / PDF 为只读可视化查看器，无文本可保存，禁用保存（避免空内容覆盖原文件）；drawio 可保存
@@ -1769,7 +1771,11 @@ function renderSegmentedControl(control) {
       else window.aideUI.set(control.id, b.dataset.value);
     }
   });
-  if (window.aideUI) { window.aideUI.subscribe(apply); window.addEventListener('resize', apply); settingsPanel.refreshers.push(apply); }
+  if (window.aideUI) {
+    const unsub = window.aideUI.subscribe(apply);
+    window.addEventListener('resize', apply);
+    settingsPanel.refreshers.push({ apply: apply, unsub: unsub });
+  }
   track.append(thumb, ...buttons);
   wrap.append(head, track);
   requestAnimationFrame(apply);
@@ -2016,6 +2022,12 @@ function renderControlsInto(host, controls, description) {
 function renderSettingsSheet() {
   const nav = $('settings-nav');
   const content = $('settings-content');
+  // 每次重渲染前退订上一批 segmented 控制的 aideUI 订阅与 resize 监听，避免反复打开累积
+  for (const r of settingsPanel.refreshers) {
+    try { if (r.unsub) r.unsub(); } catch (_) {}
+    window.removeEventListener('resize', r.apply);
+  }
+  settingsPanel.refreshers = [];
   nav.replaceChildren();
   content.replaceChildren();
   const sections = window.aideI18n ? window.aideI18n.schema(settingsPanel.schema?.sections || []) : (settingsPanel.schema?.sections || []);
@@ -2060,7 +2072,7 @@ async function openSettingsSheet() {
   renderSettingsSheet(); // 每次打开强制重渲染，保证数据新鲜
   setSettingsOpen(true);
   // 面板可见后重测 thumb 几何（关闭状态下 offsetWidth 为 0）
-  requestAnimationFrame(() => settingsPanel.refreshers.forEach(fn => fn()));
+  requestAnimationFrame(() => settingsPanel.refreshers.forEach(r => r.apply()));
 }
 function closeSettingsSheet() {
   setSettingsOpen(false);
@@ -3494,7 +3506,11 @@ function sanitizeHtml(html) {
     for (const attr of [...el.attributes]) {
       const name = attr.name.toLowerCase();
       if (name.startsWith('on')) { el.removeAttribute(attr.name); continue; }
-      if ((name === 'href' || name === 'src') && /^\s*(javascript|vbscript|data:text\/html)/i.test(attr.value)) el.removeAttribute(attr.name);
+      if (name === 'href' || name === 'src') {
+        // 去掉 scheme 内的 tab/换行/空白等控制字符，堵住 java\tscript: / java\nscript: 绕过
+        const norm = (attr.value || '').replace(/[\x00-\x20]/g, '');
+        if (/^(javascript|vbscript|data:text\/html)/i.test(norm)) el.removeAttribute(attr.name);
+      }
     }
   });
   return doc.body;
@@ -3588,8 +3604,14 @@ function setupImagePreview(container, filePath, root, source) {
   };
   canvas.onwheel = (e) => { e.preventDefault(); const f = e.deltaY < 0 ? 1.1 : 0.9; scale = Math.max(0.1, Math.min(8, scale * f)); apply(); };
   canvas.onmousedown = (e) => { dragging = true; startX = e.clientX - tx; startY = e.clientY - ty; canvas.style.cursor = 'grabbing'; };
-  window.addEventListener('mousemove', (e) => { if (dragging) { tx = e.clientX - startX; ty = e.clientY - startY; apply(); } });
-  window.addEventListener('mouseup', () => { dragging = false; canvas.style.cursor = 'grab'; });
+  const onImgMove = (e) => { if (dragging) { tx = e.clientX - startX; ty = e.clientY - startY; apply(); } };
+  const onImgUp = () => { dragging = false; canvas.style.cursor = 'grab'; };
+  window.addEventListener('mousemove', onImgMove);
+  window.addEventListener('mouseup', onImgUp);
+  bindViewerTeardown(container, () => {
+    window.removeEventListener('mousemove', onImgMove);
+    window.removeEventListener('mouseup', onImgUp);
+  });
   canvas.style.cursor = 'grab';
 }
 
@@ -3620,6 +3642,18 @@ function detectWebGLContext() {
   return null;
 }
 /* STL 3D 模型预览器：Three.js + STLLoader + OrbitControls */
+/* ── 查看器资源回收：切换文件/关闭页签/卸载页面时，统一释放 WebGL/Observer/全局监听 ── */
+function teardownViewer(container) {
+  try { if (container && container._aideViewerTeardown) container._aideViewerTeardown(); } catch (_) {}
+  try { if (container) container._aideViewerTeardown = null; } catch (_) {}
+}
+function bindViewerTeardown(container, teardown) {
+  if (!container || typeof teardown !== 'function') return;
+  container._aideViewerTeardown = teardown;
+  const dlg = container.closest('dialog');
+  if (dlg) dlg.addEventListener('close', teardown, { once: true });
+  window.addEventListener('pagehide', teardown, { once: true });
+}
 async function setupStlPreview(container, filePath, root, source) {
   container.innerHTML = '';
   const loading = el('div', 'stl-loading', t('正在加载 3D 预览组件…'));
@@ -3686,12 +3720,25 @@ async function setupStlPreview(container, filePath, root, source) {
   const grid = new THREE.GridHelper(20, 20, 0x444466, 0x333355); scene.add(grid);
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true; controls.dampingFactor = 0.08;
+  let animId = 0, resizeObs = null, stlGeometry = null, stlMaterial = null;
+  let disposed = false;
+  const teardown = () => {
+    if (disposed) return; disposed = true;
+    if (animId) { cancelAnimationFrame(animId); animId = 0; }
+    if (resizeObs) { resizeObs.disconnect(); resizeObs = null; }
+    try { controls.dispose(); } catch (_) {}
+    if (stlGeometry) { try { stlGeometry.dispose(); } catch (_) {} }
+    if (stlMaterial) { try { stlMaterial.dispose(); } catch (_) {} }
+    try { renderer.dispose(); } catch (_) {}
+  };
+  bindViewerTeardown(container, teardown);
 
   fetch(rawUrl).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
     .then(buf => {
-      const geometry = new THREE.STLLoader().parse(buf);
-      geometry.computeVertexNormals(); geometry.computeBoundingBox();
-      const mesh = new THREE.Mesh(geometry, new THREE.MeshPhongMaterial({ color: 0x60a5fa, specular: 0x111111, shininess: 80 }));
+      stlGeometry = new THREE.STLLoader().parse(buf);
+      stlGeometry.computeVertexNormals(); stlGeometry.computeBoundingBox();
+      const mesh = new THREE.Mesh(stlGeometry, new THREE.MeshPhongMaterial({ color: 0x60a5fa, specular: 0x111111, shininess: 80 }));
+      stlMaterial = mesh.material;
       const bb = geometry.boundingBox; const center = new THREE.Vector3(); bb.getCenter(center);
       mesh.position.sub(center); scene.add(mesh);
       grid.position.y = bb.min.y - center.y;
@@ -3703,9 +3750,9 @@ async function setupStlPreview(container, filePath, root, source) {
       controls.target.set(0, 0, 0); controls.update();
       meta.textContent = Math.round(geometry.attributes.position.count / 3) + ' ' + t('三角面') + ' · ' + size.x.toFixed(2) + '×' + size.y.toFixed(2) + '×' + size.z.toFixed(2);
       btnReset.onclick = () => { camera.position.set(camDist, camDist * 0.7, camDist); controls.target.set(0, 0, 0); controls.update(); };
-      (function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
-      const resize = () => { const w = canvasWrap.clientWidth, h = canvasWrap.clientHeight; if (w > 0 && h > 0) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); } };
-      resize(); new ResizeObserver(resize).observe(canvasWrap);
+      (function animate() { if (disposed) return; animId = requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
+      const resize = () => { if (disposed) return; const w = canvasWrap.clientWidth, h = canvasWrap.clientHeight; if (w > 0 && h > 0) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); } };
+      resize(); resizeObs = new ResizeObserver(resize); resizeObs.observe(canvasWrap);
     }).catch(err => { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">' + t('STL 加载失败：') + escapeHtml(err.message) + '</div>'; meta.textContent = t('解析失败'); });
 }
 /* ── ZIP 查看器：只列出目录，不会在浏览器中解压或执行归档内容。 ── */
@@ -3795,8 +3842,7 @@ async function setupPdfPreview(container, filePath, root, source) {
   const setMeta = (txt) => { meta.textContent = txt; };
   const fail = (msg) => { scroll.innerHTML = ''; scroll.append(el('div', 'pdf-error', msg)); setMeta(t('加载失败')); };
   const teardown = () => { cancelled = true; if (io) { io.disconnect(); io = null; } if (pdfDoc) { try { pdfDoc.destroy(); } catch (e) {} pdfDoc = null; } };
-  const dlgEl = container.closest('dialog');
-  if (dlgEl) dlgEl.addEventListener('close', teardown, { once: true });
+  bindViewerTeardown(container, teardown);
 
   // 1) 取字节（复用图片/STL 的 raw 端点，带 access_token 查询参数）
   let buf;
@@ -3901,7 +3947,6 @@ async function setupPdfPreview(container, filePath, root, source) {
   btnZoomIn.onclick = () => { scale = Math.min(3, scale * 1.2); layoutPages(); };
   btnZoomOut.onclick = () => { scale = Math.max(0.4, scale / 1.2); layoutPages(); };
   btnFit.onclick = () => { scale = fitWidthScale(); layoutPages(); };
-  new ResizeObserver(() => { /* 宽度变化时维持适应宽度 */ }).observe(scroll);
 }
 
 /* ── DXF 矢量渲染器：dxf-parser + SVG 离线渲染 ── */
@@ -4031,12 +4076,14 @@ function setupCodeHighlight(textarea, lang) {
     pre.scrollTop = textarea.scrollTop;
     pre.scrollLeft = textarea.scrollLeft;
   }
+  textarea._aideResizeOverlay = positionOverlay;
   window.addEventListener('resize', positionOverlay);
   textarea.addEventListener('scroll', render);
   textarea.addEventListener('input', render);
   render();
 }
 function teardownCodeHighlight(textarea) {
+  if (textarea._aideResizeOverlay) { window.removeEventListener('resize', textarea._aideResizeOverlay); textarea._aideResizeOverlay = null; }
   textarea.classList.remove('code-editable');
   var wrapper = textarea.parentNode;
   if (wrapper && wrapper.classList.contains('code-wrapper')) {
@@ -4340,7 +4387,7 @@ async function setupDxfPreview(container, filePath, root, source) {
   canvas.onwheel = (e) => { e.preventDefault(); const f = e.deltaY < 0 ? 1.15 : 1 / 1.15; s = Math.max(0.05, Math.min(200, s * f)); applyVb(); };
   let dragging = false, lastX = 0, lastY = 0;
   canvas.onmousedown = (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; canvas.classList.add('grabbing'); };
-  window.addEventListener('mousemove', (e) => {
+  const onDxfMove = (e) => {
     if (!dragging) return;
     const dx = e.clientX - lastX, dy = e.clientY - lastY;
     lastX = e.clientX; lastY = e.clientY;
@@ -4348,8 +4395,14 @@ async function setupDxfPreview(container, filePath, root, source) {
     const cw = canvas.clientWidth || 1, ch = canvas.clientHeight || 1;
     cxv -= dx * vbW / cw; cyv -= dy * vbH / ch;
     applyVb();
+  };
+  const onDxfUp = () => { dragging = false; canvas.classList.remove('grabbing'); };
+  window.addEventListener('mousemove', onDxfMove);
+  window.addEventListener('mouseup', onDxfUp);
+  bindViewerTeardown(container, () => {
+    window.removeEventListener('mousemove', onDxfMove);
+    window.removeEventListener('mouseup', onDxfUp);
   });
-  window.addEventListener('mouseup', () => { dragging = false; canvas.classList.remove('grabbing'); });
   canvas.classList.add('grab');
 
   meta.textContent = entities.length + ' ' + t('个实体');
@@ -4676,6 +4729,7 @@ async function openFileViewMode() {
   $('file-view-editor').readOnly = readOnly;
   // #64: code syntax highlighting
   teardownCodeHighlight($('file-view-editor'));
+  teardownViewer($('file-view-preview')); // file-view 页签切文件前回收上一个查看器
   var _fvcl = codeLang(spec.path);
   if (_fvcl) setupCodeHighlight($('file-view-editor'), _fvcl);
   // 图片 / STL / PDF 只读查看器禁用保存；drawio 可保存
@@ -4979,12 +5033,15 @@ function ensureTrajectoryTabs() {
 
 /* ── 全局搜索（FR-92）：⌘K 聚焦，防抖检索会话缓存 ── */
 let searchTimer = null;
+let searchSeq = 0;
 $('global-search').addEventListener('input', () => {
   clearTimeout(searchTimer);
   const q = $('global-search').value.trim();
   if (!q) { $('search-results').classList.add('hidden'); return; }
   searchTimer = setTimeout(action(async () => {
+    const mySeq = ++searchSeq;
     const data = await api('/search?q=' + encodeURIComponent(q));
+    if (mySeq !== searchSeq) return; // 已有更新的查询，丢弃旧响应
     const host = $('search-results');
     host.replaceChildren();
     if (!data.results?.length) { host.append(el('p', 'muted', t("没有匹配的聊天"))); }
@@ -5109,7 +5166,7 @@ window.addEventListener('aide:language', () => {
   renderSession(); renderAttachments(); renderTrajectory(); renderSourceChips();
   refreshStrategyUI(); refreshCompactInfo(); estimateContext(); renderWorkspaceSummary(); updateSendEnabled();
   // mermaid 初始化
-if (window.mermaid) mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'loose' });
+if (window.mermaid) mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'strict' });
 async function renderMermaid() {
   if (!window.mermaid) return;
   document.querySelectorAll('div.mermaid:not([data-processed])').forEach(async el => {
@@ -5434,8 +5491,9 @@ function webSpeakReply(text) {
   const basePitch = isMale ? 0.99 : 1.1;
   const baseRate = 1.04;
   let i = 0;
+  let stopped = false; // ttsCancel()/锁屏/停止按钮 → 终止整条朗读链
   function next() {
-    if (i >= segs.length) return;
+    if (stopped || i >= segs.length) return;
     const seg = segs[i];
     const u = new SpeechSynthesisUtterance(seg);
     u.lang = 'zh-CN';
@@ -5446,8 +5504,13 @@ function webSpeakReply(text) {
     u.pitch = ask ? basePitch + 0.14 : exclaim ? basePitch + 0.06 : basePitch;
     u.rate = exclaim ? baseRate + 0.07 : ask ? baseRate - 0.04 : baseRate;
     u.volume = 1;
-    u.onend = () => { const pause = ask ? 200 : clause ? 95 : 175; i++; setTimeout(next, pause); };
-    u.onerror = () => { i++; next(); };
+    u.onend = () => { if (stopped) return; const pause = ask ? 200 : clause ? 95 : 175; i++; setTimeout(next, pause); };
+    u.onerror = (ev) => {
+      // canceled/interrupted/aborted 是主动取消，必须停链，不再排队下一句
+      const kind = ev && ev.error;
+      if (kind === 'canceled' || kind === 'interrupted' || kind === 'aborted') { stopped = true; return; }
+      i++; next();
+    };
     synth.speak(u);
   }
   next();
@@ -5984,13 +6047,14 @@ function toggleMechanicalRead(btn, text){
   const parts = mechanicalParts(text);
   if(!parts.length){ toast(t('没有可朗读的文本')); return; }
   mech.btn=btn; mech.speaking=true; btn.textContent=t('停止');
-  let i=0;
+  let i=0; let stopped=false;
   function next(){
+    if(stopped) return;
     if(i>=parts.length){ mech.speaking=false; btn.textContent=t('朗读'); mech.btn=null; return; }
     const u=new SpeechSynthesisUtterance(parts[i]);
     u.lang='zh-CN'; u.rate=1; u.pitch=1; u.volume=1; // 固定参数、无停顿无语气 → 机械
-    u.onend=()=>{ i++; next(); };
-    u.onerror=()=>{ i++; next(); };
+    u.onend=()=>{ if(stopped) return; i++; next(); };
+    u.onerror=(ev)=>{ const kind=ev&&ev.error; if(kind==='canceled'||kind==='interrupted'||kind==='aborted'){ stopped=true; return; } i++; next(); };
     window.speechSynthesis.speak(u);
   }
   // speechSynthesis.cancel() 是异步的，立即 speak 首句会被吞掉，延迟 120ms 再开读
@@ -7276,7 +7340,7 @@ async function setupSqliteViewer(container, path, root) {
     // 左侧表列表
     html += '<div style="width:200px;border-right:1px solid var(--border);overflow-y:auto;padding:8px;">';
     tables.forEach((t, i) => {
-      html += `<div class="sqlite-table-item" data-table="${t.name}" style="padding:8px 12px;cursor:pointer;border-radius:6px;margin-bottom:2px;font-size:13px;">${t.name} <span style="color:var(--text-secondary);font-size:11px;">(${t.rows} rows)</span></div>`;
+      html += `<div class="sqlite-table-item" data-table="${escapeHtml(t.name)}" style="padding:8px 12px;cursor:pointer;border-radius:6px;margin-bottom:2px;font-size:13px;">${escapeHtml(t.name)} <span style="color:var(--text-secondary);font-size:11px;">(${t.rows} rows)</span></div>`;
     });
     html += '</div>';
     // 右侧数据区
@@ -7297,21 +7361,21 @@ async function setupSqliteViewer(container, path, root) {
           tableHtml += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:13px;">';
           tableHtml += '<thead><tr>';
           data.columns.forEach(col => {
-            tableHtml += `<th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);background:var(--surface);font-weight:600;">${col.name}<div style="font-size:11px;font-weight:400;color:var(--text-secondary);">${col.type}</div></th>`;
+            tableHtml += `<th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--border);background:var(--surface);font-weight:600;">${escapeHtml(col.name)}<div style="font-size:11px;font-weight:400;color:var(--text-secondary);">${escapeHtml(col.type)}</div></th>`;
           });
           tableHtml += '</tr></thead><tbody>';
           data.rows.forEach(row => {
             tableHtml += '<tr>';
             data.columns.forEach(col => {
               const val = row[col.name];
-              tableHtml += `<td style="padding:8px 12px;border-bottom:1px solid var(--border);">${val === null ? '<span style="color:var(--text-secondary);">NULL</span>' : String(val)}</td>`;
+              tableHtml += `<td style="padding:8px 12px;border-bottom:1px solid var(--border);">${val === null ? '<span style="color:var(--text-secondary);">NULL</span>' : escapeHtml(val)}</td>`;
             });
             tableHtml += '</tr>';
           });
           tableHtml += '</tbody></table></div>';
           dataArea.innerHTML = tableHtml;
         } catch (e) {
-          dataArea.innerHTML = '<div style="padding:24px;color:#e53e3e;">加载失败: ' + e.message + '</div>';
+          dataArea.innerHTML = '<div style="padding:24px;color:#e53e3e;">加载失败: ' + escapeHtml(e.message || '') + '</div>';
         }
       };
     });
@@ -7319,6 +7383,6 @@ async function setupSqliteViewer(container, path, root) {
     const firstTable = container.querySelector('.sqlite-table-item');
     if (firstTable) firstTable.click();
   } catch (e) {
-    container.innerHTML = '<div style="padding:24px;color:#e53e3e;">加载失败: ' + e.message + '</div>';
+    container.innerHTML = '<div style="padding:24px;color:#e53e3e;">加载失败: ' + escapeHtml(e.message || '') + '</div>';
   }
 }
