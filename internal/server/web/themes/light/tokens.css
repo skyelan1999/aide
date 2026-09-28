@@ -99,4 +99,13 @@ color-scheme:light;
 --success-bg:color-mix(in srgb, var(--success) 12%, transparent);
 --warn-bg:color-mix(in srgb, var(--warn) 12%, transparent);
 --radius-card:8px;  /* 卡片统一圆角（白卡上沿 / 小秘行下沿接缝） */
+/* 工作流四阶段选中态语义令牌（P2#5 / frontend-css-004）：每阶段背景+前景成对，随主题切换 */
+--phase-req-bg:rgba(59,130,246,.14);
+--phase-req-fg:#1d4ed8;
+--phase-design-bg:rgba(139,92,246,.14);
+--phase-design-fg:#5b21b6;
+--phase-impl-bg:rgba(245,158,11,.14);
+--phase-impl-fg:#92400e;
+--phase-verify-bg:rgba(16,185,129,.14);
+--phase-verify-fg:#065f46;
 }

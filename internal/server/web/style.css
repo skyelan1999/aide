@@ -371,10 +371,10 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 }
 .phase-btn:hover { background: var(--hover); color: var(--text); }
 /* 选中态：柔和低饱和填充 + 同色系深文字 */
-.phase-requirement.selected { background: rgba(59,130,246,0.14); color: #2563eb; }
-.phase-implementation.selected { background: rgba(245,158,11,0.14); color: #b45309; }
-.phase-design.selected { background: rgba(139,92,246,0.14); color: #6d28d9; }
-.phase-verify.selected { background: rgba(16,185,129,0.14); color: #047857; }
+.phase-requirement.selected { background: var(--phase-req-bg); color: var(--phase-req-fg); }
+.phase-implementation.selected { background: var(--phase-impl-bg); color: var(--phase-impl-fg); }
+.phase-design.selected { background: var(--phase-design-bg); color: var(--phase-design-fg); }
+.phase-verify.selected { background: var(--phase-verify-bg); color: var(--phase-verify-fg); }
 @keyframes phaseIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
