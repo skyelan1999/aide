@@ -32,8 +32,8 @@ button.primary { border-radius: 9px; font-weight: 600; box-shadow: 0 1px 2px var
 .new-session { margin-bottom: 28px; min-height: 38px; padding: 9px 12px !important; font-size: 13px; }
 .new-session kbd { border-color: color-mix(in srgb, var(--on-brand) 35%, transparent); color: var(--on-brand); }
 .section-label { font-size: 11px; letter-spacing: .2px; padding: 0 9px; margin-bottom: 8px; font-weight: 500; }
-button.workspace-label { background: transparent; border: 0; padding: 10px 9px; margin-bottom: 8px; border-radius: 9px; gap: 10px; }
-button.workspace-label:hover { background: var(--hover); }
+button.workspace-label { background: var(--surface); border: 0; padding: 10px 9px; margin-bottom: 0; border-radius: 8px; gap: 10px; }
+button.workspace-label:hover { background: var(--surface); }
 .workspace-label strong { font-size: 13px; font-weight: 550; }
 .workspace-label small { font-size: 11px; margin-top: 4px; }
 .folder-icon { display: flex; align-items: center; }
