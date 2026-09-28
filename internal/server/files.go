@@ -1179,13 +1179,25 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
 	if a.workspaceMode() == "ssh" {
+		// 与本地 checkVersion 对齐：先按存在性区分“新建”与“覆盖”。
+		// readWorkspaceText 对二进制/非 UTF-8 文件会报错（validateTextContent），
+		// 旧代码把这类错误一律当作“文件不存在”，导致已存在的二进制旧文件在
+		// in.Hash=="" 时被静默覆盖、绕过哈希冲突检测。
+		exists := a.sftpExists(a.workspaceRemotePath(in.Path))
 		current, readErr := a.readWorkspaceText(in.Path)
-		if readErr == nil && hash(current) != in.Hash {
+		switch {
+		case !exists:
+			// 远端确实没有该文件：新建。若客户端却带了旧哈希，说明已被删，409。
+			if in.Hash != "" {
+				fail(w, 409, errors.New("文件已被删除，请重新打开"))
+				return
+			}
+		case readErr != nil:
+			// 文件存在但无法作为文本读取（二进制等）：不绕过冲突检测，409。
 			fail(w, 409, errors.New("文件已改变或已存在，请重新打开后再保存"))
 			return
-		}
-		if readErr != nil && in.Hash != "" {
-			fail(w, 409, errors.New("文件已被删除，请重新打开"))
+		case hash(current) != in.Hash:
+			fail(w, 409, errors.New("文件已改变或已存在，请重新打开后再保存"))
 			return
 		}
 		if err := a.writeWorkspaceText(in.Path, []byte(in.Content)); err != nil {
@@ -1352,6 +1364,9 @@ func (a *App) resolveSqlitePath(r *http.Request) (string, error) {
 	}
 	defer tmp.Close()
 	if _, err := tmp.Write(b); err != nil {
+		// 提前 return 时调用方的 defer os.Remove(tmpPath) 不会执行，需在此清理，
+		// 避免磁盘满/配额失败时临时 db 残留在系统 temp 目录。
+		os.Remove(tmp.Name())
 		return "", err
 	}
 	return tmp.Name(), nil
