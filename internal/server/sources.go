@@ -588,6 +588,25 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
+	// 来源被删除，或 SFTP 连接参数（主机/端口/用户/认证方式）变化时，关闭旧
+	// ControlMaster 并清理其临时凭据文件；否则 -O check 会命中指向旧主机的残留 socket，
+	// 后续 sftpBatchSource 仍走旧连接。下次使用时由 ensureSourceSession 以新参数重建。
+	oldSFTP := map[string]Source{}
+	for _, old := range a.sourceRegistry.Sources {
+		if old.Type == "sftp" {
+			oldSFTP[old.ID] = old
+		}
+	}
+	newByID := make(map[string]Source, len(in.Sources))
+	for _, fresh := range in.Sources {
+		newByID[fresh.ID] = fresh
+	}
+	for id, old := range oldSFTP {
+		fresh, exists := newByID[id]
+		if !exists || fresh.Type != "sftp" || sftpConnIdentity(old) != sftpConnIdentity(fresh) {
+			a.killSourceSession(id, a.sftpTargetOf(old))
+		}
+	}
 	a.sourceRegistry.Sources = in.Sources
 	// 内置来源常驻：/context（只读）+ 自动系统文档（Docs.Path 读写）；被客户端漏提交时补回
 	a.ensureBuiltinSources()
