@@ -47,12 +47,16 @@ func (a *App) resolveSessionRef(ref string) *Session {
 		if err != nil || n <= 0 {
 			return nil
 		}
+		var match *Session
 		for _, s := range a.sessions {
 			if !s.Deleted && s.Number == n {
-				return s
+				if match != nil {
+					return nil // 重复编号时拒绝随机命中；启动修复会在加载时消除正常数据中的重复。
+				}
+				match = s
 			}
 		}
-		return nil
+		return match
 	}
 	if s := a.sessions[ref]; s != nil && !s.Deleted {
 		return s

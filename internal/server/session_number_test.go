@@ -58,6 +58,70 @@ func TestSessionNumberNotReused(t *testing.T) {
 	}
 }
 
+func TestSessionNumberSurvivesPartialSettingsUpdates(t *testing.T) {
+	a := testApp(t)
+	first := mustPostSession(t, a, "设置前")
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{
+		"baseURL": "https://api.example.com", "model": "m1",
+	}), 200)
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{
+		"activeModel": "m1",
+	}), 200)
+	second := mustPostSession(t, a, "设置后")
+	if second.Number <= first.Number {
+		t.Fatalf("局部设置更新后编号回退: first=#%d second=#%d", first.Number, second.Number)
+	}
+}
+
+func TestSessionNumberDuplicatesAreRepairedOnStartup(t *testing.T) {
+	a := testApp(t)
+	first := mustPostSession(t, a, "原编号保留")
+	second := mustPostSession(t, a, "重复编号修复")
+	third := mustPostSession(t, a, "后续会话")
+
+	a.mu.Lock()
+	secondInMemory := a.sessions[second.ID]
+	secondInMemory.Number = first.Number
+	if err := a.save(secondInMemory); err != nil {
+		a.mu.Unlock()
+		t.Fatal(err)
+	}
+	a.settings.NextSessionSeq = 1
+	if err := atomicJSON(SettingsPath(a.dataPath), a.settings); err != nil {
+		a.mu.Unlock()
+		t.Fatal(err)
+	}
+	a.mu.Unlock()
+
+	restarted, err := New(a.workPath, a.reference.Name(), a.dataPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restarted.Close()
+	seen := map[int]string{}
+	maxNumber := 0
+	for _, id := range []string{first.ID, second.ID, third.ID} {
+		sess := restarted.sessions[id]
+		if sess == nil {
+			t.Fatalf("重启后会话丢失: %s", id)
+		}
+		if prev := seen[sess.Number]; prev != "" {
+			t.Fatalf("重启后编号仍重复: #%d 对应 %s 和 %s", sess.Number, prev, id)
+		}
+		seen[sess.Number] = id
+		if sess.Number > maxNumber {
+			maxNumber = sess.Number
+		}
+		got, err := restarted.getSessionTool("#" + strconv.Itoa(sess.Number))
+		if err != nil || got.ID != id {
+			t.Fatalf("#%d 未唯一解析到 %s: got=%v err=%v", sess.Number, id, got, err)
+		}
+	}
+	if restarted.settings.NextSessionSeq <= maxNumber {
+		t.Fatalf("计数器未推进到最大编号之后: next=%d max=%d", restarted.settings.NextSessionSeq, maxNumber)
+	}
+}
+
 // TestAssistantSessionIdempotent 启动两次后恰好一个小秘系统会话。
 func TestAssistantSessionIdempotent(t *testing.T) {
 	a := testApp(t)

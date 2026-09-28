@@ -45,13 +45,13 @@ func factoryResetAuditPath(data string) string {
 // writeFactoryResetAudit 追加一条出厂重置审计（时间、scope、备份路径、结果）。绝不记录凭据正文。
 func writeFactoryResetAudit(data string, scope ResetScope, backupPath, result string) {
 	entry := map[string]any{
-		"time":       time.Now().UTC().Format(time.RFC3339Nano),
-		"settings":   scope.Settings,
-		"sessions":   scope.SessionsAndMemory,
+		"time":        time.Now().UTC().Format(time.RFC3339Nano),
+		"settings":    scope.Settings,
+		"sessions":    scope.SessionsAndMemory,
 		"credentials": scope.CredentialsAndKeys,
-		"workspace":  scope.WorkspaceConfig,
-		"backupPath": backupPath,
-		"result":     result,
+		"workspace":   scope.WorkspaceConfig,
+		"backupPath":  backupPath,
+		"result":      result,
 	}
 	b, err := json.Marshal(entry)
 	if err != nil {
@@ -85,7 +85,7 @@ func (a *App) buildResetBackup() (string, error) {
 		IncludeVoiceData: true,
 		Settings:         sb,
 	}
-		if b, e := os.ReadFile(SourcesSecretsPath(a.dataPath)); e == nil && json.Valid(b) {
+	if b, e := os.ReadFile(SourcesSecretsPath(a.dataPath)); e == nil && json.Valid(b) {
 		bk.SourcesSecrets = b
 	}
 	if a.vault != nil {
@@ -233,6 +233,7 @@ func (a *App) applySessionsAndMemoryReset() {
 	_ = os.Remove(VoiceMemoryPath(a.dataPath))
 	if a.voiceAgent != nil {
 		a.voiceAgent = newVoiceAgent(a.dataPath)
+		a.voiceAgent.setAideMemoryPath(a.memoryPath())
 		a.voiceAgent.attachBroker(a.liveBroker)
 	}
 	// 性格恢复默认（aide + xiaomi），清空自定义性格密文与解锁缓存。
@@ -378,9 +379,9 @@ func (a *App) postFactoryReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonOut(w, 200, map[string]any{
-		"ok":           true,
-		"backupPath":   backupPath,
-		"needRelogin":  needRelogin,
+		"ok":            true,
+		"backupPath":    backupPath,
+		"needRelogin":   needRelogin,
 		"preservedDirs": []string{"/workspace", "/context"},
 	})
 }
@@ -415,16 +416,16 @@ func (a *App) previewFactoryReset(w http.ResponseWriter, r *http.Request) {
 			"desc": "模型 / TTS / 主题 / 权限 / 工具轮数 / 推理强度 / 沙箱 / 工作流 / 无障碍",
 		},
 		"sessionsAndMemory": map[string]any{
-			"sessionFiles":  sessions,
+			"sessionFiles":    sessions,
 			"memoryCoreFiles": memCore,
-			"desc":          "全部会话 + aide 核心记忆 + 小秘历史/记忆 + 性格恢复默认",
+			"desc":            "全部会话 + aide 核心记忆 + 小秘历史/记忆 + 性格恢复默认",
 		},
 		"credentialsAndKeys": map[string]any{
-			"hasPassword":  hasPassword,
-			"hasAPIKey":     hasAPIKey,
-			"hasVault":      hasVault,
-			"hasWebAuthn":   hasWebAuthn,
-			"desc":          "登录密码 / API Key / SSH·vault 凭据 / 来源密钥 / 调试令牌 / WebAuthn / KDF salt / access-token",
+			"hasPassword": hasPassword,
+			"hasAPIKey":   hasAPIKey,
+			"hasVault":    hasVault,
+			"hasWebAuthn": hasWebAuthn,
+			"desc":        "登录密码 / API Key / SSH·vault 凭据 / 来源密钥 / 调试令牌 / WebAuthn / KDF salt / access-token",
 		},
 		"workspaceConfig": map[string]any{
 			"desc": "工作空间连接配置回到本地默认（不删除 /workspace、/context 里的任何文件）",

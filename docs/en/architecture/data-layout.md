@@ -22,8 +22,8 @@ This document describes the target layout that refactors the legacy flat `/data`
 ├─ assistant/                voice-assistant private area (global, encrypted)
 │   ├─ voice-history.json   conversation history envelope
 │   └─ voice-memory.json     long-term memory
-├─ memory/                   main memory system
-│   ├─ core/                 core memory
+├─ memory/                   global memory and feedback cache
+│   ├─ core/                 plugin experience; migration source for legacy aide memory.md
 │   ├─ cache/               embedding/vector cache (regenerable)
 │   └─ feedback/             good/best-answer feedback
 ├─ config/                   configuration
@@ -45,6 +45,8 @@ This document describes the target layout that refactors the legacy flat `/data`
 │   ├─ index.json            id → docPath index (atomic write)
 │   └─ <sha256(docPath)>/<commentID>.json   one comment per file (incl. replies)
 ├─ certs/                    TLS cert & private key (#29, 0600)
+
+`stats/token-stats.json` stores per-call usage and immutable cost snapshots, including model, provider, input cache hit/miss counts, rate category, and computed cost. DeepSeek official-model records use the rate and Beijing-time period for that call; missing cache breakdown is marked as estimated. `stats/token-pricing.json` remains the editable fallback for other compatible providers. Existing snapshots are not rewritten when rates change.
 │   ├─ cert.pem
 │   └─ key.pem
 ├─ .integrity/               manifests / baseline / recovery log
@@ -131,6 +133,7 @@ Every check and recovery is appended to `.integrity/recovery.log`; after recover
 
 ## 6. Deployment notes
 
+- **Project memory**: local aide long-term memory lives at `<project>/.cache/aide/memory.md` and is not shared through global `/data`; SSH workspace memory is currently isolated by workspace identity under the local `.cache/projects/<id>/aide/` and does not sync with the remote repository; see `memory-access.md`.
 - **Docker volume mapping**: `/data` is a named volume, persistent across projects and upgrades; never write `/data` into a user project directory.
 - **First-boot migration**: legacy flat volumes migrate automatically on first boot, with backup and rollback; no manual step required.
 - **Permissions**: layered directories 0700, sensitive files 0600.

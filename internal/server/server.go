@@ -445,17 +445,79 @@ type PricingState struct {
 
 // TokenCallRec 逐调用记录（R08）：来源、模型、计价快照、费用。
 type TokenCallRec struct {
-	Time       string  `json:"time"`
-	Model      string  `json:"model"`
-	Provider   string  `json:"provider,omitempty"`
-	Prompt     int     `json:"prompt"`
-	Completion int     `json:"completion"`
-	Total      int     `json:"total"`
-	Estimated  bool    `json:"estimated,omitempty"`
-	Defaulted  bool    `json:"defaulted,omitempty"` // 该模型未配置费率，费用按刊例默认价（估算性质）
-	PriceIn    float64 `json:"priceIn"`
-	PriceOut   float64 `json:"priceOut"`
-	Cost       float64 `json:"cost"`
+	Time             string  `json:"time"`
+	Model            string  `json:"model"`
+	Provider         string  `json:"provider,omitempty"`
+	Prompt           int     `json:"prompt"`
+	CacheHit         int     `json:"cacheHit,omitempty"`
+	CacheMiss        int     `json:"cacheMiss,omitempty"`
+	CacheKnown       bool    `json:"cacheKnown,omitempty"`
+	Completion       int     `json:"completion"`
+	Total            int     `json:"total"`
+	Estimated        bool    `json:"estimated,omitempty"`
+	Defaulted        bool    `json:"defaulted,omitempty"` // 该模型未配置费率，费用按刊例默认价（估算性质）
+	CostEstimated    bool    `json:"costEstimated,omitempty"`
+	RateSource       string  `json:"rateSource,omitempty"`
+	Peak             bool    `json:"peak,omitempty"`
+	PriceIn          float64 `json:"priceIn"`
+	PriceInCacheHit  float64 `json:"priceInCacheHit,omitempty"`
+	PriceInCacheMiss float64 `json:"priceInCacheMiss,omitempty"`
+	PriceOut         float64 `json:"priceOut"`
+	Cost             float64 `json:"cost"`
+}
+
+// DeepSeek's published rates are CNY per million tokens. Cache-hit and
+// cache-miss input tokens have distinct prices, with peak-hour multipliers.
+func deepSeekRate(model string, at time.Time) (modelName string, priceInHit, priceInMiss, priceOut float64, peak bool) {
+	if strings.EqualFold(model, "deepseek-flash") || strings.EqualFold(model, "deepseek-v4-flash") || strings.EqualFold(model, "deepseek-v4-flash-vision-exp") {
+		modelName, priceInHit, priceInMiss, priceOut = "deepseek-flash", 0.02, 1, 4
+	} else if strings.EqualFold(model, "deepseek-v4-pro") {
+		modelName, priceInHit, priceInMiss, priceOut = "deepseek-v4-pro", 0.15, 4.5, 13.5
+	} else {
+		return "", 0, 0, 0, false
+	}
+	peak = deepSeekPeakHour(at)
+	if peak {
+		priceInHit *= 2
+		priceInMiss *= 2
+		priceOut *= 2
+	}
+	return
+}
+
+func isDeepSeekProvider(baseURL string) bool {
+	u, err := url.Parse(strings.TrimSpace(baseURL))
+	return err == nil && strings.EqualFold(u.Hostname(), "api.deepseek.com")
+}
+
+func deepSeekPeakHour(at time.Time) bool {
+	loc, err := time.LoadLocation("Asia/Shanghai")
+	if err != nil {
+		loc = time.FixedZone("CST", 8*60*60)
+	}
+	local := at.In(loc)
+	if local.Weekday() == time.Saturday || local.Weekday() == time.Sunday || isChinaPublicHoliday2026(local) {
+		return false
+	}
+	hour := local.Hour()
+	return hour >= 9 && hour < 12 || hour >= 14 && hour < 18
+}
+
+// Official holiday periods published by the State Council for 2026.
+// Weekends remain idle even when they are make-up working days, per DeepSeek.
+func isChinaPublicHoliday2026(at time.Time) bool {
+	date := at.Format("2006-01-02")
+	for _, span := range [][2]string{
+		{"2026-01-01", "2026-01-03"}, {"2026-02-15", "2026-02-23"},
+		{"2026-04-04", "2026-04-06"}, {"2026-05-01", "2026-05-05"},
+		{"2026-06-19", "2026-06-21"}, {"2026-09-25", "2026-09-27"},
+		{"2026-10-01", "2026-10-07"},
+	} {
+		if date >= span[0] && date <= span[1] {
+			return true
+		}
+	}
+	return false
 }
 
 // TokenDay 单日 Token 消耗（FR-90）。Priced 表示该日累计时存在计价快照；
@@ -779,6 +841,10 @@ func New(work, reference, data string) (*App, error) {
 			return nil, err
 		}
 	}
+	if err := a.repairSessionNumbers(); err != nil {
+		a.Close()
+		return nil, fmt.Errorf("修复会话编号失败: %w", err)
+	}
 	// #30：启动幂等确保恰好一个小秘系统会话（永久置顶、密码进入）。
 	a.ensureAssistantSession()
 	return a, nil
@@ -816,14 +882,74 @@ func (a *App) save(s *Session) error {
 // assignSessionNumber 给会话分配下一个编号 #N：单调递增、删除不复用，分配后立即持久化 settings。
 // 调用方必须已持有 a.mu（与 createSession / 子会话创建 / 启动幂等同一把锁）。
 func (a *App) assignSessionNumber(s *Session) {
-	s.Number = a.settings.NextSessionSeq
-	if s.Number <= 0 {
-		s.Number = 1
+	// settings PUT 等旧版本请求可能遗漏计数器；从现有会话再次求上界，避免编号回退。
+	maxNumber := 0
+	for _, existing := range a.sessions {
+		if existing != nil && existing.Number > maxNumber {
+			maxNumber = existing.Number
+		}
 	}
-	a.settings.NextSessionSeq = s.Number + 1
+	next := a.settings.NextSessionSeq
+	if next <= maxNumber {
+		next = maxNumber + 1
+	}
+	if next <= 0 {
+		next = 1
+	}
+	s.Number = next
+	a.settings.NextSessionSeq = next + 1
 	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings); err != nil {
 		log.Printf("持久化 nextSessionSeq 失败: %v", err)
 	}
+}
+
+// repairSessionNumbers 修复旧数据中缺失/重复的可见编号，并将计数器推进到最大编号之后。
+// 重复编号时保留最早创建的会话原编号，其余会话按创建时间和 ID 稳定分配新编号。
+func (a *App) repairSessionNumbers() error {
+	sessions := make([]*Session, 0, len(a.sessions))
+	maxNumber := 0
+	for _, s := range a.sessions {
+		if s == nil || s.Deleted {
+			continue
+		}
+		sessions = append(sessions, s)
+		if s.Number > maxNumber {
+			maxNumber = s.Number
+		}
+	}
+	sort.Slice(sessions, func(i, j int) bool {
+		if sessions[i].Created != sessions[j].Created {
+			return sessions[i].Created < sessions[j].Created
+		}
+		return sessions[i].ID < sessions[j].ID
+	})
+	seen := make(map[int]bool, len(sessions))
+	changed := make([]*Session, 0)
+	for _, s := range sessions {
+		if s.Number > 0 && !seen[s.Number] {
+			seen[s.Number] = true
+			continue
+		}
+		maxNumber++
+		s.Number = maxNumber
+		seen[s.Number] = true
+		changed = append(changed, s)
+	}
+	if a.settings.NextSessionSeq <= maxNumber {
+		a.settings.NextSessionSeq = maxNumber + 1
+		for _, s := range changed {
+			if err := a.save(s); err != nil {
+				return err
+			}
+		}
+		return atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings)
+	}
+	for _, s := range changed {
+		if err := a.save(s); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // assistantNameLocked 返回当前小秘名字（空回退"小秘"）。调用方持 a.mu。
@@ -962,6 +1088,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/directory/rename", a.renameDirectory)
 	mux.HandleFunc("GET /api/file/raw", a.readFileRaw)
 	mux.HandleFunc("GET /api/file/download", a.downloadFile)
+	mux.HandleFunc("POST /api/file/archive", a.createWorkspaceArchive)
 	mux.HandleFunc("POST /api/file/extract", a.extractArchive)
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)
@@ -989,7 +1116,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("PATCH /api/sessions/{id}", a.patchSession)
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
 	mux.HandleFunc("POST /api/sessions/{id}/unlock-assistant", a.unlockAssistantSession)   // #30 小秘会话密码门
-	mux.HandleFunc("POST /api/sessions/{id}/assistant-message", a.assistantMessageHandler) // #62 小蜜会话文字=语音（走 analyze 管线）
+	mux.HandleFunc("POST /api/sessions/{id}/assistant-message", a.assistantMessageHandler) // 小秘键盘消息，不经过语音环境过滤
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/retry", a.retryTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
@@ -1223,6 +1350,8 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	// 局部 PUT（仅改某一项）不携带以下字段，未传一律保留已存值，避免性格启用态/沙箱/轮次/设备被静默重置。
 	in.Settings.Personalities = a.settings.Personalities
 	in.Settings.PersonaCipher = a.settings.PersonaCipher
+	// 会话编号计数器是服务端维护字段，客户端设置表单不会提交，始终沿用后端值。
+	in.Settings.NextSessionSeq = a.settings.NextSessionSeq
 	if in.Settings.SandboxMode == "" {
 		in.Settings.SandboxMode = a.settings.SandboxMode
 	}
@@ -1466,7 +1595,7 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	// #62 升级：语音也走小秘 agentic 自主决策管线（与文字同一循环）。
 	// 注入模型 API Key 后跑循环；失败则回落到既有 analyze 甄别（保留能力不删）。
 	cfg.APIKey, _ = a.modelAPIKeyLocked()
-	dec, aerr := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context)
+	dec, aerr := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "voice")
 	if aerr != nil {
 		entry, err := va.analyze(r.Context(), cfg, text, in.Context)
 		if err != nil {
@@ -2252,7 +2381,8 @@ func Run() error {
 // recordTokenUsage 累计当日 Token 消耗并持久化到 /data/token-stats.json（FR-90）。
 func (a *App) recordTokenUsage(u TokenUsage) {
 	a.tokenStatsMu.Lock()
-	day := time.Now().UTC().Format("2006-01-02")
+	now := time.Now()
+	day := now.UTC().Format("2006-01-02")
 	d := a.tokenStats[day]
 	d.Prompt += u.Prompt
 	d.Completion += u.Completion
@@ -2267,8 +2397,30 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 	if !configured {
 		entry = a.pricing.Default
 	}
-	rec := TokenCallRec{Time: time.Now().UTC().Format(time.RFC3339Nano), Model: u.Model, Provider: u.Provider, Prompt: u.Prompt, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, Defaulted: !configured, PriceIn: entry.PriceIn, PriceOut: entry.PriceOut}
-	rec.Cost = float64(rec.Prompt)*rec.PriceIn/1e6 + float64(rec.Completion)*rec.PriceOut/1e6
+	rec := TokenCallRec{Time: now.UTC().Format(time.RFC3339Nano), Model: u.Model, Provider: u.Provider, Prompt: u.Prompt, CacheHit: u.CacheHit, CacheMiss: u.CacheMiss, CacheKnown: u.CacheKnown, Completion: u.Completion, Total: u.Total, Estimated: u.Estimated, Defaulted: !configured, CostEstimated: u.Estimated, PriceIn: entry.PriceIn, PriceOut: entry.PriceOut}
+	if isDeepSeekProvider(u.Provider) {
+		if officialModel, hitRate, missRate, outputRate, peak := deepSeekRate(u.Model, now); officialModel != "" {
+			rec.RateSource = "deepseek-official"
+			rec.Defaulted = false
+			rec.Peak = peak
+			rec.PriceIn = missRate // legacy clients still see the conservative cache-miss input rate
+			rec.PriceInCacheHit, rec.PriceInCacheMiss, rec.PriceOut = hitRate, missRate, outputRate
+			if !rec.CacheKnown {
+				rec.CacheMiss = rec.Prompt
+				rec.CostEstimated = true // usage lacks cache breakdown; estimate conservatively as cache miss
+			}
+			rec.Cost = (float64(rec.CacheHit)*hitRate + float64(rec.CacheMiss)*missRate + float64(rec.Completion)*outputRate) / 1e6
+		} else {
+			rec.RateSource = "custom"
+		}
+	} else if configured {
+		rec.RateSource = "custom"
+	} else {
+		rec.RateSource = "default-estimate"
+	}
+	if rec.RateSource != "deepseek-official" {
+		rec.Cost = float64(rec.Prompt)*rec.PriceIn/1e6 + float64(rec.Completion)*rec.PriceOut/1e6
+	}
 	a.tokenCalls = append(a.tokenCalls, rec)
 	if len(a.tokenCalls) > 5000 {
 		a.tokenCalls = a.tokenCalls[len(a.tokenCalls)-5000:]
@@ -2280,21 +2432,36 @@ func (a *App) recordTokenUsage(u TokenUsage) {
 
 func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
+		a.mu.Lock()
+		active := a.settings.Model
+		baseURL := a.settings.BaseURL
+		a.mu.Unlock()
 		a.tokenStatsMu.Lock()
 		p := a.pricing
-		active := a.settings.Model
 		a.tokenStatsMu.Unlock()
 		entry, configured := p.Rates[active]
 		if !configured {
 			entry = p.Default
 		}
+		deepSeekProvider := isDeepSeekProvider(baseURL)
+		_, hitRate, missRate, outputRate, peak := deepSeekRate(active, time.Now())
+		official := deepSeekProvider && hitRate > 0
+		if official {
+			entry.PriceIn, entry.PriceOut = missRate, outputRate
+			configured = true
+		}
 		jsonOut(w, 200, map[string]any{
-			"priceIn":   entry.PriceIn,
-			"priceOut":  entry.PriceOut,
-			"model":     active,
-			"defaulted": !configured,
-			"rates":     p.Rates,
-			"default":   p.Default,
+			"priceIn":          entry.PriceIn,
+			"priceOut":         entry.PriceOut,
+			"model":            active,
+			"defaulted":        !configured,
+			"rates":            p.Rates,
+			"default":          p.Default,
+			"official":         official,
+			"deepSeekProvider": deepSeekProvider,
+			"priceInCacheHit":  hitRate,
+			"priceInCacheMiss": missRate,
+			"peak":             peak,
 		})
 		return
 	}
@@ -2333,6 +2500,10 @@ func (a *App) tokenPricingHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	active := a.settings.Model
+	baseURL := a.settings.BaseURL
+	a.mu.Unlock()
 	a.tokenStatsMu.Lock()
 	defer a.tokenStatsMu.Unlock()
 	totals := TokenDay{}
@@ -2369,17 +2540,23 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		m.Total += c.Total
 		m.Calls++
 		perModel[c.Model] = m
-		if c.Defaulted {
+		if c.Defaulted || c.CostEstimated {
 			estimatedCost += c.Cost // 未配置费率的模型：刊例默认价估算，不算精确费用
 			continue
 		}
 		totalCost += c.Cost
 		modelCost[c.Model] += c.Cost
 	}
-	active := a.settings.Model
 	entry, configured := a.pricing.Rates[active]
 	if !configured {
 		entry = a.pricing.Default
+	}
+	_, hitRate, missRate, outputRate, peak := deepSeekRate(active, time.Now())
+	deepSeekProvider := isDeepSeekProvider(baseURL)
+	official := deepSeekProvider && hitRate > 0
+	if official {
+		entry.PriceIn, entry.PriceOut = missRate, outputRate
+		configured = true
 	}
 	jsonOut(w, 200, map[string]any{
 		"days":          a.tokenStats,
@@ -2390,11 +2567,17 @@ func (a *App) tokenStatsHandler(w http.ResponseWriter, r *http.Request) {
 		"modelCost":     modelCost,
 		"perModel":      perModel,
 		"pricing": map[string]any{
-			"priceIn":   entry.PriceIn,
-			"priceOut":  entry.PriceOut,
-			"defaulted": !configured,
-			"rates":     a.pricing.Rates,
-			"default":   a.pricing.Default,
+			"priceIn":          entry.PriceIn,
+			"priceOut":         entry.PriceOut,
+			"defaulted":        !configured,
+			"rates":            a.pricing.Rates,
+			"default":          a.pricing.Default,
+			"official":         official,
+			"deepSeekProvider": deepSeekProvider,
+			"model":            active,
+			"priceInCacheHit":  hitRate,
+			"priceInCacheMiss": missRate,
+			"peak":             peak,
 		},
 		"calls": len(a.tokenCalls),
 		// R08：已计价/未计价拆分；旧版汇总没有逐调用与计价证据，费用必须显示为未知

@@ -91,17 +91,17 @@ type Task struct {
 	SnapshotsTruncated  bool              `json:"snapshotsTruncated,omitempty"`  // 快照达到上限后被截断
 	// #45 子 agent 归属：spawn_subagent 派生的子任务在创建时打上父子会话身份，
 	// 供 toolLoop 记录 ToolUse.Who 及子会话编号/标题。主任务这些字段为空。
-	ParentSessionID string          `json:"parentSessionId,omitempty"` // 父会话 ID（子任务才有）
-	ChildSessionID  string          `json:"childSessionId,omitempty"`  // 本子任务所属子会话 ID
-	ChildNumber     int             `json:"childNumber,omitempty"`     // 子会话编号 #N
-	ChildTitle      string          `json:"childTitle,omitempty"`      // 子会话标题
-	Steer           chan string     `json:"-"`                         // 运行中插话通道（立即影响当前轮）
-	Queue           []string        `json:"queue,omitempty"`           // 排队消息（当前回答完后再处理）
-	Steers          []SteerMsg      `json:"steers,omitempty"`          // 运行中插话/排队消息（UI 展示用）
-	PendingQuestion json.RawMessage `json:"pendingQuestion,omitempty"` // 等待用户澄清的结构化问题
-	AnswerCh        chan string     `json:"-"`                         // 当前澄清轮次的应答通道（每轮 ask_user 新建，见 answerRound）
-	answerRound     int64           `json:"-"`                         // 澄清轮次单调 nonce：每进入一次 ask_user 自增，与本轮 AnswerCh 配对
-	discardedAnswers int64          `json:"-"`                         // 因轮次过期/任务不再 awaiting 而被丢弃的应答计数（诊断）
+	ParentSessionID  string          `json:"parentSessionId,omitempty"` // 父会话 ID（子任务才有）
+	ChildSessionID   string          `json:"childSessionId,omitempty"`  // 本子任务所属子会话 ID
+	ChildNumber      int             `json:"childNumber,omitempty"`     // 子会话编号 #N
+	ChildTitle       string          `json:"childTitle,omitempty"`      // 子会话标题
+	Steer            chan string     `json:"-"`                         // 运行中插话通道（立即影响当前轮）
+	Queue            []string        `json:"queue,omitempty"`           // 排队消息（当前回答完后再处理）
+	Steers           []SteerMsg      `json:"steers,omitempty"`          // 运行中插话/排队消息（UI 展示用）
+	PendingQuestion  json.RawMessage `json:"pendingQuestion,omitempty"` // 等待用户澄清的结构化问题
+	AnswerCh         chan string     `json:"-"`                         // 当前澄清轮次的应答通道（每轮 ask_user 新建，见 answerRound）
+	answerRound      int64           `json:"-"`                         // 澄清轮次单调 nonce：每进入一次 ask_user 自增，与本轮 AnswerCh 配对
+	discardedAnswers int64           `json:"-"`                         // 因轮次过期/任务不再 awaiting 而被丢弃的应答计数（诊断）
 }
 
 // SteerMsg 记录一条运行中用户输入。
@@ -260,8 +260,45 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	// 阶段/自动编排提示会追加到同一首条 system 消息，必须先计入再检查窗口。
 	a.applyWorkflowContext(preview, in.Mode, in.WorkflowPhase)
 	if preview.OverLimit {
-		fail(w, 400, fmt.Errorf("上下文预算超限：输入估算 %d tokens + 输出预留 %d tokens = %d，超过模型窗口 %d；请缩短任务、减少附件或调大窗口后重试", preview.InputEstimate, preview.OutputReserve, preview.TotalEstimate, preview.ContextWindow))
-		return
+		compactCfg := a.settings
+		if modelKey, keyErr := a.modelAPIKeyLocked(); keyErr != nil {
+			fail(w, 400, keyErr)
+			return
+		} else {
+			compactCfg.APIKey = modelKey
+		}
+		sessionID := s.ID
+		modelBeforeCompact := compactCfg.Model
+		a.mu.Unlock()
+		compactCtx, cancel := context.WithTimeout(r.Context(), 6*time.Minute)
+		compactErr := a.compactSessionForContext(compactCtx, sessionID, compactCfg, params.MaxTokens)
+		cancel()
+		a.mu.Lock()
+		if compactErr != nil {
+			fail(w, 400, fmt.Errorf("上下文超出模型窗口，自动压缩未完成：%w；请减少附件或新建会话后重试", compactErr))
+			return
+		}
+		s = a.sessions[sessionID]
+		if s == nil {
+			fail(w, 404, errors.New("会话在压缩期间已被删除"))
+			return
+		}
+		if a.settings.Model != modelBeforeCompact {
+			fail(w, 409, errors.New("压缩期间模型设置已变化，请重试本次请求"))
+			return
+		}
+		for _, existing := range s.Runs {
+			if existing.Status == "running" || existing.Status == "awaiting_clarification" {
+				fail(w, 409, errors.New("会话在自动压缩期间已开始其他任务，请稍后重试"))
+				return
+			}
+		}
+		preview = a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true)
+		a.applyWorkflowContext(preview, in.Mode, in.WorkflowPhase)
+		if preview.OverLimit {
+			fail(w, 400, fmt.Errorf("自动压缩后仍超出上下文预算：输入估算 %d tokens + 输出预留 %d tokens = %d，模型窗口 %d；请减少附件/提示内容或新建会话", preview.InputEstimate, preview.OutputReserve, preview.TotalEstimate, preview.ContextWindow))
+			return
+		}
 	}
 	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...) // 去掉末条指令（execute 首轮再加）
 	firstInput := preview.Messages
@@ -1433,31 +1470,57 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt, profileID string) (stri
 	return subID, subSess.Title, nil
 }
 
-// memoryPath aide 长期记忆文件：<data>/memory/core/memory.md（#31 分层 / #35 单向可见）。
+// memoryPath 当前工作区的项目记忆文件：<project>/.cache/aide/memory.md。
 // 小秘对该文件只读（readAideMemory）；aide 是唯一可写者。
 func (a *App) memoryPath() string {
-	return filepath.Join(MemoryCoreDir(a.dataPath), "memory.md")
+	return filepath.Join(a.projectCacheDir(), "memory.md")
 }
 
-// migrateLegacyAideMemory 一次性把旧版缓存在 .cache/memory.md 的 aide 记忆搬到 memory/core/。
-// 仅在新位置不存在、旧位置存在且非空时复制；失败不阻断（下次读写照旧）。
+func (a *App) projectCacheDir() string {
+	if a.wsConfig.Workspace.Mode != "ssh" && a.containerAbs != "" {
+		return filepath.Join(a.containerAbs, ".cache", "aide")
+	}
+	root := a.cacheContainer
+	if root == "" {
+		root = filepath.Join(a.workPath, ".cache")
+	}
+	if a.wsConfig.Workspace.Mode == "ssh" {
+		sum := sha256.Sum256([]byte(a.wsID()))
+		return filepath.Join(root, "projects", hex.EncodeToString(sum[:8]), "aide")
+	}
+	return filepath.Join(root, "aide")
+}
+
+// migrateLegacyAideMemory 将旧 .cache/memory.md 或全局 aide 记忆迁入当前项目 .cache/aide/。
+// 全局记忆只迁移一次，避免复制到每个后续项目；旧文件保留，便于回滚。
 func (a *App) migrateLegacyAideMemory() {
 	dst := a.memoryPath()
-	if _, err := os.Stat(dst); err == nil {
-		return // 新位置已有记忆
-	}
-	legacy := a.cacheContainer + "/memory.md"
-	b, err := os.ReadFile(legacy)
-	if err != nil || len(b) == 0 {
+	if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
 		return
 	}
-	_ = os.MkdirAll(MemoryCoreDir(a.dataPath), 0700)
-	_ = os.WriteFile(dst, b, 0600)
+	marker := filepath.Join(ConfigDir(a.dataPath), "project-memory-migrated")
+	if _, err := os.Stat(marker); err == nil {
+		return
+	}
+	if _, err := os.Stat(dst); os.IsNotExist(err) {
+		legacyProject := filepath.Join(filepath.Dir(a.projectCacheDir()), "memory.md")
+		b, readErr := os.ReadFile(legacyProject)
+		if readErr != nil || len(b) == 0 {
+			b, readErr = os.ReadFile(filepath.Join(MemoryCoreDir(a.dataPath), "memory.md"))
+		}
+		if readErr == nil && len(b) > 0 {
+			if err := os.WriteFile(dst, b, 0600); err != nil {
+				return
+			}
+		}
+	}
+	_ = os.MkdirAll(filepath.Dir(marker), 0700)
+	_ = os.WriteFile(marker, []byte(a.wsID()+"\n"), 0600)
 }
 
 func (a *App) readMemory() string {
 	// 显式权限守卫（纵深防御）：aide 只读写自己的记忆区。
-	if ok, reason := canAccessMemory(a.dataPath, callerAide, a.memoryPath(), opRead); !ok {
+	if ok, reason := canAccessProjectMemory(a.projectCacheDir(), callerAide, a.memoryPath(), opRead); !ok {
 		return "(" + reason + ")"
 	}
 	a.migrateLegacyAideMemory()
@@ -1465,14 +1528,20 @@ func (a *App) readMemory() string {
 	if err != nil {
 		return "(记忆文件为空或不存在，使用 write_memory 开始记录)"
 	}
-	return string(b)
+	return clip(string(b), 4000)
 }
 func (a *App) writeMemory(content string) string {
-	if ok, reason := canAccessMemory(a.dataPath, callerAide, a.memoryPath(), opWrite); !ok {
+	if ok, reason := canAccessProjectMemory(a.projectCacheDir(), callerAide, a.memoryPath(), opWrite); !ok {
 		return "(" + reason + ")"
 	}
 	a.migrateLegacyAideMemory()
 	existing, _ := os.ReadFile(a.memoryPath())
+	if len(existing)+len(content) > 24*1024 {
+		return "项目记忆已接近上限（24 KB）；请先整理 .cache/aide/memory.md，再添加新内容。"
+	}
+	if err := os.MkdirAll(filepath.Dir(a.memoryPath()), 0700); err != nil {
+		return "创建项目记忆目录失败: " + err.Error()
+	}
 	f, err := os.OpenFile(a.memoryPath(), os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0600)
 	if err != nil {
 		return "写入记忆失败: " + err.Error()
@@ -3163,6 +3232,59 @@ const (
 	compactMaxFolded = 400   // 单次最多折叠消息数
 )
 
+// compactSessionForContext compacts the oldest history before a request is rejected for exceeding
+// the model window. The model call is outside a.mu; commit is allowed only if the session snapshot
+// is unchanged. Caller must not hold a.mu.
+func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cfg Settings, outputReserve int) error {
+	a.mu.Lock()
+	sess := a.sessions[sessionID]
+	if sess == nil {
+		a.mu.Unlock()
+		return errors.New("会话不存在")
+	}
+	if a.compactingSessions[sessionID] {
+		a.mu.Unlock()
+		return errors.New("该会话正在压缩，请稍后重试")
+	}
+	a.compactingSessions[sessionID] = true
+	// Reserve room for the new prompt, system instructions, compacted summary, and protocol overhead.
+	keepBudget := (a.modelWindow(cfg.Model) - outputReserve - 4096) * contextBytesPerToken
+	if keepBudget > compactKeepBytes {
+		keepBudget = compactKeepBytes
+	}
+	snap, split := a.snapshotForCompactBudget(sess, keepBudget)
+	baseLen := len(sess.Messages)
+	a.mu.Unlock()
+	defer func() {
+		a.mu.Lock()
+		delete(a.compactingSessions, sessionID)
+		a.mu.Unlock()
+	}()
+	if split == 0 {
+		return errors.New("历史消息不足以压缩")
+	}
+	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact)
+	if err != nil {
+		return err
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	sess = a.sessions[sessionID]
+	if sess == nil || len(sess.Messages) != baseLen {
+		return errors.New("压缩期间会话已变化")
+	}
+	for i := 0; i < split; i++ {
+		if sess.Messages[i].Content != snap.messages[i].Content || sess.Messages[i].Role != snap.messages[i].Role {
+			return errors.New("压缩期间会话已变化")
+		}
+	}
+	sess.Compact = summary
+	sess.CompactedMessages = snap.prevCount + split
+	sess.CompactedAt = time.Now().UTC().Format(time.RFC3339Nano)
+	sess.Messages = append([]Message{}, sess.Messages[split:]...)
+	return a.save(sess)
+}
+
 type compactSnapshot struct {
 	prevCompact string
 	prevCount   int
@@ -3170,16 +3292,23 @@ type compactSnapshot struct {
 }
 
 func (a *App) snapshotForCompact(sess *Session) (compactSnapshot, int) {
+	return a.snapshotForCompactBudget(sess, compactKeepBytes)
+}
+
+func (a *App) snapshotForCompactBudget(sess *Session, keepBudget int) (compactSnapshot, int) {
 	total := 0
 	for _, m := range sess.Messages {
 		total += len(m.Content)
 	}
-	if total <= compactKeepBytes {
+	if keepBudget < 1024 {
+		keepBudget = 1024
+	}
+	if total <= keepBudget {
 		return compactSnapshot{}, 0
 	}
 	split := len(sess.Messages)
 	keep := 0
-	for split > 0 && keep < compactKeepBytes {
+	for split > 0 && keep < keepBudget {
 		split--
 		keep += len(sess.Messages[split].Content)
 	}
@@ -3306,13 +3435,18 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings) {
 	if cfg.Model == "" {
 		return
 	}
-	// R01：自动压缩必须超过 48,000 字节触发阈值
+	// 自动压缩按消息字节量和当前模型窗口阈值中较小者触发。
 	a.mu.Lock()
 	total := 0
 	for _, m := range s.Messages {
 		total += len(m.Content)
 	}
-	if total <= compactAutoBytes {
+	threshold := compactAutoBytes
+	modelThreshold := a.modelWindow(cfg.Model) * contextBytesPerToken * 55 / 100
+	if modelThreshold > compactKeepBytes && modelThreshold < threshold {
+		threshold = modelThreshold
+	}
+	if total <= threshold {
 		a.mu.Unlock()
 		return
 	}

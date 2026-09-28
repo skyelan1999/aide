@@ -15,10 +15,10 @@ import (
 
 // 消息类型（Message.Type）取值，前端据此区分渲染：
 const (
-	msgTypeVoiceIn   = "voice-in"  // 用户听到的原话
+	msgTypeVoiceIn   = "voice-in"   // 用户听到的原话
 	msgTypeVoiceNote = "voice-note" // 小蜜的甄别结论/转交说明
 	msgTypeVoiceAsk  = "voice-ask"  // 小蜜的追问
-	msgTypeTextIn    = "text-in"   // 小蜜会话视图里用户手敲的文字
+	msgTypeTextIn    = "text-in"    // 小蜜会话视图里用户手敲的文字
 )
 
 // recordAssistantExchangeLocked 把一次小秘交互（用户听到/输入的原话 + 小秘决策）
@@ -173,7 +173,7 @@ func (a *App) xiaomiHistoryLocked() []Message {
 }
 
 // assistantMessageHandler POST /api/sessions/{id}/assistant-message
-// 小秘系统会话视图的文字输入：走小秘 agentic 自主决策管线（#62 升级）。
+// 小秘系统会话视图的文字输入：直接按发给小秘的消息处理；不做语音环境过滤。
 // 入参 {text, context?}；返回小秘决策 + 回复文本 +（dispatch 时）转交的 aide 会话信息。
 // dispatch 由后端直接新建 aide 会话承接；chat/ask/silent 只留在小秘会话。
 func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
@@ -228,39 +228,10 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	// 注入模型 API Key（与 execute 一致），跑 agentic 自主决策循环
 	cfg.APIKey, _ = a.modelAPIKeyLocked()
-	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context)
+	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "text")
 	if err != nil {
-		// 兜底：agentic 循环失败则回落到既有 analyze 甄别（保留该能力不删）
-		entry, aerr := va.analyze(r.Context(), cfg, text, in.Context)
-		if aerr != nil {
-			runFallback()
-			return
-		}
-		if entry.Action == "send" && strings.TrimSpace(entry.Text) == "" {
-			entry.Text = text
-		}
-		var disp map[string]any
-		a.mu.Lock()
-		a.recordAssistantExchangeLocked(text, entry, "text")
-		if entry.Action == "send" {
-			disp = a.dispatchToAideLocked(entry.Text)
-			fire, trigger := a.onPersonalityInteractLocked(personaXiaomi)
-			var sample string
-			if fire {
-				sample = a.personalitySampleLocked(personaXiaomi)
-			}
-			a.mu.Unlock()
-			if fire {
-				go a.runAutoEvolve(personaXiaomi, modeRefine, trigger, sample)
-			}
-		} else {
-			a.mu.Unlock()
-		}
-		jsonOut(w, 200, map[string]any{
-			"action": entry.Action, "text": entry.Text, "ask": entry.Ask,
-			"mode": entry.Mode, "reason": entry.Reason, "reply": describeVoiceEntry(entry),
-			"dispatched": disp,
-		})
+		// 键盘输入绝不回落到语音 analyze 过滤器；模型不可用时按明确文字指令兜底转交。
+		runFallback()
 		return
 	}
 

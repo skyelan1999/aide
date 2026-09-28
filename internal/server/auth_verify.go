@@ -23,9 +23,10 @@ import (
 // verifyMasterIdentity 统一主身份认证入口。
 func (a *App) verifyMasterIdentity(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Password  string          `json:"password"`
-		Assertion json.RawMessage `json:"assertion"`
-		Challenge string          `json:"challenge"`
+		Password           string          `json:"password"`
+		Assertion          json.RawMessage `json:"assertion"`
+		Challenge          string          `json:"challenge"`
+		AssistantSessionID string          `json:"assistantSessionId,omitempty"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		return
@@ -43,20 +44,32 @@ func (a *App) verifyMasterIdentity(w http.ResponseWriter, r *http.Request) {
 
 	if havePw {
 		if hash == "" {
+			if err := a.unlockAssistantAfterMasterAuth(in.AssistantSessionID); err != nil {
+				fail(w, 404, err)
+				return
+			}
 			a.vaultAudit("master-auth:passwordless")
 			jsonOut(w, 200, map[string]any{"ok": true, "scope": "master", "unlocked": a.vaultIsUnlocked()})
 			return
 		}
-		ok, _ := VerifyPassword(in.Password, hash)
+		ok, needsUpgrade := VerifyPassword(in.Password, hash)
 		if !ok {
 			a.vaultAudit("master-auth:failed:password")
 			fail(w, 401, errors.New("密码错误"))
 			return
 		}
-		a.mu.Lock()
-		a.unlockVault(in.Password)
-		a.migratePendingLegacyAPIKeyLocked()
-		a.mu.Unlock()
+		if in.AssistantSessionID != "" && needsUpgrade {
+			a.migratePasswordHash(in.Password)
+		} else {
+			a.mu.Lock()
+			a.unlockVault(in.Password)
+			a.migratePendingLegacyAPIKeyLocked()
+			a.mu.Unlock()
+		}
+		if err := a.unlockAssistantAfterMasterAuth(in.AssistantSessionID); err != nil {
+			fail(w, 404, err)
+			return
+		}
 		a.vaultAudit("master-auth:password")
 		jsonOut(w, 200, map[string]any{"ok": true, "scope": "master", "unlocked": true})
 		return
@@ -84,8 +97,28 @@ func (a *App) verifyMasterIdentity(w http.ResponseWriter, r *http.Request) {
 		fail(w, 401, errors.New("指纹验证失败"))
 		return
 	}
+	if err := a.unlockAssistantAfterMasterAuth(in.AssistantSessionID); err != nil {
+		fail(w, 404, err)
+		return
+	}
 	a.vaultAudit("master-auth:webauthn")
 	jsonOut(w, 200, map[string]any{"ok": true, "scope": "master", "unlocked": a.vaultIsUnlocked()})
+}
+
+// unlockAssistantAfterMasterAuth lets a successfully verified password or
+// WebAuthn assertion open the specific assistant session that requested it.
+func (a *App) unlockAssistantAfterMasterAuth(id string) error {
+	if id == "" {
+		return nil
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	s := a.sessions[id]
+	if s == nil || s.Kind != assistantSessionKind {
+		return errors.New("不是有效的小秘系统会话")
+	}
+	a.markAssistantUnlocked(id)
+	return nil
 }
 
 // validateAssertion 校验一次 WebAuthn 登录断言（与 /api/webauthn/assertion/finish 同一流程）。

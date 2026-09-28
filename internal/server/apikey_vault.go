@@ -112,6 +112,7 @@ func (a *App) hasModelAPIKey() bool { return a.vault != nil && a.vault.Has(Vault
 // modelAPIKeyLocked 从 vault 取出解密后的模型 API Key。
 //   - 未配置 key（本地模型）：返回 ("", nil)，按原逻辑不带 Authorization。
 //   - 已配置但 vault 未解锁：返回 errVaultLocked，供模型调用给出明确提示。
+//
 // 调用方持有 a.mu。用完不应长期驻留；这里返回字符串（value copy）由调用方随 cfg 传用。
 func (a *App) modelAPIKeyLocked() (string, error) {
 	if !a.hasModelAPIKey() {
@@ -125,6 +126,19 @@ func (a *App) modelAPIKeyLocked() (string, error) {
 		return "", err
 	}
 	return string(pt), nil
+}
+
+// modelSettingsWithAPIKey returns a model settings snapshot with the key loaded
+// from the vault. The caller must not hold a.mu.
+func (a *App) modelSettingsWithAPIKey(cfg Settings) (Settings, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	key, err := a.modelAPIKeyLocked()
+	if err != nil {
+		return cfg, err
+	}
+	cfg.APIKey = key
+	return cfg, nil
 }
 
 // stageLegacyAPIKeyMigration 启动时检测旧明文 API Key（settings.json / AI_API_KEY 环境变量）。

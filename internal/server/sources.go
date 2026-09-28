@@ -450,6 +450,37 @@ func (a *App) listSources(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, map[string]any{"sources": items})
 }
 
+func defaultSourceName(s Source) string {
+	switch s.Type {
+	case "local", "skill":
+		if p := strings.TrimSpace(s.Config.Path); p != "" {
+			name := filepath.Base(filepath.Clean(p))
+			if name != "." && name != string(filepath.Separator) && name != "" {
+				return name
+			}
+		}
+	case "sftp":
+		if host := strings.TrimSpace(s.Config.Host); host != "" {
+			return host
+		}
+	case "link", "ftp", "ftps", "smb":
+		if u, err := url.Parse(strings.TrimSpace(s.Config.URL)); err == nil && u.Hostname() != "" {
+			return u.Hostname()
+		}
+	case "mcp":
+		for i := len(s.Config.Args) - 1; i >= 0; i-- {
+			arg := strings.TrimSpace(s.Config.Args[i])
+			if arg != "" && !strings.HasPrefix(arg, "-") {
+				return path.Base(arg)
+			}
+		}
+		if command := strings.TrimSpace(s.Config.Command); command != "" {
+			return filepath.Base(command)
+		}
+	}
+	return s.ID
+}
+
 func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Sources []Source `json:"sources"`
@@ -488,9 +519,6 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		}
 		seen[s.ID] = true
 		s.Name = strings.TrimSpace(s.Name)
-		if s.Name == "" {
-			s.Name = s.ID
-		}
 		switch s.Type {
 		case "local", "skill":
 			if strings.TrimSpace(s.Config.Path) == "" {
@@ -559,6 +587,9 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		default:
 			fail(w, 400, errors.New("未知来源类型"))
 			return
+		}
+		if s.Name == "" {
+			s.Name = defaultSourceName(*s)
 		}
 	}
 	a.mu.Lock()

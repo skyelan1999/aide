@@ -60,6 +60,8 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 
 任务快照记录工作区身份；旧提案、编辑器保存需要通过身份和哈希检查。文件应用为逐文件原子替换，可能部分成功。压缩用结构化摘要与近期历史构造后续请求，不保证删除 Runs 或缩小磁盘。
 
+上下文预检按模型窗口与输出预留计算预算。历史接近动态阈值时会在任务结束后压缩；若新请求预检仍超限，则先对旧消息生成摘要、保留近期原文并重算预算，再决定是否接受。摘要调用失败、会话在压缩期间变化或压缩后仍超限都会返回错误，不会发送超预算请求。项目记忆、助手脚本和中间产物按工作区写入 `.cache/aide/`；本地工作区记忆随项目目录保存，SSH 工作区记忆当前按 workspace identity 放在本机缓存，尚未做到随远端仓库同步。
+
 ## API 索引
 
 除静态资源、`/healthz` 外，`/api/` 路由需要 Bearer token；以 `server.go: Handler` 为完整注册表。
@@ -84,15 +86,15 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 | POST | `/api/context-preview` | 与运行请求共用构造器的预算预览 |
 | GET | `/api/search` | 会话全文搜索 |
 | POST | `/api/sessions/{id}/compact` | 手动摘要压缩 |
-| GET | `/api/token-stats` | 用量与费用汇总 |
-| GET / PUT | `/api/token-pricing` | 费率管理 |
+| GET | `/api/token-stats` | 用量与费用汇总；逐调用缓存命中/未命中与价格快照 |
+| GET / PUT | `/api/token-pricing` | 官方 DeepSeek 费率预览；其他模型的自定义费率管理 |
 | GET / POST | `/api/plugins` | 插件列表/上传 |
 | PUT / DELETE | `/api/plugins/{id}` | 启停/删除 |
 | GET | `/api/plugin-surface` | 插件能力清单 |
 | POST | `/api/command` | 命令执行，NDJSON 输出 |
 | POST | `/api/config/export`、`/api/config/import` | 配置备份导出/导入（信封 `aide-config-backup`，可选含密钥/语音历史） |
 | POST | `/api/sessions/{id}/runs/{run}/retry`、`/answer`、`/queue/{index}` | 重试/回答澄清问题/排队项改删升级 |
-| GET / POST | `/api/file/raw`、`/api/file/download`、`/api/file/extract`、`/api/file/rename` | 原始文件查看、文件/目录下载与 ZIP 导出、安全解压到新的工作目录、重命名；download/raw 允许 `access_token` 供浏览器资源请求使用 |
+| GET / POST | `/api/file/raw`、`/api/file/download`、`/api/file/archive`、`/api/file/extract`、`/api/file/rename` | 原始文件查看、文件/目录下载与 ZIP 导出、在工作目录原路径旁创建 ZIP、安全解压到 ZIP 同级新目录、重命名；归档创建拒绝覆盖同名文件；download/raw 允许 `access_token` 供浏览器资源请求使用 |
 | PATCH / DELETE | `/api/sessions/{id}`、`/api/sessions/archived/all` | 改 pinned/archived/删除/清空归档 |
 | POST | `/api/persona/*`（unlock/save/reset/GET）、`/api/personas/*`（GET/active）、`/api/personality/*`（GET/PUT/reset/evolve） | 性格加解密、多人格切换、性格演化 |
 | POST | `/api/voice-filter`、`/api/voice-narrate` | 小秘研判 send/ignore/standby、双向朗读 |

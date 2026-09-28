@@ -22,8 +22,8 @@ aide 把数据分为三类边界：**程序（镜像只读）/ 项目（绑定�
 ├─ assistant/                小蜜私有区（全局、加密）
 │   ├─ voice-history.json   小蜜对话历史信封
 │   └─ voice-memory.json     小蜜长期记忆
-├─ memory/                   aide 主记忆系统
-│   ├─ core/                 核心记忆
+├─ memory/                   全局记忆与反馈缓存
+│   ├─ core/                 插件经验；旧版 aide memory.md 的迁移源
 │   ├─ cache/                嵌入/向量缓存（可再生）
 │   └─ feedback/             好/坏回答反馈
 ├─ config/                   配置
@@ -45,6 +45,8 @@ aide 把数据分为三类边界：**程序（镜像只读）/ 项目（绑定�
 │   ├─ index.json            id → docPath 索引（原子写）
 │   └─ <sha256(docPath)>/<commentID>.json   单条批注（含 replies）
 ├─ certs/                    TLS 证书与私钥（#29，0600）
+
+`stats/token-stats.json` 按调用保存用量和不可变费用快照，包括模型、提供商、输入缓存命中/未命中数量、费率档位和费用。DeepSeek 官方模型按该次调用对应的费率及时段保存；缺少缓存拆分时会标记为估算。`stats/token-pricing.json` 继续为其他兼容提供商保存可编辑的备用费率。修改费率不会改写历史快照。
 │   ├─ cert.pem
 │   └─ key.pem
 ├─ .integrity/               完整性清单 / 基线 / 恢复日志
@@ -132,6 +134,7 @@ flowchart LR
 
 ## 六、部署注意事项
 
+- **项目记忆**：本地工作区的 aide 长期记忆保存在 `<project>/.cache/aide/memory.md`，不通过全局 `/data` 共享；SSH 工作区目前按 workspace identity 隔离并保存在本机 `.cache/projects/<id>/aide/`，不会随远端仓库同步；详见 `memory-access.md`。
 - **Docker volume 映射**：`/data` 为命名卷，跨项目、跨升级持久；不要把 `/data` 写进用户项目目录。
 - **首次启动迁移**：旧平铺卷在首次启动时自动迁移，全程备份可回滚；无需人工干预。
 - **权限**：分层目录 0700，敏感文件 0600。

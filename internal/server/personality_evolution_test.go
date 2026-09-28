@@ -142,6 +142,28 @@ func TestEvolveShorterKeepsCore(t *testing.T) {
 	}
 }
 
+func TestEvolvePersonalityUsesVaultAPIKey(t *testing.T) {
+	a := testApp(t)
+	const apiKey = "test-vault-model-key"
+	a.vault.Unlock(deriveKey("test-vault-password"))
+	if err := a.vault.Put(VaultIDModelAPIKey, VaultTypeModelAPIKey, "模型 API Key", []byte(apiKey), ""); err != nil {
+		t.Fatal(err)
+	}
+	gotAuthorization := ""
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuthorization = r.Header.Get("Authorization")
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"choices": []any{map[string]any{"message": map[string]string{"content": "你是 aide。请先给出结论，再简洁说明依据，并保持严谨负责。"}}}})
+	}))
+	defer srv.Close()
+	cfg := Settings{BaseURL: srv.URL, Model: "test-model"}
+	cur := Personality{Enabled: true, Prompt: "你是 aide。" + strings.Repeat("旧内容", 20)}
+	_ = a.evolvePersonality(personaAide, cur, cfg, okSample, modeRefine)
+	if gotAuthorization != "Bearer "+apiKey {
+		t.Fatalf("模型请求应使用 vault API Key，got Authorization=%q", gotAuthorization)
+	}
+}
+
 // TestEvolveLongerWithinThreshold：变长 ≤1.1× 且保留核心、与旧版有实质差异 → 采纳。
 func TestEvolveLongerWithinThreshold(t *testing.T) {
 	a := testApp(t)

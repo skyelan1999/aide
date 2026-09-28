@@ -1,0 +1,77 @@
+{
+  "id": "reference-source-edit",
+  "request": "点击引用来源左侧图标打开配置编辑，可修改该来源设置并保存。",
+  "baseline": "9c9f8521c21e64fdc181b40c03aad3f51ac3cafe",
+  "initial_status": "M docs/PRD.md\n M docs/architecture.md\n M docs/architecture/data-layout.md\n M docs/architecture/memory-access.md\n M docs/architecture/personality-evolution.md\n M docs/en/architecture/data-layout.md\n M docs/en/architecture/memory-access.md\n M docs/en/architecture/personality-evolution.md\n M docs/en/user-guide.md\n M docs/tasks/file-download-archive.json\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/cross_session_tools.go\n M internal/server/factory_reset.go\n M internal/server/files.go\n M internal/server/memory_access.go\n M internal/server/memory_access_test.go\n M internal/server/personality_evolution.go\n M internal/server/personality_evolution_test.go\n M internal/server/provider.go\n M internal/server/remediation_test.go\n M internal/server/server.go\n M internal/server/session_number_test.go\n M internal/server/sources.go\n M internal/server/voice_agent.go\n M internal/server/voice_personality.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n?? docs/tasks/context-meter-segments.json\n?? docs/tasks/deepseek-pricing-accuracy.json\n?? docs/tasks/model-window-one-million.json\n?? docs/tasks/personality-401.json\n?? docs/tasks/project-cache-context-management.json\n?? docs/tasks/reference-panel-clarity.json\n?? docs/tasks/session-number-uniqueness.json\n?? docs/tasks/source-name-autofill.json\n?? docs/tasks/xiaomi-access-reset.json\n?? internal/server/auth_verify_test.go",
+  "acceptance": [
+    "点击引用列表中自定义来源左侧图标打开该来源编辑表单，点击来源名称仍用于切换当前来源。",
+    "可修改来源名称、同类型连接参数及支持的读写标记，并以原来源 ID 保存，不创建重复来源。",
+    "密码/私钥不回显；凭据输入留空时保存其他配置不会清空已有凭据，输入新凭据时更新对应值。",
+    "内置来源不显示编辑入口，编辑保存后来源列表和当前目录正常刷新。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "docs/tasks/reference-source-edit.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户希望点击自定义引用来源左侧图标修改该来源配置。按截图将图标作为编辑入口；名称区域继续选择来源。",
+      "evidence": "2026-09-29 Safari 文件面板截图与用户请求"
+    },
+    "design": {
+      "status": "pass",
+      "summary": "将自定义来源的左侧图标单独做成编辑按钮，来源名称继续选择来源；复用新增来源对话框切换编辑模式，来源类型固定，凭据留空保持不变。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/sources.go 的 PUT /api/sources"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "图标打开来源编辑表单，预填该来源连接配置并保存到原 ID；支持名称、路径、主机、端口、用户、远程目录、URL、MCP 命令参数及读写标记。密码/密钥不回显，空值不替换已存凭据。添加来源按钮仍进入新增模式。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/web/style.css",
+        "internal/server/web/locales/en.js"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "前端脚本语法检查与 git diff --check 通过；未运行测试。未进行浏览器交互验收，CUA 当前报告 Mac 已锁定，无法自动解锁。",
+      "evidence": [
+        "node --check internal/server/web/app.js：exit 0",
+        "node --check internal/server/web/locales/en.js：exit 0",
+        "git diff --check：exit 0",
+        "CUA getState：Mac locked"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "编辑模式、中英文按钮/标题及凭据留空行为已在表单文案和任务账本中说明。",
+      "evidence": [
+        "internal/server/web/index.html",
+        "internal/server/web/locales/en.js",
+        "docs/tasks/reference-source-edit.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留此前工作树中所有其他改动和来源配置；未产生临时文件。",
+      "evidence": "git status --short --branch"
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮仅实现前端功能，未授权提交、升版、发布或重启 aide。",
+      "evidence": "用户当前请求"
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本任务对引用来源卡片图标、来源表单编辑模式和对应样式的增量；不修改已有来源数据。",
+  "handoff": "自定义引用卡片左侧图标已作为配置编辑入口；来源名称区域仍用于切换来源。编辑保存保留原 ID，允许更改名称和同类型配置；密码或密钥输入留空即保持现有凭据。前端语法与 diff 检查通过；Mac 锁定导致真实 UI 操作未验收，未运行测试、未重启服务。"
+}

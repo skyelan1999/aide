@@ -1,0 +1,82 @@
+{
+  "id": "session-number-uniqueness",
+  "request": "小蜜上下文不连贯，会话中的唯一可识别编号不是唯一的",
+  "baseline": "9c9f8521c21e64fdc181b40c03aad3f51ac3cafe",
+  "initial_status": "M docs/architecture/personality-evolution.md\n M docs/en/architecture/personality-evolution.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/auth_verify.go\n M internal/server/personality_evolution.go\n M internal/server/personality_evolution_test.go\n M internal/server/voice_personality.go\n M internal/server/web/app.js\n?? docs/tasks/personality-401.json\n?? docs/tasks/xiaomi-access-reset.json\n?? internal/server/auth_verify_test.go",
+  "acceptance": [
+    "会话编号在多次部分设置更新后仍持续递增且不重复。",
+    "重启时修复历史缺失或重复编号，编号查询能唯一返回原会话。",
+    "编号修复后计数器高于所有已分配编号，后续新会话不复用编号。"
+  ],
+  "scope": [
+    "internal/server/server.go",
+    "internal/server/cross_session_tools.go",
+    "internal/server/session_number_test.go",
+    "docs/tasks/session-number-uniqueness.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户反馈小秘上下文不连贯，截图显示会话列表存在重复 #1；用户意图是编号唯一并能准确定位会话。",
+      "evidence": [
+        "根因：/api/settings 局部 PUT 会把未提交的 NextSessionSeq 零值写回，导致新建会话编号重置。",
+        "历史重复编号会令 resolveSessionRef 按 map 遍历结果随机命中。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "部分设置更新保留服务端编号计数器；创建时按已存在最大编号兜底；启动时按创建时间及会话 ID 修复缺失/重复编号；解析层拒绝重复编号的随机匹配。",
+      "evidence": [
+        "兼容现有 #N 与会话 ID 引用。",
+        "重复编号保留最早创建会话的旧编号，其他会话从历史最大编号之后重新编号。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成计数器保留、防回退分配、启动迁移修复、歧义拒绝、回归测试和中英文用户文档更新。",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/cross_session_tools.go",
+        "internal/server/session_number_test.go",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "编号专项测试及 diff 检查通过。全包测试已启动后因执行时间较长手动停止；quick 检查有一项仓库既有文档断链失败。",
+      "evidence": [
+        "Docker golang:1.26-bookworm: go test ./internal/server -run TestSessionNumber|TestGetSessionByNumber|TestAssistantSessionTitleSync -count=1：通过。",
+        "git diff --check：通过。",
+        "python3 scripts/agent-route.py verify quick：其余 13 项通过；scripts/check_docs.py 仅报 docs/reviews/2026-09-28-requirements-alignment/README.md:130 断链。",
+        "go test ./internal/server -count=1：执行中手动停止，未判定通过。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新中英文会话编号说明，记录启动时修复旧会话编号的行为。",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "复核本任务差异并运行 git diff --check；保留此前已有改动和任务文件，未提交、未部署。",
+      "evidence": [
+        "git status --short",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未获发布或重启运行环境授权；源码修复已完成但当前运行容器尚未验证应用。",
+      "evidence": [
+        "工作流要求将发布、部署与代码修改分开授权。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回滚本任务的 server.go、cross_session_tools.go、session_number_test.go 及两份用户指南差异。启动迁移会将修复后的会话编号写回数据文件；恢复旧编号需由备份还原对应会话 JSON 和 settings.json。",
+  "handoff": "源码修复已完成。编号专项测试通过；尚未运行更新镜像，也未重启 8097 服务。快速检查唯一失败为既有文档断链 docs/reviews/2026-09-28-requirements-alignment/README.md:130。"
+}

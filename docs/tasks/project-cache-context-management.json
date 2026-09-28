@@ -1,0 +1,100 @@
+{
+  "id": "project-cache-context-management",
+  "request": "今天测试 aide 会话遇到上下文过长；参考 Codex 的上下文管理方案，并把相关脚本、生成文件及项目记忆放在随项目走的 .cache 目录中。",
+  "baseline": "9c9f8521c21e64fdc181b40c03aad3f51ac3cafe",
+  "initial_status": "M docs/architecture/personality-evolution.md\n M docs/en/architecture/personality-evolution.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/auth_verify.go\n M internal/server/cross_session_tools.go\n M internal/server/personality_evolution.go\n M internal/server/personality_evolution_test.go\n M internal/server/server.go\n M internal/server/session_number_test.go\n M internal/server/voice_personality.go\n M internal/server/web/app.js\n?? docs/tasks/personality-401.json\n?? docs/tasks/session-number-uniqueness.json\n?? docs/tasks/xiaomi-access-reset.json\n?? internal/server/auth_verify_test.go",
+  "acceptance": [
+    "上下文在接近模型窗口上限时自动压缩历史，压缩摘要保留约束、决策、文件、待办并保留最近原始对话；无法压缩时给出可执行错误，不静默丢上下文。",
+    "项目相关 memory、脚本及生成文件写入当前项目 .cache 内，不落在产品目录或用户全局记忆目录。",
+    "项目切换后记忆隔离；旧 aide 记忆可安全迁移/兼容；小秘私有记忆继续加密且与 aide 隔离。"
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/context.go",
+    "internal/server/workspace_config.go",
+    "internal/server/voice_agent.go",
+    "internal/server/memory_access.go",
+    "internal/server/factory_reset.go",
+    "internal/server/config_backup.go",
+    "internal/server/remediation_test.go",
+    "internal/server/memory_access_test.go",
+    "docs/architecture/memory-access.md",
+    "docs/en/architecture/memory-access.md",
+    "docs/architecture/data-layout.md",
+    "docs/en/architecture/data-layout.md",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户遇到会话上下文过长，要求参考 Codex 上下文管理；辅助脚本/中间文件和项目记忆应放项目 .cache，随项目隔离。",
+      "evidence": [
+        "现有自动压缩固定 48 KB 且在任务结束后执行；超窗新请求直接拒绝。",
+        "Codex 公开实现使用窗口阈值自动压缩并保留近期上下文；OpenAI Compaction 文档要求后续请求传递压缩输出与保留项。",
+        "aide 项目记忆原在全局 data/memory/core；旧 .cache/memory.md 迁移方向曾相反。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "预算校验使用现有模型兼容摘要器：模型窗口接近阈值时任务结束后压缩；发送前若仍超预算，则缩小保留区间、摘要历史、重算预算后再决定是否拒绝。项目记忆跟随本地工作区 .cache/aide，迁移旧记忆一次且保留旧文件。",
+      "evidence": [
+        "参考 Codex 的模型窗口阈值触发自动压缩、保留近期历史的思路；沿用 aide 当前 OpenAI-compatible provider，不依赖 Responses 专属接口。",
+        "小秘只读当前项目记忆；小秘私有历史仍保留在加密的 /data/assistant。",
+        "SSH 工作区使用 workspace identity 隔离的本地缓存；远端 shell 的辅助脚本仍放远端项目 .cache/aide。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已实现动态自动压缩阈值、超预算发送前压缩与重新预算、工作区 .cache/aide 项目记忆、一次性兼容迁移、助手提示引导临时文件写入 .cache/aide，并限制注入上下文的记忆长度。",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/workspace_config.go",
+        "internal/server/voice_agent.go",
+        "internal/server/memory_access.go",
+        "internal/server/factory_reset.go",
+        "internal/server/config_backup.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "针对项目隔离/旧记忆迁移/小秘只读/自动压缩/超预算发起请求运行的服务端回归通过；diff 检查通过。quick profile 有一项已有文档断链。",
+      "evidence": [
+        "Docker golang:1.26-bookworm: go test ./internal/server -run Test(ProjectAideMemory|LegacyGlobalAideMemory|ContextOverflowCompacts|StartTaskCompacts|RemediationAutoCompact|RemediationConcurrentCompaction|RemediationCompactionChain|AideCannotReadAssistantMemory|AssistantCanReadAideMemory|AssistantCannotWriteAideMemory|IsolationPolicy) -count=1：通过。",
+        "git diff --check：通过。",
+        "python3 scripts/agent-route.py verify quick：13/14 项通过；scripts/check_docs.py 报既有 docs/reviews/2026-09-28-requirements-alignment/README.md:130 断链。",
+        "完整 internal/server 套件未运行；未做浏览器或运行容器验收。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新中英文用户指南、记忆访问/数据布局架构，并修正主 PRD 的历史压缩、预算预检和记忆存储条目；记录 SSH 记忆尚不随远端仓库同步的限制。",
+      "evidence": [
+        "docs/PRD.md：SM-11/TR-05/MM-01 同步当前压缩与项目记忆行为。",
+        "docs/architecture.md、docs/architecture/data-layout.md、docs/architecture/memory-access.md 及英文对应文档记录实现边界。",
+        "docs/user-guide.md 与 docs/en/user-guide.md 描述用户可见行为与记忆上限。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "核对任务 diff、版本脚本和已有 Git 改动；仅归档本任务文件，不清理或覆盖其他任务的未提交改动。",
+      "evidence": [
+        "git diff --check：通过。",
+        "git status --short --branch：main 与 origin/main 同步；工作区含本任务及此前 personality、身份认证、小秘恢复、会话编号任务的修改，均保留。",
+        "本任务无新生成的根目录脚本或临时文件。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未运行发布流程。scripts/version.sh show/check 确认当前 0.1.12.0 RC1；升版脚本会产生提交/tag，当前提醒未明确授权该发布操作，因此保留 release 为 not_run。",
+      "evidence": [
+        "bash scripts/version.sh show：0.1.12.0 RC1。",
+        "bash scripts/version.sh check：校验通过。",
+        "未执行 version.sh bump/patch/note、提交、打 tag、构建或部署；当前 aide 容器仍为旧镜像。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回滚本任务修改的源码与文档即可恢复原行为。运行时项目记忆放在工作区 .cache/aide/memory.md；旧 memory/core/memory.md 和旧 .cache/memory.md 均保留为迁移源/回滚副本。",
+  "handoff": "源码、定向回归与文档同步已完成。版本基线为 0.1.12.0 RC1，version.sh check 通过；未执行会自动提交和打 tag 的升版/发布流程。完整 internal/server 套件未运行，未做浏览器或当前运行容器验收。SSH 工作区记忆按 workspace identity 存在本地 cache，尚未做到随远端仓库同步且未做 SSH 实机验证。quick 检查的唯一肖外失败为既有文档断链 docs/reviews/2026-09-28-requirements-alignment/README.md:130。"
+}

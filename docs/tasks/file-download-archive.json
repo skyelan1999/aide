@@ -1,12 +1,13 @@
 {
   "id": "file-download-archive",
-  "request": "在工作目录和引用的右键菜单增加文件/文件夹下载、ZIP 压缩、ZIP 预览与安全解压功能。",
+  "request": "在工作目录和引用的右键菜单增加文件/文件夹下载、ZIP 压缩、ZIP 预览与安全解压功能。 用户补充：工作目录压缩应在源路径同级创建 ZIP，而非下载；工作目录 ZIP 应适配同级目录解压。",
   "baseline": "4a7085300d50f0be85d1f67b8005c2023e873607",
   "acceptance": [
     "工作目录和引用中的文件、文件夹均可从右键菜单下载；文件夹下载为 ZIP。",
-    "工作目录和引用中的文件、文件夹均可导出 ZIP，且不修改引用来源。",
+    "工作目录文件/文件夹右键“压缩为 ZIP”在原路径同级生成 <源名称>.zip，不触发浏览器下载；目标已存在时明确报冲突且不覆盖。",
+    "引用来源为只读；其下载仍可导出 ZIP，但不允许在引用路径创建 ZIP 或解压。",
     "点击 ZIP 可在应用内预览归档目录和文件清单。",
-    "工作目录中的 ZIP 可右键安全解压到新的同级目录；引用中的解压操作保持禁用。",
+    "工作目录中的 ZIP 右键解压到以 ZIP 文件名命名的同级新目录；目标已存在时拒绝写入。",
     "归档与解压拒绝路径穿越、覆盖已有文件及超出资源限制的输入。"
   ],
   "scope": [
@@ -17,15 +18,52 @@
     "internal/server/web/style.css",
     "internal/server/web/index.html",
     "internal/server/web/locales/en.js",
-    "docs/tasks/file-download-archive.json"
+    "docs/tasks/file-download-archive.json",
+    "docs/architecture.md",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md"
   ],
   "stages": {
-    "requirements": {"status": "pass", "summary": "已确认下载、压缩、预览、解压及引用只读边界。", "evidence": "用户 2026-09-28 的连续需求"},
-    "design": {"status": "pass", "summary": "下载/压缩统一复用来源读取与目录列举；解压先解析校验，再写临时目录并原子改名。", "evidence": "internal/server/files.go 的 downloadTarget、collectArchive、extractArchive"},
-    "implementation": {"status": "pass", "summary": "新增下载、ZIP 导出、安全解压 API、ZIP 清单查看器及两类文件菜单操作。", "evidence": "internal/server/server.go、files.go、web/app.js"},
-    "verification": {"status": "not_run", "summary": "后端定向回归、JS 语法、i18n 和 diff 检查通过；当前客户端没有可接管的 Edge 窗口，未完成真实 UI 点击验收。", "evidence": "容器：go test ./internal/server -run TestWorkspaceDownloadAndArchive -count=1 -v（PASS）；go test ./internal/server -run TestReferenceDownloadAndSafeExtraction -count=1 -v（PASS）；node --check internal/server/web/app.js；node scripts/test_i18n.cjs（PASS）；git diff --check；CUA getState 无可用浏览器标签页"},
-    "documentation": {"status": "pass", "summary": "README 与架构接口索引已写明 ZIP 操作及引用只读边界。", "evidence": "README.md、docs/architecture.md"},
-    "cleanup": {"status": "pass", "summary": "仅新增受控测试和任务记录；没有删除用户数据或未跟踪工作文件。", "evidence": "git status --short"},
-    "release": {"status": "not_run", "summary": "未获本轮发布授权。", "evidence": "用户仅授权实现功能"}
+    "requirements": {
+      "status": "pass",
+      "summary": "补充确认：工作目录压缩必须在原路径同级落盘，解压选择现有 ZIP 并落到同级新目录；引用保持只读。",
+      "evidence": "用户 2026-09-29 补充需求与文件面板截图"
+    },
+    "design": {
+      "status": "pass",
+      "summary": "新增仅工作目录可调用的 POST /api/file/archive，沿用受限归档收集器，创建 <源路径>.zip；同名目标拒绝覆盖。已有解压接口保持 ZIP 同级目录与路径安全校验。",
+      "evidence": "internal/server/server.go、internal/server/files.go、internal/server/web/app.js"
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "压缩菜单改为调用落盘 API 并刷新列表；引用禁用写入型压缩，ZIP 文件禁用重复压缩；ZIP 解压菜单继续仅对工作目录 ZIP 启用。更新中英文指南与 API 索引。",
+      "evidence": "internal/server/files.go、internal/server/server.go、internal/server/web/app.js、internal/server/web/locales/en.js、docs/user-guide.md、docs/en/user-guide.md、docs/architecture.md"
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "静态与构建检查通过：Docker golang:1.26-bookworm go build ./...；gofmt -d 无差异；node --check app.js 与 locales/en.js；git diff --check。按工作区协作规则未添加或运行测试。未完成真实浏览器菜单验收：CUA 报告 Mac 已锁定，无法自动解锁。",
+      "evidence": [
+        "docker run --rm -v \"$PWD:/src\" -w /src golang:1.26-bookworm go build ./...: exit 0",
+        "docker run --rm -v \"$PWD:/src\" -w /src golang:1.26-bookworm gofmt -d internal/server/files.go internal/server/server.go: 无差异",
+        "node --check internal/server/web/app.js && node --check internal/server/web/locales/en.js: exit 0",
+        "git diff --check: exit 0",
+        "CUA getState: Native apps error, Mac locked"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "补充同级 ZIP 落盘、同名冲突、ZIP 同级解压和引用只读行为的中英文说明及 API 索引。",
+      "evidence": "docs/user-guide.md、docs/en/user-guide.md、docs/architecture.md"
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅任务范围内的实现和文档；未清理或覆盖其他已有工作树改动。无临时源码或产物新增。",
+      "evidence": "git status --short --branch；任务范围文件 diff 审阅"
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮仅授权修复文件菜单行为，未授权发布、升版、提交或重启服务。",
+      "evidence": "用户需求范围"
+    }
   }
 }

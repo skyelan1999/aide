@@ -65,6 +65,8 @@ Every attempt (success / rejected / failed / unchanged / insufficient-sample) is
 
 ## 8. Evolution Decision Flow
 
+Model requests must load the API key from the encrypted vault into the per-request settings snapshot. Manual evolution, background evolution, and Xiaomi voice profiling follow this rule; a locked vault returns an explicit unlock error. If voice profiling fails, the editable draft remains available and the model error is shown to the user.
+
 ```mermaid
 flowchart TD
     A[Interaction event] --> B{Trigger reached?}

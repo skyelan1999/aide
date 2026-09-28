@@ -77,6 +77,64 @@ func TestRemediationAutoCompactNotBlockedByHeldMutex(t *testing.T) {
 	}
 }
 
+func TestContextOverflowCompactsHistoryBeforeRetry(t *testing.T) {
+	a := testApp(t)
+	s := createSession(t, a)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": `{"goal":"keep goal","decisions":["keep decision"],"files":[],"facts":[],"pending":[]}`}}}})
+	}))
+	defer provider.Close()
+	a.mu.Lock()
+	a.settings = Settings{BaseURL: provider.URL, Model: "test", Models: []ModelRef{{ID: "test", ContextWindow: 16000}}}
+	s = a.sessions[s.ID]
+	for i := 0; i < 10; i++ {
+		s.Messages = append(s.Messages, Message{Role: "user", Content: strings.Repeat("u", 6000)}, Message{Role: "assistant", Content: strings.Repeat("a", 6000)})
+	}
+	_ = a.save(s)
+	before := a.buildContextPreview(s, "continue", "chat", "", nil, a.settings, ProfileParams{MaxTokens: 1000}, true)
+	a.mu.Unlock()
+	if !before.OverLimit {
+		t.Fatalf("fixture should exceed its context window: %+v", before)
+	}
+	if err := a.compactSessionForContext(context.Background(), s.ID, Settings{BaseURL: provider.URL, Model: "test"}, 1000); err != nil {
+		t.Fatal(err)
+	}
+	a.mu.Lock()
+	after := a.buildContextPreview(a.sessions[s.ID], "continue", "chat", "", nil, a.settings, ProfileParams{MaxTokens: 1000}, true)
+	folded := a.sessions[s.ID].CompactedMessages
+	a.mu.Unlock()
+	if folded == 0 || after.OverLimit {
+		t.Fatalf("history not compacted enough: folded=%d preview=%+v", folded, after)
+	}
+}
+
+func TestStartTaskCompactsOverBudgetHistoryBeforeProviderCall(t *testing.T) {
+	a := testApp(t)
+	s := createSession(t, a)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": `{"goal":"continue","decisions":[],"files":[],"facts":[],"pending":[]}`}}}})
+	}))
+	defer provider.Close()
+	a.mu.Lock()
+	a.settings = Settings{BaseURL: provider.URL, Model: "test", ActiveModel: "test", Models: []ModelRef{{ID: "test", ContextWindow: 16000}}}
+	s = a.sessions[s.ID]
+	for i := 0; i < 10; i++ {
+		s.Messages = append(s.Messages, Message{Role: "user", Content: strings.Repeat("u", 6000)}, Message{Role: "assistant", Content: strings.Repeat("a", 6000)})
+	}
+	_ = a.save(s)
+	a.mu.Unlock()
+	w := request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "chat", "prompt": "继续当前工作"})
+	requireStatus(t, w, 202)
+	waitTaskDone(t, a, s.ID)
+	a.mu.Lock()
+	stored := a.sessions[s.ID]
+	folded, compact, messageCount := stored.CompactedMessages, stored.Compact, len(stored.Messages)
+	a.mu.Unlock()
+	if folded == 0 || compact == "" || messageCount >= 20 {
+		t.Fatalf("超预算新请求没有先压缩历史: folded=%d summary=%q messages=%d", folded, compact, messageCount)
+	}
+}
+
 // compactForTest 模拟自动压缩路径（模型调用在锁外）。
 func (a *App) compactForTest(s *Session) (int, error) {
 	a.mu.Lock()

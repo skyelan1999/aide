@@ -281,7 +281,7 @@ func (a *App) cwdPromptLineLocked() string {
 	if dir == "" {
 		dir = "/workspace"
 	}
-	return "当前工作目录(容器内绝对路径)=" + dir + "。所有文件操作使用相对路径；禁止使用 /workspace 绝对路径，/workspace 是产品安装目录，不得写入。"
+	return "当前工作目录(容器内绝对路径)=" + dir + "。所有文件操作使用相对路径；禁止使用 /workspace 绝对路径，/workspace 是产品安装目录，不得写入。临时辅助脚本、生成的中间文件和项目记忆放在项目 .cache/aide/ 下；用户要求交付的正式文件仍写到其指定位置。"
 }
 
 // applyWorkspaceConfig 按配置切换工作空间/文档/缓存根，并清理旧 SSH 会话（FR-79 / FR-80）。
@@ -350,6 +350,11 @@ func (a *App) applyWorkspaceConfig() error {
 	}
 	_ = os.MkdirAll(cacheContainer, 0755)
 	a.cacheContainer = cacheContainer
+	_ = os.MkdirAll(a.projectCacheDir(), 0700)
+	if a.voiceAgent != nil {
+		a.voiceAgent.setAideMemoryPath(a.memoryPath())
+	}
+	a.migrateLegacyAideMemory()
 	a.killSSHSession()
 	return nil
 }

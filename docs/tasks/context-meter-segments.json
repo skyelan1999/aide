@@ -1,0 +1,81 @@
+{
+  "id": "context-meter-segments",
+  "request": "Replace collapsible context detail with segmented colored usage bar and hover details; distinguish actual upstream usage from estimates.",
+  "baseline": "9c9f8521c21e64fdc181b40c03aad3f51ac3cafe",
+  "initial_status": "M docs/PRD.md\n M docs/architecture.md\n M docs/architecture/data-layout.md\n M docs/architecture/memory-access.md\n M docs/architecture/personality-evolution.md\n M docs/en/architecture/data-layout.md\n M docs/en/architecture/memory-access.md\n M docs/en/architecture/personality-evolution.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/cross_session_tools.go\n M internal/server/factory_reset.go\n M internal/server/memory_access.go\n M internal/server/memory_access_test.go\n M internal/server/personality_evolution.go\n M internal/server/personality_evolution_test.go\n M internal/server/remediation_test.go\n M internal/server/server.go\n M internal/server/session_number_test.go\n M internal/server/voice_agent.go\n M internal/server/voice_personality.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n?? docs/tasks/personality-401.json\n?? docs/tasks/project-cache-context-management.json\n?? docs/tasks/reference-panel-clarity.json\n?? docs/tasks/session-number-uniqueness.json\n?? docs/tasks/xiaomi-access-reset.json\n?? internal/server/auth_verify_test.go",
+  "acceptance": [
+    "左侧上下文预算条按组成项使用区分色段，详情不再依赖折叠按钮。",
+    "悬停或键盘聚焦色段可查看项目名称、估算 token 数和相对上下文窗口的占比。",
+    "输出预留与输入组成视觉区分；最近一次 provider 实际 usage 与请求预算估算分别标示。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "docs/tasks/context-meter-segments.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户截图需求：用稳定的色段表达上下文分项，悬停查看该段数值，移除折叠详情；图区明确预算估算与 provider 实际 usage 的口径。",
+      "evidence": [
+        "用户本轮描述及两张上下文预算栏截图。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用 contextParts 与 /context-preview breakdown。每个输入分项相对上下文窗口绘制；输出预留用斜纹单独表示；Tooltip 同时支持 hover 与键盘 focus；最近任务 provider usage 仍在条下标注。",
+      "evidence": [
+        "internal/server/context.go:30-42 定义分项 token 为 4 字节近似或图片保守上界估算。",
+        "internal/server/context.go:108-114 定义 inputEstimate、outputReserve、totalEstimate。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "将侧栏折叠按钮和明细行改为常驻分段预算条；悬停/键盘聚焦显示分项 token 与窗口百分比；输出预留使用斜纹，最近任务 usage 保留原有实际/估算标记。",
+      "evidence": [
+        "internal/server/web/app.js 的 renderContextMeter 使用 contextParts 绘制所有预算分项及输出预留。",
+        "internal/server/web/index.html 移除旧单色 fill 和折叠入口，加入 context-bar 与常驻实际 usage 容器。",
+        "internal/server/web/style.css 添加色段、斜纹 reserve 与 Tooltip 样式。",
+        "internal/server/web/locales/en.js 添加对应新文案翻译。"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "app.js 和 en.js 的 Node 语法检查及 diff whitespace 检查通过。统一 quick 检查其余项目通过，但被当前已有文档校验错误阻断；无法执行 Go build（当前 shell 无 go 命令），桌面 Safari 也因 Mac 锁屏无法做真实悬停验收。",
+      "evidence": [
+        "node --check internal/server/web/app.js：通过。",
+        "node --check internal/server/web/locales/en.js：通过。",
+        "git diff --check：通过。",
+        "python3 scripts/agent-route.py verify quick：失败，唯一失败为 docs/reviews/2026-09-28-requirements-alignment/README.md:130 broken/nonportable link；与本任务文件无关。",
+        "go build -o /tmp/aide-context-meter ./cmd/aide：未执行，zsh: command not found: go。",
+        "Safari/CUA 状态：Mac locked，无法访问桌面浏览器完成界面悬停实测。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "此改动不改变接口或上下文计价机制；将行为、估算口径与验证限制记入任务账本。",
+      "evidence": [
+        "docs/tasks/context-meter-segments.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未生成或遗留临时文件；没有重启/覆盖用户的 aide 运行实例。保留工作区现有其他未提交更改。",
+      "evidence": [
+        "git status --short 显示原有工作项仍在；本任务只有账本新增文件。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未更新版本、未构建镜像、未重启 aide 服务；需要桌面解锁完成实际界面验收后再交付运行时。",
+      "evidence": [
+        "用户未授权发布或替换正在运行的 8097 实例。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "仅回退本任务对 app.js 的 renderContextMeter、index.html 的 sidebar context markup、style.css 的分段样式、locales/en.js 对应新文案即可恢复原来的折叠视图；不涉及数据迁移。",
+  "handoff": "源码变更已完成，当前运行服务未刷新。重新解锁 Mac 后，在本机 Safari 对上下文色段进行 hover/keyboard 检查；修复或独立确认 docs/reviews/2026-09-28-requirements-alignment/README.md:130 断链后重跑 quick。"
+}

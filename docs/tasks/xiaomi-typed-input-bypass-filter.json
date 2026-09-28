@@ -1,0 +1,76 @@
+{
+  "id": "xiaomi-typed-input-bypass-filter",
+  "request": "小秘按输入来源区分文字和语音：键盘输入作为直接发给小秘的消息，不再因“像是在和别人聊天”被语音静默过滤；语音转写保留背景声/真人对话过滤。",
+  "baseline": "9c9f8521c21e64fdc181b40c03aad3f51ac3cafe",
+  "initial_status": "M docs/PRD.md\n M docs/architecture.md\n M docs/architecture/data-layout.md\n M docs/architecture/memory-access.md\n M docs/architecture/personality-evolution.md\n M docs/en/architecture/data-layout.md\n M docs/en/architecture/memory-access.md\n M docs/en/architecture/personality-evolution.md\n M docs/en/user-guide.md\n M docs/tasks/file-download-archive.json\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/cross_session_tools.go\n M internal/server/factory_reset.go\n M internal/server/files.go\n M internal/server/memory_access.go\n M internal/server/memory_access_test.go\n M internal/server/personality_evolution.go\n M internal/server/personality_evolution_test.go\n M internal/server/provider.go\n M internal/server/remediation_test.go\n M internal/server/server.go\n M internal/server/session_number_test.go\n M internal/server/sources.go\n M internal/server/voice_agent.go\n M internal/server/voice_personality.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n?? docs/tasks/context-meter-segments.json\n?? docs/tasks/deepseek-pricing-accuracy.json\n?? docs/tasks/model-window-one-million.json\n?? docs/tasks/personality-401.json\n?? docs/tasks/project-cache-context-management.json\n?? docs/tasks/reference-panel-clarity.json\n?? docs/tasks/reference-source-edit.json\n?? docs/tasks/session-number-uniqueness.json\n?? docs/tasks/source-name-autofill.json\n?? docs/tasks/xiaomi-access-reset.json\n?? internal/server/auth_verify_test.go",
+  "acceptance": [
+    "assistant-message 键盘输入带有 text 来源标记并按直接发给小秘的消息处理，不因真人闲聊/背景声理由静默。",
+    "文字输入决策不暴露 be_silent 工具，模型调用失败时不回落到语音 analyze 甄别。",
+    "voice-filter 明确传入 voice 来源，保留原有语音背景声与真人对话过滤。"
+  ],
+  "scope": [
+    "internal/server/assistant_agent.go",
+    "internal/server/assistant_history.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "docs/tasks/xiaomi-typed-input-bypass-filter.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "根据用户截图中的键盘输入被识别成“与身边人聊天”并静默的问题，文字提交作为明确发给小秘的输入；语音转写继续使用环境过滤。",
+      "evidence": "2026-09-29 用户请求与小秘会话截图"
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用 agentic 主循环但增加 inputSource；text 源不提供 be_silent 工具并在 system prompt 明示没有环境音；voice 源原样保留。文字路径失败时保持既有直接转交兜底，不走 voice analyze。",
+      "evidence": [
+        "internal/server/assistant_agent.go",
+        "internal/server/assistant_history.go",
+        "internal/server/server.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "assistant-message 传入 text，voice-filter 传入 voice；输入来源参与提示与工具集构造。",
+      "evidence": [
+        "internal/server/assistant_agent.go",
+        "internal/server/assistant_history.go",
+        "internal/server/server.go"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "Docker Go 编译、前端语法、gofmt 和 diff 格式检查通过；未运行测试或浏览器真实交互验证。",
+      "evidence": [
+        "docker run --rm -v \"$PWD:/src\" -w /src golang:1.26-bookworm go build ./...：exit 0",
+        "node --check internal/server/web/app.js：exit 0",
+        "gofmt -d internal/server/assistant_agent.go internal/server/assistant_history.go internal/server/server.go：无差异",
+        "git diff --check：exit 0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新小秘入口注释，并新增本任务账本记录来源区分和验收条件。",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/assistant_history.go",
+        "internal/server/web/app.js",
+        "docs/tasks/xiaomi-typed-input-bypass-filter.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留工作区原有未提交改动；本任务未创建临时文件。",
+      "evidence": "git status --short --branch"
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未授权提交、升版、发布或重启运行中的 aide。",
+      "evidence": "用户请求仅要求修正输入来源过滤逻辑"
+    }
+  },
+  "release_authorization": "",
+  "rollback": "仅回退 assistant-message/voice-filter 对 runAssistantAgenticLoop 的来源参数、文字来源提示及文字路径不回落 voice analyze 的改动。",
+  "handoff": "小秘键盘消息现在作为直接发给小秘的文字处理，不再可调用 be_silent，也不会在模型调用失败时回落语音过滤器；麦克风语音仍保留背景声/真人对话甄别。已做静态编译/语法检查，未运行测试、未做浏览器交互、未重启服务。"
+}

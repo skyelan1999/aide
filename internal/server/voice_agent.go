@@ -15,14 +15,14 @@ import (
 // VoiceHistoryEntry 小秘 agent 的一条决策记录：听到了什么、怎么分析、做了什么。
 type VoiceHistoryEntry struct {
 	Time       string `json:"time"`
-	Heard      string `json:"heard"`      // 原始听到的口语
-	Summarized string `json:"summarized"` // 总结后的清晰意图
-	Action     string `json:"action"`     // send | ignore | standby | ask
-	Text       string `json:"text"`       // action=send 时=总结后的意图（前端据此发送）
-	Ask        string `json:"ask"`        // action=ask 时的单个追问
-	Reason     string `json:"reason"`     // 小秘的分析理由
+	Heard      string `json:"heard"`          // 原始听到的口语
+	Summarized string `json:"summarized"`     // 总结后的清晰意图
+	Action     string `json:"action"`         // send | ignore | standby | ask
+	Text       string `json:"text"`           // action=send 时=总结后的意图（前端据此发送）
+	Ask        string `json:"ask"`            // action=ask 时的单个追问
+	Reason     string `json:"reason"`         // 小秘的分析理由
 	Mode       string `json:"mode,omitempty"` // #41：action=send 时的发送调度 queue(默认,排队) | insert(插队,打断当前 run)
-	Stop       bool   `json:"stop,omitempty"`  // #41：本条是否为中止/止损类指令（始终插队、不受冷却限制）
+	Stop       bool   `json:"stop,omitempty"` // #41：本条是否为中止/止损类指令（始终插队、不受冷却限制）
 }
 
 // VoiceMemory 小秘的长期记忆：与主记忆区分，记录用户习惯/偏好。
@@ -59,19 +59,21 @@ type voiceHistoryFile struct {
 
 type VoiceAgent struct {
 	mu                 sync.Mutex
+	aideMemoryMu       sync.RWMutex
+	aideMemoryPath     string
 	history            []VoiceHistoryEntry // 未加密恒在内存；加密后仅解锁时持有
 	memory             VoiceMemory
 	encrypted          bool   // 历史是否启用加密
 	cachedCipher       string // 加密落盘密文，锁定时保留供解锁
 	key                []byte // 内存密钥，锁定为 nil
 	dataPath           string
-	broker             *StreamBroker // #35：可选注入；小秘据此拉取 aide 主会话实时流式输出
-	lastUrgentInsertAt time.Time     // #41：上一次【非中止类】插队时间戳，用于插队冷却
+	broker             *StreamBroker    // #35：可选注入；小秘据此拉取 aide 主会话实时流式输出
+	lastUrgentInsertAt time.Time        // #41：上一次【非中止类】插队时间戳，用于插队冷却
 	now                func() time.Time // #41：可注入时钟，测试用；运行态=time.Now
 }
 
 func newVoiceAgent(dataPath string) *VoiceAgent {
-	va := &VoiceAgent{dataPath: dataPath, now: time.Now}
+	va := &VoiceAgent{dataPath: dataPath, aideMemoryPath: aideAideMemoryFilePath(dataPath), now: time.Now}
 	if b, err := os.ReadFile(VoiceHistoryPath(dataPath)); err == nil {
 		var f voiceHistoryFile
 		if json.Unmarshal(b, &f) == nil && (f.Encrypted || f.History != nil) {
@@ -139,14 +141,17 @@ func voiceRecentSummary(recent []VoiceHistoryEntry) string {
 	return strings.Join(lines, "\n")
 }
 
-// readAideMemory 只读 aide 的长期记忆（memory/core/memory.md），返回一段摘要供小秘参考。
+// readAideMemory 只读当前项目 .cache/aide/memory.md，返回一段摘要供小秘参考。
 //
 // 单向只读：本类型【刻意不提供任何 writeAideMemory 方法】——小秘能看到 aide 记下了什么，
 // 但绝不能改写/污染 aide 的记忆（编译期保证：无写方法即不可写）。
 // 返回内容前先过 canAccessMemory 策略：小秘对 memory/core 仅读放行。
 func (va *VoiceAgent) readAideMemory() string {
-	p := aideAideMemoryFilePath(va.dataPath)
-	if ok, reason := canAccessMemory(va.dataPath, callerAssistant, p, opRead); !ok {
+	va.aideMemoryMu.RLock()
+	p := va.aideMemoryPath
+	va.aideMemoryMu.RUnlock()
+	root := filepath.Dir(p)
+	if ok, reason := canAccessProjectMemory(root, callerAssistant, p, opRead); !ok {
 		return "（无权读取 aide 记忆：" + reason + "）"
 	}
 	b, err := os.ReadFile(p)
@@ -160,7 +165,13 @@ func (va *VoiceAgent) readAideMemory() string {
 	return s
 }
 
-// aideAideMemoryFilePath aide 长期记忆文件的绝对路径（与 App.memoryPath 同一文件，#31/#35）。
+func (va *VoiceAgent) setAideMemoryPath(path string) {
+	va.aideMemoryMu.Lock()
+	va.aideMemoryPath = path
+	va.aideMemoryMu.Unlock()
+}
+
+// aideAideMemoryFilePath 兼容旧 VoiceAgent 构造方式使用的全局迁移源路径。
 func aideAideMemoryFilePath(dataPath string) string {
 	return filepath.Join(MemoryCoreDir(dataPath), "memory.md")
 }

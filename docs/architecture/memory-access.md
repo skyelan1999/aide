@@ -15,7 +15,7 @@ aide（AI 工作台）与小秘（语音秘书）共用一个进程，但两者�
 
 | 数据区 | 路径（相对 `/data`） | aide | 小秘 |
 | --- | --- | --- | --- |
-| aide 长期记忆 | `memory/core/`（`memory.md`） | 读 √ 写 √ | 读 √（只读）写 × |
+| aide 项目记忆 | `<project>/.cache/aide/memory.md` | 读 √ 写 √ | 读 √（只读）写 × |
 | 小秘长期记忆 | `assistant/voice-memory.json` | 读 × 写 × | 读 √ 写 √ |
 | 小秘对话历史信封 | `assistant/voice-history.json` | 读 × 写 × | 读 √ 写 √ |
 | aide 主会话流式输出 | 内存（`StreamBroker`） | 产生（SSE 发布） | 读 √（按会话拉取） |
@@ -26,21 +26,21 @@ aide（AI 工作台）与小秘（语音秘书）共用一个进程，但两者�
 判断依据是**路径前缀与目录归属**，不是文件名。即便文件改名/移动，只要落在正确的目录归属里，策略依然成立。权威函数在 `memory_access.go`：
 
 - `isAssistantMemoryPath(data, path)`：目标是否在 `<data>/assistant/` 整棵子树。
-- `isAideMemoryPath(data, path)`：目标是否在 `<data>/memory/core/` 整棵子树。
+- `canAccessProjectMemory(root, caller, path, op)`：项目记忆仅允许在当前 `.cache/aide/` 范围内访问；aide 可读写，小秘只读。
 - `canAccessMemory(data, caller, path, op)`：唯一权威判定，`caller ∈ {aide, assistant}`、`op ∈ {read, write}`。
 - `withinDataBase(base, target)`：用 `filepath.Rel` 做归一化，显式拦截 `..` 逃逸（跨盘符/异常挂载给出 `..` 前缀的情况也拒）。
 
 纵深防御点：
 
-- **记忆工具入口**：`read_memory` / `write_memory` 不接收路径参数（路径固定指向 `memory/core/memory.md`），入口仍调 `canAccessMemory(aide, …)` 做断言式越权检查。
+- **记忆工具入口**：`read_memory` / `write_memory` 不接收路径参数（路径固定指向当前项目 `.cache/aide/memory.md`），入口调用 `canAccessProjectMemory(aide, …)` 做断言式越权检查。
 - **工作区文件工具**：`read_file/write_file/list_files` 早已被 `safePath()` 限制在工作区内（拒绝绝对路径与 `..`），物理上碰不到 `/data`。
 - **run_shell 沙箱**：run_shell 是同容器 bash（`danger-full-access` 模式下本不拦截），新增 `shellTouchesAssistantZone()`：命中 `/data/assistant` 路径前缀或 `voice-memory.json` / `voice-history.json` 文件名即拦截，且**不受沙箱模式影响**。
 
-> aide 记忆文件从旧版 `.cache/memory.md` 归位到 `memory/core/memory.md`（#31 布局）；`migrateLegacyAideMemory()` 在首次读写时一次性复制旧记忆，不丢数据。
+> 本地项目记忆保存在工作区 `.cache/aide/memory.md`。SSH 项目记忆按 workspace identity 存于本机 `.cache/projects/<id>/aide/memory.md`，当前不会随远端仓库同步。旧版 `.cache/memory.md` 优先迁入当前项目；旧全局 `memory/core/memory.md` 仅在首次访问时迁移一次。旧文件保留以便回滚，后续项目不会继承全局旧记忆。
 
 ## 四、小秘只读 aide 记忆
 
-`VoiceAgent.readAideMemory()`（`voice_agent.go`）读取 `memory/core/memory.md` 返回摘要（截断 4000 字）。本类型**刻意不提供任何 `writeAideMemory` 方法**——小秘能看不能写，写操作在编译期就不存在。
+`VoiceAgent.readAideMemory()`（`voice_agent.go`）读取当前项目 `.cache/aide/memory.md` 返回摘要（截断 4000 字）。本类型**刻意不提供任何 `writeAideMemory` 方法**——小秘能看不能写，写操作在编译期就不存在。
 
 注入点（与小秘私有记忆分两个上下文块，明确区分归属）：
 

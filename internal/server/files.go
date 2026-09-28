@@ -432,6 +432,94 @@ func (a *App) downloadFile(w http.ResponseWriter, r *http.Request) {
 	w.Write(body)
 }
 
+func encodeArchive(items []archiveItem) ([]byte, error) {
+	var buf bytes.Buffer
+	zw := zip.NewWriter(&buf)
+	for _, item := range items {
+		hdr := &zip.FileHeader{Name: item.name, Method: zip.Deflate}
+		if item.dir {
+			hdr.SetMode(os.ModeDir | 0755)
+		}
+		out, err := zw.CreateHeader(hdr)
+		if err != nil {
+			return nil, err
+		}
+		if !item.dir {
+			if _, err := out.Write(item.data); err != nil {
+				return nil, err
+			}
+		}
+	}
+	if err := zw.Close(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}
+
+// createWorkspaceArchive writes the generated ZIP alongside its source instead of returning it as a download.
+func (a *App) createWorkspaceArchive(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Root string `json:"root"`
+		Path string `json:"path"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Root != "workspace" || validArchivePath(body.Path) != nil {
+		fail(w, 400, errors.New("需要工作目录中的文件或文件夹"))
+		return
+	}
+	a.filesMu.Lock()
+	defer a.filesMu.Unlock()
+	info, err := a.workspaceFileProperties(body.Path)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	dir, _ := info["dir"].(bool)
+	items, err := a.collectArchive(body.Path, Source{}, false, dir)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	data, err := encodeArchive(items)
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	dest := body.Path + ".zip"
+	if a.workspaceMode() == "ssh" {
+		remote := a.workspaceRemotePath(dest)
+		if a.sftpExists(remote) {
+			fail(w, 409, errors.New("压缩目标已存在"))
+			return
+		}
+		if err := a.sftpWrite(remote, data); err != nil {
+			fail(w, 500, err)
+			return
+		}
+	} else {
+		f, err := a.workspace.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0644)
+		if err != nil {
+			if errors.Is(err, os.ErrExist) {
+				fail(w, 409, errors.New("压缩目标已存在"))
+			} else {
+				fail(w, 400, err)
+			}
+			return
+		}
+		if _, err := f.Write(data); err != nil {
+			f.Close()
+			_ = a.workspace.Remove(dest)
+			fail(w, 500, err)
+			return
+		}
+		if err := f.Close(); err != nil {
+			_ = a.workspace.Remove(dest)
+			fail(w, 500, err)
+			return
+		}
+	}
+	jsonOut(w, 200, map[string]string{"path": dest})
+}
+
 type extractedArchiveFile struct {
 	path string
 	data []byte
@@ -1220,6 +1308,7 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonOut(w, 200, map[string]string{"hash": hash([]byte(in.Content))})
 }
+
 // isSFTPNotExistErr 判断 sftp 读取失败是否因“远端文件不存在”。
 // sftpBatch 把 stdout+stderr 合并进错误文本；OpenSSH sftp 对缺失文件报
 // “Couldn't stat remote file: No such file”。以此与“存在但二进制不可读”区分。

@@ -1,0 +1,74 @@
+{
+  "id": "model-window-one-million",
+  "request": "Fix the model settings 1M context-window preset being rejected during save.",
+  "baseline": "9c9f8521c21e64fdc181b40c03aad3f51ac3cafe",
+  "initial_status": "M docs/PRD.md\n M docs/architecture.md\n M docs/architecture/data-layout.md\n M docs/architecture/memory-access.md\n M docs/architecture/personality-evolution.md\n M docs/en/architecture/data-layout.md\n M docs/en/architecture/memory-access.md\n M docs/en/architecture/personality-evolution.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/cross_session_tools.go\n M internal/server/factory_reset.go\n M internal/server/memory_access.go\n M internal/server/memory_access_test.go\n M internal/server/personality_evolution.go\n M internal/server/personality_evolution_test.go\n M internal/server/remediation_test.go\n M internal/server/server.go\n M internal/server/session_number_test.go\n M internal/server/voice_agent.go\n M internal/server/voice_personality.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n?? docs/tasks/context-meter-segments.json\n?? docs/tasks/personality-401.json\n?? docs/tasks/project-cache-context-management.json\n?? docs/tasks/reference-panel-clarity.json\n?? docs/tasks/session-number-uniqueness.json\n?? docs/tasks/xiaomi-access-reset.json\n?? internal/server/auth_verify_test.go",
+  "acceptance": [
+    "点击 1M 预设后，数字输入框值为 1000000 且符合 HTML 表单约束。",
+    "保存模型设置时，前端不再因 step mismatch 阻止提交；服务端范围继续为 1024–2097152。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "docs/PRD.md",
+    "docs/tasks/model-window-one-million.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户在模型设置选择 1M（1000000）并保存时收到浏览器原生提示“输入有效值”。",
+      "evidence": [
+        "用户截图显示 1M 预设被选中，数字输入框为 1000000，页面提示“输入有效值”。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "这是 HTML number 输入 step 校验导致的 stepMismatch，不是服务端上下文窗口上限。设置 step=1 可接受所有整数，再由现有 min/max 与服务端统一范围校验。",
+      "evidence": [
+        "internal/server/web/app.js:2731-2737 原 step=1024、min=1024、max=2097152；1,000,000 不是从 step base 1024 开始的 1024 倍数。",
+        "internal/server/server.go:104-132 服务端窗口范围为 1024–2097152，接受 1,000,000。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "模型窗口数字输入步长改为 1，并注明 1M 预设与 1024 步长不整除导致原生表单拦截。将 PRD 中过期的模型窗口上限改为与服务端一致的 2,097,152。",
+      "evidence": [
+        "internal/server/web/app.js:2731-2738 windowInput.step = 1。",
+        "docs/PRD.md MD-01 上限更新为 2,097,152。"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "前端脚本语法及差异空白检查通过。无法在 Safari 实际提交验证：桌面自动化报告 Mac 已锁屏。没有本机 Go 命令，未执行 Go API 回归。源码逻辑显示 1M 现在满足 step=1 和服务端范围，但保存路径仍待解锁后实测。",
+      "evidence": [
+        "node --check internal/server/web/app.js：通过。",
+        "git diff --check -- internal/server/web/app.js docs/PRD.md：通过。",
+        "Safari/CUA 状态：Mac locked，无法点保存并确认成功。",
+        "go build/test 未执行；当前 zsh 找不到 go。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "修正 PRD 过期的上下文窗口最大值，记录实际 2,097,152 上限。",
+      "evidence": [
+        "docs/PRD.md MD-01。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未生成临时文件；没有改动模型数据、密钥或运行中的 8097 服务。",
+      "evidence": [
+        "本任务仅修改模型窗口步长、对应 PRD 数值和任务记录。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未升版、构建镜像或重启服务；当前 8097 运行实例仍未包含此源码修复。",
+      "evidence": [
+        "用户未要求发布/替换运行中的服务。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "将 internal/server/web/app.js 中 windowInput.step 恢复为 1024，并将 docs/PRD.md MD-01 恢复原值即可；没有持久数据迁移。",
+  "handoff": "根因是 HTML number stepMismatch：1,000,000 虽在服务端窗口范围内，却不满足旧 step=1024。源码已改为 step=1。Mac 解锁后建议在设置里再次点选 1M 并保存，确认成功提示。"
+}

@@ -1,0 +1,74 @@
+{
+  "id": "source-name-autofill",
+  "request": "添加引用名称留空时，根据本机/Skill目标路径文件夹名或远程服务名自动生成来源名称。",
+  "baseline": "9c9f8521c21e64fdc181b40c03aad3f51ac3cafe",
+  "initial_status": "M docs/PRD.md\n M docs/architecture.md\n M docs/architecture/data-layout.md\n M docs/architecture/memory-access.md\n M docs/architecture/personality-evolution.md\n M docs/en/architecture/data-layout.md\n M docs/en/architecture/memory-access.md\n M docs/en/architecture/personality-evolution.md\n M docs/en/user-guide.md\n M docs/tasks/file-download-archive.json\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/cross_session_tools.go\n M internal/server/factory_reset.go\n M internal/server/files.go\n M internal/server/memory_access.go\n M internal/server/memory_access_test.go\n M internal/server/personality_evolution.go\n M internal/server/personality_evolution_test.go\n M internal/server/provider.go\n M internal/server/remediation_test.go\n M internal/server/server.go\n M internal/server/session_number_test.go\n M internal/server/voice_agent.go\n M internal/server/voice_personality.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n?? docs/tasks/context-meter-segments.json\n?? docs/tasks/deepseek-pricing-accuracy.json\n?? docs/tasks/model-window-one-million.json\n?? docs/tasks/personality-401.json\n?? docs/tasks/project-cache-context-management.json\n?? docs/tasks/reference-panel-clarity.json\n?? docs/tasks/session-number-uniqueness.json\n?? docs/tasks/xiaomi-access-reset.json\n?? internal/server/auth_verify_test.go",
+  "acceptance": [
+    "新增来源表单允许名称留空；手动填写时保留用户名称。",
+    "local/skill 名称留空时默认取所选绝对路径的末级文件夹名。",
+    "SFTP 和 URL 类来源名称留空时从主机名生成；MCP 来源从服务参数/命令生成。",
+    "API 提交为空名称时也执行相同的安全兜底，避免来源名退化为随机 ID。"
+  ],
+  "scope": [
+    "internal/server/sources.go",
+    "internal/server/web/index.html",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "docs/tasks/source-name-autofill.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "名称可选填；空值按路径末级目录或对应服务主机/服务名自动生成，手填名称优先。",
+      "evidence": "Safari 添加引用表单截图与 2026-09-29 用户请求"
+    },
+    "design": {
+      "status": "pass",
+      "summary": "前端提交前按来源类型推导名称以便立即展示；后端 updateSources 对 API/旧客户端的空名称提供同类型兜底。",
+      "evidence": "internal/server/web/app.js、internal/server/sources.go"
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "名称输入框改为可选，并说明自动命名规则；前端按 local/skill 路径末级目录名、SFTP/URL 主机名、MCP 参数或命令生成名称。后端对 API 空名称同样归一化，显式名称保持不变。",
+      "evidence": [
+        "internal/server/web/index.html",
+        "internal/server/web/app.js",
+        "internal/server/web/locales/en.js",
+        "internal/server/sources.go"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "Go 编译、前端语法、gofmt 与 diff 格式检查通过；未运行测试，亦未进行浏览器提交交互。",
+      "evidence": [
+        "Docker golang:1.26-bookworm go build ./...：exit 0",
+        "node --check internal/server/web/app.js：exit 0",
+        "node --check internal/server/web/locales/en.js：exit 0",
+        "gofmt -d internal/server/sources.go：无差异",
+        "git diff --check：exit 0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "表单新增中英文提示，任务账本记录来源类型与自动命名规则。",
+      "evidence": [
+        "internal/server/web/index.html",
+        "internal/server/web/locales/en.js",
+        "docs/tasks/source-name-autofill.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留其他已有工作树改动和所有来源配置；未创建临时文件。",
+      "evidence": "git status --short --branch"
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未授权提交、升版、发布或重启服务。",
+      "evidence": "当前用户请求仅为添加引用默认名称"
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本任务在表单、来源提交和名称归一化处的增量；现有来源配置不会迁移或重命名。",
+  "handoff": "新增引用时可将名称留空：本机/Skill 来源取路径末级目录名，SFTP 和 URL 来源取主机名，MCP 来源取参数中的服务名或启动命令名；手动名称优先。Go 编译和静态检查通过，未运行测试或重启正在使用的 aide 实例。"
+}

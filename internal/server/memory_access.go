@@ -8,16 +8,16 @@ import (
 
 // ── 记忆访问的单向可见策略（#35）──────────────────────────────────────────────
 //
-// 边界划分（与 paths.go 的数据目录分层一致，#31）：
+// 边界划分：项目记忆跟随工作区，账户级小秘历史留在 /data 私有目录。
 //
-//	aide 记忆区 = <data>/memory/core/   （aide 可读写；小秘只读）
+//	aide 项目记忆区 = <workspace>/.cache/aide/（aide 可读写；小秘只读）
 //	小秘私有区  = <data>/assistant/      （小秘可读写；aide 一律禁止）
 //	    ├─ voice-memory.json              小秘长期记忆
 //	    └─ voice-history.json             小秘对话历史信封
 //
 // 这是【显式策略层】：判断依据是路径前缀与目录归属，而不是文件名巧合。
 // 即便日后文件改名/移动，只要落在正确的目录归属里，策略依然成立。
-// aide 的 read_memory/write_memory 不接收路径参数（路径固定指向 memory/core/），
+// aide 的 read_memory/write_memory 不接收路径参数（路径固定指向当前项目 .cache/aide/memory.md），
 // 本模块同时在工具入口做一次“断言式”越权检查，作为纵深防御。
 
 // 调用方身份。
@@ -59,7 +59,7 @@ func isAssistantMemoryPath(dataPath, path string) bool {
 	return ok
 }
 
-// isAideMemoryPath 判断绝对路径是否落在 aide 自己的记忆区整棵子树（<data>/memory/core/）。
+// isAideMemoryPath 判断绝对路径是否落在旧版 aide 记忆迁移源（<data>/memory/core/）。
 func isAideMemoryPath(dataPath, path string) bool {
 	_, ok := withinDataBase(MemoryCoreDir(dataPath), path)
 	return ok
@@ -69,7 +69,7 @@ func isAideMemoryPath(dataPath, path string) bool {
 //
 // 策略矩阵：
 //
-//	aide 记忆区 (memory/core) ：aide 读√ 写√ ; 小秘 读√ 写×（只读，不污染）
+//	旧 aide 记忆区 (memory/core)：迁移源；新读写策略由 canAccessProjectMemory 管辖
 //	小秘私有区  (assistant/)   ：aide 读× 写× ; 小秘 读√ 写√
 //
 // 其他 /data 路径（config/sessions/secrets/...）不属于本策略管辖，由各自模块的
@@ -92,6 +92,25 @@ func canAccessMemory(dataPath, caller, path, op string) (bool, string) {
 		return false, "小秘私有记忆/历史区对 aide 不可见"
 	default:
 		return true, ""
+	}
+}
+
+// canAccessProjectMemory applies the same one-way policy to project-scoped aide memory.
+// The root is the current project's .cache/aide directory, not the global /data tree.
+func canAccessProjectMemory(memoryRoot, caller, target, op string) (bool, string) {
+	if _, ok := withinDataBase(memoryRoot, target); !ok {
+		return false, "目标不在当前项目记忆目录内"
+	}
+	switch caller {
+	case callerAide:
+		return true, ""
+	case callerAssistant:
+		if op == opRead {
+			return true, ""
+		}
+		return false, "小秘对 aide 项目记忆为只读，禁止写入"
+	default:
+		return false, "未知记忆访问身份"
 	}
 }
 
@@ -126,6 +145,7 @@ func shellTouchesAssistantZone(command string) (string, bool) {
 //   - 拒绝读宿主敏感 dotfile（.ssh/.docker/.kube/.aws/.gnupg/.zsh_history/.zsh_sessions/Library/Keychains）
 //   - 拒绝写/改产品目录 A（/workspace）与配置目录 /data（仅当工程目录 B 不是 A 时）
 //   - 拒绝读写 B 之外的 /local/... 绝对路径
+//
 // 注意：命令串字符串过滤天生可绕过（cd 后用相对路径、$(...) 等），这是"防呆+提示"，不是强隔离。
 func shellPathGuard(command, containerAbs string) (string, bool) {
 	if containerAbs == "" {

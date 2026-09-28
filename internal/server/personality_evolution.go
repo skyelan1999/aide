@@ -235,6 +235,11 @@ func appendHistory(hist []string, old string) []string {
 //   - modeRefine：精炼 + 依稳定偏好微调；要求 ≤1.1× 旧长、≤4000 字、核心保留、相似度不过高。
 //   - modeCompress：压缩事件专用；要求严格更短（只减不增）。
 func (a *App) evolvePersonality(id string, cur Personality, cfg Settings, sample string, mode personalityMode) evolveResult {
+	var err error
+	cfg, err = a.modelSettingsWithAPIKey(cfg)
+	if err != nil {
+		return evolveResult{Personality: cur, Status: "failed", Note: "演化调用失败: " + err.Error()}
+	}
 	old := strings.TrimSpace(cur.Prompt)
 	if old == "" {
 		old = defaultPersonalityPrompt(id)

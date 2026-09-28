@@ -15,7 +15,7 @@ aide (the AI workbench) and 小秘 (the voice secretary) share one process, but 
 
 | Data zone | Path (under `/data`) | aide | secretary |
 | --- | --- | --- | --- |
-| aide long-term memory | `memory/core/` (`memory.md`) | read √ write √ | read √ (read-only) write × |
+| aide project memory | `<project>/.cache/aide/memory.md` | read √ write √ | read √ (read-only) write × |
 | secretary long-term memory | `assistant/voice-memory.json` | read × write × | read √ write √ |
 | secretary history envelope | `assistant/voice-history.json` | read × write × | read √ write √ |
 | aide main-session live output | in-memory (`StreamBroker`) | produces (SSE publish) | read √ (pull by session) |
@@ -26,21 +26,21 @@ aide (the AI workbench) and 小秘 (the voice secretary) share one process, but 
 Decisions are based on **path prefix and directory ownership**, not filenames. Even if files are renamed/moved, the policy still holds as long as they land in the right directory. Authoritative functions live in `memory_access.go`:
 
 - `isAssistantMemoryPath(data, path)`: whether target is anywhere under `<data>/assistant/`.
-- `isAideMemoryPath(data, path)`: whether target is anywhere under `<data>/memory/core/`.
+- `canAccessProjectMemory(root, caller, path, op)`: restricts project memory to the current `.cache/aide/`; aide can read/write and Xiaomi is read-only.
 - `canAccessMemory(data, caller, path, op)`: the single authority; `caller ∈ {aide, assistant}`, `op ∈ {read, write}`.
 - `withinDataBase(base, target)`: normalizes via `filepath.Rel` and explicitly rejects `..` escapes (including cross-mount cases that yield a `..` prefix without an error).
 
 Defense-in-depth points:
 
-- **Memory tool entry**: `read_memory` / `write_memory` take no path argument (fixed to `memory/core/memory.md`); the entry still calls `canAccessMemory(aide, …)` as an assertion.
+- **Memory tool entry**: `read_memory` / `write_memory` take no path argument (fixed to the current project's `.cache/aide/memory.md`); the entry calls `canAccessProjectMemory(aide, …)` as an assertion.
 - **Workspace file tools**: `read_file/write_file/list_files` are already jailed to the workspace by `safePath()` (absolute paths and `..` rejected), so they cannot physically reach `/data`.
 - **run_shell sandbox**: run_shell is an in-container bash (not blocked under `danger-full-access` mode); `shellTouchesAssistantZone()` blocks on the `/data/assistant` path prefix or the `voice-memory.json` / `voice-history.json` filenames, **regardless of sandbox mode**.
 
-> aide's memory file was relocated from the legacy `.cache/memory.md` to `memory/core/memory.md` (#31 layout); `migrateLegacyAideMemory()` copies legacy memory once on first read/write, so nothing is lost.
+> Local project memory lives at the workspace's `.cache/aide/memory.md`. SSH project memory is isolated by workspace identity under the local `.cache/projects/<id>/aide/memory.md` and currently does not sync with the remote repository. Legacy `.cache/memory.md` is migrated into the current project first; the old global `memory/core/memory.md` is migrated only once. Old files remain for rollback, and later projects do not inherit the old global memory.
 
 ## 4. Secretary Reads aide Memory (Read-Only)
 
-`VoiceAgent.readAideMemory()` (`voice_agent.go`) reads `memory/core/memory.md` and returns a summary (truncated to 4000 chars). The type **deliberately exposes no `writeAideMemory` method** — the secretary can see but never write; a write simply cannot compile.
+`VoiceAgent.readAideMemory()` (`voice_agent.go`) reads the current project's `.cache/aide/memory.md` and returns a summary (truncated to 4000 chars). The type **deliberately exposes no `writeAideMemory` method** — the secretary can see but never write; a write simply cannot compile.
 
 Injection points (two clearly separated context blocks, distinct from the secretary's private memory):
 

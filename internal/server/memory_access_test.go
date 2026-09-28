@@ -77,6 +77,60 @@ func TestAssistantCannotWriteAideMemory(t *testing.T) {
 	}
 }
 
+func TestProjectAideMemoryFollowsWorkspace(t *testing.T) {
+	a := testApp(t)
+	firstDir := a.projectCacheDir()
+	if got := a.writeMemory("项目 A 的约定"); !strings.Contains(got, "已写入") {
+		t.Fatal(got)
+	}
+	firstPath := filepath.Join(firstDir, "memory.md")
+	if b, err := os.ReadFile(firstPath); err != nil || !strings.Contains(string(b), "项目 A 的约定") {
+		t.Fatalf("项目 A 记忆未落到 .cache/aide: %q %v", b, err)
+	}
+
+	secondProject := t.TempDir()
+	a.containerAbs = secondProject
+	secondDir := a.projectCacheDir()
+	a.voiceAgent.setAideMemoryPath(a.memoryPath())
+	if got := a.readMemory(); !strings.HasPrefix(got, "(") {
+		t.Fatalf("切换项目后不应读到项目 A 的记忆: %q", got)
+	}
+	if got := a.writeMemory("项目 B 的约定"); !strings.Contains(got, "已写入") {
+		t.Fatal(got)
+	}
+	if b, err := os.ReadFile(filepath.Join(secondDir, "memory.md")); err != nil || !strings.Contains(string(b), "项目 B 的约定") {
+		t.Fatalf("项目 B 记忆未写入自己的 .cache/aide: %q %v", b, err)
+	}
+	if got := a.voiceAgent.readAideMemory(); !strings.Contains(got, "项目 B 的约定") {
+		t.Fatalf("小秘未能只读当前项目记忆: %q", got)
+	}
+	if b, err := os.ReadFile(firstPath); err != nil || !strings.Contains(string(b), "项目 A 的约定") {
+		t.Fatalf("切换项目影响了项目 A 记忆: %q %v", b, err)
+	}
+}
+
+func TestLegacyGlobalAideMemoryMigratesOnceToProjectCache(t *testing.T) {
+	a := testApp(t)
+	if err := os.MkdirAll(MemoryCoreDir(a.dataPath), 0700); err != nil {
+		t.Fatal(err)
+	}
+	legacy := filepath.Join(MemoryCoreDir(a.dataPath), "memory.md")
+	if err := os.WriteFile(legacy, []byte("legacy project guidance"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	_ = os.Remove(filepath.Join(ConfigDir(a.dataPath), "project-memory-migrated"))
+	if got := a.readMemory(); !strings.Contains(got, "legacy project guidance") {
+		t.Fatalf("旧记忆未迁移到当前项目: %q", got)
+	}
+	if _, err := os.Stat(filepath.Join(a.projectCacheDir(), "memory.md")); err != nil {
+		t.Fatalf("项目 .cache/aide/memory.md 不存在: %v", err)
+	}
+	a.containerAbs = t.TempDir()
+	if got := a.readMemory(); !strings.HasPrefix(got, "(") {
+		t.Fatalf("旧全局记忆不应自动复制到第二个项目: %q", got)
+	}
+}
+
 // TestIsolationPolicy：双向隔离矩阵 + 路径逃逸不得绕过目录归属判断。
 func TestIsolationPolicy(t *testing.T) {
 	data := t.TempDir()

@@ -21,25 +21,25 @@ import (
 
 // VoicePersonalityProfile 性格画像（LLM 推断结果，结构化）。
 type VoicePersonalityProfile struct {
-	Openness         int    `json:"openness"`         // 开放性 0-100
-	Conscientiousness int   `json:"conscientiousness"` // 尽责性 0-100
-	Extraversion     int    `json:"extraversion"`     // 外向性 0-100
-	Agreeableness    int    `json:"agreeableness"`    // 宜人性 0-100
-	Neuroticism      int    `json:"neuroticism"`      // 情绪稳定性(反向) 0-100
-	Formality        string `json:"formality"`        // formal | neutral | casual
-	Warmth           string `json:"warmth"`           // warm | neutral | cool
-	Decisiveness     string `json:"decisiveness"`     // decisive | balanced | cautious
-	Humor            string `json:"humor"`            // playful | mild | serious
-	EmotionalStable  string `json:"emotionalStable"`  // calm | neutral | expressive
-	Summary          string `json:"summary"`          // 一句话画像
+	Openness          int    `json:"openness"`          // 开放性 0-100
+	Conscientiousness int    `json:"conscientiousness"` // 尽责性 0-100
+	Extraversion      int    `json:"extraversion"`      // 外向性 0-100
+	Agreeableness     int    `json:"agreeableness"`     // 宜人性 0-100
+	Neuroticism       int    `json:"neuroticism"`       // 情绪稳定性(反向) 0-100
+	Formality         string `json:"formality"`         // formal | neutral | casual
+	Warmth            string `json:"warmth"`            // warm | neutral | cool
+	Decisiveness      string `json:"decisiveness"`      // decisive | balanced | cautious
+	Humor             string `json:"humor"`             // playful | mild | serious
+	EmotionalStable   string `json:"emotionalStable"`   // calm | neutral | expressive
+	Summary           string `json:"summary"`           // 一句话画像
 }
 
 // voiceAcousticFeatures 轻量声学特征（无 DSP 依赖；WAV 头解析时长 + 转写字数比）。
 type voiceAcousticFeatures struct {
-	DurationSec  float64 `json:"durationSec"`
-	CharsPerSec  float64 `json:"charsPerSec"`  // 语速（中文字符/秒）
-	SampleCount  int     `json:"sampleCount"`
-	HasTranscript bool   `json:"hasTranscript"`
+	DurationSec   float64 `json:"durationSec"`
+	CharsPerSec   float64 `json:"charsPerSec"` // 语速（中文字符/秒）
+	SampleCount   int     `json:"sampleCount"`
+	HasTranscript bool    `json:"hasTranscript"`
 }
 
 // wavDurationSec 从 WAV 字节解析时长（秒）。非 WAV 返回 0。
@@ -169,24 +169,33 @@ func (a *App) voicePersonalityInfer(w http.ResponseWriter, r *http.Request) {
 	cfg := a.settings
 	cur := a.personalityLocked(personaXiaomi)
 	a.mu.Unlock()
+	cfg, err = a.modelSettingsWithAPIKey(cfg)
+	if err != nil {
+		fail(w, 423, err)
+		return
+	}
 
 	profileResult, promptDraft, err := a.inferPersonalityLLM(r.Context(), cfg, cur.Prompt, feats, transcriptStr)
 	if err != nil {
-		// LLM 不可用时返回保守占位（不阻断流程，用户可手动编辑）
+		// LLM 不可用时仍允许手动编辑，但把错误明确返回给页面，避免把失败伪装成成功画像。
 		profileResult = VoicePersonalityProfile{
 			Formality: "neutral", Warmth: "warm", Decisiveness: "balanced",
 			Humor: "mild", EmotionalStable: "calm",
-			Summary: "（LLM 不可用，未能从声音推断；请手动调整性格提示词）",
+			Summary: "未能从声音推断；请手动调整性格提示词",
 		}
 		promptDraft = cur.Prompt
 	}
 
-	jsonOut(w, 200, map[string]any{
-		"profile":    profileResult,
-		"features":   feats,
+	out := map[string]any{
+		"profile":     profileResult,
+		"features":    feats,
 		"promptDraft": promptDraft,
-		"disclaimer": "AI 推断仅供参考，采纳前请人工确认/编辑",
-	})
+		"disclaimer":  "AI 推断仅供参考，采纳前请人工确认/编辑",
+	}
+	if err != nil {
+		out["error"] = "模型推断失败: " + err.Error()
+	}
+	jsonOut(w, 200, out)
 }
 
 // inferPersonalityLLM 调 LLM 由声学特征 + 转写推断性格，返回结构化画像与提示词草稿。

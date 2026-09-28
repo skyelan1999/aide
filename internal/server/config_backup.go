@@ -216,13 +216,14 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		if e := os.WriteFile(VoiceHistoryPath(a.dataPath), bk.VoiceHistory, 0600); e == nil {
 			voiceImported = true
 			a.voiceAgent = newVoiceAgent(a.dataPath) // 重新从文件加载小秘历史
+			a.voiceAgent.setAideMemoryPath(a.memoryPath())
 		}
 	}
 
 	jsonOut(w, 200, map[string]any{
 		"ok": true, "passwordChanged": passwordChanged,
 		"voiceImported": voiceImported, "migratedKey": migratedKey,
-		"exportedAt":    bk.ExportedAt, "appVersion": bk.AppVersion,
+		"exportedAt": bk.ExportedAt, "appVersion": bk.AppVersion,
 	})
 }
 

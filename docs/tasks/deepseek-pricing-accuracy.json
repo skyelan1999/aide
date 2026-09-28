@@ -1,0 +1,98 @@
+{
+  "id": "deepseek-pricing-accuracy",
+  "request": "Align aide token-cost calculations with the official DeepSeek pricing page, making estimates more accurate from actual usage and official rates.",
+  "baseline": "9c9f8521c21e64fdc181b40c03aad3f51ac3cafe",
+  "initial_status": "M docs/PRD.md\n M docs/architecture.md\n M docs/architecture/data-layout.md\n M docs/architecture/memory-access.md\n M docs/architecture/personality-evolution.md\n M docs/en/architecture/data-layout.md\n M docs/en/architecture/memory-access.md\n M docs/en/architecture/personality-evolution.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/cross_session_tools.go\n M internal/server/factory_reset.go\n M internal/server/memory_access.go\n M internal/server/memory_access_test.go\n M internal/server/personality_evolution.go\n M internal/server/personality_evolution_test.go\n M internal/server/remediation_test.go\n M internal/server/server.go\n M internal/server/session_number_test.go\n M internal/server/voice_agent.go\n M internal/server/voice_personality.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n?? docs/tasks/context-meter-segments.json\n?? docs/tasks/model-window-one-million.json\n?? docs/tasks/personality-401.json\n?? docs/tasks/project-cache-context-management.json\n?? docs/tasks/reference-panel-clarity.json\n?? docs/tasks/session-number-uniqueness.json\n?? docs/tasks/xiaomi-access-reset.json\n?? internal/server/auth_verify_test.go",
+  "acceptance": [
+    {
+      "criterion": "DeepSeek 官方模型 deepseek-flash、deepseek-v4-flash（含 deepseek-v4-flash-vision-exp 旧别名）和 deepseek-v4-pro 按官方缓存命中输入、未命中输入、输出费率计价，并按调用时北京时间高峰/空闲费率保存快照。",
+      "status": "implemented"
+    },
+    {
+      "criterion": "非流式、流式与兼容 SSE/JSON 响应解析上游 cache usage；缓存明细缺失时按全未命中保守估算并标记估算。",
+      "status": "implemented"
+    },
+    {
+      "criterion": "DeepSeek 当前官方价目表未列出的模型继续使用已有自定义/默认费率并在 UI 说明；历史费用快照不被新算法重算。",
+      "status": "implemented"
+    },
+    {
+      "criterion": "消耗统计页面显示官方自动费率、单日缓存命中/未命中量与估算费用说明。",
+      "status": "implemented_browser_check_not_run"
+    }
+  ],
+  "scope": [
+    "internal/server/provider.go: 捕获 Chat Completions usage 中 prompt_cache_hit_tokens、prompt_cache_miss_tokens 与 prompt_tokens_details.cached_tokens。",
+    "internal/server/server.go: DeepSeek 官方型号与时段费率、逐调用缓存拆分/费率/费用快照、旧兼容模型保留自定义和默认计价。",
+    "internal/server/web/app.js 与 style.css: 官方费率说明、无缓存拆分时估算提示、单日缓存统计和估算金额展示。",
+    "docs/PRD.md、docs/architecture.md、docs/architecture/data-layout.md、docs/user-guide.md 及英文对应文档。",
+    "版本号、镜像发布、服务重启和已有无关工作区改动不在本次范围。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "依据用户提供的 DeepSeek 价格页截图定义官方型号、缓存命中/未命中费率和高峰时段规则；未知模型不套用官方价格。",
+      "evidence": [
+        "用户消息中的 DeepSeek API 官方模型与价格截图，2026-09-28。",
+        "docs/PRD.md TR-07。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "调用入口保留真实上游 usage；按调用时间做不可变费率快照；无缓存拆分则按全未命中估算并单独归入估算费用。",
+      "evidence": [
+        "internal/server/provider.go providerUsage 与 applyPromptCacheUsage。",
+        "internal/server/server.go deepSeekRate、deepSeekPeakHour、recordTokenUsage。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已实现官方 DeepSeek 计价、缓存用量解析、调用快照、设置页说明与单日明细。历史逐调用价格不回写。",
+      "evidence": [
+        "internal/server/provider.go。",
+        "internal/server/server.go。",
+        "internal/server/web/app.js 与 internal/server/web/style.css。"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "定向静态检查与编译通过；真实浏览器/页面验收未运行，不能据此宣称 UI 端到端已验证。",
+      "evidence": [
+        "PASS: docker run --rm -v \"$PWD\":/src -w /src golang:1.26-bookworm go build ./...；exit 0。",
+        "PASS: node --check internal/server/web/app.js。",
+        "PASS: git diff --check。",
+        "NOT_RUN: Safari/桌面 UI 验收；Playwright js_repl 工具不可用，CUA 报告 Mac 锁屏且无法解锁。",
+        "未运行测试套件；未向 DeepSeek 发起付费模型调用。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "同步 PRD、架构接口/数据存储说明及中英文用户指南，说明官方费率、假日维护、估算边界和快照行为。",
+      "evidence": [
+        "docs/PRD.md TR-07。",
+        "docs/architecture.md token-stats/token-pricing API。",
+        "docs/architecture/data-layout.md 与 docs/en/architecture/data-layout.md。",
+        "docs/user-guide.md 与 docs/en/user-guide.md。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留工作区已有改动与未跟踪文件；未清理、覆盖、暂存或提交其他任务内容。任务账本记录本任务修改文件和未执行项目。",
+      "evidence": [
+        "git diff --check exit 0。",
+        "git status 中仍有多个已有修改和其他未跟踪任务文件，均保留。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "没有升版、提交、构建候选镜像、重启服务或发布；本次请求授权的是计价逻辑实现，没有 release 授权。",
+      "evidence": [
+        "AGENTS.md 与 docs/agent/WORKFLOW.md 发布门禁要求明确版本与发布授权。",
+        "当前没有版本 bump 或部署操作。"
+      ]
+    }
+  },
+  "release_authorization": "None. User requested implementation of DeepSeek pricing logic but did not authorize version bump, image publication, or deployment.",
+  "rollback": "No commit or service restart. Revert only this task’s pricing hunks in the listed source/docs files after reviewing the combined worktree diff; preserve unrelated pre-existing edits and user data.",
+  "handoff": "Implemented code and docs. Remaining: unlock Mac and run browser/UI acceptance; review task-specific diff within mixed worktree; run the repo-approved relevant verification workflow if requested. Release and version bump remain not run."
+}

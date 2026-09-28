@@ -1,0 +1,114 @@
+{
+  "id": "xiaomi-access-reset",
+  "request": "排查小秘会话无法进入的身份验证问题；若小秘数据重置可以解决，设置-恢复出厂设置中新增仅重置小秘的按钮。",
+  "baseline": "9c9f8521c21e64fdc181b40c03aad3f51ac3cafe",
+  "initial_status": "M docs/architecture/personality-evolution.md\n M docs/en/architecture/personality-evolution.md\n M internal/server/apikey_vault.go\n M internal/server/personality_evolution.go\n M internal/server/personality_evolution_test.go\n M internal/server/voice_personality.go\n M internal/server/web/app.js\n?? docs/tasks/personality-401.json",
+  "acceptance": [
+    "小秘入口的 Touch ID/WebAuthn 验证成功后，服务端解锁对应的小秘系统会话。",
+    "密码进入保持可用；普通会话 ID 不可借主身份认证获得小秘解锁状态。",
+    "小秘数据和账户凭据无需重置。"
+  ],
+  "scope": [
+    "internal/server/auth_verify.go",
+    "internal/server/auth_verify_test.go",
+    "internal/server/web/app.js",
+    "docs/user-guide.md",
+    "docs/tasks/xiaomi-access-reset.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "恢复本任务修改的 app.js、auth_verify.go、auth_verify_test.go 和 user-guide.md；当前服务没有更换镜像，无运行时回滚。",
+  "handoff": "修复已编译并通过定向测试。使其在 localhost:8097 生效还需将新 aide:local 镜像应用到运行容器，并在 Safari/macOS 上完成真实 Touch ID 验收。",
+  "clarification": "用户确认账户密码可进入；失败的是指纹授权后进入小秘会话。无需重置小秘数据。",
+  "requirements": {
+    "status": "pass",
+    "summary": "用户澄清账户密码可用，Touch ID 指纹授权后无法进入小秘；数据重置与症状无关。",
+    "evidence": [
+      "用户消息：密码可以；提供的 Safari localhost 截图显示小秘身份验证弹窗。"
+    ]
+  },
+  "design": {
+    "status": "pass",
+    "summary": "requestMasterAuth 在 WebAuthn 验证成功后返回 success；openAssistantGate 却拒绝 success 并提示使用账户密码。密码路径因后续单独调用 unlock-assistant 而可用。将目标小秘会话 ID 随主身份验证一并发送，后端仅在凭据验证成功且目标为 assistant session 后解锁。",
+    "evidence": [
+      "internal/server/web/app.js:47-96",
+      "internal/server/web/app.js:309-326",
+      "internal/server/auth_verify.go"
+    ]
+  },
+  "implementation": {
+    "status": "pass",
+    "summary": "密码和 WebAuthn 的主身份验证均支持解锁请求指定的小秘会话；普通会话 ID 会被拒绝。小秘入口对两种成功结果采用同一后续路径。添加认证路由回归测试。",
+    "evidence": [
+      "internal/server/auth_verify.go",
+      "internal/server/auth_verify_test.go",
+      "internal/server/web/app.js"
+    ]
+  },
+  "verification": {
+    "status": "pass",
+    "summary": "认证定向 Go 测试、WebAuthn challenge 回归、前端语法检查、diff 检查通过；Docker vet/build 成功。没有在实际 Mac Touch ID 上做硬件验收，当前运行容器仍是旧镜像。",
+    "evidence": [
+      "docker run --rm --entrypoint go -v \"$PWD:/workspace\" -w /workspace aide:local test ./internal/server -run Test(MasterAuth|AssertionStartChallengeKeyMatch|VerifyMasterIdentity) -count=1 — PASS",
+      "node --check internal/server/web/app.js — PASS",
+      "git diff --check — PASS",
+      "docker compose build aide — PASS (go vet + go build)",
+      "8097 container image unchanged; no deployment/restart performed"
+    ]
+  },
+  "documentation": {
+    "status": "pass",
+    "summary": "用户指南说明主身份认证成功后如何打开指定小秘会话。",
+    "evidence": [
+      "docs/user-guide.md"
+    ]
+  },
+  "cleanup": {
+    "status": "pass",
+    "summary": "未添加重置小秘数据按钮；此故障是认证成功后的前端分支未接入会话解锁。未触碰用户数据。",
+    "evidence": [
+      "git diff --check — PASS"
+    ]
+  },
+  "release": {
+    "status": "not_run",
+    "summary": "候选镜像已构建；当前 8097 服务未重启，实际 Touch ID 验收待应用更新后进行。",
+    "evidence": []
+  }
+}

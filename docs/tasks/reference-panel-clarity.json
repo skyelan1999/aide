@@ -1,0 +1,78 @@
+{
+  "id": "reference-panel-clarity",
+  "request": "右侧工作区/引用页签中，将页签“引用”显示为带双引号的“引用”；删除引用列表中用户指出的不明用途内置“引用”条目。先确认该内置条目的语义和影响，保留自动系统文档与其他真实引用来源。",
+  "baseline": "9c9f8521c21e64fdc181b40c03aad3f51ac3cafe",
+  "initial_status": "M docs/PRD.md\n M docs/architecture.md\n M docs/architecture/data-layout.md\n M docs/architecture/memory-access.md\n M docs/architecture/personality-evolution.md\n M docs/en/architecture/data-layout.md\n M docs/en/architecture/memory-access.md\n M docs/en/architecture/personality-evolution.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/auth_verify.go\n M internal/server/config_backup.go\n M internal/server/cross_session_tools.go\n M internal/server/factory_reset.go\n M internal/server/memory_access.go\n M internal/server/memory_access_test.go\n M internal/server/personality_evolution.go\n M internal/server/personality_evolution_test.go\n M internal/server/remediation_test.go\n M internal/server/server.go\n M internal/server/session_number_test.go\n M internal/server/voice_agent.go\n M internal/server/voice_personality.go\n M internal/server/web/app.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n?? docs/tasks/personality-401.json\n?? docs/tasks/project-cache-context-management.json\n?? docs/tasks/session-number-uniqueness.json\n?? docs/tasks/xiaomi-access-reset.json\n?? internal/server/auth_verify_test.go",
+  "acceptance": [
+    "右侧文件面板的引用页签显示为带中文双引号的“引用”，中英文切换后标签仍正确。",
+    "引用列表不显示内置 /context 来源卡片；自动系统文档与用户配置的引用来源保持可见、可用。",
+    "内置 /context 后端挂载与引用读取能力保持兼容，不改变已有用户数据或其他来源配置。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "docs/tasks/reference-panel-clarity.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户希望引用页签带双引号，并移除其下方含义不清的内置“引用”条目。",
+      "evidence": [
+        "Safari 截图中上方为工作目录/引用切换，下面的“引用 内置”是 contextSource。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "仅从来源卡片列表隐藏内置 contextSource，并将页签 key 改为带引号标签；保留 /context 后端挂载和 system-docs/用户来源。",
+      "evidence": [
+        "internal/server/sources.go:122-165 强制确保只读 /context 内置来源；internal/server/context_sources_test.go 覆盖工作区切换后 /context 仍可读。",
+        "移除数据源本身会破坏 /context 引用根，因此只移除用户看到的列表项。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "引用页签改为带中文双引号的标签；来源列表隐藏冗余的内置 context 卡片，保留后端 /context 挂载、自动系统文档和用户来源。",
+      "evidence": [
+        "internal/server/web/app.js：applyReferenceTerminology 使用“引用”；renderSourceChips 不再展示 contextSource。",
+        "internal/server/web/locales/en.js：增加 quoted label 英文映射。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "两个前端脚本语法检查和 diff 检查通过；在隔离的临时 Go 服务中用 Safari 打开页面，确认“引用”页签加了双引号，引用列表隐藏内置 context 卡片并保留自动系统文档和新增入口。",
+      "evidence": [
+        "node --check internal/server/web/app.js：通过。",
+        "node --check internal/server/web/locales/en.js：通过。",
+        "git diff --check：通过。",
+        "Safari 访问 127.0.0.1:8098 的隔离测试实例：可访问性树显示按钮“引用”；视觉截图中引用列表仅显示“自动系统文档”和“+ 引用”。",
+        "未运行 Go 测试；用户自定义来源未另行创建测试样本。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "用户可见行为、保留 /context 的原因和实现范围记录在任务账本；无需另改用户指南。",
+      "evidence": [
+        "docs/tasks/reference-panel-clarity.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "临时容器和生成的隔离工作区/数据已清理；没有修改 8097 服务数据。Mac 在验收后锁屏，无法通过 UI 关闭临时 Safari 标签页。",
+      "evidence": [
+        "aide-reference-panel-qa 临时容器已停止。",
+        ".agent-state/reference-panel-clarity 临时目录已删除。",
+        "用户原有 Safari aide 标签页与 8097 容器未操作。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "没有替换正在使用的 8097 实例；这项修改尚未构建进生产镜像。",
+      "evidence": [
+        "用户现有 aide 服务未重启，源码改动仍在当前工作区。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退 internal/server/web/app.js 与 internal/server/web/locales/en.js 本任务增量即可恢复原标签和来源列表显示；后端 /context 数据源始终保留。",
+  "handoff": "前端源码改动及隔离 Safari 界面验收完成。引用页签显示“引用”；列表隐藏内置 context 卡片，保留系统文档和新增引用入口。内置 /context 后端只读根仍保留。临时容器和数据已清理；Mac 锁屏导致无法关闭已打开的临时 Safari 标签页。8097 服务未重启；未运行 Go 测试。"
+}

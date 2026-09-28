@@ -138,7 +138,7 @@ stateDiagram-v2
 - **Configuration backup**: export all settings to a file, or restore from a backup. A backup exported by an older version imports into the new release with defaults auto-filled for any newly added fields, while explicit backup values (including explicit zeros) are preserved; out-of-range numbers and invalid enums fall back to a safe default. The result takes effect immediately, no restart needed, and matches the post-restart state. Backups from a newer version are rejected. See [Security: config backup & cross-version compatibility](security/config-backup.md).
 - **Danger zone — Factory reset**: reset aide's settings and local data by scope, in **Settings → Danger zone → Factory reset**. Scopes are optional and safe by default:
   - *Settings* (checked by default): restore model / TTS / theme / permissions / tool rounds / reasoning effort / sandbox / workflow / accessibility to the current defaults. Credential fields (API key, login password hash, debug token) are **preserved** unless *Credentials & keys* is also checked.
-  - *Sessions & memory* (opt-in): clear all sessions (active / archived / assistant), aide core memory, and voice history/memory, and reset personality to default; a fresh assistant system session is recreated automatically.
+  - *Sessions & memory* (opt-in): clear all sessions (active / archived / assistant), the current project's `.cache/aide/memory.md`, and voice history/memory, and reset personality to default; a fresh assistant system session is recreated automatically.
   - *Credentials & keys* (opt-in): clear login password hash, API key, SSH/vault credentials, source secrets, debug token, WebAuthn, and KDF salt, and **rotate the access-token**, then return to login / first-run.
   - *Workspace config* (opt-in): restore the workspace connection config to local defaults; no user files are deleted.
 
@@ -191,14 +191,18 @@ Plugins are trusted Node code and do not gain an independent security sandbox fr
 
 Open **Trajectory** for tasks, steps, tools, proposals, suggested commands, errors, and token usage. Expand details as needed. Search from the top bar or use **⌘K / Ctrl+K** to find conversations by title or cached content.
 
-Compaction summarizes older history into structured context for later requests. It may be automatic above the threshold or triggered manually. It is not ZIP compression and does not guarantee less disk usage or lossless recall. Reopen source files and task history for precise facts.
+Compaction summarizes older history into structured context for later requests. It runs automatically as history approaches the model budget, and an over-budget request attempts compaction before rejection. It may also be triggered manually. It is not ZIP compression and does not guarantee less disk usage or lossless recall. Reopen source files and task history for precise facts.
+
+**ZIP file actions**: In the workspace file menu, choose **Compress to ZIP** to create a sibling archive named after the selected file or folder (for example, `reports/` creates `reports.zip`). An existing destination is reported as a conflict and is never overwritten. Choose **Extract to new folder** on a workspace `.zip` to extract beside it into a folder named after the archive; extraction is rejected if that folder already exists. References are read-only, so use **Download** to export them; downloading a folder creates a ZIP.
+
+Project memory, helper scripts, and intermediate artifacts live under the workspace's `.cache/aide/`, isolated per project. Requested deliverables still go to their specified locations. At most 4,000 characters of project memory are injected into context.
 
 ### Session numbers
 
 Every regular session (including child sessions) gets an incrementing number `#N` at creation, shown before the title in the session list and global search results (e.g. `#3 Project discussion`).
 
 - Numbers start at `#1` and only increase; deleting a session **never** reuses its number.
-- Numbers persist in settings across restarts. Sessions created before this feature have no number; only new sessions carry one.
+- Numbers persist across restarts. On startup, missing numbers are assigned to older sessions and duplicates are repaired while preserving the original number for the earliest session.
 - Global search (⌘K) results also show the `#N` prefix for quick lookup.
 
 ### Real-time session-list refresh (#60)
@@ -290,9 +294,9 @@ flowchart TD
 
 ## 8. Usage and pricing
 
-**Settings → Usage** shows token totals and a daily heatmap. Hover or focus a day for detail; select it for a daily breakdown. Known per-call costs use the rate snapshot at call time. Default-rate estimates and unpriced legacy records are shown separately. Zero means free; blank pricing is invalid.
+**Settings → Usage** shows token totals and a daily heatmap. For DeepSeek's official `deepseek-flash` (also the legacy IDs `deepseek-v4-flash` and `deepseek-v4-flash-vision-exp`) and `deepseek-v4-pro` models, input cache hits, input cache misses, and output use separate official rates. Calls are priced using China Standard Time and the peak/off-peak window in effect when the call was made. Cache counts returned by DeepSeek appear in the daily detail; if a compatible endpoint omits them, input is conservatively treated as all cache misses and the cost is labeled an estimate.
 
-Changing a rate affects subsequent calls, not historical snapshots. Provider balance is separate from local usage accounting and may be unavailable. These values are not an official bill; caching, plans, and provider rules can differ. Missing usage and context counts may be heuristic estimates.
+Other models retain configurable input/output rates per million tokens. Zero means free; blank pricing is invalid. Rates and costs are snapshotted per call, so changing a rate does not rewrite historical records. Legacy aggregate records without per-call evidence remain unpriced. Official pricing and holiday schedules may change; keep the maintained schedule aligned with DeepSeek's [pricing page](https://api-docs.deepseek.com/zh-cn/quick_start/pricing/) and the State Council's [2026 holiday notice](https://www.gov.cn/zhengce/content/202511/content_7047091.htm). Local accounting is an estimate rather than a provider invoice; provider billing rules can differ.
 
 ## 9. Plugins
 

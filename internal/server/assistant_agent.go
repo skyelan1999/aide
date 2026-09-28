@@ -22,7 +22,7 @@ import (
 // analyze() 保留为兜底/既有甄别能力（不删除）；agentic 循环失败时回落。
 
 // assistantDecision 小秘 agentic 循环产出的统一决策（文字 assistant-message 与
-// 语音 voice-filter 共用）。Handler 再把它映射到各自前端契约。
+// 语音 voice-filter 共用）。输入来源会约束可用动作，Handler 再映射到各自前端契约。
 type assistantDecision struct {
 	Action       string   // dispatch | chat | ask | silent
 	Reply        string   // 小秘对用户说的话（陪聊正文 / 转交说明 / 追问文案）
@@ -52,7 +52,7 @@ const assistantAgentPrinciples = `【你现在怎么决定动作】不要再只�
 
 // assistantAgentToolSchemas 小秘 agentic 循环可用的工具 schema（ curated，
 // 不含 run_shell/write_file 等高危工具——小秘不直接操作工作区，只做调度与陪聊）。
-func assistantAgentToolSchemas() []any {
+func assistantAgentToolSchemas(allowSilent bool) []any {
 	base := crossSessionToolSchemas() // search_sessions/get_session/follow_session/push_to_session
 	extra := []any{
 		map[string]any{"type": "function", "function": map[string]any{
@@ -76,13 +76,17 @@ func assistantAgentToolSchemas() []any {
 				"note": map[string]any{"type": "string", "description": "要记下的一句话"},
 			}, "required": []string{"note"}}}},
 	}
+	if !allowSilent {
+		// 键盘输入没有环境音信息，不能按背景声/真人对话静默；语音入口仍提供此工具。
+		extra = append(extra[:1], extra[2:]...)
+	}
 	return append(base, extra...)
 }
 
 // runAssistantAgenticLoop 小秘 agentic 决策主循环。
-// heard=用户原话/语音转写；aideCtx=aide 主会话最近上下文（可选）。
+// heard=用户原话/语音转写；aideCtx=aide 主会话最近上下文（可选）；inputSource=text/voice。
 // 调用方不持 a.mu（循环内部按需加锁）；cfg 已注入 APIKey。
-func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, aideCtx string) (assistantDecision, error) {
+func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, aideCtx, inputSource string) (assistantDecision, error) {
 	va := a.voiceAgent
 	// 组装 system prompt：身份核心前置 + 动作原则 + aide 记忆（只读）+ 小秘私有记忆
 	// 注意：va 可能为 nil（未初始化/降级路径），必须先判空再解引用 va.memory。
@@ -98,7 +102,11 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 	if strings.TrimSpace(aideCtx) != "" {
 		aideSection = "aide 主工作台最近与用户的对话如下（用户可能让你讲解/总结/接着讨论；据此回答，不要说看不到）：\n" + aideCtx + "\n\n"
 	}
-	system := voiceIdentityPrompt(cfg) + "\n\n" + assistantAgentPrinciples + "\n\n" +
+	sourceGuidance := ""
+	if inputSource == "text" {
+		sourceGuidance = "【输入来源：键盘文字】这句话是用户直接发给你的消息。请正常理解并回应，或在用户明确要求工作时转交 aide。文字输入不包含背景音，禁止以‘在和别人聊天’、‘背景声’等理由静默；当前没有 be_silent 工具。\n\n"
+	}
+	system := voiceIdentityPrompt(cfg) + "\n\n" + assistantAgentPrinciples + "\n\n" + sourceGuidance +
 		aideSection +
 		fmt.Sprintf("【aide 的长期记忆（只读参考、绝不修改；它不是你自己的记忆）】\n%s\n\n", aideMem) +
 		fmt.Sprintf("【你自己的私有长期记忆】%s\n", voiceMemorySummary(mem))
@@ -107,7 +115,7 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 		{Role: "system", Content: system},
 		{Role: "user", Content: heard},
 	}
-	tools := assistantAgentToolSchemas()
+	tools := assistantAgentToolSchemas(inputSource != "text")
 	params := ProfileParams{MaxTokens: 800, Temperature: fp(0.3)}
 
 	dec := assistantDecision{Action: "chat"}

@@ -44,7 +44,7 @@ function passwordPrompt(title) {
 // requestMasterAuth({reason}) 统一主身份认证弹窗（#43）：密码输入 + 指纹授权按钮。
 // 已注册指纹（hasPlatformCredential=true）则按钮可点并自动发起 WebAuthn assertion；未注册置灰。
 // 返回 Promise<string|null>：输入密码且验证通过→密码串；指纹通过→'success'；取消→null（失败已 toast/内联提示，不锁死）。
-function requestMasterAuth({ reason } = {}) {
+function requestMasterAuth({ reason, assistantSessionId } = {}) {
   return new Promise(resolve => {
     const dlg = el('dialog', 'master-auth');
     const box = el('div', 'master-auth-box');
@@ -68,7 +68,9 @@ function requestMasterAuth({ reason } = {}) {
       const pw = input.value;
       if (!pw) { err.textContent = t('请输入密码'); input.focus(); return; }
       try {
-        await api('/auth/verify', { method: 'POST', body: JSON.stringify({ password: pw }) });
+        const body = { password: pw };
+        if (assistantSessionId) body.assistantSessionId = assistantSessionId;
+        await api('/auth/verify', { method: 'POST', body: JSON.stringify(body) });
         done(pw);
       } catch (e) { err.textContent = t('密码错误'); input.value = ''; input.focus(); }
     };
@@ -94,7 +96,9 @@ function requestMasterAuth({ reason } = {}) {
         };
         const assertion = await navigator.credentials.get({ publicKey: options });
         if (!assertion) { fp.disabled = false; return; }
-        await api('/auth/verify', { method: 'POST', body: JSON.stringify({ challenge: start.challenge, assertion: assertionToJSON(assertion) }) });
+        const body = { challenge: start.challenge, assertion: assertionToJSON(assertion) };
+        if (assistantSessionId) body.assistantSessionId = assistantSessionId;
+        await api('/auth/verify', { method: 'POST', body: JSON.stringify(body) });
         done('success');
       } catch (e) {
         if (e && e.name === 'NotAllowedError') { fp.disabled = false; return; }
@@ -316,13 +320,8 @@ function openAssistantGate(id, title) {
       if (r && (r.noPassword || r.unlocked)) { localStorage.setItem('assistantUnlocked_' + id, '1'); selectSession(id); return; }
     } catch (_) {}
     // 需要密码：弹身份验证框
-    const res = await requestMasterAuth({ reason: t('进入小秘会话需要验证身份') });
+    const res = await requestMasterAuth({ reason: t('进入小秘会话需要验证身份'), assistantSessionId: id });
     if (res === null) return; // 取消
-    if (typeof res !== 'string' || res === 'success') {
-      toast(t('请使用账户密码解锁小秘会话'));
-      return;
-    }
-    try { await api('/sessions/' + id + '/unlock-assistant', { method: 'POST', body: JSON.stringify({ password: res }) }); } catch (_) { return; }
     localStorage.setItem('assistantUnlocked_' + id, '1');
     selectSession(id);
   })();
@@ -1237,10 +1236,11 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   const ren = el('button', 'file-ctx-item', t('重命名'));
   const props = el('button', 'file-ctx-item', t('属性'));
   const del = el('button', 'file-ctx-item danger-item', t('删除'));
-  if (state.root === 'context') [ren, props, del, extract].forEach(x => { x.classList.add('disabled'); x.disabled = true; x.title = t('引用为只读'); });
+  if (state.root === 'context') [compress, ren, props, del, extract].forEach(x => { x.classList.add('disabled'); x.disabled = true; x.title = t('引用为只读'); });
+  if (state.root !== 'context' && isZipPath(file.path)) { compress.classList.add('disabled'); compress.disabled = true; compress.title = t('不能重复压缩 ZIP 文件'); }
   if (state.root !== 'context' && !isZipPath(file.path)) { extract.classList.add('disabled'); extract.disabled = true; extract.title = t('仅支持 ZIP 文件'); }
   download.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); downloadFileEntry(file, !!file.dir); };
-  compress.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); downloadFileEntry(file, true); };
+  compress.onclick = async (e) => { e.stopPropagation(); closeFileContextMenu(); try { const out = await api('/file/archive', { method: 'POST', body: JSON.stringify({ root: 'workspace', path: file.path }) }); toast(t('已压缩到：') + out.path); await loadFiles(); } catch (err) { toast(err.message || String(err)); } };
   extract.onclick = async (e) => { e.stopPropagation(); closeFileContextMenu(); try { const out = await api('/file/extract', { method: 'POST', body: JSON.stringify({ root: 'workspace', path: file.path }) }); toast(t('已解压到：') + out.path); loadFiles(); } catch (err) { toast(err.message || String(err)); } };
   ren.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); selectFileRow(rowBtn); beginInlineRename(rowBtn, nameSpan, file); };
   props.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); showFileProperties(file); };
@@ -1361,7 +1361,7 @@ document.querySelectorAll('.starter').forEach(b => b.onclick = () => { $('prompt
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
 function applyReferenceTerminology() {
   const setText = (selector, key) => document.querySelectorAll(selector).forEach(node => { node.dataset.i18n = key; node.textContent = t(key); });
-  setText('[data-root="context"] i18n-text', '引用');
+  setText('[data-root="context"] i18n-text', '“引用”');
   setText('.context-guide i18n-text[data-i18n="也可以从辅助资料中选择参考文档。"]', '也可以从引用中选择参考文档。');
   setText('#source-dialog h2 i18n-text', '添加引用');
   const add = $('source-add');
@@ -1416,7 +1416,7 @@ $('task-form').onsubmit = action(async event => {
       if (!state.session) state.session = created; // 仅当用户仍停留在空白页时接管；点击已切走的会话不被空壳抢占
     }
     const target = draftSession || created;
-    // #62扩展：小蜜会话文字输入走 assistant-message，非普通 /runs
+    // 小秘会话键盘输入走 assistant-message，由后端按直接文字消息处理，不经过语音环境过滤。
     if (target.kind === 'assistant') {
       try {
         const resp = await api(`/sessions/${target.id}/assistant-message`, { method: 'POST', body: JSON.stringify({ text: prompt }) });
@@ -2343,6 +2343,8 @@ function renderTokenStats(control) {
   const tip = el('div', 'token-tip');
   const detail = el('div', 'token-day-detail hidden');
   const priceRow = el('div', 'token-price-row');
+  const priceFields = el('div', 'token-price-fields');
+  const priceNote = el('small', 'token-price-note', '');
   wrap.append(head, chips, priceRow, grid, legend, tip, detail);
   const pieWrap = el('div', 'model-pie-wrap');
   pieWrap.innerHTML = `<div class="model-pie-title">${t('模型 Token 占比')}</div><div class="model-pie-body"><svg class="model-pie-svg" viewBox="-82 -12 384 240"></svg></div><div class="model-pie-empty hidden">${t('暂无模型调用数据')}</div>`;
@@ -2357,6 +2359,12 @@ function renderTokenStats(control) {
     const todayStats = data.today || {};
     const unpriced = data.unpricedTotals || {};
     pricing = data.pricing || pricing;
+    priceRow.classList.toggle('official-pricing', !!pricing.official);
+    priceNote.textContent = pricing.official
+      ? t("DeepSeek 官方自动计价：输入缓存命中 ¥{0}/百万、未命中 ¥{1}/百万，输出 ¥{2}/百万；按调用时北京时间高峰/空闲费率快照", pricing.priceInCacheHit, pricing.priceInCacheMiss, pricing.priceOut)
+      : pricing.deepSeekProvider
+        ? t("当前模型未列入 DeepSeek 官网现行价目表，按该模型自定义费率或默认费率估算；历史费用不会重算")
+        : t("自定义费率按调用快照计算；未配置模型使用默认刊例估算。历史费用不会重算");
     const cost = data.cost ?? 0;
     // 服务端费率加载完成后同步输入框显示（未聚焦时），避免停留在初始默认值
     const inEl = wrap.querySelector('input[data-price="priceIn"]');
@@ -2365,7 +2373,18 @@ function renderTokenStats(control) {
     if (outEl && document.activeElement !== outEl) outEl.value = pricing.priceOut;
     const callRecords = data.callRecords || [];
     const dayCost = {};
-    callRecords.forEach(c => { const k = (c.time || '').slice(0, 10); dayCost[k] = (dayCost[k] || 0) + (c.cost || 0); });
+    const dayEstimated = {};
+    const dayCache = {};
+    callRecords.forEach(c => {
+      const k = (c.time || '').slice(0, 10);
+      dayCost[k] = (dayCost[k] || 0) + (c.cost || 0);
+      if (c.defaulted || c.costEstimated) dayEstimated[k] = (dayEstimated[k] || 0) + (c.cost || 0);
+      if (c.cacheKnown) {
+        const entry = dayCache[k] || { hit: 0, miss: 0, knownCalls: 0 };
+        entry.hit += c.cacheHit || 0; entry.miss += c.cacheMiss || 0; entry.knownCalls++;
+        dayCache[k] = entry;
+      }
+    });
     // R08：费用仅由服务端逐调用记录汇总；未计价历史（旧版汇总）单独提示，不并入费用
     const estimatedCost = data.estimatedCost ?? 0;
     const metrics = head.querySelector('.control-value');
@@ -2624,13 +2643,14 @@ function renderTokenStats(control) {
           detail.classList.remove('hidden');
           detail.replaceChildren();
           const pricedDay = day.priced !== false;
-          const fee = pricedDay ? t("费用 ¥{0}（按调用时刻计价快照）", (dayCost[key] || 0).toFixed(4)) : t("费用未知：旧数据没有逐调用与计价证据，未按当前费率冒充");
+          const fee = pricedDay ? t("费用 ¥{0}（调用快照；其中估算 ¥{1}）", (dayCost[key] || 0).toFixed(4), (dayEstimated[key] || 0).toFixed(4)) : t("费用未知：旧数据没有逐调用与计价证据，未按当前费率冒充");
           detail.append(
             el('strong', '', key),
             el('span', '', t("输入 {0} tokens · 输出 {1} tokens", fmtStatTokens(day.prompt || 0), fmtStatTokens(day.completion || 0))),
             el('span', '', t("调用 {0} 次 · 合计 {1} tokens{2}", day.calls || 0, fmtStatTokens(day.total || 0), day.estimated ? t("（用量为估算）") : '')),
             el('span', '', fee)
           );
+          if (dayCache[key]) detail.append(el('span', '', t("缓存命中 {0} · 未命中 {1} tokens（{2} 次调用有缓存明细）", fmtStatTokens(dayCache[key].hit), fmtStatTokens(dayCache[key].miss), dayCache[key].knownCalls)));
           tip.classList.remove('show');
           detail.scrollIntoView({ block: 'nearest' });
         });
@@ -2641,7 +2661,7 @@ function renderTokenStats(control) {
     legend.replaceChildren();
     legend.append(el('span', '', t("少")));
     for (let i = 1; i <= 4; i++) legend.append(el('span', 'token-cell tk-' + i));
-    legend.append(el('span', '', t("多")), el('small', '', t("计价可配置 · 悬停查看明细")));
+    legend.append(el('span', '', t("多")), el('small', '', pricing.official ? t("按 DeepSeek 官方费率与调用用量计算 · 悬停查看明细") : t("计价可配置 · 悬停查看明细")));
   };
   action(loadStats).call(null);
   const mkPrice = (key, label) => {
@@ -2683,7 +2703,8 @@ function renderTokenStats(control) {
     lab.append(input);
     return lab;
   };
-  priceRow.append(mkPrice('priceIn', t("输入 ¥/百万")), mkPrice('priceOut', t("输出 ¥/百万")), el('small', '', t("0 = 免费；留空无效。费率由服务端保存，历史费用按调用时刻快照不变")));
+  priceFields.append(mkPrice('priceIn', t("输入 ¥/百万")), mkPrice('priceOut', t("输出 ¥/百万")));
+  priceRow.append(priceFields, priceNote);
   return wrap;
 }
 /* ── 模型列表管理（FR-67 / FR-68）：设置弹窗内增删、标记当前、自动获取候选 ── */
@@ -2733,7 +2754,9 @@ function renderModelList() {
     windowInput.type = 'number';
     windowInput.min = 1024;
     windowInput.max = 2097152;
-    windowInput.step = 1024;
+    // Preset values like 1,000,000 are valid integer windows but are not
+    // multiples of 1024; a 1024 step makes the browser block form submission.
+    windowInput.step = 1;
     windowInput.value = m.contextWindow || 65536;
     windowInput.setAttribute('aria-label', t("上下文窗口"));
     windowInput.addEventListener('input', () => {
@@ -2792,28 +2815,17 @@ $('fetch-models').onclick = action(async () => {
 function fmtTokens(n) { return n < 1000 ? String(n) : (n / 1024).toFixed(1) + 'K'; }
 state.contextMeterSeq = state.contextMeterSeq || { value: 0 };
 state.contextMeterKey = state.contextMeterKey || '';
-state.contextMeterOpen = state.contextMeterOpen || false;
 state.contextMeterDraft = state.contextMeterDraft || false;
 
 function ensureContextMeterControls() {
   const card = $('context-card');
-  if (!card || $('context-detail-toggle')) return;
-  const head = card.querySelector('.context-head');
-  const toggle = el('button', 'context-detail-toggle', '▾');
-  toggle.type = 'button'; toggle.id = 'context-detail-toggle';
-  toggle.title = t("查看上下文组成");
-  toggle.setAttribute('aria-label', t("查看上下文组成"));
-  toggle.setAttribute('aria-expanded', 'false');
-  const detail = el('div', 'context-card-detail hidden');
-  detail.id = 'context-card-detail';
-  toggle.onclick = () => {
-    state.contextMeterOpen = !state.contextMeterOpen;
-    detail.classList.toggle('hidden', !state.contextMeterOpen);
-    toggle.textContent = state.contextMeterOpen ? '▴' : '▾';
-    toggle.setAttribute('aria-expanded', String(state.contextMeterOpen));
-  };
-  head.append(toggle);
-  card.append(detail);
+  if (!card) return;
+  const bar = $('context-bar');
+  if (bar && !$('context-card-detail')) {
+    const detail = el('div', 'context-card-detail');
+    detail.id = 'context-card-detail';
+    card.append(detail);
+  }
 }
 function contextMeterKey() {
   const messages = state.session?.messages || [];
@@ -2829,31 +2841,62 @@ function renderContextMeter(data, isDraft) {
   const pressure = data.totalEstimate || data.inputEstimate || 0;
   const pct = Math.min(100, Math.round((pressure / limit) * 100));
   $('context-stat').textContent = fmtTokens(data.inputEstimate || 0) + ' / ' + fmtTokens(limit);
-  $('context-fill').style.width = pct + '%';
-  $('context-fill').classList.toggle('warn', pct > 90);
-  $('context-card').title = t("下一次请求的上下文组成估算：输入 {0} + 输出预留 {1} = {2} / 窗口 {3}。上游真实 usage 以轨迹记录为准。", data.inputEstimate || 0, data.outputReserve || 0, pressure, limit);
+  const bar = $('context-bar');
+  bar.replaceChildren();
+  bar.setAttribute('aria-label', t("下一次请求的上下文估算：{0} / 窗口 {1}", pressure, limit));
   const detail = $('context-card-detail');
   if (!detail) return;
   detail.replaceChildren();
-  if (isDraft) detail.append(el('div', 'context-card-kicker', t("当前草稿 · 即将发送")));
-  contextParts(data.breakdown).forEach(([label, part, color]) => {
-    const row = el('div', 'context-card-row');
-    const left = el('span', ''); left.append(el('i', 'context-card-dot', ''), document.createTextNode(label));
-    left.querySelector('i').style.background = color;
-    row.append(left, el('strong', '', fmtTokens(part.tokens)));
-    detail.append(row);
+  const parts = contextParts(data.breakdown);
+  parts.forEach(([label, part, color]) => {
+    const segment = el('span', 'context-segment');
+    const share = Math.max(0, part.tokens) / limit * 100;
+    segment.style.width = share + '%';
+    segment.style.backgroundColor = color;
+    segment.tabIndex = 0;
+    segment.setAttribute('role', 'img');
+    const pctOfWindow = (part.tokens / limit * 100).toFixed(1);
+    const tooltip = (event) => showCtxTooltip(event, label + (isDraft ? ' · ' + t("当前草稿 · 估算") : ' · ' + t("估算")), part.tokens.toLocaleString(), pctOfWindow, color);
+    segment.setAttribute('aria-label', t("{0}：估算 {1} tokens，占窗口 {2}%", label, part.tokens, pctOfWindow));
+    segment.title = t("{0} · 估算 {1} tokens · 窗口 {2}%", label, part.tokens, pctOfWindow);
+    segment.addEventListener('mouseenter', tooltip);
+    segment.addEventListener('mousemove', moveCtxTooltip);
+    segment.addEventListener('mouseleave', hideCtxTooltip);
+    segment.addEventListener('focus', (event) => {
+      const rect = event.currentTarget.getBoundingClientRect();
+      tooltip({ clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 });
+    });
+    segment.addEventListener('blur', hideCtxTooltip);
+    bar.append(segment);
   });
-  const reserve = el('div', 'context-card-row context-card-reserve');
-  reserve.append(el('span', '', t("输出预留")), el('strong', '', fmtTokens(data.outputReserve || 0)));
-  detail.append(reserve);
+  if ((data.outputReserve || 0) > 0) {
+    const reserve = el('span', 'context-segment context-segment-reserve');
+    reserve.style.width = Math.max(0, data.outputReserve) / limit * 100 + '%';
+    reserve.tabIndex = 0;
+    reserve.setAttribute('role', 'img');
+    reserve.setAttribute('aria-label', t("输出预留：估算 {0} tokens", data.outputReserve));
+    reserve.title = t("输出预留 · {0} tokens", data.outputReserve);
+    const showReserve = (event) => showCtxTooltip(event, t("输出预留"), data.outputReserve.toLocaleString(), (data.outputReserve / limit * 100).toFixed(1), '#475569');
+    reserve.addEventListener('mouseenter', showReserve);
+    reserve.addEventListener('mousemove', moveCtxTooltip);
+    reserve.addEventListener('mouseleave', hideCtxTooltip);
+    reserve.addEventListener('focus', (event) => { const rect = event.currentTarget.getBoundingClientRect(); showReserve({ clientX: rect.left + rect.width / 2, clientY: rect.top + rect.height / 2 }); });
+    reserve.addEventListener('blur', hideCtxTooltip);
+    bar.append(reserve);
+  }
+  bar.classList.toggle('warn', pct > 90);
   const runs = state.session?.runs || [];
   const lastRun = [...runs].reverse().find(r => r.usage && r.usage.total > 0);
   if (lastRun) {
     const usage = lastRun.usage;
     const source = usage.estimated ? t("最近任务累计（估算）") : t("最近任务累计（上游实际）");
-    detail.append(el('p', 'context-card-actual', t("{0}：输入 {1} · 输出 {2}", source, fmtTokens(usage.prompt || 0), fmtTokens(usage.completion || 0))));
+    const promptTokens = usage.estimated ? fmtTokens(usage.prompt || 0) : (usage.prompt || 0).toLocaleString();
+    const completionTokens = usage.estimated ? fmtTokens(usage.completion || 0) : (usage.completion || 0).toLocaleString();
+    const actual = el('p', 'context-card-actual', t("{0}：输入 {1} · 输出 {2}", source, promptTokens, completionTokens));
+    actual.title = t("{0}：输入 {1} tokens · 输出 {2} tokens", source, usage.prompt || 0, usage.completion || 0);
+    detail.append(actual);
   }
-  detail.append(el('p', 'context-card-note', data.estimationNote || ''));
+  detail.title = data.estimationNote || '';
 }
 async function refreshContextMeter() {
   if (!state.config?.configured || state.contextMeterDraft) return;
@@ -2874,7 +2917,8 @@ async function refreshContextMeter() {
 function estimateContext() {
   if (!state.config?.configured) {
     $('context-stat').textContent = '—';
-    $('context-fill').style.width = '0';
+    $('context-bar').replaceChildren();
+    $('context-card-detail')?.replaceChildren();
     return;
   }
   refreshContextMeter();
@@ -3354,6 +3398,7 @@ $('ws-browse-parent').onclick = () => { const b = wsState.browse; b.dir = browse
 $('ws-browse-select').onclick = () => { const b = wsState.browse; $(b.field).value = b.remote ? (b.dir === '.' ? '' : b.dir) : b.workspace ? (b.dir === '.' ? '' : b.dir) : b.field === 'ws-key-refpath' ? ('/local/' + b.dir).replace(/\/+/g,'/') : hostPathOf(b.dir); $('ws-browse-dialog').close(); };
 
 /* ── 引用多来源（FR-82~84） ── */
+let editingSourceID = '';
 function defaultContextSourceID() {
   const enabled = state.sources.filter(x => x.enabled);
   return (enabled.find(x => x.id === 'system-docs') || enabled.find(x => x.id === 'context') || enabled[0] || {}).id || '';
@@ -3391,8 +3436,9 @@ function renderSourceChips() {
   track.replaceChildren();
   const enabled = state.sources.filter(x => x.enabled);
   const systemDocs = enabled.find(x => x.id === 'system-docs');
-  const context = enabled.find(x => x.id === 'context');
-  const ordered = [systemDocs, context, ...enabled.filter(x => !x.builtin)].filter(Boolean);
+  // /context remains a backend reference root, but its generic built-in chip is
+  // redundant beside the configured system-docs source and is hidden from this list.
+  const ordered = [systemDocs, ...enabled.filter(x => !x.builtin && x.id !== 'context')].filter(Boolean);
   ordered.forEach(src => {
     const displayName = src.builtin ? t(src.name) : src.name;
     const loc = src.config.path || src.config.command || src.config.url || (src.config.host ? ('//' + src.config.host + (src.config.path || '')) : '');
@@ -3402,7 +3448,15 @@ function renderSourceChips() {
     main.title = t(src.rw ? '{0} · 读写' : '{0} · 只读', (src.type ? src.type + ' · ' : '') + (loc || displayName));
     main.setAttribute('aria-pressed', state.source === src.id ? 'true' : 'false');
     main.onclick = () => { state.source = src.id; state.dir = '.'; state.attachments = []; renderAttachments(); renderSourceChips(); action(loadFiles)(); };
-    main.insertAdjacentHTML('beforeend', '<span class="src-ico">' + sourceIconSVG(src.type) + '</span>');
+    if (!src.builtin) {
+      const edit = el('button', 'src-edit');
+      edit.type = 'button'; edit.title = t('编辑引用配置'); edit.setAttribute('aria-label', t('编辑引用配置：{0}', displayName));
+      edit.insertAdjacentHTML('beforeend', '<span class="src-ico">' + sourceIconSVG(src.type) + '</span>');
+      edit.onclick = ev => { ev.stopPropagation(); openSourceEditor(src); };
+      wrap.append(edit);
+    } else {
+      main.insertAdjacentHTML('beforeend', '<span class="src-ico">' + sourceIconSVG(src.type) + '</span>');
+    }
     main.append(el('span', 'src-name', displayName));
     if (src.builtin) main.append(el('span', 'src-fixed', src.id === 'system-docs' ? t('固定') : t('内置')));
     wrap.append(main);
@@ -3449,7 +3503,48 @@ function renderSourceChips() {
     track.append(wrap);
   });
 }
-$('source-add').onclick = () => { $('source-form').reset(); renderSourceFields(); $('source-dialog').showModal(); };
+$('source-add').onclick = () => {
+  editingSourceID = '';
+  $('source-form').reset(); $('src-type').disabled = false;
+  setSourceDialogMode(false); renderSourceFields(); $('source-dialog').showModal();
+};
+
+function setSourceDialogMode(editing) {
+  const title = document.querySelector('#source-dialog h2 i18n-text');
+  const titleKey = editing ? '编辑引用配置' : '添加辅助资料来源';
+  title.dataset.i18n = titleKey; title.textContent = t(titleKey);
+  const submit = document.querySelector('#source-submit i18n-text');
+  const submitKey = editing ? '保存来源配置' : '添加来源';
+  submit.dataset.i18n = submitKey; submit.textContent = t(submitKey);
+}
+
+function openSourceEditor(src) {
+  if (!src || src.builtin) return;
+  editingSourceID = src.id;
+  $('source-form').reset();
+  $('src-type').value = src.type;
+  renderSourceFields();
+  $('src-type').disabled = true;
+  $('src-name').value = src.name || '';
+  $('src-rw').checked = !!src.rw;
+  if (src.type === 'local' || src.type === 'skill') $('src-path').value = src.config.path || '';
+  else if (src.type === 'sftp') {
+    $('src-host').value = src.config.host || '';
+    $('src-port').value = src.config.port || 22;
+    $('src-user').value = src.config.username || '';
+    $('src-remote').value = src.config.path || '';
+  } else if (src.type === 'mcp') {
+    $('src-command').value = src.config.command || '';
+    $('src-mcp-args').value = (src.config.args || []).join('\n');
+  } else {
+    $('src-url').value = src.config.url || '';
+    if ($('src-user')) $('src-user').value = src.config.username || '';
+  }
+  const keepSecretHint = src.hasSecret ? t('留空 = 保留现有凭据') : '';
+  ['src-password', 'src-key'].forEach(id => { if ($(id) && keepSecretHint) $(id).placeholder = keepSecretHint; });
+  setSourceDialogMode(true);
+  $('source-dialog').showModal();
+}
 
 function renderSourceFields() {
   const type = $('src-type').value;
@@ -3467,7 +3562,7 @@ function renderSourceFields() {
   }
   else if (type === 'link' || type === 'ftp' || type === 'ftps' || type === 'smb') {
     addField(t("URL（如 ftp://host/dir 或 https://…）"), 'src-url', type === 'link' ? 'https://' : type + '://');
-    if (type !== 'link') { addField(t('用户名'), 'src-user', ''); addField(t('密码（可选）'), 'src-password', '').type = 'password'; }
+    if (type !== 'link') { addField(t('用户名'), 'src-user', ''); addField(t('密码（可选）'), 'src-password', editingSourceID ? t('留空 = 保留现有凭据') : '').type = 'password'; }
   }
   else if (type === 'mcp') {
     addField(t('启动程序'), 'src-command', 'npx');
@@ -3483,29 +3578,50 @@ function renderSourceFields() {
     addField(t("端口"), 'src-port', '22').type = 'number';
     addField(t("用户名"), 'src-user', 'root');
     addField(t("远程目录"), 'src-remote', '/srv/refs');
-    addField(t("密码（可选）"), 'src-password', t("留空 = 无密码认证")).type = 'password';
-    addField(t("私钥（可选，优先于密码）"), 'src-key', t("粘贴私钥内容")).type = 'password';
+    addField(t("密码（可选）"), 'src-password', editingSourceID ? t('留空 = 保留现有凭据') : t("留空 = 无密码认证")).type = 'password';
+    addField(t("私钥（可选，优先于密码）"), 'src-key', editingSourceID ? t('留空 = 保留现有凭据') : t("粘贴私钥内容")).type = 'password';
   }
 }
 $('src-type').addEventListener('change', renderSourceFields);
+function suggestedSourceName(type) {
+  if (type === 'local' || type === 'skill') {
+    const parts = ($('src-path')?.value || '').trim().split(/[\\/]+/).filter(Boolean);
+    return parts.pop() || (type === 'skill' ? 'Skill' : '本机');
+  }
+  if (type === 'sftp') return ($('src-host')?.value || '').trim() || 'SFTP';
+  if (type === 'link' || type === 'ftp' || type === 'ftps' || type === 'smb') {
+    const value = ($('src-url')?.value || '').trim();
+    try { return new URL(value).hostname || type.toUpperCase(); } catch { return type.toUpperCase(); }
+  }
+  if (type === 'mcp') {
+    const args = ($('src-mcp-args')?.value || '').split(/\r?\n/).map(x => x.trim()).filter(x => x && !x.startsWith('-'));
+    const command = ($('src-command')?.value || '').trim();
+    return args.pop()?.split(/[\\/]/).filter(Boolean).pop() || command.split(/[\\/]/).filter(Boolean).pop() || 'MCP';
+  }
+  return type;
+}
 $('source-form').onsubmit = action(async event => {
   event.preventDefault();
   const type = $('src-type').value;
-  const name = $('src-name').value.trim();
-  const id = 's-' + Math.random().toString(36).slice(2, 8);
-  const src = { id, name, type, enabled: true, rw: $('src-rw').checked, config: {} };
+  const name = $('src-name').value.trim() || suggestedSourceName(type);
+  const previous = editingSourceID ? state.sources.find(x => x.id === editingSourceID) : null;
+  const id = previous?.id || 's-' + Math.random().toString(36).slice(2, 8);
+  const src = { id, name, type, enabled: previous?.enabled ?? true, rw: $('src-rw').checked, config: {} };
   const secrets = {};
   if (type === 'local' || type === 'skill') src.config.path = $('src-path').value.trim();
   else if (type === 'mcp') { src.config = { transport: 'stdio', command: ($('src-command')?.value || '').trim(), args: ($('src-mcp-args')?.value || '').split(/\r?\n/).filter(value => value.length > 0) }; }
-  else if (type === 'sftp') { src.config = { path: $('src-remote').value.trim(), host: $('src-host').value.trim(), port: parseInt($('src-port').value, 10) || 22, username: $('src-user').value.trim(), auth: $('src-key').value ? 'key' : $('src-password').value ? 'password' : 'none' }; const pw = $('src-password').value, key = $('src-key').value; if (pw || key) secrets[id] = { password: pw, key }; }
+  else if (type === 'sftp') { const pw = $('src-password').value, key = $('src-key').value; src.config = { path: $('src-remote').value.trim(), host: $('src-host').value.trim(), port: parseInt($('src-port').value, 10) || 22, username: $('src-user').value.trim(), auth: key ? 'key' : pw ? 'password' : previous?.config.auth || 'none' }; if (pw || key) secrets[id] = { password: pw, key }; }
   else { src.config.url = $('src-url').value.trim(); if ($('src-user')) src.config.username = $('src-user').value.trim(); if ($('src-password')?.value) secrets[id] = { password: $('src-password').value }; }
-  const payload = { sources: [...state.sources.filter(x => !x.builtin), src] };
+  const payload = previous
+    ? { sources: sourceUpdatePayload(src) }
+    : { sources: [...state.sources.filter(x => !x.builtin), src] };
   if (Object.keys(secrets).length) payload.secrets = secrets;
   await api('/sources', { method: 'PUT', body: JSON.stringify(payload) });
   $('source-dialog').close();
+  editingSourceID = '';
   await loadSourcesList();
   state.source = id; state.dir = '.'; await loadFiles();
-  toast(t("已添加来源：{0}", name));
+  toast(previous ? t('来源配置已保存') : t("已添加来源：{0}", name));
 });
 /* ── Markdown 渲染：基于 marked v12（MIT，vendor/marked.min.js，GFM 全特性）
      输出经 DOM 消毒（去 script/style/iframe/事件属性/javascript: 链接），
@@ -6531,6 +6647,7 @@ function renderVoiceCloneControl() {
       if (!ids.length) { toast(t('请先录制样本')); return; }
       const out = await api('/voice-personality/infer',{method:'POST',body:JSON.stringify({sampleIds:ids})});
       personaBox.innerHTML='';
+      if (out.error) toast(t('推断失败：')+out.error);
       const p = out.profile||{};
       personaBox.append(el('small','', (p.summary||'')+'（'+t('AI 推断仅供参考')+'）'));
       const ta = el('textarea'); ta.rows=6; ta.style.width='100%';

@@ -19,11 +19,50 @@ import (
 // TokenUsage 一次模型调用的用量（FR-90）；Estimated 表示上游未返回 usage 时的估算值。
 type TokenUsage struct {
 	Prompt     int    `json:"prompt"`
+	CacheHit   int    `json:"cacheHit,omitempty"`
+	CacheMiss  int    `json:"cacheMiss,omitempty"`
+	CacheKnown bool   `json:"cacheKnown,omitempty"`
 	Completion int    `json:"completion"`
 	Total      int    `json:"total"`
 	Estimated  bool   `json:"estimated,omitempty"`
 	Model      string `json:"model,omitempty"`
 	Provider   string `json:"provider,omitempty"` // R08：调用归属的 provider（baseURL 快照）
+}
+
+// providerUsage carries both DeepSeek's explicit cache counters and the
+// OpenAI-compatible prompt_tokens_details.cached_tokens fallback.
+type providerUsage struct {
+	PromptTokens     int  `json:"prompt_tokens"`
+	CompletionTokens int  `json:"completion_tokens"`
+	TotalTokens      int  `json:"total_tokens"`
+	PromptCacheHit   *int `json:"prompt_cache_hit_tokens"`
+	PromptCacheMiss  *int `json:"prompt_cache_miss_tokens"`
+	PromptDetails    struct {
+		CachedTokens *int `json:"cached_tokens"`
+	} `json:"prompt_tokens_details"`
+}
+
+func applyPromptCacheUsage(dst *TokenUsage, src providerUsage) {
+	if src.PromptCacheHit == nil && src.PromptCacheMiss == nil && src.PromptDetails.CachedTokens == nil {
+		return
+	}
+	hit := 0
+	if src.PromptCacheHit != nil {
+		hit = *src.PromptCacheHit
+	} else if src.PromptDetails.CachedTokens != nil {
+		hit = *src.PromptDetails.CachedTokens
+	}
+	miss := dst.Prompt - hit
+	if src.PromptCacheMiss != nil {
+		miss = *src.PromptCacheMiss
+	}
+	if hit < 0 {
+		hit = 0
+	}
+	if miss < 0 {
+		miss = 0
+	}
+	dst.CacheHit, dst.CacheMiss, dst.CacheKnown = hit, miss, true
 }
 
 // tokenUsageRecorder 由 New() 注入（atomic 防并行测试竞态）；complete() 成功后调用。
@@ -145,11 +184,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 				ToolCalls []ToolCall `json:"tool_calls"`
 			} `json:"message"`
 		} `json:"choices"`
-		Usage struct {
-			PromptTokens     int `json:"prompt_tokens"`
-			CompletionTokens int `json:"completion_tokens"`
-			TotalTokens      int `json:"total_tokens"`
-		} `json:"usage"`
+		Usage providerUsage `json:"usage"`
 	}
 	if err = json.Unmarshal(b, &out); err != nil {
 		return "", nil, TokenUsage{}, errors.New("模型返回了无效 JSON")
@@ -162,6 +197,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		return "", nil, TokenUsage{}, &emptyCompletionError{finish: out.Choices[0].FinishReason}
 	}
 	usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model, Provider: cfg.BaseURL}
+	applyPromptCacheUsage(&usage, out.Usage)
 	if usage.Total == 0 {
 		// 上游未返回 usage → 使用与上下文卡相同的完整请求估算并标记。
 		usage.Prompt = promptEstimate
@@ -193,11 +229,7 @@ type streamChunk struct {
 		} `json:"delta"`
 		FinishReason string `json:"finish_reason"` // stop/length/content_filter/tool_calls：区分“真结束”与“被截断/空”
 	} `json:"choices"`
-	Usage *struct {
-		PromptTokens     int `json:"prompt_tokens"`
-		CompletionTokens int `json:"completion_tokens"`
-		TotalTokens      int `json:"total_tokens"`
-	} `json:"usage,omitempty"`
+	Usage *providerUsage `json:"usage,omitempty"`
 }
 
 // completeStream 以 stream:true 发起 Chat Completions，逐 token 聚合响应。
@@ -271,11 +303,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 					ToolCalls []ToolCall `json:"tool_calls"`
 				} `json:"message"`
 			} `json:"choices"`
-			Usage struct {
-				PromptTokens     int `json:"prompt_tokens"`
-				CompletionTokens int `json:"completion_tokens"`
-				TotalTokens      int `json:"total_tokens"`
-			} `json:"usage"`
+			Usage providerUsage `json:"usage"`
 		}
 		if err := json.NewDecoder(io.LimitReader(resp.Body, 8<<20)).Decode(&out); err != nil {
 			return "", nil, TokenUsage{}, "", errors.New("模型返回了无效 JSON")
@@ -288,6 +316,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 			onDelta(msg.Content)
 		}
 		usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model, Provider: cfg.BaseURL}
+		applyPromptCacheUsage(&usage, out.Usage)
 		if usage.Total == 0 {
 			usage.Prompt = promptEstimate
 			usage.Completion = len(msg.Content) / 4
@@ -303,11 +332,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 	var content strings.Builder
 	toolCallsByIndex := map[int]*ToolCall{}
 	var finishReason string
-	var usage *struct {
-		PromptTokens     int `json:"prompt_tokens"`
-		CompletionTokens int `json:"completion_tokens"`
-		TotalTokens      int `json:"total_tokens"`
-	}
+	var usage *providerUsage
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 64<<10), 1<<20) // 单个 chunk 上限 1 MiB
 	for scanner.Scan() {
@@ -397,6 +422,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		tu.Prompt = usage.PromptTokens
 		tu.Completion = usage.CompletionTokens
 		tu.Total = usage.TotalTokens
+		applyPromptCacheUsage(&tu, *usage)
 	}
 	if tu.Total == 0 {
 		tu.Prompt = promptEstimate
