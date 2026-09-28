@@ -1,0 +1,183 @@
+{
+  "agent": "frontend-viewers",
+  "lens": "前端查看器/语音/账户：PDF/DXF/docx/ZIP/SQLite/STL/drawio/mermaid 渲染安全、资源销毁与异步取消、锁屏/语音/WebAuthn/备份/恢复出厂流程",
+  "summary": "查看器整体安全基调良好：ZIP 只列目录不解压、DXF/文本走 textContent 与 createElementNS、markdown 经 DOMParser 消毒。主要问题集中在三处：(1) SQLite 查看器把表名/列名/单元格值直接拼进 innerHTML，存在注入；(2) Web Speech 兜底朗读的 onerror 处理会把 cancel 误判为可继续，导致锁屏/停止按钮无法真正打断机械朗读与对话回复朗读；(3) STL/PDF/DXF/图片查看器关闭或切换文件时不销毁 renderer、IntersectionObserver、rAF 循环和 window 鼠标监听，反复打开会泄漏 WebGL 上下文与定时器。另有 mermaid securityLevel=loose 且 svg 经 innerHTML 直插、docx 批注 anchorIndex 恒为 0 等逻辑缺陷。",
+  "findings": [
+    {
+      "id": "frontend-viewers-001",
+      "title": "Web Speech 兜底朗读无法被中断：onerror 把 cancel 当作普通错误继续朗读下一句",
+      "category": "逻辑错误",
+      "severity": "P1",
+      "file": "internal/server/web/app.js",
+      "line": "5450, 5993",
+      "evidence": "webSpeakReply() 中 `u.onerror = () => { i++; next(); };`（5450），toggleMechanicalRead() 中 `u.onerror=()=>{ i++; next(); };`（5993）。ttsCancel()/停止按钮调用 `speechSynthesis.cancel()`，Chrome 会对被取消的 utterance 触发 error 事件且 event.error==='canceled'；该处理不区分错误类型，直接 i++ 并 next() 继续朗读下一段，导致：①对话回复朗读在锁屏 applyLockVisual→ttsCancel()(6746) 后仍继续念；②消息「朗读」点「停止」后仍把剩余部分念完。await 版 webSpeakAwait 因 step() 开头检查 narration.cancelled(5823) 而幸免，但即发即忘路径没有保护。",
+      "fix": "在 onerror 中判断 `if (event && event.error === 'canceled' || event.error==='interrupted') return;`（直接结束朗读链，不再 i++/next）；或维护一个本地 cancelled 标志，ttsCancel 时置位，next() 开头检查。",
+      "confidence": "high"
+    },
+    {
+      "id": "frontend-viewers-002",
+      "title": "SQLite 查看器表名/列名/单元格值未转义直接拼 innerHTML",
+      "category": "安全",
+      "severity": "P1",
+      "file": "internal/server/web/app.js",
+      "line": "7279, 7300, 7307",
+      "evidence": "`html += ... data-table=\"${t.name}\" ...${t.name}...`(7279)、表头 `${col.name}` / `${col.type}`(7300)、单元格 `${val === null ? ... : String(val)}`(7307) 全部是字符串拼接进 innerHTML，未做 HTML 转义。数据库可能来自 workspace 或外部引用来源，若表名/列名或某单元格内容含 `<img src=x onerror=...>`、`<svg onload>` 等即构成存储型 XSS，运行在持有 Bearer token 的同源页面里。",
+      "fix": "统一用 el()/textContent 构建 DOM，或写一个 escapeHtml 对 t.name/col.name/col.type/String(val) 转义后再拼接；data-table 属性也用 setAttribute。",
+      "confidence": "high"
+    },
+    {
+      "id": "frontend-viewers-003",
+      "title": "STL 3D 查看器关闭/切换时不销毁 renderer、rAF 循环与 ResizeObserver",
+      "category": "资源泄漏",
+      "severity": "P1",
+      "file": "internal/server/web/app.js",
+      "line": "3680-3708",
+      "evidence": "setupStlPreview 创建 WebGLRenderer(3680)、OrbitControls、并启动 `(function animate(){ requestAnimationFrame(animate); ...renderer.render(...) })()`(3706) 与 `new ResizeObserver(resize).observe(canvasWrap)`(3708)。函数内没有 teardown，showEditor 再次打开别的文件时仅 container.innerHTML='' 清空 DOM，rAF 闭包仍持引用持续渲染、ResizeObserver 不 disconnect、WebGL 上下文不 dispose。反复打开 STL 会累积 WebGL context，最终浏览器报错 'Too many active WebGL contexts' 导致后续 3D/Canvas 查看器打不开。file-view-mode(4692) 路径同样无任何回收。",
+      "fix": "注册 cancel/销毁句柄（记录 renderer、controls、resizeObserver、animationFrameId），在容器被替换或 dialog close / pagehide 时：cancelAnimationFrame、resizeObserver.disconnect()、controls.dispose()、renderer.dispose() 并释放 geometry/material。",
+      "confidence": "high"
+    },
+    {
+      "id": "frontend-viewers-004",
+      "title": "mermaid 以 securityLevel=loose 渲染且 svg 经 innerHTML 直插，AI 产出可触发脚本",
+      "category": "安全",
+      "severity": "P1",
+      "file": "internal/server/web/app.js",
+      "line": "5112, 5117-5118",
+      "evidence": "`mermaid.initialize({ startOnLoad:false, theme:'neutral', securityLevel:'loose' })`(5112)，随后 `const {svg}=await mermaid.render(...); el.innerHTML=svg;`(5118)。renderMarkdown 中 mermaid 源码来自 AI 输出（用户不可控），虽然 div 本身用 textContent 安全创建，但最终 svg 不经 sanitizeHtml 直接 innerHTML。loose 级别允许 mermaid 在标签/link/click 回调中嵌入交互与 HTML，历史上存在 foreignObject/onerror 类注入面。",
+      "fix": "将 securityLevel 改为 'strict'（mermaid 默认即禁用 click 与 html 标签），或对 mermaid.render 返回的 svg 再过一遍 sanitizeHtml（移除事件属性/foreignObject/script）后再插入。",
+      "confidence": "medium"
+    },
+    {
+      "id": "frontend-viewers-005",
+      "title": "PDF 查看器仅在 dialog close 时 teardown，file-view 页签与切换文件时不销毁文档/Observer",
+      "category": "资源泄漏",
+      "severity": "P2",
+      "file": "internal/server/web/app.js",
+      "line": "3797-3799",
+      "evidence": "teardown 只在 `const dlgEl = container.closest('dialog'); if (dlgEl) dlgEl.addEventListener('close', teardown, {once:true});`(3799)。file-view-mode(4696) 打开的 PDF 没有 dialog，关闭靠 history.back，pdfDoc.destroy()/io.disconnect() 永不执行；在编辑器 dialog 内从 PDF 再 openFile 切到另一文件时 showEditor 直接 innerHTML=''，旧 pdfDoc 与 IntersectionObserver 同样泄漏。另 `new ResizeObserver(()=>{}).observe(scroll)`(3904) 空回调且从不 disconnect。",
+      "fix": "把 teardown 句柄挂到可全局查询的容器属性上（如 container._viewerTeardown），在 showEditor/openFileViewMode 重新渲染前先调用上一个查看器的 teardown；file-view 页签监听 pagehashchange/pagehide 触发销毁；删除空 ResizeObserver。",
+      "confidence": "high"
+    },
+    {
+      "id": "frontend-viewers-006",
+      "title": "DXF/图片查看器每次打开都新增永久 window mousemove/mouseup 监听，从不移除",
+      "category": "资源泄漏",
+      "severity": "P2",
+      "file": "internal/server/web/app.js",
+      "line": "4343-4352, 3591-3592",
+      "evidence": "setupDxfPreview 中 `window.addEventListener('mousemove', ...)`(4343) 与 `window.addEventListener('mouseup', ...)`(4352) 是匿名闭包，无对应 removeEventListener；setupImagePreview 同样在 3591/3592 挂匿名 mousemove/mouseup。每打开一次 DXF/图片就泄漏一对监听器，且闭包持有 canvas/svg/DOM 引用无法 GC；拖拽判断里即便 dragging=false 也每次 mousemove 都跑函数。",
+      "fix": "把 handler 提为具名函数并在容器替换/close 时 window.removeEventListener；或改用 Pointer Capture(setPointerCapture) 替代全局 window 监听。",
+      "confidence": "high"
+    },
+    {
+      "id": "frontend-viewers-007",
+      "title": "docx 添加批注时 anchorIndex 恒为 0（死代码，计数结果未赋值）",
+      "category": "逻辑错误",
+      "severity": "P2",
+      "file": "internal/server/web/app.js",
+      "line": "4526-4532",
+      "evidence": "mouseup 里试图计算 quote 是全文第几次出现：`while(true){ const idx=norm.indexOf(normQuote,pos); if(idx<0) break; anchorIndex = anchorIndex; /* 当前就是选中的这次 */ pos = idx+1; }`。`anchorIndex = anchorIndex;` 是自赋值死代码，循环只计数但从不把 found 写入 anchorIndex，提交给后端的 anchorIndex 永远是初始值 0。当正文里被批注句子多次出现时，下次 loadComments 的 highlightComment(c.anchorIndex||0) 会高亮到第一次出现处而非用户选中处，批注锚点错位。",
+      "fix": "需要正确计算选中片段在全文中的出现序号：先记录 selection 对应的起始字符偏移，再统计该偏移之前 normQuote 出现次数，赋值给 anchorIndex；或至少把循环里的计数变量赋给 anchorIndex。",
+      "confidence": "high"
+    },
+    {
+      "id": "frontend-viewers-008",
+      "title": "全局搜索无请求时序控制，快速输入时旧响应可能覆盖新结果",
+      "category": "并发与数据竞争",
+      "severity": "P2",
+      "file": "internal/server/web/app.js",
+      "line": "4986-4999",
+      "evidence": "300ms 防抖后直接 `const data = await api('/search?q=...')`，没有 token/AbortController。用户连续输入时，前一次较慢的请求若后返回，会 replaceChildren 覆盖掉后一次（更相关）结果，造成「搜 A 却显示上一个词 B 的结果」。",
+      "fix": "维护递增 searchSeq，await 后比对 seq 是否仍是最新；或用 AbortController 取消上一次 in-flight 请求。",
+      "confidence": "medium"
+    },
+    {
+      "id": "frontend-viewers-009",
+      "title": "PDF 缩放/翻页对进行中的 render 无取消，快速缩放产生重叠渲染与画布闪烁",
+      "category": "资源泄漏",
+      "severity": "P2",
+      "file": "internal/server/web/app.js",
+      "line": "3871-3887",
+      "evidence": "renderVisible() 对每个可见页直接 `await p.render({...}).promise`，未保存/取消上一次 renderTask。连点 btnZoomIn/Out(3901-3902) 触发 layoutPages→renderVisible 时，同一 canvas 会被多个 render task 同时绘制，仅靠 catch 吞错(3885)。大文档上快速缩放会 CPU/内存升高且页面闪动。",
+      "fix": "在 holders[i] 上保存当前 renderTask，新一轮渲染前 `if (h.renderTask) h.renderTask.cancel()`；canvas 重设尺寸前取消旧任务。",
+      "confidence": "medium"
+    },
+    {
+      "id": "frontend-viewers-010",
+      "title": "docx 批注定位用逐字符 += 拼接全文，大文档卡顿",
+      "category": "边界条件",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "4424-4430",
+      "evidence": "findTextRange 里 `for (let i=0;i<t.length;i++){ map.push({node,off:i}); fullText += t[i]; }` 对每个文本节点逐字符 push 并字符串 +=。一篇几十页 docx 会构建数万元素数组并反复字符串拼接，且每次点击批注/添加批注都重跑；clearHighlights 后重高亮也重跑。",
+      "fix": "先收集节点文本长度做前缀和，用 indexOf 的偏移反查节点（二分），避免逐字符 map 与 O(n²) 字符串拼接。",
+      "confidence": "medium"
+    },
+    {
+      "id": "frontend-viewers-011",
+      "title": "代码高亮 overlay 的 window resize 监听在 teardown 后仍残留",
+      "category": "资源泄漏",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "4034, 4039-4048",
+      "evidence": "setupCodeHighlight 里 `window.addEventListener('resize', positionOverlay)`(4034) 使用函数声明 positionOverlay，teardownCodeHighlight(4039) 只移除 wrapper/pre，从未 removeEventListener('resize', positionOverlay)。每次打开一个带语法高亮的文件就泄漏一个指向已分离 textarea 的 resize 回调。",
+      "fix": "teardownCodeHighlight 中 window.removeEventListener('resize', positionOverlay)（需把 positionOverlay 暴露为实例级具名引用）。",
+      "confidence": "high"
+    },
+    {
+      "id": "frontend-viewers-012",
+      "title": "drawio 加载超时后 iframe 与 message 监听仍在后台运行",
+      "category": "资源泄漏",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "3515-3540",
+      "evidence": "15s 超时后仅替换 container.innerHTML 显示错误文案(3518)，但 iframe（已被 innerHTML='' 间接移除）对应的 window message handler 仍通过 window[handlerKey] 挂在 window 上，且 timeoutId 未 clear；drawio webapp 若在超时后才 init，会 postMessage load 到一个已移除的 frame，ev.source 校验虽拦住，但监听器与定时器残留。",
+      "fix": "超时分支里 clearTimeout(timeoutId)、window.removeEventListener('message', window[handlerKey])、window[handlerKey]=null。",
+      "confidence": "medium"
+    },
+    {
+      "id": "frontend-viewers-013",
+      "title": "锁屏状态刷新 setInterval(1s) 常驻，未锁屏也持续遍历 runPhase",
+      "category": "资源泄漏",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "6908",
+      "evidence": "`setInterval(()=>{ if (lockScreen.locked) refreshLockStatus(); }, 1000)` 全局常驻。虽然回调内判断了 locked，但该定时器永不清除，且 refreshLockStatus 会 for..in 遍历 state.runPhase。无功能问题，属轻微常驻开销。",
+      "fix": "在 releaseLockVisual 时把 interval 清掉、applyLockVisual 时再启动；或合并进现有活动心跳。",
+      "confidence": "low"
+    },
+    {
+      "id": "frontend-viewers-014",
+      "title": "WebAuthn assertion/finish 把 challenge 放在 URL query 中",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "6868, 7008",
+      "evidence": "`fetch('/api/webauthn/assertion/finish?challenge='+encodeURIComponent(start.challenge), ...)`(6868)，register/finish 同样把 challenge 放 query(7008)。challenge 是一次性随机值，放 query 会进入浏览器历史/代理与服务器访问日志；虽为本地服务，仍属不规范。",
+      "fix": "把 challenge 放到请求体 JSON 中（与 assertionToJSON 一起 POST），后端从 body 读取。",
+      "confidence": "medium"
+    },
+    {
+      "id": "frontend-viewers-015",
+      "title": "导出会话 Blob 的 ObjectURL 在 click() 后同步立即 revoke，个别浏览器可能不触发下载",
+      "category": "边界条件",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "4937-4940, 4945-4948",
+      "evidence": "轨迹导出 `a.click(); URL.revokeObjectURL(a.href);` 同步执行。现代 Chrome/Firefox 在 click() 同步启动下载后通常仍可完成，但 Safari 某些版本会因 URL 被立即撤销而下载失败（导出配置 7059 用了 setTimeout 1500ms 延迟撤销，两处不一致）。",
+      "fix": "与导出配置一致，用 setTimeout(()=>URL.revokeObjectURL(url), 1500) 延迟撤销。",
+      "confidence": "low"
+    },
+    {
+      "id": "frontend-viewers-016",
+      "title": "ZIP 查看器无大小/条目数上限，恶意超大 zip 全量读入内存",
+      "category": "边界条件",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "3723-3725",
+      "evidence": "`await fetch(...).arrayBuffer()` 后 `JSZip.loadAsync(...)` 把整个 zip 读入内存并展开条目列表，没有对响应字节数或 entries.length 做限制。打开一个几百 MB 的 zip 会阻塞页面并占用内存。",
+      "fix": "读取 content-length 做软上限提示（如 >200MB 提示改用系统解压），或限制渲染的条目数量（超过 N 条提示仅展示前 N 条）。",
+      "confidence": "low"
+    }
+  ]
+}

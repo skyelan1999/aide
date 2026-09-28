@@ -1,0 +1,67 @@
+{
+  "agent": "runtime-functional",
+  "lens": "用 Playwright 对本地运行中的 aide（https://127.0.0.1:8097，容器 aide-aide-1）做端到端功能走查，覆盖登录鉴权/流式对话/插话排队/工具调用/文件提案审批/文件查看器/SQLite/设置权限/会话菜单 9 大项，记录真实接口与交互缺陷。",
+  "summary": "9 大项整体可用，核心链路（鉴权→流式对话→工具调用→提案落盘→文件查看器→SQLite只读→设置持久化→会话置顶/归档/删除）全部跑通。主要问题集中在错误反馈与控制台噪声：文件提案 apply 冲突返回 409 但前端无任何提示且按钮残留；CSP style-src 'self' 拦截 app.js 动态内联样式，打开 .db 等页面单次刷出数十条 console error；highlight.js 的 ruby/php/matlab 语言包 404 且 MIME 被拒。未发现 P0/P1 阻断或崩溃。",
+  "findings": [
+    {
+      "id": "runtime-functional-001",
+      "title": "文件提案 apply 冲突返回 409，前端无任何错误反馈且按钮原样残留",
+      "category": "错误处理",
+      "severity": "P2",
+      "file": "internal/server/web/app.js (apply 调用处) + internal server apply 接口",
+      "line": "POST /api/sessions/{sid}/runs/{rid}/apply",
+      "evidence": "复现：在工作区可写下，让模型生成写文件提案 __qa_walkthrough__/greeting.py。由于模型同时用 run_shell 直接落盘过同名文件，首次点击「应用这些文件修改」时后端返回 POST /api/sessions/ffd5de75.../runs/b5bbef5e.../apply → 409，body {\"error\":\"__qa_walkthrough__/greeting.py: 文件已改变或已存在，请重新打开后再保存\"}（console 与 network 均见 409）。但前端提案卡片上的「应用这些文件修改」按钮保持原样、无 toast/红色提示/错误态，用户无法知道该次 apply 已失败。删除磁盘上的文件后再次点 apply 才返回 200 并落盘为 print(\"你好QA 123\")（22字节），卡片转为「✓ 已应用文件修改」。证据截图：05-after-apply-click.png（409 后按钮残留）、05c-apply-200.png（成功后）。",
+      "fix": "apply 接口返回 4xx 时前端应捕获响应体 error 字段，在提案卡片内或全局 toast 展示「文件已被外部修改/已存在，应用失败」，并将按钮置为可重试/禁用态，而不是静默保留可重复点击的按钮。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "runtime-functional-002",
+      "title": "CSP style-src 'self' 拦截 app.js 动态写入的内联样式，打开 .db 等页面单次刷出数十条 console error",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/web/app.js?v=64",
+      "line": "7266 / 7284 / 7292 / 7311",
+      "evidence": "打开 SQLite 查看器（demo.db）后浏览器 console 短时内累计 111 条 error，绝大多数为：Refused to apply inline style because it violates Content Security Policy directive 'style-src 'self''... 触发点集中在 app.js?v=64:7284 与 :7311（重复数十次，hash 值各不相同），另有一条来自页面内联 <style>。功能未见明显破损（查看器/弹窗仍渲染），但控制台被淹没，真实错误（如 apply 409）被噪声掩盖，影响排查。",
+      "fix": "将动态设置样式改为通过样式表/CSS 类切换，或在 CSP style-src 中按需加入 'unsafe-inline'（对内联样式场景可接受）或 nonce 机制，避免运行时逐次触发 CSP 拦截。",
+      "confidence": "medium",
+      "needs_user_decision": false
+    },
+    {
+      "id": "runtime-functional-003",
+      "title": "highlight.js 语言包 ruby/php/matlab 返回 404 且 MIME text/plain 被严格 MIME 检查拒绝",
+      "category": "资源泄漏",
+      "severity": "P3",
+      "file": "internal/server/web/vendor/highlight.js/languages/",
+      "line": "ruby.min.js / php.min.js / matlab.min.js",
+      "evidence": "页面加载时 console 报：GET /vendor/highlight.js/languages/ruby.min.js?v=64 → 404，随后 'Refused to execute script ... MIME type (text/plain) is not executable, strict MIME checking is enabled'；php.min.js、matlab.min.js 同样 404。即这三个语言包文件不存在，且服务端对缺失文件以 text/plain 返回。当消息内含 ruby/php/matlab 代码块时该语言不会被高亮（静默降级）。",
+      "fix": "要么补齐这三个语言包到 vendor 目录并以正确 MIME(application/javascript) 提供，要么在前端注册高亮语言列表时去掉对这三者的动态加载请求，避免每次加载都产生 404 + MIME 报错。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "runtime-functional-004",
+      "title": "SSE 事件流通过 URL 查询参数 access_token 传递鉴权令牌",
+      "category": "安全",
+      "severity": "P3",
+      "file": "前端 EventSource 调用",
+      "line": "GET /api/sessions/{sid}/runs/{rid}/events?access_token=...",
+      "evidence": "真正的逐字流式通道是 EventSource：GET /api/sessions/{sid}/runs/{rid}/events?access_token=<bearer>。由于 EventSource 无法自定义请求头，令牌被放在查询串里。该方式令牌会进入访问日志/代理日志/浏览器历史。属常见折中，但对自托管本地服务风险可控。",
+      "fix": "如需加固，可改用一次性短期 ticket（服务端换发、仅本事件流有效、用完即弃）替代长期 bearer 出现在 URL 中；或在反代/服务端日志中对 query 做脱敏。当前本地场景可接受，故 P3。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "runtime-functional-005",
+      "title": "写文件提案卡片未见显式「拒绝/驳回」按钮，用户只能批准或忽略",
+      "category": "UX与交互逻辑",
+      "severity": "P3",
+      "file": "前端文件提案卡片",
+      "line": "提案卡片「文件修改 · N个文件」",
+      "evidence": "让模型只通过 write_file 提案新建 __qa_walkthrough__/reject_me.py 后，卡片仅展示「应用这些文件修改」按钮与文件 diff，未在卡片上找到独立的「拒绝/驳回」操作（截图 04-tool-call-file-proposal.png）。走查任务要求验证「批准/拒绝」两条路径，但 UI 上未观察到明确的驳回入口，无法从卡片侧让用户显式拒绝并落一个「已拒绝」状态。可能存在我未点到的折叠/关闭入口，故 confidence 偏低。",
+      "fix": "在提案卡片上补充「拒绝/驳回」按钮，点击后明确标记提案为 rejected、不再提示应用，并向模型回执该提案被用户否决；若已有该入口（如关闭叉），请在文案上更可发现。",
+      "confidence": "low",
+      "needs_user_decision": false
+    }
+  ]
+}

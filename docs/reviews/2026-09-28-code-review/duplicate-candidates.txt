@@ -1,0 +1,35 @@
+=== candidate cluster ===
+  [backend-integrations] P3 安全 | internal/server/debug.go:37 | 调试令牌 TTL 365 天且无强制轮换
+  [security] P3 安全 | internal/server/debug.go:37,120-129 | 外部调试令牌 TTL 长达 365 天，且仅存哈希、无异常频次告警
+
+=== candidate cluster ===
+  [backend-http] P3 安全 | internal/server/files.go:1420-1426 | SQLite 表名拼入 f-string SQL，存在标识符注入面
+  [security] P3 安全 | internal/server/files.go:1420,1426 | SQLite 接口把 table 查询参数以 f-string 拼进 Python SQL（仅方括号转义）
+
+=== candidate cluster ===
+  [backend-integrations] P3 数据丢失 | internal/server/migration.go:238-245 | migration copyVerified 在目标文件已存在但哈希不同时静默删除源文件
+  [test-failures] P3 错误处理 | internal/server/migration.go:237-245（测试在 internal/server/migration_test.go:138） | TestMigrationRollback 期望冲突报错，但 d4fda74 已把冲突策略改为『保留目标、删除源、不报错』
+
+=== candidate cluster ===
+  [backend-http] P1 安全 | internal/server/server.go:2000-2017 | getSession 未校验小秘会话密码门，直接返回完整消息
+  [backend-http] P1 逻辑错误 | internal/server/server.go:1989 | deleteAllArchived 仍按旧平铺路径删文件，归档会话删不净、重启复活
+
+=== candidate cluster ===
+  [frontend-core] P2 安全 | internal/server/web/app.js:5112-5118 | mermaid 以 securityLevel:'loose' 渲染模型生成的图表文本，存在 HTML/脚本注入面
+  [frontend-viewers] P1 安全 | internal/server/web/app.js:5112, 5117-5118 | mermaid 以 securityLevel=loose 渲染且 svg 经 innerHTML 直插，AI 产出可触发脚本
+  [security] P2 安全 | internal/server/web/app.js:5112-5118 | Mermaid 以 securityLevel=loose 渲染并把原始 SVG 直接 innerHTML 注入，绕过 Markdown 消毒
+
+=== candidate cluster ===
+  [frontend-css] P3 代码异常 | internal/server/web/app.js:7267,7272,7279,7293,7296,7300,7307 | app.js 内联样式引用未定义令牌 --text-secondary / --border
+  [frontend-viewers] P1 安全 | internal/server/web/app.js:7279, 7300, 7307 | SQLite 查看器表名/列名/单元格值未转义直接拼 innerHTML
+  [security] P2 安全 | internal/server/web/app.js:7279,7300,7307 | SQLite 查看器把表名/列名/单元格值不经转义直接拼接 innerHTML
+
+=== candidate cluster ===
+  [frontend-css] P2 代码异常 | internal/server/web/style.css:238,284,302,312,315,316,332,335,336,343,713,716,721,723,726,728,729,731,980,990; macos.css:333 | 多个未定义令牌无 fallback 被引用，导致背景/边框/文字声明失效
+  [frontend-css] P3 UX与交互逻辑 | internal/server/web/style.css:243,349,827 | z-index 层级扁平：多个浮层同挤 1000，缺少分层约定
+
+=== candidate cluster ===
+  [frontend-css] P3 UX与交互逻辑 | internal/server/web/style.css:914-917 | 文件预览顶栏首个 <select> 未与 36px 按钮对齐
+  [frontend-css] P3 UX与交互逻辑 | internal/server/web/style.css:900-907 | editor-dialog 头部按钮高度未统一（与 file-view-head 不一致）
+  [frontend-css] P3 代码异常 | internal/server/web/style.css:906 | .ro-badge.hidden 与全局 .hidden 重复
+

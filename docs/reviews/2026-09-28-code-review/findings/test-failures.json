@@ -1,0 +1,43 @@
+{
+  "agent": "test-failures",
+  "lens": "只读复核 internal/server 三个非环境类失败用例（TestMigrationRollback / TestNoPasswordReject / TestAssistantSessionPasswordGate），逐个判定是真实代码 bug 还是测试期望过期（测试漂移），并对照 git 历史确认行为变更是否有意为之。",
+  "summary": "三个失败全部是【测试漂移】，无一真实代码 bug：本分支（feature/permission-panel，WIP 安全加固 #29/#30-#55 收口阶段）有三次有意的行为变更未同步更新对应用例——(1) 迁移冲突策略从『报错中止』改为『保留目标、删除源（已备份）』（d4fda74）；(2) 保存 SSH 凭据的『无账户密码必须 400』前置分支被删除，vault 改由本机 access-token 启动自动解锁（c536500）；(3) 小秘会话在未设置账户密码时从 401 改为 200 noPassword 放行（ac2ec2a）。三处代码变更均有明确 commit message 与内联注释说明意图，运行日志/响应体与新行为一致。处置方向都是改测试，不是改源码；仅 migration.go 顶部流程注释（第 7 条）与新策略不一致，建议顺手订正。",
+  "findings": [
+    {
+      "id": "test-failures-001",
+      "title": "TestMigrationRollback 期望冲突报错，但 d4fda74 已把冲突策略改为『保留目标、删除源、不报错』",
+      "category": "错误处理",
+      "severity": "P3",
+      "file": "internal/server/migration.go",
+      "line": "237-245（测试在 internal/server/migration_test.go:138）",
+      "evidence": "结论：测试漂移。测试构造（migration_test.go:129-139）：在平铺根写 data/settings.json={\"model\":\"orig\"}，再 EnsureDirs 后预置分层目标 config/settings.json={\"model\":\"conflicting\"}，调用 MigrateFlatToLayered 并断言 err!=nil（第 138 行 t.Fatal(\"期望冲突报错，实际 nil\")）。代码实际路径：copyVerified（migration.go:225-261）先把 src 备份到 .integrity/migration-backup-<ts>/（231-236），再读 dest 计算 hash——二者不一致时，当前实现走 243-245 行：`_ = os.Remove(src); return false, nil`（注释明确写『内容不一致：保留目标文件（用户已修改），删除旧源文件，不报错』）。因此迁移全程不返回 error，plan 为空，日志打印『数据分层迁移完成：0 个文件已归位』，返回 nil，测试在 138 行失败。git show d4fda74 证实这是有意改动：commit message『fix: settings.json 迁移冲突时保留目标文件，不再中止启动』，diff 把原来的 `return false, fmt.Errorf(\"目标 %s 已存在但内容不一致\")` 替换为『备份后 os.Remove(src) + 返回 nil』。补充：测试第 141 行还断言原平铺 settings.json 仍含 \"orig\"，在新行为下该源文件已被 Remove（但已备份到 migration-backup 目录，可恢复），即使改了 138 行的断言，这条也需要同步改。根因：测试仍按旧『冲突即中止、原文件纹丝不动』契约编写，未随 d4fda74 更新。",
+      "fix": "改测试（migration_test.go）：(1) 第 136-139 行不再要求 err!=nil，改为断言 MigrateFlatToLayered 返回 nil；(2) 断言分层目标 config/settings.json 仍为 {\"model\":\"conflicting\"}（用户配置优先、不被旧平铺覆盖）；(3) 平铺根 data/settings.json 应已不存在（被删），但可在 .integrity/migration-backup-<ts>/settings.json 找到备份原件；不再断言平铺根保留 \"orig\"。另建议（非本次失败原因）订正 migration.go 顶部流程注释第 7 条（13 行）『任一不一致：中止，清理本次复制出的分层副本，原文件纹丝不动』，使其与 copyVerified 现行『保留目标+删源（已备份）』策略一致，避免注释误导后续维护。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "test-failures-002",
+      "title": "TestNoPasswordReject 期望无账户密码 400，但 c536500 已删除该前置分支，vault 改由 access-token 自动解锁",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/workspace_config.go",
+      "line": "570-593（测试在 internal/server/secret_vault_test.go:154）",
+      "evidence": "结论：测试漂移。测试构造（secret_vault_test.go:151-158）：testApp 全新 App（UserPasswordHash 为空，无账户密码），PUT /api/workspace-config，body 为 workspace{mode:ssh,host:h,port:22,username:u,auth:password} + 顶层 \"password\":\"locked-pw\"（即 SSH 登录密码，对应 updateWorkspaceConfig 的 in.Password），断言 400。代码实际路径：needUnlock=true（in.Password!=\"\"，568 行）；进入凭证处理后，当前 570-593 行【已无】『UserPasswordHash=='' 则 400』的分支；vault 在启动时由 unlockVaultAtStartup 用 sha256(access-token) 自动解锁——本次失败响应体明确回显 \"vaultLocked\":false，证明 vault 已解锁，于是 599-604 行 vault.Put(VaultIDWSPassword,...) 成功，最终 200 返回，body 里 \"hasPassword\":true。git show c536500 证实 400 分支被有意删除：diff 删除了 `- if a.settings.UserPasswordHash == \"\" { fail(w,400, errors.New(\"请先在「设置→账户」设置登录密码以加密存储 SSH 凭据\")) }`；apikey_vault.go 头注释（9-14 行）写明新威胁模型：vault 主密钥=SHA-256(access-token)，access-token 本身已是本机工作台登录授权边界，『无需再要求一次账户密码；浏览器登录成功即具备读写凭证的权限』。根因：测试仍按旧契约（无账户密码即拒绝保存 SSH 凭据）编写，未随 c536500 的 vault 密钥模型切换更新。",
+      "fix": "改测试（secret_vault_test.go）：新行为下，持 bearer token 的请求在无账户密码时保存 SSH 凭据应成功——把第 154-157 行的期望从 400 改为 200，并断言响应体 hasPassword==true。若仍想保留『锁定时拒绝』的覆盖，应另行构造一个旧版账户密码加密、access-token 打不开的 vault（此时会落到 587-590 行 default 分支返回 423 StatusLocked，而非 400），不要复用全新 testApp。注意：本用例注释『无账户密码：保存 SSH 凭据必须被拒』已与产品设计相悖，删除或改写即可。",
+      "confidence": "high",
+      "needs_user_decision": false
+    },
+    {
+      "id": "test-failures-003",
+      "title": "TestAssistantSessionPasswordGate 首次调用期望 401，但 ac2ec2a 已把未设密码分支改为 200 noPassword 放行",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/server.go",
+      "line": "1716-1722（测试在 internal/server/session_number_test.go:145）",
+      "evidence": "结论：测试漂移。测试构造（session_number_test.go:133-146）：testApp 全新 App（此时尚未设置账户密码），取到小秘系统会话 id 后立即 POST /api/sessions/{id}/unlock-assistant，body password=\"whatever\"，注释『未设置账户密码 → 401』，第 145-146 行断言 401。代码实际路径：unlockAssistantSession（server.go:1693-1739）先取 hash=a.settings.UserPasswordHash（1702 行，此时为 \"\"），1712 行 isAssistantUnlocked 为 false，到达 1716 行 `if hash == \"\"`：当前实现直接 markAssistantUnlocked + 返回 200 {\"ok\":true,\"noPassword\":true}（1717-1720 行，注释『未设置账户密码：小秘会话无密码门，直接放行（避免 401 触发前端登录框）』）。本次失败响应体正是 {\"noPassword\":true,\"ok\":true}，日志也打印『小秘会话无密码门：未设置账户密码，直接放行』。git show ac2ec2a 证实这是有意改动：commit message『fix: 小秘会话未设置密码时直接放行，不再弹登录框』，diff 把原来的 `fail(w,401, errors.New(\"未设置账户密码\"))` 替换为 200 noPassword 放行。测试后续步骤（149-162 行先设置 UserPasswordHash 再断言错误密码→401、正确密码→200）与现行逻辑一致，应当仍可通过，本次仅首条断言过期。根因：测试仍按旧『无账户密码一律 401』契约编写，未随 ac2ec2a 更新。",
+      "fix": "改测试（session_number_test.go）：把第 144-146 行首条断言从 requireStatus(...,401) 改为 requireStatus(...,200)，并可额外断言响应体含 \"noPassword\":true、\"ok\":true；删除/改写注释『未设置账户密码 → 401』为『未设置账户密码 → 200 noPassword 放行』。第 149 行之后设置账户密码的两条断言（wrong→401、secret→200）保持不变。",
+      "confidence": "high",
+      "needs_user_decision": false
+    }
+  ]
+}

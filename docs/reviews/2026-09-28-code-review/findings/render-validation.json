@@ -1,0 +1,63 @@
+{
+  "agent": "render-validation",
+  "lens": "用 Playwright 经 UI 文件浏览器逐一打开重建后 aide (https://127.0.0.1:8097, 资源 v65) 的各类文件查看器与代码高亮，确认渲染正常并定位缺陷；含修复后复核。",
+  "summary": "可视化查看器整体健康：PDF(2页)、DOCX、DXF(SVG)、PNG、drawio(iframe)、Markdown、TXT、ZIP、SQLite 均正确渲染；独立代码文件(.go/.py/.rs/.cpp/.c/.ts/.sql)经 hljs overlay 高亮正常。首轮两处 P1/P2 缺陷(STL geometry 引用、MD 多语言高亮)与 P3 clojurescript 语言包损坏均已修复。最终复核：STL 正常渲染三角面；highlight-all.md 42/42 块全部有高亮 token(含 clojurescript 按 clojure 回退)，console 无语言包 404、无 'Unexpected token <'。仅剩 1 条 index.html:63 CSP 内联样式提示(P3，不影响功能)。",
+  "findings": [
+    {
+      "id": "render-validation-001",
+      "title": "STL 3D 查看器全部失败：ReferenceError 'geometry is not defined'",
+      "category": "代码异常",
+      "severity": "P1",
+      "file": "internal/server/web/app.js",
+      "line": "3767, 3776",
+      "evidence": "首轮：打开 sample.stl 报『STL 加载失败：geometry is not defined』，canvas 未渲染。根因：3763 行赋给 stlGeometry，但 3767/3776 误用裸 geometry。",
+      "fix": "将 3767/3776 的 geometry 改为 stlGeometry。",
+      "confidence": "high",
+      "needs_user_decision": false,
+      "status": "fixed",
+      "recheck": "2026-09-28 修复后复核：重开 render_samples/sample.stl，出现 .stl-viewer canvas(1892x740)，meta 显示『1 三角面 · 10.00x8.66x0.00』(与样例三角面一致)，无 geometry is not defined，无 STL 相关 console 报错。截图 evidence/render/stl-viewer-PASS.png。复核结论：PASS。"
+    },
+    {
+      "id": "render-validation-002",
+      "title": "Markdown 预览的 fenced code block 仅 JS/TS 高亮，其余语言为单色纯文本",
+      "category": "UX与交互逻辑",
+      "severity": "P2",
+      "file": "internal/server/web/app.js",
+      "line": "4676-4679",
+      "evidence": "首轮：renderMarkdown 只对 JS/TS 调 highlightCode，未调 window.hljs，40 种语言块 0 token。",
+      "fix": "对已注册语言改用 window.hljs.highlight(code,{language:lang,ignoreIllegals:true})。",
+      "confidence": "high",
+      "needs_user_decision": false,
+      "status": "fixed",
+      "recheck": "2026-09-28 修复后复核：重开 highlight-all.md，42 个 fenced 块中 41 个产生 hljs token(python14/go15/json22/sql12/cpp20/rust15/ruby7/php15/matlab9/css11/...)，javascript/typescript 仍正常。仅 clojurescript 1 块纯文本，原因见 render-validation-004（语言包文件本身损坏，非渲染逻辑）。截图 evidence/render/highlight-all-md-PASS.png。复核结论：渲染逻辑修复有效，41/42 高亮；剩 clojurescript 单独建单。"
+    },
+    {
+      "id": "render-validation-003",
+      "title": "CSP style-src 'self' 拦截内联样式，控制台持续报错（docx-preview / app.js）",
+      "category": "安全",
+      "severity": "P3",
+      "file": "internal/server/web/app.js",
+      "line": "3780, 4571",
+      "evidence": "v65 页面渲染抛多条 CSP 'style-src self' 拦截内联样式；实测 docx 表格/加粗仍渲染、代码 overlay 对齐正常，未见肉眼布局破损，属控制台噪音/轻微样式丢失。复核时仍见 index.html:63 一条同款 CSP 提示。",
+      "fix": "查看器所需内联样式改为 class 走外部样式表，或在 CSP style-src 加对应 sha256/nonce。",
+      "confidence": "medium",
+      "needs_user_decision": false,
+      "status": "open",
+      "recheck": "复核仍存在 1 条 index.html:63 CSP 内联样式报错；不影响已测查看器功能。"
+    },
+    {
+      "id": "render-validation-004",
+      "title": "clojurescript 语言包是损坏的 HTML 占位文件，未注册并导致 'Unexpected token <'",
+      "category": "代码异常",
+      "severity": "P3",
+      "file": "internal/server/web/vendor/highlight.js/languages/clojurescript.min.js",
+      "line": "1",
+      "evidence": "复核发现 highlight-all.md 里唯一纯文本块是 ```clojurescript。window.hljs.listLanguages() 不含 clojurescript(仅 clojure)。该文件在磁盘上仅 146 字节，内容是 nginx 404 HTML 页面('<html><head><title>404 Not Found</title>...')，而非 highlight.js 语法包；index.html 仍以 /vendor/highlight.js/languages/clojurescript.min.js?v=65 引用它，浏览器以 text/javascript 加载该 HTML -> 持续抛 'Unexpected token <'，且 clojurescript 永远不注册。对照 clojure/ruby/php/matlab.min.js 均为正常的 highlight.js 11.9.0 编译产物(2-6KB)。curl 实测该 URL 返回 HTTP 200 + text/javascript + 146 字节 HTML。",
+      "fix": "上游 highlight.js 11.9.0 本就不提供 clojurescript 语法；正确做法是移除 index.html 中无效的 clojurescript.min.js <script>、删除损坏的 404 占位文件，并让 Markdown 高亮把 clojurescript 回退到 clojure 语法。",
+      "confidence": "high",
+      "needs_user_decision": false,
+      "status": "fixed",
+      "recheck": "2026-09-28 最终复核：重开 highlight-all.md，42/42 块全部有高亮 token；其中 clojurescript 块按 clojure 语法产生 8 个 hljs token(hljs-keyword/title/built_in)。window.hljs.listLanguages() 不含 clojurescript(符合预期，走 clojure 回退)。console 不再出现 'Unexpected token <'、无任何语言包 404。截图 evidence/render/highlight-all-md-FINAL.png。复核结论：PASS。"
+    }
+  ]
+}
