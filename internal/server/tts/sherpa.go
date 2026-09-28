@@ -249,6 +249,11 @@ func (s *sherpa) Synth(ctx context.Context, text string, opts SynthOpts) (io.Rea
 	outPath := outTmp.Name()
 	_ = outTmp.Close()
 	defer os.Remove(outPath)
+	// 若待合成文本以 "--" 开头，sherpa CLI 的 flag 解析器可能把它当未知 flag。
+	// 前面加一个空格（CLI 会 trim），既不改语义又避免被当成 flag。
+	if strings.HasPrefix(text, "--") {
+		text = " " + text
+	}
 	args = append(args, "--output-filename="+outPath, text)
 
 	// 带超时执行。

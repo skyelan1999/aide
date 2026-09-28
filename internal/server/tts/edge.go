@@ -514,6 +514,11 @@ func (w *wsConn) readMessage() (byte, []byte, error) {
 			}
 			l = int(binary.BigEndian.Uint64(ext[:]))
 		}
+		// 硬上限 16 MiB：防止恶意/异常端点声明超大帧致 OOM。
+		const edgeMaxFrame = 16 << 20
+		if l < 0 || l > edgeMaxFrame {
+			return 0, nil, fmt.Errorf("edge-tts 帧长度超限: %d", l)
+		}
 		var mk [4]byte
 		if masked {
 			if _, err := io.ReadFull(w.rd, mk[:]); err != nil {
