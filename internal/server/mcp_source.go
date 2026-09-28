@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"os/exec"
 	"sort"
 	"strings"
@@ -103,6 +104,9 @@ func openMCPStdio(ctx context.Context, cfg SourceConfig) (*mcpStdio, error) {
 	}
 	ctx, cancel := context.WithTimeout(ctx, mcpRequestTimeout)
 	cmd := exec.CommandContext(ctx, cfg.Command, cfg.Args...)
+	// 安全白名单环境：绝不继承父进程完整环境，避免 AI_API_KEY / 模型 API Key
+	// 等敏感变量被用户配置的任意 MCP 可执行文件读取。
+	cmd.Env = mcpMinimalEnv()
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		cancel()
@@ -347,4 +351,29 @@ func mcpSafeName(name string) string {
 		return "tool"
 	}
 	return name
+}
+
+// mcpMinimalEnv 为 MCP stdio 子进程构造最小环境白名单。
+// 仅保留进程运行所必需的变量（PATH/HOME/TMPDIR/LANG/LC_*）与企业 TLS 自定义根证书
+// NODE_EXTRA_CA_CERTS；其余一律不传，防止父进程中的 API Key 泄漏给 MCP 可执行文件。
+func mcpMinimalEnv() []string {
+	keepExact := map[string]struct{}{
+		"PATH":                {},
+		"HOME":                {},
+		"TMPDIR":              {},
+		"LANG":                {},
+		"NODE_EXTRA_CA_CERTS": {},
+	}
+	env := make([]string, 0, 8)
+	for _, kv := range os.Environ() {
+		eq := strings.IndexByte(kv, '=')
+		if eq <= 0 {
+			continue
+		}
+		key := kv[:eq]
+		if _, ok := keepExact[key]; ok || strings.HasPrefix(key, "LC_") {
+			env = append(env, kv)
+		}
+	}
+	return env
 }
