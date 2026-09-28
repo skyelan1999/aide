@@ -26,9 +26,38 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
+
+// voiceProfileRe / voiceSampleIDRe 白名单：profile 仅允许小写字母数字连字符；
+// id 仅允许 hex（newID() 产 32 hex，upload 拼接 64 hex）。拒绝 ../ 与绝对路径越界。
+var (
+	voiceProfileRe   = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{0,63}$`)
+	voiceSampleIDRe  = regexp.MustCompile(`^[a-f0-9]{16,128}$`)
+)
+
+// safeVoiceProfile 规范化 profile：空 → xiaomi；非法值返回错误。
+func safeVoiceProfile(profile string) (string, error) {
+	profile = strings.TrimSpace(profile)
+	if profile == "" {
+		return personaXiaomi, nil
+	}
+	if !voiceProfileRe.MatchString(profile) {
+		return "", errors.New("非法 profile：仅允许小写字母/数字/连字符，且不得含路径分隔符")
+	}
+	return profile, nil
+}
+
+// safeVoiceSampleID 校验样本 id 不含路径分隔符或 ..。
+func safeVoiceSampleID(id string) error {
+	id = strings.TrimSpace(id)
+	if !voiceSampleIDRe.MatchString(id) {
+		return errors.New("非法样本 id：应为 hex 字符串")
+	}
+	return nil
+}
 
 const (
 	voiceSampleMaxBytes = 15 << 20 // 单个样本上限 15MB（3min opus ≈ 3-5MB，留余量）
@@ -136,9 +165,10 @@ func decryptSampleFile(key []byte, path string) ([]byte, error) {
 // 请求体为原始音频字节（Content-Type: audio/*），查询参数带 durationSec/transcript/consented。
 // 未解锁小秘返回 403；未勾选 consented 拒绝（GDPR Art.9）。
 func (a *App) voiceSampleUpload(w http.ResponseWriter, r *http.Request) {
-	profile := strings.TrimSpace(r.URL.Query().Get("profile"))
-	if profile == "" {
-		profile = personaXiaomi
+	profile, err := safeVoiceProfile(r.URL.Query().Get("profile"))
+	if err != nil {
+		fail(w, 400, err)
+		return
 	}
 	consented := r.URL.Query().Get("consented") == "1" || r.URL.Query().Get("consented") == "true"
 	if !consented {
@@ -197,9 +227,10 @@ func (a *App) voiceSampleUpload(w http.ResponseWriter, r *http.Request) {
 
 // voiceSamplesList 列出样本元数据（绝不返回音频本体）。
 func (a *App) voiceSamplesList(w http.ResponseWriter, r *http.Request) {
-	profile := strings.TrimSpace(r.URL.Query().Get("profile"))
-	if profile == "" {
-		profile = personaXiaomi
+	profile, err := safeVoiceProfile(r.URL.Query().Get("profile"))
+	if err != nil {
+		fail(w, 400, err)
+		return
 	}
 	idx := a.loadVoiceSampleIndex(profile)
 	jsonOut(w, 200, map[string]any{"profile": profile, "samples": idx.Items})
@@ -208,13 +239,14 @@ func (a *App) voiceSamplesList(w http.ResponseWriter, r *http.Request) {
 // voiceSampleDelete 删除一条样本（.enc + 索引条目）。
 func (a *App) voiceSampleDelete(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimSpace(r.PathValue("id"))
-	if id == "" {
-		fail(w, 400, errors.New("缺少样本 id"))
+	if err := safeVoiceSampleID(id); err != nil {
+		fail(w, 400, err)
 		return
 	}
-	profile := strings.TrimSpace(r.URL.Query().Get("profile"))
-	if profile == "" {
-		profile = personaXiaomi
+	profile, err := safeVoiceProfile(r.URL.Query().Get("profile"))
+	if err != nil {
+		fail(w, 400, err)
+		return
 	}
 	idx := a.loadVoiceSampleIndex(profile)
 	found := false
@@ -243,9 +275,14 @@ func (a *App) voiceSampleDelete(w http.ResponseWriter, r *http.Request) {
 // 注意：这是解密通道，必须鉴权（已由中间件 Bearer token 保护）。
 func (a *App) voiceSampleAudio(w http.ResponseWriter, r *http.Request) {
 	id := strings.TrimSpace(r.PathValue("id"))
-	profile := strings.TrimSpace(r.URL.Query().Get("profile"))
-	if profile == "" {
-		profile = personaXiaomi
+	if err := safeVoiceSampleID(id); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	profile, err := safeVoiceProfile(r.URL.Query().Get("profile"))
+	if err != nil {
+		fail(w, 400, err)
+		return
 	}
 	key, err := a.voiceSampleKey()
 	if err != nil {
@@ -302,6 +339,10 @@ func (a *App) voiceCloneCreate(w http.ResponseWriter, r *http.Request) {
 		// GPT-SoVITS 走文件上传参考音频
 		samples := []map[string]string{}
 		for _, sid := range in.SampleIDs {
+			if err := safeVoiceSampleID(sid); err != nil {
+				fail(w, 400, fmt.Errorf("非法样本 id %q: %w", sid, err))
+				return
+			}
 			audio, derr := decryptSampleFile(key, filepath.Join(a.voiceSamplesDir(profile), sid+".enc"))
 			if derr != nil {
 				fail(w, 500, fmt.Errorf("解密样本 %s 失败：%w", sid, derr))
@@ -369,9 +410,10 @@ func (a *App) voiceCloneCreate(w http.ResponseWriter, r *http.Request) {
 
 // voiceSamplesWipe 一键清空某 profile 全部样本（合规：GDPR 删除权）。
 func (a *App) voiceSamplesWipe(w http.ResponseWriter, r *http.Request) {
-	profile := strings.TrimSpace(r.URL.Query().Get("profile"))
-	if profile == "" {
-		profile = personaXiaomi
+	profile, err := safeVoiceProfile(r.URL.Query().Get("profile"))
+	if err != nil {
+		fail(w, 400, err)
+		return
 	}
 	dir := a.voiceSamplesDir(profile)
 	entries, _ := os.ReadDir(dir)
