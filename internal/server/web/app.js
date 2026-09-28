@@ -2813,7 +2813,9 @@ function fillWorkspaceSheet() {
   }
   else { hint.textContent = ''; hint.classList.add('hidden'); vpField.classList.add('hidden'); }
   $('docs-path').value = c.docs?.path || '';
+  $('docs-location').value = c.docs?.location || 'local';
   $('cache-path').value = c.cache?.path || '';
+  $('cache-location').value = c.cache?.location || 'local';
   $('ws-clear-secrets').checked = false;
   renderWsRecent('ws-recent', c.recent?.workspace || []);
   renderWsRecent('docs-recent', c.recent?.docs || []);
@@ -2824,8 +2826,8 @@ function collectWsConfig() {
   const auth = document.querySelector('.ws-auth [data-auth].active')?.dataset.auth || 'password';
   return {
     workspace: { mode, path: mode === 'local' ? $('ws-path').value.trim() : $('ws-remote-path').value.trim(), host: $('ws-host').value.trim(), port: parseInt($('ws-port').value, 10) || 22, username: $('ws-user').value.trim(), auth },
-    docs: { path: $('docs-path').value.trim() },
-    cache: { path: $('cache-path').value.trim() },
+    docs: { path: $('docs-path').value.trim(), location: $('docs-location').value },
+    cache: { path: $('cache-path').value.trim(), location: $('cache-location').value },
     password: $('ws-password').value,
     key: $('ws-key').value,
     passphrase: $('ws-passphrase').value,
