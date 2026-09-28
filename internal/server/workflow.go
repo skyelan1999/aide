@@ -99,7 +99,9 @@ type Task struct {
 	Queue           []string        `json:"queue,omitempty"`           // 排队消息（当前回答完后再处理）
 	Steers          []SteerMsg      `json:"steers,omitempty"`          // 运行中插话/排队消息（UI 展示用）
 	PendingQuestion json.RawMessage `json:"pendingQuestion,omitempty"` // 等待用户澄清的结构化问题
-	AnswerCh        chan string     `json:"-"`                         // 澄清应答通道（ask_user 暂停等待）
+	AnswerCh        chan string     `json:"-"`                         // 当前澄清轮次的应答通道（每轮 ask_user 新建，见 answerRound）
+	answerRound     int64           `json:"-"`                         // 澄清轮次单调 nonce：每进入一次 ask_user 自增，与本轮 AnswerCh 配对
+	discardedAnswers int64          `json:"-"`                         // 因轮次过期/任务不再 awaiting 而被丢弃的应答计数（诊断）
 }
 
 // SteerMsg 记录一条运行中用户输入。
@@ -2897,11 +2899,13 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			"progressCurrent": int(pc), "progressTotal": int(pt),
 		})
 		a.mu.Lock()
+		task.answerRound++
 		task.PendingQuestion = qb
 		task.Status = "awaiting_clarification"
-		if task.AnswerCh == nil {
-			task.AnswerCh = make(chan string, 1)
-		}
+		// 每轮澄清都换新 channel（ch）：上一轮残留/迟到的应答落在被弃用的旧 channel 中，
+		// 本轮只读 ch，旧 channel 无接收方后由 GC 回收，杜绝错轮应答被应用。
+		ch := make(chan string, 1)
+		task.AnswerCh = ch
 		var psess *Session
 		for _, ss := range a.sessions {
 			for _, rr := range ss.Runs {
@@ -2922,7 +2926,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		// 阻塞等待用户应答；取消则返回取消说明，run 随后结束
 		var ans string
 		select {
-		case ans = <-task.AnswerCh:
+		case ans = <-ch:
 		case <-ctx.Done():
 			ans = "(用户已取消)"
 		}
