@@ -332,16 +332,26 @@ func (a *App) personaReset(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "该人格不可重置", 400)
 		return
 	}
-	cipher := a.settings.PersonaCiphers[id]
-	if cipher != "" {
-		if _, err := decryptPersona(cipher, in.Password); err != nil {
+	// 密码校验：只要任一已存密文存在，提交的密码就必须能解开至少一个密文
+	// （与 personaUnlock 同口径）。不能因目标人格本身无密文就跳过校验，
+	// 否则已解锁会话的内存密钥会被任意值偷换。
+	if len(a.settings.PersonaCiphers) > 0 {
+		ok := false
+		for _, c := range a.settings.PersonaCiphers {
+			if _, err := decryptPersona(c, in.Password); err == nil {
+				ok = true
+				break
+			}
+		}
+		if !ok {
 			http.Error(w, "密码错误，无法重置", 401)
 			return
 		}
 	}
 	delete(a.settings.PersonaCiphers, id)
 	delete(a.personaCustom, id)
-	a.personaKey = in.Password
+	// 注意：不在这里覆盖 a.personaKey。当前内存密钥是已验证的解锁密码；
+	// 重置只是删除某人格密文，不应改密钥，避免把错误密码写回内存。
 	a.mu.Lock()
 	atomicJSON(SettingsPath(a.dataPath), a.settings)
 	a.mu.Unlock()
