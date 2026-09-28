@@ -6,9 +6,11 @@ package server
 
 import (
 	"encoding/json"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -214,4 +216,174 @@ func TestDaemonDisabledByDefault(t *testing.T) {
 	if n != 0 {
 		t.Fatalf("未启用的 daemon 不应被自动拉起, procs=%d", n)
 	}
+}
+
+// installHookedDaemon 在注册表登记一个 daemon 插件，并在管理器里预置一个带 launchHook 的 proc。
+// 钩子由调用方控制：进入慢启动时发 enteredReady 前先 close(enteredSlow)，等待 releaseStart 后才算 ready，
+// 之后等 p.stopCh 关闭再 close(doneCh)（模拟优雅退出）。
+func installHookedDaemon(t *testing.T, a *App, id string, hook func(readyCh, doneCh chan struct{})) *daemonProc {
+	t.Helper()
+	a.mu.Lock()
+	a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, PluginManifest{
+		ID: id, Name: "Hooked Daemon", Main: "index.js", Daemon: true, Enabled: false,
+	})
+	a.mu.Unlock()
+
+	a.daemons.mu.Lock()
+	p := &daemonProc{
+		id:         id,
+		pluginPath: "/nonexistent/" + id,
+		pending:    map[int64]chan rpcResp{},
+		events:     []daemonEvent{},
+		stopCh:     make(chan struct{}),
+		backoff:    daemonBaseBackoff,
+		launchHook: hook,
+	}
+	a.daemons.procs[id] = p
+	a.daemons.mu.Unlock()
+	return p
+}
+
+// lockFreeWithin 报告在 wait 时长内能否拿到 a.mu（不持有，拿到即释放）。
+func lockFreeWithin(a *App, wait time.Duration) bool {
+	ch := make(chan struct{})
+	go func() { a.mu.Lock(); close(ch); a.mu.Unlock() }()
+	select {
+	case <-ch:
+		return true
+	case <-time.After(wait):
+		return false
+	}
+}
+
+// TestDaemonStartOutsideGlobalLock：慢启动（等待 node 宿主 ready）期间，全局 a.mu 必须仍可被其它请求获取，
+// 即 Start 不得在持有 a.mu 时同步等待子进程。
+func TestDaemonStartOutsideGlobalLock(t *testing.T) {
+	a := testApp(t)
+	enteredSlow := make(chan struct{})
+	releaseStart := make(chan struct{})
+	var p *daemonProc
+	p = installHookedDaemon(t, a, "slow-start", func(readyCh, doneCh chan struct{}) {
+		close(enteredSlow) // 已进入慢进程阶段
+		<-releaseStart      // 模拟 node 宿主 10-15s 才 ready
+		p.closeReadyOnce()
+		<-p.stopCh
+		close(doneCh)
+	})
+
+	startDone := make(chan *httptest.ResponseRecorder, 1)
+	go func() {
+		startDone <- request(a, "POST", "/api/plugins/daemons/slow-start/start", nil)
+	}()
+
+	<-enteredSlow
+	// 慢启动正在进行时，a.mu 必须仍可获取；否则说明 handler 仍在锁内等待子进程。
+	if !lockFreeWithin(a, 2*time.Second) {
+		close(releaseStart)
+		t.Fatal("慢启动等待 ready 期间 a.mu 仍被占用：启停未移出全局锁")
+	}
+
+	close(releaseStart)
+	w := <-startDone
+	requireStatus(t, w, 200)
+	if got := p.statusSnapshot(); got != dsRunning {
+		t.Fatalf("start 后应为 running, got %s", got)
+	}
+	// 干净停止
+	requireStatus(t, request(a, "POST", "/api/plugins/daemons/slow-start/stop", nil), 200)
+	if got := p.statusSnapshot(); got != dsStopped {
+		t.Fatalf("stop 后应为 stopped, got %s", got)
+	}
+}
+
+// TestDaemonStopOutsideGlobalLock：慢停止（等待进程退出）期间 a.mu 也必须可获取。
+func TestDaemonStopOutsideGlobalLock(t *testing.T) {
+	a := testApp(t)
+	releaseStart := make(chan struct{})
+	enteredSlow := make(chan struct{})
+	stopReturned := make(chan struct{})
+	var p *daemonProc
+	p = installHookedDaemon(t, a, "slow-stop", func(readyCh, doneCh chan struct{}) {
+		close(enteredSlow)
+		<-releaseStart
+		p.closeReadyOnce()
+		<-p.stopCh
+		// 模拟退出延迟：宽限期内不立刻 close doneCh
+		time.Sleep(200 * time.Millisecond)
+		close(doneCh)
+	})
+
+	// 先触发一次 Start，进入慢启动
+	startDone := make(chan *httptest.ResponseRecorder, 1)
+	go func() {
+		startDone <- request(a, "POST", "/api/plugins/daemons/slow-stop/start", nil)
+	}()
+	<-enteredSlow
+	close(releaseStart)
+	<-startDone // 等其 ready
+	if p.statusSnapshot() != dsRunning {
+		t.Fatal("前置：daemon 未进入 running")
+	}
+
+	go func() {
+		requireStatus(t, request(a, "POST", "/api/plugins/daemons/slow-stop/stop", nil), 200)
+		close(stopReturned)
+	}()
+
+	// 慢停止期间 a.mu 必须仍可获取
+	if !lockFreeWithin(a, 2*time.Second) {
+		t.Fatal("慢停止期间 a.mu 仍被占用：Stop 未移出全局锁")
+	}
+	<-stopReturned
+}
+
+// TestDaemonConcurrentStartStopConsistency：并发重复 Start/Stop，注册表与进程状态最终一致，无 panic/死锁。
+func TestDaemonConcurrentStartStopConsistency(t *testing.T) {
+	a := testApp(t)
+	enteredSlow := make(chan struct{}, 100)
+	releaseStart := make(chan struct{})
+	closeOnce := sync.Once{}
+	var p *daemonProc
+	p = installHookedDaemon(t, a, "race-daemon", func(readyCh, doneCh chan struct{}) {
+		// 每次 spawn：短暂信号后立即 ready（不阻塞），模拟快启动；退出等 stopCh。
+		select {
+		case enteredSlow <- struct{}{}:
+		default:
+		}
+		closeOnce.Do(func() { close(releaseStart) })
+		p.closeReadyOnce()
+		<-p.stopCh
+		close(doneCh)
+	})
+
+	var wg sync.WaitGroup
+	for i := 0; i < 8; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			if i%2 == 0 {
+				_ = a.daemons.StartWithPath("race-daemon", "/nonexistent/race-daemon")
+			} else {
+				_ = a.daemons.Stop("race-daemon")
+			}
+		}(i)
+	}
+	wg.Wait()
+
+	// 最终：显式停止，状态收敛为 stopped，且 procs 表条目不重复。
+	_ = a.daemons.Stop("race-daemon")
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		if p.statusSnapshot() == dsStopped {
+			break
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if got := p.statusSnapshot(); got != dsStopped {
+		t.Fatalf("并发启停后最终应收敛 stopped, got %s", got)
+	}
+	a.daemons.mu.Lock()
+	n := len(a.daemons.procs["race-daemon"].events) // 仅断言条目存在、不 panic
+	a.daemons.mu.Unlock()
+	_ = n
 }

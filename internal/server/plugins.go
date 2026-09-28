@@ -70,27 +70,37 @@ func (a *App) savePluginRegistry() error {
 }
 
 // runPluginHost 以协议 v1 宿主加载全部启用插件，聚合 surface（LIM-26：10s 超时）。
+// 慢进程（exec node，最长 10s）在 a.mu 之外执行：仅在 a.mu 内快照启用插件列表/路径，
+// node 结束后再用短锁把 surface 写回。调用方不得持有 a.mu（本函数会自行取放）。
 func (a *App) runPluginHost(ctx context.Context) {
+	a.mu.Lock()
 	enabled := []map[string]string{}
 	for _, p := range a.pluginRegistry.Plugins {
 		if p.Enabled {
 			enabled = append(enabled, map[string]string{"id": p.ID, "name": p.Name})
 		}
 	}
+	pluginsPath := a.pluginsPath
+	a.mu.Unlock()
+
 	if len(enabled) == 0 {
 		empty, _ := json.Marshal(map[string]any{"generatedAt": time.Now().UTC().Format(time.RFC3339Nano), "plugins": []any{}})
+		a.mu.Lock()
 		a.pluginSurface = empty
+		a.mu.Unlock()
 		return
 	}
 	listJSON, _ := json.Marshal(enabled)
-	surfacePath := filepath.Join(a.pluginsPath, pluginSurfaceFN)
+	surfacePath := filepath.Join(pluginsPath, pluginSurfaceFN)
 	cctx, cancel := context.WithTimeout(ctx, pluginRunTimeout)
 	defer cancel()
-	cmd := exec.CommandContext(cctx, "node", "-e", pluginHostJS, "run", a.pluginsPath, string(listJSON), surfacePath)
+	cmd := exec.CommandContext(cctx, "node", "-e", pluginHostJS, "run", pluginsPath, string(listJSON), surfacePath)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	_ = cmd.Run() // 失败时保留旧 surface；stdout 结果不依赖（结果写入 surface 文件）
 	if b, err := os.ReadFile(surfacePath); err == nil && len(b) <= 2<<20 {
+		a.mu.Lock()
 		a.pluginSurface = b
+		a.mu.Unlock()
 	}
 }
 
@@ -192,13 +202,14 @@ func (a *App) uploadPlugin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.mu.Lock()
-	defer a.mu.Unlock()
 	if len(a.pluginRegistry.Plugins) >= maxPlugins {
+		a.mu.Unlock()
 		fail(w, 400, fmt.Errorf("插件最多 %d 个", maxPlugins))
 		return
 	}
 	for _, p := range a.pluginRegistry.Plugins {
 		if p.ID == in.ID {
+			a.mu.Unlock()
 			fail(w, 409, errors.New("插件 id 已存在"))
 			return
 		}
@@ -208,11 +219,13 @@ func (a *App) uploadPlugin(w http.ResponseWriter, r *http.Request) {
 	}
 	dir := filepath.Join(a.pluginsPath, in.ID)
 	if err := os.MkdirAll(dir, 0755); err != nil {
+		a.mu.Unlock()
 		fail(w, 500, err)
 		return
 	}
 	pluginName, err := a.validatePluginCode(in.Code)
 	if err != nil {
+		a.mu.Unlock()
 		_ = os.RemoveAll(dir)
 		fail(w, 400, err)
 		return
@@ -222,22 +235,30 @@ func (a *App) uploadPlugin(w http.ResponseWriter, r *http.Request) {
 	}
 	manifest := PluginManifest{ID: in.ID, Name: in.Name, Description: in.Description, Version: in.Version, Author: in.Author, Main: "index.js", Enabled: true, InstalledAt: time.Now().UTC().Format(time.RFC3339Nano)}
 	if err := os.WriteFile(filepath.Join(dir, "index.js"), []byte(in.Code), 0644); err != nil {
+		a.mu.Unlock()
 		_ = os.RemoveAll(dir)
 		fail(w, 500, err)
 		return
 	}
 	if err := atomicJSON(filepath.Join(dir, "manifest.json"), manifest); err != nil {
+		a.mu.Unlock()
 		_ = os.RemoveAll(dir)
 		fail(w, 500, err)
 		return
 	}
 	a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, manifest)
 	if err := a.savePluginRegistry(); err != nil {
+		a.mu.Unlock()
 		fail(w, 500, err)
 		return
 	}
+	// 慢进程（runPluginHost 聚合 surface，node 最长 10s）放 a.mu 之外执行。
+	a.mu.Unlock()
 	a.runPluginHost(context.Background())
-	jsonOut(w, 201, map[string]any{"id": in.ID, "name": in.Name, "enabled": true, "error": a.pluginError(in.ID)})
+	a.mu.Lock()
+	errText := a.pluginError(in.ID)
+	a.mu.Unlock()
+	jsonOut(w, 201, map[string]any{"id": in.ID, "name": in.Name, "enabled": true, "error": errText})
 }
 
 func (a *App) togglePlugin(w http.ResponseWriter, r *http.Request) {
@@ -248,51 +269,90 @@ func (a *App) togglePlugin(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	id := r.PathValue("id")
+	// a.mu 内只做注册表快速变更与持久化；daemon 启停与 surface 聚合（慢进程）放锁外。
 	a.mu.Lock()
-	defer a.mu.Unlock()
+	found := false
+	var wantStart bool
+	var wantStop bool
+	var mainPath string
 	for i := range a.pluginRegistry.Plugins {
-		if a.pluginRegistry.Plugins[i].ID == r.PathValue("id") {
+		if a.pluginRegistry.Plugins[i].ID == id {
 			a.pluginRegistry.Plugins[i].Enabled = in.Enabled
-			if err := a.savePluginRegistry(); err != nil {
-				fail(w, 500, err)
-				return
-			}
-			if a.daemons != nil && a.isDaemonPlugin(r.PathValue("id")) {
-				if in.Enabled {
-					_ = a.daemons.Start(r.PathValue("id"))
-				} else {
-					_ = a.daemons.Stop(r.PathValue("id"))
+			found = true
+			if a.daemons != nil {
+				if isD, mp := a.daemonManifestSnapshotLocked(id); isD {
+					mainPath = mp
+					if in.Enabled {
+						wantStart = true
+					} else {
+						wantStop = true
+					}
 				}
 			}
-			a.runPluginHost(context.Background())
-			jsonOut(w, 200, map[string]any{"id": r.PathValue("id"), "enabled": in.Enabled, "error": a.pluginError(r.PathValue("id"))})
-			return
+			break
 		}
 	}
-	fail(w, 404, errors.New("插件不存在"))
+	if !found {
+		a.mu.Unlock()
+		fail(w, 404, errors.New("插件不存在"))
+		return
+	}
+	if err := a.savePluginRegistry(); err != nil {
+		a.mu.Unlock()
+		fail(w, 500, err)
+		return
+	}
+	a.mu.Unlock()
+
+	if wantStop {
+		_ = a.daemons.Stop(id)
+	}
+	if wantStart {
+		_ = a.daemons.StartWithPath(id, mainPath)
+	}
+	a.runPluginHost(context.Background())
+	a.mu.Lock()
+	errText := a.pluginError(id)
+	a.mu.Unlock()
+	jsonOut(w, 200, map[string]any{"id": id, "enabled": in.Enabled, "error": errText})
 }
 
 func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
 	id := r.PathValue("id")
+	// a.mu 内只做注册表快速删除与持久化；daemon 停止与 surface 聚合（慢进程）放锁外。
+	a.mu.Lock()
+	found := false
+	needStop := false
 	for i := range a.pluginRegistry.Plugins {
 		if a.pluginRegistry.Plugins[i].ID == id {
 			a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins[:i], a.pluginRegistry.Plugins[i+1:]...)
+			found = true
 			if a.daemons != nil && a.isDaemonPlugin(id) {
-				_ = a.daemons.Stop(id) // 终止常驻进程并释放端口
+				needStop = true
 			}
-			_ = os.RemoveAll(filepath.Join(a.pluginsPath, id))
-			if err := a.savePluginRegistry(); err != nil {
-				fail(w, 500, err)
-				return
-			}
-			a.runPluginHost(context.Background())
-			jsonOut(w, 200, map[string]bool{"ok": true})
-			return
+			break
 		}
 	}
-	fail(w, 404, errors.New("插件不存在"))
+	if !found {
+		a.mu.Unlock()
+		fail(w, 404, errors.New("插件不存在"))
+		return
+	}
+	pluginsPath := a.pluginsPath
+	if err := a.savePluginRegistry(); err != nil {
+		a.mu.Unlock()
+		fail(w, 500, err)
+		return
+	}
+	a.mu.Unlock()
+
+	if needStop {
+		_ = a.daemons.Stop(id) // 终止常驻进程并释放端口
+	}
+	_ = os.RemoveAll(filepath.Join(pluginsPath, id))
+	a.runPluginHost(context.Background())
+	jsonOut(w, 200, map[string]bool{"ok": true})
 }
 
 // callPluginTool 调用启用插件的可执行工具。

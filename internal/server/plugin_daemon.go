@@ -95,6 +95,11 @@ type daemonProc struct {
 
 	startedAt time.Time
 	backoff   time.Duration
+
+	// launchHook 测试注入点：非 nil 时由 spawn 调用以代替真实 node 宿主进程。
+	// 钩子应在进程就绪后 close(readyCh)、在进程退出后 close(doneCh)，并监听 p.stopCh 触发退出。
+	// 生产为 nil，走真实 exec.Command("node",...)。
+	launchHook func(readyCh, doneCh chan struct{})
 }
 
 // DaemonManager 管理所有 daemon 插件子进程的生命周期。
@@ -107,6 +112,17 @@ type DaemonManager struct {
 
 func newDaemonManager(a *App) *DaemonManager {
 	return &DaemonManager{app: a, pluginsPath: a.pluginsPath, procs: map[string]*daemonProc{}}
+}
+
+// closeReadyOnce 幂等地就绪信号 readyCh（readLoop 与测试 launchHook 共用，避免重启循环重复 close）。
+func (p *daemonProc) closeReadyOnce() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	select {
+	case <-p.readyCh:
+	default:
+		close(p.readyCh)
+	}
 }
 
 func (p *daemonProc) setStatus(s daemonStatus) {
@@ -138,6 +154,22 @@ func (a *App) isDaemonPlugin(id string) bool {
 	return false
 }
 
+// daemonManifestSnapshotLocked 在持有 a.mu 时快照某 id 是否为 daemon 插件及其入口在磁盘上的路径。
+// 调用方据此放锁后再做慢进程启停，避免在 a.mu 锁外读注册表切片引入数据竞争。
+// 必须持有 a.mu 调用。
+func (a *App) daemonManifestSnapshotLocked(id string) (isDaemon bool, mainPath string) {
+	for _, p := range a.pluginRegistry.Plugins {
+		if p.ID == id {
+			main := p.Main
+			if main == "" {
+				main = "index.js"
+			}
+			return p.Daemon, filepath.Join(a.pluginsPath, id, main)
+		}
+	}
+	return false, ""
+}
+
 func (a *App) daemonPluginMain(id string) string {
 	for _, p := range a.pluginRegistry.Plugins {
 		if p.ID == id {
@@ -163,13 +195,21 @@ func (m *DaemonManager) restore() {
 }
 
 // Start 启动（或复用）一个 daemon 插件；幂等。
+// 主文件路径由调用方在持 a.mu 时快照后传入（见 StartWithPath），避免在锁外读注册表引入数据竞争。
 func (m *DaemonManager) Start(id string) error {
+	return m.StartWithPath(id, m.app.daemonPluginMain(id))
+}
+
+// StartWithPath 是 Start 的实现；pluginMain 为该插件入口在磁盘上的绝对路径。
+// 慢进程（go p.supervise → 实际 spawn node 宿主、等待 ready）在 m.mu 与 a.mu 之外进行：
+// 本函数只在 m.mu 内做注册表登记/状态句柄的快速更新，随后即放锁，绝不在锁内等待子进程。
+func (m *DaemonManager) StartWithPath(id, pluginMain string) error {
 	m.mu.Lock()
 	p, exists := m.procs[id]
 	if !exists {
 		p = &daemonProc{
 			id:         id,
-			pluginPath: m.app.daemonPluginMain(id),
+			pluginPath: pluginMain,
 			pending:    map[int64]chan rpcResp{},
 			events:     []daemonEvent{},
 			stopCh:     make(chan struct{}),
@@ -262,6 +302,17 @@ func (p *daemonProc) supervise() {
 // spawn 拉起一次子进程，建立 stdio JSON-RPC。
 func (p *daemonProc) spawn() {
 	p.mu.Lock()
+	if hook := p.launchHook; hook != nil {
+		// 测试替身：不拉起真实 node；由钩子模拟慢启动（就绪后 close readyCh）与退出（close doneCh）。
+		doneCh := make(chan struct{})
+		p.pending = map[int64]chan rpcResp{}
+		p.doneCh = doneCh
+		readyCh := p.readyCh
+		p.mu.Unlock()
+		p.setStatus(dsRunning)
+		go hook(readyCh, doneCh)
+		return
+	}
 	cmd := exec.Command("node", "-e", pluginHostJS, "daemon", p.pluginPath)
 	// 与 v1.1 短命进程同一受限环境；AIDE_DAEMON_BIND 告知协议插件仅绑回环。
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "AIDE_DAEMON=1", "AIDE_DAEMON_BIND=127.0.0.1"}
@@ -464,8 +515,13 @@ func (p *daemonProc) stop() {
 
 // Restart 先 Stop 再 Start。
 func (m *DaemonManager) Restart(id string) error {
+	return m.RestartWithPath(id, m.app.daemonPluginMain(id))
+}
+
+// RestartWithPath 是 Restart 的实现；pluginMain 为入口磁盘路径（调用方持 a.mu 时快照）。
+func (m *DaemonManager) RestartWithPath(id, pluginMain string) error {
 	_ = m.Stop(id)
-	return m.Start(id)
+	return m.StartWithPath(id, pluginMain)
 }
 
 // StopAll 应用关闭时调用。
@@ -583,14 +639,16 @@ func (a *App) listDaemons(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) daemonStartHandler(w http.ResponseWriter, r *http.Request) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
 	id := r.PathValue("id")
-	if !a.isDaemonPlugin(id) {
+	// 仅在 a.mu 内做注册表快速校验与入口路径快照；慢进程（等待 node 宿主 ready，最长 15s）放锁外执行。
+	a.mu.Lock()
+	isDaemon, mainPath := a.daemonManifestSnapshotLocked(id)
+	a.mu.Unlock()
+	if !isDaemon {
 		fail(w, 404, errors.New("非 daemon 插件"))
 		return
 	}
-	if err := a.daemons.Start(id); err != nil {
+	if err := a.daemons.StartWithPath(id, mainPath); err != nil {
 		fail(w, 500, err)
 		return
 	}
@@ -598,10 +656,12 @@ func (a *App) daemonStartHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) daemonStopHandler(w http.ResponseWriter, r *http.Request) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
 	id := r.PathValue("id")
-	if !a.isDaemonPlugin(id) {
+	// 仅在 a.mu 内做注册表快速校验；慢停止（等待进程退出/宽限后 kill）放锁外执行。
+	a.mu.Lock()
+	isDaemon := a.isDaemonPlugin(id)
+	a.mu.Unlock()
+	if !isDaemon {
 		fail(w, 404, errors.New("非 daemon 插件"))
 		return
 	}
@@ -610,14 +670,16 @@ func (a *App) daemonStopHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) daemonRestartHandler(w http.ResponseWriter, r *http.Request) {
-	a.mu.Lock()
-	defer a.mu.Unlock()
 	id := r.PathValue("id")
-	if !a.isDaemonPlugin(id) {
+	// 仅在 a.mu 内做注册表快速校验与入口路径快照；慢重启（Stop+Start）放锁外执行。
+	a.mu.Lock()
+	isDaemon, mainPath := a.daemonManifestSnapshotLocked(id)
+	a.mu.Unlock()
+	if !isDaemon {
 		fail(w, 404, errors.New("非 daemon 插件"))
 		return
 	}
-	if err := a.daemons.Restart(id); err != nil {
+	if err := a.daemons.RestartWithPath(id, mainPath); err != nil {
 		fail(w, 500, err)
 		return
 	}
