@@ -27,9 +27,9 @@
     "verification": {"status": "not_run", "summary": "定向 Go 回归、JavaScript、i18n 和 diff 检查通过；实际 Edge 视觉验收无法自动执行，因为当前自动化只能看到空的内置浏览器。测试仅使用临时容器工作区，未触碰用户的 SSH 文件。", "evidence": ["docker run golang:1.26-bookworm go test -mod=vendor -run Test(DirectoryPicker|FileManager) -count=1 ./internal/server: ok (1.210s)", "node --check internal/server/web/app.js", "node scripts/test_i18n.cjs", "git diff --check"]},
     "documentation": {"status": "pass", "summary": "任务账本记录了文件面板操作、不可递归删除边界与视觉验收限制。", "evidence": ["docs/tasks/file-manager-actions.json"]},
     "cleanup": {"status": "pass", "summary": "保留现有未跟踪文件和既有改动；仅移除了本次临时 Go 测试容器。", "evidence": ["git status --short --branch"]},
-    "release": {"status": "not_run", "summary": "未获提交、推送或发布授权。", "evidence": []}
+    "release": {"status": "pass", "summary": "用户已于 2026-09-28 授权提交并推送；功能提交已推送至 origin/feature/permission-panel。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500"]}
   },
-  "release_authorization": "",
+  "release_authorization": "用户原话：你先整理一下推上去吧",
   "rollback": "恢复文件面板前端与新增文件 API；不删除用户工作区中的文件。",
   "handoff": "未提交、未推送、未合并。"
 }

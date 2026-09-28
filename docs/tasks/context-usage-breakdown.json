@@ -27,9 +27,9 @@
     "verification": {"status": "not_run", "summary": "后端定向测试、前端语法、i18n 和服务健康检查均已通过；真实页面交互未运行，因为自动化浏览器被本地自签 HTTPS 证书拦截，未绕过证书警告。", "evidence": ["docker golang:1.26-bookworm: TestContext(Breakdown|PreviewBaseline)|TestEnvironmentGuide|TestTokenStats (PASS)", "node --check internal/server/web/app.js (PASS)", "node --check internal/server/web/locales/en.js (PASS)", "node scripts/test_i18n.cjs (PASS)", "cmd /c start.bat: 健康检查通过", "CUA: https://localhost:8097 被 ERR_CERT_AUTHORITY_INVALID 拦截"]},
     "documentation": {"status": "pass", "summary": "任务记录说明了估算口径、真实 usage 的来源及未计入敏感正文的约束。", "evidence": ["docs/tasks/context-usage-breakdown.json"]},
     "cleanup": {"status": "pass", "summary": "仅移除了本任务临时 Docker 测试容器；未清理或覆盖任何既有未提交文件。", "evidence": ["docker rm aide-context-verify2", "docker rm aide-context-verify3"]},
-    "release": {"status": "not_run", "summary": "未获提交、推送或发布授权。", "evidence": []}
+    "release": {"status": "pass", "summary": "用户已于 2026-09-28 授权提交并推送；功能提交已推送至 origin/feature/permission-panel。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500"]}
   },
-  "release_authorization": "",
+  "release_authorization": "用户原话：你先整理一下推上去吧",
   "rollback": "恢复上下文预览 API 与前端统计渲染；不修改会话历史或 token 使用记录。",
   "handoff": "已完成实现并重建本地服务；未提交、未推送、未合并。页面交互验收 NOT_RUN（本地自签 HTTPS 证书阻止自动化访问）。"
 }

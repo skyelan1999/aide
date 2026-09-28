@@ -36,9 +36,9 @@
     "verification": {"status": "not_run", "summary": "Docker 镜像重建和健康检查通过；目录创建/重命名与路径控制字符拒绝的 Go 回归通过，JavaScript 语法与 i18n 校验通过。实际 Edge 视觉验收未由自动化完成：当前自动化只能看到空的应用内浏览器，无法操作用户的 Edge 页面；未对用户本机或 SSH 服务器创建、重命名真实目录。", "evidence": ["cmd /c start.bat: Docker build, recreate, health check passed", "docker run golang:1.26-bookworm go test -mod=vendor -run TestDirectoryPicker -count=1 ./internal/server: ok (0.839s)", "node --check internal/server/web/app.js", "node scripts/test_i18n.cjs", "git diff --check", "CUA getState: only an empty Codex In-app Browser is available"]},
     "documentation": {"status": "pass", "summary": "任务账本已补充远程工作区浏览、新建/重命名目录的行为、边界与视觉验收限制。", "evidence": ["docs/tasks/workspace-path-picker-sftp.json"]},
     "cleanup": {"status": "pass", "summary": "未删除未跟踪文件、既有改动或保存的凭据；未创建发布提交。", "evidence": ["git diff --check"]},
-    "release": {"status": "not_run", "summary": "未获提交、推送或发布授权。", "evidence": []}
+    "release": {"status": "pass", "summary": "用户已于 2026-09-28 授权提交并推送；功能提交已推送至 origin/feature/permission-panel。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500"]}
   },
-  "release_authorization": "",
+  "release_authorization": "用户原话：你先整理一下推上去吧",
   "rollback": "恢复相关前端和工作空间配置文件即可回退；不删除已保存的配置或凭据。",
   "handoff": "未提交、未推送、未合并。浏览器视觉验收未由自动化完成：当前 CUA 仅可见空的应用内浏览器；请在 Edge 刷新后确认目录选择器和 SSH/SFTP 测试提示。Windows 默认挂载当前系统盘，其他盘符仍需显式 AIDE_LOCAL_ROOT/容器挂载。"
 }

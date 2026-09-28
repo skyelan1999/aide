@@ -34,9 +34,9 @@
     "verification": {"status": "pass", "summary": "MCP stub 回归、前端语法、多语言、diff 检查、Docker 重建及健康检查均已实际运行。浏览器视觉验收未运行：自动化仅返回空的 Codex 内置浏览器，没有用户 Edge 页面。", "evidence": ["docker run golang:1.26-bookworm go test -mod=vendor -run Test(MCPReferenceDiscoveryAndReadOnlyCall|SourcesRegistryAndBrowsing|AIReferenceAccess|EnvironmentGuide) -count=1 ./internal/server: ok (1.574s)", "node --check internal/server/web/app.js", "node --check internal/server/web/locales/en.js", "node scripts/test_i18n.cjs: PASS", "cmd /c start.bat: image built, aide-aide-1 recreated", "curl.exe -k -fsS https://localhost:8097/healthz: status ok, integrity degraded", "cua.getState: only empty Codex In-app Browser, no user Edge surface"]},
     "documentation": {"status": "pass", "summary": "用户指南、英文指南、架构和 PRD 已更新，明确 stdio 边界、只读安全策略及 Docker 与 Codex 桌面 MCP 隔离。", "evidence": ["docs/user-guide.md", "docs/en/user-guide.md", "docs/architecture.md", "docs/PRD.md"]},
     "cleanup": {"status": "pass", "summary": "已删除定向 Go 测试容器；保留所有既有未提交和未跟踪文件。", "evidence": ["docker rm aide-mcp-regression", "git status --short"]},
-    "release": {"status": "not_run", "summary": "未获提交、推送或发布授权。", "evidence": []}
+    "release": {"status": "pass", "summary": "用户已于 2026-09-28 授权提交并推送；功能提交已推送至 origin/feature/permission-panel。", "evidence": ["git commit c536500", "git push origin feature/permission-panel: 1a991f1..c536500"]}
   },
-  "release_authorization": "",
+  "release_authorization": "用户原话：你先整理一下推上去吧",
   "rollback": "删除本次 MCP 来源实现并恢复“仅登记”行为不会删除已有 sources.json；已发现工具摘要可安全忽略。",
   "handoff": "已完成实现与自动化验证；服务 aide-aide-1 正在运行。未提交、未推送、未发布。浏览器视觉验收未运行。"
 }
