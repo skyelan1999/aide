@@ -45,32 +45,32 @@ type ModelRef struct {
 	Vision        bool   `json:"vision,omitempty"` // #63 扩展：是否支持图片多模态输入
 }
 type Settings struct {
-	BaseURL               string                 `json:"baseURL"`
-	Model                 string                 `json:"model"`
-	APIKey                string                 `json:"apiKey,omitempty"`
-	Models                []ModelRef             `json:"models,omitempty"`
-	ActiveModel           string                 `json:"activeModel,omitempty"`
-	SandboxMode           string                 `json:"sandboxMode,omitempty"`   // read-only | workspace-write | danger-full-access
-	ToolMaxRounds         int                    `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
-	ShellTimeout          int                    `json:"shellTimeout,omitempty"`  // run_shell 超时秒数，默认 60，最大 300
-	PersonaEnabled        bool                   `json:"personaEnabled,omitempty"`
-	PersonaCipher         string                 `json:"personaCipher,omitempty"`         // 兼容旧字段：单人格时代的性格密文
-	ActivePersona         string                 `json:"activePersona,omitempty"`         // 当前活动人格 id（aide | xiaomi），默认 aide
-	PersonaCiphers        map[string]string      `json:"personaCiphers,omitempty"`        // 每人格自定义性格密文（personaID -> AES-256-GCM base64）
-	Personalities         map[string]Personality `json:"personalities,omitempty"`         // 可演化性格（aide/xiaomi），明文
-	DisabledTools         []string               `json:"disabledTools,omitempty"`         // 被禁用的工具名列表
-	ReasoningEffort       string                 `json:"reasoningEffort,omitempty"`       // 推理强度：auto/off/low/medium/high
-	VoiceAssistantName    string                 `json:"voiceAssistantName,omitempty"`    // 语音小秘名字，默认"小秘"
-	VoiceReplyEnabled     bool                   `json:"voiceReplyEnabled,omitempty"`     // 双向语音：语音回复模式
-	VoiceReplyGender      string                 `json:"voiceReplyGender,omitempty"`      // 回复音色 male | female
-	VoiceReplyVerbosity   string                 `json:"voiceReplyVerbosity,omitempty"`   // 语音回复详细度 brief(默认) | full
-	VoiceInputDevice      string                 `json:"voiceInputDevice,omitempty"`      // 小秘语音输入设备 deviceId，空=系统默认
-	VoiceDefaultSendMode  string                 `json:"voiceDefaultSendMode,omitempty"`  // #41：小秘默认发送调度 queue(默认,排队) | insert(插队)；模型拿不准时回落此值
-	VoiceInsertSensitivity string                `json:"voiceInsertSensitivity,omitempty"` // #41：插队敏感度 conservative(默认,5s冷却) | normal(3s) | aggressive(1s)
-	UserName              string                 `json:"userName,omitempty"`              // 账户用户名（锁屏欢迎语用，可空）
-	UserPasswordHash      string                 `json:"userPasswordHash,omitempty"`      // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
-	LockTimeoutSec        int                    `json:"lockTimeoutSec,omitempty"`        // 空闲锁屏秒数，0 = 不锁屏
-	AccessibilityAutoRead bool                   `json:"accessibilityAutoRead,omitempty"` // 无障碍：输出完成后由小秘自动朗读讲解
+	BaseURL                string                 `json:"baseURL"`
+	Model                  string                 `json:"model"`
+	APIKey                 string                 `json:"apiKey,omitempty"`
+	Models                 []ModelRef             `json:"models,omitempty"`
+	ActiveModel            string                 `json:"activeModel,omitempty"`
+	SandboxMode            string                 `json:"sandboxMode,omitempty"`   // read-only | workspace-write | danger-full-access
+	ToolMaxRounds          int                    `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
+	ShellTimeout           int                    `json:"shellTimeout,omitempty"`  // run_shell 超时秒数，默认 60，最大 300
+	PersonaEnabled         bool                   `json:"personaEnabled,omitempty"`
+	PersonaCipher          string                 `json:"personaCipher,omitempty"`          // 兼容旧字段：单人格时代的性格密文
+	ActivePersona          string                 `json:"activePersona,omitempty"`          // 当前活动人格 id（aide | xiaomi），默认 aide
+	PersonaCiphers         map[string]string      `json:"personaCiphers,omitempty"`         // 每人格自定义性格密文（personaID -> AES-256-GCM base64）
+	Personalities          map[string]Personality `json:"personalities,omitempty"`          // 可演化性格（aide/xiaomi），明文
+	DisabledTools          []string               `json:"disabledTools,omitempty"`          // 被禁用的工具名列表
+	ReasoningEffort        string                 `json:"reasoningEffort,omitempty"`        // 推理强度：auto/off/low/medium/high
+	VoiceAssistantName     string                 `json:"voiceAssistantName,omitempty"`     // 语音小秘名字，默认"小秘"
+	VoiceReplyEnabled      bool                   `json:"voiceReplyEnabled,omitempty"`      // 双向语音：语音回复模式
+	VoiceReplyGender       string                 `json:"voiceReplyGender,omitempty"`       // 回复音色 male | female
+	VoiceReplyVerbosity    string                 `json:"voiceReplyVerbosity,omitempty"`    // 语音回复详细度 brief(默认) | full
+	VoiceInputDevice       string                 `json:"voiceInputDevice,omitempty"`       // 小秘语音输入设备 deviceId，空=系统默认
+	VoiceDefaultSendMode   string                 `json:"voiceDefaultSendMode,omitempty"`   // #41：小秘默认发送调度 queue(默认,排队) | insert(插队)；模型拿不准时回落此值
+	VoiceInsertSensitivity string                 `json:"voiceInsertSensitivity,omitempty"` // #41：插队敏感度 conservative(默认,5s冷却) | normal(3s) | aggressive(1s)
+	UserName               string                 `json:"userName,omitempty"`               // 账户用户名（锁屏欢迎语用，可空）
+	UserPasswordHash       string                 `json:"userPasswordHash,omitempty"`       // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
+	LockTimeoutSec         int                    `json:"lockTimeoutSec,omitempty"`         // 空闲锁屏秒数，0 = 不锁屏
+	AccessibilityAutoRead  bool                   `json:"accessibilityAutoRead,omitempty"`  // 无障碍：输出完成后由小秘自动朗读讲解
 	// ── 外部 AI 诊断接口（/api/debug）：默认关、只读、独立令牌、审计脱敏 ──
 	DebugAccessEnabled  bool     `json:"debugAccessEnabled,omitempty"`  // 总开关，默认 false；关闭时 /api/debug/* 整体 404
 	DebugTokenHash      string   `json:"debugTokenHash,omitempty"`      // 调试令牌 SHA-256 哈希（绝不存明文）
@@ -91,8 +91,8 @@ type Settings struct {
 	CloneTTSAPIKey  string `json:"cloneTTSAPIKey,omitempty"`  // 克隆服务 Bearer token（可选，不回显）
 	CloneVoiceID    string `json:"cloneVoiceID,omitempty"`    // 克隆出的音色 ID（创建音色后由克隆服务返回）
 	CloneTTSBackend string `json:"cloneTTSBackend,omitempty"` // openai | gpt-sovits | indextts2 | cosyvoice2 | openvoice
-	NextSessionSeq    int     `json:"nextSessionSeq,omitempty"`    // 下一个会话编号（单调递增，删除不复用，持久化）
-	AgentCWDMode    string `json:"agentCWDMode,omitempty"`   // #61：""=新行为(报容器内 ContainerAbs)；"legacy"=回退旧宿主路径提示
+	NextSessionSeq  int    `json:"nextSessionSeq,omitempty"`  // 下一个会话编号（单调递增，删除不复用，持久化）
+	AgentCWDMode    string `json:"agentCWDMode,omitempty"`    // #61：""=新行为(报容器内 ContainerAbs)；"legacy"=回退旧宿主路径提示
 }
 
 const (
@@ -235,12 +235,12 @@ type ToolCall struct {
 	} `json:"function"`
 }
 type Message struct {
-	Role       string     `json:"role"`
-	Content    string     `json:"content"`
-	Type       string     `json:"type,omitempty"` // #62：消息类型区分；空=普通聊天。voice-in=语音听到；voice-note=小蜜决策/转交说明；voice-ask=小蜜追问
-	Images     []MessageImage `json:"-"` // #63 扩展：多模态图片，仅 outgoing 首轮用户消息附带，不持久化/不进 UI
-	ToolCalls  []ToolCall `json:"tool_calls,omitempty"`
-	ToolCallID string     `json:"tool_call_id,omitempty"`
+	Role       string         `json:"role"`
+	Content    string         `json:"content"`
+	Type       string         `json:"type,omitempty"` // #62：消息类型区分；空=普通聊天。voice-in=语音听到；voice-note=小蜜决策/转交说明；voice-ask=小蜜追问
+	Images     []MessageImage `json:"-"`              // #63 扩展：多模态图片，仅 outgoing 首轮用户消息附带，不持久化/不进 UI
+	ToolCalls  []ToolCall     `json:"tool_calls,omitempty"`
+	ToolCallID string         `json:"tool_call_id,omitempty"`
 }
 type Session struct {
 	ID                  string    `json:"id"`
@@ -630,7 +630,7 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, fmt.Errorf("secret-vault load: %w", err)
 	}
-	// 主密钥分层：有密码→保持锁定待解锁；无密码→机器绑定随机密钥自动解锁。
+	// 凭证保险库由本机 access-token 自动解锁；旧版密钥会按兼容路径迁移。
 	if err := a.unlockVaultAtStartup(); err != nil {
 		a.Close()
 		return nil, fmt.Errorf("vault master-key: %w", err)
@@ -929,12 +929,14 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/plugins/daemons/{id}/restart", a.daemonRestartHandler)
 	mux.HandleFunc("GET /api/plugins/daemons/{id}/events", a.daemonEventsHandler)
 	mux.HandleFunc("GET /api/workspace-config", a.getWorkspaceConfig)
+	mux.HandleFunc("POST /api/workspace-config/test", a.testWorkspaceConnection)
 	mux.HandleFunc("GET /api/workspace/secrets", a.listWorkspaceSecrets)
 	mux.HandleFunc("DELETE /api/workspace/secrets/{id}", a.deleteWorkspaceSecret)
 	mux.HandleFunc("POST /api/workspace/unlock-vault", a.unlockWorkspaceVault)
 	mux.HandleFunc("POST /api/unlock", a.unlockApp)
 	mux.HandleFunc("POST /api/auth/verify", a.verifyMasterIdentity) // #43 统一主身份认证（密码/指纹二选一）
 	mux.HandleFunc("GET /api/sources", a.listSources)
+	mux.HandleFunc("POST /api/sources/{id}/test", a.testMCPSource)
 	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)
 	mux.HandleFunc("POST /api/feedback", a.feedbackHandler)
 	mux.HandleFunc("POST /api/persona/unlock", a.personaUnlock)
@@ -956,10 +958,14 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("PUT /api/workspace-config", a.updateWorkspaceConfig)
 	mux.HandleFunc("PUT /api/profiles", a.updateProfiles)
 	mux.HandleFunc("GET /api/files", a.listFiles)
+	mux.HandleFunc("POST /api/directory", a.createDirectory)
+	mux.HandleFunc("POST /api/directory/rename", a.renameDirectory)
 	mux.HandleFunc("GET /api/file/raw", a.readFileRaw)
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)
 	mux.HandleFunc("POST /api/file/rename", a.renameFile)
+	mux.HandleFunc("GET /api/file/properties", a.fileProperties)
+	mux.HandleFunc("POST /api/file/delete", a.deleteWorkspaceFile)
 	mux.HandleFunc("GET /api/sqlite/tables", a.sqliteListTables)
 	mux.HandleFunc("GET /api/sqlite/data", a.sqliteQueryData)
 	// ── 侧车批注（#63，跨格式通用；接口约定见 docs/architecture/office-viewer.md）──
@@ -980,8 +986,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("DELETE /api/sessions/archived/all", a.deleteAllArchived)
 	mux.HandleFunc("PATCH /api/sessions/{id}", a.patchSession)
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
-	mux.HandleFunc("POST /api/sessions/{id}/unlock-assistant", a.unlockAssistantSession) // #30 小秘会话密码门
-	mux.HandleFunc("POST /api/sessions/{id}/assistant-message", a.assistantMessageHandler)  // #62 小蜜会话文字=语音（走 analyze 管线）
+	mux.HandleFunc("POST /api/sessions/{id}/unlock-assistant", a.unlockAssistantSession)   // #30 小秘会话密码门
+	mux.HandleFunc("POST /api/sessions/{id}/assistant-message", a.assistantMessageHandler) // #62 小蜜会话文字=语音（走 analyze 管线）
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/retry", a.retryTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
@@ -1327,21 +1333,13 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		in.Settings.UserPasswordHash = mustHashPassword(in.NewPassword)
-		// 凭证保险库（#38）：改密码时重加密。首次设置密码时 vault 为空（无密码不允许存凭据），
-		// 直接以新密钥解锁；已有密码时用旧密钥解开、新密钥重封。ReWrap 显式传入旧密钥，不依赖当前解锁态。
+		// 凭证保险库：账户密码仅保护小秘历史/人格，不再作为第二把凭证密钥。
+		// 若仍有旧版密码加密条目，在原密码已验证后迁移到本机 access-token 密钥。
 		if a.vault != nil {
-			newVaultKey := deriveKey(in.NewPassword)
-			if len(a.vault.List()) > 0 {
-				if hasPw {
-					_ = a.vault.ReWrap(deriveKey(in.OldPassword), newVaultKey)
-				} else {
-					// 首次设置密码：vault 当前由机器绑定随机密钥解锁，把全部条目重封到密码派生密钥。
-					if mk, mkErr := ensureMachineMasterKey(a.dataPath); mkErr == nil {
-						_ = a.vault.ReWrap(mk, newVaultKey)
-					}
-				}
-			} else {
-				a.vault.Unlock(newVaultKey)
+			a.unlockVault(in.OldPassword)
+			if !a.vault.Unlocked() {
+				fail(w, 500, errors.New("凭证保险库无法用本机访问令牌解锁"))
+				return
 			}
 		}
 		// 账户密码即人格自定义性格密钥：用新密钥重加密已解锁的人格自定义内容
@@ -1709,11 +1707,20 @@ func (a *App) unlockAssistantSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("不是小秘系统会话"))
 		return
 	}
+	if a.isAssistantUnlocked(s.ID) {
+		jsonOut(w, 200, map[string]any{"ok": true, "unlocked": true})
+		return
+	}
 	if hash == "" {
 		// 未设置账户密码：小秘会话无密码门，直接放行（避免 401 触发前端登录框）
 		log.Printf("小秘会话无密码门：未设置账户密码，直接放行 id=%s", s.ID)
 		a.markAssistantUnlocked(s.ID)
 		jsonOut(w, 200, map[string]any{"ok": true, "noPassword": true})
+		return
+	}
+	if in.Password == "" {
+		// 前端用空密码探测门状态；这不是认证失败，不能触发全局 401 登录弹窗。
+		jsonOut(w, 200, map[string]any{"ok": false, "needsPassword": true})
 		return
 	}
 	valid, needsUpgrade := VerifyPassword(in.Password, hash)

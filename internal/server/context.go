@@ -23,18 +23,85 @@ const (
 	planInstruction = "请针对用户任务制定简短的实施计划。可用工具查看工作目录与文件，列出步骤、需要修改的路径和验证命令；缺失信息明确说明。此阶段不执行任何破坏性操作。"
 )
 
-// ContextBreakdown 上下文组成明细（字符数按 UTF-8 字节）。
+// ContextComponent 是一个可解释的上下文组成部分。Bytes 是实际会发给
+// provider 的文本 UTF-8 字节数；Tokens 是用统一启发式计算的估算值，不是
+// provider 的账单 usage。协议开销和图片没有可比较的文本字节，因此 Bytes
+// 可以为 0 而 Tokens 非 0。
+type ContextComponent struct {
+	Bytes  int `json:"bytes"`
+	Tokens int `json:"tokens"`
+}
+
+// ContextBreakdown 上下文组成明细。各 Component.Tokens 的总和严格等于
+// ContextPreview.InputEstimate，避免前端分项和标题出现不同口径。
 type ContextBreakdown struct {
-	SystemChars      int `json:"systemChars"`
-	SummaryChars     int `json:"summaryChars"`
-	HistoryChars     int `json:"historyChars"`
-	HistoryMessages  int `json:"historyMessages"`
-	PromptChars      int `json:"promptChars"`
-	AttachmentChars  int `json:"attachmentChars"`
-	AttachmentFiles  int `json:"attachmentFiles"`
-	InstructionChars int `json:"instructionChars"`
-	ToolSchemaChars  int `json:"toolSchemaChars"`
-	ToolCount        int `json:"toolCount"`
+	System           ContextComponent `json:"system"`
+	Summary          ContextComponent `json:"summary"`
+	HistoryUser      ContextComponent `json:"historyUser"`
+	HistoryAssistant ContextComponent `json:"historyAssistant"`
+	ToolCalls        ContextComponent `json:"toolCalls"`
+	ToolResults      ContextComponent `json:"toolResults"`
+	Prompt           ContextComponent `json:"prompt"`
+	Attachments      ContextComponent `json:"attachments"`
+	Instruction      ContextComponent `json:"instruction"`
+	ToolSchemas      ContextComponent `json:"toolSchemas"`
+	Images           ContextComponent `json:"images"`
+	Protocol         ContextComponent `json:"protocol"`
+
+	HistoryMessages int `json:"historyMessages"`
+	AttachmentFiles int `json:"attachmentFiles"`
+	ImageFiles      int `json:"imageFiles"`
+	ToolCount       int `json:"toolCount"`
+	ToolCallCount   int `json:"toolCallCount"`
+	MessageCount    int `json:"messageCount"`
+
+	// 兼容 R08-04 API 客户端；新界面使用上面的 disjoint components。
+	// Deprecated: use Component.Bytes/Component.Tokens instead.
+	SystemChars      int `json:"systemChars,omitempty"`
+	SummaryChars     int `json:"summaryChars,omitempty"`
+	HistoryChars     int `json:"historyChars,omitempty"`
+	PromptChars      int `json:"promptChars,omitempty"`
+	AttachmentChars  int `json:"attachmentChars,omitempty"`
+	InstructionChars int `json:"instructionChars,omitempty"`
+	ToolSchemaChars  int `json:"toolSchemaChars,omitempty"`
+}
+
+const (
+	contextBytesPerToken       = 4
+	contextMessageOverhead     = 4
+	contextRequestOverhead     = 2
+	contextImageUpperBoundCost = 384
+)
+
+func estimateContextTextTokens(bytes int) int {
+	if bytes <= 0 {
+		return 0
+	}
+	return (bytes + contextBytesPerToken - 1) / contextBytesPerToken
+}
+
+func (b *ContextBreakdown) components() []*ContextComponent {
+	return []*ContextComponent{
+		&b.System, &b.Summary, &b.HistoryUser, &b.HistoryAssistant,
+		&b.ToolCalls, &b.ToolResults, &b.Prompt, &b.Attachments,
+		&b.Instruction, &b.ToolSchemas, &b.Images, &b.Protocol,
+	}
+}
+
+// price 按固定密度文本估算重新计价。四个 token 的每消息开销及一个请求
+// 固定开销是与具体 tokenizer 无关、显式展示的协议预算；图片使用保守上界，
+// 防止视觉附件在上下文卡里被悄悄当成零成本。
+func (b *ContextBreakdown) price() int {
+	for _, component := range b.components() {
+		component.Tokens = estimateContextTextTokens(component.Bytes)
+	}
+	b.Images.Tokens = b.ImageFiles * contextImageUpperBoundCost
+	b.Protocol.Tokens = b.MessageCount*contextMessageOverhead + contextRequestOverhead
+	total := 0
+	for _, component := range b.components() {
+		total += component.Tokens
+	}
+	return total
 }
 
 // ContextPreview 一次任务首轮请求的构建预览（R08-04）。
@@ -207,22 +274,25 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 		history[0].Content += "\n\n## 你的性格（仅影响对话风格）\n" + strings.TrimSpace(pa.Prompt)
 	}
 	var bd ContextBreakdown
-	bd.SystemChars = len(history[0].Content)
+	bd.System.Bytes = len(history[0].Content)
+	bd.SystemChars = bd.System.Bytes
 	if s != nil && s.Compact != "" {
 		history = append(history, Message{Role: "system", Content: "历史摘要（已压缩 " + fmt.Sprint(s.CompactedMessages) + " 条消息）:\n" + s.Compact})
-		bd.SummaryChars = len(history[1].Content)
+		bd.Summary.Bytes = len(history[1].Content)
+		bd.SummaryChars = bd.Summary.Bytes
 	}
+	// 摘要之后才是持久化会话回放；它们要按角色拆分，而不是混成“历史正文”。
+	historyStart := len(history)
 	historyCount := 0
 	if s != nil {
 		start, total := len(s.Messages), 0
-		for start > 0 && total+len(s.Messages[start-1].Content) < 60000 {
+		for start > 0 && total+contextMessageBytes(s.Messages[start-1]) < 60000 {
 			start--
-			total += len(s.Messages[start].Content)
+			total += contextMessageBytes(s.Messages[start])
 		}
 		history = append(history, s.Messages[start:]...)
 		historyCount = len(s.Messages) - start
 	}
-	historyStart := len(history) // 回放段起点（含摘要之后的第一条历史）
 	history = append(history, Message{Role: "user", Content: prompt + contextText, Images: images})
 	instruction := chatInstruction
 	if mode == "workflow" {
@@ -231,23 +301,27 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	first := append(append([]Message{}, history...), Message{Role: "user", Content: instruction})
 	tools := a.contextToolsFor(s)
 
-	bd.HistoryChars = 0
 	for i := historyStart; i < len(history)-1; i++ {
-		bd.HistoryChars += len(history[i].Content)
+		addHistoryComponent(&bd, history[i])
 	}
 	bd.HistoryMessages = historyCount
-	bd.PromptChars = len(prompt)
-	bd.AttachmentChars = len(contextText)
+	bd.Prompt.Bytes = len(prompt)
+	bd.PromptChars = bd.Prompt.Bytes
+	bd.Attachments.Bytes = len(contextText)
+	bd.AttachmentChars = bd.Attachments.Bytes
 	if contextText != "" {
 		bd.AttachmentFiles = strings.Count(contextText, "<untrusted-file")
 	}
-	bd.InstructionChars = len(instruction)
+	bd.ImageFiles = len(images)
+	bd.Instruction.Bytes = len(instruction)
+	bd.InstructionChars = bd.Instruction.Bytes
 	tb, _ := json.Marshal(tools)
-	bd.ToolSchemaChars = len(tb)
+	bd.ToolSchemas.Bytes = len(tb)
+	bd.ToolSchemaChars = bd.ToolSchemas.Bytes
 	bd.ToolCount = len(tools)
-
-	inputChars := bd.SystemChars + bd.SummaryChars + bd.HistoryChars + bd.PromptChars + bd.AttachmentChars + bd.InstructionChars + bd.ToolSchemaChars
-	inputEstimate := inputChars / 4
+	bd.MessageCount = len(first)
+	bd.HistoryChars = bd.HistoryUser.Bytes + bd.HistoryAssistant.Bytes + bd.ToolCalls.Bytes + bd.ToolResults.Bytes
+	inputEstimate := bd.price()
 	outputReserve := params.MaxTokens
 	window := a.modelWindow(cfg.Model)
 	total := inputEstimate + outputReserve
@@ -278,7 +352,7 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 		InputEstimate:  inputEstimate,
 		TotalEstimate:  total,
 		OverLimit:      window > 0 && total > window,
-		EstimationNote: "输入用量为估算：4 字符 ≈ 1 token（按 UTF-8 字节），非精确 tokenizer；输出预留为 max_tokens 采样参数。",
+		EstimationNote: "组成来自即将发送的首轮消息与工具定义。文本按 4 UTF-8 字节 ≈ 1 token，另计每条消息 4 token 协议开销；图片按每张 384 token 的保守上界估算。上游返回 usage 后，实际用量以轨迹记录为准。",
 		Instruction:    instruction,
 		Breakdown:      bd,
 		Fingerprint:    hex.EncodeToString(fp.Sum(nil)),
@@ -295,20 +369,110 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	return preview
 }
 
+// contextMessageBytes 是历史回放挑选的可计量载荷，而不只是正文。工具参数
+// 同样会被回放给模型，必须纳入 60K 的回放预算。
+func contextMessageBytes(m Message) int {
+	n := len(m.Content) + len(m.ToolCallID)
+	if len(m.ToolCalls) > 0 {
+		b, _ := json.Marshal(m.ToolCalls)
+		n += len(b)
+	}
+	return n
+}
+
+func addHistoryComponent(b *ContextBreakdown, m Message) {
+	switch m.Role {
+	case "tool":
+		b.ToolResults.Bytes += len(m.Content) + len(m.ToolCallID)
+	case "assistant":
+		b.HistoryAssistant.Bytes += len(m.Content)
+		if len(m.ToolCalls) > 0 {
+			encoded, _ := json.Marshal(m.ToolCalls)
+			b.ToolCalls.Bytes += len(encoded)
+			b.ToolCallCount += len(m.ToolCalls)
+		}
+	case "user":
+		b.HistoryUser.Bytes += len(m.Content)
+	default:
+		// 历史中的 system/developer 消息不能静默消失；与首条系统提示同类展示。
+		b.System.Bytes += contextMessageBytes(m)
+	}
+}
+
+// estimateProviderPromptTokens 为上游未返回 usage 的回退路径复用同一计量
+// 规则。这里不把消息称为“历史”，但按 role 分类可确保工具 schema、调用参数
+// 与工具结果都不会在本地估算里漏算。
+func estimateProviderPromptTokens(messages []Message, tools []any) int {
+	var breakdown ContextBreakdown
+	for _, message := range messages {
+		addHistoryComponent(&breakdown, message)
+		breakdown.ImageFiles += len(message.Images)
+	}
+	if len(tools) > 0 {
+		toolBytes, _ := json.Marshal(tools)
+		breakdown.ToolSchemas.Bytes = len(toolBytes)
+	}
+	breakdown.ToolCount = len(tools)
+	breakdown.MessageCount = len(messages)
+	return breakdown.price()
+}
+
+// applyWorkflowContext 把工作流阶段提示纳入首条 system 消息，并立即重算
+// 组成预算。它必须在超限检查前调用，保证预览、拦截与真实请求同口径。
+// 调用方已持有 a.mu。
+func (a *App) applyWorkflowContext(preview *ContextPreview, mode, phase string) {
+	if preview == nil || mode != "workflow" {
+		return
+	}
+	addition := ""
+	switch phase {
+	case "requirement":
+		addition = requirementPhasePrompt
+	case "design":
+		addition = designPhasePrompt
+	case "implementation":
+		addition = implementationPhasePrompt
+	case "verify":
+		addition = verifyPhasePrompt
+	case "", "auto":
+		addition = autoModePrompt + a.profileInventoryPrompt()
+	}
+	if addition == "" {
+		return
+	}
+	if len(preview.Messages) > 0 {
+		preview.Messages[0].Content += addition
+	}
+	preview.Breakdown.System.Bytes += len(addition)
+	preview.Breakdown.SystemChars = preview.Breakdown.System.Bytes
+	preview.InputEstimate = preview.Breakdown.price()
+	preview.TotalEstimate = preview.InputEstimate + preview.OutputReserve
+	preview.OverLimit = preview.ContextWindow > 0 && preview.TotalEstimate > preview.ContextWindow
+	// 指纹用于草稿失效判断；阶段切换即使用户正文不变也必须失效。
+	h := sha256.New()
+	h.Write([]byte(preview.Fingerprint))
+	h.Write([]byte(addition))
+	preview.Fingerprint = hex.EncodeToString(h.Sum(nil))
+}
+
 // contextPreviewHandler POST /api/context-preview：按草稿构造预览（不产生副作用）。
 func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		SessionID   string       `json:"sessionId"`
-		Prompt      string       `json:"prompt"`
-		Mode        string       `json:"mode"`
-		Attachments []Attachment `json:"attachments"`
+		SessionID     string       `json:"sessionId"`
+		Prompt        string       `json:"prompt"`
+		Mode          string       `json:"mode"`
+		Strategy      string       `json:"strategy,omitempty"`
+		Profile       string       `json:"profile,omitempty"`
+		WorkflowPhase string       `json:"workflowPhase,omitempty"`
+		Baseline      bool         `json:"baseline,omitempty"`
+		Attachments   []Attachment `json:"attachments"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
 		return
 	}
 	in.Prompt = strings.TrimSpace(in.Prompt)
-	if in.Prompt == "" || len(in.Prompt) > 20000 {
+	if (in.Prompt == "" && !in.Baseline) || len(in.Prompt) > 20000 {
 		fail(w, 400, errors.New("请输入 1–20000 字节的任务"))
 		return
 	}
@@ -316,7 +480,7 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("未知工作模式"))
 		return
 	}
-	if len(in.Attachments) > 8 {
+	if len(in.Attachments) > 8 || (in.Baseline && len(in.Attachments) != 0) {
 		fail(w, 400, errors.New("最多附加 8 个文件"))
 		return
 	}
@@ -343,13 +507,22 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	profileID, params, err := a.resolveProfile("manual", "", in.Prompt, in.Mode)
+	strategy := in.Strategy
+	if strategy == "" {
+		strategy = "manual"
+	}
+	if strategy != "manual" && strategy != "auto" {
+		fail(w, 400, errors.New("策略只支持 manual 或 auto"))
+		return
+	}
+	profileID, params, err := a.resolveProfile(strategy, in.Profile, in.Prompt, in.Mode)
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
 	_ = profileID
-	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true)
+	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, !in.Baseline)
+	a.applyWorkflowContext(preview, in.Mode, in.WorkflowPhase)
 	jsonOut(w, 200, preview)
 }
 

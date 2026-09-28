@@ -2,7 +2,7 @@ package server
 
 // 模型 API Key 加密保险库（#迁移）单元测试：
 //   - 无密码：key 加密入 vault、settings.json 无明文、/api/config 不回显、模型可取 key
-//   - 有密码：重启(锁)后须 /api/unlock，未解锁取 key 返回明确错误
+//   - 有密码：账户密码不再重复锁定凭证，访问令牌可在重启后自动解锁
 //   - 旧明文迁移：从含明文 settings 检出→加密入库→落盘擦除，幂等
 //   - vault.enc 落盘不可读；clearKey 删除；导出不含明文
 
@@ -131,13 +131,12 @@ func TestLegacyPlaintextMigration(t *testing.T) {
 	}
 }
 
-// 4) 有密码场景：设密码触发 re-wrap 后，锁 vault（模拟重启）→ 取 key 报明确错误；
-//    错误密码 401；正确密码 /api/unlock 后恢复。
-func TestPasswordLockedThenUnlock(t *testing.T) {
+// 4) 设置账户密码后，模拟重启锁定 vault；本机 access-token 应自动恢复凭证访问。
+func TestPasswordDoesNotRelockVault(t *testing.T) {
 	a := testApp(t)
 	// 机器密钥下存 key
 	a.storeModelAPIKeyPlaintextLocked("sk-withpw-004")
-	// 首次设置密码：触发 vault 从机器密钥 re-wrap 到密码派生密钥
+	// 设置账户密码不会改变 vault 的 access-token 密钥。
 	w := request(a, "PUT", "/api/settings", map[string]any{
 		"baseURL": "https://api.deepseek.com", "model": "deepseek-chat", "newPassword": "pw-004",
 	})
@@ -147,17 +146,45 @@ func TestPasswordLockedThenUnlock(t *testing.T) {
 	if a.vaultIsUnlocked() {
 		t.Fatal("锁定后 vault 应处于未解锁态")
 	}
-	// 未解锁取 key：明确错误，不静默
-	if _, err := a.modelAPIKeyLocked(); err != errVaultLocked {
-		t.Fatalf("未解锁应返回 errVaultLocked, got %v", err)
+	if err := a.unlockVaultAtStartup(); err != nil {
+		t.Fatalf("access-token 自动解锁失败: %v", err)
 	}
-	// 错误密码 → 401
-	requireStatus(t, request(a, "POST", "/api/unlock", map[string]any{"password": "nope"}), 401)
-	// 正确密码 → 200
-	requireStatus(t, request(a, "POST", "/api/unlock", map[string]any{"password": "pw-004"}), 200)
 	key, err := a.modelAPIKeyLocked()
 	if err != nil || key != "sk-withpw-004" {
-		t.Fatalf("解锁后应解出 key, got %q err=%v", key, err)
+		t.Fatalf("自动解锁后应解出 key, got %q err=%v", key, err)
+	}
+}
+
+// 5) 旧版账户密码密钥会在一次正确账户密码验证后迁移到访问令牌密钥。
+func TestLegacyPasswordVaultMigratesToAccessToken(t *testing.T) {
+	a := testApp(t)
+	legacyKey := deriveKey("legacy-pw-005")
+	a.vault.Unlock(legacyKey)
+	if err := a.vault.Put(VaultIDModelAPIKey, VaultTypeModelAPIKey, "模型 API Key", []byte("sk-legacy-password-005"), ""); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.vault.Save(); err != nil {
+		t.Fatal(err)
+	}
+	a.settings.UserPasswordHash = mustHashPassword("legacy-pw-005")
+	a.vault.Lock()
+	if err := a.unlockVaultAtStartup(); err != nil {
+		t.Fatal(err)
+	}
+	if a.vaultIsUnlocked() {
+		t.Fatal("旧密码密钥不应在未验证密码时自动解锁")
+	}
+	a.unlockVault("legacy-pw-005")
+	if !a.vaultIsUnlocked() {
+		t.Fatal("正确密码后应迁移并解锁")
+	}
+	a.vault.Lock()
+	if err := a.unlockVaultAtStartup(); err != nil || !a.vaultIsUnlocked() {
+		t.Fatalf("迁移后应由访问令牌自动解锁: %v", err)
+	}
+	key, err := a.modelAPIKeyLocked()
+	if err != nil || key != "sk-legacy-password-005" {
+		t.Fatalf("迁移后 key=%q err=%v", key, err)
 	}
 }
 
@@ -179,11 +206,11 @@ func TestImportLegacyPlaintextKey(t *testing.T) {
 	a := testApp(t)
 	// 构造一个旧版备份：settings 内含明文 apiKey
 	backup := map[string]any{
-		"format":        configBackupFormat,
-		"formatVersion": configBackupVersion,
+		"format":          configBackupFormat,
+		"formatVersion":   configBackupVersion,
 		"settingsVersion": configSettingsVersion,
-		"includeSecrets": true,
-		"settings":       json.RawMessage(`{"baseURL":"https://api.deepseek.com","model":"deepseek-chat","apiKey":"sk-import-006"}`),
+		"includeSecrets":  true,
+		"settings":        json.RawMessage(`{"baseURL":"https://api.deepseek.com","model":"deepseek-chat","apiKey":"sk-import-006"}`),
 	}
 	w := request(a, "POST", "/api/config/import", map[string]any{"backup": backup, "importSecrets": true})
 	requireStatus(t, w, 200)

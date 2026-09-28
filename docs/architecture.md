@@ -34,7 +34,7 @@ Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token �
 | `provider.go` | 模型请求、参数、usage、超时；complete（非流式）+ completeStream（SSE，400 时去 stream_options 重试） |
 | `profiles.go` | 内置/用户 Profile、策略文件、参数校验 |
 | `workspace_config.go` / `ssh_session.go` | 工作区身份、本地映射、SSH/SFTP 生命周期 |
-| `files.go` / `sources.go` | 路径/内容策略、读写冲突、辅助资料驱动 |
+| `files.go` / `sources.go` / `mcp_source.go` | 路径/内容策略、读写冲突、引用来源与受限 stdio MCP 驱动 |
 | `command.go` | 非交互 shell、NDJSON 输出、超时与取消 |
 | `persona.go` / `settings_persona_persist` | 性格系统：多人格（activePersona）、AES-256-GCM 密文（personaCiphers）、可演化 personalities、解锁/保存/重置 |
 | `config_backup.go` | 配置备份信封 `aide-config-backup`：导出/导入设置快照、来源与工作区密钥、小秘历史 |
@@ -71,7 +71,8 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 | GET | `/api/models`、`/api/balance` | 提供商代理；支持程度依赖上游 |
 | GET / PUT | `/api/profiles` | Profile 与当前策略 |
 | GET / PUT | `/api/workspace-config` | 工作目录、文档、缓存、远程连接 |
-| GET / PUT | `/api/sources` | 辅助资料注册表 |
+| GET / PUT | `/api/sources` | 引用来源注册表 |
+| POST | `/api/sources/{id}/test` | 初始化 stdio MCP 并发现工具（仅保存安全摘要） |
 | GET | `/api/files`、`/api/file` | 目录/文本读取 |
 | PUT | `/api/file` | 保存；包含路径、正文、哈希和工作区身份 |
 | GET / POST | `/api/sessions` | 会话列表/创建 |
@@ -204,7 +205,7 @@ stateDiagram-v2
 
 变更前读取 [统一开发工作流](agent/WORKFLOW.md)。新前端须验证浏览器实际交互；正式发布须在没有 `/web` 挂载的构建镜像中验证 embed 资源。早期预览使用 RC5 后端 + 工作区静态文件；本次发布另行验证无静态目录覆盖的镜像。
 
-待独立规划：PTY、目录分页、真实 MCP、统一插件文件驱动。会话归档（pinned/archived、子会话自动归档与折叠组）、SSE 流式输出已落地。不要把登记入口或预设名称当成这些待规划能力已经存在。
+待独立规划：PTY、目录分页、streamable HTTP MCP 与统一插件文件驱动。stdio MCP 引用已落地：程序和参数以 `exec.Command` 启动、不经 shell；测试发现工具；AI 仅能调用服务实时声明为只读的工具。会话归档（pinned/archived、子会话自动归档与折叠组）、SSE 流式输出已落地。
 
 ## 外部 AI 诊断接口（/api/debug）
 

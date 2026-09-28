@@ -283,7 +283,10 @@ func (a *App) debugOverview(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	baseURL := a.settings.BaseURL
 	activeModel := a.settings.ActiveModel
-	hasKey := a.settings.APIKey != ""
+	// API Key 已迁入加密保险库；settings.APIKey 只保留兼容迁移期的
+	// 短暂内存值，不能作为诊断真相。这里仅输出状态，不输出密钥内容。
+	hasKey := a.hasModelAPIKey()
+	keyUsable := hasKey && a.vaultIsUnlocked()
 	hasPassword := a.settings.UserPasswordHash != ""
 	a.mu.Unlock()
 
@@ -330,6 +333,7 @@ func (a *App) debugOverview(w http.ResponseWriter, r *http.Request) {
 			"providerHost": host,
 			"model":        activeModel,
 			"hasKey":       hasKey,
+			"keyUsable":    keyUsable,
 			"hasPassword":  hasPassword,
 		},
 		"mounts": map[string]mountInfo{
@@ -506,10 +510,22 @@ func (a *App) debugErrors(w http.ResponseWriter, r *http.Request) {
 // debugPingProvider 只读连通性探测：测 HTTP 可达与延迟，不回传模型列表、不发起推理。
 func (a *App) debugPingProvider(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
-	baseURL, key := a.settings.BaseURL, a.settings.APIKey
+	baseURL := a.settings.BaseURL
+	hasKey := a.hasModelAPIKey()
+	key, keyErr := a.modelAPIKeyLocked()
 	a.mu.Unlock()
 	if baseURL == "" {
 		fail(w, 400, errors.New("未配置 Provider Base URL"))
+		return
+	}
+	if keyErr != nil {
+		// 不以空凭据探测已配置但暂不可用的 Provider，否则会把本地保险库
+		// 问题伪装成上游 401。错误本身不包含任何凭据。
+		fail(w, http.StatusConflict, errors.New("模型 API 凭证已配置但当前不可用；请在本机解锁凭证保险库后重试"))
+		return
+	}
+	if !hasKey {
+		fail(w, 400, errors.New("未配置模型 API Key，无法进行需要认证的 Provider 探测"))
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)

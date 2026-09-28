@@ -1,0 +1,35 @@
+{
+  "id": "context-usage-breakdown",
+  "request": "上下文统计不准确；参考最新 DSH 的统计方式，展示提示词、用户、工具等各类上下文消耗。",
+  "baseline": "1a991f18c2618a30f4f11480ad4a2192b421939c",
+  "initial_status": "feature/permission-panel 存在用户及前序任务的未提交改动，均须保留；本 Windows 主机没有 python3，不能执行 agent-route 脚本。",
+  "acceptance": [
+    "上下文卡和组成明细基于即将实际发送给模型的请求内容，明确区分估算与上游真实 usage。",
+    "明细至少分出系统/策略提示、用户输入、会话历史中的用户与助手消息、工具调用和工具结果、附件/引用以及输出预留。",
+    "分项合计等于输入估算，且总量等于输入估算加输出预留；空分项不误导为实际消耗。",
+    "保留现有模型上下文窗口和超限提示行为，且不记录或展示敏感内容正文。"
+  ],
+  "scope": [
+    "internal/server/context.go",
+    "internal/server/provider.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/*_test.go",
+    "docs/tasks/context-usage-breakdown.json"
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "用户要求准确、可解释的上下文消耗分项，并以 DSH 近期交互为参考。", "evidence": ["用户截图及原始请求"]},
+    "design": {"status": "pass", "summary": "采用 DSH 的同源请求组成与估算/上游实际 usage 分离原则；服务端统一构造首轮请求，前端不再本地猜历史字符。", "evidence": ["dsh-context README（2026-09-28 检索）：同一 context meter 组成、估算与 provider usage 并列", "internal/server/context.go"]},
+    "implementation": {"status": "pass", "summary": "增加按系统、历史用户/助手、工具参数/结果、当前输入、引用、阶段、工具定义、图片、协议开销的互斥分项；支持无草稿基线卡片和草稿实时替换；工作流阶段提示在超限前计入。", "evidence": ["internal/server/context.go", "internal/server/workflow.go", "internal/server/web/app.js"]},
+    "verification": {"status": "not_run", "summary": "后端定向测试、前端语法、i18n 和服务健康检查均已通过；真实页面交互未运行，因为自动化浏览器被本地自签 HTTPS 证书拦截，未绕过证书警告。", "evidence": ["docker golang:1.26-bookworm: TestContext(Breakdown|PreviewBaseline)|TestEnvironmentGuide|TestTokenStats (PASS)", "node --check internal/server/web/app.js (PASS)", "node --check internal/server/web/locales/en.js (PASS)", "node scripts/test_i18n.cjs (PASS)", "cmd /c start.bat: 健康检查通过", "CUA: https://localhost:8097 被 ERR_CERT_AUTHORITY_INVALID 拦截"]},
+    "documentation": {"status": "pass", "summary": "任务记录说明了估算口径、真实 usage 的来源及未计入敏感正文的约束。", "evidence": ["docs/tasks/context-usage-breakdown.json"]},
+    "cleanup": {"status": "pass", "summary": "仅移除了本任务临时 Docker 测试容器；未清理或覆盖任何既有未提交文件。", "evidence": ["docker rm aide-context-verify2", "docker rm aide-context-verify3"]},
+    "release": {"status": "not_run", "summary": "未获提交、推送或发布授权。", "evidence": []}
+  },
+  "release_authorization": "",
+  "rollback": "恢复上下文预览 API 与前端统计渲染；不修改会话历史或 token 使用记录。",
+  "handoff": "已完成实现并重建本地服务；未提交、未推送、未合并。页面交互验收 NOT_RUN（本地自签 HTTPS 证书阻止自动化访问）。"
+}

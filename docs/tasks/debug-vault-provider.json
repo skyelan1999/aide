@@ -1,0 +1,32 @@
+{
+  "id": "debug-vault-provider",
+  "request": "使用 AIDE 的外部 AI 调试接口核查模型接入；若诊断接口不能正确反映加密凭证保险库中的模型密钥，则修复对应接口。",
+  "baseline": "1a991f18c2618a30f4f11480ad4a2192b421939c",
+  "initial_status": "工作树含用户及前序任务的未提交改动，均须保留。外部调试令牌仅用于本次运行时验证，不写入源码、配置或任务记录。",
+  "acceptance": [
+    "调试总览从模型 API Key 保险库读取是否已配置和当前是否可用的脱敏状态。",
+    "Provider 探测使用保险库内的模型密钥，不再读取已废弃的 settings 明文字段。",
+    "凭证已配置但无法解锁时，探测明确返回本地凭证状态错误，而不是以空认证伪造上游 401。",
+    "诊断响应、文档和测试均不泄露任何 API Key、调试令牌或认证头。"
+  ],
+  "scope": [
+    "internal/server/debug.go",
+    "internal/server/debug_test.go",
+    "docs/debug-api.md",
+    "README.md",
+    "docs/architecture-overview.html",
+    "docs/tasks/debug-vault-provider.json"
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "用户提供外部 AI 调试凭据并要求用 AIDE 的接入调试方案确认故障，必要时修复接口。", "evidence": ["用户本次请求"]},
+    "design": {"status": "pass", "summary": "调试接口只返回凭证存在性和可用性；Provider 探测在持锁时停止并给出 409，绝不降级为空 Authorization 请求。", "evidence": ["internal/server/apikey_vault.go", "internal/server/debug.go"]},
+    "implementation": {"status": "pass", "summary": "总览改为读取 vault 状态并增加 keyUsable；探测改为读取 modelAPIKeyLocked 并处理未配置/锁定情形；补充回归测试和文档。", "evidence": ["internal/server/debug.go", "internal/server/debug_test.go", "docs/debug-api.md"]},
+    "verification": {"status": "pass", "summary": "已用外部调试接口完成总览、Provider 探测、错误和用量只读检查；定向 Go 回归、Docker 重建和修复后运行时复测均已通过。该任务没有页面交互改动。", "evidence": ["修复前 GET /api/debug/overview: hasKey=false（与保险库状态不符）", "修复前 POST /api/debug/actions/ping-provider: HTTP 200，upstream 401", "docker run aide-debug-regression: TestDebugUsesVaultBackedModelCredential/TestDebugPingUsesVaultBackedModelCredential/TestDebugAuditNoiseReduction/TestDebugAuditExport PASS", "cmd /c start.bat: image built, aide-aide-1 recreated, health check passed", "修复后 GET /api/debug/overview: hasKey=true, keyUsable=true", "修复后 POST /api/debug/actions/ping-provider: reachable=true, httpStatus=200"]},
+    "documentation": {"status": "pass", "summary": "调试 API 文档明确 hasKey/keyUsable 语义及锁定时 409 行为；概览文档同步当前 MCP 能力边界。", "evidence": ["docs/debug-api.md", "README.md", "docs/architecture-overview.html"]},
+    "cleanup": {"status": "pass", "summary": "保留既有未提交和未跟踪文件；仅移除本任务的定向测试容器。", "evidence": ["docker rm aide-debug-regression", "git status --short"]},
+    "release": {"status": "not_run", "summary": "未获提交、推送或发布授权。", "evidence": []}
+  },
+  "release_authorization": "",
+  "rollback": "恢复 debug.go 旧的 settings 字段读取会重新产生误诊，不建议；本修复不迁移或删除任何凭证。",
+  "handoff": "调试令牌未写入仓库或配置。已完成实现、定向回归、Docker 重建和修复后接口复测；未提交、未推送、未发布。"
+}

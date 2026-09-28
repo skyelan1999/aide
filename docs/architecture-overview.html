@@ -100,7 +100,7 @@
   <div class="row">
     <div class="box data"><b>/data 卷</b><span>session-*.json · settings · 统计 · sources 登记</span></div>
     <div class="box data"><b>/workspace (RW)</b><span>本地目录绑定 或 SSH/SFTP 远程工作区</span></div>
-    <div class="box data"><b>/context (RO)</b><span>辅助资料：本地路径 / Skill / URL / MCP(登记) / SFTP·FTP·SMB</span></div>
+    <div class="box data"><b>/context (RO)</b><span>辅助资料：本地路径 / Skill / URL / MCP stdio(只读工具) / SFTP·FTP·SMB</span></div>
     <div class="box ext"><b>模型提供商</b><span>DeepSeek 或任意 OpenAI 兼容 Chat Completions 端点</span></div>
   </div>
 </div>
@@ -221,7 +221,7 @@
       <li>run_shell 无 PTY，跑不了 vim/top 等交互命令</li>
       <li>危险命令黑名单是前缀匹配，可被绕路；正式版建议加 allowlist 模式</li>
       <li>会话 JSON 单文件，会话数上千后启动加载会变慢（未做分页）</li>
-      <li>MCP 仅登记入口，未真正接 MCP 协议</li>
+      <li>MCP 目前只支持 stdio 传输和工具元数据声明为只读的调用；不支持写入工具、远程传输或复用外部桌面应用的登录会话</li>
       <li>远程 SSH 工作区的 run_shell 自动执行尚未打通</li>
       <li>权限管理目前是只读说明面板，还没做 per-user 开关持久化</li>
     </ul>

@@ -6,13 +6,12 @@ package server
 //     统一凭证保险库 /data/secrets/vault.enc（复用 #38 的 SecretVault 信封）。
 //   - settings.json 只保留"是否已配置"的语义（由 vault 条目存在性推导），不含任何密钥材料。
 //
-// 主密钥分层（关键）：
-//   - 用户已设账户密码（hasPassword=true）：主密钥 = Argon2id(账户密码, kdf-salt)，
-//     与现有 SSH vault 一致；重启后保持锁定，须经 /api/unlock 或登录解锁才能取 key 调模型。
-//   - 用户未设密码（hasPassword=false）：生成机器绑定随机主密钥（32B，0600 落盘
-//     /data/secrets/master-key.bin），启动时自动加载并解锁 vault。明文不落 settings.json；
-//     即便 settings.json 被拷走，无本机 master-key.bin 也无法解出 key。
-//   - 后续用户首次设置密码时，把 vault 全部条目从机器密钥 re-wrap 到密码派生密钥。
+// 主密钥（关键）：
+//   - 当前版本使用 SHA-256(access-token) 作为保险库主密钥。access-token 是本机
+//     工作台登录的既有授权凭据，服务启动后已从 0600 文件读取并验证，因此无需再要求
+//     一次账户密码；浏览器登录成功即具备读写凭证的权限。
+//   - 旧版无密码安装的 machine master key、及旧版账户密码派生密钥都兼容读取：前者
+//     启动时自动重封，后者在用户下一次正确输入账户密码时重封。迁移后不再重复锁定。
 //
 // 旧明文迁移：启动时检测 settings.json / 环境变量里的明文 API Key，
 // 能解锁则立即加密入 vault 并安全擦除落盘明文；不能解锁（有密码但尚未解锁）则暂存内存，
@@ -20,6 +19,7 @@ package server
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"errors"
 	"net/http"
 	"os"
@@ -67,23 +67,37 @@ func ensureMachineMasterKey(data string) ([]byte, error) {
 	return b, nil
 }
 
-// unlockVaultAtStartup 启动时按密码分层决定 vault 解锁态：
-//   - 有密码：保持锁定（等用户 /api/unlock 或登录），不读主密钥。
-//   - 无密码：加载/生成机器绑定随机主密钥，自动解锁 vault。
+// accessTokenVaultKey 从已验证的本机访问令牌派生 32B AES 密钥。
+// access-token 不写入 settings.json，且本身已是 API 的认证边界。
+func (a *App) accessTokenVaultKey() []byte {
+	sum := sha256.Sum256([]byte(a.token))
+	return sum[:]
+}
+
+// unlockVaultAtStartup 以本机访问令牌自动解锁保险库。
+// 对旧版无密码的 machine master key 自动迁移；旧版密码加密的保险库保持锁定，
+// 直到用户完成一次账户密码验证后再迁移，避免猜测或绕过旧加密。
 // 必须在 vault.Load() 之后、处理请求之前调用。
 func (a *App) unlockVaultAtStartup() error {
 	if a.vault == nil {
 		return nil
 	}
+	tokenKey := a.accessTokenVaultKey()
+	if a.vault.canOpenAllWithKey(tokenKey) {
+		a.vault.Unlock(tokenKey)
+		return nil
+	}
 	if a.settings.UserPasswordHash != "" {
-		return nil // 有密码：保持锁定
+		return nil // 旧版密码密钥：等待用户验证密码后迁移。
 	}
 	key, err := ensureMachineMasterKey(a.dataPath)
 	if err != nil {
 		return err
 	}
-	a.vault.Unlock(key)
-	return nil
+	if !a.vault.canOpenAllWithKey(key) {
+		return nil
+	}
+	return a.vault.ReWrap(key, tokenKey)
 }
 
 // vaultIsUnlocked 返回 vault 主密钥是否已驻留内存（即"vaultUnlocked"状态）。

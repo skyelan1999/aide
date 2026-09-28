@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -194,13 +195,20 @@ func (a *App) execRemote(ctx context.Context, command string, stdout, stderr *st
 // ── SFTP（经同一 master 会话，无需二次认证） ──
 
 func (a *App) sftpArgs() []string {
-	return append([]string{"-o", "ControlPath=" + sshControlSocket, "-o", "BatchMode=yes", "-o", "LogLevel=ERROR"}, append([]string{"-P", fmt.Sprint(a.wsConfig.Workspace.Port)}, a.sshTarget())...)
+	return []string{"-o", "ControlPath=" + sshControlSocket, "-o", "BatchMode=yes", "-o", "LogLevel=ERROR", "-P", fmt.Sprint(a.wsConfig.Workspace.Port)}
 }
 
 func (a *App) sftpBatch(batch string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sftpTimeout)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, a.sftpBin, append(a.sftpArgs(), "-b", "-")...)
+	// SFTP is deliberately non-interactive, so it must reuse the authenticated
+	// SSH control connection. Saving a workspace closes that connection; ensure
+	// it is available before the first subsequent refresh or directory browse.
+	if err := a.ensureSSHSession(ctx); err != nil {
+		return "", err
+	}
+	args := append(a.sftpArgs(), "-b", "-", a.sshTarget())
+	cmd := exec.CommandContext(ctx, a.sftpBin, args...)
 	cmd.Stdin = strings.NewReader(batch)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	out, err := cmd.CombinedOutput()
@@ -214,7 +222,18 @@ func (a *App) sftpBatch(batch string) (string, error) {
 }
 
 // sftpList 列远程目录：返回 {name, path, dir} 列表（与 listLocalDir 同构）。
-func (a *App) sftpList(remoteDir string) ([]map[string]any, error) {
+func (a *App) sftpList(p string) ([]map[string]any, error) {
+	return a.sftpListRemote(a.workspaceRemotePath(p), p)
+}
+
+// sftpListWorkspaceSource 通过当前工作区已验证的 SSH 会话列出自动系统文档目录。
+// base 和 p 都是相对于远程工作区的路径，返回的 path 仅保留来源内相对路径。
+func (a *App) sftpListWorkspaceSource(base, p string) ([]map[string]any, error) {
+	remoteDir := a.workspaceRemotePath(pathJoinRemote(base, p))
+	return a.sftpListRemote(remoteDir, p)
+}
+
+func (a *App) sftpListRemote(remoteDir, relativePath string) ([]map[string]any, error) {
 	out, err := a.sftpBatch("cd " + shellQuoteRemote(remoteDir) + "\nls -l\n")
 	if err != nil {
 		return nil, err
@@ -231,7 +250,11 @@ func (a *App) sftpList(remoteDir string) ([]map[string]any, error) {
 		}
 		name := strings.Join(fields[8:], " ")
 		dir := fields[0][0] == 'd'
-		items = append(items, map[string]any{"name": name, "path": name, "dir": dir})
+		if name == "." || name == ".." || safePath(name) != nil {
+			continue
+		}
+		size, _ := strconv.ParseInt(fields[4], 10, 64)
+		items = append(items, map[string]any{"name": name, "path": path.Join(relativePath, name), "dir": dir, "size": size, "modified": strings.Join(fields[5:8], " ")})
 		if len(items) >= 2000 {
 			break
 		}
@@ -279,6 +302,58 @@ func (a *App) sftpExists(remoteFile string) bool {
 		return false
 	}
 	return true
+}
+
+func sftpCommandFailed(out string) bool {
+	low := strings.ToLower(out)
+	return strings.Contains(low, "couldn't") || strings.Contains(low, "failure") ||
+		strings.Contains(low, "permission denied") || strings.Contains(low, "no such file") ||
+		strings.Contains(low, "not a directory") || strings.Contains(low, "already exists")
+}
+
+// sftpMakeDirectory and sftpRenameDirectory are intentionally limited to
+// directory-picker operations. Their callers validate relative or remote
+// browse paths before composing these quoted SFTP commands.
+func (a *App) sftpMakeDirectory(remotePath string) error {
+	out, err := a.sftpBatch("mkdir " + shellQuoteRemote(remotePath) + "\n")
+	if err != nil {
+		return err
+	}
+	if sftpCommandFailed(out) {
+		return fmt.Errorf("SFTP 创建文件夹失败: %s", strings.TrimSpace(out))
+	}
+	return nil
+}
+
+func (a *App) sftpRenameDirectory(oldPath, newPath string) error {
+	if a.sftpExists(newPath) {
+		return fmt.Errorf("已存在同名文件或文件夹")
+	}
+	out, err := a.sftpBatch("rename " + shellQuoteRemote(oldPath) + " " + shellQuoteRemote(newPath) + "\n")
+	if err != nil {
+		return err
+	}
+	if sftpCommandFailed(out) {
+		return fmt.Errorf("SFTP 重命名文件夹失败: %s", strings.TrimSpace(out))
+	}
+	return nil
+}
+
+// sftpRemove removes one regular file or one empty directory. Recursive
+// deletion is deliberately not supported by the file panel.
+func (a *App) sftpRemove(remotePath string, dir bool) error {
+	command := "rm "
+	if dir {
+		command = "rmdir "
+	}
+	out, err := a.sftpBatch(command + shellQuoteRemote(remotePath) + "\n")
+	if err != nil {
+		return err
+	}
+	if sftpCommandFailed(out) {
+		return fmt.Errorf("SFTP 删除失败: %s", strings.TrimSpace(out))
+	}
+	return nil
 }
 
 func shellQuoteRemote(s string) string {

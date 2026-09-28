@@ -64,7 +64,7 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" $BASE/api/debug/actions/ping-p
   "status": "ok",
   "version": "0.1.10.2 RC1",
   "uptimeSec": 3721,
-  "config": { "providerHost": "api.deepseek.com", "model": "deepseek-v4-flash", "hasKey": true, "hasPassword": true },
+  "config": { "providerHost": "api.deepseek.com", "model": "deepseek-v4-flash", "hasKey": true, "keyUsable": true, "hasPassword": true },
   "mounts": {
     "workspace": { "path": "/workspace", "writable": true, "freeBytes": 40000000000 },
     "context":   { "path": "/context",   "writable": false, "freeBytes": 40000000000 }
@@ -85,7 +85,7 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" $BASE/api/debug/actions/ping-p
 ## 写/受控动作边界（默认禁用清单）
 
 本接口**不提供**：发送新会话/消息、取消/重试任务、改设置、改模型、读写工作区文件、导出原始会话消息、查询余额。
-两个 `POST` 动作均为只读探测：`ping-provider` 只发一次 `GET {baseURL}/models` 并计时；`diagnostic-bundle` 只聚合已脱敏数据。
+两个 `POST` 动作均为只读探测：`ping-provider` 只发一次 `GET {baseURL}/models` 并计时；`diagnostic-bundle` 只聚合已脱敏数据。`overview.config.hasKey` 表示加密保险库中存在模型凭证，`keyUsable` 表示该凭证在当前进程可解锁使用；若 `hasKey=true` 而 `keyUsable=false`，连通性探测会返回 `409`，不会以空凭据伪造上游 401。
 
 ## 脱敏红线
 

@@ -26,7 +26,7 @@ import (
 
 const (
 	vaultDirName    = "secrets"
-	vaultFileName    = "vault.enc"
+	vaultFileName   = "vault.enc"
 	vaultEnvelopeV1 = 1
 	vaultDirPerm    = 0o700
 	vaultFilePerm   = 0o600
@@ -212,6 +212,22 @@ func (v *SecretVault) Delete(id string) { delete(v.entries, id) }
 
 // Has 报告是否存在某条目。
 func (v *SecretVault) Has(id string) bool { _, ok := v.entries[id]; return ok }
+
+// canOpenAllWithKey 验证 key 是否能解开当前保险库的每一条密文，但不改变解锁状态。
+// 空保险库只要 key 合法即视为可打开，便于首次写入时直接采用当前主密钥。
+func (v *SecretVault) canOpenAllWithKey(key []byte) bool {
+	if len(key) != 32 {
+		return false
+	}
+	for _, e := range v.entries {
+		plain, err := openWithKey(key, e.Ciphertext, e.Nonce)
+		if err != nil {
+			return false
+		}
+		zeroBytes(plain)
+	}
+	return true
+}
 
 // IsEnvelope 报告字节是否为可识别的加密信封（导出/导入时区分新信封 vs 旧明文格式）。
 func IsEnvelope(b []byte) bool {

@@ -188,11 +188,6 @@
           "label": "麦克风输入源"
         },
         {
-          "id": "voiceHistory",
-          "type": "voice-history",
-          "label": "小秘对话历史"
-        },
-        {
           "id": "voiceReply",
           "type": "voice-reply",
           "label": "语音回复"

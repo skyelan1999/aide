@@ -16,6 +16,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -233,6 +234,24 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 	if p == "" {
 		p = "."
 	}
+	which := r.URL.Query().Get("root")
+	if which == "remote" {
+		if a.workspaceMode() != "ssh" {
+			fail(w, 400, errors.New("仅 SSH/SFTP 工作空间可以浏览远程目录"))
+			return
+		}
+		if err := validateRemoteBrowsePath(p); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		items, err := a.sftpListRemote(p, p)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		jsonOut(w, 200, items)
+		return
+	}
 	if err := safePath(p); err != nil {
 		fail(w, 400, err)
 		return
@@ -253,7 +272,6 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, items)
 		return
 	}
-	which := r.URL.Query().Get("root")
 	if which == "workspace" && a.workspaceMode() == "ssh" {
 		items, err := a.listWorkspaceDir(p)
 		if err != nil {
@@ -276,17 +294,303 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, items)
 }
 
+// validateRemoteBrowsePath keeps a directory-picker path safe for an SFTP
+// batch command. Unlike workspace file paths, absolute paths and ".." are
+// allowed here: choosing the workspace root must be able to navigate anywhere
+// the authenticated remote account itself may access.
+func validateRemoteBrowsePath(p string) error {
+	if strings.ContainsAny(p, "\x00\r\n") {
+		return errors.New("远程目录不能包含反斜杠、换行或空字符")
+	}
+	p = strings.TrimSpace(p)
+	if p == "" {
+		return errors.New("远程目录不能为空")
+	}
+	if strings.Contains(p, "\\") {
+		return errors.New("远程目录不能包含反斜杠、换行或空字符")
+	}
+	return nil
+}
+
+type directoryRequest struct {
+	Root     string `json:"root"`
+	Path     string `json:"path"`
+	Parent   string `json:"parentPath"`
+	Name     string `json:"name"`
+	NewName  string `json:"newName"`
+}
+
+func validDirectoryName(name string) (string, error) {
+	if strings.ContainsAny(name, "\x00\r\n") {
+		return "", errors.New("文件夹名称无效")
+	}
+	name = strings.TrimSpace(name)
+	if name == "" || name == "." || name == ".." || strings.ContainsAny(name, `/\\`) {
+		return "", errors.New("文件夹名称无效")
+	}
+	return name, nil
+}
+
+func directoryPath(root, p string) error {
+	if root == "remote" {
+		return validateRemoteBrowsePath(p)
+	}
+	return safePath(p)
+}
+
+func (a *App) remoteDirectory(remotePath string) (bool, error) {
+	items, err := a.sftpListRemote(path.Dir(remotePath), path.Dir(remotePath))
+	if err != nil {
+		return false, err
+	}
+	name := path.Base(remotePath)
+	for _, item := range items {
+		if item["name"] == name {
+			dir, _ := item["dir"].(bool)
+			return dir, nil
+		}
+	}
+	return false, nil
+}
+
+func fileInfoPayload(p string, info os.FileInfo) map[string]any {
+	typ := "文件"
+	if info.IsDir() {
+		typ = "文件夹"
+	}
+	return map[string]any{"name": path.Base(p), "path": p, "type": typ, "dir": info.IsDir(), "size": info.Size(), "modified": info.ModTime().Format(time.RFC3339)}
+}
+
+func (a *App) workspaceFileProperties(p string) (map[string]any, error) {
+	if err := safePath(p); err != nil {
+		return nil, err
+	}
+	if a.workspaceMode() != "ssh" {
+		info, err := a.workspace.Stat(p)
+		if err != nil {
+			return nil, err
+		}
+		return fileInfoPayload(p, info), nil
+	}
+	parent := path.Dir(p)
+	items, err := a.sftpListRemote(a.workspaceRemotePath(parent), parent)
+	if err != nil {
+		return nil, err
+	}
+	for _, item := range items {
+		if item["name"] == path.Base(p) {
+			isDir, _ := item["dir"].(bool)
+			typ := "文件"
+			if isDir {
+				typ = "文件夹"
+			}
+			return map[string]any{"name": item["name"], "path": p, "type": typ, "dir": isDir, "size": item["size"], "modified": item["modified"]}, nil
+		}
+	}
+	return nil, os.ErrNotExist
+}
+
+func (a *App) fileProperties(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query().Get("root") != "workspace" || r.URL.Query().Get("source") != "" {
+		fail(w, 403, errors.New("仅工作目录支持属性查看"))
+		return
+	}
+	info, err := a.workspaceFileProperties(r.URL.Query().Get("path"))
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	jsonOut(w, 200, info)
+}
+
+func (a *App) deleteWorkspaceFile(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Root string `json:"root"`
+		Path string `json:"path"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Root != "workspace" || safePath(body.Path) != nil {
+		fail(w, 400, errors.New("需要工作目录内的有效路径"))
+		return
+	}
+	a.filesMu.Lock()
+	defer a.filesMu.Unlock()
+	info, err := a.workspaceFileProperties(body.Path)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if a.workspaceMode() == "ssh" {
+		if err := a.sftpRemove(a.workspaceRemotePath(body.Path), info["dir"] == true); err != nil {
+			fail(w, 400, err)
+			return
+		}
+	} else if err := a.workspace.Remove(body.Path); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	jsonOut(w, 200, map[string]string{"path": body.Path})
+}
+
+func (a *App) createDirectory(w http.ResponseWriter, r *http.Request) {
+	var body directoryRequest
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		fail(w, 400, errors.New("请求格式错误"))
+		return
+	}
+	if body.Parent == "" {
+		body.Parent = "."
+	}
+	if err := directoryPath(body.Root, body.Parent); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	name, err := validDirectoryName(body.Name)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	newPath := path.Join(body.Parent, name)
+	if body.Root == "remote" || (body.Root == "workspace" && a.workspaceMode() == "ssh") {
+		remotePath := newPath
+		if body.Root == "workspace" {
+			remotePath = a.workspaceRemotePath(newPath)
+		}
+		if err := a.sftpMakeDirectory(remotePath); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		jsonOut(w, 200, map[string]string{"path": newPath, "name": name})
+		return
+	}
+	root, err := a.root(body.Root)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if err := root.Mkdir(newPath, 0755); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	jsonOut(w, 200, map[string]string{"path": newPath, "name": name})
+}
+
+func (a *App) renameDirectory(w http.ResponseWriter, r *http.Request) {
+	var body directoryRequest
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		fail(w, 400, errors.New("请求格式错误"))
+		return
+	}
+	if err := directoryPath(body.Root, body.Path); err != nil || body.Path == "." || body.Path == "/" {
+		if err == nil {
+			err = errors.New("不能重命名根目录")
+		}
+		fail(w, 400, err)
+		return
+	}
+	name, err := validDirectoryName(body.NewName)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	newPath := path.Join(path.Dir(body.Path), name)
+	if body.Root == "remote" || (body.Root == "workspace" && a.workspaceMode() == "ssh") {
+		oldRemote, newRemote := body.Path, newPath
+		if body.Root == "workspace" {
+			oldRemote, newRemote = a.workspaceRemotePath(body.Path), a.workspaceRemotePath(newPath)
+		}
+		isDir, err := a.remoteDirectory(oldRemote)
+		if err != nil {
+			fail(w, 400, err)
+			return
+		}
+		if !isDir {
+			fail(w, 400, errors.New("只能重命名文件夹"))
+			return
+		}
+		if err := a.sftpRenameDirectory(oldRemote, newRemote); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		jsonOut(w, 200, map[string]string{"path": newPath, "name": name})
+		return
+	}
+	root, err := a.root(body.Root)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	info, err := root.Stat(body.Path)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if !info.IsDir() {
+		fail(w, 400, errors.New("只能重命名文件夹"))
+		return
+	}
+	if _, err := root.Stat(newPath); err == nil {
+		fail(w, 409, errors.New("已存在同名文件或文件夹"))
+		return
+	}
+	if err := root.Rename(body.Path, newPath); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	jsonOut(w, 200, map[string]string{"path": newPath, "name": name})
+}
+
 // listLocalDir 列本地目录（目录优先、名称升序；≤2000 项）。
 func (a *App) listLocalDir(root *os.Root, p string) ([]map[string]any, error) {
 	f, err := root.Open(p)
 	if err != nil {
+		// Docker Desktop 的 Windows 盘符 bind mount 在 Go Root.Open(".") 上可能
+		// 返回 fstatat permission denied，即使该挂载中的子目录可正常访问。
+		// 根目录本身已在 os.OpenRoot 时固定；这里仅回退为读取该根，不扩展可访问范围。
+		if p == "." && root == a.localRoot {
+			// os.ReadDir("/local") 在同一种 drvfs 上也会走 Go 的 fstatat，仍会失败。
+			// GNU find 直接读取目录流可用；仅在已固定的 /local 根目录降级使用，
+			// 不接收任何用户提供的命令或路径，因此不扩大访问范围。
+			if items, readErr := listDockerDesktopLocalRoot(); readErr == nil {
+				return items, nil
+			}
+		}
 		return nil, err
 	}
 	defer f.Close()
 	entries, err := f.ReadDir(2000)
 	if err != nil && err != io.EOF {
+		if p == "." && root == a.localRoot {
+			if items, readErr := listDockerDesktopLocalRoot(); readErr == nil {
+				return items, nil
+			}
+		}
 		return nil, err
 	}
+	return localDirItems(entries, p), nil
+}
+
+// listDockerDesktopLocalRoot 是 Windows Docker Desktop drvfs 根目录的兼容降级。
+// 镜像运行于 Linux，find 来自基础系统；NUL 分隔避免文件名中的空格或制表符破坏解析。
+func listDockerDesktopLocalRoot() ([]map[string]any, error) {
+	out, err := exec.Command("find", "/local", "-mindepth", "1", "-maxdepth", "1", "-printf", "%y\\000%f\\000").Output()
+	if err != nil {
+		return nil, err
+	}
+	parts := bytes.Split(out, []byte{0})
+	items := []map[string]any{}
+	for i := 0; i+1 < len(parts) && len(items) < 2000; i += 2 {
+		kind, name := string(parts[i]), string(parts[i+1])
+		if kind != "d" || name == "" || safePath(name) != nil || strings.HasPrefix(name, ".DS_Store") {
+			continue
+		}
+		items = append(items, map[string]any{"name": name, "path": name, "dir": true})
+	}
+	sort.Slice(items, func(i, j int) bool { return items[i]["name"].(string) < items[j]["name"].(string) })
+	return items, nil
+}
+
+// localDirItems 将目录项转换为前端可用、安全的列表。
+func localDirItems(entries []os.DirEntry, p string) []map[string]any {
 	items := []map[string]any{}
 	for _, e := range entries {
 		ep := path.Join(p, e.Name())
@@ -304,7 +608,7 @@ func (a *App) listLocalDir(root *os.Root, p string) ([]map[string]any, error) {
 		}
 		return items[i]["name"].(string) < items[j]["name"].(string)
 	})
-	return items, nil
+	return items
 }
 func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 	// #63：旧版 .doc 二进制在线查看不支持，尽早返回明确提示
@@ -578,6 +882,14 @@ func (a *App) renameFile(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	if body.Root != "workspace" || body.Source != "" {
+		fail(w, 403, errors.New("仅工作目录支持重命名"))
+		return
+	}
+	if strings.ContainsAny(body.NewName, "\x00\r\n") {
+		fail(w, 400, errors.New("文件名无效"))
+		return
+	}
 	newName := strings.TrimSpace(body.NewName)
 	if newName == "" || newName == "." || newName == ".." ||
 		strings.ContainsAny(newName, `/\`+"\x00") {
@@ -590,24 +902,32 @@ func (a *App) renameFile(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	if body.Source != "" {
-		fail(w, 400, errors.New("该辅助资料来源暂不支持重命名"))
-		return
-	}
-	root, err := a.root(body.Root)
-	if err != nil {
-		fail(w, 400, err)
-		return
-	}
-
-	// 显式预检目标是否存在：Unix rename(2) 会原子替换已存在目标而不报错，必须先拦截
-	if _, err := root.Stat(newPath); err == nil {
-		fail(w, 409, errors.New("已存在同名文件或文件夹"))
-		return
-	}
-	if err := root.Rename(body.Path, newPath); err != nil {
-		fail(w, 500, err)
-		return
+	a.filesMu.Lock()
+	defer a.filesMu.Unlock()
+	if a.workspaceMode() == "ssh" {
+		if _, err := a.workspaceFileProperties(body.Path); err != nil {
+			fail(w, 400, err)
+			return
+		}
+		if a.sftpExists(a.workspaceRemotePath(newPath)) {
+			fail(w, 409, errors.New("已存在同名文件或文件夹"))
+			return
+		}
+		out, err := a.sftpBatch("rename " + shellQuoteRemote(a.workspaceRemotePath(body.Path)) + " " + shellQuoteRemote(a.workspaceRemotePath(newPath)) + "\n")
+		if err != nil || sftpCommandFailed(out) {
+			if err == nil { err = errors.New(strings.TrimSpace(out)) }
+			fail(w, 400, err)
+			return
+		}
+	} else {
+		if _, err := a.workspace.Stat(newPath); err == nil {
+			fail(w, 409, errors.New("已存在同名文件或文件夹"))
+			return
+		}
+		if err := a.workspace.Rename(body.Path, newPath); err != nil {
+			fail(w, 500, err)
+			return
+		}
 	}
 	jsonOut(w, 200, map[string]any{"path": newPath, "name": newName})
 }
@@ -628,7 +948,7 @@ func (a *App) resolveSqlitePath(r *http.Request) (string, error) {
 		return "", err
 	}
 	if srcID := r.URL.Query().Get("source"); srcID != "" {
-		return "", errors.New("辅助资料暂不支持 SQLite")
+		return "", errors.New("引用暂不支持 SQLite")
 	}
 	root, err := a.root(r.URL.Query().Get("root"))
 	if err != nil {

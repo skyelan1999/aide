@@ -306,19 +306,21 @@ function setupGlobalEvents() {
 
 /* ── 小秘系统会话密码门（#30）：点击小秘会话先验证账户密码，通过后才进入；锁屏后需重新验证 ── */
 function openAssistantGate(id, title) {
-  if (localStorage.getItem('assistantUnlocked_' + id)) { selectSession(id); return; }
   action(async () => {
-    // 先试无密码放行（后端未设置账户密码时直接返回 noPassword）
+    // 后端的内存锁才是授权依据。localStorage 只作体验缓存：服务重启/锁屏后
+    // 它可能过期，不能因此跳过身份验证框。
     try {
       const r = await api('/sessions/' + id + '/unlock-assistant', { method: 'POST', body: JSON.stringify({ password: '' }) });
-      if (r && r.noPassword) { localStorage.setItem('assistantUnlocked_' + id, '1'); selectSession(id); return; }
+      if (r && (r.noPassword || r.unlocked)) { localStorage.setItem('assistantUnlocked_' + id, '1'); selectSession(id); return; }
     } catch (_) {}
     // 需要密码：弹身份验证框
     const res = await requestMasterAuth({ reason: t('进入小秘会话需要验证身份') });
     if (res === null) return; // 取消
-    if (typeof res === 'string' && res !== 'success') {
-      try { await api('/sessions/' + id + '/unlock-assistant', { method: 'POST', body: JSON.stringify({ password: res }) }); } catch (_) {}
+    if (typeof res !== 'string' || res === 'success') {
+      toast(t('请使用账户密码解锁小秘会话'));
+      return;
     }
+    try { await api('/sessions/' + id + '/unlock-assistant', { method: 'POST', body: JSON.stringify({ password: res }) }); } catch (_) { return; }
     localStorage.setItem('assistantUnlocked_' + id, '1');
     selectSession(id);
   })();
@@ -439,8 +441,14 @@ function openStream(run) {
       maybeAutoNarrate(run.id); // 无障碍/讲解模式：输出完成后由小秘自动讲解（aide 本身不发声）
     })();
   });
-  // 流断开：保留已积累的 live 文本，短暂退避后由轮询兜底重开；最终状态仍以会话接口为准
-  es.onerror = () => { closeStream(); state.streamRetryAt = Date.now() + 5000; };
+  // 流断开：保留已积累的 live 文本。服务重启或一次网络失败不能让
+  // 轮询链就此消失，否则后端已进入终态时页面会永久停在“运行中”。
+  es.onerror = () => {
+    closeStream();
+    state.streamRetryAt = Date.now() + 5000;
+    refreshSessionSoon(); // 立即向持久化会话状态对账，避免只等下一轮 SSE。
+    schedulePoll();       // 确保意外断流后的轮询兜底仍在运行。
+  };
 }
 // 流式渲染节流：delta 先累积，按动画帧批量渲染（每帧最多一次全量解析）
 const liveRenderScheduled = new Set();
@@ -681,19 +689,27 @@ function schedulePoll() {
   if (running) {
     if ((!state.stream || state.stream._runId !== running.id) && (!state.streamRetryAt || Date.now() >= state.streamRetryAt)) openStream(running);
     state.poll = setTimeout(action(async () => {
-      const id = state.session.id; const s = await api('/sessions/' + id); if (state.session?.id !== id) return;
-      const hadRunning = !!state.session?.runs?.find(r => r.status === 'running');
-      if (adoptSessionIfChanged(s)) renderSession();
-      if (hadRunning && !s.runs.some(r => r.status === 'running')) {
-        if (s.runs.some(r => r.status === 'completed')) {
-          try { await api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) }); } catch (err) {}
+      const id = state.session?.id;
+      if (!id) return;
+      try {
+        const s = await api('/sessions/' + id);
+        if (state.session?.id !== id) return;
+        const hadRunning = !!state.session?.runs?.find(r => r.status === 'running');
+        if (adoptSessionIfChanged(s)) renderSession();
+        if (hadRunning && !s.runs.some(r => r.status === 'running')) {
+          if (s.runs.some(r => r.status === 'completed')) {
+            try { await api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) }); } catch (err) {}
+          }
+          await loadSessions(); // 轮询兜底路径：完成时同步列表
+          loadFiles(true).catch(()=>{}); // 自动刷新右侧项目文件
+          scheduleTitleSync(id);
+          maybeAutoNarrate(running.id); // 轮询兜底：输出完成自动讲解
         }
-        await loadSessions(); // 轮询兜底路径：完成时同步列表
-        loadFiles(true).catch(()=>{}); // 自动刷新右侧项目文件
-        scheduleTitleSync(id);
-        maybeAutoNarrate(running.id); // 轮询兜底：输出完成自动讲解
+      } finally {
+        // action() 会把异常转成 toast；重排必须在 finally 中，避免一次请求
+        // 短暂失败后永远不再同步运行状态。
+        if (state.session?.id === id) schedulePoll();
       }
-      schedulePoll();
     }), 1500);
   } else {
     closeStream();
@@ -1110,9 +1126,13 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   closeFileContextMenu();
   const m = el('div', 'file-ctx-menu');
   const ren = el('button', 'file-ctx-item', t('重命名'));
-  if (state.root === 'context') { ren.classList.add('disabled'); ren.disabled = true; ren.title = t('只读来源不可重命名'); }
+  const props = el('button', 'file-ctx-item', t('属性'));
+  const del = el('button', 'file-ctx-item danger-item', t('删除'));
+  if (state.root === 'context') [ren, props, del].forEach(x => { x.classList.add('disabled'); x.disabled = true; x.title = t('引用为只读'); });
   ren.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); selectFileRow(rowBtn); beginInlineRename(rowBtn, nameSpan, file); };
-  m.append(ren);
+  props.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); showFileProperties(file); };
+  del.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); deleteFileEntry(file); };
+  m.append(ren, props, del);
   document.body.append(m);
   fileCtxMenuEl = m;
   m.style.left = Math.min(ev.clientX, innerWidth - 160) + 'px';
@@ -1170,7 +1190,7 @@ function showEditor() {
   $("save-file").disabled = readOnly;
   $('attach-file').disabled = state.file.fresh;
   $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx || isSqlite));
-  $("editor-ro-badge").title = (readOnly && state.file.root === "context") ? (sourceIsRW() ? t("辅助资料 · 读写来源") : t("辅助资料 · 只读")) : (isImg || isStl || isPdf || isDxf || isDocx || isSqlite ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"));
+  $("editor-ro-badge").title = (readOnly && state.file.root === "context") ? (sourceIsRW() ? t("引用 · 读写来源") : t("引用 · 只读")) : (isImg || isStl || isPdf || isDxf || isDocx || isSqlite ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"));
   $('editor-mode-switch').classList.toggle('hidden', !md);
   if (isStl) {
     $('editor').classList.add('hidden');
@@ -1219,9 +1239,19 @@ $('new-session').onclick = action(newSession); $('refresh-sessions').onclick = a
 document.querySelectorAll('.mode-switch button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
 document.querySelectorAll('.starter').forEach(b => b.onclick = () => { $('prompt').value = b.dataset.prompt; setMode(b.dataset.mode || 'chat'); $('prompt').focus(); });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
+function applyReferenceTerminology() {
+  const setText = (selector, key) => document.querySelectorAll(selector).forEach(node => { node.dataset.i18n = key; node.textContent = t(key); });
+  setText('[data-root="context"] i18n-text', '引用');
+  setText('.context-guide i18n-text[data-i18n="也可以从辅助资料中选择参考文档。"]', '也可以从引用中选择参考文档。');
+  setText('#source-dialog h2 i18n-text', '添加引用');
+  const add = $('source-add');
+  add.setAttribute('aria-label', t('新增引用')); add.title = t('新增引用');
+  const label = add.querySelector('span'); if (label) label.textContent = t('引用');
+}
+applyReferenceTerminology();
 // 点击 dialog 遮罩关闭弹窗（事件委托，覆盖所有静态及动态 dialog）
 document.addEventListener('click', e => { if (e.target.tagName === 'DIALOG' && e.target.open) e.target.close(); });
-document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { state.root = b.dataset.root; state.dir = '.'; if (state.root === 'context') state.source = ''; document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); renderSourceChips(); await loadFiles(); }));
+document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { state.root = b.dataset.root; state.dir = '.'; if (state.root === 'context') state.source = defaultContextSourceID(); document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); renderSourceChips(); await loadFiles(); }));
 function syncPanelButtons() {
   const plugins = document.body.classList.contains('plugins-mode');
   const files = !plugins && (innerWidth <= 950 ? $('file-panel').classList.contains('mobile-open') : !document.body.classList.contains('files-hidden'));
@@ -1277,7 +1307,9 @@ $('task-form').onsubmit = action(async event => {
           return;
         }
         $('prompt').value = ''; state.attachments = []; renderAttachments();
-        await selectSession(target.id);
+        // 转交成功后立即打开后端刚创建的 aide 会话。此前固定回到小秘，
+        // 导致新会话虽已出现在侧栏，主区域仍停留在欢迎页或小秘历史。
+        await selectSession(resp.dispatched?.sessionId || target.id);
         // 按 action 分流提示
         if (resp.action === 'dispatch' && resp.dispatched) {
           toast(t('已创建会话 #{0}', resp.dispatched.number || '?'));
@@ -1335,6 +1367,8 @@ function hideContextPreview() {
   state.previewOverLimit = false;
   state.previewFingerprint = '';
   $('context-preview').classList.add('hidden');
+  state.contextMeterDraft = false;
+  estimateContext();
   updateSendEnabled();
 }
 // ctx-bar 浮动 tooltip
@@ -1363,6 +1397,29 @@ function hideCtxTooltip() {
   if (_ctxTooltip) _ctxTooltip.style.display = 'none';
 }
 
+function contextParts(bd) {
+  return [
+    [t("系统/策略提示"), bd.system, "#6366f1"],
+    [t("历史摘要"), bd.summary, "#8b5cf6"],
+    [t("历史用户消息"), bd.historyUser, "#0ea5e9"],
+    [t("历史助手回复"), bd.historyAssistant, "#06b6d4"],
+    [t("工具调用参数"), bd.toolCalls, "#64748b"],
+    [t("工具结果"), bd.toolResults, "#f97316"],
+    [t("本次用户输入"), bd.prompt, "#22c55e"],
+    [t("附件/引用"), bd.attachments, "#f59e0b"],
+    [t("阶段指令"), bd.instruction, "#ec4899"],
+    [t("工具定义"), bd.toolSchemas, "#64748b"],
+    [t("图片附件（保守上界）"), bd.images, "#a855f7"],
+    [t("请求协议开销"), bd.protocol, "#94a3b8"],
+  ].filter(([, part]) => part && part.tokens > 0);
+}
+function contextPartText(part) {
+  if (!part) return '';
+  return part.bytes > 0
+    ? t("{0} 字节 · ≈ {1} tokens", part.bytes, part.tokens)
+    : t("≈ {0} tokens", part.tokens);
+}
+
 function renderContextPreview(data) {
   if (!data || !data.breakdown) return;
   state.contextPreview = data;
@@ -1373,48 +1430,28 @@ function renderContextPreview(data) {
   $('cp-summary').textContent = t("输入估算 {0} tokens + 输出预留 {1} = {2} / 窗口 {3}", data.inputEstimate, data.outputReserve, data.totalEstimate, data.contextWindow) + overText;
   const detail = $('cp-detail');
   detail.replaceChildren();
-  const rows = [
-    [t("系统指令"), bd.systemChars],
-    [t("历史摘要"), bd.summaryChars],
-    [t("历史消息 {0} 条", bd.historyMessages || 0), bd.historyChars],
-    [t("任务输入"), bd.promptChars],
-    [t("附件 {0} 个", bd.attachmentFiles || 0), bd.attachmentChars],
-    [t("阶段指令"), bd.instructionChars],
-    [t("工具定义 {0} 个", bd.toolCount || 0), bd.toolSchemaChars]
-  ];
-  rows.forEach(([label, chars]) => {
-    if (chars) {
-      const row = el('div', 'cp-row');
-      row.append(el('span', '', label), el('span', '', t("{0} 字符 ≈ {1} tokens", chars, Math.floor(chars / 4))));
-      detail.append(row);
-    }
+  const parts = contextParts(bd);
+  parts.forEach(([label, part]) => {
+    const row = el('div', 'cp-row');
+    row.append(el('span', '', label), el('span', '', contextPartText(part)));
+    detail.append(row);
   });
-  // 堆叠条形图：按 token 占比着色，hover 高亮显示详情
-  const segments = [
-    { label: t("系统指令"), chars: bd.systemChars, color: "#6366f1" },
-    { label: t("历史摘要"), chars: bd.summaryChars, color: "#8b5cf6" },
-    { label: t("历史消息"), chars: bd.historyChars, color: "#06b6d4" },
-    { label: t("任务输入"), chars: bd.promptChars, color: "#22c55e" },
-    { label: t("附件"), chars: bd.attachmentChars, color: "#f59e0b" },
-    { label: t("阶段指令"), chars: bd.instructionChars, color: "#ec4899" },
-    { label: t("工具定义"), chars: bd.toolSchemaChars, color: "#64748b" },
-  ].filter(x => x.chars > 0);
-  const total = segments.reduce((sum, x) => sum + x.chars, 0) || 1;
+  // 堆叠条按分项 token（而不是字符）显示；每段和标题的输入估算严格同口径。
+  const total = parts.reduce((sum, [, part]) => sum + part.tokens, 0) || 1;
   const bar = el('div', 'ctx-bar');
   const cells = [];
-  for (const seg of segments) {
-    const pct = ((seg.chars / total) * 100).toFixed(1);
+  for (const [label, part, color] of parts) {
+    const pct = ((part.tokens / total) * 100).toFixed(1);
     const cell = el('div', 'ctx-bar-cell');
     cell.style.width = pct + '%';
-    cell.style.background = seg.color;
-    const tokens = Math.floor(seg.chars / 4);
-    cell.dataset.label = seg.label;
-    cell.dataset.tokens = tokens;
+    cell.style.background = color;
+    cell.dataset.label = label;
+    cell.dataset.tokens = String(part.tokens);
     cell.dataset.pct = pct;
-    cell.dataset.color = seg.color;
+    cell.dataset.color = color;
     cell.addEventListener('mouseenter', (e) => {
       cells.forEach(c => { if (c !== cell) c.classList.add('dimmed'); });
-      showCtxTooltip(e, seg.label, tokens, pct, seg.color);
+      showCtxTooltip(e, label, part.tokens, pct, color);
     });
     cell.addEventListener('mousemove', (e) => moveCtxTooltip(e));
     cell.addEventListener('mouseleave', () => {
@@ -1427,21 +1464,20 @@ function renderContextPreview(data) {
   detail.append(bar);
   // 图例：可点击切换显示/隐藏
   const legend = el('div', 'ctx-legend');
-  segments.forEach(seg => {
-    const tokens = Math.floor(seg.chars / 4);
+  parts.forEach(([label, part, color], index) => {
     const item = el('div', 'ctx-legend-item');
-    item.append(el('span', 'ctx-legend-dot', ''), el('span', '', seg.label + ' · ' + tokens + 't'));
-    item.querySelector('.ctx-legend-dot').style.background = seg.color;
+    item.append(el('span', 'ctx-legend-dot', ''), el('span', '', label + ' · ' + part.tokens + 't'));
+    item.querySelector('.ctx-legend-dot').style.background = color;
     item.onclick = () => {
       item.classList.toggle('hidden');
-      const idx = segments.indexOf(seg);
-      if (cells[idx]) cells[idx].style.display = item.classList.contains('hidden') ? 'none' : '';
+      if (cells[index]) cells[index].style.display = item.classList.contains('hidden') ? 'none' : '';
     };
     legend.append(item);
   });
   detail.append(legend);
   detail.append(el('p', 'cp-note', data.estimationNote || ''));
   $('context-preview').classList.remove('hidden');
+  renderContextMeter(data, true);
   updateSendEnabled();
 }
 async function refreshContextPreview() {
@@ -1451,7 +1487,9 @@ async function refreshContextPreview() {
   $('context-preview').classList.remove('hidden');
   $('cp-summary').textContent = t("上下文预算计算中…（估算）");
   try {
-    const data = await api('/context-preview', { method: 'POST', body: JSON.stringify({ sessionId: state.session?.id || '', prompt, mode: state.mode, attachments: state.attachments }) });
+    const strategy = state.profiles?.strategy || 'manual';
+    const profile = strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default');
+    const data = await api('/context-preview', { method: 'POST', body: JSON.stringify({ sessionId: state.session?.id || '', prompt, mode: state.mode, attachments: state.attachments, strategy, profile, workflowPhase: state.workflowPhase || '' }) });
     if (seq !== state.previewSeq.value) return; // 过期响应不得覆盖新预览（R08-04 草稿失效）
     renderContextPreview(data);
   } catch (error) {
@@ -1563,8 +1601,9 @@ $('attach-file').onclick = () => {
   }
   renderAttachments(); $('editor-dialog').close(); $('prompt').focus();
 };
-$('new-file').onclick = () => { $('new-file-path').value = state.dir === '.' ? '' : state.dir + '/'; $('new-file-dialog').showModal(); };
+$('new-file').onclick = openNewItemMenu;
 $('new-file-form').onsubmit = action(async event => { event.preventDefault(); state.file = { path: $('new-file-path').value.trim(), root: 'workspace', hash: '', content: '', fresh: true }; $('new-file-dialog').close(); showEditor(); });
+$('new-folder-form').onsubmit = action(async event => { event.preventDefault(); await api('/directory', { method: 'POST', body: JSON.stringify({ root: 'workspace', parentPath: state.dir, name: $('new-folder-name').value }) }); $('new-folder-dialog').close(); await loadFiles(); });
 $('terminal-toggle').onclick = () => { const hidden = $('terminal-body').classList.toggle('hidden'); $('terminal-state').textContent = hidden ? t("展开 ＋") : t("收起 −"); };
 $('command-form').onsubmit = action(async event => {
   event.preventDefault(); if (state.commandAbort) return; const command = $('command').value.trim(); if (!command) return;
@@ -2616,27 +2655,96 @@ $('fetch-models').onclick = action(async () => {
     button.textContent = t("⟳ 自动获取");
   }
 });
-/* ── 上下文统计（FR-70，参考 DSH token-meter：4 字符/词 + 每消息 4 开销） ── */
+/* ── 上下文统计：与 /context-preview 共用服务端请求构造，避免浏览器自行猜测。 ── */
 function fmtTokens(n) { return n < 1000 ? String(n) : (n / 1024).toFixed(1) + 'K'; }
-function estimateContext() {
-  const model = activeModel();
-  const limit = model?.contextWindow || 65536;
-  let used = 0;
-  let included = 0;
+state.contextMeterSeq = state.contextMeterSeq || { value: 0 };
+state.contextMeterKey = state.contextMeterKey || '';
+state.contextMeterOpen = state.contextMeterOpen || false;
+state.contextMeterDraft = state.contextMeterDraft || false;
+
+function ensureContextMeterControls() {
+  const card = $('context-card');
+  if (!card || $('context-detail-toggle')) return;
+  const head = card.querySelector('.context-head');
+  const toggle = el('button', 'context-detail-toggle', '▾');
+  toggle.type = 'button'; toggle.id = 'context-detail-toggle';
+  toggle.title = t("查看上下文组成");
+  toggle.setAttribute('aria-label', t("查看上下文组成"));
+  toggle.setAttribute('aria-expanded', 'false');
+  const detail = el('div', 'context-card-detail hidden');
+  detail.id = 'context-card-detail';
+  toggle.onclick = () => {
+    state.contextMeterOpen = !state.contextMeterOpen;
+    detail.classList.toggle('hidden', !state.contextMeterOpen);
+    toggle.textContent = state.contextMeterOpen ? '▴' : '▾';
+    toggle.setAttribute('aria-expanded', String(state.contextMeterOpen));
+  };
+  head.append(toggle);
+  card.append(detail);
+}
+function contextMeterKey() {
   const messages = state.session?.messages || [];
-  let budget = 0;
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const size = (messages[i].content || '').length;
-    if (budget > 0 && budget + size >= 60000) break; // 与后端 60,000 字符回放预算一致（近似）
-    budget += size;
-    used += Math.ceil(size / 4) + 4;
-    included++;
-  }
-  const pct = Math.min(100, Math.round((used / limit) * 100));
-  $('context-stat').textContent = fmtTokens(used) + ' / ' + fmtTokens(limit);
+  const signature = messages.map(m => [m.role, (m.content || '').length, (m.toolCalls || []).map(c => (c.function?.arguments || '').length).join(',')].join(':')).join('|');
+  return [state.session?.id || 'new', state.config?.model || '', state.mode || 'chat', state.workflowPhase || '', state.profiles?.strategy || 'manual', state.profiles?.activeProfile || 'default', signature].join('~');
+}
+function renderContextMeter(data, isDraft) {
+  if (!data || !data.breakdown) return;
+  ensureContextMeterControls();
+  state.contextMeter = data;
+  state.contextMeterDraft = !!isDraft;
+  const limit = data.contextWindow || activeModel()?.contextWindow || 65536;
+  const pressure = data.totalEstimate || data.inputEstimate || 0;
+  const pct = Math.min(100, Math.round((pressure / limit) * 100));
+  $('context-stat').textContent = fmtTokens(data.inputEstimate || 0) + ' / ' + fmtTokens(limit);
   $('context-fill').style.width = pct + '%';
   $('context-fill').classList.toggle('warn', pct > 90);
-  $('context-card').title = included ? t("最近 {0} 条消息 · 4 字符/词估算 · tokens 已用/窗口", included) : t("当前会话暂无内容 · 4 字符/词估算 · tokens 已用/窗口");
+  $('context-card').title = t("下一次请求的上下文组成估算：输入 {0} + 输出预留 {1} = {2} / 窗口 {3}。上游真实 usage 以轨迹记录为准。", data.inputEstimate || 0, data.outputReserve || 0, pressure, limit);
+  const detail = $('context-card-detail');
+  if (!detail) return;
+  detail.replaceChildren();
+  if (isDraft) detail.append(el('div', 'context-card-kicker', t("当前草稿 · 即将发送")));
+  contextParts(data.breakdown).forEach(([label, part, color]) => {
+    const row = el('div', 'context-card-row');
+    const left = el('span', ''); left.append(el('i', 'context-card-dot', ''), document.createTextNode(label));
+    left.querySelector('i').style.background = color;
+    row.append(left, el('strong', '', fmtTokens(part.tokens)));
+    detail.append(row);
+  });
+  const reserve = el('div', 'context-card-row context-card-reserve');
+  reserve.append(el('span', '', t("输出预留")), el('strong', '', fmtTokens(data.outputReserve || 0)));
+  detail.append(reserve);
+  const runs = state.session?.runs || [];
+  const lastRun = [...runs].reverse().find(r => r.usage && r.usage.total > 0);
+  if (lastRun) {
+    const usage = lastRun.usage;
+    const source = usage.estimated ? t("最近任务累计（估算）") : t("最近任务累计（上游实际）");
+    detail.append(el('p', 'context-card-actual', t("{0}：输入 {1} · 输出 {2}", source, fmtTokens(usage.prompt || 0), fmtTokens(usage.completion || 0))));
+  }
+  detail.append(el('p', 'context-card-note', data.estimationNote || ''));
+}
+async function refreshContextMeter() {
+  if (!state.config?.configured || state.contextMeterDraft) return;
+  const key = contextMeterKey();
+  if (key === state.contextMeterKey && state.contextMeter) { renderContextMeter(state.contextMeter, false); return; }
+  state.contextMeterKey = key;
+  const seq = ++state.contextMeterSeq.value;
+  const strategy = state.profiles?.strategy || 'manual';
+  const profile = strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default');
+  try {
+    const data = await api('/context-preview', { method: 'POST', body: JSON.stringify({ sessionId: state.session?.id || '', prompt: '', mode: state.mode || 'chat', strategy, profile, workflowPhase: state.workflowPhase || '', baseline: true }) });
+    if (seq !== state.contextMeterSeq.value || state.contextMeterKey !== key || state.contextMeterDraft) return;
+    renderContextMeter(data, false);
+  } catch (_) {
+    // 统计失败不影响正常对话；不要用旧的浏览器猜测值冒充服务端口径。
+  }
+}
+function estimateContext() {
+  if (!state.config?.configured) {
+    $('context-stat').textContent = '—';
+    $('context-fill').style.width = '0';
+    return;
+  }
+  refreshContextMeter();
 }
 /* ── 插件系统（FR-72~75，协议 docs/plugin-protocol.md）：右侧面板 + 上传/搜索/启停/删除/surface ── */
 async function loadPluginsPanel() {
@@ -2751,11 +2859,55 @@ function setWsMode(mode) {
   document.querySelectorAll('.ws-seg:not(.ws-auth) [data-mode]').forEach(b => { const on = b.dataset.mode === mode; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
   $('ws-local-fields').classList.toggle('hidden', mode !== 'local');
   $('ws-ssh-fields').classList.toggle('hidden', mode !== 'ssh');
+  syncWorkspaceLocationControls();
+}
+
+async function showFileProperties(file) {
+  const data = await api('/file/properties?root=workspace&path=' + encodeURIComponent(file.path));
+  const list = $('file-properties-list'); list.replaceChildren();
+  [[t('名称'), data.name], [t('类型'), data.type], [t('相对路径'), data.path], [t('大小'), data.dir ? t('—') : formatFileSize(Number(data.size || 0))], [t('修改时间'), data.modified || t('未知')]].forEach(([key, value]) => {
+    list.append(el('dt', '', key), el('dd', '', String(value)));
+  });
+  $('file-properties-dialog').showModal();
+}
+function formatFileSize(bytes) {
+  if (!Number.isFinite(bytes) || bytes < 1024) return Math.max(0, bytes || 0) + ' B';
+  const units = ['KB', 'MB', 'GB', 'TB']; let value = bytes / 1024, index = 0;
+  while (value >= 1024 && index < units.length - 1) { value /= 1024; index++; }
+  return value.toFixed(value >= 10 ? 0 : 1) + ' ' + units[index];
+}
+async function deleteFileEntry(file) {
+  const kind = file.dir ? t('文件夹') : t('文件');
+  if (!window.confirm(t('确定永久删除{0}“{1}”？空文件夹才能删除。', kind, file.name))) return;
+  await api('/file/delete', { method: 'POST', body: JSON.stringify({ root: 'workspace', path: file.path }) });
+  if (state.file?.path === file.path) $('editor-dialog').close();
+  toast(t('已删除：{0}', file.name));
+  await loadFiles();
+}
+function openNewItemMenu() {
+  closeFileContextMenu();
+  const anchor = $('new-file'), rect = anchor.getBoundingClientRect();
+  const m = el('div', 'file-ctx-menu');
+  const file = el('button', 'file-ctx-item', t('新建文件'));
+  const folder = el('button', 'file-ctx-item', t('新建文件夹'));
+  file.onclick = () => { closeFileContextMenu(); $('new-file-path').value = state.dir === '.' ? '' : state.dir + '/'; $('new-file-dialog').showModal(); };
+  folder.onclick = () => { closeFileContextMenu(); $('new-folder-name').value = ''; $('new-folder-dialog').showModal(); $('new-folder-name').focus(); };
+  m.append(file, folder); document.body.append(m); fileCtxMenuEl = m;
+  m.style.left = Math.min(rect.left, innerWidth - 160) + 'px'; m.style.top = (rect.bottom + 4) + 'px';
+  setTimeout(() => { document.addEventListener('click', closeFileContextMenu); document.addEventListener('keydown', onFileCtxKey); }, 0);
 }
 function setWsAuth(auth) {
   document.querySelectorAll('.ws-auth [data-auth]').forEach(b => { const on = b.dataset.auth === auth; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
   $('ws-password-field').classList.toggle('hidden', auth !== 'password');
   $('ws-key-field').classList.toggle('hidden', auth !== 'key');
+}
+function syncWorkspaceLocationControls() {
+  const ssh = document.querySelector('.ws-seg:not(.ws-auth) [data-mode].active')?.dataset.mode === 'ssh';
+  for (const [field, location] of [['docs-path', 'docs-location'], ['cache-path', 'cache-location']]) {
+    if (!ssh && $(location).value === 'workspace') $(location).value = 'local';
+    const remote = ssh && $(location).value === 'workspace';
+    $(field).placeholder = remote ? t('相对远程工作区的目录；留空 = 工作区根目录') : (field === 'docs-path' ? '/context' : '.cache');
+  }
 }
 function renderWsRecent(id, list) {
   const host = $(id);
@@ -2796,7 +2948,7 @@ function fillWorkspaceSheet() {
   else { fpEl.textContent = ''; fpEl.classList.add('hidden'); }
   const hint = $('ws-vault-hint');
   const vpField = $('ws-vault-password-field');
-  if (!c.hasAccountPassword) { hint.textContent = t("请先在设置→账户设置密码，才能加密存储 SSH 凭据"); hint.classList.remove('hidden'); vpField.classList.add('hidden'); }
+  if (!c.hasAccountPassword) { hint.textContent = ''; hint.classList.add('hidden'); vpField.classList.add('hidden'); }
   else if (c.vaultLocked) {
     hint.textContent = t("凭证保险库已锁定：保存前请验证身份解锁"); hint.classList.remove('hidden'); vpField.classList.remove('hidden');
     vpField.querySelector('.ws-vault-fp')?.remove();
@@ -2816,14 +2968,17 @@ function fillWorkspaceSheet() {
   $('docs-location').value = c.docs?.location || 'local';
   $('cache-path').value = c.cache?.path || '';
   $('cache-location').value = c.cache?.location || 'local';
+  syncWorkspaceLocationControls();
   $('ws-clear-secrets').checked = false;
   renderWsRecent('ws-recent', c.recent?.workspace || []);
   renderWsRecent('docs-recent', c.recent?.docs || []);
   renderWsRecent('cache-recent', c.recent?.cache || []);
+  $('ws-test-status').textContent = '';
 }
 function collectWsConfig() {
   const mode = document.querySelector('.ws-seg:not(.ws-auth) [data-mode].active')?.dataset.mode || 'local';
   const auth = document.querySelector('.ws-auth [data-auth].active')?.dataset.auth || 'password';
+  const keyAuth = auth === 'key';
   return {
     workspace: { mode, path: mode === 'local' ? $('ws-path').value.trim() : $('ws-remote-path').value.trim(), host: $('ws-host').value.trim(), port: parseInt($('ws-port').value, 10) || 22, username: $('ws-user').value.trim(), auth },
     docs: { path: $('docs-path').value.trim(), location: $('docs-location').value },
@@ -2831,8 +2986,8 @@ function collectWsConfig() {
     password: $('ws-password').value,
     key: $('ws-key').value,
     passphrase: $('ws-passphrase').value,
-    keyMode: document.querySelector('#ws-key-file [data-keymode].active')?.dataset.keymode || 'ref',
-    keyRefPath: $('ws-key-refpath').value.trim(),
+    keyMode: keyAuth ? (document.querySelector('#ws-key-file [data-keymode].active')?.dataset.keymode || 'ref') : '',
+    keyRefPath: keyAuth ? $('ws-key-refpath').value.trim() : '',
     vaultPassword: $('ws-vault-password').value,
     clearPassword: $('ws-clear-secrets').checked,
     clearKey: $('ws-clear-secrets').checked,
@@ -2862,8 +3017,27 @@ function closeWorkspaceSheet() {
 $('workspace-config-button').onclick = () => { action(async () => { await loadWorkspaceConfig(); openWorkspaceSheet(); })(); };
 $('workspace-sheet-close').onclick = closeWorkspaceSheet;
 $('ws-save').onclick = action(async () => { await saveWorkspaceConfig(); closeWorkspaceSheet(); toast(t("工作空间配置已保存")); });
+$('ws-test').onclick = action(async () => {
+  const status = $('ws-test-status');
+  if ((document.querySelector('.ws-seg:not(.ws-auth) [data-mode].active')?.dataset.mode || 'local') !== 'ssh') {
+    status.textContent = t('仅 SSH/SFTP 工作空间需要测试连接');
+    return;
+  }
+  $('ws-test').disabled = true; status.textContent = t('正在保存配置并测试 SSH/SFTP 连接…');
+  try {
+    // 测试使用当前输入的主机、认证和目录，而非上一次保存的旧配置。保存后仍留在
+    // 弹窗中，便于根据失败原因立刻修改重试；测试本身不会写入远端。
+    await saveWorkspaceConfig();
+    const result = await api('/workspace-config/test', { method: 'POST', body: '{}' });
+    status.textContent = t('✓ SSH/SFTP 连接成功：{0}', result.path || t('远程目录'));
+  } catch (error) {
+    status.textContent = t('连接失败：{0}', error.message);
+  } finally { $('ws-test').disabled = false; }
+});
 document.querySelectorAll('.ws-seg:not(.ws-auth) [data-mode]').forEach(b => b.onclick = () => setWsMode(b.dataset.mode));
 document.querySelectorAll('.ws-auth [data-auth]').forEach(b => b.onclick = () => setWsAuth(b.dataset.auth));
+$('docs-location').onchange = syncWorkspaceLocationControls;
+$('cache-location').onchange = syncWorkspaceLocationControls;
 function setWsKeyInput(which) {
   document.querySelectorAll('.ws-keyinput [data-keyinput]').forEach(b => { const on = b.dataset.keyinput === which; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
   $('ws-key-paste').classList.toggle('hidden', which !== 'paste');
@@ -2879,18 +3053,26 @@ $('ws-key-browse').onclick = () => openBrowse('ws-key-refpath');
 function hostPathOf(dir) {
   const base = state.config?.hostLocal || '/local';
   if (dir === '.' || dir === '') return base;
+  // Windows 的宿主机路径不能与容器内部的 POSIX 路径混用斜杠；否则回填的
+  // C:\\Users\\… 无法作为下一次浏览的起点。
+  if (/^[a-z]:[\\/]/i.test(base)) return base.replace(/[\\/]+$/, '') + '\\' + dir.replace(/\//g, '\\');
   return base.replace(/\/$/, '') + '/' + dir;
 }
 /* 从输入值推导浏览起点：宿主机路径 → 本地挂载相对路径；空值/其他前缀回退根 */
 function browseDirFromValue(value) {
   value = (value || '').trim();
   const base = (state.config?.hostLocal || '/local').replace(/\/$/, '');
+  const windowsHost = /^[a-z]:[\\/]/i.test(base);
+  const normalize = input => String(input || '').replace(/\\/g, '/').replace(/\/+$/, '');
+  const sameHostPath = (left, right) => windowsHost ? left.toLowerCase() === right.toLowerCase() : left === right;
+  const hostStartsWith = (candidate, prefix) => windowsHost ? candidate.toLowerCase().startsWith(prefix.toLowerCase() + '/') : candidate.startsWith(prefix + '/');
   if (value === '~') value = base;
   else if (value.startsWith('~/')) value = base + value.slice(1);
-  for (const prefix of [base, '/local']) {
-    if (value === prefix) return '.';
-    if (value.startsWith(prefix + '/')) {
-      const parts = value.slice(prefix.length + 1).split('/');
+  const normalizedValue = normalize(value);
+  for (const prefix of [normalize(base), '/local']) {
+    if (sameHostPath(normalizedValue, prefix)) return '.';
+    if (hostStartsWith(normalizedValue, prefix)) {
+      const parts = normalizedValue.slice(prefix.length + 1).split('/');
       const clean = [];
       for (const part of parts) {
         if (!part || part === '.') continue;
@@ -2904,11 +3086,40 @@ function browseDirFromValue(value) {
   return '.';
 }
 
+function isWorkspaceBrowseField(field) {
+  return (field === 'docs-path' && $('docs-location').value === 'workspace') ||
+    (field === 'cache-path' && $('cache-location').value === 'workspace');
+}
+function isRemoteWorkspaceBrowseField(field) { return field === 'ws-remote-path'; }
+function browseWorkspaceDirFromValue(value) {
+  const clean = String(value || '').trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, '');
+  if (!clean || clean === '.') return '.';
+  if (clean.startsWith('/')) throw new Error(t('远程绝对路径可直接输入；目录浏览仅显示当前工作空间范围'));
+  const parts = [];
+  for (const part of clean.split('/')) {
+    if (!part || part === '.') continue;
+    if (part === '..') { if (!parts.length) throw new Error(t('目录超出远程工作空间')); parts.pop(); }
+    else parts.push(part);
+  }
+  return parts.join('/') || '.';
+}
+function browseRemoteDirFromValue(value) {
+  const remote = String(value || '').trim().replace(/\\/g, '/');
+  if (!remote || remote === '~' || remote === '.') return '.';
+  if (remote.startsWith('~/')) return remote.slice(2) || '.';
+  if (/[\u0000\r\n]/.test(remote)) throw new Error(t('远程目录不能包含换行或空字符'));
+  return remote;
+}
+function browseRootForField(field) {
+  if (isRemoteWorkspaceBrowseField(field)) return 'remote';
+  return isWorkspaceBrowseField(field) ? 'workspace' : 'local';
+}
+
 /* 当前路径不可用时逐级向上找到可用目录 */
-async function resolveExistingDir(dir) {
+async function resolveExistingDir(dir, root = 'local') {
   for (;;) {
     try {
-      await api('/files?root=local&path=' + encodeURIComponent(dir));
+      await api('/files?root=' + root + '&path=' + encodeURIComponent(dir));
       return dir;
     } catch (error) {
       if (dir === '.' || !dir.includes('/')) return '.';
@@ -2918,30 +3129,41 @@ async function resolveExistingDir(dir) {
 }
 function openBrowse(field) {
   action(async () => {
-    const start = browseDirFromValue($(field).value);
-    const dir = await resolveExistingDir(start);
-    wsState.browse = { field, dir };
+    const root = browseRootForField(field);
+    const workspace = root === 'workspace';
+    const remote = root === 'remote';
+    const start = remote ? browseRemoteDirFromValue($(field).value) : workspace ? browseWorkspaceDirFromValue($(field).value) : browseDirFromValue($(field).value);
+    const dir = await resolveExistingDir(start, root);
+    wsState.browse = { field, dir, root, workspace, remote };
     $('ws-browse-dialog').showModal();
     await loadBrowseDir();
   })();
 }
 async function loadBrowseDir() {
   const b = wsState.browse;
-  const files = await api('/files?root=local&path=' + encodeURIComponent(b.dir));
-  $('ws-browse-path').textContent = t('可访问范围：{0}', hostPathOf('.'));
-  $('ws-browse-address').value = hostPathOf(b.dir);
-  $('ws-browse-parent').disabled = b.dir === '.';
+  const files = await api('/files?root=' + b.root + '&path=' + encodeURIComponent(b.dir));
+  $('ws-browse-path').textContent = b.remote ? t('可访问范围：远程账户目录') : b.workspace ? t('可访问范围：远程工作空间') : t('可访问范围：{0}', hostPathOf('.'));
+  $('ws-browse-address').value = b.workspace || b.remote ? b.dir : hostPathOf(b.dir);
+  $('ws-browse-parent').disabled = !b.remote && b.dir === '.';
   $('ws-browse-status').textContent = '';
   const list = $('ws-browse-list');
   list.replaceChildren();
   const dirs = files.filter(f => f.dir);
   if (!dirs.length) list.append(el('p', 'muted', t("没有子目录")));
-  dirs.forEach(d => { const row = el('button', 'ws-browse-item', '▱ ' + d.name); row.onclick = () => { b.dir = d.path; action(loadBrowseDir)(); }; list.append(row); });
+  dirs.forEach(d => {
+    const row = el('div', 'ws-browse-dir-row');
+    const open = el('button', 'ws-browse-item', '▱ ' + d.name);
+    open.type = 'button'; open.onclick = () => { b.dir = d.path; action(loadBrowseDir)(); };
+    const rename = el('button', 'quiet ws-browse-rename', t('重命名'));
+    rename.type = 'button'; rename.title = t('重命名文件夹');
+    rename.onclick = () => renameBrowseDirectory(d);
+    row.append(open, rename); list.append(row);
+  });
 }
 async function browseAddress() {
   const b = wsState.browse, previous = b.dir;
   try {
-    b.dir = browseDirFromValue($('ws-browse-address').value);
+    b.dir = b.remote ? browseRemoteDirFromValue($('ws-browse-address').value) : b.workspace ? browseWorkspaceDirFromValue($('ws-browse-address').value) : browseDirFromValue($('ws-browse-address').value);
     await loadBrowseDir();
   } catch (error) {
     b.dir = previous;
@@ -2951,21 +3173,81 @@ async function browseAddress() {
 $('ws-browse-go').onclick = browseAddress;
 $('ws-browse-address').onkeydown = event => { if (event.key === 'Enter') { event.preventDefault(); browseAddress(); } };
 $('ws-browse').onclick = () => openBrowse('ws-path');
+function setupRemoteWorkspaceBrowse() {
+  const input = $('ws-remote-path');
+  if (!input || $('ws-remote-browse')) return;
+  const row = el('div', 'ws-row');
+  input.replaceWith(row); row.append(input);
+  const browse = el('button', 'quiet', t('浏览…'));
+  browse.id = 'ws-remote-browse'; browse.type = 'button';
+  browse.onclick = () => openBrowse('ws-remote-path');
+  row.append(browse);
+}
+setupRemoteWorkspaceBrowse();
 $('docs-browse').onclick = () => openBrowse('docs-path');
 $('cache-browse').onclick = () => openBrowse('cache-path');
-$('ws-browse-parent').onclick = () => { const b = wsState.browse; b.dir = b.dir.includes('/') ? b.dir.slice(0, b.dir.lastIndexOf('/')) : '.'; action(loadBrowseDir)(); };
-$('ws-browse-select').onclick = () => { const b = wsState.browse; $(b.field).value = b.field === 'ws-key-refpath' ? ('/local/' + b.dir).replace(/\/+/g,'/') : hostPathOf(b.dir); $('ws-browse-dialog').close(); };
+function browseParent(dir, remote) {
+  if (!remote) return dir.includes('/') ? dir.slice(0, dir.lastIndexOf('/')) : '.';
+  if (dir === '/') return '/';
+  if (dir === '.') return '..';
+  const trim = dir.replace(/\/+$/, '');
+  const parent = trim.slice(0, trim.lastIndexOf('/'));
+  return parent || (trim.startsWith('/') ? '/' : '.');
+}
+async function createBrowseDirectory() {
+  const b = wsState.browse;
+  const name = window.prompt(t('请输入新文件夹名称'));
+  if (name === null) return;
+  await api('/directory', { method: 'POST', body: JSON.stringify({ root: b.root, parentPath: b.dir, name }) });
+  await loadBrowseDir();
+}
+async function renameBrowseDirectory(dir) {
+  const b = wsState.browse;
+  const newName = window.prompt(t('请输入新的文件夹名称'), dir.name);
+  if (newName === null || newName.trim() === dir.name) return;
+  await api('/directory/rename', { method: 'POST', body: JSON.stringify({ root: b.root, path: dir.path, newName }) });
+  await loadBrowseDir();
+}
+function setupBrowseDirectoryActions() {
+  const actions = $('ws-browse-select').parentElement;
+  if ($('ws-browse-new')) return;
+  const create = el('button', 'quiet', t('新建文件夹'));
+  create.id = 'ws-browse-new'; create.type = 'button';
+  create.onclick = () => action(createBrowseDirectory)();
+  actions.prepend(create);
+}
+setupBrowseDirectoryActions();
+$('ws-browse-parent').onclick = () => { const b = wsState.browse; b.dir = browseParent(b.dir, b.remote); action(loadBrowseDir)(); };
+$('ws-browse-select').onclick = () => { const b = wsState.browse; $(b.field).value = b.remote ? (b.dir === '.' ? '' : b.dir) : b.workspace ? (b.dir === '.' ? '' : b.dir) : b.field === 'ws-key-refpath' ? ('/local/' + b.dir).replace(/\/+/g,'/') : hostPathOf(b.dir); $('ws-browse-dialog').close(); };
 
-/* ── 辅助资料多来源（FR-82~84） ── */
-async function loadSourcesList() { state.sources = (await api('/sources')).sources || []; renderSourceChips(); }
+/* ── 引用多来源（FR-82~84） ── */
+function defaultContextSourceID() {
+  const enabled = state.sources.filter(x => x.enabled);
+  return (enabled.find(x => x.id === 'system-docs') || enabled.find(x => x.id === 'context') || enabled[0] || {}).id || '';
+}
+function sourceUpdatePayload(change) {
+  return state.sources.filter(x => !x.builtin).map(src => src.id === change.id ? { ...src, ...change } : src);
+}
+function sourceCanSetRW(src) { return ['local', 'skill', 'sftp'].includes(src.type); }
+async function loadSourcesList() {
+  state.sources = (await api('/sources')).sources || [];
+  if (state.root === 'context' && !state.source) state.source = defaultContextSourceID();
+  renderSourceChips();
+}
 function sourceIconSVG(type) {
   const p = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">';
   if (type === 'local' || type === 'skill') return p + '<path d="M3 7a2 2 0 0 1 2-2h5l2 3h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>';
-  if (type === 'sftp' || type === 'ftp' || type === 'ftps') return p + '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>';
+  if (type === 'sftp' || type === 'workspace-sftp' || type === 'ftp' || type === 'ftps') return p + '<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>';
   if (type === 'link') return p + '<path d="M10 13a5 5 0 0 0 7.07.5l2-2a5 5 0 0 0-7.07-7.07l-1 1"/><path d="M14 11a5 5 0 0 0-7.07-.5l-2 2a5 5 0 0 0 7.07 7.07l1-1"/></svg>';
   if (type === 'smb') return p + '<rect x="2" y="9" width="20" height="11" rx="2"/><path d="M6 9V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3"/><path d="M6 13h.01"/></svg>';
   if (type === 'mcp') return p + '<path d="M9 3v4M15 3v4M7 7h10v4a5 5 0 0 1-10 0Z"/><path d="M12 16v5"/></svg>';
   return p + '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8Z"/><path d="M14 3v5h5"/></svg>';
+}
+function sourceLockSVG(locked) {
+  const body = locked
+    ? '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'
+    : '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-3.2"/>';
+  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + body + '</svg>';
 }
 function renderSourceChips() {
   const host = $('source-chips');
@@ -2974,10 +3256,14 @@ function renderSourceChips() {
   if (!visible) return;
   const track = $('source-track');
   track.replaceChildren();
-  state.sources.filter(x => x.enabled).sort((a, b) => (b.builtin ? 1 : 0) - (a.builtin ? 1 : 0)).forEach(src => {
+  const enabled = state.sources.filter(x => x.enabled);
+  const systemDocs = enabled.find(x => x.id === 'system-docs');
+  const context = enabled.find(x => x.id === 'context');
+  const ordered = [systemDocs, context, ...enabled.filter(x => !x.builtin)].filter(Boolean);
+  ordered.forEach(src => {
     const displayName = src.builtin ? t(src.name) : src.name;
-    const loc = src.config.path || src.config.url || (src.config.host ? ('//' + src.config.host + (src.config.path || '')) : '');
-    const wrap = el('div', 'src-chip' + (state.source === src.id ? ' active' : ''));
+    const loc = src.config.path || src.config.command || src.config.url || (src.config.host ? ('//' + src.config.host + (src.config.path || '')) : '');
+    const wrap = el('div', 'src-chip' + (state.source === src.id ? ' active' : '') + (src.id === 'system-docs' ? ' system-docs' : ''));
     const main = el('button', 'src-main');
     main.type = 'button';
     main.title = t(src.rw ? '{0} · 读写' : '{0} · 只读', (src.type ? src.type + ' · ' : '') + (loc || displayName));
@@ -2985,45 +3271,57 @@ function renderSourceChips() {
     main.onclick = () => { state.source = src.id; state.dir = '.'; state.attachments = []; renderAttachments(); renderSourceChips(); action(loadFiles)(); };
     main.insertAdjacentHTML('beforeend', '<span class="src-ico">' + sourceIconSVG(src.type) + '</span>');
     main.append(el('span', 'src-name', displayName));
-    if (src.rw) main.insertAdjacentHTML('beforeend', '<span class="src-rw">RW</span>');
-    if (src.builtin) main.insertAdjacentHTML('beforeend', '<span class="src-lock"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>');
+    if (src.builtin) main.append(el('span', 'src-fixed', src.id === 'system-docs' ? t('固定') : t('内置')));
     wrap.append(main);
     if (!src.builtin) {
+      if (src.type === 'mcp') {
+        const test = el('button', 'src-test', t('测试 MCP'));
+        test.type = 'button';
+        test.title = t('测试 MCP 并发现工具');
+        test.setAttribute('aria-label', t('测试 MCP 并发现工具'));
+        test.onclick = ev => { ev.stopPropagation(); action(async () => {
+          const result = await api('/sources/' + encodeURIComponent(src.id) + '/test', { method: 'POST' });
+          await loadSourcesList();
+          if (state.source === src.id) await loadFiles();
+          const total = Array.isArray(result.tools) ? result.tools.length : 0;
+          const readOnly = Array.isArray(result.tools) ? result.tools.filter(x => x.readOnly).length : 0;
+          toast(t('MCP 已发现 {0} 个工具，其中 {1} 个可只读调用', total, readOnly));
+        })(); };
+        wrap.append(test);
+      }
+      const lock = el('button', 'src-lock');
+      lock.type = 'button';
+      const canSetRW = sourceCanSetRW(src);
+      const nextMode = canSetRW ? (src.rw ? t('切换为只读') : t('切换为读写')) : t('此来源只支持只读');
+      lock.title = nextMode;
+      lock.setAttribute('aria-label', nextMode);
+      lock.setAttribute('aria-pressed', src.rw ? 'false' : 'true');
+      lock.disabled = !canSetRW;
+      lock.innerHTML = sourceLockSVG(!src.rw);
+      lock.onclick = ev => { if (!canSetRW) return; ev.stopPropagation(); action(async () => {
+        await api('/sources', { method: 'PUT', body: JSON.stringify({ sources: sourceUpdatePayload({ id: src.id, rw: !src.rw }) }) });
+        await loadSourcesList();
+        if (state.source === src.id) await loadFiles();
+        toast(src.rw ? t('已切换为只读') : t('已切换为读写'));
+      })(); };
+      wrap.append(lock);
       const del = el('button', 'src-del');
       del.type = 'button';
       del.title = t("删除来源 {0}", displayName);
       del.setAttribute('aria-label', t("删除来源 {0}", displayName));
       del.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
-      del.onclick = ev => { ev.stopPropagation(); if (confirm(t('删除来源「{0}」？', displayName))) action(async () => { await api('/sources', { method: 'PUT', body: JSON.stringify({ sources: state.sources.filter(x => x.id !== src.id) }) }); await loadSourcesList(); if (state.source === src.id) { state.source = ''; state.dir = '.'; await loadFiles(); } })(); };
+      del.onclick = ev => { ev.stopPropagation(); if (confirm(t('删除来源「{0}」？', displayName))) action(async () => { await api('/sources', { method: 'PUT', body: JSON.stringify({ sources: state.sources.filter(x => !x.builtin && x.id !== src.id) }) }); await loadSourcesList(); if (state.source === src.id) { state.source = defaultContextSourceID(); state.dir = '.'; await loadFiles(); } })(); };
       wrap.append(del);
     }
     track.append(wrap);
   });
-  updateSourceTrackScroll();
 }
-function applySourcePin(on) {
-  $('files-scroll').classList.toggle('pinned', on);
-  const b = $('source-pin');
-  b.classList.toggle('pinned', on);
-  b.setAttribute('aria-pressed', on ? 'true' : 'false');
-  try { localStorage.setItem('aide.sourcePinned', on ? '1' : '0'); } catch (err) {}
-}
-$('source-pin').onclick = () => applySourcePin(!$('files-scroll').classList.contains('pinned'));
-try { applySourcePin(localStorage.getItem('aide.sourcePinned') !== '0'); } catch (err) { applySourcePin(true); }
 $('source-add').onclick = () => { $('source-form').reset(); renderSourceFields(); $('source-dialog').showModal(); };
-function updateSourceTrackScroll() {
-  const host = $('source-chips'); if (!host) return;
-  const track = $('source-track'); if (!track) return;
-  const can = track.scrollWidth > track.clientWidth + 1;
-  host.classList.toggle('can-scroll', can);
-  host.classList.toggle('scrolled-start', track.scrollLeft > 2);
-  host.classList.toggle('scrolled-end', track.scrollLeft + track.clientWidth >= track.scrollWidth - 2);
-}
-$('source-track').addEventListener('scroll', updateSourceTrackScroll);
-window.addEventListener('resize', updateSourceTrackScroll);
 
 function renderSourceFields() {
   const type = $('src-type').value;
+  const mcpOption = [...$('src-type').options].find(option => option.value === 'mcp');
+  if (mcpOption) { mcpOption.textContent = t('MCP 工具服务'); mcpOption.dataset.i18n = 'MCP 工具服务'; }
   $('src-rw').disabled = !['local', 'skill', 'sftp'].includes(type);
   if ($('src-rw').disabled) $('src-rw').checked = false;
   const host = $('src-fields');
@@ -3038,7 +3336,15 @@ function renderSourceFields() {
     addField(t("URL（如 ftp://host/dir 或 https://…）"), 'src-url', type === 'link' ? 'https://' : type + '://');
     if (type !== 'link') { addField(t('用户名'), 'src-user', ''); addField(t('密码（可选）'), 'src-password', '').type = 'password'; }
   }
-  else if (type === 'mcp') { addField(t("启动命令"), 'src-command', 'npx -y @modelcontextprotocol/server-…'); addField(t("或 URL"), 'src-url', ''); }
+  else if (type === 'mcp') {
+    addField(t('启动程序'), 'src-command', 'npx');
+    const argsLabel = el('label', '', t('参数（每行一个）'));
+    const args = el('textarea', ''); args.id = 'src-mcp-args'; args.rows = 4; args.placeholder = '-y\n@wisflux/docmost-local-mcp\n--base-url=http://docs.example.com'; args.autocomplete = 'off'; argsLabel.append(args); host.append(argsLabel);
+    const template = el('button', 'quiet', t('填入 Docmost 模板')); template.type = 'button';
+    template.onclick = () => { $('src-command').value = 'npx'; args.value = '-y\n@wisflux/docmost-local-mcp\n--base-url=http://docs.example.com'; };
+    host.append(template);
+    host.append(el('p', 'muted', t('MCP 程序由 AIDE 运行时启动。测试会发现工具；AI 仅能调用服务声明为只读的工具。首次认证由该 MCP 服务自行处理。')));
+  }
   else if (type === 'sftp') {
     addField(t("主机"), 'src-host', '192.168.1.10');
     addField(t("端口"), 'src-port', '22').type = 'number';
@@ -3057,7 +3363,7 @@ $('source-form').onsubmit = action(async event => {
   const src = { id, name, type, enabled: true, rw: $('src-rw').checked, config: {} };
   const secrets = {};
   if (type === 'local' || type === 'skill') src.config.path = $('src-path').value.trim();
-  else if (type === 'mcp') { src.config.command = ($('src-command')?.value || '').trim(); src.config.url = ($('src-url')?.value || '').trim(); }
+  else if (type === 'mcp') { src.config = { transport: 'stdio', command: ($('src-command')?.value || '').trim(), args: ($('src-mcp-args')?.value || '').split(/\r?\n/).filter(value => value.length > 0) }; }
   else if (type === 'sftp') { src.config = { path: $('src-remote').value.trim(), host: $('src-host').value.trim(), port: parseInt($('src-port').value, 10) || 22, username: $('src-user').value.trim(), auth: $('src-key').value ? 'key' : $('src-password').value ? 'password' : 'none' }; const pw = $('src-password').value, key = $('src-key').value; if (pw || key) secrets[id] = { password: pw, key }; }
   else { src.config.url = $('src-url').value.trim(); if ($('src-user')) src.config.username = $('src-user').value.trim(); if ($('src-password')?.value) secrets[id] = { password: $('src-password').value }; }
   const payload = { sources: [...state.sources.filter(x => !x.builtin), src] };
@@ -3065,7 +3371,7 @@ $('source-form').onsubmit = action(async event => {
   await api('/sources', { method: 'PUT', body: JSON.stringify(payload) });
   $('source-dialog').close();
   await loadSourcesList();
-  state.source = id; state.dir = '.'; if (type !== 'mcp') await loadFiles(); else $('files').replaceChildren(el('p', 'muted', t('MCP 仅支持登记，尚未接入协议调用。')));
+  state.source = id; state.dir = '.'; await loadFiles();
   toast(t("已添加来源：{0}", name));
 });
 /* ── Markdown 渲染：基于 marked v12（MIT，vendor/marked.min.js，GFM 全特性）
@@ -4192,6 +4498,9 @@ async function openFileViewMode() {
   const isPdf = isPdfPath(spec.path);
   const isDxf = isDxfPath(spec.path);
   const isDocx = isDocxPath(spec.path);
+  // 只有二进制/画布查看器需要占满剩余空间并自行处理滚动；Markdown
+  // 预览必须保留外层滚动容器，避免被沉浸式查看器样式锁死。
+  $('file-view-preview').classList.toggle('file-view-immersive', isImg || isStl || isPdf || isDxf || isDocx || isDrawio);
   // 图片 / STL / PDF / DXF 走独立 raw 查看器，跳过只支持文本、会拒绝二进制的 /api/file
   let data;
   if (isImg || isStl || isPdf || isDxf || isDocx) {

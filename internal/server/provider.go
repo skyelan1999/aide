@@ -108,10 +108,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		return "", nil, TokenUsage{}, errors.New("请先在模型设置中配置 API 地址和模型")
 	}
 	body := buildChatBody(cfg, messages, params, tools, false)
-	promptChars := 0
-	for _, m := range messages {
-		promptChars += len(m.Content)
-	}
+	promptEstimate := estimateProviderPromptTokens(messages, tools)
 	b, err := json.Marshal(body)
 	if err != nil {
 		return "", nil, TokenUsage{}, err
@@ -166,8 +163,8 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	}
 	usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model, Provider: cfg.BaseURL}
 	if usage.Total == 0 {
-		// 上游未返回 usage → 4 字符/词估算并标记
-		usage.Prompt = promptChars / 4
+		// 上游未返回 usage → 使用与上下文卡相同的完整请求估算并标记。
+		usage.Prompt = promptEstimate
 		usage.Completion = len(msg.Content) / 4
 		usage.Total = usage.Prompt + usage.Completion
 		usage.Estimated = true
@@ -214,10 +211,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		return "", nil, TokenUsage{}, "", errors.New("请先在模型设置中配置 API 地址和模型")
 	}
 	body := buildChatBody(cfg, messages, params, tools, true)
-	promptChars := 0
-	for _, m := range messages {
-		promptChars += len(m.Content)
-	}
+	promptEstimate := estimateProviderPromptTokens(messages, tools)
 	send := func(bodyBytes []byte) (*http.Response, error) {
 		req, err := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(cfg.BaseURL, "/")+"/chat/completions", bytes.NewReader(bodyBytes))
 		if err != nil {
@@ -295,7 +289,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		}
 		usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model, Provider: cfg.BaseURL}
 		if usage.Total == 0 {
-			usage.Prompt = promptChars / 4
+			usage.Prompt = promptEstimate
 			usage.Completion = len(msg.Content) / 4
 			usage.Total = usage.Prompt + usage.Completion
 			usage.Estimated = true
@@ -405,7 +399,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		tu.Total = usage.TotalTokens
 	}
 	if tu.Total == 0 {
-		tu.Prompt = promptChars / 4
+		tu.Prompt = promptEstimate
 		tu.Completion = len(text) / 4
 		tu.Total = tu.Prompt + tu.Completion
 		tu.Estimated = true

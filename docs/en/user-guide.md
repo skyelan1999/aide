@@ -158,7 +158,7 @@ Use **Strategy** near the task input to select automatic routing or a manual par
 
 Click the workspace card to configure local directories or SSH/SFTP. The directory browser starts at the current value and walks upward when the path is unavailable. Configure system-document and cache paths separately. Saved secrets stay in the data volume. Remote SSH/SFTP passwords, private keys, and key passphrases are stored in a unified encrypted secret vault (AES-256-GCM; the master key is derived from the account password via Argon2id). A private key can be pasted or picked from a file (within /workspace, /context, /local); file mode can reference the path only (not stored) or import an encrypted copy. The UI never echoes the key and shows the public-key SHA-256 fingerprint after save. Saving SSH credentials is rejected until an account password is set. See [Security: Unified Secret Vault](security/secret-vault.md).
 
-Under **References**, add named sources: local path, Skill directory, URL, SFTP, FTP, FTPS, or SMB. MCP currently supports registration only. The built-in system-document source follows the document path; registration does not automatically generate documentation. Read/write flags cannot override a read-only Docker mount or remote permissions.
+Under **References**, add named sources: local path, Skill directory, URL, SFTP, FTP, FTPS, SMB, or an MCP stdio service. An MCP source has an executable plus one argument per line; test it to discover tools. AI may call only tools the server declares read-only. The built-in system-document source follows the document path; registration does not automatically generate documentation. Read/write flags cannot override a read-only Docker mount or remote permissions.
 
 Source registrations are stored in cache `sources.json`; credentials are stored separately. User-defined source names remain unchanged when changing language.
 
@@ -383,4 +383,6 @@ Fetch models uses the current Base URL and API Key fields without saving the dra
 
 ### AI reference access
 
-AI can call `list_sources`, then `list_files` or `read_file` with a source ID and relative path. Actual file contents return as tool messages, with source IDs visible in file-tool history. AI source access is read-only even if an editor source is marked writable. Docker live tests cover local, Skill, HTTP, FTP, explicit FTPS, password SFTP and SMB1 file reads. Curl does not support SMB2/3 here. MCP remains registration-only.
+AI can call `list_sources`, then `list_files` or `read_file` with a source ID and relative path to inspect file references. For an MCP reference, it uses `mcp_call` only with a discovered tool marked read-only. Actual reference output returns as tool messages, with source IDs visible in tool history. Docker live tests cover local, Skill, HTTP, FTP, explicit FTPS, password SFTP and SMB1 file reads. Curl does not support SMB2/3 here.
+
+An AIDE server running in Docker cannot reuse the host Codex desktop app's stdio MCP registry or interactive session. Configure an executable available **inside the AIDE runtime**. Login-capable MCP services must expose an authentication path that the runtime can complete, or be placed behind an appropriate host bridge/HTTP gateway; never add a real server address or credentials to product defaults.

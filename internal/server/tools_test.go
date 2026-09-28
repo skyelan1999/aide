@@ -235,7 +235,9 @@ func TestTokenStats(t *testing.T) {
 	w := request(a, "GET", "/api/token-stats", nil)
 	requireStatus(t, w, 200)
 	body := w.Body.String()
-	if !strings.Contains(body, `"calls":2`) || !strings.Contains(body, `"total":150`) {
+	// 第二轮没有 provider usage，回退值必须包含真实请求的消息协议开销，
+	// 而不是旧的短文本整除 0 token；本例 150 + ("hi" 1 + 1 条消息 4 + 请求 2) = 157。
+	if !strings.Contains(body, `"calls":2`) || !strings.Contains(body, `"total":157`) {
 		t.Fatalf("token stats: %s", body)
 	}
 	if !strings.Contains(body, `"estimated":true`) {

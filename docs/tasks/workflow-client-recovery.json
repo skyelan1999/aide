@@ -1,0 +1,28 @@
+{
+  "id": "workflow-client-recovery",
+  "request": "排查工作流页面在服务重启或流式连接断开后仍显示“运行中”的卡死状态，并修复客户端恢复。",
+  "baseline": "1a991f18c2618a30f4f11480ad4a2192b421939c",
+  "initial_status": "工作树含用户及前序任务的未提交改动，均须保留。调试接口确认截图所对应 run 已 completed，服务端不存在 running run。",
+  "acceptance": [
+    "SSE 断开后客户端立即以持久化会话状态对账，并继续保留轮询兜底。",
+    "单次会话查询失败不会停止后续轮询。",
+    "后端已完成、失败或中断的 run 会被刷新为终态，发送按钮不再永久显示停止状态。",
+    "不改变任务正文、附件、凭据或服务端 run 状态。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "docs/tasks/workflow-client-recovery.json"
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "用户报告页面卡死；运行时诊断显示对应任务已完成，属于客户端终态同步缺陷。", "evidence": ["GET /api/debug/sessions?status=running: 空", "GET /api/debug/sessions/{id}/runs/{run}: status=completed，3 个阶段完成"]},
+    "design": {"status": "pass", "summary": "在 SSE error 时启动一次会话对账并重建轮询；轮询回调以 finally 重排，无论 API 成功或失败都不会断链。", "evidence": ["internal/server/web/app.js schedulePoll/openStream"]},
+    "implementation": {"status": "pass", "summary": "补充 SSE error 的会话刷新和轮询重建，并将 poll 重排移动到 finally。", "evidence": ["internal/server/web/app.js"]},
+    "verification": {"status": "pass", "summary": "前端语法、多语言检查、Docker 重建、健康检查及调试接口复核均已通过。页面视觉验收为 NOT_RUN：自动化仅可见空的 Codex 内置浏览器，不能接管用户正在使用的 Edge 页面。", "evidence": ["node --check internal/server/web/app.js", "node scripts/test_i18n.cjs: PASS", "cmd /c start.bat: image built, aide-aide-1 recreated, health check passed", "GET /api/debug/sessions?status=running: 0", "POST /api/debug/actions/ping-provider: reachable=true, httpStatus=200", "cua.getState: only empty Codex In-app Browser, no user Edge surface"]},
+    "documentation": {"status": "pass", "summary": "任务记录了故障判定和恢复不变量。", "evidence": ["docs/tasks/workflow-client-recovery.json"]},
+    "cleanup": {"status": "pass", "summary": "未删除或覆盖任何既有未提交和未跟踪文件。", "evidence": ["git status --short"]},
+    "release": {"status": "not_run", "summary": "未获提交、推送或发布授权。", "evidence": []}
+  },
+  "release_authorization": "",
+  "rollback": "恢复 app.js 中 SSE error 与 schedulePoll 的旧逻辑；不会影响已持久化会话。",
+  "handoff": "服务端 run 终态正确；修复只涉及客户端断线/失败后的状态恢复。已重建本地服务；未提交、未推送、未发布。用户需刷新旧页面以加载新的客户端脚本。"
+}

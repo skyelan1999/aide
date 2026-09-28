@@ -1,0 +1,26 @@
+{
+  "id": "remove-unsupported-voice-setting",
+  "request": "删除语音小秘设置中“暂不支持的设置项（type=voice-history）”占位提示。",
+  "baseline": "1a991f18c2618a30f4f11480ad4a2192b421939c",
+  "initial_status": "existing unrelated working-tree changes preserved",
+  "acceptance": [
+    "语音小秘设置页不再显示 voice-history 的无效占位提示",
+    "麦克风输入源、语音回复和发送调度等相邻设置保持可用"
+  ],
+  "scope": [
+    "internal/server/web/settings-schema.json",
+    "docs/tasks/remove-unsupported-voice-setting.json"
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "用户明确要求删除无效提示。", "evidence": ["用户提供的 Edge 截图"]},
+    "design": {"status": "pass", "summary": "移除设置 schema 中已无渲染器的 voiceHistory 控制项；保留通用不支持控件回退，避免影响其他未来 schema。", "evidence": ["settings-schema.json voice-history", "app.js 已注明该控制项已移除"]},
+    "implementation": {"status": "pass", "summary": "已删除无渲染器的 voiceHistory schema 条目。", "evidence": ["internal/server/web/settings-schema.json"]},
+    "verification": {"status": "not_run", "summary": "JSON 解析、diff 检查和 Docker 重建健康检查已通过；实际 Edge 设置页刷新验收待用户操作，当前自动化无法控制用户的 Edge 窗口。", "evidence": ["node JSON.parse(settings-schema.json) → PASS", "git diff --check → exit 0", "AIDE_OPEN_BROWSER=0 cmd /c start.bat → 健康检查通过"]},
+    "documentation": {"status": "pass", "summary": "任务账本记录了最终的 schema 清理及实际浏览器限制。", "evidence": ["docs/tasks/remove-unsupported-voice-setting.json"]},
+    "cleanup": {"status": "pass", "summary": "未删除或纳入既有未跟踪运行时目录。", "evidence": ["git status --short"]},
+    "release": {"status": "not_run", "summary": "未获提交、推送或发布授权。", "evidence": []}
+  },
+  "release_authorization": "",
+  "rollback": "恢复 settings-schema.json 中 voiceHistory 条目即可。",
+  "handoff": ""
+}

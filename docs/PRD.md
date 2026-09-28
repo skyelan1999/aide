@@ -117,7 +117,7 @@ aide = **AI + IDE**，面向**可信单用户**的本地 AI 开发工作台。�
 | WF-08 | mermaid 流程图渲染 | 把 ```mermaid 代码块替换为 `<div class="mermaid">`，vendor mermaid@10 渲染 SVG | md 中的流程图显示为图形 | P2 | 已实现 |
 | WF-09 | md 相对路径链接内部打开 | 事件委托拦截 `.md` 相对链接，在 aide 编辑器内打开（非 404） | 点 md 内相对链接打开对应文件 | P2 | 已实现 |
 | WF-10 | Office 文件解析 | `read_file` 对 `.docx/.xlsx/.pptx` 用 python 开源库（python-docx/openpyxl/python-pptx）解析成文本 | AI 能读到 Office 文档正文 | P1 | 已实现 |
-| WF-11 | 辅助资料 sources | 本地/Skill/链接/MCP(仅登记)/SFTP/FTP/FTPS/SMB；`list_sources` 工具枚举；登记存缓存 `sources.json`，密码存卷不回传 | 可登记多来源并被 AI 只读引用；MCP 仅登记不调用 | P1 | 已实现 |
+| WF-11 | 引用 sources | 本地/Skill/链接/MCP stdio/SFTP/FTP/FTPS/SMB；`list_sources` 工具枚举；登记存缓存 `sources.json`，密码存卷不回传 | MCP 测试发现工具；AI 仅用 `mcp_call` 调用实时声明为只读的工具 | P1 | 已实现 |
 | WF-12 | 文本读取限制 | 单文件 256KiB、UTF-8、无 NUL；AI `read_file` 返回截断到 60KiB | 超限被拒/截断 | P1 | 已实现 |
 | WF-13 | md 相对路径图片加载 | 渲染时把相对 `<img src>` 改写为 aide 文件原始字节接口 `/api/file/raw`（带 access_token 查询参数），正确解析相对当前文档目录的 `../`；支持 png/jpg/jpeg/gif/svg/webp；**模态预览 / 新标签页视图 / 会话消息三处都生效**；外部 http(s) 图片不受影响；加载失败时 `opacity:0.4` 静默降级、不显示破图问号 | 仓库文档里相对图片（如 `docs/images/*.jpg`）正常显示；外链图片原样加载；失败静默不渲染破图 | P1 | 已实现 |
 
@@ -132,6 +132,7 @@ aide = **AI + IDE**，面向**可信单用户**的本地 AI 开发工作台。�
 | TL-01 | `list_sources` | 列出已启用辅助资料来源 ID 与能力（不含凭据） | 无 | 立即执行 | 已实现 |
 | TL-02 | `list_files` | 列工作目录或来源内目录 | `source?`、`path?`（默认 `.`，截断 100 项/4KB） | 立即执行 | 已实现 |
 | TL-03 | `read_file` | 读文本文件（Office 自动转文本） | `source?`、`path`（必填） | 立即执行 | 已实现 |
+| TL-04 | `mcp_call` | 调用引用来源中已发现的只读 MCP 工具 | `source`、`tool`、`arguments?` | 立即执行 | 已实现 |
 | TL-04 | `write_file` | 生成文件修改提案（**不直接写**） | `path`、`content` | 提案→人工应用 | 已实现 |
 | TL-05 | `run_shell` | 沙箱内实执行命令并回传 stdout/stderr/退出码 | `command`（必填） | 立即执行（受沙箱分级） | 已实现 |
 | TL-06 | `spawn_subagent` | 派生独立子会话处理子任务，完成自动归档 | `task`（必填）、`profile?` | 创建子会话异步跑 | 已实现 |
@@ -451,7 +452,7 @@ flowchart TD
 | OQ-02 | ~~`search_text` required 误写 `"command"`~~ | **已解决**：schema required 已改为 `["query"]`（workflow.go） | 关闭 |
 | OQ-03 | `semantic_search` 是离线 TF-IDF 余弦相似度，并非向量 embedding；工具描述仍写 "Semantic vector search"，命名易被误解为真语义检索 | 实现与"语义"字面有差距 | 在 UI/提示中明确标注"本地词频语义、非向量检索"，或后续接 embedding |
 | OQ-04 | 远程 SSH/SFTP 工作区下 `run_shell` 不自动执行（提示手动运行） | 已知边界 | 后续打通远程 exec |
-| OQ-05 | MCP 来源仅登记、不实际协议调用 | 已登记入口 | 视需要实现 MCP client |
+| OQ-05 | streamable HTTP MCP 与容器内交互登录尚未实现 | stdio MCP 已实现；宿主机 Codex MCP 不能被 Docker 服务直接复用 | 后续评估受控 HTTP/宿主机桥接 |
 | OQ-06 | ~~推理强度（MD-08）后端无 reasoning 参数透传~~ | **已解决**：provider.go 按 `ReasoningEffort` 注入 `thinking`/`reasoning_effort`（auto 不传、off 禁用、low/medium/high 开启） | 关闭 |
 | OQ-07 | 无交互式 PTY，不适合常驻服务/交互编辑器 | 已知边界 | 列入非目标，不本期实现 |
 | OQ-08 | 本次多项新功能（语音小秘/自动模式/四阶段/配置备份/锁屏）缺真实浏览器 E2E 与容器重建后全流程实测 | 待验证 | 容器重建后按 §5 流程图跑四阶段+自动模式+语音全链路 |
@@ -469,7 +470,7 @@ flowchart TD
 | FR-34~48 | 三栏布局/状态轮询/diff 展示/建议命令/附件选择/窄屏/富编辑器/会话管理/一键启动/健康检查/脚本集/镜像导入导出/验收脚本/异机恢复/远程协作 | FR-40 富编辑器未实现；FR-41/47 部分 |
 | FR-49~60 | 颜色令牌化/明暗主题/三态切换/偏好持久化/跟随系统/无闪烁/配色目录/视觉质量/品牌入口/设置 JSON/玻璃质感 | 主题与外观已交付，全组件对比度认证未做 |
 | FR-61~75 | 模型参数/Profile/聊天策略/auto 路由/版本管理/多模型/模型发现/上下文统计/深度研究入口/插件面板/生命周期/协议输出/预装插件 | 实现存在 |
-| FR-76~84 | 工作空间面板/本地与 SSH/远程文件/本地路径修复/文档缓存配置/模型工具闭环/来源注册表/多类型来源/来源浏览 | 实现存在；MCP 仅登记 |
+| FR-76~84 | 工作空间面板/本地与 SSH/远程文件/本地路径修复/文档缓存配置/模型工具闭环/来源注册表/多类型来源/来源浏览 | 实现存在；MCP stdio 仅开放只读工具 |
 | FR-85~94 | 预留/MD 渲染/策略弹层模型选择/任务主题总结/文件 MD 视图/Token 统计/会话轨迹/全局搜索/会话压缩/上下文预算预览 | FR-85 预留；余实现存在 |
 | FR-95~100 | 专业/经典两排外观/设置关于 GitHub 链接/跨客户端 Agent 路由/文档核对首页/专业工作台定位与版本镜像/环境检查首次安装 | 0.1.6.0 RC4 起交付 |
 

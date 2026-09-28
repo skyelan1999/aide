@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
@@ -27,6 +28,11 @@ func enableDebugAccess(t *testing.T, a *App) string {
 		"model":              "test-model",
 		"apiKey":             "test-key",
 	}), 200)
+	return requestDebugToken(t, a)
+}
+
+func requestDebugToken(t *testing.T, a *App) string {
+	t.Helper()
 	w := request(a, "POST", "/api/debug/admin/token", map[string]any{})
 	requireStatus(t, w, 200)
 	var tok struct {
@@ -36,6 +42,58 @@ func enableDebugAccess(t *testing.T, a *App) string {
 		t.Fatalf("生成调试令牌失败: %v %s", err, w.Body.String())
 	}
 	return tok.Token
+}
+
+func TestDebugUsesVaultBackedModelCredential(t *testing.T) {
+	a := testApp(t)
+	plain := enableDebugAccess(t, a)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodGet, "/api/debug/overview", nil)
+	r.Header.Set("Authorization", "Bearer "+plain)
+	a.Handler().ServeHTTP(w, r)
+	requireStatus(t, w, http.StatusOK)
+	var out struct {
+		Config struct {
+			HasKey    bool `json:"hasKey"`
+			KeyUsable bool `json:"keyUsable"`
+		} `json:"config"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
+		t.Fatalf("解析 debug overview: %v", err)
+	}
+	if !out.Config.HasKey || !out.Config.KeyUsable {
+		t.Fatalf("debug overview 应反映 vault 中的可用 key: %+v", out.Config)
+	}
+}
+
+func TestDebugPingUsesVaultBackedModelCredential(t *testing.T) {
+	a := testApp(t)
+	const wantKey = "debug-ping-vault-key"
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/models" {
+			t.Fatalf("探测路径 = %q, want /models", r.URL.Path)
+		}
+		if got := r.Header.Get("Authorization"); got != "Bearer "+wantKey {
+			t.Fatalf("调试探测未使用 vault 中的凭证: %q", got)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer provider.Close()
+
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{
+		"debugAccessEnabled": true,
+		"baseURL":            provider.URL,
+		"model":              "test-model",
+		"apiKey":             wantKey,
+	}), http.StatusOK)
+	plain := requestDebugToken(t, a)
+
+	w := httptest.NewRecorder()
+	r := httptest.NewRequest(http.MethodPost, "/api/debug/actions/ping-provider", nil)
+	r.Header.Set("Authorization", "Bearer "+plain)
+	a.Handler().ServeHTTP(w, r)
+	requireStatus(t, w, http.StatusOK)
 }
 
 // TestDebugAuditNoiseReduction 验证审计降噪规则：

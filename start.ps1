@@ -24,6 +24,18 @@ if (-not $env:HOME) {
     $env:HOME = if ($env:USERPROFILE) { $env:USERPROFILE } else { $PSScriptRoot }
 }
 
+# Windows 下目录选择器需要看到当前盘的完整目录树。未在进程环境或 .env 中
+# 显式收窄 AIDE_LOCAL_ROOT 时，默认把系统盘挂到 /local；项目自行配置该变量
+# 时保留其边界，不擅自扩大访问范围。
+$configuredLocalRoot = $false
+if (Test-Path -LiteralPath (Join-Path $PSScriptRoot '.env')) {
+    $configuredLocalRoot = [bool](Select-String -LiteralPath (Join-Path $PSScriptRoot '.env') -Pattern '^\s*AIDE_LOCAL_ROOT\s*=' -Quiet)
+}
+if (-not $env:AIDE_LOCAL_ROOT -and -not $configuredLocalRoot -and $env:USERPROFILE) {
+    $systemDrive = [System.IO.Path]::GetPathRoot($env:USERPROFILE)
+    if ($systemDrive) { $env:AIDE_LOCAL_ROOT = $systemDrive }
+}
+
 # 执行原生命令：-Capture 时只回收 stdout 文本，绝不把输出混进返回值；
 # 不加 -Capture 时输出直通控制台（构建进度、报错原文都保留）。
 function Invoke-Native {

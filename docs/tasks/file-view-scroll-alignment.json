@@ -1,0 +1,28 @@
+{
+  "id": "file-view-scroll-alignment",
+  "request": "文件预览页无法正常滚动，顶部编辑、预览、保存和返回按钮需要对齐。",
+  "baseline": "1a991f18c2618a30f4f11480ad4a2192b421939c",
+  "initial_status": "feature/permission-panel 含用户及前序任务的未提交改动，均须保留；Windows 主机没有 python3，无法执行 agent-route。",
+  "acceptance": [
+    "Markdown 文件预览在单文件页面可垂直滚动，且页头保持可见。",
+    "图片、PDF、DXF、STL、DOCX 和 draw.io 查看器仍可使用沉浸式填充布局。",
+    "文件视图页头的编辑/预览组、保存和返回操作具有一致高度并在同一基线对齐。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "docs/tasks/file-view-scroll-alignment.json"
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "用户截图明确显示 Markdown 单文件预览页无法滚动且页头按钮高度不一致。", "evidence": ["用户截图 2026-09-28 07:42"]},
+    "design": {"status": "pass", "summary": "Markdown 预览被面向沉浸式查看器的 overflow:hidden 规则覆盖；将沉浸式样式限定给非文本查看器。", "evidence": ["internal/server/web/style.css", "internal/server/web/app.js"]},
+    "implementation": {"status": "pass", "summary": "增加 file-view-immersive 状态类，仅让二进制/画布查看器使用沉浸式 overflow:hidden；文本预览、编辑器和内容容器可收缩并滚动。页头操作统一为 36px 高。", "evidence": ["internal/server/web/app.js", "internal/server/web/style.css"]},
+    "verification": {"status": "not_run", "summary": "JavaScript 语法、i18n、diff 格式和服务健康检查通过；真实滚动交互未运行，因为自动化环境未暴露用户 Edge 窗口，内置浏览器又被本地自签 HTTPS 证书拦截。", "evidence": ["node --check internal/server/web/app.js (PASS)", "node scripts/test_i18n.cjs (PASS)", "git diff --check (PASS; 仅 CRLF 警告)", "cmd /c start.bat: 健康检查通过", "CUA getState: 无 Edge 目标窗口；IAB 无可用标签页"]},
+    "documentation": {"status": "pass", "summary": "任务记录说明根因、滚动与查看器兼容约束及未运行的 UI 验收。", "evidence": ["docs/tasks/file-view-scroll-alignment.json"]},
+    "cleanup": {"status": "pass", "summary": "未删除任何既有文件或缓存。", "evidence": ["git status --short"]},
+    "release": {"status": "not_run", "summary": "未获提交、推送或发布授权。", "evidence": []}
+  },
+  "release_authorization": "",
+  "rollback": "移除 file-view-immersive 状态类与对应限定样式，恢复此前文件预览布局。",
+  "handoff": "已完成实现并重建本地服务；未提交、未推送、未合并。真实滚动 UI 验收 NOT_RUN（自动化无法访问用户 Edge 且不绕过自签 HTTPS 警告）。"
+}

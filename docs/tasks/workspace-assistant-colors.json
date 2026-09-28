@@ -1,0 +1,32 @@
+{
+  "id": "workspace-assistant-colors",
+  "request": "工作空间保持白色；小秘颜色随主题且不能掉色；小秘转交创建的会话必须立即显示，并缩短明确派活时的发送等待。",
+  "baseline": "1a991f18c2618a30f4f11480ad4a2192b421939c",
+  "initial_status": "feature/permission-panel ahead of origin; unrelated untracked runtime directory preserved",
+  "acceptance": [
+    "工作空间和小秘作为同一卡片的主、次级行，使用一致的品牌色层级",
+    "浅色与深色主题均通过语义色令牌保持可读性",
+    "悬停和小秘激活态不破坏卡片圆角与边界",
+    "小秘成功转交后，主区域自动切换到后端创建的 aide 会话",
+    "明确派活或静默的工具调用完成后，不再额外等待一轮模型收尾回复"
+  ],
+  "scope": [
+    "internal/server/assistant_agent.go",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/macos.css",
+    "docs/tasks/workspace-assistant-colors.json"
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "用户确认工作空间须保持白色，并补充小秘掉色及转交会话未显示的问题；Edge 截图显示 #1/#2 已创建但主区域未切换。", "evidence": ["用户提供的 Edge 截图"]},
+    "design": {"status": "pass", "summary": "工作空间保持语义 surface；小秘以 accent 与 surface 混合、左侧强调线表现主题色。转交响应已有 dispatched.sessionId，前端仅在该字段存在时选择新会话。模型工具已得出 dispatch 或 silent 决策时，服务端已有确定响应文案，跳过无业务价值的收尾模型轮次。", "evidence": ["internal/server/web/app.js assistant-message 发送路径", "internal/server/assistant_history.go dispatchToAideLocked", "internal/server/assistant_agent.go runAssistantAgenticLoop"]},
+    "implementation": {"status": "pass", "summary": "转交/静默工具完成后立即结束 agentic 循环，保留其他查询、追问和陪聊的多轮行为。", "evidence": ["internal/server/assistant_agent.go"]},
+    "verification": {"status": "not_run", "summary": "node 语法、diff 检查、Docker 重建和容器健康检查已通过。实际 Edge 发送耗时验收待用户刷新页面后发一条明确派活消息；当前自动化无法控制用户的 Edge 窗口。此前运行容器内 Go 测试编译超过命令通道时限，未将其记为通过。", "evidence": ["node --check internal/server/web/app.js → exit 0", "git diff --check → exit 0", "docker exec aide-aide-1 gofmt -w /workspace/internal/server/assistant_agent.go → exit 0", "AIDE_OPEN_BROWSER=0 cmd /c start.bat → 健康检查通过", "docker compose ps → aide-aide-1 healthy"]},
+    "documentation": {"status": "pass", "summary": "任务账本记录了发送等待优化、完成的构建检查和仍待实际 Edge 验收的限制。", "evidence": ["docs/tasks/workspace-assistant-colors.json"]},
+    "cleanup": {"status": "pass", "summary": "未删除或纳入既有未跟踪运行时目录；没有遗留临时测试进程。", "evidence": ["git status --short", "docker compose ps"]},
+    "release": {"status": "not_run", "summary": "本次未获提交、推送或发布授权。", "evidence": []}
+  },
+  "release_authorization": "",
+  "rollback": "恢复两个 CSS 文件即可回退，不影响用户数据。",
+  "handoff": ""
+}

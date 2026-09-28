@@ -24,13 +24,13 @@ import (
 // assistantDecision 小秘 agentic 循环产出的统一决策（文字 assistant-message 与
 // 语音 voice-filter 共用）。Handler 再把它映射到各自前端契约。
 type assistantDecision struct {
-	Action       string // dispatch | chat | ask | silent
-	Reply        string // 小秘对用户说的话（陪聊正文 / 转交说明 / 追问文案）
-	DispatchText string // Action=dispatch：总结后要转达给 aide 的清晰意图
-	Mode         string // queue | insert（dispatch 时）
-	Stop         bool   // 中止/止损类（dispatch 时，始终插队）
-	Ask          string // Action=ask：单个追问
-	Reason       string // 一句话理由
+	Action       string   // dispatch | chat | ask | silent
+	Reply        string   // 小秘对用户说的话（陪聊正文 / 转交说明 / 追问文案）
+	DispatchText string   // Action=dispatch：总结后要转达给 aide 的清晰意图
+	Mode         string   // queue | insert（dispatch 时）
+	Stop         bool     // 中止/止损类（dispatch 时，始终插队）
+	Ask          string   // Action=ask：单个追问
+	Reason       string   // 一句话理由
 	ToolsUsed    []string // 本次小秘实际调用了哪些工具（透明可审计）
 }
 
@@ -137,6 +137,12 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 			toolsUsed = append(toolsUsed, name)
 			result := a.execAssistantTool(call, &dec)
 			messages = append(messages, Message{Role: "tool", ToolCallID: call.ID, Content: result})
+		}
+		// dispatch 与静默的最终文案由 handler 按确定的结果生成，无需再请求一次
+		// 模型来“收尾”。这条路径原本至少多一次完整模型往返，导致明确派活时
+		// 发送按钮长时间禁用；其他需要继续查询、追问或陪聊的工具仍可多轮执行。
+		if dec.Action == "dispatch" || dec.Action == "silent" {
+			break
 		}
 	}
 	dec.ToolsUsed = toolsUsed

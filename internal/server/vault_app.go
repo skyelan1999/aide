@@ -12,13 +12,30 @@ import (
 
 // ── App 侧 vault 生命周期辅助 ──────────────────────────────────────────────
 
-// unlockVault 用账户密码派生主密钥并解锁保险库，随后迁移旧明文凭证。
-// 必须在持有账户密码（已校验）的上下文中调用。
+// unlockVault 让保险库使用本机访问令牌解锁。
+// password 只用于兼容旧版由账户密码派生的保险库：调用方验证密码后，旧条目会被
+// 一次性重封为 access-token 密钥。正常的新安装不会因账户密码或锁屏而再次锁定。
 func (a *App) unlockVault(password string) {
-	if a.vault == nil || password == "" {
+	if a.vault == nil {
 		return
 	}
-	a.vault.Unlock(deriveKey(password))
+	tokenKey := a.accessTokenVaultKey()
+	if a.vault.canOpenAllWithKey(tokenKey) {
+		a.vault.Unlock(tokenKey)
+		a.migrateLegacyWorkspaceSecrets()
+		return
+	}
+	if password == "" {
+		return
+	}
+	legacyKey := deriveKey(password)
+	if !a.vault.canOpenAllWithKey(legacyKey) {
+		return
+	}
+	if err := a.vault.ReWrap(legacyKey, tokenKey); err != nil {
+		log.Printf("凭证保险库迁移到访问令牌密钥失败: %v", err)
+		return
+	}
 	a.migrateLegacyWorkspaceSecrets()
 }
 
