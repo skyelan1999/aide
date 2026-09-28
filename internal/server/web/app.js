@@ -4530,25 +4530,48 @@ async function setupDocxPreview(container, filePath, root, source) {
     await new Promise(r => setTimeout(r, 300)); // 等 docx-preview DOM 稳定
     const listEl = commentPanel.querySelector('.dcp-list');
     let comments = [];
-    const docHash = btoa(String(buf.byteLength)).slice(0, 16);
+    // 文档内容哈希：与服务端 files.go hash() 口径一致（SHA-256(raw bytes) 小写 hex），
+    // 用于批注锚点 stale 判定；非安全上下文（无 crypto.subtle）回落旧的占位值，不阻断功能。
+    let docHash = btoa(String(buf.byteLength)).slice(0, 16);
+    try {
+      const dg = await crypto.subtle.digest('SHA-256', buf);
+      docHash = [...new Uint8Array(dg)].map(b => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) { /* 回落占位值 */ }
 
     // 在容器内跨节点查找 quote 第 N 次出现，返回 Range
     function findTextRange(container, quote, wantIndex) {
       if (!quote) return null;
-      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
-      const nodes = [];
-      while (walker.nextNode()) nodes.push(walker.currentNode);
-      let fullText = '';
-      const map = []; // char offset → {node, offsetInNode}
-      for (const node of nodes) {
+      // 排除 STYLE/SCRIPT（docx-preview 注入的 <style> 文本含大量被折叠空白，不可作为正文锚点）
+      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const p = node.parentElement;
+          if (p && (p.tagName === 'STYLE' || p.tagName === 'SCRIPT')) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      // 边遍历边构建规范化文本 norm 与偏移 map，二者严格 1:1：
+      // 连续空白折叠为一个空格（映射到该空白段首个字符），被折叠的后续空白不产生条目。
+      // 这样在 norm 里 indexOf 后用同一下标取 map，Range 不会错位进 CSS 文本。
+      let norm = '';
+      const map = []; // norm char index → {node, off}
+      let prevWS = false;
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
         const t = node.textContent;
         for (let i = 0; i < t.length; i++) {
-          map.push({ node, off: i });
-          fullText += t[i];
+          const ch = t[i];
+          if (/\s/.test(ch)) {
+            if (prevWS) continue;
+            prevWS = true;
+            map.push({ node, off: i });
+            norm += ' ';
+          } else {
+            prevWS = false;
+            map.push({ node, off: i });
+            norm += ch;
+          }
         }
       }
-      // 规范化空白
-      const norm = fullText.replace(/\s+/g, ' ');
       const normQuote = quote.trim().replace(/\s+/g, ' ');
       let found = 0, pos = 0;
       while (true) {
