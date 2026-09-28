@@ -1986,7 +1986,10 @@ func (a *App) deleteAllArchived(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		delete(a.sessions, id)
-		if err := os.Remove(filepath.Join(a.dataPath, "session-"+id+".json")); err != nil && !os.IsNotExist(err) {
+		// save() 统一落盘到 sessions/active/（paths.go SessionPath），归档只是内存/标记，
+		// 并未迁移到 archived/ 桶。这里必须按真实 active 路径删除，旧平铺路径
+		// dataPath/session-<id>.json 早已不存在，否则删不掉磁盘文件、重启后会话复活。
+		if err := os.Remove(SessionPath(a.dataPath, id, "active")); err != nil && !os.IsNotExist(err) {
 			failed++
 			failedIDs = append(failedIDs, id)
 			log.Printf("删除归档会话文件失败 %s: %v", id, err)
@@ -2006,6 +2009,15 @@ func (a *App) getSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if s.Kind == assistantSessionKind {
+		// #30 密码门：与 voiceFilter / assistant-message 一致，GET 也必须校验解锁态。
+		// 未解锁时只回元数据（清空 Messages），不得合并 xiaomiHistoryLocked()，
+		// 否则持有 access-token 的请求可绕过密码门拉走小秘全部私聊/历史。
+		if !a.isAssistantUnlocked(s.ID) {
+			view := *s
+			view.Messages = []Message{}
+			jsonOut(w, 200, &view)
+			return
+		}
 		// 旧版语音入口曾将历史单独保存在 voice-history.json；在小秘会话读取时
 		// 合并尚未迁入会话的历史，供时间线展示。仅改响应副本，不覆盖持久化会话。
 		view := *s
