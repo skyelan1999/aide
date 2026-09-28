@@ -1,7 +1,7 @@
 'use strict';
 const t = (key, ...args) => window.aideI18n ? window.aideI18n.t(key, ...args) : String(key).replace(/\{(\d+)\}/g, (m, i) => args[i] ?? m);
 const $ = id => document.getElementById(id);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveRound: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, autoScroll: true, jumpAnimating: false };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveRound: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, autoScroll: true, jumpAnimating: false };
 const fragment = new URLSearchParams(location.hash.slice(1));
 if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); history.replaceState(null, '', location.pathname); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
@@ -339,7 +339,7 @@ async function selectSession(id) {
   if (!sameSession) {
     // live 文本按 run 归属：切换会话才失效；同会话刷新（排队/插话等）保留流式状态，
     // 避免打断正在流式渲染的回答（closeStream 后 schedulePoll 会重连，live 丢失会造成文本回退）
-    state.live = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0;
+    state.live = {}; state.liveStable = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0;
   }
   const loaded = await api('/sessions/' + id);
   if (seq !== sessionSeq.value) return; // 已有更新的选择，丢弃本次过期响应
@@ -412,7 +412,7 @@ function openStream(run) {
     scheduleLiveRender(run.id); // 按动画帧批量渲染，避免逐 token 全量 markdown 解析
   });
   es.addEventListener('done', () => {
-    delete state.live[run.id]; delete state.liveRound[run.id]; delete state.liveTool[run.id]; delete state.liveReasoning[run.id];
+    delete state.live[run.id]; delete state.liveStable[run.id]; delete state.liveRound[run.id]; delete state.liveTool[run.id]; delete state.liveReasoning[run.id];
     if (state.runPhase[run.id]) state.runPhase[run.id].done = true;
     closeStream(); state.streamRetryAt = 0;
     action(async () => {
@@ -450,15 +450,57 @@ function openStream(run) {
     schedulePoll();       // 确保意外断流后的轮询兜底仍在运行。
   };
 }
-// 流式渲染节流：delta 先累积，按动画帧批量渲染（每帧最多一次全量解析）
+// 流式渲染节流：delta 先累积，按动画帧批量渲染（每帧最多一次解析）。
+// 自适应兜底：活动块异常大（如超长未闭合代码块）时隔帧渲染，给主线程喘息，
+// 防止低端机长代码块掉帧；正常大小活动块每帧渲染保持顺滑。
 const liveRenderScheduled = new Set();
+const liveActiveBytes = {};
+const liveSkipFrame = {};
 function scheduleLiveRender(runId) {
   if (liveRenderScheduled.has(runId)) return;
   liveRenderScheduled.add(runId);
-  requestAnimationFrame(() => {
+  const tick = () => requestAnimationFrame(() => {
     liveRenderScheduled.delete(runId);
+    if ((liveActiveBytes[runId] || 0) > 16384 && !liveSkipFrame[runId]) {
+      liveSkipFrame[runId] = true; // 本帧跳过，下一帧强制渲染
+      liveRenderScheduled.add(runId);
+      tick();
+      return;
+    }
+    liveSkipFrame[runId] = false;
     renderLiveAnswer(runId);
   });
+  tick();
+}
+// lineCharOffset 返回前 k 行（含各自换行符）的字符总长度，即第 k 行的起始偏移。
+function lineCharOffset(lines, k) {
+  let n = 0;
+  for (let i = 0; i < k; i++) n += lines[i].length + 1; // +1：'\n'
+  return n;
+}
+// liveSplitPoint 返回「已稳定块 / 活动块」的字符分割点。
+// 已稳定块 = 已闭合的 markdown 顶层块（完整段落 / 代码块 / 列表 / 表格），
+// 只需解析一次；活动块 = 最后一个仍在增长的块，逐帧只解析它，让单帧渲染
+// 代价近似 O(活动块) 而非 O(全文)，长回答也不掉帧。
+function liveSplitPoint(src) {
+  const lines = src.split('\n');
+  let fenceOpen = false, fenceStart = -1, lastFenceEnd = -1;
+  for (let i = 0; i < lines.length; i++) {
+    // 围栏标记：行首 0-3 空格后紧跟 ``` 或 ~~~（含四反引号围栏）
+    if (/^ {0,3}(```|~~~)/.test(lines[i])) {
+      if (!fenceOpen) { fenceOpen = true; fenceStart = i; }
+      else { fenceOpen = false; lastFenceEnd = i; }
+    }
+  }
+  // 未闭合围栏：活动块从开启围栏的行开始，整段未完成代码块都在活动区。
+  if (fenceOpen) return lineCharOffset(lines, fenceStart);
+  // 围栏已闭合：分割点不得早于最后一个闭合围栏行，避免把代码块【内部】的
+  // 空行误判成顶层块边界而拆开代码块。
+  const lower = lastFenceEnd >= 0 ? lastFenceEnd : 0;
+  for (let i = lines.length - 1; i >= lower; i--) {
+    if (lines[i].trim() === '') return lineCharOffset(lines, i);
+  }
+  return lineCharOffset(lines, lower); // 围栏刚闭合 / 尚无空行：保守把最后块留在活动区
 }
 function renderLiveAnswer(runId) {
   const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
@@ -470,8 +512,31 @@ function renderLiveAnswer(runId) {
   const step = run?.steps?.[run.steps.length - 1];
   const live = state.live[runId] || '';
   const full = live || (step?.content || '');
-  // live 渲染跳过代码高亮（每帧高亮大段代码代价高），完成态由 renderSession 全量渲染
-  ans.innerHTML = (full ? renderMarkdown(full, true) : '') + '<span class="stream-cursor" aria-hidden="true">▍</span>';
+  if (!full) { ans.innerHTML = ''; return; }
+  const split = liveSplitPoint(full);
+  const stableText = full.slice(0, split);
+  const activeText = full.slice(split);
+  liveActiveBytes[runId] = activeText.length;
+  // 双分区：stable 只在新块闭合时重建，active 每帧重建（但只含活动小块）
+  let stableEl = ans.querySelector('.live-stable');
+  let activeEl = ans.querySelector('.live-active');
+  if (!stableEl || !activeEl) {
+    ans.innerHTML = '';
+    stableEl = document.createElement('div');
+    stableEl.className = 'live-stable';
+    activeEl = document.createElement('div');
+    activeEl.className = 'live-active';
+    ans.append(stableEl, activeEl);
+    state.liveStable[runId] = null;
+  }
+  const cache = state.liveStable[runId];
+  if (!cache || cache.text !== stableText) {
+    stableEl.innerHTML = stableText ? renderMarkdown(stableText, true) : '';
+    state.liveStable[runId] = { text: stableText };
+  }
+  // live 渲染跳过代码高亮（每帧高亮代价高），完成态由 renderSession 全量补全
+  activeEl.innerHTML = (activeText ? renderMarkdown(activeText, true) : '') +
+    '<span class="stream-cursor" aria-hidden="true">▍</span>';
   const c = $('conversation');
   if (state.autoScroll) c.scrollTo({ top: c.scrollHeight, behavior: 'instant' });
   updateJumpBtn();
@@ -716,7 +781,7 @@ function schedulePoll() {
   }
 }
 async function newSession() {
-  clearTimeout(state.poll); closeStream(); state.live = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0; state.sessionJSON = ''; state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
+  clearTimeout(state.poll); closeStream(); state.live = {}; state.liveStable = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0; state.sessionJSON = ''; state.session = null; state.attachments = []; renderAttachments(); renderSession(); await loadSessions(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
 }
 const labels = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', chat: 'aide' };
 function toolSummaryBrief(use) {
@@ -4486,9 +4551,42 @@ async function setupDocxPreview(container, filePath, root, source) {
 }
 
 
+/* fixCjkEmphasis：修复 CommonMark 强调 flanking 规则在中文场景的痛点。
+   当加粗/斜体内容以全角标点（如 ）。！？】》）结尾、闭合标记 ** / * 后又直接跟
+   字母或汉字时，marked 会依据 flanking 规则判定该标记“不能闭合”，导致星号裸露
+   （如「**安全（safe）**与」渲染成字面 **）。这里把阻碍闭合的前导标点临时替换成
+   私用区占位符（非标点非空白），marked 即可正确配对；解析后再把占位符还原为原
+   标点——最终文本不留任何占位/零宽字符。围栏代码块与行内代码不处理。 */
+function fixCjkEmphasis(src) {
+  const map = new Map();
+  let ph = 0xE000;
+  const take = (ch) => {
+    for (const [k, v] of map) if (v === ch) return k;
+    const k = String.fromCodePoint(ph++);
+    map.set(k, ch);
+    return k;
+  };
+  const lines = String(src || '').split('\n');
+  let fence = null;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const fm = line.match(/^\s{0,3}(```|~~~)/);
+    if (fm) { if (fence === null) fence = fm[1][0]; else fence = null; continue; }
+    if (fence !== null) continue;
+    const segs = line.split('`');
+    for (let j = 0; j < segs.length; j += 2) {
+      segs[j] = segs[j].replace(/([^\P{P}*_])(\*\*|__|\*|_)(?=[\p{L}\p{N}])/gu, (m, p, d) => take(p) + d);
+    }
+    lines[i] = segs.join('`');
+  }
+  const text = lines.join('\n');
+  const restore = (html) => { for (const [k, v] of map) html = html.split(k).join(v); return html; };
+  return { text, restore };
+}
 function renderMarkdown(src, live, basePath) {
   if (window.marked && typeof window.marked.parse === 'function') {
-    const html = window.marked.parse(String(src || ''), { gfm: true, breaks: false });
+    const fixed = fixCjkEmphasis(String(src || ''));
+    const html = fixed.restore(window.marked.parse(fixed.text, { gfm: true, breaks: false }));
     const body = sanitizeHtml(html);
     // mermaid 流程图：把 ```mermaid 代码块替换成 <div class="mermaid"> 供后续渲染
     body.querySelectorAll('pre > code.language-mermaid').forEach(codeEl => {
