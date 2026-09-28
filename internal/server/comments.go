@@ -32,8 +32,13 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 )
+
+// commentUpdateMu 串行化同一进程内的批注 update 读-改-写，避免并发 PUT 丢更新。
+// commentStore 每次请求新建，无法在实例上加锁；单用户本机争用极小，用包级互斥即可。
+var commentUpdateMu sync.Mutex
 
 // 批注字段上限（个人本地单用户场景，主要防误传巨串）。
 const (
@@ -272,6 +277,8 @@ type updateInput struct {
 }
 
 func (cs *commentStore) update(id string, in updateInput) (*Comment, error) {
+	commentUpdateMu.Lock()
+	defer commentUpdateMu.Unlock()
 	c, err := cs.get(id)
 	if err != nil {
 		return nil, err
