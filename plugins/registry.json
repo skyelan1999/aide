@@ -88,7 +88,8 @@
       "version": "1.0.0",
       "author": "aide",
       "main": "index.js",
-      "enabled": true
+      "enabled": true,
+      "installedAt": ""
     },
     {
       "id": "sqlite",
@@ -107,8 +108,8 @@
       "version": "1.0.0",
       "author": "aide",
       "main": "index.js",
-      "daemon": true,
       "enabled": false,
+      "daemon": true,
       "installedAt": "2026-09-25T21:35:00Z"
     },
     {
@@ -118,8 +119,8 @@
       "version": "1.0.0",
       "author": "aide",
       "main": "index.js",
-      "daemon": true,
       "enabled": false,
+      "daemon": true,
       "installedAt": "2026-09-25T21:35:00Z"
     },
     {
@@ -129,8 +130,8 @@
       "version": "1.0.0",
       "author": "aide",
       "main": "index.js",
-      "daemon": true,
       "enabled": false,
+      "daemon": true,
       "installedAt": "2026-09-25T21:40:00Z"
     },
     {
@@ -140,8 +141,8 @@
       "version": "1.0.0",
       "author": "aide",
       "main": "index.js",
-      "daemon": true,
       "enabled": false,
+      "daemon": true,
       "installedAt": "2026-09-25T21:30:00Z"
     }
   ]

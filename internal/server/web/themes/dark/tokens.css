@@ -108,4 +108,6 @@ color-scheme:dark;
 --phase-verify-bg:rgba(52,211,153,.16);
 --phase-verify-fg:#6ee7b7;
 --radius-card:8px;
+/* 会话内容列统一最大宽度（P2#8 收口）：.run/.welcome/.composer 共享，居中对齐 */
+--content-max:840px;
 }
