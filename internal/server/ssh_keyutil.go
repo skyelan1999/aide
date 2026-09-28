@@ -51,18 +51,72 @@ func sshKeyFingerprint(keyMaterial []byte, passphrase string) (string, error) {
 }
 
 // sshKeygenFingerprintFile 对一个私钥文件路径取指纹（ref 模式下直接引用，无需写临时文件）。
+// passphrase 非空时，经 SSH_ASKPASS 助手从继承的管道 fd 读取口令：口令既不出现在子进程
+// argv（不再用 -P），也不写成明文临时文件。
 func sshKeygenFingerprintFile(path, passphrase string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	args := []string{"-lf", path}
+	cmd := exec.CommandContext(ctx, sshKeygenBin, args...)
 	if passphrase != "" {
-		args = append(args, "-P", passphrase)
+		cleanup, err := attachPassphraseAskpass(cmd, passphrase)
+		if err != nil {
+			return "", err
+		}
+		defer cleanup()
 	}
-	out, err := exec.CommandContext(ctx, sshKeygenBin, args...).CombinedOutput()
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", fmt.Errorf("解析私钥失败（非 OpenSSH 格式或口令错误）: %s", strings.TrimSpace(string(out)))
 	}
 	return parseSHA256Fingerprint(string(out))
+}
+
+// attachPassphraseAskpass 让 cmd 通过 SSH_ASKPASS 从继承的管道 fd 读取口令：
+//   - 口令写入一把管道并通过 cmd.ExtraFiles 把读端继承为子进程 fd 3；
+//   - 落地一个 0700 的 askpass 助手脚本（内容仅 "cat <&3"，不含任何口令材料），
+//     由 SSH_ASKPASS 指向它；SSH_ASKPASS_REQUIRE=force 强制非交互调用。
+//
+// 返回的 cleanup 关闭管道读端并删除助手临时目录。口令因此不进 cmd.Args、不进环境变量、
+// 也不写成明文文件。
+func attachPassphraseAskpass(cmd *exec.Cmd, passphrase string) (func(), error) {
+	pr, pw, err := os.Pipe()
+	if err != nil {
+		return nil, err
+	}
+	if _, err := pw.WriteString(passphrase); err != nil {
+		pr.Close()
+		pw.Close()
+		return nil, err
+	}
+	_ = pw.Close() // 写完即关：子进程 cat <&3 读到口令后遇 EOF 退出
+
+	tmpDir, err := os.MkdirTemp("", "aide-askpass-*")
+	if err != nil {
+		pr.Close()
+		return nil, err
+	}
+	askPath := filepath.Join(tmpDir, "askpass.sh")
+	// 助手脚本：从继承的 fd 3 读口令并打印到 stdout。脚本本身无敏感内容。
+	if err := os.WriteFile(askPath, []byte("#!/bin/sh\ncat <&3\n"), 0o700); err != nil {
+		pr.Close()
+		os.RemoveAll(tmpDir)
+		return nil, err
+	}
+
+	cmd.Env = append(os.Environ(),
+		"SSH_ASKPASS="+askPath,
+		"SSH_ASKPASS_REQUIRE=force",
+		"DISPLAY=aide:0",
+	)
+	// ExtraFiles 从 fd 3 开始继承（0/1/2 为 stdin/stdout/stderr）。
+	cmd.ExtraFiles = []*os.File{pr}
+
+	cleanup := func() {
+		_ = pr.Close()
+		_ = os.RemoveAll(tmpDir)
+	}
+	return cleanup, nil
 }
 
 // parseSHA256Fingerprint 从 ssh-keygen -lf 输出中提取 SHA256:... 令牌。
