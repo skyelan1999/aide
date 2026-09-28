@@ -23,6 +23,7 @@ func (a *App) unlockVault(password string) {
 	if a.vault.canOpenAllWithKey(tokenKey) {
 		a.vault.Unlock(tokenKey)
 		a.migrateLegacyWorkspaceSecrets()
+		a.migrateLegacySourceSecretsLocked()
 		return
 	}
 	if password == "" {
@@ -37,6 +38,7 @@ func (a *App) unlockVault(password string) {
 		return
 	}
 	a.migrateLegacyWorkspaceSecrets()
+	a.migrateLegacySourceSecretsLocked()
 }
 
 // vaultAudit 追加一条凭证审计（data/vault-audit.jsonl，0600）。

@@ -85,6 +85,7 @@ func (a *App) unlockVaultAtStartup() error {
 	tokenKey := a.accessTokenVaultKey()
 	if a.vault.canOpenAllWithKey(tokenKey) {
 		a.vault.Unlock(tokenKey)
+		a.migrateLegacySourceSecretsLocked()
 		return nil
 	}
 	if a.settings.UserPasswordHash != "" {
@@ -262,6 +263,7 @@ func (a *App) unlockApp(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	a.unlockVault(in.Password) // 派生主密钥解锁 + 迁移旧 SSH 凭据
 	a.migratePendingLegacyAPIKeyLocked()
+	a.migrateLegacySourceSecretsLocked()
 	a.mu.Unlock()
 	jsonOut(w, 200, map[string]any{"ok": true, "unlocked": true})
 }

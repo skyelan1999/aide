@@ -310,11 +310,8 @@ func (a *App) applyCredentialsReset() {
 			a.vault = nv
 		}
 	}
-	// 来源密钥内存清空。
-	a.sourceSecrets = sourcesSecrets{Secrets: map[string]struct {
-		Password string `json:"password,omitempty"`
-		Key      string `json:"key,omitempty"`
-	}{}}
+	// 来源密钥内存清空（vault 已在上一步连同 vault.enc 一并重建为空，无残留）。
+	a.sourceSecrets = sourcesSecrets{Secrets: map[string]sourceSecretEntry{}}
 
 	// 4) 重新生成 access-token，使当前前端立即掉线、回到登录/首次引导。
 	tok := []byte(newID() + newID())

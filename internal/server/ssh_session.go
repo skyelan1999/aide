@@ -412,20 +412,20 @@ func (a *App) ensureSourceSession(ctx context.Context, src Source) error {
 	args := append([]string{"-fNM", "-o", "ControlMaster=yes", "-o", "ControlPersist=600"}, append(base, a.sftpTargetOf(src))...)
 	env := []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	a.mu.Lock()
-	sec := a.sourceSecrets.Secrets[src.ID]
+	secPassword, secKey := a.sourceCredentialLocked(src.ID)
 	a.mu.Unlock()
-	if src.Config.Auth == "key" && sec.Key != "" {
+	if src.Config.Auth == "key" && secKey != "" {
 		keyPath := sock + ".key"
-		if err := os.WriteFile(keyPath, []byte(sec.Key), 0600); err != nil {
+		if err := os.WriteFile(keyPath, []byte(secKey), 0600); err != nil {
 			return err
 		}
 		// master 认证完成后（本函数返回时）立即删除：后续会话复用 ControlPath，
 		// 私钥正文不再需要落盘；master 若掉线，下次 ensureSourceSession 会重写。
 		defer os.Remove(keyPath)
 		args = append([]string{"-i", keyPath}, args...)
-	} else if src.Config.Auth == "password" && sec.Password != "" {
+	} else if src.Config.Auth == "password" && secPassword != "" {
 		ask := sock + ".askpass"
-		if err := os.WriteFile(ask, []byte("#!/bin/sh\necho "+shellQuote(sec.Password)+"\n"), 0700); err != nil {
+		if err := os.WriteFile(ask, []byte("#!/bin/sh\necho "+shellQuote(secPassword)+"\n"), 0700); err != nil {
 			return err
 		}
 		// master 认证完成后立即删除 askpass，口令不长期驻留 /tmp。

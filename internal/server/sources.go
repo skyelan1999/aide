@@ -71,11 +71,14 @@ type sourcesRegistry struct {
 	Sources []Source `json:"sources"`
 }
 
+// sourceSecretEntry 单来源凭据（旧明文回退存储用；新凭据一律进加密 vault）。
+type sourceSecretEntry struct {
+	Password string `json:"password,omitempty"`
+	Key      string `json:"key,omitempty"`
+}
+
 type sourcesSecrets struct {
-	Secrets map[string]struct {
-		Password string `json:"password,omitempty"`
-		Key      string `json:"key,omitempty"`
-	} `json:"secrets"`
+	Secrets map[string]sourceSecretEntry `json:"secrets"`
 }
 
 func (a *App) sourcesPath() string {
@@ -88,10 +91,7 @@ func (a *App) sourcesSecretsPath() string { return SourcesSecretsPath(a.dataPath
 
 func (a *App) loadSources() error {
 	a.sourceRegistry = sourcesRegistry{Version: 1, Sources: []Source{}}
-	a.sourceSecrets = sourcesSecrets{Secrets: map[string]struct {
-		Password string `json:"password,omitempty"`
-		Key      string `json:"key,omitempty"`
-	}{}}
+	a.sourceSecrets = sourcesSecrets{Secrets: map[string]sourceSecretEntry{}}
 	b, err := os.ReadFile(a.sourcesPath())
 	if errors.Is(err, os.ErrNotExist) {
 		// 全新部署：注册表为空，先补内置来源（#53）
@@ -104,19 +104,16 @@ func (a *App) loadSources() error {
 	if err := json.Unmarshal(b, &a.sourceRegistry); err != nil {
 		return fmt.Errorf("解析 %s: %w", sourcesFileName, err)
 	}
-	a.sourceSecrets = sourcesSecrets{Secrets: map[string]struct {
-		Password string `json:"password,omitempty"`
-		Key      string `json:"key,omitempty"`
-	}{}}
+	a.sourceSecrets = sourcesSecrets{Secrets: map[string]sourceSecretEntry{}}
 	if b, err := os.ReadFile(a.sourcesSecretsPath()); err == nil {
 		_ = json.Unmarshal(b, &a.sourceSecrets)
 	}
 	if a.sourceSecrets.Secrets == nil {
-		a.sourceSecrets.Secrets = map[string]struct {
-			Password string `json:"password,omitempty"`
-			Key      string `json:"key,omitempty"`
-		}{}
+		a.sourceSecrets.Secrets = map[string]sourceSecretEntry{}
 	}
+	// vault 已在启动时由 access-token 自动解锁：立即把旧明文来源凭据密封入 vault，
+	// 成功后清掉明文。vault 未解锁时静默保留明文，待后续 unlock 时重试（幂等）。
+	a.migrateLegacySourceSecretsLocked()
 	// 内置来源常驻兜底：/context（只读参考根）+ 自动系统文档（Docs.Path 读写挂载）
 	a.ensureBuiltinSources()
 	return nil
@@ -351,7 +348,7 @@ func (a *App) curlArgs(src Source, p string) []string {
 	}
 	if src.Config.Username != "" {
 		a.mu.Lock()
-		secret := a.sourceSecrets.Secrets[src.ID].Password
+		secret, _ := a.sourceCredentialLocked(src.ID)
 		a.mu.Unlock()
 		args = append(args, "-u", src.Config.Username+":"+secret)
 	}
@@ -447,7 +444,7 @@ func (a *App) listSources(w http.ResponseWriter, r *http.Request) {
 	for _, s := range a.sourceRegistry.Sources {
 		items = append(items, map[string]any{
 			"id": s.ID, "name": s.Name, "type": s.Type, "enabled": s.Enabled, "rw": s.RW, "builtin": s.Builtin,
-			"config": s.Config, "hasSecret": a.sourceSecrets.Secrets[s.ID].Password != "" || a.sourceSecrets.Secrets[s.ID].Key != "",
+			"config": s.Config, "hasSecret": a.sourceHasSecretLocked(s.ID),
 		})
 	}
 	jsonOut(w, 200, map[string]any{"sources": items})
@@ -578,12 +575,10 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		if sec.Key != "" {
 			entry.Key = sec.Key
 		}
-		if entry.Password != "" || entry.Key != "" {
-			a.sourceSecrets.Secrets[id] = entry
-		} else {
-			delete(a.sourceSecrets.Secrets, id)
-		}
+		// 同步收敛进加密 vault（已解锁则密封并清掉回退明文；未解锁则保留明文回退，稍后迁移）。
+		a.storeSourceCredentialLocked(id, entry.Password, entry.Key)
 	}
+	// 回退明文文件仍需落盘：vault 未解锁时它是唯一持久化凭据；已解锁时此处已无明文。
 	if err := a.saveSourcesSecrets(); err != nil {
 		fail(w, 500, err)
 		return
@@ -610,6 +605,12 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 	a.sourceRegistry.Sources = in.Sources
 	// 内置来源常驻：/context（只读）+ 自动系统文档（Docs.Path 读写）；被客户端漏提交时补回
 	a.ensureBuiltinSources()
+	// 来源被删除时，其凭据（vault 密文 + 回退明文）一并清除，无残留。
+	alive := make(map[string]bool, len(a.sourceRegistry.Sources))
+	for _, sr := range a.sourceRegistry.Sources {
+		alive[sr.ID] = true
+	}
+	a.sweepSourceCredentialsLocked(alive)
 	if err := a.saveSources(); err != nil {
 		fail(w, 500, err)
 		return
@@ -618,7 +619,7 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 	for _, src := range a.sourceRegistry.Sources {
 		items = append(items, map[string]any{
 			"id": src.ID, "name": src.Name, "type": src.Type, "enabled": src.Enabled, "rw": src.RW, "builtin": src.Builtin,
-			"config": src.Config, "hasSecret": a.sourceSecrets.Secrets[src.ID].Password != "" || a.sourceSecrets.Secrets[src.ID].Key != "",
+			"config": src.Config, "hasSecret": a.sourceHasSecretLocked(src.ID),
 		})
 	}
 	jsonOut(w, 200, map[string]any{"sources": items})
