@@ -177,15 +177,6 @@ func (a *App) xiaomiHistoryLocked() []Message {
 // 入参 {text, context?}；返回小秘决策 + 回复文本 +（dispatch 时）转交的 aide 会话信息。
 // dispatch 由后端直接新建 aide 会话承接；chat/ask/silent 只留在小秘会话。
 func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
-	s := a.sessions[r.PathValue("id")]
-	if s == nil {
-		fail(w, 404, errors.New("会话不存在"))
-		return
-	}
-	if s.Kind != assistantSessionKind {
-		fail(w, 400, errors.New("不是小秘系统会话"))
-		return
-	}
 	var in struct {
 		Text    string `json:"text"`
 		Context string `json:"context"`
@@ -198,10 +189,20 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"action": "ignore", "reply": "", "reason": "空文本"})
 		return
 	}
+	// 在锁内取 *Session 指针副本，避免与 dispatchToAideLocked 并发写 a.sessions 触发 map 竞争。
 	a.mu.Lock()
+	s := a.sessions[r.PathValue("id")]
 	cfg := a.settings
 	va := a.voiceAgent
 	a.mu.Unlock()
+	if s == nil {
+		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	if s.Kind != assistantSessionKind {
+		fail(w, 400, errors.New("不是小秘系统会话"))
+		return
+	}
 
 	runFallback := func() {
 		a.mu.Lock()
