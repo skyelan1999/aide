@@ -3764,7 +3764,7 @@ async function setupStlPreview(container, filePath, root, source) {
       stlGeometry.computeVertexNormals(); stlGeometry.computeBoundingBox();
       const mesh = new THREE.Mesh(stlGeometry, new THREE.MeshPhongMaterial({ color: 0x60a5fa, specular: 0x111111, shininess: 80 }));
       stlMaterial = mesh.material;
-      const bb = geometry.boundingBox; const center = new THREE.Vector3(); bb.getCenter(center);
+      const bb = stlGeometry.boundingBox; const center = new THREE.Vector3(); bb.getCenter(center);
       mesh.position.sub(center); scene.add(mesh);
       grid.position.y = bb.min.y - center.y;
       const size = new THREE.Vector3(); bb.getSize(size);
@@ -3773,7 +3773,7 @@ async function setupStlPreview(container, filePath, root, source) {
       camera.position.set(camDist, camDist * 0.7, camDist);
       camera.near = camDist / 100; camera.far = camDist * 100; camera.updateProjectionMatrix();
       controls.target.set(0, 0, 0); controls.update();
-      meta.textContent = Math.round(geometry.attributes.position.count / 3) + ' ' + t('三角面') + ' · ' + size.x.toFixed(2) + '×' + size.y.toFixed(2) + '×' + size.z.toFixed(2);
+      meta.textContent = Math.round(stlGeometry.attributes.position.count / 3) + ' ' + t('三角面') + ' · ' + size.x.toFixed(2) + '×' + size.y.toFixed(2) + '×' + size.z.toFixed(2);
       btnReset.onclick = () => { camera.position.set(camDist, camDist * 0.7, camDist); controls.target.set(0, 0, 0); controls.update(); };
       (function animate() { if (disposed) return; animId = requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
       const resize = () => { if (disposed) return; const w = canvasWrap.clientWidth, h = canvasWrap.clientHeight; if (w > 0 && h > 0) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); } };
@@ -4675,7 +4675,10 @@ function renderMarkdown(src, live, basePath) {
     // live（流式渲染）跳过代码高亮：每帧全量高亮代价高，完成态由 renderSession 补全
     if (!live) body.querySelectorAll('pre > code[class*="language-"]').forEach(codeEl => {
       const lang = (codeEl.className.match(/language-([\w+-]+)/) || [])[1] || '';
-      if (/^(js|javascript|jsx|ts|typescript|mjs)$/i.test(lang)) codeEl.innerHTML = highlightCode(codeEl.textContent, lang);
+      if (!lang || !window.hljs || typeof window.hljs.getLanguage !== 'function') return;
+      if (!window.hljs.getLanguage(lang)) return; // 未注册语言保持原样，避免错误着色
+      try { codeEl.innerHTML = window.hljs.highlight(codeEl.textContent, { language: lang, ignoreIllegals: true }).value; }
+      catch (_) {}
     });
     // 标记相对路径链接（事件委托在 timeline 上统一处理）
     body.querySelectorAll('a[href]').forEach(a => {
