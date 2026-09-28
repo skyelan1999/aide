@@ -676,6 +676,7 @@ window.aideEnglish = {
   "已启用": "On",
   "已启用加密": "Encryption enabled",
   "已复制": "Copied",
+  "复制失败": "Copy failed",
   "已导出会话为 JSON": "Conversation exported as JSON",
   "已导出会话为 Markdown": "Conversation exported as Markdown",
   "已导出全部会话数据": "All conversation data exported",
