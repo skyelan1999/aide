@@ -938,9 +938,9 @@ dialog.master-auth{width:min(380px,90vw)}
 .ws-vault-fp{margin-top:8px}
 
 /* ── 子任务4：小秘独立侧栏条目（#62）── */
-.ws-assistant-card{display:flex;flex-direction:column;gap:0;border:1px solid var(--line-soft);border-radius:8px;overflow:hidden;margin-bottom:10px;padding:0;background:var(--surface);line-height:0}.assistant-entry{display:flex;align-items:center;gap:8px;width:100%;margin:0;padding:0 10px;border:0;border-top:1px solid var(--line-faint);border-top-left-radius:0;border-top-right-radius:0;border-bottom-left-radius:8px;border-bottom-right-radius:8px;background:color-mix(in srgb, var(--accent) 10%, transparent);color:var(--text);cursor:pointer;font-size:11px;line-height:1;min-height:24px;height:24px;box-sizing:border-box;flex-shrink:0}
-.assistant-entry:hover{background:color-mix(in srgb, var(--accent) 16%, transparent)}
-.assistant-entry.active{background:color-mix(in srgb, var(--accent) 22%, transparent);color:var(--accent-text,var(--accent))}
+.ws-assistant-card{display:flex;flex-direction:column;gap:0;border:1px solid var(--line-soft);border-radius:8px;overflow:hidden;margin-bottom:10px;padding:0;background:var(--surface);line-height:0}.assistant-entry{display:flex;align-items:center;gap:8px;width:100%;margin:0;padding:0 10px;border:0;border-top:1px solid var(--line-faint);border-top-left-radius:0;border-top-right-radius:0;border-bottom-left-radius:8px;border-bottom-right-radius:8px;background:var(--surface);color:var(--text);cursor:pointer;font-size:11px;line-height:1;min-height:24px;height:24px;box-sizing:border-box;flex-shrink:0}
+.assistant-entry:hover{background:var(--surface-hover, var(--hover))}
+.assistant-entry.active{background:var(--selected);color:var(--accent-text,var(--accent))}
 .assistant-entry-icon{display:inline-flex;width:1.5em;height:1.5em;align-items:center;justify-content:center;flex:0 0 1.5em;color:var(--accent)}
 .assistant-entry.active .assistant-entry-icon{color:var(--accent)}
 .assistant-entry-icon svg{width:1.35em;height:1.35em}
