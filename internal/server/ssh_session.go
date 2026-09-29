@@ -9,9 +9,13 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 )
+
+// remoteRunSeq 为每次远程执行生成唯一 runID，避免并发命令的 PGID 标记互相覆盖。
+var remoteRunSeq int64
 
 // 单 SSH 会话实现（FR-77 / LIM-28）：
 // OpenSSH ControlMaster（ControlPersist）复用一条 master 连接；
@@ -177,24 +181,74 @@ func (a *App) wsRuntimeCredentials() (password, keyMaterial, passphrase, directK
 }
 
 // execRemote 通过唯一 master 会话执行远程命令；输出经 io.Writer 流式返回。
+//
+// 取消/超时清理语义（远程 shell 取消链）：远端命令被包进一个独立会话/进程组
+// （setsid），启动瞬间把该组 PGID 写入远端标记文件。命令正常结束时由包装脚本
+// 自行删除标记；一旦 ctx 被取消（用户点停止）或超时，CommandContext 只会杀掉本地
+// ssh 客户端——setsid 出去的远端进程组并不会随之退出——因此本函数在返回前另开
+// 一条 SSH 连接显式 `kill -- -PGID` 把整个远端进程组（含子孙）收掉并复核。
+// 注意：workflow 的心跳只是本地定时 ticker，绝不能当作远端存活证据；远端是否被
+// 真正清理由 cleanupRemoteGroup 的复核行（AIDE-CLEANUP:reaped/...）证明。
 func (a *App) execRemote(ctx context.Context, command string, stdout, stderr io.Writer) (int, error) {
+	runID := fmt.Sprintf("%d-%d", time.Now().UnixNano(), atomic.AddInt64(&remoteRunSeq, 1))
+	pgidFile := "/tmp/.aide-remote-" + runID + ".pgid"
+	// inner：先记录本组 PGID（$$ 即 setsid 出的会话/组长 PID），再跑用户命令，收尾删标记。
+	inner := "echo $$ > " + shellQuote(pgidFile) + "; " + command + "; rm -f " + shellQuote(pgidFile)
+	wrapped := "setsid bash -c " + shellQuote(inner)
 	args := append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
-	args = append(args, a.sshTarget(), command)
+	args = append(args, a.sshTarget(), wrapped)
 	cmd := exec.CommandContext(ctx, a.sshBin, args...)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 	// CommandContext 会在取消时终止本地 ssh 客户端；WaitDelay 防止失联的
-	// ControlMaster/管道让 Wait 永久停住。远端命令仍有 workflow 的单条超时兜底。
+	// ControlMaster/管道让 Wait 永久停住。
 	cmd.WaitDelay = 2 * time.Second
 	err := cmd.Run()
 	if err == nil {
 		return 0, nil
 	}
 	if ctx.Err() != nil {
+		// 用户取消或超时：显式清除远端进程组（详见 cleanupRemoteGroup）。
+		a.cleanupRemoteGroup(pgidFile)
 		return -1, fmt.Errorf("远程命令已取消或超时")
 	}
 	return -1, fmt.Errorf("远程执行失败: %w", err)
+}
+
+// cleanupRemoteGroup 显式清除远端进程组：读标记文件里的 PGID，先 TERM 后 KILL
+// 整个负进程组（kill -- -PGID，覆盖子孙），再复核组内是否还有存活进程，最后删标记。
+// 返回形如 "AIDE-CLEANUP:reaped:1234" 的结果行（日志/取证用）；master 不可达时
+// 返回空串。它使用独立 context，绝不复用已被取消的 ctx。
+func (a *App) cleanupRemoteGroup(pgidFile string) string {
+	if a.sshBin == "" {
+		return ""
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+	defer cancel()
+	pgf := shellQuote(pgidFile)
+	inner := "p=$(cat " + pgf + " 2>/dev/null); res=absent;" +
+		"case \"$p\" in ''|*[!0-9]*) ;; *)" +
+		"if kill -0 -- -\"$p\" 2>/dev/null; then" +
+		"kill -TERM -- -\"$p\" 2>/dev/null; sleep 0.3; kill -KILL -- -\"$p\" 2>/dev/null; sleep 0.2;" +
+		"if kill -0 -- -\"$p\" 2>/dev/null; then res=still-alive; else res=reaped; fi;" +
+		"else res=already-gone; fi;; esac;" +
+		"rm -f " + pgf + "; echo \"AIDE-CLEANUP:$res:$p\""
+	remote := "bash -c " + shellQuote(inner)
+	args := append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
+	args = append(args, a.sshTarget(), remote)
+	cmd := exec.CommandContext(ctx, a.sshBin, args...)
+	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	var out strings.Builder
+	cmd.Stdout = &out
+	cmd.Stderr = &out
+	cmd.WaitDelay = 2 * time.Second
+	_ = cmd.Run()
+	line := strings.TrimSpace(out.String())
+	if i := strings.LastIndex(line, "AIDE-CLEANUP:"); i >= 0 {
+		return strings.TrimSpace(line[i:])
+	}
+	return ""
 }
 
 // ── SFTP（经同一 master 会话，无需二次认证） ──
