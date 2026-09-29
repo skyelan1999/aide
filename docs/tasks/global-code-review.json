@@ -34,8 +34,8 @@
     }
   },
   "open_items": [
-    "save() 会话桶布局统一（archived/assistant 死目录）：仍开放。注：P2#8 f9c4e02 仅改 web/style.css 2 行（消息流/输入区列宽对齐），未触及 on-disk 会话存储，不可视为本项完成。",
-    "工作流四阶段 --phase-* 令牌、personaSave 长度上限、安全 P3 加固项：仍开放（本批 8 条 P2 不含此项）。",
+    "[已关闭 2026-09-29] save() 会话桶布局统一（archived/assistant 死目录）：由 5eb0629 关闭——sessionBucketFor 规范化桶（assistant→sessions/assistant、archived→sessions/archived、其余→sessions/active），save() 写规范桶并清理陈旧副本，delete 覆盖全部桶；启动迁移 rebalanceSessionBuckets 幂等（备份+隔离+回滚），零会话丢失；本批 race 门禁绿（GATE EXIT=0）。历史注：P2#8 f9c4e02 仅改 web/style.css 2 行（消息流/输入区列宽对齐），未触及 on-disk 会话存储，不可视为本项完成。",
+    "工作流阶段 --phase-* 令牌、personaSave 长度上限、安全 P3 加固项：部分推进。--phase-* 令牌已就位——既有 P2#5 四阶段令牌，本批 e9bdf50 新增第五阶段 --phase-rca（problem-solving）。personaSave 长度上限与安全 P3 加固项仍开放（不在本批范围）。",
     "[2026-09-28 需求对齐已关闭] per-source SFTP 凭据并入 vault → e38e8ca(P2#1,backend-integrations-003) source_secrets_vault.go+test；plugin daemon 移出全局 a.mu → aeb1ca2(P2#2,backend-persona-004) plugin_daemon.go 自带锁/慢进程在锁外；ask_user 陈旧应答竞态 → afee71(P2#3,backend-core-001) answerRound 单调 nonce+每轮独立 channel。详见 docs/reviews/2026-09-28-requirements-alignment/"
   ]
 }

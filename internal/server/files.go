@@ -719,11 +719,12 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, err)
 			return
 		}
-		items, err := searchFileTree(p, search, func(dir string) ([]map[string]any, error) { return a.sftpListRemote(dir, dir) })
+		items, trunc, err := searchFileTree(p, search, func(dir string) ([]map[string]any, error) { return a.sftpListRemote(dir, dir) })
 		if err != nil {
 			fail(w, 400, err)
 			return
 		}
+		setSearchTruncationHeaders(w, trunc)
 		jsonOut(w, 200, items)
 		return
 	}
@@ -739,20 +740,22 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, errors.New("来源不存在或已停用"))
 			return
 		}
-		items, err := searchFileTree(p, search, func(dir string) ([]map[string]any, error) { return a.listSourceDir(src, dir) })
+		items, trunc, err := searchFileTree(p, search, func(dir string) ([]map[string]any, error) { return a.listSourceDir(src, dir) })
 		if err != nil {
 			fail(w, 400, err)
 			return
 		}
+		setSearchTruncationHeaders(w, trunc)
 		jsonOut(w, 200, items)
 		return
 	}
 	if which == "workspace" && a.workspaceMode() == "ssh" {
-		items, err := searchFileTree(p, search, a.listWorkspaceDir)
+		items, trunc, err := searchFileTree(p, search, a.listWorkspaceDir)
 		if err != nil {
 			fail(w, 400, err)
 			return
 		}
+		setSearchTruncationHeaders(w, trunc)
 		jsonOut(w, 200, items)
 		return
 	}
@@ -761,11 +764,12 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	items, err := searchFileTree(p, search, func(dir string) ([]map[string]any, error) { return a.listLocalDir(root, dir) })
+	items, trunc, err := searchFileTree(p, search, func(dir string) ([]map[string]any, error) { return a.listLocalDir(root, dir) })
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
+	setSearchTruncationHeaders(w, trunc)
 	jsonOut(w, 200, items)
 }
 
@@ -802,9 +806,32 @@ func fileSearchFromRequest(r *http.Request) (fileSearch, error) {
 // searchFileTree keeps recursive search inside the already selected safe root.
 // It deliberately caps traversed folders and returned rows so a broad search on
 // an SSH/SFTP workspace cannot make the file panel unresponsive.
-func searchFileTree(base string, search fileSearch, list func(string) ([]map[string]any, error)) ([]map[string]any, error) {
+// fileSearchTruncation reports which search caps were hit. It is carried alongside
+// the (unchanged) JSON array so the HTTP layer can signal truncation via headers
+// without breaking consumers that expect a bare array body.
+type fileSearchTruncation struct {
+	dirsHit    bool // 达到 maxFileSearchDirs 但仍有未遍历的子目录
+	resultsHit bool // 达到 maxFileSearchResults 结果上限
+}
+
+func (t fileSearchTruncation) any() bool { return t.dirsHit || t.resultsHit }
+
+// setSearchTruncationHeaders emits the truncation signal only when a cap was hit.
+// The body stays a bare JSON array; these headers let the file panel show a notice.
+func setSearchTruncationHeaders(w http.ResponseWriter, trunc fileSearchTruncation) {
+	if !trunc.any() {
+		return
+	}
+	w.Header().Set("X-Search-Truncated", "1")
+	w.Header().Set("X-Search-Dir-Limit", strconv.Itoa(maxFileSearchDirs))
+	w.Header().Set("X-Search-Result-Limit", strconv.Itoa(maxFileSearchResults))
+}
+
+func searchFileTree(base string, search fileSearch, list func(string) ([]map[string]any, error)) ([]map[string]any, fileSearchTruncation, error) {
+	var trunc fileSearchTruncation
 	if search.term == "" {
-		return list(base)
+		items, err := list(base)
+		return items, trunc, err
 	}
 	queue := []string{base}
 	seen := map[string]bool{base: true}
@@ -814,7 +841,7 @@ func searchFileTree(base string, search fileSearch, list func(string) ([]map[str
 		queue = queue[1:]
 		entries, err := list(dir)
 		if err != nil {
-			return nil, err
+			return nil, trunc, err
 		}
 		for _, entry := range entries {
 			name, _ := entry["name"].(string)
@@ -823,16 +850,21 @@ func searchFileTree(base string, search fileSearch, list func(string) ([]map[str
 			if fileNameMatches(name, search) {
 				items = append(items, entry)
 				if len(items) >= maxFileSearchResults {
+					trunc.resultsHit = true
 					break
 				}
 			}
-			if search.recursive && isDir && entryPath != "" && !seen[entryPath] && len(seen) < maxFileSearchDirs {
-				seen[entryPath] = true
-				queue = append(queue, entryPath)
+			if search.recursive && isDir && entryPath != "" && !seen[entryPath] {
+				if len(seen) < maxFileSearchDirs {
+					seen[entryPath] = true
+					queue = append(queue, entryPath)
+				} else {
+					trunc.dirsHit = true
+				}
 			}
 		}
 	}
-	return items, nil
+	return items, trunc, nil
 }
 
 func fileNameMatches(name string, search fileSearch) bool {

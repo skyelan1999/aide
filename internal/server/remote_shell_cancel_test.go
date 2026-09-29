@@ -17,6 +17,11 @@ func TestRemoteShellCommandCancellable(t *testing.T) {
 for arg in "$@"; do
   [ "$arg" = "-O" ] && exit 0
 done
+# 取消后的远端进程组回收是一条带 AIDE-CLEANUP 标记的附加 ssh 调用；
+# 桩环境里没有真正的远端进程，立即返回即可。
+case "$*" in
+  *AIDE-CLEANUP*) exit 0 ;;
+esac
 exec sleep 30
 `), 0700); err != nil {
 		t.Fatal(err)

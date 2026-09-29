@@ -108,4 +108,6 @@ color-scheme:light;
 --phase-impl-fg:#92400e;
 --phase-verify-bg:rgba(16,185,129,.14);
 --phase-verify-fg:#065f46;
+--phase-rca-bg:rgba(239,68,68,.14);
+--phase-rca-fg:#b91c1c;
 }

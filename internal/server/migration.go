@@ -380,3 +380,297 @@ func migrateLegacyTLSDir(data string) error {
 	log.Printf("TLS 证书已从旧 %s/ 迁移到 %s/（保留同一张证书）", legacy, CertsDir(data))
 	return nil
 }
+
+// ── 会话桶归位（sessions/active|archived|assistant 收敛）──────────────────────
+// 背景：旧 save() 无条件写 sessions/active/，导致归档会话与小秘系统会话也堆在 active/，
+// sessions/archived 与 sessions/assistant 长期为空（死目录）。本迁移在启动时把每个会话文件
+// 按其内容（Kind/Archived，见 sessionBucketFor）归位到唯一正确的桶：
+//
+//	流程（复制→校验→隔离，全程可重入、可回滚，遵循 MigrateFlatToLayered 的安全边界）：
+//	 1. 扫描三个桶 + 平铺根下所有 session-*.json，按 id 分组。
+//	 2. 损坏会话（无法 JSON 解析）原地保留，绝不搬动/隔离（与 flat 迁移一致）。
+//	 3. 每组取 Updated 最新者为 winner；其内容决定目标桶 cb=sessionBucketFor(winner)。
+//	 4. 先把该组所有候选文件备份到 .integrity/session-bucket-backup-<ts>/<data 相对路径>/。
+//	 5. 把 winner 字节写入 cb（已存在且哈希一致则跳过；不一致则覆盖，旧字节已备份）。
+//	 6. 把所有“不在 cb”的候选文件移入 .quarantine/session-bucket-<ts>/<data 相对路径>/（不删除）。
+//	 7. 写 .integrity/session-bucket-migration.json 记录备份/隔离/新增/覆盖清单，供回滚。
+//
+// 幂等：所有会话已在正确桶、无重复、无根残留时直接 no-op（不建备份目录）。
+// 回滚：RollbackSessionBucketMigration 按记录把隔离文件移回原位、删除新增、还原被覆盖内容。
+
+// sessionRebalanceState 会话桶归位迁移的结果标记（可回滚）。
+type sessionRebalanceState struct {
+	Stage         string   `json:"stage"` // done | rolled-back
+	RebalancedAt  string   `json:"rebatedAt,omitempty"`
+	BackupDir     string   `json:"backupDir,omitempty"`
+	QuarantineDir string   `json:"quarantineDir,omitempty"`
+	// Moved 被迁出原位置的文件清单，元素为相对 data 根的路径（如
+	// "sessions/archived/session-x.json" 或平铺根 "session-x.json"）。回滚时从隔离区原样移回。
+	Moved []string `json:"moved,omitempty"`
+	// Added 迁移在目标桶新建的文件清单（相对 data 根）。回滚时删除。
+	Added []string `json:"added,omitempty"`
+	// Overwritten 迁移覆盖过的目标桶文件清单（相对 data 根）。回滚时从备份还原旧字节。
+	Overwritten []string `json:"overwritten,omitempty"`
+}
+
+// sessionRebalanceStatePath 归位迁移标记：.integrity/session-bucket-migration.json。
+func sessionRebalanceStatePath(data string) string {
+	return filepath.Join(IntegrityDir(data), "session-bucket-migration.json")
+}
+
+// sessionCand 一个候选会话文件及其解析结果。
+type sessionCand struct {
+	abs  string // 绝对路径
+	rel  string // 相对 data 根的路径（备份/隔离/回滚都以此为准）
+	raw  []byte // 文件字节
+	sess *Session
+	hash string
+}
+
+// rebalanceSessionBuckets 启动时把错位/重复/平铺残留的会话文件归位到唯一正确的桶。
+// 幂等、可重入、可回滚；损坏会话原地保留，绝不丢数据。
+func rebalanceSessionBuckets(data string) error {
+	cands, err := scanSessionCandidates(data)
+	if err != nil {
+		return err
+	}
+
+	// 按 id 分组（保持发现顺序，结果确定性）。
+	groups := map[string][]sessionCand{}
+	var order []string
+	for _, c := range cands {
+		id := sessionIDFromName(filepath.Base(c.abs))
+		if _, ok := groups[id]; !ok {
+			order = append(order, id)
+		}
+		groups[id] = append(groups[id], c)
+	}
+
+	type plan struct {
+		id      string
+		winner  sessionCand
+		members []sessionCand // 所有可解析候选
+		cb      string
+	}
+	var plans []plan
+	for _, id := range order {
+		members := groups[id]
+		if len(members) == 0 {
+			continue // 全损坏/不可读：原地不动
+		}
+		winner := pickSessionWinner(members)
+		cb := sessionBucketFor(winner.sess)
+		canonicalRel := filepath.ToSlash(filepath.Join(sessionsDirName, cb, "session-"+id+".json"))
+		// 快路径：仅一份且已在正确桶 → 无需处理。
+		if len(members) == 1 && filepath.ToSlash(members[0].rel) == canonicalRel {
+			continue
+		}
+		plans = append(plans, plan{id: id, winner: winner, members: members, cb: cb})
+	}
+
+	if len(plans) == 0 {
+		return nil // 已收敛：幂等 no-op，不建备份目录
+	}
+
+	if err := EnsureDirs(data); err != nil {
+		return fmt.Errorf("会话归位：建立目录失败: %w", err)
+	}
+	ts := time.Now().UTC().Format("20060102T150405")
+	backupDir := filepath.Join(IntegrityDir(data), "session-bucket-backup-"+ts)
+	quarantineDir := filepath.Join(QuarantineDir(data), "session-bucket-"+ts)
+	if err := os.MkdirAll(backupDir, 0700); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(quarantineDir, 0700); err != nil {
+		return err
+	}
+
+	st := sessionRebalanceState{Stage: "done", RebalancedAt: time.Now().UTC().Format(time.RFC3339), BackupDir: backupDir, QuarantineDir: quarantineDir}
+
+	for _, pl := range plans {
+		canonicalRel := filepath.ToSlash(filepath.Join(sessionsDirName, pl.cb, "session-"+pl.id+".json"))
+		canonicalAbs := filepath.Join(data, filepath.FromSlash(canonicalRel))
+
+		// 1) 备份该组所有候选（保留原始相对路径）。
+		for _, m := range pl.members {
+			dst := filepath.Join(backupDir, filepath.FromSlash(filepath.ToSlash(m.rel)))
+			if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
+				return err
+			}
+			if err := os.WriteFile(dst, m.raw, 0600); err != nil {
+				return err
+			}
+		}
+
+		// 2) 把 winner 字节落到 canonical（已存在且哈希一致则跳过）。
+		existing, err := os.ReadFile(canonicalAbs)
+		canonicalExisted := err == nil
+		canonicalOK := false
+		if canonicalExisted {
+			sum := sha256.Sum256(existing)
+			canonicalOK = hex.EncodeToString(sum[:]) == pl.winner.hash
+		}
+		if !canonicalOK {
+			if err := os.MkdirAll(filepath.Dir(canonicalAbs), 0700); err != nil {
+				return err
+			}
+			if err := os.WriteFile(canonicalAbs, pl.winner.raw, 0600); err != nil {
+				return err
+			}
+			// 校验落盘哈希
+			if b, err := os.ReadFile(canonicalAbs); err != nil {
+				return err
+			} else if sum := sha256.Sum256(b); hex.EncodeToString(sum[:]) != pl.winner.hash {
+				return fmt.Errorf("会话归位：落盘校验失败 %s", canonicalRel)
+			}
+			if canonicalExisted {
+				st.Overwritten = append(st.Overwritten, canonicalRel)
+			} else {
+				st.Added = append(st.Added, canonicalRel)
+			}
+		}
+
+		// 3) 把所有不在 canonical 的候选移入隔离区（不删除，可回滚）。
+		for _, m := range pl.members {
+			if filepath.ToSlash(m.rel) == canonicalRel {
+				continue
+			}
+			dst := filepath.Join(quarantineDir, filepath.FromSlash(filepath.ToSlash(m.rel)))
+			if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
+				return err
+			}
+			if err := moveToQuarantine(m.abs, dst); err != nil {
+				return fmt.Errorf("会话归位：隔离 %s 失败: %w", m.rel, err)
+			}
+			st.Moved = append(st.Moved, filepath.ToSlash(m.rel))
+		}
+	}
+
+	sort.Strings(st.Moved)
+	sort.Strings(st.Added)
+	sort.Strings(st.Overwritten)
+	if b, err := json.MarshalIndent(st, "", "  "); err == nil {
+		_ = os.WriteFile(sessionRebalanceStatePath(data), b, 0600)
+	}
+	log.Printf("会话桶归位完成：%d 个会话归位（隔离 %d，备份 %s）", len(plans), len(st.Moved), backupDir)
+	return nil
+}
+
+// scanSessionCandidates 收集所有需要归位检查的会话文件：三个桶 + 平铺根残留。
+// 无法读取/解析的文件不会进入返回值（原地保留，由完整性巡检报告）。
+func scanSessionCandidates(data string) ([]sessionCand, error) {
+	var out []sessionCand
+	add := func(abs string) {
+		b, err := os.ReadFile(abs)
+		if err != nil {
+			return
+		}
+		var s Session
+		if json.Unmarshal(b, &s) != nil {
+			return // 损坏：不纳入迁移
+		}
+		sum := sha256.Sum256(b)
+		rel, err := filepath.Rel(data, abs)
+		if err != nil {
+			return
+		}
+		out = append(out, sessionCand{abs: abs, rel: rel, raw: b, sess: &s, hash: hex.EncodeToString(sum[:])})
+	}
+	for _, d := range sessionBucketDirs(data) {
+		ents, err := filepath.Glob(filepath.Join(d, "session-*.json"))
+		if err != nil {
+			return nil, err
+		}
+		for _, e := range ents {
+			add(e)
+		}
+	}
+	// 平铺根残留（旧版本/未完成迁移）
+	if ents, err := filepath.Glob(filepath.Join(data, "session-*.json")); err == nil {
+		for _, e := range ents {
+			add(e)
+		}
+	}
+	return out, nil
+}
+
+// pickSessionWinner 同 id 多副本时，取 Updated 最新者（回退 Created，再回退路径字典序）。
+func pickSessionWinner(members []sessionCand) sessionCand {
+	best := members[0]
+	for _, m := range members[1:] {
+		if compareSessionCand(m, best) {
+			best = m
+		}
+	}
+	return best
+}
+
+// compareSessionCand 返回 a 是否“更新于” b。
+func compareSessionCand(a, b sessionCand) bool {
+	if ua, ub := a.sess.Updated, b.sess.Updated; ua != ub {
+		return ua > ub
+	}
+	if ca, cb := a.sess.Created, b.sess.Created; ca != cb {
+		return ca > cb
+	}
+	return a.rel > b.rel
+}
+
+// RollbackSessionBucketMigration 回滚会话桶归位迁移：
+// 隔离文件移回原位置、删除新增、从备份还原被覆盖内容。幂等：非 done 状态直接返回。
+func RollbackSessionBucketMigration(data string) error {
+	b, err := os.ReadFile(sessionRebalanceStatePath(data))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	var st sessionRebalanceState
+	if json.Unmarshal(b, &st) != nil {
+		return fmt.Errorf("会话归位：状态文件损坏，拒绝回滚")
+	}
+	if st.Stage != "done" {
+		return nil // 已回滚或无记录
+	}
+
+	// 1) 隔离文件移回原位置
+	for _, rel := range st.Moved {
+		src := filepath.Join(st.QuarantineDir, filepath.FromSlash(rel))
+		dst := filepath.Join(data, filepath.FromSlash(rel))
+		if _, err := os.Stat(src); err != nil {
+			continue // 已不在隔离区（可能被人工处理），跳过不阻断
+		}
+		if err := os.MkdirAll(filepath.Dir(dst), 0700); err != nil {
+			return err
+		}
+		if err := moveToQuarantine(src, dst); err != nil {
+			return fmt.Errorf("回滚：恢复 %s 失败: %w", rel, err)
+		}
+	}
+	// 2) 删除迁移新建的目标桶文件
+	for _, rel := range st.Added {
+		if err := os.Remove(filepath.Join(data, filepath.FromSlash(rel))); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+	// 3) 从备份还原被覆盖的目标桶文件
+	for _, rel := range st.Overwritten {
+		bak, err := os.ReadFile(filepath.Join(st.BackupDir, filepath.FromSlash(rel)))
+		if err != nil {
+			return err
+		}
+		if err := os.WriteFile(filepath.Join(data, filepath.FromSlash(rel)), bak, 0600); err != nil {
+			return err
+		}
+	}
+	st.Stage = "rolled-back"
+	st.Moved = nil
+	st.Added = nil
+	st.Overwritten = nil
+	if nb, err := json.MarshalIndent(st, "", "  "); err == nil {
+		_ = os.WriteFile(sessionRebalanceStatePath(data), nb, 0600)
+	}
+	log.Printf("会话桶归位已回滚：%d 个文件恢复原位", len(st.Moved)+len(st.Added)+len(st.Overwritten))
+	return nil
+}

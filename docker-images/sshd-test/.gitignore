@@ -1,0 +1,3 @@
+# Ephemeral runtime artifacts: generated keys and captured e2e evidence.
+# No secrets are committed; keys live only under mktemp -d and are wiped on exit.
+evidence/
