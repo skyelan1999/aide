@@ -757,6 +757,14 @@ body.file-view-mode .file-view-preview.file-view-immersive iframe{flex:1;width:1
 .narration-highlight{box-shadow:0 0 0 2px rgba(15,98,254,.55),0 10px 28px rgba(15,98,254,.13);border-radius:12px;transition:box-shadow .3s ease}
 
 .file-item.selected{background:rgba(15,98,254,.1)}
+.file-transfer-dialog{width:min(480px,92vw)}
+.file-transfer-source{width:100%;padding:9px;margin:8px 0 13px;background:var(--field);color:var(--text);border:1px solid var(--field-border);border-radius:7px}
+.file-transfer-breadcrumb{font:11px ui-monospace,monospace;color:var(--text-note);overflow-wrap:anywhere;margin-bottom:9px}
+.file-transfer-dirs{height:min(42vh,340px);overflow:auto;border:1px solid var(--line);border-radius:7px;padding:5px}
+.file-transfer-dir{display:block;width:100%;text-align:left;padding:9px 10px;border-radius:5px;color:var(--text-file);font-size:12px}
+.file-transfer-dir:hover{background:var(--selected-alt)}
+.file-transfer-error{color:var(--warn);min-height:1.5em}
+.file-transfer-footer{display:flex;justify-content:flex-end;gap:9px;margin-top:10px}
 .file-item.selected .file-name{color:var(--brand)}
 .file-filter{padding:8px 12px 12px;border-bottom:1px solid var(--line-faint)}
 .file-search-box{display:flex;align-items:center;gap:3px;padding:3px 5px 3px 0;border:1px solid var(--line);border-radius:9px;background:var(--surface);min-width:0}
@@ -943,6 +951,14 @@ dialog.master-auth{width:min(380px,90vw)}
 .assistant-entry.active{background:color-mix(in srgb,var(--accent) 25%,var(--surface));color:var(--brand-text);box-shadow:inset 3px 0 0 var(--accent);border-radius:0}
 .assistant-entry-icon{display:inline-flex;width:1.5em;height:1.5em;align-items:center;justify-content:center;flex:0 0 1.5em;color:var(--accent)}
 .assistant-entry.active .assistant-entry-icon{color:var(--accent)}
+.assistant-mode #trajectory-toggle:disabled,.assistant-mode .mode-switch button:disabled,.assistant-mode #queue-toggle:disabled{opacity:.35;color:var(--muted);background:transparent;cursor:not-allowed}
+.assistant-mode #trajectory-toggle:disabled:hover,.assistant-mode .mode-switch button:disabled:hover,.assistant-mode #queue-toggle:disabled:hover{background:transparent;color:var(--muted)}
+.session-item.loading::after,.assistant-entry.loading::after{content:"";width:10px;height:10px;flex:0 0 10px;margin-left:auto;border:2px solid var(--line-mid);border-top-color:var(--brand);border-radius:50%;animation:click-pending-spin .7s linear infinite}
+.conversation.session-switching{opacity:.55;pointer-events:none}
+#send.submitting,#send.submitting:hover{position:relative;background:var(--brand-hi);color:transparent!important;opacity:1}
+#send.submitting::after{content:"";position:absolute;left:50%;top:50%;width:13px;height:13px;margin:-8px;border:2px solid color-mix(in srgb,var(--on-brand) 35%,transparent);border-top-color:var(--on-brand);border-radius:50%;animation:click-pending-spin .7s linear infinite}
+@keyframes click-pending-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.session-item.loading::after,.assistant-entry.loading::after,#send.submitting::after{animation:none}}
 .assistant-entry-icon svg{width:1.35em;height:1.35em}
 .assistant-entry-name{flex:1;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
 .assistant-entry-dot{width:7px;height:7px;border-radius:50%;background:var(--line-mid);flex:0 0 7px}
@@ -975,6 +991,7 @@ dialog.master-auth{width:min(380px,90vw)}
 .comment-card.stale{border-style:dashed}
 .cc-text{font-size:12px;line-height:1.6;color:var(--text)}
 .cc-meta{font-size:10px;color:var(--muted);margin-top:6px}
+.cc-actions{display:flex;gap:6px;margin-top:8px}
 .docx-loading{padding:40px;text-align:center;color:var(--text-dim)}
 /* #62扩展: assistant messages timeline */
 .assistant-msg{display:flex;gap:10px;padding:10px 14px;margin:6px 0;border-radius:8px;align-items:flex-start}
@@ -1041,3 +1058,17 @@ textarea#editor,textarea#file-view-editor{position:relative}
 .sqlite-table td{padding:8px 12px;border-bottom:1px solid var(--border)}
 .sqlite-null{color:var(--text-secondary)}
 .sqlite-error{padding:24px;color:#e53e3e}
+/* Office XLSX grid: bounded viewport, accessible cell focus, local/SSH identical. */
+.xlsx-viewer { display:flex; flex-direction:column; width:100%; height:100%; min-height:320px; overflow:hidden; }
+.xlsx-toolbar { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line); flex-wrap:wrap; }
+.xlsx-toolbar select { min-width:140px; max-width:240px; }
+.xlsx-toolbar .primary { margin-left:auto; }
+.xlsx-position { color:var(--muted); font-size:12px; }
+.xlsx-grid { flex:1; overflow:auto; min-height:0; }
+.xlsx-table { border-collapse:separate; border-spacing:0; width:max-content; min-width:100%; font-size:13px; }
+.xlsx-table th, .xlsx-table td { border-right:1px solid var(--line); border-bottom:1px solid var(--line); padding:0; min-width:112px; height:32px; }
+.xlsx-table th { position:sticky; top:0; z-index:2; background:var(--surface); color:var(--muted); text-align:center; min-width:48px; }
+.xlsx-table tr th:first-child { position:sticky; left:0; z-index:3; }
+.xlsx-table td input { width:100%; height:31px; border:0; background:transparent; color:var(--text); padding:4px 7px; font:inherit; box-sizing:border-box; }
+.xlsx-table td input:focus { outline:2px solid var(--brand); outline-offset:-2px; background:var(--surface); }
+.xlsx-table td input:read-only { cursor:default; }

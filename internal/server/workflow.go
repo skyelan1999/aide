@@ -119,8 +119,8 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "read_file", "description": "读取工作目录内文本文件内容（UTF-8）。默认返回全文（受上下文大小自动截断）；对大文件用 offset(0 起始行号)/limit(行数) 分段读取，逐段翻页，避免一次读入超大文件。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Optional reference source ID from list_sources; omitted means workspace"}, "path": map[string]any{"type": "string", "description": "相对路径"}, "offset": map[string]any{"type": "integer", "description": "可选：起始行号（0 起始），仅本地工作区文件支持"}, "limit": map[string]any{"type": "integer", "description": "可选：最多返回行数，仅本地工作区文件支持"}}, "required": []string{"path"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "mcp_call", "description": "Call one discovered read-only MCP tool from a reference source. First call list_sources. Never use this for a tool not marked readOnly.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"source": map[string]any{"type": "string", "description": "Enabled MCP reference source ID from list_sources"}, "tool": map[string]any{"type": "string", "description": "Discovered MCP tool name marked readOnly"}, "arguments": map[string]any{"type": "object", "description": "Arguments accepted by that MCP tool"}}, "required": []string{"source", "tool"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_structure", "description": "读取 .docx 的结构（标题层级/段落前50字/表格行列数/原生批注数）。处理 Word 文档时先调用本工具了解结构，再用 docx_list_comments 读批注。仅支持本地工作区的 .docx。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string", "description": "工作区相对路径，如 方案.docx"}}, "required": []string{"path"}}}},
-	map[string]any{"type": "function", "function": map[string]any{"name": "docx_list_comments", "description": "列出 .docx 文件内的原生 Word 批注（作者/时间/正文）。先 docx_structure 了解文档，再读批注。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}}, "required": []string{"path"}}}},
-	map[string]any{"type": "function", "function": map[string]any{"name": "docx_add_comment", "description": "给 .docx 添加原生 Word 批注：把 quote（原文片段）所在段落锚定批注。修改文档后建议用 docx_list_comments 复核、用 docx_resolve_comment 标记解决。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "quote": map[string]any{"type": "string", "description": "文档中已存在的原文片段"}, "text": map[string]any{"type": "string", "description": "批注内容"}, "author": map[string]any{"type": "string", "description": "可选，默认 aide"}, "anchorIndex": map[string]any{"type": "integer", "description": "可选：quote 第几次出现（0 起始），默认 0"}}, "required": []string{"path", "quote", "text"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "docx_list_comments", "description": "列出 .docx 文件内的原生 Word 批注及精确锚点；支持本地和 SSH 工作区。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}}, "required": []string{"path"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "docx_add_comment", "description": "给 .docx 精确选中的 quote 原文添加原生 Word 批注；支持本地和 SSH 工作区。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "quote": map[string]any{"type": "string", "description": "文档中已存在的原文片段"}, "text": map[string]any{"type": "string", "description": "批注内容"}, "author": map[string]any{"type": "string", "description": "可选，默认 aide"}, "anchorIndex": map[string]any{"type": "integer", "description": "可选：quote 第几次出现（0 起始），默认 0"}}, "required": []string{"path", "quote", "text"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "docx_resolve_comment", "description": "把 .docx 的原生批注标记为已解决（Word 2016+ commentsExtended 格式）。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "id": map[string]any{"type": "string", "description": "批注 id（docx_list_comments 返回的 id）"}}, "required": []string{"path", "id"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "write_file", "description": "生成文件修改提案（不直接写入；需用户批准应用）", "parameters": map[string]any{"type": "object", "properties": map[string]any{"path": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}}, "required": []string{"path", "content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "run_shell", "description": "Execute a shell command in the sandbox and return its stdout/stderr/exit code", "parameters": map[string]any{"type": "object", "properties": map[string]any{"command": map[string]any{"type": "string"}}, "required": []string{"command"}}}},
@@ -996,9 +996,17 @@ func emptyNudgePrompt(attempt int) string {
 	return "【系统提示】你刚刚这一轮没有返回任何正文，也没有继续调用工具。请基于上面已经完成的所有工具调用结果，直接给用户最终结论或产出；不要再做无关的环境探测。如果任务确实受环境限制无法完成，请如实说明卡在哪一步、建议用户怎么做。"
 }
 
-// 单个步骤内的工具调用预算。ToolMaxRounds 限制模型往返次数，但单次响应可以携带
-// 多个调用；没有这个上限，远程 SSH 工作区会在网络异常或模型重复探测时看似“挂死”。
-const maxToolCallsPerStep = 24
+// 单轮响应可能含多个工具调用；按配置的轮数推导总调用预算，避免固定 24 次
+// 把正常的远程排查误判成 SSH 挂死，同时防止单次响应无限派发。
+func maxToolCallsForRounds(rounds int) int {
+	if rounds < 1 {
+		rounds = 60
+	}
+	if rounds*4 < 64 {
+		return 64
+	}
+	return rounds * 4
+}
 
 // toolLoop 与模型交互并执行工具调用（≤10 轮）；写操作只生成提案（P2/P3 原则保留）。
 // 返回最终答复与该步骤的完整对话链（含工具调用与原始结果，R05 证据链跨步骤保留）。
@@ -1016,6 +1024,8 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 	}
 	consecutiveFail := map[string]int{} // 工具名 → 连续失败次数
 	toolCallsUsed := 0
+	maxToolCalls := maxToolCallsForRounds(maxRounds)
+	repeatedCallResults := map[string]int{}
 	var lastOut string
 	emptyFallback := 0 // d 类空响应自动续接计数（成功一轮即重置）
 	for round := 0; round < maxRounds; round++ {
@@ -1149,12 +1159,15 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			return out, input, nil
 		}
 		input = append(input, Message{Role: "assistant", Content: out, ToolCalls: calls})
-		for _, call := range calls {
-			if toolCallsUsed >= maxToolCallsPerStep {
-				msg := fmt.Sprintf("本步骤已执行 %d 次工具调用，为避免持续占用远程 SSH 连接，已自动停止。请缩小排查范围或检查远端命令后重试。", maxToolCallsPerStep)
-				a.publishStream(task.ID, streamEvent{Event: "note", Text: msg, Round: round})
-				return msg, input, errors.New(msg)
+		if toolCallsUsed+len(calls) > maxToolCalls {
+			msg := fmt.Sprintf("本步骤工具调用预算已达 %d 次（依据工具轮数 %d 推导），后续调用未执行。请点击「继续」基于已有结果总结，或调整工具轮数后重试。", maxToolCalls, maxRounds)
+			for _, call := range calls {
+				input = append(input, Message{Role: "tool", ToolCallID: call.ID, Content: "未执行：" + msg})
 			}
+			a.publishStream(task.ID, streamEvent{Event: "note", Text: msg, Round: round})
+			return msg, input, nil
+		}
+		for callIndex, call := range calls {
 			toolCallsUsed++
 			// 行动意图透明：执行前先推送「准备调用什么工具 + 具体参数/命令」
 			a.publishStream(task.ID, streamEvent{Event: "intent", Tool: call.Function.Name, Args: summarizeToolArgs(call.Function.Arguments), CallID: call.ID, Round: round})
@@ -1174,6 +1187,12 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			}(call.ID, call.Function.Name)
 			result := a.executeToolCall(ctx, call, task, versions)
 			close(hbStop)
+			signature := call.Function.Name + "\x00" + call.Function.Arguments + "\x00" + result
+			repeatedCallResults[signature]++
+			repeats := repeatedCallResults[signature]
+			if repeats >= 3 {
+				result += fmt.Sprintf("\n\n[系统提示] 相同工具、参数和结果已出现 %d 次；请停止原样重试，复用当前结果，换一种排查方法或向用户说明阻碍。", repeats)
+			}
 			// 失败反馈循环：检测工具是否返回错误结果，连续失败时注入明确提示
 			isErr := strings.Contains(result, "⚠ 命令执行失败") ||
 				strings.HasPrefix(result, "权限策略拦截") ||
@@ -1217,6 +1236,14 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			task.ToolUses = append(task.ToolUses, tu)
 			a.mu.Unlock()
 			a.publishStream(task.ID, streamEvent{Event: "tool", Tool: call.Function.Name, Preview: display, CallID: call.ID, OK: !isErr})
+			if repeats >= 8 {
+				msg := "同一工具调用的参数与结果已重复 8 次，本步骤已暂停重复探测；请点击「继续」换一种方法，或核查远端路径与命令。"
+				for _, skipped := range calls[callIndex+1:] {
+					input = append(input, Message{Role: "tool", ToolCallID: skipped.ID, Content: "未执行：" + msg})
+				}
+				a.publishStream(task.ID, streamEvent{Event: "note", Text: msg, Round: round})
+				return msg, input, nil
+			}
 		}
 		a.mu.Lock()
 		task.Steps[stepIndex].Content = "工具调用中：" + strings.Join(toolCallNames(calls), ", ")
@@ -2899,9 +2926,29 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		if p == "" {
 			return "缺少 path 参数"
 		}
-		// Office 文件用 python 解析成文本
-		if strings.HasSuffix(p, ".docx") || strings.HasSuffix(p, ".xlsx") || strings.HasSuffix(p, ".pptx") {
-			return a.readOfficeFile(wsRoot.Name(), p)
+		// Office 文件经当前任务绑定的工作区或引用读取原始字节，再在隔离临时文件中提取文本。
+		ext := strings.ToLower(path.Ext(p))
+		if ext == ".docx" || ext == ".xlsx" || ext == ".pptx" {
+			if err := safePath(p); err != nil {
+				return "路径无效: " + err.Error()
+			}
+			var raw []byte
+			var err error
+			if sourceID != "" {
+				raw, err = a.readSourceRaw(source, p)
+			} else if mode == "ssh" {
+				raw, err = a.sftpRead(pathJoinRemote(remotePath, p))
+			} else {
+				raw, err = readRawBytes(wsRoot, p)
+			}
+			if err != nil {
+				return "读取失败: " + err.Error()
+			}
+			out, err := officeExtractText(raw, ext)
+			if err != nil {
+				return "Office 文件解析失败: " + err.Error()
+			}
+			return out
 		}
 		// 本地工作区大文件分段：offset(行,0起)/limit(行数) 流式只读窗口，不全量入上下文
 		if sourceID == "" && mode != "ssh" {
@@ -2938,11 +2985,26 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	case "docx_structure":
 		return a.docxTool(wsRoot, mode, str("path"), "docx_structure.py")
 	case "docx_list_comments":
-		return a.docxTool(wsRoot, mode, str("path"), "docx_list_comments.py")
+		return a.officeCommentTool(wsRoot, mode, remotePath, str("path"), "list", map[string]any{})
 	case "docx_add_comment":
-		return a.docxTool(wsRoot, mode, str("path"), "docx_add_comment.py", str("quote"), str("text"), str("author"), fmt.Sprint(toolInt("anchorIndex")))
+		return a.officeCommentTool(wsRoot, mode, remotePath, str("path"), "add", map[string]any{"quote": str("quote"), "text": str("text"), "author": str("author"), "anchorIndex": toolInt("anchorIndex")})
 	case "docx_resolve_comment":
 		return a.docxTool(wsRoot, mode, str("path"), "docx_resolve_comment.py", str("id"))
+	case "office_create":
+		if a.pluginOwnerOf("office_create") != "office" {
+			return "Office 插件未启用，无法生成文件"
+		}
+		return a.officeCreateTool(wsRoot, mode, remotePath, str("path"), str("format"), args["content"])
+	case "office_comments":
+		if a.pluginOwnerOf("office_comments") != "office" {
+			return "Office 插件未启用"
+		}
+		return a.officeCommentTool(wsRoot, mode, remotePath, str("path"), "list", map[string]any{})
+	case "office_comment_edit":
+		if a.pluginOwnerOf("office_comment_edit") != "office" {
+			return "Office 插件未启用"
+		}
+		return a.officeCommentTool(wsRoot, mode, remotePath, str("path"), "edit", map[string]any{"id": args["id"], "expectedText": str("expectedText"), "newText": str("newText")})
 	case "write_file":
 		pathStr, content := str("path"), rawStr("content")
 		msg, err := a.recordToolProposal(task, versions, map[string]any{"type": "file", "path": pathStr, "content": content})
@@ -3366,8 +3428,11 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 		return errors.New("该会话正在压缩，请稍后重试")
 	}
 	a.compactingSessions[sessionID] = true
-	// Reserve room for the new prompt, system instructions, compacted summary, and protocol overhead.
-	keepBudget := (a.modelWindow(cfg.Model) - outputReserve - 4096) * contextBytesPerToken
+	// Leave headroom for the new prompt, system/tool schemas, compacted summary,
+	// and estimation error. A 4096-token allowance was too tight for a 16k
+	// window with an 8192-token output reserve: the first compacted retry could
+	// still exceed the limit by a few tokens even with old history available.
+	keepBudget := (a.modelWindow(cfg.Model) - outputReserve - 6144) * contextBytesPerToken
 	if keepBudget > compactKeepBytes {
 		keepBudget = compactKeepBytes
 	}

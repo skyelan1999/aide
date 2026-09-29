@@ -112,10 +112,10 @@
 ### 6.1 后端门禁（golang:1.26-bookworm 容器，离线 vendor）
 - `go vet ./...` → **退出码 0**；`go build ./...` → **退出码 0**。
 - `go test -race ./...` → **0 个 DATA RACE、0 个 panic**（race 包退出码 1 仅因容器内缺 node 的插件/daemon 用例，见第 7 节）。
-- 日志：[`evidence/final-race.log`](./evidence/final-race.log)、[`evidence/baseline-vet-build-test.log`](./evidence/baseline-vet-build-test.log)、各模块 [`evidence/fix-*.log`](./evidence/)。
+- 当时的运行日志名为 `evidence/final-race.log`、`evidence/baseline-vet-build-test.log`；这两个原始日志未随当前仓库归档，不能作为当前可点击证据。已归档的模块资料见 [`evidence/`](./evidence/)。
 
 ### 6.2 镜像重建
-- 共 5 次 `docker compose build && up -d`（[rebuild.log](./evidence/rebuild.log) ~ [rebuild5.log](./evidence/rebuild5.log)）；最终容器 `aide-aide-1` **healthy**，`GET /api/sessions` → **200**。
+- 当时共记录 5 次 `docker compose build && up -d`；原始 `rebuild.log` 至 `rebuild5.log` 未随当前仓库归档。历史记录称最终容器 `aide-aide-1` **healthy**，`GET /api/sessions` → **200**；这不代表当前版本的运行结果。
 - 前端资源缓存版本由 `?v=64` 升至 `?v=65`（仅资产缓存版本，非 version.md，未触发版本/tag 禁令）。
 
 ### 6.3 Playwright 全功能走查

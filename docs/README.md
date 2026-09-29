@@ -17,9 +17,11 @@
 | 看需求范围与实际状态 | [现行 PRD](PRD.md) |
 | 看实现、数据和接口 | [架构与 API](architecture.md) |
 | 写插件 | [插件协议 v1.1](plugin-protocol.md) |
+| 生成 Office 文件与编辑 XLSX | [Office 工具集](plugins/office.md) |
 | 让 AI 参与开发 | [统一 Agent 工作流](agent/WORKFLOW.md) · [客户端接入](agent/ADAPTERS.md) |
 | 看当前设计与验证边界 | [macOS UI](design/macos-ui.md) |
 | 看本次整理过程 | [文档核对报告](reviews/2026-09-23/documentation-review.md) |
+| 看当前整合与发布状态 | [2026-09-29 整合验收记录](reviews/2026-09-29-release-preparation.md) · [版本记录](../version.md) |
 
 ## 目录职责
 
@@ -55,4 +57,4 @@ docs/
 4. 发布以 version/tag/构建身份/部署记录共同确认，不能只看截图角落的版本。
 5. 文档改动后运行 `python3 scripts/check_docs.py`；有截图更新时，使用示例数据并说明是预览还是发布版本。
 
-当前版本 0.1.10.2 RC1；截图使用此前隔离预览。此处不把历史证据重新包装为当前测试结果。
+当前版本以根目录 [version.md](../version.md) 及对应 Git tag 为准；截图使用此前隔离预览，不把历史证据重新包装为当前测试结果。

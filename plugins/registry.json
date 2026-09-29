@@ -102,6 +102,16 @@
       "installedAt": "2026-09-25T20:45:00Z"
     },
     {
+      "id": "office",
+      "name": "Office 文档",
+      "description": "生成 DOCX/XLSX/PPTX，工作目录和引用中查看/编辑 XLSX",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-09-29T00:00:00Z"
+    },
+    {
       "id": "comm-tcp",
       "name": "TCP 通讯",
       "description": "常驻 TCP 通讯：监听/连接/收发、本地代理录制、规则模拟应答、录制回放与 fuzz；零第三方依赖，默认禁用，仅绑回环",

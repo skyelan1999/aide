@@ -88,10 +88,17 @@ func TestProjectAideMemoryFollowsWorkspace(t *testing.T) {
 		t.Fatalf("项目 A 记忆未落到 .cache/aide: %q %v", b, err)
 	}
 
-	secondProject := t.TempDir()
-	a.containerAbs = secondProject
+	// Switch through the real workspace configuration path: changing only
+	// containerAbs bypasses cacheContainer remapping and is not a user action.
+	secondProject := filepath.Join(a.workPath, "project-b")
+	if err := os.Mkdir(secondProject, 0755); err != nil {
+		t.Fatal(err)
+	}
+	a.wsConfig.Workspace.Path = "project-b"
+	if err := a.applyWorkspaceConfig(); err != nil {
+		t.Fatal(err)
+	}
 	secondDir := a.projectCacheDir()
-	a.voiceAgent.setAideMemoryPath(a.memoryPath())
 	if got := a.readMemory(); !strings.HasPrefix(got, "(") {
 		t.Fatalf("切换项目后不应读到项目 A 的记忆: %q", got)
 	}
@@ -125,7 +132,14 @@ func TestLegacyGlobalAideMemoryMigratesOnceToProjectCache(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(a.projectCacheDir(), "memory.md")); err != nil {
 		t.Fatalf("项目 .cache/aide/memory.md 不存在: %v", err)
 	}
-	a.containerAbs = t.TempDir()
+	secondProject := filepath.Join(a.workPath, "project-b")
+	if err := os.Mkdir(secondProject, 0755); err != nil {
+		t.Fatal(err)
+	}
+	a.wsConfig.Workspace.Path = "project-b"
+	if err := a.applyWorkspaceConfig(); err != nil {
+		t.Fatal(err)
+	}
 	if got := a.readMemory(); !strings.HasPrefix(got, "(") {
 		t.Fatalf("旧全局记忆不应自动复制到第二个项目: %q", got)
 	}

@@ -21,7 +21,7 @@
 
 - **会话 SM**：`summarizeTopic` 并发标题（workflow.go:430,310 `[测试]`）；`wrapSteer` 插话包装（:940）；排队/插话 queue_steer_test.go；取消保留流 stream_broker.go；配置备份 config_backup.go `[测试]`。
 - **工作区 WF**：files.go `PUT/GET /api/files`、`/api/file/raw`；office.go Office 解析；attachments.go 8/80KB `[测试]`；SSH/SFTP workspace_config.go + ssh_session.go。
-- **工具 TL**：builtinTools workflow.go:117-138（实际 22 个）；search_text required=["query"](:130)；web_search DDG+降级(:1999)；ask_user(:138,2878)。
+- **工具 TL**：builtinTools workflow.go:117-138（当时实际 22 个）；search_text 的 required 为 `query`（当时约第 130 行）；web_search DDG+降级（当时约第 1999 行）；ask_user（当时约第 138、2878 行）。
 - **模型 MD**：多模型/Profile profiles.go；MD-08 推理强度 provider.go:85-91 真实注入 thinking/reasoning_effort。
 - **权限 AU**：三级沙箱 SandboxMode；危险拦截 shellBlocked；60s/并发4/128KB command.go:134,127,35；ToolMaxRounds 默认60 server.go:146；锁屏 LockTimeoutSec+SHA-256 kdf.go。
 - **记忆性格 MM**：memory_access.go；persona.go AES-256-GCM；**MM-05 plugin_learning.go（见 §④）**。

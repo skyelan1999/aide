@@ -159,11 +159,10 @@ func TestDispatchToAideLockedCreatesSession(t *testing.T) {
 // 让上面引用的 httptest 包在未使用时不报错（保持与既有测试一致的 import 风格）。
 var _ = httptest.NewRecorder
 
-
-// TestAssistantMessageAgenticFallsBackToAnalyze 当 agentic 循环（带 tools 的请求）失败时，
-// 回落到既有 analyze 甄别管线（不带 tools 的请求），仍能产出 ask 且不派发。
-// 保留 analyze 能力不删的回归测试。
-func TestAssistantMessageAgenticFallsBackToAnalyze(t *testing.T) {
+// TestAssistantMessageAgenticFailureDispatchesTypedRequest: typed instructions
+// are never sent through the ambient-audio analyze filter after an agentic
+// failure. The original text must be preserved and dispatched exactly once.
+func TestAssistantMessageAgenticFailureDispatchesTypedRequest(t *testing.T) {
 	decision := `{"action":"ask","summarized":"","ask":"你想改哪个按钮？","mode":"queue","stop":false,"reason":"缺对象，需要追问"}`
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
@@ -195,11 +194,11 @@ func TestAssistantMessageAgenticFallsBackToAnalyze(t *testing.T) {
 	requireStatus(t, w, 200)
 	var body map[string]any
 	_ = json.Unmarshal(w.Body.Bytes(), &body)
-	if body["action"] != "ask" {
-		t.Fatalf("expected ask from analyze fallback, got %v", body)
+	if body["action"] != "send" || body["text"] != "帮我把那个按钮改一下" {
+		t.Fatalf("typed request was not preserved in fallback: %v", body)
 	}
-	if body["dispatched"] != nil {
-		t.Fatalf("ask must not dispatch, got %v", body["dispatched"])
+	if body["dispatched"] == nil {
+		t.Fatalf("typed request must dispatch after model failure: %v", body)
 	}
 }
 

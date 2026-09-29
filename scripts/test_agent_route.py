@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 spec = importlib.util.spec_from_file_location('route', Path(__file__).with_name('agent-route.py'))
 route = importlib.util.module_from_spec(spec)
@@ -13,6 +14,17 @@ CONFIG = json.loads((route.ROOT / 'docs/agent/router.json').read_text())
 
 
 class RouteTests(unittest.TestCase):
+    def test_explicit_interpreter_overrides(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            executable = Path(tmp) / 'bash.exe'
+            executable.write_bytes(b'fixture')
+            with mock.patch.dict('os.environ', {'AIDE_BASH': str(executable)}):
+                self.assertEqual(route.resolve_check_command(['bash', '-n', 'script.sh']), [str(executable), '-n', 'script.sh'])
+            with mock.patch.dict('os.environ', {'AIDE_BASH': str(executable) + '.missing'}):
+                with self.assertRaises(ValueError):
+                    route.resolve_check_command(['bash', '-n', 'script.sh'])
+        self.assertEqual(route.resolve_check_command(['git', 'status']), ['git', 'status'])
+
     def test_task_path_rejects_escape(self):
         for value in ('../outside', '/tmp/a', 'a/b', 'A B', ''):
             with self.assertRaises(ValueError): route.task_path(value)

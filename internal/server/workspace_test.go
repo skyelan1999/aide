@@ -160,6 +160,10 @@ exit 0
 batch=$(cat)
 printf '%s\n' "$batch" >> "`+sftpLog+`"
 case "$batch" in
+	*"ls -l "*"/srv/app/generated.docx"*)
+	    echo "Couldn't stat remote file: No such file" >&2
+	    exit 1
+	    ;;
 	*"ls -l"*"/srv/app/.cache"*)
 	    echo "Couldn't stat remote file: No such file" >&2
 	    exit 1
@@ -212,6 +216,14 @@ exit 0
 	}
 	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), "mkdir \"/srv/app/.cache\"") || !strings.Contains(string(b), "mkdir \"/srv/app/.cache/aide\"") {
 		t.Fatalf("sftp write must create parents: %s", string(b))
+	}
+	// Office 成品走相同 SFTP 原子上传通道，无需容器内映射远端目录。
+	created := a.officeCreateTool(a.workspace, "ssh", "/srv/app", "generated.docx", "docx", map[string]any{"title": "Remote"})
+	if !strings.Contains(created, "已生成") {
+		t.Fatalf("remote Office create: %s", created)
+	}
+	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), "/srv/app/generated.docx.aide-tmp") {
+		t.Fatalf("remote Office file was not uploaded: %s", string(b))
 	}
 	// Agent run_shell now shares the same remote SSH session and starts in the
 	// task's remote workspace, matching the command panel behavior.

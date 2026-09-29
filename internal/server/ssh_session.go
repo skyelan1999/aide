@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // 单 SSH 会话实现（FR-77 / LIM-28）：
@@ -242,6 +243,29 @@ func (a *App) sftpListRemote(remoteDir, relativePath string) ([]map[string]any, 
 	if err != nil {
 		return nil, err
 	}
+	return parseSFTPList(out, relativePath), nil
+}
+
+// OpenSSH sftp 在非交互 ls -l 中将非 ASCII UTF-8 字节打印为反斜杠八进制。
+// 必须按字节还原后再做路径校验，否则中文文件被 safePath 的反斜杠检查误丢弃。
+func decodeSFTPName(raw string) string {
+	var decoded []byte
+	for i := 0; i < len(raw); i++ {
+		if raw[i] == '\\' && i+3 < len(raw) && raw[i+1] >= '0' && raw[i+1] <= '7' && raw[i+2] >= '0' && raw[i+2] <= '7' && raw[i+3] >= '0' && raw[i+3] <= '7' {
+			n, _ := strconv.ParseUint(raw[i+1:i+4], 8, 8)
+			decoded = append(decoded, byte(n))
+			i += 3
+			continue
+		}
+		decoded = append(decoded, raw[i])
+	}
+	if !utf8.Valid(decoded) {
+		return ""
+	}
+	return string(decoded)
+}
+
+func parseSFTPList(out, relativePath string) []map[string]any {
 	items := []map[string]any{}
 	for _, line := range strings.Split(out, "\n") {
 		line = strings.TrimSpace(line)
@@ -252,9 +276,9 @@ func (a *App) sftpListRemote(remoteDir, relativePath string) ([]map[string]any, 
 		if len(fields) < 9 || (fields[0] != "-rw" && !strings.HasPrefix(fields[0], "drw") && fields[0][0] != 'd' && fields[0][0] != '-' && fields[0][0] != 'l') {
 			continue
 		}
-		name := strings.Join(fields[8:], " ")
+		name := decodeSFTPName(strings.Join(fields[8:], " "))
 		dir := fields[0][0] == 'd'
-		if name == "." || name == ".." || safePath(name) != nil {
+		if name == "" || name == "." || name == ".." || strings.Contains(name, "/") || strings.ContainsAny(name, "\x00\r\n\t") || safePath(name) != nil {
 			continue
 		}
 		size, _ := strconv.ParseInt(fields[4], 10, 64)
@@ -263,7 +287,7 @@ func (a *App) sftpListRemote(remoteDir, relativePath string) ([]map[string]any, 
 			break
 		}
 	}
-	return items, nil
+	return items
 }
 
 func (a *App) sftpRead(remoteFile string) ([]byte, error) {
@@ -521,8 +545,8 @@ func (a *App) sftpListSource(src Source, p string) ([]map[string]any, error) {
 		if len(fields) < 9 || (fields[0][0] != 'd' && fields[0][0] != '-' && fields[0][0] != 'l') {
 			continue
 		}
-		name := strings.Join(fields[8:], " ")
-		if fields[0][0] == 'l' || name == "." || name == ".." || safePath(name) != nil {
+		name := decodeSFTPName(strings.Join(fields[8:], " "))
+		if fields[0][0] == 'l' || name == "" || name == "." || name == ".." || strings.Contains(name, "/") || strings.ContainsAny(name, "\x00\r\n\t") || safePath(name) != nil {
 			continue
 		}
 		items = append(items, map[string]any{"name": name, "path": path.Join(p, name), "dir": fields[0][0] == 'd'})

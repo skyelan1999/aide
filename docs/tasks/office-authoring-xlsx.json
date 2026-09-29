@@ -1,0 +1,32 @@
+{
+  "id": "office-authoring-xlsx",
+  "request": "给aide做一套office插件，现在aide反馈无法直接生成docx之类的东西，然后我们还需要在工作目录和引用中支持xlsx的显示和修改",
+  "baseline": "a93daa0dc03089234bdd3b31af85ac58fa20a7d5",
+  "initial_status": "git status --short --branch: clean on codex/consolidate-workspace-20260929",
+  "acceptance": [
+    "aide 可用结构化工具生成有效的 DOCX、XLSX、PPTX 文件，支持本地与 SSH 工作区，不覆盖已有文件",
+    "工作目录中的 XLSX 可查看工作表和单元格，可编辑并保存，保留未改动的工作簿内容",
+    "引用中的 XLSX 可查看；仅读写来源可保存，只读来源拒绝修改",
+    "保存有工作区身份和内容哈希冲突检查；错误给出明确提示",
+    "相关后端、脚本、前端测试及浏览器交互得到实际验证"
+  ],
+  "scope": [
+    "internal/server Office 工具、API、工作区和引用文件读写",
+    "plugins/office 和插件注册表",
+    "scripts/office 结构化生成与 XLSX 读写脚本",
+    "internal/server/web 文件查看器和样式",
+    "相关测试、Office 使用文档与任务账本"
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "按用户原话覆盖 Office 生成和 XLSX 工作目录/引用编辑；Office 生成支持 DOCX/XLSX/PPTX，XLSX 修改限定单元格值与公式，不承诺复杂排版/宏往返", "evidence": ["用户当前请求", "docs/architecture/office-viewer.md", "docs/tasks/63.json"]},
+    "design": {"status": "pass", "summary": "复用既有 Python Office 库；Go 负责路径/权限/哈希与本地或 SFTP 落盘，脚本只处理临时字节；前端按窗口分页渲染，引用沿用 RW 标记。旧文件不覆盖，编辑冲突返回 409；回滚为撤销本任务源码，生成文件不自动删除。", "evidence": ["internal/server/office_artifact.go", "scripts/office/office_artifact.py", "docs/plugins/office.md"]},
+    "implementation": {"status": "pass", "summary": "新增可在插件面板登记的 office_create 工具（原生工作区执行器）、XLSX 查看/编辑 API 与前端网格；read_file 支持 SSH/引用 Office；SFTP 中文名八进制解码修复。未替换 8097 生产服务。", "evidence": ["plugins/office/index.js", "plugins/registry.json", "internal/server/office_artifact.go", "internal/server/workflow.go", "internal/server/web/app.js", "internal/server/ssh_session.go"]},
+    "verification": {"status": "blocked", "summary": "Office 与 SFTP 定向 Go 回归、Go vet、插件宿主登记、JS 语法与本地化、Python 编译通过。全量 server 测试 244.495 秒后仍为基线已记录的同四项失败；插件收口后单独复测上下文预算项仍失败。隔离 UI 实例被自签名证书阻止，未绕过，浏览器验收 NOT_RUN。verify quick 在运行镜像缺少 bash/仓库挂载 Git 差异和既有文档断链下失败，分项语法与版本检查另行通过。", "evidence": ["go test -mod=vendor ./internal/server -run 'TestOffice|TestSFTPListDecodesChineseFilenames|TestRemoteWorkspaceDispatch' -count=1 -v → PASS", "node plugins/office/test.js → PASS；plugin_host.js run → id=office tools=office_create error=空", "go vet -mod=vendor ./internal/server → PASS", "go test -mod=vendor ./internal/server -count=1 → FAIL：4 项与 docs/reviews/2026-09-29-workspace-consolidation.md:30 相同", "TestStartTaskCompactsOverBudgetHistoryBeforeProviderCall 单独复测 → FAIL：输入 7919 + 输出预留 8192 > 窗口 16000", "node --check internal/server/web/app.js → PASS", "node scripts/test_i18n.cjs → PASS", "python3 -m py_compile scripts/office/office_artifact.py → PASS", "bash scripts/version.sh check → 0.1.12.0 RC1 PASS", "git diff --check（Windows Git）→ PASS", "浏览器访问隔离 https://localhost:8098/ → ERR_CERT_AUTHORITY_INVALID，未绕过"]},
+    "documentation": {"status": "pass", "summary": "新增 Office 使用/API 文档，架构历史方案加现状说明，文档索引增加入口。", "evidence": ["docs/plugins/office.md", "docs/architecture/office-viewer.md", "docs/README.md"]},
+    "cleanup": {"status": "pass", "summary": "已审阅 diff 与未跟踪文件；所有新增源码、测试及文档有明确归属。已停隔离服务，仅清理确认为本轮生成的测试 XLSX、预览二进制及 Python bytecode；隔离数据目录可能有先前数据，未删除。", "evidence": ["git diff --stat", "git status --short", "docker stop aide-office-preview", "Remove-Item -LiteralPath 已验证的生成文件"]},
+    "release": {"status": "not_run", "summary": "未获提交、推送或发布授权；不替换运行服务", "evidence": []}
+  },
+  "release_authorization": "",
+  "rollback": "本轮未替换运行镜像。回滚源码为撤销本任务涉及的 Office 工具/API/前端/SFTP 解码改动；工作区已生成的用户 Office 文件不会自动删除。",
+  "handoff": "完成项：Office 插件面板登记 office_create，原生执行器可生成 DOCX/XLSX/PPTX 并通过本地/SSH 工作区落盘；XLSX 工作目录及引用的分页查看、RW 保存与哈希冲突保护；SFTP 中文文件名显示修复；文档与测试。剩余项：浏览器实际目视与交互验收、发布门禁修复、部署。未验证项：真实 SSH 凭据现场生成 Office 文件（仅 mock SFTP 回归），复杂 Office 格式往返保真。运行服务：aide-aide-1 健康，仍为旧镜像；隔离 aide-office-preview 已停止。发布/回滚状态：未提交、未推送、未升版、未替换 8097；回滚见 rollback。浏览器隔离页因自签名证书 ERR_CERT_AUTHORITY_INVALID 未打开，不绕过。保留 .agent-state/office-preview-data 因其中可能有先前数据；仅删除明确由本轮生成的测试 XLSX、预览二进制、插件 surface 测试文件和 Python bytecode。源码指纹：office_artifact.go SHA256 39C4C0E7C6B63BCB5B921DAC39177220A122598B8B631812A7BCAF8A005A852B；web/app.js SHA256 0849E828C1432FF468DFF2FC23EE927495F2D44CFAB1CA6A0CEB89BF3A758E6B；office_artifact.py SHA256 7362E5416D02D70EA9205F8E48A52ACEB586075BB8975FECE7F7B7A4CDF96D47；plugins/office/index.js SHA256 526AB688B94B0748429B5804D19E9836A731A6533BADAD111F2308A9B4A2F1B6。"
+}

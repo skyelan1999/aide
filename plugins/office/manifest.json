@@ -1,0 +1,15 @@
+{
+  "id": "office",
+  "name": "Office 文档",
+  "description": "生成 DOCX/XLSX/PPTX，读取与按锚点修改 DOCX 批注，并查看和编辑 XLSX",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "installedAt": "2026-09-29T00:00:00Z",
+  "tools": [
+    { "name": "office_create", "kind": "write", "readonlyDefault": false },
+    { "name": "office_comments", "kind": "read", "readonlyDefault": true },
+    { "name": "office_comment_edit", "kind": "write", "readonlyDefault": false }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "id": "ui-click-latency",
+  "request": "发送按钮点击延迟较高，会话点击延迟也比较高；定位并修复交互反馈延迟。",
+  "baseline": "a93daa0dc03089234bdd3b31af85ac58fa20a7d5",
+  "initial_status": "M docs/README.md\n M docs/architecture.md\n M docs/architecture/office-viewer.md\n M internal/server/server.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n M plugins/registry.json\n?? docs/plugins/office.md\n?? docs/tasks/assistant-mode-controls.json\n?? docs/tasks/office-authoring-xlsx.json\n?? docs/tasks/office-native-comments.json\n?? docs/tasks/ssh-tool-budget.json\n?? internal/server/office_artifact.go\n?? internal/server/office_artifact_test.go\n?? internal/server/office_comments.go\n?? internal/server/office_comments_test.go\n?? internal/server/ssh_filename_test.go\n?? internal/server/workflow_budget_test.go\n?? plugins/office/\n?? scripts/office/docx_comments.py\n?? scripts/office/office_artifact.py\n?? scripts/office/test_docx_comments.py\n?? scripts/test_assistant_mode_controls.cjs",
+  "acceptance": [
+    "点击普通会话后立即高亮所选条目并显示加载反馈；慢请求或连续切换不能让旧响应覆盖新选择",
+    "点击发送后立即显示提交状态并阻止重复提交；失败时保留草稿且恢复按钮，成功后进入目标会话",
+    "减少点击关键路径上不必要的 API 串行等待；桌面浏览器实际验证交互，不调用付费模型",
+    "继承既有未提交改动，不擅自提交、推送、发布或替换 8097 服务"
+  ],
+  "scope": [
+    "internal/server/web/app.js 中会话切换和发送事件的交互反馈/请求时序",
+    "internal/server/web/style.css 中必要的状态视觉",
+    "相关前端回归测试与本任务记录"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户报告发送和会话点击反馈慢；目标限定为交互即时确认和点击关键路径，不把模型响应时间误报为按钮耗时。",
+      "evidence": ["用户 2026-09-29 请求", "acceptance 和 scope"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "会话先同步高亮与加载状态，再 GET；已读 PATCH 与侧栏刷新移出首屏等待。发送先设置提交态和去重标志，再 POST；取消过期上下文预览，避免与正式请求争用。旧响应仍由序号守卫。",
+      "evidence": ["internal/server/web/app.js selectSession、task-form、context-preview", "internal/server/workflow.go startTask 持有会话锁构造上下文"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增可见的会话加载圈和发送提交圈；减少串行 API 等待，防重复发送，失败保留草稿/恢复旧会话轮询。",
+      "evidence": ["internal/server/web/app.js", "internal/server/web/style.css", "internal/server/web/locales/en.js", "scripts/test_ui_click_latency.cjs"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "隔离的 8098 浏览器页面将会话 GET 和发送 POST 各延迟 2 秒：点击后首帧即出现目标会话高亮/加载圈或蓝色发送加载圈，结束后恢复；测试端点不调用模型。VM 回归覆盖响应乱序、GET 失败回退、重复发送与 POST 失败保留草稿。未实测生产 8097、暗色/窄屏及真实模型执行耗时。统一 quick 因本机 PATH 的 Windows python3/WSL bash 不可用而失败；单项重跑暴露既有文档链接及 Windows symlink/安装测试问题，和本次 UI 改动无关。",
+      "evidence": ["8098 隔离页面，2 秒注入延迟：首帧会话高亮/转圈及发送蓝色转圈；请求结束按钮恢复", "node scripts/test_ui_click_latency.cjs → PASS", "node scripts/test_assistant_mode_controls.cjs → PASS", "node scripts/test_i18n.cjs → PASS", "node --check internal/server/web/app.js → PASS", "node --check internal/server/web/locales/en.js → PASS", "git diff --check → PASS", "scripts/agent-route.py verify quick → FAIL（Windows bash/python3 PATH）；内容指纹 1bbb26a8782f248bc8ae417a319839cf3ae8e2098a10a1413332099f43b84197"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "任务卡记录最终交互行为、模拟慢接口的实测边界及不相关 quick 限制；无需更改用户操作说明。",
+      "evidence": ["docs/tasks/ui-click-latency.json"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已复核未跟踪文件归属；仅关闭本任务隔离浏览器/容器，删除临时 Go 入口与测试令牌。忽略的隔离测试数据和验收日志留在 .agent-state，不清除其他既有改动。",
+      "evidence": ["git status --short --branch", "git diff --check", "Get-FileHash SHA256: app.js C002F613F7E4E9C18C820C3D5A31A8128AC25E10CEDE2CF9A2C9A1DE2C502079; style.css A2DF5ED2416D8B86C97B65B20EFFE01EF920DC05C7B8A89B9E9AFF3B32E786BE; en.js F3BEF0A0E03F2ED4049D0CA384DE077F70BB28269DB0AEEB336CE46441E75C7D; test 5FE9D41EE0074237FE5FC5006144E71B8856FC7FD64A6DDE81C486FD0D82D9FA"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未取得本轮提交/推送/部署授权；未触发发布门禁或替换 8097 服务。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "完成：发送和会话点击均有首帧反馈，减少非必要串行等待，测试与隔离浏览器慢接口验收通过。剩余：生产上线需先处理统一 quick 的环境及既有失败，再按发布门禁获得授权；如用户仍报告真实耗时长，应对生产后端上下文构造/磁盘写入单独采样。未验证：真实模型调用、生产 8097、暗色/窄屏。运行服务：原 aide-aide-1 8097 保持运行；临时 8098 已停止。发布/回滚：未发布；回滚仅撤销本任务 app.js/style.css/en.js 的相关片段及新测试，保留其他在途改动。"
+}

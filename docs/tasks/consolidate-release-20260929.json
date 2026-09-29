@@ -1,0 +1,57 @@
+{
+  "id": "consolidate-release-20260929",
+  "request": "改下文档，整理下文件，打个版本号和到main上去。",
+  "baseline": "a93daa0dc03089234bdd3b31af85ac58fa20a7d5",
+  "initial_status": "M docs/README.md\n M docs/architecture.md\n M docs/architecture/office-viewer.md\n M docs/user-guide.md\n M internal/server/server.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n M plugins/registry.json\n?? docs/plugins/office.md\n?? docs/tasks/assistant-mode-controls.json\n?? docs/tasks/file-multiselect-transfer.json\n?? docs/tasks/office-authoring-xlsx.json\n?? docs/tasks/office-native-comments.json\n?? docs/tasks/ssh-tool-budget.json\n?? docs/tasks/ui-click-latency.json\n?? internal/server/file_transfer.go\n?? internal/server/file_transfer_test.go\n?? internal/server/office_artifact.go\n?? internal/server/office_artifact_test.go\n?? internal/server/office_comments.go\n?? internal/server/office_comments_test.go\n?? internal/server/ssh_filename_test.go\n?? internal/server/workflow_budget_test.go\n?? plugins/office/\n?? scripts/office/docx_comments.py\n?? scripts/office/office_artifact.py\n?? scripts/office/test_docx_comments.py\n?? scripts/test_assistant_mode_controls.cjs\n?? scripts/test_ui_click_latency.cjs",
+  "acceptance": [
+    "逐项核对当前分支未提交文件的归属、删除风险及文档事实，形成可审阅的版本范围和未完成项清单。",
+    "修复或明确阻断现有测试与 UI 验收问题；不把失败门禁标为通过。",
+    "仅在仓库发布门禁满足后合入 main，按 scripts/version.sh 规则升版和打 tag，并验证提交与版本对应关系。",
+    "用户要求的 main 交付有明确推送/部署/回滚状态，不擅自覆盖生产服务。"
+  ],
+  "scope": [
+    "当前 codex/consolidate-workspace-20260929 分支上与 aide 功能/测试/文档有关的未提交改动，逐项审阅后才纳入提交。",
+    "docs/tasks、docs/reviews、版本记录及为通过门禁所必需的定向修复。",
+    "禁止清空未跟踪文件、强制覆盖 main 或触碰生产运行服务。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户原话整理当前功能增量、文档与文件归属，完成版本和 main 交付；生产部署与 GitHub Release 不在授权范围。阻断项为测试/发布门禁，不以历史任务失败记录冒充本轮测试。",
+      "evidence": ["用户 2026-09-29 本轮请求", "本任务 acceptance/scope", "docs/agent/WORKFLOW.md"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "按现有目录职责归档 Office、文件传输、UI 和回归文件，独立隔离预览验证；在干净 main 取得 full 收据后用现有 version.sh 升版。Windows 主机解释器误路由以显式路径覆盖，容器中的 full 直接运行 Go race/vet，避免嵌套 Docker。回滚不改写 tag，不触碰用户工作数据。",
+      "evidence": ["docs/reviews/2026-09-29-release-preparation.md", "scripts/agent-route.py", "scripts/aide.sh", "docs/agent/WORKFLOW.md"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "修复 4 项基线回归，扩充工作流压缩余量；修复两份历史评审文档坏链接；文档中心与发布核对记录同步。保留并归类既有 Office、批注、文件多选、UI/SSH 改动，不删未知文件。",
+      "evidence": ["internal/server/assistant_history_test.go", "internal/server/memory_access_test.go", "internal/server/workflow.go", "docs/reviews/2026-09-28-code-review/README.md", "docs/reviews/2026-09-28-requirements-alignment/README.md", "docs/README.md"]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "定向 4 项 Go 回归、quick 门禁、全量 Go race/vet 手动容器运行和隔离页面文件复制、XLSX 保存均通过；官方 full 收据重跑按用户 2026-09-29 最新要求提前停止，后续测试继续。DOCX 批注按钮的窄视口交互、WPS 实机及真实 SSH/SFTP 仍未验证，不能作为发布通过。",
+      "evidence": [".agent-state/quick.json", "docker run aide:local: go test -race -mod=vendor -count=1 ./... && go vet -mod=vendor ./... → PASS", "http://localhost:8098/ 隔离预览：两文件复制到 destination 可见；sample.xlsx B2 保存后磁盘为 final", "docs/reviews/2026-09-29-release-preparation.md"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新文档索引与真实版本入口，补发布整合记录并修复历史审查坏链接；Office 与文件传输用法已有专题文档。",
+      "evidence": ["docs/README.md", "docs/reviews/2026-09-29-release-preparation.md", "docs/plugins/office.md", "docs/user-guide.md", "scripts/check_docs.py → PASS"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已盘点受控修改及新增文件并按功能分组，44 个目标文件逐项暂存；staged diff 无空白错误，未暂存/未跟踪项均为空。隔离预览已停止并移除，测试收据和可再生合成样例保留在忽略的 .agent-state；未删除用户数据。",
+      "evidence": ["git diff --cached --stat：44 files", "git diff --cached --check → PASS", "git diff --name-only 与 git ls-files --others --exclude-standard 均为空", "docker stop/rm aide-release-preview → PASS", "docs/reviews/2026-09-29-release-preparation.md"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户要求快速合入 main、让后续测试继续；官方 full 收据和 release-check 未通过前不运行版本脚本、打 tag、构建发布镜像或替换生产服务。源码合入/推送状态见 handoff。",
+      "evidence": ["用户最新请求：快速合入，让后续测试去做", "docs/agent/WORKFLOW.md 发布门禁"]
+    }
+  },
+  "release_authorization": "用户本轮原话：改下文档，整理下文件，打个版本号和到main上去。授权版本与 main 交付；未明确授权替换生产服务或 GitHub Release。",
+  "rollback": "合入后以新的 revert/hotfix 提交和后续版本修复，不重写 tag、不清空用户工作目录、Office 文件或会话缓存；测试预览服务可停止，生产 8097 未替换。",
+  "handoff": "按用户最新指令先快速合入 main，发布仍延期。已完成：文档与文件归属盘点、4 项回归修复、quick、手动全量 race/vet、文件多选复制与 XLSX 保存隔离 UI、staged diff。剩余：后续官方 full 收据、release-check、升版/tag、镜像构建、WPS/真实 SSH/SFTP/DOCX 窄屏验收。8097 生产未重启；8098 隔离预览已停止。合入和推送 SHA 以 main/origin/main 的实际 Git 结果核查。"
+}

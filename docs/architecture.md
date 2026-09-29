@@ -107,7 +107,7 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 
 `running → completed / awaiting_approval / failed / cancelled`；待审批提案应用后 completed；服务重启将运行任务标记 interrupted。
 
-规划、提案、审查每个阶段（及 AI 工作流四阶段/自动模式）可进入模型工具循环，循环上限 `ToolMaxRounds` 默认 60、可配 5–200。`list_files`/`read_file` 直接读，`write_file`/`run_shell` 产生提案。工具结果回传模型；已有文件写入仍需显式附件快照。插件参数 schema 进入工具声明，但可信插件本身能直接使用 Node 能力，不能声称写操作都被安全沙箱阻止。
+规划、提案、审查每个阶段（及 AI 工作流四阶段/自动模式）可进入模型工具循环，循环上限 `ToolMaxRounds` 默认 60、可配 5–200。单步工具调用总预算按轮数推导为 `max(64, 4 × ToolMaxRounds)`，不再固定 24 次；同一工具、参数、结果在步骤内重复 3 次起会提示模型停止原样重试，达到 8 次时暂停剩余重复探测并给用户可继续的说明。预算耗尽时同样给可继续的说明，不将正常步骤标记为错误。`list_files`/`read_file` 直接读，`write_file`/`run_shell` 产生提案。工具结果回传模型；已有文件写入仍需显式附件快照。插件参数 schema 进入工具声明，但可信插件本身能直接使用 Node 能力，不能声称写操作都被安全沙箱阻止。
 
 ## 界面设置
 

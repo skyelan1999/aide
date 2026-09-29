@@ -1,0 +1,57 @@
+{
+  "id": "assistant-mode-controls",
+  "request": "在小秘模式下，轨迹、对话/AI工作流切换、排队这几个按钮默认置灰不可用；普通会话恢复可用。",
+  "baseline": "a93daa0dc03089234bdd3b31af85ac58fa20a7d5",
+  "initial_status": "M docs/README.md\n M docs/architecture.md\n M docs/architecture/office-viewer.md\n M internal/server/server.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n M plugins/registry.json\n?? docs/plugins/office.md\n?? docs/tasks/office-authoring-xlsx.json\n?? docs/tasks/office-native-comments.json\n?? docs/tasks/ssh-tool-budget.json\n?? internal/server/office_artifact.go\n?? internal/server/office_artifact_test.go\n?? internal/server/office_comments.go\n?? internal/server/office_comments_test.go\n?? internal/server/ssh_filename_test.go\n?? internal/server/workflow_budget_test.go\n?? plugins/office/\n?? scripts/office/docx_comments.py\n?? scripts/office/office_artifact.py\n?? scripts/office/test_docx_comments.py",
+  "acceptance": [
+    "打开小秘会话时，轨迹、对话、AI 工作流和排队按钮均原生 disabled、视觉置灰，键盘不能激活",
+    "从普通会话切入小秘时清除工作流/排队残留状态；切回普通会话时按钮恢复可用",
+    "桌面页面实际验收小秘与普通会话切换；不能打开页面时记录 NOT_RUN",
+    "保留现有未提交改动，不提交、推送或部署未经授权的变更"
+  ],
+  "scope": [
+    "internal/server/web/app.js 会话模式控件同步",
+    "internal/server/web/style.css 禁用态视觉",
+    "必要的前端回归测试与 docs/tasks/assistant-mode-controls.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "小秘会话中轨迹、对话、AI 工作流、排队应置灰且不可操作，普通会话维持原有能力。",
+      "evidence": ["用户 2026-09-29 截图及请求"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "沿用会话 kind=assistant 的现有判定，在 renderSession 同步原生 disabled 和 aria-disabled；切入小秘清除工作流及排队残留，CSS 仅补充禁用态视觉。",
+      "evidence": ["internal/server/web/app.js syncAssistantModeControls", "internal/server/web/style.css .assistant-mode disabled rules"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已在小秘模式禁用四个控件并统一灰显；切回普通会话恢复。",
+      "evidence": ["internal/server/web/app.js", "internal/server/web/style.css", "scripts/test_assistant_mode_controls.cjs"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "隔离的 8098 HTTP 预览页面实测：小秘四按钮均在可访问性树中标为 disabled 且截图灰显，切到普通会话四按钮恢复；针对性前端测试与语法检查通过。统一 quick 在 Windows 主机因 python3/Bash 不可用失败，容器复跑在 Windows 挂载的 git diff --check 上长时间无进展后停止；这些不是本任务功能测试失败。8097 正在运行的服务未替换。",
+      "evidence": ["8098 隔离浏览器：小秘四按钮 disabled、普通会话恢复", "node scripts/test_assistant_mode_controls.cjs → PASS", "node --check internal/server/web/app.js → PASS", "node scripts/test_i18n.cjs → PASS", "git diff --check → PASS（Windows 主机）", "scripts/agent-route.py verify quick → FAIL（Windows 缺少 python3/Bash）；Docker 复跑未完成"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "本任务卡记录了验收目标、实现位置、实测结果和发布边界；无需变更用户使用说明。",
+      "evidence": ["docs/tasks/assistant-mode-controls.json"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "隔离预览容器和标签页已关闭，测试令牌及临时 Go 入口已删除；忽略目录 .agent-state/assistant-ui-preview-data 中的可再生预览数据未删，保留原工作区改动。",
+      "evidence": ["git status --short --branch", "git diff --check"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮没有提交、推送或部署授权；8097 服务未替换。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "完成：小秘四按钮禁用灰显及普通会话恢复，自动测试和隔离 UI 实测通过。剩余：如需上线，应解决统一 quick 的 Windows 工具链/容器挂载问题并经发布门禁另行授权。未验证：生产 8097 未替换，未对其执行验收。运行服务：原 8097 不变；临时 8098 预览已关闭。发布/回滚：未发布；回滚只撤销本任务的 app.js、style.css 小改动与对应测试，保留其他人改动。"
+}

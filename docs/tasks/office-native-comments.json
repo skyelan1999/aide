@@ -1,0 +1,60 @@
+{
+  "id": "office-native-comments",
+  "request": "docx中的批注要实际做到文档上去，这样文档下载下来拿wps也能看，然后aide的插件也支持看批注并根据提醒修改批注对应指示的内容",
+  "baseline": "a93daa0dc03089234bdd3b31af85ac58fa20a7d5",
+  "initial_status": "M docs/README.md\n M docs/architecture/office-viewer.md\n M internal/server/server.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n M plugins/registry.json\n?? docs/plugins/office.md\n?? docs/tasks/office-authoring-xlsx.json\n?? internal/server/office_artifact.go\n?? internal/server/office_artifact_test.go\n?? internal/server/ssh_filename_test.go\n?? plugins/office/\n?? scripts/office/office_artifact.py",
+  "acceptance": [
+    "预览器新增批注写入 DOCX 标准 OOXML 批注部件及正文锚点，下载的是修改后的同一文件",
+    "本地、SSH 工作区及读写引用可列出和新增原生批注；只读引用不能修改",
+    "Office 插件可列出批注与锚定原文，并以批注 ID、预期原文和替换文本精确修改对应内容；冲突或失效锚点不得猜测写入",
+    "原有侧车批注不丢失，界面明确标示是否已写入 DOCX，并可逐条复制进文件",
+    "相关脚本、Go 和前端测试通过；实际打开页面验收并记录 WPS 未验证项"
+  ],
+  "scope": [
+    "scripts/office 原生 DOCX 批注脚本及跨格式化 run/表格测试",
+    "internal/server Office API、工具分发及测试",
+    "plugins/office 插件清单、工具和测试",
+    "internal/server/web DOCX 批注交互",
+    "docs/plugins/office.md、docs/architecture/office-viewer.md、docs/tasks/office-native-comments.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "新增批注必须入 DOCX；旧侧车批注保留、标示并可逐条复制；插件按 ID 和预期原文精确改写，不能猜测失效锚点。",
+      "evidence": ["本任务 acceptance/scope", "用户 2026-09-29 当前请求"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用 Office 临时 OOXML 执行通道；Go 管理路径/来源权限/哈希，python-docx 写原生批注和锚点；旧侧车不自动迁移，由用户逐条复制且不删除原记录。",
+      "evidence": ["internal/server/office_comments.go", "scripts/office/docx_comments.py", "docs/plugins/office.md"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "预览器新增批注改写文件，旧侧车批注提供逐条写入 DOCX 按钮且保留旧记录；Office 插件增加批注读取和按锚点改写；本地/SSH 工作区和引用共享原生通道，保存防并发覆盖。",
+      "evidence": ["internal/server/office_comments.go", "internal/server/web/app.js", "plugins/office/index.js", "internal/server/workflow.go"]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "DOCX ZIP 部件、下载字节一致、格式化文本/表格锚点、改写保留批注、哈希冲突和只读/读写引用测试 PASS；Go vet、JS 语法和插件登记 PASS。真实 WPS 和页面交互 NOT_RUN：隔离预览服务自签证书被浏览器拦截，不能绕过。真实 SSH 端到端 NOT_RUN。全量 Go 测试失败于已有 4 项基线失败。路由 quick 在 Windows bind-mount 容器内误判大量 CRLF 文件为改动；本机 check_docs.py 另因已有 5 个失效链接失败。",
+      "evidence": ["go test -mod=vendor ./internal/server -run 'TestOfficeNativeComments|TestOfficeCreateAndXlsxEdit|TestDocx' -count=1 → PASS", "python3 scripts/office/test_docx_comments.py → PASS（格式化 runs 与表格锚点）", "go test -mod=vendor ./internal/server -count=1 → FAIL: AssistantMessageAgenticFallsBackToAnalyze, ProjectAideMemoryFollowsWorkspace, LegacyGlobalAideMemoryMigratesOnceToProjectCache, StartTaskCompactsOverBudgetHistoryBeforeProviderCall", "go vet -mod=vendor ./internal/server → PASS", "node --check internal/server/web/app.js → PASS", "node plugins/office/test.js → PASS", "curl -k https://localhost:8098/healthz → integrity ok", "浏览器 https://localhost:8098/ → net::ERR_CERT_AUTHORITY_INVALID"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "新增插件接口、OOXML 部件、旧批注边界、兼容性及未验收项说明。",
+      "evidence": ["docs/plugins/office.md", "docs/architecture/office-viewer.md"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "隔离预览容器已停止，.agent-state 预览数据保留未删除；既有 Office/XLSX 未提交改动全部保留。新增文件逐项归属任务，git diff --check PASS。",
+      "evidence": ["docker stop aide-office-native-preview", "git status --short --branch"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未获本轮发布授权，未提交、推送、升版、部署或替换 8097 服务。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "已实现代码和本地自动化测试；待有信任证书的浏览器/WPS 实际验收，以及真实 SSH 工作区验证。运行中 8097 原服务未替换；8098 隔离预览已停止。未发布；回滚为仅撤销本任务范围源码，不碰用户工作区或批注数据。"
+}

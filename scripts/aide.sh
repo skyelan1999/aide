@@ -2,6 +2,12 @@
 set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_DIR"
+MODE="${1:-start}"
+if [[ "$MODE" == test && "${AIDE_VERIFY_IN_CONTAINER:-0}" == 1 ]]; then
+  # The caller already launched an isolated aide:local verification container.
+  go test -race -count=1 ./... && go vet ./...
+  exit
+fi
 DOCKER_BIN="$(command -v docker || true)"
 if [[ -z "$DOCKER_BIN" && -x "$HOME/.docker/bin/docker" ]]; then DOCKER_BIN="$HOME/.docker/bin/docker"; fi
 if [[ -z "$DOCKER_BIN" ]]; then echo "请先安装 Docker Desktop。" >&2; exit 1; fi
@@ -21,7 +27,6 @@ source_sha() {
   ) | sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
 }
 
-MODE="${1:-start}"
 if [[ -f .aide-image ]]; then
   read -r BUNDLE_IMAGE BUNDLE_ID BUNDLE_PLATFORM < .aide-image
   export AIDE_IMAGE="$BUNDLE_IMAGE" COMPOSE_FILE=compose.yaml

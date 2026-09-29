@@ -70,6 +70,19 @@ def release_errors(task, receipt, config, current):
     return errors
 
 
+def resolve_check_command(command):
+    """Allow Windows hosts to bypass the WSL/Store command aliases explicitly."""
+    overrides = {'bash': 'AIDE_BASH', 'python3': 'AIDE_PYTHON3'}
+    setting = overrides.get(command[0])
+    executable = os.environ.get(setting, '') if setting else ''
+    if executable:
+        path = Path(executable)
+        if not path.is_file():
+            raise ValueError(setting + ' is not a file: ' + executable)
+        return [str(path), *command[1:]]
+    return command
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='cmd', required=True)
@@ -119,8 +132,8 @@ def main():
                 print('RUN ' + ' '.join(command), flush=True)
                 stream.write('\n$ ' + ' '.join(command) + '\n'); stream.flush()
                 try:
-                    code = subprocess.run(command, cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, timeout=600).returncode
-                except (OSError, subprocess.TimeoutExpired) as exc:
+                    code = subprocess.run(resolve_check_command(command), cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, timeout=600).returncode
+                except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
                     stream.write(str(exc) + '\n'); code = 1
                 records.append({'command': command, 'exit': code})
         passed = all(r['exit'] == 0 for r in records) and before == fingerprint()

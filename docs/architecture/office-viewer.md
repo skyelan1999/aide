@@ -1,5 +1,10 @@
 # Office 文档内联查看方案（docx / xlsx / pptx）
 
+> 更新：结构化 Office 生成与 XLSX 工作目录/引用编辑已按
+> [Office 工具集](../plugins/office.md) 实现。下文早期「本期不实施」
+> 是历史方案记录，不代表当前 XLSX 状态；PPTX 仍仅支持生成和文本提取，
+> 不提供内联排版预览。
+
 > 状态：**本期不实施**。本文档作为后续任务输入，给出可离线 vendor 方案与许可取舍。
 > 本期已落地：PDF 内联预览（见 `internal/server/web/vendor/pdfjs/README.md`，PDF.js 4.4.168，Apache-2.0）。
 
@@ -171,7 +176,11 @@ comments/
 - 经 `/api/file/raw?path=…&access_token=…` 取 ArrayBuffer → `docx.renderAsync(blob, container)`；
 - 保留原排版：标题/段落/表格/列表/图片；内部滚动不撑乱布局（复用 PDF 查看器 flex 滚动容器）；
 - 只读：不回写 `.docx`，工具栏不显示保存；
-- 批注侧车：前端拿到渲染 DOM 后，按 `anchorQuote` 在文本中查找、`anchorIndex` 消歧高亮，调 §2 的 CRUD 端点增/删/回复/解决；`stale=true` 时给"锚点可能失效"提示，不删除批注。
+- 历史实现为批注侧车：前端拿到渲染 DOM 后，按 `anchorQuote` 在文本中查找、`anchorIndex` 消歧高亮，调 §2 的 CRUD 端点增/删/回复/解决；`stale=true` 时给"锚点可能失效"提示，不删除批注。
+
+### 3.1 原生 DOCX 批注升级（office-native-comments）
+
+新增批注不再写入侧车，而通过 `/api/office/docx/comments` 写入 DOCX 自身的 `comments.xml` 与正文批注锚点。读取时先展示原生批注，再保留旧侧车批注并标记“未写入文件”；两者不静默合并。用户可逐条点“写入 DOCX”复制旧批注；成功后旧侧车记录仍保留但标记已写入，锚点无法匹配则不写入。GET/POST/PUT 的哈希、工作区身份和读写权限约束见 `docs/plugins/office.md`。按批注自动改写时必须校验批注 ID 及原文，若锚点跨段、含复杂对象或已经变化则拒绝写入。DOCX 下载使用现有 `/api/file/raw`，因此带上文件内批注；WPS 客户端验收单独记录。
 
 ### 4. DXF 渲染器（#57，RC2）
 

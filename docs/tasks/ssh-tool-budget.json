@@ -1,0 +1,57 @@
+{
+  "id": "ssh-tool-budget",
+  "request": "修复普通对话和 AI 工作流步骤在执行 24 次工具调用后自动停止的问题；正常远程 SSH 调查应按设置中的工具轮数继续，重复或失败调用要有可解释的保护。",
+  "baseline": "a93daa0dc03089234bdd3b31af85ac58fa20a7d5",
+  "initial_status": "M docs/README.md\n M docs/architecture/office-viewer.md\n M internal/server/server.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n M plugins/registry.json\n?? docs/plugins/office.md\n?? docs/tasks/office-authoring-xlsx.json\n?? docs/tasks/office-native-comments.json\n?? internal/server/office_artifact.go\n?? internal/server/office_artifact_test.go\n?? internal/server/office_comments.go\n?? internal/server/office_comments_test.go\n?? internal/server/ssh_filename_test.go\n?? plugins/office/\n?? scripts/office/docx_comments.py\n?? scripts/office/office_artifact.py",
+  "acceptance": [
+    "普通对话和 AI 工作流不再因固定 24 次工具调用失败；默认配置允许一次步骤执行超过 24 次调用并正常收尾",
+    "工具调用仍受用户设置的 ToolMaxRounds 及按轮数推导的总调用安全预算约束",
+    "同一工具参数及结果重复 3 次提示换路径、8 次暂停重复探测；预算耗尽时返回可继续的说明而不是错误终态",
+    "新增回归测试并记录未实测的真实 SSH 情况"
+  ],
+  "scope": [
+    "internal/server/workflow.go 的工具循环预算和重复调用提示",
+    "internal/server/workflow_budget_test.go 回归测试",
+    "docs/tasks/ssh-tool-budget.json 与相关开发文档"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "固定 24 次上限让普通对话和工作流步骤失败；既需允许正常远程调查，又需保留防无限调用机制。",
+      "evidence": ["用户 2026-09-29 截图", "internal/server/workflow.go 旧 maxToolCallsPerStep=24"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "总调用预算改为 max(64,4×ToolMaxRounds)，轮数设置继续生效；重复完全相同的调用/结果 3 次提示换法、8 次暂停探测，预算耗尽返回可继续文本并补齐未执行工具响应。",
+      "evidence": ["internal/server/workflow.go maxToolCallsForRounds/toolLoop"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "移除固定 24 次 SSH 文案和错误终态；正常调用可继续，重复结果会提示及暂停，不改变 SSH 会话和权限策略。",
+      "evidence": ["internal/server/workflow.go", "internal/server/workflow_budget_test.go"]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "模拟模型单轮 26 次不同参数调用正常完成、相同调用第 3 次提示和第 8 次暂停；预算单元测试和 Go vet PASS。真实 SSH 模型链路 NOT_RUN，未调用付费模型。全量 Go 测试在重复保护最终改动前失败于已有 4 项基线失败，不能当作最终源码收据。",
+      "evidence": ["go test -mod=vendor ./internal/server -run 'TestToolLoop|TestOffice' -count=1 → PASS（最终源码）", "go test -mod=vendor ./internal/server -run 'TestToolLoopAllowsMoreThan24|TestToolLoopStopsIdenticalRemote|TestToolCallBudget|TestOfficeNativeComments' -count=1 → PASS", "go test -mod=vendor ./internal/server -count=1 → FAIL: 4 项既有基线失败，运行于最终重复保护改动前", "go vet -mod=vendor ./internal/server → PASS"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构文档更新工具调用预算与重复提示。",
+      "evidence": ["docs/architecture.md"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已审阅任务范围 diff、未跟踪文件归属；git diff --check PASS。无生产服务变更或清理用户数据。",
+      "evidence": ["git status --short --branch", "git diff --check"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未获本轮发布授权；未提交/推送/部署。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "代码与回归已完成；真实 SSH + 付费模型复现未执行。8097 服务未替换。未发布；可回滚本任务的 workflow.go 预算改动，保留其他用户工作。"
+}

@@ -1,0 +1,58 @@
+{
+  "id": "file-multiselect-transfer",
+  "request": "工作目录和引用中支持多选，并通过右键菜单复制到或移动到目标目录。",
+  "baseline": "a93daa0dc03089234bdd3b31af85ac58fa20a7d5",
+  "initial_status": "M docs/README.md\n M docs/architecture.md\n M docs/architecture/office-viewer.md\n M internal/server/server.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n M plugins/registry.json\n?? docs/plugins/office.md\n?? docs/tasks/assistant-mode-controls.json\n?? docs/tasks/office-authoring-xlsx.json\n?? docs/tasks/office-native-comments.json\n?? docs/tasks/ssh-tool-budget.json\n?? docs/tasks/ui-click-latency.json\n?? internal/server/office_artifact.go\n?? internal/server/office_artifact_test.go\n?? internal/server/office_comments.go\n?? internal/server/office_comments_test.go\n?? internal/server/ssh_filename_test.go\n?? internal/server/workflow_budget_test.go\n?? plugins/office/\n?? scripts/office/docx_comments.py\n?? scripts/office/office_artifact.py\n?? scripts/office/test_docx_comments.py\n?? scripts/test_assistant_mode_controls.cjs\n?? scripts/test_ui_click_latency.cjs",
+  "acceptance": [
+    "工作目录和引用列表支持 Ctrl/Cmd 切换多选、Shift 范围选择；右键已选项保留整组，右键未选项只选该项。",
+    "右键复制到/移动到可选择工作目录或可写引用目标文件夹，保留文件和目录结构；只读引用不能移动。",
+    "服务端独立校验路径、来源权限、目标目录和同名冲突；复制失败不删除源文件。",
+    "验证前端交互、跨目录复制/移动、只读/冲突/非法路径边界，并记录浏览器实测。"
+  ],
+  "scope": [
+    "internal/server/web 文件面板与目标选择器",
+    "internal/server 文件传输接口及测试",
+    "docs/tasks/file-multiselect-transfer.json 与相关使用文档",
+    "不触碰无关未提交改动，不替换运行服务或发布"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "明确多选、目标选择、权限与无覆盖验收；同名冲突直接拒绝。",
+      "evidence": ["用户当前请求；现有 file panel 与 sources 读写模型"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "单列表选择状态留在前端；传输接口按来源/目标能力分发，先校验冲突，再复制，成功后移动源；同位置/子孙目录拒绝。",
+      "evidence": ["internal/server/web/app.js renderFileEntries/openFileContextMenu", "internal/server/files.go 与 sources.go"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "文件面板支持 Ctrl/Cmd/Shift 多选、组右键菜单和目标目录选择器；新增受限传输 API，支持本地工作区、SFTP 工作区、本地与 SFTP 引用。先校验权限/路径/冲突和总量，再暂存复制并发布；移动在复制成功后删除来源。",
+      "evidence": ["internal/server/web/app.js", "internal/server/web/style.css", "internal/server/file_transfer.go", "internal/server/server.go", "internal/server/ssh_session.go"]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "定向 Go 回归、JS 语法、i18n 和 diff 检查通过；完整服务端测试在当前脏分支/基础镜像失败（多项无关既存测试与缺少 Node/Office 脚本环境）。隔离预览可启动，但内置浏览器因自签名证书报 ERR_CERT_AUTHORITY_INVALID，按安全要求未绕过，真实 UI 点击验收 NOT_RUN；实际 SSH/SFTP 服务器也未连接测试。",
+      "evidence": ["docker exec aide-transfer-preview go test ./internal/server -run TestFileTransfer -count=1: PASS", "node --check internal/server/web/app.js: PASS", "node --check internal/server/web/locales/en.js: PASS", "node scripts/test_i18n.cjs: PASS", "git diff --check: PASS", "docker exec aide-transfer-preview go test ./internal/server -count=1: FAIL（无关既存/环境项）", "scripts/agent-route.py verify quick: FAIL（Windows shell 缺 bash/python3 可执行入口）", "Browser Use https://localhost:8098/: ERR_CERT_AUTHORITY_INVALID"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "用户指南记录多选、目标、只读、无覆盖、传输上限与跨来源移动语义；文档检查失败源于既存 reviews 链接。",
+      "evidence": ["docs/user-guide.md", "PYTHONUTF8=1 scripts/check_docs.py: FAIL（docs/reviews 中既存失效链接）"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已停止并移除本任务隔离预览容器；隔离预览数据保留在忽略的 .agent-state/transfer-preview-* 中（清理命令被安全策略拒绝，未强行删除）。原有脏工作树不清空。",
+      "evidence": ["docker stop aide-transfer-preview && docker rm aide-transfer-preview: PASS", "git status --short 已检查", "git hash-object file_transfer.go=e69ade70c4efe806ec7845e6944a327be29338e8, file_transfer_test.go=f83f6e9e126a4a20dcc4cf866925b3d733ac578a"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未获本次发布/推送授权；UI 验收和全量门禁未通过，未升版、提交、推送或替换生产服务。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "代码尚未发布；如需撤回，仅撤回本任务列出的文件修改，不清空既有脏工作树。传输操作发生在用户目标目录时，若跨来源移动删除失败，目标完整副本保留并在错误中提示核对。",
+  "handoff": "完成前后端实现与本地目录回归；真实浏览器交互和实机 SFTP 未验证。生产 8097 未触碰；隔离预览 8098 已停止并移除容器，忽略目录中的测试数据保留。未提交、未推送、未升版或部署。"
+}
