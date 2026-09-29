@@ -71,12 +71,17 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "准备合入 main 并推送 origin/main；不执行版本脚本、打 tag、构建发布镜像或生产部署。",
-      "evidence": []
+      "status": "pass",
+      "summary": "集成提交已 fast-forward 合入 main 并推送到 origin/main。按请求只推送源码，不升版、不打 tag、不部署。",
+      "evidence": [
+        "merge --ff-only integrate/consolidate-push-20260930: PASS",
+        "git push origin main: PASS, 62e8b21..2054b04",
+        "git rev-parse HEAD origin/main: both 2054b04c46dddadf3808c367caa31624a6d722e8",
+        "git status --short --branch: clean main tracking origin/main"
+      ]
     }
   },
   "release_authorization": "用户 2026-09-30 明确要求“合入并推送”。未授权升版、tag、GitHub Release 或部署。",
   "rollback": "回滚使用新的 revert 提交，不重写远端历史；不触碰工作目录或运行数据。",
-  "handoff": "待完成本地集成分支提交、fast-forward main 和推送 origin/main；最终分支与 SHA 在交付时核对。完整测试套件及浏览器交互留待后续。"
+  "handoff": "已完成 main 合入和 origin/main 推送，代码集成提交 2054b04c46dddadf3808c367caa31624a6d722e8。完整 Go 测试套件和 Safari UI 交互未运行；未来发布另行做全量验证。未升版、未打 tag、未部署、未重启服务。"
 }
