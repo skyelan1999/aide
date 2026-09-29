@@ -4,6 +4,9 @@
 
 ## 0.1.13.0 RC1（2026-09-29）
 
+- 文件夹递归上传：拖拽文件夹经 webkitGetAsEntry/createReader 递归收集、保留相对路径与顶层目录名，批量上传（单批 ≤1000 文件 / 256 MiB），实时进度与逐文件失败汇总；单文件拖拽行为不变
+
+
 - RCA 问题解决 UI：新增第五工作流阶段「问题解决」(problem-solving)，亦可从对话欢迎页一键进入；阶段校验与多轮排查提示可见；「RCA Reports」集中浏览报告，渲染 Markdown、打开关联 draw.io，缺图显示警告且无死链，.drawio.svg/.png 引用回链 .drawio 并做存在性校验
 
 
