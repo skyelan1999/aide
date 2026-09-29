@@ -1,0 +1,88 @@
+{
+  "id": "xiaomi-model-history",
+  "request": "aide的小蜜设置里面添加一个模型设置，可以选择模型接入来源或复用外部环境的模型设置，另外把小蜜会话的页面中的轨迹打开，支持会话历史下载",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "",
+  "acceptance": [
+    "小蜜设置可在复用工作台模型与独立 OpenAI 兼容模型来源间切换；独立配置的 API Key 加密存储，模型调用使用所选配置。",
+    "小蜜会话页可打开轨迹面板，Markdown/JSON 导出包含小蜜会话消息，锁定时不泄露历史。",
+    "普通会话现有轨迹、模型设置与密钥存储行为保持兼容。"
+  ],
+  "scope": [
+    "internal/server/server.go",
+    "internal/server/assistant_history.go",
+    "internal/server/apikey_vault.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/style.css",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "docs/tasks/xiaomi-model-history.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户原话定义小秘模型可复用工作台或独立接入，并要求小秘会话轨迹和历史下载。独立来源限定为 OpenAI 兼容 Base URL 与模型名；不包含提交、推送、发布或重启现有服务。",
+      "evidence": [
+        "用户消息：2026-09-29"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "小秘模型配置独立持久化在 Settings，密钥使用独立加密 vault 条目；文字与语音调用都从所选配置构造 provider。轨迹复用现有面板/Markdown/JSON 导出，以小秘 messages 生成历史；普通任务轨迹继续按 runs 展示。",
+      "evidence": [
+        "internal/server/assistant_history.go",
+        "internal/server/server.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增小秘模型来源接口和设置控件；放开小秘页轨迹按钮，导出其对话历史；更新中英文指南与静态资源版本。",
+      "evidence": [
+        "internal/server/assistant_history.go",
+        "internal/server/web/app.js",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "Go Docker 构建（含 go vet）通过；前端 node --check、git diff --check、文档链接检查通过。隔离 API 冒烟验证了配置往返及测试 Key 未写入 settings.json。UI 预览可打开，但浏览器环境未执行页面交互脚本，无法验证设置面板、轨迹展示与下载的真实交互。",
+      "evidence": [
+        "docker build -t aide:xiaomi-check .：exit 0；内含 go vet 与 go build",
+        "node --check internal/server/web/app.js && node --check internal/server/web/locales/en.js：exit 0",
+        "python3 scripts/check_docs.py：PASS，107 Markdown files / 227 local links",
+        "隔离容器 GET/PUT /api/xiaomi/model：custom 配置往返、Key 不在明文 settings.json；已切回 inherit 后删除临时数据",
+        "Codex In-app Browser 打开隔离预览：轨迹按钮可见且未禁用；设置控件点击无页面事件响应，轨迹导出未实测"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英文使用指南描述模型来源、加密 Key、轨迹下载和锁定态历史保护。",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "临时预览容器、测试凭据与临时数据目录已移除；工作树保留本任务修改。",
+      "evidence": [
+        "git status --short --branch"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户只要求实现功能，没有授权提交、推送、升版、发布或替换正在运行的服务。",
+      "evidence": [
+        "用户消息：2026-09-29"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本任务的变更文件；Settings 中小秘模型配置可改回 inherit，独立 vault Key 可通过设置中的清除选项删除。现有小秘会话消息数据不需要迁移或改写。",
+  "handoff": "源码与指南已更新。隔离 Docker 构建和模型配置 API 冒烟通过，8097 生产/常用服务没有重启或替换。浏览器交互受当前预览环境脚本事件未响应阻塞，小秘设置面板与轨迹导出仍需在可交互客户端复验。未提交、未推送、未发布。"
+}

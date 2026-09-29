@@ -101,7 +101,14 @@ func officeCreateBytes(kind string, spec any) ([]byte, error) {
 }
 
 func officeExtractText(b []byte, ext string) (string, error) {
-	if err := checkOfficeArchive(b); err != nil {
+	if strings.EqualFold(ext, ".pdf") {
+		if len(b) == 0 || len(b) > maxRawFile {
+			return "", errors.New("PDF 文件为空或超过大小限制")
+		}
+		if !bytes.HasPrefix(bytes.TrimSpace(b[:min(len(b), 1024)]), []byte("%PDF-")) {
+			return "", errors.New("文件不是有效的 PDF")
+		}
+	} else if err := checkOfficeArchive(b); err != nil {
 		return "", err
 	}
 	sp, err := officeScriptPath("extract_text.py")

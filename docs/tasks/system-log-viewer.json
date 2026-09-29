@@ -1,0 +1,76 @@
+{
+  "id": "system-log-viewer",
+  "request": "在设置中新增系统日志功能：按日志级别筛选并可下载日志以辅助软件问题分析",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/PRD.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/context.go\n M internal/server/file_upload_batch.go\n M internal/server/office_artifact.go\n M internal/server/provider.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n?? docs/tasks/context-token-dsh.json\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/enduring-theme.json\n?? docs/tasks/favicon-theme.json\n?? docs/tasks/nested-folder-transfer.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/search-restore.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/workspace-reference-ui.json\n?? docs/tasks/xiaomi-dispatch-manual.json\n?? docs/tasks/xiaomi-model-history.json\n?? docs/tasks/xiaomi-spontaneous-popup.json\n?? internal/server/semantic_search_test.go\n?? internal/server/web/favicon.svg\n?? internal/server/web/themes/comfort.css",
+  "acceptance": [
+    "设置中出现系统日志分区，按 DEBUG/INFO/WARN/ERROR/全部筛选近期日志。",
+    "日志以 JSONL 下载，导出级别跟随当前筛选，最多 5000 条。",
+    "日志在内存中有界保留，敏感凭据在记录和导出前脱敏。",
+    "读取接口使用应用常规访问令牌，不依赖外部调试接口开关。"
+  ],
+  "scope": [
+    "internal/server/system_log.go",
+    "internal/server/server.go 的日志路由",
+    "设置 schema、日志控制面板与样式、英文文案",
+    "中英文用户指南"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "已明确级别筛选、日志下载和问题分析用途。",
+      "evidence": [
+        "用户请求：设置内新增系统日志，支持日志级别筛查与下载。"
+      ]
+    },
+    "design": {
+      "status": "complete",
+      "summary": "采用全局标准日志捕获器、内存环形缓冲及受访问令牌保护的读取/下载接口。",
+      "evidence": [
+        "最多保留 5000 条；按现存非结构化日志内容推断级别；JSONL 下载并脱敏。"
+      ]
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "实现日志收集/级别筛选/脱敏导出，并添加设置页控制、样式和文档。",
+      "evidence": [
+        "internal/server/system_log.go",
+        "internal/server/web/settings-schema.json"
+      ]
+    },
+    "verification": {
+      "status": "complete",
+      "summary": "Go 编译、前端语法、设置 JSON 解析和 diff whitespace 检查通过；未运行测试。",
+      "evidence": [
+        "Docker golang:1.26-bookworm go build ./cmd/aide",
+        "node --check internal/server/web/app.js",
+        "node --check internal/server/web/locales/en.js",
+        "python3 -m json.tool internal/server/web/settings-schema.json",
+        "git diff --check"
+      ]
+    },
+    "documentation": {
+      "status": "complete",
+      "summary": "中英文用户指南已注明系统日志设置、保留条数及级别推断限制。",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "complete",
+      "summary": "未创建额外构建产物；构建二进制仅位于临时 Docker 容器内。",
+      "evidence": [
+        "当前仓库仅保留功能代码和文档改动。"
+      ]
+    },
+    "release": {
+      "status": "not_requested",
+      "summary": "未提交、推送或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

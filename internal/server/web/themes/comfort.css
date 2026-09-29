@@ -1,0 +1,47 @@
+/* 长时间阅读与工作使用：降低饱和度，采用柔和暖灰底色和鼠尾草绿强调色。 */
+html[data-palette="comfort"][data-theme="light"] {
+--bg:#f5f4ef; --bg-inset:#eae9e2; --field:#fffefa; --panel:#fbfaf6; --panel-alt:#efeee8;
+--surface:#fffefa; --surface-alt:#f7f6f0; --code-bg:#eeede6; --soft:#eeede6; --chip-bg:#e8ebe2;
+--bubble-bg:#eeeee8; --hover:#e9e9e1; --selected:#e1e6db; --selected-alt:#f4f3ed; --mode-active:#eeede6;
+--toast-bg:#343830; --brand-hi:#566a50; --backdrop:#24261f38; --line:#deded5; --field-border:#c9cabe;
+--line-faint:#e7e6de; --line-soft:#e2e1d9; --line-soft-2:#e2e1d9; --line-soft-3:#e2e1d9;
+--line-mid:#c9cabe; --line-chip:#d9ddcf; --line-strong:#c4c7b9; --line-composer:#d0d0c6; --line-accent:#aab69f;
+--focus-border:#697a60; --focus-border-2:#697a60; --danger-line:#d8b6ae; --text:#292b26;
+--text-tab:#42443d; --text-answer:#42443d; --text-breadcrumb:#42443d; --text-step-summary:#42443d;
+--text-step:#42443d; --text-settings:#42443d; --text-output:#383a34; --text-code:#42443d; --text-file:#42443d;
+--text-terminal:#383a34; --text-dialog-label:#42443d; --text-session:#62645c; --text-welcome:#62645c;
+--text-run-meta:#62645c; --text-dialog:#62645c; --muted:#5d6057; --text-note:#62645c; --text-file-icon:#62645c;
+--text-faint:#6d7067; --text-guide:#62645c; --text-guide-foot:#62645c; --text-placeholder:#66695f;
+--text-terminal-heading:#62645c; --text-guide-label:#62645c; --text-sep:#6b6e63; --text-arrow:#6b6e63;
+--faintest:#6d7067; --brand:#63745d; --accent:#78836b; --brand-text:#53654c; --brand-text-chip:#53654c;
+--brand-text-2:#5a6e53; --accent-text:#53654c; --on-brand:#ffffff; --on-accent:#ffffff; --on-toast:#f6f5ef;
+--focus-ring:#63745d; --success:#557453; --selection:#dce3d5; --scrollbar-thumb:#c4c7b9; --scrollbar-track:#eae9e2;
+--faint:#62645c; --phase-req-bg:rgba(99,116,93,.14); --phase-req-fg:#485941;
+--phase-design-bg:rgba(123,111,145,.14); --phase-design-fg:#5c516d;
+--phase-impl-bg:rgba(160,126,73,.15); --phase-impl-fg:#735a31;
+--phase-verify-bg:rgba(91,125,93,.15); --phase-verify-fg:#456447;
+--phase-rca-bg:rgba(161,95,85,.14); --phase-rca-fg:#854a43;
+}
+html[data-palette="comfort"][data-theme="dark"] {
+--bg:#1b1c19; --bg-inset:#20211d; --field:#252620; --panel:#22231f; --panel-alt:#242520;
+--surface:#282923; --surface-alt:#252620; --code-bg:#24251f; --soft:#303129; --chip-bg:#30332b;
+--bubble-bg:#2b2c25; --hover:#30312a; --selected:#34382e; --selected-alt:#393a33; --mode-active:#36372f;
+--toast-bg:#e6e7dc; --brand-hi:#b8c8a8; --backdrop:#090a08b5; --line:#373831; --field-border:#46483e;
+--line-faint:#30312b; --line-soft:#35362f; --line-soft-2:#393a32; --line-soft-3:#34352e;
+--line-mid:#4a4c41; --line-chip:#48503e; --line-strong:#505247; --line-composer:#4a4d41; --line-accent:#65735b;
+--focus-border:#9cac8c; --focus-border-2:#a8b898; --danger-line:#805c53; --text:#e5e5dc;
+--text-tab:#d4d5ca; --text-answer:#d4d5ca; --text-breadcrumb:#d4d5ca; --text-step-summary:#d4d5ca;
+--text-step:#d1d2c8; --text-settings:#d1d2c8; --text-output:#d0d1c6; --text-code:#d0d1c6; --text-file:#d0d1c6;
+--text-terminal:#ced0c4; --text-dialog-label:#d0d1c6; --text-session:#b2b4a8; --text-welcome:#b2b4a8;
+--text-run-meta:#b2b4a8; --text-dialog:#b2b4a8; --muted:#aeb0a4; --text-note:#aeb0a4; --text-file-icon:#aeb0a4;
+--text-faint:#96988d; --text-guide:#a2a499; --text-guide-foot:#a2a499; --text-placeholder:#a3a598;
+--text-terminal-heading:#96988d; --text-guide-label:#96988d; --text-sep:#8b8d82; --text-arrow:#8b8d82;
+--faintest:#929489; --brand:#b8c8a8; --accent:#a4b391; --brand-text:#c3d0b5; --brand-text-chip:#c3d0b5;
+--brand-text-2:#bdc9b0; --accent-text:#c3d0b5; --on-brand:#22251e; --on-accent:#22251e; --on-toast:#24251f;
+--focus-ring:#b8c8a8; --success:#a4c59a; --selection:#3b4434; --scrollbar-thumb:#55584c; --scrollbar-track:#20211d;
+--faint:#929489; --phase-req-bg:rgba(166,190,156,.16); --phase-req-fg:#c2d2b9;
+--phase-design-bg:rgba(190,170,216,.16); --phase-design-fg:#d4c4e6;
+--phase-impl-bg:rgba(218,183,121,.16); --phase-impl-fg:#e5c994;
+--phase-verify-bg:rgba(164,197,154,.16); --phase-verify-fg:#c4dfbb;
+--phase-rca-bg:rgba(218,151,138,.16); --phase-rca-fg:#e2b2a7;
+}

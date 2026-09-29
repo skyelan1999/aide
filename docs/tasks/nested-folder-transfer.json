@@ -1,0 +1,75 @@
+{
+  "id": "nested-folder-transfer",
+  "request": "批量上传带有子文件夹的文件夹时报错，解压也是一样",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/xiaomi-dispatch-manual.json\n?? docs/tasks/xiaomi-model-history.json\n?? internal/server/semantic_search_test.go",
+  "acceptance": [
+    "文件夹批量上传保留所有子目录的相对路径，必要时自动创建不存在的父目录。",
+    "含多层目录的 ZIP 能解压到新的目标目录；若目标已存在，清楚说明冲突并保留原文件。",
+    "嵌套上传和解压对本地工作区及 SFTP 工作区均按各自的目录语义处理。",
+    "向用户说明修复范围及未验证环境。"
+  ],
+  "scope": [
+    "internal/server/file_upload_batch.go",
+    "internal/server/files.go",
+    "internal/server/web/app.js",
+    "docs/tasks/nested-folder-transfer.json",
+    "internal/server/workspace_test.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "修复带子文件夹的批量上传和 ZIP 解压失败。",
+      "evidence": [
+        "用户反馈：批量上传包含子文件夹的文件夹时报错，解压也报错。"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "本地 ZIP 解压已有测试；SFTP 路径通过 SFTP CLI mock 覆盖缺失父目录和嵌套上传。解压失败的具体原因及 SFTP 解压仍需单独验证。",
+      "evidence": [
+        "internal/server/file_upload_batch.go nested write path",
+        "internal/server/files.go extractArchive local and SFTP branches"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "SFTP 批量上传冲突检测改用路径存在性查询；不存在父目录视为正常新路径，后续 SFTP 写入会创建父目录。 增加远程工作区嵌套批量上传回归断言；同步更新远程命令测试断言以解析 setsid shell 的实际输出文本。",
+      "evidence": [
+        "internal/server/file_upload_batch.go",
+        "internal/server/workspace_test.go TestRemoteWorkspaceDispatch"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Docker golang:1.26-bookworm 中通过定向 Go 测试：TestRemoteWorkspaceDispatch、TestBatchUploadNestedLayout、TestMCPReferenceDiscoveryAndReadOnlyCall、TestWorkspaceDownloadAndArchive、TestReferenceDownloadAndSafeExtraction。SFTP 使用命令替身模拟，不是连接真实 SFTP daemon；SFTP ZIP 解压路径未覆盖，用户报告的解压错误仍待具体错误文案。",
+      "evidence": [
+        "docker run --rm -e AIDE_OFFICE_SCRIPTS=/src/scripts/office -v $PWD:/src -v aide-go-mod-cache:/go/pkg/mod -v aide-pip-cache:/root/.cache/pip -w /src golang:1.26-bookworm bash -c apt-get install python3-pip, pip install python-docx openpyxl python-pptx, go test -mod=readonly ./internal/server -run focused-tests -count=1",
+        "ok aide/internal/server 1.122s",
+        "MCP 测试通过 stdio JSON-RPC fixture 验证 initialize、tools/list、只读调用和写调用拒绝",
+        "SFTP nested upload regression exercised absent parent probes, mkdir, and atomic put/rename commands"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "新增的 SFTP 回归逻辑与远程命令断言已格式化；相关差异检查通过。其他未提交工作区改动保留。",
+      "evidence": [
+        "git diff --check -- internal/server/file_upload_batch.go",
+        "git diff --check -- internal/server/workspace_test.go internal/server/file_upload_batch_test.go docs/tasks/nested-folder-transfer.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未构建或重启服务。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "还原 internal/server/file_upload_batch.go 的 workspaceStatExists 冲突检测修改。",
+  "handoff": "Docker 定向测试已通过；SFTP 由 mock CLI 覆盖，未连接真实 SFTP 服务端。仍需按用户此前反馈补充 ZIP 解压的实际错误信息，并单独验证 SFTP 解压分支。"
+}

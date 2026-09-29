@@ -1,0 +1,88 @@
+{
+  "id": "workflow-problem-analysis",
+  "request": "把RCA报告这个功能并入AI工作流中，这个功能本质上是用来帮助用户分析问题的而不是分析ai的问题的",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/xiaomi-model-history.json\n?? internal/server/semantic_search_test.go",
+  "acceptance": [
+    "RCA report generation and report history are accessed through the AI Workflow Problem Analysis phase; no separate RCA Reports button remains in the chat send row.",
+    "The phase is named Problem Analysis and the phase prompt focuses on the user-described business/device/network/project/process issue; it does not default to diagnosing aide/AI itself.",
+    "Problem analysis still produces an evidence-based report and diagram, and existing saved report browsing remains available from within the phase."
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/style.css",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "docs/tasks/workflow-problem-analysis.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "The user wants problem analysis and its saved reports integrated into AI Workflow, with the subject being the issue the user reports rather than aide/AI itself by default.",
+      "evidence": [
+        "User request: “把RCA报告这个功能并入AI工作流中……帮助用户分析问题……不是分析ai的问题的”"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse the existing problem-solving workflow phase and RCA persistence/viewer. Move the history control from the send row into the selected Problem Analysis phase hint, relabel the phase and clarify the prompt contract. Keep the internal phase key and stored report format stable.",
+      "evidence": [
+        "internal/server/web/app.js:135-202",
+        "internal/server/workflow.go:1889-1895",
+        "internal/server/rca_reports.go:25-27"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Integrated the report history action into Problem Analysis, renamed user-facing labels, clarified report-tool description and the problem-analysis prompt, and documented expected behavior in Chinese and English.",
+      "evidence": [
+        "internal/server/web/index.html",
+        "internal/server/web/app.js",
+        "internal/server/workflow.go",
+        "internal/server/web/locales/en.js",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Quick route checks, RCA-focused Go tests, go vet, and docs checks passed. Static browser preview loaded assets but hit the login screen because the static server has no API; live authenticated interaction in aide was not verified. 8097 was not restarted.",
+      "evidence": [
+        "python3 scripts/agent-route.py verify quick: PASS, fingerprint 3835af98735b4e0ce1e0d7f2e333586c81de8a3323d6bdc968e2365996fa7723",
+        "docker run golang:1.26-bookworm go test -mod=vendor ./internal/server -run ^TestRCA -count=1: PASS",
+        "docker run golang:1.26-bookworm go vet -mod=vendor ./internal/server: PASS",
+        "python3 scripts/check_docs.py: PASS within quick checks",
+        "Static preview http://127.0.0.1:18098 loaded page assets but stopped at login due /api/config 404; preview server stopped"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Guides describe the Problem Analysis workflow phase, its report/archive access, and that the default subject is the user-reported issue.",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Static preview server stopped. Existing PDF-reference and Xiaomi changes were retained; no application state or running service was changed.",
+      "evidence": [
+        "git diff --check: PASS",
+        "No service restart or runtime data mutation."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No image rebuild, service restart, commit, or release was requested or performed.",
+      "evidence": [
+        "Running aide instance left untouched."
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert only the workflow/problem-analysis UI, prompt, translations, and guide edits listed in scope; stored RCA reports and internal problem-solving phase identifier remain compatible.",
+  "handoff": "RCA report generation remains in AI Workflow → Problem Analysis; history is available inside that phase. Source changes are ready for review. Live authenticated browser verification and image rebuild/restart remain outstanding; 8097 was not touched."
+}

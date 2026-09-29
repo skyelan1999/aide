@@ -4,9 +4,104 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
+
+// 小蜜模型配置独立于工作台默认模型；凭据单独保存在加密 vault 条目。
+func (a *App) xiaomiModelSettings(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	source := a.settings.XiaomiModelSource
+	if source == "" {
+		source = "inherit"
+	}
+	jsonOut(w, 200, map[string]any{"source": source, "baseURL": a.settings.XiaomiBaseURL, "model": a.settings.XiaomiModel, "hasKey": a.vault != nil && a.vault.Has(VaultIDXiaomiModelAPIKey)})
+}
+
+func (a *App) updateXiaomiModelSettings(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Source   string `json:"source"`
+		BaseURL  string `json:"baseURL"`
+		Model    string `json:"model"`
+		APIKey   string `json:"apiKey"`
+		ClearKey bool   `json:"clearKey"`
+	}
+	if err := decode(w, r, &in); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	in.Source = strings.TrimSpace(in.Source)
+	if in.Source != "inherit" && in.Source != "custom" {
+		fail(w, 400, errors.New("模型来源必须是 inherit 或 custom"))
+		return
+	}
+	in.BaseURL = strings.TrimSpace(in.BaseURL)
+	in.Model = strings.TrimSpace(in.Model)
+	if in.Source == "custom" {
+		u, err := url.Parse(in.BaseURL)
+		if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+			fail(w, 400, errors.New("请输入有效的 HTTP(S) API Base URL"))
+			return
+		}
+		if in.Model == "" || len(in.Model) > 128 {
+			fail(w, 400, errors.New("自定义模型名称不能为空且最长 128 个字符"))
+			return
+		}
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if strings.TrimSpace(in.APIKey) != "" {
+		if !a.vaultIsUnlocked() {
+			fail(w, 400, errVaultLocked)
+			return
+		}
+		if err := a.vault.Put(VaultIDXiaomiModelAPIKey, VaultTypeModelAPIKey, "小秘模型 API Key", []byte(strings.TrimSpace(in.APIKey)), ""); err != nil {
+			fail(w, 500, err)
+			return
+		}
+		if err := a.vault.Save(); err != nil {
+			fail(w, 500, err)
+			return
+		}
+	} else if in.ClearKey && a.vault != nil {
+		a.vault.Delete(VaultIDXiaomiModelAPIKey)
+		if err := a.vault.Save(); err != nil {
+			fail(w, 500, err)
+			return
+		}
+	}
+	a.settings.XiaomiModelSource = in.Source
+	a.settings.XiaomiBaseURL = in.BaseURL
+	a.settings.XiaomiModel = in.Model
+	if err := atomicJSON(SettingsPath(a.dataPath), a.settings); err != nil {
+		fail(w, 500, err)
+		return
+	}
+	jsonOut(w, 200, map[string]any{"source": in.Source, "baseURL": in.BaseURL, "model": in.Model, "hasKey": a.vault != nil && a.vault.Has(VaultIDXiaomiModelAPIKey)})
+}
+
+func (a *App) xiaomiModelConfigLocked() (Settings, error) {
+	cfg := a.settings
+	if cfg.XiaomiModelSource != "custom" {
+		return cfg, nil
+	}
+	cfg.BaseURL, cfg.Model, cfg.ActiveModel = cfg.XiaomiBaseURL, cfg.XiaomiModel, cfg.XiaomiModel
+	cfg.Models = []ModelRef{{ID: cfg.XiaomiModel, Name: cfg.XiaomiModel, ContextWindow: defaultContextWindow}}
+	cfg.APIKey = ""
+	if a.vault != nil && a.vault.Has(VaultIDXiaomiModelAPIKey) {
+		if !a.vaultIsUnlocked() {
+			return cfg, errVaultLocked
+		}
+		key, err := a.vault.Get(VaultIDXiaomiModelAPIKey)
+		if err != nil {
+			return cfg, err
+		}
+		cfg.APIKey = string(key)
+	}
+	return cfg, nil
+}
 
 // ── #62：小蜜历史归位 + 文字=语音 + agentic 自主决策 ──────────────────────────
 // 小秘语音/文字往来统一写进 assistant 会话 messages；文字与语音都走小秘 agentic
@@ -192,7 +287,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	// 在锁内取 *Session 指针副本，避免与 dispatchToAideLocked 并发写 a.sessions 触发 map 竞争。
 	a.mu.Lock()
 	s := a.sessions[r.PathValue("id")]
-	cfg := a.settings
+	cfg, cfgErr := a.xiaomiModelConfigLocked()
 	va := a.voiceAgent
 	a.mu.Unlock()
 	if s == nil {
@@ -201,6 +296,10 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if s.Kind != assistantSessionKind {
 		fail(w, 400, errors.New("不是小秘系统会话"))
+		return
+	}
+	if cfgErr != nil {
+		fail(w, 423, cfgErr)
 		return
 	}
 
@@ -227,7 +326,9 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// 注入模型 API Key（与 execute 一致），跑 agentic 自主决策循环
-	cfg.APIKey, _ = a.modelAPIKeyLocked()
+	if cfg.XiaomiModelSource != "custom" {
+		cfg.APIKey, _ = a.modelAPIKeyLocked()
+	}
 	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "text")
 	if err != nil {
 		// 键盘输入绝不回落到语音 analyze 过滤器；模型不可用时按明确文字指令兜底转交。
@@ -281,7 +382,7 @@ func (a *App) dispatchToAideLocked(intent string) map[string]any {
 	target := &Session{
 		ID: newID(), Title: string(titleRunes), Created: now, Updated: now,
 		Messages: []Message{{Role: "user", Content: intent}},
-		Runs:     []*Task{},
+		Runs:     []*Task{}, PendingPrompt: intent,
 	}
 	a.assignSessionNumber(target)
 	a.sessions[target.ID] = target

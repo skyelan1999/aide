@@ -201,7 +201,7 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	if usage.Total == 0 {
 		// 上游未返回 usage → 使用与上下文卡相同的完整请求估算并标记。
 		usage.Prompt = promptEstimate
-		usage.Completion = len(msg.Content) / 4
+		usage.Completion = contextMessageTokens(Message{Role: "assistant", Content: msg.Content, ToolCalls: msg.ToolCalls})
 		usage.Total = usage.Prompt + usage.Completion
 		usage.Estimated = true
 	}
@@ -319,7 +319,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		applyPromptCacheUsage(&usage, out.Usage)
 		if usage.Total == 0 {
 			usage.Prompt = promptEstimate
-			usage.Completion = len(msg.Content) / 4
+			usage.Completion = contextMessageTokens(Message{Role: "assistant", Content: msg.Content, ToolCalls: msg.ToolCalls})
 			usage.Total = usage.Prompt + usage.Completion
 			usage.Estimated = true
 		}
@@ -426,7 +426,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 	}
 	if tu.Total == 0 {
 		tu.Prompt = promptEstimate
-		tu.Completion = len(text) / 4
+		tu.Completion = contextMessageTokens(Message{Role: "assistant", Content: text, ToolCalls: calls})
 		tu.Total = tu.Prompt + tu.Completion
 		tu.Estimated = true
 	}

@@ -1,0 +1,83 @@
+{
+  "id": "file-panel-drag-navigation",
+  "request": "项目文件需要支持鼠标长按拖拽进入某文件夹或上一目录",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/PRD.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/context.go\n M internal/server/file_upload_batch.go\n M internal/server/office_artifact.go\n M internal/server/provider.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n?? docs/tasks/context-token-dsh.json\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/enduring-theme.json\n?? docs/tasks/favicon-theme.json\n?? docs/tasks/nested-folder-transfer.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/search-restore.json\n?? docs/tasks/session-history-performance.json\n?? docs/tasks/system-log-viewer.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/workspace-reference-ui.json\n?? docs/tasks/xiaomi-dispatch-manual.json\n?? docs/tasks/xiaomi-model-history.json\n?? docs/tasks/xiaomi-spontaneous-popup.json\n?? internal/server/semantic_search_test.go\n?? internal/server/system_log.go\n?? internal/server/web/favicon.svg\n?? internal/server/web/themes/comfort.css",
+  "acceptance": [
+    "在项目文件列表中长按鼠标左键约 420 ms 后拖动，拖到文件夹并松开可进入该文件夹。",
+    "拖到路径栏的上级目录按钮并松开可返回上一级；根目录没有可返回目标。",
+    "普通点击、Ctrl/Command/Shift 多选和右键菜单保持原有行为；非鼠标指针不启用该手势。",
+    "拖动时源项弱化、有效目标高亮，并提示可放置位置。"
+  ],
+  "scope": [
+    "internal/server/web/app.js: project-file long-press navigation gesture and parent navigation click suppression",
+    "internal/server/web/style.css: source/target drag feedback",
+    "internal/server/web/locales/en.js: English text for drag hint",
+    "docs/PRD.md and Chinese/English user guides: behavior and interaction documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户描述定义长按拖动到文件夹或上级目录的导航行为，并保护点击/多选。",
+      "evidence": [
+        "用户请求：项目文件支持鼠标长按拖拽进入文件夹或上一目录。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用现有文件行和 parent-dir 按钮；仅在鼠标左键长按后启动导航，不改文件内容和服务端 API。",
+      "evidence": [
+        "internal/server/web/app.js:fileNavigationDropTarget、bindFileNavigationGesture、navigateParentDirectory"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "增加长按导航、拖动源/目标高亮、拖拽提示及合成点击拦截；文档说明行为。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/style.css",
+        "internal/server/web/locales/en.js",
+        "docs/PRD.md",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "JavaScript 语法和 diff 空白检查通过；浏览器交互验收未执行：桌面 Mac 当前锁定，CUA 无法访问 Safari。未运行测试套件。",
+      "evidence": [
+        "node --check internal/server/web/app.js: PASS",
+        "node --check internal/server/web/locales/en.js: PASS",
+        "git diff --check: PASS",
+        "CUA getState: Mac locked; browser interaction NOT_RUN"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新文件面板 PRD 和中文/英文使用指南。",
+      "evidence": [
+        "docs/PRD.md: WF-14",
+        "docs/user-guide.md: 长按拖动导航",
+        "docs/en/user-guide.md: Long-press drag navigation"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅检查并修改本任务范围内的源文件和任务记录；保留已有未提交工作，没有清理其他文件。",
+      "evidence": [
+        "git diff --check: PASS",
+        "git status --short: retained pre-existing dirty files"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户未要求提交、构建发布或部署；服务未重启。",
+      "evidence": [
+        "未执行发布操作。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回滚本功能时，仅撤销本任务对 app.js、style.css、locales/en.js、PRD 和用户指南对应的增量；不得覆盖这些文件中其他已有用户修改。",
+  "handoff": "源码和文档已完成；浏览器验收因 Mac 锁定未运行。后续解锁桌面后应在 Safari 验证：普通单击、长按拖入文件夹、长按拖到上级目录、多选、右键菜单及根目录行为。未提交、未发布、未重启服务。"
+}

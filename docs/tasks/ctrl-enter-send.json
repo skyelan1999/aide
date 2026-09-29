@@ -1,0 +1,79 @@
+{
+  "id": "ctrl-enter-send",
+  "request": "把对话回车发送改成ctrl+回车发送，防止误触",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/xiaomi-model-history.json\n?? internal/server/semantic_search_test.go",
+  "acceptance": [
+    "In the message prompt, plain Enter inserts a newline and does not submit.",
+    "Ctrl+Enter submits the task; IME composition Enter remains unhandled by the send shortcut.",
+    "The composer hint and Chinese/English help text reflect the new shortcut."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "docs/tasks/ctrl-enter-send.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Prevent accidental sends by making Enter insert a newline and requiring Ctrl+Enter to submit.",
+      "evidence": [
+        "User request: “把对话回车发送改成ctrl+回车发送，防止误触”"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Change the prompt textarea keydown guard only; keep native Enter/newline behavior and ignore IME composition. Update inline hint and guide translations.",
+      "evidence": [
+        "internal/server/web/app.js:1994",
+        "internal/server/web/app.js:2017"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Ctrl+Enter now prevents the newline and requests form submission. Plain Enter and Shift+Enter retain textarea newline behavior. Composer hints and guides were updated.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/web/locales/en.js",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Repository quick checks passed, including JavaScript syntax, i18n checks, docs links, and diff validation. Live authenticated browser interaction was not run; 8097 was not restarted.",
+      "evidence": [
+        "python3 scripts/agent-route.py verify quick: PASS, fingerprint d4e68cab900b855ee4f978e658a70658880363d98cf44034cbdf3d6385d00e28"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Chinese and English user guides document Enter for newline and Ctrl+Enter for send.",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only scoped keyboard handling, shortcut hints, guides, and task record were added for this request; unrelated existing changes were preserved.",
+      "evidence": [
+        "git diff --check: PASS"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No application rebuild, service restart, commit, or release was requested or performed.",
+      "evidence": [
+        "Current running instance left untouched."
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the scoped prompt keydown condition and its hint/documentation text.",
+  "handoff": "Source behavior is updated. Current aide runtime will need a frontend-containing rebuild/restart before the shortcut changes appear."
+}

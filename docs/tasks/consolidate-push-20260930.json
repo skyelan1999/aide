@@ -1,0 +1,82 @@
+{
+  "id": "consolidate-push-20260930",
+  "request": "整理文档和目录，然后合入并推送",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/PRD.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/context.go\n M internal/server/file_upload_batch.go\n M internal/server/office_artifact.go\n M internal/server/provider.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n?? docs/tasks/context-token-dsh.json\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/enduring-theme.json\n?? docs/tasks/favicon-theme.json\n?? docs/tasks/file-panel-drag-navigation.json\n?? docs/tasks/nested-folder-transfer.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/search-restore.json\n?? docs/tasks/session-history-performance.json\n?? docs/tasks/system-log-viewer.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/workspace-reference-ui.json\n?? docs/tasks/xiaomi-dispatch-manual.json\n?? docs/tasks/xiaomi-model-history.json\n?? docs/tasks/xiaomi-spontaneous-popup.json\n?? internal/server/semantic_search_test.go\n?? internal/server/system_log.go\n?? internal/server/web/favicon.svg\n?? internal/server/web/themes/comfort.css",
+  "acceptance": [
+    "本轮源码、文档和新增文件均能对应到用户此前明确提出的功能任务；不相关和未知文件不纳入。",
+    "用户指南/PRD更新与实现一致；任务记录、源码、主题资源和测试文件留在 docs/tasks、internal/server、internal/server/web 等职责目录。",
+    "按用户此前建议，在 Docker 应用镜像内通过 SFTP 与 MCP 定向回归。",
+    "将审阅后的改动合入 main 并推送 origin/main；不升版、不打 tag、不重启或替换生产服务。"
+  ],
+  "scope": [
+    "已修改文件与新增文件均对应用户此前明确提出的功能请求：服务端、前端、主题/图标资源、任务账本和操作文档。",
+    "docs/PRD.md、docs/user-guide.md、docs/en/user-guide.md、docs/README.md 与 docs/reviews/2026-09-30-consolidation.md。",
+    "不包含忽略目录、用户运行数据、未知文件、版本/tag、生产服务和 GitHub Release。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确要求整理文档与目录，合入并推送；版本、打 tag、发布和生产部署不在本次指令内。",
+      "evidence": [
+        "用户请求：整理文档和目录，然后合入并推送。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "以现有 docs/ 目录职责为准，保持任务账本在 docs/tasks、资源在 internal/server/web；工作区基于 origin/main 的 main，无分叉。将可归属改动放在集成分支提交，再 fast-forward 回 main。",
+      "evidence": [
+        "docs/README.md: 文档目录职责与禁止新建 doc/ 说明",
+        "git status --short --branch: main 与 origin/main 起始一致。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "整理文档索引和本轮整合报告，保留此前各功能任务记录与实现文件，并按审阅后的明确清单提交。",
+      "evidence": [
+        "docs/PRD.md",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/reviews/2026-09-30-consolidation.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Docker aide:local 镜像内 SFTP/MCP 定向 Go 回归通过，Go 编译通过；JS 语法、diff 空白和文档链接检查通过。完整 Go 套件与浏览器 UI 验收未运行。",
+      "evidence": [
+        "Docker aide:local: go test -mod=vendor ./internal/server -run TestRemoteWorkspaceDispatch|TestMCPReferenceDiscoveryAndReadOnlyCall -count=1: PASS (0.806s)",
+        "node --check internal/server/web/app.js: PASS",
+        "node --check internal/server/web/locales/en.js: PASS",
+        "git diff --check: PASS",
+        "Mac 已锁定；Safari 实际 UI 验收 NOT_RUN。",
+        "docker aide:local: go build -mod=vendor -buildvcs=false ./cmd/aide: PASS",
+        "python3 scripts/check_docs.py: PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "本轮新增功能在 PRD 和中英文指南中有对应说明；文档中心索引链接整合报告。",
+      "evidence": [
+        "docs/README.md",
+        "docs/PRD.md",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "新增源码、资源和任务记录均在既定目录；未发现需移动的根目录文档或非忽略散落文件。不清除 .agent-state、tmp、.verify-bin 等既有忽略目录。",
+      "evidence": [
+        "git ls-files --others --exclude-standard: 所有非忽略新增文件已按职责归类。"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "准备合入 main 并推送 origin/main；不执行版本脚本、打 tag、构建发布镜像或生产部署。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户 2026-09-30 明确要求“合入并推送”。未授权升版、tag、GitHub Release 或部署。",
+  "rollback": "回滚使用新的 revert 提交，不重写远端历史；不触碰工作目录或运行数据。",
+  "handoff": "待完成本地集成分支提交、fast-forward main 和推送 origin/main；最终分支与 SHA 在交付时核对。完整测试套件及浏览器交互留待后续。"
+}

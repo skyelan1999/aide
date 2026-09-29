@@ -1,0 +1,82 @@
+{
+  "id": "enduring-theme",
+  "request": "在设置→外观新增长期使用主题，位置在专业和经典之间，并将经典下移",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/context.go\n M internal/server/file_upload_batch.go\n M internal/server/office_artifact.go\n M internal/server/provider.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n?? docs/tasks/context-token-dsh.json\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/favicon-theme.json\n?? docs/tasks/nested-folder-transfer.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/search-restore.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/workspace-reference-ui.json\n?? docs/tasks/xiaomi-dispatch-manual.json\n?? docs/tasks/xiaomi-model-history.json\n?? internal/server/semantic_search_test.go\n?? internal/server/web/favicon.svg",
+  "acceptance": [
+    "设置→外观按专业、舒适、经典顺序展示主题，每套均提供浅色、深色、跟随系统。",
+    "舒适主题采用适合长时间阅读工作的低饱和暖灰底色与柔和强调色。",
+    "选择和刷新后均保留舒适配色；此前保存的专业/经典偏好继续有效。"
+  ],
+  "scope": [
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/settings-init.js",
+    "internal/server/web/themes/comfort.css",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "docs/PRD.md",
+    "docs/user-guide.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "在专业与经典之间增加适合长期使用的低饱和舒适主题。",
+      "evidence": [
+        "settings-schema.json 现有主题控件按 palette 区分。"
+      ]
+    },
+    "design": {
+      "status": "complete",
+      "summary": "沿用现有三档明暗模式偏好机制，新增 comfort palette 和暖灰/鼠尾草色 token。",
+      "evidence": [
+        "设置面板由 settings-schema.json 驱动；aideUI 管理主题与 palette。"
+      ]
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "新增舒适主题样式、设置行、主题存储支持及文档说明；经典主题顺序后移。",
+      "evidence": [
+        "internal/server/web/settings-schema.json",
+        "internal/server/web/settings-init.js",
+        "internal/server/web/themes/comfort.css",
+        "internal/server/web/index.html",
+        "internal/server/web/locales/en.js",
+        "docs/PRD.md",
+        "docs/user-guide.md"
+      ]
+    },
+    "verification": {
+      "status": "complete",
+      "summary": "静态检查通过；尚未在 Safari 中逐档切换实测。",
+      "evidence": [
+        "node --check internal/server/web/settings-init.js",
+        "node --check internal/server/web/locales/en.js",
+        "settings-schema.json JSON 校验通过",
+        "comfort.css 浅色/深色规则及括号平衡校验通过",
+        "git diff --check"
+      ]
+    },
+    "documentation": {
+      "status": "complete",
+      "summary": "同步更新产品需求、中文用户指南和英文界面文案。",
+      "evidence": [
+        "docs/PRD.md",
+        "docs/user-guide.md",
+        "internal/server/web/locales/en.js"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "代码和静态检查已完成。Safari 中实时主题切换与存储持久化未进行人工浏览器验收。"
+}

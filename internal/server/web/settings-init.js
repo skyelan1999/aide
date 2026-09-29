@@ -93,7 +93,7 @@
     doc.version = VERSION;
     doc.language = normalizeLanguage(parsed.language);
     doc.theme = parsed.theme === 'classic' ? 'light' : theme;
-    doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : 'blue';
+    doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
     var normalized = JSON.stringify(doc);
     if (stored !== normalized) rawSet(KEY, normalized);
     return doc;
@@ -177,7 +177,7 @@
       doc.version = VERSION;
     doc.language = normalizeLanguage(parsed.language);
       doc.theme = parsed.theme === 'classic' ? 'light' : theme;
-    doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : 'blue';
+    doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
       applyTheme();
       notifyAll();
     } else if (event.key === LEGACY_KEY) {
@@ -198,7 +198,7 @@
     },
     getAll: snapshot,
     setAppearance: function (palette, theme) {
-      doc.palette = palette === 'green' ? 'green' : 'blue';
+      doc.palette = palette === 'green' || palette === 'comfort' ? palette : 'blue';
       doc.theme = normalizeTheme(theme);
       persist();
       applyTheme();

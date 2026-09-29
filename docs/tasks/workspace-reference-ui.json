@@ -1,0 +1,69 @@
+{
+  "id": "workspace-reference-ui",
+  "request": "优化工作目录和引用右侧面板的 UI 外观，使层级、来源卡片、路径和文件列表更清晰美观，同时沿用 aide 紧凑暗色风格",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/context.go\n M internal/server/file_upload_batch.go\n M internal/server/office_artifact.go\n M internal/server/provider.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n?? docs/tasks/context-token-dsh.json\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/nested-folder-transfer.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/search-restore.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/xiaomi-dispatch-manual.json\n?? docs/tasks/xiaomi-model-history.json\n?? internal/server/semantic_search_test.go",
+  "acceptance": [
+    "工作目录/引用切换状态清晰可辨，键盘焦点与 hover 状态可见。",
+    "引用来源以完整卡片呈现，当前选中来源与固定系统文档有不同层次。",
+    "路径栏、创建文件按钮和文件/目录条目对齐一致，并保持窄面板可读。",
+    "不改动文件、引用的业务行为和权限。"
+  ],
+  "scope": [
+    "internal/server/web/style.css",
+    "docs/tasks/workspace-reference-ui.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "美化工作目录与引用面板，优先提升层级、选中态、路径操作栏和列表易读性。",
+      "evidence": [
+        "用户请求：工作目录和引用修改一下 UI，使其看着更美观。",
+        "用户截图显示 286px 右侧窄面板及当前深色主题。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "只追加作用于文件侧栏的样式，复用现有主题变量与 compact UI 规范；不改 DOM 结构或交互。",
+      "evidence": [
+        "internal/server/web/style.css existing .file-panel/.source-chips/.file-item layout"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "细化面板标题与 tab、来源卡片选中/固定状态、路径工具栏、文件条目 hover/focus，以及底部项目上下文卡片；适配小屏窄侧栏。",
+      "evidence": [
+        "internal/server/web/style.css workspace/reference panel overrides"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "app.js Node 语法检查及相关文件 git diff --check 通过。按仓库 UI 要求尝试打开页面，但 Mac 桌面报告已锁定，Safari/本机 HTTPS 证书无法自动通过，嵌入式浏览器的 18099 连接被拒绝；因此未能目视检查渲染。未运行测试。",
+      "evidence": [
+        "node --check internal/server/web/app.js",
+        "git diff --check -- internal/server/web/style.css docs/tasks/workspace-reference-ui.json",
+        "CUA getState: Mac locked; https://localhost:8097 rejected self-signed certificate; https://127.0.0.1:18099 connection refused"
+      ]
+    },
+    "documentation": {
+      "status": "not_run",
+      "summary": "纯视觉样式调整，不需要用户操作文档变更。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "样式仅追加在既有样式表末尾，相关差异检查通过；保留其他既有工作区改动。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未构建、重启、提交或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "删除 internal/server/web/style.css 本任务追加的工作目录 / 引用面板样式块。",
+  "handoff": "样式已更新并完成静态检查；需要桌面解锁后在本地应用页面目视确认色彩、卡片布局和窄屏表现。"
+}

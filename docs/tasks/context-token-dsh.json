@@ -1,0 +1,82 @@
+{
+  "id": "context-token-dsh",
+  "request": "上下文计算感觉不太准，仔细研究 DSH 的计算方法并修复",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/file_upload_batch.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/nested-folder-transfer.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/xiaomi-dispatch-manual.json\n?? docs/tasks/xiaomi-model-history.json\n?? internal/server/semantic_search_test.go",
+  "acceptance": [
+    "上下文文本估算遵循 DeepSeek Harness dsh-token-meter 的 UTF-16 code units / 4 启发式，不再按 UTF-8 字节数估算。",
+    "按 DSH 计价：每个非空 system 消息与其他消息的 role framing 计 4 token；每个内容块计 4 token；非空工具 schema 另计 4 token。",
+    "context preview、无上游 usage 时的输入/输出估算、历史回放裁剪及压缩阈值使用同一 token 单位。",
+    "图片本地估算规则与上游实际 usage 分开说明，不把最近任务累计 usage 冒充当前上下文占用。",
+    "相同模型、系统提示、工具定义下，用最近一次非估算的上游调用 usage 校准预览；切换请求头后不沿用旧锚点。"
+  ],
+  "scope": [
+    "internal/server/context.go",
+    "internal/server/provider.go",
+    "internal/server/workflow.go",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "docs/tasks/context-token-dsh.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "研究 DSH token-meter，并修复 aide 上下文估算口径不一致问题。",
+      "evidence": [
+        "用户请求：上下文计算不准，仔细研究 DSH 方法后修复。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "检查本机 DeepSeek Harness @deepseek-ai/dsh-token-meter 0.1.5-rc.3：estimateMessage 按 UTF-16 JS 字符数/4、每文本内容块 +4、role framing +4；estimateSystemMessage 单独处理 system；estimateToolsTokens 按 JSON 字符数/4 +4；图片由路由定价。aide 保留每图 384 token 本地上界，并明确它与真实 usage 分开。 DSH TokenMeter 还会以匹配请求头的真实 usage 锚定估算，再按估算增量外推；aide 以最近一次实际调用与同请求头估算的差值校准后续上下文。",
+      "evidence": [
+        "/Users/skyelan/.local/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-token-meter/lib/types/estimate.js",
+        "/Users/skyelan/.local/lib/node_modules/@deepseek-ai/dsh/node_modules/@deepseek-ai/dsh-token-meter/lib/index.js",
+        "internal/server/context.go current byte-based estimator and context selection",
+        "internal/server/provider.go fallback usage",
+        "internal/server/workflow.go auto/manual compaction budgets"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "将统一估算切换为 DSH 的 UTF-16 字符启发式和结构开销；上下文分项保留真实 UTF-8 bytes 与估算 characters；输入/输出 fallback、历史回放上限、手动/自动压缩统一到 token 估算预算。 保存最近调用的实际 usage 锚点，匹配 provider/baseURL、model、system prompt 和工具 schema 后校准预览；压缩预算还纳入每轮都发送的历史摘要。",
+      "evidence": [
+        "internal/server/context.go",
+        "internal/server/provider.go",
+        "internal/server/workflow.go",
+        "internal/server/web/app.js contextParts usageAdjustment",
+        "internal/server/web/locales/en.js provider usage calibration"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "使用 Docker golang:1.26-bookworm 执行 gofmt，并对本任务相关源码执行 git diff --check；未运行构建或测试，未重启 8097，因此浏览器及真实上游对照未验证。",
+      "evidence": [
+        "docker run --rm -v $PWD:/src -w /src golang:1.26-bookworm gofmt -w internal/server/context.go internal/server/workflow.go internal/server/provider.go",
+        "git diff --check -- internal/server/context.go internal/server/provider.go internal/server/workflow.go internal/server/web/app.js internal/server/web/locales/en.js internal/server/file_upload_batch.go"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "预估说明提示明确显示 DSH 口径、非精确 tokenizer、图片上界与上游实际 usage 分开展示。",
+      "evidence": [
+        "internal/server/context.go ContextPreview.EstimationNote"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅估算、fallback、上下文预览校准、自动/手动压缩与 UI 分项改动；保留本任务开始前既有修改及另一任务中的 SFTP 上传修复。",
+      "evidence": [
+        "git diff --check passed"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未构建、重启、提交或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "还原 context.go 的 UTF-16/结构估算、provider.go fallback 与 workflow.go 的 token-unit compaction changes。",
+  "handoff": "DSH 对齐改动已格式化并完成差异检查；尚未构建、测试、重启或做浏览器/上游用量验证。"
+}

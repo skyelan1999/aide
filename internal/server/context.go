@@ -1,7 +1,7 @@
 package server
 
 // R08-04 上下文预览：与真实请求共用同一构建器。
-// 预览展示组成/估算口径（4 字符 ≈ 1 token，非精确 tokenizer），
+// 预览展示组成/估算口径（对齐 DSH 的 4 UTF-16 字符 ≈ 1 token 启发式，非精确 tokenizer），
 // 并在发送前可解释地拦截超限请求（Provider 日志不得出现被拦截的主调用）。
 
 import (
@@ -24,12 +24,42 @@ const (
 )
 
 // ContextComponent 是一个可解释的上下文组成部分。Bytes 是实际会发给
-// provider 的文本 UTF-8 字节数；Tokens 是用统一启发式计算的估算值，不是
-// provider 的账单 usage。协议开销和图片没有可比较的文本字节，因此 Bytes
-// 可以为 0 而 Tokens 非 0。
+// provider 的文本 UTF-8 字节数；Characters 是 DSH 口径的 UTF-16 code units；
+// Tokens 是估算值，不是 provider 的账单 usage。协议开销和图片没有可比较的
+// 文本，因此 Bytes/Characters 可以为 0 而 Tokens 非 0。
 type ContextComponent struct {
-	Bytes  int `json:"bytes"`
-	Tokens int `json:"tokens"`
+	Bytes      int   `json:"bytes"`
+	Characters int   `json:"characters"` // DSH 口径：UTF-16 code units
+	Tokens     int   `json:"tokens"`
+	tokenParts []int // 保留每个文本块/字段的独立取整边界
+}
+
+// ContextUsageAnchor 保存一次真实上游调用及其 DSH 估算锚点，用来校准
+// 后续相同请求头下的会话上下文压力。
+type ContextUsageAnchor struct {
+	Usage              TokenUsage `json:"usage"`
+	PromptEstimate     int        `json:"promptEstimate"`
+	CompletionEstimate int        `json:"completionEstimate"`
+	HeaderFingerprint  string     `json:"headerFingerprint"`
+}
+
+func utf16CodeUnits(s string) int {
+	n := 0
+	for _, r := range s {
+		if r > 0xffff {
+			n += 2
+		} else {
+			n++
+		}
+	}
+	return n
+}
+
+func (c *ContextComponent) addText(s string) {
+	c.Bytes += len(s)
+	units := utf16CodeUnits(s)
+	c.Characters += units
+	c.tokenParts = append(c.tokenParts, units)
 }
 
 // ContextBreakdown 上下文组成明细。各 Component.Tokens 的总和严格等于
@@ -47,13 +77,17 @@ type ContextBreakdown struct {
 	ToolSchemas      ContextComponent `json:"toolSchemas"`
 	Images           ContextComponent `json:"images"`
 	Protocol         ContextComponent `json:"protocol"`
+	UsageAdjustment  ContextComponent `json:"usageAdjustment"`
 
-	HistoryMessages int `json:"historyMessages"`
-	AttachmentFiles int `json:"attachmentFiles"`
-	ImageFiles      int `json:"imageFiles"`
-	ToolCount       int `json:"toolCount"`
-	ToolCallCount   int `json:"toolCallCount"`
-	MessageCount    int `json:"messageCount"`
+	HistoryMessages  int `json:"historyMessages"`
+	AttachmentFiles  int `json:"attachmentFiles"`
+	ImageFiles       int `json:"imageFiles"`
+	ToolCount        int `json:"toolCount"`
+	ToolCallCount    int `json:"toolCallCount"`
+	MessageCount     int `json:"messageCount"`
+	RoleFrames       int `json:"roleFrames"`
+	ContentBlocks    int `json:"contentBlocks"`
+	UsageCalibration int `json:"usageCalibration,omitempty"`
 
 	// 兼容 R08-04 API 客户端；新界面使用上面的 disjoint components。
 	// Deprecated: use Component.Bytes/Component.Tokens instead.
@@ -67,36 +101,48 @@ type ContextBreakdown struct {
 }
 
 const (
-	contextBytesPerToken       = 4
-	contextMessageOverhead     = 4
-	contextRequestOverhead     = 2
-	contextImageUpperBoundCost = 384
+	contextCharsPerToken        = 4
+	contextMessageOverhead      = 4
+	contextContentBlockOverhead = 4
+	contextImageUpperBoundCost  = 384
+	contextHistoryMaxTokens     = 15000
 )
 
-func estimateContextTextTokens(bytes int) int {
-	if bytes <= 0 {
+func estimateContextTextTokens(characters int) int {
+	if characters <= 0 {
 		return 0
 	}
-	return (bytes + contextBytesPerToken - 1) / contextBytesPerToken
+	return (characters + contextCharsPerToken - 1) / contextCharsPerToken
+}
+
+func (c *ContextComponent) estimatedTextTokens() int {
+	total := 0
+	for _, units := range c.tokenParts {
+		total += estimateContextTextTokens(units)
+	}
+	return total
 }
 
 func (b *ContextBreakdown) components() []*ContextComponent {
 	return []*ContextComponent{
 		&b.System, &b.Summary, &b.HistoryUser, &b.HistoryAssistant,
 		&b.ToolCalls, &b.ToolResults, &b.Prompt, &b.Attachments,
-		&b.Instruction, &b.ToolSchemas, &b.Images, &b.Protocol,
+		&b.Instruction, &b.ToolSchemas, &b.Images, &b.Protocol, &b.UsageAdjustment,
 	}
 }
 
-// price 按固定密度文本估算重新计价。四个 token 的每消息开销及一个请求
-// 固定开销是与具体 tokenizer 无关、显式展示的协议预算；图片使用保守上界，
-// 防止视觉附件在上下文卡里被悄悄当成零成本。
+// price 按 DSH token-meter 的固定密度规则重新计价：UTF-16 字符数/4，
+// 每个消息角色和内容块各加 4；工具 schema 加 4。图片继续使用本地保守上界。
 func (b *ContextBreakdown) price() int {
 	for _, component := range b.components() {
-		component.Tokens = estimateContextTextTokens(component.Bytes)
+		component.Tokens = component.estimatedTextTokens()
 	}
 	b.Images.Tokens = b.ImageFiles * contextImageUpperBoundCost
-	b.Protocol.Tokens = b.MessageCount*contextMessageOverhead + contextRequestOverhead
+	if b.ToolCount > 0 {
+		b.ToolSchemas.Tokens += contextContentBlockOverhead
+	}
+	b.Protocol.Tokens = b.RoleFrames*contextMessageOverhead + b.ContentBlocks*contextContentBlockOverhead
+	b.UsageAdjustment.Tokens = b.UsageCalibration
 	total := 0
 	for _, component := range b.components() {
 		total += component.Tokens
@@ -283,11 +329,17 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 		}
 	}
 	var bd ContextBreakdown
-	bd.System.Bytes = len(history[0].Content)
+	bd.System.addText(history[0].Content)
+	if history[0].Content != "" {
+		bd.RoleFrames++
+	}
 	bd.SystemChars = bd.System.Bytes
 	if s != nil && s.Compact != "" {
 		history = append(history, Message{Role: "system", Content: "历史摘要（已压缩 " + fmt.Sprint(s.CompactedMessages) + " 条消息）:\n" + s.Compact})
-		bd.Summary.Bytes = len(history[1].Content)
+		bd.Summary.addText(history[1].Content)
+		if history[1].Content != "" {
+			bd.RoleFrames++
+		}
 		bd.SummaryChars = bd.Summary.Bytes
 	}
 	// 摘要之后才是持久化会话回放；它们要按角色拆分，而不是混成“历史正文”。
@@ -295,9 +347,9 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	historyCount := 0
 	if s != nil {
 		start, total := len(s.Messages), 0
-		for start > 0 && total+contextMessageBytes(s.Messages[start-1]) < 60000 {
+		for start > 0 && total+contextMessageTokens(s.Messages[start-1]) < contextHistoryMaxTokens {
 			start--
-			total += contextMessageBytes(s.Messages[start])
+			total += contextMessageTokens(s.Messages[start])
 		}
 		history = append(history, s.Messages[start:]...)
 		historyCount = len(s.Messages) - start
@@ -314,22 +366,51 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 		addHistoryComponent(&bd, history[i])
 	}
 	bd.HistoryMessages = historyCount
-	bd.Prompt.Bytes = len(prompt)
+	bd.Prompt.addText(prompt)
 	bd.PromptChars = bd.Prompt.Bytes
-	bd.Attachments.Bytes = len(contextText)
+	bd.Attachments.addText(contextText)
 	bd.AttachmentChars = bd.Attachments.Bytes
+	if prompt != "" || contextText != "" {
+		bd.ContentBlocks++ // 新用户消息的正文与附件文本合为一个内容块
+	}
+	bd.RoleFrames++ // 即使 baseline 正文为空，请求仍会包含该 user 消息
 	if contextText != "" {
 		bd.AttachmentFiles = strings.Count(contextText, "<untrusted-file")
 	}
 	bd.ImageFiles = len(images)
-	bd.Instruction.Bytes = len(instruction)
+	bd.ContentBlocks += len(images)
+	bd.Instruction.addText(instruction)
+	if instruction != "" {
+		bd.ContentBlocks++
+	}
+	bd.RoleFrames++
 	bd.InstructionChars = bd.Instruction.Bytes
 	tb, _ := json.Marshal(tools)
-	bd.ToolSchemas.Bytes = len(tb)
+	if len(tools) > 0 {
+		bd.ToolSchemas.addText(string(tb))
+	}
 	bd.ToolSchemaChars = bd.ToolSchemas.Bytes
 	bd.ToolCount = len(tools)
 	bd.MessageCount = len(first)
 	bd.HistoryChars = bd.HistoryUser.Bytes + bd.HistoryAssistant.Bytes + bd.ToolCalls.Bytes + bd.ToolResults.Bytes
+	if s != nil && len(history) > 0 {
+		fingerprint := contextHeaderFingerprint(cfg, history[0].Content, tools)
+		for i := len(s.Runs) - 1; i >= 0; i-- {
+			anchor := s.Runs[i].ContextAnchor
+			if anchor == nil || anchor.Usage.Estimated || anchor.Usage.Prompt <= 0 || anchor.Usage.Completion < 0 {
+				continue
+			}
+			if anchor.HeaderFingerprint != fingerprint {
+				break // header 已换到其他模型/系统提示/工具集合，不复用旧 usage
+			}
+			estimatedAnchor := anchor.PromptEstimate + anchor.CompletionEstimate
+			actualAnchor := anchor.Usage.Prompt + anchor.Usage.Completion
+			if actualAnchor >= estimatedAnchor {
+				bd.UsageCalibration = actualAnchor - estimatedAnchor
+			}
+			break
+		}
+	}
 	inputEstimate := bd.price()
 	outputReserve := params.MaxTokens
 	window := a.modelWindow(cfg.Model)
@@ -361,7 +442,7 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 		InputEstimate:  inputEstimate,
 		TotalEstimate:  total,
 		OverLimit:      window > 0 && total > window,
-		EstimationNote: "组成来自即将发送的首轮消息与工具定义。文本按 4 UTF-8 字节 ≈ 1 token，另计每条消息 4 token 协议开销；图片按每张 384 token 的保守上界估算。上游返回 usage 后，实际用量以轨迹记录为准。",
+		EstimationNote: "组成来自即将发送的首轮消息与工具定义，估算口径对齐 DeepSeek Harness：按 UTF-16 字符数每 4 个约 1 token，并按消息/内容块计结构开销；图片按每张 384 token 的本地保守上界估算。若最近一次模型调用有真实 usage 且模型/系统提示/工具定义相同，会用其校准当前估算；其余情况仍是估算，不是 tokenizer 实测。最近任务累计 usage 另行显示。",
 		Instruction:    instruction,
 		Breakdown:      bd,
 		Fingerprint:    hex.EncodeToString(fp.Sum(nil)),
@@ -378,33 +459,75 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	return preview
 }
 
-// contextMessageBytes 是历史回放挑选的可计量载荷，而不只是正文。工具参数
-// 同样会被回放给模型，必须纳入 60K 的回放预算。
-func contextMessageBytes(m Message) int {
-	n := len(m.Content) + len(m.ToolCallID)
-	if len(m.ToolCalls) > 0 {
-		b, _ := json.Marshal(m.ToolCalls)
-		n += len(b)
+// contextMessageTokens 用与预览相同的 DSH 启发式估算一条回放消息。
+func contextMessageTokens(m Message) int {
+	tokens := 0
+	if m.Role == "system" {
+		if m.Content != "" {
+			tokens = contextMessageOverhead + estimateContextTextTokens(utf16CodeUnits(m.Content))
+		}
+	} else {
+		tokens = contextMessageOverhead
+		if m.Content != "" {
+			tokens += estimateContextTextTokens(utf16CodeUnits(m.Content)) + contextContentBlockOverhead
+		}
 	}
-	return n
+	for _, call := range m.ToolCalls {
+		if tokens == 0 {
+			tokens = contextMessageOverhead
+		}
+		tokens += estimateContextTextTokens(utf16CodeUnits(call.Function.Name))
+		tokens += estimateContextTextTokens(utf16CodeUnits(call.Function.Arguments))
+		tokens += contextContentBlockOverhead
+	}
+	if len(m.Images) > 0 && tokens == 0 {
+		tokens = contextMessageOverhead
+	}
+	tokens += len(m.Images) * (contextImageUpperBoundCost + contextContentBlockOverhead)
+	return tokens
 }
 
 func addHistoryComponent(b *ContextBreakdown, m Message) {
+	if m.Role != "system" || m.Content != "" || len(m.ToolCalls) > 0 || len(m.Images) > 0 {
+		b.RoleFrames++
+	}
 	switch m.Role {
 	case "tool":
-		b.ToolResults.Bytes += len(m.Content) + len(m.ToolCallID)
-	case "assistant":
-		b.HistoryAssistant.Bytes += len(m.Content)
-		if len(m.ToolCalls) > 0 {
-			encoded, _ := json.Marshal(m.ToolCalls)
-			b.ToolCalls.Bytes += len(encoded)
-			b.ToolCallCount += len(m.ToolCalls)
+		if m.Content != "" {
+			b.ToolResults.addText(m.Content)
+			b.ContentBlocks++
 		}
+	case "assistant":
+		if m.Content != "" {
+			b.HistoryAssistant.addText(m.Content)
+			b.ContentBlocks++
+		}
+		for _, call := range m.ToolCalls {
+			b.ToolCalls.addText(call.Function.Name)
+			b.ToolCalls.addText(call.Function.Arguments)
+			b.ContentBlocks++
+		}
+		b.ToolCallCount += len(m.ToolCalls)
 	case "user":
-		b.HistoryUser.Bytes += len(m.Content)
+		if m.Content != "" {
+			b.HistoryUser.addText(m.Content)
+			b.ContentBlocks++
+		}
 	default:
 		// 历史中的 system/developer 消息不能静默消失；与首条系统提示同类展示。
-		b.System.Bytes += contextMessageBytes(m)
+		if m.Content != "" {
+			b.System.addText(m.Content)
+		}
+	}
+	b.ImageFiles += len(m.Images)
+	b.ContentBlocks += len(m.Images)
+	if m.Role != "assistant" {
+		for _, call := range m.ToolCalls {
+			b.ToolCalls.addText(call.Function.Name)
+			b.ToolCalls.addText(call.Function.Arguments)
+			b.ToolCallCount++
+			b.ContentBlocks++
+		}
 	}
 }
 
@@ -415,15 +538,27 @@ func estimateProviderPromptTokens(messages []Message, tools []any) int {
 	var breakdown ContextBreakdown
 	for _, message := range messages {
 		addHistoryComponent(&breakdown, message)
-		breakdown.ImageFiles += len(message.Images)
 	}
 	if len(tools) > 0 {
 		toolBytes, _ := json.Marshal(tools)
-		breakdown.ToolSchemas.Bytes = len(toolBytes)
+		breakdown.ToolSchemas.addText(string(toolBytes))
 	}
 	breakdown.ToolCount = len(tools)
 	breakdown.MessageCount = len(messages)
 	return breakdown.price()
+}
+
+func contextHeaderFingerprint(cfg Settings, system string, tools []any) string {
+	h := sha256.New()
+	h.Write([]byte(cfg.BaseURL))
+	h.Write([]byte{0})
+	h.Write([]byte(cfg.Model))
+	h.Write([]byte{0})
+	h.Write([]byte(system))
+	b, _ := json.Marshal(tools)
+	h.Write([]byte{0})
+	h.Write(b)
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // applyWorkflowContext 把工作流阶段提示纳入首条 system 消息，并立即重算
@@ -454,7 +589,7 @@ func (a *App) applyWorkflowContext(preview *ContextPreview, mode, phase string) 
 	if len(preview.Messages) > 0 {
 		preview.Messages[0].Content += addition
 	}
-	preview.Breakdown.System.Bytes += len(addition)
+	preview.Breakdown.System.addText(addition)
 	preview.Breakdown.SystemChars = preview.Breakdown.System.Bytes
 	preview.InputEstimate = preview.Breakdown.price()
 	preview.TotalEstimate = preview.InputEstimate + preview.OutputReserve

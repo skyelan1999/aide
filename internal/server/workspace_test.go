@@ -160,6 +160,10 @@ exit 0
 batch=$(cat)
 printf '%s\n' "$batch" >> "`+sftpLog+`"
 case "$batch" in
+	*"ls -l"*"/srv/app/drop"*)
+	    echo "Couldn't stat remote file: No such file" >&2
+	    exit 1
+	    ;;
 	*"ls -l "*"/srv/app/generated.docx"*)
 	    echo "Couldn't stat remote file: No such file" >&2
 	    exit 1
@@ -201,6 +205,17 @@ exit 0
 	if len(items) != 2 || items[0]["dir"] != true || items[1]["dir"] != false {
 		t.Fatalf("remote list parse: %v", items)
 	}
+	// Batch upload to a new nested SFTP path must tolerate absent ancestors,
+	// preserve relative paths, create parents, and atomically upload each file.
+	batch := decodeBatch(t, batchUploadParts(a, "/api/file/upload-batch?path=drop", []batchPart{
+		{"nested/deep/a.txt", "nested"},
+	}))
+	if batch.Summary.Succeeded != 1 || batch.Summary.Failed != 0 {
+		t.Fatalf("nested SFTP batch upload: %+v", batch)
+	}
+	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), `put -P`) || !strings.Contains(string(b), `/srv/app/drop/nested/deep/a.txt.aide-tmp`) || !strings.Contains(string(b), `mkdir "/srv/app/drop/nested"`) {
+		t.Fatalf("nested SFTP batch upload commands: %s", b)
+	}
 	// 远程读（sftp get 输出到 stdout 的是 ls 假数据，读返回该内容——仅验证走 sftp 通道）
 	w = request(a, "GET", "/api/file?root=workspace&path=readme.md", nil)
 	requireStatus(t, w, 200)
@@ -228,13 +243,16 @@ exit 0
 	// Agent run_shell now shares the same remote SSH session and starts in the
 	// task's remote workspace, matching the command panel behavior.
 	out, code, err := a.execShellCommand(context.Background(), &Task{WorkspaceMode: "ssh", WorkspaceRemotePath: "/srv/app"}, "echo agent-remote")
-	if err != nil || code != 0 || !strings.Contains(out, "cd '/srv/app' && echo agent-remote") {
+	if err != nil || code != 0 || !strings.Contains(out, `cd '\''/srv/app'\'' && echo agent-remote`) {
 		t.Fatalf("agent remote command: code=%d err=%v out=%q", code, err, out)
 	}
 	// 远程命令（单会话）
 	w = request(a, "POST", "/api/command", map[string]string{"command": "echo hi"})
 	requireStatus(t, w, 200)
-	if !strings.Contains(w.Body.String(), "remote:cd") || !strings.Contains(w.Body.String(), "echo hi") {
+	var commandEvent struct {
+		Text string `json:"text"`
+	}
+	if err := json.Unmarshal([]byte(strings.SplitN(w.Body.String(), "\n", 2)[0]), &commandEvent); err != nil || !strings.Contains(commandEvent.Text, `cd '\''/srv/app'\'' && echo hi`) {
 		t.Fatalf("remote command must enter remote dir: %s", w.Body.String())
 	}
 	// 会话只建立一次（master 复用）

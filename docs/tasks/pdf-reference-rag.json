@@ -1,0 +1,86 @@
+{
+  "id": "pdf-reference-rag",
+  "request": "现在用的引用源是pdf的，aide读不了pdf，好像也没办法rag",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_history.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n?? docs/tasks/xiaomi-model-history.json",
+  "acceptance": [
+    "AI read_file extracts selectable text from PDF files in enabled file-backed reference sources and preserves source/path authorization checks.",
+    "semantic_search can search the current workspace or a selected enabled file reference source, including text-extractable PDFs, and returns ranked excerpts with file locations.",
+    "Scanned/image-only PDFs and MCP sources without file bodies report that local text retrieval is unavailable; retrieval is documented accurately as local TF-IDF, not embedding/vector search."
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/office_artifact.go",
+    "internal/server/attachments.go",
+    "internal/server/semantic_search_test.go",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "docs/tasks/pdf-reference-rag.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Target is PDF text visibility and retrieval from enabled file references. Scope excludes OCR and embeddings/vector database.",
+      "evidence": [
+        "User request and Safari screenshot context; PDF reference currently fails in read_file."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse existing bounded extract_text.py/pypdf path; extend semantic_search to scan one explicitly selected enabled file source or current workspace on demand. MCP sources without raw files stay unsupported.",
+      "evidence": [
+        "internal/server/office_artifact.go:officeExtractText",
+        "internal/server/workflow.go:semanticSearch",
+        "internal/server/sources.go:readSourceRaw"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Extended PDF extraction to enabled file-backed reference reads and attachments; semantic_search now accepts an enabled source ID and ranks its text plus extractable PDFs on demand. Workspace PDF search is also enabled. No persistent index or remote embedding calls were added.",
+      "evidence": [
+        "internal/server/office_artifact.go",
+        "internal/server/attachments.go",
+        "internal/server/workflow.go",
+        "internal/server/semantic_search_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused reference search test, go vet, quick route checks, diff check, documentation links, and PDF extractor smoke check passed. Broader Office tests were attempted but this test container lacks python-docx/openpyxl/python-pptx; live Safari/model-tool interaction was not run.",
+      "evidence": [
+        "docker run golang:1.26-bookworm go test -mod=vendor ./internal/server -run ^TestSemanticSearchReferenceSource$ -count=1: PASS",
+        "docker run golang:1.26-bookworm go vet -mod=vendor ./internal/server: PASS",
+        "python3 scripts/agent-route.py verify quick: PASS; fingerprint 91cdcf8a4c56ead1ef53f89b57f8f760baf510238f50ee74f8b88e83f597ee73",
+        "python3 scripts/check_docs.py: PASS (107 Markdown files, 227 links)",
+        "aide:local scripts/office/extract_text.py against a generated text PDF: returned page marker and expected text",
+        "go test Office subset: NOT_RUN/PARTIAL; failed before assertions due missing python-docx in golang:1.26-bookworm"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Chinese and English user guides explain PDF text extraction, source-scoped retrieval, OCR/MCP limitations, and that retrieval is local TF-IDF without a persistent vector index.",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Diff whitespace checked. Existing Xiaomi model/history modifications and task record were preserved and left out of this task scope. No temporary files were added to the repository.",
+      "evidence": [
+        "git diff --check: PASS",
+        "git status --short: existing Xiaomi files retained"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No release, image rebuild, 8097 restart, commit, or push was authorized.",
+      "evidence": [
+        "User requested source capability work only."
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the task-scoped source edits; no data migration or persistent index is introduced.",
+  "handoff": "Implemented source PDF text extraction and reference-source TF-IDF retrieval. Remaining: live Safari/model-tool verification and broader Office suite in a runtime with the full Python dependencies; no service restart or release performed."
+}

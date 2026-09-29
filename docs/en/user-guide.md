@@ -26,7 +26,7 @@ Under **Appearance**, select Professional or Classic, each with Light, Dark, and
 
 ### Settings overview
 
-The settings panel is organized into sections: Usage stats (§8), Appearance, Language, Model parameters (custom profiles, §3), Archives (session export), Permissions, Account, Persona, Voice assistant, Accessibility, Configuration backup, and About. Reasoning effort (auto/off/low/medium/high) is switched in the strategy popup near the task input, not in the settings panel.
+The settings panel is organized into sections: Usage stats (§8), Appearance, Language, Model parameters (custom profiles, §3), Archives (session export), System logs (inferred-level filtering and redacted JSONL download; up to 5,000 recent entries), Permissions, Account, Persona, Voice assistant, Accessibility, Configuration backup, and About. Reasoning effort (auto/off/low/medium/high) is switched in the strategy popup near the task input, not in the settings panel.
 
 - **Permissions**: three sandbox modes — read-only (read-only commands such as `ls`/`cat`/`git status` only), workspace-write (default; writes still go through proposal approval and dangerous commands are blocked), and danger-full-access (not recommended for daily use). Tool rounds default to 60, range 5–200; when the limit is reached, already streamed output is kept and you can continue.
 - **Account**: username and lock-screen password, stored as an **Argon2id** slow hash (OWASP-recommended: 64 MB memory, 3 iterations, 4 threads); no password means no lock. The password also derives an AES-256 key that encrypts persona custom personalities and the voice-assistant conversation history. Users upgrading from older versions are migrated automatically on first login: the legacy SHA-256 hash is upgraded to Argon2id and existing ciphertexts are transparently re-wrapped with the new key. **Transport**: since 0.1.11 the main port speaks HTTPS/TLS (TLS 1.2 minimum, AEAD forward-secret ciphers); a loopback-only self-signed certificate is generated on first start, so tokens and conversation content no longer travel in clear text. See [Security: password hashing & key derivation](../security/password-hashing.md) and [Security: HTTPS/TLS entry hardening](../security/tls.md).
@@ -162,6 +162,8 @@ Under **References**, add named sources: local path, Skill directory, URL, SFTP,
 
 Source registrations are stored in cache `sources.json`; credentials are stored separately. User-defined source names remain unchanged when changing language.
 
+**PDF reading and reference retrieval**: aide can extract selectable PDF text from enabled file-backed references with the container's `pypdf`. Scanned/image-only PDFs have no searchable text layer (OCR is not included). `semantic_search` searches the current workspace when no source ID is supplied, or one enabled reference source ID returned by `list_sources`; results include file paths and excerpts, which `read_file` can then inspect. This is on-demand local TF-IDF term ranking, not vector embeddings or a vector database, and it does not persist an index. MCP sources do not expose file bodies for this search. Retrieved excerpts are returned to the configured model as tool results.
+
 ## 5. Files and attachments
 
 Open a text file to edit it. Markdown opens in preview; switch to **Edit** to change source text. **New tab** opens a standalone view with path, preview, edit, and save controls where permitted.
@@ -171,6 +173,8 @@ Saves use the original file hash and workspace identity. If a file changed exter
 Select **Attach to task** to include saved text in the next request (up to eight files). AI read tools may also read authorized workspace files; attachments are not the complete boundary of model context. Avoid including sensitive material you do not want the configured provider to receive.
 
 **Text size limit (since RC2)**: the editor/model-tool text cap was raised from 256 KiB to **64 MiB** (UTF-8, no NUL). Large files are streamed via byte-range windows on `GET /api/file` (`offset`/`limit`) and line windows in `read_file`, instead of being loaded whole.
+
+**Long-press drag navigation**: In the file list, hold the left mouse button for about half a second, then drag over a destination folder or the “↑” parent-directory button. Release when the target is highlighted to navigate. A normal click keeps its existing open/enter behavior. Holding Ctrl, Command, or Shift disables this gesture.
 
 **Editor title bar (#59, RC2/RC3)**: the standalone second row was removed; the read-only badge now lives in the title bar, and Save / New tab / Attach-to-task sit right-aligned at the far edge. Read-only viewers (image/PDF/STL/drawio/DXF/Word) hide the Save button.
 
@@ -183,11 +187,17 @@ Select **Attach to task** to include saved text in the next request (up to eight
 
 **Chat** is useful for explanation and analysis. **AI workflow** runs Plan → Propose → Review. Inspect proposed file contents and the review before applying changes. Existing-file proposals require a matching attachment snapshot. Applying files is not proof that tests passed.
 
+In the prompt box, Enter inserts a new line; Ctrl+Enter sends the message to reduce accidental sends while editing.
+
+**Analyze a problem**: select **Problem Analysis** in AI Workflow and describe the business, device, network, project, or process issue you are facing. aide gathers context, checks evidence, separates hypotheses from verified findings, and creates a report and diagram. Open **Past reports** within that workflow phase to browse earlier reports. The default subject is the user-reported problem; aide will analyze itself or its model only when you explicitly identify them as the problem.
+
 Built-in read tools and `run_shell` execute directly: shell commands run in a separate non-interactive sandbox shell with a time limit, output/exit-code reporting, and cancellation (a read-only sandbox allows only read-only commands; dangerous commands are blocked in workspace-write mode). `write_file` creates a proposal for approval. In AI workflow mode, suggested test commands are not executed automatically—insert them into the panel, inspect, then run. There is no persistent `cd`, PTY, or interactive terminal application support.
 
 Plugins are trusted Node code and do not gain an independent security sandbox from this proposal workflow.
 
 ## 7. Trajectory, search, and compaction
+
+Conversation pages load the latest 30 history items first. Use **Load earlier conversation history** at the top of the timeline to reveal older items on demand, avoiding a full-history render for long conversations.
 
 Open **Trajectory** for tasks, steps, tools, proposals, suggested commands, errors, and token usage. Expand details as needed. Search from the top bar or use **⌘K / Ctrl+K** to find conversations by title or cached content.
 
@@ -217,6 +227,8 @@ Pinned at the very top of the sidebar is the assistant system session — the ch
 - **Fixed title**: the title always shows the configured assistant name and is not overwritten by a prompt.
 - **Master-auth gate**: clicking it first asks for master identity — account password **or** Touch ID fingerprint (see unified master auth below). Once unlocked, the state lasts for the tab; locking the screen forces re-authentication.
 - **Unified history timeline (#62, RC3)**: the old standalone "settings → voice assistant → history" view is removed; voice turns and typed messages are persisted together into the assistant session's runs/messages timeline.
+- **Model source**: Settings → Voice Assistant → Assistant Model can reuse the workspace model configuration or use a separate OpenAI-compatible Base URL, model name, and API key. The separate key is encrypted in the credential vault.
+- **Trajectory and download**: open Trajectory from the top bar while viewing the assistant session. Markdown and JSON exports include its messages. Locked history stays hidden from both the trajectory and export.
 - **Text = voice (#62, RC3)**: typing in the assistant session goes through the same `analyze` intent pipeline as voice transcription (`POST /api/sessions/{id}/assistant-message`), including send/ignore/standby and insert/queue decisions.
 - **Cross-session tools (#30 now live)**: inside its own view the assistant can call `search_sessions` (keyword search across all sessions, including archived), `get_session` (by `#N` or session ID), `follow_session` (mark for follow-up), and `push_to_session` (push a note/summary into a target session), and can create/control other sessions via `spawn_subagent`. These tools are never exposed in regular sessions; assistant sessions always use the assistant persona.
 

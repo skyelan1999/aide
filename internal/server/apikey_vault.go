@@ -29,8 +29,9 @@ import (
 
 // 模型 API Key 在统一 vault 中的固定条目 ID / 类型（单实例：一个 OpenAI 兼容 provider 一把 key）。
 const (
-	VaultTypeModelAPIKey = "model-api-key"
-	VaultIDModelAPIKey   = "model:api-key"
+	VaultTypeModelAPIKey     = "model-api-key"
+	VaultIDModelAPIKey       = "model:api-key"
+	VaultIDXiaomiModelAPIKey = "model:xiaomi-api-key"
 )
 
 // errVaultLocked 未解锁且确有 key 时，模型调用应返回的明确错误（不静默失败）。

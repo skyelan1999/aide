@@ -16,13 +16,33 @@
     {
       "id": "appearance",
       "title": "外观",
-      "description": "选择适合此刻的外观，让专注更舒适。",
+      "description": "专业、舒适、经典三种配色，支持浅色、深色和跟随系统。",
       "controls": [
         {
           "id": "theme",
           "type": "segmented",
           "label": "专业",
           "palette": "blue",
+          "options": [
+            {
+              "value": "light",
+              "label": "浅色"
+            },
+            {
+              "value": "dark",
+              "label": "深色"
+            },
+            {
+              "value": "system",
+              "label": "跟随系统"
+            }
+          ]
+        },
+        {
+          "id": "theme",
+          "type": "segmented",
+          "label": "舒适",
+          "palette": "comfort",
           "options": [
             {
               "value": "light",
@@ -101,6 +121,18 @@
       ]
     },
     {
+      "id": "system-logs",
+      "title": "系统日志",
+      "description": "查看近期运行日志，按级别筛选并下载 JSONL 文件以辅助问题分析。现有未结构化日志的级别根据内容推断；敏感凭据会在记录和导出前脱敏。",
+      "controls": [
+        {
+          "id": "system-logs",
+          "type": "system-logs",
+          "label": "运行日志"
+        }
+      ]
+    },
+    {
       "id": "permissions",
       "title": "权限管理",
       "description": "控制 AI 在工作区里能自动做什么",
@@ -171,6 +203,11 @@
       "title": "语音小秘",
       "description": "普通会话的麦克风会过滤背景声并把指令交给当前会话；小秘会话中麦克风先转写到输入框，编辑后再发送。",
       "controls": [
+        {
+          "id": "xiaomi-model",
+          "type": "xiaomi-model",
+          "label": "小秘模型"
+        },
         {
           "id": "personalityXiaomi",
           "type": "personality",

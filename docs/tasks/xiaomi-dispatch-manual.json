@@ -1,0 +1,80 @@
+{
+  "id": "xiaomi-dispatch-manual",
+  "request": "小蜜创建完新会话之后不能自动运行，需要人为触发",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/xiaomi-model-history.json\n?? internal/server/semantic_search_test.go",
+  "acceptance": [
+    "小秘通过 dispatch_to_aide 或 push_to_session(new) 创建会话时仅保存待发送草稿，Runs 保持为空。",
+    "打开新会话后，在输入框自动呈现待发送内容；已有输入时不覆盖。",
+    "只有用户编辑后手动发送（点发送或 Ctrl+Enter）才创建运行任务并清除待发送草稿。",
+    "发送失败不消费待发送草稿；小秘明确告知用户任务尚未运行。"
+  ],
+  "scope": [
+    "internal/server/server.go",
+    "internal/server/assistant_history.go",
+    "internal/server/workflow.go",
+    "internal/server/assistant_agent.go",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "docs/tasks/xiaomi-dispatch-manual.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "小秘创建的新会话不应自动运行，必须由用户显式发送触发。",
+      "evidence": [
+        "用户请求：小蜜创建完新会话之后不能自动运行，需要人为触发"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "在 Session 增加待发送草稿字段；两个新会话入口都只创建空 Runs 的会话。选中会话时仅在输入框为空时填入草稿；startTask 持久化运行任务成功后消费草稿。",
+      "evidence": [
+        "internal/server/server.go Session",
+        "internal/server/assistant_history.go dispatchToAideLocked",
+        "internal/server/workflow.go push_to_session and startTask",
+        "internal/server/web/app.js selectSession"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "小秘转交意图现在作为 pendingPrompt 保存并预填，界面提示检查后发送才运行；push_to_session 文案和小秘调度原则也明确说明不会自动运行。",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/assistant_history.go",
+        "internal/server/workflow.go",
+        "internal/server/assistant_agent.go",
+        "internal/server/web/app.js",
+        "internal/server/web/locales/en.js"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "按当前任务指令未运行测试或验证命令。",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "小秘策略和转交响应明确说明用户检查后须手动发送才启动。",
+      "evidence": [
+        "internal/server/assistant_agent.go",
+        "internal/server/workflow.go"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未改动运行中的服务；保留工作树内原有未提交修改。",
+      "evidence": [
+        "git status --short 已检查，原有修改均保留"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未构建、重启服务或发布；源码更改需要后续部署到本地 aide 实例才会生效。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "恢复本次改动涉及的待发送草稿字段、预填逻辑及小秘提示文案。",
+  "handoff": "源码已改；当前运行中的 aide 服务未重启。"
+}

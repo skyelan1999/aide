@@ -393,6 +393,8 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 }
 .phase-hint.hidden { display: none; }
 .phase-hint b { color: var(--text); font-weight: 600; }
+.phase-report-link { padding: 0 2px; color: var(--brand); text-decoration: underline; text-underline-offset: 2px; font-size: inherit; }
+.phase-report-link:hover { color: var(--text); }
 @keyframes phaseIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -447,7 +449,24 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .voice-name-row { display: flex; gap: 8px; align-items: center; margin-top: 7px; }
 .voice-name-row input { flex: 1; margin-top: 0; padding: 9px 11px; font-size: 12px; }
 .voice-name-row .primary { padding: 9px 14px; font-size: 12px; }
+.xiaomi-model-fields { display: grid; gap: 8px; margin: 8px 0; }
+.xiaomi-model-fields input:not([type="checkbox"]), .settings-control select { width: 100%; padding: 9px 11px; font-size: 12px; }
+.xiaomi-clear-key { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 11px; }
+.xiaomi-clear-key input { width: auto; }
 .settings-control small { display: block; margin-top: 8px; font-size: 10px; color: var(--muted, #888); line-height: 1.7; }
+.system-logs-toolbar { display:flex; gap:8px; align-items:center; margin:10px 0 6px; }
+.system-logs-toolbar select { flex:1; min-width:0; }
+.system-logs-toolbar button { white-space:nowrap; padding:8px 10px; font-size:11px; }
+.system-logs-status { margin:5px 0 8px; }
+.system-logs-list { max-height:min(48vh,460px); overflow:auto; border:1px solid var(--line-soft); border-radius:10px; background:var(--bg-inset); }
+.system-log-entry { padding:9px 10px; border-bottom:1px solid var(--line-faint); }
+.system-log-entry:last-child { border-bottom:0; }
+.system-log-meta { display:flex; justify-content:space-between; align-items:center; gap:8px; color:var(--muted); font-size:9px; }
+.system-log-level { font-weight:700; letter-spacing:.4px; }
+.system-log-entry.level-error .system-log-level { color:var(--danger,#ef4444); }
+.system-log-entry.level-warn .system-log-level { color:var(--warn,#d97706); }
+.system-log-entry.level-debug .system-log-level { color:var(--brand-text); }
+.system-log-message { margin:5px 0 0; white-space:pre-wrap; overflow-wrap:anywhere; font:10px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--text); }
 
 /* 语音小秘：日志理由 + 对话历史时间线 */
 .voice-log-reason { display: block; font-size: 10px; color: var(--muted, #888); margin-top: 2px; line-height: 1.5; }
@@ -817,6 +836,51 @@ body.file-view-mode .file-view-preview.file-view-immersive iframe{flex:1;width:1
 .voice-narrate-toggle.active{background:var(--brand);color:var(--on-accent);border-color:var(--brand)}
 .voice-narrate-toggle.active .vnt-check{display:inline-block}
 
+/* 工作目录 / 引用面板：统一选项卡、来源卡片与文件列表的层级 */
+.file-panel{background:var(--panel);border-left-color:var(--line-soft)}
+.file-panel-heading{height:62px;padding:0 16px 0 18px;border-bottom-color:var(--line-faint)}
+.file-panel-heading strong{font-size:12px;font-weight:600;letter-spacing:.01em}
+.file-panel-heading .icon-button{width:30px;height:30px;border-radius:8px}
+.root-tabs{margin:12px 13px 10px;padding:3px;gap:3px;border-radius:10px;background:var(--bg-inset);border-color:var(--line-soft)}
+.root-tabs button{display:flex;align-items:center;justify-content:center;gap:4px;min-height:34px;padding:7px 8px;border-radius:7px;font-size:10px;transition:background .16s ease,color .16s ease,box-shadow .16s ease}
+.root-tabs button:hover{color:var(--text);background:var(--hover)}
+.root-tabs button.active{background:var(--surface);color:var(--brand-text);box-shadow:0 1px 3px var(--shadow-1),inset 0 0 0 1px var(--line-faint)}
+.root-tabs button.active span{color:var(--brand-text);opacity:.75}
+.files-scroll .source-chips{gap:7px;padding:3px 12px 11px;background:transparent;border-bottom:1px solid var(--line-faint)}
+.source-track{gap:7px}
+.src-chip{position:relative;min-height:38px;height:auto;border-radius:9px;background:var(--surface);border-color:var(--line-soft-2);box-shadow:0 1px 2px var(--shadow-1);transition:transform .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease}
+.src-chip:hover{transform:translateY(-1px);border-color:var(--line-mid);box-shadow:0 3px 10px var(--shadow-1)}
+.src-chip.active{background:color-mix(in srgb,var(--brand) 8%,var(--surface));border-color:var(--brand);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--brand) 18%,transparent),0 2px 8px var(--shadow-1)}
+.src-chip.system-docs{background:var(--surface-alt);border-style:dashed;box-shadow:none}
+.src-chip.system-docs.active{border-style:solid;background:color-mix(in srgb,var(--brand) 7%,var(--surface))}
+.src-main{min-height:36px;padding:0 10px;gap:8px;font-size:10.5px;color:var(--text-file)}
+.src-ico{width:15px;height:15px;align-items:center;justify-content:center}
+.src-ico svg{width:14px;height:14px}
+.src-fixed{font-size:8px;letter-spacing:.01em;padding:2px 5px;background:var(--bg-inset)}
+.src-edit,.src-lock,.src-del,.src-test{min-height:36px;width:34px}
+.src-test{width:auto;font-size:9px}
+.src-add{width:100%;min-height:34px;gap:6px;border-radius:8px;background:color-mix(in srgb,var(--surface) 70%,transparent);font-size:10px}
+.src-add:hover{background:var(--selected)}
+.file-tools{position:sticky;top:0;z-index:2;align-items:center;gap:7px;margin:0;padding:9px 12px;background:color-mix(in srgb,var(--panel) 94%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line-faint)}
+.file-tools>.quiet{display:inline-grid;place-items:center;width:30px;height:30px;padding:0;border:1px solid var(--line-soft);border-radius:8px;background:var(--surface);color:var(--text-note);font-size:13px}
+.file-tools>.quiet:hover{color:var(--brand);border-color:var(--line-chip);background:var(--selected)}
+#file-path{padding:7px 9px;border:1px solid var(--line-faint);border-radius:7px;background:var(--bg-inset);font-size:9.5px;line-height:1.2;color:var(--text-note)}
+#new-file{flex:0 0 30px;width:30px;height:30px;border:1px solid var(--line-soft);border-radius:8px;background:var(--surface);font-size:16px}
+#new-file:hover{color:var(--brand);border-color:var(--line-chip);background:var(--selected)}
+.files-scroll .file-list{padding:9px 10px 15px}
+.file-item{min-height:36px;gap:9px;margin:2px 0;padding:7px 9px;border:1px solid transparent;border-radius:8px;font-size:10.5px;transition:background .14s ease,border-color .14s ease,color .14s ease}
+.file-item:hover{background:var(--surface);border-color:var(--line-faint);color:var(--text)}
+.file-item:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+.file-item .file-icon{display:inline-grid;place-items:center;width:23px;height:23px;border-radius:7px;background:var(--bg-inset);font-size:13px;color:var(--text-file-icon)}
+.file-item:hover .file-icon{background:var(--selected);color:var(--brand)}
+.file-item .file-name{min-width:0}
+.file-item small{font-size:9px;font-variant-numeric:tabular-nums}
+.context-guide{margin:0 12px 12px;padding:13px 14px;border:1px solid var(--line-faint);border-radius:10px;background:var(--surface-alt)}
+.context-guide .section-label{margin-bottom:6px}
+.context-guide p{margin:6px 0 0;line-height:1.65}
+.context-guide>div:last-child{margin-top:10px}
+@media(max-width:600px){.files-scroll .source-chips{padding-left:10px;padding-right:10px}.file-tools{padding-left:10px;padding-right:10px}.context-guide{margin-left:10px;margin-right:10px}}
+
 /* 配置备份：导出 / 导入引导 */
 .backup-control{display:flex;flex-direction:column;gap:14px}
 .backup-block{display:flex;flex-direction:column;gap:9px}
@@ -1008,6 +1072,7 @@ dialog.master-auth{width:min(380px,90vw)}
 .cc-actions{display:flex;gap:6px;margin-top:8px}
 .docx-loading{padding:40px;text-align:center;color:var(--text-dim)}
 /* #62扩展: assistant messages timeline */
+.load-older-history{display:block;margin:8px auto 14px;padding:7px 12px;font-size:11px}
 .assistant-msg{display:flex;gap:10px;padding:10px 14px;margin:6px 0;border-radius:8px;align-items:flex-start}
 .assistant-msg.am-voice-in{background:color-mix(in srgb, var(--accent) 8%, transparent)}
 .assistant-msg.am-text-in{background:color-mix(in srgb, var(--accent) 8%, transparent)}
@@ -1146,3 +1211,8 @@ textarea#editor,textarea#file-view-editor{position:relative}
 .upload-progress.up-fail{border-left-color:var(--danger)}
 .upload-progress.up-done{border-left-color:var(--brand)}
 .file-search-truncated{margin:8px 4px 4px;padding:8px 10px;border:1px solid var(--warn);border-left:3px solid var(--warn);border-radius:7px;background:var(--warn-bg,rgba(217,119,6,.08));color:var(--warn);font-size:10px;line-height:1.6}
+
+/* Long-press drag navigation within the project file panel. */
+body.file-nav-dragging{cursor:grabbing;user-select:none}
+#files .file-item.file-nav-source{opacity:.52}
+#files .file-item.file-nav-target,#parent-dir.file-nav-target{background:var(--selected);border-color:var(--brand);color:var(--brand);box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 20%,transparent)}

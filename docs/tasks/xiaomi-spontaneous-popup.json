@@ -1,0 +1,65 @@
+{
+  "id": "xiaomi-spontaneous-popup",
+  "request": "未召唤小秘时使用 aide 普通对话却自动弹出小秘，定位并修复触发原因",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/PRD.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/context.go\n M internal/server/file_upload_batch.go\n M internal/server/office_artifact.go\n M internal/server/provider.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n?? docs/tasks/context-token-dsh.json\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/enduring-theme.json\n?? docs/tasks/favicon-theme.json\n?? docs/tasks/nested-folder-transfer.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/search-restore.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/workspace-reference-ui.json\n?? docs/tasks/xiaomi-dispatch-manual.json\n?? docs/tasks/xiaomi-model-history.json\n?? internal/server/semantic_search_test.go\n?? internal/server/web/favicon.svg\n?? internal/server/web/themes/comfort.css",
+  "acceptance": [
+    "手动讲解模式仅在当前页面有效；刷新后不再因旧 localStorage 状态自动开启。",
+    "无障碍自动朗读不再把临时讲解模式写入持久存储。",
+    "用户明确开启无障碍自动朗读时，自动讲解行为仍按该设置执行。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "修复旧版持久讲解状态导致普通 Aide 对话后反复自动弹出小秘的问题。",
+      "evidence": [
+        "截图中“讲解”处于激活状态；代码会从 localStorage 恢复该状态。"
+      ]
+    },
+    "design": {
+      "status": "complete",
+      "summary": "讲解模式改为页面内临时状态；无障碍自动朗读与手动讲解标志解耦。",
+      "evidence": [
+        "maybeAutoNarrate 不再通过 setNarrateModeUI 持久化自动朗读状态。"
+      ]
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "移除讲解模式写入 localStorage，启动时清理旧残留，更新 app.js 缓存版本。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html"
+      ]
+    },
+    "verification": {
+      "status": "complete",
+      "summary": "静态 JavaScript 语法及差异检查通过；浏览器现场检查受 macOS 锁屏限制未完成。",
+      "evidence": [
+        "node --check internal/server/web/app.js",
+        "git diff --check -- internal/server/web/app.js"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "修复已完成。现有浏览器状态不可读取（macOS 锁定）；若服务端 accessibilityAutoRead 明确启用，自动讲解仍会运行并在播放期间显示控制面板。"
+}

@@ -1,0 +1,66 @@
+{
+  "id": "search-restore",
+  "request": "搜索会话点击到已归档且普通会话列表中没有的会话时，自动取消归档并将其放回会话列表",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/context.go\n M internal/server/file_upload_batch.go\n M internal/server/office_artifact.go\n M internal/server/provider.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n?? docs/tasks/context-token-dsh.json\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/nested-folder-transfer.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/xiaomi-dispatch-manual.json\n?? docs/tasks/xiaomi-model-history.json\n?? internal/server/semantic_search_test.go",
+  "acceptance": [
+    "从全局搜索结果点击已归档会话时，先取消归档并持久化，再刷新会话列表并打开目标会话。",
+    "点击未归档会话的原有搜索行为保持不变。",
+    "归档会话取消归档失败时显示错误且不进入目标会话。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "docs/tasks/search-restore.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "搜索结果可能指向普通列表中不可见的归档会话；点击时应自动释放归档并回到会话列表。",
+      "evidence": [
+        "用户请求：搜索会话点击不在会话列表却在归档里面时，自动把会话从归档释放，放回到会话列表。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "仅在搜索结果标记 archived=true 时调用现有 PATCH /sessions/{id} archived=false；成功后刷新列表，再调用现有 selectSession。未归档结果保持原流程。",
+      "evidence": [
+        "internal/server/web/app.js searchSessions row.onclick",
+        "internal/server/server.go patchSession persists Archived and broadcasts sessions changed"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "归档搜索结果点击时取消归档、刷新会话列表并打开；PATCH 失败由现有 action 错误处理显示提示，不会继续选择会话。",
+      "evidence": [
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "未运行自动化测试或浏览器交互；已执行相关文件 git diff --check。",
+      "evidence": [
+        "git diff --check -- internal/server/web/app.js docs/tasks/search-restore.json"
+      ]
+    },
+    "documentation": {
+      "status": "not_run",
+      "summary": "这是搜索结果的交互行为调整，无面向用户文档需要更新。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅提交了搜索点击流程改动及本任务记录；保留既有未提交工作区变更。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未构建、重启、提交或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "还原 internal/server/web/app.js 中归档搜索结果的 PATCH archived=false 与 loadSessions 调用。",
+  "handoff": "代码已修改；自动化测试和浏览器交互未运行。"
+}

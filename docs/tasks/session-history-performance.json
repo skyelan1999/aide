@@ -1,0 +1,81 @@
+{
+  "id": "session-history-performance",
+  "request": "当一个会话中产生大量会话历史的时候，主界面很容易无响应卡死，请尝试修复和优化，如果实在不好解决请在AP中列出",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/PRD.md\n M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/context.go\n M internal/server/file_upload_batch.go\n M internal/server/office_artifact.go\n M internal/server/provider.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n?? docs/tasks/context-token-dsh.json\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/enduring-theme.json\n?? docs/tasks/favicon-theme.json\n?? docs/tasks/nested-folder-transfer.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/search-restore.json\n?? docs/tasks/system-log-viewer.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/workspace-reference-ui.json\n?? docs/tasks/xiaomi-dispatch-manual.json\n?? docs/tasks/xiaomi-model-history.json\n?? docs/tasks/xiaomi-spontaneous-popup.json\n?? internal/server/semantic_search_test.go\n?? internal/server/system_log.go\n?? internal/server/web/favicon.svg\n?? internal/server/web/themes/comfort.css",
+  "acceptance": [
+    "会话主界面默认仅加载并渲染最近 30 条 runs/messages；可以按需加载更早历史。",
+    "带 limit 的详情 API 只返回窗口内历史并报告总数/是否还有更早内容；不带 limit 的现有 API 响应保持完整兼容。",
+    "前端轮询的变更检测不再对完整会话历史做 JSON.stringify。",
+    "大历史首屏渲染和轮询不再按历史总量反复构建整条 DOM/Markdown。"
+  ],
+  "scope": [
+    "internal/server/server.go: session detail pagination response",
+    "internal/server/web/app.js: bounded history fetch/render and light session revision",
+    "internal/server/web/style.css: older-history control",
+    "docs/PRD.md and user guides"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目标是长会话不阻塞主界面，同时保持完整历史按需可读及旧 API 兼容。",
+      "evidence": [
+        "用户原始请求与本轮接受标准。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "新增 limit 查询的响应视图，仅浅拷贝并裁剪返回窗口；UI 初始取最近 30 条、每次按需多取 30 条。会话轮询改以更新时间/条数/最近 run 状态等轻量指纹比较。",
+      "evidence": [
+        "internal/server/server.go: makeSessionHistoryView/getSession",
+        "internal/server/web/app.js: sessionRevision/getSessionWindow"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "实现后端分页响应、前端渐进加载更早历史、滚动锚点保持与轻量变更检测，并更新中英文文档。",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "internal/server/web/style.css",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "Docker Go build、前端语法和 diff 检查通过；真实浏览器/长会话交互未运行。Cua 环境报告 Mac 已锁定且自动解锁失败，不能打开 UI 做性能实测。未运行测试。",
+      "evidence": [
+        "docker run --rm -v \"$PWD:/src\" -w /src golang:1.26-bookworm go build -o /tmp/aide-session-history-check ./cmd/aide: PASS",
+        "node --check internal/server/web/app.js: PASS",
+        "node --check internal/server/web/locales/en.js: PASS",
+        "git diff --check: PASS",
+        "Cua getState: native apps unavailable because Mac is locked"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "PRD 和中英文使用指南已说明 30 条首屏分页及按需加载旧历史。",
+      "evidence": [
+        "docs/PRD.md: SM-01",
+        "docs/user-guide.md: §6",
+        "docs/en/user-guide.md: §7"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未生成仓库内构建产物；临时构建输出位于 Docker 容器临时文件系统。",
+      "evidence": [
+        "git diff --check: PASS"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未提交、推送、发布或重启用户当前运行服务。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "代码级修复和编译已完成。未在浏览器实测，原因是 Cua 报告 Mac 已锁定且自动解锁失败。打开工作台并准备一条超过 30 个历史项的会话后，仍需手动验证首次仅载入最近一页、加载更早按钮追加历史以及滚动位置稳定。未提交/推送/发布。"
+}

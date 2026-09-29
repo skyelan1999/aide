@@ -159,10 +159,10 @@ func (a *App) uploadBatchFile(w http.ResponseWriter, r *http.Request) {
 				werr = a.writeSourceText(src, full, b)
 			}
 		} else {
-			if _, e := a.workspaceFileProperties(full); e == nil {
+			// Remote directory listings fail when an ancestor does not exist yet.
+			// Treat that as a normal new nested path; sftpWrite creates parents.
+			if a.workspaceStatExists(full) {
 				werr = errors.New("\u540c\u540d\u6587\u4ef6\u5df2\u5b58\u5728")
-			} else if !errors.Is(e, os.ErrNotExist) {
-				werr = e
 			} else {
 				werr = a.writeWorkspaceText(full, b)
 			}

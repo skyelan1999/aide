@@ -29,6 +29,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -46,6 +47,9 @@ type ModelRef struct {
 }
 type Settings struct {
 	BaseURL                string                 `json:"baseURL"`
+	XiaomiModelSource      string                 `json:"xiaomiModelSource,omitempty"` // inherit | custom
+	XiaomiBaseURL          string                 `json:"xiaomiBaseURL,omitempty"`
+	XiaomiModel            string                 `json:"xiaomiModel,omitempty"`
 	Model                  string                 `json:"model"`
 	APIKey                 string                 `json:"apiKey,omitempty"`
 	Models                 []ModelRef             `json:"models,omitempty"`
@@ -248,6 +252,7 @@ type Session struct {
 	Created             string    `json:"created"`
 	Messages            []Message `json:"messages"`
 	Runs                []*Task   `json:"runs"`
+	PendingPrompt       string    `json:"pendingPrompt,omitempty"`     // 小秘新建会话时暂存，用户显式发送后才启动
 	Compact             string    `json:"compact,omitempty"`           // 压缩摘要（compaction）
 	CompactedMessages   int       `json:"compactedMessages,omitempty"` // 已折叠消息数
 	CompactedAt         string    `json:"compactedAt,omitempty"`
@@ -262,6 +267,29 @@ type Session struct {
 	Kind                string    `json:"kind,omitempty"`                // 空=普通会话；"assistant"=小秘系统会话（永久置顶、密码进入）
 	FollowedByAssistant bool      `json:"followedByAssistant,omitempty"` // 小秘已标记跟进：该会话有更新时提醒
 	FollowNote          string    `json:"followNote,omitempty"`          // 小秘跟进备注
+}
+
+// sessionHistoryView adds pagination metadata to the regular Session JSON shape.
+// The underlying persistent session remains untouched.
+type sessionHistoryView struct {
+	*Session
+	RunsTotal     int  `json:"runsTotal"`
+	MessagesTotal int  `json:"messagesTotal"`
+	HasOlder      bool `json:"hasOlder"`
+}
+
+func makeSessionHistoryView(s *Session, limit int) sessionHistoryView {
+	view := *s
+	runsTotal, messagesTotal := len(view.Runs), len(view.Messages)
+	if limit > 0 {
+		if runsTotal > limit {
+			view.Runs = append([]*Task(nil), view.Runs[runsTotal-limit:]...)
+		}
+		if messagesTotal > limit {
+			view.Messages = append([]Message(nil), view.Messages[messagesTotal-limit:]...)
+		}
+	}
+	return sessionHistoryView{Session: &view, RunsTotal: runsTotal, MessagesTotal: messagesTotal, HasOlder: runsTotal > len(view.Runs) || messagesTotal > len(view.Messages)}
 }
 
 // assistantSessionKind 小秘系统会话的 Kind 标记。全应用恰好一个，永久置顶、不可归档/删除。
@@ -877,6 +905,7 @@ func (a *App) background(fn func()) {
 	a.bgWg.Add(1)
 	go func() { defer a.bgWg.Done(); fn() }()
 }
+
 // sessionBucketFor 决定一个会话应当落在哪个 canonical 桶。这是 save()/删除/启动归位迁移
 // 共同遵守的唯一归属规则，保证一个会话在磁盘上有且仅有一份、且在正确桶内：
 //   - Kind==assistant        -> sessions/assistant（小秘系统会话）
@@ -1088,7 +1117,10 @@ func (a *App) buildHandler() {
 		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
+	mux.HandleFunc("GET /api/system-logs", a.systemLogsHandler)
 	mux.HandleFunc("PUT /api/settings", a.updateSettings)
+	mux.HandleFunc("GET /api/xiaomi/model", a.xiaomiModelSettings)
+	mux.HandleFunc("PUT /api/xiaomi/model", a.updateXiaomiModelSettings)
 	mux.HandleFunc("GET /api/models", a.listModels)
 	mux.HandleFunc("POST /api/models", a.listModels)
 	mux.HandleFunc("GET /api/balance", a.listBalance)
@@ -1407,6 +1439,10 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	// 局部 PUT（仅改某一项）不携带以下字段，未传一律保留已存值，避免性格启用态/沙箱/轮次/设备被静默重置。
 	in.Settings.Personalities = a.settings.Personalities
 	in.Settings.PersonaCipher = a.settings.PersonaCipher
+	// 小秘模型由独立接口管理；普通设置 PUT 未传这些字段时保留原值。
+	in.Settings.XiaomiModelSource = a.settings.XiaomiModelSource
+	in.Settings.XiaomiBaseURL = a.settings.XiaomiBaseURL
+	in.Settings.XiaomiModel = a.settings.XiaomiModel
 	// 会话编号计数器是服务端维护字段，客户端设置表单不会提交，始终沿用后端值。
 	in.Settings.NextSessionSeq = a.settings.NextSessionSeq
 	if in.Settings.SandboxMode == "" {
@@ -1626,10 +1662,14 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	a.mu.Lock()
-	cfg := a.settings
+	cfg, cfgErr := a.xiaomiModelConfigLocked()
 	va := a.voiceAgent
 	as := a.findAssistantSessionLocked() // #62：语音输入与文字消息走同一把密码门
 	a.mu.Unlock()
+	if cfgErr != nil {
+		fail(w, 423, cfgErr)
+		return
+	}
 	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
 		if va != nil {
 			entry := va.recordFallback(text, "未配置模型，直接发送")
@@ -1651,7 +1691,9 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	}
 	// #62 升级：语音也走小秘 agentic 自主决策管线（与文字同一循环）。
 	// 注入模型 API Key 后跑循环；失败则回落到既有 analyze 甄别（保留能力不删）。
-	cfg.APIKey, _ = a.modelAPIKeyLocked()
+	if cfg.XiaomiModelSource != "custom" {
+		cfg.APIKey, _ = a.modelAPIKeyLocked()
+	}
 	dec, aerr := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "voice")
 	if aerr != nil {
 		entry, err := va.analyze(r.Context(), cfg, text, in.Context)
@@ -2178,6 +2220,18 @@ func (a *App) deleteAllArchived(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, map[string]any{"ok": true, "deleted": deleted, "failed": failed, "failedIds": failedIDs})
 }
 func (a *App) getSession(w http.ResponseWriter, r *http.Request) {
+	limit := 0 // preserve the existing full-history response for API clients that omit limit
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		parsed, err := strconv.Atoi(raw)
+		if err != nil || parsed < 1 {
+			fail(w, http.StatusBadRequest, errors.New("历史条数必须为正整数"))
+			return
+		}
+		limit = parsed
+		if limit > 2000 {
+			limit = 2000
+		}
+	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	s := a.sessions[r.PathValue("id")]
@@ -2192,17 +2246,29 @@ func (a *App) getSession(w http.ResponseWriter, r *http.Request) {
 		if !a.isAssistantUnlocked(s.ID) {
 			view := *s
 			view.Messages = []Message{}
-			jsonOut(w, 200, &view)
+			if limit > 0 {
+				jsonOut(w, 200, makeSessionHistoryView(&view, limit))
+			} else {
+				jsonOut(w, 200, &view)
+			}
 			return
 		}
 		// 旧版语音入口曾将历史单独保存在 voice-history.json；在小秘会话读取时
 		// 合并尚未迁入会话的历史，供时间线展示。仅改响应副本，不覆盖持久化会话。
 		view := *s
 		view.Messages = a.xiaomiHistoryLocked()
-		jsonOut(w, 200, &view)
+		if limit > 0 {
+			jsonOut(w, 200, makeSessionHistoryView(&view, limit))
+		} else {
+			jsonOut(w, 200, &view)
+		}
 		return
 	}
-	jsonOut(w, 200, s)
+	if limit > 0 {
+		jsonOut(w, 200, makeSessionHistoryView(s, limit))
+	} else {
+		jsonOut(w, 200, s)
+	}
 }
 
 // tlsConfig 构造严格的服务端 TLS 配置：最低 TLS 1.2，仅保留 ECDHE 前向保密 + AES-GCM AEAD 套件。

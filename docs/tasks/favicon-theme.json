@@ -1,0 +1,68 @@
+{
+  "id": "favicon-theme",
+  "request": "将网页 favicon 改为 aide 方块 a 品牌图标，并让颜色随当前主题和调色板改变",
+  "baseline": "62e8b21f0c4f8dd01873bdaa8c00d804cd4b1691",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/apikey_vault.go\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/attachments.go\n M internal/server/context.go\n M internal/server/file_upload_batch.go\n M internal/server/office_artifact.go\n M internal/server/provider.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_test.go\n?? docs/tasks/context-token-dsh.json\n?? docs/tasks/ctrl-enter-send.json\n?? docs/tasks/nested-folder-transfer.json\n?? docs/tasks/pdf-reference-rag.json\n?? docs/tasks/search-restore.json\n?? docs/tasks/workflow-problem-analysis.json\n?? docs/tasks/workspace-reference-ui.json\n?? docs/tasks/xiaomi-dispatch-manual.json\n?? docs/tasks/xiaomi-model-history.json\n?? internal/server/semantic_search_test.go",
+  "acceptance": [
+    "浏览器标签页显示 aide 方块 a 品牌 favicon。",
+    "favicon 的方块底色与字色从当前 --brand 和 --on-brand 读取；切换主题或调色板后自动刷新。",
+    "未执行 JavaScript 前仍有静态 favicon 作为首屏回退。"
+  ],
+  "scope": [
+    "internal/server/web/index.html",
+    "internal/server/web/app.js",
+    "internal/server/web/favicon.svg"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "使用与侧栏品牌标记一致的方块 a 图标，并按 CSS 主题 token 更新颜色。",
+      "evidence": [
+        "现有 .brand-icon 使用 --brand 与 --on-brand；主题初始化在同步 settings-init.js 中完成。"
+      ]
+    },
+    "design": {
+      "status": "complete",
+      "summary": "静态 SVG 用于首屏回退；运行时由应用读取计算后的 CSS 变量并更新 SVG data URL。",
+      "evidence": [
+        "aideUI.subscribe 同时覆盖主题、调色板和跨标签页偏好变化。"
+      ]
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "添加主题色 favicon、主题订阅更新，并为 app.js 和 favicon 更新缓存版本。",
+      "evidence": [
+        "internal/server/web/index.html",
+        "internal/server/web/app.js",
+        "internal/server/web/favicon.svg"
+      ]
+    },
+    "verification": {
+      "status": "complete",
+      "summary": "静态验证通过；Safari 中的 favicon 刷新效果未实测。",
+      "evidence": [
+        "node --check internal/server/web/app.js",
+        "git diff --check -- internal/server/web/index.html internal/server/web/app.js docs/tasks/favicon-theme.json",
+        "favicon.svg 可被 XML parser 解析。"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "功能已实现。浏览器标签页实际刷新及主题切换效果未在 Safari 实测。"
+}
