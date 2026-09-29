@@ -618,6 +618,11 @@ func New(work, reference, data string) (*App, error) {
 	if err := migrateLegacyTLSDir(data); err != nil {
 		log.Printf("迁移旧 tls/ 证书到 certs/ 失败（继续，将在 certs/ 重新生成）: %v", err)
 	}
+	// 会话桶归位：旧 save() 曾把归档/小秘会话全部写进 sessions/active/，archived|assistant 长期为空。
+	// 启动时把错位/重复/平铺残留的会话文件归位到唯一正确的桶（幂等、可回滚、零丢失），再开始加载。
+	if err := rebalanceSessionBuckets(data); err != nil {
+		return nil, fmt.Errorf("会话桶归位迁移失败: %w", err)
+	}
 	w, err := os.OpenRoot(work)
 	if err != nil {
 		return nil, err
@@ -872,11 +877,55 @@ func (a *App) background(fn func()) {
 	a.bgWg.Add(1)
 	go func() { defer a.bgWg.Done(); fn() }()
 }
+// sessionBucketFor 决定一个会话应当落在哪个 canonical 桶。这是 save()/删除/启动归位迁移
+// 共同遵守的唯一归属规则，保证一个会话在磁盘上有且仅有一份、且在正确桶内：
+//   - Kind==assistant        -> sessions/assistant（小秘系统会话）
+//   - Archived==true         -> sessions/archived（归档会话）
+//   - 其余                    -> sessions/active（活动会话）
+func sessionBucketFor(s *Session) string {
+	if s.Kind == assistantSessionKind {
+		return "assistant"
+	}
+	if s.Archived {
+		return "archived"
+	}
+	return "active"
+}
+
+// save 把会话原子写入其 canonical 桶，并清理同一 id 在其它桶里的残留副本。
+// 归档/取消归档/小秘会话换桶，或旧版本曾把同一份会话写进多个桶时，这里负责把磁盘收敛到
+// “一个 id 恰好一份、且在正确桶”的状态。Deleted 墓碑不落盘（任务取消后的收尾保存同样跳过）。
 func (a *App) save(s *Session) error {
 	if s.Deleted {
-		return nil // 已删除会话不再落盘（运行中任务取消后的收尾保存同样跳过）
+		return nil
 	}
-	return atomicJSON(SessionPath(a.dataPath, s.ID, "active"), s)
+	path := SessionPath(a.dataPath, s.ID, sessionBucketFor(s))
+	if err := atomicJSON(path, s); err != nil {
+		return err
+	}
+	for _, dir := range sessionBucketDirs(a.dataPath) {
+		stale := filepath.Join(dir, "session-"+s.ID+".json")
+		if stale == path {
+			continue
+		}
+		if _, err := os.Stat(stale); err == nil {
+			if err := os.Remove(stale); err != nil {
+				log.Printf("清理桶外会话副本失败 %s: %v", stale, err)
+			}
+		}
+	}
+	return nil
+}
+
+// removeSessionFiles 删除一个会话在三个桶里的所有落盘副本（删除/批量清空归档用）。
+// 旧实现只删 active/，导致归档桶/小秘桶里的文件残留、重启后会话复活。
+func (a *App) removeSessionFiles(id string) {
+	for _, dir := range sessionBucketDirs(a.dataPath) {
+		p := filepath.Join(dir, "session-"+id+".json")
+		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+			log.Printf("删除会话文件失败 %s: %v", p, err)
+		}
+	}
 }
 
 // assignSessionNumber 给会话分配下一个编号 #N：单调递增、删除不复用，分配后立即持久化 settings。
@@ -1096,6 +1145,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/file/archive", a.createWorkspaceArchive)
 	mux.HandleFunc("POST /api/file/extract", a.extractArchive)
 	mux.HandleFunc("POST /api/file/upload", a.uploadFile)
+	mux.HandleFunc("POST /api/file/upload-batch", a.uploadBatchFile)
 	mux.HandleFunc("POST /api/file/transfer", a.transferFiles)
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)
@@ -2094,10 +2144,8 @@ func (a *App) deleteSession(w http.ResponseWriter, r *http.Request) {
 	}
 	delete(a.sessions, id)
 	a.mu.Unlock()
-	// save() 落盘路径为 dataPath/session-<id>.json（直接位于数据目录）
-	if err := os.Remove(SessionPath(a.dataPath, id, "active")); err != nil && !os.IsNotExist(err) {
-		log.Printf("删除会话文件失败: %v", err)
-	}
+	// 会话可能落在 active/archived/assistant 任一桶（见 sessionBucketFor），三桶全清，防残留复活。
+	a.removeSessionFiles(id)
 	a.broadcastSessionsChanged(id) // #60
 	jsonOut(w, 200, map[string]any{"ok": true})
 }
@@ -2122,16 +2170,9 @@ func (a *App) deleteAllArchived(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		delete(a.sessions, id)
-		// save() 统一落盘到 sessions/active/（paths.go SessionPath），归档只是内存/标记，
-		// 并未迁移到 archived/ 桶。这里必须按真实 active 路径删除，旧平铺路径
-		// dataPath/session-<id>.json 早已不存在，否则删不掉磁盘文件、重启后会话复活。
-		if err := os.Remove(SessionPath(a.dataPath, id, "active")); err != nil && !os.IsNotExist(err) {
-			failed++
-			failedIDs = append(failedIDs, id)
-			log.Printf("删除归档会话文件失败 %s: %v", id, err)
-		} else {
-			deleted++
-		}
+		// 归档会话按规范落在 sessions/archived/（见 sessionBucketFor），三桶全清防残留。
+		a.removeSessionFiles(id)
+		deleted++
 	}
 	a.mu.Unlock()
 	jsonOut(w, 200, map[string]any{"ok": true, "deleted": deleted, "failed": failed, "failedIds": failedIDs})
