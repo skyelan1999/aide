@@ -99,6 +99,62 @@ func TestEvolutionProviderFailurePreservesPersonality(t *testing.T) {
 
 // ── 触发计数与持久化 ────────────────────────────────────────────────────────
 
+func TestEvolutionLengthRepair(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		second string
+		status string
+	}{
+		{"shortened", "你是 aide。简明务实，先给结论。", "adopted"},
+		{"still_long", "aide " + strings.Repeat("新", 100), "rejected"},
+		{"lost_identity", "保持简洁。", "rejected"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			a := testApp(t)
+			calls := 0
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				calls++
+				var body struct {
+					Messages []Message `json:"messages"`
+				}
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Error(err)
+				}
+				content := "aide " + strings.Repeat("新", 100)
+				if calls == 2 {
+					content = tc.second
+					if len(body.Messages) != 4 || !strings.Contains(body.Messages[3].Content, "上稿为") {
+						t.Error("missing repair feedback")
+					}
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{"choices": []any{map[string]any{"message": map[string]string{"content": content}}}})
+			}))
+			defer srv.Close()
+			cur := Personality{Enabled: true, Prompt: "你是 aide。" + strings.Repeat("旧", 40), Evolutions: 2}
+			res := a.evolvePersonality(personaAide, cur, Settings{BaseURL: srv.URL, Model: "test"}, okSample, modeRefine)
+			if calls != 2 || res.Status != tc.status {
+				t.Fatalf("calls=%d result=%+v", calls, res)
+			}
+			if tc.status != "adopted" && res.Personality != cur {
+				t.Fatal("invalid draft changed personality")
+			}
+			if tc.status == "adopted" && res.Personality.Evolutions != 3 {
+				t.Fatal("repair must count as one evolution")
+			}
+		})
+	}
+}
+
+func TestEvolutionCountsUnicodeCharacters(t *testing.T) {
+	a := testApp(t)
+	srv := evolveMockServer(t, "aide "+strings.Repeat("新", 80))
+	cur := Personality{Enabled: true, Prompt: "aide " + strings.Repeat("x", 80)}
+	res := a.evolvePersonality(personaAide, cur, Settings{BaseURL: srv.URL, Model: "test"}, okSample, modeRefine)
+	if res.Status != "adopted" {
+		t.Fatalf("same character count must fit regardless of UTF-8 bytes: %+v", res)
+	}
+}
+
 // TestTriggerAfterMessageCount：达到 20 条消息→触发一次演化并重置计数。
 func TestTriggerAfterMessageCount(t *testing.T) {
 	a := testApp(t)

@@ -1,0 +1,48 @@
+{
+  "id": "personality-length-repair",
+  "request": "修复立即演化因变长1.49倍超过1.10倍上限被拒绝；准确按字符计数并有限精简重试",
+  "baseline": "0b3f8be5aac9537d4f4ea77194e3364711a311cb",
+  "initial_status": "",
+  "acceptance": ["Prompt and validation use Unicode character counts", "An oversized draft triggers at most one rewrite under a shared timeout", "Invalid or failed rewrites preserve the old personality and evolution count"],
+  "scope": ["personality_evolution.go", "personality_evolution_test.go", "task record and repair report"],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Screenshot shows length rejection after a model response, not the previous empty-response error.",
+      "evidence": ["User screenshot 2026-09-29"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Unicode budget plus one corrective model call; retain 1.1x and 4000-character caps and identity validation; no arbitrary truncation.",
+      "evidence": ["internal/server/personality_evolution.go"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Precise integer budget, Unicode checks and bounded repair implemented with shared 120-second timeout.",
+      "evidence": ["internal/server/personality_evolution.go", "internal/server/personality_evolution_test.go"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Targeted mock-provider race regression passed (20.023s); whitespace check passed. Full suite and live paid provider not run this turn; previous branch-wide failures remain.",
+      "evidence": ["docker aide-personality-length-test: exit 0", "go test -mod=vendor -race ./internal/server -run Test(Evol|CompressMode|EndToEndEvolution|ManualEvolve|AuditOnAttempt|InsufficientSample|Rollback|Reset) -count=1", "git diff --check"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Character semantics, one-retry cost, safety and deployment limits documented.",
+      "evidence": ["docs/reviews/2026-09-29-personality-length-repair.md"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diff reviewed; temporary test container removed after retaining logs; no user data changed.",
+      "evidence": [".agent-state/personality-length-race.log"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Source follow-up only on consolidation branch; no version bump, release, or deployment.",
+      "evidence": ["Current branch codex/consolidate-workspace-20260929"]
+    }
+  },
+  "release_authorization": "Earlier user instruction for this personality fix: 完成之后自动push就可以了; source push only",
+  "rollback": "Revert only the scoped repair commit; existing personality data is unchanged by development tests.",
+  "handoff": "No live provider call or production restart. Backend-only change; no new UI layout."
+}

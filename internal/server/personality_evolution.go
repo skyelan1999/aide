@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 // ════════════════════════════════════════════════════════════════════════
@@ -244,6 +245,11 @@ func (a *App) evolvePersonality(id string, cur Personality, cfg Settings, sample
 	if old == "" {
 		old = defaultPersonalityPrompt(id)
 	}
+	oldChars := utf8.RuneCountInString(old)
+	limit := min(personalityMaxPromptChars, int(float64(oldChars)*personalityGrowRatio))
+	if mode == modeCompress {
+		limit = min(personalityMaxPromptChars, oldChars-1)
+	}
 	sys := `你在帮助一个 AI 助手精炼它自己的"性格提示词"。只输出重写后的提示词正文，不要解释、标题、引号或 markdown 围栏。`
 
 	var req string
@@ -262,7 +268,7 @@ func (a *App) evolvePersonality(id string, cur Personality, cfg Settings, sample
 1. 完整保留核心人格、身份、语气与原则。
 2. 删除重复、空话、可由系统其它部分提供的内容；合并近义条目；用更短的句子。
 3. 新提示词字符数必须严格少于当前，不要新增任何要求。
-4. 直接输出新提示词正文。`, len(old), old, sample)
+4. 直接输出新提示词正文。`, oldChars, old, sample)
 	} else {
 		req = fmt.Sprintf(`当前性格提示词（%d 字符）：
 """
@@ -278,8 +284,9 @@ func (a *App) evolvePersonality(id string, cur Personality, cfg Settings, sample
 1. 完整保留核心人格、身份、语气与原则，以及用户明确且反复出现的偏好。
 2. 精炼：删除重复、空话；合并近义条目；用更短的句子。
 3. 可据样本中反复出现的稳定偏好微调措辞与侧重；允许少量调整，但新提示词不得超过当前长度的 %.2f 倍，且绝不超过 %d 字符。
-4. 直接输出新提示词正文。`, len(old), old, sample, personalityGrowRatio, personalityMaxPromptChars)
+4. 直接输出新提示词正文。`, oldChars, old, sample, personalityGrowRatio, personalityMaxPromptChars)
 	}
+	req += fmt.Sprintf("\n硬性长度预算：最多 %d 个 Unicode 字符（包含标点、空格和换行），不是 UTF-8 字节数。请控制在预算内。", limit)
 
 	// A short rewrite needs final text, not the chat model's inherited reasoning
 	// budget. DeepSeek can otherwise spend the entire allowance on reasoning and
@@ -288,24 +295,37 @@ func (a *App) evolvePersonality(id string, cur Personality, cfg Settings, sample
 	params := ProfileParams{Temperature: fp(0.2), MaxTokens: 8192}
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
-	out, _, _, err := complete(ctx, cfg, []Message{
+	messages := []Message{
 		{Role: "system", Content: sys},
 		{Role: "user", Content: req},
-	}, params, nil, nil)
-	if err != nil {
-		return evolveResult{Personality: cur, Status: "failed", Note: "演化调用失败: " + err.Error()}
 	}
-	got := strings.TrimSpace(out)
-	got = strings.TrimPrefix(got, "```")
-	got = strings.TrimSuffix(got, "```")
-	got = strings.Trim(got, "\""+"\n")
-	got = strings.TrimSpace(got)
+	var got string
+	// One bounded repair attempt, sharing the original deadline. Never truncate
+	// personality text, silently raise the cap, or persist an oversized draft.
+	for attempt := 0; attempt < 2; attempt++ {
+		out, _, _, callErr := complete(ctx, cfg, messages, params, nil, nil)
+		if callErr != nil {
+			return evolveResult{Personality: cur, Status: "failed", Note: "演化调用失败: " + callErr.Error()}
+		}
+		got = strings.TrimSpace(out)
+		got = strings.TrimPrefix(got, "```")
+		got = strings.TrimSuffix(got, "```")
+		got = strings.TrimSpace(strings.Trim(got, "\"\n"))
+		chars := utf8.RuneCountInString(got)
+		if chars <= limit {
+			break
+		}
+		if attempt == 1 {
+			return evolveResult{Personality: cur, Status: "rejected", Note: fmt.Sprintf("已尝试自动精简，但结果仍为 %d 字符（上限 %d）；已保留原性格，请稍后重试", chars, limit)}
+		}
+		messages = append(messages, Message{Role: "assistant", Content: got}, Message{Role: "user", Content: fmt.Sprintf("上稿为 %d 个字符，超过 %d 字符的硬上限。请在完整保留原人格身份、语气和原则的前提下删去冗余，重写至最多 %d 字符。只输出正文，不要解释，不要截断句子。", chars, limit, limit)})
+	}
 	if got == "" {
 		return evolveResult{Personality: cur, Status: "rejected", Note: "演化结果为空"}
 	}
 	// 硬上限：防长期膨胀
-	if len(got) > personalityMaxPromptChars {
-		return evolveResult{Personality: cur, Status: "rejected", Note: fmt.Sprintf("新长度 %d 超过硬上限 %d", len(got), personalityMaxPromptChars)}
+	if utf8.RuneCountInString(got) > personalityMaxPromptChars {
+		return evolveResult{Personality: cur, Status: "rejected", Note: fmt.Sprintf("新长度 %d 超过硬上限 %d", utf8.RuneCountInString(got), personalityMaxPromptChars)}
 	}
 	// 核心人格一致性：身份锚点不得丢失
 	if !a.personalityCoreOK(id, got) {
@@ -317,11 +337,11 @@ func (a *App) evolvePersonality(id string, cur Personality, cfg Settings, sample
 	}
 	// 长度约束按模式区分
 	if mode == modeCompress {
-		if len(got) >= len(old) {
+		if utf8.RuneCountInString(got) >= oldChars {
 			return evolveResult{Personality: cur, Status: "rejected", Note: "压缩模式要求严格更短"}
 		}
-	} else if float64(len(got)) > float64(len(old))*personalityGrowRatio {
-		return evolveResult{Personality: cur, Status: "rejected", Note: fmt.Sprintf("变长 %.2f× 超过 %.2f× 上限", float64(len(got))/float64(len(old)), personalityGrowRatio)}
+	} else if float64(utf8.RuneCountInString(got)) > float64(oldChars)*personalityGrowRatio {
+		return evolveResult{Personality: cur, Status: "rejected", Note: "演化结果超过字符预算，已保留原性格"}
 	}
 	// 采纳
 	cur.Prompt = got
