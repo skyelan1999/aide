@@ -15,7 +15,7 @@
 - `git diff --check`、JS 语法、`bash scripts/version.sh check`：PASS。
 - 实际浏览器打开隔离 HTTP 预览，使用当前 index.html 原始 header 和完整 CSS，无用户数据。1280px 桌面按钮右边缘 1252（28px 内边距）；390px 窄屏右边缘 374（16px 内边距），scrollWidth=390，无溢出。深/浅色窄屏已观察。
 - 预览仅验证布局，不冒充文件保存端到端；生产 HTTPS 与真实付费模型验证 NOT_RUN。
-- 全量 race/vet 结果待补充。
+- 全量 `go test -mod=vendor -race -count=1 ./...`：FAIL，server 411.895s，退出 1。失败为 `TestAssistantMessageAgenticFallsBackToAnalyze`、`TestProjectAideMemoryFollowsWorkspace`、`TestLegacyGlobalAideMemoryMigratesOnceToProjectCache`、`TestStartTaskCompactsOverBudgetHistoryBeforeProviderCall`。运行对象包含此前未提交改动；不是独立提交的全量通过凭证。日志未报告 DATA RACE。tts PASS（4.836s）。原串联 vet 因测试失败未运行，另行执行。
 - i18n 回归 PASS。全局文档检查发现既有 2026-09-28 报告的 5 处坏链接；Windows 路由自测因 WinError 1314 无符号链接权限失败（其余 2 项通过）。不修改系统权限来绕过。
 - release-check 实际返回 BLOCKED：缺 full 收据、Git 非干净状态及未完成验证/清理阶段，因此不升版打标签。
 
@@ -26,3 +26,7 @@
 仅提交本任务文件。此前工作区、缓存、文件面板、RCA 等改动保留本地，不纳入本次 push。
 使用现有版本脚本追加当前版本“未发布源码补丁”记录，不绕过 clean-main/full 门禁升版或打 tag。
 当前服务不重启、不替换；源码 push 不代表线上已更新。回滚本次源码提交即可撤回修复，没有迁移或删除用户数据。
+
+源码提交：`9f05864`（含版本脚本 note 生成的记录，当前版本仍为 0.1.12.0 RC1；未新建 tag）。隔离预览进程已停止。完整验收失败不阻止用户授权的独立源码推送，但禁止声称已发布合格版本。
+
+最终结果：独立 `go vet -mod=vendor ./...` PASS（Docker 退出 0）。源码 `9f05864de43fd2d96782497f32ae53e42a90d253` 已 push 到 origin/main，并经 ls-remote 核实。原始测试日志保留于 `.agent-state/personality-targeted-race.log` 和 `.agent-state/personality-full-race.log`；临时测试容器、预览脚本已清理。生产仍为原服务，需要后续构建/部署才会看到新 UI。

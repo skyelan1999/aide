@@ -9,12 +9,12 @@
     "requirements": {"status": "pass", "summary": "Two fixes; push authorized, not production restart.", "evidence": ["User request 2026-09-29"]},
     "design": {"status": "pass", "summary": "Remove flex override; isolate evolution settings and persist personality.", "evidence": ["docs/reviews/2026-09-29-personality-toolbar.md"]},
     "implementation": {"status": "pass", "summary": "Scoped fixes with mock regression coverage.", "evidence": ["internal/server/web/macos.css", "internal/server/personality_evolution_test.go"]},
-    "verification": {"status": "in_progress", "summary": "Targeted race pass; isolated browser layout pass. Full suite pending; paid provider/production not tested.", "evidence": ["Docker aide-personality-tests: exit 0, 19.556s", "Browser right edge 1252/1280 and 374/390; narrow scrollWidth=390"]},
+    "verification": {"status": "blocked", "summary": "Targeted race and isolated layout pass. Full dirty-workspace race suite has four failures outside the scoped tests; paid provider/production not tested.", "evidence": ["Docker aide-personality-tests: exit 0, 19.556s", "Browser right edge 1252/1280 and 374/390; narrow scrollWidth=390", "Full server suite FAIL: 411.895s; details in review document"]},
     "documentation": {"status": "pass", "summary": "Root cause, verification and rollback documented.", "evidence": ["docs/reviews/2026-09-29-personality-toolbar.md"]},
-    "cleanup": {"status": "in_progress", "summary": "Scoped diff reviewed; prior changes retained; test resources pending cleanup.", "evidence": ["git diff --check: pass"]},
-    "release": {"status": "not_run", "summary": "Source push pending. No release tag/image or deployment; dirty baseline blocks clean-main gate.", "evidence": ["Initial Git status"]}
+    "cleanup": {"status": "pass", "summary": "Scoped diff reviewed; prior changes retained; isolated preview stopped and temporary test containers removed after log capture.", "evidence": ["git diff --check: pass", ".agent-state/personality-targeted-race.log", ".agent-state/personality-full-race.log"]},
+    "release": {"status": "blocked", "summary": "Source commit 9f05864 pushed and remote verified. No release tag/image or deployment; full verification and clean-main gate blocked.", "evidence": ["release-check returned BLOCKED", "scripts/version.sh note used; version remains 0.1.12.0 RC1", "git ls-remote origin refs/heads/main: 9f05864de43fd2d96782497f32ae53e42a90d253"]}
   },
   "release_authorization": "User: 完成之后自动push就可以了，做好文档和版本记录",
   "rollback": "Revert scoped source commit; running service and user data not modified.",
-  "handoff": "Other previous changes remain local. No paid model request or production restart."
+  "handoff": "Source fix pushed; go vet ./... exit 0. Targeted race/layout pass; full-suite failures documented. Other changes remain local. No paid model request, new tag/image, or production restart. Rebuild/deployment required for the running UI to change."
 }
