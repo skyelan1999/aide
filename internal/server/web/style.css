@@ -379,6 +379,20 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .phase-implementation.selected { background: var(--phase-impl-bg); color: var(--phase-impl-fg); }
 .phase-design.selected { background: var(--phase-design-bg); color: var(--phase-design-fg); }
 .phase-verify.selected { background: var(--phase-verify-bg); color: var(--phase-verify-fg); }
+.phase-problem-solving.selected { background: var(--phase-rca-bg); color: var(--phase-rca-fg); }
+/* 阶段提示条：显示所选阶段的校验/步骤要求（问题解决等多轮阶段） */
+.phase-hint {
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  background: var(--bg-inset);
+  border: 1px solid var(--line-soft-2);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.phase-hint.hidden { display: none; }
+.phase-hint b { color: var(--text); font-weight: 600; }
 @keyframes phaseIn {
   from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: translateY(0); }
@@ -1072,3 +1086,62 @@ textarea#editor,textarea#file-view-editor{position:relative}
 .xlsx-table td input { width:100%; height:31px; border:0; background:transparent; color:var(--text); padding:4px 7px; font:inherit; box-sizing:border-box; }
 .xlsx-table td input:focus { outline:2px solid var(--brand); outline-offset:-2px; background:var(--surface); }
 .xlsx-table td input:read-only { cursor:default; }
+
+/* ── RCA（问题解决）报告面板：左列表 + 右渲染视图 ── */
+.rca-dialog {
+  width: min(1080px, 94vw);
+  height: min(720px, 88vh);
+  padding: 0;
+  border: 1px solid var(--line-soft-2);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+}
+.rca-dialog::backdrop { background: rgba(0,0,0,.45); }
+.rca-layout { display: flex; height: 100%; }
+.rca-list-pane {
+  width: 280px; flex-shrink: 0;
+  border-right: 1px solid var(--line-soft-2);
+  display: flex; flex-direction: column;
+  background: var(--bg-inset);
+}
+.rca-list-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-bottom: 1px solid var(--line-soft-2);
+}
+.rca-list-head h2 { font-size: 14px; margin: 0; }
+.rca-report-list { flex: 1; overflow-y: auto; padding: 8px; }
+.rca-empty { padding: 24px 12px; color: var(--text-dim); font-size: 12px; text-align: center; }
+.rca-item {
+  display: block; width: 100%; text-align: left;
+  border: 1px solid transparent; border-radius: 8px;
+  background: transparent; cursor: pointer;
+  padding: 9px 10px; margin-bottom: 4px;
+}
+.rca-item:hover { background: var(--hover); }
+.rca-item.active { background: var(--phase-rca-bg); border-color: var(--phase-rca-fg); }
+.rca-item-id { font-size: 11px; color: var(--text-dim); }
+.rca-item-title { font-size: 13px; color: var(--text); font-weight: 500; margin-top: 2px; }
+.rca-item-meta { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+.rca-view-pane { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.rca-view-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; padding: 12px 16px; border-bottom: 1px solid var(--line-soft-2);
+}
+.rca-view-head strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rca-view-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+.rca-warn {
+  margin: 10px 16px 0; padding: 8px 12px; border-radius: 8px;
+  font-size: 12px; line-height: 1.5;
+  background: var(--warn-bg); color: var(--warn);
+  border: 1px solid var(--warn);
+}
+.rca-warn.hidden { display: none; }
+.rca-body { flex: 1; overflow-y: auto; padding: 16px 20px; border-radius: 0; }
+
+/* 批量/文件夹拖拽上传：进度与结果覆盖层（CSP style-src 'self'，仅外部类） */
+.upload-progress{position:fixed;bottom:65px;left:50%;transform:translateX(-50%);min-width:280px;max-width:440px;background:var(--toast-bg);color:var(--on-toast);border-radius:10px;padding:12px 16px;font-size:12px;box-shadow:0 4px 30px var(--shadow-2);z-index:30;border-left:3px solid var(--brand)}
+.upload-progress .up-text{font-size:12px;font-weight:500}
+.upload-progress .up-detail{margin-top:7px;font-size:10px;white-space:pre-wrap;word-break:break-all;opacity:.85;max-height:120px;overflow:auto;line-height:1.6}
+.upload-progress.up-fail{border-left-color:var(--danger)}
+.upload-progress.up-done{border-left-color:var(--brand)}

@@ -89,6 +89,8 @@ html[data-palette="green"][data-theme="light"] {
 --phase-impl-fg:#7c4a03;
 --phase-verify-bg:rgba(22,101,52,.16);
 --phase-verify-fg:#14532d;
+--phase-rca-bg:rgba(185,28,28,.16);
+--phase-rca-fg:#b91c1c;
 }
 
 html[data-palette="green"][data-theme="dark"] {

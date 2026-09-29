@@ -107,6 +107,8 @@ color-scheme:dark;
 --phase-impl-fg:#fcd34d;
 --phase-verify-bg:rgba(52,211,153,.16);
 --phase-verify-fg:#6ee7b7;
+--phase-rca-bg:rgba(248,113,113,.18);
+--phase-rca-fg:#fca5a5;
 --radius-card:8px;
 /* 会话内容列统一最大宽度（P2#8 收口）：.run/.welcome/.composer 共享，居中对齐 */
 --content-max:840px;

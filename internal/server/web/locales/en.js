@@ -1299,5 +1299,21 @@ window.aideEnglish = {
   "只读引用不能移动": "Cannot move from a read-only reference",
   "已复制": "Copied",
   "已移动": "Moved",
-  "项": "items"
+  "项": "items",
+  "问题解决": "Root Cause",
+  "RCA 报告": "RCA Reports",
+  "问题解决报告": "Root-Cause Reports",
+  "浏览问题解决（RCA）报告": "Browse root-cause (RCA) reports",
+  "问题解决阶段": "Root-cause phase",
+  "① 多轮验证假设": "1) verify hypotheses over multiple rounds",
+  "生成 RCA 图": "build the RCA diagram",
+  "落盘报告": "save the report",
+  "暂无问题解决报告。在「AI 工作流 → 问题解决」运行一次即可生成。": "No root-cause reports yet. Run one under AI Workflow → Root Cause.",
+  "读取报告失败：{0}": "Failed to load report: {0}",
+  "报告未关联 draw.io 图（缺少 RCA 图 / draw.io 路径）。": "This report has no linked draw.io diagram (missing RCA diagram / draw.io path).",
+  "关联的 draw.io 图不存在：{0}": "Linked draw.io diagram is missing: {0}",
+  "导出图缺失（{0} 未生成），已改为打开可编辑的 .drawio 源图。": "Export missing ({0} not generated); opened the editable .drawio source instead.",
+  "根因分析 · RCA 图 · 报告": "Root-cause analysis · RCA diagram · report",
+  "打开 RCA 图": "Open RCA diagram",
+  "原始": "Source"
 };

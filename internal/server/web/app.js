@@ -149,6 +149,7 @@ function setMode(mode) {
     }
   }
   updateAutoModeUI();
+  if (typeof updatePhaseHint === 'function') updatePhaseHint();
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
 function syncAssistantModeControls(isAssistantSess) {
@@ -181,10 +182,140 @@ document.querySelectorAll('.phase-btn').forEach(btn => {
       btn.classList.add('selected');
     }
     updateAutoModeUI();
+    updatePhaseHint();
   };
 });
 // 自动编排模式：AI 工作流下未选任何阶段时，由后端 autoModePrompt 处理，前端不显示描述
+
 function updateAutoModeUI() {}
+
+/* ── RCA（问题解决）报告：读 problem-reports-index.md 列表，渲染 Markdown，校验 drawio 存在 ── */
+const RCA_DIR = '.cache/system-docs/problem-reports';
+const RCA_INDEX = RCA_DIR + '/problem-reports-index.md';
+function updatePhaseHint() {
+  const el = $('phase-hint');
+  if (!el) return;
+  if (!state.workflowPhase || state.mode !== 'workflow') { el.classList.add('hidden'); el.innerHTML = ''; return; }
+  if (state.workflowPhase === 'problem-solving') {
+    el.classList.remove('hidden');
+    el.innerHTML = '<b>' + t('问题解决阶段') + '</b>：' + t('① 多轮验证假设') + ' → ② create_diagram ' + t('生成 RCA 图') + ' → ③ record_problem_report ' + t('落盘报告');
+  } else { el.classList.add('hidden'); el.innerHTML = ''; }
+}
+function rcaParseIndex(md) {
+  const rows = [];
+  (md || '').split('\n').forEach(line => {
+    const t = line.trim();
+    if (!t.startsWith('|') || /^\|[\s:\-|]+\|$/.test(t) || t.indexOf('编号') >= 0) return;
+    const parts = t.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+    if (parts.length < 1 || !/^RCA-\d+/i.test(parts[0])) return;
+    rows.push({ id: parts[0], name: parts[1] || parts[0], status: parts[2] || '', created: parts[3] || '', related: parts[4] || '' });
+  });
+  return rows;
+}
+function rcaExtractDiagramPath(content) {
+  let m = (content || '').match(/关联[：:]\s*draw\.io[：:]\s*([^\s]+)/);
+  if (m) return m[1].trim();
+  m = (content || '').match(/##\s*RCA\s*图\s*\n+([^\n#]+)/);
+  if (m) return m[1].trim();
+  return '';
+}
+function rcaResolveDiagram(ref) {
+  ref = (ref || '').trim();
+  if (!ref) return null;
+  let drawio = ref, exportRef = null;
+  if (/\.drawio\.(svg|png)$/i.test(ref)) { drawio = ref.replace(/\.(svg|png)$/i, ''); exportRef = ref; }
+  return { drawio, exportRef };
+}
+async function rcaPathExists(path) {
+  try { await api('/file?root=workspace&path=' + encodeURIComponent(path)); return true; }
+  catch (e) { return false; }
+}
+function rcaFriendlyRender(content) {
+  let src = String(content || '');
+  const trimmed = src.trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try { return renderMarkdown('```json\n' + JSON.stringify(JSON.parse(trimmed), null, 2) + '\n```', false, ''); }
+    catch (e) { /* 非合法 JSON，按 Markdown 原样渲染 */ }
+  }
+  return renderMarkdown(src, false, '');
+}
+let rcaState = { entries: [], active: '' };
+async function openRcaReports() {
+  const dlg = $('rca-dialog');
+  if (typeof dlg.showModal === 'function' && !dlg.open) dlg.showModal(); else dlg.setAttribute('open', '');
+  await loadRcaList();
+}
+async function loadRcaList() {
+  const listEl = $('rca-report-list');
+  listEl.innerHTML = '<div class="rca-empty">' + t('正在加载…') + '</div>';
+  let indexRows = [];
+  try { const d = await api('/file?root=workspace&path=' + encodeURIComponent(RCA_INDEX)); indexRows = rcaParseIndex(d.content || ''); }
+  catch (e) { indexRows = []; }
+  let files = [];
+  try { files = await api('/files?root=workspace&path=' + encodeURIComponent(RCA_DIR)); }
+  catch (e) { files = []; }
+  const reportFiles = (files || []).filter(f => !f.dir && /^RCA-.*\.md$/i.test(f.name) && f.name !== 'problem-reports-index.md');
+  const byId = {};
+  indexRows.forEach(r => { byId[r.id.toUpperCase()] = r; });
+  reportFiles.forEach(f => {
+    const m = f.name.match(/^(RCA-\d+)/i); if (!m) return;
+    const id = m[1].toUpperCase();
+    if (!byId[id]) byId[id] = { id, name: f.name.replace(/\.md$/, ''), status: '', created: '', related: '' };
+    byId[id].path = f.path;
+  });
+  rcaState.entries = Object.keys(byId).map(k => byId[k]).filter(e => e.path).sort((a, b) => a.id < b.id ? -1 : (a.id > b.id ? 1 : 0));
+  listEl.replaceChildren();
+  if (!rcaState.entries.length) {
+    listEl.innerHTML = '<div class="rca-empty">' + t('暂无问题解决报告。在「AI 工作流 → 问题解决」运行一次即可生成。') + '</div>';
+    $('rca-view-title').textContent = '—'; $('rca-view-body').innerHTML = '';
+    $('rca-open-diagram').classList.add('hidden'); $('rca-warn').classList.add('hidden');
+    return;
+  }
+  rcaState.entries.forEach(e => {
+    const b = el('button', 'rca-item' + (rcaState.active === e.path ? ' active' : ''));
+    b.type = 'button';
+    b.append(el('div', 'rca-item-id', e.id));
+    b.append(el('div', 'rca-item-title', e.name || e.id));
+    const meta = [e.status, e.created].filter(Boolean).join(' · ');
+    if (meta) b.append(el('div', 'rca-item-meta', meta));
+    b.onclick = () => openRcaReport(e);
+    listEl.append(b);
+  });
+  if (!rcaState.active || !rcaState.entries.some(e => e.path === rcaState.active)) openRcaReport(rcaState.entries[0]);
+}
+async function openRcaReport(entry) {
+  rcaState.active = entry.path;
+  document.querySelectorAll('.rca-item').forEach(b => b.classList.toggle('active', b.textContent.indexOf(entry.id) >= 0));
+  $('rca-view-title').textContent = entry.id + (entry.name ? ' · ' + entry.name : '');
+  const warn = $('rca-warn'); warn.classList.add('hidden'); warn.innerHTML = '';
+  $('rca-open-diagram').classList.add('hidden');
+  const body = $('rca-view-body');
+  body.innerHTML = '<div class="rca-empty">' + t('正在加载…') + '</div>';
+  let data;
+  try { data = await api('/file?root=workspace&path=' + encodeURIComponent(entry.path)); }
+  catch (e) { body.innerHTML = '<div class="rca-empty">' + t('读取报告失败：{0}', e.message || entry.path) + '</div>'; return; }
+  body.innerHTML = rcaFriendlyRender(data.content || '');
+  // renderMarkdown 包装层已在渲染后自动触发 renderMermaid，此处无需再调用（renderMermaid 为闭包内定义）
+  let ref = rcaExtractDiagramPath(data.content || '') || (entry.related || '').replace(/^draw\.io[：:]\s*/i, '');
+  const diag = rcaResolveDiagram(ref);
+  const warnings = [];
+  if (!diag) {
+    warnings.push(t('报告未关联 draw.io 图（缺少 RCA 图 / draw.io 路径）。'));
+  } else {
+    const ok = await rcaPathExists(diag.drawio);
+    if (!ok) {
+      warnings.push(t('关联的 draw.io 图不存在：{0}', diag.drawio));
+    } else {
+      const btn = $('rca-open-diagram');
+      btn.classList.remove('hidden');
+      btn.onclick = () => openFile(diag.drawio);
+      if (diag.exportRef && !(await rcaPathExists(diag.exportRef)))
+        warnings.push(t('导出图缺失（{0} 未生成），已改为打开可编辑的 .drawio 源图。', diag.exportRef));
+    }
+  }
+  if (warnings.length) { warn.innerHTML = warnings.join('<br>'); warn.classList.remove('hidden'); }
+}
+$('rca-reports-btn').onclick = action(openRcaReports);
 async function refreshConfig() {
   state.config = await api('/config');
   $('connection').textContent = t("● 本地服务已连接"); $('connection').classList.add('ready');
@@ -1553,7 +1684,17 @@ $('open-new-tab').onclick = () => {
 };
 $('new-session').onclick = action(newSession); $('refresh-sessions').onclick = action(loadSessions); $('refresh-files').onclick = action(loadFiles);
 document.querySelectorAll('.mode-switch button').forEach(b => b.onclick = () => setMode(b.dataset.mode));
-document.querySelectorAll('.starter').forEach(b => b.onclick = () => { $('prompt').value = b.dataset.prompt; setMode(b.dataset.mode || 'chat'); $('prompt').focus(); });
+document.querySelectorAll('.starter').forEach(b => b.onclick = () => {
+    $('prompt').value = b.dataset.prompt;
+    setMode(b.dataset.mode || 'chat');
+    if (b.dataset.phase) {
+      // 问题解决等阶段入口：自动切到工作流并选中对应阶段按钮
+      state.workflowPhase = b.dataset.phase;
+      document.querySelectorAll('#workflow-phases .phase-btn').forEach(x => x.classList.toggle('selected', x.dataset.phase === b.dataset.phase));
+      updatePhaseHint();
+    }
+    $('prompt').focus();
+  });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
 function applyReferenceTerminology() {
   const setText = (selector, key) => document.querySelectorAll(selector).forEach(node => { node.dataset.i18n = key; node.textContent = t(key); });
@@ -1600,23 +1741,177 @@ $('parent-dir').onclick = action(async () => { state.dir = state.dir.includes('/
 $('file-search').addEventListener('input', () => { state.fileSearch = $('file-search').value; clearTimeout(state.fileSearchTimer); state.fileSearchTimer = setTimeout(() => loadFiles().catch(error => toast(error.message || String(error))), 180); });
 $('file-search-scope').addEventListener('click', () => { state.fileSearchScope = state.fileSearchScope === 'folder' ? 'recursive' : 'folder'; $('file-search-scope').setAttribute('aria-pressed', String(state.fileSearchScope === 'recursive')); loadFiles().catch(error => toast(error.message || String(error))); });
 $('file-search-match').addEventListener('click', () => { state.fileSearchMatch = state.fileSearchMatch === 'fuzzy' ? 'exact' : 'fuzzy'; $('file-search-match').setAttribute('aria-pressed', String(state.fileSearchMatch === 'exact')); loadFiles().catch(error => toast(error.message || String(error))); });
+// ── 批量 / 文件夹拖拽上传 ───────────────────────────────────────────────────
+// 与后端 internal/server/file_upload_batch.go 对齐的限额（仅前端分块用）。
+const BATCH_MAX_FILES = 1000;
+const BATCH_MAX_BYTES = 256 * 1024 * 1024;
+
+// collectEntry 递归遍历 FileSystemEntry（文件夹拖拽），输出 {file, relativePath}。
+// prefix 累积到当前目录为止的相对路径（含顶层拖拽项自身的名字）。目录 reader 分多批
+// 返回条目，必须循环 readEntries 直到空批次。挂到 window 便于 Playwright 用合成 entry 单测。
+async function collectEntry(entry, prefix, out) {
+  if (entry.isFile) {
+    const file = await new Promise((resolve, reject) => entry.file(resolve, reject));
+    out.push({ file, relativePath: prefix ? prefix + '/' + file.name : file.name });
+    return;
+  }
+  if (!entry.isDirectory) return;
+  const reader = entry.createReader();
+  for (;;) {
+    const batch = await new Promise((resolve, reject) => reader.readEntries(resolve, reject));
+    if (!batch.length) break;
+    for (const child of batch) {
+      const childPrefix = prefix ? prefix + '/' + entry.name : entry.name;
+      await collectEntry(child, childPrefix, out);
+    }
+  }
+}
+
+// collectDroppedItems 优先用 DataTransferItem.webkitGetAsEntry() 递归文件夹；
+// 该 API 不可用时回退到扁平 FileList，保证单文件拖拽仍可用。
+async function collectDroppedItems(dataTransfer) {
+  if (dataTransfer && dataTransfer.items) {
+    const entries = [];
+    for (const it of dataTransfer.items) {
+      const entry = it.webkitGetAsEntry && it.webkitGetAsEntry();
+      if (entry) entries.push(entry);
+    }
+    if (entries.length) {
+      const out = [];
+      for (const entry of entries) await collectEntry(entry, '', out);
+      return out;
+    }
+  }
+  return Array.from((dataTransfer && dataTransfer.files) || []).map(f => ({ file: f, relativePath: f.name }));
+}
+
+// showUploadProgress 上传进度/结果覆盖层。纯外部 CSS 类切换（CSP style-src 'self'
+// 禁止内联样式），完成后自动隐藏；失败清单通过 up-detail 展示，绝不静默。
+function showUploadProgress(total) {
+  let host = $('upload-progress');
+  if (!host) {
+    host = el('div', 'upload-progress');
+    host.id = 'upload-progress';
+    host.innerHTML = '<div class="up-text"></div><div class="up-detail"></div>';
+    document.body.appendChild(host);
+  }
+  host.classList.remove('hidden', 'up-fail', 'up-done');
+  const text = host.querySelector('.up-text');
+  const detail = host.querySelector('.up-detail');
+  detail.textContent = ''; // 清掉上一次上传遗留的失败明细
+  const api = {
+    update(processed, current) {
+      text.textContent = '上传中 ' + processed + '/' + total + (current ? ' · ' + current : '');
+    },
+    finish(processed, failedList) {
+      const ok = processed - failedList.length;
+      if (!failedList.length) {
+        text.textContent = '已上传 ' + processed + ' 个文件';
+        detail.textContent = '';
+        host.classList.add('up-done');
+      } else {
+        text.textContent = '上传完成：成功 ' + ok + '，失败 ' + failedList.length;
+        detail.textContent = failedList.slice(0, 10).map(f => f.path + ' — ' + f.error).join('\n');
+        host.classList.add('up-fail');
+      }
+      clearTimeout(host._t);
+      host._t = setTimeout(() => host.classList.add('hidden'), failedList.length ? 12000 : 2500);
+    },
+  };
+  api.update(0, '');
+  return api;
+}
+
+// uploadCollected 上传已收集的 {file, relativePath} 列表。单文件走原有 raw
+// /api/file/upload；多文件走 multipart 批量端点并按后端限额分块。每个失败（冲突/校验/
+// 限额/网络）都计入 failed 并展示，网络错误整块计为失败。
+async function uploadCollected(items, target) {
+  if (!items.length) return { succeeded: 0, failed: [] };
+  const overlay = showUploadProgress(items.length);
+  const destBase = state.dir === '.' ? '' : state.dir;
+  const qsBase = destBase ? encodeURIComponent(destBase) : encodeURIComponent('.');
+  const srcQS = target.source ? '&source=' + encodeURIComponent(target.source) : '';
+  let processed = 0;
+  const failed = [];
+  try {
+    if (items.length === 1) {
+      const it = items[0];
+      overlay.update(0, it.relativePath);
+      const dest = destBase ? destBase + '/' + it.relativePath : it.relativePath;
+      try {
+        const resp = await fetch('/api/file/upload?path=' + encodeURIComponent(dest) + srcQS, {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': it.file.type || 'application/octet-stream' },
+          body: it.file,
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) throw new Error(data.error || ('HTTP ' + resp.status));
+      } catch (e) { failed.push({ path: it.relativePath, error: e.message }); }
+      processed++;
+      overlay.update(processed, it.relativePath);
+    } else {
+      let chunk = [];
+      let chunkBytes = 0;
+      const flush = async () => {
+        if (!chunk.length) return;
+        const form = new FormData();
+        for (const it of chunk) form.append('files', it.file, it.relativePath);
+        const url = '/api/file/upload-batch?path=' + qsBase + srcQS;
+        let resp, data;
+        try {
+          resp = await fetch(url, { method: 'POST', headers: { Authorization: 'Bearer ' + state.token }, body: form });
+          data = await resp.json().catch(() => ({}));
+        } catch (e) {
+          for (const it of chunk) failed.push({ path: it.relativePath, error: String(e) });
+          processed += chunk.length;
+          overlay.update(processed, '');
+          chunk = []; chunkBytes = 0;
+          return;
+        }
+        const results = data.results || [];
+        for (const r of results) {
+          processed++;
+          if (!r.ok) failed.push({ path: r.path || '?', error: r.error || ('HTTP ' + resp.status) });
+        }
+        if (!results.length) {
+          const errMsg = (data && data.error) || ('HTTP ' + resp.status);
+          for (const it of chunk) failed.push({ path: it.relativePath, error: errMsg });
+          processed += chunk.length;
+        }
+        overlay.update(processed, '');
+        chunk = []; chunkBytes = 0;
+      };
+      for (const it of items) {
+        const size = it.file.size || 0;
+        if (chunk.length && (chunk.length >= BATCH_MAX_FILES || chunkBytes + size > BATCH_MAX_BYTES)) await flush();
+        chunk.push(it);
+        chunkBytes += size;
+      }
+      await flush();
+    }
+  } finally {
+    await loadFiles();
+    overlay.finish(processed, failed);
+  }
+  return { succeeded: processed - failed.length, failed };
+}
+
+// uploadDroppedFiles 兼容旧的扁平 FileList 调用（单文件拖拽入口）。
 async function uploadDroppedFiles(files) {
   const target = currentFileTarget();
-  if (!target.writable) { toast(t('当前目录为只读，无法上传')); return; }
-  const items = Array.from(files || []);
+  if (!target.writable) { toast('当前目录为只读，无法上传'); return; }
+  const items = Array.from(files || []).map(f => ({ file: f, relativePath: f.name }));
   if (!items.length) return;
-  for (const file of items) {
-    const dest = state.dir === '.' ? file.name : state.dir + '/' + file.name;
-    const response = await fetch('/api/file/upload?path=' + encodeURIComponent(dest) + (target.source ? '&source=' + encodeURIComponent(target.source) : ''), { method: 'POST', headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': file.type || 'application/octet-stream' }, body: file });
-    const data = await response.json();
-    if (!response.ok) throw new Error(t(data.error) || t('上传失败'));
-  }
-  await loadFiles();
-  toast(t('已上传 {0} 个文件', items.length));
+  await uploadCollected(items, target);
 }
 ['dragenter', 'dragover'].forEach(type => $('files').addEventListener(type, event => { event.preventDefault(); if (currentFileTarget().writable) $('files').classList.add('drop-ready'); }));
 ['dragleave', 'drop'].forEach(type => $('files').addEventListener(type, event => { event.preventDefault(); $('files').classList.remove('drop-ready'); }));
-$('files').addEventListener('drop', action(async event => { const files = event.dataTransfer?.files; if (files?.length) await uploadDroppedFiles(files); }));
+$('files').addEventListener('drop', action(async event => {
+  event.preventDefault();
+  $('files').classList.remove('drop-ready');
+  const items = await collectDroppedItems(event.dataTransfer);
+  if (items.length) await uploadCollected(items, currentFileTarget());
+}));
 $('task-form').onsubmit = action(async event => {
   event.preventDefault();
   if (state.submitting) return; // Enter 连击与点击不可重复创建 run
