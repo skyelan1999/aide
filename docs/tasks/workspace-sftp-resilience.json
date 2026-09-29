@@ -1,0 +1,28 @@
+{
+  "consolidation": {"date": "2026-09-29", "task": "consolidate-workspace", "branch": "codex/consolidate-workspace-20260929", "note": "User now authorizes source push. Earlier no-commit/no-push statements describe the original task execution only. See consolidation report for current delivery status and unresolved verification; this is not a release."},
+  "id": "workspace-sftp-resilience",
+  "request": "sftp工作不稳定，老失败，而且工作空间连上之后aide里面就不能在自主的连接了，这个是有问题的",
+  "baseline": "main at task start; pre-existing workspace-test-layout changes preserved",
+  "initial_status": "Screenshot evidence shows SFTP put failed because /home/lantxa/conlon/.cache/aide did not exist. Existing code also explicitly rejects agent run_shell in SSH workspace mode.",
+  "acceptance": [
+    "Writing a workspace-relative file through SFTP creates any missing parent directories below the configured remote workspace before the atomic upload.",
+    "An aide run_shell tool call in an SSH workspace reuses the configured SSH connection, runs from the configured remote directory, and returns command output and exit status.",
+    "Local workspace shell behavior and existing SSH command-panel behavior remain covered by regression tests."
+  ],
+  "scope": [
+    "SSH workspace SFTP write helper, agent run_shell remote dispatch, focused Go regression tests, and task record.",
+    "No connection credential changes, no external SSH invocation, no deployment, and no unrelated source-SFTP behavior."
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "The reported SFTP error and autonomous execution gap are reproducible from the screenshot and code paths.", "evidence": ["User screenshot, 2026-09-29", "internal/server/ssh_session.go", "internal/server/workflow.go"]},
+    "design": {"status": "pass", "summary": "Create missing workspace-relative parents through the existing authenticated SFTP channel, then execute agent commands remotely through the already established ControlMaster while retaining existing timeout and command policy checks.", "evidence": ["internal/server/ssh_session.go", "internal/server/command.go"]},
+    "implementation": {"status": "pass", "summary": "Workspace SFTP writes now create missing parent directories before atomic upload; agent run_shell now reuses the SSH ControlMaster from its remote workspace.", "evidence": ["internal/server/ssh_session.go", "internal/server/workflow.go", "frontend/server diff fingerprint 13d847d679792df7c1a42508903a556ea18594d8"]},
+    "verification": {"status": "pass", "summary": "Docker Go regression passed with the repository SSH/SFTP mock: TestRemoteWorkspaceDispatch. It verifies nested parent mkdir, atomic upload, remote agent command cwd, and single-master reuse. Static diff and JavaScript syntax checks also passed.", "evidence": ["docker run aide:local go test -mod=vendor ./internal/server -run TestRemoteWorkspaceDispatch -count=1: PASS, 2026-09-29", "git diff --check: PASS, 2026-09-29", "node --check internal/server/web/app.js: PASS, 2026-09-29"]},
+    "documentation": {"status": "pass", "summary": "PRD and architecture overview now describe remote run_shell support and its remaining non-PTY limit.", "evidence": ["docs/PRD.md", "docs/architecture-overview.html"]},
+    "cleanup": {"status": "pass", "summary": "Removed the exact temporary Docker test container and its Go-cache volume after the test; no user service, workspace data, or credential was modified.", "evidence": ["docker rm aide-sftp-regression-20260929", "docker volume rm aide-sftp-go-cache-20260929"]},
+    "release": {"status": "not_run", "summary": "No publishing, image build, or deployment was requested.", "evidence": ["User request scope"]}
+  },
+  "release_authorization": "",
+  "rollback": "Revert the scoped server and test changes; no remote operation is run by this task.",
+  "handoff": "Completed: missing SFTP parent paths are created before upload and SSH workspace agent commands use the existing remote connection. Test: Docker mock regression passed. No external SSH connection, credential change, deployment, commit, or push was performed. Existing user-visible workspace-layout changes from the preceding task remain uncommitted in the worktree."
+}

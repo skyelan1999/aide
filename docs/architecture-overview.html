@@ -89,7 +89,7 @@
   <div class="row">
     <div class="box tool"><b>list_files / read_file</b><span>os.Root 沙箱 · 直接执行</span></div>
     <div class="box tool"><b>write_file</b><span>生成提案 → awaiting_approval → 用户 apply 落盘（带哈希校验）</span></div>
-    <div class="box tool"><b>run_shell</b><span>execShellCommand · bash --norc · 60s 超时 · 危险命令黑名单拦截</span></div>
+    <div class="box tool"><b>run_shell</b><span>execShellCommand · bash --norc · 60s 超时 · 每步骤 24 次调用预算 · SSH 取消等待上限 2s · 危险命令黑名单拦截</span></div>
     <div class="box tool"><b>plugins.go</b><span>Node 插件宿主 (DSH/Cordis 形态) · 协议 v1.1 · handler 注册进 toolLoop</span></div>
   </div>
 </div>
@@ -222,7 +222,7 @@
       <li>危险命令黑名单是前缀匹配，可被绕路；正式版建议加 allowlist 模式</li>
       <li>会话 JSON 单文件，会话数上千后启动加载会变慢（未做分页）</li>
       <li>MCP 目前只支持 stdio 传输和工具元数据声明为只读的调用；不支持写入工具、远程传输或复用外部桌面应用的登录会话</li>
-      <li>远程 SSH 工作区的 run_shell 自动执行尚未打通</li>
+      <li>远程 SSH 工作区的 run_shell 复用 SSH 会话执行，但无 PTY，不能运行 vim/top 等交互命令</li>
       <li>权限管理目前是只读说明面板，还没做 per-user 开关持久化</li>
     </ul>
   </div>

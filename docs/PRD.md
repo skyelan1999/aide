@@ -1,5 +1,7 @@
 # aide 产品需求文档（PRD）
 
+> 2026-09-29 整理说明：本分支包含尚未完成全量验收的工作区/缓存/UI 改动，“已实现”不等于已发布。RCA 阶段仍为部分实现，已知失败与待办见 [汇总交接](reviews/2026-09-29-workspace-consolidation.md)。
+
 ## 文档信息
 
 | 项 | 内容 |
@@ -66,7 +68,7 @@ aide = **AI + IDE**，面向**可信单用户**的本地 AI 开发工作台。�
 | `TEST-xxx` | `system-docs/verifications/` | `verifications-index.md` | `record_verification` | 环境 / 用例 / 真实运行结果 / 结论 |
 
 - 编号为三位递增（`REQ-001` 起），扫描已有 `REQ-NNN-*.md` 取 max+1，文件名由标题清洗（保留中文/字母/数字/连字符，截断 40 字符）。
-- `read_memory/write_memory` 持久项目记忆文件位于当前本地工作区 `.cache/aide/memory.md`（非 system-docs）；SSH 工作区按 workspace identity 存于本机项目缓存。
+- `read_memory/write_memory` 使用配置的项目缓存下 `aide/memory.md`。选择工作空间（SFTP）时，记忆和工作流建档同步到远端缓存目录；本机仅在应用数据目录保留按项目与缓存路径隔离的工作副本。上下文构建只读副本，避免 SSH 等待阻塞主面板。旧缓存不自动删除或搬迁。
 
 ### 2.3 工作模式
 
@@ -117,9 +119,10 @@ aide = **AI + IDE**，面向**可信单用户**的本地 AI 开发工作台。�
 | WF-08 | mermaid 流程图渲染 | 把 ```mermaid 代码块替换为 `<div class="mermaid">`，vendor mermaid@10 渲染 SVG | md 中的流程图显示为图形 | P2 | 已实现 |
 | WF-09 | md 相对路径链接内部打开 | 事件委托拦截 `.md` 相对链接，在 aide 编辑器内打开（非 404） | 点 md 内相对链接打开对应文件 | P2 | 已实现 |
 | WF-10 | Office 文件解析 | `read_file` 对 `.docx/.xlsx/.pptx` 用 python 开源库（python-docx/openpyxl/python-pptx）解析成文本 | AI 能读到 Office 文档正文 | P1 | 已实现 |
-| WF-11 | 引用 sources | 本地/Skill/链接/MCP stdio/SFTP/FTP/FTPS/SMB；`list_sources` 工具枚举；登记存缓存 `sources.json`，密码存卷不回传 | MCP 测试发现工具；AI 仅用 `mcp_call` 调用实时声明为只读的工具 | P1 | 已实现 |
+| WF-11 | 引用 sources | 本地/Skill/链接/MCP stdio/SFTP/FTP/FTPS/SMB；`list_sources` 工具枚举；登记存应用数据目录 `config/sources.json`，与项目缓存隔离；兼容导入旧登记，密码存卷不回传 | MCP 测试发现工具；AI 仅用 `mcp_call` 调用实时声明为只读的工具 | P1 | 已实现 |
 | WF-12 | 文本读取限制 | 单文件 256KiB、UTF-8、无 NUL；AI `read_file` 返回截断到 60KiB | 超限被拒/截断 | P1 | 已实现 |
 | WF-13 | md 相对路径图片加载 | 渲染时把相对 `<img src>` 改写为 aide 文件原始字节接口 `/api/file/raw`（带 access_token 查询参数），正确解析相对当前文档目录的 `../`；支持 png/jpg/jpeg/gif/svg/webp；**模态预览 / 新标签页视图 / 会话消息三处都生效**；外部 http(s) 图片不受影响；加载失败时 `opacity:0.4` 静默降级、不显示破图问号 | 仓库文档里相对图片（如 `docs/images/*.jpg`）正常显示；外链图片原样加载；失败静默不渲染破图 | P1 | 已实现 |
+| WF-14 | 文件面板上传与筛选 | 可写工作目录/引用支持拖拽上传（单文件 ≤64MiB、不静默覆盖）；安全隐藏项默认显示；全宽搜索框内使用子目录、精确匹配两个高亮切换按钮；各来源保留最近目录 | 只读来源由接口拒绝上传；`.cache` 等默认可见，受保护路径仍不可访问；递归搜索受目录与结果上限保护 | P1 | 已实现 |
 
 ---
 
@@ -181,7 +184,7 @@ aide = **AI + IDE**，面向**可信单用户**的本地 AI 开发工作台。�
 | AU-02 | per-tool 权限开关 | `DisabledTools[]` 持久化到 `settings.json`；`contextTools()` 按其过滤工具 schema | 禁用某工具后模型不再看到/调用它；刷新后仍禁用 | P0 | 已实现 |
 | AU-03 | run_shell 危险拦截 | `shellBlocked()` 黑名单：递归删除/提权/推送远端/pipe-to-shell 等，命中即拒 | `rm -rf /`、`sudo`、curl|sh 等被拦 | P0 | 已实现 |
 | AU-04 | 命令超时/并发/截断 | ShellTimeout 默认 60s、最大 300s（设置可配）；并发最多 4；stdout/stderr 各截断 64KB | 超时被杀；并发超限 429 | P1 | 已实现 |
-| AU-05 | 路径与越界约束 | `safePath` + 工作目录锁定 workspace；`bash --norc` 隔离环境；远程 SSH 模式 run_shell 不自动执行 | 越界/符号链接逃逸被拒；SSH 下提示手动运行 | P0 | 已实现 |
+| AU-05 | 路径与越界约束 | `safePath` + 工作目录锁定 workspace；`bash --norc` 隔离环境；远程 SSH 模式复用已认证会话执行 `run_shell` | 越界/符号链接逃逸被拒；SSH 命令受单条超时、任务取消和每步骤 24 次工具调用预算约束 | P0 | 已实现 |
 | AU-06 | 失败反馈循环 | 命令失败经 `analyzeShellFailure` 翻译成「原因+建议」喂回模型；同一工具连续失败 **≥3 次**注入止损提示；API 抖动自动重试一次 | 失败时模型拿到可读原因；连错 3 次收到换路提示 | P1 | 已实现 |
 | AU-07 | 提前停止保留输出 | 轮次超限/提前停止时保留已产生的流式输出，不再显示"未返回任何内容" | 超限时界面保留已有内容 | P1 | 已实现 |
 | AU-08 | 工具轮次上限 | 默认 60 轮（`ToolMaxRounds`，≤0 取 60），设置→权限管理可配 5–200 | 改配置后生效；到达上限停止 | P1 | 已实现 |
@@ -238,7 +241,7 @@ aide = **AI + IDE**，面向**可信单用户**的本地 AI 开发工作台。�
 | TR-06 | 请求快照证据链 | `RequestSnapshot`（首轮+工具续跑，含 messages/tools/body/SHA256/时间）；`GET .../requests` 取回 | 快照可溯源、指纹可校验 | P2 | 已实现 |
 | TR-07 | Token 费用统计 | GitHub 提交图风格热力图；DeepSeek 官方模型按缓存命中/未命中、模型与北京时间时段计价；其他模型可配置输入/输出费率；单日明细+周合计；按调用费率快照 | 区分已计价/估算/未计价；DeepSeek 调用优先使用上游 usage 和缓存明细 | P2 | 已实现 |
 | TR-08 | SSE 流式输出 | 逐 token 推送（step/delta/tool/status/done）；首 token 前思考点、闪烁光标、工具活动行；EventSource 断开轮询降级 | chat 模式实时逐字可见 | P0 | 已实现 |
-| TR-09 | SSE 顺滑性排查优化 | 排查卡顿/成块/断流：后端 flush 是否及时、中间代理缓冲、前端批量渲染节奏三端联动；保证 token 顺滑吐出、不攒成大块 | 长回答逐字顺滑、不卡顿、不中途断流 | P2 | 部分实现（runEvents 每事件 flush+X-Accel-Buffering:no+15s 心跳已落地，长回答顺滑待实测） |
+| TR-09 | SSE 顺滑性排查优化 | 排查卡顿/成块/断流：后端 flush 是否及时、中间代理缓冲、前端批量渲染节奏三端联动；长工具调用每 15 秒心跳并在面板显示连接正常和实时耗时 | 长回答逐字顺滑；长 SSH 命令持续显示活动状态、可停止 | P2 | 部分实现（SSE flush、15s 心跳、可见状态及工具预算已落地；真实 Windows/远端网络场景待实测） |
 | TR-10 | 思考过程折叠 | `reasoning_content`/思考过程**默认折叠**成 `<details>`「思考过程」条，可展开窥测；思考进行中显示"思考中…"状态；结束后可收起 | 思考内容默认不占屏、可点开看；状态正确 | P2 | 已实现 |
 
 ---
@@ -451,7 +454,7 @@ flowchart TD
 | OQ-01 | ~~消息「🔄重试」后端 404~~ | **已解决**：`POST /api/sessions/{id}/runs/{run}/retry` 已注册（server.go retryTask，运行中返回 409） | 关闭 |
 | OQ-02 | ~~`search_text` required 误写 `"command"`~~ | **已解决**：schema required 已改为 `["query"]`（workflow.go） | 关闭 |
 | OQ-03 | `semantic_search` 是离线 TF-IDF 余弦相似度，并非向量 embedding；工具描述仍写 "Semantic vector search"，命名易被误解为真语义检索 | 实现与"语义"字面有差距 | 在 UI/提示中明确标注"本地词频语义、非向量检索"，或后续接 embedding |
-| OQ-04 | 远程 SSH/SFTP 工作区下 `run_shell` 不自动执行（提示手动运行） | 已知边界 | 后续打通远程 exec |
+| OQ-04 | ~~远程 SSH/SFTP 工作区下 `run_shell` 不自动执行~~ | **已解决**：agent `run_shell` 复用已认证的 SSH ControlMaster，在配置的远程工作目录执行；无 PTY 交互式命令仍不支持。 | 关闭 |
 | OQ-05 | streamable HTTP MCP 与容器内交互登录尚未实现 | stdio MCP 已实现；宿主机 Codex MCP 不能被 Docker 服务直接复用 | 后续评估受控 HTTP/宿主机桥接 |
 | OQ-06 | ~~推理强度（MD-08）后端无 reasoning 参数透传~~ | **已解决**：provider.go 按 `ReasoningEffort` 注入 `thinking`/`reasoning_effort`（auto 不传、off 禁用、low/medium/high 开启） | 关闭 |
 | OQ-07 | 无交互式 PTY，不适合常驻服务/交互编辑器 | 已知边界 | 列入非目标，不本期实现 |

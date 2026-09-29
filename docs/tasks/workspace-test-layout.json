@@ -1,0 +1,28 @@
+{
+  "consolidation": {"date": "2026-09-29", "task": "consolidate-workspace", "branch": "codex/consolidate-workspace-20260929", "note": "User now authorizes source push. Earlier no-commit/no-push statements describe the original task execution only. See consolidation report for current delivery status and unresolved verification; this is not a release."},
+  "id": "workspace-test-layout",
+  "request": "测试连接单独横着在这页放一行，本地路径下不应该显示测试连接这个按钮",
+  "baseline": "main at task start",
+  "initial_status": "Existing workspace-picker delivery is retained; this is a narrowly scoped follow-up.",
+  "acceptance": [
+    "SSH/SFTP mode shows the connection test in a dedicated full-width row separate from Save.",
+    "Local mode does not render the connection-test button or a stale test status.",
+    "Save remains available in both modes and the existing SSH test request behavior is unchanged."
+  ],
+  "scope": [
+    "Workspace configuration modal markup, mode-switch behavior, and styles.",
+    "Task record and targeted frontend verification; no connection configuration or backend API changes."
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "User requested a standalone test-connection row and no test control for local workspaces.", "evidence": ["User request, 2026-09-29"]},
+    "design": {"status": "pass", "summary": "Keep the existing test button and handler, place them in an SSH-only row, and leave Save in a separate footer row.", "evidence": ["internal/server/web/index.html", "internal/server/web/app.js"]},
+    "implementation": {"status": "pass", "summary": "Modal structure, layout, and mode visibility have been updated without altering the SSH test handler or persistence API.", "evidence": ["internal/server/web/index.html", "internal/server/web/app.js", "internal/server/web/style.css", "frontend diff fingerprint 334b06f1decfb9002d51ba97fe3a9bdef15c2397"]},
+    "verification": {"status": "not_run", "summary": "Static checks passed: git diff --check and node --check internal/server/web/app.js. Live UI verification is NOT_RUN: the controlled browser blocked https://localhost:8097 with ERR_CERT_AUTHORITY_INVALID, and the supplied Edge window could not be controlled by the available browser surface. No certificate bypass was attempted.", "evidence": ["git diff --check: PASS, 2026-09-29", "node --check internal/server/web/app.js: PASS, 2026-09-29", "Computer Use: ERR_CERT_AUTHORITY_INVALID, 2026-09-29"]},
+    "documentation": {"status": "pass", "summary": "This task record states the exact requested behavior, scope, validation results, and live-UI limitation.", "evidence": ["docs/tasks/workspace-test-layout.json"]},
+    "cleanup": {"status": "pass", "summary": "Reviewed the scoped diff; no generated files, credentials, or unrelated changes were introduced or deleted.", "evidence": ["git diff --check: PASS, 2026-09-29"]},
+    "release": {"status": "not_run", "summary": "No publishing, image build, or deployment was requested.", "evidence": ["User request scope"]}
+  },
+  "release_authorization": "",
+  "rollback": "Revert the three frontend files in this task; no persisted configuration schema or backend behavior changed.",
+  "handoff": "Completed: the test control is in an SSH-only row, and Save remains separate. Remaining: reload the existing trusted Edge page and confirm local hides the row while SSH shows it. Live verification could not run because the controlled browser rejected the self-signed localhost certificate; no save, SSH test, publish, image build, deployment, commit, or push was performed."
+}

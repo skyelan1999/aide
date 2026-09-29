@@ -1,0 +1,20 @@
+{
+  "consolidation": {"date": "2026-09-29", "task": "consolidate-workspace", "branch": "codex/consolidate-workspace-20260929", "note": "User now authorizes source push. Earlier no-commit/no-push statements describe the original task execution only. See consolidation report for current delivery status and unresolved verification; this is not a release."},
+  "id": "file-view-actions-right",
+  "request": "吧这个部分放到右边",
+  "baseline": "main at task start; prior uncommitted work preserved",
+  "acceptance": ["The file-view action group is pinned to the right edge of its header.", "Path text continues to truncate before colliding with the action group."],
+  "scope": ["File-view header CSS and task record."],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "The annotated screenshot identifies the file-view action group as the element to align right.", "evidence": ["User screenshot, 2026-09-29"]},
+    "design": {"status": "pass", "summary": "Use header flex layout's auto left margin on the nonshrinking action group; retain the existing flexible, truncating path area.", "evidence": ["internal/server/web/style.css"]},
+    "implementation": {"status": "pass", "summary": "The file-view actions now consume remaining header space from the right.", "evidence": ["internal/server/web/style.css"]},
+    "verification": {"status": "not_run", "summary": "Diff check passed. Browser layout acceptance is NOT_RUN because the available browser rejects localhost's self-signed certificate.", "evidence": ["git diff --check: PASS, 2026-09-29"]},
+    "documentation": {"status": "pass", "summary": "Task record captures the layout behavior.", "evidence": ["docs/tasks/file-view-actions-right.json"]},
+    "cleanup": {"status": "pass", "summary": "Reviewed scoped CSS diff; no temporary files or services were changed.", "evidence": ["git status --short --branch, 2026-09-29"]},
+    "release": {"status": "not_run", "summary": "No publishing or deployment requested.", "evidence": ["User request scope"]}
+  },
+  "release_authorization": "",
+  "rollback": "Revert the file-view action margin declaration.",
+  "handoff": "Completed: file-view actions are right aligned. Browser layout acceptance remains not run because of the local certificate."
+}

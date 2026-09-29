@@ -1,0 +1,25 @@
+{
+  "consolidation": {"date": "2026-09-29", "task": "consolidate-workspace", "branch": "codex/consolidate-workspace-20260929", "note": "User now authorizes source push. Earlier no-commit/no-push statements describe the original task execution only. See consolidation report for current delivery status and unresolved verification; this is not a release."},
+  "id": "workspace-docs-path-resilience",
+  "request": "先把这个搞一下，这个又不正常了",
+  "baseline": "main at task start; existing uncommitted workspace layout, SFTP, and workflow changes are preserved",
+  "initial_status": "An SSH workspace test is interrupted during configuration refresh when the selected local system-documents path conlon/docs resolves to missing /workspace/conlon/docs.",
+  "acceptance": [
+    "An unavailable optional local system-documents directory does not prevent SSH/SFTP connection testing.",
+    "After saving such a configuration while it is the active file source, the UI falls back to the built-in reference source and identifies the document-path issue separately.",
+    "Unrelated file-loading failures remain visible rather than being hidden."
+  ],
+  "scope": ["Workspace-configuration refresh behavior, English UI string, focused static checks and task record."],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "The screenshot and request identify a local documents-path failure being reported as a connection failure.", "evidence": ["User screenshot, 2026-09-29", "internal/server/web/app.js"]},
+    "design": {"status": "pass", "summary": "Keep SSH testing on its existing connection-only endpoint; when only the active automatic-documents source cannot be listed, switch the UI to the always-available built-in reference source and report that specific condition.", "evidence": ["internal/server/web/app.js loadFiles/saveWorkspaceConfig", "internal/server/workspace_config.go testWorkspaceConnection"]},
+    "implementation": {"status": "pass", "summary": "Saving a workspace now catches only an active system-documents listing failure, switches to the built-in reference source, and surfaces a path-specific toast before SSH testing continues.", "evidence": ["internal/server/web/app.js", "internal/server/web/locales/en.js"]},
+    "verification": {"status": "not_run", "summary": "JavaScript syntax, translation integrity, and diff checks passed. Browser acceptance could not run because the available browser rejects the local self-signed certificate with ERR_CERT_AUTHORITY_INVALID; certificate bypass was not attempted.", "evidence": ["node --check internal/server/web/app.js: PASS, 2026-09-29", "node --check internal/server/web/locales/en.js: PASS, 2026-09-29", "node scripts/test_i18n.cjs: PASS, 2026-09-29", "git diff --check: PASS, 2026-09-29"]},
+    "documentation": {"status": "pass", "summary": "The user-facing fallback condition and its localized message are documented in the task record and translation catalog.", "evidence": ["docs/tasks/workspace-docs-path-resilience.json", "internal/server/web/locales/en.js"]},
+    "cleanup": {"status": "pass", "summary": "Reviewed scoped diff; no temporary files, services, credentials, or workspace data were created or removed.", "evidence": ["git status --short --branch, 2026-09-29"]},
+    "release": {"status": "not_run", "summary": "No publishing, image build, or deployment was requested.", "evidence": ["User request scope"]}
+  },
+  "release_authorization": "",
+  "rollback": "Revert the scoped UI fallback and translation changes.",
+  "handoff": "Completed: an unavailable local system-documents source no longer prevents saving an SSH workspace configuration or starting the connection test. The UI returns to /context and states the path-specific cause. Static checks passed; browser acceptance is NOT_RUN because the available browser blocks localhost's untrusted certificate. No SSH session, credential, deployment, commit, or push was performed. The interrupted workflow-problem-solving task remains in progress and requires its separate completion."
+}

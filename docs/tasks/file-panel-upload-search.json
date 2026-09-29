@@ -1,0 +1,27 @@
+{
+  "consolidation": {"date": "2026-09-29", "task": "consolidate-workspace", "branch": "codex/consolidate-workspace-20260929", "note": "User now authorizes source push. Earlier no-commit/no-push statements describe the original task execution only. See consolidation report for current delivery status and unresolved verification; this is not a release."},
+  "id": "file-panel-upload-search",
+  "request": "项目文件支持拖拽复制上传功能，可读写的目录，并在路径下面再做一个搜索框，切换工作目录和引用不会重新刷新到登记的根目录，同时还要支持显示隐藏的文件夹；后续澄清：隐藏文件默认显示、不提供勾选框；上传仅通过拖拽；搜索支持子文件夹、模糊与精确匹配选项。",
+  "baseline": "main at task start; prior uncommitted workspace, SFTP, and workflow work is preserved",
+  "initial_status": "The panel has no upload endpoint or drag target, uses one directory state that resets on root/source changes, and lists safe hidden entries without a user-controlled visibility filter.",
+  "acceptance": [
+    "Dropping one or more files uploads them into the current directory only when the workspace or selected source is writable; no click-to-upload button is shown.",
+    "Uploads reject unsafe paths, readonly sources, existing target files, and files over 64 MiB; the existing local and SFTP write paths are used.",
+    "A filename filter is shown immediately under the displayed path and offers current-folder or subfolder scope plus fuzzy or exact matching.",
+    "Each workspace/reference source retains its last navigated folder while the user switches tabs or sources.",
+    "Safe hidden files and directories are shown by default without a visibility toggle; protected paths remain inaccessible."
+  ],
+  "scope": ["File API upload handler and route, file panel markup/style/client behavior, focused Go tests, PRD and task record."],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "The follow-up screenshot corrects the interaction contract: hidden files default on, drag-only upload, and server-backed recursive/match-mode search.", "evidence": ["User request and screenshot, 2026-09-29"]},
+    "design": {"status": "pass", "summary": "Keep the safe list behavior as the default, remove picker controls, and execute recursive filename search through the file API with bounded folders/results so SSH/SFTP searches cannot stall the panel.", "evidence": ["internal/server/files.go", "internal/server/sources.go", "internal/server/web/app.js"]},
+    "implementation": {"status": "pass", "summary": "The panel now has drag-only upload, no hidden-file checkbox, and dropdowns for current-folder/subfolder plus fuzzy/exact search. The API traverses selected safe roots with a 200-folder and 500-result bound.", "evidence": ["internal/server/files.go", "internal/server/file_upload_test.go", "internal/server/web/app.js", "internal/server/web/style.css"]},
+    "verification": {"status": "pass", "summary": "Focused Docker Go regression passed for upload/hidden safety, recursive fuzzy/exact search, and source browsing. JavaScript syntax, localization integrity, and diff checks passed. Browser acceptance is NOT_RUN because the available browser rejects localhost's self-signed certificate; certificate bypass was not attempted.", "evidence": ["docker run --entrypoint go aide:local test -v -mod=vendor ./internal/server -run TestFileUploadAndSafeHiddenListing|TestFileSearchSupportsRecursiveFuzzyAndExactMatching|TestSourcesRegistryAndBrowsing -count=1: PASS, 2026-09-29", "node --check internal/server/web/app.js: PASS, 2026-09-29", "node --check internal/server/web/locales/en.js: PASS, 2026-09-29", "node scripts/test_i18n.cjs: PASS, 2026-09-29", "git diff --check: PASS, 2026-09-29"]},
+    "documentation": {"status": "pass", "summary": "PRD WF-14 now documents drag-only upload, default hidden entries, and bounded recursive matching.", "evidence": ["docs/PRD.md"]},
+    "cleanup": {"status": "pass", "summary": "Removed the exact isolated Docker test container and Go-cache volume; reviewed the scoped diff without deleting workspace data.", "evidence": ["docker rm aide-file-panel-search-regression-2-20260929", "docker volume rm aide-file-panel-go-cache-20260929", "git status --short, 2026-09-29"]},
+    "release": {"status": "not_run", "summary": "No publishing, image build, or deployment was requested.", "evidence": ["User request scope"]}
+  },
+  "release_authorization": "",
+  "rollback": "Revert the scoped file API, panel UI, tests, PRD, and task record.",
+  "handoff": "Completed: writable directories accept drag-only uploads without silent replacement; safe hidden files are visible by default; the file API supports bounded current-folder/subfolder fuzzy/exact searches; and each workspace/source retains its last folder. Focused Docker regression and static checks passed. Browser acceptance is NOT_RUN due the local self-signed certificate. No external upload, SSH connection, deployment, commit, or push was performed."
+}

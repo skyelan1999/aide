@@ -758,6 +758,15 @@ body.file-view-mode .file-view-preview.file-view-immersive iframe{flex:1;width:1
 
 .file-item.selected{background:rgba(15,98,254,.1)}
 .file-item.selected .file-name{color:var(--brand)}
+.file-filter{padding:8px 12px 12px;border-bottom:1px solid var(--line-faint)}
+.file-search-box{display:flex;align-items:center;gap:3px;padding:3px 5px 3px 0;border:1px solid var(--line);border-radius:9px;background:var(--surface);min-width:0}
+.file-search-box:focus-within{border-color:var(--brand);box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 12%,transparent)}
+.file-search-box input[type=search]{min-width:0;width:0;flex:1;padding:7px 9px;font-size:11px;border:0;background:transparent;box-shadow:none;outline:none}
+.file-search-box button{flex:0 0 25px;height:25px;padding:0;border:0;border-radius:5px;background:transparent;color:var(--muted);font-size:16px;cursor:pointer}
+.file-search-box button:hover{background:var(--hover);color:var(--text)}
+.file-search-box button[aria-pressed=true]{background:color-mix(in srgb,var(--brand) 18%,transparent);color:var(--brand)}
+.file-search-box button:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+.file-list.drop-ready{background:color-mix(in srgb,var(--brand) 12%,transparent);box-shadow:inset 0 0 0 1px var(--brand);border-radius:6px}
 
 .files-scroll{display:flex;flex-direction:column;flex:1;min-height:0;overflow:auto}
 .files-scroll .file-list{overflow:visible;flex:none}
@@ -893,7 +902,7 @@ body.file-view-mode .file-view-preview.file-view-immersive iframe{flex:1;width:1
 /* file-view 头部：路径 + badge + 操作 */
 .file-view-head-path{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
 .file-view-head-path .sheet-eyebrow{margin:0;flex-shrink:0}
-.file-view-head-actions{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.file-view-head-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;margin-left:auto}
 .file-view-head-actions .quiet-sm{padding:4px 10px;font-size:11px}
 .file-view-head-actions>.editor-mode-switch,.file-view-head-actions>#file-view-save,.file-view-head-actions>.quiet-sm{box-sizing:border-box;height:36px}
 .file-view-head-actions>.editor-mode-switch{align-items:stretch;margin-right:0}
@@ -1011,8 +1020,8 @@ textarea#editor,textarea#file-view-editor{position:relative}
 .comment-anchor-hl:hover{background:color-mix(in srgb, var(--accent) 40%, transparent)}
 .code-wrapper{position:relative;flex:1;min-height:0;min-width:0;display:flex;flex-direction:column;overflow:hidden}
 .code-wrapper textarea{flex:1;min-height:0}
-/* Keep workspace actions visually balanced when an error message wraps. */
-.ws-actions{grid-template-columns:minmax(0,1fr) 88px 88px}.ws-actions #ws-test,.ws-actions #ws-save{width:88px;min-height:36px;padding-left:6px;padding-right:6px}
+/* SSH testing is a separate full-width row; saving is available in either workspace mode. */
+.ws-test-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:14px;min-height:36px}.ws-test-row #ws-test{width:88px;min-height:36px;padding-left:6px;padding-right:6px;flex:0 0 auto}.ws-test-row #ws-test-status{min-width:0;overflow-wrap:anywhere;text-align:left}.ws-actions{display:flex;justify-content:flex-end;margin-top:14px}.ws-actions #ws-save{width:88px;min-height:36px;padding-left:6px;padding-right:6px}
 .ws-browse-dir-row{display:flex;gap:6px;align-items:center}.ws-browse-dir-row .ws-browse-item{flex:1;min-width:0}.ws-browse-rename{flex:0 0 auto;padding:5px 8px;font-size:10px}
 .context-bar.context-segments{display:flex;position:relative;height:8px;gap:1px;overflow:hidden;isolation:isolate}.context-segment{display:block;flex:0 0 auto;min-width:2px;height:100%;cursor:help;outline:none;transition:filter .12s,opacity .12s}.context-segment:hover,.context-segment:focus{filter:brightness(1.35);outline:1px solid var(--text);outline-offset:-1px;z-index:1}.context-segment-reserve{background:repeating-linear-gradient(135deg,#64748b 0 2px,#334155 2px 4px)!important}.context-bar.context-segments.warn{border-color:var(--warn)}.context-card-detail{display:block;margin-top:4px;padding:0;border:0;min-height:0}.context-card-detail:empty{display:none}.context-card-actual{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:3px 0 0;font-size:7.5px}
 

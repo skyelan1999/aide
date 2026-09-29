@@ -1,8 +1,20 @@
 'use strict';
 const t = (key, ...args) => window.aideI18n ? window.aideI18n.t(key, ...args) : String(key).replace(/\{(\d+)\}/g, (m, i) => args[i] ?? m);
 const $ = id => document.getElementById(id);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', mode: 'chat', root: 'workspace', dir: '.', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveRound: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, autoScroll: true, jumpAnimating: false };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, autoScroll: true, jumpAnimating: false };
 const fragment = new URLSearchParams(location.hash.slice(1));
+state.liveRound = {}; // Keep per-run streaming rounds initialized on the first session.
+// 文件面板的上传/搜索控件保持为脚本生成，避免与嵌入式页面模板的单行结构耦合。
+// 它们在后续的事件绑定和首次 loadFiles 前已经存在。
+(() => {
+  const tools = document.querySelector('.file-tools');
+  if (!tools) return;
+  tools.insertAdjacentHTML('afterend', '<div class="file-filter"><div class="file-search-box"><input id="file-search" type="search" autocomplete="off" placeholder="搜索文件" aria-label="搜索文件" data-i18n-placeholder="搜索文件" data-i18n-aria-label="搜索文件"><button type="button" id="file-search-scope" aria-pressed="false" title="包含子文件夹" aria-label="包含子文件夹" data-i18n-title="包含子文件夹" data-i18n-aria-label="包含子文件夹">↳</button><button type="button" id="file-search-match" aria-pressed="false" title="精确匹配" aria-label="精确匹配" data-i18n-title="精确匹配" data-i18n-aria-label="精确匹配">＝</button></div></div>');
+  const list = $('files');
+  list.tabIndex = 0;
+  list.setAttribute('aria-label', '文件列表');
+  list.dataset.i18nAriaLabel = '文件列表';
+})();
 // 纯前端「忽略此提案」集合（无后端拒绝端点）：仅在内存折叠卡片，不写盘、不影响会话
 const ignoredProposals = new Set();
 if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); history.replaceState(null, '', location.pathname); }
@@ -392,7 +404,16 @@ function openStream(run) {
     const ph = state.runPhase[run.id];
     if (ph) { ph.phase = 'reasoning'; touchRunActivity(run.id); renderRunStatus(run.id); }
   });
-  es.addEventListener('heartbeat', () => touchRunActivity(run.id)); // 长命令心跳：证明活着，看门狗复位
+  es.addEventListener('heartbeat', e => {
+    let d; try { d = JSON.parse(e.data); } catch (_) { return; }
+    const ph = state.runPhase[run.id];
+    if (!ph) return;
+    ph.lastHeartbeat = Date.now();
+    const row = ph.tools.find(x => x.callId === d.callId) || ph.tools[ph.tools.length - 1];
+    if (row) row.lastHeartbeat = ph.lastHeartbeat;
+    touchRunActivity(run.id);
+    renderRunStatus(run.id);
+  }); // 长命令心跳：可见地更新连接状态与计时，而非只重置看门狗
   es.addEventListener('note', e => {
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
     const ph = state.runPhase[run.id];
@@ -604,7 +625,7 @@ function touchRunActivity(runId) {
 }
 function phaseLabel(ph) {
   if (ph.phase === 'reasoning') return t('模型思考中');
-  if (ph.phase === 'tool') return t('正在调用 {0}', ph.toolName || t('工具'));
+  if (ph.phase === 'tool') return ph.lastHeartbeat ? t('正在调用 {0}（连接正常）', ph.toolName || t('工具')) : t('正在调用 {0}', ph.toolName || t('工具'));
   if (ph.phase === 'generating') return t('正在生成回答');
   return t('等待模型响应');
 }
@@ -623,7 +644,7 @@ function renderToolRow(tool) {
   row.append(el('span', 'rsp-tool-icon', icon));
   row.append(el('span', 'rsp-tool-name', tool.tool));
   if (tool.args) row.append(el('span', 'rsp-tool-args', tool.args));
-  row.append(el('span', 'rsp-tool-dur', tool.endedAt ? Math.round((tool.endedAt - tool.startedAt) / 1000) + 's' : ''));
+  row.append(el('span', 'rsp-tool-dur', tool.endedAt ? Math.round((tool.endedAt - tool.startedAt) / 1000) + 's' : Math.max(0, Math.round((Date.now() - tool.startedAt) / 1000)) + 's'));
   return row;
 }
 function stopRunById(runId) {
@@ -723,6 +744,9 @@ setInterval(() => {
     if (!box) continue;
     const el2 = box.querySelector('.rsp-elapsed');
     if (el2) el2.textContent = formatElapsed(ph.startedAt);
+    const runningTool = box.querySelector('.rsp-tool.running .rsp-tool-dur');
+    const activeTool = ph.tools.find(tool => tool.status === 'running');
+    if (runningTool && activeTool) runningTool.textContent = Math.max(0, Math.round((now - activeTool.startedAt) / 1000)) + 's';
     if (!ph.stalled && now - ph.lastActivity > STALL_MS) { ph.stalled = true; renderRunStatus(runId); }
   }
 }, 1000);
@@ -1133,11 +1157,29 @@ function renderAttachments() {
 async function loadFiles(auto) {
   if (auto) { const _r = document.querySelector('#files input.file-rename'); if (_r && document.activeElement === _r) return; } // 自动刷新且正在重命名 → 跳过，不打断
   const query = state.root === 'context' && state.source ? '/files?source=' + encodeURIComponent(state.source) + '&path=' : '/files?root=' + state.root + '&path=';
-  const files = await api(query + encodeURIComponent(state.dir));
+  const search = state.fileSearch.trim();
+  const searchParams = search ? '&search=' + encodeURIComponent(search) + '&scope=' + encodeURIComponent(state.fileSearchScope) + '&match=' + encodeURIComponent(state.fileSearchMatch) : '';
+  const files = await api(query + encodeURIComponent(state.dir) + searchParams);
+  state.fileDirs[fileLocationKey()] = state.dir;
   const label = state.root === 'context' && state.source ? 'sources/' + (state.sources.find(x => x.id === state.source)?.name || state.source) : state.root;
   $('file-path').textContent = '/' + label + (state.dir === '.' ? '' : '/' + state.dir); $('file-path').title = $('file-path').textContent;
-  $('new-file').disabled = state.root === 'context'; $('files').replaceChildren();
-  if (!files.length) $('files').append(el('p', 'muted', t("目录为空")));
+  const writable = currentFileTarget().writable;
+  $('new-file').disabled = !writable;
+  state.fileEntries = files;
+  renderFileEntries();
+}
+function fileLocationKey() { return state.root === 'context' ? 'context:' + (state.source || '') : 'workspace'; }
+function rememberFileLocation() { state.fileDirs[fileLocationKey()] = state.dir; }
+function restoreFileLocation() { state.dir = state.fileDirs[fileLocationKey()] || '.'; }
+function currentFileTarget() {
+  if (state.root !== 'context') return { writable: true, source: '' };
+  const src = state.sources.find(x => x.id === state.source);
+  return { writable: !!src?.rw, source: state.source || '' };
+}
+function renderFileEntries() {
+  const files = state.fileEntries;
+  $('files').replaceChildren();
+  if (!files.length) $('files').append(el('p', 'muted', state.fileSearch.trim() ? t("未找到匹配文件") : t("目录为空")));
   files.forEach(file => {
     const b = el('button', 'file-item');
     const nameSpan = el('span', 'file-name', file.name);
@@ -1361,7 +1403,7 @@ document.querySelectorAll('.starter').forEach(b => b.onclick = () => { $('prompt
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
 function applyReferenceTerminology() {
   const setText = (selector, key) => document.querySelectorAll(selector).forEach(node => { node.dataset.i18n = key; node.textContent = t(key); });
-  setText('[data-root="context"] i18n-text', '“引用”');
+  setText('[data-root="context"] i18n-text', '引用');
   setText('.context-guide i18n-text[data-i18n="也可以从辅助资料中选择参考文档。"]', '也可以从引用中选择参考文档。');
   setText('#source-dialog h2 i18n-text', '添加引用');
   const add = $('source-add');
@@ -1371,7 +1413,7 @@ function applyReferenceTerminology() {
 applyReferenceTerminology();
 // 点击 dialog 遮罩关闭弹窗（事件委托，覆盖所有静态及动态 dialog）
 document.addEventListener('click', e => { if (e.target.tagName === 'DIALOG' && e.target.open) e.target.close(); });
-document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { state.root = b.dataset.root; state.dir = '.'; if (state.root === 'context') state.source = defaultContextSourceID(); document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); renderSourceChips(); await loadFiles(); }));
+document.querySelectorAll('[data-root]').forEach(b => b.onclick = action(async () => { rememberFileLocation(); state.root = b.dataset.root; if (state.root === 'context' && !state.source) state.source = defaultContextSourceID(); restoreFileLocation(); document.querySelectorAll('[data-root]').forEach(x => x.classList.toggle('active', x === b)); renderSourceChips(); await loadFiles(); }));
 function syncPanelButtons() {
   const plugins = document.body.classList.contains('plugins-mode');
   const files = !plugins && (innerWidth <= 950 ? $('file-panel').classList.contains('mobile-open') : !document.body.classList.contains('files-hidden'));
@@ -1401,6 +1443,26 @@ $('file-panel-close').onclick = () => { closeSidePanels(); $('files-toggle').foc
 $('plugin-panel-close').onclick = () => { closeSidePanels(); $('plugins-toggle').focus(); };
 window.addEventListener('resize', syncPanelButtons);
 $('parent-dir').onclick = action(async () => { state.dir = state.dir.includes('/') ? state.dir.slice(0, state.dir.lastIndexOf('/')) : '.'; await loadFiles(); });
+$('file-search').addEventListener('input', () => { state.fileSearch = $('file-search').value; clearTimeout(state.fileSearchTimer); state.fileSearchTimer = setTimeout(() => loadFiles().catch(error => toast(error.message || String(error))), 180); });
+$('file-search-scope').addEventListener('click', () => { state.fileSearchScope = state.fileSearchScope === 'folder' ? 'recursive' : 'folder'; $('file-search-scope').setAttribute('aria-pressed', String(state.fileSearchScope === 'recursive')); loadFiles().catch(error => toast(error.message || String(error))); });
+$('file-search-match').addEventListener('click', () => { state.fileSearchMatch = state.fileSearchMatch === 'fuzzy' ? 'exact' : 'fuzzy'; $('file-search-match').setAttribute('aria-pressed', String(state.fileSearchMatch === 'exact')); loadFiles().catch(error => toast(error.message || String(error))); });
+async function uploadDroppedFiles(files) {
+  const target = currentFileTarget();
+  if (!target.writable) { toast(t('当前目录为只读，无法上传')); return; }
+  const items = Array.from(files || []);
+  if (!items.length) return;
+  for (const file of items) {
+    const dest = state.dir === '.' ? file.name : state.dir + '/' + file.name;
+    const response = await fetch('/api/file/upload?path=' + encodeURIComponent(dest) + (target.source ? '&source=' + encodeURIComponent(target.source) : ''), { method: 'POST', headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': file.type || 'application/octet-stream' }, body: file });
+    const data = await response.json();
+    if (!response.ok) throw new Error(t(data.error) || t('上传失败'));
+  }
+  await loadFiles();
+  toast(t('已上传 {0} 个文件', items.length));
+}
+['dragenter', 'dragover'].forEach(type => $('files').addEventListener(type, event => { event.preventDefault(); if (currentFileTarget().writable) $('files').classList.add('drop-ready'); }));
+['dragleave', 'drop'].forEach(type => $('files').addEventListener(type, event => { event.preventDefault(); $('files').classList.remove('drop-ready'); }));
+$('files').addEventListener('drop', action(async event => { const files = event.dataTransfer?.files; if (files?.length) await uploadDroppedFiles(files); }));
 $('task-form').onsubmit = action(async event => {
   event.preventDefault();
   if (xiaomiDictation.active || xiaomiDictation.starting) { toast(t('请先停止语音转写，再检查并发送文字')); return; }
@@ -1445,7 +1507,7 @@ $('task-form').onsubmit = action(async event => {
         return;
       } catch (err) { $('send').disabled = false; toast(err.message); return; }
     }
-    const strategy = state.profiles?.strategy || 'manual';
+    const strategy = state.profiles?.strategy || 'auto';
     // #41：小秘语音经 typeIntoPrompt 提交时，用 analyze 判定的 mode 一次性覆盖手动排队开关
     let queued = state.queueMode;
     if (voice.queuedOverride != null) { queued = voice.queuedOverride; voice.queuedOverride = null; }
@@ -1725,8 +1787,26 @@ $('new-file').onclick = openNewItemMenu;
 $('new-file-form').onsubmit = action(async event => { event.preventDefault(); state.file = { path: $('new-file-path').value.trim(), root: 'workspace', hash: '', content: '', fresh: true }; $('new-file-dialog').close(); showEditor(); });
 $('new-folder-form').onsubmit = action(async event => { event.preventDefault(); await api('/directory', { method: 'POST', body: JSON.stringify({ root: 'workspace', parentPath: state.dir, name: $('new-folder-name').value }) }); $('new-folder-dialog').close(); await loadFiles(); });
 $('terminal-toggle').onclick = () => { const hidden = $('terminal-body').classList.toggle('hidden'); $('terminal-state').textContent = hidden ? t("展开 ＋") : t("收起 −"); };
+$('command').addEventListener('keydown', event => {
+  if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' || !state.commandHistory.length) return;
+  event.preventDefault();
+  if (event.key === 'ArrowUp') {
+    if (state.commandHistoryIndex === state.commandHistory.length) state.commandHistoryDraft = $('command').value;
+    state.commandHistoryIndex = Math.max(0, state.commandHistoryIndex - 1);
+    $('command').value = state.commandHistory[state.commandHistoryIndex];
+  } else {
+    state.commandHistoryIndex = Math.min(state.commandHistory.length, state.commandHistoryIndex + 1);
+    $('command').value = state.commandHistoryIndex === state.commandHistory.length ? state.commandHistoryDraft : state.commandHistory[state.commandHistoryIndex];
+  }
+  $('command').setSelectionRange($('command').value.length, $('command').value.length);
+});
 $('command-form').onsubmit = action(async event => {
   event.preventDefault(); if (state.commandAbort) return; const command = $('command').value.trim(); if (!command) return;
+  if (state.commandHistory.at(-1) !== command) state.commandHistory.push(command);
+  if (state.commandHistory.length > 100) state.commandHistory.shift();
+  state.commandHistoryIndex = state.commandHistory.length;
+  state.commandHistoryDraft = '';
+  $('command').value = '';
   const abort = new AbortController(); state.commandAbort = abort; $('command-run').disabled = true; $('command-stop').classList.remove('hidden'); $('terminal-output').textContent += '\n\n❯ ' + command + '\n';
   try {
     const response = await fetch('/api/command', { method: 'POST', signal: abort.signal, headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ command, cwd: '.' }) });
@@ -2123,7 +2203,7 @@ function profileName(id) { const p = state.profiles?.profiles.find(p => p.id ===
 function activeModel() { return state.config?.models?.find(m => m.id === state.config.activeModel); }
 function profilesPayloadFrom(source) {
   return {
-    strategy: source?.strategy || 'manual',
+    strategy: source?.strategy || 'auto',
     activeProfile: source?.activeProfile || 'default',
     profiles: (source?.profiles || []).filter(p => !p.system)
   };
@@ -2144,7 +2224,7 @@ const paramDefs = [
   { key: 'presence_penalty', label: '存在惩罚', min: -2, max: 2, step: 0.1, placeholder: '0' }
 ];
 profilesManager.refresh = function () {
-  this.local = JSON.parse(JSON.stringify(state.profiles || { strategy: 'manual', activeProfile: 'default', profiles: [] }));
+  this.local = JSON.parse(JSON.stringify(state.profiles || { strategy: 'auto', activeProfile: 'default', profiles: [] }));
   if (this.host) this.render();
 };
 profilesManager.scheduleSave = function () {
@@ -2830,7 +2910,7 @@ function ensureContextMeterControls() {
 function contextMeterKey() {
   const messages = state.session?.messages || [];
   const signature = messages.map(m => [m.role, (m.content || '').length, (m.toolCalls || []).map(c => (c.function?.arguments || '').length).join(',')].join(':')).join('|');
-  return [state.session?.id || 'new', state.config?.model || '', state.mode || 'chat', state.workflowPhase || '', state.profiles?.strategy || 'manual', state.profiles?.activeProfile || 'default', signature].join('~');
+  return [state.session?.id || 'new', state.config?.model || '', state.mode || 'chat', state.workflowPhase || '', state.profiles?.strategy || 'auto', state.profiles?.activeProfile || 'default', signature].join('~');
 }
 function renderContextMeter(data, isDraft) {
   if (!data || !data.breakdown) return;
@@ -2904,7 +2984,7 @@ async function refreshContextMeter() {
   if (key === state.contextMeterKey && state.contextMeter) { renderContextMeter(state.contextMeter, false); return; }
   state.contextMeterKey = key;
   const seq = ++state.contextMeterSeq.value;
-  const strategy = state.profiles?.strategy || 'manual';
+  const strategy = state.profiles?.strategy || 'auto';
   const profile = strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default');
   try {
     const data = await api('/context-preview', { method: 'POST', body: JSON.stringify({ sessionId: state.session?.id || '', prompt: '', mode: state.mode || 'chat', strategy, profile, workflowPhase: state.workflowPhase || '', baseline: true }) });
@@ -3036,6 +3116,8 @@ function setWsMode(mode) {
   document.querySelectorAll('.ws-seg:not(.ws-auth) [data-mode]').forEach(b => { const on = b.dataset.mode === mode; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });
   $('ws-local-fields').classList.toggle('hidden', mode !== 'local');
   $('ws-ssh-fields').classList.toggle('hidden', mode !== 'ssh');
+  $('ws-test-row').classList.toggle('hidden', mode !== 'ssh');
+  if (mode !== 'ssh') $('ws-test-status').textContent = '';
   syncWorkspaceLocationControls();
 }
 
@@ -3083,7 +3165,7 @@ function syncWorkspaceLocationControls() {
   for (const [field, location] of [['docs-path', 'docs-location'], ['cache-path', 'cache-location']]) {
     if (!ssh && $(location).value === 'workspace') $(location).value = 'local';
     const remote = ssh && $(location).value === 'workspace';
-    $(field).placeholder = remote ? t('相对远程工作区的目录；留空 = 工作区根目录') : (field === 'docs-path' ? '/context' : '.cache');
+    $(field).placeholder = remote ? (field === 'cache-path' ? t('相对远程工作区的缓存目录；留空 = .cache') : t('相对远程工作区的目录；留空 = 工作区根目录')) : (field === 'docs-path' ? '/context' : '.cache');
   }
 }
 function renderWsRecent(id, list) {
@@ -3178,7 +3260,18 @@ async function saveWorkspaceConfig() {
   state.dir = '.';
   await refreshConfig();
   await loadSourcesList();
-  await loadFiles();
+  try {
+    await loadFiles();
+  } catch (error) {
+    // 系统文档是可选的叠加来源。它的本地路径失效时，不能把保存工作空间
+    // （尤其是随后的 SSH/SFTP 连通性测试）整体判为失败；退回恒定可用的 /context，
+    // 但只处理这一种确定情形，其他文件面板错误仍照常上抛。
+    if (state.root !== 'context' || state.source !== 'system-docs') throw error;
+    state.source = 'context';
+    state.dir = '.';
+    await loadFiles();
+    toast(t('自动系统文档路径不可访问：{0}；已切换到内置引用。', error.message));
+  }
 }
 function openWorkspaceSheet() {
   closeTrajectory();
@@ -3447,7 +3540,7 @@ function renderSourceChips() {
     main.type = 'button';
     main.title = t(src.rw ? '{0} · 读写' : '{0} · 只读', (src.type ? src.type + ' · ' : '') + (loc || displayName));
     main.setAttribute('aria-pressed', state.source === src.id ? 'true' : 'false');
-    main.onclick = () => { state.source = src.id; state.dir = '.'; state.attachments = []; renderAttachments(); renderSourceChips(); action(loadFiles)(); };
+    main.onclick = () => { rememberFileLocation(); state.source = src.id; restoreFileLocation(); state.attachments = []; renderAttachments(); renderSourceChips(); action(loadFiles)(); };
     if (!src.builtin) {
       const edit = el('button', 'src-edit');
       edit.type = 'button'; edit.title = t('编辑引用配置'); edit.setAttribute('aria-label', t('编辑引用配置：{0}', displayName));
@@ -5500,7 +5593,7 @@ async function voiceSend(text, queued) {
     if (!state.session) state.session = created;
     target = created;
   }
-  const strategy = state.profiles?.strategy || 'manual';
+  const strategy = state.profiles?.strategy || 'auto';
   // #41：小秘 analyze 判定的 mode 优先；未给出时回退手动排队开关
   const q = (queued != null) ? queued : state.queueMode;
   await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt: text, mode: state.mode, attachments: [], strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued: q, workflowPhase: state.workflowPhase || '' }) });

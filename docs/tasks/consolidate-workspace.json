@@ -1,0 +1,19 @@
+{
+  "id": "consolidate-workspace",
+  "request": "整理一下推上去",
+  "baseline": "9295a22867dd25ef0806df56fb895f8582f7f01e",
+  "acceptance": ["Preserve and group all pending task changes", "Document incomplete functionality and known failures", "Push review branch and verify remote SHA; do not deploy"],
+  "scope": ["Previously modified source files and new tests", "Ten pending task records", "PRD, architecture and consolidation report"],
+  "stages": {
+    "requirements": {"status":"pass","summary":"User authorizes organizing and pushing remaining source changes.","evidence":["Current user message"]},
+    "design": {"status":"pass","summary":"Group backend dependencies together, frontend and handoff separately; use review branch because full tests fail.","evidence":["docs/reviews/2026-09-29-workspace-consolidation.md"]},
+    "implementation": {"status":"pass","summary":"Existing implementation preserved; added consolidation references and accurate completion boundaries, no new business code.","evidence":["git diff reviewed", "consolidation fields in task records"]},
+    "verification": {"status":"pass","summary":"Consolidation-only checks: JS syntax, i18n, SSE URL, whitespace and version format pass. Product acceptance remains blocked by four full-suite failures, not rerun this turn; see report.","evidence":["node --check internal/server/web/app.js","node --check internal/server/web/locales/en.js","node scripts/test_i18n.cjs","node scripts/test_stream_url.cjs","git diff --check","bash scripts/version.sh check"]},
+    "documentation": {"status":"pass","summary":"Incomplete RCA, cache failures, UI validation gaps and rollback recorded.","evidence":["docs/reviews/2026-09-29-workspace-consolidation.md"]},
+    "cleanup": {"status":"pass","summary":"All pending files assigned to source/tests/docs; no data or unknown files deleted.","evidence":["Explicit file-list staging"]},
+    "release": {"status":"blocked","summary":"Review-branch source delivery only. No passing full receipt, no release/tag/image/deployment.","evidence":["Previous full-suite failure retained in report"]}
+  },
+  "release_authorization":"User authorizes source push: 整理一下推上去",
+  "rollback":"Do not merge review branch; if later merged, revert scoped commits without deleting user data.",
+  "handoff":"Branch codex/consolidate-workspace-20260929; source push to be verified in final response. Main and running service retained. Product remains unapproved for release."
+}

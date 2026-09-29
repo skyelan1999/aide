@@ -1,0 +1,26 @@
+{
+  "consolidation": {"date": "2026-09-29", "task": "consolidate-workspace", "branch": "codex/consolidate-workspace-20260929", "note": "User now authorizes source push. Earlier no-commit/no-push statements describe the original task execution only. See consolidation report for current delivery status and unresolved verification; this is not a release."},
+  "id": "workflow-problem-solving",
+  "request": "验证后面再加一个问题解决功能，多轮执行，通过用户说明的问题自动使用draw.io梳理RCA，问题，原因可能并给出分析和建议，在用户提示输出对应的报告，可以是任意格式的，把问题、背景、排查方向（draw.io的图）、测试、以及conclusion",
+  "baseline": "main at task start; earlier uncommitted workspace UI and SSH/SFTP fixes are preserved",
+  "initial_status": "The existing workflow has four phase controls, a 60-round tool loop, and a create_diagram draw.io tool.",
+  "acceptance": [
+    "AI 工作流中，验证后显示并可选择问题解决阶段。",
+    "问题解决阶段向模型注入多轮 RCA 流程，强制使用 draw.io 图并输出问题、背景、排查方向、测试、结论和建议。",
+    "问题报告被持久化为 Markdown，并记录关联 draw.io 图；图写入本地或 SSH/SFTP 工作空间时遵循当前工作区写入通道。",
+    "工作流阶段和报告生成具备自动化回归测试。"
+  ],
+  "scope": ["Workflow phase UI, server phase validation/prompt, problem-report tool, draw.io workspace write path, tests, PRD and task record."],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "User requested a fifth workflow phase after verification for multi-round RCA, draw.io analysis, and a structured report.", "evidence": ["User request, 2026-09-29"]},
+    "design": {"status": "pass", "summary": "Reuse the existing phase selector, tool loop, create_diagram tool, and system-doc store; add an explicit problem-report tool so the required report is durable and diagram-linked.", "evidence": ["internal/server/workflow.go", "internal/server/context.go", "internal/server/web/index.html"]},
+    "implementation": {"status": "in_progress", "summary": "", "evidence": []},
+    "verification": {"status": "pending", "summary": "", "evidence": []},
+    "documentation": {"status": "pending", "summary": "", "evidence": []},
+    "cleanup": {"status": "pending", "summary": "", "evidence": []},
+    "release": {"status": "not_run", "summary": "No publishing, image build, or deployment was requested.", "evidence": ["User request scope"]}
+  },
+  "release_authorization": "",
+  "rollback": "Revert the scoped workflow UI, server prompt/tool, documentation, and test changes.",
+  "handoff": ""
+}

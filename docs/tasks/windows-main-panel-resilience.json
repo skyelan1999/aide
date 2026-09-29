@@ -1,0 +1,29 @@
+{
+  "consolidation": {"date": "2026-09-29", "task": "consolidate-workspace", "branch": "codex/consolidate-workspace-20260929", "note": "User now authorizes source push. Earlier no-commit/no-push statements describe the original task execution only. See consolidation report for current delivery status and unresolved verification; this is not a release."},
+  "id": "windows-main-panel-resilience",
+  "request": "修复 Windows 环境下 SSH/SFTP 工作流长时间 run_shell 时主面板看似无响应：限制远端工具链失控、显示可见心跳与耗时、加强取消语义。",
+  "baseline": "Existing uncommitted workspace, file-panel, profile, workflow, and document changes are preserved.",
+  "initial_status": "The supplied screenshot shows an SSH workspace workflow at run_shell call 32. Tool calls execute serially; a remote command can use the configured 60-second timeout, while heartbeat events only reset the watchdog without updating visible status.",
+  "acceptance": [
+    "A workflow step cannot execute an unbounded number of tool calls; it stops with an actionable message at a documented per-step budget.",
+    "A running remote tool visibly reports that its connection is alive and its elapsed duration continues to update.",
+    "Cancelling a remote shell command terminates the local SSH client promptly and retains the existing per-command timeout behavior.",
+    "Focused server and JavaScript checks pass; browser acceptance is recorded separately when the local certificate blocks automation."
+  ],
+  "scope": [
+    "Workflow tool-loop budget, remote SSH process lifecycle, run-status frontend, focused tests, task record, and necessary PRD/architecture notes.",
+    "No remote host command is invoked, no credentials are changed, and no deployment, commit, or push is performed."
+  ],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "The screenshot and inspected run path identify a long, serial remote run_shell chain with non-visible heartbeat as the user-facing failure mode.", "evidence": ["User screenshot, 2026-09-29", "internal/server/workflow.go", "internal/server/web/app.js"]},
+    "design": {"status": "pass", "summary": "Use a per-step budget because one model response can contain multiple serial calls; surface the existing 15-second heartbeat as visible connection activity; give the local SSH client a bounded post-cancel wait.", "evidence": ["internal/server/workflow.go", "internal/server/ssh_session.go", "internal/server/web/app.js"]},
+    "implementation": {"status": "pass", "summary": "Workflow steps now stop after 24 tool calls with an actionable message. SSH client waits are bounded after cancellation. The run panel displays connection-active after a heartbeat and updates the active tool duration every second.", "evidence": ["internal/server/workflow.go", "internal/server/ssh_session.go", "internal/server/web/app.js", "internal/server/web/locales/en.js", "internal/server/remote_shell_cancel_test.go"]},
+    "verification": {"status": "pass", "summary": "Focused Docker Go regression exited 0, covering local cancellation, SSH workspace dispatch, and SSH cancellation. JavaScript syntax, localization integrity, and diff whitespace checks passed. Browser UI acceptance was not run because the local HTTPS certificate is not trusted by the automation browser.", "evidence": ["docker run --rm --entrypoint go aide:local test -v -mod=vendor ./internal/server -run TestRemoteShellCommandCancellable|TestRemoteWorkspaceDispatch|TestExecShellCommandCancellable -count=1: exit 0, 2026-09-29", "node --check internal/server/web/app.js: PASS, 2026-09-29", "node --check internal/server/web/locales/en.js: PASS, 2026-09-29", "node scripts/test_i18n.cjs: PASS, 2026-09-29", "git diff --check: PASS, 2026-09-29", "Browser UI: NOT_RUN (ERR_CERT_AUTHORITY_INVALID in automation browser)"]},
+    "documentation": {"status": "pass", "summary": "PRD and architecture overview document the SSH tool-call budget, visible heartbeat state, and cancellation bound.", "evidence": ["docs/PRD.md", "docs/architecture-overview.html"]},
+    "cleanup": {"status": "pass", "summary": "Removed four accidental aide-service containers created by the image entrypoint and the named Go regression container; no user service, workspace files, credentials, or remote host were changed.", "evidence": ["docker rm -f 4af1563c130c 2c6e95641a95 79bc5ae4a61f 698f2d86d5cd", "docker rm aide-main-panel-regression-20260929"]},
+    "release": {"status": "not_run", "summary": "No publishing, image build, deployment, commit, or push was requested.", "evidence": ["User request scope"]}
+  },
+  "release_authorization": "",
+  "rollback": "Revert only the scoped workflow, SSH, frontend, tests, documentation, and task-record changes; this task does not mutate a remote host.",
+  "handoff": "Completed: the workflow now has a 24-call per-step brake; remote-tool heartbeats are visible with a live duration; and local SSH-client cancellation has a two-second wait bound. Focused Docker regressions and static checks passed. Browser UI is NOT_RUN because the automation browser refuses the local self-signed HTTPS certificate. No remote SSH command, credential change, deployment, commit, or push was performed. Existing uncommitted work from other requested tasks remains preserved."
+}

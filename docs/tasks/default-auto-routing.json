@@ -1,0 +1,20 @@
+{
+  "consolidation": {"date": "2026-09-29", "task": "consolidate-workspace", "branch": "codex/consolidate-workspace-20260929", "note": "User now authorizes source push. Earlier no-commit/no-push statements describe the original task execution only. See consolidation report for current delivery status and unresolved verification; this is not a release."},
+  "id": "default-auto-routing",
+  "request": "策略默认设置为自动路由",
+  "baseline": "main at task start; prior uncommitted work preserved",
+  "acceptance": ["Fresh profile state defaults to auto routing.", "Frontend fallbacks submit auto routing before profile state has loaded.", "Manual strategy remains explicitly selectable."],
+  "scope": ["Profile defaults, frontend fallbacks, focused test, task record."],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "User explicitly requests automatic routing as the default strategy.", "evidence": ["User request, 2026-09-29"]},
+    "design": {"status": "pass", "summary": "Change only default/fallback values; keep persisted explicit manual selections and the menu choice intact.", "evidence": ["internal/server/profiles.go", "internal/server/web/app.js"]},
+    "implementation": {"status": "pass", "summary": "Fresh server profile state and frontend pre-load fallbacks now use auto.", "evidence": ["internal/server/profiles.go", "internal/server/web/app.js"]},
+    "verification": {"status": "pass", "summary": "Focused profile regression, JavaScript syntax, and diff checks passed.", "evidence": ["docker go test -mod=vendor ./internal/server -run TestSystemProfilesImmutability -count=1: exit 0, 2026-09-29", "node --check internal/server/web/app.js: PASS, 2026-09-29", "git diff --check: PASS, 2026-09-29"]},
+    "documentation": {"status": "pass", "summary": "The task record states the default and compatibility behavior.", "evidence": ["docs/tasks/default-auto-routing.json"]},
+    "cleanup": {"status": "pass", "summary": "The anonymous isolated test container exited and was automatically removed; no user data or service was changed.", "evidence": ["docker run --rm exit 0, 2026-09-29"]},
+    "release": {"status": "not_run", "summary": "No publishing or deployment requested.", "evidence": ["User request scope"]}
+  },
+  "release_authorization": "",
+  "rollback": "Revert the profile default and browser fallback changes.",
+  "handoff": "Completed: fresh profile state and client fallbacks use automatic routing. Existing explicitly saved manual profile selections are retained. Focused backend and static checks passed; no deployment, commit, or push performed."
+}

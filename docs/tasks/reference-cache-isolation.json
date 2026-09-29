@@ -1,0 +1,18 @@
+{
+  "consolidation": {"date": "2026-09-29", "task": "consolidate-workspace", "branch": "codex/consolidate-workspace-20260929", "note": "User now authorizes source push. Earlier no-commit/no-push statements describe the original task execution only. See consolidation report for current delivery status and unresolved verification; this is not a release."},
+ "id":"reference-cache-isolation",
+ "request":"引用搜索框加宽，子文件夹与精确匹配改为框内按钮；项目缓存映射至指定目录，与 aide 缓存分离",
+ "acceptance":["Search fills the panel width with two accessible in-field toggles", "Remote cache artifacts and memory are uploaded to configured SFTP cache", "Application source registry is stored under data/config", "Local shell and memory honor configured cache"],
+ "scope":["file panel CSS/JS", "project cache routing, sources registry migration, command environment", "focused tests and documentation"],
+ "stages": {
+  "requirements":{"status":"pass","summary":"User screenshots specify UI and cache separation","evidence":["User request"]},
+  "design":{"status":"pass","summary":"SFTP destination with per-project local working copy under data; registry in application config; no deletion of old caches","evidence":["internal/server/project_cache.go"]},
+  "implementation":{"status":"pass","summary":"Inline accessible search toggles; project document and memory SFTP persistence; data-directory registry with legacy import; consistent local command cache. No old cache data migrated or removed.","evidence":["internal/server/project_cache.go SHA256 EE1437215C1453F45A055EE3FC5FB8091D0FA505F01243A18E59D3B39BDA6DDF","internal/server/web/app.js SHA256 875B7DC027134D44A568DD88838F0E703FB83D7A7A95B4A4A4B3737365241877"]},
+  "verification":{"status":"not_run","summary":"Final focused Go regression exited 0 (1.865s): cache destination, local command/memory agreement, workspace CRUD and sources. JS syntax/i18n and native git diff --check passed. UI NOT_RUN: opening https://localhost:8097 returned ERR_CERT_AUTHORITY_INVALID. Unified quick check incomplete: Docker git diff --check stalled on the Windows mount for over 2 minutes and was stopped; native check passed. Full/release verification not run.","evidence":["docker aide-cache-isolation-test final exit 0","node --check internal/server/web/app.js","node scripts/test_i18n.cjs","git diff --check"]},
+  "documentation":{"status":"pass","summary":"PRD describes inline controls, project memory destination, data-directory registry, local working-copy behavior and retention of old caches.","evidence":["docs/PRD.md"]},
+  "cleanup":{"status":"pass","summary":"Removed the three task-specific test containers. Existing service and user cache data retained.","evidence":["docker rm aide-cache-quick-final aide-cache-quick-check aide-cache-isolation-test"]},
+  "release":{"status":"not_run","summary":"No production deployment requested","evidence":[]}
+ },
+ "baseline":"ccec6367e498d815991c589b30e4e523b04c5728; pre-existing dirty work preserved",
+ "handoff":"Source changes only, no service redeployment or image release. Existing remote caches are read before numbering/appending. Local remote-project working copies live under data/cache. Old product-tree caches remain for manual recovery. UI blocked by local TLS certificate. Route start failed because Python image lacks git."
+}

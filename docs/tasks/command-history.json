@@ -1,0 +1,20 @@
+{
+  "consolidation": {"date": "2026-09-29", "task": "consolidate-workspace", "branch": "codex/consolidate-workspace-20260929", "note": "User now authorizes source push. Earlier no-commit/no-push statements describe the original task execution only. See consolidation report for current delivery status and unresolved verification; this is not a release."},
+  "id": "command-history",
+  "request": "命令面板按回车完之后清空输入框，支持按上下键使用历史命令",
+  "baseline": "main at task start; prior uncommitted work preserved",
+  "acceptance": ["Submitting a nonempty command clears the input while retaining the command in output.", "Arrow Up and Arrow Down browse a bounded in-page history without running a command.", "Returning below the newest history entry restores the unfinished draft."],
+  "scope": ["Command-panel browser state and event handling, task record."],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "User requested cleared submitted input and keyboard command history.", "evidence": ["User request, 2026-09-29"]},
+    "design": {"status": "pass", "summary": "Keep an in-memory bounded history, avoid duplicate adjacent entries, and preserve the pre-navigation draft.", "evidence": ["internal/server/web/app.js command form"]},
+    "implementation": {"status": "pass", "summary": "Command submission clears the field and records history; Arrow Up/Down navigate it without execution.", "evidence": ["internal/server/web/app.js"]},
+    "verification": {"status": "not_run", "summary": "JavaScript syntax and diff checks passed. Interactive keyboard acceptance is NOT_RUN because the available browser rejects localhost's self-signed certificate; certificate bypass was not attempted.", "evidence": ["node --check internal/server/web/app.js: PASS, 2026-09-29", "git diff --check: PASS, 2026-09-29"]},
+    "documentation": {"status": "pass", "summary": "The task record documents scope and keyboard behavior.", "evidence": ["docs/tasks/command-history.json"]},
+    "cleanup": {"status": "pass", "summary": "Reviewed scoped frontend diff; no temporary files, services, or data were created or removed.", "evidence": ["git status --short --branch, 2026-09-29"]},
+    "release": {"status": "not_run", "summary": "No publishing or deployment requested.", "evidence": ["User request scope"]}
+  },
+  "release_authorization": "",
+  "rollback": "Revert the command-panel event handling.",
+  "handoff": "Completed: submitting a command clears the input and records it in a 100-entry in-memory history. Arrow Up/Down browse history and restore the typed draft at the newest position. Static checks passed; browser interaction is NOT_RUN due the local certificate. No deployment, commit, or push was performed."
+}
