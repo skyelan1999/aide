@@ -1,0 +1,20 @@
+{
+  "id": "personality-toolbar-fix",
+  "request": "文件预览按钮移动到最右侧；修复性格演化失败；做好文档版本记录后自动 push。",
+  "baseline": "ccec6367e498d815991c589b30e4e523b04c5728",
+  "initial_status": "Existing workspace/SFTP/cache/search/workflow changes remain uncommitted and excluded.",
+  "acceptance": ["Actions align right and wrap on narrow screens", "Evolution uses non-reasoning budget without changing chat settings", "Failure preserves personality; successful automatic evolution persists"],
+  "scope": ["internal/server/web/macos.css", "internal/server/personality_evolution.go", "internal/server/personality_evolution_test.go", "docs/tasks/personality-toolbar-fix.json", "docs/reviews/2026-09-29-personality-toolbar.md", "version.md"],
+  "stages": {
+    "requirements": {"status": "pass", "summary": "Two fixes; push authorized, not production restart.", "evidence": ["User request 2026-09-29"]},
+    "design": {"status": "pass", "summary": "Remove flex override; isolate evolution settings and persist personality.", "evidence": ["docs/reviews/2026-09-29-personality-toolbar.md"]},
+    "implementation": {"status": "pass", "summary": "Scoped fixes with mock regression coverage.", "evidence": ["internal/server/web/macos.css", "internal/server/personality_evolution_test.go"]},
+    "verification": {"status": "in_progress", "summary": "Targeted race pass; isolated browser layout pass. Full suite pending; paid provider/production not tested.", "evidence": ["Docker aide-personality-tests: exit 0, 19.556s", "Browser right edge 1252/1280 and 374/390; narrow scrollWidth=390"]},
+    "documentation": {"status": "pass", "summary": "Root cause, verification and rollback documented.", "evidence": ["docs/reviews/2026-09-29-personality-toolbar.md"]},
+    "cleanup": {"status": "in_progress", "summary": "Scoped diff reviewed; prior changes retained; test resources pending cleanup.", "evidence": ["git diff --check: pass"]},
+    "release": {"status": "not_run", "summary": "Source push pending. No release tag/image or deployment; dirty baseline blocks clean-main gate.", "evidence": ["Initial Git status"]}
+  },
+  "release_authorization": "User: 完成之后自动push就可以了，做好文档和版本记录",
+  "rollback": "Revert scoped source commit; running service and user data not modified.",
+  "handoff": "Other previous changes remain local. No paid model request or production restart."
+}

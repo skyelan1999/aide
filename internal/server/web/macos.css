@@ -355,10 +355,12 @@ html[lang="en"] .settings-nav-item { white-space: normal; text-align: left; }
 /* The legacy content host must not share the document's remaining height. */
 .file-view-content:empty { display: none; }
 .file-view-editor, .file-view-preview, .file-view-content { min-height: 0; }
-.file-view-head > div { flex: 1; }
+.file-view-head > .file-view-head-path { flex: 1; }
+.file-view-head > .file-view-head-actions { flex: 0 0 auto; margin-left: auto; justify-content: flex-end; }
 @media (max-width: 600px) {
   .file-view-head { flex-wrap: wrap; }
-  .file-view-head > div { order: 3; flex-basis: 100%; }
+  .file-view-head > .file-view-head-path { order: 3; flex-basis: 100%; }
+  .file-view-head > .file-view-head-actions { flex-wrap: wrap; }
 }
 
 .source-path-row { display: flex; gap: 8px; align-items: center; }

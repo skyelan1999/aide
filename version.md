@@ -4,6 +4,9 @@
 
 ## 0.1.12.0 RC1（2026-09-29）
 
+- Unreleased source fix: right-align file-view actions; isolate personality rewrite reasoning budget and persist automatic evolution. Targeted race and isolated browser layout pass; full release gate not passed, no production deployment.
+
+
 - release: 0.1.12.0 RC1 — 汇总 feature/permission-panel：MM-05/TR-09、全局代码审查修复、8 条 P2 决策项、需求对齐
 - MM-05 插件感知训练：plugin_learning.go 的能力提示 pluginCapabilityHint / 经验提示 pluginExperienceHint 注入系统提示（context.go），每次插件调用落 plugin-experience.md，附单测（PRD 原标「待开始」，经代码核实已交付）
 - TR-09 SSE 顺滑：runEvents 逐事件 flusher.Flush、X-Accel-Buffering:no、15s 心跳（后端 flush/代理缓冲已就绪，长回答逐字顺滑待 E2E 实测）

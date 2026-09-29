@@ -281,8 +281,14 @@ func (a *App) evolvePersonality(id string, cur Personality, cfg Settings, sample
 4. 直接输出新提示词正文。`, len(old), old, sample, personalityGrowRatio, personalityMaxPromptChars)
 	}
 
-	params := ProfileParams{Temperature: fp(0.2), MaxTokens: 2048}
-	out, _, _, err := complete(context.Background(), cfg, []Message{
+	// A short rewrite needs final text, not the chat model's inherited reasoning
+	// budget. DeepSeek can otherwise spend the entire allowance on reasoning and
+	// return an empty content with finish_reason=length. Only override this copy.
+	cfg.ReasoningEffort = "off"
+	params := ProfileParams{Temperature: fp(0.2), MaxTokens: 8192}
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+	out, _, _, err := complete(ctx, cfg, []Message{
 		{Role: "system", Content: sys},
 		{Role: "user", Content: req},
 	}, params, nil, nil)
@@ -360,6 +366,7 @@ func (a *App) runAutoEvolve(id string, mode personalityMode, trigger string, sam
 		st.LastEvolvedAt = res.Personality.UpdatedAt
 		a.settings.Personalities[id] = res.Personality
 		a.personalityState.Entries[id] = st
+		a.persistPersonalitiesLocked()
 		a.persistPersonalityStateLocked()
 		a.mu.Unlock()
 		a.finishPersonalityAttempt(id, trigger, "success", cur, res.Personality, res.Note)

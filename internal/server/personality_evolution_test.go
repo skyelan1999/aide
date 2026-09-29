@@ -58,6 +58,45 @@ func (a *App) aideEvolutions(t *testing.T) int {
 // okSample 5+ 条有效样本，满足最小取样量。
 const okSample = "user: 帮我看看这个 bug\nuser: 记得明天开会\nuser: 我喜欢用中文回答\nuser: 代码要先写测试\nuser: 周报周五下班前交\nuser: 请给结论再展开\n"
 
+func TestEvolutionDisablesInheritedReasoning(t *testing.T) {
+	a := testApp(t)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body map[string]any
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Error(err)
+			return
+		}
+		thinking, _ := body["thinking"].(map[string]any)
+		if thinking["type"] != "disabled" || body["max_tokens"] != float64(8192) {
+			t.Errorf("rewrite must reserve final-text budget, got %v", body)
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{"choices": []any{map[string]any{"finish_reason": "stop", "message": map[string]string{"content": "你是 aide。先结论，再解释。"}}}})
+	}))
+	defer srv.Close()
+	cfg := Settings{BaseURL: srv.URL, Model: "deepseek-flash", ReasoningEffort: "high"}
+	cur := Personality{Enabled: true, Prompt: "你是 aide。" + strings.Repeat("旧内容", 30)}
+	res := a.evolvePersonality(personaAide, cur, cfg, okSample, modeRefine)
+	if res.Status != "adopted" {
+		t.Fatalf("%+v", res)
+	}
+	if cfg.ReasoningEffort != "high" {
+		t.Fatal("chat settings must remain unchanged")
+	}
+}
+
+func TestEvolutionProviderFailurePreservesPersonality(t *testing.T) {
+	a := testApp(t)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"choices":[{"finish_reason":"length","message":{"content":""}}]}`))
+	}))
+	defer srv.Close()
+	cur := Personality{Enabled: true, Prompt: "你是 aide。保持原性格。", Evolutions: 3}
+	res := a.evolvePersonality(personaAide, cur, Settings{BaseURL: srv.URL, Model: "test"}, okSample, modeRefine)
+	if res.Status != "failed" || res.Personality != cur || !strings.Contains(res.Note, "finish_reason=length") {
+		t.Fatalf("failure must preserve prompt/count and explain provider failure: %+v", res)
+	}
+}
+
 // ── 触发计数与持久化 ────────────────────────────────────────────────────────
 
 // TestTriggerAfterMessageCount：达到 20 条消息→触发一次演化并重置计数。
@@ -258,6 +297,17 @@ func TestEndToEndEvolution(t *testing.T) {
 		t.Fatalf("evolutions 应为 1, got %d", ev)
 	}
 	// 落盘后重启保留
+	settingsBytes, err := os.ReadFile(SettingsPath(a.dataPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var persisted Settings
+	if err := json.Unmarshal(settingsBytes, &persisted); err != nil {
+		t.Fatal(err)
+	}
+	if persisted.Personalities[personaAide].Prompt != got || persisted.Personalities[personaAide].Evolutions != 1 {
+		t.Fatal("adopted personality must survive reload from settings.json")
+	}
 	a.mu.Lock()
 	a.personalityState.Entries = map[string]personalityStateEntry{}
 	a.loadPersonalityState()
