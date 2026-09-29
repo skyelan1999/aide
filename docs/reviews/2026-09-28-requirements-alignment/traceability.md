@@ -196,3 +196,20 @@
 > 相对 PRD §6.1 原口径（109 已实现 / 2 待开始）：MM-05 实为已交付、TR-09 后端已就绪改判部分；MD-06 本就是部分实现却被 §6.1 计入已实现。净效应：已交付 108、部分 3、未开始 0。
 >
 > 口径自洽说明：本台账「严格口径」= 已交付 108、部分 3（MD-06/TL-11/TR-09）、未开始 0。PRD §6.1 沿用其「部分并入已实现」的汇总口径，故记 110 已实现 / 1 待验证（TR-09 长回答实测）；两个口径相差的 2 = MD-06、TL-11，差异仅在统计约定，不影响结论。
+
+
+---
+
+## 附录（2026-09-29）：RCA-UI + 文件夹上传批次交付核验
+
+> 基线 `feature/rca-ui-upload-gate` @ `e119fa9..d6c3786`（6 个功能提交）。门禁：`go test -race` GATE EXIT=0（0 FAIL / 0 DATA RACE / 0 panic）、`go vet`/`go build` OK、Playwright 43 项检查 PASS + 回归 11/11。详见 [2026-09-29-rca-upload-gate.md](../2026-09-29-rca-upload-gate.md)。
+> 本附录只登记本批新增/变更项，不改动上方既有行。
+
+| 项 | 状态 | 说明 / 证据 |
+| --- | --- | --- |
+| RCA（问题解决）第五阶段 UI | 已交付+已验证 | `e9bdf50`+`830fc1e`；阶段按钮「问题解决/Root Cause」（后端 `problem-solving`）与欢迎页入口、RCA Reports 对话框渲染 Markdown+打开 `.drawio`、缺图琥珀警告无死链；顺带补齐 TL-11 缺口：`.drawio.svg/.png` 回链 `.drawio` 并做存在性校验 |
+| 文件夹递归上传 | 已交付+已验证 | `157b101`+`e9bdf50`；`webkitGetAsEntry` 递归保相对路径（含顶层目录名）、multipart `POST /api/file/upload-batch`（1000 文件/256 MiB、单文件 64 MiB、201 全成功/207 部分）、进度遮罩+逐文件失败汇总；单文件拖拽不变 |
+| 搜索截断提示 | 已交付+已验证 | `d6c3786`；`GET /api/files` 触顶时设 `X-Search-Truncated`/`X-Search-Dir-Limit:200`/`X-Search-Result-Limit:500` 头（body 不变）+ UI 琥珀提示条 |
+| SSH 远端取消（进程组回收） | 已交付+已验证（容器内） | `f756aaf`；`setsid` 独立 PGID、cancel/timeout 跑 `cleanupRemoteGroup`（TERM→KILL 并校验）返回 `AIDE-CLEANUP:reaped`，集中在 `App.execRemote`；localhost sshd e2e 证据 `docker-images/sshd-test/evidence/20260929-210707/` |
+| 真实公网 SSH 远端稳定性 | 待用户提供 | 未给主机/凭据；仅容器内 e2e，真实跨网长尾会话下的远端回收未验证 |
+| 会话桶布局统一+迁移 | 已交付+已验证 | `5eb0629`；`sessionBucketFor` 规范桶、`save()` 清理陈旧副本、`delete` 全覆盖、`rebalanceSessionBuckets` 幂等备份+回滚零会话丢失；race 门禁绿 |
