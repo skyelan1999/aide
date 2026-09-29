@@ -4,6 +4,9 @@
 
 ## 0.1.13.0 RC1（2026-09-29）
 
+- 全量门禁：go test -race 0 FAIL / 0 DATA RACE / 0 panic（跳过 15 个仅依赖 node/office 工具链的环境测试，已记录），go vet/build 通过；Playwright 独立验收 43 项 + 修复后回归 11/11。真实公网 SSH 远端稳定性待用户提供主机/凭据后验证
+
+
 - 会话桶布局统一：save() 按 sessionBucketFor 写入 active/archived/assistant 规范桶并清理陈旧副本；启动迁移幂等、带备份/隔离与回滚，零会话丢失
 
 
