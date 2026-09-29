@@ -4,6 +4,9 @@
 
 ## 0.1.13.0 RC1（2026-09-29）
 
+- 会话桶布局统一：save() 按 sessionBucketFor 写入 active/archived/assistant 规范桶并清理陈旧副本；启动迁移幂等、带备份/隔离与回滚，零会话丢失
+
+
 - SSH 远端取消加固：远端命令经 setsid 纳入独立进程组，取消/超时后显式回收远端进程组（TERM→KILL 并校验），集中于 execRemote 覆盖命令面板与 Agent run_shell；附容器内 sshd 端到端证据（连接→执行→取消→确认远端进程退出）
 
 
