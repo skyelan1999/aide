@@ -1346,7 +1346,13 @@ async function loadFiles(auto) {
   const query = state.root === 'context' && state.source ? '/files?source=' + encodeURIComponent(state.source) + '&path=' : '/files?root=' + state.root + '&path=';
   const search = state.fileSearch.trim();
   const searchParams = search ? '&search=' + encodeURIComponent(search) + '&scope=' + encodeURIComponent(state.fileSearchScope) + '&match=' + encodeURIComponent(state.fileSearchMatch) : '';
-  const files = await api(query + encodeURIComponent(state.dir) + searchParams);
+  // 直接 fetch 以便读取搜索截断响应头（api() 只返回 body）。
+  const filesResp = await fetch('/api' + query + encodeURIComponent(state.dir) + searchParams, { headers: { 'Authorization': 'Bearer ' + state.token } });
+  const files = await filesResp.json();
+  if (!filesResp.ok) { if (filesResp.status === 401 && !$('login-dialog').open) $('login-dialog').showModal(); throw new Error(t(files && files.error) || t("请求失败")); }
+  state.fileSearchTruncated = filesResp.headers.get('X-Search-Truncated') === '1';
+  state.fileSearchDirLimit = filesResp.headers.get('X-Search-Dir-Limit') || '200';
+  state.fileSearchResultLimit = filesResp.headers.get('X-Search-Result-Limit') || '500';
   const selectionLocation = fileLocationKey() + ':' + state.dir;
   if (state.fileSelectionLocation !== selectionLocation) { state.fileSelection.clear(); state.fileSelectionAnchor = -1; state.fileSelectionLocation = selectionLocation; }
   const visible = new Set(files.map(f => f.path));
@@ -1416,6 +1422,9 @@ function renderFileEntries() {
     };
     $('files').append(b);
   });
+  if (state.fileSearchTruncated) {
+    $('files').append(el('p', 'file-search-truncated', t("结果过多，已按上限截断：最多搜索 {0} 个文件夹、显示前 {1} 项，请缩小范围或改用精确匹配", state.fileSearchDirLimit, state.fileSearchResultLimit)));
+  }
 }
 /* 文件名内联重命名：点击名称进入编辑，失焦/回车保存，Esc 取消 */
 function beginInlineRename(rowBtn, nameSpan, file) {

@@ -1145,3 +1145,4 @@ textarea#editor,textarea#file-view-editor{position:relative}
 .upload-progress .up-detail{margin-top:7px;font-size:10px;white-space:pre-wrap;word-break:break-all;opacity:.85;max-height:120px;overflow:auto;line-height:1.6}
 .upload-progress.up-fail{border-left-color:var(--danger)}
 .upload-progress.up-done{border-left-color:var(--brand)}
+.file-search-truncated{margin:8px 4px 4px;padding:8px 10px;border:1px solid var(--warn);border-left:3px solid var(--warn);border-radius:7px;background:var(--warn-bg,rgba(217,119,6,.08));color:var(--warn);font-size:10px;line-height:1.6}

@@ -1,6 +1,7 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "结果过多，已按上限截断：最多搜索 {0} 个文件夹、显示前 {1} 项，请缩小范围或改用精确匹配": "Too many results; truncated at the limit: searches at most {0} folders and shows the first {1} items. Narrow your range or use exact match.",
   "工作表": "Worksheet",
   "前 26 列": "Previous 26 columns",
   "后 26 列": "Next 26 columns",
