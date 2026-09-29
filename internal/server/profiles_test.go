@@ -15,8 +15,13 @@ import (
 
 func TestSystemProfilesImmutability(t *testing.T) {
 	a := testApp(t)
+	w := request(a, "GET", "/api/profiles", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"strategy":"auto"`) {
+		t.Fatalf("default strategy must be auto: %s", w.Body.String())
+	}
 	// 尝试覆盖系统配置：必须被拒绝
-	w := request(a, "PUT", "/api/profiles", map[string]any{
+	w = request(a, "PUT", "/api/profiles", map[string]any{
 		"strategy":      "manual",
 		"activeProfile": "default",
 		"profiles": []map[string]any{{

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -159,6 +160,10 @@ exit 0
 batch=$(cat)
 printf '%s\n' "$batch" >> "`+sftpLog+`"
 case "$batch" in
+	*"ls -l"*"/srv/app/.cache"*)
+	    echo "Couldn't stat remote file: No such file" >&2
+	    exit 1
+	    ;;
   *"ls -l"*)
     echo 'drwxr-xr-x 1 user group 0 Jan 1 00:00 src'
     echo '-rw-r--r-- 1 user group 12 Jan 1 00:00 readme.md'
@@ -199,6 +204,20 @@ exit 0
 	requireStatus(t, request(a, "PUT", "/api/file", map[string]string{"path": "x.txt", "content": "hi", "hash": ""}), 200)
 	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), "put -P") || !strings.Contains(string(b), "rename") {
 		t.Fatalf("sftp write batch: %s", string(b))
+	}
+	// 首次写入嵌套目录时，SFTP 要先创建缺失父目录，不能把 No such file
+	// 直接暴露给工作流提案应用。
+	if err := a.sftpWrite("/srv/app/.cache/aide/patch.py", []byte("print(1)")); err != nil {
+		t.Fatalf("nested sftp write: %v", err)
+	}
+	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), "mkdir \"/srv/app/.cache\"") || !strings.Contains(string(b), "mkdir \"/srv/app/.cache/aide\"") {
+		t.Fatalf("sftp write must create parents: %s", string(b))
+	}
+	// Agent run_shell now shares the same remote SSH session and starts in the
+	// task's remote workspace, matching the command panel behavior.
+	out, code, err := a.execShellCommand(context.Background(), &Task{WorkspaceMode: "ssh", WorkspaceRemotePath: "/srv/app"}, "echo agent-remote")
+	if err != nil || code != 0 || !strings.Contains(out, "cd '/srv/app' && echo agent-remote") {
+		t.Fatalf("agent remote command: code=%d err=%v out=%q", code, err, out)
 	}
 	// 远程命令（单会话）
 	w = request(a, "POST", "/api/command", map[string]string{"command": "echo hi"})

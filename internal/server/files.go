@@ -704,6 +704,11 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 	if p == "" {
 		p = "."
 	}
+	search, err := fileSearchFromRequest(r)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
 	which := r.URL.Query().Get("root")
 	if which == "remote" {
 		if a.workspaceMode() != "ssh" {
@@ -714,7 +719,7 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, err)
 			return
 		}
-		items, err := a.sftpListRemote(p, p)
+		items, err := searchFileTree(p, search, func(dir string) ([]map[string]any, error) { return a.sftpListRemote(dir, dir) })
 		if err != nil {
 			fail(w, 400, err)
 			return
@@ -734,7 +739,7 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, errors.New("来源不存在或已停用"))
 			return
 		}
-		items, err := a.listSourceDir(src, p)
+		items, err := searchFileTree(p, search, func(dir string) ([]map[string]any, error) { return a.listSourceDir(src, dir) })
 		if err != nil {
 			fail(w, 400, err)
 			return
@@ -743,7 +748,7 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if which == "workspace" && a.workspaceMode() == "ssh" {
-		items, err := a.listWorkspaceDir(p)
+		items, err := searchFileTree(p, search, a.listWorkspaceDir)
 		if err != nil {
 			fail(w, 400, err)
 			return
@@ -756,12 +761,85 @@ func (a *App) listFiles(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	items, err := a.listLocalDir(root, p)
+	items, err := searchFileTree(p, search, func(dir string) ([]map[string]any, error) { return a.listLocalDir(root, dir) })
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
 	jsonOut(w, 200, items)
+}
+
+const (
+	maxFileSearchResults = 500
+	maxFileSearchDirs    = 200
+)
+
+type fileSearch struct {
+	term      string
+	recursive bool
+	exact     bool
+}
+
+func fileSearchFromRequest(r *http.Request) (fileSearch, error) {
+	term := strings.TrimSpace(r.URL.Query().Get("search"))
+	if term == "" {
+		return fileSearch{}, nil
+	}
+	if len([]rune(term)) > 256 || strings.ContainsAny(term, "\x00\r\n") {
+		return fileSearch{}, errors.New("搜索词无效")
+	}
+	scope := r.URL.Query().Get("scope")
+	if scope != "" && scope != "folder" && scope != "recursive" {
+		return fileSearch{}, errors.New("搜索范围无效")
+	}
+	match := r.URL.Query().Get("match")
+	if match != "" && match != "fuzzy" && match != "exact" {
+		return fileSearch{}, errors.New("匹配方式无效")
+	}
+	return fileSearch{term: term, recursive: scope == "recursive", exact: match == "exact"}, nil
+}
+
+// searchFileTree keeps recursive search inside the already selected safe root.
+// It deliberately caps traversed folders and returned rows so a broad search on
+// an SSH/SFTP workspace cannot make the file panel unresponsive.
+func searchFileTree(base string, search fileSearch, list func(string) ([]map[string]any, error)) ([]map[string]any, error) {
+	if search.term == "" {
+		return list(base)
+	}
+	queue := []string{base}
+	seen := map[string]bool{base: true}
+	items := make([]map[string]any, 0)
+	for len(queue) > 0 && len(seen) <= maxFileSearchDirs && len(items) < maxFileSearchResults {
+		dir := queue[0]
+		queue = queue[1:]
+		entries, err := list(dir)
+		if err != nil {
+			return nil, err
+		}
+		for _, entry := range entries {
+			name, _ := entry["name"].(string)
+			entryPath, _ := entry["path"].(string)
+			isDir, _ := entry["dir"].(bool)
+			if fileNameMatches(name, search) {
+				items = append(items, entry)
+				if len(items) >= maxFileSearchResults {
+					break
+				}
+			}
+			if search.recursive && isDir && entryPath != "" && !seen[entryPath] && len(seen) < maxFileSearchDirs {
+				seen[entryPath] = true
+				queue = append(queue, entryPath)
+			}
+		}
+	}
+	return items, nil
+}
+
+func fileNameMatches(name string, search fileSearch) bool {
+	if search.exact {
+		return strings.EqualFold(name, search.term)
+	}
+	return strings.Contains(strings.ToLower(name), strings.ToLower(search.term))
 }
 
 // validateRemoteBrowsePath keeps a directory-picker path safe for an SFTP
@@ -1307,6 +1385,67 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonOut(w, 200, map[string]string{"hash": hash([]byte(in.Content))})
+}
+
+// uploadFile writes one browser-selected raw file to the current writable workspace
+// or reference source. It intentionally rejects replacement: a dropped file must not
+// silently overwrite a project artifact. Local, SSH workspace, and writable source
+// destinations all reuse their existing atomic write channels.
+func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) {
+	p := r.URL.Query().Get("path")
+	if err := safePath(p); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, maxRawFile+1)
+	b, err := io.ReadAll(r.Body)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if len(b) > maxRawFile {
+		fail(w, 400, fmt.Errorf("文件超过 %d MiB 限制", maxRawFile>>20))
+		return
+	}
+	if sourceID := strings.TrimSpace(r.URL.Query().Get("source")); sourceID != "" {
+		a.mu.Lock()
+		src, ok := a.findSource(sourceID)
+		a.mu.Unlock()
+		if !ok || !src.Enabled {
+			fail(w, 400, errors.New("来源不存在或已停用"))
+			return
+		}
+		if !src.RW {
+			fail(w, 403, errors.New("该来源为只读"))
+			return
+		}
+		if _, err := a.sourceEntry(src, p); err == nil {
+			fail(w, 409, errors.New("同名文件已存在"))
+			return
+		} else if !errors.Is(err, os.ErrNotExist) {
+			fail(w, 400, err)
+			return
+		}
+		if err := a.writeSourceText(src, p, b); err != nil {
+			fail(w, 400, err)
+			return
+		}
+	} else {
+		a.filesMu.Lock()
+		defer a.filesMu.Unlock()
+		if _, err := a.workspaceFileProperties(p); err == nil {
+			fail(w, 409, errors.New("同名文件已存在"))
+			return
+		} else if !errors.Is(err, os.ErrNotExist) {
+			fail(w, 400, err)
+			return
+		}
+		if err := a.writeWorkspaceText(p, b); err != nil {
+			fail(w, 400, err)
+			return
+		}
+	}
+	jsonOut(w, 201, map[string]any{"path": p, "size": len(b)})
 }
 
 // isSFTPNotExistErr 判断 sftp 读取失败是否因“远端文件不存在”。

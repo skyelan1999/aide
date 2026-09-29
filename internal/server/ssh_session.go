@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path"
@@ -175,13 +176,16 @@ func (a *App) wsRuntimeCredentials() (password, keyMaterial, passphrase, directK
 }
 
 // execRemote 通过唯一 master 会话执行远程命令；输出经 io.Writer 流式返回。
-func (a *App) execRemote(ctx context.Context, command string, stdout, stderr *streamWriter) (int, error) {
+func (a *App) execRemote(ctx context.Context, command string, stdout, stderr io.Writer) (int, error) {
 	args := append([]string{"-S", sshControlSocket}, a.sshCommonArgs()...)
 	args = append(args, a.sshTarget(), command)
 	cmd := exec.CommandContext(ctx, a.sshBin, args...)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	// CommandContext 会在取消时终止本地 ssh 客户端；WaitDelay 防止失联的
+	// ControlMaster/管道让 Wait 永久停住。远端命令仍有 workflow 的单条超时兜底。
+	cmd.WaitDelay = 2 * time.Second
 	err := cmd.Run()
 	if err == nil {
 		return 0, nil
@@ -277,6 +281,9 @@ func (a *App) sftpRead(remoteFile string) ([]byte, error) {
 }
 
 func (a *App) sftpWrite(remoteFile string, b []byte) error {
+	if err := a.sftpEnsureParents(remoteFile); err != nil {
+		return err
+	}
 	tmp, err := os.CreateTemp("", "aide-sftp-*")
 	if err != nil {
 		return err
@@ -292,6 +299,38 @@ func (a *App) sftpWrite(remoteFile string, b []byte) error {
 	tmpRemote := remoteFile + ".aide-tmp"
 	if _, err := a.sftpBatch("put -P " + shellQuoteRemote(tmpPath) + " " + shellQuoteRemote(tmpRemote) + "\nrename " + shellQuoteRemote(tmpRemote) + " " + shellQuoteRemote(remoteFile) + "\n"); err != nil {
 		return err
+	}
+	return nil
+}
+
+// sftpEnsureParents creates missing ancestors for a workspace write. SFTP has
+// no mkdir -p, so probe one directory at a time and create only absent paths.
+// This keeps atomic uploads working for first writes such as .cache/aide/x.py.
+func (a *App) sftpEnsureParents(remoteFile string) error {
+	parent := path.Dir(path.Clean(remoteFile))
+	if parent == "." || parent == "/" {
+		return nil
+	}
+	absolute := strings.HasPrefix(parent, "/")
+	current := "."
+	if absolute {
+		current = "/"
+	}
+	for _, part := range strings.Split(strings.Trim(parent, "/"), "/") {
+		if part == "" || part == "." {
+			continue
+		}
+		current = path.Join(current, part)
+		if a.sftpExists(current) {
+			continue
+		}
+		if err := a.sftpMakeDirectory(current); err != nil {
+			// A concurrent writer may have created it between the probe and mkdir.
+			if a.sftpExists(current) {
+				continue
+			}
+			return fmt.Errorf("SFTP 创建父目录 %q 失败: %w", current, err)
+		}
 	}
 	return nil
 }

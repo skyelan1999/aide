@@ -135,7 +135,7 @@ func (a *App) saveProfiles() error {
 
 // loadProfiles 在 New() 中调用：文件缺失时使用缺省状态；内容非法时返回错误拒绝启动。
 func (a *App) loadProfiles() error {
-	a.profileState = ProfilesState{Version: 1, Strategy: "manual", ActiveProfile: "default", Profiles: []Profile{}}
+	a.profileState = ProfilesState{Version: 1, Strategy: "auto", ActiveProfile: "default", Profiles: []Profile{}}
 	b, err := os.ReadFile(a.profilesPath)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
@@ -189,7 +189,7 @@ func (a *App) updateProfiles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if in.Strategy == "" {
-		in.Strategy = "manual"
+		in.Strategy = "auto"
 	}
 	if in.Strategy != "manual" && in.Strategy != "auto" {
 		fail(w, 400, errors.New("策略只支持 manual 或 auto"))

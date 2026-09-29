@@ -82,10 +82,7 @@ type sourcesSecrets struct {
 }
 
 func (a *App) sourcesPath() string {
-	if a.cacheContainer != "" {
-		return filepath.Join(a.cacheContainer, sourcesFileName)
-	}
-	return filepath.Join(a.workPath, ".cache", sourcesFileName)
+	return filepath.Join(ConfigDir(a.dataPath), sourcesFileName)
 }
 func (a *App) sourcesSecretsPath() string { return SourcesSecretsPath(a.dataPath) }
 
@@ -93,6 +90,18 @@ func (a *App) loadSources() error {
 	a.sourceRegistry = sourcesRegistry{Version: 1, Sources: []Source{}}
 	a.sourceSecrets = sourcesSecrets{Secrets: map[string]sourceSecretEntry{}}
 	b, err := os.ReadFile(a.sourcesPath())
+	if errors.Is(err, os.ErrNotExist) {
+		// Copy the previous registry once, keeping the original for rollback.
+		for _, legacy := range []string{filepath.Join(a.cacheContainer, sourcesFileName), filepath.Join(a.workPath, ".cache", sourcesFileName)} {
+			if old, readErr := os.ReadFile(legacy); readErr == nil {
+				if writeErr := os.WriteFile(a.sourcesPath(), old, 0600); writeErr != nil {
+					return writeErr
+				}
+				b, err = old, nil
+				break
+			}
+		}
+	}
 	if errors.Is(err, os.ErrNotExist) {
 		// 全新部署：注册表为空，先补内置来源（#53）
 		a.ensureBuiltinSources()

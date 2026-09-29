@@ -266,7 +266,7 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 		history[0].Content += "\n" + guide
 	}
 	// 注入持久记忆
-	if mem := a.readMemory(); mem != "" && !strings.HasPrefix(mem, "(记忆文件为空") {
+	if mem := a.readCachedProjectMemory(); mem != "" && !strings.HasPrefix(mem, "(记忆文件为空") {
 		history[0].Content += "\n\n## 持久记忆\n以下是你之前记下的用户偏好和项目约定，请在回答中参考：\n" + mem
 	}
 	// 注入 aide 性格（仅影响对话风格；可演化、只作用于基本聊天）
@@ -443,6 +443,8 @@ func (a *App) applyWorkflowContext(preview *ContextPreview, mode, phase string) 
 		addition = implementationPhasePrompt
 	case "verify":
 		addition = verifyPhasePrompt
+	case "problem-solving":
+		addition = problemSolvingPhasePrompt
 	case "", "auto":
 		addition = autoModePrompt + a.profileInventoryPrompt()
 	}
@@ -462,6 +464,14 @@ func (a *App) applyWorkflowContext(preview *ContextPreview, mode, phase string) 
 	h.Write([]byte(preview.Fingerprint))
 	h.Write([]byte(addition))
 	preview.Fingerprint = hex.EncodeToString(h.Sum(nil))
+}
+
+func validWorkflowPhase(phase string) bool {
+	switch phase {
+	case "", "auto", "requirement", "design", "implementation", "verify", "problem-solving":
+		return true
+	}
+	return false
 }
 
 // contextPreviewHandler POST /api/context-preview：按草稿构造预览（不产生副作用）。
@@ -487,6 +497,10 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if in.Mode != "chat" && in.Mode != "workflow" {
 		fail(w, 400, errors.New("未知工作模式"))
+		return
+	}
+	if in.Mode == "workflow" && !validWorkflowPhase(in.WorkflowPhase) {
+		fail(w, 400, errors.New("未知工作流阶段"))
 		return
 	}
 	if len(in.Attachments) > 8 || (in.Baseline && len(in.Attachments) != 0) {

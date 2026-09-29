@@ -1090,6 +1090,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/file/download", a.downloadFile)
 	mux.HandleFunc("POST /api/file/archive", a.createWorkspaceArchive)
 	mux.HandleFunc("POST /api/file/extract", a.extractArchive)
+	mux.HandleFunc("POST /api/file/upload", a.uploadFile)
 	mux.HandleFunc("GET /api/file", a.readFile)
 	mux.HandleFunc("PUT /api/file", a.writeFile)
 	mux.HandleFunc("POST /api/file/rename", a.renameFile)

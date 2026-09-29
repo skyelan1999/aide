@@ -335,18 +335,17 @@ func (a *App) applyWorkspaceConfig() error {
 	// Docs.Path 不再“替换”参考根，而是作为 system-docs 读写来源叠加进来源注册表：
 	// 空路径 → localSourceRoot 回落 a.reference（/context）；非空路径 → 独立打开该目录（可显示“目录为空”）。
 	_ = a.reference
-	// 缓存目录（自动创建；来源注册表存于此）。
-	// #61：默认落产品目录 A（a.workPath/.cache）向后兼容；当用户选了非默认工程目录 B
-	// 且未显式指定 cache.path 时，默认改落 B/.cache，避免把 Go 构建缓存/来源注册表写进产品仓库。
+	// 项目缓存。来源注册表独立存入 data/config；远程项目仅在 data 下保留工作副本。
 	cacheContainer := filepath.Join(a.workPath, ".cache")
 	if a.wsConfig.Cache.Location == "workspace" {
-		// 应用自身的 sources.json、任务快照等仍必须保存在容器本地；远程缓存位置
-		// 只注入 SSH 命令环境，避免把需要随机访问/原子写的内部状态错误写到 SFTP。
-		cacheContainer = filepath.Join(a.workPath, ".cache")
+		// 建档与项目记忆通过 SFTP 同步到配置目录，本地副本按项目和缓存路径隔离。
+		cacheContainer = filepath.Join(a.dataPath, "cache", "remote-projects", hash([]byte(a.wsID()+"|"+a.workspaceRemoteCachePath())))
 	} else if cp, _, err := a.resolveHostPath(a.wsConfig.Cache.Path); err == nil && cp != "" {
 		cacheContainer = cp
 	} else if a.containerAbs != "" && a.containerAbs != a.workPath {
 		cacheContainer = filepath.Join(a.containerAbs, ".cache")
+	} else if a.wsConfig.Workspace.Mode == "ssh" {
+		cacheContainer = filepath.Join(a.dataPath, "cache", "projects", hash([]byte(a.wsID())))
 	}
 	_ = os.MkdirAll(cacheContainer, 0755)
 	a.cacheContainer = cacheContainer

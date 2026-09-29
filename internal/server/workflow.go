@@ -135,6 +135,7 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "create_design", "description": "设计阶段专用：创建/更新方案设计文档，自动分配 DESIGN-xxx 编号并更新设计索引。须先阅读相关 REQ-xxx 需求文档。content 用 ## 开发流程、## 依赖条件、## 架构需求、## 待确认项、## 变更记录 组织。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"title": map[string]any{"type": "string", "description": "设计名称"}, "content": map[string]any{"type": "string", "description": "设计内容，含上述子标题"}, "reqId": map[string]any{"type": "string", "description": "关联需求编号（如 REQ-001），可选"}, "related": map[string]any{"type": "string", "description": "其他关联，可选"}}, "required": []string{"title", "content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "record_implementation", "description": "实施阶段专用：在 /workspace 实际写代码并运行编译/测试后，记录实施结果，自动分配 IMPL-xxx 编号。content 记录实现内容、修改的文件、基于真实运行的验证结果。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"title": map[string]any{"type": "string", "description": "实施项名称"}, "content": map[string]any{"type": "string", "description": "实现内容、修改文件、验证结果"}, "reqId": map[string]any{"type": "string", "description": "关联需求编号，可选"}, "designId": map[string]any{"type": "string", "description": "关联设计编号（如 DESIGN-001），可选"}}, "required": []string{"title", "content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "record_verification", "description": "验证阶段专用：编写并真实运行自动化测试后，记录测试报告，自动分配 TEST-xxx 编号。报告必须基于真实运行结果，禁止把计划写成通过。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"title": map[string]any{"type": "string", "description": "验证项名称"}, "content": map[string]any{"type": "string", "description": "测试报告：环境、用例、真实运行结果、结论"}, "reqId": map[string]any{"type": "string", "description": "关联需求编号，可选"}, "designId": map[string]any{"type": "string", "description": "关联设计编号，可选"}, "implId": map[string]any{"type": "string", "description": "关联实施编号（如 IMPL-001），可选"}}, "required": []string{"title", "content"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "record_problem_report", "description": "问题解决阶段专用：在创建 draw.io RCA 图后持久化 Markdown 报告，自动分配 RCA-xxx 编号并更新索引。content 必须含问题、背景、排查方向、RCA 图、测试、结论、建议；diagramPath 必须是已生成的 .drawio 相对路径。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"title": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}, "diagramPath": map[string]any{"type": "string"}}, "required": []string{"title", "content", "diagramPath"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "ask_user", "description": "Ask the user ONE clarifying question and PAUSE until they answer. Use this whenever requirements/design/numbers are unclear, BEFORE proceeding. Ask exactly ONE question at a time, never a long list. type=single for one choice, multi for several, input for a number/text, confirm to approve/adjust a plan. After the answer you continue. Never assume user intent when a key fact is missing.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"question": map[string]any{"type": "string", "description": "The single clarifying question"}, "type": map[string]any{"type": "string", "enum": []string{"single", "multi", "input", "confirm"}}, "options": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}, "progressCurrent": map[string]any{"type": "integer"}, "progressTotal": map[string]any{"type": "integer"}}, "required": []string{"question", "type"}}}},
 }
 
@@ -159,6 +160,10 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if in.Mode != "chat" && in.Mode != "workflow" {
 		fail(w, 400, errors.New("未知工作模式"))
+		return
+	}
+	if in.Mode == "workflow" && !validWorkflowPhase(in.WorkflowPhase) {
+		fail(w, 400, errors.New("未知工作流阶段"))
 		return
 	}
 	if len(in.Attachments) > 8 {
@@ -991,6 +996,10 @@ func emptyNudgePrompt(attempt int) string {
 	return "【系统提示】你刚刚这一轮没有返回任何正文，也没有继续调用工具。请基于上面已经完成的所有工具调用结果，直接给用户最终结论或产出；不要再做无关的环境探测。如果任务确实受环境限制无法完成，请如实说明卡在哪一步、建议用户怎么做。"
 }
 
+// 单个步骤内的工具调用预算。ToolMaxRounds 限制模型往返次数，但单次响应可以携带
+// 多个调用；没有这个上限，远程 SSH 工作区会在网络异常或模型重复探测时看似“挂死”。
+const maxToolCallsPerStep = 24
+
 // toolLoop 与模型交互并执行工具调用（≤10 轮）；写操作只生成提案（P2/P3 原则保留）。
 // 返回最终答复与该步骤的完整对话链（含工具调用与原始结果，R05 证据链跨步骤保留）。
 // 每轮实际发出的请求体以快照记录（R08-04：预览与真实请求的可比证据）。
@@ -1006,6 +1015,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		maxRounds = 60
 	}
 	consecutiveFail := map[string]int{} // 工具名 → 连续失败次数
+	toolCallsUsed := 0
 	var lastOut string
 	emptyFallback := 0 // d 类空响应自动续接计数（成功一轮即重置）
 	for round := 0; round < maxRounds; round++ {
@@ -1140,6 +1150,12 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		}
 		input = append(input, Message{Role: "assistant", Content: out, ToolCalls: calls})
 		for _, call := range calls {
+			if toolCallsUsed >= maxToolCallsPerStep {
+				msg := fmt.Sprintf("本步骤已执行 %d 次工具调用，为避免持续占用远程 SSH 连接，已自动停止。请缩小排查范围或检查远端命令后重试。", maxToolCallsPerStep)
+				a.publishStream(task.ID, streamEvent{Event: "note", Text: msg, Round: round})
+				return msg, input, errors.New(msg)
+			}
+			toolCallsUsed++
 			// 行动意图透明：执行前先推送「准备调用什么工具 + 具体参数/命令」
 			a.publishStream(task.ID, streamEvent{Event: "intent", Tool: call.Function.Name, Args: summarizeToolArgs(call.Function.Arguments), CallID: call.ID, Round: round})
 			// 长命令心跳：工具执行期间每 15s 推一次心跳证明活着（前端看门狗据此区分“真在跑”与“假死”）
@@ -1477,8 +1493,11 @@ func (a *App) memoryPath() string {
 }
 
 func (a *App) projectCacheDir() string {
-	if a.wsConfig.Workspace.Mode != "ssh" && a.containerAbs != "" {
-		return filepath.Join(a.containerAbs, ".cache", "aide")
+	if a.workspaceRemoteCachePath() != "" {
+		return filepath.Join(a.cacheContainer, "aide")
+	}
+	if a.wsConfig.Workspace.Mode != "ssh" && a.cacheContainer != "" {
+		return filepath.Join(a.cacheContainer, "aide")
 	}
 	root := a.cacheContainer
 	if root == "" {
@@ -1519,6 +1538,16 @@ func (a *App) migrateLegacyAideMemory() {
 }
 
 func (a *App) readMemory() string {
+	a.filesMu.Lock()
+	defer a.filesMu.Unlock()
+	if err := a.pullProjectCacheDir("aide"); err != nil {
+		return "读取项目缓存失败: " + err.Error()
+	}
+	return a.readCachedProjectMemory()
+}
+
+// Context construction holds the app lock: never perform SSH I/O there.
+func (a *App) readCachedProjectMemory() string {
 	// 显式权限守卫（纵深防御）：aide 只读写自己的记忆区。
 	if ok, reason := canAccessProjectMemory(a.projectCacheDir(), callerAide, a.memoryPath(), opRead); !ok {
 		return "(" + reason + ")"
@@ -1531,6 +1560,11 @@ func (a *App) readMemory() string {
 	return clip(string(b), 4000)
 }
 func (a *App) writeMemory(content string) string {
+	a.filesMu.Lock()
+	defer a.filesMu.Unlock()
+	if err := a.pullProjectCacheDir("aide"); err != nil {
+		return "读取项目缓存失败: " + err.Error()
+	}
 	if ok, reason := canAccessProjectMemory(a.projectCacheDir(), callerAide, a.memoryPath(), opWrite); !ok {
 		return "(" + reason + ")"
 	}
@@ -1551,6 +1585,12 @@ func (a *App) writeMemory(content string) string {
 		f.WriteString("\n")
 	}
 	f.WriteString("\n- " + content + "\n")
+	if err := f.Close(); err != nil {
+		return "写入记忆失败: " + err.Error()
+	}
+	if err := a.pushProjectCacheFiles("aide", "memory.md"); err != nil {
+		return "同步项目缓存失败: " + err.Error()
+	}
 	return "已写入记忆。"
 }
 
@@ -1669,11 +1709,16 @@ func requirementSection(content, name string) string {
 
 // createRequirement 创建需求文档并更新索引（需求阶段强流程工具）。
 func (a *App) createRequirement(title, content, related string) string {
+	a.filesMu.Lock()
+	defer a.filesMu.Unlock()
 	title = strings.TrimSpace(title)
 	if title == "" {
 		return "缺少 title 参数"
 	}
 	dir := a.requirementsDir()
+	if err := a.pullProjectCacheDir("system-docs/requirements"); err != nil {
+		return "读取项目缓存失败: " + err.Error()
+	}
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "创建需求目录失败: " + err.Error()
 	}
@@ -1728,7 +1773,10 @@ func (a *App) createRequirement(title, content, related string) string {
 	if err := a.rewriteRequirementsIndex(dir); err != nil {
 		return "需求已建档，但索引更新失败: " + err.Error()
 	}
-	return fmt.Sprintf("需求已建档：%s · %s\n文件：%s\n索引已更新", id, title, filePath)
+	if err := a.pushProjectCacheFiles("system-docs/requirements", filepath.Base(filePath), "requirements-index.md"); err != nil {
+		return "同步项目缓存失败: " + err.Error()
+	}
+	return fmt.Sprintf("需求已建档：%s · %s\n文件：%s\n索引已更新", id, title, a.projectCacheDisplayPath("system-docs/requirements/"+filepath.Base(filePath)))
 }
 
 // rewriteRequirementsIndex 扫描目录下所有 REQ-*.md，重写 requirements-index.md。
@@ -1810,6 +1858,14 @@ const verifyPhasePrompt = `
 2. 在工作目录编写真实的自动化测试代码，并用 run_shell 真实运行（go test、curl、编译等）
 3. 测试报告必须基于真实运行结果，禁止把"计划执行/未运行"写成"通过"
 4. 调用 record_verification 记录测试报告，回复用户验证编号（TEST-xxx）与真实结论`
+
+const problemSolvingPhasePrompt = `
+【问题解决阶段强流程】你当前处于问题解决（RCA）阶段。必须使用多轮工具调用，依据每轮真实输出迭代，不得把猜测写成已验证事实。
+1. 先归纳用户说明的【问题】与【背景】；用 list_files/read_file/search_text 检查相关代码、配置、日志和已有测试。信息不足时用 ask_user 一次只问一个关键问题。
+2. 建立【排查方向】与多个【可能原因】，为每项说明证据、反证方式和优先级；必要时用 run_shell 执行安全且相关的检查或测试，并把真实结果与未运行项明确区分。
+3. 必须调用 create_diagram 生成一个工作区内的 .drawio RCA 图。图至少包含：问题、背景/信号、排查分支、可能根因、验证或排除结果、建议动作；连线必须表达因果或验证关系。
+4. 必须调用 record_problem_report 持久化报告，并传入上一步生成的 diagramPath。报告 content 必须按 Markdown 二级标题覆盖：## 问题、## 背景、## 排查方向、## RCA 图、## 测试、## 结论、## 建议。
+5. 最终面向用户输出同样结构的简明报告，给出 RCA 图和报告路径；结论必须标注为已验证、待验证或被排除，不能虚构测试通过。`
 
 // phaseDocSpec 描述一个"文档驱动"工作流阶段的编号/目录/索引/章节约定。
 type phaseDocSpec struct {
@@ -1901,11 +1957,16 @@ func rewriteDocIndex(dir, prefix, indexFile, indexTitle string) error {
 
 // createDoc 文档驱动阶段的通用建档：分配编号、写模板、重写索引。
 func (a *App) createDoc(spec phaseDocSpec, title, content, related string) string {
+	a.filesMu.Lock()
+	defer a.filesMu.Unlock()
 	title = strings.TrimSpace(title)
 	if title == "" {
 		return "缺少 title 参数"
 	}
 	dir := a.cacheContainer + "/system-docs/" + spec.subdir
+	if err := a.pullProjectCacheDir("system-docs/" + spec.subdir); err != nil {
+		return "读取项目缓存失败: " + err.Error()
+	}
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "创建文档目录失败: " + err.Error()
 	}
@@ -1933,7 +1994,10 @@ func (a *App) createDoc(spec phaseDocSpec, title, content, related string) strin
 	if err := rewriteDocIndex(dir, spec.prefix, spec.indexFile, spec.indexTitle); err != nil {
 		return "已建档，但索引更新失败: " + err.Error()
 	}
-	return fmt.Sprintf("已建档：%s · %s\n文件：%s\n索引已更新", id, title, filePath)
+	if err := a.pushProjectCacheFiles("system-docs/"+spec.subdir, fileName, spec.indexFile); err != nil {
+		return "同步项目缓存失败: " + err.Error()
+	}
+	return fmt.Sprintf("已建档：%s · %s\n文件：%s\n索引已更新", id, title, a.projectCacheDisplayPath("system-docs/"+spec.subdir+"/"+fileName))
 }
 
 // joinRelated 合并非空关联编号为逗号分隔串。
@@ -1969,6 +2033,20 @@ func (a *App) recordVerification(title, content, reqId, designId, implId string)
 		prefix: "TEST", subdir: "verifications", indexFile: "verifications-index.md", indexTitle: "验证索引",
 		sections: []string{"测试环境", "测试用例", "运行结果", "结论与缺陷"},
 	}, title, content, joinRelated(reqId, designId, implId))
+}
+
+func (a *App) recordProblemReport(title, content, diagramPath string) string {
+	diagramPath = strings.TrimSpace(diagramPath)
+	if diagramPath == "" {
+		return "缺少 diagramPath 参数：请先创建 draw.io RCA 图"
+	}
+	if requirementSection(content, "RCA 图") == "" {
+		content = strings.TrimSpace(content) + "\n\n## RCA 图\n" + diagramPath + "\n"
+	}
+	return a.createDoc(phaseDocSpec{
+		prefix: "RCA", subdir: "problem-reports", indexFile: "problem-reports-index.md", indexTitle: "问题解决报告索引",
+		sections: []string{"问题", "背景", "排查方向", "RCA 图", "测试", "结论", "建议"},
+	}, title, content, "draw.io: "+diagramPath)
 }
 
 // readOfficeFile 用 python 解析 Office 文件为纯文本（#61：工作目录绑定任务快照 ContainerAbs）
@@ -2054,12 +2132,12 @@ func (a *App) createDiagram(path, xml string) string {
   </diagram>
 </mxfile>`
 	}
-	f, err := a.workspace.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
+	if err := safePath(path); err != nil {
 		return "创建失败: " + err.Error()
 	}
-	defer f.Close()
-	f.WriteString(xml)
+	if err := a.writeWorkspaceText(path, []byte(xml)); err != nil {
+		return "创建失败: " + err.Error()
+	}
 	return "图表已创建: " + path + "（可在文件面板中点击打开查看和编辑）"
 }
 
@@ -2426,7 +2504,7 @@ func (a *App) feedbackHandler(w http.ResponseWriter, r *http.Request) {
 
 // execShellCommand 在容器沙箱内实际执行一条 shell 命令（run_shell 工具）。
 // 复用 /api/command 的沙箱约束：bash --norc、60s 超时、受限 env、工作目录锁定在 workspace 内。
-// 返回收集到的 stdout+stderr（截断）和退出码；远程 SSH 模式暂不支持自动执行。
+// 返回收集到的 stdout+stderr（截断）和退出码；SSH 工作区复用已认证会话远程执行。
 // readOnlyAllowed 在 read-only 沙箱模式下允许的只读命令。
 // 用精确命令前缀匹配，避免 "go build" 被当成 "go" 放行。
 func readOnlyAllowed(command string) bool {
@@ -2487,7 +2565,46 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 		return "", -1, errors.New("权限策略拦截：" + reason)
 	}
 	if a.workspaceMode() == "ssh" {
-		return "", -1, errors.New("远程工作区模式暂不支持 run_shell 自动执行，请手动在终端运行")
+		// SSH 工作区与命令面板共用同一 ControlMaster。让 agent 在同一远程
+		// 工作目录执行命令，避免“已连接但 run_shell 不可用”的能力断层。
+		remotePath := task.WorkspaceRemotePath
+		if remotePath == "" {
+			a.mu.Lock()
+			remotePath = a.wsConfig.Workspace.Path
+			a.mu.Unlock()
+		}
+		remote := command
+		if strings.TrimSpace(remotePath) != "" {
+			remote = "cd " + shellQuote(remotePath) + " && " + remote
+		}
+		if cache := a.workspaceRemoteCachePath(); cache != "" {
+			remote = "mkdir -p " + shellQuote(cache) + " && export AIDE_CACHE=" + shellQuote(cache) + " GOCACHE=" + shellQuote(cache) + " && " + remote
+		}
+		ctx, cancel := context.WithTimeout(parent, time.Duration(timeoutSec)*time.Second)
+		defer cancel()
+		if err := a.ensureSSHSession(ctx); err != nil {
+			return "", -1, err
+		}
+		var stdoutBuf, stderrBuf strings.Builder
+		code, err := a.execRemote(ctx, remote, &stdoutBuf, &stderrBuf)
+		stdout, stderr := stdoutBuf.String(), stderrBuf.String()
+		if len(stdout) > 64<<10 {
+			stdout = stdout[:64<<10] + "\n…（stdout已截断 64KB）"
+		}
+		if len(stderr) > 64<<10 {
+			stderr = stderr[:64<<10] + "\n…（stderr已截断 64KB）"
+		}
+		out := stdout
+		if strings.TrimSpace(stderr) != "" {
+			if out != "" {
+				out += "\n"
+			}
+			out += "[stderr]\n" + stderr
+		}
+		if ctx.Err() != nil {
+			err = fmt.Errorf("命令超过 %d 秒已终止", timeoutSec)
+		}
+		return out, code, err
 	}
 	// #61：CWD 绑定任务创建时快照的 ContainerAbs（消除运行中切工作区错位）。
 	dir := a.taskContainerAbs(task)
@@ -3028,6 +3145,8 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		return a.recordImplementation(str("title"), rawStr("content"), str("reqId"), str("designId"))
 	case "record_verification":
 		return a.recordVerification(str("title"), rawStr("content"), str("reqId"), str("designId"), str("implId"))
+	case "record_problem_report":
+		return a.recordProblemReport(str("title"), rawStr("content"), str("diagramPath"))
 	default:
 		// 插件工具（协议 v1.1）
 		pluginID := a.pluginOwnerOf(call.Function.Name)

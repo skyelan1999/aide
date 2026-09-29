@@ -135,10 +135,7 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "bash", "--noprofile", "--norc", "-c", in.Command)
 	cmd.Dir = dir
-	cacheEnv := "/home/aide/.cache/go-build"
-	if c := a.wsConfig.Cache.Path; c != "" {
-		cacheEnv = filepath.Join(a.workPath, filepath.FromSlash(c))
-	}
+	cacheEnv := a.cacheContainer
 	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=" + cacheEnv, "GOPATH=/home/aide/go", "AIDE_CACHE=" + cacheEnv}
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	cmd.Cancel = func() error {
