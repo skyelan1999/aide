@@ -1,0 +1,73 @@
+{
+  "id": "docs-commit-20260930",
+  "request": "整理并核对当前任务文档，提交文档改动。",
+  "baseline": "2531cab5ed6c1d0d5200262cfc43f8a355e33b7f",
+  "initial_status": "M internal/server/assistant_agent_test.go\n M internal/server/assistant_history.go\n M internal/server/provider.go\n M internal/server/reminders.go\n M internal/server/reminders_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/style.css\n?? docs/tasks/reminder-button-polish.json\n?? docs/tasks/xiaomi-current-time-recovery.json\n?? internal/server/provider_error_test.go",
+  "acceptance": [
+    "文档入口和目录职责清楚，文档链接与编号检查通过。",
+    "不删除仍被索引或用于历史验收/追踪的记录。",
+    "提交本轮任务文档及已确认的修复，不纳入原有无关工作区改动。"
+  ],
+  "scope": [
+    "docs/tasks/docs-commit-20260930.json",
+    "docs/tasks/xiaomi-current-time-recovery.json",
+    "docs/tasks/reminder-button-polish.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户要求检查文档组织并提交相关改动。",
+      "evidence": [
+        "用户要求：整理文档提交。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留已归档的历史需求和验收证据；遵循现有 docs/README.md 与 docs/agent 文档目录约定。",
+      "evidence": [
+        "审阅 docs/README.md、docs/agent/WORKFLOW.md 与 docs/agent/router.json。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增本轮文档整理审计记录；归档本轮小秘修复与提醒面板 UI 任务记录。",
+      "evidence": [
+        "docs/tasks/docs-commit-20260930.json",
+        "docs/tasks/xiaomi-current-time-recovery.json",
+        "docs/tasks/reminder-button-polish.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "文档索引、链接和编号检查通过，任务账本 JSON 可解析。",
+      "evidence": [
+        "python3 scripts/check_docs.py：PASS，112 Markdown、252 本地链接、FR-01..100。",
+        "git diff --check：PASS。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "新任务账本收录本次范围、检查结果与历史记录保留依据。",
+      "evidence": [
+        "docs/tasks/docs-commit-20260930.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未发现可确认删除的过期文档；历史归档与审查证据仍由索引/任务账本引用。",
+      "evidence": [
+        "docs/README.md 的归档职责与历史验收说明；python3 scripts/agent-route.py audit。"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "用户授权本地 Git 提交；本轮只做本地提交，不推送。",
+      "evidence": [
+        "提交前核对暂存范围，排除已有无关界面改动。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "文档目录已核对，当前入口与历史归档保留。文档检查通过。按用户当前授权提交本轮任务文档和对应小秘修复/提醒样式改动；不推送，并保留任务开始时已存在的其他 UI 修改。"
+}

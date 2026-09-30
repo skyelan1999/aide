@@ -1,0 +1,72 @@
+{
+  "id": "reminder-button-polish",
+  "request": "优化提醒面板按钮的视觉样式，并在 Safari 中检查渲染与筛选交互。",
+  "baseline": "2531cab5ed6c1d0d5200262cfc43f8a355e33b7f",
+  "initial_status": "M internal/server/assistant_agent_test.go\n M internal/server/assistant_history.go\n M internal/server/provider.go\n M internal/server/reminders.go\n M internal/server/reminders_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/style.css\n?? docs/tasks/xiaomi-current-time-recovery.json\n?? internal/server/provider_error_test.go",
+  "acceptance": [
+    "提醒面板的新增、关闭、刷新、筛选和卡片操作按钮风格统一、层级清晰。",
+    "窄侧栏内筛选项仍在一行完整显示，选中状态清楚。",
+    "Safari 中提醒面板正常渲染，筛选交互可用。"
+  ],
+  "scope": [
+    "internal/server/web/style.css",
+    "docs/tasks/reminder-button-polish.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "聚焦提醒侧栏的操作控件视觉一致性与可辨识度。",
+      "evidence": [
+        "用户要求调整提醒区域按钮渲染。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "筛选控件改为单行分段按钮，其他操作统一尺寸、表面、边框和 hover/focus 层级；沿用现有主题变量。",
+      "evidence": [
+        "检查提醒中心现有 DOM 与外部样式结构。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "优化提醒面板头部、刷新、筛选器、提醒行操作及表单动作按钮样式。",
+      "evidence": [
+        "internal/server/web/style.css"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "通过容器构建/Go vet、Safari 实际渲染、筛选交互和提醒样式回归检查。",
+      "evidence": [
+        "./start.command：Docker build/vet 及服务重启成功。",
+        "Safari：提醒面板可见；全部区域/全局按钮切换正常，列表空状态同步变化；最后恢复全部区域。",
+        "node scripts/test_reminder_styles.cjs：PASS。",
+        "git diff --check：PASS。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "样式微调无需用户文档；记录在任务账本。",
+      "evidence": [
+        "docs/tasks/reminder-button-polish.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只修改提醒面板样式；已有业务代码与用户原有 web UI 改动均保留。",
+      "evidence": [
+        "git status --short；git diff --check。"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "用户授权本地 Git 提交；本轮只做本地提交，不推送。",
+      "evidence": [
+        "提交前核对暂存范围，排除已有无关界面改动。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "提醒面板按钮样式已调整并经 Safari 渲染与筛选交互验证；本地服务使用 ./start.command 构建运行。本轮经用户授权提交新增提醒控件样式；文件中原有样式改动保持未暂存。"
+}

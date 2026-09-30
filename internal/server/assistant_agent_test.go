@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -96,6 +98,62 @@ func TestAssistantAgenticChatNoDispatch(t *testing.T) {
 	last := msgs[len(msgs)-1]
 	if last.Role != "assistant" || last.Type != "" {
 		t.Fatalf("chat reply should be normal assistant bubble, got %+v", last)
+	}
+}
+
+func TestAssistantAgenticPluginResultReturnedToModel(t *testing.T) {
+	pluginCode, err := os.ReadFile(filepath.Join("..", "..", "plugins", "current-time", "index.js"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var secondRound []Message
+	requestCount := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		requestCount++
+		if requestCount == 1 {
+			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{
+				"role": "assistant", "content": "", "tool_calls": []ToolCall{asstToolCall("get_current_datetime", `{"timeZone":"Asia/Shanghai"}`)},
+			}}}})
+			return
+		}
+		secondRound = body.Messages
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"role": "assistant", "content": "现在是 2026-09-30 21:00，Asia/Shanghai。"}}}})
+	}))
+	defer srv.Close()
+
+	a := testApp(t)
+	install := request(a, "POST", "/api/plugins", map[string]any{"id": "current-time", "name": "Current time", "code": string(pluginCode)})
+	requireStatus(t, install, 201)
+	dec, err := a.runAssistantAgenticLoop(context.Background(), Settings{BaseURL: srv.URL, Model: "test"}, "现在是什么时间？", "", "text")
+	if err != nil {
+		t.Fatalf("runAssistantAgenticLoop: %v", err)
+	}
+	if !strings.Contains(dec.Reply, "Asia/Shanghai") || len(secondRound) == 0 {
+		t.Fatalf("tool result did not return to final model turn: decision=%+v messages=%+v", dec, secondRound)
+	}
+	found := false
+	for _, message := range secondRound {
+		if message.Role == "tool" && message.ToolCallID == "call-1" {
+			var result struct {
+				Date     string `json:"date"`
+				Time     string `json:"time"`
+				TimeZone string `json:"timeZone"`
+			}
+			if err := json.Unmarshal([]byte(message.Content), &result); err != nil {
+				t.Fatalf("tool result is not JSON: %q (%v)", message.Content, err)
+			}
+			if result.TimeZone != "Asia/Shanghai" || result.Date == "" || result.Time == "" {
+				t.Fatalf("unexpected tool result: %+v", result)
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("second model request omitted tool result: %+v", secondRound)
 	}
 }
 

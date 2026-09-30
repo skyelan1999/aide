@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strings"
@@ -340,9 +341,14 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	runFallback := func() {
+	runFallback := func(reason string) {
 		a.mu.Lock()
-		entry := va.recordFallback(text, "小蜜未就绪，直接转交")
+		var entry VoiceHistoryEntry
+		if va != nil {
+			entry = va.recordFallback(text, reason)
+		} else {
+			entry = VoiceHistoryEntry{Time: time.Now().Format("2006-01-02 15:04:05"), Heard: text, Text: text, Action: "send", Mode: "queue", Reason: reason}
+		}
 		a.recordAssistantExchangeLocked(text, entry, "text")
 		disp := a.dispatchToAideLocked(entry.Text)
 		a.mu.Unlock()
@@ -353,7 +359,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if cfg.BaseURL == "" || cfg.Model == "" || va == nil {
-		runFallback()
+		runFallback("小秘模型未配置，原文已转交 aide")
 		return
 	}
 	// #62 修复：与 unlockAssistantSession 同一把锁（a.assistantUnlocked），不再误用 voice-history
@@ -369,7 +375,9 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "text")
 	if err != nil {
 		// 键盘输入绝不回落到语音 analyze 过滤器；模型不可用时按明确文字指令兜底转交。
-		runFallback()
+		detail := strings.ReplaceAll(err.Error(), cfg.BaseURL, "<model-endpoint>")
+		log.Printf("小秘文字决策失败 session=%s model=%s: %s", s.ID, cfg.Model, detail)
+		runFallback("小秘模型调用失败，原文已转交 aide")
 		return
 	}
 

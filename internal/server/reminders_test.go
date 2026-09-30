@@ -8,6 +8,27 @@ import (
 	"time"
 )
 
+func TestXiaomiReminderToolSchemasOmitNullRequired(t *testing.T) {
+	for _, raw := range xiaomiReminderToolSchemas() {
+		tool, ok := raw.(map[string]any)
+		if !ok {
+			t.Fatalf("tool schema has unexpected type %T", raw)
+		}
+		fn, _ := tool["function"].(map[string]any)
+		name, _ := fn["name"].(string)
+		params, _ := fn["parameters"].(map[string]any)
+		if params["type"] != "object" {
+			t.Errorf("%s parameters must be an object schema: %#v", name, params)
+		}
+		if required, exists := params["required"]; exists {
+			list, ok := required.([]string)
+			if !ok || len(list) == 0 {
+				t.Errorf("%s has invalid required field %#v", name, required)
+			}
+		}
+	}
+}
+
 func TestReminderAPICRUDSearchAndScopes(t *testing.T) {
 	a := testApp(t)
 	created := request(a, "POST", "/api/reminders", map[string]any{

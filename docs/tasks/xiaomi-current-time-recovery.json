@@ -1,0 +1,79 @@
+{
+  "id": "xiaomi-current-time-recovery",
+  "request": "执行 start.command 并用系统浏览器验证小秘可用及当前时间插件结果能正确回传；修复阻断问题并回归验证。",
+  "baseline": "2531cab5ed6c1d0d5200262cfc43f8a355e33b7f",
+  "initial_status": "M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/style.css",
+  "acceptance": [
+    "小秘文字会话可正常请求已配置的模型；模型故障时给出准确回退原因，不因缺少代理崩溃。",
+    "当前时间工具调用结果回传模型并由小秘答复用户。",
+    "提醒工具函数 schema 不向模型发送 null required；上游错误诊断不泄漏 API key 或模型端点。"
+  ],
+  "scope": [
+    "internal/server/assistant_history.go",
+    "internal/server/provider.go",
+    "internal/server/provider_error_test.go",
+    "internal/server/assistant_agent_test.go",
+    "internal/server/reminders.go",
+    "internal/server/reminders_test.go",
+    "docs/tasks/xiaomi-current-time-recovery.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目标是恢复小秘模型会话及其时间工具回传；保持现有交接语义。",
+      "evidence": [
+        "用户要求执行 start.command 并使用系统浏览器测试；随后明确授权 Safari 解锁。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "根因是提醒列表函数 schema 将空 required 编码为 null，被 DeepSeek 拒绝；完善安全诊断并保持回退路径可用。",
+      "evidence": [
+        "Safari 复现错误：HTTP 400，reminder_list 的 required 为 null。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "修正 schema、上游错误脱敏诊断和小秘回退提示/nil 保护；添加工具结果回传和错误脱敏测试。",
+      "evidence": [
+        "范围内 Go 变更见任务工作区差异。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "完整 race 套件、quick 检查和 Safari 实际会话验证均通过。",
+      "evidence": [
+        "bash scripts/aide.sh test：PASS；aide/internal/server 280.567s，aide/internal/server/tts 3.068s，命令退出码 0。",
+        "python3 scripts/agent-route.py verify quick：PASS；fingerprint ac6232ebd7f6aead8f4ef005dc2fc26323f6e705801e336b21648c7ce22bf22d。",
+        "node plugins/current-time/test.js：PASS。",
+        "Safari 经小秘查询 Asia/Shanghai 时间：工具结果回传并生成自然语言回复。",
+        "start.command：镜像构建和服务重启成功；服务健康。",
+        "git diff --check：PASS。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "无需变更用户文档；此任务账本保留根因、验收和验证证据。",
+      "evidence": [
+        "docs/tasks/xiaomi-current-time-recovery.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅差异并通过 diff 检查；保留已有无关 web UI 修改，不删除未跟踪文件。",
+      "evidence": [
+        "git status --short；git diff --check：PASS。"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "用户授权本地 Git 提交；本轮只做本地提交，不推送。",
+      "evidence": [
+        "提交前核对暂存范围，排除已有无关界面改动。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "小秘的 DeepSeek 400 根因已修复，当前时间工具经 Safari 验证可用。完整 race 与 quick 检查通过。start.command 已启动修复后服务。本轮经用户授权提交源码修复；既有 web UI 改动保持未暂存。"
+}

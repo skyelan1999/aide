@@ -500,9 +500,13 @@ func (a *App) deleteReminderHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func reminderToolSchema(name, description string, properties map[string]any, required []string) any {
+	parameters := map[string]any{"type": "object", "properties": properties}
+	if len(required) > 0 {
+		parameters["required"] = required
+	}
 	return map[string]any{"type": "function", "function": map[string]any{
 		"name": name, "description": description,
-		"parameters": map[string]any{"type": "object", "properties": properties, "required": required},
+		"parameters": parameters,
 	}}
 }
 

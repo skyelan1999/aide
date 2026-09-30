@@ -170,7 +170,28 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		return "", nil, TokenUsage{}, fmt.Errorf("模型 API 返回 HTTP %d；请检查地址、模型、密钥和额度", resp.StatusCode)
+		// Keep a short provider message in the error for the caller's redacted diagnostic
+		// log. Do not include response headers or the request body (which may contain secrets).
+		var providerErr struct {
+			Error struct {
+				Message string `json:"message"`
+			} `json:"error"`
+		}
+		_ = json.NewDecoder(io.LimitReader(resp.Body, 16<<10)).Decode(&providerErr)
+		detail := strings.TrimSpace(providerErr.Error.Message)
+		if cfg.APIKey != "" {
+			detail = strings.ReplaceAll(detail, cfg.APIKey, "<redacted>")
+		}
+		if cfg.BaseURL != "" {
+			detail = strings.ReplaceAll(detail, cfg.BaseURL, "<model-endpoint>")
+		}
+		if len(detail) > 500 {
+			detail = detail[:500]
+		}
+		if detail == "" {
+			return "", nil, TokenUsage{}, fmt.Errorf("模型 API 返回 HTTP %d；请检查地址、模型、密钥和额度", resp.StatusCode)
+		}
+		return "", nil, TokenUsage{}, fmt.Errorf("模型 API 返回 HTTP %d: %s", resp.StatusCode, detail)
 	}
 	b, err = io.ReadAll(io.LimitReader(resp.Body, 2<<20))
 	if err != nil {

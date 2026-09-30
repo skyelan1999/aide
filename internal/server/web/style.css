@@ -1311,3 +1311,26 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
     #reminder-center-button{position:relative;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}.reminder-center-icon{width:16px;height:16px;flex:none;color:var(--brand)}.reminder-count{display:inline-grid;place-items:center;min-width:16px;height:16px;padding:0 4px;border-radius:9px;background:var(--brand);color:var(--on-brand);font-size:9px;margin-left:1px}
     .reminder-panel-actions{display:flex;align-items:center;gap:6px}#reminder-create-toggle{width:30px;height:30px;border:1px solid var(--line-soft);border-radius:8px;font-size:18px;line-height:1;color:var(--brand)}#reminder-center-close{width:30px;height:30px}
     @media(max-width:950px){.reminder-center-panel{position:fixed;right:0;top:70px;bottom:0;width:290px;z-index:5;box-shadow:-10px 0 30px var(--shadow-3)}}@media(max-width:600px){.reminder-center-panel{top:54px;width:min(360px,100vw)}}
+
+/* Reminder controls: one consistent, compact control language across the panel. */
+.reminder-center-head h2{font-size:13px;letter-spacing:.01em}
+.reminder-panel-actions{gap:8px}
+#reminder-create-toggle{display:grid;place-items:center;width:34px;height:34px;border:1px solid color-mix(in srgb,var(--brand) 28%,var(--line));border-radius:10px;background:color-mix(in srgb,var(--brand) 8%,var(--panel));font-size:20px;font-weight:450;line-height:1;color:var(--brand);transition:background .16s,border-color .16s,color .16s,transform .16s}
+#reminder-create-toggle:hover{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+#reminder-create-toggle[aria-expanded="true"]{background:var(--selected);border-color:var(--line-accent);color:var(--brand-text)}
+#reminder-center-close{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;color:var(--muted);font-size:19px;line-height:1}
+#reminder-center-close:hover{background:color-mix(in srgb,var(--danger) 10%,transparent);color:var(--danger)}
+#reminder-refresh{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:32px;padding:0 10px;border:1px solid var(--line-soft);border-radius:9px;background:var(--surface-alt);color:var(--text-note);font-size:10px;font-weight:550;transition:background .16s,border-color .16s,color .16s}
+#reminder-refresh::before{content:"↻";font-size:15px;line-height:1;color:var(--brand)}
+#reminder-refresh:hover{background:var(--selected);border-color:var(--line-accent);color:var(--brand-text)}
+.reminder-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;margin:0 0 9px;padding:3px;border:1px solid var(--line-soft);border-radius:11px;background:var(--surface-alt)}
+.reminder-filter{min-width:0;min-height:30px;padding:5px 3px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--text-note);font-size:10px;font-weight:500;line-height:1.2;white-space:nowrap;transition:background .16s,border-color .16s,color .16s,box-shadow .16s}
+.reminder-filter:hover:not(.active){background:var(--hover);color:var(--text)}
+.reminder-filter.active{background:var(--panel);border-color:var(--line-faint);color:var(--brand-text);box-shadow:0 1px 2px var(--shadow-1);font-weight:650}
+.reminder-row-actions{gap:5px}
+.reminder-row-actions button{min-height:27px;padding:4px 9px;border:1px solid var(--line-soft);border-radius:7px;background:var(--panel);color:var(--text-note);font-size:10px;font-weight:550;transition:background .16s,border-color .16s,color .16s}
+.reminder-row-actions button:hover{background:var(--selected);border-color:var(--line-accent);color:var(--brand-text)}
+.reminder-row-actions button:last-child:hover{background:color-mix(in srgb,var(--danger) 9%,var(--panel));border-color:var(--danger-line);color:var(--danger)}
+.reminder-form-actions #reminder-save{min-height:34px;padding:8px 14px;border-radius:9px;font-size:11px}
+.reminder-form-actions #reminder-edit-cancel{min-height:34px;padding:7px 11px;border:1px solid var(--line-soft);border-radius:9px;color:var(--text-note);font-size:11px}
+@media(max-width:360px){.reminder-filter{font-size:9px;padding-inline:1px}}
