@@ -59,10 +59,10 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "用户授权本地 Git 提交；本轮只做本地提交，不推送。",
+      "status": "pass",
+      "summary": "本地提交已完成（923b205）；未推送。",
       "evidence": [
-        "提交前核对暂存范围，排除已有无关界面改动。"
+        "git commit 923b205 fix: restore Xiaomi assistant replies and polish reminders"
       ]
     }
   },
