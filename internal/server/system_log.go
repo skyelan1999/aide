@@ -90,7 +90,7 @@ func inferSystemLogLevel(line string) string {
 	return "info"
 }
 
-func (b *systemLogBuffer) snapshot(level string, limit int) []systemLogEntry {
+func (b *systemLogBuffer) snapshot(level string, limit int, start, end *time.Time) []systemLogEntry {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 	out := make([]systemLogEntry, 0, len(b.entries))
@@ -99,9 +99,17 @@ func (b *systemLogBuffer) snapshot(level string, limit int) []systemLogEntry {
 		if len(b.entries) == systemLogCapacity {
 			index = (b.next - 1 - i + systemLogCapacity) % systemLogCapacity
 		}
-		if level == "all" || b.entries[index].Level == level {
-			out = append(out, b.entries[index])
+		entry := b.entries[index]
+		if level != "all" && entry.Level != level {
+			continue
 		}
+		if start != nil || end != nil {
+			loggedAt, err := time.Parse(time.RFC3339Nano, entry.Time)
+			if err != nil || (start != nil && loggedAt.Before(*start)) || (end != nil && loggedAt.After(*end)) {
+				continue
+			}
+		}
+		out = append(out, entry)
 	}
 	return out
 }
@@ -125,7 +133,28 @@ func (a *App) systemLogsHandler(w http.ResponseWriter, r *http.Request) {
 			limit = systemLogCapacity
 		}
 	}
-	entries := systemLogs.snapshot(level, limit)
+	var start, end *time.Time
+	if raw := strings.TrimSpace(r.URL.Query().Get("start")); raw != "" {
+		parsed, err := time.Parse(time.RFC3339Nano, raw)
+		if err != nil {
+			http.Error(w, "start must be an RFC3339 date-time", http.StatusBadRequest)
+			return
+		}
+		start = &parsed
+	}
+	if raw := strings.TrimSpace(r.URL.Query().Get("end")); raw != "" {
+		parsed, err := time.Parse(time.RFC3339Nano, raw)
+		if err != nil {
+			http.Error(w, "end must be an RFC3339 date-time", http.StatusBadRequest)
+			return
+		}
+		end = &parsed
+	}
+	if start != nil && end != nil && start.After(*end) {
+		http.Error(w, "start must not be after end", http.StatusBadRequest)
+		return
+	}
+	entries := systemLogs.snapshot(level, limit, start, end)
 	if r.URL.Query().Get("download") == "1" {
 		w.Header().Set("Content-Disposition", `attachment; filename="aide-system-logs.jsonl"`)
 		w.Header().Set("Content-Type", "application/x-ndjson; charset=utf-8")

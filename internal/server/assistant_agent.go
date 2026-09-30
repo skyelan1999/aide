@@ -42,6 +42,8 @@ const assistantAgentPrinciples = `【你现在怎么决定动作】不要再只�
 - 听上去是电视/广播/视频的背景声，或用户在跟身边真人打电话、闲聊：调用 be_silent，不要转达、不要搭话。
 - 意图不清楚（缺对象、缺要做什么）：不要乱猜，直接用一句话追问最关键的一个问题（不调工具，正文就是那个问题）。
 - 用户提到某个历史任务/会话、要你跟进或把结论写过去：先用 search_sessions 找到它，必要时 get_session 读一下，再 follow_session 标记或 push_to_session 推送；新独立任务用 push_to_session（ref 留空/"new"）新建会话承接。新会话只准备待发送草稿，用户检查并手动发送后 aide 才开始运行。
+- 用户询问你是否记得/能否翻历史，或在刚才的历史查询后只补充一个关键词/主题：要把它当作查历史的延续，主动用 search_sessions 检索；找到后用 get_session 查看相关上下文，再结合事实回答。找不到时如实说明，不要假装记得。
+- 回答时先结合本小秘会话最近的对话，不能把用户当前一句从上下文里孤立处理；跨会话的旧事实仍须通过历史工具检索，不要猜测。
 - 想记住用户的习惯/偏好/待办：调用 remember 写进你自己的私有记忆。
 
 【铁律】
@@ -80,7 +82,14 @@ func assistantAgentToolSchemas(allowSilent bool) []any {
 		// 键盘输入没有环境音信息，不能按背景声/真人对话静默；语音入口仍提供此工具。
 		extra = append(extra[:1], extra[2:]...)
 	}
+	base = append(base, xiaomiReminderToolSchemas()...)
 	return append(base, extra...)
+}
+
+func (a *App) assistantAgentTools(allowSilent bool) []any {
+	tools := assistantAgentToolSchemas(allowSilent)
+	tools = append(tools, a.pluginToolSchemasForOwner("current-time")...)
+	return append(tools, a.pluginToolSchemasForOwner("lunar-calendar")...)
 }
 
 // runAssistantAgenticLoop 小秘 agentic 决策主循环。
@@ -111,11 +120,11 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 		fmt.Sprintf("【aide 的长期记忆（只读参考、绝不修改；它不是你自己的记忆）】\n%s\n\n", aideMem) +
 		fmt.Sprintf("【你自己的私有长期记忆】%s\n", voiceMemorySummary(mem))
 
-	messages := []Message{
-		{Role: "system", Content: system},
-		{Role: "user", Content: heard},
-	}
-	tools := assistantAgentToolSchemas(inputSource != "text")
+	messages := []Message{{Role: "system", Content: system}}
+	messages = append(messages, a.recentAssistantConversation()...)
+	messages = append(messages, Message{Role: "user", Content: heard})
+	// XiaoMi can read the clock, but must not inherit arbitrary workspace plugin tools.
+	tools := a.assistantAgentTools(inputSource != "text")
 	params := ProfileParams{MaxTokens: 800, Temperature: fp(0.3)}
 
 	dec := assistantDecision{Action: "chat"}
@@ -298,6 +307,20 @@ func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision) string {
 		}
 		return fmt.Sprintf("已向会话 #%d（%s）推送：%s", target.Number, target.Title, msg)
 	default:
+		if strings.HasPrefix(call.Function.Name, "reminder_") {
+			return a.dispatchAssistantReminderTool(call)
+		}
+		if pluginID := a.pluginOwnerOf(call.Function.Name); pluginID == "current-time" || pluginID == "lunar-calendar" {
+			result, err := a.callPluginTool(pluginID, call.Function.Name, args)
+			if err != nil {
+				return "查询插件信息失败: " + err.Error()
+			}
+			b, err := json.Marshal(result)
+			if err != nil {
+				return "查询插件信息失败: 无法序列化结果"
+			}
+			return string(b)
+		}
 		return "未知工具: " + call.Function.Name
 	}
 }

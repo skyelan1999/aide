@@ -90,6 +90,11 @@ type Task struct {
 	Profile             string              `json:"profile,omitempty"`             // 本次生效的 profile id
 	RequestSnapshots    []RequestSnapshot   `json:"requestSnapshots,omitempty"`    // R08-04：实际发出的 Provider 请求快照（首轮+工具续跑）
 	SnapshotsTruncated  bool                `json:"snapshotsTruncated,omitempty"`  // 快照达到上限后被截断
+	CheckpointMessages  []Message           `json:"checkpointMessages,omitempty"`  // 已完成模型/工具往返，用于暂停后续跑
+	CheckpointStep      string              `json:"checkpointStep,omitempty"`      // 当前未完成阶段；空表示阶段间检查点
+	CanResume           bool                `json:"canResume,omitempty"`
+	PauseRequested      bool                `json:"pauseRequested,omitempty"`
+	ResumedFrom         string              `json:"resumedFrom,omitempty"`
 	// #45 子 agent 归属：spawn_subagent 派生的子任务在创建时打上父子会话身份，
 	// 供 toolLoop 记录 ToolUse.Who 及子会话编号/标题。主任务这些字段为空。
 	ParentSessionID  string          `json:"parentSessionId,omitempty"` // 父会话 ID（子任务才有）
@@ -103,6 +108,15 @@ type Task struct {
 	AnswerCh         chan string     `json:"-"`                         // 当前澄清轮次的应答通道（每轮 ask_user 新建，见 answerRound）
 	answerRound      int64           `json:"-"`                         // 澄清轮次单调 nonce：每进入一次 ask_user 自增，与本轮 AnswerCh 配对
 	discardedAnswers int64           `json:"-"`                         // 因轮次过期/任务不再 awaiting 而被丢弃的应答计数（诊断）
+}
+
+const workflowRunTimeout = 15 * time.Minute
+
+func taskRunTimeout(mode string) time.Duration {
+	if mode == "chat" {
+		return 6 * time.Minute
+	}
+	return workflowRunTimeout
 }
 
 // SteerMsg 记录一条运行中用户输入。
@@ -328,16 +342,28 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			go a.runAutoEvolve(personaAide, modeRefine, trigger, a.personalitySampleLocked(personaAide))
 		}
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+	runTimeout := taskRunTimeout(task.Mode)
+	ctx, cancel := context.WithTimeout(context.Background(), runTimeout)
 	a.cancels[task.ID] = cancel
 	go a.execute(ctx, s, task, a.settings, history, firstInput, versions, params)
 	a.broadcastSessionsChanged(s.ID) // #60：run 启动，会话状态变更
 	jsonOut(w, 202, task)
 }
 func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings, messages []Message, firstInput []Message, versions map[string]Change, params ProfileParams) {
+	runTimeout := taskRunTimeout(task.Mode)
 	// 模型 API Key 从加密 vault 解密注入 cfg。已配置 key 但 vault 未解锁时明确失败，
 	// 不静默发空 Authorization 让上游回 401。
 	a.mu.Lock()
+	if len(task.CheckpointMessages) == 0 && len(firstInput) > 0 {
+		task.CheckpointMessages = append([]Message(nil), firstInput...)
+		if task.Mode == "chat" {
+			task.CheckpointStep = "chat"
+		} else {
+			task.CheckpointStep = "plan"
+		}
+		task.CanResume = true
+		_ = a.save(s)
+	}
 	modelKey, keyErr := a.modelAPIKeyLocked()
 	a.mu.Unlock()
 	cfg.APIKey = modelKey
@@ -354,7 +380,9 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 	// 主题总结改为并发执行：原先串行会阻塞首个回答 token（多一次完整模型调用延迟）。
 	// summarizeTopic 只读写 s.Title/task.Usage（均在 a.mu 内），与主流程无竞态。
 	// 标题总结用独立 ctx：不随主 run 结束被 cancel，否则短任务会把标题总结掐断
-	a.background(func() { a.summarizeTopic(a.bgCtx, s, task, cfg, params) })
+	if len(task.Steps) == 0 {
+		a.background(func() { a.summarizeTopic(a.bgCtx, s, task, cfg, params) })
+	}
 	defer func() {
 		a.mu.Lock()
 		if cancel := a.cancels[task.ID]; cancel != nil {
@@ -365,10 +393,39 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 	}()
 	// #35：把本 run 的 SSE 增量桥到会话维度的实时输出缓冲（供小秘拉取）。
 	a.beginLiveRun(s.ID, task.ID)
+	a.mu.Lock()
+	resumeStep := task.CheckpointStep
+	resumeMessages := append([]Message(nil), task.CheckpointMessages...)
+	findStep := func(name string) int {
+		for i := range task.Steps {
+			if task.Steps[i].Name == name {
+				return i
+			}
+		}
+		return -1
+	}
+	a.mu.Unlock()
+	checkpoint := func(name string, chain []Message) {
+		a.mu.Lock()
+		task.CheckpointStep = name
+		task.CheckpointMessages = append([]Message(nil), chain...)
+		task.CanResume = true
+		_ = a.save(s)
+		a.mu.Unlock()
+	}
 	step := func(name, instruction string, withTools bool) (string, error) {
 		a.mu.Lock()
-		task.Steps = append(task.Steps, Step{Name: name, Status: "running"})
-		index := len(task.Steps) - 1
+		index := findStep(name)
+		if index >= 0 && task.Steps[index].Status == "completed" && resumeStep != name {
+			content := task.Steps[index].Content
+			a.mu.Unlock()
+			return content, nil
+		}
+		if index < 0 {
+			task.Steps = append(task.Steps, Step{Name: name})
+			index = len(task.Steps) - 1
+		}
+		task.Steps[index].Status = "running"
 		err := a.save(s)
 		a.mu.Unlock()
 		a.publishStream(task.ID, streamEvent{Event: "step", Step: name, Status: "running"})
@@ -376,7 +433,9 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 			return "", err
 		}
 		var input []Message
-		if index == 0 && firstInput != nil {
+		if resumeStep == name && len(resumeMessages) > 0 {
+			input = append([]Message(nil), resumeMessages...)
+		} else if index == 0 && firstInput != nil {
 			// R08-04：首轮请求与预览共用同一构建器产物，保证字节一致
 			input = append([]Message{}, firstInput...)
 		} else {
@@ -394,12 +453,21 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 			// 偶发返回非 JSON 导致整个任务失败；propose 不带工具，约束不冲突。
 			stepParams.ResponseFormat = "json_object"
 		}
-		out, chain, err := a.toolLoop(ctx, cfg, input, stepParams, tools, task, versions, index)
+		checkpoint(name, input)
+		out, chain, err := a.toolLoop(ctx, cfg, input, stepParams, tools, task, versions, index, checkpoint)
 		a.mu.Lock()
 		task.Steps[index].Content = out
-		task.Steps[index].Status = "completed"
 		if err != nil {
-			task.Steps[index].Status = "failed"
+			if task.PauseRequested && errors.Is(ctx.Err(), context.Canceled) {
+				task.Steps[index].Status = "paused"
+			} else {
+				task.Steps[index].Status = "failed"
+			}
+		} else {
+			task.Steps[index].Status = "completed"
+			messages = append(chain, Message{Role: "assistant", Content: out})
+			task.CheckpointStep = ""
+			task.CheckpointMessages = append([]Message(nil), messages...)
 		}
 		saveErr := a.save(s)
 		a.mu.Unlock()
@@ -411,7 +479,6 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 			return "", saveErr
 		}
 		// 完整对话链（含工具调用与原始结果）进入下一阶段请求（R05 证据链）
-		messages = append(chain, Message{Role: "assistant", Content: out})
 		return out, nil
 	}
 	var answer string
@@ -433,14 +500,38 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 	}
 	a.mu.Lock()
 	if err != nil {
-		task.Status = "failed"
 		task.Error = err.Error()
-		if ctx.Err() != nil {
-			task.Status = "cancelled"
-			task.Error = "任务已取消或超时"
+		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+			task.Status = "failed"
+			task.CanResume = false
+			phase := "当前阶段"
+			if n := len(task.Steps); n > 0 {
+				phase = task.Steps[n-1].Name
+			}
+			task.Error = fmt.Sprintf("任务运行超过 %s，阶段：%s；可重试", runTimeout, phase)
+		} else if errors.Is(ctx.Err(), context.Canceled) {
+			if task.PauseRequested && len(task.CheckpointMessages) > 0 {
+				task.Status = "paused"
+				task.Error = ""
+				task.CanResume = true
+			} else {
+				task.Status = "cancelled"
+				task.Error = "任务已停止"
+				task.CanResume = false
+				task.CheckpointMessages = nil
+				task.CheckpointStep = ""
+			}
+			task.PauseRequested = false
+		} else {
+			task.Status = "failed"
+			task.CanResume = false
 		}
 	} else {
 		task.Status = "completed"
+		task.CanResume = false
+		task.PauseRequested = false
+		task.CheckpointMessages = nil
+		task.CheckpointStep = ""
 		if len(task.Files) > 0 {
 			task.Status = "awaiting_approval"
 		}
@@ -617,7 +708,8 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+	runTimeout := taskRunTimeout(task.Mode)
+	ctx, cancel := context.WithTimeout(context.Background(), runTimeout)
 	a.cancels[task.ID] = cancel
 	go a.execute(ctx, s, task, a.settings, history, firstInput, versions, params)
 	a.broadcastSessionsChanged(s.ID) // #60：run 启动，会话状态变更
@@ -630,6 +722,7 @@ func (a *App) cancelTask(w http.ResponseWriter, r *http.Request) {
 	if s != nil {
 		for _, t := range s.Runs {
 			if t.ID == r.PathValue("run") {
+				t.PauseRequested = false
 				if cancel := a.cancels[t.ID]; cancel != nil {
 					cancel()
 				}
@@ -639,6 +732,143 @@ func (a *App) cancelTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	fail(w, 404, errors.New("任务不存在"))
+}
+
+func (a *App) pauseTask(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	s := a.sessions[r.PathValue("id")]
+	if s == nil {
+		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	for _, task := range s.Runs {
+		if task.ID != r.PathValue("run") {
+			continue
+		}
+		if task.Status != "running" {
+			fail(w, 409, errors.New("只有运行中的任务可以暂停"))
+			return
+		}
+		cancel := a.cancels[task.ID]
+		if cancel == nil || !task.CanResume || len(task.CheckpointMessages) == 0 {
+			fail(w, 409, errors.New("任务检查点尚未准备好，请稍后再试"))
+			return
+		}
+		task.PauseRequested = true
+		if err := a.save(s); err != nil {
+			task.PauseRequested = false
+			fail(w, 500, err)
+			return
+		}
+		cancel()
+		jsonOut(w, 202, map[string]any{"ok": true, "status": "pausing"})
+		return
+	}
+	fail(w, 404, errors.New("任务不存在"))
+}
+
+func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	s := a.sessions[r.PathValue("id")]
+	if s == nil {
+		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	var orig *Task
+	for _, task := range s.Runs {
+		if task.ID == r.PathValue("run") {
+			orig = task
+			break
+		}
+	}
+	if orig == nil {
+		fail(w, 404, errors.New("任务不存在"))
+		return
+	}
+	if (orig.Status != "paused" && orig.Status != "interrupted") || !orig.CanResume || len(orig.CheckpointMessages) == 0 {
+		fail(w, 409, errors.New("该任务没有可恢复的检查点"))
+		return
+	}
+	if a.settings.Model == "" {
+		fail(w, 400, errors.New("请先配置模型"))
+		return
+	}
+	if len(a.cancels) >= 4 {
+		fail(w, 429, errors.New("运行中的任务过多"))
+		return
+	}
+	strategy := orig.Strategy
+	if strategy == "" {
+		strategy = "manual"
+	}
+	profileID, params, err := a.resolveProfile(strategy, orig.Profile, orig.Prompt, orig.Mode)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	_, images, versions, err := a.attachmentContext(orig.Attachments)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if err := a.visionGateLocked(images); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	var resumed Task
+	b, err := json.Marshal(orig)
+	if err == nil {
+		err = json.Unmarshal(b, &resumed)
+	}
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	for i := len(resumed.CheckpointMessages) - 1; i >= 0; i-- {
+		msg := &resumed.CheckpointMessages[i]
+		if msg.Role == "user" && strings.TrimSpace(msg.Content) == strings.TrimSpace(orig.Prompt) {
+			msg.Images = images
+			break
+		}
+	}
+	resumed.ID = newID()
+	resumed.Created = time.Now().UTC().Format(time.RFC3339Nano)
+	resumed.Status = "running"
+	resumed.Error = ""
+	resumed.Strategy = strategy
+	resumed.Profile = profileID
+	resumed.ResumedFrom = orig.ID
+	resumed.PauseRequested = false
+	resumed.CanResume = true
+	resumed.Steer = make(chan string, 4)
+	resumed.AnswerCh = nil
+	resumed.PendingQuestion = nil
+	resumed.discardedAnswers = 0
+	resumed.answerRound = 0
+	if orig.Model != "" {
+		resumed.Model = orig.Model
+	}
+	orig.Status = "resumed"
+	orig.CanResume = false
+	s.Runs = append(s.Runs, &resumed)
+	if err := a.save(s); err != nil {
+		s.Runs = s.Runs[:len(s.Runs)-1]
+		orig.Status = "paused"
+		orig.CanResume = true
+		fail(w, 500, err)
+		return
+	}
+	cfg := a.settings
+	if resumed.Model != "" {
+		cfg.Model = resumed.Model
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), taskRunTimeout(resumed.Mode))
+	a.cancels[resumed.ID] = cancel
+	go a.execute(ctx, s, &resumed, cfg, resumed.CheckpointMessages, nil, versions, params)
+	a.broadcastSessionsChanged(s.ID)
+	jsonOut(w, 202, &resumed)
 }
 
 // answerTask 接收用户对澄清问题的应答，唤醒被 ask_user 阻塞的 run。
@@ -762,8 +992,14 @@ func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 // toolListHint 生成系统提示里的工具清单行（协议 v1.1 / FR-33）。
 // pluginToolSchemas 把启用插件的可执行工具（含 parameters）纳入模型工具 schema（R05）。
 func (a *App) pluginToolSchemas() []any {
+	return a.pluginToolSchemasForOwner("")
+}
+
+// pluginToolSchemasForOwner returns executable tool schemas, optionally limited to one plugin.
+func (a *App) pluginToolSchemasForOwner(pluginID string) []any {
 	var surface struct {
 		Plugins []struct {
+			ID    string `json:"id"`
 			Error string `json:"error"`
 			Tools []struct {
 				Name        string         `json:"name"`
@@ -778,7 +1014,7 @@ func (a *App) pluginToolSchemas() []any {
 	}
 	out := []any{}
 	for _, p := range surface.Plugins {
-		if p.Error != "" {
+		if p.Error != "" || (pluginID != "" && p.ID != pluginID) {
 			continue
 		}
 		for _, t := range p.Tools {
@@ -976,7 +1212,7 @@ func (a *App) finishLiveRun(sessionID, taskID, taskStatus string) {
 	a.liveTaskMu.Unlock()
 	status := streamDone
 	switch taskStatus {
-	case "cancelled":
+	case "cancelled", "paused":
 		status = streamInterrupted
 	case "failed":
 		status = streamFailed
@@ -1016,13 +1252,19 @@ func maxToolCallsForRounds(rounds int) int {
 // toolLoop 与模型交互并执行工具调用（≤10 轮）；写操作只生成提案（P2/P3 原则保留）。
 // 返回最终答复与该步骤的完整对话链（含工具调用与原始结果，R05 证据链跨步骤保留）。
 // 每轮实际发出的请求体以快照记录（R08-04：预览与真实请求的可比证据）。
-func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task, versions map[string]Change, stepIndex int) (string, []Message, error) {
+func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, params ProfileParams, tools []any, task *Task, versions map[string]Change, stepIndex int, checkpoints ...func(string, []Message)) (string, []Message, error) {
 	a.mu.Lock()
 	stepName := "step"
 	if stepIndex >= 0 && stepIndex < len(task.Steps) {
 		stepName = task.Steps[stepIndex].Name
 	}
 	a.mu.Unlock()
+	saveCheckpoint := func() {
+		if len(checkpoints) > 0 && checkpoints[0] != nil {
+			checkpoints[0](stepName, input)
+		}
+	}
+	saveCheckpoint()
 	maxRounds := a.settings.ToolMaxRounds
 	if maxRounds <= 0 {
 		maxRounds = 60
@@ -1072,10 +1314,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		if err != nil {
 			// (a) 用户主动停止：保留已流式输出的部分内容与完整对话链
 			if ctx.Err() != nil {
-				if strings.TrimSpace(out) != "" {
-					return out + "\n\n---\n> ⏹ 已手动停止", input, nil
-				}
-				return "", input, ctx.Err()
+				return out, input, ctx.Err()
 			}
 			// (d) 空响应：上游正常结束但既无正文也无工具调用（长工具链后模型“直接闭嘴”）。
 			// 盲重试只会原样重放空结果；改为注入明确提示后让模型再收尾，最多自动兜底 2 次。
@@ -1084,6 +1323,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				if emptyFallback <= 2 {
 					a.publishStream(task.ID, streamEvent{Event: "note", Text: "模型本轮没有返回正文，正在自动续接…", Round: round})
 					input = append(input, Message{Role: "user", Content: emptyNudgePrompt(emptyFallback)})
+					saveCheckpoint()
 					continue
 				}
 				// 兜底仍空：不判失败，保留全部工具产出，给出可操作的明确状态
@@ -1143,6 +1383,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				a.publishStream(task.ID, streamEvent{Event: "note", Text: "回答被输出上限截断，正在自动续写…", Round: round})
 				input = append(input, Message{Role: "assistant", Content: out})
 				input = append(input, Message{Role: "user", Content: "【系统】你上一段输出因达到单次输出上限被截断。请直接接着上面未完成的内容继续输出，不要重复已写过的部分、不要重新开头。"})
+				saveCheckpoint()
 				continue
 			}
 			// out 为空且无可补全 tool_call：落到既有空响应兜底（err 分支）。
@@ -1173,6 +1414,13 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			return out, input, nil
 		}
 		input = append(input, Message{Role: "assistant", Content: out, ToolCalls: calls})
+		if ctx.Err() != nil {
+			for _, call := range calls {
+				input = append(input, Message{Role: "tool", ToolCallID: call.ID, Content: "因任务暂停，此调用尚未执行；恢复时请根据已有上下文判断是否需要重新调用。"})
+			}
+			saveCheckpoint()
+			return "", input, ctx.Err()
+		}
 		if toolCallsUsed+len(calls) > maxToolCalls {
 			msg := fmt.Sprintf("本步骤工具调用预算已达 %d 次（依据工具轮数 %d 推导），后续调用未执行。请点击「继续」基于已有结果总结，或调整工具轮数后重试。", maxToolCalls, maxRounds)
 			for _, call := range calls {
@@ -1249,7 +1497,15 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			}
 			task.ToolUses = append(task.ToolUses, tu)
 			a.mu.Unlock()
+			saveCheckpoint()
 			a.publishStream(task.ID, streamEvent{Event: "tool", Tool: call.Function.Name, Preview: display, CallID: call.ID, OK: !isErr})
+			if ctx.Err() != nil {
+				for _, skipped := range calls[callIndex+1:] {
+					input = append(input, Message{Role: "tool", ToolCallID: skipped.ID, Content: "因任务暂停，此调用尚未执行；恢复时请根据已有上下文判断是否需要重新调用。"})
+				}
+				saveCheckpoint()
+				return "", input, ctx.Err()
+			}
 			if repeats >= 8 {
 				msg := "同一工具调用的参数与结果已重复 8 次，本步骤已暂停重复探测；请点击「继续」换一种方法，或核查远端路径与命令。"
 				for _, skipped := range calls[callIndex+1:] {
@@ -1514,7 +1770,7 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt, profileID string) (stri
 	preview := a.buildContextPreview(subSess, subPrompt, "chat", "", nil, cfg, params, true)
 	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...)
 	firstInput := preview.Messages
-	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), taskRunTimeout(subTask.Mode))
 	a.cancels[subTask.ID] = cancel
 	a.mu.Unlock()
 
@@ -2887,6 +3143,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		if dt == call.Function.Name {
 			return "工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用"
 		}
+	}
+	if strings.HasPrefix(call.Function.Name, "reminder_") {
+		return a.executeReminderTool(a.reminderActorForTask(task.ID), call)
 	}
 	listDir := func(p string) ([]map[string]any, error) {
 		if mode == "ssh" {

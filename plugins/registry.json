@@ -112,6 +112,26 @@
       "installedAt": "2026-09-29T00:00:00Z"
     },
     {
+      "id": "current-time",
+      "name": "当前日期时间",
+      "description": "查询运行环境的当前日期、时间和时区；可指定 IANA 时区",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": ""
+    },
+    {
+      "id": "lunar-calendar",
+      "name": "农历日历",
+      "description": "查询今天或指定公历日期对应的中国农历日期、闰月、干支和生肖",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": ""
+    },
+    {
       "id": "comm-tcp",
       "name": "TCP 通讯",
       "description": "常驻 TCP 通讯：监听/连接/收发、本地代理录制、规则模拟应答、录制回放与 fuzz；零第三方依赖，默认禁用，仅绑回环",

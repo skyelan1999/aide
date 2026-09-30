@@ -1,0 +1,10 @@
+{
+  "id": "current-time",
+  "name": "当前日期时间",
+  "description": "查询运行环境的当前日期、时间和时区；可指定 IANA 时区",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "installedAt": ""
+}

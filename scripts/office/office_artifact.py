@@ -11,6 +11,7 @@ from pathlib import Path
 
 from docx import Document
 from openpyxl import Workbook, load_workbook
+from openpyxl.utils import get_column_letter
 from pptx import Presentation
 
 
@@ -84,13 +85,17 @@ def view_xlsx(source, sheet_name, start_row, start_col):
         if sheet_name and sheet_name not in wb.sheetnames:
             fail("sheet not found")
         ws = wb[sheet_name or wb.sheetnames[0]]
+        max_row = ws.max_row or 1
+        max_col = ws.max_column or 1
         rows = []
-        for row in ws.iter_rows(min_row=start_row, max_row=min(start_row + 99, ws.max_row),
-                                min_col=start_col, max_col=min(start_col + 25, ws.max_column)):
-            rows.append([{"ref": cell.coordinate, "value": cell.value if cell.value is not None else ""}
-                         for cell in row])
+        for row_offset, row in enumerate(ws.iter_rows(min_row=start_row, max_row=min(start_row + 99, max_row),
+                                                       min_col=start_col, max_col=min(start_col + 25, max_col))):
+            row_number = start_row + row_offset
+            rows.append([{"ref": f"{get_column_letter(start_col + col_offset)}{row_number}",
+                          "value": cell.value if cell.value is not None else ""}
+                         for col_offset, cell in enumerate(row)])
         return {"sheets": wb.sheetnames, "sheet": ws.title, "rows": rows,
-                "maxRow": ws.max_row, "maxCol": ws.max_column,
+                "maxRow": max_row, "maxCol": max_col,
                 "startRow": start_row, "startCol": start_col}
     finally:
         wb.close()

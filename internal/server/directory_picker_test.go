@@ -27,6 +27,42 @@ func TestDirectoryPickerCreatesAndRenamesWorkspaceFolder(t *testing.T) {
 	}
 }
 
+func TestDirectoryCreationUsesSelectedWritableReference(t *testing.T) {
+	a := testApp(t)
+	for i := range a.sourceRegistry.Sources {
+		if a.sourceRegistry.Sources[i].ID == contextSource {
+			a.sourceRegistry.Sources[i].RW = true
+		}
+	}
+	requireStatus(t, request(a, "POST", "/api/directory", map[string]any{
+		"root": "context", "source": contextSource, "parentPath": ".", "name": "reference-folder",
+	}), 200)
+	if info, err := a.reference.Stat("reference-folder"); err != nil || !info.IsDir() {
+		t.Fatalf("reference folder missing: %v", err)
+	}
+	if _, err := a.workspace.Stat("reference-folder"); !os.IsNotExist(err) {
+		t.Fatalf("folder unexpectedly created in workspace: %v", err)
+	}
+
+	for _, tc := range []struct {
+		name string
+		body map[string]any
+		want int
+	}{
+		{"readonly", map[string]any{"root": "context", "source": "context", "parentPath": ".", "name": "denied"}, 403},
+		{"root mismatch", map[string]any{"root": "workspace", "source": contextSource, "parentPath": ".", "name": "denied"}, 400},
+	} {
+		if tc.name == "readonly" {
+			for i := range a.sourceRegistry.Sources {
+				if a.sourceRegistry.Sources[i].ID == contextSource {
+					a.sourceRegistry.Sources[i].RW = false
+				}
+			}
+		}
+		requireStatus(t, request(a, "POST", "/api/directory", tc.body), tc.want)
+	}
+}
+
 func TestFileManagerPropertiesAndDelete(t *testing.T) {
 	a := testApp(t)
 	if err := putText(a.workspace, "notes.txt", []byte("hello")); err != nil {
@@ -42,8 +78,23 @@ func TestFileManagerPropertiesAndDelete(t *testing.T) {
 	if _, err := a.workspace.Stat("notes.txt"); !os.IsNotExist(err) {
 		t.Fatalf("file should be deleted, got %v", err)
 	}
-	if err := a.workspace.Mkdir("empty", 0755); err != nil { t.Fatal(err) }
+	if err := a.workspace.Mkdir("empty", 0755); err != nil {
+		t.Fatal(err)
+	}
 	requireStatus(t, request(a, "POST", "/api/file/delete", map[string]any{"root": "workspace", "path": "empty"}), 200)
+	if err := a.workspace.MkdirAll("nested/child", 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := putText(a.workspace, "nested/top.txt", []byte("top")); err != nil {
+		t.Fatal(err)
+	}
+	if err := putText(a.workspace, "nested/child/inside.txt", []byte("inside")); err != nil {
+		t.Fatal(err)
+	}
+	requireStatus(t, request(a, "POST", "/api/file/delete", map[string]any{"root": "workspace", "path": "nested"}), 200)
+	if _, err := a.workspace.Stat("nested"); !os.IsNotExist(err) {
+		t.Fatalf("nested directory tree should be deleted, got %v", err)
+	}
 	requireStatus(t, request(a, "POST", "/api/file/delete", map[string]any{"root": "workspace", "path": "."}), 400)
 }
 

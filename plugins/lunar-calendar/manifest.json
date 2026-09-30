@@ -1,0 +1,10 @@
+{
+  "id": "lunar-calendar",
+  "name": "农历日历",
+  "description": "查询今天或指定公历日期对应的中国农历日期、闰月、干支和生肖",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "installedAt": ""
+}

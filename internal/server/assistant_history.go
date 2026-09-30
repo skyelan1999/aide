@@ -267,6 +267,43 @@ func (a *App) xiaomiHistoryLocked() []Message {
 	return append(legacy, current...)
 }
 
+// recentAssistantConversation 提供小秘当前系统会话的短期上下文。它只把已有会话
+// 消息临时带入本次模型请求，不写入长期记忆；跨会话内容仍需显式调用历史检索工具。
+func (a *App) recentAssistantConversation() []Message {
+	const maxMessages = 16
+	const maxRunes = 8000
+
+	a.mu.Lock()
+	history := a.xiaomiHistoryLocked()
+	a.mu.Unlock()
+
+	selected := make([]Message, 0, maxMessages)
+	used := 0
+	for i := len(history) - 1; i >= 0 && len(selected) < maxMessages; i-- {
+		msg := history[i]
+		if msg.Role != "user" && msg.Role != "assistant" {
+			continue
+		}
+		content := []rune(strings.TrimSpace(msg.Content))
+		if len(content) == 0 || used >= maxRunes {
+			continue
+		}
+		remaining := maxRunes - used
+		if len(content) > remaining {
+			content = content[len(content)-remaining:]
+		}
+		msg.Content = string(content)
+		msg.ToolCalls = nil
+		msg.ToolCallID = ""
+		selected = append(selected, msg)
+		used += len(content)
+	}
+	for left, right := 0, len(selected)-1; left < right; left, right = left+1, right-1 {
+		selected[left], selected[right] = selected[right], selected[left]
+	}
+	return selected
+}
+
 // assistantMessageHandler POST /api/sessions/{id}/assistant-message
 // 小秘系统会话视图的文字输入：直接按发给小秘的消息处理；不做语音环境过滤。
 // 入参 {text, context?}；返回小秘决策 + 回复文本 +（dispatch 时）转交的 aide 会话信息。

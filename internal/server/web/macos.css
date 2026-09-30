@@ -146,11 +146,6 @@ h1 span { color: var(--brand); }
 .file-list { padding: 10px 8px; }
 .file-item { padding: 9px 11px; font-size: 12px; border-radius: 7px; }
 .file-item .file-icon { color: var(--brand-text); }
-.context-guide { padding: 20px 18px; }
-.context-guide .section-label { font-size: 10px; letter-spacing: .3px; }
-.context-guide strong { font-size: 12px; }
-.context-guide p { font-size: 11px; }
-.context-guide>div:last-child { font-size: 10px; margin-top: 14px; }
 /* Sheets behave as centered utility windows, with one contained scroll region. */
 .settings-backdrop { -webkit-backdrop-filter: blur(5px); backdrop-filter: blur(5px); }
 .settings-sheet, .settings-sheet.sheet-wide { left: 50%; top: 50%; width: min(760px, calc(100vw - 48px)); max-height: calc(100dvh - 48px); padding: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 28px 100px var(--shadow-2), 0 2px 12px var(--shadow-1); transform: translate(-50%, calc(-50% + 8px)) scale(.99); overflow: hidden; display: flex; flex-direction: column; -webkit-backdrop-filter: none; backdrop-filter: none; }

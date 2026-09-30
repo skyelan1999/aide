@@ -112,6 +112,18 @@ flowchart TD
 
 仅本机自用，不影响他人；删数据卷会换一张新证书，需重新导入。
 
+### 可选：Windows 上信任本地证书（消除警告）
+
+仅当 aide 运行在本机 Docker Desktop 且通过 `https://localhost:8097` 访问时使用。PowerShell 中导出**公开证书**（不是私钥）：
+
+```powershell
+docker compose exec -T aide cat /data/certs/cert.pem > aide-local.pem
+```
+
+确认文件来自本机 aide 的持久化数据卷后，运行 `certmgr.msc`，在“当前用户 → 受信任的根证书颁发机构 → 证书”中导入 `aide-local.pem`，然后重启浏览器。若服务端运行在其他主机/容器，必须在实际发起 TLS 连接的客户端信任该服务端证书；导入 Windows 当前用户证书不会影响其他容器的信任存储。证书轮换或删除数据卷后需重新导入。
+
+不要导入 `key.pem`（私钥），也不要关闭浏览器或客户端的证书校验。此操作需要用户自行确认并执行；aide 不会自动修改 Windows 证书存储。
+
 ## 7. WebAuthn / Touch ID 与 Secure Context
 
 WebAuthn 要求 **Secure Context**（`https://` 或 `http://localhost`）。0.1.11 切到 HTTPS 后：

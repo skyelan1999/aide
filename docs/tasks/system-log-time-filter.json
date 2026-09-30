@@ -1,0 +1,90 @@
+{
+  "id": "system-log-time-filter",
+  "request": "系统日志页面增加开始日期时间和截至日期时间过滤功能。",
+  "baseline": "40da817c36eb68a2ac0169afd4bec428da6214bb",
+  "initial_status": "",
+  "acceptance": [
+    "系统日志面板提供可选的开始日期时间和截至日期时间；任一为空时，该端不设时间边界。",
+    "开始和截至时间按本地时区输入并正确筛选日志；截至时间包含该时刻，开始时间不得晚于截至时间。",
+    "刷新和 JSONL 下载使用相同的级别、开始时间和截至时间筛选条件。",
+    "时间过滤在服务端执行，仍受最近 5000 条日志的缓冲容量限制。"
+  ],
+  "scope": [
+    "internal/server/system_log.go",
+    "internal/server/system_log_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "docs/tasks/system-log-time-filter.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "系统日志新增可选本地日期时间边界；截至值含边界，校验开始不晚于截至，并让刷新与导出复用同一筛选。",
+      "evidence": [
+        "用户请求：系统日志增加开始日期时间和截至日期时间过滤。",
+        "docs/tasks/system-log-viewer.json：现有面板支持级别筛选、刷新与 JSONL 下载，最多保留 5000 条。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "服务端按 RFC3339 时间边界过滤当前环形缓冲快照；前端 datetime-local 取本地时间并转换为带时区的 ISO 时间；列表与下载共用查询参数。",
+      "evidence": [
+        "internal/server/system_log.go：现有环形缓冲 snapshot 与 GET /api/system-logs 查询逻辑。",
+        "internal/server/web/app.js：现有系统日志级别、刷新、下载控制。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "增加服务端 start/end RFC3339 过滤与范围校验；设置页加入本地日期时间控件，刷新和 JSONL 下载共用级别、时间参数；补齐样式、英文文案和中英文用户指南。",
+      "evidence": [
+        "internal/server/system_log.go",
+        "internal/server/web/app.js",
+        "internal/server/web/style.css",
+        "internal/server/web/locales/en.js",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "系统日志 Go 定向测试、前端语法检查、英文文案测试、Markdown 链接检查和 diff whitespace 检查通过。完整 quick 检查未通过：本机 WSL 缺少 /bin/bash，Python 测试受 Windows 符号链接权限、临时目录锁定及本地根目录平台假设影响。已登录 aide 页面未能在可用浏览器中打开，因此真实 UI 验收未运行。",
+      "evidence": [
+        "docker run --rm -v C:\\workstation\\aide\\aide:/workspace -w /workspace golang:1.26-bookworm go test -mod=vendor ./internal/server -run ^TestSystemLog -count=1: PASS, aide/internal/server 0.007s",
+        "python bundled -X utf8 scripts/check_docs.py: PASS, 108 Markdown files and 228 local links",
+        "python bundled -X utf8 scripts/agent-route.py verify quick: FAIL, .agent-state/verify-20260930T023841781359Z.log; WSL /bin/bash absent, Windows symlink/temp cleanup restrictions and local-root platform assumption",
+        "node --check internal/server/web/app.js; node --check internal/server/web/locales/en.js: PASS",
+        "node scripts/test_i18n.cjs: PASS; git diff --check: PASS",
+        "Real browser UI: NOT_RUN; current available browser had no authenticated aide tab. Existing local containers were not restarted or changed."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英文指南均说明可按级别和可选本地开始/截至日期时间过滤，并下载相同条件的脱敏 JSONL。",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "变更范围限定在日志筛选接口、设置页、回归测试、用户指南和本任务记录；没有修改或重启现有运行容器。",
+      "evidence": [
+        "git status --short --branch: 仅本任务的 8 个文件有变化或新增",
+        "git diff --check: PASS"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未授权提交、推送、构建发布镜像或部署；日志筛选实现继续由合并任务记录跟踪。",
+      "evidence": [
+        "docs/agent/WORKFLOW.md：发布必须有用户明确授权；当前请求仅授权解决问题，没有授权发布。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退 system_log.go 与 system_log_test.go 的时间筛选改动，app.js/style.css/en.js 的日期控件改动和两份指南说明；不影响现有日志缓冲与级别筛选。",
+  "handoff": "已实现并通过日志定向测试；完整 quick 检查受 Windows/WSL 环境影响，真实浏览器验收 NOT_RUN。未构建镜像、提交、发布、重启或部署；现有 Docker 容器未改动。继续前应在 Linux/WSL 有 bash 的环境重跑 quick，并在已登录 aide 页面实际检查开始/截至筛选、刷新与 JSONL 下载。"
+}

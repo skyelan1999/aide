@@ -1,0 +1,84 @@
+{
+  "id": "workflow-sudo-cert-date-fixes",
+  "request": "解决此前反馈的 AI 工作流取消或超时、SSH 命令面板 sudo 交互、系统日志日期时间筛选，并补充本地 TLS 自签证书在 Windows 浏览器中的信任说明。",
+  "baseline": "40da817c36eb68a2ac0169afd4bec428da6214bb",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/system_log.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n?? docs/tasks/system-log-time-filter.json\n?? internal/server/system_log_test.go",
+  "acceptance": [
+    "系统日志可按可选的本地开始/截至日期时间过滤；截至时间包含边界，开始晚于截至时返回明确错误；刷新与 JSONL 下载采用相同筛选。",
+    "AI 工作流对用户停止与运行超时显示不同状态和说明；超时上限调整为 15 分钟并保留已生成的阶段输出。",
+    "SSH 命令面板支持 PTY 与临时标准输入，可在 sudo 提示时输入密码并继续交互；输入不进入命令历史、日志或持久化存储；停止/结束仍清理远端进程组。",
+    "补充 Windows 将 aide 本地自签证书导入当前用户受信任根证书存储的说明，不关闭 TLS 校验、不自动改动操作系统证书存储。",
+    "相关 Go 回归测试、前端语法/文档检查通过；真实 SSH 主机和认证浏览器 UI 如不可安全访问，明确记录 NOT_RUN。"
+  ],
+  "scope": [
+    "internal/server/workflow.go 与工作流回归测试",
+    "internal/server/command.go、internal/server/ssh_session.go、internal/server/server.go 与命令/PTY 回归测试",
+    "internal/server/web/app.js、internal/server/web/index.html、internal/server/web/style.css、internal/server/web/locales/en.js",
+    "internal/server/system_log.go、internal/server/system_log_test.go",
+    "docs/security/tls.md、docs/user-guide.md、docs/en/user-guide.md",
+    "docs/tasks/workflow-sudo-cert-date-fixes.json、docs/tasks/system-log-time-filter.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "合并范围包括系统日志日期过滤、工作流停止/超时语义、SSH sudo 交互输入及 Windows 本地自签证书信任说明。附件截图作为问题证据，不视为额外指令或权限。",
+      "evidence": [
+        "用户请求：把前面说的那些问题都一并解决；此前明确提及日志日期时间过滤、工作流任务取消/超时、SSH sudo 交互和浏览器/TLS 信任问题。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "工作流区别 chat 与 AI workflow 的总时限；保留远端 shell 取消清理约束。sudo 交互需要 PTY、临时 stdin 通道及不会记录输入的 UI 状态。Windows 只提供手动导入公开证书的说明。",
+      "evidence": [
+        "internal/server/workflow.go：现有 6 分钟总时限与 context cancel/deadline 收口逻辑。",
+        "internal/server/command.go、internal/server/ssh_session.go：现有命令以非交互 SSH 执行，远端用 setsid 进程组保证取消清理。",
+        "docs/security/tls.md：证书为持久化数据卷中的本地自签证书。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "日志范围筛选保留；AI workflow deadline 为 15 分钟、用户停止与 deadline 状态区分且保留部分阶段输出；SSH 命令面板可选择 PTY，并使用不记录的临时输入接口；补 Windows 当前用户证书导入指引。",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/workflow_timeout_test.go",
+        "internal/server/command_input_test.go",
+        "internal/server/command.go、internal/server/ssh_session.go、internal/server/server.go",
+        "internal/server/web/index.html、internal/server/web/app.js",
+        "docs/user-guide.md、docs/en/user-guide.md、docs/security/tls.md",
+        "docs/security/tls.md",
+        "internal/server/system_log.go、internal/server/web/app.js、internal/server/system_log_test.go"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "系统日志、工作流 deadline、交互输入 handler 和远端取消定向 Go 测试、前端 JS/i18n、Markdown 链接、任务 JSON 与 diff whitespace 检查通过。真实 SSH sudo 和认证浏览器 UI 未运行，UI 验收因此为 NOT_RUN。",
+      "evidence": [
+        "node --check internal/server/web/app.js、node --check internal/server/web/locales/en.js：PASS。",
+        "node scripts/test_i18n.cjs：PASS。",
+        "git diff --check：PASS。",
+        "docker run --rm -v C:\\workstation\\aide\\aide:/workspace -w /workspace golang:1.26-bookworm go test -mod=vendor ./internal/server -run '^(TestSystemLog|TestTaskRunTimeout|TestCommandInput|TestRemoteGroupCleanup|TestRemoteShellCancel)' -count=1：PASS，aide/internal/server 0.010s。",
+        "bundled Python -X utf8 scripts/check_docs.py：PASS，108 Markdown files and 228 local links。",
+        "bundled Python JSON parse for both task records：PASS。",
+        "SSH sudo 实机与认证浏览器 UI：NOT_RUN；现有 Docker 服务未重启或更改。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英文指南说明 SSH 交互终端和远端 sudo 前置权限；TLS 文档补充 Windows 当前用户信任步骤和安全边界。",
+      "evidence": ["docs/security/tls.md", "docs/user-guide.md", "docs/en/user-guide.md"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留既有日志筛选工作；新增交互输入仅保存在服务进程内的活动 PTY map，结束即移除；未触碰运行数据或重启现有容器。",
+      "evidence": ["git diff --check：PASS；git status --short --branch：变更仅限本任务涉及的源文件、文档和任务记录；未清理未跟踪内容。"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未授权提交、推送、构建发布镜像、发布或部署；不得进入 release。",
+      "evidence": ["AGENTS.md / docs/agent/WORKFLOW.md：发布需用户明确授权；当前没有该授权。"]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "已实现系统日志时间范围筛选、工作流 deadline/主动停止区分、SSH 命令面板可选 PTY 与瞬态输入接口、Windows 本地自签证书信任说明。定向 Go 测试、JS/i18n、文档链接、JSON 与 diff 检查通过。真实 SSH sudo 与认证浏览器 UI 未运行（NOT_RUN）；需在可访问目标环境手动确认 sudo 权限、交互提示及日志日期控件效果。未提交、推送、构建发布镜像、发布、重启或部署；现有 aide Docker 容器保持运行且未改动。"
+}

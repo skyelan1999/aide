@@ -1,10 +1,11 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
-	"strings"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -193,5 +194,46 @@ func TestAssistantAgenticSelfIdentity(t *testing.T) {
 	}
 	if !strings.Contains(p, "aide") {
 		t.Fatal("identity prompt missing aide division of labor")
+	}
+}
+
+func TestAssistantRecentConversationRestoresShortTermContext(t *testing.T) {
+	a := testApp(t)
+	a.mu.Lock()
+	s := a.findAssistantSessionLocked()
+	s.Messages = []Message{
+		{Role: "user", Content: "你翻得历史记录嘛", Type: msgTypeTextIn},
+		{Role: "assistant", Content: "能的，我可以帮你找", Type: ""},
+		{Role: "user", Content: "支气管炎", Type: msgTypeTextIn},
+	}
+	a.mu.Unlock()
+
+	history := a.recentAssistantConversation()
+	if len(history) != 3 {
+		t.Fatalf("recent context has %d messages, want 3: %+v", len(history), history)
+	}
+	if history[0].Content != "你翻得历史记录嘛" || history[2].Content != "支气管炎" {
+		t.Fatalf("recent context order/content lost: %+v", history)
+	}
+	if !strings.Contains(assistantAgentPrinciples, "历史查询后只补充一个关键词") {
+		t.Fatal("assistant instructions must treat a short follow-up topic as a continuation of a history lookup")
+	}
+
+	var sent []Message
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		sent = body.Messages
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"role": "assistant", "content": "我去找一下历史记录。"}}}})
+	}))
+	defer srv.Close()
+	_, err := a.runAssistantAgenticLoop(context.Background(), Settings{BaseURL: srv.URL, Model: "test"}, "支气管炎", "", "text")
+	if err != nil {
+		t.Fatalf("runAssistantAgenticLoop: %v", err)
+	}
+	if len(sent) < 4 || sent[1].Content != "你翻得历史记录嘛" || sent[2].Content != "能的，我可以帮你找" || sent[3].Content != "支气管炎" {
+		t.Fatalf("model request did not include ordered prior conversation and new input: %+v", sent)
 	}
 }

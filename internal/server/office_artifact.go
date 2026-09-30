@@ -197,7 +197,7 @@ func (a *App) officeWriteBytes(p, sourceID string, src Source, b []byte) error {
 
 func (a *App) officeXlsxView(w http.ResponseWriter, r *http.Request) {
 	p, sourceID := r.URL.Query().Get("path"), r.URL.Query().Get("source")
-	if strings.ToLower(path.Ext(p)) != ".xlsx" {
+	if effectiveFileExt(p) != ".xlsx" {
 		fail(w, 400, errors.New("仅支持 .xlsx"))
 		return
 	}

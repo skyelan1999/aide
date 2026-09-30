@@ -17,3 +17,10 @@ func TestSFTPListDecodesChineseFilenames(t *testing.T) {
 		t.Fatalf("directory: %#v", items[1])
 	}
 }
+
+func TestSFTPListMarksSymlinksWithoutTreatingThemAsDirectories(t *testing.T) {
+	items := parseSFTPList("lrwxrwxrwx 1 user group 8 Sep 29 13:06 link -> outside\n", ".")
+	if len(items) != 1 || items[0]["name"] != "link" || items[0]["path"] != "link" || items[0]["symlink"] != true || items[0]["dir"] != false {
+		t.Fatalf("symlink should be a non-directory unlinkable entry: %#v", items)
+	}
+}

@@ -1,0 +1,58 @@
+{
+  "id": "xlsx-emptycell-render",
+  "request": "修复 Excel 其他 sheet 页不能正常渲染的问题；截图错误为 office 脚本失败: EmptyCell object has no attribute coordinate。",
+  "baseline": "40da817c36eb68a2ac0169afd4bec428da6214bb",
+  "initial_status": "M docs/README.md\n M docs/en/user-guide.md\n M docs/security/tls.md\n M docs/user-guide.md\n M internal/server/command.go\n M internal/server/server.go\n M internal/server/ssh_session.go\n M internal/server/system_log.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n?? docs/system-overview.md\n?? docs/tasks/project-context-dismiss.json\n?? docs/tasks/system-log-time-filter.json\n?? docs/tasks/system-overview-20260930.json\n?? docs/tasks/workflow-sudo-cert-date-fixes.json\n?? internal/server/command_input_test.go\n?? internal/server/system_log_test.go\n?? internal/server/workflow_timeout_test.go",
+  "acceptance": [
+    "打开含多个工作表的 XLSX 后，每个 sheet 都能选择并渲染，不因空单元格或样式区域失败。",
+    "读取单元格坐标时兼容 openpyxl EmptyCell / MergedCell 等没有 coordinate 属性的对象；空值/合并区域保持合理呈现。",
+    "增加针对稀疏工作表/空单元格的回归测试，相关 XLSX 工具测试通过。",
+    "前端选择其他工作表实际验证；若无法访问认证 UI 或原始文件，明确标记未验证。"
+  ],
+  "scope": [
+    "internal/server/office_artifact.go 与 XLSX 相关代码",
+    "scripts 中相关 Office 渲染脚本（如确有必要）",
+    "internal/server/office_artifact_test.go 或对应回归测试",
+    "docs/tasks/xlsx-emptycell-render.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目标是修复多工作表中稀疏/空白单元格触发坐标属性异常；截图中错误明确来自 Excel 读取脚本。",
+      "evidence": ["用户原话：excel的其他sheet页不能正常渲染。", "用户截图中的服务错误：office 脚本失败: 'EmptyCell' object has no attribute 'coordinate'。"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "openpyxl read_only iter_rows 对稀疏区域返回 EmptyCell；使用迭代起始行/列推算 A1 坐标，而不读取对象自身 coordinate；并对空表 max dimensions 为空作兜底。",
+      "evidence": ["scripts/office/office_artifact.py:view_xlsx 使用 read_only=True，原先直接访问 cell.coordinate。"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "按网格起始坐标生成单元格 ref，兼容缺少 coordinate 属性的 EmptyCell；补充选择第二个稀疏 sheet 的 API 回归。",
+      "evidence": ["scripts/office/office_artifact.py", "internal/server/office_artifact_test.go:TestOfficeXlsxViewSparseSecondSheet"]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "合成多 sheet/稀疏单元格通过完整 Go API 测试；截图所示原始工作簿未在当前 Git 工作区中找到，且没有可用的已登录浏览器标签进行端到端点击验收。原工作簿/浏览器验收 NOT_RUN。",
+      "evidence": ["docker run --rm --entrypoint go -v C:\\workstation\\aide\\aide:/workspace -w /workspace aide:local test -mod=vendor ./internal/server -run ^TestOfficeXlsxViewSparseSecondSheet$ -count=1：PASS，aide/internal/server 2.237s。", "rg --files -g '*.xlsx'：工作区未发现 xlsx 样本。", "可用 Codex In-app Browser 无打开标签；原始文件的 UI 验收：NOT_RUN。", "git diff --check：PASS。"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "本修复仅变更 XLSX 渲染脚本和回归测试，无外部 API 或用户指南行为变化；用户可见的错误已通过任务交接记录描述。",
+      "evidence": ["docs/tasks/xlsx-emptycell-render.json"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "变更限于单元格渲染坐标推算和稀疏 sheet 测试；没有删除或修改工作区数据。",
+      "evidence": ["git diff --check：PASS；未删除工作区文件或测试证据。"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未授权提交、推送、构建发布或部署。",
+      "evidence": ["AGENTS.md 与 docs/agent/WORKFLOW.md：发布需用户明确授权。"]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退 scripts/office/office_artifact.py 中坐标推算与空表维度兜底，并回退新增的 TestOfficeXlsxViewSparseSecondSheet；不涉及用户工作簿数据。",
+  "handoff": "已修复 EmptyCell.coordinate 假设，并以合成第二个稀疏 sheet 的完整 API 测试通过。原截图工作簿不在当前仓库，浏览器 UI 未验收；若用户可提供工作簿路径/文件，可在实际文件上进一步复核。未提交、发布或部署。"
+}

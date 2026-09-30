@@ -186,6 +186,9 @@ func (a *App) contextToolsFor(sess *Session) []any {
 	tools := a.contextTools()
 	if sess != nil && sess.Kind == assistantSessionKind {
 		tools = append(tools, crossSessionToolSchemas()...)
+		tools = append(tools, xiaomiReminderToolSchemas()...)
+	} else {
+		tools = append(tools, aideReminderToolSchemas()...)
 	}
 	return tools
 }

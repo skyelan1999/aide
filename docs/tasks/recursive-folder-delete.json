@@ -1,0 +1,59 @@
+{
+  "id": "recursive-folder-delete",
+  "request": "修复项目文件面板中含有子文件或子文件夹的目录无法删除的问题。",
+  "baseline": "40da817c36eb68a2ac0169afd4bec428da6214bb",
+  "initial_status": "M docs/README.md\n M docs/en/user-guide.md\n M docs/security/tls.md\n M docs/user-guide.md\n M internal/server/archive_test.go\n M internal/server/command.go\n M internal/server/files.go\n M internal/server/office_artifact_test.go\n M internal/server/server.go\n M internal/server/ssh_session.go\n M internal/server/system_log.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M scripts/office/office_artifact.py\n?? docs/system-overview.md\n?? docs/tasks/project-context-dismiss.json\n?? docs/tasks/system-log-time-filter.json\n?? docs/tasks/system-overview-20260930.json\n?? docs/tasks/workflow-sudo-cert-date-fixes.json\n?? docs/tasks/xlsx-emptycell-render.json\n?? docs/tasks/zip-extract-path-validation.json\n?? internal/server/command_input_test.go\n?? internal/server/system_log_test.go\n?? internal/server/workflow_timeout_test.go",
+  "acceptance": [
+    "项目文件面板可在确认后删除包含嵌套子目录和文件的工作区目录。",
+    "删除仅作用于工作区内选定路径；工作区根目录、受保护路径和引用来源仍不可删除。",
+    "本地工作区递归删除不跟随符号链接；SSH 工作区支持目录递归删除并安全处理链接项。",
+    "前端确认文案准确说明目录内容会一并永久删除，删除成功后刷新文件列表。",
+    "新增 API/递归删除回归测试通过；UI 实际验收如不可用须记录 NOT_RUN。"
+  ],
+  "scope": [
+    "internal/server/files.go 及相应服务端测试",
+    "internal/server/ssh_session.go 及相应解析/删除测试",
+    "internal/server/web/app.js 和英文翻译中删除确认文案",
+    "本任务记录及必要的用户指南"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "范围限定为项目文件面板工作区路径；递归内容删除需显式确认，根目录和受保护路径拒绝。",
+      "evidence": ["验收标准已记录；用户需求：含子项的文件夹无法删除。"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "本地使用 os.Root.RemoveAll 限定在工作区根内；SSH 先遍历预检整个子树，再后序逐项 SFTP 删除，链接项按文件 unlink。",
+      "evidence": ["internal/server/files.go:deleteWorkspaceFile", "internal/server/ssh_session.go:sftpRemoveWorkspacePath"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成本地/SSH工作区递归删除、SFTP 链接识别、递归删除警告文案和 API 回归测试。",
+      "evidence": ["internal/server/files.go", "internal/server/ssh_session.go", "internal/server/web/app.js", "internal/server/web/locales/en.js", "internal/server/directory_picker_test.go", "internal/server/ssh_filename_test.go"]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "Go 定向测试、JS 语法、i18n 检查已通过；桌面 UI 实际验收未运行，当前 Computer Use 未返回可用应用窗口。",
+      "evidence": ["PASS docker run --rm --entrypoint go -v C:\\workstation\\aide\\aide:/workspace -w /workspace aide:local test -mod=vendor ./internal/server -run ^(TestFileManagerPropertiesAndDelete|TestSFTPListDecodesChineseFilenames|TestSFTPListMarksSymlinksWithoutTreatingThemAsDirectories)$ -count=1", "PASS node --check internal/server/web/app.js", "PASS node --check internal/server/web/locales/en.js", "PASS node scripts/test_i18n.cjs", "PASS git diff --check (仅提示现存 LF/CRLF 转换警告)", "NOT_RUN UI: Codex In-app Browser tab list empty; Windows Computer Use 返回 apps=[]"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "无需新增独立用户指南；确认弹窗已说明目录及其全部内容将永久删除，后端 API 未改变。",
+      "evidence": ["internal/server/web/app.js:deleteFileEntry"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未清理或覆盖任何既有修改、未跟踪文件；未执行真实远程目录删除。",
+      "evidence": ["git status --short --branch 已复核；仅保留工作区变更"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未提交、构建镜像、部署或重启服务；用户未授权发布。",
+      "evidence": ["现有运行服务未触碰"]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回滚本次删除支持变更：恢复 files.go、ssh_session.go、app.js、locales/en.js 和相应测试；不涉及数据迁移或已删除文件。",
+  "handoff": "源码和定向测试已完成；待在真实 aide UI 中验收含子项目录删除确认与列表刷新。当前运行服务未重启，需按用户授权另行发布；未验证远程 SSH 实际删除。"
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"os/exec"
 	"path/filepath"
@@ -50,8 +51,9 @@ func (s *streamWriter) Write(b []byte) (int, error) {
 }
 func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Command string `json:"command"`
-		Cwd     string `json:"cwd"`
+		Command     string `json:"command"`
+		Cwd         string `json:"cwd"`
+		Interactive bool   `json:"interactive"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -66,7 +68,11 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	}
 	if a.workspaceMode() == "ssh" {
 		// R02/R03：远程模式不做本地 cwd 校验；命令进入绑定的远程目录
-		ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
+		timeout := 60 * time.Second
+		if in.Interactive {
+			timeout = 15 * time.Minute
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), timeout)
 		defer cancel()
 		if err := a.ensureSSHSession(ctx); err != nil {
 			fail(w, 400, err)
@@ -90,13 +96,37 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("X-Accel-Buffering", "no")
 		stream := &streamWriter{w: w}
 		start := time.Now()
-		code, runErr := a.execRemote(ctx, remote, stream, stream)
+		var code int
+		var runErr error
+		if in.Interactive {
+			inputID := newID()
+			reader, writer := io.Pipe()
+			a.commandInputMu.Lock()
+			if a.commandInputs == nil {
+				a.commandInputs = make(map[string]*io.PipeWriter)
+			}
+			a.commandInputs[inputID] = writer
+			a.commandInputMu.Unlock()
+			stream.event(map[string]string{"type": "session", "id": inputID})
+			code, runErr = a.execRemotePTY(ctx, remote, reader, stream, stream)
+			a.commandInputMu.Lock()
+			delete(a.commandInputs, inputID)
+			a.commandInputMu.Unlock()
+			_ = reader.Close()
+			_ = writer.Close()
+		} else {
+			code, runErr = a.execRemote(ctx, remote, stream, stream)
+		}
 		message := ""
 		if runErr != nil {
 			message = runErr.Error()
 		}
 		if ctx.Err() != nil {
-			message = "命令已取消或超过 60 秒"
+			if in.Interactive {
+				message = "交互命令已取消或超过 15 分钟"
+			} else {
+				message = "命令已取消或超过 60 秒"
+			}
 		}
 		stream.event(map[string]any{"type": "exit", "code": code, "error": message, "elapsedMS": time.Since(start).Milliseconds()})
 		return
@@ -172,4 +202,32 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 		message = "命令已取消或超过 60 秒"
 	}
 	stream.event(map[string]any{"type": "exit", "code": code, "error": message, "elapsedMS": time.Since(start).Milliseconds()})
+}
+
+// commandInput writes transient terminal input to an active SSH PTY. Input is
+// deliberately neither logged nor added to command history.
+func (a *App) commandInput(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Input string `json:"input"`
+	}
+	if err := decode(w, r, &in); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if len(in.Input) > 4096 {
+		fail(w, 400, errors.New("终端输入过长"))
+		return
+	}
+	a.commandInputMu.Lock()
+	writer := a.commandInputs[r.PathValue("id")]
+	a.commandInputMu.Unlock()
+	if writer == nil {
+		fail(w, 404, errors.New("交互终端已结束"))
+		return
+	}
+	if _, err := io.WriteString(writer, in.Input+"\n"); err != nil {
+		fail(w, 410, errors.New("交互终端已关闭"))
+		return
+	}
+	jsonOut(w, 200, map[string]bool{"ok": true})
 }

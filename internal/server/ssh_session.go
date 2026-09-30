@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -216,6 +217,34 @@ func (a *App) execRemote(ctx context.Context, command string, stdout, stderr io.
 	return -1, fmt.Errorf("远程执行失败: %w", err)
 }
 
+// execRemotePTY runs a command through an allocated SSH terminal while retaining
+// the remote process-group marker used by execRemote cancellation cleanup.
+func (a *App) execRemotePTY(ctx context.Context, command string, stdin io.Reader, stdout, stderr io.Writer) (int, error) {
+	runID := fmt.Sprintf("%d-%d", time.Now().UnixNano(), atomic.AddInt64(&remoteRunSeq, 1))
+	pgidFile := "/tmp/.aide-remote-" + runID + ".pgid"
+	inner := "echo $$ > " + shellQuote(pgidFile) + "; " + command + "; status=$?; rm -f " + shellQuote(pgidFile) + "; exit $status"
+	wrapped := "setsid -c bash -c " + shellQuote(inner)
+	args := append([]string{"-tt", "-S", sshControlSocket}, a.sshCommonArgs()...)
+	args = append(args, a.sshTarget(), wrapped)
+	cmd := exec.CommandContext(ctx, a.sshBin, args...)
+	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "TERM=xterm-256color"}
+	cmd.Stdin, cmd.Stdout, cmd.Stderr = stdin, stdout, stderr
+	cmd.WaitDelay = 2 * time.Second
+	err := cmd.Run()
+	if err == nil {
+		return 0, nil
+	}
+	if ctx.Err() != nil {
+		a.cleanupRemoteGroup(pgidFile)
+		return -1, fmt.Errorf("交互远程命令已取消或超时")
+	}
+	var ee *exec.ExitError
+	if errors.As(err, &ee) {
+		return ee.ExitCode(), nil
+	}
+	return -1, fmt.Errorf("远程交互执行失败: %w", err)
+}
+
 // cleanupRemoteGroup 显式清除远端进程组：读标记文件里的 PGID，先 TERM 后 KILL
 // 整个负进程组（kill -- -PGID，覆盖子孙），再复核组内是否还有存活进程，最后删标记。
 // 返回形如 "AIDE-CLEANUP:reaped:1234" 的结果行（日志/取证用）；master 不可达时
@@ -330,13 +359,20 @@ func parseSFTPList(out, relativePath string) []map[string]any {
 		if len(fields) < 9 || (fields[0] != "-rw" && !strings.HasPrefix(fields[0], "drw") && fields[0][0] != 'd' && fields[0][0] != '-' && fields[0][0] != 'l') {
 			continue
 		}
-		name := decodeSFTPName(strings.Join(fields[8:], " "))
 		dir := fields[0][0] == 'd'
+		symlink := fields[0][0] == 'l'
+		rawName := strings.Join(fields[8:], " ")
+		if symlink {
+			if arrow := strings.Index(rawName, " -> "); arrow >= 0 {
+				rawName = rawName[:arrow]
+			}
+		}
+		name := decodeSFTPName(rawName)
 		if name == "" || name == "." || name == ".." || strings.Contains(name, "/") || strings.ContainsAny(name, "\x00\r\n\t") || safePath(name) != nil {
 			continue
 		}
 		size, _ := strconv.ParseInt(fields[4], 10, 64)
-		items = append(items, map[string]any{"name": name, "path": path.Join(relativePath, name), "dir": dir, "size": size, "modified": strings.Join(fields[5:8], " ")})
+		items = append(items, map[string]any{"name": name, "path": path.Join(relativePath, name), "dir": dir, "symlink": symlink, "size": size, "modified": strings.Join(fields[5:8], " ")})
 		if len(items) >= 2000 {
 			break
 		}
@@ -456,8 +492,7 @@ func (a *App) sftpRenameDirectory(oldPath, newPath string) error {
 	return nil
 }
 
-// sftpRemove removes one regular file or one empty directory. Recursive
-// deletion is deliberately not supported by the file panel.
+// sftpRemove removes one regular file or one empty directory.
 func (a *App) sftpRemove(remotePath string, dir bool) error {
 	command := "rm "
 	if dir {
@@ -469,6 +504,52 @@ func (a *App) sftpRemove(remotePath string, dir bool) error {
 	}
 	if sftpCommandFailed(out) {
 		return fmt.Errorf("SFTP 删除失败: %s", strings.TrimSpace(out))
+	}
+	return nil
+}
+
+// sftpRemoveWorkspacePath preflights a complete subtree before deleting it so
+// protected paths cannot cause a partially deleted tree. SFTP reports symlinks
+// as link entries; they are unlinked, never traversed.
+func (a *App) sftpRemoveWorkspacePath(relativePath string, dir bool) error {
+	type entry struct {
+		path string
+		dir  bool
+	}
+	var entries []entry
+	var scan func(string, bool) error
+	scan = func(p string, isDir bool) error {
+		if err := safePath(p); err != nil {
+			return err
+		}
+		if !isDir {
+			entries = append(entries, entry{p, false})
+			return nil
+		}
+		items, err := a.sftpListRemote(a.workspaceRemotePath(p), p)
+		if err != nil {
+			return err
+		}
+		if len(items) >= 2000 {
+			return fmt.Errorf("目录条目过多，无法安全递归删除: %s", p)
+		}
+		for _, item := range items {
+			child, _ := item["path"].(string)
+			childDir, _ := item["dir"].(bool)
+			if err := scan(child, childDir); err != nil {
+				return err
+			}
+		}
+		entries = append(entries, entry{p, true})
+		return nil
+	}
+	if err := scan(relativePath, dir); err != nil {
+		return err
+	}
+	for _, item := range entries {
+		if err := a.sftpRemove(a.workspaceRemotePath(item.path), item.dir); err != nil {
+			return err
+		}
 	}
 	return nil
 }

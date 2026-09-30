@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -273,6 +274,21 @@ func checkedRaw(b []byte) ([]byte, error) {
 	return b, nil
 }
 
+// effectiveFileExt recognizes a backup by the type of the original file while
+// retaining the actual .bak path for all reads and writes. Only one suffix is
+// removed, matching the browser's preview routing.
+func effectiveFileExt(p string) string {
+	p = strings.ToLower(p)
+	if !strings.HasSuffix(p, ".bak") {
+		return path.Ext(p)
+	}
+	p = strings.TrimSuffix(p, ".bak")
+	p = backupVersionSuffix.ReplaceAllString(p, "")
+	return path.Ext(p)
+}
+
+var backupVersionSuffix = regexp.MustCompile(`(?:\.v\d+(?:\.\d+)*|\.pre-[^.]+)+$`)
+
 func (a *App) downloadTarget(r *http.Request) (string, Source, bool, bool, error) {
 	p := r.URL.Query().Get("path")
 	if err := validArchivePath(p); err != nil {
@@ -526,6 +542,57 @@ type extractedArchiveFile struct {
 	dir  bool
 }
 
+func cleanArchiveEntryPath(raw string, isDir bool) (string, error) {
+	if strings.ContainsAny(raw, "\x00\r\n") {
+		return "", errors.New("ZIP 包含不安全路径")
+	}
+	// ZIP names should use '/', but archives produced on Windows sometimes use
+	// '\\' or prefix entries with './'. Normalize those harmless forms before
+	// applying traversal checks; never let a drive, rooted, or parent path through.
+	name := strings.ReplaceAll(raw, "\\", "/")
+	if strings.HasPrefix(name, "/") {
+		return "", errors.New("ZIP 包含不安全路径")
+	}
+	first := strings.SplitN(name, "/", 2)[0]
+	if len(first) >= 2 && ((first[0] >= 'A' && first[0] <= 'Z') || (first[0] >= 'a' && first[0] <= 'z')) && first[1] == ':' {
+		return "", errors.New("ZIP 包含不安全路径")
+	}
+	parts := strings.Split(name, "/")
+	cleanParts := make([]string, 0, len(parts))
+	for _, part := range parts {
+		switch part {
+		case "", ".":
+			continue
+		case "..":
+			return "", errors.New("ZIP 包含不安全路径")
+		default:
+			cleanParts = append(cleanParts, part)
+		}
+	}
+	name = strings.Join(cleanParts, "/")
+	if name == "" && isDir {
+		return "", nil // Ignore an archive's harmless explicit current-directory entry.
+	}
+	if name == "" || path.Clean(name) != name || safePath(name) != nil {
+		return "", errors.New("ZIP 包含不安全路径")
+	}
+	return name, nil
+}
+
+func availableArchiveDestination(base string, exists func(string) bool) (string, error) {
+	if !exists(base) {
+		return base, nil
+	}
+	parent, name := path.Dir(base), path.Base(base)
+	for suffix := 2; suffix <= 10000; suffix++ {
+		candidate := path.Join(parent, name+" ("+strconv.Itoa(suffix)+")")
+		if !exists(candidate) {
+			return candidate, nil
+		}
+	}
+	return "", errors.New("找不到可用的解压目标目录")
+}
+
 func readArchiveFiles(data []byte) ([]extractedArchiveFile, error) {
 	zr, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
@@ -541,18 +608,18 @@ func readArchiveFiles(data []byte) ([]extractedArchiveFile, error) {
 	seen := map[string]bool{}
 	total := 0
 	for _, entry := range zr.File {
-		if strings.Contains(entry.Name, "\\") || strings.HasPrefix(entry.Name, "/") {
-			return nil, errors.New("ZIP 包含不安全路径")
+		isDir := entry.FileInfo().IsDir() || strings.HasSuffix(entry.Name, "/") || strings.HasSuffix(entry.Name, "\\")
+		name, pathErr := cleanArchiveEntryPath(entry.Name, isDir)
+		if pathErr != nil {
+			return nil, pathErr
 		}
-		name := strings.TrimSuffix(entry.Name, "/")
-		if name == "" || path.Clean(name) != name || safePath(name) != nil {
-			return nil, errors.New("ZIP 包含不安全路径")
+		if name == "" && isDir {
+			continue
 		}
 		if seen[name] {
 			return nil, errors.New("ZIP 包含重复路径")
 		}
 		seen[name] = true
-		isDir := entry.FileInfo().IsDir()
 		if entry.Mode()&os.ModeSymlink != 0 {
 			return nil, errors.New("ZIP 不支持符号链接")
 		}
@@ -599,14 +666,26 @@ func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	dest := path.Join(path.Dir(body.Path), strings.TrimSuffix(path.Base(body.Path), path.Ext(body.Path)))
-	if err := validArchivePath(dest); err != nil {
+	destBase := path.Join(path.Dir(body.Path), strings.TrimSuffix(path.Base(body.Path), path.Ext(body.Path)))
+	if err := validArchivePath(destBase); err != nil {
 		fail(w, 400, err)
 		return
 	}
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
-	if a.workspaceMode() == "ssh" {
+	remoteMode := a.workspaceMode() == "ssh"
+	dest, err := availableArchiveDestination(destBase, func(candidate string) bool {
+		if remoteMode {
+			return a.sftpExists(a.workspaceRemotePath(candidate))
+		}
+		_, statErr := a.workspace.Stat(candidate)
+		return statErr == nil
+	})
+	if err != nil {
+		fail(w, 409, err)
+		return
+	}
+	if remoteMode {
 		if a.sftpExists(a.workspaceRemotePath(dest)) {
 			fail(w, 409, errors.New("解压目标已存在"))
 			return
@@ -894,6 +973,7 @@ func validateRemoteBrowsePath(p string) error {
 
 type directoryRequest struct {
 	Root    string `json:"root"`
+	Source  string `json:"source,omitempty"`
 	Path    string `json:"path"`
 	Parent  string `json:"parentPath"`
 	Name    string `json:"name"`
@@ -988,7 +1068,7 @@ func (a *App) deleteWorkspaceFile(w http.ResponseWriter, r *http.Request) {
 		Root string `json:"root"`
 		Path string `json:"path"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Root != "workspace" || safePath(body.Path) != nil {
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Root != "workspace" || body.Path == "." || safePath(body.Path) != nil {
 		fail(w, 400, errors.New("需要工作目录内的有效路径"))
 		return
 	}
@@ -1000,11 +1080,11 @@ func (a *App) deleteWorkspaceFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if a.workspaceMode() == "ssh" {
-		if err := a.sftpRemove(a.workspaceRemotePath(body.Path), info["dir"] == true); err != nil {
+		if err := a.sftpRemoveWorkspacePath(body.Path, info["dir"] == true); err != nil {
 			fail(w, 400, err)
 			return
 		}
-	} else if err := a.workspace.Remove(body.Path); err != nil {
+	} else if err := a.workspace.RemoveAll(body.Path); err != nil {
 		fail(w, 400, err)
 		return
 	}
@@ -1030,6 +1110,50 @@ func (a *App) createDirectory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	newPath := path.Join(body.Parent, name)
+	if body.Source != "" {
+		if body.Root != "" && body.Root != "context" {
+			fail(w, 400, errors.New("引用来源与目录根不匹配"))
+			return
+		}
+		a.mu.Lock()
+		src, ok := a.findSource(body.Source)
+		a.mu.Unlock()
+		if !ok || !src.Enabled {
+			fail(w, 400, errors.New("来源不存在或已停用"))
+			return
+		}
+		if !src.RW {
+			fail(w, 403, errors.New("该来源为只读"))
+			return
+		}
+		switch src.Type {
+		case "local", "skill":
+			root, err := a.localSourceRoot(src)
+			if err == nil {
+				err = root.Mkdir(newPath, 0755)
+				root.Close()
+			}
+			if err != nil {
+				fail(w, 400, err)
+				return
+			}
+		case "sftp":
+			if _, err := a.sftpBatchSource(src, "mkdir "+shellQuoteRemote(pathJoinRemote(src.Config.Path, newPath))+"\n"); err != nil {
+				fail(w, 400, err)
+				return
+			}
+		case "workspace-sftp":
+			if err := a.sftpMakeDirectory(a.workspaceRemotePath(pathJoinRemote(src.Config.Path, newPath))); err != nil {
+				fail(w, 400, err)
+				return
+			}
+		default:
+			fail(w, 400, errors.New("该类型来源不支持创建文件夹"))
+			return
+		}
+		jsonOut(w, 200, map[string]string{"path": newPath, "name": name})
+		return
+	}
 	if body.Root == "remote" || (body.Root == "workspace" && a.workspaceMode() == "ssh") {
 		remotePath := newPath
 		if body.Root == "workspace" {
@@ -1230,7 +1354,7 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	ext := strings.ToLower(path.Ext(r.URL.Query().Get("path")))
+	ext := effectiveFileExt(r.URL.Query().Get("path"))
 	ct := map[string]string{
 		".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
 		".gif": "image/gif", ".svg": "image/svg+xml", ".webp": "image/webp",

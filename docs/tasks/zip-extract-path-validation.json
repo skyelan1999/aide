@@ -1,0 +1,57 @@
+{
+  "id": "zip-extract-path-validation",
+  "request": "修复项目文件面板中解压 ZIP 失败的问题；截图提示 ZIP 包含不安全路径。",
+  "baseline": "40da817c36eb68a2ac0169afd4bec428da6214bb",
+  "initial_status": "M docs/README.md\n M docs/en/user-guide.md\n M docs/security/tls.md\n M docs/user-guide.md\n M internal/server/command.go\n M internal/server/office_artifact_test.go\n M internal/server/server.go\n M internal/server/ssh_session.go\n M internal/server/system_log.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M scripts/office/office_artifact.py\n?? docs/system-overview.md\n?? docs/tasks/project-context-dismiss.json\n?? docs/tasks/system-log-time-filter.json\n?? docs/tasks/system-overview-20260930.json\n?? docs/tasks/workflow-sudo-cert-date-fixes.json\n?? docs/tasks/xlsx-emptycell-render.json\n?? internal/server/command_input_test.go\n?? internal/server/system_log_test.go\n?? internal/server/workflow_timeout_test.go",
+  "acceptance": [
+    "包含正常相对文件名/目录名的 ZIP 可成功解压到当前目录。",
+    "绝对路径、盘符路径、UNC 路径、反斜杠穿越、../ 穿越等危险条目仍被拒绝。",
+    "修复 Windows 路径语义或文件名校验导致的正常条目误报，并增加正常与恶意条目的自动回归测试。",
+    "危险路径校验在创建目标目录前完成；若同名目标已存在，自动选择带序号的新目录，不覆盖或删除原文件。"
+  ],
+  "scope": [
+    "internal/server/files.go：ZIP 读取、路径规范化与安全解压目标选择",
+    "相关 Go 回归测试",
+    "docs/tasks/zip-extract-path-validation.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "解决截图中 ZIP 包含不安全路径的误报，同时处理截图里同名目标目录已存在的情形；不得弱化穿越防护或覆盖已有内容。",
+      "evidence": ["用户原话：zip解压不行。", "截图提示 ZIP 包含不安全路径，右侧同时可见与 ZIP 同名的已存在目录。"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "统一将 ZIP 中反斜杠转为路径分隔符，规范化 harmless ./ 与空段；任何 ..、绝对路径、Windows 盘符和控制字符均拒绝。规范化后检查重复目标；同名解压目录存在时选择唯一序号目录。",
+      "evidence": ["internal/server/files.go:readArchiveFiles 原先拒绝所有反斜杠名称且要求 path.Clean(name)==name。", "extractArchive 原先对同名目标直接返回 409。"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "加入跨平台安全条目名规范化与无覆盖的唯一解压目录选择；补普通 Windows 风格路径、恶意绝对/穿越路径、规范化后重复路径及同名解压的完整 API 回归。",
+      "evidence": ["internal/server/files.go", "internal/server/archive_test.go"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "ZIP 解压 API 回归通过，覆盖原有安全路径用例、新增反斜杠/./ 路径、恶意路径拒绝、规范化重名拒绝，以及目标已存在时生成新目录并保留旧内容。",
+      "evidence": ["docker run --rm --entrypoint go -v C:\\workstation\\aide\\aide:/workspace -w /workspace aide:local test -mod=vendor ./internal/server -run '^(TestReferenceDownloadAndSafeExtraction|TestReadArchiveFiles)' -count=1：PASS，aide/internal/server 0.601s。", "git diff --check：PASS。"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "无 API schema 变化，无需用户指南更新；成功响应仍返回最终解压路径，前端既有 toast 会显示带序号的新目标目录。",
+      "evidence": ["internal/server/files.go:extractArchive 返回最终 path；internal/server/web/app.js 现有解压动作显示 out.path。"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只修改 ZIP 条目路径处理和回归测试，未删除或覆盖任何工作区文件；旧目标内容回归断言保持不变。",
+      "evidence": ["git diff --check：PASS；测试验证原目录文件内容未改变。"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未授权提交、构建发布镜像或重启现有 aide 服务。",
+      "evidence": ["AGENTS.md 与 docs/agent/WORKFLOW.md：发布/重启需明确授权。"]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退 internal/server/files.go 的 cleanArchiveEntryPath、availableArchiveDestination 以及 readArchiveFiles/extractArchive 调用改动，并回退 archive_test.go 新增回归；不涉及数据迁移。",
+  "handoff": "修复了 ZIP 中 Windows 反斜杠与 ./ 前缀造成的误判，同时保持并扩展路径穿越防护；目标同名时自动解压到名称 (2) 等新目录，绝不覆盖原目录。定向 Go API 测试和 diff 检查通过。工作区源码尚未部署到 localhost:8097，现有服务未重启；用户需在授权部署后验证截图中的真实 ZIP。"
+}

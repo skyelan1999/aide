@@ -242,7 +242,8 @@ type Message struct {
 	Role       string         `json:"role"`
 	Content    string         `json:"content"`
 	Type       string         `json:"type,omitempty"` // #62：消息类型区分；空=普通聊天。voice-in=语音听到；voice-note=小蜜决策/转交说明；voice-ask=小蜜追问
-	Images     []MessageImage `json:"-"`              // #63 扩展：多模态图片，仅 outgoing 首轮用户消息附带，不持久化/不进 UI
+	ReminderID string         `json:"reminderId,omitempty"`
+	Images     []MessageImage `json:"-"` // #63 扩展：多模态图片，仅 outgoing 首轮用户消息附带，不持久化/不进 UI
 	ToolCalls  []ToolCall     `json:"tool_calls,omitempty"`
 	ToolCallID string         `json:"tool_call_id,omitempty"`
 }
@@ -273,14 +274,25 @@ type Session struct {
 // The underlying persistent session remains untouched.
 type sessionHistoryView struct {
 	*Session
-	RunsTotal     int  `json:"runsTotal"`
-	MessagesTotal int  `json:"messagesTotal"`
-	HasOlder      bool `json:"hasOlder"`
+	RunsTotal     int        `json:"runsTotal"`
+	MessagesTotal int        `json:"messagesTotal"`
+	HasOlder      bool       `json:"hasOlder"`
+	SessionUsage  TokenUsage `json:"sessionUsage"`
 }
 
 func makeSessionHistoryView(s *Session, limit int) sessionHistoryView {
 	view := *s
 	runsTotal, messagesTotal := len(view.Runs), len(view.Messages)
+	var sessionUsage TokenUsage
+	for _, run := range s.Runs {
+		if run == nil {
+			continue
+		}
+		sessionUsage.Prompt += run.Usage.Prompt
+		sessionUsage.Completion += run.Usage.Completion
+		sessionUsage.Total += run.Usage.Total
+		sessionUsage.Estimated = sessionUsage.Estimated || run.Usage.Estimated
+	}
 	if limit > 0 {
 		if runsTotal > limit {
 			view.Runs = append([]*Task(nil), view.Runs[runsTotal-limit:]...)
@@ -289,7 +301,7 @@ func makeSessionHistoryView(s *Session, limit int) sessionHistoryView {
 			view.Messages = append([]Message(nil), view.Messages[messagesTotal-limit:]...)
 		}
 	}
-	return sessionHistoryView{Session: &view, RunsTotal: runsTotal, MessagesTotal: messagesTotal, HasOlder: runsTotal > len(view.Runs) || messagesTotal > len(view.Messages)}
+	return sessionHistoryView{Session: &view, RunsTotal: runsTotal, MessagesTotal: messagesTotal, HasOlder: runsTotal > len(view.Runs) || messagesTotal > len(view.Messages), SessionUsage: sessionUsage}
 }
 
 // assistantSessionKind 小秘系统会话的 Kind 标记。全应用恰好一个，永久置顶、不可归档/删除。
@@ -302,8 +314,11 @@ type App struct {
 	workPath, dataPath, token string
 	settings                  Settings
 	sessions                  map[string]*Session
+	reminders                 []Reminder
 	cancels                   map[string]context.CancelFunc
 	commands                  chan struct{}
+	commandInputMu            sync.Mutex
+	commandInputs             map[string]*io.PipeWriter
 	profilesPath              string
 	profileState              ProfilesState
 	version                   string
@@ -661,6 +676,10 @@ func New(work, reference, data string) (*App, error) {
 		return nil, err
 	}
 	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}, globalSubs: map[chan string]struct{}{}, liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}}
+	if err := a.loadReminders(); err != nil {
+		a.Close()
+		return nil, err
+	}
 	a.startedAt = time.Now().UTC()
 	a.bgCtx, a.bgCancel = context.WithCancel(context.Background())
 	// 完整性：首次生成程序基线（已存在则跳过），启动校验并自愈，结果供 healthz 上报；后台周期巡检。
@@ -866,7 +885,15 @@ func New(work, reference, data string) (*App, error) {
 		for _, task := range s.Runs {
 			if task.Status == "running" {
 				task.Status = "interrupted"
-				task.Error = "服务重启，任务已中断。可重新提交。"
+				task.PauseRequested = false
+				if len(task.CheckpointMessages) > 0 {
+					task.CanResume = true
+				}
+				if task.CanResume {
+					task.Error = "服务重启，任务已中断。可以从已保存检查点继续。"
+				} else {
+					task.Error = "服务重启，任务已中断。可重新提交。"
+				}
 			}
 		}
 		if err := a.save(&s); err != nil {
@@ -880,6 +907,7 @@ func New(work, reference, data string) (*App, error) {
 	}
 	// #30：启动幂等确保恰好一个小秘系统会话（永久置顶、密码进入）。
 	a.ensureAssistantSession()
+	a.background(func() { a.reminderLoop(a.bgCtx) })
 	return a, nil
 }
 func (a *App) Close() {
@@ -1207,15 +1235,25 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/sessions/{id}/unlock-assistant", a.unlockAssistantSession)   // #30 小秘会话密码门
 	mux.HandleFunc("POST /api/sessions/{id}/assistant-message", a.assistantMessageHandler) // 小秘键盘消息，不经过语音环境过滤
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/retry", a.retryTask)
+	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/pause", a.pauseTask)
+	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/resume", a.resumeTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/answer", a.answerTask)
+	mux.HandleFunc("GET /api/reminders", a.listRemindersHandler)
+	mux.HandleFunc("GET /api/reminders/due", a.dueRemindersHandler)
+	mux.HandleFunc("POST /api/reminders", a.createReminderHandler)
+	mux.HandleFunc("PUT /api/reminders/{id}", a.updateReminderHandler)
+	mux.HandleFunc("POST /api/reminders/{id}/complete", a.completeReminderHandler)
+	mux.HandleFunc("POST /api/reminders/{id}/popup-seen", a.popupSeenReminderHandler)
+	mux.HandleFunc("DELETE /api/reminders/{id}", a.deleteReminderHandler)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/requests", a.runRequestsHandler)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/events", a.runEvents)
 	mux.HandleFunc("GET /api/sessions/{id}/tool-calls", a.sessionToolCalls) // #45 调用记录聚合（主/子 Agent）
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/queue/{index}", a.queueUpdate)
 	mux.HandleFunc("POST /api/context-preview", a.contextPreviewHandler)
 	mux.HandleFunc("POST /api/command", a.command)
+	mux.HandleFunc("POST /api/command/{id}/input", a.commandInput)
 	mux.HandleFunc("POST /api/voice-filter", a.voiceFilter)
 	mux.HandleFunc("POST /api/voice-narrate", a.voiceNarrate)
 	mux.HandleFunc("POST /api/tts/synthesize", a.ttsSynthesize)

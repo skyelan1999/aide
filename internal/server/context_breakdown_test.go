@@ -58,3 +58,40 @@ func TestContextPreviewBaselineAllowsEmptyPromptWithoutRequestBody(t *testing.T)
 		t.Fatalf("baseline omitted history/protocol: %#v", preview.Breakdown)
 	}
 }
+
+func TestContextPreviewAccumulatesHistoryAndReflectsCompaction(t *testing.T) {
+	a := testApp(t)
+	a.settings = Settings{Model: "test-model", Models: []ModelRef{{ID: "test-model", ContextWindow: 32768}}}
+	short := &Session{ID: "session-1", Messages: []Message{{Role: "user", Content: "first question"}}}
+	shortPreview := a.buildContextPreview(short, "second question", "chat", "", nil, a.settings, ProfileParams{MaxTokens: 512}, false)
+	long := &Session{ID: "session-1", Messages: []Message{
+		{Role: "user", Content: "first question"},
+		{Role: "assistant", Content: "a detailed prior answer with decisions and explanation"},
+		{Role: "user", Content: "another question"},
+	}}
+	longPreview := a.buildContextPreview(long, "second question", "chat", "", nil, a.settings, ProfileParams{MaxTokens: 512}, false)
+	if longPreview.InputEstimate <= shortPreview.InputEstimate {
+		t.Fatalf("activity context should include earlier conversation: short=%d long=%d", shortPreview.InputEstimate, longPreview.InputEstimate)
+	}
+	long.Compact = "Summary of the earlier questions and decisions."
+	long.CompactedMessages = 2
+	long.Messages = []Message{{Role: "user", Content: "another question"}}
+	compactedPreview := a.buildContextPreview(long, "second question", "chat", "", nil, a.settings, ProfileParams{MaxTokens: 512}, false)
+	if compactedPreview.InputEstimate >= longPreview.InputEstimate {
+		t.Fatalf("compaction should reduce active context while retaining its summary: before=%d after=%d", longPreview.InputEstimate, compactedPreview.InputEstimate)
+	}
+}
+
+func TestSessionHistoryPageIncludesLifetimeUsageAcrossAllRuns(t *testing.T) {
+	s := &Session{Runs: []*Task{
+		{Usage: TokenUsage{Prompt: 100, Completion: 20, Total: 120}},
+		{Usage: TokenUsage{Prompt: 200, Completion: 30, Total: 230, Estimated: true}},
+	}}
+	view := makeSessionHistoryView(s, 1)
+	if len(view.Runs) != 1 || view.RunsTotal != 2 {
+		t.Fatalf("runs should be paginated while preserving total metadata: %#v", view)
+	}
+	if view.SessionUsage.Prompt != 300 || view.SessionUsage.Completion != 50 || view.SessionUsage.Total != 350 || !view.SessionUsage.Estimated {
+		t.Fatalf("session usage must cover all runs and mark estimates: %#v", view.SessionUsage)
+	}
+}

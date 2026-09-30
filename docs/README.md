@@ -16,6 +16,7 @@
 | 运维、备份、恢复与发布 | [交接手册](../HANDOVER.md) |
 | 看需求范围与实际状态 | [现行 PRD](PRD.md) |
 | 看实现、数据和接口 | [架构与 API](architecture.md) |
+| 看系统整体方案、状态机和运行机制 | [系统方案总览](system-overview.md) |
 | 写插件 | [插件协议 v1.1](plugin-protocol.md) |
 | 生成 Office 文件与编辑 XLSX | [Office 工具集](plugins/office.md) |
 | 让 AI 参与开发 | [统一 Agent 工作流](agent/WORKFLOW.md) · [客户端接入](agent/ADAPTERS.md) |

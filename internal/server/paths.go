@@ -73,7 +73,8 @@ const (
 	certsDirName      = "certs"
 	integrityDirName  = ".integrity"
 	quarantineDirName = ".quarantine"
-	commentsDirName   = "comments" // #63 侧车批注（跨格式：docx/xlsx/pptx/pdf 通用）
+	commentsDirName   = "comments"  // #63 侧车批注（跨格式：docx/xlsx/pptx/pdf 通用）
+	remindersDirName  = "reminders" // 全局提醒账本（scope 字段区分全局/工作区）
 )
 
 // 文件名常量（平铺期与分层期共用同一文件名，仅所在目录变化）。
@@ -122,6 +123,8 @@ func ConfigBackupsDir(data string) string { return filepath.Join(data, configDir
 func StatsDir(data string) string         { return filepath.Join(data, statsDirName) }
 func AuditDir(data string) string         { return filepath.Join(data, auditDirName) }
 func CommentsDir(data string) string      { return filepath.Join(data, commentsDirName) } // #63 侧车批注根目录
+func RemindersDir(data string) string     { return filepath.Join(data, remindersDirName) }
+func RemindersPath(data string) string    { return filepath.Join(RemindersDir(data), "reminders.json") }
 func SecretsDir(data string) string       { return filepath.Join(data, secretsDirName) }
 func CertsDir(data string) string         { return filepath.Join(data, certsDirName) }
 func IntegrityDir(data string) string     { return filepath.Join(data, integrityDirName) }
