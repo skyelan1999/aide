@@ -48,11 +48,11 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "待创建并推送集成分支；按用户要求不合入 main，验证完成后再决定后续发布。",
-      "evidence": ["本次不运行 release-check，因为验证被用户明确延期。"]
+      "summary": "集成分支已提交并推送；未验证，因此未合入 main。",
+      "evidence": ["分支 integrate/consolidate-push-followup-20260930 已推送到 origin，提交 88f9c14。", "未运行 release-check；验证由用户在其他设备接力。"]
     }
   },
-  "release_authorization": "用户明确要求全部改动推送，并随后明确要求本轮不验证，由其他设备接力验证。未授权合入 main、升版、打 tag、部署或重启。",
-  "rollback": "若验证发现问题，在该集成分支增加修复提交或 revert 对应提交；未合入 main，不需重写远端历史。",
-  "handoff": "全部改动推送至集成分支供其他设备接力验证。验证状态为 NOT_RUN（用户要求）；未合入 main、未升版、未打 tag、未部署、未重启服务。"
+  "release_authorization": "用户明确要求全部改动推送，并随后明确要求本轮不验证，由其他设备接力验证。已授权推送集成分支；未授权合入 main、升版、打 tag、部署或重启。",
+  "rollback": "若验证发现问题，在集成分支新增修复提交或 revert 88f9c14；main 未变化，不需重写远端历史。",
+  "handoff": "已将全部改动推送到 origin/integrate/consolidate-push-followup-20260930，提交 88f9c14（75 个文件）。请在其他设备 checkout/pull 此分支按 acceptance 逐项验收，尤其覆盖任务暂停/恢复、文件操作和 ZIP 安全、Excel 多 Sheet、上传传输状态、提醒权限/搜索、时间/农历/周数插件、系统日志时间过滤、界面交互以及 Shift+Enter。验证状态为 NOT_RUN（按用户要求）；未合入 main、未升版、未打 tag、未部署、未重启服务。"
 }
