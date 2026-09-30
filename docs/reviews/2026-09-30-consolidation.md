@@ -57,3 +57,8 @@ Safari 自动化期间 macOS 锁屏，之后无法继续系统浏览器操作；
 本次只合入并推送源码，不变更 `version.md`，不创建 tag，不构建/发布镜像，不重启或替换正在运行的 8097 服务。后续完整验证和发布应独立执行并记录对应代码指纹。
 
 代码集成提交 `2054b04c46dddadf3808c367caa31624a6d722e8` 已 fast-forward 合入 `main` 并推送至 `origin/main`；推送后本地 `main` 与远端 SHA 一致。
+
+### 合并与推送
+
+- 整合提交 `65c6cf46b9d5fa1b0972fb4f4b95d1b10b6a776e` 已通过 fast-forward 合入 `main` 并推送到 `origin/main`；本地 `main` 与 `origin/main` 指向同一提交。
+- 本次未升版、未创建 tag/release、未部署，也未重启生产服务。自动化门禁通过；上节列出的手工 UI 项仍保持未验收状态。

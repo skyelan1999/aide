@@ -91,16 +91,20 @@
         "docs/archive/HANDOVER-2026-09-30-legacy.md",
         "docs/archive/2026-09-26-HANDOFF-RC3.md",
         "docs/archive/2026-09-26-web-i18n-refactor-plan.md",
-        "python3 scripts/check_docs.py PASS 112 Markdown, 250 local links"
+        "python3 scripts/check_docs.py PASS: 112 Markdown, 252 local links, JPEG signatures, FR index"
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "待 fresh verification, commit, main fast-forward merge, and push; no version bump/tag/release/deployment/restart.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Commit 65c6cf46b9d5fa1b0972fb4f4b95d1b10b6a776e fast-forward merged to main and pushed; local main and origin/main match. No version bump, tag, release, deployment, or production restart.",
+      "evidence": [
+        "git merge --ff-only integrate/consolidate-push-followup-20260930: PASS",
+        "git push origin main: 40da817..65c6cf4",
+        "git rev-parse HEAD origin/main: both 65c6cf46b9d5fa1b0972fb4f4b95d1b10b6a776e"
+      ]
     }
   },
   "release_authorization": "用户最新明确要求合入 main；此前任务明确授权将变更推送，并仅禁止升版/tag/部署/重启。",
   "rollback": "合并前创建并记录 main 与集成分支 SHA；代码通过单独修复提交和 fast-forward 合并，必要时可 revert 集成与修复提交。文档删除仅限已审查路径并记录清单。",
-  "handoff": "功能代码回归与正式 full 门禁通过；具体未手工验收 UI 清单见 verification stage 和整合报告。main 与 origin/main 起始于 40da817c36eb68a2ac0169afd4bec428da6214bb，集成分支可快进合并；等待提交、推送后填写最终 SHA。没有升版/tag/release/deploy/restart。"
+  "handoff": "Commit 65c6cf46b9d5fa1b0972fb4f4b95d1b10b6a776e fast-forward merged and pushed to main; local main and origin/main match. Full automated verification passed. Specific UI interactions not completed due macOS lock are listed in verification stage and docs/reviews/2026-09-30-consolidation.md. No version bump/tag/release/deploy/restart."
 }
