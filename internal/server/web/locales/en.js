@@ -197,7 +197,6 @@ window.aideEnglish = {
   "上下文预算超限：请缩短任务或减少附件后再发送": "Context budget exceeded: shorten the task or remove attachments before sending",
   "新会话": "New conversation",
   "⚠ 上下文预算超限：请缩短任务或减少附件": "⚠ Context budget exceeded: shorten the task or remove attachments",
-  "Ctrl + Enter 发送 · Enter 换行": "Ctrl + Enter to send · Enter for a new line",
   "Shift + Enter 发送 · Enter 换行": "Shift + Enter to send · Enter for a new line",
   "正在提交…": "Submitting…",
   " · ⚠ 超限 ": " · ⚠ Over budget ",

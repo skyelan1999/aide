@@ -22,37 +22,66 @@
     "requirements": {
       "status": "pass",
       "summary": "参考 Codex 与 DSH 后明确区分当前活动上下文窗口和会话生命周期累计 token 消耗；压缩允许降低前者，不回退后者。",
-      "evidence": ["用户描述的当前句子估算/压缩后变化问题", "DSH token-meter 与 Codex context-window 源码/文档核对"]
+      "evidence": [
+        "用户描述的当前句子估算/压缩后变化问题",
+        "DSH token-meter 与 Codex context-window 源码/文档核对"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "当前活动上下文复用后端完整 session transcript/压缩摘要预览；UI 累计量由分页前的全部 run 用量求和；缓存键加入 full message count 和 compact revision。",
-      "evidence": ["internal/server/context.go:buildContextPreview", "internal/server/server.go:makeSessionHistoryView", "internal/server/web/app.js:contextMeterKey"]
+      "evidence": [
+        "internal/server/context.go:buildContextPreview",
+        "internal/server/server.go:makeSessionHistoryView",
+        "internal/server/web/app.js:contextMeterKey"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "修复分页历史下 compaction 缓存失效；分页会话 API 附带完整会话 usage 聚合；UI 将活动上下文和累计消耗分别标示；补足多轮与压缩回归测试。",
-      "evidence": ["internal/server/server.go", "internal/server/web/app.js", "internal/server/web/index.html", "internal/server/web/locales/en.js", "internal/server/context_breakdown_test.go"]
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/web/locales/en.js",
+        "internal/server/context_breakdown_test.go"
+      ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "相关 Go 回归、JS 语法、缓存键压缩失效断言、i18n 和差异空白检查通过；实际 UI 未运行，Computer Use 无可用应用，Codex 内嵌浏览器没有标签。",
-      "evidence": ["PASS docker run --rm --entrypoint go -v C:\\workstation\\aide\\aide:/workspace -w /workspace aide:local test -mod=vendor ./internal/server -run ^(TestContextPreviewAccumulatesHistoryAndReflectsCompaction|TestSessionHistoryPageIncludesLifetimeUsageAcrossAllRuns|TestContextPreviewBaselineAllowsEmptyPromptWithoutRequestBody)$ -count=1", "PASS node --check internal/server/web/app.js", "PASS node --check internal/server/web/locales/en.js", "PASS node scripts/test_i18n.cjs", "PASS inline contextMeterKey assertion: compaction invalidates even with an unchanged visible 30-message page", "PASS git diff --check -- scoped files (CRLF conversion warnings only)", "NOT_RUN UI: Computer Use returned apps=[] and Codex In-app Browser tabs=[]"]
+      "status": "in_progress",
+      "summary": "Full Go race/vet and context-meter related regressions pass. The isolated new session showed no context usage; active historical-session meter behavior was not manually exercised.",
+      "evidence": [
+        "PASS docker run --rm --entrypoint go -v C:\\workstation\\aide\\aide:/workspace -w /workspace aide:local test -mod=vendor ./internal/server -run ^(TestContextPreviewAccumulatesHistoryAndReflectsCompaction|TestSessionHistoryPageIncludesLifetimeUsageAcrossAllRuns|TestContextPreviewBaselineAllowsEmptyPromptWithoutRequestBody)$ -count=1",
+        "PASS node --check internal/server/web/app.js",
+        "PASS node --check internal/server/web/locales/en.js",
+        "PASS node scripts/test_i18n.cjs",
+        "PASS inline contextMeterKey assertion: compaction invalidates even with an unchanged visible 30-message page",
+        "PASS git diff --check -- scoped files (CRLF conversion warnings only)",
+        "NOT_RUN UI: Computer Use returned apps=[] and Codex In-app Browser tabs=[]",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
+      ]
     },
     "documentation": {
       "status": "pass",
       "summary": "上下文卡片 tooltip 说明活动上下文含会话历史且压缩后可能下降；累计消耗来源单独注明实际/含估算。",
-      "evidence": ["internal/server/web/index.html context-card title", "internal/server/web/app.js sessionUsage label"]
+      "evidence": [
+        "internal/server/web/index.html context-card title",
+        "internal/server/web/app.js sessionUsage label"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "只修改任务范围内服务端、上下文 UI、测试和任务账本；保留其他既有修改。",
-      "evidence": ["复核本任务限定文件状态与 diff"]
+      "evidence": [
+        "复核本任务限定文件状态与 diff"
+      ]
     },
     "release": {
       "status": "not_run",
       "summary": "未提交、构建镜像、部署或重启运行实例；用户未授权发布。",
-      "evidence": ["运行服务未触碰"]
+      "evidence": [
+        "运行服务未触碰"
+      ]
     }
   },
   "release_authorization": "",

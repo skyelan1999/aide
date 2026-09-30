@@ -9,7 +9,9 @@ const voiceStart = source.indexOf('/* ── 语音小秘（Web Speech API 实�
 const voiceEnd = source.indexOf('/* ── 双向语音：', voiceStart);
 const startFn = source.indexOf('async function voiceStart()', voiceEnd);
 const startEnd = source.indexOf('// ===== 小秘语音导览', startFn);
-assert.ok(voiceStart >= 0 && voiceEnd > voiceStart && startFn > voiceEnd && startEnd > startFn, 'voice source blocks found');
+const dictationStart = source.indexOf('const xiaomiDictation =', voiceEnd);
+const dictationEnd = source.indexOf('async function voiceStart()', dictationStart);
+assert.ok(voiceStart >= 0 && voiceEnd > voiceStart && startFn > voiceEnd && startEnd > startFn && dictationStart >= voiceEnd && dictationEnd > dictationStart, 'voice source blocks found');
 
 class FakeElement {
   constructor(id = '') {
@@ -68,6 +70,8 @@ const state = {
 };
 const context = {
   state,
+  // voiceStart shares the production input guard with Xiaomi dictation.
+  xiaomiDictation: { active: false, starting: false },
   window: { SpeechRecognition: FakeRecognition, speechSynthesis: { getVoices: () => [] } },
   navigator: { mediaDevices: { getUserMedia: () => new Promise(resolve => { micRelease = resolve; }) } },
   $: get,
@@ -91,6 +95,7 @@ const context = {
 };
 vm.createContext(context);
 vm.runInContext(source.slice(voiceStart, voiceEnd) + '\nglobalThis.__voice = voice;', context, { filename: 'app.js voice pipeline' });
+vm.runInContext(source.slice(dictationStart, dictationEnd), context, { filename: 'app.js Xiaomi dictation' });
 vm.runInContext(source.slice(startFn, startEnd) + '\nglobalThis.__voiceStart = voiceStart; globalThis.__voiceHardStop = voiceHardStop;', context, { filename: 'app.js voice lifecycle' });
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
@@ -150,6 +155,7 @@ function emit(rec, text) {
   await tick();
   recs.at(-1).onstart();
   get('voice-btn').onclick();
+  await new Promise(resolve => setTimeout(resolve, 950)); // assistant dictation preserves late final speech for its 900 ms flush window
   assert.equal(get('voice-panel').classList.contains('hidden'), true, 'mic toggle stops and hides the assistant panel');
   assert.equal(stoppedTracks, 3);
   console.log('PASS: immediate panel, permission retry, selected audio track/fallback, main/assistant path, queue/insert, ignored log, and stop');

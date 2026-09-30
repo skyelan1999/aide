@@ -36,10 +36,11 @@
       ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "未运行自动化测试或浏览器交互；已执行相关文件 git diff --check。",
+      "status": "in_progress",
+      "summary": "The isolated app loaded successfully, but no archived QA sessions were seeded; search-result unarchive behavior was not manually exercised.",
       "evidence": [
-        "git diff --check -- internal/server/web/app.js docs/tasks/search-restore.json"
+        "git diff --check -- internal/server/web/app.js docs/tasks/search-restore.json",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
       ]
     },
     "documentation": {

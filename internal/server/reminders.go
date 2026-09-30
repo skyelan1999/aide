@@ -414,7 +414,9 @@ func (a *App) dispatchAssistantReminders(now time.Time) {
 func (a *App) reminderLoop(ctx context.Context) {
 	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
-	a.dispatchAssistantReminders(time.Now())
+	// Defer the first sweep until the ticker fires. New() is also used by tests
+	// that populate session state immediately after construction; an eager sweep
+	// races those callers and production startup does not need a sub-second scan.
 	for {
 		select {
 		case <-ctx.Done():

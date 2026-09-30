@@ -2,13 +2,13 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。可直接使用发行版，需要扩展时再按 [定制指南](customization.md) 修改源码。安装脚本负责环境检查、首次配置、校验镜像和启动应用；不会静默安装收费软件、请求 sudo、覆盖已有 .env 或删除数据卷。
+aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。最近 tag 只有源码；发行镜像以 Releases 页面实际附件为准。需要扩展时再按 [定制指南](customization.md) 修改源码。安装脚本负责环境检查、首次配置、校验镜像和启动应用；不会静默安装收费软件、请求 sudo、覆盖已有 .env 或删除数据卷。
 
 ## 1. 安装宿主环境
 
 | 平台 | 前置环境 | 注意 |
 | --- | --- | --- |
-| macOS Apple Silicon | Docker Desktop、Git；镜像校验需要 Python 3 | 打开 Docker Desktop，等待引擎就绪；本次镜像为 linux/arm64 |
+| macOS Apple Silicon | Docker Desktop、Git；镜像校验需要 Python 3 | 打开 Docker Desktop，等待引擎就绪；发行镜像目标为 linux/arm64 |
 | Linux ARM64 | Docker Engine、Compose v2、Git、Python 3 | 当前用户须有访问 Docker 引擎的权限 |
 | Linux/macOS x86 | 同上 | 使用源码构建；不要直接使用 ARM 归档 |
 | Windows | WSL2 Linux 环境与 Docker Desktop WSL 集成、Git、Python 3 | 在 WSL 的 Bash 中运行；本轮未在 Windows 实机验证 |
@@ -17,10 +17,12 @@ aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。可直�
 
 ## 2. 下载同一版本的源码
 
+最近 tag 为 `v0.1.13.0-RC1`；截至 2026-09-30，GitHub 上没有对应 Release 附件（该 tag 仅有源码）。因此可 checkout 该 tag 并从源码构建；发行镜像安装章节只适用于页面上确实存在且与源码同版的 Release 附件。
+
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
-git checkout v0.1.10.2-RC1
+git checkout v0.1.13.0-RC1
 bash scripts/install.sh --check
 ```
 
@@ -28,10 +30,10 @@ bash scripts/install.sh --check
 
 ## 3A. 发行镜像安装（Apple Silicon / ARM64）
 
-从 [Release](https://github.com/skyelan1999/aide/releases) 下载镜像和 SHA256SUMS，放在同一目录，例如 aide/docker-images/：
+只有在 [Releases](https://github.com/skyelan1999/aide/releases) 页面存在镜像附件时，才使用此方式。下载同一 release 的镜像和 SHA256SUMS，放在 aide/docker-images/；按实际附件文件名替换下面的 `<matching-version>` 占位符。
 
 ```bash
-bash scripts/install.sh --image docker-images/aide-0.1.10.2-RC1-linux-arm64.tar.gz
+bash scripts/install.sh --image "docker-images/aide-<matching-version>-linux-arm64.tar.gz"
 ```
 
 脚本先检查校验和，再导入镜像并检查架构，最后使用 `--no-build --pull never` 启动。版本不匹配、校验失败或架构不匹配会停止，不会偷偷重建。
@@ -48,19 +50,19 @@ bash scripts/install.sh --source
 
 适用于完全不连公网的内网/隔离环境。**核心原则：目标机只 `docker load` 已导入镜像并用 `start-image` 启动，绝不执行 `start`**——`start` 会触发 `docker build`，进而拉取基础镜像，在离线机上必然失败或挂起。Compose 已设 `pull_policy: never`，双保险防止裸跑 `compose up` 意外拉取；缺镜像会立即报错而非联网等待。
 
-交付物三件套（来自同一版本 tag，如 0.1.10.2 RC1）：
+交付物三件套（来自同一版本 tag，如 0.1.13.0 RC1）：
 
 1. 同 tag 源码（或源码 ZIP，内含 Compose、scripts、version.md）；
-2. 自包含镜像归档 `aide-0.1.10.2-RC1-linux-aarch64.tar.gz`（x86 机为 `amd64`；Docker 内部架构标识为 arm64，归档文件名统一用 aarch64/amd64）；
+2. 自包含镜像归档 `aide-<matching-version>-linux-aarch64.tar.gz`（x86 机为 `amd64`；Docker 内部架构标识为 arm64，归档文件名统一用 aarch64/amd64）；
 3. 同目录清单 `SHA256SUMS`（单文件；历史零散 `*.sha256` 已废弃）。
 
 ```bash
 # 目标离线机：校验 → 导入 → 配置 → 启动
 cd aide                                   # 同 tag 源码根目录
 shasum -a 256 -c docker-images/SHA256SUMS # 校验归档完整性，失败即停
-docker load -i docker-images/aide-0.1.10.2-RC1-linux-aarch64.tar.gz
+docker load -i "docker-images/aide-<matching-version>-linux-aarch64.tar.gz"
 # 复制模板并指定已导入镜像 tag、局域网模型地址（见 .env.example 注释）
-#   AIDE_IMAGE=aide:0.1.10.2-RC1
+#   AIDE_IMAGE=aide:<matching-version>
 #   AI_BASE_URL=http://<局域网模型地址>
 #   AIDE_WEBSEARCH_URL=        # 留空：web_search 离线降级
 bash scripts/aide.sh start-image          # = --no-build --pull never，绝不 build/pull
@@ -119,7 +121,7 @@ flowchart TD
 首次默认使用源码目录作为工作区。如需其他目录，修改 .env 后重新启动；路径必须存在，推荐绝对路径：
 
 ```dotenv
-AIDE_IMAGE=aide:0.1.10.2-RC1
+AIDE_IMAGE=aide:<matching-version>
 AIDE_PORT=8097
 AIDE_WORKSPACE=/absolute/path/to/project
 AIDE_CONTEXT=/absolute/path/to/reference

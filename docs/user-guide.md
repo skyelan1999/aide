@@ -2,7 +2,7 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-适用：0.1.11.0 RC3。aide 可直接使用，也可交给 AI 按 [场景定制指南](customization.md) 改造成专属工作台。启动配置见 [README](../README.md)。
+适用范围：最近发布基线为 `v0.1.13.0-RC1`；当前 `main` 可能包含 tag 之后的功能和修复，是否完成验收以对应 [任务账本](tasks/) 与 [验证记录](verification.md) 为准。aide 可直接使用，也可交给 AI 按 [场景定制指南](customization.md) 改造成专属工作台。启动配置见 [README](../README.md)。
 
 ## 1. 认识工作台
 

@@ -16,32 +16,52 @@
     "requirements": {
       "status": "pass",
       "summary": "明确仅在小秘单独模型来源为 custom 时锁定模型列；继承工作台模型与 aide 页面行为保持不变。",
-      "evidence": ["docs/tasks/xiaomi-model-selector-lock.json acceptance/scope"]
+      "evidence": [
+        "docs/tasks/xiaomi-model-selector-lock.json acceptance/scope"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "复用 GET/PUT /api/xiaomi/model 配置状态；独立模型时将模型选项及管理入口设置为原生 disabled 并提供 aria-disabled/说明，菜单打开时刷新服务端设置。",
-      "evidence": ["internal/server/web/app.js refreshStrategyUI/open strategy button/renderXiaomiModelControl"]
+      "evidence": [
+        "internal/server/web/app.js refreshStrategyUI/open strategy button/renderXiaomiModelControl"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "小秘独立模型时置灰模型列和管理入口；保存设置后立即更新；会话切换时关闭菜单避免状态残留；补充禁用样式及英文文案。",
-      "evidence": ["internal/server/web/app.js", "internal/server/web/style.css", "internal/server/web/locales/en.js"]
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/style.css",
+        "internal/server/web/locales/en.js"
+      ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "静态检查通过，但实际浏览器 UI 验收未完成：Codex In-app Browser 打开本地页面时返回 ERR_CERT_AUTHORITY_INVALID；按安全要求未绕过证书限制。",
-      "evidence": ["PASS: node --check internal/server/web/app.js", "PASS: node --check internal/server/web/locales/en.js", "PASS: node scripts/test_i18n.cjs", "PASS: git diff --check (scoped files)", "NOT_RUN: visual/interactive browser verification; http://localhost:8097 redirects to HTTPS and the browser rejects its local certificate"]
+      "status": "in_progress",
+      "summary": "Assistant mode control regression verifies the XiaoMi lock list, including trajectory. Manual model selector interaction inside an XiaoMi session was not completed in the browser.",
+      "evidence": [
+        "PASS: node --check internal/server/web/app.js",
+        "PASS: node --check internal/server/web/locales/en.js",
+        "PASS: node scripts/test_i18n.cjs",
+        "PASS: git diff --check (scoped files)",
+        "NOT_RUN: visual/interactive browser verification; http://localhost:8097 redirects to HTTPS and the browser rejects its local certificate",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
+      ]
     },
     "documentation": {
       "status": "pass",
       "summary": "UI 行为变更无需新增用户手册；英文界面禁用说明已补本地化，任务记录注明限制与交接。",
-      "evidence": ["internal/server/web/locales/en.js", "docs/tasks/xiaomi-model-selector-lock.json"]
+      "evidence": [
+        "internal/server/web/locales/en.js",
+        "docs/tasks/xiaomi-model-selector-lock.json"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "变更限定于模型菜单与来源状态，没有临时文件；保留工作区已有用户改动。",
-      "evidence": ["git status reviewed; no cleanup/deletion performed"]
+      "evidence": [
+        "git status reviewed; no cleanup/deletion performed"
+      ]
     },
     "release": {
       "status": "pending",

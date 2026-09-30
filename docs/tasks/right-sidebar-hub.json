@@ -18,37 +18,60 @@
     "requirements": {
       "status": "pass",
       "summary": "按用户请求统一提醒/插件/文件到右侧管理，提醒页内提供加号创建、搜索与过滤；保留现有提醒来源和数据/API行为。截图仅为布局参考。",
-      "evidence": ["用户请求与附件；docs/agent/WORKFLOW.md、router.json、reminder-center 既有任务记录已检查。"]
+      "evidence": [
+        "用户请求与附件；docs/agent/WORKFLOW.md、router.json、reminder-center 既有任务记录已检查。"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "复用已有提醒中心的列表、表单、过滤、API 和提醒徽标；将动态提醒对话框改为独立右侧 aside，与现有文件和插件侧栏互斥显示。+ 控制表单展开；不迁移提醒数据、不触碰后端权限。",
-      "evidence": ["internal/server/web/app.js: reminder center and side panel switches", "internal/server/web/index.html: panel-switch group", "internal/server/web/style.css: shared side-panel geometry"]
+      "evidence": [
+        "internal/server/web/app.js: reminder center and side panel switches",
+        "internal/server/web/index.html: panel-switch group",
+        "internal/server/web/style.css: shared side-panel geometry"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "提醒入口已并入右侧面板切换组；提醒中心改为右侧 aside 并复用现有列表、搜索和过滤；+ 展开新建表单，完成后回到列表。",
-      "evidence": ["internal/server/web/app.js", "internal/server/web/style.css"]
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/style.css"
+      ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "JS 语法、i18n 回归与目标文件 diff whitespace 检查通过。实际页面验收尝试打开 localhost:8097 被 ERR_CERT_AUTHORITY_INVALID 阻断；按安全要求未绕过证书，故侧栏交互/窄屏布局 UI 验收 NOT_RUN。本次不改 Go/API；提醒后端定向测试已在既有 reminder-center 任务中记录。",
-      "evidence": ["PASS node --check internal/server/web/app.js", "PASS node scripts/test_i18n.cjs", "PASS node -e JSON.parse(docs/tasks/right-sidebar-hub.json)", "PASS git diff --check -- internal/server/web/app.js internal/server/web/style.css docs/tasks/right-sidebar-hub.json", "NOT_RUN Codex In-app Browser: https://localhost:8097 -> net::ERR_CERT_AUTHORITY_INVALID"]
+      "status": "in_progress",
+      "summary": "Isolated Safari visually rendered the current right file panel and navigation surface at desktop size. Reminder/plugin panel switching and narrow-screen drawer behavior were not manually exercised after macOS locked.",
+      "evidence": [
+        "PASS node --check internal/server/web/app.js",
+        "PASS node scripts/test_i18n.cjs",
+        "PASS node -e JSON.parse(docs/tasks/right-sidebar-hub.json)",
+        "PASS git diff --check -- internal/server/web/app.js internal/server/web/style.css docs/tasks/right-sidebar-hub.json",
+        "NOT_RUN Codex In-app Browser: https://localhost:8097 -> net::ERR_CERT_AUTHORITY_INVALID",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
+      ]
     },
     "documentation": {
       "status": "pass",
       "summary": "侧栏页签、提醒加号、搜索与过滤行为在 UI 中直接呈现；任务账本记录数据/API 保持不变及验收限制。",
-      "evidence": ["docs/tasks/right-sidebar-hub.json", "右侧栏动态提醒界面文案"]
+      "evidence": [
+        "docs/tasks/right-sidebar-hub.json",
+        "右侧栏动态提醒界面文案"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "只审阅并编辑本任务范围文件；未创建临时资源或改动提醒后端、插件及文件管理逻辑，保留工作区其他既有改动。",
-      "evidence": ["git status --short -- scoped paths"]
+      "evidence": [
+        "git status --short -- scoped paths"
+      ]
     },
     "release": {
       "status": "not_run",
       "summary": "未获发布或重启授权；未构建镜像、未触碰运行中的 aide 服务。",
-      "evidence": ["用户请求为界面调整"]
+      "evidence": [
+        "用户请求为界面调整"
+      ]
     }
   },
   "content_fingerprint_git_blob_sha1": {

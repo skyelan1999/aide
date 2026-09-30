@@ -58,8 +58,8 @@ async function testSessionSelection() {
   assert.equal(s2.classList.contains('active'), true, 'selection must paint before GET');
   assert.equal(s2.classList.contains('loading'), true);
   assert.equal(nodes.conversation.attributes['aria-busy'], 'true');
-  assert.deepEqual(requests, [['/sessions/s2','GET']], 'checked write must not precede GET');
-  gets.get('/sessions/s2').resolve({id:'s2',title:'s2',runs:[]});
+  assert.deepEqual(requests, [['/sessions/s2?limit=30','GET']], 'checked write must not precede GET');
+  gets.get('/sessions/s2?limit=30').resolve({id:'s2',title:'s2',runs:[]});
   await first;
   assert.equal(state.session.id, 's2');
   assert.equal(nodes.prompt.focused, true);
@@ -69,14 +69,14 @@ async function testSessionSelection() {
 
   const old = context.selectSession('s1');
   const latest = context.selectSession('s3');
-  gets.get('/sessions/s3').resolve({id:'s3',title:'s3',runs:[]});
+  gets.get('/sessions/s3?limit=30').resolve({id:'s3',title:'s3',runs:[]});
   await latest;
-  gets.get('/sessions/s1').resolve({id:'s1',title:'s1',runs:[]});
+  gets.get('/sessions/s1?limit=30').resolve({id:'s1',title:'s1',runs:[]});
   await old;
   assert.equal(state.session.id, 's3', 'stale response must not overwrite newest selection');
 
   const failed = context.selectSession('s1');
-  gets.get('/sessions/s1').reject(new Error('offline'));
+  gets.get('/sessions/s1?limit=30').reject(new Error('offline'));
   await assert.rejects(failed, /offline/);
   assert.equal(state.session.id, 's3');
   assert.equal(s3.classList.contains('active'), true, 'failed GET must restore prior selection');

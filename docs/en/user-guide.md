@@ -2,7 +2,7 @@
 
 [简体中文](../user-guide.md) · **English**
 
-This guide covers the 0.1.11.0 RC3 functional baseline. See [Installation](installation.md) for version boundaries.
+The latest tagged release baseline is `v0.1.13.0-RC1`. `main` may also contain post-tag work; check the linked [task records](../tasks/) and [verification log](../verification.md) for acceptance status. See [Installation](installation.md) for setup.
 
 ## 1. Find your way around
 

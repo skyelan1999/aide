@@ -17,32 +17,50 @@
     "requirements": {
       "status": "pass",
       "summary": "发现当前 UI 使用 fetch，进度覆盖层只在请求完成后增加文件计数，无法取得请求上传方向的字节进度。",
-      "evidence": ["internal/server/web/app.js：原 uploadCollected 通过 fetch 上传单文件和批次，进度仅由响应后的 processed 更新。"]
+      "evidence": [
+        "internal/server/web/app.js：原 uploadCollected 通过 fetch 上传单文件和批次，进度仅由响应后的 processed 更新。"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "用 XMLHttpRequest.upload.progress 读取真实请求体字节数和耗时估算速率；显示当前请求进度、已处理文件数、批次和等待服务端确认状态。",
-      "evidence": ["单文件传输显示精确文件字节；批次显示真实 multipart 请求体字节（含 multipart 边界），计数只在响应后增加。"]
+      "evidence": [
+        "单文件传输显示精确文件字节；批次显示真实 multipart 请求体字节（含 multipart 边界），计数只在响应后增加。"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "更新上传提示层，加入原生进度元素和速度/字节展示；单文件与批次请求统一由 XHR 上传事件驱动。",
-      "evidence": ["internal/server/web/app.js", "internal/server/web/style.css"]
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/style.css"
+      ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "脚本语法、模拟上传事件和 diff 检查通过；页面实测未运行，本地 HTTPS 证书不受信。",
-      "evidence": ["PASS: node --check internal/server/web/app.js。", "PASS: node --check scripts/test_upload_progress.cjs。", "PASS: node scripts/test_upload_progress.cjs → upload progress PASS（字节、速度、等待服务端响应、错误状态、批次切分）。", "PASS: git diff --check -- 目标文件。", "NOT_RUN: 浏览器真实上传页面验收；打开 https://localhost:8097 返回 ERR_CERT_AUTHORITY_INVALID，未绕过证书校验。"]
+      "status": "in_progress",
+      "summary": "Upload progress simulation regression passes; Safari did not reach the file upload interaction before the Mac locked.",
+      "evidence": [
+        "PASS: node --check internal/server/web/app.js。",
+        "PASS: node --check scripts/test_upload_progress.cjs。",
+        "PASS: node scripts/test_upload_progress.cjs → upload progress PASS（字节、速度、等待服务端响应、错误状态、批次切分）。",
+        "PASS: git diff --check -- 目标文件。",
+        "NOT_RUN: 浏览器真实上传页面验收；打开 https://localhost:8097 返回 ERR_CERT_AUTHORITY_INVALID，未绕过证书校验。",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
+      ]
     },
     "documentation": {
       "status": "pass",
       "summary": "无接口协议变更；记录实现行为与验证限制。",
-      "evidence": ["docs/tasks/upload-transfer-status.json"]
+      "evidence": [
+        "docs/tasks/upload-transfer-status.json"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "新增 scripts/test_upload_progress.cjs 作为轻量前端事件回归测试；未清理或覆盖其他已有改动。",
-      "evidence": ["scripts/test_upload_progress.cjs"]
+      "evidence": [
+        "scripts/test_upload_progress.cjs"
+      ]
     },
     "release": {
       "status": "not_run",

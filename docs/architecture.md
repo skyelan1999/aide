@@ -2,7 +2,7 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-核对日期：2026-09-25。当前版本 0.1.10.2 RC1（分支 feature/permission-panel）；aide 融合 AI 与 IDE，让人更专注于专业工作；架构采用 Go、浏览器与 Docker，支持按场景扩展。历史验收保留于 verification.md，发布身份由 tag 与镜像记录确认。
+核对日期：2026-09-30。最近发布 tag 为 `v0.1.13.0-RC1`；本分支包含 tag 之后的整合改动。aide 融合 AI 与 IDE；架构由 Go 服务、浏览器 UI 与 Docker 工具环境组成。历史验收保留于 [验证记录](verification.md)，功能状态以对应任务验收记录为准，发布身份由 tag、镜像和发布记录共同确认。
 
 ## 系统结构
 

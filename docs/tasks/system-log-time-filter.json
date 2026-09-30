@@ -49,15 +49,16 @@
       ]
     },
     "verification": {
-      "status": "blocked",
-      "summary": "系统日志 Go 定向测试、前端语法检查、英文文案测试、Markdown 链接检查和 diff whitespace 检查通过。完整 quick 检查未通过：本机 WSL 缺少 /bin/bash，Python 测试受 Windows 符号链接权限、临时目录锁定及本地根目录平台假设影响。已登录 aide 页面未能在可用浏览器中打开，因此真实 UI 验收未运行。",
+      "status": "in_progress",
+      "summary": "Go log-filter tests and current quick/full components pass. In an isolated Safari instance, selected ERROR and confirmed the empty state, then used Download logs and saw the success toast. Date-time fields rendered, but changing a date range was not manually verified because macOS locked during browser QA.",
       "evidence": [
         "docker run --rm -v C:\\workstation\\aide\\aide:/workspace -w /workspace golang:1.26-bookworm go test -mod=vendor ./internal/server -run ^TestSystemLog -count=1: PASS, aide/internal/server 0.007s",
         "python bundled -X utf8 scripts/check_docs.py: PASS, 108 Markdown files and 228 local links",
         "python bundled -X utf8 scripts/agent-route.py verify quick: FAIL, .agent-state/verify-20260930T023841781359Z.log; WSL /bin/bash absent, Windows symlink/temp cleanup restrictions and local-root platform assumption",
         "node --check internal/server/web/app.js; node --check internal/server/web/locales/en.js: PASS",
         "node scripts/test_i18n.cjs: PASS; git diff --check: PASS",
-        "Real browser UI: NOT_RUN; current available browser had no authenticated aide tab. Existing local containers were not restarted or changed."
+        "Real browser UI: NOT_RUN; current available browser had no authenticated aide tab. Existing local containers were not restarted or changed.",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
       ]
     },
     "documentation": {

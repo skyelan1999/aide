@@ -10,7 +10,7 @@ aide combines AI and an integrated work environment. The installer checks prereq
 
 | Platform | Requirements | Notes |
 | --- | --- | --- |
-| Apple Silicon macOS | Docker Desktop, Git, Python 3 for image verification | Start Docker and wait for the engine; published image is linux/arm64 |
+| Apple Silicon macOS | Docker Desktop, Git, Python 3 for image verification | Start Docker and wait for the engine; release-image target is linux/arm64 |
 | ARM64 Linux | Docker Engine, Compose v2, Git, Python 3 | Current user must be able to access Docker |
 | x86 Linux/macOS | Equivalent prerequisites | Build from source instead of importing the ARM archive |
 | Windows | WSL2, Docker Desktop WSL integration, Git, Python 3 | Run Bash inside WSL; not validated on a Windows device |
@@ -22,25 +22,22 @@ Official installers: [Docker Desktop](https://docs.docker.com/desktop/), [Docker
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
+git checkout v0.1.13.0-RC1
 bash scripts/install.sh --check
 ```
 
 A source ZIP is also usable for image installation. Keep its scripts, Compose file, and `version.md`: an image tarball is not a standalone desktop installer.
 
-The current baseline is **v0.1.10.2-RC1**. This release adds persistent memory, model context-window presets, a 60 default tool-call round limit, fixed Markdown/Mermaid rendering, trajectory export and call analysis, sub-agents, a three-level sandbox, a four-phase AI workflow with auto mode, five reasoning-effort levels, a voice assistant, per-tool permission toggles, configuration backup, lock screen, and persistent personas.
+The latest source tag is **v0.1.13.0-RC1**. The current `main` branch may include changes after that tag. Check the release page for matching image assets before using the image-install path.
 
-## 3A. Install the published ARM64 image
+## 3A. Install a released ARM64 image
 
-Use the source and assets from the **same release**:
+Use this only when the [Releases](https://github.com/skyelan1999/aide/releases) page has image assets. Download the image and SHA256SUMS from the **same release**, and replace `<matching-version>` below with the exact asset filename:
 
-```bash
-git checkout v0.1.10.2-RC1
-```
-
-Download `aide-0.1.10.2-RC1-linux-arm64.tar.gz` and `SHA256SUMS` from [Releases](https://github.com/skyelan1999/aide/releases), placing both in `docker-images/`:
+Download `aide-<matching-version>-linux-arm64.tar.gz` and `SHA256SUMS` from [Releases](https://github.com/skyelan1999/aide/releases), placing both in `docker-images/`:
 
 ```bash
-bash scripts/install.sh --image docker-images/aide-0.1.10.2-RC1-linux-arm64.tar.gz
+bash scripts/install.sh --image "docker-images/aide-<matching-version>-linux-arm64.tar.gz"
 ```
 
 The script verifies SHA256, loads the image, checks its architecture, and starts with `--no-build --pull never`. A failed checksum, missing tag, or incompatible architecture stops installation. Existing `.env` is preserved; inspect it if you are upgrading.
@@ -57,19 +54,19 @@ Use a Git checkout for source identity. First builds download base images. If `.
 
 For fully isolated intranet/disconnected environments. **Golden rule: on the target machine only `docker load` the imported image and launch it with `start-image`; never run `start`** — `start` triggers `docker build`, which pulls base images and will fail or hang offline. Compose sets `pull_policy: never` as a second guard so a bare `compose up` cannot pull; a missing image fails fast instead of hanging on a fetch.
 
-Three delivery artifacts (all from the same version tag, e.g. 0.1.10.2 RC1):
+Three delivery artifacts (all from the same version tag, e.g. 0.1.13.0 RC1):
 
 1. Matching-tag source (or a source ZIP with the Compose file, scripts, and version.md);
-2. Self-contained image archive `aide-0.1.10.2-RC1-linux-aarch64.tar.gz` (use `amd64` on x86; Docker reports the architecture as arm64 internally while archive filenames uniformly use aarch64/amd64);
+2. Self-contained image archive `aide-<matching-version>-linux-aarch64.tar.gz` (use `amd64` on x86; Docker reports the architecture as arm64 internally while archive filenames uniformly use aarch64/amd64);
 3. A single `SHA256SUMS` manifest in the same directory (legacy per-archive `*.sha256` files are deprecated).
 
 ```bash
 # On the offline target: verify -> load -> configure -> start
 cd aide                                    # matching-tag source root
 shasum -a 256 -c docker-images/SHA256SUMS  # verify integrity; stop on mismatch
-docker load -i docker-images/aide-0.1.10.2-RC1-linux-aarch64.tar.gz
+docker load -i "docker-images/aide-<matching-version>-linux-aarch64.tar.gz"
 # Copy .env.example to .env and set:
-#   AIDE_IMAGE=aide:0.1.10.2-RC1
+#   AIDE_IMAGE=aide:<matching-version>
 #   AI_BASE_URL=http://<lan-model-address>
 #   AIDE_WEBSEARCH_URL=        # leave empty: web_search degrades offline
 bash scripts/aide.sh start-image           # = --no-build --pull never; never builds/pulls
@@ -128,7 +125,7 @@ flowchart TD
 Use existing paths, preferably absolute:
 
 ```dotenv
-AIDE_IMAGE=aide:0.1.10.2-RC1
+AIDE_IMAGE=aide:<matching-version>
 AIDE_PORT=8097
 AIDE_WORKSPACE=/absolute/path/to/project
 AIDE_CONTEXT=/absolute/path/to/references

@@ -16,7 +16,7 @@ AI and an integrated work environment · Understand information · Analyze probl
 
 ![aide workbench with conversations, project files, and task input](docs/images/workbench-preview.jpg)
 
-> The current baseline is **0.1.10.2 RC1**. This adds persistent memory (read/write_memory injected into the system prompt each session), model context-window presets (32K/64K/128K/200K/256K/1M one-click), a default 60 tool-call round limit (tunable 5–200 in permissions), fixed Markdown/Mermaid rendering with internal handling of relative links, trajectory export and a call-analysis view, a stacked context-preview chart, sub-agents (spawn_subagent), automatic retry and stop-loss on failures, a three-level Codex-style sandbox, a four-phase AI workflow with auto mode, five reasoning-effort levels, a voice assistant, per-tool permission toggles, configuration backup, lock screen, and persistent personas. Session management, queue/interrupt, and SSE streaming landed earlier. Screenshots use an isolated demonstration environment. See [Releases](https://github.com/skyelan1999/aide/releases) for published artifacts and their exact versions.
+> **Latest published tag:** `v0.1.13.0-RC1` (see [version history](version.md)). `main` may contain post-tag integration fixes; code that has not been released is not necessarily available as an image. The preview uses an isolated demonstration workspace. Check the task and verification records before treating a feature as accepted.
 
 ## Focus on your professional work
 

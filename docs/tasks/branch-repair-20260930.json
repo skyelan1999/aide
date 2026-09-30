@@ -1,0 +1,86 @@
+{
+  "id": "branch-repair-20260930",
+  "request": "我更新了分支，但是这个版本都修坏了，请帮我把他们都修正正确的样子并完成对应的测试，请直接控制系统浏览器进行测试和渲染查询",
+  "baseline": "eaba911f725424d6514d4a7da00bf228d16659e2",
+  "initial_status": "",
+  "acceptance": [
+    "提醒中心在生产严格 CSP 下仍完整应用样式，并显示在右侧工作区面板位置，不溢出主界面。",
+    "Safari 系统浏览器验证提醒中心打开/关闭、表单和列表布局，以及桌面与窄屏渲染。",
+    "运行提醒功能相关测试与仓库 quick/full 验证；逐项记录结果和未验证范围。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/reminders.go",
+    "internal/server/tools_test.go",
+    "docs/agent/router.json",
+    "scripts/test_reminder_styles.cjs",
+    "docs/tasks/branch-repair-20260930.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按 Safari 截图确定首要可见故障：提醒中心 CSS 未生效并溢出；修复并检查本分支集中改动。",
+      "evidence": [
+        "用户请求：2026-09-30 Safari 截图显示提醒表单样式失效且位于页面左下方。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "将提醒中心样式移入已由页面加载的外部 style.css，保持生产 CSP 的 style-src self 策略。",
+      "evidence": [
+        "internal/server/server.go:1320 生产 CSP 限制 style-src self；内联样式注入会被浏览器拦截。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "提醒样式从 CSP 会拦截的运行时内联 style 移至静态样式表；提醒初始扫描延迟到既有 20 秒 ticker，避免 New 返回后与调用方初始化会话表并发；修正 TokenStats 断言至估算结果 168，并加入 CSP/提醒样式回归测试及 quick 路由。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/style.css",
+        "internal/server/reminders.go",
+        "internal/server/tools_test.go",
+        "scripts/test_reminder_styles.cjs",
+        "docs/agent/router.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "首次 full 暴露 reminders session map race 与 TokenStats 期望值错误；修复后定向 race、全量 race/vet、quick 门禁和 Safari 桌面/窄屏交互均通过。",
+      "evidence": [
+        "node scripts/test_reminder_styles.cjs: PASS",
+        "python3 scripts/agent-route.py verify quick: PASS; fingerprint 1164b95f95907bea0935828f1f0a746931ec5a795e0d20191710f4814bf3b02f; log .agent-state/verify-20260930T104354420378Z.log",
+        "docker go test -race -count=1 ./internal/server -run Test(DueRemindersPopupAndXiaomiDispatchAreIdempotent|TokenStats): PASS",
+        "bash scripts/aide.sh test: PASS; go test -race -count=1 ./... and go vet ./...",
+        "Safari isolated Docker build under strict style-src self CSP: reminder panel rendered in right sidebar; desktop and 390x844 narrow viewport inspected",
+        "Safari smoke: open/close, form, create reminder, complete, completed filter, delete/confirm all PASS; QA reminder removed",
+        "Initial full run failed before fixes on reminder dispatch races and TestTokenStats 157 vs actual 168; full rerun after fixes passed"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新 agent quick 检查路由并记录本任务验收、测试和交接结果；无需额外用户文档。",
+      "evidence": [
+        "docs/agent/router.json",
+        "docs/tasks/branch-repair-20260930.json",
+        "python3 scripts/check_docs.py: PASS"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "关闭隔离 QA 容器和本地预览代理，清理临时容器数据；未停止或修改用户的 8097 服务。",
+      "evidence": [
+        "隔离容器 aide-qa-branch-repair 已停止并移除",
+        "Safari 已返回 https://localhost:8097/"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户请求修复和测试，未请求提交、合并、推送或重启服务。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本任务在 internal/server/web/app.js、internal/server/web/style.css、internal/server/reminders.go、internal/server/tools_test.go、docs/agent/router.json、scripts/test_reminder_styles.cjs 的修改，以及删除 docs/tasks/branch-repair-20260930.json；不涉及用户数据。",
+  "handoff": "当前分支工作树保留修复，未提交/推送/合并。用户现有 8097 服务未重启，部署修复需按项目流程重建并重启应用；本任务仅在隔离容器通过 Safari 验证。浏览器验证覆盖提醒中心，不代表整站所有功能均已人工回归。"
+}

@@ -2,14 +2,23 @@
 
 > **历史证据**：以下日期、提交、测试数量、镜像和运行状态只适用于各节记录时点。本轮文档核对不重新认定这些结果，现行操作请读仓库根 HANDOVER.md；原审查报告中的“缺陷已复现”不代表当前代码仍存在该缺陷。
 
-## 现行验证入口（2026-09-25）
+## 现行验证入口（2026-09-30）
 
 当前以统一开发工作流脚本为准，不以下文历史测试数量为准：
 
 - 快速门禁：`python3 scripts/agent-route.py verify quick`（git diff --check、`node --check` 前端 JS、`scripts/version.sh check`、`test_agent_route.py`、`check_docs.py`、`bash -n` 脚本、i18n/stream/local-root 回归等，清单见 `docs/agent/router.json` 的 `checks.quick`）。
 - 完整门禁：`python3 scripts/agent-route.py verify full` = quick + `bash scripts/aide.sh test`，后者在 `aide:local` 容器内跑 `go test -race -count=1 ./... && go vet ./...`。
 - 发布门禁：`python3 scripts/agent-route.py release-check <id>`（只检查不发布）。
-- 后端测试已从记录时点的 9 个函数增至 21 个 `*_test.go` 文件、约 90 个 `Test*` 函数（含 config_backup、voice_agent、queue_steer、remediation、stream_events、auto-routing 等新覆盖）。
+- 后端测试已从历史记录时点的 9 个函数持续扩展；具体覆盖以当前 `go test` 结果和 `internal/server/*_test.go` 为准。
+
+## 集成分支收尾验收（2026-09-30）
+
+本节只记录本次 `consolidate-push-followup-20260930` AP 补验结果。版本 tag `v0.1.13.0-RC1` 仍是最近发布基线，分支整合本身不升版、不发布、不部署。
+
+- `python3 scripts/agent-route.py verify quick`：首轮通过；完整门禁冻结工作树后重跑的结果记录在任务 [`consolidate-closeout-20260930`](tasks/consolidate-closeout-20260930.json) 和 `.agent-state/full.json`。
+- Go 全量测试：容器内执行 `go test -race -count=1 ./... && go vet ./...`，`internal/server` 与 `internal/server/tts` 通过。第一次官方 full 收据因并行整理文档改变 fingerprint 而判 fail；后续稳定工作树复跑状态见本任务收据。
+- 前端专项、时间/农历/Office/SQLite 插件、文档链接检查、SFTP/FTP/FTPS/SMB 本地服务与 MCP 引用调用、真实临时 sshd cancel/timeout 进程组清理结果见同一任务账本。
+- Safari 隔离实例确认主工作台可渲染；系统日志级别选择 `ERROR` 后显示空结果，并能触发日志下载成功提示。系统随后自动锁屏，提醒 CRUD、窄屏侧栏拖动、会话长历史、IME、小秘会话交互未完成手工验收，不记为 PASS。
 
 下文为历史记录，保留原始证据。
 

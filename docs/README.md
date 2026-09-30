@@ -21,8 +21,8 @@
 | 生成 Office 文件与编辑 XLSX | [Office 工具集](plugins/office.md) |
 | 让 AI 参与开发 | [统一 Agent 工作流](agent/WORKFLOW.md) · [客户端接入](agent/ADAPTERS.md) |
 | 看当前设计与验证边界 | [macOS UI](design/macos-ui.md) |
-| 看本次整理过程 | [文档核对报告](reviews/2026-09-23/documentation-review.md) |
-| 看当前整合与发布状态 | [2026-09-30 功能整合记录](reviews/2026-09-30-consolidation.md) · [2026-09-29 发布准备记录](reviews/2026-09-29-release-preparation.md) · [版本记录](../version.md) |
+| 看本次文档整理与 AP 收尾 | [2026-09-30 整合与验证报告](reviews/2026-09-30-consolidation.md) · [任务验收账本](tasks/consolidate-closeout-20260930.json) |
+| 查看历史审查与发布证据 | [审查归档](reviews/) · [版本记录](../version.md) |
 
 ## 目录职责
 

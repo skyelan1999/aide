@@ -18,32 +18,54 @@
     "requirements": {
       "status": "pass",
       "summary": "小秘会话中轨迹、对话、AI 工作流、排队应置灰且不可操作，普通会话维持原有能力。",
-      "evidence": ["用户 2026-09-29 截图及请求"]
+      "evidence": [
+        "用户 2026-09-29 截图及请求"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "沿用会话 kind=assistant 的现有判定，在 renderSession 同步原生 disabled 和 aria-disabled；切入小秘清除工作流及排队残留，CSS 仅补充禁用态视觉。",
-      "evidence": ["internal/server/web/app.js syncAssistantModeControls", "internal/server/web/style.css .assistant-mode disabled rules"]
+      "evidence": [
+        "internal/server/web/app.js syncAssistantModeControls",
+        "internal/server/web/style.css .assistant-mode disabled rules"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "已在小秘模式禁用四个控件并统一灰显；切回普通会话恢复。",
-      "evidence": ["internal/server/web/app.js", "internal/server/web/style.css", "scripts/test_assistant_mode_controls.cjs"]
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/style.css",
+        "scripts/test_assistant_mode_controls.cjs"
+      ]
     },
     "verification": {
       "status": "pass",
-      "summary": "隔离的 8098 HTTP 预览页面实测：小秘四按钮均在可访问性树中标为 disabled 且截图灰显，切到普通会话四按钮恢复；针对性前端测试与语法检查通过。统一 quick 在 Windows 主机因 python3/Bash 不可用失败，容器复跑在 Windows 挂载的 git diff --check 上长时间无进展后停止；这些不是本任务功能测试失败。8097 正在运行的服务未替换。",
-      "evidence": ["8098 隔离浏览器：小秘四按钮 disabled、普通会话恢复", "node scripts/test_assistant_mode_controls.cjs → PASS", "node --check internal/server/web/app.js → PASS", "node scripts/test_i18n.cjs → PASS", "git diff --check → PASS（Windows 主机）", "scripts/agent-route.py verify quick → FAIL（Windows 缺少 python3/Bash）；Docker 复跑未完成"]
+      "summary": "Automated assistant-mode regression passes, including trajectory in the locked-control set; manual QA in the isolated Safari instance rendered the current production branch UI. The earlier desktop browser evidence still covers disabled controls in XiaoMi mode and restored controls in a normal session.",
+      "evidence": [
+        "8098 隔离浏览器：小秘四按钮 disabled、普通会话恢复",
+        "node scripts/test_assistant_mode_controls.cjs → PASS",
+        "node --check internal/server/web/app.js → PASS",
+        "node scripts/test_i18n.cjs → PASS",
+        "git diff --check → PASS（Windows 主机）",
+        "scripts/agent-route.py verify quick → FAIL（Windows 缺少 python3/Bash）；Docker 复跑未完成",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
+      ]
     },
     "documentation": {
       "status": "pass",
       "summary": "本任务卡记录了验收目标、实现位置、实测结果和发布边界；无需变更用户使用说明。",
-      "evidence": ["docs/tasks/assistant-mode-controls.json"]
+      "evidence": [
+        "docs/tasks/assistant-mode-controls.json"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "隔离预览容器和标签页已关闭，测试令牌及临时 Go 入口已删除；忽略目录 .agent-state/assistant-ui-preview-data 中的可再生预览数据未删，保留原工作区改动。",
-      "evidence": ["git status --short --branch", "git diff --check"]
+      "evidence": [
+        "git status --short --branch",
+        "git diff --check"
+      ]
     },
     "release": {
       "status": "not_run",

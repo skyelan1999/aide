@@ -16,32 +16,48 @@
     "requirements": {
       "status": "pass",
       "summary": "替换会话列表中不协调的图钉表情符号，保留置顶标记语义和操作逻辑。",
-      "evidence": ["用户原话：会话里的置顶符号不好看，改成适合主题的图标。"]
+      "evidence": [
+        "用户原话：会话里的置顶符号不好看，改成适合主题的图标。"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "仅替换已置顶会话的标记为 currentColor SVG 线性图标，颜色使用现有品牌色；通过独立标题 span 保留省略样式，不改置顶 API 或顺序。",
-      "evidence": ["internal/server/web/app.js：buildItem 仅在 s.pinned 时创建图标，pinBtn 原有 PATCH 行为未改。"]
+      "evidence": [
+        "internal/server/web/app.js：buildItem 仅在 s.pinned 时创建图标，pinBtn 原有 PATCH 行为未改。"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "会话列表改为主题色线性置顶符号，标题在侧栏宽度不足时继续省略显示。",
-      "evidence": ["internal/server/web/app.js", "internal/server/web/style.css"]
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/style.css"
+      ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "JavaScript 语法及目标文件 diff 检查通过；无法进行真实 UI 页面验收。",
-      "evidence": ["PASS: node --check internal/server/web/app.js。", "PASS: git diff --check -- internal/server/web/app.js internal/server/web/style.css docs/tasks/session-pin-icon.json。", "NOT_RUN: 浏览器验收；https://localhost:8097 返回 ERR_CERT_AUTHORITY_INVALID，未绕过证书。"]
+      "status": "in_progress",
+      "summary": "Full Go and frontend checks pass. The session list remained empty in the isolated QA instance, so pinned-session icon rendering was not manually exercised.",
+      "evidence": [
+        "PASS: node --check internal/server/web/app.js。",
+        "PASS: git diff --check -- internal/server/web/app.js internal/server/web/style.css docs/tasks/session-pin-icon.json。",
+        "NOT_RUN: 浏览器验收；https://localhost:8097 返回 ERR_CERT_AUTHORITY_INVALID，未绕过证书。",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
+      ]
     },
     "documentation": {
       "status": "pass",
       "summary": "本次 UI 微调无额外用户文档需求；在任务记录中写明图标与验收限制。",
-      "evidence": ["docs/tasks/session-pin-icon.json"]
+      "evidence": [
+        "docs/tasks/session-pin-icon.json"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "只改置顶标记与局部标题布局；未清理或覆盖仓库内其它已有改动。",
-      "evidence": ["工作树其他未提交改动保留原样。"]
+      "evidence": [
+        "工作树其他未提交改动保留原样。"
+      ]
     },
     "release": {
       "status": "not_run",

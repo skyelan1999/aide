@@ -20,37 +20,60 @@
     "requirements": {
       "status": "pass",
       "summary": "设置分别管理 aide/小秘形象、透明度和聊天框状态动画；锁屏在解锁卡片上方展示 aide 形象与状态，保持小秘配置隔离。附件仅作为界面位置参考。",
-      "evidence": ["用户请求与截图；工作区 Git 基线及 docs/agent/WORKFLOW.md 已检查。"]
+      "evidence": [
+        "用户请求与截图；工作区 Git 基线及 docs/agent/WORKFLOW.md 已检查。"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "采用浏览器本地存储形象图片和偏好，避免上传用户图片至服务端；锁屏直接读取 aide 配置及既有任务阶段/耗时状态，中性 joining veil 隐藏状态，避免未确认锁定前泄漏。",
-      "evidence": ["internal/server/web/app.js：assistant-mode、state.busy、voice-btn.recording；settings-dialog。"]
+      "evidence": [
+        "internal/server/web/app.js：assistant-mode、state.busy、voice-btn.recording；settings-dialog。"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "已增加独立形象管理弹窗、persona 分离设置、本地添加删除切换、透明度调节和 composer 状态动画/CSS；锁屏上方展示 aide 形象及任务状态。图片限制为 PNG/JPG/WebP/GIF 且单张不超过 1.5 MB。",
-      "evidence": ["internal/server/web/app.js", "internal/server/web/index.html", "internal/server/web/style.css"]
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/web/style.css"
+      ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "前端语法检查及目标文件 whitespace 检查已通过。完整 quick 流程在全工作区 git diff --check 阶段耗时过长后停止；Go 包测试运行超过 90 秒仍无结果，已停止测试容器。浏览器打开受本地 TLS 证书校验阻断，按安全要求不绕过；UI 实机验收 NOT_RUN。",
-      "evidence": ["node --check internal/server/web/app.js: PASS", "node JSON.parse docs/tasks/composer-avatars.json: PASS", "git diff --check -- internal/server/web/app.js internal/server/web/index.html internal/server/web/style.css docs/tasks/composer-avatars.json: PASS", "python3 scripts/agent-route.py verify quick: stopped during whole-workspace git diff --check", "docker run aide:local go test ./internal/server: stopped after >90s without result", "http(s)://localhost:8097: ERR_CERT_AUTHORITY_INVALID (UI NOT_RUN)", "git hash-object app.js=62b7c002dea8051ebdd4b33f3a04dcf0651195a1; index.html=4d69c3e5b9a7a7b464a669fb8aa7a3145e15d355; style.css=1f8cb67d189e55f927d7a4db8222d6fa5ee9996c"]
+      "status": "in_progress",
+      "summary": "Full Go suite, frontend parse, and quick checks pass. Manual avatar state rendering was not reached before the Mac locked.",
+      "evidence": [
+        "node --check internal/server/web/app.js: PASS",
+        "node JSON.parse docs/tasks/composer-avatars.json: PASS",
+        "git diff --check -- internal/server/web/app.js internal/server/web/index.html internal/server/web/style.css docs/tasks/composer-avatars.json: PASS",
+        "python3 scripts/agent-route.py verify quick: stopped during whole-workspace git diff --check",
+        "docker run aide:local go test ./internal/server: stopped after >90s without result",
+        "http(s)://localhost:8097: ERR_CERT_AUTHORITY_INVALID (UI NOT_RUN)",
+        "git hash-object app.js=62b7c002dea8051ebdd4b33f3a04dcf0651195a1; index.html=4d69c3e5b9a7a7b464a669fb8aa7a3145e15d355; style.css=1f8cb67d189e55f927d7a4db8222d6fa5ee9996c",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
+      ]
     },
     "documentation": {
       "status": "pass",
       "summary": "设置界面说明支持范围、浏览器本地存储和 GIF 行为；任务账本记录锁屏显示逻辑及限制。",
-      "evidence": ["形象管理弹窗提示、锁屏状态文字、docs/tasks/composer-avatars.json"]
+      "evidence": [
+        "形象管理弹窗提示、锁屏状态文字、docs/tasks/composer-avatars.json"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "审阅本任务前端差异与任务记录；没有生成媒体文件或临时产物。工作区其他既有改动及正在运行的 aide 服务均保留。",
-      "evidence": ["git status --short --branch（任务开始及结束均检查本任务路径，工作区已有大量并行改动）"]
+      "evidence": [
+        "git status --short --branch（任务开始及结束均检查本任务路径，工作区已有大量并行改动）"
+      ]
     },
     "release": {
       "status": "not_run",
       "summary": "未构建/发布 Docker 镜像、未重启任何 aide 服务；用户本次请求未授权发布或停服务，保留本地源码供后续验收。",
-      "evidence": ["用户请求仅为增加功能"]
+      "evidence": [
+        "用户请求仅为增加功能"
+      ]
     }
   },
   "release_authorization": "未授权发布或服务重启。",

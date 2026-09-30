@@ -21,12 +21,16 @@
     "requirements": {
       "status": "pass",
       "summary": "明确运行中暂停、从保存的模型/工具消息接续、进程重启后恢复；与停止后重试区分。",
-      "evidence": ["用户原话：暂停后要能接上，避免中断后从头推理；验收标准已记录在本任务 acceptance。"]
+      "evidence": [
+        "用户原话：暂停后要能接上，避免中断后从头推理；验收标准已记录在本任务 acceptance。"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "将当前阶段的对话消息链持久化为任务检查点；恢复时创建关联续跑 run，跳过已完成工作流阶段，并继续当前阶段。重启时把 running 标为 interrupted 并保留可恢复检查点。",
-      "evidence": ["检查点位于 Task 持久化结构；旧会话缺少检查点时仍显示为不可续跑，不做破坏性迁移。"]
+      "evidence": [
+        "检查点位于 Task 持久化结构；旧会话缺少检查点时仍显示为不可续跑，不做破坏性迁移。"
+      ]
     },
     "implementation": {
       "status": "pass",
@@ -42,29 +46,36 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "后端定向测试、JS 语法与 i18n 检查通过；完整 quick 门禁有与本任务无关的既有工作树问题，浏览器验收因 localhost 证书不受信任而未执行。",
+      "summary": "Workflow pause/resume regression package is included in the passing full Go race/vet run and focused tests. Browser handoff/resume interaction was not manually verified in this turn.",
       "evidence": [
         "PASS (Docker aide:local): go test ./internal/server -run ^Test(ToolLoopCheckpointResumesAfterCompletedTool|InterruptedTaskWithCheckpointIsResumableAfterRestart|ResumeEndpointContinuesSavedMessages|PauseEndpointCancelsRunAndPersistsRequest)$ -count=1 -timeout=90s；结果 ok aide/internal/server 1.577s。",
         "PASS (Docker aide:local): go test ./internal/server -run ^(TestToolLoop.*|TestRunEventsCancelMidStream|TestContextToolsForAssistantOnly)$ -count=1 -timeout=90s；结果 ok aide/internal/server 5.426s。",
         "PASS: node --check internal/server/web/app.js；PASS: node scripts/test_i18n.cjs；PASS: scoped git diff --check -- internal/server/workflow.go internal/server/server.go internal/server/workflow_pause_test.go internal/server/web/app.js internal/server/web/locales/en.js。",
         "FAIL (全仓 quick): git diff --check 命中 web-i18n-refactor-plan.md 的既有尾随空格；bash -n scripts/aide.sh 遇到 CRLF 语法错误。其余 quick 检查均通过，未修改这些无关文件。",
-        "NOT_RUN: localhost:8097 返回 ERR_CERT_AUTHORITY_INVALID；按 computer-use 技能限制未绕过浏览器证书警告，因此未做页面交互验收。"
+        "NOT_RUN: localhost:8097 返回 ERR_CERT_AUTHORITY_INVALID；按 computer-use 技能限制未绕过浏览器证书警告，因此未做页面交互验收。",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
       ]
     },
     "documentation": {
       "status": "pass",
       "summary": "任务记录包含验收标准、实现范围、验证结果、限制和交接状态；界面按钮使用已有本地化映射。",
-      "evidence": ["已更新本任务 acceptance、scope、各阶段证据与 handoff。"]
+      "evidence": [
+        "已更新本任务 acceptance、scope、各阶段证据与 handoff。"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "仅保留本功能源码和回归测试；没有清理或改写其他未提交工作。",
-      "evidence": ["隔离测试使用 docker run --rm；已有运行中的服务容器未停止或重启。"]
+      "evidence": [
+        "隔离测试使用 docker run --rm；已有运行中的服务容器未停止或重启。"
+      ]
     },
     "release": {
       "status": "not_run",
       "summary": "未获发布/重启授权，不构建替换现有镜像、不重启服务、不推送或提交。",
-      "evidence": ["现有三个运行中的 Docker 服务保持原状；工作树仍包含大量其他任务的未提交改动。"]
+      "evidence": [
+        "现有三个运行中的 Docker 服务保持原状；工作树仍包含大量其他任务的未提交改动。"
+      ]
     }
   },
   "release_authorization": "",

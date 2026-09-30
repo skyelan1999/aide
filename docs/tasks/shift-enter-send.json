@@ -17,37 +17,63 @@
     "requirements": {
       "status": "pass",
       "summary": "已明确：Shift+Enter 发送、Enter 换行，并保留中文 IME 组合输入；同步中英文提示和指南。",
-      "evidence": ["验收标准和修改范围记录在本任务 acceptance/scope。"]
+      "evidence": [
+        "验收标准和修改范围记录在本任务 acceptance/scope。"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "沿用共享 prompt textarea 的键盘监听，抽出可测试判定函数；不改提交流程。",
-      "evidence": ["internal/server/web/app.js：shouldSendPromptOnKeydown 与 prompt keydown 监听。"]
+      "evidence": [
+        "internal/server/web/app.js：shouldSendPromptOnKeydown 与 prompt keydown 监听。"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "改为 Shift+Enter 发送，Ctrl/Meta/Alt 组合和 IME composition 不触发；提示与双语指南已更新。",
-      "evidence": ["internal/server/web/app.js", "internal/server/web/locales/en.js", "docs/user-guide.md", "docs/en/user-guide.md", "scripts/test_prompt_shortcut.cjs"]
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/locales/en.js",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "scripts/test_prompt_shortcut.cjs"
+      ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "Node 语法检查、快捷键专项测试、国际化回归、git diff --check 均通过。实际页面未能打开：浏览器返回 net::ERR_CERT_AUTHORITY_INVALID；未绕过证书拦截，因此 UI 验收未运行。仓库 quick verify 因 Windows 环境没有 Python 运行时未能启动。",
-      "evidence": ["node --check internal/server/web/app.js：PASS", "node --check internal/server/web/locales/en.js：PASS", "node scripts/test_prompt_shortcut.cjs：PASS", "node scripts/test_i18n.cjs：PASS", "git diff --check（本任务文件）：PASS", "浏览器打开 https://localhost:8097/：net::ERR_CERT_AUTHORITY_INVALID，UI NOT_RUN", "python3 scripts/agent-route.py verify quick：NOT_RUN，python3 命令解析到 Windows Store alias，系统提示未安装 Python"]
+      "status": "in_progress",
+      "summary": "Shortcut-specific DOM regression, locale regression, static composer hint check, and full quick/full test suites pass. Manual key/IME entry was not completed in the browser because the Mac locked during QA.",
+      "evidence": [
+        "node --check internal/server/web/app.js：PASS",
+        "node --check internal/server/web/locales/en.js：PASS",
+        "node scripts/test_prompt_shortcut.cjs：PASS",
+        "node scripts/test_i18n.cjs：PASS",
+        "git diff --check（本任务文件）：PASS",
+        "浏览器打开 https://localhost:8097/：net::ERR_CERT_AUTHORITY_INVALID，UI NOT_RUN",
+        "python3 scripts/agent-route.py verify quick：NOT_RUN，python3 命令解析到 Windows Store alias，系统提示未安装 Python",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
+      ]
     },
     "documentation": {
       "status": "pass",
       "summary": "中英文用户指南均说明 Enter 换行、Shift+Enter 发送。",
-      "evidence": ["docs/user-guide.md", "docs/en/user-guide.md"]
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "新增专项脚本归属 scripts/，没有生成临时文件；仓库有大量既存改动，均保留。",
-      "evidence": ["git status --short（仅检查本任务相关路径；其他工作区改动未触碰）"]
+      "evidence": [
+        "git status --short（仅检查本任务相关路径；其他工作区改动未触碰）"
+      ]
     },
     "release": {
       "status": "not_run",
       "summary": "未获发布授权；未提交、构建、重启服务或发布。",
-      "evidence": ["本请求仅授权代码修改；发布门禁未执行。"]
+      "evidence": [
+        "本请求仅授权代码修改；发布门禁未执行。"
+      ]
     }
   },
   "release_authorization": "",

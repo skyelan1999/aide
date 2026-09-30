@@ -6,7 +6,7 @@ const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../internal/server/web/app.js'), 'utf8');
 const start = source.indexOf('function syncAssistantModeControls(');
-const end = source.indexOf('// AI 工作流四阶段', start);
+const end = source.indexOf('// AI 工作流阶段', start);
 assert.ok(start >= 0 && end > start, 'assistant controls synchronizer exists');
 
 function button() {

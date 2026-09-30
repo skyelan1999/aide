@@ -17,37 +17,58 @@
     "requirements": {
       "status": "pass",
       "summary": "项目文件面板按常见文件类型区分图标，文件夹和未知文件各自有稳定的回退图标。",
-      "evidence": ["docs/tasks/file-type-icons.json acceptance/scope"]
+      "evidence": [
+        "docs/tasks/file-type-icons.json acceptance/scope"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "采用前端扩展名分类和内嵌 SVG 图形，不新增依赖；文件列表行交互保持不变。",
-      "evidence": ["internal/server/web/app.js:fileIconKind", "internal/server/web/app.js:fileIconMarkup"]
+      "evidence": [
+        "internal/server/web/app.js:fileIconKind",
+        "internal/server/web/app.js:fileIconMarkup"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "增加代码、图片、表格、文档、PDF、压缩包、视频、音频、配置、数据库、文件夹及通用文件图标和配色。",
-      "evidence": ["internal/server/web/app.js:renderFileEntries", "internal/server/web/style.css:file-icon-* classes"]
+      "evidence": [
+        "internal/server/web/app.js:renderFileEntries",
+        "internal/server/web/style.css:file-icon-* classes"
+      ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "JS 语法检查、类型分类用例、i18n 和差异空白检查通过；桌面 UI 实际验收不可用。",
-      "evidence": ["PASS node --check internal/server/web/app.js", "PASS node inline fileIconKind mapping assertions (11 categories/fallbacks)", "PASS node scripts/test_i18n.cjs", "PASS git diff --check -- scoped files (仅 CRLF 转换提示)", "NOT_RUN UI: Computer Use returned apps=[]; Codex In-app Browser has no tabs"]
+      "status": "in_progress",
+      "summary": "File type detection regression passes and the live isolated Safari file panel renders. The Mac locked before file-type-specific icons could be exercised against sample files.",
+      "evidence": [
+        "PASS node --check internal/server/web/app.js",
+        "PASS node inline fileIconKind mapping assertions (11 categories/fallbacks)",
+        "PASS node scripts/test_i18n.cjs",
+        "PASS git diff --check -- scoped files (仅 CRLF 转换提示)",
+        "NOT_RUN UI: Computer Use returned apps=[]; Codex In-app Browser has no tabs",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
+      ]
     },
     "documentation": {
       "status": "pass",
       "summary": "无需用户文档或接口文档变更；仅改变文件列表图标表现。",
-      "evidence": ["仅变更前端呈现，无新增设置或操作"]
+      "evidence": [
+        "仅变更前端呈现，无新增设置或操作"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "仅登记本任务记录；未触碰工作区内用户文件或其他已有改动。",
-      "evidence": ["已审查本任务范围内 diff"]
+      "evidence": [
+        "已审查本任务范围内 diff"
+      ]
     },
     "release": {
       "status": "not_run",
       "summary": "未提交、构建、发布、部署或重启；当前未获发布授权。",
-      "evidence": ["运行服务未触碰"]
+      "evidence": [
+        "运行服务未触碰"
+      ]
     }
   },
   "release_authorization": "",

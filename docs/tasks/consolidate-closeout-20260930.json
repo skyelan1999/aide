@@ -1,0 +1,106 @@
+{
+  "id": "consolidate-closeout-20260930",
+  "request": "整理全部文档，删除过期无用文档；按 consolidate-push-followup-20260930 验收 AP 补完未完成功能和验证，并将分支合并到 main（不升版、不打 tag、不部署或重启生产服务）",
+  "baseline": "eaba911f725424d6514d4a7da00bf228d16659e2",
+  "initial_status": "M docs/agent/router.json\n M internal/server/reminders.go\n M internal/server/tools_test.go\n M internal/server/web/app.js\n M internal/server/web/style.css\n?? docs/tasks/branch-repair-20260930.json\n?? scripts/test_reminder_styles.cjs",
+  "acceptance": [
+    "逐项完成 docs/tasks/consolidate-push-followup-20260930.json 的功能验收 AP；修复发现的真实缺陷，不能把已存在实现或静态测试当成端到端通过。",
+    "运行并记录当前正式 quick/full 门禁及 AP 对应的独立前端、插件、SFTP/MCP、浏览器回归；未完成的外部依赖场景明确列出。",
+    "审阅全部受控文档与目录；只删除已证实过期、重复、无引用且不承载历史/法规/验收证据的文件，更新当前状态与文档索引。",
+    "将当前集成分支与修复在测试通过后合入 main 并推送 origin/main；不升版、不打 tag、不部署或重启生产服务。"
+  ],
+  "scope": [
+    "当前分支与 main 间已授权集成内容和本轮修复",
+    "docs/**（索引、现行指南、架构、任务账本、历史文档目录审计）",
+    "AP 相关的 internal/server、internal/server/web、plugins、scripts",
+    "docs/tasks/consolidate-closeout-20260930.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户授权整理所有文档、删除过期无用文档、按已留验收 AP 完成未完成项并将分支合入 main；保持不升版、不打 tag、不部署或重启生产服务。",
+      "evidence": [
+        "docs/tasks/consolidate-push-followup-20260930.json:acceptance 与 75 文件集成范围",
+        "用户最新明确请求：整理文档、删除过期无用文档、未完成的功能一并做完并合入 main"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "以原 AP、相关任务账本和实际工作树为基准；将已完成的日期交接/方案移入 docs/archive，更新主入口版本边界，保留历史验收与法规资料。",
+      "evidence": [
+        "docs/README.md",
+        "docs/agent/WORKFLOW.md",
+        "docs/archive/"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "修复小秘会话的轨迹控件未禁用缺陷，修复过时快捷键提示和 3 个旧测试断点；归档过时根目录计划与交接入口，更新中英文文档。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/web/locales/en.js",
+        "scripts/test_assistant_mode_controls.cjs",
+        "scripts/test_prompt_shortcut.cjs",
+        "scripts/test_ui_click_latency.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "正式 verify full 已在冻结源码树上 PASS（fingerprint 597973ed50d94a5d109ddca105c5e5b5e2bf4d13a27c7bed219d48222f002319）：quick、Go race 全量及 vet。独立前端/插件/SFTP/MCP/sshd E2E 通过；Safari 隔离实例确认工作台渲染与系统日志 ERROR 筛选/下载。因 macOS 锁屏，AP 中列出的若干实际手工交互未完成，逐项记录为未验收。",
+      "evidence": [
+        "python3 scripts/agent-route.py verify full: PASS; head=eaba911f725424d6514d4a7da00bf228d16659e2; fingerprint=597973ed50d94a5d109ddca105c5e5b5e2bf4d13a27c7bed219d48222f002319",
+        "node scripts/test_assistant_mode_controls.cjs: PASS",
+        "node scripts/test_ui_click_latency.cjs: PASS",
+        "node scripts/test_prompt_shortcut.cjs: PASS",
+        "node scripts/test_file_type_detection.cjs: PASS",
+        "node scripts/test_upload_progress.cjs: PASS",
+        "node scripts/test_reminder_styles.cjs: PASS",
+        "node scripts/test_voice_panel.cjs: PASS",
+        "node scripts/test_i18n.cjs and test_stream_url.cjs: PASS",
+        "current-time/lunar-calendar/office plugins: PASS; SQLite 33/33 in Docker; office docx comments test PASS in Docker",
+        "scripts/test-source-protocols.sh: local/skill/link/ftp/ftps/sftp/smb all pass, including MCP roundtrip",
+        "internal/server TestRemoteWorkspaceDispatch and TestMCPReferenceDiscoveryAndReadOnlyCall: PASS",
+        "docker-images/sshd-test/run-e2e.sh: cancel and timeout both reap remote process groups",
+        "Safari isolated local instance: workbench rendered, ERROR log filter yielded empty state, Download logs produced success toast",
+        "Manual UI NOT RUN after macOS auto-lock: reminder CRUD; narrow/resizable sidebars and drag navigation; long-session rendering and archive search restore; Shift+Enter with IME; actual XLSX render/upload progress; pin/avatar/context meter; model selector inside XiaoMi session"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "根 HANDOVER 收敛为现行操作入口；旧 handoff 与完成的 i18n 方案归档；中英文首页/安装/使用指南、PRD、架构、验证记录及文档索引已校正 tag 后功能的版本与验收边界。",
+      "evidence": [
+        "docs/README.md",
+        "README.md",
+        "README.en.md",
+        "HANDOVER.md",
+        "docs/PRD.md",
+        "docs/architecture.md",
+        "docs/installation.md",
+        "docs/en/installation.md",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/verification.md",
+        "docs/reviews/2026-09-30-consolidation.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "将 2026-09-26 交接与已完成的 i18n 方案移出根目录放入 docs/archive；清理已执行，历史内容仍保留。没有删除仍承载唯一历史/验收/法规信息的文档。",
+      "evidence": [
+        "docs/archive/HANDOVER-2026-09-30-legacy.md",
+        "docs/archive/2026-09-26-HANDOFF-RC3.md",
+        "docs/archive/2026-09-26-web-i18n-refactor-plan.md",
+        "python3 scripts/check_docs.py PASS 112 Markdown, 250 local links"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "待 fresh verification, commit, main fast-forward merge, and push; no version bump/tag/release/deployment/restart.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户最新明确要求合入 main；此前任务明确授权将变更推送，并仅禁止升版/tag/部署/重启。",
+  "rollback": "合并前创建并记录 main 与集成分支 SHA；代码通过单独修复提交和 fast-forward 合并，必要时可 revert 集成与修复提交。文档删除仅限已审查路径并记录清单。",
+  "handoff": "功能代码回归与正式 full 门禁通过；具体未手工验收 UI 清单见 verification stage 和整合报告。main 与 origin/main 起始于 40da817c36eb68a2ac0169afd4bec428da6214bb，集成分支可快进合并；等待提交、推送后填写最终 SHA。没有升版/tag/release/deploy/restart。"
+}

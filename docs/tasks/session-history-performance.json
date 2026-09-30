@@ -43,14 +43,15 @@
       ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "Docker Go build、前端语法和 diff 检查通过；真实浏览器/长会话交互未运行。Cua 环境报告 Mac 已锁定且自动解锁失败，不能打开 UI 做性能实测。未运行测试。",
+      "status": "in_progress",
+      "summary": "Paginated-session request/latency regressions and full Go race/vet pass. Long-history rendering performance was not measured in a live conversation during this turn.",
       "evidence": [
         "docker run --rm -v \"$PWD:/src\" -w /src golang:1.26-bookworm go build -o /tmp/aide-session-history-check ./cmd/aide: PASS",
         "node --check internal/server/web/app.js: PASS",
         "node --check internal/server/web/locales/en.js: PASS",
         "git diff --check: PASS",
-        "Cua getState: native apps unavailable because Mac is locked"
+        "Cua getState: native apps unavailable because Mac is locked",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
       ]
     },
     "documentation": {

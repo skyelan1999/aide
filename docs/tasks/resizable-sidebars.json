@@ -16,32 +16,53 @@
     "requirements": {
       "status": "pass",
       "summary": "两侧栏宽度可分别调整；设置→无障碍负责恢复响应式默认值；偏好限定本地浏览器。",
-      "evidence": ["docs/tasks/resizable-sidebars.json acceptance/scope"]
+      "evidence": [
+        "docs/tasks/resizable-sidebars.json acceptance/scope"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "固定定位的键盘可操作分隔条驱动 CSS Grid/抽屉宽度；localStorage 持久化；响应式断点保留现有叠层布局。",
-      "evidence": ["internal/server/web/app.js initSidebarResizers", "internal/server/web/style.css sidebar resize rules"]
+      "evidence": [
+        "internal/server/web/app.js initSidebarResizers",
+        "internal/server/web/style.css sidebar resize rules"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "完成指针拖动与箭头键调宽、本地记忆、面板开关可见状态、无障碍重置按钮与英文翻译。",
-      "evidence": ["internal/server/web/app.js", "internal/server/web/style.css", "internal/server/web/locales/en.js"]
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/style.css",
+        "internal/server/web/locales/en.js"
+      ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "JS 语法、本地化回归和 scoped diff 检查通过；实际浏览器 UI 拖动/重置验收未运行：访问本地 HTTP 会转至 HTTPS 且浏览器报 ERR_CERT_AUTHORITY_INVALID，按安全要求未绕过。",
-      "evidence": ["PASS: node --check internal/server/web/app.js", "PASS: node --check internal/server/web/locales/en.js", "PASS: node scripts/test_i18n.cjs", "PASS: git diff --check (scoped files)", "NOT_RUN: desktop/mobile rendering, pointer drag and accessibility-reset interaction"]
+      "status": "in_progress",
+      "summary": "The isolated Safari screenshot confirms the desktop workbench layout. Manual splitter drag and narrow viewport checks were not completed because the Mac locked.",
+      "evidence": [
+        "PASS: node --check internal/server/web/app.js",
+        "PASS: node --check internal/server/web/locales/en.js",
+        "PASS: node scripts/test_i18n.cjs",
+        "PASS: git diff --check (scoped files)",
+        "NOT_RUN: desktop/mobile rendering, pointer drag and accessibility-reset interaction",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
+      ]
     },
     "documentation": {
       "status": "pass",
       "summary": "说明已通过无障碍设置按钮及英文界面文案呈现；交互说明写入任务交接记录。",
-      "evidence": ["internal/server/web/locales/en.js", "docs/tasks/resizable-sidebars.json"]
+      "evidence": [
+        "internal/server/web/locales/en.js",
+        "docs/tasks/resizable-sidebars.json"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "新增功能未产生临时文件；保留工作区既有改动，未执行清理或删除。",
-      "evidence": ["git status reviewed; no cleanup/deletion performed"]
+      "evidence": [
+        "git status reviewed; no cleanup/deletion performed"
+      ]
     },
     "release": {
       "status": "pending",

@@ -30,37 +30,72 @@
     "requirements": {
       "status": "pass",
       "summary": "记录可验证验收：全局提醒中心、来源及存储区域、持久化、弹窗/小秘到期通知，以及 aide 与小秘不同的服务端控制权限。",
-      "evidence": ["docs/tasks/reminder-center.json:acceptance", "docs/tasks/reminder-center.json:scope"]
+      "evidence": [
+        "docs/tasks/reminder-center.json:acceptance",
+        "docs/tasks/reminder-center.json:scope"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "提醒账本保存在 aide 数据卷 reminders/reminders.json；area/workspaceId 区分全局与当前工作区。以工具 schema 与服务端 actor guard 限制 aide 只能创建和完成，小秘通过完整提醒工具集管理。到期小秘消息用 ReminderID 幂等去重；旧数据不存在时初始化空账本，不修改项目目录。",
-      "evidence": ["internal/server/paths.go:RemindersPath", "internal/server/reminders.go:Reminder", "internal/server/cross_session_tools.go:contextToolsFor"]
+      "evidence": [
+        "internal/server/paths.go:RemindersPath",
+        "internal/server/reminders.go:Reminder",
+        "internal/server/cross_session_tools.go:contextToolsFor"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "新增提醒持久化、API、优先级/搜索/区域过滤、弹窗已读标记、后台小秘通知、aide 小秘工具权限和全局提醒中心 UI；补中文说明与英文文案。",
-      "evidence": ["internal/server/reminders.go", "internal/server/reminders_test.go", "internal/server/server.go:reminder routes and scheduler", "internal/server/web/app.js:reminder center", "internal/server/web/locales/en.js:reminder labels", "docs/user-guide.md:提醒中心", "docs/en/user-guide.md:Reminders"]
+      "evidence": [
+        "internal/server/reminders.go",
+        "internal/server/reminders_test.go",
+        "internal/server/server.go:reminder routes and scheduler",
+        "internal/server/web/app.js:reminder center",
+        "internal/server/web/locales/en.js:reminder labels",
+        "docs/user-guide.md:提醒中心",
+        "docs/en/user-guide.md:Reminders"
+      ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "提醒定向 Go 测试、JS 语法、i18n 和文档检查通过。完整 internal/server 测试失败于既有 TestTokenStats：该测试断言 total=157，但当前输出 total=168；提醒功能测试单独通过。临时 QA 服务成功启动，但 Codex 浏览器报告 ERR_CERT_AUTHORITY_INVALID；遵守安全约束没有绕过，UI 实际交互验收未完成。",
-      "evidence": ["PASS docker run ... go test ./internal/server -run '^TestReminder' -count=1 (2026-09-30): ok, 0.866s", "PASS node --check internal/server/web/app.js", "PASS node --check internal/server/web/locales/en.js", "PASS node scripts/test_i18n.cjs", "PASS python3 scripts/check_docs.py in aide:local: 109 Markdown files, 229 local links, FR-01..100", "PASS git diff --check -- scoped files (仅 CRLF 转换提示)", "FAIL docker run ... go test ./internal/server -count=1: TestTokenStats in internal/server/tools_test.go:241 expects total 157; observed 168; full package otherwise reached end", "NOT_RUN UI interaction: isolated https://localhost:18097 returns net::ERR_CERT_AUTHORITY_INVALID in Codex In-app Browser; no certificate warning bypassed; temporary QA container stopped"]
+      "status": "in_progress",
+      "summary": "Reminder backend race/full tests and stylesheet/CSP regression pass. Safari showed the reminder entry point; creating, filtering, and completing a reminder was not manually exercised after macOS locked.",
+      "evidence": [
+        "PASS docker run ... go test ./internal/server -run '^TestReminder' -count=1 (2026-09-30): ok, 0.866s",
+        "PASS node --check internal/server/web/app.js",
+        "PASS node --check internal/server/web/locales/en.js",
+        "PASS node scripts/test_i18n.cjs",
+        "PASS python3 scripts/check_docs.py in aide:local: 109 Markdown files, 229 local links, FR-01..100",
+        "PASS git diff --check -- scoped files (仅 CRLF 转换提示)",
+        "FAIL docker run ... go test ./internal/server -count=1: TestTokenStats in internal/server/tools_test.go:241 expects total 157; observed 168; full package otherwise reached end",
+        "NOT_RUN UI interaction: isolated https://localhost:18097 returns net::ERR_CERT_AUTHORITY_INVALID in Codex In-app Browser; no certificate warning bypassed; temporary QA container stopped",
+        "2026-09-30 integration closeout: isolated Safari QA or current Go/Node regressions; see docs/tasks/consolidate-closeout-20260930.json for test names and boundary."
+      ]
     },
     "documentation": {
       "status": "pass",
       "summary": "中英文用户指南说明提醒入口、区域、通知方式、存储位置和 aide/小秘权限边界。",
-      "evidence": ["docs/user-guide.md:提醒中心", "docs/en/user-guide.md:Reminders", "PASS node scripts/test_i18n.cjs"]
+      "evidence": [
+        "docs/user-guide.md:提醒中心",
+        "docs/en/user-guide.md:Reminders",
+        "PASS node scripts/test_i18n.cjs"
+      ]
     },
     "cleanup": {
       "status": "pass",
       "summary": "审查本任务改动范围；保留仓库原有大量未提交修改和未跟踪文件，未做无关清理。临时 QA 容器已停止。",
-      "evidence": ["git diff --check -- scoped files", "docker ps --filter name=aide-reminder-qa (temporary test service stopped)"]
+      "evidence": [
+        "git diff --check -- scoped files",
+        "docker ps --filter name=aide-reminder-qa (temporary test service stopped)"
+      ]
     },
     "release": {
       "status": "not_run",
       "summary": "未获构建交付/发布/部署/重启授权，未提交或替换运行镜像；8097 现有服务未触碰。",
-      "evidence": ["本轮仅在隔离容器进行源码测试和临时 18097 页面启动", "release_authorization 为空"]
+      "evidence": [
+        "本轮仅在隔离容器进行源码测试和临时 18097 页面启动",
+        "release_authorization 为空"
+      ]
     }
   },
   "content_sha256": {

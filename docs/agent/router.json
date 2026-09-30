@@ -46,6 +46,10 @@
       ],
       [
         "node",
+        "scripts/test_reminder_styles.cjs"
+      ],
+      [
+        "node",
         "--check",
         "internal/server/web/settings-init.js"
       ],
