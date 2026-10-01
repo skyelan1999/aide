@@ -54,16 +54,16 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "RC2 后的完整 race/vet 门禁通过。RC3 Docker build 的 release go test 曾因构建阶段缺少插件/Office fixtures 失败；Dockerfile 修复后将对 RC4 重新执行完整发布构建和镜像验收。",
+      "summary": "Docker 挂载源码下的全量 race/vet 门禁通过；Dockerfile 测试上下文已修正，发布构建将再次强制执行全量 Go 测试。RC3 候选构建失败原因已修复，RC4 镜像构建与远端发布仍待完成。",
       "evidence": [
-        "python3 scripts/agent-route.py verify full PASS at ff26b5f7212f251b8a14b4f3162dd98909b73166; fingerprint e15457d1d62a289ec3a383e580cef9159bac21d29cd82a6cf3d7cff809148ee0; log .agent-state/verify-20261001T064645409600Z.log",
-        "docker image inspect confirms only linux/arm64 bases are locally cached; no amd64 pull performed",
-        "Initial RC3 docker build --pull=false --build-arg AIDE_RUN_TESTS=1 failed on missing plugins/current-time/index.js and scripts/office/office_artifact.py; Dockerfile fix applied; RC4 build pending."
+        "python3 scripts/agent-route.py verify full PASS at 1df58cbdc425a50ef3fa95cbee7c69fcac89657c; fingerprint 4fc9ab293229cd4f38719a99a0a8c6ba86bb2318706413152004fd1a46d044c7; log .agent-state/verify-20261001T070559182938Z.log",
+        "Dockerfile now copies plugins/ and scripts/office/ before AIDE_RUN_TESTS=1 executes go test.",
+        "Local Docker base images are linux/arm64; no amd64 pull/build was attempted."
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "中英安装指南列明 RC3 的具体平台包、共享镜像流程和暂缺 amd64 的范围；OFFLINE.md 与文档索引同步。Release 报告作为远端 release notes。",
+      "summary": "中英安装指南列明 RC4 的平台包、共享镜像流程与暂缺 amd64 的范围；离线说明、PRD、架构、交接及索引已同步。",
       "evidence": [
         "python3 scripts/check_docs.py PASS",
         "Release asset procedure in docs/installation.md and docs/en/installation.md"
@@ -71,7 +71,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "范围内改动已提交到 main；发布输出仅写入 .agent-state，不进入 Git。",
+      "summary": "范围内实现与文档改动已提交；后续任务/发布证据留在受控 docs 文件，资产仅写入忽略的 .agent-state。",
       "evidence": [
         "Implementation commit ff26b5f7212f251b8a14b4f3162dd98909b73166",
         "git status clean after documentation/task closeout commit"
@@ -85,5 +85,5 @@
   },
   "release_authorization": "用户 2026-10-01 原话：“镜像该传传上去啊，另外你需要根据mac windows ubuntu分别设计单独的可执行程序，并提供制作脚本来上传到release中”。明确授权上传 Docker 镜像与平台启动包到 GitHub Release。之前“把所需的docker镜像全部放到本地，不用从联网拉取了”仍约束不拉取 amd64 基础镜像。",
   "rollback": "不移动或复用已推送 tag。若 Release 附件错误，移除错误附件并暂缓下载；修复后使用版本脚本递增 RC、重建镜像/平台包并更新 Release。此次不替换生产实例或用户现有 Docker 卷。",
-  "handoff": "RC3 local tag is an unpushed failed candidate and will not be released. Dockerfile test-stage fixture copy was fixed; RC4 is the intended source/tag/image/release identity. Only linux/arm64 is locally buildable without pulls."
+  "handoff": "RC3 local tag is an unpushed failed candidate and will not be released. Dockerfile fixture copy is fixed and RC4 full race/vet passed. Build the release image from tag commit 1df58cbdc425a50ef3fa95cbee7c69fcac89657c, then upload arm64 assets. Windows x64/Ubuntu x64 are unavailable."
 }

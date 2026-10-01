@@ -21,7 +21,7 @@
 | 生成 Office 文件与编辑 XLSX | [Office 工具集](plugins/office.md) |
 | 让 AI 参与开发 | [统一 Agent 工作流](agent/WORKFLOW.md) · [客户端接入](agent/ADAPTERS.md) |
 | 看当前设计与验证边界 | [macOS UI](design/macos-ui.md) |
-| 看当前版本发布记录与验收边界 | [0.1.14.0 RC3 跨平台资产发布](reviews/release-assets-2026-10-01.md) · [发布任务验收](tasks/release-assets-2026-10-01.json) |
+| 看当前版本发布记录与验收边界 | [0.1.14.0 RC4 跨平台资产发布](reviews/release-assets-2026-10-01.md) · [发布任务验收](tasks/release-assets-2026-10-01.json) |
 | 查看上一版本实现记录 | [0.1.14.0 RC2 源码记录](reviews/2026-10-01-v0.1.14.0-RC2.md) · [任务验收](tasks/release-2026-10-01.json) |
 | 查看历史审查与发布证据 | [审查归档](reviews/) · [版本记录](../version.md) |
 
