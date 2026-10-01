@@ -2113,12 +2113,15 @@ function showEditor() {
   const isXlsx = isXlsxPath(state.file.path);
   const isSqlite = isSqlitePath(state.file.path);
   const isZip = isZipPath(state.file.path);
+  $('editor-preview').classList.toggle('editor-preview-immersive', isImg || isStl || isPdf || isDxf || isDocx || isXlsx || isSqlite || isDrawio);
   $('editor').readOnly = readOnly;
   // #64: code syntax highlighting
   teardownCodeHighlight($('editor'));
   teardownViewer($('editor-preview')); // 切文件前回收上一个可视化查看器（WebGL/PDF/Observer）
   var _cl = codeLang(state.file.path);
   if (_cl) setupCodeHighlight($('editor'), _cl);
+  const visualPreview = isZip || isStl || isPdf || isDxf || isDocx || isXlsx || isSqlite || isImg || isDrawio;
+  if ($('editor').parentNode.classList.contains('code-wrapper')) $('editor').parentNode.classList.toggle('hidden', visualPreview);
   // 图片 / STL / PDF 为只读可视化查看器，无文本可保存，禁用保存（避免空内容覆盖原文件）；drawio 可保存
   // 可视化查看器（图片/STL/PDF/DXF）无文本可保存 → 隐藏保存按钮；只读来源的文本文件 → 禁用
   $("save-file").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx || isXlsx || isSqlite || isZip);
@@ -6567,6 +6570,8 @@ async function openFileViewMode() {
   teardownViewer($('file-view-preview')); // file-view 页签切文件前回收上一个查看器
   var _fvcl = codeLang(spec.path);
   if (_fvcl) setupCodeHighlight($('file-view-editor'), _fvcl);
+  const visualPreview = isZip || isStl || isPdf || isDxf || isDocx || isXlsx || isImg || isDrawio;
+  if ($('file-view-editor').parentNode.classList.contains('code-wrapper')) $('file-view-editor').parentNode.classList.toggle('hidden', visualPreview);
   // 图片 / STL / PDF 只读查看器禁用保存；drawio 可保存
   $("file-view-save").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx || isXlsx || isZip);
   $("file-view-save").disabled = readOnly;

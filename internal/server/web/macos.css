@@ -281,6 +281,43 @@ dialog label, dialog p { font-size: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
 @media (prefers-contrast: more) { .quiet, .starter, .composer, input, textarea { border-color: var(--text-faint); } }
+
+/* Keep native viewers inside their available canvas instead of inheriting the
+   reading-column width and fixed-height Markdown preview treatment. */
+.editor-preview.editor-preview-immersive {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: min(68dvh, 860px);
+  min-height: min(420px, calc(100dvh - 180px));
+  padding: 0;
+  overflow: hidden;
+}
+.editor-preview.editor-preview-immersive .img-viewer,
+.editor-preview.editor-preview-immersive .stl-viewer,
+.editor-preview.editor-preview-immersive .pdf-viewer,
+.editor-preview.editor-preview-immersive .dxf-viewer {
+  flex: 1 1 auto;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.editor-preview.editor-preview-immersive iframe {
+  display: block;
+  flex: 1 1 0;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  border: 0;
+}
+.file-view-preview.file-view-immersive {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
 /* Parsed Markdown must not inherit the plain-text reply's pre-wrap layout. */
 .md-body { white-space: normal; }
 .md-body pre { white-space: pre; overflow-x: auto; max-width: 100%; margin: 18px 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--code-bg); font: 12px/1.8 ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -401,4 +438,116 @@ body.files-hidden { grid-template-columns: var(--aide-left-sidebar-width, 238px)
   body .file-panel.mobile-open,
   body.plugins-mode .plugin-panel,
   body.reminders-mode #reminder-center { width: var(--aide-right-sidebar-width, min(360px, 100vw)); }
+}
+
+/* Refined glass surfaces, legible type, and viewport-safe desktop/web sizing. */
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  font-size: 14px;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  font-optical-sizing: auto;
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  min-width: 0;
+  min-height: 0;
+  grid-template-columns: var(--aide-left-sidebar-width, 238px) minmax(0, 1fr) var(--aide-right-sidebar-width, 286px);
+  background:
+    radial-gradient(ellipse at 18% -12%, color-mix(in srgb, var(--brand) 7%, transparent), transparent 42%),
+    var(--bg);
+}
+body.files-hidden { grid-template-columns: var(--aide-left-sidebar-width, 238px) minmax(0, 1fr); }
+main, .conversation, .file-panel, .plugin-panel { min-width: 0; }
+.sidebar, .topbar, .file-panel, .plugin-panel, #reminder-center,
+.composer, .strategy-menu, .search-results, .settings-sheet, dialog {
+  -webkit-backdrop-filter: saturate(155%) blur(22px);
+  backdrop-filter: saturate(155%) blur(22px);
+}
+.sidebar, .file-panel, .plugin-panel, #reminder-center {
+  background: color-mix(in srgb, var(--panel-alt) 82%, transparent);
+}
+.topbar {
+  background: color-mix(in srgb, var(--panel) 76%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--line) 76%, transparent);
+}
+.composer, .settings-sheet, dialog {
+  background: color-mix(in srgb, var(--panel) 86%, transparent);
+  border-color: color-mix(in srgb, var(--line) 82%, transparent);
+}
+.conversation { scrollbar-gutter: stable; }
+.chat-answer, .md-body { font-size: 14px; letter-spacing: .005em; }
+.chat-answer { font-size: 15px; line-height: 1.9; }
+.welcome>p { font-size: 15px; line-height: 1.8; }
+.starter strong { font-size: 14px; }
+.starter small { font-size: 12px; }
+.section-label { font-size: 12px; }
+.workspace-label strong { font-size: 14px; }
+.workspace-label small { font-size: 12px; }
+.session-item { font-size: 14px; }
+.file-panel-heading strong, .plugin-panel-heading strong { font-size: 14px; }
+.run-meta { font-size: 11px; }
+.run-meta, .connection, .composer-note { font-variant-numeric: tabular-nums; }
+button.primary {
+  min-height: 38px;
+  padding: 9px 16px;
+  border-radius: 10px;
+  letter-spacing: .01em;
+}
+button.quiet, .quiet {
+  min-height: 34px;
+  padding: 7px 11px;
+  border-radius: 9px;
+  line-height: 1.25;
+}
+.icon-button { width: 34px; height: 34px; border-radius: 10px; }
+.new-session { min-height: 42px; }
+.settings-button { min-height: 38px; }
+.top-actions .quiet { min-height: 36px; }
+.mode-switch button, .root-tabs button, .reminder-filter,
+.settings-nav-item, .settings-subnav-item, .editor-mode-switch .quiet {
+  min-height: 30px;
+}
+.composer { box-shadow: 0 14px 40px color-mix(in srgb, var(--shadow-2) 58%, transparent), 0 1px 2px var(--shadow-1); }
+.settings-backdrop, dialog::backdrop { -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.settings-sheet, .settings-sheet.sheet-wide { -webkit-backdrop-filter: saturate(155%) blur(22px); backdrop-filter: saturate(155%) blur(22px); }
+.starter, .runtime-card, .workspace-label, .session-item, .file-item, .reminder-item {
+  transition: background-color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.starter:hover { transform: translateY(-1px); }
+@media (min-width: 1151px) {
+  body { grid-template-columns: var(--aide-left-sidebar-width, 238px) minmax(0, 1fr) var(--aide-right-sidebar-width, 286px); }
+  body.files-hidden { grid-template-columns: var(--aide-left-sidebar-width, 238px) minmax(0, 1fr); }
+}
+@media (max-width: 1150px) and (min-width: 951px) {
+  body { grid-template-columns: var(--aide-left-sidebar-width, 206px) minmax(0, 1fr) var(--aide-right-sidebar-width, 235px); }
+  body.files-hidden { grid-template-columns: var(--aide-left-sidebar-width, 206px) minmax(0, 1fr); }
+}
+@media (max-width: 950px) and (min-width: 601px) {
+  body, body.files-hidden { grid-template-columns: var(--aide-left-sidebar-width, 190px) minmax(0, 1fr); }
+}
+@media (max-width: 700px) {
+  .topbar { height: 56px; padding-inline: 12px; gap: 8px; }
+  .conversation { padding: 18px 16px; }
+  .composer-wrap { padding: 10px 12px 12px; }
+  .starter-grid { grid-template-columns: minmax(0, 1fr); }
+  .settings-sheet, .settings-sheet.sheet-wide { width: calc(100vw - 20px); max-height: calc(100dvh - 20px); border-radius: 16px; }
+}
+@media (max-width: 600px) {
+  body, body.files-hidden { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 420px) {
+  .composer-toolbar { flex-wrap: wrap; gap: 6px; }
+  .strategy-picker { flex: 1 1 calc(100% - 48px); min-width: 0; }
+  .strategy-button { max-width: 100%; }
+  .mode-switch { order: 2; max-width: 100%; }
+  .send-group { order: 1; margin-left: auto; }
+  .composer-note { align-items: flex-start; flex-direction: column; }
+  .composer-note span { max-width: 100%; white-space: normal; }
+  .settings-body { min-width: 0; }
+  .settings-nav { width: 122px; }
+  .settings-content { padding: 16px 12px; }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .sidebar, .topbar, .file-panel, .plugin-panel, #reminder-center, .composer, .settings-sheet, dialog { background: var(--panel); }
 }

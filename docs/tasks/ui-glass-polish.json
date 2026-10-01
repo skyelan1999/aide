@@ -1,0 +1,83 @@
+{
+  "id": "ui-glass-polish",
+  "request": "优化 aide UI：提升毛玻璃质感和字体显示品质，调整不合理的按钮尺寸，优化网页分辨率/响应式布局。",
+  "baseline": "0e5220eb1c25cd7b6e18407dd90210fceb5c26de",
+  "initial_status": "",
+  "acceptance": [
+    "主要页面的玻璃层次更清晰，背景/表面/浮层有可读对比且文本保持清楚。",
+    "字体家族、字重、字号和行高形成稳定层级，中文内容在主要界面易读。",
+    "按钮尺寸、内边距和图标对齐统一，不挤压文字或破坏窄屏布局。",
+    "宽屏与常见笔记本/窄视口下布局适配，页面不出现横向溢出或关键操作遮挡。",
+    "实际在浏览器检查至少宽屏和窄屏，并覆盖浅色/深色主题。",
+    "图片（含 SVG）与 draw.io 在弹窗中不残留语法高亮空白容器；预览占用可用画布；全屏预览不受普通阅读列最大宽度限制。"
+  ],
+  "scope": [
+    "internal/server/web 的全局设计令牌、布局样式与必要的组件样式",
+    "不改交互语义/API/默认主题配置，避免无关页面重构",
+    "internal/server/web 文件查看器：编辑弹窗可视预览布局、全屏沉浸式预览宽度"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求提升毛玻璃观感、字体、按钮尺寸和网页分辨率适配；验收聚焦对比度、中文易读、按钮与宽窄布局。",
+      "evidence": [
+        "用户请求原文"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "在 macos.css 覆盖层统一增强半透明材质、字形层级与交互尺寸；让内容列和面板按可用视口收缩，避免窄屏固定最小宽度造成挤压。",
+      "evidence": [
+        "现有 style.css/macos.css、主题 token、全局 viewport meta 与断点规则检查"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成桌面/web 共享样式覆盖与窄视口网格修正；修复可视文件预览的语法高亮包装器未隐藏、全屏预览继承 940px 阅读列宽限制；index.html 更新 app.js 与 macos.css cache key。",
+      "evidence": [
+        "internal/server/web/macos.css",
+        "internal/server/web/index.html",
+        "internal/server/web/app.js：仅在可视预览状态隐藏 code-wrapper，保留代码编辑器布局。",
+        "internal/server/web/macos.css：专用弹窗预览画布、全屏沉浸式预览宽度重置。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "首次 UI 复查发现 SVG/Draw.io 预览被固定高度语法高亮包装器推到弹窗下方；修复后在隔离本地容器以 Chromium 实际打开 SVG 弹窗、Draw.io 弹窗与 SVG 全屏页，画布位于视口内且正确铺满。原有宽/窄视口玻璃样式验证仍有效。",
+      "evidence": [
+        "浏览器测量：1440/1024/390/320px 的 document/body scrollWidth 与 viewport 相等。",
+        "截图：/tmp/aide-ui-wide-dark.png、/tmp/aide-ui-wide-light.png、/tmp/aide-ui-laptop-light.png、/tmp/aide-ui-mobile-light.png。",
+        "截图：/tmp/aide-viewer-svg-fixed.png；SVG 工具栏从弹窗标题下方开始，内容完整可见。",
+        "截图：/tmp/aide-viewer-drawio-fixed.png；Draw.io 菜单、工具栏及画布都在弹窗可视区域。",
+        "截图：/tmp/aide-viewer-svg-full-fixed.png；全屏 SVG 预览宽度为 1512px（视口同宽），max-width 为 none。",
+        "布局测量：弹窗 SVG 预览 y=188、h=668；Draw.io iframe y=190、h=666；隐藏 code-wrapper display=none。",
+        "隔离服务：aide-ui-review，端口 8098；未操作运行中的 aide 9999/8097 容器。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "纯 UI 样式调整，不改变交互/API/运行行为；将实现与浏览器验收结论记录于本任务账本。",
+      "evidence": [
+        "docs/tasks/ui-glass-polish.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已停止并移除独立预览容器及本任务专用数据卷；临时验证文件位于 /tmp，不在工作区。没有操作用户正在运行的 aide 容器/数据。",
+      "evidence": [
+        "docker compose -p aide-ui-review down --volumes",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次请求为 UI 优化，未请求发布；保持在当前 main 工作区，不创建 release。",
+      "evidence": [
+        "用户本轮请求"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}
