@@ -34,29 +34,44 @@
       ]
     },
     "implementation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "实现小秘工具真实启动/排队 Aide run 并报告真实启动结果；自动 TTS 回退浏览器合成和音频播放失败兜底；修正设置布局和本地构建拉取策略。race 门禁同时发现并修正委派任务测试异步清理与 daemon 测试钩子同步问题。",
+      "evidence": [
+        "ee56e0b feat: launch delegated aide runs and harden voice fallback",
+        "1194d86 / 3295a27 / df4ed94 race-test lifecycle fixes"
+      ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "quick/full 最终通过；聚焦 delegated-run 和 daemon race 测试通过。Safari 用户当前运行实例仍为 RC1，未替换/重启；浏览器麦克风、真实 TTS 听音与 RC2 浏览器交互未验收，明确记为未验证。",
+      "evidence": [
+        "python3 scripts/agent-route.py verify quick included in passing full receipt",
+        "python3 scripts/agent-route.py verify full PASS, head df4ed94a9639eba5e7887fedcd1ed69792a60e5f, fingerprint 695d746b2506763b53f42d4d66d73aca7bab028abb44a68b00fc1e800d3129ea, log .agent-state/verify-20261001T054247506678Z.log",
+        "Targeted: go test -mod=vendor -race ./internal/server -run \"^(TestStartDispatchedAssistantTaskStartsRun|TestAssistantAgenticDispatch|TestAssistantMessageAgenticFailureDispatchesTypedRequest|TestDaemonConcurrentStartStopConsistency|TestDaemonStartOutsideGlobalLock)$\" -count=1 PASS"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "中英文 README、HANDOVER、PRD、架构、安装说明、用户指南、文档索引、验证记录和 RC2 发布记录均已更新；链接检查在最终 full 中通过。",
+      "evidence": [
+        "python3 scripts/check_docs.py PASS: 115 Markdown files, 263 local links, JPEG signatures, FR-01..100",
+        "docs/reviews/2026-10-01-v0.1.14.0-RC2.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "范围内全部源码、测试和文档已显式暂存提交；当前工作树干净，无新增运行数据或临时发布文件。",
+      "evidence": [
+        "Commits ee56e0b, 1194d86, 3295a27, df4ed94",
+        "git diff --cached --check PASS; clean main worktree before full verification"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "quick/full 已通过；执行 release-check、RC2 版本脚本、独立候选构建和本机 API/健康核对，再推送 main 与 tag。",
+      "evidence": [
+        "Full verification PASS receipt: .agent-state/verify-20261001T054247506678Z.log"
+      ]
     }
   },
   "release_authorization": "用户 2026-10-01 原话：“整理文档，release and psuh”。授权整理、按项目版本规则 release（本项目源码 RC tag）、提交并推送 main 与 tag；当前范围不含 GitHub Release、镜像附件或生产部署。",
