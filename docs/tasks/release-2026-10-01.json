@@ -70,17 +70,18 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "release-check PASS；version script generated v0.1.14.0-RC2; isolated candidate build/health/API PASS. Ready to push main and tag; Safari RC2 UI/TTS remains unverified due self-signed certificate trust rejection.",
+      "status": "pass",
+      "summary": "release-check PASS；版本脚本建立 annotated tag v0.1.14.0-RC2 并指向 992b39b0a33efe86109d7e4520ebacfd3790cfbe；候选镜像本地构建、健康和鉴权配置 API 通过；origin/main 与 annotated tag refs 均核实。Safari RC2/TTS 未验证限制已记录。",
       "evidence": [
-        "Full verification PASS receipt: .agent-state/verify-20261001T054247506678Z.log",
-        "docker image aide:0.1.14.0-rc2-candidate sha256:50dd8a06be6957dadae7b4cf39d8fe3e379e632396990cc2ab15e6c71b09be02",
-        "candidate container 1cf9f260de680abf0fc9aba861a4528e19183e4a07522842c82023d7b1def4cc removed after health/API verification",
-        "release-check release-2026-10-01 PASS"
+        "python3 scripts/agent-route.py release-check release-2026-10-01 PASS",
+        "bash scripts/version.sh patch -m \"小秘任务启动、语音浏览器回退与离线构建修复\" -> v0.1.14.0-RC2",
+        "git push origin main --tags succeeded",
+        "git ls-remote origin: main=3a6d8ef4497f6ee9c87ed4573d65bd324d32eb38; tag object=d325aae520a06ca97c3bd3ae0d4d8d08f968b97c; peeled tag commit=992b39b0a33efe86109d7e4520ebacfd3790cfbe",
+        "Candidate runtime: integrity=ok; /api/config version/revision matched tag commit; no GitHub Release, published image archive, or production deployment"
       ]
     }
   },
   "release_authorization": "用户 2026-10-01 原话：“整理文档，release and psuh”。授权整理、按项目版本规则 release（本项目源码 RC tag）、提交并推送 main 与 tag；当前范围不含 GitHub Release、镜像附件或生产部署。",
   "rollback": "保持已发布 tag 不变，不 force-push。若候选回归：git revert <本次功能提交>，再运行 bash start.command 重建本地服务；若只需恢复上一版，checkout v0.1.14.0-RC1 于隔离工作树并从源码重建。回滚后另发递增 RC，不复用/移动 tag。",
-  "handoff": ""
+  "handoff": "origin/main currently includes final release evidence commit; v0.1.14.0-RC2 annotated tag points to version commit 992b39b0a33efe86109d7e4520ebacfd3790cfbe. Local candidate image was not published. Existing Safari/8097 instance remains RC1. Safari RC2 UI/audio remain unverified because browser rejected the independent candidate self-signed certificate."
 }
