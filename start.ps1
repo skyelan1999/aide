@@ -257,20 +257,28 @@ if ($offlineBundle) {
             $imageArchive = Join-Path $PSScriptRoot "docker-images/$imageName"
             $releaseBase = "https://github.com/skyelan1999/aide/releases/download/$releaseTag"
             $partialImage = "$imageArchive.partial"
-            $partialSums = Join-Path $PSScriptRoot 'docker-images/SHA256SUMS.partial'
             Write-Host "包内没有镜像，正在从 GitHub Release 下载（约 500 MB）：$releaseTag"
             try {
                 [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
                 Invoke-WebRequest -Uri "$releaseBase/$imageName" -OutFile $partialImage -UseBasicParsing
                 Move-Item -LiteralPath $partialImage -Destination $imageArchive -Force
-                Invoke-WebRequest -Uri "$releaseBase/SHA256SUMS" -OutFile $partialSums -UseBasicParsing
-                Move-Item -LiteralPath $partialSums -Destination (Join-Path $PSScriptRoot 'docker-images/SHA256SUMS') -Force
             } catch {
-                Remove-Item -LiteralPath $partialImage, $partialSums -Force -ErrorAction SilentlyContinue
+                Remove-Item -LiteralPath $partialImage -Force -ErrorAction SilentlyContinue
                 throw "自動下載 Release 鏡像失敗：$($_.Exception.Message)"
             }
         }
         $sumFile = Join-Path $PSScriptRoot 'docker-images/SHA256SUMS'
+        if (-not (Test-Path -LiteralPath $sumFile) -and $releaseTag) {
+            $partialSums = "$sumFile.partial"
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+                Invoke-WebRequest -Uri "https://github.com/skyelan1999/aide/releases/download/$releaseTag/SHA256SUMS" -OutFile $partialSums -UseBasicParsing
+                Move-Item -LiteralPath $partialSums -Destination $sumFile -Force
+            } catch {
+                Remove-Item -LiteralPath $partialSums -Force -ErrorAction SilentlyContinue
+                throw "自動下載 SHA256SUMS 失敗：$($_.Exception.Message)"
+            }
+        }
         $imageName = [System.IO.Path]::GetFileName($imageArchive)
         $sumLine = Get-Content -LiteralPath $sumFile | Where-Object { $_ -match (('\*?' + [regex]::Escape($imageName)) + '$') } | Select-Object -First 1
         if (-not $sumLine) { throw "SHA256SUMS 中没有 $imageName 的校验值。" }

@@ -46,18 +46,21 @@ if [[ "$MODE" == start-bundle ]]; then
     if [[ ! -f "$IMAGE_ARCHIVE" ]]; then
       IMAGE_ARCHIVE="$(find docker-images -maxdepth 1 -type f -name 'aide-v*-linux-*-image.tar.gz' -print -quit)"
     fi
-    if [[ ! -f "$IMAGE_ARCHIVE" ]]; then
-      if [[ -z "${BUNDLE_RELEASE_TAG:-}" ]]; then
-        echo "包内缺少镜像，且 .aide-image 没有 Release tag，无法自动下载。" >&2
-        exit 1
-      fi
-      IMAGE_ARCHIVE="docker-images/aide-${BUNDLE_RELEASE_TAG}-linux-${BUNDLE_PLATFORM#linux/}-image.tar.gz"
-      IMAGE_URL="https://github.com/skyelan1999/aide/releases/download/${BUNDLE_RELEASE_TAG}/${IMAGE_ARCHIVE##*/}"
+    if [[ -n "${BUNDLE_RELEASE_TAG:-}" ]]; then
+      RELEASE_IMAGE="docker-images/aide-${BUNDLE_RELEASE_TAG}-linux-${BUNDLE_PLATFORM#linux/}-image.tar.gz"
+      [[ -f "$IMAGE_ARCHIVE" ]] || IMAGE_ARCHIVE="$RELEASE_IMAGE"
+      IMAGE_URL="https://github.com/skyelan1999/aide/releases/download/${BUNDLE_RELEASE_TAG}/${RELEASE_IMAGE##*/}"
       SUMS_URL="https://github.com/skyelan1999/aide/releases/download/${BUNDLE_RELEASE_TAG}/SHA256SUMS"
+    fi
+    if [[ ! -f "$IMAGE_ARCHIVE" ]]; then
+      [[ -n "${BUNDLE_RELEASE_TAG:-}" ]] || { echo "包内缺少镜像，且 .aide-image 没有 Release tag，无法自动下载。" >&2; exit 1; }
       command -v curl >/dev/null 2>&1 || { echo "缺少 curl，无法自动下载镜像。请安装 curl 后重试。" >&2; exit 1; }
       echo "包内没有镜像，正在从 GitHub Release 下载（约 500 MB）：$BUNDLE_RELEASE_TAG"
       curl --fail --location --retry 3 --output "$IMAGE_ARCHIVE.partial" "$IMAGE_URL"
       mv "$IMAGE_ARCHIVE.partial" "$IMAGE_ARCHIVE"
+    fi
+    if [[ ! -f docker-images/SHA256SUMS && -n "${BUNDLE_RELEASE_TAG:-}" ]]; then
+      command -v curl >/dev/null 2>&1 || { echo "缺少 curl，无法下载 SHA256SUMS。" >&2; exit 1; }
       curl --fail --location --retry 3 --output docker-images/SHA256SUMS.partial "$SUMS_URL"
       mv docker-images/SHA256SUMS.partial docker-images/SHA256SUMS
     fi
