@@ -72,10 +72,11 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "用户已明确要求提交并上传；与本次工作相关的 skill 路由变更纳入主分支提交。",
+      "status": "pass",
+      "summary": "skill 路由及其验证用例已推送到 origin/main。",
       "evidence": [
-        "用户原话：同步的放到工程里一并提交上传"
+        "commit 48a5ae513c70eec5fc1bbf7b0ff6d41693cb735c",
+        "git ls-remote origin refs/heads/main 返回相同 SHA"
       ]
     }
   },

@@ -59,10 +59,11 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "用户已明确要求提交并上传；本任务 UI 样式变更纳入主分支提交，浏览器视觉未完成限制保留。",
+      "status": "pass",
+      "summary": "UI 样式变更及静态验证已推送到 origin/main；浏览器视觉未完成限制保留。",
       "evidence": [
-        "用户原话：同步的放到工程里一并提交上传"
+        "commit 48a5ae513c70eec5fc1bbf7b0ff6d41693cb735c",
+        "UI-04 浏览器视觉验收未完成，原因见 docs/reviews/2026-10-02-verification-report.md"
       ]
     }
   },

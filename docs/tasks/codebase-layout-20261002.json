@@ -74,14 +74,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "用户已明确要求提交并上传；正在检查 main 远端、执行范围暂存和推送。该操作不创建产品版本或 GitHub Release。",
+      "status": "pass",
+      "summary": "变更与验证报告已提交并推送到 origin/main；没有创建产品版本或 GitHub Release。",
       "evidence": [
-        "用户原话：同步的放到工程里一并提交上传"
+        "commit 48a5ae513c70eec5fc1bbf7b0ff6d41693cb735c",
+        "git ls-remote origin refs/heads/main 返回相同 SHA",
+        "python3 scripts/agent-route.py release-check codebase-layout-20261002 — PASS"
       ]
     }
   },
   "release_authorization": "用户明确要求：“同步的放到工程里一并提交上传”，授权将本次范围提交并推送到远端 main。",
   "rollback": "恢复两个 mock 文件的原路径并回滚其活动引用；删除新增目录导航文档及架构索引链接。",
-  "handoff": "专用用例与 quick/full 门禁通过；UI-04 当前浏览器视觉项未验证，原因见 docs/reviews/2026-10-02-verification-report.md。等待 Git 提交/推送后补记 SHA。"
+  "handoff": "提交 48a5ae513c70eec5fc1bbf7b0ff6d41693cb735c 已推送到 origin/main；专用用例及 quick/full 门禁通过。UI-04 当前浏览器视觉项未验证，原因见 docs/reviews/2026-10-02-verification-report.md。"
 }

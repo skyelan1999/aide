@@ -25,7 +25,7 @@
 ## 结果与修正
 
 - 专项用例最终复跑：目录 5/5、路由 7/7、UI 样式 5/5，合计 17/17 PASS。
-- Quick：PASS，收据指纹 `d4c7246e3db44f64923798bb676bde439adc75f26ddf42968bedff363523806b`。Full：PASS，收据指纹 `715c88d116b397f4a145d05c9786cffd2a426c685d3e5718b62f573e2c462419`；本机日志 `.agent-state/verify-20261001T194023588666Z.log`。
+- Quick：PASS，当前提交收据指纹 `b6de82d2b001fa05a16f40939c5a1deb987131e0ae37ed56c5b8b6be72bb6018`；本机日志 `.agent-state/verify-20261001T195632196441Z.log`。Full：PASS，同一指纹；本机日志 `.agent-state/verify-20261001T194939631561Z.log`。
 
 - 三组专用回归测试覆盖目录布局、路由行为和 UI 样式声明。具体用例分别位于 `scripts/test_code_layout.py`、`scripts/test_agent_skill_routing.py`、`scripts/test_ui_calm.py`。
 - 检查发现 `.settings-sheet.sheet-wide` 的旧规则比新增普通面板选择器更具体，导致 22px 模糊可能胜过预期的 12px。已提高后置规则的选择器覆盖范围，并为减少透明模式添加同一宽屏面板覆盖；UI-02 对此作回归检查。
@@ -35,4 +35,4 @@
 
 - 用户数据与 9999 实例未登录、未写入；未绕过 TLS 证书错误。
 - 静态/自动化验证全部通过；UI-04 保持未完成，不以源码检查代替浏览器目视。
-- 提交 SHA、远端推送结果将在 Git 操作后补记。
+- 提交 `48a5ae513c70eec5fc1bbf7b0ff6d41693cb735c` 已推送到 `origin/main`；`git ls-remote` 返回相同 SHA。该提交包含用例、报告和本次范围内的代码/文档变更。
