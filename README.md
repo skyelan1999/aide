@@ -102,6 +102,8 @@ bash scripts/aide.sh start
 
 macOS 也可以双击 `start.command`。脚本会构建并启动容器，打开浏览器完成本地令牌登录。默认地址为 `http://127.0.0.1:8097`。首次构建需要下载基础镜像；启动会重建当前源码，不是只读查看操作。
 
+**macOS 发布包首次启动**：当前 ZIP 尚未使用 Apple Developer ID 签名并公证，Safari 下载后可能被 Gatekeeper 拦截。仅在确认文件来自 aide 官方 Release 且未被篡改后，先尝试运行一次 `start.command`，再打开「系统设置 → 隐私与安全性」，在“安全性”区域选择仍要打开并确认。若系统没有提供“仍要打开”，可在终端切换到解压后的包目录，只移除启动脚本的隔离标记：`xattr -d com.apple.quarantine start.command`，然后双击启动。不要对来源不明的软件执行此操作。免此提示分发需要配置 Developer ID 签名和 Apple 公证。
+
 本地登录令牌和模型 API Key 是两种凭据。不要分享带令牌的地址或将令牌贴到问题单。普通开发构建可能显示 `dev`/`unknown`；正式版本需要构建身份，见[发布与维护](HANDOVER.md)。
 
 ### 4. 配置模型

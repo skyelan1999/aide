@@ -58,6 +58,7 @@ aide $VERSION - $TARGET launcher package
 2. Run the platform launcher in this folder. If the image is not already present, it downloads the matching Release image and SHA256SUMS, verifies the SHA256 and image ID, then imports and starts aide without building or pulling.
 3. The first launch downloads about 500 MB and requires internet access. To prepare an offline install, download $IMAGE_ASSET and SHA256SUMS and place both in docker-images/ before launch.
 4. On first launch, the script uses port 8097 when available and selects/saves the next available port if it is occupied. Change the host port in Settings > Accessibility; the running launcher monitor applies it by recreating the container.
+5. macOS first launch: this ZIP is not yet signed with an Apple Developer ID or notarized, so Gatekeeper may block start.command. Only if you verified this package came from the official aide Release and is unchanged, try opening it once, then go to System Settings > Privacy & Security > Security and choose Open Anyway. If macOS does not offer that button, open Terminal in this package folder and run: xattr -d com.apple.quarantine start.command. Then double-click start.command. Do not do this for software from an untrusted source.
 
 Required Docker engine image platform: $PLATFORM
 Image reference: $IMAGE
