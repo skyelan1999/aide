@@ -52,16 +52,14 @@ for TARGET in macos-arm64 windows-arm64 ubuntu-arm64; do
   cp "$ROOT/docker/compose.offline.yaml" "$PACKAGE/compose.yaml"
   cp "$ROOT/docker/offline.env.example" "$PACKAGE/.env.example"
   cp "$ROOT/LICENSE" "$PACKAGE/"
-  printf '%s %s %s\n' "$IMAGE" "$IMAGE_ID" "$PLATFORM" > "$PACKAGE/.aide-image"
+  printf '%s %s %s %s\n' "$IMAGE" "$IMAGE_ID" "$PLATFORM" "$TAG" > "$PACKAGE/.aide-image"
   cat > "$PACKAGE/README.txt" <<EOF
 aide $VERSION - $TARGET launcher package
 
 1. Install Docker Desktop (macOS/Windows) or Docker Engine with Compose v2 (Ubuntu).
-2. Download the matching asset named: $IMAGE_ASSET
-3. Copy the image file into this folder's docker-images directory, keeping its filename.
-4. Copy the Release SHA256SUMS file into docker-images/SHA256SUMS.
-5. Run the platform launcher in this folder. It verifies/imports the image and starts aide without building or pulling.
-6. On first launch, the script uses port 8097 when available and selects/saves the next available port if it is occupied. Change the host port in Settings > Accessibility; the running launcher monitor applies it by recreating the container.
+2. Run the platform launcher in this folder. If the image is not already present, it downloads the matching Release image and SHA256SUMS, verifies the SHA256 and image ID, then imports and starts aide without building or pulling.
+3. The first launch downloads about 500 MB and requires internet access. To prepare an offline install, download $IMAGE_ASSET and SHA256SUMS and place both in docker-images/ before launch.
+4. On first launch, the script uses port 8097 when available and selects/saves the next available port if it is occupied. Change the host port in Settings > Accessibility; the running launcher monitor applies it by recreating the container.
 
 Required Docker engine image platform: $PLATFORM
 Image reference: $IMAGE

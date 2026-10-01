@@ -2,7 +2,7 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。RC5 Release 提供 arm64 Docker 镜像及 macOS、Windows ARM64、Ubuntu ARM64 启动包；x64 镜像尚未构建。需要扩展时再按 [定制指南](customization.md) 修改源码。安装脚本负责环境检查、首次配置、校验镜像和启动应用；不会静默安装收费软件、请求 sudo、覆盖已有 .env 或删除数据卷。
+aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。RC8 Release 提供 arm64 Docker 镜像及 macOS、Windows ARM64、Ubuntu ARM64 启动包；x64 镜像尚未构建。首次启动器会自动获取并校验对应版本镜像。需要扩展时再按 [定制指南](customization.md) 修改源码。安装脚本负责环境检查、首次配置、校验镜像和启动应用；不会静默安装收费软件、请求 sudo、覆盖已有 .env 或删除数据卷。
 
 ## 1. 安装宿主环境
 
@@ -12,27 +12,27 @@ aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。RC5 Rel
 | Linux ARM64 | Docker Engine、Compose v2、Git、Python 3 | 当前用户须有访问 Docker 引擎的权限 |
 | Linux/macOS x86 | 同上 | 使用源码构建；不要直接使用 ARM 归档 |
 | Windows ARM64 | Docker Desktop ARM64 Linux 引擎 | 使用 Release 中 Windows ARM64 启动包；本轮未在 Windows 实机验证 |
-| Windows x64 | Docker Desktop、WSL2 | RC5 没有 linux/amd64 镜像；使用源码构建 |
+| Windows x64 | Docker Desktop、WSL2 | RC8 没有 linux/amd64 镜像；使用源码构建 |
 
 安装入口：[Docker Desktop](https://docs.docker.com/desktop/) / [Docker Engine](https://docs.docker.com/engine/install/) / [Git](https://git-scm.com/downloads) / [Python](https://www.python.org/downloads/)。Docker Desktop 的适用许可由使用者按其组织情况确认；aide 自身使用 MIT 许可证。不需要在宿主机安装 Go；日常运行无需 npm。开发路由检查另外需要 Node.js 与 Python 3。
 
 ## 2. 下载同一版本的源码
 
-当前源码 tag 为 `v0.1.14.0-RC5`。从同一 GitHub Release 下载平台启动 ZIP、linux/arm64 镜像归档和 SHA256SUMS。将镜像归档与校验文件放入启动包的 `docker-images/` 目录，再运行对应启动器。
+当前源码 tag 为 `v0.1.14.0-RC8`。从同一 GitHub Release 下载对应平台启动 ZIP。首次启动时，若本机没有目标镜像，启动器会自动下载同一 Release 的 linux/arm64 镜像和 SHA256SUMS，校验后导入；首次启动约下载 500 MB 且需要联网。离线环境可预先将镜像和 SHA256SUMS 放入包内 `docker-images/`。
 
 | 下载项 | 启动方式 | 目标系统 |
 | --- | --- | --- |
-| `aide-v0.1.14.0-RC5-macos-arm64.zip` | 双击 `start.command` | Apple Silicon macOS |
-| `aide-v0.1.14.0-RC5-windows-arm64.zip` | 双击 `start.bat` | Windows ARM64 |
-| `aide-v0.1.14.0-RC5-ubuntu-arm64.zip` | `./start.sh` | Ubuntu ARM64 |
-| `aide-v0.1.14.0-RC5-linux-arm64-image.tar.gz` | 复制到启动包 `docker-images/` | 三个平台共用 |
+| `aide-v0.1.14.0-RC8-macos-arm64.zip` | 双击 `start.command` | Apple Silicon macOS |
+| `aide-v0.1.14.0-RC8-windows-arm64.zip` | 双击 `start.bat` | Windows ARM64 |
+| `aide-v0.1.14.0-RC8-ubuntu-arm64.zip` | `./start.sh` | Ubuntu ARM64 |
+| `aide-v0.1.14.0-RC8-linux-arm64-image.tar.gz` | 启动器自动下载，也可预置到 `docker-images/` | 三个平台共用 |
 
 启动器检查 Docker 引擎架构、SHA256 和镜像 ID，再执行不构建、不拉取的启动。Windows x64 与 Ubuntu x64 暂无镜像；本机缓存只有 arm64 Docker 基础镜像。开发者可在持有匹配架构基础镜像的构建机运行 `scripts/package-release-assets.sh <tag> <image> [输出目录]`，生成镜像和三个启动包；`scripts/publish-release-assets.sh <tag> <输出目录>` 会把产物上传到已推送的 GitHub tag 对应 Release。
 
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
-git checkout v0.1.14.0-RC5
+git checkout v0.1.14.0-RC8
 bash scripts/install.sh --check
 ```
 

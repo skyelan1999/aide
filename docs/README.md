@@ -23,6 +23,7 @@
 | 看当前设计与验证边界 | [macOS UI](design/macos-ui.md) |
 | 看当前版本发布记录与验收边界 | [0.1.14.0 RC5 跨平台资产发布](reviews/release-assets-2026-10-01.md) · [发布任务验收](tasks/release-assets-2026-10-01.json) |
 | 查看 RC6 后端口切换、虚拟形象与助理名称更新 | [RC7 发布记录](reviews/release-rc7-2026-10-01.md) · [发布任务账本](tasks/release-2026-10-01-rc7.json) |
+| 查看 RC8 启动器自动下载镜像的修复与发布状态 | [RC8 发布记录](reviews/release-0.1.14.0-RC8-2026-10-01.md) · [安装说明](installation.md) |
 | 查看上一版本实现记录 | [0.1.14.0 RC2 源码记录](reviews/2026-10-01-v0.1.14.0-RC2.md) · [任务验收](tasks/release-2026-10-01.json) |
 | 查看历史审查与发布证据 | [审查归档](reviews/) · [版本记录](../version.md) |
 

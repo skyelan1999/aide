@@ -27,6 +27,7 @@ if ($offlineBundle) {
     $env:AIDE_IMAGE = $marker[0]
     $expectedImageId = $marker[1]
     $expectedPlatform = $marker[2]
+    $releaseTag = if ($marker.Count -ge 4) { $marker[3] } else { $null }
     $env:COMPOSE_FILE = 'compose.yaml'
     if (-not $env:AIDE_WORKSPACE) { $env:AIDE_WORKSPACE = Join-Path $PSScriptRoot 'workspace' }
     if (-not $env:AIDE_CONTEXT) { $env:AIDE_CONTEXT = Join-Path $PSScriptRoot 'context' }
@@ -250,12 +251,33 @@ if ($offlineBundle) {
         if (-not (Test-Path -LiteralPath $imageArchive)) {
             $imageArchive = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'docker-images') -Filter 'aide-v*-linux-*-image.tar.gz' -File | Select-Object -First 1 -ExpandProperty FullName
         }
-        if (-not $imageArchive -or -not (Test-Path -LiteralPath $imageArchive)) { throw '缺少镜像归档。请将同版本 Release 镜像附件放入 docker-images 目录。' }
+        if (-not $imageArchive -or -not (Test-Path -LiteralPath $imageArchive)) {
+            if (-not $releaseTag) { throw '包内缺少镜像，且 .aide-image 未提供 Release tag，无法自动下载。' }
+            $imageName = "aide-$releaseTag-linux-$($expectedPlatform.Split('/')[-1])-image.tar.gz"
+            $imageArchive = Join-Path $PSScriptRoot "docker-images/$imageName"
+            $releaseBase = "https://github.com/skyelan1999/aide/releases/download/$releaseTag"
+            $partialImage = "$imageArchive.partial"
+            $partialSums = Join-Path $PSScriptRoot 'docker-images/SHA256SUMS.partial'
+            Write-Host "包内没有镜像，正在从 GitHub Release 下载（约 500 MB）：$releaseTag"
+            try {
+                [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor [Net.SecurityProtocolType]::Tls12
+                Invoke-WebRequest -Uri "$releaseBase/$imageName" -OutFile $partialImage -UseBasicParsing
+                Move-Item -LiteralPath $partialImage -Destination $imageArchive -Force
+                Invoke-WebRequest -Uri "$releaseBase/SHA256SUMS" -OutFile $partialSums -UseBasicParsing
+                Move-Item -LiteralPath $partialSums -Destination (Join-Path $PSScriptRoot 'docker-images/SHA256SUMS') -Force
+            } catch {
+                Remove-Item -LiteralPath $partialImage, $partialSums -Force -ErrorAction SilentlyContinue
+                throw "自動下載 Release 鏡像失敗：$($_.Exception.Message)"
+            }
+        }
         $sumFile = Join-Path $PSScriptRoot 'docker-images/SHA256SUMS'
-        if (Test-Path -LiteralPath $sumFile) {
-            $imageName = [System.IO.Path]::GetFileName($imageArchive)
-            $expectedHash = ((Get-Content -LiteralPath $sumFile | Where-Object { $_ -match ([regex]::Escape($imageName) + '$') } | Select-Object -First 1) -split '\s+')[0]
-            if ($expectedHash -and (Get-FileHash -Algorithm SHA256 -LiteralPath $imageArchive).Hash.ToLowerInvariant() -ne $expectedHash.ToLowerInvariant()) { throw 'Docker 镜像 SHA256 校验失败。' }
+        $imageName = [System.IO.Path]::GetFileName($imageArchive)
+        $sumLine = Get-Content -LiteralPath $sumFile | Where-Object { $_ -match (('\*?' + [regex]::Escape($imageName)) + '$') } | Select-Object -First 1
+        if (-not $sumLine) { throw "SHA256SUMS 中没有 $imageName 的校验值。" }
+        $expectedHash = ($sumLine -split '\s+')[0]
+        if ($expectedHash -notmatch '^[0-9a-fA-F]{64}$' -or (Get-FileHash -Algorithm SHA256 -LiteralPath $imageArchive).Hash.ToLowerInvariant() -ne $expectedHash.ToLowerInvariant()) {
+            Remove-Item -LiteralPath $imageArchive -Force -ErrorAction SilentlyContinue
+            throw 'Docker 镜像 SHA256 校验失败。'
         }
         if ((Invoke-Native $dockerExe @('image', 'load', '-i', $imageArchive)).Code -ne 0) { throw '导入 Docker 镜像失败。' }
         $imageId = (Invoke-Native $dockerExe @('image', 'inspect', $env:AIDE_IMAGE, '--format', '{{.Id}}') -Capture).Text

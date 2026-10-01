@@ -28,7 +28,7 @@ source_sha() {
 }
 
 if [[ -f .aide-image ]]; then
-  read -r BUNDLE_IMAGE BUNDLE_ID BUNDLE_PLATFORM < .aide-image
+  read -r BUNDLE_IMAGE BUNDLE_ID BUNDLE_PLATFORM BUNDLE_RELEASE_TAG < .aide-image
   export AIDE_IMAGE="$BUNDLE_IMAGE" COMPOSE_FILE=compose.yaml
 fi
 if [[ "$MODE" == start-bundle ]]; then
@@ -46,11 +46,29 @@ if [[ "$MODE" == start-bundle ]]; then
     if [[ ! -f "$IMAGE_ARCHIVE" ]]; then
       IMAGE_ARCHIVE="$(find docker-images -maxdepth 1 -type f -name 'aide-v*-linux-*-image.tar.gz' -print -quit)"
     fi
-    [[ -f "$IMAGE_ARCHIVE" ]] || { echo "缺少镜像归档：docker-images/aide-local.tar[.gz]。" >&2; exit 1; }
-    if [[ -f docker-images/SHA256SUMS ]]; then
-      ARCHIVE_NAME="$(basename "$IMAGE_ARCHIVE")"
-      awk -v name="$ARCHIVE_NAME" '$2 == name { print }' docker-images/SHA256SUMS | (cd docker-images && shasum -a 256 -c -)
+    if [[ ! -f "$IMAGE_ARCHIVE" ]]; then
+      if [[ -z "${BUNDLE_RELEASE_TAG:-}" ]]; then
+        echo "包内缺少镜像，且 .aide-image 没有 Release tag，无法自动下载。" >&2
+        exit 1
+      fi
+      IMAGE_ARCHIVE="docker-images/aide-${BUNDLE_RELEASE_TAG}-linux-${BUNDLE_PLATFORM#linux/}-image.tar.gz"
+      IMAGE_URL="https://github.com/skyelan1999/aide/releases/download/${BUNDLE_RELEASE_TAG}/${IMAGE_ARCHIVE##*/}"
+      SUMS_URL="https://github.com/skyelan1999/aide/releases/download/${BUNDLE_RELEASE_TAG}/SHA256SUMS"
+      command -v curl >/dev/null 2>&1 || { echo "缺少 curl，无法自动下载镜像。请安装 curl 后重试。" >&2; exit 1; }
+      echo "包内没有镜像，正在从 GitHub Release 下载（约 500 MB）：$BUNDLE_RELEASE_TAG"
+      curl --fail --location --retry 3 --output "$IMAGE_ARCHIVE.partial" "$IMAGE_URL"
+      mv "$IMAGE_ARCHIVE.partial" "$IMAGE_ARCHIVE"
+      curl --fail --location --retry 3 --output docker-images/SHA256SUMS.partial "$SUMS_URL"
+      mv docker-images/SHA256SUMS.partial docker-images/SHA256SUMS
     fi
+    [[ -f "$IMAGE_ARCHIVE" ]] || { echo "缺少镜像归档：docker-images/aide-local.tar[.gz]。" >&2; exit 1; }
+    ARCHIVE_NAME="$(basename "$IMAGE_ARCHIVE")"
+    EXPECTED_HASH="$(awk -v name="$ARCHIVE_NAME" '{file=$2; sub(/^\*/, "", file); if (file == name) {print $1; exit}}' docker-images/SHA256SUMS 2>/dev/null || true)"
+    [[ "$EXPECTED_HASH" =~ ^[[:xdigit:]]{64}$ ]] || { echo "SHA256SUMS 中没有 $ARCHIVE_NAME 的有效校验值。" >&2; exit 1; }
+    if command -v shasum >/dev/null 2>&1; then ACTUAL_HASH="$(shasum -a 256 "$IMAGE_ARCHIVE" | awk '{print $1}')";
+    elif command -v sha256sum >/dev/null 2>&1; then ACTUAL_HASH="$(sha256sum "$IMAGE_ARCHIVE" | awk '{print $1}')";
+    else echo "缺少 shasum/sha256sum，无法校验下载镜像。" >&2; exit 1; fi
+    [[ "$ACTUAL_HASH" == "$EXPECTED_HASH" ]] || { echo "Docker 镜像 SHA256 校验失败。" >&2; rm -f "$IMAGE_ARCHIVE"; exit 1; }
     "$DOCKER_BIN" image load -i "$IMAGE_ARCHIVE"
   fi
   [[ "$("$DOCKER_BIN" image inspect "$BUNDLE_IMAGE" --format '{{.Id}}')" == "$BUNDLE_ID" ]] || { echo "镜像身份不匹配。" >&2; exit 1; }
@@ -187,7 +205,7 @@ case "$MODE" in
     cp docker/offline.env.example "$BUNDLE/.env.example"
     cp docker/OFFLINE.md "$BUNDLE/README.md"
     cp LICENSE "$BUNDLE/"
-    printf '%s %s %s\n' "$BUNDLE_TAG" "$IMAGE_ID" "$PLATFORM" > "$BUNDLE/.aide-image"
+    printf '%s %s %s v%s\n' "$BUNDLE_TAG" "$IMAGE_ID" "$PLATFORM" "$VERSION" > "$BUNDLE/.aide-image"
     printf 'version=%s\nimage=%s\nplatform=%s\nsrcsha=%s\n' "$VERSION" "$IMAGE_ID" "$PLATFORM" \
       "$("$DOCKER_BIN" image inspect "$IMG" --format '{{index .Config.Labels "aide.srcsha"}}')" > "$BUNDLE/BUILD.txt"
     "$DOCKER_BIN" image tag "$IMAGE_ID" "$BUNDLE_TAG"

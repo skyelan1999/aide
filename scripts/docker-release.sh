@@ -20,6 +20,12 @@ VER="$(echo "$VER_RAW" | sed 's/ /-/g')"
 ARCH="$(uname -m | sed 's/arm64/aarch64/;s/x86_64/amd64/')"
 COMMIT="$(git rev-parse HEAD)"
 TAG="aide:${VER}"
+SOURCE_SHA="$(
+  (
+    find cmd internal vendor scripts/office docker/wheels docker/sherpa -type f -print0
+    printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md
+  ) | sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
+)"
 
 # 与 aide.sh 一致地发现 docker 可执行文件
 DOCKER_BIN="$(command -v docker || true)"
@@ -45,6 +51,7 @@ echo "== [1/4] docker build（AIDE_RUN_TESTS=1 强制全量测试）=="
 "$DOCKER_BIN" build \
   --build-arg AIDE_VERSION="$VER_RAW" \
   --build-arg AIDE_COMMIT="$COMMIT" \
+  --build-arg AIDE_SRC_SHA="$SOURCE_SHA" \
   --build-arg AIDE_RUN_TESTS=1 \
   -t "$TAG" .
 

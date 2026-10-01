@@ -1,8 +1,8 @@
 # aide 离线启动包
 
-将整个平台启动包解压到目标电脑的普通目录，并从同一 GitHub Release 下载匹配架构的 Docker 镜像归档与 `SHA256SUMS`。把镜像归档（保留文件名）复制到包内 `docker-images/`，清单复制到 `docker-images/SHA256SUMS`。需要 Docker Desktop / Docker Engine 与 Compose v2；应用、Go、Python、Node.js 与文档解析依赖已包含在镜像中。
+将启动包解压到目标电脑的普通目录。需要 Docker Desktop / Docker Engine 与 Compose v2；应用、Go、Python、Node.js 与文档解析依赖已包含在镜像中。首次启动时，若 Docker 中尚无目标镜像，启动器会从同一 GitHub Release 自动下载镜像与 `SHA256SUMS`，校验 SHA256 和镜像 ID 后导入。首次下载约 500 MB，需联网；离线安装可预先将匹配镜像归档和 `SHA256SUMS` 放入包内 `docker-images/`。
 
-macOS 双击 `start.command`；Windows ARM64 双击 `start.bat`；Ubuntu ARM64 执行 `./start.sh`。首次运行会检查 CPU 架构、校验并导入镜像，创建 workspace / context 目录和默认 .env，然后启动应用。后续运行复用匹配的镜像。全程不构建、不拉取基础镜像；包内没有 Dockerfile 或 Compose build 配置。
+macOS 双击 `start.command`；Windows ARM64 双击 `start.bat`；Ubuntu ARM64 执行 `./start.sh`。首次运行会检查 CPU 架构，按需下载、校验并导入镜像，创建 workspace / context 目录和默认 .env，然后启动应用。后续运行复用匹配的镜像。全程不构建、不拉取基础镜像；包内没有 Dockerfile 或 Compose build 配置。
 
 通常在浏览器访问 https://localhost:8097。若该端口已被占用，启动脚本会自动选择并保存下一个可用端口，并在终端显示实际端口。首次使用的自签证书提示需要由使用者确认。启动脚本在桌面环境中会自动打开携带本机登录令牌的页面。服务器环境从容器 `/data/auth/access-token` 获取令牌，勿公开令牌。
 
