@@ -38,6 +38,14 @@ ARG AIDE_COMMIT=unknown
 # echo 把参数值写进命令文本，确保切换 AIDE_RUN_TESTS 必然失效该层缓存（否则 =0 缓存会被 =1 误命中而跳过测试）。
 # go build 缓存经 cache mount 跨构建复用，增量编译秒级。
 ARG AIDE_RUN_TESTS=0
+ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+# Go tests exercise the same Office scripts that the runtime image ships. Give
+# the build-stage test process the pinned Python modules too; these packages do
+# not enter the final runtime stage from this build stage.
+RUN if [ "${AIDE_RUN_TESTS}" = "1" ]; then \
+      pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
+        python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf==6.19.0; \
+    fi
 RUN --mount=type=cache,target=/root/.cache/go-build \
     echo "[build] AIDE_RUN_TESTS=${AIDE_RUN_TESTS}" && \
     if [ "${AIDE_RUN_TESTS}" = "1" ]; then echo "[build] 发布门禁：跑全量 go test"; AIDE_OFFICE_SCRIPTS=/src/scripts/office go test -mod=vendor -count=1 ./...; fi && \
