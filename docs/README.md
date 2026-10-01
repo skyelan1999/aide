@@ -13,6 +13,7 @@
 | 安装环境与首次启动 | [安装说明](installation.md) |
 | 工作目录、共享范围与上级导航 | [工作目录配置](workspace-paths.md) |
 | 学会使用项目、模型、文件、轨迹、统计 | [使用指南](user-guide.md) |
+| 检查与安装软件更新 | [软件更新流程](architecture/software-updates.md) |
 | 运维、备份、恢复与发布 | [交接手册](../HANDOVER.md) |
 | 看需求范围与实际状态 | [现行 PRD](PRD.md) |
 | 看实现、数据和接口 | [架构与 API](architecture.md) |

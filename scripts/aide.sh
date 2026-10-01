@@ -74,6 +74,12 @@ if [[ "$MODE" == start-bundle ]]; then
     [[ "$ACTUAL_HASH" == "$EXPECTED_HASH" ]] || { echo "Docker 镜像 SHA256 校验失败。" >&2; rm -f "$IMAGE_ARCHIVE"; exit 1; }
     "$DOCKER_BIN" image load -i "$IMAGE_ARCHIVE"
   fi
+  # Release launchers address images through stable A/B tags. Migrate old
+  # bundles after loading the immutable release tag, without touching data.
+  if [[ "$BUNDLE_IMAGE" != aide:slot-* ]]; then BUNDLE_IMAGE=aide:slot-a; fi
+  SLOT_ID="$("$DOCKER_BIN" image inspect "$BUNDLE_IMAGE" --format '{{.Id}}' 2>/dev/null || true)"
+  if [[ "$SLOT_ID" != "$BUNDLE_ID" ]]; then "$DOCKER_BIN" image tag "$BUNDLE_ID" "$BUNDLE_IMAGE"; fi
+  printf '%s %s %s %s\n' "$BUNDLE_IMAGE" "$BUNDLE_ID" "$BUNDLE_PLATFORM" "${BUNDLE_RELEASE_TAG:-}" > .aide-image
   [[ "$("$DOCKER_BIN" image inspect "$BUNDLE_IMAGE" --format '{{.Id}}')" == "$BUNDLE_ID" ]] || { echo "镜像身份不匹配。" >&2; exit 1; }
   mkdir -p workspace context
   if [[ ! -e .env ]]; then cp .env.example .env; fi
@@ -160,6 +166,9 @@ case "$MODE" in
     ADDRESS="$("$DOCKER_BIN" compose port aide 8080)"
     HOSTPORT="${ADDRESS##*:}"
     (nohup bash scripts/watch-port.sh >/dev/null 2>&1 </dev/null &)
+    if [[ -f .aide-image && -x scripts/update-agent.sh ]]; then
+      (nohup bash scripts/update-agent.sh >/dev/null 2>&1 </dev/null &)
+    fi
     # #31 数据分层后令牌位于 /data/auth/access-token；兼容旧路径，读取失败不中断启动
     TOKEN="$("$DOCKER_BIN" compose exec -T aide sh -c 'cat /data/auth/access-token 2>/dev/null || cat /data/access-token 2>/dev/null' || true)"
     if [[ -n "$TOKEN" ]]; then LOGIN_URL="https://localhost:$HOSTPORT/#token=$TOKEN"; else LOGIN_URL="https://localhost:$HOSTPORT/"; fi

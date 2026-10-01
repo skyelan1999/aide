@@ -3243,6 +3243,177 @@ function renderAboutProject(control) {
   card.append(deps);
   return card;
 }
+function renderSoftwareUpdates() {
+  const wrap = el('div', 'settings-control software-updates');
+  const intro = el('p', 'section-desc', t('上传经过校验的完整升级包到非活动槽，再由本机启动器安全切换。A/B 槽共用会话、设置和工作区数据；切换期间服务会短暂重启。'));
+  const top = el('div', 'settings-row');
+  const check = el('button', 'primary', t('检查更新'));
+  const status = el('div', 'software-update-status', t('点击检查官方 Release'));
+  top.append(status, check);
+  const detail = el('div', 'software-update-detail');
+  const slots = el('div', 'software-update-slots');
+  const slotsTitle = el('div', 'software-update-slots-title');
+  const refreshSlots = el('button', 'quiet', t('刷新槽状态'));
+  slotsTitle.append(el('h4', '', t('A/B 软件槽')), refreshSlots);
+  const uploadRow = el('div', 'software-update-upload');
+  const file = el('input'); file.type = 'file'; file.accept = '.zip,application/zip'; file.setAttribute('aria-label', t('选择 aide 应用内升级 ZIP 包'));
+  const folder = el('input'); folder.type = 'file'; folder.multiple = true; folder.setAttribute('webkitdirectory', ''); folder.setAttribute('directory', ''); folder.setAttribute('aria-label', t('选择解压后的 aide 升级文件夹'));
+  const upload = el('button', 'quiet', t('上传到非活动槽'));
+  const slotStatus = el('small', 'software-update-slot-status', t('正在读取 A/B 槽状态…'));
+  const zipPicker = el('label', 'software-update-picker');
+  zipPicker.append(el('span', '', t('选择升级 ZIP')), file);
+  const folderPicker = el('label', 'software-update-picker');
+  folderPicker.append(el('span', '', t('选择解压后的升级文件夹')), folder);
+  const selection = el('small', 'software-update-selection', t('支持应用内升级 ZIP 包或 macOS 解压后的升级文件夹；平台启动器 ZIP 不能直接上传。'));
+  uploadRow.append(zipPicker, folderPicker, upload);
+  wrap.append(intro, top, detail, slotsTitle, slots, uploadRow, slotStatus,
+    selection,
+    el('small', '', t('升级包由发行流程生成，包含当前平台 Docker 镜像、manifest.json 和 SHA256SUMS。切换由随软件包安装的宿主启动代理执行，不会在容器内操作 Docker。')));
+
+  file.onchange = () => {
+    if (file.files?.length) {
+      folder.value = '';
+      selection.textContent = t('已选择文件：{0}', file.files[0].name);
+    }
+  };
+  const isMacFolderMetadata = item => {
+    const relativePath = item.webkitRelativePath || item.name || '';
+    const parts = relativePath.replaceAll('\\', '/').split('/');
+    const name = parts[parts.length - 1] || '';
+    return name === '.DS_Store' || name.startsWith('._') || parts.includes('__MACOSX');
+  };
+  const usableFolderFiles = () => (folder.files ? [...folder.files] : []).filter(item => !isMacFolderMetadata(item));
+  folder.onchange = () => {
+    if (folder.files?.length) {
+      file.value = '';
+      const usableCount = usableFolderFiles().length;
+      selection.textContent = t('已选择升级文件夹：{0} 个有效文件', usableCount);
+    }
+  };
+
+  async function loadSlots() {
+    const result = await api('/updates/slots');
+    slots.replaceChildren();
+    for (const name of ['A', 'B']) {
+      const slot = result.slots?.[name] || {};
+      const card = el('article', 'software-update-slot' + (result.activeSlot === name ? ' active' : ''));
+      const head = el('div', 'software-update-slot-head');
+      const isActive = result.activeSlot === name;
+      const hasPendingPackage = !isActive && Boolean(slot.packageId);
+      head.append(el('strong', '', t('槽 {0}', name)), el('span', 'software-update-slot-badge', isActive ? t('正在运行') : hasPendingPackage ? t('待手动激活') : t('待机')));
+      const slotHint = isActive
+        ? (slot.imageId ? t('当前活动版本') : t('等待宿主启动器同步镜像信息'))
+        : hasPendingPackage
+          ? t('升级包已校验并暂存；手动激活后导入镜像并重启工作台')
+          : slot.imageId ? t('此版本已安装，可手动切换') : t('未安装');
+      card.append(head, el('div', 'software-update-slot-version', slot.version ? 'v' + slot.version : t('尚无软件包')),
+        el('small', 'muted', slotHint));
+      if (result.activeSlot !== name && (hasPendingPackage || slot.imageId)) {
+        const switchButton = el('button', 'quiet', hasPendingPackage ? t('手动激活槽 {0}', name) : t('手动切换到槽 {0}', name));
+        switchButton.onclick = action(async () => {
+          if (!confirm(t('手动激活槽 {0} 会导入该槽镜像并短暂重启 aide；用户数据卷保持共用。若新版本健康检查失败会自动回滚。继续？', name))) return;
+          switchButton.disabled = true; slotStatus.textContent = t('已提交切换请求，等待宿主启动器…');
+          await api('/updates/switch', { method: 'POST', body: JSON.stringify({ target: name }) });
+          const deadline = Date.now() + 180000;
+          while (Date.now() < deadline) {
+            await new Promise(resolve => setTimeout(resolve, 2500));
+            try {
+              const latest = await api('/updates/slots');
+              if (!latest.pending) { slotStatus.textContent = latest.lastMessage || t('切换已完成'); await loadSlots(); return; }
+            } catch (_) { /* app is restarting; continue polling */ }
+          }
+          slotStatus.textContent = t('仍在等待切换结果。服务重新就绪后可刷新槽状态。');
+          switchButton.disabled = false;
+        });
+        card.append(switchButton);
+      }
+      slots.append(card);
+    }
+    slotStatus.textContent = result.pending ? t('正在切换：槽 {0}', result.pending.target) : (result.lastMessage || t('A/B 槽状态已同步'));
+  }
+  refreshSlots.onclick = action(loadSlots);
+  upload.onclick = action(async () => {
+    const zipFiles = file.files ? [...file.files] : [];
+    const folderFiles = usableFolderFiles();
+    if (zipFiles.length && folderFiles.length) { toast(t('请只选择 ZIP 包或升级文件夹中的一种')); return; }
+    if (!zipFiles.length && !folderFiles.length) { toast(t('请先选择升级 ZIP 包或文件夹')); return; }
+    if (zipFiles.length && !/-update-linux-(arm64|amd64)\.zip$/i.test(zipFiles[0].name)) {
+      slotStatus.textContent = t('所选文件不是应用内升级包。请选择名称带有 update-linux 的升级 ZIP；macOS/Windows/Ubuntu 启动器 ZIP 不能用于槽升级。');
+      return;
+    }
+    upload.disabled = true; slotStatus.textContent = t('正在上传并校验升级包…');
+    try {
+      const form = new FormData();
+      if (zipFiles.length) {
+        form.append('package', zipFiles[0]);
+      } else {
+        const paths = [];
+        for (const item of folderFiles) {
+          paths.push(item.webkitRelativePath || item.name);
+          form.append('files', item, item.name);
+        }
+        form.append('paths', JSON.stringify(paths));
+      }
+      const response = await fetch('/api/updates/packages', { method: 'POST', headers: { Authorization: 'Bearer ' + state.token }, body: form });
+      const result = await response.json();
+      if (!response.ok) throw new Error(t(result.error) || t('升级包上传失败'));
+      file.value = ''; folder.value = ''; selection.textContent = t('支持应用内升级 ZIP 包或 macOS 解压后的升级文件夹；平台启动器 ZIP 不能直接上传。');
+      slotStatus.textContent = t('升级包已安装到槽 {0}', result.targetSlot);
+      await loadSlots();
+    } catch (error) {
+      slotStatus.textContent = t('升级包校验失败：{0}', error.message);
+      throw error;
+    } finally { upload.disabled = false; }
+  });
+  action(loadSlots)();
+  check.onclick = action(async () => {
+    check.disabled = true;
+    status.textContent = t('正在检查…');
+    detail.replaceChildren();
+    try {
+      const result = await api('/updates');
+      status.textContent = result.updateAvailable
+        ? t('发现新版本：{0}（当前 {1}）', 'v' + result.latestVersion, 'v' + (result.currentVersion || 'dev'))
+        : result.currentAhead
+          ? t('当前版本 {0} 比公开 Release 更新', 'v' + result.currentVersion)
+          : t('当前已是最新版本：{0}', 'v' + (result.currentVersion || 'dev'));
+      const header = el('div', 'software-update-release');
+      const link = el('a', '', t('查看 Release 页面'));
+      link.href = result.releaseURL; link.target = '_blank'; link.rel = 'noopener noreferrer';
+      header.append(link);
+      if (result.publishedAt) header.append(el('span', 'muted', new Date(result.publishedAt).toLocaleString()));
+      detail.append(header);
+      const notes = el('div', 'software-update-notes');
+      notes.innerHTML = renderMarkdown(result.releaseNotes || t('此 Release 没有版本说明。'), false);
+      detail.append(notes);
+      const updateAssets = el('div', 'software-update-assets');
+      const launcherAssets = el('div', 'software-update-assets');
+      for (const asset of result.assets || []) {
+        const platform = asset.name.match(/-(macos-arm64|windows-arm64|ubuntu-arm64)\.zip$/)?.[1] || asset.name;
+        const labels = { 'macos-arm64': 'macOS · Apple Silicon', 'windows-arm64': 'Windows · ARM64', 'ubuntu-arm64': 'Ubuntu · ARM64' };
+        const bundleMatch = asset.name.match(/-update-linux-(arm64|amd64)\.zip$/);
+        const label = bundleMatch ? t('应用内升级包 · Linux {0}', bundleMatch[1]) : t(labels[platform] || asset.name);
+        const a = el('a', 'quiet software-update-download', label);
+        a.href = asset.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
+        a.download = '';
+        (bundleMatch ? updateAssets : launcherAssets).append(a);
+      }
+      if (updateAssets.children.length) {
+        detail.append(el('h4', '', t('应用内升级包')), updateAssets);
+      } else {
+        detail.append(el('p', 'muted', t('该 Release 没有应用内升级包。启动器 ZIP 用于安装工作台，不能上传到 A/B 槽。')));
+      }
+      if (launcherAssets.children.length) {
+        detail.append(el('h4', '', t('启动器下载（全新安装）')), launcherAssets);
+      }
+    } catch (error) {
+      status.textContent = t('检查更新失败：{0}', error.message);
+    } finally {
+      check.disabled = false;
+    }
+  });
+  return wrap;
+}
 function renderLanguageControl() {
   const wrap = el('div', 'settings-control language-control');
   wrap.append(el('span', '', t('界面语言')));
@@ -3352,7 +3523,7 @@ function renderNumberControl(control) {
   if (control.description) wrap.append(el('small', '', control.description));
   return wrap;
 }
-const controlRenderers = { language: renderLanguageControl, 'about-project': renderAboutProject, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
+const controlRenderers = { language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 
 function renderSystemLogsControl() {
   const wrap = el('div', 'settings-control system-logs-control');

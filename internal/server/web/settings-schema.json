@@ -297,6 +297,17 @@
       ]
     },
     {
+      "id": "software-updates",
+      "title": "软件升级",
+      "controls": [
+        {
+          "id": "software-updates",
+          "type": "software-updates",
+          "label": "检查软件更新"
+        }
+      ]
+    },
+    {
       "id": "about",
       "title": "关于",
       "controls": [

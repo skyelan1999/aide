@@ -353,6 +353,9 @@ type App struct {
 	pricing                   PricingState
 	tokenCalls                []TokenCallRec
 	buildVersion, buildCommit string
+	updateHTTPClient          *http.Client
+	updateAPIBase             string
+	updatesMu                 sync.Mutex
 	eventMu                   sync.Mutex
 	eventSubs                 map[string]map[chan streamEvent]struct{} // SSE 订阅：taskID → subscriber set
 	globalSubs                map[chan string]struct{}                 // #60 全局 SSE 订阅者（sessions-changed）
@@ -1146,6 +1149,14 @@ func (a *App) buildHandler() {
 		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
+	mux.HandleFunc("GET /api/updates", a.checkUpdates)
+	mux.HandleFunc("GET /api/updates/slots", a.updateSlots)
+	mux.HandleFunc("POST /api/updates/packages", a.uploadUpdatePackage)
+	mux.HandleFunc("POST /api/updates/switch", a.switchUpdateSlot)
+	mux.HandleFunc("GET /api/updates/agent", a.updateAgentCommand)
+	mux.HandleFunc("POST /api/updates/agent/result", a.updateAgentResult)
+	mux.HandleFunc("POST /api/updates/agent/sync", a.updateAgentSync)
+	mux.HandleFunc("GET /api/updates/agent/packages/{id}", a.downloadUpdatePackage)
 	mux.HandleFunc("GET /api/virtual-avatar-settings", a.getVirtualAvatarSettings)
 	mux.HandleFunc("PUT /api/virtual-avatar-settings", a.putVirtualAvatarSettings)
 	mux.HandleFunc("GET /api/system-logs", a.systemLogsHandler)

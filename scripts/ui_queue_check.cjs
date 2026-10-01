@@ -314,7 +314,7 @@ function fail(msg) { console.error('FAIL: ' + msg); process.exit(1); }
     return out;
   });
   console.log('SETTINGS:', JSON.stringify(settings));
-  if (settings.order.join(',') !== '消耗统计,外观,语言,模型参数,归档,关于') fail('设置栏目顺序不符：' + settings.order.join(','));
+  if (settings.order.join(',') !== '消耗统计,外观,语言,模型参数,归档,软件升级,关于') fail('设置栏目顺序不符：' + settings.order.join(','));
   if (!settings.hasExportBtn) fail('归档窗格缺少全部导出按钮');
   if (!settings.exportOk) fail('全部导出接口不可用或未含归档会话');
   if (settings.hasRestoreBtn !== true) fail('归档窗格缺少恢复按钮');

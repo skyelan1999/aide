@@ -288,10 +288,18 @@ if ($offlineBundle) {
             throw 'Docker 镜像 SHA256 校验失败。'
         }
         if ((Invoke-Native $dockerExe @('image', 'load', '-i', $imageArchive)).Code -ne 0) { throw '导入 Docker 镜像失败。' }
-        $imageId = (Invoke-Native $dockerExe @('image', 'inspect', $env:AIDE_IMAGE, '--format', '{{.Id}}') -Capture).Text
-        if ($imageId -ne $expectedImageId) { throw '导入的 Docker 镜像身份与离线包不匹配。' }
-    }
-    New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot 'workspace'), (Join-Path $PSScriptRoot 'context') -Force | Out-Null
+        # The immutable release tag from the archive is checked below after it
+        # is assigned to the stable slot tag.
+  }
+  # Stable A/B tags keep both package versions selectable without changing the
+  # shared Compose volumes. Older launchers are migrated in place to slot A.
+  if ($env:AIDE_IMAGE -notlike 'aide:slot-*') { $env:AIDE_IMAGE = 'aide:slot-a' }
+  $slotImageId = (Invoke-Native $dockerExe @('image', 'inspect', $env:AIDE_IMAGE, '--format', '{{.Id}}') -Capture).Text
+  if ($slotImageId -ne $expectedImageId -and (Invoke-Native $dockerExe @('image', 'tag', $expectedImageId, $env:AIDE_IMAGE)).Code -ne 0) { throw '无法初始化 A/B 活动镜像槽。' }
+  $slotImageId = (Invoke-Native $dockerExe @('image', 'inspect', $env:AIDE_IMAGE, '--format', '{{.Id}}') -Capture).Text
+  if ($slotImageId -ne $expectedImageId) { throw '导入的 Docker 镜像身份与离线包不匹配。' }
+  "$($env:AIDE_IMAGE) $expectedImageId $expectedPlatform $releaseTag" | Set-Content -NoNewline -Encoding ASCII (Join-Path $PSScriptRoot '.aide-image')
+  New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot 'workspace'), (Join-Path $PSScriptRoot 'context') -Force | Out-Null
     if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot '.env'))) { Copy-Item (Join-Path $PSScriptRoot '.env.example') (Join-Path $PSScriptRoot '.env') }
 }
 if ((Invoke-Compose @startArguments).Code -ne 0) {
@@ -323,3 +331,7 @@ if (-not $token) {
     Write-Host "未自动读到令牌，已打开登录页；可运行：$($ComposeCmd -join ' ') exec -T aide cat /data/auth/access-token"
 }
 if ($env:AIDE_OPEN_BROWSER -ne '0') { Start-Process $url }
+if ($offlineBundle -and (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'scripts/update-agent.ps1'))) {
+    $currentPowerShell = (Get-Process -Id $PID).Path
+    Start-Process -FilePath $currentPowerShell -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',(Join-Path $PSScriptRoot 'scripts/update-agent.ps1')) -WindowStyle Hidden
+}

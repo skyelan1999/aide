@@ -1,0 +1,89 @@
+{
+  "id": "settings-updater",
+  "request": "添加软件升级功能，在设置里进行升级，至于具体流程你可以自由定义",
+  "baseline": "4f50b839d038356850ccc15c2df312e673e03f5d",
+  "initial_status": "",
+  "acceptance": [
+    "设置中提供独立的软件升级项，支持选择并上传经过清单和 SHA256 校验的完整软件升级包。",
+    "升级包装入非活动 A/B 槽；两个槽保留各自镜像/版本，切换时只运行一个 aide 实例。",
+    "升级包经校验后只暂存到非活动槽；用户必须手动点击激活并确认才会切换，启动健康检查失败时宿主代理自动回滚。",
+    "切换复用同一组 Docker 持久卷；新槽启动健康检查失败时自动恢复原槽。",
+    "支持检查公开 Release 与本地升级包；所有更新 API 受访问令牌保护，容器内不直接操作宿主 Docker。",
+    "启动包在 macOS、Windows、Ubuntu 上运行宿主升级代理；新包格式包含镜像和 SHA256，支持离线导入。"
+  ],
+  "scope": [
+    "internal/server upgrade package validation, A/B state API, focused tests",
+    "internal/server/web dedicated software-upgrade settings, localization and controls",
+    "host update agents and release package generation for macOS, Windows, Ubuntu",
+    "updater architecture documentation and this task record"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "新增完整包上传到非活动槽、宿主代理加载镜像并执行 A/B 切换、健康失败回滚；会话与设置等共用 Docker 卷，避免两个应用实例并行访问数据。",
+      "evidence": [
+        "用户原始请求：添加软件升级功能，在设置里进行升级，流程可自行定义。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Web 服务只校验与暂存包、记录待切换操作；平台启动器内的宿主代理轮询受鉴权 API，验证已签 SHA256、导入到 inactive Docker image slot，停止 active 服务后复用相同 named volumes 启动目标槽，healthz 失败则恢复旧 marker 与镜像。",
+      "evidence": [
+        "scripts/package-release-assets.sh：发布包包含平台 launcher ZIP；docker/compose.offline.yaml 使用持久卷。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已增加独立设置 → 软件升级项；完整 ZIP 上传至 /data/updates 并校验清单、平台、递增版本和 SHA256；支持查看 A/B 槽、请求切换及轮询。macOS/Ubuntu shell 与 Windows PowerShell 宿主代理导入镜像、复用稳定槽镜像标签和 Compose 命名卷，健康检查失败恢复旧 marker。Release 打包脚本生成包含 Docker 镜像的 update ZIP 并将代理加入各平台 launcher。",
+      "evidence": [
+        "internal/server/updates.go",
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "internal/server/web/settings-schema.json",
+        "scripts/update-agent.sh",
+        "scripts/update-agent.ps1",
+        "scripts/package-release-assets.sh"
+      ]
+    },
+    "verification": {
+      "status": "partial_pass",
+      "summary": "Safari 所选解压目录含 Finder 元数据导致上传失败的问题已修复。升级包暂存与手动激活流程经隔离服务 API 实际验证；上传本身不创建切换请求，显式调用手动激活后才排队目标槽。快速验证与 ZIP/文件夹回归测试通过。Mac 当前锁屏，无法完成 Safari 页面交互验收；宿主代理驱动的 Docker A/B 切换及真实健康失败回滚未实机执行。此前 full 验证被既有 TestDaemonConcurrentStartStopConsistency 的 race 测试超时阻断，单测重跑通过。",
+      "evidence": [
+        "PASS: python3 scripts/agent-route.py verify quick；fingerprint 9779db5b7155799557398d4ed0f463337893f7ac25c019028c1a2bc9daaa1759；日志 .agent-state/verify-20261001T172003111116Z.log",
+        "PASS: docker run --rm -v \"$PWD:/src\" -w /src --entrypoint go aide:local test -mod=vendor ./internal/server -run 'TestUploadUpdatePackageAccepts(ExtractedFolder|Zip)' -count=1 -v；目录测试含 .DS_Store、._*、__MACOSX 元数据",
+        "PASS: 隔离 RC9 服务接收本地 RC10 解压包；GET slots 确认 active=A、非活动槽已暂存、pending=null；显式 POST switch 后 active 仍为 A 且 pendingTarget=B。仅 API 排队验证，未执行宿主 Docker 切换。",
+        "PASS: 单独重跑既有 race 测试 TestDaemonConcurrentStartStopConsistency：go test -race ... -run ^TestDaemonConcurrentStartStopConsistency$ -timeout=120s；2.250s 通过。",
+        "FAIL/NOT_PASS: 此前 full 验证的 go test -race -count=1 ./... 命中 TestDaemonConcurrentStartStopConsistency 全局测试超时；日志 .agent-state/verify-20261001T170057566388Z.log。",
+        "NOT_RUN: Mac 锁屏导致 Safari 无法打开或交互；真实宿主 A/B Docker 切换与故障回滚、Windows PowerShell 实机验证。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新升级架构说明：macOS Finder 元数据过滤、文件夹包校验、上传只暂存、显式手动激活、共享持久卷和健康失败自动回滚。任务记录保留实测范围及未验项。",
+      "evidence": [
+        "docs/architecture/software-updates.md",
+        "docs/README.md",
+        "docs/tasks/settings-updater.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未操作现有 Docker 服务或数据卷。仅替换由本任务生成的 Downloads/aide-update-test-RC10 中测试升级 ZIP 与解压副本。",
+      "evidence": [
+        "git status --short --branch",
+        "git diff --check",
+        "~/Downloads/aide-update-test-RC10/README-test.txt"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次用户明确授权将本任务变更提交并推送到 main；未创建版本 tag、GitHub Release 或发布资产。",
+      "evidence": [
+        "用户指令：更新文档并 release；本轮明确要求“把文档改了然后都push上去”。"
+      ]
+    }
+  },
+  "release_authorization": "推送授权：用户明确要求“把文档改了然后都push上去”。GitHub Release/tag：本轮未授权/未执行。",
+  "rollback": "恢复本次工作区变更：git diff -- docs/README.md internal/server/server.go internal/server/web/app.js internal/server/web/locales/en.js internal/server/web/settings-schema.json internal/server/web/style.css；删除本任务新增的 docs/architecture/software-updates.md、internal/server/updates.go、internal/server/updates_test.go、docs/tasks/settings-updater.json。未对运行服务或 Docker 数据卷做变更。",
+  "handoff": "已修复解压升级文件夹中的 Finder 元数据导致的结构校验失败；A/B 包上传只暂存，设置界面提供手动激活，健康检查失败时宿主代理自动回滚。快速验证、文件夹/ZIP 上传回归与隔离服务 API 的手动激活排队验证通过。Safari 当前因 Mac 锁屏无法实机交互；Docker 宿主切换/真实回滚及 Windows 实机验证未完成。已按用户授权提交并推送 main；本轮未创建 GitHub Release/tag。"
+}

@@ -34,6 +34,16 @@ echo "== Exporting $IMAGE ($PLATFORM, $IMAGE_ID) =="
 mv "$OUT/$IMAGE_ASSET.partial" "$OUT/$IMAGE_ASSET"
 gzip -t "$OUT/$IMAGE_ASSET"
 
+# The in-app updater accepts one self-contained, checksummed platform bundle.
+mkdir -p "$ROOT/.agent-state"
+UPDATE_STAGING="$(mktemp -d "$ROOT/.agent-state/update-package.XXXXXX")"
+cp "$OUT/$IMAGE_ASSET" "$UPDATE_STAGING/"
+(cd "$UPDATE_STAGING" && shasum -a 256 "$IMAGE_ASSET" > SHA256SUMS)
+printf '{"format":"aide-update-package","version":1,"releaseTag":"%s","platform":"%s","imageArchive":"%s","imageId":"%s"}\n' \
+  "$TAG" "$PLATFORM" "$IMAGE_ASSET" "$IMAGE_ID" > "$UPDATE_STAGING/manifest.json"
+(cd "$UPDATE_STAGING" && zip -q "$OUT/aide-$TAG-update-${PLATFORM//\//-}.zip" manifest.json SHA256SUMS "$IMAGE_ASSET")
+rm -rf "$UPDATE_STAGING"
+
 STAGING="$(mktemp -d "$ROOT/.agent-state/release-package.XXXXXX")"
 trap 'rm -rf "$STAGING"' EXIT
 for TARGET in macos-arm64 windows-arm64 ubuntu-arm64; do
@@ -47,10 +57,12 @@ for TARGET in macos-arm64 windows-arm64 ubuntu-arm64; do
   for launcher in "${LAUNCHERS[@]}"; do cp "$ROOT/$launcher" "$PACKAGE/"; done
   cp "$ROOT/scripts/aide.sh" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/watch-port.sh" "$PACKAGE/scripts/"
+  cp "$ROOT/scripts/update-agent.sh" "$PACKAGE/scripts/"
+  cp "$ROOT/scripts/update-agent.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/docker/compose.offline.yaml" "$PACKAGE/compose.yaml"
   cp "$ROOT/docker/offline.env.example" "$PACKAGE/.env.example"
   cp "$ROOT/LICENSE" "$PACKAGE/"
-  printf '%s %s %s %s\n' "$IMAGE" "$IMAGE_ID" "$PLATFORM" "$TAG" > "$PACKAGE/.aide-image"
+  printf 'aide:slot-a %s %s %s\n' "$IMAGE_ID" "$PLATFORM" "$TAG" > "$PACKAGE/.aide-image"
   cat > "$PACKAGE/README.txt" <<EOF
 aide $VERSION - $TARGET launcher package
 
