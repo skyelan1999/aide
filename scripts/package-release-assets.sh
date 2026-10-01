@@ -29,11 +29,9 @@ EXPECTED_SRC_SHA="$(source_sha)"
 SHORT_ID="${IMAGE_ID#sha256:}"
 SHORT_ID="${SHORT_ID:0:12}"
 IMAGE_ASSET="aide-${TAG}-linux-${PLATFORM#linux/}-image.tar.gz"
-if [[ ! -f "$OUT/$IMAGE_ASSET" ]]; then
-  echo "== Exporting $IMAGE ($PLATFORM, $IMAGE_ID) =="
-  "$DOCKER_BIN" image save "$IMAGE" | gzip -1 > "$OUT/$IMAGE_ASSET.partial"
-  mv "$OUT/$IMAGE_ASSET.partial" "$OUT/$IMAGE_ASSET"
-fi
+echo "== Exporting $IMAGE ($PLATFORM, $IMAGE_ID) =="
+"$DOCKER_BIN" image save "$IMAGE" | gzip -1 > "$OUT/$IMAGE_ASSET.partial"
+mv "$OUT/$IMAGE_ASSET.partial" "$OUT/$IMAGE_ASSET"
 gzip -t "$OUT/$IMAGE_ASSET"
 
 STAGING="$(mktemp -d "$ROOT/.agent-state/release-package.XXXXXX")"
