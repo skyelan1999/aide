@@ -1,0 +1,79 @@
+{
+  "id": "port-switch-redirect",
+  "request": "修改端口后自动关闭当前端口网页并打开新端口网页。",
+  "baseline": "0ccda31a2a6d6b54e8892917227595696982db14",
+  "initial_status": "M docker/OFFLINE.md\n M docs/design/virtual-avatar-original-art.md\n M docs/user-guide.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M scripts/aide.sh\n M scripts/package-release-assets.sh\n M scripts/test_avatar_settings.cjs\n?? docs/reviews/builtin-avatar-pack-name-2026-10-01.md\n?? docs/reviews/voice-assistant-display-name-2026-10-01.md\n?? docs/tasks/builtin-avatar-pack-name-2026-10-01.json\n?? docs/tasks/virtual-avatar-cross-port.json\n?? docs/tasks/voice-assistant-display-name-2026-10-01.json\n?? scripts/watch-port.sh",
+  "acceptance": [
+    "修改端口后由当前页面等待新端口健康，并在同一标签页跳转；旧端口 URL 不再留在当前标签历史页。",
+    "新地址继续使用当前访问令牌登录。",
+    "后台端口监视器不再额外打开重复标签页。",
+    "服务重建后仍健康，默认端口设置不被更改。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "scripts/watch-port.sh",
+    "docker/OFFLINE.md",
+    "docs/user-guide.md",
+    "docs/tasks/port-switch-redirect.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求更改端口后自动关闭旧端口网页并打开新端口网页。按同标签页替换实现，保留访问令牌且避免重复开页。",
+      "evidence": [
+        "2026-10-01 用户消息。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "设置页提交后轮询新端口 /healthz（no-cors opaque GET），新监听就绪后通过 location.replace 切换当前页；旧页面传递一次性 URL fragment 令牌。端口监视器只负责更新 Compose 并重启。",
+      "evidence": [
+        "scripts/watch-port.sh 原先额外调用系统 open/xdg-open；本次移除，由当前页面负责切换。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增端口切换等待、超时反馈、重复提交保护和同页跳转；后台监视器不再开新页；更新中英文文案与操作文档。",
+      "evidence": [
+        "scripts/aide.sh start 已重建 aide:local 并重启当前服务。"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "未运行专项测试或 Safari 端到端端口切换；已做 JS/bash 语法检查、git diff --check、Go vet/build，并确认本地容器健康与映射仍为 9999。",
+      "evidence": [
+        "node --check internal/server/web/app.js：通过。",
+        "node --check internal/server/web/locales/en.js：通过。",
+        "bash -n scripts/watch-port.sh：通过。",
+        "scripts/aide.sh start：Docker 构建的 node 检查、go vet、go build 通过。",
+        "docker compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz 返回 status=ok；端口映射为 127.0.0.1:9999。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新离线包说明与用户指南，记录端口变更后等待就绪并在当前标签页切换。",
+      "evidence": [
+        "docker/OFFLINE.md",
+        "docs/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "not_run",
+      "summary": "保留工作区原有未提交修改。本任务修改尚未提交。",
+      "evidence": [
+        "git diff --check 通过。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本地服务已更新；未提交、推送或发布。",
+      "evidence": [
+        "当前服务 https://127.0.0.1:9999。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "恢复本任务所列文件的本次差异；通过 scripts/aide.sh start 重建本地镜像。",
+  "handoff": "新逻辑已包含在本地 aide:local，当前服务位于 https://127.0.0.1:9999 且健康。尚未在 Safari 实际改变端口验证自动同页跳转。"
+}

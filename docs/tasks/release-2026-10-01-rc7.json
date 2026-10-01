@@ -1,0 +1,93 @@
+{
+  "id": "release-2026-10-01-rc7",
+  "request": "更新文档并release；结合此前明确的 release and push 授权，发布 RC6 之后本工作区待发布的端口切换、虚拟形象跨端口持久化、语音助理命名等改动。",
+  "baseline": "0ccda31a2a6d6b54e8892917227595696982db14",
+  "initial_status": "M docker/OFFLINE.md\n M docs/design/virtual-avatar-original-art.md\n M docs/user-guide.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M scripts/aide.sh\n M scripts/package-release-assets.sh\n M scripts/test_avatar_settings.cjs\n?? docs/reviews/builtin-avatar-pack-name-2026-10-01.md\n?? docs/reviews/voice-assistant-display-name-2026-10-01.md\n?? docs/tasks/builtin-avatar-pack-name-2026-10-01.json\n?? docs/tasks/port-switch-redirect.json\n?? docs/tasks/virtual-avatar-cross-port.json\n?? docs/tasks/voice-assistant-display-name-2026-10-01.json\n?? scripts/watch-port.sh",
+  "acceptance": [
+    "版本文档列明 RC6 后纳入的端口设置与自动同页切换、虚拟形象工作区持久化、语音助理命名和内置素材包命名。",
+    "快速与完整发布检查通过，候选镜像含发布版本号并可健康启动；授权 API 与核心行为有实际证据。",
+    "macOS Apple Silicon、Windows ARM64、Ubuntu ARM64 启动包及匹配离线镜像重新生成、校验并附加到 GitHub Release。",
+    "main 与 release tag 推送成功，GitHub Release 页面及附件可访问；未验证行为和生产部署状态如实记录。"
+  ],
+  "scope": [
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/style.css",
+    "scripts/aide.sh",
+    "scripts/watch-port.sh",
+    "scripts/package-release-assets.sh",
+    "scripts/test_avatar_settings.cjs",
+    "docker/OFFLINE.md",
+    "docs/design/virtual-avatar-original-art.md",
+    "docs/user-guide.md",
+    "docs/reviews/builtin-avatar-pack-name-2026-10-01.md",
+    "docs/reviews/voice-assistant-display-name-2026-10-01.md",
+    "docs/tasks/builtin-avatar-pack-name-2026-10-01.json",
+    "docs/tasks/port-switch-redirect.json",
+    "docs/tasks/virtual-avatar-cross-port.json",
+    "docs/tasks/voice-assistant-display-name-2026-10-01.json",
+    "docs/tasks/release-2026-10-01-rc7.json",
+    "version.md",
+    "scripts/test_voice_panel.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "发布 RC6 之后的待发布用户功能，更新版本文档，重新生成平台启动包和离线镜像，推送 main/tag 并发布 GitHub Release。",
+      "evidence": [
+        "本轮用户消息“更新文档并release”；此前同一任务链用户消息“整理文档，release and psuh”及跨平台包、Release 上传要求。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用 scripts/version.sh、agent-route 发布门禁和 release asset 制作机制。端口由工作区数据卷持久化，监视器只更新离线启动包 Compose；浏览器在新监听就绪后同页 replace。虚拟形象配置由工作区卷提供跨 localhost origin 的共享副本。",
+      "evidence": [
+        "已审阅 scripts/version.sh、scripts/package-release-assets.sh、scripts/aide.sh、scripts/watch-port.sh、后端设置/API 路由及前端同步调用链。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "RC6 后待发布改动已在工作区实现；将以当前状态封装，已完成快速门禁和虚拟形象/名称专项测试。",
+      "evidence": [
+        "工作区差异逐项审阅；`python3 scripts/agent-route.py verify quick` 当前输入 PASS。",
+        "`node scripts/test_avatar_settings.cjs`、`node scripts/test_avatar_player.cjs`、`node scripts/test_avatar_feedback.cjs`、`bash -n scripts/watch-port.sh` 均 PASS。"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "快速门禁与头像设置/播放器/反馈、语音面板、助理标题定向测试通过；本机服务健康且鉴权 API 返回工作区头像配置。完整 Go race/vet 发布门禁尚待 clean main 执行；Safari 端口修改后的同页跳转未实际操作。",
+      "evidence": [
+        "`python3 scripts/agent-route.py verify quick` PASS，收据 `.agent-state/verify-20261001T094711961422Z.json`。",
+        "`node scripts/test_avatar_settings.cjs`、`node scripts/test_avatar_player.cjs`、`node scripts/test_avatar_feedback.cjs`、`node scripts/test_voice_panel.cjs` PASS。",
+        "`go test -mod=vendor ./internal/server -run ^TestAssistantSessionTitleSync$ -count=1` PASS。",
+        "本地服务 `https://127.0.0.1:9999/healthz` healthy；鉴权 `GET /api/virtual-avatar-settings` 返回 setting_present=true、schema_version=6。",
+        "NOT RUN：真实 Safari 端口变更重启、旧标签页关闭/替换及新页免重复登录。当前用户 Safari 处于锁屏，不在其活动会话中操作。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新离线启动包、用户指南、虚拟形象存储说明和文档中心；新增 RC7 发布记录及任务账本。",
+      "evidence": [
+        "docker/OFFLINE.md、docs/user-guide.md、docs/design/virtual-avatar-original-art.md、docs/README.md、docs/reviews/release-rc7-2026-10-01.md。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "逐项审阅当前修改与新增文件，均归属于 RC7 功能、专项验证或发布记录；未清理持久数据、工作区内容或令牌。",
+      "evidence": [
+        "`python3 scripts/agent-route.py audit` 将所有新增文件列为本次任务归属；`git diff --check` 通过。"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户本轮明确说“更新文档并release”；此前同一会话明确授权“整理文档，release and psuh”，并要求跨平台可执行程序及上传 release 的制作脚本。按此前持续授权执行版本发布及 Git 推送。",
+  "rollback": "代码回滚：将 main 回退到 RC6 基线 0ccda31；镜像回滚：重新运行上一已发布 RC6 离线包/镜像。不要回滚或覆盖持久卷 /data/config/virtual-avatar-settings.json、/data/config/host-port。若端口更新后无法访问，使用启动包 start.command/start.bat/start.sh 读取持久 host-port 并启动；不要假设端口固定为 8097。",
+  "handoff": "RC7 候选内容、文档和专项回归已准备。完整 release gate、RC7 构建、资产重打包上传和推送尚未执行。端口自动跳转尚无真实 Safari 端到端证据。"
+}

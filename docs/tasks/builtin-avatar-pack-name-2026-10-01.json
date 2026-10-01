@@ -1,0 +1,78 @@
+{
+  "id": "builtin-avatar-pack-name-2026-10-01",
+  "request": "把内置虚拟形象包名称改为“小鲸鱼 - 光栅版 - 原画动态包”，并确保已保存的内置包名称随版本更新。",
+  "baseline": "0ccda31a2a6d6b54e8892917227595696982db14",
+  "initial_status": "M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n?? docs/reviews/voice-assistant-display-name-2026-10-01.md\n?? docs/tasks/voice-assistant-display-name-2026-10-01.json",
+  "acceptance": [
+    "内置虚拟形象素材包在设置中的显示名为“小鲸鱼 - 光栅版 - 原画动态包”。",
+    "已保存的旧版内置包记录能随内置包 revision 更新显示名，且保留包 ID、启用状态和动画素材。",
+    "英文界面显示对应英文名称，虚拟形象设置回归检查通过。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "scripts/test_avatar_settings.cjs",
+    "docs/tasks/builtin-avatar-pack-name-2026-10-01.json",
+    "docs/reviews/builtin-avatar-pack-name-2026-10-01.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "将内置包卡片标题改为用户指定名称，并要求现存本地内置包记录通过 revision 迁移到新标题。",
+      "evidence": [
+        "用户明确要求将“小鲸 · 原画动态包”改为“小鲸鱼 - 光栅版 - 原画动态包”。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留 builtin-whale 的稳定 ID 与素材路径；递增 revision，让现有 localStorage 中的旧内置包对象替换为新展示名。",
+      "evidence": [
+        "internal/server/web/app.js 的虚拟形象存储 migrate() 根据 builtin-whale revision 更新既有包。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "内置包名称更新为“小鲸鱼 - 光栅版 - 原画动态包”，revision 从 2 提升到 3；旧保存记录重载时替换为当前清单，保留 ID 和用户偏好。同步英文映射及迁移回归断言。",
+      "evidence": [
+        "internal/server/web/app.js：builtinPack 新名称/revision 3；migrate() 自动刷新旧 revision。",
+        "internal/server/web/locales/en.js：新增对应英文显示名。",
+        "scripts/test_avatar_settings.cjs：验证旧名称记录更新且 builtin-whale ID 保持稳定。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "虚拟形象设置回归、i18n、语法和快速检查通过；隔离候选浏览器验证旧版设置迁移与显示名称。",
+      "evidence": [
+        "node scripts/test_avatar_settings.cjs：PASS。",
+        "node scripts/test_i18n.cjs、node --check internal/server/web/app.js、node --check internal/server/web/locales/en.js：PASS。",
+        "隔离候选浏览器：包卡片与激活单选项显示新名称；旧 revision 2 记录迁为 revision 3，素材路径和 opacity/playbackRate 保留。",
+        "python3 scripts/agent-route.py verify quick：PASS；收据 .agent-state/verify-20261001T083152581856Z.log。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录显示名、存储迁移与验证范围。",
+      "evidence": [
+        "docs/reviews/builtin-avatar-pack-name-2026-10-01.md",
+        "docs/tasks/builtin-avatar-pack-name-2026-10-01.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "清理独立候选容器和临时镜像；现有 Safari 服务未触碰。",
+      "evidence": [
+        "候选容器 aide-avatar-name-check 与临时镜像 aide:avatar-name-check 已移除；localhost:8097 未更改或重启。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "当前请求未授权升版、提交、推送或发布。",
+      "evidence": [
+        "release_authorization 字段注明本请求仅修改包显示名称和本地迁移。"
+      ]
+    }
+  },
+  "release_authorization": "本请求未授权升版、提交、推送或发布。",
+  "rollback": "恢复内置包显示名、revision、英文映射和回归断言即可；稳定包 ID 和动画素材不变。",
+  "handoff": "实现与定向验证完成。隔离候选验证后已清理；未提交、升版、推送或发布。Safari 上正在运行的 RC6 需在新构建部署后才会显示名称更新。"
+}

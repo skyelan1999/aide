@@ -1,0 +1,76 @@
+{
+  "id": "virtual-avatar-cross-port",
+  "request": "虚拟形象设置应在 localhost 端口切换后跨端口保留；当前只保存在浏览器 localStorage，8097 与 9999 存储相互隔离。",
+  "baseline": "0ccda31a2a6d6b54e8892917227595696982db14",
+  "initial_status": "M docker/OFFLINE.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M scripts/aide.sh\n M scripts/package-release-assets.sh\n M scripts/test_avatar_settings.cjs\n?? docs/reviews/builtin-avatar-pack-name-2026-10-01.md\n?? docs/reviews/voice-assistant-display-name-2026-10-01.md\n?? docs/tasks/builtin-avatar-pack-name-2026-10-01.json\n?? docs/tasks/voice-assistant-display-name-2026-10-01.json\n?? scripts/watch-port.sh",
+  "acceptance": [
+    "虚拟形象开关、显示位置、透明度、播放参数、当前素材包及用户导入素材持久保存在工作区数据卷。",
+    "同一工作区从不同 localhost 端口打开时读取相同的虚拟形象配置。",
+    "空白 origin 创建的默认值不得覆盖已有工作区配置；旧 localStorage 配置在工作区副本不存在时迁入。",
+    "本地服务重建后健康检查正常，已鉴权 API 可读取持久化设置。"
+  ],
+  "scope": [
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "docs/design/virtual-avatar-original-art.md",
+    "docs/user-guide.md",
+    "docs/tasks/virtual-avatar-cross-port.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户报告网页将端口切到 9999 后虚拟形象配置未记忆。根因是 localStorage 按 origin 隔离；验收为工作区持久副本、跨端口读取且默认值不覆盖已保存值。",
+      "evidence": [
+        "2026-10-01 用户消息及 localhost:9999 页面截图；现有设置代码只读写 aide.virtual-avatars.v2。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "增加受工作台访问令牌保护的 GET/PUT 接口，将版本化设置 JSON 保存到数据卷；浏览器继续保留 localStorage 缓存，启动时工作区副本优先，副本不存在时仅迁移非默认本地配置。",
+      "evidence": [
+        "internal/server/server.go 路由包装对 /api/* 执行 Bearer token 校验。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "增加最大 24 MiB 的虚拟形象持久化 API、前端启动同步和变更同步，并更新设置说明。",
+      "evidence": [
+        "Docker 构建包含 node --check、go vet 和 go build；docker compose recreate 成功。"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "未执行专项测试或浏览器跨端口交互验收。只确认本地服务健康、端口映射和已鉴权设置 API 可用。",
+      "evidence": [
+        "docker compose exec aide curl -fsSk https://127.0.0.1:8080/healthz 返回 status=ok。",
+        "curl https://127.0.0.1:9999/api/virtual-avatar-settings 使用容器令牌可读取工作区设置；令牌未输出。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新虚拟形象设计文档和用户指南，说明设置与导入素材保存在工作区数据卷并缓存在浏览器。",
+      "evidence": [
+        "docs/design/virtual-avatar-original-art.md",
+        "docs/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "not_run",
+      "summary": "仓库开始时已有多项用户修改，本次未清理或覆盖其他改动；本任务改动仍未提交。",
+      "evidence": [
+        "开始时 git status 记录在 initial_status。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "仅更新本地开发服务；未提交、未推送、未发布。",
+      "evidence": [
+        "本地 aide:local 已重建；发布步骤未执行。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "恢复本任务涉及文件的本次差异；运行 scripts/aide.sh start 重建。数据卷中的 config/virtual-avatar-settings.json 可备份后恢复。",
+  "handoff": "本地服务在 https://127.0.0.1:9999 运行。持久工作区设置接口可用且已发现工作区副本存在。尚未做 Safari 跨端口读写验收，也未运行专项测试。"
+}

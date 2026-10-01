@@ -75,6 +75,7 @@ type Settings struct {
 	UserPasswordHash       string                 `json:"userPasswordHash,omitempty"`       // 账户密码 SHA-256 哈希（不存明文；即小秘历史加密密钥）
 	LockTimeoutSec         int                    `json:"lockTimeoutSec,omitempty"`         // 空闲锁屏秒数，0 = 不锁屏
 	AccessibilityAutoRead  bool                   `json:"accessibilityAutoRead,omitempty"`  // 无障碍：输出完成后由小秘自动朗读讲解
+	AccessibilityHostPort  int                    `json:"accessibilityHostPort,omitempty"`  // 离线启动包宿主机绑定端口
 	// ── 外部 AI 诊断接口（/api/debug）：默认关、只读、独立令牌、审计脱敏 ──
 	DebugAccessEnabled  bool     `json:"debugAccessEnabled,omitempty"`  // 总开关，默认 false；关闭时 /api/debug/* 整体 404
 	DebugTokenHash      string   `json:"debugTokenHash,omitempty"`      // 调试令牌 SHA-256 哈希（绝不存明文）
@@ -1145,6 +1146,8 @@ func (a *App) buildHandler() {
 		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
+	mux.HandleFunc("GET /api/virtual-avatar-settings", a.getVirtualAvatarSettings)
+	mux.HandleFunc("PUT /api/virtual-avatar-settings", a.putVirtualAvatarSettings)
 	mux.HandleFunc("GET /api/system-logs", a.systemLogsHandler)
 	mux.HandleFunc("PUT /api/settings", a.updateSettings)
 	mux.HandleFunc("GET /api/xiaomi/model", a.xiaomiModelSettings)
@@ -1360,14 +1363,70 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	sherpaInstalled := sherpaBinOK && len(sherpaVoices) > 0
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	accessibilityPort := a.settings.AccessibilityHostPort
+	if accessibilityPort == 0 {
+		accessibilityPort = 8097
+	}
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
+
+// Virtual avatar preferences live in the data volume so changing the browser
+// origin (for example localhost:8097 to localhost:9999) does not reset them.
+func (a *App) getVirtualAvatarSettings(w http.ResponseWriter, r *http.Request) {
+	path := filepath.Join(a.dataPath, "config", "virtual-avatar-settings.json")
+	b, err := os.ReadFile(path)
+	if errors.Is(err, os.ErrNotExist) {
+		jsonOut(w, http.StatusOK, map[string]any{"settings": nil})
+		return
+	}
+	if err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return
+	}
+	var settings json.RawMessage
+	if err := json.Unmarshal(b, &settings); err != nil {
+		fail(w, http.StatusInternalServerError, errors.New("虚拟形象设置文件损坏"))
+		return
+	}
+	jsonOut(w, http.StatusOK, map[string]any{"settings": settings})
+}
+
+func (a *App) putVirtualAvatarSettings(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 24<<20)
+	var settings map[string]any
+	if err := json.NewDecoder(r.Body).Decode(&settings); err != nil {
+		fail(w, http.StatusBadRequest, errors.New("虚拟形象设置 JSON 无效或超过 24 MB"))
+		return
+	}
+	if settings["version"] != float64(6) {
+		fail(w, http.StatusBadRequest, errors.New("不支持的虚拟形象设置版本"))
+		return
+	}
+	if _, ok := settings["avatar"].(map[string]any); !ok {
+		fail(w, http.StatusBadRequest, errors.New("缺少虚拟形象设置"))
+		return
+	}
+	path := filepath.Join(a.dataPath, "config", "virtual-avatar-settings.json")
+	a.mu.Lock()
+	err := atomicJSON(path, settings)
+	if err == nil {
+		err = os.Chmod(path, 0600)
+	}
+	a.mu.Unlock()
+	if err != nil {
+		fail(w, http.StatusInternalServerError, err)
+		return
+	}
+	jsonOut(w, http.StatusOK, map[string]bool{"saved": true})
+}
+
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Settings
 		ClearKey              bool   `json:"clearKey"`
 		VoiceReplyEnabled     *bool  `json:"voiceReplyEnabled,omitempty"`
 		AccessibilityAutoRead *bool  `json:"accessibilityAutoRead,omitempty"`
+		AccessibilityHostPort *int   `json:"accessibilityHostPort,omitempty"`
 		VoiceReplyGender      string `json:"voiceReplyGender,omitempty"`
 		// 账户：外层同名字段覆盖内嵌 Settings（与 VoiceReplyEnabled 同模式），以便区分"未传"与"传空/0"
 		UserName         string  `json:"userName,omitempty"`
@@ -1434,6 +1493,15 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		in.Settings.AccessibilityAutoRead = *in.AccessibilityAutoRead
 	} else {
 		in.Settings.AccessibilityAutoRead = a.settings.AccessibilityAutoRead
+	}
+	if in.AccessibilityHostPort != nil {
+		if *in.AccessibilityHostPort < 1 || *in.AccessibilityHostPort > 65535 {
+			fail(w, 400, errors.New("宿主机端口必须在 1 到 65535 之间"))
+			return
+		}
+		in.Settings.AccessibilityHostPort = *in.AccessibilityHostPort
+	} else {
+		in.Settings.AccessibilityHostPort = a.settings.AccessibilityHostPort
 	}
 	// 调试接口：令牌哈希只由 /api/debug/admin/* 管理，普通 PUT 永不覆盖；
 	// 白名单未传则保留；总开关用指针判定。关闭时立即清空令牌哈希（无凭据残留）。
@@ -1620,6 +1688,13 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if err := atomicJSON(SettingsPath(a.dataPath), in.Settings); err != nil {
 		fail(w, 500, err)
 		return
+	}
+	if in.Settings.AccessibilityHostPort > 0 {
+		portFile := filepath.Join(filepath.Dir(SettingsPath(a.dataPath)), "host-port")
+		if err := os.WriteFile(portFile, []byte(fmt.Sprintf("%d\n", in.Settings.AccessibilityHostPort)), 0600); err != nil {
+			fail(w, 500, err)
+			return
+		}
 	}
 	a.settings = in.Settings
 	// #30：VoiceAssistantName 变更后，小秘系统会话标题跟随

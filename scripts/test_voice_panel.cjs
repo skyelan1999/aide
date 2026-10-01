@@ -70,6 +70,7 @@ const state = {
 };
 const context = {
   state,
+  voiceAssistantDisplayName: () => String(state.config?.voiceAssistantName || '小秘').trim() || '小秘',
   // voiceStart shares the production input guard with Xiaomi dictation.
   xiaomiDictation: { active: false, starting: false },
   window: { SpeechRecognition: FakeRecognition, speechSynthesis: { getVoices: () => [] } },
@@ -79,6 +80,7 @@ const context = {
   t: s => s,
   toast: message => toasts.push(message),
   action: fn => fn,
+  reconcileAvatarRun: () => {},
   ttsCancel: () => {},
   clearTimeout, setTimeout,
   api: async (path, opts = {}) => {
@@ -97,6 +99,10 @@ vm.createContext(context);
 vm.runInContext(source.slice(voiceStart, voiceEnd) + '\nglobalThis.__voice = voice;', context, { filename: 'app.js voice pipeline' });
 vm.runInContext(source.slice(dictationStart, dictationEnd), context, { filename: 'app.js Xiaomi dictation' });
 vm.runInContext(source.slice(startFn, startEnd) + '\nglobalThis.__voiceStart = voiceStart; globalThis.__voiceHardStop = voiceHardStop;', context, { filename: 'app.js voice lifecycle' });
+assert.equal(context.__voice.name(), '小秘', 'voice assistant name uses the configured default');
+state.config.voiceAssistantName = '阿斯特拉';
+assert.equal(context.__voice.name(), '阿斯特拉', 'voice assistant name follows the saved display name');
+state.config.voiceAssistantName = '小秘';
 
 const tick = () => new Promise(resolve => setImmediate(resolve));
 function emit(rec, text) {

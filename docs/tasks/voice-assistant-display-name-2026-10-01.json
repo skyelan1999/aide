@@ -1,0 +1,82 @@
+{
+  "id": "voice-assistant-display-name-2026-10-01",
+  "request": "把设置项语音小秘改为语音助理，默认显示名为小秘；语音助理设置中修改名字后，小秘会话入口和锁屏界面显示名同步变化。",
+  "baseline": "0ccda31a2a6d6b54e8892917227595696982db14",
+  "initial_status": "",
+  "acceptance": [
+    "设置导航标题显示“语音助理”，名称输入项清楚标为助理名称，默认名称精确为“小秘”。",
+    "语音助理设置中的性格配置项显示为“助理性格系统”。",
+    "保存自定义名称后，语音助理面板、侧栏小秘会话入口和锁屏眉题同步显示该名称。",
+    "后端小秘系统会话标题继续跟随 voiceAssistantName；未设置时稳定回退“小秘”。",
+    "中文/英文界面翻译和受影响的前端/后端回归检查通过；保留现有历史设置数据。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/locales/en.js",
+    "docs/tasks/voice-assistant-display-name-2026-10-01.json",
+    "docs/reviews/voice-assistant-display-name-2026-10-01.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "统一语音助理设置名称，并让配置名称反映到小秘会话入口与锁屏界面；默认名为“小秘”。",
+      "evidence": [
+        "用户直接要求将“语音小秘”设置改名为“语音助理”，默认名“小秘”，并同步会话和锁屏显示。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用现有 voiceAssistantName 配置与后端会话标题同步，不新增字段或迁移；前端统一读取 voiceAssistantName，锁屏显示动态眉题。",
+      "evidence": [
+        "internal/server/server.go:assistantNameLocked 已按 voiceAssistantName 返回自定义名并回退“小秘”。",
+        "internal/server/session_number_test.go:TestAssistantSessionTitleSync 已覆盖后端会话标题跟随。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "设置区改名为“语音助理”；其中性格配置项命名为“助理性格系统”。名称使用统一 voiceAssistantName getter，同步小秘入口可见名、无障碍标签、标题数据、当前小秘会话标题与锁屏眉题。默认值回退“小秘”。",
+      "evidence": [
+        "internal/server/web/settings-schema.json 与 locales/en.js 更新设置标题、助理名称及助理性格系统翻译。",
+        "internal/server/web/app.js 将侧栏、会话标题和锁屏眉题统一绑定 voiceAssistantName。",
+        "未新增配置键或迁移，既有 voiceAssistantName 数据继续使用。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "定向后端回归、前端语法/i18n/快速检查及隔离候选 UI 检查通过。锁屏动态名称节点已在浏览器验证；锁屏遮罩交互未在无密码的临时环境中启用。",
+      "evidence": [
+        "docker run --rm -v $PWD:/src -w /src --entrypoint bash aide:local -c 'go test -mod=vendor ./internal/server -run ^TestAssistantSessionTitleSync$ -count=1'：PASS。",
+        "node --check internal/server/web/app.js；node --check internal/server/web/locales/en.js；python3 -m json.tool internal/server/web/settings-schema.json；node scripts/test_i18n.cjs；node scripts/test_avatar_settings.cjs；python3 scripts/check_docs.py；git diff --check：PASS。",
+        "隔离 Docker 候选页在无头 Chrome 中打开；设置标题显示“语音助理”，默认“小秘”；保存“阿斯特拉”后侧栏入口、会话标题、data-session-title 与锁屏名称节点均显示“阿斯特拉”。未访问或重启 Safari/8097。",
+        "python3 scripts/agent-route.py verify quick：PASS；首次名称联动收据 .agent-state/verify-20261001T080817334689Z.log，性格标签更正后收据 .agent-state/verify-20261001T082550506526Z.log。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "新增本任务交付审阅记录和可复核任务账本；产品使用行为记录本次名称联动。",
+      "evidence": [
+        "docs/reviews/voice-assistant-display-name-2026-10-01.md",
+        "docs/tasks/voice-assistant-display-name-2026-10-01.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "隔离验证环境与用户现有服务分离；测试容器与临时镜像在交付前移除。",
+      "evidence": [
+        "Safari/localhost:8097 未改动；验证候选只在临时 Docker 容器运行，容器与 aide:voice-name-check 临时镜像已清理。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次请求仅涉及名称与显示同步，用户未在本请求中授权版本升级、提交、推送或发布。",
+      "evidence": [
+        "release_authorization 字段记录本次范围不含远端操作。"
+      ]
+    }
+  },
+  "release_authorization": "本任务仅实现设置/显示改动，未授权提交、推送或发布；不操作远端 Release。",
+  "rollback": "恢复 app.js、index.html、settings-schema.json、locales/en.js 的变更即可回滚 UI；voiceAssistantName 配置键和会话历史保持原样，无数据迁移。",
+  "handoff": "实现与定向验证完成，未提交、升版或发布。隔离候选验证了自定义名称的侧栏、会话标题和锁屏名称节点；锁屏遮罩需在配置账户密码的环境进一步验证。"
+}

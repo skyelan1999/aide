@@ -115,7 +115,10 @@ async function main() {
   const removed = structuredClone(v5); removed.aide.packs = []; removed.xiaomi.packs = [custom];
   assert.deepEqual(environment(removed).stored().avatar.packs, [custom], 'deleted builtin is never resurrected');
   const fresh = environment().stored(); assert.equal(fresh.avatar.enabled, false); assert.equal(fresh.avatar.packs.length, 1);
-  assert.equal(fresh.avatar.packs[0].revision, 2); assert.equal(fresh.avatar.packs[0].assets.length, 1, 'builtin references one manifest, not 38 running thumbnails');
+  assert.equal(fresh.avatar.packs[0].name, '小鲸鱼 - 光栅版 - 原画动态包');
+  assert.equal(fresh.avatar.packs[0].revision, 3); assert.equal(fresh.avatar.packs[0].assets.length, 1, 'builtin references one manifest, not 38 running thumbnails');
+  const savedOldBuiltin=structuredClone(fresh);savedOldBuiltin.avatar.packs[0].name='小鲸 · 原画动态包';savedOldBuiltin.avatar.packs[0].revision=2;
+  const upgradedBuiltin=environment(savedOldBuiltin).stored();assert.equal(upgradedBuiltin.avatar.packs[0].name,'小鲸鱼 - 光栅版 - 原画动态包');assert.equal(upgradedBuiltin.avatar.packs[0].id,'builtin-whale','the built-in identity remains stable during rename');
   assert.equal(fresh.avatar.playbackRate, 1, 'new installs default to original speed');
   assert.equal(fresh.avatar.smoothFrames, true, 'frame interpolation defaults on without enabling a disabled avatar');
   const legacyConfig=structuredClone(fresh);legacyConfig.avatar.playbackRate=0.5;legacyConfig.avatar.smoothFrames=false;legacyConfig.avatar.packs.push(custom);
@@ -206,7 +209,7 @@ async function main() {
   assert.equal(storageRefresh.clip(),storageFirst, 'storage refresh itself does not replace an action even if a rotation is due');
   storageRefresh.env.advance(800);assert.notEqual(storageRefresh.clip(),storageFirst, 'regular polling continues normal rotation after storage refresh');
   const earlyV6 = structuredClone(fresh); earlyV6.avatar.packs[0].revision = 1; earlyV6.avatar.packs[0].assets = [{ id: 'old-preview', src: '/old.webp' }]; earlyV6.avatar.packs.push(custom); earlyV6.avatar.opacity = 52; earlyV6.avatar.activePack = custom.id;
-  const renewed = environment(earlyV6).stored(); assert.equal(renewed.avatar.packs[0].revision, 2); assert.equal(renewed.avatar.opacity, 52); assert.equal(renewed.avatar.activePack, custom.id); assert.deepEqual(renewed.avatar.packs[1], custom);
+  const renewed = environment(earlyV6).stored(); assert.equal(renewed.avatar.packs[0].revision, 3); assert.equal(renewed.avatar.opacity, 52); assert.equal(renewed.avatar.activePack, custom.id); assert.deepEqual(renewed.avatar.packs[1], custom);
   earlyV6.avatar.packs = [custom]; assert.deepEqual(environment(earlyV6).stored().avatar.packs, [custom], 'builtin metadata refresh never resurrects a deleted pack');
   const v1 = { version: 1, xiaomi: { active: custom.id, items: [{ id: custom.id, name: 'Old image', src: custom.assets[0].src }], opacity: 66 } };
   const migratedV1 = environment(v1).stored().avatar; assert.equal(migratedV1.enabled, true); assert.equal(migratedV1.activePack, custom.id); assert.equal(migratedV1.opacity, 66);
@@ -220,7 +223,7 @@ async function main() {
   const opacity = range(host); env.tick(5); opacity.value = '42'; opacity.oninput(); assert.equal(env.stored().avatar.opacity, 42);
   const fromOtherTab = env.stored(); fromOtherTab.avatar.opacity = 80; fromOtherTab.avatar.lock = true;
   env.external(fromOtherTab); opacity.value = '63'; opacity.oninput(); assert.equal(env.stored().avatar.opacity, 63); assert.equal(env.stored().avatar.lock, true, 'cross-tab changes are preserved by controls already open');
-  const builtinRadio = descendants(host).find(element => element.type === 'radio' && element.attributes['aria-label'] === '激活素材包 小鲸 · 原画动态包');
+  const builtinRadio = descendants(host).find(element => element.type === 'radio' && element.attributes['aria-label'] === '激活素材包 小鲸鱼 - 光栅版 - 原画动态包');
   builtinRadio.checked = true; builtinRadio.onchange(); await env.settled();
   assert.equal(env.stored().avatar.activePack, 'builtin-whale'); assert.deepEqual(env.stored().avatar.packs.find(pack => pack.id === custom.id), custom);
   const on = checkbox(host, '启用虚拟形象'); on.checked = true; on.onchange(); await env.settled();

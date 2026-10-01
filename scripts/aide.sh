@@ -56,6 +56,50 @@ if [[ "$MODE" == start-bundle ]]; then
   [[ "$("$DOCKER_BIN" image inspect "$BUNDLE_IMAGE" --format '{{.Id}}')" == "$BUNDLE_ID" ]] || { echo "镜像身份不匹配。" >&2; exit 1; }
   mkdir -p workspace context
   if [[ ! -e .env ]]; then cp .env.example .env; fi
+  SAVED_PORT="$("$DOCKER_BIN" compose run --rm --no-deps --entrypoint sh aide -c 'cat /data/config/host-port 2>/dev/null || true' 2>/dev/null | tr -d '\r\n' || true)"
+  if [[ "$SAVED_PORT" =~ ^[0-9]{1,5}$ ]] && (( SAVED_PORT >= 1 && SAVED_PORT <= 65535 )); then
+    AIDE_PORT="$SAVED_PORT"
+    export AIDE_PORT
+    if grep -q '^AIDE_PORT=' .env; then
+      sed -i.bak "s/^AIDE_PORT=.*/AIDE_PORT=$AIDE_PORT/" .env && rm -f .env.bak
+    else
+      printf '\nAIDE_PORT=%s\n' "$AIDE_PORT" >> .env
+    fi
+  fi
+  # A bundle is often started while the regular developer install is already
+  # using 8097. Pick and persist the next free port instead of failing after
+  # Docker has created its network and volumes.
+  if [[ -z "${AIDE_PORT:-}" ]]; then
+    CONFIGURED_PORT="$(awk -F= '$1 == "AIDE_PORT" { gsub(/[[:space:]]/, "", $2); print $2; exit }' .env)"
+    CONFIGURED_PORT="${CONFIGURED_PORT:-8097}"
+    port_is_listening() {
+      if command -v lsof >/dev/null 2>&1; then
+        lsof -nP -iTCP:"$1" -sTCP:LISTEN -t >/dev/null 2>&1
+      elif command -v ss >/dev/null 2>&1; then
+        [[ -n "$(ss -H -ltn "sport = :$1" 2>/dev/null)" ]]
+      elif command -v nc >/dev/null 2>&1; then
+        nc -z -w 1 127.0.0.1 "$1" >/dev/null 2>&1
+      else
+        return 1
+      fi
+    }
+    if port_is_listening "$CONFIGURED_PORT"; then
+      for candidate in $(seq "$((CONFIGURED_PORT + 1))" "$((CONFIGURED_PORT + 100))"); do
+        if ! port_is_listening "$candidate"; then
+          AIDE_PORT="$candidate"
+          export AIDE_PORT
+          if grep -q '^AIDE_PORT=' .env; then
+            sed -i.bak "s/^AIDE_PORT=.*/AIDE_PORT=$AIDE_PORT/" .env && rm -f .env.bak
+          else
+            printf '\nAIDE_PORT=%s\n' "$AIDE_PORT" >> .env
+          fi
+          echo "端口 $CONFIGURED_PORT 已占用，离线包改用端口 $AIDE_PORT。"
+          break
+        fi
+      done
+      [[ -n "${AIDE_PORT:-}" ]] || { echo "端口 $CONFIGURED_PORT 至 $((CONFIGURED_PORT + 100)) 均被占用，请在 .env 中设置 AIDE_PORT。" >&2; exit 1; }
+    fi
+  fi
   export AIDE_IMAGE="$BUNDLE_IMAGE" COMPOSE_FILE=compose.yaml
   MODE=start-image
 fi
@@ -94,6 +138,7 @@ case "$MODE" in
     "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null
     ADDRESS="$("$DOCKER_BIN" compose port aide 8080)"
     HOSTPORT="${ADDRESS##*:}"
+    (nohup bash scripts/watch-port.sh >/dev/null 2>&1 </dev/null &)
     # #31 数据分层后令牌位于 /data/auth/access-token；兼容旧路径，读取失败不中断启动
     TOKEN="$("$DOCKER_BIN" compose exec -T aide sh -c 'cat /data/auth/access-token 2>/dev/null || cat /data/access-token 2>/dev/null' || true)"
     if [[ -n "$TOKEN" ]]; then LOGIN_URL="https://localhost:$HOSTPORT/#token=$TOKEN"; else LOGIN_URL="https://localhost:$HOSTPORT/"; fi

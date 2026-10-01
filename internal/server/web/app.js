@@ -13,6 +13,7 @@ function updateFavicon() {
 updateFavicon();
 if (window.aideUI?.subscribe) window.aideUI.subscribe(updateFavicon);
 const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, autoScroll: true, jumpAnimating: false };
+function voiceAssistantDisplayName() { return String(state.config?.voiceAssistantName || '小秘').trim() || '小秘'; }
 const fragment = new URLSearchParams(location.hash.slice(1));
 state.liveRound = {}; // Keep per-run streaming rounds initialized on the first session.
 // 文件面板的上传/搜索控件保持为脚本生成，避免与嵌入式页面模板的单行结构耦合。
@@ -222,7 +223,13 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
 async function api(path, options = {}) {
   const response = await fetch('/api' + path, { ...options, headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json', ...options.headers } });
   const data = await response.json();
-  if (!response.ok) { if (response.status === 401 && !$('login-dialog').open) $('login-dialog').showModal(); throw new Error(t(data.error) || t("请求失败")); }
+  if (!response.ok) {
+    // A wrong lock-screen password is also HTTP 401, but it does not mean the
+    // browser's access token expired. Keep the lock screen visible so its own
+    // handler can show the password error instead of opening the login dialog.
+    if (response.status === 401 && path !== '/account/verify-password' && !$('login-dialog').open) $('login-dialog').showModal();
+    throw new Error(t(data.error) || t("请求失败"));
+  }
   return data;
 }
 function action(fn) { return async (...args) => { try { await fn(...args); } catch (e) { toast(e.message); } }; }
@@ -419,6 +426,7 @@ async function refreshConfig() {
   const versionText = state.config.version ? 'v' + state.config.version : 'dev';
   $('app-version').textContent = versionText;
   $('settings-sheet-version').textContent = ' · aide ' + versionText;
+  syncVoiceAssistantDisplayName();
   $('model-status').textContent = state.config.configured ? t("已配置") : t("未配置");
   $('model-name').textContent = state.config.configured ? t("{0} · API 已配置", state.config.model) : t("先配置模型，即可开始真实 AI 对话");
   if (typeof resetIdleTimer === "function") resetIdleTimer();
@@ -433,6 +441,25 @@ async function refreshConfig() {
   estimateContext();
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
+function syncVoiceAssistantDisplayName() {
+  const name = voiceAssistantDisplayName();
+  const entry = $('assistant-entry');
+  if (entry) {
+    const label = entry.querySelector('.assistant-entry-name');
+    if (label) label.textContent = name;
+    entry.dataset.sessionTitle = name;
+    entry.setAttribute('aria-label', name);
+    entry.title = name;
+  }
+  if (assistantEntrySession) assistantEntrySession.title = name;
+  const lockName = $('lock-assistant-name');
+  if (lockName) lockName.textContent = name;
+  if (state.session?.kind === 'assistant') {
+    state.session.title = name;
+    const title = $('session-title');
+    if (title) title.textContent = name;
+  }
+}
 const subGroupState = {}; // 主会话 id -> { collapsed, expandAll }：已归档子会话折叠组状态，跨 loadSessions 重渲染保留
 let assistantEntrySession = null; // #62：小秘单例会话引用（独立侧栏槽位）
 function renderAssistantEntry(s) {
@@ -440,8 +467,10 @@ function renderAssistantEntry(s) {
   const entry = $('assistant-entry');
   if (!entry) return;
   entry.dataset.sessionId = s.id;
-  entry.dataset.sessionTitle = s.title;
-  entry.querySelector('.assistant-entry-name').textContent = (state.config && state.config.assistantName) || t('小秘');
+  entry.dataset.sessionTitle = voiceAssistantDisplayName();
+  entry.querySelector('.assistant-entry-name').textContent = voiceAssistantDisplayName();
+  entry.setAttribute('aria-label', voiceAssistantDisplayName());
+  entry.title = voiceAssistantDisplayName();
   entry.classList.toggle('active', (state.pendingSessionId || state.session?.id) === s.id);
   entry.classList.toggle('loading', state.pendingSessionId === s.id);
   const running = s.status === 'running';
@@ -2804,12 +2833,12 @@ $('settings-form').onsubmit = action(async event => { event.preventDefault(); if
   const scenes = Object.fromEntries(sceneList.map(([id,name,variants])=>[id,{name,variants}]));
   const legacyMotion = {generating:'eating',executing:'working',completed:'done',error:'tantrum'};
   const canonical = motion => ({eating:'generating',working:'executing',done:'completed',tantrum:'error',failed:'error',cancelled:'paused',interrupted:'paused',awaiting_approval:'awaiting_user',awaiting_clarification:'awaiting_user'})[motion] || motion;
-  const builtinPack = () => ({id:'builtin-whale',name:'小鲸 · 原画动态包',builtin:true,revision:2,assets:[{id:'whale-animation-pack',name:'小鲸',motion:'idle',src:'/avatars/xiaomi-original/idle-v1.webp',poster:'/avatars/xiaomi-original/idle-v1-poster.webp',manifest:'/avatars/xiaomi-original/manifest.json'}]});
+  const builtinPack = () => ({id:'builtin-whale',name:'小鲸鱼 - 光栅版 - 原画动态包',builtin:true,revision:3,assets:[{id:'whale-animation-pack',name:'小鲸',motion:'idle',src:'/avatars/xiaomi-original/idle-v1.webp',poster:'/avatars/xiaomi-original/idle-v1-poster.webp',manifest:'/avatars/xiaomi-original/manifest.json'}]});
   const normalizePlaybackRate = value => Number.isFinite(Number(value)) && Number(value)>0 ? Math.max(0.25,Math.min(4,Number(value))) : 1;
   const defaults = () => ({version:6,avatar:{enabled:false,chat:true,lock:true,opacity:100,playbackRate:1,smoothFrames:true,activePack:'builtin-whale',packs:[builtinPack()]}});
   const normalize = value => ({...value,enabled:!!value?.enabled,chat:value?.chat!==false,lock:value?.lock!==false,opacity:Math.max(25,Math.min(100,Number(value?.opacity)||100)),playbackRate:normalizePlaybackRate(value?.playbackRate),smoothFrames:value?.smoothFrames!==false,activePack:String(value?.activePack||''),packs:Array.isArray(value?.packs)?value.packs.filter(pack=>pack&&typeof pack.id==='string'&&Array.isArray(pack.assets)):[]});
   function migrate(parsed) {
-    if(parsed?.version===6){const avatar=normalize(parsed.avatar);avatar.packs=avatar.packs.map(pack=>pack.id==='builtin-whale'&&pack.builtin&&pack.revision!==2?builtinPack():pack);return {version:6,avatar,...(parsed.migration?{migration:parsed.migration}:{})};}
+    if(parsed?.version===6){const avatar=normalize(parsed.avatar);avatar.packs=avatar.packs.map(pack=>pack.id==='builtin-whale'&&pack.builtin&&pack.revision!==3?builtinPack():pack);return {version:6,avatar,...(parsed.migration?{migration:parsed.migration}:{})};}
     const old = Object.fromEntries(['xiaomi','aide'].map(id=>{
       const value=parsed?.[id]||{};
       if(Array.isArray(value.items))return [id,normalize({...value,packs:value.items.map((item,index)=>({id:item.id||id+'-import-'+index,name:item.name||'导入的形象 '+(index+1),assets:[{id:item.id||id+'-asset-'+index,name:'待机',motion:'idle',src:item.src}]})),activePack:value.active||value.items[0]?.id||'',enabled:value.enabled??!!value.active})];
@@ -2842,7 +2871,22 @@ $('settings-form').onsubmit = action(async event => { event.preventDefault(); if
     return result;
   }
   let data=read(), p=data.avatar, refreshPreview=null;
-  const save=()=>{try{localStorage.setItem(key,JSON.stringify(data));return true;}catch{return false;}};
+  let remoteSaveTimer=0;
+  const save=()=>{try{localStorage.setItem(key,JSON.stringify(data));clearTimeout(remoteSaveTimer);remoteSaveTimer=setTimeout(()=>api('/virtual-avatar-settings',{method:'PUT',body:JSON.stringify(data)}).catch(error=>console.warn('Virtual avatar settings could not sync to workspace storage:',error)),250);return true;}catch{return false;}};
+  const hasUserSettings=()=>JSON.stringify(data)!==JSON.stringify(defaults());
+  window.syncVirtualAvatarSettings=async()=>{
+    const remote=await api('/virtual-avatar-settings');
+    if(remote.settings){
+      const next=migrate(remote.settings),wasEnabled=p.enabled;
+      Object.assign(p,next.avatar);data={...next,avatar:p};
+      try{localStorage.setItem(key,JSON.stringify(data));}catch{/* Keep workspace copy available if this browser storage is full. */}
+      update({preserveSelection:true});refreshPreview?.();if(wasEnabled!==p.enabled)refreshContextBudget();
+    }else{
+      // A fresh origin auto-creates browser defaults. Do not let those defaults
+      // overwrite real preferences still stored under another localhost port.
+      if(hasUserSettings())await api('/virtual-avatar-settings',{method:'PUT',body:JSON.stringify(data)});
+    }
+  };
   const refreshContextBudget=()=>{if(typeof scheduleContextPreview==='function')scheduleContextPreview();};
   const activePack=()=>p.packs.find(pack=>pack.id===p.activePack);
   const manifests=new Map();
@@ -2954,7 +2998,7 @@ $('settings-form').onsubmit = action(async event => { event.preventDefault(); if
     if(/listen|record|聆听|倾听|录音/.test(value))return'listening';if(/think|reason|思考|推理/.test(value))return'thinking';if(/eat|token|snack|吃|投喂/.test(value))return'generating';if(/sleep|nap|睡|打盹/.test(value))return'sleeping';if(/tantrum|rage|angry|闹脾气|大吵|error|fail|错误|失败/.test(value))return'error';if(/done|success|完成|成功/.test(value))return'completed';if(/work|tool|run|执行|工作|工具/.test(value))return'executing';return'idle';
   }
   function renderer(){
-    const host=el('div','virtual-avatar-settings');host.append(el('p','section-desc',t('aide 与小秘共用一个形象。可分别选择聊天框和锁屏显示；关闭后不显示。导入的素材仅保存在此浏览器。')));
+    const host=el('div','virtual-avatar-settings');host.append(el('p','section-desc',t('aide 与小秘共用一个形象。可分别选择聊天框和锁屏显示；关闭后不显示。素材与设置保存在此工作区，并缓存在当前浏览器。')));
     const body=el('div','avatar-settings-body');host.append(body);let previewScene='idle',previewIndex=0;
     const draw=()=>{
       body.replaceChildren();let refreshPacks=()=>{},refreshSpeed=()=>{},refreshSmoothing=()=>{};const preview=el('div','avatar-preview-card'),previewActor=el('div','avatar-preview-actor'),sample=el('div','avatar-character-slot');previewActor.append(sample);
@@ -6903,6 +6947,7 @@ $('compact-button').onclick = action(async () => {
 async function initialize() {
   syncPanelButtons();
   await refreshConfig();
+  if (window.syncVirtualAvatarSettings) await window.syncVirtualAvatarSettings();
   const fragment = new URLSearchParams(location.hash.slice(1));
   if (fragment.has('file')) { await Promise.all([loadWorkspaceConfig(), loadSourcesList()]); await openFileViewMode(); return; }
   await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
@@ -7010,7 +7055,7 @@ const voice = {
   buffer: '', interim: '', baseStatus: '', timer: null, sending: false, queue: [], log: [], micStream: null,
   queuedOverride: null // #41：小秘 analyze 判定的本次发送排队/插队（一次性，onsubmit 消费后清零）
 };
-voice.name = () => (state.config && state.config.voiceAssistantName) || t('小秘');
+voice.name = voiceAssistantDisplayName;
 voice.supported = ('SpeechRecognition' in window) || ('webkitSpeechRecognition' in window);
 try {
   if ('speechSynthesis' in window) {
@@ -7929,28 +7974,28 @@ function toggleMechanicalRead(btn, text){
   setTimeout(next, 120);
 }
 
-// 设置面板：语音小秘名字输入
+// 设置面板：语音助理名称输入
 function renderVoiceNameControl() {
   const wrap = el('div', 'settings-control');
   const head = el('div', 'control-label');
-  head.append(el('span', '', t('小秘名字')));
+  head.append(el('span', '', t('助理名称')));
   const input = el('input');
   input.type = 'text';
   input.maxLength = 12;
-  input.placeholder = t('小秘');
-  input.value = (state.config && state.config.voiceAssistantName) || t('小秘');
+  input.placeholder = '小秘';
+  input.value = voiceAssistantDisplayName();
   input.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); saveBtn.click(); } };
   const saveBtn = el('button', 'primary', t('保存'));
   saveBtn.type = 'button';
   saveBtn.onclick = action(async () => {
-    const name = input.value.trim() || t('小秘');
+    const name = input.value.trim() || '小秘';
     await api('/settings', { method: 'PUT', body: JSON.stringify({ voiceAssistantName: name, activeModel: state.config ? state.config.activeModel : '' }) });
     await refreshConfig();
-    toast(t('小秘名字已保存'));
+    toast(t('助理名称已保存'));
   });
   const row = el('div', 'voice-name-row');
   row.append(input, saveBtn);
-  wrap.append(head, row, el('small', '', t('语音弹框标题使用这个名字，默认「小秘」。')));
+  wrap.append(head, row, el('small', '', t('名称同步显示在小秘会话和锁屏界面；默认「小秘」。')));
   return wrap;
 }
 function renderXiaomiModelControl() {
@@ -8350,11 +8395,50 @@ function renderAccessibilityControl() {
     } finally { busy = false; }
   });
   row.append(toggle, el('span', '', t('输出完成后自动朗读')));
+  const portRow = el('div', 'accessibility-port-row');
+  const portLabel = el('label', '', t('绑定端口'));
+  const port = el('input'); port.type = 'number'; port.min = '1'; port.max = '65535'; port.step = '1';
+  port.value = String(state.config?.accessibilityHostPort || 8097); portLabel.append(port);
+  const savePort = el('button', 'primary', t('保存端口')); savePort.type = 'button';
+  let portSwitching = false;
+  savePort.onclick = action(async () => {
+    if (portSwitching) return;
+    const value = Number(port.value);
+    if (!Number.isInteger(value) || value < 1 || value > 65535) { toast(t('请输入 1 到 65535 之间的端口')); return; }
+    if (value === Number(location.port || (location.protocol === 'https:' ? 443 : 80))) { toast(t('当前已使用此端口')); return; }
+    portSwitching = true; savePort.disabled = true;
+    try {
+      await api('/settings', { method: 'PUT', body: JSON.stringify({ accessibilityHostPort: value, activeModel: state.config?.activeModel || '' }) });
+      toast(t('端口已保存，正在切换到新地址'));
+      const destination = new URL(location.href);
+      destination.port = String(value); destination.pathname = '/'; destination.search = '';
+      destination.hash = state.token ? new URLSearchParams({ token: state.token }).toString() : '';
+      for (let attempt = 0; attempt < 60; attempt++) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 1200);
+        try {
+          // no-cors allows a same-host health probe across localhost ports; the
+          // opaque response is enough to know the new listener is accepting requests.
+          await fetch(new URL('/healthz', destination.origin), { mode: 'no-cors', cache: 'no-store', signal: controller.signal });
+          clearTimeout(timeout);
+          location.replace(destination.href);
+          return;
+        } catch {
+          clearTimeout(timeout);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      toast(t('新端口尚未就绪，请确认端口未被占用后刷新页面'));
+    } finally {
+      portSwitching = false; savePort.disabled = false;
+    }
+  });
+  portRow.append(portLabel, savePort);
   const resizeRow = el('div', 'accessibility-reset-row');
   const resetWidths = el('button', 'quiet', t('重置侧边栏宽度')); resetWidths.type = 'button';
   resetWidths.onclick = () => { resetSidebarWidths(); toast(t('两侧边栏宽度已恢复默认')); };
   resizeRow.append(resetWidths);
-  wrap.append(head, row, el('small', '', t('勾选即自动保存。开启后：每次模型输出完成，由小秘自动滚动、打开相关文件并口头讲解本次输出；aide 主会话本身不发声。')), resizeRow, el('small', '', t('恢复左侧工作区栏和右侧文件/插件栏的默认宽度。')));
+  wrap.append(head, row, el('small', '', t('勾选即自动保存。开启后：每次模型输出完成，由小秘自动滚动、打开相关文件并口头讲解本次输出；aide 主会话本身不发声。')), portRow, el('small', '', t('修改后会自动重启离线启动包服务；设置保存在数据卷中。')), resizeRow, el('small', '', t('恢复左侧工作区栏和右侧文件/插件栏的默认宽度。')));
   return wrap;
 }
 controlRenderers['accessibility-read'] = renderAccessibilityControl;
@@ -8584,7 +8668,7 @@ function renderPersonalityControl(control) {
   const pid = control.persona || 'aide';
   const wrap = el('div', 'settings-control personality-panel');
   const head = el('div', 'control-label');
-  head.append(el('span', '', t(control.label || (pid === 'xiaomi' ? '小秘性格系统' : 'aide 性格系统'))));
+  head.append(el('span', '', t(control.label || (pid === 'xiaomi' ? '助理性格系统' : 'aide 性格系统'))));
 
   const top = el('div', 'personality-top');
   const toggle = el('label', 'switch');
@@ -8707,6 +8791,7 @@ function applyLockVisual() {
   const veil = $('lock-screen');
   if (lockScreen.locked) { refreshLockStatus(); return; }
   lockScreen.locked = true;
+  syncVoiceAssistantDisplayName();
   clearTimeout(lockScreen.timer); lockScreen.timer = null;
   // 小秘退下：停止听写 + 取消朗读（解锁后按原状态恢复）
   lockScreen.wasVoiceListening = !!voice.listening;
@@ -8751,7 +8836,7 @@ function dismissAfterUnlock() {
   $('lock-screen').hidden = true;
   $('lock-screen').classList.remove('joining');
   const name = (state.config && state.config.userName) || '';
-  const xm = (state.config && state.config.voiceAssistantName) || t('小秘');
+  const xm = voiceAssistantDisplayName();
   const welcome = name ? t('欢迎回来，{0}，我是{1}。', name, xm) : t('欢迎回来，我是{0}。', xm);
   toast(welcome);
   speakReply(welcome);

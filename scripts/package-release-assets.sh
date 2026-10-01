@@ -48,6 +48,7 @@ for TARGET in macos-arm64 windows-arm64 ubuntu-arm64; do
   mkdir -p "$PACKAGE/scripts" "$PACKAGE/docker-images" "$PACKAGE/workspace" "$PACKAGE/context"
   for launcher in "${LAUNCHERS[@]}"; do cp "$ROOT/$launcher" "$PACKAGE/"; done
   cp "$ROOT/scripts/aide.sh" "$PACKAGE/scripts/"
+  cp "$ROOT/scripts/watch-port.sh" "$PACKAGE/scripts/"
   cp "$ROOT/docker/compose.offline.yaml" "$PACKAGE/compose.yaml"
   cp "$ROOT/docker/offline.env.example" "$PACKAGE/.env.example"
   cp "$ROOT/LICENSE" "$PACKAGE/"
@@ -60,6 +61,7 @@ aide $VERSION - $TARGET launcher package
 3. Copy the image file into this folder's docker-images directory, keeping its filename.
 4. Copy the Release SHA256SUMS file into docker-images/SHA256SUMS.
 5. Run the platform launcher in this folder. It verifies/imports the image and starts aide without building or pulling.
+6. On first launch, the script uses port 8097 when available and selects/saves the next available port if it is occupied. Change the host port in Settings > Accessibility; the running launcher monitor applies it by recreating the container.
 
 Required Docker engine image platform: $PLATFORM
 Image reference: $IMAGE
@@ -68,7 +70,7 @@ Image ID: $IMAGE_ID
 This launcher archive does not contain your .env, workspace data, API key, browser token, or Docker volumes.
 Configure model access in the app after first start. Default local URL: https://localhost:8097
 EOF
-  chmod +x "$PACKAGE/start.command" "$PACKAGE/start.sh" 2>/dev/null || true
+  chmod +x "$PACKAGE/start.command" "$PACKAGE/start.sh" "$PACKAGE/scripts/"*.sh 2>/dev/null || true
   (cd "$STAGING" && zip -qr "$OUT/aide-$TAG-$TARGET.zip" "aide-$TAG-$TARGET")
 done
 
