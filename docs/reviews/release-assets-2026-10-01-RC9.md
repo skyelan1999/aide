@@ -22,4 +22,8 @@ The RC9 macOS package README documents Gatekeeper approval and the narrowly scop
 
 ## Remote publication
 
-Status: pending. Record the pushed source/tag and verify all six Release assets and remote checksums after publication.
+- GitHub prerelease: https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC9
+- All six assets report `uploaded`; the remote `SHA256SUMS` file matches the local file byte for byte.
+- Remote `SHA256SUMS` SHA256: `30229b39a56c6ebf9e8391b59e140ffa54189901fff5dedd337a6ac1fe14b4c9`.
+- `main` and annotated tag `v0.1.14.0-RC9` were pushed at source commit `046f100`.
+- Failed historical candidate tags RC3, RC4, and RC5 were inadvertently included by `git push --follow-tags` and immediately deleted from the remote; `git ls-remote` confirmed they are absent.
