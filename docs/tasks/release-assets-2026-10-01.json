@@ -91,15 +91,19 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "本地发布预检与资产验收通过；待推送 main/RC6 tag、上传 GitHub prerelease 并核对远端资产。",
+      "status": "pass",
+      "summary": "RC6 prerelease 与 6 个资产已上传并从 GitHub API 确认 uploaded；远端 SHA256SUMS 已下载并与本地逐字节一致。仅发布 linux/arm64 镜像和三个 ARM64 启动包。",
       "evidence": [
         "gh auth status passed for skyelan1999.",
-        "Only v0.1.14.0-RC6 will be pushed; failed RC3/RC4/RC5 tags are excluded."
+        "Only v0.1.14.0-RC6 will be pushed; failed RC3/RC4/RC5 tags are excluded.",
+        "GitHub prerelease: https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC6",
+        "Remote release API confirms isPrerelease=true and 6 uploaded assets, including the 513816588-byte arm64 image.",
+        "GitHub SHA256SUMS was downloaded and cmp matched the locally verified manifest exactly; GitHub asset digests match local image and ZIP hashes.",
+        "git ls-remote confirms main b55a315b156c58fff250b3778086faa35af74e15 and annotated tag object 1815d027372a56be404512a1c164dccce09f26bf."
       ]
     }
   },
   "release_authorization": "用户 2026-10-01 原话：“镜像该传传上去啊，另外你需要根据mac windows ubuntu分别设计单独的可执行程序，并提供制作脚本来上传到release中”。明确授权上传 Docker 镜像与平台启动包到 GitHub Release。之前“把所需的docker镜像全部放到本地，不用从联网拉取了”仍约束不拉取 amd64 基础镜像。",
   "rollback": "不移动或复用已推送 tag。若 Release 附件错误，移除错误附件并暂缓下载；修复后使用版本脚本递增 RC、重建镜像/平台包并更新 Release。此次不替换生产实例或用户现有 Docker 卷。",
-  "handoff": "RC6 source tag v0.1.14.0-RC6 at 284e367 is ready. Local release assets are built and checksum/gzip/ZIP/runtime-health checks pass. Full verify full passed at fingerprint fad181940ddb9a0296450372dc990b7294c4784581dd73dfb8078e7fda253759. Next commit the release status docs, run release-check, push main and only RC6, publish prerelease assets, inspect remote assets, then commit/push remote confirmation docs. Do not push RC3/RC4/RC5 failed candidate tags."
+  "handoff": "Complete: RC6 v0.1.14.0-RC6 GitHub prerelease is live with shared linux/arm64 image, macOS Apple Silicon/Windows ARM64/Ubuntu ARM64 launcher ZIPs, SHA256SUMS and RELEASE-ASSETS.txt. Remote checksums match local manifest. Main/tag pushed. Windows and Ubuntu device startup remain NOT_RUN; x64 image bundles are omitted because no local amd64 base inputs were available. RC3/RC4/RC5 failed-candidate tags were not pushed."
 }

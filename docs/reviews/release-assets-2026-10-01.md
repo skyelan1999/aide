@@ -50,3 +50,9 @@ RC6 全量发布验证：`python3 scripts/agent-route.py verify full` PASS，fin
 资产目录：`.agent-state/release-assets/v0.1.14.0-RC6/`。镜像 `aide-v0.1.14.0-RC6-linux-arm64-image.tar.gz`，490M，SHA256 `1c70f07d1800374e306be1f03514f2d395f574631efa92a76f44cc53d9eb8bb2`，image ID `sha256:19b1da3729efcef339de8110ca3db608fb62a9e31d5e4a78a185a4bb8ff73743`。启动包：macOS Apple Silicon ZIP 7.9K（`c70124133509fb6eb6b5aff60a27fd4369c148c33a7df81559df11c0fa5846ec`）、Ubuntu ARM64 ZIP 8.2K（`3539e6c03a5da62e9c671398811ad6b836eb651895e7030a49859e6a70aed338`）、Windows ARM64 ZIP 14K（`9a9a5e271376ed69150bfe4eef1a3a1ef47377bb3d30c0fa28361bfa6d897f14`）。gzip、三个 ZIP 与 `SHA256SUMS` 均通过。
 
 Windows 和 Ubuntu 实机启动仍为 NOT_RUN。三个下载包是各平台 Docker 启动器包，并非将应用编译成不同 CPU 架构的原生 GUI 二进制。Windows x64 与 Ubuntu x64 未发布，因为没有本地 linux/amd64 镜像输入。RC3/RC4/RC5 均为本地失败候选 tag，不推送。
+
+## 远端发布确认
+
+GitHub prerelease：<https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC6>。Release API 返回 `isPrerelease=true`、6 项资产且状态均为 `uploaded`。镜像远端大小 513,816,588 bytes；三个启动 ZIP 和说明/校验文件均已上传。远端 `SHA256SUMS` 下载后与本地逐字节相同，GitHub 提供的镜像及 ZIP digest 与本地 manifest 一致。
+
+源码远端已确认：`main`=`b55a315b156c58fff250b3778086faa35af74e15`；`v0.1.14.0-RC6` annotated tag object=`1815d027372a56be404512a1c164dccce09f26bf`。Release 已完成。Windows 和 Ubuntu 实机启动为 NOT_RUN；x64 包未发布。
