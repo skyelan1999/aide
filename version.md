@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.14.0 RC7**
+**当前版本：0.1.14.0 RC8**
+
+## 0.1.14.0 RC8（2026-10-01）
+
+- Automate release image download from launchers
+
 
 ## 0.1.14.0 RC7（2026-10-01）
 
