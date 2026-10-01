@@ -12,6 +12,7 @@ VERSION="${VERSION/-RC/ RC}"
 DOCKER_BIN="$(command -v docker || true)"
 [[ -n "$DOCKER_BIN" ]] || { echo 'docker is required.' >&2; exit 1; }
 mkdir -p "$OUT"
+OUT="$(cd "$OUT" && pwd)"
 
 IMAGE_ID="$("$DOCKER_BIN" image inspect "$IMAGE" --format '{{.Id}}')"
 PLATFORM="$("$DOCKER_BIN" image inspect "$IMAGE" --format '{{.Os}}/{{.Architecture}}')"

@@ -17,7 +17,8 @@ if gh release view "$TAG" >/dev/null 2>&1; then
   echo "Release $TAG already exists; uploading assets without replacing existing names."
   gh release upload "$TAG" "${ASSETS[@]}"
 else
-  NOTES="$ROOT/docs/reviews/2026-10-01-v0.1.14.0-RC2.md"
+  NOTES="$ROOT/docs/reviews/release-assets-2026-10-01.md"
+  [[ -f "$NOTES" ]] || { echo "Release notes not found: $NOTES" >&2; exit 1; }
   gh release create "$TAG" "${ASSETS[@]}" --verify-tag --prerelease \
     --title "aide $TAG" --notes-file "$NOTES"
 fi

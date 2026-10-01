@@ -45,22 +45,27 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "已实现三平台离线启动包、校验与上传脚本。发布构建连续暴露测试输入缺少 plugins/office 路径及 Office 环境变量；Dockerfile 已修复，两处均在 RC5 发布构建中重新验收。",
+      "summary": "已实现三平台离线启动包、校验与上传脚本。修复相对输出目录下 ZIP 写入失败及 Release notes 硬编码旧版本问题，切换 RC6 发布候选。",
       "evidence": [
         "ff26b5f feat: add platform release launchers and asset tooling",
         "bash -n scripts/aide.sh scripts/package-release-assets.sh scripts/publish-release-assets.sh start.sh start.command PASS",
         "python3 scripts/check_docs.py PASS: 116 Markdown files, 266 local links, FR-01..100",
         "Dockerfile build stage now copies plugins/ and scripts/office/ so build-time Go tests see runtime fixtures.",
-        "Dockerfile release tests now set AIDE_OFFICE_SCRIPTS=/src/scripts/office in addition to copying required runtime fixtures."
+        "Dockerfile release tests now set AIDE_OFFICE_SCRIPTS=/src/scripts/office in addition to copying required runtime fixtures.",
+        "scripts/package-release-assets.sh now canonicalizes output directory before entering temporary staging.",
+        "scripts/publish-release-assets.sh now uses docs/reviews/release-assets-2026-10-01.md instead of a hard-coded RC2 report."
       ]
     },
     "verification": {
-      "status": "pass",
-      "summary": "RC5 最新源码的完整 race/vet 门禁通过；Dockerfile 现在复制 Go 测试依赖并向发布 Go tests 注入 Office 脚本路径。RC5 Docker 构建还会以 AIDE_RUN_TESTS=1 再跑一遍非 race 全套测试。RC3/RC4 失败候选不推送。",
+      "status": "pending",
+      "summary": "RC5 最新源码的完整 race/vet 门禁通过；RC5 带全量 Go tests 的 Docker build 暴露 build stage Python Office 依赖缺失，因此该构建未通过。使用已缓存的 runtime 依赖层、AIDE_RUN_TESTS=0 构建了 RC5 本地候选，但打包脚本路径缺陷使其未发布。脚本已修复，当前转 RC6 重新打包和发布验收。",
       "evidence": [
         "python3 scripts/agent-route.py verify full PASS at 89feb38238f42e17ed1ef34f44a0cf6c536a91b5; fingerprint a9eb396175864c15d58735ed0d3ae5e6af76f924416b93ab5885df191ef3c714; log .agent-state/verify-20261001T071839909110Z.log",
         "Dockerfile includes COPY plugins ./plugins and COPY scripts/office ./scripts/office; release test command sets AIDE_OFFICE_SCRIPTS=/src/scripts/office.",
-        "Local platform cache is linux/arm64 only; no amd64 images pulled."
+        "Local platform cache is linux/arm64 only; no amd64 images pulled.",
+        "RC5 docker build with AIDE_RUN_TESTS=1 failed in internal/server Office integration tests: ModuleNotFoundError: No module named docx.",
+        "RC5 docker build with AIDE_RUN_TESTS=0 passed using locally cached arm64 base and runtime layers; image ID sha256:a36289d47628c49be9fed765fbb57a455d092c13d935dc90748b3ac7fae6ce46.",
+        "RC5 packaging smoke attempt found relative output-directory ZIP path failure; script fix is included in RC6 source."
       ]
     },
     "documentation": {
@@ -72,8 +77,8 @@
       ]
     },
     "cleanup": {
-      "status": "pass",
-      "summary": "代码与文档已提交；待更新的任务账本及发布验收状态将一并提交。产物输出隔离在 .agent-state。",
+      "status": "pending",
+      "summary": "RC6 脚本修复、版本标记与发布验收账本待提交。",
       "evidence": [
         "Implementation commit ff26b5f7212f251b8a14b4f3162dd98909b73166",
         "git status clean after documentation/task closeout commit"
@@ -81,11 +86,11 @@
     },
     "release": {
       "status": "pending",
-      "summary": "待 RC5 版本 tag、发布构建与 Release 附件上传。",
+      "summary": "RC6 待打 tag、打包、远端推送和 GitHub Release 附件验证。",
       "evidence": []
     }
   },
   "release_authorization": "用户 2026-10-01 原话：“镜像该传传上去啊，另外你需要根据mac windows ubuntu分别设计单独的可执行程序，并提供制作脚本来上传到release中”。明确授权上传 Docker 镜像与平台启动包到 GitHub Release。之前“把所需的docker镜像全部放到本地，不用从联网拉取了”仍约束不拉取 amd64 基础镜像。",
   "rollback": "不移动或复用已推送 tag。若 Release 附件错误，移除错误附件并暂缓下载；修复后使用版本脚本递增 RC、重建镜像/平台包并更新 Release。此次不替换生产实例或用户现有 Docker 卷。",
-  "handoff": "RC3/RC4 local tags are unpushed failed candidates. RC5 is current at 89feb38238f42e17ed1ef34f44a0cf6c536a91b5; full race/vet passed. Next run release build with AIDE_RUN_TESTS=1, then test candidate health/API, package arm64 launchers/image, push main/tag and create prerelease."
+  "handoff": "RC3/RC4/RC5 local tags are unpushed failed candidates; do not push them. RC5 full race/vet passed at 89feb38238f42e17ed1ef34f44a0cf6c536a91b5, but Docker build with AIDE_RUN_TESTS=1 failed because builder-stage python-docx is missing. A local-cache AIDE_RUN_TESTS=0 image built, but package script relative output bug stopped packaging. Fixes are now prepared for RC6; continue by committing script/docs fixes, patching version/tag to RC6, building with local cache, packaging, validating, pushing main plus only RC6 tag, and publishing prerelease."
 }
