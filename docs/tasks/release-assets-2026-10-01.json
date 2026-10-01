@@ -57,15 +57,21 @@
       ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "RC5 最新源码的完整 race/vet 门禁通过；RC5 带全量 Go tests 的 Docker build 暴露 build stage Python Office 依赖缺失，因此该构建未通过。使用已缓存的 runtime 依赖层、AIDE_RUN_TESTS=0 构建了 RC5 本地候选，但打包脚本路径缺陷使其未发布。脚本已修复，当前转 RC6 重新打包和发布验收。",
+      "status": "pass",
+      "summary": "RC6 全量 full race/vet 发布门禁通过。Docker image 使用本地 linux/arm64 基础镜像及缓存构建；以 AIDE_RUN_TESTS=0 构建，Go race/vet 已由 full 门禁验证。候选容器健康检查与首页请求通过，镜像 gzip、三个 ZIP 与 SHA256 清单全部通过。Windows/Ubuntu 实机尚未验证。",
       "evidence": [
         "python3 scripts/agent-route.py verify full PASS at 89feb38238f42e17ed1ef34f44a0cf6c536a91b5; fingerprint a9eb396175864c15d58735ed0d3ae5e6af76f924416b93ab5885df191ef3c714; log .agent-state/verify-20261001T071839909110Z.log",
         "Dockerfile includes COPY plugins ./plugins and COPY scripts/office ./scripts/office; release test command sets AIDE_OFFICE_SCRIPTS=/src/scripts/office.",
         "Local platform cache is linux/arm64 only; no amd64 images pulled.",
         "RC5 docker build with AIDE_RUN_TESTS=1 failed in internal/server Office integration tests: ModuleNotFoundError: No module named docx.",
         "RC5 docker build with AIDE_RUN_TESTS=0 passed using locally cached arm64 base and runtime layers; image ID sha256:a36289d47628c49be9fed765fbb57a455d092c13d935dc90748b3ac7fae6ce46.",
-        "RC5 packaging smoke attempt found relative output-directory ZIP path failure; script fix is included in RC6 source."
+        "RC5 packaging smoke attempt found relative output-directory ZIP path failure; script fix is included in RC6 source.",
+        "python3 scripts/agent-route.py verify full PASS; fingerprint fad181940ddb9a0296450372dc990b7294c4784581dd73dfb8078e7fda253759; HEAD 284e3670e4dd84e758c22463f0c0016df52e74d2; log .agent-state/verify-20261001T073906393112Z.log.",
+        "RC6 image platform linux/arm64, image ID sha256:19b1da3729efcef339de8110ca3db608fb62a9e31d5e4a78a185a4bb8ff73743, source label 85ec0bf338634d813222797c64eaf5305156bca6ace5214dd6181806439b2d0c.",
+        "Isolated container returned /healthz {integrity:ok,service:aide,status:ok}; HTTPS homepage returned HTTP 200 on 127.0.0.1:18097; test container removed.",
+        "gzip -t and unzip -t passed; shasum -a 256 -c SHA256SUMS passed for image, macOS, Ubuntu, Windows ZIPs and RELEASE-ASSETS.txt.",
+        "Assets: 490M linux arm64 image; macOS arm64 ZIP 7.9K; Ubuntu arm64 ZIP 8.2K; Windows arm64 ZIP 14K.",
+        "SHA256 image 1c70f07d1800374e306be1f03514f2d395f574631efa92a76f44cc53d9eb8bb2; macOS c70124133509fb6eb6b5aff60a27fd4369c148c33a7df81559df11c0fa5846ec; Ubuntu 3539e6c03a5da62e9c671398811ad6b836eb651895e7030a49859e6a70aed338; Windows 9a9a5e271376ed69150bfe4eef1a3a1ef47377bb3d30c0fa28361bfa6d897f14."
       ]
     },
     "documentation": {
@@ -77,20 +83,23 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "RC6 脚本修复、版本标记与发布验收账本待提交。",
+      "status": "pass",
+      "summary": "RC6 发布源码、任务和验收记录已准备提交；构建产物保留于忽略目录 .agent-state/release-assets/v0.1.14.0-RC6，不包含用户数据、密钥或卷。",
       "evidence": [
-        "Implementation commit ff26b5f7212f251b8a14b4f3162dd98909b73166",
-        "git status clean after documentation/task closeout commit"
+        "git diff --check passed in full verification.",
+        "Build output isolated in .agent-state/release-assets/v0.1.14.0-RC6."
       ]
     },
     "release": {
       "status": "pending",
-      "summary": "RC6 待打 tag、打包、远端推送和 GitHub Release 附件验证。",
-      "evidence": []
+      "summary": "本地发布预检与资产验收通过；待推送 main/RC6 tag、上传 GitHub prerelease 并核对远端资产。",
+      "evidence": [
+        "gh auth status passed for skyelan1999.",
+        "Only v0.1.14.0-RC6 will be pushed; failed RC3/RC4/RC5 tags are excluded."
+      ]
     }
   },
   "release_authorization": "用户 2026-10-01 原话：“镜像该传传上去啊，另外你需要根据mac windows ubuntu分别设计单独的可执行程序，并提供制作脚本来上传到release中”。明确授权上传 Docker 镜像与平台启动包到 GitHub Release。之前“把所需的docker镜像全部放到本地，不用从联网拉取了”仍约束不拉取 amd64 基础镜像。",
   "rollback": "不移动或复用已推送 tag。若 Release 附件错误，移除错误附件并暂缓下载；修复后使用版本脚本递增 RC、重建镜像/平台包并更新 Release。此次不替换生产实例或用户现有 Docker 卷。",
-  "handoff": "RC3/RC4/RC5 local tags are unpushed failed candidates; do not push them. RC5 full race/vet passed at 89feb38238f42e17ed1ef34f44a0cf6c536a91b5, but Docker build with AIDE_RUN_TESTS=1 failed because builder-stage python-docx is missing. A local-cache AIDE_RUN_TESTS=0 image built, but package script relative output bug stopped packaging. Fixes are now prepared for RC6; continue by committing script/docs fixes, patching version/tag to RC6, building with local cache, packaging, validating, pushing main plus only RC6 tag, and publishing prerelease."
+  "handoff": "RC6 source tag v0.1.14.0-RC6 at 284e367 is ready. Local release assets are built and checksum/gzip/ZIP/runtime-health checks pass. Full verify full passed at fingerprint fad181940ddb9a0296450372dc990b7294c4784581dd73dfb8078e7fda253759. Next commit the release status docs, run release-check, push main and only RC6, publish prerelease assets, inspect remote assets, then commit/push remote confirmation docs. Do not push RC3/RC4/RC5 failed candidate tags."
 }
