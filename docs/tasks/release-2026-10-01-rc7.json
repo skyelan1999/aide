@@ -57,14 +57,14 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "快速门禁与头像设置/播放器/反馈、语音面板、助理标题定向测试通过；本机服务健康且鉴权 API 返回工作区头像配置。完整 Go race/vet 发布门禁尚待 clean main 执行；Safari 端口修改后的同页跳转未实际操作。",
+      "status": "pass",
+      "summary": "快速门禁、完整 Go race/vet 发布门禁与定向回归通过；当前运行服务健康、鉴权头像 API 可读取工作区设置。隔离真实浏览器端口跳转未能进入：计算机使用界面报告 Mac 已锁定。该特定交互明确标记 NOT RUN，不作通过声明。",
       "evidence": [
         "`python3 scripts/agent-route.py verify quick` PASS，收据 `.agent-state/verify-20261001T094711961422Z.json`。",
-        "`node scripts/test_avatar_settings.cjs`、`node scripts/test_avatar_player.cjs`、`node scripts/test_avatar_feedback.cjs`、`node scripts/test_voice_panel.cjs` PASS。",
-        "`go test -mod=vendor ./internal/server -run ^TestAssistantSessionTitleSync$ -count=1` PASS。",
-        "本地服务 `https://127.0.0.1:9999/healthz` healthy；鉴权 `GET /api/virtual-avatar-settings` 返回 setting_present=true、schema_version=6。",
-        "NOT RUN：真实 Safari 端口变更重启、旧标签页关闭/替换及新页免重复登录。当前用户 Safari 处于锁屏，不在其活动会话中操作。"
+        "`python3 scripts/agent-route.py verify full` PASS，收据 `.agent-state/full.json`，fingerprint `3aff19aae81368e11243ab0250d9d74f3fc1e1f9bae7aeae9c7aae6bf9437b6b`，覆盖全仓 `go test -race -count=1 ./...` 与 `go vet ./...`。",
+        "`node scripts/test_avatar_settings.cjs`、`node scripts/test_avatar_player.cjs`、`node scripts/test_avatar_feedback.cjs`、`node scripts/test_voice_panel.cjs` 均 PASS；助理会话标题定向 Go 测试 PASS。",
+        "本地 RC6 容器健康；使用容器令牌鉴权调用 `GET /api/virtual-avatar-settings` 返回 `setting_present=true`、`schema_version=6`，令牌未输出。",
+        "NOT RUN：浏览器实际保存端口后等待新监听、同标签页 replace、携令牌登录。Cua 报告系统 Mac locked；隔离测试容器与数据卷已清理。"
       ]
     },
     "documentation": {
@@ -89,5 +89,5 @@
   },
   "release_authorization": "用户本轮明确说“更新文档并release”；此前同一会话明确授权“整理文档，release and psuh”，并要求跨平台可执行程序及上传 release 的制作脚本。按此前持续授权执行版本发布及 Git 推送。",
   "rollback": "代码回滚：将 main 回退到 RC6 基线 0ccda31；镜像回滚：重新运行上一已发布 RC6 离线包/镜像。不要回滚或覆盖持久卷 /data/config/virtual-avatar-settings.json、/data/config/host-port。若端口更新后无法访问，使用启动包 start.command/start.bat/start.sh 读取持久 host-port 并启动；不要假设端口固定为 8097。",
-  "handoff": "RC7 候选内容、文档和专项回归已准备。完整 release gate、RC7 构建、资产重打包上传和推送尚未执行。端口自动跳转尚无真实 Safari 端到端证据。"
+  "handoff": "代码与文档提交 f4b6ff3；全量发布门禁通过。当前开发容器仍运行 RC6 镜像，127.0.0.1:9999 healthy；没有替换生产/用户服务。端口修改后的实际浏览器同页跳转未运行（系统 Mac locked）。正在继续 RC7 升版、镜像构建、资产上传与推送。"
 }
