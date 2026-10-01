@@ -7,6 +7,7 @@ aide = AI + IDE，产品主旨是让人更专注于专业工作。本路由用�
 
 - 首次回复简要报告：任务号、当前阶段、验收目标、使用的客户端及不能执行的能力。
 - 统一命令：`python3 scripts/agent-route.py --help`。
+- 新任务先用 `python3 scripts/agent-route.py route --request "需求原文"` 分派领域 skill；路由只建议 agent 分工，不启动或授权任何 agent。
 - 新需求：`python3 scripts/agent-route.py start <任务号> --request "需求"`。
 - 先盘点 Git 状态；继承现有改动，不覆盖、清空或自动提交其他人的工作。
 - UI 变化必须实际打开页面验收；没有浏览器能力则记录 NOT_RUN 并交接。

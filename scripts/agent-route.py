@@ -83,11 +83,55 @@ def resolve_check_command(command):
     return command
 
 
+def select_skills(request, config):
+    router = config['skill_router']
+    text = request.casefold()
+    matches = []
+    for route in router['routes']:
+        hits = []
+        for word in route['keywords']:
+            term = re.escape(word.casefold())
+            if re.fullmatch(r'[a-z0-9_/.-]+', word.casefold()):
+                matched = re.search(r'(?<![a-z0-9_])' + term + r'(?![a-z0-9_])', text)
+            else:
+                matched = word.casefold() in text
+            if matched:
+                hits.append(word)
+        if hits:
+            matches.append((len(hits), route))
+    matches.sort(key=lambda item: (-item[0], item[1]['priority']))
+    matches = [route for _, route in matches]
+    return matches[:router['max_specialists']]
+
+
+def render_route(request, config):
+    router = config['skill_router']
+    matches = select_skills(request, config)
+    print('aide skill routing')
+    print('Request: ' + request)
+    print('Mode: ' + ('specialist matches' if matches else 'no keyword match; coordinator owns discovery'))
+    print('Read the repository entry and shared workflow before assigning work. Routing is advisory; it does not spawn agents or grant authorization.')
+    entry = ROOT / router['entry']
+    print('\n--- ROUTER SKILL: ' + router['entry'] + ' ---\n' + entry.read_text())
+    if not matches:
+        print('\nSuggested owner: coordinator (use AGENTS.md and docs/agent/WORKFLOW.md; inspect before delegating).')
+    for index, route in enumerate(matches):
+        role = 'primary specialist' if index == 0 else 'optional collaborator; use only if this is a distinct concern'
+        print('\n--- ' + role.upper() + ': ' + route['title'] + ' (' + route['id'] + ') ---')
+        print('Skill: ' + route['skill'])
+        print('Source entry points: ' + ', '.join(route['source_roots']))
+        print('Verification suggestions: ' + '; '.join(route['verification']))
+        print('Assignment: implement only this concern in its agreed file scope; report changed paths, actual commands/results, and unresolved items to the coordinator.')
+        print('\n' + (ROOT / route['skill']).read_text())
+    return matches
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest='cmd', required=True)
     start = sub.add_parser('start'); start.add_argument('id'); start.add_argument('--request', required=True)
-    prompt = sub.add_parser('prompt'); prompt.add_argument('client', choices=['codex', 'claude', 'deepseek', 'doubao', 'workbuddy'])
+    prompt = sub.add_parser('prompt'); prompt.add_argument('client', choices=['codex', 'claude', 'deepseek', 'doubao', 'workbuddy']); prompt.add_argument('--request')
+    route = sub.add_parser('route'); route.add_argument('--request', required=True)
     verify = sub.add_parser('verify'); verify.add_argument('profile', choices=['quick', 'full'])
     release = sub.add_parser('release-check'); release.add_argument('id')
     for name in ('check', 'audit', 'clean'):
@@ -109,6 +153,11 @@ def main():
         for file in ('AGENTS.md', config['workflow']):
             print('\n--- ' + file + ' ---\n' + (ROOT / file).read_text())
         print('\nResume the applicable docs/tasks/<id>.json. Request its contents if local access is unavailable.')
+        if args.request:
+            print('\n--- SPECIALIST ROUTING ---')
+            render_route(args.request, config)
+    elif args.cmd == 'route':
+        render_route(args.request, config)
     elif args.cmd in ('audit', 'clean'):
         for p in candidates(config):
             print(('DELETE ' if args.cmd == 'clean' else 'CANDIDATE ') + str(p.relative_to(ROOT)))
@@ -117,9 +166,12 @@ def main():
         print('Untracked files to classify (NOT deletion candidates):\n' + git('ls-files', '--others', '--exclude-standard'))
     elif args.cmd == 'check':
         missing = [f for f in config['required_files'] if not (ROOT / f).is_file()]
+        router = config['skill_router']
+        skill_files = [router['entry'], *(item['skill'] for item in router['routes'])]
+        missing.extend(f for f in skill_files if not (ROOT / f).is_file())
         if missing:
             raise ValueError('Missing: ' + ', '.join(missing))
-        print('PASS: route files present; client loading must still be confirmed')
+        print('PASS: route and specialist skill files present; client loading must still be confirmed')
     elif args.cmd == 'verify':
         before = fingerprint()
         records = []

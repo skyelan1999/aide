@@ -79,7 +79,7 @@ go vet ./...
 
 ## 浏览器验证
 
-临时预览容器中使用 `scripts/mock_provider.py` 作为受控的本地测试 API。界面和输出明确标注 QA 模拟；没有调用云端模型。
+临时预览容器中使用 `scripts/fixtures/mocks/mock_provider.py` 作为受控的本地测试 API。界面和输出明确标注 QA 模拟；没有调用云端模型。
 
 已实际操作验证：
 

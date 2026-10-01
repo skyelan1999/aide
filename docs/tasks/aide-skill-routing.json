@@ -1,0 +1,85 @@
+{
+  "id": "aide-skill-routing",
+  "request": "创建用于配合不同 agent 路由的 skill 路由，提升其他 AI 的 Aide 开发效率",
+  "baseline": "e1848c9d6fbf99f1e7faa1d5e668dff575188e63",
+  "initial_status": "",
+  "acceptance": [
+    "建立精简的 Aide 开发 skill 路由，能按请求匹配一个主技能及必要的协作技能。",
+    "其他 agent 可通过仓库统一命令获得可执行的分工、源码入口与验证建议。",
+    "保留现有 Codex/Claude/DeepSeek/豆包/WorkBuddy 工作流，明确技能是否自动加载须按客户端确认。",
+    "提供按请求选择不超过三个专业技能的统一命令，并在文档中说明多客户端接入边界；不改变产品运行时与发布行为。"
+  ],
+  "scope": [
+    "AGENTS.md",
+    "docs/agent/WORKFLOW.md",
+    "docs/agent/ADAPTERS.md",
+    "docs/agent/router.json",
+    "docs/README.md",
+    "scripts/agent-route.py",
+    ".agents/skills/aide-development-router/**",
+    "docs/tasks/aide-skill-routing.json",
+    "scripts/test_agent_skill_routing.py",
+    "docs/reviews/2026-10-02-verification-report.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "范围限定为项目级多客户端 skill 路由与 Aide 领域提示；不触及产品功能或发布。",
+      "evidence": [
+        "用户请求；AGENTS.md 与 docs/agent/WORKFLOW.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "采用 router.json 作为路由目录，agent-route.py 按请求命中少量领域 skill；协调者负责整合。",
+      "evidence": [
+        "docs/agent/router.json",
+        ".agents/skills/aide-development-router/SKILL.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增五个领域 skill、route 命令和 prompt --request 集成，并将路由接入入口文档。",
+      "evidence": [
+        "AGENTS.md",
+        "scripts/agent-route.py",
+        ".agents/skills/"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "五类专业路由、主技能排序、最多三个匹配、无匹配回退、CLI 输出与 prompt 集成均有 7 个回归用例；统一 quick 门禁通过。",
+      "evidence": [
+        "python3 scripts/test_agent_skill_routing.py — 7 tests PASS",
+        "python3 scripts/agent-route.py verify quick — PASS",
+        "docs/reviews/2026-10-02-verification-report.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已更新 Agent 工作流、客户端接入说明和文档索引；新增技能说明每个领域职责及验证边界。",
+      "evidence": [
+        "docs/agent/WORKFLOW.md",
+        "docs/agent/ADAPTERS.md",
+        "docs/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅工作区变更；仅包含本任务路由、技能、文档及任务账本文件，未清理其他文件。",
+      "evidence": [
+        "git status --short --branch"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "用户已明确要求提交并上传；与本次工作相关的 skill 路由变更纳入主分支提交。",
+      "evidence": [
+        "用户原话：同步的放到工程里一并提交上传"
+      ]
+    }
+  },
+  "release_authorization": "用户明确要求：“同步的放到工程里一并提交上传”，授权将本次范围提交并推送到远端 main。",
+  "rollback": "",
+  "handoff": "路由与五个专业 skill 的行为回归已验证；客户端自动发现仍由客户端本身决定。"
+}

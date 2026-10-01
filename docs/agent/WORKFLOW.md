@@ -7,7 +7,7 @@ aide = AI + IDE，产品主旨是让人更专注于专业工作。本路由用�
 
 ## 开始与恢复
 
-1. 进入 aide 根目录，读取 AGENTS.md、本文、router.json；`git status --short --branch`。
+1. 进入 aide 根目录，读取 AGENTS.md、本文、router.json；`git status --short --branch`。新需求随后运行 `python3 scripts/agent-route.py route --request "原始需求"`，只加载命中的主 skill 和确有必要的协作 skill。
 2. 找到已有任务记录继续；新任务运行 `python3 scripts/agent-route.py start <id> --request "原始需求"`。
    ID 仅允许小写字母、数字、连字符。命令不会切分支、暂存、提交或重启服务。
 3. 先补 acceptance 数组（可以验证的标准）及 scope 数组（允许修改的范围）。

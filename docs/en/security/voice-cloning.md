@@ -3,7 +3,7 @@
 > Status: **pluggable framework landed; real clone-model quality NOT_RUN**.
 > aide's main image does not bundle GB-scale clone models (GPU-only in practice). This module
 > delivers a *pluggable cloning framework + self-hosted clone-service integration*.
-> `scripts/mock_clone_server.py` lets you exercise the full upload→encrypt→create→synthesize→personality loop
+> `scripts/fixtures/mocks/mock_clone_server.py` lets you exercise the full upload→encrypt→create→synthesize→personality loop
 > without any real model.
 
 ## Goals
@@ -105,7 +105,7 @@ Voice is biometric data (GDPR Art.9). Default posture:
 
 ```bash
 # 1. Start the mock clone service (:9880)
-python3 scripts/mock_clone_server.py --port 9880
+python3 scripts/fixtures/mocks/mock_clone_server.py --port 9880
 
 # 2. In aide settings: TTS engine=clone, Base URL=http://127.0.0.1:9880
 # 3. Record → upload → create voice → preview; infer personality → adopt

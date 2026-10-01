@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """mock_clone_server.py — 仿自托管音色克隆服务（#36 端到端测试用）。
 
-与 scripts/mock_provider.py（LLM mock，:9001）互补：本脚本只仿克隆 TTS 服务。
+与 scripts/fixtures/mocks/mock_provider.py（LLM mock，:9001）互补：本脚本只仿克隆 TTS 服务。
 
 端点（对齐 internal/server/tts/clone.go 的适配层）：
   POST /audio/speech   OpenAI 兼容：{model,input,voice,response_format,speed} → audio/mpeg
@@ -10,7 +10,7 @@
   GET  /healthz        存活探针
 
 用法：
-  python3 scripts/mock_clone_server.py --port 9880
+  python3 scripts/fixtures/mocks/mock_clone_server.py --port 9880
   # aide 设置里填 CloneTTSBaseURL=http://127.0.0.1:9880，TTSProvider=clone
   # 录音 → 上传加密样本 → 创建音色 → 用该音色合成可播放
 

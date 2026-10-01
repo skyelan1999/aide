@@ -460,7 +460,7 @@ body {
 body.files-hidden { grid-template-columns: var(--aide-left-sidebar-width, 238px) minmax(0, 1fr); }
 main, .conversation, .file-panel, .plugin-panel { min-width: 0; }
 .sidebar, .topbar, .file-panel, .plugin-panel, #reminder-center,
-.composer, .strategy-menu, .search-results, .settings-sheet, dialog {
+.composer, .strategy-menu, .search-results, .settings-sheet, .settings-sheet.sheet-wide, dialog {
   -webkit-backdrop-filter: saturate(155%) blur(22px);
   backdrop-filter: saturate(155%) blur(22px);
 }
@@ -550,4 +550,65 @@ button.quiet, .quiet {
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   .sidebar, .topbar, .file-panel, .plugin-panel, #reminder-center, .composer, .settings-sheet, dialog { background: var(--panel); }
+}
+
+/* Calm work surfaces: quiet hierarchy, readable secondary text, and no reward-like motion. */
+.brand .brand-icon,
+.brand:hover .brand-icon,
+.brand:focus-visible .brand-icon {
+  transform: none;
+  box-shadow: none;
+}
+.sidebar, .topbar, .file-panel, .plugin-panel, #reminder-center,
+.composer, .strategy-menu, .search-results, .settings-sheet, .settings-sheet.sheet-wide, dialog {
+  -webkit-backdrop-filter: saturate(118%) blur(12px);
+  backdrop-filter: saturate(118%) blur(12px);
+}
+.sidebar, .file-panel, .plugin-panel, #reminder-center {
+  background: color-mix(in srgb, var(--panel-alt) 90%, transparent);
+}
+.topbar { background: color-mix(in srgb, var(--panel) 88%, transparent); }
+.composer, .settings-sheet, dialog {
+  background: color-mix(in srgb, var(--panel) 94%, transparent);
+}
+.composer { box-shadow: 0 4px 18px color-mix(in srgb, var(--shadow-2) 30%, transparent), 0 1px 2px var(--shadow-1); }
+.settings-backdrop, dialog::backdrop {
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.starter, .runtime-card, .workspace-label, .session-item, .file-item, .reminder-item {
+  transition: background-color .16s ease, border-color .16s ease, box-shadow .16s ease;
+}
+.starter:hover { transform: none; box-shadow: 0 2px 8px var(--shadow-1); }
+.starter small, .workspace-label small, .run-meta,
+.section-label, .context-head, .runtime-card, .runtime-card small,
+.settings-button>span:last-child, .connection, .eyebrow, .welcome-foot,
+.composer-note, .terminal-heading, .terminal-heading small, .usage-label,
+.usage-caption, .sheet-foot, .param-field>span, .token-legend,
+.token-legend small, .token-price-row label, .token-price-row small {
+  font-size: 12px;
+  line-height: 1.55;
+}
+.section-desc { font-size: 13px; line-height: 1.7; }
+.settings-control .control-label { font-size: 13px; }
+.settings-sheet input, .settings-sheet select, .settings-sheet textarea { font-size: 14px; }
+dialog label, dialog p { font-size: 14px; line-height: 1.65; }
+dialog #models-hint, dialog .settings-note { font-size: 13px; line-height: 1.6; }
+dialog input, dialog select, dialog textarea { font-size: 14px; }
+@media (min-width: 1151px) {
+  .starter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .starter { grid-template-columns: 28px minmax(0, 1fr); column-gap: 8px; padding: 11px 10px; }
+  .starter>.starter-icon { width: 28px; height: 28px; }
+}
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .sidebar, .topbar, .file-panel, .plugin-panel, #reminder-center,
+  .composer, .strategy-menu, .search-results, .settings-sheet, .settings-sheet.sheet-wide, dialog {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: var(--panel);
+  }
 }

@@ -20,7 +20,7 @@
 | 看系统整体方案、状态机和运行机制 | [系统方案总览](system-overview.md) |
 | 写插件 | [插件协议 v1.1](plugin-protocol.md) |
 | 生成 Office 文件与编辑 XLSX | [Office 工具集](plugins/office.md) |
-| 让 AI 参与开发 | [统一 Agent 工作流](agent/WORKFLOW.md) · [客户端接入](agent/ADAPTERS.md) |
+| 让 AI 参与开发 | [统一 Agent 工作流](agent/WORKFLOW.md) · [客户端接入与 skill 路由](agent/ADAPTERS.md) · `python3 scripts/agent-route.py route --request "需求原文"` |
 | 看当前设计与验证边界 | [macOS UI](design/macos-ui.md) |
 | 看当前版本发布记录与验收边界 | [0.1.14.0 RC5 跨平台资产发布](reviews/release-assets-2026-10-01.md) · [发布任务验收](tasks/release-assets-2026-10-01.json) |
 | 查看 RC6 后端口切换、虚拟形象与助理名称更新 | [RC7 发布记录](reviews/release-rc7-2026-10-01.md) · [发布任务账本](tasks/release-2026-10-01-rc7.json) |

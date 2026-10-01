@@ -2,7 +2,7 @@
 
 > 状态：**可插拔框架已落地；真实克隆模型效果 NOT_RUN**。
 > aide 主镜像不内置 GB 级克隆大模型（GPU 才实用）。本模块交付"可插拔克隆音色框架 + 自托管克隆服务接入"，
-> 用 `scripts/mock_clone_server.py` 即可完整跑通"录音→加密→创建音色→合成→性格推断"链路。
+> 用 `scripts/fixtures/mocks/mock_clone_server.py` 即可完整跑通"录音→加密→创建音色→合成→性格推断"链路。
 
 ## 设计目标
 
@@ -105,7 +105,7 @@ curl -s http://127.0.0.1:9880/healthz
 
 ```bash
 # 1. 起 mock 克隆服务（:9880）
-python3 scripts/mock_clone_server.py --port 9880
+python3 scripts/fixtures/mocks/mock_clone_server.py --port 9880
 
 # 2. 起 aide（任意测试配置），设置里：
 #    语音引擎 = clone，服务地址 = http://127.0.0.1:9880

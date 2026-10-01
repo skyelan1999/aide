@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Local QA fixture only. Deterministic responses, never a real AI model.
-Run inside a test container: python3 scripts/mock_provider.py
+Run inside a test container: python3 scripts/fixtures/mocks/mock_provider.py
 Configure the test aide instance with http://127.0.0.1:9001 and model qa-fixture.
 Supports both plain JSON (stream:false) and SSE (stream:true) responses.
 Do not use this endpoint as a real model provider.

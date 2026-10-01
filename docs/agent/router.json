@@ -1,6 +1,166 @@
 {
   "version": 1,
   "workflow": "docs/agent/WORKFLOW.md",
+  "skill_router": {
+    "entry": ".agents/skills/aide-development-router/SKILL.md",
+    "max_specialists": 3,
+    "fallback": "coordinator",
+    "routes": [
+      {
+        "id": "backend",
+        "title": "Go 后端与产品能力",
+        "skill": ".agents/skills/aide-backend/SKILL.md",
+        "priority": 10,
+        "keywords": [
+          "后端",
+          "go",
+          "api",
+          "接口",
+          "会话",
+          "工作流",
+          "provider",
+          "模型调用",
+          "存储",
+          "插件",
+          "mcp",
+          "任务状态"
+        ],
+        "source_roots": [
+          "cmd/aide",
+          "internal/server"
+        ],
+        "verification": [
+          "选择对应 Go 包的单测",
+          "按需执行 scripts/agent-route.py verify quick"
+        ]
+      },
+      {
+        "id": "frontend",
+        "title": "网页界面与交互",
+        "skill": ".agents/skills/aide-frontend/SKILL.md",
+        "priority": 20,
+        "keywords": [
+          "前端",
+          "网页",
+          "界面",
+          "ui",
+          "css",
+          "样式",
+          "设置页",
+          "按钮",
+          "对话框",
+          "渲染",
+          "i18n",
+          "国际化",
+          "无障碍",
+          "浏览器"
+        ],
+        "source_roots": [
+          "internal/server/web"
+        ],
+        "verification": [
+          "执行变更相关的 node 检查或脚本",
+          "UI 改动须在真实浏览器验收"
+        ]
+      },
+      {
+        "id": "runtime-release",
+        "title": "启动、容器与发行升级",
+        "skill": ".agents/skills/aide-runtime-release/SKILL.md",
+        "priority": 30,
+        "keywords": [
+          "docker",
+          "容器",
+          "镜像",
+          "release",
+          "发行",
+          "发布",
+          "安装",
+          "启动",
+          "端口",
+          "升级",
+          "a/b",
+          "macos",
+          "windows",
+          "ubuntu",
+          "打包",
+          "脚本"
+        ],
+        "source_roots": [
+          "Dockerfile",
+          "compose.yaml",
+          "scripts",
+          "docker-images",
+          "docs/architecture/software-updates.md"
+        ],
+        "verification": [
+          "bash -n 检查涉及的 shell 脚本",
+          "仅按用户授权执行构建、发布或推送"
+        ]
+      },
+      {
+        "id": "security",
+        "title": "鉴权、权限与敏感数据",
+        "skill": ".agents/skills/aide-security/SKILL.md",
+        "priority": 40,
+        "keywords": [
+          "安全",
+          "鉴权",
+          "认证",
+          "权限",
+          "令牌",
+          "token",
+          "密钥",
+          "secret",
+          "vault",
+          "路径穿越",
+          "注入",
+          "加密",
+          "csrf",
+          "csp"
+        ],
+        "source_roots": [
+          "internal/server",
+          "internal/server/web",
+          "docs/security"
+        ],
+        "verification": [
+          "覆盖拒绝路径和未授权路径的相关回归",
+          "不输出真实密钥、令牌或用户数据"
+        ]
+      },
+      {
+        "id": "verification-docs",
+        "title": "验证、文档与交接",
+        "skill": ".agents/skills/aide-verification-docs/SKILL.md",
+        "priority": 50,
+        "keywords": [
+          "测试",
+          "验收",
+          "验证",
+          "文档",
+          "说明",
+          "交接",
+          "qa",
+          "回归",
+          "bug",
+          "问题",
+          "复现",
+          "报告"
+        ],
+        "source_roots": [
+          "scripts",
+          "docs/agent",
+          "docs/tasks",
+          "docs/reviews"
+        ],
+        "verification": [
+          "记录实际执行的命令和结果",
+          "运行 python3 scripts/check_docs.py 检查文档链接"
+        ]
+      }
+    ]
+  },
   "stages": [
     "requirements",
     "design",
