@@ -1,0 +1,47 @@
+{
+  "id": "release-2026-10-01-rc8",
+  "request": "Make the platform release packages complete so start.command can start without manually downloading and copying the Docker image; update docs and publish the release.",
+  "baseline": "v0.1.14.0-RC7",
+  "root_cause": "The RC7 launcher ZIP contained .aide-image but no Docker archive. start.command therefore selected the bundle path and exited with a missing archive error. The image existed only as a separate GitHub Release asset and README required manual copy.",
+  "changes": [
+    "macOS and Ubuntu Bash launchers automatically download the matching image and SHA256SUMS when missing, verify SHA256 and imported image ID, then start without build or pull.",
+    "Windows PowerShell launcher performs the same download, checksum, and image ID validation.",
+    "Checksum download can be retried independently if an image download already completed.",
+    "Release package README and offline install docs explain first-start network use and offline pre-seeding.",
+    "Release image packaging always re-exports the image matching the current Docker image ID rather than reusing a stale same-name archive.",
+    "Docker release test stage installs the pinned Office Python dependencies so Office integration tests run instead of failing from an incomplete test environment."
+  ],
+  "verification": {
+    "status": "pass",
+    "evidence": [
+      "scripts/docker-release.sh completed: full Go test suite passed, go vet and build passed, and temporary container healthz passed.",
+      "python3 scripts/test_offline_bundle.py: 5 tests passed.",
+      "bash -n passed for aide, Docker release, package-release-assets, and publish-release-assets scripts; git diff --check passed.",
+      "The linux/arm64 image archive passed gzip -t; the macOS, Windows ARM64, and Ubuntu ARM64 ZIPs passed unzip -t; all six local SHA256SUMS entries passed.",
+      "GitHub Release API reports all six assets uploaded. Downloaded remote SHA256SUMS compared byte-for-byte equal to the local manifest.",
+      "The image in launcher .aide-image markers matches the linux/arm64 image archive and published image ID sha256:7e4bcf76debbb3c85fae94b4540b23487f8eeb1f9822ebb1728988b6c575de43."
+    ],
+    "not_run": [
+      "Windows and Ubuntu physical host launcher execution.",
+      "First launch through a fresh user's Docker installation and automatic download path."
+    ]
+  },
+  "release": {
+    "status": "published",
+    "url": "https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC8",
+    "tag": "v0.1.14.0-RC8",
+    "tag_commit": "43dd46ccb926b46c17f40820a993200f313657b1",
+    "main_commit": "ed6605289f3b6bd4fcac5990a6da31606a2cf9e6",
+    "assets": [
+      "aide-v0.1.14.0-RC8-linux-arm64-image.tar.gz",
+      "aide-v0.1.14.0-RC8-macos-arm64.zip",
+      "aide-v0.1.14.0-RC8-windows-arm64.zip",
+      "aide-v0.1.14.0-RC8-ubuntu-arm64.zip",
+      "SHA256SUMS",
+      "RELEASE-ASSETS.txt"
+    ],
+    "image_archive_bytes": 513819739,
+    "image_archive_sha256": "2904246b05da2f2976d5588234a62a0c124b6eae9a46f53ecc86b83cb7ca864e"
+  },
+  "rollback": "Use the previous RC7 launcher and matching RC7 image. Keep existing Docker volumes; do not remove user workspace or data volumes."
+}
