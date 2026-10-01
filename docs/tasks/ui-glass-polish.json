@@ -71,9 +71,10 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "本次请求为 UI 优化，未请求发布；保持在当前 main 工作区，不创建 release。",
+      "summary": "用户授权并完成代码推送到 origin/main（提交 0b250ba）；未请求创建版本 tag、GitHub Release 或发布镜像。",
       "evidence": [
-        "用户本轮请求"
+        "用户本轮请求：推送到 main。",
+        "git push origin main：0e5220e..0b250ba main -> main。"
       ]
     }
   },
