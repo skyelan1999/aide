@@ -43,11 +43,14 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "quick/full 最终通过；聚焦 delegated-run 和 daemon race 测试通过。Safari 用户当前运行实例仍为 RC1，未替换/重启；浏览器麦克风、真实 TTS 听音与 RC2 浏览器交互未验收，明确记为未验证。",
+      "summary": "quick/full 通过；RC2 隔离候选容器健康和鉴权配置 API 均通过，显示版本 0.1.14.0 RC2、revision 992b39be0f1fcda18930365517f3a607c89877ec。Safari 当前连接的是用户 RC1 实例；独立浏览器拒绝候选自签证书（ERR_CERT_AUTHORITY_INVALID），因此 RC2 Safari 交互与真实 TTS 听音未验证。候选容器已清理，主服务未被替换。",
       "evidence": [
         "python3 scripts/agent-route.py verify quick included in passing full receipt",
         "python3 scripts/agent-route.py verify full PASS, head df4ed94a9639eba5e7887fedcd1ed69792a60e5f, fingerprint 695d746b2506763b53f42d4d66d73aca7bab028abb44a68b00fc1e800d3129ea, log .agent-state/verify-20261001T054247506678Z.log",
-        "Targeted: go test -mod=vendor -race ./internal/server -run \"^(TestStartDispatchedAssistantTaskStartsRun|TestAssistantAgenticDispatch|TestAssistantMessageAgenticFailureDispatchesTypedRequest|TestDaemonConcurrentStartStopConsistency|TestDaemonStartOutsideGlobalLock)$\" -count=1 PASS"
+        "Targeted: go test -mod=vendor -race ./internal/server -run \"^(TestStartDispatchedAssistantTaskStartsRun|TestAssistantAgenticDispatch|TestAssistantMessageAgenticFailureDispatchesTypedRequest|TestDaemonConcurrentStartStopConsistency|TestDaemonStartOutsideGlobalLock)$\" -count=1 PASS",
+        "docker build --pull=false --tag aide:0.1.14.0-rc2-candidate ... PASS using cached base layers",
+        "isolated candidate GET /healthz -> integrity=ok, status=ok; authenticated GET /api/config -> version/revision 0.1.14.0 RC2 / 992b39be0f1fcda18930365517f3a607c89877ec",
+        "Browser candidate navigation failed with ERR_CERT_AUTHORITY_INVALID; no Safari/TTS claim"
       ]
     },
     "documentation": {
@@ -68,9 +71,12 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "quick/full 已通过；执行 release-check、RC2 版本脚本、独立候选构建和本机 API/健康核对，再推送 main 与 tag。",
+      "summary": "release-check PASS；version script generated v0.1.14.0-RC2; isolated candidate build/health/API PASS. Ready to push main and tag; Safari RC2 UI/TTS remains unverified due self-signed certificate trust rejection.",
       "evidence": [
-        "Full verification PASS receipt: .agent-state/verify-20261001T054247506678Z.log"
+        "Full verification PASS receipt: .agent-state/verify-20261001T054247506678Z.log",
+        "docker image aide:0.1.14.0-rc2-candidate sha256:50dd8a06be6957dadae7b4cf39d8fe3e379e632396990cc2ab15e6c71b09be02",
+        "candidate container 1cf9f260de680abf0fc9aba861a4528e19183e4a07522842c82023d7b1def4cc removed after health/API verification",
+        "release-check release-2026-10-01 PASS"
       ]
     }
   },
