@@ -40,7 +40,7 @@ ARG AIDE_COMMIT=unknown
 ARG AIDE_RUN_TESTS=0
 RUN --mount=type=cache,target=/root/.cache/go-build \
     echo "[build] AIDE_RUN_TESTS=${AIDE_RUN_TESTS}" && \
-    if [ "${AIDE_RUN_TESTS}" = "1" ]; then echo "[build] 发布门禁：跑全量 go test"; go test -mod=vendor -count=1 ./...; fi && \
+    if [ "${AIDE_RUN_TESTS}" = "1" ]; then echo "[build] 发布门禁：跑全量 go test"; AIDE_OFFICE_SCRIPTS=/src/scripts/office go test -mod=vendor -count=1 ./...; fi && \
     go vet -mod=vendor ./... && \
     CGO_ENABLED=0 go build -mod=vendor -trimpath \
     -ldflags "-s -w -X 'aide/internal/server.buildVersion=${AIDE_VERSION}' -X 'aide/internal/server.buildCommit=${AIDE_COMMIT}'" \

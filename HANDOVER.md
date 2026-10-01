@@ -1,6 +1,6 @@
 # aide 开发与运维入口
 
-> **当前源码基线**：`v0.1.14.0-RC4`，RC4 将发布 macOS Apple Silicon、Windows ARM64、Ubuntu ARM64 启动包及共享 linux/arm64 Docker 镜像；x64 镜像不在当前本机缓存范围内。实际发布附件与平台限制见 [发布记录](docs/reviews/release-assets-2026-10-01.md)。
+> **当前源码基线**：`v0.1.14.0-RC5`，RC5 将发布 macOS Apple Silicon、Windows ARM64、Ubuntu ARM64 启动包及共享 linux/arm64 Docker 镜像；x64 镜像不在当前本机缓存范围内。实际发布附件与平台限制见 [发布记录](docs/reviews/release-assets-2026-10-01.md)。
 
 ## 快速接手
 
@@ -49,4 +49,4 @@ python3 scripts/agent-route.py audit
 - [旧版运维与交接档案（截至 2026-09-30）](docs/archive/HANDOVER-2026-09-30-legacy.md)
 - [2026-09-26 RC3 交接记录](docs/archive/2026-09-26-HANDOFF-RC3.md)
 - [版本记录](version.md) · [安装指南](docs/installation.md) · [用户指南](docs/user-guide.md)
-- [0.1.14.0 RC4 发布记录与限制](docs/reviews/release-assets-2026-10-01.md) · [发布任务验收](docs/tasks/release-2026-10-01.json)
+- [0.1.14.0 RC5 发布记录与限制](docs/reviews/release-assets-2026-10-01.md) · [发布任务验收](docs/tasks/release-2026-10-01.json)

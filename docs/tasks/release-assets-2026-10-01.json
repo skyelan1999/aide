@@ -23,6 +23,7 @@
     "docs/reviews/release-assets-2026-10-01.md",
     "docs/agent/router.json",
     "version.md",
+    "Dockerfile",
     "Dockerfile"
   ],
   "stages": {
@@ -44,21 +45,23 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "已实现 Windows 离线镜像加载/架构校验及 macOS/Linux offline bundle 启动；三平台打包和 GitHub Release 上传脚本已完成。发布构建暴露 Dockerfile 测试阶段漏拷贝 plugins 与 scripts/office，已修正并将发布版本递增为 RC4。",
+      "summary": "已实现三平台离线启动包、校验与上传脚本。发布构建连续暴露测试输入缺少 plugins/office 路径及 Office 环境变量；Dockerfile 已修复，两处均在 RC5 发布构建中重新验收。",
       "evidence": [
         "ff26b5f feat: add platform release launchers and asset tooling",
         "bash -n scripts/aide.sh scripts/package-release-assets.sh scripts/publish-release-assets.sh start.sh start.command PASS",
         "python3 scripts/check_docs.py PASS: 116 Markdown files, 266 local links, FR-01..100",
-        "Dockerfile build stage now copies plugins/ and scripts/office/ so build-time Go tests see runtime fixtures."
+        "Dockerfile build stage now copies plugins/ and scripts/office/ so build-time Go tests see runtime fixtures.",
+        "Dockerfile release tests now set AIDE_OFFICE_SCRIPTS=/src/scripts/office in addition to copying required runtime fixtures."
       ]
     },
     "verification": {
       "status": "pass",
-      "summary": "Docker 挂载源码下的全量 race/vet 门禁通过；Dockerfile 测试上下文已修正，发布构建将再次强制执行全量 Go 测试。RC3 候选构建失败原因已修复，RC4 镜像构建与远端发布仍待完成。",
+      "summary": "RC4 Docker 发布测试仍因 Office 测试缺少 AIDE_OFFICE_SCRIPTS 而失败；已修复 Dockerfile 并升 RC5。RC5 发布构建和镜像验证待执行。Race/vet full verification is rerun after final Dockerfile update.",
       "evidence": [
         "python3 scripts/agent-route.py verify full PASS at 1df58cbdc425a50ef3fa95cbee7c69fcac89657c; fingerprint 4fc9ab293229cd4f38719a99a0a8c6ba86bb2318706413152004fd1a46d044c7; log .agent-state/verify-20261001T070559182938Z.log",
         "Dockerfile now copies plugins/ and scripts/office/ before AIDE_RUN_TESTS=1 executes go test.",
-        "Local Docker base images are linux/arm64; no amd64 pull/build was attempted."
+        "Local Docker base images are linux/arm64; no amd64 pull/build was attempted.",
+        "RC4 AIDE_RUN_TESTS=1 failures were isolated to missing AIDE_OFFICE_SCRIPTS=/src/scripts/office; source and existing full mounted race/vet are clean."
       ]
     },
     "documentation": {
@@ -79,11 +82,11 @@
     },
     "release": {
       "status": "pending",
-      "summary": "待 RC4 版本 tag、发布构建与 Release 附件上传。",
+      "summary": "待 RC5 版本 tag、发布构建与 Release 附件上传。",
       "evidence": []
     }
   },
   "release_authorization": "用户 2026-10-01 原话：“镜像该传传上去啊，另外你需要根据mac windows ubuntu分别设计单独的可执行程序，并提供制作脚本来上传到release中”。明确授权上传 Docker 镜像与平台启动包到 GitHub Release。之前“把所需的docker镜像全部放到本地，不用从联网拉取了”仍约束不拉取 amd64 基础镜像。",
   "rollback": "不移动或复用已推送 tag。若 Release 附件错误，移除错误附件并暂缓下载；修复后使用版本脚本递增 RC、重建镜像/平台包并更新 Release。此次不替换生产实例或用户现有 Docker 卷。",
-  "handoff": "RC3 local tag is an unpushed failed candidate and will not be released. Dockerfile fixture copy is fixed and RC4 full race/vet passed. Build the release image from tag commit 1df58cbdc425a50ef3fa95cbee7c69fcac89657c, then upload arm64 assets. Windows x64/Ubuntu x64 are unavailable."
+  "handoff": "RC3/RC4 local tags are unpushed failed candidates. RC5 Dockerfile copies plugins/ and scripts/office/ and sets AIDE_OFFICE_SCRIPTS for release Go tests. Only publish after RC5 AIDE_RUN_TESTS=1 build passes."
 }
