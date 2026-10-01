@@ -193,10 +193,12 @@ func TestStartDispatchedAssistantTaskStartsRun(t *testing.T) {
 	sessionID, _ := disp["sessionId"].(string)
 	a.mu.Lock()
 	s := a.sessions[sessionID]
-	defer a.mu.Unlock()
 	if s == nil || s.PendingPrompt != "" || len(s.Runs) != 1 || s.Runs[0].Status != "running" {
+		a.mu.Unlock()
 		t.Fatalf("delegated session did not enter running state: %+v", s)
 	}
+	a.mu.Unlock()
+	waitDispatchedRunTerminal(t, a, sessionID)
 }
 
 // 让上面引用的 httptest 包在未使用时不报错（保持与既有测试一致的 import 风格）。

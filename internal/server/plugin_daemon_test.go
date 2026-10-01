@@ -267,8 +267,6 @@ func TestDaemonStartOutsideGlobalLock(t *testing.T) {
 		close(enteredSlow) // 已进入慢进程阶段
 		<-releaseStart     // 模拟 node 宿主 10-15s 才 ready
 		p.closeReadyOnce()
-		// Concurrent starts may replace stopCh; capture it under the mutex used
-		// by the production supervisor to avoid racing the test hook itself.
 		p.mu.Lock()
 		stopCh := p.stopCh
 		p.mu.Unlock()
@@ -312,7 +310,12 @@ func TestDaemonStopOutsideGlobalLock(t *testing.T) {
 		close(enteredSlow)
 		<-releaseStart
 		p.closeReadyOnce()
-		<-p.stopCh
+		// Concurrent starts may replace stopCh; capture it under the mutex used
+		// by the production supervisor to avoid racing the test hook itself.
+		p.mu.Lock()
+		stopCh := p.stopCh
+		p.mu.Unlock()
+		<-stopCh
 		// 模拟退出延迟：宽限期内不立刻 close doneCh
 		time.Sleep(200 * time.Millisecond)
 		close(doneCh)
