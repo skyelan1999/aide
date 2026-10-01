@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="xiaomi-rig" viewBox="0 0 240 280" role="img" aria-label="小鲸，蓝发鲸尾女仆伙伴">
+  <defs>
+    <linearGradient id="hair" x2="0" y2="1"><stop stop-color="#718de0"/><stop offset=".58" stop-color="#3452a2"/><stop offset="1" stop-color="#24356f"/></linearGradient>
+    <linearGradient id="hairLight" x2="0" y2="1"><stop stop-color="#96c9ff"/><stop offset="1" stop-color="#397bc7"/></linearGradient>
+    <linearGradient id="dress" x2="0" y2="1"><stop stop-color="#344579"/><stop offset="1" stop-color="#202a52"/></linearGradient>
+    <linearGradient id="skin" x2="0" y2="1"><stop stop-color="#fff4e9"/><stop offset="1" stop-color="#ffd9ca"/></linearGradient>
+  </defs>
+  <g class="rig-shadow"><ellipse cx="120" cy="263" rx="64" ry="9" fill="#1c2342" opacity=".13"/></g>
+  <g class="rig-tail"><path d="M158 222c29 3 43 18 47 31 4-13 14-19 23-19-8 13-7 25 2 33-18-2-29-7-34-17-13 9-30 7-48-3z" fill="#27396f" stroke="#172348" stroke-width="3" stroke-linejoin="round"/><path d="M170 230c15 6 23 13 28 24" fill="none" stroke="#85b8f5" stroke-width="4" stroke-linecap="round" opacity=".75"/></g>
+  <g class="rig-legs"><path d="M91 226l-5 26q-1 9 12 10 13 0 13-9l-1-28m20 0 2 28q1 9 14 8 12-1 10-10l-8-28" fill="#f4e8ec" stroke="#1c294f" stroke-width="4"/><path d="M84 250q13-7 29 0l1 8q-13 7-28 0zm39 0q15-7 29 1l2 7q-15 7-29 0z" fill="#283661" stroke="#1c294f" stroke-width="3"/><path d="M88 253l18 1m23 0 18 1" stroke="#a9d8ff" stroke-width="2" stroke-linecap="round"/></g>
+  <g class="rig-body">
+    <path d="M83 158q37-18 74 0l31 70q-65 29-134 0z" fill="url(#dress)" stroke="#172348" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M99 159l21 15 21-15 11 27-32 42-32-42z" fill="#fff8f4" stroke="#d9dff0" stroke-width="2"/>
+    <path d="M87 208q33 12 66 0l-6 20q-28 13-55 0z" fill="#fff" stroke="#d5dced" stroke-width="3"/>
+    <path d="M108 173l12 7 12-7-5 15h-14z" fill="#2e4d9a"/><circle cx="120" cy="194" r="3" fill="#f4c96a"/><circle cx="120" cy="205" r="3" fill="#f4c96a"/>
+    <path d="M81 220q39 16 78 0l13 15q-52 20-104 0z" fill="#273763" stroke="#19264b" stroke-width="3"/><path d="M79 237q41 12 82 0l-5 9q-36 12-72 0z" fill="#f7f4fc" stroke="#d9dff0" stroke-width="2"/>
+    <path d="M113 222q7-6 14 0l-7 9z" fill="#f7f9ff"/><path d="M111 221q9 6 18 0" fill="none" stroke="#38558f" stroke-width="2"/>
+  </g>
+  <g class="rig-arm rig-arm-left" transform-origin="87px 171px"><path d="M86 165q-15-4-22 11l12 17 17-10z" fill="url(#dress)" stroke="#172348" stroke-width="4" stroke-linejoin="round"/><g class="rig-forearm rig-forearm-left" transform-origin="74px 187px"><path d="M76 184l-12-7q-8 16-11 28-4 12 7 16 10 3 15-7l9-17z" fill="url(#dress)" stroke="#172348" stroke-width="4" stroke-linejoin="round"/><path d="M58 201l14 7-6 10q-9 2-13-7z" fill="#fff" stroke="#d8deef" stroke-width="2"/><g class="rig-wrist" transform-origin="61px 218px"><ellipse class="rig-hand" cx="61" cy="218" rx="10" ry="8" fill="url(#skin)" stroke="#c98986" stroke-width="2"/></g></g></g>
+  <g class="rig-arm rig-arm-right" transform-origin="153px 171px"><path d="M154 165q15-4 22 11l-12 17-17-10z" fill="url(#dress)" stroke="#172348" stroke-width="4" stroke-linejoin="round"/><g class="rig-forearm rig-forearm-right" transform-origin="166px 187px"><path d="M164 184l12-7q8 16 11 28 4 12-7 16-10 3-15-7l-9-17z" fill="url(#dress)" stroke="#172348" stroke-width="4" stroke-linejoin="round"/><path d="M182 201l-14 7 6 10q9 2 13-7z" fill="#fff" stroke="#d8deef" stroke-width="2"/><g class="rig-wrist" transform-origin="179px 218px"><ellipse class="rig-hand" cx="179" cy="218" rx="10" ry="8" fill="url(#skin)" stroke="#c98986" stroke-width="2"/></g></g></g>
+  <g class="rig-hair-back"><path d="M72 92Q40 116 52 164q-1 26-19 39 28 2 44-20l13-51m77-40q35 19 28 65 2 29 21 43-29 3-47-20l-9-47" fill="url(#hair)" stroke="#172348" stroke-width="4" stroke-linejoin="round"/><path d="M62 151q-5 23-17 35m135-33q7 24 18 32" fill="none" stroke="#66a9ed" stroke-width="5" stroke-linecap="round"/></g>
+  <g class="rig-head" transform-origin="120px 105px">
+    <path d="M68 70q7-31 25-34l7 17q17-20 37-17l7 15q16-9 29 8 14 17 9 45l-8 43q-12 28-53 31-43-3-58-34-12-31-4-59z" fill="url(#hair)" stroke="#172348" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M71 53q-12-13-3-23 9 12 16 14m87 10q17-15 24-4-10 5-13 17" fill="#344c93" stroke="#172348" stroke-width="3"/>
+    <path d="M74 79q-8 47 9 71 17 20 39 20 29 0 46-22 14-24 7-61-19-24-47-22-34-2-54 14z" fill="url(#skin)" stroke="#1c294f" stroke-width="3"/>
+    <g class="rig-fringe"><path d="M68 78q3-34 32-42 20-8 39 4 21-4 32 15 6 10 4 28-20-18-37-18-18 24-36 28l5-25q-15 21-34 30z" fill="url(#hair)" stroke="#172348" stroke-width="4" stroke-linejoin="round"/><path d="M89 56q20-14 37-12m-29 24q14-13 27-16" fill="none" stroke="#9ac8ff" stroke-width="4" stroke-linecap="round" opacity=".78"/></g>
+    <g class="rig-eyes"><g class="rig-eye rig-eye-left"><ellipse cx="96" cy="112" rx="11" ry="15" fill="#fff"/><ellipse cx="98" cy="114" rx="7" ry="11" fill="#376ac1"/><ellipse cx="99" cy="117" rx="4" ry="7" fill="#182b68"/><circle cx="101" cy="109" r="3.2" fill="#fff"/><path d="M84 105q11-13 23-3" fill="none" stroke="#182348" stroke-width="4" stroke-linecap="round"/></g><g class="rig-eye rig-eye-right"><ellipse cx="144" cy="112" rx="11" ry="15" fill="#fff"/><ellipse cx="142" cy="114" rx="7" ry="11" fill="#376ac1"/><ellipse cx="141" cy="117" rx="4" ry="7" fill="#182b68"/><circle cx="139" cy="109" r="3.2" fill="#fff"/><path d="M133 102q12-10 23 3" fill="none" stroke="#182348" stroke-width="4" stroke-linecap="round"/></g></g>
+    <g class="rig-blush" fill="#f48d9d" opacity=".55"><ellipse cx="81" cy="132" rx="10" ry="5"/><ellipse cx="159" cy="132" rx="10" ry="5"/></g>
+    <g class="rig-mouth"><path class="mouth-smile" d="M112 139q8 10 16 0" fill="none" stroke="#aa586a" stroke-width="3" stroke-linecap="round"/><ellipse class="mouth-open" cx="120" cy="141" rx="7" ry="8" fill="#c75e76"/><path class="mouth-pout" d="M114 143q6-5 12 0" fill="none" stroke="#ad5266" stroke-width="3" stroke-linecap="round"/></g>
+    <g class="rig-sleep-mask"><path d="M84 111q11 11 23 0m25 0q12 11 24 0" fill="none" stroke="#24345f" stroke-width="4" stroke-linecap="round"/><path d="M88 117l-4 4m8-2-3 5m32-7 4 4m-1-5 5 4" stroke="#24345f" stroke-width="2" stroke-linecap="round"/></g>
+    <g class="rig-angry-brows"><path d="M84 102l22 7m48-7-22 7" stroke="#172348" stroke-width="4" stroke-linecap="round"/></g>
+    <path class="rig-bow" d="M166 66q-17-12-19-1 0 8 14 9-12 5-7 12 7 6 17-8 12 14 18 7 5-7-8-13 15-4 12-12-3-9-19 6z" fill="#63b8ed" stroke="#233769" stroke-width="3"/>
+    <g class="rig-maid-cap"><path d="M74 68q8-21 18-17 3-20 15-11 9-18 19-5 12-15 20 1 14-7 17 12 13-1 14 20" fill="#fff8ff" stroke="#dce2f2" stroke-width="4" stroke-linejoin="round"/><path d="M73 70q52-25 105 0" fill="none" stroke="#273b77" stroke-width="4"/></g>
+  </g>
+  <g class="rig-token"><circle cx="202" cy="84" r="16" fill="#ffd66f" stroke="#aa7432" stroke-width="3"/><circle cx="202" cy="84" r="11" fill="none" stroke="#fff3c3" stroke-width="2"/><text x="202" y="90" text-anchor="middle" font-size="15" font-weight="900" fill="#886026">T</text></g>
+  <g class="rig-zzz" fill="#5677c7" font-family="sans-serif" font-weight="900"><text x="48" y="69" font-size="16">Z</text><text x="38" y="51" font-size="12">z</text><text x="34" y="39" font-size="9">z</text></g>
+  <g class="rig-anger" fill="#f16b77"><path d="M190 109l7-12 4 8 12-3-6 10 6 8-12-1-5 9-2-11-10-3z"/><path d="M48 131l7-10 3 8 11-1-6 9 4 9-10-3-7 7v-11l-8-5z"/></g>
+  <g class="rig-tears" fill="#72b7eb"><path d="M84 117q-8 11 0 14 8-3 0-14zm70 0q-8 11 0 14 8-3 0-14z"/></g>
+</svg>

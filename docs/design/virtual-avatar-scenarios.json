@@ -1,0 +1,261 @@
+{
+  "version": 1,
+  "date": "2026-10-01",
+  "status": "implemented-awaiting-browser-review",
+  "scope": "一个全局虚拟形象，aide/小秘共用设置与素材包；角色沿用用户提供的蓝发鲸尾动漫人物。",
+  "sceneCount": 16,
+  "clipCount": 38,
+  "minimumDistinctFramesPerClip": 30,
+  "minimumTotalFrames": 1140,
+  "playback": {
+    "usualFramesPerClip": "30个不同原画帧；实际数量见素材manifest与art-audit",
+    "quality": [
+      "连续姿势有实际变化，不以复制帧凑数量",
+      "同一场景脸型、服装、光影、比例、定位一致",
+      "检查循环首尾衔接、动作中断与回到待机的过渡",
+      "预解码当前及下一动作；屏幕外/后台/减少动态效果暂停",
+      "每套单独验收透明边缘、输入框遮挡、锁屏和低帧耗"
+    ],
+    "frameDurationMs": {
+      "idle": 95,
+      "sleeping": 110,
+      "other": 75
+    },
+    "note": "帧数与播放流畅度分别核验，不能以帧数替代浏览器观察。"
+  },
+  "scenes": [
+    {
+      "id": "idle",
+      "name": "日常待机",
+      "variants": [
+        "眨眼甩尾",
+        "趴在输入框边缘发呆",
+        "歪头观察"
+      ],
+      "triggers": [
+        "无活动任务；短时间空闲"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "listening",
+      "name": "聆听语音",
+      "variants": [
+        "侧头竖耳",
+        "双手托脸认真听"
+      ],
+      "triggers": [
+        "voice.listening / voice-btn.recording"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "thinking",
+      "name": "思考推理",
+      "variants": [
+        "托腮想问题",
+        "挠头后灵光一闪",
+        "抱小鲸皱眉思考"
+      ],
+      "triggers": [
+        "runPhase.phase=reasoning；提交等待首轮响应"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "searching",
+      "name": "查找资料",
+      "variants": [
+        "举放大镜左右寻找",
+        "翻找资料盒"
+      ],
+      "triggers": [
+        "intent.tool 分类为搜索/检索"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "reading",
+      "name": "阅读文件",
+      "variants": [
+        "翻书做笔记",
+        "趴桌逐行阅读"
+      ],
+      "triggers": [
+        "intent.tool 分类为读取文件/文档"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "creating",
+      "name": "写作与编程",
+      "variants": [
+        "认真敲键盘",
+        "拿笔画图后擦改"
+      ],
+      "triggers": [
+        "intent.tool 分类为写入文件/生成文档/绘图"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "executing",
+      "name": "执行与检查",
+      "variants": [
+        "拿小工具修理",
+        "盯进度后逐项打勾"
+      ],
+      "triggers": [
+        "intent.tool 分类为终端/测试/一般工具；heartbeat"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "generating",
+      "name": "生成回答／吃 token",
+      "variants": [
+        "拿金币送入口中咀嚼",
+        "抱碗一勺勺吃 token",
+        "伸手接住小token并吃掉"
+      ],
+      "triggers": [
+        "runPhase.phase=generating；模型 delta"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "speaking",
+      "name": "朗读与讲解",
+      "variants": [
+        "张嘴讲话配手势",
+        "拿教鞭指重点"
+      ],
+      "triggers": [
+        "实际 TTS 播放状态；narration.active 且非暂停"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "awaiting_user",
+      "name": "等你确认或补充",
+      "variants": [
+        "举问号牌探头",
+        "捧问题卡轻轻招手"
+      ],
+      "triggers": [
+        "awaiting_approval / awaiting_clarification"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "waiting",
+      "name": "排队或等待响应",
+      "variants": [
+        "抱沙漏晃脚",
+        "看一眼钟再耐心等待"
+      ],
+      "triggers": [
+        "排队；请求等待；连接重试/停滞"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "completed",
+      "name": "任务完成",
+      "variants": [
+        "双手鼓掌",
+        "举起完成的小卡片",
+        "开心跳一下再挥手"
+      ],
+      "triggers": [
+        "服务端终态 completed；不能只以 SSE done 判断成功"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "error",
+      "name": "出错或受挫",
+      "variants": [
+        "鼓腮叉腰",
+        "急得抱头后擦泪",
+        "跺脚挥拳闹脾气再消气"
+      ],
+      "triggers": [
+        "failed / 明确工具失败；不由回答关键词猜测"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "paused",
+      "name": "暂停或停止",
+      "variants": [
+        "放下工具坐好",
+        "双手做暂停手势"
+      ],
+      "triggers": [
+        "paused / cancelled / interrupted；不按失败处理"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "sleeping",
+      "name": "休息与锁屏",
+      "variants": [
+        "趴睡吹鼻泡",
+        "抱小鲸蜷着睡",
+        "打哈欠后靠着睡着"
+      ],
+      "triggers": [
+        "无任务且持续空闲；锁屏但后台仍运行时继续显示任务动作"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    },
+    {
+      "id": "notification",
+      "name": "提醒与唤醒",
+      "variants": [
+        "揉眼伸懒腰招手",
+        "轻摇铃铛指向提醒"
+      ],
+      "triggers": [
+        "页面恢复/解锁；到期提醒事件"
+      ],
+      "status": "30-distinct-frames-per-variant-reviewed"
+    }
+  ],
+  "selection": {
+    "source": "应用事件决定任务场景；AI 可选的结构化反馈选择该场景内的情绪/动作。",
+    "cue": {
+      "scene": "allowlisted scene id",
+      "variant": "allowed variant id",
+      "emotion": "calm|curious|happy|frustrated|sleepy",
+      "intensity": "1..3"
+    },
+    "rules": [
+      "不把回答里的自然语言或用户贴入内容直接当状态指令",
+      "不额外每帧请求模型；仅语义状态变化时更新提示",
+      "失败、等待确认和完成由真实状态优先确定",
+      "动作有最短驻留时间和冷却；同一状态避免立即重复同一动作",
+      "锁屏只显示动作和任务状态，不展示对话内容"
+    ]
+  },
+  "migration": {
+    "target": "version6 global avatar config",
+    "decision": "合并双方素材包并去重，保留自定义素材；统一启停/聊天框/锁屏选项。",
+    "status": "not_implemented"
+  },
+  "baseline": {
+    "status": "prototype",
+    "asset": "internal/server/web/avatars/xiaomi-original/manifest.json",
+    "frames": 24,
+    "primaryClips": 4,
+    "framesPerPrimaryClip": 6,
+    "notes": "本轮已用参考角色生成四组样稿并接入；未满足本计划的30帧和全局统一配置要求。"
+  },
+  "implementationOrder": [
+    "统一配置与事件调度",
+    "先做吃 token、趴睡、闹脾气各一条满足30帧的完整动作，检查人物与流畅度",
+    "按场景表扩展其他动作",
+    "AI反馈控制、完整Safari验收、记录未完成项"
+  ]
+}

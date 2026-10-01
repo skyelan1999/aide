@@ -1,0 +1,328 @@
+{
+  "mode": "identity-preserve; unified character; 16 scenes / 38 variants",
+  "reference": "user reference 4-照片-4.jpg",
+  "jobs": [
+    {
+      "id": "awaiting_user-v1",
+      "scene": "awaiting_user",
+      "label": "举问号牌探头",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 等你确认或补充。举问号牌探头。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-bb98a169-7741-4419-bbbd-add6a7e9cc9f.png"
+    },
+    {
+      "id": "awaiting_user-v2",
+      "scene": "awaiting_user",
+      "label": "捧问题卡轻轻招手",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 等你确认或补充。捧问题卡轻轻招手。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-0bb15a57-aa58-4eff-a58c-6ac272c633e0.png"
+    },
+    {
+      "id": "completed-v1",
+      "scene": "completed",
+      "label": "双手鼓掌",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 任务完成。双手鼓掌。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-4b56ceaf-d4d0-43b6-90d6-939d206d49e6.png"
+    },
+    {
+      "id": "completed-v2",
+      "scene": "completed",
+      "label": "举起完成的小卡片",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 任务完成。举起完成的小卡片。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-15bf25c2-4a54-4968-b61a-0a444d48ed34.png"
+    },
+    {
+      "id": "completed-v3",
+      "scene": "completed",
+      "label": "开心跳一下再挥手",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 任务完成。开心跳一下再挥手。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-f971f139-90f0-4c2a-98fe-a50e925a9829.png"
+    },
+    {
+      "id": "creating-v1",
+      "scene": "creating",
+      "label": "认真敲键盘",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 写作与编程。认真敲键盘。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-9f07aa22-b179-4691-bcd3-6f5e71108fe9.png"
+    },
+    {
+      "id": "creating-v2",
+      "scene": "creating",
+      "label": "拿笔画图后擦改",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 写作与编程。拿笔画图后擦改。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-5147d2aa-dae4-4d1a-bb54-40e1f0f64841.png"
+    },
+    {
+      "id": "error-v1",
+      "scene": "error",
+      "label": "鼓腮叉腰",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 出错或受挫。鼓腮叉腰。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-8d1621c1-918b-4d1f-9bb8-a22f5faecb87.png"
+    },
+    {
+      "id": "error-v2",
+      "scene": "error",
+      "label": "急得抱头后擦泪",
+      "prompt": "Edit this supplied 6-column 5-row sprite sheet. PRESERVE EXACTLY ALL30 FRAME POSITIONS, SAME SIZES AND TRANSPARENT BACKGROUND. Fix anatomy ONLY in row2 column1 (the seventh sprite): it currently has FOUR hands. Remove the topmost two hands above her bangs and the associated extra arms, and restore the underlying dark blue hair cleanly. Keep her other TWO hands beside her face, making a cute worried pose consistent with row2 column2. Do not alter the other29 sprites, do not remove any row or column. EXACTLY30 separate full-body sprites remain. Preserve fine originalanime drawing style, costume, expressions, bluehairandwhaletail. No text, no newprops, no watermark.",
+      "revision": 4,
+      "reference": "exec-b5c8db72-89b6-494d-85b9-ff3faf2e0e17.png",
+      "sourceFile": "exec-ce1b0b0c-ea43-44e8-8156-f8631fb062fc.png"
+    },
+    {
+      "id": "error-v3",
+      "scene": "error",
+      "label": "跺脚挥拳闹脾气再消气",
+      "prompt": "Use case: identity-preserve. Asset type: production 2D anime animation sprite sheet, exactly 30 consecutive hand-drawn frames in an EXACT 6-column by 5-row uniform grid, read left-to-right top-to-bottom. Transparent RGBA background. The attached reference is the exact character identity to preserve: adorable blue-haired whale-tail maid, same large blue eyes, face, navy/white frilly outfit, blue bow, fin ears and tail. Draw the full character in EVERY cell, consistent scale, fixed camera, feet/floor baseline and center. No grid lines, no captions, no numbers, no scenery, no watermark. Fill each cell with the character with 8% clear padding; don't cross cell boundaries. High quality delicate anime linework and cel shading. Each of the 30 cells MUST show a slightly advanced unique joint/face/hair/tail pose of ONE continuous action. Do not just translate or rotate the whole picture. Consistent face and clothing. Action lasts ~2 seconds at 15fps; smooth arcs, anticipation, followthrough, and near-matching first/last pose for a seamless loop. Request canvas 1536x1280, each cell256x256. A cute frustrated tantrum that settles:1-5 puff cheeks and raise clenched little fists by chest;6-10 lift right foot then stomp, elbows swing;11-15 lift left foot and stomp as mouth opens in pouty squeak;16-21 both hands flail alternately, hair/whale tail followthrough;22-26 exhale, lower hands, eyes soften;27-30 returns to first puff-cheek standing pose. Adorably expressive, no scary rage and no tears obscuring face. Every frame advances distinct arm, foot, face and tail motion.",
+      "sourceFile": "exec-b44fc097-c3e4-49e4-8714-fb7b074d6159.png"
+    },
+    {
+      "id": "executing-v1",
+      "scene": "executing",
+      "label": "拿小工具修理",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 执行与检查。拿小工具修理。保持呆萌可爱，动作节奏连贯，有局部关节活动。\nCRITICAL RETAKE: EXACTLY30 FULL CHARACTERS, arranged 6 columns×5rows. In every row6, including lastrow6, NOT5. Use60px EMPTY TRANSPARENT outermargin allfour sides. Everycharacter30 fullyinsideeachcell withhands,shoes,tail visible; onefullbodycharacterpercell. Continuous toolrepair action (inspect little device, turn screwdriver, tighten, check, return). Same original reference face/hair/clothes. Exact30count important. No words,numbers,dividers,grids.",
+      "revision": 2,
+      "sourceFile": "exec-e77db416-14c3-452a-a73f-13e4bbb299a0.png"
+    },
+    {
+      "id": "executing-v2",
+      "scene": "executing",
+      "label": "盯进度后逐项打勾",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 执行与检查。盯进度后逐项打勾。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-3ffde64b-d542-4851-baef-4d7d05fa2614.png"
+    },
+    {
+      "id": "generating-v1",
+      "scene": "generating",
+      "label": "拿金币送入口中咀嚼",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 生成回答／吃 token。拿金币送入口中咀嚼。保持呆萌可爱，动作节奏连贯，有局部关节活动。\nCRITICAL RETAKE: Prior sheet had crowded sprites and clipped feet. Use EXACTLY 6 columns by 5 rows = EXACTLY 30 characters, uniform square cells with transparent background. Each complete character including hair tail and prop occupies no more than 60% cell width and 65% cell height; generous 20% empty margins. Leave clear transparent gaps between every character and outer canvas borders. NOTHING touches another frame, feet and tail never clipped. Number of sprites in EACH of the 5 rows MUST be SIX. Keep actual hand/mouth/eyes/tail action changes across30frames. No text, labels or grid.",
+      "revision": 2,
+      "sourceFile": "exec-8228cd3b-94be-48cf-903b-4bb519457978.png"
+    },
+    {
+      "id": "generating-v2",
+      "scene": "generating",
+      "label": "抱碗一勺勺吃 token",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 生成回答／吃 token。抱碗一勺勺吃 token。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-0893ba0c-6927-4b0a-970c-82428d6bbd0b.png"
+    },
+    {
+      "id": "generating-v3",
+      "scene": "generating",
+      "label": "伸手接住小token并吃掉",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 生成回答／吃 token。追住飘来的 token 再吃掉。保持呆萌可爱，动作节奏连贯，有局部关节活动。\nRETAKE REQUIREMENTS: Keep small golden token and entire character includingtailwithinONEcell. No glow, no light trails, no large light halo, no connecting effects. 20px clean emptytransparentgapsbetweeneveryframe. 60pxemptyoutermargin. Exactly30frames6columns5rows all30fullyvisible. Animation: standingchibi girl sees tiny token floating beside face, reaches up, catches it, brings to lips and nibbles, cutepleased smile, reset. Keep upright fullbody SAMEsize and registerfacepositionacrossallframes; no diving, no lying down, no giantpose silhouette changes. Entirehandsandtailcontainedinonecell. Preserveexactreferencecharacter.",
+      "revision": 2,
+      "sourceFile": "exec-00b7d19c-f9f8-446b-b051-3da4cfbaac63.png"
+    },
+    {
+      "id": "idle-v1",
+      "scene": "idle",
+      "label": "眨眼甩尾",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 日常待机。眨眼甩尾。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-498626d1-17de-4417-b4a9-fce505c08c51.png"
+    },
+    {
+      "id": "idle-v2",
+      "scene": "idle",
+      "label": "趴在输入框边缘发呆",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 日常待机。趴在输入框边缘发呆。保持呆萌可爱，动作节奏连贯，有局部关节活动。\nCRITICAL RETAKE: Prior sheet had crowded sprites and clipped feet. Use EXACTLY 6 columns by 5 rows = EXACTLY 30 characters, uniform square cells with transparent background. Each complete character including hair tail and prop occupies no more than 60% cell width and 65% cell height; generous 20% empty margins. Leave clear transparent gaps between every character and outer canvas borders. NOTHING touches another frame, feet and tail never clipped. Number of sprites in EACH of the 5 rows MUST be SIX. Keep actual hand/mouth/eyes/tail action changes across30frames. No text, labels or grid.",
+      "revision": 2,
+      "sourceFile": "exec-4cb658c0-0bd0-4cdc-8c4d-8e8c90d80d0e.png"
+    },
+    {
+      "id": "idle-v3",
+      "scene": "idle",
+      "label": "歪头观察",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 日常待机。歪头观察。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-ee4212d9-9a1c-4d83-a297-117990daac10.png"
+    },
+    {
+      "id": "listening-v1",
+      "scene": "listening",
+      "label": "侧头竖耳",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 聆听语音。侧头竖耳。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-728efed8-7065-45ab-8b00-1c50976ad544.png"
+    },
+    {
+      "id": "listening-v2",
+      "scene": "listening",
+      "label": "双手托脸认真听",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 聆听语音。双手托脸认真听。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-56bba52f-630a-4843-a79c-dc6eeaa9cf89.png"
+    },
+    {
+      "id": "notification-v1",
+      "scene": "notification",
+      "label": "揉眼伸懒腰招手",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 提醒与唤醒。揉眼伸懒腰招手。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-3a453f96-125a-48e3-9a0f-8779a6eadf32.png"
+    },
+    {
+      "id": "notification-v2",
+      "scene": "notification",
+      "label": "轻摇铃铛指向提醒",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 提醒与唤醒。轻摇铃铛指向提醒。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-47c6100d-8e7d-4565-9b54-ec0515902cf2.png"
+    },
+    {
+      "id": "paused-v1",
+      "scene": "paused",
+      "label": "放下工具坐好",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 暂停或停止。放下工具坐好。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-17c04157-c71e-45b1-940b-7b2f89dfefe3.png"
+    },
+    {
+      "id": "paused-v2",
+      "scene": "paused",
+      "label": "双手做暂停手势",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 暂停或停止。双手做暂停手势。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-7512ca79-6373-4cda-a876-8ec12d131796.png"
+    },
+    {
+      "id": "reading-v1",
+      "scene": "reading",
+      "label": "翻书做笔记",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 阅读文件。翻书做笔记。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-465f2ad9-e7b8-42af-bb21-c9cfe194e785.png"
+    },
+    {
+      "id": "reading-v2",
+      "scene": "reading",
+      "label": "趴桌逐行阅读",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 阅读文件。趴桌逐行阅读。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-45183487-ff4c-49b1-bab9-9a98fb7abfe1.png"
+    },
+    {
+      "id": "searching-v1",
+      "scene": "searching",
+      "label": "举放大镜左右寻找",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 查找资料。举放大镜左右寻找。保持呆萌可爱，动作节奏连贯，有局部关节活动。\nMake exactly30completefullbodycharacters in 6columns×5rows. KEEPallshoesandtailfullyvisible includinglastrow6characters. Preserve60pxEMPTYtransparentoutermarginall4sides. Onechar+magnifier entirely insideeachcell, transparentgapbetweeneverycharacter. Nooverlappingframes, noglows, norayscrossingcells. Cuteinvestigatingwithsmallmagnifier, briefsurprisedeyethroughlens, leaninspect, lowersmagnifier backtorest. Preciseoriginalfaceoutfitbluehairwhaletail.",
+      "revision": 2,
+      "sourceFile": "exec-b6fdd34e-976a-45c1-9f2f-4578e320e7b2.png"
+    },
+    {
+      "id": "searching-v2",
+      "scene": "searching",
+      "label": "翻找资料盒",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 查找资料。翻找资料盒。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-5c5adda9-ae99-476c-9065-6be62551cc96.png"
+    },
+    {
+      "id": "sleeping-v1",
+      "scene": "sleeping",
+      "label": "趴睡吹鼻泡",
+      "prompt": "Use case: identity-preserve. Asset type: production 2D anime animation sprite sheet, exactly 30 consecutive hand-drawn frames in an EXACT 6-column by 5-row uniform grid, read left-to-right top-to-bottom. Transparent RGBA background. The attached reference is the exact character identity to preserve: adorable blue-haired whale-tail maid, same large blue eyes, face, navy/white frilly outfit, blue bow, fin ears and tail. Draw the full character in EVERY cell, consistent scale, fixed camera, feet/floor baseline and center. No grid lines, no captions, no numbers, no scenery, no watermark. Fill each cell with the character with 8% clear padding; don't cross cell boundaries. High quality delicate anime linework and cel shading. Each of the 30 cells MUST show a slightly advanced unique joint/face/hair/tail pose of ONE continuous action. Do not just translate or rotate the whole picture. Consistent face and clothing. Action lasts ~2 seconds at 15fps; smooth arcs, anticipation, followthrough, and near-matching first/last pose for a seamless loop. Request canvas 1536x1280, each cell256x256. She lies on her belly asleep, chin on folded hands, closed eyes, whale tail curled beside her. Frames1-10 gentle inhale expands shoulders/chest slightly and small translucent nose bubble grows;11-18 exhale shoulders relax, tail fin flexes and bubble contracts;19-24 tiny ear twitch, fingers curl, eyelids flutter without waking;25-30 settles back to initial pose. Full prone body including hair and tail inside each cell. This is one smooth breathing loop with subtle distinct consecutive drawings, not different random sleeping poses.",
+      "sourceFile": "exec-203dff55-4d6f-480d-9e23-042c42ab35d1.png"
+    },
+    {
+      "id": "sleeping-v2",
+      "scene": "sleeping",
+      "label": "抱小鲸蜷着睡",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 休息与锁屏。抱小鲸蜷着睡。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-780428b9-5c09-4576-aeeb-02c2ba8b18be.png"
+    },
+    {
+      "id": "sleeping-v3",
+      "scene": "sleeping",
+      "label": "打哈欠后靠着睡着",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 休息与锁屏。打哈欠后靠着睡着。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-ceb4c288-be1f-4d15-9099-48a54f6d7746.png"
+    },
+    {
+      "id": "speaking-v1",
+      "scene": "speaking",
+      "label": "张嘴讲话配手势",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 朗读与讲解。张嘴讲话配手势。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-4d4dcb7a-628c-4fb5-a129-7662045b2d14.png"
+    },
+    {
+      "id": "speaking-v2",
+      "scene": "speaking",
+      "label": "拿教鞭指重点",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 朗读与讲解。拿教鞭指重点。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-7654e6eb-d7a2-4df4-a6dd-bb8b7eba421d.png"
+    },
+    {
+      "id": "thinking-v1",
+      "scene": "thinking",
+      "label": "托腮想问题",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 思考推理。托腮想问题。保持呆萌可爱，动作节奏连贯，有局部关节活动。\nRETAKE. The prior version clipped shoes and tail at right/bottom edges. Put a WIDE INVISIBLE SAFE AREA around the whole sheet: at least 60 pixels of EMPTY TRANSPARENCY on ALL FOUR sides, including bottom and right. Then exactly6columns×5rows30sprites. Allsprites must be complete head-to-toe including tail. Only use 65% of each cell for the illustration; rest transparent empty. Never allow shoes, hair, tails, or props to hit canvasboundary. Absolute30frames. Continuous chin-rest thinking expression arc, full original maid outfit and exact face/hair.",
+      "revision": 2,
+      "sourceFile": "exec-a6f47e23-77aa-47b6-8e74-fe2562147201.png"
+    },
+    {
+      "id": "thinking-v2",
+      "scene": "thinking",
+      "label": "挠头后灵光一闪",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 思考推理。挠头后灵光一闪。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-390fe77a-7b17-4038-8812-fef35a5b67cd.png"
+    },
+    {
+      "id": "thinking-v3",
+      "scene": "thinking",
+      "label": "抱小鲸皱眉思考",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 思考推理。抱小鲸皱眉思考。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-1baab653-2a24-40ed-9789-51bc0b49fd38.png"
+    },
+    {
+      "id": "waiting-v1",
+      "scene": "waiting",
+      "label": "抱沙漏晃脚",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 排队或等待响应。抱沙漏晃脚。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-bf4b5bc8-710d-444f-ab43-12a99cee9a8f.png"
+    },
+    {
+      "id": "waiting-v2",
+      "scene": "waiting",
+      "label": "看一眼钟再耐心等待",
+      "prompt": "Use case: identity-preserve. Create a production transparent PNG animation sprite sheet for this exact blue-haired whale-tail maid character from the reference. Same face, huge blue eyes, long blue-gradient wavy hair, fin ears/blue bow, navy/gold dress and white frilly whale apron. Cute lively anime cel-shaded illustration.\nEXACT LAYOUT: 6 columns × 5 rows =30 sprites. EVERY row contains EXACTLY SIX. Uniform square cells at fixed positions. Not a freeform collage. Canvas aspect6:5. Leave 15% transparent padding INSIDE EVERY CELL so neighboring figures never touch. Full body and props fit entirely within each cell. Consistent character scale throughout; use same camera, head size and ground baseline. Genuinely transparent background, no labels, gridlines, captions or watermark.\nThis is ONE continuous 30-frame animation, read left-to-right then top-to-bottom. Each frame advances arm/elbow/hand, facial expression, eyelid, hair and tail motion by a small amount along smooth curves. No whole-character rocking substitute. Frames1-6 anticipation,7-18 main action,19-25 followthrough,26-30 return to starting pose for seamless loop. Draw 30 unique consecutive poses with stable identity and proportions.\nScene/action: 排队或等待响应。看一眼钟再耐心等待。保持呆萌可爱，动作节奏连贯，有局部关节活动。",
+      "sourceFile": "exec-53be250f-d409-449f-965b-3f7f414cabc2.png"
+    }
+  ],
+  "minimumDistinctFramesPerClip": 30,
+  "rejectedSources": [
+    {
+      "id": "generating-v1",
+      "reason": "31个角色，底行脚部裁切",
+      "sourceFile": "exec-b3162620-2622-4704-8a73-81dd9152de53.png"
+    },
+    {
+      "id": "idle-v2",
+      "reason": "相邻人物连接和边界裁切",
+      "sourceFile": "exec-9283efdd-4446-48bb-ab63-e1f688700973.png"
+    },
+    {
+      "id": "thinking-v1",
+      "reason": "右边尾部及底行脚部裁切",
+      "sourceFile": "exec-ef2e2fc0-3290-433c-b9f2-9c58adc0dc7b.png"
+    },
+    {
+      "id": "executing-v1",
+      "reason": "仅29个角色"
+    },
+    {
+      "id": "generating-v3",
+      "reason": "金币光晕跨帧，归属不稳定"
+    },
+    {
+      "id": "error-v2",
+      "reason": "底行脚部裁切"
+    },
+    {
+      "id": "error-v2",
+      "reason": "第7帧多余手臂",
+      "sourceFile": "exec-b5c8db72-89b6-494d-85b9-ff3faf2e0e17.png"
+    },
+    {
+      "id": "error-v2",
+      "reason": "仅24个角色",
+      "sourceFile": "exec-65b2dff3-6428-4591-b240-260077d95c84.png"
+    }
+  ],
+  "verifiedAssets": {
+    "scenes": 16,
+    "variants": 38,
+    "distinctFrames": 1140,
+    "framesPerVariant": 30,
+    "runtimeFileHashesVerified": 114,
+    "review": "source sheets and packed contact sheets reviewed; browser playback pending Mac unlock"
+  }
+}

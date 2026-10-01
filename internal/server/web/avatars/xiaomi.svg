@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" fill="none">
+  <defs>
+    <linearGradient id="whale" x1="27" y1="40" x2="133" y2="134" gradientUnits="userSpaceOnUse"><stop stop-color="#78CFFF"/><stop offset="1" stop-color="#2678D7"/></linearGradient>
+    <linearGradient id="belly" x1="61" y1="82" x2="98" y2="130" gradientUnits="userSpaceOnUse"><stop stop-color="#FFF"/><stop offset="1" stop-color="#DDF4FF"/></linearGradient>
+  </defs>
+  <ellipse cx="79" cy="143" rx="46" ry="8" fill="#235B9A" opacity=".14"/>
+  <path d="M110 105c19-1 28-11 31-23 2-7 7-6 9 0 5 17-5 37-28 43" fill="#246BC3" stroke="#174D99" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M36 102c-13 0-22 8-24 18-1 5 3 8 8 6l23-8" fill="#55AEEA" stroke="#174D99" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M29 82c0-29 22-52 52-52 25 0 43 14 50 37 3 10-1 22-8 30-7 9-8 21-17 28-10 8-28 10-44 5-20-7-33-23-33-48Z" fill="url(#whale)" stroke="#174D99" stroke-width="4"/>
+  <path d="M45 94c11 4 20 5 33 5 15 0 28-3 43-10-1 24-13 41-37 43-20 1-35-13-39-38Z" fill="url(#belly)" stroke="#C7E8FA" stroke-width="3"/>
+  <path d="M63 76v2m37-2v2" stroke="#153E78" stroke-width="7" stroke-linecap="round"/>
+  <path d="M75 89c3 3 8 3 11 0" stroke="#174D99" stroke-width="3" stroke-linecap="round"/>
+  <path d="M77 31c-1-13 5-18 13-24 4-3 8 0 5 5-3 5-5 11-4 18" fill="#75D8F1" stroke="#174D99" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m111 47 5-9 7 7 9-3-2 10 7 7-10 2-4 9-5-8-10-1 6-7-3-7Z" fill="#FFF1B5" stroke="#D99131" stroke-width="2" stroke-linejoin="round"/>
+  <circle cx="48" cy="87" r="5" fill="#9FEAFF" opacity=".8"/>
+</svg>

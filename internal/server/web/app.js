@@ -665,6 +665,31 @@ async function selectSession(id) {
 function closeStream() {
   if (state.stream) { try { state.stream.close(); } catch (e) {} state.stream = null; }
 }
+// Only server state may announce a terminal result; an SSE connection ending
+// also happens on failure, pause and reconnect, so it is not a success signal.
+const avatarRunCues = new Map();
+function avatarRunCue(runId, cue) {
+  if (!cue || !runId) return;
+  const signature = JSON.stringify(cue);
+  if (avatarRunCues.get(runId) === signature) return;
+  avatarRunCues.set(runId, signature);
+  if (avatarRunCues.size > 100) avatarRunCues.delete(avatarRunCues.keys().next().value);
+  window.aideAvatarCue?.(cue);
+}
+function reconcileAvatarRun(runId) {
+  const run = state.session?.runs?.find(item => item.id === runId);
+  if (!run) return;
+  avatarRunCue(run.id, run.avatarCue);
+  avatarRunFeedback(run.id, run.status);
+}
+const avatarRunStatuses = new Map();
+function avatarRunFeedback(runId, status) {
+  if (!['completed','failed','cancelled','interrupted','paused','awaiting_approval','awaiting_clarification'].includes(status)) return;
+  if (avatarRunStatuses.get(runId) === status) return;
+  avatarRunStatuses.set(runId, status);
+  if (avatarRunStatuses.size > 100) avatarRunStatuses.delete(avatarRunStatuses.keys().next().value);
+  window.aideAvatarFeedback?.(status, {runId});
+}
 function openStream(run) {
   closeStream();
   const es = new EventSource('/api/sessions/' + state.session.id + '/runs/' + run.id + '/events?access_token=' + encodeURIComponent(state.token));
@@ -672,10 +697,23 @@ function openStream(run) {
   state.stream = es;
   state.streamRetryAt = 0;
   ensureRunPhase(run.id);
-  es.addEventListener('step', () => { touchRunActivity(run.id); refreshSessionSoon(); });
+  es.addEventListener('avatar', e => {
+    let d; try { d = JSON.parse(e.data); } catch (_) { return; }
+    if (state.stream === es && d.avatarCue) avatarRunCue(run.id, d.avatarCue);
+  });
+  es.addEventListener('status', e => {
+    let d; try { d = JSON.parse(e.data); } catch (_) { return; }
+    if (state.stream !== es) return;
+    if (state.runPhase[run.id]) state.runPhase[run.id].status = d.status;
+    avatarRunFeedback(run.id, d.status);
+    refreshSessionSoon();
+  });
+  es.addEventListener('step', () => { if (state.stream !== es) return; touchRunActivity(run.id); refreshSessionSoon(); });
   es.addEventListener('tool', e => {
+    if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
     state.liveTool[run.id] = d;
+    if (!d.ok) window.aideAvatarFeedback?.('error', {runId:run.id});
     const ph = state.runPhase[run.id];
     if (ph) {
       const row = ph.tools.find(x => x.callId === d.callId) || ph.tools[ph.tools.length - 1];
@@ -686,6 +724,7 @@ function openStream(run) {
     refreshSessionSoon();
   });
   es.addEventListener('intent', e => {
+    if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
     const ph = state.runPhase[run.id];
     if (ph) {
@@ -695,12 +734,14 @@ function openStream(run) {
     }
   });
   es.addEventListener('reasoning', e => {
+    if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
     state.liveReasoning[run.id] = (state.liveReasoning[run.id] || '') + (d.reasoning || '');
     const ph = state.runPhase[run.id];
     if (ph) { ph.phase = 'reasoning'; touchRunActivity(run.id); renderRunStatus(run.id); }
   });
   es.addEventListener('heartbeat', e => {
+    if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (_) { return; }
     const ph = state.runPhase[run.id];
     if (!ph) return;
@@ -711,12 +752,14 @@ function openStream(run) {
     renderRunStatus(run.id);
   }); // 长命令心跳：可见地更新连接状态与计时，而非只重置看门狗
   es.addEventListener('note', e => {
+    if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
     const ph = state.runPhase[run.id];
     if (ph) { ph.note = d.text || ''; touchRunActivity(run.id); renderRunStatus(run.id); }
   }); // 空响应自动续接提示
-  es.addEventListener('clarification', () => refreshSessionSoon());
+  es.addEventListener('clarification', () => { if (state.stream !== es) return; avatarRunFeedback(run.id, 'awaiting_clarification'); refreshSessionSoon(); });
   es.addEventListener('delta', e => {
+    if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
     const ph = state.runPhase[run.id];
     if (ph) { ph.phase = 'generating'; touchRunActivity(run.id); }
@@ -729,7 +772,10 @@ function openStream(run) {
     state.live[run.id] = (state.live[run.id] || '') + (d.text || '');
     scheduleLiveRender(run.id); // 按动画帧批量渲染，避免逐 token 全量 markdown 解析
   });
-  es.addEventListener('done', () => {
+  es.addEventListener('done', e => {
+    if (state.stream !== es) return;
+    let terminal = {}; try { terminal = JSON.parse(e.data || '{}'); } catch (_) {}
+    avatarRunFeedback(run.id, terminal.status);
     delete state.live[run.id]; delete state.liveStable[run.id]; delete state.liveRound[run.id]; delete state.liveTool[run.id]; delete state.liveReasoning[run.id];
     delete state.runPhase[run.id]; // run 终态，释放 phase 残留（看门狗/锁屏均跳过 done 项）
     closeStream(); state.streamRetryAt = 0;
@@ -737,6 +783,7 @@ function openStream(run) {
       const id = state.session?.id; if (!id) return;
       const s = await getSessionWindow(id); if (state.session?.id !== id) return;
       if (adoptSessionIfChanged(s)) renderSession();
+      reconcileAvatarRun(run.id);
       // 小秘语音发起的 run 完成且开启语音回复 → 朗读最后一条 assistant 回复
       if (voice.awaitingReply) {
         voice.awaitingReply = false;
@@ -762,6 +809,7 @@ function openStream(run) {
   // 流断开：保留已积累的 live 文本。服务重启或一次网络失败不能让
   // 轮询链就此消失，否则后端已进入终态时页面会永久停在“运行中”。
   es.onerror = () => {
+    if (state.stream !== es) return;
     closeStream();
     state.streamRetryAt = Date.now() + 5000;
     refreshSessionSoon(); // 立即向持久化会话状态对账，避免只等下一轮 SSE。
@@ -1010,7 +1058,18 @@ function stopRunById(runId) {
     try {
       const result = await api('/reminders?' + params.toString());
       list.replaceChildren();
-      if (!result.items?.length) { list.append(el('div', 'reminder-empty', t('没有匹配的提醒'))); return; }
+      if (!result.items?.length) {
+        const emptyMessage = q
+          ? t('没有匹配的提醒')
+          : filterStatus === 'completed'
+            ? t('暂无已完成提醒')
+            : filterArea === 'global'
+              ? t('暂无全局待处理提醒')
+              : filterArea === 'workspace'
+                ? t('当前工作区暂无待处理提醒')
+                : t('暂无待处理提醒');
+        list.append(el('div', 'reminder-empty', emptyMessage)); return;
+      }
       for (const item of result.items) {
         const card = el('article', 'reminder-item' + (item.status === 'completed' ? ' reminder-completed' : ''));
         const head = el('div', 'reminder-row-head'); head.append(el('strong', 'reminder-title', item.title));
@@ -1053,6 +1112,7 @@ function stopRunById(runId) {
         await api('/reminders/' + encodeURIComponent(item.id) + '/popup-seen', {method:'POST', body:'{}'});
       }
       $('reminder-alert').showModal();
+      window.aideAvatarFeedback?.('notification');
     } catch (_) { popupBusy = false; }
   }
   button.onclick = () => openCenter(false); $('reminder-center-close').onclick = () => { closeSidePanels(); button.focus(); };
@@ -1083,12 +1143,16 @@ function pauseRunById(runId) {
     .catch(e => toast(e.message));
 }
 function resumeRunById(runId) {
-  api(`/sessions/${state.session.id}/runs/${runId}/resume`, { method: 'POST', body: '{}' })
-    .then(() => selectSession(state.session.id))
+  const sessionId = state.session.id;
+  api(`/sessions/${sessionId}/runs/${runId}/resume`, { method: 'POST', body: JSON.stringify({avatarFeedback: !!window.aideAvatarEnabled?.()}) })
+    .then(async run => { if(state.session?.id === sessionId) { await selectSession(sessionId); reconcileAvatarRun(run.id); } })
     .catch(e => toast(e.message));
 }
 function retryRunById(runId) {
-  api('/sessions/' + state.session.id + '/runs/' + runId + '/retry', { method: 'POST', body: '{}' }).then(() => selectSession(state.session.id)).catch(() => {});
+  const sessionId = state.session.id;
+  api(`/sessions/${sessionId}/runs/${runId}/retry`, { method: 'POST', body: JSON.stringify({avatarFeedback: !!window.aideAvatarEnabled?.()}) })
+    .then(async run => { if(state.session?.id === sessionId) { await selectSession(sessionId); reconcileAvatarRun(run.id); } })
+    .catch(e => toast(e.message));
 }
 function renderRunStatusInto(box, runId) {
   const ph = state.runPhase[runId];
@@ -1224,6 +1288,8 @@ function schedulePoll() {
         const hadRunning = !!state.session?.runs?.find(r => r.status === 'running');
         if (adoptSessionIfChanged(s)) renderSession();
         if (hadRunning && !s.runs.some(r => r.status === 'running')) {
+          delete state.runPhase[running.id];
+          reconcileAvatarRun(running.id);
           if (s.runs.some(r => r.status === 'completed')) {
             try { await api(`/sessions/${id}`, { method: 'PATCH', body: JSON.stringify({ check: true }) }); } catch (err) {}
           }
@@ -1481,7 +1547,7 @@ function renderSession() {
             rb.classList.add('msg-btn-mech');
             actions.append(rb);
           }
-          actions.append(mk(t("重试"), () => { api(`/sessions/${state.session.id}/runs/${run.id}/retry`, { method: 'POST', body: '{}' }).then(() => selectSession(state.session.id)); }));
+          actions.append(mk(t("重试"), () => retryRunById(run.id)));
           actions.append(mk(t("继续"), () => { $('prompt').value = t("继续"); $('task-form').requestSubmit(); }));
           if (text) {
             actions.append(mk(t("好"), () => {
@@ -2397,7 +2463,8 @@ $('task-form').onsubmit = action(async event => {
     // 小秘会话键盘输入走 assistant-message，由后端按直接文字消息处理，不经过语音环境过滤。
     if (target.kind === 'assistant') {
       try {
-        const resp = await api(`/sessions/${target.id}/assistant-message`, { method: 'POST', body: JSON.stringify({ text: prompt }) });
+        const resp = await api(`/sessions/${target.id}/assistant-message`, { method: 'POST', body: JSON.stringify({ text: prompt, avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+        if (resp.avatarCue) window.aideAvatarCue?.(resp.avatarCue);
         // locked：弹密码门，不清空输入，解锁后重发
         if (resp.action === 'locked') {
           toast(resp.reason || t('小秘已锁定，请在小秘会话中解锁'));
@@ -2420,22 +2487,25 @@ $('task-form').onsubmit = action(async event => {
         } else {
           toast(t('已发送'));
         }
+        window.aideAvatarFeedback?.(resp.action === 'ask' ? 'awaiting_clarification' : 'completed');
         return;
-      } catch (err) { toast(err.message); return; }
+      } catch (err) { window.aideAvatarFeedback?.('error'); toast(err.message); return; }
     }
     const strategy = state.profiles?.strategy || 'auto';
     // #41：小秘语音经 typeIntoPrompt 提交时，用 analyze 判定的 mode 一次性覆盖手动排队开关
     let queued = state.queueMode;
     if (voice.queuedOverride != null) { queued = voice.queuedOverride; voice.queuedOverride = null; }
-    await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued, workflowPhase: state.workflowPhase || '' }) });
+    const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
     if (state.session?.id === target.id) { // 仅当用户仍停留在发送会话时清空草稿
       $('prompt').value = ''; state.attachments = []; renderAttachments();
     }
     if (state.session?.id === target.id) { // R07：提交完成后不得抢走用户已切换到的会话
       await selectSession(target.id);
+      reconcileAvatarRun(submitted.id || submitted.runId);
       $('conversation').scrollTo({ top: $('conversation').scrollHeight, behavior: 'instant' });
     }
   } catch (err) {
+    window.aideAvatarFeedback?.('error');
     // 任务未启动成功：删掉刚创建的空壳会话，避免侧栏残留“新会话”空项；正展示时退回空白页
     if (created) {
       if (state.session?.id === created.id) { state.session = null; state.sessionJSON = ''; renderSession(); }
@@ -2608,7 +2678,7 @@ async function refreshContextPreview() {
   try {
     const strategy = state.profiles?.strategy || 'manual';
     const profile = strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default');
-    const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ sessionId: state.session?.id || '', prompt, mode: state.mode, attachments: state.attachments, strategy, profile, workflowPhase: state.workflowPhase || '' }) });
+    const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ sessionId: state.session?.id || '', prompt, mode: state.mode, attachments: state.attachments, strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
     if (seq !== state.previewSeq.value) return; // 过期响应不得覆盖新预览（R08-04 草稿失效）
     renderContextPreview(data);
   } catch (error) {
@@ -2703,55 +2773,240 @@ function renderApiKeyStatus() {
 function openSettings() { $('base-url').value = state.config?.baseURL || 'https://api.deepseek.com'; state.modelDraft = { models: JSON.parse(JSON.stringify(state.config?.models || [])), activeModel: state.config?.activeModel || '' }; renderModelList(); renderApiKeyStatus(); $('settings-dialog').showModal(); }
 $('settings-button').onclick = openSettings;
 $('settings-form').onsubmit = action(async event => { event.preventDefault(); if (!state.modelDraft.models.length) { toast(t("请至少添加一个模型")); return; } await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked, models: state.modelDraft.models, activeModel: state.modelDraft.activeModel }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast(t("模型设置已保存，发送任务时会调用当前模型")); if (typeof scheduleContextPreview === 'function') scheduleContextPreview(); });
-// 轻量虚拟形象：头像文件与每个 persona 的显示偏好存于当前浏览器，不上传到服务器。
+// 虚拟形象：aide 与小秘共用一个形象；任务事件决定场景，模型只能选择场景内的动作。
 (() => {
-  const key = 'aide.virtual-avatars.v1';
-  const read = () => { try { return JSON.parse(localStorage.getItem(key) || '{"aide":{"items":[],"active":"","opacity":55},"xiaomi":{"items":[],"active":"","opacity":55}}'); } catch { return { aide:{items:[],active:'',opacity:55}, xiaomi:{items:[],active:'',opacity:55} }; } };
-  let data = read(), persona = 'aide';
-  const save = () => localStorage.setItem(key, JSON.stringify(data));
-  const ensure = id => data[id] ||= { items: [], active: '', opacity: 55 };
-  const box = document.createElement('dialog'); box.className = 'avatar-settings-dialog'; box.innerHTML = '<div class="dialog-heading"><div><p class="dialog-eyebrow">AIDE SETTINGS</p><h2>虚拟形象</h2></div><button type="button" class="icon-button" aria-label="关闭">×</button></div><p class="muted">分别为 aide 和小秘设置形象。图片只保存在当前浏览器。</p><div class="avatar-persona-tabs"><button type="button" data-persona="aide">aide</button><button type="button" data-persona="xiaomi">小秘</button></div><div class="avatar-settings-body"><label class="avatar-upload">添加图片<input type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label><label class="avatar-opacity">透明度 <output>55%</output><input type="range" min="10" max="100" value="55"></label><div class="avatar-items"></div><p class="muted">支持 PNG、JPG、WebP、GIF，单张不超过 1.5 MB。上传的动图会按原文件播放；会话状态还会叠加主题动画。</p></div>';
-  document.body.append(box); box.querySelector('.icon-button').onclick = () => box.close();
-  const render = () => {
-    const p = ensure(persona), list = box.querySelector('.avatar-items');
-    box.querySelectorAll('[data-persona]').forEach(b => b.classList.toggle('active', b.dataset.persona === persona));
-    const range = box.querySelector('input[type=range]'); range.value = p.opacity; box.querySelector('output').textContent = p.opacity + '%';
-    list.replaceChildren();
-    if (!p.items.length) { list.textContent = '尚未添加形象'; return; }
-    for (const item of p.items) {
-      const row = document.createElement('div'); row.className = 'avatar-item' + (item.id === p.active ? ' selected' : '');
-      const img = document.createElement('img'); img.src = item.src; img.alt = '';
-      const name = document.createElement('span'); name.textContent = item.name;
-      const choose = document.createElement('button'); choose.type = 'button'; choose.className = 'quiet'; choose.textContent = item.id === p.active ? '使用中' : '切换'; choose.onclick = () => { p.active = item.id; save(); render(); update(); };
-      const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'quiet'; remove.textContent = '删除'; remove.onclick = () => { p.items = p.items.filter(x => x.id !== item.id); if (p.active === item.id) p.active = p.items[0]?.id || ''; save(); render(); update(); };
-      row.append(img, name, choose, remove); list.append(row);
+  const key = 'aide.virtual-avatars.v2',legacyKey='aide.virtual-avatars.v1';
+  const sceneList = [
+    ['idle','日常待机',['眨眼甩尾','趴在输入框边缘发呆','歪头观察']],
+    ['listening','聆听语音',['侧头竖耳','双手托脸认真听']],
+    ['thinking','思考推理',['托腮想问题','挠头后灵光一闪','抱小鲸皱眉思考']],
+    ['searching','查找资料',['举放大镜左右寻找','翻找资料盒']],
+    ['reading','阅读文件',['翻书做笔记','趴桌逐行阅读']],
+    ['creating','写作与编程',['认真敲键盘','拿笔画图后擦改']],
+    ['executing','执行与检查',['拿小工具修理','盯进度后逐项打勾']],
+    ['generating','生成回答／吃 token',['拿金币送入口中咀嚼','抱碗一勺勺吃 token','追住飘来的 token 再吃掉']],
+    ['speaking','朗读与讲解',['张嘴讲话配手势','拿教鞭指重点']],
+    ['awaiting_user','等你确认或补充',['举问号牌探头','捧问题卡轻轻招手']],
+    ['waiting','排队或等待响应',['抱沙漏晃脚','看一眼钟再耐心等待']],
+    ['completed','任务完成',['双手鼓掌','举起完成的小卡片','开心跳一下再挥手']],
+    ['error','出错或受挫',['鼓腮叉腰','急得抱头后擦泪','跺脚挥拳闹脾气再消气']],
+    ['paused','暂停或停止',['放下工具坐好','双手做暂停手势']],
+    ['sleeping','休息与锁屏',['趴睡吹鼻泡','抱小鲸蜷着睡','打哈欠后靠着睡着']],
+    ['notification','提醒与唤醒',['揉眼伸懒腰招手','轻摇铃铛指向提醒']]
+  ];
+  const scenes = Object.fromEntries(sceneList.map(([id,name,variants])=>[id,{name,variants}]));
+  const legacyMotion = {generating:'eating',executing:'working',completed:'done',error:'tantrum'};
+  const canonical = motion => ({eating:'generating',working:'executing',done:'completed',tantrum:'error',failed:'error',cancelled:'paused',interrupted:'paused',awaiting_approval:'awaiting_user',awaiting_clarification:'awaiting_user'})[motion] || motion;
+  const builtinPack = () => ({id:'builtin-whale',name:'小鲸 · 原画动态包',builtin:true,revision:2,assets:[{id:'whale-animation-pack',name:'小鲸',motion:'idle',src:'/avatars/xiaomi-original/idle-v1.webp',poster:'/avatars/xiaomi-original/idle-v1-poster.webp',manifest:'/avatars/xiaomi-original/manifest.json'}]});
+  const normalizePlaybackRate = value => Number.isFinite(Number(value)) && Number(value)>0 ? Math.max(0.25,Math.min(4,Number(value))) : 1;
+  const defaults = () => ({version:6,avatar:{enabled:false,chat:true,lock:true,opacity:100,playbackRate:1,smoothFrames:true,activePack:'builtin-whale',packs:[builtinPack()]}});
+  const normalize = value => ({...value,enabled:!!value?.enabled,chat:value?.chat!==false,lock:value?.lock!==false,opacity:Math.max(25,Math.min(100,Number(value?.opacity)||100)),playbackRate:normalizePlaybackRate(value?.playbackRate),smoothFrames:value?.smoothFrames!==false,activePack:String(value?.activePack||''),packs:Array.isArray(value?.packs)?value.packs.filter(pack=>pack&&typeof pack.id==='string'&&Array.isArray(pack.assets)):[]});
+  function migrate(parsed) {
+    if(parsed?.version===6){const avatar=normalize(parsed.avatar);avatar.packs=avatar.packs.map(pack=>pack.id==='builtin-whale'&&pack.builtin&&pack.revision!==2?builtinPack():pack);return {version:6,avatar,...(parsed.migration?{migration:parsed.migration}:{})};}
+    const old = Object.fromEntries(['xiaomi','aide'].map(id=>{
+      const value=parsed?.[id]||{};
+      if(Array.isArray(value.items))return [id,normalize({...value,packs:value.items.map((item,index)=>({id:item.id||id+'-import-'+index,name:item.name||'导入的形象 '+(index+1),assets:[{id:item.id||id+'-asset-'+index,name:'待机',motion:'idle',src:item.src}]})),activePack:value.active||value.items[0]?.id||'',enabled:value.enabled??!!value.active})];
+      return [id,normalize(value)];
+    }));
+    const preferred=Object.keys(old).find(id=>old[id].enabled&&old[id].packs.some(pack=>pack.id===old[id].activePack&&!pack.builtin))||Object.keys(old).find(id=>old[id].enabled)||'xiaomi';
+    const avatar={...old[preferred],packs:[]}, idMap=new Map(), fingerprints=new Map();
+    for(const id of ['xiaomi','aide'])for(const pack of old[id].packs){
+      if(pack.builtin&&/^builtin-(aide|xiaomi|whale)$/.test(pack.id)){
+        if(!avatar.packs.some(item=>item.id==='builtin-whale'))avatar.packs.push(builtinPack());
+        idMap.set(id+':'+pack.id,'builtin-whale');continue;
+      }
+      const fingerprint=JSON.stringify({name:pack.name,assets:pack.assets.map(({id:assetID,...asset})=>asset)});
+      let mapped=fingerprints.get(fingerprint);
+      if(!mapped){mapped=pack.id;let suffix=1;while(avatar.packs.some(item=>item.id===mapped))mapped=pack.id+'-merged-'+suffix++;avatar.packs.push(mapped===pack.id?pack:{...pack,id:mapped});fingerprints.set(fingerprint,mapped);}
+      idMap.set(id+':'+pack.id,mapped);
     }
-  };
-  box.querySelectorAll('[data-persona]').forEach(b => b.onclick = () => { persona = b.dataset.persona; render(); });
-  box.querySelector('input[type=range]').oninput = event => { const p = ensure(persona); p.opacity = Number(event.target.value); box.querySelector('output').textContent = p.opacity + '%'; save(); update(); };
-  box.querySelector('input[type=file]').onchange = event => {
-    const file = event.target.files?.[0]; event.target.value = ''; if (!file) return;
-    if (!/^image\/(png|jpeg|webp|gif)$/.test(file.type) || file.size > 1.5 * 1024 * 1024) { toast('请选择 PNG、JPG、WebP 或 GIF 图片（最大 1.5 MB）'); return; }
-    const reader = new FileReader(); reader.onload = () => { const p = ensure(persona), previous = p.active; const item = { id: crypto.randomUUID(), name: file.name, src: String(reader.result) }; p.items.push(item); p.active = item.id; try { save(); render(); update(); } catch { p.items.pop(); p.active = previous; toast('浏览器存储空间不足，未能保存该形象'); } }; reader.readAsDataURL(file);
-  };
-  const settingsHeading = $('settings-dialog').querySelector('.dialog-heading');
-  const settingsButton = document.createElement('button'); settingsButton.type = 'button'; settingsButton.className = 'quiet'; settingsButton.textContent = '虚拟形象'; settingsButton.onclick = () => { data = read(); render(); box.showModal(); };
-  settingsHeading.insertBefore(settingsButton, settingsHeading.lastElementChild);
-  const stage = document.createElement('div'); stage.className = 'composer-avatar-stage'; stage.setAttribute('aria-hidden', 'true');
-  const avatar = document.createElement('img'); stage.append(avatar); document.querySelector('.input-wrap')?.append(stage);
-  function update() {
-    data = read(); const id = document.body.classList.contains('assistant-mode') ? 'xiaomi' : 'aide'; const p = ensure(id); const item = p.items.find(x => x.id === p.active);
-    stage.classList.toggle('visible', !!item); stage.style.setProperty('--avatar-opacity', String(Math.max(0.1, Math.min(1, Number(p.opacity) / 100))));
-    if (item && avatar.dataset.id !== item.id) { avatar.src = item.src; avatar.dataset.id = item.id; }
-    else if (!item) { avatar.removeAttribute('src'); delete avatar.dataset.id; }
-    const listening = $('voice-btn')?.classList.contains('recording'); const working = !!state.busy || !!state.submitting;
-    stage.dataset.motion = listening ? 'listening' : working ? 'working' : 'idle';
-    stage.dataset.persona = id;
+    const enabled=Object.values(old).filter(value=>value.enabled);
+    avatar.enabled=enabled.length>0;
+    if(enabled.length){avatar.chat=enabled.some(value=>value.chat);avatar.lock=enabled.some(value=>value.lock);}
+    avatar.activePack=idMap.get(preferred+':'+old[preferred].activePack)||avatar.packs[0]?.id||'';
+    return {version:6,avatar,migration:{fromVersion:parsed?.version||1,preferences:Object.fromEntries(Object.entries(old).map(([id,{packs,...preferences}])=>[id,preferences]))}};
   }
-  const observer = new MutationObserver(update); observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  for (const control of [$('voice-btn'), $('send')]) if (control) observer.observe(control, { attributes: true, attributeFilter: ['class'] });
-  update();
-  window.addEventListener('storage', event => { if (event.key === key) { data = read(); render(); update(); } });
+  function read(persistMigration=true){
+    let result;
+    try{const current=localStorage.getItem(key),raw=current===null?localStorage.getItem(legacyKey):current;result=raw?migrate(JSON.parse(raw)):defaults();}catch{return defaults();}
+    // Old tabs rewrite unknown v1 fields. Isolate the new settings without deleting their data.
+    // Storage-event reads must never write back and trigger a cross-tab normalization loop.
+    if(persistMigration)try{const serialized=JSON.stringify(result);if(localStorage.getItem(key)!==serialized)localStorage.setItem(key,serialized);}catch{/* Keep readable custom packs even when persistence is unavailable. */}
+    return result;
+  }
+  let data=read(), p=data.avatar, refreshPreview=null;
+  const save=()=>{try{localStorage.setItem(key,JSON.stringify(data));return true;}catch{return false;}};
+  const refreshContextBudget=()=>{if(typeof scheduleContextPreview==='function')scheduleContextPreview();};
+  const activePack=()=>p.packs.find(pack=>pack.id===p.activePack);
+  const manifests=new Map();
+  function manifestFor(asset){
+    if(!asset?.manifest)return null;
+    let record=manifests.get(asset.manifest);
+    if(!record){record={value:null};manifests.set(asset.manifest,record);fetch(asset.manifest,{credentials:'same-origin'}).then(response=>{if(!response.ok)throw new Error('Avatar manifest unavailable');return response.json();}).then(value=>{if(value?.version!==1||!value.clips)throw new Error('Invalid avatar manifest');record.value=value;update();refreshPreview?.();}).catch(()=>{record.failed=true;refreshPreview?.();});}
+    return record.value;
+  }
+  const assetsFor=scene=>(activePack()?.assets||[]).filter(asset=>canonical(asset.motion)===scene);
+  function availableClips(scene){
+    const assets=activePack()?.assets||[], manifestAsset=assets.find(asset=>asset.manifest), manifest=manifestFor(manifestAsset);
+    if(manifest){
+      const IDs=manifest.scenes?.[scene]||[scene,legacyMotion[scene]].filter(Boolean);
+      const existing=IDs.filter(id=>manifest.clips[id]);
+      if(existing.length)return existing.map((id,index)=>({id,asset:manifestAsset,index:/-v[1-3]$/.test(id)?Number(id.slice(-1))-1:index,clip:manifest.clips[id],variant:manifest.variants?.[id]}));
+    }
+    const images=assetsFor(scene).filter(asset=>!asset.manifest);
+    return images.map((asset,index)=>({id:asset.id,asset,index:Number.isInteger(asset.variant)?asset.variant-1:index}));
+  }
+  function fallbackClip(scene){
+    const available=availableClips(scene);if(available.length)return available[0];
+    const idle=availableClips('idle');if(idle.length)return idle[0];
+    const asset=(activePack()?.assets||[]).find(item=>canonical(item.motion)==='idle')||activePack()?.assets?.[0];
+    if(!asset)return null;const manifest=manifestFor(asset),first=manifest&&Object.keys(manifest.clips)[0];return first?{id:first,asset,index:0,clip:manifest.clips[first]}:{id:'idle',asset,index:0};
+  }
+  function setCharacter(slot,selection,scene,autoTransition=false){
+    if(!slot||!selection)return;
+    const deferUntilLoop=autoTransition&&slot.dataset.motion===scene;
+    const {asset,id}=selection;slot.dataset.motion=scene;slot.dataset.clip=id;
+    if(asset.manifest&&window.AideAvatarPlayer){slot.dataset.asset=asset.id;const player=window.AideAvatarPlayer.mount(slot,asset.manifest,id,{deferUntilLoop});player.setPlaybackRate?.(p.playbackRate);player.setInterpolationEnabled?.(p.smoothFrames);return player;}
+    if(slot.dataset.asset===asset.id)return;
+    window.AideAvatarPlayer?.unmount(slot);slot.dataset.asset=asset.id;slot.replaceChildren();
+    const img=el('img','avatar-character');img.src=asset.src;img.alt=t('虚拟形象');slot.append(img);
+  }
+  const stage=el('div','composer-avatar-stage');stage.setAttribute('aria-hidden','true');
+  const stageCharacter=el('div','avatar-character-slot'),stageMood=el('span','avatar-mood');
+  stage.append(stageCharacter,stageMood);document.querySelector('.input-wrap')?.append(stage);
+  let lockActor=null,feedback=null,idleSince=Date.now(),selection=null,selectedScene='',selectedAt=0,selectedPack='',selectedCue=null,feedbackTimer=0;
+  let selectedElapsed=0,selectedTick=0,selectedRate=p.playbackRate;
+  const signals=new Set(),cues=new Map(),lastClips=new Map();
+  window.aideAvatarEnabled=()=>!!p.enabled;
+  window.aideAvatarSignal=(name,active)=>{if(!['listening','speaking','waiting'].includes(name))return;active?signals.add(name):signals.delete(name);update();};
+  window.aideAvatarFeedback=(mode,detail={})=>{const scene=canonical(mode);if(!scenes[scene])return;feedback={scene,runId:detail?.runId||'',until:Date.now()+6000};clearTimeout(feedbackTimer);feedbackTimer=setTimeout(()=>{feedback=null;update();},6050);update();};
+  window.aideAvatarCue=cue=>{
+    if(!p.enabled||!cue||!scenes[cue.scene]||!['calm','curious','happy','frustrated','sleepy'].includes(cue.emotion)||!Number.isInteger(cue.intensity)||cue.intensity<1||cue.intensity>3)return false;
+    const match=typeof cue.variant==='string'?cue.variant.match(new RegExp('^'+cue.scene+'-v([1-3])$')):null;
+    const variant=Number.isInteger(cue.variant)?cue.variant:match?Number(match[1]):0;
+    if(variant<1||variant>scenes[cue.scene].variants.length)return false;
+    cues.set(cue.scene,{...cue,variant,until:Date.now()+15000});update();return true;
+  };
+  function toolScene(tool){
+    if(/search|browse|fetch|检索|搜索/i.test(tool))return'searching';
+    if(/read|open_file|list_file|inspect|读取|阅读/i.test(tool))return'reading';
+    if(/write|edit|patch|create|generate|render|绘图|写入/i.test(tool))return'creating';
+    return'executing';
+  }
+  function currentScene(){
+    const runs=state.session?.runs||[],latest=runs[runs.length-1],terminal=['completed','failed','cancelled','interrupted'];
+    const running=Object.entries(state.runPhase||{}).find(([id,phase])=>{
+      if(!phase||phase.done||terminal.includes(phase.status))return false;
+      if(!state.session)return true;
+      const run=runs.find(item=>item.id===id);return !!run&&!terminal.includes(run.status);
+    });
+    if(signals.has('listening')||$('voice-btn')?.classList.contains('recording')){idleSince=Date.now();return'listening';}
+    const waitingStatus=running?.[1]?.status||latest?.status;
+    if(['awaiting_approval','awaiting_clarification','paused'].includes(waitingStatus)){idleSince=Date.now();return canonical(waitingStatus);}
+    if(feedback&&feedback.until>Date.now()&&(!running||feedback.runId===running[0])&&!state.submitting){idleSince=Date.now();return feedback.scene;}
+    if(signals.has('speaking')){idleSince=Date.now();return'speaking';}
+    if(running){idleSince=Date.now();const phase=running[1];if(phase.stalled||phase.phase==='waiting')return'waiting';if(phase.phase==='generating')return'generating';if(phase.phase==='tool')return toolScene(phase.toolName||'');return'thinking';}
+    if(state.submitting){idleSince=Date.now();return'thinking';}
+    if(signals.has('waiting')||state.busy){idleSince=Date.now();return'waiting';}
+    if(Date.now()-idleSince>45000)return'sleeping';
+    return'idle';
+  }
+  const moodFor=scene=>({idle:'陪你呢',listening:'我在听～',thinking:'让我想想…',searching:'找找看…',reading:'认真读一读',creating:'灵感变成作品',executing:'认真干活！',generating:'嗯！token 好吃',speaking:'讲给你听',awaiting_user:'等你告诉我',waiting:'耐心等一会',completed:'做好啦！',error:'遇到问题了',paused:'先歇一歇',sleeping:'呼…再睡一会',notification:'有新提醒啦'})[scene];
+  function choose(scene,preserveSelection=false){
+    const pack=activePack()?.id||'',choices=availableClips(scene),now=Date.now(),cue=cues.get(scene);
+    // Account for time at the previous rate before accepting a newly saved multiplier.
+    if(selection)selectedElapsed+=Math.max(0,now-selectedTick)*selectedRate;
+    selectedTick=now;selectedRate=p.playbackRate;
+    const spec=selection?.clip,duration=spec?.frames?.reduce((sum,_,index)=>sum+Math.min(10000,Math.max(40,Number(spec.durations?.[index])||Number(spec.duration)||160)),0)||0;
+    const changed=scene!==selectedScene||pack!==selectedPack||!selection;
+    const desired=cue?.until>now?choices.find(choice=>choice.index===cue.variant-1):null;
+    const canChange=!preserveSelection&&now-selectedAt>=4000&&selectedElapsed>=duration;
+    if(changed||canChange&&(choices.length>1||desired&&desired.id!==selection?.id)||selection&&!choices.some(item=>item.id===selection.id)&&choices.length){
+      const last=lastClips.get(pack+':'+scene),nextIndex=Math.max(0,(choices.findIndex(item=>item.id===last)+1)%Math.max(1,choices.length));
+      selection=desired||choices[nextIndex]||fallbackClip(scene);selectedScene=scene;selectedPack=pack;selectedAt=now;selectedCue=desired?cue:null;
+      selectedElapsed=0;selectedTick=now;selectedRate=p.playbackRate;
+      if(selection)lastClips.set(pack+':'+scene,selection.id);
+      if(desired)cues.delete(scene);
+    }
+    return selection;
+  }
+  function clearCharacter(slot){window.AideAvatarPlayer?.unmount(slot);slot.replaceChildren();delete slot.dataset.asset;delete slot.dataset.clip;}
+  function update(options={}){
+    const scene=currentScene(),clip=p.enabled?choose(scene,options.preserveSelection===true):null,shown=!!(p.chat&&clip);
+    stage.classList.toggle('visible',shown);$('task-form')?.classList.toggle('has-avatar',shown);stage.style.setProperty('--avatar-opacity',String(p.opacity/100));stage.dataset.motion=scene;
+    const cue=selectedCue;stage.dataset.emotion=cue?.scene===scene?cue.emotion:'calm';stage.dataset.intensity=String(cue?.scene===scene?cue.intensity:1);
+    if(stageMood.textContent!==t(moodFor(scene)))stageMood.textContent=t(moodFor(scene));
+    if(shown){const player=setCharacter(stageCharacter,clip,scene,true),choices=availableClips(scene);const next=choices[(choices.findIndex(item=>item.id===clip.id)+1)%Math.max(1,choices.length)];if(next)player?.preload?.(next.id);}else clearCharacter(stageCharacter);
+    const host=$('lock-avatars');if(!host)return;
+    const lockScreenElement=$('lock-screen'),lockVisible=lockScreenElement&&!lockScreenElement.hidden&&!lockScreenElement.classList.contains('joining');
+    if(p.enabled&&p.lock&&clip&&lockVisible){if(!lockActor){lockActor=el('div','lock-avatar-actor');lockActor.setAttribute('aria-hidden','true');}lockActor.style.setProperty('--avatar-opacity',String(p.opacity/100));setCharacter(lockActor,clip,scene,true);if(lockActor.parentElement!==host)host.append(lockActor);}
+    else if(lockActor){clearCharacter(lockActor);lockActor.remove();lockActor=null;}
+  }
+  function modeFromName(name){
+    const value=name.toLowerCase();const exact=sceneList.find(([id])=>new RegExp('(^|[. _-])'+id+'([. _-]|$)').test(value));if(exact)return exact[0];
+    if(/listen|record|聆听|倾听|录音/.test(value))return'listening';if(/think|reason|思考|推理/.test(value))return'thinking';if(/eat|token|snack|吃|投喂/.test(value))return'generating';if(/sleep|nap|睡|打盹/.test(value))return'sleeping';if(/tantrum|rage|angry|闹脾气|大吵|error|fail|错误|失败/.test(value))return'error';if(/done|success|完成|成功/.test(value))return'completed';if(/work|tool|run|执行|工作|工具/.test(value))return'executing';return'idle';
+  }
+  function renderer(){
+    const host=el('div','virtual-avatar-settings');host.append(el('p','section-desc',t('aide 与小秘共用一个形象。可分别选择聊天框和锁屏显示；关闭后不显示。导入的素材仅保存在此浏览器。')));
+    const body=el('div','avatar-settings-body');host.append(body);let previewScene='idle',previewIndex=0;
+    const draw=()=>{
+      body.replaceChildren();let refreshPacks=()=>{},refreshSpeed=()=>{},refreshSmoothing=()=>{};const preview=el('div','avatar-preview-card'),previewActor=el('div','avatar-preview-actor'),sample=el('div','avatar-character-slot');previewActor.append(sample);
+      const info=el('div','avatar-preview-info');info.append(el('div','avatar-preview-copy',t(activePack()?.name||'选择一个素材包')));
+      const mood=el('div','avatar-preview-status'),availability=el('div','avatar-preview-availability'),controls=el('div','avatar-demo-controls');
+      const sceneSelect=el('select','avatar-scene-select');sceneSelect.setAttribute('aria-label',t('预览场景'));for(const [id,name] of sceneList){const option=el('option','',t(name));option.value=id;sceneSelect.append(option);}sceneSelect.value=previewScene;
+      const variantSelect=el('select','avatar-variant-select');variantSelect.setAttribute('aria-label',t('动作变体'));
+      const refresh=()=>{const choices=availableClips(previewScene);variantSelect.replaceChildren();for(let index=0;index<scenes[previewScene].variants.length;index++){const available=choices.find(choice=>choice.index===index),option=el('option','',t(available?.variant?.label||scenes[previewScene].variants[index])+(available?'':' · '+t('未提供')));option.value=String(index);option.disabled=!available;variantSelect.append(option);}if(!choices.some(choice=>choice.index===previewIndex))previewIndex=choices[0]?.index||0;variantSelect.value=String(previewIndex);variantSelect.disabled=!choices.length;const chosen=choices.find(choice=>choice.index===previewIndex)||fallbackClip(previewScene);previewActor.dataset.motion=previewScene;mood.textContent=t(moodFor(previewScene));availability.textContent=choices.length?(chosen?.clip?.frames?t('{0} 帧 · {1} 套可用动作',chosen.clip.frames.length,choices.length):t('{0} 套可用动作',choices.length)):t('此素材包尚未提供该场景，展示可用形象');if(chosen)setCharacter(sample,chosen,previewScene);else clearCharacter(sample);};
+      sceneSelect.onchange=()=>{previewScene=sceneSelect.value;previewIndex=0;refresh();};variantSelect.onchange=()=>{previewIndex=Number(variantSelect.value)||0;refresh();};controls.append(sceneSelect,variantSelect);info.append(mood,controls,availability);preview.append(previewActor,info);body.append(preview);refreshPreview=()=>{refresh();refreshPacks();refreshSpeed();refreshSmoothing();};refresh();
+      const options=el('div','avatar-options');
+      function toggle(label,value,disabled,onchange){const wrapper=el('label','avatar-option'),input=el('input');input.type='checkbox';input.checked=value;input.disabled=disabled;input.onchange=()=>onchange(input.checked);wrapper.append(input,el('span','',t(label)));options.append(wrapper);}
+      toggle('启用虚拟形象',p.enabled,false,value=>{p.enabled=value;save();update();draw();refreshContextBudget();});toggle('在聊天框显示',p.chat,!p.enabled,value=>{p.chat=value;save();update();});toggle('在锁屏界面显示',p.lock,!p.enabled,value=>{p.lock=value;save();update();});
+      const opacity=el('label','avatar-opacity');opacity.append(el('span','',t('形象透明度')));const range=el('input');range.type='range';range.min='25';range.max='100';range.value=String(p.opacity);const output=el('output','',range.value+'%');range.oninput=()=>{p.opacity=Number(range.value);output.textContent=range.value+'%';save();update();};opacity.append(range,output);options.append(opacity);
+      const playback=el('div','avatar-playback'),speedLabel=el('label','',t('播放速度')),speedField=el('div','avatar-speed-field'),speedInput=el('input','avatar-speed-input');
+      speedInput.id='avatar-playback-rate';speedInput.type='number';speedInput.min='0.25';speedInput.max='4';speedInput.step='any';speedInput.inputMode='decimal';speedInput.value=String(p.playbackRate);speedInput.setAttribute('aria-label',t('播放速度倍率'));speedInput.setAttribute('aria-describedby','avatar-playback-help');speedLabel.htmlFor=speedInput.id;
+      const speedUnit=el('span','avatar-speed-unit','×');speedUnit.setAttribute('aria-hidden','true');speedField.append(speedInput,speedUnit);
+      const resetSpeed=el('button','quiet avatar-speed-reset',t('恢复 1 倍'));resetSpeed.type='button';
+      const speedHelp=el('small','avatar-speed-help',t('0.25–4 倍；0.5 为半速，1 为原速，2 为双倍速。'));speedHelp.id='avatar-playback-help';
+      refreshSpeed=()=>{speedInput.value=String(p.playbackRate);const frameAnimation=!!activePack()?.assets.some(asset=>asset.manifest);speedInput.disabled=!frameAnimation;resetSpeed.disabled=!frameAnimation;speedHelp.textContent=t(frameAnimation?'0.25–4 倍；0.5 为半速，1 为原速，2 为双倍速。':'此素材按自身速度播放；倍率适用于内置帧动画。');};
+      const applySpeed=()=>{const value=Number(speedInput.value);if(!Number.isFinite(value)||value<0.25||value>4)return false;const previous=p.playbackRate;p.playbackRate=value;if(!save()){p.playbackRate=previous;speedInput.value=String(previous);toast(t('播放速度未能保存，请检查浏览器存储空间'));return false;}update({preserveSelection:true});refresh();return true;};
+      speedInput.oninput=applySpeed;speedInput.onchange=()=>{if(!applySpeed()){speedInput.value=String(p.playbackRate);toast(t('请输入 0.25 到 4 之间的播放倍率'));}};speedInput.onblur=()=>{speedInput.value=String(p.playbackRate);};speedInput.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();speedInput.onchange();speedInput.blur();}};resetSpeed.onclick=()=>{speedInput.value='1';applySpeed();};
+      playback.append(speedLabel,speedField,resetSpeed,speedHelp);options.append(playback);refreshSpeed();
+      const smoothing=el('div','avatar-smoothing'),smoothLabel=el('label','avatar-option'),smoothInput=el('input'),smoothHelp=el('small','avatar-speed-help');smoothInput.type='checkbox';smoothInput.setAttribute('aria-label',t('自动平滑补帧'));smoothInput.setAttribute('aria-describedby','avatar-smoothing-help');smoothHelp.id='avatar-smoothing-help';smoothLabel.append(smoothInput,el('span','',t('自动平滑补帧')));
+      refreshSmoothing=()=>{smoothInput.checked=p.smoothFrames;const supported=!!activePack()?.assets.some(asset=>asset.manifest);smoothInput.disabled=!supported;smoothHelp.textContent=t(supported?'平滑相邻画面，不改变播放速度。大幅动作若出现重影，可关闭。':'此素材由浏览器直接播放，暂不支持平滑补帧。');};
+      smoothInput.onchange=()=>{const previous=p.smoothFrames;p.smoothFrames=smoothInput.checked;if(!save()){p.smoothFrames=previous;refreshSmoothing();toast(t('补帧设置未能保存，请检查浏览器存储空间'));return;}update({preserveSelection:true});refresh();};
+      smoothing.append(smoothLabel,smoothHelp);options.append(smoothing);refreshSmoothing();body.append(options);
+      const heading=el('div','avatar-pack-heading');heading.append(el('h4','',t('素材包')),el('small','',t('支持 PNG、JPG、动态 WebP 和 GIF。按场景英文名命名，可用 -v1、-v2、-v3 区分动作；未匹配时作为待机图。')));body.append(heading);
+      const form=el('div','avatar-pack-form'),name=el('input','avatar-pack-name');name.type='text';name.maxLength=50;name.placeholder=t('新素材包名称');name.setAttribute('aria-label',t('新素材包名称'));const upload=el('label','avatar-upload');upload.append(el('span','',t('添加素材包')));const files=el('input');files.type='file';files.multiple=true;files.accept='image/png,image/jpeg,image/webp,image/gif';upload.append(files);form.append(name,upload);body.append(form);
+      const list=el('div','avatar-pack-list');body.append(list);
+      const packRefreshers=[];
+      for(const pack of p.packs){
+        const row=el('article','avatar-pack'+(pack.id===p.activePack?' active':'')),head=el('div','avatar-pack-row'),radio=el('input');radio.type='radio';radio.name='avatar-active-pack';radio.checked=pack.id===p.activePack;radio.setAttribute('aria-label',t('激活素材包 {0}',pack.name));radio.onchange=()=>{p.activePack=pack.id;save();update();draw();};
+        const badge=el('span','avatar-pack-count');head.append(radio,el('strong','',pack.name),badge);
+        const remove=el('button','quiet avatar-delete-pack',t('删除'));remove.type='button';remove.onclick=()=>{if(!confirm(t('删除素材包「{0}」？',pack.name)))return;p.packs=p.packs.filter(item=>item.id!==pack.id);if(p.activePack===pack.id)p.activePack=p.packs[0]?.id||'';save();update();draw();};head.append(remove);row.append(head);
+        const thumbs=el('div','avatar-pack-assets');row.append(thumbs);list.append(row);
+        packRefreshers.push(()=>{
+          const asset=pack.assets.find(item=>item.manifest),manifest=manifestFor(asset);
+          const entries=manifest?sceneList.map(([scene,name])=>{const ids=(manifest.scenes?.[scene]||[scene,legacyMotion[scene]].filter(Boolean)).filter(id=>manifest.clips[id]);return {scene,name,ids};}).filter(item=>item.ids.length):[];
+          const clipIDs=new Set(entries.flatMap(item=>item.ids));
+          badge.textContent=manifest?t('{0} 个场景 · {1} 套动作',entries.length,clipIDs.size):asset?t(manifests.get(asset.manifest)?.failed?'动作读取失败':'正在读取动作…'):t('{0} 项',pack.assets.length);
+          const posters=entries.length?entries.slice(0,8).map(item=>{const id=item.ids[0],clip=manifest.clips[id],source=manifest.variants?.[id]?.poster||clip.poster||(pack.builtin&&/-v[1-3]$/.test(id)?id+'-poster.webp':'');const poster=source?(source.startsWith('/')||source.startsWith('https:')||source.startsWith('http:')||source.startsWith('data:')?source:asset.manifest.replace(/[^/]*$/,'')+source):asset.poster;return {name:item.name,poster};}):pack.assets.slice(0,8);
+          thumbs.replaceChildren();for(const item of posters){const thumb=el('div','avatar-asset-thumb'),image=el('img');image.src=item.poster||item.src;image.alt='';image.loading='lazy';image.decoding='async';thumb.append(image,el('small','',t(item.name||item.motion)));thumbs.append(thumb);}
+        });
+      }
+      refreshPacks=()=>packRefreshers.forEach(refresh=>refresh());refreshPacks();
+      if(!p.packs.length)list.append(el('div','avatar-empty',t('还没有素材包，可添加图片创建一个。')));
+      files.onchange=async()=>{
+        const picked=Array.from(files.files||[]);files.value='';if(!picked.length)return;
+        if(picked.length>48){toast(t('一个素材包最多添加 48 张图片'));return;}if(picked.some(file=>!/^image\/(png|jpeg|webp|gif)$/.test(file.type)||file.size>800*1024)){toast(t('请添加 PNG、JPG、WebP 或 GIF；每张不超过 800 KB'));return;}
+        if(JSON.stringify(data).length+Math.ceil(picked.reduce((sum,file)=>sum+file.size,0)*1.4)>3.5*1024*1024){toast(t('浏览器形象素材空间即将不足，请删除不用的素材包'));return;}
+        try{const assets=await Promise.all(picked.map(file=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve({id:crypto.randomUUID(),name:file.name,motion:modeFromName(file.name),...(/-v[1-3]\.[^.]+$/.test(file.name)?{variant:Number(file.name.match(/-v([1-3])\.[^.]+$/)[1])}:{}),src:String(reader.result)});reader.onerror=reject;reader.readAsDataURL(file);})));assets.sort((a,b)=>a.name.localeCompare(b.name,undefined,{numeric:true}));const pack={id:crypto.randomUUID(),name:name.value.trim()||picked[0].name.replace(/\.[^.]+$/,''),builtin:false,assets},previous={activePack:p.activePack,enabled:p.enabled};p.packs.push(pack);p.activePack=pack.id;p.enabled=true;if(!save()){p.packs.pop();Object.assign(p,previous);toast(t('浏览器存储空间不足，素材包未保存'));return;}name.value='';update();draw();if(!previous.enabled)refreshContextBudget();}catch{toast(t('素材读取失败，请重新添加'));}
+      };
+    };
+    draw();return host;
+  }
+  window.renderVirtualAvatarSettings=renderer;
+  const observer=new MutationObserver(update);observer.observe(document.body,{attributes:true,attributeFilter:['class']});if($('lock-screen'))observer.observe($('lock-screen'),{attributes:true,attributeFilter:['hidden','class']});for(const control of [$('voice-btn'),$('voice-stop'),$('send')])if(control)observer.observe(control,{attributes:true,attributeFilter:['class']});
+  window.addEventListener('storage',event=>{if(event.key===key){const next=read(false),wasEnabled=p.enabled;Object.assign(p,next.avatar);data={...next,avatar:p};update({preserveSelection:true});refreshPreview?.();if(wasEnabled!==p.enabled)refreshContextBudget();}});
+  window.setInterval(update,800);update();
 })();
 $('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; if (state.file.wsId) body.workspaceId = state.file.wsId; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; toast(t("✓ 已保存")); await loadFiles(); });
 $('attach-file').onclick = () => {
@@ -3043,7 +3298,7 @@ function renderNumberControl(control) {
   if (control.description) wrap.append(el('small', '', control.description));
   return wrap;
 }
-const controlRenderers = { language: renderLanguageControl, 'about-project': renderAboutProject, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl };
+const controlRenderers = { language: renderLanguageControl, 'about-project': renderAboutProject, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 
 function renderSystemLogsControl() {
   const wrap = el('div', 'settings-control system-logs-control');
@@ -4010,7 +4265,7 @@ function contextMeterKey() {
     session?.compactedAt || '', (session?.compact || '').length, anchor?.headerFingerprint || '',
     anchor?.usage?.prompt || 0, anchor?.usage?.completion || 0, anchor?.promptEstimate || 0,
     state.config?.model || '', state.mode || 'chat', state.workflowPhase || '', state.profiles?.strategy || 'auto',
-    state.profiles?.activeProfile || 'default', signature].join('~');
+    state.profiles?.activeProfile || 'default', !!window.aideAvatarEnabled?.(), signature].join('~');
 }
 function renderContextMeter(data, isDraft) {
   if (!data || !data.breakdown) return;
@@ -4090,7 +4345,7 @@ async function refreshContextMeter() {
   const strategy = state.profiles?.strategy || 'auto';
   const profile = strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default');
   try {
-    const data = await api('/context-preview', { method: 'POST', body: JSON.stringify({ sessionId: state.session?.id || '', prompt: '', mode: state.mode || 'chat', strategy, profile, workflowPhase: state.workflowPhase || '', baseline: true }) });
+    const data = await api('/context-preview', { method: 'POST', body: JSON.stringify({ sessionId: state.session?.id || '', prompt: '', mode: state.mode || 'chat', strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.(), baseline: true }) });
     if (seq !== state.contextMeterSeq.value || state.contextMeterKey !== key || state.contextMeterDraft) return;
     renderContextMeter(data, false);
   } catch (_) {
@@ -6758,6 +7013,8 @@ try {
 } catch (_) {}
 
 function voiceSetStatus(mode, text) {
+  window.aideAvatarSignal?.('listening', mode === 'listening');
+  window.aideAvatarSignal?.('waiting', mode === 'requesting');
   const box = $('voice-status');
   box.classList.remove('listening', 'ignored', 'standby', 'requesting');
   if (mode) box.classList.add(mode);
@@ -6830,8 +7087,8 @@ async function voiceSend(text, queued) {
   const strategy = state.profiles?.strategy || 'auto';
   // #41：小秘 analyze 判定的 mode 优先；未给出时回退手动排队开关
   const q = (queued != null) ? queued : state.queueMode;
-  await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt: text, mode: state.mode, attachments: [], strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued: q, workflowPhase: state.workflowPhase || '' }) });
-  if (state.session?.id === target.id) await selectSession(target.id);
+  const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt: text, mode: state.mode, attachments: [], strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued: q, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+  if (state.session?.id === target.id) { await selectSession(target.id); reconcileAvatarRun(submitted.id || submitted.runId); }
 }
 // 提取主会话近期对话（供小秘对话/讲解感知 aide 内容）
 function buildAideContextText(){
@@ -6848,8 +7105,9 @@ function buildAideContextText(){
 }
 async function voiceFilterOne(sentence) {
   let result = { action: 'ignore', text: sentence, reason: '' };
-  try { result = await api('/voice-filter', { method: 'POST', body: JSON.stringify({ text: sentence, context: buildAideContextText() }) }); }
+  try { result = await api('/voice-filter', { method: 'POST', body: JSON.stringify({ text: sentence, context: buildAideContextText(), avatarFeedback: !!window.aideAvatarEnabled?.() }) }); }
   catch (_) { result = { action: 'ignore', text: sentence, reason: t('甄别失败') }; }
+  if (result.avatarCue) window.aideAvatarCue?.(result.avatarCue);
   if (result.action === 'locked') {
     voiceLog('ignored', sentence, result.reason);
     if (voice.recognition) { try { voice.recognition.onend = null; voice.recognition.stop(); } catch (_) {} }
@@ -6904,6 +7162,7 @@ async function voiceDrainQueue() {
 
 /* ── 双向语音：小蜜朗读。优先后端 edge-tts 神经音（TTSPlayer），失败/超时自动降级浏览器 Web Speech ── */
 function ttsCancel() {
+  window.aideAvatarSignal?.('speaking', false);
   try { if ('speechSynthesis' in window) window.speechSynthesis.cancel(); } catch (_) {}
   ttsPlayer.halt();
 }
@@ -6937,6 +7196,7 @@ const ttsPlayer = {
   cancelled: false, paused: false,
   _ctrl: null, _audio: null, _wake: null,
   halt() {
+    window.aideAvatarSignal?.('speaking', false);
     this.cancelled = true; this.paused = false;
     if (this._ctrl) { try { this._ctrl.abort(); } catch (_) {} this._ctrl = null; }
     if (this._audio) { try { this._audio.pause(); } catch (_) {} this._audio = null; }
@@ -6944,6 +7204,7 @@ const ttsPlayer = {
   },
   setPaused(p) {
     this.paused = p;
+    if (p) window.aideAvatarSignal?.('speaking', false);
     if (p) { if (this._audio) try { this._audio.pause(); } catch (_) {} }
     else { if (this._audio) this._audio.play().catch(() => {}); if (this._wake) { const w = this._wake; this._wake = null; w(); } }
   },
@@ -6979,7 +7240,9 @@ function ttsPlayOne(url) {
     const a = new Audio(url);
     ttsPlayer._audio = a;
     let done = false;
-    const finish = () => { if (done) return; done = true; ttsPlayer._audio = null; URL.revokeObjectURL(url); resolve(); };
+    const finish = () => { if (done) return; done = true; window.aideAvatarSignal?.('speaking', false); ttsPlayer._audio = null; URL.revokeObjectURL(url); resolve(); };
+    a.onplaying = () => window.aideAvatarSignal?.('speaking', true);
+    a.onpause = () => window.aideAvatarSignal?.('speaking', false);
     a.onended = finish;
     a.onerror = finish;
     const timer = setInterval(() => {
@@ -7050,6 +7313,8 @@ function webSpeakReply(text) {
     if (stopped || i >= segs.length) return;
     const seg = segs[i];
     const u = new SpeechSynthesisUtterance(seg);
+    u.onstart = u.onresume = () => window.aideAvatarSignal?.('speaking', true);
+    u.onpause = () => window.aideAvatarSignal?.('speaking', false);
     u.lang = 'zh-CN';
     if (voice) u.voice = voice;
     const ask = /[?？]\s*$/.test(seg);
@@ -7058,8 +7323,9 @@ function webSpeakReply(text) {
     u.pitch = ask ? basePitch + 0.14 : exclaim ? basePitch + 0.06 : basePitch;
     u.rate = exclaim ? baseRate + 0.07 : ask ? baseRate - 0.04 : baseRate;
     u.volume = 1;
-    u.onend = () => { if (stopped) return; const pause = ask ? 200 : clause ? 95 : 175; i++; setTimeout(next, pause); };
+    u.onend = () => { window.aideAvatarSignal?.('speaking', false); if (stopped) return; const pause = ask ? 200 : clause ? 95 : 175; i++; setTimeout(next, pause); };
     u.onerror = (ev) => {
+      window.aideAvatarSignal?.('speaking', false);
       // canceled/interrupted/aborted 是主动取消，必须停链，不再排队下一句
       const kind = ev && ev.error;
       if (kind === 'canceled' || kind === 'interrupted' || kind === 'aborted') { stopped = true; return; }
@@ -7441,12 +7707,14 @@ function webSpeakAwait(text){
       if(i>=segs.length) return res();
       const seg=segs[i];
       const u=new SpeechSynthesisUtterance(seg);
+      u.onstart=u.onresume=()=>window.aideAvatarSignal?.('speaking', true);
+      u.onpause=()=>window.aideAvatarSignal?.('speaking', false);
       u.lang='zh-CN'; if(vc)u.voice=vc;
       const ask=/[?？]\s*$/.test(seg), ex=/[!！]\s*$/.test(seg), clause=/[，,、；;：:]\s*$/.test(seg);
       u.pitch=ask?basePitch+0.14:ex?basePitch+0.06:basePitch;
       u.rate=ex?baseRate+0.07:ask?baseRate-0.04:baseRate;
-      u.onend=()=>{ const pause=ask?200:clause?95:175; i++; setTimeout(next,pause); };
-      u.onerror=()=>{ i++; next(); };
+      u.onend=()=>{ window.aideAvatarSignal?.('speaking', false); const pause=ask?200:clause?95:175; i++; setTimeout(next,pause); };
+      u.onerror=()=>{ window.aideAvatarSignal?.('speaking', false); i++; next(); };
       synth.speak(u);
     }
     function next(){
@@ -7605,9 +7873,11 @@ function toggleMechanicalRead(btn, text){
     if(stopped) return;
     if(i>=parts.length){ mech.speaking=false; btn.textContent=t('朗读'); mech.btn=null; return; }
     const u=new SpeechSynthesisUtterance(parts[i]);
+    u.onstart=u.onresume=()=>window.aideAvatarSignal?.('speaking', true);
+    u.onpause=()=>window.aideAvatarSignal?.('speaking', false);
     u.lang='zh-CN'; u.rate=1; u.pitch=1; u.volume=1; // 固定参数、无停顿无语气 → 机械
-    u.onend=()=>{ if(stopped) return; i++; next(); };
-    u.onerror=(ev)=>{ const kind=ev&&ev.error; if(kind==='canceled'||kind==='interrupted'||kind==='aborted'){ stopped=true; return; } i++; next(); };
+    u.onend=()=>{ window.aideAvatarSignal?.('speaking', false); if(stopped) return; i++; next(); };
+    u.onerror=(ev)=>{ window.aideAvatarSignal?.('speaking', false); const kind=ev&&ev.error; if(kind==='canceled'||kind==='interrupted'||kind==='aborted'){ stopped=true; return; } i++; next(); };
     window.speechSynthesis.speak(u);
   }
   // speechSynthesis.cancel() 是异步的，立即 speak 首句会被吞掉，延迟 120ms 再开读
@@ -8381,24 +8651,10 @@ function refreshLockStatus() {
   refreshLockAvatar(host.textContent, !!running);
 }
 function refreshLockAvatar(status, running) {
-  const image = $('lock-avatar');
-  if (!image) return;
-  try {
-    const prefs = JSON.parse(localStorage.getItem('aide.virtual-avatars.v1') || '{}').aide;
-    const item = prefs?.items?.find(x => x.id === prefs.active && typeof x.src === 'string' && x.src.startsWith('data:image/'));
-    if (item) {
-      if (image.dataset.avatarId !== item.id) { image.src = item.src; image.dataset.avatarId = item.id; }
-      image.hidden = false;
-      image.style.setProperty('--avatar-opacity', String(Math.max(.1, Math.min(1, Number(prefs.opacity ?? 55) / 100))));
-    } else {
-      image.removeAttribute('src'); delete image.dataset.avatarId; image.hidden = true;
-    }
-    image.dataset.motion = running ? 'working' : 'idle';
-    $('lock-companion').dataset.motion = running ? 'working' : 'idle';
-    $('lock-companion').dataset.status = status;
-  } catch {
-    image.removeAttribute('src'); delete image.dataset.avatarId; image.hidden = true;
-  }
+  const companion=$('lock-companion');
+  if(!companion)return;
+  companion.dataset.motion=running?'working':'idle';
+  companion.dataset.status=status;
 }
 /* 视觉层：把 effectiveLocked=true 落到本地遮罩 + 小秘退下（幂等，可重复调用）。 */
 function applyLockVisual() {
@@ -8444,6 +8700,7 @@ function lockScreenNow() {
 }
 /* dismissAfterUnlock：密码与触控 ID 解锁共用的唯一收尾出口——保证两路径行为逐字节一致。 */
 function dismissAfterUnlock() {
+  window.aideAvatarFeedback?.('notification');
   // 本 tab 本地恢复（欢迎语、麦克风只在解锁的那个 tab，避免多 tab 合唱）
   lockScreen.locked = false;
   $('lock-screen').hidden = true;

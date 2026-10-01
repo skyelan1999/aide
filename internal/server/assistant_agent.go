@@ -24,14 +24,15 @@ import (
 // assistantDecision 小秘 agentic 循环产出的统一决策（文字 assistant-message 与
 // 语音 voice-filter 共用）。输入来源会约束可用动作，Handler 再映射到各自前端契约。
 type assistantDecision struct {
-	Action       string   // dispatch | chat | ask | silent
-	Reply        string   // 小秘对用户说的话（陪聊正文 / 转交说明 / 追问文案）
-	DispatchText string   // Action=dispatch：总结后要转达给 aide 的清晰意图
-	Mode         string   // queue | insert（dispatch 时）
-	Stop         bool     // 中止/止损类（dispatch 时，始终插队）
-	Ask          string   // Action=ask：单个追问
-	Reason       string   // 一句话理由
-	ToolsUsed    []string // 本次小秘实际调用了哪些工具（透明可审计）
+	Action       string     // dispatch | chat | ask | silent
+	Reply        string     // 小秘对用户说的话（陪聊正文 / 转交说明 / 追问文案）
+	DispatchText string     // Action=dispatch：总结后要转达给 aide 的清晰意图
+	Mode         string     // queue | insert（dispatch 时）
+	Stop         bool       // 中止/止损类（dispatch 时，始终插队）
+	Ask          string     // Action=ask：单个追问
+	Reason       string     // 一句话理由
+	AvatarCue    *AvatarCue // optional validated cosmetic feedback
+	ToolsUsed    []string   // 本次小秘实际调用了哪些工具（透明可审计）
 }
 
 // assistantAgentPrinciples 写进小秘 system prompt 的动作原则。
@@ -95,7 +96,7 @@ func (a *App) assistantAgentTools(allowSilent bool) []any {
 // runAssistantAgenticLoop 小秘 agentic 决策主循环。
 // heard=用户原话/语音转写；aideCtx=aide 主会话最近上下文（可选）；inputSource=text/voice。
 // 调用方不持 a.mu（循环内部按需加锁）；cfg 已注入 APIKey。
-func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, aideCtx, inputSource string) (assistantDecision, error) {
+func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, aideCtx, inputSource string, avatarFeedback ...bool) (assistantDecision, error) {
 	va := a.voiceAgent
 	// 组装 system prompt：身份核心前置 + 动作原则 + aide 记忆（只读）+ 小秘私有记忆
 	// 注意：va 可能为 nil（未初始化/降级路径），必须先判空再解引用 va.memory。
@@ -124,7 +125,9 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 	messages = append(messages, a.recentAssistantConversation()...)
 	messages = append(messages, Message{Role: "user", Content: heard})
 	// XiaoMi can read the clock, but must not inherit arbitrary workspace plugin tools.
-	tools := a.assistantAgentTools(inputSource != "text")
+	avatarEnabled := len(avatarFeedback) > 0 && avatarFeedback[0]
+	tools := withAvatarCueTool(a.assistantAgentTools(inputSource != "text"), avatarEnabled)
+	avatarCuesUsed := 0
 	params := ProfileParams{MaxTokens: 800, Temperature: fp(0.3)}
 
 	dec := assistantDecision{Action: "chat"}
@@ -138,6 +141,22 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 				return dec, nil
 			}
 			return dec, err
+		}
+		if avatarEnabled {
+			var cue *AvatarCue
+			out, calls, cue = consumeAvatarCues(out, calls, true, &avatarCuesUsed)
+			if cue != nil {
+				dec.AvatarCue = cue
+			}
+			if avatarCuesUsed >= avatarCueBudget {
+				tools = withoutAvatarCueTool(tools)
+			}
+			if strings.TrimSpace(out) == "" && len(calls) == 0 {
+				avatarEnabled = false
+				tools = withoutAvatarCueTool(tools)
+				messages = append(messages, Message{Role: "user", Content: "Please reply normally; avatar feedback is optional and no longer needed."})
+				continue
+			}
 		}
 		if len(calls) == 0 {
 			// 没有工具调用 → 正文就是小秘的收尾回复
@@ -329,9 +348,10 @@ func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision) string {
 // （voice-filter 前端仍按 action=send/ask/standby/ignore 驱动语音面板）。
 func decisionToVoiceEntry(d assistantDecision, heard string) VoiceHistoryEntry {
 	e := VoiceHistoryEntry{
-		Time:   time.Now().Format("2006-01-02 15:04:05"),
-		Heard:  heard,
-		Reason: d.Reason,
+		Time:      time.Now().Format("2006-01-02 15:04:05"),
+		AvatarCue: d.AvatarCue,
+		Heard:     heard,
+		Reason:    d.Reason,
 	}
 	switch d.Action {
 	case "dispatch":

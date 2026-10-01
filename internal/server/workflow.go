@@ -68,6 +68,9 @@ type Task struct {
 	ID                  string              `json:"id"`
 	Mode                string              `json:"mode"`
 	Prompt              string              `json:"prompt"`
+	AvatarFeedback      bool                `json:"avatarFeedback,omitempty"`
+	AvatarCuesUsed      int                 `json:"avatarCuesUsed,omitempty"`
+	AvatarCue           *AvatarCue          `json:"avatarCue,omitempty"`
 	Status              string              `json:"status"`
 	Created             string              `json:"created"`
 	Steps               []Step              `json:"steps"`
@@ -156,13 +159,14 @@ var builtinTools = []any{
 
 func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Prompt        string       `json:"prompt"`
-		Mode          string       `json:"mode"`
-		Attachments   []Attachment `json:"attachments"`
-		Strategy      string       `json:"strategy"`
-		Profile       string       `json:"profile"`
-		Queued        bool         `json:"queued"`
-		WorkflowPhase string       `json:"workflowPhase,omitempty"`
+		Prompt         string       `json:"prompt"`
+		AvatarFeedback bool         `json:"avatarFeedback,omitempty"`
+		Mode           string       `json:"mode"`
+		Attachments    []Attachment `json:"attachments"`
+		Strategy       string       `json:"strategy"`
+		Profile        string       `json:"profile"`
+		Queued         bool         `json:"queued"`
+		WorkflowPhase  string       `json:"workflowPhase,omitempty"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -266,7 +270,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{ID: newID(), Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{ID: newID(), AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	oldTitle := s.Title
 	oldPendingPrompt := s.PendingPrompt
 	if len(s.Messages) == 0 {
@@ -277,7 +281,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		s.Title = string(title)
 	}
 	// R08-04：与 /api/context-preview 共用同一构建器；超限在此可解释拦截（Provider 不会收到该调用）
-	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true)
+	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true, in.AvatarFeedback)
 	// 阶段/自动编排提示会追加到同一首条 system 消息，必须先计入再检查窗口。
 	a.applyWorkflowContext(preview, in.Mode, in.WorkflowPhase)
 	if preview.OverLimit {
@@ -314,7 +318,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		preview = a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true)
+		preview = a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true, in.AvatarFeedback)
 		a.applyWorkflowContext(preview, in.Mode, in.WorkflowPhase)
 		if preview.OverLimit {
 			fail(w, 400, fmt.Errorf("自动压缩后仍超出上下文预算：输入估算 %d tokens + 输出预留 %d tokens = %d，模型窗口 %d；请减少附件/提示内容或新建会话", preview.InputEstimate, preview.OutputReserve, preview.TotalEstimate, preview.ContextWindow))
@@ -646,6 +650,11 @@ func (a *App) acceptProposal(s *Session, task *Task, raw string, versions map[st
 	return a.save(s)
 }
 func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
+	avatarOverride, err := readAvatarFeedbackOverride(w, r)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	s := a.sessions[r.PathValue("id")]
@@ -693,8 +702,12 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{ID: newID(), Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
-	preview := a.buildContextPreview(s, orig.Prompt, orig.Mode, contextText, images, a.settings, params, true)
+	avatarEnabled := orig.AvatarFeedback
+	if avatarOverride != nil {
+		avatarEnabled = *avatarOverride
+	}
+	task := &Task{ID: newID(), AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	preview := a.buildContextPreview(s, orig.Prompt, orig.Mode, contextText, images, a.settings, params, true, avatarEnabled)
 	if preview.OverLimit {
 		fail(w, 400, errors.New("上下文预算超限，重试失败"))
 		return
@@ -769,6 +782,11 @@ func (a *App) pauseTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
+	avatarOverride, err := readAvatarFeedbackOverride(w, r)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	s := a.sessions[r.PathValue("id")]
@@ -834,6 +852,12 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	resumed.ID = newID()
+	if avatarOverride != nil {
+		resumed.AvatarFeedback = *avatarOverride
+	}
+	// The persisted budget follows a resumed logical turn, but an old cue must
+	// not be replayed as if the resumed run just generated it.
+	resumed.AvatarCue = nil
 	resumed.Created = time.Now().UTC().Format(time.RFC3339Nano)
 	resumed.Status = "running"
 	resumed.Error = ""
@@ -1115,19 +1139,20 @@ func summarizeToolArgs(raw string) string {
 // streamEvent 推送给 SSE 订阅者的事件；event 取值：step | delta | tool | status | done。
 // SSE 是实时增强层，最终任务状态仍由 GET /sessions/{id} 持久化兜底。
 type streamEvent struct {
-	Event     string `json:"event"`
-	Step      string `json:"step,omitempty"`
-	Status    string `json:"status,omitempty"`
-	Text      string `json:"text,omitempty"`
-	Tool      string `json:"tool,omitempty"`
-	Preview   string `json:"preview,omitempty"`
-	Error     string `json:"error,omitempty"`
-	Round     int    `json:"round,omitempty"`     // toolLoop 轮次：前端按轮次重置 live 文本，避免跨轮拼接
-	Question  string `json:"question,omitempty"`  // 澄清问题（awaiting_clarification 时下发）
-	Reasoning string `json:"reasoning,omitempty"` // reasoning 事件：模型思考链增量
-	Args      string `json:"args,omitempty"`      // intent 事件：工具参数摘要（命令/路径）
-	CallID    string `json:"callId,omitempty"`    // 关联 intent↔tool 事件，定位第几个工具
-	OK        bool   `json:"ok,omitempty"`        // tool 事件：是否执行成功
+	Event     string     `json:"event"`
+	AvatarCue *AvatarCue `json:"avatarCue,omitempty"`
+	Step      string     `json:"step,omitempty"`
+	Status    string     `json:"status,omitempty"`
+	Text      string     `json:"text,omitempty"`
+	Tool      string     `json:"tool,omitempty"`
+	Preview   string     `json:"preview,omitempty"`
+	Error     string     `json:"error,omitempty"`
+	Round     int        `json:"round,omitempty"`     // toolLoop 轮次：前端按轮次重置 live 文本，避免跨轮拼接
+	Question  string     `json:"question,omitempty"`  // 澄清问题（awaiting_clarification 时下发）
+	Reasoning string     `json:"reasoning,omitempty"` // reasoning 事件：模型思考链增量
+	Args      string     `json:"args,omitempty"`      // intent 事件：工具参数摘要（命令/路径）
+	CallID    string     `json:"callId,omitempty"`    // 关联 intent↔tool 事件，定位第几个工具
+	OK        bool       `json:"ok,omitempty"`        // tool 事件：是否执行成功
 }
 
 // subscribeStream 订阅某任务的实时事件；返回 channel 与取消函数。
@@ -1180,7 +1205,7 @@ func (a *App) finishStream(taskID, status, errMsg string) {
 		default:
 		}
 		select {
-		case ch <- streamEvent{Event: "done"}:
+		case ch <- streamEvent{Event: "done", Status: status}:
 		default:
 		}
 		close(ch)
@@ -1265,6 +1290,11 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		}
 	}
 	saveCheckpoint()
+	a.mu.Lock()
+	avatarEnabled := task.AvatarFeedback && avatarCueFormatAllowed(params)
+	avatarCuesUsed := task.AvatarCuesUsed
+	a.mu.Unlock()
+	tools = withAvatarCueTool(tools, avatarEnabled && avatarCuesUsed < avatarCueBudget)
 	maxRounds := a.settings.ToolMaxRounds
 	if maxRounds <= 0 {
 		maxRounds = 60
@@ -1387,6 +1417,29 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				continue
 			}
 			// out 为空且无可补全 tool_call：落到既有空响应兜底（err 分支）。
+		}
+		// Cosmetic feedback is carried by the existing completion, never another
+		// background classifier. Keep ordinary tool calls paired with their results.
+		if avatarEnabled {
+			var cue *AvatarCue
+			out, calls, cue = consumeAvatarCues(out, calls, true, &avatarCuesUsed)
+			if cue != nil {
+				a.mu.Lock()
+				task.AvatarCue = cue
+				task.AvatarCuesUsed = avatarCuesUsed
+				a.mu.Unlock()
+				a.publishStream(task.ID, streamEvent{Event: "avatar", AvatarCue: cue})
+			}
+			if avatarCuesUsed >= avatarCueBudget {
+				tools = withoutAvatarCueTool(tools)
+			}
+			if strings.TrimSpace(out) == "" && len(calls) == 0 {
+				// A malformed cue-only answer is not a successful task result.
+				avatarEnabled = false
+				tools = withoutAvatarCueTool(tools)
+				input = append(input, Message{Role: "user", Content: "Please answer the user normally; avatar feedback is optional and no longer needed."})
+				continue
+			}
 		}
 		if len(calls) == 0 {
 			select {
@@ -4058,11 +4111,14 @@ func (a *App) runEvents(w http.ResponseWriter, r *http.Request) {
 	ch, unsub := a.subscribeStream(runID)
 	defer unsub()
 	a.mu.Lock()
-	status, errMsg := task.Status, task.Error
+	status, errMsg, cue := task.Status, task.Error, task.AvatarCue
 	a.mu.Unlock()
+	if cue != nil {
+		writeEvent(streamEvent{Event: "avatar", AvatarCue: cue})
+	}
 	if status != "running" {
 		writeEvent(streamEvent{Event: "status", Status: status, Error: errMsg})
-		writeEvent(streamEvent{Event: "done"})
+		writeEvent(streamEvent{Event: "done", Status: status})
 		return
 	}
 

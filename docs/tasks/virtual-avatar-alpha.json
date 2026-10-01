@@ -1,0 +1,340 @@
+{
+  "id": "virtual-avatar-alpha",
+  "request": "沿用用户提供的蓝发鲸尾动漫人物制作动画；最新要求统一为一个全局形象，先梳理场景，再每场景制作2–3套动作、每套至少30帧，根据任务和AI反馈变化。",
+  "baseline": "31d754c0201908d422d3c29eee073ff3915a1ab2",
+  "initial_status": "M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n?? internal/server/web/avatars/",
+  "acceptance": [
+    "一个全局虚拟形象设置，统一素材包、聊天框与锁屏开关。",
+    "16类场景共38套动作，每套至少30个连续变化的有效帧。",
+    "保留参考图角色的脸型、服装、发色和鲸尾，检查帧一致性与循环衔接。",
+    "应用实际事件确定任务状态，AI结构化反馈选择动作变体。",
+    "保留已有自定义包与用户偏好；Safari 验证动画、显示位置及交互。",
+    "虚拟形象播放速度可按倍率输入，默认1、0.25–4，实时作用于聊天框/锁屏/预览并持久化。",
+    "自动平滑补帧默认开启且可关闭，按相邻帧进度混合并保留播放速度；跨标签/刷新保存，隐藏锁屏不加载，同场景变体在循环边界切换。",
+    "启用聊天框形象后不添加整行空白、不缩短聊天滚动区；小秘底部消息可读，形象区域不拦截滚动。"
+  ],
+  "scope": [
+    "internal/server/web/{app.js,index.html,style.css,macos.css,settings-schema.json,locales/en.js,avatar-player.js}",
+    "internal/server/web/avatars/xiaomi-original/：16场景38套透明动画、图集、静态预览和素材审计",
+    "internal/server/{avatar_feedback.go,assistant_agent.go,assistant_history.go,context.go,server.go,voice_agent.go,workflow.go}：按需AI动作反馈及真实事件",
+    "internal/server/avatar_feedback_test.go、scripts/test_avatar_{settings,player,feedback}.cjs：回归",
+    "scripts/pack_avatar_art.cjs：技术裁帧、对齐、编码与素材校验",
+    "docs/design/virtual-avatar-{original-art.md,scenarios.json,generation.json}、docs/tasks/virtual-avatar-alpha.json：设计、生成来源和验收"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按最新要求统一为一个可选形象，沿用参考角色；16场景每场景2–3变体、每套至少30帧，根据真实任务及AI反馈变化。",
+      "evidence": [
+        "用户最新要求不再区分aide和小蜜，并指定每套至少30帧。",
+        "docs/design/virtual-avatar-scenarios.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "16场景38变体；真实事件优先，AI仅选择当前场景动作；v1–v5迁移v6统一配置；图片按需解码并限制缓存。",
+      "evidence": [
+        "docs/design/virtual-avatar-original-art.md",
+        "docs/design/virtual-avatar-scenarios.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已统一设置并完成38套各30不同原画帧，共1140帧；独立透明动画WebP+图集+静态预览；按需AI提示、真实状态、锁屏和聊天框共用一个角色。",
+      "evidence": [
+        "internal/server/web/avatars/xiaomi-original/manifest.json",
+        "internal/server/web/avatars/xiaomi-original/art-audit.json",
+        "internal/server/avatar_feedback.go",
+        "internal/server/web/avatar-player.js",
+        "兼容保留旧素材URL；未删除用户自定义包。"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "素材、播放器、设置、AI反馈、服务端race与真实DeepSeek请求通过；本轮Safari已验证倍率/补帧开关刷新保存、原画预览及聊天框显示。完整38动作动态与锁屏现场验收仍未全部完成。",
+      "evidence": [
+        "node scripts/test_avatar_player.cjs：38变体/16场景/1140真实帧、114成品哈希、WebP实际ANMF帧数、按需缓存/离屏/后台/减少动态效果/销毁通过",
+        "node scripts/test_avatar_settings.cjs：统一迁移、保留删除/自定义包、场景/真实状态/cue/驻留通过",
+        "node scripts/test_avatar_feedback.cjs：14终态/恢复路径、过期SSE与真实Audio事件通过",
+        "go test -race ./internal/server -count=1 -timeout=20m：最终后端源码通过，312.622秒，Go1.26.8 linux/arm64隔离容器",
+        ".agent-state/avatar-feedback-full-race-final/summary.json",
+        ".agent-state/avatar-feedback-live/result.json：真实deepseek-chat，一次主任务请求，返回completed-v1，reply OK，输入7873/输出110，QA会话已删除",
+        "实时检查发现并修复默认text输出格式遗漏动作工具；json_object继续排除动作工具。",
+        "Mac锁屏：cua系统Safari刷新返回cannot unlock，已异步请求用户手动解锁。",
+        "内置浏览器补充尝试遇到ERR_CERT_AUTHORITY_INVALID后停止，未绕过。",
+        "AIDE_OPEN_BROWSER=0 AIDE_RUN_TESTS=0 bash start.command：最终素材构建并启动成功；日志/tmp/aide-avatar-build-final.log",
+        "运行时HTTPS读取114个素材文件并逐一校对SHA256；app.js/player.js/style.css/index.html/settings-schema.json与当前文件完全一致。",
+        ".agent-state/avatar-packed/final-pixel-qa.json：38个压缩图集解码后1140帧均非空、不同，最小不透明边距11px。",
+        "最终再次调用SafariAX工具仍报告Mac锁屏，未完成最终视觉验收。",
+        "播放速度追加验证：Safari已见设置行和原画预览；后续输入验证时Mac再次锁屏，详见playbackSpeed.browser。",
+        "自动补帧回归：相邻帧权重/透明度、循环/单次、倍率、暂停、尺寸缓存、预解码、循环边界延期切换通过。",
+        "设置回归：补帧默认/开关、三个显示面、v1→v2迁移、旧标签隔离、跨标签同步、原生图片禁用、隐藏锁屏不加载通过。",
+        "Safari实际键盘输入0.5、关闭补帧后刷新：仍为0.5且关闭；后恢复1倍及开启，形象总开关恢复原值关闭。",
+        "Safari预览生成回答/吃token及聊天框休息场景已渲染；截图在/tmp/aide-avatar-qa-20261001。大动作短暂重影实际可见，未据截图宣称帧率。",
+        "start.command构建运行补帧版成功：/tmp/aide-avatar-smoothing-build.log；当前运行资源记录.agent-state/avatar-smoothing-runtime.json。",
+        "最后构建日志/tmp/aide-avatar-smoothing-build-final.log；单帧deferred边界已修复，当前资源哈希与源码一致。",
+        "小秘聊天区整行留白修复已在Safari验收，记录见composerOverlayFix。"
+      ],
+      "limitations": [
+        "尚未在最终Safari页面逐一观察38套动作的播放节奏、循环衔接和聊天框/锁屏遮挡。",
+        "真实模型测试明确请求一个动作；未经提示的自发动作选择尚未做浏览器验收。",
+        "普通75ms/帧，待机95ms、睡眠110ms；至少30帧不等于已证明所有浏览器流畅。",
+        "用户运行中关闭形象立即隐藏；已发出的请求可能仍含当时启用的动作schema至任务结束或额度耗尽。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新统一形象设计、38套生成提示词与来源、重制记录、帧数和真实验收边界。",
+      "evidence": [
+        "docs/design/virtual-avatar-original-art.md",
+        "docs/design/virtual-avatar-generation.json",
+        "docs/design/virtual-avatar-scenarios.json",
+        "docs/tasks/virtual-avatar-alpha.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "素材仅位于avatars目录；原始源图在生成器缓存，临时联系表/测试日志在.agent-state。保留旧素材供历史浏览器包URL兼容，未清理运行数据或用户改动。",
+      "evidence": [
+        "git diff --check：通过",
+        "不提交已否定源图；生成登记保留重制原因。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本地评审版本；未提交、推送或合并。",
+      "evidence": [
+        "当前迭代用于本地共同评审；未执行Git发布。"
+      ]
+    }
+  },
+  "release_authorization": "当前迭代先完成并共同评审；未执行Git发布。",
+  "rollback": "设置→虚拟形象→关闭“启用虚拟形象”，立即停止聊天框和锁屏显示；自定义素材与偏好保留。代码回退需仅撤销本任务变更，不清空现有修改或运行数据。",
+  "handoff": "本地https://localhost:8097已运行统一形象38套动画、0.25–4倍播放速度与默认开启的平滑补帧。Safari已验收倍率与补帧刷新保存、预览及聊天框显示；未逐一验收38动作、锁屏动态或量测浏览器帧率。未提交/推送。 小秘形象整行空白回归已修复，Safari底部消息/滚动验收通过，CSS缓存78；当前布局资源见composerOverlayFix.runtimeVerification。",
+  "latest_requirement_plan": "docs/design/virtual-avatar-scenarios.json",
+  "live_provider_result": {
+    "started": "2026-09-30T17:33:59.398247+00:00",
+    "scope": "new QA regular session only; no workspace operations or settings changes",
+    "preview": [
+      {
+        "enabled": false,
+        "cueTool": false,
+        "inputEstimate": 5810,
+        "toolCount": 39
+      },
+      {
+        "enabled": true,
+        "cueTool": true,
+        "inputEstimate": 6215,
+        "toolCount": 40
+      }
+    ],
+    "run": {
+      "status": "completed",
+      "avatarFeedback": true,
+      "cue": {
+        "scene": "completed",
+        "variant": 1,
+        "emotion": "happy",
+        "intensity": 1
+      },
+      "cuesUsed": 1,
+      "usage": {
+        "prompt": 7873,
+        "completion": 110,
+        "total": 7983,
+        "model": "deepseek-chat"
+      },
+      "requestCount": 1,
+      "cueToolPerRequest": [
+        true
+      ],
+      "ordinaryTools": [],
+      "fileChanges": 0,
+      "commands": 0,
+      "replyIsOK": true
+    },
+    "lateStream": [
+      {
+        "event": "avatar",
+        "status": null,
+        "cue": {
+          "scene": "completed",
+          "variant": 1,
+          "emotion": "happy",
+          "intensity": 1
+        }
+      },
+      {
+        "event": "status",
+        "status": "completed",
+        "cue": null
+      },
+      {
+        "event": "done",
+        "status": "completed",
+        "cue": null
+      }
+    ],
+    "outcome": "pass",
+    "qaSessionDeleted": true,
+    "finished": "2026-09-30T17:34:00.484849+00:00"
+  },
+  "runtimeVerification": {
+    "status": "pass",
+    "verifiedTLS": "Exact peer certificate bytes matched running container certificate before every HTTP request",
+    "sceneCount": 16,
+    "clipCount": 38,
+    "assetFilesVerified": 114,
+    "totalDistinctFrames": 1140,
+    "runningImage": "sha256:b1069f9bb307da0c56d0d9e2444073b9a4de04938c0d869e88bc4c32c6594f71",
+    "codeSHA256": {
+      "app.js": "8741923857295b392e824c61b54b2320fab08ed225928f96fe4f04a1ad2f8f83",
+      "avatar-player.js": "4d45a5d7ace314e89cb899629e90419625e0e9036afdb3730238f3b06bf1b89d",
+      "style.css": "ec7498fb5df1108239017309f1bdd5c0135e9fa92916825670736355f0839c82",
+      "index.html": "8ad8bea2b46071c13d7e357e0617170292525c721f99fb92e5d263009979e92d",
+      "settings-schema.json": "f080cc1e9775ce8334263d4ed9e7114eca942da84e4322ae78fe6a4d8d2c89b8"
+    },
+    "scope": "播放速度和补帧更新前的38套素材完整核验；当前运行代码见smoothPlayback.runtimeVerification。"
+  },
+  "playbackSpeed": {
+    "request": "在加一个设置，播放速度，按比例输入",
+    "status": "implemented",
+    "range": [
+      0.25,
+      4
+    ],
+    "default": 1,
+    "storage": "avatar.playbackRate",
+    "evidence": [
+      "node scripts/test_avatar_settings.cjs：输入校验、默认/迁移、持久化、跨标签、三个显示面、低速完整动作驻留通过",
+      "node scripts/test_avatar_player.cjs：倍率精确帧边界、保留进度、独立实例、暂停和单次动作通过",
+      "node scripts/test_i18n.cjs、app.js语法、git diff --check通过",
+      "start.command构建启动成功；6个当前前端资源通过HTTPS逐一核对SHA256，app缓存版本76。",
+      "补充回归通过：调速先按旧倍率结算已播放时长，输入/跨标签同步不会提前切到下一变体，保留4秒最短驻留和完整动作。",
+      "最终重建：/tmp/aide-avatar-playback-speed-build-final.log；6个HTTPS前端资源SHA256与当前源码相同。"
+    ],
+    "limitation": "倍率适用于内置帧动画；原生导入GIF/WebP按文件自带速度。",
+    "browser": {
+      "status": "partial",
+      "verified": [
+        "Safari刷新后打开设置→虚拟形象，已显示播放速度数值框、默认1、×、恢复1倍和范围说明。",
+        "设置页原画预览可见，播放速度行无重叠。",
+        "本轮Safari通过实际键盘输入0.5并失焦保存，刷新后仍显示0.5；再恢复1倍。",
+        "修复旧版本页签覆盖新偏好的问题：改用v2键，一次迁移旧配置。"
+      ],
+      "notVerified": [
+        "锁屏实际倍率观感及量化帧率未现场测量。"
+      ],
+      "screenshot": "/tmp/aide-avatar-qa-20261001/playback-speed-settings-layout.png"
+    },
+    "runtime": "pass",
+    "runtimeVerification": {
+      "status": "pass",
+      "verifiedAt": "2026-10-01T01:02:13.189241+00:00",
+      "appCacheVersion": 76,
+      "verifiedTLS": "Exact peer certificate bytes matched running container certificate before every HTTP request",
+      "runningImage": "sha256:e73ad7448372c52a5e1ffccaaa50e18a8ce4060fe73dfdf3c2818b9dd7e072cf",
+      "codeSHA256": {
+        "app.js": "e33355241e692ed1a3e71c99d0cd97b0e54a28a42c8aa91e78fa5ef44359eb4d",
+        "avatar-player.js": "9074414037bf6f36b4ce8d835b49637d592a5f9148f9d257093cee4905f87dbf",
+        "style.css": "70027b155751f85864f09db2e250e5a07311ced672bf28cffe2c6b3d92234dbc",
+        "index.html": "70bb22659775c3522e445705fc80f883a32cea7dbf380c5b48ce3c5134a356f3",
+        "locales/en.js": "e81f4b08a037be246293efdb1246e1296e560bd6c171133c75e8f2c40aab9c01",
+        "settings-schema.json": "f080cc1e9775ce8334263d4ed9e7114eca942da84e4322ae78fe6a4d8d2c89b8"
+      }
+    }
+  },
+  "smoothPlayback": {
+    "request": "你能做一个自动平滑补帧的功能吗，看着渲染太卡了",
+    "status": "implemented",
+    "algorithm": "Canvas相邻帧预乘alpha线性混合，无光流/生成模型",
+    "preferences": {
+      "storage": "aide.virtual-avatars.v2",
+      "field": "avatar.smoothFrames",
+      "default": true
+    },
+    "verified": [
+      "node scripts/test_avatar_player.cjs：相邻帧插值、预乘alpha、原速/倍率、循环和单次、延迟切换/解码、缓存、暂停等通过。",
+      "node scripts/test_avatar_settings.cjs：默认开启、开关即时应用、跨标签/刷新数据、迁移与旧页签隔离、三个显示面、原生GIF/WebP补帧限制通过。",
+      "node scripts/test_avatar_feedback.cjs、node scripts/test_i18n.cjs、JS语法检查与git diff --check通过。",
+      "start.command重建启动成功，当前HTTPS资源与源码哈希一致。",
+      "最终增加单帧循环/非循环素材切换回归；player/settings测试再次通过，重建启动完成，6项前端资源再次核对通过。"
+    ],
+    "browser": {
+      "status": "partial",
+      "verified": [
+        "Safari设置中补帧复选框可开启/关闭，倍率可输入0.5并恢复1倍。",
+        "0.5倍+补帧关闭刷新后正确保留。",
+        "补帧开启的吃token预览及聊天框睡眠场景可见，输入及发送按钮无形象遮挡。"
+      ],
+      "notVerified": [
+        "38动作逐一动态观感",
+        "锁屏现场动态",
+        "量化fps/帧时间分布"
+      ],
+      "restoredPreferences": {
+        "enabled": false,
+        "playbackRate": 1,
+        "smoothFrames": true
+      },
+      "screenshots": [
+        "/tmp/aide-avatar-qa-20261001/smoothing-off-half-speed.png",
+        "/tmp/aide-avatar-qa-20261001/smoothing-on-token-preview.png",
+        "/tmp/aide-avatar-qa-20261001/smoothing-on-composer.png"
+      ]
+    },
+    "limitations": [
+      "大幅姿态变化可能短暂重影；无法凭混合生成真实关节中间姿势。",
+      "仅manifest图集动画支持；原生GIF/WebP保持原播放方式。",
+      "原画每套30帧不变，不宣称恒定60fps。",
+      "旧v1大型自定义包迁移为v2时两份数据可能触及浏览器存储配额；读取保留原配置，保存失败会提示，未声称所有容量边界均现场验收。"
+    ],
+    "runtimeVerification": {
+      "status": "pass",
+      "verifiedAt": "2026-10-01T01:25:43.272186+00:00",
+      "appCacheVersion": 77,
+      "verifiedTLS": "Exact peer certificate bytes matched running container certificate before every HTTP request",
+      "runningImage": "sha256:777cf9acf3bf275731e2f8bae3d5fce8ec03c089818a159667b873c90035995a",
+      "codeSHA256": {
+        "app.js": "a09533c67b7cebf33efd8774cbcf04d3677f506d6deac17eed9e32e99e335e80",
+        "avatar-player.js": "8f9ee41571efb894cfd3735cb89ccc3a5f68b3b1370b2371affd20986901612f",
+        "style.css": "96ef6468c1c7542095073d7c8cde5c9f0005eaba53023762fc1b67c9e378d6b1",
+        "index.html": "478237ebb1bd9708aa832168820b4dc6b2989b867bf2d5ff0f98793563c52a1a",
+        "locales/en.js": "9be360dcfa338dde9de797671db31b0b1ec9d0699541bbb0075a653da3cfd890",
+        "settings-schema.json": "f080cc1e9775ce8334263d4ed9e7114eca942da84e4322ae78fe6a4d8d2c89b8"
+      }
+    }
+  },
+  "composerOverlayFix": {
+    "request": "打开小蜜后虚拟形象涂层盖住了底部的内容",
+    "status": "pass",
+    "cause": "composer.has-avatar 的116px/94px margin-top撑高不可收缩的composer-wrap，挤掉整个聊天滚动视口高度。",
+    "change": "移除整行高度预留；保持右侧148px（窄屏116px）绝对定位的透明形象及pointer-events:none。",
+    "verification": [
+      "node scripts/test_avatar_settings.cjs：禁止桌面/窄屏form额外高度预留，绝对定位及指针穿透契约通过；已有设置/迁移回归通过。",
+      "node scripts/test_avatar_player.cjs及git diff --check通过。",
+      "AIDE_OPEN_BROWSER=0 AIDE_RUN_TESTS=0 bash start.command构建重启成功；/tmp/aide-avatar-overlay-build.log。",
+      "系统Safari刷新后重新打开小秘并验证身份，实际看到最后一条回复完整显示、整行空白隔带消失。",
+      "Safari在原空白区域向上滚动后出现回到底部按钮，点击成功回到底部；未提交聊天消息。"
+    ],
+    "screenshots": [
+      "/tmp/aide-avatar-qa-20261001/overlay-before.png",
+      "/tmp/aide-avatar-qa-20261001/overlay-after-xiaomi-bottom.png"
+    ],
+    "runtimeVerification": {
+      "status": "pass",
+      "verifiedAt": "2026-10-01T01:34:50.087217+00:00",
+      "styleCacheVersion": 78,
+      "verifiedTLS": "Exact peer certificate matched running container certificate before requests",
+      "runningImage": "sha256:ea117b35dda51a905c71ff609e068e879e6fd89971a39d5ad33c53a4a608afaa",
+      "codeSHA256": {
+        "style.css": "92c10575a3e8daa3f02d22fb98813795432b2843799e98ed7f5eb0a5ed389943",
+        "index.html": "c33d25b59c22df92833af457ebdec23bb468077c0e899494f06d5a39026459cd"
+      }
+    },
+    "limitations": [
+      "此轮实际浏览器检查为用户当前桌面Safari窗口；窄屏规则静态回归通过，未另开移动设备验收。"
+    ]
+  }
+}

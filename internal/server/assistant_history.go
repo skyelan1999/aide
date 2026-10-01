@@ -311,8 +311,9 @@ func (a *App) recentAssistantConversation() []Message {
 // dispatch 由后端直接新建 aide 会话承接；chat/ask/silent 只留在小秘会话。
 func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Text    string `json:"text"`
-		Context string `json:"context"`
+		Text           string `json:"text"`
+		Context        string `json:"context"`
+		AvatarFeedback bool   `json:"avatarFeedback,omitempty"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		return
@@ -372,7 +373,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	if cfg.XiaomiModelSource != "custom" {
 		cfg.APIKey, _ = a.modelAPIKeyLocked()
 	}
-	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "text")
+	dec, err := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "text", in.AvatarFeedback)
 	if err != nil {
 		// 键盘输入绝不回落到语音 analyze 过滤器；模型不可用时按明确文字指令兜底转交。
 		detail := strings.ReplaceAll(err.Error(), cfg.BaseURL, "<model-endpoint>")
@@ -408,7 +409,7 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, map[string]any{
 		"action": dec.Action, "text": dec.DispatchText, "ask": dec.Ask,
 		"mode": dec.Mode, "reason": dec.Reason, "reply": replyOut,
-		"dispatched": disp, "toolsUsed": dec.ToolsUsed,
+		"dispatched": disp, "toolsUsed": dec.ToolsUsed, "avatarCue": dec.AvatarCue,
 	})
 }
 

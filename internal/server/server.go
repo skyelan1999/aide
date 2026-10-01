@@ -1687,8 +1687,9 @@ func cloneBackendName(b string) string {
 // 任何失败都降级为 send 原文，保证语音录入在模型不可用时仍可用。
 func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Text    string `json:"text"`
-		Context string `json:"context"`
+		Text           string `json:"text"`
+		Context        string `json:"context"`
+		AvatarFeedback bool   `json:"avatarFeedback,omitempty"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -1732,7 +1733,7 @@ func (a *App) voiceFilter(w http.ResponseWriter, r *http.Request) {
 	if cfg.XiaomiModelSource != "custom" {
 		cfg.APIKey, _ = a.modelAPIKeyLocked()
 	}
-	dec, aerr := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "voice")
+	dec, aerr := a.runAssistantAgenticLoop(r.Context(), cfg, text, in.Context, "voice", in.AvatarFeedback)
 	if aerr != nil {
 		entry, err := va.analyze(r.Context(), cfg, text, in.Context)
 		if err != nil {

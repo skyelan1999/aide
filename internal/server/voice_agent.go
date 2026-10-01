@@ -14,15 +14,16 @@ import (
 
 // VoiceHistoryEntry 小秘 agent 的一条决策记录：听到了什么、怎么分析、做了什么。
 type VoiceHistoryEntry struct {
-	Time       string `json:"time"`
-	Heard      string `json:"heard"`          // 原始听到的口语
-	Summarized string `json:"summarized"`     // 总结后的清晰意图
-	Action     string `json:"action"`         // send | ignore | standby | ask
-	Text       string `json:"text"`           // action=send 时=总结后的意图（前端据此发送）
-	Ask        string `json:"ask"`            // action=ask 时的单个追问
-	Reason     string `json:"reason"`         // 小秘的分析理由
-	Mode       string `json:"mode,omitempty"` // #41：action=send 时的发送调度 queue(默认,排队) | insert(插队,打断当前 run)
-	Stop       bool   `json:"stop,omitempty"` // #41：本条是否为中止/止损类指令（始终插队、不受冷却限制）
+	AvatarCue  *AvatarCue `json:"avatarCue,omitempty"`
+	Time       string     `json:"time"`
+	Heard      string     `json:"heard"`          // 原始听到的口语
+	Summarized string     `json:"summarized"`     // 总结后的清晰意图
+	Action     string     `json:"action"`         // send | ignore | standby | ask
+	Text       string     `json:"text"`           // action=send 时=总结后的意图（前端据此发送）
+	Ask        string     `json:"ask"`            // action=ask 时的单个追问
+	Reason     string     `json:"reason"`         // 小秘的分析理由
+	Mode       string     `json:"mode,omitempty"` // #41：action=send 时的发送调度 queue(默认,排队) | insert(插队,打断当前 run)
+	Stop       bool       `json:"stop,omitempty"` // #41：本条是否为中止/止损类指令（始终插队、不受冷却限制）
 }
 
 // VoiceMemory 小秘的长期记忆：与主记忆区分，记录用户习惯/偏好。

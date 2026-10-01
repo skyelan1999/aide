@@ -81,6 +81,18 @@
       ]
     },
     {
+      "id": "virtual-avatars",
+      "title": "虚拟形象",
+      "description": "aide 与小秘共用一个虚拟形象，统一管理素材包、显示位置与启用状态。导入素材仅保存在当前浏览器。",
+      "controls": [
+        {
+          "id": "virtual-avatars",
+          "type": "virtual-avatars",
+          "label": "虚拟形象"
+        }
+      ]
+    },
+    {
       "id": "language",
       "title": "语言",
       "controls": [

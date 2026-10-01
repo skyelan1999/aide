@@ -305,7 +305,7 @@ func (a *App) systemPromptForSession(s *Session) string {
 
 // buildContextPreview 构造与真实首轮请求一致的消息/工具并给出预算估算。
 // s 为 nil 时表示新会话（无历史与摘要）。调用方需持有 a.mu。
-func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, images []MessageImage, cfg Settings, params ProfileParams, includeBody bool) *ContextPreview {
+func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, images []MessageImage, cfg Settings, params ProfileParams, includeBody bool, avatarFeedback ...bool) *ContextPreview {
 	// 按会话 Kind 选基础 system 设定（小秘系统会话恒为小秘人格；普通会话跟随全局活动人格）
 	history := []Message{{Role: "system", Content: a.systemPromptForSession(s) + "\n" + a.cwdPromptLineLocked() + "\n可用工具: " + a.toolListHint()}}
 	if guide := a.environmentGuide(); guide != "" {
@@ -360,7 +360,8 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 		instruction = planInstruction
 	}
 	first := append(append([]Message{}, history...), Message{Role: "user", Content: instruction})
-	tools := a.contextToolsFor(s)
+	avatarEnabled := len(avatarFeedback) > 0 && avatarFeedback[0] && avatarCueFormatAllowed(params)
+	tools := withAvatarCueTool(a.contextToolsFor(s), avatarEnabled)
 
 	for i := historyStart; i < len(history)-1; i++ {
 		addHistoryComponent(&bd, history[i])
@@ -421,6 +422,9 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	fp.Write([]byte(cfg.Model))
 	fp.Write([]byte(prompt))
 	fp.Write([]byte(mode))
+	if avatarEnabled {
+		fp.Write([]byte("avatar-feedback"))
+	}
 	fp.Write([]byte(contextText))
 	fp.Write([]byte(a.wsID()))
 	if s != nil {
@@ -612,14 +616,15 @@ func validWorkflowPhase(phase string) bool {
 // contextPreviewHandler POST /api/context-preview：按草稿构造预览（不产生副作用）。
 func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		SessionID     string       `json:"sessionId"`
-		Prompt        string       `json:"prompt"`
-		Mode          string       `json:"mode"`
-		Strategy      string       `json:"strategy,omitempty"`
-		Profile       string       `json:"profile,omitempty"`
-		WorkflowPhase string       `json:"workflowPhase,omitempty"`
-		Baseline      bool         `json:"baseline,omitempty"`
-		Attachments   []Attachment `json:"attachments"`
+		SessionID      string       `json:"sessionId"`
+		Prompt         string       `json:"prompt"`
+		Mode           string       `json:"mode"`
+		Strategy       string       `json:"strategy,omitempty"`
+		Profile        string       `json:"profile,omitempty"`
+		WorkflowPhase  string       `json:"workflowPhase,omitempty"`
+		Baseline       bool         `json:"baseline,omitempty"`
+		AvatarFeedback bool         `json:"avatarFeedback,omitempty"`
+		Attachments    []Attachment `json:"attachments"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -679,7 +684,7 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_ = profileID
-	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, !in.Baseline)
+	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, !in.Baseline, in.AvatarFeedback)
 	a.applyWorkflowContext(preview, in.Mode, in.WorkflowPhase)
 	jsonOut(w, 200, preview)
 }
