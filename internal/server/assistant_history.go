@@ -1,10 +1,13 @@
 package server
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"time"
@@ -353,6 +356,9 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 		a.recordAssistantExchangeLocked(text, entry, "text")
 		disp := a.dispatchToAideLocked(entry.Text)
 		a.mu.Unlock()
+		if disp != nil {
+			a.startDispatchedAssistantTask(disp, entry.Text, in.AvatarFeedback)
+		}
 		jsonOut(w, 200, map[string]any{
 			"action": entry.Action, "text": entry.Text, "reply": describeVoiceEntry(entry),
 			"dispatched": disp, "reason": entry.Reason,
@@ -399,11 +405,17 @@ func (a *App) assistantMessageHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		a.mu.Unlock()
 	}
+	if dec.Action == "dispatch" && disp != nil {
+		a.startDispatchedAssistantTask(disp, dec.DispatchText, in.AvatarFeedback)
+	}
 	replyOut := dec.Reply
 	if dec.Action == "dispatch" {
-		replyOut = "好，我已经把这件事交给 aide 了。"
-		if n, ok := disp["number"]; ok {
-			replyOut = fmt.Sprintf("好，我已经把这件事交给 aide 在 #%v 那边做了，我帮你盯着。", n)
+		if disp != nil && disp["started"] == true {
+			replyOut = fmt.Sprintf("好，我已经启动 aide 会话 #%v 开始处理了，我会帮你盯着。", disp["number"])
+		} else if disp == nil {
+			replyOut = "我识别到了这项工作，但没能创建 aide 会话；请稍后重试。"
+		} else {
+			replyOut = fmt.Sprintf("我已创建 aide 会话 #%v，但暂时没能启动：%v。任务草稿留在会话里，处理好模型配置后可以继续。", disp["number"], disp["startError"])
 		}
 	}
 	jsonOut(w, 200, map[string]any{
@@ -427,7 +439,7 @@ func (a *App) dispatchToAideLocked(intent string) map[string]any {
 	}
 	target := &Session{
 		ID: newID(), Title: string(titleRunes), Created: now, Updated: now,
-		Messages: []Message{{Role: "user", Content: intent}},
+		Messages: []Message{},
 		Runs:     []*Task{}, PendingPrompt: intent,
 	}
 	a.assignSessionNumber(target)
@@ -438,5 +450,47 @@ func (a *App) dispatchToAideLocked(intent string) map[string]any {
 		"sessionId": target.ID,
 		"number":    target.Number,
 		"title":     target.Title,
+	}
+}
+
+// startDispatchedAssistantTask makes Xiaomi's explicit aide delegation an active run.
+// It calls the same validated startTask path as the composer, preserving queue,
+// context-budget, model, permission, and run-limit checks.
+func (a *App) startDispatchedAssistantTask(dispatch map[string]any, prompt string, avatarFeedback bool) {
+	sessionID, _ := dispatch["sessionId"].(string)
+	if sessionID == "" || strings.TrimSpace(prompt) == "" {
+		dispatch["started"] = false
+		dispatch["startError"] = "缺少会话或任务内容"
+		return
+	}
+	body, _ := json.Marshal(map[string]any{
+		"prompt": prompt, "mode": "chat", "strategy": "auto", "queued": true,
+		"avatarFeedback": avatarFeedback,
+	})
+	req := httptest.NewRequest(http.MethodPost, "/api/sessions/"+sessionID+"/runs", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req.SetPathValue("id", sessionID)
+	recorder := httptest.NewRecorder()
+	a.startTask(recorder, req)
+	if recorder.Code != http.StatusAccepted {
+		var failure struct {
+			Error string `json:"error"`
+		}
+		_ = json.Unmarshal(recorder.Body.Bytes(), &failure)
+		if failure.Error == "" {
+			failure.Error = fmt.Sprintf("任务启动失败（HTTP %d）", recorder.Code)
+		}
+		dispatch["started"] = false
+		dispatch["startError"] = failure.Error
+		return
+	}
+	var task map[string]any
+	_ = json.Unmarshal(recorder.Body.Bytes(), &task)
+	dispatch["started"] = true
+	if runID, ok := task["id"].(string); ok && runID != "" {
+		dispatch["runId"] = runID
+	}
+	if runID, ok := task["runId"].(string); ok && runID != "" {
+		dispatch["runId"] = runID
 	}
 }

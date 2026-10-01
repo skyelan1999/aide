@@ -2,7 +2,7 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-核对日期：2026-10-01。当前源码 tag 为 `v0.1.14.0-RC1`。aide 融合 AI 与 IDE；架构由 Go 服务、浏览器 UI 与 Docker 工具环境组成。统一虚拟形象使用共享偏好与按需素材播放器，后端真实任务事件确定状态，模型反馈只选择动作变体；响应式侧栏宽度由 CSS 变量与拖动控制器共同维护。历史验收保留于 [验证记录](verification.md)，功能状态以对应任务验收记录为准，发布身份由 tag、镜像和发布记录共同确认。
+核对日期：2026-10-01。当前源码 tag 为 `v0.1.14.0-RC2`。aide 融合 AI 与 IDE；架构由 Go 服务、浏览器 UI 与 Docker 工具环境组成。统一虚拟形象使用共享偏好与按需素材播放器，后端真实任务事件确定状态，模型反馈只选择动作变体；响应式侧栏宽度由 CSS 变量与拖动控制器共同维护。小秘明确转交时通过既有 `startTask` 路径创建并启动/排队 Aide 任务；TTS 自动模式按可用提供商回退，无法播放后端音频时退到浏览器合成。历史验收保留于 [验证记录](verification.md)，功能状态以对应任务验收记录为准，发布身份由 tag、镜像和发布记录共同确认。
 
 ## 系统结构
 
@@ -155,7 +155,7 @@ flowchart LR
 
 ## TTS 分层架构
 
-小蜜朗读是可插拔管线：后端 `internal/server/tts` 定义 `TTSProvider` 接口（`Name/Synth/Format/Available`），`NewProvider(name, Config)` 按名注册。当前实现 edge-tts——用标准库手写最小 RFC6455 WebSocket 客户端直连微软 Read-Aloud（`wss://speech.platform.bing.com/...`，公开 token + 时间派生的 `Sec-MS-GEC`，无需 key），SSML 映射语速/情感，回流式 MP3。Web Speech 是纯浏览器能力，后端不合成（`ErrBrowserOnly`），始终在前端兜底。
+小秘朗读是可插拔管线：后端 `internal/server/tts` 定义 `TTSProvider` 接口（`Name/Synth/Format/Available`），`NewProvider(name, Config)` 按名注册。当前实现 edge-tts——用标准库手写最小 RFC6455 WebSocket 客户端直连微软 Read-Aloud（`wss://speech.platform.bing.com/...`，公开 token + 时间派生的 `Sec-MS-GEC`，无需 key），SSML 映射语速/情感，回流式 MP3。Web Speech 是纯浏览器能力，后端不合成（`ErrBrowserOnly`），由前端兜底；自动模式在 sherpa/edge/Azure 均不可用时直接使用浏览器合成，后端音频解码或播放失败也会回退浏览器。
 
 **音频流路径**：
 
@@ -181,7 +181,7 @@ sequenceDiagram
   end
 ```
 
-**降级链**：选定引擎 → edge-tts（首包 1.5s 无数据即失败）→ 浏览器 Web Speech。前端 `ttsSpeak` 在 fetch/首包失败时用同一段文本改走 `webSpeakReply`/`webSpeakAwait`；显式选 webspeech 时后端直接 400、前端不发请求。
+**降级链**：自动模式优先本地 sherpa-onnx，之后尝试 edge-tts 与已配置的 Azure；均不可用时由前端使用浏览器 Web Speech。后端音频请求、解码或播放失败时，同一段文本改走 `webSpeakReply`/`webSpeakAwait`。显式选择浏览器合成时前端直接使用 Web Speech；显式选定其他引擎时不静默改写用户选择。
 
 ```mermaid
 stateDiagram-v2

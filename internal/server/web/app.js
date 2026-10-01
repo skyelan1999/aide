@@ -628,6 +628,8 @@ async function selectSession(id) {
   state.pendingSessionId = id;
   paintSessionSelection(id, true); // 首帧反馈不等待 GET 或「已读」磁盘写入
   if (!sameSession && typeof stopXiaomiDictation === 'function') stopXiaomiDictation();
+  // 离开小秘会话时收起聆听面板并硬停止识别，避免麦克风继续监听或把后续语音送到新会话。
+  if (!sameSession && typeof voiceHardStop === 'function' && !$('voice-panel').classList.contains('hidden')) voiceHardStop();
   clearTimeout(state.poll); closeStream();
   ttsCancel();
   if (!sameSession) {
@@ -787,11 +789,12 @@ function openStream(run) {
       // 小秘语音发起的 run 完成且开启语音回复 → 朗读最后一条 assistant 回复
       if (voice.awaitingReply) {
         voice.awaitingReply = false;
+        const rev = [...(s.messages || [])].reverse();
+        let last = rev.find(m => m.role === 'assistant' && m.content && m.content.trim().length >= 30);
+        if (!last) last = rev.find(m => m.role === 'assistant' && m.content && m.content.trim());
+        if (last) voiceLog('reply', last.content.trim());
         if (state.config && state.config.voiceReplyEnabled) {
           // 选最终完整结论：排除工具过渡/过短消息（<30 字多为工具确认）；找不到再退回最后一条非空 assistant
-          const rev = [...(s.messages || [])].reverse();
-          let last = rev.find(m => m.role === 'assistant' && m.content && m.content.trim().length >= 30);
-          if (!last) last = rev.find(m => m.role === 'assistant' && m.content && m.content.trim());
           if (last) speakReply(last.content);
         }
       }
@@ -2471,13 +2474,17 @@ $('task-form').onsubmit = action(async event => {
           openAssistantGate(target.id, target.title || '小秘');
           return;
         }
+        // 小秘文字会话不经过 aide 的 run/done 流；直接朗读本次小秘回复。
+        // 静默/忽略动作没有面向用户的回复，不触发 TTS。
+        if (resp.action !== 'silent' && resp.action !== 'ignore' && resp.reply) speakReply(resp.reply);
         $('prompt').value = ''; state.attachments = []; renderAttachments();
         // 转交成功后立即打开后端刚创建的 aide 会话。此前固定回到小秘，
         // 导致新会话虽已出现在侧栏，主区域仍停留在欢迎页或小秘历史。
         await selectSession(resp.dispatched?.sessionId || target.id);
         // 按 action 分流提示
         if (resp.action === 'dispatch' && resp.dispatched) {
-          toast(t('已创建会话 #{0}，任务已就绪；检查后发送才会运行', resp.dispatched.number || '?'));
+          if (resp.dispatched.started) toast(t('已启动 aide 会话 #{0}，任务已开始', resp.dispatched.number || '?'));
+          else toast(t('已创建 aide 会话 #{0}，但任务未启动：{1}', resp.dispatched.number || '?', resp.dispatched.startError || t('请检查模型配置')));
         } else if (resp.action === 'ask') {
           toast(resp.reply || t('小秘想追问'));
         } else if (resp.action === 'silent') {
@@ -7036,8 +7043,8 @@ function voiceRenderLog() {
   const host = $('voice-text');
   host.replaceChildren();
   for (const item of voice.log) {
-    const line = el('div', 'voice-log-line ' + (item.type === 'sent' ? 'is-sent' : item.type === 'ignored' ? 'is-ignored' : 'is-standby'));
-    const label = item.type === 'sent' ? t('已发送') : item.type === 'ignored' ? t('已忽略') : item.type === 'ask' ? t('追问') : t('已退下');
+    const line = el('div', 'voice-log-line ' + (item.type === 'reply' ? 'is-reply' : item.type === 'sent' ? 'is-sent' : item.type === 'ignored' ? 'is-ignored' : 'is-standby'));
+    const label = item.type === 'reply' ? t('小秘回复') : item.type === 'sent' ? t('已发送') : item.type === 'ignored' ? t('已忽略') : item.type === 'ask' ? t('追问') : t('已退下');
     const tag = el('span', 'voice-log-tag', label);
     const chips = el('span', 'voice-log-chips');
     if (item.type === 'sent' && item.mode === 'insert') chips.append(el('span', 'voice-log-mode is-insert', t('插队')));
@@ -7143,6 +7150,9 @@ async function voiceFilterOne(sentence) {
     // 退下即收起面板，仅短暂 toast 提示
     $('voice-panel').classList.add('hidden');
     toast(result.reason || t('小秘已退下，点麦克风可重新唤起'));
+  } else if (result.reply) {
+    voiceLog('reply', result.reply, result.reason);
+    if (state.config && state.config.voiceReplyEnabled) speakReply(result.reply);
   } else {
     voiceLog('ignored', sentence, result.reason);
   }
@@ -7211,7 +7221,13 @@ const ttsPlayer = {
 };
 function ttsWantsEdge(overrideProvider) {
   const p = overrideProvider != null ? overrideProvider : ((state.config && state.config.ttsProvider) || 'auto');
-  return p !== 'webspeech'; // auto/edge 都先走 edge，失败自动降级
+  if (p === 'webspeech') return false;
+  if (p === 'auto') {
+    const cfg = state.config || {};
+    // 自动模式在已知离线模型与后端神经音均不可用时，直接使用浏览器语音，避免等待必然失败的请求。
+    if (!cfg.sherpaAvailable && cfg.edgeAvailable === false && !cfg.azureConfigured) return false;
+  }
+  return true; // 后端合成失败或浏览器音频无法播放时，ttsSpeak 会降级 Web Speech。
 }
 async function ttsEdgeSynthOne(seg, overrideVoice) {
   const ctrl = new AbortController();
@@ -7236,22 +7252,30 @@ async function ttsEdgeSynthOne(seg, overrideVoice) {
   return URL.createObjectURL(blob);
 }
 function ttsPlayOne(url) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const a = new Audio(url);
     ttsPlayer._audio = a;
     let done = false;
-    const finish = () => { if (done) return; done = true; window.aideAvatarSignal?.('speaking', false); ttsPlayer._audio = null; URL.revokeObjectURL(url); resolve(); };
+    let timer = 0;
+    const cleanup = () => {
+      window.aideAvatarSignal?.('speaking', false);
+      if (ttsPlayer._audio === a) ttsPlayer._audio = null;
+      if (timer) clearInterval(timer);
+      URL.revokeObjectURL(url);
+    };
+    const finish = () => { if (done) return; done = true; cleanup(); resolve(); };
+    const fail = error => { if (done) return; done = true; cleanup(); reject(error || new Error('合成音频无法播放')); };
     a.onplaying = () => window.aideAvatarSignal?.('speaking', true);
     a.onpause = () => window.aideAvatarSignal?.('speaking', false);
     a.onended = finish;
-    a.onerror = finish;
-    const timer = setInterval(() => {
+    a.onerror = () => fail(new Error('合成音频解码或播放失败'));
+    timer = setInterval(() => {
       if (done) { clearInterval(timer); return; }
       if (ttsPlayer.cancelled) { a.pause(); clearInterval(timer); finish(); return; }
       if (ttsPlayer.paused) { if (!a.paused) a.pause(); }
-      else if (a.paused && !a.ended) a.play().catch(() => {});
+      else if (a.paused && !a.ended) a.play().catch(fail);
     }, 150);
-    a.play().catch(finish);
+    a.play().catch(fail);
   });
 }
 // 朗读入口：awaitMode=true 返回 Promise（导览讲解），否则即发即忘（对话回复）。
@@ -7351,8 +7375,14 @@ async function typeIntoPrompt(text) {
   }
 }
 
-// 小秘专属会话使用听写模式：识别结果先进入可编辑输入框，用户显式点击发送后才提交。
-const xiaomiDictation = { token: 0, recognition: null, stream: null, active: false, starting: false, finalText: '', interim: '', baseText: '', lastRendered: '' };
+// 小秘专属会话使用听写模式：语音停顿后自动结束，识别结果回到输入框供用户编辑和发送。
+const xiaomiDictation = { token: 0, recognition: null, stream: null, active: false, starting: false, finalText: '', interim: '', baseText: '', lastRendered: '', silenceTimer: 0 };
+function scheduleXiaomiDictationFinish(token) {
+  clearTimeout(xiaomiDictation.silenceTimer);
+  xiaomiDictation.silenceTimer = setTimeout(() => {
+    if (token === xiaomiDictation.token && xiaomiDictation.active) stopXiaomiDictation();
+  }, 1200);
+}
 function renderXiaomiDictationText() {
   const prompt = $('prompt');
   const recognized = xiaomiDictation.finalText + xiaomiDictation.interim;
@@ -7377,6 +7407,8 @@ function finishXiaomiDictation(token, showResult = true) {
   xiaomiDictation.starting = false;
   if (showResult && xiaomiDictation.interim.trim()) xiaomiDictation.finalText += xiaomiDictation.interim;
   xiaomiDictation.interim = '';
+  clearTimeout(xiaomiDictation.silenceTimer);
+  xiaomiDictation.silenceTimer = 0;
   if (xiaomiDictation.recognition) {
     try { xiaomiDictation.recognition.onend = null; xiaomiDictation.recognition.stop(); } catch (_) {}
     xiaomiDictation.recognition = null;
@@ -7387,11 +7419,20 @@ function finishXiaomiDictation(token, showResult = true) {
   $('voice-btn').classList.remove('recording');
   $('voice-panel').classList.add('hidden');
   renderXiaomiDictationText();
-  if (showResult && xiaomiDictation.finalText.trim()) toast(t('语音已转写，可编辑后发送'));
+  if (showResult && xiaomiDictation.finalText.trim()) {
+    // Programmatic value updates do not notify the composer. Emit the same event
+    // as typed input so context preview, send state, and other listeners refresh.
+    const prompt = $('prompt');
+    if (typeof Event === 'function' && typeof prompt.dispatchEvent === 'function') prompt.dispatchEvent(new Event('input', { bubbles: true }));
+    if (typeof prompt.focus === 'function') prompt.focus();
+    toast(t('语音已转写，可编辑后发送'));
+  }
 }
 function stopXiaomiDictation() {
   if (!xiaomiDictation.active && !xiaomiDictation.starting) return;
   const token = xiaomiDictation.token;
+  clearTimeout(xiaomiDictation.silenceTimer);
+  xiaomiDictation.silenceTimer = 0;
   xiaomiDictation.active = false;
   xiaomiDictation.starting = false;
   $('voice-btn').classList.remove('recording');
@@ -7444,14 +7485,18 @@ async function startXiaomiDictation() {
     rec.onresult = event => {
       if (token !== xiaomiDictation.token) return;
       let interim = '';
+      let receivedFinal = false;
       for (let i = event.resultIndex; i < event.results.length; i++) {
         const result = event.results[i];
-        if (result.isFinal) xiaomiDictation.finalText += result[0].transcript;
+        if (result.isFinal) { xiaomiDictation.finalText += result[0].transcript; receivedFinal = true; }
         else interim += result[0].transcript;
       }
       xiaomiDictation.interim = interim;
       renderXiaomiDictationText();
+      if (receivedFinal) scheduleXiaomiDictationFinish(token);
     };
+    rec.onspeechstart = () => clearTimeout(xiaomiDictation.silenceTimer);
+    rec.onspeechend = () => scheduleXiaomiDictationFinish(token);
     rec.onerror = event => {
       if (token !== xiaomiDictation.token) return;
       const denied = event.error === 'not-allowed' || event.error === 'service-not-allowed';
@@ -7938,7 +7983,7 @@ function renderVoiceReplyControl() {
   const wrap = el('div', 'settings-control');
   const head = el('div', 'control-label');
   head.append(el('span', '', t('语音回复')));
-  const row = el('div', 'voice-reply-row');
+  const row = el('div', 'voice-reply-row voice-reply-options');
   const toggle = el('input'); toggle.type = 'checkbox';
   toggle.checked = !!(state.config && state.config.voiceReplyEnabled);
   const gender = el('select');
@@ -7971,7 +8016,7 @@ function renderVoiceDispatchControl() {
   const head = el('div', 'control-label');
   head.append(el('span', '', t('发送调度')));
   const cfg = state.config || {};
-  const row = el('div', 'voice-reply-row');
+  const row = el('div', 'voice-reply-row voice-dispatch-row');
 
   row.append(el('span', '', t('默认发送模式')));
   const mode = el('select');
@@ -8015,7 +8060,7 @@ function renderTTSEngineControl() {
   const engRow = el('div', 'voice-reply-row');
   engRow.append(el('span', '', t('TTS引擎')));
   const eng = el('select');
-  [['auto', t('自动（本地离线优先）')], ['sherpa', t('本地离线')], ['edge', t('edge-tts 联网')], ['clone', t('克隆音色（自托管）')], ['webspeech', t('浏览器合成')]].forEach(([v, label]) => {
+  [['auto', t('自动（不可用时浏览器兜底）')], ['sherpa', t('本地离线')], ['edge', t('edge-tts 联网')], ['clone', t('克隆音色（自托管）')], ['webspeech', t('浏览器合成')]].forEach(([v, label]) => {
     const o = el('option', '', label); o.value = v; eng.append(o);
   });
   eng.value = cfg.ttsProvider || 'auto';
@@ -8122,7 +8167,7 @@ function renderTTSEngineControl() {
     engStatus.style.color = '#888';
   }
   wrap.append(head, engRow, voiceRow, engStatus, rateRow, expRow, btnRow, warn,
-    el('small', '', t('默认优先本地离线 sherpa-onnx（完全离线、文本不出本机）；未装模型时自动回退 edge-tts 联网神经音，再不行降级浏览器合成。保密环境可装本地模型或选「浏览器合成」。主聊天的机械朗读按钮不受此设置影响。')));
+    el('small', '', t('自动模式依次尝试本地离线和可用的联网神经音；都不可用或播放失败时直接回退浏览器合成。可手动选择浏览器合成。主聊天的机械朗读按钮不受此设置影响。')));
   return wrap;
 }
 controlRenderers['tts-engine'] = renderTTSEngineControl;

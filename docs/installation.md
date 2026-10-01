@@ -17,12 +17,12 @@ aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。最近 
 
 ## 2. 下载同一版本的源码
 
-当前源码 tag 为 `v0.1.14.0-RC1`。源码 tag 不代表 GitHub Release 已有镜像附件；使用镜像安装前请确认发布页提供了同版本文件。也可以 checkout 下方源码 tag 并从源码构建。
+当前源码 tag 为 `v0.1.14.0-RC2`。源码 tag 不代表 GitHub Release 已有镜像附件；使用镜像安装前请确认发布页提供了同版本文件。也可以 checkout 下方源码 tag 并从源码构建。
 
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
-git checkout v0.1.14.0-RC1
+git checkout v0.1.14.0-RC2
 bash scripts/install.sh --check
 ```
 

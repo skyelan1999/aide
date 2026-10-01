@@ -253,7 +253,7 @@ type Session struct {
 	Created             string    `json:"created"`
 	Messages            []Message `json:"messages"`
 	Runs                []*Task   `json:"runs"`
-	PendingPrompt       string    `json:"pendingPrompt,omitempty"`     // 小秘新建会话时暂存，用户显式发送后才启动
+	PendingPrompt       string    `json:"pendingPrompt,omitempty"`     // 会话任务未能自动启动时保留的待发送草稿
 	Compact             string    `json:"compact,omitempty"`           // 压缩摘要（compaction）
 	CompactedMessages   int       `json:"compactedMessages,omitempty"` // 已折叠消息数
 	CompactedAt         string    `json:"compactedAt,omitempty"`

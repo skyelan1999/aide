@@ -3480,31 +3480,34 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			}
 			target = &Session{
 				ID: newID(), Title: string(titleRunes), Created: now, Updated: now,
-				Messages: []Message{{Role: "user", Content: msg}},
-				Runs:     []*Task{}, PendingPrompt: msg,
+				Runs: []*Task{}, PendingPrompt: msg,
 			}
 			a.assignSessionNumber(target)
 			a.sessions[target.ID] = target
 			created = true
 			_ = a.save(target)
+			a.broadcastSessionsChanged(target.ID)
 		} else {
 			target = a.resolveSessionRef(ref)
 			if target == nil {
 				a.mu.Unlock()
 				return "会话不存在: " + ref
 			}
-			target.Messages = append(target.Messages, Message{
-				Role:    "user",
-				Content: "[小秘转交] " + msg,
-			})
+			// 保留可恢复草稿；成功启动时 startTask 会消费它，启动校验失败时也可继续。
+			target.PendingPrompt = msg
 			target.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 			_ = a.save(target)
 		}
+		dispatch := map[string]any{"sessionId": target.ID, "number": target.Number, "title": target.Title}
 		a.mu.Unlock()
-		if created {
-			return fmt.Sprintf("已新建会话 #%d（%s），任务已准备为待发送草稿：%s。尚未运行；用户检查后须在该会话手动发送才会启动。", target.Number, target.Title, msg)
+		a.startDispatchedAssistantTask(dispatch, msg, false)
+		if dispatch["started"] != true {
+			return fmt.Sprintf("aide 会话 #%d（%s）的任务暂未启动：%v，内容已保留为草稿。", target.Number, target.Title, dispatch["startError"])
 		}
-		return fmt.Sprintf("已向会话 #%d（%s）推送：%s", target.Number, target.Title, msg)
+		if created {
+			return fmt.Sprintf("已新建并启动 aide 会话 #%d（%s），任务正在处理：%s。", target.Number, target.Title, msg)
+		}
+		return fmt.Sprintf("已向会话 #%d（%s）推送并启动任务：%s", target.Number, target.Title, msg)
 	case "ask_user":
 		question := str("question")
 		qtype := str("type")

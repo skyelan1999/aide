@@ -100,13 +100,16 @@ func TestAssistantMessageRecordsAndDispatches(t *testing.T) {
 		t.Fatalf("second msg = %+v", msgs[1])
 	}
 
-	// 被派发的 aide 会话确实存在且含用户意图
+	// 模型未配置时启动门会拒绝 run，但意图必须作为草稿持久保留。
 	dispID, _ := disp["sessionId"].(string)
 	a.mu.Lock()
 	ds := a.sessions[dispID]
 	a.mu.Unlock()
-	if ds == nil || len(ds.Messages) == 0 || ds.Messages[0].Content == "" {
+	if ds == nil || ds.PendingPrompt != "帮我把首页按钮改成蓝色" || len(ds.Messages) != 0 {
 		t.Fatal("dispatched session not persisted")
+	}
+	if disp["started"] != false || disp["startError"] == "" {
+		t.Fatalf("expected truthful startup failure, got dispatch: %v", disp)
 	}
 }
 
@@ -153,6 +156,27 @@ func TestDispatchToAideLockedCreatesSession(t *testing.T) {
 	a.mu.Unlock()
 	if disp == nil || disp["number"] == nil {
 		t.Fatalf("dispatch returned %v", disp)
+	}
+}
+
+func TestStartDispatchedAssistantTaskStartsRun(t *testing.T) {
+	a := testApp(t)
+	a.mu.Lock()
+	a.settings.BaseURL = "http://127.0.0.1:1" // execution may fail later; run creation is synchronous
+	a.settings.Model = "test"
+	disp := a.dispatchToAideLocked("写一个单元测试")
+	a.mu.Unlock()
+
+	a.startDispatchedAssistantTask(disp, "写一个单元测试", false)
+	if disp["started"] != true || disp["runId"] == nil {
+		t.Fatalf("delegated task was not started: %v", disp)
+	}
+	sessionID, _ := disp["sessionId"].(string)
+	a.mu.Lock()
+	s := a.sessions[sessionID]
+	defer a.mu.Unlock()
+	if s == nil || s.PendingPrompt != "" || len(s.Runs) != 1 || s.Runs[0].Status != "running" {
+		t.Fatalf("delegated session did not enter running state: %+v", s)
 	}
 }
 

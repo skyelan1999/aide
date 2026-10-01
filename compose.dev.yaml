@@ -5,6 +5,7 @@ services:
   aide:
     build: !reset null
     image: golang:1.26-bookworm
+    pull_policy: never
     user: "1000:1000"
     working_dir: /src
     command: ["go", "run", "./cmd/aide"]

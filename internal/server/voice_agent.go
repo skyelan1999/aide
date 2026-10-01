@@ -21,6 +21,7 @@ type VoiceHistoryEntry struct {
 	Action     string     `json:"action"`         // send | ignore | standby | ask
 	Text       string     `json:"text"`           // action=send 时=总结后的意图（前端据此发送）
 	Ask        string     `json:"ask"`            // action=ask 时的单个追问
+	Reply      string     `json:"reply,omitempty"` // action=ignore 且为陪聊时，小秘实际回复的正文
 	Reason     string     `json:"reason"`         // 小秘的分析理由
 	Mode       string     `json:"mode,omitempty"` // #41：action=send 时的发送调度 queue(默认,排队) | insert(插队,打断当前 run)
 	Stop       bool       `json:"stop,omitempty"` // #41：本条是否为中止/止损类指令（始终插队、不受冷却限制）

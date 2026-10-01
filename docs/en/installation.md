@@ -22,13 +22,13 @@ Official installers: [Docker Desktop](https://docs.docker.com/desktop/), [Docker
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
-git checkout v0.1.14.0-RC1
+git checkout v0.1.14.0-RC2
 bash scripts/install.sh --check
 ```
 
 A source ZIP is also usable for image installation. Keep its scripts, Compose file, and `version.md`: an image tarball is not a standalone desktop installer.
 
-The current source tag is **v0.1.14.0-RC1**. A source tag does not imply that a GitHub Release has matching image assets. Check the release page before using the image-install path.
+The current source tag is **v0.1.14.0-RC2**. A source tag does not imply that a GitHub Release has matching image assets. Check the release page before using the image-install path.
 
 ## 3A. Install a released ARM64 image
 

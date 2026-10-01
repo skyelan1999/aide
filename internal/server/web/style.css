@@ -479,6 +479,7 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .voice-log-line { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; }
 .voice-log-tag { flex-shrink: 0; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; }
 .voice-log-line.is-sent .voice-log-tag { background: rgba(34,197,94,.15); color: #16a34a; }
+.voice-log-line.is-reply .voice-log-tag { background: color-mix(in srgb, var(--brand) 14%, transparent); color: var(--brand-text); }
 .voice-log-line.is-ignored .voice-log-tag { background: rgba(217,119,6,.15); color: #d97706; }
 .voice-log-line.is-standby .voice-log-tag { background: rgba(127,127,127,.15); color: var(--muted, #888); }
 .voice-log-interim { font-size: 12px; color: var(--muted, #888); padding-top: 4px; border-top: 1px dashed var(--line-faint, #ddd); margin-top: 4px; }
@@ -630,6 +631,20 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 .voice-reply-row { display: flex; align-items: center; gap: 8px; margin-top: 7px; }
 .voice-reply-row select { padding: 6px 8px; font-size: 12px; background: var(--field); color: var(--text); border: 1px solid var(--field-border); border-radius: 8px; }
 .voice-reply-row .primary { padding: 7px 14px; font-size: 12px; }
+.voice-reply-options { display: grid; grid-template-columns: auto auto minmax(0, 1fr) minmax(0, 1fr) auto; align-items: center; }
+.voice-reply-options > span, .voice-dispatch-row > span { white-space: nowrap; }
+.voice-reply-options select, .voice-dispatch-row select { min-width: 0; width: 100%; }
+.voice-reply-options input[type="checkbox"] { margin: 0; }
+.voice-dispatch-row { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content minmax(0, 1fr) auto; align-items: center; }
+@media (max-width: 760px) {
+  .settings-sheet.sheet-wide { width: min(720px, calc(100vw - 20px)); height: min(720px, calc(100dvh - 20px)); top: 10px; left: 10px; }
+  .voice-reply-options { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .voice-reply-options select { grid-column: span 3; }
+  .voice-reply-options .primary { grid-column: 3; }
+  .voice-dispatch-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .voice-dispatch-row select { grid-column: 1 / -1; }
+  .voice-dispatch-row .primary { grid-column: 2; }
+}
 
 /* 空返回/失败的回答占位：明确原因，不再是光秃秃的“未返回回答” */
 .chat-answer-empty { color: var(--muted); font-size: 12px; font-style: italic; }

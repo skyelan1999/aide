@@ -1,0 +1,65 @@
+{
+  "id": "release-2026-10-01",
+  "request": "整理当前仓库改动和产品文档，运行发布门禁，按版本脚本生成新 RC，构建并验证后提交、打 tag 并推送到 origin。用户授权原话：整理文档，release and psuh。",
+  "baseline": "89df04029d8719f481c25fff215915fd33da5022",
+  "initial_status": "M compose.dev.yaml\n M docker/voice-clone/docker-compose.yml\n M docker/voice-clone/mock/Dockerfile\n M internal/server/assistant_agent.go\n M internal/server/assistant_history.go\n M internal/server/assistant_history_test.go\n M internal/server/server.go\n M internal/server/voice_agent.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go",
+  "acceptance": [
+    "小秘明确转交工作后创建 aide 会话并通过现有 startTask 校验立即启动或排队；校验失败时保留持久草稿并显示失败原因。",
+    "TTS 自动模式在 sherpa、edge 与 Azure 均不可用时直接使用浏览器合成；后端音频解码或播放失败时回退浏览器合成；手动选择行为不回归。",
+    "开发容器及 voice-clone mock 的本地构建不要求拉取镜像；构建上下文/Dockerfile 调整可复现。",
+    "更新面向当前源码版本的中英文文档、PRD/使用说明、版本记录与发布验收，明确源码 tag、GitHub Release、镜像和生产部署状态。",
+    "quick/full/release-check 通过；在当前 Safari 工作台和本地服务验证发布候选，记录听音或不可验证限制；版本脚本创建新 RC 的提交和 annotated tag，推送 main 与 tag 后核实远端同步。"
+  ],
+  "scope": [
+    "现有已修改源码与配置：compose.dev.yaml、docker/voice-clone/docker-compose.yml、docker/voice-clone/mock/Dockerfile、internal/server/assistant_agent.go、assistant_history.go、assistant_history_test.go、server.go、voice_agent.go、workflow.go、web/app.js、web/locales/en.js、web/style.css。",
+    "README.md、README.en.md、HANDOVER.md、docs/PRD.md、docs/README.md、docs/architecture.md、docs/installation.md、docs/en/installation.md、docs/user-guide.md、docs/en/user-guide.md、docs/verification.md、version.md。",
+    "docs/reviews/2026-10-01-v0.1.14.0-RC2.md 与 docs/tasks/release-2026-10-01.json；仅整理与本次发行范围相关的现行文档，不改写历史版本记录。",
+    "只使用 scripts/version.sh 完成版本 patch/annotated tag；不创建 GitHub Release、不发布镜像附件、不替换生产服务。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "当前用户明确要求整理文档、release 并 push；结合仓库规则解释为新建源码 RC tag、推送 main 和 tags。本轮文件边界列于 scope，GitHub Release/附件与生产部署需独立授权。",
+      "evidence": [
+        "用户原话：整理文档，release and psuh。",
+        "AGENTS.md 与 docs/agent/WORKFLOW.md：升版/tag 仅用 scripts/version.sh，发布门禁需 full 与 release-check。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "在 main 上归纳当前未提交的 Xiaomi 自动启动任务、TTS 浏览器回退、语音设置排版及本地 Docker 拉取策略改动；先更新现行文档和验收账本，提交受控源码/文档，clean tree 上运行 full 与 release-check，再通过 patch 递增 RC、构建并核验本地候选，最后推送 main/tag。",
+      "evidence": [
+        "当前 HEAD 89df04029d8719f481c25fff215915fd33da5022，最近 tag v0.1.14.0-RC1。",
+        "docs/agent/WORKFLOW.md 发布 1-7 步；scripts/version.sh patch 规则。"
+      ]
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户 2026-10-01 原话：“整理文档，release and psuh”。授权整理、按项目版本规则 release（本项目源码 RC tag）、提交并推送 main 与 tag；当前范围不含 GitHub Release、镜像附件或生产部署。",
+  "rollback": "保持已发布 tag 不变，不 force-push。若候选回归：git revert <本次功能提交>，再运行 bash start.command 重建本地服务；若只需恢复上一版，checkout v0.1.14.0-RC1 于隔离工作树并从源码重建。回滚后另发递增 RC，不复用/移动 tag。",
+  "handoff": ""
+}

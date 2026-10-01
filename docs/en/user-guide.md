@@ -2,7 +2,7 @@
 
 [简体中文](../user-guide.md) · **English**
 
-The current source tag is `v0.1.14.0-RC1`. Check the linked [task records](../tasks/) and [verification log](../verification.md) for acceptance status. See [Installation](installation.md) for setup.
+The current source tag is `v0.1.14.0-RC2`. Check the linked [task records](../tasks/) and [verification log](../verification.md) for acceptance status. See [Installation](installation.md) for setup.
 
 ## 1. Find your way around
 
@@ -36,7 +36,7 @@ The settings panel is organized into sections: Usage stats (§8), Appearance, La
 
 #### Speech engine & naturalness
 
-The assistant's read-aloud no longer relies only on the browser's built-in Web Speech — on macOS it often falls back to a mechanical old voice like Ting-Ting. Since 0.1.10.2 RC1, read-aloud preferentially uses the backend **edge-tts neural voice** (the same engine as Microsoft Edge "Read aloud", with noticeably more natural Chinese voices such as Xiaoxiao and Yunxi), and automatically falls back to browser speech when it is unavailable.
+Read-aloud supports local sherpa-onnx, edge-tts, configured Azure Speech, and browser Web Speech. Auto mode selects among available engines and uses browser speech when the other engines are unavailable. Browser voice quality depends on the operating system. edge-tts sends spoken text to Microsoft; choose browser speech manually in confidential environments.
 
 ```mermaid
 flowchart TD
@@ -55,25 +55,28 @@ flowchart TD
 
 | Engine | Naturalness | Voices | Network needed | Privacy |
 | --- | --- | --- | --- | --- |
-| edge-tts (default) | High (neural) | Xiaoxiao/Yunxi/Xiaoyi and ~10 more Chinese voices | Yes | Spoken text is sent to Microsoft |
+| sherpa-onnx (local priority) | Depends on installed model | Depends on local model | No | Local processing |
+| edge-tts | High (neural) | Xiaoxiao/Yunxi/Xiaoyi and other Chinese voices | Yes | Spoken text is sent to Microsoft |
 | Browser Web Speech | Low (macOS often Ting-Ting mechanical) | Depends on OS | No | Fully local, never leaves device |
 | Cloud / local OSS (reserved) | High | Extensible | Depends | Depends |
 
-**Neural voice vs. browser mechanical voice**: edge-tts sends text to Microsoft's "Read aloud" channel and streams back a natural neural MP3; browser Web Speech synthesizes locally and works offline, but on macOS it often collapses to a single mechanical voice like Ting-Ting. This was the root cause of "no matter which voice I pick, it sounds the same": not that the voice setting was ignored, but that a too-short first-byte timeout mistakenly degraded to browser speech, so every sentence used the OS mechanical voice.
+**Voice quality and privacy**: network neural voices are often more natural, but edge-tts sends spoken text to Microsoft. Browser Web Speech is local and works offline; its quality and available voices depend on the operating system. Auto mode prefers available local/network engines and selects browser speech when the others are unavailable. Playback failures for backend audio also trigger a browser-speech attempt.
 
 **Robustness: layered timeouts & auto-retry**: edge-tts connection is timed out in three independent stages so a slightly slow first handshake is no longer treated as "unavailable":
 
 - TCP/TLS connect 5s; WSS handshake 5s; **first audio packet 5s** (was 1.5s — the first connection plus GEC token generation often exceeds 1.5s, so it was relaxed).
-- Any timeout retries once with a fresh connection ID; only then does it fall back to browser speech. Non-timeout errors (e.g. 403 auth failure) are not retried.
+- Any timeout retries once with a fresh connection ID; Auto mode can fall back to browser speech after that. Non-timeout errors (e.g. 403 auth failure) are not retried.
 - The backend caches edge availability for 60s: a lightweight probe runs at startup / before the first synth; `/api/config` and `/api/debug/overview` expose `edgeAvailable` and the last failure reason. The cache is re-probed after expiry, so it switches back to the neural voice seamlessly once connectivity returns.
 
 **Degradation notice**: when edge is unavailable and a read falls back to the browser mechanical voice, a toast appears ("neural voice temporarily unavailable, using browser speech"); the settings page also shows a persistent red warning (with the reason) that disappears once edge recovers.
 
 **Colloquializing & prosody**: chat replies are lightly rewritten by an LLM before being read — short sentences, markdown stripped, numbers read aloud, natural filler words. The result is cached in an in-memory LRU keyed by the original text, so the same reply never costs tokens twice. Guided narration is already colloquialized by the backend `voice-narrate` path and is not rewritten again. Speed and expressiveness map to SSML `prosody` / `express-as` on edge-tts.
 
+**Automatic engine selection**: Auto mode prefers available local sherpa-onnx, then tries edge-tts and configured Azure Speech. If none are enabled or available, it uses browser Web Speech. If backend audio cannot be decoded or played, the frontend retries the same text with browser speech. Explicit engine selections remain user-controlled.
+
 **Settings**: Settings → Voice assistant → **Speech engine**:
 
-- **TTS engine**: Auto (recommended) / edge-tts / Browser speech.
+- **TTS engine**: Auto (local offline priority) / Local offline / edge-tts online / Self-hosted clone / Browser speech. Auto uses browser speech when other engines are unavailable.
 - **Voice**: listed grouped by female/male; pick Xiaoxiao (female) / Yunxi (male) / Xiaoyi etc. when edge-tts is chosen. "Default (by gender)" maps female→Xiaoxiao, male→Yunxi, neutral→Xiaoyi.
 - **Speed**: 0.8–1.3×.
 - **Expressiveness**: 0–1, mapped to edge-tts style intensity.
@@ -232,7 +235,7 @@ Pinned at the very top of the sidebar is the assistant system session — the ch
 - **Model source**: Settings → Voice Assistant → Assistant Model can reuse the workspace model configuration or use a separate OpenAI-compatible Base URL, model name, and API key. The separate key is encrypted in the credential vault.
 - **Trajectory and download**: open Trajectory from the top bar while viewing the assistant session. Markdown and JSON exports include its messages. Locked history stays hidden from both the trajectory and export.
 - **Text = voice (#62, RC3)**: typing in the assistant session goes through the same `analyze` intent pipeline as voice transcription (`POST /api/sessions/{id}/assistant-message`), including send/ignore/standby and insert/queue decisions.
-- **Cross-session tools (#30 now live)**: inside its own view the assistant can call `search_sessions` (keyword search across all sessions, including archived), `get_session` (by `#N` or session ID), `follow_session` (mark for follow-up), and `push_to_session` (push a note/summary into a target session), and can create/control other sessions via `spawn_subagent`. These tools are never exposed in regular sessions; assistant sessions always use the assistant persona.
+- **Cross-session tools**: inside its own view the assistant can call `search_sessions` (keyword search across all sessions, including archived), `get_session` (by `#N` or session ID), `follow_session` (mark for follow-up), and `push_to_session` (write a task and start/queue it through the standard Aide run path), and can create/control other sessions via `spawn_subagent`. Standard validation applies; a failed start preserves the draft and reports the reason. These tools are never exposed in regular sessions; assistant sessions always use the assistant persona.
 
 ```mermaid
 flowchart TD
