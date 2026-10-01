@@ -17,12 +17,12 @@ aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。最近 
 
 ## 2. 下载同一版本的源码
 
-最近 tag 为 `v0.1.13.0-RC1`；截至 2026-09-30，GitHub 上没有对应 Release 附件（该 tag 仅有源码）。因此可 checkout 该 tag 并从源码构建；发行镜像安装章节只适用于页面上确实存在且与源码同版的 Release 附件。
+当前源码 tag 为 `v0.1.14.0-RC1`。源码 tag 不代表 GitHub Release 已有镜像附件；使用镜像安装前请确认发布页提供了同版本文件。也可以 checkout 下方源码 tag 并从源码构建。
 
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
-git checkout v0.1.13.0-RC1
+git checkout v0.1.14.0-RC1
 bash scripts/install.sh --check
 ```
 
@@ -50,7 +50,7 @@ bash scripts/install.sh --source
 
 适用于完全不连公网的内网/隔离环境。**核心原则：目标机只 `docker load` 已导入镜像并用 `start-image` 启动，绝不执行 `start`**——`start` 会触发 `docker build`，进而拉取基础镜像，在离线机上必然失败或挂起。Compose 已设 `pull_policy: never`，双保险防止裸跑 `compose up` 意外拉取；缺镜像会立即报错而非联网等待。
 
-交付物三件套（来自同一版本 tag，如 0.1.13.0 RC1）：
+交付物三件套（来自同一版本 tag，如 0.1.14.0 RC1）：
 
 1. 同 tag 源码（或源码 ZIP，内含 Compose、scripts、version.md）；
 2. 自包含镜像归档 `aide-<matching-version>-linux-aarch64.tar.gz`（x86 机为 `amd64`；Docker 内部架构标识为 arm64，归档文件名统一用 aarch64/amd64）；

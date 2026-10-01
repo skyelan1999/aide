@@ -336,5 +336,15 @@
     "limitations": [
       "此轮实际浏览器检查为用户当前桌面Safari窗口；窄屏规则静态回归通过，未另开移动设备验收。"
     ]
+  },
+  "sidebarResizeRegression": {
+    "status": "pass",
+    "cause": "macos.css中固定grid-template-columns覆盖拖动控制器写入的侧栏宽度变量。",
+    "change": "macOS桌面列宽、files-hidden、窄屏浮层宽度绑定--aide-left/right-sidebar-width，并更新样式缓存版本。",
+    "verification": [
+      "系统Safari拖动左侧分隔条：300→340→300 CSS px；中间工作区边界同步移动。",
+      "系统Safari拖动右侧分隔条：366→408→366 CSS px；文件面板和主区同步变化。",
+      "测试结束将两侧恢复到原偏好300/366 px。"
+    ]
   }
 }

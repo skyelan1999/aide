@@ -11,6 +11,16 @@
 - 发布门禁：`python3 scripts/agent-route.py release-check <id>`（只检查不发布）。
 - 后端测试已从历史记录时点的 9 个函数持续扩展；具体覆盖以当前 `go test` 结果和 `internal/server/*_test.go` 为准。
 
+## 0.1.14.0 RC1 源码版本门禁（2026-10-01）
+
+本节记录虚拟形象与 macOS 两侧栏拖动修复随源码版本升版前的验证。版本编号与代码身份以 `version.md` 和 Git tag 为准；本次不构建镜像、不创建 GitHub Release、不部署生产。
+
+- `python3 scripts/agent-route.py verify quick`：PASS；文档检查覆盖 114 个 Markdown 文件及 261 个本地链接。
+- `python3 scripts/agent-route.py verify full`：PASS；包含 `go test -race -count=1 ./...`（`internal/server` 319.328 秒、`internal/server/tts` 3.498 秒）及 `go vet ./...`，命令整体退出码 0。原始门禁收据保存在本机忽略目录 `.agent-state/full.json`，其任务账本记录 fingerprint。
+- 虚拟形象专项 `test_avatar_player/settings/feedback.cjs` 与 `test_i18n.cjs`：PASS；播放器素材、设置迁移、反馈路径及本地化回归通过。
+- 系统 Safari 手工拖动两侧分隔条：左侧 `300 → 340 → 300 px`，右侧 `366 → 408 → 366 px`；分隔线和对应侧栏同步变化，测试后恢复原偏好。
+- 完整38种动作的逐场景主观验收、锁屏动态现场验收、量化帧率仍未全部完成；详见[虚拟形象任务记录](tasks/virtual-avatar-alpha.json)。
+
 ## 集成分支收尾验收（2026-09-30）
 
 本节只记录本次 `consolidate-push-followup-20260930` AP 补验结果。版本 tag `v0.1.13.0-RC1` 仍是最近发布基线，分支整合本身不升版、不发布、不部署。

@@ -16,7 +16,7 @@ AI and an integrated work environment · Understand information · Analyze probl
 
 ![aide workbench with conversations, project files, and task input](docs/images/workbench-preview.jpg)
 
-> **Latest published tag:** `v0.1.13.0-RC1` (see [version history](version.md)). `main` may contain post-tag integration fixes; code that has not been released is not necessarily available as an image. The preview uses an isolated demonstration workspace. Check the task and verification records before treating a feature as accepted.
+> **Current source tag:** `v0.1.14.0-RC1` (see [version history](version.md)). This is a source tag; verify GitHub Release image assets and production deployment separately. The preview uses an isolated demonstration workspace. Check the task and verification records before treating a feature as accepted.
 
 ## Focus on your professional work
 

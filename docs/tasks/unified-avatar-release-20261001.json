@@ -1,0 +1,91 @@
+{
+  "id": "unified-avatar-release-20261001",
+  "request": "文档归整、版本号与发布 tag：统一记录 #a55f041 的虚拟形象及可调侧栏修复和验证范围，更新现行文档版本基线并执行项目发布门禁；不构建镜像、不发布 GitHub Release、不部署生产。",
+  "baseline": "a55f0413dca1e1842672b4f5efc3414ac19e3ec0",
+  "initial_status": "",
+  "acceptance": [
+    "现行中英文文档统一指向源码版本 v0.1.14.0-RC1；历史归档保留其当时版本。",
+    "发布记录区分源码 tag、GitHub Release 镜像附件和生产部署，不将本地验证冒充发布或部署。",
+    "发布门禁通过，version.md 更新，main 上创建对应版本 tag；推送 main 与 tag 后远端同步。",
+    "记录虚拟形象和两侧栏宽度修复的已验证项、未验证项与回滚方式。"
+  ],
+  "scope": [
+    "README.md",
+    "README.en.md",
+    "HANDOVER.md",
+    "version.md",
+    "docs/PRD.md",
+    "docs/README.md",
+    "docs/architecture.md",
+    "docs/user-guide.md",
+    "docs/en/installation.md",
+    "docs/en/user-guide.md",
+    "docs/installation.md",
+    "docs/verification.md",
+    "docs/reviews/2026-10-01-v0.1.14.0-RC1.md",
+    "docs/tasks/virtual-avatar-alpha.json",
+    "docs/tasks/unified-avatar-release-20261001.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "更新全部现行文档版本基线并为 a55f041 已提交变更建立可追溯版本记录；保持历史档案时间语义。",
+      "evidence": [
+        "用户请求：更新所有文档并打版本号。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "沿用四位版本机制；功能变更提升 feature 档到 0.1.14.0 RC1。使用版本脚本完成版本提交和 main tag。",
+      "evidence": [
+        "scripts/version.sh",
+        "docs/agent/WORKFLOW.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "中英文首页/安装/用户指南、PRD、架构、文档索引、交接和任务验收记录已更新；补充源码版本与发布边界说明。",
+      "evidence": [
+        "README.md",
+        "HANDOVER.md",
+        "docs/PRD.md",
+        "docs/user-guide.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "项目 full 门禁全部通过，包括 Go race/vet 容器测试；虚拟形象组件/i18n专项通过，Safari左右侧栏拖拽宽度实测恢复原偏好。",
+      "evidence": [
+        ".agent-state/full.json（发布前最终内容指纹收据，要求重新生成后再 release-check）",
+        "node scripts/test_avatar_player.cjs PASS",
+        "node scripts/test_avatar_settings.cjs PASS",
+        "node scripts/test_avatar_feedback.cjs PASS",
+        "node scripts/test_i18n.cjs PASS",
+        "Safari：左300→340→300 px、右366→408→366 px；确认面板变化并恢复原值"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新了中英文 README、安装/用户指南、PRD、架构、文档索引、HANDOVER、版本验收记录和本任务账本。",
+      "evidence": [
+        "python3 scripts/check_docs.py: 114 Markdown files, 261 local links PASS",
+        "docs/reviews/2026-10-01-v0.1.14.0-RC1.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅更新现行文档；历史归档原样保留。所有测试后门禁将复核工作树。",
+      "evidence": [
+        "rg 检查现行文档的旧版本引用；保留历史版本记录"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "发布门禁/full收据、版本提交与tag、远端推送尚待本次流程完成。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户原话（2026-10-01）：“更新所有文档，打个版本号”。版本流程按项目 scripts/version.sh 执行；不包含构建镜像、创建 GitHub Release 或生产部署。",
+  "rollback": "源码变更通过 git revert 回滚；版本 tag 为不可移动的审计记录，不重写或移动。若需修复，创建新补丁版本。",
+  "handoff": "版本 tag 和同步状态以本任务最终记录为准；运行实例仍需通过 /api/config 核对 revision。"
+}

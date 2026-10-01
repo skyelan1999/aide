@@ -22,13 +22,13 @@ Official installers: [Docker Desktop](https://docs.docker.com/desktop/), [Docker
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
-git checkout v0.1.13.0-RC1
+git checkout v0.1.14.0-RC1
 bash scripts/install.sh --check
 ```
 
 A source ZIP is also usable for image installation. Keep its scripts, Compose file, and `version.md`: an image tarball is not a standalone desktop installer.
 
-The latest source tag is **v0.1.13.0-RC1**. The current `main` branch may include changes after that tag. Check the release page for matching image assets before using the image-install path.
+The current source tag is **v0.1.14.0-RC1**. A source tag does not imply that a GitHub Release has matching image assets. Check the release page before using the image-install path.
 
 ## 3A. Install a released ARM64 image
 
@@ -54,7 +54,7 @@ Use a Git checkout for source identity. First builds download base images. If `.
 
 For fully isolated intranet/disconnected environments. **Golden rule: on the target machine only `docker load` the imported image and launch it with `start-image`; never run `start`** — `start` triggers `docker build`, which pulls base images and will fail or hang offline. Compose sets `pull_policy: never` as a second guard so a bare `compose up` cannot pull; a missing image fails fast instead of hanging on a fetch.
 
-Three delivery artifacts (all from the same version tag, e.g. 0.1.13.0 RC1):
+Three delivery artifacts (all from the same version tag, e.g. 0.1.14.0 RC1):
 
 1. Matching-tag source (or a source ZIP with the Compose file, scripts, and version.md);
 2. Self-contained image archive `aide-<matching-version>-linux-aarch64.tar.gz` (use `amd64` on x86; Docker reports the architecture as arm64 internally while archive filenames uniformly use aarch64/amd64);

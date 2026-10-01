@@ -1,6 +1,6 @@
 # aide 开发与运维入口
 
-> **当前代码基线**：`main` 合并后的提交以 Git 为准；最后发布 tag 为 `v0.1.13.0-RC1`，运行时版本字符串不会因本次合并自动变化。本次整合不包含升版、打 tag、发布镜像或重启生产服务。
+> **当前源码基线**：`v0.1.14.0-RC1`，tag 对应的 `main` 提交为本次发布记录所列版本提交。此版本只标记源码；本次没有构建发布镜像、创建 GitHub Release 或部署生产。运行实例身份须查看 `/api/config` 的版本与 revision。
 
 ## 快速接手
 
@@ -49,3 +49,4 @@ python3 scripts/agent-route.py audit
 - [旧版运维与交接档案（截至 2026-09-30）](docs/archive/HANDOVER-2026-09-30-legacy.md)
 - [2026-09-26 RC3 交接记录](docs/archive/2026-09-26-HANDOFF-RC3.md)
 - [版本记录](version.md) · [安装指南](docs/installation.md) · [用户指南](docs/user-guide.md)
+- [0.1.14.0 RC1 发布记录与限制](docs/reviews/2026-10-01-v0.1.14.0-RC1.md) · [发布任务验收](docs/tasks/unified-avatar-release-20261001.json)
