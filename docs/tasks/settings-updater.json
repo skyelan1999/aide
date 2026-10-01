@@ -53,6 +53,8 @@
         "PASS: docker run --rm -v \"$PWD:/src\" -w /src --entrypoint go aide:local test -mod=vendor ./internal/server -run 'TestUploadUpdatePackageAccepts(ExtractedFolder|Zip)' -count=1 -v；目录测试含 .DS_Store、._*、__MACOSX 元数据",
         "PASS: 隔离 RC9 服务接收本地 RC10 解压包；GET slots 确认 active=A、非活动槽已暂存、pending=null；显式 POST switch 后 active 仍为 A 且 pendingTarget=B。仅 API 排队验证，未执行宿主 Docker 切换。",
         "PASS: 单独重跑既有 race 测试 TestDaemonConcurrentStartStopConsistency：go test -race ... -run ^TestDaemonConcurrentStartStopConsistency$ -timeout=120s；2.250s 通过。",
+        "PASS: 从已推送代码提交 a5181a59bb44ec7f2d5e1e2bb5d7ed250069ed1e 重建 RC10 linux/arm64 候选镜像并重新打包；镜像 ID sha256:7fd50807b55297fc0f2a675ddcdd427fc7b61376916374f6a41947e7077161be，aide.srcsha 与当前产品源码哈希相符。",
+        "PASS: 已更新 ~/Downloads/aide-update-test-RC10/ 中的 RC10 应用内升级 ZIP 和自动解压文件夹；ZIP 外层 SHA256 652231d0a219df73720005c37810d35249c6bb4ca893da24905b7c3540c8ae4f，内部镜像校验、ZIP 完整性及精确三文件结构均通过。",
         "FAIL/NOT_PASS: 此前 full 验证的 go test -race -count=1 ./... 命中 TestDaemonConcurrentStartStopConsistency 全局测试超时；日志 .agent-state/verify-20261001T170057566388Z.log。",
         "NOT_RUN: Mac 锁屏导致 Safari 无法打开或交互；真实宿主 A/B Docker 切换与故障回滚、Windows PowerShell 实机验证。"
       ]
