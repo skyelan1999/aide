@@ -34,40 +34,53 @@
       ]
     },
     "design": {
-      "status": "in_progress",
-      "summary": "共享单份 ARM64 镜像归档，附带三种 OS 的独立启动包；启动器拒绝不匹配 Docker 引擎，导入前校验 SHA256/镜像 ID。更新的启动逻辑需发布为新的递增 RC，避免将不在 RC2 tag 中的脚本误标为 RC2 资产。",
+      "status": "pass",
+      "summary": "采用一份 Linux arm64 OCI 镜像资产、三份操作系统专属启动包；启动程序严格核对镜像平台/身份/SHA256，并使用 offline Compose 配置，拒绝错误架构。源码另发 RC3，避免将新代码挂到旧 RC2 tag。",
       "evidence": [
-        "新增 scripts/package-release-assets.sh 与 scripts/publish-release-assets.sh。",
-        "当前 RC2 GitHub Release 尚不存在。"
+        "macOS: start.command；Windows: start.bat + start.ps1；Ubuntu: start.sh。",
+        "构建脚本要求镜像 aide.srcsha 与当前 release 源码输入一致。"
       ]
     },
     "implementation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "已实现 Windows 离线镜像加载/架构校验及 macOS/Linux offline bundle 启动；完成三平台打包、SHA256清单和 GitHub Release 上传脚本。安装指南、离线说明、README、PRD、架构和交接文档已同步。",
+      "evidence": [
+        "ff26b5f feat: add platform release launchers and asset tooling",
+        "bash -n scripts/aide.sh scripts/package-release-assets.sh scripts/publish-release-assets.sh start.sh start.command PASS",
+        "python3 scripts/check_docs.py PASS: 116 Markdown files, 266 local links, FR-01..100"
+      ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "RC3 资产本身待正式构建/发布；代码实现完整门禁通过，Go/race 与 vet 已由 Docker 执行。当前 Windows ARM64 与 Ubuntu ARM64 实机启动不可在 macOS 主机上验收。",
+      "evidence": [
+        "python3 scripts/agent-route.py verify full PASS at ff26b5f7212f251b8a14b4f3162dd98909b73166; fingerprint e15457d1d62a289ec3a383e580cef9159bac21d29cd82a6cf3d7cff809148ee0; log .agent-state/verify-20261001T064645409600Z.log",
+        "docker image inspect confirms only linux/arm64 bases are locally cached; no amd64 pull performed"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "中英安装指南列明 RC3 的具体平台包、共享镜像流程和暂缺 amd64 的范围；OFFLINE.md 与文档索引同步。Release 报告作为远端 release notes。",
+      "evidence": [
+        "python3 scripts/check_docs.py PASS",
+        "Release asset procedure in docs/installation.md and docs/en/installation.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "范围内改动已提交到 main；发布输出仅写入 .agent-state，不进入 Git。",
+      "evidence": [
+        "Implementation commit ff26b5f7212f251b8a14b4f3162dd98909b73166",
+        "git status clean after documentation/task closeout commit"
+      ]
     },
     "release": {
       "status": "pending",
-      "summary": "",
+      "summary": "待 version script 升 RC3、推送 tag、构建验证 arm64 镜像、打包、上传 GitHub prerelease 并核验附件。",
       "evidence": []
     }
   },
   "release_authorization": "用户 2026-10-01 原话：“镜像该传传上去啊，另外你需要根据mac windows ubuntu分别设计单独的可执行程序，并提供制作脚本来上传到release中”。明确授权上传 Docker 镜像与平台启动包到 GitHub Release。之前“把所需的docker镜像全部放到本地，不用从联网拉取了”仍约束不拉取 amd64 基础镜像。",
   "rollback": "",
-  "handoff": ""
+  "handoff": "RC3 source/tag and GitHub assets are in progress. The current builder has only arm64 base images, so planned support is Apple Silicon macOS, Ubuntu ARM64, and Windows ARM64. Do not claim x64 support or Windows/Ubuntu device acceptance."
 }
