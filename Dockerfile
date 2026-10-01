@@ -24,6 +24,8 @@ COPY go.sum ./
 COPY vendor ./vendor
 COPY cmd ./cmd
 COPY internal ./internal
+COPY plugins ./plugins
+COPY scripts/office ./scripts/office
 # Fail the build before shipping a page whose application script cannot parse.
 RUN node --check internal/server/web/app.js \
     && node --check internal/server/web/settings-init.js \

@@ -1,6 +1,6 @@
-# aide v0.1.14.0 RC3 跨平台 Release 资产记录
+# aide v0.1.14.0 RC4 跨平台 Release 资产记录
 
-状态：源码改动已提交；RC3 tag、镜像构建、资产打包与远端发布待执行。
+状态：源码改动已提交；RC4 tag、镜像构建、资产打包与远端发布待执行。
 
 ## 目标与平台
 
@@ -16,8 +16,8 @@
 ## 制作与上传
 
 ```bash
-bash scripts/package-release-assets.sh v0.1.14.0-RC3 aide:0.1.14.0-RC3
-bash scripts/publish-release-assets.sh v0.1.14.0-RC3 .agent-state/release-assets/v0.1.14.0-RC3
+bash scripts/package-release-assets.sh v0.1.14.0-RC4 aide:0.1.14.0-RC4
+bash scripts/publish-release-assets.sh v0.1.14.0-RC4 .agent-state/release-assets/v0.1.14.0-RC4
 ```
 
 发布脚本只上传已生成文件；tag 必须已推送。校验和清单覆盖镜像与三个平台 ZIP。
@@ -28,7 +28,7 @@ bash scripts/publish-release-assets.sh v0.1.14.0-RC3 .agent-state/release-assets
 | --- | --- | --- |
 | 平台启动器与共享镜像包 | 待执行 |  |
 | SHA256 与压缩包校验 | 待执行 |  |
-| RC3 镜像健康 / API 身份 | 待执行 |  |
+| RC4 镜像健康 / API 身份 | 待执行 |  |
 | GitHub prerelease 与附件 | 待执行 |  |
 | Windows 实机启动 | NOT_RUN | 当前执行环境为 macOS，无 Windows 主机 |
 | Ubuntu ARM64 实机启动 | NOT_RUN | 当前执行环境未提供 Ubuntu ARM64 主机 |
