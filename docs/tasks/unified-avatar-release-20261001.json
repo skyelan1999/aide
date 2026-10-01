@@ -61,7 +61,8 @@
         "node scripts/test_avatar_settings.cjs PASS",
         "node scripts/test_avatar_feedback.cjs PASS",
         "node scripts/test_i18n.cjs PASS",
-        "Safari：左300→340→300 px、右366→408→366 px；确认面板变化并恢复原值"
+        "Safari：左300→340→300 px、右366→408→366 px；确认面板变化并恢复原值",
+        ".agent-state/full.json: profile=full, status=pass, fingerprint=9868c9ea20fe3dc303e1a422741924d2dcf03b7bd170c5150a9b29fec0bec065; full Go race/vet 门禁结果附在 .agent-state/verify-20261001T033845302374Z.log。"
       ]
     },
     "documentation": {
@@ -80,12 +81,19 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "发布门禁/full收据、版本提交与tag、远端推送尚待本次流程完成。",
-      "evidence": []
+      "status": "pass",
+      "summary": "版本脚本升级到0.1.14.0 RC1并创建annotated tag v0.1.14.0-RC1；main与tag已推送origin，远端main/tag均确认指向版本提交28e4e72（源码提交SHA见下）。",
+      "evidence": [
+        "python3 scripts/agent-route.py release-check unified-avatar-release-20261001: PASS",
+        "bash scripts/version.sh check: PASS，0.1.14.0 RC1",
+        "git push origin main --tags: PASS；tag v0.1.14.0-RC1 已创建远端",
+        "version commit: 28e4e72d676ae5f2f8e6b3f61bc8d2d1a0a8f847",
+        "tag object: 7c736135472a3fec59068490560f088b6077f96e",
+        "git status --short --branch: main 与 origin/main 同步；最终文档收尾提交随后同步"
+      ]
     }
   },
   "release_authorization": "用户原话（2026-10-01）：“更新所有文档，打个版本号”。版本流程按项目 scripts/version.sh 执行；不包含构建镜像、创建 GitHub Release 或生产部署。",
   "rollback": "源码变更通过 git revert 回滚；版本 tag 为不可移动的审计记录，不重写或移动。若需修复，创建新补丁版本。",
-  "handoff": "版本 tag 和同步状态以本任务最终记录为准；运行实例仍需通过 /api/config 核对 revision。"
+  "handoff": "源码 tag v0.1.14.0-RC1 的目标提交为 28e4e72d676ae5f2f8e6b3f61bc8d2d1a0a8f847。任务账本后续文档提交只更新验收/同步记录，不改变 tag 指向。无镜像/GitHub Release/生产部署。"
 }
