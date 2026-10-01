@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 // assistantSessionID 从测试 App 取出唯一小秘系统会话 ID。
@@ -31,6 +32,24 @@ func unlockAssistantSessionForTest(t *testing.T, a *App) {
 		t.Fatal("assistant session not created at startup")
 	}
 	a.markAssistantUnlocked(s.ID)
+}
+
+func waitDispatchedRunTerminal(t *testing.T, a *App, sessionID string) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		a.mu.Lock()
+		var status string
+		if s := a.sessions[sessionID]; s != nil && len(s.Runs) > 0 {
+			status = s.Runs[len(s.Runs)-1].Status
+		}
+		a.mu.Unlock()
+		if status == "completed" || status == "failed" {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatalf("dispatched aide run did not finish before cleanup (session %s)", sessionID)
 }
 
 // TestContextToolsForAssistantOnly 跨会话工具只在小秘系统会话注入，普通会话不可见。
@@ -221,8 +240,13 @@ func TestAssistantMessageAgenticFailureDispatchesTypedRequest(t *testing.T) {
 	if body["action"] != "send" || body["text"] != "帮我把那个按钮改一下" {
 		t.Fatalf("typed request was not preserved in fallback: %v", body)
 	}
-	if body["dispatched"] == nil {
+	disp, _ := body["dispatched"].(map[string]any)
+	if disp == nil {
 		t.Fatalf("typed request must dispatch after model failure: %v", body)
+	}
+	if disp["started"] == true {
+		sessionID, _ := disp["sessionId"].(string)
+		waitDispatchedRunTerminal(t, a, sessionID)
 	}
 }
 

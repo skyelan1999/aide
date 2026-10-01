@@ -265,9 +265,14 @@ func TestDaemonStartOutsideGlobalLock(t *testing.T) {
 	var p *daemonProc
 	p = installHookedDaemon(t, a, "slow-start", func(readyCh, doneCh chan struct{}) {
 		close(enteredSlow) // 已进入慢进程阶段
-		<-releaseStart      // 模拟 node 宿主 10-15s 才 ready
+		<-releaseStart     // 模拟 node 宿主 10-15s 才 ready
 		p.closeReadyOnce()
-		<-p.stopCh
+		// Concurrent starts may replace stopCh; capture it under the mutex used
+		// by the production supervisor to avoid racing the test hook itself.
+		p.mu.Lock()
+		stopCh := p.stopCh
+		p.mu.Unlock()
+		<-stopCh
 		close(doneCh)
 	})
 
