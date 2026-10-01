@@ -2,7 +2,7 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。最近 tag 只有源码；发行镜像以 Releases 页面实际附件为准。需要扩展时再按 [定制指南](customization.md) 修改源码。安装脚本负责环境检查、首次配置、校验镜像和启动应用；不会静默安装收费软件、请求 sudo、覆盖已有 .env 或删除数据卷。
+aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。RC3 Release 提供 arm64 Docker 镜像及 macOS、Windows ARM64、Ubuntu ARM64 启动包；x64 镜像尚未构建。需要扩展时再按 [定制指南](customization.md) 修改源码。安装脚本负责环境检查、首次配置、校验镜像和启动应用；不会静默安装收费软件、请求 sudo、覆盖已有 .env 或删除数据卷。
 
 ## 1. 安装宿主环境
 
@@ -11,18 +11,28 @@ aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。最近 
 | macOS Apple Silicon | Docker Desktop、Git；镜像校验需要 Python 3 | 打开 Docker Desktop，等待引擎就绪；发行镜像目标为 linux/arm64 |
 | Linux ARM64 | Docker Engine、Compose v2、Git、Python 3 | 当前用户须有访问 Docker 引擎的权限 |
 | Linux/macOS x86 | 同上 | 使用源码构建；不要直接使用 ARM 归档 |
-| Windows | WSL2 Linux 环境与 Docker Desktop WSL 集成、Git、Python 3 | 在 WSL 的 Bash 中运行；本轮未在 Windows 实机验证 |
+| Windows ARM64 | Docker Desktop ARM64 Linux 引擎 | 使用 Release 中 Windows ARM64 启动包；本轮未在 Windows 实机验证 |
+| Windows x64 | Docker Desktop、WSL2 | RC3 没有 linux/amd64 镜像；使用源码构建 |
 
 安装入口：[Docker Desktop](https://docs.docker.com/desktop/) / [Docker Engine](https://docs.docker.com/engine/install/) / [Git](https://git-scm.com/downloads) / [Python](https://www.python.org/downloads/)。Docker Desktop 的适用许可由使用者按其组织情况确认；aide 自身使用 MIT 许可证。不需要在宿主机安装 Go；日常运行无需 npm。开发路由检查另外需要 Node.js 与 Python 3。
 
 ## 2. 下载同一版本的源码
 
-当前源码 tag 为 `v0.1.14.0-RC2`。源码 tag 不代表 GitHub Release 已有镜像附件；使用镜像安装前请确认发布页提供了同版本文件。也可以 checkout 下方源码 tag 并从源码构建。
+当前源码 tag 为 `v0.1.14.0-RC3`。从同一 GitHub Release 下载平台启动 ZIP、linux/arm64 镜像归档和 SHA256SUMS。将镜像归档与校验文件放入启动包的 `docker-images/` 目录，再运行对应启动器。
+
+| 下载项 | 启动方式 | 目标系统 |
+| --- | --- | --- |
+| `aide-v0.1.14.0-RC3-macos-arm64.zip` | 双击 `start.command` | Apple Silicon macOS |
+| `aide-v0.1.14.0-RC3-windows-arm64.zip` | 双击 `start.bat` | Windows ARM64 |
+| `aide-v0.1.14.0-RC3-ubuntu-arm64.zip` | `./start.sh` | Ubuntu ARM64 |
+| `aide-v0.1.14.0-RC3-linux-arm64-image.tar.gz` | 复制到启动包 `docker-images/` | 三个平台共用 |
+
+启动器检查 Docker 引擎架构、SHA256 和镜像 ID，再执行不构建、不拉取的启动。Windows x64 与 Ubuntu x64 暂无镜像；本机缓存只有 arm64 Docker 基础镜像。开发者可在持有匹配架构基础镜像的构建机运行 `scripts/package-release-assets.sh <tag> <image> [输出目录]`，生成镜像和三个启动包；`scripts/publish-release-assets.sh <tag> <输出目录>` 会把产物上传到已推送的 GitHub tag 对应 Release。
 
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
-git checkout v0.1.14.0-RC2
+git checkout v0.1.14.0-RC3
 bash scripts/install.sh --check
 ```
 

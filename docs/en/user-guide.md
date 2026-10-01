@@ -2,7 +2,7 @@
 
 [简体中文](../user-guide.md) · **English**
 
-The current source tag is `v0.1.14.0-RC2`. Check the linked [task records](../tasks/) and [verification log](../verification.md) for acceptance status. See [Installation](installation.md) for setup.
+The current source tag is `v0.1.14.0-RC3`. Check the linked [task records](../tasks/) and [verification log](../verification.md) for acceptance status. See [Installation](installation.md) for setup.
 
 ## 1. Find your way around
 

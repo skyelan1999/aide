@@ -41,8 +41,17 @@ if [[ "$MODE" == start-bundle ]]; then
   CURRENT_ID="$("$DOCKER_BIN" image inspect "$BUNDLE_IMAGE" --format '{{.Id}}' 2>/dev/null || true)"
   if [[ "$CURRENT_ID" != "$BUNDLE_ID" ]]; then
     echo "== 校验并导入包内镜像 =="
-    (cd docker-images && shasum -a 256 -c SHA256SUMS)
-    "$DOCKER_BIN" image load -i docker-images/aide-local.tar
+    IMAGE_ARCHIVE="docker-images/aide-local.tar"
+    [[ -f "$IMAGE_ARCHIVE" ]] || IMAGE_ARCHIVE="docker-images/aide-local.tar.gz"
+    if [[ ! -f "$IMAGE_ARCHIVE" ]]; then
+      IMAGE_ARCHIVE="$(find docker-images -maxdepth 1 -type f -name 'aide-v*-linux-*-image.tar.gz' -print -quit)"
+    fi
+    [[ -f "$IMAGE_ARCHIVE" ]] || { echo "缺少镜像归档：docker-images/aide-local.tar[.gz]。" >&2; exit 1; }
+    if [[ -f docker-images/SHA256SUMS ]]; then
+      ARCHIVE_NAME="$(basename "$IMAGE_ARCHIVE")"
+      awk -v name="$ARCHIVE_NAME" '$2 == name { print }' docker-images/SHA256SUMS | (cd docker-images && shasum -a 256 -c -)
+    fi
+    "$DOCKER_BIN" image load -i "$IMAGE_ARCHIVE"
   fi
   [[ "$("$DOCKER_BIN" image inspect "$BUNDLE_IMAGE" --format '{{.Id}}')" == "$BUNDLE_ID" ]] || { echo "镜像身份不匹配。" >&2; exit 1; }
   mkdir -p workspace context

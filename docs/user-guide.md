@@ -2,13 +2,13 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-适用范围：源码版本 `v0.1.14.0-RC2`。功能验收以对应 [任务账本](tasks/) 与 [验证记录](verification.md) 为准。aide 可直接使用，也可交给 AI 按 [场景定制指南](customization.md) 改造成专属工作台。启动配置见 [README](../README.md)。
+适用范围：源码版本 `v0.1.14.0-RC3`。功能验收以对应 [任务账本](tasks/) 与 [验证记录](verification.md) 为准。aide 可直接使用，也可交给 AI 按 [场景定制指南](customization.md) 改造成专属工作台。启动配置见 [README](../README.md)。
 
 ## 虚拟形象与侧栏
 
 设置中的「虚拟形象」可启用或关闭统一助手形象，设置聊天框/锁屏显示、素材包、动作播放速度与平滑补帧。形象按任务和反馈选择场景动作；逐个场景及帧率表现见[虚拟形象验收记录](tasks/virtual-avatar-alpha.json)，锁屏全场景的现场验收尚未完成。
 
-左右侧栏分隔条可拖动改变宽度，偏好会保存。窄屏下文件/插件/提醒作为浮层侧栏显示，其行为记录在[版本验收](reviews/2026-10-01-v0.1.14.0-RC2.md)。
+左右侧栏分隔条可拖动改变宽度，偏好会保存。窄屏下文件/插件/提醒作为浮层侧栏显示，其行为记录在[版本验收](reviews/release-assets-2026-10-01.md)。
 
 ## 1. 认识工作台
 

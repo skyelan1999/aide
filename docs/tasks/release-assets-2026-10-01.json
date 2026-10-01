@@ -1,0 +1,73 @@
+{
+  "id": "release-assets-2026-10-01",
+  "request": "用户追加：将 Docker 镜像上传到 GitHub Release；按 macOS、Windows、Ubuntu 分别提供启动程序，提供制作/上传脚本。",
+  "baseline": "a5fff2b78d21f82d7d58c657f21fd012565164ab",
+  "initial_status": "",
+  "acceptance": [
+    "提供独立的 macOS、Windows、Ubuntu 平台启动包，并共享匹配架构 Docker 镜像；启动不触发 build/pull。",
+    "启动器校验平台架构、镜像身份及 SHA256；不兼容架构给出明确错误。",
+    "提供可重复的本地镜像打包和 GitHub Release 上传脚本及使用说明。",
+    "在本机不拉取 amd64 基础镜像的约束下，只发布已验证的 arm64 镜像；明确 Windows/Ubuntu x64 不支持。",
+    "提交并推送新源码 tag，生成 GitHub prerelease，验证已上传资产、校验和、压缩包及镜像架构。"
+  ],
+  "scope": [
+    "start.sh",
+    "start.ps1",
+    "scripts/aide.sh",
+    "scripts/package-release-assets.sh",
+    "scripts/publish-release-assets.sh",
+    "docker/OFFLINE.md",
+    "docs/installation.md",
+    "docs/en/installation.md",
+    "docs/tasks/release-assets-2026-10-01.json",
+    "docs/reviews/release-assets-2026-10-01.md",
+    "docs/agent/router.json",
+    "version.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "复用已推送 RC2 结果并扩展为 Release 资产交付。因本机构建缓存只有 linux/arm64 基础镜像，接受矩阵限定为 macOS Apple Silicon、Ubuntu ARM64、Windows ARM64；x64 构建留待匹配本地缓存。",
+      "evidence": [
+        "用户明确授权上传镜像、三个平台启动包和发布脚本。",
+        "docker image inspect 确认候选仅 linux/arm64；本地 python/node/golang 基础镜像均 linux/arm64。"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "共享单份 ARM64 镜像归档，附带三种 OS 的独立启动包；启动器拒绝不匹配 Docker 引擎，导入前校验 SHA256/镜像 ID。更新的启动逻辑需发布为新的递增 RC，避免将不在 RC2 tag 中的脚本误标为 RC2 资产。",
+      "evidence": [
+        "新增 scripts/package-release-assets.sh 与 scripts/publish-release-assets.sh。",
+        "当前 RC2 GitHub Release 尚不存在。"
+      ]
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户 2026-10-01 原话：“镜像该传传上去啊，另外你需要根据mac windows ubuntu分别设计单独的可执行程序，并提供制作脚本来上传到release中”。明确授权上传 Docker 镜像与平台启动包到 GitHub Release。之前“把所需的docker镜像全部放到本地，不用从联网拉取了”仍约束不拉取 amd64 基础镜像。",
+  "rollback": "",
+  "handoff": ""
+}

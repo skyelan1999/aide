@@ -17,6 +17,22 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-Location -Path $PSScriptRoot
 
+# Release bundles contain a prebuilt, architecture-specific Linux image. Use it
+# directly and never invoke Compose build/pull for an offline installation.
+$offlineMarker = Join-Path $PSScriptRoot '.aide-image'
+$offlineBundle = Test-Path -LiteralPath $offlineMarker
+if ($offlineBundle) {
+    $marker = (Get-Content -Raw -LiteralPath $offlineMarker).Trim() -split '\s+'
+    if ($marker.Count -lt 3) { throw '离线包 .aide-image 格式无效。' }
+    $env:AIDE_IMAGE = $marker[0]
+    $expectedImageId = $marker[1]
+    $expectedPlatform = $marker[2]
+    $env:COMPOSE_FILE = 'compose.yaml'
+    if (-not $env:AIDE_WORKSPACE) { $env:AIDE_WORKSPACE = Join-Path $PSScriptRoot 'workspace' }
+    if (-not $env:AIDE_CONTEXT) { $env:AIDE_CONTEXT = Join-Path $PSScriptRoot 'context' }
+    if (-not $env:AIDE_LOCAL_ROOT) { $env:AIDE_LOCAL_ROOT = $env:AIDE_WORKSPACE }
+}
+
 # Compose 的默认 /local 来源使用 $HOME；Windows PowerShell 有 $HOME 自动变量，
 # 但通常没有同名的进程环境变量。补齐它可避免 Compose 将空路径回退到仓库目录，
 # 同时不覆盖用户在 .env 或进程环境中设置的 AIDE_LOCAL_ROOT。
@@ -224,7 +240,31 @@ if (-not (Test-Docker)) {
 }
 
 Write-Host "构建并启动 aide…"
-if ((Invoke-Compose up -d --build --pull never).Code -ne 0) {
+$startArguments = if ($offlineBundle) { @('up', '-d', '--no-build', '--pull', 'never') } else { @('up', '-d', '--build', '--pull', 'never') }
+if ($offlineBundle) {
+    $enginePlatform = (Invoke-Native $dockerExe @('info', '--format', '{{.OSType}}/{{.Architecture}}') -Capture).Text -replace '/aarch64$', '/arm64' -replace '/x86_64$', '/amd64'
+    if ($enginePlatform -ne $expectedPlatform) { throw "此离线镜像为 $expectedPlatform，当前 Docker 引擎为 $enginePlatform。请下载匹配架构的 Release 包。" }
+    $imageId = (Invoke-Native $dockerExe @('image', 'inspect', $env:AIDE_IMAGE, '--format', '{{.Id}}') -Capture).Text
+    if ($imageId -ne $expectedImageId) {
+        $imageArchive = Join-Path $PSScriptRoot 'docker-images/aide-local.tar.gz'
+        if (-not (Test-Path -LiteralPath $imageArchive)) {
+            $imageArchive = Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'docker-images') -Filter 'aide-v*-linux-*-image.tar.gz' -File | Select-Object -First 1 -ExpandProperty FullName
+        }
+        if (-not $imageArchive -or -not (Test-Path -LiteralPath $imageArchive)) { throw '缺少镜像归档。请将同版本 Release 镜像附件放入 docker-images 目录。' }
+        $sumFile = Join-Path $PSScriptRoot 'docker-images/SHA256SUMS'
+        if (Test-Path -LiteralPath $sumFile) {
+            $imageName = [System.IO.Path]::GetFileName($imageArchive)
+            $expectedHash = ((Get-Content -LiteralPath $sumFile | Where-Object { $_ -match ([regex]::Escape($imageName) + '$') } | Select-Object -First 1) -split '\s+')[0]
+            if ($expectedHash -and (Get-FileHash -Algorithm SHA256 -LiteralPath $imageArchive).Hash.ToLowerInvariant() -ne $expectedHash.ToLowerInvariant()) { throw 'Docker 镜像 SHA256 校验失败。' }
+        }
+        if ((Invoke-Native $dockerExe @('image', 'load', '-i', $imageArchive)).Code -ne 0) { throw '导入 Docker 镜像失败。' }
+        $imageId = (Invoke-Native $dockerExe @('image', 'inspect', $env:AIDE_IMAGE, '--format', '{{.Id}}') -Capture).Text
+        if ($imageId -ne $expectedImageId) { throw '导入的 Docker 镜像身份与离线包不匹配。' }
+    }
+    New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot 'workspace'), (Join-Path $PSScriptRoot 'context') -Force | Out-Null
+    if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot '.env'))) { Copy-Item (Join-Path $PSScriptRoot '.env.example') (Join-Path $PSScriptRoot '.env') }
+}
+if ((Invoke-Compose @startArguments).Code -ne 0) {
     Write-Error "compose up 失败，请检查上方输出。"
 }
 

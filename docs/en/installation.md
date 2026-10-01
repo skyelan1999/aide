@@ -4,7 +4,7 @@
 
 [简体中文](../installation.md) · **English**
 
-aide combines AI and an integrated work environment. The installer checks prerequisites, initializes first-run settings, verifies image archives, and starts the application. It does not silently install host software, request sudo, overwrite `.env`, or delete volumes.
+aide combines AI and an integrated work environment. The RC3 Release includes a linux/arm64 Docker image and launch packages for Apple Silicon macOS, Windows ARM64, and Ubuntu ARM64. An amd64 image has not been built. The installer checks prerequisites, initializes first-run settings, verifies image archives, and starts the application. It does not silently install host software, request sudo, overwrite `.env`, or delete volumes.
 
 ## 1. Prepare the host
 
@@ -13,7 +13,8 @@ aide combines AI and an integrated work environment. The installer checks prereq
 | Apple Silicon macOS | Docker Desktop, Git, Python 3 for image verification | Start Docker and wait for the engine; release-image target is linux/arm64 |
 | ARM64 Linux | Docker Engine, Compose v2, Git, Python 3 | Current user must be able to access Docker |
 | x86 Linux/macOS | Equivalent prerequisites | Build from source instead of importing the ARM archive |
-| Windows | WSL2, Docker Desktop WSL integration, Git, Python 3 | Run Bash inside WSL; not validated on a Windows device |
+| Windows ARM64 | Docker Desktop with an ARM64 Linux engine | Use the Windows ARM64 launcher; not validated on a Windows device |
+| Windows x64 | Docker Desktop, WSL2 | RC3 has no linux/amd64 image; build from source |
 
 Official installers: [Docker Desktop](https://docs.docker.com/desktop/), [Docker Engine](https://docs.docker.com/engine/install/), [Git](https://git-scm.com/downloads), [Python](https://www.python.org/downloads/). Check Docker Desktop licensing for your organization. aide is MIT-licensed. Host Go is unnecessary. Development checks additionally require Node.js and Python 3.
 
@@ -22,13 +23,22 @@ Official installers: [Docker Desktop](https://docs.docker.com/desktop/), [Docker
 ```bash
 git clone https://github.com/skyelan1999/aide.git
 cd aide
-git checkout v0.1.14.0-RC2
+git checkout v0.1.14.0-RC3
 bash scripts/install.sh --check
 ```
 
 A source ZIP is also usable for image installation. Keep its scripts, Compose file, and `version.md`: an image tarball is not a standalone desktop installer.
 
-The current source tag is **v0.1.14.0-RC2**. A source tag does not imply that a GitHub Release has matching image assets. Check the release page before using the image-install path.
+The current source tag is **v0.1.14.0-RC3**. Download the platform launcher ZIP, linux/arm64 image archive, and SHA256SUMS from the matching GitHub Release. Place the image archive and checksum file in the launcher's `docker-images/` directory before running it.
+
+| Asset | Launch | Target |
+| --- | --- | --- |
+| `aide-v0.1.14.0-RC3-macos-arm64.zip` | Double-click `start.command` | Apple Silicon macOS |
+| `aide-v0.1.14.0-RC3-windows-arm64.zip` | Double-click `start.bat` | Windows ARM64 |
+| `aide-v0.1.14.0-RC3-ubuntu-arm64.zip` | Run `./start.sh` | Ubuntu ARM64 |
+| `aide-v0.1.14.0-RC3-linux-arm64-image.tar.gz` | Copy into the launcher's `docker-images/` | Shared image for all three |
+
+Launchers check Docker engine architecture, SHA256, and image ID, then start without build/pull. Windows x64 and Ubuntu x64 images are not included because this builder only has arm64 Docker base images cached. On a builder with matching architecture bases, run `scripts/package-release-assets.sh <tag> <image> [output-dir]`; upload generated assets with `scripts/publish-release-assets.sh <tag> <output-dir>` after pushing the tag.
 
 ## 3A. Install a released ARM64 image
 

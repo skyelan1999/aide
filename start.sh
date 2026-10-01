@@ -5,4 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 export COMPOSE_FILE="${COMPOSE_FILE:-compose.yaml}"
+if [[ -f .aide-image ]]; then
+  exec bash scripts/aide.sh start-bundle
+fi
 exec bash scripts/aide.sh start
