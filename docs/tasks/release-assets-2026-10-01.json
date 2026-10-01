@@ -81,6 +81,6 @@
     }
   },
   "release_authorization": "用户 2026-10-01 原话：“镜像该传传上去啊，另外你需要根据mac windows ubuntu分别设计单独的可执行程序，并提供制作脚本来上传到release中”。明确授权上传 Docker 镜像与平台启动包到 GitHub Release。之前“把所需的docker镜像全部放到本地，不用从联网拉取了”仍约束不拉取 amd64 基础镜像。",
-  "rollback": "",
+  "rollback": "不移动或复用已推送 tag。若 Release 附件错误，移除错误附件并暂缓下载；修复后使用版本脚本递增 RC、重建镜像/平台包并更新 Release。此次不替换生产实例或用户现有 Docker 卷。",
   "handoff": "RC3 source/tag and GitHub assets are in progress. The current builder has only arm64 base images, so planned support is Apple Silicon macOS, Ubuntu ARM64, and Windows ARM64. Do not claim x64 support or Windows/Ubuntu device acceptance."
 }
