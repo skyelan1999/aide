@@ -3245,7 +3245,10 @@ function renderAboutProject(control) {
 }
 function renderSoftwareUpdates() {
   const wrap = el('div', 'settings-control software-updates');
-  const intro = el('p', 'section-desc', t('上传经过校验的完整升级包到非活动槽，再由本机启动器安全切换。A/B 槽共用会话、设置和工作区数据；切换期间服务会短暂重启。'));
+  const releaseIntro = t('上传经过校验的完整升级包到非活动槽，再由本机启动器安全切换。A/B 槽共用会话、设置和工作区数据；切换期间服务会短暂重启。');
+  const intro = el('p', 'section-desc', releaseIntro);
+  const modeNotice = el('p', 'section-desc');
+  modeNotice.hidden = true;
   const top = el('div', 'settings-row');
   const check = el('button', 'primary', t('检查更新'));
   const status = el('div', 'software-update-status', t('点击检查官方 Release'));
@@ -3265,10 +3268,11 @@ function renderSoftwareUpdates() {
   const folderPicker = el('label', 'software-update-picker');
   folderPicker.append(el('span', '', t('选择解压后的升级文件夹')), folder);
   const selection = el('small', 'software-update-selection', t('支持应用内升级 ZIP 包或 macOS 解压后的升级文件夹；平台启动器 ZIP 不能直接上传。'));
+  const packageHint = el('small', '', t('升级包由发行流程生成，包含当前平台 Docker 镜像、manifest.json 和 SHA256SUMS。切换由随软件包安装的宿主启动代理执行，不会在容器内操作 Docker。'));
+  slotsTitle.hidden = true; slots.hidden = true; uploadRow.hidden = true; slotStatus.hidden = true; selection.hidden = true;
   uploadRow.append(zipPicker, folderPicker, upload);
-  wrap.append(intro, top, detail, slotsTitle, slots, uploadRow, slotStatus,
-    selection,
-    el('small', '', t('升级包由发行流程生成，包含当前平台 Docker 镜像、manifest.json 和 SHA256SUMS。切换由随软件包安装的宿主启动代理执行，不会在容器内操作 Docker。')));
+  wrap.append(intro, modeNotice, top, detail, slotsTitle, slots, uploadRow, slotStatus,
+    selection, packageHint);
 
   file.onchange = () => {
     if (file.files?.length) {
@@ -3282,17 +3286,48 @@ function renderSoftwareUpdates() {
     const name = parts[parts.length - 1] || '';
     return name === '.DS_Store' || name.startsWith('._') || parts.includes('__MACOSX');
   };
-  const usableFolderFiles = () => (folder.files ? [...folder.files] : []).filter(item => !isMacFolderMetadata(item));
+  const folderPackageSelection = () => {
+    const groups = new Map();
+    const files = (folder.files ? [...folder.files] : []).filter(item => !isMacFolderMetadata(item));
+    for (const item of files) {
+      const relativePath = (item.webkitRelativePath || item.name || '').replaceAll('\\', '/');
+      const parts = relativePath.split('/');
+      const name = parts[parts.length - 1] || '';
+      if (name !== 'manifest.json' && name !== 'SHA256SUMS' && !name.endsWith('-image.tar.gz')) continue;
+      const parent = parts.slice(0, -1).join('/');
+      if (!groups.has(parent)) groups.set(parent, []);
+      groups.get(parent).push(item);
+    }
+    const candidates = [...groups.values()].filter(items =>
+      items.filter(item => (item.webkitRelativePath || item.name || '').split('/').pop() === 'manifest.json').length === 1 &&
+      items.filter(item => (item.webkitRelativePath || item.name || '').split('/').pop() === 'SHA256SUMS').length === 1 &&
+      items.filter(item => (item.webkitRelativePath || item.name || '').split('/').pop().endsWith('-image.tar.gz')).length === 1
+    );
+    return { files: candidates.length === 1 ? candidates[0] : [], ignoredCount: files.length - (candidates.length === 1 ? 3 : 0) };
+  };
+  const folderPackageError = t('所选目录中未找到同一子文件夹内的 manifest.json、SHA256SUMS 和 Docker 镜像归档。请解压并选择应用内升级包文件夹；启动器包或工作目录不能用于槽升级。');
   folder.onchange = () => {
     if (folder.files?.length) {
       file.value = '';
-      const usableCount = usableFolderFiles().length;
-      selection.textContent = t('已选择升级文件夹：{0} 个有效文件', usableCount);
+      const selected = folderPackageSelection();
+      selection.textContent = selected.files.length
+        ? t('已在所选目录中定位升级包：3 个必需文件；忽略其他 {0} 个文件', selected.ignoredCount)
+        : t('所选目录有 {0} 个文件，但未找到完整的应用内升级包', folder.files.length);
     }
   };
 
   async function loadSlots() {
     const result = await api('/updates/slots');
+    const sourceMode = result.runtimeMode === 'source';
+    modeNotice.hidden = !sourceMode;
+    modeNotice.textContent = sourceMode ? t('当前由源代码启动；源码更新无需应用内升级。通过 Git 更新代码并按开发流程重新启动。A/B 软件槽只适用于 Release 镜像。') : '';
+    intro.textContent = sourceMode ? t('此处可检查公开 Release。当前由源代码启动，更新时通过 Git 更新并重启即可。') : releaseIntro;
+    packageHint.textContent = sourceMode ? t('源码启动不安装应用内升级包；A/B 槽由正式 Release 镜像与宿主启动器共同提供。') : t('升级包由发行流程生成，包含当前平台 Docker 镜像、manifest.json 和 SHA256SUMS。切换由随软件包安装的宿主启动代理执行，不会在容器内操作 Docker。');
+    slotsTitle.hidden = sourceMode;
+    slots.hidden = sourceMode;
+    uploadRow.hidden = sourceMode;
+    selection.hidden = sourceMode;
+    slotStatus.hidden = sourceMode;
     slots.replaceChildren();
     for (const name of ['A', 'B']) {
       const slot = result.slots?.[name] || {};
@@ -3334,9 +3369,13 @@ function renderSoftwareUpdates() {
   refreshSlots.onclick = action(loadSlots);
   upload.onclick = action(async () => {
     const zipFiles = file.files ? [...file.files] : [];
-    const folderFiles = usableFolderFiles();
+    const selectedFolderPackage = folderPackageSelection();
+    const folderFiles = selectedFolderPackage.files;
     if (zipFiles.length && folderFiles.length) { toast(t('请只选择 ZIP 包或升级文件夹中的一种')); return; }
-    if (!zipFiles.length && !folderFiles.length) { toast(t('请先选择升级 ZIP 包或文件夹')); return; }
+    if (!zipFiles.length && !folderFiles.length) {
+      slotStatus.textContent = folder.files?.length ? folderPackageError : t('请先选择升级 ZIP 包或文件夹');
+      return;
+    }
     if (zipFiles.length && !/-update-linux-(arm64|amd64)\.zip$/i.test(zipFiles[0].name)) {
       slotStatus.textContent = t('所选文件不是应用内升级包。请选择名称带有 update-linux 的升级 ZIP；macOS/Windows/Ubuntu 启动器 ZIP 不能用于槽升级。');
       return;
@@ -3398,7 +3437,9 @@ function renderSoftwareUpdates() {
         a.download = '';
         (bundleMatch ? updateAssets : launcherAssets).append(a);
       }
-      if (updateAssets.children.length) {
+      if (result.runtimeMode === 'source') {
+        detail.append(el('p', 'muted', t('源码启动无需下载应用内升级包；更新源码后按开发流程重新启动即可。')));
+      } else if (updateAssets.children.length) {
         detail.append(el('h4', '', t('应用内升级包')), updateAssets);
       } else {
         detail.append(el('p', 'muted', t('该 Release 没有应用内升级包。启动器 ZIP 用于安装工作台，不能上传到 A/B 槽。')));

@@ -9,7 +9,9 @@
     "升级包经校验后只暂存到非活动槽；用户必须手动点击激活并确认才会切换，启动健康检查失败时宿主代理自动回滚。",
     "切换复用同一组 Docker 持久卷；新槽启动健康检查失败时自动恢复原槽。",
     "支持检查公开 Release 与本地升级包；所有更新 API 受访问令牌保护，容器内不直接操作宿主 Docker。",
-    "启动包在 macOS、Windows、Ubuntu 上运行宿主升级代理；新包格式包含镜像和 SHA256，支持离线导入。"
+    "启动包在 macOS、Windows、Ubuntu 上运行宿主升级代理；新包格式包含镜像和 SHA256，支持离线导入。",
+    "源码启动与 Release 镜像启动都可使用版本检查；源码模式明确提示通过 Git 更新，不提供 A/B 上传或切换；Release 镜像保留完整 A/B 升级。运行形态由独立构建标记决定，源码构建即使注入正式版本号也保持 source 模式。",
+    "选择解压后的上层目录（包括名为 aide 的唯一工作目录）时，在目录树中定位同一子目录里的 manifest.json、SHA256SUMS 和唯一镜像归档，仅提交这三个文件并忽略 macOS 元数据及其他无关文件。"
   ],
   "scope": [
     "internal/server upgrade package validation, A/B state API, focused tests",
@@ -27,14 +29,14 @@
     },
     "design": {
       "status": "pass",
-      "summary": "Web 服务只校验与暂存包、记录待切换操作；平台启动器内的宿主代理轮询受鉴权 API，验证已签 SHA256、导入到 inactive Docker image slot，停止 active 服务后复用相同 named volumes 启动目标槽，healthz 失败则恢复旧 marker 与镜像。",
+      "summary": "源码启动与 Release 镜像启动均可检查官方 Release；源码不需要应用内升级，隐藏 A/B 操作并提示使用 Git 更新。独立构建标记区分运行方式，源码构建即使有正式版本号也保持 source。Release 镜像下 Web 服务校验并暂存包、记录待切换操作；平台启动器宿主代理轮询受鉴权 API，验证 SHA256、导入 inactive Docker image slot，停止 active 服务后复用相同 named volumes 启动目标槽，healthz 失败则恢复旧 marker 与镜像。目录选择器允许从 aide 根目录递归定位完整包。",
       "evidence": [
         "scripts/package-release-assets.sh：发布包包含平台 launcher ZIP；docker/compose.offline.yaml 使用持久卷。"
       ]
     },
     "implementation": {
       "status": "pass",
-      "summary": "已增加独立设置 → 软件升级项；完整 ZIP 上传至 /data/updates 并校验清单、平台、递增版本和 SHA256；支持查看 A/B 槽、请求切换及轮询。macOS/Ubuntu shell 与 Windows PowerShell 宿主代理导入镜像、复用稳定槽镜像标签和 Compose 命名卷，健康检查失败恢复旧 marker。Release 打包脚本生成包含 Docker 镜像的 update ZIP 并将代理加入各平台 launcher。",
+      "summary": "已增加独立设置 → 软件升级项。源码模式只提供版本检查与 Git 更新提示，拒绝 A/B 上传/切换；Release 镜像提供 A/B 状态、校验上传、手动激活/切换。解压目录选择可在 aide 根目录树中找到同目录的三个必需包文件并忽略其他文件。完整 ZIP 上传至 /data/updates 并校验清单、平台、递增版本和 SHA256。macOS/Ubuntu shell 与 Windows PowerShell 宿主代理导入镜像、复用稳定槽镜像标签和 Compose 命名卷，健康检查失败恢复旧 marker。",
       "evidence": [
         "internal/server/updates.go",
         "internal/server/server.go",
@@ -47,21 +49,31 @@
     },
     "verification": {
       "status": "partial_pass",
-      "summary": "Safari 所选解压目录含 Finder 元数据导致上传失败的问题已修复。升级包暂存与手动激活流程经隔离服务 API 实际验证；上传本身不创建切换请求，显式调用手动激活后才排队目标槽。快速验证与 ZIP/文件夹回归测试通过。Mac 当前锁屏，无法完成 Safari 页面交互验收；宿主代理驱动的 Docker A/B 切换及真实健康失败回滚未实机执行。此前 full 验证被既有 TestDaemonConcurrentStartStopConsistency 的 race 测试超时阻断，单测重跑通过。",
+      "summary": "浏览器实测源码启动候选只显示 Git 更新说明，A/B 槽和上传控件均隐藏；Release 镜像候选显示 A/B 控件。以 RC9 为活动槽，在 Release 设置页上传 RC10 ZIP 成功暂存至槽 B，显示“待手动激活”和“手动激活槽 B”。再从只含 aide 根目录的 Downloads/aide 选择整个文件夹，页面定位三件套、忽略 4 个杂项，重新上传后槽 B 仍正确待手动激活。定向 Go 测试、quick 检查、ZIP 完整性及镜像 SHA256 通过。宿主代理实际切换/健康回滚仍未执行。",
       "evidence": [
         "PASS: python3 scripts/agent-route.py verify quick；fingerprint 9779db5b7155799557398d4ed0f463337893f7ac25c019028c1a2bc9daaa1759；日志 .agent-state/verify-20261001T172003111116Z.log",
-        "PASS: docker run --rm -v \"$PWD:/src\" -w /src --entrypoint go aide:local test -mod=vendor ./internal/server -run 'TestUploadUpdatePackageAccepts(ExtractedFolder|Zip)' -count=1 -v；目录测试含 .DS_Store、._*、__MACOSX 元数据",
+        "PASS: docker run --rm -v \"$PWD:/src\" -w /src --entrypoint go aide:local test -mod=vendor ./internal/server -run 'Test(SourceModeSkipsABUpgrade|UploadUpdatePackageAccepts(ExtractedFolder|Zip))' -count=1 -v；目录测试含 .DS_Store、._*、__MACOSX 元数据",
         "PASS: 隔离 RC9 服务接收本地 RC10 解压包；GET slots 确认 active=A、非活动槽已暂存、pending=null；显式 POST switch 后 active 仍为 A 且 pendingTarget=B。仅 API 排队验证，未执行宿主 Docker 切换。",
         "PASS: 单独重跑既有 race 测试 TestDaemonConcurrentStartStopConsistency：go test -race ... -run ^TestDaemonConcurrentStartStopConsistency$ -timeout=120s；2.250s 通过。",
         "PASS: 从已推送代码提交 a5181a59bb44ec7f2d5e1e2bb5d7ed250069ed1e 重建 RC10 linux/arm64 候选镜像并重新打包；镜像 ID sha256:7fd50807b55297fc0f2a675ddcdd427fc7b61376916374f6a41947e7077161be，aide.srcsha 与当前产品源码哈希相符。",
+        "PASS: 本次源码模式防护补齐宿主代理 command、sync、result 和 package download API；TestSourceModeSkipsABUpgrade 覆盖上传、切换及宿主代理请求。",
+        "PASS: RC10 隔离 Release 镜像 /api/updates/slots 返回 runtimeMode=release-image；Safari 中选择 aide 根目录识别到 manifest.json、SHA256SUMS 与 Docker 镜像归档三件套并忽略无关文件。",
+        "PASS: 本次源码工作区 quick 验证 fingerprint 68c57f77bffd9ab60dbf8de4af9f16c10b3c8f2658a9333e1996d8cd39ec7ef8；定向 source-mode 与 ZIP/目录 Go 测试通过。",
         "PASS: 已更新 ~/Downloads/aide-update-test-RC10/ 中的 RC10 应用内升级 ZIP 和自动解压文件夹；ZIP 外层 SHA256 652231d0a219df73720005c37810d35249c6bb4ca893da24905b7c3540c8ae4f，内部镜像校验、ZIP 完整性及精确三文件结构均通过。",
         "FAIL/NOT_PASS: 此前 full 验证的 go test -race -count=1 ./... 命中 TestDaemonConcurrentStartStopConsistency 全局测试超时；日志 .agent-state/verify-20261001T170057566388Z.log。",
-        "NOT_RUN: Mac 锁屏导致 Safari 无法打开或交互；真实宿主 A/B Docker 切换与故障回滚、Windows PowerShell 实机验证。"
+        "PASS: python3 scripts/agent-route.py verify quick；fingerprint b1c55ed56adfaee122a40ec9380bb553897251e854c3758e6b25edf45cf4e27f；日志 .agent-state/verify-20261001T183403138636Z.log。",
+        "PASS: Docker 构建源码启动候选镜像及 release-image RC10 候选镜像；源码默认 AIDE_RUNTIME_MODE=source，scripts/docker-release.sh 显式设置 release-image。",
+        "PASS: 更新包 ZIP 在 ~/Downloads/aide-update-test-RC10-20261002/aide-v0.1.14.0-RC10-update-linux-arm64.zip；unzip -t 通过，内部 SHA256SUMS 镜像校验通过，ZIP SHA256 4feb5dfe08df614e535e7bba6a03ceb98726cd1c8278474ef4ef93605bfa0b2c。已同时解压为同目录下同名文件夹供 Finder 自动解压情形测试。",
+        "PASS: 本地隔离浏览器打开源码模式候选的软件升级设置页；页面显示 Git 更新提示，无 A/B 槽、上传入口或切换控件；源码 [hidden] 样式问题已修复，实际布局已截图检查。",
+        "PASS: 本地隔离 Release 镜像候选运行 RC9；经浏览器选择 Downloads 中 RC10 应用内升级 ZIP 并上传，显示槽 B v0.1.14.0-RC10、“待手动激活”及“手动激活槽 B”。未触发切换。",
+        "PASS: 浏览器选择只有 aide 一个顶层文件夹的 ~/Downloads/aide，页面发现同一子目录中的 manifest.json、SHA256SUMS、Docker 镜像归档并忽略 4 个其他文件；文件夹上传后槽 B 仍显示 RC10 待手动激活。",
+        "PASS: 更新包 ZIP 在 ~/Downloads/aide-update-test-RC10-20261002/aide-v0.1.14.0-RC10-update-linux-arm64.zip；unzip -t 通过，内部 SHA256SUMS 镜像校验通过，ZIP SHA256 4feb5dfe08df614e535e7bba6a03ceb98726cd1c8278474ef4ef93605bfa0b2c；已解压副本也在同目录。",
+        "PASS: 本次最终源码与文档 quick 验证；fingerprint b1c55ed56adfaee122a40ec9380bb553897251e854c3758e6b25edf45cf4e27f；日志 .agent-state/verify-20261001T185243112172Z.log。"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "更新升级架构说明：macOS Finder 元数据过滤、文件夹包校验、上传只暂存、显式手动激活、共享持久卷和健康失败自动回滚。任务记录保留实测范围及未验项。",
+      "summary": "更新升级架构说明和任务记录：源码模式通过 Git 更新，Release 镜像支持上传到非活动槽并手动激活；说明从 aide 根目录递归定位应用内升级包、忽略无关文件，以及实际验证范围。",
       "evidence": [
         "docs/architecture/software-updates.md",
         "docs/README.md",
@@ -70,7 +82,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "未操作现有 Docker 服务或数据卷。仅替换由本任务生成的 Downloads/aide-update-test-RC10 中测试升级 ZIP 与解压副本。",
+      "summary": "未改动现有用户 Docker 服务或卷。测试包保留在 Downloads 供用户验证；只在隔离容器端口使用候选镜像。",
       "evidence": [
         "git status --short --branch",
         "git diff --check",
@@ -87,5 +99,5 @@
   },
   "release_authorization": "推送授权：用户明确要求“把文档改了然后都push上去”。GitHub Release/tag：本轮未授权/未执行。",
   "rollback": "恢复本次工作区变更：git diff -- docs/README.md internal/server/server.go internal/server/web/app.js internal/server/web/locales/en.js internal/server/web/settings-schema.json internal/server/web/style.css；删除本任务新增的 docs/architecture/software-updates.md、internal/server/updates.go、internal/server/updates_test.go、docs/tasks/settings-updater.json。未对运行服务或 Docker 数据卷做变更。",
-  "handoff": "已修复解压升级文件夹中的 Finder 元数据导致的结构校验失败；A/B 包上传只暂存，设置界面提供手动激活，健康检查失败时宿主代理自动回滚。快速验证、文件夹/ZIP 上传回归与隔离服务 API 的手动激活排队验证通过。Safari 当前因 Mac 锁屏无法实机交互；Docker 宿主切换/真实回滚及 Windows 实机验证未完成。已按用户授权提交并推送 main；本轮未创建 GitHub Release/tag。"
+  "handoff": "源码运行和 Release 镜像运行都保留：源码默认 source，只能检查公开 Release 并由 Git 更新；Release 构建显式标记 release-image，设置中提供 A/B 包校验、暂存与手动激活。浏览器实测源码模式隐藏 A/B 操作；Release RC9 上传 RC10 ZIP 和从 ~/Downloads/aide 根目录选择解压包后，均在槽 B 显示待手动激活。测试 ZIP 与解压副本位于 ~/Downloads/aide-update-test-RC10-20261002。宿主 Docker A/B 切换及健康失败回滚未执行。"
 }

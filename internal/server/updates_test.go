@@ -56,6 +56,29 @@ func TestCheckUpdatesRequiresAuthentication(t *testing.T) {
 	requireStatus(t, w, http.StatusUnauthorized)
 }
 
+func TestSourceModeSkipsABUpgrade(t *testing.T) {
+	a := testApp(t)
+	a.version = "0.1.14.0 RC9"
+	a.buildVersion = "dev"
+
+	w := request(a, http.MethodGet, "/api/updates/slots", nil)
+	requireStatus(t, w, http.StatusOK)
+	var slots struct {
+		RuntimeMode string `json:"runtimeMode"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &slots); err != nil {
+		t.Fatal(err)
+	}
+	if slots.RuntimeMode != "source" {
+		t.Fatalf("runtime mode = %q, want source", slots.RuntimeMode)
+	}
+	requireStatus(t, request(a, http.MethodPost, "/api/updates/packages", nil), http.StatusConflict)
+	requireStatus(t, request(a, http.MethodPost, "/api/updates/switch", map[string]string{"target": "B"}), http.StatusConflict)
+	requireStatus(t, request(a, http.MethodGet, "/api/updates/agent", nil), http.StatusConflict)
+	requireStatus(t, request(a, http.MethodPost, "/api/updates/agent/sync", map[string]any{}), http.StatusConflict)
+	requireStatus(t, request(a, http.MethodPost, "/api/updates/agent/result", map[string]any{}), http.StatusConflict)
+}
+
 func TestReleaseVersionOrdering(t *testing.T) {
 	for _, tc := range []struct {
 		current, latest string
@@ -75,6 +98,8 @@ func TestReleaseVersionOrdering(t *testing.T) {
 func TestUploadUpdatePackageAcceptsExtractedFolder(t *testing.T) {
 	a := testApp(t)
 	a.version = "0.1.14.0 RC9"
+	a.buildVersion = a.version
+	a.buildRuntimeMode = "release-image"
 	tag := "v0.1.14.0-RC10"
 	platform := runtimePlatform()
 	imageName := "aide-" + tag + "-" + strings.ReplaceAll(platform, "/", "-") + "-image.tar.gz"
@@ -160,6 +185,8 @@ func TestUploadUpdatePackageAcceptsExtractedFolder(t *testing.T) {
 func TestUploadUpdatePackageAcceptsZip(t *testing.T) {
 	a := testApp(t)
 	a.version = "0.1.14.0 RC9"
+	a.buildVersion = a.version
+	a.buildRuntimeMode = "release-image"
 	tag := "v0.1.14.0-RC10"
 	platform := runtimePlatform()
 	imageName := "aide-" + tag + "-" + strings.ReplaceAll(platform, "/", "-") + "-image.tar.gz"

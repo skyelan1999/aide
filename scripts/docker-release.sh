@@ -51,6 +51,7 @@ echo "== [1/4] docker build（AIDE_RUN_TESTS=1 强制全量测试）=="
 "$DOCKER_BIN" build \
   --build-arg AIDE_VERSION="$VER_RAW" \
   --build-arg AIDE_COMMIT="$COMMIT" \
+  --build-arg AIDE_RUNTIME_MODE=release-image \
   --build-arg AIDE_SRC_SHA="$SOURCE_SHA" \
   --build-arg AIDE_RUN_TESTS=1 \
   -t "$TAG" .

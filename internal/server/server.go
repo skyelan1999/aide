@@ -353,6 +353,7 @@ type App struct {
 	pricing                   PricingState
 	tokenCalls                []TokenCallRec
 	buildVersion, buildCommit string
+	buildRuntimeMode          string
 	updateHTTPClient          *http.Client
 	updateAPIBase             string
 	updatesMu                 sync.Mutex
@@ -585,7 +586,7 @@ func env(key, fallback string) string {
 	return fallback
 }
 
-var buildVersion, buildCommit string
+var buildVersion, buildCommit, buildRuntimeMode string
 
 var versionRE = regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+ RC[0-9]+`)
 
@@ -774,6 +775,7 @@ func New(work, reference, data string) (*App, error) {
 	}
 	a.buildVersion = buildVersion
 	a.buildCommit = buildCommit
+	a.buildRuntimeMode = buildRuntimeMode
 	if err := a.loadPlugins(); err != nil {
 		a.Close()
 		return nil, err

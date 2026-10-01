@@ -34,6 +34,7 @@ RUN node --check internal/server/web/app.js \
 # R09：构建期身份（版本/commit）经 ldflags 注入；版本格式与 version.md 一致（如 0.1.5.0 RC5）
 ARG AIDE_VERSION=dev
 ARG AIDE_COMMIT=unknown
+ARG AIDE_RUNTIME_MODE=source
 # AIDE_RUN_TESTS=1 时才跑全量 go test（发布门禁强制）；默认 0 跳过，仅 vet+build。
 # echo 把参数值写进命令文本，确保切换 AIDE_RUN_TESTS 必然失效该层缓存（否则 =0 缓存会被 =1 误命中而跳过测试）。
 # go build 缓存经 cache mount 跨构建复用，增量编译秒级。
@@ -51,7 +52,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     if [ "${AIDE_RUN_TESTS}" = "1" ]; then echo "[build] 发布门禁：跑全量 go test"; AIDE_OFFICE_SCRIPTS=/src/scripts/office go test -mod=vendor -count=1 ./...; fi && \
     go vet -mod=vendor ./... && \
     CGO_ENABLED=0 go build -mod=vendor -trimpath \
-    -ldflags "-s -w -X 'aide/internal/server.buildVersion=${AIDE_VERSION}' -X 'aide/internal/server.buildCommit=${AIDE_COMMIT}'" \
+    -ldflags "-s -w -X 'aide/internal/server.buildVersion=${AIDE_VERSION}' -X 'aide/internal/server.buildCommit=${AIDE_COMMIT}' -X 'aide/internal/server.buildRuntimeMode=${AIDE_RUNTIME_MODE}'" \
     -o /usr/local/bin/aide ./cmd/aide
 
 # ── runtime stage：运行时镜像 ──────────────────────────────────────────────────

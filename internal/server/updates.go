@@ -83,6 +83,21 @@ type updateAsset struct {
 	URL  string `json:"url"`
 }
 
+func (a *App) updateRuntimeMode() string {
+	if a.buildRuntimeMode == "release-image" {
+		return "release-image"
+	}
+	return "source"
+}
+
+func (a *App) requireReleaseUpdateRuntime(w http.ResponseWriter) bool {
+	if a.updateRuntimeMode() == "release-image" {
+		return true
+	}
+	fail(w, http.StatusConflict, errors.New("当前由源代码启动；源码更新无需应用内升级。A/B 槽与宿主升级代理仅适用于 Release 镜像"))
+	return false
+}
+
 func (a *App) checkUpdates(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -130,6 +145,7 @@ func (a *App) checkUpdates(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonOut(w, http.StatusOK, map[string]any{
 		"currentVersion":  current,
+		"runtimeMode":     a.updateRuntimeMode(),
 		"latestVersion":   latestVersion,
 		"updateAvailable": !currentKnown || versionLess(current, latestVersion),
 		"currentAhead":    currentKnown && versionLess(latestVersion, current),
@@ -300,10 +316,17 @@ func (a *App) updateSlots(w http.ResponseWriter, _ *http.Request) {
 		fail(w, 500, err)
 		return
 	}
-	jsonOut(w, 200, state)
+	jsonOut(w, 200, map[string]any{
+		"version": state.Version, "activeSlot": state.ActiveSlot, "slots": state.Slots,
+		"pending": state.Pending, "lastMessage": state.LastMessage, "updatedAt": state.UpdatedAt,
+		"runtimeMode": a.updateRuntimeMode(),
+	})
 }
 
 func (a *App) uploadUpdatePackage(w http.ResponseWriter, r *http.Request) {
+	if !a.requireReleaseUpdateRuntime(w) {
+		return
+	}
 	r.Body = http.MaxBytesReader(w, r.Body, updatePackageMaxBytes+(1<<20))
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		fail(w, 413, errors.New("升级包超过 2 GiB 或 multipart 数据无效"))
@@ -431,8 +454,9 @@ type updatePackageSizeError struct{}
 func (*updatePackageSizeError) Error() string { return "update package exceeds size limit" }
 
 // zipUpdateFolder rebuilds the exact three-entry update archive from a browser
-// directory upload. Only the selected folder's direct children are accepted;
-// browser-provided relative paths are validated and never used as ZIP paths.
+// directory upload. The browser locates and submits only the three package
+// files from one shared parent directory; their paths are validated and never
+// used as ZIP paths.
 func zipUpdateFolder(files []*multipart.FileHeader, paths []string, destination string) error {
 	if len(paths) != len(files) || len(files) < 3 || len(files) > 64 {
 		return errors.New("升级文件夹必须只包含 manifest.json、SHA256SUMS 和一个 Docker 镜像归档")
@@ -613,6 +637,9 @@ func inactiveSlot(active string) string {
 func slotImageRef(slot string) string { return "aide:slot-" + strings.ToLower(slot) }
 
 func (a *App) switchUpdateSlot(w http.ResponseWriter, r *http.Request) {
+	if !a.requireReleaseUpdateRuntime(w) {
+		return
+	}
 	var req struct {
 		Target string `json:"target"`
 	}
@@ -659,6 +686,9 @@ func (a *App) switchUpdateSlot(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) updateAgentCommand(w http.ResponseWriter, _ *http.Request) {
+	if !a.requireReleaseUpdateRuntime(w) {
+		return
+	}
 	a.updatesMu.Lock()
 	defer a.updatesMu.Unlock()
 	state, err := a.loadUpdateStateLocked()
@@ -680,6 +710,9 @@ func (a *App) updateAgentCommand(w http.ResponseWriter, _ *http.Request) {
 }
 
 func (a *App) downloadUpdatePackage(w http.ResponseWriter, r *http.Request) {
+	if !a.requireReleaseUpdateRuntime(w) {
+		return
+	}
 	id := r.PathValue("id")
 	if !updatePackageIDPattern.MatchString(id) {
 		fail(w, 404, errors.New("升级包不存在"))
@@ -697,6 +730,9 @@ func (a *App) downloadUpdatePackage(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) updateAgentResult(w http.ResponseWriter, r *http.Request) {
+	if !a.requireReleaseUpdateRuntime(w) {
+		return
+	}
 	var req struct {
 		OperationID string `json:"operationId"`
 		Success     bool   `json:"success"`
@@ -732,6 +768,9 @@ func (a *App) updateAgentResult(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) updateAgentSync(w http.ResponseWriter, r *http.Request) {
+	if !a.requireReleaseUpdateRuntime(w) {
+		return
+	}
 	var req updateSlotsState
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 32<<10)).Decode(&req); err != nil {
 		fail(w, 400, errors.New("启动器槽状态无效"))

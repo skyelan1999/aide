@@ -1609,7 +1609,12 @@ window.aideEnglish = {
   "选择解压后的升级文件夹": "Choose extracted update folder",
   "支持应用内升级 ZIP 包或 macOS 解压后的升级文件夹；平台启动器 ZIP 不能直接上传。": "Choose an application update ZIP or its extracted folder on macOS. Launcher ZIPs cannot be uploaded to an A/B slot.",
   "已选择文件：{0}": "Selected file: {0}",
-  "已选择升级文件夹：{0} 个有效文件": "Selected update folder: {0} usable files",
+  "已在所选目录中定位升级包：3 个必需文件；忽略其他 {0} 个文件": "Found the update bundle in the selected folder: 3 required files; ignoring {0} other files",
+  "所选目录有 {0} 个文件，但未找到完整的应用内升级包": "The selected folder has {0} files, but no complete in-app update bundle was found",
+  "当前由源代码启动；源码更新无需应用内升级。通过 Git 更新代码并按开发流程重新启动。A/B 软件槽只适用于 Release 镜像。": "This instance was started from source code. Source updates do not need the in-app updater; update with Git and restart using the development workflow. A/B slots are only available in release images.",
+  "当前由源代码启动；源码更新无需应用内升级，请通过 Git 更新并按开发流程重新启动。A/B 升级仅适用于 Release 镜像": "This instance was started from source code. Update with Git and restart using the development workflow. A/B upgrades are only available in release images.",
+  "当前由源代码启动；源码更新无需应用内升级。A/B 槽切换仅适用于 Release 镜像": "This instance was started from source code. A/B slot switching is only available in release images.",
+  "所选目录中未找到同一子文件夹内的 manifest.json、SHA256SUMS 和 Docker 镜像归档。请解压并选择应用内升级包文件夹；启动器包或工作目录不能用于槽升级。": "No manifest.json, SHA256SUMS, and Docker image archive were found together in one subfolder. Extract and choose the in-app update bundle folder; launcher packages and work directories cannot update a slot.",
   "请只选择 ZIP 包或升级文件夹中的一种": "Choose either a ZIP or an update folder, not both",
   "请先选择升级 ZIP 包或文件夹": "Choose an update ZIP or folder first",
   "所选文件不是应用内升级包。请选择名称带有 update-linux 的升级 ZIP；macOS/Windows/Ubuntu 启动器 ZIP 不能用于槽升级。": "This is not an application update bundle. Choose an update ZIP whose name contains update-linux. macOS, Windows, and Ubuntu launcher ZIPs cannot update an A/B slot.",
@@ -1623,5 +1628,8 @@ window.aideEnglish = {
   "请选择 aide 应用内升级 ZIP 包，或选择解压后的完整升级文件夹": "Choose an aide in-app update ZIP or its complete extracted folder.",
   "升级文件夹必须包含 manifest.json、SHA256SUMS 和一个 Docker 镜像归档": "The update folder must contain manifest.json, SHA256SUMS, and one Docker image archive.",
   "升级文件夹包含无效文件路径": "The update folder contains an invalid file path.",
-  "升级文件夹包含重复文件": "The update folder contains duplicate files."
+  "升级文件夹包含重复文件": "The update folder contains duplicate files.",
+  "此处可检查公开 Release。当前由源代码启动，更新时通过 Git 更新并重启即可。": "Check public Releases here. This instance runs from source; update with Git and restart.",
+  "源码启动不安装应用内升级包；A/B 槽由正式 Release 镜像与宿主启动器共同提供。": "Source mode does not install in-app update packages. A/B slots require a release image and its host launcher.",
+  "源码启动无需下载应用内升级包；更新源码后按开发流程重新启动即可。": "Source mode does not need an in-app update package. Update the source and restart using the development workflow."
 };
