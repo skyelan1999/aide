@@ -3,12 +3,13 @@ package server
 import (
 	"context"
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 // agenticScriptServer 返回一个按脚本依次吐响应的 mock 模型：
@@ -187,6 +188,9 @@ func TestAssistantAgenticDispatch(t *testing.T) {
 	if disp == nil || disp["sessionId"] == nil {
 		t.Fatalf("expected dispatched aide session, got %v", body["dispatched"])
 	}
+	if disp["started"] != true {
+		t.Fatalf("expected dispatch to start an aide run, got %v", disp)
+	}
 	if body["text"] != "把首页主按钮改成蓝色" {
 		t.Fatalf("dispatch text not propagated, got %v", body["text"])
 	}
@@ -201,6 +205,23 @@ func TestAssistantAgenticDispatch(t *testing.T) {
 	if !found {
 		t.Fatalf("expected toolsUsed to include dispatch_to_aide, got %v", toolsUsed)
 	}
+	// The new behavior launches a real asynchronous task. Wait for it to finish
+	// before testApp cleanup closes shared App resources, mirroring a clean run lifecycle.
+	sessionID, _ := disp["sessionId"].(string)
+	deadline := time.Now().Add(5 * time.Second)
+	for time.Now().Before(deadline) {
+		a.mu.Lock()
+		var status string
+		if s := a.sessions[sessionID]; s != nil && len(s.Runs) > 0 {
+			status = s.Runs[len(s.Runs)-1].Status
+		}
+		a.mu.Unlock()
+		if status == "completed" || status == "failed" {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatalf("dispatched aide run did not finish before cleanup (session %s)", sessionID)
 }
 
 // TestAssistantAgenticSilent 背景声/与他人对话：小秘调用 be_silent，不派发、不追问。
