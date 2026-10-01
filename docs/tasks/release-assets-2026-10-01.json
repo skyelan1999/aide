@@ -56,17 +56,16 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "RC4 Docker 发布测试仍因 Office 测试缺少 AIDE_OFFICE_SCRIPTS 而失败；已修复 Dockerfile 并升 RC5。RC5 发布构建和镜像验证待执行。Race/vet full verification is rerun after final Dockerfile update.",
+      "summary": "RC5 最新源码的完整 race/vet 门禁通过；Dockerfile 现在复制 Go 测试依赖并向发布 Go tests 注入 Office 脚本路径。RC5 Docker 构建还会以 AIDE_RUN_TESTS=1 再跑一遍非 race 全套测试。RC3/RC4 失败候选不推送。",
       "evidence": [
-        "python3 scripts/agent-route.py verify full PASS at 1df58cbdc425a50ef3fa95cbee7c69fcac89657c; fingerprint 4fc9ab293229cd4f38719a99a0a8c6ba86bb2318706413152004fd1a46d044c7; log .agent-state/verify-20261001T070559182938Z.log",
-        "Dockerfile now copies plugins/ and scripts/office/ before AIDE_RUN_TESTS=1 executes go test.",
-        "Local Docker base images are linux/arm64; no amd64 pull/build was attempted.",
-        "RC4 AIDE_RUN_TESTS=1 failures were isolated to missing AIDE_OFFICE_SCRIPTS=/src/scripts/office; source and existing full mounted race/vet are clean."
+        "python3 scripts/agent-route.py verify full PASS at 89feb38238f42e17ed1ef34f44a0cf6c536a91b5; fingerprint a9eb396175864c15d58735ed0d3ae5e6af76f924416b93ab5885df191ef3c714; log .agent-state/verify-20261001T071839909110Z.log",
+        "Dockerfile includes COPY plugins ./plugins and COPY scripts/office ./scripts/office; release test command sets AIDE_OFFICE_SCRIPTS=/src/scripts/office.",
+        "Local platform cache is linux/arm64 only; no amd64 images pulled."
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "中英安装指南列明 RC4 的平台包、共享镜像流程与暂缺 amd64 的范围；离线说明、PRD、架构、交接及索引已同步。",
+      "summary": "中英安装指南、OFFLINE 说明、PRD、架构、交接与索引均标记 RC5；列出三种 ARM64 启动包、共享镜像和 x64 缺口。",
       "evidence": [
         "python3 scripts/check_docs.py PASS",
         "Release asset procedure in docs/installation.md and docs/en/installation.md"
@@ -74,7 +73,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "范围内实现与文档改动已提交；后续任务/发布证据留在受控 docs 文件，资产仅写入忽略的 .agent-state。",
+      "summary": "代码与文档已提交；待更新的任务账本及发布验收状态将一并提交。产物输出隔离在 .agent-state。",
       "evidence": [
         "Implementation commit ff26b5f7212f251b8a14b4f3162dd98909b73166",
         "git status clean after documentation/task closeout commit"
@@ -88,5 +87,5 @@
   },
   "release_authorization": "用户 2026-10-01 原话：“镜像该传传上去啊，另外你需要根据mac windows ubuntu分别设计单独的可执行程序，并提供制作脚本来上传到release中”。明确授权上传 Docker 镜像与平台启动包到 GitHub Release。之前“把所需的docker镜像全部放到本地，不用从联网拉取了”仍约束不拉取 amd64 基础镜像。",
   "rollback": "不移动或复用已推送 tag。若 Release 附件错误，移除错误附件并暂缓下载；修复后使用版本脚本递增 RC、重建镜像/平台包并更新 Release。此次不替换生产实例或用户现有 Docker 卷。",
-  "handoff": "RC3/RC4 local tags are unpushed failed candidates. RC5 Dockerfile copies plugins/ and scripts/office/ and sets AIDE_OFFICE_SCRIPTS for release Go tests. Only publish after RC5 AIDE_RUN_TESTS=1 build passes."
+  "handoff": "RC3/RC4 local tags are unpushed failed candidates. RC5 is current at 89feb38238f42e17ed1ef34f44a0cf6c536a91b5; full race/vet passed. Next run release build with AIDE_RUN_TESTS=1, then test candidate health/API, package arm64 launchers/image, push main/tag and create prerelease."
 }
