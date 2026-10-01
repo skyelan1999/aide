@@ -66,14 +66,15 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "本地服务已更新；未提交、推送或发布。",
+      "status": "pass",
+      "summary": "随 aide 0.1.14.0 RC7 GitHub prerelease 发布。",
       "evidence": [
-        "当前服务 https://127.0.0.1:9999。"
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC7",
+        "tag v0.1.14.0-RC7 → df411b7ba1bbff29395258bc92daec2ba0069806；完整构建、镜像和附件证据见 release-2026-10-01-rc7.json。"
       ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "后续用户消息“更新文档并release”，结合此前同一任务链“整理文档，release and psuh”授权，本实现随 v0.1.14.0 RC7 发布。",
   "rollback": "恢复本任务所列文件的本次差异；通过 scripts/aide.sh start 重建本地镜像。",
-  "handoff": "新逻辑已包含在本地 aide:local，当前服务位于 https://127.0.0.1:9999 且健康。尚未在 Safari 实际改变端口验证自动同页跳转。"
+  "handoff": "已随 RC7 发布；用户当前服务未替换。自动同页跳转需要真实浏览器验收，目前 NOT RUN（执行环境 Mac locked）。详见 docs/tasks/release-2026-10-01-rc7.json。"
 }

@@ -63,14 +63,15 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "仅更新本地开发服务；未提交、未推送、未发布。",
+      "status": "pass",
+      "summary": "随 aide 0.1.14.0 RC7 GitHub prerelease 发布。",
       "evidence": [
-        "本地 aide:local 已重建；发布步骤未执行。"
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC7",
+        "tag v0.1.14.0-RC7 → df411b7ba1bbff29395258bc92daec2ba0069806；完整构建、镜像和附件证据见 release-2026-10-01-rc7.json。"
       ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "后续用户消息“更新文档并release”，结合此前同一任务链“整理文档，release and psuh”授权，本实现随 v0.1.14.0 RC7 发布。",
   "rollback": "恢复本任务涉及文件的本次差异；运行 scripts/aide.sh start 重建。数据卷中的 config/virtual-avatar-settings.json 可备份后恢复。",
-  "handoff": "本地服务在 https://127.0.0.1:9999 运行。持久工作区设置接口可用且已发现工作区副本存在。尚未做 Safari 跨端口读写验收，也未运行专项测试。"
+  "handoff": "已随 RC7 发布。工作区数据卷 API 已在候选容器中 smoke test；真实第二 localhost origin/browser 验收仍 NOT RUN。详见 docs/tasks/release-2026-10-01-rc7.json。"
 }

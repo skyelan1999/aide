@@ -82,12 +82,18 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "RC7 已升版、构建候选镜像、生成并校验 6 个发行附件、推送 main/tag 并创建 GitHub prerelease。浏览器端口切换仍为 NOT RUN，未替换当前用户服务。",
+      "evidence": [
+        "GitHub Release 已创建并验证为 prerelease：https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC7",
+        "远端 main 与本地 main 均为 df411b7ba1bbff29395258bc92daec2ba0069806；annotated tag v0.1.14.0-RC7 peel 到同一提交。",
+        "6 个附件存在于远端，包含 Linux ARM64 离线镜像、macOS/Windows/Ubuntu ARM64 启动包、RELEASE-ASSETS.txt 和 SHA256SUMS；本地逐项 `shasum -a 256 -c SHA256SUMS` 均 OK。",
+        "镜像 aide:0.1.14.0-rc7-candidate：sha256:25a091875c9e1c8d48c88c7cfbaf23083c5eea7cef61107b34ffc120bd1d62df，linux/arm64，源码 label cde7bf192ff9a6217096ed8d8d9adad4f58ff60fcdf6c2792b1d64227067d7e6；临时容器 health=ok、integrity=ok、鉴权虚拟形象 API 可用。",
+        "端口修改后真实浏览器同页跳转 NOT RUN：计算机使用界面显示 Mac locked；未替换当前 9999 用户服务。x64 镜像资产未构建。"
+      ]
     }
   },
   "release_authorization": "用户本轮明确说“更新文档并release”；此前同一会话明确授权“整理文档，release and psuh”，并要求跨平台可执行程序及上传 release 的制作脚本。按此前持续授权执行版本发布及 Git 推送。",
   "rollback": "代码回滚：将 main 回退到 RC6 基线 0ccda31；镜像回滚：重新运行上一已发布 RC6 离线包/镜像。不要回滚或覆盖持久卷 /data/config/virtual-avatar-settings.json、/data/config/host-port。若端口更新后无法访问，使用启动包 start.command/start.bat/start.sh 读取持久 host-port 并启动；不要假设端口固定为 8097。",
-  "handoff": "代码与文档提交 f4b6ff3；全量发布门禁通过。当前开发容器仍运行 RC6 镜像，127.0.0.1:9999 healthy；没有替换生产/用户服务。端口修改后的实际浏览器同页跳转未运行（系统 Mac locked）。正在继续 RC7 升版、镜像构建、资产上传与推送。"
+  "handoff": "发布完成：0.1.14.0 RC7；tag v0.1.14.0-RC7 指向 df411b7ba1bbff29395258bc92daec2ba0069806；main 已推送。GitHub prerelease https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC7 含 6 个附件。开发服务仍为 RC6 镜像、127.0.0.1:9999 healthy，未部署/替换。端口变更真实浏览器同页跳转未验证（Mac locked）；x64 包未提供。"
 }

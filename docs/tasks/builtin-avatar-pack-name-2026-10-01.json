@@ -65,14 +65,15 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "当前请求未授权升版、提交、推送或发布。",
+      "status": "pass",
+      "summary": "随 aide 0.1.14.0 RC7 GitHub prerelease 发布。",
       "evidence": [
-        "release_authorization 字段注明本请求仅修改包显示名称和本地迁移。"
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC7",
+        "tag v0.1.14.0-RC7 → df411b7ba1bbff29395258bc92daec2ba0069806；完整构建、镜像和附件证据见 release-2026-10-01-rc7.json。"
       ]
     }
   },
-  "release_authorization": "本请求未授权升版、提交、推送或发布。",
+  "release_authorization": "后续用户消息“更新文档并release”，结合此前同一任务链“整理文档，release and psuh”授权，本实现随 v0.1.14.0 RC7 发布。",
   "rollback": "恢复内置包显示名、revision、英文映射和回归断言即可；稳定包 ID 和动画素材不变。",
   "handoff": "实现与定向验证完成。隔离候选验证后已清理；未提交、升版、推送或发布。Safari 上正在运行的 RC6 需在新构建部署后才会显示名称更新。"
 }

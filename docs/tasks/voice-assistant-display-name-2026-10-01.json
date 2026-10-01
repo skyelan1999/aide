@@ -69,14 +69,15 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "本次请求仅涉及名称与显示同步，用户未在本请求中授权版本升级、提交、推送或发布。",
+      "status": "pass",
+      "summary": "随 aide 0.1.14.0 RC7 GitHub prerelease 发布。",
       "evidence": [
-        "release_authorization 字段记录本次范围不含远端操作。"
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC7",
+        "tag v0.1.14.0-RC7 → df411b7ba1bbff29395258bc92daec2ba0069806；完整构建、镜像和附件证据见 release-2026-10-01-rc7.json。"
       ]
     }
   },
-  "release_authorization": "本任务仅实现设置/显示改动，未授权提交、推送或发布；不操作远端 Release。",
+  "release_authorization": "后续用户消息“更新文档并release”，结合此前同一任务链“整理文档，release and psuh”授权，本实现随 v0.1.14.0 RC7 发布。",
   "rollback": "恢复 app.js、index.html、settings-schema.json、locales/en.js 的变更即可回滚 UI；voiceAssistantName 配置键和会话历史保持原样，无数据迁移。",
   "handoff": "实现与定向验证完成，未提交、升版或发布。隔离候选验证了自定义名称的侧栏、会话标题和锁屏名称节点；锁屏遮罩需在配置账户密码的环境进一步验证。"
 }
