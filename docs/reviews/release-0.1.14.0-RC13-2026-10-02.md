@@ -13,4 +13,4 @@ RC13 发布统一的完整运行与应用内升级包。macOS、Windows 和 Ubun
 
 ## 验证状态
 
-构建、全量测试、健康检查、资产校验、上传/升级验收和远端 Release 复核见 [RC13 资产验证报告](release-assets-2026-10-02-RC13.md)。
+构建、全量测试、健康检查、资产校验、上传/升级验收和远端 Release 复核见 [RC13 资产验证报告](https://github.com/skyelan1999/aide/blob/main/docs/reviews/release-assets-2026-10-02-RC13.md)。
