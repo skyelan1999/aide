@@ -67,13 +67,40 @@ if [[ "$MODE" == start-bundle ]]; then
       [[ -n "${BUNDLE_RELEASE_TAG:-}" ]] || { echo "包内缺少镜像，且 .aide-image 没有 Release tag，无法自动下载。" >&2; exit 1; }
       command -v curl >/dev/null 2>&1 || { echo "缺少 curl，无法自动下载镜像。请安装 curl 后重试。" >&2; exit 1; }
       echo "包内没有镜像，正在从 GitHub Release 下载（约 500 MB）：$BUNDLE_RELEASE_TAG"
-      curl --fail --location --retry 3 --output "$IMAGE_ARCHIVE.partial" "$IMAGE_URL"
-      mv "$IMAGE_ARCHIVE.partial" "$IMAGE_ARCHIVE"
     fi
     if [[ ! -f docker-images/SHA256SUMS && -n "${BUNDLE_RELEASE_TAG:-}" ]]; then
       command -v curl >/dev/null 2>&1 || { echo "缺少 curl，无法下载 SHA256SUMS。" >&2; exit 1; }
-      curl --fail --location --retry 3 --output docker-images/SHA256SUMS.partial "$SUMS_URL"
+      curl --fail --location --retry 5 --retry-all-errors --retry-delay 2 --connect-timeout 30 --output docker-images/SHA256SUMS.partial "$SUMS_URL"
       mv docker-images/SHA256SUMS.partial docker-images/SHA256SUMS
+    fi
+    if [[ ! -f "$IMAGE_ARCHIVE" && -n "${BUNDLE_RELEASE_TAG:-}" ]]; then
+      # GitHub/CDN connections can be closed mid-transfer. Keep the partial
+      # file and resume it on the next attempt; only promote a complete file
+      # after its digest matches the published checksum.
+      ARCHIVE_NAME="$(basename "$IMAGE_ARCHIVE")"
+      EXPECTED_HASH="$(awk -v name="$ARCHIVE_NAME" '{file=$2; sub(/^\*/, "", file); if (file == name) {print $1; exit}}' docker-images/SHA256SUMS 2>/dev/null || true)"
+      [[ "$EXPECTED_HASH" =~ ^[[:xdigit:]]{64}$ ]] || { echo "SHA256SUMS 中没有 $ARCHIVE_NAME 的有效校验值。" >&2; exit 1; }
+      downloaded=0
+      for attempt in {1..8}; do
+        if curl --fail --location --retry 3 --retry-all-errors --retry-delay 2 --connect-timeout 30 --continue-at - --output "$IMAGE_ARCHIVE.partial" "$IMAGE_URL"; then
+          if command -v shasum >/dev/null 2>&1; then ACTUAL_HASH="$(shasum -a 256 "$IMAGE_ARCHIVE.partial" | awk '{print $1}')";
+          elif command -v sha256sum >/dev/null 2>&1; then ACTUAL_HASH="$(sha256sum "$IMAGE_ARCHIVE.partial" | awk '{print $1}')";
+          else echo "缺少 shasum/sha256sum，无法校验下载镜像。" >&2; exit 1; fi
+          if [[ "$ACTUAL_HASH" == "$EXPECTED_HASH" ]]; then
+            mv "$IMAGE_ARCHIVE.partial" "$IMAGE_ARCHIVE"
+            downloaded=1
+            break
+          fi
+          echo "下载内容校验未通过，重新下载（尝试 $attempt/8）…" >&2
+          rm -f "$IMAGE_ARCHIVE.partial"
+        else
+          echo "镜像下载中断，正在从已下载位置续传（尝试 $attempt/8）…" >&2
+        fi
+      done
+      if (( downloaded == 0 )); then
+        echo "镜像下载未完成。请检查网络后重新运行 start.command；已下载部分会尝试续传。" >&2
+        exit 1
+      fi
     fi
     [[ -f "$IMAGE_ARCHIVE" ]] || { echo "缺少镜像归档：docker-images/aide-local.tar[.gz]。" >&2; exit 1; }
     ARCHIVE_NAME="$(basename "$IMAGE_ARCHIVE")"

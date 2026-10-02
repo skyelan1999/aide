@@ -1,0 +1,59 @@
+{
+  "id": "macos-launch-download-resume-20261002",
+  "request": "修复 macOS Release start.command 下载镜像时 curl 18 中断导致脚本退出、浏览器不打开；支持断点续传，校验通过后启动并自动打开浏览器，补充测试和文档。",
+  "baseline": "7b95fde61c331c5398fe61c59e67cf6c8b7b736e",
+  "initial_status": "M docs/en/installation.md\n M docs/installation.md\n M scripts/aide.sh\n M scripts/test_offline_bundle.py\n?? docs/reviews/2026-10-02-agent-harness-architecture-review.md\n?? docs/tasks/harness-architecture-review-20261002.json",
+  "acceptance": [
+    "Release launcher resumes an interrupted image download and retries transient transfer errors.",
+    "The image is imported only after its SHA256 matches the release checksum.",
+    "Successful startup reaches the configured URL and invokes the macOS browser opener; failed download exits with a retry instruction.",
+    "Chinese and English installation docs describe lightweight launcher behavior and the offline full package option."
+  ],
+  "scope": [
+    "scripts/aide.sh",
+    "scripts/test_offline_bundle.py",
+    "docs/installation.md",
+    "docs/en/installation.md",
+    "docs/tasks/macos-launch-download-resume-20261002.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "症状由轻量发行 ZIP 的在线镜像下载中断造成；curl 返回 18 时启动脚本在启动服务/打开网页之前退出。",
+      "evidence": ["用户提供的 RC13 start.command 终端截图：下载 70.0 MB/490 MB 后 curl: (18) Transferred a partial file。"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "先下载同一 Release 的 SHA256SUMS，再用 curl 断点续传与重试拉取镜像；仅当 SHA256 匹配时将 partial 文件晋升为镜像归档。启动及健康检查成功后沿用现有自动打开浏览器路径。",
+      "evidence": ["scripts/aide.sh start-bundle 分支及 start-image 健康检查/浏览器打开调用链已审阅。"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "加入 Release 镜像模拟下载测试，覆盖一次部分传输失败、续传、摘要校验、Docker 导入和打开本机浏览器 URL。",
+      "evidence": ["scripts/aide.sh", "scripts/test_offline_bundle.py"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "专项测试、仓库 quick 和 full 门禁均通过。验证在当前 Mac Docker Engine 执行；实际 RC14 Release 下载尚未发布，CDN 在线行为通过模拟中断续传夹具验证。",
+      "evidence": ["python3 -m unittest scripts/test_offline_bundle.py -v — 6 tests OK", "python3 scripts/agent-route.py verify quick — pass; fingerprint 171b77d4f45b0eb77a5e27432d7509605dfb5922b25655a3d2fe48bc69ba2267", "python3 scripts/agent-route.py verify full — pass; same fingerprint; Docker go test -race and go vet passed", "bash -n scripts/aide.sh — OK", "git diff --check — OK"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英文安装说明已补充轻量启动包联网下载、断点续传、镜像校验、健康后开浏览器及完整包离线启动方式。",
+      "evidence": ["docs/installation.md", "docs/en/installation.md"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅 diff；只修改启动脚本、回归测试、中英文安装文档和本任务记录。保留两项范围外的 harness review 文件且未暂存。",
+      "evidence": ["git diff --check — OK", "git status --short --branch；确认范围外未跟踪文件未被暂存或改写。"]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户在本任务前明确要求‘文档改了然后都push上去’，并明确要求‘你发布一个’；本次不改写已发布的 RC13，而以新 RC 版本发布修复。",
+  "rollback": "RC13 release 保持不变。修复版本若有问题，用户仍可下载上一版完整发行 ZIP 或继续使用已安装槽；不删除用户数据、不重置 A/B 槽。",
+  "handoff": ""
+}

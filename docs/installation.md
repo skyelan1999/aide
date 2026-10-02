@@ -18,7 +18,7 @@ aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。RC8 Rel
 
 ## 2. 下载同一版本的源码
 
-从 GitHub Release 下载 `aide-<tag>-full-linux-<arch>.zip` 可使用统一完整发行包。解压后 macOS 运行 `start.command`、Windows 运行 `start.ps1` 或 `start.bat`、Ubuntu 运行 `start.sh`；启动器校验并导入包内的 Docker 镜像，不需要首次联网下载。此 ZIP 同时可用于已有 Release 安装的应用内升级；macOS 若自动解压，在设置的「软件升级」中选择解压后的完整发行包文件夹即可，系统会定位 `docker-images/` 下的升级文件并校验。轻量平台启动 ZIP仍支持联网安装，但不含升级镜像，不能用于 A/B 升级。
+从 GitHub Release 下载 `aide-<tag>-full-linux-<arch>.zip` 可使用统一完整发行包。解压后 macOS 运行 `start.command`、Windows 运行 `start.ps1` 或 `start.bat`、Ubuntu 运行 `start.sh`；启动器校验并导入包内的 Docker 镜像，不需要首次联网下载。此 ZIP 同时可用于已有 Release 安装的应用内升级；macOS 若自动解压，在设置的「软件升级」中选择解压后的完整发行包文件夹即可，系统会定位 `docker-images/` 下的升级文件并校验。轻量平台启动 ZIP 不含镜像，首次启动时会从同一 GitHub Release 下载并校验约 500 MB 镜像；连接中断会自动续传，只有校验并启动服务成功后才会打开浏览器。轻量 ZIP 不能用于 A/B 升级。
 
 | 下载项 | 启动方式 | 目标系统 |
 | --- | --- | --- |
