@@ -1,0 +1,93 @@
+{
+  "id": "systematic-runtime-config-audit-20261003",
+  "request": "Systematically inspect repository for bugs caused by host/runtime/container integration mismatches like WebAuthn origin using a fixed port while launcher maps dynamically; fix confirmed issues together, add regression coverage and a review report.",
+  "baseline": "27fd13418036a4e35c35740685468ffe7802258f",
+  "initial_status": "M docs/agent/router.json\n M docs/architecture/2026-09-25-touchid-webauthn-unlock.md\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/webauthn.go\n M internal/server/webauthn_test.go\n M scripts/package-release-assets.sh\n M scripts/test_assistant_mode_controls.cjs\n M scripts/test_i18n.cjs\n M start.ps1\n?? docs/reviews/2026-10-02-agent-harness-architecture-review.md\n?? docs/tasks/assistant-model-source-label-20261002.json\n?? docs/tasks/dynamic-assistant-composer-placeholder-20261002.json\n?? docs/tasks/fix-assistant-trajectory-toggle-20261002.json\n?? docs/tasks/fix-webauthn-origin-port-20261003.json\n?? docs/tasks/harness-architecture-review-20261002.json\n?? docs/tasks/password-prompt-reveal-toggle-20261002.json\n?? scripts/test_accessibility_port.cjs\n?? scripts/test_password_prompt.cjs",
+  "acceptance": [
+    "Audit the host/runtime/container boundary for port and origin drift related to the reported Passkey failure.",
+    "Fix every confirmed issue in the audited lifecycle and add regression coverage where practical.",
+    "Document scope, findings, fixes, verification evidence, and unverified platform limits.",
+    "Preserve pre-existing unrelated working-tree changes; do not publish or push as part of this audit."
+  ],
+  "scope": [
+    "internal/server/webauthn.go",
+    "internal/server/webauthn_test.go",
+    "internal/server/web/app.js",
+    "start.ps1",
+    "scripts/watch-port.ps1",
+    "scripts/package-release-assets.sh",
+    "scripts/test_accessibility_port.cjs",
+    "scripts/test_windows_port_lifecycle.py",
+    "docs/security/tls.md",
+    "docs/en/security/tls.md",
+    "docs/architecture/2026-09-25-touchid-webauthn-unlock.md",
+    "docs/reviews/2026-10-03-runtime-port-integration-audit.md",
+    "docs/tasks/systematic-runtime-config-audit-20261003.json",
+    "docs/agent/router.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Scoped to integration failures where the host-selected browser port differs from container defaults or fails to propagate through settings, launchers, and packaged runtime support.",
+      "evidence": [
+        "Runtime observation: Compose maps 127.0.0.1:9999 to container 8080; container has no AIDE_PORT while host .env sets 9999.",
+        "Compared Compose/Docker health probing, settings persistence, both offline launcher paths, and release packager contents."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Keep container service port fixed at 8080; derive browser-origin settings from the active page; bind WebAuthn ceremonies to the validated request origin; reconcile persisted host-port changes in each offline launcher without removing shared volumes.",
+      "evidence": [
+        "Unix bundle already had fallback selection and a host-side port watcher; Windows bundle was brought to the same lifecycle.",
+        "Launcher child script paths are explicitly quoted so packages installed under paths containing spaces can start their agents."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Fixed four confirmed integration defects: WebAuthn origin/port mismatch, stale settings-page port display, missing Windows offline fallback/watcher, and Windows child-script path quoting.",
+      "evidence": [
+        "WebAuthn start validates localhost Origin and binds it to the one-use challenge; finish requires the same origin.",
+        "Accessibility host-port control renders the active browser port including implicit 80/443.",
+        "Windows offline startup chooses and persists a free fallback; Windows and combined full packages include watch-port.ps1 to reconcile saved port through Compose.",
+        "Windows launcher quotes update-agent.ps1 and watch-port.ps1 paths passed to Start-Process."
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "Go and repository quick checks passed. Windows script checks are static only, and browser acceptance against rebuilt code was not run.",
+      "evidence": [
+        "Targeted Go WebAuthn tests: PASS.",
+        "node --check internal/server/web/app.js: PASS; node scripts/test_accessibility_port.cjs: PASS.",
+        "python3 scripts/test_windows_port_lifecycle.py: PASS (4 static regression assertions).",
+        "python3 scripts/agent-route.py verify quick: PASS (16 checks, including documentation and new regression checks).",
+        "bash -n scripts/package-release-assets.sh and git diff --check: PASS.",
+        "PowerShell runtime: NOT_RUN; pwsh/powershell is unavailable on this host. Safari/browser acceptance against a rebuilt image: NOT_RUN."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated Chinese and English TLS/WebAuthn descriptions and added a scoped audit report distinguishing confirmed fixes from platform validation limits.",
+      "evidence": [
+        "docs/security/tls.md and docs/en/security/tls.md no longer describe an origin allowlist inferred from container AIDE_PORT.",
+        "docs/reviews/2026-10-03-runtime-port-integration-audit.md records findings, evidence, and handoff limits."
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed and staged only the audit-scoped changes; unrelated pre-existing worktree edits were retained outside the commit.",
+      "evidence": [
+        "git diff --cached --check passed; the staged file list was reviewed against the pre-existing dirty state."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Source and documentation changes are pushed to main, but no new runtime is built, deployed, or published; the existing RC14 install still runs old code.",
+      "evidence": [
+        "No image build, service restart, browser deployment, or Release publication was performed."
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert only the audit-scoped source/scripts/docs changes; do not remove Compose volumes or alter persisted /data/config/host-port.",
+  "handoff": "Source fixes and documentation are pushed to main. Re-run the Windows launcher/watcher under Windows PowerShell and verify Settings port changes against a rebuilt offline bundle before publishing. Existing RC14 remains unchanged."
+}

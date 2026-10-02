@@ -66,8 +66,8 @@
 | `navigator.credentials.create/get` 支持 | Chrome 桌面 108+、Safari 16+（macOS 13+）均支持；前端必须先做特性检测 | 不支持即隐藏按钮，不报错 |
 | macOS Touch ID 作 platform authenticator | 支持。Safari 走 iCloud Keychain（macOS 10.15+ 起）；Chrome 自 120 起也调 macOS 系统级 Touch ID 对话框，体验与 Safari 一致 | `authenticatorAttachment: "platform"`，`userVerification: "preferred"` |
 | secure context：`http://127.0.0.1:8097` | loopback 属 potentially trustworthy，secure context 成立 | 但见下一行 RP ID 限制 |
-| **RP ID 能设成 `127.0.0.1` 吗** | **不能。RP ID 必须是 registrable domain，裸 IP 永不合法；`localhost` 是规范唯一的 loopback 例外** | **用户必须用 `http://localhost:8097` 打开**。compose 发布的是 `127.0.0.1:8097`，`localhost` 解析到同一地址，零成本切换 |
-| Docker 端口映射下 origin | 浏览器看到的 origin 是 `http://localhost:8097`（端口不进 RP ID，RP ID 只取 host） | 后端配置允许 origin 白名单 `http://localhost:8097` |
+| **RP ID 能设成 `127.0.0.1` 吗** | **不能。RP ID 必须是 registrable domain，裸 IP 永不合法；`localhost` 是规范唯一的 loopback 例外** | RP ID 固定为 `localhost`；用户通过 localhost 打开 |
+| Docker 端口映射下 origin | 浏览器看到宿主机映射端口，例如 `https://localhost:9999`；端口不进 RP ID，RP ID 只取 host | start 请求只接受与 Host 同源的 `http(s)://localhost:<port>`，并把实际 origin 绑定到一次性 challenge；finish 只按绑定的 origin 验证。支持启动器动态分配端口，不接受远程主机 |
 | 内嵌浏览器 / webview | WKWebView 类环境 Touch ID 支持参差；不赌环境 | 用 `PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()` 运行时探测，false 即隐藏 |
 | Chrome vs Safari 差异 | 两者 Touch ID 体验一致；区别仅在凭证落到 iCloud Keychain 还是 Google Password Manager；Firefox macOS platform authenticator 支持弱 | 特性检测兜底，差异无感 |
 
@@ -257,7 +257,7 @@ sequenceDiagram
 
 1. **私钥不出设备**：Touch ID 对应的私钥存于 macOS Secure Enclave / iCloud Keychain，后端只存公钥、credential ID、签名计数。
 2. **签名计数（signCount）单调校验**：每次成功断言后回写 `authenticator.SignCount`；新值 ≤ 旧值且非合法 0→0 场景即告警/拒绝，防凭证克隆。
-3. **origin / RP ID 强校验**：后端固定 RPID=localhost；`finish` 阶段校验 clientDataJSON 的 origin 必须落在白名单（`http://localhost:8097`），challenge 必须与内存会话一致。
+3. **origin / RP ID 强校验**：后端固定 RPID=localhost；start 阶段只接受与请求 Host 一致的 localhost origin，并将其绑定到一次性 challenge；finish 阶段校验同一 origin、RP ID 与 challenge。允许宿主机映射端口变化，不接受远程主机来源。
 4. **challenge 一次性 + 过期**：32 字节 crypto/rand；TTL 120s；finish 即删；不通过 finish 消费的 challenge 到期自动清（后台定时或惰性检查）。
 5. **凭证文件保护**：`webauthn-credentials.json` 0600，仅公钥材料，即使泄露也无法离线伪造（私钥在 Secure Enclave）。
 6. **注册强认证**：register/start 必须先验原密码，杜绝「已解锁即被登记后门凭证」。

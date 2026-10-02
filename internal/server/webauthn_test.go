@@ -60,8 +60,13 @@ func readChallenge(t *testing.T, rec *httptest.ResponseRecorder) string {
 
 // finishErrText 调 finish 并返回 (status, errorMessage)。
 func finishErrText(t *testing.T, handler http.HandlerFunc, target string, body []byte) (int, string) {
+	return finishErrTextForOrigin(t, handler, target, body, "9999")
+}
+
+func finishErrTextForOrigin(t *testing.T, handler http.HandlerFunc, target string, body []byte, port string) (int, string) {
 	t.Helper()
 	req := httptest.NewRequest(http.MethodPost, target, bytes.NewReader(body))
+	setWebAuthnTestOrigin(req, port)
 	rec := httptest.NewRecorder()
 	handler(rec, req)
 	var parsed struct {
@@ -71,6 +76,38 @@ func finishErrText(t *testing.T, handler http.HandlerFunc, target string, body [
 	return rec.Code, parsed.Error
 }
 
+func setWebAuthnTestOrigin(req *http.Request, port string) {
+	req.Host = "localhost:" + port
+	req.Header.Set("Origin", "https://localhost:"+port)
+}
+
+func TestWebAuthnOriginAllowsDynamicLocalPort(t *testing.T) {
+	req := httptest.NewRequest(http.MethodPost, "/api/webauthn/register/start", nil)
+	setWebAuthnTestOrigin(req, "9999")
+	got, ok := webAuthnOrigin(req)
+	if !ok || got != "https://localhost:9999" {
+		t.Fatalf("dynamic localhost origin rejected: origin=%q ok=%v", got, ok)
+	}
+
+	for _, tc := range []struct {
+		name, origin, host string
+	}{
+		{name: "remote hostname", origin: "https://example.com:9999", host: "example.com:9999"},
+		{name: "origin host mismatch", origin: "https://localhost:9998", host: "localhost:9999"},
+		{name: "insecure scheme with malformed authority", origin: "file://localhost", host: "localhost"},
+		{name: "path in origin", origin: "https://localhost:9999/path", host: "localhost:9999"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodPost, "/", nil)
+			r.Host = tc.host
+			r.Header.Set("Origin", tc.origin)
+			if got, ok := webAuthnOrigin(r); ok {
+				t.Fatalf("unsafe origin accepted: %q", got)
+			}
+		})
+	}
+}
+
 // TestRegisterStartChallengeKeyMatch 验证 register/start 存会话的 key == 下发 challenge。
 func TestRegisterStartChallengeKeyMatch(t *testing.T) {
 	a := newWebAuthnTestApp(t, t.TempDir())
@@ -78,6 +115,7 @@ func TestRegisterStartChallengeKeyMatch(t *testing.T) {
 	// start: POST /api/webauthn/register/start {oldPassword}
 	req := httptest.NewRequest(http.MethodPost, "/api/webauthn/register/start",
 		strings.NewReader(`{"oldPassword":"webauthn-test-pw"}`))
+	setWebAuthnTestOrigin(req, "9999")
 	rec := httptest.NewRecorder()
 	a.webAuthnRegisterStart(rec, req)
 	if rec.Code != http.StatusOK {
@@ -89,11 +127,15 @@ func TestRegisterStartChallengeKeyMatch(t *testing.T) {
 	a.webAuthn.mu.Lock()
 	_, ok := a.webAuthn.sessions[ch]
 	_, doubleOK := a.webAuthn.sessions[doubleEncodedKey(ch)]
+	boundOrigin := a.webAuthn.origins[ch]
 	total := len(a.webAuthn.sessions)
 	a.webAuthn.mu.Unlock()
 
 	if !ok {
 		t.Fatalf("下发 challenge %q 未能命中 sessions 会话（双重编码 bug 仍在）", ch)
+	}
+	if boundOrigin != "https://localhost:9999" {
+		t.Fatalf("expected start to bind actual host port origin, got %q", boundOrigin)
 	}
 	if doubleOK {
 		t.Fatalf("旧的双重编码 key 仍存在于 sessions（说明修复未生效）")
@@ -101,9 +143,14 @@ func TestRegisterStartChallengeKeyMatch(t *testing.T) {
 	if total != 1 {
 		t.Fatalf("期望恰好 1 条会话，实际 %d", total)
 	}
+	status, msg := finishErrTextForOrigin(t, a.webAuthnRegisterFinish,
+		"/api/webauthn/register/finish?challenge="+ch, []byte{}, "10000")
+	if status != http.StatusBadRequest || !strings.Contains(msg, "来源已变化") {
+		t.Fatalf("跨端口 finish 应拒绝且指出来源变化，status=%d msg=%q", status, msg)
+	}
 
 	// finish 用正确 challenge + 空 body：应命中会话后在解析阶段 400，而非"会话无效"。
-	status, msg := finishErrText(t, a.webAuthnRegisterFinish,
+	status, msg = finishErrText(t, a.webAuthnRegisterFinish,
 		"/api/webauthn/register/finish?challenge="+ch, []byte{})
 	if status != http.StatusBadRequest {
 		t.Fatalf("register/finish 期望 400（解析错误），实际 %d msg=%q", status, msg)
@@ -128,6 +175,7 @@ func TestAssertionStartChallengeKeyMatch(t *testing.T) {
 	a.webAuthn.mu.Unlock()
 
 	req := httptest.NewRequest(http.MethodPost, "/api/webauthn/assertion/start", nil)
+	setWebAuthnTestOrigin(req, "9999")
 	rec := httptest.NewRecorder()
 	a.webAuthnAssertionStart(rec, req)
 	if rec.Code != http.StatusOK {

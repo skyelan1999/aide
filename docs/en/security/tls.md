@@ -116,8 +116,8 @@ This is local-only and does not affect anyone else. Deleting the data volume iss
 
 WebAuthn requires a **Secure Context** (`https://` or `http://localhost`). After switching to HTTPS in 0.1.11:
 
-- the page runs at `https://localhost:8097`, so register/assertion origins carry the `https://` scheme;
-- the backend `newWebAuthnManager()` fills `RPOrigins` with all **four** combos http/https × localhost/127.0.0.1, with the port taken from the host-mapped `AIDE_PORT` (default 8097) — so even a stale `http://localhost:8097` cached tab issuing register/finish is not rejected as `origin not allowed`;
+- the page runs at the launcher's `https://localhost:<host-port>`, so register/assertion origins carry the `https://` scheme;
+- at registration/assertion start, the backend binds the validated `http(s)://localhost:<current host port>` origin to that challenge; finish must come from the same origin. `RPID` remains `localhost`, and the host mapping is not inferred from a container default port;
 - `RPID` stays `localhost` (IP literals are invalid — use the `localhost` URL for Touch ID unlock).
 
 ## 8. Production / public deployment notes
@@ -135,7 +135,7 @@ Offline / air-gapped environments are unaffected: the certificate is generated l
 
 - `internal/server/server.go`: `Run()` single-port `net.Listen` + `splitProto()` Peek routing; main server `ServeTLS`; plaintext conn `httpsRedirectHandler()` 308; `ensureTLSCert()` self-signed cert (writes to `CertsDir`); `tlsConfig()` strict TLS params; `strictTransportSecurity()` / `isLoopbackHost()` conditional HSTS.
 - `internal/server/migration.go`: `migrateLegacyTLSDir()` legacy `data/tls/` → `data/certs/` migration.
-- `internal/server/webauthn.go`: `newWebAuthnManager()` builds the four http/https × localhost/127.0.0.1 `RPOrigins` from `AIDE_PORT`.
+- `internal/server/webauthn.go`: validates localhost origins per request and binds each challenge to its initiating origin; finish accepts only that origin.
 - `internal/server/tls_test.go`: cert generation/SAN/permissions, TLS cipher whitelist, 308 redirect preserving `r.Host`+URI, Peek classification (0x16 vs plaintext), certs migration, HSTS off on localhost.
 - `Dockerfile`: `HEALTHCHECK` switched to `curl -fsSk https://127.0.0.1:8080/healthz` (after single-port, plaintext `/healthz` returns 308, so the check must hit https).
 - `scripts/aide.sh` / `start.ps1`: health check and opened URL switched to https.

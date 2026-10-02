@@ -128,8 +128,8 @@ docker compose exec -T aide cat /data/certs/cert.pem > aide-local.pem
 
 WebAuthn 要求 **Secure Context**（`https://` 或 `http://localhost`）。0.1.11 切到 HTTPS 后：
 
-- 页面跑在 `https://localhost:8097`，`register` / `assertion` 的 origin 会带 `https://` 前缀；
-- 后端 `newWebAuthnManager()` 的 `RPOrigins` 同时覆盖 **http/https × localhost/127.0.0.1** 共 4 条，端口取自宿主映射 `AIDE_PORT`（默认 8097）——这样即便浏览器旧标签仍用 `http://localhost:8097` 缓存页面发起 register/finish，也不会被 `origin not allowed` 拒绝；
+- 页面跑在启动器选定的 `https://localhost:<宿主端口>`，`register` / `assertion` 的 origin 会带 `https://` 前缀；
+- WebAuthn 开始注册/断言时，后端根据本次请求绑定 `http(s)://localhost:<当前宿主端口>` 到 challenge；finish 必须来自同一个 origin。`RPID` 仍固定为 `localhost`，不从容器默认端口推断宿主映射端口；
 - `RPID` 仍固定 `localhost`（IP 字面量不合法，故 Touch ID 解锁请用 `localhost` 地址访问）。
 
 ## 8. 生产 / 公网部署建议
@@ -147,7 +147,7 @@ WebAuthn 要求 **Secure Context**（`https://` 或 `http://localhost`）。0.1.
 
 - `internal/server/server.go`：`Run()` 单端口 `net.Listen` + `splitProto()` Peek 分流；主 server `ServeTLS`；明文连接 `httpsRedirectHandler()` 308；`ensureTLSCert()` 自签证书（写 `CertsDir`）；`tlsConfig()` 严格 TLS 参数；`strictTransportSecurity()` / `isLoopbackHost()` HSTS 条件下发。
 - `internal/server/migration.go`：`migrateLegacyTLSDir()` 旧 `data/tls/` → `data/certs/` 迁移。
-- `internal/server/webauthn.go`：`newWebAuthnManager()` 按 `AIDE_PORT` 动态生成 http/https × localhost/127.0.0.1 四条 `RPOrigins`。
+- `internal/server/webauthn.go`：按请求校验 localhost origin，并将 challenge 与发起端口绑定；finish 阶段仅接受 challenge 原 origin。
 - `internal/server/tls_test.go`：证书生成/SAN/权限、TLS 套件白名单、308 跳转保留 `r.Host`+URI、Peek 分类（0x16 vs 明文）、certs 迁移、localhost 不加 HSTS。
 - `Dockerfile`：`HEALTHCHECK` 改 `curl -fsSk https://127.0.0.1:8080/healthz`（单端口后明文 `/healthz` 会是 308，必须打 https）。
 - `scripts/aide.sh` / `start.ps1`：健康检查与打开 URL 改 https。

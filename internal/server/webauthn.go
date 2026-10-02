@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -53,6 +54,7 @@ type webAuthnManager struct {
 	dataPath string
 	store    webAuthnStore
 	sessions map[string]*webauthn.SessionData // challenge(base64url) → session
+	origins  map[string]string                // challenge(base64url) → validated browser origin
 }
 
 // localWebAuthnUser 实现 webauthn.User 接口（单机单用户，固定 userHandle）。
@@ -71,21 +73,14 @@ func newWebAuthnManager(dataPath string) *webAuthnManager {
 	m := &webAuthnManager{
 		dataPath: dataPath,
 		sessions: map[string]*webauthn.SessionData{},
+		origins:  map[string]string{},
 	}
-	// RPID 固定 localhost（IP 字面量不合法）。
-	// Origin 白名单同时覆盖 http/https × localhost/127.0.0.1：页面已切 HTTPS（自签），
-	// 但浏览器旧标签缓存仍可能以 http:// 发起 register/finish，缺 https origin 会被
-	// WebAuthn 以 "origin not allowed" 拒绝。端口取宿主映射 AIDE_PORT（默认 8097）。
-	port := env("AIDE_PORT", "8097")
+	// 浏览器访问的是宿主映射端口（可由启动器动态分配），容器内无法用 AIDE_PORT 推断。
+	// 每次 ceremony 在 start 时验证并绑定严格的 localhost origin，finish 只接受该 origin。
 	cfg := &webauthn.Config{
 		RPID:          "localhost",
 		RPDisplayName: "aide",
-		RPOrigins: []string{
-			"https://localhost:" + port,
-			"https://127.0.0.1:" + port,
-			"http://localhost:" + port,
-			"http://127.0.0.1:" + port,
-		},
+		RPOrigins:     []string{"https://localhost"}, // per-ceremony clone replaces this with the validated origin
 	}
 	wa, err := webauthn.New(cfg)
 	if err != nil {
@@ -97,6 +92,26 @@ func newWebAuthnManager(dataPath string) *webAuthnManager {
 	// 后台每 60s 清理过期 challenge 会话，避免客户端只 start 不 finish 时 map 无限增长。
 	go m.pruneLoop()
 	return m
+}
+
+// webAuthnOrigin accepts only a same-host localhost browser origin. The external port is intentionally
+// taken from Origin (not container env), because the launcher maps a host port to container port 8080.
+func webAuthnOrigin(r *http.Request) (string, bool) {
+	origin := r.Header.Get("Origin")
+	u, err := url.Parse(origin)
+	if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" || u.Host != r.Host ||
+		u.Hostname() != "localhost" || u.User != nil || u.Path != "" || u.RawQuery != "" || u.Fragment != "" {
+		return "", false
+	}
+	return u.Scheme + "://" + u.Host, true
+}
+
+func (m *webAuthnManager) forOrigin(origin string) *webauthn.WebAuthn {
+	copyWA := *m.wa
+	copyConfig := *m.wa.Config
+	copyConfig.RPOrigins = []string{origin}
+	copyWA.Config = &copyConfig
+	return &copyWA
 }
 
 // pruneLoop 定时清理过期 WebAuthn challenge 会话。
@@ -142,6 +157,7 @@ func (m *webAuthnManager) pruneSessionsLocked() {
 	for k, s := range m.sessions {
 		if !s.Expires.IsZero() && s.Expires.Before(now) {
 			delete(m.sessions, k)
+			delete(m.origins, k)
 		}
 	}
 }
@@ -168,6 +184,11 @@ func (m *webAuthnManager) findCredLocked(idB64 string) *webAuthnCredEntry {
 func (a *App) webAuthnRegisterStart(w http.ResponseWriter, r *http.Request) {
 	if !a.webAuthn.enabled() {
 		fail(w, 503, errors.New("WebAuthn 不可用"))
+		return
+	}
+	origin, ok := webAuthnOrigin(r)
+	if !ok {
+		fail(w, http.StatusForbidden, errors.New("Passkey 仅支持通过 localhost 打开工作台"))
 		return
 	}
 	var in struct {
@@ -225,6 +246,7 @@ func (a *App) webAuthnRegisterStart(w http.ResponseWriter, r *http.Request) {
 	// 保证与下发值逐字节一致。
 	challengeKey := creation.Response.Challenge.String()
 	a.webAuthn.sessions[challengeKey] = session
+	a.webAuthn.origins[challengeKey] = origin
 	jsonOut(w, 200, creation.Response)
 }
 
@@ -235,6 +257,11 @@ func (a *App) webAuthnRegisterFinish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	challengeB64 := r.URL.Query().Get("challenge")
+	origin, originOK := webAuthnOrigin(r)
+	if !originOK {
+		fail(w, http.StatusForbidden, errors.New("Passkey 仅支持通过 localhost 打开工作台"))
+		return
+	}
 	label := strings.TrimSpace(r.URL.Query().Get("label"))
 	if label == "" {
 		label = "MacBook 触控 ID"
@@ -247,12 +274,14 @@ func (a *App) webAuthnRegisterFinish(w http.ResponseWriter, r *http.Request) {
 
 	a.webAuthn.mu.Lock()
 	session, ok := a.webAuthn.sessions[challengeB64]
-	if !ok {
+	boundOrigin, originExists := a.webAuthn.origins[challengeB64]
+	if !ok || !originExists || origin != boundOrigin {
 		a.webAuthn.mu.Unlock()
-		fail(w, 400, errors.New("会话无效或已过期，请重新开始"))
+		fail(w, 400, errors.New("Passkey 来源已变化，请重新开始"))
 		return
 	}
 	delete(a.webAuthn.sessions, challengeB64) // 一次性
+	delete(a.webAuthn.origins, challengeB64)
 	user := a.webAuthn.userLocked()
 	a.webAuthn.mu.Unlock()
 
@@ -261,7 +290,7 @@ func (a *App) webAuthnRegisterFinish(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	cred, err := a.webAuthn.wa.CreateCredential(user, *session, parsed)
+	cred, err := a.webAuthn.forOrigin(boundOrigin).CreateCredential(user, *session, parsed)
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -382,6 +411,11 @@ func (a *App) webAuthnAssertionStart(w http.ResponseWriter, r *http.Request) {
 		fail(w, 503, errors.New("WebAuthn 不可用"))
 		return
 	}
+	origin, ok := webAuthnOrigin(r)
+	if !ok {
+		fail(w, http.StatusForbidden, errors.New("Passkey 仅支持通过 localhost 打开工作台"))
+		return
+	}
 	a.webAuthn.mu.Lock()
 	defer a.webAuthn.mu.Unlock()
 	a.webAuthn.pruneSessionsLocked()
@@ -412,6 +446,7 @@ func (a *App) webAuthnAssertionStart(w http.ResponseWriter, r *http.Request) {
 	// 不得再二次 base64 编码，否则前端回传值命中不了会话（双重编码 bug）。
 	challengeKey := assertion.Response.Challenge.String()
 	a.webAuthn.sessions[challengeKey] = session
+	a.webAuthn.origins[challengeKey] = origin
 	jsonOut(w, 200, assertion.Response)
 }
 
@@ -419,6 +454,11 @@ func (a *App) webAuthnAssertionStart(w http.ResponseWriter, r *http.Request) {
 func (a *App) webAuthnAssertionFinish(w http.ResponseWriter, r *http.Request) {
 	if !a.webAuthn.enabled() {
 		fail(w, 503, errors.New("WebAuthn 不可用"))
+		return
+	}
+	origin, originOK := webAuthnOrigin(r)
+	if !originOK {
+		fail(w, http.StatusForbidden, errors.New("Passkey 仅支持通过 localhost 打开工作台"))
 		return
 	}
 	challengeB64 := r.URL.Query().Get("challenge")
@@ -430,12 +470,14 @@ func (a *App) webAuthnAssertionFinish(w http.ResponseWriter, r *http.Request) {
 
 	a.webAuthn.mu.Lock()
 	session, ok := a.webAuthn.sessions[challengeB64]
-	if !ok {
+	boundOrigin, originExists := a.webAuthn.origins[challengeB64]
+	if !ok || !originExists || origin != boundOrigin {
 		a.webAuthn.mu.Unlock()
-		fail(w, 400, errors.New("会话无效或已过期，请重试"))
+		fail(w, 400, errors.New("Passkey 来源已变化，请重试"))
 		return
 	}
 	delete(a.webAuthn.sessions, challengeB64)
+	delete(a.webAuthn.origins, challengeB64)
 	user := a.webAuthn.userLocked()
 	a.webAuthn.mu.Unlock()
 
@@ -444,7 +486,7 @@ func (a *App) webAuthnAssertionFinish(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	cred, err := a.webAuthn.wa.ValidateLogin(user, *session, parsed)
+	cred, err := a.webAuthn.forOrigin(boundOrigin).ValidateLogin(user, *session, parsed)
 	if err != nil {
 		fail(w, 401, errors.New("验证失败："+err.Error()))
 		return

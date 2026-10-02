@@ -1,0 +1,74 @@
+{
+  "id": "fix-webauthn-origin-port-20261003",
+  "request": "Fix Touch ID / Passkey registration failure caused by allowed origin port mismatch; inspect actual server config, add regression coverage, preserve existing worktree changes.",
+  "baseline": "27fd13418036a4e35c35740685468ffe7802258f",
+  "initial_status": "M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M scripts/test_assistant_mode_controls.cjs\n M scripts/test_i18n.cjs\n?? docs/reviews/2026-10-02-agent-harness-architecture-review.md\n?? docs/tasks/assistant-model-source-label-20261002.json\n?? docs/tasks/dynamic-assistant-composer-placeholder-20261002.json\n?? docs/tasks/fix-assistant-trajectory-toggle-20261002.json\n?? docs/tasks/harness-architecture-review-20261002.json\n?? docs/tasks/password-prompt-reveal-toggle-20261002.json\n?? scripts/test_password_prompt.cjs",
+  "acceptance": [
+    "Passkey start accepts the actual HTTPS localhost port used by the launcher, including port 9999.",
+    "Passkey finish accepts only the exact localhost origin bound to its start challenge; remote hosts and changed ports are rejected.",
+    "Existing challenge/session behavior continues to pass targeted server regression tests."
+  ],
+  "scope": [
+    "internal/server/webauthn.go",
+    "internal/server/webauthn_test.go",
+    "docs/architecture/2026-09-25-touchid-webauthn-unlock.md",
+    "docs/tasks/fix-webauthn-origin-port-20261003.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Root cause from screenshot and runtime configuration: UI at https://localhost:9999 but WebAuthn hard-coded host port from AIDE_PORT default 8097; compose does not pass host AIDE_PORT into container.",
+      "evidence": [
+        "Observed running aide-aide-1 port mapping 127.0.0.1:9999->8080/tcp; no AIDE_PORT in container env; host .env sets AIDE_PORT=9999."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use the request Origin only when it is HTTP(S), localhost, and exactly matches request Host; bind that validated value to each one-use challenge and clone WebAuthn config for finish validation.",
+      "evidence": [
+        "Preserves fixed RP ID localhost and exact same-origin validation while allowing arbitrary launcher host ports."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Dynamic localhost origin binding now covers both registration and assertion ceremonies; expired/consumed challenges also clear origin state.",
+      "evidence": [
+        "Updated internal/server/webauthn.go."
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Targeted Go server tests and diff whitespace check passed.",
+      "evidence": [
+        "docker run --rm -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor ./internal/server -run Test(WebAuthnOriginAllowsDynamicLocalPort|RegisterStartChallengeKeyMatch|AssertionStartChallengeKeyMatch)$ -count=1: PASS.",
+        "git diff --check: PASS.",
+        "Regression coverage checks dynamic port 9999, disallowed host/source/path, challenge binding, and cross-port finish rejection.",
+        "python3 scripts/agent-route.py verify quick: PASS (15 checks, fingerprint 540f9c26b0417b898512c9118ebd84be56f18019bd84da68a0700068a240335b)."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated Touch ID architecture notes to describe runtime localhost port mapping and bound-origin validation.",
+      "evidence": [
+        "docs/architecture/2026-09-25-touchid-webauthn-unlock.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped diffs; preserved all pre-existing unrelated working tree edits. No build or temporary files were created in the repository.",
+      "evidence": [
+        "git status --short reviewed; only scoped WebAuthn/docs changes and previously present edits remain."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No commit, push, image build, restart, or release was requested. The currently running RC14 service remains unchanged and must be rebuilt/deployed for this source fix to affect the browser.",
+      "evidence": [
+        "Running container aide-aide-1 was inspected read-only and not restarted."
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert only the WebAuthn origin/session changes and restore the previous architecture wording; no persistent credential data or running services were changed.",
+  "handoff": "Source fix is ready in the worktree. Browser/Touch ID registration against rebuilt code has not been performed; the existing RC14 browser service still runs the old image. User must restart from a rebuilt source/runtime or request a release/deployment step to exercise it."
+}

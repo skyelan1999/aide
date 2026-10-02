@@ -259,6 +259,14 @@
         "scripts/test_stream_url.cjs"
       ],
       [
+        "node",
+        "scripts/test_accessibility_port.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_windows_port_lifecycle.py"
+      ],
+      [
         "python3",
         "scripts/test_local_root.py"
       ]

@@ -182,6 +182,13 @@ function Get-ComposeResult {
     return Invoke-Native -File $ComposeCmd[0] -Arguments $all -Capture
 }
 
+function Test-LocalHostPortAvailable([int]$Candidate) {
+    $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, $Candidate)
+    try { $listener.Start(); return $true }
+    catch { return $false }
+    finally { if ($listener.Server.IsBound) { $listener.Stop() } }
+}
+
 # Dockerfile 的 RUN --mount=type=cache 要求 BuildKit；独立版 compose 默认关闭。
 # 双击 .bat 时 Docker 有时拿不到有效的 Windows Console handle，交互式进度渲染会
 # 直接失败（"failed to get console: The handle is invalid"）。强制 plain 文本进度，
@@ -300,7 +307,41 @@ if ($offlineBundle) {
   if ($slotImageId -ne $expectedImageId) { throw '导入的 Docker 镜像身份与离线包不匹配。' }
   "$($env:AIDE_IMAGE) $expectedImageId $expectedPlatform $releaseTag" | Set-Content -NoNewline -Encoding ASCII (Join-Path $PSScriptRoot '.aide-image')
   New-Item -ItemType Directory -Path (Join-Path $PSScriptRoot 'workspace'), (Join-Path $PSScriptRoot 'context') -Force | Out-Null
-    if (-not (Test-Path -LiteralPath (Join-Path $PSScriptRoot '.env'))) { Copy-Item (Join-Path $PSScriptRoot '.env.example') (Join-Path $PSScriptRoot '.env') }
+  $envPath = Join-Path $PSScriptRoot '.env'
+  if (-not (Test-Path -LiteralPath $envPath)) { Copy-Item (Join-Path $PSScriptRoot '.env.example') $envPath }
+
+  # Match the macOS/Linux launcher: keep the persisted port setting, but if an
+  # initial install's requested port is occupied, choose and persist a free one.
+  $savedPort = (Get-ComposeResult run --rm --no-deps --entrypoint sh aide -c 'cat /data/config/host-port 2>/dev/null || true').Text.Trim()
+  if ($savedPort -match '^\d{1,5}$' -and [int]$savedPort -ge 1 -and [int]$savedPort -le 65535) {
+      $env:AIDE_PORT = $savedPort
+      $envText = [System.IO.File]::ReadAllText($envPath)
+      if ($envText -match '(?m)^\s*AIDE_PORT\s*=') { $envText = [regex]::Replace($envText, '(?m)^\s*AIDE_PORT\s*=.*$', "AIDE_PORT=$savedPort") }
+      else { $envText = $envText.TrimEnd() + "`r`nAIDE_PORT=$savedPort`r`n" }
+      [System.IO.File]::WriteAllText($envPath, $envText, (New-Object System.Text.UTF8Encoding $false))
+  }
+  if (-not $env:AIDE_PORT) {
+      $envLine = Select-String -LiteralPath $envPath -Pattern '^\s*AIDE_PORT\s*=\s*(\d+)\s*$' | Select-Object -First 1
+      $env:AIDE_PORT = if ($envLine) { $envLine.Matches[0].Groups[1].Value } else { '8097' }
+  }
+  $configuredPort = [int]$env:AIDE_PORT
+  $runningServices = (Get-ComposeResult ps --status running --services).Text -split '\r?\n'
+  $currentAddress = (Get-ComposeResult port aide 8080).Text.Trim()
+  $currentPort = if ($currentAddress -match ':(\d+)\s*$') { [int]$Matches[1] } else { 0 }
+  $alreadyRunningOnRequestedPort = ($runningServices -contains 'aide') -and ($currentPort -eq $configuredPort)
+  if (-not $alreadyRunningOnRequestedPort -and -not (Test-LocalHostPortAvailable $configuredPort)) {
+      $selectedPort = 0
+      for ($candidate = $configuredPort + 1; $candidate -le [Math]::Min($configuredPort + 100, 65535); $candidate++) {
+          if (Test-LocalHostPortAvailable $candidate) { $selectedPort = $candidate; break }
+      }
+      if (-not $selectedPort) { throw "端口 $configuredPort 至 $([Math]::Min($configuredPort + 100, 65535)) 均被占用，请在 .env 中设置 AIDE_PORT。" }
+      $env:AIDE_PORT = [string]$selectedPort
+      $envText = [System.IO.File]::ReadAllText($envPath)
+      if ($envText -match '(?m)^\s*AIDE_PORT\s*=') { $envText = [regex]::Replace($envText, '(?m)^\s*AIDE_PORT\s*=.*$', "AIDE_PORT=$selectedPort") }
+      else { $envText = $envText.TrimEnd() + "`r`nAIDE_PORT=$selectedPort`r`n" }
+      [System.IO.File]::WriteAllText($envPath, $envText, (New-Object System.Text.UTF8Encoding $false))
+      Write-Host "端口 $configuredPort 已占用，离线包改用端口 $selectedPort。"
+  }
 }
 if ((Invoke-Compose @startArguments).Code -ne 0) {
     Write-Error "compose up 失败，请检查上方输出。"
@@ -333,5 +374,11 @@ if (-not $token) {
 if ($env:AIDE_OPEN_BROWSER -ne '0') { Start-Process $url }
 if ($offlineBundle -and (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'scripts/update-agent.ps1'))) {
     $currentPowerShell = (Get-Process -Id $PID).Path
-    Start-Process -FilePath $currentPowerShell -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',(Join-Path $PSScriptRoot 'scripts/update-agent.ps1')) -WindowStyle Hidden
+    $updateAgentPath = Join-Path $PSScriptRoot 'scripts/update-agent.ps1'
+    Start-Process -FilePath $currentPowerShell -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"{0}"' -f $updateAgentPath)) -WindowStyle Hidden
+}
+if ($offlineBundle -and (Test-Path -LiteralPath (Join-Path $PSScriptRoot 'scripts/watch-port.ps1'))) {
+    $currentPowerShell = (Get-Process -Id $PID).Path
+    $portWatcherPath = Join-Path $PSScriptRoot 'scripts/watch-port.ps1'
+    Start-Process -FilePath $currentPowerShell -ArgumentList @('-NoProfile','-ExecutionPolicy','Bypass','-File',('"{0}"' -f $portWatcherPath)) -WindowStyle Hidden
 }

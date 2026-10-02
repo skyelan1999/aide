@@ -14,6 +14,7 @@ updateFavicon();
 if (window.aideUI?.subscribe) window.aideUI.subscribe(updateFavicon);
 const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, autoScroll: true, jumpAnimating: false };
 function voiceAssistantDisplayName() { return String(state.config?.voiceAssistantName || '小秘').trim() || '小秘'; }
+function currentHostPort() { return Number(location.port || (location.protocol === 'https:' ? 443 : 80)); }
 const fragment = new URLSearchParams(location.hash.slice(1));
 state.liveRound = {}; // Keep per-run streaming rounds initialized on the first session.
 // 文件面板的上传/搜索控件保持为脚本生成，避免与嵌入式页面模板的单行结构耦合。
@@ -8707,7 +8708,10 @@ function renderAccessibilityControl() {
   const portRow = el('div', 'accessibility-port-row');
   const portLabel = el('label', '', t('绑定端口'));
   const port = el('input'); port.type = 'number'; port.min = '1'; port.max = '65535'; port.step = '1';
-  port.value = String(state.config?.accessibilityHostPort || 8097); portLabel.append(port);
+  // The saved host-port may be stale when the launcher selected a fallback port
+  // because the configured/default port was already occupied. Show this tab's
+  // actual listener so saving the same value is a no-op and changing it is clear.
+  port.value = String(currentHostPort()); portLabel.append(port);
   const savePort = el('button', 'primary', t('保存端口')); savePort.type = 'button';
   let portSwitching = false;
   savePort.onclick = action(async () => {

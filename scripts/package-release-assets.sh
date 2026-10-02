@@ -57,6 +57,7 @@ for TARGET in macos-arm64 windows-arm64 ubuntu-arm64; do
   for launcher in "${LAUNCHERS[@]}"; do cp "$ROOT/$launcher" "$PACKAGE/"; done
   cp "$ROOT/scripts/aide.sh" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/watch-port.sh" "$PACKAGE/scripts/"
+  if [[ "$TARGET" == windows-arm64 ]]; then cp "$ROOT/scripts/watch-port.ps1" "$PACKAGE/scripts/"; fi
   cp "$ROOT/scripts/update-agent.sh" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/update-agent.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/docker/compose.offline.yaml" "$PACKAGE/compose.yaml"
@@ -90,7 +91,7 @@ FULL_TARGET="aide-$TAG-full-linux-${PLATFORM#linux/}"
 FULL_PACKAGE="$STAGING/$FULL_TARGET"
 mkdir -p "$FULL_PACKAGE/scripts" "$FULL_PACKAGE/docker-images" "$FULL_PACKAGE/workspace" "$FULL_PACKAGE/context"
 cp "$ROOT/start.command" "$ROOT/start.sh" "$ROOT/start.ps1" "$ROOT/start.bat" "$FULL_PACKAGE/"
-cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/update-agent.sh" "$ROOT/scripts/update-agent.ps1" "$FULL_PACKAGE/scripts/"
+cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/watch-port.ps1" "$ROOT/scripts/update-agent.sh" "$ROOT/scripts/update-agent.ps1" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/docker/compose.offline.yaml" "$FULL_PACKAGE/compose.yaml"
 cp "$ROOT/docker/offline.env.example" "$FULL_PACKAGE/.env.example"
 cp "$ROOT/LICENSE" "$FULL_PACKAGE/"

@@ -20,6 +20,8 @@ aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。RC8 Rel
 
 从 GitHub Release 下载 `aide-<tag>-full-linux-<arch>.zip` 可使用统一完整发行包。解压后 macOS 运行 `start.command`、Windows 运行 `start.ps1` 或 `start.bat`、Ubuntu 运行 `start.sh`；启动器校验并导入包内的 Docker 镜像，不需要首次联网下载。此 ZIP 同时可用于已有 Release 安装的应用内升级；macOS 若自动解压，在设置的「软件升级」中选择解压后的完整发行包文件夹即可，系统会定位 `docker-images/` 下的升级文件并校验。轻量平台启动 ZIP 不含镜像，首次启动时会从同一 GitHub Release 下载并校验约 500 MB 镜像；连接中断会自动续传，只有校验并启动服务成功后才会打开浏览器。轻量 ZIP 不能用于 A/B 升级。
 
+Release 离线启动器会读取已保存的宿主端口；首次启动遇到端口占用时，会在默认端口后选择并保存可用端口。Windows 离线包和完整发行包会启动宿主端口监视器，在设置中更改端口后更新 Compose 映射并重启服务；`/data` 与工作区数据卷继续共用。源码开发启动使用仓库 `.env` 配置，不启用 Release 包的自动升级流程。
+
 | 下载项 | 启动方式 | 目标系统 |
 | --- | --- | --- |
 | `aide-v0.1.14.0-RC8-macos-arm64.zip` | 双击 `start.command` | Apple Silicon macOS |
