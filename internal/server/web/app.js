@@ -3259,20 +3259,39 @@ function renderSoftwareUpdates() {
   const refreshSlots = el('button', 'quiet', t('刷新槽状态'));
   slotsTitle.append(el('h4', '', t('A/B 软件槽')), refreshSlots);
   const uploadRow = el('div', 'software-update-upload');
-  const file = el('input'); file.type = 'file'; file.accept = '.zip,application/zip'; file.setAttribute('aria-label', t('选择 aide 应用内升级 ZIP 包'));
+  const file = el('input'); file.type = 'file'; file.accept = '.zip,application/zip'; file.setAttribute('aria-label', t('选择 aide 完整发行 ZIP 包或升级 ZIP 包'));
   const folder = el('input'); folder.type = 'file'; folder.multiple = true; folder.setAttribute('webkitdirectory', ''); folder.setAttribute('directory', ''); folder.setAttribute('aria-label', t('选择解压后的 aide 升级文件夹'));
   const upload = el('button', 'quiet', t('上传到非活动槽'));
   const slotStatus = el('small', 'software-update-slot-status', t('正在读取 A/B 槽状态…'));
+  const progress = el('div', 'software-update-progress');
+  const progressCaption = el('span', 'software-update-progress-caption');
+  const progressTrack = el('div', 'software-update-progress-track');
+  const progressFill = el('div', 'software-update-progress-fill');
+  const progressValue = el('span', 'software-update-progress-value');
+  progressTrack.append(progressFill); progress.append(progressCaption, progressTrack, progressValue); progress.hidden = true;
   const zipPicker = el('label', 'software-update-picker');
-  zipPicker.append(el('span', '', t('选择升级 ZIP')), file);
+  zipPicker.append(el('span', '', t('选择完整发行包或升级 ZIP')), file);
   const folderPicker = el('label', 'software-update-picker');
   folderPicker.append(el('span', '', t('选择解压后的升级文件夹')), folder);
-  const selection = el('small', 'software-update-selection', t('支持应用内升级 ZIP 包或 macOS 解压后的升级文件夹；平台启动器 ZIP 不能直接上传。'));
-  const packageHint = el('small', '', t('升级包由发行流程生成，包含当前平台 Docker 镜像、manifest.json 和 SHA256SUMS。切换由随软件包安装的宿主启动代理执行，不会在容器内操作 Docker。'));
+  const selection = el('small', 'software-update-selection', t('完整发行 ZIP 同时支持首次启动和应用内升级；macOS 自动解压后可直接选择解压文件夹。'));
+  const packageHint = el('small', '', t('完整发行包同时包含各平台启动器与一个校验过的 Docker 镜像。可用同一 ZIP 首次启动，也可上传到非活动槽；宿主启动代理负责切换，数据卷共用。'));
   slotsTitle.hidden = true; slots.hidden = true; uploadRow.hidden = true; slotStatus.hidden = true; selection.hidden = true;
   uploadRow.append(zipPicker, folderPicker, upload);
-  wrap.append(intro, modeNotice, top, detail, slotsTitle, slots, uploadRow, slotStatus,
+  wrap.append(intro, modeNotice, top, detail, slotsTitle, slots, uploadRow, slotStatus, progress,
     selection, packageHint);
+
+  function renderSwitchProgress(pending) {
+    if (!pending) { progress.hidden = true; return; }
+    progress.hidden = false;
+    const percent = Math.max(0, Math.min(100, Number(pending.progress) || 0));
+    progressFill.style.width = percent + '%';
+    progressValue.textContent = percent + '%';
+    progressCaption.textContent = t('切换进度');
+    const age = pending.createdAt ? Date.now() - Date.parse(pending.createdAt) : 0;
+    if (pending.message) slotStatus.textContent = pending.message;
+    else if (pending.status === 'requested' && age > 15000) slotStatus.textContent = t('切换请求已排队 {0} 秒，启动器尚未响应；请确认正在运行本机 start.command。', Math.floor(age / 1000));
+    else slotStatus.textContent = t('已提交切换请求，等待宿主启动器…');
+  }
 
   file.onchange = () => {
     if (file.files?.length) {
@@ -3305,7 +3324,7 @@ function renderSoftwareUpdates() {
     );
     return { files: candidates.length === 1 ? candidates[0] : [], ignoredCount: files.length - (candidates.length === 1 ? 3 : 0) };
   };
-  const folderPackageError = t('所选目录中未找到同一子文件夹内的 manifest.json、SHA256SUMS 和 Docker 镜像归档。请解压并选择应用内升级包文件夹；启动器包或工作目录不能用于槽升级。');
+  const folderPackageError = t('所选目录中未找到同一文件夹内的 manifest.json、SHA256SUMS 和 Docker 镜像归档。若 macOS 已自动解压，请选择完整发行包文件夹；可忽略其中的启动器和工作区文件。');
   folder.onchange = () => {
     if (folder.files?.length) {
       file.value = '';
@@ -3322,7 +3341,7 @@ function renderSoftwareUpdates() {
     modeNotice.hidden = !sourceMode;
     modeNotice.textContent = sourceMode ? t('当前由源代码启动；源码更新无需应用内升级。通过 Git 更新代码并按开发流程重新启动。A/B 软件槽只适用于 Release 镜像。') : '';
     intro.textContent = sourceMode ? t('此处可检查公开 Release。当前由源代码启动，更新时通过 Git 更新并重启即可。') : releaseIntro;
-    packageHint.textContent = sourceMode ? t('源码启动不安装应用内升级包；A/B 槽由正式 Release 镜像与宿主启动器共同提供。') : t('升级包由发行流程生成，包含当前平台 Docker 镜像、manifest.json 和 SHA256SUMS。切换由随软件包安装的宿主启动代理执行，不会在容器内操作 Docker。');
+    packageHint.textContent = sourceMode ? t('源码启动无需应用内升级；Release 完整发行包同时包含首次启动运行文件和 A/B 升级所需镜像。') : t('完整发行包同时包含各平台启动器与一个校验过的 Docker 镜像。可用同一 ZIP 首次启动，也可上传到非活动槽；宿主启动代理负责切换，数据卷共用。');
     slotsTitle.hidden = sourceMode;
     slots.hidden = sourceMode;
     uploadRow.hidden = sourceMode;
@@ -3355,6 +3374,7 @@ function renderSoftwareUpdates() {
             try {
               const latest = await api('/updates/slots');
               if (!latest.pending) { slotStatus.textContent = latest.lastMessage || t('切换已完成'); await loadSlots(); return; }
+              renderSwitchProgress(latest.pending);
             } catch (_) { /* app is restarting; continue polling */ }
           }
           slotStatus.textContent = t('仍在等待切换结果。服务重新就绪后可刷新槽状态。');
@@ -3364,7 +3384,8 @@ function renderSoftwareUpdates() {
       }
       slots.append(card);
     }
-    slotStatus.textContent = result.pending ? t('正在切换：槽 {0}', result.pending.target) : (result.lastMessage || t('A/B 槽状态已同步'));
+    if (result.pending) renderSwitchProgress(result.pending);
+    else { progress.hidden = true; slotStatus.textContent = result.lastMessage || t('A/B 槽状态已同步'); }
   }
   refreshSlots.onclick = action(loadSlots);
   upload.onclick = action(async () => {
@@ -3376,8 +3397,8 @@ function renderSoftwareUpdates() {
       slotStatus.textContent = folder.files?.length ? folderPackageError : t('请先选择升级 ZIP 包或文件夹');
       return;
     }
-    if (zipFiles.length && !/-update-linux-(arm64|amd64)\.zip$/i.test(zipFiles[0].name)) {
-      slotStatus.textContent = t('所选文件不是应用内升级包。请选择名称带有 update-linux 的升级 ZIP；macOS/Windows/Ubuntu 启动器 ZIP 不能用于槽升级。');
+    if (zipFiles.length && !/-(update-linux|full-linux)-(arm64|amd64)\.zip$/i.test(zipFiles[0].name)) {
+      slotStatus.textContent = t('所选 ZIP 不含可用于 A/B 升级的完整镜像。请选择 aide 完整发行包或应用内升级 ZIP；轻量启动器 ZIP 不含镜像。');
       return;
     }
     upload.disabled = true; slotStatus.textContent = t('正在上传并校验升级包…');
@@ -3393,10 +3414,19 @@ function renderSoftwareUpdates() {
         }
         form.append('paths', JSON.stringify(paths));
       }
-      const response = await fetch('/api/updates/packages', { method: 'POST', headers: { Authorization: 'Bearer ' + state.token }, body: form });
-      const result = await response.json();
-      if (!response.ok) throw new Error(t(result.error) || t('升级包上传失败'));
-      file.value = ''; folder.value = ''; selection.textContent = t('支持应用内升级 ZIP 包或 macOS 解压后的升级文件夹；平台启动器 ZIP 不能直接上传。');
+      progress.hidden = false; progressFill.style.width = '0%'; progressValue.textContent = '0%';
+      progressCaption.textContent = t('正在上传发行包');
+      const response = await uploadWithProgress('/api/updates/packages', form, (loaded, total, speed, statusText) => {
+        const percent = total > 0 ? Math.min(95, Math.round(loaded / total * 95)) : 0;
+        progressFill.style.width = percent + '%';
+        progressValue.textContent = percent + '%';
+        progressCaption.textContent = total > 0
+          ? t('{0} · {1} / {2} · {3}/s', statusText, formatTransferBytes(loaded), formatTransferBytes(total), formatTransferBytes(speed))
+          : statusText;
+      });
+      if (!response.ok) throw new Error(t(response.data.error) || t('升级包上传失败'));
+      progressFill.style.width = '100%'; progressValue.textContent = '100%'; progressCaption.textContent = t('校验完成，正在暂存');
+      file.value = ''; folder.value = ''; selection.textContent = t('完整发行 ZIP 同时支持首次启动和应用内升级；macOS 自动解压后可直接选择解压文件夹。');
       slotStatus.textContent = t('升级包已安装到槽 {0}', result.targetSlot);
       await loadSlots();
     } catch (error) {
@@ -3431,18 +3461,19 @@ function renderSoftwareUpdates() {
         const platform = asset.name.match(/-(macos-arm64|windows-arm64|ubuntu-arm64)\.zip$/)?.[1] || asset.name;
         const labels = { 'macos-arm64': 'macOS · Apple Silicon', 'windows-arm64': 'Windows · ARM64', 'ubuntu-arm64': 'Ubuntu · ARM64' };
         const bundleMatch = asset.name.match(/-update-linux-(arm64|amd64)\.zip$/);
-        const label = bundleMatch ? t('应用内升级包 · Linux {0}', bundleMatch[1]) : t(labels[platform] || asset.name);
+        const fullBundleMatch = asset.name.match(/-full-linux-(arm64|amd64)\.zip$/);
+        const label = fullBundleMatch ? t('完整运行与升级包 · Linux {0}', fullBundleMatch[1]) : bundleMatch ? t('应用内升级包 · Linux {0}', bundleMatch[1]) : t(labels[platform] || asset.name);
         const a = el('a', 'quiet software-update-download', label);
         a.href = asset.url; a.target = '_blank'; a.rel = 'noopener noreferrer';
         a.download = '';
-        (bundleMatch ? updateAssets : launcherAssets).append(a);
+        (bundleMatch || fullBundleMatch ? updateAssets : launcherAssets).append(a);
       }
       if (result.runtimeMode === 'source') {
         detail.append(el('p', 'muted', t('源码启动无需下载应用内升级包；更新源码后按开发流程重新启动即可。')));
       } else if (updateAssets.children.length) {
-        detail.append(el('h4', '', t('应用内升级包')), updateAssets);
+        detail.append(el('h4', '', t('完整运行与升级包（同一文件用于首次启动和 A/B 升级）')), updateAssets);
       } else {
-        detail.append(el('p', 'muted', t('该 Release 没有应用内升级包。启动器 ZIP 用于安装工作台，不能上传到 A/B 槽。')));
+        detail.append(el('p', 'muted', t('该 Release 没有完整运行与升级包。轻量启动器 ZIP 只用于联网安装，不能上传到 A/B 槽。')));
       }
       if (launcherAssets.children.length) {
         detail.append(el('h4', '', t('启动器下载（全新安装）')), launcherAssets);

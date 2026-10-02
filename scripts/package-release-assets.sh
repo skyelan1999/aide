@@ -83,10 +83,46 @@ EOF
   (cd "$STAGING" && zip -qr "$OUT/aide-$TAG-$TARGET.zip" "aide-$TAG-$TARGET")
 done
 
+# One ZIP serves both first-run bootstrap and in-app A/B upgrade. It contains
+# all host launchers plus a single copy of the image and the exact payload
+# triple the updater extracts from either this ZIP or its macOS-unzipped folder.
+FULL_TARGET="aide-$TAG-full-linux-${PLATFORM#linux/}"
+FULL_PACKAGE="$STAGING/$FULL_TARGET"
+mkdir -p "$FULL_PACKAGE/scripts" "$FULL_PACKAGE/docker-images" "$FULL_PACKAGE/workspace" "$FULL_PACKAGE/context"
+cp "$ROOT/start.command" "$ROOT/start.sh" "$ROOT/start.ps1" "$ROOT/start.bat" "$FULL_PACKAGE/"
+cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/update-agent.sh" "$ROOT/scripts/update-agent.ps1" "$FULL_PACKAGE/scripts/"
+cp "$ROOT/docker/compose.offline.yaml" "$FULL_PACKAGE/compose.yaml"
+cp "$ROOT/docker/offline.env.example" "$FULL_PACKAGE/.env.example"
+cp "$ROOT/LICENSE" "$FULL_PACKAGE/"
+cp "$OUT/$IMAGE_ASSET" "$FULL_PACKAGE/docker-images/"
+printf '%s %s %s %s\n' "aide:slot-a" "$IMAGE_ID" "$PLATFORM" "$TAG" > "$FULL_PACKAGE/.aide-image"
+(cd "$FULL_PACKAGE/docker-images" && shasum -a 256 "$IMAGE_ASSET" > SHA256SUMS)
+printf '{"format":"aide-update-package","version":1,"releaseTag":"%s","platform":"%s","imageArchive":"%s","imageId":"%s"}\n' \
+  "$TAG" "$PLATFORM" "$IMAGE_ASSET" "$IMAGE_ID" > "$FULL_PACKAGE/docker-images/manifest.json"
+cat > "$FULL_PACKAGE/README.txt" <<EOF
+aide $VERSION - complete runtime and upgrade package
+
+This single ZIP supports both a new installation and an in-app A/B upgrade.
+It includes the platform launchers and one verified Docker image archive.
+
+First run: extract this folder, then run start.command (macOS), start.ps1/start.bat (Windows), or start.sh (Ubuntu). The launcher verifies and imports the included image without downloading it, then starts aide. Docker Desktop / Docker Engine with Compose v2 is required.
+
+Upgrade an existing Release installation: in aide open Settings > Software Update and select this same ZIP. If macOS automatically extracts it, choose the extracted package folder instead. The updater locates docker-images/manifest.json, SHA256SUMS and the image archive, ignores launcher/workspace files, validates the package, and stages it in the inactive slot. Confirm the manual activation in Settings to switch.
+
+Required Docker engine image platform: $PLATFORM
+Image reference: aide:slot-a
+Image ID: $IMAGE_ID
+
+This package does not contain .env, workspace contents, API keys, browser tokens, or Docker volumes. A/B slots share the existing aide data volumes.
+EOF
+chmod +x "$FULL_PACKAGE/start.command" "$FULL_PACKAGE/start.sh" "$FULL_PACKAGE/scripts/"*.sh
+(cd "$STAGING" && zip -0qr "$OUT/aide-$TAG-full-linux-${PLATFORM#linux/}.zip" "$FULL_TARGET")
+
 cat > "$OUT/RELEASE-ASSETS.txt" <<EOF
 aide $VERSION release assets
 Docker image: $IMAGE_ASSET ($PLATFORM, $IMAGE_ID)
 Launchers: macOS Apple Silicon, Windows ARM64, Ubuntu ARM64
+Unified full runtime + upgrade package: aide-$TAG-full-linux-${PLATFORM#linux/}.zip (all launchers and one image archive; use the same ZIP for first run or the in-app updater)
 Windows x64 and Ubuntu x64 image bundles are omitted because no local linux/amd64 candidate image is available.
 EOF
 (cd "$OUT" && shasum -a 256 "$IMAGE_ASSET" ./*.zip RELEASE-ASSETS.txt > SHA256SUMS)

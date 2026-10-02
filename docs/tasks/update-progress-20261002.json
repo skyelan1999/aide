@@ -1,0 +1,103 @@
+{
+  "id": "update-progress-20261002",
+  "request": "修复 A/B 手动切换卡住并显示上传/切换进度；将首次启动运行包和应用内升级包合为同一 Release 包，支持 macOS 自动解压后的文件夹升级。",
+  "baseline": "1138cc48d21d62a9c93ba0d8be39f6ea9d1c67d0",
+  "initial_status": "M docs/architecture/software-updates.md\n M internal/server/server.go\n M internal/server/updates.go\n M internal/server/updates_test.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M scripts/update-agent.sh\n?? docs/reviews/2026-10-02-agent-harness-architecture-review.md\n?? docs/tasks/harness-architecture-review-20261002.json",
+  "acceptance": [
+    "手动切换到已安装镜像槽时，宿主代理能够正确解析命令并完成重启、健康检查和状态回报。",
+    "设置页在切换期间显示阶段、百分比与提示；服务短暂重启和刷新后能从持久状态恢复显示。",
+    "非法或过期的进度回报不能覆盖当前槽操作；回归测试覆盖可选字段解析和进度持久化。",
+    "升级上传按真实已传字节显示进度，镜像切换显示阶段里程碑与百分比。",
+    "同一个完整 Release ZIP 可供首次启动及 Release 镜像应用内升级；完整包上传仅提取升级三件套。",
+    "macOS 自动解压后选择完整包文件夹可定位 docker-images/ 下的升级三件套，忽略 Finder 元数据及启动器、工作区文件。",
+    "回归测试覆盖可选字段解析、进度持久化、完整 ZIP 归一化和嵌套文件夹上传。"
+  ],
+  "scope": [
+    "internal/server/server.go",
+    "internal/server/updates.go",
+    "internal/server/updates_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/style.css",
+    "scripts/update-agent.sh",
+    "docs/architecture/software-updates.md",
+    "scripts/package-release-assets.sh",
+    "docs/installation.md",
+    "docs/en/installation.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "复现为 A/B 手动切换请求长期停留 requested；目标为修复宿主命令字段错位并让设置页可见切换阶段。",
+      "evidence": [
+        "Safari 截图显示槽 A RC12、槽 B RC11、遗留“正在切换：槽 B”",
+        "受令牌保护的 /api/updates/slots 显示 pending.status=requested；agent 命令含空 packageId 与 imageSHA256 字段"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "使用非空白控制分隔符兼容 Bash IFS，并在可选字段协议中用占位值；进度写入已有共享槽状态，前端可在刷新/重启后恢复。",
+      "evidence": [
+        "internal/server/updates.go 与 scripts/update-agent.sh 命令解析链路",
+        "/data/updates/slots.json 已持久化 pending 操作"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "修复字段对齐，新增阶段进度 API、宿主进度上报、上传字节进度条；发行脚本增加同时可用于首次运行和应用内升级的统一完整包。",
+      "evidence": [
+        "更新宿主代理脚本后，原待处理操作实际切换到槽 B；API 返回 activeSlot=B、pending=null、lastMessage=已切换到槽 B"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "焦点 Go 回归和快速仓库验证通过；在隔离 RC13 Release 模式实例中使用桌面 Chrome 实测完整发行 ZIP、macOS 解压文件夹上传及上传进度。",
+      "evidence": [
+        "docker run --rm -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor ./internal/server -run TestManualSwitchAgentCommandPreservesEmptyOptionalFields|TestUpdateAgentProgressIsVisibleInSlotState -count=1 -> PASS",
+        "python3 scripts/agent-route.py verify quick -> PASS；fingerprint 5ec12e70a9aa7cef7a9e612878b3a6502a6b6e806d04dc8f24202fa069e8e0fb",
+        "bash -n scripts/update-agent.sh、node --check app.js/locales/en.js、git diff --check -> PASS",
+        "更新当前 RC12 宿主代理脚本后，手动切换完成；容器运行 aide:slot-b，API 返回 activeSlot=B、pending=null、lastMessage=已切换到槽 B",
+        "桌面 Chrome 登录本机隔离测试实例 https://127.0.0.1:18097，实例来自包含本分支改动的 RC13 Release 模式镜像；未操作用户的 8097/9999 工作台",
+        "软件升级设置页实际呈现 A/B 槽、完整 ZIP 与解压目录两个选择器；目录选择器报告定位 docker-images 中三件套，并忽略 .DS_Store、README/launcher/workspace 文件",
+        "上传完整发行 ZIP 返回 HTTP 201，API 暂存版本 0.1.14.0-RC14 到非活动槽 B；随后完整发行文件夹上传也返回 HTTP 201 并暂存到槽 B",
+        "浏览器观察上传进度：0% 正在连接、95% 时 8.0 MB/8.0 MB 已传、100% 校验完成并暂存；进度填充渲染宽度随值更新",
+        "浏览器从官方 Release API 显示可用 RC12 下载资产；当时的公开 Release 尚无 full-linux 完整运行/升级 ZIP，因此未把旧 Release 冒充为含新统一包的发布结果",
+        "测试上传用 RC14 校验夹具（带 manifest/SHA256SUMS 和随机 8 MB 占位归档），只验证结构校验、进度和暂存，不导入或激活该占位镜像",
+        "docker run --rm -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor ./internal/server -run 'TestManualSwitchAgentCommandPreservesEmptyOptionalFields|TestUpdateAgentProgressIsVisibleInSlotState|TestUploadUpdatePackageAcceptsFullRuntimeZip|TestUploadUpdatePackageAcceptsFullRuntimeFolder' -count=1 -> PASS",
+        "python3 scripts/agent-route.py verify quick -> PASS；fingerprint b86b6946d10d54167e2ff9455427d6078cb08ae3a9a08669ef9de9c1b9416303",
+        "Safari 实际操作：从 RC11 活动槽 B 点击“手动切换到槽 A”，确认风险提示后页面先显示“已提交切换请求”，容器重启后刷新 Safari，A 显示正在运行 RC12、B 显示待机 RC11，状态文案“已切换到槽 A”",
+        "本轮没有切换槽：上传夹具中的镜像归档不是可运行的 Docker 镜像；槽 B 手动激活按钮存在，但真实镜像导入、启动、健康检查及回滚不属于本次浏览器上传验收"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "同步软件升级架构及中英文安装文档，说明统一运行/升级包、macOS 解压目录上传、进度含义和兼容旧版包。",
+      "evidence": [
+        "docs/architecture/software-updates.md",
+        "docs/installation.md",
+        "docs/en/installation.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "变更与任务记录已核对；两个无关的用户未跟踪文件未纳入范围。",
+      "evidence": [
+        "docs/reviews/2026-10-02-agent-harness-architecture-review.md 与 docs/tasks/harness-architecture-review-20261002.json 未修改"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "不发布新 Release；本轮需先完成统一发行包的仓库实现和验证。",
+      "evidence": [
+        "version.md 仍为 v0.1.14.0 RC12"
+      ]
+    },
+    "handoff": {
+      "status": "pass",
+      "summary": "仓库实现、文档、专项验证及隔离桌面浏览器的 ZIP/文件夹上传和上传进度验收完成；完整 Release ZIP 尚待下一次发行构建并发布后，才能从官方 Release 下载流验收。"
+    }
+  },
+  "release_authorization": "用户此前授权 aide 工作推送 main；本轮未发现针对新 RC13/GitHub Release 的明确授权。",
+  "rollback": "若后续进度更新 API 引入问题，移除 updateAgentProgress 路由和前端控件，并用上一版 launcher 镜像槽切回；现有数据卷保持不变。",
+  "handoff": "统一完整运行/升级包、macOS 解压文件夹上传、上传/切换进度的仓库实现及本地浏览器验收完成。官方当前 Release 仍是 RC12 且没有 full-linux 完整包；新包需后续发行流程生成并发布后再做远端 Release 上传验收。真实镜像切换/自动回滚未在占位归档上执行。"
+}

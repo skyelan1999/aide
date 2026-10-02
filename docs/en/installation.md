@@ -29,16 +29,17 @@ bash scripts/install.sh --check
 
 A source ZIP is also usable for image installation. Keep its scripts, Compose file, and `version.md`: an image tarball is not a standalone desktop installer.
 
-The current source tag is **v0.1.14.0-RC8**. Download the platform launcher ZIP from the matching GitHub Release. On first launch, if the image is not already present locally, the launcher downloads the matching linux/arm64 image and SHA256SUMS, verifies them, and imports the image. This first download is about 500 MB and requires internet access. For offline setup, pre-place the image archive and SHA256SUMS in the launcher's `docker-images/` directory.
+Download `aide-<tag>-full-linux-<arch>.zip` from a GitHub Release for the complete runtime package. After extraction, run `start.command` on macOS, `start.ps1` or `start.bat` on Windows, or `start.sh` on Ubuntu. The launcher verifies and imports the bundled Docker image, so first launch does not need to download the image. The same ZIP can be uploaded from Settings > Software Update on an existing Release installation. If macOS automatically extracts it, select the extracted full package folder; the updater locates and verifies the payload under `docker-images/`. Lightweight platform launcher ZIPs remain available for online installation, but do not contain an image and cannot be used for A/B updates.
 
 | Asset | Launch | Target |
 | --- | --- | --- |
 | `aide-v0.1.14.0-RC8-macos-arm64.zip` | Double-click `start.command` | Apple Silicon macOS |
 | `aide-v0.1.14.0-RC8-windows-arm64.zip` | Double-click `start.bat` | Windows ARM64 |
 | `aide-v0.1.14.0-RC8-ubuntu-arm64.zip` | Run `./start.sh` | Ubuntu ARM64 |
-| `aide-v0.1.14.0-RC8-linux-arm64-image.tar.gz` | Auto-downloaded by launcher or pre-place in `docker-images/` | Shared image for all three |
+| `aide-<tag>-full-linux-arm64.zip` | First launch or upload in Settings for update; contains launchers and arm64 image | Docker Engine is linux/arm64 |
+| `aide-<tag>-full-linux-amd64.zip` | First launch or upload in Settings for update; contains launchers and amd64 image | Docker Engine is linux/amd64 |
 
-Launchers check Docker engine architecture, SHA256, and image ID, then start without build/pull. Windows x64 and Ubuntu x64 images are not included because this builder only has arm64 Docker base images cached. On a builder with matching architecture bases, run `scripts/package-release-assets.sh <tag> <image> [output-dir]`; upload generated assets with `scripts/publish-release-assets.sh <tag> <output-dir>` after pushing the tag.
+Launchers check Docker engine architecture, SHA256, and image ID, then start without build/pull. The architecture in the complete package name describes its Linux Docker image; it contains launch files for all host platforms. On a builder with matching architecture bases, run `scripts/package-release-assets.sh <tag> <image> [output-dir]`; upload generated assets with `scripts/publish-release-assets.sh <tag> <output-dir>` after pushing the tag.
 
 ## 3A. Install a released ARM64 image
 

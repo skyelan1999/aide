@@ -35,6 +35,15 @@ post_result() {
     --data "{\"operationId\":\"$op\",\"success\":$success,\"message\":\"$message\"}" \
     "https://127.0.0.1:$result_port/api/updates/agent/result" >/dev/null 2>&1
 }
+report_progress() {
+  local status="$1" progress="$2" message="$3" current_port current_token
+  current_port="$(compose port aide 8080 2>/dev/null | sed -n 's/.*:\([0-9][0-9]*\)$/\1/p' | tail -1)"
+  current_token="$(compose exec -T aide sh -c 'cat /data/auth/access-token 2>/dev/null || cat /data/access-token 2>/dev/null' 2>/dev/null | tr -d '\r\n')"
+  [[ -n "$current_port" && -n "$current_token" ]] || return 1
+  curl -ksS --max-time 10 -H "Authorization: Bearer $current_token" -H 'Content-Type: application/json' -X POST \
+    --data "{\"operationId\":\"$op\",\"status\":\"$status\",\"progress\":$progress,\"message\":\"$message\"}" \
+    "https://127.0.0.1:$current_port/api/updates/agent/progress" >/dev/null 2>&1
+}
 
 # Seed the server's shared slot record with the launcher currently on disk.
 read -r old_ref old_id platform old_tag < .aide-image
@@ -54,24 +63,37 @@ while compose ps --status running --services 2>/dev/null | grep -qx aide; do
   base="https://127.0.0.1:$port/api/updates"
   command="$(api "$base/agent" 2>/dev/null || true)"
   if [[ -n "$command" ]]; then
-    IFS=$'\t' read -r op target package_id tag image_id platform image_hash image_ref version <<< "$command"
+    # Bash treats tabs as IFS whitespace and collapses adjacent empty fields.
+    # Translate to a non-whitespace delimiter so legacy commands with empty
+    # optional package fields still parse correctly.
+    IFS=$'\034' read -r op target package_id tag image_id platform image_hash image_ref version <<< "$(printf '%s' "$command" | tr '\t' '\034')"
+    [[ "$package_id" == "-" ]] && package_id=""
+    [[ "$image_hash" == "-" ]] && image_hash=""
     target_lower="$(printf '%s' "$target" | tr '[:upper:]' '[:lower:]')"
     if [[ "$op" =~ ^[a-f0-9]{32}$ && ( "$target" == A || "$target" == B ) && ( -z "$package_id" || "$package_id" =~ ^[a-f0-9]{32}$ ) && "$image_id" =~ ^sha256:[a-f0-9]{64}$ && "$platform" =~ ^linux/(arm64|amd64)$ && "$image_ref" == "aide:slot-$target_lower" ]]; then
+      report_progress preparing 5 '正在准备切换环境' || true
       old_marker="$(cat .aide-image)"
       tmp="$(mktemp -d .agent-state/update.XXXXXX 2>/dev/null || { mkdir -p .agent-state; mktemp -d .agent-state/update.XXXXXX; })"
       ready=0
       if [[ -n "$package_id" ]]; then
+        report_progress downloading 15 '正在下载升级镜像' || true
         archive="aide-$tag-linux-${platform#linux/}-image.tar.gz"
         if curl -ksS --connect-timeout 10 --max-time 3600 -H "Authorization: Bearer $token" -o "$tmp/package.zip" "$base/agent/packages/$package_id" && unzip -p "$tmp/package.zip" "$archive" > "$tmp/$archive" 2>/dev/null; then
+          report_progress verifying 38 '正在校验镜像 SHA256' || true
           if command -v shasum >/dev/null 2>&1; then actual="$(shasum -a 256 "$tmp/$archive" | awk '{print $1}')"; else actual="$(sha256sum "$tmp/$archive" | awk '{print $1}')"; fi
-          if [[ "$actual" == "$image_hash" ]] && "$DOCKER_BIN" image load -i "$tmp/$archive" >/dev/null; then ready=1; fi
+          if [[ "$actual" == "$image_hash" ]]; then
+            report_progress importing 52 '正在导入 Docker 镜像' || true
+            if "$DOCKER_BIN" image load -i "$tmp/$archive" >/dev/null; then ready=1; fi
+          fi
         fi
       elif [[ "$("$DOCKER_BIN" image inspect "$image_ref" --format '{{.Id}}' 2>/dev/null || true)" == "$image_id" ]]; then
         ready=1
       fi
       if (( ready )) && "$DOCKER_BIN" image tag "$image_id" "$image_ref" >/dev/null; then
+          report_progress activating 70 '正在切换活动槽并重启工作台' || true
           printf '%s %s %s %s\n' "$image_ref" "$image_id" "$platform" "$tag" > .aide-image
           if AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-bundle >/dev/null 2>&1; then
+            report_progress health-check 88 '新版本已启动，正在检查健康状态' || true
             new_port="$(compose port aide 8080 2>/dev/null | sed -n 's/.*:\([0-9][0-9]*\)$/\1/p' | tail -1)"
             healthy=0
             for _ in {1..45}; do
@@ -81,16 +103,19 @@ while compose ps --status running --services 2>/dev/null | grep -qx aide; do
             if (( healthy )); then
               post_result true 'healthz passed' || true
             else
+              report_progress rollback 95 '健康检查超时，正在恢复上一槽' || true
               printf '%s\n' "$old_marker" > .aide-image
               AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-bundle >/dev/null 2>&1 || true
               post_result false 'health check timed out; restored previous slot' || true
             fi
           else
+            report_progress rollback 95 '新版本启动失败，正在恢复上一槽' || true
             printf '%s\n' "$old_marker" > .aide-image
             AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-bundle >/dev/null 2>&1 || true
             post_result false 'target container failed to start; restored previous slot' || true
           fi
       else
+        report_progress rollback 95 '镜像下载、校验或导入失败，切换已取消' || true
         post_result false 'package download, checksum, or image import failed' || true
       fi
       rm -rf "$tmp"

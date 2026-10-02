@@ -21,7 +21,7 @@ func TestCheckUpdatesReturnsVerifiedLauncherLinks(t *testing.T) {
 			t.Fatalf("unexpected update request: %s", r.URL.String())
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`[{"tag_name":"v0.1.15.0-RC1","name":"aide v0.1.15.0 RC1","html_url":"https://github.com/skyelan1999/aide/releases/tag/v0.1.15.0-RC1","body":"New version","published_at":"2026-10-01T00:00:00Z","assets":[{"name":"aide-v0.1.15.0-RC1-macos-arm64.zip","browser_download_url":"https://github.com/skyelan1999/aide/releases/download/v0.1.15.0-RC1/aide-v0.1.15.0-RC1-macos-arm64.zip"},{"name":"aide-v0.1.15.0-RC1-linux-arm64-image.tar.gz","browser_download_url":"https://github.com/skyelan1999/aide/releases/download/v0.1.15.0-RC1/image.tar.gz"},{"name":"aide-v0.1.15.0-RC1-windows-arm64.zip","browser_download_url":"https://evil.example/launcher.zip"}]}]`))
+		_, _ = w.Write([]byte(`[{"tag_name":"v0.1.15.0-RC1","name":"aide v0.1.15.0 RC1","html_url":"https://github.com/skyelan1999/aide/releases/tag/v0.1.15.0-RC1","body":"New version","published_at":"2026-10-01T00:00:00Z","assets":[{"name":"aide-v0.1.15.0-RC1-macos-arm64.zip","browser_download_url":"https://github.com/skyelan1999/aide/releases/download/v0.1.15.0-RC1/aide-v0.1.15.0-RC1-macos-arm64.zip"},{"name":"aide-v0.1.15.0-RC1-full-linux-arm64.zip","browser_download_url":"https://github.com/skyelan1999/aide/releases/download/v0.1.15.0-RC1/aide-v0.1.15.0-RC1-full-linux-arm64.zip"},{"name":"aide-v0.1.15.0-RC1-linux-arm64-image.tar.gz","browser_download_url":"https://github.com/skyelan1999/aide/releases/download/v0.1.15.0-RC1/image.tar.gz"},{"name":"aide-v0.1.15.0-RC1-windows-arm64.zip","browser_download_url":"https://evil.example/launcher.zip"}]}]`))
 	}))
 	defer github.Close()
 	a := testApp(t)
@@ -44,8 +44,8 @@ func TestCheckUpdatesReturnsVerifiedLauncherLinks(t *testing.T) {
 	if got.CurrentVersion != "0.1.14.0 RC9" || got.LatestVersion != "0.1.15.0-RC1" || !got.UpdateAvailable || got.ReleaseNotes != "New version" {
 		t.Fatalf("unexpected update info: %+v", got)
 	}
-	if len(got.Assets) != 1 || !strings.HasSuffix(got.Assets[0].Name, "macos-arm64.zip") {
-		t.Fatalf("only known launcher assets on github.com should be returned: %+v", got.Assets)
+	if len(got.Assets) != 2 || !isLauncherAsset(got.Assets[0].Name, "v0.1.15.0-RC1") || !isUpdateBundleAsset(got.Assets[1].Name, "v0.1.15.0-RC1") {
+		t.Fatalf("known launcher and unified runtime/update assets on github.com should be returned: %+v", got.Assets)
 	}
 }
 
@@ -115,6 +115,54 @@ func TestUpdateAgentSyncClearsStaleSwitchFailureWhenReportingActiveSlot(t *testi
 	}
 }
 
+func TestManualSwitchAgentCommandPreservesEmptyOptionalFields(t *testing.T) {
+	a := testApp(t)
+	a.buildRuntimeMode = "release-image"
+	a.updatesMu.Lock()
+	state := updateSlotsState{Version: 1, ActiveSlot: "A", Slots: map[string]updateSlot{
+		"A": {Version: "0.1.14.0 RC12", Tag: "v0.1.14.0-RC12", ImageRef: "aide:slot-a", ImageID: "sha256:" + strings.Repeat("a", 64), Platform: "linux/arm64"},
+		"B": {Version: "0.1.14.0 RC11", Tag: "v0.1.14.0-RC11", ImageRef: "aide:slot-b", ImageID: "sha256:" + strings.Repeat("b", 64), Platform: "linux/arm64"},
+	}}
+	if err := a.saveUpdateStateLocked(state); err != nil {
+		a.updatesMu.Unlock()
+		t.Fatal(err)
+	}
+	a.updatesMu.Unlock()
+	requireStatus(t, request(a, http.MethodPost, "/api/updates/switch", map[string]string{"target": "B"}), http.StatusAccepted)
+	response := request(a, http.MethodGet, "/api/updates/agent", nil)
+	requireStatus(t, response, http.StatusOK)
+	fields := strings.Split(strings.TrimSpace(response.Body.String()), "\t")
+	if len(fields) != 9 || fields[1] != "B" || fields[2] != "-" || fields[3] != "v0.1.14.0-RC11" || fields[4] != "sha256:"+strings.Repeat("b", 64) || fields[5] != "linux/arm64" || fields[6] != "-" || fields[7] != "aide:slot-b" || fields[8] != "0.1.14.0 RC11" {
+		t.Fatalf("manual activation command fields shifted: %#v", fields)
+	}
+}
+
+func TestUpdateAgentProgressIsVisibleInSlotState(t *testing.T) {
+	a := testApp(t)
+	a.buildRuntimeMode = "release-image"
+	a.updatesMu.Lock()
+	state := updateSlotsState{Version: 1, ActiveSlot: "A", Slots: map[string]updateSlot{
+		"A": {ImageRef: "aide:slot-a", ImageID: "sha256:" + strings.Repeat("a", 64), Platform: "linux/arm64"},
+		"B": {ImageRef: "aide:slot-b", ImageID: "sha256:" + strings.Repeat("b", 64), Platform: "linux/arm64"},
+	}, Pending: &updateOperation{ID: strings.Repeat("c", 32), Target: "B", Status: "requested"}}
+	if err := a.saveUpdateStateLocked(state); err != nil {
+		a.updatesMu.Unlock()
+		t.Fatal(err)
+	}
+	a.updatesMu.Unlock()
+	response := request(a, http.MethodPost, "/api/updates/agent/progress", map[string]any{"operationId": strings.Repeat("c", 32), "status": "importing", "progress": 52, "message": "正在导入 Docker 镜像"})
+	requireStatus(t, response, http.StatusOK)
+	stateResponse := request(a, http.MethodGet, "/api/updates/slots", nil)
+	requireStatus(t, stateResponse, http.StatusOK)
+	var got updateSlotsState
+	if err := json.Unmarshal(stateResponse.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.Pending == nil || got.Pending.Status != "importing" || got.Pending.Progress != 52 || got.Pending.Message != "正在导入 Docker 镜像" {
+		t.Fatalf("progress must persist in slot status for the UI: %+v", got.Pending)
+	}
+}
+
 func TestReleaseVersionOrdering(t *testing.T) {
 	for _, tc := range []struct {
 		current, latest string
@@ -146,19 +194,19 @@ func TestUploadUpdatePackageAcceptsExtractedFolder(t *testing.T) {
 		ImageArchive: imageName, ImageID: "sha256:" + strings.Repeat("a", 64),
 	})
 	files := map[string][]byte{
-		"manifest.json":         manifest,
-		"SHA256SUMS":            []byte(fmt.Sprintf("%s  %s\n", hex.EncodeToString(imageSum[:]), imageName)),
-		imageName:               imageBytes,
-		".DS_Store":             []byte("Finder metadata"),
-		"._manifest.json":       []byte("AppleDouble metadata"),
-		"__MACOSX/._SHA256SUMS": []byte("AppleDouble metadata in resource fork folder"),
+		"docker-images/manifest.json": manifest,
+		"docker-images/SHA256SUMS":    []byte(fmt.Sprintf("%s  %s\n", hex.EncodeToString(imageSum[:]), imageName)),
+		"docker-images/" + imageName:  imageBytes,
+		".DS_Store":                   []byte("Finder metadata"),
+		"._manifest.json":             []byte("AppleDouble metadata"),
+		"__MACOSX/._SHA256SUMS":       []byte("AppleDouble metadata in resource fork folder"),
 	}
 	var body bytes.Buffer
 	mw := multipart.NewWriter(&body)
 	paths := make([]string, 0, len(files))
 	for name, contents := range files {
-		paths = append(paths, "aide-update-"+tag+"/"+name)
-		part, err := mw.CreateFormFile("files", name)
+		paths = append(paths, "aide-"+tag+"-full-linux-"+strings.TrimPrefix(platform, "linux/")+"/"+name)
+		part, err := mw.CreateFormFile("files", filepath.Base(name))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -269,4 +317,71 @@ func TestUploadUpdatePackageAcceptsZip(t *testing.T) {
 	w := httptest.NewRecorder()
 	a.Handler().ServeHTTP(w, r)
 	requireStatus(t, w, http.StatusCreated)
+}
+
+func TestUploadUpdatePackageAcceptsFullRuntimeZip(t *testing.T) {
+	a := testApp(t)
+	a.version = "0.1.14.0 RC9"
+	a.buildVersion = a.version
+	a.buildRuntimeMode = "release-image"
+	tag := "v0.1.14.0-RC10"
+	platform := runtimePlatform()
+	imageName := "aide-" + tag + "-" + strings.ReplaceAll(platform, "/", "-") + "-image.tar.gz"
+	imageBytes := []byte("compressed docker image fixture")
+	imageSum := sha256.Sum256(imageBytes)
+	manifest, _ := json.Marshal(updatePackageManifest{
+		Format: "aide-update-package", Version: 1, ReleaseTag: tag, Platform: platform,
+		ImageArchive: imageName, ImageID: "sha256:" + strings.Repeat("c", 64),
+	})
+	entries := map[string][]byte{
+		"aide-" + tag + "-full-linux-" + strings.TrimPrefix(platform, "linux/") + "/start.command":               []byte("launcher"),
+		"aide-" + tag + "-full-linux-" + strings.TrimPrefix(platform, "linux/") + "/docker-images/manifest.json": manifest,
+		"aide-" + tag + "-full-linux-" + strings.TrimPrefix(platform, "linux/") + "/docker-images/SHA256SUMS":    []byte(fmt.Sprintf("%s  %s\n", hex.EncodeToString(imageSum[:]), imageName)),
+		"aide-" + tag + "-full-linux-" + strings.TrimPrefix(platform, "linux/") + "/docker-images/" + imageName:  imageBytes,
+	}
+	var archive bytes.Buffer
+	zw := zip.NewWriter(&archive)
+	for name, contents := range entries {
+		entry, err := zw.Create(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := entry.Write(contents); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := zw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	var body bytes.Buffer
+	mw := multipart.NewWriter(&body)
+	part, err := mw.CreateFormFile("package", "aide-"+tag+"-full-linux-"+strings.TrimPrefix(platform, "linux/")+".zip")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := part.Write(archive.Bytes()); err != nil {
+		t.Fatal(err)
+	}
+	if err := mw.Close(); err != nil {
+		t.Fatal(err)
+	}
+	r := httptest.NewRequest(http.MethodPost, "/api/updates/packages", &body)
+	r.Header.Set("Content-Type", mw.FormDataContentType())
+	r.Header.Set("Authorization", "Bearer "+a.token)
+	w := httptest.NewRecorder()
+	a.Handler().ServeHTTP(w, r)
+	requireStatus(t, w, http.StatusCreated)
+	var result struct {
+		PackageID string `json:"packageId"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	manifestOut, imageHash, err := validateUpdatePackage(filepath.Join(a.updatePackagesPath(), result.PackageID+".zip"))
+	if err != nil {
+		t.Fatalf("full runtime package should be normalized to the strict updater payload: %v", err)
+	}
+	if manifestOut.ReleaseTag != tag || imageHash != hex.EncodeToString(imageSum[:]) {
+		t.Fatalf("unexpected normalized package: manifest=%+v sha=%s", manifestOut, imageHash)
+	}
 }

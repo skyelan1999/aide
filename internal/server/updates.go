@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
@@ -44,6 +45,8 @@ type updateOperation struct {
 	ID        string `json:"id"`
 	Target    string `json:"target"`
 	Status    string `json:"status"`
+	Progress  int    `json:"progress,omitempty"`
+	Message   string `json:"message,omitempty"`
 	CreatedAt string `json:"createdAt"`
 }
 
@@ -199,6 +202,9 @@ func isLauncherAsset(name, tag string) bool {
 	if !strings.HasPrefix(name, "aide-"+tag+"-") || !strings.HasSuffix(name, ".zip") {
 		return false
 	}
+	if name == "aide-"+tag+"-full-linux-arm64.zip" || name == "aide-"+tag+"-full-linux-amd64.zip" {
+		return true
+	}
 	for _, platform := range []string{"macos-arm64", "windows-arm64", "ubuntu-arm64"} {
 		if name == "aide-"+tag+"-"+platform+".zip" {
 			return true
@@ -208,7 +214,8 @@ func isLauncherAsset(name, tag string) bool {
 }
 
 func isUpdateBundleAsset(name, tag string) bool {
-	return name == "aide-"+tag+"-update-linux-arm64.zip" || name == "aide-"+tag+"-update-linux-amd64.zip"
+	return name == "aide-"+tag+"-update-linux-arm64.zip" || name == "aide-"+tag+"-update-linux-amd64.zip" ||
+		name == "aide-"+tag+"-full-linux-arm64.zip" || name == "aide-"+tag+"-full-linux-amd64.zip"
 }
 
 type parsedVersion struct {
@@ -346,6 +353,7 @@ func (a *App) uploadUpdatePackage(w http.ResponseWriter, r *http.Request) {
 	}
 	tmpPath := tmp.Name()
 	defer os.Remove(tmpPath)
+	packagePath := tmpPath
 	if files := r.MultipartForm.File["package"]; len(files) > 0 {
 		if len(files) != 1 || !strings.EqualFold(filepath.Ext(files[0].Filename), ".zip") {
 			_ = tmp.Close()
@@ -394,7 +402,20 @@ func (a *App) uploadUpdatePackage(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("请选择 aide 应用内升级 ZIP 包，或选择解压后的完整升级文件夹"))
 		return
 	}
-	manifest, imageHash, err := validateUpdatePackage(tmpPath)
+	manifest, imageHash, err := validateUpdatePackage(packagePath)
+	if err != nil && len(r.MultipartForm.File["package"]) == 1 {
+		// A full release bundle is both a first-run runtime package and an
+		// upgrade source. Normalize its embedded docker-images/ payload back to
+		// the small, strict updater archive stored for the host agent.
+		normalizedPath := tmpPath + ".payload.zip"
+		defer os.Remove(normalizedPath)
+		if normalizeEmbeddedUpdatePackage(tmpPath, normalizedPath) == nil {
+			if _, _, normalizedErr := validateUpdatePackage(normalizedPath); normalizedErr == nil {
+				packagePath = normalizedPath
+				manifest, imageHash, err = validateUpdatePackage(packagePath)
+			}
+		}
+	}
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -431,7 +452,7 @@ func (a *App) uploadUpdatePackage(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("升级包版本必须高于当前活动槽版本"))
 		return
 	}
-	if err := os.Rename(tmpPath, storedPath); err != nil {
+	if err := os.Rename(packagePath, storedPath); err != nil {
 		fail(w, 500, errors.New("保存升级包失败"))
 		return
 	}
@@ -447,6 +468,118 @@ func (a *App) uploadUpdatePackage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	jsonOut(w, 201, map[string]any{"packageId": packageID, "targetSlot": target, "slot": state.Slots[target]})
+}
+
+// normalizeEmbeddedUpdatePackage extracts exactly one sibling set of
+// manifest.json, SHA256SUMS, and *-image.tar.gz from a full runtime ZIP. It
+// never writes archive paths to disk and emits the same normalized three-file
+// ZIP accepted by validateUpdatePackage and consumed by the host agents.
+func normalizeEmbeddedUpdatePackage(source, destination string) error {
+	zr, err := zip.OpenReader(source)
+	if err != nil {
+		return errors.New("升级包不是有效 ZIP")
+	}
+	defer zr.Close()
+	type candidate struct {
+		entries map[string]*zip.File
+		total   uint64
+	}
+	candidates := map[string]*candidate{}
+	for _, f := range zr.File {
+		if f.FileInfo().IsDir() {
+			continue
+		}
+		name := strings.ReplaceAll(f.Name, "\\", "/")
+		clean := path.Clean(name)
+		if name == "" || strings.HasPrefix(name, "/") || clean == "." || clean == ".." || strings.HasPrefix(clean, "../") {
+			continue
+		}
+		base := path.Base(clean)
+		if base != "manifest.json" && base != "SHA256SUMS" && !strings.HasSuffix(base, "-image.tar.gz") {
+			continue
+		}
+		parent := path.Dir(clean)
+		group := candidates[parent]
+		if group == nil {
+			group = &candidate{entries: map[string]*zip.File{}}
+			candidates[parent] = group
+		}
+		if group.entries[base] != nil || f.UncompressedSize64 > uint64(updatePackageMaxBytes) {
+			return errors.New("完整运行包中的升级文件重复或过大")
+		}
+		group.entries[base] = f
+		group.total += f.UncompressedSize64
+	}
+	var selected *candidate
+	for _, group := range candidates {
+		if group.entries["manifest.json"] == nil || group.entries["SHA256SUMS"] == nil {
+			continue
+		}
+		images := 0
+		for name := range group.entries {
+			if strings.HasSuffix(name, "-image.tar.gz") {
+				images++
+			}
+		}
+		if images != 1 {
+			continue
+		}
+		if selected != nil {
+			return errors.New("完整运行包中发现多个升级文件夹")
+		}
+		selected = group
+	}
+	if selected == nil || selected.total > uint64(updatePackageMaxBytes) {
+		return errors.New("完整运行包中未找到唯一、完整的升级文件夹")
+	}
+	w, err := os.Create(destination)
+	if err != nil {
+		return err
+	}
+	zw := zip.NewWriter(w)
+	for _, name := range []string{"manifest.json", "SHA256SUMS"} {
+		if err = copyUpdateEntry(zw, name, selected.entries[name]); err != nil {
+			break
+		}
+	}
+	if err == nil {
+		for name, entry := range selected.entries {
+			if strings.HasSuffix(name, "-image.tar.gz") {
+				err = copyUpdateEntry(zw, name, entry)
+				break
+			}
+		}
+	}
+	zipErr := zw.Close()
+	fileErr := w.Close()
+	if err != nil {
+		return err
+	}
+	if zipErr != nil || fileErr != nil {
+		return errors.New("无法整理完整运行包中的升级文件")
+	}
+	return nil
+}
+
+func copyUpdateEntry(zw *zip.Writer, name string, source *zip.File) error {
+	if source == nil {
+		return errors.New("完整运行包升级文件不完整")
+	}
+	header := &zip.FileHeader{Name: name, Method: zip.Store}
+	entry, err := zw.CreateHeader(header)
+	if err != nil {
+		return err
+	}
+	r, err := source.Open()
+	if err != nil {
+		return err
+	}
+	_, copyErr := io.Copy(entry, io.LimitReader(r, updatePackageMaxBytes+1))
+	closeErr := r.Close()
+	if copyErr != nil || closeErr != nil {
+		return errors.New("读取完整运行包升级文件失败")
+	}
+	return nil
 }
 
 type updatePackageSizeError struct{}
@@ -705,8 +838,57 @@ func (a *App) updateAgentCommand(w http.ResponseWriter, _ *http.Request) {
 		fail(w, 500, errors.New("目标槽元数据无效"))
 		return
 	}
+	// Bash treats adjacent tab characters as one IFS separator. Use explicit
+	// sentinels for optional package fields so manual activation commands keep
+	// their columns aligned when no uploaded package is involved.
+	packageID, imageSHA256 := slot.PackageID, slot.ImageSHA256
+	if packageID == "" {
+		packageID = "-"
+	}
+	if imageSHA256 == "" {
+		imageSHA256 = "-"
+	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", state.Pending.ID, state.Pending.Target, slot.PackageID, slot.Tag, slot.ImageID, slot.Platform, slot.ImageSHA256, slotImageRef(state.Pending.Target), slot.Version)
+	_, _ = fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", state.Pending.ID, state.Pending.Target, packageID, slot.Tag, slot.ImageID, slot.Platform, imageSHA256, slotImageRef(state.Pending.Target), slot.Version)
+}
+
+func (a *App) updateAgentProgress(w http.ResponseWriter, r *http.Request) {
+	if !a.requireReleaseUpdateRuntime(w) {
+		return
+	}
+	var req struct {
+		OperationID string `json:"operationId"`
+		Status      string `json:"status"`
+		Progress    int    `json:"progress"`
+		Message     string `json:"message"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8<<10)).Decode(&req); err != nil || len(req.Message) > 500 || req.Progress < 0 || req.Progress > 100 {
+		fail(w, 400, errors.New("升级进度无效"))
+		return
+	}
+	allowed := map[string]bool{"preparing": true, "downloading": true, "verifying": true, "importing": true, "activating": true, "health-check": true, "rollback": true}
+	if !allowed[req.Status] {
+		fail(w, 400, errors.New("升级阶段无效"))
+		return
+	}
+	a.updatesMu.Lock()
+	defer a.updatesMu.Unlock()
+	state, err := a.loadUpdateStateLocked()
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	if state.Pending == nil || state.Pending.ID != req.OperationID {
+		fail(w, 409, errors.New("升级操作已变化或不存在"))
+		return
+	}
+	state.Pending.Status, state.Pending.Progress, state.Pending.Message = req.Status, req.Progress, req.Message
+	state.LastMessage = req.Message
+	if err := a.saveUpdateStateLocked(state); err != nil {
+		fail(w, 500, err)
+		return
+	}
+	jsonOut(w, 200, state.Pending)
 }
 
 func (a *App) downloadUpdatePackage(w http.ResponseWriter, r *http.Request) {

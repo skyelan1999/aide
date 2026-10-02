@@ -18,16 +18,17 @@ aide 融合 AI 与 IDE，让你在本地更专注地处理专业任务。RC8 Rel
 
 ## 2. 下载同一版本的源码
 
-当前源码 tag 为 `v0.1.14.0-RC8`。从同一 GitHub Release 下载对应平台启动 ZIP。首次启动时，若本机没有目标镜像，启动器会自动下载同一 Release 的 linux/arm64 镜像和 SHA256SUMS，校验后导入；首次启动约下载 500 MB 且需要联网。离线环境可预先将镜像和 SHA256SUMS 放入包内 `docker-images/`。
+从 GitHub Release 下载 `aide-<tag>-full-linux-<arch>.zip` 可使用统一完整发行包。解压后 macOS 运行 `start.command`、Windows 运行 `start.ps1` 或 `start.bat`、Ubuntu 运行 `start.sh`；启动器校验并导入包内的 Docker 镜像，不需要首次联网下载。此 ZIP 同时可用于已有 Release 安装的应用内升级；macOS 若自动解压，在设置的「软件升级」中选择解压后的完整发行包文件夹即可，系统会定位 `docker-images/` 下的升级文件并校验。轻量平台启动 ZIP仍支持联网安装，但不含升级镜像，不能用于 A/B 升级。
 
 | 下载项 | 启动方式 | 目标系统 |
 | --- | --- | --- |
 | `aide-v0.1.14.0-RC8-macos-arm64.zip` | 双击 `start.command` | Apple Silicon macOS |
 | `aide-v0.1.14.0-RC8-windows-arm64.zip` | 双击 `start.bat` | Windows ARM64 |
 | `aide-v0.1.14.0-RC8-ubuntu-arm64.zip` | `./start.sh` | Ubuntu ARM64 |
-| `aide-v0.1.14.0-RC8-linux-arm64-image.tar.gz` | 启动器自动下载，也可预置到 `docker-images/` | 三个平台共用 |
+| `aide-<tag>-full-linux-arm64.zip` | 首次运行或在设置中上传升级；包含各平台启动脚本和 arm64 镜像 | Docker Engine 为 linux/arm64 |
+| `aide-<tag>-full-linux-amd64.zip` | 首次运行或在设置中上传升级；包含各平台启动脚本和 amd64 镜像 | Docker Engine 为 linux/amd64 |
 
-启动器检查 Docker 引擎架构、SHA256 和镜像 ID，再执行不构建、不拉取的启动。Windows x64 与 Ubuntu x64 暂无镜像；本机缓存只有 arm64 Docker 基础镜像。开发者可在持有匹配架构基础镜像的构建机运行 `scripts/package-release-assets.sh <tag> <image> [输出目录]`，生成镜像和三个启动包；`scripts/publish-release-assets.sh <tag> <输出目录>` 会把产物上传到已推送的 GitHub tag 对应 Release。
+启动器检查 Docker 引擎架构、SHA256 和镜像 ID，再执行不构建、不拉取的启动。完整发行包名称中的架构指包内 Linux Docker 镜像架构，包含所有宿主平台启动文件。开发者可在持有匹配架构基础镜像的构建机运行 `scripts/package-release-assets.sh <tag> <image> [输出目录]` 生成完整包；`scripts/publish-release-assets.sh <tag> <输出目录>` 会把产物上传到已推送的 GitHub tag 对应 Release。
 
 ```bash
 git clone https://github.com/skyelan1999/aide.git

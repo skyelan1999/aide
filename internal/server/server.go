@@ -1156,6 +1156,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/updates/packages", a.uploadUpdatePackage)
 	mux.HandleFunc("POST /api/updates/switch", a.switchUpdateSlot)
 	mux.HandleFunc("GET /api/updates/agent", a.updateAgentCommand)
+	mux.HandleFunc("POST /api/updates/agent/progress", a.updateAgentProgress)
 	mux.HandleFunc("POST /api/updates/agent/result", a.updateAgentResult)
 	mux.HandleFunc("POST /api/updates/agent/sync", a.updateAgentSync)
 	mux.HandleFunc("GET /api/updates/agent/packages/{id}", a.downloadUpdatePackage)
