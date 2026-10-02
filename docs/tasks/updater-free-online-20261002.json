@@ -81,5 +81,5 @@
   },
   "release_authorization": "用户请求：“整理一下文档，push上去吧”——授权文档整理及 Git push；未包含版本发布、打 tag 或创建 Release。",
   "rollback": "在线安装仅写入隔离测试卷的槽 B，未激活；测试容器与卷已删除。代码未发布。",
-  "handoff": "待提交后填写 commit SHA 和远端推送确认。"
+  "handoff": "实现与文档已提交到 main，commit b703e63（feat: add online and flexible A/B updates）；本次推送到 origin/main 后完成交接。未创建版本 tag 或 GitHub Release。"
 }
