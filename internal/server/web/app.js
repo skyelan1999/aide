@@ -3427,7 +3427,7 @@ function renderSoftwareUpdates() {
       if (!response.ok) throw new Error(t(response.data.error) || t('升级包上传失败'));
       progressFill.style.width = '100%'; progressValue.textContent = '100%'; progressCaption.textContent = t('校验完成，正在暂存');
       file.value = ''; folder.value = ''; selection.textContent = t('完整发行 ZIP 同时支持首次启动和应用内升级；macOS 自动解压后可直接选择解压文件夹。');
-      slotStatus.textContent = t('升级包已安装到槽 {0}', result.targetSlot);
+      slotStatus.textContent = t('升级包已安装到槽 {0}', response.data.targetSlot);
       await loadSlots();
     } catch (error) {
       slotStatus.textContent = t('升级包校验失败：{0}', error.message);

@@ -36,27 +36,28 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "统一完整运行/升级 ZIP、ZIP/解压目录导入、上传和切换进度已随 11a5146 合并 main。",
+      "summary": "统一完整运行/升级 ZIP、ZIP/解压目录导入、上传和切换进度已随 11a5146 合并 main；真实发行包验收发现上传成功后 UI 刷新变量引用错误，已修复并纳入 RC13。",
       "evidence": [
         "main commit 11a5146d Fix A/B update progress and unified runtime bundles",
-        "docs/tasks/update-progress-20261002.json 中记录桌面 Chrome 对 ZIP/文件夹上传和进度的验收结果"
+        "docs/tasks/update-progress-20261002.json 中记录桌面 Chrome 对 ZIP/文件夹上传和进度的验收结果",
+        "internal/server/web/app.js：上传成功提示读取 response.data.targetSlot，避免 result is not defined"
       ]
     },
     "verification": {
-      "status": "pass",
-      "summary": "桌面 Chrome 上传/进度验收、焦点 Go 回归及仓库 full 门禁通过。",
+      "status": "in_progress",
+      "summary": "完整真实包上传已成功暂存到槽 B，但浏览器发现 UI 成功后刷新异常；修复已写入，正在重建镜像并复测，然后重跑完整门禁。",
       "evidence": [
-        "隔离 RC13 Release 模式实例中 ZIP 与 macOS 解压目录上传均 HTTP 201 并暂存到槽 B；上传进度实际显示 0%、95%、100%",
-        "焦点 Go 测试：手动切换字段/进度持久化/完整 ZIP/文件夹上传 -> PASS",
-        "python3 scripts/agent-route.py verify quick -> PASS",
-        "python3 scripts/agent-route.py verify full -> PASS；go test -race ./... 与 go vet ./... 均通过；fingerprint b86b6946d10d54167e2ff9455427d6078cb08ae3a9a08669ef9de9c1b9416303"
+        "隔离 RC13 实例完整 ZIP 与 macOS 解压文件夹上传均返回 HTTP 201，槽 B 已暂存 RC13，上传进度实际显示 0% 到 100%",
+        "真实包 UI 复验发现成功提示引用未定义 result，已改用上传响应 response.data.targetSlot；需要用修复后构建回归确认",
+        "完整门禁和 release-check 必须对修复后的最终源码重新运行"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "统一包安装方式、解压目录上传、非活动槽暂存和切换进度已记录在架构及中英文安装文档；构建后另生成 RC13 专属 release note 和资产报告。",
+      "summary": "统一包安装方式、解压目录上传、非活动槽暂存和切换进度已记录在架构及中英文安装文档；RC13 prerelease notes 已编写，资产报告随实际构建补齐。",
       "evidence": [
-        "docs/architecture/software-updates.md、docs/installation.md、docs/en/installation.md 已随 11a5146 提交"
+        "docs/architecture/software-updates.md、docs/installation.md、docs/en/installation.md 已随 11a5146 提交",
+        "docs/reviews/release-0.1.14.0-RC13-2026-10-02.md"
       ]
     },
     "cleanup": {
@@ -67,12 +68,15 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "RC13 本地版本已创建；真实包验收促成 UI 刷新修复，正在重建并重跑发布门禁，之后重新标注 tag 并发布。",
+      "evidence": [
+        "bash scripts/version.sh patch -m '统一完整运行升级包与 A/B 上传进度' -> v0.1.14.0-RC13；修复提交后需将本地 tag 移至最终源码提交",
+        "用户明确授权发布测试 Release"
+      ]
     }
   },
   "release_authorization": "用户明确授权：你发布一个（当前对话，2026-10-02）。",
   "rollback": "RC13 是 prerelease 测试版本，不覆盖现有用户实例。若资产校验或健康检查失败则不发布。已安装 RC13 后可通过设置 > 软件升级手动切回仍安装的旧槽；正式发布前需确认远端 Release 附件完整。",
-  "handoff": ""
+  "handoff": "修复后的 RC13 构建、浏览器验收、full 门禁、资产校验、推送与 GitHub prerelease 上传尚待完成；测试完成前不得标记已发布。"
 }
