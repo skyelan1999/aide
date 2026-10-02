@@ -6,4 +6,6 @@ RC12 修复了 macOS Release 启动器上的 A/B 升级失败。macOS 系统 Bas
 
 从 RC10 或 RC11 升级时，在「设置 → 软件升级」上传本 Release 名称包含 `-update-` 的应用内升级 ZIP，或选择 macOS 自动解压后的升级文件夹。上传会暂存到非活动槽；确认后手动激活。RC9 没有应用内升级功能，需要先使用完整启动器 ZIP 安装 RC10 或更新版本。
 
+RC10/RC11 的 macOS 宿主代理脚本位于本机启动器目录，不会随应用镜像包更新。已有安装需要先将 RC12 macOS 启动 ZIP 解压覆盖到原安装目录并重新运行 `start.command`，保留原 `.env`、`workspace/` 和 `context/`；同一安装路径会继续使用原 Compose 项目和数据卷。完成后再使用应用内升级包切换后续版本。
+
 macOS 启动 ZIP 是全新安装包；Linux ARM64 镜像归档可通过 `SHA256SUMS` 校验。A/B 槽共用会话、设置及容器 home 数据。macOS 启动器未使用 Apple Developer ID 签名，也未公证，首次启动可能出现 Gatekeeper 提示。

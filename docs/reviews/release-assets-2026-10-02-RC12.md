@@ -11,6 +11,7 @@
 ## A/B upgrade acceptance
 
 - On the RC11 macOS launcher directory, the release RC12 update ZIP was accepted and staged in the inactive slot. Manual activation imported the image and restarted the same Compose project.
+- Before the RC11-to-RC12 live acceptance, the RC12 host launcher scripts were overlaid into the existing launcher directory; updating the container image alone cannot replace host-side scripts. The RC12 release notes document this bootstrap step for stock RC10/RC11 macOS installs.
 - The live upgrade completed from RC11 slot B to RC12 slot A. `/api/config` reported `0.1.14.0 RC12`, `pending` was null, `lastMessage` was `已切换到槽 A`, and `/healthz` passed.
 - The live activation retained the configured host port `8100`. A subsequent bundle restart with `AIDE_PORT=8099` started RC12 on `8099`; this confirmed an existing running bundle is not mistaken for an external port conflict.
 - The original failure came from Bash 4-only parameter transformations in the macOS host agent, which runs on Bash 3.2. The agent now uses `tr` and derives the Compose project name from the running container label. It can recover a pending manual activation instead of leaving the UI in “正在切换”.
