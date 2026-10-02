@@ -6,6 +6,14 @@ cd "$(dirname "$0")/.." || exit 1
 DOCKER_BIN="$(command -v docker || true)"
 [[ -n "$DOCKER_BIN" ]] || [[ ! -x "$HOME/.docker/bin/docker" ]] || DOCKER_BIN="$HOME/.docker/bin/docker"
 [[ -n "$DOCKER_BIN" ]] || exit 0
+# Finder launches may not inherit the shell environment that supplied
+# COMPOSE_PROJECT_NAME. Resolve the currently running bundle's project label.
+bundle_dir="$(pwd -P)"
+running_bundle="$("$DOCKER_BIN" ps -q --filter "label=com.docker.compose.project.working_dir=$bundle_dir" --filter label=com.docker.compose.service=aide | head -1)"
+if [[ -n "$running_bundle" ]]; then
+  running_project="$("$DOCKER_BIN" inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' "$running_bundle" 2>/dev/null || true)"
+  if [[ -n "$running_project" ]]; then export COMPOSE_PROJECT_NAME="$running_project"; fi
+fi
 LOCK=.aide-update-agent.lock
 mkdir "$LOCK" 2>/dev/null || exit 0
 trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT INT TERM
@@ -33,7 +41,7 @@ read -r old_ref old_id platform old_tag < .aide-image
 if [[ "$old_ref" != aide:slot-* ]]; then old_ref=aide:slot-a; fi
 "$DOCKER_BIN" image tag "$old_id" "$old_ref" >/dev/null 2>&1 || true
 active_slot="${old_ref##*-}"
-active_slot="${active_slot^^}"
+active_slot="$(printf '%s' "$active_slot" | tr '[:lower:]' '[:upper:]')"
 active_version="${old_tag#v}"
 active_version="${active_version/-RC/ RC}"
 sync_json="{\"version\":1,\"activeSlot\":\"$active_slot\",\"slots\":{\"$active_slot\":{\"version\":\"$active_version\",\"tag\":\"${old_tag:-}\",\"imageRef\":\"$old_ref\",\"imageId\":\"$old_id\",\"platform\":\"$platform\"}}}"
@@ -47,7 +55,8 @@ while compose ps --status running --services 2>/dev/null | grep -qx aide; do
   command="$(api "$base/agent" 2>/dev/null || true)"
   if [[ -n "$command" ]]; then
     IFS=$'\t' read -r op target package_id tag image_id platform image_hash image_ref version <<< "$command"
-    if [[ "$op" =~ ^[a-f0-9]{32}$ && ( "$target" == A || "$target" == B ) && ( -z "$package_id" || "$package_id" =~ ^[a-f0-9]{32}$ ) && "$image_id" =~ ^sha256:[a-f0-9]{64}$ && "$platform" =~ ^linux/(arm64|amd64)$ && "$image_ref" == "aide:slot-${target,,}" ]]; then
+    target_lower="$(printf '%s' "$target" | tr '[:upper:]' '[:lower:]')"
+    if [[ "$op" =~ ^[a-f0-9]{32}$ && ( "$target" == A || "$target" == B ) && ( -z "$package_id" || "$package_id" =~ ^[a-f0-9]{32}$ ) && "$image_id" =~ ^sha256:[a-f0-9]{64}$ && "$platform" =~ ^linux/(arm64|amd64)$ && "$image_ref" == "aide:slot-$target_lower" ]]; then
       old_marker="$(cat .aide-image)"
       tmp="$(mktemp -d .agent-state/update.XXXXXX 2>/dev/null || { mkdir -p .agent-state; mktemp -d .agent-state/update.XXXXXX; })"
       ready=0

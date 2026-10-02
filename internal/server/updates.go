@@ -800,6 +800,7 @@ func (a *App) updateAgentSync(w http.ResponseWriter, r *http.Request) {
 	}
 	if state.Pending == nil {
 		state.ActiveSlot = req.ActiveSlot
+		state.LastMessage = "宿主启动器已同步当前活动槽"
 	}
 	// A launcher reports only its currently running image. Preserve the other
 	// slot's package metadata, which was validated and stored by the upload API.

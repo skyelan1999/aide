@@ -21,6 +21,8 @@
 3. 宿主代理下载已验证包、复核 SHA256、导入 Docker 镜像并标记目标槽，然后用原 Compose project 重建唯一的 aide 服务。
 4. 新服务的 `/healthz` 在期限内成功后，代理确认切换；否则恢复旧 `.aide-image` 并启动原槽，再记录失败/回滚。
 
+macOS 使用系统 Bash 3.2，因此宿主 shell 代理避免 Bash 4 才支持的 `${value,,}` / `${value^^}` 大小写转换。代理从当前运行容器的 Compose 标签发现项目名，确保 Finder 启动、升级重启与显式 Compose 项目一致。`start-bundle` 检测到本 bundle 已在运行时沿用 `.env` 端口；只有首次启动且目标端口被其他程序占用时才选择下一个可用端口。这样切换槽不会把同一工作台误判成端口冲突，也不会悄悄更改访问地址。
+
 槽 A/B 使用稳定镜像引用 `aide:slot-a` 与 `aide:slot-b`。`docker/compose.offline.yaml` 固定同一 Compose project，并使用相同的 `aide-data` 和 `aide-home` named volumes；会话、设置、模型配置与容器 home 共用。`workspace/`、`context/` 仍由启动目录挂载。切换采用停旧再启新，任何时刻只允许一个 aide 实例写数据；切换期间页面可能短暂断开。两个镜像槽保留各自版本，失败可回滚，也可在升级页面主动切回旧槽。
 
 ## 运行边界
@@ -29,5 +31,6 @@
 - Docker 操作仅在用户宿主启动包里的代理中运行；不挂载 Docker socket 到 aide 容器。
 - 页面关闭不会中止已提交的切换；启动代理在宿主后台轮询。
 - 服务重启后代理读取共享 `/data/updates/slots.json` 恢复槽状态；本地 `.aide-image` 记录当前启动槽。
+- 无待处理切换时，启动器同步会更新活动槽并清除过期的切换错误文案；存在待处理操作时保留该操作，等待代理回报结果。
 - 检查公开 Release 需要联网；包上传和镜像导入可离线执行。
 - 当前 Release builder 对应当前 Docker Linux 镜像架构（arm64 或 amd64）。安装机的 Docker engine 架构必须匹配；不兼容平台包会在上传时被拒绝。

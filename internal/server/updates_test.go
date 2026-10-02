@@ -79,6 +79,42 @@ func TestSourceModeSkipsABUpgrade(t *testing.T) {
 	requireStatus(t, request(a, http.MethodPost, "/api/updates/agent/result", map[string]any{}), http.StatusConflict)
 }
 
+func TestUpdateAgentSyncClearsStaleSwitchFailureWhenReportingActiveSlot(t *testing.T) {
+	a := testApp(t)
+	a.buildRuntimeMode = "release-image"
+	a.updatesMu.Lock()
+	state := updateSlotsState{
+		Version: 1, ActiveSlot: "A", LastMessage: "槽切换失败并已回滚：target container failed to start",
+		Slots: map[string]updateSlot{
+			"A": {Version: "0.1.14.0 RC10", Tag: "v0.1.14.0-RC10", ImageRef: "aide:slot-a", ImageID: "sha256:" + strings.Repeat("a", 64), Platform: "linux/arm64"},
+			"B": {Version: "0.1.14.0 RC11", Tag: "v0.1.14.0-RC11", ImageRef: "aide:slot-b", ImageID: "sha256:" + strings.Repeat("b", 64), Platform: "linux/arm64"},
+		},
+	}
+	if err := a.saveUpdateStateLocked(state); err != nil {
+		a.updatesMu.Unlock()
+		t.Fatal(err)
+	}
+	a.updatesMu.Unlock()
+
+	response := request(a, http.MethodPost, "/api/updates/agent/sync", map[string]any{
+		"version": 1, "activeSlot": "B",
+		"slots": map[string]any{
+			"B": map[string]any{
+				"version": "0.1.14.0 RC11", "tag": "v0.1.14.0-RC11", "imageRef": "aide:slot-b",
+				"imageId": "sha256:" + strings.Repeat("b", 64), "platform": "linux/arm64",
+			},
+		},
+	})
+	requireStatus(t, response, http.StatusOK)
+	var got updateSlotsState
+	if err := json.Unmarshal(response.Body.Bytes(), &got); err != nil {
+		t.Fatal(err)
+	}
+	if got.ActiveSlot != "B" || got.LastMessage != "宿主启动器已同步当前活动槽" || got.Pending != nil {
+		t.Fatalf("launcher sync should report the actual active slot and clear stale failure state: %+v", got)
+	}
+}
+
 func TestReleaseVersionOrdering(t *testing.T) {
 	for _, tc := range []struct {
 		current, latest string

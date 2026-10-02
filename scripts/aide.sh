@@ -18,6 +18,17 @@ if ! "$DOCKER_BIN" info >/dev/null 2>&1; then
   "$DOCKER_BIN" info >/dev/null
 fi
 
+# A/B restarts must address the Compose project that owns the already-running
+# bundle. The launcher can be started from Finder or another shell, so inherit
+# its project name from the container label instead of relying on caller env.
+if [[ -f .aide-image ]]; then
+  RUNNING_BUNDLE="$("$DOCKER_BIN" ps -q --filter "label=com.docker.compose.project.working_dir=$PROJECT_DIR" --filter label=com.docker.compose.service=aide | head -1)"
+  if [[ -n "$RUNNING_BUNDLE" ]]; then
+    RUNNING_PROJECT="$("$DOCKER_BIN" inspect --format '{{ index .Config.Labels "com.docker.compose.project" }}' "$RUNNING_BUNDLE" 2>/dev/null || true)"
+    if [[ -n "$RUNNING_PROJECT" ]]; then export COMPOSE_PROJECT_NAME="$RUNNING_PROJECT"; fi
+  fi
+fi
+
 # source_sha：覆盖应用源码和 Dockerfile COPY 的 Office、wheel、语音资源。
 # 哈希写进镜像 label aide.srcsha，供 start 二次启动时比对，命中即跳过构建。
 source_sha() {
@@ -110,7 +121,13 @@ if [[ "$MODE" == start-bundle ]]; then
         return 1
       fi
     }
-    if port_is_listening "$CONFIGURED_PORT"; then
+    # During an A/B restart this port belongs to the current aide container.
+    # Reuse it; only avoid occupied ports when no bundle service is running.
+    BUNDLE_RUNNING=0
+    if [[ -f .aide-image ]] && "$DOCKER_BIN" compose ps --status running --services 2>/dev/null | grep -qx aide; then
+      BUNDLE_RUNNING=1
+    fi
+    if (( BUNDLE_RUNNING == 0 )) && port_is_listening "$CONFIGURED_PORT"; then
       for candidate in $(seq "$((CONFIGURED_PORT + 1))" "$((CONFIGURED_PORT + 100))"); do
         if ! port_is_listening "$candidate"; then
           AIDE_PORT="$candidate"
