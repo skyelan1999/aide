@@ -44,12 +44,12 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "完整真实包上传已成功暂存到槽 B，但浏览器发现 UI 成功后刷新异常；修复已写入，正在重建镜像并复测，然后重跑完整门禁。",
+      "status": "pass",
+      "summary": "修复后的完整门禁通过；修复前真实包测试发现的问题已纳入镜像源码并由 full 门禁覆盖。发行镜像与最终桌面浏览器回归仍在发布阶段完成。",
       "evidence": [
-        "隔离 RC13 实例完整 ZIP 与 macOS 解压文件夹上传均返回 HTTP 201，槽 B 已暂存 RC13，上传进度实际显示 0% 到 100%",
-        "真实包 UI 复验发现成功提示引用未定义 result，已改用上传响应 response.data.targetSlot；需要用修复后构建回归确认",
-        "完整门禁和 release-check 必须对修复后的最终源码重新运行"
+        "隔离 RC13 实例真实完整 ZIP 与 macOS 解压目录上传均 HTTP 201，暂存槽 B；实际进度从 0% 到 100%",
+        "真实上传 UI 曾暴露 result is not defined，已在 internal/server/web/app.js 修复为 response.data.targetSlot；loadSlots 后续刷新恢复可执行",
+        "python3 scripts/agent-route.py verify full -> PASS；go test -race ./... 与 go vet ./... 均通过；fingerprint 8b7e113a35b99e92a4b0a169e743d280249e4cec92841dda34f8dfb8e9b098e1"
       ]
     },
     "documentation": {
@@ -69,14 +69,15 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "RC13 本地版本已创建；真实包验收促成 UI 刷新修复，正在重建并重跑发布门禁，之后重新标注 tag 并发布。",
+      "summary": "RC13 标签已指向 main 提交 220ac00；修复后的 full 门禁通过。正在重建发行镜像、生成资产并完成桌面浏览器最终回归，再推送与发布。",
       "evidence": [
-        "bash scripts/version.sh patch -m '统一完整运行升级包与 A/B 上传进度' -> v0.1.14.0-RC13；修复提交后需将本地 tag 移至最终源码提交",
+        "python3 scripts/agent-route.py verify full -> PASS；fingerprint 8b7e113a35b99e92a4b0a169e743d280249e4cec92841dda34f8dfb8e9b098e1",
+        "本地 tag v0.1.14.0-RC13 -> 220ac00e229223a7f9dabe8dda327ac5c8032c7a",
         "用户明确授权发布测试 Release"
       ]
     }
   },
   "release_authorization": "用户明确授权：你发布一个（当前对话，2026-10-02）。",
   "rollback": "RC13 是 prerelease 测试版本，不覆盖现有用户实例。若资产校验或健康检查失败则不发布。已安装 RC13 后可通过设置 > 软件升级手动切回仍安装的旧槽；正式发布前需确认远端 Release 附件完整。",
-  "handoff": "修复后的 RC13 构建、浏览器验收、full 门禁、资产校验、推送与 GitHub prerelease 上传尚待完成；测试完成前不得标记已发布。"
+  "handoff": "发行镜像构建、完整包重打、浏览器最终验收、SHA256 校验、main/tag 推送、GitHub prerelease 发布及远端附件复核待完成。"
 }
