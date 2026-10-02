@@ -48,12 +48,12 @@
       "evidence": ["git diff --check — OK", "git status --short --branch；确认范围外未跟踪文件未被暂存或改写。"]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "RC14 已构建、推送并发布。轻量 macOS 包真实下载/校验/导入/健康检查通过；远端校验和匹配。Safari UI 目视验收因 Mac 锁定未运行。",
+      "evidence": ["v0.1.14.0-RC14; tag and main pushed to origin", "GitHub prerelease contains launcher, full runtime, A/B update, image, SHA256SUMS and RELEASE-ASSETS.txt", "All 7 checksummed assets match GitHub remote digest", "docs/reviews/release-assets-2026-10-02-RC14.md", "Mac lock prevented visible Safari inspection; command-line open completed without error"]
     }
   },
   "release_authorization": "用户在本任务前明确要求‘文档改了然后都push上去’，并明确要求‘你发布一个’；本次不改写已发布的 RC13，而以新 RC 版本发布修复。",
   "rollback": "RC13 release 保持不变。修复版本若有问题，用户仍可下载上一版完整发行 ZIP 或继续使用已安装槽；不删除用户数据、不重置 A/B 槽。",
-  "handoff": ""
+  "handoff": "RC13 stays unchanged. RC14 is public at https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC14. Exact Safari page inspection was NOT_RUN because the Mac was locked; see docs/reviews/release-assets-2026-10-02-RC14.md."
 }

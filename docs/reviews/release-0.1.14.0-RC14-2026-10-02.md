@@ -11,4 +11,7 @@ The full package remains available for offline installation and can be selected 
 - The interrupted-transfer fixture verified resume, SHA256 validation, image import, and invocation of the macOS browser opener.
 - `python3 scripts/agent-route.py verify quick` passed.
 - `python3 scripts/agent-route.py verify full` passed, including Docker `go test -race` and `go vet`.
-- Direct network behavior against the public RC14 asset is not verified until the release is published.
+- The published macOS launcher downloaded the 490 MB RC14 image, verified and imported it, started an isolated Compose project on port 18297, and returned a healthy `/healthz` response. The default browser open command completed without an error.
+- Safari could not be visually inspected because the Mac was locked during the check; UI visibility is not claimed as verified.
+
+See the [RC14 asset report](https://github.com/skyelan1999/aide/blob/main/docs/reviews/release-assets-2026-10-02-RC14.md) for build identity, publication, and remote checksum results.
