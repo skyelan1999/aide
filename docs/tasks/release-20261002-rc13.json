@@ -1,0 +1,78 @@
+{
+  "id": "release-20261002-rc13",
+  "request": "发布一个 aide 测试 Release，包含本次统一完整运行/应用内升级包、macOS 解压文件夹支持和进度显示。",
+  "baseline": "11a5146f9396783ce29f8954da6bb289d09af9dc",
+  "initial_status": "?? docs/reviews/2026-10-02-agent-harness-architecture-review.md\n?? docs/tasks/harness-architecture-review-20261002.json",
+  "acceptance": [
+    "创建新的 v0.1.14.0-RC13 prerelease，tag 指向 main 的本次发布提交。",
+    "Release 同时提供 macOS/Windows/Ubuntu 启动器、Linux ARM64 镜像和单一 full-linux-arm64 ZIP；该统一 ZIP 可用于首次启动和应用内升级。",
+    "统一 ZIP 内含完整启动材料及校验镜像；设置页接受 ZIP 和 macOS 解压目录，只暂存非活动槽。",
+    "发布前 Release 全量测试、镜像健康检查、资产校验和远端资产核验均通过。"
+  ],
+  "scope": [
+    "version.md",
+    "docs/tasks/release-20261002-rc13.json",
+    "docs/reviews/release-0.1.14.0-RC13-2026-10-02.md",
+    "docs/reviews/release-assets-2026-10-02-RC13.md",
+    "docker-images/aide-0.1.14.0-RC13-linux-aarch64.tar.gz",
+    ".agent-state/release-assets/v0.1.14.0-RC13/"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确要求发布一个测试 Release；目标版本按仓库 patch 规则由 RC12 升至 RC13。",
+      "evidence": [
+        "用户消息：你发布一个",
+        "当前 GitHub 最新 prerelease 与本地 version.md 均为 v0.1.14.0-RC12"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "沿用现有 version.sh、docker-release.sh、package-release-assets.sh 和 publish-release-assets.sh，不新增发布途径。",
+      "evidence": [
+        "AGENTS.md / docs/agent/WORKFLOW.md 发布阶段要求",
+        "脚本已核实：全量 Go 测试、健康检查、SHA256SUMS、prerelease 发布和远端资产清单"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "统一完整运行/升级 ZIP、ZIP/解压目录导入、上传和切换进度已随 11a5146 合并 main。",
+      "evidence": [
+        "main commit 11a5146d Fix A/B update progress and unified runtime bundles",
+        "docs/tasks/update-progress-20261002.json 中记录桌面 Chrome 对 ZIP/文件夹上传和进度的验收结果"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "桌面 Chrome 上传/进度验收、焦点 Go 回归及仓库 full 门禁通过。",
+      "evidence": [
+        "隔离 RC13 Release 模式实例中 ZIP 与 macOS 解压目录上传均 HTTP 201 并暂存到槽 B；上传进度实际显示 0%、95%、100%",
+        "焦点 Go 测试：手动切换字段/进度持久化/完整 ZIP/文件夹上传 -> PASS",
+        "python3 scripts/agent-route.py verify quick -> PASS",
+        "python3 scripts/agent-route.py verify full -> PASS；go test -race ./... 与 go vet ./... 均通过；fingerprint b86b6946d10d54167e2ff9455427d6078cb08ae3a9a08669ef9de9c1b9416303"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "统一包安装方式、解压目录上传、非活动槽暂存和切换进度已记录在架构及中英文安装文档；构建后另生成 RC13 专属 release note 和资产报告。",
+      "evidence": [
+        "docs/architecture/software-updates.md、docs/installation.md、docs/en/installation.md 已随 11a5146 提交"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "发行范围只涵盖 RC13 版本、测试资产、发布记录及任务账本；未跟踪的 Harness 审阅文件不纳入提交。",
+      "evidence": [
+        "起始工作区仅有 docs/reviews/2026-10-02-agent-harness-architecture-review.md 和 docs/tasks/harness-architecture-review-20261002.json 两个无关未跟踪文件，原样保留"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户明确授权：你发布一个（当前对话，2026-10-02）。",
+  "rollback": "RC13 是 prerelease 测试版本，不覆盖现有用户实例。若资产校验或健康检查失败则不发布。已安装 RC13 后可通过设置 > 软件升级手动切回仍安装的旧槽；正式发布前需确认远端 Release 附件完整。",
+  "handoff": ""
+}
