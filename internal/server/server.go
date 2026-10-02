@@ -1154,6 +1154,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/updates", a.checkUpdates)
 	mux.HandleFunc("GET /api/updates/slots", a.updateSlots)
 	mux.HandleFunc("POST /api/updates/packages", a.uploadUpdatePackage)
+	mux.HandleFunc("POST /api/updates/online", a.installUpdateOnline)
 	mux.HandleFunc("POST /api/updates/switch", a.switchUpdateSlot)
 	mux.HandleFunc("GET /api/updates/agent", a.updateAgentCommand)
 	mux.HandleFunc("POST /api/updates/agent/progress", a.updateAgentProgress)

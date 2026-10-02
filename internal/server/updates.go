@@ -55,6 +55,7 @@ type updateSlotsState struct {
 	ActiveSlot  string                `json:"activeSlot"`
 	Slots       map[string]updateSlot `json:"slots"`
 	Pending     *updateOperation      `json:"pending,omitempty"`
+	Download    *updateOperation      `json:"download,omitempty"`
 	LastMessage string                `json:"lastMessage,omitempty"`
 	UpdatedAt   string                `json:"updatedAt,omitempty"`
 }
@@ -84,6 +85,16 @@ type githubRelease struct {
 type updateAsset struct {
 	Name string `json:"name"`
 	URL  string `json:"url"`
+}
+
+type onlineRelease struct {
+	Tag       string `json:"tag"`
+	Version   string `json:"version"`
+	Name      string `json:"name"`
+	URL       string `json:"url"`
+	AssetName string `json:"assetName"`
+	AssetURL  string `json:"assetUrl"`
+	Published string `json:"publishedAt,omitempty"`
 }
 
 func (a *App) updateRuntimeMode() string {
@@ -142,6 +153,17 @@ func (a *App) checkUpdates(w http.ResponseWriter, r *http.Request) {
 		}
 		assets = append(assets, updateAsset{Name: asset.Name, URL: asset.BrowserDownloadURL})
 	}
+	onlineReleases := make([]onlineRelease, 0, len(releases))
+	for _, release := range releases {
+		if release.Draft || !releaseTagPattern.MatchString(release.TagName) || !isGitHubURL(release.HTMLURL) {
+			continue
+		}
+		assetName, assetURL := releaseBundleForPlatform(release, runtimePlatform())
+		if assetURL == "" {
+			continue
+		}
+		onlineReleases = append(onlineReleases, onlineRelease{Tag: release.TagName, Version: strings.TrimPrefix(release.TagName, "v"), Name: release.Name, URL: release.HTMLURL, AssetName: assetName, AssetURL: assetURL, Published: release.PublishedAt})
+	}
 	notes := latest.Body
 	if len(notes) > 24000 {
 		notes = notes[:24000]
@@ -156,7 +178,24 @@ func (a *App) checkUpdates(w http.ResponseWriter, r *http.Request) {
 		"releaseNotes":    notes,
 		"publishedAt":     latest.PublishedAt,
 		"assets":          assets,
+		"onlineReleases":  onlineReleases,
 	})
+}
+
+func releaseBundleForPlatform(release githubRelease, platform string) (string, string) {
+	arch := strings.TrimPrefix(platform, "linux/")
+	if arch != "arm64" && arch != "amd64" {
+		return "", ""
+	}
+	wanted := []string{"aide-" + release.TagName + "-update-linux-" + arch + ".zip", "aide-" + release.TagName + "-full-linux-" + arch + ".zip"}
+	for _, name := range wanted {
+		for _, asset := range release.Assets {
+			if asset.Name == name && isGitHubURL(asset.BrowserDownloadURL) {
+				return name, asset.BrowserDownloadURL
+			}
+		}
+	}
+	return "", ""
 }
 
 func fetchReleases(ctx context.Context, client *http.Client, endpoint string) ([]githubRelease, error) {
@@ -325,7 +364,7 @@ func (a *App) updateSlots(w http.ResponseWriter, _ *http.Request) {
 	}
 	jsonOut(w, 200, map[string]any{
 		"version": state.Version, "activeSlot": state.ActiveSlot, "slots": state.Slots,
-		"pending": state.Pending, "lastMessage": state.LastMessage, "updatedAt": state.UpdatedAt,
+		"pending": state.Pending, "download": state.Download, "lastMessage": state.LastMessage, "updatedAt": state.UpdatedAt,
 		"runtimeMode": a.updateRuntimeMode(),
 	})
 }
@@ -424,15 +463,244 @@ func (a *App) uploadUpdatePackage(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, fmt.Errorf("升级包平台 %s 与当前运行镜像 %s 不匹配", manifest.Platform, runtimePlatform()))
 		return
 	}
-	currentVersion := strings.TrimPrefix(manifest.ReleaseTag, "v")
 	if !releaseTagPattern.MatchString(manifest.ReleaseTag) {
 		fail(w, 400, errors.New("升级包版本标记无效"))
 		return
 	}
+	if err := a.stageUpdatePackage(packagePath, manifest, imageHash, ""); err != nil {
+		status := http.StatusConflict
+		if strings.Contains(err.Error(), "保存升级包") || strings.Contains(err.Error(), "编号") {
+			status = http.StatusInternalServerError
+		}
+		fail(w, status, err)
+		return
+	}
+	a.updatesMu.Lock()
+	state, err := a.loadUpdateStateLocked()
+	a.updatesMu.Unlock()
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	target := inactiveSlot(state.ActiveSlot)
+	jsonOut(w, http.StatusCreated, map[string]any{"packageId": state.Slots[target].PackageID, "targetSlot": target, "slot": state.Slots[target]})
+}
+
+func (a *App) installUpdateOnline(w http.ResponseWriter, r *http.Request) {
+	if !a.requireReleaseUpdateRuntime(w) {
+		return
+	}
+	var req struct {
+		Tag string `json:"tag"`
+	}
+	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 1<<10)).Decode(&req); err != nil || !releaseTagPattern.MatchString(req.Tag) {
+		fail(w, http.StatusBadRequest, errors.New("Release 版本标记无效"))
+		return
+	}
+	a.updatesMu.Lock()
+	state, err := a.loadUpdateStateLocked()
+	if err != nil {
+		a.updatesMu.Unlock()
+		fail(w, 500, err)
+		return
+	}
+	if state.Pending != nil {
+		a.updatesMu.Unlock()
+		fail(w, 409, errors.New("当前有槽切换正在进行，请等待结束后再安装"))
+		return
+	}
+	if state.Download != nil && state.Download.Status != "failed" && state.Download.Status != "complete" {
+		a.updatesMu.Unlock()
+		fail(w, 409, errors.New("已有 Release 下载正在进行"))
+		return
+	}
 	var idBytes [16]byte
 	if _, err := rand.Read(idBytes[:]); err != nil {
-		fail(w, 500, errors.New("创建升级包编号失败"))
+		a.updatesMu.Unlock()
+		fail(w, 500, errors.New("创建下载操作编号失败"))
 		return
+	}
+	id := hex.EncodeToString(idBytes[:])
+	state.Download = &updateOperation{ID: id, Target: inactiveSlot(state.ActiveSlot), Status: "queued", Message: "等待开始官方 Release 下载", CreatedAt: time.Now().UTC().Format(time.RFC3339)}
+	state.LastMessage = "等待开始官方 Release 下载"
+	if err := a.saveUpdateStateLocked(state); err != nil {
+		a.updatesMu.Unlock()
+		fail(w, 500, err)
+		return
+	}
+	a.updatesMu.Unlock()
+	go a.runOnlineUpdateDownload(req.Tag, id)
+	jsonOut(w, http.StatusAccepted, map[string]any{"status": "queued", "operationId": id, "targetSlot": state.Download.Target})
+}
+
+func (a *App) runOnlineUpdateDownload(tag, operationID string) {
+	setProgress := func(status string, progress int, message string) bool {
+		a.updatesMu.Lock()
+		defer a.updatesMu.Unlock()
+		state, err := a.loadUpdateStateLocked()
+		if err != nil || state.Download == nil || state.Download.ID != operationID {
+			return false
+		}
+		state.Download.Status, state.Download.Progress, state.Download.Message = status, progress, message
+		state.LastMessage = message
+		return a.saveUpdateStateLocked(state) == nil
+	}
+	failDownload := func(err error) {
+		msg := "Release 在线安装失败：" + err.Error()
+		if len(msg) > 500 {
+			msg = msg[:500]
+		}
+		setProgress("failed", 0, msg)
+	}
+	base := a.updateAPIBase
+	if base == "" {
+		base = "https://api.github.com/repos/skyelan1999/aide/releases?per_page=20"
+	}
+	client := a.updateHTTPClient
+	if client == nil {
+		client = &http.Client{}
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Hour)
+	defer cancel()
+	if !setProgress("looking-up", 1, "正在读取官方 Release 信息") {
+		return
+	}
+	releases, err := fetchReleases(ctx, client, base)
+	if err != nil {
+		failDownload(err)
+		return
+	}
+	var selected *githubRelease
+	for i := range releases {
+		if releases[i].TagName == tag && !releases[i].Draft {
+			selected = &releases[i]
+			break
+		}
+	}
+	if selected == nil {
+		failDownload(errors.New("官方 Release 中找不到所选版本"))
+		return
+	}
+	assetName, assetURL := releaseBundleForPlatform(*selected, runtimePlatform())
+	if assetURL == "" {
+		failDownload(errors.New("所选 Release 没有当前平台的应用内升级包"))
+		return
+	}
+	if !setProgress("downloading", 2, "正在从官方 Release 下载 "+assetName) {
+		return
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, assetURL, nil)
+	if err != nil {
+		failDownload(err)
+		return
+	}
+	req.Header.Set("User-Agent", "aide-update-installer")
+	resp, err := client.Do(req)
+	if err != nil {
+		failDownload(err)
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		failDownload(fmt.Errorf("下载服务返回 HTTP %d", resp.StatusCode))
+		return
+	}
+	if resp.ContentLength > updatePackageMaxBytes {
+		failDownload(errors.New("升级包超过 2 GiB"))
+		return
+	}
+	if err := os.MkdirAll(a.updatePackagesPath(), 0700); err != nil {
+		failDownload(errors.New("无法准备升级包目录"))
+		return
+	}
+	tmp, err := os.CreateTemp(a.updatePackagesPath(), ".online-*.zip")
+	if err != nil {
+		failDownload(errors.New("无法创建升级包临时文件"))
+		return
+	}
+	tmpPath := tmp.Name()
+	defer os.Remove(tmpPath)
+	var received int64
+	buf := make([]byte, 1<<20)
+	lastPercent := -1
+	for {
+		n, readErr := resp.Body.Read(buf)
+		if n > 0 {
+			received += int64(n)
+			if received > updatePackageMaxBytes {
+				_ = tmp.Close()
+				failDownload(errors.New("升级包超过 2 GiB"))
+				return
+			}
+			if _, err = tmp.Write(buf[:n]); err != nil {
+				_ = tmp.Close()
+				failDownload(errors.New("保存下载内容失败"))
+				return
+			}
+			percent := 0
+			if resp.ContentLength > 0 {
+				percent = int(float64(received) / float64(resp.ContentLength) * 78)
+				if percent > 78 {
+					percent = 78
+				}
+			}
+			if percent != lastPercent {
+				setProgress("downloading", percent, fmt.Sprintf("正在下载官方升级包：%.1f / %.1f MiB", float64(received)/(1<<20), float64(maxInt64(resp.ContentLength, 0))/(1<<20)))
+				lastPercent = percent
+			}
+		}
+		if readErr == io.EOF {
+			break
+		}
+		if readErr != nil {
+			_ = tmp.Close()
+			failDownload(readErr)
+			return
+		}
+	}
+	if err := tmp.Close(); err != nil {
+		failDownload(errors.New("完成升级包写入失败"))
+		return
+	}
+	setProgress("verifying", 82, "下载完成，正在校验发布包 SHA256 与镜像清单")
+	packagePath := tmpPath
+	manifest, imageHash, err := validateUpdatePackage(packagePath)
+	if err != nil {
+		normalized := tmpPath + ".payload.zip"
+		defer os.Remove(normalized)
+		if normalizeEmbeddedUpdatePackage(tmpPath, normalized) == nil {
+			packagePath = normalized
+			manifest, imageHash, err = validateUpdatePackage(packagePath)
+		}
+	}
+	if err != nil {
+		failDownload(err)
+		return
+	}
+	if manifest.ReleaseTag != tag || manifest.Platform != runtimePlatform() {
+		failDownload(errors.New("升级包版本或平台与所选 Release 不匹配"))
+		return
+	}
+	if !setProgress("staging", 94, "校验通过，正在写入非活动槽") {
+		return
+	}
+	if err := a.stageUpdatePackage(packagePath, manifest, imageHash, operationID); err != nil {
+		failDownload(err)
+		return
+	}
+}
+
+func maxInt64(a, b int64) int64 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func (a *App) stageUpdatePackage(packagePath string, manifest updatePackageManifest, imageHash, downloadOperationID string) error {
+	var idBytes [16]byte
+	if _, err := rand.Read(idBytes[:]); err != nil {
+		return errors.New("创建升级包编号失败")
 	}
 	packageID := hex.EncodeToString(idBytes[:])
 	storedPath := filepath.Join(a.updatePackagesPath(), packageID+".zip")
@@ -440,34 +708,40 @@ func (a *App) uploadUpdatePackage(w http.ResponseWriter, r *http.Request) {
 	defer a.updatesMu.Unlock()
 	state, err := a.loadUpdateStateLocked()
 	if err != nil {
-		fail(w, 500, err)
-		return
+		return err
 	}
 	if state.Pending != nil {
-		fail(w, 409, errors.New("当前有升级切换正在进行，请等待结束后再添加软件包"))
-		return
+		return errors.New("当前有槽切换正在进行，请等待结束后再添加软件包")
 	}
-	active := state.Slots[state.ActiveSlot]
-	if active.Version != "" && !versionLess(active.Version, currentVersion) {
-		fail(w, 400, errors.New("升级包版本必须高于当前活动槽版本"))
-		return
+	if downloadOperationID == "" && state.Download != nil && state.Download.Status != "failed" && state.Download.Status != "complete" {
+		return errors.New("正在从官方 Release 下载升级包，请等待下载完成")
 	}
-	if err := os.Rename(packagePath, storedPath); err != nil {
-		fail(w, 500, errors.New("保存升级包失败"))
-		return
+	if downloadOperationID != "" && (state.Download == nil || state.Download.ID != downloadOperationID) {
+		return errors.New("Release 下载操作已结束")
 	}
 	target := inactiveSlot(state.ActiveSlot)
-	state.Slots[target] = updateSlot{
-		Version: currentVersion, Tag: manifest.ReleaseTag,
-		ImageRef: slotImageRef(target), ImageID: manifest.ImageID,
-		Platform: manifest.Platform, PackageID: packageID, ImageSHA256: imageHash,
+	oldPackageID := state.Slots[target].PackageID
+	if err := os.Rename(packagePath, storedPath); err != nil {
+		return errors.New("保存升级包失败")
 	}
+	state.Slots[target] = updateSlot{Version: strings.TrimPrefix(manifest.ReleaseTag, "v"), Tag: manifest.ReleaseTag, ImageRef: slotImageRef(target), ImageID: manifest.ImageID, Platform: manifest.Platform, PackageID: packageID, ImageSHA256: imageHash}
+	if downloadOperationID != "" {
+		state.Download.Status = "complete"
+		state.Download.Progress = 100
+		state.Download.Message = "升级包已校验并暂存到槽 " + target
+	}
+	if downloadOperationID == "" {
+		state.Download = nil
+	}
+	state.LastMessage = "升级包已校验并暂存到槽 " + target
 	if err := a.saveUpdateStateLocked(state); err != nil {
 		_ = os.Remove(storedPath)
-		fail(w, 500, err)
-		return
+		return err
 	}
-	jsonOut(w, 201, map[string]any{"packageId": packageID, "targetSlot": target, "slot": state.Slots[target]})
+	if oldPackageID != "" && oldPackageID != packageID {
+		_ = os.Remove(filepath.Join(a.updatePackagesPath(), oldPackageID+".zip"))
+	}
+	return nil
 }
 
 // normalizeEmbeddedUpdatePackage extracts exactly one sibling set of

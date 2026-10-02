@@ -1647,5 +1647,16 @@ window.aideEnglish = {
   "升级文件夹包含重复文件": "The update folder contains duplicate files.",
   "此处可检查公开 Release。当前由源代码启动，更新时通过 Git 更新并重启即可。": "Check public Releases here. This instance runs from source; update with Git and restart.",
   "源码启动不安装应用内升级包；A/B 槽由正式 Release 镜像与宿主启动器共同提供。": "Source mode does not install in-app update packages. A/B slots require a release image and its host launcher.",
-  "源码启动无需下载应用内升级包；更新源码后按开发流程重新启动即可。": "Source mode does not need an in-app update package. Update the source and restart using the development workflow."
+  "源码启动无需下载应用内升级包；更新源码后按开发流程重新启动即可。": "Source mode does not need an in-app update package. Update the source and restart using the development workflow.",
+  "在线安装 Release（无需先下载到本机）": "Install from a Release online (no need to download it locally first)",
+  "在线安装到非活动槽": "Install online to the inactive slot",
+  "选择在线安装版本": "Choose a Release to install online",
+  "在线安装进度": "Online installation progress",
+  "在线安装已完成": "Online installation complete",
+  "在线安装失败": "Online installation failed",
+  "正在请求在线安装…": "Requesting online installation…",
+  "等待开始官方 Release 下载": "Waiting to start the official Release download",
+  "已提交在线安装，正在下载 {0}": "Online installation queued; downloading {0}",
+  "在线安装失败：{0}": "Online installation failed: {0}",
+  "将从官方 Release 下载 {0} 并校验后暂存到非活动槽；完成后仍需手动激活。允许选择同版本或较低版本，继续？": "Download {0} from the official Release and verify it before staging to the inactive slot. Manual activation is still required. Same-version installs and downgrades are allowed. Continue?"
 };

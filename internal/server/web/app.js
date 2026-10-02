@@ -3268,6 +3268,8 @@ function renderSoftwareUpdates() {
   const progressTrack = el('div', 'software-update-progress-track');
   const progressFill = el('div', 'software-update-progress-fill');
   const progressValue = el('span', 'software-update-progress-value');
+  let onlinePollRunning = false;
+  let onlineInstallButton = null;
   progressTrack.append(progressFill); progress.append(progressCaption, progressTrack, progressValue); progress.hidden = true;
   const zipPicker = el('label', 'software-update-picker');
   zipPicker.append(el('span', '', t('选择完整发行包或升级 ZIP')), file);
@@ -3286,11 +3288,31 @@ function renderSoftwareUpdates() {
     const percent = Math.max(0, Math.min(100, Number(pending.progress) || 0));
     progressFill.style.width = percent + '%';
     progressValue.textContent = percent + '%';
-    progressCaption.textContent = t('切换进度');
+    progressCaption.textContent = pending.status === 'downloading' || pending.status === 'looking-up' || pending.status === 'verifying' || pending.status === 'staging'
+      ? t('在线安装进度') : t('切换进度');
     const age = pending.createdAt ? Date.now() - Date.parse(pending.createdAt) : 0;
     if (pending.message) slotStatus.textContent = pending.message;
     else if (pending.status === 'requested' && age > 15000) slotStatus.textContent = t('切换请求已排队 {0} 秒，启动器尚未响应；请确认正在运行本机 start.command。', Math.floor(age / 1000));
     else slotStatus.textContent = t('已提交切换请求，等待宿主启动器…');
+  }
+
+  async function pollOnlineDownload() {
+    if (onlinePollRunning) return;
+    onlinePollRunning = true;
+    const deadline = Date.now() + 60 * 60 * 1000;
+    try {
+      while (Date.now() < deadline) {
+        await new Promise(resolve => setTimeout(resolve, 1800));
+        let latest;
+        try { latest = await api('/updates/slots'); } catch (_) { continue; }
+        const download = latest.download;
+        if (!download) break;
+        if (download.status !== 'complete' && download.status !== 'failed') renderSwitchProgress(download);
+        else { slotStatus.textContent = download.message || t('在线安装已完成'); break; }
+      }
+      await loadSlots();
+    } finally { onlinePollRunning = false; }
+    if (onlineInstallButton) onlineInstallButton.disabled = false;
   }
 
   file.onchange = () => {
@@ -3385,7 +3407,14 @@ function renderSoftwareUpdates() {
       slots.append(card);
     }
     if (result.pending) renderSwitchProgress(result.pending);
-    else { progress.hidden = true; slotStatus.textContent = result.lastMessage || t('A/B 槽状态已同步'); }
+    else if (result.download && result.download.status !== 'complete' && result.download.status !== 'failed') {
+      renderSwitchProgress(result.download);
+      pollOnlineDownload();
+    } else {
+      progress.hidden = true;
+      if (result.download?.status === 'failed') slotStatus.textContent = result.download.message || t('在线安装失败');
+      else slotStatus.textContent = result.lastMessage || t('A/B 槽状态已同步');
+    }
   }
   refreshSlots.onclick = action(loadSlots);
   upload.onclick = action(async () => {
@@ -3477,6 +3506,38 @@ function renderSoftwareUpdates() {
       }
       if (launcherAssets.children.length) {
         detail.append(el('h4', '', t('启动器下载（全新安装）')), launcherAssets);
+      }
+      if (result.runtimeMode === 'release-image' && result.onlineReleases?.length) {
+        const onlineRow = el('div', 'software-update-online');
+        const releasePicker = el('select');
+        releasePicker.setAttribute('aria-label', t('选择在线安装版本'));
+        for (const release of result.onlineReleases) {
+          const option = el('option', '', `${release.name || release.tag} · ${release.assetName}`);
+          option.value = release.tag;
+          releasePicker.append(option);
+        }
+        const onlineButton = el('button', 'primary', t('在线安装到非活动槽'));
+        onlineInstallButton = onlineButton;
+        onlineButton.onclick = action(async () => {
+          const selected = result.onlineReleases.find(release => release.tag === releasePicker.value);
+          if (!selected) return;
+          if (!confirm(t('将从官方 Release 下载 {0} 并校验后暂存到非活动槽；完成后仍需手动激活。允许选择同版本或较低版本，继续？', selected.name || selected.tag))) return;
+          onlineButton.disabled = true;
+          slotStatus.textContent = t('正在请求在线安装…');
+          progress.hidden = false; progressFill.style.width = '0%'; progressValue.textContent = '0%';
+          progressCaption.textContent = t('等待开始官方 Release 下载');
+          try {
+            const response = await api('/updates/online', { method: 'POST', body: JSON.stringify({ tag: selected.tag }) });
+            slotStatus.textContent = t('已提交在线安装，正在下载 {0}', selected.name || selected.tag);
+            pollOnlineDownload();
+          } catch (error) {
+            slotStatus.textContent = t('在线安装失败：{0}', error.message);
+            onlineButton.disabled = false;
+            throw error;
+          }
+        });
+        onlineRow.append(releasePicker, onlineButton);
+        detail.append(el('h4', '', t('在线安装 Release（无需先下载到本机）')), onlineRow);
       }
     } catch (error) {
       status.textContent = t('检查更新失败：{0}', error.message);

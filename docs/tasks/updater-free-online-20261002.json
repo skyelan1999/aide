@@ -1,0 +1,85 @@
+{
+  "id": "updater-free-online-20261002",
+  "request": "软件升级应支持自由选择版本（包括相同版本重装、已安装版本切换和较低版本回退），另增加直接从官方 Release 在线安装方式，与本地 ZIP/解压文件夹并存。截图复现：RC14活动槽、上传RC14包时报版本必须高于当前活动槽。",
+  "baseline": "95c7a1355a9220150f27f836f33fa6407d5b1b78",
+  "initial_status": "?? docs/reviews/2026-10-02-agent-harness-architecture-review.md\n?? docs/tasks/harness-architecture-review-20261002.json",
+  "acceptance": [
+    "上传同版本包不再因版本号比较被拒绝，版本回退可暂存；活动槽不被在线替换，仍仅在手动激活后切换。",
+    "设置页检查官方 Release 后，可选择适配当前 Linux 架构的历史/最新发行并在线下载、校验、暂存到非活动槽，能观察服务端下载进度与错误。",
+    "本地升级 ZIP 与 macOS 解压后的完整发行目录流程保留；源码模式不展示 A/B/在线安装控件。",
+    "Go 后端回归覆盖版本回退/同版本暂存、在线资产选择、下载校验/暂存以及未授权/源代码模式拒绝；更新架构文档和任务验证记录。"
+  ],
+  "scope": [
+    "internal/server/updates.go",
+    "internal/server/updates_test.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/software-updates.md",
+    "docs/tasks/updater-free-online-20261002.json",
+    "internal/server/web/style.css"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户截图表明上传 RC14 同版本包被严格递增版本判断拒绝；用户需要自由选择版本和官方 Release 在线安装两种路径。",
+      "evidence": [
+        "用户消息及截图：RC14 活动槽，选择目录 3 个升级文件后报“升级包版本必须高于当前活动槽版本”",
+        "AGENTS.md / docs/agent/WORKFLOW.md：源码运行与 Release 镜像升级边界、发布与验证工作流"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留本地 ZIP/文件夹上载和手动 A/B 激活。改为镜像身份校验而不限制版本单调性；在线安装由已鉴权 Go 服务按官方 GitHub Release 清单下载平台匹配包，校验后暂存非活动槽并持久化下载进度，仍由宿主代理在用户手动激活后导入镜像。",
+      "evidence": [
+        "internal/server/updates.go：原版本门槛与宿主代理命令流已检查",
+        "scripts/update-agent.sh：代理仅处理 Pending 切换命令，新增独立 Download 状态不触发 Docker 操作",
+        "UI 保留离线 ZIP/解压目录上传和手动槽切换；在线方式只暂存非活动槽，不自动激活。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "移除严格递增版本门槛；新增鉴权在线安装 API，从 Release API 选取当前架构官方资产，后台下载、限流、显示进度、校验并暂存。设置页加入版本选择、确认与下载进度。",
+      "evidence": [
+        "internal/server/updates.go 与 internal/server/server.go：同版本/回退包走统一非活动槽暂存；在线任务在 slots.download 持久化状态。",
+        "internal/server/web/app.js：在线版本选择、操作确认、在线安装进度、下载结果及手动激活槽。",
+        "internal/server/updates_test.go：同版本/回退暂存、官方资产在线下载校验、源码模式拒绝在线安装。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Go 定向测试、前端语法和 quick 验证通过；系统 Safari 在隔离 RC14 容器内完成真实 Release 检查及 490.1 MiB 在线下载、校验与暂存。没有激活槽 B。",
+      "evidence": [
+        "Docker Go 测试：go test -mod=vendor ./internal/server -run \"Test(CheckUpdates|StageUpdatePackage|OnlineInstall|UploadUpdatePackage|ManualSwitch|SourceMode)\" -count=1 通过。",
+        "python3 scripts/agent-route.py verify quick 通过，结果记录于 .agent-state/verify-20261002T152748470931Z.log。",
+        "Safari https://localhost:18097：检查官方 v0.1.14.0-RC14，在线安装进度从 0% 到校验，随后显示“槽 B 待手动激活”；API 最终 status=complete，A 仍是 activeSlot，B 带有已校验镜像元数据。",
+        "隔离容器与测试数据卷已清理；用户当前运行服务未改动。",
+        "完整 internal/server 测试尝试在等待约一分钟仍无输出后中断；没有把它记作通过。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "重整升级架构说明，按适用范围、安装方式、发行包结构、槽切换、进度恢复和安全边界分节，并加入离线/在线方式表。",
+      "evidence": [
+        "docs/architecture/software-updates.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "隔离浏览器验收容器及其三个数据卷已移除；RC14 常驻容器和默认服务均未修改。",
+      "evidence": [
+        "docker rm aide-updater-online-qa；移除 aide-updater-online-qa-context/data/workspace 测试卷"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户授权将本次文档与源码改动推送到 main；未授权升版、打 tag 或创建 GitHub Release，因此发布流程未执行。",
+      "evidence": [
+        "用户请求：“整理一下文档，push上去吧”"
+      ]
+    }
+  },
+  "release_authorization": "用户请求：“整理一下文档，push上去吧”——授权文档整理及 Git push；未包含版本发布、打 tag 或创建 Release。",
+  "rollback": "在线安装仅写入隔离测试卷的槽 B，未激活；测试容器与卷已删除。代码未发布。",
+  "handoff": "待提交后填写 commit SHA 和远端推送确认。"
+}
