@@ -14,7 +14,7 @@
 | 完整 ZIP 上传与非活动槽暂存 | PASS | 隔离 RC13 Release 实例接受真实完整 ZIP，HTTP 201、目标槽 B；槽 A 仍为 RC12，槽 B 暂存 RC13，镜像 ID 与包内 manifest 一致 |
 | 浏览器上传后刷新 | 源码修复完成；Safari 实际 UI 复验受阻 | 成功提示现读取 `response.data.targetSlot` 后调用 `loadSlots()`。Safari 对隔离 `localhost:18097` 显示“此连接非私人连接”；按安全策略关闭临时标签，没有绕过警告。修复前真实包 UI 测试复现了 `result is not defined` |
 | SHA256 / ZIP 完整性 | PASS | 所有发布附件通过 `shasum -a 256 -c SHA256SUMS`；全部 ZIP 通过 `unzip -tq` |
-| GitHub prerelease 与远端附件 | 发布后补记 | 发布完成后更新 Release URL、远端附件清单和校验结果 |
+| GitHub prerelease 与远端附件 | PASS | [aide v0.1.14.0-RC13](https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC13)；7 个附件均已上传，GitHub 远端 SHA256 与本地一致 |
 
 ## 发布资产
 
@@ -38,4 +38,4 @@
 
 ## 结果
 
-Full 门禁、镜像冒烟、真实完整包校验和隔离实例暂存已通过。Safari 因证书安全拦截未完成修复后 UI 的最终观察；远端发布后将补记 Release URL 和附件复核结果。
+Release URL：<https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC13>。Full 门禁、镜像冒烟、真实完整包校验、隔离实例暂存、7 项远端附件 SHA256 核验均通过。Safari 因证书安全拦截未完成修复后 UI 的最终观察；没有绕过证书警告。

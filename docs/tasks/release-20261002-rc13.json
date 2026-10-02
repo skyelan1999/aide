@@ -70,16 +70,17 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "RC13 镜像、统一完整 ZIP 和启动器已本地构建且校验通过；准备推送 main/tag、创建 GitHub prerelease 并核验远端附件。",
+      "status": "pass",
+      "summary": "RC13 main 与 tag 已推送，GitHub prerelease 已发布；7 个附件状态为 uploaded，GitHub SHA256 与本地资产校验清单逐项一致。",
       "evidence": [
-        "python3 scripts/agent-route.py release-check release-20261002-rc13 -> PASS（完整门禁 fingerprint 与当前代码输入一致）",
-        "GitHub CLI skyelan1999 已认证，可访问 skyelan1999/aide",
-        "release asset directory .agent-state/release-assets/v0.1.14.0-RC13 已包含 3 个启动器 ZIP、Linux ARM64 镜像、统一 full ZIP、SHA256SUMS 和 RELEASE-ASSETS.txt"
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC13",
+        "gh release view v0.1.14.0-RC13 -> isDraft=false、isPrerelease=true，附件共 7 个",
+        "远端 GitHub assets.digest 对照本地 SHA256SUMS：完整运行 ZIP、Linux ARM64 镜像、三个启动器 ZIP、SHA256SUMS、RELEASE-ASSETS.txt 全部匹配",
+        "git push origin main v0.1.14.0-RC13 -> PASS；发布来源代码提交 b02edae，tag commit bd269e5 仅在其上补充发布资产验证记录"
       ]
     }
   },
   "release_authorization": "用户明确授权：你发布一个（当前对话，2026-10-02）。",
   "rollback": "RC13 是 prerelease 测试版本，不覆盖现有用户实例。若资产校验或健康检查失败则不发布。已安装 RC13 后可通过设置 > 软件升级手动切回仍安装的旧槽；正式发布前需确认远端 Release 附件完整。",
-  "handoff": "本地完整包和镜像验证已完成；推送 main/tag、创建 GitHub prerelease、检查远端资产并回填发布报告待完成。Safari 证书警告限制见资产报告。"
+  "handoff": ""
 }
