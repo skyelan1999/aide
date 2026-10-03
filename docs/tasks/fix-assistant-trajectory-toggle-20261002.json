@@ -1,0 +1,73 @@
+{
+  "id": "fix-assistant-trajectory-toggle-20261002",
+  "request": "修复小秘会话中轨迹按钮被禁用的问题；保留既有助理模型来源改名等无关工作区改动。",
+  "baseline": "27fd13418036a4e35c35740685468ffe7802258f",
+  "initial_status": "M internal/server/web/app.js\n M internal/server/web/locales/en.js\n?? docs/reviews/2026-10-02-agent-harness-architecture-review.md\n?? docs/tasks/assistant-model-source-label-20261002.json\n?? docs/tasks/harness-architecture-review-20261002.json",
+  "acceptance": [
+    "小秘会话中“轨迹”控件保持启用，可查看小秘对话历史。",
+    "小秘会话中工作模式与排队控件仍禁用；离开小秘会话后恢复可用。",
+    "记录自动化回归与可用浏览器实测状态，不将静态检查表述为浏览器验收。"
+  ],
+  "scope": [
+    "internal/server/web/app.js 的小秘控制同步逻辑",
+    "scripts/test_assistant_mode_controls.cjs 回归断言"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "截图中轨迹入口在小秘会话呈禁用态；现有渲染和导出逻辑支持 assistant session 的 messages。",
+      "evidence": [
+        "Safari 截图：localhost:9999，小秘会话顶部“轨迹”显示灰色。",
+        "源码定位：syncAssistantModeControls 把轨迹按钮和工作模式/排队按钮同批 disabled；renderTrajectory 对 assistant session 输出 messages。"
+      ]
+    },
+    "design": {
+      "status": "complete",
+      "summary": "只禁用不适用于小秘的工作模式和排队控件；轨迹按钮显式保持启用。",
+      "evidence": [
+        "更新 app.js syncAssistantModeControls。"
+      ]
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "修正控件状态并更新对应自动化回归断言。",
+      "evidence": [
+        "更新 internal/server/web/app.js。",
+        "更新 scripts/test_assistant_mode_controls.cjs。"
+      ]
+    },
+    "verification": {
+      "status": "complete",
+      "summary": "源码回归通过；Safari 对已发布 RC14 的修复前复现确认按钮处于 disabled。未对当前 RC14 服务做重启或热替换，因此没有把源码修改后的运行时状态冒充为浏览器验收。Chrome 因 localhost 自签 HTTPS 证书显示隐私错误，未继续绕过。",
+      "evidence": [
+        "PASS：node scripts/test_assistant_mode_controls.cjs — assistant session 保持轨迹控件 enabled/aria-disabled=false，同时聊天/工作流/排队依然 disabled；退出 assistant session 控件恢复。",
+        "PASS：node --check internal/server/web/app.js。",
+        "PASS：python3 scripts/agent-route.py verify quick，15 项通过（静态 quick profile）。",
+        "Safari 复现：localhost:9999 的 RC14 小秘会话 AX 状态显示“轨迹” disabled；此服务不是当前仓库热加载实例，尚未用修复源码验证浏览器交互。",
+        "NOT_RUN：修复后浏览器交互；需在用户允许的源码服务或下一个包含此变更的构建中重新加载后点击“轨迹”。"
+      ]
+    },
+    "documentation": {
+      "status": "complete",
+      "summary": "将行为和验证限制记录在任务台账。",
+      "evidence": [
+        "更新本任务 docs/tasks JSON。"
+      ]
+    },
+    "cleanup": {
+      "status": "complete",
+      "summary": "未停止、重启或修改用户正在运行的 RC14 服务；仅保留隔离于服务运行态的源码与回归测试修改。",
+      "evidence": [
+        "当前 Safari 服务仍运行 RC14。"
+      ]
+    },
+    "release": {
+      "status": "not_applicable",
+      "summary": "本次请求为源码 bug 修复，未请求发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

@@ -1,0 +1,83 @@
+{
+  "id": "harness-p0-capability-policy-20261003",
+  "request": "按 agent harness 架构审阅的优先级，在测试分支先解决 P0：统一产品运行时工具能力声明与 allow/ask/deny 授权策略，并在后端执行点强制执行；为现有工具映射策略、加回归测试、文档与验证报告。先在可证明安全的最小范围完成，记录超出本轮范围的隔离改造。",
+  "baseline": "6f0b974752c8a0a3a3b66c8e29baf4818fb66a7b",
+  "initial_status": "M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M scripts/test_assistant_mode_controls.cjs\n M scripts/test_i18n.cjs\n?? docs/reviews/2026-10-02-agent-harness-architecture-review.md\n?? docs/tasks/assistant-model-source-label-20261002.json\n?? docs/tasks/dynamic-assistant-composer-placeholder-20261002.json\n?? docs/tasks/fix-assistant-trajectory-toggle-20261002.json\n?? docs/tasks/harness-architecture-review-20261002.json\n?? docs/tasks/password-prompt-reveal-toggle-20261002.json\n?? scripts/test_password_prompt.cjs",
+  "acceptance": [
+    "Disabled tools are removed from both Aide and assistant model schemas, including plugin tools.",
+    "Both Aide and assistant backend execution entry points reject denied tool calls even when a call is submitted directly.",
+    "Regression tests cover filtering and forged calls; quick checks pass and full Go race/vet result is recorded accurately.",
+    "Documentation distinguishes this deny-consistency fix from a complete allow/ask/deny policy or isolated execution boundary."
+  ],
+  "scope": [
+    "internal/server tool schema filtering and backend execution authorization",
+    "Regression tests for disabled plugin tool behavior",
+    "Harness architecture task ledger and implementation review note",
+    "No UI policy editor, generic pending approval/resume flow, execution sandbox redesign, commit, push, or release"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Selected the first concrete authorization P0 from the existing harness architecture review: one disabled-tool decision must hold across model schema exposure and both Aide/assistant executors.",
+      "evidence": [
+        "docs/reviews/2026-10-02-agent-harness-architecture-review.md §Current gaps and near-term priorities",
+        "User request: create a test branch and start the previously prioritized harness work for later review."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Kept persisted disabledTools compatibility. Shared schema filtering and deny lookup, applied in both schema construction and execution boundaries. Explicitly excluded generic ask approval because current proposals cannot resume arbitrary tool calls.",
+      "evidence": [
+        "internal/server/context.go: contextTools, toolDenied, filterDisabledToolSchemas",
+        "internal/server/assistant_agent.go: assistantAgentTools and execAssistantTool",
+        "internal/server/workflow.go: executeToolCall"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Filtered plugin schemas for both callers and added server-side deny enforcement to assistant execution; Aide uses the shared deny lookup. Added regression assertions for both schemas and forged tool calls.",
+      "evidence": [
+        "internal/server/current_time_plugin_test.go: TestCurrentTimePluginAvailableToAideAndXiaomi",
+        "git diff --check passed"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Quick profile passed. Focused regressions passed. The full wrapper exceeded its 600-second command timeout, so the exact Docker Go race/vet command was run directly without the wrapper timeout and passed.",
+      "evidence": [
+        "python3 scripts/agent-route.py verify quick: PASS, fingerprint 507d247fb94bdb57990a87e55c129e7e6a87931a37007efa101411e9892014ce",
+        "python3 scripts/agent-route.py verify full: static/quick checks exit 0; full runner stage timed out at 600 seconds; .agent-state/verify-20261002T164632750160Z.log",
+        "Direct Docker run: go test -race -count=1 ./... && go vet ./...; exit 0; aide/internal/server passed in 333.309s, aide/internal/server/tts passed in 3.374s; go vet passed",
+        "Docker targeted regression: go test ./internal/server -run \"TestCurrentTimePluginAvailableToAideAndXiaomi|TestLunarCalendarPluginAvailableToAideAndXiaomi\" -count=1; exit 0, ok aide/internal/server 1.002s",
+        "Docker gofmt -d internal/server/context.go internal/server/assistant_agent.go internal/server/workflow.go internal/server/current_time_plugin_test.go: no diff",
+        "git diff --check: exit 0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded the actual scope and remaining policy/isolation work in system overview and review report.",
+      "evidence": [
+        "docs/system-overview.md §Permission model",
+        "docs/reviews/2026-10-03-harness-p0-policy.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Final task diff reviewed; gofmt reported no differences. All unrelated pre-existing changes remain untouched and unstaged.",
+      "evidence": [
+        "git status --short reviewed; changes are on test/harness-p0-capability-policy-20261003",
+        "No files or runtime data were deleted."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Intentionally not a release task; user requested a test branch for later inspection. No commit or push.",
+      "evidence": [
+        "Current branch test/harness-p0-capability-policy-20261003"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Discard only this task changes on the test branch if rejected; preserve all pre-existing unrelated modifications. No runtime data or deployed services changed.",
+  "handoff": "Ready for user review on test/harness-p0-capability-policy-20261003. Implemented deny consistency across Aide/assistant schemas and execution paths. Quick checks, focused regression tests and direct full Docker Go race/vet passed. The standard full wrapper exceeded its own 600-second command timeout; the same Go race/vet command passed when run directly without the wrapper timeout. Review docs/reviews/2026-10-03-harness-p0-policy.md. Next priority is the shared capability schema plus a real ask approval/resume workflow; execution isolation remains a separate follow-up."
+}

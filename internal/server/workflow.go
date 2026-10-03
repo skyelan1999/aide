@@ -3188,14 +3188,10 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		}
 		return 0
 	}
-	// per-tool 权限：被禁用的工具直接拒绝
-	a.mu.Lock()
-	disabled := a.settings.DisabledTools
-	a.mu.Unlock()
-	for _, dt := range disabled {
-		if dt == call.Function.Name {
-			return "工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用"
-		}
+	// The schema filter is only a hint to the model. Enforce deny again here
+	// because callers can submit tool calls that were not advertised.
+	if a.toolDenied(call.Function.Name) {
+		return "工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用"
 	}
 	if strings.HasPrefix(call.Function.Name, "reminder_") {
 		return a.executeReminderTool(a.reminderActorForTask(task.ID), call)

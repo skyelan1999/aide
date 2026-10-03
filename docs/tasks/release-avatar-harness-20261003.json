@@ -1,0 +1,79 @@
+{
+  "id": "release-avatar-harness-20261003",
+  "request": "提交并 release aide 当前完成的 harness、UI、虚拟形象两套素材注册改动",
+  "baseline": "c8acbe054ab98f2a0480fab56d4e18dc70c5332d",
+  "initial_status": "M docs/system-overview.md\n M internal/server/assistant_agent.go\n M internal/server/context.go\n M internal/server/current_time_plugin_test.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M scripts/test_assistant_mode_controls.cjs\n M scripts/test_avatar_settings.cjs\n M scripts/test_i18n.cjs\n?? docs/reviews/2026-10-02-agent-harness-architecture-review.md\n?? docs/reviews/2026-10-03-harness-p0-policy.md\n?? docs/tasks/assistant-model-source-label-20261002.json\n?? docs/tasks/dynamic-assistant-composer-placeholder-20261002.json\n?? docs/tasks/fix-assistant-trajectory-toggle-20261002.json\n?? docs/tasks/harness-architecture-review-20261002.json\n?? docs/tasks/harness-p0-capability-policy-20261003.json\n?? docs/tasks/password-prompt-reveal-toggle-20261002.json\n?? internal/server/web/avatars/xiaomi-enhanced/\n?? scripts/interpolate_frames_x3.cjs\n?? scripts/pack_avatar_enhanced.cjs\n?? scripts/stabilize_frames.cjs\n?? scripts/test_password_prompt.cjs",
+  "acceptance": [
+    "当前测试分支的已完成源码、测试、文档与用户请求素材进入 main，保留两套独立虚拟形象包并默认选择增强版。",
+    "按仓库版本机制发布下一个 RC；完整门禁、源码构建、候选镜像健康和核心 API 验收有实际记录。",
+    "GitHub Release 含符合发布脚本契约的启动器、完整运行/升级包、Linux 镜像归档、SHA256SUMS 和资产说明；远端资产可校验。",
+    "记录提交、tag、镜像、发布页和资产验证，以及未能执行的真实 UI/平台验证和回滚方式。"
+  ],
+  "scope": [
+    "本分支已有的 harness P0、助理 UI 修复、双虚拟形象包及随附测试/报告/任务记录。",
+    "version.md、docs/reviews 本次 release 记录和本 release 任务账本。",
+    "main 合并、正式版本 tag、当前 host 可构建的平台镜像及 GitHub prerelease 资产。",
+    "不更改用户工作区数据、不部署到外部生产服务、不删除其他分支或历史 tag。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确授权提交并发布当前已完成的改动；范围覆盖此前测试分支上的 harness P0、助理界面修复和两套虚拟形象素材。",
+      "evidence": [
+        "用户原话：可以了，提交并release版本吧。",
+        "基线：test/harness-p0-capability-policy-20261003 @ c8acbe054ab98f2a0480fab56d4e18dc70c5332d；版本基线 0.1.14.0 RC14。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "沿用现有版本机制，只在 main 合并完成后执行 patch bump。增强版和原画作为两个独立内置素材包，保留各自 manifest 与目录；旧设置只补登记一次，用户删除的素材包不会在后续读取时复活。",
+      "evidence": [
+        "docs/prd/2026-09-21-version-management.md：patch 只增加 RC，tag 仅允许 main。",
+        "internal/server/web/app.js：两个稳定内置包 ID 与版本迁移。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "整合当前分支中已完成的工具禁用执行检查、助理轨迹和命名交互、密码显示控件及两套虚拟形象注册，并更新对应回归与说明。",
+      "evidence": [
+        "internal/server/context.go、assistant_agent.go、workflow.go：共享 deny 判断并在 schema 与执行边界应用。",
+        "internal/server/web/app.js、locales/en.js、style.css：助理设置文案、轨迹可用性、密码显示和独立素材包。",
+        "internal/server/web/avatars/xiaomi-enhanced/manifest.json 与 xiaomi-original/manifest.json：两份独立资源清单。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "快速门禁、头像设置/迁移、助理模式、密码弹窗、国际化及完整 Docker Go race/vet 门禁通过。真实页面浏览器验收未运行：Chrome 对 localhost 拒绝无效 TLS 证书，按安全策略未绕过警告。",
+      "evidence": [
+        "python3 scripts/agent-route.py verify quick：PASS；.agent-state/quick.json fingerprint 7c66a4cffd9082dad94b5b9ef83860c638e3ff3aa75007efa101411e9892014ce。",
+        "node scripts/test_avatar_settings.cjs、test_assistant_mode_controls.cjs、test_password_prompt.cjs、test_i18n.cjs：全部 PASS。",
+        "python3 scripts/agent-route.py verify full：PASS；.agent-state/full.json fingerprint a50d5975b7abac9c0dffcd364c239779dc1812d989cd29b29ddcfb0fbcfcfc。",
+        "真实浏览器：NOT_RUN；Chrome 错误 net::ERR_CERT_AUTHORITY_INVALID。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "保留现有 harness 架构审阅与 P0 报告；本发布新增版本说明与资产/验证报告。",
+      "evidence": [
+        "docs/reviews/2026-10-02-agent-harness-architecture-review.md",
+        "docs/reviews/2026-10-03-harness-p0-policy.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅所有修改和新增文件；素材审核记录与生成脚本保留，未运行 git clean 或删除用户数据。",
+      "evidence": [
+        "git status --short 与 git diff --stat 已检查；新增素材目录含 117 个文件，总计约 32 MB。",
+        "git diff --check：PASS。"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户原话：可以了，提交并release版本吧。",
+  "rollback": "Git rollback 使用 release tag 的前一版本；A/B 运行环境切换回原槽。保留共享数据卷，必要时先从发布镜像回滚并重新确认健康。",
+  "handoff": "发布完成后补入精确提交/tag、镜像 ID、GitHub URL、资产 SHA256 和未验证项。"
+}

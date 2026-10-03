@@ -22,6 +22,7 @@ for (const [, rule] of avatarComposerRules) {
 assert.match(avatarCSS, /\.input-wrap \.composer-avatar-stage\s*\{[^}]*position:absolute[^}]*pointer-events:none/, 'the overlay stays local and passes pointer events through');
 const plan = JSON.parse(fs.readFileSync(path.join(__dirname, '../docs/design/virtual-avatar-scenarios.json'), 'utf8'));
 const fullManifest = { version: 1, scenes: {}, clips: {} };
+const enhancedManifest = JSON.parse(fs.readFileSync(path.join(__dirname, '../internal/server/web/avatars/xiaomi-enhanced/manifest.json'), 'utf8'));
 for (const scene of plan.scenes) {
   fullManifest.scenes[scene.id] = scene.variants.map((_, index) => `${scene.id}-v${index + 1}`);
   for (const id of fullManifest.scenes[scene.id]) fullManifest.clips[id] = { sheet: id, frames: Array.from({ length: 30 }, (_, index) => index), duration: 100 };
@@ -100,7 +101,9 @@ async function main() {
   for (const version of [2, 3, 4, 5]) {
     const migrated = environment({ ...v5, version }).stored();
     assert.equal(migrated.version, 6);
-    assert.equal(migrated.avatar.packs.filter(pack => pack.builtin).length, 1, 'old builtins become one shared pack');
+    assert.equal(migrated.avatar.packs.filter(pack => pack.builtin).length, 2, 'old builtins migrate to two independent shared packs');
+    assert.ok(migrated.avatar.packs.some(pack => pack.id === 'builtin-whale'));
+    assert.ok(migrated.avatar.packs.some(pack => pack.id === 'builtin-whale-original'));
     assert.equal(migrated.avatar.enabled, true); assert.equal(migrated.avatar.chat, true); assert.equal(migrated.avatar.lock, false);
     assert.equal(migrated.avatar.opacity, 67); assert.equal(migrated.avatar.activePack, custom.id);
     assert.deepEqual(migrated.avatar.packs.find(pack => pack.id === custom.id), custom, 'custom assets survive byte-for-byte');
@@ -114,11 +117,17 @@ async function main() {
   assert.equal(new Set(merged.map(pack => pack.id)).size, merged.length, 'colliding IDs are renamed safely');
   const removed = structuredClone(v5); removed.aide.packs = []; removed.xiaomi.packs = [custom];
   assert.deepEqual(environment(removed).stored().avatar.packs, [custom], 'deleted builtin is never resurrected');
-  const fresh = environment().stored(); assert.equal(fresh.avatar.enabled, false); assert.equal(fresh.avatar.packs.length, 1);
-  assert.equal(fresh.avatar.packs[0].name, '小鲸鱼 - 光栅版 - 原画动态包');
-  assert.equal(fresh.avatar.packs[0].revision, 3); assert.equal(fresh.avatar.packs[0].assets.length, 1, 'builtin references one manifest, not 38 running thumbnails');
+  const fresh = environment().stored(); assert.equal(fresh.avatar.enabled, false); assert.equal(fresh.avatar.packs.length, 2);
+  const enhancedPack = fresh.avatar.packs.find(pack => pack.id === 'builtin-whale');
+  const originalPack = fresh.avatar.packs.find(pack => pack.id === 'builtin-whale-original');
+  assert.equal(enhancedPack.name, '小鲸鱼 - 精致增强动态包');
+  assert.equal(originalPack.name, '小鲸鱼 - 原画动态包');
+  assert.equal(enhancedPack.revision, 5); assert.equal(enhancedPack.assets.length, 1, 'each builtin references its own manifest, not per-frame thumbnails');
+  assert.equal(enhancedPack.assets[0].manifest, '/avatars/xiaomi-enhanced/manifest.json');
+  assert.equal(originalPack.assets[0].manifest, '/avatars/xiaomi-original/manifest.json');
   const savedOldBuiltin=structuredClone(fresh);savedOldBuiltin.avatar.packs[0].name='小鲸 · 原画动态包';savedOldBuiltin.avatar.packs[0].revision=2;
-  const upgradedBuiltin=environment(savedOldBuiltin).stored();assert.equal(upgradedBuiltin.avatar.packs[0].name,'小鲸鱼 - 光栅版 - 原画动态包');assert.equal(upgradedBuiltin.avatar.packs[0].id,'builtin-whale','the built-in identity remains stable during rename');
+  savedOldBuiltin.avatar.packs = [savedOldBuiltin.avatar.packs[0]];
+  const upgradedBuiltin=environment(savedOldBuiltin).stored();assert.equal(upgradedBuiltin.avatar.packs.find(pack => pack.id === 'builtin-whale').name,'小鲸鱼 - 精致增强动态包');assert.ok(upgradedBuiltin.avatar.packs.some(pack => pack.id === 'builtin-whale-original'),'upgrade registers the second builtin without changing the stable enhanced-pack identity');
   assert.equal(fresh.avatar.playbackRate, 1, 'new installs default to original speed');
   assert.equal(fresh.avatar.smoothFrames, true, 'frame interpolation defaults on without enabling a disabled avatar');
   const legacyConfig=structuredClone(fresh);legacyConfig.avatar.playbackRate=0.5;legacyConfig.avatar.smoothFrames=false;legacyConfig.avatar.packs.push(custom);
@@ -209,12 +218,14 @@ async function main() {
   assert.equal(storageRefresh.clip(),storageFirst, 'storage refresh itself does not replace an action even if a rotation is due');
   storageRefresh.env.advance(800);assert.notEqual(storageRefresh.clip(),storageFirst, 'regular polling continues normal rotation after storage refresh');
   const earlyV6 = structuredClone(fresh); earlyV6.avatar.packs[0].revision = 1; earlyV6.avatar.packs[0].assets = [{ id: 'old-preview', src: '/old.webp' }]; earlyV6.avatar.packs.push(custom); earlyV6.avatar.opacity = 52; earlyV6.avatar.activePack = custom.id;
-  const renewed = environment(earlyV6).stored(); assert.equal(renewed.avatar.packs[0].revision, 3); assert.equal(renewed.avatar.opacity, 52); assert.equal(renewed.avatar.activePack, custom.id); assert.deepEqual(renewed.avatar.packs[1], custom);
+  const renewed = environment(earlyV6).stored(); assert.equal(renewed.avatar.packs[0].revision, 5); assert.equal(renewed.avatar.opacity, 52); assert.equal(renewed.avatar.activePack, custom.id); assert.deepEqual(renewed.avatar.packs[2], custom);
   earlyV6.avatar.packs = [custom]; assert.deepEqual(environment(earlyV6).stored().avatar.packs, [custom], 'builtin metadata refresh never resurrects a deleted pack');
+  const oneBuiltin = structuredClone(fresh); oneBuiltin.avatar.packs = [enhancedPack];
+  assert.deepEqual(environment(oneBuiltin).stored().avatar.packs, [enhancedPack], 'an intentionally deleted companion pack is not re-added on every read');
   const v1 = { version: 1, xiaomi: { active: custom.id, items: [{ id: custom.id, name: 'Old image', src: custom.assets[0].src }], opacity: 66 } };
   const migratedV1 = environment(v1).stored().avatar; assert.equal(migratedV1.enabled, true); assert.equal(migratedV1.activePack, custom.id); assert.equal(migratedV1.opacity, 66);
 
-  const env = environment(v5), host = env.render(); await env.settled();
+  const env = environment(v5, enhancedManifest), host = env.render(); await env.settled();
   assert.equal(button(host, '小秘'), undefined, 'no persona switch remains');
   assert.equal(descendants(host).find(element => element.attributes['aria-label'] === '播放速度倍率').disabled, true, 'native image-only packs explain fixed native playback speed');
   assert.equal(checkbox(host,'自动平滑补帧').disabled,true,'native GIF/WebP cannot use sprite interpolation');
@@ -223,17 +234,22 @@ async function main() {
   const opacity = range(host); env.tick(5); opacity.value = '42'; opacity.oninput(); assert.equal(env.stored().avatar.opacity, 42);
   const fromOtherTab = env.stored(); fromOtherTab.avatar.opacity = 80; fromOtherTab.avatar.lock = true;
   env.external(fromOtherTab); opacity.value = '63'; opacity.oninput(); assert.equal(env.stored().avatar.opacity, 63); assert.equal(env.stored().avatar.lock, true, 'cross-tab changes are preserved by controls already open');
-  const builtinRadio = descendants(host).find(element => element.type === 'radio' && element.attributes['aria-label'] === '激活素材包 小鲸鱼 - 光栅版 - 原画动态包');
+  const builtinRadio = descendants(host).find(element => element.type === 'radio' && element.attributes['aria-label'] === '激活素材包 小鲸鱼 - 精致增强动态包');
   builtinRadio.checked = true; builtinRadio.onchange(); await env.settled();
   assert.equal(env.stored().avatar.activePack, 'builtin-whale'); assert.deepEqual(env.stored().avatar.packs.find(pack => pack.id === custom.id), custom);
   const on = checkbox(host, '启用虚拟形象'); on.checked = true; on.onchange(); await env.settled();
   const sceneSelect = select(host, '预览场景'); assert.equal(sceneSelect.children.length, 16);
-  assert.ok(descendants(host).some(element => element.className === 'avatar-pack-count' && element.textContent === '16 个场景 · 38 套动作'), 'counts derive from manifest');
+  assert.ok(descendants(host).some(element => element.className === 'avatar-pack-count' && element.textContent === `16 个场景 · ${Object.keys(enhancedManifest.clips).length} 套动作`), 'counts derive from the selected enhanced manifest');
   const builtinThumbs = descendants(host).find(element => element.className === 'avatar-pack-assets'); assert.equal(builtinThumbs.children.length, 8); assert.ok(descendants(builtinThumbs).filter(element => element.tagName === 'IMG').every(image => image.src.endsWith('-poster.webp') && image.loading === 'lazy'), 'gallery uses at most8 lazy static posters');
   for (const scene of plan.scenes) {
     sceneSelect.value = scene.id; sceneSelect.onchange();
-    const variants = select(host, '动作变体'); assert.equal(variants.children.length, scene.variants.length); assert.ok(variants.children.every(option => !option.disabled));
-    const status = descendants(host).find(element => element.className === 'avatar-preview-availability'); assert.ok(status.textContent.startsWith('30 帧'), 'preview frame count comes from manifest');
+    const variants = select(host, '动作变体');
+    const clips = enhancedManifest.scenes[scene.id];
+    const highestVariant = Math.max(0, ...clips.map(id => Number(id.match(/-v(\d+)$/)?.[1] || 0)));
+    assert.equal(variants.children.length, Math.max(scene.variants.length, highestVariant));
+    assert.deepEqual(variants.children.map(option => !!option.disabled), variants.children.map((_, index) => !clips.some(id => Number(id.match(/-v(\d+)$/)?.[1] || 0) === index + 1)));
+    const firstClip = enhancedManifest.clips[enhancedManifest.scenes[scene.id][0]];
+    const status = descendants(host).find(element => element.className === 'avatar-preview-availability'); assert.ok(status.textContent.startsWith(`${firstClip.frames.length} 帧`), 'preview frame count comes from the selected manifest');
   }
   assert.equal(env.get('lock-avatars').children.length, 1, 'one lock actor');
   env.get('body').classList.toggle('assistant-mode', true); env.tick(); assert.equal(env.get('lock-avatars').children.length, 1, 'assistant mode uses same lock actor');
@@ -245,13 +261,15 @@ async function main() {
   }
   state.runPhase = { r1: { done: false, phase: 'generating' } }; env.tick(); assert.equal(env.stage().dataset.motion, 'generating');
   const char = env.stage().children[0]; const initialClip = char.dataset.clip;
-  assert.equal(env.context.aideAvatarCue({ scene: 'completed', variant: 'completed-v3', emotion: 'happy', intensity: 2 }), true); env.tick(); assert.equal(env.stage().dataset.motion, 'generating', 'AI feedback cannot claim success during generation');
-  assert.equal(env.context.aideAvatarCue({ scene: 'generating', variant: 'generating-v3', emotion: 'happy', intensity: 2 }), true);
+  const generatedVariant = 'generating-v2';
+  const completedVariant = 'completed-v3';
+  assert.equal(env.context.aideAvatarCue({ scene: 'completed', variant: completedVariant, emotion: 'happy', intensity: 2 }), true); env.tick(); assert.equal(env.stage().dataset.motion, 'generating', 'AI feedback cannot claim success during generation');
+  assert.equal(env.context.aideAvatarCue({ scene: 'generating', variant: generatedVariant, emotion: 'happy', intensity: 2 }), true);
   env.advance(3999); assert.equal(char.dataset.clip, initialClip, 'variant holds for minimum dwell');
-  env.advance(2); assert.equal(char.dataset.clip, 'generating-v3', 'valid matching scene cue selects requested variant after dwell');
+  env.advance(2); assert.equal(char.dataset.clip, generatedVariant, 'valid matching scene cue selects requested variant after dwell');
   assert.equal(env.stage().dataset.emotion, 'happy'); assert.equal(env.stage().dataset.intensity, '2', 'accepted expression lasts for the selected clip');
-  env.advance(4100); assert.notEqual(char.dataset.clip, 'generating-v3', 'automatic selection avoids immediate repeat');
-  assert.equal(env.context.aideAvatarCue({ scene: 'generating', variant: 'error-v3', emotion: 'happy', intensity: 2 }), false, 'cross-scene variant rejected');
+  env.advance(4100); assert.notEqual(char.dataset.clip, generatedVariant, 'automatic selection avoids immediate repeat');
+  assert.equal(env.context.aideAvatarCue({ scene: 'generating', variant: 'error-v2', emotion: 'happy', intensity: 2 }), false, 'cross-scene variant rejected');
   assert.equal(env.context.aideAvatarCue({ scene: 'generating', variant: 4, emotion: 'happy', intensity: 2 }), false);
   assert.equal(env.context.aideAvatarCue({ scene: 'generating', variant: 1, emotion: 'evil', intensity: 2 }), false);
   env.context.aideAvatarFeedback('completed', { runId: 'old-run' }); assert.equal(env.stage().dataset.motion, 'generating', 'late old-run completion does not replace current work');
@@ -273,7 +291,7 @@ async function main() {
   const sparseHost = sparse.render(); await sparse.settled(); const sparseScene = select(sparseHost, '预览场景'); sparseScene.value = 'reading'; sparseScene.onchange();
   assert.equal(select(sparseHost, '动作变体').disabled, true, 'missing variants are not presented as implemented');
   assert.equal(descendants(sparseHost).find(element => element.className === 'avatar-preview-availability').textContent, '此素材包尚未提供该场景，展示可用形象');
-  button(sparseHost, '删除').onclick(); assert.equal(sparse.stored().avatar.packs.length, 0); assert.equal(environment(sparse.stored()).stored().avatar.packs.length, 0, 'delete remains effective after reload');
+  button(sparseHost, '删除').onclick(); assert.equal(sparse.stored().avatar.packs.length, 1); assert.equal(sparse.stored().avatar.packs[0].id, 'builtin-whale-original'); assert.equal(environment(sparse.stored()).stored().avatar.packs.length, 1, 'deleting one builtin remains effective after reload');
 
 
   const importEnv = environment(fresh), importHost = importEnv.render(); await importEnv.settled();

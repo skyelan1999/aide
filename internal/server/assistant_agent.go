@@ -90,7 +90,14 @@ func assistantAgentToolSchemas(allowSilent bool) []any {
 func (a *App) assistantAgentTools(allowSilent bool) []any {
 	tools := assistantAgentToolSchemas(allowSilent)
 	tools = append(tools, a.pluginToolSchemasForOwner("current-time")...)
-	return append(tools, a.pluginToolSchemasForOwner("lunar-calendar")...)
+	tools = append(tools, a.pluginToolSchemasForOwner("lunar-calendar")...)
+	a.mu.Lock()
+	disabled := make(map[string]bool, len(a.settings.DisabledTools))
+	for _, name := range a.settings.DisabledTools {
+		disabled[name] = true
+	}
+	a.mu.Unlock()
+	return filterDisabledToolSchemas(tools, disabled)
 }
 
 // runAssistantAgenticLoop 小秘 agentic 决策主循环。
@@ -199,6 +206,9 @@ func (a *App) runAssistantAgenticLoop(ctx context.Context, cfg Settings, heard, 
 // 与 executeToolCall 不同：不绑定 Task、不流转发流、不做文件/shell——只做调度与记忆。
 // 调用方不持 a.mu；内部按需加锁。结果作为 tool 消息回灌给模型。
 func (a *App) execAssistantTool(call ToolCall, dec *assistantDecision) string {
+	if a.toolDenied(call.Function.Name) {
+		return "工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用"
+	}
 	var args map[string]any
 	_ = json.Unmarshal([]byte(call.Function.Arguments), &args)
 	if args == nil {

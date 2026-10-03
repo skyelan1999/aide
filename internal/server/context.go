@@ -197,8 +197,41 @@ func (a *App) contextTools() []any {
 		}
 		tools = append(tools, t)
 	}
-	tools = append(tools, a.pluginToolSchemas()...)
+	tools = append(tools, filterDisabledToolSchemas(a.pluginToolSchemas(), disabled)...)
 	return tools
+}
+
+// toolDenied reports the persisted deny decision for a tool. Keep this check at
+// execution boundaries as well as schema construction: a model can still send
+// a call that was omitted from its advertised tool list.
+func (a *App) toolDenied(name string) bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return toolDeniedIn(a.settings.DisabledTools, name)
+}
+
+func toolDeniedIn(disabled []string, name string) bool {
+	for _, candidate := range disabled {
+		if candidate == name {
+			return true
+		}
+	}
+	return false
+}
+
+func filterDisabledToolSchemas(tools []any, disabled map[string]bool) []any {
+	if len(disabled) == 0 {
+		return tools
+	}
+	filtered := make([]any, 0, len(tools))
+	for _, tool := range tools {
+		fn, _ := tool.(map[string]any)["function"].(map[string]any)
+		name, _ := fn["name"].(string)
+		if !disabled[name] {
+			filtered = append(filtered, tool)
+		}
+	}
+	return filtered
 }
 
 // modelWindow 返回活跃模型的上下文窗口（未配置/缺省 → defaultContextWindow）。

@@ -9,6 +9,9 @@ for(const f of ['locales/en.js','i18n.js']) vm.runInContext(fs.readFileSync('int
 const api=ctx.window.aideI18n;
 assert.equal(api.language(),'en');
 assert.equal(api.t('语言'),'Language');
+assert.equal(api.t('显示'),'Show');
+assert.equal(api.t('隐藏'),'Hide');
+assert.equal(api.t('对{0}说点什么…', '小秘'),'Say something to 小秘…');
 assert.equal(api.t('unknown 中文'),'unknown 中文');
 ctx.window.aideEnglish['test {0}']='value {0}';
 assert.equal(api.t('test {0}','中文 <script>'),'value 中文 <script>');
@@ -17,6 +20,7 @@ const output=api.schema(input);
 assert.equal(output.id,'语言');assert.equal(output.title,'Language');
 assert.equal(output.options[0].value,'语言');assert.equal(input.title,'语言');
 pref='zh-CN';assert.equal(api.t('语言'),'语言');
+assert.equal(api.t('对{0}说点什么…', '小鲸'),'对小鲸说点什么…');
 pref='invalid';ctx.navigator.language='zh-CN';assert.equal(api.language(),'zh-CN');
 for(const [key,value] of Object.entries(ctx.window.aideEnglish)) {
  const slots=s=>[...s.matchAll(/\{\d+\}/g)].map(x=>x[0]).sort();
