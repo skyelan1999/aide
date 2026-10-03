@@ -56,7 +56,9 @@
       "summary": "保留现有 harness 架构审阅与 P0 报告；本发布新增版本说明与资产/验证报告。",
       "evidence": [
         "docs/reviews/2026-10-02-agent-harness-architecture-review.md",
-        "docs/reviews/2026-10-03-harness-p0-policy.md"
+        "docs/reviews/2026-10-03-harness-p0-policy.md",
+        "docs/reviews/release-0.1.14.0-RC15-2026-10-03.md",
+        "docs/reviews/release-assets-2026-10-03-RC15.md"
       ]
     },
     "cleanup": {
@@ -69,11 +71,16 @@
     },
     "release": {
       "status": "pending",
-      "summary": "",
-      "evidence": []
+      "summary": "RC15 镜像和发行资产已构建并通过本地校验；GitHub 推送/发布及远端摘要校验尚待完成。",
+      "evidence": [
+        "源码 commit 6a6129a447d06498a7618189ab59413dcb8c11b3；tag v0.1.14.0-RC15。",
+        "Linux ARM64 image sha256:7b34f4db310cc5ddbd500db3e70ada9c01f46be407d33a1eead05c3c41b65b92；docker-release.sh Go tests、go vet、healthz PASS。",
+        "7 项发行资产 SHA256 与全部 zip/gzip 完整性检查 PASS。",
+        "真实浏览器验证、macOS/Windows 启动器运行、真实 A/B 激活/回滚未执行；详见 release-assets-2026-10-03-RC15.md。"
+      ]
     }
   },
   "release_authorization": "用户原话：可以了，提交并release版本吧。",
   "rollback": "Git rollback 使用 release tag 的前一版本；A/B 运行环境切换回原槽。保留共享数据卷，必要时先从发布镜像回滚并重新确认健康。",
-  "handoff": "发布完成后补入精确提交/tag、镜像 ID、GitHub URL、资产 SHA256 和未验证项。"
+  "handoff": "发布完成后补入 GitHub Release URL、远端资产清单及摘要校验结果；tag 指向版本源码提交，报告账本允许后续文档提交。"
 }
