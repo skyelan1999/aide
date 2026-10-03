@@ -1,6 +1,11 @@
 # aide 版本记录
 
-**当前版本：0.1.14.0 RC14**
+**当前版本：0.1.14.0 RC15**
+
+## 0.1.14.0 RC15（2026-10-03）
+
+- Assistant harness, independent avatar packs and settings fixes
+
 
 ## 0.1.14.0 RC14（2026-10-02）
 
