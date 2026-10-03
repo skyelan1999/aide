@@ -128,9 +128,23 @@ function passwordPrompt(title) {
     const row = el('label', 'pw-prompt-label', title);
     const input = el('input');
     input.type = 'password';
-    input.autocomplete = 'off';
+    input.autocomplete = 'current-password';
     input.spellcheck = false;
-    row.append(input);
+    const field = el('div', 'pw-prompt-field');
+    const reveal = el('button', 'quiet quiet-sm pw-prompt-reveal', t('显示'));
+    reveal.type = 'button';
+    reveal.setAttribute('aria-label', t('显示密码'));
+    reveal.setAttribute('aria-pressed', 'false');
+    reveal.onclick = () => {
+      const visible = input.type === 'password';
+      input.type = visible ? 'text' : 'password';
+      reveal.textContent = t(visible ? '隐藏' : '显示');
+      reveal.setAttribute('aria-label', t(visible ? '隐藏密码' : '显示密码'));
+      reveal.setAttribute('aria-pressed', String(visible));
+      input.focus();
+    };
+    field.append(input, reveal);
+    row.append(field);
     dlg.append(row);
     const actions = el('div', 'editor-footer');
     const cancel = el('button', 'quiet', t('取消')); cancel.type = 'button';
@@ -138,7 +152,7 @@ function passwordPrompt(title) {
     actions.append(cancel, ok);
     dlg.append(actions);
     let settled = false;
-    const done = val => { if (settled) return; settled = true; dlg.close(); dlg.remove(); resolve(val); };
+    const done = val => { if (settled) return; settled = true; input.value = ''; dlg.close(); dlg.remove(); resolve(val); };
     cancel.onclick = () => done(null);
     ok.onclick = () => done(input.value);
     input.addEventListener('keydown', e => {
@@ -266,7 +280,14 @@ function syncAssistantModeControls(isAssistantSess) {
     state.queueMode = false;
     $('queue-toggle')?.classList.remove('active');
   }
-  const controls = [$('trajectory-toggle'), ...document.querySelectorAll('.mode-switch button'), $('queue-toggle')];
+  // The trajectory view also renders assistant-session message history. Keep it
+  // available in 小秘; only workbench execution controls are incompatible there.
+  const trajectoryToggle = $('trajectory-toggle');
+  if (trajectoryToggle) {
+    trajectoryToggle.disabled = false;
+    trajectoryToggle.setAttribute('aria-disabled', 'false');
+  }
+  const controls = [...document.querySelectorAll('.mode-switch button'), $('queue-toggle')];
   controls.forEach(button => {
     if (!button) return;
     button.disabled = isAssistantSess;
@@ -1468,7 +1489,7 @@ function renderSession() {
   const isAssistantSess = state.session?.kind === 'assistant';
   document.body.classList.toggle('assistant-mode', !!isAssistantSess);
   syncAssistantModeControls(!!isAssistantSess);
-  $('prompt').placeholder = isAssistantSess ? t('对小蜜说点什么…') : '';
+  $('prompt').placeholder = isAssistantSess ? t('对{0}说点什么…', voiceAssistantDisplayName()) : '';
   $('session-title').textContent = state.session?.title || t("开始新的探索");
   // #62：小秘会话始终隐藏通用 welcome（及其 4 个快捷入口），改渲染小蜜专属时间线/空状态
   $('welcome').classList.toggle('hidden', isAssistantSess || !!state.session?.runs.length);
@@ -2837,12 +2858,13 @@ $('settings-form').onsubmit = action(async event => { event.preventDefault(); if
   const scenes = Object.fromEntries(sceneList.map(([id,name,variants])=>[id,{name,variants}]));
   const legacyMotion = {generating:'eating',executing:'working',completed:'done',error:'tantrum'};
   const canonical = motion => ({eating:'generating',working:'executing',done:'completed',tantrum:'error',failed:'error',cancelled:'paused',interrupted:'paused',awaiting_approval:'awaiting_user',awaiting_clarification:'awaiting_user'})[motion] || motion;
-  const builtinPack = () => ({id:'builtin-whale',name:'小鲸鱼 - 光栅版 - 原画动态包',builtin:true,revision:3,assets:[{id:'whale-animation-pack',name:'小鲸',motion:'idle',src:'/avatars/xiaomi-original/idle-v1.webp',poster:'/avatars/xiaomi-original/idle-v1-poster.webp',manifest:'/avatars/xiaomi-original/manifest.json'}]});
+  const builtinPack = () => ({id:'builtin-whale',name:'小鲸鱼 - 精致增强动态包',builtin:true,revision:5,assets:[{id:'whale-enhanced-animation-pack',name:'小鲸',motion:'idle',src:'/avatars/xiaomi-enhanced/idle-v1.webp',poster:'/avatars/xiaomi-enhanced/idle-v1-poster.webp',manifest:'/avatars/xiaomi-enhanced/manifest.json'}]});
+  const builtinOriginalPack = () => ({id:'builtin-whale-original',name:'小鲸鱼 - 原画动态包',builtin:true,revision:5,assets:[{id:'whale-original-animation-pack',name:'小鲸',motion:'idle',src:'/avatars/xiaomi-original/idle-v1.webp',poster:'/avatars/xiaomi-original/idle-v1-poster.webp',manifest:'/avatars/xiaomi-original/manifest.json'}]});
   const normalizePlaybackRate = value => Number.isFinite(Number(value)) && Number(value)>0 ? Math.max(0.25,Math.min(4,Number(value))) : 1;
-  const defaults = () => ({version:6,avatar:{enabled:false,chat:true,lock:true,opacity:100,playbackRate:1,smoothFrames:true,activePack:'builtin-whale',packs:[builtinPack()]}});
+  const defaults = () => ({version:6,avatar:{enabled:false,chat:true,lock:true,opacity:100,playbackRate:1,smoothFrames:true,activePack:'builtin-whale',packs:[builtinPack(),builtinOriginalPack()]}});
   const normalize = value => ({...value,enabled:!!value?.enabled,chat:value?.chat!==false,lock:value?.lock!==false,opacity:Math.max(25,Math.min(100,Number(value?.opacity)||100)),playbackRate:normalizePlaybackRate(value?.playbackRate),smoothFrames:value?.smoothFrames!==false,activePack:String(value?.activePack||''),packs:Array.isArray(value?.packs)?value.packs.filter(pack=>pack&&typeof pack.id==='string'&&Array.isArray(pack.assets)):[]});
   function migrate(parsed) {
-    if(parsed?.version===6){const avatar=normalize(parsed.avatar);avatar.packs=avatar.packs.map(pack=>pack.id==='builtin-whale'&&pack.builtin&&pack.revision!==3?builtinPack():pack);return {version:6,avatar,...(parsed.migration?{migration:parsed.migration}:{})};}
+    if(parsed?.version===6){const avatar=normalize(parsed.avatar);const needsCompanion=avatar.packs.some(pack=>pack.id==='builtin-whale'&&pack.builtin&&pack.revision!==5);avatar.packs=avatar.packs.map(pack=>pack.id==='builtin-whale'&&pack.builtin&&pack.revision!==5?builtinPack():pack);if(needsCompanion&&!avatar.packs.some(pack=>pack.id==='builtin-whale-original'))avatar.packs.push(builtinOriginalPack());return {version:6,avatar,...(parsed.migration?{migration:parsed.migration}:{})};}
     const old = Object.fromEntries(['xiaomi','aide'].map(id=>{
       const value=parsed?.[id]||{};
       if(Array.isArray(value.items))return [id,normalize({...value,packs:value.items.map((item,index)=>({id:item.id||id+'-import-'+index,name:item.name||'导入的形象 '+(index+1),assets:[{id:item.id||id+'-asset-'+index,name:'待机',motion:'idle',src:item.src}]})),activePack:value.active||value.items[0]?.id||'',enabled:value.enabled??!!value.active})];
@@ -2852,7 +2874,7 @@ $('settings-form').onsubmit = action(async event => { event.preventDefault(); if
     const avatar={...old[preferred],packs:[]}, idMap=new Map(), fingerprints=new Map();
     for(const id of ['xiaomi','aide'])for(const pack of old[id].packs){
       if(pack.builtin&&/^builtin-(aide|xiaomi|whale)$/.test(pack.id)){
-        if(!avatar.packs.some(item=>item.id==='builtin-whale'))avatar.packs.push(builtinPack());
+        if(!avatar.packs.some(item=>item.id==='builtin-whale'))avatar.packs.push(builtinPack(),builtinOriginalPack());
         idMap.set(id+':'+pack.id,'builtin-whale');continue;
       }
       const fingerprint=JSON.stringify({name:pack.name,assets:pack.assets.map(({id:assetID,...asset})=>asset)});
@@ -2906,7 +2928,7 @@ $('settings-form').onsubmit = action(async event => { event.preventDefault(); if
     if(manifest){
       const IDs=manifest.scenes?.[scene]||[scene,legacyMotion[scene]].filter(Boolean);
       const existing=IDs.filter(id=>manifest.clips[id]);
-      if(existing.length)return existing.map((id,index)=>({id,asset:manifestAsset,index:/-v[1-3]$/.test(id)?Number(id.slice(-1))-1:index,clip:manifest.clips[id],variant:manifest.variants?.[id]}));
+      if(existing.length)return existing.map((id,index)=>({id,asset:manifestAsset,index:/-v([1-9]\d*)$/.test(id)?Number(id.match(/-v([1-9]\d*)$/)[1])-1:index,clip:manifest.clips[id],variant:manifest.variants?.[id]}));
     }
     const images=assetsFor(scene).filter(asset=>!asset.manifest);
     return images.map((asset,index)=>({id:asset.id,asset,index:Number.isInteger(asset.variant)?asset.variant-1:index}));
@@ -3010,7 +3032,7 @@ $('settings-form').onsubmit = action(async event => { event.preventDefault(); if
       const mood=el('div','avatar-preview-status'),availability=el('div','avatar-preview-availability'),controls=el('div','avatar-demo-controls');
       const sceneSelect=el('select','avatar-scene-select');sceneSelect.setAttribute('aria-label',t('预览场景'));for(const [id,name] of sceneList){const option=el('option','',t(name));option.value=id;sceneSelect.append(option);}sceneSelect.value=previewScene;
       const variantSelect=el('select','avatar-variant-select');variantSelect.setAttribute('aria-label',t('动作变体'));
-      const refresh=()=>{const choices=availableClips(previewScene);variantSelect.replaceChildren();for(let index=0;index<scenes[previewScene].variants.length;index++){const available=choices.find(choice=>choice.index===index),option=el('option','',t(available?.variant?.label||scenes[previewScene].variants[index])+(available?'':' · '+t('未提供')));option.value=String(index);option.disabled=!available;variantSelect.append(option);}if(!choices.some(choice=>choice.index===previewIndex))previewIndex=choices[0]?.index||0;variantSelect.value=String(previewIndex);variantSelect.disabled=!choices.length;const chosen=choices.find(choice=>choice.index===previewIndex)||fallbackClip(previewScene);previewActor.dataset.motion=previewScene;mood.textContent=t(moodFor(previewScene));availability.textContent=choices.length?(chosen?.clip?.frames?t('{0} 帧 · {1} 套可用动作',chosen.clip.frames.length,choices.length):t('{0} 套可用动作',choices.length)):t('此素材包尚未提供该场景，展示可用形象');if(chosen)setCharacter(sample,chosen,previewScene);else clearCharacter(sample);};
+      const refresh=()=>{const choices=availableClips(previewScene);variantSelect.replaceChildren();const optionCount=Math.max(scenes[previewScene].variants.length,choices.reduce((count,choice)=>Math.max(count,choice.index+1),0));for(let index=0;index<optionCount;index++){const available=choices.find(choice=>choice.index===index),label=available?.variant?.label||scenes[previewScene].variants[index]||available?.id||t('动作 {0}',index+1),option=el('option','',t(label)+(available?'':' · '+t('未提供')));option.value=String(index);option.disabled=!available;variantSelect.append(option);}if(!choices.some(choice=>choice.index===previewIndex))previewIndex=choices[0]?.index||0;variantSelect.value=String(previewIndex);variantSelect.disabled=!choices.length;const chosen=choices.find(choice=>choice.index===previewIndex)||fallbackClip(previewScene);previewActor.dataset.motion=previewScene;mood.textContent=t(moodFor(previewScene));availability.textContent=choices.length?(chosen?.clip?.frames?t('{0} 帧 · {1} 套可用动作',chosen.clip.frames.length,choices.length):t('{0} 套可用动作',choices.length)):t('此素材包尚未提供该场景，展示可用形象');if(chosen)setCharacter(sample,chosen,previewScene);else clearCharacter(sample);};
       sceneSelect.onchange=()=>{previewScene=sceneSelect.value;previewIndex=0;refresh();};variantSelect.onchange=()=>{previewIndex=Number(variantSelect.value)||0;refresh();};controls.append(sceneSelect,variantSelect);info.append(mood,controls,availability);preview.append(previewActor,info);body.append(preview);refreshPreview=()=>{refresh();refreshPacks();refreshSpeed();refreshSmoothing();};refresh();
       const options=el('div','avatar-options');
       function toggle(label,value,disabled,onchange){const wrapper=el('label','avatar-option'),input=el('input');input.type='checkbox';input.checked=value;input.disabled=disabled;input.onchange=()=>onchange(input.checked);wrapper.append(input,el('span','',t(label)));options.append(wrapper);}
@@ -8310,7 +8332,7 @@ function renderVoiceNameControl() {
 }
 function renderXiaomiModelControl() {
   const wrap = el('div', 'settings-control');
-  const head = el('div', 'control-label'); head.append(el('span', '', t('小秘模型来源')));
+  const head = el('div', 'control-label'); head.append(el('span', '', t('助理模型来源')));
   const source = el('select', 'input');
   [['inherit', t('复用工作台模型设置')], ['custom', t('使用独立模型来源')]].forEach(([v, label]) => { const o = el('option', '', label); o.value = v; source.append(o); });
   const base = el('input', 'input'); base.placeholder = 'https://api.example.com/v1'; base.autocomplete = 'url';
@@ -9336,7 +9358,7 @@ function renderAccountControl() {
           const meta = el('span', 'wa-cred-meta', new Date((c.createdAt || 0) * 1000).toLocaleDateString());
           const delBtn = el('button', 'quiet', t('删除')); delBtn.type = 'button';
           delBtn.onclick = action(async () => {
-            const pw = prompt(t('删除设备请输入原密码'));
+            const pw = await passwordPrompt(t('删除设备请输入原密码'));
             if (!pw) return;
             await api('/webauthn/credentials/' + encodeURIComponent(c.id), { method: 'DELETE', body: JSON.stringify({ oldPassword: pw }) });
             toast(t('设备已删除'));

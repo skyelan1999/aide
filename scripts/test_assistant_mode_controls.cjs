@@ -24,6 +24,8 @@ function button() {
 }
 
 const trajectory = button();
+trajectory.disabled = true;
+trajectory.attributes['aria-disabled'] = 'true';
 const chat = button();
 const workflow = button();
 const queue = button();
@@ -51,13 +53,17 @@ assert.equal(state.queueMode, false);
 assert.equal(queue.classList.contains('active'), false);
 assert.equal(phase.classList.contains('selected'), false);
 assert.equal(phaseBar.classList.contains('hidden'), true);
-for (const control of [trajectory, chat, workflow, queue]) {
+assert.equal(trajectory.disabled, false);
+assert.equal(trajectory.attributes['aria-disabled'], 'false');
+for (const control of [chat, workflow, queue]) {
   assert.equal(control.disabled, true);
   assert.equal(control.attributes['aria-disabled'], 'true');
 }
 
 context.syncAssistantModeControls(false);
-for (const control of [trajectory, chat, workflow, queue]) {
+assert.equal(trajectory.disabled, false);
+assert.equal(trajectory.attributes['aria-disabled'], 'false');
+for (const control of [chat, workflow, queue]) {
   assert.equal(control.disabled, false);
   assert.equal(control.attributes['aria-disabled'], 'false');
 }

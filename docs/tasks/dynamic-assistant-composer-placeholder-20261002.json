@@ -1,0 +1,72 @@
+{
+  "id": "dynamic-assistant-composer-placeholder-20261002",
+  "request": "小秘输入框占位文案改为按设置中的助理名称动态显示。",
+  "baseline": "27fd13418036a4e35c35740685468ffe7802258f",
+  "initial_status": "M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M scripts/test_assistant_mode_controls.cjs\n?? docs/reviews/2026-10-02-agent-harness-architecture-review.md\n?? docs/tasks/assistant-model-source-label-20261002.json\n?? docs/tasks/fix-assistant-trajectory-toggle-20261002.json\n?? docs/tasks/harness-architecture-review-20261002.json",
+  "acceptance": [
+    "小秘会话输入框占位提示按设置中的助理名称动态显示。",
+    "英文 UI 使用对应句式并保留助理名称。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "scripts/test_i18n.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "输入框提示需将助理称呼动态绑定到语音助理设置名称。",
+      "evidence": [
+        "Safari 截图和用户要求。"
+      ]
+    },
+    "design": {
+      "status": "complete",
+      "summary": "使用 voiceAssistantDisplayName()，通过带占位符的 i18n key 生成中英文文案。",
+      "evidence": [
+        "app.js 已有 voiceAssistantDisplayName() 配置读取函数。"
+      ]
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "修改小秘模式 prompt placeholder，并同步英文目录与翻译测试。",
+      "evidence": [
+        "修改 app.js、locales/en.js、test_i18n.cjs。"
+      ]
+    },
+    "verification": {
+      "status": "complete",
+      "summary": "占位文案中英文模板和翻译占位符检查通过；JS 语法检查、相关小秘控件回归及文档检查通过。",
+      "evidence": [
+        "PASS：node scripts/test_i18n.cjs，动态中文助理名与英文模板插值正确。",
+        "PASS：node --check internal/server/web/app.js。",
+        "PASS：node --check internal/server/web/locales/en.js。",
+        "PASS：node scripts/test_assistant_mode_controls.cjs。",
+        "PASS：python3 scripts/check_docs.py。",
+        "Safari 运行时未做热替换；当前运行 RC14，不反映仓库未发布源码。"
+      ]
+    },
+    "documentation": {
+      "status": "complete",
+      "summary": "记录本次文案行为和验证。",
+      "evidence": [
+        "本任务 JSON。"
+      ]
+    },
+    "cleanup": {
+      "status": "complete",
+      "summary": "检查差异格式；保留并未改动前序未提交工作。",
+      "evidence": [
+        "PASS：git diff --check。"
+      ]
+    },
+    "release": {
+      "status": "not_applicable",
+      "summary": "用户未要求发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "当前 Safari 运行 RC14，不会热加载源码；本次验证源码翻译逻辑。"
+}

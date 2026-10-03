@@ -1,0 +1,59 @@
+{
+  "id": "harness-architecture-review-20261002",
+  "request": "审阅当前 aide agent harness 架构，对照前沿设计并编写不足分析与发展路线报告",
+  "baseline": "6a839798392351516cf5c1da66cb8c81f1f93063",
+  "initial_status": "main at 6a839798392351516cf5c1da66cb8c81f1f93063; working tree clean",
+  "acceptance": [
+    "Report distinguishes current Aide runtime harness from the developer skill router.",
+    "Claims about current implementation cite inspected code/config paths; frontier patterns link to primary sources.",
+    "Report identifies current gaps, limitations of the review, and a prioritized, measurable roadmap."
+  ],
+  "scope": [
+    "docs/reviews/2026-10-02-agent-harness-architecture-review.md",
+    "docs/tasks/harness-architecture-review-20261002.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "定位为基于当前 Aide 仓库和公开一手资料的工程审阅；明确报告边界、差距和路线，不声称全球排名或独立基准结果。",
+      "evidence": ["用户请求：审阅 harness 架构、分析当前不足与未来方向。"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "以控制/执行边界、持久任务、上下文、工具接口、安全、eval 六个维度对照，再给分期路线。",
+      "evidence": ["docs/architecture.md", "internal/server/workflow.go", "compose.yaml", "Dockerfile", "官方 OpenAI、Anthropic 与 SWE-agent 资料"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成带源码依据、限制说明、建议指标和官方来源的审阅报告。",
+      "evidence": ["docs/reviews/2026-10-02-agent-harness-architecture-review.md"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "文档链接与 Markdown 格式检查通过；源码结论以指定基线核对。",
+      "evidence": [
+        "python3 -m json.tool docs/tasks/harness-architecture-review-20261002.json — PASS",
+        "python3 scripts/check_docs.py — PASS: 127 Markdown files, 277 local links, JPEG signatures, FR-01..100",
+        "git diff --check — PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "报告归档到 docs/reviews，包含仓库证据、优先级路线和官方来源。",
+      "evidence": ["docs/reviews/2026-10-02-agent-harness-architecture-review.md"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "变更只有本审阅报告与其任务记录；无临时测试产物。",
+      "evidence": ["git status --short --branch"]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次请求未要求提交或推送；报告留在本地工作树待审阅。",
+      "evidence": ["发布授权未提供"]
+    }
+  },
+  "release_authorization": "本任务仅新增审阅文档，未获单独提交或推送授权。",
+  "rollback": "删除 docs/reviews/2026-10-02-agent-harness-architecture-review.md 与本任务 JSON。",
+  "handoff": "报告结论为静态架构审阅与公开资料综合；没有实施架构改造，也没有做运行时安全测试或 agent benchmark。报告和任务记录当前尚未提交。"
+}

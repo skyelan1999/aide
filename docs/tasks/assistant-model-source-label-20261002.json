@@ -1,0 +1,70 @@
+{
+  "id": "assistant-model-source-label-20261002",
+  "request": "语音助理设置中的“小秘模型来源”改为“助理模型来源”。",
+  "baseline": "27fd13418036a4e35c35740685468ffe7802258f",
+  "initial_status": "?? docs/reviews/2026-10-02-agent-harness-architecture-review.md\n?? docs/tasks/harness-architecture-review-20261002.json",
+  "acceptance": [
+    "语音助理设置中的模型来源字段标签显示“助理模型来源”；英语界面显示对应的 Assistant model source。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "docs/tasks/assistant-model-source-label-20261002.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求只改语音助理设置中字段标题的中文称呼。",
+      "evidence": [
+        "用户提供的 Safari 设置截图及明确文字指令。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "仅更换 i18n key 并同步英文词条，保留控件行为、模型设置和其他“小秘”产品用语。",
+      "evidence": [
+        "internal/server/web/app.js: renderXiaomiModelControl",
+        "internal/server/web/locales/en.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "将字段标题的翻译 key 改为“助理模型来源”，英文仍显示 Assistant model source。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/locales/en.js"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "JavaScript 语法检查通过；Safari 中未验证新文案，因为当前 9999 页面由已发布 RC14 服务提供，不会读取此工作树文件，且本轮未重启或替换用户服务。",
+      "evidence": [
+        "node --check internal/server/web/app.js：通过。",
+        "node --check internal/server/web/locales/en.js：通过。",
+        "当前 Safari 页面截图对应 https://localhost:9999/，运行版本为 RC14；本地源码变更未部署到该服务。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "不涉及用户文档或产品行为说明；只同步英文 UI 词条。",
+      "evidence": [
+        "internal/server/web/locales/en.js"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "改动限制在标签 i18n key、英文译文和任务记录；未更改其他“小秘”文案。",
+      "evidence": [
+        "git diff --check 尚待最终检查。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户未要求提交、推送或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "代码已修改；本轮不提交或推送。需要重新构建并在 Safari 中确认实际设置页标签后再将 UI 验收标记为通过。"
+}

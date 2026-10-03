@@ -1,9 +1,11 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -40,6 +42,25 @@ func TestCurrentTimePluginAvailableToAideAndXiaomi(t *testing.T) {
 	if !xiaomiTools["get_current_datetime"] || !xiaomiTools["get_week_number"] || xiaomiTools["other_tool"] {
 		t.Fatalf("XiaoMi should only receive the clock plugin, got %v", xiaomiTools)
 	}
+
+	// A denied plugin tool must be omitted from both model schemas and rejected
+	// if a model submits it directly (the advertised schema is not enforcement).
+	a.settings.DisabledTools = []string{"get_week_number"}
+	if names := toolNames(a.contextToolsFor(&Session{ID: "aide-test"})); names["get_week_number"] {
+		t.Fatalf("denied plugin tool leaked into aide schema: %v", names)
+	}
+	if names := toolNames(a.assistantAgentTools(true)); names["get_week_number"] {
+		t.Fatalf("denied plugin tool leaked into assistant schema: %v", names)
+	}
+	denied := ToolCall{}
+	denied.Function.Name = "get_week_number"
+	if got := a.execAssistantTool(denied, &assistantDecision{}); !strings.Contains(got, "已被管理员禁用") {
+		t.Fatalf("assistant execution should enforce deny decision, got %q", got)
+	}
+	if got := a.executeToolCall(context.Background(), denied, &Task{}, nil); !strings.Contains(got, "已被管理员禁用") {
+		t.Fatalf("aide execution should enforce deny decision, got %q", got)
+	}
+	a.settings.DisabledTools = nil
 
 	var call ToolCall
 	call.Function.Name = "get_current_datetime"
