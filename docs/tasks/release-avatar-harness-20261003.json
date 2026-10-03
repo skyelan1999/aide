@@ -70,17 +70,17 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "RC15 镜像和发行资产已构建并通过本地校验；GitHub 推送/发布及远端摘要校验尚待完成。",
+      "status": "pass",
+      "summary": "RC15 已推送并发布为 GitHub prerelease；远端返回 8 项已上传资产，7 个受清单约束的资产 digest 与本地 SHA256SUMS 一致。",
       "evidence": [
-        "源码 commit 6a6129a447d06498a7618189ab59413dcb8c11b3；tag v0.1.14.0-RC15。",
-        "Linux ARM64 image sha256:7b34f4db310cc5ddbd500db3e70ada9c01f46be407d33a1eead05c3c41b65b92；docker-release.sh Go tests、go vet、healthz PASS。",
-        "7 项发行资产 SHA256 与全部 zip/gzip 完整性检查 PASS。",
-        "真实浏览器验证、macOS/Windows 启动器运行、真实 A/B 激活/回滚未执行；详见 release-assets-2026-10-03-RC15.md。"
+        "Release: https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC15；tag v0.1.14.0-RC15 指向版本源码 commit 6a6129a447d06498a7618189ab59413dcb8c11b3。",
+        "GitHub Release API: isPrerelease=true，8 项资产 state=uploaded。",
+        "远端 image/full/update/launcher/RELEASE-ASSETS.txt digest 均与本地 SHA256SUMS 对应项一致；SHA256SUMS 自身远端 digest 为 3d9fb0729915e86fa9f457d1804c6fa26440bb20738a6bb9e05a63595721575e。",
+        "具体版本、资产与验证见 docs/reviews/release-assets-2026-10-03-RC15.md；浏览器端、macOS/Windows 实机启动与 A/B 激活/回滚未验证。"
       ]
     }
   },
   "release_authorization": "用户原话：可以了，提交并release版本吧。",
   "rollback": "Git rollback 使用 release tag 的前一版本；A/B 运行环境切换回原槽。保留共享数据卷，必要时先从发布镜像回滚并重新确认健康。",
-  "handoff": "发布完成后补入 GitHub Release URL、远端资产清单及摘要校验结果；tag 指向版本源码提交，报告账本允许后续文档提交。"
+  "handoff": "RC15 GitHub prerelease 已发布和远端摘要核验；tag 锁定版本源码提交，main 后续包含发布证据文档提交。"
 }

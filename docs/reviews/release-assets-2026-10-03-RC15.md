@@ -35,6 +35,12 @@ The asset directory's `SHA256SUMS` is authoritative. Hashes below are copied fro
 
 The macOS/Ubuntu/Windows launcher archives are lightweight online installers. The complete runtime package is about 521 MB and combines all launchers with the ARM64 image; that same ZIP supports offline first launch or in-app staging. The standalone update ZIP contains the image and the update manifest/checksum payload. No x86_64 image bundle was built on this ARM64 host.
 
+## Remote publication verification
+
+- GitHub prerelease: https://github.com/skyelan1999/aide/releases/tag/v0.1.14.0-RC15
+- Release API confirmed `isPrerelease=true` and all 8 assets are `uploaded`.
+- GitHub asset SHA256 digests match every corresponding image/ZIP/RELEASE-ASSETS.txt entry in the local manifest. Remote `SHA256SUMS` digest: `3d9fb0729915e86fa9f457d1804c6fa26440bb20738a6bb9e05a63595721575e`.
+
 ## Rollback
 
 RC14 remains the preceding release. For a failed RC15 A/B switch, select the previously active slot after the host launcher reports it healthy. Shared workspace and settings volumes are outside the image slot. Release tags and older assets remain unchanged.
