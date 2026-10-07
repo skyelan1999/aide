@@ -44,6 +44,11 @@ type ModelRef struct {
 	Name          string `json:"name,omitempty"`
 	ContextWindow int    `json:"contextWindow,omitempty"`
 	Vision        bool   `json:"vision,omitempty"` // #63 扩展：是否支持图片多模态输入
+	// Capabilities records provider/model features as supported, unsupported, or unknown.
+	// Unknown is deliberately the default: listing a model ID does not prove feature support.
+	Capabilities        map[string]string `json:"capabilities,omitempty"`
+	CapabilitiesSource  string            `json:"capabilitiesSource,omitempty"`
+	CapabilitiesChecked string            `json:"capabilitiesChecked,omitempty"`
 }
 type Settings struct {
 	BaseURL                string                 `json:"baseURL"`
@@ -133,6 +138,36 @@ func normalizeModels(models []ModelRef) ([]ModelRef, error) {
 		}
 		if m.ContextWindow < 1024 || m.ContextWindow > 2097152 {
 			return nil, fmt.Errorf("模型 %s 的上下文窗口须在 1024–2097152 之间", m.ID)
+		}
+		if len(m.Capabilities) > 16 {
+			return nil, fmt.Errorf("模型 %s 的能力项过多", m.ID)
+		}
+		if len(m.Capabilities) > 0 {
+			clean := make(map[string]string, len(m.Capabilities))
+			for capability, status := range m.Capabilities {
+				capability = strings.TrimSpace(capability)
+				if capability == "" || len(capability) > 40 {
+					return nil, fmt.Errorf("模型 %s 的能力名称无效", m.ID)
+				}
+				if _, duplicate := clean[capability]; duplicate {
+					return nil, fmt.Errorf("模型 %s 的能力名称重复: %s", m.ID, capability)
+				}
+				switch status {
+				case "supported", "unsupported", "unknown":
+				default:
+					return nil, fmt.Errorf("模型 %s 的能力 %s 状态无效", m.ID, capability)
+				}
+				clean[capability] = status
+			}
+			m.Capabilities = clean
+		}
+		m.CapabilitiesSource = strings.TrimSpace(m.CapabilitiesSource)
+		if len(m.CapabilitiesSource) > 120 {
+			return nil, fmt.Errorf("模型 %s 的能力来源过长", m.ID)
+		}
+		m.CapabilitiesChecked = strings.TrimSpace(m.CapabilitiesChecked)
+		if len(m.CapabilitiesChecked) > 40 {
+			return nil, fmt.Errorf("模型 %s 的能力核验时间无效", m.ID)
 		}
 		out = append(out, m)
 	}
@@ -1173,7 +1208,9 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/profiles", a.listProfiles)
 	mux.HandleFunc("GET /api/plugins", a.listPlugins)
 	mux.HandleFunc("POST /api/plugins", a.uploadPlugin)
+	mux.HandleFunc("POST /api/plugins/bundle", a.uploadPluginBundle)
 	mux.HandleFunc("PUT /api/plugins/{id}", a.togglePlugin)
+	mux.HandleFunc("PUT /api/plugins/{id}/settings", a.updatePluginSettings)
 	mux.HandleFunc("DELETE /api/plugins/{id}", a.deletePlugin)
 	mux.HandleFunc("GET /api/plugin-surface", a.pluginSurfaceHandler)
 	mux.HandleFunc("GET /api/plugins/daemons", a.listDaemons)

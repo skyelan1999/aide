@@ -13,6 +13,19 @@ COPY --from=node /usr/local/lib/node_modules /usr/local/lib/node_modules
 RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -s ../lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx
 
+# Source-development runtime: keep Python tooling aligned with the release
+# runtime while retaining Go and Node for `go run` and plugin hosting.
+FROM toolchain AS dev
+ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+RUN pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
+      python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0 \
+    && groupadd -g 1000 aide \
+    && useradd -m -u 1000 -g aide aide \
+    && mkdir -p /data /workspace /context /local /home/aide/.cache/go-build /home/aide/go \
+    && chown -R aide:aide /data /workspace /context /local /home/aide
+USER aide
+WORKDIR /src
+
 # ── build stage：编译 aide 二进制 ──────────────────────────────────────────────
 # 热路径优化（#43）：默认不再跑全量 go test。日常 start 走层缓存，只做 vet+build；
 # 全量测试移到发布门禁——release/CI 必须 --build-arg AIDE_RUN_TESTS=1。
@@ -45,7 +58,7 @@ ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 # not enter the final runtime stage from this build stage.
 RUN if [ "${AIDE_RUN_TESTS}" = "1" ]; then \
       pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
-        python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf==6.19.0; \
+        python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0; \
     fi
 RUN --mount=type=cache,target=/root/.cache/go-build \
     echo "[build] AIDE_RUN_TESTS=${AIDE_RUN_TESTS}" && \
@@ -79,11 +92,11 @@ RUN --mount=type=cache,target=/root/.cache/pip \
     if [ "${PIP_OFFLINE}" = "1" ]; then \
       echo "[runtime] 离线模式：从 /wheels 安装（--no-index）"; \
       pip install --no-index --find-links=/wheels \
-        python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf==6.19.0; \
+        python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0; \
     else \
       echo "[runtime] 在线模式：从 ${PIP_INDEX_URL} 安装"; \
       pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
-        python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf==6.19.0; \
+        python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0; \
     fi
 
 # 2.5) 本地离线 TTS：sherpa-onnx 预编译 CPU 二进制（#44，Apache-2.0，无 cgo）——稳定层
@@ -131,6 +144,11 @@ RUN set -ux; \
 # 2.6) Office 工具脚本（#63）：aide 经 os/exec 调用（docx_structure/comments 等）。
 #      查找顺序：$AIDE_OFFICE_SCRIPTS → /workspace/scripts/office（dev 挂仓）→ 本目录。
 COPY scripts/office /opt/aide/office-scripts
+
+# Ship control plugins independently of the mounted user's workspace.
+COPY plugins/browser-control /opt/aide/builtin-plugins/browser-control
+COPY plugins/computer-control /opt/aide/builtin-plugins/computer-control
+ENV AIDE_BUILTIN_PLUGINS=/opt/aide/builtin-plugins
 
 # 3) 业务二进制（随每次代码/前端改动变化）——最易失效的层放在最后
 COPY --from=build /usr/local/bin/aide /usr/local/bin/aide

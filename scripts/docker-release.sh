@@ -22,7 +22,7 @@ COMMIT="$(git rev-parse HEAD)"
 TAG="aide:${VER}"
 SOURCE_SHA="$(
   (
-    find cmd internal vendor scripts/office docker/wheels docker/sherpa -type f -print0
+    find cmd internal plugins vendor scripts/office docker/wheels docker/sherpa -type f -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md
   ) | sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
 )"

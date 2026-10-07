@@ -9,6 +9,31 @@ import (
 	"time"
 )
 
+func TestExplicitModelCapabilitiesControlProviderFeatures(t *testing.T) {
+	cfg := Settings{
+		BaseURL: "http://127.0.0.1", Model: "gpt-4o-mini",
+		Models: []ModelRef{{ID: "gpt-4o-mini", Capabilities: map[string]string{
+			"tool_calls": "unsupported", "vision": "unsupported", "structured_output": "unsupported", "reasoning": "unsupported",
+		}}},
+		ReasoningEffort: "high",
+	}
+	if modelSupportsVision(cfg.Model, cfg.Models) {
+		t.Fatal("explicit vision=unsupported must override model-name heuristic")
+	}
+	body := buildChatBody(cfg, []Message{{Role: "user", Content: "hi"}}, ProfileParams{ResponseFormat: "json_object"}, []any{map[string]any{"type": "function"}}, false)
+	for _, key := range []string{"tools", "response_format", "thinking", "reasoning_effort"} {
+		if _, ok := body[key]; ok {
+			t.Errorf("unsupported capability %s was sent: %#v", key, body[key])
+		}
+	}
+	// An explicitly unsupported feature is rejected before any network request.
+	cfg.BaseURL = "not a valid URL"
+	_, _, _, err := complete(context.Background(), cfg, []Message{{Role: "user", Content: "hi"}}, ProfileParams{ResponseFormat: "json_object"}, nil, nil)
+	if err == nil || !strings.Contains(err.Error(), "不支持结构化输出") {
+		t.Fatal("structured output should be rejected locally")
+	}
+}
+
 func TestCompleteStreamTextDeltas(t *testing.T) {
 	// 模拟 OpenAI 兼容 SSE：逐 chunk 推 content，最后 [DONE]
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

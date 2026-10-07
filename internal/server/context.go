@@ -390,11 +390,12 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	history = append(history, Message{Role: "user", Content: prompt + contextText, Images: images})
 	instruction := chatInstruction
 	if mode == "workflow" {
-		instruction = planInstruction
+		instruction = modelLedInstruction
 	}
-	first := append(append([]Message{}, history...), Message{Role: "user", Content: instruction})
 	avatarEnabled := len(avatarFeedback) > 0 && avatarFeedback[0] && avatarCueFormatAllowed(params)
 	tools := withAvatarCueTool(a.contextToolsFor(s), avatarEnabled)
+	instruction += "\n" + runtimeCapabilityInstruction(tools, prompt, mode)
+	first := append(append([]Message{}, history...), Message{Role: "user", Content: instruction})
 
 	for i := historyStart; i < len(history)-1; i++ {
 		addHistoryComponent(&bd, history[i])

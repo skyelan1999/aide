@@ -1,0 +1,9 @@
+{
+  "id": "browser-control",
+  "name": "浏览器控制",
+  "description": "独立无头 Chromium 读取实际网页正文、链接与控件，支持导航、点击、输入、滚动；可切换 Safari",
+  "version": "1.1.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": false
+}

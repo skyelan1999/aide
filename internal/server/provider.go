@@ -97,7 +97,7 @@ func isEmptyCompletionErr(err error) bool {
 // deepseek-reasoner 不支持的采样参数会被剔除，避免上游 400。
 func buildChatBody(cfg Settings, messages []Message, params ProfileParams, tools []any, stream bool) map[string]any {
 	body := map[string]any{"model": cfg.Model, "messages": outgoingMessages(messages), "stream": stream}
-	if len(tools) > 0 {
+	if len(tools) > 0 && modelCapabilityStatus(cfg, "tool_calls") != "unsupported" {
 		body["tools"] = tools
 	}
 	if params.Temperature != nil {
@@ -115,17 +115,19 @@ func buildChatBody(cfg Settings, messages []Message, params ProfileParams, tools
 	if params.PresencePenalty != nil {
 		body["presence_penalty"] = *params.PresencePenalty
 	}
-	if params.ResponseFormat != "" {
+	if params.ResponseFormat != "" && modelCapabilityStatus(cfg, "structured_output") != "unsupported" {
 		body["response_format"] = map[string]string{"type": params.ResponseFormat}
 	}
 	if len(params.Stop) > 0 {
 		body["stop"] = params.Stop
 	}
 	// 推理强度：auto 不传；off 显式关闭；low/medium/high 开启 thinking + 设 effort
-	switch cfg.ReasoningEffort {
-	case "off":
+	switch {
+	case modelCapabilityStatus(cfg, "reasoning") == "unsupported":
+		// Do not send reasoning extensions to a model explicitly marked unsupported.
+	case cfg.ReasoningEffort == "off":
 		body["thinking"] = map[string]string{"type": "disabled"}
-	case "low", "medium", "high":
+	case cfg.ReasoningEffort == "low" || cfg.ReasoningEffort == "medium" || cfg.ReasoningEffort == "high":
 		body["thinking"] = map[string]string{"type": "enabled"}
 		body["reasoning_effort"] = cfg.ReasoningEffort
 	}
@@ -142,9 +144,24 @@ func buildChatBody(cfg Settings, messages []Message, params ProfileParams, tools
 	return body
 }
 
+func modelCapabilityStatus(cfg Settings, capability string) string {
+	for _, model := range cfg.Models {
+		if model.ID == cfg.Model {
+			return model.Capabilities[capability]
+		}
+	}
+	return ""
+}
+
 func complete(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte)) (string, []ToolCall, TokenUsage, error) {
 	if cfg.BaseURL == "" || cfg.Model == "" {
 		return "", nil, TokenUsage{}, errors.New("请先在模型设置中配置 API 地址和模型")
+	}
+	if len(tools) > 0 && modelCapabilityStatus(cfg, "tool_calls") == "unsupported" {
+		return "", nil, TokenUsage{}, fmt.Errorf("模型 %q 已标记为不支持工具调用；请切换模型，或先核验并更新能力设置", cfg.Model)
+	}
+	if params.ResponseFormat != "" && modelCapabilityStatus(cfg, "structured_output") == "unsupported" {
+		return "", nil, TokenUsage{}, fmt.Errorf("模型 %q 已标记为不支持结构化输出；请切换模型，或先核验并更新能力设置", cfg.Model)
 	}
 	body := buildChatBody(cfg, messages, params, tools, false)
 	promptEstimate := estimateProviderPromptTokens(messages, tools)

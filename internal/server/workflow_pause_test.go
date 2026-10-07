@@ -36,6 +36,11 @@ func TestToolLoopCheckpointResumesAfterCompletedTool(t *testing.T) {
 			resumedMessages = append([]Message(nil), body.Messages...)
 			resumedMessagesMu.Unlock()
 			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "continued from checkpoint"}}}})
+		case 3:
+			if !strings.Contains(body.Messages[len(body.Messages)-1].Content, "任务收尾自检") {
+				t.Error("missing completion review")
+			}
+			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "continued from checkpoint"}}}})
 		default:
 			t.Errorf("unexpected provider request %d", requests.Load())
 			jsonOut(w, 500, map[string]string{"error": "unexpected request"})
@@ -72,8 +77,8 @@ func TestToolLoopCheckpointResumesAfterCompletedTool(t *testing.T) {
 	if err != nil || out != "continued from checkpoint" {
 		t.Fatalf("resume output = %q, err = %v", out, err)
 	}
-	if got := requests.Load(); got != 2 {
-		t.Fatalf("provider requests = %d, want original tool round + one resume round", got)
+	if got := requests.Load(); got != 3 {
+		t.Fatalf("provider requests = %d, want original tool round + resume + one completion review", got)
 	}
 	if len(task.ToolUses) != 1 {
 		t.Fatalf("resume repeated a completed tool call: got %d tool uses", len(task.ToolUses))

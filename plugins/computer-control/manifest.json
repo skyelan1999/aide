@@ -1,0 +1,9 @@
+{
+  "id": "computer-control",
+  "name": "电脑控制",
+  "description": "读取允许应用窗口的截图和辅助功能控件；独立 Aide Computer Bridge 提供权限入口，点击、输入和按键仍需 Aide 确认",
+  "version": "1.1.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": false
+}

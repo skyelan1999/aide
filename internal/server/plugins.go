@@ -1,14 +1,18 @@
 package server
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
+	pathpkg "path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -19,45 +23,140 @@ import (
 var pluginHostJS string
 
 const (
-	pluginsDirName   = "plugins"
-	pluginSurfaceFN  = "surface.json"
-	maxPlugins       = 50
-	maxPluginCode    = 256 << 10
-	pluginRunTimeout = 10 * time.Second
+	pluginsDirName    = "plugins"
+	pluginSurfaceFN   = "surface.json"
+	maxPlugins        = 50
+	maxPluginCode     = 256 << 10
+	maxPluginBundle   = 24 << 20
+	maxPluginExpanded = 64 << 20
+	maxPluginFiles    = 256
+	pluginRunTimeout  = 10 * time.Second
 )
 
 var pluginIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 
 type PluginManifest struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Version     string `json:"version,omitempty"`
-	Author      string `json:"author,omitempty"`
-	Main        string `json:"main"`
-	Enabled     bool   `json:"enabled"`
-	Daemon      bool   `json:"daemon,omitempty"` // 协议 v1.2：常驻守护插件
-	InstalledAt string `json:"installedAt"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name"`
+	Description string         `json:"description,omitempty"`
+	Version     string         `json:"version,omitempty"`
+	Author      string         `json:"author,omitempty"`
+	Main        string         `json:"main"`
+	Enabled     bool           `json:"enabled"`
+	Daemon      bool           `json:"daemon,omitempty"` // 协议 v1.2：常驻守护插件
+	Settings    map[string]any `json:"settings,omitempty"`
+	InstalledAt string         `json:"installedAt"`
 }
 
 type pluginRegistry struct {
-	Version int              `json:"version"`
-	Plugins []PluginManifest `json:"plugins"`
+	Version         int              `json:"version"`
+	Plugins         []PluginManifest `json:"plugins"`
+	RemovedBuiltins []string         `json:"removedBuiltins,omitempty"`
 }
 
-// loadPlugins 在 New() 中调用：读取工程目录 plugins/registry.json；缺失时使用空注册表。
+// loadPlugins reads workspace state, then adds newly shipped control plugins.
+// Existing plugin code, enablement and settings belong to the workspace.
 func (a *App) loadPlugins() error {
 	a.pluginsPath = filepath.Join(a.workPath, pluginsDirName)
 	a.pluginRegistry = pluginRegistry{Version: 1, Plugins: []PluginManifest{}}
 	b, err := os.ReadFile(filepath.Join(a.pluginsPath, "registry.json"))
 	if errors.Is(err, os.ErrNotExist) {
-		return nil
+		return a.installBundledControlPlugins(os.Getenv("AIDE_BUILTIN_PLUGINS"))
 	}
 	if err != nil {
 		return err
 	}
 	if err := json.Unmarshal(b, &a.pluginRegistry); err != nil {
 		return fmt.Errorf("解析 plugins/registry.json: %w", err)
+	}
+	return a.installBundledControlPlugins(os.Getenv("AIDE_BUILTIN_PLUGINS"))
+}
+
+func (a *App) installBundledControlPlugins(bundlePath string) error {
+	if bundlePath == "" {
+		return nil
+	}
+	for _, id := range []string{"browser-control", "computer-control"} {
+		found := false
+		for _, removed := range a.pluginRegistry.RemovedBuiltins {
+			if removed == id {
+				found = true
+			}
+		}
+		for _, existing := range a.pluginRegistry.Plugins {
+			if existing.ID == id {
+				found = true
+				break
+			}
+		}
+		if found {
+			continue
+		}
+		source := filepath.Join(bundlePath, id)
+		raw, err := os.ReadFile(filepath.Join(source, "manifest.json"))
+		if err != nil {
+			return fmt.Errorf("read bundled plugin %s: %w", id, err)
+		}
+		var manifest PluginManifest
+		if err := json.Unmarshal(raw, &manifest); err != nil || manifest.ID != id || manifest.Main != "index.js" {
+			return fmt.Errorf("invalid bundled control plugin manifest: %s", id)
+		}
+		code, err := os.ReadFile(filepath.Join(source, "index.js"))
+		if err != nil {
+			return err
+		}
+		if err := os.MkdirAll(a.pluginsPath, 0755); err != nil {
+			return err
+		}
+		destination := filepath.Join(a.pluginsPath, id)
+		// Source upgrades may already contain the files but retain an older
+		// registry. Register a valid local copy without replacing its contents.
+		if info, err := os.Lstat(destination); err == nil {
+			if !info.IsDir() {
+				return fmt.Errorf("bundled plugin path is not a directory: %s", id)
+			}
+			local, readErr := os.ReadFile(filepath.Join(destination, "manifest.json"))
+			if readErr != nil || json.Unmarshal(local, &manifest) != nil || manifest.ID != id || manifest.Main != "index.js" {
+				return fmt.Errorf("cannot register existing control plugin directory: %s", id)
+			}
+			entry, statErr := os.Lstat(filepath.Join(destination, "index.js"))
+			if statErr != nil || !entry.Mode().IsRegular() {
+				return fmt.Errorf("control plugin entry is not a regular file: %s", id)
+			}
+			manifest.Enabled = false
+			a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, manifest)
+			if err := a.savePluginRegistry(); err != nil {
+				a.pluginRegistry.Plugins = a.pluginRegistry.Plugins[:len(a.pluginRegistry.Plugins)-1]
+				return err
+			}
+			continue
+		} else if !errors.Is(err, os.ErrNotExist) {
+			return err
+		}
+		stage, err := os.MkdirTemp(a.pluginsPath, ".builtin-")
+		if err != nil {
+			return err
+		}
+		manifest.Enabled = false
+		manifest.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
+		err = os.WriteFile(filepath.Join(stage, "index.js"), code, 0644)
+		if err == nil {
+			err = atomicJSON(filepath.Join(stage, "manifest.json"), manifest)
+		}
+		if err == nil {
+			err = os.Rename(stage, destination)
+		}
+		_ = os.RemoveAll(stage)
+		if err != nil {
+			return err
+		}
+		a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, manifest)
+		// Persist each successful install so a later failure can be retried.
+		if err := a.savePluginRegistry(); err != nil {
+			a.pluginRegistry.Plugins = a.pluginRegistry.Plugins[:len(a.pluginRegistry.Plugins)-1]
+			_ = os.RemoveAll(destination)
+			return err
+		}
 	}
 	return nil
 }
@@ -74,10 +173,10 @@ func (a *App) savePluginRegistry() error {
 // node 结束后再用短锁把 surface 写回。调用方不得持有 a.mu（本函数会自行取放）。
 func (a *App) runPluginHost(ctx context.Context) {
 	a.mu.Lock()
-	enabled := []map[string]string{}
+	enabled := []map[string]any{}
 	for _, p := range a.pluginRegistry.Plugins {
 		if p.Enabled {
-			enabled = append(enabled, map[string]string{"id": p.ID, "name": p.Name})
+			enabled = append(enabled, map[string]any{"id": p.ID, "name": p.Name, "main": p.Main, "settings": p.Settings})
 		}
 	}
 	pluginsPath := a.pluginsPath
@@ -148,10 +247,75 @@ func (a *App) listPlugins(w http.ResponseWriter, r *http.Request) {
 		items = append(items, map[string]any{
 			"id": p.ID, "name": p.Name, "description": p.Description, "version": p.Version,
 			"author": p.Author, "enabled": p.Enabled, "installedAt": p.InstalledAt,
-			"error": a.pluginError(p.ID),
+			"error": a.pluginError(p.ID), "settings": pluginSettingsOrEmpty(p.Settings),
 		})
 	}
 	jsonOut(w, 200, map[string]any{"plugins": items})
+}
+
+func pluginSettingsOrEmpty(settings map[string]any) map[string]any {
+	if settings == nil {
+		return map[string]any{}
+	}
+	return settings
+}
+
+// updatePluginSettings saves non-secret, workspace-local settings for one plugin.
+func (a *App) updatePluginSettings(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Settings map[string]any `json:"settings"`
+	}
+	if err := decode(w, r, &in); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if in.Settings == nil {
+		fail(w, 400, errors.New("插件设置必须是 JSON 对象"))
+		return
+	}
+	encoded, err := json.Marshal(in.Settings)
+	if err != nil || len(encoded) > 32<<10 {
+		fail(w, 400, errors.New("插件设置不能超过 32 KiB"))
+		return
+	}
+	id := r.PathValue("id")
+	a.mu.Lock()
+	index := -1
+	for i := range a.pluginRegistry.Plugins {
+		if a.pluginRegistry.Plugins[i].ID == id {
+			index = i
+			break
+		}
+	}
+	if index < 0 {
+		a.mu.Unlock()
+		fail(w, 404, errors.New("插件不存在"))
+		return
+	}
+	p := &a.pluginRegistry.Plugins[index]
+	p.Settings = in.Settings
+	isDaemon, mainPath := a.daemonManifestSnapshotLocked(id)
+	enabled := p.Enabled
+	settings := p.Settings
+	if err := a.savePluginRegistry(); err != nil {
+		a.mu.Unlock()
+		fail(w, 500, err)
+		return
+	}
+	a.mu.Unlock()
+
+	var restartError string
+	if isDaemon && enabled && a.daemons != nil {
+		if err := a.daemons.RestartWithSettings(id, mainPath, settings); err != nil {
+			restartError = err.Error()
+		}
+	}
+	a.runPluginHost(context.Background())
+	result := map[string]any{"id": id, "settings": settings}
+	if restartError != "" {
+		result["restartError"] = restartError
+	}
+	jsonOut(w, 200, result)
 }
 
 func (a *App) pluginError(id string) string {
@@ -261,6 +425,204 @@ func (a *App) uploadPlugin(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 201, map[string]any{"id": in.ID, "name": in.Name, "enabled": true, "error": errText})
 }
 
+// uploadPluginBundle installs a self-contained ZIP package with a manifest, JS
+// entry point, and optional resources such as Python scripts. It never runs pip.
+func (a *App) uploadPluginBundle(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxPluginBundle)
+	if err := r.ParseMultipartForm(2 << 20); err != nil {
+		fail(w, 400, fmt.Errorf("插件包上传失败或超过 24 MiB: %w", err))
+		return
+	}
+	if r.MultipartForm != nil {
+		defer r.MultipartForm.RemoveAll()
+	}
+	f, _, err := r.FormFile("bundle")
+	if err != nil {
+		fail(w, 400, errors.New("请选择插件 ZIP 包"))
+		return
+	}
+	defer f.Close()
+	raw, err := io.ReadAll(io.LimitReader(f, maxPluginBundle+1))
+	if err != nil || len(raw) > maxPluginBundle {
+		fail(w, 400, errors.New("插件 ZIP 包超过 24 MiB"))
+		return
+	}
+	zr, err := zip.NewReader(bytes.NewReader(raw), int64(len(raw)))
+	if err != nil {
+		fail(w, 400, fmt.Errorf("插件 ZIP 包无法读取: %w", err))
+		return
+	}
+	if len(zr.File) == 0 || len(zr.File) > maxPluginFiles {
+		fail(w, 400, fmt.Errorf("插件包文件数必须为 1–%d", maxPluginFiles))
+		return
+	}
+	files := make(map[string][]byte, len(zr.File))
+	manifestPath := ""
+	var expanded int64
+	for _, entry := range zr.File {
+		name := strings.ReplaceAll(entry.Name, "\\", "/")
+		if entry.FileInfo().IsDir() {
+			continue
+		}
+		if entry.Mode()&os.ModeSymlink != 0 || name == "" || strings.HasPrefix(name, "/") || pathpkg.Clean(name) != name || strings.Contains(name, ":") {
+			fail(w, 400, errors.New("插件包包含不安全路径"))
+			return
+		}
+		for _, part := range strings.Split(name, "/") {
+			if part == "" || part == "." || part == ".." || strings.HasPrefix(part, ".") {
+				fail(w, 400, errors.New("插件包包含不允许的路径"))
+				return
+			}
+		}
+		if strings.HasPrefix(name, "__MACOSX/") || pathpkg.Base(name) == ".DS_Store" {
+			continue
+		}
+		if _, duplicate := files[name]; duplicate {
+			fail(w, 400, fmt.Errorf("插件包存在重复文件: %s", name))
+			return
+		}
+		if entry.UncompressedSize64 > 16<<20 || expanded+int64(entry.UncompressedSize64) > maxPluginExpanded {
+			fail(w, 400, errors.New("插件包解压后超过限制（单文件 16 MiB，合计 64 MiB）"))
+			return
+		}
+		reader, openErr := entry.Open()
+		if openErr != nil {
+			fail(w, 400, openErr)
+			return
+		}
+		contents, readErr := io.ReadAll(io.LimitReader(reader, int64(entry.UncompressedSize64)+1))
+		closeErr := reader.Close()
+		if readErr != nil || closeErr != nil || uint64(len(contents)) != entry.UncompressedSize64 {
+			fail(w, 400, fmt.Errorf("插件包文件读取失败: %s", name))
+			return
+		}
+		expanded += int64(len(contents))
+		files[name] = contents
+		if pathpkg.Base(name) == "manifest.json" {
+			if manifestPath != "" {
+				fail(w, 400, errors.New("插件包必须只有一个 manifest.json"))
+				return
+			}
+			manifestPath = name
+		}
+	}
+	if manifestPath == "" {
+		fail(w, 400, errors.New("插件包缺少 manifest.json"))
+		return
+	}
+	root := pathpkg.Dir(manifestPath)
+	packageFiles := make(map[string][]byte, len(files))
+	for name, contents := range files {
+		rel := name
+		if root != "." {
+			if !strings.HasPrefix(name, root+"/") {
+				fail(w, 400, fmt.Errorf("插件包内容必须位于同一目录: %s", name))
+				return
+			}
+			rel = strings.TrimPrefix(name, root+"/")
+		}
+		packageFiles[rel] = contents
+	}
+	var manifest PluginManifest
+	manifestBytes := packageFiles["manifest.json"]
+	if len(manifestBytes) == 0 || json.Unmarshal(manifestBytes, &manifest) != nil {
+		fail(w, 400, errors.New("插件 manifest.json 无效"))
+		return
+	}
+	if !pluginIDPattern.MatchString(manifest.ID) || strings.TrimSpace(manifest.Name) == "" || len([]rune(manifest.Name)) > 32 {
+		fail(w, 400, errors.New("manifest 必须包含合法 id 和 1–32 字的 name"))
+		return
+	}
+	main := strings.ReplaceAll(manifest.Main, "\\", "/")
+	if main == "" || strings.HasPrefix(main, "/") || pathpkg.Clean(main) != main || !strings.HasSuffix(main, ".js") || strings.Contains(main, ":") {
+		fail(w, 400, errors.New("manifest.main 必须是插件包内的相对 .js 路径"))
+		return
+	}
+	for _, part := range strings.Split(main, "/") {
+		if part == "" || part == "." || part == ".." || strings.HasPrefix(part, ".") {
+			fail(w, 400, errors.New("manifest.main 路径无效"))
+			return
+		}
+	}
+	code := packageFiles[main]
+	if len(code) == 0 || len(code) > maxPluginCode {
+		fail(w, 400, errors.New("插件入口缺失或超过 256 KiB"))
+		return
+	}
+	if _, err := a.validatePluginCode(string(code)); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	if a.pluginsPath == "" {
+		a.pluginsPath = filepath.Join(a.workPath, pluginsDirName)
+	}
+	if err := os.MkdirAll(a.pluginsPath, 0755); err != nil {
+		fail(w, 500, err)
+		return
+	}
+	stage, err := os.MkdirTemp(a.pluginsPath, ".install-")
+	if err != nil {
+		fail(w, 500, err)
+		return
+	}
+	defer os.RemoveAll(stage)
+	for rel, contents := range packageFiles {
+		if rel == "manifest.json" {
+			continue
+		}
+		dest := filepath.Join(stage, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
+			fail(w, 500, err)
+			return
+		}
+		mode := os.FileMode(0644)
+		if strings.HasSuffix(rel, ".py") {
+			mode = 0644
+		}
+		if err := os.WriteFile(dest, contents, mode); err != nil {
+			fail(w, 500, err)
+			return
+		}
+	}
+	manifest.Main = main
+	manifest.Enabled = true
+	manifest.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
+	if err := atomicJSON(filepath.Join(stage, "manifest.json"), manifest); err != nil {
+		fail(w, 500, err)
+		return
+	}
+	a.mu.Lock()
+	if len(a.pluginRegistry.Plugins) >= maxPlugins {
+		a.mu.Unlock()
+		fail(w, 400, fmt.Errorf("插件最多 %d 个", maxPlugins))
+		return
+	}
+	for _, p := range a.pluginRegistry.Plugins {
+		if p.ID == manifest.ID {
+			a.mu.Unlock()
+			fail(w, 409, errors.New("插件 id 已存在"))
+			return
+		}
+	}
+	destination := filepath.Join(a.pluginsPath, manifest.ID)
+	if err := os.Rename(stage, destination); err != nil {
+		a.mu.Unlock()
+		fail(w, 500, err)
+		return
+	}
+	a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, manifest)
+	if err := a.savePluginRegistry(); err != nil {
+		a.pluginRegistry.Plugins = a.pluginRegistry.Plugins[:len(a.pluginRegistry.Plugins)-1]
+		_ = os.RemoveAll(destination)
+		a.mu.Unlock()
+		fail(w, 500, err)
+		return
+	}
+	a.mu.Unlock()
+	a.runPluginHost(context.Background())
+	jsonOut(w, 201, map[string]any{"id": manifest.ID, "name": manifest.Name, "enabled": true})
+}
+
 func (a *App) togglePlugin(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Enabled bool `json:"enabled"`
@@ -340,6 +702,9 @@ func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pluginsPath := a.pluginsPath
+	if id == "browser-control" || id == "computer-control" {
+		a.pluginRegistry.RemovedBuiltins = append(a.pluginRegistry.RemovedBuiltins, id)
+	}
 	if err := a.savePluginRegistry(); err != nil {
 		a.mu.Unlock()
 		fail(w, 500, err)
@@ -358,19 +723,55 @@ func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {
 // callPluginTool 调用启用插件的可执行工具。
 // 协议 v1.2：声明 daemon:true 的插件走常驻 DaemonManager（IPC），其余保持 v1.1 短命进程（向后兼容）。
 func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (any, error) {
+	return a.callPluginToolContext(context.Background(), pluginID, toolName, args)
+}
+
+func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName string, args map[string]any) (any, error) {
+	if err := parent.Err(); err != nil {
+		return nil, err
+	}
+	if pluginID == "browser-control" || pluginID == "computer-control" {
+		a.mu.Lock()
+		enabled := false
+		for _, p := range a.pluginRegistry.Plugins {
+			if p.ID == pluginID {
+				enabled = p.Enabled
+				break
+			}
+		}
+		a.mu.Unlock()
+		if !enabled {
+			return nil, errors.New("控制插件已停用，操作未执行")
+		}
+	}
 	if a.daemons != nil && a.isDaemonPlugin(pluginID) {
 		return a.daemons.Call(pluginID, toolName, args)
 	}
-	req, err := json.Marshal(map[string]any{"plugin": pluginID, "tool": toolName, "args": args})
+	a.mu.Lock()
+	settings := map[string]any{}
+	for _, p := range a.pluginRegistry.Plugins {
+		if p.ID == pluginID {
+			settings = pluginSettingsOrEmpty(p.Settings)
+			break
+		}
+	}
+	a.mu.Unlock()
+	req, err := json.Marshal(map[string]any{"plugin": pluginID, "tool": toolName, "args": args, "settings": settings})
 	if err != nil {
 		return nil, err
 	}
 	outFile := filepath.Join(os.TempDir(), "aide-plugin-call-"+newID()+".json")
 	defer os.Remove(outFile)
-	ctx, cancel := context.WithTimeout(context.Background(), 70*time.Second)
+	ctx, cancel := context.WithTimeout(parent, 310*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "node", "-e", pluginHostJS, "call", a.pluginsPath, string(req), outFile)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
+	if bridgeToken := os.Getenv("AIDE_BROWSER_BRIDGE_TOKEN"); pluginID == "browser-control" && len(bridgeToken) >= 32 {
+		cmd.Env = append(cmd.Env, "AIDE_BROWSER_BRIDGE_TOKEN="+bridgeToken)
+	}
+	if bridgeToken := os.Getenv("AIDE_COMPUTER_BRIDGE_TOKEN"); pluginID == "computer-control" && len(bridgeToken) >= 32 {
+		cmd.Env = append(cmd.Env, "AIDE_COMPUTER_BRIDGE_TOKEN="+bridgeToken)
+	}
 	// 有界读取 stdout/stderr，防止坏插件狂写致 OOM（实际结果写入 outFile，此处仅用于排障）。
 	pluginStdout := &limitedBytesWriter{limit: 64 << 10}
 	pluginStderr := &limitedBytesWriter{limit: 64 << 10}
@@ -378,6 +779,9 @@ func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (an
 	cmd.Stderr = pluginStderr
 	runErr := cmd.Run()
 	if ctx.Err() != nil && runErr != nil {
+		if parent.Err() != nil {
+			return nil, parent.Err()
+		}
 		return nil, errors.New("插件工具执行超时")
 	} else if runErr != nil {
 		detail := strings.TrimSpace(pluginStderr.String())
@@ -419,6 +823,20 @@ func normalizePluginResult(raw any) (string, []map[string]any) {
 				proposals = append(proposals, prop)
 			} else if s, ok := t["text"].(string); ok {
 				text = s
+			} else {
+				// Preserve structured status/results for the model. Do not dump
+				// binary screenshot data into a text-only tool message.
+				summary := make(map[string]any, len(t))
+				for k, v := range t {
+					if k == "imageBase64" {
+						summary["imageNotice"] = "截图已返回；当前文本工具结果不包含图像，不能据此声称已看见屏幕。"
+						continue
+					}
+					summary[k] = v
+				}
+				if b, err := json.Marshal(summary); err == nil {
+					text = string(b)
+				}
 			}
 		}
 	}

@@ -77,8 +77,15 @@ func modelSupportsVision(modelID string, models []ModelRef) bool {
 		return false
 	}
 	for _, m := range models {
-		if m.ID == modelID && m.Vision {
-			return true
+		if m.ID == modelID {
+			if status := m.Capabilities["vision"]; status == "supported" {
+				return true
+			} else if status == "unsupported" {
+				return false
+			}
+			if m.Vision {
+				return true
+			}
 		}
 	}
 	low := strings.ToLower(modelID)

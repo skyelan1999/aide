@@ -29,15 +29,15 @@ import (
 )
 
 const (
-	daemonEventCap     = 1000             // 每个 daemon 进程事件环形缓存容量
-	daemonPingInterval = 30 * time.Second // 心跳周期
-	daemonPingTimeout  = 5 * time.Second  // 心跳等待 pong 超时，超时即判崩溃
-	daemonCallTimeout  = 70 * time.Second // 单次 tool.call 等待结果超时（与 v1.1 对齐）
-	daemonStartTimeout = 15 * time.Second // 启动等待 ready 事件超时
-	daemonMaxBackoff   = 30 * time.Second // 崩溃退避上限
-	daemonBaseBackoff  = time.Second      // 首次崩溃退避
-	daemonResetUptime  = 60 * time.Second // 连续健康运行超过此时长则重置退避基数
-	daemonGraceStop    = 3 * time.Second  // 优雅停止宽限，超时后 SIGKILL
+	daemonEventCap     = 1000              // 每个 daemon 进程事件环形缓存容量
+	daemonPingInterval = 30 * time.Second  // 心跳周期
+	daemonPingTimeout  = 5 * time.Second   // 心跳等待 pong 超时，超时即判崩溃
+	daemonCallTimeout  = 310 * time.Second // 覆盖 Python 工具最长 280s 与 IPC 收尾
+	daemonStartTimeout = 15 * time.Second  // 启动等待 ready 事件超时
+	daemonMaxBackoff   = 30 * time.Second  // 崩溃退避上限
+	daemonBaseBackoff  = time.Second       // 首次崩溃退避
+	daemonResetUptime  = 60 * time.Second  // 连续健康运行超过此时长则重置退避基数
+	daemonGraceStop    = 3 * time.Second   // 优雅停止宽限，超时后 SIGKILL
 )
 
 type daemonStatus string
@@ -73,10 +73,11 @@ type rpcResp struct {
 
 // daemonProc 单个 daemon 插件的运行态。
 type daemonProc struct {
-	id         string
-	pluginPath string
-	cmd        *exec.Cmd
-	stdin      io.WriteCloser
+	id           string
+	pluginPath   string
+	settingsJSON string
+	cmd          *exec.Cmd
+	stdin        io.WriteCloser
 
 	mu      sync.Mutex // 保护 cmd/stdin/pending/nextID
 	nextID  int64
@@ -204,18 +205,41 @@ func (m *DaemonManager) Start(id string) error {
 // 慢进程（go p.supervise → 实际 spawn node 宿主、等待 ready）在 m.mu 与 a.mu 之外进行：
 // 本函数只在 m.mu 内做注册表登记/状态句柄的快速更新，随后即放锁，绝不在锁内等待子进程。
 func (m *DaemonManager) StartWithPath(id, pluginMain string) error {
+	settings := map[string]any{}
+	m.app.mu.Lock()
+	for _, reg := range m.app.pluginRegistry.Plugins {
+		if reg.ID == id {
+			settings = pluginSettingsOrEmpty(reg.Settings)
+			break
+		}
+	}
+	m.app.mu.Unlock()
+	return m.StartWithSettings(id, pluginMain, settings)
+}
+
+// StartWithSettings starts a daemon with its workspace-local non-secret settings snapshot.
+func (m *DaemonManager) StartWithSettings(id, pluginMain string, settings map[string]any) error {
+	settingsBytes, err := json.Marshal(pluginSettingsOrEmpty(settings))
+	if err != nil || len(settingsBytes) > 32<<10 {
+		return errors.New("daemon 插件设置无法序列化或超过 32 KiB")
+	}
 	m.mu.Lock()
 	p, exists := m.procs[id]
 	if !exists {
 		p = &daemonProc{
-			id:         id,
-			pluginPath: pluginMain,
-			pending:    map[int64]chan rpcResp{},
-			events:     []daemonEvent{},
-			stopCh:     make(chan struct{}),
-			backoff:    daemonBaseBackoff,
+			id:           id,
+			pluginPath:   pluginMain,
+			settingsJSON: string(settingsBytes),
+			pending:      map[int64]chan rpcResp{},
+			events:       []daemonEvent{},
+			stopCh:       make(chan struct{}),
+			backoff:      daemonBaseBackoff,
 		}
 		m.procs[id] = p
+	} else {
+		p.mu.Lock()
+		p.settingsJSON = string(settingsBytes)
+		p.mu.Unlock()
 	}
 	st := p.statusSnapshot()
 	already := st == dsRunning || st == dsBackoff
@@ -314,8 +338,9 @@ func (p *daemonProc) spawn() {
 		return
 	}
 	cmd := exec.Command("node", "-e", pluginHostJS, "daemon", p.pluginPath)
+	settingsJSON := p.settingsJSON
 	// 与 v1.1 短命进程同一受限环境；AIDE_DAEMON_BIND 告知协议插件仅绑回环。
-	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "AIDE_DAEMON=1", "AIDE_DAEMON_BIND=127.0.0.1"}
+	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "AIDE_DAEMON=1", "AIDE_DAEMON_BIND=127.0.0.1", "AIDE_PLUGIN_SETTINGS=" + settingsJSON}
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		p.mu.Unlock()
@@ -520,8 +545,21 @@ func (m *DaemonManager) Restart(id string) error {
 
 // RestartWithPath 是 Restart 的实现；pluginMain 为入口磁盘路径（调用方持 a.mu 时快照）。
 func (m *DaemonManager) RestartWithPath(id, pluginMain string) error {
+	settings := map[string]any{}
+	m.app.mu.Lock()
+	for _, reg := range m.app.pluginRegistry.Plugins {
+		if reg.ID == id {
+			settings = pluginSettingsOrEmpty(reg.Settings)
+			break
+		}
+	}
+	m.app.mu.Unlock()
+	return m.RestartWithSettings(id, pluginMain, settings)
+}
+
+func (m *DaemonManager) RestartWithSettings(id, pluginMain string, settings map[string]any) error {
 	_ = m.Stop(id)
-	return m.StartWithPath(id, pluginMain)
+	return m.StartWithSettings(id, pluginMain, settings)
 }
 
 // StopAll 应用关闭时调用。

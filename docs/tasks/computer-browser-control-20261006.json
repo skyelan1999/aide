@@ -1,0 +1,101 @@
+{
+  "id": "computer-browser-control-20261006",
+  "request": "根据Codex逻辑为aide定制插件，增加电脑和浏览器控制插件",
+  "baseline": "8ffd6d62f59ae479dc0bb75268c510259b3a4cd2",
+  "initial_status": "M Dockerfile\n M compose.dev.yaml\n M docs/plugin-protocol.md\n M internal/server/plugin_daemon.go\n M internal/server/plugin_host.js\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M scripts/dev.sh\n?? docs/plugins/python-tool-package.md\n?? docs/tasks/plugin-settings-page-20261006.json\n?? docs/tasks/python-plugin-runtime-20261006.json\n?? internal/server/plugins_bundle_test.go",
+  "acceptance": [
+    "浏览器控制与桌面控制作为独立插件和独立授权面；默认拒绝，按站点/应用授权。",
+    "读取类操作在授权范围内工作；点击、输入、提交、下载等外部状态变更必须在 Aide 内逐次确认，并支持拒绝、取消、超时和撤权。",
+    "容器插件经 macOS 本机桥接服务操作 Safari/桌面；桥接不暴露任意 shell、通用文件访问或网络代理。",
+    "加入独立可导入插件包、服务端权限校验、审计脱敏、真实 Safari 与桌面交互验收及发行包集成。"
+  ],
+  "scope": [
+    "docs/plugins/computer-browser-control.md",
+    "后续实现需涉及 Aide 插件协议/宿主、工作流审批 API/UI、macOS 本机桥接服务、browser-control 与 computer-control ZIP 插件包、Docker/发行启动器与测试。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "确认目标是 Aide 工程内增加浏览器与电脑控制能力。用户先前已限定“你只负责 aide”，并明确允许使用实际系统浏览器测试。",
+      "evidence": [
+        "用户原话：根据你的能力，为aide定制对应的插件，逻辑参考一下codex，并且增加电脑和浏览器控制的插件。",
+        "用户原话：你可用实际系统浏览器进行测试。",
+        "Aide 的插件宿主运行于 Docker 容器。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "已记录分权设计：浏览器按站点授权、桌面按应用授权、默认拒绝、会改变外部状态的动作逐次确认；需要 macOS 宿主桥接与服务端二次校验。",
+      "evidence": [
+        "docs/plugins/computer-browser-control.md：当前架构事实、Codex 原则、桥接服务和服务端授权设计。",
+        "Codex 官方说明将 Browser Use 与 Computer Use 分开控制，并支持站点/应用范围策略。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Headless browser and native desktop bridge deployed; both production control plugins enabled. Native OS screen recording and accessibility authorized and verified.",
+      "evidence": [
+        "plugins/registry.json、plugins/browser-control、plugins/computer-control：两个默认关闭的独立插件。",
+        "scripts/safari-bridge.js、scripts/computer-bridge.js：只提供受限操作的 macOS 桥接服务。",
+        "internal/server/workflow.go：浏览器导航/点击/输入与电脑点击/输入/按键在执行前逐次确认。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Both production plugins enabled and UI reload verified. Real headless browser interaction and body reading passed; native scoped screenshot, click, Chinese input, Enter, AX readback passed. Real Aide model sessions #31 browser_read and #32 computer_inspect completed. Final full gate passed all 19 commands including Go race and vet.",
+      "evidence": [
+        "bash scripts/aide.sh test：exit 0，go test -race -count=1 ./... 与 go vet ./... 均通过。",
+        "python3 scripts/agent-route.py verify quick：status pass。",
+        "node scripts/browser-control-check.cjs：PASS browser allowlist, bridge auth, navigation, snapshot, click, fill。",
+        "node scripts/computer-control-check.cjs：PASS computer-control allowlist, scoped operations, approval gate, key/text limits。",
+        "Safari 实机验收受自签名 TLS 警告阻止；没有跳过安全警告或替用户更改 macOS 权限。",
+        "本轮升级/相关回归 go test -race 通过 5.070s；go vet ./internal/server 通过。",
+        "候选镜像 aide:control-integration-qa 构建成功；旧17项工作区启动后19项，浏览器5个可执行工具，重启后设置保留；scripts/test_control_plugin_runtime.py 两次 PASS。",
+        "docs/reviews/2026-10-06-control-capability-acceptance.md",
+        "Real production: 19 plugins; controls disabled. Docker-to-host status tools return ok, Safari session=false.",
+        "Real Safari WebDriver: Allow remote automation required. Real computer snapshot: could not create image from display.",
+        "Focused control Go race: PASS 19.473s; go vet ./internal/server exit 0; 24 approval/decline/cancel/revoke cases passed.",
+        "Native Safari UI: qaVerification save/reopen passed; restored {} and reopened visually verified.",
+        "First full gate: all subprocesses exit 0, fingerprint failed because source changed during execution; rerun started with stable source.",
+        "Final full gate PASS: 18 commands exit 0, including all Go race and vet. Log .agent-state/verify-20261006T154107236604Z.log; fingerprint a36df123449aad3039f6dbf057270fa41d6a9e78b8d369d88b975c1b697be656.",
+        "User approved combined Safari automation/external-agent toggle; native UI verified value=1. Aide session still times out. Isolated safaridriver:500 session not created, timeout connecting to Safari instance. User restart requested.",
+        "2026-10-07: scripts/test_control_bridge_launchers.py, eight system Bash PID lifecycle cases passed.",
+        "2026-10-07: scripts/test_headless_browser.cjs real Chromium integration passed.",
+        "Production browser_read returned Example Domain and DJI Chinese homepage (10350 characters, 100 links).",
+        "Native signed app listens on17778, healthz screenRecording=false/accessibility=false.",
+        "Production Safari UI headless settings form saved; browser enabled persisted.",
+        "Production session #31 completed: DeepSeek called browser_read once; expanded trace contains Example Domain and genuine returned body.",
+        "Native real scope-denial checks passed; screenRecording/accessibility remain false.",
+        "Full test found two failures: stale tool count and test-hook stopCh race; corrected, rerun pending.",
+        "2026-10-07: native health screenRecording=true, accessibility=true after re-registering current app in macOS permissions.",
+        "2026-10-07: actual plugin click/type/key wrote Aide desktop acceptance 中文 + newline + PASS into a new blank TextEdit document; AX readback and native screenshot confirmed.",
+        "Production computer plugin enabled with allowedApps 文本编辑/TextEdit/Safari, re-read persisted settings via authenticated API.",
+        "Aide session #32 completed with successful computer_status and computer_inspect; model returned exact test document text.",
+        "Full gate PASS before final plugin enablement: 19 commands exit 0, receipt .agent-state/full.json at 20261007T023303762730Z. Final enablement rerun running.",
+        "Final full gate PASS: .agent-state/verify-20261007T031544277890Z.log; fingerprint b1369412e8e3ec2b93b13f5fa555b1734ced8b415778443330cd5c8868744807"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新插件协议和浏览器/电脑控制说明，区分源码能力与 RC15 运行实例，并列出实机权限前置条件。",
+      "evidence": [
+        "docs/plugins/computer-browser-control.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Independent QA container removed. Production updated with existing volumes retained. Codex and Clash not closed; test text only in a new blank TextEdit document.",
+      "evidence": [
+        "docker rm -f aide-control-integration-qa exit 0"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮未提交、推送或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Core browser/desktop capabilities deployed and verified; both plugins enabled. Browser uses isolated headless Chromium. Computer scope is 文本编辑/TextEdit/Safari and target must be foreground. Settings survive page reload. Safari WebDriver, model screenshot vision, downloads/uploads not supported. Registry display version remains1.0.0. No commit/push/release."
+}

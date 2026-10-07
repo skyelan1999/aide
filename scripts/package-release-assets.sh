@@ -19,7 +19,7 @@ PLATFORM="$("$DOCKER_BIN" image inspect "$IMAGE" --format '{{.Os}}/{{.Architectu
 [[ "$PLATFORM" == linux/arm64 || "$PLATFORM" == linux/amd64 ]] || { echo "Unsupported release platform: $PLATFORM" >&2; exit 1; }
 source_sha() {
   (
-    find cmd internal vendor scripts/office docker/wheels docker/sherpa -type f -print0
+    find cmd internal plugins vendor scripts/office docker/wheels docker/sherpa -type f -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md
   ) | sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
 }
@@ -36,6 +36,16 @@ gzip -t "$OUT/$IMAGE_ASSET"
 
 # The in-app updater accepts one self-contained, checksummed platform bundle.
 mkdir -p "$ROOT/.agent-state"
+copy_control_runtime() {
+  local destination="$1"
+  cp "$ROOT/scripts/safari-bridge-control.sh" "$ROOT/scripts/safari-bridge.js" \
+     "$ROOT/scripts/computer-bridge-control.sh" "$ROOT/scripts/computer-bridge.js" \
+     "$ROOT/scripts/build-native-computer-bridge.sh" "$ROOT/scripts/native-computer-bridge.swift" \
+     "$ROOT/scripts/headless-browser-control.sh" "$ROOT/scripts/headless-browser-bridge.js" "$destination/"
+  mkdir -p "$destination/browser-runtime"
+  cp "$ROOT/scripts/browser-runtime/package.json" "$ROOT/scripts/browser-runtime/package-lock.json" "$destination/browser-runtime/"
+}
+
 UPDATE_STAGING="$(mktemp -d "$ROOT/.agent-state/update-package.XXXXXX")"
 cp "$OUT/$IMAGE_ASSET" "$UPDATE_STAGING/"
 (cd "$UPDATE_STAGING" && shasum -a 256 "$IMAGE_ASSET" > SHA256SUMS)
@@ -62,6 +72,7 @@ for TARGET in macos-arm64 windows-arm64 ubuntu-arm64; do
   cp "$ROOT/scripts/update-agent.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/docker/compose.offline.yaml" "$PACKAGE/compose.yaml"
   cp "$ROOT/docker/offline.env.example" "$PACKAGE/.env.example"
+  copy_control_runtime "$PACKAGE/scripts"
   cp "$ROOT/LICENSE" "$PACKAGE/"
   printf 'aide:slot-a %s %s %s\n' "$IMAGE_ID" "$PLATFORM" "$TAG" > "$PACKAGE/.aide-image"
   cat > "$PACKAGE/README.txt" <<EOF
@@ -94,6 +105,7 @@ cp "$ROOT/start.command" "$ROOT/start.sh" "$ROOT/start.ps1" "$ROOT/start.bat" "$
 cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/watch-port.ps1" "$ROOT/scripts/update-agent.sh" "$ROOT/scripts/update-agent.ps1" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/docker/compose.offline.yaml" "$FULL_PACKAGE/compose.yaml"
 cp "$ROOT/docker/offline.env.example" "$FULL_PACKAGE/.env.example"
+copy_control_runtime "$FULL_PACKAGE/scripts"
 cp "$ROOT/LICENSE" "$FULL_PACKAGE/"
 cp "$OUT/$IMAGE_ASSET" "$FULL_PACKAGE/docker-images/"
 printf '%s %s %s %s\n' "aide:slot-a" "$IMAGE_ID" "$PLATFORM" "$TAG" > "$FULL_PACKAGE/.aide-image"

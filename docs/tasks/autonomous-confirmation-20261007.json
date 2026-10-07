@@ -1,0 +1,88 @@
+{
+  "id": "autonomous-confirmation-20261007",
+  "request": "减少重复询问，已授权任务自主继续，确需确认使用询问框和选项",
+  "baseline": "8ffd6d62f59ae479dc0bb75268c510259b3a4cd2",
+  "initial_status": "M .env.example\n M Dockerfile\n M compose.dev.yaml\n M compose.yaml\n M docs/agent/router.json\n M docs/plugin-protocol.md\n M internal/server/apikey_vault.go\n M internal/server/attachments.go\n M internal/server/context.go\n M internal/server/models_test.go\n M internal/server/plugin_daemon.go\n M internal/server/plugin_daemon_test.go\n M internal/server/plugin_host.js\n M internal/server/plugins.go\n M internal/server/provider.go\n M internal/server/provider_stream_test.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M plugins/registry.json\n M scripts/aide.sh\n M scripts/dev.sh\n?? docs/plugins/computer-browser-control.md\n?? docs/plugins/python-tool-package.md\n?? docs/plugins/web-research-workflow.md\n?? docs/reviews/2026-10-06-codex-capability-gap.md\n?? docs/reviews/2026-10-06-control-capability-acceptance.md\n?? docs/tasks/aide-capability-gap-20261006.json\n?? docs/tasks/computer-browser-control-20261006.json\n?? docs/tasks/plugin-settings-page-20261006.json\n?? docs/tasks/python-plugin-runtime-20261006.json\n?? docs/tasks/web-research-routing-20261007.json\n?? internal/server/browser_control_test.go\n?? internal/server/control_workflow_test.go\n?? internal/server/plugins_builtin_test.go\n?? internal/server/plugins_bundle_test.go\n?? internal/server/web_research.go\n?? internal/server/web_research_test.go\n?? internal/server/workflow_shell_approval_test.go\n?? plugins/browser-control/\n?? plugins/computer-control/\n?? scripts/browser-control-check.cjs\n?? scripts/browser-runtime/\n?? scripts/build-native-computer-bridge.sh\n?? scripts/computer-bridge-control.sh\n?? scripts/computer-bridge.js\n?? scripts/computer-control-check.cjs\n?? scripts/headless-browser-bridge.js\n?? scripts/headless-browser-control.sh\n?? scripts/native-computer-bridge.swift\n?? scripts/safari-bridge-control.sh\n?? scripts/safari-bridge.js\n?? scripts/test_control_bridge_launchers.py\n?? scripts/test_control_plugin_runtime.py\n?? scripts/test_headless_browser.cjs",
+  "acceptance": [
+    "Reuse task authorization; no phase approval for routine work",
+    "Blocking questions use existing ask_user card with meaningful options",
+    "Keep existing plugin, domain and shell approval gates",
+    "Verify model continuation and necessary question card",
+    "Recover transient page navigation errors; expose later PDF links; read allowed public PDF text without requiring user upload",
+    "Do not declare unexplored pages exhausted or misread short consent as upload commitment"
+  ],
+  "scope": [
+    "internal/server/autonomous_execution.go",
+    "internal/server/autonomous_execution_test.go",
+    "internal/server/web_research.go",
+    "internal/server/workflow.go",
+    "docs/plugins/autonomous-confirmation.md",
+    "scripts/headless-browser-bridge.js",
+    "plugins/browser-control/index.js",
+    "scripts/test_headless_browser.cjs",
+    "Dockerfile",
+    "scripts/prebuild-wheels.sh",
+    "scripts/test_browser_pdf.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Unified execution policy; preserve approval gates; reuse clarification UI; retain inherited changes.",
+      "evidence": [
+        "internal/server/autonomous_execution.go",
+        "docs/plugins/autonomous-confirmation.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Unified execution policy; preserve approval gates; reuse clarification UI; retain inherited changes.",
+      "evidence": [
+        "internal/server/autonomous_execution.go",
+        "docs/plugins/autonomous-confirmation.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Unified execution policy; preserve approval gates; reuse clarification UI; retain inherited changes.",
+      "evidence": [
+        "internal/server/autonomous_execution.go",
+        "docs/plugins/autonomous-confirmation.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "18 quick checks; focused Go race 20.542s; real Chromium navigation/PDF/scope fixtures; AES parser fixture; actual DeepSeek reads official 93-page manual in two ranges without ask_user. Earlier failed/overstated reads retained as limitations and corrected.",
+      "evidence": [
+        ".agent-state/verify-20261007T044932089827Z.log",
+        ".cache/control-acceptance/autonomous-confirmation.json",
+        ".cache/control-acceptance/autonomy-pdf-final-trace.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Unified execution policy; preserve approval gates; reuse clarification UI; retain inherited changes.",
+      "evidence": [
+        "internal/server/autonomous_execution.go",
+        "docs/plugins/autonomous-confirmation.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Unified execution policy; preserve approval gates; reuse clarification UI; retain inherited changes.",
+      "evidence": [
+        "internal/server/autonomous_execution.go",
+        "docs/plugins/autonomous-confirmation.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local deployment complete; image sha256:c41a2394776829858ffb83ba718fff31114a36b972298c6882e7c3eb3db434ba. No commit, tag, push or public release.",
+      "evidence": [
+        ".cache/control-acceptance/autonomous-confirmation.json"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "aide:autonomy-before-20261007 local Docker image",
+  "handoff": "Existing permission gates retained. Natural language correction is bounded and cannot guarantee every future reply. Public PDF reads verified; no full suite or offline wheelhouse acceptance."
+}

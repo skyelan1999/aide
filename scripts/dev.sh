@@ -10,5 +10,5 @@ if docker compose ps --status running 2>/dev/null | grep -q aide; then
   bash scripts/aide.sh stop
 fi
 
-echo "启动 dev 容器（golang + go run，首次编译约 5-10 秒）…"
-exec docker compose -f compose.yaml -f compose.dev.yaml up --build=false --force-recreate
+echo "启动 dev 容器（Go + Python + Node，源码 go run）…"
+exec docker compose -f compose.yaml -f compose.dev.yaml up --build --force-recreate

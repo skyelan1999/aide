@@ -44,9 +44,10 @@ function loadPlugin(file) {
 
 /* 协议 v1.1 的受限 ctx（协议 §3）：logger 走 stderr；effect/on 只登记；provide/slot 记入 surface；
    tool 注册 name/description/parameters 与 handler（handler 不序列化，仅供 call 命令调用）。 */
-function makeCtx(surface, registry) {
+function makeCtx(surface, registry, settings) {
   const noop = () => () => {};
   return {
+    settings: settings && typeof settings === 'object' && !Array.isArray(settings) ? settings : {},
     logger: { info: log, warn: log, error: log },
     effect: noop,
     on: noop,
@@ -72,9 +73,11 @@ function makeCtx(surface, registry) {
 }
 
 /* 协议 v1.1 工具 api：读操作直接执行；写/命令返回提案对象（由 Go 侧进入用户批准流程，P2 原则）。 */
-function makeToolAPI() {
+function makeToolAPI(pluginDir) {
   const fs2 = require('fs');
   const path2 = require('path');
+  const { spawn } = require('child_process');
+  const realPluginDir = fs2.realpathSync(pluginDir);
   const safeJoin = p => {
     const rel = String(p || '.').replace(/\\/g, '/').replace(/^\.\//, '');
     if (rel.startsWith('/') || rel.split('/').includes('..')) throw new Error('路径越界');
@@ -85,6 +88,29 @@ function makeToolAPI() {
     listFiles: rel => fs2.readdirSync(safeJoin(rel), { withFileTypes: true }).map(e => (e.isDirectory() ? e.name + '/' : e.name)),
     proposeWrite: (rel, content) => ({ proposal: { type: 'file', path: rel, content: String(content) } }),
     proposeCommand: cmd => ({ proposal: { type: 'command', command: String(cmd) } }),
+    runPython: (script, input = {}, options = {}) => new Promise((resolve, reject) => {
+      const rel = String(script || '').replace(/\\/g, '/');
+      if (!rel || rel.startsWith('/') || rel.split('/').some(part => !part || part === '.' || part === '..')) return reject(new Error('Python 脚本路径必须是插件包内的相对路径'));
+      const scriptPath = path2.resolve(realPluginDir, rel);
+      let realScript;
+      try { realScript = fs2.realpathSync(scriptPath); } catch (_) { return reject(new Error('Python 脚本不存在')); }
+      if (!realScript.startsWith(realPluginDir + path2.sep)) return reject(new Error('Python 脚本路径越界'));
+      const timeoutMs = Math.max(1000, Math.min(Number(options.timeoutMs) || 60000, 280000));
+      const outputLimit = 8 << 20;
+      const proc = spawn('python3', ['-I', realScript], { cwd: '/workspace', env: { PATH: '/usr/local/bin:/usr/bin:/bin', HOME: '/home/aide', PYTHONUNBUFFERED: '1' }, stdio: ['pipe', 'pipe', 'pipe'] });
+      let stdout = Buffer.alloc(0), stderr = Buffer.alloc(0), settled = false;
+      const finish = (err, value) => { if (settled) return; settled = true; clearTimeout(timer); err ? reject(err) : resolve(value); };
+      const timer = setTimeout(() => { proc.kill('SIGKILL'); finish(new Error('Python 工具执行超时')); }, timeoutMs);
+      proc.stdout.on('data', chunk => { stdout = Buffer.concat([stdout, chunk]); if (stdout.length > outputLimit) { proc.kill('SIGKILL'); finish(new Error('Python 工具标准输出超过 8 MiB')); } });
+      proc.stderr.on('data', chunk => { if (stderr.length < 64 << 10) stderr = Buffer.concat([stderr, chunk]).subarray(0, 64 << 10); });
+      proc.on('error', err => finish(new Error('启动 Python 失败: ' + err.message)));
+      proc.on('close', code => {
+        if (settled) return;
+        if (code !== 0) return finish(new Error(('Python 工具失败: ' + stderr.toString('utf8')).slice(0, 1000)));
+        finish(null, stdout.toString('utf8'));
+      });
+      try { proc.stdin.end(JSON.stringify(input)); } catch (err) { proc.kill('SIGKILL'); finish(err); }
+    }),
     log: log,
   };
 }
@@ -120,7 +146,7 @@ function runCommand(pluginsDir, enabledJSON, outFile) {
     }
     if (result.plugin.name && typeof result.plugin.name === 'string') item.name = String(result.plugin.name).slice(0, 64);
     try {
-      const disposer = result.plugin.apply(makeCtx(item, new Map()));
+      const disposer = result.plugin.apply(makeCtx(item, new Map(), entry.settings));
       if (typeof disposer === 'function') {
         try {
           disposer();
@@ -153,7 +179,18 @@ function callCommand(pluginsDir, requestJSON, outFile) {
     process.exit(3);
   }
   const write = obj => fs.writeFileSync(outFile, JSON.stringify(obj));
-  const file = path.join(pluginsDir, req.plugin, 'index.js');
+  const pluginDir = path.join(pluginsDir, req.plugin);
+  let main = 'index.js';
+  try {
+    const manifest = JSON.parse(fs.readFileSync(path.join(pluginDir, 'manifest.json'), 'utf8'));
+    if (typeof manifest.main === 'string' && manifest.main) main = manifest.main;
+  } catch (_) {}
+  if (main.startsWith('/') || main.split(/[\\/]/).includes('..')) {
+    write({ ok: false, error: '插件入口路径无效' });
+    console.log(JSON.stringify({ ok: false }));
+    return;
+  }
+  const file = path.join(pluginDir, main);
   const result = loadPlugin(file);
   if (result.error) {
     write({ ok: false, error: result.error });
@@ -163,7 +200,7 @@ function callCommand(pluginsDir, requestJSON, outFile) {
   const surface = { id: req.plugin, name: req.plugin, error: '', tools: [], slots: [], provided: [] };
   const registry = new Map();
   try {
-    result.plugin.apply(makeCtx(surface, registry));
+    result.plugin.apply(makeCtx(surface, registry, req.settings));
   } catch (err) {
     write({ ok: false, error: 'apply 执行失败: ' + String(err && err.message).slice(0, 300) });
     console.log(JSON.stringify({ ok: false }));
@@ -179,12 +216,12 @@ function callCommand(pluginsDir, requestJSON, outFile) {
   const timer = setTimeout(() => {
     if (!finished) {
       finished = true;
-      write({ ok: false, error: '工具执行超时（60s）' });
+      write({ ok: false, error: '工具执行超时（300s）' });
       process.exit(0);
     }
-  }, 60000);
+  }, 300000);
   Promise.resolve()
-    .then(() => entry.handler(req.args || {}, makeToolAPI()))
+    .then(() => entry.handler(req.args || {}, makeToolAPI(path.join(pluginsDir, req.plugin))))
     .then(value => {
       if (finished) return;
       finished = true;
@@ -238,7 +275,12 @@ function daemonCommand(pluginPath) {
     sendLine({ method: 'event', params });
   };
 
-  const ctx = makeCtx(surface, registry);
+  let settings = {};
+  try {
+    const parsed = JSON.parse(process.env.AIDE_PLUGIN_SETTINGS || '{}');
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) settings = parsed;
+  } catch (_) {}
+  const ctx = makeCtx(surface, registry, settings);
   ctx.emit = emit; // daemon 专有：插件上报流量/事件/日志
 
   let stopped = false;
@@ -276,7 +318,7 @@ function daemonCommand(pluginPath) {
             return;
           }
           Promise.resolve()
-            .then(() => entry.handler(params.args || {}, makeToolAPI()))
+            .then(() => entry.handler(params.args || {}, makeToolAPI(path.dirname(pluginPath))))
             .then((value) => sendLine({ jsonrpc: '2.0', id: msg.id, result: value === undefined ? null : value }))
             .catch((err) => sendLine({ jsonrpc: '2.0', id: msg.id, error: { code: -32000, message: String(err && err.message).slice(0, 500) } }));
         }

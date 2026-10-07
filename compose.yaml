@@ -31,6 +31,8 @@ services:
       # 在线搜索端点（SearXNG 兼容 JSON）。留空=离线优雅降级（web_search 提示用 search_text 搜本地，不发外联）。
       # 联网部署填公开/自建实例以恢复 DuckDuckGo 在线搜索能力；空气 gap 机务必留空。
       AIDE_WEBSEARCH_URL: ${AIDE_WEBSEARCH_URL:-}
+      AIDE_BROWSER_BRIDGE_TOKEN: ${AIDE_BROWSER_BRIDGE_TOKEN:-}
+      AIDE_COMPUTER_BRIDGE_TOKEN: ${AIDE_COMPUTER_BRIDGE_TOKEN:-}
     volumes:
       - type: bind
         source: ${AIDE_WORKSPACE:-.}

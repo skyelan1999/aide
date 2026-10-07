@@ -1,0 +1,87 @@
+{
+  "id": "aide-capability-gap-20261006",
+  "request": "参考Codex能力评估Aide的缺失能力、模型能力限制及补齐方案；用户确认按路线实施（都做了吧）",
+  "baseline": "8ffd6d62f59ae479dc0bb75268c510259b3a4cd2",
+  "initial_status": "M Dockerfile\n M compose.dev.yaml\n M docs/plugin-protocol.md\n M internal/server/plugin_daemon.go\n M internal/server/plugin_host.js\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M scripts/dev.sh\n?? docs/plugins/computer-browser-control.md\n?? docs/plugins/python-tool-package.md\n?? docs/tasks/computer-browser-control-20261006.json\n?? docs/tasks/plugin-settings-page-20261006.json\n?? docs/tasks/python-plugin-runtime-20261006.json\n?? internal/server/plugins_bundle_test.go",
+  "acceptance": [
+    "以当前 aide 仓库代码/文档为依据列出已具备、缺失及待验证能力。",
+    "将产品/运行环境差距与底层模型能力限制分开，并说明各自可行的弥补方式。",
+    "参考 Codex 官方公开资料，按优先级给出分阶段补齐路线和验收门槛。",
+    "明确区分架构评估与已实现、已测试、已发布功能。",
+    "为模型能力提供显式支持/不支持/未知状态、来源和核验日期；明确不支持时阻止不兼容参数/工具调用。",
+    "逐步完成安全审批、运行隔离、浏览器/桌面桥接、MCP HTTP、Git 隔离与长任务恢复，并按阶段记录实现、验收和发布状态。"
+  ],
+  "scope": [
+    "docs/reviews/2026-10-06-codex-capability-gap.md",
+    "docs/tasks/aide-capability-gap-20261006.json",
+    "internal/server/server.go",
+    "internal/server/provider.go",
+    "internal/server/attachments.go",
+    "internal/server/apikey_vault.go",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "docs/plugins/computer-browser-control.md",
+    "docs/plugins/python-tool-package.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "需求是对照 Codex 能力盘点 Aide 当前缺口，区分模型本身限制和产品/环境限制，并给出补齐路线。",
+      "evidence": [
+        "用户原话：参考codex的能力，看下aide还有哪些不具备，哪些是受限于模型能力的，如何弥补。",
+        "路由：coordinator，按源码和官方资料做静态能力审查。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "按现有底座、产品/环境缺口、模型限制、补齐优先级、验收门槛五层组织；当前未提交的 Python/plugin 工作树变更单独标明，不算已发布能力。",
+      "evidence": [
+        "Aide 当前 provider 以 Chat Completions 兼容端点为核心。",
+        "Aide MCP 仅 stdio/read-only；桌面浏览器无宿主桥接。",
+        "Codex 官方插件将 Skills/MCP/hooks 组合，浏览器和电脑权限分开。"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "已实现模型能力状态/来源/核验日期及设置 UI；显式不支持时服务端阻止工具调用/结构化输出或剔除推理扩展。run_shell 的写入、联网和外部状态命令现需逐条通过 Aide 确认卡；拒绝/取消不执行。其余路线仍未实现：每插件 OS 隔离、宿主浏览器/桌面桥、MCP HTTP/OAuth、Git worktree/diff 审阅、环境复现、签名目录和跨重启长任务恢复。",
+      "evidence": [
+        "docs/reviews/2026-10-06-codex-capability-gap.md",
+        "ModelRef 新增能力状态/来源/核验日期字段；设置页提供工具调用、视觉、结构化输出、推理和音频能力状态编辑。",
+        "internal/server/workflow.go：非只读 run_shell 显示完整命令并等待逐次用户确认。"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "完整 go test -race -count=1 ./... 通过（server 340.829s、tts 2.955s），随后对最后的 shell 语法白名单加固运行相关模型/审批 race 用例通过；go vet ./... 退出码 0；agent-route verify quick 通过。Safari 仍运行旧 RC15，因此没有进行当前工作树的真实 UI 验收。",
+      "evidence": [
+        ".agent-state/verify-20261006T140418616251Z.log",
+        "Docker Go race test output: ok aide/internal/server 340.829s; ok aide/internal/server/tts 2.955s",
+        "Post-gofmt targeted race tests: TestMultiModelSettings, TestExplicitModelCapabilitiesControlProviderFeatures, TestRunShellRequiresExactConfirmationForWrites, TestReadOnlyAllowedRejectsShellEvaluation passed.",
+        "go vet ./... exit code 0; Safari UI acceptance not run because the visible service is the old RC15 runtime."
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "评估报告已更新已实现项、完整测试证据与未实现路线；Python/ZIP 插件文档和浏览器/桌面桥接设计均明确标记工作树状态/尚未实现。尚未完成未开发能力对应的实现文档。",
+      "evidence": [
+        "docs/reviews/2026-10-06-codex-capability-gap.md"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "在原有插件 ZIP/Python/设置页未提交改动上增量工作；保留已有文件，不做清理或覆盖。",
+      "evidence": [
+        "工作树已有 Python 插件/设置页等未提交改动均保留。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "仅交付评估文档；未提交、推送或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "已完成模型能力登记/门禁与逐命令 run_shell 确认，并通过全仓 race 测试、go vet、快速静态验证。仍需继续实现并验收：每插件 OS 隔离、宿主浏览器和桌面控制桥接、MCP HTTP/OAuth 写操作审批、Git worktree/diff 审阅、环境复现、插件签名目录及更完整的跨重启长任务恢复。Safari UI 尚未针对当前未提交工作树验收；未提交、未推送、未发布。模型本身缺少的视觉/工具能力不能靠插件或提示词创造。"
+}

@@ -236,7 +236,9 @@ function requestMasterAuth({ reason, assistantSessionId } = {}) {
   });
 }
 async function api(path, options = {}) {
-  const response = await fetch('/api' + path, { ...options, headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json', ...options.headers } });
+  const isForm = typeof FormData !== 'undefined' && options.body instanceof FormData;
+  const headers = { 'Authorization': 'Bearer ' + state.token, ...(isForm ? {} : { 'Content-Type': 'application/json' }), ...options.headers };
+  const response = await fetch('/api' + path, { ...options, headers });
   const data = await response.json();
   if (!response.ok) {
     // A wrong lock-screen password is also HTTP 401, but it does not mean the
@@ -1371,7 +1373,7 @@ async function newSession() {
   clearTimeout(state.poll); closeStream(); state.live = {}; state.liveStable = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0; state.sessionJSON = ''; state.session = null; state.attachments = []; renderAttachments(); renderSession(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
   loadSessions().catch(() => {});
 }
-const labels = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', chat: 'aide' };
+const labels = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', agent: '自主执行', chat: 'aide' };
 function toolSummaryBrief(use) {
   try {
     const args = JSON.parse(use.args || '{}');
@@ -1548,7 +1550,7 @@ function renderSession() {
       msg.append(el('span', 'steer-tag', t("插话")), document.createTextNode(st.content));
       box.append(msg);
     }
-    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? t("◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
+    const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? t(run.steps?.some(step => step.name === 'agent') ? "◈ AIDE WORKFLOW · 自主执行" : "◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
     if (run.status === 'running' && !run.pauseRequested) {
       const pause = el('button', 'quiet', t('暂停任务')); pause.type = 'button'; pause.onclick = () => pauseRunById(run.id); meta.append(pause);
     } else if ((run.status === 'paused' || run.status === 'interrupted') && run.canResume) {
@@ -4592,6 +4594,51 @@ function renderModelList() {
     const rowWin = el('div', 'model-row-window');
     rowWin.append(windowLabel, presetRow, windowInput);
     row.append(rowHead, rowWin);
+    const capabilityLabels = [
+      ['tool_calls', t('工具调用')],
+      ['vision', t('图片输入')],
+      ['structured_output', t('结构化输出')],
+      ['reasoning', t('推理参数')],
+      ['audio_input', t('音频输入')],
+      ['audio_output', t('音频输出')],
+    ];
+    m.capabilities ||= {};
+    if (m.vision && !m.capabilities.vision) m.capabilities.vision = 'supported';
+    const capRow = el('div', 'model-capabilities');
+    capabilityLabels.forEach(([key, label]) => {
+      const field = el('label', 'model-capability');
+      field.append(el('span', '', label));
+      const select = el('select');
+      select.setAttribute('aria-label', `${m.id}: ${label}`);
+      [['unknown', t('未知')], ['supported', t('支持')], ['unsupported', t('不支持')]].forEach(([value, text]) => {
+        const option = new Option(text, value);
+        select.add(option);
+      });
+      select.value = m.capabilities[key] || 'unknown';
+      select.addEventListener('change', () => {
+        if (select.value === 'unknown') delete m.capabilities[key];
+        else m.capabilities[key] = select.value;
+        if (key === 'vision') m.vision = select.value === 'supported';
+      });
+      field.append(select);
+      capRow.append(field);
+    });
+    const capNote = el('small', 'model-capability-note', t('模型 ID 列表不代表能力已验证；未知状态按兼容默认行为处理。'));
+    const capSource = el('input', 'model-capability-source');
+    capSource.type = 'text';
+    capSource.maxLength = 120;
+    capSource.placeholder = t('能力核验来源或依据（可选）');
+    capSource.value = m.capabilitiesSource || '';
+    capSource.setAttribute('aria-label', t('能力核验来源或依据（可选）'));
+    capSource.addEventListener('input', () => { m.capabilitiesSource = capSource.value.trim(); });
+    const capChecked = el('input', 'model-capability-date');
+    capChecked.type = 'date';
+    capChecked.value = (m.capabilitiesChecked || '').slice(0, 10);
+    capChecked.setAttribute('aria-label', t('能力核验日期'));
+    capChecked.addEventListener('change', () => { m.capabilitiesChecked = capChecked.value; });
+    const capMeta = el('div', 'model-capability-meta');
+    capMeta.append(capSource, capChecked);
+    row.append(capRow, capNote, capMeta);
     host.append(row);
   }
   if (!(state.modelDraft?.models || []).length) host.append(el('p', 'muted', t("尚未添加模型。可输入模型 ID 添加，或用「自动获取」从 API 拉取候选。")));
@@ -4769,6 +4816,40 @@ function trPlugin(text) {
   return t(text);
 }
 
+const pluginSettingsState = { plugin: null };
+function openPluginSettings(plugin) {
+  pluginSettingsState.plugin = plugin;
+  $('plugin-settings-title').textContent = t("{0} 设置", trPlugin(plugin.name));
+  $('plugin-settings-description').textContent = plugin.description ? trPlugin(plugin.description) : plugin.id;
+  $('plugin-settings-json').value = JSON.stringify(plugin.settings || {}, null, 2);
+  const jsonLabel = $('plugin-settings-json').closest('label');
+  $('control-plugin-fields')?.remove();
+  const control = ['browser-control', 'computer-control'].includes(plugin.id);
+  jsonLabel.style.display = control ? 'none' : '';
+  if (control) {
+    const fields = el('div', 'control-plugin-fields'); fields.id = 'control-plugin-fields';
+    const isBrowser = plugin.id === 'browser-control';
+    if (isBrowser) {
+      const label = el('label', '', t('浏览器引擎'));
+      const select = document.createElement('select'); select.id = 'control-plugin-engine';
+      for (const [value, text] of [['headless', '独立无头浏览器'], ['safari', 'Safari（需要远程自动化）']]) {
+        const option = document.createElement('option'); option.value = value; option.textContent = t(text); select.append(option);
+      }
+      select.value = plugin.settings?.engine || (String(plugin.settings?.bridgeUrl || '').endsWith(':17777') ? 'safari' : 'headless');
+      label.append(select); fields.append(label);
+    }
+    const label = el('label', '', t(isBrowser ? '允许的网站（每行一个域名）' : '允许的应用（每行一个应用名称）'));
+    const scope = document.createElement('textarea'); scope.id = 'control-plugin-scope'; scope.rows = 5;
+    scope.spellcheck = false; scope.value = (plugin.settings?.[isBrowser ? 'allowedHosts' : 'allowedApps'] || []).join('\n');
+    scope.placeholder = isBrowser ? 'example.com\nwww.dji.com\n*.dji.com' : 'TextEdit\nSafari';
+    label.append(scope); fields.append(label);
+    fields.append(el('p', 'muted', t(isBrowser ? '无头浏览器使用独立会话读取网页；Safari 需要本机开启远程自动化。保存后在插件列表启用，导航、点击和输入仍需确认。' : '先打开 Aide Computer Bridge，申请屏幕录制与辅助功能权限。保存后在插件列表启用；只操作名单内的前台应用。')));
+    jsonLabel.before(fields);
+  }
+  $('plugin-settings-dialog').showModal();
+  (control ? $('control-plugin-scope') : $('plugin-settings-json')).focus();
+}
+
 function renderPluginList() {
   const query = $('plugin-search').value.trim().toLowerCase();
   const host = $('plugin-list');
@@ -4780,6 +4861,10 @@ function renderPluginList() {
     const card = el('div', 'plugin-card' + (p.enabled ? '' : ' disabled'));
     const head = el('div', 'plugin-card-head');
     head.append(el('span', 'plugin-name', trPlugin(p.name)), el('span', 'plugin-badge', p.id + (p.version ? ' · v' + p.version : '')));
+    const settings = el('button', 'plugin-settings-button', '⚙ ' + t("设置"));
+    settings.type = 'button'; settings.title = t("插件设置");
+    settings.onclick = () => openPluginSettings(p);
+    head.append(settings);
     const del = el('button', 'plugin-delete', '－');
     del.type = 'button'; del.title = t("删除插件");
     del.onclick = () => { if (confirm(t("删除插件「{0}」？", trPlugin(p.name)))) action(async () => { await api('/plugins/' + encodeURIComponent(p.id), { method: 'DELETE' }); await loadPluginsPanel(); toast(t("插件已删除")); })(); };
@@ -4829,15 +4914,54 @@ $('plugins-toggle').onclick = action(async () => {
 });
 $('refresh-plugins').onclick = action(loadPluginsPanel);
 $('plugin-search').addEventListener('input', renderPluginList);
+$('plugin-settings-form').onsubmit = action(async event => {
+  event.preventDefault();
+  const plugin = pluginSettingsState.plugin;
+  if (!plugin) return;
+  let settings;
+  try {
+    settings = JSON.parse($('plugin-settings-json').value || '{}');
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) throw new Error('object');
+  } catch {
+    toast(t("插件设置必须是有效的 JSON 对象"));
+    $('plugin-settings-json').focus();
+    return;
+  }
+  if (['browser-control', 'computer-control'].includes(plugin.id)) {
+    const scope = [...new Set($('control-plugin-scope').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean))];
+    if (plugin.id === 'browser-control') {
+      settings.allowedHosts = scope;
+      settings.engine = $('control-plugin-engine').value;
+      delete settings.bridgeUrl;
+    } else settings.allowedApps = scope;
+  }
+  const result = await api('/plugins/' + encodeURIComponent(plugin.id) + '/settings', { method: 'PUT', body: JSON.stringify({ settings }) });
+  $('plugin-settings-dialog').close();
+  pluginSettingsState.plugin = null;
+  await loadPluginsPanel();
+  toast(result.restartError ? t("插件设置已保存，但重启失败：{0}", result.restartError) : t("插件设置已保存"));
+});
 $('plugin-upload').onclick = () => { $('plugin-upload-form').reset(); $('plugin-file-name').textContent = ''; $('plugin-upload-dialog').showModal(); };
-$('plugin-file-pick').addEventListener('change', () => { $('plugin-file-name').textContent = $('plugin-file-pick').files[0] ? t("已选择：") + $('plugin-file-pick').files[0].name : ''; });
+$('plugin-file-pick').addEventListener('change', () => {
+  const file = $('plugin-file-pick').files[0];
+  const isBundle = !!file && file.name.toLowerCase().endsWith('.zip');
+  $('plugin-name').required = !isBundle;
+  $('plugin-file-name').textContent = file ? t("已选择：") + file.name + (isBundle ? t("；ZIP 包使用 manifest.json 中的名称") : '') : '';
+});
 $('plugin-upload-form').onsubmit = action(async event => {
   event.preventDefault();
   const file = $('plugin-file-pick').files[0];
   if (!file) { toast(t("请选择插件文件")); return; }
-  if (file.size > 256 * 1024) { toast(t("插件文件超过 256 KiB 限制")); return; }
+  const isBundle = file.name.toLowerCase().endsWith('.zip');
+  if (isBundle) {
+    if (file.size > 24 * 1024 * 1024) { toast(t("插件 ZIP 包超过 24 MiB 限制")); return; }
+    const body = new FormData(); body.append('bundle', file);
+    await api('/plugins/bundle', { method: 'POST', body });
+  } else {
+    if (file.size > 256 * 1024) { toast(t("插件文件超过 256 KiB 限制")); return; }
   const code = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error(t("读取文件失败"))); reader.readAsText(file); });
   await api('/plugins', { method: 'POST', body: JSON.stringify({ name: $('plugin-name').value.trim() || file.name.replace(/\.js$/, ''), description: $('plugin-desc').value.trim(), code }) });
+  }
   $('plugin-upload-dialog').close();
   await loadPluginsPanel();
   toast(t("插件已上传并启用"));

@@ -5,6 +5,7 @@ cd "$PROJECT_DIR"
 MODE="${1:-start}"
 if [[ "$MODE" == test && "${AIDE_VERIFY_IN_CONTAINER:-0}" == 1 ]]; then
   # The caller already launched an isolated aide:local verification container.
+  export AIDE_BUILTIN_PLUGINS=
   go test -race -count=1 ./... && go vet ./...
   exit
 fi
@@ -33,7 +34,7 @@ fi
 # 哈希写进镜像 label aide.srcsha，供 start 二次启动时比对，命中即跳过构建。
 source_sha() {
   (
-    find cmd internal vendor scripts/office docker/wheels docker/sherpa -type f -print0
+    find cmd internal plugins vendor scripts/office docker/wheels docker/sherpa -type f -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md
   ) | sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
 }
@@ -177,6 +178,29 @@ fi
 
 case "$MODE" in
   start|start-image)
+    # Per-install authentication for the macOS Safari relay. .env is parsed as
+    # data by Compose and is never executed as shell code.
+    if [[ ! -f .env ]]; then cp .env.example .env; fi
+    BRIDGE_TOKEN="$(awk -F= '$1 == "AIDE_BROWSER_BRIDGE_TOKEN" { sub(/^[^=]*=/, ""); print; exit }' .env)"
+    if [[ ${#BRIDGE_TOKEN} -lt 32 ]]; then
+      BRIDGE_TOKEN="$(openssl rand -hex 32)"
+      if grep -q '^AIDE_BROWSER_BRIDGE_TOKEN=' .env; then
+        sed -i.bak "s/^AIDE_BROWSER_BRIDGE_TOKEN=.*/AIDE_BROWSER_BRIDGE_TOKEN=$BRIDGE_TOKEN/" .env && rm -f .env.bak
+      else
+        printf '\nAIDE_BROWSER_BRIDGE_TOKEN=%s\n' "$BRIDGE_TOKEN" >> .env
+      fi
+    fi
+    export AIDE_BROWSER_BRIDGE_TOKEN="$BRIDGE_TOKEN"
+    COMPUTER_BRIDGE_TOKEN="$(awk -F= '$1 == "AIDE_COMPUTER_BRIDGE_TOKEN" { sub(/^[^=]*=/, ""); print; exit }' .env)"
+    if [[ ${#COMPUTER_BRIDGE_TOKEN} -lt 32 ]]; then
+      COMPUTER_BRIDGE_TOKEN="$(openssl rand -hex 32)"
+      if grep -q '^AIDE_COMPUTER_BRIDGE_TOKEN=' .env; then
+        sed -i.bak "s/^AIDE_COMPUTER_BRIDGE_TOKEN=.*/AIDE_COMPUTER_BRIDGE_TOKEN=$COMPUTER_BRIDGE_TOKEN/" .env && rm -f .env.bak
+      else
+        printf '\nAIDE_COMPUTER_BRIDGE_TOKEN=%s\n' "$COMPUTER_BRIDGE_TOKEN" >> .env
+      fi
+    fi
+    export AIDE_COMPUTER_BRIDGE_TOKEN="$COMPUTER_BRIDGE_TOKEN"
     if [[ "$MODE" == start-image ]]; then
       "$DOCKER_BIN" compose up -d --no-build --pull never
     else
@@ -205,6 +229,11 @@ case "$MODE" in
         "$DOCKER_BIN" compose up -d --build --pull never
       fi
     fi
+    if [[ "$(uname -s)" == Darwin ]] && command -v node >/dev/null 2>&1; then
+      bash scripts/safari-bridge-control.sh start || echo "Safari 桥接未启动；Aide 其他功能仍可用。"
+      bash scripts/computer-bridge-control.sh start || echo "电脑桥接未启动；Aide 其他功能仍可用。"
+      bash scripts/headless-browser-control.sh start || echo "无头浏览器未启动；可先运行 bash scripts/headless-browser-control.sh install。"
+    fi
     for attempt in {1..60}; do if "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null 2>&1; then break; fi; sleep 1; done
     "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null
     ADDRESS="$("$DOCKER_BIN" compose port aide 8080)"
@@ -223,10 +252,15 @@ case "$MODE" in
     elif command -v xdg-open >/dev/null; then xdg-open "$LOGIN_URL";
     else echo "在浏览器打开 $LOGIN_URL ；令牌位于容器 /data/auth/access-token，自签证书浏览器会告警，选择继续。"; fi
     ;;
-  stop) "$DOCKER_BIN" compose stop ;;
+  stop)
+    "$DOCKER_BIN" compose stop
+    if [[ "$(uname -s)" == Darwin ]]; then bash scripts/safari-bridge-control.sh stop || true; fi
+    if [[ "$(uname -s)" == Darwin ]]; then bash scripts/computer-bridge-control.sh stop || true; fi
+    if [[ "$(uname -s)" == Darwin ]]; then bash scripts/headless-browser-control.sh stop || true; fi
+    ;;
   status) "$DOCKER_BIN" compose ps ;;
   logs) "$DOCKER_BIN" compose logs --tail=100 aide ;;
-  test) "$DOCKER_BIN" run --rm -v "$PROJECT_DIR:/src" -w /src --entrypoint bash aide:local -c 'go test -race -count=1 ./... && go vet ./...' ;;
+  test) "$DOCKER_BIN" run --rm -e AIDE_BUILTIN_PLUGINS= -v "$PROJECT_DIR:/src" -w /src --entrypoint bash aide:local -c 'go test -race -count=1 ./... && go vet ./...' ;;
   export)
     mkdir -p docker-images
     ARCHIVE="$PROJECT_DIR/docker-images/aide-local.tar.gz"

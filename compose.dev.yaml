@@ -1,10 +1,13 @@
-# 开发模式覆盖：挂载源码到 golang 容器，go run 热启动，不 build 镜像。
+# 开发模式覆盖：挂载源码到 Go + Python + Node 工具镜像，go run 热启动。
 # 用法：bash scripts/dev.sh
 # 退出：Ctrl+C
 services:
   aide:
-    build: !reset null
-    image: golang:1.26-bookworm
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    image: aide:dev
     pull_policy: never
     user: "1000:1000"
     working_dir: /src
@@ -18,5 +21,6 @@ services:
       AIDE_WORKSPACE: /workspace
       AIDE_CONTEXT: /context
       AIDE_DATA: /data
+      AIDE_BUILTIN_PLUGINS: /src/plugins
     volumes:
       - .:/src

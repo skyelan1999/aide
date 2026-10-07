@@ -38,6 +38,22 @@ func TestMultiModelSettings(t *testing.T) {
 	if second["name"] != "m2" || second["contextWindow"] != float64(65536) {
 		t.Fatalf("defaults not applied: %v", second)
 	}
+	// Capability declarations and their provenance survive settings normalization and config output.
+	w = request(a, "PUT", "/api/settings", map[string]any{
+		"models": []any{map[string]any{
+			"id": "m1", "capabilities": map[string]string{"tool_calls": "supported", "vision": "unsupported"},
+			"capabilitiesSource": "provider docs", "capabilitiesChecked": "2026-10-06",
+		}}, "activeModel": "m1",
+	})
+	requireStatus(t, w, 200)
+	w = request(a, "GET", "/api/config", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), `"tool_calls":"supported"`) || !strings.Contains(w.Body.String(), `"vision":"unsupported"`) || !strings.Contains(w.Body.String(), `"capabilitiesSource":"provider docs"`) {
+		t.Fatalf("capability metadata did not round-trip: %s", w.Body.String())
+	}
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{
+		"models": []any{map[string]any{"id": "m1", "capabilities": map[string]string{"vision": "maybe"}}}, "activeModel": "m1",
+	}), 400)
 	// 越界校验
 	for _, bad := range []map[string]any{
 		{"baseURL": "https://api.example.com", "models": []any{map[string]any{"id": ""}}, "activeModel": "m2"},

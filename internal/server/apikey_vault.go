@@ -224,11 +224,14 @@ func shredFile(path string) {
 // modelConfigItem 是 /api/config 返回的单个模型条目：在 ModelRef 基础上追加 hasApiKey 标记，
 // 绝不回显明文 key。单 provider 场景下所有模型共享同一把 key，故 hasApiKey 取值一致。
 type modelConfigItem struct {
-	ID            string `json:"id"`
-	Name          string `json:"name,omitempty"`
-	ContextWindow int    `json:"contextWindow,omitempty"`
-	HasAPIKey     bool   `json:"hasApiKey"`
-	Vision        bool   `json:"vision"` // #63 扩展：该模型是否支持图片输入
+	ID                  string            `json:"id"`
+	Name                string            `json:"name,omitempty"`
+	ContextWindow       int               `json:"contextWindow,omitempty"`
+	HasAPIKey           bool              `json:"hasApiKey"`
+	Vision              bool              `json:"vision"` // #63 扩展：该模型是否支持图片输入
+	Capabilities        map[string]string `json:"capabilities,omitempty"`
+	CapabilitiesSource  string            `json:"capabilitiesSource,omitempty"`
+	CapabilitiesChecked string            `json:"capabilitiesChecked,omitempty"`
 }
 
 // modelConfigOut 把 a.settings.Models 转成带 hasApiKey 标记的输出列表。调用方持有 a.mu。
@@ -238,6 +241,7 @@ func (a *App) modelConfigOut() []modelConfigItem {
 	for _, m := range a.settings.Models {
 		out = append(out, modelConfigItem{
 			ID: m.ID, Name: m.Name, ContextWindow: m.ContextWindow, HasAPIKey: has, Vision: m.Vision,
+			Capabilities: m.Capabilities, CapabilitiesSource: m.CapabilitiesSource, CapabilitiesChecked: m.CapabilitiesChecked,
 		})
 	}
 	return out

@@ -1,0 +1,99 @@
+{
+  "id": "python-plugin-runtime-20261006",
+  "request": "为aide扩展独立Python插件包导入、容器Python工具执行及工作流一键调用能力",
+  "baseline": "8ffd6d62f59ae479dc0bb75268c510259b3a4cd2",
+  "initial_status": "M docs/plugin-protocol.md\n M internal/server/plugin_daemon.go\n M internal/server/plugin_host.js\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n?? docs/tasks/plugin-settings-page-20261006.json",
+  "acceptance": [
+    "插件面板支持安装独立 ZIP 工具包，并保留既有单文件 JavaScript 插件上传兼容。",
+    "工具包安装拒绝路径穿越、链接条目、重复/异常路径、超限压缩包和无效入口；校验通过后原子登记，失败不留半成品。",
+    "插件 handler 可通过受限 API 调用容器 Python 3，传 JSON 输入，工作目录限定在工具包和 /workspace 约定内，超时/输出有界且取消会终止子进程。",
+    "源码开发容器与 release runtime 镜像使用同一 Python 工具接口；默认发行环境可执行固定依赖工具包，不在导入时联网 pip 安装。",
+    "已有工具调用循环可串行调用多个 Python 工具并回传结果；文件改动沿用 aide 提案批准路径。",
+    "接口与用户文档明确第三方插件代码是可信代码、Python依赖/时间/输出限制、浏览器访问不在该能力范围。"
+  ],
+  "scope": [
+    "internal/server/plugins.go",
+    "internal/server/plugin_host.js",
+    "internal/server/server.go",
+    "internal/server/workflow.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/style.css",
+    "Dockerfile",
+    "docker/wheels/",
+    "plugins/",
+    "docs/plugin-protocol.md",
+    "docs/plugins/",
+    "docs/architecture.md",
+    "docs/tasks/python-plugin-runtime-20261006.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "已限定为 aide 工程能力：可导入的独立插件包、Python执行接口、源码与release一致、工具循环支持连续调用；不代做具体DJI设计。",
+      "evidence": [
+        "用户消息：为aide扩展对应所需的能力",
+        "docs/plugin-protocol.md 当前上传仅支持单个 JS，运行时 Python 包固定在镜像，插件可返回受审批的文件提案。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "为兼容旧 JS 插件，新增 ZIP 插件包导入路径；ZIP 提供 manifest/index.js/Python资源。Python调用经显式 api.runPython 提供，无导入时联网安装依赖；输出文件继续转为已有的待审批写入提案。",
+      "evidence": [
+        "internal/server/plugins.go:241-328",
+        "internal/server/plugin_host.js:makeToolAPI/callCommand",
+        "internal/server/workflow.go:recordToolProposal"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增 ZIP 工具包上传与安全暂存/原子登记；插件面板支持 .zip 与旧 JS 上传、每插件 JSON 设置页；插件 handler 可调用插件目录内 Python 3.12 脚本；源码 dev 镜像与 Release runtime 固定相同依赖；已有对话/工作流工具循环复用 callPluginTool。",
+      "evidence": [
+        "internal/server/plugins.go: uploadPluginBundle、updatePluginSettings、callPluginTool",
+        "internal/server/plugin_host.js: makeToolAPI.runPython、manifest.main 入口解析",
+        "internal/server/assistant_agent.go:343 与 internal/server/workflow.go:3599 共用 callPluginTool",
+        "internal/server/web/app.js 与 internal/server/web/index.html：ZIP/JS 上传和插件设置对话框",
+        "Dockerfile dev 与 runtime stages、compose.dev.yaml"
+      ]
+    },
+    "verification": {
+      "status": "pass_with_limitations",
+      "summary": "定向 ZIP/Python/插件设置回归通过；server 全量回归和 Release 容器构建、Python 依赖 smoke check 通过。Safari UI 未完成：本地 QA HTTPS 曾被系统自签名证书拦截，不绕过证书提示。首次 server 全量测试因未设置 AIDE_OFFICE_SCRIPTS 失败；依项目约定补环境变量后通过。",
+      "evidence": [
+        "docker run aide:python-dev-check go test ./internal/server -run 'TestPlugin(Bundle|Settings)' -count=1：PASS",
+        "AIDE_OFFICE_SCRIPTS=/src/scripts/office go test ./...：PASS（internal/server、internal/server/tts）",
+        "docker build -t aide:python-runtime-check .：PASS；默认 Release runtime stage 构建完成",
+        "Release runtime 容器 Python 3.12.14，ezdxf 1.4.4/python-docx 1.2.0 导入通过；JSON stdin/stdout smoke check 通过",
+        "python3 scripts/check_docs.py：PASS（142 Markdown、279 本地链接、JPEG signatures、FR-01..100）",
+        "node --check plugin_host.js/app.js/locales/en.js、git diff --check：PASS",
+        "Safari UI：未验证；隔离本地 HTTPS 遇系统证书拦截，未绕过"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "升级插件协议至 v1.2，新增 Python 工具包指南，记录 ZIP 结构/限额、设置页、可信代码模型、开发与 Release 环境依赖及工具执行边界。",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "docs/plugins/python-tool-package.md",
+        "python3 scripts/check_docs.py：PASS"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "git diff --check 通过；验证容器为一次性 --rm 容器。保留本次构建的本地 aide:python-dev-check 与 aide:python-runtime-check 镜像供复测；没有启动、停止或改动现有 aide 服务。",
+      "evidence": [
+        "git diff --check：PASS",
+        "工作目录顶层仍为 aide 单一工程目录"
+      ]
+    },
+    "release": {
+      "status": "not_requested",
+      "summary": "本轮没有 commit、push 或发布；当前请求仅为扩展 aide 工程能力。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回滚本次功能可撤销本记录所列的 ZIP 上传路由/解析、plugin_host Python API、dev 容器目标、前端入口及文档；现有单文件 JS 上传保持兼容。",
+  "handoff": "Safari/系统浏览器 UI 上传与设置交互仍待人工或后续环境完成本地证书信任后验证；其余服务端回归和容器构建已通过。"
+}

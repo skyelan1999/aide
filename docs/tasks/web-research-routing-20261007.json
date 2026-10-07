@@ -1,0 +1,82 @@
+{
+  "id": "web-research-routing-20261007",
+  "request": "研究并搭建网页研究流程能力，修复旧会话仍声称没有浏览器能力的问题",
+  "baseline": "8ffd6d62f59ae479dc0bb75268c510259b3a4cd2",
+  "initial_status": "M .env.example\n M Dockerfile\n M compose.dev.yaml\n M compose.yaml\n M docs/agent/router.json\n M docs/plugin-protocol.md\n M internal/server/apikey_vault.go\n M internal/server/attachments.go\n M internal/server/models_test.go\n M internal/server/plugin_daemon.go\n M internal/server/plugin_daemon_test.go\n M internal/server/plugin_host.js\n M internal/server/plugins.go\n M internal/server/provider.go\n M internal/server/provider_stream_test.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M plugins/registry.json\n M scripts/aide.sh\n M scripts/dev.sh\n?? docs/plugins/computer-browser-control.md\n?? docs/plugins/python-tool-package.md\n?? docs/reviews/2026-10-06-codex-capability-gap.md\n?? docs/reviews/2026-10-06-control-capability-acceptance.md\n?? docs/tasks/aide-capability-gap-20261006.json\n?? docs/tasks/computer-browser-control-20261006.json\n?? docs/tasks/plugin-settings-page-20261006.json\n?? docs/tasks/python-plugin-runtime-20261006.json\n?? internal/server/browser_control_test.go\n?? internal/server/control_workflow_test.go\n?? internal/server/plugins_builtin_test.go\n?? internal/server/plugins_bundle_test.go\n?? internal/server/workflow_shell_approval_test.go\n?? plugins/browser-control/\n?? plugins/computer-control/\n?? scripts/browser-control-check.cjs\n?? scripts/browser-runtime/\n?? scripts/build-native-computer-bridge.sh\n?? scripts/computer-bridge-control.sh\n?? scripts/computer-bridge.js\n?? scripts/computer-control-check.cjs\n?? scripts/headless-browser-bridge.js\n?? scripts/headless-browser-control.sh\n?? scripts/native-computer-bridge.swift\n?? scripts/safari-bridge-control.sh\n?? scripts/safari-bridge.js\n?? scripts/test_control_bridge_launchers.py\n?? scripts/test_control_plugin_runtime.py\n?? scripts/test_headless_browser.cjs",
+  "acceptance": [
+    "旧会话每轮使用过滤后的真实工具清单认知能力，不沿用历史能力否定。",
+    "网页研究请求优先读取官方网页正文，区分搜索摘要、页面读取、推断与未知并提供来源。",
+    "有可用网页读取工具却未调用时最多自动纠正一次，仍未调用则明确未完成，不虚报查询。",
+    "停用/禁用工具不触发读取或扩大网站授权；保留既有确认流程。",
+    "使用原 #30 旧会话自然语言请求完成实测，保存可核查工具记录。"
+  ],
+  "scope": [
+    "internal/server/context.go",
+    "internal/server/workflow.go",
+    "internal/server/web_research.go",
+    "internal/server/web_research_test.go",
+    "docs/tasks/web-research-routing-20261007.json",
+    "docs/plugins/web-research-workflow.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "确认真实工具已注入但旧会话模型未调用；增加当前能力刷新提示、网页研究步骤和一次纠正门禁。",
+      "evidence": [
+        "会话 #30 最新请求快照含 browser_read 等7工具，但该任务未执行网页工具。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "确认真实工具已注入但旧会话模型未调用；增加当前能力刷新提示、网页研究步骤和一次纠正门禁。",
+      "evidence": [
+        "会话 #30 最新请求快照含 browser_read 等7工具，但该任务未执行网页工具。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "按本轮真实工具定义刷新能力认知，加入网页研究步骤和最多一次的读取纠正。",
+      "evidence": [
+        "internal/server/web_research.go",
+        "internal/server/context.go",
+        "internal/server/workflow.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "聚焦 race 回归、19 项全量检查和原 #30 旧会话真实模型网页读取均通过。",
+      "evidence": [
+        "聚焦 go test -race: PASS 15.443s",
+        "full: pass fingerprint 7302a904dc851047dbb9dd54154f2eda2b61d628e5f696abf822aedfd4795134",
+        ".agent-state/verify-20261007T034748299080Z.log",
+        "internal/server 全量 race: PASS 376.767s",
+        ".cache/control-acceptance/web-research-old-session.json；run ff7b4a8ea88240f710a524b04b2720c0；三次 browser_read 正文成功",
+        "Safari 原 #30 界面已显示新版摘要并展开五条工具记录"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录网页研究路径、纠正上限和能力边界。",
+      "evidence": [
+        "docs/plugins/web-research-workflow.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留已有修改；实机证据置于忽略的缓存目录，无删除用户文件。",
+      "evidence": [
+        ".cache/control-acceptance/web-research-old-session.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "已按既有授权部署本地运行实例，未提交、推送或发布版本。",
+      "evidence": [
+        "image sha256:588a56762f56bb288bdb26833bc50d5bbf7830fe65df5f7059b4e2a2d32fe6c6"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "本地镜像已保留 aide:web-research-before-20261007，恢复镜像后重建本地容器。",
+  "handoff": "原 #30 旧会话 run ff7b4a8ea88240f710a524b04b2720c0 已完成；真实执行 browser_status、web_search 和三次 browser_read，首页/产品页/技术参数页成功。web_search 返回离线不可用，模型继续用浏览器读取成功。Safari 界面已打开该会话并展开本任务五条工具记录。"
+}

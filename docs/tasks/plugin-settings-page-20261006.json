@@ -1,0 +1,82 @@
+{
+  "id": "plugin-settings-page-20261006",
+  "request": "帮我看下浏览器访问插件能力，插件添加一个设置按钮和页面吧，每个插件",
+  "baseline": "8ffd6d62f59ae479dc0bb75268c510259b3a4cd2",
+  "initial_status": "## main...origin/main\n",
+  "acceptance": [
+    "每张插件卡片提供可访问的设置入口，并为该插件打开独立设置页。",
+    "每插件设置可保存、重新打开后保留；插件运行上下文可读取自己的设置，修改后 daemon 插件使用新配置重启。",
+    "说明当前 v1 插件没有浏览器自动化访问能力；通用设置不得暗示获得浏览器、网络或凭据权限。"
+  ],
+  "scope": [
+    "插件列表/设置页前端及英文文案。",
+    "插件配置持久化 API、Node plugin context 与 daemon 启动上下文。",
+    "插件协议和本任务记录；不实现浏览器自动化，不授予额外系统权限。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "现有仓库注册插件清单中未发现浏览器访问/自动化插件；插件协议明确不支持插件网络、文件系统特权。用户需要所有插件都可单独进入设置页面。",
+      "evidence": [
+        "检索 plugins/ 与 internal/server 非 vendor 源码，没有 browser/playwright/puppeteer 插件实现。",
+        "docs/plugin-protocol.md §1 明确 v1 不支持插件网络与文件系统特权。",
+        "用户原话：帮我看下浏览器访问插件能力，插件添加一个设置按钮和页面吧，每个插件。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "采用通用 JSON 设置对话页，注册表持久化；短命插件在下次执行时读取，daemon 插件在保存后重启。32 KiB 上限，页面与协议均明确不保存秘密且不授予浏览器或网络权限。",
+      "evidence": [
+        "现有注册表 API 仅支持列表、启停、删除；PluginManifest 没有设置字段。",
+        "非 daemon 插件通过 plugin_host.js call 命令执行；daemon 插件由 plugin_daemon.go 启动，需分别注入配置。",
+        "设置路由 PUT /api/plugins/{id}/settings 持久化到插件注册表。",
+        "ctx.settings 覆盖加载、短命工具调用及 daemon 启动场景。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "插件卡片已增加设置入口和 JSON 编辑页；配置通过 API 保存并暴露给插件 ctx.settings，daemon 保存后重启；同步英文词条和插件协议说明。",
+      "evidence": [
+        "internal/server/web/app.js、index.html、style.css：通用设置入口、编辑表单和保存交互。",
+        "internal/server/plugins.go、server.go、plugin_host.js、plugin_daemon.go：配置校验/持久化及 plugin context 注入。",
+        "docs/plugin-protocol.md：记录设置接口、上限、明文存储和浏览器访问边界。"
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "插件设置保存接口的 ZIP 插件回归、server 全量 Go 回归、前端语法及文档检查均通过。Safari UI 未完成：隔离本地 HTTPS 曾被系统自签名证书拦截，没有绕过证书提示。",
+      "evidence": [
+        "docker run aide:python-dev-check go test ./internal/server -run 'TestPlugin(Bundle|Settings)' -count=1：PASS",
+        "AIDE_OFFICE_SCRIPTS=/src/scripts/office go test ./...：PASS",
+        "node --check internal/server/plugin_host.js、web/app.js、web/locales/en.js：PASS；git diff --check：PASS",
+        "python3 scripts/check_docs.py：PASS",
+        "Safari UI：未验证；本地 QA HTTPS 证书被系统拦截，未绕过"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "插件协议已同步记录 ctx.settings、PUT 设置接口、32 KiB 上限、重启行为及权限边界。",
+      "evidence": [
+        "docs/plugin-protocol.md §1、§3、§4、§5。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅了改动文件与 diff；新增任务记录归档本次实现，没有临时文件。",
+      "evidence": [
+        "git diff --check 无输出。",
+        "变更仅限插件前端、插件宿主/daemon、API、协议文档和任务记录。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户本轮没有要求提交、推送或发布。",
+      "evidence": [
+        "不适用本次请求。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回滚本任务中列出的插件 UI/API/宿主/协议改动；新增 settings 字段为可选，旧注册表兼容。若配置数据需清理，先备份 plugins/registry.json，再由用户决定是否移除 settings 字段。",
+  "handoff": "设置以通用 JSON 对象提供；插件作者可在 apply(ctx) 中读取 ctx.settings。当前无浏览器自动化插件/权限。未运行测试与真实浏览器验收。"
+}

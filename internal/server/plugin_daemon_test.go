@@ -353,6 +353,11 @@ func TestDaemonConcurrentStartStopConsistency(t *testing.T) {
 	closeOnce := sync.Once{}
 	var p *daemonProc
 	p = installHookedDaemon(t, a, "race-daemon", func(readyCh, doneCh chan struct{}) {
+		// Capture this generation's stop signal before publishing readiness.
+		// A concurrent restart replaces p.stopCh under p.mu.
+		p.mu.Lock()
+		stopCh := p.stopCh
+		p.mu.Unlock()
 		// 每次 spawn：短暂信号后立即 ready（不阻塞），模拟快启动；退出等 stopCh。
 		select {
 		case enteredSlow <- struct{}{}:
@@ -360,7 +365,7 @@ func TestDaemonConcurrentStartStopConsistency(t *testing.T) {
 		}
 		closeOnce.Do(func() { close(releaseStart) })
 		p.closeReadyOnce()
-		<-p.stopCh
+		<-stopCh
 		close(doneCh)
 	})
 

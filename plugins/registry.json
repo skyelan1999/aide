@@ -132,6 +132,47 @@
       "installedAt": ""
     },
     {
+      "id": "browser-control",
+      "name": "浏览器控制",
+      "description": "在用户授权的网站范围内读取 Safari 页面；导航、点击和输入均逐次确认",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "settings": {
+        "allowedHosts": [
+          "example.com",
+          "www.dji.com",
+          "dji.com",
+          "*.dji.com",
+          "www.dji.com.cn",
+          "www.dji.cn",
+          "dji.cn",
+          "*.djicdn.com",
+          "djicdn.com"
+        ],
+        "engine": "headless"
+      },
+      "installedAt": ""
+    },
+    {
+      "id": "computer-control",
+      "name": "电脑控制",
+      "description": "在授权应用范围内查看屏幕；点击、输入和按键每次都需 Aide 确认",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "settings": {
+        "allowedApps": [
+          "文本编辑",
+          "TextEdit",
+          "Safari"
+        ]
+      },
+      "installedAt": ""
+    },
+    {
       "id": "comm-tcp",
       "name": "TCP 通讯",
       "description": "常驻 TCP 通讯：监听/连接/收发、本地代理录制、规则模拟应答、录制回放与 fuzz；零第三方依赖，默认禁用，仅绑回环",

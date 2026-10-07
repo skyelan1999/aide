@@ -269,6 +269,10 @@
       [
         "python3",
         "scripts/test_local_root.py"
+      ],
+      [
+        "python3",
+        "scripts/test_control_bridge_launchers.py"
       ]
     ],
     "full": [

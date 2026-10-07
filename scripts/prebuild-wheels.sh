@@ -20,7 +20,7 @@ if ! "$DOCKER_BIN" image inspect aide:local >/dev/null 2>&1; then
 fi
 
 # 与 Dockerfile 中 pin 的版本保持一致；改动请同步 Dockerfile 的 PIP 安装行
-DEPS="python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4"
+DEPS="python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0"
 # 下载用的索引（联网机可达即可；最终离线安装走 --no-index，与索引无关）
 PIP_INDEX_URL="${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}"
 
