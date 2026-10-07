@@ -192,7 +192,7 @@ func TestBatchUploadCountCap(t *testing.T) {
 	maxBatchBytes = 1 << 20
 	var parts []batchPart
 	for i := 0; i < 3; i++ {
-		parts = append(parts, batchPart{string(rune('A' + i)) + ".txt", "x"})
+		parts = append(parts, batchPart{string(rune('A'+i)) + ".txt", "x"})
 	}
 	w := batchUploadParts(a, "/api/file/upload-batch", parts)
 	requireStatus(t, w, 207)

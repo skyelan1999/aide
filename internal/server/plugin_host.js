@@ -44,25 +44,35 @@ function loadPlugin(file) {
 
 /* 协议 v1.1 的受限 ctx（协议 §3）：logger 走 stderr；effect/on 只登记；provide/slot 记入 surface；
    tool 注册 name/description/parameters 与 handler（handler 不序列化，仅供 call 命令调用）。 */
-function makeCtx(surface, registry, settings) {
+function makeCtx(surface, registry, settings, services = new Map(), required = []) {
   const noop = () => () => {};
   return {
     settings: settings && typeof settings === 'object' && !Array.isArray(settings) ? settings : {},
     logger: { info: log, warn: log, error: log },
     effect: noop,
     on: noop,
-    provide: name => {
-      if (typeof name === 'string') surface.provided.push(String(name).slice(0, 128));
-      return () => {};
+    provide: (name, value) => {
+      if (typeof name !== 'string' || !/^[A-Za-z_][A-Za-z0-9_.:-]{0,127}$/.test(name)) throw new Error('服务名无效');
+      if (services.has(name)) throw new Error('服务重复注册: ' + name);
+      services.set(name, {owner: surface.__pluginId || surface.id, value});
+      surface.provided.push(name);
+      return () => { if (services.get(name)?.owner === (surface.__pluginId || surface.id)) services.delete(name); };
+    },
+    consume: name => {
+      if (!required.includes(name)) throw new Error('服务依赖未声明: ' + name);
+      if (!services.has(name)) throw new Error('服务依赖不可用: ' + name);
+      return services.get(name).value;
     },
     tool: def => {
       const d = def && typeof def === 'object' ? def : {};
-      const name = String(d.name || '匿名工具').slice(0, 128);
+      const name = String(d.name || '');
+      if (!/^[A-Za-z_][A-Za-z0-9_.:-]{0,127}$/.test(name)) throw new Error('工具名无效');
+      if (registry && registry.has(name)) throw new Error('工具重复注册: ' + name);
       const toolEntry = { name, description: String(d.description || '').slice(0, 512), executable: typeof d.handler === 'function' };
       if (d.parameters && typeof d.parameters === 'object') toolEntry.parameters = d.parameters;
       surface.tools.push(toolEntry);
       if (typeof d.handler === 'function' && registry) {
-        registry.set(name, { handler: d.handler, plugin: surface.__pluginId || '' });
+        registry.set(name, { handler: d.handler, plugin: surface.__pluginId || surface.id || '' });
       }
     },
     slot: def => {
@@ -125,47 +135,72 @@ function validateCommand(file) {
   console.log(JSON.stringify({ ok: true, name }));
 }
 
+// Assemble service providers before consumers. A missing, ambiguous or cyclic
+// dependency disables its consumer instead of exposing partially wired tools.
+// Contracts come from trusted enabled plugin code, not model/tool arguments.
+function assemblePlugins(pluginsDir, enabled, target = '', reserved = []) {
+  const modules = new Map(), providers = new Map(), states = new Map();
+  const out = {generatedAt: new Date().toISOString(), plugins: []};
+  const registry = new Map(reserved.map(name => [name, {plugin: 'builtin'}])), services = new Map(), disposers = [];
+  const names = values => {
+    if (values == null) return [];
+    if (!Array.isArray(values) || values.length > 64 || values.some(v => typeof v !== 'string' || !/^[A-Za-z_][A-Za-z0-9_.:-]{0,127}$/.test(v)) || new Set(values).size !== values.length) throw new Error('服务契约必须是最多64项唯一服务名数组');
+    return values;
+  };
+  for (const entry of enabled) {
+    const item = {id: entry.id, name: entry.name || entry.id, error: '', tools: [], slots: [], provided: [], requires: []};
+    item.__pluginId = entry.id; out.plugins.push(item);
+    try {
+      if (!/^[a-z0-9][a-z0-9_-]{0,63}$/.test(entry.id) || String(entry.main || 'index.js').startsWith('/') || String(entry.main || 'index.js').split(/[\\/]/).includes('..')) throw new Error('插件入口路径无效');
+      if (modules.has(entry.id)) throw new Error('插件ID重复');
+      const loaded = loadPlugin(path.join(pluginsDir, entry.id, entry.main || 'index.js'));
+      if (loaded.error) throw new Error(loaded.error);
+      const requires = names(loaded.plugin.requires), provides = names(loaded.plugin.provides);
+      item.requires = requires;
+      modules.set(entry.id, {entry, item, plugin: loaded.plugin, requires, provides});
+      for (const name of provides) { if (!providers.has(name)) providers.set(name, []); providers.get(name).push(entry.id); }
+    } catch (error) { item.error = String(error.message || error).slice(0, 300); }
+  }
+  const visit = id => {
+    const mod = modules.get(id); if (!mod) throw new Error('依赖插件不可用: ' + id);
+    if (states.get(id) === 'ready') return;
+    if (states.get(id) === 'visiting') throw new Error('服务依赖存在循环: ' + id);
+    if (states.get(id) === 'failed') throw new Error(mod.item.error);
+    states.set(id, 'visiting');
+    try {
+      for (const name of mod.requires) {
+        const owners = providers.get(name) || [];
+        if (owners.length !== 1) throw new Error('服务缺失或存在多个提供者: ' + name);
+        visit(owners[0]);
+        if (!services.has(name)) throw new Error('声明的服务未提供: ' + name);
+      }
+      const dispose = mod.plugin.apply(makeCtx(mod.item, registry, mod.entry.settings, services, mod.requires));
+      if (dispose && typeof dispose.then === 'function') throw new Error('同步服务装配不支持异步apply');
+      if (typeof dispose === 'function') disposers.push(dispose);
+      for (const name of mod.provides) if (services.get(name)?.owner !== id) throw new Error('声明的服务未提供: ' + name);
+      states.set(id, 'ready');
+    } catch (error) {
+      mod.item.error = String(error.message || error).slice(0, 300);
+      for (const [name, entry] of registry) if (entry.plugin === id) registry.delete(name);
+      for (const [name, entry] of services) if (entry.owner === id) services.delete(name);
+      mod.item.tools = []; states.set(id, 'failed'); throw error;
+    }
+  };
+  if (target) { try { visit(target); } catch (_) {} }
+  else for (const id of modules.keys()) { try { visit(id); } catch (_) {} }
+  const dispose = () => { for (const fn of disposers.reverse()) { try { fn(); } catch (_) {} } };
+  return {out, registry, dispose};
+}
 function runCommand(pluginsDir, enabledJSON, outFile) {
   let enabled;
-  try {
-    enabled = JSON.parse(enabledJSON);
-  } catch (err) {
-    console.log(JSON.stringify({ ok: false, error: 'enabledListJson 解析失败' }));
-    process.exit(3);
-  }
-  const out = { generatedAt: new Date().toISOString(), plugins: [] };
-  for (const entry of enabled) {
-    const item = { id: entry.id, name: entry.name || entry.id, error: '', tools: [], slots: [], provided: [] };
-    item.__pluginId = entry.id;
-    const file = path.join(pluginsDir, entry.id, entry.main || 'index.js');
-    const result = loadPlugin(file);
-    if (result.error) {
-      item.error = result.error;
-      out.plugins.push(item);
-      continue;
-    }
-    if (result.plugin.name && typeof result.plugin.name === 'string') item.name = String(result.plugin.name).slice(0, 64);
-    try {
-      const disposer = result.plugin.apply(makeCtx(item, new Map(), entry.settings));
-      if (typeof disposer === 'function') {
-        try {
-          disposer();
-        } catch (err) {
-          /* 清理回调异常不影响其他插件 */
-        }
-      }
-    } catch (err) {
-      item.error = 'apply(ctx) 执行失败: ' + String(err && err.message).slice(0, 300);
-    }
-    out.plugins.push(item);
-  }
-  try {
-    fs.writeFileSync(outFile, JSON.stringify(out));
-  } catch (err) {
-    console.log(JSON.stringify({ ok: false, error: 'surface 写入失败: ' + String(err && err.message) }));
-    process.exit(4);
-  }
-  console.log(JSON.stringify({ ok: true, count: out.plugins.length }));
+  let reserved = [];
+  try { const document = JSON.parse(enabledJSON); enabled = Array.isArray(document) ? document : document.plugins; reserved = Array.isArray(document.reservedTools) ? document.reservedTools : []; if (!Array.isArray(enabled) || enabled.length > 256) throw new Error('invalid plugin list'); }
+  catch (error) { console.log(JSON.stringify({ok:false,error:String(error.message)})); process.exit(3); }
+  const assembled = assemblePlugins(pluginsDir, enabled, '', reserved);
+  assembled.dispose();
+  try { fs.writeFileSync(outFile, JSON.stringify(assembled.out)); }
+  catch (error) { console.log(JSON.stringify({ok:false,error:'surface 写入失败: ' + error.message})); process.exit(4); }
+  console.log(JSON.stringify({ok:true,count:assembled.out.plugins.length}));
 }
 
 /* 协议 v1.1：call <pluginsDir> <requestJson> <outFile>
@@ -190,25 +225,13 @@ function callCommand(pluginsDir, requestJSON, outFile) {
     console.log(JSON.stringify({ ok: false }));
     return;
   }
-  const file = path.join(pluginDir, main);
-  const result = loadPlugin(file);
-  if (result.error) {
-    write({ ok: false, error: result.error });
-    console.log(JSON.stringify({ ok: false }));
-    return;
-  }
-  const surface = { id: req.plugin, name: req.plugin, error: '', tools: [], slots: [], provided: [] };
-  const registry = new Map();
-  try {
-    result.plugin.apply(makeCtx(surface, registry, req.settings));
-  } catch (err) {
-    write({ ok: false, error: 'apply 执行失败: ' + String(err && err.message).slice(0, 300) });
-    console.log(JSON.stringify({ ok: false }));
-    return;
-  }
+  const enabled = Array.isArray(req.enabledPlugins) ? req.enabledPlugins : [{id:req.plugin,main,settings:req.settings}];
+  const assembled = assemblePlugins(pluginsDir, enabled, req.plugin, Array.isArray(req.reservedTools) ? req.reservedTools : []);
+  const registry = assembled.registry;
   const entry = registry.get(req.tool);
-  if (!entry) {
-    write({ ok: false, error: '工具未注册: ' + req.tool });
+  if (!entry || entry.plugin !== req.plugin) {
+    assembled.dispose();
+    write({ ok: false, error: '工具未注册、服务依赖无效或归属不匹配: ' + req.tool });
     console.log(JSON.stringify({ ok: false }));
     return;
   }
@@ -226,6 +249,7 @@ function callCommand(pluginsDir, requestJSON, outFile) {
       if (finished) return;
       finished = true;
       clearTimeout(timer);
+      assembled.dispose();
       write({ ok: true, result: value === undefined ? null : value });
       console.log(JSON.stringify({ ok: true }));
     })
@@ -233,6 +257,7 @@ function callCommand(pluginsDir, requestJSON, outFile) {
       if (finished) return;
       finished = true;
       clearTimeout(timer);
+      assembled.dispose();
       write({ ok: false, error: String(err && err.message).slice(0, 500) });
       console.log(JSON.stringify({ ok: false }));
     });

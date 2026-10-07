@@ -189,7 +189,7 @@ func (a *App) runPluginHost(ctx context.Context) {
 		a.mu.Unlock()
 		return
 	}
-	listJSON, _ := json.Marshal(enabled)
+	listJSON, _ := json.Marshal(map[string]any{"plugins": enabled, "reservedTools": builtinToolNames()})
 	surfacePath := filepath.Join(pluginsPath, pluginSurfaceFN)
 	cctx, cancel := context.WithTimeout(ctx, pluginRunTimeout)
 	defer cancel()
@@ -730,33 +730,38 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	if err := parent.Err(); err != nil {
 		return nil, err
 	}
-	if pluginID == "browser-control" || pluginID == "computer-control" {
-		a.mu.Lock()
-		enabled := false
-		for _, p := range a.pluginRegistry.Plugins {
-			if p.ID == pluginID {
-				enabled = p.Enabled
-				break
-			}
+	a.mu.Lock()
+	enabled := false
+	for _, p := range a.pluginRegistry.Plugins {
+		if p.ID == pluginID {
+			enabled = p.Enabled
+			break
 		}
-		a.mu.Unlock()
-		if !enabled {
-			return nil, errors.New("控制插件已停用，操作未执行")
-		}
+	}
+	denied := toolDeniedIn(a.settings.DisabledTools, toolName)
+	a.mu.Unlock()
+	if !enabled {
+		return nil, errors.New("插件已停用，操作未执行")
+	}
+	if denied {
+		return nil, errors.New("插件工具已禁用，操作未执行")
 	}
 	if a.daemons != nil && a.isDaemonPlugin(pluginID) {
 		return a.daemons.Call(pluginID, toolName, args)
 	}
 	a.mu.Lock()
 	settings := map[string]any{}
+	enabledPlugins := []map[string]any{}
 	for _, p := range a.pluginRegistry.Plugins {
+		if p.Enabled {
+			enabledPlugins = append(enabledPlugins, map[string]any{"id": p.ID, "name": p.Name, "main": p.Main, "settings": p.Settings})
+		}
 		if p.ID == pluginID {
 			settings = pluginSettingsOrEmpty(p.Settings)
-			break
 		}
 	}
 	a.mu.Unlock()
-	req, err := json.Marshal(map[string]any{"plugin": pluginID, "tool": toolName, "args": args, "settings": settings})
+	req, err := json.Marshal(map[string]any{"plugin": pluginID, "tool": toolName, "args": args, "settings": settings, "enabledPlugins": enabledPlugins, "reservedTools": builtinToolNames()})
 	if err != nil {
 		return nil, err
 	}
@@ -822,7 +827,20 @@ func normalizePluginResult(raw any) (string, []map[string]any) {
 			if prop, ok := t["proposal"].(map[string]any); ok {
 				proposals = append(proposals, prop)
 			} else if s, ok := t["text"].(string); ok {
-				text = s
+				text = sourceReceipt(t) + s
+				// Keep actual PDF coverage even when text normalization would
+				// otherwise discard the plugin's structured result.
+				if _, pdf := t["pages"]; pdf {
+					meta := map[string]any{}
+					for _, key := range []string{"url", "pages", "fromPage", "toPage", "pagesRead", "nextPage", "truncated", "lastPageComplete"} {
+						if value, exists := t[key]; exists {
+							meta[key] = value
+						}
+					}
+					if encoded, err := json.Marshal(meta); err == nil {
+						text = sourceReceipt(t) + "【PDF读取元数据】" + string(encoded) + "\n" + s
+					}
+				}
 			} else {
 				// Preserve structured status/results for the model. Do not dump
 				// binary screenshot data into a text-only tool message.
@@ -863,4 +881,18 @@ func (a *App) pluginSurfaceHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	_, _ = w.Write(a.pluginSurface)
+}
+
+func builtinToolNames() []string {
+	names := []string{}
+	for _, tool := range builtinTools {
+		if entry, ok := tool.(map[string]any); ok {
+			if fn, ok := entry["function"].(map[string]any); ok {
+				if name, ok := fn["name"].(string); ok {
+					names = append(names, name)
+				}
+			}
+		}
+	}
+	return names
 }

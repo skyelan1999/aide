@@ -65,8 +65,8 @@ func TestToolLoopLengthTruncatedToolCallAutoPatches(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fl, _ := w.(http.Flusher)
 		var body struct {
-			Stream bool     `json:"stream"`
-			Tools  []any    `json:"tools"`
+			Stream bool  `json:"stream"`
+			Tools  []any `json:"tools"`
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		if !body.Stream {
@@ -104,6 +104,7 @@ func TestToolLoopLengthTruncatedToolCallAutoPatches(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	input := []Message{{Role: "user", Content: "生成 dxf"}}
+	registerHarnessFixtureTask(t, a, task)
 	out, chain, err := a.toolLoop(ctx, cfg, input, ProfileParams{}, nil, task, map[string]Change{}, 0)
 	if err != nil {
 		t.Fatalf("toolLoop err = %v", err)
@@ -167,6 +168,7 @@ func TestToolLoopLengthPureTextContinues(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	input := []Message{{Role: "user", Content: "写一段长说明"}}
+	registerHarnessFixtureTask(t, a, task)
 	out, chain, err := a.toolLoop(ctx, cfg, input, ProfileParams{}, nil, task, map[string]Change{}, 0)
 	if err != nil {
 		t.Fatalf("toolLoop err = %v", err)

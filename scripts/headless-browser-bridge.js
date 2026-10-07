@@ -36,6 +36,9 @@ async function snapshot(tab, rules) {
   const value = await tab.evaluate(() => ({
     url: location.href, title: document.title,
     text: (document.body?.innerText || '').slice(0, 30000),
+    textChars: (document.body?.innerText || '').length,
+    truncated: (document.body?.innerText || '').length > 30000,
+    linksTruncated: document.querySelectorAll('a[href]').length > 300,
     links: Array.from(new Map(Array.from(document.querySelectorAll('a[href]')).map(a => [a.href, { text: (a.innerText || a.getAttribute('aria-label') || '').slice(0, 200), url: a.href }])).values()).sort((a, b) => Number(/\.pdf(?:[?#]|$)/i.test(b.url)) - Number(/\.pdf(?:[?#]|$)/i.test(a.url))).slice(0, 300),
     controls: Array.from(document.querySelectorAll('input,textarea,button,select')).slice(0, 100).map(e => ({ tag: e.tagName.toLowerCase(), id: e.id, name: e.getAttribute('name') || '', text: (e.innerText || e.getAttribute('placeholder') || '').slice(0, 200) })),
   }));

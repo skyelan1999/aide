@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -50,7 +52,7 @@ func TestModelLedPlanValidationAndJSONPersistence(t *testing.T) {
 	if restored.AgentPlan == nil || len(restored.AgentPlan.Items) != 2 || !restored.AgentReviewDone || restored.WorkflowPhase != "auto" {
 		t.Fatalf("persistence lost: %+v", restored)
 	}
-	if got := a.agentCompletionReview(&restored); !strings.Contains(got, "工具记录1 read_file：observed") {
+	if got := a.agentCompletionReview(&restored); !strings.Contains(got, "工具记录1 read_file 参数：") || !strings.Contains(got, "返回：observed") {
 		t.Fatal(got)
 	}
 }
@@ -76,12 +78,19 @@ func TestModelLedLoopPlansReceiptsAndSingleReview(t *testing.T) {
 			if last.Role != "tool" || !strings.Contains(last.Content, "[工具记录1]") {
 				t.Errorf("missing receipt: %+v", last)
 			}
+			msg.Content = ""
+			msg.ToolCalls = []ToolCall{readCall("read_file", `{"path":"review.txt"}`)}
 		case 3:
+			last := body.Messages[len(body.Messages)-1]
+			if last.Role != "tool" || !strings.Contains(last.Content, "observed") {
+				t.Errorf("missing actual read result: %+v", last)
+			}
+		case 4:
 			last := body.Messages[len(body.Messages)-1]
 			if !strings.Contains(last.Content, "任务收尾自检") || !strings.Contains(last.Content, "当前计划") {
 				t.Errorf("missing review: %+v", last)
 			}
-		case 4: // resume final response
+		case 5: // resume final response
 		default:
 			t.Errorf("unexpected request %d", n)
 		}
@@ -89,20 +98,25 @@ func TestModelLedLoopPlansReceiptsAndSingleReview(t *testing.T) {
 	}))
 	defer provider.Close()
 	a.settings.ToolMaxRounds = 6
+	if err := os.WriteFile(filepath.Join(a.workPath, "review.txt"), []byte("observed"), 0600); err != nil {
+		t.Fatal(err)
+	}
 	task := &Task{ID: newID(), Mode: "workflow", Strategy: "auto", Steps: []Step{{Name: "agent"}}, Steer: make(chan string, 1)}
-	out, chain, err := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "test"}, []Message{{Role: "user", Content: "整理目标"}}, ProfileParams{}, []any{updatePlanTool}, task, nil, 0)
+	registerHarnessFixtureTask(t, a, task)
+	out, chain, err := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "test"}, []Message{{Role: "user", Content: "整理目标"}}, ProfileParams{}, append(append([]any{}, builtinTools...), updatePlanTool), task, nil, 0)
 	if err != nil || out != "已完成" {
 		t.Fatalf("%q %v", out, err)
 	}
-	if count.Load() != 3 || !task.AgentReviewDone || task.AgentPlan == nil || len(task.ToolUses) != 1 {
+	if count.Load() != 4 || !task.AgentReviewDone || task.AgentPlan == nil || len(task.ToolUses) != 2 {
 		t.Fatalf("unexpected state: calls=%d task=%+v", count.Load(), task)
 	}
 	// A resumed chain retains review state and does not add another review.
+	registerHarnessFixtureTask(t, a, task)
 	_, _, err = a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "test"}, chain, ProfileParams{}, nil, task, nil, 0)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if count.Load() != 4 {
+	if count.Load() != 5 {
 		t.Fatalf("repeat review: %d", count.Load())
 	}
 }

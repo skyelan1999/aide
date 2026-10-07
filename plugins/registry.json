@@ -215,6 +215,16 @@
       "enabled": false,
       "daemon": true,
       "installedAt": "2026-09-25T21:30:00Z"
+    },
+    {
+      "id": "propeller-aero",
+      "name": "桨叶建模与气动 / Propeller CAD \u0026 BEMT",
+      "description": "官方尺寸约束重建、封闭桨叶 STL、气动 CSV 与图表；纯 Python 标准库，可离线复现，假设透明，文件经现有提案审批。",
+      "version": "1.0.0",
+      "author": "aide",
+      "main": "index.js",
+      "enabled": true,
+      "installedAt": "2026-10-07T09:06:48.208534626Z"
     }
   ]
 }

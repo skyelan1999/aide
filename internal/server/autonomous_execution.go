@@ -45,13 +45,15 @@ func needsResearchContinuation(out string, tools []any) bool {
 		tail = tail[len(tail)-1200:]
 	}
 	text := string(tail)
-	for _, cue := range []string{"我这就用", "我现在就读取", "我接着自定执行", "下一步（我直接继续", "下一步（我自定执行"} {
-		if strings.Contains(text, cue) && (strings.Contains(text, "读取") || strings.Contains(text, "继续读")) {
+	for _, cue := range []string{"我这就用", "我现在就读取", "我接着自定执行", "下一步（我直接继续", "下一步（我自定执行", "我下一轮直接执行", "若你希望我读", "需要我接着读哪一条"} {
+		if strings.Contains(text, cue) && (strings.Contains(text, "读取") || strings.Contains(text, "继续读") || strings.Contains(text, "未读") || strings.Contains(text, "尚未读取")) {
 			return true
 		}
 	}
 	return false
 }
+
+const researchContinuationNotCompleted = "本轮研究尚未完成：回复仍将可继续的读取留到下一轮，已达到本轮自动纠正或工具轮数上限。已有工具结果保留在轨迹中；未读取的来源不能称为查尽，也不能据此认定官方不公开。"
 
 const researchContinuationCorrection = "【执行策略纠正】上一段末尾承诺立即继续读取，却结束了回答。请现在调用 browser_read 执行已经承诺的只读步骤；PDF截断时使用真实nextPage/fromPage继续。不得伪造页码内容或把未执行步骤称为完成。若实际工具预算或权限阻塞，说明具体停止原因和未完成项，不再写将自动继续。"
 

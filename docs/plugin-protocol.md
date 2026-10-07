@@ -183,3 +183,30 @@ module.exports = {
 ### 内置环境说明能力
 
 `environment-guide` 是 Go 上下文构造器集成的内置插件，不是通用 Node 自动上下文 API。注册表中启用该 ID 后，在任务创建时采集有界的本地顶层目录及脱敏来源信息，注入对话/工作流共用的系统上下文，并计入预算。Node 入口仅声明能力。不会执行任意插件输出作为系统指令。详见 [插件说明](../plugins/environment-guide/README.md)。
+
+## 受信插件的同步服务装配
+
+插件模块可声明 `provides: ["service-name"]` 和 `requires: ["service-name"]`，每组最多64个唯一名称。宿主按依赖顺序执行同步 `apply(ctx)`；消费者使用 `ctx.consume(name)` 获取提供者通过 `ctx.provide(name, value)` 注册的真实值。没有声明的消费、服务缺失、多个提供者、循环依赖、声明但未注册服务和重复工具名（含内置工具名）均返回 surface 错误，并移除失败插件工具。
+
+```js
+// Provider module
+module.exports = {
+  name: 'formatter', provides: ['example.formatter'],
+  apply(ctx) {
+    return ctx.provide('example.formatter', text => String(text).trim());
+  }
+};
+// Consumer module (installed as a different plugin)
+module.exports = {
+  name: 'consumer', requires: ['example.formatter'],
+  apply(ctx) {
+    const format = ctx.consume('example.formatter');
+    ctx.tool({name: 'example_format', description: 'Format text',
+      parameters: {type: 'object', properties: {text: {type: 'string'}}},
+      handler: args => format(args.text)});
+  }
+};
+```
+
+非daemon工具每次调用用操作者当前启用插件列表重新装配目标插件及依赖，校验工具实际归属；结束后反序调用清理回调。扫描surface也反序清理。依赖关闭后不能通过旧工具schema越过停用检查。现有每插件设置由各模块的 `ctx.settings` 读取，配置变更不需要重新编译产品。
+这不是完整Cordis兼容层，不提供跨进程服务对象、异步apply或daemon间服务注入。daemon既有生命周期保持独立。`effect/on`仍为兼容登记，不代表事件订阅已实现。同步服务是受信插件代码，不构成新的权限或隔离边界；安装/启用仍由操作者进行。

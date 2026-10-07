@@ -119,6 +119,16 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 
 `theme` 为 light/dark/system，`palette` 为 blue/green。页面 `data-theme` 是解析后的明暗，`data-theme-pref` 是用户选择，`data-palette` 是风格。专业与经典各一排三项，通过 `aideUI.setAppearance()` 一次保存组合。旧 `aide.theme` 和中间版本 classic 偏好迁移；`settings-schema.json` 侧边分区为：消耗统计(stats)/外观(appearance)/语言(language)/模型(model)/会话数据(sessions-data)/权限(permissions)/账户(account)/性格(persona)/语音(voice)/无障碍(accessibility)/备份(backup)/关于(about)。
 
+文件侧栏顶部采用紧凑间距：标题栏 42px、根目录切换按钮最小 28px，路径与搜索行收紧内边距；触摸设备标题栏 46px、主要按钮 34px。规则统一在 `style.css` 的 `#file-panel` 范围内，适用于经典与专业外观，不改变文件列表行样式。
+
+## 本任务自动命令审批
+
+聊天输入框工具栏在策略按钮旁提供“审批 · 手动 / 帮我审批”，命令确认卡只提供本次确认及调整操作。发送前的选择通过创建任务参数 `autoReview` 写入任务；当前页面内按会话记住新任务选择，不跨会话继承，刷新后未运行任务的选择回到手动。运行中的开关以任务持久化状态为准。`PUT /api/sessions/{id}/runs/{run}/approval-mode` 仅切换该运行任务审核方式；默认关闭，不改变沙箱与插件权限。开启后，`run_shell` 的非只读命令由独立、无工具的模型请求审核，使用任务模型与现有连接，20 秒时限、512 输出 token，用量计入任务。只在明确授权、工作区内、低风险或可逆中等风险且结构化结果完整时自动放行。删除、权限修改、现有受保护命令、不确定操作仍等待人工；失败/超时/取消不放行。此功能当前覆盖 shell 命令确认，不代替文件提案应用或其他插件审批。
+
+命令确认由服务端标记 `approvalKind=shell` 和轮次；按钮提交轮次，过期请求拒绝。审核结果只有在同一轮次、同一开关代际、未被人工应答且上下文有效时生效；切换或人工应答取消进行中的审核。保留最近 50 条具体命令、状态和原因，先持久化记录再唤醒执行；现有命令执行器仍检查沙箱。文件、网页与模型回复均不能自行开启审批方式。
+
+参考 [Codex Auto-review](https://learn.chatgpt.com/docs/sandboxing/auto-review) 的独立审核、具体行动与审批原因设计。本实现使用 Aide 当前连接的模型，未接入 Codex 服务，也未声称具有相同安全保证。
+
 ## 锁屏集群
 
 锁屏状态跨标签页（主界面 ↔ 文件查看器）联动，纯前端零后端改动，实现见 `internal/server/web/lock-cluster.js`，频道 `aide-lock-v1`。后端 `/account/verify-password` 仍无状态，只比对 SHA-256；锁屏状态不入库、不回服务端。

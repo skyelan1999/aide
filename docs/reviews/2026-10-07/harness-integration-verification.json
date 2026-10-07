@@ -1,0 +1,446 @@
+{
+  "task": "harness-integration-20261007",
+  "timeUTC": "2026-10-07T12:17:34Z",
+  "sourceFingerprint": "7c0ba932987f7d255c03c85147ed4f7b5037e6cbb1be446fe2775885c5e00820",
+  "baseline": "5472946055d6f8d7099196a987098d204fb6555c",
+  "scope": "Current uncommitted candidate; no production replacement or remote publication",
+  "normalFullRegression": {
+    "status": "pass",
+    "serverSeconds": 211.676,
+    "ttsSeconds": 2.475,
+    "passedTestsAndSubtests": 553,
+    "scopeNote": "Before latest read-only option and approval ownership changes; latest source separately covered by partitioned race"
+  },
+  "monolithicRace": {
+    "status": "failed_environment",
+    "attempts": 2,
+    "reason": "2GiB cgroup OOM kills; not counted as PASS"
+  },
+  "partitionedRace": {
+    "status": "pass",
+    "inventoryCount": 473,
+    "inventorySHA256": "2fa63e2c7f2123a4d8b596db32adbd44efbf29bcade2f88b0052a0f9abb30a30",
+    "batchCount": 19,
+    "passedTestsAndSubtests": 540,
+    "skips": [
+      "TestAttachmentContextPdf",
+      "TestFingerprint",
+      "TestSourcesLiveProtocols",
+      "TestSshKeygenPassphraseViaAskpass"
+    ],
+    "missing": [],
+    "failed": [],
+    "batches": [
+      {
+        "index": 0,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 1,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 2,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 3,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 4,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 5,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 6,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 7,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 8,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 9,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 10,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 11,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 12,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 13,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 14,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 15,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 16,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 17,
+        "count": 25,
+        "exit": 0
+      },
+      {
+        "index": 18,
+        "count": 23,
+        "exit": 0
+      }
+    ],
+    "source": "Go runtime-generated inventory, 25 top-level tests per separate race process; -race -p1 -count1; no missing terminal results",
+    "env": {
+      "CGO_ENABLED": "1",
+      "GOMEMLIMIT": "640MiB",
+      "GOGC": "50",
+      "GORACE": "history_size=0",
+      "AIDE_OFFICE_SCRIPTS": "/src/scripts/office",
+      "PYTHONPATH": "/tmp/harness-python-packages"
+    }
+  },
+  "ttsRace": {
+    "status": "pass",
+    "seconds": 4.171
+  },
+  "vet": {
+    "status": "pass",
+    "exit": 0
+  },
+  "runtime": {
+    "setup": "pass",
+    "workspaceId": "local||",
+    "worktreeId": "d27dd10634666eb48c9f1dd9ef9fe362",
+    "worktreePath": "/workspace/.cache/aide/worktrees/d27dd10634666eb48c9f1dd9ef9fe362",
+    "binarySHA256": "5c10de841b46fa08aa396e5e4f5f652d4e52b5af9080942e3b483e9b3701d773",
+    "restart": "pass",
+    "tls": "verified against generated certificate, no verification bypass",
+    "apiAuthentication": "401 without token, 200 with token",
+    "container": "aide-harness-runtime-20261007",
+    "url": "https://localhost:18189/",
+    "workspace": "temporary fixture only",
+    "trust": "API client validates candidate-generated certificate, not a browser acceptance result",
+    "certificateSHA256": "F8:A3:EE:AC:8B:73:37:CD:22:BB:22:06:62:37:D4:93:D8:9F:A1:AB:6D:D4:DE:56:B2:FD:77:CE:7B:30:87:6E"
+  },
+  "ui": {
+    "status": "pass",
+    "observations": [
+      "Mac locked; native app capture/control unavailable",
+      "Candidate URL returned net::ERR_CERT_AUTHORITY_INVALID",
+      "Resumed turn: Mac unlocked; native Safari navigation to https://localhost:18189 produced certificate warning 此连接非私人连接. No warning bypass performed; user handoff requested. UI acceptance remains not_run.",
+      "Next consecutive resumed goal turn: Safari AX state still shows certificate warning for https://localhost:18189; no user handoff completion observed."
+    ],
+    "remaining": [],
+    "historical_before_followup": {
+      "status": "not_run",
+      "observations": [
+        "Mac locked; native app capture/control unavailable",
+        "Candidate URL returned net::ERR_CERT_AUTHORITY_INVALID",
+        "Resumed turn: Mac unlocked; native Safari navigation to https://localhost:18189 produced certificate warning 此连接非私人连接. No warning bypass performed; user handoff requested. UI acceptance remains not_run.",
+        "Next consecutive resumed goal turn: Safari AX state still shows certificate warning for https://localhost:18189; no user handoff completion observed."
+      ],
+      "remaining": [
+        "Configuration edit/save/reload/import/export in rendered UI",
+        "Approval-card mode toggle and interaction",
+        "Worktree select/save/archive interface",
+        "Desktop/narrow and language/theme review"
+      ]
+    },
+    "currentEvidence": {
+      "status": "pass",
+      "passed": [
+        "global budget save and restart persistence",
+        "global extension edit/save/reload",
+        "policy JSON export and actual import preview",
+        "worktree create/select/save/switch back/archive retained file",
+        "manual approval card confirmed and executed fixture write",
+        "English config and worktree labels",
+        "768px responsive view: policy controls and wrapped worktree paths",
+        "390px responsive view: wrapped paths and controls",
+        "temporary responsive mode exited; Chinese restored",
+        "assisted switch on -> independent review approved -> exit0 -> completed task -> restored manual/off"
+      ],
+      "pending": [],
+      "related_race": "TestHarnessManagedWorktreeCreateArchive PASS 2.275s",
+      "mock_provider": "127.0.0.1:18190, session88923, candidate-only",
+      "screenshot": "/private/tmp/aide-harness-ui-evidence/manual-approval.png",
+      "screenshots": [
+        "/private/tmp/aide-harness-ui-evidence/assisted-approved.png",
+        "/private/tmp/aide-harness-ui-evidence/assisted-restored-manual.png"
+      ]
+    }
+  },
+  "paidModel": {
+    "status": "not_run",
+    "note": "Model behavior checked with local mock providers only"
+  },
+  "release": {
+    "productionReplaced": false,
+    "pushed": false,
+    "published": false
+  },
+  "goal": "integration complete; source and isolated candidate accepted; no production/public release",
+  "quick": {
+    "status": "pass",
+    "fingerprint": "689dec44ba3eccb8822096146d3210b8b9e3abe1580a718391723547880964b6",
+    "checks": 18,
+    "source": "post local BasePath visibility fix"
+  },
+  "start_command_ui_followup": {
+    "status": "pass",
+    "launcher": "original start.command with isolated COMPOSE_FILE",
+    "url": "https://localhost:18189/",
+    "container": "aide-harness-launcher-20261007-aide-1",
+    "candidate_sha256": "c6b49514cdd84c624d537cc1e51e67b807e60cab355e24608f493b6860c7e7a2",
+    "verified_ui": [
+      "global strategy save and restart persistence 480 seconds",
+      "global extension config edit/save/reload",
+      "worktree create/select/save/switch back/archive",
+      "equivalent local base paths retain worktree visibility",
+      "assisted approval actual mock UI completed; composer restored manual/off"
+    ],
+    "remaining": [],
+    "screenshot": "/private/tmp/aide-harness-ui-evidence/start-command-worktrees.png",
+    "production_replaced": false
+  },
+  "ui_acceptance_followup": {
+    "status": "pass",
+    "passed": [
+      "global budget save and restart persistence",
+      "global extension edit/save/reload",
+      "policy JSON export and actual import preview",
+      "worktree create/select/save/switch back/archive retained file",
+      "manual approval card confirmed and executed fixture write",
+      "English config and worktree labels",
+      "768px responsive view: policy controls and wrapped worktree paths",
+      "390px responsive view: wrapped paths and controls",
+      "temporary responsive mode exited; Chinese restored",
+      "assisted switch on -> independent review approved -> exit0 -> completed task -> restored manual/off"
+    ],
+    "pending": [],
+    "related_race": "TestHarnessManagedWorktreeCreateArchive PASS 2.275s",
+    "mock_provider": "127.0.0.1:18190, session88923, candidate-only",
+    "screenshot": "/private/tmp/aide-harness-ui-evidence/manual-approval.png",
+    "screenshots": [
+      "/private/tmp/aide-harness-ui-evidence/assisted-approved.png",
+      "/private/tmp/aide-harness-ui-evidence/assisted-restored-manual.png"
+    ]
+  },
+  "postFixRace": {
+    "status": "pass",
+    "fingerprint": "689dec44ba3eccb8822096146d3210b8b9e3abe1580a718391723547880964b6",
+    "topLevelTests": 473,
+    "batches": 19,
+    "passedTests": 540,
+    "skips": [
+      "TestAttachmentContextPdf",
+      "TestFingerprint",
+      "TestSourcesLiveProtocols",
+      "TestSshKeygenPassphraseViaAskpass"
+    ],
+    "missing": [],
+    "failed": [],
+    "rawSummary": ".agent-state/harness-integration/race-after-ui-fix-summary.json",
+    "execution": "separate race processes; not monolithic race"
+  },
+  "liveManualApprovalJournal": {
+    "records": 5,
+    "mode": "0600",
+    "events": [
+      "model_request",
+      "tool_dispatch",
+      "tool_result",
+      "model_request",
+      "model_request"
+    ],
+    "containsRawCommand": false
+  },
+  "historicalSourceFingerprint": "352ecc6b478a9ad6dffbb01d31c23f83667a55ac564ac34bada720f114127f84",
+  "postFixTtsRace": {
+    "status": "pass",
+    "package": "./internal/server/tts",
+    "seconds": 2.929,
+    "incorrectPathAttempt": "./internal/tts setup failed; corrected using actual source path"
+  },
+  "postFixVet": {
+    "status": "pass",
+    "exit": 0
+  },
+  "currentCandidateSHA256": "c6b49514cdd84c624d537cc1e51e67b807e60cab355e24608f493b6860c7e7a2",
+  "historical_blocking_audit": {
+    "status": "blocked",
+    "consecutiveGoalTurns": 3,
+    "condition": "Mac remains locked; remaining actual UI cannot be operated. Assisted reviewer toggle action-time confirmation has not been received.",
+    "backendEvidence": "post-fix473 top-level/19race batches/540pass/4environment skips/no missing or failures; tts race2.929s, vet exit0, quick18pass",
+    "noLiveRegression": "All regression handles ended; do not restart completed checks.",
+    "resumeNeeds": [
+      "human unlock Mac",
+      "human answer pending one-time assisted-toggle confirmation"
+    ],
+    "pendingUI": [
+      "assisted-review toggle interaction",
+      "narrow-window rendering"
+    ],
+    "services": "original start.command candidate18189 retained; production unchanged; local-only mock93245 retained for pending UI simulation",
+    "completed": false
+  },
+  "current_followup": {
+    "status": "pass",
+    "remaining": [],
+    "completed": true,
+    "environment": "native Safari, isolated candidate18189, local mock88923"
+  },
+  "narrow_viewport_fix": {
+    "status": "pass",
+    "source": "internal/server/web/style.css",
+    "sha256": "c538336a99847ef6b4ce0100c0d8e2414c57b1916a71dc95e68dc1270e564433",
+    "quickFingerprint": "7c0ba932987f7d255c03c85147ed4f7b5037e6cbb1be446fe2775885c5e00820",
+    "quickChecks": 18,
+    "build": "exit0",
+    "startCommand": "original ./start.command with isolated COMPOSE_FILE; exit0; candidate18189",
+    "candidateSHA256": "c6b49514cdd84c624d537cc1e51e67b807e60cab355e24608f493b6860c7e7a2",
+    "screenshots": [
+      "/private/tmp/aide-harness-ui-evidence/narrow-worktrees-768-fixed.png",
+      "/private/tmp/aide-harness-ui-evidence/narrow-worktrees-390-fixed.png"
+    ],
+    "goRegressionBoundary": "Previous 473 top-level tests / 19 race batches receipt belongs to prior fingerprint689dec44; only CSS changed afterwards. No full Go regression rerun for this CSS change."
+  },
+  "completion_audit": {
+    "status": "pass",
+    "complete": true,
+    "requirements": [
+      {
+        "requirement": "autonomous execution and independent approval",
+        "source": "workflow.go; assisted_approval.go",
+        "evidence": "TestHarnessIndependentReviewerReleaseAndSandbox verifies independent tool-free review, exact write, read-only refusal and orphan abortion; manual approval UI created actual fixture; actual Safari assisted toggle on, approved receipt, command exit0 and persisted journal; composer restored manual/off",
+        "status": "pass"
+      },
+      {
+        "requirement": "task and worktree management",
+        "source": "managed_worktrees.go; web/app.js",
+        "evidence": "TestHarnessManagedWorktreeCreateArchive preserves original changes and archives retained checkout; candidate UI create/select/save/switch back/archive and responsive768/390",
+        "status": "pass"
+      },
+      {
+        "requirement": "global/project layered configuration",
+        "source": "harness_config.go; workspace_execution_policy.go",
+        "evidence": "layer merge, strict validation, stale workspace409 and restart task snapshots; actual settings save/reload/import/export/restart persistence",
+        "status": "pass"
+      },
+      {
+        "requirement": "Hooks and Skills",
+        "source": "harness_runtime.go",
+        "evidence": "TestHarnessSkillsToolsAndHookExecution verifies file skill contents, same tool denial and unknown Hook replay barrier; before/after call sites in workflow.go inspected",
+        "status": "pass"
+      },
+      {
+        "requirement": "custom subagents",
+        "source": "harness_runtime.go; context.go",
+        "evidence": "TestHarnessChildUsesConfiguredModelAndNarrowTools observes actual mock request model and tool intersection, parent ownership and depth bound",
+        "status": "pass"
+      },
+      {
+        "requirement": "plugin assembly",
+        "source": "plugin_host.js; plugins.go",
+        "evidence": "real provider function consumed and returns trimmed value; disabled provider/consumer rejected; cycle/ambiguous/name conflict tests",
+        "status": "pass"
+      },
+      {
+        "requirement": "persistent event logs and pre-execution checkpoints",
+        "source": "execution_journal.go; workflow.go",
+        "evidence": "save-before-dispatch call sites; journal0600 digest-only ownership, pagination and deletion checks; actual candidate manual task journal5 records",
+        "status": "pass"
+      },
+      {
+        "requirement": "unknown outcome recovery",
+        "source": "execution_journal.go",
+        "evidence": "unknown versus not-dispatched and unknown Hook barrier assertions; persisted task restart snapshots",
+        "status": "pass"
+      },
+      {
+        "requirement": "implementation documentation and delivery boundary",
+        "source": "docs/architecture/harness-integration.md",
+        "evidence": "current mechanism table, configuration examples, existing sandbox scope, same-provider agent limit, synchronous trusted plugins, non-exactly-once recovery; no production deployment or release claim",
+        "status": "pass"
+      }
+    ],
+    "receiptScope": "473 top-level tests/19 race batches/540 passes/4 skips at prior fingerprint689dec44. Current CSS-only fingerprint7c0ba932 covered by quick18 and actual browser. All13 recorded backend source hashes still match.",
+    "completedAtUTC": "2026-10-07T15:36:55.650892+00:00",
+    "historicalWaitingAudit": {
+      "condition": "pending assisted-toggle action-time confirmation",
+      "consecutiveGoalTurns": 3,
+      "noLiveRegression": true,
+      "latestObservation": "Native Safari AX localhost18189 remains manual off; no human answer to pending assisted-toggle action-time confirmation. Previous turn no progress. Required independent work exhausted; goal incomplete.",
+      "status": "blocked"
+    }
+  },
+  "assisted_ui_acceptance": {
+    "status": "pass",
+    "timeUTC": "2026-10-07T15:36:55.650892+00:00",
+    "environment": "isolated candidate https://localhost:18189; local mock only; no paid provider",
+    "humanConfirmation": "User replied 可以 to the pending one-time isolated assisted-toggle confirmation",
+    "taskId": "e4958818edec2f94081ab260794a6783",
+    "sessionId": "2bdb34114f97e620ed5108003d255ba3",
+    "command": "echo ui-fixture > approval-ui-fixture.txt",
+    "reviewStatus": "approved",
+    "reviewReason": "仅批准本地验收文件命令",
+    "taskStatus": "completed",
+    "toolResult": "exit code: 0",
+    "fileContent": "ui-fixture\n",
+    "journalMode": "0600",
+    "journalRecords": 5,
+    "journalKinds": [
+      "model_request",
+      "tool_dispatch",
+      "tool_result",
+      "model_request",
+      "model_request"
+    ],
+    "restoredComposerMode": "manual/off",
+    "completedTaskSnapshotAutoReview": true,
+    "mockSession": 88923,
+    "screenshots": [
+      "/private/tmp/aide-harness-ui-evidence/assisted-approved.png",
+      "/private/tmp/aide-harness-ui-evidence/assisted-restored-manual.png"
+    ],
+    "limitation": "Mock proves UI/independent review/dispatch/persistence path, not real-model approval judgment quality."
+  }
+}

@@ -1,0 +1,74 @@
+{
+  "id": "assisted-approval-20261007",
+  "request": "做一个帮我审批的按钮，参考codex的思路；用户更正：开关应放到聊天输入框工具栏",
+  "baseline": "5472946055d6f8d7099196a987098d204fb6555c",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/model-led-agent.md\n M internal/server/autonomous_execution.go\n M internal/server/model_led_agent.go\n M internal/server/plugins.go\n M internal/server/web/style.css\n M internal/server/web_research.go\n M internal/server/workflow.go\n M plugins/browser-control/index.js\n?? docs/tasks/compact-file-header-20261007.json\n?? docs/tasks/research-completion-20261007.json",
+  "acceptance": [
+    "聊天输入框策略旁提供审批方式，可在发送前选择及运行中切换；确认卡无重复开关",
+    "独立无工具审核具体命令，结构化拒绝或失败时不自动确认",
+    "保留具体命令、原因及用量；取消/轮次变化不能放行过期命令",
+    "不改变现有沙箱、插件或保护路径策略"
+  ],
+  "scope": [
+    "internal/server/assisted_approval.go",
+    "internal/server/workflow.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "docs/architecture.md",
+    "docs/tasks/assisted-approval-20261007.json",
+    "internal/server/web/index.html"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "以任务为范围增加帮我审批按钮，默认关闭。",
+      "evidence": [
+        "internal/server/assisted_approval.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "独立有限模型审核，具体行动收据、超时转人工、轮次与开关代际保护。",
+      "evidence": [
+        "internal/server/assisted_approval.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "后端模式 API、审核逻辑、界面按钮/记录/代码块及英文文案已实现。；开关已移到聊天输入框工具栏，创建任务接收 autoReview，键盘/语音发送携带选择。",
+      "evidence": [
+        "internal/server/assisted_approval.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "本次位置调整 node --check app.js/en.js、git diff --check 通过；Go build -buildvcs=false 成功。未运行测试、未调用真实模型审批；新布局尚未做浏览器验收，未部署到当前服务。",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "architecture.md 记录范围、模型成本、取消行为与缺口。",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留继承改动；临时组件预览置于 .agent-state。",
+      "evidence": [
+        "internal/server/assisted_approval.go"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未重启正在等待审批的用户会话；未提交、升版、发布或替换运行服务。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "撤销本任务范围内的审批新增代码与接口；保留此前任务改动。",
+  "handoff": "开关已移到聊天输入框工具栏，发送前及运行中可选择；源码编译成功，当前服务未更新。",
+  "verification_followup": "Final release acceptance is tracked by docs/tasks/harness-release-20261007.json and docs/tasks/harness-integration-20261007.json; earlier status preserved as historical scope. Actual UI assisted on/approved/exit0/manual-off completed with local mock; no real-provider quality claim."
+}

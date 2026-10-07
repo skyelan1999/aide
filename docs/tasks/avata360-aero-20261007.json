@@ -1,0 +1,77 @@
+{
+  "id": "avata360-aero-20261007",
+  "request": "整理并复刻DJI Avata360桨叶三维模型、计算气动模型及图表，在Aide复现修复对应能力",
+  "baseline": "5472946055d6f8d7099196a987098d204fb6555c",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/model-led-agent.md\n M internal/server/autonomous_execution.go\n M internal/server/model_led_agent.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/web_research.go\n M internal/server/workflow.go\n M plugins/browser-control/index.js\n?? docs/tasks/assisted-approval-20261007.json\n?? docs/tasks/compact-file-header-20261007.json\n?? docs/tasks/research-completion-20261007.json\n?? internal/server/assisted_approval.go",
+  "acceptance": [
+    "Official propeller dimensions with source locators",
+    "Closed blade solids and mirrored model with stated geometry gaps",
+    "Deterministic BEMT CSV/charts and transparent assumptions",
+    "Aide executable tools declared and actually invoked",
+    "Artifact viewer opened and result copied to fresh user workspace directory"
+  ],
+  "scope": [
+    "plugins/propeller-aero",
+    "plugins/registry.json",
+    "docs/architecture/propeller-aero.md",
+    "standalone reconstruction artifacts"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "3340S official dimensions recovered; unknown sections/interfaces kept explicit",
+      "evidence": [
+        "docs/architecture/propeller-aero.md",
+        "../avata360-3340s-20261007-final/RUNTIME_RECEIPT.json"
+      ]
+    },
+    "design": {
+      "status": "complete",
+      "summary": "Standard-library parametric CAD and axial BEMT, existing proposal protocol",
+      "evidence": [
+        "docs/architecture/propeller-aero.md",
+        "../avata360-3340s-20261007-final/RUNTIME_RECEIPT.json"
+      ]
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "Two plugin tools, source registry, mirrored STL, viewer/charts/icon/reports",
+      "evidence": [
+        "docs/architecture/propeller-aero.md",
+        "../avata360-3340s-20261007-final/RUNTIME_RECEIPT.json"
+      ]
+    },
+    "verification": {
+      "status": "complete",
+      "summary": "Actual computation, zero boundary/nonmanifold edges; browser preview; live plugin enabled and deployed-equivalent host calls succeed. Formal tests not requested/not run.",
+      "evidence": [
+        "docs/architecture/propeller-aero.md",
+        "../avata360-3340s-20261007-final/RUNTIME_RECEIPT.json"
+      ]
+    },
+    "documentation": {
+      "status": "complete",
+      "summary": "Source records, methods/limits, runtime receipt and capability documentation",
+      "evidence": [
+        "docs/architecture/propeller-aero.md",
+        "../avata360-3340s-20261007-final/RUNTIME_RECEIPT.json"
+      ]
+    },
+    "cleanup": {
+      "status": "complete",
+      "summary": "Preserved previous user changes and old concept; new artifacts separated",
+      "evidence": [
+        "docs/architecture/propeller-aero.md",
+        "../avata360-3340s-20261007-final/RUNTIME_RECEIPT.json"
+      ]
+    },
+    "release": {
+      "status": "not_requested",
+      "summary": "Hot-enabled plugin in existing local Aide; no build/tag/publish/restart",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Disable propeller-aero in plugin panel; new output directory can be archived independently.",
+  "handoff": "Open viewer.html; artifacts mirrored in /Users/skyelan/debug/avatar360_prop_concept/3340s_reconstruction_20261007. Exact original CAD needs measured blade sections and mounting interface."
+}

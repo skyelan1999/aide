@@ -1,0 +1,83 @@
+{
+  "id": "harness-release-20261007",
+  "request": "整理一下，release吧",
+  "baseline": "5472946055d6f8d7099196a987098d204fb6555c",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/model-led-agent.md\n M docs/plugin-protocol.md\n M internal/server/autonomous_execution.go\n M internal/server/avatar_feedback_test.go\n M internal/server/context.go\n M internal/server/empty_completion_test.go\n M internal/server/file_upload_batch_test.go\n M internal/server/length_continue_test.go\n M internal/server/model_led_agent.go\n M internal/server/model_led_agent_test.go\n M internal/server/plugin_daemon_test.go\n M internal/server/plugin_host.js\n M internal/server/plugins.go\n M internal/server/queue_steer_test.go\n M internal/server/server.go\n M internal/server/voice_personality_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web_research.go\n M internal/server/web_research_test.go\n M internal/server/workflow.go\n M internal/server/workflow_pause_test.go\n M plugins/browser-control/index.js\n M plugins/registry.json\n M scripts/headless-browser-bridge.js\n?? docs/architecture/execution-policy.md\n?? docs/architecture/harness-integration.md\n?? docs/architecture/propeller-aero.md\n?? docs/architecture/research-evidence.md\n?? docs/reviews/2026-10-07/\n?? docs/tasks/assisted-approval-20261007.json\n?? docs/tasks/avata360-aero-20261007.json\n?? docs/tasks/compact-file-header-20261007.json\n?? docs/tasks/execution-policy-20261007.json\n?? docs/tasks/harness-integration-20261007.json\n?? docs/tasks/research-completion-20261007.json\n?? docs/tasks/research-pipeline-20261007.json\n?? internal/server/assisted_approval.go\n?? internal/server/execution_journal.go\n?? internal/server/execution_policy.go\n?? internal/server/harness_config.go\n?? internal/server/harness_integration_test.go\n?? internal/server/harness_runtime.go\n?? internal/server/managed_worktrees.go\n?? internal/server/research_evidence.go\n?? internal/server/task_run_budget.go\n?? internal/server/workspace_execution_policy.go\n?? plugins/propeller-aero/",
+  "acceptance": [
+    "Review and explicitly commit related tracked/untracked changes without user data",
+    "Current clean main full gate and release-check pass",
+    "Version via scripts/version.sh; exact tag commit/image metadata",
+    "Build release image with tests enabled; TLS health and unauthenticated401 smoke",
+    "Package all standard assets and verify checksums",
+    "Push source/tag and publish GitHub prerelease; verify remote asset names/sizes/digests",
+    "No production replacement; retain isolated start.command candidate and rollback instructions"
+  ],
+  "scope": [
+    "Current related changes listed in initial_status",
+    "docs/tasks/harness-release-20261007.json",
+    "docs/reviews/release-0.1.16.0-RC1-2026-10-08.md",
+    "version.md",
+    "docker-images and ignored release assets"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Release scope and user authorization recorded; complex feature bump0.1.16.0 RC1",
+      "evidence": [
+        "用户发布请求",
+        "initial_status"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse original release/asset/version scripts, isolated smoke and previousRC3 rollback",
+      "evidence": [
+        "scripts/version.sh",
+        "scripts/docker-release.sh",
+        "scripts/package-release-assets.sh",
+        "scripts/publish-release-assets.sh"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Prior mechanism implementation accepted; release gate running on current source",
+      "evidence": [
+        "docs/tasks/harness-integration-20261007.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Current full gate passed19 checks at7c0ba932; monolithic server race373.126s,tts17.413s and vet exit0. Previously completed actual Safari acceptance retained.",
+      "evidence": [
+        ".agent-state/verify-20261007T155312516346Z.log",
+        ".agent-state/full.json",
+        "docs/tasks/harness-integration-20261007.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Release notes collect related mechanisms and limits; success pending exact gate/build/publication receipts.",
+      "evidence": [
+        "docs/reviews/release-0.1.16.0-RC1-2026-10-08.md",
+        "docs/architecture/harness-integration.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "All current changes attributed to requested UI, approvals, research, policy, CAD and harness tasks; no user data or temp output added. No broad deletion.",
+      "evidence": [
+        "git status --short",
+        "git diff --stat",
+        "agent-route audit"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户直接授权：整理一下，release吧。包括整理相关改动、提交/版本/tag/推送及GitHub prerelease；未授权替换生产服务。",
+  "rollback": "Production unchanged; prior v0.1.15.0-RC3 remains available. Candidate isolated18189. If deploying later, backup data and select previous release image without deleting data.",
+  "handoff": "Current full pass; prepare exact scoped commit, version bump and image build. Production unchanged."
+}

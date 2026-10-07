@@ -1,0 +1,79 @@
+{
+  "id": "research-pipeline-20261007",
+  "request": "用户澄清：改进Aide对应的调查建模流程，使其能够像Codex一样得到一致或相似的结论",
+  "baseline": "5472946055d6f8d7099196a987098d204fb6555c",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/model-led-agent.md\n M internal/server/autonomous_execution.go\n M internal/server/model_led_agent.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/web_research.go\n M internal/server/workflow.go\n M plugins/browser-control/index.js\n M plugins/registry.json\n?? docs/architecture/propeller-aero.md\n?? docs/tasks/assisted-approval-20261007.json\n?? docs/tasks/avata360-aero-20261007.json\n?? docs/tasks/compact-file-header-20261007.json\n?? docs/tasks/research-completion-20261007.json\n?? internal/server/assisted_approval.go\n?? plugins/propeller-aero/",
+  "acceptance": [
+    "调查公开配件与维修来源，不把空页面或未配置搜索当成无资料",
+    "真实工具回执累计 PDF 覆盖与参数依据",
+    "参数驱动近似模型，并保留精确复刻缺口",
+    "不自动付费调用、重启生产或覆盖已有修改",
+    "人工回答与审批等待不计入执行预算；超时保留检查点可显式续跑",
+    "新增执行后再次核对交付；收尾检查最多三次，状态持久化"
+  ],
+  "scope": [
+    "internal/server/research_evidence.go",
+    "internal/server/workflow.go",
+    "internal/server/plugins.go",
+    "internal/server/model_led_agent.go",
+    "internal/server/web_research.go",
+    "scripts/headless-browser-bridge.js",
+    "docs/architecture/research-evidence.md",
+    "internal/server/task_run_budget.go",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户澄清修复通用调查建模流程",
+      "evidence": [
+        "docs/architecture/research-evidence.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "真实来源回执、参数账本及有界纠正",
+      "evidence": [
+        "docs/architecture/research-evidence.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "增加基于执行进度的收尾检查，最多三次；Go 构建通过",
+      "evidence": [
+        "docs/architecture/research-evidence.md"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "Go构建、JS语法及diff检查通过；未运行测试、超过6分钟人工等待或付费模型完整流程验收",
+      "evidence": [
+        ".agent-state/avata360-aero/aide-research-candidate"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "执行链与限制已记录",
+      "evidence": [
+        "docs/architecture/research-evidence.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留原有未提交修改；候选置于 agent-state",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "此前等待超时修复已应用；本次循环增量候选已构建，未替换运行服务",
+      "evidence": [
+        ".agent-state/research-timeout-deploy-20261007/receipt.json"
+      ]
+    }
+  },
+  "release_authorization": "用户回复 可：授权备份、应用候选、重启 Aide 和浏览器桥",
+  "rollback": "应用前备份现有运行二进制和配置；恢复备份重启。勿回滚整个仓库已有修改。",
+  "handoff": "本次收尾循环候选未部署；真实模型完整流程未验收。",
+  "verification_followup": "Final release acceptance is tracked by docs/tasks/harness-release-20261007.json and docs/tasks/harness-integration-20261007.json; earlier status preserved as historical scope. Actual UI assisted on/approved/exit0/manual-off completed with local mock; no real-provider quality claim."
+}

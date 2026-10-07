@@ -339,6 +339,18 @@ func (a *App) systemPromptForSession(s *Session) string {
 // buildContextPreview 构造与真实首轮请求一致的消息/工具并给出预算估算。
 // s 为 nil 时表示新会话（无历史与摘要）。调用方需持有 a.mu。
 func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, images []MessageImage, cfg Settings, params ProfileParams, includeBody bool, avatarFeedback ...bool) *ContextPreview {
+	return a.buildContextPreviewWithPolicy(s, prompt, mode, contextText, images, cfg, params, includeBody, a.currentExecutionPolicy(), avatarFeedback...)
+}
+
+func (a *App) buildContextPreviewWithPolicy(s *Session, prompt, mode, contextText string, images []MessageImage, cfg Settings, params ProfileParams, includeBody bool, policy ExecutionPolicy, avatarFeedback ...bool) *ContextPreview {
+	harness, _ := a.loadHarnessConfig()
+	return a.buildContextPreviewWithHarness(s, prompt, mode, contextText, images, cfg, params, includeBody, policy, harness, avatarFeedback...)
+}
+
+func (a *App) buildContextPreviewWithHarness(s *Session, prompt, mode, contextText string, images []MessageImage, cfg Settings, params ProfileParams, includeBody bool, policy ExecutionPolicy, harness HarnessConfig, avatarFeedback ...bool) *ContextPreview {
+	return a.buildContextPreviewWithTask(s, prompt, mode, contextText, images, cfg, params, includeBody, policy, harness, nil, avatarFeedback...)
+}
+func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText string, images []MessageImage, cfg Settings, params ProfileParams, includeBody bool, policy ExecutionPolicy, harness HarnessConfig, task *Task, avatarFeedback ...bool) *ContextPreview {
 	// 按会话 Kind 选基础 system 设定（小秘系统会话恒为小秘人格；普通会话跟随全局活动人格）
 	history := []Message{{Role: "system", Content: a.systemPromptForSession(s) + "\n" + a.cwdPromptLineLocked() + "\n可用工具: " + a.toolListHint()}}
 	if guide := a.environmentGuide(); guide != "" {
@@ -360,6 +372,9 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 		if expHint := a.pluginExperienceHint(); expHint != "" {
 			history[0].Content += "\n\n" + expHint
 		}
+	}
+	if s == nil || s.Kind != assistantSessionKind {
+		history[0].Content += harnessInstruction(harness)
 	}
 	var bd ContextBreakdown
 	bd.System.addText(history[0].Content)
@@ -390,11 +405,14 @@ func (a *App) buildContextPreview(s *Session, prompt, mode, contextText string, 
 	history = append(history, Message{Role: "user", Content: prompt + contextText, Images: images})
 	instruction := chatInstruction
 	if mode == "workflow" {
-		instruction = modelLedInstruction
+		instruction = policy.AgentInstruction
 	}
 	avatarEnabled := len(avatarFeedback) > 0 && avatarFeedback[0] && avatarCueFormatAllowed(params)
-	tools := withAvatarCueTool(a.contextToolsFor(s), avatarEnabled)
-	instruction += "\n" + runtimeCapabilityInstruction(tools, prompt, mode)
+	if task == nil {
+		task = &Task{HarnessConfig: &harness}
+	}
+	tools := filterTaskTools(task, withAvatarCueTool(a.contextToolsFor(s), avatarEnabled))
+	instruction += "\n" + runtimeCapabilityInstruction(tools, prompt, mode, policy)
 	first := append(append([]Message{}, history...), Message{Role: "user", Content: instruction})
 
 	for i := historyStart; i < len(history)-1; i++ {
@@ -603,6 +621,10 @@ func contextHeaderFingerprint(cfg Settings, system string, tools []any) string {
 // 组成预算。它必须在超限检查前调用，保证预览、拦截与真实请求同口径。
 // 调用方已持有 a.mu。
 func (a *App) applyWorkflowContext(preview *ContextPreview, mode, phase string) {
+	a.applyWorkflowContextWithPolicy(preview, mode, phase, a.currentExecutionPolicy())
+}
+
+func (a *App) applyWorkflowContextWithPolicy(preview *ContextPreview, mode, phase string, policy ExecutionPolicy) {
 	if preview == nil || mode != "workflow" {
 		return
 	}
@@ -619,7 +641,7 @@ func (a *App) applyWorkflowContext(preview *ContextPreview, mode, phase string) 
 	case "problem-solving":
 		addition = problemSolvingPhasePrompt
 	case "", "auto":
-		addition = autoModePrompt + a.profileInventoryPrompt()
+		addition = strings.Replace(autoModePrompt, modelLedInstruction, policy.AgentInstruction, 1) + a.profileInventoryPrompt()
 	}
 	if addition == "" {
 		return

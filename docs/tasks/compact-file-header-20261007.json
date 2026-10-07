@@ -1,0 +1,73 @@
+{
+  "id": "compact-file-header-20261007",
+  "request": "右侧页眉那整体压缩一下",
+  "baseline": "5472946055d6f8d7099196a987098d204fb6555c",
+  "initial_status": "M docs/architecture/model-led-agent.md\n M internal/server/autonomous_execution.go\n M internal/server/model_led_agent.go\n M internal/server/plugins.go\n M internal/server/web_research.go\n M internal/server/workflow.go\n M plugins/browser-control/index.js\n?? docs/tasks/research-completion-20261007.json",
+  "acceptance": [
+    "压缩项目文件标题、根目录切换、路径和搜索区域的纵向空间",
+    "保留目录、刷新、新建、搜索控件与触摸设备尺寸",
+    "浏览器实际查看组件预览，区分预览与运行服务状态"
+  ],
+  "scope": [
+    "internal/server/web/style.css",
+    "docs/architecture.md",
+    "docs/tasks/compact-file-header-20261007.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户截图压缩右侧文件面板顶部。",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "通过 #file-panel 范围覆盖高度和内边距；共享经典/专业外观；触摸设备保留较大按钮。",
+      "evidence": [
+        "internal/server/web/style.css"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "添加紧凑样式，标题 42px，按钮 28px；触摸标题 46px、按钮 34px。",
+      "evidence": [
+        "internal/server/web/style.css"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "git diff --check 通过；CUA 实际查看 light + macos 组件预览，顶部总高度 171px。运行服务实际 UI 未验收；未运行测试套件。",
+      "evidence": [
+        "/tmp/aide-compact-file-header.png",
+        ".agent-state/file-header-preview/index.html"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "architecture.md 记录文件侧栏紧凑样式。",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅范围内差异；保留所有继承的未提交改动。",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "运行服务采用 Go embed 静态资源，需要重新构建及重启。当前会话等待确认，为避免打断任务，本轮未重启。",
+      "evidence": [
+        "internal/server/server.go"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "移除 style.css 末尾 compact file controls 规则即可回退，运行服务未替换。",
+  "handoff": "源码已完成，浏览器组件预览已查看；需要在当前会话处理完成后构建、更新本地服务并实际验收。",
+  "style_sha256": "1df1419473da6a4b5df7771c8f4cb3ae06d10d5c6f062d1589c45a17b303c841",
+  "verification_followup": "Final release acceptance is tracked by docs/tasks/harness-release-20261007.json and docs/tasks/harness-integration-20261007.json; earlier status preserved as historical scope. Actual UI assisted on/approved/exit0/manual-off completed with local mock; no real-provider quality claim."
+}

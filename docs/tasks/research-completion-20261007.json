@@ -1,0 +1,77 @@
+{
+  "id": "research-completion-20261007",
+  "request": "希望你把这个问题好好修一下：研究提前结束、虚报阅读覆盖及重复询问",
+  "baseline": "5472946055d6f8d7099196a987098d204fb6555c",
+  "initial_status": "",
+  "acceptance": [
+    "收尾自检能够看到实际工具参数和PDF阅读范围，不以历史助手陈述当执行证据",
+    "已识别的下轮再读收尾触发有限纠正；预算耗尽时明确研究未完成",
+    "只报告已读来源内的缺口，不把检索无结果推断为官方不公开",
+    "保护会话、插件配置及概念设计文件"
+  ],
+  "scope": [
+    "服务端工具循环及收尾证据提示",
+    "浏览器PDF元数据透传及读取器页码说明",
+    "本地源码构建和已安装插件代码更新；不新增版本发布"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "依据用户截图修复提前收尾、虚报阅读范围和重复索取授权。",
+      "evidence": [
+        "用户当前消息：希望你把这个问题好好修一下"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "沿用模型决定下一步的执行循环；补足证据范围和有限纠正，不增加固定业务流程。",
+      "evidence": [
+        "internal/server/model_led_agent.go",
+        "internal/server/autonomous_execution.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "六个源码文件已修改；运行中插件代码备份并更新；本地服务已重启。",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/plugins.go",
+        "internal/server/web_research.go",
+        "plugins/browser-control/index.js"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "node --check、git diff --check、gofmt、Go vet及构建成功；未执行本次真实模型行为验收或回归测试。旧收据不用于本次验收。",
+      "evidence": [
+        ".agent-state/research-completion-start.log：AIDE_RUN_TESTS=0，go vet和go build完成",
+        "node --check plugins/browser-control/index.js：exit 0",
+        "git diff --check：exit 0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已记录调用链、元数据含义、局限、本地安装及回滚。",
+      "evidence": [
+        "docs/architecture/model-led-agent.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只修改本任务源码与文档；备份和构建日志归入忽略的.agent-state。",
+      "evidence": [
+        "git status --short",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次本地修复尚未完成真实模型验收，不发布新的GitHub版本。版本标签保持RC3，运行源码修复构建。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "应用基线5472946；插件备份.agent-state/browser-control-before-research-fix.js，恢复到容器/workspace/plugins/browser-control/index.js后重启。",
+  "handoff": "本地服务已加载源码修复；未修改概念设计。仍需真实模型行为验收，不能声称所有研究任务已修复或新的发布完成。",
+  "verification_followup": "Final release acceptance is tracked by docs/tasks/harness-release-20261007.json and docs/tasks/harness-integration-20261007.json; earlier status preserved as historical scope. Actual UI assisted on/approved/exit0/manual-off completed with local mock; no real-provider quality claim."
+}

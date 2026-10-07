@@ -87,6 +87,7 @@ func TestToolLoopEmptyFallbackRecovers(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	input := []Message{{Role: "user", Content: "画个户型"}}
+	registerHarnessFixtureTask(t, a, task)
 	out, chain, err := a.toolLoop(ctx, cfg, input, ProfileParams{}, nil, task, map[string]Change{}, 0)
 	if err != nil {
 		t.Fatalf("toolLoop err = %v", err)
@@ -126,6 +127,7 @@ func TestToolLoopEmptyFallbackExhausted(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	input := []Message{{Role: "user", Content: "画个户型"}}
+	registerHarnessFixtureTask(t, a, task)
 	out, chain, err := a.toolLoop(ctx, cfg, input, ProfileParams{}, nil, task, map[string]Change{}, 0)
 	if err != nil {
 		t.Fatalf("耗尽兜底不应返回错误: %v", err)
@@ -162,6 +164,7 @@ func TestToolLoopUpstreamErrorPreservesChain(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	input := []Message{{Role: "user", Content: "hi"}}
+	registerHarnessFixtureTask(t, a, task)
 	_, chain, err := a.toolLoop(ctx, cfg, input, ProfileParams{}, nil, task, map[string]Change{}, 0)
 	if err == nil || !strings.Contains(err.Error(), "500") {
 		t.Fatalf("err = %v, want 含 500 的真实上游错误", err)

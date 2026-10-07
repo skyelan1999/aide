@@ -384,6 +384,7 @@ type App struct {
 	wsRevision                uint64
 	compactingSessions        map[string]bool
 	retiredRoots              []*os.Root
+	worktreeMu                sync.Mutex
 	wsRoots                   map[string]*os.Root // 工作区身份 → 打开中的根（R02 运行中任务的工具绑定）
 	pricing                   PricingState
 	tokenCalls                []TokenCallRec
@@ -924,7 +925,8 @@ func New(work, reference, data string) (*App, error) {
 		}
 		a.sessions[s.ID] = &s
 		for _, task := range s.Runs {
-			if task.Status == "running" {
+			if task.Status == "running" || task.Status == "awaiting_clarification" {
+				recoverExecutionCheckpoint(task)
 				task.Status = "interrupted"
 				task.PauseRequested = false
 				if len(task.CheckpointMessages) > 0 {
@@ -1186,6 +1188,20 @@ func (a *App) buildHandler() {
 		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
+	mux.HandleFunc("GET /api/worktrees", a.managedWorktrees)
+	mux.HandleFunc("POST /api/worktrees", a.managedWorktrees)
+	mux.HandleFunc("POST /api/worktrees/{worktree}/archive", a.managedWorktrees)
+	mux.HandleFunc("GET /api/harness-config", a.harnessConfigHandler)
+	mux.HandleFunc("PUT /api/harness-config", a.harnessConfigHandler)
+	mux.HandleFunc("DELETE /api/harness-config", a.harnessConfigHandler)
+	mux.HandleFunc("GET /api/harness-config/workspace", a.harnessConfigHandler)
+	mux.HandleFunc("PUT /api/harness-config/workspace", a.harnessConfigHandler)
+	mux.HandleFunc("DELETE /api/harness-config/workspace", a.harnessConfigHandler)
+	mux.HandleFunc("GET /api/execution-policy", a.getExecutionPolicy)
+	mux.HandleFunc("PUT /api/execution-policy", a.putExecutionPolicy)
+	mux.HandleFunc("GET /api/execution-policy/workspace", a.getWorkspaceExecutionPolicy)
+	mux.HandleFunc("PUT /api/execution-policy/workspace", a.putWorkspaceExecutionPolicy)
+	mux.HandleFunc("DELETE /api/execution-policy/workspace", a.clearWorkspaceExecutionPolicy)
 	mux.HandleFunc("GET /api/updates", a.checkUpdates)
 	mux.HandleFunc("GET /api/updates/slots", a.updateSlots)
 	mux.HandleFunc("POST /api/updates/packages", a.uploadUpdatePackage)
@@ -1295,6 +1311,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/answer", a.answerTask)
+	mux.HandleFunc("PUT /api/sessions/{id}/runs/{run}/approval-mode", a.setApprovalMode)
 	mux.HandleFunc("GET /api/reminders", a.listRemindersHandler)
 	mux.HandleFunc("GET /api/reminders/due", a.dueRemindersHandler)
 	mux.HandleFunc("POST /api/reminders", a.createReminderHandler)
@@ -1304,6 +1321,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("DELETE /api/reminders/{id}", a.deleteReminderHandler)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/requests", a.runRequestsHandler)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/events", a.runEvents)
+	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/journal", a.executionJournal)
 	mux.HandleFunc("GET /api/sessions/{id}/tool-calls", a.sessionToolCalls) // #45 调用记录聚合（主/子 Agent）
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/queue/{index}", a.queueUpdate)
 	mux.HandleFunc("POST /api/context-preview", a.contextPreviewHandler)
@@ -2354,6 +2372,7 @@ func (a *App) deleteSession(w http.ResponseWriter, r *http.Request) {
 	a.mu.Unlock()
 	// 会话可能落在 active/archived/assistant 任一桶（见 sessionBucketFor），三桶全清，防残留复活。
 	a.removeSessionFiles(id)
+	a.removeExecutionJournals(s)
 	a.broadcastSessionsChanged(id) // #60
 	jsonOut(w, 200, map[string]any{"ok": true})
 }
@@ -2380,6 +2399,7 @@ func (a *App) deleteAllArchived(w http.ResponseWriter, r *http.Request) {
 		delete(a.sessions, id)
 		// 归档会话按规范落在 sessions/archived/（见 sessionBucketFor），三桶全清防残留。
 		a.removeSessionFiles(id)
+		a.removeExecutionJournals(s)
 		deleted++
 	}
 	a.mu.Unlock()

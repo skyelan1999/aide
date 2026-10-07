@@ -145,6 +145,33 @@
       ]
     },
     {
+      "id": "execution-policy",
+      "title": "执行策略",
+      "description": "配置执行循环、时间预算和提示词，无需重新编译",
+      "controls": [
+        {
+          "id": "execution-policy",
+          "type": "execution-policy",
+          "label": "执行策略"
+        },
+        {
+          "id": "workspace-policy",
+          "type": "workspace-policy",
+          "label": "当前工作区执行策略覆盖"
+        },
+        {
+          "id": "harness-config",
+          "type": "harness-config",
+          "label": "扩展机制配置"
+        },
+        {
+          "id": "managed-worktrees",
+          "type": "managed-worktrees",
+          "label": "任务工作树"
+        }
+      ]
+    },
+    {
       "id": "permissions",
       "title": "权限管理",
       "description": "控制 AI 在工作区里能自动做什么",
@@ -172,16 +199,6 @@
           "id": "permission-manager",
           "type": "permission-manager",
           "label": "工具权限"
-        },
-        {
-          "id": "toolMaxRounds",
-          "type": "number",
-          "label": "工具调用最大轮次",
-          "min": 5,
-          "max": 200,
-          "step": 5,
-          "placeholder": "60",
-          "description": "模型连续自动调用工具的最大轮数；达到上限后自动停止并提示继续。范围 5–200，默认 60。"
         }
       ]
     },

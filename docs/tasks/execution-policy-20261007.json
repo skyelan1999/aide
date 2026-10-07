@@ -1,0 +1,80 @@
+{
+  "id": "execution-policy-20261007",
+  "request": "执行策略开放可配置，无需每次改代码编译导入",
+  "baseline": "5472946055d6f8d7099196a987098d204fb6555c",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/model-led-agent.md\n M internal/server/autonomous_execution.go\n M internal/server/model_led_agent.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/web_research.go\n M internal/server/workflow.go\n M plugins/browser-control/index.js\n M plugins/registry.json\n M scripts/headless-browser-bridge.js\n?? docs/architecture/propeller-aero.md\n?? docs/architecture/research-evidence.md\n?? docs/tasks/assisted-approval-20261007.json\n?? docs/tasks/avata360-aero-20261007.json\n?? docs/tasks/compact-file-header-20261007.json\n?? docs/tasks/research-completion-20261007.json\n?? docs/tasks/research-pipeline-20261007.json\n?? internal/server/assisted_approval.go\n?? internal/server/research_evidence.go\n?? internal/server/task_run_budget.go\n?? plugins/propeller-aero/",
+  "acceptance": [
+    "设置页编辑/导入/导出/默认草稿，保存后新任务生效",
+    "API 鉴权、持久化、严格字段和范围校验",
+    "任务快照保持续跑策略，保留现有权限边界"
+  ],
+  "scope": [
+    "internal/server/execution_policy.go",
+    "internal/server/model_led_agent.go",
+    "internal/server/workflow.go",
+    "internal/server/context.go",
+    "internal/server/server.go",
+    "internal/server/web_research.go",
+    "internal/server/research_evidence.go",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/execution-policy.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "参见执行策略架构文档",
+      "evidence": [
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "参见执行策略架构文档",
+      "evidence": [
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Go 构建成功；JS 语法、JSON 设置结构及 diff 检查通过；可配置策略与界面已实现",
+      "evidence": [
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "真实 GET/PUT 保存及读回内容一致，health status=ok，设置入口由实际服务返回；Mac 锁屏导致浏览器查看阻塞；未运行测试或付费模型流程",
+      "evidence": [
+        ".agent-state/execution-policy-deploy-20261007/receipt.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "参见执行策略架构文档",
+      "evidence": [
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留继承修改，候选与部署证据在 agent-state",
+      "evidence": [
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "候选已按既有授权应用到本地容器，运行指纹一致；镜像/正式版本未构建发布，容器重建会恢复原镜像二进制",
+      "evidence": [
+        ".agent-state/execution-policy-deploy-20261007/receipt.json"
+      ]
+    }
+  },
+  "release_authorization": "沿用用户此前 可 授权备份、应用候选与本地重启；本轮明确要求策略可配置",
+  "rollback": "恢复 .agent-state/execution-policy-deploy-20261007/aide.before 至容器 /usr/local/bin/aide 并重启。config/execution-policy.json 保留，旧版本忽略，不删除用户配置。",
+  "handoff": "设置 → 执行策略；新任务生效、运行/续跑保留快照。默认策略已保存读回，Mac 解锁后查看页面；正式镜像发布与模型流程仍未验收。",
+  "verification_followup": "Final release acceptance is tracked by docs/tasks/harness-release-20261007.json and docs/tasks/harness-integration-20261007.json; earlier status preserved as historical scope. Actual UI assisted on/approved/exit0/manual-off completed with local mock; no real-provider quality claim."
+}

@@ -21,12 +21,12 @@ func makeWAV(sampleRate uint32, seconds int) []byte {
 	// fmt chunk
 	b = append(b, "fmt "...)
 	b = binary.LittleEndian.AppendUint32(b, 16)
-	b = binary.LittleEndian.AppendUint16(b, 1)       // PCM
-	b = binary.LittleEndian.AppendUint16(b, 1)       // mono
+	b = binary.LittleEndian.AppendUint16(b, 1) // PCM
+	b = binary.LittleEndian.AppendUint16(b, 1) // mono
 	b = binary.LittleEndian.AppendUint32(b, sampleRate)
 	b = binary.LittleEndian.AppendUint32(b, sampleRate*2) // byte rate
-	b = binary.LittleEndian.AppendUint16(b, 2)        // block align
-	b = binary.LittleEndian.AppendUint16(b, 16)       // bits
+	b = binary.LittleEndian.AppendUint16(b, 2)            // block align
+	b = binary.LittleEndian.AppendUint16(b, 16)           // bits
 	// data chunk
 	b = append(b, "data"...)
 	b = binary.LittleEndian.AppendUint32(b, dataBytes)

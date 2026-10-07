@@ -54,6 +54,7 @@ func TestToolLoopSteerAndQueue(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	input := []Message{{Role: "user", Content: "第一个问题"}}
+	registerHarnessFixtureTask(t, a, task)
 	out, chain, err := a.toolLoop(ctx, cfg, input, ProfileParams{}, nil, task, map[string]Change{}, 0)
 	if err != nil {
 		t.Fatalf("toolLoop: %v", err)

@@ -71,6 +71,7 @@ func TestWebResearchNoReadAnswerGetsOneCorrection(t *testing.T) {
 	defer srv.Close()
 	a := testApp(t)
 	task := &Task{ID: newID(), Mode: "chat", Prompt: "查官网并总结", Steer: make(chan string, 4), Steps: []Step{{Name: "chat"}}}
+	registerHarnessFixtureTask(t, a, task)
 	out, _, err := a.toolLoop(context.Background(), Settings{BaseURL: srv.URL, Model: "test"}, []Message{{Role: "user", Content: task.Prompt}}, ProfileParams{}, webReadTestTools(), task, nil, 0)
 	if err != nil || calls.Load() != 2 || out != webReadNotCompleted {
 		t.Fatalf("unexpected no-read fallback: calls=%d out=%s err=%v", calls.Load(), out, err)

@@ -103,6 +103,7 @@ func TestAvatarToolLoopSingleCompletionAndDisabled(t *testing.T) {
 				task := &Task{ID: newID(), AvatarFeedback: enabled, Steps: []Step{{Name: "chat"}}, Steer: make(chan string, 1)}
 				events, cancel := a.subscribeStream(task.ID)
 				defer cancel()
+				registerHarnessFixtureTask(t, a, task)
 				out, chain, err := a.toolLoop(context.Background(), Settings{BaseURL: srv.URL, Model: "test"}, []Message{{Role: "user", Content: "你好"}}, ProfileParams{ResponseFormat: format}, nil, task, map[string]Change{}, 0)
 				if err != nil {
 					t.Fatal(err)
@@ -253,6 +254,7 @@ func TestAvatarBudgetSpansWorkflowSteps(t *testing.T) {
 	defer srv.Close()
 	task := &Task{ID: newID(), AvatarFeedback: true, Steps: []Step{{Name: "one"}, {Name: "two"}, {Name: "three"}, {Name: "four"}}, Steer: make(chan string, 1)}
 	for step := 0; step < 4; step++ {
+		registerHarnessFixtureTask(t, a, task)
 		_, _, err := a.toolLoop(context.Background(), Settings{BaseURL: srv.URL, Model: "test"}, []Message{{Role: "user", Content: "继续"}}, ProfileParams{}, nil, task, nil, step)
 		if err != nil {
 			t.Fatal(err)

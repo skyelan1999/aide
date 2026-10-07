@@ -59,6 +59,7 @@ func TestToolLoopCheckpointResumesAfterCompletedTool(t *testing.T) {
 			cancel()
 		}
 	}
+	registerHarnessFixtureTask(t, a, task)
 	_, chain, err := a.toolLoop(ctx, Settings{BaseURL: provider.URL, Model: "test"}, initial, ProfileParams{}, nil, task, nil, 0, checkpointFn)
 	if err != context.Canceled {
 		t.Fatalf("first toolLoop error = %v, want context.Canceled", err)
@@ -73,6 +74,7 @@ func TestToolLoopCheckpointResumesAfterCompletedTool(t *testing.T) {
 		t.Fatalf("completed tool call recorded %d times before resume, want 1", len(task.ToolUses))
 	}
 
+	registerHarnessFixtureTask(t, a, task)
 	out, _, err := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "test"}, checkpoint, ProfileParams{}, nil, task, nil, 0)
 	if err != nil || out != "continued from checkpoint" {
 		t.Fatalf("resume output = %q, err = %v", out, err)

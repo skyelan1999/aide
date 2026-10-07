@@ -12,7 +12,7 @@ function updateFavicon() {
 }
 updateFavicon();
 if (window.aideUI?.subscribe) window.aideUI.subscribe(updateFavicon);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, autoScroll: true, jumpAnimating: false };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, approvalModes: new Map(), approvalModeBusy: false, autoScroll: true, jumpAnimating: false };
 function voiceAssistantDisplayName() { return String(state.config?.voiceAssistantName || '小秘').trim() || '小秘'; }
 function currentHostPort() { return Number(location.port || (location.protocol === 'https:' ? 443 : 80)); }
 const fragment = new URLSearchParams(location.hash.slice(1));
@@ -812,7 +812,7 @@ function openStream(run) {
     const ph = state.runPhase[run.id];
     if (ph) { ph.note = d.text || ''; touchRunActivity(run.id); renderRunStatus(run.id); }
   }); // 空响应自动续接提示
-  es.addEventListener('clarification', () => { if (state.stream !== es) return; avatarRunFeedback(run.id, 'awaiting_clarification'); refreshSessionSoon(); });
+  es.addEventListener('clarification', () => { if (state.stream !== es) return; const ph = ensureRunPhase(run.id); const waitingRun = state.session?.runs?.find(r => r.id === run.id); if (waitingRun) waitingRun.status = 'awaiting_clarification'; ph.status = 'awaiting_clarification'; ph.stalled = false; renderRunStatus(run.id); avatarRunFeedback(run.id, 'awaiting_clarification'); refreshSessionSoon(); });
   es.addEventListener('delta', e => {
     if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
@@ -1210,6 +1210,10 @@ function retryRunById(runId) {
     .then(async run => { if(state.session?.id === sessionId) { await selectSession(sessionId); reconcileAvatarRun(run.id); } })
     .catch(e => toast(e.message));
 }
+function runWaitingForUser(runId) {
+  const run = state.session?.runs?.find(r => r.id === runId);
+  return (run?.status || state.runPhase[runId]?.status) === 'awaiting_clarification';
+}
 function renderRunStatusInto(box, runId) {
   const ph = state.runPhase[runId];
   if (!box || !ph) return;
@@ -1227,8 +1231,11 @@ function renderRunStatusInto(box, runId) {
     head.append(el('span', 'rsp-spinner'), el('span', 'rsp-phase'), el('span', 'rsp-elapsed'));
     panel.append(head);
   }
-  head.querySelector('.rsp-phase').textContent = phaseLabel(ph);
-  head.querySelector('.rsp-elapsed').textContent = formatElapsed(ph.startedAt);
+  const awaitingUser = runWaitingForUser(runId);
+  if (awaitingUser) ph.stalled = false;
+  head.querySelector('.rsp-phase').textContent = awaitingUser ? t('等待你的回答或审批（执行计时暂停）') : phaseLabel(ph);
+  head.querySelector('.rsp-elapsed').hidden = awaitingUser;
+  head.querySelector('.rsp-elapsed').textContent = awaitingUser ? '' : formatElapsed(ph.startedAt);
   let noteEl = panel.querySelector('.run-note');
   if (ph.note) {
     if (!noteEl) { noteEl = el('div', 'run-note'); panel.append(noteEl); }
@@ -1297,6 +1304,7 @@ setInterval(() => {
   for (const runId in state.runPhase) {
     const ph = state.runPhase[runId];
     if (!ph || ph.done) continue;
+    if (runWaitingForUser(runId)) { if (ph.stalled) { ph.stalled = false; renderRunStatus(runId); } continue; }
     const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
     if (!box) continue;
     const el2 = box.querySelector('.rsp-elapsed');
@@ -1449,23 +1457,76 @@ function buildToolUses(run) {
   return group;
 }
 const statuses = { running: '运行中', paused: '已暂停', resumed: '已续跑', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断', awaiting_approval: '等待应用', awaiting_clarification: '等待澄清' };
+// The server reviews exact shell approvals; the browser never synthesizes a confirmation.
+function currentApprovalRun() {
+  return [...(state.session?.runs || [])].reverse().find(r => ['running', 'awaiting_clarification'].includes(r.status));
+}
+function composerAutoReview() {
+  const run = currentApprovalRun();
+  return run ? !!run.autoReview : !!state.approvalModes.get(state.session?.id || 'draft');
+}
+function syncComposerApproval() {
+  const button = $('approval-button');
+  if (!button) return;
+  const enabled = composerAutoReview();
+  button.textContent = t(enabled ? '审批 · 帮我审批' : '审批 · 手动');
+  button.setAttribute('aria-pressed', String(enabled));
+  button.disabled = !!state.approvalModeBusy || !!state.submitting;
+  button.title = t('当前会话的新任务使用此选择；运行中可切换。独立审核具体命令，不确定时转人工，审核使用当前模型并计入用量。');
+  button.onclick = async () => {
+    const sessionId = state.session?.id;
+    const key = sessionId || 'draft';
+    const run = currentApprovalRun();
+    const next = !composerAutoReview();
+    state.approvalModeBusy = true; syncComposerApproval(); updateSendEnabled();
+    try {
+      if (run) {
+        await api(`/sessions/${sessionId}/runs/${run.id}/approval-mode`, {
+          method: 'PUT', body: JSON.stringify({enabled: next})
+        });
+      }
+      state.approvalModes.set(key, next);
+      if (run && state.session?.id === sessionId) {
+        run.autoReview = next;
+        await selectSession(sessionId); schedulePoll();
+      }
+    } catch(e) { toast(e.message); }
+    finally { state.approvalModeBusy = false; syncComposerApproval(); updateSendEnabled(); }
+  };
+}
+function renderApprovalReviews(run, box) {
+  if (!run.approvalReviews?.length) return;
+  const details = el('details', 'approval-reviews');
+  details.append(el('summary', '', t('自动审批记录 · {0}', run.approvalReviews.length)));
+  const labels = {reviewing:'审核中', approved:'已自动放行', manual:'需手动确认', aborted:'未自动放行'};
+  run.approvalReviews.forEach(r => {
+    const item = el('div', 'approval-review');
+    item.append(el('strong', '', t(labels[r.status] || '需手动确认')), el('p', '', r.reason), el('pre', '', r.command));
+    details.append(item);
+  });
+  box.append(details);
+}
 // 澄清卡片：在会话流中渲染单个交互问题（选项/输入/确认条），点击即作为应答
 function renderClarification(run, box) {
   if (!run.pendingQuestion) return;
   let q; try { q = typeof run.pendingQuestion === 'string' ? JSON.parse(run.pendingQuestion) : run.pendingQuestion; } catch (e) { return; }
   const card = el('div', 'clarify-card');
   if (q.progressTotal) card.append(el('div', 'clarify-progress', t('澄清 {0}/{1}', q.progressCurrent || 1, q.progressTotal)));
-  card.append(el('div', 'clarify-question', q.question));
+  if (q.approvalKind === 'shell') {
+    card.append(el('div', 'clarify-question', t('执行命令前确认')));
+    card.append(el('pre', 'approval-command', q.command));
+  } else card.append(el('div', 'clarify-question', q.question));
   const answer = async (text) => {
     card.querySelectorAll('button,input').forEach(x => x.disabled = true);
-    try { await api(`/sessions/${state.session.id}/runs/${run.id}/answer`, { method: 'POST', body: JSON.stringify({ answer: text }) }); await selectSession(state.session.id); schedulePoll(); }
+    try { await api(`/sessions/${state.session.id}/runs/${run.id}/answer`, { method: 'POST', body: JSON.stringify({ answer: text, round: q.approvalRound || '' }) }); await selectSession(state.session.id); schedulePoll(); }
     catch (e) { toast(e.message); card.querySelectorAll('button,input').forEach(x => x.disabled = false); }
   };
   if (q.type === 'confirm') {
     const row = el('div', 'clarify-actions');
     const ok = el('button', 'primary', t('确认，继续')); ok.onclick = () => answer('确认');
     const adj = el('button', 'quiet', t('需要调整')); adj.onclick = () => answer('需要调整');
-    row.append(ok, adj); card.append(row);
+    row.append(ok, adj);
+    card.append(row);
   } else if (q.type === 'input') {
     const row = el('div', 'clarify-actions');
     const input = el('input', 'clarify-input'); input.placeholder = t('输入你的回答…');
@@ -1491,6 +1552,7 @@ function renderSession() {
   const isAssistantSess = state.session?.kind === 'assistant';
   document.body.classList.toggle('assistant-mode', !!isAssistantSess);
   syncAssistantModeControls(!!isAssistantSess);
+  syncComposerApproval();
   $('prompt').placeholder = isAssistantSess ? t('对{0}说点什么…', voiceAssistantDisplayName()) : '';
   $('session-title').textContent = state.session?.title || t("开始新的探索");
   // #62：小秘会话始终隐藏通用 welcome（及其 4 个快捷入口），改渲染小蜜专属时间线/空状态
@@ -1559,6 +1621,7 @@ function renderSession() {
       meta.append(el('span', 'run-status', t('正在暂停任务…')));
     }
     box.append(meta);
+    renderApprovalReviews(run, box);
     if (run.status === 'running' && state.runPhase[run.id]) renderRunStatusInto(box, run.id);
     if (run.attachments?.length) box.append(el('p', 'muted', t("已附加：") + run.attachments.map(a => a.root + '/' + a.path).join('、')));
     renderClarification(run, box);
@@ -2503,7 +2566,7 @@ $('files').addEventListener('drop', action(async event => {
 }));
 $('task-form').onsubmit = action(async event => {
   event.preventDefault();
-  if (state.submitting) return; // Enter 连击与点击不可重复创建 run
+  if (state.submitting || state.approvalModeBusy) return; // Enter 连击与点击不可重复创建 run
   if (xiaomiDictation.active || xiaomiDictation.starting) { toast(t('请先停止语音转写，再检查并发送文字')); return; }
   const prompt = $('prompt').value.trim(); if (!prompt) return;
   if (!state.config?.configured) { openSettings(); return; }
@@ -2511,6 +2574,7 @@ $('task-form').onsubmit = action(async event => {
   state.submitting = true;
   updateSendEnabled(); // 先显示提交态，再等待创建会话/启动任务请求
   cancelContextPreview(); // 输入防抖请求不再和正式发送争用服务端会话锁
+  const autoReview = composerAutoReview();
   const draftSession = state.session; // R07：捕获发送时对象，后续等待不得覆盖新选择
   let created = null;
   try {
@@ -2519,6 +2583,7 @@ $('task-form').onsubmit = action(async event => {
       if (!state.session) state.session = created; // 仅当用户仍停留在空白页时接管；点击已切走的会话不被空壳抢占
     }
     const target = draftSession || created;
+    if (created) state.approvalModes.set(created.id, autoReview);
     // 小秘会话键盘输入走 assistant-message，由后端按直接文字消息处理，不经过语音环境过滤。
     if (target.kind === 'assistant') {
       try {
@@ -2558,7 +2623,7 @@ $('task-form').onsubmit = action(async event => {
     // #41：小秘语音经 typeIntoPrompt 提交时，用 analyze 判定的 mode 一次性覆盖手动排队开关
     let queued = state.queueMode;
     if (voice.queuedOverride != null) { queued = voice.queuedOverride; voice.queuedOverride = null; }
-    const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+    const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, autoReview, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
     if (state.session?.id === target.id) { // 仅当用户仍停留在发送会话时清空草稿
       $('prompt').value = ''; state.attachments = []; renderAttachments();
     }
@@ -2600,7 +2665,8 @@ function cancelContextPreview() {
   state.previewController = null;
 }
 function updateSendEnabled() {
-  $('send').disabled = !!state.previewOverLimit || !!state.submitting;
+  $('send').disabled = !!state.previewOverLimit || !!state.submitting || !!state.approvalModeBusy;
+  syncComposerApproval();
   $('send').classList.toggle('submitting', !!state.submitting);
   $('send').setAttribute('aria-busy', String(!!state.submitting));
   if (state.submitting) {
@@ -3681,7 +3747,163 @@ function renderNumberControl(control) {
   if (control.description) wrap.append(el('small', '', control.description));
   return wrap;
 }
-const controlRenderers = { language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
+// Execution policy is an authenticated, server-persisted document. Edits are
+// drafts until Save succeeds; running tasks keep their recorded snapshot.
+function renderExecutionPolicy() {
+  const wrap = el('div', 'settings-control');
+  const status = el('p', 'section-desc', t('正在加载执行策略…'));
+  const form = el('div', 'execution-policy-form');
+  const buttons = el('div', 'execution-policy-actions');
+  const save = el('button', '', t('保存策略'));
+  const reset = el('button', '', t('恢复默认'));
+  const download = el('button', '', t('导出 JSON'));
+  const upload = el('button', '', t('导入 JSON'));
+  const file = el('input'); file.type = 'file'; file.accept = '.json,application/json'; file.hidden = true;
+  let defaults = null, inputs = {}, busy = false;
+  const fields = [
+    ['chatBudgetSec', '聊天执行预算（秒）', 30, 7200],
+    ['workflowBudgetSec', '工作流执行预算（秒）', 30, 7200],
+    ['toolMaxRounds', '工具调用最大轮次', 1, 200],
+    ['completionReviews', '收尾检查次数（0 为关闭）', 0, 10],
+    ['researchCorrections', '资料调查纠正次数（0 为关闭）', 0, 10],
+    ['agentInstruction', '自主执行提示词'],
+    ['researchInstruction', '资料调查提示词'],
+    ['completionInstruction', '收尾检查提示词']
+  ];
+  const draft = () => {
+    const p = {version: 1};
+    for (const [key, , min] of fields) {
+      const input = inputs[key];
+      if (min != null) {
+        if (!input.checkValidity() || input.value.trim() === '') throw new Error(t('请检查数值范围'));
+        p[key] = Number(input.value);
+      } else p[key] = input.value;
+    }
+    return p;
+  };
+  const fill = (p) => {
+    form.replaceChildren(); inputs = {};
+    for (const [key, label, min, max] of fields) {
+      const row = el('label', 'execution-policy-field'); row.append(el('span', '', t(label)));
+      const input = el(min == null ? 'textarea' : 'input');
+      if (min != null) { input.type = 'number'; input.min = min; input.max = max; input.step = 1; input.required = true; }
+      else { input.rows = 5; input.maxLength = 12000; }
+      input.setAttribute('aria-label', t(label)); input.value = p[key] ?? '';
+      input.oninput = () => { status.textContent = t('尚未保存'); };
+      inputs[key] = input; row.append(input); form.append(row);
+    }
+  };
+  const disabled = (value) => { busy = value; for (const b of [save, reset, download, upload]) b.disabled = value; };
+  save.onclick = action(async () => {
+    if (busy) return;
+    const p = draft(); disabled(true);
+    try { const result = await api('/execution-policy', {method: 'PUT', body: JSON.stringify(p)}); fill(result.policy); status.textContent = t('已保存，新任务生效；运行和续跑任务保留原策略。'); }
+    finally { disabled(false); }
+  });
+  reset.onclick = () => { if (!defaults || busy) return; fill(defaults); status.textContent = t('默认策略已载入，点击保存后生效。'); };
+  download.onclick = action(async () => {
+    const blob = new Blob([JSON.stringify(draft(), null, 2) + '\n'], {type: 'application/json'});
+    const url = URL.createObjectURL(blob); const a = el('a'); a.href = url; a.download = 'execution-policy.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  });
+  upload.onclick = () => { if (!busy) file.click(); };
+  file.onchange = action(async () => {
+    const selected = file.files?.[0]; if (!selected) return;
+    try {
+      if (selected.size > 128 * 1024) throw new Error(t('策略文件不得超过 128 KiB'));
+      const p = JSON.parse(await selected.text());
+      const keys = ['version', ...fields.map(f => f[0])];
+      if (!p || p.version !== 1 || Object.keys(p).some(k => !keys.includes(k)) || keys.some(k => !(k in p))) throw new Error(t('策略格式无效'));
+      for (const [key, , min, max] of fields) {
+        if (min != null ? (!Number.isInteger(p[key]) || p[key] < min || p[key] > max) : (typeof p[key] !== 'string' || [...p[key]].length > 12000)) throw new Error(t('策略格式无效'));
+      }
+      fill(p); status.textContent = t('策略已导入，点击保存后生效。');
+    } finally { file.value = ''; }
+  });
+  disabled(true); buttons.append(save, reset, download, upload, file);
+  wrap.append(el('p', 'section-desc', t('配置自主推进、资料调查和收尾规则。人工等待不计入执行预算；策略不授予工具权限。')), status, form, buttons);
+  api('/execution-policy').then(result => {
+    defaults = result.defaults; fill(result.policy); disabled(false);
+    status.textContent = result.warning ? t('配置读取异常，当前显示默认策略：{0}', result.warning) : t('修改后保存，新任务直接生效，无需重启。');
+  }).catch(error => { status.textContent = String(error.message || error); });
+  return wrap;
+}
+
+function renderManagedWorktrees() {
+  const wrap = el('div', 'settings-control');
+  wrap.append(el('h4', '', t('任务工作树')), el('p', 'section-desc', t('从固定 Git 提交创建隔离目录，不复制未提交修改。切换工作区后新任务绑定该工作树；归档保留全部文件。')));
+  const status = el('p', 'section-desc'), list = el('div');
+  const name = el('input'); name.placeholder = 'task-name'; name.setAttribute('aria-label', t('工作树名称'));
+  const ref = el('input'); ref.value = 'HEAD'; ref.setAttribute('aria-label', t('起始 Git 版本'));
+  const create = el('button', '', t('创建工作树')), refresh = el('button', '', t('刷新'));
+  let workspaceId = '', busy = false;
+  const load = async () => {
+    const result = await api('/worktrees'); workspaceId = result.workspaceId;
+    create.disabled = !result.supported || busy; list.replaceChildren();
+    for (const entry of result.worktrees) {
+      const card = el('div', 'execution-policy-field');
+      card.append(el('strong', '', entry.name + ' · ' + entry.state), el('code', '', entry.workspacePath), el('small', '', entry.baseCommit));
+      if (entry.error) card.append(el('p', 'section-desc', entry.error));
+      if (entry.state === 'ready') {
+        const select = el('button', '', t('切换到此工作树'));
+        select.onclick = action(async () => { await loadWorkspaceConfig(); wsState.config.workspace.mode = 'local'; wsState.config.workspace.path = entry.workspacePath; openWorkspaceSheet(); toast(t('工作树路径已填入，保存后切换。')); });
+        const archive = el('button', '', t('归档并保留文件'));
+        archive.onclick = action(async () => { archive.disabled = true; try { await api('/worktrees/' + encodeURIComponent(entry.id) + '/archive', {method: 'POST', body: '{}'}); await load(); } finally { archive.disabled = false; } });
+        card.append(select, archive);
+      }
+      list.append(card);
+    }
+    status.textContent = result.supported ? t('仅在当前本地 Git 工作区内创建；有 checkout 过滤器时需人工处理。') : t('SSH 工作区暂不支持托管工作树。');
+  };
+  create.onclick = action(async () => {
+    if (busy) return; busy = true; create.disabled = true;
+    try { await api('/worktrees', {method: 'POST', body: JSON.stringify({name: name.value.trim(), ref: ref.value.trim(), workspaceId})}); await load(); }
+    finally { busy = false; create.disabled = false; }
+  });
+  refresh.onclick = action(load); wrap.append(status, name, ref, create, refresh, list);
+  load().catch(error => { status.textContent = String(error.message || error); create.disabled = true; });
+  return wrap;
+}
+
+// Layer editors save validated documents through authenticated APIs.
+function renderHarnessConfig() {
+  const wrap = el('div', 'settings-control');
+  wrap.append(el('p', 'section-desc', t('配置 Skills、子代理和 Hooks。全局与工作区数组按整组覆盖；保存仅影响新任务。Hooks 使用现有命令审批和沙箱。')));
+  for (const workspace of [false, true]) {
+    wrap.append(renderConfigDocument('/harness-config' + (workspace ? '/workspace' : ''), workspace ? '当前工作区扩展配置' : '全局扩展配置', 'config', 'effectiveConfig', workspace));
+  }
+  return wrap;
+}
+function renderConfigDocument(endpoint, title, storedKey, effectiveKey, workspace) {
+  const wrap = el('div', 'execution-policy-form');
+  const status = el('p', 'section-desc', t('正在加载…'));
+  const input = el('textarea'); input.rows = 12; input.spellcheck = false; input.setAttribute('aria-label', t(title));
+  const effective = el('pre', 'section-desc'); effective.style.whiteSpace = 'pre-wrap';
+  const details = el('details'); details.append(el('summary', '', t('查看合并后的配置')), effective);
+  const buttons = el('div', 'execution-policy-actions');
+  const save = el('button', '', t('保存配置')), reload = el('button', '', t('重新加载')), clear = el('button', '', t('清除覆盖'));
+  const exportButton = el('button', '', t('导出 JSON'));
+  let workspaceId = '', busy = true;
+  const disable = value => { busy = value; [save, reload, clear, exportButton].forEach(b => b.disabled = value); input.disabled = value; };
+  const fill = result => {
+    workspaceId = result.workspaceId || ''; input.value = JSON.stringify(result[storedKey], null, 2);
+    effective.textContent = JSON.stringify(result[effectiveKey], null, 2);
+    status.textContent = result.warning || t('保存后新任务生效；运行和续跑任务保留原配置。');
+  };
+  const target = () => endpoint + (workspace ? '?workspaceId=' + encodeURIComponent(workspaceId) : '');
+  const draft = () => { const value = JSON.parse(input.value); if (!value || Array.isArray(value) || typeof value !== 'object') throw new Error(t('配置必须是 JSON 对象')); if (new Blob([input.value]).size > 128 * 1024) throw new Error(t('配置不得超过 128 KiB')); return value; };
+  save.onclick = action(async () => { if (busy) return; const value = draft(); disable(true); try { fill(await api(target(), {method: 'PUT', body: JSON.stringify(value)})); } finally { disable(false); } });
+  const load = async () => { disable(true); try { fill(await api(endpoint)); } finally { disable(false); } };
+  reload.onclick = action(load);
+  clear.onclick = action(async () => { if (busy) return; disable(true); try { await api(target(), {method: 'DELETE'}); fill(await api(endpoint)); } finally { disable(false); } });
+  exportButton.onclick = action(async () => { const url = URL.createObjectURL(new Blob([JSON.stringify(draft(), null, 2)], {type: 'application/json'})); const link = el('a'); link.href = url; link.download = title + '.json'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); });
+  input.oninput = () => { status.textContent = t('尚未保存'); };
+  buttons.append(save, reload, exportButton); if (workspace || storedKey === 'config') buttons.append(clear);
+  wrap.append(el('h4', '', t(title)), status, input, buttons, details);
+  disable(true); load().catch(error => { status.textContent = String(error.message || error); save.disabled = true; clear.disabled = true; });
+  return wrap;
+}
+
+const controlRenderers = { 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 
 function renderSystemLogsControl() {
   const wrap = el('div', 'settings-control system-logs-control');
@@ -7586,16 +7808,18 @@ function voiceArmPauseFlush() {
 // 与手动提交同一 run 入口，尊重排队模式/工作流模式
 async function voiceSend(text, queued) {
   if (!state.config?.configured) throw new Error(t('请先配置模型'));
+  const autoReview = composerAutoReview();
   let target = state.session, created = null;
   if (!target) {
     created = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: t('新会话') }) });
     if (!state.session) state.session = created;
     target = created;
+    state.approvalModes.set(created.id, autoReview);
   }
   const strategy = state.profiles?.strategy || 'auto';
   // #41：小秘 analyze 判定的 mode 优先；未给出时回退手动排队开关
   const q = (queued != null) ? queued : state.queueMode;
-  const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt: text, mode: state.mode, attachments: [], strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued: q, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+  const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt: text, autoReview, mode: state.mode, attachments: [], strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued: q, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
   if (state.session?.id === target.id) { await selectSession(target.id); reconcileAvatarRun(submitted.id || submitted.runId); }
 }
 // 提取主会话近期对话（供小秘对话/讲解感知 aide 内容）

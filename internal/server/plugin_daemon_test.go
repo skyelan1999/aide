@@ -82,7 +82,7 @@ func TestDaemonStartStop(t *testing.T) {
 
 func TestDaemonCallViaIPC(t *testing.T) {
 	a := testApp(t)
-	installMockDaemon(t, a, "mock-daemon", false)
+	installMockDaemon(t, a, "mock-daemon", true)
 	requireStatus(t, request(a, "POST", "/api/plugins/daemons/mock-daemon/start", nil), 200)
 
 	raw, err := a.callPluginTool("mock-daemon", "echo", map[string]any{"msg": "hello-daemon"})
@@ -97,7 +97,7 @@ func TestDaemonCallViaIPC(t *testing.T) {
 
 func TestDaemonCrashRestart(t *testing.T) {
 	a := testApp(t)
-	installMockDaemon(t, a, "mock-daemon", false)
+	installMockDaemon(t, a, "mock-daemon", true)
 	requireStatus(t, request(a, "POST", "/api/plugins/daemons/mock-daemon/start", nil), 200)
 
 	a.daemons.mu.Lock()
@@ -132,7 +132,7 @@ func TestDaemonCrashRestart(t *testing.T) {
 
 func TestDaemonEventReporting(t *testing.T) {
 	a := testApp(t)
-	installMockDaemon(t, a, "mock-daemon", false)
+	installMockDaemon(t, a, "mock-daemon", true)
 	requireStatus(t, request(a, "POST", "/api/plugins/daemons/mock-daemon/start", nil), 200)
 
 	if _, err := a.callPluginTool("mock-daemon", "emit-event", map[string]any{"note": "hi-from-mock"}); err != nil {

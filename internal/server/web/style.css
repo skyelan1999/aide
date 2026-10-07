@@ -1421,3 +1421,45 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 .model-capability-meta{display:flex;gap:6px;margin-left:30px}.model-capability-source{flex:1;min-width:0;padding:5px 7px;font-size:9px;border-radius:5px}.model-capability-date{width:115px;padding:4px;font-size:9px;border-radius:5px}
 
 .control-plugin-fields{display:flex;flex-direction:column;gap:12px}.control-plugin-fields select{padding:10px;border:1px solid var(--line-soft);border-radius:8px;background:var(--bg-sub);color:var(--text)}.control-plugin-fields textarea{min-height:130px}
+
+/* Compact file controls in both appearances; keep list typography unchanged. */
+#file-panel .file-panel-heading{height:42px;min-height:42px;flex-shrink:0;padding:0 12px}
+#file-panel .file-panel-heading strong{font-size:12px}
+#file-panel .root-tabs{margin:8px 12px 6px;padding:2px;flex-shrink:0}
+#file-panel .root-tabs button{min-height:28px;padding:4px 5px}
+#file-panel .file-tools{padding:5px 12px;gap:6px}
+#file-panel .file-tools>.quiet,#file-panel .icon-button{width:28px;height:28px;min-height:28px;padding:0;flex-shrink:0}
+#file-panel #file-path{padding:5px 7px;line-height:1.2}
+#file-panel .file-filter{padding:5px 12px 7px}
+#file-panel .file-search-box{padding:2px 4px 2px 0}
+#file-panel .file-search-box input[type=search]{padding:4px 7px}
+@media(pointer:coarse){
+  #file-panel .file-panel-heading{height:46px;min-height:46px}
+  #file-panel .root-tabs button{min-height:34px}
+  #file-panel .file-tools>.quiet,#file-panel .icon-button{width:34px;height:34px;min-height:34px}
+  #file-panel .file-search-box button{flex-basis:30px;height:30px}
+}
+
+/* Exact-action reviewer controls and audit history. */
+.approval-mode-button[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+.clarify-actions{flex-wrap:wrap}
+.approval-help{font-size:12px;line-height:1.5;margin:8px 0}
+.approval-reviews{margin:8px 0 12px;font-size:12px}
+.approval-reviews summary{cursor:pointer;color:var(--muted)}
+.approval-review{padding:10px 12px;border-left:2px solid var(--border);margin-top:8px}
+.approval-review p{margin:6px 0}
+.approval-review pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:160px;overflow:auto}
+
+.approval-command{white-space:pre-wrap;overflow-wrap:anywhere;max-height:220px;overflow:auto;font-size:12px;line-height:1.6;font-weight:normal;padding:12px;border-radius:8px;background:var(--bg)}
+
+/* Approval choice belongs to the composer, next to the strategy picker. */
+.composer-toolbar{flex-wrap:wrap}
+#approval-button{white-space:nowrap;font-size:12px;padding:6px 10px;min-height:30px}
+.assistant-mode #approval-button{display:none}
+
+.execution-policy-form { display:grid; gap:14px; }
+.execution-policy-field { display:grid; gap:6px; min-width:0; }
+.execution-policy-field code, .execution-policy-field small { min-width:0; max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+.execution-policy-field input { width:140px; max-width:100%; }
+.execution-policy-field textarea { width:100%; box-sizing:border-box; resize:vertical; font:inherit; }
+.execution-policy-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
