@@ -29,3 +29,11 @@
 - 本地截图：.agent-state/model-led-acceptance.png（用户目录信息，仅本地保留，不上传发行包）。
 - 完整回归：.agent-state/full.json 及其 log，按内容指纹判断最终有效收据。
 - 架构与回滚：[模型驱动执行循环](../architecture/model-led-agent.md)。
+
+## 发行构建补充
+
+首轮 RC1 发行构建被 Python ZIP 插件回归拦截：build 阶段没有 `/workspace`，spawn 子进程因 cwd 不存在报 ENOENT；本地 runtime 阶段已有该目录，因此此前 full 通过。已将编译期测试目录与运行时对齐，重新执行完整门禁。RC1 未对外发布，后续使用 RC2 记录修复，保留原标签追踪。
+
+编译期 toolchain 专门回归已通过：创建 `/workspace` 后，TestPluginBundleInstallsAndRunsPythonTool 在原 build 工具链镜像内执行成功（0.857秒）。证据：.agent-state/release-toolchain-check.log。
+
+修复后最终完整门禁通过：verify-20261007T052801977315Z.log，19项检查退出0，源码指纹 59f7a99a35b496f2c7166657bd8bcee201f31feffddaa62be07b40f24885aeac。

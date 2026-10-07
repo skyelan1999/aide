@@ -57,10 +57,11 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Current-input full verification passed: go test -race, go vet, frontend and launcher checks. Focused model-led/pause regressions and real DeepSeek Safari task passed; plan-size fidelity limitation recorded.",
+      "summary": "Fresh full gate passed after build cwd fix: all 19 checks exit0 including go test -race and go vet. Real DeepSeek/Safari task and build-toolchain Python ZIP regression passed.",
       "evidence": [
-        ".agent-state/verify-20261007T051106700665Z.log",
-        "fingerprint 68b7f26d7959f19bc31fcbae9b9beaabebb9a10adaa30495522652d09037eadb",
+        ".agent-state/verify-20261007T052801977315Z.log",
+        "fingerprint 59f7a99a35b496f2c7166657bd8bcee201f31feffddaa62be07b40f24885aeac",
+        ".agent-state/release-toolchain-check.log",
         "docs/reviews/2026-10-07-model-led-acceptance.md"
       ]
     },
@@ -83,13 +84,14 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "User authorized release; acceptance gates passed. Preparing version, image and checksummed bundles.",
+      "summary": "RC1 local build blocked by Python plugin test. Preparing corrected RC2 without rewriting RC1 tag.",
       "evidence": [
-        "docs/reviews/release-0.1.15.0-RC1-2026-10-07.md"
+        ".agent-state/release-build-0.1.15.0-RC1.log",
+        "docs/reviews/release-0.1.15.0-RC2-2026-10-07.md"
       ]
     }
   },
   "release_authorization": "用户当前原话：验收，更新文档并发布（2026-10-07）。授权提交、版本升级、构建、推送和 GitHub prerelease。",
   "rollback": "Local image aide:model-led-before-20261007; pause new agent tasks before rollback because the previous version cannot resume their agent step.",
-  "handoff": "Acceptance passed for recorded scope. Proceed with authorized version 0.1.15.0 RC1 and release assets; cross-device first-run and cross-model quality remain untested."
+  "handoff": "Current-input acceptance passed. Publish corrected 0.1.15.0 RC2; RC1 build failed and was not published."
 }

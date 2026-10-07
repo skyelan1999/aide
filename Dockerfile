@@ -57,6 +57,7 @@ ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
 # the build-stage test process the pinned Python modules too; these packages do
 # not enter the final runtime stage from this build stage.
 RUN if [ "${AIDE_RUN_TESTS}" = "1" ]; then \
+      mkdir -p /workspace && \
       pip install --retries 5 --timeout 60 -i ${PIP_INDEX_URL} \
         python-docx==1.2.0 openpyxl==3.1.5 python-pptx==1.0.2 ezdxf==1.4.4 pypdf[crypto]==6.19.0; \
     fi

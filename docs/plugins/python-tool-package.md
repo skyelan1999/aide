@@ -53,4 +53,4 @@ print(json.dumps({"path": request["path"], "status": "inspected"}))
 
 需要交付新建或修改的文本文件时，插件应通过 `api.proposeWrite(path, content)` 返回 aide 提案，让工作流进入现有审批流程。DXF、ASCII STL、CSV、JSON、Markdown 等文本格式可直接采用此方式；大文件或二进制产物需要后续增加专门的工件 API。工作流可以连续调用工具，工作流总时限为 15 分钟。
 
-源码开发模式与 Release 容器使用相同的 Python 3.12 和锁定依赖。开发启动器构建 Dockerfile 的 `dev` target；Release 默认 target 仍是 `runtime`。aide 不提供浏览器自动化或任意网页读取能力。
+源码开发模式与 Release 容器使用相同的 Python 3.12 和锁定依赖。开发启动器构建 Dockerfile 的 `dev` target；Release 默认 target 仍是 `runtime`。网页读取与浏览器控制通过独立 browser-control 插件提供，需相应站点授权；Python 工具包自身不授予额外浏览器权限。
