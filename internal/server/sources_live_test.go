@@ -83,7 +83,7 @@ func TestSourcesLiveProtocols(t *testing.T) {
 			requireStatus(t, request(a, "POST", "/api/sessions/"+session.ID+"/runs", map[string]any{"mode": "chat", "prompt": "Read reference source"}), 202)
 			waitTaskDone(t, a, session.ID)
 			found := false
-			for _, messages := range provider.requests {
+			for _, messages := range provider.snapshotRequests() {
 				for _, message := range messages {
 					if message.Role == "tool" && strings.Contains(message.Content, "real protocol reference") {
 						found = true

@@ -12,6 +12,8 @@ services:
       AI_API_KEY: ${AI_API_KEY:-}
       AIDE_HOST_LOCAL: ${AIDE_LOCAL_ROOT:-${PWD}/workspace}
       AIDE_WEBSEARCH_URL: ${AIDE_WEBSEARCH_URL:-}
+      AIDE_BROWSER_BRIDGE_TOKEN: ${AIDE_BROWSER_BRIDGE_TOKEN:-}
+      AIDE_COMPUTER_BRIDGE_TOKEN: ${AIDE_COMPUTER_BRIDGE_TOKEN:-}
     volumes:
       - type: bind
         source: ${AIDE_WORKSPACE:-./workspace}

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -15,11 +16,18 @@ import (
 type toolProvider struct {
 	*httptest.Server
 	requests [][]Message
+	mu       sync.Mutex
 	script   []func() (string, []ToolCall)
 	idx      int
 }
 
-func (p *toolProvider) requestsEmpty() int { return len(p.requests) }
+func (p *toolProvider) requestsEmpty() int { return len(p.snapshotRequests()) }
+
+func (p *toolProvider) snapshotRequests() [][]Message {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return append([][]Message(nil), p.requests...)
+}
 
 func newToolProvider(t *testing.T, script []func() (string, []ToolCall)) *toolProvider {
 	p := &toolProvider{script: script}
@@ -29,15 +37,15 @@ func newToolProvider(t *testing.T, script []func() (string, []ToolCall)) *toolPr
 			Tools    []any     `json:"tools"`
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
-		first := len(p.requests) == 0
+		p.mu.Lock()
+		defer p.mu.Unlock()
 		p.requests = append(p.requests, body.Messages)
-		if !first && len(body.Tools) == 0 {
-			t.Error("tools not sent to provider")
-		}
 		var content string
 		var calls []ToolCall
-		if first {
-			content, calls = "主题", nil // 首个调用是任务主题总结（FR-88）
+		// Title generation runs concurrently with task execution, so classify
+		// requests by their tool schema rather than their arrival order.
+		if len(body.Tools) == 0 {
+			content, calls = "主题", nil
 		} else if p.idx < len(p.script) {
 			content, calls = p.script[p.idx]()
 			p.idx++
@@ -83,7 +91,7 @@ func TestToolLoopReadFile(t *testing.T) {
 	}
 	// 第二轮请求必须包含 tool 角色消息与文件内容
 	found := false
-	for _, req := range provider.requests {
+	for _, req := range provider.snapshotRequests() {
 		for _, m := range req {
 			if m.Role == "tool" && strings.Contains(m.Content, "tool-readable-content") {
 				found = true
@@ -91,7 +99,7 @@ func TestToolLoopReadFile(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Fatalf("tool result not passed back to model: %+v", provider.requests)
+		t.Fatalf("tool result not passed back to model: %+v", provider.snapshotRequests())
 	}
 }
 
@@ -172,7 +180,7 @@ module.exports = {
 	requireStatus(t, w, 202)
 	waitTaskDone(t, a, s.ID)
 	found := false
-	for _, req := range provider.requests {
+	for _, req := range provider.snapshotRequests() {
 		for _, m := range req {
 			if m.Role == "tool" && strings.Contains(m.Content, "hello aide") {
 				found = true
@@ -180,7 +188,7 @@ module.exports = {
 		}
 	}
 	if !found {
-		t.Fatalf("plugin tool result not in loop: %+v", provider.requests)
+		t.Fatalf("plugin tool result not in loop: %+v", provider.snapshotRequests())
 	}
 }
 
@@ -330,7 +338,6 @@ func TestShellBlocked(t *testing.T) {
 		}
 	}
 }
-
 
 func TestReadOnlyAllowed(t *testing.T) {
 	readOnly := []string{"ls -la", "cat main.go", "grep -r foo .", "git status", "git diff", "pwd", "head -n 5 x", "wc -l x"}

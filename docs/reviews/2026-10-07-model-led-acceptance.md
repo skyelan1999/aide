@@ -37,3 +37,9 @@
 编译期 toolchain 专门回归已通过：创建 `/workspace` 后，TestPluginBundleInstallsAndRunsPythonTool 在原 build 工具链镜像内执行成功（0.857秒）。证据：.agent-state/release-toolchain-check.log。
 
 修复后最终完整门禁通过：verify-20261007T052801977315Z.log，19项检查退出0，源码指纹 59f7a99a35b496f2c7166657bd8bcee201f31feffddaa62be07b40f24885aeac。
+
+离线模板复核发现未传递两个桥接令牌。已补入 docker/compose.offline.yaml，并用合成令牌运行 docker compose config 验证两个环境变量均准确传入；不使用本地真实令牌。修复后以 RC3 交付并重跑完整门禁。
+
+最终模板回归暴露既有 toolProvider 测试假设不稳定：标题生成与工具执行并发，请求顺序无保证，模拟服务按先后顺序误发响应。修复测试为按工具 schema 分类用途，并对共享记录加锁，读取用快照。保留实际工具结果与文件审批断言，未调整产品权限或执行逻辑。
+
+最终离线模板与并发测试修正后的完整验收：verify-20261007T054902999779Z.log，19项全部通过，源码指纹 73cd2d68ec7d46e14aa1f4a4993517ab0695951f92687b25d62b045e1bc40405。工具测试在 race 模式重复5次通过（14.902秒）。RC2 候选在无网络容器中验证 TLS healthz 返回200、未登录配置接口返回401；正式 RC3 将再次检查。

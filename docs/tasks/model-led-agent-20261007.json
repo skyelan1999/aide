@@ -22,7 +22,10 @@
     "scripts/package-release-assets.sh",
     "scripts/docker-release.sh",
     "docs/reviews/2026-10-07-model-led-acceptance.md",
-    "Integrated pending autonomous-confirmation, web-research, control-plugin and plugin-settings source changes listed in initial_status; all reviewed as dependent capability delivery."
+    "Integrated pending autonomous-confirmation, web-research, control-plugin and plugin-settings source changes listed in initial_status; all reviewed as dependent capability delivery.",
+    "docker/compose.offline.yaml",
+    "internal/server/tools_test.go",
+    "internal/server/sources_live_test.go"
   ],
   "stages": {
     "requirements": {
@@ -57,11 +60,10 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Fresh full gate passed after build cwd fix: all 19 checks exit0 including go test -race and go vet. Real DeepSeek/Safari task and build-toolchain Python ZIP regression passed.",
+      "summary": "Final full verification passed all 19 checks, including race and vet; concurrent title/tool fixture stabilized and focused tests repeated five times.",
       "evidence": [
-        ".agent-state/verify-20261007T052801977315Z.log",
-        "fingerprint 59f7a99a35b496f2c7166657bd8bcee201f31feffddaa62be07b40f24885aeac",
-        ".agent-state/release-toolchain-check.log",
+        ".agent-state/verify-20261007T054902999779Z.log",
+        "fingerprint 73cd2d68ec7d46e14aa1f4a4993517ab0695951f92687b25d62b045e1bc40405",
         "docs/reviews/2026-10-07-model-led-acceptance.md"
       ]
     },
@@ -84,7 +86,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "RC1 local build blocked by Python plugin test. Preparing corrected RC2 without rewriting RC1 tag.",
+      "summary": "RC1 failed build; RC2 local candidate superseded by offline template fix. Preparing RC3.",
       "evidence": [
         ".agent-state/release-build-0.1.15.0-RC1.log",
         "docs/reviews/release-0.1.15.0-RC2-2026-10-07.md"
@@ -93,5 +95,5 @@
   },
   "release_authorization": "用户当前原话：验收，更新文档并发布（2026-10-07）。授权提交、版本升级、构建、推送和 GitHub prerelease。",
   "rollback": "Local image aide:model-led-before-20261007; pause new agent tasks before rollback because the previous version cannot resume their agent step.",
-  "handoff": "Current-input acceptance passed. Publish corrected 0.1.15.0 RC2; RC1 build failed and was not published."
+  "handoff": "Final full acceptance passed; publishing 0.1.15.0 RC3. RC1 and RC2 remain unpublished local candidates."
 }
