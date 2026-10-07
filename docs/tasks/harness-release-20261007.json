@@ -56,7 +56,7 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "Release notes collect related mechanisms and limits; success pending exact gate/build/publication receipts.",
+      "summary": "Final release notes record exact tag, image, verification, eight assets and implementation limits.",
       "evidence": [
         "docs/reviews/release-0.1.16.0-RC1-2026-10-08.md",
         "docs/architecture/harness-integration.md"
@@ -72,12 +72,18 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Published v0.1.16.0-RC1 prerelease at source7da5278; original test-enabled image build, start.command TLS candidate, eight remote asset sizes and SHA256 digests verified. Production unchanged.",
+      "evidence": [
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.16.0-RC1",
+        ".agent-state/release-build-0.1.16.0-RC1.log",
+        ".agent-state/release-package-0.1.16.0-RC1.log",
+        ".agent-state/release-smoke-0.1.16.0-RC1.json",
+        ".agent-state/release-remote-verified-0.1.16.0-RC1.json"
+      ]
     }
   },
   "release_authorization": "用户直接授权：整理一下，release吧。包括整理相关改动、提交/版本/tag/推送及GitHub prerelease；未授权替换生产服务。",
   "rollback": "Production unchanged; prior v0.1.15.0-RC3 remains available. Candidate isolated18189. If deploying later, backup data and select previous release image without deleting data.",
-  "handoff": "Current full pass; prepare exact scoped commit, version bump and image build. Production unchanged."
+  "handoff": "Release published and all8 remote digests/sizes match local files. ARM64 only. Candidate18189 kept; production9999 unchanged. Release tag7da5278 remains immutable; follow-up commit only records publication receipts."
 }
