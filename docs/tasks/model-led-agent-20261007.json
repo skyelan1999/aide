@@ -85,15 +85,18 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "RC1 failed build; RC2 local candidate superseded by offline template fix. Preparing RC3.",
+      "status": "pass",
+      "summary": "RC3 prerelease published with 8 assets; all remote sizes and SHA-256 match local files. Same image deployed locally healthy; Safari shows RC3 and preserved completed autonomous session #34.",
       "evidence": [
-        ".agent-state/release-build-0.1.15.0-RC1.log",
-        "docs/reviews/release-0.1.15.0-RC2-2026-10-07.md"
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.15.0-RC3",
+        ".agent-state/remote-RC3-release.json",
+        ".agent-state/rc3-package-check.json",
+        ".agent-state/rc3-public-check.json",
+        ".agent-state/model-led-release-RC3.png"
       ]
     }
   },
   "release_authorization": "用户当前原话：验收，更新文档并发布（2026-10-07）。授权提交、版本升级、构建、推送和 GitHub prerelease。",
   "rollback": "Local image aide:model-led-before-20261007; pause new agent tasks before rollback because the previous version cannot resume their agent step.",
-  "handoff": "Final full acceptance passed; publishing 0.1.15.0 RC3. RC1 and RC2 remain unpublished local candidates."
+  "handoff": "Released v0.1.15.0-RC3 at e653cca; main documentation records final evidence. Local RC3 is healthy and authenticated Safari shows preserved autonomous result. New-device and Windows/Ubuntu physical acceptance remain unverified."
 }
