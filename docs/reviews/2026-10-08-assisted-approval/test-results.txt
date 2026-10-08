@@ -1,0 +1,8 @@
+Full server regression (AIDE_BUILTIN_PLUGINS unset):
+ok  	aide/internal/server	124.646s
+
+Focused race regression and final candidate build:
+ok  	aide/internal/server	8.996s
+
+UI persistence regression: PASS (actual app.js functions; browser interaction not run)
+JS syntax and git diff --check: PASS

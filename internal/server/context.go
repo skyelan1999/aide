@@ -356,6 +356,9 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 	if guide := a.environmentGuide(); guide != "" {
 		history[0].Content += "\n" + guide
 	}
+	if task != nil && task.AutoReview {
+		history[0].Content += "\n辅助审批已启用：已获用户授权的常规操作直接调用 run_shell 或 write_file，由运行时独立审核。不要先用 ask_user 重复索取同一授权。ask_user 用于缺失的关键输入或新的影响。write_file 返回的是提案，运行结束后由审核器应用；不得为了落实提案再用 shell 重复写入同一文件。审批不代表执行成功，文件提案不代表已落盘。"
+	}
 	// 注入持久记忆
 	if mem := a.readCachedProjectMemory(); mem != "" && !strings.HasPrefix(mem, "(记忆文件为空") {
 		history[0].Content += "\n\n## 持久记忆\n以下是你之前记下的用户偏好和项目约定，请在回答中参考：\n" + mem

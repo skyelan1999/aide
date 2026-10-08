@@ -54,7 +54,7 @@ func (a *App) setApprovalMode(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("任务不存在"))
 		return
 	}
-	if task.Status != "running" && task.Status != "awaiting_clarification" {
+	if task.Status != "running" && task.Status != "awaiting_clarification" && task.Status != "awaiting_approval" {
 		a.mu.Unlock()
 		fail(w, 409, errors.New("任务已结束"))
 		return
@@ -84,7 +84,10 @@ func (a *App) setApprovalMode(w http.ResponseWriter, r *http.Request) {
 	a.mu.Unlock()
 	a.broadcastSessionsChanged(s.ID)
 	if in.Enabled {
-		go a.reviewPendingCommand(task)
+		go func() {
+			a.reviewPendingCommand(task)
+			a.reviewPendingFiles(context.Background(), task)
+		}()
 	}
 	jsonOut(w, 200, map[string]any{"ok": true})
 }
@@ -110,7 +113,7 @@ func (a *App) reviewPendingCommand(task *Task) {
 		return
 	}
 	task.approvalReviewRound, task.approvalReviewGeneration = round, gen
-	ctx, cancel := context.WithTimeout(task.approvalCtx, 20*time.Second)
+	ctx, cancel := context.WithTimeout(task.approvalCtx, 60*time.Second)
 	task.approvalCancel = cancel
 	cfg := a.settings
 	if task.Model != "" {
@@ -120,6 +123,10 @@ func (a *App) reviewPendingCommand(task *Task) {
 	cfg.APIKey = key
 	s := a.approvalSessionLocked(task)
 	prompt, authorizationOK := a.approvalAuthorizationLocked(task)
+	cwd := task.AgentRoot.ContainerAbs
+	if cwd == "" {
+		cwd = a.containerAbs
+	}
 	record := ApprovalReview{Command: q.Command, Status: "reviewing", Reason: "正在独立审核具体命令", At: time.Now().UTC().Format(time.RFC3339Nano)}
 	if len(task.ApprovalReviews) >= 50 {
 		task.ApprovalReviews = task.ApprovalReviews[len(task.ApprovalReviews)-49:]
@@ -138,7 +145,7 @@ func (a *App) reviewPendingCommand(task *Task) {
 	approved := false
 	var usage TokenUsage
 	if authorizationOK && keyErr == nil && len(prompt) <= 16000 && len(q.Command) <= 16000 {
-		payload, _ := json.Marshal(map[string]string{"userRequest": prompt, "command": q.Command, "scope": "仅限本任务工作区内的可逆操作；未提供文件内容、备份或符号链接证明", "delegatedTask": task.Prompt, "workspaceId": task.WorkspaceID})
+		payload, _ := json.Marshal(map[string]string{"userRequest": prompt, "command": q.Command, "scope": "仅限本任务工作区内的可逆操作；未提供文件内容、备份或符号链接证明", "delegatedTask": task.Prompt, "workspaceId": task.WorkspaceID, "workingDirectory": cwd})
 		out, _, u, err := complete(ctx, cfg, []Message{{Role: "system", Content: assistedApprovalPolicy}, {Role: "user", Content: string(payload)}}, ProfileParams{MaxTokens: 512, Temperature: fp(0)}, nil, nil)
 		usage = u
 		var v struct {

@@ -1,0 +1,18 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const code=fs.readFileSync('internal/server/web/app.js','utf8');
+const get=(name)=>code.slice(code.indexOf(`function ${name}(`),code.indexOf('\n}',code.indexOf(`function ${name}(`))+2);
+const data=new Map();const localStorage={getItem:k=>data.get(k)||null,setItem:(k,v)=>data.set(k,v)};
+const c=vm.createContext({localStorage,Map,JSON});
+vm.runInContext(get('loadApprovalModes')+get('rememberApprovalMode')+'\nconst state={session:null,approvalModes:loadApprovalModes()};\n'+get('currentApprovalRun')+get('composerAutoReview'),c);
+assert.equal(vm.runInContext('composerAutoReview()',c),false);
+vm.runInContext("rememberApprovalMode('draft',true)",c);
+assert.equal(vm.runInContext('loadApprovalModes().get("draft")',c),true);
+vm.runInContext('state.session={id:"one",runs:[{autoReview:true,status:"completed"}]}',c);
+assert.equal(vm.runInContext('composerAutoReview()',c),true);
+vm.runInContext('rememberApprovalMode("one",false)',c);
+assert.equal(vm.runInContext('composerAutoReview()',c),false);
+vm.runInContext('state.session={id:"two",runs:[]}',c);
+assert.equal(vm.runInContext('composerAutoReview()',c),false);
+vm.runInContext('state.session={id:"one",runs:[{autoReview:true,status:"awaiting_approval"}]}',c);
+assert.equal(vm.runInContext('composerAutoReview()',c),true);
+console.log('PASS: draft/session persistence, completed-run fallback, manual override, session isolation, pending-file mode');

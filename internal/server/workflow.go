@@ -329,7 +329,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		s.Title = string(title)
 	}
 	// R08-04：与 /api/context-preview 共用同一构建器；超限在此可解释拦截（Provider 不会收到该调用）
-	preview := a.buildContextPreviewWithHarness(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true, policy, harness, in.AvatarFeedback)
+	preview := a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true, policy, harness, task, in.AvatarFeedback)
 	// 阶段/自动编排提示会追加到同一首条 system 消息，必须先计入再检查窗口。
 	a.applyWorkflowContextWithPolicy(preview, in.Mode, in.WorkflowPhase, policy)
 	if preview.OverLimit {
@@ -366,7 +366,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		preview = a.buildContextPreviewWithHarness(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true, policy, harness, in.AvatarFeedback)
+		preview = a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true, policy, harness, task, in.AvatarFeedback)
 		a.applyWorkflowContextWithPolicy(preview, in.Mode, in.WorkflowPhase, policy)
 		if preview.OverLimit {
 			fail(w, 400, fmt.Errorf("自动压缩后仍超出上下文预算：输入估算 %d tokens + 输出预留 %d tokens = %d，模型窗口 %d；请减少附件/提示内容或新建会话", preview.InputEstimate, preview.OutputReserve, preview.TotalEstimate, preview.ContextWindow))
@@ -611,6 +611,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		task.Error = "会话保存失败: " + saveErr.Error()
 	}
 	a.mu.Unlock()
+	a.reviewPendingFiles(ctx, task)
 	// 关闭插话通道，避免悬挂 goroutine 向已结束 task 发消息
 	if task.Steer != nil {
 		select {
@@ -764,7 +765,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	if avatarOverride != nil {
 		avatarEnabled = *avatarOverride
 	}
-	task := &Task{ID: newID(), WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{ID: newID(), AutoReview: orig.AutoReview, WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	policy, policyErr := a.loadExecutionPolicy()
 	if policyErr != nil {
 		fail(w, 400, fmt.Errorf("invalid execution policy: %w", policyErr))
@@ -778,7 +779,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	task.HarnessConfig = &harness
-	preview := a.buildContextPreviewWithHarness(s, orig.Prompt, orig.Mode, contextText, images, a.settings, params, true, policy, harness, avatarEnabled)
+	preview := a.buildContextPreviewWithTask(s, orig.Prompt, orig.Mode, contextText, images, a.settings, params, true, policy, harness, task, avatarEnabled)
 	a.applyWorkflowContextWithPolicy(preview, orig.Mode, orig.WorkflowPhase, policy)
 	if preview.OverLimit {
 		fail(w, 400, errors.New("上下文预算超限，重试失败"))
@@ -1024,6 +1025,10 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 	fail(w, 409, errors.New("当前无可应答的澄清问题"))
 }
 func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
+	a.applyTaskGuarded(w, r, nil)
+}
+
+func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard func(*Task) error) {
 	// File writers can acquire a.mu while establishing SSH. Do not wait for
 	// filesMu with the application lock held.
 	a.filesMu.Lock()
@@ -1046,6 +1051,12 @@ func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 	if task.Status != "awaiting_approval" {
 		fail(w, 409, errors.New("任务当前不可应用"))
 		return
+	}
+	if guard != nil {
+		if err := guard(task); err != nil {
+			fail(w, 409, err)
+			return
+		}
 	}
 	// R02：提案只能写回生成时的工作区（以工作区身份判定；路径/主机变化即身份变化）。
 	// 旧提案缺身份时仅允许在从未定制的默认工作区应用，定制后一律拒绝（不可静默改绑）。

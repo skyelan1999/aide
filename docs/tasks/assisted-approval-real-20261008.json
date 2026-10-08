@@ -1,0 +1,73 @@
+{
+  "id": "assisted-approval-real-20261008",
+  "request": "辅助审批规则错误，大量操作仍手动审批，使用实际环境复现修复并测试",
+  "baseline": "8bd2bb9c3961e35f711d982ee4ce40be475feb13",
+  "initial_status": "M docs/architecture/knowledge-map.md\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n?? docs/reviews/2026-10-08-starmap-logbook/\n?? docs/reviews/2026-10-08-starmap-stellar-colors/\n?? docs/tasks/starmap-logbook-20261008.json\n?? docs/tasks/starmap-stellar-colors-20261008.json",
+  "acceptance": [
+    "actual provider reproduction",
+    "new file proposals reviewed and applied",
+    "fail closed on stale/readonly/existing files",
+    "session preference persistence",
+    "candidate actual provider acceptance"
+  ],
+  "scope": [
+    "assisted shell/file approvals",
+    "per-session approval persistence",
+    "retry inheritance",
+    "actual provider QA"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "See scoped review; no production replacement",
+      "evidence": [
+        "docs/reviews/2026-10-08-assisted-approval/README.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "See scoped review; no production replacement",
+      "evidence": [
+        "docs/reviews/2026-10-08-assisted-approval/README.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "See scoped review; no production replacement",
+      "evidence": [
+        "docs/reviews/2026-10-08-assisted-approval/README.md"
+      ]
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "PASS: real DeepSeek new-file independent approval and disk content; deletion remains manual and sentinel intact; focused race/full server/UI function tests pass. Browser reload interaction NOT_RUN due user control/certificate.",
+      "evidence": [
+        "docs/reviews/2026-10-08-assisted-approval/test-results.txt",
+        "scripts/test_approval_persistence.cjs",
+        "docs/reviews/2026-10-08-assisted-approval/real-provider-results.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "See scoped review; no production replacement",
+      "evidence": [
+        "docs/reviews/2026-10-08-assisted-approval/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Cancelled negative QA task; restored original encrypted QA configuration and token byte-for-byte, removed temporary backup, restarted through start.command; model empty and hasKey=false",
+      "evidence": [
+        "docs/reviews/2026-10-08-assisted-approval/README.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Source commit/push authorized; versioned release and production activation not requested",
+      "evidence": []
+    }
+  },
+  "release_authorization": "2026-10-08 用户：推上去吧（授权源码提交与推送；不包含 Release 发布或生产替换）",
+  "rollback": "Revert the approval fix commit; production 9999 was not replaced.",
+  "handoff": "Real provider candidate checks passed after explicit credential-copy authorization. Original QA configuration restored and memory reset. Production 9999 unchanged; browser reload acceptance pending."
+}

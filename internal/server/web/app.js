@@ -12,7 +12,17 @@ function updateFavicon() {
 }
 updateFavicon();
 if (window.aideUI?.subscribe) window.aideUI.subscribe(updateFavicon);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, approvalModes: new Map(), approvalModeBusy: false, autoScroll: true, jumpAnimating: false };
+function loadApprovalModes() {
+  try {
+    const values = JSON.parse(localStorage.getItem('aide-approval-modes') || '[]');
+    return new Map(Array.isArray(values) ? values.filter(v => Array.isArray(v) && typeof v[0] === 'string' && typeof v[1] === 'boolean').slice(-200) : []);
+  } catch { return new Map(); }
+}
+function rememberApprovalMode(key, enabled) {
+  state.approvalModes.set(key, enabled);
+  try { localStorage.setItem('aide-approval-modes', JSON.stringify([...state.approvalModes].slice(-200))); } catch {}
+}
+const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, approvalModes: loadApprovalModes(), approvalModeBusy: false, autoScroll: true, jumpAnimating: false };
 function voiceAssistantDisplayName() { return String(state.config?.voiceAssistantName || '小秘').trim() || '小秘'; }
 function currentHostPort() { return Number(location.port || (location.protocol === 'https:' ? 443 : 80)); }
 const fragment = new URLSearchParams(location.hash.slice(1));
@@ -1468,11 +1478,14 @@ function buildToolUses(run) {
 const statuses = { running: '运行中', paused: '已暂停', resumed: '已续跑', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断', awaiting_approval: '等待应用', awaiting_clarification: '等待澄清' };
 // The server reviews exact shell approvals; the browser never synthesizes a confirmation.
 function currentApprovalRun() {
-  return [...(state.session?.runs || [])].reverse().find(r => ['running', 'awaiting_clarification'].includes(r.status));
+  return [...(state.session?.runs || [])].reverse().find(r => ['running', 'awaiting_clarification', 'awaiting_approval'].includes(r.status));
 }
 function composerAutoReview() {
   const run = currentApprovalRun();
-  return run ? !!run.autoReview : !!state.approvalModes.get(state.session?.id || 'draft');
+  if (run) return !!run.autoReview;
+  const key = state.session?.id || 'draft';
+  if (state.approvalModes.has(key)) return state.approvalModes.get(key);
+  return !!state.session?.runs?.at(-1)?.autoReview;
 }
 function syncComposerApproval() {
   refreshStrategyUI();
@@ -1489,7 +1502,7 @@ async function setComposerAutoReview(next) {
         method: 'PUT', body: JSON.stringify({enabled: next})
       });
     }
-    state.approvalModes.set(key, next);
+    rememberApprovalMode(key, next);
     if (run && state.session?.id === sessionId) {
       run.autoReview = next;
       await selectSession(sessionId); schedulePoll();
@@ -2598,7 +2611,7 @@ $('task-form').onsubmit = action(async event => {
       if (!state.session) state.session = created; // 仅当用户仍停留在空白页时接管；点击已切走的会话不被空壳抢占
     }
     const target = draftSession || created;
-    if (created) state.approvalModes.set(created.id, autoReview);
+    if (created) rememberApprovalMode(created.id, autoReview);
     // 小秘会话键盘输入走 assistant-message，由后端按直接文字消息处理，不经过语音环境过滤。
     if (target.kind === 'assistant') {
       try {
@@ -7909,7 +7922,7 @@ async function voiceSend(text, queued) {
     created = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: t('新会话') }) });
     if (!state.session) state.session = created;
     target = created;
-    state.approvalModes.set(created.id, autoReview);
+    rememberApprovalMode(created.id, autoReview);
   }
   const strategy = state.profiles?.strategy || 'auto';
   // #41：小秘 analyze 判定的 mode 优先；未给出时回退手动排队开关
