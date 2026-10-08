@@ -1,0 +1,224 @@
+{
+  "id": "starmap-cosmic-scales-20261008",
+  "request": "星图至少具备可观测宇宙、拉尼亚凯亚超星系团、室女座超星系团、本星系群、银河系、猎户臂、太阳系、地球对应的八层渲染，层级划分逻辑自行设计",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/avatar-player.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/themes/comfort.css\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n M internal/server/workflow.go\n M plugins/office/index.js\n M plugins/office/manifest.json\n M plugins/office/test.js\n?? docs/architecture/knowledge-map.md\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? docs/tasks/starmap-code-insight-20261008.json\n?? docs/tasks/starmap-document-retrieval-20261008.json\n?? docs/tasks/starmap-scroll-backview-20261008.json\n?? docs/tasks/ui-celestial-sanctum-20261008.json\n?? docs/tasks/ui-comfort-motion-20261008.json\n?? docs/tasks/ui-motion-continuity-20261008.json\n?? docs/tasks/ui-observatory-refinement-20261008.json\n?? internal/server/code_analysis/\n?? internal/server/document_analysis/\n?? internal/server/knowledge_code.go\n?? internal/server/knowledge_documents.go\n?? internal/server/knowledge_map.go\n?? internal/server/static_assets.go\n?? internal/server/web/experience.css\n?? internal/server/web/experience.js\n?? internal/server/web/sanctum.css\n?? internal/server/web/starmap-journey.js\n?? internal/server/web/starmap-structure.js\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js\n?? plugins/office/README.md",
+  "acceptance": [
+    "一个固定知识宇宙；只有足够多个真实已成立下级分组才呈现更大天体，单银河不能按内部节点总数冒称星系团",
+    "不足门槛的元数据包装折叠；真实节点ID不变；去重计数，不虚构分区补足八层",
+    "移除八尺度、面包屑、进入/返回等额外导航按钮，只通过缩放和双击星域自然变换，保留搜索/详情/归位",
+    "参考ESA Gaia实图恢复小星点、柔和星云、暗尘带及真实连接；星等取调用关系层级，与成员数量分开",
+    "保留原文/RAG与AI和原会话真实编号插入接口；本轮不调用付费模型",
+    "通过start.command启动隔离18189候选，并手动观察真实稀疏/代码星域与关键交互，旧候选收据不能验收本次修订"
+  ],
+  "scope": [
+    "internal/server/web/starmap-cosmos.js",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.css",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks/starmap-cosmic-scales-20261008.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按最新四条纠正重开任务：永久宇宙、真实下级数量门槛、调用星等、自然星空与无额外层级按钮。",
+      "evidence": [
+        "你这个统计不对，你应该凑够数量才会变大一个尺度，然后根据调用关系确定星等",
+        "总共都是在一个宇宙的，如果就只有单一的银河系，又怎么能变成星系团的渲染？",
+        "建议你参考一下真正的星图，我觉得当前做的这一版的感觉没有上一版的好",
+        "而且那几个按钮你不应该放出来，这个应该只是从视觉上的渲染"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "bottom-up真实同级数量资格，未成立包装flatten与可变路径；永久root；最近共同父级边重新聚合。Renderer恢复真实成员星点，HUD仅被动读数。",
+      "evidence": [
+        "cosmic_model只读设计",
+        "ESA Gaia实图已实际观察",
+        "NASA large scale structures 官方结构说明"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "真实下级门槛、可变路径折叠、调用候选星等、自然星空与无尺度导航按钮已完成；源码指纹匹配已编译候选。",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap-cosmos.js",
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap.css",
+        "internal/server/web/starmap-structure.js",
+        "internal/server/web/starmap-journey.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "语法检查与离线Go编译通过；start.command启动18189，Safari实看普通知识/密集代码/稀疏会话、搜索详情、滚轮进入返回、归位目标、模块依赖筛选及代码编号回填。此pass仅限列明范围，不含未验收项。",
+      "evidence": [
+        ".agent-state/starmap-cosmos/revision-v2/build.json",
+        ".agent-state/starmap-cosmos/revision-v2/start.log",
+        ".agent-state/starmap-cosmos/revision-v2/receipt.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已更新真实单位门槛、调用候选、无尺度按钮、缓存实际边界、新候选与手动观察范围；保留旧版本历史及未验证项。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "本次编号回填草稿/附件已清理；关闭本次创建的旧候选标签，保留新预览与原有用户标签；生产9999未替换，候选回滚副本保留。",
+      "evidence": [
+        ".agent-state/starmap-cosmos/revision-v2/receipt.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮实现与候选预览，未授权发布或替换生产。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "仅恢复隔离候选：将 /private/tmp/aide-harness-runtime-j01jw5vg/aide-candidate-starmap.before-cosmos-20261008 复制回 aide-candidate-starmap，并将 compose.starmap.yaml.before-cosmos-20261008 复制回 compose.starmap.yaml，使用相同 COMPOSE_FILE / COMPOSE_PROJECT_NAME 运行 start.command；不得替换生产9999。 本次修订单独回滚至旧c549：使用 aide-candidate-starmap.before-natural-scales-20261008 与 compose.starmap.yaml.before-natural-scales-20261008（同一隔离目录），再按相同COMPOSE参数运行start.command。",
+  "handoff": "修订候选808a5b44通过start.command运行于18189，Safari手动观察已完成；新候选星图保留用于用户预览。生产9999未替换，未提交/发布。",
+  "candidate": {
+    "sha256": "808a5b44454212a388660be323b8533e868fb346ba1952b7203387c99d0675ec",
+    "candidate": "https://localhost:18189/",
+    "compose": "/private/tmp/aide-harness-runtime-j01jw5vg/compose.starmap.yaml",
+    "source_fingerprints": {
+      "internal/server/web/starmap.js": "2538dea89f75df991314ea3c9b42fd4c4a03ec68892ff3ca68034471484fab20",
+      "internal/server/web/starmap-cosmos.js": "639b2632b10056ef8ff1bffb2012f7fd7c05e87e80b0256158bfa2ab3ed59ac8",
+      "internal/server/web/starmap.html": "7456d410242c80c68b121bd9ea75bb4f008423a4adfd1747a705d3e42e86472c",
+      "internal/server/web/starmap.css": "d8e1c10c55c30007d04a6a33116cf6ad00f1636bd68e904e42881479d5e07b6b",
+      "internal/server/web/starmap-structure.js": "a9d6a3761a57de479ffeb28b54c240d448a1403eb082db4e470191bf13376514",
+      "internal/server/web/starmap-journey.js": "a78337def8ddcc791507daa4402d2a8fca6fe9e42f1f7c22209a5ef148ecf194"
+    },
+    "production_updated": false
+  },
+  "observations": {
+    "knowledge_snapshot": {
+      "nodes": 285,
+      "edges": 469,
+      "no_call_data": "统一基准星等"
+    },
+    "code_snapshot": {
+      "nodes": 1485,
+      "edges": 4721,
+      "visible_real_nodes": 1483,
+      "source_files": 73,
+      "declarations": 1200,
+      "call_candidates": 3241,
+      "unresolved_calls": 8900,
+      "entry_candidates": 209,
+      "global_call_layers": 12,
+      "qualified_direct_structures": {
+        "spiral_arm": 1,
+        "star_system": 50
+      }
+    },
+    "search": {
+      "id": "Cdaa20d9e6e0e",
+      "name": "App.knowledgeMap",
+      "source": "observatory/aide-source/knowledge_map.go",
+      "lines": [
+        344,
+        363
+      ],
+      "scope_real_nodes": 4,
+      "scope": "已成立恒星系统",
+      "outward_candidate_hops": 3
+    },
+    "wheel": {
+      "inward_observed_scope": "App · 旋臂",
+      "inward_observed_real_nodes": 49,
+      "inward_observed_systems": 3,
+      "outward_observed_scope": "知识宇宙",
+      "note": "以Safari原生滚轮实际操作观察；截图采样不测帧率"
+    },
+    "home": "从4节点恒星系统回到唯一宇宙；结束状态已保存。未用单帧宣称全程流畅。",
+    "dependency_filter": "模块依赖视角仍显示1旋臂、50恒星系统、1483真实节点与调用候选全局12层；已恢复全部关系",
+    "sparse_sessions": {
+      "nodes": 2,
+      "ids": [
+        "S2",
+        "S3"
+      ],
+      "scope": "知识宇宙",
+      "qualified_structures": 0,
+      "detail_id": "S3"
+    },
+    "callback": "真实代码编号、名称、344–363行及源文件附件进入原候选工作台草稿；未发送；本次草稿及附件已清理",
+    "removed_controls": "Safari可见页面与AX中不存在八尺度按钮、路径面包屑、进入/返回等额外层级导航",
+    "cleanup": "关闭本次创建的旧c549候选工作台与星图标签；保留原有标签及新候选工作台/星图",
+    "sample_scope": "隔离候选源码快照及180份明确标记的密度示例文档；1200声明触及索引上限，不是全项目调用覆盖"
+  },
+  "not_verified": [
+    "实际帧率及滚动延迟分位数",
+    "实际内存及长期稳定性",
+    "OS减少动态效果偏好",
+    "窄屏实机布局",
+    "本轮所有来源组合与锁定重验",
+    "真实模型/RAG回答质量",
+    "自动化测试及完整回归",
+    "生产激活和正式发布"
+  ],
+  "updated_at": "2026-10-07T22:17:30.663435+00:00",
+  "amendments": [
+    "你这个统计不对，你应该凑够数量才会变大一个尺度，然后根据调用关系确定星等",
+    "总共都是在一个宇宙的，如果就只有单一的银河系，又怎么能变成星系团的渲染？",
+    "建议你参考一下真正的星图，我觉得当前做的这一版的感觉没有上一版的好",
+    "而且那几个按钮你不应该放出来，这个应该只是从视觉上的渲染"
+  ],
+  "superseded_candidate": {
+    "candidate": {
+      "sha256": "c54966546623cccb5487e5f40e385c311fc440cdfa6a7326f65b2a1f26affd80",
+      "candidate": "https://localhost:18189/",
+      "compose": "/private/tmp/aide-harness-runtime-j01jw5vg/compose.starmap.yaml",
+      "source_fingerprints": {
+        "internal/server/web/starmap.js": "555fec1d3a4c9f99082a860dbe9ee3b7f65be5043db741886f556b597f0a0e80",
+        "internal/server/web/starmap-cosmos.js": "17807c801f1be7ec48ac26cdbb718d2301e726c79ebc19488e6a242ae71f7dcf",
+        "internal/server/web/starmap.html": "b495aed43ddf8ab119bece637580138a71013709121591f7831660d4f8307a3b",
+        "internal/server/web/starmap.css": "10520fe9a3f89d2dcd9853c4565461aeae5b2c10919582d382828a376dc223f0",
+        "internal/server/web/starmap-structure.js": "a9d6a3761a57de479ffeb28b54c240d448a1403eb082db4e470191bf13376514",
+        "internal/server/web/starmap-journey.js": "a78337def8ddcc791507daa4402d2a8fca6fe9e42f1f7c22209a5ef148ecf194"
+      },
+      "production_updated": false
+    },
+    "observations": {
+      "code_nodes": 1485,
+      "edges": 4721,
+      "source_files": 73,
+      "declarations": 1200,
+      "call_candidates": 3241,
+      "unresolved_calls": 8900,
+      "scope_nodes": [
+        1485,
+        1477,
+        1280,
+        1272,
+        17,
+        4,
+        4,
+        1
+      ],
+      "scope_children": [
+        5,
+        4,
+        4,
+        72,
+        7,
+        1,
+        4,
+        0
+      ],
+      "searched_id": "Cdaa20d9e6e0e",
+      "wheel_leaf": "C1f629045706e",
+      "session_leaf": "S3",
+      "callback": "代码编号/行号/附件与会话编号/摘录均进入原草稿，未发送；本次草稿已清理",
+      "sample_scope": "隔离候选源码快照与180份明确标记密度示例文档，声明达到1200上限，不是完整项目覆盖"
+    },
+    "reason": "固定八级包装和公开尺度按钮被用户纠正；旧浏览器观察仅证实旧版本，不是修订验收"
+  }
+}

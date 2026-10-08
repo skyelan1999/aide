@@ -396,6 +396,7 @@ type App struct {
 	eventMu                   sync.Mutex
 	eventSubs                 map[string]map[chan streamEvent]struct{} // SSE 订阅：taskID → subscriber set
 	globalSubs                map[chan string]struct{}                 // #60 全局 SSE 订阅者（sessions-changed）
+	knowledgeUpdates          knowledgeUpdateState                     // bounded live star-map snapshots
 	liveBroker                *StreamBroker                            // #35：aide 主会话实时输出 → 小秘拉取
 	liveTaskMu                sync.Mutex
 	liveTaskSess              map[string]string    // #35：taskID → sessionID（把 SSE 增量桥到会话维度）
@@ -1188,6 +1189,11 @@ func (a *App) buildHandler() {
 		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
+	mux.HandleFunc("GET /api/knowledge-map", a.knowledgeMap)
+	mux.HandleFunc("GET /api/knowledge-map/updates", a.knowledgeMapUpdates)
+	mux.HandleFunc("POST /api/knowledge-map/assist", a.knowledgeAssist)
+	mux.HandleFunc("POST /api/knowledge-map/documents/search", a.knowledgeDocumentSearch)
+	mux.HandleFunc("POST /api/knowledge-map/documents/reference", a.knowledgeDocumentReference)
 	mux.HandleFunc("GET /api/worktrees", a.managedWorktrees)
 	mux.HandleFunc("POST /api/worktrees", a.managedWorktrees)
 	mux.HandleFunc("POST /api/worktrees/{worktree}/archive", a.managedWorktrees)
@@ -1374,7 +1380,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/debug/admin/toggle", a.debugAdminToggle)
 	a.routes = mux
 	web, _ := fs.Sub(assets, "web")
-	fileServer := http.FileServer(http.FS(web))
+	fileServer := staticAssetServer(web)
 	mux.Handle("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// ES 模块（pdf.js 的 .mjs）必须以 JS MIME 提供，否则动态 import() / module worker 被浏览器严格 MIME 检查拦截
 		if strings.HasSuffix(r.URL.Path, ".mjs") {

@@ -1,0 +1,516 @@
+'use strict';
+const $=id=>document.getElementById(id), canvas=$('sky'), ctx=canvas.getContext('2d');
+const params=new URLSearchParams(location.search), channelName=params.get('channel');
+const channel=channelName&&/^[a-zA-Z0-9-]{10,100}$/.test(channelName)?new BroadcastChannel('aide-stars-'+channelName):null;
+let token=localStorage.getItem('aide-token')||'',graph={nodes:[],edges:[],warnings:[]},selected=null,region='',results=[],yaw=0,pitch=.1,zoom=1,drag=null,projection=[],width=0,height=0,pixelRatio=0,loading=false;
+const motionReduced=()=>document.documentElement.dataset.motion==='reduced'||matchMedia('(prefers-reduced-motion: reduce)').matches;
+let codeView=params.get('code')==='1',edgeMode='all',focusCode=false,focusCache=null,focusKey='',graphGeneration=0,loadAbort=null,aiAbort=null;
+let documentAbort=null,documentGeneration=0;
+// Data revisions and rendering lifetimes are separate: polling never reloads the page.
+let liveCursor='',liveTimer=0,liveAbort=null,liveEpoch=0,liveFailures=0,liveAnimationUntil=0;
+let liveReconcile=false,liveWireNodes=new Map(),liveStableScenes=new Map(),liveGhosts=[];
+const nodeFields=['id','name','kind','region','path','root','source','session','number','text','size','modified','language','symbolKind','line','endLine','parentFile','signature','contentHash'];
+const edgeKey=e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.evidence||'']);
+function birthAlpha(n,now){if(!n.bornAt)return 1;return easing(clamp((now-n.bornAt)/680,0,1));}
+function liveReady(){return !locked&&!document.hidden&&!pageLeaving&&!loading&&!drag&&!cosmicFlight;}
+function stopLive(clearCursor=false){clearTimeout(liveTimer);liveTimer=0;liveEpoch++;liveAbort?.abort();liveAbort=null;if(clearCursor)liveCursor='';}
+function scheduleLive(delay=4000){clearTimeout(liveTimer);liveTimer=0;if(locked||document.hidden||pageLeaving)return;liveTimer=setTimeout(pollLive,delay);}
+async function pollLive(){
+ liveTimer=0;if(!liveReady()){scheduleLive(650);return;}if(liveAbort)return;
+ const epoch=liveEpoch,mode=codeView,cursor=liveCursor,controller=new AbortController();liveAbort=controller;
+ const timeout=setTimeout(()=>controller.abort(),14000);
+ try{const update=await api('/updates?code='+(mode?'1':'0')+'&cursor='+encodeURIComponent(cursor),{signal:controller.signal});
+  if(epoch!==liveEpoch||mode!==codeView||!liveReady())return;
+  applyLiveUpdate(update);liveCursor=update.revision;liveFailures=0;
+ }catch(e){if(epoch===liveEpoch&&!locked&&!document.hidden){liveFailures++;if(liveFailures===1)say('自动同步暂不可用，保留当前星图并稍后重试。');}}
+ finally{clearTimeout(timeout);if(liveAbort===controller)liveAbort=null;if(epoch===liveEpoch)scheduleLive(Math.min(30000,4000*Math.pow(2,liveFailures)));}
+}
+
+const retrievalMode=()=>codeView?'nodes':$('retrieval-mode').value;
+let animate=!motionReduced(), frame=0, pageLeaving=false;
+let skyTime=0,lastPaint=null,pausedAt=document.hidden?performance.now():null,cameraTween=null,graphFade=null;
+let wheelZoom=null,interactionUntil=0,paintRequested=true,renderRevision=0,renderKey='';
+let structure=null,layerState=null,nodeByID=new Map(),edgeAdjacency=new Map(),renderNodes=[],renderEdges=[],edgeBatches=[];
+let searchQuery='',resultIDs=new Set(),callDepth='all',skyCache=null;
+const glowCache=new Map(),cloudCache=new Map(),tau=Math.PI*2;
+let cosmos=null,cosmicEnabled=true,cosmicScene=null,cosmicKey='',cosmicRecords=[],cosmicLinks=[],cosmicSelected='',cosmicHover='',cosmicFlight=null;
+let cosmicWheel=0,cosmicWheelLast=0,cosmicGate=0,cosmicScopeKey='',cosmicStars=[],cosmicStarEdges=[],cosmicCallState=null;
+const cosmicTextureCache=new Map(),cosmicSceneCache=new Map();
+const panelAnimations=new Map(),motionMedia=matchMedia('(prefers-reduced-motion: reduce)');
+// Read the same appearance contract as the workbench, once per change. Canvas
+// keeps its own prepared textures; it never reads CSS in the animation loop.
+function readMapPalette(){
+ const css=getComputedStyle(document.documentElement),pixel=document.createElement('canvas');pixel.width=pixel.height=1;const sample=pixel.getContext('2d',{willReadFrequently:true});
+ // Normalize CSS colors, including system high-contrast colors, to cached hex.
+ // Alpha suffixes below never depend on a user's choice of CSS color notation.
+ const read=(name,fallback)=>{sample.clearRect(0,0,1,1);sample.fillStyle=fallback;sample.fillStyle=css.getPropertyValue(name).trim()||fallback;sample.fillRect(0,0,1,1);return '#'+Array.from(sample.getImageData(0,0,1,1).data).slice(0,3).map(v=>v.toString(16).padStart(2,'0')).join('');},light=document.documentElement.dataset.theme==='light';
+ return {light,highContrast:matchMedia('(forced-colors: active)').matches,file:read('--map-source-file',light?'#55779e':'#9bb5d1'),reference:read('--map-source-reference',light?'#71849b':'#91a5bd'),session:read('--map-source-session',light?'#596574':'#b0b7c1'),bg:read('--map-canvas-bg',light?'#f2f3f5':'#202328'),text:read('--map-canvas-text',light?'#293039':'#dfe3e9'),star:read('--map-canvas-star',light?'#55779e':'#b6c7d9'),nebula:read('--map-canvas-nebula',light?'#71849b':'#91a5bd'),muted:read('--map-muted',light?'#596574':'#b0b7c1')};
+}
+let mapPalette=readMapPalette();
+function syncMapPalette(){
+ const next=readMapPalette();if(JSON.stringify(next)===JSON.stringify(mapPalette))return;mapPalette=next;
+ glowCache.clear();cloudCache.clear();cosmicTextureCache.clear();cosmicSceneCache.clear();
+ for(const c of clusters){c.color=colors(c);c.texture=cloudTexture(c.key,c.color);}
+ for(const n of graph.nodes){n.starColor=colors(n);n.spectralColor=mapPalette.star;n.glow=glowSprite(n.spectralColor);}
+ if(cosmicScene){const data=cosmicData(cosmicKey);if(data){cosmicRecords=data.records;cosmicStars=data.stars;cosmicStarEdges=data.edges;}}
+ graphFade=null;cosmicFlight=null;if(width&&height)makeSky();redraw();
+}
+const easing=u=>u*u*u*(u*(u*6-15)+10);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function motionEnabled(){return animate&&!motionReduced();}
+function nearestYaw(value){return yaw+Math.atan2(Math.sin(value-yaw),Math.cos(value-yaw));}
+function updateCamera(now){
+ if(wheelZoom){
+  const elapsed=clamp(now-wheelZoom.last,0,80),k=1-Math.exp(-elapsed/70);
+  zoom=Math.exp(Math.log(zoom)+(Math.log(wheelZoom.target)-Math.log(zoom))*k);wheelZoom.last=now;
+  if(Math.abs(Math.log(wheelZoom.target/zoom))<.0003){zoom=wheelZoom.target;wheelZoom=null;}
+ }
+ if(!cameraTween)return;
+ const u=clamp((now-cameraTween.start)/cameraTween.duration,0,1),k=easing(u),{from,to}=cameraTween;
+ yaw=from.yaw+(to.yaw-from.yaw)*k;pitch=from.pitch+(to.pitch-from.pitch)*k;
+ zoom=Math.exp(Math.log(from.zoom)+(Math.log(to.zoom)-Math.log(from.zoom))*k);
+ if(u===1)cameraTween=null;
+}
+function moveCamera(to,duration=700){
+ const now=performance.now();updateCamera(now);wheelZoom=null;
+ const target={yaw:nearestYaw(to.yaw??yaw),pitch:clamp(to.pitch??pitch,-1,1),zoom:clamp(to.zoom??zoom,.5,2.8)};
+ if(!motionEnabled()){cameraTween=null;({yaw,pitch,zoom}=target);redraw();return;}
+ cameraTween={from:{yaw,pitch,zoom},to:target,start:now,duration};redraw();
+}
+function interruptCamera(){updateCamera(performance.now());cameraTween=null;wheelZoom=null;}
+function beginGraphTransition(){
+ if(!motionEnabled()||locked||!canvas.width)return;
+ // A single local snapshot blends filters/index refreshes; no second render loop.
+ const c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height;c.getContext('2d').drawImage(canvas,0,0);
+ graphFade={canvas:c,start:performance.now(),duration:260};redraw();
+}
+function revealPanel(el,shown){
+ const old=panelAnimations.get(el),style=old?getComputedStyle(el):null;
+ const current=style?{opacity:style.opacity,transform:style.transform}:null;
+ old?.cancel();panelAnimations.delete(el);el.inert=!shown;
+ if(!motionEnabled()||typeof el.animate!=='function'){el.hidden=!shown;return;}
+ const entering=el.hidden;
+ if(!shown&&entering)return;
+ el.hidden=false;
+ const first=current||(shown?{opacity:entering?0:.65,transform:entering?'translateY(10px)':'none'}:{opacity:1,transform:'none'});
+ const last=shown?{opacity:1,transform:'none'}:{opacity:0,transform:'translateY(6px)'};
+ const a=el.animate([first,last],{duration:shown?(entering?240:170):150,easing:'cubic-bezier(.22,1,.36,1)'});
+ panelAnimations.set(el,a);
+ a.finished.then(()=>{if(panelAnimations.get(el)!==a)return;if(!shown)el.hidden=true;panelAnimations.delete(el)},()=>{});
+}
+function settlePanels(){for(const [el,a]of panelAnimations){a.cancel();if(el.inert)el.hidden=true;}panelAnimations.clear();}
+function openAI(){revealPanel($('ai-body'),true);$('ai-toggle').setAttribute('aria-expanded','true');}
+function say(s){$('status').textContent=s;}
+async function api(p,options={}){const r=await fetch('/api/knowledge-map'+p,{...options,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}});const d=await r.json();if(!r.ok)throw Error(d.error||'读取失败，请回到工作台登录');return d;}
+function seeded(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}h ^= h >>> 16; h = Math.imul(h, 0x7feb352d); h ^= h >>> 15; h = Math.imul(h, 0x846ca68b); h ^= h >>> 16; return (h>>>0)/4294967296;}
+const colors=n=>mapPalette.highContrast?mapPalette.star:n.kind==='symbol'||n.region==='sessions'?mapPalette.session:n.region==='workspace'?mapPalette.file:mapPalette.reference;
+// Static sky, nebula textures and stellar glows are rasterized once. Interaction
+// frames only project cached graph records; they never rebuild gradients or hashes.
+const stars=Array.from({length:64},(_,i)=>({x:seeded('x'+i),y:seeded('y'+i),a:seeded('a'+i),r:.35+seeded('r'+i)*1.05}));
+let clusters=[];
+function glowSprite(color){
+ if(glowCache.has(color))return glowCache.get(color);
+ const c=document.createElement('canvas');c.width=c.height=96;const g=c.getContext('2d'),fog=g.createRadialGradient(48,48,0,48,48,46);
+ fog.addColorStop(0,color+'f0');fog.addColorStop(.055,color+'c0');fog.addColorStop(.15,color+'48');fog.addColorStop(.42,color+'13');fog.addColorStop(1,color+'00');
+ g.fillStyle=fog;g.fillRect(0,0,96,96);glowCache.set(color,c);return c;
+}
+function makeSky(){
+ const c=document.createElement('canvas'),scale=Math.min(1,1900/width);c.width=Math.ceil(width*scale);c.height=Math.ceil(height*scale);
+ const g=c.getContext('2d');g.scale(scale,scale);g.fillStyle=mapPalette.bg;g.fillRect(0,0,width,height);
+ const haze=g.createRadialGradient(width*.61,height*.45,0,width*.61,height*.45,width*.72);
+ haze.addColorStop(0,mapPalette.nebula+'16');haze.addColorStop(.36,mapPalette.nebula+'08');haze.addColorStop(1,mapPalette.nebula+'00');g.fillStyle=haze;g.fillRect(0,0,width,height);
+ g.save();g.translate(width*.49,height*.43);g.rotate(-.37);g.scale(1,.28);
+ const mist=g.createRadialGradient(0,0,0,0,0,width*.64);mist.addColorStop(0,mapPalette.nebula+'0b');mist.addColorStop(.45,mapPalette.nebula+'08');mist.addColorStop(1,mapPalette.nebula+'00');g.fillStyle=mist;g.fillRect(-width,-height*2,width*2,height*4);g.restore();
+ // Filamentary dust is stable while the camera moves; sparse stars remain crisp.
+ for(let i=0;i<900;i++){
+  const u=seeded('sky-u'+i),v=seeded('sky-v'+i),band=i<500;
+  const x=u*width,y=band?height*.54-(u-.5)*height*.62+(v-.5)*height*.30:v*height;
+  if(y<0||y>height)continue;
+  const light=seeded('sky-light'+i);g.globalAlpha=.05+light*(mapPalette.light?.16:.27);g.fillStyle=mapPalette.star;g.beginPath();g.arc(x,y,.2+light*.55,0,tau);g.fill();
+ }
+ g.globalAlpha=1;skyCache=c;
+}
+function cloudTexture(key,color){
+ // Six seeded dust variants per source color bound texture memory as clusters grow.
+ const textureKey=color+'|'+Math.floor(seeded(key)*6);if(cloudCache.has(textureKey))return cloudCache.get(textureKey);key=textureKey;
+ const c=document.createElement('canvas');c.width=c.height=384;const g=c.getContext('2d');
+ for(let i=0;i<48;i++){const angle=seeded(key+i+'a')*tau,r=Math.sqrt(seeded(key+i+'r'))*112,x=192+Math.cos(angle)*r,y=192+Math.sin(angle)*r*.57,size=22+seeded(key+i+'s')*63;
+  const fog=g.createRadialGradient(x,y,0,x,y,size);fog.addColorStop(0,color+'1a');fog.addColorStop(.35,color+'0a');fog.addColorStop(1,color+'00');g.fillStyle=fog;g.fillRect(x-size,y-size,size*2,size*2);}
+ g.globalCompositeOperation='destination-out';for(let i=0;i<13;i++){const x=64+i*21,y=186+Math.sin(i*.69)*28,f=g.createRadialGradient(x,y,0,x,y,27);f.addColorStop(0,'#00000075');f.addColorStop(1,'#00000000');g.fillStyle=f;g.fillRect(x-27,y-27,54,54);}g.globalCompositeOperation='source-over';cloudCache.set(textureKey,c);return c;
+}
+// Spatial scale comes from qualified, real child units. Source/path zoning is
+// only a layout cue: an unlabeled dust region never adds a galaxy to the model.
+function cosmicTexture(depth,variant=0){
+ const key=depth+'|'+variant;if(cosmicTextureCache.has(key))return cosmicTextureCache.get(key);
+ const c=document.createElement('canvas');c.width=c.height=384;const g=c.getContext('2d');
+ // Atmospheric gas only. Every visible foreground star is drawn from a real ID.
+ const flattened=depth===4||depth===5,stretch=flattened?.31:.65;
+ g.save();g.translate(192,192);g.rotate(-.32+variant*.19);g.scale(1,stretch);
+ for(let i=0;i<38;i++){const u=seeded(key+'u'+i),v=seeded(key+'v'+i),x=(u-.5)*235,y=(v-.5)*110+Math.sin(u*5)*24,r=24+seeded(key+'r'+i)*52,f=g.createRadialGradient(x,y,0,x,y,r);f.addColorStop(0,mapPalette.nebula+(flattened?'14':'10'));f.addColorStop(.4,mapPalette.nebula+'07');f.addColorStop(1,mapPalette.nebula+'00');g.fillStyle=f;g.fillRect(x-r,y-r,r*2,r*2);}
+ g.restore();
+ // Irregular dark interstellar lanes, never a fake repeated celestial icon.
+ g.globalCompositeOperation='destination-out';for(let i=0;i<12;i++){const x=54+i*23,y=185+Math.sin(i*.57+variant)*24,r=14+seeded(key+'dark'+i)*15,f=g.createRadialGradient(x,y,0,x,y,r);f.addColorStop(0,'#00000099');f.addColorStop(1,'#00000000');g.fillStyle=f;g.fillRect(x-r,y-r,r*2,r*2);}g.globalCompositeOperation='source-over';
+ cosmicTextureCache.set(key,c);while(cosmicTextureCache.size>12)cosmicTextureCache.delete(cosmicTextureCache.keys().next().value);return c;
+}
+function cosmicLabel(depth){return cosmos?.levels?.[depth]||['知识宇宙','超星系团','星系团','星系群','银河','旋臂','恒星系统','节点'][depth];}
+function cosmicData(key){
+ if(cosmicSceneCache.has(key))return cosmicSceneCache.get(key);const scene=cosmos?.scene(key);if(!scene)return null;
+ const stable=liveStableScenes.get(key),stableRecords=new Map((stable?.records||[]).map(r=>[r.group.key,r])),stableStars=new Map((stable?.stars||[]).map(r=>[r.n.id,r]));
+ const children=scene.children.length?scene.children:scene.group.nodeID?[scene.group]:[],ordered=[...children].sort((a,b)=>a.key.localeCompare(b.key)),records=[],owner=new Map();
+ for(let i=0;i<ordered.length;i++){
+  const group=ordered[i],leaf=!!group.nodeID,n=leaf?nodeByID.get(group.nodeID):null;
+  // Retain familiar source/path constellations when no higher unit qualifies.
+  const members=group.members.map(id=>nodeByID.get(id)).filter(Boolean),centroid=members.reduce((a,n)=>({x:a.x+(n.x||0),y:a.y+(n.y||0)}),{x:0,y:0});
+  const x=members.length?centroid.x/members.length*.72:0,y=members.length?centroid.y/members.length*.66:0;
+  const spread=leaf?0:Math.min(.24,.055+Math.sqrt(members.length)*.012),record={group,x:ordered.length===1?0:x,y:ordered.length===1?0:y,z:.96+seeded(group.key+'z')*.09,spread,phase:seeded(group.key+'phase'),p:{x:0,y:0,onScreen:false},radius:12,texture:leaf?null:cosmicTexture(group.depth,Math.floor(seeded(group.key)*2))};
+  const previous=stableRecords.get(group.key);if(previous){for(const prop of ['x','y','z','spread','radius'])record[prop]=previous[prop];record.p=previous.p;}
+  record.label=group.label.length>30?group.label.slice(0,29)+'…':group.label;records.push(record);for(const id of group.members)owner.set(id,record);
+ }
+ const stars=[];
+ for(const id of scene.members){const n=nodeByID.get(id);if(!n)continue;const r=owner.get(id);if(!r)continue;let x,y;
+  if(r.group.nodeID){x=ordered.length===1?0:(n.x||0)*.72;y=ordered.length===1?0:(n.y||0)*.66;r.x=x;r.y=y;}
+  else{const a=seeded(id+'cosmic-a')*tau,rr=Math.sqrt(seeded(id+'cosmic-r'))*r.spread,disc=r.group.depth===4||r.group.depth===5;x=r.x+Math.cos(a)*rr;y=r.y+Math.sin(a)*rr*(disc?.30:.68)+(disc?Math.sin(a*2)*rr*.08:0);}
+  const star={n,x,y,z:(r.z+(seeded(id+'cosmic-z')-.5)*.07)*(1+Math.min(n.globalVisualDepth??5,12)*.035),p:{n,x:0,y:0,onScreen:false},owner:r};const previous=stableStars.get(id);if(previous){star.x=previous.x;star.y=previous.y;star.z=previous.z;star.p=previous.p;star.p.n=n;}stars.push(star);
+ }
+ const starByID=new Map(stars.map(r=>[r.n.id,r]));
+ const edges=renderEdges.map(e=>({...e,a:starByID.get(e.from)?.p,b:starByID.get(e.to)?.p})).filter(e=>e.a&&e.b),batches=new Map();for(const e of edges){if(!batches.has(e.kind))batches.set(e.kind,{kind:e.kind,dashed:e.dashed,hierarchy:e.hierarchy,edges:[]});batches.get(e.kind).edges.push(e);}
+ // Faint source gas preserves region recognition; it is not counted as a unit.
+ const gas=new Map();for(const star of stars){const key=star.n.cluster?.key||star.n.region||'source';if(!gas.has(key))gas.set(key,{x:0,y:0,count:0,key,texture:cloudTexture(key,mapPalette.nebula)});const zone=gas.get(key);zone.x+=star.x;zone.y+=star.y;zone.count++;}
+ for(const zone of gas.values()){zone.x/=zone.count;zone.y/=zone.count;zone.spread=Math.min(.28,.05+Math.sqrt(zone.count)*.012);}
+ const data={scene,records,stars,edges,batches:[...batches.values()],gas:[...gas.values()],projection:stars.map(star=>star.p)};cosmicSceneCache.set(key,data);while(cosmicSceneCache.size>4)cosmicSceneCache.delete(cosmicSceneCache.keys().next().value);return data;
+}
+function cosmicPath(group){const path=[];for(let g=group;g;g=g.parent)path.unshift(g);return path;}
+function cosmicPreferred(){return cosmicRecords.find(r=>r.group.key===cosmicSelected)?.group||cosmicRecords.find(r=>r.group.key===cosmicHover)?.group||cosmicScene?.children.reduce((best,g)=>!best||g.members.length>best.members.length?g:best,null);}
+function syncCosmicNav(){
+ const hud=$('cosmic-nav');if(!hud)return;hud.hidden=!cosmicScene;document.body.classList.toggle('cosmic-mode',cosmicEnabled);document.body.classList.remove('cosmic-legacy');
+ if(!cosmicScene){$('cosmic-title').textContent='知识星域';$('cosmic-meta').textContent='等待索引';return;}
+ const counts=cosmicScene.scaleCounts||[],units=[];for(let depth=1;depth<7;depth++)if(counts[depth])units.push(counts[depth]+' '+cosmicLabel(depth));
+ const calls=structure?.entry('calls'),hasCalls=cosmicScene.members.some(id=>calls?.levels.has(id));$('cosmic-title').textContent=cosmicScene.group.nodeID?cosmicScene.group.label:cosmicScene.group.parent?cosmicScene.group.label+' · '+cosmicLabel(cosmicScene.depth):'知识宇宙';
+ $('cosmic-meta').textContent=(units.length?units.join(' · ')+' · ':'')+cosmicScene.members.length+' 个真实节点 · '+(hasCalls?'按调用层与关系呈现星等':'无调用关系数据 · 统一基准星等');
+ canvas.setAttribute('aria-label','真实节点知识星域，拖动环顾，滚轮靠近，双击进入，滚轮远离或 Alt 加左方向键返回。');
+}
+function enterCosmic(key,animateFlight=true,keepSelection=false){
+ if(!cosmos||locked)return;const data=cosmicData(key);if(!data)return;if(key===cosmicKey){syncCosmicNav();return;}
+ const oldScene=cosmicScene,anchor=cosmicRecords.find(r=>r.group.key===key)?.p,now=performance.now(),inward=oldScene&&cosmicPath(data.scene.group).some(g=>g.key===oldScene.group.key);
+ if(animateFlight&&motionEnabled()&&oldScene&&canvas.width){const snapshot=document.createElement('canvas');snapshot.width=canvas.width;snapshot.height=canvas.height;snapshot.getContext('2d').drawImage(canvas,0,0);cosmicFlight={canvas:snapshot,start:now,duration:760,direction:inward?1:-1,anchor:{x:anchor?.x??width*.57,y:anchor?.y??height*.5}};}else cosmicFlight=null;
+ cosmicKey=key;cosmicScene=data.scene;cosmicRecords=data.records;cosmicStars=data.stars;cosmicStarEdges=data.edges;cosmicSelected='';cosmicHover='';projection=[];drag=null;interruptCamera();yaw=0;pitch=.1;zoom=1;cosmicWheel=0;cosmicGate=now+800;graphFade=null;
+ if(!keepSelection){selected=null;revealPanel($('detail'),false);}syncCosmicNav();redraw();
+}
+function ensureCosmicView(){
+ if(!cosmicEnabled||locked||!window.AideStarCosmos)return;
+ const key=[graphGeneration,region,codeView,edgeMode,focusCode,focusCode?selected?.id||'':'',focusCode?callDepth:''].join('|');if(key===cosmicScopeKey)return;
+ const keep=liveReconcile;liveReconcile=false;
+ const oldPath=cosmicScene?cosmicPath(cosmicScene.group).map(g=>g.key):[],transition=graphFade;
+ if(keep){liveStableScenes=new Map(cosmicSceneCache);}
+ const visibleIDs=new Set(renderNodes.map(n=>n.id)),modelEdges=graph.edges.filter(e=>visibleIDs.has(e.from)&&visibleIDs.has(e.to));
+ cosmicScopeKey=key;cosmos=AideStarCosmos.build(renderNodes,modelEdges);cosmicSceneCache.clear();
+ if(keep){const target=[...oldPath].reverse().find(k=>cosmos.find(k))||cosmos.root.key,data=cosmicData(target);
+  cosmicKey=target;cosmicScene=data.scene;cosmicRecords=data.records;cosmicStars=data.stars;cosmicStarEdges=data.edges;projection=data.projection;
+  cosmicHover=cosmos.find(cosmicHover)?cosmicHover:'';cosmicSelected=cosmos.find(cosmicSelected)?cosmicSelected:'';syncCosmicNav();
+ }else{liveStableScenes.clear();cosmicScene=null;cosmicKey='';enterCosmic(cosmos.root.key,false,true);graphFade=transition;}
+}
+
+function cosmicLocate(n){const path=cosmos?.pathFor(n.id);if(!path?.length)return;const target=path.length>2?path.at(-2):path[0];enterCosmic(target.key,true,true);}
+function cosmicPick(x,y){let nearest=null,score=Infinity;for(const r of cosmicRecords){if(!r.p.onScreen)continue;const radius=r.group.nodeID?12:Math.min(90,r.radius+15),d=Math.hypot(r.p.x-x,r.p.y-y);if(d<radius&&d/radius<score){nearest=r;score=d/radius;}}return nearest;}
+function cosmicStarPick(x,y){let nearest=null,distance=11;for(const star of cosmicStars){if(!star.p.onScreen)continue;const d=Math.hypot(star.p.x-x,star.p.y-y);if(d<distance){distance=d;nearest=star;}}return nearest;}
+function drawCosmos(now,t){
+ if(!cosmicScene)return;const data=cosmicSceneCache.get(cosmicKey),flight=cosmicFlight,u=flight?clamp((now-flight.start)/flight.duration,0,1):1,k=easing(u),fade=flight?k:1,scale=flight?(flight.direction>0?.83+.17*k:1.17-.17*k):1;
+ const cx=width*.57,cy=height*.5,drift=motionEnabled()?Math.sin(t/32000)*.006:0;
+ ctx.save();ctx.globalAlpha=fade;ctx.translate(cx,cy);ctx.scale(scale,scale);ctx.translate(-cx,-cy);
+ // No synthetic cosmic web, disc badge or planet is painted behind the real stars.
+ for(const zone of data?.gas||[]){const x=cx+(zone.x+yaw*.22+drift)*width*zoom,y=cy+(zone.y+(pitch-.1)*.18)*height*zoom,size=Math.max(90,zone.spread*width*3.1*zoom);if(x+size/2<0||x-size/2>width||y+size*.4<0||y-size*.4>height)continue;ctx.save();ctx.globalAlpha=fade*.12;ctx.translate(x,y);ctx.rotate(-.32);ctx.drawImage(zone.texture,-size/2,-size*.36,size,size*.72);ctx.restore();}
+ for(const r of cosmicRecords){const p=r.p;p.x=cx+(r.x+yaw*.22+drift)*width*zoom/r.z;p.y=cy+(r.y+(pitch-.1)*.18)*height*zoom/r.z;p.onScreen=p.x>-100&&p.x<width+100&&p.y>-100&&p.y<height+100;r.radius=r.group.nodeID?10:Math.max(25,r.spread*width*zoom/r.z*.65);if(r.texture&&p.onScreen){const size=Math.max(110,r.spread*width*3.6*zoom/r.z);ctx.save();ctx.globalAlpha=fade*.13;ctx.translate(p.x,p.y);ctx.rotate(-.32+r.phase*.13);ctx.drawImage(r.texture,-size/2,-size/2,size,size);ctx.restore();}}
+ for(const star of cosmicStars){const p=star.p;p.x=cx+(star.x+yaw*.22+drift)*width*zoom/star.z;p.y=cy+(star.y+(pitch-.1)*.18)*height*zoom/star.z;p.onScreen=p.x>-30&&p.x<width+30&&p.y>-30&&p.y<height+30;if(star.owner.group.nodeID){star.owner.p.x=p.x;star.owner.p.y=p.y;star.owner.p.onScreen=p.onScreen;}}
+ const calls=structure?.entry('calls');cosmicCallState=selected&&calls?.levels.has(selected.id)?structure.describe(selected.id,'calls'):calls;
+ for(const batch of data?.batches||[]){if(cosmicStars.length>140&&batch.hierarchy)continue;ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'18':'30');ctx.lineWidth=.6;ctx.setLineDash(batch.dashed?[3,7]:[]);ctx.beginPath();for(const e of batch.edges){if(!edgeInView(e)||selected&&(e.from===selected.id||e.to===selected.id))continue;if(birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}ctx.stroke();}ctx.setLineDash([]);
+ let particles=0;for(const e of cosmicStarEdges){if(!edgeInView(e))continue;const birth=Math.min(birthAlpha(nodeByID.get(e.from)||{},now),birthAlpha(nodeByID.get(e.to)||{},now));if(birth<.97)continue;const active=selected&&(e.from===selected.id||e.to===selected.id);if(active){ctx.strokeStyle=mapPalette.star+'90';ctx.lineWidth=1;ctx.setLineDash(e.dashed?[3,6]:[]);ctx.beginPath();ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);ctx.stroke();ctx.setLineDash([]);}if(active&&animate&&particles++<24){const q=(t/6500+e.phase)%1;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(e.a.x+(e.b.x-e.a.x)*q,e.a.y+(e.b.y-e.a.y)*q,1,0,tau);ctx.fill();}}
+ for(const star of cosmicStars){const {n,p}=star;if(!p.onScreen)continue;const participating=!!calls?.levels.has(n.id),depth=participating?cosmicCallState?.levels.get(n.id):null,known=Number.isFinite(depth),incoming=!!cosmicCallState?.incoming.has(n.id),chosen=selected?.id===n.id;
+  // Call depth alone drives visual magnitude. Node/file counts never brighten it.
+  const lum=known?Math.max(.10,Math.pow(10,-.4*1.65*Math.log2(Math.min(depth,16)+1))):participating?.13:.24,color=mapPalette.star,radius=(chosen?2.5:incoming?1.9:.65+1.1*Math.sqrt(lum)),halo=chosen?25:incoming?17:5+10*Math.sqrt(lum),match=n.match,alpha=searchQuery&&!match&&!chosen?.18:chosen||mapPalette.highContrast?1:incoming?.82:.43+lum*.55;
+  const birth=birthAlpha(n,now);ctx.globalAlpha=fade*alpha*birth*(chosen?.65:.28);ctx.drawImage(glowSprite(color),p.x-halo/2,p.y-halo/2,halo,halo);ctx.globalAlpha=fade*alpha*birth;ctx.fillStyle=color;ctx.beginPath();ctx.arc(p.x,p.y,radius*(.4+.6*birth),0,tau);ctx.fill();ctx.globalAlpha=fade;
+  if((chosen||match)&&birth>.5){ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=chosen?mapPalette.text:mapPalette.muted;ctx.fillText(n.drawLabel||n.name,p.x+9,p.y+4);}
+  if(chosen){ctx.strokeStyle=mapPalette.star+'70';ctx.lineWidth=.7;ctx.beginPath();ctx.arc(p.x,p.y,12+(motionEnabled()?Math.sin(t/1000)*.8:0),0,tau);ctx.stroke();}
+ }
+ for(const r of cosmicRecords){if(!r.p.onScreen||r.group.nodeID||r.group.key!==cosmicHover&&r.group.key!==cosmicSelected)continue;ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=mapPalette.text;ctx.fillText(r.label,r.p.x+15,r.p.y-15);ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=mapPalette.muted;ctx.fillText(r.group.members.length+' 个真实节点',r.p.x+15,r.p.y);}
+ if(!cosmicScene.members.length){ctx.font='13px -apple-system,sans-serif';ctx.fillStyle=mapPalette.text;ctx.fillText('当前范围尚无已索引节点',cx-90,cy);}
+ ctx.restore();projection=data?.projection||[];drawLiveGhosts(now,drift);
+ if(flight){ctx.save();ctx.globalAlpha=1-k;const s=flight.direction>0?1+.60*k:1-.22*k;ctx.translate(flight.anchor.x,flight.anchor.y);ctx.scale(s,s);ctx.translate(-flight.anchor.x,-flight.anchor.y);ctx.drawImage(flight.canvas,0,0,width,height);ctx.restore();if(u===1)cosmicFlight=null;}
+}
+function relationshipOverview(){
+ cosmicEnabled=true;cosmicScopeKey='';cosmicSceneCache.clear();cosmicScene=null;cosmicKey='';projection=[];renderKey='';
+ moveCamera({yaw:0,pitch:.1,zoom:1},650);redraw();
+}
+addEventListener('keydown',e=>{if(!cosmicEnabled||locked||e.target.closest?.('input,textarea,select,[contenteditable=true]'))return;if((e.altKey&&e.key==='ArrowLeft')||(e.key==='Escape'&&!selected)){if(cosmicScene?.group.parent){e.preventDefault();enterCosmic(cosmicScene.group.parent.key);}}});
+function invalidateView(){renderRevision++;renderKey='';focusCache=null;focusKey='';}
+function layout(preserve=false){
+ const oldClusters=new Map(clusters.map(c=>[c.key,c])),oldPositions=new Map(preserve?graph.nodes.filter(n=>Number.isFinite(n.x)).map(n=>[n.id,{x:n.x,y:n.y,depth:n.depth}]):[]);
+ const regions=[...new Set(graph.nodes.map(n=>n.region))],buckets=new Map();
+ nodeByID=new Map(graph.nodes.map(n=>[n.id,n]));edgeAdjacency=new Map();
+ structure=window.AideStarStructure?.build(graph.nodes,graph.edges)||null;
+ for(const n of graph.nodes){const path=(n.path||'').split('/').filter(x=>x&&x!=='.');const branch=n.kind==='session'?'conversations':path.length>2?path.slice(0,2).join('/'):path.length>1?path[0]:'root';const key=n.region+'/'+branch;
+  if(!buckets.has(key))buckets.set(key,{key,name:branch==='root'?(n.region==='workspace'?'Workspace':n.region==='sessions'?'Conversations':n.name):branch,region:n.region,nodes:[]});buckets.get(key).nodes.push(n);}
+ clusters=[...buckets.values()];
+ for(const r of regions){const group=clusters.filter(c=>c.region===r),ri=regions.indexOf(r),rx=r==='workspace'?.05:r==='sessions'?-.9:.65+(ri%3)*.2,ry=r==='workspace'?.04:r==='sessions'?.15:(ri%3-1)*.42;
+  group.forEach((c,i)=>{const angle=i*2.399963,ring=group.length===1?0:.12+.17*Math.sqrt(i/group.length);const old=preserve&&oldClusters.get(c.key);c.x=old?.x??rx+Math.cos(angle)*ring;c.y=old?.y??ry+Math.sin(angle)*ring*1.4;c.depth=old?.depth??.95+seeded(c.key)*.15;c.phase=seeded(c.key);c.color=colors(c);c.projected={x:0,y:0,onScreen:false};c.texture=cloudTexture(c.key,c.color);
+   const spread=old?.radius??Math.min(.3,.055+Math.sqrt(c.nodes.length)*.014);c.radius=spread;
+   c.nodes.forEach(n=>{const angle=seeded(n.id+'a')*tau,r=Math.sqrt(seeded(n.id+'r'))*spread;n.x=c.x+Math.cos(angle)*r;n.y=c.y+Math.sin(angle)*r*.68;n.depth=c.depth+(seeded(n.id+'z')-.5)*.08;if(oldPositions.has(n.id))Object.assign(n,oldPositions.get(n.id));n.cluster=c;
+    n.starColor=colors(n);n.spectralColor=mapPalette.star;n.glow=glowSprite(n.spectralColor);n.drawLabel=n.name.length>27?n.name.slice(0,27)+'…':n.name;n.projected=preserve&&n.projected?n.projected:{n,x:0,y:0,onScreen:false};});});}
+ for(const n of graph.nodes){if(n.kind!=='symbol'||preserve&&oldPositions.has(n.id))continue;const p=nodeByID.get(n.parentFile);if(!p)continue;const a=seeded(n.id+'orbit')*tau,r=.016+seeded(n.id+'span')*.038;n.x=p.x+Math.cos(a)*r;n.y=p.y+Math.sin(a)*r;n.depth=p.depth-.01;}
+ for(const e of graph.edges){e.a=nodeByID.get(e.from)?.projected;e.b=nodeByID.get(e.to)?.projected;e.phase=seeded(e.from+e.to);e.hierarchy=['contains','defines'].includes(e.kind);e.dashed=['mention','call_candidate'].includes(e.kind);e.directed=['call_candidate','imports'].includes(e.kind);
+  for(const id of [e.from,e.to]){if(!edgeAdjacency.has(id))edgeAdjacency.set(id,[]);edgeAdjacency.get(id).push(e);}}
+ if(!preserve){cosmos=window.AideStarCosmos?.build(graph.nodes,graph.edges)||null;cosmicSceneCache.clear();cosmicTextureCache.clear();cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicFlight=null;cosmicScopeKey='';liveStableScenes.clear();
+  if(cosmos)enterCosmic(cosmos.root.key,false);else{cosmicEnabled=false;syncCosmicNav();}
+ }else liveReconcile=true;
+ invalidateView();
+}
+function eligibleEdge(e){return !codeView||edgeMode==='all'||edgeMode==='calls'&&e.kind==='call_candidate'||edgeMode==='imports'&&e.kind==='imports'||edgeMode==='hierarchy'&&e.hierarchy;}
+function focusIDs(){
+ if(!codeView||!focusCode||!selected)return null;
+ const key=selected.id+'|'+edgeMode+'|'+callDepth+'|'+renderRevision;if(focusKey===key&&focusCache)return focusCache;
+ const max=callDepth==='all'?Infinity:Number(callDepth)||2,ids=new Set([selected.id]);
+ if(structure){const layers=structure.describe(selected.id,edgeMode);for(const [id,depth]of layers.levels){if(depth<=max)ids.add(id);}for(const id of layers.incoming||[])ids.add(id);}
+ else{let frontier=[selected.id];for(let depth=0;depth<max&&frontier.length;depth++){const next=[];for(const id of frontier){for(const e of edgeAdjacency.get(id)||[]){if(!eligibleEdge(e))continue;const to=e.from===id?e.to:e.from;if(!ids.has(to)){ids.add(to);next.push(to);}}}frontier=next;}}
+ focusKey=key;focusCache=ids;return ids;
+}
+function refreshView(){
+ const key=[renderRevision,region,codeView,focusCode,selected?.id||'',edgeMode,callDepth,searchQuery].join('|');if(key===renderKey)return;
+ renderKey=key;const focus=focusIDs(),globalLayers=structure?.entry('calls'),callLayers=selected&&globalLayers?.levels.has(selected.id)?structure.describe(selected.id,'calls'):globalLayers;layerState=structure?(selected?structure.describe(selected.id,edgeMode):globalLayers):null;
+ renderNodes=[];const visibleIDs=new Set();
+ for(const n of graph.nodes){if(region&&n.region!==region||focus&&!focus.has(n.id)||codeView&&n.kind==='session')continue;
+  const depth=callLayers?.levels.get(n.id),finite=!!globalLayers?.levels.has(n.id)&&Number.isFinite(depth);n.visualDepth=finite?depth:null;
+  // Brightness encodes static graph distance. These are visual magnitudes, not
+  // measured stellar luminosities or observed runtime call-stack depths.
+  const d=finite?Math.min(depth,16):9;
+  n.magnitude=finite?1.1+1.65*Math.log2(d+1):4.3;n.luminosity=finite?Math.max(.10,Math.pow(10,-.4*(n.magnitude-1.1))):.24;
+  n.apparentRadius=Math.max(1,.9+2.3/(1+d*.48));n.globalVisualDepth=globalLayers?.levels.get(n.id);const globalDepth=Number.isFinite(n.globalVisualDepth)?n.globalVisualDepth:9;n.spatialDepth=n.depth*(1+Math.min(globalDepth,12)*.07);
+  n.match=!!searchQuery&&resultIDs.has(n.id);n.chosen=selected?.id===n.id;n.incoming=!!selected&&!!callLayers?.incoming.has(n.id);
+  n.drawAlpha=searchQuery&&!n.match&&!n.chosen?.20:n.incoming?.68:finite?.40+n.luminosity*.60:.28;
+  n.glowSize=n.chosen?62:n.incoming?26:Math.max(9,12+24*n.luminosity);renderNodes.push(n);visibleIDs.add(n.id);
+ }
+ renderEdges=graph.edges.filter(e=>eligibleEdge(e)&&visibleIDs.has(e.from)&&visibleIDs.has(e.to));if(selected)renderEdges.sort((a,b)=>Number(b.from===selected.id||b.to===selected.id)-Number(a.from===selected.id||a.to===selected.id));const batches=new Map();for(const e of renderEdges){if(!batches.has(e.kind))batches.set(e.kind,{edges:[],kind:e.kind,dashed:e.dashed,hierarchy:e.hierarchy});batches.get(e.kind).edges.push(e);}edgeBatches=[...batches.values()];
+ projection=renderNodes.map(n=>n.projected);
+ // The optional UI consumes the same traversal that drives brightness/focus.
+ updateLayerLabels();
+}
+function updateLayerLabels(){
+ const title=layerState?.mode==='calls'?'静态调用候选':layerState?.mode==='imports'?'模块导入':layerState?.mode==='hierarchy'?'声明层级':'关系';
+ const maxDepth=layerState?.maxDepth??0,hasLayers=!!layerState?.levels.size,hopName=layerState?.mode==='calls'?'调用':layerState?.mode==='imports'?'导入':'结构';
+ const localRange=selected?'已解析至 '+maxDepth+' 跳'+(focusCode?' · 聚焦 '+(callDepth==='all'?'全部已解析跳数':'向外 '+callDepth+' 跳'):''):'';
+ if($('layer-summary'))$('layer-summary').textContent=hasLayers?`${title} · ${selected?'从当前节点向外':(layerState.rootIDs?.size||0)+' 个入口候选'} · ${selected?localRange:'全局 '+(maxDepth+1)+' 层'}`:'当前索引没有可分层的连接';
+ const callLayers=structure?.entry('calls'),selectedHasCalls=selected&&callLayers?.levels.has(selected.id);
+ if($('magnitude-key'))$('magnitude-key').textContent=callLayers?.levels.size?(selectedHasCalls?'当前节点最亮 · 调用跳数 1、2、3…逐步变暗':'全局调用候选层 1、2、3…逐层变暗')+' · 星等仅表示调用结构距离':'未有调用关系数据 · 使用统一基准星等';
+ if($('detail-level')){
+  $('detail-level').hidden=!selected||!codeView&&selected.kind!=='symbol';
+  const globalDepth=selected?.globalVisualDepth,cycle=selected&&callLayers?.cycles.has(selected.id);
+  $('detail-level').textContent=(Number.isFinite(globalDepth)?`调用星等 · 全局调用候选层 ${globalDepth+1}`:'调用关系未知 · 基准星等')+(selected?' · 当前节点（选中增亮）':'')+(cycle?' · 候选闭环':'');
+
+ }
+}
+function projectInto(n,out,driftX,driftY,depth=n.depth){out.x=width*.57+Math.sin(n.x+yaw+driftX)*width*.43*zoom/depth;out.y=height*.5+Math.sin(n.y+pitch+driftY)*height*.47*zoom/depth;out.onScreen=out.x>-70&&out.x<width+70&&out.y>-70&&out.y<height+70;return out;}
+function edgeInView(e){const a=e.a,b=e.b;return a&&b&&Math.max(a.x,b.x)>=-70&&Math.min(a.x,b.x)<=width+70&&Math.max(a.y,b.y)>=-70&&Math.min(a.y,b.y)<=height+70;}
+function draw(now=performance.now()){
+ frame=0;if(document.hidden)return;
+ const active=!!(drag||cameraTween||wheelZoom||graphFade||cosmicFlight||now<interactionUntil||now<liveAnimationUntil),budget=active?1000/60:1000/30;
+ if(!paintRequested&&lastPaint!==null&&now-lastPaint<budget-1){redraw(false);return;}
+ paintRequested=false;const delta=lastPaint===null?0:clamp(now-lastPaint,0,64);lastPaint=now;if(animate)skyTime+=delta;
+ const t=skyTime;updateCamera(now);
+ const dpr=Math.min(devicePixelRatio,1.75);if(width!==innerWidth||height!==innerHeight||pixelRatio!==dpr){width=innerWidth;height=innerHeight;pixelRatio=dpr;canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);graphFade=null;makeSky();}
+ ctx.drawImage(skyCache,0,0,width,height);
+ for(const s of stars){const x=((s.x*width-yaw*33-t/2800)%width+width)%width,y=((s.y*height+pitch*20)%height+height)%height;ctx.globalAlpha=.06+s.a*.16+Math.sin(t/2400+s.a*17)*.04;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(x,y,s.r,0,tau);ctx.fill();}ctx.globalAlpha=1;
+ refreshView();ensureCosmicView();
+ if(cosmicEnabled&&cosmicScene){
+  drawCosmos(now,t);
+  if(graphFade){const u=clamp((now-graphFade.start)/graphFade.duration,0,1);ctx.save();ctx.globalAlpha=1-easing(u);ctx.drawImage(graphFade.canvas,0,0,width,height);ctx.restore();if(u===1)graphFade=null;}
+  if(animate||cameraTween||wheelZoom||graphFade||cosmicFlight||now<liveAnimationUntil)redraw(false);return;
+ }
+ refreshView();const driftX=Math.sin(t/24000)*.012,driftY=Math.cos(t/31000)*.008;
+ for(const c of clusters){if(region&&c.region!==region)continue;const p=projectInto(c,c.projected,driftX,driftY),size=Math.max(110,c.radius*width*3.3*zoom),density=Math.min(.85,.16+c.nodes.length/85);
+  if(p.x+size/2<0||p.x-size/2>width||p.y+size*.4<0||p.y-size*.4>height)continue;
+  ctx.save();ctx.globalAlpha=density;ctx.translate(p.x,p.y);ctx.rotate(-.3+Math.sin(t/32000+c.phase)*.018);ctx.drawImage(c.texture,-size/2,-size*.38,size,size*.76);ctx.restore();
+  if(c.nodes.length>8){ctx.font='10px -apple-system,sans-serif';ctx.fillStyle=c.color+'99';ctx.fillText(c.name+' / '+c.nodes.length,p.x+18,p.y-size*.2);}}
+ for(const n of renderNodes)projectInto(n,n.projected,driftX,driftY,n.spatialDepth);
+ // Each non-selected relation kind is stroked as one path. A dense graph no
+ // longer dispatches a separate Canvas stroke/state change for every edge.
+ for(const batch of edgeBatches){if(renderNodes.length>120&&batch.hierarchy)continue;
+  ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'18':'30');ctx.lineWidth=.55;ctx.setLineDash(batch.dashed?[3,5]:[]);ctx.beginPath();
+  for(const e of batch.edges){if(selected&&(e.from===selected.id||e.to===selected.id)||!edgeInView(e)||birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}ctx.stroke();
+ }
+ let particles=0,lastDash=null;
+ for(const e of renderEdges){if(!edgeInView(e)||birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;const a=e.a,b=e.b,activeEdge=!!selected&&(e.from===selected.id||e.to===selected.id);
+  if(renderNodes.length>120&&!activeEdge&&e.hierarchy)continue;
+  if(activeEdge||e.directed&&renderNodes.length<120){ctx.strokeStyle=mapPalette.star+(activeEdge?'90':'30');ctx.lineWidth=activeEdge?1.2:.55;
+   if(lastDash!==e.dashed){ctx.setLineDash(e.dashed?[3,5]:[]);lastDash=e.dashed;}
+   if(activeEdge){ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+   if(e.directed){const angle=Math.atan2(b.y-a.y,b.x-a.x),x=b.x-Math.cos(angle)*7,y=b.y-Math.sin(angle)*7;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-Math.cos(angle-.45)*5,y-Math.sin(angle-.45)*5);ctx.moveTo(x,y);ctx.lineTo(x-Math.cos(angle+.45)*5,y-Math.sin(angle+.45)*5);ctx.stroke();}}
+  if(animate&&!e.hierarchy&&particles<48&&(activeEdge||e.phase<.20)){const progress=(t/6500+e.phase)%1,px=a.x+(b.x-a.x)*progress,py=a.y+(b.y-a.y)*progress;ctx.fillStyle=mapPalette.star+(activeEdge?'ff':'88');ctx.beginPath();ctx.arc(px,py,activeEdge?1.65:.9,0,tau);ctx.fill();particles++;}
+ }ctx.setLineDash([]);
+ for(const n of renderNodes){const {x,y,onScreen}=n.projected;if(!onScreen)continue;const chosen=n.chosen,match=n.match,r=n.apparentRadius+(chosen?1.5:0),g=n.glowSize;
+  ctx.globalAlpha=n.drawAlpha*birthAlpha(n,now);ctx.drawImage(n.glow,x-g/2,y-g/2,g,g);ctx.fillStyle=n.starColor;ctx.beginPath();ctx.arc(x,y,r*(.4+.6*birthAlpha(n,now)),0,tau);ctx.fill();ctx.globalAlpha=1;
+  if(birthAlpha(n,now)>.5&&(chosen||match||renderNodes.length<120&&n.kind==='directory'&&n.path==='.')){ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=chosen?mapPalette.text:mapPalette.muted;ctx.fillText(n.drawLabel,x+10,y+4);}
+  if(chosen){ctx.strokeStyle=mapPalette.star+'80';ctx.beginPath();ctx.arc(x,y,15+Math.sin(t/650)*1.4,0,tau);ctx.stroke();
+   ctx.strokeStyle=mapPalette.star+'45';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x-10,y);ctx.lineTo(x+10,y);ctx.moveTo(x,y-10);ctx.lineTo(x,y+10);ctx.stroke();}}
+ ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=mapPalette.muted+'66';for(let i=0;i<9;i++){const x=width*(i+1)/10;ctx.fillRect(x,height*.82,1,5);ctx.fillText(String(i*30).padStart(3,'0')+'°',x-8,height*.82+19);}
+ if(graphFade){const u=clamp((now-graphFade.start)/graphFade.duration,0,1);ctx.save();ctx.globalAlpha=1-easing(u);ctx.drawImage(graphFade.canvas,0,0,width,height);ctx.restore();if(u===1)graphFade=null;}
+ drawLiveGhosts(now,0);
+ if(animate||cameraTween||wheelZoom||graphFade||now<liveAnimationUntil)redraw(false);
+}
+function redraw(dirty=true){if(dirty)paintRequested=true;if(!frame&&!document.hidden)frame=requestAnimationFrame(draw);}
+function nodeResults(announce=true){
+ const q=$('search').value.trim().toLowerCase(),terms=q.split(/\s+/).filter(Boolean);searchQuery=q;
+ results=graph.nodes.filter(n=>n.kind!=='directory'&&(!region||region===n.region)).map(n=>({n,score:terms.reduce((score,k)=>score+(n.id.toLowerCase()===k?100:n.name.toLowerCase().includes(k)?15:n.signature?.toLowerCase().includes(k)?12:n.path?.toLowerCase().includes(k)?10:n.text?.toLowerCase().includes(k)?2:0),0)})).filter(v=>!q||v.score>0).sort((a,b)=>b.score-a.score||a.n.id.localeCompare(b.n.id)).map(v=>v.n);
+ resultIDs=new Set(results.map(n=>n.id));invalidateView();
+ const box=$('results'),previous=new Map([...box.children].map(el=>[el.dataset.nodeID,el])),keep=new Set();
+ for(const [i,n]of results.slice(0,40).entries()){
+  let button=previous.get(n.id);if(!button){button=document.createElement('button');button.className='result';button.type='button';button.dataset.nodeID=n.id;button.append(document.createElement('code'),document.createElement('span'));button.lastChild.append(document.createElement('small'));button.onclick=()=>{const node=nodeByID.get(button.dataset.nodeID);if(node)select(node);};}
+  const mark=button.firstChild,label=button.lastChild,path=label.lastChild;if(mark.textContent!==n.id)mark.textContent=n.id;
+  if(!label.firstChild||label.firstChild===path)label.insertBefore(document.createTextNode(n.name),path);else if(label.firstChild.textContent!==n.name)label.firstChild.textContent=n.name;
+  const locator=n.path||'会话 #'+n.number;if(path.textContent!==locator)path.textContent=locator;
+  keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
+ }
+ for(const child of [...box.children])if(!keep.has(child))child.remove();
+ if(announce)say(q?`找到 ${results.length} 个节点`:'点击星点，开始探索');redraw();
+}
+function search(){searchQuery=$('search').value.trim().toLowerCase();if(retrievalMode()!=='nodes'){documentGeneration++;selected=null;revealPanel($('detail'),false);documentAbort?.abort();$('results').replaceChildren();results=[];resultIDs.clear();invalidateView();say('输入问题后点击探索，检索文档正文。');redraw();return;}nodeResults();}
+
+function select(n,focus=true){if(selected?.id!==n.id)beginGraphTransition();$('document-insight').hidden=true;selected=nodeByID.get(n.id)||n;revealPanel($('detail'),true);if(cosmicEnabled&&focus)cosmicLocate(selected);else if(!cosmicEnabled&&focus&&Number.isFinite(selected.x))moveCamera({yaw:-selected.x,pitch:-selected.y,zoom:Math.max(zoom,1.08)},650);$('detail-name').textContent=n.name;$('detail-region').textContent=n.kind==='symbol'?'CODE / '+n.language:n.region==='sessions'?'CONVERSATION / 会话':n.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('detail-id').textContent=n.id;$('detail-path').textContent=(n.path||'会话 #'+n.number)+(n.line?' : '+n.line+'–'+n.endLine:'');$('detail-text').textContent=n.text||'此节点仅索引名称，尚未读取正文。';const edges=edgeAdjacency.get(n.id)||[];$('neighbors').textContent=`${edges.length} 条连接 · ${n.kind==='symbol'?'声明附近片段':(n.size||0)+' 字节'}`;$('insert').disabled=n.kind==='directory';$('understand').disabled=n.kind==='directory';renderCodeInsight(n);redraw();}
+function renderCodeInsight(n){
+ const on=codeView||n.kind==='symbol';$('code-insight').hidden=!on;if(!on)return;
+ $('code-signature').textContent=n.signature||'';$('code-location').textContent=n.kind==='symbol'?`${n.language} · ${n.symbolKind} · L${n.line}–L${n.endLine} · ${n.id}`+(n.contentHash?' · SHA '+n.contentHash.slice(0,10):''):'文件 / 模块视角';
+ $('code-open').hidden=!n.path||n.kind==='directory';const spec={root:n.root,path:n.path,readOnly:true};if(n.line){spec.line=n.line;spec.endLine=n.endLine;spec.codeHash=n.contentHash;}if(n.source)spec.source=n.source;$('code-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));
+ const byID=nodeByID,edges=graph.edges;
+ function list(id,title,items){const box=$(id);box.replaceChildren();const h=document.createElement('h3');h.textContent=title+' · '+items.length;box.append(h);for(const {node,edge,label}of items.slice(0,24)){const b=document.createElement('button');b.type='button';b.className='code-relation';b.textContent=(label||'')+node.name+(edge?.line?' · L'+edge.line:'');b.title=(node.path||'')+' / '+node.id;b.onclick=()=>select(node);box.append(b);}if(items.length>24){const p=document.createElement('p');p.textContent='仅显示前24项，可用函数名继续搜索。';box.append(p);}if(!items.length){const p=document.createElement('p');p.textContent='当前索引内未发现；不代表项目中不存在。';box.append(p);}}
+ const mapped=(es,dir)=>es.map(e=>({node:byID.get(e[dir]),edge:e})).filter(x=>x.node);
+ const hierarchy=[...mapped(edges.filter(e=>['defines','contains'].includes(e.kind)&&e.to===n.id),'from').map(x=>({...x,label:'上级 / '})),...mapped(edges.filter(e=>['defines','contains'].includes(e.kind)&&e.from===n.id),'to').map(x=>({...x,label:'声明 / '}))];
+ list('code-hierarchy','代码层级',hierarchy);list('code-callers','调用者候选 ←',mapped(edges.filter(e=>e.kind==='call_candidate'&&e.to===n.id),'from'));list('code-callees','被调用候选 →',mapped(edges.filter(e=>e.kind==='call_candidate'&&e.from===n.id),'to'));
+ const adj=new Map();for(const e of edges.filter(e=>e.kind==='call_candidate')){if(!adj.has(e.from))adj.set(e.from,[]);adj.get(e.from).push(e.to)}
+ let cycle=null,visited=0;const pending=[[n.id]];while(pending.length&&visited++<600){const route=pending.shift();if(route.length>12)continue;for(const to of adj.get(route.at(-1))||[]){if(to===n.id){cycle=[...route,to];break;}if(!route.includes(to)&&pending.length<600)pending.push([...route,to]);}if(cycle)break;}
+ $('code-recursion').textContent=cycle?'静态候选闭环：'+cycle.map(id=>byID.get(id)?.name||id).join(' → '):'未发现12层 / 600步范围内的候选闭环；不构成无递归证明。';
+}
+function syncCodeView(){for(const [id,on]of [['view-code',codeView],['view-knowledge',!codeView]]){$(id).setAttribute('aria-pressed',String(on));$(id).disabled=loading;}$('code-tools').hidden=!codeView;$('retrieval-mode').disabled=codeView;document.body.classList.toggle('code-view',codeView);}
+$('view-code').onclick=()=>{if(loading||codeView)return;codeView=true;syncCodeView();load()};$('view-knowledge').onclick=()=>{if(loading||!codeView)return;codeView=false;syncCodeView();load()};
+if($('call-depth')){callDepth=$('call-depth').value;$('call-depth').onchange=()=>{beginGraphTransition();relationshipOverview();callDepth=$('call-depth').value;if(selected){focusCode=true;$('focus-code').setAttribute('aria-pressed','true');}else say('先选中节点，深度将用于向外聚焦。');invalidateView();redraw();};}
+$('edge-mode').onchange=()=>{beginGraphTransition();relationshipOverview();edgeMode=$('edge-mode').value;redraw()};$('focus-code').onclick=()=>{beginGraphTransition();relationshipOverview();focusCode=!focusCode;$('focus-code').setAttribute('aria-pressed',String(focusCode));if(focusCode&&!selected)say('先选中一个文件或函数，再查看指定深度的关系。');redraw()};syncCodeView();
+
+function syncGraphChrome(){
+ $('counts').textContent=`${graph.nodes.length} STARS / ${graph.edges.length} CONNECTIONS`;
+ $('code-summary').textContent=graph.code?`${graph.code.files} 份源码 · ${graph.code.symbols} 个声明 · ${graph.code.calls} 条调用候选 · ${graph.code.unresolved} 个未解析调用`:'';
+ $('warnings').textContent=[...(graph.warnings||[]),...(graph.code?.diagnostics||[]),...(graph.truncated?['索引达到数量、深度或时间上限；未覆盖全部文件。']:[])].join('\n');
+ const box=$('regions'),previous=new Map([...box.children].map(el=>[el.dataset.region,el])),keep=new Set();
+ for(const [i,r]of ['',...new Set(graph.nodes.map(n=>n.region))].entries()){
+  let button=previous.get(r);if(!button){button=document.createElement('button');button.dataset.region=r;button.onclick=()=>{beginGraphTransition();region=button.dataset.region;cosmicSceneCache.clear();cosmicKey='';if(cosmos)enterCosmic(cosmos.root.key,true);for(const x of box.children)x.setAttribute('aria-pressed',String(x===button));search();};}
+  button.textContent=r===''?'全部星域':r==='workspace'?'工作区':r==='sessions'?'会话':r==='context'?'引用目录':graph.nodes.find(n=>n.region===r&&n.path==='.')?.name||'引用';button.setAttribute('aria-pressed',String(region===r));keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
+ }
+ for(const child of [...box.children])if(!keep.has(child))child.remove();
+}
+function drawLiveGhosts(now,drift){
+ if(!liveGhosts.length)return;const remaining=[];ctx.save();
+ for(const ghost of liveGhosts){const age=(now-ghost.start)/380;if(age>=1)continue;remaining.push(ghost);
+  const x=ghost.cosmic?width*.57+(ghost.x+yaw*.22+drift)*width*zoom/ghost.z:ghost.x,y=ghost.cosmic?height*.5+(ghost.y+(pitch-.1)*.18)*height*zoom/ghost.z:ghost.y;
+  ctx.globalAlpha=(1-easing(clamp(age,0,1)))*.55;ctx.fillStyle=ghost.color;ctx.beginPath();ctx.arc(x,y,ghost.radius*(1-age*.4),0,tau);ctx.fill();
+ }ctx.restore();liveGhosts=remaining;
+}
+function applyLiveUpdate(update,initial=false){
+ if(!update||typeof update.revision!=='string'||!Array.isArray(update.nodes)||!Array.isArray(update.edges))throw Error('自动同步响应不完整');
+ const differentWorkspace=!!graph.workspace&&graph.workspace!==update.workspace;
+ if(initial||differentWorkspace||!graph.workspace){
+  if(!initial)graphGeneration++;
+  if(aiAbort&&!aiAbort.signal.aborted&&$('ask').disabled)$('answer').textContent='工作区资料已更新，当前理解已中止；请重新探索。';aiAbort?.abort();
+  liveGhosts=[];liveAnimationUntil=0;liveStableScenes.clear();liveReconcile=false;liveWireNodes=new Map(update.nodes.map(n=>[n.id,JSON.stringify(n)]));
+  graph={workspace:update.workspace,nodes:update.nodes,edges:update.edges,warnings:update.warnings||[],truncated:!!update.truncated,code:update.code};
+  documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;selected=null;revealPanel($('detail'),false);region='';layout();syncGraphChrome();search();return;
+ }
+ const incoming=new Map(update.nodes.map(n=>[n.id,n])),removed=new Set(update.removedNodes||[]),oldNodes=new Map(graph.nodes.map(n=>[n.id,n]));
+ if(update.reset)for(const id of oldNodes.keys())if(!incoming.has(id))removed.add(id);
+ const changed=[],added=[];
+ for(const raw of update.nodes){if(liveWireNodes.get(raw.id)===JSON.stringify(raw))continue;changed.push(raw);if(!oldNodes.has(raw.id))added.push(raw);}
+ const oldEdges=new Map(graph.edges.map(e=>[edgeKey(e),e])),nextEdges=update.reset?new Map(update.edges.map(e=>[edgeKey(e),oldEdges.get(edgeKey(e))||e])):new Map(oldEdges);
+ if(!update.reset){for(const e of update.removedEdges||[])nextEdges.delete(edgeKey(e));for(const e of update.edges)nextEdges.set(edgeKey(e),oldEdges.get(edgeKey(e))||e);}
+ for(const [key,e]of nextEdges)if(removed.has(e.from)||removed.has(e.to))nextEdges.delete(key);
+ const edgesChanged=oldEdges.size!==nextEdges.size||[...nextEdges.keys()].some(k=>!oldEdges.has(k));
+ graph.warnings=update.warnings||[];graph.truncated=!!update.truncated;graph.code=update.code;syncGraphChrome();
+ if(!changed.length&&!removed.size&&!edgesChanged)return;
+ const now=performance.now(),motion=motionEnabled(),selectionID=selected?.id,selectionChanged=changed.some(n=>n.id===selectionID),citation=selected?.documentCitation;
+ if(motion)for(const star of cosmicStars){if(removed.has(star.n.id)&&star.p.onScreen)liveGhosts.push({cosmic:true,x:star.x,y:star.y,z:star.z,color:mapPalette.star,radius:1.3,start:now});}
+ if(liveGhosts.length>512)liveGhosts=liveGhosts.slice(-512);
+ for(const id of removed){oldNodes.delete(id);liveWireNodes.delete(id);}
+ for(const raw of changed){let node=oldNodes.get(raw.id);if(!node){node={};oldNodes.set(raw.id,node);}for(const field of nodeFields)if(!(field in raw))delete node[field];Object.assign(node,raw);liveWireNodes.set(raw.id,JSON.stringify(raw));}
+ if(motion)for(const [i,raw]of added.entries())oldNodes.get(raw.id).bornAt=now+Math.min(i,20)*32;
+ graph.nodes=[...oldNodes.values()];graph.edges=[...nextEdges.values()];graphGeneration++;documentGeneration++;documentAbort?.abort();
+ if(aiAbort&&!aiAbort.signal.aborted&&$('ask').disabled)$('answer').textContent='资料有更新，当前理解已中止；请重新理解最新资料。';aiAbort?.abort();
+ if(selectionID&&!oldNodes.has(selectionID)){selected=null;$('insert').disabled=true;$('understand').disabled=true;revealPanel($('detail'),false);}
+ else if(selectionID)selected=!selectionChanged&&citation?{...oldNodes.get(selectionID),documentCitation:citation}:oldNodes.get(selectionID);
+ layout(true);if(retrievalMode()==='nodes')nodeResults(false);else{invalidateView();if(selectionChanged)$('document-note').textContent='当前原文已更新；保留检索结果，重新探索可核对最新摘录。';}
+ refreshView();ensureCosmicView();syncGraphChrome();
+ if(selected){$('detail-name').textContent=selected.name;$('detail-path').textContent=(selected.path||'会话 #'+selected.number)+(selected.line?' : '+selected.line+'–'+selected.endLine:'');$('detail-region').textContent=selected.kind==='symbol'?'CODE / '+selected.language:selected.region==='sessions'?'CONVERSATION / 会话':selected.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('insert').disabled=selected.kind==='directory';$('understand').disabled=selected.kind==='directory';$('neighbors').textContent=`${(edgeAdjacency.get(selected.id)||[]).length} 条连接`;if(selectionChanged){$('detail-text').textContent=selected.text||'此节点仅索引名称。';$('document-insight').hidden=true;delete selected.documentCitation;}renderCodeInsight(selected);}
+ liveAnimationUntil=motion?now+(added.length?Math.min(added.length-1,20)*32+680:380):0;
+ say('已同步'+(added.length?' · '+added.length+' 颗新星':'')+(removed.size?' · '+removed.size+' 个节点移出':'')+(changed.length>added.length?' · '+(changed.length-added.length)+' 个节点更新':''));redraw();
+}
+async function load(){
+ if(loading||locked)return;stopLive(true);loading=true;const generation=++graphGeneration,mode=codeView;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
+ try{const update=await api('/updates?code='+(mode?'1':'0'),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
+  beginGraphTransition();applyLiveUpdate(update,true);liveCursor=update.revision;liveFailures=0;
+ }catch(e){if(!locked&&e.name!=='AbortError'){liveFailures++;say(e.message);}}
+ finally{loading=false;syncCodeView();redraw();if(!locked&&generation!==graphGeneration)load();else scheduleLive();}
+}
+function syncMotion(){ $('motion').textContent=animate?'动效 · 开':'动效 · 关';$('motion').setAttribute('aria-pressed',String(animate)); }
+$('motion').onclick=()=>{if(motionReduced()){say('当前已减少动态效果，请在工作台外观或系统设置中调整。');return;}animate=!animate;if(!animate){for(const n of graph.nodes)delete n.bornAt;liveGhosts=[];liveAnimationUntil=0;if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}graphFade=null;cosmicFlight=null;settlePanels();}syncMotion();redraw();};syncMotion();
+addEventListener('visibilitychange',()=>{
+ const now=performance.now();cancelAnimationFrame(frame);frame=0;
+ if(document.hidden){stopLive();pausedAt=now;drag=null;settlePanels();}
+ else{scheduleLive(0);if(pausedAt!==null){if(cameraTween)cameraTween.start+=now-Math.max(pausedAt,cameraTween.start);if(graphFade)graphFade.start+=now-Math.max(pausedAt,graphFade.start);if(cosmicFlight)cosmicFlight.start+=now-Math.max(pausedAt,cosmicFlight.start);const pause=now-pausedAt;for(const n of graph.nodes)if(n.bornAt)n.bornAt+=pause;for(const ghost of liveGhosts)ghost.start+=pause;if(liveAnimationUntil)liveAnimationUntil+=pause;cosmicGate+=pause;}pausedAt=null;if(wheelZoom)wheelZoom.last=now;lastPaint=now;redraw();}
+});
+$('search-form').onsubmit=e=>{e.preventDefault();if(retrievalMode()==='nodes')search();else searchDocuments()};$('search').oninput=search;$('close-detail').onclick=()=>{beginGraphTransition();selected=null;revealPanel($('detail'),false);redraw()};$('home').onclick=()=>{if(cosmicEnabled&&cosmos&&cosmicKey!==cosmos.root.key)enterCosmic(cosmos.root.key);else moveCamera({yaw:0,pitch:.1,zoom:1},850);};
+canvas.onpointerdown=e=>{if(locked||cosmicEnabled&&cosmicFlight)return;interruptCamera();interactionUntil=performance.now()+220;drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY};canvas.setPointerCapture(e.pointerId);};
+canvas.onpointermove=e=>{if(!drag){if(cosmicEnabled&&!cosmicFlight){const r=cosmicPick(e.clientX,e.clientY),next=r?.group.key||'';if(next!==cosmicHover){cosmicHover=next;canvas.style.cursor=next?'pointer':'grab';redraw();}}return;}yaw+= (e.clientX-drag.x)/width*2;if(cosmicEnabled)yaw=clamp(yaw,-2.5,2.5);pitch=clamp(pitch+(e.clientY-drag.y)/height*1.5,-1,1);drag.x=e.clientX;drag.y=e.clientY;interactionUntil=performance.now()+220;redraw();};
+canvas.onpointerup=e=>{if(drag&&Math.hypot(e.clientX-drag.startX,e.clientY-drag.startY)<5){if(cosmicEnabled){const star=cosmicStarPick(e.clientX,e.clientY);if(star)select(star.n,false);else{const r=cosmicPick(e.clientX,e.clientY);if(r&&!r.group.nodeID){cosmicSelected=r.group.key;syncCosmicNav();say('已选中 '+r.group.label+'，双击或继续滚轮靠近，进入这个星域。');redraw();}}}else{let nearest=null,distance=20;for(const p of projection){if(!p.onScreen)continue;const d=Math.hypot(p.x-e.clientX,p.y-e.clientY);if(d<distance){nearest=p;distance=d;}}if(nearest)select(nearest.n,false);}}drag=null;interactionUntil=performance.now()+180;};
+canvas.ondblclick=e=>{if(!cosmicEnabled||cosmicFlight||locked)return;const star=cosmicStarPick(e.clientX,e.clientY);if(star){const path=cosmos.pathFor(star.n.id),index=path.findIndex(g=>g.key===cosmicKey),child=path[index+1];if(child)enterCosmic(child.key,true,true);select(star.n,false);return;}const r=cosmicPick(e.clientX,e.clientY);if(r&&!r.group.nodeID)enterCosmic(r.group.key);else if(cosmicScene?.group.parent)enterCosmic(cosmicScene.group.parent.key);};
+canvas.onpointerleave=()=>{cosmicHover='';canvas.style.cursor='grab';};
+canvas.onpointercancel=()=>{drag=null;};
+canvas.addEventListener('wheel',e=>{
+ e.preventDefault();if(locked)return;
+ const now=performance.now();updateCamera(now);if(cameraTween){cameraTween=null;}
+ const units=e.deltaMode===1?16:e.deltaMode===2?height:1,delta=clamp(e.deltaY*units,-240,240),base=wheelZoom?.target??zoom,target=clamp(base*Math.exp(-delta*.001),.5,2.8);
+ interactionUntil=now+250;
+ if(cosmicEnabled&&cosmicScene){
+  if(now-cosmicWheelLast>260||Math.sign(cosmicWheel)!==Math.sign(delta))cosmicWheel=0;cosmicWheel+=delta;cosmicWheelLast=now;
+  if(now>cosmicGate&&delta<0&&target>=2.15&&cosmicWheel<-65&&cosmicScene.children.length){const child=cosmicStarPick(e.clientX,e.clientY)?.owner.group||cosmicPick(e.clientX,e.clientY)?.group||cosmicPreferred();if(child&&child.depth>cosmicScene.depth){enterCosmic(child.key);if(child.nodeID){const n=nodeByID.get(child.nodeID);if(n)select(n,false);}return;}}
+  if(now>cosmicGate&&delta>0&&target<=.64&&cosmicWheel>65&&cosmicScene.group.parent){enterCosmic(cosmicScene.group.parent.key);return;}
+ }
+ if(!motionEnabled()){zoom=target;wheelZoom=null;}else{wheelZoom={target,last:now};}
+ redraw();
+},{passive:false});
+$('ai-toggle').onclick=()=>{const shown=$('ai-toggle').getAttribute('aria-expanded')!=='true';revealPanel($('ai-body'),shown);$('ai-toggle').setAttribute('aria-expanded',String(shown))};$('understand').onclick=()=>{openAI();$('question').value=selected?.documentCitation?'请依据原文关键词 '+$('search').value+' 解释这份文档的相关内容，引用片段编号及定位，并列出缺口。':codeView?'请依据源码和行号解释此节点的代码层级、输入输出、分支、副作用、调用链与未解析调用。区分声明证据和调用候选，不假定已经运行。':'请解释这个节点的内容、相关文件与证据缺口。';$('question').focus()};
+async function askAI(find=false){
+ if(locked)return;
+ const generation=graphGeneration,docGeneration=documentGeneration;aiAbort?.abort();aiAbort=new AbortController();
+ const docs=retrievalMode()!=='nodes';const ids=find?[]:(selected?[selected]:(docs?[]:results)).filter(n=>n.kind!=='directory').slice(0,8).map(n=>n.id);
+ $('ask').disabled=true;$('find-ai').disabled=true;$('answer').textContent=docs?'正在检索文档片段，再生成带引用回答…':find?'正在搜索知识目录，再依据资料理解…':'正在依据选中资料理解…';$('ai-found').replaceChildren();
+ try {
+  const d=await api('/assist',{method:'POST',signal:aiAbort.signal,body:JSON.stringify({query:$('question').value||$('search').value,ids,workspace:graph.workspace,code:codeView,retrievalMode:docs?'rag':'nodes',region})});
+  if(locked||generation!==graphGeneration||docGeneration!==documentGeneration)return;
+  $('answer').textContent=d.answer;if(d.retrieval){renderDocumentResults(d.retrieval,'ai-found');$('warnings').textContent=d.retrieval.warnings.join('\n');}$('usage').textContent=d.model+' · '+JSON.stringify(d.usage);
+  for(const n of d.retrieval?[]:(d.references||[])){const b=document.createElement('button');b.className='result';b.textContent=n.id+' · '+n.name;b.onclick=()=>select(n);$('ai-found').append(b);}
+ }catch(e){if(!locked&&generation===graphGeneration&&docGeneration===documentGeneration&&e.name!=='AbortError')$('answer').textContent=e.message}finally{$('ask').disabled=false;$('find-ai').disabled=false}
+}
+$('ask').onclick=()=>askAI(false);$('find-ai').onclick=()=>askAI(true);
+$('insert').onclick=()=>{if(locked||!selected)return;if(!channel){say('请从工作台的星图按钮打开，以连接原会话。');return}channel.postMessage({type:'insert',id:selected.id,workspace:graph.workspace,document:selected.documentCitation||null});say('正在请求原会话插入…')};if(channel){channel.onmessage=e=>{if(e.data?.type==='ack')say(e.data.message)}}
+addEventListener('resize',redraw);addEventListener('pagehide',()=>{pageLeaving=true;stopLive();cancelAnimationFrame(frame);frame=0;settlePanels();channel?.close();});let locked=true,lockStateKnown=false;
+addEventListener('pageshow',()=>{pageLeaving=false;scheduleLive(0);redraw();});
+function setLocked(value){
+ // Presence heartbeats may repeat the same effective state. Only a transition
+ // should clear or reload the graph; the first notification still initializes it.
+ if(lockStateKnown&&locked===value)return;
+ lockStateKnown=true;locked=value;if(value){stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],warnings:[]};$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];selected=null;renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
+if(window.LockCluster){LockCluster.on('effective',setLocked);LockCluster.onReady().then(setLocked);}else setLocked(false);
+addEventListener('pointerdown',()=>window.LockCluster?.noteActivity());
+redraw();
+
+function respectMotion(){if(motionReduced()){animate=false;for(const n of graph.nodes)delete n.bornAt;liveGhosts=[];liveAnimationUntil=0;if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}graphFade=null;cosmicFlight=null;settlePanels();syncMotion();redraw();}}
+addEventListener('aide:motion',respectMotion);motionMedia.addEventListener('change',respectMotion);
+window.aideUI?.subscribe(syncMapPalette);
+matchMedia('(forced-colors: active)').addEventListener('change',syncMapPalette);
+
+$('retrieval-mode').onchange=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiAbort?.abort();$('ai-found').replaceChildren();$('answer').textContent='';selected=null;revealPanel($('detail'),false);search();};
+function selectDocument(hit){select(hit.file);selected={...selected,documentCitation:{locator:hit.locator,offset:hit.offset,hash:hit.hash}};$('detail-text').textContent=hit.text;$('document-insight').hidden=false;$('document-locator').textContent=hit.id+' · '+hit.locator+' · 段内字符偏移 '+hit.offset;$('document-hash').textContent='SHA-256 '+hit.hash;const spec={root:hit.file.root,path:hit.file.path,readOnly:true};if(hit.file.source)spec.source=hit.file.source;$('document-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));}
+function renderDocumentResults(data,id='results'){const box=$(id);box.replaceChildren();for(const hit of data.hits||[]){const b=document.createElement('button');b.type='button';b.className='result document-result';const title=document.createElement('span');title.textContent=hit.file.name+' · '+hit.locator;const snippet=document.createElement('small');snippet.textContent=hit.text.slice(0,220);title.append(snippet);const code=document.createElement('code');code.textContent=hit.file.id;b.append(code,title);b.onclick=()=>selectDocument(hit);box.append(b);}if(!(data.hits||[]).length){const p=document.createElement('p');p.textContent='未检索到匹配原文；请检查关键词、来源范围与提取诊断。';box.append(p);}}
+async function searchDocuments(){if(locked||loading)return;const gen=++documentGeneration,graphGen=graphGeneration,mode=retrievalMode(),query=$('search').value;documentAbort?.abort();documentAbort=new AbortController();say('正在提取与检索文档正文…');try{const d=await api('/documents/search',{method:'POST',signal:documentAbort.signal,body:JSON.stringify({query,mode,workspace:graph.workspace,region})});if(locked||gen!==documentGeneration||graphGen!==graphGeneration)return;renderDocumentResults(d);$('warnings').textContent=[...d.warnings,...(d.truncated?['索引／提取／结果达到限制，不能据此声称全文无匹配。']:[])].join('\n');say(`${d.files} 份文档 · ${d.chunks} 个片段 · ${d.hits.length} 条结果 · ${mode==='original'?'逐字原文':'本地 TF-IDF RAG'}`);}catch(e){if(!locked&&gen===documentGeneration&&e.name!=='AbortError')say(e.message);}}

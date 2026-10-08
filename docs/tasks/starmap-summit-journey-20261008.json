@@ -1,0 +1,107 @@
+{
+  "id": "starmap-summit-journey-20261008",
+  "request": "星图进入动画：穿户外登山服的年轻男人，背对镜头站在山顶望着星河，缓缓抬头看天，全身变成一颗星星飞上星河。提升电影质感、人物动作、全身化星与衔接。 最新补充：从浅色工作台切换到强制深色星图不自然；要求符合 Aide 主体配色和环境，低 AI 感。",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/avatar-player.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/themes/comfort.css\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n M internal/server/workflow.go\n M plugins/office/index.js\n M plugins/office/manifest.json\n M plugins/office/test.js\n?? docs/architecture/knowledge-map.md\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? docs/tasks/starmap-code-insight-20261008.json\n?? docs/tasks/starmap-cosmic-scales-20261008.json\n?? docs/tasks/starmap-document-retrieval-20261008.json\n?? docs/tasks/starmap-scroll-backview-20261008.json\n?? docs/tasks/ui-celestial-sanctum-20261008.json\n?? docs/tasks/ui-comfort-motion-20261008.json\n?? docs/tasks/ui-motion-continuity-20261008.json\n?? docs/tasks/ui-observatory-refinement-20261008.json\n?? internal/server/code_analysis/\n?? internal/server/document_analysis/\n?? internal/server/knowledge_code.go\n?? internal/server/knowledge_documents.go\n?? internal/server/knowledge_map.go\n?? internal/server/static_assets.go\n?? internal/server/web/experience.css\n?? internal/server/web/experience.js\n?? internal/server/web/sanctum.css\n?? internal/server/web/starmap-cosmos.js\n?? internal/server/web/starmap-journey.js\n?? internal/server/web/starmap-structure.js\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js\n?? plugins/office/README.md",
+  "acceptance": [
+    "山顶与星河有电影感的景深、材质与夜景光照，人物为穿户外登山服的年轻男性背影。",
+    "人物站稳后缓缓抬头，全身光点收拢为单颗星星，再飞向星河；正常速度实际播放可辨识。",
+    "顺滑衔接真实知识星图，保留跳过/重播、减少动效、锁屏及单 RAF 调度。",
+    "通过 start.command 启动隔离的 18189 候选并在 Safari 实际观察；不替换生产服务、不发布。",
+    "星图与工作台共享明暗及舒适主题；夜景入场前后渐入渐出，不另造强制深色应用。"
+  ],
+  "scope": [
+    "internal/server/web/starmap-journey.js",
+    "internal/server/web/starmap.js (入场生命周期、主题 Canvas 与纹理缓存)",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.css (共享语义主题与入场文字)",
+    "internal/server/web/assets/starmap/ (新图像素材)",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks/starmap-summit-journey-20261008.json",
+    ".agent-state/starmap-summit/"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确场景与低 AI 感约束：登山服男性背影、山顶星河、慢抬头、全身聚单星、融入 Aide 冷灰蓝环境。 最新截图明确浅色工作台与深色星图不协调，加入同主题视觉连续性。",
+      "evidence": [
+        "用户最新两条消息",
+        "本任务 acceptance"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "用户场景已明确；沿用现有知识星图调度，新增山顶背景与人物素材，单颗星从全身聚合后起飞。",
+      "evidence": [
+        "本任务 acceptance 与 scope",
+        "internal/server/web/starmap-journey.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "9.4秒山顶摄影与背向抬头人物；完整身体化星、星河投影终点、0.75秒渐入；星图加载工作台主题并在设置变化时更新缓存颜色。",
+      "evidence": [
+        "internal/server/web/starmap-journey.js",
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap.css",
+        "internal/server/web/starmap.html",
+        "internal/server/web/assets/starmap/"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "最新源码 JS 语法、diff与离线 Docker 编译通过；start.command 在18189就绪。Mac已锁，Safari无法操作：最新正常速度、主题、跳过、重播、动效开关为 NOT_RUN。上一版真实采样只用于发现问题，不能作为最新验收。未运行自动化测试。",
+      "evidence": [
+        ".agent-state/starmap-summit/build-input.json",
+        ".agent-state/starmap-summit/build.json",
+        ".agent-state/starmap-summit/build.log",
+        ".agent-state/starmap-summit/start.log",
+        ".agent-state/starmap-summit/playback-v1/timing.json",
+        "原生Safari返回Mac锁定；已请求用户解锁"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新知识星图架构、最新版源码与二进制身份、正常速度旧观察与最新锁屏未验收的边界；check_docs PASS 159 Markdown / 296 local links。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docs/tasks/starmap-summit-journey-20261008.json",
+        "python3 scripts/check_docs.py"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留继承的未提交改动；新增3份图像归属山巅入场，日志/采样/构建记录位于忽略的.agent-state，隔离候选与旧二进制保留用于回滚。无根目录临时输出；diff检查通过。",
+      "evidence": [
+        "internal/server/web/assets/starmap/",
+        ".agent-state/starmap-summit/",
+        "git diff --check",
+        "运行目录/private/tmp/aide-harness-runtime-j01jw5vg/"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮仅候选功能改进；无本轮发布授权，且最新浏览器验收尚缺。未提交、打tag、推送、发布或替换9999。",
+      "evidence": [
+        "本轮仅本地候选与浏览器预览；未授权发布、提交、打 tag 或替换 9999。"
+      ]
+    }
+  },
+  "release_authorization": "本轮仅本地候选与浏览器预览；未授权发布、提交、打 tag 或替换 9999。",
+  "rollback": "候选编译前保留现有 808a5b44 二进制与 compose；回滚只影响隔离的 18189。",
+  "handoff": "最新候选已通过start.command在18189运行；Mac解锁后重新加载工作台与星图，实际观察浅色/深色/舒适配色及正常动画、跳过重播动效。旧Safari录屏不是最新候选证据。",
+  "binary_sha256": "d5364db9a53e64dff7c07c1ffc6811022f68b9f43b2addc7fda29f69a88bea31",
+  "appearance_source_fingerprint": "78970503316de3a8265356a668994325822b16a76d29214e73738c6893a72636",
+  "source_fingerprint_scope": "12份动画与外观输入，不是全仓库内容指纹",
+  "review": {
+    "css": "Aide语义主题复用；源颜色alias；高对比Canvas保持可见",
+    "javascript": "移除标题WAAPI opacity以免覆盖场景渐入；规范化CSS颜色、更新主题缓存并订阅共享设置",
+    "limits": "静态审阅不等于主题切换或正常播放验收"
+  },
+  "superseded": {
+    "date": "2026-10-08",
+    "request": "那个星图的入场动画还是删了吧",
+    "task": "starmap-docs-push-20261008",
+    "summary": "山巅／人物入场及素材退出产品；保留历史实现、候选摘要和未验收范围。共享主题、新星渐入及相机过渡保留。"
+  }
+}

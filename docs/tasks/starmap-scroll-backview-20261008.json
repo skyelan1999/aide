@@ -1,0 +1,119 @@
+{
+  "id": "starmap-scroll-backview-20261008",
+  "request": "修复知识图谱滚动卡顿，入场改为背对镜头缓慢抬头变成星星后进入星图；追加：调用层1、层2等映射不同可视星等，提高宇宙真实感",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/avatar-player.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/themes/comfort.css\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n M internal/server/workflow.go\n M plugins/office/index.js\n M plugins/office/manifest.json\n M plugins/office/test.js\n?? docs/architecture/knowledge-map.md\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? docs/tasks/starmap-code-insight-20261008.json\n?? docs/tasks/starmap-document-retrieval-20261008.json\n?? docs/tasks/ui-celestial-sanctum-20261008.json\n?? docs/tasks/ui-comfort-motion-20261008.json\n?? docs/tasks/ui-motion-continuity-20261008.json\n?? docs/tasks/ui-observatory-refinement-20261008.json\n?? internal/server/code_analysis/\n?? internal/server/document_analysis/\n?? internal/server/knowledge_code.go\n?? internal/server/knowledge_documents.go\n?? internal/server/knowledge_map.go\n?? internal/server/static_assets.go\n?? internal/server/web/experience.css\n?? internal/server/web/experience.js\n?? internal/server/web/sanctum.css\n?? internal/server/web/starmap-journey.js\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js\n?? plugins/office/README.md",
+  "acceptance": [
+    "滚轮缩放连续跟随输入，不在每次事件重启零速度缓动；缓存静态背景、星光与图邻接数据，避免逐帧大面积渐变和字符串哈希",
+    "入场人物背对镜头，缓慢抬头望天后化为星光，接续既有飞升和真实知识图揭示",
+    "根据有向调用候选图分层，区分全局分量层与选中节点最短调用跳数；循环同层、孤立节点不虚构入口",
+    "调用层映射可视星等、光晕和深度，保留来源配色、编号、搜索和原会话回填",
+    "使用 start.command 启动隔离候选，实际 Safari 查看入场、滚轮、归位和代码层级；记录证据与未测项"
+  ],
+  "scope": [
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap-journey.js",
+    "internal/server/web/starmap-structure.js",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.css",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks/starmap-scroll-backview-20261008.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "原始卡顿/背面抬头与新增调用分层/星等需求已纳入。",
+      "evidence": [
+        "用户本轮两条指令",
+        "只读审阅：滚轮反复重启零速度缓动；节点逐帧创建渐变；call_candidate 为 caller→candidate"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "滚轮使用连续阻尼目标；缓存纹理、邻接、可见节点。独立结构模块全局 SCC 分量 DAG 最长路径分层、选中节点有向 BFS 最短跳数。背面观察者保持单RAF入场与末段交叠。",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "internal/server/knowledge_code.go",
+        "internal/server/web/starmap-journey.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "连续滚轮阻尼、天空/星光/有限云纹缓存、邻接及投影缓存、视口裁剪、连线批绘已实现；背面抬头化星入场；有向调用SCC全局层与BFS局部跳数驱动可视星等和稳定纵深；新增深度控件及明确范围文案。",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap-journey.js",
+        "internal/server/web/starmap-structure.js",
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap.css",
+        "只读协作审阅：未发现阻塞问题"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "限定候选桌面范围：三份JS语法检查、离线Go编译与docs链接检查通过；通过start.command启动18189，容器摘要与最终二进制一致。Safari实际查看背面入场、滚轮缩放及归位中间画面，密集图谱1485节点/4721连接，全局12层；App.knowledgeMap已解析至3跳，选向外2跳自动聚焦，最终说明文字已核对。未运行自动化测试或量化帧率，不称为全产品或大规模性能验收。",
+      "evidence": [
+        ".agent-state/starmap-scroll-build.log",
+        ".agent-state/starmap-scroll-start.log",
+        ".agent-state/starmap-scroll/build.json",
+        ".agent-state/starmap-scroll/source-fingerprints.json",
+        ".agent-state/starmap-scroll/journey/frames.json",
+        ".agent-state/starmap-scroll/journey-safari.gif",
+        ".agent-state/starmap-scroll/movement/frames.json",
+        ".agent-state/starmap-scroll/final-layer-state.txt",
+        ".agent-state/starmap-scroll/final-layers.png",
+        "node --check starmap.js / starmap-journey.js / starmap-structure.js: exit 0",
+        "python3 scripts/check_docs.py: PASS 158 Markdown / 289 links",
+        "git diff --check: exit 0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构文档已说明调用层与跳数、循环/孤立边界、可视星等、缓存上限、真实浏览器观察与未测项；旧候选指纹与本轮指纹分开记录。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docs/tasks/starmap-scroll-backview-20261008.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅范围内代码和新结构模块，保留既有脏工作树；证据留在忽略目录，源码快照与密度演示仅位于隔离候选工作区。仅关闭本轮三个过期候选标签，保留用户标签、最终工作台及星图；未删除运行数据。",
+      "evidence": [
+        "git status --short --branch",
+        "git diff --check",
+        ".agent-state/starmap-scroll/",
+        "/private/tmp/aide-harness-runtime-j01jw5vg/work/observatory/aide-source/SOURCE.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮只授权修复与预览；未提交、推送、升版或发布，未替换生产9999。",
+      "evidence": [
+        "最终候选18189；main仍为既有77a2790并保留此前改动"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "仅恢复隔离候选：将 /private/tmp/aide-harness-runtime-j01jw5vg/aide-candidate-starmap.before-scroll-20261008 复制回 aide-candidate-starmap，将 compose.starmap.yaml.before-scroll-20261008 复制回 compose.starmap.yaml；使用相同COMPOSE_FILE/COMPOSE_PROJECT_NAME运行start.command。不得恢复或替换生产9999。",
+  "handoff": "候选由 start.command 运行于18189；源码待提交，GIF/截图与指纹在.agent-state/starmap-scroll。图谱是静态候选，星等是视觉映射。180份密度预览文档为明确标注的合成文件；73份源码包含Aide自身源码快照，不执行工作区代码。",
+  "candidate": {
+    "url": "https://localhost:18189/",
+    "binary_sha256": "80cb1c215ea03069a3d6891e39fd7647f98c8ed2496c6afc69713754962aae64",
+    "journey_capture_binary_sha256": "c82b04f546d0d08fee374d24cae4d648b7aa964abc21b17e49d05e21037c1e90",
+    "source_fingerprints": {
+      "internal/server/web/starmap.js": "5d398328179d108b2c4f7a9f12cc978f9e7f4a33a9cdfbe7c88dd59383f5e36c",
+      "internal/server/web/starmap-journey.js": "a78337def8ddcc791507daa4402d2a8fca6fe9e42f1f7c22209a5ef148ecf194",
+      "internal/server/web/starmap-structure.js": "a9d6a3761a57de479ffeb28b54c240d448a1403eb082db4e470191bf13376514",
+      "internal/server/web/starmap.html": "1d237ce64940d414c958c4807be72cf0554c335e3b457a4450192fdaf243f4cd",
+      "internal/server/web/starmap.css": "3aebab76a7f01ede0f468c742742f0882e0ad3860410e454d8deef0168f2df25"
+    },
+    "production_updated": false
+  },
+  "unverified": [
+    "量化FPS、连续帧延迟、CPU/GPU/内存峰值",
+    "自动化测试、race、窄屏实机",
+    "系统减少动效、后台锁态交互的本轮浏览器验收",
+    "真实模型回答质量",
+    "完整项目调用覆盖：当前1200符号上限、8900调用未解析"
+  ]
+}

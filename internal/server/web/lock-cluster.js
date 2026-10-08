@@ -45,7 +45,7 @@
     : 'tab-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
   const bootTs = Date.now();
   // role：文件查看器（#file=…）为 slave 优先角色；其余 ws 为主界面
-  const role = (location.hash || '').indexOf('#file=') === 0 ? 'file' : 'ws';
+  const role = ((location.hash || '').indexOf('#file=') === 0 || location.pathname === '/starmap.html') ? 'file' : 'ws';
   const ROLE_PRI = role === 'ws' ? 0 : 1;
 
   const handlers = Object.create(null);

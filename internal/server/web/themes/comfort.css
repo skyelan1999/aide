@@ -1,7 +1,7 @@
 /* 长时间阅读与工作使用：降低饱和度，采用柔和暖灰底色和鼠尾草绿强调色。 */
 html[data-palette="comfort"][data-theme="light"] {
---bg:#f5f4ef; --bg-inset:#eae9e2; --field:#fffefa; --panel:#fbfaf6; --panel-alt:#efeee8;
---surface:#fffefa; --surface-alt:#f7f6f0; --code-bg:#eeede6; --soft:#eeede6; --chip-bg:#e8ebe2;
+--bg:#f3f3f0; --bg-inset:#eae9e2; --field:#fbfbf8; --panel:#f9f9f6; --panel-alt:#eceee9;
+--surface:#fbfbf8; --surface-alt:#f7f6f0; --code-bg:#eeede6; --soft:#eeede6; --chip-bg:#e8ebe2;
 --bubble-bg:#eeeee8; --hover:#e9e9e1; --selected:#e1e6db; --selected-alt:#f4f3ed; --mode-active:#eeede6;
 --toast-bg:#343830; --brand-hi:#566a50; --backdrop:#24261f38; --line:#deded5; --field-border:#c9cabe;
 --line-faint:#e7e6de; --line-soft:#e2e1d9; --line-soft-2:#e2e1d9; --line-soft-3:#e2e1d9;
@@ -23,13 +23,13 @@ html[data-palette="comfort"][data-theme="light"] {
 --phase-rca-bg:rgba(161,95,85,.14); --phase-rca-fg:#854a43;
 }
 html[data-palette="comfort"][data-theme="dark"] {
---bg:#1b1c19; --bg-inset:#20211d; --field:#252620; --panel:#22231f; --panel-alt:#242520;
+--bg:#20231f; --bg-inset:#20211d; --field:#252620; --panel:#22231f; --panel-alt:#242520;
 --surface:#282923; --surface-alt:#252620; --code-bg:#24251f; --soft:#303129; --chip-bg:#30332b;
 --bubble-bg:#2b2c25; --hover:#30312a; --selected:#34382e; --selected-alt:#393a33; --mode-active:#36372f;
 --toast-bg:#e6e7dc; --brand-hi:#b8c8a8; --backdrop:#090a08b5; --line:#373831; --field-border:#46483e;
 --line-faint:#30312b; --line-soft:#35362f; --line-soft-2:#393a32; --line-soft-3:#34352e;
 --line-mid:#4a4c41; --line-chip:#48503e; --line-strong:#505247; --line-composer:#4a4d41; --line-accent:#65735b;
---focus-border:#9cac8c; --focus-border-2:#a8b898; --danger-line:#805c53; --text:#e5e5dc;
+--focus-border:#9cac8c; --focus-border-2:#a8b898; --danger-line:#805c53; --text:#dee4da;
 --text-tab:#d4d5ca; --text-answer:#d4d5ca; --text-breadcrumb:#d4d5ca; --text-step-summary:#d4d5ca;
 --text-step:#d1d2c8; --text-settings:#d1d2c8; --text-output:#d0d1c6; --text-code:#d0d1c6; --text-file:#d0d1c6;
 --text-terminal:#ced0c4; --text-dialog-label:#d0d1c6; --text-session:#b2b4a8; --text-welcome:#b2b4a8;

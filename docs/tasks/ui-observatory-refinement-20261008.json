@@ -1,0 +1,182 @@
+{
+  "id": "ui-observatory-refinement-20261008",
+  "request": "各处UI增强，参考全球top100大平台完成度，体现未知高智慧的能量感",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/avatar-player.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/themes/comfort.css\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n M internal/server/workflow.go\n M plugins/office/index.js\n M plugins/office/manifest.json\n M plugins/office/test.js\n?? docs/architecture/knowledge-map.md\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? docs/tasks/starmap-code-insight-20261008.json\n?? docs/tasks/starmap-document-retrieval-20261008.json\n?? docs/tasks/ui-celestial-sanctum-20261008.json\n?? docs/tasks/ui-comfort-motion-20261008.json\n?? internal/server/code_analysis/\n?? internal/server/document_analysis/\n?? internal/server/knowledge_code.go\n?? internal/server/knowledge_documents.go\n?? internal/server/knowledge_map.go\n?? internal/server/static_assets.go\n?? internal/server/web/experience.css\n?? internal/server/web/experience.js\n?? internal/server/web/sanctum.css\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js\n?? plugins/office/README.md",
+  "acceptance": [
+    "统一工作台、会话、文件、插件、设置、审批、预览控件与独立星图的层级和反馈。",
+    "修复主题对比、隐藏开关键盘焦点、短屏菜单溢出和小型操作按钮目标。",
+    "保持正文与原始图片、CAD、文档的颜色；沿用减少动效与后台暂停。",
+    "通过 start.command 更新隔离候选18189，完成可访问页面的手动浏览器检查；未覆盖的场景如实记录。"
+  ],
+  "scope": [
+    "internal/server/web/sanctum.css",
+    "internal/server/web/starmap.css",
+    "internal/server/web/index.html",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.js",
+    "docs/architecture.md",
+    "docs/tasks/ui-observatory-refinement-20261008.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "将全球大型产品的完成度作为设计参考；不作流量排名或已超越平台的声明。",
+      "evidence": [
+        "Current user request",
+        "Fluent 2 design tokens and motion official guidance"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "统一不透明表面、语义令牌、排版、尺寸和有界动效；源码审计发现跨主题按钮文字与锁屏提示对比问题。",
+      "evidence": [
+        "internal/server/web/sanctum.css",
+        "internal/server/web/style.css",
+        "internal/server/web/themes/comfort.css"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "统一共享UI令牌、排版、表面、交互目标与星图独立浮层；修复重复解锁状态通知导致节点详情消失，保留首次初始化和真实锁态切换。",
+      "evidence": [
+        "internal/server/web/sanctum.css",
+        "internal/server/web/starmap.css",
+        "internal/server/web/starmap.js",
+        "internal/server/web/index.html",
+        "internal/server/web/starmap.html",
+        "ui_audit agent read-only review"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "限定范围检查完成：隔离候选构建、JS语法、差异空白、Safari桌面与390像素响应式手动观察。此状态仅表示下列已执行项目；不构成完整测试、性能或全功能发布验收。",
+      "evidence": [
+        ".agent-state/ui-observatory-build.log",
+        ".agent-state/ui-observatory-start.log",
+        ".agent-state/ui-observatory/workbench-professional-dark.png",
+        ".agent-state/ui-observatory/starmap-desktop.png",
+        ".agent-state/ui-observatory/strategy-390x600.png",
+        ".agent-state/ui-observatory/starmap-390x844-panels.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构补充共享UI精修和锁态去重，限定验证和星图夜空主题边界。",
+      "evidence": [
+        "docs/architecture.md:254",
+        "python3 scripts/check_docs.py: PASS, 158 Markdown files, 289 local links, JPEG signatures, FR-01..100"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已审阅范围内改动；继承源码和用户数据保留；日志/截图位于忽略的.agent-state；临时响应式模式退出；候选回滚文件保留。",
+      "evidence": [
+        "git status --short",
+        "git diff --check",
+        ".agent-state/ui-observatory/"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮交付本地UI候选；未提交、推送、打tag、发布GitHub Release或替换生产9999。",
+      "evidence": [
+        "Isolated compose aide-harness-launcher-20261007 / port 18189"
+      ]
+    }
+  },
+  "release_authorization": "仅用户授权的本地UI改进及隔离候选预览；本轮不提交、推送或发布。",
+  "rollback": "候选使用独立18189及compose项目；替换前保存上一候选二进制和compose，生产9999不变。",
+  "handoff": "本轮UI实现完成，隔离18189候选已通过start.command启动，Safari桌面/390像素界面已实际打开。保留生产9999与所有继承改动。后续完整测试、真实模型、性能测量和发布门禁尚未进行；候选二进制/compose备份可回退，切勿将本记录当成完整发布收据。",
+  "checks": [
+    {
+      "name": "Isolated Go build",
+      "status": "pass",
+      "command": "docker run --rm --network none ... golang:1.26-bookworm ... CGO_ENABLED=0 go build -mod=vendor ./cmd/aide",
+      "result": "Exit 0; final binary includes starmap lock-state guard; no tests run."
+    },
+    {
+      "name": "JavaScript syntax",
+      "status": "pass",
+      "command": "node --check internal/server/web/starmap.js",
+      "result": "Exit 0 after final JS edit."
+    },
+    {
+      "name": "Tracked diff whitespace",
+      "status": "pass",
+      "command": "git diff --check",
+      "result": "Exit 0; untracked styles are not covered by this check."
+    },
+    {
+      "name": "Desktop main workbench",
+      "status": "pass",
+      "method": "Safari native CUA manual inspection",
+      "result": "Classic dark, professional dark, comfort light observed; strategy four columns, file preview, two plugin cards and existing mock approval history opened. Final candidate device theme left professional dark."
+    },
+    {
+      "name": "Responsive strategy",
+      "status": "pass",
+      "method": "Safari Responsive Design Mode, 390x844 and 390x600",
+      "result": "Sections fit width; 600px screen scroll reaches approval choices. No approval mode changed."
+    },
+    {
+      "name": "Desktop star map",
+      "status": "pass",
+      "method": "Click knowledge-map icon beside file refresh, Safari native CUA",
+      "result": "Independent tab opens; 213 demo nodes / 397 connections; detail and AI docks separate and scroll independently. After fix, README selection remains through subsequent interactions and responsive transitions, whereas it previously disappeared."
+    },
+    {
+      "name": "Responsive star map",
+      "status": "pass",
+      "method": "Safari Responsive Design Mode, 390x844",
+      "result": "Detail and AI overlays visible without intersection; search hidden behind active focus panels. Responsive mode exited before handoff."
+    },
+    {
+      "name": "Implementation tests / release regression",
+      "status": "not_run",
+      "reason": "Current request asks for UI enhancement; developer instruction prohibits adding or running tests without explicit request."
+    },
+    {
+      "name": "FPS / load latency / vision outcomes / platform ranking",
+      "status": "not_run",
+      "reason": "No numerical measurements, clinical assessment or cross-platform comparative evaluation performed; do not claim speed or eyesight benefit or superiority."
+    },
+    {
+      "name": "Remaining devices and UI dialogs",
+      "status": "not_run",
+      "reason": "No physical touch device, forced-colors session, professional light / comfort dark / classic light inspection, every PDF/CAD dialog or full keyboard traversal this turn."
+    },
+    {
+      "name": "Real-model / RAG / code-calls / approval execution",
+      "status": "not_run",
+      "reason": "Visual pass used isolated local-ui-fixture and existing records; no new model requests, command approval or semantic retrieval acceptance."
+    },
+    {
+      "name": "Actual lock/unlock transition",
+      "status": "not_run",
+      "reason": "Transition logic reviewed from source; this turn manually checked detail persistence after repeated existing unlock-state events, not a new authenticated lock/unlock cycle."
+    }
+  ],
+  "candidate": {
+    "url": "https://localhost:18189/",
+    "project": "aide-harness-launcher-20261007",
+    "binary": "/private/tmp/aide-harness-runtime-j01jw5vg/aide-candidate-starmap",
+    "sha256": "d8c84af0578f50f0df10dd04f606c178f9c1e979f9952bdf767ce6c5d6162c6b",
+    "compose": "/private/tmp/aide-harness-runtime-j01jw5vg/compose.starmap.yaml",
+    "launcher": "start.command",
+    "production_port": 9999,
+    "production_replaced": false,
+    "source_files": {
+      "internal/server/web/sanctum.css": "653f7d05396ea74b353190342b5675d32ebfe95ca7f435b9fbdcd7dd4ea3d8ab",
+      "internal/server/web/starmap.css": "c667be850ffa459d66cbd2fdddb3f579917f7531e10599e8efd9d3515070107d",
+      "internal/server/web/index.html": "493f3c5f21a599d664f3f94d31d7dcfa492330d4b1e8647cc913ef78cdb92f19",
+      "internal/server/web/starmap.html": "6b36fc77117783cd8973698ddb25fa8b6a39e6f0ad6db549907419a0ffb84370",
+      "internal/server/web/starmap.js": "941c05b837998482ce859d5e20e5e3a9e2d76dc80cfd7b9f9b6df1ba3fedaac0"
+    }
+  },
+  "rollback_files": [
+    "/private/tmp/aide-harness-runtime-j01jw5vg/aide-candidate-starmap-before-observatory",
+    "/private/tmp/aide-harness-runtime-j01jw5vg/compose.starmap-before-observatory.yaml"
+  ],
+  "updated_at": "2026-10-07T19:25:47.275934+00:00"
+}

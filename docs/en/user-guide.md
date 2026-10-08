@@ -2,7 +2,7 @@
 
 [简体中文](../user-guide.md) · **English**
 
-The current source tag is `v0.1.14.0-RC5`. Check the linked [task records](../tasks/) and [verification log](../verification.md) for acceptance status. See [Installation](installation.md) for setup.
+The latest source tag is `v0.1.16.0-RC1`. This guide also describes candidate source changes after RC1: the separate Approval column, knowledge map, and later UI updates are not included merely by running the published RC1 image. Check [task records](../tasks/) and the [verification log](../verification.md) for acceptance status. See [Installation](installation.md) for setup.
 
 ## 1. Find your way around
 
@@ -155,7 +155,16 @@ Open **Model settings**. Enter the provider's Chat Completions-compatible Base U
 
 **Fetch models** queries the provider's `/models` endpoint. A configured status confirms fields, not successful connectivity. Model IDs and context windows must match the provider.
 
-Use **Strategy** near the task input to select automatic routing or a manual parameter profile. The right column selects the model. System profiles are read-only; custom names are user data and are not translated. Routing rules live in `routing-policy.json`.
+Use **Strategy** near the task input to select automatic routing or a manual parameter profile, model, and reasoning effort. System profiles are read-only; custom names are user data and are not translated. Routing rules live in `routing-policy.json`.
+
+### Approval column (candidate UI)
+
+Ordinary conversations show four columns: Strategy, Model, Reasoning effort, and Approval. The selected approval mode also appears in the Strategy button summary. Assistant conversations do not show this column.
+
+- **Manual approval:** decide each command that requires confirmation.
+- **Assisted approval:** the backend independently reviews one exact command using the task's current model and records the model usage and decision. Only authorized low-risk or reversible medium-risk work may pass. Deletion, external transfer, publication, writes outside the workspace, or insufficient evidence return to manual confirmation. Failure, timeout, or a changed command never grants automatic approval.
+
+The selection uses existing conversation-draft and task approval state; you can switch a running task or one waiting for command clarification. It does not change sandbox or plugin permissions, apply file proposals, or grant authority through model routing. Execution-loop prompts, budgets, and research rules are separately editable in settings without recompilation or restart; saved changes affect new tasks, while running and resumed tasks retain their policy snapshot. See [Execution policy](../architecture/execution-policy.md).
 
 ## 4. Workspaces and references
 
@@ -185,6 +194,27 @@ Select **Attach to task** to include saved text in the next request (up to eight
 
 - **DXF vector drawing (#57)**: `.dxf` is parsed offline via the vendored `dxf-parser` (MIT) into SVG, covering LINE/CIRCLE/ARC/ELLIPSE/LWPOLYLINE/POLYLINE/SPLINE/TEXT/MTEXT/INSERT/DIMENSION with ACI colors, layers, and line widths; toolbar zoom ± and fit-to-window; read-only, save disabled.
 - **Word document (#63)**: `.docx` is rendered offline via vendored `docx-preview` 0.3.2 (Apache-2.0) + JSZip 3.10.1 (MIT), preserving headings/tables/lists/images. Sidecar comments are supported (select text to comment, reply, mark resolved; a comment whose anchor no longer matches is flagged stale rather than deleted). Legacy `.doc` binaries prompt you to save-as `.docx`. Comments live in `/data/comments/`, separate from the document body.
+
+### Knowledge map (candidate source)
+
+Click the constellation icon to the left of the file-refresh button in **Project files** to open the independent map directly. Allow pop-up windows for local Aide if the browser blocks it. The map has no manual refresh button. Drag to look around, use the wheel to approach or retreat, double-click a real group to enter it, select a star for details, and use **Reset view** to return smoothly to the single knowledge universe.
+
+Regions represent the current local workspace, reference directory, enabled local/Skill sources, and ordinary conversations belonging to that workspace. Private assistant conversations are excluded; SSH, remote, and MCP documents are not fetched automatically. Larger structures appear only when enough distinct real child groups qualify. Decorative stars are not knowledge nodes. Visual magnitude follows resolved static call-candidate layers, independently of directory depth.
+
+| Search mode | Use and boundary |
+| --- | --- |
+| Nodes / names | Match names, paths, indexed text excerpts, or file `F…`, code `C…`, and session `S…` IDs. File IDs remain stable while workspace, source, and path stay the same |
+| Code hierarchy | Parse Go, ordinary JavaScript, and Python declarations, imports, and call candidates; inspect callers, callees, source lines, and outward hops. This does not execute code or perform full type checking. No incoming edge does not prove unused code; TypeScript/TSX/JSX and other cases remain unsupported |
+| Original document text | Case-sensitive exact matching over extracted text with page, paragraph, or table-row locators; no model call. It does not search the visual layout or unextracted content |
+| Document RAG | Rank excerpts locally with TF-IDF. Clicking AI sends at most eight excerpts for an answer with IDs, locators, and file hashes. This is not vector retrieval, OCR, or a persistent knowledge database. AI answers from original-text mode also use this RAG path |
+
+**Insert into original conversation** appends a reference to the draft that opened the map; it never sends a message. File attachments are deduplicated, code references include IDs and line numbers, and sessions include IDs and excerpts. A changed workspace or originating conversation, or a locked workbench, blocks the old callback. Document excerpts are checked against the original file's SHA-256; changed files require a fresh search.
+
+After a check completes, the map normally checks again in about four seconds and merges changed nodes and relationships by stable ID. Existing star positions, camera, search, and valid selection are preserved. New stars fade in over about 680 ms; removed stars fade out. An unchanged result does not rebuild the layout. Hidden, locked, or departed pages pause synchronization; failures preserve the current sky and retry with backoff. This is a bounded metadata scan, not filesystem event streaming. Leaving the index can also mean renaming, disabled sources, or budget changes; it does not prove a file was deleted. Motion-off and reduced-motion settings apply changes directly.
+
+The built-in `document_search` and the upgraded, enabled Office plugin's `office_document_search` share extraction and retrieval rules. Existing old plugins need the normal update/import process. Discovered read-only MCP tools remain accessible through source tools and `mcp_call`; they are not automatically indexed. The base graph allows at most 800 files, 200 directories, and 200 ordinary sessions; code allows 80 files and 1,200 declarations; document search allows 32 files and returns at most 40 exact hits or 12 RAG excerpts. See [Knowledge-map architecture](../architecture/knowledge-map.md) for detailed input, time, cache, truncation, and plugin limits. An exhausted budget or failed extraction does not prove that the whole document has no match.
+
+These are candidate-source descriptions. This round's Safari observation confirms direct entry and removal of entrance, replay, and map refresh controls. Actual delta additions, changes, removals, interaction, and performance acceptance remain pending. Earlier screenshots, compilation, and startup do not establish full acceptance of the latest implementation. See the [live-update task](../tasks/starmap-live-updates-20261008.json) and [knowledge-map architecture](../architecture/knowledge-map.md).
 
 ## 6. Chat, workflows, and commands
 

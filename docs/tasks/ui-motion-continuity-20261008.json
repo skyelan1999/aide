@@ -1,0 +1,93 @@
+{
+  "id": "ui-motion-continuity-20261008",
+  "request": "星图入场动画做的还是很差，还需要优化，还有归位按钮，没有动画切换，你看看别的地方还有类似的问题吗，修一下",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/avatar-player.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/themes/comfort.css\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n M internal/server/workflow.go\n M plugins/office/index.js\n M plugins/office/manifest.json\n M plugins/office/test.js\n?? docs/architecture/knowledge-map.md\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? docs/tasks/starmap-code-insight-20261008.json\n?? docs/tasks/starmap-document-retrieval-20261008.json\n?? docs/tasks/ui-celestial-sanctum-20261008.json\n?? docs/tasks/ui-comfort-motion-20261008.json\n?? docs/tasks/ui-observatory-refinement-20261008.json\n?? internal/server/code_analysis/\n?? internal/server/document_analysis/\n?? internal/server/knowledge_code.go\n?? internal/server/knowledge_documents.go\n?? internal/server/knowledge_map.go\n?? internal/server/static_assets.go\n?? internal/server/web/experience.css\n?? internal/server/web/experience.js\n?? internal/server/web/sanctum.css\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js\n?? plugins/office/README.md",
+  "acceptance": [
+    "重做观测者仰望、星光飞升与真实星图衔接，保留跳过和重播。",
+    "归位、检索节点聚焦、缩放使用可被拖拽打断的连续相机过渡。",
+    "修复星域、关系筛选、节点详情与AI展开等突变；排查共享面板。",
+    "保持减少动效、后台暂停、锁态清理；通过start.command部署隔离候选并实际查看。"
+  ],
+  "scope": [
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap-journey.js",
+    "internal/server/web/starmap.css",
+    "internal/server/web/starmap.html",
+    "internal/server/web/experience.js",
+    "internal/server/web/experience.css",
+    "internal/server/web/index.html",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks/ui-motion-continuity-20261008.json",
+    "internal/server/web/app.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "基于用户反馈重做入场与归位，并排查同类动效缺失。",
+      "evidence": [
+        "Current user request",
+        "internal/server/web/starmap.js",
+        "internal/server/web/experience.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Canvas场景独立模块；统一时间轴和可打断相机，图关系短交叠，指定面板有界过渡。",
+      "evidence": [
+        "Current user request",
+        "internal/server/web/starmap.js",
+        "internal/server/web/experience.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成独立6.4秒入场、统一RAF时钟、可打断相机、图筛选交叠、星图面板反向续接及共享侧栏／菜单退出生命周期；保留当前列宽和透明度，避免重复触发进入。 全局搜索退出及异步响应可见意图废弃机制已补齐。",
+      "evidence": [
+        "internal/server/web/starmap-journey.js",
+        "internal/server/web/starmap.js",
+        "internal/server/web/experience.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "有限范围检查完成：4个JS语法检查、Go离线编译、docs和diff检查通过；最终隔离候选通过start.command启动，Safari查看完整入场、归位中间画面及指定面板开收状态。未将结束状态等同于所有过渡或生命周期通过。 最终补查搜索结果、Escape关闭、快捷键重开和清空关闭；没有慢响应竞争验收。",
+      "evidence": [
+        ".agent-state/ui-motion-build-final.log",
+        ".agent-state/ui-motion-start-final.log",
+        ".agent-state/ui-motion/journey-final-record.json",
+        ".agent-state/ui-motion/journey-final-safari.gif",
+        ".agent-state/ui-motion/home-final-record.json",
+        ".agent-state/ui-motion/verification-final.json",
+        ".agent-state/ui-motion-start-corrected.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已更新知识星图入场时长、连续动效实现及当前浏览器验收范围；docs检查通过。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "python3 scripts/check_docs.py: PASS 158 Markdown / 289 links"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "原有修改与无关文件保留；程序生成纹理不引入依赖或外部素材；证据存于忽略目录.agent-state，候选和回滚备份保留用于查看。 已关闭4个本轮临时预览标签，保留最终工作台、星图输出及用户原有标签。",
+      "evidence": [
+        ".agent-state/ui-motion",
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次为工作区候选修复，不发布；未提交或推送，未替换生产9999。",
+      "evidence": [
+        "Current user request"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "隔离候选二进制与compose备份在 /private/tmp/aide-harness-runtime-j01jw5vg/aide-candidate-starmap.before-motion-20261008 与 compose.starmap.yaml.before-motion-20261008；生产9999未修改。",
+  "handoff": "候选18189已启动，SHA-256 76791759c6fb03f2ffc573f64d81e4b66a33a47dbd19b49b1027353a01661a2b；生产9999未修改。未运行自动化测试、真实付费模型、FPS量化、窄屏实机、系统减少动效切换、DPR变化或锁态验收；共享短过渡的中间帧及快速反向切换未捕获。搜索结果退出与旧响应废弃已修，受控慢响应竞争未验收；终端和提醒长表单不做高度动画。"
+}

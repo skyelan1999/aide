@@ -1,0 +1,92 @@
+{
+  "id": "ui-celestial-sanctum-20261008",
+  "request": "所有UI检查并优化提升一个层级，营造开源AI工作空间天宫或秘境、神秘高智慧感，同时保持清晰效率与舒适度",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/avatar-player.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/themes/comfort.css\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n?? docs/architecture/knowledge-map.md\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? docs/tasks/ui-comfort-motion-20261008.json\n?? internal/server/knowledge_map.go\n?? internal/server/static_assets.go\n?? internal/server/web/experience.css\n?? internal/server/web/experience.js\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js",
+  "acceptance": [
+    {
+      "criterion": "工作台/输入/审批/设置/文件/插件共享表面，专业明暗及舒适经典兼容",
+      "status": "not_run",
+      "reason": "共享样式与调用位置已巡检；主题和主要区域实际渲染待浏览器可用。"
+    },
+    {
+      "criterion": "静态SVG无交互覆盖，减少动态效果优先，不给用户文件滤色",
+      "status": "pass",
+      "evidence": "sanctum.css/index.html/experience.js源码：aria-hidden及pointer-events none，窄屏隐藏SVG；无图片滤色，减少动态效果原机制保持。属于源码证据，非浏览器证明。"
+    },
+    {
+      "criterion": "Safari实际检查主要区域及窄屏",
+      "status": "blocked",
+      "reason": "Mac锁定；In-app browser自签证书未获信任，未绕过安全警告"
+    }
+  ],
+  "scope": [
+    "共享视觉层sanctum.css，首页入口SVG和文案、启动星轨细节、星图界面、英文翻译",
+    "保留已有审批、星图、舒适动效和其他未提交编辑；仅隔离候选，不发布"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "天宫/秘境的空间感与清晰、高效、可扩展的开源工作空间定位；不宣传未经证实的无限能力。",
+      "evidence": [
+        "用户本轮要求"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "共享精细边框、深空石板与珍珠白、淡金星轨、入口文案；正文保持平静。静态SVG/CSS，无远端字体图片或常驻粒子。",
+      "evidence": [
+        "internal/server/web/sanctum.css",
+        "internal/server/web/index.html"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已实现全局共享视觉层、首页观测轨道、启动刻度、星图面板和英文翻译。保留功能接口、状态语义颜色和减少动态效果。",
+      "evidence": [
+        "internal/server/web/sanctum.css",
+        "internal/server/web/experience.js",
+        "internal/server/web/starmap.css",
+        "internal/server/web/locales/en.js"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "已运行JS语法、diff检查和Go构建；UI实看被Mac锁定与内置浏览器证书不受信任阻挡，未绕过。未运行自动化测试或付费模型调用。",
+      "evidence": [
+        "node --check internal/server/web/experience.js",
+        "node --check internal/server/web/locales/en.js",
+        "git diff --check",
+        ".agent-state/ui-sanctum-build.log",
+        "candidate SHA256 777132c784196bb2bdf11bb8da1034ca69e4d5293c615a10393775e719cc9410",
+        "Safari: Mac locked; IAB: net::ERR_CERT_AUTHORITY_INVALID",
+        ".agent-state/ui-sanctum-start.log: container recreated, started, localhost18189 ready"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录视觉层覆盖范围、静态装饰与验证限制。",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/tasks/ui-celestial-sanctum-20261008.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "共享视觉文件归属产品web；候选二进制位于private/tmp，日志位于忽略目录.agent-state。保留所有前序变更。",
+      "evidence": [
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮请求未授权新发布，未提交、推送、打tag或替换生产。",
+      "evidence": [
+        "用户本轮UI要求"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "候选仅18189，保留生产9999。源码只撤销本任务sanctum视觉层及对应引用和文案，保留前序动效、审批与星图变更。",
+  "handoff": "完成源码层视觉升级，待用户解锁后实际检查专业明暗、舒适经典、审批/设置/预览/星图及窄屏。候选通过start.command启动；不以旧截图证明本轮外观。"
+}

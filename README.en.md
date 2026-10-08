@@ -16,7 +16,7 @@ AI and an integrated work environment · Understand information · Analyze probl
 
 ![aide workbench with conversations, project files, and task input](docs/images/workbench-preview.jpg)
 
-> **Current source tag:** `v0.1.14.0-RC5` (see [version history](version.md)). This is a source tag; verify GitHub Release image assets and production deployment separately. The preview uses an isolated demonstration workspace. Check the task and verification records before treating a feature as accepted.
+> **Latest source tag:** `v0.1.16.0-RC1` (see [release record](docs/reviews/release-0.1.16.0-RC1-2026-10-08.md)). The knowledge map, approval menu, and UI updates below describe candidate source changes after RC1; they are not included merely by running the published RC1 image. The preview uses an isolated workspace. Build, browser acceptance, Release assets, and production deployment are recorded separately.
 
 ## Focus on your professional work
 
@@ -38,6 +38,9 @@ Data is persisted locally. When using a cloud model, task content, context, and 
 | Files and Markdown | Browse, edit, preview, open in a new tab, and attach files | Text/size limits apply; saves check file hashes |
 | Workspaces and references | Local, SSH/SFTP, Skill directories, links, FTP/FTPS/SMB | MCP registration is not a working MCP connection |
 | Models and strategies | Multiple model IDs, parameter profiles, automatic/manual routing | Models share the current provider connection |
+| Approval selection (candidate UI) | A separate Approval column in the input's Strategy menu selects manual or assisted review | Reviews one exact command using the task model and records usage; uncertainty returns to manual confirmation and permissions are unchanged |
+| Knowledge map (candidate) | Open an independent star-map page from Project files; search file, session, and code IDs and insert references into the original draft | Bounded local index; static calls are candidates; checks roughly every 4 seconds merge changes while preserving valid camera and selection state |
+| Original text and RAG (candidate) | Exact text search or local TF-IDF excerpt ranking; click AI for an answer with citations | No OCR, vector database, or persistent index; local retrieval uses no model, while AI sends excerpts and incurs provider usage; [scope and limits](docs/architecture/knowledge-map.md) |
 | Trajectory, search, compaction | Inspect events, search conversation history, summarize old context | Compaction is summarization, not lossless compression or ZIP |
 | Usage and cost | Heatmap, daily details, rate snapshots, provider balance | Priced, estimated, and unpriced usage differ; this is not an invoice |
 | Command panel | Run, inspect, and cancel individual shell commands | No PTY or persistent shell session |
@@ -82,6 +85,8 @@ Open `http://127.0.0.1:8097`. The startup script opens a local token login autom
 5. Review the proposed files before applying them. Existing-file changes require the attachment snapshot and conflict checks.
 6. Review suggested commands and run them separately in the command panel. Check actual results.
 
+In candidate builds, **Strategy → Approval** controls manual or assisted command review independently of model routing. The constellation icon in **Project files** opens the map directly. Find a file (`F…`), code symbol (`C…`), or session (`S…`) and insert its reference into the originating conversation draft; insertion never sends a message. See the [user guide](docs/en/user-guide.md#knowledge-map-candidate-source) and [knowledge-map architecture](docs/architecture/knowledge-map.md).
+
 Choose **Settings → Language → 中文 / English** in a build with language support. The login screen and standalone file view also expose a language selector. Switching language preserves task drafts and editor contents. Model responses, file names, custom profiles, plugins, terminal output, and provider error details retain their original content.
 
 ## Extend aide
@@ -110,7 +115,7 @@ Go embeds the frontend; rebuilding the image is necessary after source changes. 
 
 This is a trusted, single-user local workbench, not public multi-user hosting. AI read tools may read beyond explicitly attached files. File application is atomic per file, not a multi-file transaction. Plugins can use Node capabilities. Per-token SSE streaming is supported (chat mode updates live). Full MCP, PTY, and complete DSH compatibility are not implemented. Token estimates and compaction can lose precision or detail.
 
-[Documentation index](docs/en/README.md) · [Architecture](docs/architecture.md) · [Operations](HANDOVER.md) · [Plugin protocol](docs/plugin-protocol.md) · [Requirements](docs/PRD.md)
+[Documentation index](docs/en/README.md) · [Architecture](docs/architecture.md) · [Knowledge map](docs/architecture/knowledge-map.md) · [Operations](HANDOVER.md) · [Plugin protocol](docs/plugin-protocol.md) · [Requirements](docs/PRD.md)
 
 ## License and acknowledgements
 

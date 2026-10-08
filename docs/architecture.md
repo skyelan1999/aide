@@ -4,7 +4,7 @@
 
 > **启动配置以 `.env` 为准**：`start.command` → `scripts/aide.sh` → Docker Compose，统一读取 `AIDE_PORT`（默认 8097）和 `COMPOSE_FILE`。临时验收端口不是用户启动入口。目录范围和 macOS 共享根模式见 [工作目录配置](workspace-paths.md)。
 
-核对日期：2026-10-01。当前源码 tag 为 `v0.1.14.0-RC5`。aide 融合 AI 与 IDE；架构由 Go 服务、浏览器 UI 与 Docker 工具环境组成。统一虚拟形象使用共享偏好与按需素材播放器，后端真实任务事件确定状态，模型反馈只选择动作变体；响应式侧栏宽度由 CSS 变量与拖动控制器共同维护。小秘明确转交时通过既有 `startTask` 路径创建并启动/排队 Aide 任务；TTS 自动模式按可用提供商回退，无法播放后端音频时退到浏览器合成。历史验收保留于 [验证记录](verification.md)，功能状态以对应任务验收记录为准，发布身份由 tag、镜像和发布记录共同确认。
+核对日期：2026-10-08。已标记源码基线为 `v0.1.16.0-RC1`；本次UI与知识星图改动是该基线之后的源码候选，尚未发行新tag。aide 融合 AI 与 IDE；架构由 Go 服务、浏览器 UI 与 Docker 工具环境组成。统一虚拟形象使用共享偏好与按需素材播放器，后端真实任务事件确定状态，模型反馈只选择动作变体；响应式侧栏宽度由 CSS 变量与拖动控制器共同维护。小秘明确转交时通过既有 `startTask` 路径创建并启动/排队 Aide 任务；TTS 自动模式按可用提供商回退，无法播放后端音频时退到浏览器合成。历史验收保留于 [验证记录](verification.md)，功能状态以对应任务验收记录为准，发布身份由 tag、镜像和发布记录共同确认。
 
 ## 系统结构
 
@@ -37,6 +37,10 @@ Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token �
 | `profiles.go` | 内置/用户 Profile、策略文件、参数校验 |
 | `workspace_config.go` / `ssh_session.go` | 工作区身份、本地映射、SSH/SFTP 生命周期 |
 | `files.go` / `sources.go` / `mcp_source.go` | 路径/内容策略、读写冲突、引用来源与受限 stdio MCP 驱动 |
+| `knowledge_map.go` / `knowledge_updates.go` | 有界知识索引、编号重查、版本差量与文件／代码缓存 |
+| `knowledge_code.go` / `code_analysis/` | Go／JavaScript／Python AST与静态调用候选 |
+| `knowledge_documents.go` / `document_analysis/` | 文档原文提取、本地TF-IDF RAG与原文指纹回填 |
+| `web/starmap*` | 独立知识星图、自然尺度、代码探索和自动增量绘制；直接进入，无入场过场 |
 | `command.go` | 非交互 shell、NDJSON 输出、超时与取消 |
 | `persona.go` / `settings_persona_persist` | 性格系统：多人格（activePersona）、AES-256-GCM 密文（personaCiphers）、可演化 personalities、解锁/保存/重置 |
 | `config_backup.go` | 配置备份信封 `aide-config-backup`：导出/导入设置快照、来源与工作区密钥、小秘历史 |
@@ -70,6 +74,9 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 
 | 方法 | 路由 | 用途 |
 | --- | --- | --- |
+| GET | `/api/knowledge-map`、`/api/knowledge-map/updates` | 知识／代码快照、稳定编号与版本差量同步；详见[知识星图](architecture/knowledge-map.md) |
+| POST | `/api/knowledge-map/assist` | 带编号和片段证据的知识／代码／RAG辅助理解 |
+| POST | `/api/knowledge-map/documents/search`、`/api/knowledge-map/documents/reference` | 原文或RAG检索、回填前重查文件指纹与定位 |
 | GET | `/api/config` | 脱敏配置、version/revision/buildCommit |
 | PUT | `/api/settings` | 模型连接与模型列表 |
 | GET | `/api/models`、`/api/balance` | 提供商代理；支持程度依赖上游 |
@@ -231,3 +238,35 @@ stateDiagram-v2
 4. **分发+脱敏**：通过 `a.routes` 分发到 mux；handler 内白名单聚合——只回 `hasKey/hasPassword`、baseURL 主机名、模型 id、挂载与用量，绝不回 key/密码哈希/人格密文/请求快照正文/access-token。
 
 状态落点：`App.startedAt`（uptime）、`App.errorRing`（失败终态由 `finishStream` 落一条）、`App.providerHealth`（ping-provider 探测缓存）。令牌哈希只由 `/api/debug/admin/*` 管理；关闭总开关或吊销即即时清空哈希。详见 [debug-api.md](debug-api.md)。
+
+
+### 2026-10-08：舒适配色、共享动效与静态加载
+
+- `web/experience.css` 在现有主题与 macos 样式之后加载，统一短交互时长 140/200/260ms、稳定焦点轮廓与选中勾选。主题预览限定于 `data-palette`，普通分段选项保持紧凑。专业主题为中性灰与石板蓝，舒适主题为灰绿；图片、图表、文件预览没有整体滤色，经典主题偏好兼容保留。
+- `aide.ui.motion` 支持 `system/full/reduced`；系统 `prefers-reduced-motion` 优先。`settings-init.js` 仍同步执行以避免主题闪烁，同时应用 `data-motion` 并广播 `aide:motion`。CSS、共享形象播放器、星图和 STL 持续绘制遵循该偏好；后台暂停动画，STL 交互在减少动效时仍可重绘。
+- `web/experience.js` 为装饰性的短星轨汇聚，动画 940ms，980ms 回收，当前标签页会话首次显示。`startupAnimation=off` 关闭自动播放；外观中可以主动重播。减少动态效果优先关闭；点击、键盘操作或切到后台提前回收。覆盖层 `aria-hidden`、`pointer-events:none`，无输入或初始化等待门禁。
+- 除主题初始化外首页脚本使用 `defer`。Mermaid 与 Three/STLLoader/OrbitControls 按需加载且并发去重：合计 3,977,524 字节（约 3.79MiB）从首页初始脚本移出，并非库被移除。Mermaid 首次绘制不依赖语言切换；失败保留文字提示。代码编辑器输入通过 RAF 合帧，滚动只同步偏移，避免每次滚动重复高亮。
+- `static_assets.go` 只对嵌入的公共 JS/CSS/图片/字体/JSON 资源发出 SHA-256 ETag 与 `public,max-age=0,must-revalidate`，摘要按进程缓存。浏览器仍向服务端校验，资源变化不会沿用旧摘要。HTML、API、工作区文件继续 `no-store`；并未改变鉴权、CSP 或跨工作区权限。
+- 所选正文/背景颜色的算术对比值约 12.0–12.87，白色主按钮文字/石板蓝底约 6.47。数值是设计计算，不是全页面可访问性认证，也不能证明保护视力、消除疲劳或保证每个人的颜色识别。实际首屏时长、FPS、持续使用效果需要设备测量。
+- 本次 Safari 观察与构建范围见 `docs/tasks/ui-comfort-motion-20261008.json`。仅隔离候选18189；未发布或替换生产。
+
+### 2026-10-08：天文观测殿视觉层
+
+- `web/sanctum.css` 在 `experience.css` 后加载。共享覆盖工作台导航、文件与插件面板、提醒、输入区、策略菜单、审批澄清卡、设置、文件预览与终端标题；专业主题采用深空石板／珍珠白，淡金仅用于装饰细节，成功、警告与错误的语义颜色保持原有值。经典和舒适主题仍继承各自语义令牌。
+- 首页文案突出开放创造、模型／工具／知识连接与可审阅成果。入口星轨为本地、`aria-hidden`、不可聚焦且不接收指针事件的内联 SVG；仅空工作台显示，小屏隐藏。无远端素材或常驻粒子渲染，不对正文、图片、CAD、文档和图表做整体滤色。
+- 启动星轨增加精细刻度与淡金弧线，继续保持940ms淡出、980ms回收及减少动态效果优先。共享动效层仍限制短过渡；装饰星轨是静态画面。
+- 独立知识星图使用同一石板／月白／淡金层次，搜索、详情、AI区域的表面降低模糊半径，辅助文字提升亮度。当时保留原索引、AI调用提示、编号回调与入场交互；后续入场已删除，当前行为见[知识星图](architecture/knowledge-map.md)。
+- 源码巡检和验证边界记录于 `docs/tasks/ui-celestial-sanctum-20261008.json`。本轮Mac锁定，Safari实际检查尚未完成；内置浏览器自签证书拒绝访问，未绕过警告。不能据此声称全UI实际验收通过或整体性能提升。
+
+### 2026-10-08：共享界面精修
+
+- 在现有 `sanctum.css` 中统一会话菜单、文件列表、插件卡、设置、审批命令、聊天操作、PDF/CAD 工具栏的排版、边框和焦点；采用主题语义令牌。参考 [Fluent 2 设计令牌](https://fluent2.microsoft.design/design-tokens) 的语义层次与 [动效指导](https://fluent2.microsoft.design/motion) 的短反馈、减少动效原则；大型产品的完成度为设计参考，没有流量排名或比较性验收结论。
+- 主按钮及品牌标识使用 `--on-brand`，修正舒适／经典暗色浅底按钮白字问题；运行环境锁定提示改用主题文字，移除其背景模糊。文件工具栏也改用稳定不透明表面。API 状态保持 `--success/--warn`，停止任务保持危险色；原文档、图片与 CAD 内容无整体滤色。
+- 会话更多操作为30px，模型／插件／配置删除为32px；粗指针下扩大到40px。聊天操作不小于30px。隐藏设置开关的相邻滑块显示键盘焦点。审批命令使用等宽字体、主题边框、独立滚动；策略菜单整体限制高度并滚动，小屏单列。
+- 以下为较早候选精修记录；星图随后改为共享工作台主题并删除入场动画，当前行为见[知识星图](architecture/knowledge-map.md)。其 CSS 统一搜索、原文／RAG、代码层级、详情和 AI 区域，详情与 AI 区域按高度分隔，小屏以浮层切换；减少透明度与强制颜色有对应样式。此前采用独立夜空基调，现已由工作台主题连续性替代。没有新增常驻动画、外部素材或依赖。
+- 手动检查发现重复的 `LockCluster` 有效状态通知会触发星图重新索引并清掉节点详情。`setLocked` 记录首次状态，仅在首次通知或真实状态切换时初始化／清理；重复心跳保留当前选择。真实锁定、解锁及索引取消代次处理保持原有链路。
+- 本轮仅更新隔离候选18189，通过 `start.command` 启动；构建、手动浏览器检查、未覆盖场景及回滚文件以 `docs/tasks/ui-observatory-refinement-20261008.json` 为准。构建成功不等于全界面、真实模型或所有设备验收。
+
+### 2026-10-08：星图差量更新与入场删除
+
+星图使用独立页、自然尺度及调用层星等；知识／代码变更通过 `/api/knowledge-map/updates` 按稳定编号自动合并，未变布局与镜头保留。节点视图、文档原文及本地TF-IDF RAG分别表达不同检索范围，Office插件共用原文提取与引用校验。已删除星图刷新按钮和入场过场，保留持续星空、新星渐入与归位。接口、预算、缓存边界、主题和验收状态见[知识星图架构](architecture/knowledge-map.md)与[源码交接](reviews/2026-10-08-starmap-source-sync.md)。

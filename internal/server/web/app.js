@@ -119,6 +119,13 @@ function initSidebarResizers() {
 }
 initSidebarResizers();
 function toast(text) { const host = document.querySelector('dialog[open]') || document.body; host.append($('toast')); $('toast').textContent = text; $('toast').classList.remove('hidden'); clearTimeout(toast.timer); toast.timer = setTimeout(() => $('toast').classList.add('hidden'), 5000); }
+// State changes and listener cleanup remain immediate; experience retains only
+// short-lived inert paint, and falls back to immediate cleanup without motion.
+function leaveUISurface(node, close, remove = false) {
+  if (window.aideExperience?.leave) window.aideExperience.leave(node, close, { remove });
+  else { close?.(); if (remove) node?.remove(); }
+}
+function changeSidePanelState(update) { if (window.aideExperience?.changePanels) window.aideExperience.changePanels(update); else update(); }
 // passwordPrompt(title) 通用密文密码弹窗：替代浏览器原生 prompt（输入时密码在屏幕上明文可见）。
 // 用 <dialog> + <input type=password>，回车确认 / Esc 或点遮罩取消。
 // 返回 Promise<string|null>：确定为输入串（不 trim，由调用方决定），取消为 null。样式复用全局 dialog/label/button 主题变量。
@@ -541,9 +548,9 @@ async function loadSessions() {
     more.setAttribute('aria-label', t("会话操作"));
     more.onclick = e => {
       e.stopPropagation();
-      document.querySelectorAll('.session-menu').forEach(m => m.remove());
+      document.querySelectorAll('.session-menu').forEach(m => leaveUISurface(m, null, true));
       const menu = el('div', 'session-menu');
-      const closeMenu = () => { menu.remove(); };
+      const closeMenu = () => { leaveUISurface(menu, null, true); };
       const pinBtn = el('button', 'menu-item', s.pinned ? t("取消置顶") : t("置顶"));
       pinBtn.onclick = action(async () => { await api(`/sessions/${s.id}`, { method: 'PATCH', body: JSON.stringify({ pinned: !s.pinned }) }); closeMenu(); await loadSessions(); });
       const archBtn = el('button', 'menu-item', s.archived ? t("取消归档") : t("归档"));
@@ -1096,13 +1103,15 @@ function stopRunById(runId) {
   $('plugin-panel').after(center);
   const openCenter = async force => {
     if (document.body.classList.contains('reminders-mode') && !force) { closeSidePanels(); return; }
-    document.body.classList.remove('plugins-mode', 'files-hidden'); document.body.classList.add('reminders-mode');
-    $('file-panel').classList.remove('mobile-open'); state.panel = 'reminders'; syncPanelButtons();
+    changeSidePanelState(() => {
+      document.body.classList.remove('plugins-mode', 'files-hidden'); document.body.classList.add('reminders-mode');
+      $('file-panel').classList.remove('mobile-open'); state.panel = 'reminders'; syncPanelButtons();
+    });
     await loadList();
   };
   const resetForm = () => { editingID = ''; form.reset(); $('reminder-priority').value = 'normal'; $('reminder-area').value = 'workspace'; $('reminder-notify').value = 'both'; $('reminder-form-title').textContent = t('新建提醒'); $('reminder-save').textContent = t('保存提醒'); $('reminder-edit-cancel').classList.add('hidden'); };
-  const showCreateForm = focus => { form.classList.add('open'); $('reminder-create-toggle').textContent = '×'; $('reminder-create-toggle').setAttribute('aria-expanded', 'true'); if (focus) $('reminder-title').focus(); };
-  const hideCreateForm = () => { form.classList.remove('open'); $('reminder-create-toggle').textContent = '＋'; $('reminder-create-toggle').setAttribute('aria-expanded', 'false'); };
+  const showCreateForm = focus => { window.aideExperience?.reopen(form); form.classList.add('open'); $('reminder-create-toggle').textContent = '×'; $('reminder-create-toggle').setAttribute('aria-expanded', 'true'); if (focus) $('reminder-title').focus(); };
+  const hideCreateForm = () => { leaveUISurface(form, () => form.classList.remove('open')); $('reminder-create-toggle').textContent = '＋'; $('reminder-create-toggle').setAttribute('aria-expanded', 'false'); };
   const fmt = value => { if (!value) return ''; const d = new Date(value); return Number.isNaN(d.valueOf()) ? value : d.toLocaleString(); };
   const tag = (text, cls = '') => { const node = el('span', 'reminder-tag ' + cls, text); return node; };
   async function loadList() {
@@ -1466,33 +1475,27 @@ function composerAutoReview() {
   return run ? !!run.autoReview : !!state.approvalModes.get(state.session?.id || 'draft');
 }
 function syncComposerApproval() {
-  const button = $('approval-button');
-  if (!button) return;
-  const enabled = composerAutoReview();
-  button.textContent = t(enabled ? '审批 · 帮我审批' : '审批 · 手动');
-  button.setAttribute('aria-pressed', String(enabled));
-  button.disabled = !!state.approvalModeBusy || !!state.submitting;
-  button.title = t('当前会话的新任务使用此选择；运行中可切换。独立审核具体命令，不确定时转人工，审核使用当前模型并计入用量。');
-  button.onclick = async () => {
-    const sessionId = state.session?.id;
-    const key = sessionId || 'draft';
-    const run = currentApprovalRun();
-    const next = !composerAutoReview();
-    state.approvalModeBusy = true; syncComposerApproval(); updateSendEnabled();
-    try {
-      if (run) {
-        await api(`/sessions/${sessionId}/runs/${run.id}/approval-mode`, {
-          method: 'PUT', body: JSON.stringify({enabled: next})
-        });
-      }
-      state.approvalModes.set(key, next);
-      if (run && state.session?.id === sessionId) {
-        run.autoReview = next;
-        await selectSession(sessionId); schedulePoll();
-      }
-    } catch(e) { toast(e.message); }
-    finally { state.approvalModeBusy = false; syncComposerApproval(); updateSendEnabled(); }
-  };
+  refreshStrategyUI();
+}
+async function setComposerAutoReview(next) {
+  if (state.approvalModeBusy || state.submitting || next === composerAutoReview()) return;
+  const sessionId = state.session?.id;
+  const key = sessionId || 'draft';
+  const run = currentApprovalRun();
+  state.approvalModeBusy = true; syncComposerApproval(); updateSendEnabled();
+  try {
+    if (run) {
+      await api(`/sessions/${sessionId}/runs/${run.id}/approval-mode`, {
+        method: 'PUT', body: JSON.stringify({enabled: next})
+      });
+    }
+    state.approvalModes.set(key, next);
+    if (run && state.session?.id === sessionId) {
+      run.autoReview = next;
+      await selectSession(sessionId); schedulePoll();
+    }
+  } catch(e) { toast(e.message); }
+  finally { state.approvalModeBusy = false; syncComposerApproval(); updateSendEnabled(); }
 }
 function renderApprovalReviews(run, box) {
   if (!run.approvalReviews?.length) return;
@@ -2050,9 +2053,10 @@ function openFileInNewTab(file){
 let fileCtxMenuEl = null;
 function closeFileContextMenu() {
   if (!fileCtxMenuEl) return;
-  fileCtxMenuEl.remove(); fileCtxMenuEl = null;
+  const menu = fileCtxMenuEl; fileCtxMenuEl = null;
   document.removeEventListener('click', closeFileContextMenu);
   document.removeEventListener('keydown', onFileCtxKey);
+  leaveUISurface(menu, null, true);
 }
 function onFileCtxKey(ev) { if (ev.key === 'Escape') closeFileContextMenu(); }
 function fileRawUrl(filePath, root, source) {
@@ -2304,12 +2308,15 @@ function syncPanelButtons() {
   }
 }
 function closeSidePanels() {
+  changeSidePanelState(() => {
   document.body.classList.remove('plugins-mode', 'reminders-mode');
   document.body.classList.add('files-hidden');
   $('file-panel').classList.remove('mobile-open');
   syncPanelButtons();
+  });
 }
 $('files-toggle').onclick = () => {
+  changeSidePanelState(() => {
   const fromPlugins = document.body.classList.contains('plugins-mode');
   const fromReminders = document.body.classList.contains('reminders-mode');
   document.body.classList.remove('plugins-mode', 'reminders-mode');
@@ -2320,6 +2327,7 @@ $('files-toggle').onclick = () => {
   } else if (fromPlugins || fromReminders) document.body.classList.remove('files-hidden');
   else document.body.classList.toggle('files-hidden');
   syncPanelButtons();
+  });
 };
 $('file-panel-close').onclick = () => { closeSidePanels(); $('files-toggle').focus(); };
 $('plugin-panel-close').onclick = () => { closeSidePanels(); $('plugins-toggle').focus(); };
@@ -3177,7 +3185,12 @@ $('attach-file').onclick = () => {
 $('new-file').onclick = openNewItemMenu;
 $('new-file-form').onsubmit = action(async event => { event.preventDefault(); state.file = { path: $('new-file-path').value.trim(), root: 'workspace', hash: '', content: '', fresh: true }; $('new-file-dialog').close(); showEditor(); });
 $('new-folder-form').onsubmit = action(async event => { event.preventDefault(); const target = currentFileTarget(); if (!target.writable) throw new Error(t('引用为只读')); await api('/directory', { method: 'POST', body: JSON.stringify({ root: state.root, source: target.source || undefined, parentPath: state.dir, name: $('new-folder-name').value }) }); $('new-folder-dialog').close(); await loadFiles(); });
-$('terminal-toggle').onclick = () => { const hidden = $('terminal-body').classList.toggle('hidden'); $('terminal-state').textContent = hidden ? t("展开 ＋") : t("收起 −"); };
+$('terminal-toggle').onclick = () => {
+  const terminal = $('terminal-body'), closing = !terminal.classList.contains('hidden');
+  if (closing) leaveUISurface(terminal, () => terminal.classList.add('hidden'));
+  else { window.aideExperience?.reopen(terminal); terminal.classList.remove('hidden'); }
+  $('terminal-state').textContent = closing ? t("展开 ＋") : t("收起 −");
+};
 $('command').addEventListener('keydown', event => {
   if (event.key === 'Enter' && state.commandSessionID) { event.preventDefault(); $('command-form').requestSubmit(); return; }
   if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' || !state.commandHistory.length) return;
@@ -3903,7 +3916,8 @@ function renderConfigDocument(endpoint, title, storedKey, effectiveKey, workspac
   return wrap;
 }
 
-const controlRenderers = { 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
+function renderExperiencePreview() { const wrap=el('div','settings-control'); const b=el('button','quiet',t('重播启动动画')); b.type='button'; b.onclick=()=>{if(document.documentElement.dataset.motion==='reduced'){toast(t('当前已减少动态效果，启动动画已停用。'));return;}closeSettingsSheet();window.aideExperience?.replay();}; wrap.append(b,el('p','muted',t('短促星轨动画，不阻塞操作；系统减少动态效果优先。'))); return wrap; }
+const controlRenderers = { 'experience-preview': renderExperiencePreview, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 
 function renderSystemLogsControl() {
   const wrap = el('div', 'settings-control system-logs-control');
@@ -4268,7 +4282,8 @@ function refreshStrategyUI() {
   const xiaomiOwnsModel = document.body.classList.contains('assistant-mode') && state.xiaomiModelSettings?.source === 'custom';
   const xiaomiModelName = String(state.xiaomiModelSettings?.model || '').trim();
   const modelName = xiaomiOwnsModel ? (xiaomiModelName || t('小秘独立模型')) : (state.config?.models?.find(m => m.id === state.config.activeModel)?.name || state.config?.model || '');
-  const label = (p.strategy === 'auto' ? t("策略 · 自动") : t("策略 · {0}", profileName(p.activeProfile))) + (modelName ? ' · ' + modelName : '');
+  const assistantMode = document.body.classList.contains('assistant-mode');
+  const label = (p.strategy === 'auto' ? t("策略 · 自动") : t("策略 · {0}", profileName(p.activeProfile))) + (modelName ? ' · ' + modelName : '') + (assistantMode ? '' : ' · ' + t(composerAutoReview() ? '辅助审批' : '手动审批'));
   $('strategy-label').textContent = label;
   $('strategy-label').title = label;
   const menu = $('strategy-menu');
@@ -4308,16 +4323,34 @@ function refreshStrategyUI() {
     reasoningCol.append(strategyMenuOption('reasoning', val, name, desc, curEffort === val));
   }
   menu.append(left, right, reasoningCol);
+  menu.classList.toggle('with-approval', !assistantMode);
+  if (!assistantMode) {
+    const approvalCol = el('div', 'strategy-menu-col strategy-approval-col');
+    approvalCol.append(el('div', 'strategy-menu-sep', t('审批')));
+    const enabled = composerAutoReview();
+    const busy = !!state.approvalModeBusy || !!state.submitting;
+    approvalCol.append(
+      strategyMenuOption('approval', 'manual', t('手动审批'), t('逐项确认命令'), !enabled, busy),
+      strategyMenuOption('approval', 'assisted', t('辅助审批'), t('独立审核命令'), enabled, busy),
+      el('small', 'strategy-approval-note', t('独立审核具体命令，不确定时转人工；审核使用当前模型并计入用量。'))
+    );
+    menu.append(approvalCol);
+  }
 }
 function strategyMenuOption(kind, value, name, desc, selected, disabled = false) {
   const b = el('button', 'strategy-option' + (selected ? ' selected' : ''));
   b.type = 'button';
   b.disabled = disabled;
-  if (disabled) b.title = t('小秘使用独立模型来源，模型由小秘设置管理');
+  if (disabled && kind !== 'approval') b.title = t('小秘使用独立模型来源，模型由小秘设置管理');
   b.setAttribute('role', 'menuitemradio');
   b.setAttribute('aria-checked', String(selected));
   b.append(el('span', 'strategy-option-check', selected ? '✓' : ''), el('span', '', name), el('small', '', desc));
   b.onclick = action(async () => {
+    if (kind === 'approval') {
+      await setComposerAutoReview(value === 'assisted');
+      closeStrategyMenu();
+      return;
+    }
     await profilesManager.flush();
     const source = profilesManager.local || state.profiles;
     if (kind === 'model') {
@@ -4345,11 +4378,12 @@ function strategyMenuOption(kind, value, name, desc, selected, disabled = false)
   return b;
 }
 function openStrategyMenu() {
+  window.aideExperience?.reopen($('strategy-menu'));
   $('strategy-menu').classList.remove('hidden');
   $('strategy-button').setAttribute('aria-expanded', 'true');
 }
 function closeStrategyMenu() {
-  $('strategy-menu').classList.add('hidden');
+  leaveUISurface($('strategy-menu'), () => $('strategy-menu').classList.add('hidden'));
   $('strategy-button').setAttribute('aria-expanded', 'false');
 }
 $('strategy-button').onclick = async () => {
@@ -5127,11 +5161,13 @@ function renderPluginSurface(entries) {
 }
 $('plugins-toggle').onclick = action(async () => {
   if (document.body.classList.contains('plugins-mode')) { closeSidePanels(); return; }
+  changeSidePanelState(() => {
   document.body.classList.remove('files-hidden');
   document.body.classList.remove('reminders-mode'); document.body.classList.add('plugins-mode');
   state.panel = 'plugins';
   $('file-panel').classList.remove('mobile-open');
   syncPanelButtons();
+  });
   await loadPluginsPanel();
 });
 $('refresh-plugins').onclick = action(loadPluginsPanel);
@@ -5940,15 +5976,17 @@ function setupImagePreview(container, filePath, root, source) {
 
 /* STL 3D 模型预览器：Three.js + STLLoader + OrbitControls */
 /* 动态确保 vendor 脚本加载（兜底 defer 未生效 / 缓存失败） */
+const vendorLoads = new Map();
 function ensureVendorScript(src, check) {
-  return new Promise((resolve, reject) => {
-    if (check()) return resolve();
-    const sc = document.createElement('script');
-    sc.src = src; sc.async = false;
-    sc.onload = () => (check() ? resolve() : reject(new Error(t('{0} 加载后仍不可用', src))));
-    sc.onerror = () => reject(new Error(t('无法加载 {0}', src)));
+  if (check()) return Promise.resolve();
+  if (vendorLoads.has(src)) return vendorLoads.get(src);
+  const pending = new Promise((resolve, reject) => {
+    const sc = document.createElement('script'); sc.src = src; sc.async = false;
+    sc.onload = () => check() ? resolve() : reject(new Error(t('{0} 加载后仍不可用', src)));
+    sc.onerror = () => { sc.remove(); reject(new Error(t('无法加载 {0}', src))); };
     document.head.appendChild(sc);
-  });
+  }).catch(error => { vendorLoads.delete(src); throw error; });
+  vendorLoads.set(src, pending); return pending;
 }
 async function ensureThreeStack() {
   await ensureVendorScript('/vendor/three.min.js', () => typeof THREE !== 'undefined');
@@ -6035,7 +6073,7 @@ async function setupStlPreview(container, filePath, root, source) {
   scene.background = new THREE.Color(0x1a1a2e);
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 10000);
   const renderer = new THREE.WebGLRenderer({ antialias: true, failIfMajorPerformanceCaveat: false });
-  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   canvasWrap.appendChild(renderer.domElement);
   scene.add(new THREE.AmbientLight(0xffffff, 0.5));
   const dl1 = new THREE.DirectionalLight(0xffffff, 0.8); dl1.position.set(5, 10, 7); scene.add(dl1);
@@ -6045,8 +6083,26 @@ async function setupStlPreview(container, filePath, root, source) {
   controls.enableDamping = true; controls.dampingFactor = 0.08;
   let animId = 0, resizeObs = null, stlGeometry = null, stlMaterial = null;
   let disposed = false;
+  const animateSTL = () => {
+    animId = 0;
+    if (disposed || document.hidden || !container.isConnected) return;
+    controls.update(); renderer.render(scene, camera);
+    if (document.documentElement.dataset.motion !== 'reduced') animId = requestAnimationFrame(animateSTL);
+  };
+  const syncSTLMotion = () => {
+    if (animId) cancelAnimationFrame(animId);
+    animId = 0; controls.enableDamping = document.documentElement.dataset.motion !== 'reduced';
+    animateSTL();
+  };
+  const renderSTLChange = () => { if (!disposed && document.documentElement.dataset.motion === 'reduced') renderer.render(scene, camera); };
+  document.addEventListener('visibilitychange', syncSTLMotion);
+  window.addEventListener('aide:motion', syncSTLMotion);
+  controls.addEventListener('change', renderSTLChange);
   const teardown = () => {
     if (disposed) return; disposed = true;
+    document.removeEventListener('visibilitychange', syncSTLMotion);
+    window.removeEventListener('aide:motion', syncSTLMotion);
+    controls.removeEventListener('change', renderSTLChange);
     if (animId) { cancelAnimationFrame(animId); animId = 0; }
     if (resizeObs) { resizeObs.disconnect(); resizeObs = null; }
     try { controls.dispose(); } catch (_) {}
@@ -6058,6 +6114,7 @@ async function setupStlPreview(container, filePath, root, source) {
 
   fetch(rawUrl).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
     .then(buf => {
+      if (disposed) return;
       stlGeometry = new THREE.STLLoader().parse(buf);
       stlGeometry.computeVertexNormals(); stlGeometry.computeBoundingBox();
       const mesh = new THREE.Mesh(stlGeometry, new THREE.MeshPhongMaterial({ color: 0x60a5fa, specular: 0x111111, shininess: 80 }));
@@ -6073,8 +6130,8 @@ async function setupStlPreview(container, filePath, root, source) {
       controls.target.set(0, 0, 0); controls.update();
       meta.textContent = Math.round(stlGeometry.attributes.position.count / 3) + ' ' + t('三角面') + ' · ' + size.x.toFixed(2) + '×' + size.y.toFixed(2) + '×' + size.z.toFixed(2);
       btnReset.onclick = () => { camera.position.set(camDist, camDist * 0.7, camDist); controls.target.set(0, 0, 0); controls.update(); };
-      (function animate() { if (disposed) return; animId = requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
-      const resize = () => { if (disposed) return; const w = canvasWrap.clientWidth, h = canvasWrap.clientHeight; if (w > 0 && h > 0) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); } };
+      animateSTL();
+      const resize = () => { if (disposed) return; const w = canvasWrap.clientWidth, h = canvasWrap.clientHeight; if (w > 0 && h > 0) { camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setSize(w, h); renderSTLChange(); } };
       resize(); resizeObs = new ResizeObserver(resize); resizeObs.observe(canvasWrap);
     }).catch(err => { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">' + t('STL 加载失败：') + escapeHtml(err.message) + '</div>'; meta.textContent = t('解析失败'); });
 }
@@ -6509,7 +6566,6 @@ function setupCodeHighlight(textarea, lang) {
     pre.style.boxSizing = style.boxSizing;
   }
   function render() {
-    positionOverlay();
     var text = textarea.value;
     if (text.length > 500000) { code.textContent = text; return; }
     try {
@@ -6521,11 +6577,16 @@ function setupCodeHighlight(textarea, lang) {
   }
   textarea._aideResizeOverlay = positionOverlay;
   window.addEventListener('resize', positionOverlay);
-  textarea.addEventListener('scroll', render);
-  textarea.addEventListener('input', render);
-  render();
+  var highlightFrame=0;
+  function syncScroll(){pre.scrollTop=textarea.scrollTop;pre.scrollLeft=textarea.scrollLeft;}
+  function scheduleHighlight(){if(!highlightFrame)highlightFrame=requestAnimationFrame(()=>{highlightFrame=0;render();});}
+  textarea.addEventListener('scroll',syncScroll,{passive:true});
+  textarea.addEventListener('input',scheduleHighlight);
+  textarea._aideHighlightCleanup=()=>{cancelAnimationFrame(highlightFrame);textarea.removeEventListener('scroll',syncScroll);textarea.removeEventListener('input',scheduleHighlight);};
+  positionOverlay();render();
 }
 function teardownCodeHighlight(textarea) {
+  textarea._aideHighlightCleanup?.();textarea._aideHighlightCleanup=null;
   if (textarea._aideResizeOverlay) { window.removeEventListener('resize', textarea._aideResizeOverlay); textarea._aideResizeOverlay = null; }
   textarea.classList.remove('code-editable');
   var wrapper = textarea.parentNode;
@@ -7235,7 +7296,7 @@ async function openFileViewMode() {
   }
   fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
   $('file-view-mode-switch').classList.toggle('hidden', !md);
-  const readOnly = isBackupPath(spec.path) || (spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true));
+  const readOnly = spec.readOnly === true || isBackupPath(spec.path) || (spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true));
   $('file-view-editor').value = data.content;
   $('file-view-editor').readOnly = readOnly;
   // #64: code syntax highlighting
@@ -7287,6 +7348,17 @@ async function openFileViewMode() {
     }, '_fileViewDrawioHandler');
   } else {
     setFileViewMode(md ? 'preview' : 'edit');
+  }
+  if (spec.codeHash && data.hash !== spec.codeHash) toast(t('源码已变更，请刷新星图后重新定位。'));
+  if (!visualPreview && (!spec.codeHash || data.hash === spec.codeHash) && Number.isInteger(spec.line) && spec.line > 0) {
+    setFileViewMode('edit');
+    const editor=$('file-view-editor'),lines=editor.value.split('\n');
+    const line=Math.min(spec.line,lines.length),end=Math.min(Number.isInteger(spec.endLine)?Math.max(line,spec.endLine):line,lines.length,line+200);
+    const start=lines.slice(0,line-1).reduce((n,s)=>n+s.length+1,0),finish=lines.slice(0,end).join('\n').length;
+    editor.focus();editor.setSelectionRange(start,finish);
+    editor.scrollTop=Math.max(0,(line-3)*(parseFloat(getComputedStyle(editor).lineHeight)||20));
+    editor.dispatchEvent(new Event('scroll'));
+    $('file-view-path').textContent+=' · L'+line+'–L'+end;
   }
   $('file-view-content').replaceChildren();
 }
@@ -7558,15 +7630,31 @@ function ensureTrajectoryTabs() {
 /* ── 全局搜索（FR-92）：⌘K 聚焦，防抖检索会话缓存 ── */
 let searchTimer = null;
 let searchSeq = 0;
-$('global-search').addEventListener('input', () => {
+let searchResultsWanted = false;
+function closeGlobalSearch() {
+  clearTimeout(searchTimer); searchTimer = null;
+  searchResultsWanted = false; ++searchSeq; // Invalidate even a request already in flight.
+  leaveUISurface($('search-results'), () => $('search-results').classList.add('hidden'));
+}
+function searchMayShow(seq, query) {
+  // Do not replace a keyboard-focused result row: that would remove its focus
+  // and could reopen the panel after its focusout close intent.
+  const focused = document.activeElement === $('global-search');
+  return searchResultsWanted && seq === searchSeq && query === $('global-search').value.trim() && focused;
+}
+function scheduleGlobalSearch() {
   clearTimeout(searchTimer);
   const q = $('global-search').value.trim();
-  if (!q) { $('search-results').classList.add('hidden'); return; }
+  if (!q) { closeGlobalSearch(); return; }
+  searchResultsWanted = true;
+  const mySeq = ++searchSeq; // New input invalidates the previous response before debounce.
   searchTimer = setTimeout(action(async () => {
-    const mySeq = ++searchSeq;
+    searchTimer = null;
+    if (!searchMayShow(mySeq, q)) return;
     const data = await api('/search?q=' + encodeURIComponent(q));
-    if (mySeq !== searchSeq) return; // 已有更新的查询，丢弃旧响应
+    if (!searchMayShow(mySeq, q)) return;
     const host = $('search-results');
+    window.aideExperience?.reopen(host);
     host.replaceChildren();
     if (!data.results?.length) { host.append(el('p', 'muted', t("没有匹配的聊天"))); }
     data.results.forEach(res => {
@@ -7574,7 +7662,7 @@ $('global-search').addEventListener('input', () => {
       const badge = res.archived ? el('span', 'archived-badge', t('已归档')) : null;
       row.append(el('strong', '', (res.number > 0 ? '#' + res.number + ' ' : '') + res.title), badge, el('span', '', res.snippet));
       row.onclick = action(async () => {
-        $('search-results').classList.add('hidden'); $('global-search').value = '';
+        closeGlobalSearch(); $('global-search').value = '';
         if (res.archived) {
           await api(`/sessions/${res.sessionId}`, { method: 'PATCH', body: JSON.stringify({ archived: false }) });
           await loadSessions();
@@ -7585,19 +7673,28 @@ $('global-search').addEventListener('input', () => {
     });
     host.classList.remove('hidden');
   }), 300);
-});
+}
+$('global-search').addEventListener('input', scheduleGlobalSearch);
 // 聚焦即展开搜索面板：空输入时给出提示，消除「可输入但无反应」的假可点观感。
-$('global-search').addEventListener('focus', () => {
-  if ($('global-search').value.trim()) return;
+function showGlobalSearch() {
+  if ($('global-search').value.trim()) { scheduleGlobalSearch(); return; }
+  clearTimeout(searchTimer); searchTimer = null;
+  searchResultsWanted = true; ++searchSeq;
   const host = $('search-results');
+  window.aideExperience?.reopen(host);
   host.replaceChildren(el('p', 'muted', t("输入关键字搜索聊天记录")));
   host.classList.remove('hidden');
+}
+$('global-search').addEventListener('focus', showGlobalSearch);
+$('global-search').closest('.global-search').addEventListener('focusout', event => {
+  if (!event.currentTarget.contains(event.relatedTarget)) closeGlobalSearch();
 });
 document.addEventListener('keydown', event => {
-  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); $('global-search').focus(); $('global-search').select(); }
-  if (event.key === 'Escape') $('search-results').classList.add('hidden');
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); $('global-search').focus(); $('global-search').select(); if (!searchResultsWanted) showGlobalSearch(); }
+  if (event.key === 'Escape') closeGlobalSearch();
 });
 document.addEventListener('click', event => {
+  if (!event.target.closest('.global-search')) closeGlobalSearch();
   // md 相对路径链接：在 aide 内部打开
   const link = event.target.closest('a[data-internal-link]');
   if (link) {
@@ -7607,7 +7704,6 @@ document.addEventListener('click', event => {
     if (path) openFile(path).catch(() => toast(t("打不开文件: {0}", path)));
     return;
   }
-  if (!event.target.closest('.global-search')) $('search-results').classList.add('hidden');
 });
 /* ── 手动压缩（FR-93） ── */
 function refreshCompactInfo() {
@@ -7704,26 +7800,25 @@ window.addEventListener('aide:language', () => {
   if (state.config) action(refreshConfig)();
   renderSession(); renderAttachments(); renderTrajectory(); renderSourceChips();
   refreshStrategyUI(); refreshCompactInfo(); estimateContext(); renderWorkspaceSummary(); updateSendEnabled();
-  // mermaid 初始化
-if (window.mermaid) mermaid.initialize({ startOnLoad: false, theme: 'neutral', securityLevel: 'strict' });
-async function renderMermaid() {
-  if (!window.mermaid) return;
-  document.querySelectorAll('div.mermaid:not([data-processed])').forEach(async el => {
-    try {
-      const { svg } = await mermaid.render('m' + Math.random().toString(36).slice(2), el.textContent);
-      el.innerHTML = svg; el.dataset.processed = '1';
-    } catch (e) { el.innerHTML = `<pre style="color:#f87171">${t('流程图渲染失败')}</pre>`; el.dataset.processed = '1'; }
-  });
-}
-if (!document.body.classList.contains('file-view-mode') && state.config) { action(loadSessions)(); action(loadFiles)(); }
-// 每次 renderMarkdown 后触发 mermaid 渲染
-const _origRender = renderMarkdown;
-renderMarkdown = function(src, live) { const html = _origRender(src, live); setTimeout(renderMermaid, 50); return html; };
+  scheduleMermaid();
   if (fileView.spec) $('file-view-ro-badge').classList.toggle('hidden', !$('file-view-editor').readOnly);
   if (!$('strategy-menu').classList.contains('hidden')) openStrategyMenu();
   if (state.contextPreview) renderContextPreview(state.contextPreview);
 });
 
+let mermaidTimer=0, mermaidReady=null;
+function scheduleMermaid(){clearTimeout(mermaidTimer);mermaidTimer=setTimeout(renderMermaid,80);}
+async function renderMermaid(){
+ const nodes=[...document.querySelectorAll('div.mermaid:not([data-processed])')];if(!nodes.length)return;
+ for(const node of nodes)node.dataset.processed='pending';
+ try {
+  if(!mermaidReady)mermaidReady=ensureVendorScript('/vendor/mermaid.min.js',()=>!!window.mermaid).then(()=>{window.mermaid.initialize({startOnLoad:false,theme:'neutral',securityLevel:'strict'});}).catch(e=>{mermaidReady=null;throw e;});
+  await mermaidReady;
+  for(const node of nodes){if(!node.isConnected)continue;try{const result=await window.mermaid.render('m'+crypto.randomUUID().replaceAll('-',''),node.textContent);if(node.isConnected){node.innerHTML=result.svg;node.dataset.processed='1';}}catch{node.textContent=t('流程图渲染失败');node.dataset.processed='1';}}
+ } catch {for(const node of nodes){delete node.dataset.processed;node.textContent=t('流程图渲染失败');}}
+}
+const originalMarkdownRender=renderMarkdown;
+renderMarkdown=function(src,live,basePath){const html=originalMarkdownRender(src,live,basePath);if(/```mermaid|class="mermaid"/.test(src||''))scheduleMermaid();return html;};
 /* ── 语音小秘（Web Speech API 实时断句 + AI 甄别 + 直接发送）──────────
    边说边断：按句末标点/停顿自动成句 → 后端甄别 → 判定为指令的句子直接
    发送到当前会话（与手动提交同一 run 入口，兼容排队/工作流模式）；
@@ -10060,3 +10155,40 @@ async function setupSqliteViewer(container, path, root) {
     container.innerHTML = '<div class="sqlite-error">加载失败: ' + escapeHtml(e.message || '') + '</div>';
   }
 }
+
+// Each star-map window has its own callback channel and remains bound to the originating draft.
+$('open-starmap').onclick = () => {
+  if (lockScreen.locked) return;
+  const nonce = crypto.randomUUID();
+  const originalSession = state.session?.id || '';
+  const bridge = new BroadcastChannel('aide-stars-' + nonce);
+  const sky = window.open('/starmap.html?channel=' + encodeURIComponent(nonce), '_blank');
+  if (!sky) { bridge.close(); toast(t('请允许弹出知识星图窗口')); return; }
+  bridge.onmessage = async event => {
+    if (event.data?.type !== 'insert') return;
+    if (lockScreen.locked) { bridge.postMessage({type:'ack', message:t('请先解锁工作台')}); return; }
+    const reply = message => bridge.postMessage({type:'ack', message});
+    if ((state.session?.id || '') !== originalSession) { reply(t('原会话已切换，请从当前会话重新打开星图')); return; }
+    try {
+      const n = await api('/knowledge-map?id=' + encodeURIComponent(event.data.id) + '&workspace=' + encodeURIComponent(event.data.workspace));
+      if ((state.session?.id || '') !== originalSession) { reply(t('原会话已切换，请重新打开星图')); return; }
+      let documentQuote = null;
+      if (event.data.document && n.kind === 'file') {
+        const d = event.data.document;
+        documentQuote = await api('/knowledge-map/documents/reference', {method:'POST',body:JSON.stringify({id:n.id,workspace:event.data.workspace,locator:d.locator,offset:d.offset,hash:d.hash})});
+      }
+      if (lockScreen.locked || (state.session?.id || '') !== originalSession) { reply(t('原会话已切换，请重新打开星图')); return; }
+      if (n.kind === 'file' || n.kind === 'symbol') {
+        const att = {root:n.root, path:n.path}; if (n.source) att.source=n.source;
+        const exists = state.attachments.some(a=>a.root===att.root && a.path===att.path && (a.source||'')===(att.source||''));
+        if (!exists) { if (state.attachments.length >= 8) throw Error(t('最多附加 8 个文件')); state.attachments.push(att); renderAttachments(); }
+      } else if (n.kind !== 'session') { throw Error(t('请选择文件或会话节点')); }
+      const reference = n.kind === 'symbol' ? '[代码 ' + n.id + '] ' + n.path + ':' + n.line + '–' + n.endLine + ' · ' + n.name : n.kind === 'session' ? '[会话 ' + n.id + ' / #' + n.number + '] ' + n.name : '[文件 ' + n.id + '] ' + n.path;
+      $('prompt').value += ($('prompt').value ? '\n' : '') + reference + (documentQuote ? '\n[文档片段 ' + documentQuote.id + '] ' + documentQuote.locator + ' · SHA-256 ' + documentQuote.hash + '\n' + documentQuote.text : '') + (n.kind === 'session' && n.text ? '\n会话片段（索引摘录）：\n' + n.text.slice(0, 1500) : '');
+      $('prompt').dispatchEvent(new Event('input', {bubbles:true}));
+      $('prompt').focus(); reply(t('已插入原会话草稿，尚未发送'));
+    } catch (e) { reply(e.message); }
+  };
+  // Stop listening once the independently opened window is closed.
+  const timer = setInterval(()=>{ if (sky.closed) { clearInterval(timer); bridge.close(); } }, 2000);
+};

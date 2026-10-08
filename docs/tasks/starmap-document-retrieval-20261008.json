@@ -1,0 +1,82 @@
+{
+  "id": "starmap-document-retrieval-20261008",
+  "request": "文档支持RAG和原文搜索两种形式并配合插件",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/avatar-player.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/themes/comfort.css\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n?? docs/architecture/knowledge-map.md\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? docs/tasks/starmap-code-insight-20261008.json\n?? docs/tasks/ui-celestial-sanctum-20261008.json\n?? docs/tasks/ui-comfort-motion-20261008.json\n?? internal/server/code_analysis/\n?? internal/server/knowledge_code.go\n?? internal/server/knowledge_map.go\n?? internal/server/static_assets.go\n?? internal/server/web/experience.css\n?? internal/server/web/experience.js\n?? internal/server/web/sanctum.css\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js",
+  "acceptance": [
+    "星图提供原文逐字搜索及RAG片段检索两种形式",
+    "PDF／DOCX／XLSX／PPTX／UTF-8文本有来源定位与内容指纹",
+    "RAG回答引用片段编号，原文搜索不调用模型",
+    "Office插件和内置document_search共用服务，遵守来源启用和工具禁用",
+    "片段插入原会话前重新校验文件指纹，不自动发送"
+  ],
+  "scope": [
+    "internal/server/knowledge_documents.go",
+    "internal/server/document_analysis/",
+    "internal/server/knowledge_map.go",
+    "internal/server/server.go",
+    "internal/server/workflow.go",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.css",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "plugins/office/index.js",
+    "plugins/office/manifest.json",
+    "docs/architecture/knowledge-map.md",
+    "plugins/office/test.js",
+    "plugins/office/README.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "双模式检索、定位、编号回填及插件共享服务，验收标准已列",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "只读授权范围、内容指纹缓存、有界提取、TF-IDF RAG及原文逐字匹配",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "实现文档双模式API、AI RAG回答、片段回填校验、星图选择器及Office1.1.0适配；源码编译通过",
+      "evidence": []
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "Go构建、JS／Python语法检查通过；start.command启动候选。Mac锁定导致新增界面、原文／RAG交互及回填浏览器验收NOT_RUN。未运行测试、真实文档解析端到端或真实模型调用。插件源码1.1.0已准备，未自动替换已安装旧插件。",
+      "evidence": [
+        ".agent-state/starmap-document-build.log",
+        ".agent-state/starmap-document-start.log",
+        "Safari getAXState: Mac locked"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新知识星图架构及Office插件使用说明，明确无OCR／向量索引／远程文档集成",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "plugins/office/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留继承改动；新增产品脚本属于嵌入式文档解析；旧插件注册断言随工具顺序更新，未新增测试用例或运行测试",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "无本轮发布授权；未提交、推送、打标签或替换生产9999",
+      "evidence": []
+    }
+  },
+  "release_authorization": "仅功能实现与隔离候选启动",
+  "rollback": "逐文件撤销本轮文档检索改动并重编候选；保留原星图及代码视图改动",
+  "handoff": "解锁Mac后验收原文搜索／RAG片段与回填；模型质量及真实PDF/Office提取需单独验收；已安装Office旧插件通过现有更新机制升级至1.1.0",
+  "candidate": {
+    "url": "https://localhost:18189/",
+    "entry": "start.command",
+    "sha256": "a1911e7f1d54f6176bf8af35046a4259aefd927c31c9755212fd94969de14ca1"
+  }
+}

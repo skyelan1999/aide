@@ -1,0 +1,90 @@
+{
+  "id": "starmap-live-updates-20261008",
+  "request": "把刷新按钮删了，如果有更新自动刷新，星星自动生成而不是全盘的刷",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/avatar-player.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/themes/comfort.css\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n M internal/server/workflow.go\n M plugins/office/index.js\n M plugins/office/manifest.json\n M plugins/office/test.js\n?? .github/\n?? docs/architecture/knowledge-map.md\n?? docs/reviews/2026-10-08-homepage/\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/homepage-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? docs/tasks/starmap-code-insight-20261008.json\n?? docs/tasks/starmap-cosmic-scales-20261008.json\n?? docs/tasks/starmap-document-retrieval-20261008.json\n?? docs/tasks/starmap-scroll-backview-20261008.json\n?? docs/tasks/starmap-summit-journey-20261008.json\n?? docs/tasks/ui-celestial-sanctum-20261008.json\n?? docs/tasks/ui-comfort-motion-20261008.json\n?? docs/tasks/ui-motion-continuity-20261008.json\n?? docs/tasks/ui-observatory-refinement-20261008.json\n?? docs/website.md\n?? internal/server/code_analysis/\n?? internal/server/document_analysis/\n?? internal/server/knowledge_code.go\n?? internal/server/knowledge_documents.go\n?? internal/server/knowledge_map.go\n?? internal/server/static_assets.go\n?? internal/server/web/assets/\n?? internal/server/web/experience.css\n?? internal/server/web/experience.js\n?? internal/server/web/sanctum.css\n?? internal/server/web/starmap-cosmos.js\n?? internal/server/web/starmap-journey.js\n?? internal/server/web/starmap-structure.js\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js\n?? plugins/office/README.md\n?? site/",
+  "acceptance": [
+    "星图页不再显示手动刷新按钮，初次载入后自动检查索引变化。",
+    "更新按编号合并，新增星点逐颗显现，删除淡出、修改更新节点和关系；不刷新网页或整幅画布快照。",
+    "相同工作区保留相机、当前星域、筛选、查询和未删除的选中节点；无变化不触发布局。",
+    "后台、锁定、离开页面暂停同步；重试有退避、请求取消/模式切换不应用旧响应。",
+    "通过start.command启动18189候选，观察新增、修改、删除及相机/搜索/选择保留；不替换9999。"
+  ],
+  "scope": [
+    "internal/server/knowledge_updates.go",
+    "internal/server/knowledge_map.go",
+    "internal/server/server.go (App字段与单路由)",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks/starmap-live-updates-20261008.json",
+    ".agent-state/starmap-live/"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按当前用户要求移除星图刷新按钮并改为自动差量同步；保留已有主题、入场与索引边界。",
+      "evidence": [
+        "本任务request和acceptance"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "后端按受限元数据扫描发现变化，复用未改变文件原文/代码结果，保留8版差量；前端请求携带revision并按稳定ID合并，保留节点和星域布局、新增单节点渐入。后台/锁定停表，无新模型或外部服务。",
+      "evidence": [
+        "internal/server/knowledge_map.go",
+        "internal/server/web/starmap.js",
+        "已确认updates接口"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已删除星图刷新入口，新增有界版本差量API及元数据/AST复用，前端按编号合并、新星渐入、移出淡出、保持镜头/选择/检索；源码复核已修原文引用、后台时间补偿和AI取消说明。",
+      "evidence": [
+        "internal/server/knowledge_updates.go",
+        "internal/server/knowledge_map.go",
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap.html",
+        ".agent-state/starmap-live/build-inputs.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "node --check、git diff --check、离线go build exit0；start.command已启动18189候选。Mac锁定，Safari实际增改删/动画/视角保留观察待解锁；未添加或运行自动化测试。",
+      "evidence": [
+        ".agent-state/starmap-live/build-receipt.json",
+        "根及子代理只读源码复核"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "追加自动差量同步接口、缓存与原文边界、轮询与动画说明；check_docs PASS 159 Markdown/297本地链接。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "上一d536候选二进制与compose已独立备份，本轮尚未生成手工动态样例文件；未动9999。",
+      "evidence": [
+        "/private/tmp/aide-harness-runtime-j01jw5vg/aide-candidate-starmap.before-live-20261008",
+        "/private/tmp/aide-harness-runtime-j01jw5vg/compose.starmap.before-live-20261008.yaml"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "本轮仅隔离18189功能候选，无本轮发布/提交/tag授权；不替换9999。",
+  "rollback": "保留上一轮d5364db9候选二进制/compose，回滚仅18189。",
+  "handoff": "当前18189二进制 acfff9f1a879112bf567cb7aef8f1727bc40665d3bc6ccde447fb9e09f5c94c0；Mac锁定，已向用户请求解锁，仅剩实际浏览器动态观察。",
+  "followup": {
+    "task": "starmap-docs-push-20261008",
+    "request": "整理，更新文档并推送；追加删除入场动画",
+    "candidate_sha256": "c61d042e40563929bcb445afe8d5b62c05061fdc47e52b386ddd0cf2c8b26441",
+    "summary": "已删除入场动画并重新离线编译/start.command启动；Safari直接进入、无重播/刷新按钮已观察。原差量动态增改删/状态保留验收仍待补齐，未运行测试套件。",
+    "review": "docs/reviews/2026-10-08-starmap-source-sync.md"
+  }
+}

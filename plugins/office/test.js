@@ -10,7 +10,7 @@ const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, 'manifest.json'
 const registry = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'registry.json'), 'utf8'));
 assert.equal(manifest.id, 'office');
 assert.equal(registry.plugins.find(p => p.id === 'office')?.enabled, true);
-assert.deepEqual(tools.map(t => t.name), ['office_create', 'office_comments', 'office_comment_edit']);
-assert.deepEqual(tools[0].parameters.required, ['path', 'format', 'content']);
-assert.throws(() => tools[0].handler({}), /原生工作区执行器/);
+assert.deepEqual(tools.map(t => t.name), ['office_document_search', 'office_create', 'office_comments', 'office_comment_edit']);
+assert.deepEqual(tools[1].parameters.required, ['path', 'format', 'content']);
+assert.throws(() => tools[1].handler({}), /原生工作区执行器/);
 console.log('office plugin registration PASS');

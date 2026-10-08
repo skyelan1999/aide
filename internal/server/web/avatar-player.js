@@ -148,7 +148,7 @@
   }
 
   async function warmNext(player) {
-    if (player.destroyed || !player.manifest || !player.image || player.pendingRecord || document.hidden || reducedMotion?.matches || !visible(player)) {
+    if (player.destroyed || !player.manifest || !player.image || player.pendingRecord || document.hidden || (reducedMotion?.matches || document.documentElement.dataset.motion === 'reduced') || !visible(player)) {
       releasePreload(player);
       return false;
     }
@@ -208,7 +208,7 @@
   function canAnimate(player) {
     return !player.destroyed && player.image && player.clip?.frames.length > 1 &&
       (player.clip.loop || player.elapsed < player.clip.total) && !document.hidden &&
-      !reducedMotion?.matches && visible(player);
+      !(reducedMotion?.matches || document.documentElement.dataset.motion === 'reduced') && visible(player);
   }
 
   function schedule() {
@@ -218,7 +218,7 @@
   }
 
   function commitDeferred(player) {
-    if (!player.deferredMotion || player.destroyed || !player.manifest || document.hidden || reducedMotion?.matches || !visible(player)) return false;
+    if (!player.deferredMotion || player.destroyed || !player.manifest || document.hidden || (reducedMotion?.matches || document.documentElement.dataset.motion === 'reduced') || !visible(player)) return false;
     const clip = nextVariant(player);
     if (!clip || (clip.sheet.src !== player.clip?.sheet.src && (player.preloadRecord?.key !== clip.sheet.src || !player.preloadRecord.settled))) return false;
     const motion = player.deferredMotion;
@@ -389,6 +389,7 @@
     if (observing) return;
     observing = true;
     document.addEventListener('visibilitychange', refreshVisibility);
+    window.addEventListener('aide:motion',refreshVisibility);
     if (reducedMotion?.addEventListener) reducedMotion.addEventListener('change', refreshVisibility);
     else reducedMotion?.addListener?.(refreshVisibility);
     if (window.IntersectionObserver) intersectionObserver = new IntersectionObserver(entries => {
@@ -421,6 +422,7 @@
     intersectionObserver?.disconnect(); resizeObserver?.disconnect(); removalObserver?.disconnect();
     intersectionObserver = resizeObserver = removalObserver = undefined;
     document.removeEventListener('visibilitychange', refreshVisibility);
+    window.removeEventListener('aide:motion',refreshVisibility);
     if (reducedMotion?.removeEventListener) reducedMotion.removeEventListener('change', refreshVisibility);
     else reducedMotion?.removeListener?.(refreshVisibility);
     for (const [key, record] of images) if (!record.refs) discard(images, key, record);

@@ -31,6 +31,7 @@
   var DEFAULT_PREF = 'system';
   function normalizeLanguage(value) { return ['zh-CN', 'en', 'system'].indexOf(value) >= 0 ? value : 'system'; }                   // 缺省偏好
   var DEFAULT_DOC = { version: VERSION, theme: DEFAULT_PREF, palette: 'blue' };
+  var motionMedia = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
   var SYSTEM_QUERY = '(prefers-color-scheme: dark)';
 
   var root = document.documentElement;
@@ -92,6 +93,8 @@
     }
     doc.version = VERSION;
     doc.language = normalizeLanguage(parsed.language);
+    doc.motion = ['system', 'full', 'reduced'].indexOf(parsed.motion) >= 0 ? parsed.motion : 'system';
+    doc.startupAnimation = parsed.startupAnimation === 'off' ? 'off' : 'on';
     doc.theme = parsed.theme === 'classic' ? 'light' : theme;
     doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
     var normalized = JSON.stringify(doc);
@@ -110,6 +113,8 @@
     root.setAttribute('data-theme', effectiveOf(doc.theme));
     root.setAttribute('data-theme-pref', doc.theme);
     root.setAttribute('data-palette', doc.palette);
+    root.setAttribute('data-motion', doc.motion === 'reduced' || motionMedia && motionMedia.matches ? 'reduced' : 'full');
+    window.dispatchEvent(new Event('aide:motion'));
     root.lang = doc.language === 'en' || (doc.language === 'system' && /^en(?:-|$)/i.test(window.navigator && window.navigator.language || '')) ? 'en' : 'zh-CN';
   }
 
@@ -157,6 +162,11 @@
     else if (media.addListener) media.addListener(onSystemChange); // 旧内核兜底
   }
 
+  if (motionMedia) {
+    if (motionMedia.addEventListener) motionMedia.addEventListener('change', applyTheme);
+    else if (motionMedia.addListener) motionMedia.addListener(applyTheme);
+  }
+
   /* ── 跨标签页同步：JSON 键与旧键都吸收 ── */
   window.addEventListener('storage', function (event) {
     if (event.key === KEY) {
@@ -176,6 +186,8 @@
       }
       doc.version = VERSION;
     doc.language = normalizeLanguage(parsed.language);
+    doc.motion = ['system', 'full', 'reduced'].indexOf(parsed.motion) >= 0 ? parsed.motion : 'system';
+    doc.startupAnimation = parsed.startupAnimation === 'off' ? 'off' : 'on';
       doc.theme = parsed.theme === 'classic' ? 'light' : theme;
     doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
       applyTheme();
@@ -205,9 +217,9 @@
       notifyAll();
     },
     set: function (name, value) {
-      doc[name] = name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : value;
+      doc[name] = name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? (['system','full','reduced'].indexOf(value)>=0 ? value : 'system') : name === 'startupAnimation' ? (value==='off' ? 'off' : 'on') : value;
       persist();
-      if (name === 'theme' || name === 'language') applyTheme();
+      if (name === 'theme' || name === 'language' || name === 'motion') applyTheme();
       notifyAll();
       return doc[name];
     },

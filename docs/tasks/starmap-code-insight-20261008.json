@@ -1,0 +1,85 @@
+{
+  "id": "starmap-code-insight-20261008",
+  "request": "星图支持代码调用检查，帮助用户理解代码层级和代码逻辑",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/avatar-player.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/themes/comfort.css\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n?? docs/architecture/knowledge-map.md\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? docs/tasks/ui-celestial-sanctum-20261008.json\n?? docs/tasks/ui-comfort-motion-20261008.json\n?? internal/server/knowledge_map.go\n?? internal/server/static_assets.go\n?? internal/server/web/experience.css\n?? internal/server/web/experience.js\n?? internal/server/web/sanctum.css\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js",
+  "acceptance": [
+    "代码视图显示声明层级、模块依赖和调用位置",
+    "调用关系标明静态候选，动态或歧义调用有诊断",
+    "调用者／被调用者跳转、两层聚焦和有限递归候选检查",
+    "只读源码定位含文件指纹校验，编号回填到草稿",
+    "AI 结合有限源码片段和关系解释逻辑，不冒充运行证明"
+  ],
+  "scope": [
+    "internal/server/knowledge_code.go",
+    "internal/server/code_analysis/",
+    "internal/server/knowledge_map.go",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.css",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/knowledge-map.md",
+    "internal/server/web/index.html"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求星图支持代码调用检查及层级／逻辑理解",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "只读 AST 解析；声明事实、导入证据与静态调用候选分开；限定预算",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Go／JavaScript／Python 符号索引、调用候选、源码定位、编号回填及 AI 证据已实现",
+      "evidence": [
+        "internal/server/knowledge_code.go",
+        "internal/server/code_analysis/",
+        "internal/server/knowledge_map.go",
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap.css",
+        "internal/server/web/app.js",
+        "internal/server/web/locales/en.js",
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "JavaScript／Python 语法检查、Go 编译通过；start.command 已启动隔离候选 18189。新增代码视图的浏览器验收因 Mac 锁定未完成；未运行自动化测试和真实模型调用。",
+      "evidence": [
+        ".agent-state/starmap-code-build.log",
+        ".agent-state/starmap-code-start.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构范围、限制及 Acorn 来源／许可已记录",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留既有工作区改动；未创建测试文件或运行测试",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "仅本地候选启动；无提交、推送、标签或生产发布",
+      "evidence": []
+    }
+  },
+  "release_authorization": "本轮仅授权功能实现，无新发布授权",
+  "rollback": "源码逐文件撤销本轮改动；候选二进制可重新编译此前工作区状态",
+  "handoff": "解锁 Mac 后进行代码视图、源码定位及编号回填的浏览器验收",
+  "candidate": {
+    "url": "https://localhost:18189/",
+    "sha256": "a6d572eb56da30d87eeb15462eaddefd95e39c17a67239ce7d020b66ac2a1f34",
+    "entry": "start.command",
+    "workspace": "/private/tmp/aide-harness-runtime-j01jw5vg/work"
+  },
+  "history_note": "原阶段状态规范化，保留原有历史证据；后续源码整理见starmap-docs-push-20261008。历史动画已移除，不能作为当前能力或验收证明。"
+}

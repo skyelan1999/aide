@@ -1,0 +1,83 @@
+/* Shared motion layer: short feedback, stable reading surfaces, no input gate. */
+:root{--motion-fast:140ms;--motion-normal:200ms;--motion-slow:260ms;--motion-ease:cubic-bezier(.22,1,.36,1)}
+button,a,input,textarea,select{transition:background-color var(--motion-fast) ease,border-color var(--motion-fast) ease,color var(--motion-fast) ease;}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--brand);outline-offset:3px}
+.segmented-thumb{transition:transform var(--motion-normal) var(--motion-ease),width var(--motion-normal) var(--motion-ease)}
+.settings-backdrop,.settings-sheet{transition:opacity var(--motion-normal) ease,transform 220ms var(--motion-ease),visibility 0s linear 220ms}
+.settings-backdrop.open,.settings-sheet.open{transition:opacity var(--motion-normal) ease,transform 220ms var(--motion-ease)}
+.settings-backdrop{backdrop-filter:blur(6px)}
+.settings-sheet{backdrop-filter:blur(12px);background:color-mix(in srgb,var(--panel) 96%,transparent)}
+.persona-card{transition:border-color var(--motion-fast) ease,background-color var(--motion-fast) ease}
+.strategy-menu,.toast{animation:aide-reveal var(--motion-normal) var(--motion-ease)}
+@keyframes aide-reveal{from{opacity:0}to{opacity:1}}
+@keyframes aide-th{0%,100%{opacity:.65}50%{opacity:1}}
+@keyframes session-pulse{0%,100%{opacity:1}50%{opacity:.65}}
+@keyframes voice-pulse{0%,100%{opacity:1}50%{opacity:.72}}
+.thinking-dot,.live-tool .live-dot,.session-dot.dot-running{animation-duration:1800ms}
+.md-body{line-height:1.85;text-rendering:optimizeLegibility}
+.section-desc,.settings-control .control-label,.settings-nav-item{line-height:1.65}
+@media(hover:hover) and (pointer:fine){.starter-card{transition:transform var(--motion-normal) var(--motion-ease),background-color var(--motion-fast),border-color var(--motion-fast)}.starter-card:hover{transform:translateY(-2px)}}
+/* A translucent orbital signature, not a blocking splash screen. */
+.aide-intro{position:fixed;inset:0;z-index:150;pointer-events:none;display:grid;place-items:center;overflow:hidden;animation:aide-intro-fade 940ms ease both}
+.aide-intro::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 46%,color-mix(in srgb,var(--bg) 95%,transparent),color-mix(in srgb,var(--bg) 35%,transparent) 55%,transparent 80%)}
+.aide-intro-mark{width:260px;height:260px;position:relative;display:grid;place-items:center;animation:aide-intro-arrive 740ms var(--motion-ease) both}
+.aide-intro svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;color:var(--brand)}
+.aide-intro-ring{fill:none;stroke:currentColor;stroke-width:.7;opacity:.38;transform-origin:130px 130px;animation:aide-orbit 900ms var(--motion-ease) both}
+.aide-intro-ring.inner{stroke-width:1.1;opacity:.7;animation-direction:reverse}
+.aide-intro-ray{fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-dasharray:40 490;transform-origin:130px 130px;animation:aide-orbit 850ms var(--motion-ease) both}
+.aide-intro-core{font:600 68px/1 system-ui;color:var(--text);position:relative;letter-spacing:-5px;text-shadow:0 0 24px color-mix(in srgb,var(--brand) 25%,transparent)}
+.aide-intro-star{fill:var(--text);animation:aide-star 850ms ease both;transform-origin:208px 64px}
+@keyframes aide-orbit{from{transform:rotate(-110deg)}to{transform:rotate(55deg)}}
+@keyframes aide-star{0%{opacity:0;transform:scale(.3)}45%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.8)}}
+@keyframes aide-intro-arrive{from{opacity:0;transform:scale(.88)}45%{opacity:1}to{opacity:1;transform:scale(1)}}
+@keyframes aide-intro-fade{0%{opacity:0}15%,64%{opacity:1}100%{opacity:0}}
+html[data-ui-paused] *,html[data-ui-paused] *::before,html[data-ui-paused] *::after{animation-play-state:paused!important}
+html[data-motion="reduced"] *,html[data-motion="reduced"] *::before,html[data-motion="reduced"] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.aide-intro{display:none}}
+/* Preview tiles belong to palettes only. Other settings remain compact controls. */
+.segmented:not([data-palette]){gap:4px;padding:3px;background:var(--bg-inset);border:1px solid var(--line-soft);border-radius:10px}
+.segmented:not([data-palette]) button{padding:9px 8px;min-height:36px;border-color:transparent;background:transparent}
+.segmented:not([data-palette]) button::before{content:'';display:none}
+.segmented:not([data-palette]) button[aria-pressed="true"]{background:var(--selected);border-color:var(--line-accent);font-weight:650;box-shadow:none}
+.segmented:not([data-palette]) button[aria-pressed="true"]::before{content:'✓';display:inline;margin:0 5px 0 0;height:auto;border:0;background:none;box-shadow:none}
+.segmented[data-palette] button{position:relative}
+.segmented[data-palette] button[aria-pressed="true"]::after{content:'✓';position:absolute;right:8px;top:5px;color:var(--brand-text);font-weight:700}
+.segmented[data-palette="blue"] button[data-value="light"]::before{background:linear-gradient(90deg,#eceef1 29%,#f8f9fa 29%);box-shadow:inset 0 8px #f2f3f5}
+.segmented[data-palette="blue"] button[data-value="dark"]::before{background:linear-gradient(90deg,#25292f 29%,#202328 29%);box-shadow:inset 0 8px #2b3037}
+.segmented[data-palette="blue"] button[data-value="system"]::before{background:linear-gradient(90deg,#eceef1 28%,#f8f9fa 28% 50%,#202328 50%);box-shadow:inset 0 8px #929da444}
+.segmented[data-palette="comfort"] button[data-value="light"]::before{background:linear-gradient(90deg,#eceee9 29%,#f9f9f6 29%);box-shadow:inset 0 8px #f3f3f0}
+.segmented[data-palette="comfort"] button[data-value="dark"]::before{background:linear-gradient(90deg,#242520 29%,#20231f 29%);box-shadow:inset 0 8px #30332b}
+.segmented[data-palette="comfort"] button[data-value="system"]::before{background:linear-gradient(90deg,#eceee9 28%,#f9f9f6 28% 50%,#20231f 50%);box-shadow:inset 0 8px #84917c44}
+.composer,.strategy-menu,.search-results,dialog{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.settings-sheet,.settings-sheet.sheet-wide{-webkit-backdrop-filter:none;backdrop-filter:none;background:var(--panel)}
+/* experience.js owns these reveals; suppress the earlier per-menu CSS animation
+   so a reopened or interrupted menu has one predictable visual trajectory. */
+html[data-motion-layer="ready"] .strategy-menu,
+html[data-motion-layer="ready"] .session-menu,
+html[data-motion-layer="ready"] .file-ctx-menu{animation:none!important}
+[data-ui-exiting="true"]{pointer-events:none!important;user-select:none!important}
+@media(min-width:951px){
+ #file-panel,#plugin-panel,#reminder-center{grid-column:3;grid-row:1;min-width:0;overflow:hidden}
+}
+/* Native dialog transitions retain the top-layer paint only for the short exit.
+   The application still closes the dialog/focus gate immediately. Auth/password
+   dialogs are not marked and never inherit these discretionary transitions. */
+@supports (transition-behavior:allow-discrete){
+ dialog[data-ui-motion="dialog"]{
+  opacity:0;transform:translateY(6px);pointer-events:none;
+  transition:opacity 160ms ease,transform 180ms var(--motion-ease),display 180ms allow-discrete,overlay 180ms allow-discrete;
+ }
+ dialog[data-ui-motion="dialog"][open]{opacity:1;transform:none;pointer-events:auto}
+ dialog[data-ui-motion="dialog"]::backdrop{opacity:0;transition:opacity 160ms ease,display 180ms allow-discrete,overlay 180ms allow-discrete}
+ dialog[data-ui-motion="dialog"][open]::backdrop{opacity:1}
+ @starting-style{
+  dialog[data-ui-motion="dialog"][open]{opacity:0;transform:translateY(6px)}
+  dialog[data-ui-motion="dialog"][open]::backdrop{opacity:0}
+ }
+ html[data-ui-paused] dialog[data-ui-motion="dialog"],
+ html[data-ui-paused] dialog[data-ui-motion="dialog"]::backdrop{transition:none!important}
+ @media(hover:none),(pointer:coarse){
+  dialog[data-ui-motion="dialog"]{transform:none}
+  @starting-style{dialog[data-ui-motion="dialog"][open]{transform:none}}
+ }
+}

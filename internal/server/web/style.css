@@ -1454,8 +1454,10 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 
 /* Approval choice belongs to the composer, next to the strategy picker. */
 .composer-toolbar{flex-wrap:wrap}
-#approval-button{white-space:nowrap;font-size:12px;padding:6px 10px;min-height:30px}
-.assistant-mode #approval-button{display:none}
+.strategy-menu.with-approval{grid-template-columns:repeat(4,minmax(0,1fr));min-width:680px;max-width:min(880px,calc(100vw - 32px))}
+.strategy-approval-note{padding:8px 10px;color:var(--muted);font-size:10px;line-height:1.6;white-space:normal}
+@media(max-width:900px){.strategy-menu.with-approval{grid-template-columns:repeat(2,minmax(0,1fr));min-width:min(480px,calc(100vw - 32px))}.strategy-menu.with-approval .strategy-menu-col:nth-child(3){border-left:0}}
+@media(max-width:600px){.strategy-menu.with-approval{grid-template-columns:1fr;min-width:min(260px,calc(100vw - 32px));max-height:60vh;overflow:auto}.strategy-menu.with-approval .strategy-menu-col{max-height:none;overflow:visible}}
 
 .execution-policy-form { display:grid; gap:14px; }
 .execution-policy-field { display:grid; gap:6px; min-width:0; }
@@ -1463,3 +1465,6 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 .execution-policy-field input { width:140px; max-width:100%; }
 .execution-policy-field textarea { width:100%; box-sizing:border-box; resize:vertical; font:inherit; }
 .execution-policy-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+
+.file-panel-heading #open-starmap { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; }
+.file-panel-heading #refresh-files { margin-left: 0; }

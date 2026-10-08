@@ -77,6 +77,45 @@
               "label": "跟随系统"
             }
           ]
+        },
+        {
+          "id": "motion",
+          "type": "segmented",
+          "label": "动效强度",
+          "options": [
+            {
+              "value": "system",
+              "label": "跟随系统"
+            },
+            {
+              "value": "full",
+              "label": "轻盈动效"
+            },
+            {
+              "value": "reduced",
+              "label": "减少动态效果"
+            }
+          ]
+        },
+        {
+          "id": "startupAnimation",
+          "type": "segmented",
+          "label": "启动动画",
+          "options": [
+            {
+              "value": "on",
+              "label": "开启"
+            },
+            {
+              "value": "off",
+              "label": "关闭"
+            }
+          ]
+        },
+        {
+          "id": "experience-preview",
+          "type": "experience-preview",
+          "label": "重播启动动画"
         }
       ]
     },

@@ -4,12 +4,12 @@
  * 令牌名是冻结接口：不得改名 / 不得删减 / 不得新增。 */
 html[data-theme="light"]{
 color-scheme:light;
---bg:#f7f8fa;
+--bg:#f2f3f5;
 --bg-inset:#eef1f5;
---field:#ffffff;
---panel:#fcfcfd;
---panel-alt:#f3f5f8;
---surface:#ffffff;
+--field:#fcfcfd;
+--panel:#f8f9fa;
+--panel-alt:#eceef1;
+--surface:#fcfcfd;
 --surface-alt:#f7f8fa;
 --code-bg:#f1f3f6;
 --soft:#f5f6f8;
@@ -20,7 +20,7 @@ color-scheme:light;
 --selected-alt:#f7f8fa;
 --mode-active:#f0f2f5;
 --toast-bg:#252528;
---brand-hi:#3e5f84;  /* 主按钮实心底：低饱和石板蓝，白字保持 AA 对比度 */
+--brand-hi:#42617f;  /* 主按钮实心底：低饱和石板蓝，白字保持清晰对比 */
 --backdrop:#18182038;
 --line:#e1e4e9;
 --field-border:#cbd1da;
@@ -36,7 +36,7 @@ color-scheme:light;
 --focus-border:#356fae;
 --focus-border-2:#356fae;
 --danger-line:#e7b4b0;
---text:#252a32;
+--text:#293039;
 --text-tab:#414955;
 --text-answer:#414955;
 --text-breadcrumb:#414955;
@@ -48,11 +48,11 @@ color-scheme:light;
 --text-file:#414955;
 --text-terminal:#414955;
 --text-dialog-label:#414955;
---text-session:#707078;
---text-welcome:#707078;
+--text-session:#616d7a;
+--text-welcome:#616d7a;
 --text-run-meta:#707078;
 --text-dialog:#707078;
---muted:#626b77;
+--muted:#596574;
 --text-note:#707078;
 --text-file-icon:#707078;
 --text-faint:#707078;

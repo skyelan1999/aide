@@ -1,0 +1,120 @@
+{
+  "id": "starmap-docs-push-20261008",
+  "request": "整理，更新文档并推送",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/avatar-player.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/themes/comfort.css\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n M internal/server/workflow.go\n M plugins/office/index.js\n M plugins/office/manifest.json\n M plugins/office/test.js\n?? .github/\n?? docs/architecture/knowledge-map.md\n?? docs/reviews/2026-10-08-homepage/\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/homepage-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? docs/tasks/starmap-code-insight-20261008.json\n?? docs/tasks/starmap-cosmic-scales-20261008.json\n?? docs/tasks/starmap-document-retrieval-20261008.json\n?? docs/tasks/starmap-live-updates-20261008.json\n?? docs/tasks/starmap-scroll-backview-20261008.json\n?? docs/tasks/starmap-summit-journey-20261008.json\n?? docs/tasks/ui-celestial-sanctum-20261008.json\n?? docs/tasks/ui-comfort-motion-20261008.json\n?? docs/tasks/ui-motion-continuity-20261008.json\n?? docs/tasks/ui-observatory-refinement-20261008.json\n?? docs/website.md\n?? internal/server/code_analysis/\n?? internal/server/document_analysis/\n?? internal/server/knowledge_code.go\n?? internal/server/knowledge_documents.go\n?? internal/server/knowledge_map.go\n?? internal/server/knowledge_updates.go\n?? internal/server/static_assets.go\n?? internal/server/web/assets/\n?? internal/server/web/experience.css\n?? internal/server/web/experience.js\n?? internal/server/web/sanctum.css\n?? internal/server/web/starmap-cosmos.js\n?? internal/server/web/starmap-journey.js\n?? internal/server/web/starmap-structure.js\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js\n?? plugins/office/README.md\n?? site/",
+  "acceptance": [
+    "星图直接进入，入场／跳过／重播及未使用素材从产品移除；保留自动同步与持续动效。",
+    "更新中英文入口、使用指南、知识星图/API/交接记录，并准确区分RC1基线、源码候选与待验收项。",
+    "逐项审阅、仅暂存本线程累计审批/UI/星图/检索改动；独立主页任务保留原状。",
+    "记录静态检查、离线编译、start.command候选启动与源码内容核对；不以其代替动态验收。",
+    "普通快进推送到origin/main并核对远端提交；不新建tag或发布Release，不替换生产。"
+  ],
+  "scope": [
+    "本线程累计审批/UI/星图/检索源码和对应文档/任务",
+    "README.md",
+    "README.en.md",
+    "docs/README.md",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "HANDOVER.md",
+    "docs/architecture.md",
+    "docs/architecture/knowledge-map.md",
+    "docs/reviews/2026-10-08-starmap-source-sync.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户授权整理文档并推送，追加删除星图入场动画；提交范围和独立主页排除项明确。",
+      "evidence": [
+        "request",
+        "steering",
+        "acceptance",
+        "只读git盘点"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "删除仅过场代码和素材，保留单RAF相机/星空/差量出生；当前行为文档与历史验收分别记录。",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已删除星图入场模块、HTML入口/CSS、预加载和3张素材；保留持续动效、归位和差量更新。整理本线程累积审批、UI、代码与文档检索源码。",
+      "evidence": [
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap.css"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "13个JS/CJS语法、2个Python AST语法、git diff检查与离线go build通过；start.command启动18189；已服务HTML/JS/CSS摘要一致。Safari原生从工作台点击星图，当前光色主题直接进入、无入场/重播/刷新控件。未运行测试套件；差量动态及性能、真实模型/插件仍待验收。",
+      "evidence": [
+        "docs/reviews/2026-10-08-starmap-source-sync.md",
+        ".agent-state/starmap-live/no-entrance/build-receipt.json",
+        ".agent-state/starmap-live/no-entrance/served-receipt.json",
+        ".agent-state/starmap-live/no-entrance/safari-direct-entry.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "同步中英文README/使用指南、文档中心、执行与星图架构及交接；准确区分RC1已标记基线、当前候选、历史入场与待验收。 check_docs通过160 Markdown/335本地链接、JPEG签名与FR覆盖。",
+      "evidence": [
+        "README.md",
+        "README.en.md",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/architecture/knowledge-map.md",
+        "docs/reviews/2026-10-08-starmap-source-sync.md",
+        "python3 scripts/check_docs.py exit0"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未创建动态样例或修改生产；上一候选二进制与Compose已备份，入场素材已本地归档；独立主页11个文件保持未暂存。",
+      "evidence": [
+        "excluded",
+        "rollback"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "普通源码提交与推送已获授权，提交范围复核完成；推送结果将记录于本任务。未请求新tag、GitHub Release或生产替换。",
+      "evidence": [
+        "release_authorization"
+      ]
+    }
+  },
+  "release_authorization": "用户本轮原话：整理，更新文档并推送。只授权本范围源码提交与普通推送，无新tag/Release/生产替换。",
+  "rollback": "保留acfff9f1上一自动同步候选二进制及compose；已删除素材先本地归档到.agent-state，生产数据不变。",
+  "handoff": "当前候选通过start.command启动；Safari直接进入已观察。提交时排除独立主页任务；新发布及生产替换仍未授权。",
+  "steering": [
+    "那个星图的入场动画还是删了吧"
+  ],
+  "excluded": [
+    ".github/",
+    "site/",
+    "docs/website.md",
+    "docs/reviews/2026-10-08-homepage/",
+    "docs/tasks/homepage-20261008.json"
+  ],
+  "candidate": {
+    "port": 18189,
+    "launcher": "start.command",
+    "version": "0.1.16.0-RC1-ui-candidate",
+    "build_commit": "77a2790-dirty",
+    "binary_sha256": "c61d042e40563929bcb445afe8d5b62c05061fdc47e52b386ddd0cf2c8b26441",
+    "source_inputs_unchanged": 15,
+    "browser_observation": "light/direct-entry/no-entrance-no-replay-no-refresh",
+    "pending": [
+      "差量动态增改删和状态保留",
+      "BFCache回填通道恢复",
+      "真实模型及插件端到端",
+      "量化性能"
+    ]
+  }
+}

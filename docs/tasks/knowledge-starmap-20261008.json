@@ -1,0 +1,74 @@
+{
+  "id": "knowledge-starmap-20261008",
+  "request": "项目文件刷新左侧星图图标；独立窗口；跨区域文件关系、知识及AI搜索理解、编号回调插入",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture/execution-policy.md\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n?? docs/tasks/approval-strategy-column-20261008.json",
+  "acceptance": [
+    "刷新左侧星图入口",
+    "独立夜空页面与编号",
+    "本地知识搜索与有据关系",
+    "显式AI理解调用",
+    "编号回填草稿及附件，不自动发送",
+    "动态星云与按目录聚集的星座团",
+    "精细人物仰望、地球大气与星光升空转场"
+  ],
+  "scope": [
+    "internal/server/knowledge_map.go",
+    "internal/server/server.go",
+    "internal/server/web"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户要求实施，保持其他未提交改动",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "鉴权只读限量索引；编号重新解析；随机回调通道；有据关系与截断提示",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "鉴权限量索引、知识及 AI 搜索理解、编号回填、独立星图、星云聚集与 8.4 秒入场动画已实现",
+      "evidence": [
+        "internal/server/knowledge_map.go",
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap.css"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Node 语法检查与 Linux Go 构建成功；Safari 实际看到入口、入场、213 节点星云、BEMT 搜索、文件编号回填草稿和附件。未运行自动化测试、真实付费模型检索、窄屏或锁屏交互验收。",
+      "evidence": [
+        ".agent-state/starmap-build.log",
+        ".agent-state/starmap-start.log",
+        "/private/tmp/aide-harness-ui-evidence/starmap-entry-refined.png",
+        "/private/tmp/aide-harness-ui-evidence/starmap-nebula.png",
+        "/private/tmp/aide-harness-ui-evidence/starmap-callback.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录索引范围、关系证据、模型调用及回调机制和验收缺口",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "预览文件、二进制和运行数据隔离在 /private/tmp；保留用户现有修改，不修改生产 9999",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次未提交、打包或发布；仅隔离候选",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "隔离 compose 切回原候选二进制并经 start.command 启动；源代码按任务路径审阅回退，保留此前审批修改。",
+  "handoff": "https://localhost:18189/；从项目文件星图按钮打开以绑定原会话。模型为 local-ui-fixture，不能代表真实 AI 检索质量。",
+  "history_note": "原阶段状态规范化，保留原有历史证据；后续源码整理见starmap-docs-push-20261008。历史动画已移除，不能作为当前能力或验收证明。"
+}

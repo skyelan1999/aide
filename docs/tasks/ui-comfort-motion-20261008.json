@@ -1,0 +1,104 @@
+{
+  "id": "ui-comfort-motion-20261008",
+  "request": "把aide所有ui动画优化的更好一些，更流畅，访问速度更快，配色更高级，更适合长时间工作和使用且对视力和颜色的认知不会影响，再做一个快速的启动动画，要求灵动高级神秘",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/style.css\n?? docs/architecture/knowledge-map.md\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? internal/server/knowledge_map.go\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js",
+  "acceptance": [
+    {
+      "item": "Safari 实际界面与动效选项",
+      "status": "pass",
+      "evidence": "localhost:18189 专业明暗、舒适深色；截图 ui-professional-light.png / ui-professional-dark.png / ui-comfort-dark.png"
+    },
+    {
+      "item": "启动动画重播与减少动态效果",
+      "status": "pass",
+      "evidence": "实际点击重播，截图 ui-startup-orbit.png；减少动态效果时出现停用提示 ui-motion-reduced.png"
+    },
+    {
+      "item": "静态校验缓存",
+      "status": "pass",
+      "evidence": "experience.css 200 带 ETag/public,max-age=0,must-revalidate；If-None-Match 返回304，0字节。首页200 no-store；未鉴权API401 no-store"
+    },
+    {
+      "item": "所有查看器/窄屏/真实模型/实际FPS与长时间使用",
+      "status": "not_run",
+      "evidence": "本轮构建及手动主要界面观察，无自动测试或付费模型调用；未进行设备基准或医学评价"
+    }
+  ],
+  "scope": [
+    "共享外观与动效层、明暗语义配色、外观设置",
+    "短促星轨启动动画；小秘、星图、STL 动效偏好联动",
+    "延后脚本解析、流程图及三维库按需加载、代码编辑器 RAF 合帧",
+    "仅内置静态资源校验缓存；API/HTML/工作区文件保持 no-store"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "统一界面配色、交互动效和加载流程；短启动动画不阻塞操作；舒适不能等同视力保护或颜色辨识保证。",
+      "evidence": [
+        "用户本轮请求",
+        "AGENTS.md",
+        "docs/architecture.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保持专业/舒适/经典偏好，新增独立动效和启动开关；系统减少动态效果优先；不滤色媒体。静态缓存只作用嵌入公共资源。",
+      "evidence": [
+        "internal/server/web/settings-schema.json",
+        "internal/server/web/experience.css",
+        "internal/server/static_assets.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "共享动效层140/200/260ms、温和状态呼吸、后台CSS暂停；星轨940ms动画980ms回收。同步主题初始化保留，其他脚本defer，Mermaid/Three按需；代码输入合帧和滚动取消重复高亮。",
+      "evidence": [
+        "internal/server/web/experience.js",
+        "internal/server/web/settings-init.js",
+        "internal/server/web/app.js",
+        "internal/server/web/avatar-player.js",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "完成语法检查、diff检查、Go候选构建、start.command隔离启动和Safari核心视图手动观察。pass只覆盖acceptance列出的实做项，未宣称全应用回归。",
+      "evidence": [
+        "node --check app.js / settings-init.js / experience.js / avatar-player.js / locales/en.js / starmap.js",
+        "git diff --check",
+        ".agent-state/ui-experience-build.log",
+        ".agent-state/ui-experience-start.log",
+        "candidate SHA256 aa8bb2ef9b18e697183bffffb0adb3c13666ac2d6f24d2e3ff742e063c93816e",
+        "/private/tmp/aide-harness-ui-evidence/",
+        "最后两项修正后已重新构建及start.command启动；Mac锁定，最终构建的Safari复看未完成。先前截图对应此前候选。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录实现、配色数值、缓存边界和验证范围。",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/tasks/ui-comfort-motion-20261008.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留既有审批/星图未提交变更；临时脚本/二进制在private/tmp，日志在忽略的.agent-state；生产9999未替换。",
+      "evidence": [
+        "git status --short",
+        "COMPOSE_FILE=/private/tmp/aide-harness-runtime-j01jw5vg/compose.starmap.yaml"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "当前请求是UI实现，不包含新发布授权；未commit、push、tag或生产部署。",
+      "evidence": [
+        "用户本轮请求"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "仅候选18189使用临时二进制；源码逐文件回退本任务差异，保留前序审批/星图编辑，禁止git reset --hard。",
+  "handoff": "候选通过start.command启动，localhost:18189；设置>外观支持动效和启动动画。API缓存及鉴权未放宽；FPS/首次加载时长、所有文件查看器、窄屏和真实模型回归未测。"
+}

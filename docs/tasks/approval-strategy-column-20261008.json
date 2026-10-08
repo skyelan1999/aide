@@ -1,0 +1,79 @@
+{
+  "id": "approval-strategy-column-20261008",
+  "request": "把审批做到策略里单独做一栏",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "",
+  "acceptance": [
+    "Strategy popup has separate Approval column with manual and assisted choices",
+    "Composer no longer has standalone approval button; summary retains selected mode",
+    "Reuse existing draft/session/run approval state and PUT interface",
+    "Desktop four columns; narrow layout fits and scrolls; localized labels",
+    "No production deployment or RC1 tag changes"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/execution-policy.md",
+    "docs/tasks/approval-strategy-column-20261008.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Move approval into fourth strategy menu column; reuse existing approval mode state/API. Preserve assistant mode exclusion.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Move approval into fourth strategy menu column; reuse existing approval mode state/API. Preserve assistant mode exclusion.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Move approval into fourth strategy menu column; reuse existing approval mode state/API. Preserve assistant mode exclusion.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "JS syntax/diff checks and isolated candidate build passed. Safari desktop shows4 columns, manual selected, assisted unselected, description visible, separate composer button removed. Narrow-screen actual inspection NOT_RUN: native Safari developer menu returned stale element IDs and no screenshot; responsive mode exited. No automated tests or real model calls run.",
+      "evidence": [
+        ".agent-state/approval-column-build.log",
+        "/private/tmp/aide-harness-ui-evidence/approval-strategy-column.png",
+        "Safari localhost18189 AX: strategy/model/reasoning/approval columns"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded strategy approval column, responsive behavior and unchanged approval API.",
+      "evidence": [
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only6 task-owned files changed. Temporary candidate/evidence outside repo; production and published RC1 unchanged.",
+      "evidence": [
+        "git diff --check",
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "This new UI change was not committed or released; prior publishedRC1 unchanged.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "UI preview at18189 launched via start.command with candidate binary77a2790-dirty. Production9999 unchanged. Narrow viewport and active-run mode switching not inspected this turn; backend semantics unchanged."
+}
