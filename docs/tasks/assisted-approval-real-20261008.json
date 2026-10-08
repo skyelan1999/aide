@@ -39,12 +39,13 @@
       ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "PASS: real DeepSeek new-file independent approval and disk content; deletion remains manual and sentinel intact; focused race/full server/UI function tests pass. Browser reload interaction NOT_RUN due user control/certificate.",
+      "status": "pass",
+      "summary": "原有真实模型正反例/函数测试通过；RC2本轮补齐Safari刷新后重新进入会话的辅助审批回退和已应用状态。用户显式切换覆盖的全浏览器流程未全测，不扩大范围。",
       "evidence": [
         "docs/reviews/2026-10-08-assisted-approval/test-results.txt",
         "scripts/test_approval_persistence.cjs",
-        "docs/reviews/2026-10-08-assisted-approval/real-provider-results.json"
+        "docs/reviews/2026-10-08-assisted-approval/real-provider-results.json",
+        "docs/reviews/2026-10-08-rc2-release/approval-after-reload.png"
       ]
     },
     "documentation": {
@@ -62,12 +63,26 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "Source commit/push authorized; versioned release and production activation not requested",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "后续用户授权全部推送并release，纳入RC2发布账本；生产未切换。",
+      "evidence": [
+        "docs/tasks/release-0171-20261008.json"
+      ]
     }
   },
-  "release_authorization": "2026-10-08 用户：推上去吧（授权源码提交与推送；不包含 Release 发布或生产替换）",
+  "release_authorization": "2026-10-08 用户：推上去吧（授权源码提交与推送；不包含 Release 发布或生产替换）；后续明确授权：所有的内容都推上去，然后release。",
   "rollback": "Revert the approval fix commit; production 9999 was not replaced.",
-  "handoff": "Real provider candidate checks passed after explicit credential-copy authorization. Original QA configuration restored and memory reset. Production 9999 unchanged; browser reload acceptance pending."
+  "handoff": "RC2发布账本接续；真实模型和刷新后会话回退已验收，原QA凭据已恢复；生产切换不在本次范围。",
+  "verification_history": [
+    {
+      "status": "pass",
+      "summary": "原有真实模型正反例/函数测试通过；RC2本轮补齐Safari刷新后重新进入会话的辅助审批回退和已应用状态。用户显式切换覆盖的全浏览器流程未全测，不扩大范围。",
+      "evidence": [
+        "docs/reviews/2026-10-08-assisted-approval/test-results.txt",
+        "scripts/test_approval_persistence.cjs",
+        "docs/reviews/2026-10-08-assisted-approval/real-provider-results.json",
+        "docs/reviews/2026-10-08-rc2-release/approval-after-reload.png"
+      ]
+    }
+  ]
 }
