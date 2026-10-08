@@ -85,9 +85,12 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "本轮未请求发布、推送或替换实例。",
-      "evidence": []
+      "status": "pass",
+      "summary": "Included in parent release v0.1.17.0-RC1. Published ARM64 assets and current gate evidence are recorded in release-20261008; this does not broaden the subtask acceptance scope.",
+      "evidence": [
+        "docs/tasks/release-20261008.json",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC1"
+      ]
     }
   },
   "release_authorization": "后续父任务 release-20261008：用户2026-10-08“整理所有资料和文档并release”，并明确答复允许运行完整验收并发布。原实施轮的NOT_RUN/未验证证据保留；最终版本、标签、镜像和附件状态查父任务及发布记录。既有生产实例不替换，Pages未自动部署。",
@@ -113,5 +116,12 @@
       "handoff": "源码候选实现完成。下一轮在明确隔离候选用 start.command 启动，按review验证同名多来源筛选、原文/RAG、查看/编号草稿回插及断连/停用/改配/取消；MCP只验已发现工具目录。未推送、未发布、未替换运行实例或用户插件。"
     }
   ],
-  "release_parent": "release-20261008"
+  "release_parent": "release-20261008",
+  "release_history": [
+    {
+      "status": "not_run",
+      "summary": "本轮未请求发布、推送或替换实例。",
+      "evidence": []
+    }
+  ]
 }

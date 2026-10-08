@@ -79,9 +79,12 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Included in parent release v0.1.17.0-RC1. Published ARM64 assets and current gate evidence are recorded in release-20261008; this does not broaden the subtask acceptance scope.",
+      "evidence": [
+        "docs/tasks/release-20261008.json",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC1"
+      ]
     }
   },
   "release_authorization": "后续父任务 release-20261008：用户2026-10-08“整理所有资料和文档并release”，并明确答复允许运行完整验收并发布。原实施轮的NOT_RUN/未验证证据保留；最终版本、标签、镜像和附件状态查父任务及发布记录。既有生产实例不替换，Pages未自动部署。",
@@ -148,5 +151,12 @@
       "handoff": "主页源码与文档整理完成，现有desktop-initial/full预览保留。当前verification仍in_progress：390px/320px、导航/移动菜单、场景键盘、复制/FAQ、无JavaScript和reduced-motion尚缺完整操作收据。用户已请求整理所有资料和文档并release；本轮发布者负责新的浏览器验收与版本/附件发布记录。Pages只有手动工作流，未因源码整理自动部署。"
     }
   ],
-  "release_parent": "release-20261008"
+  "release_parent": "release-20261008",
+  "release_history": [
+    {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  ]
 }

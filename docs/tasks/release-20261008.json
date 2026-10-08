@@ -44,12 +44,13 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Final 19 checks PASS; race server342.996s, tts3.092s, vet PASS. Controlled SSH28+8, multi-source97, restart30 PASS; Safari desktop and homepage responsive acceptance recorded with explicit limits.",
+      "summary": "Final 19 checks PASS; race server317.793s, tts3.100s, vet PASS. Controlled SSH28+8, multi-source97, restart30 PASS; Safari desktop and homepage responsive acceptance recorded with explicit limits.",
       "evidence": [
         ".agent-state/full.json fingerprint81935c04df8f869c408492b393693a1a941fd552e9cd600b5c5660ccd884692e",
         ".agent-state/verify-20261008T060822197969Z.log",
         "docs/reviews/2026-10-08-release-integration.md",
-        "docs/reviews/2026-10-08-release-ui.md"
+        "docs/reviews/2026-10-08-release-ui.md",
+        ".agent-state/full.json fingerprintd331b9d9c719d16a0950e05a70695aed98565c7868d131caa26bad874530a7c2"
       ]
     },
     "documentation": {
@@ -71,14 +72,20 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Published v0.1.17.0-RC1 prerelease; immutable tag8a2ddb21 matches image. Full19 current fingerprintPASS, actual fullZIP start.command HTTPS/auth and Safari desktopPASS, eight remote bytes/SHA256 match local. Production untouched; Pages not deployed.",
+      "evidence": [
+        "docs/reviews/release-0.1.17.0-RC1-2026-10-08.md",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC1",
+        ".agent-state/release-20261008/runtime-receipt.json",
+        ".agent-state/release-20261008/remote-assets-receipt.json",
+        ".agent-state/verify-20261008T063234683227Z.log"
+      ]
     }
   },
   "release_authorization": "User 2026-10-08: organize all materials and documents and release; prior start.command and SSH-test instructions retained.",
   "rollback": "No existing runtime or user data replacement. Retain v0.1.16.0-RC1; deploy with backup and rollback using original image/data mounts. Isolated candidate owns synthetic data only.",
-  "handoff": "",
+  "handoff": "Release complete. ARM64 packages only; user-host SSH, Windows/Ubuntu device launch, Aide narrow view and paid model quality remain unverified. Isolated package available localhost18201.",
   "verification_history": [
     {
       "phase": "pre_restart_stale_socket_fix",

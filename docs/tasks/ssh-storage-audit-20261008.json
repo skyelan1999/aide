@@ -79,10 +79,11 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "本轮授权测试与修复，未请求发布、推送或替换运行实例。",
+      "status": "pass",
+      "summary": "Included in parent release v0.1.17.0-RC1. Published ARM64 assets and current gate evidence are recorded in release-20261008; this does not broaden the subtask acceptance scope.",
       "evidence": [
-        "本轮用户请求范围"
+        "docs/tasks/release-20261008.json",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC1"
       ]
     }
   },
@@ -121,5 +122,14 @@
       "handoff": "SSH隔离双服务器重跑与完整发布门禁通过；原用户服务器具体链接失败、已保存配置Safari工作区操作和长空闲/公网故障仍待实际环境核对。原生三服务器存储不支持；后续星图多来源通过另见starmap-sources/release父任务，原SSH实施轮结论留在history。最终版本/镜像/附件查父release任务。"
     }
   ],
-  "release_parent": "release-20261008"
+  "release_parent": "release-20261008",
+  "release_history": [
+    {
+      "status": "not_run",
+      "summary": "本轮授权测试与修复，未请求发布、推送或替换运行实例。",
+      "evidence": [
+        "本轮用户请求范围"
+      ]
+    }
+  ]
 }
