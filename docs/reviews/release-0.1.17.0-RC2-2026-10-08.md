@@ -1,6 +1,6 @@
 # Aide 0.1.17.0 RC2 发布记录
 
-状态：本地完整门禁、镜像和实际发行包启动、八项附件验收通过；GitHub prerelease待远端核对。用户授权：“所有的内容都推上去，然后release”。
+状态：已发布 GitHub prerelease；完整代码门禁、实际发行包启动及八项远端附件逐项核对通过。用户授权：“所有的内容都推上去，然后release”。
 
 ## 本次内容
 
@@ -15,7 +15,7 @@
 
 [星际日志](../tasks/starmap-logbook-20261008.json)和[星色验收](../tasks/starmap-stellar-colors-20261008.json)：实际Safari隔离18201桌面日志打开／Escape／外部关闭，灰点及40／20／10度颜色、135→138关系自动差量通过。测试并非生产数据或所有颜色边界。本轮恢复Safari控制后：刷新页面回到新任务，重新打开原会话，显示辅助审批及已应用文件修改；日志打开、Escape关闭回焦点、高关联40度蓝色节点再次通过。截图在2026-10-08-rc2-release目录。该检查验证最近任务回退，不声称用户显式模式覆盖的浏览器流程全部覆盖；窄屏、所有主题、量化帧率未完成。未绕过IAB证书错误。
 
-完整回归、固定版本镜像、隔离发行包启动、附件与远端核对的实际结果将在产生收据后追加。本次不替换9999，不部署Pages；三平台ARM64启动器不表示三个真实宿主设备都已测试。
+完整回归、固定版本镜像、隔离发行包启动、附件与远端核对的实际结果见下方收据。本次不替换9999，不部署Pages；三平台ARM64启动器不表示三个真实宿主设备都已测试。
 
 ## 回滚
 
@@ -67,3 +67,9 @@ Safari实际发行包刷新：工作台显示0.1.17.0 RC2，重新打开原会�
 ## 最终完整门禁
 
 包含导出后校验和的最终19项全部exit0；ok  	aide/internal/server	326.316s, ok  	aide/internal/server/tts	3.759s；vet通过。收据 `.agent-state/verify-20261008T081756081248Z.log`，指纹 `e3c3668e54b229e886a95958a44dce87a5aad0d7632e6ea6bec73fece6b5c32c`。后续只追加docs下发布回执，不变更标签或镜像。
+
+## 远端发行完成
+
+[https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC2](https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC2) 已实际API核对：draft=false、prerelease=true，八项附件均uploaded，逐项字节数和GitHub SHA256 digest与本地一致；标签解引用为a4a13aa41c98775bc2c63a1b2f4a8413ed9a2ad3。main与标签已推送，后续只追加发布回执文档，不重写标签。
+
+远端原始API与逐项收据：.agent-state/release-rc2-20261008/remote-release.json、remote-assets-receipt.json、remote-refs.txt。发行镜像/附件与标签提交固定，main之后的提交仅为文档收尾。生产9999与Pages本轮未部署。

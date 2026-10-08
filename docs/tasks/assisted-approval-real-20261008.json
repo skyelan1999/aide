@@ -63,16 +63,18 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "后续用户授权全部推送并release，纳入RC2发布账本；生产未切换。",
+      "status": "pass",
+      "summary": "v0.1.17.0-RC2 prerelease发布；八项远端字节数/SHA256匹配，标签a4a13aa固定镜像。main全内容推送。18201实际包启动通过；旧卷基线degraded边界记录，空数据完整性ok；本轮未切换9999或Pages。",
       "evidence": [
-        "docs/tasks/release-0171-20261008.json"
+        "docs/reviews/release-0.1.17.0-RC2-2026-10-08.md",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC2",
+        ".agent-state/release-rc2-20261008/remote-assets-receipt.json"
       ]
     }
   },
-  "release_authorization": "2026-10-08 用户：推上去吧（授权源码提交与推送；不包含 Release 发布或生产替换）；后续明确授权：所有的内容都推上去，然后release。",
+  "release_authorization": "2026-10-08用户：所有的内容都推上去，然后release。",
   "rollback": "Revert the approval fix commit; production 9999 was not replaced.",
-  "handoff": "RC2发布账本接续；真实模型和刷新后会话回退已验收，原QA凭据已恢复；生产切换不在本次范围。",
+  "handoff": "RC2发布完成，ARM64包；当前QA18201使用实际发行包及原QA卷。旧卷安全基线换版报警需部署核对；窄屏/所有主题/量化性能及Windows/Ubuntu真实宿主未验收。",
   "verification_history": [
     {
       "status": "pass",

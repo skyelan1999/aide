@@ -76,14 +76,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "RC2不可变标签、测试构建与八项本地附件已完成，准备推送并发布。",
+      "status": "pass",
+      "summary": "v0.1.17.0-RC2 prerelease发布；八项远端字节数/SHA256匹配，标签a4a13aa固定镜像。main全内容推送。18201实际包启动通过；旧卷基线degraded边界记录，空数据完整性ok；本轮未切换9999或Pages。",
       "evidence": [
-        "docs/reviews/release-0.1.17.0-RC2-2026-10-08.md"
+        "docs/reviews/release-0.1.17.0-RC2-2026-10-08.md",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC2",
+        ".agent-state/release-rc2-20261008/remote-assets-receipt.json"
       ]
     }
   },
-  "release_authorization": "User 2026-10-08: 所有的内容都推上去，然后release。完整验收授权沿用；生产实例切换未要求。",
+  "release_authorization": "2026-10-08用户：所有的内容都推上去，然后release。",
   "rollback": "保留不可变 v0.1.17.0-RC1 和原生产实例/数据卷；隔离18201可切回旧镜像；不删除卷、不覆盖业务数据。",
-  "handoff": "目标 v0.1.17.0-RC2 prerelease；仅 ARM64 发行包。浏览器刷新交互、窄屏和全部主题未完成，不宣称通过。"
+  "handoff": "RC2发布完成，ARM64包；当前QA18201使用实际发行包及原QA卷。旧卷安全基线换版报警需部署核对；窄屏/所有主题/量化性能及Windows/Ubuntu真实宿主未验收。"
 }

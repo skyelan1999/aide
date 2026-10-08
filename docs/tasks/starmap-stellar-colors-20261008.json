@@ -49,12 +49,16 @@
       "evidence": []
     },
     "release": {
-      "status": "not_run",
-      "summary": "Not requested this turn. Not committed/pushed or deployed to9999.",
-      "evidence": []
+      "status": "pass",
+      "summary": "v0.1.17.0-RC2 prerelease发布；八项远端字节数/SHA256匹配，标签a4a13aa固定镜像。main全内容推送。18201实际包启动通过；旧卷基线degraded边界记录，空数据完整性ok；本轮未切换9999或Pages。",
+      "evidence": [
+        "docs/reviews/release-0.1.17.0-RC2-2026-10-08.md",
+        "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC2",
+        ".agent-state/release-rc2-20261008/remote-assets-receipt.json"
+      ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "2026-10-08用户：所有的内容都推上去，然后release。",
   "rollback": "Revert only stellar mapping code; no data migration.",
-  "handoff": "https://localhost:18201/starmap.html candidate0.1.17.0-RC1-stellar-candidate. Production9999 unchanged."
+  "handoff": "RC2发布完成，ARM64包；当前QA18201使用实际发行包及原QA卷。旧卷安全基线换版报警需部署核对；窄屏/所有主题/量化性能及Windows/Ubuntu真实宿主未验收。"
 }
