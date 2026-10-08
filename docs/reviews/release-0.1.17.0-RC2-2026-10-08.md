@@ -31,3 +31,10 @@
 ## 升版前完整门禁
 
 19项全部exit0；server race335.010秒、tts3.293秒及vet通过。收据 `.agent-state/verify-20261008T080224159593Z.log`，指纹 `b72ce78b4d6d24832292a32641b8c5e41b495167c1a453b1ee85a51201468ad8`。范围与截图证据不扩大到未验收设备。
+
+## 固定版本构建
+
+- 标签 `v0.1.17.0-RC2`，版本提交 `a4a13aa41c98775bc2c63a1b2f4a8413ed9a2ad3`。
+- `scripts/docker-release.sh`，AIDE_RUN_TESTS=1，server128.886秒、tts1.913秒、vet通过，固定信任证书的HTTPS healthz通过。
+- 镜像 `sha256:820efc829a7833fdbb1ad712084628b7895962bf8ee1a4cac771fa50cb2b0a8b`，平台 `linux/arm64`，源码标签 `c07e58de7aae716165a97573014b661370b05880768c3b3dbf35f3d72755f105`。
+- 原始构建日志 `.agent-state/release-rc2-20261008/build.log`；发行导出更新了docker-images/SHA256SUMS，需对最终输入再次运行完整门禁。
