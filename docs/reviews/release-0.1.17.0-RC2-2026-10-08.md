@@ -38,3 +38,28 @@
 - `scripts/docker-release.sh`，AIDE_RUN_TESTS=1，server128.886秒、tts1.913秒、vet通过，固定信任证书的HTTPS healthz通过。
 - 镜像 `sha256:820efc829a7833fdbb1ad712084628b7895962bf8ee1a4cac771fa50cb2b0a8b`，平台 `linux/arm64`，源码标签 `c07e58de7aae716165a97573014b661370b05880768c3b3dbf35f3d72755f105`。
 - 原始构建日志 `.agent-state/release-rc2-20261008/build.log`；发行导出更新了docker-images/SHA256SUMS，需对最终输入再次运行完整门禁。
+
+## 实际发行包启动及本地附件
+
+完整ZIP保留未改的解压原件，工作副本仅设置QA18201、原QA工作区/引用目录/数据卷与独立镜像引用，未挂载候选二进制。用户要求的start.command成功导入包内镜像并启动；HTTPS固定证书、未鉴权401、鉴权200；version与buildCommit均匹配RC2标签，容器镜像ID等于包内manifest。模型为空、hasKey=false，未再复制模型凭据。
+
+Safari实际发行包刷新：工作台显示0.1.17.0 RC2，重新打开原会话显示辅助审批和已应用；星图64节点138关系、星际日志可打开。截图：[发行工作台](2026-10-08-rc2-release/final-package.png)、[发行星图](2026-10-08-rc2-release/final-package-starmap.png)。临时浏览器标签已关闭。
+
+### 完整性边界
+
+复用QA卷保留RC1基线commit8a2ddb21，binarySha256 d61deb9315aa7dbf4b19db2b6dba451a9c5448e33dba64956b0b1d87029cc3c7；RC2实际二进制05d1b440a018c3feecc7aed0c08ff75b5da106435a599fe823040fb2b794977d，因此healthz.status=ok、integrity=degraded。未重置或删除该安全基线。独立空数据一次性容器的RC2 healthz.status=ok且integrity=ok、401/200及版本提交核对通过，测试容器已停止移除。旧卷换版需在部署流程核对新镜像并处理基线；新装健康不代替原卷升级完整性验收。
+
+原始收据：.agent-state/release-rc2-20261008/runtime-receipt.json、fresh-runtime-receipt.json、start-package.log。隔离服务继续保留18201，生产9999本轮未停止或替换。
+
+八项本地附件通过ZIP CRC、七载荷SHA256、包内manifest/启动器镜像ID与tag、无.env/access-token/vault文件名检查。ARM64专用，不声称Windows/Ubuntu真实设备启动或amd64发行。
+
+| 附件 | 字节 | SHA256 |
+| --- | ---: | --- |
+| RELEASE-ASSETS.txt | 522 | `c4052b7e8533f8aaded9d4ded4a5b0b0bcf5678b5a8576d918f15afbd407cb0b` |
+| SHA256SUMS | 725 | `0f6c2384dc4063cdc94fee418139d4242ee0f2026061a8a7b528b55f8b19400a` |
+| aide-v0.1.17.0-RC2-full-linux-arm64.zip | 552850035 | `aff1675573440272aecb3cc27f104e70efac92a1c52778901de8d026443bbed6` |
+| aide-v0.1.17.0-RC2-linux-arm64-image.tar.gz | 552726810 | `f0f97a61b6b95695b64deca72a88a6f3598594ea5409822f9d2e43c34df29a21` |
+| aide-v0.1.17.0-RC2-macos-arm64.zip | 39780 | `f133f93802ac2863211aeee5125eff10a94d683c5aabe23e7621321e0b4167c1` |
+| aide-v0.1.17.0-RC2-ubuntu-arm64.zip | 40112 | `97658f73fb4be6ce048183ca87ed2f0d51d3c2000518b4929c142dd384826905` |
+| aide-v0.1.17.0-RC2-update-linux-arm64.zip | 552795326 | `bfbed95631af84000f326b79c09e4bdf55022b20646d83b66766a3622509fc94` |
+| aide-v0.1.17.0-RC2-windows-arm64.zip | 49648 | `812cddd959fec02bce9a161b82ebaf2153647a4729016e4e47151fa733407ac2` |
