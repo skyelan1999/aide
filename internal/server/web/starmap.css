@@ -364,3 +364,33 @@ html[data-motion=reduced] #cosmic-nav { transition:none; }
  :root { --map-canvas-bg:Canvas;--map-canvas-text:CanvasText;--map-canvas-star:CanvasText;--map-canvas-nebula:CanvasText; }
  #cosmic-title,#cosmic-meta,.cosmic-eyebrow { color:CanvasText; }
 }
+
+/* Header logbook: the index evidence belongs to this sky's observing tools. */
+header:has(#limits[open]) { z-index:6; }
+header #limits,header #limits[open] {
+  position:relative;inset:auto;margin:0;padding:0;max-width:none;
+  flex-shrink:0;background:transparent;border:0;border-radius:0;color:var(--map-muted);
+  max-height:none;overflow:visible;box-shadow:none;
+}
+#limits > summary {
+  display:grid;place-items:center;width:40px;height:40px;list-style:none;
+  border:1px solid var(--map-line);border-radius:12px;color:var(--map-gold);
+  background:transparent;transition:background 160ms ease,border-color 160ms ease;
+}
+#limits > summary::-webkit-details-marker { display:none; }
+#limits > summary:hover,#limits[open] > summary { background:var(--selected);border-color:var(--line-accent); }
+#limits > summary:focus-visible { outline:2px solid var(--focus-ring);outline-offset:3px; }
+.logbook-panel {
+  position:absolute;right:0;top:calc(100% + 16px);width:min(420px,calc(100vw - 32px));
+  max-height:calc(100dvh - 124px);overflow:auto;padding:23px;
+  background:var(--panel);border:1px solid var(--map-line);border-radius:16px;
+  box-shadow:0 16px 48px var(--line-faint);backdrop-filter:blur(24px);
+  color:var(--map-muted);font-size:12px;line-height:1.8;
+  animation:logbook-reveal 180ms cubic-bezier(.22,1,.36,1);
+}
+.logbook-panel h2 { margin:6px 0 0;font-size:20px;color:var(--map-text); }
+.logbook-panel .logbook-caption { margin:3px 0 14px; }
+@keyframes logbook-reveal { from { opacity:0;transform:translateY(-5px); } to { opacity:1;transform:translateY(0); } }
+@media(max-width:800px) { header #limits { margin-left:auto; } .logbook-panel { position:fixed;top:78px;right:16px;max-height:calc(100dvh - 96px); } }
+@media(prefers-reduced-motion:reduce) { .logbook-panel { animation:none; } #limits > summary { transition:none; } }
+html[data-motion="reduced"] .logbook-panel { animation:none; }

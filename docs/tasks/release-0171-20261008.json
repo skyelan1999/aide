@@ -1,0 +1,83 @@
+{
+  "id": "release-0171-20261008",
+  "request": "所有内容推送并发布：星际日志、星色映射、实际环境辅助审批修复",
+  "baseline": "fee72b0ea9044cdf0b3d2e7c43395f43cd889f4c",
+  "initial_status": "M docs/architecture/knowledge-map.md\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n?? docs/reviews/2026-10-08-starmap-logbook/\n?? docs/reviews/2026-10-08-starmap-stellar-colors/\n?? docs/tasks/starmap-logbook-20261008.json\n?? docs/tasks/starmap-stellar-colors-20261008.json",
+  "acceptance": [
+    "全部已审阅源码与文档推送 origin/main",
+    "完整 quick、Go race、vet 门禁通过",
+    "版本脚本生成 RC2 标签，发行镜像与标签一致",
+    "start.command 隔离启动、HTTPS 与鉴权通过",
+    "GitHub prerelease 和八项 ARM64 附件，远端摘要与本地一致"
+  ],
+  "scope": [
+    "internal/server/web/starmap.css",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.js",
+    "docs/architecture/knowledge-map.md",
+    "docs/reviews/2026-10-08-starmap-logbook",
+    "docs/reviews/2026-10-08-starmap-stellar-colors",
+    "docs/tasks",
+    "HANDOVER.md",
+    "version.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户授权全部推送和发布；审批与星图需求限定到已有实现。",
+      "evidence": [
+        "docs/reviews/release-0.1.17.0-RC2-2026-10-08.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "新文件独立审核、会话审批选择隔离；星色按唯一非结构关联；星际日志保留原证据。",
+      "evidence": [
+        "docs/architecture/execution-policy.md",
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "fee72b0 审批修复与剩余星图、文档、截图全部审阅后纳入。",
+      "evidence": [
+        "internal/server/assisted_approval_files.go",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "已有Safari星际日志和星色差量验收，真实模型审批正反例通过；本轮完整门禁待执行。浏览器刷新交互被用户接管，未完成。",
+      "evidence": [
+        "docs/reviews/2026-10-08-assisted-approval/README.md",
+        "docs/tasks/starmap-logbook-20261008.json",
+        "docs/tasks/starmap-stellar-colors-20261008.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "历史报告保留范围，新增RC2发布记录和交接入口。",
+      "evidence": [
+        "docs/reviews/release-0.1.17.0-RC2-2026-10-08.md",
+        "HANDOVER.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅发布仓库文件；临时真实模型设置已恢复，QA备份移除；原始日志在忽略目录。",
+      "evidence": [
+        "docs/reviews/2026-10-08-assisted-approval/README.md",
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User 2026-10-08: 所有的内容都推上去，然后release。完整验收授权沿用；生产实例切换未要求。",
+  "rollback": "保留不可变 v0.1.17.0-RC1 和原生产实例/数据卷；隔离18201可切回旧镜像；不删除卷、不覆盖业务数据。",
+  "handoff": "目标 v0.1.17.0-RC2 prerelease；仅 ARM64 发行包。浏览器刷新交互、窄屏和全部主题未完成，不宣称通过。"
+}

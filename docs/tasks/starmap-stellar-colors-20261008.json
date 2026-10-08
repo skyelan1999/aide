@@ -1,0 +1,60 @@
+{
+  "id": "starmap-stellar-colors-20261008",
+  "request": "根据天体颜色及链接个数渲染不同颜色和晕染，孤立文件灰色小星星，高连接节点蓝色强光星",
+  "baseline": "8bd2bb9c3961e35f711d982ee4ce40be475feb13",
+  "initial_status": "M docs/architecture/knowledge-map.md\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n?? docs/reviews/2026-10-08-starmap-logbook/\n?? docs/tasks/starmap-logbook-20261008.json",
+  "acceptance": [
+    "Zero valid neighbors: dim gray star; unique non-structural neighbors define degree",
+    "Six fixed color bands, bounded halos; code distance remains a separate cue",
+    "Actual browser inspection of isolated and high-degree nodes and live update"
+  ],
+  "scope": [
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "docs/architecture/knowledge-map.md",
+    "docs/reviews/2026-10-08-starmap-stellar-colors"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "NASA star temperature color sequence. Supernova is not a fixed blue class. Gray is an isolated-node UI metaphor.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Thresholds 0 / 1-2 / 3-7 / 8-15 / 16-31 / 32+. Ignore contains, defines, self links and duplicate neighbors. Project cross-file symbol relations to files.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Shared visual helper for both render paths; prepare degree and cached halo on graph/theme changes. Expose degree and band in detail.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Docker candidate compiled. Actual Safari18201 light desktop:60 nodes135 edges;0 gray,40 blue hub,20 blue-white,10 white. Appended three links without page reload:60 nodes138 edges;selected isolated node became gold with3 effective neighbors. Restored QA file. Dark/high-contrast/code-call graph/full boundary/performance acceptance not run. No automated tests added or run.",
+      "evidence": [
+        "docs/reviews/2026-10-08-starmap-stellar-colors/blue-hub.png",
+        "docs/reviews/2026-10-08-starmap-stellar-colors/live-update.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture documents thresholds, source, degree rule, and evidence scope.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "QA files only in ignored isolated workspace. Retained logbook changes. Production9999 and immutable release assets unchanged.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Not requested this turn. Not committed/pushed or deployed to9999.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert only stellar mapping code; no data migration.",
+  "handoff": "https://localhost:18201/starmap.html candidate0.1.17.0-RC1-stellar-candidate. Production9999 unchanged."
+}

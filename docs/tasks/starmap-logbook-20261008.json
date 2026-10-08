@@ -1,0 +1,80 @@
+{
+  "id": "starmap-logbook-20261008",
+  "request": "把星图索引范围和证据放到右上角做一个图标，星际日志",
+  "baseline": "8bd2bb9c3961e35f711d982ee4ce40be475feb13",
+  "initial_status": "",
+  "acceptance": [
+    "Header right icon named 星际日志 opens existing index evidence and source states.",
+    "Former upper-left evidence entry removed; outside click and Escape close; focus returns on Escape.",
+    "Reuse palette, bounded scrolling panel and narrow-screen positioning."
+  ],
+  "scope": [
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.css",
+    "internal/server/web/starmap.js",
+    "docs/tasks/starmap-logbook-20261008.json",
+    "docs/architecture/knowledge-map.md",
+    "docs/reviews/2026-10-08-starmap-logbook/"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Move existing evidence into right header icon, named 星际日志.",
+      "evidence": [
+        "Current user request"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Retain native details and existing evidence DOM; styled icon and anchored scrollable panel; Escape/outside close.",
+      "evidence": [
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Moved existing details into header right icon; retained warning/source IDs and data pipeline. Added anchored panel, keyboard/outside dismissal, lock close, cache versions.",
+      "evidence": [
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap.css",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Safari desktop isolated18201 compiled candidate:13 nodes11 edges loaded; header 星际日志 icon opens warning/source evidence, Escape closes and returns focus, outside search click closes. Narrow/theme/lock interaction not exercised; no automated tests requested or run.",
+      "evidence": [
+        "docs/reviews/2026-10-08-starmap-logbook/open.png",
+        "docs/reviews/2026-10-08-starmap-logbook/closed.png",
+        ".agent-state/starmap-logbook-20261008/start.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated knowledge map architecture and scoped task evidence.",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docs/tasks/starmap-logbook-20261008.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only scoped source/docs changed; candidate binary/log ignored. Preview18201 updated via start.command working-copy mount;9999 production untouched. Original release bundle/tag/assets retained.",
+      "evidence": [
+        "git diff review",
+        "docs/tasks/starmap-logbook-20261008.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "This request changes UI only; not pushed, not a new release, not deployed to9999. Previous immutable release remains unchanged.",
+      "evidence": [
+        "Current user request scope"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert only this task source changes; no data or API migration.",
+  "handoff": "Preview https://localhost:18201/starmap.html ; candidate build 0.1.17.0 RC1-logbook-candidate / 8bd2bb9-dirty-logbook. Production9999 unchanged. Compiled and visually checked, no automated tests run."
+}
