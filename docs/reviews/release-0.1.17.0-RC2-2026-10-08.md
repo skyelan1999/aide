@@ -27,3 +27,7 @@
 - 实际星图64节点138关系：星际日志打开，Escape关闭并回焦点；blue-hub为40有效关联、蓝色强光星。
 - Node VM读取当前实际星色函数：0/1/2/3/7/8/15/16/31/32/100000阈值、半径/光晕有界、结构/自身/重复排除、符号跨文件投影均通过。
 - 截图：[审批刷新](2026-10-08-rc2-release/approval-after-reload.png)、[日志](2026-10-08-rc2-release/logbook.png)、[星色](2026-10-08-rc2-release/star-degree.png)。
+
+## 升版前完整门禁
+
+19项全部exit0；server race335.010秒、tts3.293秒及vet通过。收据 `.agent-state/verify-20261008T080224159593Z.log`，指纹 `b72ce78b4d6d24832292a32641b8c5e41b495167c1a453b1ee85a51201468ad8`。范围与截图证据不扩大到未验收设备。
