@@ -1,6 +1,6 @@
 # Aide 0.1.17.0 RC2 发布记录
 
-状态：准备发行；完整代码门禁、镜像、包启动和远端附件尚待核对。用户授权：“所有的内容都推上去，然后release”。
+状态：本地完整门禁、镜像和实际发行包启动、八项附件验收通过；GitHub prerelease待远端核对。用户授权：“所有的内容都推上去，然后release”。
 
 ## 本次内容
 
@@ -63,3 +63,7 @@ Safari实际发行包刷新：工作台显示0.1.17.0 RC2，重新打开原会�
 | aide-v0.1.17.0-RC2-ubuntu-arm64.zip | 40112 | `97658f73fb4be6ce048183ca87ed2f0d51d3c2000518b4929c142dd384826905` |
 | aide-v0.1.17.0-RC2-update-linux-arm64.zip | 552795326 | `bfbed95631af84000f326b79c09e4bdf55022b20646d83b66766a3622509fc94` |
 | aide-v0.1.17.0-RC2-windows-arm64.zip | 49648 | `812cddd959fec02bce9a161b82ebaf2153647a4729016e4e47151fa733407ac2` |
+
+## 最终完整门禁
+
+包含导出后校验和的最终19项全部exit0；ok  	aide/internal/server	326.316s, ok  	aide/internal/server/tts	3.759s；vet通过。收据 `.agent-state/verify-20261008T081756081248Z.log`，指纹 `e3c3668e54b229e886a95958a44dce87a5aad0d7632e6ea6bec73fece6b5c32c`。后续只追加docs下发布回执，不变更标签或镜像。

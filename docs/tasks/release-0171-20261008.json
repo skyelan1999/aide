@@ -48,12 +48,15 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "完整19项quick/Go race/vet全部exit0，server335.010s；Safari刷新后原会话辅助审批与应用状态、日志Escape和40度蓝星复核通过。阈值全部边界及前端持久化函数通过。窄屏/全部主题/量化性能不在已验收范围。",
+      "summary": "完整19项quick/Go race/vet全部exit0，server335.010s；Safari刷新后原会话辅助审批与应用状态、日志Escape和40度蓝星复核通过。阈值全部边界及前端持久化函数通过。窄屏/全部主题/量化性能不在已验收范围。最终导出后19项full再次通过，实际发行包HTTPS/API/Safari核心通过；旧QA卷安全基线保留，degraded边界已记录；空数据完整性ok。",
       "evidence": [
         ".agent-state/verify-20261008T080224159593Z.log",
         ".agent-state/full.json",
         "docs/reviews/2026-10-08-rc2-release/approval-after-reload.png",
-        "docs/reviews/2026-10-08-assisted-approval/README.md"
+        "docs/reviews/2026-10-08-assisted-approval/README.md",
+        ".agent-state/verify-20261008T081756081248Z.log",
+        "docs/reviews/2026-10-08-rc2-release/final-package.png",
+        ".agent-state/release-assets/rc2-local-assets-receipt.json"
       ]
     },
     "documentation": {
@@ -73,9 +76,11 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "RC2不可变标签、测试构建与八项本地附件已完成，准备推送并发布。",
+      "evidence": [
+        "docs/reviews/release-0.1.17.0-RC2-2026-10-08.md"
+      ]
     }
   },
   "release_authorization": "User 2026-10-08: 所有的内容都推上去，然后release。完整验收授权沿用；生产实例切换未要求。",
