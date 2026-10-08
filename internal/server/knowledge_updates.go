@@ -18,11 +18,15 @@ const knowledgeRevisionLimit = 8
 // The zero value is ready to use. One cancellable gate serializes scans for an
 // App; caches are confined to its current workspace and its two graph modes.
 type knowledgeUpdateState struct {
-	once      sync.Once
-	gate      chan struct{}
-	workspace string
-	epoch     uint64
-	views     [2]*knowledgeUpdateView
+	once       sync.Once
+	gate       chan struct{}
+	workspace  string
+	epoch      uint64
+	views      [2]*knowledgeUpdateView
+	remoteMu   sync.Mutex
+	remote     map[string]*knowledgeRemoteMemo
+	originOnce sync.Once
+	originSeed []byte
 }
 
 type knowledgeUpdateView struct {
@@ -52,6 +56,7 @@ type knowledgeUpdateResponse struct {
 	Warnings     []string              `json:"warnings"`
 	Truncated    bool                  `json:"truncated"`
 	Code         *knowledgeCodeSummary `json:"code,omitempty"`
+	Sources      []knowledgeSource     `json:"sources"`
 }
 
 type knowledgeFileStamp struct {
@@ -157,7 +162,7 @@ func (c *knowledgeScanCache) expandCode(ctx context.Context, g *knowledgeGraph, 
 	}
 	inputs := []string{g.Workspace, fmt.Sprint(len(g.Edges))}
 	for _, f := range files {
-		inputs = append(inputs, f.ID, f.Node.Root, f.Node.Source, f.Node.Path, f.Module, hash([]byte(f.Text)))
+		inputs = append(inputs, f.ID, f.Node.Root, f.Node.Source, f.Node.Path, f.Node.Origin, f.Module, hash([]byte(f.Text)))
 	}
 	raw, _ := json.Marshal(inputs)
 	key := hash(raw)
@@ -230,7 +235,7 @@ func knowledgeGraphRevision(g *knowledgeGraph) knowledgeRevision {
 
 func knowledgeDelta(view *knowledgeUpdateView, cursor string) knowledgeUpdateResponse {
 	g := view.graph
-	out := knowledgeUpdateResponse{Workspace: g.Workspace, Revision: view.revision, Nodes: []knowledgeNode{}, RemovedNodes: []string{}, Edges: []knowledgeEdge{}, RemovedEdges: []knowledgeEdge{}, Warnings: g.Warnings, Truncated: g.Truncated, Code: g.Code}
+	out := knowledgeUpdateResponse{Workspace: g.Workspace, Revision: view.revision, Nodes: []knowledgeNode{}, RemovedNodes: []string{}, Edges: []knowledgeEdge{}, RemovedEdges: []knowledgeEdge{}, Warnings: g.Warnings, Truncated: g.Truncated, Code: g.Code, Sources: g.Sources}
 	var baseline *knowledgeRevision
 	for i := range view.history {
 		if cursor != "" && view.history[i].id == cursor {

@@ -7,8 +7,11 @@ package server
 //   - store/clear 同步写 vault；删除来源 sweep 掉密文
 
 import (
+	"bytes"
 	"encoding/json"
+	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -179,5 +182,141 @@ func TestSourceCredentialSweepRemoved(t *testing.T) {
 	}
 	if _, ok := a.sourceSecrets.Secrets["gone1"]; ok {
 		t.Fatal("sweep 后内存明文不应再有已删除来源")
+	}
+}
+
+func sourceVaultPatchFixture(t *testing.T) (*App, map[string]any, string) {
+	t.Helper()
+	a := testApp(t)
+	if !a.vaultIsUnlocked() {
+		t.Fatal("source credential patch fixture requires an unlocked vault")
+	}
+	dir := t.TempDir()
+	log := filepath.Join(dir, "ssh.log")
+	a.sshBin = filepath.Join(dir, "ssh")
+	writeStub(t, a.sshBin, "#!/bin/sh\nprintf '%s\\n' \"$*\" >> "+shellQuote(log)+"\nexit 0\n")
+	src := sourceBody("vault-patch", "sealed source", "sftp", map[string]any{"host": "fixture.invalid", "port": 22, "username": "reader", "auth": "key", "path": "/docs"}, true)
+	requireStatus(t, request(a, http.MethodPut, "/api/sources", map[string]any{
+		"sources": []any{src}, "secrets": map[string]any{"vault-patch": map[string]any{"password": "fixture-password", "key": "fixture-key"}},
+	}), http.StatusOK)
+	if _, ok := a.sourceSecrets.Secrets["vault-patch"]; ok {
+		t.Fatal("sealed fixture must not retain fallback plaintext")
+	}
+	return a, src, log
+}
+
+func TestUpdateSourcesPartialVaultCredentials(t *testing.T) {
+	a, src, log := sourceVaultPatchFixture(t)
+	for _, tt := range []struct {
+		patch         map[string]any
+		password, key string
+	}{
+		{map[string]any{"password": "fixture-new-password"}, "fixture-new-password", "fixture-key"},
+		{map[string]any{"key": "fixture-new-key"}, "fixture-new-password", "fixture-new-key"},
+	} {
+		generation := a.sshSessionGeneration(sourceSocket("vault-patch"))
+		if err := os.WriteFile(log, nil, 0600); err != nil {
+			t.Fatal(err)
+		}
+		requireStatus(t, request(a, http.MethodPut, "/api/sources", map[string]any{"sources": []any{src}, "secrets": map[string]any{"vault-patch": tt.patch}}), http.StatusOK)
+		a.mu.Lock()
+		password, key := a.sourceCredentialLocked("vault-patch")
+		_, plaintext := a.sourceSecrets.Secrets["vault-patch"]
+		a.mu.Unlock()
+		if password != tt.password || key != tt.key || plaintext {
+			t.Fatal("partial update lost its omitted field or retained plaintext")
+		}
+		if a.sshSessionGeneration(sourceSocket("vault-patch")) != generation+1 {
+			t.Fatal("partial credential update did not invalidate its master generation")
+		}
+		b, err := os.ReadFile(log)
+		if err != nil || !strings.Contains(string(b), "-O exit") {
+			t.Fatal("partial credential update did not retire its old master")
+		}
+	}
+}
+
+func TestUpdateSourcesEmptyVaultCredentialPatchIsNoop(t *testing.T) {
+	a, src, _ := sourceVaultPatchFixture(t)
+	before, err := os.ReadFile(a.vault.Path())
+	if err != nil {
+		t.Fatal(err)
+	}
+	generation := a.sshSessionGeneration(sourceSocket("vault-patch"))
+	requireStatus(t, request(a, http.MethodPut, "/api/sources", map[string]any{"sources": []any{src}, "secrets": map[string]any{"vault-patch": map[string]any{}}}), http.StatusOK)
+	after, err := os.ReadFile(a.vault.Path())
+	if err != nil || !bytes.Equal(before, after) || a.sshSessionGeneration(sourceSocket("vault-patch")) != generation {
+		t.Fatal("empty credential patch changed a sealed entry or retired its master")
+	}
+	a.mu.Lock()
+	password, key := a.sourceCredentialLocked("vault-patch")
+	a.mu.Unlock()
+	if password != "fixture-password" || key != "fixture-key" {
+		t.Fatal("empty credential patch cleared existing credentials")
+	}
+}
+
+func TestUpdateSourcesUnreadablePartialVaultPatchIsAtomic(t *testing.T) {
+	for _, mode := range []string{"locked", "invalid-payload"} {
+		t.Run(mode, func(t *testing.T) {
+			a, src, log := sourceVaultPatchFixture(t)
+			other := sourceBody("vault-patch-other", "other sealed source", "sftp", map[string]any{"host": "other.invalid", "auth": "key", "path": "/docs"}, true)
+			requireStatus(t, request(a, http.MethodPut, "/api/sources", map[string]any{"sources": []any{src, other}, "secrets": map[string]any{"vault-patch-other": map[string]any{"password": "fixture-other-password", "key": "fixture-other-key"}}}), http.StatusOK)
+			if mode == "locked" {
+				a.vault.Lock()
+			} else {
+				if err := a.vault.Put(sourceVaultID("vault-patch"), VaultTypeSourceSecret, "fixture malformed payload", []byte("not-json"), ""); err != nil {
+					t.Fatal(err)
+				}
+				if err := a.vault.Save(); err != nil {
+					t.Fatal(err)
+				}
+			}
+			paths := []string{a.vault.Path(), a.sourcesPath(), a.sourcesSecretsPath()}
+			before := make(map[string][]byte, len(paths))
+			for _, path := range paths {
+				b, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				before[path] = b
+			}
+			generation := a.sshSessionGeneration(sourceSocket("vault-patch-other"))
+			if err := os.WriteFile(log, nil, 0600); err != nil {
+				t.Fatal(err)
+			}
+			src["name"] = "must not be saved"
+			response := request(a, http.MethodPut, "/api/sources", map[string]any{
+				"sources": []any{src, other},
+				"secrets": map[string]any{"vault-patch": map[string]any{"password": "fixture-partial"}, "vault-patch-other": map[string]any{"clear": true}},
+			})
+			want := http.StatusLocked
+			if mode == "invalid-payload" {
+				want = http.StatusInternalServerError
+			}
+			requireStatus(t, response, want)
+			for _, path := range paths {
+				after, err := os.ReadFile(path)
+				if err != nil || !bytes.Equal(before[path], after) {
+					t.Fatal("failed preflight partially saved source credentials or registry")
+				}
+			}
+			if !a.vault.Has(sourceVaultID("vault-patch-other")) || a.sshSessionGeneration(sourceSocket("vault-patch-other")) != generation {
+				t.Fatal("failed batch cleared another source or retired its master")
+			}
+			b, err := os.ReadFile(log)
+			if err != nil || len(b) != 0 {
+				t.Fatal("failed preflight performed SSH teardown")
+			}
+		})
+	}
+}
+
+func TestUpdateSourcesClearLockedVaultCredentials(t *testing.T) {
+	a, src, _ := sourceVaultPatchFixture(t)
+	a.vault.Lock()
+	requireStatus(t, request(a, http.MethodPut, "/api/sources", map[string]any{"sources": []any{src}, "secrets": map[string]any{"vault-patch": map[string]any{"clear": true}}}), http.StatusOK)
+	if a.vault.Has(sourceVaultID("vault-patch")) {
+		t.Fatal("explicit clear must remain available without decrypting the old credentials")
 	}
 }

@@ -197,11 +197,29 @@ func (a *App) officeWriteBytes(p, sourceID string, src Source, b []byte) error {
 
 func (a *App) officeXlsxView(w http.ResponseWriter, r *http.Request) {
 	p, sourceID := r.URL.Query().Get("path"), r.URL.Query().Get("source")
-	if effectiveFileExt(p) != ".xlsx" {
+	origin, workspace := r.URL.Query().Get("knowledgeOrigin"), r.URL.Query().Get("knowledgeWorkspace")
+	knowledgeReadOnly := origin != ""
+	// A single URL has a virtual resource.txt path. Only identity-pinned,
+	// read-only link/SMB views may use the graph's XLSX format hint.
+	virtualXlsx := false
+	if knowledgeReadOnly && workspace != "" && sourceID != "" && r.URL.Query().Get("knowledgeFormat") == ".xlsx" {
+		a.mu.Lock()
+		src, ok := a.findSource(sourceID)
+		a.mu.Unlock()
+		virtualXlsx = ok && src.Enabled && (src.Type == "link" || src.Type == "smb")
+	}
+	if effectiveFileExt(p) != ".xlsx" && !virtualXlsx {
 		fail(w, 400, errors.New("仅支持 .xlsx"))
 		return
 	}
-	b, src, err := a.officeReadBytes(p, sourceID)
+	var b []byte
+	var src Source
+	var err error
+	if knowledgeReadOnly {
+		b, err = a.knowledgeReadViewer(r.Context(), r.URL.Query().Get("root"), sourceID, p, origin, workspace, 16<<20)
+	} else {
+		b, src, err = a.officeReadBytes(p, sourceID)
+	}
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -245,7 +263,7 @@ func (a *App) officeXlsxView(w http.ResponseWriter, r *http.Request) {
 	}
 	result["hash"] = hash(b)
 	result["workspaceId"] = a.wsID()
-	result["readOnly"] = sourceID != "" && !src.RW
+	result["readOnly"] = knowledgeReadOnly || sourceID != "" && !src.RW
 	if sourceID != "" {
 		result["workspaceId"] = "source:" + sourceID
 	}

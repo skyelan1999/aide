@@ -1,0 +1,117 @@
+{
+  "id": "starmap-sources-20261008",
+  "request": "星图还要支持不同的引用来源",
+  "baseline": "912cc06f49167f6789f1007547fc0b128f7dbfa0",
+  "initial_status": "M docs/architecture.md\n M docs/user-guide.md\n M internal/server/file_transfer.go\n M internal/server/files.go\n M internal/server/remote_group_cleanup_test.go\n M internal/server/server.go\n M internal/server/source_secrets_vault_test.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n?? .github/\n?? docs/architecture/ssh-storage.md\n?? docs/reviews/2026-10-08-homepage/\n?? docs/reviews/2026-10-08-ssh-storage-audit.md\n?? docs/tasks/homepage-20261008.json\n?? docs/tasks/ssh-storage-audit-20261008.json\n?? docs/website.md\n?? internal/server/ssh_apply_test.go\n?? internal/server/ssh_live_test.go\n?? internal/server/ssh_session_reliability_test.go\n?? internal/server/workspace_remote_paths_test.go\n?? scripts/test-ssh-workspace.sh\n?? site/",
+  "acceptance": [
+    "已启用本地/Skill、SSH工作区、自动系统文档SFTP、独立SFTP、HTTP链接、FTP/FTPS、SMB来源按独立星域索引，MCP仅索引已发现工具说明，不自动调用工具。",
+    "节点与原文/RAG结果携带来源名称、类型、稳定来源编号；同名同路径跨来源不混淆。",
+    "来源停用、改配、不可访问有诊断，自动同步按节点差量合并，保留已有视角。",
+    "远程读取有请求取消、时间与字节预算；文档回插重查当前来源身份与内容指纹。",
+    "更新架构及用户指南并记录编译/语法检查与未执行验收范围；不替换运行实例或推送。"
+  ],
+  "scope": [
+    "internal/server/knowledge_map.go",
+    "internal/server/knowledge_updates.go",
+    "internal/server/knowledge_sources.go",
+    "internal/server/knowledge_documents.go",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.css",
+    "docs/architecture/knowledge-map.md",
+    "docs/architecture.md",
+    "docs/user-guide.md",
+    "docs/reviews/2026-10-08-starmap-sources.md",
+    "docs/tasks/starmap-sources-20261008.json",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/workflow.go (document_search description only; preserve SSH edits)",
+    "plugins/office/index.js",
+    "plugins/office/README.md",
+    "internal/server/sources.go (bounded binary raw source reads; preserve SSH/vault changes)",
+    "internal/server/files.go (source/raw/text viewer identity and request context; preserve SSH changes)",
+    "internal/server/office_artifact.go (identity-pinned read-only XLSX view)"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求不同引用来源；扩展既有来源注册表及星图，不新增外部服务。",
+      "evidence": [
+        "当前 sources.go 驱动与 knowledgeSnapshot/documentRaw 调用链已读取。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "新增有界只读来源适配层，来源目录共用稳定编号、独立状态与差量同步。MCP目录只读取已有元数据。",
+      "evidence": [
+        "knowledge_map.go 当前仅 local/skill；documentRaw 当前仅本地；starmap.js 已有 region 过滤及编号桥接。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "来源目录、共享只读适配、出处及身份校验、原文/RAG/插件、差量UI与只读查看链路已实现；没有新增测试。",
+      "evidence": [
+        "internal/server/knowledge_sources.go + knowledge_map.go + knowledge_updates.go",
+        "knowledge_documents.go, sources.go, files.go, office_artifact.go",
+        "web/starmap.js/html/css, app.js/index.html; plugins/office"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "发布轮19门禁通过；隔离来源协议/API50+基线12+格式35检查PASS；Safari桌面来源状态、按F编号查找/草稿附件回填未发送、原文只读查看、新增/删除差量及镜头视觉保留通过。Aide窄屏、全部编号/主题/性能和付费模型质量NOT_RUN；原实施轮编译与NOT_RUN保留在history。",
+      "evidence": [
+        "docs/reviews/2026-10-08-release-integration.md",
+        "docs/reviews/2026-10-08-release-ui.md",
+        ".agent-state/full.json fingerprint9c66307af535ecf4438ab81faeb8dceb1d9ae10cd31f341806b0295bbe4483c8",
+        ".agent-state/verify-20261008T055113017149Z.log",
+        "docs/reviews/2026-10-08-release-ui/source-callback.png + source-readonly.png + delta-before.png + delta-after.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构、用户指南、插件说明和受控候选记录同步能力、预算、边界及未验收范围。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docs/user-guide.md, docs/architecture.md, plugins/office/README.md",
+        "docs/reviews/2026-10-08-starmap-sources.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅本任务范围；保留已有SSH与主页改动。候选和原始日志仅存忽略的.agent-state；没有清理用户数据或运行配置。",
+      "evidence": [
+        "git status --short confirms prior changes preserved; no staging/commit/restart",
+        "knowledge_sources.go and candidate review/task have explicit ownership"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮未请求发布、推送或替换实例。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "后续父任务 release-20261008：用户2026-10-08“整理所有资料和文档并release”，并明确答复允许运行完整验收并发布。原实施轮的NOT_RUN/未验证证据保留；最终版本、标签、镜像和附件状态查父任务及发布记录。既有生产实例不替换，Pages未自动部署。",
+  "rollback": "No runtime/config/data migration this turn. For source rollback, revert this task's hunks only; files.go/sources.go/workflow.go/docs contain prior SSH work and must not be reset wholesale. Future candidate launch uses start.command and preserves original image/config/data.",
+  "handoff": "多来源API与Safari桌面核心链路已验收，具体范围见release integration/UI。继续保留用户服务器、Aide窄屏/全部主题、全部编号回填、模型质量与量化性能未验收边界。最终版本镜像/附件发布由release-20261008记录；旧实施轮NOT_RUN留存。",
+  "verification_history": [
+    {
+      "phase": "original_implementation_turn",
+      "verification": {
+        "status": "not_run",
+        "summary": "候选离线编译及语法/格式检查通过；功能、浏览器、远端协议和模型验收未运行，不能作为发布验收。",
+        "evidence": [
+          "gofmt 6 Go files, exit 0",
+          "node --check starmap.js / app.js / plugins/office/index.js: each exit 0",
+          "go build -mod=vendor -trimpath ./cmd/aide, go1.26.8 linux/arm64, exit 0, network none",
+          "build inputs fingerprint bdf2b391f17dae1727a5b71c6aac166d2fe33f126905636542175939e29583e5; before/after match",
+          "candidate binary SHA256 5f06c39b7060330fec0267e664bb149112160de68cac3c12c33cd0b7e7c5df98",
+          "scoped git diff --check exit 0; python3 scripts/check_docs.py PASS 163 Markdown / 342 links",
+          ".agent-state/starmap-sources/checks.json + build.log + build-inputs-before.json + build-inputs-after.json",
+          "NOT_RUN: no tests/race/real server integration/browser/model calls"
+        ]
+      },
+      "handoff": "源码候选实现完成。下一轮在明确隔离候选用 start.command 启动，按review验证同名多来源筛选、原文/RAG、查看/编号草稿回插及断连/停用/改配/取消；MCP只验已发现工具目录。未推送、未发布、未替换运行实例或用户插件。"
+    }
+  ],
+  "release_parent": "release-20261008"
+}

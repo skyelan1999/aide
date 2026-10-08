@@ -25,6 +25,10 @@ type knowledgeNode struct {
 	Path        string `json:"path,omitempty"`
 	Root        string `json:"root,omitempty"`
 	Source      string `json:"source,omitempty"`
+	SourceName  string `json:"sourceName,omitempty"`
+	SourceType  string `json:"sourceType,omitempty"`
+	Origin      string `json:"origin,omitempty"`
+	Format      string `json:"format,omitempty"`
 	Session     string `json:"session,omitempty"`
 	Number      int    `json:"number,omitempty"`
 	Text        string `json:"text,omitempty"`
@@ -52,6 +56,7 @@ type knowledgeGraph struct {
 	Warnings  []string              `json:"warnings"`
 	Truncated bool                  `json:"truncated"`
 	Code      *knowledgeCodeSummary `json:"code,omitempty"`
+	Sources   []knowledgeSource     `json:"sources"`
 }
 
 func knowledgeID(scope, root, source, p string) string {
@@ -109,7 +114,6 @@ func (a *App) knowledgeSnapshotMode(ctx context.Context, includeCode bool) knowl
 func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool, cache *knowledgeScanCache) knowledgeGraph {
 	a.mu.Lock()
 	scope := a.wsID()
-	mode := a.wsConfig.Workspace.Mode
 	var workspaceName, referenceName string
 	if a.workspace != nil {
 		workspaceName = a.workspace.Name()
@@ -117,22 +121,7 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 	if a.reference != nil {
 		referenceName = a.reference.Name()
 	}
-	sources := append([]Source(nil), a.sourceRegistry.Sources...)
-	for i := range sources {
-		if sources[i].Type != "local" && sources[i].Type != "skill" {
-			continue
-		}
-		if strings.TrimSpace(sources[i].Config.Path) == "" {
-			sources[i].Config.Path = referenceName
-		} else {
-			resolved, _, err := a.resolveHostPath(sources[i].Config.Path)
-			if err != nil {
-				sources[i].Config.Path = ""
-			} else {
-				sources[i].Config.Path = resolved
-			}
-		}
-	}
+	areas := a.knowledgeAreasLocked(scope, workspaceName, referenceName)
 	nodes := []knowledgeNode{}
 	sessionsTruncated := false
 	attachments := map[string][]Attachment{}
@@ -179,41 +168,34 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 		}
 	}
 	a.mu.Unlock()
-	g := knowledgeGraph{Workspace: knowledgeID(scope, "scope", "", "."), Truncated: sessionsTruncated, Nodes: nodes, Edges: []knowledgeEdge{}, Warnings: []string{"正文索引：每份文本前 8 KiB；PDF、图片和二进制仅索引文件名。隐藏文件、密钥及依赖目录不索引。"}}
-	type area struct{ root, source, name, location string }
-	areas := []area{}
-	if mode == "local" || mode == "" {
-		areas = append(areas, area{"workspace", "", "工作区", workspaceName})
-	} else {
-		g.Warnings = append(g.Warnings, "远程工作区未索引；不会自动连接外部服务。")
-	}
-	if referenceName != "" {
-		areas = append(areas, area{"context", "", "引用目录", referenceName})
-	}
-	for _, src := range sources {
-		if !src.Enabled {
-			continue
+	g := knowledgeGraph{Workspace: knowledgeID(scope, "scope", "", "."), Truncated: sessionsTruncated, Nodes: nodes, Edges: []knowledgeEdge{}, Sources: []knowledgeSource{{ID: "sessions", Name: "会话", Type: "session", Region: "sessions", State: "ready", NodeCount: len(nodes)}}, Warnings: []string{"正文索引：每份文本前 8 KiB；PDF、图片和二进制在星图中仅索引名称，文档检索按读取预算提取。隐藏文件、密钥、符号链接及依赖目录不索引。"}}
+	for _, ar := range areas {
+		state := "partial"
+		message := "等待本轮索引"
+		if !ar.enabled {
+			state, message = "disabled", "来源已停用"
 		}
-		if src.Type == "local" || src.Type == "skill" {
-			areas = append(areas, area{"source", src.ID, src.Name, src.Config.Path})
-		} else {
-			g.Warnings = append(g.Warnings, src.Name+"：远程或插件来源未索引")
-		}
+		g.Sources = append(g.Sources, knowledgeSource{ID: ar.id(), Name: ar.name, Type: ar.kind, Region: ar.region(), State: state, Message: message})
 	}
-	dirs := 0
-	files := 0
+	fileQuota, dirQuota := knowledgeAreaQuotas(areas)
 	codeFiles := []knowledgeCodeFile{}
 	codeBytes := 0
 	codeSkipped := 0
 	for _, ar := range areas {
+		if !ar.enabled || !ar.local() {
+			continue
+		}
+		dirs, files := 0, 0
+		partial := false
+		firstNode := len(g.Nodes)
 		if ctx.Err() != nil {
 			g.Truncated = true
 			break
 		}
 		root, err := os.OpenRoot(ar.location)
 		if err != nil {
-			cache.fail()
 			g.Warnings = append(g.Warnings, ar.name+"：不可读取")
+			knowledgeSetSource(&g, ar, "unavailable", "本地目录不可读取", 0)
 			continue
 		}
 		module := ""
@@ -226,7 +208,8 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 		}
 		var walk func(string, string, int)
 		walk = func(p, parent string, depth int) {
-			if ctx.Err() != nil || files >= 800 || dirs >= 200 || depth > 7 {
+			if ctx.Err() != nil || files >= fileQuota || dirs >= dirQuota || depth > 7 {
+				partial = true
 				g.Truncated = true
 				return
 			}
@@ -236,22 +219,25 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 			if p == "." {
 				name = ar.name
 			}
-			g.Nodes = append(g.Nodes, knowledgeNode{ID: nid, Name: name, Kind: "directory", Region: region, Root: ar.root, Source: ar.source, Path: p})
+			g.Nodes = append(g.Nodes, ar.node(knowledgeNode{ID: nid, Name: name, Kind: "directory", Region: region, Root: ar.root, Source: ar.source, Path: p}))
 			if parent != "" {
 				g.Edges = append(g.Edges, knowledgeEdge{From: parent, To: nid, Kind: "contains"})
 			}
 			f, err := root.Open(p)
 			if err != nil {
+				partial = true
 				cache.fail()
 				g.Truncated = true
 				return
 			}
 			entries, err := f.ReadDir(1000)
 			if len(entries) >= 1000 {
+				partial = true
 				g.Truncated = true
 			}
 			f.Close()
 			if err != nil && err != io.EOF {
+				partial = true
 				cache.fail()
 				g.Truncated = true
 				return
@@ -262,20 +248,22 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 					continue
 				}
 				rel := path.Join(p, e.Name())
-				if safePath(rel) != nil {
+				if !knowledgeSafePath(rel) {
 					continue
 				}
 				if e.IsDir() {
 					walk(rel, nid, depth+1)
 					continue
 				}
-				if files >= 800 {
+				if files >= fileQuota {
+					partial = true
 					g.Truncated = true
 					break
 				}
 				info, err := e.Info()
 				if err != nil || !info.Mode().IsRegular() {
 					if err != nil {
+						partial = true
 						cache.fail()
 					}
 					continue
@@ -294,7 +282,10 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 					}
 				}
 				text, code, readErr := cache.material(root, ar.location, rel, info, wantCode)
-				node := knowledgeNode{ID: fid, Name: e.Name(), Kind: "file", Region: region, Root: ar.root, Source: ar.source, Path: rel, Size: info.Size(), Text: text}
+				if readErr != nil {
+					partial = true
+				}
+				node := ar.node(knowledgeNode{ID: fid, Name: e.Name(), Kind: "file", Region: region, Root: ar.root, Source: ar.source, Path: rel, Size: info.Size(), Text: text})
 				if cache != nil {
 					node.Modified = info.ModTime().UTC().Format(time.RFC3339Nano)
 				}
@@ -312,7 +303,13 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 		}
 		walk(".", "", 0)
 		root.Close()
+		state, message := "ready", ""
+		if partial {
+			state, message = "partial", "部分目录或正文达到读取、数量、深度或时间限制"
+		}
+		knowledgeSetSource(&g, ar, state, message, len(g.Nodes)-firstNode)
 	}
+	a.knowledgeAppendRemote(ctx, &g, areas, includeCode, &codeFiles, &codeBytes, &codeSkipped)
 	if includeCode {
 		cache.expandCode(ctx, &g, codeFiles)
 		if codeSkipped > 0 {
@@ -334,6 +331,12 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 	}
 	// Link targets are resolved relative to the containing file. Cross-region links require an explicit namespace or stable ID.
 	targets := regexp.MustCompile("[(`\"]([^`\"\\s)]+)[)`\"]")
+	pathCounts := map[string]int{}
+	for _, n := range g.Nodes {
+		if n.Kind == "file" {
+			pathCounts[n.Path]++
+		}
+	}
 	for _, from := range g.Nodes {
 		if from.Text == "" || from.Kind == "symbol" {
 			continue
@@ -357,17 +360,19 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 			if to.Root == "source" {
 				explicit = explicit || strings.Contains(from.Text, to.Source+":"+to.Path)
 			}
-			local := (from.Kind == "session" || from.Region == to.Region) && refs[to.Path]
+			local := (from.Region == to.Region || from.Kind == "session" && pathCounts[to.Path] == 1) && refs[to.Path]
 			if explicit || local {
 				g.Edges = append(g.Edges, knowledgeEdge{From: from.ID, To: to.ID, Kind: "mention"})
 				if len(g.Edges) >= 4000 {
 					g.Truncated = true
+					a.knowledgeRevalidateGraph(&g)
 					return g
 				}
 			}
 		}
 	}
 
+	a.knowledgeRevalidateGraph(&g)
 	return g
 }
 func (a *App) knowledgeMap(w http.ResponseWriter, r *http.Request) {
@@ -439,7 +444,7 @@ func (a *App) knowledgeAssist(w http.ResponseWriter, r *http.Request) {
 	if len(in.IDs) == 0 {
 		candidates := []knowledgeNode{}
 		for _, n := range g.Nodes {
-			if n.Kind != "directory" {
+			if n.Kind != "directory" && (in.Region == "" || in.Region == "all" || n.Region == in.Region) {
 				candidates = append(candidates, n)
 			}
 		}
@@ -512,7 +517,7 @@ func (a *App) knowledgeAssist(w http.ResponseWriter, r *http.Request) {
 	seen := map[string]bool{}
 	for _, id := range in.IDs {
 		for _, n := range g.Nodes {
-			if n.ID == id && n.Kind != "directory" && !seen[id] {
+			if n.ID == id && n.Kind != "directory" && !seen[id] && (in.Region == "" || in.Region == "all" || n.Region == in.Region) {
 				n.Text = knowledgeClip(n.Text, 1500)
 				selected = append(selected, n)
 				seen[id] = true

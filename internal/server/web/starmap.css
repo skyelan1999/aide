@@ -339,6 +339,27 @@ body:has(#ai-toggle[aria-expanded=true]) .ai-panel { top:54vh; }
 @media(max-height:620px) { #cosmic-nav { top:88px; } }
 @media(prefers-reduced-motion:reduce) { #cosmic-nav { transition:none; } }
 html[data-motion=reduced] #cosmic-nav { transition:none; }
+
+/* Source identity and availability stay readable without relying on color. */
+.chips { max-height:190px;overflow:auto;scrollbar-gutter:stable;overscroll-behavior:contain; }
+.chips button.source-chip { display:flex;flex-direction:column;align-items:flex-start;gap:3px;max-width:100%;text-align:left;padding:7px 10px; }
+.source-chip-name { font-size:11px;line-height:1.5;overflow-wrap:anywhere; }
+.chips .source-chip-meta { color:var(--map-muted);font-size:9px;line-height:1.55;white-space:normal; }
+.chips button[data-state=unavailable],.chips button[data-state=disabled] { border-style:dashed; }
+.source-meta { color:var(--map-muted);font-size:10px;line-height:1.7;overflow-wrap:anywhere; }
+.result .source-meta { display:block;color:var(--map-muted);font-size:10px;white-space:normal; }
+#detail-source { margin:9px 0 0; }
+#source-catalog-section { margin-top:15px;padding-top:13px;border-top:1px solid var(--map-line); }
+#source-catalog-section h3 { margin:0 0 7px;color:var(--map-text);font-size:11px;line-height:1.6; }
+#source-catalog-section>p { margin:0 0 10px;color:var(--map-muted);font-size:10px;line-height:1.8; }
+#source-catalog { display:grid;gap:8px;list-style:none;margin:0;padding:0; }
+#source-catalog li { padding:9px 11px;border:1px solid var(--map-line);border-radius:9px;overflow-wrap:anywhere; }
+#source-catalog li.source-current { border-color:var(--line-accent); }
+#source-catalog strong,#source-catalog span,#source-catalog small { display:block;line-height:1.75; }
+#source-catalog strong { color:var(--map-text);font-size:11px;font-weight:550; }
+#source-catalog span,#source-catalog small { color:var(--map-muted);font-size:10px; }
+#source-catalog small { margin-top:3px; }
+@media(max-width:720px) { .chips { max-height:146px; } }
 @media(forced-colors:active) {
  :root { --map-canvas-bg:Canvas;--map-canvas-text:CanvasText;--map-canvas-star:CanvasText;--map-canvas-nebula:CanvasText; }
  #cosmic-title,#cosmic-meta,.cosmic-eyebrow { color:CanvasText; }

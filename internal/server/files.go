@@ -1143,7 +1143,7 @@ func (a *App) createDirectory(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		case "workspace-sftp":
-			if err := a.sftpMakeDirectory(a.workspaceRemotePath(pathJoinRemote(src.Config.Path, newPath))); err != nil {
+			if err := a.sftpMakeDirectory(a.workspaceRemoteSourcePath(src.Config.Path, newPath)); err != nil {
 				fail(w, 400, err)
 				return
 			}
@@ -1322,7 +1322,10 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 	}
 	var b []byte
 	var err error
-	if srcID := r.URL.Query().Get("source"); srcID != "" {
+	if r.URL.Query().Get("knowledgeOrigin") != "" || r.URL.Query().Get("source") == "" && r.URL.Query().Get("root") == "workspace" && a.workspaceMode() == "ssh" {
+		q := r.URL.Query()
+		b, err = a.knowledgeReadViewer(r.Context(), q.Get("root"), q.Get("source"), q.Get("path"), q.Get("knowledgeOrigin"), q.Get("knowledgeWorkspace"), maxRawFile)
+	} else if srcID := r.URL.Query().Get("source"); srcID != "" {
 		a.mu.Lock()
 		src, ok := a.findSource(srcID)
 		a.mu.Unlock()
@@ -1330,14 +1333,11 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 			fail(w, 400, errors.New("来源不存在或已停用"))
 			return
 		}
-		b, err = a.readSourceRaw(src, r.URL.Query().Get("path"))
-	} else if r.URL.Query().Get("root") == "workspace" && a.workspaceMode() == "ssh" {
-		pth := r.URL.Query().Get("path")
-		if err := safePath(pth); err != nil {
-			fail(w, 400, err)
-			return
+		if src.Type == "mcp" {
+			b, err = a.readSourceRaw(src, r.URL.Query().Get("path"))
+		} else {
+			b, err = a.knowledgeReadSource(r.Context(), src, r.URL.Query().Get("path"), 64<<20)
 		}
-		b, err = a.sftpRead(a.workspaceRemotePath(pth))
 	} else {
 		root, rootErr := a.root(r.URL.Query().Get("root"))
 		if rootErr != nil {
@@ -1380,6 +1380,19 @@ func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
 	}
 	var b []byte
 	var err error
+	if origin := r.URL.Query().Get("knowledgeOrigin"); origin != "" {
+		q := r.URL.Query()
+		b, err = a.knowledgeReadViewer(r.Context(), q.Get("root"), q.Get("source"), q.Get("path"), origin, q.Get("knowledgeWorkspace"), maxFile)
+		if err == nil {
+			err = validateTextContent(b)
+		}
+		if err != nil {
+			fail(w, 409, err)
+			return
+		}
+		jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b)})
+		return
+	}
 	if srcID := r.URL.Query().Get("source"); srcID != "" {
 		a.mu.Lock()
 		src, ok := a.findSource(srcID)
@@ -1606,13 +1619,25 @@ func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) {
 
 // isSFTPNotExistErr 判断 sftp 读取失败是否因“远端文件不存在”。
 // sftpBatch 把 stdout+stderr 合并进错误文本；OpenSSH sftp 对缺失文件报
-// “Couldn't stat remote file: No such file”。以此与“存在但二进制不可读”区分。
+// “Couldn't stat remote file: No such file” 或 “File \"...\" not found.”。
+// 只接受明确的不存在诊断；Couldn't stat 本身也可能表示权限不足。
 func isSFTPNotExistErr(err error) bool {
 	if err == nil {
 		return false
 	}
-	msg := err.Error()
-	return strings.Contains(msg, "No such file") || strings.Contains(msg, "Couldn't stat")
+	for _, line := range strings.Split(err.Error(), "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "sftp>") {
+			continue
+		}
+		if strings.HasSuffix(line, ": No such file") || strings.HasSuffix(line, ": No such file or directory") {
+			return true
+		}
+		if strings.Contains(line, `File "`) && strings.HasSuffix(line, `" not found.`) {
+			return true
+		}
+	}
+	return false
 }
 
 func checkVersion(root *os.Root, p, expected string) error {

@@ -371,6 +371,9 @@ type App struct {
 	// 不落盘（内存中即 settings.APIKey 的待迁移副本），解锁入库后清空。
 	pendingLegacyAPIKey       string
 	sshBin, sftpBin           string
+	sshLifecycleMu            sync.Mutex
+	sshLifecycles             map[string]*sshSessionLifecycle
+	sshGenerations            map[string]sshSessionVersion
 	localRoot                 *os.Root
 	hostLocal                 string
 	workspaceDisplay          string

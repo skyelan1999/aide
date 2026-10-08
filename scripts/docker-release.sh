@@ -59,14 +59,26 @@ echo "== [1/4] docker build（AIDE_RUN_TESTS=1 强制全量测试）=="
 # 2) 冒烟测试：容器内 healthz 通过才算可交付
 echo "== [2/4] 冒烟测试 healthz =="
 TEST_NAME="aide-rel-test"
-cleanup() { "$DOCKER_BIN" rm -f "$TEST_NAME" >/dev/null 2>&1 || true; }
+SMOKE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/aide-release-smoke.XXXXXX")"
+cleanup() {
+  "$DOCKER_BIN" rm -f "$TEST_NAME" >/dev/null 2>&1 || true
+  rm -f "$SMOKE_DIR/cert.pem" "$SMOKE_DIR/health.json"
+  rmdir "$SMOKE_DIR" 2>/dev/null || true
+}
 "$DOCKER_BIN" rm -f "$TEST_NAME" >/dev/null 2>&1 || true
 trap cleanup EXIT
 "$DOCKER_BIN" run --rm -d --name "$TEST_NAME" -p 127.0.0.1:8099:8080 "$TAG"
 
 ok=0
 for attempt in {1..30}; do
-  if curl -sf http://127.0.0.1:8099/healthz >/dev/null 2>&1; then ok=1; break; fi
+  # Trust this exact candidate certificate and verify the HTTPS health body.
+  # A successful plaintext redirect does not prove application readiness.
+  if "$DOCKER_BIN" cp "$TEST_NAME:/data/certs/cert.pem" "$SMOKE_DIR/cert.pem" >/dev/null 2>&1 &&
+      curl --noproxy localhost,127.0.0.1 --cacert "$SMOKE_DIR/cert.pem" -fsS https://localhost:8099/healthz > "$SMOKE_DIR/health.json" 2>/dev/null &&
+      python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); sys.exit(0 if d.get("status")=="ok" and d.get("service")=="aide" else 1)' "$SMOKE_DIR/health.json"; then
+    ok=1
+    break
+  fi
   sleep 1
 done
 "$DOCKER_BIN" stop "$TEST_NAME" >/dev/null

@@ -273,7 +273,7 @@ func (a *App) readSourceText(src Source, p string) ([]byte, error) {
 		if err := safePath(p); err != nil {
 			return nil, err
 		}
-		b, err := a.sftpRead(a.workspaceRemotePath(pathJoinRemote(src.Config.Path, p)))
+		b, err := a.sftpRead(a.workspaceRemoteSourcePath(src.Config.Path, p))
 		if err != nil {
 			return nil, err
 		}
@@ -308,9 +308,11 @@ func (a *App) readSourceRaw(src Source, p string) ([]byte, error) {
 		if err := safePath(p); err != nil {
 			return nil, err
 		}
-		return a.sftpRead(a.workspaceRemotePath(pathJoinRemote(src.Config.Path, p)))
+		return a.sftpRead(a.workspaceRemoteSourcePath(src.Config.Path, p))
 	case "link", "ftp", "ftps", "smb":
-		return a.curlReadSource(src, p)
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		return a.knowledgeReadSource(ctx, src, p, 64<<20)
 	case "mcp":
 		return nil, errors.New("MCP 引用工具没有原始文件内容")
 	}
@@ -335,7 +337,7 @@ func (a *App) writeSourceText(src Source, p string, b []byte) error {
 		if err := safePath(p); err != nil {
 			return err
 		}
-		return a.sftpWrite(a.workspaceRemotePath(pathJoinRemote(src.Config.Path, p)), b)
+		return a.sftpWrite(a.workspaceRemoteSourcePath(src.Config.Path, p), b)
 	}
 	return errors.New("该类型来源不支持写入")
 }
@@ -603,11 +605,35 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	// Validate every patch before storing any credentials or retiring a master.
+	// A sealed entry is absent from the fallback map; partial updates must merge
+	// the decrypted payload instead of silently dropping its other field.
+	credentials := make(map[string]sourceCredPayload, len(in.Secrets))
 	for id, sec := range in.Secrets {
-		entry := a.sourceSecrets.Secrets[id]
-		if sec.Clear {
-			entry.Password = ""
-			entry.Key = ""
+		if !sec.Clear && sec.Password == "" && sec.Key == "" {
+			continue // An empty patch leaves existing credentials untouched.
+		}
+		var entry sourceCredPayload
+		if !sec.Clear && (sec.Password == "" || sec.Key == "") {
+			if a.vault != nil && a.vault.Has(sourceVaultID(id)) {
+				if !a.vault.Unlocked() {
+					fail(w, http.StatusLocked, fmt.Errorf("来源 %s 的凭据保险库未解锁，无法保留未修改字段；请先解锁后再更新", id))
+					return
+				}
+				payload, err := a.vault.Get(sourceVaultID(id))
+				if err != nil {
+					fail(w, 500, fmt.Errorf("来源 %s 的现有凭据无法读取，未修改任何来源凭据", id))
+					return
+				}
+				err = json.Unmarshal(payload, &entry)
+				zeroBytes(payload)
+				if err != nil {
+					fail(w, 500, fmt.Errorf("来源 %s 的现有凭据载荷损坏，未修改任何来源凭据", id))
+					return
+				}
+			} else {
+				entry.Password, entry.Key = a.sourceCredentialLocked(id)
+			}
 		}
 		if sec.Password != "" {
 			entry.Password = sec.Password
@@ -615,6 +641,9 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		if sec.Key != "" {
 			entry.Key = sec.Key
 		}
+		credentials[id] = entry
+	}
+	for id, entry := range credentials {
 		// 同步收敛进加密 vault（已解锁则密封并清掉回退明文；未解锁则保留明文回退，稍后迁移）。
 		a.storeSourceCredentialLocked(id, entry.Password, entry.Key)
 	}
@@ -623,7 +652,7 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
-	// 来源被删除，或 SFTP 连接参数（主机/端口/用户/认证方式）变化时，关闭旧
+	// 来源被删除，或 SFTP 连接参数/凭据变化时，关闭旧
 	// ControlMaster 并清理其临时凭据文件；否则 -O check 会命中指向旧主机的残留 socket，
 	// 后续 sftpBatchSource 仍走旧连接。下次使用时由 ensureSourceSession 以新参数重建。
 	oldSFTP := map[string]Source{}
@@ -638,7 +667,8 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 	}
 	for id, old := range oldSFTP {
 		fresh, exists := newByID[id]
-		if !exists || fresh.Type != "sftp" || sftpConnIdentity(old) != sftpConnIdentity(fresh) {
+		_, credentialsChanged := credentials[id]
+		if !exists || fresh.Type != "sftp" || sftpConnIdentity(old) != sftpConnIdentity(fresh) || credentialsChanged {
 			a.killSourceSession(id, a.sftpTargetOf(old))
 		}
 	}

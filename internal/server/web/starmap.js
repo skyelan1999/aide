@@ -2,14 +2,33 @@
 const $=id=>document.getElementById(id), canvas=$('sky'), ctx=canvas.getContext('2d');
 const params=new URLSearchParams(location.search), channelName=params.get('channel');
 const channel=channelName&&/^[a-zA-Z0-9-]{10,100}$/.test(channelName)?new BroadcastChannel('aide-stars-'+channelName):null;
-let token=localStorage.getItem('aide-token')||'',graph={nodes:[],edges:[],warnings:[]},selected=null,region='',results=[],yaw=0,pitch=.1,zoom=1,drag=null,projection=[],width=0,height=0,pixelRatio=0,loading=false;
+let token=localStorage.getItem('aide-token')||'',graph={nodes:[],edges:[],sources:[],warnings:[]},selected=null,region='',results=[],yaw=0,pitch=.1,zoom=1,drag=null,projection=[],width=0,height=0,pixelRatio=0,loading=false;
 const motionReduced=()=>document.documentElement.dataset.motion==='reduced'||matchMedia('(prefers-reduced-motion: reduce)').matches;
 let codeView=params.get('code')==='1',edgeMode='all',focusCode=false,focusCache=null,focusKey='',graphGeneration=0,loadAbort=null,aiAbort=null;
 let documentAbort=null,documentGeneration=0;
 // Data revisions and rendering lifetimes are separate: polling never reloads the page.
 let liveCursor='',liveTimer=0,liveAbort=null,liveEpoch=0,liveFailures=0,liveAnimationUntil=0;
 let liveReconcile=false,liveWireNodes=new Map(),liveStableScenes=new Map(),liveGhosts=[];
-const nodeFields=['id','name','kind','region','path','root','source','session','number','text','size','modified','language','symbolKind','line','endLine','parentFile','signature','contentHash'];
+const nodeFields=['id','name','kind','region','path','root','source','sourceName','sourceType','origin','format','session','number','text','size','modified','language','symbolKind','line','endLine','parentFile','signature','contentHash'];
+let sourceCatalog=[],sourceByRegion=new Map();
+const sourceTypes={session:'会话',local:'本地目录',ssh:'SSH 工作区',skill:'Skill',link:'HTTP 链接',mcp:'MCP 工具目录',sftp:'SSH / SFTP','workspace-sftp':'工作区 SSH / SFTP',ftp:'FTP',ftps:'FTPS',smb:'SMB'};
+const sourceStates={ready:'已索引',partial:'部分索引',unavailable:'暂不可用',disabled:'已停用',catalog:'仅工具目录'};
+const sourceTypeLabel=type=>sourceTypes[type]||type||'未报告类型';
+const sourceStateLabel=state=>sourceStates[state]||'未报告状态';
+function fallbackSourceName(r){return r==='sessions'?'会话':r==='workspace'?'工作区':r==='context'?'引用目录':graph.nodes.find(n=>n.region===r&&n.path==='.')?.name||'引用';}
+function currentSources(){
+ // Older servers do not publish a catalog. Derive its visible regions only in
+ // that case; a reported empty or unavailable source remains an independent chip.
+ if(Array.isArray(graph.sources))return graph.sources.filter(s=>s&&typeof s.region==='string'&&s.region).map(s=>({...s,name:s.name||fallbackSourceName(s.region),nodeCount:Math.max(0,Number(s.nodeCount)||0)}));
+ const byRegion=new Map();for(const n of graph.nodes){if(!n.region)continue;let s=byRegion.get(n.region);if(!s){s={id:n.source||n.region,name:n.sourceName||fallbackSourceName(n.region),type:n.sourceType||(n.region==='sessions'?'session':''),region:n.region,state:'ready',nodeCount:0};byRegion.set(n.region,s);}s.nodeCount++;}return [...byRegion.values()];
+}
+function nodeSource(n){const s=sourceByRegion.get(n.region);return {id:s?.id||n.source||n.region,name:s?.name||n.sourceName||fallbackSourceName(n.region),type:s?.type||n.sourceType||(n.region==='sessions'?'session':''),state:s?.state||'',message:s?.message||''};}
+function nodeSourceLabel(n){const s=nodeSource(n);return [s.name,s.type?sourceTypeLabel(s.type):'',n.format].filter(Boolean).join(' · ');}
+function syncNodeSourceChrome(){
+ if(selected){const s=nodeSource(selected);$('detail-source').textContent=nodeSourceLabel(selected)+(s.id?' · 来源 #'+s.id:'')+(s.type==='mcp'?' · 仅工具名称与说明，不含工具执行结果或远端文档正文；不会调用工具。':s.state&&s.state!=='ready'?' · '+sourceStateLabel(s.state):'');}
+ for(const box of [$('results'),$('ai-found')])for(const b of box.querySelectorAll('[data-source-node]')){const current=nodeByID.get(b.dataset.sourceNode),original=b.sourceNode;const n=current?{...current,format:current.origin===original?.origin?original?.format||current.format:current.format}:original;if(n){b.textContent=nodeSourceLabel(n);b.title=b.textContent;}}
+}
+function appendSourceLabel(parent,n){const meta=document.createElement('small');meta.className='source-meta';meta.dataset.sourceNode=n.id;meta.sourceNode=n;meta.textContent=nodeSourceLabel(n);meta.title=meta.textContent;parent.append(meta);return meta;}
 const edgeKey=e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.evidence||'']);
 function birthAlpha(n,now){if(!n.bornAt)return 1;return easing(clamp((now-n.bornAt)/680,0,1));}
 function liveReady(){return !locked&&!document.hidden&&!pageLeaving&&!loading&&!drag&&!cosmicFlight;}
@@ -361,22 +380,23 @@ function nodeResults(announce=true){
  resultIDs=new Set(results.map(n=>n.id));invalidateView();
  const box=$('results'),previous=new Map([...box.children].map(el=>[el.dataset.nodeID,el])),keep=new Set();
  for(const [i,n]of results.slice(0,40).entries()){
-  let button=previous.get(n.id);if(!button){button=document.createElement('button');button.className='result';button.type='button';button.dataset.nodeID=n.id;button.append(document.createElement('code'),document.createElement('span'));button.lastChild.append(document.createElement('small'));button.onclick=()=>{const node=nodeByID.get(button.dataset.nodeID);if(node)select(node);};}
-  const mark=button.firstChild,label=button.lastChild,path=label.lastChild;if(mark.textContent!==n.id)mark.textContent=n.id;
+  let button=previous.get(n.id);if(!button){button=document.createElement('button');button.className='result';button.type='button';button.dataset.nodeID=n.id;button.append(document.createElement('code'),document.createElement('span'));const path=document.createElement('small');path.className='result-path';button.lastChild.append(path);appendSourceLabel(button.lastChild,n);button.onclick=()=>{const node=nodeByID.get(button.dataset.nodeID);if(node)select(node);};}
+  const mark=button.firstChild,label=button.lastChild,path=label.querySelector('.result-path'),meta=label.querySelector('.source-meta');if(mark.textContent!==n.id)mark.textContent=n.id;
   if(!label.firstChild||label.firstChild===path)label.insertBefore(document.createTextNode(n.name),path);else if(label.firstChild.textContent!==n.name)label.firstChild.textContent=n.name;
   const locator=n.path||'会话 #'+n.number;if(path.textContent!==locator)path.textContent=locator;
+  meta.sourceNode=n;meta.textContent=nodeSourceLabel(n);meta.title=meta.textContent;
   keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
  }
  for(const child of [...box.children])if(!keep.has(child))child.remove();
- if(announce)say(q?`找到 ${results.length} 个节点`:'点击星点，开始探索');redraw();
+ if(announce){const s=sourceByRegion.get(region);say(!results.length&&s?`${s.name} · ${sourceStateLabel(s.state)} · 当前范围暂无可检索节点`:q?`找到 ${results.length} 个节点`:'点击星点，开始探索');}redraw();
 }
 function search(){searchQuery=$('search').value.trim().toLowerCase();if(retrievalMode()!=='nodes'){documentGeneration++;selected=null;revealPanel($('detail'),false);documentAbort?.abort();$('results').replaceChildren();results=[];resultIDs.clear();invalidateView();say('输入问题后点击探索，检索文档正文。');redraw();return;}nodeResults();}
 
-function select(n,focus=true){if(selected?.id!==n.id)beginGraphTransition();$('document-insight').hidden=true;selected=nodeByID.get(n.id)||n;revealPanel($('detail'),true);if(cosmicEnabled&&focus)cosmicLocate(selected);else if(!cosmicEnabled&&focus&&Number.isFinite(selected.x))moveCamera({yaw:-selected.x,pitch:-selected.y,zoom:Math.max(zoom,1.08)},650);$('detail-name').textContent=n.name;$('detail-region').textContent=n.kind==='symbol'?'CODE / '+n.language:n.region==='sessions'?'CONVERSATION / 会话':n.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('detail-id').textContent=n.id;$('detail-path').textContent=(n.path||'会话 #'+n.number)+(n.line?' : '+n.line+'–'+n.endLine:'');$('detail-text').textContent=n.text||'此节点仅索引名称，尚未读取正文。';const edges=edgeAdjacency.get(n.id)||[];$('neighbors').textContent=`${edges.length} 条连接 · ${n.kind==='symbol'?'声明附近片段':(n.size||0)+' 字节'}`;$('insert').disabled=n.kind==='directory';$('understand').disabled=n.kind==='directory';renderCodeInsight(n);redraw();}
+function select(n,focus=true){if(selected?.id!==n.id)beginGraphTransition();$('document-insight').hidden=true;selected=nodeByID.get(n.id)||n;revealPanel($('detail'),true);if(cosmicEnabled&&focus)cosmicLocate(selected);else if(!cosmicEnabled&&focus&&Number.isFinite(selected.x))moveCamera({yaw:-selected.x,pitch:-selected.y,zoom:Math.max(zoom,1.08)},650);$('detail-name').textContent=n.name;$('detail-region').textContent=n.kind==='symbol'?'CODE / '+n.language:n.region==='sessions'?'CONVERSATION / 会话':n.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('detail-id').textContent=n.id;$('detail-path').textContent=(n.path||'会话 #'+n.number)+(n.line?' : '+n.line+'–'+n.endLine:'');$('detail-text').textContent=n.text||'此节点仅索引名称，尚未读取正文。';const edges=edgeAdjacency.get(n.id)||[];$('neighbors').textContent=`${edges.length} 条连接 · ${n.kind==='symbol'?'声明附近片段':(n.size||0)+' 字节'}`;$('insert').disabled=n.kind==='directory';$('understand').disabled=n.kind==='directory';syncNodeSourceChrome();renderCodeInsight(n);redraw();}
 function renderCodeInsight(n){
  const on=codeView||n.kind==='symbol';$('code-insight').hidden=!on;if(!on)return;
  $('code-signature').textContent=n.signature||'';$('code-location').textContent=n.kind==='symbol'?`${n.language} · ${n.symbolKind} · L${n.line}–L${n.endLine} · ${n.id}`+(n.contentHash?' · SHA '+n.contentHash.slice(0,10):''):'文件 / 模块视角';
- $('code-open').hidden=!n.path||n.kind==='directory';const spec={root:n.root,path:n.path,readOnly:true};if(n.line){spec.line=n.line;spec.endLine=n.endLine;spec.codeHash=n.contentHash;}if(n.source)spec.source=n.source;$('code-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));
+ $('code-open').hidden=!n.path||n.kind==='directory';const spec={root:n.root,path:n.path,readOnly:true,origin:n.origin||'',knowledgeWorkspace:graph.workspace};if(n.line){spec.line=n.line;spec.endLine=n.endLine;spec.codeHash=n.contentHash;}if(n.source)spec.source=n.source;if(n.format)spec.format=n.format;$('code-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));
  const byID=nodeByID,edges=graph.edges;
  function list(id,title,items){const box=$(id);box.replaceChildren();const h=document.createElement('h3');h.textContent=title+' · '+items.length;box.append(h);for(const {node,edge,label}of items.slice(0,24)){const b=document.createElement('button');b.type='button';b.className='code-relation';b.textContent=(label||'')+node.name+(edge?.line?' · L'+edge.line:'');b.title=(node.path||'')+' / '+node.id;b.onclick=()=>select(node);box.append(b);}if(items.length>24){const p=document.createElement('p');p.textContent='仅显示前24项，可用函数名继续搜索。';box.append(p);}if(!items.length){const p=document.createElement('p');p.textContent='当前索引内未发现；不代表项目中不存在。';box.append(p);}}
  const mapped=(es,dir)=>es.map(e=>({node:byID.get(e[dir]),edge:e})).filter(x=>x.node);
@@ -396,11 +416,22 @@ function syncGraphChrome(){
  $('code-summary').textContent=graph.code?`${graph.code.files} 份源码 · ${graph.code.symbols} 个声明 · ${graph.code.calls} 条调用候选 · ${graph.code.unresolved} 个未解析调用`:'';
  $('warnings').textContent=[...(graph.warnings||[]),...(graph.code?.diagnostics||[]),...(graph.truncated?['索引达到数量、深度或时间上限；未覆盖全部文件。']:[])].join('\n');
  const box=$('regions'),previous=new Map([...box.children].map(el=>[el.dataset.region,el])),keep=new Set();
- for(const [i,r]of ['',...new Set(graph.nodes.map(n=>n.region))].entries()){
-  let button=previous.get(r);if(!button){button=document.createElement('button');button.dataset.region=r;button.onclick=()=>{beginGraphTransition();region=button.dataset.region;cosmicSceneCache.clear();cosmicKey='';if(cosmos)enterCosmic(cosmos.root.key,true);for(const x of box.children)x.setAttribute('aria-pressed',String(x===button));search();};}
-  button.textContent=r===''?'全部星域':r==='workspace'?'工作区':r==='sessions'?'会话':r==='context'?'引用目录':graph.nodes.find(n=>n.region===r&&n.path==='.')?.name||'引用';button.setAttribute('aria-pressed',String(region===r));keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
+ sourceCatalog=currentSources();
+ // A removed source does not silently broaden an existing search to all sources.
+ // Retain its selected chip until the user explicitly chooses another region.
+ if(region&&!sourceCatalog.some(s=>s.region===region)){const old=previous.get(region)?.sourceDescriptor;sourceCatalog.push({id:old?.id||region,name:old?.name||fallbackSourceName(region),type:old?.type||'',region,state:'unavailable',nodeCount:graph.nodes.filter(n=>n.region===region).length,detached:true,message:'当前索引不再报告此来源，已保留筛选。请选择其他星域以继续。'});}
+ sourceByRegion=new Map(sourceCatalog.map(s=>[s.region,s]));
+ for(const [i,s]of [{region:'',name:'全部星域'},...sourceCatalog].entries()){
+  const r=s.region;let button=previous.get(r);if(!button){button=document.createElement('button');button.type='button';button.dataset.region=r;button.append(document.createElement('span'),document.createElement('small'));button.firstChild.className='source-chip-name';button.lastChild.className='source-chip-meta';button.onclick=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiAbort?.abort();$('ai-found').replaceChildren();$('answer').textContent='';selected=null;revealPanel($('detail'),false);region=button.dataset.region;cosmicSceneCache.clear();cosmicKey='';if(cosmos)enterCosmic(cosmos.root.key,true);syncGraphChrome();search();};}
+  button.sourceDescriptor=s;button.classList.toggle('source-chip',!!r);button.dataset.state=s.state||'';button.firstChild.textContent=s.name;
+  const state=s.detached?'已移除':sourceStateLabel(s.state),type=sourceTypeLabel(s.type),meta=r?`${type} · ${state} · ${s.nodeCount} 颗星`:'';
+  button.lastChild.textContent=meta;button.lastChild.hidden=!r;button.title=r?[s.name,meta,'来源 #'+s.id,s.message].filter(Boolean).join(' · '):'查看全部已索引来源';button.setAttribute('aria-label',r?s.name+'，'+meta+'，来源 '+s.id:s.name);button.setAttribute('aria-pressed',String(region===r));keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
  }
  for(const child of [...box.children])if(!keep.has(child))child.remove();
+ const catalog=$('source-catalog'),prior=new Map([...catalog.children].map(el=>[el.dataset.region,el])),retained=new Set();
+ for(const [i,s]of sourceCatalog.entries()){let item=prior.get(s.region);if(!item){item=document.createElement('li');item.dataset.region=s.region;item.append(document.createElement('strong'),document.createElement('span'),document.createElement('small'));}item.dataset.state=s.state;item.classList.toggle('source-current',s.region===region);item.children[0].textContent=s.name;item.children[1].textContent=`${sourceTypeLabel(s.type)} · ${s.detached?'已移除':sourceStateLabel(s.state)} · ${s.nodeCount} 颗星 · 来源 #${s.id}`+(s.region===region?' · 当前筛选':'');item.children[2].textContent=s.message||(s.type==='mcp'?'仅已保存的工具名称与说明；不调用工具，也不读取工具执行结果。':s.state==='ready'&&!s.nodeCount?'当前来源尚无可索引节点。':'');item.children[2].hidden=!item.children[2].textContent;retained.add(item);if(catalog.children[i]!==item)catalog.insertBefore(item,catalog.children[i]||null);}
+ for(const item of [...catalog.children])if(!retained.has(item))item.remove();$('source-catalog-section').hidden=!sourceCatalog.length;
+ syncNodeSourceChrome();
 }
 function drawLiveGhosts(now,drift){
  if(!liveGhosts.length)return;const remaining=[];ctx.save();
@@ -416,7 +447,7 @@ function applyLiveUpdate(update,initial=false){
   if(!initial)graphGeneration++;
   if(aiAbort&&!aiAbort.signal.aborted&&$('ask').disabled)$('answer').textContent='工作区资料已更新，当前理解已中止；请重新探索。';aiAbort?.abort();
   liveGhosts=[];liveAnimationUntil=0;liveStableScenes.clear();liveReconcile=false;liveWireNodes=new Map(update.nodes.map(n=>[n.id,JSON.stringify(n)]));
-  graph={workspace:update.workspace,nodes:update.nodes,edges:update.edges,warnings:update.warnings||[],truncated:!!update.truncated,code:update.code};
+  graph={workspace:update.workspace,nodes:update.nodes,edges:update.edges,sources:Array.isArray(update.sources)?update.sources:null,warnings:update.warnings||[],truncated:!!update.truncated,code:update.code};
   documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;selected=null;revealPanel($('detail'),false);region='';layout();syncGraphChrome();search();return;
  }
  const incoming=new Map(update.nodes.map(n=>[n.id,n])),removed=new Set(update.removedNodes||[]),oldNodes=new Map(graph.nodes.map(n=>[n.id,n]));
@@ -427,6 +458,7 @@ function applyLiveUpdate(update,initial=false){
  if(!update.reset){for(const e of update.removedEdges||[])nextEdges.delete(edgeKey(e));for(const e of update.edges)nextEdges.set(edgeKey(e),oldEdges.get(edgeKey(e))||e);}
  for(const [key,e]of nextEdges)if(removed.has(e.from)||removed.has(e.to))nextEdges.delete(key);
  const edgesChanged=oldEdges.size!==nextEdges.size||[...nextEdges.keys()].some(k=>!oldEdges.has(k));
+ if(Array.isArray(update.sources))graph.sources=update.sources;
  graph.warnings=update.warnings||[];graph.truncated=!!update.truncated;graph.code=update.code;syncGraphChrome();
  if(!changed.length&&!removed.size&&!edgesChanged)return;
  const now=performance.now(),motion=motionEnabled(),selectionID=selected?.id,selectionChanged=changed.some(n=>n.id===selectionID),citation=selected?.documentCitation;
@@ -489,18 +521,18 @@ async function askAI(find=false){
   const d=await api('/assist',{method:'POST',signal:aiAbort.signal,body:JSON.stringify({query:$('question').value||$('search').value,ids,workspace:graph.workspace,code:codeView,retrievalMode:docs?'rag':'nodes',region})});
   if(locked||generation!==graphGeneration||docGeneration!==documentGeneration)return;
   $('answer').textContent=d.answer;if(d.retrieval){renderDocumentResults(d.retrieval,'ai-found');$('warnings').textContent=d.retrieval.warnings.join('\n');}$('usage').textContent=d.model+' · '+JSON.stringify(d.usage);
-  for(const n of d.retrieval?[]:(d.references||[])){const b=document.createElement('button');b.className='result';b.textContent=n.id+' · '+n.name;b.onclick=()=>select(n);$('ai-found').append(b);}
+  for(const n of d.retrieval?[]:(d.references||[])){const b=document.createElement('button');b.type='button';b.className='result';const code=document.createElement('code'),label=document.createElement('span');code.textContent=n.id;label.textContent=n.name;appendSourceLabel(label,n);b.append(code,label);b.onclick=()=>select(n);$('ai-found').append(b);}
  }catch(e){if(!locked&&generation===graphGeneration&&docGeneration===documentGeneration&&e.name!=='AbortError')$('answer').textContent=e.message}finally{$('ask').disabled=false;$('find-ai').disabled=false}
 }
 $('ask').onclick=()=>askAI(false);$('find-ai').onclick=()=>askAI(true);
-$('insert').onclick=()=>{if(locked||!selected)return;if(!channel){say('请从工作台的星图按钮打开，以连接原会话。');return}channel.postMessage({type:'insert',id:selected.id,workspace:graph.workspace,document:selected.documentCitation||null});say('正在请求原会话插入…')};if(channel){channel.onmessage=e=>{if(e.data?.type==='ack')say(e.data.message)}}
+$('insert').onclick=()=>{if(locked||!selected)return;if(!channel){say('请从工作台的星图按钮打开，以连接原会话。');return}channel.postMessage({type:'insert',id:selected.id,workspace:graph.workspace,origin:selected.origin||'',document:selected.documentCitation||null});say('正在请求原会话插入…')};if(channel){channel.onmessage=e=>{if(e.data?.type==='ack')say(e.data.message)}}
 addEventListener('resize',redraw);addEventListener('pagehide',()=>{pageLeaving=true;stopLive();cancelAnimationFrame(frame);frame=0;settlePanels();channel?.close();});let locked=true,lockStateKnown=false;
 addEventListener('pageshow',()=>{pageLeaving=false;scheduleLive(0);redraw();});
 function setLocked(value){
  // Presence heartbeats may repeat the same effective state. Only a transition
  // should clear or reload the graph; the first notification still initializes it.
  if(lockStateKnown&&locked===value)return;
- lockStateKnown=true;locked=value;if(value){stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],warnings:[]};$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];selected=null;renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
+ lockStateKnown=true;locked=value;if(value){stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];selected=null;renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
 if(window.LockCluster){LockCluster.on('effective',setLocked);LockCluster.onReady().then(setLocked);}else setLocked(false);
 addEventListener('pointerdown',()=>window.LockCluster?.noteActivity());
 redraw();
@@ -511,6 +543,6 @@ window.aideUI?.subscribe(syncMapPalette);
 matchMedia('(forced-colors: active)').addEventListener('change',syncMapPalette);
 
 $('retrieval-mode').onchange=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiAbort?.abort();$('ai-found').replaceChildren();$('answer').textContent='';selected=null;revealPanel($('detail'),false);search();};
-function selectDocument(hit){select(hit.file);selected={...selected,documentCitation:{locator:hit.locator,offset:hit.offset,hash:hit.hash}};$('detail-text').textContent=hit.text;$('document-insight').hidden=false;$('document-locator').textContent=hit.id+' · '+hit.locator+' · 段内字符偏移 '+hit.offset;$('document-hash').textContent='SHA-256 '+hit.hash;const spec={root:hit.file.root,path:hit.file.path,readOnly:true};if(hit.file.source)spec.source=hit.file.source;$('document-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));}
-function renderDocumentResults(data,id='results'){const box=$(id);box.replaceChildren();for(const hit of data.hits||[]){const b=document.createElement('button');b.type='button';b.className='result document-result';const title=document.createElement('span');title.textContent=hit.file.name+' · '+hit.locator;const snippet=document.createElement('small');snippet.textContent=hit.text.slice(0,220);title.append(snippet);const code=document.createElement('code');code.textContent=hit.file.id;b.append(code,title);b.onclick=()=>selectDocument(hit);box.append(b);}if(!(data.hits||[]).length){const p=document.createElement('p');p.textContent='未检索到匹配原文；请检查关键词、来源范围与提取诊断。';box.append(p);}}
+function selectDocument(hit){select(hit.file);const origin=hit.file.origin||selected.origin||'';selected={...selected,format:hit.file.format||selected.format,origin,documentCitation:{locator:hit.locator,offset:hit.offset,hash:hit.hash,origin}};syncNodeSourceChrome();$('detail-text').textContent=hit.text;$('document-insight').hidden=false;$('document-locator').textContent=hit.id+' · '+hit.locator+' · 段内字符偏移 '+hit.offset;$('document-hash').textContent='SHA-256 '+hit.hash;const spec={root:hit.file.root,path:hit.file.path,readOnly:true,origin,knowledgeWorkspace:graph.workspace};if(hit.file.source)spec.source=hit.file.source;if(hit.file.format)spec.format=hit.file.format;$('document-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));}
+function renderDocumentResults(data,id='results'){const box=$(id);box.replaceChildren();for(const hit of data.hits||[]){const b=document.createElement('button');b.type='button';b.className='result document-result';const title=document.createElement('span');title.textContent=hit.file.name+' · '+hit.locator;appendSourceLabel(title,hit.file);const snippet=document.createElement('small');snippet.textContent=hit.text.slice(0,220);title.append(snippet);const code=document.createElement('code');code.textContent=hit.file.id;b.append(code,title);b.onclick=()=>selectDocument(hit);box.append(b);}if(!(data.hits||[]).length){const p=document.createElement('p');p.textContent='未检索到匹配原文；请检查关键词、来源范围与提取诊断。';box.append(p);}}
 async function searchDocuments(){if(locked||loading)return;const gen=++documentGeneration,graphGen=graphGeneration,mode=retrievalMode(),query=$('search').value;documentAbort?.abort();documentAbort=new AbortController();say('正在提取与检索文档正文…');try{const d=await api('/documents/search',{method:'POST',signal:documentAbort.signal,body:JSON.stringify({query,mode,workspace:graph.workspace,region})});if(locked||gen!==documentGeneration||graphGen!==graphGeneration)return;renderDocumentResults(d);$('warnings').textContent=[...d.warnings,...(d.truncated?['索引／提取／结果达到限制，不能据此声称全文无匹配。']:[])].join('\n');say(`${d.files} 份文档 · ${d.chunks} 个片段 · ${d.hits.length} 条结果 · ${mode==='original'?'逐字原文':'本地 TF-IDF RAG'}`);}catch(e){if(!locked&&gen===documentGeneration&&e.name!=='AbortError')say(e.message);}}

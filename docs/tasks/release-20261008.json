@@ -1,0 +1,97 @@
+{
+  "id": "release-20261008",
+  "request": "整理所有资料和文档并release",
+  "baseline": "912cc06f49167f6789f1007547fc0b128f7dbfa0",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/knowledge-map.md\n M docs/user-guide.md\n M internal/server/file_transfer.go\n M internal/server/files.go\n M internal/server/knowledge_documents.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_updates.go\n M internal/server/office_artifact.go\n M internal/server/remote_group_cleanup_test.go\n M internal/server/server.go\n M internal/server/source_secrets_vault_test.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M plugins/office/README.md\n M plugins/office/index.js\n?? .github/\n?? docs/architecture/ssh-storage.md\n?? docs/reviews/2026-10-08-homepage/\n?? docs/reviews/2026-10-08-ssh-storage-audit.md\n?? docs/reviews/2026-10-08-starmap-sources.md\n?? docs/tasks/homepage-20261008.json\n?? docs/tasks/ssh-storage-audit-20261008.json\n?? docs/tasks/starmap-sources-20261008.json\n?? docs/website.md\n?? internal/server/knowledge_sources.go\n?? internal/server/ssh_apply_test.go\n?? internal/server/ssh_live_test.go\n?? internal/server/ssh_session_reliability_test.go\n?? internal/server/workspace_remote_paths_test.go\n?? scripts/test-ssh-workspace.sh\n?? site/",
+  "acceptance": [
+    "Consolidate current SSH, multi-source starmap, homepage and documentation with accurate evidence.",
+    "Pass mandatory full release checks; version, tag, image and all assets must be traceable.",
+    "Launch an isolated candidate using start.command; verify HTTPS/authentication/core UI without replacing user services.",
+    "Publish a GitHub prerelease with eight ARM64 assets; verify remote sizes and SHA256."
+  ],
+  "scope": [
+    "Pending SSH and starmap source changes; office integration; site and all documentation materials",
+    "README/HANDOVER/docs task and release records/version.md",
+    "Existing cancellation fixture teardown; release HTTPS smoke check",
+    "Existing version/build/package/publish tools and isolated candidate receipts"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorized release of current pending Aide work.",
+      "evidence": [
+        "Current user release request",
+        "Initial Git status and SSH/starmap/homepage task records"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use feature version 0.1.17.0 RC1, existing scripts, isolated candidate and evidence boundaries.",
+      "evidence": [
+        "docs/agent/WORKFLOW.md",
+        "docs/prd/2026-09-21-version-management.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Reviewed inherited scope; fixed cancellation fixture, HTTPS smoke and restart-stale SSH socket recovery without replaying writes.",
+      "evidence": [
+        "internal/server/server_test.go",
+        "internal/server/ssh_session.go",
+        "internal/server/ssh_live_test.go",
+        "scripts/docker-release.sh"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final 19 checks PASS; race server342.996s, tts3.092s, vet PASS. Controlled SSH28+8, multi-source97, restart30 PASS; Safari desktop and homepage responsive acceptance recorded with explicit limits.",
+      "evidence": [
+        ".agent-state/full.json fingerprint81935c04df8f869c408492b393693a1a941fd552e9cd600b5c5660ccd884692e",
+        ".agent-state/verify-20261008T060822197969Z.log",
+        "docs/reviews/2026-10-08-release-integration.md",
+        "docs/reviews/2026-10-08-release-ui.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Consolidated current user guide, architecture, source and SSH topology, homepage, evidence and release ledger; documentation links checked.",
+      "evidence": [
+        "docs/README.md",
+        "docs/user-guide.md",
+        "docs/reviews/release-0.1.17.0-RC1-2026-10-08.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Explicitly classified all scope files; removed six regenerable .DS_Store files; own protocol fixture containers/network removed; synthetic receipts retained ignored. User services and business data untouched.",
+      "evidence": [
+        "python3 scripts/agent-route.py audit / clean",
+        "docs/reviews/2026-10-08-release-integration.md",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User 2026-10-08: organize all materials and documents and release; prior start.command and SSH-test instructions retained.",
+  "rollback": "No existing runtime or user data replacement. Retain v0.1.16.0-RC1; deploy with backup and rollback using original image/data mounts. Isolated candidate owns synthetic data only.",
+  "handoff": "",
+  "verification_history": [
+    {
+      "phase": "pre_restart_stale_socket_fix",
+      "verification": {
+        "status": "pass",
+        "summary": "最终冻结19项full门禁PASS；SSH24次、来源API50+基线12+格式35；Safari桌面审批/星图/来源/文件草稿回填及增删差量，主页桌面390/320核心交互均通过。pass限定实际收据；Aide窄屏、全部主题/编号、OS减少动效/无JS运行、付费模型质量与量化性能NOT_RUN。发行版本镜像和附件仍待release阶段验收。",
+        "evidence": [
+          ".agent-state/full.json fingerprint9c66307af535ecf4438ab81faeb8dceb1d9ae10cd31f341806b0295bbe4483c8",
+          ".agent-state/verify-20261008T055113017149Z.log",
+          "docs/reviews/2026-10-08-release-integration.md",
+          "docs/reviews/2026-10-08-release-ui.md"
+        ]
+      }
+    }
+  ]
+}

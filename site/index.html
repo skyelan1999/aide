@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f8fa">
+  <meta name="description" content="aide = AI + IDE。把项目文件、AI 对话、修改提案和执行过程放在同一个本地工作空间，让想法成为下一步。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="aide · 让想法成为下一步">
+  <meta property="og:description" content="你的项目，你的模型，你的工作节奏。一个围绕专业任务展开的本地 AI 工作台。">
+  <title>aide · AI + IDE，让想法成为下一步</title>
+  <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./main.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="header">
+    <div class="container header-inner">
+      <a class="brand" href="#" aria-label="aide 首页"><img src="./assets/favicon.svg" alt="" width="32" height="32"><span>aide<span class="brand-dot">.</span></span></a>
+      <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="navigation" aria-label="打开导航"><span></span><span></span></button>
+      <nav id="navigation" class="navigation" aria-label="主导航">
+        <a href="#features">工作方式</a>
+        <a href="#workflow">核心能力</a>
+        <a href="https://github.com/skyelan1999/aide/blob/main/docs/user-guide.md" target="_blank" rel="noopener noreferrer">文档 <span aria-hidden="true">↗</span></a>
+        <a class="nav-github" href="https://github.com/skyelan1999/aide" target="_blank" rel="noopener noreferrer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .8a11.3 11.3 0 0 0-3.57 22.02c.56.1.77-.24.77-.54v-2.1c-3.14.68-3.8-1.34-3.8-1.34-.52-1.3-1.26-1.65-1.26-1.65-1.02-.7.08-.69.08-.69 1.13.08 1.73 1.16 1.73 1.16 1 1.72 2.64 1.22 3.28.93.1-.73.4-1.22.72-1.5-2.5-.28-5.13-1.25-5.13-5.59 0-1.24.44-2.25 1.16-3.05-.12-.28-.5-1.43.11-2.99 0 0 .95-.3 3.11 1.16a10.8 10.8 0 0 1 5.66 0c2.16-1.47 3.1-1.16 3.1-1.16.62 1.56.24 2.71.12 3 .72.79 1.16 1.8 1.16 3.04 0 4.35-2.64 5.3-5.15 5.58.4.35.77 1.03.77 2.08v3.12c0 .3.2.65.78.54A11.3 11.3 0 0 0 12 .8Z"/></svg>GitHub</a>
+        <a class="button button-small" href="#get-started">开始使用 <span aria-hidden="true">↗</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <div class="container">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="status-dot" aria-hidden="true"></span>AI + IDE<span class="eyebrow-divider"></span>你的本地 AI 工作台</div>
+          <h1 id="hero-title">让想法，<br>成为<span class="blue">下一步。</span></h1>
+          <p class="hero-description">理解项目，梳理思路，一起把事情做好。<br>你的文件与工作流，在这里井然有序。</p>
+          <div class="hero-actions">
+            <a class="button" href="#get-started">开始使用 aide <span aria-hidden="true">↗</span></a>
+            <a class="text-link" href="https://github.com/skyelan1999/aide" target="_blank" rel="noopener noreferrer">探索源代码 <span aria-hidden="true">→</span></a>
+          </div>
+          <p class="hero-note"><span aria-hidden="true">⌘</span> 本地运行 <span class="note-dot">·</span> 模型可选 <span class="note-dot">·</span> MIT 开源</p>
+        </div>
+        <div class="hero-side" aria-hidden="true"><span>LESS SWITCHING.</span><span>MORE MAKING.</span><div class="connection-mark"><i></i><i></i><i></i></div><p>从想法到成果<br>在同一个工作空间</p></div>
+        <figure class="workbench">
+          <div class="window-bar"><div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div><span>aide / workspace</span><span class="window-local"><i aria-hidden="true"></i> LOCAL</span></div>
+          <img src="./assets/workbench-preview.jpg" width="1280" height="720" alt="aide 工作台示例：左侧会话与工作空间，中间 AI 任务输入，右侧项目文件" fetchpriority="high">
+          <figcaption><span>一处工作空间，串起你的项目与 AI。</span><span>示例工作区预览 · 界面以当前版本为准</span></figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="principles" aria-label="产品特点">
+      <div class="container principle-grid">
+        <div><span class="principle-symbol" aria-hidden="true">⌂</span><p><strong>围绕真实项目</strong><span>文件、资料与任务放在一起</span></p></div>
+        <div><span class="principle-symbol" aria-hidden="true">◎</span><p><strong>选择你的模型</strong><span>连接兼容的本地或云端服务</span></p></div>
+        <div><span class="principle-symbol" aria-hidden="true">≋</span><p><strong>看清每一步</strong><span>规划、提案与工具轨迹可查</span></p></div>
+        <div><span class="principle-symbol" aria-hidden="true">↗</span><p><strong>自由扩展</strong><span>用源码与插件适配专业场景</span></p></div>
+      </div>
+    </section>
+
+    <section id="features" class="section features" aria-labelledby="features-title">
+      <div class="container">
+        <div class="section-heading"><div><p class="section-label">01 / WORK WITH CONTEXT</p><h2 id="features-title">把工作串起来，<br>把注意力留下来。</h2></div><p class="section-intro">从第一个问题，到可审阅的成果。<br>aide 围绕你的任务组织上下文，<br>让你专注于分析与判断。</p></div>
+        <div class="scenario-layout">
+          <div class="scenarios" role="tablist" aria-label="探索 aide 工作场景" aria-orientation="vertical">
+            <button class="scenario active" id="tab-understand" type="button" role="tab" aria-selected="true" aria-controls="panel-understand" data-scenario="understand"><span class="scenario-number">01</span><span><strong>理解一个项目</strong><span>先看清结构，再找到方向。</span></span><span class="scenario-arrow" aria-hidden="true">↗</span></button>
+            <button class="scenario" id="tab-build" type="button" role="tab" aria-selected="false" aria-controls="panel-build" tabindex="-1" data-scenario="build"><span class="scenario-number">02</span><span><strong>推进一次改动</strong><span>把目标拆成可审阅的步骤。</span></span><span class="scenario-arrow" aria-hidden="true">↗</span></button>
+            <button class="scenario" id="tab-research" type="button" role="tab" aria-selected="false" aria-controls="panel-research" tabindex="-1" data-scenario="research"><span class="scenario-number">03</span><span><strong>梳理一组资料</strong><span>带着上下文，深入分析问题。</span></span><span class="scenario-arrow" aria-hidden="true">↗</span></button>
+          </div>
+          <div class="scenario-stage">
+            <div class="demo-bar"><span><i aria-hidden="true"></i> aide workspace</span><span>工作方式示意</span></div>
+            <div id="panel-understand" class="scenario-panel" role="tabpanel" aria-labelledby="tab-understand" tabindex="0">
+              <div class="demo-prompt"><span class="avatar-user" aria-hidden="true">你</span><p>帮我梳理这个项目的结构与关键模块。</p></div>
+              <div class="demo-response"><img src="./assets/favicon.svg" alt="" width="26" height="26"><div><p class="demo-response-title">先理解项目，再决定下一步。</p><p class="demo-description">围绕工作区文件展开对话，把架构、代码与辅助资料放进同一份上下文。</p><div class="file-tree" aria-hidden="true"><div><span>▾</span> my-project <em>工作目录</em></div><div class="tree-indent"><span>▱</span> src/ <small>应用代码</small></div><div class="tree-indent"><span>▱</span> docs/ <small>项目资料</small></div><div class="tree-indent"><span>≡</span> README.md <small>项目说明</small></div></div><div class="demo-tags"><span>本地 / SSH 工作区</span><span>文件引用</span><span>AI 对话</span></div></div></div>
+            </div>
+            <div id="panel-build" class="scenario-panel" role="tabpanel" aria-labelledby="tab-build" tabindex="0" hidden>
+              <div class="demo-prompt"><span class="avatar-user" aria-hidden="true">你</span><p>为这个功能整理方案，并给出修改提案。</p></div>
+              <div class="demo-response"><img src="./assets/favicon.svg" alt="" width="26" height="26"><div><p class="demo-response-title">每一步，都有迹可循。</p><p class="demo-description">查看规划、工具记录和文件提案。审阅改动，再决定应用；验证结果仍以实际运行输出为准。</p><ol class="demo-steps"><li><span class="demo-step-icon">1</span><span><strong>规划</strong><small>明确目标与实现路径</small></span></li><li><span class="demo-step-icon">2</span><span><strong>提案</strong><small>查看文件差异与修改内容</small></span><span class="review-pill">待审阅</span></li><li><span class="demo-step-icon">3</span><span><strong>检查与应用</strong><small>由你判断，运行必要验证</small></span></li></ol><div class="demo-tags"><span>文件 diff</span><span>任务轨迹</span><span>命令输出</span></div></div></div>
+            </div>
+            <div id="panel-research" class="scenario-panel" role="tabpanel" aria-labelledby="tab-research" tabindex="0" hidden>
+              <div class="demo-prompt"><span class="avatar-user" aria-hidden="true">你</span><p>结合这些资料，帮我分析方案中的关键问题。</p></div>
+              <div class="demo-response"><img src="./assets/favicon.svg" alt="" width="26" height="26"><div><p class="demo-response-title">把上下文带进来，把思路理清楚。</p><p class="demo-description">将工作文件与辅助资料附加到任务，围绕已有内容对照、分析，再回到源文件核对关键结论。</p><div class="research-files"><div><span class="document-icon" aria-hidden="true">MD</span><span><strong>需求说明.md</strong><small>工作目录 · 任务附件示例</small></span><span aria-hidden="true">↗</span></div><div><span class="document-icon" aria-hidden="true">MD</span><span><strong>接口文档.md</strong><small>辅助资料 · 只读引用示例</small></span><span aria-hidden="true">↗</span></div></div><div class="demo-tags"><span>辅助资料</span><span>只读引用</span><span>上下文管理</span></div></div></div>
+            </div>
+          </div>
+        </div>
+        <noscript><p class="noscript-note">启用 JavaScript 可切换场景示意。更多能力见<a href="https://github.com/skyelan1999/aide/blob/main/docs/user-guide.md">使用指南</a>。</p></noscript>
+      </div>
+    </section>
+
+    <section id="workflow" class="section capabilities" aria-labelledby="capabilities-title">
+      <div class="container capability-layout">
+        <div class="capability-heading"><p class="section-label">02 / MAKE IT YOURS</p><h2 id="capabilities-title">你的项目。<br>你的模型。<br><span>你的工作节奏。</span></h2><p>一个可以随专业场景成长的工作台。</p><a class="text-link" href="https://github.com/skyelan1999/aide/blob/main/docs/customization.md" target="_blank" rel="noopener noreferrer">了解如何扩展 <span aria-hidden="true">↗</span></a></div>
+        <div class="capability-list">
+          <article><div class="capability-icon" aria-hidden="true">▱</div><div><h3>连接你正在做的项目</h3><p>从本地目录到 SSH/SFTP 工作区，浏览文件、编辑内容、引用资料。把任务放回真实的工作环境。</p><span class="capability-footnote">本地文件 / 远程工作区 / Markdown 预览</span></div></article>
+          <article><div class="capability-icon" aria-hidden="true">✳</div><div><h3>让模型适应你的工作</h3><p>配置兼容 Chat Completions 的模型服务，用模型列表与参数策略适配不同任务。</p><span class="capability-footnote">自选提供商 / 模型策略 / 用量记录</span></div></article>
+          <article><div class="capability-icon" aria-hidden="true">⌘</div><div><h3>留下可检查的过程</h3><p>规划、工具调用、修改提案和命令输出有处可查。保留你对改动与成果的判断。</p><span class="capability-footnote">规划 → 提案 → 审查 / 文件差异 / 运行轨迹</span></div></article>
+          <article><div class="capability-icon" aria-hidden="true">＋</div><div><h3>围绕专业场景继续生长</h3><p>用辅助资料、插件和源码定制，连接你的工具与工作方式。Go、Python、Node.js 与 Git 随 Docker 环境提供。</p><span class="capability-footnote">插件工具 / 只读 MCP 工具 / 源码定制</span></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="get-started" class="section get-started" aria-labelledby="start-title">
+      <div class="container">
+        <div class="section-heading"><div><p class="section-label">03 / YOUR NEXT STEP</p><h2 id="start-title">从你的下一个想法开始。</h2></div><p class="section-intro">准备好 Git 与 Docker。<br>让 aide 在你的电脑上运行。</p></div>
+        <div class="install-layout">
+          <div class="install-code"><div class="code-bar"><span><i aria-hidden="true"></i> 从源码开始</span><button id="copy-command" class="copy-button" type="button" aria-label="复制安装命令"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h4"/></svg><span>复制</span></button></div><pre><code id="install-command"><span class="code-comment"># 获取 aide</span>
+git clone https://github.com/skyelan1999/aide.git
+cd aide
+
+<span class="code-comment"># 检查环境并安装</span>
+bash scripts/install.sh --check
+bash scripts/install.sh --source</code></pre><div class="code-footer"><span>需要 Docker Engine 与 Docker Compose</span><span id="copy-status" role="status" aria-live="polite"></span></div></div>
+          <div class="install-guide"><span class="install-guide-number">NEXT</span><h3>启动之后，<br>连接你的模型。</h3><p>在模型设置中填写服务地址、API Key 与模型 ID，然后选一个项目，开始第一次对话。</p><a class="text-link" href="https://github.com/skyelan1999/aide/blob/main/docs/installation.md" target="_blank" rel="noopener noreferrer">完整安装说明 <span aria-hidden="true">↗</span></a><div class="release-link"><span>也可以从发行包开始</span><a href="https://github.com/skyelan1999/aide/releases" target="_blank" rel="noopener noreferrer">浏览 GitHub Releases <span aria-hidden="true">↗</span></a><small>按发行说明选择适合平台与架构的附件。</small></div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section faq-section" aria-labelledby="faq-title">
+      <div class="container faq-layout"><div><p class="section-label">A FEW THINGS TO KNOW</p><h2 id="faq-title">开始之前，<br>你可能想知道。</h2></div><div class="faq-list">
+        <details><summary>这个网站能直接运行 aide 吗？<span aria-hidden="true">＋</span></summary><p>这是 aide 的产品主页。aide 本体需要在你的电脑上安装运行，再通过浏览器进入本地工作台；它面向可信单用户使用，不提供公网多用户托管。</p></details>
+        <details><summary>aide 是免费的吗？<span aria-hidden="true">＋</span></summary><p>aide 源码采用 MIT License。模型服务由你自行配置，云端模型可能按提供商规则收费；本地模型也需要相应的运行环境。</p></details>
+        <details><summary>可以使用自己的模型吗？<span aria-hidden="true">＋</span></summary><p>可以配置兼容 Chat Completions 的模型服务，包括可访问的本地服务。具体兼容性取决于服务的 API 与工具调用支持，保存配置后请先用一个简短问题检查连接。</p></details>
+        <details><summary>本地运行时，资料会发送到哪里？<span aria-hidden="true">＋</span></summary><p>项目与会话数据在本机持久化。使用云端模型时，任务内容、上下文和工具读取结果会发送给所配置的提供商；请根据资料要求选择模型服务与可访问的工作目录。</p></details>
+      </div></div>
+    </section>
+
+    <section class="closing" aria-labelledby="closing-title"><div class="container closing-inner"><div><p class="section-label">YOUR IDEAS, IN MOTION.</p><h2 id="closing-title">想法已经有了。<br>下一步，一起完成。</h2></div><a class="button button-white" href="#get-started">开始使用 aide <span aria-hidden="true">↗</span></a><div class="closing-decoration" aria-hidden="true">a</div></div></section>
+  </main>
+
+  <footer class="footer"><div class="container"><div class="footer-top"><a class="brand" href="#" aria-label="回到 aide 首页"><img src="./assets/favicon.svg" alt="" width="32" height="32"><span>aide<span class="brand-dot">.</span></span></a><span class="footer-tagline">AI + IDE，让想法成为下一步。</span><nav aria-label="页脚导航"><a href="https://github.com/skyelan1999/aide" target="_blank" rel="noopener noreferrer">GitHub ↗</a><a href="https://github.com/skyelan1999/aide/blob/main/docs/user-guide.md" target="_blank" rel="noopener noreferrer">使用指南 ↗</a><a href="https://github.com/skyelan1999/aide/issues" target="_blank" rel="noopener noreferrer">反馈 ↗</a></nav></div><div class="footer-bottom"><span>由 skyelan1999 发起 · <a href="https://github.com/skyelan1999/aide/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a></span><span>独立开源项目 · 在你的电脑上展开工作</span></div></div></footer>
+</body>
+</html>

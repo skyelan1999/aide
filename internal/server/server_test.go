@@ -4,14 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -267,22 +265,46 @@ func TestRestartMarksInterrupted(t *testing.T) {
 func TestChatHistoryAndCancelEndpoint(t *testing.T) {
 	a := testApp(t)
 	entered := make(chan struct{})
-	var calls atomic.Int32
+	var enteredOnce sync.Once
 	p := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, _ = io.Copy(io.Discard, r.Body)
-		n := calls.Add(1)
-		if n == 1 {
+		var body struct {
+			Messages []Message `json:"messages"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Errorf("provider request: %v", err)
+			http.Error(w, "invalid request", http.StatusBadRequest)
+			return
+		}
+		// Topic summaries run independently of the chat request; arrival order
+		// is not a stable way to choose the fixture response.
+		if len(body.Messages) > 0 && strings.Contains(body.Messages[0].Content, "主题短语") {
 			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "主题标题"}}}})
 			return
 		}
-		if n == 2 {
+		secondPrompt := false
+		for _, message := range body.Messages {
+			if message.Role == "user" && strings.Contains(message.Content, "second") {
+				secondPrompt = true
+			}
+		}
+		if !secondPrompt {
 			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "first reply"}}}})
 			return
 		}
-		close(entered)
+		enteredOnce.Do(func() { close(entered) })
 		<-r.Context().Done()
 	}))
-	defer p.Close()
+	defer func() {
+		// Deferred server shutdown precedes testApp's cleanup. Cancel both
+		// active runs and independent summaries before waiting for handlers.
+		a.mu.Lock()
+		for _, cancel := range a.cancels {
+			cancel()
+		}
+		a.mu.Unlock()
+		a.bgCancel()
+		p.Close()
+	}()
 	a.settings = Settings{BaseURL: p.URL, Model: "test"}
 	w := request(a, "POST", "/api/sessions", map[string]string{})
 	var s Session

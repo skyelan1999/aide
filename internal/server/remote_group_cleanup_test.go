@@ -49,7 +49,7 @@ func TestRemoteCommandWrappedInOwnPG(t *testing.T) {
 		t.Fatalf("正常远程命令失败 code=%d err=%v", code, err)
 	}
 	log := readFileString(t, logPath)
-	if !strings.Contains(log, "setsid bash -c") {
+	if !strings.Contains(log, "setsid -w bash -c") {
 		t.Fatalf("远端命令未包进 setsid 独立会话:\n%s", log)
 	}
 	if !strings.Contains(log, "/tmp/.aide-remote-") {

@@ -86,7 +86,7 @@ func (a *App) transferRemote(loc transferLocation, p string) (string, bool) {
 		return a.workspaceRemotePath(p), true
 	}
 	if loc.hasSource && loc.source.Type == "workspace-sftp" {
-		return a.workspaceRemotePath(pathJoinRemote(loc.source.Config.Path, p)), true
+		return a.workspaceRemoteSourcePath(loc.source.Config.Path, p), true
 	}
 	if loc.hasSource && loc.source.Type == "sftp" {
 		return pathJoinRemote(loc.source.Config.Path, p), true

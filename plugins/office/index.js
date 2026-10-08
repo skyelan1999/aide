@@ -4,7 +4,7 @@
 module.exports = {
   name: 'office',
   apply(ctx) {
-    ctx.tool({name:"office_document_search",description:"原文搜索或RAG片段检索，复用星图文档服务。original逐字匹配提取原文，rag本地TF-IDF片段排序（非向量）。返回文件指纹、片段编号及页/段落/工作表/幻灯片定位；只读，无OCR，不代表全文已读。支持工作区或已启用本地来源。",parameters:{type:"object",required:["query","mode"],properties:{query:{type:"string"},mode:{type:"string",enum:["original","rag"]},source:{type:"string"},path:{type:"string"}}},handler(){throw new Error("office_document_search 必须由 aide 原生工作区执行器调用");}});
+    ctx.tool({name:"office_document_search",description:"原文搜索或RAG片段检索，复用星图文档服务。original逐字匹配提取原文，rag本地TF-IDF片段排序（非向量）。返回文件指纹、片段编号及页/段落/工作表/幻灯片定位；只读，无OCR，不代表全文已读。支持本地/SSH工作区及已启用的文件来源；MCP仅检索已发现工具说明，不自动调用工具。",parameters:{type:"object",required:["query","mode"],properties:{query:{type:"string"},mode:{type:"string",enum:["original","rag"]},source:{type:"string"},path:{type:"string"}}},handler(){throw new Error("office_document_search 必须由 aide 原生工作区执行器调用");}});
     ctx.tool({
       name: 'office_create',
       description: '直接生成 DOCX/XLSX/PPTX 并写入当前本地或 SSH 工作区，不覆盖同名文件。docx content={title,blocks:[{type:"heading"|"paragraph",text,level?}|{type:"table",rows:[[...]]}]}；xlsx content={sheets:[{name,rows:[[...]]}]}；pptx content={slides:[{title,body}]}。',

@@ -1,0 +1,152 @@
+{
+  "id": "homepage-20261008",
+  "request": "你做一个aide的主页",
+  "baseline": "77a27900d04d959cf058ad4e2630e075879ba96b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/avatar-player.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n M internal/server/web/themes/comfort.css\n M internal/server/web/themes/dark/tokens.css\n M internal/server/web/themes/light/tokens.css\n M internal/server/workflow.go\n M plugins/office/index.js\n M plugins/office/manifest.json\n M plugins/office/test.js\n?? docs/architecture/knowledge-map.md\n?? docs/tasks/approval-strategy-column-20261008.json\n?? docs/tasks/knowledge-starmap-20261008.json\n?? docs/tasks/starmap-code-insight-20261008.json\n?? docs/tasks/starmap-cosmic-scales-20261008.json\n?? docs/tasks/starmap-document-retrieval-20261008.json\n?? docs/tasks/starmap-scroll-backview-20261008.json\n?? docs/tasks/starmap-summit-journey-20261008.json\n?? docs/tasks/ui-celestial-sanctum-20261008.json\n?? docs/tasks/ui-comfort-motion-20261008.json\n?? docs/tasks/ui-motion-continuity-20261008.json\n?? docs/tasks/ui-observatory-refinement-20261008.json\n?? internal/server/code_analysis/\n?? internal/server/document_analysis/\n?? internal/server/knowledge_code.go\n?? internal/server/knowledge_documents.go\n?? internal/server/knowledge_map.go\n?? internal/server/static_assets.go\n?? internal/server/web/experience.css\n?? internal/server/web/experience.js\n?? internal/server/web/sanctum.css\n?? internal/server/web/starmap-cosmos.js\n?? internal/server/web/starmap-journey.js\n?? internal/server/web/starmap-structure.js\n?? internal/server/web/starmap.css\n?? internal/server/web/starmap.html\n?? internal/server/web/starmap.js\n?? plugins/office/README.md",
+  "acceptance": [
+    "独立中文 Aide 产品主页，基于仓库资料提供定位、能力、工作方式、安装与文档入口；不固定未经核对的版本和统计。",
+    "静态 HTML/CSS/JavaScript 与本地资源，无 npm 构建和 CDN；支持 GitHub Pages 子路径部署。",
+    "实际浏览器验收桌面与 390px/320px 窄屏，首屏 CTA 清晰、无水平溢出；核对全部页面区域。",
+    "导航、移动菜单、场景切换、键盘切换、复制安装命令和 FAQ 能正常使用。",
+    "提供发布准备与本地预览说明；不自动推送、启用 Pages 或改动运行中的 Aide。"
+  ],
+  "scope": [
+    "site/",
+    "docs/tasks/homepage-20261008.json",
+    "docs/website.md",
+    ".github/workflows/pages.yml"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按用户请求创建主页；结合上一轮 GitHub Pages 讨论采用独立静态站点。远端发布未授权。",
+      "evidence": [
+        "用户原话：你做一个aide的主页",
+        "README.md",
+        "docs/PRD.md 第 1 节",
+        "AGENTS.md",
+        "docs/agent/WORKFLOW.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "独立静态站点；暖白、深墨色、aide 蓝色；沿用工作台图标与真实示例截图；不接 API 或模型。",
+      "evidence": [
+        "site/index.html",
+        "site/style.css",
+        "site/main.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成主页、移动导航、3 个可键盘切换的场景、命令复制回退、FAQ、仅手动 Pages 工作流与说明。",
+      "evidence": [
+        "site/",
+        ".github/workflows/pages.yml",
+        "docs/website.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "本轮HTTP18200浏览器主验收通过：1280×900/390×844/320×844无水平溢出、图片和锚点；菜单/Escape焦点/导航、场景点击与键盘、实际剪贴板matches:true、4项FAQ与窄屏长答案。无JS及OS减少动效真实运行NOT_RUN，仅静态检查。",
+      "evidence": [
+        "docs/reviews/2026-10-08-release-ui.md",
+        "docs/reviews/2026-10-08-homepage/desktop-release.png + desktop-release-full.png",
+        "docs/reviews/2026-10-08-homepage/mobile-320.png + mobile-390-install.png",
+        "发布者本轮实际IAB操作；不是旧desktop截图推断"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "产品主页说明、README、文档中心及交接导航已整理，区分静态主页、Go工作台、发行包及手动Pages部署；旧桌面截图不冒充当前浏览器验收。",
+      "evidence": [
+        "docs/website.md",
+        "README.md",
+        "HANDOVER.md",
+        "docs/README.md",
+        "docs/architecture.md",
+        "python3 scripts/check_docs.py PASS: 163 Markdown files / 360 local links（2026-10-08资料整理，非功能测试）"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只读核对6个site文件、手动Pages工作流、2张桌面预览截图与任务/说明的归属；示例工作台图片未显示真实凭据，素材与原检查资料保留。未删除业务文件、未改运行实例或提交推送。",
+      "evidence": [
+        "site/index.html + style.css + main.js + .nojekyll + assets/favicon.svg + assets/workbench-preview.jpg",
+        ".github/workflows/pages.yml",
+        "docs/reviews/2026-10-08-homepage/desktop-initial.png + desktop-full.png",
+        "git status --short -- site .github docs/reviews/2026-10-08-homepage docs/tasks/homepage-20261008.json docs/website.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "后续父任务 release-20261008：用户2026-10-08“整理所有资料和文档并release”，并明确答复允许运行完整验收并发布。原实施轮的NOT_RUN/未验证证据保留；最终版本、标签、镜像和附件状态查父任务及发布记录。既有生产实例不替换，Pages未自动部署。",
+  "rollback": "移除本任务新增的 site/、Pages 工作流与网站文档即可撤销本地主页；未改变应用或远端状态。",
+  "handoff": "主页桌面与390/320窄屏及核心交互已验收，当前原始证据见release-ui。无JS/OS减少动效实际运行未测；Pages未部署。版本、包和源码交付跟随release-20261008父任务，旧预览/未完成状态留在verification_history。",
+  "qa_inventory": [
+    {
+      "claim": "清晰的产品定位和安装入口",
+      "check": "桌面、390px、320px 首屏截图及 CTA bounds",
+      "status": "pass",
+      "result": "本轮实际浏览器动作见docs/reviews/2026-10-08-release-ui.md。"
+    },
+    {
+      "claim": "全部页面布局完整",
+      "check": "逐区域截图，图像加载、横向溢出与链接完整性",
+      "status": "pass",
+      "result": "本轮实际浏览器动作见docs/reviews/2026-10-08-release-ui.md。"
+    },
+    {
+      "control": "导航与移动菜单",
+      "check": "锚点、展开/收起、选择后关闭、Escape 与焦点恢复",
+      "status": "pass",
+      "result": "本轮实际浏览器动作见docs/reviews/2026-10-08-release-ui.md。"
+    },
+    {
+      "control": "3 个场景选项卡",
+      "check": "点击、左右箭头、Home/End、面板内容与 ARIA 状态",
+      "status": "pass",
+      "result": "本轮实际浏览器动作见docs/reviews/2026-10-08-release-ui.md。"
+    },
+    {
+      "control": "复制命令",
+      "check": "实际点击、成功反馈、粘贴内容一致；不支持复制时保留可选择命令",
+      "status": "pass",
+      "result": "本轮实际浏览器动作见docs/reviews/2026-10-08-release-ui.md。"
+    },
+    {
+      "control": "FAQ",
+      "check": "实际展开/收起，最长答案在窄屏无裁切",
+      "status": "pass",
+      "result": "本轮实际浏览器动作见docs/reviews/2026-10-08-release-ui.md。"
+    },
+    {
+      "exploratory": "无 JavaScript",
+      "check": "正文、首个场景、安装命令、FAQ 和链接仍可用",
+      "status": "not_run",
+      "result": "静态HTML读取，未禁用JS运行。"
+    },
+    {
+      "exploratory": "减少动态效果与 320px 最窄布局",
+      "check": "reduced-motion CSS、首屏与菜单状态、横向无溢出",
+      "status": "not_run",
+      "result": "320px实际布局通过；OS reduced-motion运行未测，仅静态CSS检查。"
+    }
+  ],
+  "verification_history": [
+    {
+      "phase": "original_implementation_turn",
+      "verification": {
+        "status": "in_progress",
+        "summary": "",
+        "evidence": []
+      },
+      "handoff": "主页源码与文档整理完成，现有desktop-initial/full预览保留。当前verification仍in_progress：390px/320px、导航/移动菜单、场景键盘、复制/FAQ、无JavaScript和reduced-motion尚缺完整操作收据。用户已请求整理所有资料和文档并release；本轮发布者负责新的浏览器验收与版本/附件发布记录。Pages只有手动工作流，未因源码整理自动部署。"
+    }
+  ],
+  "release_parent": "release-20261008"
+}

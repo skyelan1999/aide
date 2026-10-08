@@ -2059,10 +2059,17 @@ function closeFileContextMenu() {
   leaveUISurface(menu, null, true);
 }
 function onFileCtxKey(ev) { if (ev.key === 'Escape') closeFileContextMenu(); }
-function fileRawUrl(filePath, root, source) {
+function addKnowledgeViewerIdentity(query, spec) {
+  if (spec?.readOnly !== true || !spec.origin || !spec.knowledgeWorkspace) return false;
+  query.set('knowledgeOrigin', spec.origin);
+  query.set('knowledgeWorkspace', spec.knowledgeWorkspace);
+  return true;
+}
+function fileRawUrl(filePath, root, source, viewerSpec) {
   const token = state.token || (state.config && state.config.accessToken) || '';
   const qp = new URLSearchParams(); qp.set('path', filePath);
   if (source) qp.set('source', source); else qp.set('root', root || 'workspace');
+  addKnowledgeViewerIdentity(qp, viewerSpec);
   if (token) qp.set('access_token', token);
   return '/api/file/raw?' + qp.toString();
 }
@@ -5916,15 +5923,9 @@ function setupDrawioFrame(container, xml, onSave, handlerKey) {
 }
 
 /* 图片预览器：缩放/平移/适应窗口/原始大小 */
-function setupImagePreview(container, filePath, root, source) {
+function setupImagePreview(container, filePath, root, source, viewerSpec) {
   container.innerHTML = '';
-  const token = state.token || (state.config && state.config.accessToken) || '';
-  const params = new URLSearchParams();
-  params.set('path', filePath);
-  if (source) params.set('source', source);
-  else params.set('root', root || 'workspace');
-  if (token) params.set('access_token', token);
-  const imgUrl = '/api/file/raw?' + params.toString();
+  const imgUrl = fileRawUrl(filePath, root, source, viewerSpec);
   const viewer = el('div', 'img-viewer');
   const toolbar = el('div', 'img-toolbar');
   const info = el('span', 'img-info', filePath.split('/').pop());
@@ -6015,7 +6016,7 @@ function bindViewerTeardown(container, teardown) {
   if (dlg) dlg.addEventListener('close', teardown, { once: true });
   window.addEventListener('pagehide', teardown, { once: true });
 }
-async function setupStlPreview(container, filePath, root, source) {
+async function setupStlPreview(container, filePath, root, source, viewerSpec) {
   container.innerHTML = '';
   const loading = el('div', 'stl-loading', t('正在加载 3D 预览组件…'));
   loading.style.cssText = 'padding:40px;text-align:center;color:var(--text-dim)';
@@ -6031,12 +6032,7 @@ async function setupStlPreview(container, filePath, root, source) {
     return;
   }
 
-  const token = state.token || (state.config && state.config.accessToken) || '';
-  const qp = new URLSearchParams();
-  qp.set('path', filePath);
-  if (source) qp.set('source', source); else qp.set('root', root || 'workspace');
-  if (token) qp.set('access_token', token);
-  const rawUrl = '/api/file/raw?' + qp.toString();
+  const rawUrl = fileRawUrl(filePath, root, source, viewerSpec);
 
   if (!glType) {
     loading.remove();
@@ -6136,18 +6132,18 @@ async function setupStlPreview(container, filePath, root, source) {
     }).catch(err => { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">' + t('STL 加载失败：') + escapeHtml(err.message) + '</div>'; meta.textContent = t('解析失败'); });
 }
 /* ── ZIP 查看器：只列出目录，不会在浏览器中解压或执行归档内容。 ── */
-async function setupZipPreview(container, filePath, root, source) {
+async function setupZipPreview(container, filePath, root, source, viewerSpec) {
   container.innerHTML = '';
   const viewer = el('div', 'zip-viewer');
   const toolbar = el('div', 'zip-toolbar');
   const title = el('strong', '', filePath.split('/').pop());
   const meta = el('span', 'zip-meta', t('正在读取压缩包…'));
-  const download = el('a', 'zip-download', t('下载 ZIP')); download.href = fileRawUrl(filePath, root, source); download.download = filePath.split('/').pop();
+  const download = el('a', 'zip-download', t('下载 ZIP')); download.href = fileRawUrl(filePath, root, source, viewerSpec); download.download = filePath.split('/').pop();
   toolbar.append(title, meta, download);
   const list = el('div', 'zip-list'); viewer.append(toolbar, list); container.append(viewer);
   try {
     if (!window.JSZip) throw new Error('JSZip unavailable');
-    const response = await fetch(fileRawUrl(filePath, root, source));
+    const response = await fetch(fileRawUrl(filePath, root, source, viewerSpec));
     if (!response.ok) throw new Error('HTTP ' + response.status);
     const zip = await window.JSZip.loadAsync(await response.arrayBuffer(), { createFolders: true });
     const entries = Object.values(zip.files).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
@@ -6178,14 +6174,9 @@ function ensurePdfJs() {
   })();
   return _pdfjsPromise;
 }
-async function setupPdfPreview(container, filePath, root, source) {
+async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
   container.innerHTML = '';
-  const token = state.token || (state.config && state.config.accessToken) || '';
-  const qp = new URLSearchParams();
-  qp.set('path', filePath);
-  if (source) qp.set('source', source); else qp.set('root', root || 'workspace');
-  if (token) qp.set('access_token', token);
-  const rawUrl = '/api/file/raw?' + qp.toString();
+  const rawUrl = fileRawUrl(filePath, root, source, viewerSpec);
 
   const viewer = el('div', 'pdf-viewer');
   const toolbar = el('div', 'pdf-toolbar');
@@ -6371,7 +6362,7 @@ async function setupPdfPreview(container, filePath, root, source) {
 function isDxfPath(path) { return /\.dxf$/i.test(effectiveFileTypePath(path)); }
 function isDocxPath(path) { return /\.docx$/i.test(effectiveFileTypePath(path)); }
 /* XLSX 查看和单元格修改走服务端 openpyxl：仅传可见页，保留原工作簿。 */
-async function setupXlsxPreview(container, filePath, root, source) {
+async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
   container.replaceChildren();
   const wrap = el('div', 'xlsx-viewer');
   const toolbar = el('div', 'xlsx-toolbar');
@@ -6392,13 +6383,19 @@ async function setupXlsxPreview(container, filePath, root, source) {
     try {
       const query = new URLSearchParams({path:filePath, row:String(startRow), col:String(startCol)});
       if (source) query.set('source', source);
+      const knowledgeReadOnly = addKnowledgeViewerIdentity(query, viewerSpec);
+      if (knowledgeReadOnly) {
+        query.set('root', root || 'workspace');
+        if (viewerSpec.format === '.xlsx') query.set('knowledgeFormat', '.xlsx');
+      }
       if (sheet) query.set('sheet', sheet);
       current = await api('/office/xlsx?' + query.toString());
       if (!saveHash) saveHash = current.hash;
       if (!sheetSelect.options.length) current.sheets.forEach(name => { const opt = document.createElement('option'); opt.value = name; opt.textContent = name; sheetSelect.append(opt); });
       sheetSelect.value = current.sheet;
       position.textContent = `${startRow}–${Math.min(startRow + 99, current.maxRow)} / ${current.maxRow} · ${startCol}–${Math.min(startCol + 25, current.maxCol)} / ${current.maxCol}`;
-      const readOnly = !!current.readOnly || isBackupPath(filePath);
+      const readOnly = knowledgeReadOnly || !!current.readOnly || isBackupPath(filePath);
+      if (knowledgeReadOnly) current.readOnly = true;
       save.disabled = readOnly || !changes.size;
       save.classList.toggle('hidden', readOnly);
       previous.disabled = startRow <= 1; next.disabled = startRow + 100 > current.maxRow;
@@ -6647,14 +6644,9 @@ function bulgePts(x1, y1, x2, y2, bulge) {
   return pts;
 }
 
-async function setupDxfPreview(container, filePath, root, source) {
+async function setupDxfPreview(container, filePath, root, source, viewerSpec) {
   container.innerHTML = '';
-  const token = state.token || (state.config && state.config.accessToken) || '';
-  const qp = new URLSearchParams();
-  qp.set('path', filePath);
-  if (source) qp.set('source', source); else qp.set('root', root || 'workspace');
-  if (token) qp.set('access_token', token);
-  const rawUrl = '/api/file/raw?' + qp.toString();
+  const rawUrl = fileRawUrl(filePath, root, source, viewerSpec);
 
   const viewer = el('div', 'dxf-viewer');
   const toolbar = el('div', 'dxf-toolbar');
@@ -6913,7 +6905,7 @@ async function setupDxfPreview(container, filePath, root, source) {
 }
 
 /* ── docx-preview 渲染器：保留标题/表格/图片/列表，支持批注 ── */
-async function setupDocxPreview(container, filePath, root, source) {
+async function setupDocxPreview(container, filePath, root, source, viewerSpec) {
   container.innerHTML = '';
   const loading = el('div', 'docx-loading', t('正在加载 Word 文档…'));
   loading.style.cssText = 'padding:40px;text-align:center;color:var(--text-dim)';
@@ -6926,12 +6918,8 @@ async function setupDocxPreview(container, filePath, root, source) {
     return;
   }
 
-  const token = state.token || (state.config && state.config.accessToken) || '';
-  const qp = new URLSearchParams();
-  qp.set('path', filePath);
-  if (source) qp.set('source', source); else qp.set('root', root || 'workspace');
-  if (token) qp.set('access_token', token);
-  const rawUrl = '/api/file/raw?' + qp.toString();
+  const rawUrl = fileRawUrl(filePath, root, source, viewerSpec);
+  const knowledgeReadOnly = viewerSpec?.readOnly === true && !!viewerSpec.origin;
 
   try {
     const r = await fetch(rawUrl);
@@ -6942,7 +6930,7 @@ async function setupDocxPreview(container, filePath, root, source) {
     const info = el('span', 'docx-info', filePath.split('/').pop());
     const btnToggleComments = el('button', 'docx-ctrl', t('批注'));
     btnToggleComments.title = t('切换批注面板');
-    btnToggleComments.classList.toggle('hidden', isBackupPath(filePath));
+    btnToggleComments.classList.toggle('hidden', knowledgeReadOnly || isBackupPath(filePath));
     const btnClose = el('button', 'docx-ctrl', '✕');
     toolbar.append(info, btnToggleComments, btnClose);
 
@@ -6964,6 +6952,10 @@ async function setupDocxPreview(container, filePath, root, source) {
       experimental: true,
     });
     loading.remove();
+
+    // Knowledge views pin source identity and remain read-only. The existing
+    // comment editor uses mutable source paths, so keep it in ordinary views.
+    if (knowledgeReadOnly) return;
 
     // ── 批注：跨节点 Range 定位 + 高亮 + 联动 ──
     await new Promise(r => setTimeout(r, 300)); // 等 docx-preview DOM 稳定
@@ -7201,7 +7193,7 @@ function fixCjkEmphasis(src) {
   const restore = (html) => { for (const [k, v] of map) html = html.split(k).join(v); return html; };
   return { text, restore };
 }
-function renderMarkdown(src, live, basePath) {
+function renderMarkdown(src, live, basePath, viewerSpec) {
   if (window.marked && typeof window.marked.parse === 'function') {
     const fixed = fixCjkEmphasis(String(src || ''));
     const html = fixed.restore(window.marked.parse(fixed.text, { gfm: true, breaks: false }));
@@ -7245,7 +7237,10 @@ function renderMarkdown(src, live, basePath) {
           }
           resolved = parts.join('/');
         }
-        img.src = '/api/file/raw?root=workspace&path=' + encodeURIComponent(resolved) + '&access_token=' + encodeURIComponent(state.token);
+        const knowledgeView = viewerSpec?.readOnly === true && viewerSpec.origin && viewerSpec.knowledgeWorkspace;
+        img.src = knowledgeView
+          ? fileRawUrl(resolved, viewerSpec.root, viewerSpec.source || '', viewerSpec)
+          : fileRawUrl(resolved, 'workspace', '');
         img.onerror = () => { img.style.opacity = '0.4'; img.title = t('图片加载失败: {0}', orig); };
       });
     }
@@ -7262,7 +7257,7 @@ function setFileViewMode(mode) {
   $('file-view-preview').classList.toggle('hidden', !preview);
   $('fv-edit').classList.toggle('active', !preview);
   $('fv-preview').classList.toggle('active', preview);
-  if (preview) { $('file-view-preview').innerHTML = renderMarkdown($('file-view-editor').value, false, fileView.spec ? fileView.spec.path : ''); $('file-view-preview').scrollTop = 0; }
+  if (preview) { $('file-view-preview').innerHTML = renderMarkdown($('file-view-editor').value, false, fileView.spec ? fileView.spec.path : '', fileView.spec); $('file-view-preview').scrollTop = 0; }
 }
 async function openFileViewMode() {
   let spec = null;
@@ -7272,15 +7267,20 @@ async function openFileViewMode() {
   $('file-view').classList.remove('hidden');
   fileView.spec = spec; fileView.wsId = '';
   $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;
-  const md = isMarkdownPath(spec.path);
-  const isDrawio = /\.drawio$/i.test(effectiveFileTypePath(spec.path));
-  const isImg = isImagePath(spec.path);
-  const isStl = isStlPath(spec.path);
-  const isPdf = isPdfPath(spec.path);
-  const isDxf = isDxfPath(spec.path);
-  const isDocx = isDocxPath(spec.path);
-  const isXlsx = isXlsxPath(spec.path);
-  const isZip = isZipPath(spec.path);
+  // Single URL resources retain their virtual path; the graph carries a bounded
+  // format hint for choosing an existing viewer. Requests still use spec.path.
+  const format = String(spec.format || '').toLowerCase();
+  const viewerFormats = ['.pdf','.docx','.xlsx','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.dxf','.zip','.drawio'];
+  const typePath = spec.readOnly === true && spec.source && viewerFormats.includes(format) ? 'resource' + format : spec.path;
+  const md = isMarkdownPath(typePath);
+  const isDrawio = /\.drawio$/i.test(effectiveFileTypePath(typePath));
+  const isImg = isImagePath(typePath);
+  const isStl = isStlPath(typePath);
+  const isPdf = isPdfPath(typePath);
+  const isDxf = isDxfPath(typePath);
+  const isDocx = isDocxPath(typePath);
+  const isXlsx = isXlsxPath(typePath);
+  const isZip = isZipPath(typePath);
   // 只有二进制/画布查看器需要占满剩余空间并自行处理滚动；Markdown
   // 预览必须保留外层滚动容器，避免被沉浸式查看器样式锁死。
   $('file-view-preview').classList.toggle('file-view-immersive', isImg || isStl || isPdf || isDxf || isDocx || isXlsx || isDrawio);
@@ -7289,10 +7289,10 @@ async function openFileViewMode() {
   if (isImg || isStl || isPdf || isDxf || isDocx || isXlsx || isZip) {
     data = { content: '', hash: '', workspaceId: '', wsId: '' };
   } else {
-    const query = spec.source
-      ? '/file?source=' + encodeURIComponent(spec.source) + '&path=' + encodeURIComponent(spec.path)
-      : '/file?root=' + encodeURIComponent(spec.root) + '&path=' + encodeURIComponent(spec.path);
-    data = await api(query);
+    const query = new URLSearchParams({path:spec.path});
+    if (spec.source) query.set('source', spec.source); else query.set('root', spec.root || 'workspace');
+    addKnowledgeViewerIdentity(query, spec);
+    data = await api('/file?' + query.toString());
   }
   fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
   $('file-view-mode-switch').classList.toggle('hidden', !md);
@@ -7313,35 +7313,35 @@ async function openFileViewMode() {
   if (isZip) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
-    setupZipPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+    setupZipPreview($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
   } else if (isStl) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
-    setupStlPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+    setupStlPreview($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
   } else if (isPdf) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
-    setupPdfPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+    setupPdfPreview($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
   } else if (isDxf) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
-    setupDxfPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+    setupDxfPreview($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
   } else if (isDocx) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
-    setupDocxPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+    setupDocxPreview($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
   } else if (isXlsx) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
-    setupXlsxPreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+    setupXlsxPreview($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
   } else if (isImg) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
-    setupImagePreview($('file-view-preview'), spec.path, spec.root, spec.source || '');
+    setupImagePreview($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
   } else if (isDrawio) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
-    setupDrawioFrame($('file-view-preview'), data.content, (xml) => {
+    setupDrawioFrame($('file-view-preview'), data.content, spec.readOnly === true && spec.origin ? null : (xml) => {
       $('file-view-editor').value = xml;
       $('file-view-save').click();
       toast(t('draw.io 已保存'));
@@ -10172,10 +10172,11 @@ $('open-starmap').onclick = () => {
     try {
       const n = await api('/knowledge-map?id=' + encodeURIComponent(event.data.id) + '&workspace=' + encodeURIComponent(event.data.workspace));
       if ((state.session?.id || '') !== originalSession) { reply(t('原会话已切换，请重新打开星图')); return; }
+      if (event.data.origin && event.data.origin !== n.origin) { throw Error(t('引用来源配置已变化，请重新选择星图节点')); }
       let documentQuote = null;
       if (event.data.document && n.kind === 'file') {
         const d = event.data.document;
-        documentQuote = await api('/knowledge-map/documents/reference', {method:'POST',body:JSON.stringify({id:n.id,workspace:event.data.workspace,locator:d.locator,offset:d.offset,hash:d.hash})});
+        documentQuote = await api('/knowledge-map/documents/reference', {method:'POST',body:JSON.stringify({id:n.id,workspace:event.data.workspace,origin:n.origin||'',locator:d.locator,offset:d.offset,hash:d.hash})});
       }
       if (lockScreen.locked || (state.session?.id || '') !== originalSession) { reply(t('原会话已切换，请重新打开星图')); return; }
       if (n.kind === 'file' || n.kind === 'symbol') {
@@ -10183,7 +10184,8 @@ $('open-starmap').onclick = () => {
         const exists = state.attachments.some(a=>a.root===att.root && a.path===att.path && (a.source||'')===(att.source||''));
         if (!exists) { if (state.attachments.length >= 8) throw Error(t('最多附加 8 个文件')); state.attachments.push(att); renderAttachments(); }
       } else if (n.kind !== 'session') { throw Error(t('请选择文件或会话节点')); }
-      const reference = n.kind === 'symbol' ? '[代码 ' + n.id + '] ' + n.path + ':' + n.line + '–' + n.endLine + ' · ' + n.name : n.kind === 'session' ? '[会话 ' + n.id + ' / #' + n.number + '] ' + n.name : '[文件 ' + n.id + '] ' + n.path;
+      const provenance = n.sourceName ? ' · 来源：' + n.sourceName + (n.sourceType ? '（' + n.sourceType + '）' : '') + (n.source ? ' [' + n.source + ']' : '') : '';
+      const reference = (n.kind === 'symbol' ? '[代码 ' + n.id + '] ' + n.path + ':' + n.line + '–' + n.endLine + ' · ' + n.name : n.kind === 'session' ? '[会话 ' + n.id + ' / #' + n.number + '] ' + n.name : '[文件 ' + n.id + '] ' + n.path) + provenance;
       $('prompt').value += ($('prompt').value ? '\n' : '') + reference + (documentQuote ? '\n[文档片段 ' + documentQuote.id + '] ' + documentQuote.locator + ' · SHA-256 ' + documentQuote.hash + '\n' + documentQuote.text : '') + (n.kind === 'session' && n.text ? '\n会话片段（索引摘录）：\n' + n.text.slice(0, 1500) : '');
       $('prompt').dispatchEvent(new Event('input', {bubbles:true}));
       $('prompt').focus(); reply(t('已插入原会话草稿，尚未发送'));

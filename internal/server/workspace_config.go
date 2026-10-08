@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -713,10 +714,32 @@ func (a *App) updateWorkspaceConfig(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) workspaceMode() string { return a.wsConfig.Workspace.Mode }
 func (a *App) workspaceRemotePath(p string) string {
-	if p == "." {
-		return a.wsConfig.Workspace.Path
+	base := a.wsConfig.Workspace.Path
+	if strings.TrimSpace(base) == "" {
+		base = "." // An omitted SSH workspace directory means the remote login home.
 	}
-	return pathJoinRemote(a.wsConfig.Workspace.Path, p)
+	if p == "." {
+		return base
+	}
+	return pathJoinRemote(base, p)
+}
+
+// Configured directories may be absolute on the workspace server. File paths
+// remain relative and are checked by safePath before reaching this resolver.
+// Do not change workspaceRemotePath to accept absolute file paths: that would
+// let a file request escape its selected root.
+func (a *App) workspaceRemoteConfiguredDir(p string) string {
+	if path.IsAbs(p) {
+		return path.Clean(p)
+	}
+	if p == "" {
+		p = "."
+	}
+	return a.workspaceRemotePath(p)
+}
+
+func (a *App) workspaceRemoteSourcePath(base, p string) string {
+	return pathJoinRemote(a.workspaceRemoteConfiguredDir(base), p)
 }
 
 // workspaceRemoteCachePath 返回远端命令使用的缓存目录。应用自身的状态缓存仍在容器本地，
@@ -729,7 +752,7 @@ func (a *App) workspaceRemoteCachePath() string {
 	if p == "" {
 		p = ".cache"
 	}
-	return a.workspaceRemotePath(p)
+	return a.workspaceRemoteConfiguredDir(p)
 }
 func pathJoinRemote(base, p string) string {
 	if strings.TrimSpace(base) == "" {
