@@ -1,6 +1,6 @@
 # Aide 0.1.17.0 RC1 发布记录
 
-状态：**发布准备中，PENDING；重启联调发现的死SFTP socket重建缺陷正在修复，新完整门禁待产**。计划标签 `v0.1.17.0-RC1`；未填入的提交、镜像与附件收据不表示已经生成或发布。任务：[release-20261008](../tasks/release-20261008.json)。
+状态：**本地完整验收、发行构建及实际包启动通过，待远端发布**。本地标签 `v0.1.17.0-RC1` 已创建；远端发布及附件仍待核对。任务：[release-20261008](../tasks/release-20261008.json)。
 
 用户授权：2026-10-08“整理所有资料和文档并release”；本轮后续答复明确允许运行完整验收并发布。沿用用户指定的 `start.command` 启动入口。目标为 GitHub prerelease 与八项 ARM64 标准附件；不替换用户正在使用的生产实例，不自动部署 Pages。
 
@@ -33,15 +33,15 @@
 | 检查 | 当前状态 | 证据与范围 |
 | --- | --- | --- |
 | 原聊天取消测试fixture修复 | PASS（focused） | 既有 `TestChatHistoryAndCancelEndpoint` 按user prompt确定mock响应并先取消再关闭；禁网Linux/ARM64容器 `-race -count=10`，10次PASS、9.413秒，输入前后相同；`.agent-state/release-gate-audit/cancel-focused-race.json`。此前SSH报告的基线超时由此闭环，不能因此声称全量通过 |
-| 完整quick／Go race／vet发布门禁 | 旧收据PASS；当前PENDING | 19项命令均exit 0，server race324.818秒、tts8.139秒、go vet通过；指纹 `9c66307af535ecf4438ab81faeb8dceb1d9ae10cd31f341806b0295bbe4483c8`，`.agent-state/full.json`、`verify-20261008T055113017149Z.log`。首轮335.144／3.298秒、指纹34cc6…的收据留为历史。随后重启联调发现死SFTP socket重建缺陷，此处两轮PASS均属补充修复前源码；修复后的新完整门禁待产 |
-| 当前SSH／多来源功能验收 | 已测范围PASS；补充重启修复PENDING | 双真实SSH服务器 race 24次子测试PASS、15.136秒；9类来源50／50检查、工作区／引用目录基线12／12、HTTPS／PDF／DOCX／HTTP与SMB XLSX检索和只读查看35／35。来源、正文、指纹、origin、取消及差量范围见[联调报告](2026-10-08-release-integration.md)；不代替浏览器或用户服务器验收。重启联调确认vault／hasSecret正常但死SFTP socket阻止master重建，正在补充修复与真实stale-socket回归 |
+| 完整quick／Go race／vet发布门禁 | PASS（修复后最终） | 19项均exit0，server race342.996秒、tts3.092秒、vet通过；指纹 `81935c04df8f869c408492b393693a1a941fd552e9cd600b5c5660ccd884692e`，`.agent-state/full.json`、`verify-20261008T060822197969Z.log`。修复前两轮收据保留为历史，不替代当前结果 |
+| 当前SSH／多来源功能验收 | PASS（修复后隔离验收） | 双真实SSH28/28 race，15.848秒；活动/超时socket8/8 race；多来源50+12+35=97/97；两次stop/start.command重启30/30。19项来源配置持久化，旧origin拒绝。见[联调报告](2026-10-08-release-integration.md)，不代替用户服务器验收 |
 | 当前工作台／星图浏览器验收 | PASS（Safari桌面核心范围）；窄屏NOT_RUN | 审批四栏默认手动、直接新tab星图、来源状态、F编号草稿回填未发送、原文只读查看、71→72→71差量及镜头视觉保留通过；IAB证书错误未绕过，Aide窄屏／全部主题／量化性能／付费模型未测。见[UI报告](2026-10-08-release-ui.md) |
 | 独立主页浏览器验收 | PASS（主验收）；两项探索NOT_RUN | IAB HTTP18200，1280×900／390×844／320×844无横向溢出、图片加载及锚点；菜单／Escape焦点／导航、场景键盘、实际clipboard matches:true、4FAQ通过。禁用JS与OS减少动效未运行，仅静态检查；[UI报告](2026-10-08-release-ui.md) |
 | 文档整理检查 | PASS（本轮普通文档整理） | `python3 scripts/check_docs.py`：166 Markdown／397本地链接、JPEG签名与FR-01..100覆盖；`git diff --check -- docs` exit 0。普通docs更新不替代补充源码修复后的完整门禁 |
-| main清洁、release-check、升版／tag／推送 | PENDING | 新提交与不可变tag身份待产生 |
-| 开启测试的发行镜像构建 | PENDING | `AIDE_RUN_TESTS=1`、源码摘要、版本／commit、镜像ID待产生 |
-| `start.command`隔离发行启动及HTTPS／鉴权冒烟 | PENDING | healthz、无鉴权拒绝、Bearer API、buildCommit与标签一致性待核对 |
-| 八项附件本地完整性与包内隐私检查 | PENDING | 校验和、gzip／ZIP、清单、manifest与镜像身份待核对 |
+| main清洁、release-check、升版／tag／推送 | 本地PASS；远端PENDING | 功能提交9c755e3，version.sh产生8a2ddb21a389644c2b57e11356a673b9fafd3a51及不可变标签；升版前后release-check通过 |
+| 开启测试的发行镜像构建 | PASS | AIDE_RUN_TESTS=1，全量Go test（server126.558秒、tts2.256秒）及vet通过；HTTPS healthz通过；镜像及源码摘要见下 |
+| `start.command`隔离发行启动及HTTPS／鉴权冒烟 | PASS | 完整ZIP保留原始解压副本，在独立工作副本用原启动器导入包内镜像；端口18201，独立项目aide-release-0170。固定信任证书、校验主机名；healthz正常、未鉴权401、鉴权200、版本与buildCommit匹配；13节点11关系；Safari版本／审批四栏／直接星图通过 |
+| 八项附件本地完整性与包内隐私检查 | PASS | 八项齐全、七载荷SHA256一致、五ZIP CRC及隐私检查通过、镜像／manifest匹配；本地收据local-assets-receipt.json |
 | GitHub prerelease发布与八项远端附件核对 | PENDING | draft=false、prerelease=true、远端字节数与SHA-256待核对 |
 | 生产替换／Pages部署 | NOT_RUN | 本轮不替换生产；Pages未自动部署 |
 
@@ -64,25 +64,25 @@
 
 ## 八项标准附件
 
-计划沿用 `scripts/package-release-assets.sh`，所有以下产物当前均为 **PENDING**。`SHA256SUMS`覆盖其余七项载荷，包内另含镜像校验和与升级manifest。
+已使用 `scripts/package-release-assets.sh` 生成并通过本地完整性检查，远端核对待完成。`SHA256SUMS`覆盖其余七项载荷，包内另含镜像校验和与升级manifest。
 
 | 文件 | 用途 | 当前状态 |
 | --- | --- | --- |
-| `aide-v0.1.17.0-RC1-linux-arm64-image.tar.gz` | Linux/ARM64 Docker镜像归档 | PENDING |
-| `aide-v0.1.17.0-RC1-full-linux-arm64.zip` | 完整运行／升级包：三平台启动器与一份镜像 | PENDING |
-| `aide-v0.1.17.0-RC1-update-linux-arm64.zip` | 应用内升级manifest、镜像及校验和 | PENDING |
-| `aide-v0.1.17.0-RC1-macos-arm64.zip` | Apple Silicon启动包；入口start.command | PENDING |
-| `aide-v0.1.17.0-RC1-windows-arm64.zip` | Windows ARM64启动包；入口start.ps1／start.bat | PENDING |
-| `aide-v0.1.17.0-RC1-ubuntu-arm64.zip` | Ubuntu ARM64启动包；入口start.sh | PENDING |
-| `RELEASE-ASSETS.txt` | 产物、平台和使用说明 | PENDING |
-| `SHA256SUMS` | 七项载荷的SHA-256 | PENDING |
+| `aide-v0.1.17.0-RC1-linux-arm64-image.tar.gz` | Linux/ARM64 Docker镜像归档 | 本地PASS |
+| `aide-v0.1.17.0-RC1-full-linux-arm64.zip` | 完整运行／升级包：三平台启动器与一份镜像 | 本地PASS |
+| `aide-v0.1.17.0-RC1-update-linux-arm64.zip` | 应用内升级manifest、镜像及校验和 | 本地PASS |
+| `aide-v0.1.17.0-RC1-macos-arm64.zip` | Apple Silicon启动包；入口start.command | 本地PASS |
+| `aide-v0.1.17.0-RC1-windows-arm64.zip` | Windows ARM64启动包；入口start.ps1／start.bat | 本地PASS |
+| `aide-v0.1.17.0-RC1-ubuntu-arm64.zip` | Ubuntu ARM64启动包；入口start.sh | 本地PASS |
+| `RELEASE-ASSETS.txt` | 产物、平台和使用说明 | 本地PASS |
+| `SHA256SUMS` | 七项载荷的SHA-256 | 本地PASS |
 
 ## 本次发行收据
 
-- 计划标签：`v0.1.17.0-RC1`。版本提交：PENDING；tag与main推送：PENDING。
-- 镜像ID、源码构建摘要、构建测试日志：PENDING。
-- 版本注入前隔离候选：`start.command`、端口18201，二进制 `5f06c39b7060330fec0267e664bb149112160de68cac3c12c33cd0b7e7c5df98`；协议/API使用固定本地信任证书并校验主机名。它没有发行版本和提交注入；Safari桌面与静态主页本轮验收见UI报告；升版后的最终镜像启动／鉴权／浏览器结果仍PENDING。
-- 本地附件目录、七项校验和与八项远端字节数／SHA-256：PENDING。
+- 标签：`v0.1.17.0-RC1`。版本提交：`8a2ddb21a389644c2b57e11356a673b9fafd3a51`；远端推送待完成。
+- 镜像ID：`sha256:2e7b3584fd3f605fe0fc4cb90a52f36f0b680cc681785926833d8907164c6bbe`；linux/arm64；源码摘要：`c2b0719d9ff7b330bcc2550d72cb84be03ccda2ec61caa27d82b371eb0fcf306`。构建日志：`.agent-state/release-20261008/build-0.1.17.0-RC1.log`。
+- 版本注入前隔离候选：`start.command`、端口18201，二进制 `5f06c39b7060330fec0267e664bb149112160de68cac3c12c33cd0b7e7c5df98`；协议/API使用固定本地信任证书并校验主机名。它没有发行版本和提交注入；Safari桌面与静态主页本轮验收见UI报告；升版后的实际发行包启动／鉴权／Safari桌面核心验收已PASS；[工作台截图](2026-10-08-release-ui/final-package.png)及[星图截图](2026-10-08-release-ui/final-package-starmap.png)。
+- 本地附件：`.agent-state/release-assets/v0.1.17.0-RC1/`；本地收据：`.agent-state/release-assets/local-assets-receipt.json`；远端核对待完成。
 - GitHub prerelease URL及draft／prerelease状态：PENDING。
 - 正式生产实例：本轮不替换；独立Pages：未部署。
 
@@ -97,3 +97,16 @@ Pages可独立撤销部署或关闭站点，不影响本地工作台和会话。
 ### SSH重启补充闭环
 
 控制检查失败后，仅在请求未取消、Unix socket连接明确被拒绝且inode/mtime未变化时清理残留。修复后28项双服务器race、8项活动/超时保留、97项多来源API、两轮共30项实际stop/start.command重启检查均通过。候选二进制SHA-256 `b0ee07874a88ed119071d100b893c3735ff1af4a0538c9568b2a3bb488d59a1d`；最终带版本发行镜像另行验收。
+
+## 本地资产身份
+
+| 文件 | 字节 | SHA-256 |
+| --- | ---: | --- |
+| `RELEASE-ASSETS.txt` | 522 | `203b1611c32850f0d08f2e6ced34e260973e26176403d75f3007dd2ede33ecbd` |
+| `SHA256SUMS` | 725 | `6fd79d06b0494b0294dce456ff725d90d7323191533148b2fde8c3cf3bcfb7ec` |
+| `aide-v0.1.17.0-RC1-full-linux-arm64.zip` | 552843760 | `016d9f6cf9929b558cf7e9efc46b9565528341b5e6efc5e655777a4da9b05098` |
+| `aide-v0.1.17.0-RC1-linux-arm64-image.tar.gz` | 552720535 | `91e846865f6789edb8fd58cf41eaf70452a3552daf6691aa4597969903f46dad` |
+| `aide-v0.1.17.0-RC1-macos-arm64.zip` | 39783 | `8ae0f666c652ea44c2873d364f0ed22888d4e4a4b5a4a64e4314c11bed9b8b25` |
+| `aide-v0.1.17.0-RC1-ubuntu-arm64.zip` | 40115 | `7ffb40e89178eb7d04177820d16f4a07bab50b76309bc43ab691dc5e4b934ca3` |
+| `aide-v0.1.17.0-RC1-update-linux-arm64.zip` | 552787703 | `def1dd905998f148b6e4a4272a89fc1675888f56b9ee33d22fa6b8e7fd3d4c0f` |
+| `aide-v0.1.17.0-RC1-windows-arm64.zip` | 49651 | `4748956a3e12b12994c911136e233ad021672fb7150c16c6ebef8373ff537135` |

@@ -62,8 +62,8 @@
       "evidence": [
         "docs/reviews/2026-10-08-release-integration.md",
         "docs/reviews/2026-10-08-release-ui.md",
-        ".agent-state/full.json fingerprint9c66307af535ecf4438ab81faeb8dceb1d9ae10cd31f341806b0295bbe4483c8",
-        ".agent-state/verify-20261008T055113017149Z.log",
+        ".agent-state/full.json fingerprint81935c04df8f869c408492b393693a1a941fd552e9cd600b5c5660ccd884692e",
+        ".agent-state/verify-20261008T060822197969Z.log",
         "docs/reviews/2026-10-08-release-ui/source-callback.png + source-readonly.png + delta-before.png + delta-after.png"
       ]
     },
