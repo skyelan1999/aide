@@ -82,16 +82,17 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "普通源码提交与推送已获授权，提交范围复核完成；推送结果将记录于本任务。未请求新tag、GitHub Release或生产替换。",
+      "status": "pass",
+      "summary": "普通源码提交e33fff7已推送origin/main；远端refs/heads/main核对一致。后续记录提交只补齐本结果。没有新tag、GitHub Release附件或生产替换。",
       "evidence": [
-        "release_authorization"
+        "git push origin main exit0",
+        "git ls-remote origin refs/heads/main e33fff77f0d743016a299cdd0fb956c5516b1c5b"
       ]
     }
   },
   "release_authorization": "用户本轮原话：整理，更新文档并推送。只授权本范围源码提交与普通推送，无新tag/Release/生产替换。",
   "rollback": "保留acfff9f1上一自动同步候选二进制及compose；已删除素材先本地归档到.agent-state，生产数据不变。",
-  "handoff": "当前候选通过start.command启动；Safari直接进入已观察。提交时排除独立主页任务；新发布及生产替换仍未授权。",
+  "handoff": "源码提交已普通推送并核对远端。当前18189候选通过start.command启动；Safari直接进入已观察；尚待动态同步/状态保留、BFCache回填恢复、真实模型/插件、性能验收。工作区只剩独立主页任务未跟踪文件。",
   "steering": [
     "那个星图的入场动画还是删了吧"
   ],
@@ -116,5 +117,14 @@
       "真实模型及插件端到端",
       "量化性能"
     ]
+  },
+  "source_push": {
+    "commit": "e33fff77f0d743016a299cdd0fb956c5516b1c5b",
+    "branch": "main",
+    "remote": "origin",
+    "verified_remote_head": "e33fff77f0d743016a299cdd0fb956c5516b1c5b",
+    "included_files": 59,
+    "release_created": false,
+    "production_replaced": false
   }
 }
