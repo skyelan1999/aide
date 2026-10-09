@@ -6,7 +6,9 @@
 
 已发布基线为 `0.1.17.0 RC2`，验收／交付状态见[发布记录](reviews/release-0.1.17.0-RC2-2026-10-08.md)。功能实现、隔离运行、浏览器验收、标签与远端附件分别记账；此前 `v0.1.16.0-RC1` 的收据保留为历史，不能代替本轮结果。
 
-星图按钮修整与增强漂移为 RC2 之后的本地候选；本次先提交文档和截图，相关源码尚未包含在已发布包中。见[按钮验收](reviews/starmap-controls-20261008.md)、[漂移验收](reviews/starmap-drift-20261008.md)与[文档推送范围](tasks/starmap-docs-push-20261009.json)。
+星图按钮修整与增强漂移为 RC2 之后的本地候选；相关源码已纳入后续开发提交，尚未包含在已发布包中。见[按钮验收](reviews/starmap-controls-20261008.md)、[漂移验收](reviews/starmap-drift-20261008.md)与[文档推送范围](tasks/starmap-docs-push-20261009.json)。
+
+当前连续工作、Markdown 历史、引用操作与 AI 可见性的源码检查点见[阶段性推送记录](reviews/continuity-checkpoint-20261009.md)；[整体目标](architecture/continuity-roadmap.md)继续进行中。
 
 ## 从这里开始
 
@@ -76,3 +78,5 @@ docs/
 5. 文档改动后运行 `python3 scripts/check_docs.py`；有截图更新时，使用示例数据并说明是预览还是发布版本。
 
 当前版本以根目录 [version.md](../version.md) 及对应 Git tag 为准；截图使用此前隔离预览，不把历史证据重新包装为当前测试结果。
+
+- [Markdown 历史版本插件](plugins/markdown-history.md)：原文编辑、保存去重与嵌入资源快照。

@@ -76,7 +76,7 @@ func (a *App) installBundledControlPlugins(bundlePath string) error {
 	if bundlePath == "" {
 		return nil
 	}
-	for _, id := range []string{"browser-control", "computer-control"} {
+	for _, id := range []string{"browser-control", "computer-control", "markdown-history"} {
 		found := false
 		for _, removed := range a.pluginRegistry.RemovedBuiltins {
 			if removed == id {
@@ -93,6 +93,11 @@ func (a *App) installBundledControlPlugins(bundlePath string) error {
 			continue
 		}
 		source := filepath.Join(bundlePath, id)
+		if id == "markdown-history" {
+			if _, err := os.Stat(filepath.Join(source, "manifest.json")); errors.Is(err, os.ErrNotExist) {
+				continue
+			}
+		}
 		raw, err := os.ReadFile(filepath.Join(source, "manifest.json"))
 		if err != nil {
 			return fmt.Errorf("read bundled plugin %s: %w", id, err)
@@ -123,7 +128,7 @@ func (a *App) installBundledControlPlugins(bundlePath string) error {
 			if statErr != nil || !entry.Mode().IsRegular() {
 				return fmt.Errorf("control plugin entry is not a regular file: %s", id)
 			}
-			manifest.Enabled = false
+			manifest.Enabled = id == "markdown-history"
 			a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, manifest)
 			if err := a.savePluginRegistry(); err != nil {
 				a.pluginRegistry.Plugins = a.pluginRegistry.Plugins[:len(a.pluginRegistry.Plugins)-1]
@@ -137,7 +142,7 @@ func (a *App) installBundledControlPlugins(bundlePath string) error {
 		if err != nil {
 			return err
 		}
-		manifest.Enabled = false
+		manifest.Enabled = id == "markdown-history"
 		manifest.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
 		err = os.WriteFile(filepath.Join(stage, "index.js"), code, 0644)
 		if err == nil {
@@ -702,7 +707,7 @@ func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pluginsPath := a.pluginsPath
-	if id == "browser-control" || id == "computer-control" {
+	if id == "browser-control" || id == "computer-control" || id == "markdown-history" {
 		a.pluginRegistry.RemovedBuiltins = append(a.pluginRegistry.RemovedBuiltins, id)
 	}
 	if err := a.savePluginRegistry(); err != nil {

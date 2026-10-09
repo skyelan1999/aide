@@ -475,10 +475,19 @@ func encodeArchive(items []archiveItem) ([]byte, error) {
 // createWorkspaceArchive writes the generated ZIP alongside its source instead of returning it as a download.
 func (a *App) createWorkspaceArchive(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Root string `json:"root"`
-		Path string `json:"path"`
+		Root   string `json:"root"`
+		Source string `json:"source"`
+		Path   string `json:"path"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Root != "workspace" || validArchivePath(body.Path) != nil {
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		fail(w, 400, errors.New("请求格式错误"))
+		return
+	}
+	if body.Source != "" {
+		a.sourceFileAction(w, body.Root, body.Source, body.Path, "archive", "")
+		return
+	}
+	if body.Root != "workspace" || validArchivePath(body.Path) != nil {
 		fail(w, 400, errors.New("需要工作目录中的文件或文件夹"))
 		return
 	}
@@ -649,10 +658,19 @@ func readArchiveFiles(data []byte) ([]extractedArchiveFile, error) {
 
 func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Root string `json:"root"`
-		Path string `json:"path"`
+		Root   string `json:"root"`
+		Source string `json:"source"`
+		Path   string `json:"path"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Root != "workspace" || validArchivePath(body.Path) != nil || !strings.HasSuffix(strings.ToLower(body.Path), ".zip") {
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		fail(w, 400, errors.New("请求格式错误"))
+		return
+	}
+	if body.Source != "" {
+		a.sourceFileAction(w, body.Root, body.Source, body.Path, "extract", "")
+		return
+	}
+	if body.Root != "workspace" || validArchivePath(body.Path) != nil || !strings.HasSuffix(strings.ToLower(body.Path), ".zip") {
 		fail(w, 400, errors.New("需要工作目录中的 ZIP 文件"))
 		return
 	}
@@ -1051,6 +1069,10 @@ func (a *App) workspaceFileProperties(p string) (map[string]any, error) {
 }
 
 func (a *App) fileProperties(w http.ResponseWriter, r *http.Request) {
+	if source := r.URL.Query().Get("source"); source != "" {
+		a.sourceFileAction(w, r.URL.Query().Get("root"), source, r.URL.Query().Get("path"), "properties", "")
+		return
+	}
 	if r.URL.Query().Get("root") != "workspace" || r.URL.Query().Get("source") != "" {
 		fail(w, 403, errors.New("仅工作目录支持属性查看"))
 		return
@@ -1065,10 +1087,19 @@ func (a *App) fileProperties(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) deleteWorkspaceFile(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		Root string `json:"root"`
-		Path string `json:"path"`
+		Root   string `json:"root"`
+		Source string `json:"source"`
+		Path   string `json:"path"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Root != "workspace" || body.Path == "." || safePath(body.Path) != nil {
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		fail(w, 400, errors.New("请求格式错误"))
+		return
+	}
+	if body.Source != "" {
+		a.sourceFileAction(w, body.Root, body.Source, body.Path, "delete", "")
+		return
+	}
+	if body.Root != "workspace" || body.Path == "." || safePath(body.Path) != nil {
 		fail(w, 400, errors.New("需要工作目录内的有效路径"))
 		return
 	}
@@ -1493,6 +1524,8 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("来源已切换：请重新打开文件后再保存"))
 		return
 	}
+	a.filesMu.Lock()
+	defer a.filesMu.Unlock()
 	if in.Source != "" {
 		a.mu.Lock()
 		src, ok := a.findSource(in.Source)
@@ -1505,6 +1538,11 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 			fail(w, 403, errors.New("该来源为只读"))
 			return
 		}
+		current, readErr := a.readSourceText(src, in.Path)
+		if (readErr == nil && hash(current) != in.Hash) || (readErr != nil && (in.Hash != "" || (!errors.Is(readErr, os.ErrNotExist) && !isSFTPNotExistErr(readErr)))) {
+			fail(w, 409, errors.New("来源文件已改变或无法确认版本，请重新打开后再保存"))
+			return
+		}
 		if err := a.writeSourceText(src, in.Path, []byte(in.Content)); err != nil {
 			fail(w, 400, err)
 			return
@@ -1512,8 +1550,6 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]string{"hash": hash([]byte(in.Content))})
 		return
 	}
-	a.filesMu.Lock()
-	defer a.filesMu.Unlock()
 	if a.workspaceMode() == "ssh" {
 		// 与本地 checkVersion 对齐区分“新建/覆盖”，但不能用 sftpExists(ls -l)：
 		// sftp 的 `ls -l <file>` 在远端/桩里常退化为目录列表，无法可靠判断具体文件存在性。
@@ -1550,7 +1586,7 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, err)
 		return
 	}
-	if err := putText(a.workspace, in.Path, []byte(in.Content)); err != nil {
+	if err := a.writeWorkspaceText(in.Path, []byte(in.Content)); err != nil {
 		fail(w, 400, err)
 		return
 	}
@@ -1711,6 +1747,10 @@ func (a *App) renameFile(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := safePath(body.Path); err != nil {
 		fail(w, 400, err)
+		return
+	}
+	if body.Source != "" {
+		a.sourceFileAction(w, body.Root, body.Source, body.Path, "rename", body.NewName)
 		return
 	}
 	if body.Root != "workspace" || body.Source != "" {

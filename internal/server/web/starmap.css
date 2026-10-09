@@ -474,3 +474,8 @@ html[data-motion=reduced] #ai-toggle::after { transition:none; }
 @media(max-width:720px) { .search-panel { top:auto;padding:16px; } }
 @media(max-width:720px) and (max-height:620px) { .search-panel { top:108px; } }
 @media(pointer:coarse) { .chips button,.chips button.source-chip { min-height:42px; } }
+
+.session-destination{margin:0 0 4px}
+.session-destination label{display:block;font-size:12px;color:var(--map-muted);margin-bottom:8px}
+.session-destination input{box-sizing:border-box;width:100%;min-height:40px;padding:10px 12px;border-radius:10px;font:12px/1.5 ui-monospace,SFMono-Regular,monospace}
+.session-destination p{font-size:11px;line-height:1.6;color:var(--map-muted);margin:8px 0 0}

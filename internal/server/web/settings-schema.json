@@ -125,6 +125,12 @@
       "description": "勾选后立即生效，自动保存到当前浏览器；同源标签页同步。默认预览选项在下次打开文件时应用。文件内容仍需点击保存。",
       "controls": [
         {
+          "id": "workRecovery",
+          "type": "checkbox",
+          "label": "工作现场与本地草稿恢复",
+          "description": "在当前浏览器保存会话草稿、目录和编辑恢复记录；服务器保存状态单独显示。"
+        },
+        {
           "id": "fileLineNumbers",
           "type": "checkbox",
           "label": "显示行号",
@@ -159,6 +165,11 @@
           "type": "checkbox",
           "label": "CSV / TSV 默认表格预览",
           "description": "取消勾选后默认打开原文，仍可手动切换表格。"
+        },
+        {
+          "id": "markdownHistory",
+          "type": "markdown-history",
+          "label": "Markdown 历史版本追踪"
         }
       ]
     },

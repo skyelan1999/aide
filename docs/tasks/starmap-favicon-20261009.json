@@ -1,0 +1,55 @@
+{
+  "id": "starmap-favicon-20261009",
+  "request": "知识星图的网页图标沿用星图入口的图标",
+  "baseline": "68af962a8498767628e99d403ab10b4bc4308dfe",
+  "initial_status": "M Dockerfile\n M docs/README.md\n M docs/architecture.md\n M docs/architecture/knowledge-map.md\n M docs/workspace-paths.md\n M internal/server/context.go\n M internal/server/files.go\n M internal/server/generated_documents.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/file-autosave.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M plugins/registry.json\n?? docs/architecture/continuity-roadmap.md\n?? docs/plugins/markdown-history.md\n?? docs/tasks/aide-continuity-knowledge-20261009.json\n?? docs/tasks/markdown-history-20261009.json\n?? docs/tasks/source-file-actions-20261009.json\n?? docs/tasks/starmap-session-target-20261009.json\n?? internal/server/markdown_history.go\n?? internal/server/markdown_history_test.go\n?? internal/server/markdown_restore.go\n?? internal/server/source_file_actions.go\n?? internal/server/source_file_actions_test.go\n?? internal/server/task_outcome.go\n?? internal/server/task_outcome_test.go\n?? internal/server/web/continuity.js\n?? internal/server/web/markdown-history.js\n?? internal/server/web/task-outcome.js\n?? plugins/markdown-history/",
+  "acceptance": [
+    "星图网页使用入口的四节点星图图形",
+    "沿用主体金色，提供深浅系统配色",
+    "工作台品牌图标保持独立"
+  ],
+  "scope": [
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap-icon.svg"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "沿用星图入口图形。",
+      "evidence": []
+    },
+    "design": {
+      "status": "complete",
+      "summary": "独立 SVG favicon，四节点路径与入口一致；浅色 #ad9361，深色 #c8b88f。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "添加 starmap-icon.svg 与星图 head favicon 链接。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "complete",
+      "summary": "SVG XML 解析和 git diff --check 通过；浏览器打开静态星图确认 favicon href，并实际打开 SVG 资源成功。仅静态资源验收，生产 9999 未部署。",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "complete",
+      "summary": "本任务记录实现和验收范围。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "complete",
+      "summary": "关闭临时浏览器标签页并停止 18214 静态预览。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "随整体目标发布；未部署生产。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "源码完成；生产实例尚未更新。"
+}

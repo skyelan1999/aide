@@ -89,6 +89,7 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 | GET / PUT | `/api/profiles` | Profile 与当前策略 |
 | GET / PUT | `/api/workspace-config` | 工作目录、文档、缓存、远程连接 |
 | GET / PUT | `/api/sources` | 引用来源注册表 |
+| PUT | `/api/sources/ai-visibility` | 按工作区保存来源 AI 可见性；保留手动浏览，不替代操作系统权限 |
 | POST | `/api/sources/{id}/test` | 初始化 stdio MCP 并发现工具（仅保存安全摘要） |
 | GET | `/api/files`、`/api/file` | 目录/文本读取 |
 | PUT | `/api/file` | 保存；包含路径、正文、哈希和工作区身份 |
@@ -109,7 +110,7 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 | POST | `/api/command` | 命令执行，NDJSON 输出 |
 | POST | `/api/config/export`、`/api/config/import` | 配置备份导出/导入（信封 `aide-config-backup`，可选含密钥/语音历史） |
 | POST | `/api/sessions/{id}/runs/{run}/retry`、`/answer`、`/queue/{index}` | 重试/回答澄清问题/排队项改删升级 |
-| GET / POST | `/api/file/raw`、`/api/file/download`、`/api/file/archive`、`/api/file/extract`、`/api/file/rename` | 原始文件查看、文件/目录下载与 ZIP 导出、在工作目录原路径旁创建 ZIP、安全解压到 ZIP 同级新目录、重命名；归档创建拒绝覆盖同名文件；download/raw 允许 `access_token` 供浏览器资源请求使用 |
+| GET / POST | `/api/file/raw`、`/api/file/download`、`/api/file/archive`、`/api/file/extract`、`/api/file/rename` | 原始文件查看、文件/目录下载与 ZIP 导出、在工作目录或可写引用原路径旁创建 ZIP、安全解压到 ZIP 同级新目录、重命名；归档创建拒绝覆盖同名文件；download/raw 允许 `access_token` 供浏览器资源请求使用 |
 | PATCH / DELETE | `/api/sessions/{id}`、`/api/sessions/archived/all` | 改 pinned/archived/删除/清空归档 |
 | POST | `/api/persona/*`（unlock/save/reset/GET）、`/api/personas/*`（GET/active）、`/api/personality/*`（GET/PUT/reset/evolve） | 性格加解密、多人格切换、性格演化 |
 | POST | `/api/voice-filter`、`/api/voice-narrate` | 小秘研判 send/ignore/standby、双向朗读 |

@@ -261,6 +261,19 @@ func (a *App) attachmentContext(atts []Attachment) (string, []MessageImage, map[
 		return nil
 	}
 	for _, att := range atts {
+		if att.Root == "source" && !a.sourceAIAllowed(att.Source) || att.Root == "context" && !a.sourceAIAllowed(contextSource) {
+			return "", nil, nil, errors.New("该引用来源对当前工作区 AI 不可见，请先开启可见性或移除附件")
+		}
+		if att.Directory {
+			body, err := a.directoryAttachmentContext(att)
+			if err != nil {
+				return "", nil, nil, err
+			}
+			if err := addText(att.Root, att.Path, body); err != nil {
+				return "", nil, nil, err
+			}
+			continue
+		}
 		ext := strings.ToLower(path.Ext(att.Path))
 
 		// 1) 图片 → 多模态（是否可发送由调用方 visionGateLocked 判定）
@@ -353,6 +366,9 @@ func (a *App) buildContextPreviewWithHarness(s *Session, prompt, mode, contextTe
 func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText string, images []MessageImage, cfg Settings, params ProfileParams, includeBody bool, policy ExecutionPolicy, harness HarnessConfig, task *Task, avatarFeedback ...bool) *ContextPreview {
 	// 按会话 Kind 选基础 system 设定（小秘系统会话恒为小秘人格；普通会话跟随全局活动人格）
 	history := []Message{{Role: "system", Content: a.systemPromptForSession(s) + "\n" + a.cwdPromptLineLocked() + "\n可用工具: " + a.toolListHint()}}
+	if enabled, embedded := a.markdownHistoryConfig(); enabled {
+		history[0].Content += fmt.Sprintf("\nMarkdown 历史追踪已启用（嵌入资源追踪=%t）。先读取现有 MD，再通过 write_file 提案修改原文件，不为备份另建副本；除非用户明确要求复制。实际保存才归档，未保存不算历史。可用 markdown_history 核实状态及版本。shell 或外部编辑不经过保存钩子，不能宣称已记录历史。", embedded)
+	}
 	if guide := a.environmentGuide(); guide != "" {
 		history[0].Content += "\n" + guide
 	}

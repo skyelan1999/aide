@@ -1,0 +1,19 @@
+{
+  "id": "markdown-history",
+  "name": "Markdown 历史版本",
+  "description": "原文编辑、保存去重与图片／附件／draw.io 资源快照。历史保存在 Aide 服务数据目录，按工作区和来源隔离。",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "settings": {
+    "trackEmbedded": true
+  },
+  "tools": [
+    {
+      "name": "markdown_history",
+      "kind": "read",
+      "readonlyDefault": true
+    }
+  ]
+}

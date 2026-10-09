@@ -35,13 +35,14 @@ const (
 var sourceIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 
 type Source struct {
-	ID      string       `json:"id"`
-	Name    string       `json:"name"`
-	Type    string       `json:"type"` // local | skill | link | mcp | sftp | workspace-sftp | ftp | ftps | smb
-	Enabled bool         `json:"enabled"`
-	RW      bool         `json:"rw,omitempty"`
-	Builtin bool         `json:"builtin,omitempty"`
-	Config  SourceConfig `json:"config"`
+	ID                 string       `json:"id"`
+	Name               string       `json:"name"`
+	Type               string       `json:"type"` // local | skill | link | mcp | sftp | workspace-sftp | ftp | ftps | smb
+	Enabled            bool         `json:"enabled"`
+	RW                 bool         `json:"rw,omitempty"`
+	Builtin            bool         `json:"builtin,omitempty"`
+	AIHiddenWorkspaces []string     `json:"aiHiddenWorkspaces,omitempty"`
+	Config             SourceConfig `json:"config"`
 }
 
 // SourceConfig deliberately keeps an MCP command separate from its arguments.
@@ -324,7 +325,7 @@ func (a *App) readSourceRaw(src Source, p string) ([]byte, error) {
 	return nil, errors.New("未知来源类型")
 }
 
-func (a *App) writeSourceText(src Source, p string, b []byte) error {
+func (a *App) writeSourceTextRaw(src Source, p string, b []byte) error {
 	if !src.RW {
 		return errors.New("该来源为只读")
 	}
@@ -460,6 +461,7 @@ func (a *App) listSources(w http.ResponseWriter, r *http.Request) {
 	for _, s := range a.sourceRegistry.Sources {
 		items = append(items, map[string]any{
 			"id": s.ID, "name": s.Name, "type": s.Type, "enabled": s.Enabled, "rw": s.RW, "builtin": s.Builtin,
+			"aiVisible": sourceAIVisible(s, a.wsID()), "aiHiddenWorkspaces": s.AIHiddenWorkspaces,
 			"config": s.Config, "hasSecret": a.sourceHasSecretLocked(s.ID),
 		})
 	}
@@ -677,6 +679,20 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 			a.killSourceSession(id, a.sftpTargetOf(old))
 		}
 	}
+	for _, old := range a.sourceRegistry.Sources {
+		if old.Builtin {
+			found := false
+			for _, fresh := range in.Sources {
+				if fresh.ID == old.ID {
+					found = true
+					break
+				}
+			}
+			if !found {
+				in.Sources = append(in.Sources, old)
+			}
+		}
+	}
 	a.sourceRegistry.Sources = in.Sources
 	// 内置来源常驻：/context（只读）+ 自动系统文档（Docs.Path 读写）；被客户端漏提交时补回
 	a.ensureBuiltinSources()
@@ -694,8 +710,16 @@ func (a *App) updateSources(w http.ResponseWriter, r *http.Request) {
 	for _, src := range a.sourceRegistry.Sources {
 		items = append(items, map[string]any{
 			"id": src.ID, "name": src.Name, "type": src.Type, "enabled": src.Enabled, "rw": src.RW, "builtin": src.Builtin,
+			"aiVisible": sourceAIVisible(src, a.wsID()), "aiHiddenWorkspaces": src.AIHiddenWorkspaces,
 			"config": src.Config, "hasSecret": a.sourceHasSecretLocked(src.ID),
 		})
 	}
 	jsonOut(w, 200, map[string]any{"sources": items})
+}
+
+func (a *App) writeSourceText(src Source, p string, b []byte) error {
+	if !src.RW {
+		return errors.New("该来源为只读")
+	}
+	return a.withMarkdownHistory(markdownSourceIdentity(src), p, b, func(p string) ([]byte, error) { return a.readSourceRaw(src, p) }, func() error { return a.writeSourceTextRaw(src, p, b) })
 }

@@ -430,7 +430,7 @@ func (a *App) knowledgeDocumentSearch(w http.ResponseWriter, r *http.Request) {
 func (a *App) knowledgeDocumentAnswer(w http.ResponseWriter, r *http.Request, in documentRequest) {
 	ctx, cancel := context.WithTimeout(r.Context(), 45*time.Second)
 	defer cancel()
-	g := a.knowledgeSnapshot(ctx)
+	g := a.knowledgeForAI(a.knowledgeSnapshot(ctx))
 	in.Mode = "rag"
 	result, err := a.retrieveDocuments(ctx, g, in)
 	if err != nil {
@@ -561,7 +561,7 @@ func (a *App) documentSearchTool(ctx context.Context, wsRoot *os.Root, task *Tas
 	}
 	child, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-	g := a.knowledgeSnapshot(child)
+	g := a.knowledgeForAI(a.knowledgeSnapshot(child))
 	if g.Workspace != knowledgeID(scope, "scope", "", ".") {
 		return "错误：工作区已切换，未检索其他工作区"
 	}

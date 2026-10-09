@@ -1,0 +1,59 @@
+{
+  "id": "file-task-attachment-20261009",
+  "request": "项目文件右键菜单增加附加到任务，支持文件与文件夹",
+  "baseline": "68af962a8498767628e99d403ab10b4bc4308dfe",
+  "initial_status": "M Dockerfile\n M docs/README.md\n M docs/architecture.md\n M docs/architecture/knowledge-map.md\n M docs/workspace-paths.md\n M internal/server/context.go\n M internal/server/files.go\n M internal/server/generated_documents.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/file-autosave.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M plugins/registry.json\n?? docs/architecture/continuity-roadmap.md\n?? docs/plugins/markdown-history.md\n?? docs/tasks/aide-continuity-knowledge-20261009.json\n?? docs/tasks/markdown-history-20261009.json\n?? docs/tasks/source-file-actions-20261009.json\n?? docs/tasks/starmap-favicon-20261009.json\n?? docs/tasks/starmap-session-target-20261009.json\n?? internal/server/markdown_history.go\n?? internal/server/markdown_history_test.go\n?? internal/server/markdown_restore.go\n?? internal/server/source_file_actions.go\n?? internal/server/source_file_actions_test.go\n?? internal/server/task_outcome.go\n?? internal/server/task_outcome_test.go\n?? internal/server/web/continuity.js\n?? internal/server/web/markdown-history.js\n?? internal/server/web/starmap-icon.svg\n?? internal/server/web/task-outcome.js\n?? plugins/markdown-history/",
+  "acceptance": [
+    "文件与文件夹右键可附加到当前待发送任务",
+    "保持来源和路径；目录清单有界",
+    "来源切换保留附件，重复路径去重"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/workflow.go",
+    "internal/server/context.go",
+    "internal/server/attachments.go",
+    "internal/server/attachments_test.go",
+    "docs/workspace-paths.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "文件与文件夹都可以附加，不自动发送。",
+      "evidence": []
+    },
+    "design": {
+      "status": "complete",
+      "summary": "复用现有附件协议，目录增加directory标记，附加直接清单供按需读取。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "右键菜单、公共附件函数、目录上下文、引用切换保留附件、英文翻译完成。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Node语法、diff检查通过；现有附件回归及新增目录race测试通过；实际浏览器组件确认文件与目录source/path/directory字段。完整工作台证书仍待处理，真实模型与SSH目录附件未联调。",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "complete",
+      "summary": "workspace-paths说明协议、范围和未验收项。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "complete",
+      "summary": "关闭组件预览标签与18213静态服务。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "生产未更新，随整体发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

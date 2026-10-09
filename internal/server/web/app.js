@@ -13,6 +13,19 @@ function updateFavicon() {
 updateFavicon();
 if (window.aideUI?.subscribe) window.aideUI.subscribe(updateFavicon);
 const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, approvalPolicy: null, approvalModeBusy: false, autoScroll: true, jumpAnimating: false };
+let recoveryReady=false,recoveryTimer=0,recoveryNotice=false;
+const recoveryScope=()=>state.config?.workspaceId||'';
+function recoveryFailure(error){if(!recoveryNotice){recoveryNotice=true;toast(t('本地草稿保存失败')+' · '+error.message);}}
+function persistChatDraft(){
+ if(!recoveryReady||lockScreen.locked)return;
+ const scope=recoveryScope(),id=state.session?.id||'';
+ const draft={text:$('prompt').value,attachments:state.attachments.map(a=>({...a})),start:$('prompt').selectionStart,end:$('prompt').selectionEnd,scroll:$('prompt').scrollTop};
+ sessionDrafts.set(id,draft);
+ window.AideContinuity?.write(scope,'chat',id,draft).catch(recoveryFailure);
+ window.AideContinuity?.write(scope,'scene','workbench',{session:id,root:state.root,source:state.source,dir:state.dir,fileDirs:state.fileDirs}).catch(recoveryFailure);
+}
+function restoreChatSelection(draft){const prompt=$('prompt');if(!draft)return;const start=Math.min(prompt.value.length,Math.max(0,Number(draft.start)||0)),end=Math.min(prompt.value.length,Math.max(start,Number(draft.end)||start));prompt.setSelectionRange(start,end);prompt.scrollTop=Math.max(0,Number(draft.scroll)||0);}
+function scheduleChatRecovery(){clearTimeout(recoveryTimer);recoveryTimer=setTimeout(persistChatDraft,180);}
 function voiceAssistantDisplayName() { return String(state.config?.voiceAssistantName || '小秘').trim() || '小秘'; }
 function currentHostPort() { return Number(location.port || (location.protocol === 'https:' ? 443 : 80)); }
 const fragment = new URLSearchParams(location.hash.slice(1));
@@ -254,6 +267,7 @@ async function api(path, options = {}) {
     if (response.status === 401 && path !== '/account/verify-password' && !$('login-dialog').open) $('login-dialog').showModal();
     const error = new Error(t(data.error) || t("请求失败"));
     error.status = response.status;
+    error.data = data;
     throw error;
   }
   return data;
@@ -691,7 +705,10 @@ function paintSessionSelection(id, loading) {
     if (selected?.dataset.sessionTitle) $('session-title').textContent = selected.dataset.sessionTitle;
   }
 }
+// Drafts are recovered per workspace; selecting a target never sends them.
+const sessionDrafts = new Map();
 async function selectSession(id) {
+  window.AideTaskOutcome?.close();
   const seq = ++sessionSeq.value;
   const sameSession = state.session?.id === id;
   if (!sameSession && typeof closeStrategyMenu === 'function') closeStrategyMenu();
@@ -710,12 +727,22 @@ async function selectSession(id) {
     state.live = {}; state.liveStable = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0;
   }
   try {
+    const savedDraft=window.AideContinuity?await AideContinuity.read(recoveryScope(),'chat',id).catch(()=>null):null;
     const loaded = await getSessionWindow(id);
     if (seq !== sessionSeq.value) return; // 已有更新的选择，丢弃本次过期响应
     const json = sessionRevision(loaded);
     const changed = json !== state.sessionJSON;
+    if (!sameSession) {
+      persistChatDraft();
+      sessionDrafts.set(state.session?.id || '', {text:$('prompt').value, attachments:state.attachments.map(a=>({...a})),start:$('prompt').selectionStart,end:$('prompt').selectionEnd,scroll:$('prompt').scrollTop});
+      const draft = sessionDrafts.get(id) || savedDraft;
+      $('prompt').value = draft ? draft.text : loaded.pendingPrompt || '';
+      state.attachments = draft?.attachments?.map(a=>({...a})) || [];
+      renderAttachments();restoreChatSelection(draft);
+    }
     state.session = loaded;
     state.sessionJSON = json;
+    scheduleChatRecovery();
     if (loaded.pendingPrompt && !$('prompt').value.trim()) $('prompt').value = loaded.pendingPrompt;
     if (changed || !sameSession) renderSession(); // 数据未变时跳过重渲染，点击更轻快
     refreshCompactInfo();
@@ -1403,6 +1430,7 @@ function schedulePoll() {
   }
 }
 async function newSession() {
+  persistChatDraft();$('prompt').value='';
   ++sessionSeq.value; state.pendingSessionId = '';
   state.historyLimit = SESSION_HISTORY_PAGE; state.historyScroll = false;
   cancelContextPreview();
@@ -1661,6 +1689,8 @@ function renderSession() {
       meta.append(el('span', 'run-status', t('正在暂停任务…')));
     }
     box.append(meta);
+    if(window.AideTaskOutcome)meta.append(AideTaskOutcome.button({sessionId:state.session.id,runId:run.id,api,t,error:toast,blocked:()=>lockScreen.locked||!state.token||$('login-dialog').open||state.session?.id!==box.dataset.outcomeSession}));
+    box.dataset.outcomeSession=state.session.id;
     renderApprovalReviews(run, box);
     if (run.status === 'running' && state.runPhase[run.id]) renderRunStatusInto(box, run.id);
     if (run.attachments?.length) box.append(el('p', 'muted', t("已附加：") + run.attachments.map(a => a.root + '/' + a.path).join('、')));
@@ -1848,9 +1878,10 @@ function renderQueueBar() {
   bar.append(el('div', 'queue-hint', t("提示：点「插话」提升到下一轮立即处理；修改 / 删除即时生效")));
 }
 function renderAttachments() {
+  scheduleChatRecovery();
   $('attachment-chips').replaceChildren();
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
-  state.attachments.forEach((a, index) => { const chip = el('span', 'chip', a.root === 'context' ? t("参考 · {0}", a.path) : a.path); const b = el('button', '', '×'); b.setAttribute('aria-label', t("移除附件 {0}", a.path)); b.onclick = () => { state.attachments.splice(index, 1); renderAttachments(); }; chip.append(b); $('attachment-chips').append(chip); });
+  state.attachments.forEach((a, index) => { const chip = el('span', 'chip', (a.directory ? '▱ ' : '') + (a.root === 'context' || a.root === 'source' ? t("参考 · {0}", a.path) : a.path)); const b = el('button', '', '×'); b.setAttribute('aria-label', t("移除附件 {0}", a.path)); b.onclick = () => { state.attachments.splice(index, 1); renderAttachments(); }; chip.append(b); $('attachment-chips').append(chip); });
 }
 async function loadFiles(auto) {
   if (auto) { const _r = document.querySelector('#files input.file-rename'); if (_r && document.activeElement === _r) return; } // 自动刷新且正在重命名 → 跳过，不打断
@@ -1875,6 +1906,7 @@ async function loadFiles(auto) {
   $('new-file').disabled = !writable;
   state.fileEntries = files;
   renderFileEntries();
+  rememberFileLocation();scheduleChatRecovery();
 }
 function fileLocationKey() { return state.root === 'context' ? 'context:' + (state.source || '') : 'workspace'; }
 function rememberFileLocation() { state.fileDirs[fileLocationKey()] = state.dir; }
@@ -2044,7 +2076,7 @@ function renderFileEntries() {
   }
 }
 /* 文件名内联重命名：点击名称进入编辑，失焦/回车保存，Esc 取消 */
-function beginInlineRename(rowBtn, nameSpan, file) {
+function beginInlineRename(rowBtn, nameSpan, file, target = {root:state.root,source:currentFileTarget().source}) {
   if (rowBtn.querySelector('input.file-rename')) return;
   const original = file.name;
   const input = el('input', 'file-rename');
@@ -2061,7 +2093,7 @@ function beginInlineRename(rowBtn, nameSpan, file) {
     if (nn === '' || nn === original) { restore(); return; }
     if (nn.includes('/') || nn.includes('\\')) { toast(t('文件名不能包含 / 或 \\')); restore(); return; }
     try {
-      await api('/file/rename', { method: 'POST', body: JSON.stringify({ root: state.root, path: file.path, newName: nn }) });
+      await api('/file/rename', { method: 'POST', body: JSON.stringify({ ...target, path: file.path, newName: nn }) });
       await loadFiles();
     } catch (e) { restore(); toast(e.message || String(e)); }
   });
@@ -2115,15 +2147,15 @@ function fileRawUrl(filePath, root, source, viewerSpec) {
   if (token) qp.set('access_token', token);
   return '/api/file/raw?' + qp.toString();
 }
-function downloadFileEntry(file, archive) {
+function downloadFileEntry(file, archive, target = {root:state.root,source:currentFileTarget().source}) {
   const token = state.token || (state.config && state.config.accessToken) || '';
   const qp = new URLSearchParams(); qp.set('path', file.path);
-  if (state.root === 'context' && state.source) qp.set('source', state.source); else qp.set('root', state.root || 'workspace');
+  if (target.source) qp.set('source', target.source); else qp.set('root', target.root || 'workspace');
   if (archive) qp.set('archive', '1'); if (token) qp.set('access_token', token);
   const link = document.createElement('a'); link.href = '/api/file/download?' + qp.toString(); link.download = archive ? file.name + '.zip' : file.name;
   link.style.display = 'none'; document.body.append(link); link.click(); setTimeout(() => link.remove(), 0);
 }
-function openFileTransferPicker(operation, selectedPaths) {
+function openFileTransferPicker(operation, selectedPaths, target = {root:state.root,source:currentFileTarget().source}) {
   const candidates = [{ id: 'workspace', name: t('工作目录') }, ...state.sources.filter(s => s.enabled && s.rw && ['local', 'skill', 'sftp', 'workspace-sftp'].includes(s.type)).map(s => ({ id: s.id, name: s.name }))];
   const dlg = el('dialog', 'file-transfer-dialog');
   const heading = el('h2', '', operation === 'copy' ? t('复制到') : t('移动到'));
@@ -2163,7 +2195,7 @@ function openFileTransferPicker(operation, selectedPaths) {
   submit.onclick = action(async () => {
     submit.disabled = true; err.textContent = '';
     try {
-      const source = state.root === 'context' ? state.source : 'workspace';
+      const source = target.source || 'workspace';
       const result = await api('/file/transfer', { method: 'POST', body: JSON.stringify({ operation, source, paths: selectedPaths, destination: location.value, destinationPath: dir }) });
       dlg.close(); state.fileSelection.clear(); state.fileSelectionAnchor = -1;
       await loadFiles();
@@ -2178,7 +2210,11 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   closeFileContextMenu();
   const selectedPaths = state.fileEntries.filter(f => state.fileSelection.has(f.path)).map(f => f.path);
   const multiple = selectedPaths.length > 1;
+  const target = {root:state.root,source:currentFileTarget().source};
+  const writable = currentFileTarget().writable;
   const m = el('div', 'file-ctx-menu');
+  const attach = el('button', 'file-ctx-item', t('附加到任务'));
+  attach.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); attachFileEntry(file, target); };
   const copyTo = el('button', 'file-ctx-item', t('复制到…') + (multiple ? ' (' + selectedPaths.length + ')' : ''));
   const moveTo = el('button', 'file-ctx-item', t('移动到…') + (multiple ? ' (' + selectedPaths.length + ')' : ''));
   const download = el('button', 'file-ctx-item', t('下载'));
@@ -2189,22 +2225,22 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   const del = el('button', 'file-ctx-item danger-item', t('删除'));
   if (!currentFileTarget().writable) { moveTo.disabled = true; moveTo.title = t('只读引用不能移动'); }
   if (multiple) [download, compress, extract, ren, props, del].forEach(x => { x.disabled = true; x.title = t('此操作仅支持单个文件'); });
-  if (state.root === 'context') [compress, ren, props, del, extract].forEach(x => { x.classList.add('disabled'); x.disabled = true; x.title = t('引用为只读'); });
-  if (state.root !== 'context' && isZipPath(file.path)) { compress.classList.add('disabled'); compress.disabled = true; compress.title = t('不能重复压缩 ZIP 文件'); }
-  if (state.root !== 'context' && !isZipPath(file.path)) { extract.classList.add('disabled'); extract.disabled = true; extract.title = t('仅支持 ZIP 文件'); }
-  download.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); downloadFileEntry(file, !!file.dir); };
-  copyTo.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); openFileTransferPicker('copy', selectedPaths); };
-  moveTo.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); openFileTransferPicker('move', selectedPaths); };
-  compress.onclick = async (e) => { e.stopPropagation(); closeFileContextMenu(); try { const out = await api('/file/archive', { method: 'POST', body: JSON.stringify({ root: 'workspace', path: file.path }) }); toast(t('已压缩到：') + out.path); await loadFiles(); } catch (err) { toast(err.message || String(err)); } };
-  extract.onclick = async (e) => { e.stopPropagation(); closeFileContextMenu(); try { const out = await api('/file/extract', { method: 'POST', body: JSON.stringify({ root: 'workspace', path: file.path }) }); toast(t('已解压到：') + out.path); loadFiles(); } catch (err) { toast(err.message || String(err)); } };
-  ren.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); selectFileRow(rowBtn, file.path, state.fileEntries.indexOf(file)); beginInlineRename(rowBtn, nameSpan, file); };
-  props.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); showFileProperties(file); };
-  del.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); deleteFileEntry(file); };
-  m.append(copyTo, moveTo, download, compress, extract, ren, props, del);
+  if (!writable) [compress, ren, del, extract].forEach(x => { x.classList.add('disabled'); x.disabled = true; x.title = t('引用为只读'); });
+  if (!file.dir && isZipPath(file.path)) { compress.classList.add('disabled'); compress.disabled = true; compress.title = t('不能重复压缩 ZIP 文件'); }
+  if (!isZipPath(file.path) || file.dir) { extract.classList.add('disabled'); extract.disabled = true; extract.title = t('仅支持 ZIP 文件'); }
+  download.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); downloadFileEntry(file, !!file.dir, target); };
+  copyTo.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); openFileTransferPicker('copy', selectedPaths, target); };
+  moveTo.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); openFileTransferPicker('move', selectedPaths, target); };
+  compress.onclick = async (e) => { e.stopPropagation(); closeFileContextMenu(); try { const out = await api('/file/archive', { method: 'POST', body: JSON.stringify({ ...target, path: file.path }) }); toast(t('已压缩到：') + out.path); await loadFiles(); } catch (err) { toast(err.message || String(err)); } };
+  extract.onclick = async (e) => { e.stopPropagation(); closeFileContextMenu(); try { const out = await api('/file/extract', { method: 'POST', body: JSON.stringify({ ...target, path: file.path }) }); toast(t('已解压到：') + out.path); loadFiles(); } catch (err) { toast(err.message || String(err)); } };
+  ren.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); selectFileRow(rowBtn, file.path, state.fileEntries.indexOf(file)); beginInlineRename(rowBtn, nameSpan, file, target); };
+  props.onclick = action(async (e) => { e.stopPropagation(); closeFileContextMenu(); await showFileProperties(file, target); });
+  del.onclick = action(async (e) => { e.stopPropagation(); closeFileContextMenu(); await deleteFileEntry(file, target); });
+  m.append(attach, copyTo, moveTo, download, compress, extract, ren, props, del);
   document.body.append(m);
   fileCtxMenuEl = m;
   m.style.left = Math.max(8, Math.min(ev.clientX, innerWidth - 198)) + 'px';
-  m.style.top = Math.max(8, Math.min(ev.clientY, innerHeight - 300)) + 'px';
+  m.style.top = Math.max(8, Math.min(ev.clientY, innerHeight - 340)) + 'px';
   setTimeout(() => { document.addEventListener('click', closeFileContextMenu); document.addEventListener('keydown', onFileCtxKey); }, 0);
 }
 
@@ -2321,7 +2357,7 @@ function showEditor() {
     setEditorMode((md && fileRenderEnabled('fileMarkdownPreview')) || (isDelimitedPath(state.file.path) && fileRenderEnabled('fileCsvPreview')) ? 'preview' : 'edit');
   }
   setupMarkdownMedia($('editor'), {...state.file}, () => ({...state.file}), () => setEditorMode('edit'));
-  editorAutoSave.activate();
+  editorAutoSave.activate(); editorHistory.refresh();
   $('editor-dialog').showModal();
 }
 $('editor-mode-edit').onclick = () => setEditorMode('edit');
@@ -2899,6 +2935,10 @@ function scheduleContextPreview() {
   state.previewTimer = setTimeout(() => action(refreshContextPreview).call(null), 300);
 }
 $('prompt').addEventListener('input', scheduleContextPreview);
+$('prompt').addEventListener('input',scheduleChatRecovery);
+$('prompt').addEventListener('select',scheduleChatRecovery);$('prompt').addEventListener('scroll',scheduleChatRecovery);
+window.addEventListener('pagehide',persistChatDraft);
+document.addEventListener('visibilitychange',()=>{if(document.hidden)persistChatDraft();});
 $('cp-toggle').onclick = () => {
   const detail = $('cp-detail');
   const open = detail.classList.toggle('hidden');
@@ -3218,25 +3258,23 @@ $('settings-form').onsubmit = action(async event => { event.preventDefault(); if
   window.addEventListener('storage',event=>{if(event.key===key){const next=read(false),wasEnabled=p.enabled;Object.assign(p,next.avatar);data={...next,avatar:p};update({preserveSelection:true});refreshPreview?.();if(wasEnabled!==p.enabled)refreshContextBudget();}});
   window.setInterval(update,800);update();
 })();
-$('attach-file').onclick = () => {
-  if (state.file.content !== $('editor').value) { toast(t("请先保存修改，再附加到任务")); return; }
-  const fp = state.file.path || '';
-  const ext = fp.split('.').pop().toLowerCase();
-  const att = { root: state.file.root, path: fp }; if (state.file.source) { att.root = 'source'; att.source = state.file.source; }
-  // 图片附件：检查模型视觉能力
-  if (isImagePath(fp)) {
-    const vision = state.config && state.config.vision;
-    if (!vision) {
-      const rec = (state.config && state.config.visionRecommend || []).join('、');
-      toast(t("当前模型不支持图片输入，请切换到支持视觉的模型") + (rec ? "（推荐：" + rec + "）" : ""));
-      return;
-    }
+function attachFileEntry(file, target = {root:file.root,source:file.source || ''}) {
+  if (target.source && state.sources.find(src => src.id === target.source)?.aiVisible === false) { toast(t('该来源对工作区 AI 不可见，请先开启可见性')); return false; }
+  const att = {root:target.source ? 'source' : target.root,path:file.path};
+  if (target.source) att.source = target.source;
+  if (file.dir) att.directory = true;
+  if (!file.dir && isImagePath(file.path) && !state.config?.vision) {
+    toast(t('当前模型不支持图片输入，请切换到支持视觉的模型')); return false;
   }
   if (!state.attachments.some(a => a.root === att.root && a.path === att.path && (a.source || '') === (att.source || ''))) {
-    if (state.attachments.length >= 8) { toast(t("最多附加 8 个文件")); return; }
+    if (state.attachments.length >= 8) { toast(t('最多附加 8 个文件或文件夹')); return false; }
     state.attachments.push(att);
   }
-  renderAttachments(); $('editor-dialog').close(); $('prompt').focus();
+  renderAttachments(); $('prompt').focus(); return true;
+}
+$('attach-file').onclick = () => {
+  if (state.file.content !== $('editor').value) { toast(t('请先保存修改，再附加到任务')); return; }
+  if (attachFileEntry(state.file)) $('editor-dialog').close();
 };
 $('new-file').onclick = openNewItemMenu;
 let newItemTarget = null;
@@ -4004,7 +4042,13 @@ function renderConfigDocument(endpoint, title, storedKey, effectiveKey, workspac
 }
 
 function renderExperiencePreview() { const wrap=el('div','settings-control'); const b=el('button','quiet',t('重播启动动画')); b.type='button'; b.onclick=()=>{if(document.documentElement.dataset.motion==='reduced'){toast(t('当前已减少动态效果，启动动画已停用。'));return;}closeSettingsSheet();window.aideExperience?.replay();}; wrap.append(b,el('p','muted',t('短促星轨动画，不阻塞操作；系统减少动态效果优先。'))); return wrap; }
+function renderMarkdownHistoryControl() {
+ const row=el('div','settings-control');const label=el('label','settings-file-checkbox');const check=document.createElement('input');check.type='checkbox';check.disabled=true;const copy=el('span','settings-file-copy');copy.append(el('strong','',t('Markdown 历史版本追踪')),el('span','',t('服务端插件状态；所有会话共享。直接修改原文，保存时去重，并追踪引用资源。')));label.append(check,copy);row.append(label);
+ api('/plugins').then(data=>{const plugin=(data.plugins||[]).find(p=>p.id==='markdown-history');if(!plugin){copy.append(el('small','',t('需要安装 Markdown 历史版本插件。')));return;}check.checked=plugin.enabled;check.disabled=false;check.onchange=async()=>{check.disabled=true;try{await api('/plugins/markdown-history',{method:'PUT',body:JSON.stringify({enabled:check.checked})});}catch(e){check.checked=!check.checked;toast(e.message);}finally{check.disabled=false;}};}).catch(e=>copy.append(el('small','',e.message)));
+ return row;
+}
 const controlRenderers = {
+  "markdown-history": renderMarkdownHistoryControl,
   checkbox: renderCheckboxControl, 'experience-preview': renderExperiencePreview, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 
 function renderSystemLogsControl() {
@@ -5339,10 +5383,10 @@ function setWsMode(mode) {
   syncWorkspaceLocationControls();
 }
 
-async function showFileProperties(file) {
-  const data = await api('/file/properties?root=workspace&path=' + encodeURIComponent(file.path));
+async function showFileProperties(file, target = {root:state.root,source:currentFileTarget().source}) {
+  const data = await api('/file/properties?' + new URLSearchParams({...target,path:file.path}));
   const list = $('file-properties-list'); list.replaceChildren();
-  [[t('名称'), data.name], [t('类型'), data.type], [t('相对路径'), data.path], [t('大小'), data.dir ? t('—') : formatFileSize(Number(data.size || 0))], [t('修改时间'), data.modified || t('未知')]].forEach(([key, value]) => {
+  [[t('名称'), data.name], [t('类型'), data.type], [t('相对路径'), data.path], [t('大小'), data.dir ? t('—') : data.size == null ? t('未知') : formatFileSize(Number(data.size))], [t('修改时间'), data.modified || t('未知')]].forEach(([key, value]) => {
     list.append(el('dt', '', key), el('dd', '', String(value)));
   });
   $('file-properties-dialog').showModal();
@@ -5353,11 +5397,11 @@ function formatFileSize(bytes) {
   while (value >= 1024 && index < units.length - 1) { value /= 1024; index++; }
   return value.toFixed(value >= 10 ? 0 : 1) + ' ' + units[index];
 }
-async function deleteFileEntry(file) {
+async function deleteFileEntry(file, target = {root:state.root,source:currentFileTarget().source}) {
   const kind = file.dir ? t('文件夹') : t('文件');
   if (!window.confirm(t('确定永久删除{0}“{1}”及其全部内容？此操作不可撤销。', kind, file.name))) return;
-  await api('/file/delete', { method: 'POST', body: JSON.stringify({ root: 'workspace', path: file.path }) });
-  if (state.file?.path === file.path) $('editor-dialog').close();
+  await api('/file/delete', { method: 'POST', body: JSON.stringify({ ...target, path: file.path }) });
+  if (state.file?.path === file.path && (state.file.source||'') === target.source && state.file.root === target.root) $('editor-dialog').close();
   toast(t('已删除：{0}', file.name));
   await loadFiles();
 }
@@ -5763,7 +5807,7 @@ function renderSourceChips() {
     main.type = 'button';
     main.title = t(src.rw ? '{0} · 读写' : '{0} · 只读', (src.type ? src.type + ' · ' : '') + (loc || displayName));
     main.setAttribute('aria-pressed', state.source === src.id ? 'true' : 'false');
-    main.onclick = () => { rememberFileLocation(); state.source = src.id; restoreFileLocation(); state.attachments = []; renderAttachments(); renderSourceChips(); action(loadFiles)(); };
+    main.onclick = () => { rememberFileLocation(); state.source = src.id; restoreFileLocation(); renderSourceChips(); action(loadFiles)(); };
     if (!src.builtin) {
       const edit = el('button', 'src-edit');
       edit.type = 'button'; edit.title = t('编辑引用配置'); edit.setAttribute('aria-label', t('编辑引用配置：{0}', displayName));
@@ -5776,6 +5820,21 @@ function renderSourceChips() {
     main.append(el('span', 'src-name', displayName));
     if (src.builtin) main.append(el('span', 'src-fixed', src.id === 'system-docs' ? t('固定') + ' · ' + t('读写') : t('内置')));
     wrap.append(main);
+    const visibility = el('button', 'src-lock src-ai-visibility');
+    visibility.type = 'button';
+    visibility.title = t(src.aiVisible === false ? '对工作区不可见 · AI 不可使用' : '对工作区可见 · AI 可使用');
+    visibility.setAttribute('aria-label', t('对工作区可见：{0}', displayName));
+    visibility.setAttribute('aria-pressed', src.aiVisible === false ? 'false' : 'true');
+    visibility.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>' + (src.aiVisible === false ? '<path d="m3 3 18 18"/>' : '') + '</svg>';
+    visibility.onclick = ev => { ev.stopPropagation(); action(async () => {
+      visibility.disabled = true;
+      try {
+        await api('/sources/ai-visibility', {method:'PUT',body:JSON.stringify({source:src.id,workspaceId:state.config?.workspaceId || '',visible:src.aiVisible === false})});
+        await loadSourcesList();
+        scheduleContextPreview();
+      } finally { visibility.disabled = false; }
+    })(); };
+    wrap.append(visibility);
     if (!src.builtin) {
       if (src.type === 'mcp') {
         const test = el('button', 'src-test', t('测试 MCP'));
@@ -7496,7 +7555,7 @@ async function openFileViewMode() {
   }
   setupMarkdownMedia($('file-view-editor'), {...spec, wsId:fileView.wsId}, () => ({...fileView.spec, wsId:fileView.wsId}), () => setFileViewMode('edit'));
   $('file-view-content').replaceChildren();
-  fileViewAutoSave.activate();
+  fileViewAutoSave.activate(); fileViewHistory.refresh();
 }
 let filePresentationPrefs = '';
 window.aideUI?.subscribe(() => {
@@ -7518,16 +7577,20 @@ filePresentationPrefs = ['fileMarkdownOutline','fileMarkdownMedia'].map(fileRend
 $('fv-edit').onclick = () => setFileViewMode('edit');
 $('fv-preview').onclick = () => setFileViewMode('preview');
 function isDrawioPathForSave(path){return /\.drawio$/i.test(path||'');}
+const editorHistory = window.AideMarkdownHistory.bind({button:$('editor-history'),editor:$('editor'),getContext:()=>state.file,api,t,error:e=>toast(e.message),isDirty:()=>editorAutoSave.dirty()||editorAutoSave.busy(),onRestored:result=>{state.file.hash=result.hash;state.file.content=result.content;$('editor').value=result.content;$('editor').dispatchEvent(new Event('input'));editorAutoSave.activate();loadFiles().catch(()=>{});toast(t('✓ 历史版本已恢复'));}});
+const fileViewHistory = window.AideMarkdownHistory.bind({button:$('file-view-history'),editor:$('file-view-editor'),getContext:()=>({...fileView.spec,wsId:fileView.wsId}),api,t,error:e=>toast(e.message),isDirty:()=>fileViewAutoSave.dirty()||fileViewAutoSave.busy(),onRestored:result=>{fileView.hash=result.hash;$('file-view-editor').value=result.content;$('file-view-editor').dispatchEvent(new Event('input'));fileViewAutoSave.activate();toast(t('✓ 历史版本已恢复'));}});
 function bindFileAutoSave(editorId, buttonId, manualId, getContext, onSaved) {
   return window.AideFileAutoSave.bind({editor:$(editorId),button:$(buttonId),manual:$(manualId),getContext,t,error:toast,
     blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open,
+    readLatest:async(spec)=>{const q=new URLSearchParams({path:spec.path,root:spec.root||'workspace'});if(spec.source)q.set('source',spec.source);if(spec.wsId)q.set('workspaceId',spec.wsId);return api('/file?'+q);},
+    onConflict:latest=>{if(editorId==='editor')state.file.hash=latest.hash;else fileView.hash=latest.hash;},
     save:async(spec,content)=>{const body={path:spec.path,content,hash:spec.hash};if(spec.source)body.source=spec.source;if(spec.wsId)body.workspaceId=spec.wsId;return api('/file',{method:'PUT',body:JSON.stringify(body)});},onSaved});
 }
-const editorAutoSave=bindFileAutoSave('editor','editor-autosave','save-file',()=>({...state.file,autoEligible:!isDrawioPathForSave(state.file?.path)}), (spec,content,result,manual)=>{
+const editorAutoSave=bindFileAutoSave('editor','editor-autosave','save-file',()=>({...state.file,recoveryScope:recoveryScope(),autoEligible:!isDrawioPathForSave(state.file?.path)}), (spec,content,result,manual)=>{
   state.file.hash=result.hash;state.file.content=content;state.file.fresh=false;$('attach-file').disabled=false;
   if(manual)toast(t('✓ 已保存'));loadFiles().catch(()=>{});
 });
-const fileViewAutoSave=bindFileAutoSave('file-view-editor','file-view-autosave','file-view-save',()=>({...fileView.spec,hash:fileView.hash,wsId:fileView.wsId,autoEligible:!isDrawioPathForSave(fileView.spec?.path)}), (spec,content,result,manual)=>{fileView.hash=result.hash;if(manual)toast(t('✓ 已保存'));});
+const fileViewAutoSave=bindFileAutoSave('file-view-editor','file-view-autosave','file-view-save',()=>({...fileView.spec,hash:fileView.hash,wsId:fileView.wsId,recoveryScope:recoveryScope(),autoEligible:!isDrawioPathForSave(fileView.spec?.path)}), (spec,content,result,manual)=>{fileView.hash=result.hash;if(manual)toast(t('✓ 已保存'));});
 // Anchor navigation must not replace the standalone file locator.
 window.addEventListener('hashchange',()=>{
   if(fileView.spec && !new URLSearchParams(location.hash.slice(1)).has('file'))window.AideFileRoute?.pin(fileView.spec);
@@ -7889,7 +7952,19 @@ async function initialize() {
   }
   if (window.syncVirtualAvatarSettings) await window.syncVirtualAvatarSettings();
   if (window.AideFileRoute?.read()) { await Promise.all([loadWorkspaceConfig(), loadSourcesList()]); if(!fileView.spec)await openFileViewMode(); return; }
-  await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
+  await Promise.all([loadSessions(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
+  const recovered=window.AideContinuity?await AideContinuity.read(recoveryScope(),'scene','workbench').catch(()=>null):null;
+  if(recovered){
+    state.fileDirs=recovered.fileDirs||{};
+    if(recovered.root==='workspace'||recovered.root==='context'&&state.sources.some(s=>s.id===recovered.source&&s.enabled)){
+      state.root=recovered.root;state.source=recovered.source||'';state.dir=recovered.dir||'.';
+      document.querySelectorAll('[data-root]').forEach(b=>b.classList.toggle('active',b.dataset.root===state.root));renderSourceChips();
+    }
+  }
+  await loadFiles().catch(async()=>{state.dir='.';await loadFiles();});
+  if(recovered?.session){try{await selectSession(recovered.session);}catch(e){toast(t('上次会话暂不可用'));}}
+  else if(window.AideContinuity){const draft=await AideContinuity.read(recoveryScope(),'chat','').catch(()=>null);if(draft){$('prompt').value=draft.text||'';state.attachments=draft.attachments||[];renderAttachments();restoreChatSelection(draft);}}
+  recoveryReady=true;
   setupGlobalEvents(); // #60
 }
 initialize()
@@ -10298,7 +10373,8 @@ async function setupSqliteViewer(container, path, root) {
   }
 }
 
-// Each star-map window has its own callback channel and remains bound to the originating draft.
+// Each star-map window has a scoped callback channel and an explicit destination.
+
 $('open-starmap').onclick = () => {
   if (lockScreen.locked) return;
   const nonce = crypto.randomUUID();
@@ -10306,21 +10382,42 @@ $('open-starmap').onclick = () => {
   const bridge = new BroadcastChannel('aide-stars-' + nonce);
   const sky = window.open('/starmap.html?channel=' + encodeURIComponent(nonce), '_blank');
   if (!sky) { bridge.close(); toast(t('请允许弹出知识星图窗口')); return; }
+  let inserting = false;
   bridge.onmessage = async event => {
+    if (event.data?.type === 'sessions') {
+      if (lockScreen.locked) { bridge.postMessage({type:'sessions',error:t('请先解锁工作台')}); return; }
+      try { const sessions = await api('/sessions'); if (!lockScreen.locked) bridge.postMessage({type:'sessions',sessions,originalSession}); }
+      catch (e) { bridge.postMessage({type:'sessions',error:e.message}); }
+      return;
+    }
     if (event.data?.type !== 'insert') return;
     if (lockScreen.locked) { bridge.postMessage({type:'ack', message:t('请先解锁工作台')}); return; }
     const reply = message => bridge.postMessage({type:'ack', message});
-    if ((state.session?.id || '') !== originalSession) { reply(t('原会话已切换，请从当前会话重新打开星图')); return; }
+    if (inserting || state.pendingSessionId) { reply(t('会话正在切换或插入，请稍后再试')); return; }
+    const explicitTarget = typeof event.data.session === 'string' && event.data.session.trim();
+    const destination = explicitTarget || originalSession;
+    if (!explicitTarget && (state.session?.id || '') !== originalSession) { reply(t('原会话已切换，请选择目标会话')); return; }
+    const initialSession = state.session?.id || '', initialSequence = sessionSeq.value;
+    const unchanged = () => !lockScreen.locked && sessionSeq.value === initialSequence && (state.session?.id || '') === initialSession;
+    inserting = true;
     try {
+      if (explicitTarget) {
+        const sessions = await api('/sessions');
+        if (!sessions.some(s=>s.id === destination)) throw Error(t('目标会话不存在或已归档'));
+      }
       const n = await api('/knowledge-map?id=' + encodeURIComponent(event.data.id) + '&workspace=' + encodeURIComponent(event.data.workspace));
-      if ((state.session?.id || '') !== originalSession) { reply(t('原会话已切换，请重新打开星图')); return; }
+      if (!unchanged()) throw Error(t('工作台状态已变化，请重新插入'));
       if (event.data.origin && event.data.origin !== n.origin) { throw Error(t('引用来源配置已变化，请重新选择星图节点')); }
       let documentQuote = null;
       if (event.data.document && n.kind === 'file') {
         const d = event.data.document;
         documentQuote = await api('/knowledge-map/documents/reference', {method:'POST',body:JSON.stringify({id:n.id,workspace:event.data.workspace,origin:n.origin||'',locator:d.locator,offset:d.offset,hash:d.hash})});
       }
-      if (lockScreen.locked || (state.session?.id || '') !== originalSession) { reply(t('原会话已切换，请重新打开星图')); return; }
+      if (!unchanged()) throw Error(t('工作台状态已变化，请重新插入'));
+      if (destination && destination !== initialSession) {
+        await selectSession(destination);
+        if (lockScreen.locked || state.pendingSessionId || state.session?.id !== destination || sessionSeq.value !== initialSequence + 1) throw Error(t('目标会话已变化，请重新插入'));
+      }
       if (n.kind === 'file' || n.kind === 'symbol') {
         const att = {root:n.root, path:n.path}; if (n.source) att.source=n.source;
         const exists = state.attachments.some(a=>a.root===att.root && a.path===att.path && (a.source||'')===(att.source||''));
@@ -10330,8 +10427,9 @@ $('open-starmap').onclick = () => {
       const reference = (n.kind === 'symbol' ? '[代码 ' + n.id + '] ' + n.path + ':' + n.line + '–' + n.endLine + ' · ' + n.name : n.kind === 'session' ? '[会话 ' + n.id + ' / #' + n.number + '] ' + n.name : '[文件 ' + n.id + '] ' + n.path) + provenance;
       $('prompt').value += ($('prompt').value ? '\n' : '') + reference + (documentQuote ? '\n[文档片段 ' + documentQuote.id + '] ' + documentQuote.locator + ' · SHA-256 ' + documentQuote.hash + '\n' + documentQuote.text : '') + (n.kind === 'session' && n.text ? '\n会话片段（索引摘录）：\n' + n.text.slice(0, 1500) : '');
       $('prompt').dispatchEvent(new Event('input', {bubbles:true}));
-      $('prompt').focus(); reply(t('已插入原会话草稿，尚未发送'));
+      $('prompt').focus(); reply(t('已插入会话草稿，尚未发送') + (state.session?.number ? ' · #' + state.session.number : ''));
     } catch (e) { reply(e.message); }
+    finally { inserting = false; }
   };
   // Stop listening once the independently opened window is closed.
   const timer = setInterval(()=>{ if (sky.closed) { clearInterval(timer); bridge.close(); } }, 2000);

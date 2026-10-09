@@ -228,3 +228,26 @@ func TestReadLocalImageDataURL(t *testing.T) {
 		t.Fatal("base64 往返不一致")
 	}
 }
+
+func TestAttachmentContextDirectory(t *testing.T) {
+	a := testApp(t)
+	if err := os.MkdirAll(filepath.Join(a.workPath, "folder/sub"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(a.workPath, "folder/notes.md"), []byte("private-body-marker"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	ctx, images, versions, err := a.attachmentContext([]Attachment{{Root: "workspace", Path: "folder", Directory: true}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(ctx, "notes.md") || !strings.Contains(ctx, "sub") || strings.Contains(ctx, "private-body-marker") || len(images) != 0 || len(versions) != 0 {
+		t.Fatalf("bad directory context: %s", ctx)
+	}
+	if _, _, _, err := a.attachmentContext([]Attachment{{Root: "workspace", Path: "../folder", Directory: true}}); err == nil {
+		t.Fatal("traversal accepted")
+	}
+	if _, _, _, err := a.attachmentContext([]Attachment{{Root: "source", Source: "missing", Path: "folder", Directory: true}}); err == nil {
+		t.Fatal("unknown source accepted")
+	}
+}

@@ -1140,7 +1140,11 @@ func parseSourceSFTPListing(out, p string) []map[string]any {
 		if fields[0][0] == 'l' || name == "" || name == "." || name == ".." || strings.Contains(name, "/") || strings.ContainsAny(name, "\x00\r\n\t") || safePath(name) != nil {
 			continue
 		}
-		items = append(items, map[string]any{"name": name, "path": path.Join(p, name), "dir": fields[0][0] == 'd'})
+		item := map[string]any{"name": name, "path": path.Join(p, name), "dir": fields[0][0] == 'd', "modified": strings.Join(fields[5:8], " ")}
+		if size, e := strconv.ParseInt(fields[4], 10, 64); e == nil && size >= 0 {
+			item["size"] = size
+		}
+		items = append(items, item)
 		if len(items) >= 2000 {
 			break
 		}

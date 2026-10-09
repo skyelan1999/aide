@@ -1468,3 +1468,6 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 
 .file-panel-heading #open-starmap { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; }
 .file-panel-heading #refresh-files { margin-left: 0; }
+
+.src-ai-visibility[aria-pressed="true"]{color:var(--brand)}
+.src-ai-visibility[aria-pressed="false"]{color:var(--faint)}

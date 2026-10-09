@@ -1,0 +1,70 @@
+{
+  "id": "continuity-checkpoint-push-20261009",
+  "request": "先把现有的push一版，更新下文档",
+  "baseline": "68af962a8498767628e99d403ab10b4bc4308dfe",
+  "initial_status": "M Dockerfile\n M docs/README.md\n M docs/architecture.md\n M docs/architecture/knowledge-map.md\n M docs/workspace-paths.md\n M internal/server/attachments.go\n M internal/server/attachments_test.go\n M internal/server/context.go\n M internal/server/environment_guide.go\n M internal/server/files.go\n M internal/server/generated_documents.go\n M internal/server/knowledge_documents.go\n M internal/server/knowledge_map.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/file-autosave.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M plugins/registry.json\n?? docs/architecture/continuity-roadmap.md\n?? docs/plugins/markdown-history.md\n?? docs/tasks/aide-continuity-knowledge-20261009.json\n?? docs/tasks/file-task-attachment-20261009.json\n?? docs/tasks/markdown-history-20261009.json\n?? docs/tasks/source-ai-visibility-20261009.json\n?? docs/tasks/source-file-actions-20261009.json\n?? docs/tasks/starmap-favicon-20261009.json\n?? docs/tasks/starmap-session-target-20261009.json\n?? internal/server/markdown_history.go\n?? internal/server/markdown_history_test.go\n?? internal/server/markdown_restore.go\n?? internal/server/source_ai_visibility.go\n?? internal/server/source_ai_visibility_test.go\n?? internal/server/source_file_actions.go\n?? internal/server/source_file_actions_test.go\n?? internal/server/task_outcome.go\n?? internal/server/task_outcome_test.go\n?? internal/server/web/continuity.js\n?? internal/server/web/markdown-history.js\n?? internal/server/web/starmap-icon.svg\n?? internal/server/web/task-outcome.js\n?? plugins/markdown-history/",
+  "acceptance": [
+    "Preserve and push current scoped source and plugins",
+    "Update implementation and acceptance boundaries",
+    "Verify origin/main matches local HEAD"
+  ],
+  "scope": [
+    "All files recorded in initial_status",
+    "docs/reviews/continuity-checkpoint-20261009.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Current scoped implementation and checkpoint documentation reviewed",
+      "evidence": [
+        "docs/reviews/continuity-checkpoint-20261009.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Current scoped implementation and checkpoint documentation reviewed",
+      "evidence": [
+        "docs/reviews/continuity-checkpoint-20261009.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Current scoped implementation and checkpoint documentation reviewed",
+      "evidence": [
+        "docs/reviews/continuity-checkpoint-20261009.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Checkpoint quick profile passed; full release acceptance not asserted",
+      "evidence": [
+        ".agent-state/verify-20261009T074610937875Z.log",
+        "quick fingerprint abe6154c23f8e68ac8fbe98b868a8f4ab34595fdb51a7e516ab71e012043ae4d"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Current scoped implementation and checkpoint documentation reviewed",
+      "evidence": [
+        "docs/reviews/continuity-checkpoint-20261009.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Current scoped implementation and checkpoint documentation reviewed",
+      "evidence": [
+        "docs/reviews/continuity-checkpoint-20261009.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Source checkpoint push only; no version bump, release assets or deployment",
+      "evidence": [
+        "User request recorded above"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "No deployment. Use an explicit revert commit if required; do not reset user work.",
+  "handoff": "Checkpoint only. Overall goal remains active; production 9999 unchanged; isolated 18211 retained. See checkpoint review for pending acceptance."
+}

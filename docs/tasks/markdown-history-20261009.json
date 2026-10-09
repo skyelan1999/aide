@@ -1,0 +1,134 @@
+{
+  "id": "markdown-history-20261009",
+  "request": "Markdown 历史版本追踪插件，启用后修改原文，保存仅记录实际变更并考虑嵌入资源",
+  "baseline": "68af962a8498767628e99d403ab10b4bc4308dfe",
+  "initial_status": "",
+  "acceptance": [
+    "设置及模型上下文读取同一服务端插件状态",
+    "启用后修改原文而非创建备份副本，保留审批",
+    "保存时以正文和引用资源指纹去重",
+    "历史正文和资源可查询，按工作区及来源隔离"
+  ],
+  "scope": [
+    "internal/server/markdown_history.go",
+    "internal/server/workflow.go",
+    "internal/server/files.go",
+    "internal/server/workspace_config.go",
+    "internal/server/sources.go",
+    "internal/server/generated_documents.go",
+    "internal/server/context.go",
+    "internal/server/plugins.go",
+    "internal/server/server.go",
+    "internal/server/web",
+    "plugins/markdown-history",
+    "Dockerfile",
+    "docs/plugins/markdown-history.md",
+    "docs/workspace-paths.md",
+    "docs/README.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Markdown 历史插件、原文编辑策略、正文与嵌入资源变更去重",
+      "evidence": [
+        "internal/server/markdown_history.go",
+        "internal/server/workflow.go",
+        "internal/server/files.go",
+        "internal/server/workspace_config.go",
+        "internal/server/sources.go",
+        "internal/server/generated_documents.go",
+        "internal/server/context.go",
+        "internal/server/plugins.go",
+        "internal/server/server.go",
+        "internal/server/web",
+        "plugins/markdown-history",
+        "Dockerfile",
+        "docs/plugins/markdown-history.md",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "服务端插件状态；内容寻址对象、原子版本元数据、身份隔离，现有审批保持",
+      "evidence": [
+        "internal/server/markdown_history.go",
+        "internal/server/workflow.go",
+        "internal/server/files.go",
+        "internal/server/workspace_config.go",
+        "internal/server/sources.go",
+        "internal/server/generated_documents.go",
+        "internal/server/context.go",
+        "internal/server/plugins.go",
+        "internal/server/server.go",
+        "internal/server/web",
+        "plugins/markdown-history",
+        "Dockerfile",
+        "docs/plugins/markdown-history.md",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "原生保存钩子、模型状态注入、插件打包、设置开关与历史对比界面",
+      "evidence": [
+        "internal/server/markdown_history.go",
+        "internal/server/workflow.go",
+        "internal/server/files.go",
+        "internal/server/workspace_config.go",
+        "internal/server/sources.go",
+        "internal/server/generated_documents.go",
+        "internal/server/context.go",
+        "internal/server/plugins.go",
+        "internal/server/server.go",
+        "internal/server/web",
+        "plugins/markdown-history",
+        "Dockerfile",
+        "docs/plugins/markdown-history.md",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "Node 语法和 Docker Go 编译通过；真实浏览器组件使用示例数据检查 1280px/390px 历史列表、正文对比、资源按钮。真实保存去重、SSH、插件联调及完整实例验收未运行。",
+      "evidence": [
+        ".agent-state/markdown-history-preview/history.png",
+        ".agent-state/markdown-history-preview/mobile.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录存储、引用范围、失败和外部编辑边界",
+      "evidence": [
+        "internal/server/markdown_history.go",
+        "internal/server/workflow.go",
+        "internal/server/files.go",
+        "internal/server/workspace_config.go",
+        "internal/server/sources.go",
+        "internal/server/generated_documents.go",
+        "internal/server/context.go",
+        "internal/server/plugins.go",
+        "internal/server/server.go",
+        "internal/server/web",
+        "plugins/markdown-history",
+        "Dockerfile",
+        "docs/plugins/markdown-history.md",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未清空原有数据；仅停止本轮预览服务，保留证据",
+      "evidence": [
+        ".agent-state/markdown-history-preview/"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未部署、推送或发布",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "源码和默认启用的内置插件集成已实现；运行实例需使用 start.command 更新后联调。"
+}

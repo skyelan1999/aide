@@ -40,9 +40,12 @@ func (a *App) environmentGuide() string {
 	// /context 内置参考根常驻（#53）：恒为 AIDE_CONTEXT，不随 Docs.Path/工作区切换变化。
 	reference := item{ID: "context", Name: "引用 / Reference directory", Kind: "local", Path: "/context", Access: "read-only reference", Usage: "Browse references and attach relevant files to the task; do not assume reference files were already read."}
 	reference.Entries, reference.Inventory = guideEntries(a.reference)
-	items := []item{workspace, reference}
+	items := []item{workspace}
+	if src, ok := a.findSource(contextSource); ok && sourceAIVisible(src, a.wsID()) {
+		items = append(items, reference)
+	}
 	for _, src := range a.sourceRegistry.Sources {
-		if !src.Enabled {
+		if !sourceAIVisible(src, a.wsID()) {
 			continue
 		}
 		if src.ID == contextSource {

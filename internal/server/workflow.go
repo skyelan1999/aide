@@ -25,9 +25,10 @@ import (
 )
 
 type Attachment struct {
-	Root   string `json:"root"`
-	Path   string `json:"path"`
-	Source string `json:"source,omitempty"`
+	Root      string `json:"root"`
+	Path      string `json:"path"`
+	Source    string `json:"source,omitempty"`
+	Directory bool   `json:"directory,omitempty"`
 }
 type Step struct {
 	Name      string `json:"name"`
@@ -1134,13 +1135,31 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 		if f.Applied {
 			continue
 		}
-		if err := a.writeWorkspaceText(f.Path, []byte(f.Content)); err != nil {
+		// Resource snapshots can use remote reference readers; never hold the
+		// application lock while waiting for history I/O or network channels.
+		original := *f
+		root := a.workspace
+		identity := a.wsID()
+		a.mu.Unlock()
+		writeErr := a.withMarkdownHistory("workspace:"+identity, original.Path, []byte(original.Content), func(p string) ([]byte, error) { return readRawBytes(root, p) }, func() error { return putText(root, original.Path, []byte(original.Content)) })
+		a.mu.Lock()
+		if i >= len(task.Files) || task.Files[i] != original || a.wsID() != identity {
+			fail(w, 409, errors.New("保存期间提案已变化，请检查文件状态"))
+			return
+		}
+		f = &task.Files[i]
+		if err := writeErr; err != nil {
 			task.Error = "部分应用失败: " + err.Error()
 			_ = a.save(s)
 			fail(w, 500, errors.New(task.Error))
 			return
 		}
 		f.Applied = true
+		if task.Status != "awaiting_approval" {
+			_ = a.save(s)
+			fail(w, 409, errors.New("文件已保存，但任务状态已变化"))
+			return
+		}
 		if err := a.save(s); err != nil {
 			fail(w, 500, fmt.Errorf("文件已写入，但记录保存失败: %w", err))
 			return
@@ -1245,7 +1264,11 @@ func (a *App) applySSHProposalLocked(w http.ResponseWriter, r *http.Request, s *
 		writeErr := func() error {
 			a.mu.Unlock()
 			defer a.mu.Lock()
-			return a.sftpWriteAtGeneration(pathJoinRemote(remoteBase, f.Path), []byte(f.Content), generation)
+			return a.withMarkdownHistory("workspace:"+workspaceID, f.Path, []byte(f.Content), func(p string) ([]byte, error) {
+				return a.sftpReadAtGeneration(pathJoinRemote(remoteBase, p), generation)
+			}, func() error {
+				return a.sftpWriteAtGeneration(pathJoinRemote(remoteBase, f.Path), []byte(f.Content), generation)
+			})
 		}()
 		if !proposalCurrent() {
 			fail(w, 409, errors.New("远程操作完成后任务或提案已变化，请检查文件状态"))
@@ -3104,8 +3127,9 @@ func (a *App) semanticSearch(query, sourceID string, wsRoot *os.Root) string {
 		a.mu.Lock()
 		var ok bool
 		source, ok = a.findSource(sourceID)
+		allowed := ok && sourceAIVisible(source, a.wsID())
 		a.mu.Unlock()
-		if !ok || !source.Enabled {
+		if !allowed {
 			return "引用来源不存在或已停用"
 		}
 		if source.Type == "mcp" {
@@ -3679,8 +3703,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		}
 		a.mu.Lock()
 		src, ok := a.findSource(sourceID)
+		allowed := ok && sourceAIVisible(src, a.wsID())
 		a.mu.Unlock()
-		if !ok || !src.Enabled {
+		if !allowed {
 			return "Reference source does not exist or is disabled"
 		}
 		source = src
@@ -3717,7 +3742,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		defer a.mu.Unlock()
 		rows := []map[string]any{}
 		for _, src := range a.sourceRegistry.Sources {
-			if src.Enabled {
+			if sourceAIVisible(src, a.wsID()) {
 				row := map[string]any{"id": src.ID, "name": guideLabel(src.Name), "type": src.Type, "readable": src.Type != "mcp", "builtin": src.Builtin, "aiAccess": "read-only"}
 				row["rw"] = src.RW
 				if src.ID == systemDocsSource && strings.TrimSpace(a.wsConfig.Docs.Path) != "" {
@@ -3828,6 +3853,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	case "docx_resolve_comment":
 		return a.docxTool(wsRoot, mode, str("path"), "docx_resolve_comment.py", str("id"))
 	case "office_create":
+		if src, bound := a.generatedDocumentSource(); bound && !a.sourceAIAllowed(src.ID) {
+			return "自动系统文档对当前工作区 AI 不可见"
+		}
 		if a.pluginOwnerOf("office_create") != "office" {
 			return "Office 插件未启用，无法生成文件"
 		}
@@ -3842,6 +3870,22 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			return "Office 插件未启用"
 		}
 		return a.officeCommentTool(wsRoot, mode, remotePath, str("path"), "edit", map[string]any{"id": args["id"], "expectedText": str("expectedText"), "newText": str("newText")})
+	case "markdown_history":
+		if a.pluginOwnerOf("markdown_history") != "markdown-history" {
+			return "Markdown 历史版本插件未启用"
+		}
+		a.filesMu.Lock()
+		if task.WorkspaceID != "" && task.WorkspaceID != a.wsID() {
+			a.filesMu.Unlock()
+			return "工作区已切换，无法读取本任务的历史"
+		}
+		result, err := a.markdownHistoryData(str("source"), str("path"), str("revision"), str("asset"))
+		a.filesMu.Unlock()
+		if err != nil {
+			return err.Error()
+		}
+		raw, _ := json.Marshal(result)
+		return string(raw)
 	case "write_file":
 		pathStr, content := str("path"), rawStr("content")
 		msg, err := a.recordToolProposal(task, versions, map[string]any{"type": "file", "path": pathStr, "content": content})

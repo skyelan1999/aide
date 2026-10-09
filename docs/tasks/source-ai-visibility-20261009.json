@@ -1,0 +1,73 @@
+{
+  "id": "source-ai-visibility-20261009",
+  "request": "引用来源增加对工作区可见开关，控制当前工作区AI是否可使用来源，手动浏览不受影响",
+  "baseline": "68af962a8498767628e99d403ab10b4bc4308dfe",
+  "initial_status": "M Dockerfile\n M docs/README.md\n M docs/architecture.md\n M docs/architecture/knowledge-map.md\n M docs/workspace-paths.md\n M internal/server/attachments.go\n M internal/server/attachments_test.go\n M internal/server/context.go\n M internal/server/files.go\n M internal/server/generated_documents.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/file-autosave.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M plugins/registry.json\n?? docs/architecture/continuity-roadmap.md\n?? docs/plugins/markdown-history.md\n?? docs/tasks/aide-continuity-knowledge-20261009.json\n?? docs/tasks/file-task-attachment-20261009.json\n?? docs/tasks/markdown-history-20261009.json\n?? docs/tasks/source-file-actions-20261009.json\n?? docs/tasks/starmap-favicon-20261009.json\n?? docs/tasks/starmap-session-target-20261009.json\n?? internal/server/markdown_history.go\n?? internal/server/markdown_history_test.go\n?? internal/server/markdown_restore.go\n?? internal/server/source_file_actions.go\n?? internal/server/source_file_actions_test.go\n?? internal/server/task_outcome.go\n?? internal/server/task_outcome_test.go\n?? internal/server/web/continuity.js\n?? internal/server/web/markdown-history.js\n?? internal/server/web/starmap-icon.svg\n?? internal/server/web/task-outcome.js\n?? plugins/markdown-history/",
+  "acceptance": [
+    "眼睛按钮切换当前工作区AI可见性",
+    "设置持久化，其他工作区不受影响",
+    "AI来源清单、工具、附件、AI星图与RAG受限制，手动浏览保持可用"
+  ],
+  "scope": [
+    "internal/server/source_ai_visibility.go",
+    "internal/server/source_ai_visibility_test.go",
+    "internal/server/sources.go",
+    "internal/server/context.go",
+    "internal/server/workflow.go",
+    "internal/server/environment_guide.go",
+    "internal/server/generated_documents.go",
+    "internal/server/knowledge_map.go",
+    "internal/server/knowledge_documents.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/index.html",
+    "docs/workspace-paths.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "complete",
+      "summary": "用户明确控制AI是否可使用引用来源。",
+      "evidence": []
+    },
+    "design": {
+      "status": "complete",
+      "summary": "注册来源按工作区身份保存hidden列表，默认可见，独立API修改。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "complete",
+      "summary": "来源眼睛按钮、持久化与AI清单/附件/工具/图谱生成过滤完成，原有浏览接口保持。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Go race作用域、持久化、手动浏览、工具/附件拒绝与图谱过滤、内置来源设置保留通过；实际浏览器组件开关及请求正确。真实模型/SSH来源与完整工作台未联调。 18211实际鉴权API保存/读取、手动读取、隐藏文件/目录附件拒绝、409和开启后继续到模型配置检查通过；无模型调用。",
+      "evidence": [
+        ".agent-state/source-ai-visibility/go-test.log",
+        ".agent-state/source-ai-visibility/api-receipt.json",
+        ".agent-state/source-ai-visibility/disabled.png",
+        ".agent-state/source-ai-visibility/go-test-build.log"
+      ]
+    },
+    "documentation": {
+      "status": "complete",
+      "summary": "workspace-paths记录语义、API、旧配置行为、路径别名与已传输内容/运行中操作边界。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "complete",
+      "summary": "关闭18215预览与浏览器标签；18211保持隔离新版本服务，9999未改动。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "随整体目标验收发布，未更新生产。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

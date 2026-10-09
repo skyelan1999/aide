@@ -1,0 +1,2 @@
+'use strict';
+module.exports={name:'Markdown 历史版本',apply(ctx){ctx.tool({name:'markdown_history',description:'读取服务端 Markdown 历史追踪插件状态和设置，列出真实保存版本或读取指定版本。启用后应读取并修改原 MD，不创建备份副本；写入仍使用原审批通道。path 可省略以查询状态；revision 为返回的版本编号。资源快照存储在服务端，只有实际正文或引用资源变化才产生版本。',parameters:{type:'object',properties:{path:{type:'string'},source:{type:'string'},revision:{type:'string'},asset:{type:'string',description:'从该版本读取指定引用资源快照，返回 base64，不读取当前资源'}}},handler(){throw new Error('markdown_history 必须由 Aide 原生执行器调用');}});}};

@@ -1,0 +1,73 @@
+{
+  "id": "source-file-actions-20261009",
+  "request": "引用里面可读写的区域无法删除，压缩重命名，属性等，顺便也修一下",
+  "baseline": "68af962a8498767628e99d403ab10b4bc4308dfe",
+  "initial_status": "M Dockerfile\n M docs/README.md\n M docs/architecture/knowledge-map.md\n M docs/workspace-paths.md\n M internal/server/context.go\n M internal/server/files.go\n M internal/server/generated_documents.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/web/app.js\n M internal/server/web/file-autosave.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n M plugins/registry.json\n?? docs/architecture/continuity-roadmap.md\n?? docs/plugins/markdown-history.md\n?? docs/tasks/aide-continuity-knowledge-20261009.json\n?? docs/tasks/markdown-history-20261009.json\n?? docs/tasks/starmap-session-target-20261009.json\n?? internal/server/markdown_history.go\n?? internal/server/markdown_history_test.go\n?? internal/server/markdown_restore.go\n?? internal/server/task_outcome.go\n?? internal/server/task_outcome_test.go\n?? internal/server/web/continuity.js\n?? internal/server/web/markdown-history.js\n?? internal/server/web/task-outcome.js\n?? plugins/markdown-history/",
+  "acceptance": [
+    "可写引用来源可删除/重命名/压缩/解压；属性可读",
+    "只读/停用/未知来源拒绝写操作，属性只读可访问",
+    "请求保留所选来源，不误操作工作区同名文件",
+    "本地与真实SFTP闭环，浏览器菜单验证"
+  ],
+  "scope": [
+    "internal/server/files.go",
+    "internal/server/source_file_actions.go",
+    "internal/server/source_file_actions_test.go",
+    "internal/server/ssh_session.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "明确源ID及RW操作与拒绝路径",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用有界transferLocation适配层；保留工作区操作兼容；properties不要求写权限",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "补引用来源处理分支、SFTP元数据、菜单权限与来源目标捕获",
+      "evidence": [
+        "internal/server/source_file_actions.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "本地/API/race及真实SFTP通过，组件浏览器验证通过；完整工作台证书受限，生产未部署",
+      "evidence": [
+        ".agent-state/source-file-actions/go-test.log",
+        ".agent-state/source-file-actions/live-sftp.log",
+        ".agent-state/source-file-actions/api-receipt.json",
+        ".agent-state/source-file-actions/writable-requests.png",
+        ".agent-state/source-file-actions/readonly-menu.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新架构接口表与workspace-paths行为边界",
+      "evidence": [
+        "docs/workspace-paths.md",
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "测试服务器、网络、组件服务清理；18211留供后续完整验收",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "持续目标其余工作与全量发布门禁未完成，本次未推送/发布/替换9999",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "18211已包含此修复，等待证书处理后完整工作台验收；独立SFTP已真实验收，workspace-sftp分支沿用适配但本轮未真实联调；用户远端与9999生产未操作。"
+}

@@ -1,0 +1,83 @@
+{
+  "id": "starmap-session-target-20261009",
+  "request": "知识星图插入会话可以直接选择插入会话id",
+  "baseline": "68af962a8498767628e99d403ab10b4bc4308dfe",
+  "initial_status": "M Dockerfile\n M docs/README.md\n M docs/workspace-paths.md\n M internal/server/context.go\n M internal/server/files.go\n M internal/server/generated_documents.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/settings-schema.json\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n?? docs/plugins/markdown-history.md\n?? docs/tasks/markdown-history-20261009.json\n?? internal/server/markdown_history.go\n?? internal/server/web/markdown-history.js\n?? plugins/markdown-history/",
+  "acceptance": [
+    "节点操作区可选择会话 ID 或输入 #编号",
+    "插入只追加目标草稿、不自动发送",
+    "切换前草稿保留在当前标签页；锁屏或状态变化拒绝插入"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.css",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/knowledge-map.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "支持指定现有目标会话 ID/编号",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用会话目录、独立回调通道和 selectSession；会话草稿在标签页内隔离",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "会话目标输入与候选、回调验证、切换与草稿缓存已实现",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap.css",
+        "internal/server/web/index.html",
+        "internal/server/web/locales/en.js",
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "语法/diff 与浏览器示例回调检查通过；未运行自动测试，真实工作台切换和草稿保留联调未执行",
+      "evidence": [
+        "node --check internal/server/web/app.js",
+        "node --check internal/server/web/starmap.js",
+        "node --check internal/server/web/locales/en.js",
+        "git diff --check",
+        ".agent-state/starmap-session-preview/target.png",
+        "示例回调收到 session=preview-37、id=Fpreview"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "知识星图架构文档描述用途、限制和验证范围",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "预览服务已停止；保留示例 UI 证据，继承历史追踪任务改动",
+      "evidence": [
+        ".agent-state/starmap-session-preview/"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "当前请求未要求推送或发布，运行实例未更新",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

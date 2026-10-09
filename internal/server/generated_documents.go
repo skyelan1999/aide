@@ -34,6 +34,9 @@ func (a *App) generatedDocumentSource() (Source, bool) {
 // Caller holds filesMu.
 func (a *App) prepareGeneratedDocDir(subdir string) (string, string, func(...string) error, func(), error) {
 	src, bound := a.generatedDocumentSource()
+	if bound && !a.sourceAIAllowed(src.ID) {
+		return "", "", nil, nil, fmt.Errorf("自动系统文档对当前工作区 AI 不可见")
+	}
 	if !bound {
 		rel := "system-docs/" + subdir
 		if err := a.pullProjectCacheDir(rel); err != nil {
@@ -108,7 +111,8 @@ func (a *App) prepareGeneratedDocDir(subdir string) (string, string, func(...str
 				return err
 			}
 			if root != nil {
-				err = putText(root, path.Join(subdir, name), b)
+				full := path.Join(subdir, name)
+				err = a.withMarkdownHistory(markdownSourceIdentity(src), full, b, func(p string) ([]byte, error) { return readRawBytes(root, p) }, func() error { return putText(root, full, b) })
 			} else {
 				err = a.writeSourceText(src, path.Join(subdir, name), b)
 			}

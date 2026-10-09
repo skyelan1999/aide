@@ -431,6 +431,7 @@ func (a *App) knowledgeAssist(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	g = a.knowledgeForAI(g)
 	a.mu.Lock()
 	cfg := a.settings
 	key, err := a.modelAPIKeyLocked()

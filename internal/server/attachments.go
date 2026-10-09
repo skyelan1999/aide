@@ -248,3 +248,52 @@ func outgoingMessages(msgs []Message) []any {
 	}
 	return out
 }
+
+// directoryAttachmentContext attaches a bounded direct listing, not recursive file contents.
+func (a *App) directoryAttachmentContext(att Attachment) (string, error) {
+	if err := validTransferPath(att.Path); err != nil {
+		return "", err
+	}
+	var items []map[string]any
+	var err error
+	switch att.Root {
+	case "source":
+		if att.Source == "" {
+			return "", errors.New("缺少引用来源 ID")
+		}
+		loc, e := a.transferLocation(att.Source, false)
+		if e != nil {
+			return "", e
+		}
+		items, err = a.transferChildren(loc, att.Path)
+	case "", "workspace":
+		items, err = a.listWorkspaceDir(att.Path)
+	case "context":
+		r, e := a.root(att.Root)
+		if e != nil {
+			return "", e
+		}
+		items, err = a.listLocalDir(r, att.Path)
+	default:
+		return "", errors.New("不支持的附件来源")
+	}
+	if err != nil {
+		return "", fmt.Errorf("读取目录附件 %s: %w", att.Path, err)
+	}
+	body := fmt.Sprintf("[目录附件；来源=%s；仅列出直接子项，不包含文件正文。需要正文时按来源与路径使用读取工具。]\n", att.Source)
+	for i, item := range items {
+		if i >= 200 || len(body) >= 20000 {
+			body += "[目录清单已截断]\n"
+			break
+		}
+		kind := "文件"
+		if item["dir"] == true {
+			kind = "目录"
+		}
+		body += fmt.Sprintf("%s %q\n", kind, item["name"])
+	}
+	if len(items) == 0 {
+		body += "[空目录]\n"
+	}
+	return body, nil
+}

@@ -784,7 +784,7 @@ func (a *App) readWorkspaceText(p string) ([]byte, error) {
 	}
 	return readText(a.workspace, p)
 }
-func (a *App) writeWorkspaceText(p string, b []byte) error {
+func (a *App) writeWorkspaceTextRaw(p string, b []byte) error {
 	if a.workspaceMode() == "ssh" {
 		return a.sftpWrite(a.workspaceRemotePath(p), b)
 	}
@@ -801,4 +801,8 @@ func (a *App) workspaceStatExists(p string) bool {
 	}
 	_, err := root.Stat(p)
 	return err == nil
+}
+
+func (a *App) writeWorkspaceText(p string, b []byte) error {
+	return a.withMarkdownHistory("workspace:"+a.wsID(), p, b, func(p string) ([]byte, error) { return a.downloadRaw(p, Source{}, false) }, func() error { return a.writeWorkspaceTextRaw(p, b) })
 }

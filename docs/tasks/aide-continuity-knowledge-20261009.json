@@ -1,0 +1,165 @@
+{
+  "id": "aide-continuity-knowledge-20261009",
+  "request": "用户授权将上一轮全部完善项与六个创意提案纳入目标并实现",
+  "baseline": "68af962a8498767628e99d403ab10b4bc4308dfe",
+  "initial_status": "M Dockerfile\n M docs/README.md\n M docs/architecture/knowledge-map.md\n M docs/workspace-paths.md\n M internal/server/context.go\n M internal/server/files.go\n M internal/server/generated_documents.go\n M internal/server/plugins.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M internal/server/workspace_config.go\n?? docs/plugins/markdown-history.md\n?? docs/tasks/markdown-history-20261009.json\n?? docs/tasks/starmap-session-target-20261009.json\n?? internal/server/markdown_history.go\n?? internal/server/web/markdown-history.js\n?? plugins/markdown-history/",
+  "acceptance": [
+    "工作现场恢复：会话草稿与附件、文件草稿、目录、光标、滚动、星图镜头，按工作区隔离；刷新/重启恢复，不自动发送",
+    "保存状态与冲突：区分本地记录和服务器保存；断网保留、409暂停、对比合并、重试、不静默覆盖",
+    "Markdown 历史闭环：正文+嵌入资源整版恢复；外部编辑检测、无实际变更不追加、存储与备份管理",
+    "真实环境验收：本地及可用SSH：创建/修改/保存/重开/恢复、跨会话审批、锁屏、Windows输入与长时间打开",
+    "任务成果舱：目标、文件变化、执行、验证、证据、缺口、发布状态统一成果卡",
+    "审批与授权管理：解释自动通过和人工原因，作用范围、有效期、撤销和全局同步",
+    "连接能力仪表：SSH连接/目录/权限、解析器、插件工具可用性、模型连接及实际检查",
+    "渐进索引：项目/目录范围、索引覆盖和预算状态、重点优先、不虚报全库",
+    "混合检索：关键词+可配置向量检索、原文精确检索、来源定位和内容指纹",
+    "代码关系可信度：确定引用/候选调用/未解析显式区分，可选语言服务",
+    "星图路径探索：节点间证据路径、按钮到服务和报告到来源，跳转行号或段落",
+    "知识时光：按时间比较真实节点增改移除、历史依据与结论演变"
+  ],
+  "scope": [
+    "internal/server",
+    "plugins",
+    "docs",
+    "scripts"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户 2026-10-09 明确授权全部完善项与提案，已创建持续目标；完整范围拆成12条工作流",
+      "evidence": [
+        "docs/architecture/continuity-roadmap.md"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "先复用现有hash保存、审批/索引与插件，恢复记录和服务器保存分离；其他工作流逐步设计",
+      "evidence": [
+        "internal/server/web/continuity.js",
+        "internal/server/web/file-autosave.js"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "首批源码：IndexedDB草稿/会话/目录恢复，保存冲突对比与显式合并；其余范围继续；历史列表观察外部正文/资源变化，快照完整性验证与锁态防护；Markdown 正文与引用资源显式整版恢复、指纹冲突校验、恢复前备份、逐项读回与操作记录；星图按工作区保存恢复视角、筛选、代码关系、节点来源、动效与漂移相位；会话光标与滚动恢复；已保存文件位置独立记录并校验指纹；任务成果舱聚合目标/文件/工具/报告/来源/缺口，完整证据摘要校验与分页，完成意图不计入未知；用户追加可写引用文件菜单修复，来源操作分支与来源目标捕获",
+      "evidence": [
+        "internal/server/web/continuity.js",
+        "internal/server/web/app.js",
+        "internal/server/web/file-autosave.js",
+        "internal/server/server.go",
+        "internal/server/markdown_restore.go",
+        "internal/server/web/markdown-history.js",
+        "internal/server/web/starmap.js",
+        "internal/server/task_outcome.go",
+        "internal/server/web/task-outcome.js",
+        "新增引用来源当前工作区AI可见性：眼睛按钮、sources.json作用域持久化、工具/附件/AI星图与RAG过滤已实现；18211真实鉴权API和Go race、浏览器组件通过。完整工作台、真实模型与SSH来源仍待验收；见source-ai-visibility-20261009。"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Go编译、JS语法检查；浏览器实际观察IndexedDB重新打开恢复与模拟服务器409冲突对比、取消；真实完整实例/SSH未执行；三个 Markdown 历史临时文件/API 回归及 race 通过；历史组件锁定关闭、禁止重开、解锁重开通过；5项历史/恢复 Go race 回归通过；恢复组件实际点击范围预览、确认恢复和编辑器更新，未替代完整工作台/SSH验收；真实 IndexedDB 组件刷新恢复星点位置/筛选/详情/动效，以及代码视图调用候选和2跳，真实锁态/工作区切换仍未验收；文件位置组件刷新保持选区与滚动、指纹变化不恢复旧位置；start.command隔离18211实际文件API验证保存/去重/外部资源变化/整版恢复/409拒绝写入，浏览器受新实例证书提示限制，等待用户处理；运行二进制待跟随最新位置功能重建；3项成果舱race回归通过；start.command重建18211最新二进制，合成持久化会话真实鉴权API通过，未调用模型；组件原始证据展开/窄屏无溢出通过，JSON下载事件15秒超时未通过；可写引用本地/18211真实API及独立SFTP操作闭环通过，组件菜单验证通过，workspace-sftp真实操作待验收",
+      "evidence": [
+        "Docker aide:local go build exit 0",
+        ".agent-state/continuity-preview/conflict.png",
+        "internal/server/markdown_history_test.go",
+        ".agent-state/markdown-history-preview/observed-history.png",
+        "go test -race -buildvcs=false ./internal/server -run TestMarkdown(History|Restore) -count=1 -timeout=90s",
+        ".agent-state/markdown-history-preview/restore-scope.png",
+        ".agent-state/starmap-session-preview/recovery-before-final.png",
+        ".agent-state/starmap-session-preview/recovery-after-final.png",
+        ".agent-state/continuity-runtime/api-receipt.json",
+        ".agent-state/starmap-session-preview/saved-file-position.png",
+        "internal/server/task_outcome_test.go",
+        ".agent-state/outcome-preview/go-test.log",
+        ".agent-state/outcome-preview/api-receipt.json",
+        ".agent-state/outcome-preview/original-evidence.png",
+        ".agent-state/outcome-preview/narrow.png",
+        "docs/tasks/source-file-actions-20261009.json"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "路线图和真实完成范围已记录，后续各项继续更新",
+      "evidence": [
+        "docs/architecture/continuity-roadmap.md"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "组件预览服务停止；18211隔离实例留供后续浏览器验收，生产9999未改；继承改动与证据均保留",
+      "evidence": [
+        ".agent-state/continuity-preview/"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "目标未完成；未推送、发布或替换生产，最终按门禁处理",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "目标active；18211已由start.command重建最新二进制，包含file-view和成果舱。等待用户处理证书后完整工作台/锁态验收；继续SSH与其他工作流，成果摘要下载未验收、结构化发布回执未接入。",
+  "workstreams": [
+    {
+      "name": "工作现场恢复",
+      "acceptance": "会话草稿与附件、文件草稿、目录、光标、滚动、星图镜头，按工作区隔离；刷新/重启恢复，不自动发送",
+      "status": "in_progress"
+    },
+    {
+      "name": "保存状态与冲突",
+      "acceptance": "区分本地记录和服务器保存；断网保留、409暂停、对比合并、重试、不静默覆盖",
+      "status": "in_progress"
+    },
+    {
+      "name": "Markdown 历史闭环",
+      "acceptance": "正文+嵌入资源整版恢复；外部编辑检测、无实际变更不追加、存储与备份管理",
+      "status": "in_progress"
+    },
+    {
+      "name": "真实环境验收",
+      "acceptance": "本地及可用SSH：创建/修改/保存/重开/恢复、跨会话审批、锁屏、Windows输入与长时间打开",
+      "status": "in_progress"
+    },
+    {
+      "name": "任务成果舱",
+      "acceptance": "目标、文件变化、执行、验证、证据、缺口、发布状态统一成果卡",
+      "status": "in_progress"
+    },
+    {
+      "name": "审批与授权管理",
+      "acceptance": "解释自动通过和人工原因，作用范围、有效期、撤销和全局同步",
+      "status": "pending"
+    },
+    {
+      "name": "连接能力仪表",
+      "acceptance": "SSH连接/目录/权限、解析器、插件工具可用性、模型连接及实际检查",
+      "status": "pending"
+    },
+    {
+      "name": "渐进索引",
+      "acceptance": "项目/目录范围、索引覆盖和预算状态、重点优先、不虚报全库",
+      "status": "pending"
+    },
+    {
+      "name": "混合检索",
+      "acceptance": "关键词+可配置向量检索、原文精确检索、来源定位和内容指纹",
+      "status": "pending"
+    },
+    {
+      "name": "代码关系可信度",
+      "acceptance": "确定引用/候选调用/未解析显式区分，可选语言服务",
+      "status": "pending"
+    },
+    {
+      "name": "星图路径探索",
+      "acceptance": "节点间证据路径、按钮到服务和报告到来源，跳转行号或段落",
+      "status": "pending"
+    },
+    {
+      "name": "知识时光",
+      "acceptance": "按时间比较真实节点增改移除、历史依据与结论演变",
+      "status": "pending"
+    }
+  ]
+}
