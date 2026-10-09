@@ -1,0 +1,68 @@
+{
+  "id": "trajectory-outcome-20261009",
+  "request": "将成果舱整合进轨迹，保留任务选择、证据与导出",
+  "baseline": "c3c95584725eee113a27c0245f0f20b644bf52ee",
+  "initial_status": "M docs/README.md\n M docs/architecture.md\n M docs/architecture/continuity-roadmap.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n M internal/server/web/style.css\n?? docs/architecture/capability-dashboard.md\n?? internal/server/capabilities.go\n?? internal/server/capabilities_test.go\n?? internal/server/web/capabilities.js",
+  "acceptance": [
+    "轨迹内历史、调用记录、成果舱按钮切换",
+    "成果按当前会话任务选择，保留原始证据与摘要导出",
+    "切换和关闭后迟到的请求不覆盖新页面",
+    "窄屏无横向溢出"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/task-outcome.js",
+    "internal/server/web/index.html",
+    "internal/server/web/macos.css",
+    "internal/server/web/locales/en.js",
+    "docs/architecture.md",
+    "docs/architecture/continuity-roadmap.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "轨迹整合成果舱；保留已有能力仪表改动；临时静态服务已停止，浏览器视口已恢复。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "轨迹整合成果舱；保留已有能力仪表改动；临时静态服务已停止，浏览器视口已恢复。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "轨迹整合成果舱；保留已有能力仪表改动；临时静态服务已停止，浏览器视口已恢复。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "前端语法与文档检查通过；实际浏览器组件夹具覆盖三个页签、任务选择、证据、快速切换及390px布局。完整已鉴权工作台联调 NOT_RUN；导出按钮已点击，下载文件内容未验收。",
+      "evidence": [
+        "node --check app.js/task-outcome.js/locales/en.js: PASS",
+        "check_docs.py: 176 Markdown / 455 links PASS",
+        "git diff --check: PASS",
+        ".agent-state/trajectory-preview/desktop.png",
+        ".agent-state/trajectory-preview/narrow.png",
+        "source SHA256 60e64127db652e2f79b4369b49fa29ca59456f4d1fd067837393294fd3253507"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "轨迹整合成果舱；保留已有能力仪表改动；临时静态服务已停止，浏览器视口已恢复。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "轨迹整合成果舱；保留已有能力仪表改动；临时静态服务已停止，浏览器视口已恢复。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "源码随Markdown检查点推送；未部署、未升版或发布镜像。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "成果舱改为轨迹内页签；完整工作台联调和发布尚未进行。"
+}

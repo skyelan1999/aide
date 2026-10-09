@@ -6,17 +6,10 @@
  function close(){generation++;active?.close();}
  window.LockCluster?.on('effective',value=>{if(value)close();});
  window.addEventListener('pagehide',close);
- function button({sessionId,runId,api,blocked,t,error}){
-  const launch=node('button','quiet outcome-launch',t('成果舱'));launch.type='button';launch.setAttribute('aria-haspopup','dialog');
-  launch.onclick=async()=>{
-   if(blocked?.())return;
-   close();const gen=++generation,dialog=node('dialog','outcome-dialog');active=dialog;
-   const head=node('header','outcome-head'),heading=node('div');const title=node('h2','',t('任务成果舱'));title.id='outcome-title';dialog.setAttribute('aria-labelledby',title.id);heading.append(node('span','sheet-eyebrow','TASK OUTCOME'),title);
-   const dismiss=node('button','icon-button','×');dismiss.type='button';dismiss.setAttribute('aria-label',t('关闭成果舱'));dismiss.onclick=()=>dialog.close();head.append(heading,dismiss);
-   const content=node('div','outcome-content'),notice=node('p','muted',t('正在读取任务记录…'));
-   content.append(notice);dialog.append(head,content);document.body.append(dialog);
-   dialog.addEventListener('close',()=>{if(active===dialog){active=null;generation++;}dialog.remove();launch.focus();},{once:true});dialog.showModal();
-   const valid=()=>gen===generation&&dialog.open&&!blocked?.();
+ async function mount(content,{sessionId,runId,api,blocked,t,error}){
+   close();const gen=++generation;active={close:()=>{active=null;}};
+   content.replaceChildren(node('p','muted',t('正在读取任务记录…')));
+   const valid=()=>gen===generation&&content.isConnected&&!blocked?.();
    const base='/sessions/'+encodeURIComponent(sessionId)+'/runs/'+encodeURIComponent(runId)+'/outcome';
    let data,files=[],executions=[];
    const section=(title)=>{const s=node('section','outcome-section');s.append(node('h3','',t(title)));content.append(s);return s;};
@@ -44,8 +37,7 @@
     const actions=node('div','outcome-actions');const exportButton=node('button','quiet',t('导出成果 JSON'));exportButton.onclick=()=>{if(!valid())return;const blob=new Blob([JSON.stringify({...data,files,executions,exportScope:{kind:'summary',allPagesLoaded:!data.page.filesMore&&!data.page.executionsMore,rawEvidenceIncluded:false,textTruncated:!!data.goalTruncated||executions.some(e=>e.truncated)||data.verification.some(r=>r.truncated)}},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='aide-outcome-'+runId+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};actions.append(exportButton);content.append(actions);
    }
    try{data=await api(base);if(!valid())return;files=data.files;executions=data.executions;render();}catch(e){if(valid()){content.replaceChildren(node('p','task-error',e.message));}}
-  };
-  return launch;
+   return {close};
  }
- window.AideTaskOutcome={button,close};
+ window.AideTaskOutcome={mount,close};
 })();

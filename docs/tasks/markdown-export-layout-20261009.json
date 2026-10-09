@@ -1,0 +1,69 @@
+{
+  "id": "markdown-export-layout-20261009",
+  "request": "Markdown导出PDF；设置左右对比或纯文本编辑；更新文档并push",
+  "baseline": "c3c95584725eee113a27c0245f0f20b644bf52ee",
+  "initial_status": "M docs/README.md\n M docs/architecture.md\n M docs/architecture/continuity-roadmap.md\n M docs/architecture/knowledge-map.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M internal/server/knowledge_map.go\n M internal/server/knowledge_sources.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/web/style.css\n M internal/server/web/task-outcome.js\n?? docs/architecture/capability-dashboard.md\n?? docs/tasks/trajectory-outcome-20261009.json\n?? internal/server/capabilities.go\n?? internal/server/capabilities_test.go\n?? internal/server/knowledge_coverage_test.go\n?? internal/server/web/capabilities.js",
+  "acceptance": [
+    "Markdown弹窗和独立页提供PDF导出入口，当前未保存内容参与导出",
+    "设置提供左右对比与纯文本，自动持久化，切换保留草稿",
+    "记录浏览器实际验收与未验证范围，更新文档并推送"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/markdown-export.js",
+    "internal/server/web/settings-init.js",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/macos.css",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/README.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "新增PDF打印导出及自动保存的Markdown编辑布局设置。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用原文编辑器、Markdown渲染与本地设置；同源打印快照，无外部转换服务。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "弹窗与独立页接入；默认左右对比，窄屏上下排列；关闭弹窗恢复隐藏。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "组件左右对比/纯文本/刷新持久化/实时预览/未保存快照/390px/关闭隐藏 PASS；Safari实际保存1页PDF并检查中文文本和渲染。完整鉴权工作台、独立页端到端、SSH图片、多页与Windows NOT_RUN。",
+      "evidence": [
+        ".agent-state/markdown-layout-preview/desktop.png",
+        ".agent-state/markdown-layout-preview/narrow.png",
+        "Safari PDF: 1 page; Chinese selectable text and table verified",
+        "quick PASS .agent-state/verify-20261009T085815510170Z.log",
+        "fingerprint 6c2ac44f9e4389f84d07458887f2065a970096762a30c67bd8d98606b7d4e424",
+        "node --check markdown-export.js PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "新增使用、边界和实际验收说明；继承能力仪表、轨迹成果舱与索引覆盖改动保持。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "临时浏览器与静态服务器清理，证据位于忽略的.agent-state；无生产配置或凭据变更。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户授权源码push；本次不升版、部署或GitHub Release。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本次源码提交；偏好缺失自动使用左右对比，无数据迁移。",
+  "handoff": "源码检查点；整体连续工作目标仍在进行，生产实例未替换。"
+}

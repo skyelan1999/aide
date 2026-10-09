@@ -351,6 +351,8 @@ type App struct {
 	workPath, dataPath, token string
 	settings                  Settings
 	approvalPolicy            ApprovalPolicy
+	capabilityChecks          map[string]CapabilityCheck
+	capabilityChecking        bool
 	sessions                  map[string]*Session
 	reminders                 []Reminder
 	cancels                   map[string]context.CancelFunc
@@ -1335,6 +1337,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/resume", a.resumeTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
+	mux.HandleFunc("GET /api/capabilities", a.listCapabilities)
+	mux.HandleFunc("POST /api/capabilities/check", a.checkCapability)
 	mux.HandleFunc("GET /api/approval-policy", a.getApprovalPolicy)
 	mux.HandleFunc("PUT /api/approval-policy", a.updateApprovalPolicy)
 	mux.HandleFunc("DELETE /api/approval-policy/rules", a.clearApprovalRules)

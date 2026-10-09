@@ -64,6 +64,11 @@ function currentSources(){
  if(Array.isArray(graph.sources))return graph.sources.filter(s=>s&&typeof s.region==='string'&&s.region).map(s=>({...s,name:s.name||fallbackSourceName(s.region),nodeCount:Math.max(0,Number(s.nodeCount)||0)}));
  const byRegion=new Map();for(const n of graph.nodes){if(!n.region)continue;let s=byRegion.get(n.region);if(!s){s={id:n.source||n.region,name:n.sourceName||fallbackSourceName(n.region),type:n.sourceType||(n.region==='sessions'?'session':''),region:n.region,state:'ready',nodeCount:0};byRegion.set(n.region,s);}s.nodeCount++;}return [...byRegion.values()];
 }
+function sourceCoverageLabel(source){
+ const c=source.coverage;if(!c)return '';
+ const reasons={files:'文件预算',directories:'目录预算',depth:'目录深度',time:'扫描时限',directory_entries:'单目录条目预算',read_error:'读取失败'};
+ return `已扫描 ${c.files} 个文件 / ${c.directories} 个目录；预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层；文本仅前 ${c.textBytesPerFile/1024} KiB；全库总数未统计`+(c.reasons?.length?'；受限：'+c.reasons.map(r=>reasons[r]||r).join('、'):'；限定目录范围内扫描完成');
+}
 function nodeSource(n){const s=sourceByRegion.get(n.region);return {id:s?.id||n.source||n.region,name:s?.name||n.sourceName||fallbackSourceName(n.region),type:s?.type||n.sourceType||(n.region==='sessions'?'session':''),state:s?.state||'',message:s?.message||''};}
 function nodeSourceLabel(n){const s=nodeSource(n);return [s.name,s.type?sourceTypeLabel(s.type):'',n.format].filter(Boolean).join(' · ');}
 function syncNodeSourceChrome(){
@@ -497,7 +502,7 @@ function syncGraphChrome(){
  }
  for(const child of [...box.children])if(!keep.has(child))child.remove();
  const catalog=$('source-catalog'),prior=new Map([...catalog.children].map(el=>[el.dataset.region,el])),retained=new Set();
- for(const [i,s]of sourceCatalog.entries()){let item=prior.get(s.region);if(!item){item=document.createElement('li');item.dataset.region=s.region;item.append(document.createElement('strong'),document.createElement('span'),document.createElement('small'));}item.dataset.state=s.state;item.classList.toggle('source-current',s.region===region);item.children[0].textContent=s.name;item.children[1].textContent=`${sourceTypeLabel(s.type)} · ${s.detached?'已移除':sourceStateLabel(s.state)} · ${s.nodeCount} 颗星 · 来源 #${s.id}`+(s.region===region?' · 当前筛选':'');item.children[2].textContent=s.message||(s.type==='mcp'?'仅已保存的工具名称与说明；不调用工具，也不读取工具执行结果。':s.state==='ready'&&!s.nodeCount?'当前来源尚无可索引节点。':'');item.children[2].hidden=!item.children[2].textContent;retained.add(item);if(catalog.children[i]!==item)catalog.insertBefore(item,catalog.children[i]||null);}
+ for(const [i,s]of sourceCatalog.entries()){let item=prior.get(s.region);if(!item){item=document.createElement('li');item.dataset.region=s.region;item.append(document.createElement('strong'),document.createElement('span'),document.createElement('small'));}item.dataset.state=s.state;item.classList.toggle('source-current',s.region===region);item.children[0].textContent=s.name;item.children[1].textContent=`${sourceTypeLabel(s.type)} · ${s.detached?'已移除':sourceStateLabel(s.state)} · ${s.nodeCount} 颗星 · 来源 #${s.id}`+(s.region===region?' · 当前筛选':'');item.children[2].textContent=[sourceCoverageLabel(s),s.message].filter(Boolean).join('。')||(s.type==='mcp'?'仅已保存的工具名称与说明；不调用工具，也不读取工具执行结果。':s.state==='ready'&&!s.nodeCount?'当前来源尚无可索引节点。':'');item.children[2].hidden=!item.children[2].textContent;retained.add(item);if(catalog.children[i]!==item)catalog.insertBefore(item,catalog.children[i]||null);}
  for(const item of [...catalog.children])if(!retained.has(item))item.remove();$('source-catalog-section').hidden=!sourceCatalog.length;
  syncNodeSourceChrome();
 }

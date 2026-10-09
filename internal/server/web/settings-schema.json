@@ -149,6 +149,21 @@
           "description": "取消勾选后默认打开 Markdown 源文。"
         },
         {
+          "id": "fileMarkdownEditing",
+          "type": "segmented",
+          "label": "Markdown 编辑模式",
+          "options": [
+            {
+              "value": "split",
+              "label": "左右对比"
+            },
+            {
+              "value": "text",
+              "label": "纯文本"
+            }
+          ]
+        },
+        {
           "id": "fileMarkdownOutline",
           "type": "checkbox",
           "label": "Markdown 标题目录",
@@ -425,6 +440,18 @@
           "id": "about-project",
           "type": "about-project",
           "repository": "https://github.com/skyelan1999/aide"
+        }
+      ]
+    },
+    {
+      "id": "capabilities",
+      "title": "连接与能力",
+      "description": "分别观察配置、工具登记和具体检查；检查结果有时间与范围，不代替完整验收。",
+      "controls": [
+        {
+          "id": "capabilities",
+          "type": "capabilities",
+          "label": "连接与插件能力仪表"
         }
       ]
     }

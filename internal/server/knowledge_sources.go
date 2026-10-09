@@ -28,14 +28,26 @@ func knowledgeSafePath(p string) bool {
 
 // A source's public catalogue never contains its endpoint, credentials or MCP
 // command. Origin is an opaque configuration identity used for stale citations.
+type knowledgeCoverage struct {
+	Files            int      `json:"files"`
+	Directories      int      `json:"directories"`
+	FileBudget       int      `json:"fileBudget"`
+	DirectoryBudget  int      `json:"directoryBudget"`
+	DepthBudget      int      `json:"depthBudget"`
+	TextBytesPerFile int      `json:"textBytesPerFile"`
+	TotalKnown       bool     `json:"totalKnown"`
+	Reasons          []string `json:"reasons"`
+}
+
 type knowledgeSource struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Type      string `json:"type"`
-	Region    string `json:"region"`
-	State     string `json:"state"`
-	Message   string `json:"message,omitempty"`
-	NodeCount int    `json:"nodeCount"`
+	ID        string             `json:"id"`
+	Name      string             `json:"name"`
+	Type      string             `json:"type"`
+	Region    string             `json:"region"`
+	State     string             `json:"state"`
+	Message   string             `json:"message,omitempty"`
+	NodeCount int                `json:"nodeCount"`
+	Coverage  *knowledgeCoverage `json:"coverage,omitempty"`
 }
 
 type knowledgeArea struct {

@@ -206,6 +206,7 @@
     key: KEY,
     version: VERSION,
     get: function (name) {
+      if(name==='fileMarkdownEditing')return doc[name]==='text'?'text':'split';
       return ['workRecovery','fileLineNumbers','fileSyntaxHighlight','fileMarkdownPreview','fileMarkdownOutline','fileMarkdownMedia','fileCsvPreview'].indexOf(name) >= 0 ? doc[name] !== false : doc[name];
     },
     getAll: snapshot,
@@ -217,7 +218,7 @@
       notifyAll();
     },
     set: function (name, value) {
-      doc[name] = name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? (['system','full','reduced'].indexOf(value)>=0 ? value : 'system') : name === 'startupAnimation' ? (value==='off' ? 'off' : 'on') : value;
+      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? (['system','full','reduced'].indexOf(value)>=0 ? value : 'system') : name === 'startupAnimation' ? (value==='off' ? 'off' : 'on') : value;
       persist();
       if (name === 'theme' || name === 'language' || name === 'motion') applyTheme();
       notifyAll();

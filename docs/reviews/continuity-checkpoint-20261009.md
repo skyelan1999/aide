@@ -22,3 +22,10 @@
 ## 检查与交接
 
 本次检查与推送范围记录在[推送任务](../tasks/continuity-checkpoint-push-20261009.json)。原始本地日志位于忽略的 `.agent-state/`，不上传运行数据、令牌或临时工作区。发行基线仍为 `0.1.17.0 RC2`；后续 release 需重新绑定源码指纹并通过发布门禁。
+
+
+## 后续源码检查点：Markdown 编辑与导出
+
+本轮用户授权：“md需要在做一个导出为pdf，然后编辑的话可以在设置里设置是左右对比编辑还是纯文本编辑，做完这个改下文档push一下”。从 `c3c9558` 整理 Markdown 编辑布局与浏览器 PDF 导出，并一并保存此前尚未提交的连接能力仪表、轨迹内成果舱和索引覆盖诊断。详见[编辑与导出](../architecture/markdown-editing-export.md)、[能力仪表](../architecture/capability-dashboard.md)与[本轮任务](../tasks/markdown-export-layout-20261009.json)。
+
+quick 检查通过，源码指纹 `6c2ac44f9e4389f84d07458887f2065a970096762a30c67bd8d98606b7d4e424`。实际弹窗组件检查编辑模式、偏好持久化、实时草稿预览和390px布局；Safari打印保存的PDF已检查中文正文与表格。能力与索引覆盖相关Go race回归通过。完整工作台、独立文件页、远程图像、多页文档和Windows打印仍待验收。源码推送不改变当前生产实例；未升版、未构建发行包，整体目标继续。

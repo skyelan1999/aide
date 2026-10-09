@@ -26,7 +26,7 @@
 | 探索文件、会话、代码与文档 | [知识星图：多来源、差量同步、编号回填、静态代码关系与原文/RAG](architecture/knowledge-map.md) |
 | 排查 SSH 目录访问、分配资料和缓存目录 | [SSH 与存储配置](architecture/ssh-storage.md) · [双服务器隔离检查报告](reviews/2026-10-08-ssh-storage-audit.md) |
 | 维护独立产品主页 | [主页预览与手动 Pages 发布](website.md) · [主页任务](tasks/homepage-20261008.json) |
-| 配置执行循环、模型路由与命令审批 | [执行策略](architecture/execution-policy.md) · [审批检查点](reviews/approval-checkpoint-20261009.md) · [Harness 集成](architecture/harness-integration.md) |
+| 配置执行循环、模型路由与命令审批 | [执行策略](architecture/execution-policy.md) · [能力仪表](architecture/capability-dashboard.md) · [审批检查点](reviews/approval-checkpoint-20261009.md) · [Harness 集成](architecture/harness-integration.md) |
 | 看系统整体方案、状态机和运行机制 | [系统方案总览](system-overview.md) |
 | 写插件 | [插件协议 v1.1](plugin-protocol.md) |
 | 生成 Office 文件与编辑 XLSX | [Office 工具集](plugins/office.md) |
@@ -79,4 +79,5 @@ docs/
 
 当前版本以根目录 [version.md](../version.md) 及对应 Git tag 为准；截图使用此前隔离预览，不把历史证据重新包装为当前测试结果。
 
+- [Markdown 编辑布局与 PDF 导出](architecture/markdown-editing-export.md)：左右对比、纯文本及浏览器 PDF 排版。
 - [Markdown 历史版本插件](plugins/markdown-history.md)：原文编辑、保存去重与嵌入资源快照。

@@ -169,6 +169,10 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 	}
 	a.mu.Unlock()
 	g := knowledgeGraph{Workspace: knowledgeID(scope, "scope", "", "."), Truncated: sessionsTruncated, Nodes: nodes, Edges: []knowledgeEdge{}, Sources: []knowledgeSource{{ID: "sessions", Name: "会话", Type: "session", Region: "sessions", State: "ready", NodeCount: len(nodes)}}, Warnings: []string{"正文索引：每份文本前 8 KiB；PDF、图片和二进制在星图中仅索引名称，文档检索按读取预算提取。隐藏文件、密钥、符号链接及依赖目录不索引。"}}
+	if sessionsTruncated {
+		g.Sources[0].State = "partial"
+		g.Sources[0].Message = "会话数量达到200条索引预算；总会话数未统计"
+	}
 	for _, ar := range areas {
 		state := "partial"
 		message := "等待本轮索引"
@@ -186,6 +190,7 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 			continue
 		}
 		dirs, files := 0, 0
+		reasons := map[string]bool{}
 		partial := false
 		firstNode := len(g.Nodes)
 		if ctx.Err() != nil {
@@ -209,6 +214,18 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 		var walk func(string, string, int)
 		walk = func(p, parent string, depth int) {
 			if ctx.Err() != nil || files >= fileQuota || dirs >= dirQuota || depth > 7 {
+				if ctx.Err() != nil {
+					reasons["time"] = true
+				}
+				if files >= fileQuota {
+					reasons["files"] = true
+				}
+				if dirs >= dirQuota {
+					reasons["directories"] = true
+				}
+				if depth > 7 {
+					reasons["depth"] = true
+				}
 				partial = true
 				g.Truncated = true
 				return
@@ -226,18 +243,22 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 			f, err := root.Open(p)
 			if err != nil {
 				partial = true
+				reasons["read_error"] = true
 				cache.fail()
 				g.Truncated = true
 				return
 			}
-			entries, err := f.ReadDir(1000)
-			if len(entries) >= 1000 {
+			entries, err := f.ReadDir(1001)
+			if len(entries) > 1000 {
+				entries = entries[:1000]
+				reasons["directory_entries"] = true
 				partial = true
 				g.Truncated = true
 			}
 			f.Close()
 			if err != nil && err != io.EOF {
 				partial = true
+				reasons["read_error"] = true
 				cache.fail()
 				g.Truncated = true
 				return
@@ -256,6 +277,7 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 					continue
 				}
 				if files >= fileQuota {
+					reasons["files"] = true
 					partial = true
 					g.Truncated = true
 					break
@@ -264,6 +286,7 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 				if err != nil || !info.Mode().IsRegular() {
 					if err != nil {
 						partial = true
+						reasons["read_error"] = true
 						cache.fail()
 					}
 					continue
@@ -283,6 +306,7 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 				}
 				text, code, readErr := cache.material(root, ar.location, rel, info, wantCode)
 				if readErr != nil {
+					reasons["read_error"] = true
 					partial = true
 				}
 				node := ar.node(knowledgeNode{ID: fid, Name: e.Name(), Kind: "file", Region: region, Root: ar.root, Source: ar.source, Path: rel, Size: info.Size(), Text: text})
@@ -305,9 +329,24 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 		root.Close()
 		state, message := "ready", ""
 		if partial {
+			g.Truncated = true
 			state, message = "partial", "部分目录或正文达到读取、数量、深度或时间限制"
 		}
 		knowledgeSetSource(&g, ar, state, message, len(g.Nodes)-firstNode)
+		if partial && len(reasons) == 0 {
+			reasons["read_error"] = true
+		}
+		coverage := &knowledgeCoverage{Files: files, Directories: dirs, FileBudget: fileQuota, DirectoryBudget: dirQuota, DepthBudget: 7, TextBytesPerFile: 8192, Reasons: []string{}}
+		for reason := range reasons {
+			coverage.Reasons = append(coverage.Reasons, reason)
+		}
+		sort.Strings(coverage.Reasons)
+		for i := range g.Sources {
+			if g.Sources[i].Region == ar.region() {
+				g.Sources[i].Coverage = coverage
+				break
+			}
+		}
 	}
 	a.knowledgeAppendRemote(ctx, &g, areas, includeCode, &codeFiles, &codeBytes, &codeSkipped)
 	if includeCode {

@@ -1699,8 +1699,6 @@ function renderSession() {
       meta.append(el('span', 'run-status', t('正在暂停任务…')));
     }
     box.append(meta);
-    if(window.AideTaskOutcome)meta.append(AideTaskOutcome.button({sessionId:state.session.id,runId:run.id,api,t,error:toast,blocked:()=>lockScreen.locked||!state.token||$('login-dialog').open||state.session?.id!==box.dataset.outcomeSession}));
-    box.dataset.outcomeSession=state.session.id;
     renderApprovalReviews(run, box);
     if (run.status === 'running' && state.runPhase[run.id]) renderRunStatusInto(box, run.id);
     if (run.attachments?.length) box.append(el('p', 'muted', t("已附加：") + run.attachments.map(a => a.root + '/' + a.path).join('、')));
@@ -2281,12 +2279,15 @@ function isSqlitePath(path) { return /\.(db|sqlite|sqlite3)$/i.test(effectiveFil
 function setEditorMode(mode) {
   window.AideMarkdownOutline?.dispose($('editor-preview'));
   const preview = mode === 'preview';
+  const split = !preview && isMarkdownPath(state.file?.path) && window.aideUI?.get('fileMarkdownEditing') !== 'text';
+  $('editor-dialog').classList.toggle('md-split', split);
+  $('editor-dialog').dataset.editMode = mode;
   $('editor').classList.toggle('hidden', preview);
   if ($('editor').parentNode.classList.contains('code-wrapper')) $('editor').parentNode.classList.toggle('hidden', preview);
-  $('editor-preview').classList.toggle('hidden', !preview);
+  $('editor-preview').classList.toggle('hidden', !preview && !split);
   $('editor-mode-edit').classList.toggle('active', !preview);
   $('editor-mode-preview').classList.toggle('active', preview);
-  if (preview) {
+  if (preview || split) {
     if(isDelimitedPath(state.file?.path || ''))setupDelimitedPreview($('editor-preview'),$('editor'),state.file.path);
     else setupMarkdownPreview($('editor-preview'), $('editor').value, state.file?.path || '', state.file);
     $('editor-preview').scrollTop = 0;
@@ -2297,6 +2298,8 @@ function showEditor() {
   $('editor-title').textContent = state.file.path; $('editor').value = state.file.content;
   const readOnly = isBackupPath(state.file.path) || (state.file.root === 'context' && !sourceIsRW());
   const md = isMarkdownPath(state.file.path);
+  $('editor-export-pdf').classList.toggle('hidden', !md);
+  $('editor-dialog').classList.remove('md-split');
   const isDrawio = /\.drawio$/i.test(effectiveFileTypePath(state.file.path));
   const isImg = isImagePath(state.file.path);
   const isStl = isStlPath(state.file.path);
@@ -4058,6 +4061,7 @@ function renderMarkdownHistoryControl() {
  return row;
 }
 const controlRenderers = {
+  "capabilities": () => window.aideCapabilities.render({api,t,blocked:()=>lockScreen.locked||!state.token,active:()=>settingsPanel.active==='capabilities'&&$('settings-sheet').classList.contains('open')}),
   "markdown-history": renderMarkdownHistoryControl,
   checkbox: renderCheckboxControl, 'experience-preview': renderExperiencePreview, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 
@@ -7489,12 +7493,15 @@ const fileView = { spec: null, hash: '' };
 function setFileViewMode(mode) {
   window.AideMarkdownOutline?.dispose($('file-view-preview'));
   const preview = mode === 'preview';
+  const split = !preview && (isMarkdownPath(fileView.spec?.path) || ['.md','.markdown'].includes(fileView.spec?.format)) && window.aideUI?.get('fileMarkdownEditing') !== 'text';
+  $('file-view').classList.toggle('md-split', split);
+  $('file-view').dataset.editMode = mode;
   $('file-view-editor').classList.toggle('hidden', preview);
   if ($('file-view-editor').parentNode.classList.contains('code-wrapper')) $('file-view-editor').parentNode.classList.toggle('hidden', preview);
-  $('file-view-preview').classList.toggle('hidden', !preview);
+  $('file-view-preview').classList.toggle('hidden', !preview && !split);
   $('fv-edit').classList.toggle('active', !preview);
   $('fv-preview').classList.toggle('active', preview);
-  if (preview) {
+  if (preview || split) {
     if(isDelimitedPath(fileView.spec?.path || '') || ['.csv','.tsv'].includes(fileView.spec?.format))setupDelimitedPreview($('file-view-preview'),$('file-view-editor'),isDelimitedPath(fileView.spec.path)?fileView.spec.path:'resource'+fileView.spec.format);
     else setupMarkdownPreview($('file-view-preview'), $('file-view-editor').value, fileView.spec?.path || '', fileView.spec);
     $('file-view-preview').scrollTop = 0;
@@ -7515,6 +7522,8 @@ async function openFileViewMode() {
   const viewerFormats = ['.pdf','.docx','.xlsx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.dxf','.zip','.drawio'];
   const typePath = spec.readOnly === true && spec.source && viewerFormats.includes(format) ? 'resource' + format : spec.path;
   const md = isMarkdownPath(typePath);
+  $('file-view-export-pdf').classList.toggle('hidden', !md);
+  $('file-view').classList.remove('md-split');
   const isDrawio = /\.drawio$/i.test(effectiveFileTypePath(typePath));
   const isImg = isImagePath(typePath);
   const isStl = isStlPath(typePath);
@@ -7608,7 +7617,7 @@ async function openFileViewMode() {
 }
 let filePresentationPrefs = '';
 window.aideUI?.subscribe(() => {
-  const next = ['fileMarkdownOutline','fileMarkdownMedia'].map(fileRenderEnabled).join(':');
+  const next = ['fileMarkdownOutline','fileMarkdownMedia'].map(fileRenderEnabled).join(':')+':'+window.aideUI?.get('fileMarkdownEditing');
   if (filePresentationPrefs === next) return;
   const previous = filePresentationPrefs; filePresentationPrefs = next;
   if (!previous) return;
@@ -7616,13 +7625,23 @@ window.aideUI?.subscribe(() => {
     ['editor','editor-preview',state.file,()=>({...state.file}),()=>setEditorMode('edit')],
     ['file-view-editor','file-view-preview',fileView.spec,()=>({...fileView.spec,wsId:fileView.wsId}),()=>setFileViewMode('edit')]
   ]) {
-    if (!spec || !isMarkdownPath(spec.path)) continue;
+    if (!spec || !(isMarkdownPath(spec.path) || ['.md','.markdown'].includes(spec.format))) continue;
+    const panel=$(editorId==='editor'?'editor-dialog':'file-view');
+    if(panel.dataset.editMode==='edit')edit();
     setupMarkdownMedia($(editorId), {...spec,wsId:editorId==='file-view-editor'?fileView.wsId:spec.wsId}, currentSpec, edit);
     const host=$(previewId), scroll=host.scrollTop;
     if (!host.classList.contains('hidden')) { window.AideMarkdownOutline?.dispose(host); setupMarkdownPreview(host,$(editorId).value,spec.path,spec); host.scrollTop=scroll; }
   }
 });
-filePresentationPrefs = ['fileMarkdownOutline','fileMarkdownMedia'].map(fileRenderEnabled).join(':');
+filePresentationPrefs = ['fileMarkdownOutline','fileMarkdownMedia'].map(fileRenderEnabled).join(':')+':'+window.aideUI?.get('fileMarkdownEditing');
+for(const [editorId,previewId,panelId,getSpec] of [['editor','editor-preview','editor-dialog',()=>state.file],['file-view-editor','file-view-preview','file-view',()=>fileView.spec]]){
+ let timer=0;
+ const refresh=()=>{clearTimeout(timer);const spec=getSpec();if(!$(panelId).classList.contains('md-split'))return;timer=setTimeout(()=>{if(getSpec()!==spec||!$(panelId).classList.contains('md-split'))return;const host=$(previewId),scroll=host.scrollTop;window.AideMarkdownOutline?.dispose(host);setupMarkdownPreview(host,$(editorId).value,spec.path,spec);host.scrollTop=scroll;},250);};
+ $(editorId).addEventListener('input',event=>{if(!event.isComposing)refresh();});$(editorId).addEventListener('compositionend',refresh);
+ const exportButton=$(editorId==='editor'?'editor-export-pdf':'file-view-export-pdf');
+ exportButton.onclick=action(async()=>{const spec=getSpec();if(!spec)return;exportButton.disabled=true;try{await AideMarkdownExport.exportPDF({title:spec.path,html:renderMarkdown($(editorId).value,false,spec.path,spec),valid:()=>getSpec()===spec&&!lockScreen.locked&&!!state.token,renderDiagrams:async host=>{const nodes=[...host.querySelectorAll('.mermaid')];if(!nodes.length)return;await ensureVendorScript('/vendor/mermaid.min.js',()=>!!window.mermaid);window.mermaid.initialize({startOnLoad:false,theme:'neutral',securityLevel:'strict'});for(const node of nodes){const result=await window.mermaid.render('print'+crypto.randomUUID().replaceAll('-',''),node.textContent);node.innerHTML=result.svg;}}});}finally{exportButton.disabled=false;}});
+ exportButton.title=t('打开打印窗口，选择存储为 PDF；包含当前未保存的编辑内容');
+}
 $('fv-edit').onclick = () => setFileViewMode('edit');
 $('fv-preview').onclick = () => setFileViewMode('preview');
 function isDrawioPathForSave(path){return /\.drawio$/i.test(path||'');}
@@ -7653,17 +7672,25 @@ function trajectoryEvent(dot, title, bodyNode, kind) {
   if (bodyNode) ev.append(bodyNode);
   return ev;
 }
-let trajView = "history"; // history | calls（一级）
+let trajView = "history"; // history | calls | outcome（一级）
+let trajOutcomeRun = null;
+let trajectoryGeneration = 0;
 let trajFmt = "md"; // md | json（历史视图格式，二级）
 function renderTrajectory() {
   const host = $('trajectory-content');
+  ++trajectoryGeneration;
+  window.AideTaskOutcome?.close();
   host.replaceChildren();
+  const fmtSeg = $('traj-fmt-seg');
+  fmtSeg?.classList.toggle('hidden', trajView !== 'history');
+  $('trajectory-export').classList.toggle('hidden', trajView === 'outcome');
+  $('compact-button').classList.toggle('hidden', trajView !== 'history');
   const session = state.session;
   if (!session || (session.kind === 'assistant' ? !session.messages?.length : !session.runs?.length)) {
     host.append(el('p', 'muted', t("当前会话还没有任务。发送任务后，这里会按事件时间线记录完整轨迹。")));
     return;
   }
-  const fmtSeg = $('traj-fmt-seg');
+  if (trajView === 'outcome') { renderTrajectoryOutcome(host, session); return; }
   if (trajView === 'calls') { if (fmtSeg) fmtSeg.classList.add('hidden'); if (session.kind === 'assistant') host.append(el('p', 'muted', t('小秘会话记录的是对话历史，没有工作台工具调用记录。'))); else renderCallsAnalysis(host, session); return; }
   if (fmtSeg) fmtSeg.classList.remove('hidden');
   if (trajFmt === 'json') {
@@ -7675,6 +7702,28 @@ function renderTrajectory() {
     md.innerHTML = renderMarkdown(buildTrajectoryMarkdown(session)); // Markdown 渲染为 HTML（含 mermaid）
     host.append(md);
   }
+}
+function renderTrajectoryOutcome(host, session) {
+  if (session.kind === 'assistant') {
+    host.append(el('p', 'muted', t('小秘会话记录的是对话历史，没有工作台任务成果。')));
+    return;
+  }
+  const runs = [...(session.runs || [])].reverse();
+  const selected = runs.find(r => r.id === trajOutcomeRun?.runId && session.id === trajOutcomeRun?.sessionId) || runs[0];
+  if (!selected) return;
+  trajOutcomeRun = {sessionId: session.id, runId: selected.id};
+  const bar = el('div', 'traj-outcome-picker');
+  const label = el('label', '', t('选择任务')); label.htmlFor = 'traj-outcome-run';
+  const select = el('select', ''); select.id = 'traj-outcome-run';
+  runs.forEach((run, index) => {
+    const option = el('option', '', '#' + (runs.length - index) + ' · ' + (run.prompt || t('未命名任务')).slice(0, 70));
+    option.value = run.id; option.selected = run.id === selected.id; select.append(option);
+  });
+  select.onchange = () => { trajOutcomeRun = {sessionId:session.id, runId:select.value}; renderTrajectory(); };
+  bar.append(label, select);
+  const content = el('div', 'outcome-content traj-outcome-content'); host.append(bar, content);
+  window.AideTaskOutcome?.mount(content, {sessionId:session.id, runId:selected.id, api, t, error:toast,
+    blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id !== session.id || trajView !== 'outcome'});
 }
 function buildTrajectoryMarkdown(s) {
   const subs = (state.sessions || []).filter(x => x.parentId === s.id);
@@ -7755,6 +7804,7 @@ function callTypeOf(tool) {
   return 'other';
 }
 function renderCallsAnalysis(host, session) {
+  const requestGeneration = trajectoryGeneration;
   host.replaceChildren();
   host.append(el('p', 'muted', t('加载调用记录…')));
   (async () => {
@@ -7769,8 +7819,10 @@ function renderCallsAnalysis(host, session) {
         result: c.result,
         ok: c.ok
       }));
+      if (state.session?.id !== session.id || trajView !== 'calls' || !host.isConnected || lockScreen.locked || requestGeneration !== trajectoryGeneration) return;
       renderCallsTable(host, calls, resp.stats);
     } catch(e) {
+      if (requestGeneration !== trajectoryGeneration || state.session?.id !== session.id || trajView !== 'calls' || lockScreen.locked) return;
       host.replaceChildren();
       host.append(el('p', 'muted', t('加载失败：{0}', e.message)));
     }
@@ -7841,6 +7893,8 @@ function openTrajectory() {
   $('settings-backdrop').classList.add('open');
 }
 function closeTrajectory() {
+  ++trajectoryGeneration;
+  window.AideTaskOutcome?.close();
   $('trajectory-sheet').classList.remove('open');
   $('settings-backdrop').classList.remove('open');
 }
@@ -7872,15 +7926,14 @@ $('trajectory-export').onclick = action(() => {
     toast(t("已导出会话为 Markdown"));
   }
 });
-// 轨迹一级视图：历史 / 调用记录；历史二级格式：Markdown / JSON
+// 轨迹一级视图：历史 / 调用记录 / 成果舱；历史二级格式：Markdown / JSON
 function ensureTrajectoryTabs() {
   const mainSeg = document.querySelector('.traj-main-seg');
   if (mainSeg && !mainSeg.dataset.bound) {
     mainSeg.dataset.bound = '1';
     mainSeg.querySelectorAll('.traj-seg-btn').forEach(btn => {
       btn.onclick = () => {
-        mainSeg.querySelectorAll('.traj-seg-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        mainSeg.querySelectorAll('.traj-seg-btn').forEach(b => { b.classList.toggle('active', b === btn); b.setAttribute('aria-pressed', String(b === btn)); });
         trajView = btn.dataset.view;
         renderTrajectory();
       };

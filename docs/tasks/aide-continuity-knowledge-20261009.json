@@ -54,7 +54,9 @@
         "internal/server/web/task-outcome.js",
         "新增引用来源当前工作区AI可见性：眼睛按钮、sources.json作用域持久化、工具/附件/AI星图与RAG过滤已实现；18211真实鉴权API和Go race、浏览器组件通过。完整工作台、真实模型与SSH来源仍待验收；见source-ai-visibility-20261009。",
         "审批规则管理首批：按精确身份列出、单条撤销、有效期设置、revision冲突与执行前到期检查。UI待实际浏览器验收。",
-        "审批来源证据：人工、模型、有效规则匹配的范围/指纹/规则编号/期限，放行前持久化；成果舱独立审批快照。"
+        "审批来源证据：人工、模型、有效规则匹配的范围/指纹/规则编号/期限，放行前持久化；成果舱独立审批快照。",
+        "internal/server/capabilities.go 与 web/capabilities.js：显式能力检查和设置面板",
+        "本地来源coverage实际计数/预算/截断原因；会话200条截断来源状态；星际日志呈现。渐进继续扫描和优先范围仍待实现。"
       ]
     },
     "verification": {
@@ -79,7 +81,13 @@
         "docs/tasks/source-file-actions-20261009.json",
         "TestRememberedApprovalReceiptAndOutcome|TestApproval|TestTaskOutcome|TestRunShellRequiresExactConfirmationForWrites race PASS 6.273s",
         "TestAssistedApprovalNewFiles|TestWorkflowApprovalConflictAndPersistence|TestHarnessManualApprovalSaveFailureDoesNotRelease|TestSSHApply race PASS 13.011s",
-        ".agent-state/approval-receipts-preview/evidence.png (mock component API; not full workbench)"
+        ".agent-state/approval-receipts-preview/evidence.png (mock component API; not full workbench)",
+        "能力仪表相关 Go race: 5.994秒；四模块实际导入通过；本地HTTP和MCP夹具，不代表远端验收",
+        "最终能力仪表相关 Go race 通过5.497秒，补充宿主错误不泄漏；组件显示失败状态和宿主登记；临时预览18216已停止",
+        "能力仪表最终 quick: .agent-state/verify-20261009T083055838525Z.log; fingerprint 3dab88160541b0c5cb7985102674a7ed2ce4b056783f960650087d33cb25698a",
+        "node --check internal/server/web/capabilities.js 通过",
+        "TestKnowledgeCoverage定向race及 .agent-state/coverage-preview/logbook.png：临时本地目录与模拟日志数据，非完整实例/SSH验收",
+        "最终 TestKnowledgeCoverage -race PASS 3.978s；node --check starmap.js PASS；check_docs.py 176文件455链接 PASS；git diff --check PASS。初次夹具假设空工作区失败，已按testApp初始化内容的实测基线修正。"
       ]
     },
     "documentation": {
@@ -87,7 +95,8 @@
       "summary": "路线图和真实完成范围已记录，后续各项继续更新",
       "evidence": [
         "docs/architecture/continuity-roadmap.md",
-        "docs/reviews/approval-checkpoint-20261009.md"
+        "docs/reviews/approval-checkpoint-20261009.md",
+        "docs/architecture/capability-dashboard.md"
       ]
     },
     "cleanup": {
@@ -105,7 +114,7 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "目标active；18211已由start.command重建最新二进制，包含file-view和成果舱。等待用户处理证书后完整工作台/锁态验收；继续SSH与其他工作流，成果摘要下载未验收、结构化发布回执未接入。",
+  "handoff": "目标active；18211已由start.command重建最新二进制，包含file-view和成果舱。等待用户处理证书后完整工作台/锁态验收；继续SSH与其他工作流，成果摘要下载未验收、结构化发布回执未接入。 本批能力仪表源码未部署；完整工作台/SSH/真实提供商检查仍待完成。 本地索引覆盖观测已实现；渐进队列、范围与预算配置尚未实现。",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -140,12 +149,12 @@
     {
       "name": "连接能力仪表",
       "acceptance": "SSH连接/目录/权限、解析器、插件工具可用性、模型连接及实际检查",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "name": "渐进索引",
       "acceptance": "项目/目录范围、索引覆盖和预算状态、重点优先、不虚报全库",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "name": "混合检索",
