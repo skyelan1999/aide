@@ -1,0 +1,79 @@
+{
+  "id": "starmap-drift-20261008",
+  "request": "在加一个整体星图缓慢飘动的效果",
+  "baseline": "efa098a1ed6160d40fdb7baad16a0176df88f2a7",
+  "initial_status": "M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n?? docs/reviews/2026-10-08-starmap-controls/\n?? docs/reviews/starmap-controls-20261008.md\n?? docs/tasks/starmap-controls-20261008.json",
+  "acceptance": [
+    "整体星点、星云和关系线同步缓慢漂移",
+    "拖动/缩放/视角切换暂停漂移，恢复时不跳动",
+    "关闭动效冻结当前位置，遵循减少动态效果设置"
+  ],
+  "scope": [
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "docs/tasks/starmap-drift-20261008.json",
+    "docs/reviews/starmap-drift-20261008.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户反馈首版不明显，提升为横3.8%/纵2.4%视口，周期约138秒/182秒；仍冻结漂移时钟避免操作和开关跳变。",
+      "evidence": [
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "用户反馈首版不明显，提升为横3.8%/纵2.4%视口，周期约138秒/182秒；仍冻结漂移时钟避免操作和开关跳变。",
+      "evidence": [
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "用户反馈首版不明显，提升为横3.8%/纵2.4%视口，周期约138秒/182秒；仍冻结漂移时钟避免操作和开关跳变。",
+      "evidence": [
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "增强版语法/diff检查、候选构建成功；Safari18201间隔15秒两帧可见整体向右下移动，UI面板固定。保留先前开关验证，未重测完整周期/全量性能。",
+      "evidence": [
+        "docs/reviews/starmap-drift-20261008.md",
+        "docs/reviews/2026-10-08-starmap-drift/drift-a.png",
+        "docs/reviews/2026-10-08-starmap-drift/drift-b.png",
+        "docs/reviews/2026-10-08-starmap-drift/stronger-a.png",
+        "docs/reviews/2026-10-08-starmap-drift/stronger-b.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "证据与未验收项记录齐全；关闭本轮临时浏览器页，保留隔离候选。",
+      "evidence": [
+        "docs/reviews/starmap-drift-20261008.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "证据与未验收项记录齐全；关闭本轮临时浏览器页，保留隔离候选。",
+      "evidence": [
+        "docs/reviews/starmap-drift-20261008.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮未推送、发布或部署9999。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "隔离服务恢复 .agent-state/starmap-controls-20261008/compose-original.yaml，再由 start.command 启动。",
+  "handoff": "2026-10-08已观察18201候选；本次仅推送文档，相关产品源码留在本地。未重新检查服务、未新建Release、未部署生产。",
+  "documentation_push": {
+    "date": "2026-10-09",
+    "scope": "文档、任务账本与截图；产品源码未暂存",
+    "authorization": "先处理一下文档推上去",
+    "status": "prepared"
+  }
+}

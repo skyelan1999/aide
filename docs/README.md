@@ -4,7 +4,9 @@
 
 全部项目文档统一在 `docs/`。根目录仅保留 README、HANDOVER、version、许可证及客户端入口。不再创建 `doc/`。
 
-本轮发行线为 `0.1.17.0 RC1`，当前验收／交付状态见[发布记录](reviews/release-0.1.17.0-RC1-2026-10-08.md)。功能实现、隔离运行、浏览器验收、标签与远端附件分别记账；此前 `v0.1.16.0-RC1` 的收据保留为历史，不能代替本轮结果。
+已发布基线为 `0.1.17.0 RC2`，验收／交付状态见[发布记录](reviews/release-0.1.17.0-RC2-2026-10-08.md)。功能实现、隔离运行、浏览器验收、标签与远端附件分别记账；此前 `v0.1.16.0-RC1` 的收据保留为历史，不能代替本轮结果。
+
+星图按钮修整与增强漂移为 RC2 之后的本地候选；本次先提交文档和截图，相关源码尚未包含在已发布包中。见[按钮验收](reviews/starmap-controls-20261008.md)、[漂移验收](reviews/starmap-drift-20261008.md)与[文档推送范围](tasks/starmap-docs-push-20261009.json)。
 
 ## 从这里开始
 
@@ -28,7 +30,7 @@
 | 生成 Office 文件与编辑 XLSX | [Office 工具集](plugins/office.md) |
 | 让 AI 参与开发 | [统一 Agent 工作流](agent/WORKFLOW.md) · [客户端接入与 skill 路由](agent/ADAPTERS.md) · `python3 scripts/agent-route.py route --request "需求原文"` |
 | 看当前设计与验证边界 | [macOS UI](design/macos-ui.md) |
-| 看本轮0.1.17.0 RC1发布状态与实时收据 | [发布记录](reviews/release-0.1.17.0-RC1-2026-10-08.md) · [发布任务](tasks/release-20261008.json)（完成前为PENDING） |
+| 看当前0.1.17.0 RC2发行与附件收据 | [RC2发布记录](reviews/release-0.1.17.0-RC2-2026-10-08.md) |
 | 查看上一发行的记录与验收边界 | [0.1.16.0 RC1 发布记录](reviews/release-0.1.16.0-RC1-2026-10-08.md) · [发布任务验收](tasks/harness-release-20261007.json) |
 | 查看星图分任务实施记录 | [自动差量同步任务](tasks/starmap-live-updates-20261008.json) · [多来源任务](tasks/starmap-sources-20261008.json) · [多来源检查报告](reviews/2026-10-08-starmap-sources.md) |
 | 查看较早 RC5 跨平台资产 | [0.1.14.0 RC5 资产记录](reviews/release-assets-2026-10-01.md) · [发布任务账本](tasks/release-assets-2026-10-01.json) |

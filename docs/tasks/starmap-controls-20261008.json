@@ -1,0 +1,80 @@
+{
+  "id": "starmap-controls-20261008",
+  "request": "这一页的按钮修改一下，UI不太美观，按照最高标准改",
+  "baseline": "efa098a1ed6160d40fdb7baad16a0176df88f2a7",
+  "initial_status": "",
+  "acceptance": [
+    "按钮统一图标、尺寸、选择与焦点反馈",
+    "来源状态和节点数量清晰且保留完整无障碍说明",
+    "详情操作可见且原有检索/筛选/回调接口不变",
+    "隔离浏览器实际检查，无生产重启"
+  ],
+  "scope": [
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.css",
+    "internal/server/web/starmap.js",
+    "docs/tasks/starmap-controls-20261008.json",
+    "docs/reviews/starmap-controls-20261008.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "沿用现有主题、状态与事件；统一控件层级和紧凑来源列表，不增加模型请求。",
+      "evidence": [
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "沿用现有主题、状态与事件；统一控件层级和紧凑来源列表，不增加模型请求。",
+      "evidence": [
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "统一 SVG 图标、紧凑来源控件、详情粘性操作栏、组合星空控制；局限记录在验收文档。",
+      "evidence": [
+        "docs/reviews/starmap-controls-20261008.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "node --check、git diff --check、候选 Go 构建成功；Safari 18201 暗色桌面搜索、节点详情、来源筛选、代码/知识视图实际通过。其他主题/窄屏、键盘、AI与回调端到端未运行。",
+      "evidence": [
+        "docs/reviews/2026-10-08-starmap-controls/desktop-dark.png",
+        "docs/reviews/starmap-controls-20261008.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "统一 SVG 图标、紧凑来源控件、详情粘性操作栏、组合星空控制；局限记录在验收文档。",
+      "evidence": [
+        "docs/reviews/starmap-controls-20261008.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "统一 SVG 图标、紧凑来源控件、详情粘性操作栏、组合星空控制；局限记录在验收文档。",
+      "evidence": [
+        "docs/reviews/starmap-controls-20261008.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮为 UI 修改，无新的推送、发布或生产部署授权。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "隔离 bundle-runtime/compose.yaml 的原件位于 .agent-state/starmap-controls-20261008/compose-original.yaml；恢复原件后使用相同 COMPOSE_PROJECT_NAME 的 start.command。",
+  "handoff": "2026-10-08已观察18201候选；本次仅推送文档，相关产品源码留在本地。未重新检查服务、未新建Release、未部署生产。",
+  "documentation_push": {
+    "date": "2026-10-09",
+    "scope": "文档、任务账本与截图；产品源码未暂存",
+    "authorization": "先处理一下文档推上去",
+    "status": "prepared"
+  }
+}
