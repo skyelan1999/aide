@@ -74,6 +74,8 @@
     "date": "2026-10-09",
     "scope": "文档、任务账本与截图；产品源码未暂存",
     "authorization": "先处理一下文档推上去",
-    "status": "prepared"
+    "status": "pushed",
+    "commit": "4c5b426e46461f2b9487cc62fb26ef8910959a08",
+    "remote": "origin/main"
   }
 }

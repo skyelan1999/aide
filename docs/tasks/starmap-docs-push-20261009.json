@@ -79,12 +79,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "文档准备完成，将普通提交并推送origin/main；远端结果以实际Git收据为准。无新tag或Release。",
-      "evidence": []
+      "status": "pass",
+      "summary": "文档提交4c5b426已普通推送origin/main，git ls-remote核对一致；此后收据提交仅补齐结果。未创建tag或Release。",
+      "evidence": [
+        "git push origin main exit0",
+        "git ls-remote origin refs/heads/main 4c5b426e46461f2b9487cc62fb26ef8910959a08"
+      ]
     }
   },
   "release_authorization": "用户2026-10-09：先处理一下文档推上去。仅文档普通提交推送，无Release或生产更新。",
   "rollback": "",
-  "handoff": "产品HTML/CSS/JS保留未暂存；本次未重启服务、未执行产品测试或浏览器复测。"
+  "handoff": "文档和7张截图已推送origin/main。产品HTML/CSS/JS仍未暂存，未新建Release或部署生产；未运行产品回归。"
 }
