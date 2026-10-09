@@ -1,0 +1,13 @@
+'use strict';
+const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
+const source=fs.readFileSync('internal/server/web/app.js','utf8');
+const start=source.indexOf('function resolveMarkdownImagePath('),end=source.indexOf('function renderMarkdown(',start);
+const context={};vm.createContext(context);vm.runInContext(source.slice(start,end),context);
+const path=context.resolveMarkdownImagePath;
+assert.equal(path('docs/readme.md','images/test.png'),'docs/images/test.png');
+assert.equal(path('docs/readme.md','../images/test.png'),'images/test.png');
+assert.equal(path('readme.md','images/a%20b.png'),'images/a b.png');
+assert.equal(path('docs/readme.md','/images/test.png?raw=1#view'),'images/test.png');
+assert(source.includes("fileRawUrl(resolved, viewerSpec?.root || 'workspace', viewerSpec?.source || '', viewerSpec)"));
+assert(source.includes("renderMarkdown($('editor').value, false, state.file ? state.file.path : '', state.file)"));
+console.log('PASS: Markdown image normalization and viewer source routing');

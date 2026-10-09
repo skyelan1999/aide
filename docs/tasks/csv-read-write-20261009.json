@@ -1,0 +1,73 @@
+{
+  "id": "csv-read-write-20261009",
+  "request": "修复 CSV 文件读写支持",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M docs/plugins/office.md\n M docs/workspace-paths.md\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/auth_verify_test.go\n M internal/server/environment_guide.go\n M internal/server/global_events.go\n M internal/server/harness_runtime.go\n M internal/server/lock_state.go\n M internal/server/lock_state_test.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M plugins/office/index.js\n M scripts/lock-cluster-election.test.js\n?? docs/reviews/2026-10-09/\n?? docs/tasks/approval-global-memory-20261009.json\n?? docs/tasks/assisted-approval-ui-20261009.json\n?? docs/tasks/file-create-location-20261009.json\n?? docs/tasks/generated-docs-binding-20261009.json\n?? docs/tasks/lock-screen-review-20261009.json\n?? internal/server/approval_policy.go\n?? internal/server/generated_documents.go\n?? internal/server/source_browse.go\n?? internal/server/source_browse_test.go\n?? scripts/lock-cluster-state.test.js\n?? scripts/markdown-image-path.test.js",
+  "acceptance": [
+    "用户确认需求是 Excel 风格表格渲染",
+    "CSV/TSV 默认表格、支持单元格和原文编辑",
+    "权限与 hash 保存路径沿用现有接口",
+    "保留前导零和引号换行字段"
+  ],
+  "scope": [
+    "web/app.js",
+    "web/delimited-text.js",
+    "web/index.html",
+    "web/macos.css",
+    "web/locales/en.js",
+    "files.go MIME",
+    "docs/workspace-paths.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "已按用户确认的表格渲染需求完成源码与文档",
+      "evidence": [
+        "docs/workspace-paths.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "已按用户确认的表格渲染需求完成源码与文档",
+      "evidence": [
+        "docs/workspace-paths.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已按用户确认的表格渲染需求完成源码与文档",
+      "evidence": [
+        "docs/workspace-paths.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "JS 语法、diff、Docker 编译通过；组件浏览器预览与单元格同步已观察。生产实例和完整 API 保存未验收。",
+      "evidence": [
+        ".agent-state/csv-preview/preview.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已按用户确认的表格渲染需求完成源码与文档",
+      "evidence": [
+        "docs/workspace-paths.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "隔离预览证据归入 .agent-state；未修改运行数据或生产服务",
+      "evidence": [
+        ".agent-state/csv-preview/preview.png"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未部署、推送或发布",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "源码表格视图已实现；当前 9999 实例未更新。"
+}

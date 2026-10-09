@@ -1004,6 +1004,12 @@ func (a *App) ensureSourceSession(ctx context.Context, src Source) error {
 	secPassword, secKey := a.sourceCredentialLocked(src.ID)
 	generation := a.sshSessionGeneration(sock)
 	a.mu.Unlock()
+	return a.ensureSourceSessionCredentials(ctx, src, secPassword, secKey, generation)
+}
+
+// Draft directory pickers use request-scoped credentials and their own socket.
+func (a *App) ensureSourceSessionCredentials(ctx context.Context, src Source, secPassword, secKey string, generation uint64) error {
+	sock := sourceSocket(src.ID)
 	unlock, err := a.lockSSHSession(ctx, sock)
 	if err != nil {
 		return fmt.Errorf("等待 SFTP 连接失败: %w", err)
@@ -1116,6 +1122,10 @@ func (a *App) sftpListSource(src Source, p string) ([]map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
+	return parseSourceSFTPListing(out, p), nil
+}
+
+func parseSourceSFTPListing(out, p string) []map[string]any {
 	items := []map[string]any{}
 	for _, line := range strings.Split(out, "\n") {
 		line = strings.TrimSpace(line)
@@ -1135,7 +1145,7 @@ func (a *App) sftpListSource(src Source, p string) ([]map[string]any, error) {
 			break
 		}
 	}
-	return items, nil
+	return items
 }
 
 func (a *App) sftpReadSource(src Source, p string) ([]byte, error) {

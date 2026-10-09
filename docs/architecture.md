@@ -114,7 +114,7 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 | POST | `/api/persona/*`（unlock/save/reset/GET）、`/api/personas/*`（GET/active）、`/api/personality/*`（GET/PUT/reset/evolve） | 性格加解密、多人格切换、性格演化 |
 | POST | `/api/voice-filter`、`/api/voice-narrate` | 小秘研判 send/ignore/standby、双向朗读 |
 | GET/DELETE/POST | `/api/voice-history`（list/clear/enable/unlock/lock/change-password/disable） | 小秘工作历史与加锁 |
-| POST | `/api/account/verify-password` | 账户密码 SHA-256 校验（锁屏/历史口令） |
+| POST | `/api/account/verify-password` | 账户密码校验（Argon2id，兼容旧密码摘要；可提交锁屏解锁） |
 
 这里是导航索引，不代替每个 handler 中的完整请求结构、验证与错误码。完整注册表以 `server.go` mux 注册为准。
 
@@ -136,7 +136,7 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 
 ## 本任务自动命令审批
 
-聊天输入框的策略菜单提供独立“审批”栏（手动审批／辅助审批），策略按钮摘要显示当前选择；小秘会话不显示此栏。发送前选择通过 autoReview 写入任务。浏览器在本机按会话保存选择（最多 200 项），未保存的会话继承最近任务的选择；不跨会话自动授权。重试继承原任务选择。approval-mode API 可切换运行、等待澄清或等待文件应用任务的审核方式；默认关闭，不改变沙箱与插件权限。开启后，shell 命令及运行结束的新文件提案使用独立、无工具的模型请求审核，提供真实用户授权与工作目录，60 秒时限、512 输出 token，用量计入任务。授权范围内低风险或可逆中等风险操作才可放行。文件提案必须是本地工作区的新文件，经过完整提案内容审核，再复用正常应用路径及文件版本校验；已有文件覆盖、SSH 文件提案、只读沙箱、提案中途变化仍转人工。普通 ask_user 和浏览器/电脑控制确认不由此机制代答。失败、超时、取消不放行。
+聊天输入框的策略菜单提供独立“审批”栏（手动审批／辅助审批），策略按钮摘要显示当前选择；小秘会话不显示此栏。源码候选将审批模式作为服务端全局偏好持久化；新建、重试、续跑与子会话采用同一模式，切换立即更新所有活动任务并取消旧审核代次，跨标签页通过 SSE 同步。人工命令和文件卡片提供仅本次或永远记住，长期授权精准匹配工作空间与完整操作；策略栏可清空记忆。默认手动，不改变沙箱与插件权限，见[全局审批设计与验收边界](architecture/execution-policy.md)。开启后，shell 命令及运行结束的新文件提案使用独立、无工具的模型请求审核，提供真实用户授权与工作目录，60 秒时限、512 输出 token，用量计入任务。授权范围内低风险或可逆中等风险操作才可放行。文件提案必须是本地工作区的新文件，经过完整提案内容审核，再复用正常应用路径及文件版本校验；已有文件覆盖、SSH 文件提案、只读沙箱、提案中途变化仍转人工。普通 ask_user 和浏览器/电脑控制确认不由此机制代答。失败、超时、取消不放行。
 
 命令确认由服务端标记 `approvalKind=shell` 和轮次；按钮提交轮次，过期请求拒绝。审核结果只有在同一轮次、同一开关代际、未被人工应答且上下文有效时生效；切换或人工应答取消进行中的审核。保留最近 50 条具体命令、状态和原因，先持久化记录再唤醒执行；现有命令执行器仍检查沙箱。文件、网页与模型回复均不能自行开启审批方式。
 
@@ -144,39 +144,15 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 
 ## 锁屏集群
 
-锁屏状态跨标签页（主界面 ↔ 文件查看器）联动，纯前端零后端改动，实现见 `internal/server/web/lock-cluster.js`，频道 `aide-lock-v1`。后端 `/account/verify-password` 仍无状态，只比对 SHA-256；锁屏状态不入库、不回服务端。
+工作台、文件查看器与知识星图通过 `internal/server/web/lock-cluster.js` 同步视觉锁屏，BroadcastChannel 频道为 `aide-lock-v1`。服务端 `config/lock-state.json` 保存 `locked/gen/updatedAt`，原子写入，权限 0600；页面启动、主从竞选、恢复前台和可见页面每 5 秒读取权威状态。未设置账户密码时 GET 返回未锁，避免星图被历史状态困住。已设置密码且状态文件损坏时保持锁定。
 
-每 tab 启动生成 `tabId`（`crypto.randomUUID` 降级）+ `bootTs`；`role` 由 `location.hash` 是否含 `#file=` 决定（`ws`/`file`）。优先级元组 `P=(role: ws=0 < file=1, bootTs, tabId)`，小者胜，**ws 主界面优先当 master**。master 是 `masterLocked` 的唯一写入点；slave 各自维护 `localDismiss`。每 tab 可见遮罩 = `masterLocked && !localDismiss`。
+工作台优先于文件查看器和星图成为 master，同类页面按启动时间及 tabId 竞选。主页面降为 slave 时停止发送心跳；主页面消失时重新选举并先读取持久状态。无 BroadcastChannel 时仍可通过服务端复核同步。旧代际响应不能覆盖更新状态。
 
-消息协议（均带 `gen` 代际，slave 只接受 `gen` 单调递增）：
+锁定立即遮盖页面并串行提交 `PUT /api/lock-state`，保存失败明确显示错误。配置了密码时该端点拒绝直接写入未锁状态。全局解锁通过密码验证端点（`unlockScreen/lockGen`）或 WebAuthn 验证端点（同名查询参数）完成：先验证身份，再检查锁定代际，原子保存解锁，最后前端移除遮罩。期间出现新锁定时返回 409，旧验证不能清除新锁定。
 
-| 消息 | 方向 | 语义 |
-| --- | --- | --- |
-| `hello` | 任意 → 集群 | 新 tab 加入，携带自身优先级 |
-| `welcome` | master → hello 者 | 回执当前 `masterLocked` 与 `gen`；slave 据此采用状态 |
-| `assert` | master → 集群 | 心跳（1.5s），携带 `masterLocked`；slave 续看门狗 |
-| `lock` | master → 集群 | 升锁；slave 清 `localDismiss` 并本地遮罩+语音退下 |
-| `unlock` | master → 集群 | 解锁；slave 揭遮罩（不播欢迎语、不恢复麦克风） |
-| `bye` | 任意 → 集群 | tab 关闭；slave 发现 master bye 立即重选 |
-| `election` | candidate → 集群 | 竞选；对方优先级更高则退让，否则反发 |
-| `ping` | slave → master | 活动中继（≥1s 节流），master 续空闲表 |
-| `req-lock` | slave → master | slave 点"立即锁屏"，请 master 升锁并广播 |
+slave 单独验证只在该页面设置 `localDismiss`，不解锁其他页面；新页面加入不会清掉已有本地解锁标记，新一轮锁定会清除该标记。全局解锁后各页面跟随揭开遮罩，其他页面不恢复麦克风。工作台空闲计时由 master 管理，依据最后一次用户活动计算；配置读取不延长空闲期限，解锁时重新计时。文件页和星图的活动可向 master 中继。
 
-选举：加入窗口 600ms 内无 `welcome`/`assert` 即发 `election`；收到更强优先级的 `election` 则退让等对方 `assert`，400ms 无人反超即当选 master。新当选 master 继承"最后已知集群锁态"，从未见过 master（首个 tab / 刷新主 tab）则默认锁。slave 3s 收不到心跳触发重选；`lockTimeoutSec` 只在 master 计时，任意 tab 活动经 `ping` 续表。`BroadcastChannel` 不可用时降级为各 tab 独立锁。
-
-```mermaid
-flowchart LR
-  subgraph tabs
-    A[主界面 ws<br/>master]
-    B[从界面 file<br/>slave]
-    C[从界面 file<br/>slave]
-  end
-  A -- "assert/lock/unlock 广播" --> B
-  A -- "assert/lock/unlock 广播" --> C
-  B -- "ping/req-lock 上行" --> A
-  C -- "ping/req-lock 上行" --> A
-  A -. "3s 无心跳 → election" .-> B
-```
+这是视觉锁屏，不是账户退出或 bearer API 权限撤销。后台任务继续运行；星图锁定时清空当前图谱和详情，解锁后重新加载。触控 ID 的真实硬件链路需要浏览器与设备验收，源代码测试不能替代该验收。
 
 ## TTS 分层架构
 

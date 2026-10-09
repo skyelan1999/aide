@@ -115,7 +115,7 @@ func (a *App) approvedShell(ctx context.Context, task *Task, command string, tim
 	if a.toolDenied("run_shell") || taskToolDenied(task, "run_shell") {
 		return "工具 run_shell 已禁用", false
 	}
-	if !readOnlyAllowed(command) {
+	if !readOnlyAllowed(command) && !a.rememberedShellApproval(task, command) {
 		q, _ := json.Marshal(map[string]any{"question": "即将执行可能修改文件、改变外部状态或访问网络的命令。请检查完整命令后决定是否继续：\n\n" + command, "type": "confirm", "approvalKind": "shell", "command": command})
 		if a.awaitUserAnswer(ctx, task, q) != "确认" {
 			return "用户未批准执行该命令；命令没有运行。", false

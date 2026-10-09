@@ -12,17 +12,7 @@ function updateFavicon() {
 }
 updateFavicon();
 if (window.aideUI?.subscribe) window.aideUI.subscribe(updateFavicon);
-function loadApprovalModes() {
-  try {
-    const values = JSON.parse(localStorage.getItem('aide-approval-modes') || '[]');
-    return new Map(Array.isArray(values) ? values.filter(v => Array.isArray(v) && typeof v[0] === 'string' && typeof v[1] === 'boolean').slice(-200) : []);
-  } catch { return new Map(); }
-}
-function rememberApprovalMode(key, enabled) {
-  state.approvalModes.set(key, enabled);
-  try { localStorage.setItem('aide-approval-modes', JSON.stringify([...state.approvalModes].slice(-200))); } catch {}
-}
-const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, approvalModes: loadApprovalModes(), approvalModeBusy: false, autoScroll: true, jumpAnimating: false };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, approvalPolicy: null, approvalModeBusy: false, autoScroll: true, jumpAnimating: false };
 function voiceAssistantDisplayName() { return String(state.config?.voiceAssistantName || '小秘').trim() || '小秘'; }
 function currentHostPort() { return Number(location.port || (location.protocol === 'https:' ? 443 : 80)); }
 const fragment = new URLSearchParams(location.hash.slice(1));
@@ -40,7 +30,7 @@ state.liveRound = {}; // Keep per-run streaming rounds initialized on the first 
 })();
 // 纯前端「忽略此提案」集合（无后端拒绝端点）：仅在内存折叠卡片，不写盘、不影响会话
 const ignoredProposals = new Set();
-if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); history.replaceState(null, '', location.pathname); }
+if (fragment.has('token')) { state.token = fragment.get('token'); localStorage.setItem('aide-token', state.token); fragment.delete('token'); history.replaceState(history.state, '', location.pathname + location.search + (fragment.toString() ? '#' + fragment.toString() : '')); }
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 const SIDEBAR_WIDTHS_KEY = 'aide-sidebar-widths-v1';
 const sidebarWidths = { left: null, right: null };
@@ -262,7 +252,9 @@ async function api(path, options = {}) {
     // browser's access token expired. Keep the lock screen visible so its own
     // handler can show the password error instead of opening the login dialog.
     if (response.status === 401 && path !== '/account/verify-password' && !$('login-dialog').open) $('login-dialog').showModal();
-    throw new Error(t(data.error) || t("请求失败"));
+    const error = new Error(t(data.error) || t("请求失败"));
+    error.status = response.status;
+    throw error;
   }
   return data;
 }
@@ -337,6 +329,7 @@ function updateAutoModeUI() {}
 /* ── 问题分析历史报告：读索引、渲染 Markdown，并校验 draw.io 图存在 ── */
 const RCA_DIR = '.cache/system-docs/problem-reports';
 const RCA_INDEX = RCA_DIR + '/problem-reports-index.md';
+let rcaLocation = { query: 'root=workspace', dir: RCA_DIR, index: RCA_INDEX };
 function updatePhaseHint() {
   const el = $('phase-hint');
   if (!el) return;
@@ -389,16 +382,20 @@ let rcaState = { entries: [], active: '' };
 async function openRcaReports() {
   const dlg = $('rca-dialog');
   if (typeof dlg.showModal === 'function' && !dlg.open) dlg.showModal(); else dlg.setAttribute('open', '');
+  const config = await api('/workspace-config');
+  const bound = !!String(config.docs?.path || '').trim();
+  rcaLocation = bound ? { query: 'source=system-docs', dir: 'problem-reports', index: 'problem-reports/problem-reports-index.md' } : { query: 'root=workspace', dir: RCA_DIR, index: RCA_INDEX };
+  rcaState.active = '';
   await loadRcaList();
 }
 async function loadRcaList() {
   const listEl = $('rca-report-list');
   listEl.innerHTML = '<div class="rca-empty">' + t('正在加载…') + '</div>';
   let indexRows = [];
-  try { const d = await api('/file?root=workspace&path=' + encodeURIComponent(RCA_INDEX)); indexRows = rcaParseIndex(d.content || ''); }
+  try { const d = await api('/file?' + rcaLocation.query + '&path=' + encodeURIComponent(rcaLocation.index)); indexRows = rcaParseIndex(d.content || ''); }
   catch (e) { indexRows = []; }
   let files = [];
-  try { files = await api('/files?root=workspace&path=' + encodeURIComponent(RCA_DIR)); }
+  try { files = await api('/files?' + rcaLocation.query + '&path=' + encodeURIComponent(rcaLocation.dir)); }
   catch (e) { files = []; }
   const reportFiles = (files || []).filter(f => !f.dir && /^RCA-.*\.md$/i.test(f.name) && f.name !== 'problem-reports-index.md');
   const byId = {};
@@ -438,7 +435,7 @@ async function openRcaReport(entry) {
   const body = $('rca-view-body');
   body.innerHTML = '<div class="rca-empty">' + t('正在加载…') + '</div>';
   let data;
-  try { data = await api('/file?root=workspace&path=' + encodeURIComponent(entry.path)); }
+  try { data = await api('/file?' + rcaLocation.query + '&path=' + encodeURIComponent(entry.path)); }
   catch (e) { body.innerHTML = '<div class="rca-empty">' + t('读取报告失败：{0}', e.message || entry.path) + '</div>'; return; }
   body.innerHTML = rcaFriendlyRender(data.content || '');
   // renderMarkdown 包装层已在渲染后自动触发 renderMermaid，此处无需再调用（renderMermaid 为闭包内定义）
@@ -463,6 +460,7 @@ async function openRcaReport(entry) {
 }
 async function refreshConfig() {
   state.config = await api('/config');
+  await refreshApprovalPolicy();
   $('connection').textContent = t("● 本地服务已连接"); $('connection').classList.add('ready');
   const versionText = state.config.version ? 'v' + state.config.version : 'dev';
   $('app-version').textContent = versionText;
@@ -644,6 +642,10 @@ function setupGlobalEvents() {
   try {
     sessionsEv = new EventSource('/api/events?access_token=' + encodeURIComponent(state.token));
     sessionsEv.addEventListener('sessions-changed', () => scheduleSessionsRefresh());
+    sessionsEv.addEventListener('approval-policy-changed', async () => {
+      try { await refreshApprovalPolicy(); if(state.session) await selectSession(state.session.id); } catch (_) {}
+    });
+    sessionsEv.addEventListener('open', () => refreshApprovalPolicy().catch(() => {}));
     sessionsEv.onerror = () => { /* 浏览器自动重连；不关闭 */ };
   } catch (_) { sessionsEv = null; }
 }
@@ -830,6 +832,14 @@ function openStream(run) {
     if (ph) { ph.note = d.text || ''; touchRunActivity(run.id); renderRunStatus(run.id); }
   }); // 空响应自动续接提示
   es.addEventListener('clarification', () => { if (state.stream !== es) return; const ph = ensureRunPhase(run.id); const waitingRun = state.session?.runs?.find(r => r.id === run.id); if (waitingRun) waitingRun.status = 'awaiting_clarification'; ph.status = 'awaiting_clarification'; ph.stalled = false; renderRunStatus(run.id); avatarRunFeedback(run.id, 'awaiting_clarification'); refreshSessionSoon(); });
+  es.addEventListener('clarification-resolved', () => {
+    if (state.stream !== es) return;
+    const waitingRun = state.session?.runs?.find(r => r.id === run.id);
+    if (waitingRun) { waitingRun.pendingQuestion = null; if (waitingRun.status === 'awaiting_clarification') waitingRun.status = 'running'; }
+    const ph = ensureRunPhase(run.id);
+    if (ph.status === 'awaiting_clarification') ph.status = 'running';
+    renderSession(); refreshSessionSoon();
+  });
   es.addEventListener('delta', e => {
     if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
@@ -1477,38 +1487,23 @@ function buildToolUses(run) {
 }
 const statuses = { running: '运行中', paused: '已暂停', resumed: '已续跑', completed: '已完成', failed: '失败', cancelled: '已停止', interrupted: '已中断', awaiting_approval: '等待应用', awaiting_clarification: '等待澄清' };
 // The server reviews exact shell approvals; the browser never synthesizes a confirmation.
-function currentApprovalRun() {
-  return [...(state.session?.runs || [])].reverse().find(r => ['running', 'awaiting_clarification', 'awaiting_approval'].includes(r.status));
-}
-function composerAutoReview() {
-  const run = currentApprovalRun();
-  if (run) return !!run.autoReview;
-  const key = state.session?.id || 'draft';
-  if (state.approvalModes.has(key)) return state.approvalModes.get(key);
-  return !!state.session?.runs?.at(-1)?.autoReview;
-}
-function syncComposerApproval() {
-  refreshStrategyUI();
+function composerAutoReview() { return !!state.approvalPolicy?.enabled; }
+function syncComposerApproval() { refreshStrategyUI(); }
+async function refreshApprovalPolicy() {
+  const policy = await api('/approval-policy');
+  if (state.approvalPolicy && policy.revision < state.approvalPolicy.revision) return;
+  state.approvalPolicy = policy;
+  syncComposerApproval();
 }
 async function setComposerAutoReview(next) {
-  if (state.approvalModeBusy || state.submitting || next === composerAutoReview()) return;
-  const sessionId = state.session?.id;
-  const key = sessionId || 'draft';
-  const run = currentApprovalRun();
-  state.approvalModeBusy = true; syncComposerApproval(); updateSendEnabled();
+  if (state.approvalModeBusy || next === composerAutoReview()) return;
+  state.approvalModeBusy = true; syncComposerApproval();
   try {
-    if (run) {
-      await api(`/sessions/${sessionId}/runs/${run.id}/approval-mode`, {
-        method: 'PUT', body: JSON.stringify({enabled: next})
-      });
-    }
-    rememberApprovalMode(key, next);
-    if (run && state.session?.id === sessionId) {
-      run.autoReview = next;
-      await selectSession(sessionId); schedulePoll();
-    }
-  } catch(e) { toast(e.message); }
-  finally { state.approvalModeBusy = false; syncComposerApproval(); updateSendEnabled(); }
+    state.approvalPolicy = await api('/approval-policy', {method:'PUT', body:JSON.stringify({enabled:next})});
+    if (state.session) { await selectSession(state.session.id); schedulePoll(); }
+    toast(t('审批模式已全局生效'));
+  } catch(e) { await refreshApprovalPolicy().catch(() => {}); toast(e.message); }
+  finally { state.approvalModeBusy=false; syncComposerApproval(); }
 }
 function renderApprovalReviews(run, box) {
   if (!run.approvalReviews?.length) return;
@@ -1523,25 +1518,53 @@ function renderApprovalReviews(run, box) {
   box.append(details);
 }
 // 澄清卡片：在会话流中渲染单个交互问题（选项/输入/确认条），点击即作为应答
+const clarificationSubmissions = new Set();
 function renderClarification(run, box) {
-  if (!run.pendingQuestion) return;
+  if (!run.pendingQuestion || run.status !== "awaiting_clarification") return;
+  const sessionId = state.session?.id;
+  if (!sessionId) return;
   let q; try { q = typeof run.pendingQuestion === 'string' ? JSON.parse(run.pendingQuestion) : run.pendingQuestion; } catch (e) { return; }
+  if (q.approvalKind === 'shell' && run.autoReview && ['reviewing', 'approved'].includes(run.approvalState)) {
+    const status = el('div', 'approval-review');
+    status.setAttribute('role', 'status');
+    status.append(el('p', '', t(run.approvalState === 'approved' ? '已自动放行' : '辅助审批中，无需操作')), el('pre', 'approval-command', q.command));
+    box.append(status); return;
+  }
   const card = el('div', 'clarify-card');
   if (q.progressTotal) card.append(el('div', 'clarify-progress', t('澄清 {0}/{1}', q.progressCurrent || 1, q.progressTotal)));
   if (q.approvalKind === 'shell') {
     card.append(el('div', 'clarify-question', t('执行命令前确认')));
     card.append(el('pre', 'approval-command', q.command));
   } else card.append(el('div', 'clarify-question', q.question));
-  const answer = async (text) => {
-    card.querySelectorAll('button,input').forEach(x => x.disabled = true);
-    try { await api(`/sessions/${state.session.id}/runs/${run.id}/answer`, { method: 'POST', body: JSON.stringify({ answer: text, round: q.approvalRound || '' }) }); await selectSession(state.session.id); schedulePoll(); }
-    catch (e) { toast(e.message); card.querySelectorAll('button,input').forEach(x => x.disabled = false); }
+  const key = `${sessionId}/${run.id}/${q.questionId || q.approvalRound || JSON.stringify(q)}`;
+  const disable = value => card.querySelectorAll('button,input').forEach(x => x.disabled = value);
+  const refresh = async () => { if (state.session?.id === sessionId) await selectSession(sessionId); schedulePoll(); };
+  const answer = async (text, remember = false) => {
+    if (clarificationSubmissions.has(key)) return;
+    clarificationSubmissions.add(key); disable(true);
+    let accepted = false;
+    try {
+      await api(`/sessions/${sessionId}/runs/${run.id}/answer`, { method: 'POST', body: JSON.stringify({ answer: text, round: q.approvalRound || '', questionId: q.questionId || '', remember }) });
+      accepted = true; card.remove();
+      await refresh();
+    } catch (e) {
+      if (e.status === 409) {
+        card.remove();
+        toast(t('问题状态已变化，正在同步会话'));
+        await refresh().catch(err => toast(err.message));
+      } else {
+        toast(e.message);
+        if (!accepted) { clarificationSubmissions.delete(key); disable(false); }
+      }
+    }
   };
   if (q.type === 'confirm') {
     const row = el('div', 'clarify-actions');
-    const ok = el('button', 'primary', t('确认，继续')); ok.onclick = () => answer('确认');
+    const ok = el('button', 'primary', t(q.approvalKind === 'shell' ? '仅本次允许' : '确认，继续')); ok.onclick = () => answer('确认');
     const adj = el('button', 'quiet', t('需要调整')); adj.onclick = () => answer('需要调整');
-    row.append(ok, adj);
+    row.append(ok);
+    if (q.approvalKind === 'shell') { const always = el('button', 'quiet', t('永远记住并允许')); always.title=t('记住此工作空间中的完整命令，不扩大沙箱权限'); always.onclick=()=>answer('确认',true); row.append(always); }
+    row.append(adj);
     card.append(row);
   } else if (q.type === 'input') {
     const row = el('div', 'clarify-actions');
@@ -1555,6 +1578,7 @@ function renderClarification(run, box) {
     other.onclick = () => { $('prompt').focus(); toast(t('直接在输入框回答后发送即可')); };
     card.append(other);
   }
+  disable(clarificationSubmissions.has(key));
   box.append(card);
 }
 function renderSession() {
@@ -1721,15 +1745,18 @@ function renderSession() {
         const after = el('div'); after.append(el('small', '', t("建议内容")), el('pre', '', file.content)); diff.append(before, after); details.append(diff); proposal.append(details);
       }
       if (run.status === 'awaiting_approval') {
-        if (ignoredProposals.has(run.id)) {
+        if (run.autoReview && ['reviewing', 'approved'].includes(run.approvalState)) {
+          const status = el('p', 'muted', t(run.approvalState === 'approved' ? '已自动放行' : '辅助审批中，无需操作'));
+          status.setAttribute('role', 'status'); proposal.append(status);
+        } else if (ignoredProposals.has(run.id)) {
           proposal.append(el('p', 'muted', t("已忽略此提案，未写入磁盘。")));
         } else {
           const apply = el('button', 'primary', t("应用这些文件修改"));
-          apply.onclick = async () => {
+          const applyFiles = async (remember = false) => {
             if (apply.disabled) return;
             apply.disabled = true;
             try {
-              await api(`/sessions/${state.session.id}/runs/${run.id}/apply`, { method: 'POST', body: '{}' });
+              await api(`/sessions/${state.session.id}/runs/${run.id}/apply`, { method: 'POST', body: JSON.stringify({remember}) });
               toast(t("文件修改已写入本地挂载目录"));
               await selectSession(state.session.id);
               await loadFiles();
@@ -1739,9 +1766,11 @@ function renderSession() {
               apply.disabled = false;
             }
           };
+          apply.textContent=t('仅本次应用'); apply.onclick=()=>applyFiles(false);
+          const always=el('button','quiet',t('永远记住并应用')); always.title=t('记住相同路径、原版本和完整新内容'); always.onclick=()=>applyFiles(true);
           const ignore = el('button', 'quiet', t("忽略此提案"));
           ignore.onclick = () => { ignoredProposals.add(run.id); renderSession(); };
-          proposal.append(el('p', 'muted', t("请展开检查文件内容。应用后会写入本地工作目录；验证命令需要单独运行。")), apply, ignore);
+          proposal.append(el('p', 'muted', t("请展开检查文件内容。应用后会写入本地工作目录；验证命令需要单独运行。")), apply, always, ignore);
         }
       }
       else if (run.applied) proposal.append(el('p', 'muted', t("✓ 已应用文件修改。命令验证结果以命令面板为准。")));
@@ -2200,18 +2229,25 @@ function isImagePath(path) { return /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i.test(
 function isStlPath(path) { return /\.stl$/i.test(effectiveFileTypePath(path)); }
 function isPdfPath(path) { return /\.pdf$/i.test(effectiveFileTypePath(path)); }
 function isZipPath(path) { return /\.zip$/i.test(effectiveFileTypePath(path)); }
+function isDelimitedPath(path) { return /\.(csv|tsv)$/i.test(effectiveFileTypePath(path)); }
 function isXlsxPath(path) { return /\.xlsx$/i.test(effectiveFileTypePath(path)); }
 function isSqlitePath(path) { return /\.(db|sqlite|sqlite3)$/i.test(effectiveFileTypePath(path)); }
 function setEditorMode(mode) {
+  window.AideMarkdownOutline?.dispose($('editor-preview'));
   const preview = mode === 'preview';
   $('editor').classList.toggle('hidden', preview);
   if ($('editor').parentNode.classList.contains('code-wrapper')) $('editor').parentNode.classList.toggle('hidden', preview);
   $('editor-preview').classList.toggle('hidden', !preview);
   $('editor-mode-edit').classList.toggle('active', !preview);
   $('editor-mode-preview').classList.toggle('active', preview);
-  if (preview) { $('editor-preview').innerHTML = renderMarkdown($('editor').value, false, state.file ? state.file.path : ''); $('editor-preview').scrollTop = 0; }
+  if (preview) {
+    if(isDelimitedPath(state.file?.path || ''))setupDelimitedPreview($('editor-preview'),$('editor'),state.file.path);
+    else setupMarkdownPreview($('editor-preview'), $('editor').value, state.file?.path || '', state.file);
+    $('editor-preview').scrollTop = 0;
+  }
 }
 function showEditor() {
+  window.AideMarkdownMedia?.dispose($("editor"));
   $('editor-title').textContent = state.file.path; $('editor').value = state.file.content;
   const readOnly = isBackupPath(state.file.path) || (state.file.root === 'context' && !sourceIsRW());
   const md = isMarkdownPath(state.file.path);
@@ -2230,7 +2266,7 @@ function showEditor() {
   teardownCodeHighlight($('editor'));
   teardownViewer($('editor-preview')); // 切文件前回收上一个可视化查看器（WebGL/PDF/Observer）
   var _cl = codeLang(state.file.path);
-  if (_cl) setupCodeHighlight($('editor'), _cl);
+  setupCodeHighlight($('editor'), _cl);
   const visualPreview = isZip || isStl || isPdf || isDxf || isDocx || isXlsx || isSqlite || isImg || isDrawio;
   if ($('editor').parentNode.classList.contains('code-wrapper')) $('editor').parentNode.classList.toggle('hidden', visualPreview);
   // 图片 / STL / PDF 为只读可视化查看器，无文本可保存，禁用保存（避免空内容覆盖原文件）；drawio 可保存
@@ -2240,7 +2276,7 @@ function showEditor() {
   $('attach-file').disabled = state.file.fresh;
   $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx || isSqlite || isZip));
   $("editor-ro-badge").title = isBackupPath(state.file.path) ? t("备份文件 · 只读") : ((readOnly && state.file.root === "context") ? (sourceIsRW() ? t("引用 · 读写来源") : t("引用 · 只读")) : (isDocx ? t("DOCX 正文预览 · 批注可写入文档") : (isImg || isStl || isPdf || isDxf || isSqlite || isZip ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"))));
-  $('editor-mode-switch').classList.toggle('hidden', !md);
+  $('editor-mode-switch').classList.toggle('hidden', !md && !isDelimitedPath(state.file.path));
   if (isZip) {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
@@ -2282,8 +2318,10 @@ function showEditor() {
       toast(t('draw.io 已保存'));
     }, '_editorDrawioHandler');
   } else {
-    setEditorMode(md ? 'preview' : 'edit');
+    setEditorMode((md && fileRenderEnabled('fileMarkdownPreview')) || (isDelimitedPath(state.file.path) && fileRenderEnabled('fileCsvPreview')) ? 'preview' : 'edit');
   }
+  setupMarkdownMedia($('editor'), {...state.file}, () => ({...state.file}), () => setEditorMode('edit'));
+  editorAutoSave.activate();
   $('editor-dialog').showModal();
 }
 $('editor-mode-edit').onclick = () => setEditorMode('edit');
@@ -2611,7 +2649,6 @@ $('task-form').onsubmit = action(async event => {
       if (!state.session) state.session = created; // 仅当用户仍停留在空白页时接管；点击已切走的会话不被空壳抢占
     }
     const target = draftSession || created;
-    if (created) rememberApprovalMode(created.id, autoReview);
     // 小秘会话键盘输入走 assistant-message，由后端按直接文字消息处理，不经过语音环境过滤。
     if (target.kind === 'assistant') {
       try {
@@ -3181,7 +3218,6 @@ $('settings-form').onsubmit = action(async event => { event.preventDefault(); if
   window.addEventListener('storage',event=>{if(event.key===key){const next=read(false),wasEnabled=p.enabled;Object.assign(p,next.avatar);data={...next,avatar:p};update({preserveSelection:true});refreshPreview?.();if(wasEnabled!==p.enabled)refreshContextBudget();}});
   window.setInterval(update,800);update();
 })();
-$('save-file').onclick = action(async () => { const body = { path: state.file.path, content: $('editor').value, hash: state.file.hash }; if (state.file.source) body.source = state.file.source; if (state.file.wsId) body.workspaceId = state.file.wsId; const data = await api('/file', { method: 'PUT', body: JSON.stringify(body) }); state.file.hash = data.hash; state.file.content = $('editor').value; state.file.fresh = false; $('attach-file').disabled = false; toast(t("✓ 已保存")); await loadFiles(); });
 $('attach-file').onclick = () => {
   if (state.file.content !== $('editor').value) { toast(t("请先保存修改，再附加到任务")); return; }
   const fp = state.file.path || '';
@@ -3203,8 +3239,28 @@ $('attach-file').onclick = () => {
   renderAttachments(); $('editor-dialog').close(); $('prompt').focus();
 };
 $('new-file').onclick = openNewItemMenu;
-$('new-file-form').onsubmit = action(async event => { event.preventDefault(); state.file = { path: $('new-file-path').value.trim(), root: 'workspace', hash: '', content: '', fresh: true }; $('new-file-dialog').close(); showEditor(); });
-$('new-folder-form').onsubmit = action(async event => { event.preventDefault(); const target = currentFileTarget(); if (!target.writable) throw new Error(t('引用为只读')); await api('/directory', { method: 'POST', body: JSON.stringify({ root: state.root, source: target.source || undefined, parentPath: state.dir, name: $('new-folder-name').value }) }); $('new-folder-dialog').close(); await loadFiles(); });
+let newItemTarget = null;
+function selectedNewItemTarget() {
+  if (!newItemTarget || newItemTarget.location !== fileLocationKey() || newItemTarget.dir !== state.dir) {
+    throw new Error(t('目录已切换，请重新打开新建菜单'));
+  }
+  if (!currentFileTarget().writable) throw new Error(t('引用为只读'));
+  return newItemTarget;
+}
+$('new-file-form').onsubmit = action(async event => {
+  event.preventDefault();
+  const target = selectedNewItemTarget();
+  const path = $('new-file-path').value.trim();
+  if (!path) return;
+  state.file = { path, root: target.root, source: target.source, wsId: target.source ? 'source:' + target.source : '', hash: '', content: '', fresh: true };
+  $('new-file-dialog').close(); showEditor();
+});
+$('new-folder-form').onsubmit = action(async event => {
+  event.preventDefault();
+  const target = selectedNewItemTarget();
+  await api('/directory', { method: 'POST', body: JSON.stringify({ root: target.root, source: target.source || undefined, parentPath: target.dir, name: $('new-folder-name').value }) });
+  $('new-folder-dialog').close(); await loadFiles();
+});
 $('terminal-toggle').onclick = () => {
   const terminal = $('terminal-body'), closing = !terminal.classList.contains('hidden');
   if (closing) leaveUISurface(terminal, () => terminal.classList.add('hidden'));
@@ -3320,6 +3376,17 @@ function renderSegmentedControl(control) {
   wrap.append(head, track);
   requestAnimationFrame(apply);
   return wrap;
+}
+function renderCheckboxControl(control) {
+  const row = el('label', 'settings-file-checkbox');
+  const input = document.createElement('input'); input.type = 'checkbox';
+  input.dataset.control = control.id;
+  const copy = el('span', 'settings-file-copy');
+  copy.append(el('strong', '', t(control.label)), el('span', '', t(control.description || '')));
+  const apply = () => { input.checked = fileRenderEnabled(control.id); };
+  input.addEventListener('change', () => window.aideUI?.set(control.id, input.checked));
+  const unsub = window.aideUI?.subscribe(apply);
+  settingsPanel.refreshers.push({apply, unsub}); apply(); row.append(input, copy); return row;
 }
 function renderAboutProject(control) {
   const card = el('div', 'about-project');
@@ -3937,7 +4004,8 @@ function renderConfigDocument(endpoint, title, storedKey, effectiveKey, workspac
 }
 
 function renderExperiencePreview() { const wrap=el('div','settings-control'); const b=el('button','quiet',t('重播启动动画')); b.type='button'; b.onclick=()=>{if(document.documentElement.dataset.motion==='reduced'){toast(t('当前已减少动态效果，启动动画已停用。'));return;}closeSettingsSheet();window.aideExperience?.replay();}; wrap.append(b,el('p','muted',t('短促星轨动画，不阻塞操作；系统减少动态效果优先。'))); return wrap; }
-const controlRenderers = { 'experience-preview': renderExperiencePreview, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
+const controlRenderers = {
+  checkbox: renderCheckboxControl, 'experience-preview': renderExperiencePreview, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 
 function renderSystemLogsControl() {
   const wrap = el('div', 'settings-control system-logs-control');
@@ -4346,14 +4414,22 @@ function refreshStrategyUI() {
   menu.classList.toggle('with-approval', !assistantMode);
   if (!assistantMode) {
     const approvalCol = el('div', 'strategy-menu-col strategy-approval-col');
-    approvalCol.append(el('div', 'strategy-menu-sep', t('审批')));
+    approvalCol.append(el('div', 'strategy-menu-sep', t('审批 · 全局')));
     const enabled = composerAutoReview();
     const busy = !!state.approvalModeBusy || !!state.submitting;
     approvalCol.append(
-      strategyMenuOption('approval', 'manual', t('手动审批'), t('逐项确认命令'), !enabled, busy),
-      strategyMenuOption('approval', 'assisted', t('辅助审批'), t('独立审核命令'), enabled, busy),
+      strategyMenuOption('approval', 'manual', t('手动审批'), t('未记住的操作由你确认'), !enabled, busy),
+      strategyMenuOption('approval', 'assisted', t('辅助审批'), t('所有会话立即生效'), enabled, busy),
       el('small', 'strategy-approval-note', t('独立审核具体命令，不确定时转人工；审核使用当前模型并计入用量。'))
     );
+    if (state.approvalPolicy?.rememberedRules) {
+      const clear=el('button','strategy-option',t('清空审批记忆 · {0}',state.approvalPolicy.rememberedRules));
+      clear.type='button'; clear.onclick=action(async()=>{
+        if(!confirm(t('清空所有长期审批规则？审批模式保持不变。'))) return;
+        await api('/approval-policy/rules',{method:'DELETE'}); await refreshApprovalPolicy();
+        toast(t('审批记忆已清空'));
+      }); approvalCol.append(clear);
+    }
     menu.append(approvalCol);
   }
 }
@@ -5287,11 +5363,14 @@ async function deleteFileEntry(file) {
 }
 function openNewItemMenu() {
   closeFileContextMenu();
+  const target = currentFileTarget();
+  if (!target.writable) { toast(t('引用为只读')); return; }
+  newItemTarget = { root: state.root, source: target.source, dir: state.dir, location: fileLocationKey() };
   const anchor = $('new-file'), rect = anchor.getBoundingClientRect();
   const m = el('div', 'file-ctx-menu');
   const file = el('button', 'file-ctx-item', t('新建文件'));
   const folder = el('button', 'file-ctx-item', t('新建文件夹'));
-  file.onclick = () => { closeFileContextMenu(); $('new-file-path').value = state.dir === '.' ? '' : state.dir + '/'; $('new-file-dialog').showModal(); };
+  file.onclick = () => { closeFileContextMenu(); $('new-file-path').value = newItemTarget.dir === '.' ? '' : newItemTarget.dir + '/'; $('new-file-dialog').showModal(); };
   folder.onclick = () => { closeFileContextMenu(); $('new-folder-name').value = ''; $('new-folder-dialog').showModal(); $('new-folder-name').focus(); };
   m.append(file, folder); document.body.append(m); fileCtxMenuEl = m;
   m.style.left = Math.min(rect.left, innerWidth - 160) + 'px'; m.style.top = (rect.bottom + 4) + 'px';
@@ -5502,7 +5581,7 @@ function isWorkspaceBrowseField(field) {
   return (field === 'docs-path' && $('docs-location').value === 'workspace') ||
     (field === 'cache-path' && $('cache-location').value === 'workspace');
 }
-function isRemoteWorkspaceBrowseField(field) { return field === 'ws-remote-path'; }
+function isRemoteWorkspaceBrowseField(field) { return field === 'ws-remote-path' || field === 'src-remote'; }
 function browseWorkspaceDirFromValue(value) {
   const clean = String(value || '').trim().replace(/\\/g, '/').replace(/^\.\//, '').replace(/\/+$/, '');
   if (!clean || clean === '.') return '.';
@@ -5545,15 +5624,17 @@ function openBrowse(field) {
     const workspace = root === 'workspace';
     const remote = root === 'remote';
     const start = remote ? browseRemoteDirFromValue($(field).value) : workspace ? browseWorkspaceDirFromValue($(field).value) : browseDirFromValue($(field).value);
-    const dir = await resolveExistingDir(start, root);
-    wsState.browse = { field, dir, root, workspace, remote };
+    const sourceDraft=field==='src-remote';
+    const dir = sourceDraft ? start : await resolveExistingDir(start, root);
+    wsState.browse = { field, dir, root, workspace, remote, sourceDraft };
     $('ws-browse-dialog').showModal();
     await loadBrowseDir();
   })();
 }
 async function loadBrowseDir() {
   const b = wsState.browse;
-  const files = await api('/files?root=' + b.root + '&path=' + encodeURIComponent(b.dir));
+  const files = b.sourceDraft ? await browseSourceDraft(b.dir) : await api('/files?root=' + b.root + '&path=' + encodeURIComponent(b.dir));
+  $('ws-browse-new').hidden=!!b.sourceDraft;
   $('ws-browse-path').textContent = b.remote ? t('可访问范围：远程账户目录') : b.workspace ? t('可访问范围：远程工作空间') : t('可访问范围：{0}', hostPathOf('.'));
   $('ws-browse-address').value = b.workspace || b.remote ? b.dir : hostPathOf(b.dir);
   $('ws-browse-parent').disabled = !b.remote && b.dir === '.';
@@ -5569,7 +5650,7 @@ async function loadBrowseDir() {
     const rename = el('button', 'quiet ws-browse-rename', t('重命名'));
     rename.type = 'button'; rename.title = t('重命名文件夹');
     rename.onclick = () => renameBrowseDirectory(d);
-    row.append(open, rename); list.append(row);
+    row.append(open); if(!b.sourceDraft)row.append(rename); list.append(row);
   });
 }
 async function browseAddress() {
@@ -5693,7 +5774,7 @@ function renderSourceChips() {
       main.insertAdjacentHTML('beforeend', '<span class="src-ico">' + sourceIconSVG(src.type) + '</span>');
     }
     main.append(el('span', 'src-name', displayName));
-    if (src.builtin) main.append(el('span', 'src-fixed', src.id === 'system-docs' ? t('固定') : t('内置')));
+    if (src.builtin) main.append(el('span', 'src-fixed', src.id === 'system-docs' ? t('固定') + ' · ' + t('读写') : t('内置')));
     wrap.append(main);
     if (!src.builtin) {
       if (src.type === 'mcp') {
@@ -5812,12 +5893,19 @@ function renderSourceFields() {
     addField(t("主机"), 'src-host', '192.168.1.10');
     addField(t("端口"), 'src-port', '22').type = 'number';
     addField(t("用户名"), 'src-user', 'root');
-    addField(t("远程目录"), 'src-remote', '/srv/refs');
+    const remoteInput=addField(t("远程目录"), 'src-remote', '/srv/refs');
+    const remoteRow=el('div','source-path-row');remoteInput.parentNode.append(remoteRow);remoteRow.append(remoteInput);
+    const browse=el('button','quiet',t('浏览…'));browse.type='button';browse.onclick=()=>openBrowse('src-remote');remoteRow.append(browse);
     addField(t("密码（可选）"), 'src-password', editingSourceID ? t('留空 = 保留现有凭据') : t("留空 = 无密码认证")).type = 'password';
     addField(t("私钥（可选，优先于密码）"), 'src-key', editingSourceID ? t('留空 = 保留现有凭据') : t("粘贴私钥内容")).type = 'password';
   }
 }
 $('src-type').addEventListener('change', renderSourceFields);
+async function browseSourceDraft(path) {
+  const previous=editingSourceID?state.sources.find(x=>x.id===editingSourceID):null;
+  const password=$('src-password').value,key=$('src-key').value;
+  return api('/sources/browse',{method:'POST',body:JSON.stringify({id:editingSourceID,path,password,key,config:{host:$('src-host').value.trim(),port:Number($('src-port').value)||22,username:$('src-user').value.trim(),auth:key?'key':password?'password':previous?.config.auth||'none'}})});
+}
 function suggestedSourceName(type) {
   if (type === 'local' || type === 'skill') {
     const parts = ($('src-path')?.value || '').trim().split(/[\\/]+/).filter(Boolean);
@@ -6375,6 +6463,45 @@ async function setupPdfPreview(container, filePath, root, source, viewerSpec) {
 function isDxfPath(path) { return /\.dxf$/i.test(effectiveFileTypePath(path)); }
 function isDocxPath(path) { return /\.docx$/i.test(effectiveFileTypePath(path)); }
 /* XLSX 查看和单元格修改走服务端 openpyxl：仅传可见页，保留原工作簿。 */
+function csvColumnLabel(index) {
+  let label='';
+  for(let n=index+1;n>0;n=Math.floor((n-1)/26))label=String.fromCharCode(65+(n-1)%26)+label;
+  return label;
+}
+function setupDelimitedPreview(host, editor, filePath) {
+  host.replaceChildren();
+  if(editor.value.length>2*1024*1024){host.append(el('p','muted',t('文件较大，请切换原文编辑，避免表格渲染阻塞页面。')));return;}
+  let data;
+  try { data=AideDelimitedText.parse(editor.value,/\.tsv$/i.test(effectiveFileTypePath(filePath))?'\t':undefined); }
+  catch(error){host.append(el('p','muted',t(error.message)));return;}
+  const wrap=el('div','xlsx-viewer csv-viewer');
+  const columns=data.rows.reduce((max,row)=>Math.max(max,row.length),0);
+  const hint=el('p','muted',t('{0} 行 · {1} 列',data.rows.length,columns));
+  wrap.append(hint);
+  if(data.rows.length>500||columns>100)wrap.append(el('p','muted',t('表格只显示前 500 行、100 列；保存保留全部数据，完整内容可切换原文编辑。')));
+  const grid=el('div','xlsx-grid'),table=el('table','xlsx-table csv-table'),head=el('thead'),header=el('tr');
+  header.append(el('th','','#'));
+  for(let c=0;c<Math.min(columns,100);c++)header.append(el('th','',csvColumnLabel(c)));
+  head.append(header);table.append(head);
+  const body=el('tbody');
+  data.rows.slice(0,500).forEach((values,r)=>{
+    const row=el('tr');row.append(el('th','',String(r+1)));
+    for(let c=0;c<Math.min(columns,100);c++){
+      const cell=el('td');
+      if(editor.readOnly)cell.textContent=values[c]??'';
+      else {
+        const input=el('textarea','csv-cell');input.value=values[c]??'';input.rows=Math.min(6,input.value.split('\n').length);
+        input.setAttribute('aria-label',t('第 {0} 行，第 {1} 列',r+1,c+1));
+        input.oninput=()=>{while(values.length<=c)values.push('');values[c]=input.value;editor.value=AideDelimitedText.stringify(data);editor.dispatchEvent(new Event('input',{bubbles:true}));};
+        cell.append(input);
+      }
+      row.append(cell);
+    }
+    body.append(row);
+  });
+  table.append(body);grid.append(table);wrap.append(grid);host.append(wrap);
+}
+
 async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
   container.replaceChildren();
   const wrap = el('div', 'xlsx-viewer');
@@ -6546,68 +6673,9 @@ function codeLang(path) {
   };
   return map[ext] || '';
 }
-function setupCodeHighlight(textarea, lang) {
-  if (!window.hljs || !lang) return;
-  var wrapper = document.createElement('div');
-  wrapper.className = 'code-wrapper';
-  textarea.parentNode.insertBefore(wrapper, textarea);
-  wrapper.appendChild(textarea);
-  var pre = document.createElement('pre');
-  pre.className = 'code-highlight-overlay';
-  pre.setAttribute('aria-hidden', 'true');
-  var code = document.createElement('code');
-  code.className = 'language-' + lang;
-  pre.appendChild(code);
-  wrapper.insertBefore(pre, textarea);
-  textarea.classList.add('code-editable');
-  function positionOverlay() {
-    var style = window.getComputedStyle(textarea);
-    pre.style.top = '0';
-    pre.style.left = '0';
-    pre.style.width = '100%';
-    pre.style.height = '100%';
-    pre.style.font = style.font;
-    pre.style.lineHeight = style.lineHeight;
-    pre.style.letterSpacing = style.letterSpacing;
-    pre.style.padding = style.padding;
-    pre.style.tabSize = style.tabSize;
-    pre.style.whiteSpace = style.whiteSpace;
-    pre.style.wordBreak = style.wordBreak;
-    pre.style.boxSizing = style.boxSizing;
-  }
-  function render() {
-    var text = textarea.value;
-    if (text.length > 500000) { code.textContent = text; return; }
-    try {
-      var res = window.hljs.highlight(text, { language: lang, ignoreIllegals: true });
-      code.innerHTML = res.value;
-    } catch (e) { code.textContent = text; }
-    pre.scrollTop = textarea.scrollTop;
-    pre.scrollLeft = textarea.scrollLeft;
-  }
-  textarea._aideResizeOverlay = positionOverlay;
-  window.addEventListener('resize', positionOverlay);
-  var highlightFrame=0;
-  function syncScroll(){pre.scrollTop=textarea.scrollTop;pre.scrollLeft=textarea.scrollLeft;}
-  function scheduleHighlight(){if(!highlightFrame)highlightFrame=requestAnimationFrame(()=>{highlightFrame=0;render();});}
-  textarea.addEventListener('scroll',syncScroll,{passive:true});
-  textarea.addEventListener('input',scheduleHighlight);
-  textarea._aideHighlightCleanup=()=>{cancelAnimationFrame(highlightFrame);textarea.removeEventListener('scroll',syncScroll);textarea.removeEventListener('input',scheduleHighlight);};
-  positionOverlay();render();
-}
-function teardownCodeHighlight(textarea) {
-  textarea._aideHighlightCleanup?.();textarea._aideHighlightCleanup=null;
-  if (textarea._aideResizeOverlay) { window.removeEventListener('resize', textarea._aideResizeOverlay); textarea._aideResizeOverlay = null; }
-  textarea.classList.remove('code-editable');
-  var wrapper = textarea.parentNode;
-  if (wrapper && wrapper.classList.contains('code-wrapper')) {
-    var pre = wrapper.querySelector('.code-highlight-overlay');
-    if (pre) pre.remove();
-    // Unwrap: move textarea back to original parent
-    wrapper.parentNode.insertBefore(textarea, wrapper);
-    wrapper.remove();
-  }
-}
+function fileRenderEnabled(key) { return window.aideUI?.get(key) !== false; }
+function setupCodeHighlight(textarea, lang) { window.AideTextEditor?.mount(textarea, lang); }
+function teardownCodeHighlight(textarea) { window.AideTextEditor?.dispose(textarea); }
 let _dxfParserPromise = null;
 function ensureDxfParser() {
   if (_dxfParserPromise) return _dxfParserPromise;
@@ -7206,6 +7274,66 @@ function fixCjkEmphasis(src) {
   const restore = (html) => { for (const [k, v] of map) html = html.split(k).join(v); return html; };
   return { text, restore };
 }
+function resolveMarkdownImagePath(basePath, imagePath) {
+  const pathPart=String(imagePath).split(/[?#]/,1)[0];
+  let decoded=pathPart;
+  try { decoded=decodeURIComponent(pathPart); } catch (_) {}
+  const baseDir=String(basePath).includes('/')?String(basePath).slice(0,String(basePath).lastIndexOf('/')):'';
+  const joined=decoded.startsWith('/')?decoded:baseDir+'/'+decoded;
+  const parts=[];
+  for(const segment of joined.split('/')) {
+    if(!segment||segment==='.')continue;
+    if(segment==='..'){parts.pop();continue;}
+    parts.push(segment);
+  }
+  return parts.join('/');
+}
+async function uploadMarkdownAsset(path, blob, spec) {
+  if (blob.size > 64 * 1024 * 1024) throw new Error(t('文件超过 64 MiB 限制'));
+  const query = new URLSearchParams({path});
+  if (spec.source) query.set('source', spec.source); else if (spec.wsId) query.set('workspaceId', spec.wsId);
+  const response = await fetch('/api/file/upload?' + query, {method:'POST',headers:{Authorization:'Bearer '+state.token,'Content-Type':blob.type||'application/octet-stream'},body:blob});
+  const result = await response.json(); if (!response.ok) throw new Error(result.error || t('请求失败')); return result;
+}
+function setupMarkdownMedia(editor, spec, currentSpec, edit) {
+  window.AideMarkdownMedia?.dispose(editor);
+  if (fileRenderEnabled('fileMarkdownMedia')) window.AideMarkdownMedia?.mount(editor, {spec,currentSpec,edit,t,error:toast,upload:uploadMarkdownAsset});
+}
+function setupMarkdownPreview(host, text, path, spec) {
+  host.innerHTML = renderMarkdown(text, false, path, spec);
+  if (fileRenderEnabled('fileMarkdownOutline')) window.AideMarkdownOutline?.mount(host, { title: t('标题目录') });
+  const captured = {...spec};
+  host.querySelectorAll('a[href^="#"]').forEach(link=>{link.addEventListener('click',event=>{
+    event.preventDefault();let id;try{id=decodeURIComponent(link.getAttribute('href').slice(1));}catch{return;}
+    const target=[...host.querySelectorAll('[id]')].find(node=>node.id===id);
+    if(target)host.scrollTo({top:target.getBoundingClientRect().top-host.getBoundingClientRect().top+host.scrollTop,behavior:document.documentElement.dataset.motion==='reduced'?'auto':'smooth'});
+  });});
+  host.querySelectorAll('a[data-internal-link]').forEach(link => {
+    const href=link.dataset.internalLink;
+    if (!href || /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(href)) return;
+    const resolved=resolveMarkdownImagePath(path,href);
+    const target={...captured,path:resolved};delete target.format;
+    link.href=location.pathname+'#file='+encodeURIComponent(JSON.stringify(target));link.target='_blank';link.rel='noopener';
+  });
+  host.querySelectorAll('img').forEach(img => {
+    const parsed=new URL(img.src,location.href),relative=parsed.searchParams.get('path');
+    if (parsed.origin !== location.origin || parsed.pathname !== '/api/file/raw' || !relative || !/\.drawio\.svg$/i.test(relative)) return;
+    const editor=host.id==='editor-preview'?$('editor'):$('file-view-editor');
+    if (editor.readOnly) return;
+    const edit=async () => {
+      const query=new URLSearchParams({path:relative});if(captured.source)query.set('source',captured.source);else query.set('root',captured.root||'workspace');
+      const original=await api('/file?'+query);
+      const svg=await window.AideMarkdownMedia.diagram(original.content,t);
+      const content=await svg.text();
+      await api('/file',{method:'PUT',body:JSON.stringify({path:relative,content,hash:original.hash,source:captured.source||'',workspaceId:original.workspaceId||captured.wsId||''})});
+      img.src=fileRawUrl(relative,captured.root,captured.source,captured)+'&v='+Date.now();toast(t('draw.io 已保存'));
+    };
+    const wrap=el('figure','md-diagram');img.replaceWith(wrap);wrap.append(img);
+    const button=el('button','quiet quiet-sm',t('编辑 draw.io 图'));button.type='button';
+    let busy=false;const open=async()=>{if(busy)return;busy=true;button.disabled=true;try{await edit();}catch(e){toast(e.message);}finally{busy=false;button.disabled=false;}};
+    button.onclick=open;img.ondblclick=open;wrap.append(button);
+  });
+}
 function renderMarkdown(src, live, basePath, viewerSpec) {
   if (window.marked && typeof window.marked.parse === 'function') {
     const fixed = fixCjkEmphasis(String(src || ''));
@@ -7236,24 +7364,11 @@ function renderMarkdown(src, live, basePath, viewerSpec) {
     });
     // 相对路径图片：改写为 /api/file/raw 原始字节端点（img 无法带 Authorization 头，用 access_token 查询参数）
     if (basePath) {
-      const baseDir = basePath.includes('/') ? basePath.slice(0, basePath.lastIndexOf('/')) : '';
       body.querySelectorAll('img[src]').forEach(img => {
         const orig = img.getAttribute('src') || '';
         if (/^(https?:|data:|blob:|\/\/)/.test(orig)) return;
-        let resolved = orig;
-        if (baseDir) {
-          const parts = [];
-          for (const seg of (baseDir + '/' + orig).split('/')) {
-            if (seg === '' || seg === '.') continue;
-            if (seg === '..') { parts.pop(); continue; }
-            parts.push(seg);
-          }
-          resolved = parts.join('/');
-        }
-        const knowledgeView = viewerSpec?.readOnly === true && viewerSpec.origin && viewerSpec.knowledgeWorkspace;
-        img.src = knowledgeView
-          ? fileRawUrl(resolved, viewerSpec.root, viewerSpec.source || '', viewerSpec)
-          : fileRawUrl(resolved, 'workspace', '');
+        const resolved = resolveMarkdownImagePath(basePath, orig);
+        img.src = fileRawUrl(resolved, viewerSpec?.root || 'workspace', viewerSpec?.source || '', viewerSpec);
         img.onerror = () => { img.style.opacity = '0.4'; img.title = t('图片加载失败: {0}', orig); };
       });
     }
@@ -7264,18 +7379,24 @@ function renderMarkdown(src, live, basePath, viewerSpec) {
 /* ── 单文件视图（新标签页）：路径 + 可编辑内容（保存带哈希校验）+ md 渲染预览 ── */
 const fileView = { spec: null, hash: '' };
 function setFileViewMode(mode) {
+  window.AideMarkdownOutline?.dispose($('file-view-preview'));
   const preview = mode === 'preview';
   $('file-view-editor').classList.toggle('hidden', preview);
   if ($('file-view-editor').parentNode.classList.contains('code-wrapper')) $('file-view-editor').parentNode.classList.toggle('hidden', preview);
   $('file-view-preview').classList.toggle('hidden', !preview);
   $('fv-edit').classList.toggle('active', !preview);
   $('fv-preview').classList.toggle('active', preview);
-  if (preview) { $('file-view-preview').innerHTML = renderMarkdown($('file-view-editor').value, false, fileView.spec ? fileView.spec.path : '', fileView.spec); $('file-view-preview').scrollTop = 0; }
+  if (preview) {
+    if(isDelimitedPath(fileView.spec?.path || '') || ['.csv','.tsv'].includes(fileView.spec?.format))setupDelimitedPreview($('file-view-preview'),$('file-view-editor'),isDelimitedPath(fileView.spec.path)?fileView.spec.path:'resource'+fileView.spec.format);
+    else setupMarkdownPreview($('file-view-preview'), $('file-view-editor').value, fileView.spec?.path || '', fileView.spec);
+    $('file-view-preview').scrollTop = 0;
+  }
 }
 async function openFileViewMode() {
   let spec = null;
-  try { spec = JSON.parse(decodeURIComponent(new URLSearchParams(location.hash.slice(1)).get('file') || '')); } catch (e) { spec = null; }
+  spec = window.AideFileRoute?.read();
   if (!spec) return;
+  window.AideFileRoute?.pin(spec);
   document.body.classList.add('file-view-mode');
   $('file-view').classList.remove('hidden');
   fileView.spec = spec; fileView.wsId = '';
@@ -7283,7 +7404,7 @@ async function openFileViewMode() {
   // Single URL resources retain their virtual path; the graph carries a bounded
   // format hint for choosing an existing viewer. Requests still use spec.path.
   const format = String(spec.format || '').toLowerCase();
-  const viewerFormats = ['.pdf','.docx','.xlsx','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.dxf','.zip','.drawio'];
+  const viewerFormats = ['.pdf','.docx','.xlsx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.dxf','.zip','.drawio'];
   const typePath = spec.readOnly === true && spec.source && viewerFormats.includes(format) ? 'resource' + format : spec.path;
   const md = isMarkdownPath(typePath);
   const isDrawio = /\.drawio$/i.test(effectiveFileTypePath(typePath));
@@ -7308,15 +7429,15 @@ async function openFileViewMode() {
     data = await api('/file?' + query.toString());
   }
   fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
-  $('file-view-mode-switch').classList.toggle('hidden', !md);
+  $('file-view-mode-switch').classList.toggle('hidden', !md && !isDelimitedPath(typePath));
   const readOnly = spec.readOnly === true || isBackupPath(spec.path) || (spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true));
   $('file-view-editor').value = data.content;
   $('file-view-editor').readOnly = readOnly;
   // #64: code syntax highlighting
   teardownCodeHighlight($('file-view-editor'));
   teardownViewer($('file-view-preview')); // file-view 页签切文件前回收上一个查看器
-  var _fvcl = codeLang(spec.path);
-  if (_fvcl) setupCodeHighlight($('file-view-editor'), _fvcl);
+  var _fvcl = codeLang(typePath);
+  setupCodeHighlight($('file-view-editor'), _fvcl);
   const visualPreview = isZip || isStl || isPdf || isDxf || isDocx || isXlsx || isImg || isDrawio;
   if ($('file-view-editor').parentNode.classList.contains('code-wrapper')) $('file-view-editor').parentNode.classList.toggle('hidden', visualPreview);
   // 图片 / STL / PDF 只读查看器禁用保存；drawio 可保存
@@ -7360,7 +7481,7 @@ async function openFileViewMode() {
       toast(t('draw.io 已保存'));
     }, '_fileViewDrawioHandler');
   } else {
-    setFileViewMode(md ? 'preview' : 'edit');
+    setFileViewMode((md && fileRenderEnabled('fileMarkdownPreview')) || (isDelimitedPath(typePath) && fileRenderEnabled('fileCsvPreview')) ? 'preview' : 'edit');
   }
   if (spec.codeHash && data.hash !== spec.codeHash) toast(t('源码已变更，请刷新星图后重新定位。'));
   if (!visualPreview && (!spec.codeHash || data.hash === spec.codeHash) && Number.isInteger(spec.line) && spec.line > 0) {
@@ -7373,16 +7494,43 @@ async function openFileViewMode() {
     editor.dispatchEvent(new Event('scroll'));
     $('file-view-path').textContent+=' · L'+line+'–L'+end;
   }
+  setupMarkdownMedia($('file-view-editor'), {...spec, wsId:fileView.wsId}, () => ({...fileView.spec, wsId:fileView.wsId}), () => setFileViewMode('edit'));
   $('file-view-content').replaceChildren();
+  fileViewAutoSave.activate();
 }
+let filePresentationPrefs = '';
+window.aideUI?.subscribe(() => {
+  const next = ['fileMarkdownOutline','fileMarkdownMedia'].map(fileRenderEnabled).join(':');
+  if (filePresentationPrefs === next) return;
+  const previous = filePresentationPrefs; filePresentationPrefs = next;
+  if (!previous) return;
+  for (const [editorId, previewId, spec, currentSpec, edit] of [
+    ['editor','editor-preview',state.file,()=>({...state.file}),()=>setEditorMode('edit')],
+    ['file-view-editor','file-view-preview',fileView.spec,()=>({...fileView.spec,wsId:fileView.wsId}),()=>setFileViewMode('edit')]
+  ]) {
+    if (!spec || !isMarkdownPath(spec.path)) continue;
+    setupMarkdownMedia($(editorId), {...spec,wsId:editorId==='file-view-editor'?fileView.wsId:spec.wsId}, currentSpec, edit);
+    const host=$(previewId), scroll=host.scrollTop;
+    if (!host.classList.contains('hidden')) { window.AideMarkdownOutline?.dispose(host); setupMarkdownPreview(host,$(editorId).value,spec.path,spec); host.scrollTop=scroll; }
+  }
+});
+filePresentationPrefs = ['fileMarkdownOutline','fileMarkdownMedia'].map(fileRenderEnabled).join(':');
 $('fv-edit').onclick = () => setFileViewMode('edit');
 $('fv-preview').onclick = () => setFileViewMode('preview');
-$('file-view-save').onclick = action(async () => {
-  const body = { path: fileView.spec.path, content: $('file-view-editor').value, hash: fileView.hash };
-  if (fileView.spec.source) body.source = fileView.spec.source; if (fileView.wsId) body.workspaceId = fileView.wsId;
-  const res = await api('/file', { method: 'PUT', body: JSON.stringify(body) });
-  fileView.hash = res.hash;
-  toast(t("✓ 已保存"));
+function isDrawioPathForSave(path){return /\.drawio$/i.test(path||'');}
+function bindFileAutoSave(editorId, buttonId, manualId, getContext, onSaved) {
+  return window.AideFileAutoSave.bind({editor:$(editorId),button:$(buttonId),manual:$(manualId),getContext,t,error:toast,
+    blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open,
+    save:async(spec,content)=>{const body={path:spec.path,content,hash:spec.hash};if(spec.source)body.source=spec.source;if(spec.wsId)body.workspaceId=spec.wsId;return api('/file',{method:'PUT',body:JSON.stringify(body)});},onSaved});
+}
+const editorAutoSave=bindFileAutoSave('editor','editor-autosave','save-file',()=>({...state.file,autoEligible:!isDrawioPathForSave(state.file?.path)}), (spec,content,result,manual)=>{
+  state.file.hash=result.hash;state.file.content=content;state.file.fresh=false;$('attach-file').disabled=false;
+  if(manual)toast(t('✓ 已保存'));loadFiles().catch(()=>{});
+});
+const fileViewAutoSave=bindFileAutoSave('file-view-editor','file-view-autosave','file-view-save',()=>({...fileView.spec,hash:fileView.hash,wsId:fileView.wsId,autoEligible:!isDrawioPathForSave(fileView.spec?.path)}), (spec,content,result,manual)=>{fileView.hash=result.hash;if(manual)toast(t('✓ 已保存'));});
+// Anchor navigation must not replace the standalone file locator.
+window.addEventListener('hashchange',()=>{
+  if(fileView.spec && !new URLSearchParams(location.hash.slice(1)).has('file'))window.AideFileRoute?.pin(fileView.spec);
 });
 /* ── 会话轨迹（DSH TrajectoryView 风格：turn-aware 事件时间线） ── */
 function trajectoryEvent(dot, title, bodyNode, kind) {
@@ -7734,37 +7882,18 @@ $('compact-button').onclick = action(async () => {
 async function initialize() {
   syncPanelButtons();
   await refreshConfig();
+  if (state.config?.hasPassword && window.LockCluster) {
+    showJoiningVeil();
+    const locked=await LockCluster.onReady();
+    if(locked)applyLockVisual();else releaseLockVisual();
+  }
   if (window.syncVirtualAvatarSettings) await window.syncVirtualAvatarSettings();
-  const fragment = new URLSearchParams(location.hash.slice(1));
-  if (fragment.has('file')) { await Promise.all([loadWorkspaceConfig(), loadSourcesList()]); await openFileViewMode(); return; }
+  if (window.AideFileRoute?.read()) { await Promise.all([loadWorkspaceConfig(), loadSourcesList()]); if(!fileView.spec)await openFileViewMode(); return; }
   await Promise.all([loadSessions(), loadFiles(), loadProfiles(), loadWorkspaceConfig(), loadSourcesList()]);
   setupGlobalEvents(); // #60
 }
 initialize()
-  .then(() => {
-    // 已配置密码：先入集群，加入窗口期显示中性面纱，等选举结果再决定遮罩。
-    // ① master 未锁 → slave 不锁；② master 锁 → slave 跟随；③ slave 单解不回传。
-    if (state.config && state.config.hasPassword && !lockScreen.locked) {
-      if (!lockScreenActive()) {
-        // 文件只读查看标签：不卡 joining 面纱、不参与选举；一次 1s 短超时后端权威核对即可。
-        checkFileViewLock();
-      } else if (typeof LockCluster !== 'undefined') {
-        // 后端权威已明确且选举已收敛：权威“未锁”直接放行，尽量不闪 joining 面纱；
-        // 收敛中或权威“锁定”才显示中性面纱，等 onReady 决定遮罩。
-        const snap = LockCluster.snapshot();
-        if (snap.settled && !snap.locked) {
-          // 权威未锁：跳过面纱，直接进入界面
-        } else {
-          showJoiningVeil();
-          LockCluster.onReady().then(effective => {
-            if (effective) applyLockVisual(); else releaseLockVisual();
-          });
-        }
-      } else {
-        lockScreenNow(); // 降级（无 LockCluster）：旧行为本地即锁
-      }
-    }
-  })
+  .then(() => { resetIdleTimer(); })
   .catch(error => { if (!$('login-dialog').open) $('login-dialog').showModal(); $('login-error').textContent = state.token ? error.message : ''; });
 
 /* Compact-window navigation. Keeps session navigation reachable on iPhone/iPad. */
@@ -7831,7 +7960,7 @@ async function renderMermaid(){
  } catch {for(const node of nodes){delete node.dataset.processed;node.textContent=t('流程图渲染失败');}}
 }
 const originalMarkdownRender=renderMarkdown;
-renderMarkdown=function(src,live,basePath){const html=originalMarkdownRender(src,live,basePath);if(/```mermaid|class="mermaid"/.test(src||''))scheduleMermaid();return html;};
+renderMarkdown=function(src,live,basePath,viewerSpec){const html=originalMarkdownRender(src,live,basePath,viewerSpec);if(/```mermaid|class="mermaid"/.test(src||''))scheduleMermaid();return html;};
 /* ── 语音小秘（Web Speech API 实时断句 + AI 甄别 + 直接发送）──────────
    边说边断：按句末标点/停顿自动成句 → 后端甄别 → 判定为指令的句子直接
    发送到当前会话（与手动提交同一 run 入口，兼容排队/工作流模式）；
@@ -7922,7 +8051,6 @@ async function voiceSend(text, queued) {
     created = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: t('新会话') }) });
     if (!state.session) state.session = created;
     target = created;
-    rememberApprovalMode(created.id, autoReview);
   }
   const strategy = state.profiles?.strategy || 'auto';
   // #41：小秘 analyze 判定的 mode 优先；未给出时回退手动排队开关
@@ -9529,33 +9657,20 @@ controlRenderers['personality'] = renderPersonalityControl;
 
 
 /* ── 账户锁屏：空闲糊化遮罩（纯视觉层，不停止后端任务；小秘暂停听写/朗读） ── */
-const lockScreen = { timer: null, locked: false, wasVoiceListening: false };
+const lockScreen = { timer: null, locked: false, wasVoiceListening: false, lastActivity: Date.now(), unlocking: false };
 function lockTimeoutActive() {
   return !!(state.config && state.config.hasPassword && (state.config.lockTimeoutSec || 0) > 0);
 }
-// 文件只读查看标签（#file=… / body.file-view-mode）：锁屏系统被动化——不参与选举、
-// 不卡 joining 面纱、不响应后续集群锁定与空闲升锁。仅打开时做一次短超时后端权威核对。
-function lockScreenActive() {
-  return !document.body.classList.contains('file-view-mode');
-}
-// file-view 打开时一次短超时后端权威核对：明确锁定才罩屏；未锁/失败超时直接显示文件。
-function checkFileViewLock() {
-  const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
-  const timer = setTimeout(() => { try { ctrl && ctrl.abort(); } catch (_) {} }, 1000);
-  fetch('/api/lock-state', { headers: { 'Authorization': 'Bearer ' + (state.token || '') }, signal: ctrl ? ctrl.signal : undefined })
-    .then(r => { clearTimeout(timer); if (!r.ok) return null; return r.json(); })
-    .then(d => { if (d && d.locked) applyLockVisual(); })
-    .catch(() => { clearTimeout(timer); /* 失败默认放行：双击只可能来自已解锁主界面 */ });
-}
 // 空闲定时器只在 master 持有；slave 的活动经 ping 续 master 的表。
-function resetIdleTimer() {
+function resetIdleTimer(activity = false) {
+  if(activity && !lockScreen.locked)lockScreen.lastActivity=Date.now();
   clearTimeout(lockScreen.timer);
   lockScreen.timer = null;
-  if (!lockScreenActive()) return; // 文件只读查看标签不参与空闲升锁
   if (typeof LockCluster !== 'undefined' && !LockCluster.isMaster()) return;
   if (lockScreen.locked) return;
   if (!lockTimeoutActive()) return;
-  lockScreen.timer = setTimeout(lockScreenNow, (state.config.lockTimeoutSec || 0) * 1000);
+  const remaining=Math.max(0,state.config.lockTimeoutSec*1000-(Date.now()-lockScreen.lastActivity));
+  lockScreen.timer = setTimeout(lockScreenNow, remaining);
 }
 function refreshLockStatus() {
   const host = $('lock-status');
@@ -9582,6 +9697,7 @@ function applyLockVisual() {
   const veil = $('lock-screen');
   if (lockScreen.locked) { refreshLockStatus(); return; }
   lockScreen.locked = true;
+  clearAssistantGate();
   syncVoiceAssistantDisplayName();
   clearTimeout(lockScreen.timer); lockScreen.timer = null;
   // 小秘退下：停止听写 + 取消朗读（解锁后按原状态恢复）
@@ -9599,10 +9715,12 @@ function applyLockVisual() {
 }
 /* 视觉层：把 effectiveLocked=false 落到本地（仅藏遮罩；欢迎语/麦克风恢复只在输密码的 tab）。 */
 function releaseLockVisual() {
+  if(lockScreen.locked)lockScreen.lastActivity=Date.now();
   lockScreen.locked = false;
   const veil = $('lock-screen');
   veil.hidden = true;
   veil.classList.remove('joining');
+  if(!lockScreen.unlocking)lockScreen.wasVoiceListening=false;
 }
 /* 加入窗口期中性面纱：不露内容、不抢密码框。 */
 function showJoiningVeil() {
@@ -9612,15 +9730,17 @@ function showJoiningVeil() {
   $('lock-error').textContent = '';
   $('lock-status').textContent = t('正在确认安全状态…');
 }
-/* 升锁入口：master 写 masterLocked 并广播；slave 转 req-lock 给 master。 */
+/* 升锁入口：立即遮盖，串行持久化并通知其他页面。 */
 function lockScreenNow() {
   if (!state.config || !state.config.hasPassword) return;
   clearAssistantGate(); // #30：锁屏后小秘会话需重新验证密码
-  if (typeof LockCluster !== 'undefined') LockCluster.requestLock('manual');
+  if (typeof LockCluster !== 'undefined') LockCluster.requestLock('manual').catch(e => { $('lock-error').textContent=e.message; });
   else applyLockVisual();
 }
 /* dismissAfterUnlock：密码与触控 ID 解锁共用的唯一收尾出口——保证两路径行为逐字节一致。 */
-function dismissAfterUnlock() {
+async function dismissAfterUnlock(scope) {
+  if(window.LockCluster)await LockCluster.handleUnlockSuccess(scope);
+  lockScreen.lastActivity=Date.now();
   window.aideAvatarFeedback?.('notification');
   // 本 tab 本地恢复（欢迎语、麦克风只在解锁的那个 tab，避免多 tab 合唱）
   lockScreen.locked = false;
@@ -9632,11 +9752,12 @@ function dismissAfterUnlock() {
   toast(welcome);
   speakReply(welcome);
   if (lockScreen.wasVoiceListening) { lockScreen.wasVoiceListening = false; voiceStart(); }
-  if (typeof LockCluster !== 'undefined') LockCluster.handleUnlockSuccess();
   resetIdleTimer();
 }
-function unlockScreen(pw) {
-  return api('/account/verify-password', { method: 'POST', body: JSON.stringify({ password: pw }) }).then(dismissAfterUnlock);
+async function unlockScreen(pw) {
+  const scope=window.LockCluster?await LockCluster.prepareUnlock():{global:true,gen:(await api('/lock-state')).gen};
+  await api('/account/verify-password',{method:'POST',body:JSON.stringify({password:pw,unlockScreen:scope.global,lockGen:scope.gen})});
+  await dismissAfterUnlock(scope);
 }
 
 /* ── 触控 ID / WebAuthn 解锁 ── */
@@ -9695,8 +9816,10 @@ function assertionToJSON(a) {
 }
 async function unlockByTouchId() {
   const btn = $('touchid-unlock-btn');
+  if(lockScreen.unlocking)return;lockScreen.unlocking=true;
   if (btn) btn.disabled = true;
   try {
+    const scope=window.LockCluster?await LockCluster.prepareUnlock():{global:true,gen:(await api('/lock-state')).gen};
     const start = await api('/webauthn/assertion/start', { method: 'POST', body: '{}' });
     if (!start.allowCredentials || !start.allowCredentials.length) {
       $('lock-error').textContent = t('未注册触控 ID 设备，请先在设置中绑定');
@@ -9711,7 +9834,7 @@ async function unlockByTouchId() {
     };
     const assertion = await navigator.credentials.get({ publicKey: options });
     if (!assertion) { $('lock-error').textContent = ''; return; }
-    const finishRes = await fetch('/api/webauthn/assertion/finish?challenge=' + encodeURIComponent(start.challenge), {
+    const finishRes = await fetch('/api/webauthn/assertion/finish?challenge=' + encodeURIComponent(start.challenge)+(scope.global?'&unlockScreen=1&lockGen='+scope.gen:''), {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json' },
       body: JSON.stringify(assertionToJSON(assertion)),
@@ -9720,36 +9843,42 @@ async function unlockByTouchId() {
       const err = await finishRes.json().catch(() => ({}));
       throw new Error(t(err.error || '验证失败，请重试'));
     }
-    dismissAfterUnlock();
+    await dismissAfterUnlock(scope);
   } catch (e) {
     if (e && e.name === 'NotAllowedError') { $('lock-error').textContent = ''; return; }
-    $('lock-error').textContent = t('验证失败，请重试');
+    $('lock-error').textContent = e.message || t('验证失败，请重试');
   } finally {
+    lockScreen.unlocking=false;
     if (btn) btn.disabled = false;
   }
 }
 $('lock-form').onsubmit = action(async e => {
   e.preventDefault();
+  if(lockScreen.unlocking)return;lockScreen.unlocking=true;
+  const button=$('lock-form').querySelector('button[type=submit]');if(button)button.disabled=true;
   try {
     await unlockScreen($('lock-password').value);
     $('lock-password').value = '';
   } catch (err) {
-    $('lock-error').textContent = t('密码错误');
+    $('lock-error').textContent = err.message || t('验证失败，请重试');
     try { $('lock-password').select(); } catch (_) {}
-  }
+  } finally {lockScreen.unlocking=false;if(button)button.disabled=false;}
 });
 const touchidBtn = $('touchid-unlock-btn');
 if (touchidBtn) touchidBtn.onclick = action(unlockByTouchId);
 // 集群把 effectiveLocked 映射到本地视觉（master 自身、slave 收到 lock/unlock 均走这里）
 if (typeof LockCluster !== 'undefined') {
-  LockCluster.on('effective', locked => { if (!lockScreenActive()) return; if (locked) applyLockVisual(); else releaseLockVisual(); });
-  LockCluster.setRemoteActivityHook(() => resetIdleTimer()); // master 续表
+  LockCluster.on('effective', locked => { if (locked) applyLockVisual(); else { releaseLockVisual(); resetIdleTimer(); editorAutoSave.resume(); fileViewAutoSave.resume(); } });
+  LockCluster.on('role', () => resetIdleTimer());
+  LockCluster.on('error', message=>{if(lockScreen.locked)$('lock-error').textContent=message;});
+  LockCluster.setRemoteActivityHook(() => resetIdleTimer(true)); // master 续表
 }
 ['mousemove', 'keydown', 'click', 'scroll', 'touchstart'].forEach(ev =>
   window.addEventListener(ev, () => {
     // master 自己活动即续表；slave 活动节流发 ping，由 master 续表
+    if(lockScreen.locked)return;
     if (typeof LockCluster !== 'undefined') LockCluster.noteActivity();
-    resetIdleTimer();
+    resetIdleTimer(true);
   }, { passive: true }));
 setInterval(() => { if (lockScreen.locked) refreshLockStatus(); }, 1000);
 
@@ -10207,3 +10336,5 @@ $('open-starmap').onclick = () => {
   // Stop listening once the independently opened window is closed.
   const timer = setInterval(()=>{ if (sky.closed) { clearInterval(timer); bridge.close(); } }, 2000);
 };
+
+document.addEventListener('visibilitychange', () => { if (!document.hidden && state.config) refreshApprovalPolicy().catch(() => {}); });

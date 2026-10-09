@@ -151,6 +151,8 @@ func (a *App) ensureBuiltinSources() {
 		case systemDocsSource:
 			hasSys = true
 			s := &a.sourceRegistry.Sources[i]
+			s.Name = "自动系统文档"
+			s.Enabled = true
 			s.Builtin = true
 			s.RW = true
 			if a.wsConfig.Docs.Location == "workspace" && a.wsConfig.Workspace.Mode == "ssh" {
@@ -214,9 +216,12 @@ func (a *App) upsertSystemDocs() error {
 	}
 	for i := range a.sourceRegistry.Sources {
 		if a.sourceRegistry.Sources[i].ID == systemDocsSource {
+			a.sourceRegistry.Sources[i].Name = entry.Name
 			a.sourceRegistry.Sources[i].Type = entry.Type
 			a.sourceRegistry.Sources[i].Config.Path = docs
 			a.sourceRegistry.Sources[i].Enabled = true
+			a.sourceRegistry.Sources[i].RW = true
+			a.sourceRegistry.Sources[i].Builtin = true
 			return a.saveSources()
 		}
 	}

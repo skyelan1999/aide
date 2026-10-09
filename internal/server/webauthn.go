@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -501,5 +502,16 @@ func (a *App) webAuthnAssertionFinish(w http.ResponseWriter, r *http.Request) {
 	}
 	a.webAuthn.mu.Unlock()
 
+	if r.URL.Query().Get("unlockScreen") == "1" {
+		gen, err := strconv.ParseInt(r.URL.Query().Get("lockGen"), 10, 64)
+		if err != nil {
+			fail(w, 400, errors.New("缺少有效锁屏代次"))
+			return
+		}
+		if err := a.unlockScreenState(&gen); err != nil {
+			fail(w, 409, err)
+			return
+		}
+	}
 	jsonOut(w, 200, map[string]bool{"ok": true})
 }

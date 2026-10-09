@@ -1,0 +1,84 @@
+{
+  "id": "approval-stale-answer-20261009",
+  "request": "点击审批按钮经常提示当前无可应答的审批问题",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M docs/plugins/office.md\n M docs/workspace-paths.md\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/auth_verify_test.go\n M internal/server/environment_guide.go\n M internal/server/files.go\n M internal/server/global_events.go\n M internal/server/harness_runtime.go\n M internal/server/lock_state.go\n M internal/server/lock_state_test.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/macos.css\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M plugins/office/index.js\n M scripts/lock-cluster-election.test.js\n?? docs/reviews/2026-10-09/\n?? docs/tasks/approval-global-memory-20261009.json\n?? docs/tasks/assisted-approval-ui-20261009.json\n?? docs/tasks/csv-read-write-20261009.json\n?? docs/tasks/file-create-location-20261009.json\n?? docs/tasks/generated-docs-binding-20261009.json\n?? docs/tasks/lock-screen-review-20261009.json\n?? internal/server/approval_policy.go\n?? internal/server/generated_documents.go\n?? internal/server/source_browse.go\n?? internal/server/source_browse_test.go\n?? internal/server/web/delimited-text.js\n?? scripts/lock-cluster-state.test.js\n?? scripts/markdown-image-path.test.js",
+  "acceptance": [
+    "过期问题不被用于新问题的审批",
+    "中断任务不显示可应答按钮",
+    "重复点击不会重复发送",
+    "409 自动同步并移除过期卡片"
+  ],
+  "scope": [
+    "审批问题身份与轮次",
+    "重启后的过期卡片",
+    "重复提交与会话切换",
+    "应答结束状态同步"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "已完成源码修复与范围记录；运行验收单独标记",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "已完成源码修复与范围记录；运行验收单独标记",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已完成源码修复与范围记录；运行验收单独标记",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Go 编译、JS 语法及 diff 检查通过；未运行回归或浏览器联调",
+      "evidence": [
+        "go build -buildvcs=false -o /tmp/aide-approval-review ./cmd/aide: exit 0",
+        "node --check internal/server/web/app.js: exit 0",
+        "git diff --check: exit 0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已完成源码修复与范围记录；运行验收单独标记",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "停止本轮临时容器；原服务未重启",
+      "evidence": [
+        "docker stop 90dfd6045fb5"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未发布或部署",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "源码修复完成，仍需运行候选服务进行真实审批联调。"
+}

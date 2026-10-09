@@ -50,6 +50,7 @@ async function pollLive(){
 
 const retrievalMode=()=>codeView?'nodes':$('retrieval-mode').value;
 let animate=!motionReduced(), frame=0, pageLeaving=false;
+let driftTime=0;const skyFloat={x:0,y:0};
 let skyTime=0,lastPaint=null,pausedAt=document.hidden?performance.now():null,cameraTween=null,graphFade=null;
 let wheelZoom=null,interactionUntil=0,paintRequested=true,renderRevision=0,renderKey='';
 let structure=null,layerState=null,nodeByID=new Map(),edgeAdjacency=new Map(),renderNodes=[],renderEdges=[],edgeBatches=[];
@@ -256,7 +257,7 @@ function cosmicPick(x,y){let nearest=null,score=Infinity;for(const r of cosmicRe
 function cosmicStarPick(x,y){let nearest=null,distance=11;for(const star of cosmicStars){if(!star.p.onScreen)continue;const d=Math.hypot(star.p.x-x,star.p.y-y);if(d<distance){distance=d;nearest=star;}}return nearest;}
 function drawCosmos(now,t){
  if(!cosmicScene)return;const data=cosmicSceneCache.get(cosmicKey),flight=cosmicFlight,u=flight?clamp((now-flight.start)/flight.duration,0,1):1,k=easing(u),fade=flight?k:1,scale=flight?(flight.direction>0?.83+.17*k:1.17-.17*k):1;
- const cx=width*.57,cy=height*.5,drift=motionEnabled()?Math.sin(t/32000)*.006:0;
+ const cx=width*(.57+skyFloat.x),cy=height*(.5+skyFloat.y),drift=0;
  ctx.save();ctx.globalAlpha=fade;ctx.translate(cx,cy);ctx.scale(scale,scale);ctx.translate(-cx,-cy);
  // No synthetic cosmic web, disc badge or planet is painted behind the real stars.
  for(const zone of data?.gas||[]){const x=cx+(zone.x+yaw*.22+drift)*width*zoom,y=cy+(zone.y+(pitch-.1)*.18)*height*zoom,size=Math.max(90,zone.spread*width*3.1*zoom);if(x+size/2<0||x-size/2>width||y+size*.4<0||y-size*.4>height)continue;ctx.save();ctx.globalAlpha=fade*.12;ctx.translate(x,y);ctx.rotate(-.32);ctx.drawImage(zone.texture,-size/2,-size*.36,size,size*.72);ctx.restore();}
@@ -347,13 +348,18 @@ function updateLayerLabels(){
 
  }
 }
-function projectInto(n,out,driftX,driftY,depth=n.depth){out.x=width*.57+Math.sin(n.x+yaw+driftX)*width*.43*zoom/depth;out.y=height*.5+Math.sin(n.y+pitch+driftY)*height*.47*zoom/depth;out.onScreen=out.x>-70&&out.x<width+70&&out.y>-70&&out.y<height+70;return out;}
+function projectInto(n,out,driftX,driftY,depth=n.depth){out.x=width*(.57+skyFloat.x)+Math.sin(n.x+yaw+driftX)*width*.43*zoom/depth;out.y=height*(.5+skyFloat.y)+Math.sin(n.y+pitch+driftY)*height*.47*zoom/depth;out.onScreen=out.x>-70&&out.x<width+70&&out.y>-70&&out.y<height+70;return out;}
 function edgeInView(e){const a=e.a,b=e.b;return a&&b&&Math.max(a.x,b.x)>=-70&&Math.min(a.x,b.x)<=width+70&&Math.max(a.y,b.y)>=-70&&Math.min(a.y,b.y)<=height+70;}
 function draw(now=performance.now()){
  frame=0;if(document.hidden)return;
  const active=!!(drag||cameraTween||wheelZoom||graphFade||cosmicFlight||now<interactionUntil||now<liveAnimationUntil),budget=active?1000/60:1000/30;
  if(!paintRequested&&lastPaint!==null&&now-lastPaint<budget-1){redraw(false);return;}
  paintRequested=false;const delta=lastPaint===null?0:clamp(now-lastPaint,0,64);lastPaint=now;if(animate)skyTime+=delta;
+ // A bounded, rigid sky drift preserves relations and hit testing. Its clock
+ // pauses during manipulation and while motion is disabled, without snapping.
+ if(motionEnabled()&&!drag&&!cameraTween&&!wheelZoom&&!cosmicFlight&&now>=interactionUntil){
+  driftTime+=delta;skyFloat.x=Math.sin(driftTime/22000)*.038;skyFloat.y=Math.sin(driftTime/29000)*.024;
+ }
  const t=skyTime;updateCamera(now);
  const dpr=Math.min(devicePixelRatio,1.75);if(width!==innerWidth||height!==innerHeight||pixelRatio!==dpr){width=innerWidth;height=innerHeight;pixelRatio=dpr;canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);graphFade=null;makeSky();}
  ctx.drawImage(skyCache,0,0,width,height);
@@ -364,7 +370,7 @@ function draw(now=performance.now()){
   if(graphFade){const u=clamp((now-graphFade.start)/graphFade.duration,0,1);ctx.save();ctx.globalAlpha=1-easing(u);ctx.drawImage(graphFade.canvas,0,0,width,height);ctx.restore();if(u===1)graphFade=null;}
   if(animate||cameraTween||wheelZoom||graphFade||cosmicFlight||now<liveAnimationUntil)redraw(false);return;
  }
- refreshView();const driftX=Math.sin(t/24000)*.012,driftY=Math.cos(t/31000)*.008;
+ refreshView();const driftX=0,driftY=0;
  for(const c of clusters){if(region&&c.region!==region)continue;const p=projectInto(c,c.projected,driftX,driftY),size=Math.max(110,c.radius*width*3.3*zoom),density=Math.min(.85,.16+c.nodes.length/85);
   if(p.x+size/2<0||p.x-size/2>width||p.y+size*.4<0||p.y-size*.4>height)continue;
   ctx.save();ctx.globalAlpha=density;ctx.translate(p.x,p.y);ctx.rotate(-.3+Math.sin(t/32000+c.phase)*.018);ctx.drawImage(c.texture,-size/2,-size*.38,size,size*.76);ctx.restore();
@@ -447,7 +453,7 @@ function syncGraphChrome(){
   const r=s.region;let button=previous.get(r);if(!button){button=document.createElement('button');button.type='button';button.dataset.region=r;button.append(document.createElement('span'),document.createElement('small'));button.firstChild.className='source-chip-name';button.lastChild.className='source-chip-meta';button.onclick=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiAbort?.abort();$('ai-found').replaceChildren();$('answer').textContent='';selected=null;revealPanel($('detail'),false);region=button.dataset.region;cosmicSceneCache.clear();cosmicKey='';if(cosmos)enterCosmic(cosmos.root.key,true);syncGraphChrome();search();};}
   button.sourceDescriptor=s;button.classList.toggle('source-chip',!!r);button.dataset.state=s.state||'';button.firstChild.textContent=s.name;
   const state=s.detached?'已移除':sourceStateLabel(s.state),type=sourceTypeLabel(s.type),meta=r?`${type} · ${state} · ${s.nodeCount} 颗星`:'';
-  button.lastChild.textContent=meta;button.lastChild.hidden=!r;button.title=r?[s.name,meta,'来源 #'+s.id,s.message].filter(Boolean).join(' · '):'查看全部已索引来源';button.setAttribute('aria-label',r?s.name+'，'+meta+'，来源 '+s.id:s.name);button.setAttribute('aria-pressed',String(region===r));keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
+  button.dataset.count=r?String(s.nodeCount):String(graph.nodes.length);button.lastChild.textContent=r?`${type} · ${state}`:'全部已索引来源';button.lastChild.hidden=false;button.title=r?[s.name,meta,'来源 #'+s.id,s.message].filter(Boolean).join(' · '):'查看全部已索引来源';button.setAttribute('aria-label',r?s.name+'，'+meta+'，来源 '+s.id:s.name);button.setAttribute('aria-pressed',String(region===r));keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
  }
  for(const child of [...box.children])if(!keep.has(child))child.remove();
  const catalog=$('source-catalog'),prior=new Map([...catalog.children].map(el=>[el.dataset.region,el])),retained=new Set();
@@ -458,7 +464,7 @@ function syncGraphChrome(){
 function drawLiveGhosts(now,drift){
  if(!liveGhosts.length)return;const remaining=[];ctx.save();
  for(const ghost of liveGhosts){const age=(now-ghost.start)/380;if(age>=1)continue;remaining.push(ghost);
-  const x=ghost.cosmic?width*.57+(ghost.x+yaw*.22+drift)*width*zoom/ghost.z:ghost.x,y=ghost.cosmic?height*.5+(ghost.y+(pitch-.1)*.18)*height*zoom/ghost.z:ghost.y;
+  const x=ghost.cosmic?width*(.57+skyFloat.x)+(ghost.x+yaw*.22+drift)*width*zoom/ghost.z:ghost.x,y=ghost.cosmic?height*(.5+skyFloat.y)+(ghost.y+(pitch-.1)*.18)*height*zoom/ghost.z:ghost.y;
   ctx.globalAlpha=(1-easing(clamp(age,0,1)))*.55;ctx.fillStyle=ghost.color;ctx.beginPath();ctx.arc(x,y,ghost.radius*(1-age*.4),0,tau);ctx.fill();
  }ctx.restore();liveGhosts=remaining;
 }
@@ -556,7 +562,7 @@ function setLocked(value){
  if(lockStateKnown&&locked===value)return;
  lockStateKnown=true;locked=value;if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];selected=null;renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
 if(window.LockCluster){LockCluster.on('effective',setLocked);LockCluster.onReady().then(setLocked);}else setLocked(false);
-addEventListener('pointerdown',()=>window.LockCluster?.noteActivity());
+for(const event of ['pointerdown','pointermove','keydown','wheel'])addEventListener(event,()=>{if(!locked)window.LockCluster?.noteActivity();},{passive:true});
 redraw();
 
 function respectMotion(){if(motionReduced()){animate=false;for(const n of graph.nodes)delete n.bornAt;liveGhosts=[];liveAnimationUntil=0;if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}graphFade=null;cosmicFlight=null;settlePanels();syncMotion();redraw();}}

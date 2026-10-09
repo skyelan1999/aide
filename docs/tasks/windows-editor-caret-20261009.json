@@ -1,0 +1,83 @@
+{
+  "id": "windows-editor-caret-20261009",
+  "request": "修复 Windows 上文件编写光标位置不正确",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M docs/plugins/office.md\n M docs/workspace-paths.md\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/auth_verify_test.go\n M internal/server/environment_guide.go\n M internal/server/files.go\n M internal/server/global_events.go\n M internal/server/harness_runtime.go\n M internal/server/lock_state.go\n M internal/server/lock_state_test.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/macos.css\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M plugins/office/index.js\n M scripts/lock-cluster-election.test.js\n?? docs/reviews/2026-10-09/\n?? docs/tasks/approval-global-memory-20261009.json\n?? docs/tasks/approval-stale-answer-20261009.json\n?? docs/tasks/assisted-approval-ui-20261009.json\n?? docs/tasks/csv-read-write-20261009.json\n?? docs/tasks/file-create-location-20261009.json\n?? docs/tasks/file-render-settings-20261009.json\n?? docs/tasks/file-view-stability-autosave-20261009.json\n?? docs/tasks/generated-docs-binding-20261009.json\n?? docs/tasks/lock-screen-review-20261009.json\n?? docs/tasks/markdown-media-20261009.json\n?? docs/tasks/markdown-outline-20261009.json\n?? internal/server/approval_policy.go\n?? internal/server/generated_documents.go\n?? internal/server/source_browse.go\n?? internal/server/source_browse_test.go\n?? internal/server/web/delimited-text.js\n?? internal/server/web/file-autosave.js\n?? internal/server/web/file-route.js\n?? internal/server/web/markdown-media.js\n?? internal/server/web/markdown-outline.js\n?? internal/server/web/text-editor.js\n?? scripts/lock-cluster-state.test.js\n?? scripts/markdown-image-path.test.js",
+  "acceptance": [
+    "高亮文字与原生输入框字体和字宽一致",
+    "常驻滚动条下高亮层尺寸跟随原生可视区域",
+    "横纵滚动保留原生光标与文字相对位置",
+    "中文组合输入使用原生显示，结束恢复高亮"
+  ],
+  "scope": [
+    "internal/server/web/text-editor.js",
+    "internal/server/web/macos.css",
+    "internal/server/web/index.html",
+    "docs/workspace-paths.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "明确 Windows 编辑光标错位，保留原生输入与选择行为",
+      "evidence": [
+        "internal/server/web/text-editor.js",
+        "internal/server/web/macos.css",
+        "internal/server/web/index.html",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "单一原生滚动源，裁剪绘制层，统一字体度量，IME 原生显示",
+      "evidence": [
+        "internal/server/web/text-editor.js",
+        "internal/server/web/macos.css",
+        "internal/server/web/index.html",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "client viewport 对齐、token 字体统一、输入法与字体加载生命周期清理",
+      "evidence": [
+        "internal/server/web/text-editor.js",
+        "internal/server/web/macos.css",
+        "internal/server/web/index.html",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "node --check 与 git diff --check 通过；macOS IAB 组件实际检查：native/paint 835×343，Consolas/Courier 字体一致，scrollLeft 1298 对应 translate(-1298px,0px)，高亮正文与输入相同；纵向 1464.5px 同步。Windows 实机、中文输入法组合及完整 Aide 实例验收未运行。",
+      "evidence": [
+        ".agent-state/windows-caret-preview/editor.png",
+        ".agent-state/windows-caret-preview/horizontal.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新文本编辑对齐行为与实机验收边界",
+      "evidence": [
+        "internal/server/web/text-editor.js",
+        "internal/server/web/macos.css",
+        "internal/server/web/index.html",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留已有工作树改动与组件截图；临时预览服务停止后交接",
+      "evidence": [
+        ".agent-state/windows-caret-preview/"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮未部署、推送或发布",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "共享编辑组件源码已修复；Windows 浏览器实机确认待完成，运行实例未更新。"
+}

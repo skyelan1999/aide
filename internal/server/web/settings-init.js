@@ -206,7 +206,7 @@
     key: KEY,
     version: VERSION,
     get: function (name) {
-      return doc[name];
+      return ['fileLineNumbers','fileSyntaxHighlight','fileMarkdownPreview','fileMarkdownOutline','fileMarkdownMedia','fileCsvPreview'].indexOf(name) >= 0 ? doc[name] !== false : doc[name];
     },
     getAll: snapshot,
     setAppearance: function (palette, theme) {

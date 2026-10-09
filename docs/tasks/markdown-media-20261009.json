@@ -1,0 +1,90 @@
+{
+  "id": "markdown-media-20261009",
+  "request": "Markdown 支持文件、图片及 draw.io 图片插入，参考 Docmost",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M docs/plugins/office.md\n M docs/workspace-paths.md\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/auth_verify_test.go\n M internal/server/environment_guide.go\n M internal/server/files.go\n M internal/server/global_events.go\n M internal/server/harness_runtime.go\n M internal/server/lock_state.go\n M internal/server/lock_state_test.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/macos.css\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M plugins/office/index.js\n M scripts/lock-cluster-election.test.js\n?? docs/reviews/2026-10-09/\n?? docs/tasks/approval-global-memory-20261009.json\n?? docs/tasks/approval-stale-answer-20261009.json\n?? docs/tasks/assisted-approval-ui-20261009.json\n?? docs/tasks/csv-read-write-20261009.json\n?? docs/tasks/file-create-location-20261009.json\n?? docs/tasks/generated-docs-binding-20261009.json\n?? docs/tasks/lock-screen-review-20261009.json\n?? docs/tasks/markdown-outline-20261009.json\n?? internal/server/approval_policy.go\n?? internal/server/generated_documents.go\n?? internal/server/source_browse.go\n?? internal/server/source_browse_test.go\n?? internal/server/web/delimited-text.js\n?? internal/server/web/markdown-outline.js\n?? scripts/lock-cluster-state.test.js\n?? scripts/markdown-image-path.test.js",
+  "acceptance": [
+    "插入普通附件与图片引用",
+    "资源保存到当前文档来源和目录",
+    "只读文档不提供写入入口",
+    "draw.io 保存后插入 SVG，预览提供再次编辑入口",
+    "文档变化时不覆盖新编辑内容"
+  ],
+  "scope": [
+    "Markdown 两种文件预览的插入工具栏",
+    "文件上传与当前文档来源绑定",
+    "粘贴和拖入文件",
+    "draw.io 本地编辑与可编辑 SVG",
+    "附件预览链接",
+    "文档和本地化"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "实现共享 Markdown 插入模块，复用文件接口与本地 draw.io",
+      "evidence": [
+        "internal/server/web/markdown-media.js",
+        "internal/server/web/app.js",
+        "internal/server/files.go",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "实现共享 Markdown 插入模块，复用文件接口与本地 draw.io",
+      "evidence": [
+        "internal/server/web/markdown-media.js",
+        "internal/server/web/app.js",
+        "internal/server/files.go",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "实现共享 Markdown 插入模块，复用文件接口与本地 draw.io",
+      "evidence": [
+        "internal/server/web/markdown-media.js",
+        "internal/server/web/app.js",
+        "internal/server/files.go",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "语法、diff 及最终 Go 编译通过；组件浏览器实际完成中文链接插入与 draw.io 文字节点导出 SVG。上传服务、来源权限、保存和再次编辑持久化未联调。",
+      "evidence": [
+        "node --check internal/server/web/markdown-media.js",
+        "node --check internal/server/web/app.js",
+        "node --check internal/server/web/locales/en.js",
+        "git diff --check",
+        "go build -buildvcs=false -o /tmp/aide-markdown-media ./cmd/aide: exit 0",
+        ".agent-state/markdown-media-preview/diagram.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "实现共享 Markdown 插入模块，复用文件接口与本地 draw.io",
+      "evidence": [
+        "internal/server/web/markdown-media.js",
+        "internal/server/web/app.js",
+        "internal/server/files.go",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "恢复浏览器尺寸，停止本机预览服务",
+      "evidence": [
+        "temporary preview port 18207"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未推送、发布或部署",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "完成源码、组件预览和文档；真实 API/文件保存及 SSH 来源验收待执行。"
+}

@@ -1,0 +1,61 @@
+{
+  "id": "file-render-settings-20261009",
+  "request": "代码和 TXT 支持行号；设置增加文件查看与渲染，勾选配置自动保存",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M docs/plugins/office.md\n M docs/workspace-paths.md\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/auth_verify_test.go\n M internal/server/environment_guide.go\n M internal/server/files.go\n M internal/server/global_events.go\n M internal/server/harness_runtime.go\n M internal/server/lock_state.go\n M internal/server/lock_state_test.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/macos.css\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M plugins/office/index.js\n M scripts/lock-cluster-election.test.js\n?? docs/reviews/2026-10-09/\n?? docs/tasks/approval-global-memory-20261009.json\n?? docs/tasks/approval-stale-answer-20261009.json\n?? docs/tasks/assisted-approval-ui-20261009.json\n?? docs/tasks/csv-read-write-20261009.json\n?? docs/tasks/file-create-location-20261009.json\n?? docs/tasks/generated-docs-binding-20261009.json\n?? docs/tasks/lock-screen-review-20261009.json\n?? docs/tasks/markdown-media-20261009.json\n?? docs/tasks/markdown-outline-20261009.json\n?? internal/server/approval_policy.go\n?? internal/server/generated_documents.go\n?? internal/server/source_browse.go\n?? internal/server/source_browse_test.go\n?? internal/server/web/delimited-text.js\n?? internal/server/web/markdown-media.js\n?? internal/server/web/markdown-outline.js\n?? scripts/lock-cluster-state.test.js\n?? scripts/markdown-image-path.test.js",
+  "acceptance": [
+    "代码和 TXT 等原文显示逻辑行号",
+    "设置采用复选框且无需保存按钮",
+    "选择在当前浏览器刷新后保留",
+    "不修改文件原文或写权限"
+  ],
+  "scope": [
+    "文本查看器行号与可选高亮",
+    "文件查看与渲染复选框及浏览器自动保存",
+    "Markdown 与 CSV 默认渲染偏好及现有目录/工具栏开关"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "行号覆盖全部文本格式，渲染选项勾选自动保存。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "共用原生 textarea 的编号/高亮组件；沿用 aide.ui 浏览器偏好，明确与文件内容保存区别。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已接入工作台与独立文件页；六项配置支持即时显示或下次打开默认模式。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "node --check、git diff --check、Go build 通过；独立组件桌面与 390px 预览、行号滚动到 120、取消勾选刷新后保留已观察。完整 Aide 设置面板/生产部署 NOT_RUN。",
+      "evidence": [
+        ".agent-state/file-render-preview/desktop.png",
+        "internal/server/web/text-editor.js",
+        "internal/server/web/settings-schema.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "docs/workspace-paths.md 记录选项、生效时机、浏览器范围和限制。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留此前工作区修改；临时预览将停止。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次未部署、提交或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "源码完成；生产实例未升级。"
+}

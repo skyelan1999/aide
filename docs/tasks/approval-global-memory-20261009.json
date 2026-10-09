@@ -1,0 +1,116 @@
+{
+  "id": "approval-global-memory-20261009",
+  "request": "审批增加仅本次或永远记住；辅助/手动审批作为全局偏好立即影响所有会话",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M docs/architecture/execution-policy.md\n M docs/plugins/office.md\n M docs/workspace-paths.md\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/environment_guide.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/web/app.js\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M plugins/office/index.js\n?? docs/tasks/assisted-approval-ui-20261009.json\n?? docs/tasks/file-create-location-20261009.json\n?? docs/tasks/generated-docs-binding-20261009.json\n?? internal/server/generated_documents.go",
+  "acceptance": [
+    "全局手动/辅助模式持久化，所有活动会话立即更新并取消旧审核",
+    "新建/重试/续跑采用服务端偏好，标签页通过SSE同步",
+    "人工命令和文件审批支持仅本次/永远记住，精准匹配且可清空",
+    "权限、版本冲突、失效审批轮次和保存失败不能被记忆绕过"
+  ],
+  "scope": [
+    "internal/server/approval_policy.go",
+    "internal/server/assisted_approval.go",
+    "internal/server/assisted_approval_files.go",
+    "internal/server/workflow.go",
+    "internal/server/server.go",
+    "internal/server/harness_runtime.go",
+    "internal/server/global_events.go",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/index.html",
+    "docs/architecture/execution-policy.md",
+    "docs/architecture.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求全局立即生效与仅本次/永远记住；同实例共享，长期规则精准限定",
+      "evidence": [
+        "internal/server/approval_policy.go",
+        "internal/server/assisted_approval.go",
+        "internal/server/assisted_approval_files.go",
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/harness_runtime.go",
+        "internal/server/global_events.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "服务端原子JSON持久化，审核代次取消，SSE同步，哈希匹配授权",
+      "evidence": [
+        "internal/server/approval_policy.go",
+        "internal/server/assisted_approval.go",
+        "internal/server/assisted_approval_files.go",
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/harness_runtime.go",
+        "internal/server/global_events.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "接入全局API、任务创建重试续跑、命令与文件长期授权、前端操作及撤销入口",
+      "evidence": [
+        "internal/server/approval_policy.go",
+        "internal/server/assisted_approval.go",
+        "internal/server/assisted_approval_files.go",
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/harness_runtime.go",
+        "internal/server/global_events.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "Go build、JS语法和文档检查；浏览器、跨会话即时生效与真实模型验收尚未运行；本轮未增加或执行测试",
+      "evidence": [
+        "Docker aide:local CGO_ENABLED=0 go build -buildvcs=false -mod=vendor ./cmd/aide",
+        "node --check internal/server/web/app.js",
+        "node --check internal/server/web/locales/en.js",
+        "git diff --check",
+        "python3 scripts/check_docs.py"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "描述全局作用域、授权指纹、旧客户端兼容、撤销及验收边界",
+      "evidence": [
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "继承并保留已有改动；移除会话级审批选择的无效前端缓存调用；新增文件均属于本任务",
+      "evidence": [
+        "git diff --check",
+        "internal/server/approval_policy.go"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮未推送、发布或替换生产实例",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "源码候选，未替换9999生产服务。下一步通过start.command在隔离实例验收两个会话/标签页、重启、一次与长期授权、撤销和保存失败。未推送或发布。",
+  "source_fingerprints": {
+    "internal/server/approval_policy.go": "e3bd468b239676852182b2c96ed089743d1fa7337d662d2850096c7f5e534b8d",
+    "internal/server/assisted_approval.go": "7e9d790f36cc73aefcac77d95e20f0276af564979f154c190f601a5cab92a299",
+    "internal/server/assisted_approval_files.go": "5d7275679aa4930f03e16abdd80a176b4ca9a3afbc1439f9a2c3042d0103f508",
+    "internal/server/workflow.go": "bef1d5f1ba1a84ae4df2e9dea350995b8628ff15d4ae601d2e19f2069ccb8a0d",
+    "internal/server/server.go": "f7087d8a3a28ec410c4bfd3c4b7952783c7401bc9cf3f21076ad4b801606aed0",
+    "internal/server/harness_runtime.go": "e647f0a882b18bfc6d8719406e577491d98a55970af3ad61275dd014f7b6e443",
+    "internal/server/global_events.go": "3917d0f983e4320c04fe3cc81388c83e88ce92ac91b08202b516d0662c5a17c2",
+    "internal/server/web/app.js": "c777e07360fd0104bd26ef523d6d47d859c95b1fc3fa6abfbab82a2c364e7191",
+    "internal/server/web/locales/en.js": "3d7a95288b81ef2347f3acc39150b946937334bfbca5a6fbff84f6ddf5a0b28a",
+    "internal/server/web/index.html": "d87948681095d3ebc8ed28e4eb50224c272bf82793c3180a1a0f0698354a611e"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "id": "file-view-stability-autosave-20261009",
+  "request": "独立文件页长时间打开可能闪退；保存右侧增加自动保存开关和切换动画",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M docs/plugins/office.md\n M docs/workspace-paths.md\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/auth_verify_test.go\n M internal/server/environment_guide.go\n M internal/server/files.go\n M internal/server/global_events.go\n M internal/server/harness_runtime.go\n M internal/server/lock_state.go\n M internal/server/lock_state_test.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/macos.css\n M internal/server/web/settings-init.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M plugins/office/index.js\n M scripts/lock-cluster-election.test.js\n?? docs/reviews/2026-10-09/\n?? docs/tasks/approval-global-memory-20261009.json\n?? docs/tasks/approval-stale-answer-20261009.json\n?? docs/tasks/assisted-approval-ui-20261009.json\n?? docs/tasks/csv-read-write-20261009.json\n?? docs/tasks/file-create-location-20261009.json\n?? docs/tasks/file-render-settings-20261009.json\n?? docs/tasks/generated-docs-binding-20261009.json\n?? docs/tasks/lock-screen-review-20261009.json\n?? docs/tasks/markdown-media-20261009.json\n?? docs/tasks/markdown-outline-20261009.json\n?? internal/server/approval_policy.go\n?? internal/server/generated_documents.go\n?? internal/server/source_browse.go\n?? internal/server/source_browse_test.go\n?? internal/server/web/delimited-text.js\n?? internal/server/web/markdown-media.js\n?? internal/server/web/markdown-outline.js\n?? internal/server/web/text-editor.js\n?? scripts/lock-cluster-state.test.js\n?? scripts/markdown-image-path.test.js",
+  "acceptance": [
+    "定位参数不会被 token 清理及文内锚点覆盖",
+    "保存右侧提供自动保存开关和减少动效兼容动画",
+    "输入停顿后保存内容快照，保持 hash/工作区校验",
+    "切文件及只读/锁屏状态不会误写"
+  ],
+  "scope": [
+    "独立文件页定位恢复和锚点行为",
+    "自动/手动保存队列及界面开关",
+    "相关文档与组件浏览器观察"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认 Markdown/TXT/代码的文件画面消失返回工作台，非整个浏览器崩溃。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "定位绑定当前 history state；防抖且串行保存，不绕过后端冲突校验。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "源码已实现，保留既有文件权限与锁屏机制。",
+      "evidence": [
+        "internal/server/web/file-route.js",
+        "internal/server/web/file-autosave.js"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "JS 语法、diff 检查与 Go build PASS；真实浏览器独立组件观察到开启开关、输入防抖保存快照、锚点后刷新仍保留 notes.md 定位、开关刷新保留。模拟保存不代表实际 API 写入验收。用户的长时间打开后回到工作台未复现，完整实例耐久及实际 API 回归 NOT_RUN。",
+      "evidence": [
+        ".agent-state/file-autosave-preview/desktop.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "workspace-paths 记录定位保留、保存机制、冲突暂停及边界。",
+      "evidence": [
+        "docs/workspace-paths.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留前序源码与资料修改；临时组件服务将在交接前停止。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未提交、推送或更新生产实例。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "源码完成；长时间自动回退未复现。独立组件仅模拟保存，实际实例回归及部署未进行。"
+}

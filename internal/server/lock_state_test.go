@@ -82,6 +82,7 @@ func TestLockStateCorruptedFallsBackUnlocked(t *testing.T) {
 // GET / PUT 处理端到端。
 func TestLockStateHandlers(t *testing.T) {
 	a := newLockStateTestApp(t)
+	a.settings.UserPasswordHash = "configured-password"
 
 	// GET 初始未锁
 	rr := httptest.NewRecorder()
@@ -118,5 +119,57 @@ func TestLockStateHandlers(t *testing.T) {
 	// 路径落在 config/lock-state.json
 	if got := lockStatePath(a.dataPath); filepath.Base(got) != "lock-state.json" || filepath.Base(filepath.Dir(got)) != "config" {
 		t.Fatalf("路径应在 config/lock-state.json，got %s", got)
+	}
+}
+
+func TestLockStateCorruptWithPasswordFailsClosed(t *testing.T) {
+	a := newLockStateTestApp(t)
+	a.settings.UserPasswordHash = "configured-password"
+	if err := os.WriteFile(lockStatePath(a.dataPath), []byte("invalid"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if !a.readLockState().Locked {
+		t.Fatal("corrupt state with password must remain locked")
+	}
+}
+func TestLockStateCannotUnlockWithoutVerification(t *testing.T) {
+	a := newLockStateTestApp(t)
+	a.settings.UserPasswordHash = "configured-password"
+	a.writeLockState(true)
+	for _, body := range []string{`{}`, `{"locked":null}`, `{"locked":false}`} {
+		w := httptest.NewRecorder()
+		a.lockStatePut(w, httptest.NewRequest("PUT", "/api/lock-state", bytes.NewBufferString(body)))
+		if w.Code == 200 || !a.readLockState().Locked {
+			t.Fatalf("unverified unlock accepted: %s / %d", body, w.Code)
+		}
+	}
+}
+func TestLockStateVerifiedGenerationCannotClearNewLock(t *testing.T) {
+	a := newLockStateTestApp(t)
+	first, err := a.writeLockState(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	a.writeLockState(true)
+	if err := a.unlockScreenState(&first.Gen); err == nil || !a.readLockState().Locked {
+		t.Fatal("stale identity attempt cleared a newer lock")
+	}
+	current := a.readLockState()
+	if err := a.unlockScreenState(&current.Gen); err != nil {
+		t.Fatal(err)
+	}
+	if a.readLockState().Locked {
+		t.Fatal("current generation did not unlock")
+	}
+}
+func TestLockStateWithoutPasswordDoesNotTrapStarMap(t *testing.T) {
+	a := newLockStateTestApp(t)
+	a.writeLockState(true)
+	w := httptest.NewRecorder()
+	a.lockStateGet(w, httptest.NewRequest("GET", "/api/lock-state", nil))
+	var state LockStateFile
+	json.Unmarshal(w.Body.Bytes(), &state)
+	if state.Locked {
+		t.Fatal("removed password left map locked")
 	}
 }

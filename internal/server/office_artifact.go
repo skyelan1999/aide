@@ -143,6 +143,17 @@ func (a *App) officeCreateTool(wsRoot *os.Root, mode, remotePath, p, kind string
 	}
 	a.filesMu.Lock()
 	defer a.filesMu.Unlock()
+	if src, bound := a.generatedDocumentSource(); bound {
+		if _, readErr := a.readSourceRaw(src, p); readErr == nil {
+			return "文件已存在，不会覆盖: " + p
+		} else if !errors.Is(readErr, os.ErrNotExist) && !isSFTPNotExistErr(readErr) {
+			return "检查自动系统文档失败: " + readErr.Error()
+		}
+		if err := a.writeSourceText(src, p, b); err != nil {
+			return "Office 写入失败: " + err.Error()
+		}
+		return fmt.Sprintf("已生成 %s（%d 字节）；来源 system-docs，请从自动系统文档打开验证", path.Join(src.Config.Path, p), len(b))
+	}
 	if mode == "ssh" {
 		remoteFile := pathJoinRemote(remotePath, p)
 		if a.sftpExists(remoteFile) {

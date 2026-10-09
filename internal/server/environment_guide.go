@@ -52,6 +52,9 @@ func (a *App) environmentGuide() string {
 		if src.RW {
 			row.Access = "registered read/write; actual mount and server permissions still apply"
 		}
+		if src.ID == systemDocsSource && strings.TrimSpace(a.wsConfig.Docs.Path) != "" {
+			row.Usage = "Default destination for workflow documents and office_create; tool paths are relative to this binding. Read generated files with source=system-docs. Generic write_file proposals still target the workspace."
+		}
 		if src.Type == "local" || src.Type == "skill" {
 			row.Path = guideLabel(src.Config.Path)
 			container, _, err := a.resolveHostPath(src.Config.Path)

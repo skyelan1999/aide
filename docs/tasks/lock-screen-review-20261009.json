@@ -1,0 +1,70 @@
+{
+  "id": "lock-screen-review-20261009",
+  "request": "复核并修正屏幕锁定逻辑",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M docs/plugins/office.md\n M docs/workspace-paths.md\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/environment_guide.go\n M internal/server/global_events.go\n M internal/server/harness_runtime.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M plugins/office/index.js\n?? docs/tasks/approval-global-memory-20261009.json\n?? docs/tasks/assisted-approval-ui-20261009.json\n?? docs/tasks/file-create-location-20261009.json\n?? docs/tasks/generated-docs-binding-20261009.json\n?? internal/server/approval_policy.go\n?? internal/server/generated_documents.go",
+  "acceptance": [
+    "解锁保存后揭开遮罩",
+    "刷新与星图同步权威锁态",
+    "旧解锁不得覆盖新锁定",
+    "回归验证与真实浏览器状态分别记录"
+  ],
+  "scope": [
+    "lock-cluster.js",
+    "app.js",
+    "starmap.js",
+    "lock_state.go",
+    "account/password and WebAuthn unlock endpoints",
+    "focused regression and documentation"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "completed",
+      "summary": "已整理到锁屏复核记录",
+      "evidence": [
+        "docs/reviews/2026-10-09/lock-screen-review.md"
+      ]
+    },
+    "design": {
+      "status": "completed",
+      "summary": "已整理到锁屏复核记录",
+      "evidence": [
+        "docs/reviews/2026-10-09/lock-screen-review.md"
+      ]
+    },
+    "implementation": {
+      "status": "completed",
+      "summary": "已整理到锁屏复核记录",
+      "evidence": [
+        "docs/reviews/2026-10-09/lock-screen-review.md"
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "源代码修正与定向回归完成；真实浏览器及 Touch ID 未执行",
+      "evidence": [
+        "docs/reviews/2026-10-09/lock-screen-review.md"
+      ]
+    },
+    "documentation": {
+      "status": "completed",
+      "summary": "已整理到锁屏复核记录",
+      "evidence": [
+        "docs/reviews/2026-10-09/lock-screen-review.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未推送、发布或更新生产服务",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "运行服务未变；源码回退只撤销本任务差异，保留已有审批、文档与星图修改。",
+  "handoff": "定向回归与编译通过；Safari/Touch ID 验收及运行服务更新待执行。"
+}

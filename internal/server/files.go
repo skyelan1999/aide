@@ -1362,6 +1362,7 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 		".pdf": "application/pdf", ".html": "text/html; charset=utf-8",
 		".css": "text/css; charset=utf-8", ".js": "application/javascript",
 		".json": "application/json", ".txt": "text/plain; charset=utf-8",
+		".csv": "text/csv; charset=utf-8", ".tsv": "text/tab-separated-values; charset=utf-8",
 		".md": "text/markdown; charset=utf-8", ".drawio": "application/xml; charset=utf-8",
 		".stl": "model/stl",
 	}[ext]
@@ -1561,6 +1562,15 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 // silently overwrite a project artifact. Local, SSH workspace, and writable source
 // destinations all reuse their existing atomic write channels.
 func (a *App) uploadFile(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query().Get("source") == "" {
+		a.mu.Lock()
+		workspaceID := a.wsID()
+		a.mu.Unlock()
+		if id := r.URL.Query().Get("workspaceId"); id != "" && id != workspaceID {
+			fail(w, 409, errors.New("工作区已切换：请重新打开文档后插入附件"))
+			return
+		}
+	}
 	p := r.URL.Query().Get("path")
 	if err := safePath(p); err != nil {
 		fail(w, 400, err)

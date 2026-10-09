@@ -75,6 +75,7 @@ type Task struct {
 	ToolExecutionIntents     []ToolExecutionIntent `json:"toolExecutionIntents,omitempty"`
 	ExecutionPolicy          *ExecutionPolicy      `json:"executionPolicy,omitempty"`
 	AutoReview               bool                  `json:"autoReview,omitempty"`
+	ApprovalState            string                `json:"approvalState,omitempty"`
 	ApprovalReviews          []ApprovalReview      `json:"approvalReviews,omitempty"`
 	approvalCtx              context.Context
 	approvalCancel           context.CancelFunc
@@ -184,7 +185,7 @@ var builtinTools = []any{
 	map[string]any{"type": "function", "function": map[string]any{"name": "record_implementation", "description": "实施阶段专用：在 /workspace 实际写代码并运行编译/测试后，记录实施结果，自动分配 IMPL-xxx 编号。content 记录实现内容、修改的文件、基于真实运行的验证结果。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"title": map[string]any{"type": "string", "description": "实施项名称"}, "content": map[string]any{"type": "string", "description": "实现内容、修改文件、验证结果"}, "reqId": map[string]any{"type": "string", "description": "关联需求编号，可选"}, "designId": map[string]any{"type": "string", "description": "关联设计编号（如 DESIGN-001），可选"}}, "required": []string{"title", "content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "record_verification", "description": "验证阶段专用：编写并真实运行自动化测试后，记录测试报告，自动分配 TEST-xxx 编号。报告必须基于真实运行结果，禁止把计划写成通过。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"title": map[string]any{"type": "string", "description": "验证项名称"}, "content": map[string]any{"type": "string", "description": "测试报告：环境、用例、真实运行结果、结论"}, "reqId": map[string]any{"type": "string", "description": "关联需求编号，可选"}, "designId": map[string]any{"type": "string", "description": "关联设计编号，可选"}, "implId": map[string]any{"type": "string", "description": "关联实施编号（如 IMPL-001），可选"}}, "required": []string{"title", "content"}}}},
 	map[string]any{"type": "function", "function": map[string]any{"name": "record_problem_report", "description": "仅用于 AI 工作流的问题分析阶段：保存对用户明确描述的问题所做的分析；不要默认记录 aide/AI 自身问题，除非用户明确将其作为待分析对象。先生成 draw.io 图，再保存 Markdown 报告并自动分配 RCA-xxx 编号。content 必须含问题、背景、排查方向、RCA 图、测试、结论、建议；diagramPath 必须是已生成的 .drawio 相对路径。", "parameters": map[string]any{"type": "object", "properties": map[string]any{"title": map[string]any{"type": "string"}, "content": map[string]any{"type": "string"}, "diagramPath": map[string]any{"type": "string"}}, "required": []string{"title", "content", "diagramPath"}}}},
-	map[string]any{"type": "function", "function": map[string]any{"name": "ask_user", "description": "Pause only for a blocking missing input or a concrete action requiring user approval. Reuse prior authorization; continue routine authorized research and reversible work without asking again. Do not request generic plan or phase approval. Use this tool instead of a question in ordinary prose. Ask ONE self-contained question explaining why it is needed. single: provide 2-3 meaningful choices with recommendation first; input: essential free text; confirm: concrete action and impact. After the answer, execute.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"question": map[string]any{"type": "string", "description": "The single clarifying question"}, "type": map[string]any{"type": "string", "enum": []string{"single", "multi", "input", "confirm"}}, "options": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}, "progressCurrent": map[string]any{"type": "integer"}, "progressTotal": map[string]any{"type": "integer"}}, "required": []string{"question", "type"}}}},
+	map[string]any{"type": "function", "function": map[string]any{"name": "ask_user", "description": "Pause only for a blocking missing input or a concrete action requiring user approval. Reuse prior authorization; continue routine authorized research and reversible work without asking again. Do not request generic plan or phase approval. Never use ask_user to duplicate run_shell or write_file approval: call the action tool so its approval gate can perform assisted review. Use this tool instead of a question in ordinary prose. Ask ONE self-contained question explaining why it is needed. single: provide 2-3 meaningful choices with recommendation first; input: essential free text; confirm: concrete action and impact. After the answer, execute.", "parameters": map[string]any{"type": "object", "properties": map[string]any{"question": map[string]any{"type": "string", "description": "The single clarifying question"}, "type": map[string]any{"type": "string", "enum": []string{"single", "multi", "input", "confirm"}}, "options": map[string]any{"type": "array", "items": map[string]any{"type": "string"}}, "progressCurrent": map[string]any{"type": "integer"}, "progressTotal": map[string]any{"type": "integer"}}, "required": []string{"question", "type"}}}},
 }
 
 func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
@@ -305,7 +306,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{ID: newID(), AutoReview: in.AutoReview, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{ID: newID(), AutoReview: a.approvalPolicy.Enabled, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	policy, policyErr := a.loadExecutionPolicy()
 	if policyErr != nil {
 		fail(w, 400, fmt.Errorf("invalid execution policy: %w", policyErr))
@@ -596,6 +597,10 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		task.CheckpointStep = ""
 		if len(task.Files) > 0 {
 			task.Status = "awaiting_approval"
+			task.ApprovalState = "manual"
+			if task.AutoReview {
+				task.ApprovalState = "reviewing"
+			}
 		}
 		s.Messages = append(s.Messages, Message{Role: "assistant", Content: answer})
 	}
@@ -765,7 +770,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	if avatarOverride != nil {
 		avatarEnabled = *avatarOverride
 	}
-	task := &Task{ID: newID(), AutoReview: orig.AutoReview, WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{ID: newID(), AutoReview: a.approvalPolicy.Enabled, WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	policy, policyErr := a.loadExecutionPolicy()
 	if policyErr != nil {
 		fail(w, 400, fmt.Errorf("invalid execution policy: %w", policyErr))
@@ -926,6 +931,7 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	resumed.ID = newID()
+	resumed.AutoReview = a.approvalPolicy.Enabled
 	if avatarOverride != nil {
 		resumed.AvatarFeedback = *avatarOverride
 	}
@@ -972,8 +978,10 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 // answerTask 接收用户对澄清问题的应答，唤醒被 ask_user 阻塞的 run。
 func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Answer string `json:"answer"`
-		Round  string `json:"round"`
+		Answer     string `json:"answer"`
+		Remember   bool   `json:"remember"`
+		Round      string `json:"round"`
+		QuestionID string `json:"questionId"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -988,6 +996,14 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, t := range s.Runs {
 		if t.ID == r.PathValue("run") && t.Status == "awaiting_clarification" && t.AnswerCh != nil {
+			var currentQuestion struct {
+				ID string `json:"questionId"`
+			}
+			_ = json.Unmarshal(t.PendingQuestion, &currentQuestion)
+			if in.QuestionID != "" && in.QuestionID != currentQuestion.ID {
+				fail(w, 409, errors.New("审批请求已过期，请刷新"))
+				return
+			}
 			if in.Round != "" && in.Round != fmt.Sprint(t.answerRound) {
 				fail(w, 409, errors.New("审批请求已过期，请刷新"))
 				return
@@ -999,6 +1015,21 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 			if len(t.AnswerCh) != 0 {
 				fail(w, 409, errors.New("澄清应答通道忙"))
 				return
+			}
+			if in.Remember {
+				var q struct {
+					Kind    string `json:"approvalKind"`
+					Command string `json:"command"`
+				}
+				_ = json.Unmarshal(t.PendingQuestion, &q)
+				if q.Kind != "shell" || in.Answer != "确认" || in.Round == "" {
+					fail(w, 400, errors.New("仅可记住当前明确确认的命令审批"))
+					return
+				}
+				if err := a.rememberApprovalLocked(t, "shell", q.Command); err != nil {
+					fail(w, 400, err)
+					return
+				}
 			}
 			previousMessages, previousUpdated := s.Messages, s.Updated
 			s.Messages = append(s.Messages, Message{Role: "user", Content: in.Answer})
@@ -1025,7 +1056,21 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 	fail(w, 409, errors.New("当前无可应答的澄清问题"))
 }
 func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
-	a.applyTaskGuarded(w, r, nil)
+	var in struct {
+		Remember bool `json:"remember"`
+	}
+	if r.ContentLength != 0 {
+		if err := decode(w, r, &in); err != nil {
+			fail(w, 400, err)
+			return
+		}
+	}
+	a.applyTaskGuarded(w, r, func(task *Task) error {
+		if in.Remember {
+			return a.rememberApprovalLocked(task, "files", approvalFilesFingerprint(task.Files))
+		}
+		return nil
+	})
 }
 
 func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard func(*Task) error) {
@@ -2151,7 +2196,8 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt, profileID string, agent
 		}
 	}
 	subTask := &Task{
-		ID: newID(), Mode: "chat", Prompt: subPrompt, Status: "running",
+		AutoReview: a.approvalPolicy.Enabled,
+		ID:         newID(), Mode: "chat", Prompt: subPrompt, Status: "running",
 		Steer: make(chan string, 4), Created: now,
 		Steps: []Step{}, Files: []Change{}, Commands: []string{},
 		Strategy: "manual", Model: a.settings.Model,
@@ -2316,7 +2362,7 @@ func (a *App) writeMemory(content string) string {
 		return "写入记忆失败: " + err.Error()
 	}
 	if err := a.pushProjectCacheFiles("aide", "memory.md"); err != nil {
-		return "同步项目缓存失败: " + err.Error()
+		return "同步文档失败: " + err.Error()
 	}
 	return "已写入记忆。"
 }
@@ -2431,10 +2477,11 @@ func (a *App) createRequirement(title, content, related string) string {
 	if title == "" {
 		return "缺少 title 参数"
 	}
-	dir := a.requirementsDir()
-	if err := a.pullProjectCacheDir("system-docs/requirements"); err != nil {
-		return "读取项目缓存失败: " + err.Error()
+	dir, destination, publish, cleanup, err := a.prepareGeneratedDocDir("requirements")
+	if err != nil {
+		return "读取自动系统文档目录失败: " + err.Error()
 	}
+	defer cleanup()
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "创建需求目录失败: " + err.Error()
 	}
@@ -2489,10 +2536,10 @@ func (a *App) createRequirement(title, content, related string) string {
 	if err := a.rewriteRequirementsIndex(dir); err != nil {
 		return "需求已建档，但索引更新失败: " + err.Error()
 	}
-	if err := a.pushProjectCacheFiles("system-docs/requirements", filepath.Base(filePath), "requirements-index.md"); err != nil {
-		return "同步项目缓存失败: " + err.Error()
+	if err := publish(filepath.Base(filePath), "requirements-index.md"); err != nil {
+		return "同步文档失败: " + err.Error()
 	}
-	return fmt.Sprintf("需求已建档：%s · %s\n文件：%s\n索引已更新", id, title, a.projectCacheDisplayPath("system-docs/requirements/"+filepath.Base(filePath)))
+	return fmt.Sprintf("需求已建档：%s · %s\n文件：%s\n索引已更新", id, title, path.Join(destination, filepath.Base(filePath)))
 }
 
 // rewriteRequirementsIndex 扫描目录下所有 REQ-*.md，重写 requirements-index.md。
@@ -2553,7 +2600,7 @@ func (a *App) rewriteRequirementsIndex(dir string) error {
 // designPhasePrompt 设计阶段强流程提示。
 const designPhasePrompt = `
 【设计阶段强流程】你当前处于方案设计阶段。必须严格执行：
-1. 先用 read_file 阅读 system-docs/requirements/ 下相关的 REQ-xxx 需求文档（尤其关联需求）
+1. 先阅读相关 REQ-xxx 需求文档（尤其关联需求）；绑定自动系统文档时使用 read_file(source="system-docs", path="requirements/文件名.md")，未绑定时读取项目缓存 system-docs/requirements/。
 2. 调用 create_design 工具创建/更新设计文档（必须调用，不可跳过）
 3. 主动列举关键决策点、可选方案及其取舍；涉及复杂结构用 create_diagram 生成 .drawio 图
 4. 文档须覆盖：开发流程、依赖条件、架构需求、待确认项（主动澄清）、变更记录
@@ -2679,10 +2726,11 @@ func (a *App) createDoc(spec phaseDocSpec, title, content, related string) strin
 	if title == "" {
 		return "缺少 title 参数"
 	}
-	dir := a.cacheContainer + "/system-docs/" + spec.subdir
-	if err := a.pullProjectCacheDir("system-docs/" + spec.subdir); err != nil {
-		return "读取项目缓存失败: " + err.Error()
+	dir, destination, publish, cleanup, err := a.prepareGeneratedDocDir(spec.subdir)
+	if err != nil {
+		return "读取自动系统文档目录失败: " + err.Error()
 	}
+	defer cleanup()
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return "创建文档目录失败: " + err.Error()
 	}
@@ -2710,10 +2758,10 @@ func (a *App) createDoc(spec phaseDocSpec, title, content, related string) strin
 	if err := rewriteDocIndex(dir, spec.prefix, spec.indexFile, spec.indexTitle); err != nil {
 		return "已建档，但索引更新失败: " + err.Error()
 	}
-	if err := a.pushProjectCacheFiles("system-docs/"+spec.subdir, fileName, spec.indexFile); err != nil {
-		return "同步项目缓存失败: " + err.Error()
+	if err := publish(fileName, spec.indexFile); err != nil {
+		return "同步文档失败: " + err.Error()
 	}
-	return fmt.Sprintf("已建档：%s · %s\n文件：%s\n索引已更新", id, title, a.projectCacheDisplayPath("system-docs/"+spec.subdir+"/"+fileName))
+	return fmt.Sprintf("已建档：%s · %s\n文件：%s\n索引已更新", id, title, path.Join(destination, fileName))
 }
 
 // joinRelated 合并非空关联编号为逗号分隔串。
@@ -3671,6 +3719,10 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		for _, src := range a.sourceRegistry.Sources {
 			if src.Enabled {
 				row := map[string]any{"id": src.ID, "name": guideLabel(src.Name), "type": src.Type, "readable": src.Type != "mcp", "builtin": src.Builtin, "aiAccess": "read-only"}
+				row["rw"] = src.RW
+				if src.ID == systemDocsSource && strings.TrimSpace(a.wsConfig.Docs.Path) != "" {
+					row["aiAccess"] = "read; write via workflow document tools and office_create"
+				}
 				if src.Type == "mcp" {
 					row["readable"] = false
 					row["aiAccess"] = "read-only MCP tools"
@@ -4055,11 +4107,19 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 	task.approvalAnswered = false
 	task.approvalCtx = ctx
 	var approvalQuestion map[string]any
-	if json.Unmarshal(question, &approvalQuestion) == nil && approvalQuestion["approvalKind"] == "shell" {
+	if json.Unmarshal(question, &approvalQuestion) == nil {
+		approvalQuestion["questionId"] = newID()
 		approvalQuestion["approvalRound"] = fmt.Sprint(task.answerRound)
 		question, _ = json.Marshal(approvalQuestion)
 	}
 	task.PendingQuestion = question
+	task.ApprovalState = ""
+	if approvalQuestion["approvalKind"] == "shell" {
+		task.ApprovalState = "manual"
+		if task.AutoReview {
+			task.ApprovalState = "reviewing"
+		}
+	}
 	task.Status = "awaiting_clarification"
 	ch := make(chan string, 1)
 	task.AnswerCh = ch
@@ -4104,11 +4164,21 @@ func (a *App) awaitUserAnswer(ctx context.Context, task *Task, question json.Raw
 	}
 	task.approvalCtx = nil
 	task.PendingQuestion = nil
+	task.ApprovalState = ""
 	task.AnswerCh = nil
 	if ctx.Err() == nil {
 		task.Status = "running"
 	}
+	if session != nil {
+		if err := a.save(session); err != nil {
+			log.Printf("保存澄清结束状态失败: %v", err)
+		}
+	}
 	a.mu.Unlock()
+	a.publishStream(task.ID, streamEvent{Event: "clarification-resolved"})
+	if session != nil {
+		a.broadcastSessionsChanged(session.ID)
+	}
 	return strings.TrimSpace(answer)
 }
 

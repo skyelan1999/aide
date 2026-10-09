@@ -120,6 +120,49 @@
       ]
     },
     {
+      "id": "file-rendering",
+      "title": "文件查看与渲染",
+      "description": "勾选后立即生效，自动保存到当前浏览器；同源标签页同步。默认预览选项在下次打开文件时应用。文件内容仍需点击保存。",
+      "controls": [
+        {
+          "id": "fileLineNumbers",
+          "type": "checkbox",
+          "label": "显示行号",
+          "description": "所有代码和 TXT 等文本文件，编辑与只读视图均支持。"
+        },
+        {
+          "id": "fileSyntaxHighlight",
+          "type": "checkbox",
+          "label": "代码语法高亮",
+          "description": "已识别语言显示语法颜色，其他格式保留普通文本。"
+        },
+        {
+          "id": "fileMarkdownPreview",
+          "type": "checkbox",
+          "label": "Markdown 默认渲染预览",
+          "description": "取消勾选后默认打开 Markdown 源文。"
+        },
+        {
+          "id": "fileMarkdownOutline",
+          "type": "checkbox",
+          "label": "Markdown 标题目录",
+          "description": "预览中显示标题导航。"
+        },
+        {
+          "id": "fileMarkdownMedia",
+          "type": "checkbox",
+          "label": "Markdown 插入工具栏",
+          "description": "可写 Markdown 显示文件、图片和 draw.io 插入入口。"
+        },
+        {
+          "id": "fileCsvPreview",
+          "type": "checkbox",
+          "label": "CSV / TSV 默认表格预览",
+          "description": "取消勾选后默认打开原文，仍可手动切换表格。"
+        }
+      ]
+    },
+    {
       "id": "virtual-avatars",
       "title": "虚拟形象",
       "description": "aide 与小秘共用一个虚拟形象，统一管理素材包、显示位置与启用状态。导入素材仅保存在当前浏览器。",

@@ -1,0 +1,87 @@
+{
+  "id": "markdown-outline-20261009",
+  "request": "Markdown 文件增加标题目录导航",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/execution-policy.md\n M docs/plugins/office.md\n M docs/workspace-paths.md\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/auth_verify_test.go\n M internal/server/environment_guide.go\n M internal/server/files.go\n M internal/server/global_events.go\n M internal/server/harness_runtime.go\n M internal/server/lock_state.go\n M internal/server/lock_state_test.go\n M internal/server/office_artifact.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/lock-cluster.js\n M internal/server/web/macos.css\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/webauthn.go\n M internal/server/workflow.go\n M plugins/office/index.js\n M scripts/lock-cluster-election.test.js\n?? docs/reviews/2026-10-09/\n?? docs/tasks/approval-global-memory-20261009.json\n?? docs/tasks/approval-stale-answer-20261009.json\n?? docs/tasks/assisted-approval-ui-20261009.json\n?? docs/tasks/csv-read-write-20261009.json\n?? docs/tasks/file-create-location-20261009.json\n?? docs/tasks/generated-docs-binding-20261009.json\n?? docs/tasks/lock-screen-review-20261009.json\n?? internal/server/approval_policy.go\n?? internal/server/generated_documents.go\n?? internal/server/source_browse.go\n?? internal/server/source_browse_test.go\n?? internal/server/web/delimited-text.js\n?? scripts/lock-cluster-state.test.js\n?? scripts/markdown-image-path.test.js",
+  "acceptance": [
+    "H1-H6 标题分级显示",
+    "点击目录定位章节，滚动更新高亮",
+    "中文与同名标题可分别定位",
+    "窄窗口折叠目录，减少动态效果兼容",
+    "导航不修改文件原文"
+  ],
+  "scope": [
+    "Markdown 文件编辑器预览",
+    "独立文件预览",
+    "目录样式与本地化"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "完成共享目录组件及两种文件预览接入",
+      "evidence": [
+        "internal/server/web/markdown-outline.js",
+        "internal/server/web/app.js",
+        "internal/server/web/macos.css",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "完成共享目录组件及两种文件预览接入",
+      "evidence": [
+        "internal/server/web/markdown-outline.js",
+        "internal/server/web/app.js",
+        "internal/server/web/macos.css",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成共享目录组件及两种文件预览接入",
+      "evidence": [
+        "internal/server/web/markdown-outline.js",
+        "internal/server/web/app.js",
+        "internal/server/web/macos.css",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "JS 语法及 diff 检查通过；Go 编译通过；浏览器组件查看桌面和 390px 布局、章节跳转与折叠。运行中 Aide 整体联调未执行。",
+      "evidence": [
+        "node --check internal/server/web/markdown-outline.js",
+        "node --check internal/server/web/app.js",
+        "git diff --check",
+        "go build -buildvcs=false -o /tmp/aide-outline-review ./cmd/aide: exit 0",
+        ".agent-state/markdown-outline-preview/desktop.png",
+        ".agent-state/markdown-outline-preview/mobile.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "完成共享目录组件及两种文件预览接入",
+      "evidence": [
+        "internal/server/web/markdown-outline.js",
+        "internal/server/web/app.js",
+        "internal/server/web/macos.css",
+        "docs/workspace-paths.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "浏览器尺寸已恢复；预览服务已停止",
+      "evidence": [
+        "temporary preview port 18206"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未提交、推送、发布或替换生产服务",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "目录源码及组件预览完成；需在候选 Aide 中核实实际文件预览、主题与保存链路。"
+}

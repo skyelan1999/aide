@@ -349,6 +349,7 @@ type App struct {
 	workspace, reference      *os.Root
 	workPath, dataPath, token string
 	settings                  Settings
+	approvalPolicy            ApprovalPolicy
 	sessions                  map[string]*Session
 	reminders                 []Reminder
 	cancels                   map[string]context.CancelFunc
@@ -771,6 +772,10 @@ func New(work, reference, data string) (*App, error) {
 		a.Close()
 		return nil, fmt.Errorf("settings.json: %w", err)
 	}
+	if err := a.loadApprovalPolicy(); err != nil {
+		a.Close()
+		return nil, err
+	}
 	// #34：加载性格演化触发计数/回滚历史（config/personality-state.json），重启不清零。
 	a.loadPersonalityState()
 	// KDF：确保本机固定的 Argon2id salt（data/kdf-salt.bin, 0600）存在并加载，
@@ -929,9 +934,14 @@ func New(work, reference, data string) (*App, error) {
 		}
 		a.sessions[s.ID] = &s
 		for _, task := range s.Runs {
+			if task.ApprovalState != "" {
+				task.ApprovalState = "manual"
+			} // no reviewer survives a service restart
 			if task.Status == "running" || task.Status == "awaiting_clarification" {
 				recoverExecutionCheckpoint(task)
 				task.Status = "interrupted"
+				task.PendingQuestion = nil
+				task.ApprovalState = ""
 				task.PauseRequested = false
 				if len(task.CheckpointMessages) > 0 {
 					task.CanResume = true
@@ -1252,6 +1262,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/auth/verify", a.verifyMasterIdentity) // #43 统一主身份认证（密码/指纹二选一）
 	mux.HandleFunc("GET /api/sources", a.listSources)
 	mux.HandleFunc("POST /api/sources/{id}/test", a.testMCPSource)
+	mux.HandleFunc("POST /api/sources/browse", a.browseSFTPSource)
 	mux.HandleFunc("GET /api/token-stats", a.tokenStatsHandler)
 	mux.HandleFunc("POST /api/feedback", a.feedbackHandler)
 	mux.HandleFunc("POST /api/persona/unlock", a.personaUnlock)
@@ -1319,6 +1330,9 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/resume", a.resumeTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/cancel", a.cancelTask)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/apply", a.applyTask)
+	mux.HandleFunc("GET /api/approval-policy", a.getApprovalPolicy)
+	mux.HandleFunc("PUT /api/approval-policy", a.updateApprovalPolicy)
+	mux.HandleFunc("DELETE /api/approval-policy/rules", a.clearApprovalRules)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/answer", a.answerTask)
 	mux.HandleFunc("PUT /api/sessions/{id}/runs/{run}/approval-mode", a.setApprovalMode)
 	mux.HandleFunc("GET /api/reminders", a.listRemindersHandler)
@@ -2083,7 +2097,9 @@ func (a *App) voiceHistoryDisable(w http.ResponseWriter, r *http.Request) {
 // 不返回任何敏感信息；未设置密码时一律拒绝。
 func (a *App) accountVerifyPassword(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Password string `json:"password"`
+		Password     string `json:"password"`
+		UnlockScreen bool   `json:"unlockScreen,omitempty"`
+		LockGen      *int64 `json:"lockGen,omitempty"`
 	}
 	if decode(w, r, &in) != nil {
 		return
@@ -2105,6 +2121,12 @@ func (a *App) accountVerifyPassword(w http.ResponseWriter, r *http.Request) {
 		upgraded = a.migratePasswordHash(in.Password)
 	} else {
 		a.unlockVault(in.Password) // 密码校验通过：解锁凭证保险库供 SSH 运行时使用
+	}
+	if in.UnlockScreen {
+		if err := a.unlockScreenState(in.LockGen); err != nil {
+			fail(w, 409, err)
+			return
+		}
 	}
 	jsonOut(w, 200, map[string]any{"ok": true, "upgraded": upgraded})
 }

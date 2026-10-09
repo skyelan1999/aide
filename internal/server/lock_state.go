@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -35,8 +36,8 @@ func lockStatePath(data string) string {
 	return filepath.Join(ConfigDir(data), lockStateFileName)
 }
 
-// readLockState 读权威状态。文件缺失/损坏视为“未锁、gen=0”初始态：
-// 全新部署与首次启动默认不锁，避免刷新即误锁。
+// readLockState 读权威状态。缺失文件表示初始未锁；读取失败或损坏时，
+// 已配置密码的实例保持锁定，未配置密码的实例返回未锁。
 func (a *App) readLockState() LockStateFile {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -46,11 +47,14 @@ func (a *App) readLockState() LockStateFile {
 func (a *App) loadLockStateLocked() LockStateFile {
 	b, err := os.ReadFile(lockStatePath(a.dataPath))
 	if err != nil {
-		return LockStateFile{}
+		if errors.Is(err, os.ErrNotExist) {
+			return LockStateFile{}
+		}
+		return LockStateFile{Locked: a.settings.UserPasswordHash != ""}
 	}
 	var st LockStateFile
 	if json.Unmarshal(b, &st) != nil {
-		return LockStateFile{}
+		return LockStateFile{Locked: a.settings.UserPasswordHash != ""}
 	}
 	return st
 }
@@ -72,24 +76,57 @@ func (a *App) writeLockState(locked bool) (LockStateFile, error) {
 // GET /api/lock-state：读取权威锁定状态。
 // 走外层统一的普通 access-token 鉴权；仅回显 locked/gen/updatedAt，不泄露任何敏感内容。
 func (a *App) lockStateGet(w http.ResponseWriter, r *http.Request) {
-	st := a.readLockState()
-	jsonOut(w, 200, map[string]any{"locked": st.Locked, "gen": st.Gen, "updatedAt": st.UpdatedAt})
+	a.mu.Lock()
+	st := a.loadLockStateLocked()
+	hasPassword := a.settings.UserPasswordHash != ""
+	a.mu.Unlock()
+	if !hasPassword {
+		st.Locked = false
+	}
+	jsonOut(w, 200, map[string]any{"locked": st.Locked, "gen": st.Gen, "updatedAt": st.UpdatedAt, "hasPassword": hasPassword})
 }
 
 // PUT /api/lock-state：master 更新权威状态。
-// body: {"locked": bool}。仅 master 在执行锁定/解锁/空闲升锁/切换成功后调用。
+// body: {"locked": bool}。密码实例仅允许升锁，解锁由身份验证端点提交。
 func (a *App) lockStatePut(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Locked bool `json:"locked"`
+		Locked *bool `json:"locked"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
 		return
 	}
-	st, err := a.writeLockState(in.Locked)
+	if in.Locked == nil {
+		fail(w, 400, errors.New("缺少 locked 状态"))
+		return
+	}
+	a.mu.Lock()
+	hasPassword := a.settings.UserPasswordHash != ""
+	a.mu.Unlock()
+	if !*in.Locked && hasPassword {
+		fail(w, 403, errors.New("解锁必须通过密码或触控 ID 验证"))
+		return
+	}
+	st, err := a.writeLockState(*in.Locked)
 	if err != nil {
 		fail(w, 500, err)
 		return
 	}
 	jsonOut(w, 200, map[string]any{"locked": st.Locked, "gen": st.Gen, "updatedAt": st.UpdatedAt})
+}
+
+// A successful identity check may unlock only the exact lock generation it saw.
+// A concurrent manual lock invalidates the earlier password/passkey attempt.
+func (a *App) unlockScreenState(gen *int64) error {
+	if gen == nil {
+		return errors.New("缺少锁屏代次，请重新解锁")
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	current := a.loadLockStateLocked()
+	if current.Gen != *gen {
+		return errors.New("锁屏状态已变化，请重新解锁")
+	}
+	next := LockStateFile{Locked: false, Gen: current.Gen + 1, UpdatedAt: time.Now().Unix()}
+	return atomicJSON(lockStatePath(a.dataPath), next)
 }

@@ -4,7 +4,7 @@
  * 用 env BACKEND_MODE 控制后端权威状态：
  *   unlocked → 后端明确未锁 → 刷新后当选 must NOT lock（核心回归）
  *   locked   → 后端明确锁定 → 刷新后当选 must stay locked
- *   down     → 后端不可达 → 回退 DEFAULT_LOCK_WHEN_UNKNOWN(false)，must NOT lock
+ *   down     → 后端不可达 → 未知状态保留锁定，不因读取失败暴露内容
  *
  * 运行：node scripts/lock-cluster-election.test.js <mode>
  */
@@ -16,7 +16,8 @@ const mode = process.argv[2] || 'unlocked';
 
 // ── 浏览器环境打桩 ──
 global.window = { addEventListener() {}, LockCluster: undefined };
-global.location = { hash: '' };
+global.location = { hash: '', pathname:'/' };
+global.document = {hidden:false,addEventListener(){}};
 // node 22 全局 crypto 只读且自带 randomUUID，无需打桩
 global.localStorage = {
   getItem: () => 'fake-token',
@@ -54,7 +55,7 @@ setTimeout(() => {
   if (!lc) { console.error('FAIL: LockCluster 未挂载'); process.exit(1); }
   const locked = lc.effectiveLocked();
   const phase = lc.isMaster() ? 'master' : (lc.isSlave() ? 'slave' : 'joining');
-  const want = (mode === 'locked');
+  const want = (mode === 'locked' || mode === 'down');
   if (locked !== want) {
     console.error(`FAIL mode=${mode} phase=${phase} locked=${locked} want=${want}`);
     process.exit(1);

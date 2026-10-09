@@ -1,0 +1,80 @@
+{
+  "id": "file-create-location-20261009",
+  "request": "加号创建的文件或文件夹未跟随选择的目录路而是一味的放到工作目录",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M docs/plugins/office.md\n M docs/workspace-paths.md\n M internal/server/environment_guide.go\n M internal/server/office_artifact.go\n M internal/server/sources.go\n M internal/server/web/app.js\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M plugins/office/index.js\n?? docs/tasks/generated-docs-binding-20261009.json\n?? internal/server/generated_documents.go",
+  "acceptance": [
+    "新建文件保留当前root/source和子目录默认前缀",
+    "新建文件夹使用菜单打开时的来源与父目录",
+    "只读来源拒绝新建，来源或目录变化后要求重新打开菜单"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "docs/workspace-paths.md",
+    "docs/tasks/file-create-location-20261009.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "修复新建文件硬编码workspace；文件/文件夹共享菜单目标快照和只读、目录切换校验。保留其他本地未提交改动。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "docs/workspace-paths.md",
+        "docs/tasks/file-create-location-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "修复新建文件硬编码workspace；文件/文件夹共享菜单目标快照和只读、目录切换校验。保留其他本地未提交改动。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "docs/workspace-paths.md",
+        "docs/tasks/file-create-location-20261009.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "修复新建文件硬编码workspace；文件/文件夹共享菜单目标快照和只读、目录切换校验。保留其他本地未提交改动。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "docs/workspace-paths.md",
+        "docs/tasks/file-create-location-20261009.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "node --check app.js、git diff --check通过；check_docs通过170 Markdown/428本地链接。未添加或运行测试，浏览器操作和实际落盘NOT_RUN。",
+      "evidence": [
+        "node --check internal/server/web/app.js exit0",
+        "git diff --check exit0",
+        "python3 scripts/check_docs.py exit0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "修复新建文件硬编码workspace；文件/文件夹共享菜单目标快照和只读、目录切换校验。保留其他本地未提交改动。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "docs/workspace-paths.md",
+        "docs/tasks/file-create-location-20261009.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "修复新建文件硬编码workspace；文件/文件夹共享菜单目标快照和只读、目录切换校验。保留其他本地未提交改动。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "docs/workspace-paths.md",
+        "docs/tasks/file-create-location-20261009.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未要求发布，本轮未提交推送、发布或更新生产。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "实际本地/SSH引用及工作目录子目录的新建保存待验收，生产9999未更新。"
+}

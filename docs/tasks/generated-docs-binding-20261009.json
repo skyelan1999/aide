@@ -1,0 +1,116 @@
+{
+  "id": "generated-docs-binding-20261009",
+  "request": "aide创建文档为跟随工作空间中绑定的自动系统文档路径",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js",
+  "acceptance": [
+    "自动工作流文档与索引跟随当前非空Docs.Path绑定",
+    "Office生成跟随绑定，未绑定保留旧默认位置，不覆盖同名文件",
+    "报告列表读取绑定来源，失败不静默回落",
+    "记录编译检查与运行验收边界"
+  ],
+  "scope": [
+    "internal/server/generated_documents.go",
+    "internal/server/workflow.go",
+    "internal/server/office_artifact.go",
+    "internal/server/environment_guide.go",
+    "internal/server/web/app.js",
+    "plugins/office/index.js",
+    "docs/workspace-paths.md",
+    "docs/plugins/office.md",
+    "docs/tasks/generated-docs-binding-20261009.json",
+    "internal/server/sources.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "统一绑定路径、编号索引工作副本、Office目标和报告读取；保留未绑定默认路径，未迁移旧文档。保留既有星图改动。",
+      "evidence": [
+        "internal/server/generated_documents.go",
+        "internal/server/workflow.go",
+        "internal/server/office_artifact.go",
+        "internal/server/environment_guide.go",
+        "internal/server/web/app.js",
+        "plugins/office/index.js",
+        "docs/workspace-paths.md",
+        "docs/plugins/office.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "统一绑定路径、编号索引工作副本、Office目标和报告读取；保留未绑定默认路径，未迁移旧文档。保留既有星图改动。",
+      "evidence": [
+        "internal/server/generated_documents.go",
+        "internal/server/workflow.go",
+        "internal/server/office_artifact.go",
+        "internal/server/environment_guide.go",
+        "internal/server/web/app.js",
+        "plugins/office/index.js",
+        "docs/workspace-paths.md",
+        "docs/plugins/office.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "统一绑定路径、编号索引工作副本、Office目标和报告读取；保留未绑定默认路径，未迁移旧文档。保留既有星图改动。 自动系统文档来源在加载/配置保存时校正启用、读写和内置标记；UI明确显示读写，来源列表返回rw。",
+      "evidence": [
+        "internal/server/generated_documents.go",
+        "internal/server/workflow.go",
+        "internal/server/office_artifact.go",
+        "internal/server/environment_guide.go",
+        "internal/server/web/app.js",
+        "plugins/office/index.js",
+        "docs/workspace-paths.md",
+        "docs/plugins/office.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "node --check app.js和office/index.js、git diff --check成功；Docker aide:local内gofmt与go build成功。未添加或运行测试；本地/SSH创建、切换及报告浏览器验收NOT_RUN。",
+      "evidence": [
+        "node --check internal/server/web/app.js exit0",
+        "node --check plugins/office/index.js exit0",
+        "docker aide:local: gofmt and CGO_ENABLED=0 go build -buildvcs=false -mod=vendor ./cmd/aide exit0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "统一绑定路径、编号索引工作副本、Office目标和报告读取；保留未绑定默认路径，未迁移旧文档。保留既有星图改动。",
+      "evidence": [
+        "internal/server/generated_documents.go",
+        "internal/server/workflow.go",
+        "internal/server/office_artifact.go",
+        "internal/server/environment_guide.go",
+        "internal/server/web/app.js",
+        "plugins/office/index.js",
+        "docs/workspace-paths.md",
+        "docs/plugins/office.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "统一绑定路径、编号索引工作副本、Office目标和报告读取；保留未绑定默认路径，未迁移旧文档。保留既有星图改动。",
+      "evidence": [
+        "internal/server/generated_documents.go",
+        "internal/server/workflow.go",
+        "internal/server/office_artifact.go",
+        "internal/server/environment_guide.go",
+        "internal/server/web/app.js",
+        "plugins/office/index.js",
+        "docs/workspace-paths.md",
+        "docs/plugins/office.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "当前仅源码修订，未提交推送、发布或部署；本次用户未要求发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "源码编译完成；真实本地和SSH绑定创建、编号索引、同名拒绝及工作空间切换仍待验收。生产服务未重启，历史文档未迁移。 引用权限修订的实际保存与浏览器标记未验收。",
+  "steering": [
+    "引用中自动系统文档路径应该为可读写的"
+  ]
+}

@@ -43,3 +43,33 @@ func TestMasterAuthCannotUnlockNonAssistantSession(t *testing.T) {
 		t.Fatal("master authentication must not unlock a regular session")
 	}
 }
+
+func TestLockStatePasswordUnlockCommitsBeforeSuccess(t *testing.T) {
+	a := testApp(t)
+	a.mu.Lock()
+	a.settings.UserPasswordHash = mustHashPassword("account-password")
+	a.mu.Unlock()
+	state, err := a.writeLockState(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := map[string]any{"password": "incorrect", "unlockScreen": true, "lockGen": state.Gen}
+	w := request(a, "POST", "/api/account/verify-password", payload)
+	if w.Code == 200 || !a.readLockState().Locked {
+		t.Fatal("incorrect password cleared screen lock")
+	}
+	payload["password"] = "account-password"
+	payload["lockGen"] = state.Gen - 1
+	w = request(a, "POST", "/api/account/verify-password", payload)
+	requireStatus(t, w, 409)
+	if !a.readLockState().Locked {
+		t.Fatal("stale verification cleared screen lock")
+	}
+	payload["lockGen"] = state.Gen
+	w = request(a, "POST", "/api/account/verify-password", payload)
+	requireStatus(t, w, 200)
+	got := a.readLockState()
+	if got.Locked || got.Gen != state.Gen+1 {
+		t.Fatalf("successful verification must persist unlock: %+v", got)
+	}
+}

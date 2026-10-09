@@ -73,8 +73,12 @@ func (a *App) globalEvents(w http.ResponseWriter, r *http.Request) {
 			if len(parts) == 2 {
 				sid = parts[1]
 			}
-			data, _ := json.Marshal(map[string]any{"event": "sessions-changed", "sessionId": sid})
-			fmt.Fprintf(w, "event: sessions-changed\ndata: %s\n\n", data)
+			event := "sessions-changed"
+			if parts[0] == "approval" {
+				event = "approval-policy-changed"
+			}
+			data, _ := json.Marshal(map[string]any{"event": event, "sessionId": sid})
+			fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, data)
 			flusher.Flush()
 		}
 	}

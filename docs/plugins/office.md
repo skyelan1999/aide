@@ -5,7 +5,7 @@ Office 插件在“插件”面板中登记 `office_create`；实际执行由 ai
 
 ## 生成
 
-模型工具 `office_create` 直接写当前工作区（本地或 SSH/SFTP）：
+源码候选（2026-10-09）：模型工具 `office_create` 优先写当前工作空间绑定的自动系统文档目录（本地或工作空间 SFTP），`path` 相对该目录；未绑定非空路径时维持写当前工作区。配置失败时返回错误，不静默回落。此修订尚未做真实创建验收或部署，见[路径说明](../workspace-paths.md)。
 
 | format | path 后缀 | content 结构 |
 | --- | --- | --- |

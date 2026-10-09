@@ -1,0 +1,100 @@
+{
+  "id": "assisted-approval-ui-20261009",
+  "request": "辅助审批仍有大量不需要人工审批的内容还是在审批，辅助审批就不需要弹按钮了，只有弹按钮的才需要人工审批",
+  "baseline": "45106c23af0810cf70c6b4a316a0a89d2ef8a9c8",
+  "initial_status": "M docs/plugins/office.md\n M docs/workspace-paths.md\n M internal/server/environment_guide.go\n M internal/server/office_artifact.go\n M internal/server/sources.go\n M internal/server/web/app.js\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M plugins/office/index.js\n?? docs/tasks/file-create-location-20261009.json\n?? docs/tasks/generated-docs-binding-20261009.json\n?? internal/server/generated_documents.go",
+  "acceptance": [
+    "辅助审核中及放行后不显示人工审批按钮",
+    "转人工/超时/失败后保留人工按钮，服务重启不无限隐藏",
+    "降低JSON代码块格式及内容限额导致的误转人工，保留权限边界"
+  ],
+  "scope": [
+    "internal/server/assisted_approval.go",
+    "internal/server/assisted_approval_files.go",
+    "internal/server/workflow.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "docs/architecture/execution-policy.md",
+    "docs/tasks/assisted-approval-ui-20261009.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "增加当前审批状态；辅助审查期间只显示状态，转人工后显示按钮。修复JSON代码块误判，明确任务内常规步骤授权，保留失败回退及危险操作规则。继承其他未提交改动。",
+      "evidence": [
+        "internal/server/assisted_approval.go",
+        "internal/server/assisted_approval_files.go",
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "增加当前审批状态；辅助审查期间只显示状态，转人工后显示按钮。修复JSON代码块误判，明确任务内常规步骤授权，保留失败回退及危险操作规则。继承其他未提交改动。",
+      "evidence": [
+        "internal/server/assisted_approval.go",
+        "internal/server/assisted_approval_files.go",
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "增加当前审批状态；辅助审查期间只显示状态，转人工后显示按钮。修复JSON代码块误判，明确任务内常规步骤授权，保留失败回退及危险操作规则。继承其他未提交改动。",
+      "evidence": [
+        "internal/server/assisted_approval.go",
+        "internal/server/assisted_approval_files.go",
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "node --check app.js、git diff --check、文档检查170 Markdown/429本地链接与Docker aide:local内gofmt、go build成功。未添加或运行测试；真实模型审批比例及浏览器按钮切换NOT_RUN。",
+      "evidence": [
+        "node --check internal/server/web/app.js exit0",
+        "git diff --check exit0",
+        "docker aide:local: gofmt and CGO_ENABLED=0 go build -buildvcs=false -mod=vendor ./cmd/aide exit0",
+        "python3 scripts/check_docs.py exit0"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "增加当前审批状态；辅助审查期间只显示状态，转人工后显示按钮。修复JSON代码块误判，明确任务内常规步骤授权，保留失败回退及危险操作规则。继承其他未提交改动。",
+      "evidence": [
+        "internal/server/assisted_approval.go",
+        "internal/server/assisted_approval_files.go",
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "增加当前审批状态；辅助审查期间只显示状态，转人工后显示按钮。修复JSON代码块误判，明确任务内常规步骤授权，保留失败回退及危险操作规则。继承其他未提交改动。",
+      "evidence": [
+        "internal/server/assisted_approval.go",
+        "internal/server/assisted_approval_files.go",
+        "internal/server/workflow.go",
+        "internal/server/server.go",
+        "internal/server/web/app.js",
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未提交推送、发布或部署生产。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "需要实际模型与命令/文件提案的自动批准、人工回退、超时及页面按钮验收。当前不声称已降低生产人工审批数量。"
+}

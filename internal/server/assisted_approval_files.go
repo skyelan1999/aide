@@ -13,6 +13,9 @@ import (
 // File proposals use the same independent reviewer, then the normal versioned
 // apply path. Only new local files are eligible; existing originals stay manual.
 func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
+	if a.applyRememberedFiles(task) {
+		return
+	}
 	a.mu.Lock()
 	s := a.approvalSessionLocked(task)
 	if s == nil || !task.AutoReview || task.Status != "awaiting_approval" || len(task.Files) == 0 {
@@ -26,6 +29,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 		return
 	}
 	task.approvalReviewRound, task.approvalReviewGeneration = round, gen
+	task.ApprovalState = "reviewing"
 	ctx, cancel := context.WithTimeout(parent, 60*time.Second)
 	task.approvalCancel = cancel
 	files := append([]Change(nil), task.Files...)
@@ -63,7 +67,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	var usage TokenUsage
 	if eligible {
 		payload, _ := json.Marshal(map[string]any{"userRequest": prompt, "workingDirectory": cwd, "operation": "create new files using write_file; no existing file replacement", "files": files})
-		if len(payload) <= 24000 {
+		if len(payload) <= 64000 {
 			out, _, u, err := complete(ctx, cfg, []Message{{Role: "system", Content: assistedApprovalPolicy + "\n本次待审对象是 files 新文件提案，不是 shell command。逐项判断路径与完整内容是否符合用户授权。"}, {Role: "user", Content: string(payload)}}, ProfileParams{MaxTokens: 512, Temperature: fp(0)}, nil, nil)
 			usage = u
 			var v struct {
@@ -73,7 +77,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 				Authorized      bool
 				Reason          string
 			}
-			if err == nil && json.Unmarshal([]byte(strings.TrimSpace(out)), &v) == nil && strings.TrimSpace(v.Reason) != "" {
+			if err == nil && json.Unmarshal(approvalDecisionJSON(out), &v) == nil && strings.TrimSpace(v.Reason) != "" {
 				reason = v.Reason
 				approved = v.Decision == "approve" && (v.Risk == "low" || v.Risk == "medium") && v.WithinWorkspace && v.Authorized
 			} else {
@@ -104,12 +108,18 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	if approved {
 		status = "approved"
 	}
+	if task.approvalGeneration == gen && task.Status == "awaiting_approval" {
+		task.ApprovalState = status
+	}
 	if index < len(task.ApprovalReviews) && task.ApprovalReviews[index].At == record.At {
 		task.ApprovalReviews[index].Status = status
 		task.ApprovalReviews[index].Reason = reason
 	}
 	if a.save(s) != nil {
 		approved = false
+		if task.approvalGeneration == gen && task.Status == "awaiting_approval" {
+			task.ApprovalState = "manual"
+		}
 		if index < len(task.ApprovalReviews) && task.ApprovalReviews[index].At == record.At {
 			task.ApprovalReviews[index].Status = "manual"
 			task.ApprovalReviews[index].Reason = "审批记录保存失败，未自动应用"
@@ -124,6 +134,9 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 		a.applyTaskGuarded(w, r, current)
 		if w.status != http.StatusOK {
 			a.mu.Lock()
+			if task.approvalGeneration == gen {
+				task.ApprovalState = "manual"
+			}
 			if index < len(task.ApprovalReviews) && task.ApprovalReviews[index].At == record.At {
 				task.ApprovalReviews[index].Status = "manual"
 				task.ApprovalReviews[index].Reason = "审核通过，但文件未成功应用：" + w.body.String()
