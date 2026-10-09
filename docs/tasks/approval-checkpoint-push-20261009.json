@@ -1,0 +1,76 @@
+{
+  "id": "approval-checkpoint-push-20261009",
+  "request": "先把现有的push一版，更新下文档",
+  "baseline": "8b5d926735402f037a959ee991024aaa607dc09c",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/continuity-roadmap.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M internal/server/approval_policy.go\n M internal/server/assisted_approval.go\n M internal/server/assisted_approval_files.go\n M internal/server/harness_runtime.go\n M internal/server/server.go\n M internal/server/task_outcome.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n?? internal/server/approval_receipts.go\n?? internal/server/approval_receipts_test.go\n?? internal/server/approval_rules.go\n?? internal/server/approval_rules_test.go",
+  "acceptance": [
+    "保留并推送当前审批改动与测试",
+    "更新操作说明及真实验收边界",
+    "确认origin/main与本地HEAD一致"
+  ],
+  "scope": [
+    "initial_status 所列全部文件",
+    "docs/architecture/execution-policy.md",
+    "docs/README.md",
+    "docs/reviews/approval-checkpoint-20261009.md",
+    "本任务记录"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "已核对现有审批实现、归属和源码检查点边界",
+      "evidence": [
+        "docs/reviews/approval-checkpoint-20261009.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "已核对现有审批实现、归属和源码检查点边界",
+      "evidence": [
+        "docs/reviews/approval-checkpoint-20261009.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已核对现有审批实现、归属和源码检查点边界",
+      "evidence": [
+        "docs/reviews/approval-checkpoint-20261009.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "本次 quick 和审批相关隔离 Go race 通过；不声称完整发布验收",
+      "evidence": [
+        ".agent-state/verify-20261009T081455974037Z.log",
+        "quick fingerprint b54f575502546e989edc3909bf9a1d2f53e592650bd0e935a69352da88d94188",
+        "node --check internal/server/web/task-outcome.js 通过",
+        "docs/architecture/continuity-roadmap.md",
+        "docker aide:local: go test -race -buildvcs=false ./internal/server -run \"TestRememberedApprovalReceiptAndOutcome|TestApproval|TestTaskOutcome|TestRunShellRequiresExactConfirmationForWrites|TestAssistedApprovalNewFiles|TestWorkflowApprovalConflictAndPersistence|TestHarnessManualApprovalSaveFailureDoesNotRelease|TestSSHApply\" -count=1 -timeout=120s: PASS 18.738s"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已核对现有审批实现、归属和源码检查点边界",
+      "evidence": [
+        "docs/reviews/approval-checkpoint-20261009.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已核对现有审批实现、归属和源码检查点边界",
+      "evidence": [
+        "docs/reviews/approval-checkpoint-20261009.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "仅源码推送；不升版、不发布、不部署",
+      "evidence": [
+        "用户授权见request"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "需要回退时显式revert，不reset或清空用户改动。",
+  "handoff": "整体目标继续；本批未部署到18211或9999。"
+}

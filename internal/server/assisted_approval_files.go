@@ -52,7 +52,7 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 			eligible = false
 		}
 	}
-	record := ApprovalReview{Command: "write_file: " + strings.Join(paths, ", "), Status: "reviewing", Reason: "正在独立审核新文件提案", At: time.Now().UTC().Format(time.RFC3339Nano)}
+	record := ApprovalReview{Command: "write_file: " + strings.Join(paths, ", "), Status: "reviewing", Reason: "正在独立审核新文件提案", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "model", Kind: "files", Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(approvalFilesFingerprint(files))}
 	if len(task.ApprovalReviews) >= 50 {
 		task.ApprovalReviews = task.ApprovalReviews[len(task.ApprovalReviews)-49:]
 	}

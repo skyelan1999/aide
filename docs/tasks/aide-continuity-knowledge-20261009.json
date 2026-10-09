@@ -52,12 +52,14 @@
         "internal/server/web/starmap.js",
         "internal/server/task_outcome.go",
         "internal/server/web/task-outcome.js",
-        "新增引用来源当前工作区AI可见性：眼睛按钮、sources.json作用域持久化、工具/附件/AI星图与RAG过滤已实现；18211真实鉴权API和Go race、浏览器组件通过。完整工作台、真实模型与SSH来源仍待验收；见source-ai-visibility-20261009。"
+        "新增引用来源当前工作区AI可见性：眼睛按钮、sources.json作用域持久化、工具/附件/AI星图与RAG过滤已实现；18211真实鉴权API和Go race、浏览器组件通过。完整工作台、真实模型与SSH来源仍待验收；见source-ai-visibility-20261009。",
+        "审批规则管理首批：按精确身份列出、单条撤销、有效期设置、revision冲突与执行前到期检查。UI待实际浏览器验收。",
+        "审批来源证据：人工、模型、有效规则匹配的范围/指纹/规则编号/期限，放行前持久化；成果舱独立审批快照。"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Go编译、JS语法检查；浏览器实际观察IndexedDB重新打开恢复与模拟服务器409冲突对比、取消；真实完整实例/SSH未执行；三个 Markdown 历史临时文件/API 回归及 race 通过；历史组件锁定关闭、禁止重开、解锁重开通过；5项历史/恢复 Go race 回归通过；恢复组件实际点击范围预览、确认恢复和编辑器更新，未替代完整工作台/SSH验收；真实 IndexedDB 组件刷新恢复星点位置/筛选/详情/动效，以及代码视图调用候选和2跳，真实锁态/工作区切换仍未验收；文件位置组件刷新保持选区与滚动、指纹变化不恢复旧位置；start.command隔离18211实际文件API验证保存/去重/外部资源变化/整版恢复/409拒绝写入，浏览器受新实例证书提示限制，等待用户处理；运行二进制待跟随最新位置功能重建；3项成果舱race回归通过；start.command重建18211最新二进制，合成持久化会话真实鉴权API通过，未调用模型；组件原始证据展开/窄屏无溢出通过，JSON下载事件15秒超时未通过；可写引用本地/18211真实API及独立SFTP操作闭环通过，组件菜单验证通过，workspace-sftp真实操作待验收",
+      "summary": "Go编译、JS语法检查；浏览器实际观察IndexedDB重新打开恢复与模拟服务器409冲突对比、取消；真实完整实例/SSH未执行；三个 Markdown 历史临时文件/API 回归及 race 通过；历史组件锁定关闭、禁止重开、解锁重开通过；5项历史/恢复 Go race 回归通过；恢复组件实际点击范围预览、确认恢复和编辑器更新，未替代完整工作台/SSH验收；真实 IndexedDB 组件刷新恢复星点位置/筛选/详情/动效，以及代码视图调用候选和2跳，真实锁态/工作区切换仍未验收；文件位置组件刷新保持选区与滚动、指纹变化不恢复旧位置；start.command隔离18211实际文件API验证保存/去重/外部资源变化/整版恢复/409拒绝写入，浏览器受新实例证书提示限制，等待用户处理；该批旧二进制已在后续重建；3项成果舱race回归通过；start.command重建18211最新二进制，合成持久化会话真实鉴权API通过，未调用模型；组件原始证据展开/窄屏无溢出通过，JSON下载事件15秒超时未通过；可写引用本地/18211真实API及独立SFTP操作闭环通过，组件菜单验证通过，workspace-sftp真实操作待验收",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -74,14 +76,18 @@
         ".agent-state/outcome-preview/api-receipt.json",
         ".agent-state/outcome-preview/original-evidence.png",
         ".agent-state/outcome-preview/narrow.png",
-        "docs/tasks/source-file-actions-20261009.json"
+        "docs/tasks/source-file-actions-20261009.json",
+        "TestRememberedApprovalReceiptAndOutcome|TestApproval|TestTaskOutcome|TestRunShellRequiresExactConfirmationForWrites race PASS 6.273s",
+        "TestAssistedApprovalNewFiles|TestWorkflowApprovalConflictAndPersistence|TestHarnessManualApprovalSaveFailureDoesNotRelease|TestSSHApply race PASS 13.011s",
+        ".agent-state/approval-receipts-preview/evidence.png (mock component API; not full workbench)"
       ]
     },
     "documentation": {
       "status": "in_progress",
       "summary": "路线图和真实完成范围已记录，后续各项继续更新",
       "evidence": [
-        "docs/architecture/continuity-roadmap.md"
+        "docs/architecture/continuity-roadmap.md",
+        "docs/reviews/approval-checkpoint-20261009.md"
       ]
     },
     "cleanup": {
@@ -93,7 +99,7 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "目标未完成；未推送、发布或替换生产，最终按门禁处理",
+      "summary": "整体目标未完成；源码检查点8b5d926已推送，本批审批检查点按用户授权提交推送；未发布或替换生产。",
       "evidence": []
     }
   },
@@ -129,7 +135,7 @@
     {
       "name": "审批与授权管理",
       "acceptance": "解释自动通过和人工原因，作用范围、有效期、撤销和全局同步",
-      "status": "pending"
+      "status": "in_progress"
     },
     {
       "name": "连接能力仪表",

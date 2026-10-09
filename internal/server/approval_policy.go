@@ -25,6 +25,7 @@ type ApprovalRule struct {
 	Root        AgentRoot `json:"root"`
 	Fingerprint string    `json:"fingerprint"`
 	At          string    `json:"at"`
+	ExpiresAt   string    `json:"expiresAt,omitempty"`
 }
 
 func approvalFingerprint(text string) string {
@@ -157,16 +158,36 @@ func (a *App) clearApprovalRules(w http.ResponseWriter, r *http.Request) {
 	jsonOut(w, 200, map[string]bool{"ok": true})
 }
 func (a *App) rememberApprovalLocked(task *Task, kind, payload string) error {
+	return a.rememberApprovalUntilLocked(task, kind, payload, "")
+}
+func (a *App) rememberApprovalUntilLocked(task *Task, kind, payload, expiresAt string) error {
+	deadline, err := validateApprovalExpiry(expiresAt)
+	if err != nil {
+		return err
+	}
 	if task.WorkspaceID == "" || task.WorkspaceID != a.wsID() {
 		return errors.New("工作空间不匹配，不能记住")
 	}
 	if kind == "shell" && (payload == "" || approvalCommandProtected(payload) || approvalCommandCannotRemember(payload)) {
 		return errors.New("该命令不能保存为长期授权，请仅批准本次")
 	}
-	rule := ApprovalRule{kind, task.WorkspaceID, task.AgentRoot, approvalFingerprint(payload), time.Now().UTC().Format(time.RFC3339Nano)}
+	rule := ApprovalRule{Kind: kind, Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(payload), At: time.Now().UTC().Format(time.RFC3339Nano), ExpiresAt: deadline}
 	p := a.approvalPolicy
-	for _, r := range p.Rules {
+	for i, r := range p.Rules {
 		if r.Kind == rule.Kind && r.Workspace == rule.Workspace && r.Root == rule.Root && r.Fingerprint == rule.Fingerprint {
+			if approvalRuleActive(r, time.Now()) && r.ExpiresAt == rule.ExpiresAt {
+				return nil
+			}
+			if approvalRuleActive(r, time.Now()) {
+				rule.At = r.At
+			}
+			p.Rules = append([]ApprovalRule(nil), p.Rules...)
+			p.Rules[i] = rule
+			p.Revision++
+			if err := a.saveApprovalPolicyLocked(p); err != nil {
+				return err
+			}
+			a.broadcastApprovalPolicy()
 			return nil
 		}
 	}
@@ -183,16 +204,20 @@ func (a *App) rememberApprovalLocked(task *Task, kind, payload string) error {
 	return nil
 }
 func (a *App) rememberedApprovalLocked(task *Task, kind, payload string) bool {
+	_, matched := a.matchApprovalRuleLocked(task, kind, payload)
+	return matched
+}
+func (a *App) matchApprovalRuleLocked(task *Task, kind, payload string) (ApprovalRule, bool) {
 	if task.WorkspaceID == "" || task.WorkspaceID != a.wsID() || a.settings.SandboxMode == "read-only" {
-		return false
+		return ApprovalRule{}, false
 	}
 	fingerprint := approvalFingerprint(payload)
 	for _, r := range a.approvalPolicy.Rules {
-		if r.Kind == kind && r.Workspace == task.WorkspaceID && r.Root == task.AgentRoot && r.Fingerprint == fingerprint {
-			return true
+		if r.Kind == kind && r.Workspace == task.WorkspaceID && r.Root == task.AgentRoot && r.Fingerprint == fingerprint && approvalRuleActive(r, time.Now()) {
+			return r, true
 		}
 	}
-	return false
+	return ApprovalRule{}, false
 }
 func (a *App) rememberedShellApproval(task *Task, command string) bool {
 	a.mu.Lock()
@@ -225,7 +250,8 @@ func (a *App) applyRememberedFiles(task *Task) bool {
 		if t != task || a.sessions[s.ID] != s || s.Deleted || approvalFilesFingerprint(t.Files) != payload || !a.rememberedApprovalLocked(t, "files", payload) {
 			return errors.New("审批记忆或提案环境已变化")
 		}
-		return nil
+		rule, _ := a.matchApprovalRuleLocked(t, "files", payload)
+		return a.persistApprovalReceiptLocked(t, rememberedApprovalReceipt(rule, "write_file: remembered exact proposal"))
 	})
 	if w.status != http.StatusOK {
 		a.mu.Lock()

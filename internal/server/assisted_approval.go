@@ -11,10 +11,17 @@ import (
 
 // ApprovalReview records a decision for one exact command, never a reusable grant.
 type ApprovalReview struct {
-	Command string `json:"command"`
-	Status  string `json:"status"`
-	Reason  string `json:"reason"`
-	At      string `json:"at"`
+	Command     string    `json:"command"`
+	Status      string    `json:"status"`
+	Reason      string    `json:"reason"`
+	At          string    `json:"at"`
+	Source      string    `json:"source,omitempty"`
+	Kind        string    `json:"kind,omitempty"`
+	Workspace   string    `json:"workspace,omitempty"`
+	Root        AgentRoot `json:"root,omitempty"`
+	Fingerprint string    `json:"fingerprint,omitempty"`
+	RuleID      string    `json:"ruleId,omitempty"`
+	ExpiresAt   string    `json:"expiresAt,omitempty"`
 }
 
 func (a *App) approvalSessionLocked(task *Task) *Session {
@@ -111,7 +118,7 @@ func (a *App) reviewPendingCommand(task *Task) {
 	if cwd == "" {
 		cwd = a.containerAbs
 	}
-	record := ApprovalReview{Command: q.Command, Status: "reviewing", Reason: "正在独立审核具体命令", At: time.Now().UTC().Format(time.RFC3339Nano)}
+	record := ApprovalReview{Command: q.Command, Status: "reviewing", Reason: "正在独立审核具体命令", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "model", Kind: "shell", Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(q.Command)}
 	if len(task.ApprovalReviews) >= 50 {
 		task.ApprovalReviews = task.ApprovalReviews[len(task.ApprovalReviews)-49:]
 	}

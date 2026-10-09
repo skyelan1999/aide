@@ -981,6 +981,7 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Answer     string `json:"answer"`
 		Remember   bool   `json:"remember"`
+		ExpiresAt  string `json:"expiresAt"`
 		Round      string `json:"round"`
 		QuestionID string `json:"questionId"`
 	}
@@ -1027,16 +1028,41 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 					fail(w, 400, errors.New("仅可记住当前明确确认的命令审批"))
 					return
 				}
-				if err := a.rememberApprovalLocked(t, "shell", q.Command); err != nil {
+				if err := a.rememberApprovalUntilLocked(t, "shell", q.Command, in.ExpiresAt); err != nil {
 					fail(w, 400, err)
 					return
 				}
 			}
 			previousMessages, previousUpdated := s.Messages, s.Updated
+			previousReviews := t.ApprovalReviews
+			var approvalQuestion struct {
+				Kind    string `json:"approvalKind"`
+				Command string `json:"command"`
+			}
+			_ = json.Unmarshal(t.PendingQuestion, &approvalQuestion)
+			if approvalQuestion.Kind == "shell" {
+				status, reason := "declined", "用户未批准当前命令"
+				if in.Answer == "确认" {
+					status, reason = "confirmed", "用户明确确认当前命令；未扩大沙箱或工具权限"
+				}
+				receipt := ApprovalReview{Command: approvalQuestion.Command, Status: status, Reason: reason, At: time.Now().UTC().Format(time.RFC3339Nano), Source: "human", Kind: "shell", Workspace: t.WorkspaceID, Root: t.AgentRoot, Fingerprint: approvalFingerprint(approvalQuestion.Command)}
+				if in.Remember {
+					if rule, matched := a.matchApprovalRuleLocked(t, "shell", approvalQuestion.Command); matched {
+						receipt.RuleID = approvalRuleID(rule)
+						receipt.ExpiresAt = rule.ExpiresAt
+					}
+				}
+				next := append([]ApprovalReview(nil), previousReviews...)
+				if len(next) >= 50 {
+					next = next[len(next)-49:]
+				}
+				t.ApprovalReviews = append(next, receipt)
+			}
 			s.Messages = append(s.Messages, Message{Role: "user", Content: in.Answer})
 			s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 			if err := a.save(s); err != nil {
 				s.Messages, s.Updated = previousMessages, previousUpdated
+				t.ApprovalReviews = previousReviews
 				fail(w, 500, err)
 				return
 			}
@@ -1058,7 +1084,8 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 }
 func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Remember bool `json:"remember"`
+		Remember  bool   `json:"remember"`
+		ExpiresAt string `json:"expiresAt"`
 	}
 	if r.ContentLength != 0 {
 		if err := decode(w, r, &in); err != nil {
@@ -1068,9 +1095,18 @@ func (a *App) applyTask(w http.ResponseWriter, r *http.Request) {
 	}
 	a.applyTaskGuarded(w, r, func(task *Task) error {
 		if in.Remember {
-			return a.rememberApprovalLocked(task, "files", approvalFilesFingerprint(task.Files))
+			if err := a.rememberApprovalUntilLocked(task, "files", approvalFilesFingerprint(task.Files), in.ExpiresAt); err != nil {
+				return err
+			}
 		}
-		return nil
+		record := ApprovalReview{Command: "write_file: explicit file proposal", Status: "confirmed", Reason: "用户明确批准当前文件提案；后续仍检查工作区与文件版本", At: time.Now().UTC().Format(time.RFC3339Nano), Source: "human", Kind: "files", Workspace: task.WorkspaceID, Root: task.AgentRoot, Fingerprint: approvalFingerprint(approvalFilesFingerprint(task.Files))}
+		if in.Remember {
+			if rule, matched := a.matchApprovalRuleLocked(task, "files", approvalFilesFingerprint(task.Files)); matched {
+				record.RuleID = approvalRuleID(rule)
+				record.ExpiresAt = rule.ExpiresAt
+			}
+		}
+		return a.persistApprovalReceiptLocked(task, record)
 	})
 }
 

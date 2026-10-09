@@ -76,6 +76,7 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 		t.Files = append([]Change(nil), run.Files...)
 		t.Commands = append([]string(nil), run.Commands...)
 		t.ToolUses = append([]ToolUse(nil), run.ToolUses...)
+		t.ApprovalReviews = append([]ApprovalReview(nil), run.ApprovalReviews...)
 		t.ResearchFindings = append([]ResearchFinding(nil), run.ResearchFindings...)
 		t.ToolExecutionIntents = append([]ToolExecutionIntent(nil), run.ToolExecutionIntents...)
 		if run.AgentPlan != nil {
@@ -156,6 +157,7 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		"version": 1, "taskId": task.ID, "sessionId": sessionID, "sessionNumber": number, "sessionTitle": title, "workspaceId": task.WorkspaceID, "created": task.Created, "status": task.Status, "goal": goal, "goalTruncated": goalTruncated, "goalDigest": hash([]byte(task.Prompt)), "plan": task.AgentPlan,
 		"summary": map[string]any{"files": len(task.Files), "applicationRecords": applied, "executions": len(task.ToolUses), "verificationReports": len(reports), "findings": len(task.ResearchFindings), "unknownOutcomes": len(unknown)},
 		"files":   files, "executions": uses, "verification": reports, "findings": task.ResearchFindings, "suggestedCommands": task.Commands, "unknownCalls": unknown, "gaps": gaps,
+		"approvals": task.ApprovalReviews, "approvalNote": "审批记录仅证明当时的决策及匹配依据，不证明执行成功；最多保留最近50条，旧记录可能缺少来源字段",
 		"release": map[string]string{"state": "not_recorded", "message": "尚无结构化发布验收记录；聊天结论与命令文本不证明远端发布成功"},
 		"page":    map[string]any{"fileNext": fEnd, "filesMore": fEnd < len(task.Files), "executionNext": eEnd, "executionsMore": eEnd < len(task.ToolUses), "limit": limit},
 		"journal": map[string]any{"sequence": task.ExecutionSequence, "url": "/api/sessions/" + url.PathEscape(sessionID) + "/runs/" + url.PathEscape(task.ID) + "/journal", "note": "执行日志为独立记录；工具结果可由证据编号读取原文与摘要"},

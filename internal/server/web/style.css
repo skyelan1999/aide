@@ -1471,3 +1471,5 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 
 .src-ai-visibility[aria-pressed="true"]{color:var(--brand)}
 .src-ai-visibility[aria-pressed="false"]{color:var(--faint)}
+
+.approval-validity{display:inline-flex;align-items:center;gap:8px;margin:8px;font-size:12px;color:var(--muted)}.approval-validity select{padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text)}

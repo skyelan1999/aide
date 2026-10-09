@@ -1536,17 +1536,27 @@ async function setComposerAutoReview(next) {
 function renderApprovalReviews(run, box) {
   if (!run.approvalReviews?.length) return;
   const details = el('details', 'approval-reviews');
-  details.append(el('summary', '', t('自动审批记录 · {0}', run.approvalReviews.length)));
-  const labels = {reviewing:'审核中', approved:'已自动放行', manual:'需手动确认', aborted:'未自动放行'};
+  details.append(el('summary', '', t('审批记录 · {0}', run.approvalReviews.length)));
+  details.append(el('p','muted',t('每条记录仅对应当时的具体操作；自动通过不等于操作成功。')));
+  const labels = {reviewing:'审核中', approved:'已自动放行', manual:'需手动确认', aborted:'未自动放行', confirmed:'人工已确认', declined:'人工未批准'};
   run.approvalReviews.forEach(r => {
     const item = el('div', 'approval-review');
-    item.append(el('strong', '', t(labels[r.status] || '需手动确认')), el('p', '', r.reason), el('pre', '', r.command));
+    item.append(el('strong', '', t(labels[r.status] || '需手动确认')), el('p', '', r.reason), el('small','muted',r.at?new Date(r.at).toLocaleString():''), el('pre', '', r.command));
+    const sources={model:'模型独立审核',human:'人工确认',remembered:'授权规则匹配'};item.append(el('small','muted',t(sources[r.source]||'历史来源未记录')));if(r.workspace)item.append(el('p','muted',r.workspace+' · '+(r.root?.displayHost||r.root?.containerAbs||'—')));if(r.ruleId)item.append(el('code','outcome-digest',r.ruleId),el('p','muted',r.expiresAt?new Date(r.expiresAt).toLocaleString():t('永久')));
     details.append(item);
   });
   box.append(details);
 }
 // 澄清卡片：在会话流中渲染单个交互问题（选项/输入/确认条），点击即作为应答
 const clarificationSubmissions = new Set();
+function approvalValidityPicker(button, permanentLabel, timedLabel='记住并允许') {
+  const label=el('label','approval-validity',t('记住期限'));
+  const select=el('select');select.setAttribute('aria-label',t('记住期限'));
+  for(const [value,name] of [['','永久'],['3600','1小时'],['86400','1天'],['2592000','30天']]) {const option=el('option','',t(name));option.value=value;select.append(option);}
+  select.onchange=()=>{button.textContent=t(select.value?timedLabel:permanentLabel);};
+  label.append(select);
+  return {node:label,expiresAt:()=>select.value?new Date(Date.now()+Number(select.value)*1000).toISOString():''};
+}
 function renderClarification(run, box) {
   if (!run.pendingQuestion || run.status !== "awaiting_clarification") return;
   const sessionId = state.session?.id;
@@ -1565,14 +1575,14 @@ function renderClarification(run, box) {
     card.append(el('pre', 'approval-command', q.command));
   } else card.append(el('div', 'clarify-question', q.question));
   const key = `${sessionId}/${run.id}/${q.questionId || q.approvalRound || JSON.stringify(q)}`;
-  const disable = value => card.querySelectorAll('button,input').forEach(x => x.disabled = value);
+  const disable = value => card.querySelectorAll('button,input,select').forEach(x => x.disabled = value);
   const refresh = async () => { if (state.session?.id === sessionId) await selectSession(sessionId); schedulePoll(); };
-  const answer = async (text, remember = false) => {
+  const answer = async (text, remember = false, expiresAt = '') => {
     if (clarificationSubmissions.has(key)) return;
     clarificationSubmissions.add(key); disable(true);
     let accepted = false;
     try {
-      await api(`/sessions/${sessionId}/runs/${run.id}/answer`, { method: 'POST', body: JSON.stringify({ answer: text, round: q.approvalRound || '', questionId: q.questionId || '', remember }) });
+      await api(`/sessions/${sessionId}/runs/${run.id}/answer`, { method: 'POST', body: JSON.stringify({ answer: text, round: q.approvalRound || '', questionId: q.questionId || '', remember, expiresAt }) });
       accepted = true; card.remove();
       await refresh();
     } catch (e) {
@@ -1591,7 +1601,7 @@ function renderClarification(run, box) {
     const ok = el('button', 'primary', t(q.approvalKind === 'shell' ? '仅本次允许' : '确认，继续')); ok.onclick = () => answer('确认');
     const adj = el('button', 'quiet', t('需要调整')); adj.onclick = () => answer('需要调整');
     row.append(ok);
-    if (q.approvalKind === 'shell') { const always = el('button', 'quiet', t('永远记住并允许')); always.title=t('记住此工作空间中的完整命令，不扩大沙箱权限'); always.onclick=()=>answer('确认',true); row.append(always); }
+    if (q.approvalKind === 'shell') { const always = el('button', 'quiet', t('永远记住并允许')); always.title=t('记住此工作空间中的完整命令，不扩大沙箱权限'); const validity=approvalValidityPicker(always,'永远记住并允许');always.onclick=()=>answer('确认',true,validity.expiresAt()); row.append(validity.node,always); }
     row.append(adj);
     card.append(row);
   } else if (q.type === 'input') {
@@ -1782,11 +1792,11 @@ function renderSession() {
           proposal.append(el('p', 'muted', t("已忽略此提案，未写入磁盘。")));
         } else {
           const apply = el('button', 'primary', t("应用这些文件修改"));
-          const applyFiles = async (remember = false) => {
+          const applyFiles = async (remember = false, expiresAt = '') => {
             if (apply.disabled) return;
             apply.disabled = true;
             try {
-              await api(`/sessions/${state.session.id}/runs/${run.id}/apply`, { method: 'POST', body: JSON.stringify({remember}) });
+              await api(`/sessions/${state.session.id}/runs/${run.id}/apply`, { method: 'POST', body: JSON.stringify({remember,expiresAt}) });
               toast(t("文件修改已写入本地挂载目录"));
               await selectSession(state.session.id);
               await loadFiles();
@@ -1797,10 +1807,10 @@ function renderSession() {
             }
           };
           apply.textContent=t('仅本次应用'); apply.onclick=()=>applyFiles(false);
-          const always=el('button','quiet',t('永远记住并应用')); always.title=t('记住相同路径、原版本和完整新内容'); always.onclick=()=>applyFiles(true);
+          const always=el('button','quiet',t('永远记住并应用')); always.title=t('记住相同路径、原版本和完整新内容');const validity=approvalValidityPicker(always,'永远记住并应用','记住并应用');always.onclick=()=>applyFiles(true,validity.expiresAt());
           const ignore = el('button', 'quiet', t("忽略此提案"));
           ignore.onclick = () => { ignoredProposals.add(run.id); renderSession(); };
-          proposal.append(el('p', 'muted', t("请展开检查文件内容。应用后会写入本地工作目录；验证命令需要单独运行。")), apply, always, ignore);
+          proposal.append(el('p', 'muted', t("请展开检查文件内容。应用后会写入本地工作目录；验证命令需要单独运行。")), apply, validity.node, always, ignore);
         }
       }
       else if (run.applied) proposal.append(el('p', 'muted', t("✓ 已应用文件修改。命令验证结果以命令面板为准。")));
@@ -4467,6 +4477,8 @@ function refreshStrategyUI() {
       el('small', 'strategy-approval-note', t('独立审核具体命令，不确定时转人工；审核使用当前模型并计入用量。'))
     );
     if (state.approvalPolicy?.rememberedRules) {
+      const manage=el('button','strategy-option',t('管理审批授权'));
+      manage.type='button';manage.onclick=()=>{closeStrategyMenu();openApprovalRules();};approvalCol.append(manage);
       const clear=el('button','strategy-option',t('清空审批记忆 · {0}',state.approvalPolicy.rememberedRules));
       clear.type='button'; clear.onclick=action(async()=>{
         if(!confirm(t('清空所有长期审批规则？审批模式保持不变。'))) return;
@@ -4476,6 +4488,43 @@ function refreshStrategyUI() {
     }
     menu.append(approvalCol);
   }
+}
+let approvalRulesDialog=null;
+window.LockCluster?.on('effective',locked=>{if(locked)approvalRulesDialog?.close();});
+window.addEventListener('pagehide',()=>approvalRulesDialog?.close());
+async function openApprovalRules() {
+  if(lockScreen.locked||!state.token)return;
+  approvalRulesDialog?.close();
+  const dialog=el('dialog','outcome-dialog'),head=el('header','outcome-head'),title=el('h2','',t('审批授权'));
+  approvalRulesDialog=dialog;title.id='approval-rules-title';dialog.setAttribute('aria-labelledby',title.id);
+  const close=el('button','icon-button','×');close.type='button';close.setAttribute('aria-label',t('关闭'));close.onclick=()=>dialog.close();
+  head.append(title,close);const content=el('div','outcome-content');dialog.append(head,content);document.body.append(dialog);
+  dialog.addEventListener('close',()=>{if(approvalRulesDialog===dialog)approvalRulesDialog=null;dialog.remove();$('strategy-button')?.focus();},{once:true});dialog.showModal();
+  const valid=()=>dialog.open&&!lockScreen.locked&&!!state.token;
+  async function load() {
+    content.replaceChildren(el('p','muted',t('正在读取授权…')));
+    try {
+      const data=await api('/approval-policy/rules');if(!valid())return;
+      content.replaceChildren(el('p','muted',t('只匹配相同工作区、根目录和完整命令或文件提案；撤销及到期影响后续检查，不取消已经执行的操作。')));
+      if(!data.rules.length)content.append(el('p','muted',t('没有已记住的授权')));
+      for(const rule of data.rules) {
+        const row=el('section','outcome-section');row.append(el('h3','',t(rule.kind==='shell'?'命令授权':'文件提案授权')),el('p','muted',rule.workspace+' · '+(rule.root?.displayHost||rule.root?.containerAbs||'—')),el('code','outcome-digest',rule.fingerprint),el('p','muted',t(rule.active?'有效':'已到期')+' · '+new Date(rule.createdAt).toLocaleString()));
+        const label=el('label','',t('到期时间（留空表示永久）')),expiry=el('input');expiry.type='datetime-local';expiry.setAttribute('aria-label',t('到期时间（留空表示永久）'));
+        if(rule.expiresAt){const date=new Date(rule.expiresAt);if(!isNaN(date.getTime()))expiry.value=new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16);}
+        label.append(expiry);row.append(label);
+        const actions=el('div','outcome-actions'),save=el('button','quiet',t('保存有效期')),revoke=el('button','quiet',t('撤销授权'));save.type=revoke.type='button';
+        async function change(method) {
+          if(!valid())return;
+          if(method==='DELETE'&&!confirm(t('撤销此条授权？后续相同操作将重新审批。')))return;
+          save.disabled=revoke.disabled=true;
+          try {await api('/approval-policy/rules/'+encodeURIComponent(rule.id),{method,body:JSON.stringify({revision:data.revision,expiresAt:expiry.value?new Date(expiry.value).toISOString():''})});await refreshApprovalPolicy();if(valid())await load();}
+          catch(e){if(valid()){toast(e.message);await load();}}
+        }
+        save.onclick=()=>change('PUT');revoke.onclick=()=>change('DELETE');actions.append(save,revoke);row.append(actions);content.append(row);
+      }
+    }catch(e){if(valid())content.replaceChildren(el('p','task-error',e.message));}
+  }
+  await load();
 }
 function strategyMenuOption(kind, value, name, desc, selected, disabled = false) {
   const b = el('button', 'strategy-option' + (selected ? ' selected' : ''));
