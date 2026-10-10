@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -32,8 +33,9 @@ type markdownRevision struct {
 	Assets      []markdownAsset `json:"assets"`
 }
 type markdownHistoryIndex struct {
-	Path     string             `json:"path"`
-	Versions []markdownRevision `json:"versions"`
+	LastRevision int                `json:"lastRevision,omitempty"`
+	Path         string             `json:"path"`
+	Versions     []markdownRevision `json:"versions"`
 }
 
 func (a *App) markdownHistoryConfig() (bool, bool) {
@@ -196,7 +198,12 @@ func (a *App) captureMarkdown(dir, p string, b []byte, embedded bool, read func(
 	if len(index.Versions) > 0 && index.Versions[len(index.Versions)-1].Fingerprint == fingerprint {
 		return nil
 	}
-	index.Versions = append(index.Versions, markdownRevision{ID: nextMarkdownRevision(index), Created: time.Now().UTC().Format(time.RFC3339Nano), Content: digest, Fingerprint: fingerprint, Assets: assets})
+	if markdownRevisionWatermark(index) >= 1000000000 {
+		return errors.New("历史版本编号已达上限")
+	}
+	id := nextMarkdownRevision(index)
+	index.LastRevision, _ = strconv.Atoi(id)
+	index.Versions = append(index.Versions, markdownRevision{ID: id, Created: time.Now().UTC().Format(time.RFC3339Nano), Content: digest, Fingerprint: fingerprint, Assets: assets})
 	policy, err := loadMarkdownRetention(dir, p)
 	if err != nil {
 		return err

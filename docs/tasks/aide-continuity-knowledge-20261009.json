@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Structured operator release records and updated acceptance handoff pushed at cc20d13. Go compile and syntax/docs checks passed. Runtime/full/Safari acceptance delegated to Luna; no production deployment or release.",
+    "latest_completed": "Fixed Markdown import capture baseline and allocation high watermark; preparing docs/source push. Runtime acceptance still delegated to Luna.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2201,5 +2201,20 @@
       "exit": 0,
       "remote_probe": "git ls-remote origin refs/heads/main confirmed exact commit"
     }
+  },
+  "markdown_import_baseline_fix_20261010": {
+    "status": "implemented_pending_acceptance",
+    "cause": "Imported historical observations appended to the capture tail could replace deduplication/resource tracking baseline; pruned imported IDs could be reused",
+    "changes": [
+      "Imported observations sorted internally and prepended before existing local captures",
+      "Persistent lastRevision high watermark survives retention pruning; legacy indices derive it from remaining IDs",
+      "10^9 revision bound rejects further allocations"
+    ],
+    "checks": {
+      "go_build": "PASS Docker golang:1.26 exit0",
+      "runtime_tests_safari": "NOT_RUN; delegated to Luna"
+    },
+    "push": "pending",
+    "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md"
   }
 }

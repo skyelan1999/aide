@@ -43,6 +43,8 @@ func loadMarkdownRetention(dir, p string) (markdownRetention, error) {
 	return policy, policy.validate()
 }
 func retainMarkdown(index markdownHistoryIndex, policy markdownRetention, now time.Time) markdownHistoryIndex {
+	// Preserve allocated IDs even when their versions are explicitly pruned.
+	index.LastRevision = markdownRevisionWatermark(index)
 	if policy.KeepLatest == 0 && policy.KeepDays == 0 {
 		return index
 	}
@@ -59,14 +61,17 @@ func retainMarkdown(index markdownHistoryIndex, policy markdownRetention, now ti
 	index.Versions = retained
 	return index
 }
-func nextMarkdownRevision(index markdownHistoryIndex) string {
-	max := 0
+func markdownRevisionWatermark(index markdownHistoryIndex) int {
+	max := index.LastRevision
 	for _, v := range index.Versions {
 		if n, err := strconv.Atoi(v.ID); err == nil && n > max {
 			max = n
 		}
 	}
-	return fmt.Sprintf("%06d", max+1)
+	return max
+}
+func nextMarkdownRevision(index markdownHistoryIndex) string {
+	return fmt.Sprintf("%06d", markdownRevisionWatermark(index)+1)
 }
 
 func markdownFingerprint(content string, assets []markdownAsset) string {
@@ -136,7 +141,7 @@ func readMarkdownArchive(raw []byte, p string) (markdownImportedArchive, error) 
 		Schema  int                  `json:"schema"`
 		History markdownHistoryIndex `json:"history"`
 	}
-	if json.Unmarshal(manifest, &m) != nil || m.Format != "aide-markdown-history" || m.Schema != 1 || m.History.Path != p || len(m.History.Versions) > 10000 {
+	if json.Unmarshal(manifest, &m) != nil || m.Format != "aide-markdown-history" || m.Schema != 1 || m.History.Path != p || m.History.LastRevision < 0 || m.History.LastRevision > 1000000000 || len(m.History.Versions) > 10000 {
 		return out, errors.New("历史备份清单或目标路径不匹配")
 	}
 	needed := map[string]bool{}
@@ -406,21 +411,34 @@ func (a *App) markdownManageAPI(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		merged := index
-		merged.Versions = append([]markdownRevision{}, index.Versions...)
+		merged.LastRevision = markdownRevisionWatermark(index)
 		fingerprints := map[string]bool{}
 		for _, v := range index.Versions {
 			fingerprints[v.Created+"|"+v.Fingerprint] = true
 		}
-		added := 0
+		imported := []markdownRevision{}
 		for _, v := range archive.History.Versions {
 			if fingerprints[v.Created+"|"+v.Fingerprint] {
 				continue
 			}
-			v.ID = nextMarkdownRevision(merged)
-			merged.Versions = append(merged.Versions, v)
+			if merged.LastRevision >= 1000000000 {
+				fail(w, 400, errors.New("历史版本编号已达上限"))
+				return
+			}
+			merged.LastRevision++
+			v.ID = fmt.Sprintf("%06d", merged.LastRevision)
+			imported = append(imported, v)
 			fingerprints[v.Created+"|"+v.Fingerprint] = true
-			added++
 		}
+		// Imports are historical observations, not saves of the current document.
+		// Preserve the local capture tail used for deduplication/resource tracking.
+		sort.SliceStable(imported, func(i, j int) bool {
+			a, _ := time.Parse(time.RFC3339Nano, imported[i].Created)
+			b, _ := time.Parse(time.RFC3339Nano, imported[j].Created)
+			return a.Before(b)
+		})
+		merged.Versions = append(imported, index.Versions...)
+		added := len(imported)
 		if len(merged.Versions) > 10000 {
 			fail(w, 400, errors.New("导入后历史版本超过 10000 条"))
 			return
