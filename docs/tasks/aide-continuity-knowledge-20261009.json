@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Capability dashboard unlock refresh implemented; source/docs push pending. Runtime acceptance remains with Luna, no production deployment.",
+    "latest_completed": "Capability dashboard unlock refresh repair and docs pushed at 3c007df. Syntax/docs checks passed; runtime/full/Safari acceptance remains with Luna; production unchanged.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2254,7 +2254,12 @@
       "javascript_syntax": "PASS node --check capabilities.js",
       "runtime_safari_full": "NOT_RUN; delegated to Luna"
     },
-    "push": "pending",
+    "push": {
+      "status": "pass",
+      "implementation_commit": "3c007df399905b1c1282bad853f747a147413f5d",
+      "command": "git push origin main",
+      "exit": 0
+    },
     "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md"
   }
 }
