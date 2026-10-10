@@ -2423,12 +2423,12 @@
       "Temporary CSV fixture remains because Aide labeled deletion permanent and irreversible; no confirmation was given"
     ],
     "repository": {
-      "local_head": "417468601972b60bf1e35c1d3077b6e3cc34b347",
       "branch": "main",
-      "working_tree": "clean_after_two_successful_pushes",
-      "push": "exit0_main_827bc23_to_e297a46_then_e297a46_to_4174686",
-      "remote_probe": "ls_remote_dns_failure_after_successful_push",
-      "local_worktree": "clean"
+      "head": "c21189b",
+      "working_tree": "clean_before_receipt_doc_update",
+      "push": "exit0 origin main; 4704cf1..c21189b main -> main",
+      "remote_probe": "DNS failure resolving github.com after successful push output",
+      "release_gate": "blocked: rollback missing; design, implementation, verification, documentation, cleanup stages incomplete"
     },
     "vector": "deferred_by_user",
     "windows": "not_run_no_environment",
@@ -2471,14 +2471,12 @@
   "latest_source_revision": {
     "branch": "main",
     "head_at_start": "27ad7af76450e3c2b48625e9bc7216318c4a43b6",
-    "working_changes": [
-      "internal/server/server.go",
-      "internal/server/webauthn.go",
-      "internal/server/webauthn_test.go",
-      "scripts/agent-route.py"
-    ],
-    "status": "full_verification_pass_documentation_and_push_pending",
+    "working_changes": [],
+    "status": "pushed_to_origin_main_remote_probe_dns_unavailable",
     "note": "Earlier source_head 399e0be is historical acceptance evidence, not current source.",
-    "full_fingerprint": "6f93ef31c2185705f565a9e6aa596b87a042fe759cb910c66e5d2076a3569cf5"
+    "full_fingerprint": "6f93ef31c2185705f565a9e6aa596b87a042fe759cb910c66e5d2076a3569cf5",
+    "commit": "c21189b",
+    "push": "exit0 origin main; 4704cf1..c21189b main -> main",
+    "remote_probe": "git ls-remote origin refs/heads/main failed: local DNS could not resolve github.com"
   }
 }

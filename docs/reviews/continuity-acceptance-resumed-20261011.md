@@ -82,3 +82,7 @@ Docker 定向 race 检查 `TestSFTPFailureWithZeroExit` 与 `TestWebAuthnManager
 `python3 scripts/agent-route.py verify full` 最终 exit 0，38 项全部通过，源码指纹 `6f93ef31c2185705f565a9e6aa596b87a042fe759cb910c66e5d2076a3569cf5`，记录时间 `20261010T183733620736Z`，日志 `.agent-state/verify-20261010T183733620736Z.log`。Docker `internal/server` race 全包 679.043 秒，`go vet ./...` exit 0。此前两次失败日志保留：普通权限无法访问 Docker socket，以及原 Go 默认 10 分钟超时；此收据是在提权本地 Docker 环境、显式 15 分钟 Go 超时和指纹未变化的正式重跑结果。
 
 该收据证明源码回归，不覆盖尚未执行的真实向量检索、Windows 实机、产品级跨工作区/标签隔离与全部人工审批路径；是否 release 仍以 release-check 和其余阶段证据为准。
+
+### 提交与推送
+
+修复提交 `c21189b`（`fix: stop WebAuthn cleanup loop on shutdown`），包含生命周期修复、测试、正式 Go 超时设置和验收收据。`git push origin main` 返回 exit 0：`4704cf1..c21189b main -> main`。随后独立 `git ls-remote origin refs/heads/main` 因本机 DNS 无法解析 `github.com` 失败；因此记录 push 客户端的成功回执，但不声称已独立核实远端 HEAD。release-check 在本地干净提交上仍因缺 rollback 及五个阶段未完成而 BLOCKED；未发布或部署。
