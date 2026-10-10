@@ -3,7 +3,7 @@
 用户于 2026-10-09 授权全部执行。总目标处于进行中；以下不是已经完成的功能列表。
 
 
-开发交接与最新待验收范围见[Luna交接](../reviews/luna-acceptance-handoff-20261010.md)。当前逐项状态以[2026-10-10验收审计](../reviews/continuity-acceptance-audit-20261010.md)为准；下文保留各阶段历史边界。
+开发交接与最新待验收范围见[Luna交接](../reviews/luna-acceptance-handoff-20261010.md)。当前逐项状态以[2026-10-10验收审计](../reviews/continuity-acceptance-audit-20261010.md)为准；下文保留各阶段历史边界，其中“待开发”不代表当前源码；最新入口与验收缺口以审计顶部核对表及Luna交接为准。
 
 ## 工作现场恢复
 

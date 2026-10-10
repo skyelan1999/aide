@@ -1,5 +1,32 @@
 # 连续工作与知识能力：验收审计 · 2026-10-10
 
+## 当前交接索引：按总目标核对源码
+
+本节依据 `a61ee25` 工作树静态检查补充；以下源码入口存在且接入，不等于完整行为已验收。其后带提交号的章节是历史观察，不能将其中“正在运行”“待开发”作为当前状态。最近一批修改未部署，运行验收由Luna接手，真实向量验收暂缓，Windows缺设备。当前完整发布门禁尚无覆盖最新源码的证据。
+
+| 总目标 | 当前源码入口 | Luna须取得的完成证据 |
+| --- | --- | --- |
+| 文件、光标、滚动恢复 | [continuity.js](../../internal/server/web/continuity.js)、[file-autosave.js](../../internal/server/web/file-autosave.js) | 重开、跨标签分支、同名不同来源、配额/崩溃、陈旧回调隔离；恢复后的正文与位置读回 |
+| 会话草稿、附件、目录现场 | [app.js](../../internal/server/web/app.js)、[continuity.js](../../internal/server/web/continuity.js) | 关闭所有标签后恢复，附件身份与来源正确；恢复不发送；工作区切换互不覆盖 |
+| 星图镜头与来源状态 | [starmap.js](../../internal/server/web/starmap.js) | 跨标签/锁屏/来源更新后镜头与选择稳定，隐藏来源不泄露；动画开关有效 |
+| 自动保存、断网、冲突 | [file-autosave.js](../../internal/server/web/file-autosave.js) | 实际保存、断网保留、409暂停与合并、切文件延迟响应、长时编辑；服务器与本地状态分开核对 |
+| Markdown正文与资源版本 | [markdown_history.go](../../internal/server/markdown_history.go)、[markdown_restore.go](../../internal/server/markdown_restore.go) | 正文/资源变化归档、无变更去重、恢复预览与409、外部修改检测、SSH资源独立读回 |
+| 历史导入、保留与清理 | [markdown_manage.go](../../internal/server/markdown_manage.go)、[markdown-history-manager.js](../../internal/server/web/markdown-history-manager.js) | ZIP摘要与拒绝路径、当前基线不被旧备份覆盖、编号不复用、策略竞争与保护引用对象；先备份 |
+| 恢复存储管理 | [recovery-transfer.js](../../internal/server/web/recovery-transfer.js)、[recovery-manager.js](../../internal/server/web/recovery-manager.js) | 预览/归档/撤销/显式永久清除，事务竞争；撤销备份保留期只清理该类记录 |
+| 本地/SSH真实联调 | [ssh_continuity_live_test.go](../../internal/server/ssh_continuity_live_test.go)、[sources.go](../../internal/server/sources.go) | 在明确临时目录执行与独立SFTP读回；SSH浏览、权限、断网及工作区/文档/缓存不同服务器路径 |
+| 输入与输出、成果和证据 | [task_outcome.go](../../internal/server/task_outcome.go)、[task-outcome.js](../../internal/server/web/task-outcome.js) | 有真实附件/插话/回复/成果的会话，运行中分页快照一致，证据来源与下载可追溯 |
+| 发布记录 | [task_release_receipts.go](../../internal/server/task_release_receipts.go) | 导入预览、重复摘要、陈旧快照、持久化失败；操作者记录不能冒充远端核验 |
+| 审批解释、范围、到期、撤销、同步 | [approval_policy.go](../../internal/server/approval_policy.go)、[approval_rules.go](../../internal/server/approval_rules.go)、[approval_receipts.go](../../internal/server/approval_receipts.go) | 精确授权匹配、作用域隔离、过期/撤销/并发、跨会话与标签即时切模式；结束撤销临时规则并恢复原模式 |
+| 连接与插件能力 | [capabilities.go](../../internal/server/capabilities.go)、[capabilities.js](../../internal/server/web/capabilities.js) | 人工执行真实能力检查、插件实际调用；锁定停读/解锁重读，发现能力不等于执行成功 |
+| 渐进索引与覆盖 | [knowledge_progressive.go](../../internal/server/knowledge_progressive.go)、[knowledge_remote_progressive.go](../../internal/server/knowledge_remote_progressive.go)、[knowledge_index_policy.go](../../internal/server/knowledge_index_policy.go) | 大目录分批续扫、进程重启、来源变更/禁用/权限失败；部分覆盖不能标完整，增量更新不能重排全图 |
+| 原文、关键词与向量混合检索 | [knowledge_documents.go](../../internal/server/knowledge_documents.go)、[knowledge_hybrid.go](../../internal/server/knowledge_hybrid.go)、[knowledge_embeddings.go](../../internal/server/knowledge_embeddings.go) | 原文定位/内容指纹/远程续查；真实embedding按用户要求暂缓，不以关键词降级或夹具证明向量完成 |
+| 代码关系可信度、可选语言服务 | [knowledge_code.go](../../internal/server/knowledge_code.go)、[knowledge_go_types.go](../../internal/server/knowledge_go_types.go) | AST候选、未解析与类型绑定明确区别；可选服务当前仅go-types，失败保留候选，不是通用LSP或运行调用证明 |
+| 节点间证据路径 | [knowledge_paths.go](../../internal/server/knowledge_paths.go)、[starmap.js](../../internal/server/web/starmap.js) | 同快照/模式/工作区、方向与反向、结构边规则、深度/节点限制、来源跳转；未找到不等于无真实联系 |
+| 知识变化时间线 | [knowledge_timeline.go](../../internal/server/knowledge_timeline.go)、[starmap-timeline.js](../../internal/server/web/starmap-timeline.js) | 两个历史索引与覆盖证据、容量淘汰后选择/对比一致、存储失败；索引移除不等于文件删除，不推断语义演变 |
+| 配色、动效、文档与发布 | [Luna交接](luna-acceptance-handoff-20261010.md)、[任务账本](../tasks/aide-continuity-knowledge-20261009.json) | 系统Safari明暗主题/窄屏/键盘/性能，最新SHA full及逐项证据，release-check和部署/回滚/资产摘要 |
+
+**明确边界**：跨设备恢复是显式JSON导入且需匹配工作区身份，未实现任意路径自动映射；单文档ZIP不是服务数据卷灾备；Go类型绑定不是所有语言的语言服务器；真实向量检索和Windows目前未验收。源码交付不能将这些项勾成全目标完成。
+
 ## 开发交接检查点（2026-10-10）
 
 用户将后续验收交给 Luna，要求本批开发和文档推送。新增 Markdown 历史导入、保留策略、未引用对象清理、恢复范围归档/撤销及永久清除撤销备份，代码和交互入口已写入。JS语法和Docker Go编译通过；新功能真实行为、系统Safari、SSH和full均未验收。上一轮归档full的Go race/vet超出600秒，保留失败日志，不按PASS处理。详细步骤、源代码与仍存在的开发边界见[Luna交接](luna-acceptance-handoff-20261010.md)。本批未部署9999、未release。下文是此前提交的历史证据。
