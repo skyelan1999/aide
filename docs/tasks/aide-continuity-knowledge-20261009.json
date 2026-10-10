@@ -127,9 +127,11 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "当前输入 full 已通过，但完整产品阶段未闭环、缺可执行回滚与候选发布验证；真实向量暂缓、Windows无环境、系统Safari因锁定未做本轮交互；不发布。源码与文档可按用户已授权范围推送。",
+      "summary": "当前输入 full 38/38通过且源码/文档已推送(c536dca)，但干净工作树上 release-check 仍因缺回滚步骤与 design、implementation、verification、documentation、cleanup未闭环而BLOCKED；未发布、未部署。",
       "evidence": [
-        "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009：当前阶段检查仍要求回滚说明及前置阶段通过；本轮没有运行发布/部署"
+        "release-check on committed clean tree: Missing rollback; Incomplete stage: design, implementation, verification, documentation, cleanup",
+        "git push origin main exit0: f6c3ea5..c536dca main -> main",
+        "post-push git ls-remote unavailable: local DNS could not resolve github.com"
       ]
     }
   },
@@ -2475,22 +2477,21 @@
   },
   "latest_source_revision": {
     "branch": "main",
-    "head_at_start": "f6c3ea53bef2c41e71faa0a41ca4a1cad21742d5",
+    "head_at_start": "c536dca",
     "working_changes": [
-      "internal/server/approval_policy_test.go",
-      "docs/reviews/continuity-acceptance-resumed-20261011.md",
-      "docs/tasks/aide-continuity-knowledge-20261009.json"
+      "docs/tasks/aide-continuity-knowledge-20261009.json (this ledger update)"
     ],
-    "status": "full_verified_uncommitted_changes; push pending",
-    "note": "Baseline was pushed as f6c3ea5. The current full verification includes the new approval policy regression test; its receipt is recorded below.",
+    "status": "pushed_to_origin_main_push_receipt_success; independent remote probe unavailable",
+    "note": "Current full receipt fingerprints the approval regression test and code input. Its recorded HEAD is f6c3ea5 because the regression file was untracked during verify; it is included unchanged in pushed commit c536dca. Documentation/ledger updates are excluded from source fingerprint.",
     "full_fingerprint": "4afd7fbdc94871cb216388bf2481e5a26af69bb29b4c23c641fe4a56d652df34",
-    "commit": "c21189b",
-    "push": "pending for this turn",
-    "remote_probe": "not run for this turn",
+    "commit": "c536dca",
+    "push": "exit0 origin main; f6c3ea5..c536dca main -> main",
+    "remote_probe": "git ls-remote origin refs/heads/main failed: local DNS could not resolve github.com after successful push receipt",
     "full_log": ".agent-state/verify-20261010T191351778252Z.log"
   },
   "release_gate": {
     "status": "blocked",
-    "reason": "Full verification passes for current input, but release prerequisites remain incomplete: rollback procedure and design/implementation/verification/documentation/cleanup stage closure; real Safari/model/SSH/Windows acceptance remains limited and vector is deferred."
+    "command": "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009",
+    "result": "BLOCKED: Missing rollback; incomplete stages design, implementation, verification, documentation, cleanup. Clean-worktree requirement passed on rerun after commit."
   }
 }
