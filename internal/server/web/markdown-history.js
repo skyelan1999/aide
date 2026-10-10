@@ -49,7 +49,15 @@
      }catch(e){error(e);}
     };list.append(item);}
     if(!data.versions.length)detail.textContent=t('暂无历史版本；启用后第一次保存会建立基线。');else detail.textContent=t('选择版本，对比正文与引用资源。');
-    dialog.append(head,status,layout);dialog.addEventListener('close',()=>{selection++;if(activeDialog===dialog)activeDialog=null;dialog.remove();},{once:true});document.body.append(dialog);dialog.showModal();close.focus();
+    const backupArea=document.createElement('section');backupArea.className='md-history-backup';
+    const storage=document.createElement('button'),download=document.createElement('button'),storageInfo=document.createElement('p');
+    storage.type=download.type='button';storage.className=download.className='quiet';storage.textContent=t('历史存储统计');download.textContent=t('下载完整历史备份');storageInfo.className='muted';
+    const backupRequest=async(archive)=>{const q=query(spec);if(archive)q.set('archive','1');const result=await api('/file/history/backup?'+q);if(blocked()||!dialog.open||request!==epoch||['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return null;return result;};
+    const describe=result=>{storageInfo.textContent=t('已归档版本')+': '+result.versions+' · '+t('去重对象')+': '+result.objects+' · '+(result.objectBytes/1024/1024).toFixed(2)+' MiB';if(result.unavailableAssets)storageInfo.textContent+=' · '+t('未归档资源记录')+': '+result.unavailableAssets;};
+    storage.onclick=async()=>{storage.disabled=true;try{const result=await backupRequest(false);if(result)describe(result);}catch(e){error(e);}finally{storage.disabled=false;}};
+    download.onclick=async()=>{download.disabled=true;try{const result=await backupRequest(true);if(!result)return;describe(result);const raw=Uint8Array.from(atob(result.base64),c=>c.charCodeAt(0)),url=URL.createObjectURL(new Blob([raw],{type:'application/zip'}));const link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);storageInfo.textContent+=' · '+t('已验证归档对象摘要');}catch(e){error(e);}finally{download.disabled=false;}};
+    backupArea.append(storage,download,storageInfo);
+    dialog.append(head,status,backupArea,layout);dialog.addEventListener('close',()=>{selection++;if(activeDialog===dialog)activeDialog=null;dialog.remove();},{once:true});document.body.append(dialog);dialog.showModal();close.focus();
    }catch(e){error(e);}finally{button.disabled=false;}
   };
   return {refresh};

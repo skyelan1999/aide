@@ -1,6 +1,12 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "历史存储统计": "History storage usage",
+  "下载完整历史备份": "Download full history backup",
+  "已归档版本": "Archived versions",
+  "去重对象": "Deduplicated objects",
+  "未归档资源记录": "Unarchived asset records",
+  "已验证归档对象摘要": "Archive object hashes verified",
   "导出": "Export",
   "直接下载 · 分页文档": "Direct download · paginated document",
   "下载原文 · .md": "Download source · .md",

@@ -60,7 +60,8 @@
         "internal/server/capabilities.go 与 web/capabilities.js：显式能力检查和设置面板",
         "本地来源coverage实际计数/预算/截断原因；会话200条截断来源状态；星际日志呈现。渐进继续扫描和优先范围仍待实现。",
         "knowledge-progressive-index-20261009: resumable local discovery cursor foundation; not yet integrated into graph polling",
-        "knowledge-progressive-index-20261009: local discovery integrated into incremental graph polling; cumulative nodes and refresh-cycle removal, bounded catalog and progressive coverage"
+        "knowledge-progressive-index-20261009: local discovery integrated into incremental graph polling; cumulative nodes and refresh-cycle removal, bounded catalog and progressive coverage",
+        "Single Markdown document complete history ZIP backup with integrity verification and object usage stats"
       ]
     },
     "verification": {
@@ -1792,6 +1793,47 @@
         "No model/provider call",
         "No production settings changed"
       ]
+    },
+    "markdown_history_backup_20261010": {
+      "status": "pass for scoped export implementation and native Safari download",
+      "implementation": [
+        "internal/server/markdown_backup.go",
+        "internal/server/markdown_backup_test.go",
+        "internal/server/web/markdown-history.js"
+      ],
+      "api": "GET /api/file/history/backup?path=...&archive=1",
+      "scope": "All indexed revisions of one document and referenced content-addressed objects; no restore journals, credentials, unrelated documents or GC",
+      "sourceRegression": "TestMarkdownBackup race PASS 4.887s; 201 revisions, dedup, corruption/budget/scope rejection",
+      "frontendRegression": "markdown-history-writable VM download/error/stale scope/locked response and i18n PASS",
+      "browser": {
+        "downloadName": "notes.md.history.zip",
+        "sha256": "d99c6d7ee2fcb069c2a9ec52aa48ef2290607a6227b562b5a7ae042e4b045618",
+        "versions": 7,
+        "objects": 6,
+        "allReferencedObjectsPresent": true,
+        "allObjectHashesVerified": true,
+        "path": "notes.md",
+        "schema": 1,
+        "format": "aide-markdown-history",
+        "instance": "18211",
+        "browser": "Native Safari",
+        "candidateBinarySha256": "d869d7fb781aef7383e14d5ecfa9b00a65450c080fe695b7f1a07dcd28a3e0b1"
+      },
+      "startup": "Isolated start.command exit0, 18211 only; prior candidate binary backed up",
+      "production": "9999 unchanged",
+      "remaining": [
+        "Full-service backup/import/retention and GC management",
+        "SSH endpoint native browser and 64MiB browser performance"
+      ],
+      "full": {
+        "status": "pass",
+        "time": "20261010T033647298786Z",
+        "fingerprint": "d65ff441584ea813b85a9ca46f4fda785c7f6e57563d77ae7a8cef5e802f52dd",
+        "commands": 37,
+        "allExitZero": true,
+        "log": ".agent-state/verify-20261010T033647298786Z.log"
+      },
+      "cleanup": "Owned file page and three start.command workbench tabs closed; native Safari returned to original six workbench tabs, candidate data/draft retained"
     }
   },
   "implementation_batch_20261010": {

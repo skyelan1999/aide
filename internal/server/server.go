@@ -1258,6 +1258,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("PUT /api/plugins/{id}", a.togglePlugin)
 	mux.HandleFunc("PUT /api/plugins/{id}/settings", a.updatePluginSettings)
 	mux.HandleFunc("GET /api/file/history", a.markdownHistoryAPI)
+	mux.HandleFunc("GET /api/file/history/backup", a.markdownBackupAPI)
 	mux.HandleFunc("GET /api/file/history/restore", a.markdownRestorePreviewAPI)
 	mux.HandleFunc("POST /api/file/history/restore", a.markdownRestoreAPI)
 	mux.HandleFunc("DELETE /api/plugins/{id}", a.deletePlugin)

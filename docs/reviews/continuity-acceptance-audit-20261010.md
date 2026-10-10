@@ -183,3 +183,11 @@ VM通过同文件A/B不同草稿和位置、过期清理、清理A后B及共享�
 收据 `.agent-state/continuity-runtime/ssh-branches-receipt-20261010.json`；截图为同目录 `ssh-branches-two-options-20261010.png`、`ssh-alpha-position-restored-20261010.png`、`ssh-beta-position-restored-20261010.png`、`ssh-branches-conflict-20261010.png`。测试文件已归档；临时来源、一次性凭据、容器和内部网络已清理，原4个来源逐字段核对不变，原工作台草稿与附件保留。隔离候选保留最新二进制及原备份。
 
 此为SSH同文件双分支/精确位置/显式保存与冲突的系统浏览器证据，不覆盖WAN丢包、Windows、强制浏览器崩溃或真实配额耗尽。本轮无产品源码变动，沿用前节37条稳定源码full收据；文档另行检查。检查器中还观察到页面内联样式CSP拒绝及docx-preview sourcemap 404，未将其归因为草稿故障或声称已修复。
+
+## Markdown 历史备份管理补充（2026-10-10）
+
+新增单文档历史统计及ZIP导出，包含全部索引版本、清单和去重对象，下载前逐项摘要校验；超64MiB拒绝，不删除历史。定向 `TestMarkdownBackup` Go race PASS 4.887秒，覆盖201版本、完整ZIP解包、共享资源去重、未知来源/越界/工作区切换拒绝、损坏对象和容量限制。前端VM补充下载、失败释放按钮、工作区切换和锁定不下载；JS语法及i18n检查通过。
+
+经隔离 `start.command` 重建18211，候选二进制SHA-256 `d869d7fb781aef7383e14d5ecfa9b00a65450c080fe695b7f1a07dcd28a3e0b1`。原生Safari打开notes.md历史窗口，实际显示7版本/6去重对象并点击下载；浏览器下载路径中的ZIP独立解包，所有清单引用对象齐全且每项SHA-256匹配，ZIP摘要 `d99c6d7ee2fcb069c2a9ec52aa48ef2290607a6227b562b5a7ae042e4b045618`。收据 `.agent-state/continuity-runtime/markdown-backup-download-receipt-20261010.json`，截图同目录 `markdown-history-backup-safari-20261010.png`。未编辑源文件、未复制模型凭据、生产9999未替换。
+
+不等同于服务灾备或备份导入验收；恢复操作记录、未引用旧对象不在此单文档包中；64MiB真实浏览器下载、SSH该入口及跨设备导入尚未验收。本轮稳定full收据 `20261010T033647298786Z` PASS，37条命令全部exit0（Go race/vet在内），指纹 `d65ff441584ea813b85a9ca46f4fda785c7f6e57563d77ae7a8cef5e802f52dd`；日志 `.agent-state/verify-20261010T033647298786Z.log`。本轮文件页及start.command产生的临时工作台标签已关闭，Safari恢复原6个工作台标签。此收据不补足以上未验收边界。
