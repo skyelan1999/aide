@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Autosave stale callback isolation and handoff pushed at 58c230c. Syntax/docs checks passed; runtime/full/Safari acceptance delegated to Luna; production unchanged.",
+    "latest_completed": "Capability dashboard unlock refresh implemented; source/docs push pending. Runtime acceptance remains with Luna, no production deployment.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2240,6 +2240,21 @@
       "command": "git push origin main",
       "exit": 0
     },
+    "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md"
+  },
+  "capabilities_unlock_refresh_fix_20261010": {
+    "status": "implemented_pending_acceptance",
+    "cause": "Locked panel stopped its only polling loop and could retain disabled controls after a request completed while locked",
+    "changes": [
+      "Mounted active panel lifecycle tick; pause reads while locked/hidden and reload on availability recovery",
+      "Metadata request exclusion and normal 30-second interval",
+      "No automatic capability probes; stop timer when panel removed or inactive"
+    ],
+    "checks": {
+      "javascript_syntax": "PASS node --check capabilities.js",
+      "runtime_safari_full": "NOT_RUN; delegated to Luna"
+    },
+    "push": "pending",
     "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md"
   }
 }
