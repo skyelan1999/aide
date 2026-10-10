@@ -125,3 +125,9 @@ Luna应使用系统Safari验证A文件保存延迟/409后读取延迟期间切�
 Luna使用系统Safari：比较两个旧观察，新增观察直到保留容量淘汰其中之一，确认选择自动更换后旧证据不残留；未淘汰时保持编号及结果；手动换选择、锁屏、工作区/代码模式切换及请求取消期间不得出现旧结果。当前仅执行语法、文档和diff检查；运行/API/Safari/full均NOT_RUN，服务未更新。
 
 知识历史选择修复源码及文档提交 `9b91ce65b6cac2bc74baf59bb07a81013687fbb9` 已推送到origin/main，push exit0。JS语法、文档185份Markdown/488条本地链接、diff检查通过。本批未运行验收。此前full仅为历史提交证据，源码已变化，不能用作当前发布门禁。剩余由Luna执行本文运行清单；真实向量验收按用户要求暂缓，Windows缺设备保持NOT_RUN。
+
+## 接手发布门禁检查
+
+在源码基线 `f074d65` 执行 `python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009`，实际exit1：缺release_authorization、rollback，design/implementation/verification/documentation/cleanup阶段未完成，且要求当前输入的full通过收据。已根据既有用户“所有的内容都推上去，然后release”指令补记录授权；此补记不表示门禁通过。其余字段必须以实际验收和发布准备证据闭环，不能仅为让检查变绿填写。
+
+Luna须确认候选包含接手HEAD，完成本文定向及完整验收，然后核实生产数据备份、旧镜像/二进制身份及适用回滚命令，填入rollback并重新运行release-check。开发/设计/文档阶段摘要包含历史边界，关闭阶段前逐项核对顶部源码矩阵。此轮仅检查门禁，不运行测试、不启动服务、不部署；永久清除已删除数据不能靠软件回滚恢复。

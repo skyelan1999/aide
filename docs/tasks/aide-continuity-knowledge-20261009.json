@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "最新稳定源码 full 37 条命令 PASS，内容指纹匹配；原生 Safari 本地及隔离 SSH 草稿分支、光标滚动、保存和冲突链路已有读回证据。Windows、真实向量提供商、SSH其余边界/长时性能及完整产品范围继续验收。",
+      "summary": "保留此前37/38项full及Safari/隔离SSH历史收据；后续源码已变化，当前full与完整产品验收未运行，不能沿用历史PASS。运行验收按用户分工交给Luna；真实向量暂缓，Windows缺环境。",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -124,11 +124,11 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "整体目标未完成；源码检查点8b5d926已推送，本批审批检查点按用户授权提交推送；未发布或替换生产。",
+      "summary": "源码及文档已推送到f074d65；当前release-check exit1，缺回滚、当前full与阶段闭环。已有用户发布授权记录，未发布、未部署本批。",
       "evidence": []
     }
   },
-  "release_authorization": "",
+  "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "",
   "handoff": "2026-10-10 continuation: closed-file draft branches previously pushed in 4403146; new outcome paging version guards and explicit reload implemented, native Safari actual one-page export plus simulated changing paginated API passed, final full 37 checks PASS (025532050610Z). Earlier parallel full returned signal: killed and remains FAIL evidence. Actual 9999 started using start.command, healthy source 49147a1c8f6d5b58dd90a9094235b9793c5ebda14f9e0852b9c4d567661ad61d. Goal remains active; production live multi-page, scale, structured release evidence and broader outstanding acceptance remain pending; Windows unavailable, embedding not configured. This batch is a source push, not formal release.",
   "workstreams": [
@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Static requirement/source traceability audit completed; corrected outdated handoff boundaries. Runtime acceptance and release gates remain.",
+    "latest_completed": "Release gate audited at f074d65: exit1; recorded existing user authorization, superseded stale verification summary; rollback/current full/stage closure remain with acceptance handoff.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2300,5 +2300,24 @@
       "command": "git push origin main",
       "exit": 0
     }
+  },
+  "release_gate_audit_20261010": {
+    "status": "blocked_release_gate_only",
+    "baseline": "f074d65",
+    "command": "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009",
+    "exit": 1,
+    "observed": [
+      "Missing release_authorization (now recorded from existing user authorization)",
+      "Missing rollback",
+      "Incomplete stages: design, implementation, verification, documentation, cleanup",
+      "Passing full verification of current inputs required"
+    ],
+    "next_owner": "Luna acceptance; source handoff follows existing user split",
+    "remaining": [
+      "Current full and requirement-specific direct evidence",
+      "Validate deployment backup/image identity and executable rollback before filling rollback field",
+      "Close stages only against corresponding current evidence"
+    ],
+    "scope": "No goal blocked status claimed; no release, deployment or runtime tests executed"
   }
 }
