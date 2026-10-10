@@ -193,7 +193,7 @@
           "ssh_workspace_recovery_browser",
           "windows_acceptance"
         ],
-        "remaining": "Safari锁态同步与点击解锁、隔离SSH已有验证；跨会话真实模型审批、键盘锁入口、长时间使用未完整验证；Windows not_run。"
+        "remaining": "Safari锁态同步与点击解锁、隔离SSH及实际9999跨会话精确命令审批已有证据；键盘锁入口、长时间使用和其余远程边界未完整验证；Windows not_run。"
       }
     },
     {
@@ -217,9 +217,10 @@
       "current_audit_20261010": {
         "status": "in_progress",
         "evidence_locators": [
-          "approval_management_browser"
+          "approval_management_browser",
+          "approval_cross_session_real_20261010"
         ],
-        "remaining": "Safari规则到期设置/撤销与持久化通过；真实任务建立记忆规则、跨会话匹配和人工/辅助审批全局切换尚缺实际模型证据。"
+        "remaining": "Real9999 local exact command remember/match/revoke and manual-to-assisted other-tab sync passed. Live SSH scope, expiry/concurrency and reverse-mode immediate sync remain."
       }
     },
     {
@@ -675,12 +676,12 @@
     "remaining": [
       "Windows real browser/input/long duration acceptance (no device available)",
       "Embedding real provider configuration and end-to-end hybrid retrieval",
-      "Cross-session remembered approval rules and global mode switching with real tasks",
       "Exact star-map camera/path restoration, closed-tab draft branches and capacity management",
       "Remaining SSH cursor/scroll, diagram editing and network-failure acceptance boundaries",
       "Live multi-page outcome consistency and structured release evidence",
       "Broad responsive/theme/performance and remaining source-type acceptance",
-      "Release gates and final requirement-by-requirement evidence audit"
+      "Release gates and final requirement-by-requirement evidence audit",
+      "Remaining live SSH approval scopes, expiry/concurrency and reverse-mode immediate sync acceptance"
     ],
     "capabilities_browser": {
       "status": "pass for local workbench settings actions only",
@@ -1468,6 +1469,53 @@
         "time": "20261010T011324648367Z",
         "log": ".agent-state/verify-20261010T011324648367Z.log"
       }
+    },
+    "approval_cross_session_real_20261010": {
+      "status": "pass for local exact shell command, remembered cross-session match, single-rule revocation and manual-to-assisted other-tab sync",
+      "environment": "actual https://localhost:9999, native Safari, deepseek-flash",
+      "baseline": {
+        "enabled": true,
+        "rememberedRules": 0,
+        "revision": 1
+      },
+      "sessions": [
+        {
+          "number": 41,
+          "id": "17186b6718c21014db94dee1762d1aeb",
+          "approvalSource": "human",
+          "status": "completed"
+        },
+        {
+          "number": 42,
+          "id": "e76e13b5d517f9c08e663e3045867563",
+          "approvalSource": "remembered",
+          "status": "completed"
+        }
+      ],
+      "ruleId": "69ff7ec41b9efd1a03ab3111ed4918d37d8476b02a9f9efe0c34a6e29557478a",
+      "file": {
+        "path": ".cache/aide/approval-remember-20261010.txt",
+        "bytes": 28,
+        "sha256": "21f0a67e95d5e4fbc9e9dfbeedac44d4616b44e36d6ce11ac14232b390e8cc4f",
+        "exactReadback": true
+      },
+      "restored": {
+        "enabled": true,
+        "rememberedRules": 0,
+        "revision": 5
+      },
+      "evidence": ".agent-state/continuity-runtime/approval-cross-session-20261010.json",
+      "screenshots": [
+        "approval-remember-before-safari-20261010.png",
+        "approval-remember-match-safari-20261010.png",
+        "approval-global-restored-safari-20261010.png"
+      ],
+      "remaining": [
+        "Live SSH scopes, expiry during execution and concurrent policy changes not exercised",
+        "Revocation confirmed by rules API/UI; subsequent model execution after revocation not run",
+        "Only manual-to-assisted was observed in an already-open second tab without reload"
+      ],
+      "cleanup": "New rule revoked, original mode restored, temporary Safari tabs closed; original18211 draft and attachment preserved; test sessions/file retained"
     }
   },
   "implementation_batch_20261010": {

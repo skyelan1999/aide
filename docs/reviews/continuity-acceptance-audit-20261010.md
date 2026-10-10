@@ -4,6 +4,8 @@
 
 ## 当前基线
 
+新增实际模型跨会话审批验收见 [跨会话审批记录](approval-cross-session-20261010.md)：精确记忆匹配和原策略恢复已确认，范围限制单独记录。
+
 - 接手基线：`78bbf406ce2403e9c6093f74fe5182f10c3d08c0`。用户随后要求先推送功能批次，源码/测试/归档提案和文档已通过提交8070c0c推送origin/main；推送结果见[功能批次交接](function-batch-20261010.md)，正式发布与其余验收继续。
 - 星图最终修复 full：36项 PASS，Go race/vet通过；收据 `20261010T011324648367Z`，源码指纹 `7f2a30689e7d906b930d0733f3ef1a323290772e17eb9e2bfdf0226842e09da9`。随后提交范围格式检查修复了测试脚本行尾空格，并为jsPDF官方原包许可证注释设置单文件空格检查豁免；推送前全量重跑36项PASS、Go race/vet退出0，收据20261010T012418170337Z，指纹783ed132f9fa5e1a9dbc7d6ba944076fbec28c9dc992c77d4d261aa7dc26123b。历史收据保留于下文。
 - 服务：隔离18211保留；按用户明确要求运行项目start.command，实际9999已重建为当前已通过full的源码。保留镜像aide:before-live-acceptance-20261010用于回退。UI证据采用系统Safari。
@@ -18,9 +20,9 @@
 | 工作现场恢复 | chat_refresh_browser, workspace_scene_fix, file_scroll_recovery, file_workspace_isolation_browser, sky_workspace_default_fix, ssh_workspace_recovery_browser | 本地与隔离SSH草稿/目录恢复已有Safari证据；精确星图镜头与相位、标签页隔离和首次503恢复已有Safari证据（sky_recovery）；SSH光标滚动、关闭标签后的草稿分支/容量管理仍缺验收。 |
 | 保存状态与冲突 | autosave_conflict_browser, offline_save_browser, ssh_browser_save_conflict, ssh_autosave_assets_browser, history_autosave_lifecycle_fix | 本地合并、服务中断重试与SSH保存已验证；修复后的SSH历史恢复及立即自动保存已由Safari和远端读回复验（ssh_history_postfix_system_browser）；物理网络中断仍未测。 |
 | Markdown 历史闭环 | history_assets_browser, ssh_autosave_assets_browser, history_autosave_lifecycle_fix | 本地/SSH SVG外部变更与整版恢复有读回证据；本地CSV、draw.io源文件和ZIP附件外部更新/整版恢复/去重已通过Safari与SHA256读回；本地draw.io实际插入/再次编辑/SVG嵌入XML/资源独立变更/历史恢复渲染及SHA256读回通过（drawio_embed_system_browser）；SSH图表编辑、其他类型和备份管理未全部覆盖。 |
-| 真实环境验收 | lock_browser, lock_entry_fix, ssh_workspace_recovery_browser, windows_acceptance | Safari锁态同步与点击解锁、隔离SSH已有验证；跨会话真实模型审批、键盘锁入口、长时间使用未完整验证；Windows not_run。 |
+| 真实环境验收 | lock_browser, lock_entry_fix, ssh_workspace_recovery_browser, windows_acceptance, approval_cross_session_real_20261010 | Safari锁态同步与点击解锁、隔离SSH及实际9999跨会话精确命令审批已有证据；键盘锁入口、长时间使用和其余远程边界未完整验证；Windows not_run。 |
 | 任务成果舱 | outcome_system_browser_download | 真实模型本地文件任务的系统应用回执、S编号原文和JSON下载已通过Safari（outcome_system_receipts）；运行中跨页快照一致性和发布成果卡未验收。 |
-| 审批与授权管理 | approval_management_browser | Safari规则到期设置/撤销与持久化通过；真实任务建立记忆规则、跨会话匹配和人工/辅助审批全局切换尚缺实际模型证据。 |
+| 审批与授权管理 | approval_management_browser, approval_cross_session_real_20261010 | 实际9999真实模型精确命令记住、跨会话匹配、单条撤销及手动→辅助跨标签同步通过；SSH作用域、执行中到期/并发变化和反向同步仍待实际验收。 |
 | 连接能力仪表 | capabilities_browser | 本地目录及解析器导入已查；当前时间插件宿主实际执行及SSH根目录通过/中断失败/恢复通过已有证据；Go模型派发、其他插件、写权限与真实提供商连接仍未闭环。 |
 | 渐进索引 | local_cursor_persistence, shared_catalogue_checkpoint, progressive_over1000_browser | 本地进程重启续扫及Safari超过1000节点增量加载已验证；来源按钮覆盖状态可见性及自动扫描完成切换已通过Safari（coverage_visible_system_browser）；大库性能、远程大目录及真实FTP/FTPS/HTTP/SMB/MCP来源语义仍需验收。 |
 | 混合检索 | document_continuation_checkpoint, knowledge-hybrid-retrieval-20261009 | Safari原文和关键词RAG续查通过；向量真实提供商及远程全文检索未完整验证。 |
