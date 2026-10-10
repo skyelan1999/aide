@@ -253,3 +253,9 @@ File recovery now retains divergent loaded-document branches in IndexedDB, scope
 Each serialized draft remains limited to 2 MiB; each file's serialized branch array is capped at 32 records and 8 MiB. Exceeding either branch budget aborts the persistent transaction and shows an error; existing persistent drafts are not evicted. The current edit can remain in tab-local storage if that write succeeds. Browser storage quota may fail earlier; this is not a server backup or a whole-origin storage manager. Closing immediately before an IndexedDB transaction finishes remains subject to browser unload behavior. Chat/star-map closed-tab branch selection is not provided by this file-only change.
 
 Native Safari on actual 9999 verified two different TXT drafts, closing both tabs, selecting Alpha in a fresh tab, saving Alpha, and comparing retained Beta against Alpha after reload. Disk readback exactly matched Alpha. Capacity and workspace isolation are source-fixture checks; SSH, Windows, quota-exhaustion UI and abrupt browser termination remain unverified.
+
+### 成果记录分页版本（2026-10-10）
+
+成果接口返回 `snapshot` 内容指纹；客户端加载下一页时携带该指纹。指纹涵盖完整成果投影，包括文件提案、工具返回摘要及原文指纹、审批、系统回执、验证报告、状态和会话标题。即使执行日志序号未递增，修改已有工具返回也会使旧分页失效。接口返回 HTTP 409；成果舱保留已有页以便查看，但停止追加、禁用导出，提供“重新加载成果记录”，显式丢弃旧页后从第一页重新收集。
+
+导出字段 `exportScope.snapshot` 和 `consistentSnapshot` 标识已加载记录属于同一版本；`allPagesLoaded` 单独表示是否已加载全部页。导出仍是摘要，原始证据按编号及其独立指纹读取。该机制不冻结服务器任务、不自动重放工具，不证明文件现状或验收成功。持续更新的任务可能反复使分页失效；旧 API 客户端不传 `snapshot` 时仍可访问，但不获得分页一致性保证。计算指纹需要遍历当前成果记录；大型任务的成本尚需专项测量。

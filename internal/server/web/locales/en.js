@@ -1933,6 +1933,8 @@ window.aideEnglish = {
   "已记录返回": "Result recorded",
   "查看原始证据": "Inspect original evidence",
   "加载更多成果记录": "Load more records",
+  "重新加载成果记录": "Reload outcome records",
+  "成果记录已更新，请重新加载；旧页与新页不能混合": "Outcome records changed. Reload to avoid mixing different snapshots.",
   "验证记录": "Verification records",
   "尚无验证报告；不推断通过": "No verification report; acceptance is not inferred",
   "报告声明": "Reported claim",

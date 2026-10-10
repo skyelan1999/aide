@@ -139,3 +139,39 @@ func TestTaskOutcomeSystemReceipt(t *testing.T) {
 	}
 	requireStatus(t, request(a, "GET", "/api/sessions/other/runs/outcome-run/outcome/evidence/S0002", nil), 404)
 }
+
+func TestTaskOutcomePaginationSnapshot(t *testing.T) {
+	a, task := outcomeFixture(t)
+	base := "/api/sessions/outcome-session/runs/outcome-run/outcome"
+	read := func() string {
+		w := request(a, "GET", base+"?limit=1", nil)
+		requireStatus(t, w, 200)
+		var d map[string]any
+		if err := json.Unmarshal(w.Body.Bytes(), &d); err != nil {
+			t.Fatal(err)
+		}
+		token, ok := d["snapshot"].(string)
+		if !ok || len(token) != 64 {
+			t.Fatal(d)
+		}
+		return token
+	}
+	token := read()
+	next := base + "?limit=1&fileOffset=1&executionOffset=1&snapshot=" + token
+	requireStatus(t, request(a, "GET", next, nil), 200)
+	// A changed return must invalidate pages even without a journal increment.
+	task.ToolUses[0].Result = "new return"
+	requireStatus(t, request(a, "GET", next, nil), 409)
+	token = read()
+	requireStatus(t, request(a, "GET", base+"?limit=2&snapshot="+token, nil), 200)
+	task.Files[0].Content = "new proposal"
+	requireStatus(t, request(a, "GET", base+"?snapshot="+token, nil), 409)
+	token = read()
+	task.Status = "failed"
+	requireStatus(t, request(a, "GET", base+"?snapshot="+token, nil), 409)
+	token = read()
+	a.sessions["outcome-session"].Title = "renamed"
+	requireStatus(t, request(a, "GET", base+"?snapshot="+token, nil), 409)
+	// Legacy API clients remain supported without consistency guarantees.
+	requireStatus(t, request(a, "GET", next[:strings.Index(next, "&snapshot=")], nil), 200)
+}

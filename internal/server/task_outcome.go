@@ -89,9 +89,14 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 		t.Commands = append([]string(nil), run.Commands...)
 		t.ToolUses = append([]ToolUse(nil), run.ToolUses...)
 		t.Steps = append([]Step(nil), run.Steps...)
-		t.ApprovalReviews = append([]ApprovalReview(nil), run.ApprovalReviews...)
-		t.ResearchFindings = append([]ResearchFinding(nil), run.ResearchFindings...)
-		t.ToolExecutionIntents = append([]ToolExecutionIntent(nil), run.ToolExecutionIntents...)
+		for _, pair := range []struct{ src, dst any }{
+			{run.ApprovalReviews, &t.ApprovalReviews},
+			{run.ResearchFindings, &t.ResearchFindings},
+			{run.ToolExecutionIntents, &t.ToolExecutionIntents},
+		} {
+			b, _ := json.Marshal(pair.src)
+			_ = json.Unmarshal(b, pair.dst)
+		}
 		if run.AgentPlan != nil {
 			b, _ := json.Marshal(run.AgentPlan)
 			_ = json.Unmarshal(b, &t.AgentPlan)
@@ -185,6 +190,16 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		"journal": map[string]any{"sequence": task.ExecutionSequence, "url": "/api/sessions/" + url.PathEscape(sessionID) + "/runs/" + url.PathEscape(task.ID) + "/journal", "note": "执行日志为独立记录；工具结果可由证据编号读取原文与摘要"},
 	}
 }
+
+// Bind every page to the complete visible projection, including changes to
+// existing records that do not advance the execution journal sequence.
+func outcomeSnapshotDigest(task *Task, sessionID string, number int, title string) string {
+	projection := taskOutcomeProjection(task, sessionID, number, title, 0, 0, max(1, max(len(task.Files), len(task.ToolUses))))
+	delete(projection, "page")
+	b, _ := json.Marshal(projection)
+	return hash(b)
+}
+
 func (a *App) taskOutcomeAPI(w http.ResponseWriter, r *http.Request) {
 	task, number, title, err := a.outcomeTaskSnapshot(r.PathValue("id"), r.PathValue("run"))
 	if err != nil {
@@ -212,7 +227,14 @@ func (a *App) taskOutcomeAPI(w http.ResponseWriter, r *http.Request) {
 	// Clamp before addition so attacker-controlled offsets cannot overflow.
 	f = min(f, len(task.Files))
 	x = min(x, len(task.ToolUses))
-	jsonOut(w, 200, taskOutcomeProjection(task, r.PathValue("id"), number, title, f, x, limit))
+	digest := outcomeSnapshotDigest(task, r.PathValue("id"), number, title)
+	if expected := r.URL.Query().Get("snapshot"); expected != "" && expected != digest {
+		fail(w, 409, errors.New("成果记录已更新，请重新加载；旧页与新页不能混合"))
+		return
+	}
+	projection := taskOutcomeProjection(task, r.PathValue("id"), number, title, f, x, limit)
+	projection["snapshot"] = digest
+	jsonOut(w, 200, projection)
 }
 func (a *App) taskOutcomeEvidenceAPI(w http.ResponseWriter, r *http.Request) {
 	task, _, _, err := a.outcomeTaskSnapshot(r.PathValue("id"), r.PathValue("run"))

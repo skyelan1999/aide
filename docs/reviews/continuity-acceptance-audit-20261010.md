@@ -153,3 +153,20 @@ VM通过同文件A/B不同草稿和位置、过期清理、清理A后B及共享�
 最终运行源码的新页再次列出Beta及新输入两份分支；切换Beta后按钮从恢复变为对比，正文准确显示Alpha/Beta。截图closed-file-branches-final-safari-20261010.png。前次full时间20261010T023042725408Z的36条命令均exit0，但运行期间源码指纹改变，收据判FAIL；不作为最终门禁证据，已重跑。
 
 最终稳定源码full结束exit0，36项全部PASS，含Go race/vet；时间20261010T023837755925Z，指纹a192f80d44bc3e85c59e5033a5630968dc2848b438d1b1a3bae25d608cc5fd8e，日志.agent-state/verify-20261010T023837755925Z.log。本次只更新实现/文档并推送，不进入正式release，持续目标仍active。
+
+
+## 成果记录分页一致性补强
+
+本批以 `4403146355153f52f258bf76b1ee39a052b798a2` 为基线，修复运行中任务每次分页重新取快照而混合不同版本的问题。新增完整成果投影指纹和 HTTP 409 校验；前端发现变化时保留已读页，停止追加及导出，并提供显式重新加载。导出分开记录版本一致性与是否全部页加载，保持摘要/原始证据的边界。
+
+- Go 新增 `TestTaskOutcomePaginationSnapshot`：不变版本分页、原有返回变化且日志序号未递增、文件内容变化、任务状态变化、会话改名，以及旧客户端兼容。
+- `node scripts/outcome-pagination.test.cjs` 实际 PASS：稳定版本两页导出、HTTP 409、服务返回不同指纹、防止旧新页追加、禁用失效导出、显式重载后清空旧页。该测试使用 VM 模拟 DOM/API。
+- 经 `bash start.command` 重建并启动实际 9999。容器健康；源码哈希 `49147a1c8f6d5b58dd90a9094235b9793c5ebda14f9e0852b9c4d567661ad61d`，镜像 `sha256:2dca4d2ce5cee5cefd5c63d398457ebaf9c8f6756f7fa87bc8914f760d509c13`。
+- 原生 Safari 实际任务 #41：轨迹 → 成果舱 → 导出；下载文件解析得到 1 条真实执行记录、64 位 snapshot、`consistentSnapshot=true`、`allPagesLoaded=true`。文件 SHA-256 `38138a9e2bb8f1a9e8ca1015d5be0261e46d37f475ddcb2f9178cab82d57eed3`。这是单页真实记录，不能代替运行中多页联调。
+- 原生 Safari 专用本机 18213 模拟接口：第一页后推进记录版本，再点击加载更多；实际出现更新提示及禁用的导出按钮；重载后继续分页取得 E0001/E0002，下载解析版本均为 2、两页完整。SHA-256 `5c22887d6d70b47ae5694755891b743ffeb436e116e467c9e6603f2939559a40`。使用真实成果组件和网络 409，但任务/接口为模拟；专用标签页已关闭、服务器已停止，没有修改生产任务。截图/AX/下载收据存 `.agent-state/continuity-runtime/outcome-pagination-*` 与 `outcome-snapshot-production-*`。
+
+本批没有调用付费模型、切换审批保护或复制凭据。真实持续运行的多页长任务、大记录量指纹成本、结构化发布回执仍未验收；总目标保持 active。
+
+先启动的全量收据 `20261010T025405088815Z` 为 FAIL：Go server 测试运行 484.122 秒后返回 `signal: killed`，不能视为通过；该轮过程中还发生格式化/新增测试，不能用于最终指纹门禁。随后针对稳定源码的独立收据另行记录，保留失败日志而不删除。
+
+最终稳定收据 `20261010T025532050610Z`：full PASS，37 个命令全部退出 0，包含 Go race/vet。内容指纹 `9bf65131ae85b602506506afff9366f90e74cb732197dd779c174d0e7402cc74`，日志 `.agent-state/verify-20261010T025532050610Z.log`；验证时基线 HEAD 为 4403146，代码内容以此指纹绑定。该收据不补足上文的真实长任务分页、Windows、向量 provider 或其他剩余产品验收。

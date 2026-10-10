@@ -341,6 +341,10 @@
       [
         "node",
         "scripts/workspace-scene-transition.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/outcome-pagination.test.cjs"
       ]
     ],
     "full": [
