@@ -121,3 +121,11 @@
 源码现在额外记录并恢复scroll.detailText；旧现场缺少此字段时回退0，保持version1兼容。starmap-workspace-scene source VM覆盖非零正文滚动及旧快照，已通过。经项目start.command重建实际9999退出0，source_sha=741103c2746475e1e073d5b565c688d0ed31bbce92cb7f60c393c3ab59093a4b。用户解锁后原生Safari实际复验通过：刷新前后详情正文scrollTop=870、外层0、搜索337、infrared=true、animate=false及selected=F00fd3f918b5c完全一致。收据sky-detail-fixed-before/after-safari-20261010.txt与sky-detail-fixed-after-safari-20261010.png位于.agent-state/continuity-runtime。覆盖本次本地详情正文和红外开启刷新恢复，不覆盖嵌套路径。
 
 本次full结束exit0，36项全部PASS，含Go race/vet；时间20261010T015338938460Z，指纹1222cfa1f70dee6bbf92586f9279816e5f032edd0c3cabcd81431fcec2f5e4f7，日志.agent-state/verify-20261010T015338938460Z.log。嵌套路径、关闭全部标签后的多分支恢复、容量淘汰及Windows实际设备仍未验收；本次仅源码推送，不进入正式release。
+
+## 嵌套调用星域刷新恢复（2026-10-10）
+
+用户解锁后，在实际9999、原生Safari通过代码层级结果选择 Commands.cmd_help（C072c217f8209），进入真实调用关系形成的8节点恒星系统；随后使用Safari刷新。刷新前后读取现有页面状态，路径完全一致：全部已索引知识（depth0）→ Commands（depth5，owner Cd2b740afd9b6）→ Commands.cmd_help · 调用单元（depth6，calls C072c217f8209）。codeView=true、selected=C072c217f8209、yaw=0、pitch=0.1、zoom=1、infrared=true、animate=false均一致。页面显示“已恢复上次星图视角与筛选；未自动执行检索或 AI”。
+
+本次无源码修改，验证运行源码741103c2746475e1e073d5b565c688d0ed31bbce92cb7f60c393c3ab59093a4b（提交012194b）。证据为.agent-state/continuity-runtime/sky-nested-recovery-20261010.json、sky-nested-before/after-safari-20261010.txt及sky-nested-after-safari-20261010.png。临时星图标签关闭，原用户工作台标签保留。
+
+此PASS仅覆盖同一标签页中上述真实嵌套路径刷新恢复，镜头为该场景归位数值；非默认镜头已有前次独立验收。关闭全部标签后的多分支恢复、容量淘汰及Windows实机仍未验收。此次仅更新验收文档并推送；沿用源码指纹1222cfa1f70dee6bbf92586f9279816e5f032edd0c3cabcd81431fcec2f5e4f7的36项full PASS，不将文档更新称为正式release。

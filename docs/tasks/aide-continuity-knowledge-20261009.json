@@ -1547,7 +1547,7 @@
         ]
       },
       "remaining": [
-        "Nested cosmic path restore",
+        "Nested cosmic same-tab reload verified in subsequent sky_nested_recovery_20261010 checkpoint",
         "Closed-tab branches, capacity, Windows"
       ],
       "full": {
@@ -1557,6 +1557,52 @@
         "log": ".agent-state/verify-20261010T015338938460Z.log",
         "checks": 36
       }
+    },
+    "sky_nested_recovery_20261010": {
+      "status": "pass",
+      "environment": "native Safari actual9999",
+      "source_commit": "012194bc62b5db8ad63a1cb1599f9180b0966cd9",
+      "runtime_source_sha": "741103c2746475e1e073d5b565c688d0ed31bbce92cb7f60c393c3ab59093a4b",
+      "action": "Select actual code node, reload through Safari, inspect existing state read-only",
+      "before_after": {
+        "codeView": true,
+        "path": [
+          {
+            "id": "cosmos:0",
+            "label": "全部已索引知识",
+            "depth": 0
+          },
+          {
+            "id": "5:owner%3ACd2b740afd9b6",
+            "label": "Commands",
+            "depth": 5
+          },
+          {
+            "id": "6:calls%3AC072c217f8209",
+            "label": "Commands.cmd_help · 调用单元",
+            "depth": 6
+          }
+        ],
+        "selected": "C072c217f8209",
+        "camera": {
+          "yaw": 0,
+          "pitch": 0.1,
+          "zoom": 1
+        },
+        "infrared": true,
+        "animate": false
+      },
+      "evidence": [
+        ".agent-state/continuity-runtime/sky-nested-before-safari-20261010.txt",
+        ".agent-state/continuity-runtime/sky-nested-after-safari-20261010.txt",
+        ".agent-state/continuity-runtime/sky-nested-after-safari-20261010.png"
+      ],
+      "limits": [
+        "Same tab reload only",
+        "Default camera values in this nested scene",
+        "Closed-tab branches, eviction, Windows not verified"
+      ],
+      "cleanup": "Temporary star map tab closed; existing user workbench tabs preserved"
     }
   },
   "implementation_batch_20261010": {
