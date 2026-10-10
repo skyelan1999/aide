@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Release gate audited at f074d65: exit1; recorded existing user authorization, superseded stale verification summary; rollback/current full/stage closure remain with acceptance handoff.",
+    "latest_completed": "Current-input full PASS38; disposable SSH PASS twice; Safari autosave/body+SVG restore/ZIP duplicate import accepted. Remaining manual scope tracked separately.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2033,18 +2033,21 @@
       "checks": 38
     },
     "remaining": [
-      "Luna: recovery ownership/capacity/crash and star-map restoration runtime acceptance",
-      "Luna: real SSH/source/approval/network boundary acceptance",
-      "Luna: input/output pagination, release records, history import/retention/cleanup acceptance",
-      "Luna: Safari themes/narrow layouts/performance/long-lived viewing and unlock refresh",
-      "Windows real-device acceptance NOT_RUN: user has no environment",
-      "Real embedding service/vector acceptance deferred by user",
-      "Production deployment and release gated by fresh full and item evidence"
+      "System Safari remaining goal-specific workflows/themes/narrow layouts",
+      "Real approval/plugin/model workflows and network/conflict boundaries",
+      "Release/rollback gate closure",
+      "Windows NOT_RUN: user has no environment",
+      "Real vector acceptance deferred by user"
     ],
     "production": "本批未部署到9999；未release",
     "current_head_full": {
-      "status": "not_run",
-      "reason": "Source changed after historical full receipt; acceptance delegated to Luna. Historical full is not current release evidence."
+      "status": "pass",
+      "checks": 38,
+      "fingerprint": "7fbdd76d7a9bce49e29595e01dabb2218ef191b536622876fac4c4436134e03a",
+      "head": "2240eea60c6bcaf9871d6d96766ab75d471ab46a",
+      "log": ".agent-state/verify-20261010T160155645421Z.log",
+      "exit": 0,
+      "working_tree_change": "scripts/markdown-history-writable.test.cjs fixture window/history-manager stub repair; no product source changes"
     }
   },
   "implementation_batch_push_20261010": {
@@ -2319,5 +2322,61 @@
       "Close stages only against corresponding current evidence"
     ],
     "scope": "No goal blocked status claimed; no release, deployment or runtime tests executed"
+  },
+  "acceptance_resumed_20261011": {
+    "status": "in_progress",
+    "owner": "Codex",
+    "user_instruction": "改由你继续完整验收；向量测试仍暂缓",
+    "source_head": "2240eea60c6bcaf9871d6d96766ab75d471ab46a",
+    "production": "9999 unchanged; no release",
+    "full": {
+      "status": "pass",
+      "checks": 38,
+      "fingerprint": "7fbdd76d7a9bce49e29595e01dabb2218ef191b536622876fac4c4436134e03a",
+      "head": "2240eea60c6bcaf9871d6d96766ab75d471ab46a",
+      "log": ".agent-state/verify-20261010T160155645421Z.log",
+      "exit": 0,
+      "working_tree_change": "scripts/markdown-history-writable.test.cjs fixture window/history-manager stub repair; no product source changes"
+    },
+    "prior_failure": {
+      "log": ".agent-state/verify-20261010T155248666849Z.log",
+      "reason": "VM fixture missing window after history manager integration; targeted test passed after repair"
+    },
+    "ssh": {
+      "status": "pass",
+      "repetitions": 2,
+      "log": ".agent-state/ssh-acceptance-2240eea/aide-ssh-test-20261011000106-70151.log",
+      "exit": 0,
+      "scope": "Disposable two-server SSH/SFTP; source, directory errors, stale connection, docs/cache, history restore, operations, remote index and cancellation",
+      "limits": "Does not establish production credentials/permissions or physical network outage behavior"
+    },
+    "safari": {
+      "instance": "https://localhost:18211",
+      "startup": "isolated start.command exit0",
+      "binary_sha256": "965f364172410a30d164bc6cb01b449937337dfa48a731c1e5e3fa764eee1a56",
+      "passed": [
+        "Retention 0/0 preview retains all 7 existing notes.md versions; cancelled",
+        "Autosave B persisted; external SVG C captured; restored body A and SVG A with independent filesystem readback",
+        "Unchanged manual save did not create fifth version",
+        "Downloaded history ZIP: 4 versions, 4 objects, all SHA256 verified",
+        "Duplicate ZIP import preview0, execution0, reopened4 versions; current body/resource unchanged",
+        "Workbench entry to star map; name search distinguishes duplicate page.md paths; new node excerpt equals current server file; timeline compared actual surface.json startup change; no further history growth observed across scanning cycles176–198"
+      ],
+      "screenshot": ".agent-state/continuity-runtime/history-import-idempotent-2240eea-safari.png",
+      "archive_sha256": "1b2c62a98c533b93349ea3f27de077782af10639580fabaec156c47acebba4a2",
+      "limits": [
+        "Candidate copied launcher lacks three bridge-control scripts; bridge startup not accepted",
+        "Permanent retention/GC not executed",
+        "Other embeddings and cross-workspace import remain pending"
+      ]
+    },
+    "remaining": [
+      "System Safari remaining goal-specific workflows/themes/narrow layouts",
+      "Real approval/plugin/model workflows and network/conflict boundaries",
+      "Release/rollback gate closure",
+      "Windows NOT_RUN: user has no environment",
+      "Real vector acceptance deferred by user"
+    ],
+    "document": "docs/reviews/continuity-acceptance-resumed-20261011.md"
   }
 }
