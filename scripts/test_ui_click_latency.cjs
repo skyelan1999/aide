@@ -38,7 +38,7 @@ async function testSessionSelection() {
   const state = {session: {id:'s1',title:'s1'}, sessionJSON:'', pendingSessionId:'', live:{}, liveStable:{}, liveRound:{}, liveTool:{}, liveReasoning:{}, runPhase:{}, attachments:[]};
   const context = {
     state, $: id => nodes[id], window: {},
-    persistChatDraft() {}, renderAttachments() {}, restoreChatSelection() {}, scheduleChatRecovery() {},
+    persistChatDraft() {}, refreshChatDraftChoices() {}, renderAttachments() {}, restoreChatSelection() {}, scheduleChatRecovery() {},
     document: {querySelectorAll: selector => {
       assert.equal(selector, '.session-item[data-session-id]'); return [s1,s2,s3];
     }},
@@ -116,6 +116,7 @@ async function testSendSubmission() {
   let posts = 0, refreshes = 0, cancels = 0;
   let run = deferred();
   const context = {
+    recoveryScope:()=> 'workspace', chatDraftKey:id=>id, sessionDrafts:new Map(), chatContent:d=>JSON.stringify([d?.text||'',d?.attachments||[]]), recoveryFailure(){},
     state, $: id => nodes[id], window: {}, composerAutoReview: () => false, reconcileAvatarRun() {}, t: key => key, xiaomiDictation:{active:false,starting:false},
     voice:{queuedOverride:null}, action: fn => fn, toast() {}, openSettings() {}, renderAttachments() {},
     cancelContextPreview() { cancels++; }, setSendMode() {},
@@ -142,6 +143,11 @@ async function testSendSubmission() {
   assert.equal(cancels, 1);
   assert.ok(refreshes >= 2);
 
+  prompt.value = 'submitted snapshot';state.attachments=[{path:'first.md'}];
+  run=deferred();const typing=first(event);
+  prompt.value='new typing';state.attachments=[{path:'second.md'}];run.resolve({});await typing;
+  assert.equal(prompt.value,'new typing','successful POST must retain edits made while waiting');
+  assert.equal(state.attachments[0].path,'second.md');
   prompt.value = 'retry draft';
   run = deferred();
   const failed = first(event);
@@ -152,8 +158,36 @@ async function testSendSubmission() {
   assert.equal(send.disabled, false);
 }
 
+async function testChatRecoveryChoices(){
+  class Element{
+    constructor(tag,text=''){this.tag=tag;this.textContent=text;this.children=[];this.value='';this.hidden=false;}
+    append(...items){this.children.push(...items);}
+    prepend(item){this.children.unshift(item);}
+    replaceChildren(...items){this.children=items;}
+    setAttribute(){} focus(){} setSelectionRange(a,b){this.start=a;this.end=b;}
+  }
+  const form=new Element('form'),prompt=new Element('textarea');prompt.value='current';
+  const state={session:{id:'s1'},attachments:[{path:'current.md'}],submitting:false};
+  const draft={text:'closed B',attachments:[{path:'b.md'}],start:3,end:3,scroll:20};
+  let adopted=0,saved=0,sent=0,positions=0;
+  const find=(root,id)=>root.id===id?root:root.children.map(c=>find(c,id)).find(Boolean);
+  const context={state,lockScreen:{locked:false},recoveryScope:()=> 'workspace',$:id=>id==='task-form'?form:id==='prompt'?prompt:find(form,id),
+    window:{AideContinuity:{listChatDrafts:async()=>[draft],adoptChatDraft:async()=>{adopted++;},dismissChatDraft:async()=>{}}},
+    el:(tag,cls,text)=>new Element(tag,text),t:(key,...args)=>key.replace(/\{(\d+)\}/g,(_,i)=>args[i]),action:fn=>fn,
+    recoveryFailure(e){throw e;},persistChatDraft:async()=>{saved++;},renderAttachments(){},restoreChatSelection(d){positions++;assert.equal(d.start,3);},scheduleContextPreview(){},Date};
+  context.AideContinuity=context.window.AideContinuity;
+  vm.createContext(context);vm.runInContext(excerpt('let chatRecoverySeq=', 'function voiceAssistantDisplayName()'),context);
+  await context.refreshChatDraftChoices();
+  let panel=find(form,'chat-recovery');assert.equal(panel.hidden,false);
+  await panel.children[1].children[2].onclick();
+  assert.equal(prompt.value,'closed B');assert.equal(state.attachments[0].path,'b.md');assert.equal(adopted,1);assert.equal(saved,2);assert.equal(positions,1);assert.equal(sent,0);assert.equal(panel.hidden,true);
+  prompt.value='current';await context.refreshChatDraftChoices();const stale=panel.children[1].children[2];state.session={id:'s2'};await stale.onclick();assert.equal(adopted,1,'stale recovery must not overwrite another session');
+  state.session={id:'s1'};context.lockScreen.locked=true;await context.refreshChatDraftChoices();assert.equal(panel.hidden,true);
+}
+
 (async () => {
   await testSessionSelection();
   await testSendSubmission();
+  await testChatRecoveryChoices();
   console.log('ui click latency PASS');
 })().catch(error => { console.error(error); process.exitCode = 1; });

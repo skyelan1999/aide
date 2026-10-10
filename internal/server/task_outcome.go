@@ -86,6 +86,8 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 		// checkpoint prompts, live approval channels, or model credentials.
 		t := &Task{ID: run.ID, Prompt: run.Prompt, Status: run.Status, Created: run.Created, WorkspaceID: run.WorkspaceID, Error: run.Error, Applied: run.Applied, ExecutionSequence: run.ExecutionSequence}
 		t.Files = append([]Change(nil), run.Files...)
+		t.Attachments = append([]Attachment(nil), run.Attachments...)
+		t.Steers = append([]SteerMsg(nil), run.Steers...)
 		t.Commands = append([]string(nil), run.Commands...)
 		t.ToolUses = append([]ToolUse(nil), run.ToolUses...)
 		t.Steps = append([]Step(nil), run.Steps...)
@@ -178,9 +180,18 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 	if task.Error != "" {
 		gaps = append(gaps, task.Error)
 	}
+	outputs := []map[string]any{}
+	for _, step := range task.Steps {
+		if step.Name == "file_application_receipt" || step.Content == "" {
+			continue
+		}
+		text, truncated := outcomeText(step.Content, 8000)
+		outputs = append(outputs, map[string]any{"name": step.Name, "status": step.Status, "content": text, "truncated": truncated, "digest": hash([]byte(step.Content))})
+	}
 	goal, goalTruncated := outcomeText(task.Prompt, 20000)
 	return map[string]any{
 		"version": 1, "taskId": task.ID, "sessionId": sessionID, "sessionNumber": number, "sessionTitle": title, "workspaceId": task.WorkspaceID, "created": task.Created, "status": task.Status, "goal": goal, "goalTruncated": goalTruncated, "goalDigest": hash([]byte(task.Prompt)), "plan": task.AgentPlan,
+		"inputs": map[string]any{"attachments": task.Attachments, "steers": task.Steers}, "outputs": outputs,
 		"summary":        map[string]any{"files": len(task.Files), "applicationRecords": applied, "executions": len(task.ToolUses), "verificationReports": len(reports), "systemReceipts": len(receipts), "findings": len(task.ResearchFindings), "unknownOutcomes": len(unknown)},
 		"systemReceipts": receipts, "systemReceiptNote": "系统应用回执记录应用后的检查及其限制，不等于当前文件复核或完整产品验收；completed也可能记录待人工审批或远程未读回，请查看原文",
 		"files": files, "executions": uses, "verification": reports, "findings": task.ResearchFindings, "suggestedCommands": task.Commands, "unknownCalls": unknown, "gaps": gaps,

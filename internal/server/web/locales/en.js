@@ -2071,3 +2071,25 @@ Object.assign(window.aideEnglish, {
 
 
 Object.assign(window.aideEnglish, {'代码语言服务':'Code language service','AST 名称候选':'AST name candidates','Go 类型绑定（已索引快照）':'Go type bindings (indexed snapshot)','可选 Go 服务只检查已索引包，不运行项目代码或下载依赖；类型错误、接口动态调用仍保留未确认。':'The optional Go service checks indexed packages only. It does not execute project code or download dependencies; type errors and dynamic interface dispatch remain unconfirmed.'});
+
+Object.assign(window.aideEnglish, {
+ '其他恢复草稿 · {0}':'Other recovery drafts · {0}',
+ '选择恢复仅替换输入区，不会发送任务；当前草稿会先保留。':'Recovery replaces the composer only and never submits a task. The current draft is retained first.',
+ '选择恢复草稿':'Choose a recovery draft',
+ '{0} · {1} 个附件 · {2}':'{0} · {1} attachments · {2}',
+ '仅附件':'Attachments only','较早草稿':'Earlier draft','恢复到输入区':'Restore to composer','忽略此草稿':'Dismiss this draft',
+ '此会话恢复草稿已达上限；当前编辑仅保留在本标签页':'This conversation has reached its recovery draft limit. Current edits remain in this tab only.'
+});
+
+Object.assign(window.aideEnglish, {
+ '输入与输出':'Input & output','当前会话 · 输入与输出':'Current conversation · Input & output',
+ '已展示 {0} / {1} 轮任务':'Showing {0} of {1} task rounds','输入任务':'Input tasks','输出回复':'Output replies','成果文件记录':'Artifact file records',
+ '第 {0} 轮':'Round {0}','输入了什么':'What was provided','输出了什么':'What was produced','形成了什么成果':'Artifacts and results',
+ '排队补充':'Queued input','插话补充':'Follow-up input','尚无回复记录':'No reply recorded yet',
+ '没有成果文件记录；回复和执行结果见输出及详情。':'No artifact file records. See replies and execution details for other outputs.',
+ '已应用记录':'Application recorded','{0} 条工具调用记录':'{0} tool call records','查看此轮详情与证据':'View round details and evidence',
+ '加载更早的输入与输出':'Load earlier inputs and outputs','展示范围':'Display scope','当前会话总览':'Conversation overview',
+ '这里展示已提交的输入和已记录的输出；未发送草稿不计入。已应用记录不代表当前文件已复核。':'This view includes submitted inputs and recorded outputs, excluding unsent drafts. Application records do not verify the current file.',
+ '回复摘要已截断，完整回复见会话历史':'Reply preview truncated. See conversation history for the full reply.',
+ '历史记录会话内容，输入与输出展示任务、资料、回复和成果；详情保留调用、审批与证据。':'History contains conversation content. Input & output shows tasks, sources, replies and artifacts; details retain calls, approvals and evidence.'
+});

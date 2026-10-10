@@ -175,3 +175,29 @@ func TestTaskOutcomePaginationSnapshot(t *testing.T) {
 	// Legacy API clients remain supported without consistency guarantees.
 	requireStatus(t, request(a, "GET", next[:strings.Index(next, "&snapshot=")], nil), 200)
 }
+
+func TestTaskOutcomeInputsAndOutputs(t *testing.T) {
+	a, original := outcomeFixture(t)
+	original.Attachments = []Attachment{{Root: "context", Source: "ssh-data", Path: "input.csv"}}
+	original.Steers = []SteerMsg{{Content: "Use blue", Queued: true}}
+	original.Steps = []Step{{Name: "chat", Content: "Actual reply", Reasoning: "private reasoning"}, {Name: "file_application_receipt", Content: "Historical receipt"}}
+	snapshot, _, _, err := a.outcomeTaskSnapshot("outcome-session", original.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	original.Attachments[0].Path = "changed"
+	original.Steers[0].Content = "changed"
+	d := taskOutcomeProjection(snapshot, "outcome-session", 42, "test", 0, 0, 100)
+	inputs := d["inputs"].(map[string]any)
+	if inputs["attachments"].([]Attachment)[0].Path != "input.csv" || inputs["steers"].([]SteerMsg)[0].Content != "Use blue" {
+		t.Fatal("inputs alias live task")
+	}
+	outputs := d["outputs"].([]map[string]any)
+	if len(outputs) != 1 || outputs[0]["content"] != "Actual reply" {
+		t.Fatal(outputs)
+	}
+	b, _ := json.Marshal(d)
+	if strings.Contains(string(b), "private reasoning") {
+		t.Fatal("reasoning leaked into output projection")
+	}
+}

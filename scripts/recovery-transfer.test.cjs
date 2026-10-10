@@ -17,6 +17,9 @@ const backup=values=>({format:'aide-local-recovery',schema:1,count:values.length
  plan=await api.previewImport(backup([r('D','new')]));await assert.rejects(api.importRecovery(plan,{active:()=>false}),/取消/);assert.equal(records.has(r('D','').key),false);
  failPut=true;await assert.rejects(api.importRecovery(plan),/Quota/);failPut=false;assert.equal(JSON.stringify([...records]),before);
  result=await api.importRecovery(plan);records.set(r('D','').key,r('D','subsequent edit',2));const changed=JSON.stringify([...records]);await assert.rejects(api.undoRecovery(result.id),/已变化/);assert.equal(JSON.stringify([...records]),changed);
+ const chatBranches={key:JSON.stringify(['workspace','chat-branches','closed']),updated:1,value:[{branch:'A',text:'A',attachments:[{path:'a.md'}],start:3},{branch:'B',text:'B',attachments:[],scroll:40}]};
+ const validated=ctx.window.AideRecoveryTransfer.validate(backup([chatBranches]));assert.deepEqual(validated[0].value,chatBranches.value);
+ await assert.rejects(api.previewImport(backup([{...chatBranches,value:[{branch:'huge',text:'x'.repeat(2*1024*1024)}]}])),/上限/);
  for(const bad of [{schema:2}, {count:2},{records:[r('A','x'),r('A','x')],count:2},{records:[{...r('A','x'),key:JSON.stringify(['workspace','unknown','A'])}]},{records:[{...r('A','x'),value:JSON.parse('{"text":"x","__proto__":{}}')}]}])await assert.rejects(api.previewImport({...backup([r('A','x')]),...bad}));
  assert.equal(JSON.stringify([...records]),changed);
  console.log('Recovery import preview, default skip, explicit replacement, transactional undo, concurrent changes, quota rollback and invalid input PASS (in-memory IndexedDB fixture)');

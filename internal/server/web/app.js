@@ -17,18 +17,51 @@ let recoveryReady=false,recoveryTimer=0,recoveryNotice=false;
 const recoveryScope=()=>state.config?.workspaceId||'';
 const chatDraftKey=(id,scope=recoveryScope())=>JSON.stringify([scope,id]);
 function recoveryFailure(error){if(!recoveryNotice){recoveryNotice=true;toast(t('本地草稿保存失败')+' · '+error.message);}}
-function persistChatDraft(){
+function persistChatDraft(strict=false){
  if(!recoveryReady||lockScreen.locked)return;
  const scope=recoveryScope(),id=state.session?.id||'';
+ const failed=e=>{recoveryFailure(e);if(strict===true)throw e;};
  const draft={text:$('prompt').value,attachments:state.attachments.map(a=>({...a})),start:$('prompt').selectionStart,end:$('prompt').selectionEnd,scroll:$('prompt').scrollTop};
  sessionDrafts.set(chatDraftKey(id),draft);
  return Promise.all([
-  window.AideContinuity?.writeTab(scope,'chat',id,draft).catch(recoveryFailure),
-  window.AideContinuity?.writeTab(scope,'scene','workbench',{session:id,root:state.root,source:state.source,dir:state.dir,fileDirs:state.fileDirs}).catch(recoveryFailure)
+  window.AideContinuity?.writeTab(scope,'chat',id,draft).catch(failed),
+  window.AideContinuity?.writeTab(scope,'scene','workbench',{session:id,root:state.root,source:state.source,dir:state.dir,fileDirs:state.fileDirs}).catch(failed)
  ]);
 }
 function restoreChatSelection(draft){const prompt=$('prompt');if(!draft)return;const start=Math.min(prompt.value.length,Math.max(0,Number(draft.start)||0)),end=Math.min(prompt.value.length,Math.max(start,Number(draft.end)||start));prompt.setSelectionRange(start,end);prompt.scrollTop=Math.max(0,Number(draft.scroll)||0);}
 function scheduleChatRecovery(){clearTimeout(recoveryTimer);recoveryTimer=setTimeout(persistChatDraft,180);}
+let chatRecoverySeq=0;
+const chatContent=d=>JSON.stringify([d?.text||'',d?.attachments||[]]);
+async function refreshChatDraftChoices(){
+ const seq=++chatRecoverySeq,scope=recoveryScope(),id=state.session?.id||'';
+ let panel=$('chat-recovery');
+ if(!panel){panel=el('details','chat-recovery');panel.id='chat-recovery';$('task-form').prepend(panel);}
+ panel.hidden=true;panel.replaceChildren();
+ if(!window.AideContinuity?.listChatDrafts||lockScreen.locked)return;
+ const drafts=await AideContinuity.listChatDrafts(scope,id).catch(e=>{recoveryFailure(e);return [];});
+ if(seq!==chatRecoverySeq||scope!==recoveryScope()||id!==(state.session?.id||'')||lockScreen.locked)return;
+ const current=()=>({text:$('prompt').value,attachments:state.attachments});
+ const choices=drafts.filter(d=>chatContent(d)!==chatContent(current()));
+ if(!choices.length)return;
+ const summary=el('summary','',t('其他恢复草稿 · {0}',choices.length));
+ const body=el('div','chat-recovery-body'),hint=el('p','muted',t('选择恢复仅替换输入区，不会发送任务；当前草稿会先保留。'));
+ const select=el('select');select.setAttribute('aria-label',t('选择恢复草稿'));
+ choices.forEach((d,i)=>{const option=el('option','',t('{0} · {1} 个附件 · {2}',String(d.text||'').replace(/\s+/g,' ').slice(0,60)||t('仅附件'),d.attachments?.length||0,d.updated?new Date(d.updated).toLocaleString():t('较早草稿')));option.value=String(i);select.append(option);});
+ const restore=el('button','quiet',t('恢复到输入区')),dismiss=el('button','quiet',t('忽略此草稿'));restore.type=dismiss.type='button';
+ const valid=()=>seq===chatRecoverySeq&&scope===recoveryScope()&&id===(state.session?.id||'')&&!lockScreen.locked&&!state.submitting;
+ restore.onclick=action(async()=>{
+  if(!valid())return;
+  const d=choices[Number(select.value)],before=chatContent(current());restore.disabled=dismiss.disabled=true;
+  try{await persistChatDraft(true);if(!valid()||chatContent(current())!==before)return;
+   await AideContinuity.adoptChatDraft(scope,id,d);if(!valid())return;
+   if(chatContent(current())!==before){await persistChatDraft(true);return;}
+   $('prompt').value=d.text||'';state.attachments=(d.attachments||[]).map(a=>({...a}));renderAttachments();restoreChatSelection(d);
+   await persistChatDraft();$('prompt').focus();scheduleContextPreview();
+  }finally{await refreshChatDraftChoices();}
+ });
+ dismiss.onclick=action(async()=>{if(!valid())return;restore.disabled=dismiss.disabled=true;try{await AideContinuity.dismissChatDraft(scope,id,choices[Number(select.value)]);}finally{await refreshChatDraftChoices();}});
+ body.append(hint,select,restore,dismiss);panel.append(summary,body);panel.hidden=false;
+}
 function voiceAssistantDisplayName() { return String(state.config?.voiceAssistantName || '小秘').trim() || '小秘'; }
 function currentHostPort() { return Number(location.port || (location.protocol === 'https:' ? 443 : 80)); }
 const fragment = new URLSearchParams(location.hash.slice(1));
@@ -779,6 +812,7 @@ async function selectSession(id) {
     }
     state.session = loaded;
     state.sessionJSON = json;
+    if(!sameSession)refreshChatDraftChoices();
     scheduleChatRecovery();
     if (loaded.pendingPrompt && !$('prompt').value.trim()) $('prompt').value = loaded.pendingPrompt;
     if (changed || !sameSession) renderSession(); // 数据未变时跳过重渲染，点击更轻快
@@ -1476,6 +1510,7 @@ async function newSession() {
   cancelContextPreview();
   paintSessionSelection('', false);
   clearTimeout(state.poll); closeStream(); state.live = {}; state.liveStable = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0; state.sessionJSON = ''; state.session = null; state.attachments = []; renderAttachments(); renderSession(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
+  refreshChatDraftChoices();
   loadSessions().catch(() => {});
 }
 const labels = { plan: '01 · 规划', propose: '02 · 生成方案', review: '03 · 审查', agent: '自主执行', chat: 'aide', file_application_receipt: '系统应用回执' };
@@ -2733,6 +2768,12 @@ $('task-form').onsubmit = action(async event => {
   cancelContextPreview(); // 输入防抖请求不再和正式发送争用服务端会话锁
   const autoReview = composerAutoReview();
   const draftSession = state.session; // R07：捕获发送时对象，后续等待不得覆盖新选择
+  const submittedScope=recoveryScope(),submittedDraft={text:$('prompt').value,attachments:state.attachments.map(a=>({...a}))};
+  const clearSubmittedDraft=async()=>{
+    await window.AideContinuity?.sentChatDraft(submittedScope,draftSession?.id||'',submittedDraft).catch(recoveryFailure);
+    const cached=sessionDrafts.get(chatDraftKey(draftSession?.id||'',submittedScope));
+    if(chatContent(cached)===chatContent(submittedDraft))sessionDrafts.delete(chatDraftKey(draftSession?.id||'',submittedScope));
+  };
   let created = null;
   try {
     if (!draftSession) {
@@ -2754,7 +2795,8 @@ $('task-form').onsubmit = action(async event => {
         // 小秘文字会话不经过 aide 的 run/done 流；直接朗读本次小秘回复。
         // 静默/忽略动作没有面向用户的回复，不触发 TTS。
         if (resp.action !== 'silent' && resp.action !== 'ignore' && resp.reply) speakReply(resp.reply);
-        $('prompt').value = ''; state.attachments = []; renderAttachments();
+        await clearSubmittedDraft();
+        if(recoveryScope()===submittedScope&&state.session?.id===target.id&&chatContent({text:$('prompt').value,attachments:state.attachments})===chatContent(submittedDraft)){ $('prompt').value = ''; state.attachments = []; renderAttachments(); }
         // 转交成功后立即打开后端刚创建的 aide 会话。此前固定回到小秘，
         // 导致新会话虽已出现在侧栏，主区域仍停留在欢迎页或小秘历史。
         await selectSession(resp.dispatched?.sessionId || target.id);
@@ -2779,8 +2821,9 @@ $('task-form').onsubmit = action(async event => {
     // #41：小秘语音经 typeIntoPrompt 提交时，用 analyze 判定的 mode 一次性覆盖手动排队开关
     let queued = state.queueMode;
     if (voice.queuedOverride != null) { queued = voice.queuedOverride; voice.queuedOverride = null; }
-    const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, autoReview, mode: state.mode, attachments: state.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
-    if (state.session?.id === target.id) { // 仅当用户仍停留在发送会话时清空草稿
+    const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, autoReview, mode: state.mode, attachments: submittedDraft.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+    await clearSubmittedDraft();
+    if (recoveryScope()===submittedScope&&state.session?.id === target.id&&chatContent({text:$('prompt').value,attachments:state.attachments})===chatContent(submittedDraft)) { // 只清空成功发送且未继续编辑的快照
       $('prompt').value = ''; state.attachments = []; renderAttachments();
     }
     if (state.session?.id === target.id) { // R07：提交完成后不得抢走用户已切换到的会话
@@ -5690,7 +5733,7 @@ async function restoreWorkspaceScene() {
       if(scope!==recoveryScope())return;
       if(draft){$('prompt').value=draft.text||'';state.attachments=draft.attachments||[];renderAttachments();restoreChatSelection(draft);}
     }
-  } finally {if(scope===recoveryScope())recoveryReady=true;}
+  } finally {if(scope===recoveryScope()){recoveryReady=true;refreshChatDraftChoices();}}
 }
 async function saveWorkspaceConfig() {
   await persistChatDraft();
@@ -7856,19 +7899,20 @@ function renderTrajectoryOutcome(host, session) {
     return;
   }
   const runs = [...(session.runs || [])].reverse();
-  const selected = runs.find(r => r.id === trajOutcomeRun?.runId && session.id === trajOutcomeRun?.sessionId) || runs[0];
-  if (!selected) return;
-  trajOutcomeRun = {sessionId: session.id, runId: selected.id};
+  const selected = runs.find(r => r.id === trajOutcomeRun?.runId && session.id === trajOutcomeRun?.sessionId);
+  if (!runs.length) return;
   const bar = el('div', 'traj-outcome-picker');
-  const label = el('label', '', t('选择任务')); label.htmlFor = 'traj-outcome-run';
+  const label = el('label', '', t('展示范围')); label.htmlFor = 'traj-outcome-run';
   const select = el('select', ''); select.id = 'traj-outcome-run';
+  const overview=el('option','',t('当前会话总览'));overview.value='';overview.selected=!selected;select.append(overview);
   runs.forEach((run, index) => {
     const option = el('option', '', '#' + (runs.length - index) + ' · ' + (run.prompt || t('未命名任务')).slice(0, 70));
-    option.value = run.id; option.selected = run.id === selected.id; select.append(option);
+    option.value = run.id; option.selected = run.id === selected?.id; select.append(option);
   });
   select.onchange = () => { trajOutcomeRun = {sessionId:session.id, runId:select.value}; renderTrajectory(); };
   bar.append(label, select);
   const content = el('div', 'outcome-content traj-outcome-content'); host.append(bar, content);
+  if(!selected){window.AideTaskOutcome?.sessionOverview(content,{session,t,selectRun:id=>{trajOutcomeRun={sessionId:session.id,runId:id};renderTrajectory();},loadOlder:action(async()=>{if(state.session?.id!==session.id)return;state.historyLimit=Math.min(2000,state.historyLimit+SESSION_HISTORY_PAGE);await selectSession(session.id);if(state.session?.id===session.id)renderTrajectory();})});return;}
   window.AideTaskOutcome?.mount(content, {sessionId:session.id, runId:selected.id, api, t, error:toast,
     blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id !== session.id || trajView !== 'outcome'});
 }
@@ -8214,6 +8258,7 @@ async function initialize() {
   if(recovered?.session){try{await selectSession(recovered.session);}catch(e){toast(t('上次会话暂不可用'));}}
   else if(window.AideContinuity){const draft=await AideContinuity.readTab(recoveryScope(),'chat','').catch(()=>null);if(draft){$('prompt').value=draft.text||'';state.attachments=draft.attachments||[];renderAttachments();restoreChatSelection(draft);}}
   recoveryReady=true;
+  refreshChatDraftChoices();
   setupGlobalEvents(); // #60
 }
 initialize()

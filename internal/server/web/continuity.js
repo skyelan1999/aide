@@ -60,6 +60,73 @@
     });
     await removeMatchingTab(scope,'file',id,text);
   }
+  // Chat identity includes attachments: equal text with different task sources
+  // is still a divergent draft. Positions travel with the selected branch.
+  const chatBranches=new Map();
+  const chatBranchFor=(scope,id)=>{const k=key(scope,'chat',id);if(!chatBranches.has(k))chatBranches.set(k,crypto.randomUUID());return chatBranches.get(k);};
+  const sameChat=(a,b)=>a?.text===b?.text&&JSON.stringify(a?.attachments||[])===JSON.stringify(b?.attachments||[]);
+  async function chatTransaction(scope,id,change){
+    const db=await open();return new Promise((resolve,reject)=>{
+      const tx=db.transaction('records','readwrite'),store=tx.objectStore('records');
+      const request=store.get(key(scope,'chat-branches',id));let failure;
+      request.onsuccess=()=>{try{change(store,request.result?.value||[]);}catch(e){failure=e;tx.abort();}};
+      tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(failure||tx.error);tx.onabort=()=>reject(failure||tx.error);
+    });
+  }
+  async function writeChatDraft(scope,id,value){
+    if(!enabled()||!scope)return false;
+    const serialized=JSON.stringify(value);
+    if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
+    sessionStorage.setItem(tabKey(scope,'chat',id),serialized);
+    return chatTransaction(scope,id,(store,branches)=>{
+      const chatBranch=chatBranchFor(scope,id),next=branches.filter(b=>b.branch!==chatBranch);
+      // Restoring identical content must not transfer another document's
+      // branch ownership: a later edit in this tab must preserve that draft.
+      if((value.text||value.attachments?.length)&&!next.some(b=>sameChat(b,value)))next.push({...value,branch:chatBranch,updated:Date.now()});
+      if(next.length>32||new Blob([JSON.stringify(next)]).size>8*1024*1024)
+        throw new Error('此会话恢复草稿已达上限；当前编辑仅保留在本标签页');
+      store.put({key:key(scope,'chat-branches',id),value:next,updated:Date.now()});
+      store.put({key:key(scope,'chat',id),value,updated:Date.now()});
+    });
+  }
+  async function adoptChatDraft(scope,id,draft){
+    const k=key(scope,'chat',id),prior=chatBranches.get(k),cacheKey=tabKey(scope,'chat',id),priorCache=sessionStorage.getItem(cacheKey),adopted=JSON.stringify(draft);
+    chatBranches.set(k,crypto.randomUUID());
+    try{return await writeChatDraft(scope,id,draft);}catch(e){
+      if(prior)chatBranches.set(k,prior);else chatBranches.delete(k);
+      // Roll back only our attempted cache write; retain later user edits.
+      if(sessionStorage.getItem(cacheKey)===adopted){if(priorCache===null)sessionStorage.removeItem(cacheKey);else sessionStorage.setItem(cacheKey,priorCache);}
+      throw e;
+    }
+  }
+  async function listChatDrafts(scope,id){
+    if(!enabled()||!scope)return [];
+    const branches=await read(scope,'chat-branches',id)||[],own=await readTab(scope,'chat',id);
+    if((own?.text||own?.attachments?.length)&&!branches.some(b=>sameChat(b,own)))branches.push({...own,branch:'legacy',updated:0});
+    return branches.sort((a,b)=>Number(sameChat(b,own))-Number(sameChat(a,own))||b.updated-a.updated);
+  }
+  async function sentChatDraft(scope,id,draft){
+    if(!enabled()||!scope)return false;
+    await chatTransaction(scope,id,(store,branches)=>{
+      store.put({key:key(scope,'chat-branches',id),value:branches.filter(b=>!sameChat(b,draft)),updated:Date.now()});
+      const request=store.get(key(scope,'chat',id));
+      request.onsuccess=()=>{if(sameChat(request.result?.value,draft))store.delete(key(scope,'chat',id));};
+    });
+    const cached=sessionStorage.getItem(tabKey(scope,'chat',id));
+    if(cached!==null&&sameChat(JSON.parse(cached),draft))sessionStorage.setItem(tabKey(scope,'chat',id),'null');
+    return true;
+  }
+  async function dismissChatDraft(scope,id,draft){
+    if(!enabled()||!scope)return false;
+    await chatTransaction(scope,id,(store,branches)=>{
+      store.put({key:key(scope,'chat-branches',id),value:branches.filter(b=>b.branch!==draft.branch),updated:Date.now()});
+      const request=store.get(key(scope,'chat',id));
+      request.onsuccess=()=>{if(sameChat(request.result?.value,draft))store.delete(key(scope,'chat',id));};
+    });
+    const cached=sessionStorage.getItem(tabKey(scope,'chat',id));
+    if(cached!==null&&sameChat(JSON.parse(cached),draft))sessionStorage.setItem(tabKey(scope,'chat',id),'null');
+    return true;
+  }
   async function read(scope,kind,id){if(!enabled()||!scope)return null;const record=await run('readonly',store=>store.get(key(scope,kind,id)));return record?.value||null;}
   async function write(scope,kind,id,value){
     if(!enabled()||!scope)return false;
@@ -85,6 +152,7 @@
     return value;
   }
   async function writeTab(scope,kind,id,value){
+    if(kind==='chat')return writeChatDraft(scope,id,value);
     if(!enabled()||!scope)return false;
     const serialized=JSON.stringify(value);
     if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
@@ -144,5 +212,5 @@
     if(new Blob([JSON.stringify(backup)]).size>64*1024*1024)throw Error('恢复备份超过 64 MiB，请保留现有记录并分批处理');
     return backup;
   }
-  window.AideContinuity={...window.AideRecoveryTransfer?.create({open}),inventory,exportRecovery,enabled,read,write,readTab,writeTab,remove,removeMatching,removeMatchingTab,writeFileDraft,listFileDrafts,dismissFileDraft,savedFileDraft};
+  window.AideContinuity={...window.AideRecoveryTransfer?.create({open}),inventory,exportRecovery,enabled,read,write,readTab,writeTab,writeChatDraft,adoptChatDraft,listChatDrafts,dismissChatDraft,sentChatDraft,remove,removeMatching,removeMatchingTab,writeFileDraft,listFileDrafts,dismissFileDraft,savedFileDraft};
 })();

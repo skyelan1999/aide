@@ -6,6 +6,31 @@
  function close(){generation++;active?.close();}
  window.LockCluster?.on('effective',value=>{if(value)close();});
  window.addEventListener('pagehide',close);
+ function sessionOverview(content,{session,t,selectRun,loadOlder}){
+  close();content.replaceChildren();
+  const runs=session.runs||[],intro=node('div','outcome-intro');
+  intro.append(node('h3','',t('当前会话 · 输入与输出')),node('p','muted','#'+(session.number||'?')+' · '+session.title),node('p','muted',t('已展示 {0} / {1} 轮任务',runs.length,session.runsTotal??runs.length)));content.append(intro);
+  const totals={inputs:runs.length,outputs:runs.reduce((n,r)=>n+(r.steps||[]).filter(s=>s.content&&s.name!=='file_application_receipt').length,0),files:runs.reduce((n,r)=>n+(r.files||[]).length,0)};
+  const metrics=node('div','outcome-metrics outcome-io-metrics');for(const [key,label]of [['inputs','输入任务'],['outputs','输出回复'],['files','成果文件记录']]){const cell=node('div');cell.append(node('strong','',totals[key]),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
+  const text=(host,value)=>{const pre=node('pre','outcome-io-text',String(value||''));host.append(pre);};
+  for(let i=runs.length-1;i>=0;i--){const run=runs[i],card=node('article','outcome-io-round');card.append(node('h3','',t('第 {0} 轮', (session.runsTotal??runs.length)-runs.length+i+1)+' · '+(run.created||'')),node('p','muted',t('任务状态')+' · '+run.status));
+   const input=node('section','outcome-io-block');input.append(node('h4','',t('输入了什么')));text(input,run.prompt);
+   for(const a of run.attachments||[])input.append(node('p','outcome-io-resource',(a.directory?t('文件夹'):t('文件'))+' · '+a.path+' · '+(a.source||a.root||'workspace')));
+   for(const steer of run.steers||[])input.append(node('p','',t(steer.queued?'排队补充':'插话补充')+' · '+steer.content));
+   const output=node('section','outcome-io-block');output.append(node('h4','',t('输出了什么')));
+   const replies=(run.steps||[]).filter(s=>s.content&&s.name!=='file_application_receipt');
+   if(!replies.length)output.append(node('p','muted',t('尚无回复记录')));
+   for(const step of replies){const d=node('details','outcome-io-reply');d.append(node('summary','',step.name+' · '+step.status));text(d,step.content);output.append(d);}
+   const results=node('section','outcome-io-block');results.append(node('h4','',t('形成了什么成果')));
+   if(!(run.files||[]).length)results.append(node('p','muted',t('没有成果文件记录；回复和执行结果见输出及详情。')));
+   for(const f of run.files||[])results.append(node('p','outcome-io-resource',f.path+' · '+t(f.applied?'已应用记录':'提案未应用')));
+   results.append(node('p','muted',t('{0} 条工具调用记录',run.toolUses?.length||0)));
+   const detail=node('button','quiet',t('查看此轮详情与证据'));detail.type='button';detail.onclick=()=>selectRun(run.id);results.append(detail);
+   card.append(input,output,results);content.append(card);
+  }
+  if(session.hasOlder){const more=node('button','quiet',t('加载更早的输入与输出'));more.type='button';more.onclick=loadOlder;content.append(more);}
+  content.append(node('p','outcome-boundary',t('这里展示已提交的输入和已记录的输出；未发送草稿不计入。已应用记录不代表当前文件已复核。')));
+ }
  async function mount(content,{sessionId,runId,api,blocked,t,error}){
    close();const gen=++generation;active={close:()=>{active=null;}};
    content.replaceChildren(node('p','muted',t('正在读取任务记录…')));
@@ -26,6 +51,12 @@
    }
    function render(){
     content.replaceChildren();const intro=node('div','outcome-intro');intro.append(node('p','muted','#'+(data.sessionNumber||'?')+' · '+data.sessionTitle),node('p','',data.goal),node('code','outcome-digest',data.taskId),node('p','muted',t('任务状态')+' · '+data.status+' / '+t('工作区')+' · '+(data.workspaceId||'—')));if(data.goalTruncated)intro.append(node('p','muted',t('目标摘要已截断，原文摘要指纹保留在导出记录中')));content.append(intro);
+    const input=section('输入了什么');input.append(node('pre','outcome-io-text',data.goal));
+    for(const a of data.inputs?.attachments||[])input.append(node('p','outcome-io-resource',a.path+' · '+(a.source||a.root||'workspace')));
+    for(const steer of data.inputs?.steers||[])input.append(node('p','',t(steer.queued?'排队补充':'插话补充')+' · '+steer.content));
+    const output=section('输出了什么');if(!data.outputs?.length)output.append(node('p','muted',t('尚无回复记录')));
+    for(const reply of data.outputs||[]){const d=node('details','outcome-io-reply');d.append(node('summary','',reply.name+' · '+reply.status),node('pre','outcome-io-text',reply.content));if(reply.truncated)d.append(node('p','muted',t('回复摘要已截断，完整回复见会话历史')));output.append(d);}
+    section('形成了什么成果');
     const metrics=node('div','outcome-metrics');for(const [key,label]of [['files','文件提案'],['applicationRecords','应用记录'],['executions','执行返回'],['verificationReports','验证报告'],['unknownOutcomes','未知结果']]){const cell=node('div');cell.append(node('strong','',data.summary[key]),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
     content.append(node('p','outcome-boundary',t('任务状态、模型计划与验证报告不是独立验收证明；展开证据查看原始返回。')));
     if(data.plan?.items?.length){const s=section('目标与计划');for(const item of data.plan.items)s.append(node('p','',item.step+' · '+item.status+(item.evidence?.length?' · '+item.evidence.map(i=>'E'+String(i).padStart(4,'0')).join(', '):'')));}
@@ -45,5 +76,5 @@
    try{data=await api(base);if(!valid())return;files=data.files;executions=data.executions;render();}catch(e){if(valid()){content.replaceChildren(node('p','task-error',e.message));}}
    return {close};
  }
- window.AideTaskOutcome={mount,close};
+ window.AideTaskOutcome={mount,sessionOverview,close};
 })();

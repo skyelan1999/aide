@@ -7,14 +7,14 @@
   const operationKey=id=>JSON.stringify(['',operationKind,id]);
   function validate(backup){
     if(!backup||backup.format!=='aide-local-recovery'||backup.schema!==1||!Array.isArray(backup.records)||backup.count!==backup.records.length||bytes(backup)>LIMIT)throw Error('恢复备份格式、数量或大小无效');
-    const keys=new Set(),kinds=new Set(['chat','scene','file','file-view','file-branches']);
+    const keys=new Set(),kinds=new Set(['chat','scene','file','file-view','file-branches','chat-branches']);
     const check=(value,depth=0)=>{if(depth>64)throw Error('恢复备份内容嵌套过深');if(value&&typeof value==='object')for(const k of Object.keys(value)){if(['__proto__','constructor','prototype'].includes(k))throw Error('恢复备份包含不支持的字段');check(value[k],depth+1);}};
     for(const r of backup.records){
       const p=typeof r?.key==='string'?JSON.parse(r.key):null;
       if(!p||p.length!==3||!p.every(x=>typeof x==='string')||!p[0]||p[0].length>4096||p[2].length>16384||!kinds.has(p[1])||JSON.stringify(p)!==r.key||keys.has(r.key)||!Number.isFinite(r.updated)||!r.value||typeof r.value!=='object')throw Error('恢复备份记录无效或重复');
       keys.add(r.key);check(r.value);
-      if(p[1]==='file-branches'){
-        if(!Array.isArray(r.value)||r.value.length>32||bytes(r.value)>8*1024*1024||r.value.some(b=>!b||typeof b.text!=='string'||typeof b.branch!=='string'))throw Error('文件草稿分支无效或超出上限');
+      if(['file-branches','chat-branches'].includes(p[1])){
+        if(!Array.isArray(r.value)||r.value.length>32||bytes(r.value)>8*1024*1024||r.value.some(b=>!b||typeof b.text!=='string'||typeof b.branch!=='string'||bytes(b)>2*1024*1024))throw Error('文件草稿分支无效或超出上限');
       }else if(Array.isArray(r.value)||bytes(r.value)>2*1024*1024)throw Error('恢复记录超出上限');
       if(['chat','file'].includes(p[1])&&typeof r.value.text!=='string')throw Error('恢复文字记录无效');
     }

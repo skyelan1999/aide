@@ -2,18 +2,6 @@
   "version": 1,
   "sections": [
     {
-      "id": "stats",
-      "title": "消耗统计",
-      "description": "模型调用 Token 消耗与费用趋势",
-      "controls": [
-        {
-          "id": "token-stats",
-          "type": "token-stats",
-          "label": "Token 消耗"
-        }
-      ]
-    },
-    {
       "id": "appearance",
       "title": "外观",
       "description": "专业、舒适、经典三种配色，支持浅色、深色和跟随系统。",
@@ -120,21 +108,20 @@
       ]
     },
     {
+      "id": "language",
+      "title": "语言",
+      "controls": [
+        {
+          "type": "language",
+          "id": "language"
+        }
+      ]
+    },
+    {
       "id": "file-rendering",
       "title": "文件查看与渲染",
       "description": "勾选后立即生效，自动保存到当前浏览器；同源标签页同步。默认预览选项在下次打开文件时应用。文件内容仍需点击保存。",
       "controls": [
-        {
-          "id": "workRecovery",
-          "type": "checkbox",
-          "label": "工作现场与本地草稿恢复",
-          "description": "在当前浏览器保存会话草稿、目录和编辑恢复记录；服务器保存状态单独显示。"
-        },
-        {
-          "id": "recovery-storage",
-          "type": "recovery-storage",
-          "label": "本地恢复存储"
-        },
         {
           "id": "fileLineNumbers",
           "type": "checkbox",
@@ -190,28 +177,33 @@
           "id": "markdownHistory",
           "type": "markdown-history",
           "label": "Markdown 历史版本追踪"
+        },
+        {
+          "id": "workRecovery",
+          "type": "checkbox",
+          "label": "工作现场与本地草稿恢复",
+          "description": "在当前浏览器保存会话草稿、目录和编辑恢复记录；服务器保存状态单独显示。"
+        },
+        {
+          "id": "recovery-storage",
+          "type": "recovery-storage",
+          "label": "本地恢复存储"
         }
       ]
     },
     {
-      "id": "virtual-avatars",
-      "title": "虚拟形象",
-      "description": "aide 与小秘共用一个虚拟形象，统一管理素材包、显示位置与启用状态。导入素材仅保存在当前浏览器。",
+      "id": "knowledge-index",
+      "title": "知识索引",
       "controls": [
         {
-          "id": "virtual-avatars",
-          "type": "virtual-avatars",
-          "label": "虚拟形象"
-        }
-      ]
-    },
-    {
-      "id": "language",
-      "title": "语言",
-      "controls": [
+          "id": "knowledge-index-policy",
+          "type": "knowledge-index-policy",
+          "label": "索引预算与优先路径"
+        },
         {
-          "type": "language",
-          "id": "language"
+          "id": "knowledge-embedding-policy",
+          "type": "knowledge-embedding-policy",
+          "label": "向量混合检索"
         }
       ]
     },
@@ -230,30 +222,6 @@
               "label": "参数配置"
             }
           ]
-        }
-      ]
-    },
-    {
-      "id": "sessions-data",
-      "title": "归档",
-      "description": "归档会话管理与会话数据全部导出",
-      "controls": [
-        {
-          "id": "sessions-manage",
-          "type": "sessions-manage",
-          "label": "会话数据"
-        }
-      ]
-    },
-    {
-      "id": "system-logs",
-      "title": "系统日志",
-      "description": "查看近期运行日志，按级别筛选并下载 JSONL 文件以辅助问题分析。现有未结构化日志的级别根据内容推断；敏感凭据会在记录和导出前脱敏。",
-      "controls": [
-        {
-          "id": "system-logs",
-          "type": "system-logs",
-          "label": "运行日志"
         }
       ]
     },
@@ -316,14 +284,14 @@
       ]
     },
     {
-      "id": "account",
-      "title": "账户",
-      "description": "设置用户名与锁屏密码；锁屏密码同时作为小秘对话历史的加密密钥。不设密码则不锁屏。",
+      "id": "capabilities",
+      "title": "连接与能力",
+      "description": "分别观察配置、工具登记和具体检查；检查结果有时间与范围，不代替完整验收。",
       "controls": [
         {
-          "id": "account",
-          "type": "account",
-          "label": "账户与锁屏"
+          "id": "capabilities",
+          "type": "capabilities",
+          "label": "连接与插件能力仪表"
         }
       ]
     },
@@ -346,6 +314,11 @@
       "description": "普通会话的麦克风会过滤背景声并把指令交给当前会话；小秘会话中麦克风先转写到输入框，编辑后再发送。",
       "controls": [
         {
+          "id": "voiceAssistantName",
+          "type": "voice-name",
+          "label": "助理名称"
+        },
+        {
           "id": "xiaomi-model",
           "type": "xiaomi-model",
           "label": "小秘模型"
@@ -357,24 +330,19 @@
           "label": "助理性格系统"
         },
         {
-          "id": "voiceAssistantName",
-          "type": "voice-name",
-          "label": "助理名称"
-        },
-        {
           "id": "voiceInputSource",
           "type": "voice-input-source",
           "label": "麦克风输入源"
         },
         {
-          "id": "voiceReply",
-          "type": "voice-reply",
-          "label": "语音回复"
-        },
-        {
           "id": "voiceDispatch",
           "type": "voice-dispatch",
           "label": "发送调度"
+        },
+        {
+          "id": "voiceReply",
+          "type": "voice-reply",
+          "label": "语音回复"
         },
         {
           "id": "ttsEngine",
@@ -385,6 +353,18 @@
           "id": "voiceClone",
           "type": "voice-clone",
           "label": "个性化音色（声音克隆）"
+        }
+      ]
+    },
+    {
+      "id": "virtual-avatars",
+      "title": "虚拟形象",
+      "description": "aide 与小秘共用一个虚拟形象，统一管理素材包、显示位置与启用状态。导入素材仅保存在当前浏览器。",
+      "controls": [
+        {
+          "id": "virtual-avatars",
+          "type": "virtual-avatars",
+          "label": "虚拟形象"
         }
       ]
     },
@@ -405,6 +385,30 @@
       ]
     },
     {
+      "id": "stats",
+      "title": "消耗统计",
+      "description": "模型调用 Token 消耗与费用趋势",
+      "controls": [
+        {
+          "id": "token-stats",
+          "type": "token-stats",
+          "label": "Token 消耗"
+        }
+      ]
+    },
+    {
+      "id": "sessions-data",
+      "title": "归档",
+      "description": "归档会话管理与会话数据全部导出",
+      "controls": [
+        {
+          "id": "sessions-manage",
+          "type": "sessions-manage",
+          "label": "会话数据"
+        }
+      ]
+    },
+    {
       "id": "backup",
       "title": "配置备份",
       "controls": [
@@ -416,13 +420,26 @@
       ]
     },
     {
-      "id": "danger",
-      "title": "恢复出厂设置",
+      "id": "account",
+      "title": "账户",
+      "description": "设置用户名与锁屏密码；锁屏密码同时作为小秘对话历史的加密密钥。不设密码则不锁屏。",
       "controls": [
         {
-          "id": "factory-reset",
-          "type": "factory-reset",
-          "label": "恢复出厂设置"
+          "id": "account",
+          "type": "account",
+          "label": "账户与锁屏"
+        }
+      ]
+    },
+    {
+      "id": "system-logs",
+      "title": "系统日志",
+      "description": "查看近期运行日志，按级别筛选并下载 JSONL 文件以辅助问题分析。现有未结构化日志的级别根据内容推断；敏感凭据会在记录和导出前脱敏。",
+      "controls": [
+        {
+          "id": "system-logs",
+          "type": "system-logs",
+          "label": "运行日志"
         }
       ]
     },
@@ -449,30 +466,13 @@
       ]
     },
     {
-      "id": "capabilities",
-      "title": "连接与能力",
-      "description": "分别观察配置、工具登记和具体检查；检查结果有时间与范围，不代替完整验收。",
+      "id": "danger",
+      "title": "恢复出厂设置",
       "controls": [
         {
-          "id": "capabilities",
-          "type": "capabilities",
-          "label": "连接与插件能力仪表"
-        }
-      ]
-    },
-    {
-      "id": "knowledge-index",
-      "title": "知识索引",
-      "controls": [
-        {
-          "id": "knowledge-index-policy",
-          "type": "knowledge-index-policy",
-          "label": "索引预算与优先路径"
-        },
-        {
-          "id": "knowledge-embedding-policy",
-          "type": "knowledge-embedding-policy",
-          "label": "向量混合检索"
+          "id": "factory-reset",
+          "type": "factory-reset",
+          "label": "恢复出厂设置"
         }
       ]
     }

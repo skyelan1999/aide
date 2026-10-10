@@ -1930,5 +1930,130 @@
       "Actual browser maximum capacity transfer",
       "Whole goal acceptance and release"
     ]
+  },
+  "chat_closed_branches_20261010": {
+    "status": "in_progress",
+    "implementation": [
+      "Atomic per-conversation chat branches with text/attachment identity, caret and scroll",
+      "Composer recovery choices preserve previous draft before explicit adoption; no task submission",
+      "Successful submission removes only the matching submitted snapshot and retains edits during POST",
+      "Recovery backup accepts bounded chat branch records"
+    ],
+    "source_regression": "continuity-isolation, recovery-transfer, ui-click-latency and workspace-scene-transition PASS; in-memory/source VM fixtures",
+    "quick": {
+      "status": "pass",
+      "time": "20261010T050307397194Z",
+      "fingerprint": "8ebf4c6fd76704243b3db4712049f863ff0be786bfd23a14bbb3d7f728ec61ce",
+      "log": ".agent-state/verify-20261010T050307397194Z.log"
+    },
+    "system_safari": "PASS scoped: native Safari 18211 retained two text branches after all owned pages closed; explicit restore does not submit. Workspace attachment retained and middle-text caret restored after close/reopen, confirmed by character insertion. Quota/crash and Windows unverified.",
+    "full": {
+      "status": "pass",
+      "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
+      "head": "46c5868b6bbe286e6b67178a93dc8e935951b158",
+      "time": "20261010T053253364772Z",
+      "log": ".agent-state/verify-20261010T053253364772Z.log",
+      "checks": 38
+    },
+    "remaining": [
+      "Full regression and reviewed source push",
+      "Actual quota/crash and Windows"
+    ],
+    "release": "not_run",
+    "candidate": {
+      "start": "start.command exit 0; isolated 18211 only",
+      "binary": "5afafd9fc7d4c4e9e77f13b8bbb1b35ab900503f41875d30f0c728499a6bf685",
+      "label": "chat-ownership-20261010",
+      "cleanup": "All owned candidate tabs closed; seven original Safari tabs retained",
+      "screenshot": ".agent-state/continuity-runtime/chat-ownership-safari-20261010.png",
+      "attachment_caret_screenshot": ".agent-state/continuity-runtime/chat-attachment-caret-safari-20261010.png"
+    },
+    "ownership_fix": "Identical restored content no longer transfers another document branch ownership; source regression covers attachment identity and later divergent edit."
+  },
+  "session_input_output_20261010": {
+    "status": "in_progress",
+    "request": "把成果仓改为输入和输出，重点展示当前会话输入、输出和成果",
+    "implementation": [
+      "Trajectory tab renamed 输入与输出; current-session overview is default",
+      "Rounds show submitted prompts, attachments and steers, recorded replies and artifact application states",
+      "Single-round detail includes input/output projection and original evidence; no reasoning field exposed",
+      "Loaded/total round counts and older-history loading prevent claiming complete history from a partial page"
+    ],
+    "verification": {
+      "source": "outcome-pagination source VM, i18n and directed Go race TestTaskOutcome PASS",
+      "system_safari": "PASS on isolated https://localhost:18211 for overview, three sections, detail and return selector using a clearly labeled historical fixture; unsent composer excluded",
+      "screenshot": ".agent-state/continuity-runtime/input-output-overview-safari-20261010.png",
+      "full": "running"
+    },
+    "limits": [
+      "Production 9999 not replaced",
+      "Native fixture has no model reply; attachment/reply rendering checked in source regression",
+      "Narrow, dark and Windows native acceptance not run for this change"
+    ],
+    "release": "not_run",
+    "full": {
+      "status": "pass",
+      "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
+      "head": "46c5868b6bbe286e6b67178a93dc8e935951b158",
+      "time": "20261010T053253364772Z",
+      "log": ".agent-state/verify-20261010T053253364772Z.log",
+      "checks": 38
+    }
+  },
+  "settings_order_20261010": {
+    "status": "pass",
+    "request": "设置页面的选项框先后顺序也要排一下",
+    "scope": [
+      "internal/server/web/settings-schema.json"
+    ],
+    "verification": [
+      "Schema normalized against HEAD: order-only; IDs and values unchanged",
+      "i18n and docs checks PASS"
+    ],
+    "system_safari": "PASS: native Safari 18211 first opens Appearance; navigation order and file controls order observed without changing preferences; owned two startup tabs closed, original seven retained",
+    "production": "not deployed",
+    "screenshot": ".agent-state/continuity-runtime/settings-order-safari-20261010.png"
+  },
+  "progress_reporting": {
+    "requested": "2026-10-10",
+    "rule": "每完成一步更新任务账本并汇报完成项、验证证据、剩余工作和整体粗估进度；实现、浏览器验收、推送、部署和发布分别记录。",
+    "estimate_policy": "按工程工作量粗估，非精确完成率；未验证项不能计为验收完成。"
+  },
+  "progress_checkpoint_20261010": {
+    "estimated_complete_percent": 80,
+    "estimated_remaining_percent": 20,
+    "estimate_kind": "rough engineering estimate, not acceptance pass rate",
+    "latest_completed": "当前候选完整回归38项通过，源码指纹一致；关闭页面后的会话草稿、附件和中间光标恢复已完成系统Safari验收。",
+    "full": {
+      "status": "pass",
+      "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
+      "head": "46c5868b6bbe286e6b67178a93dc8e935951b158",
+      "time": "20261010T053253364772Z",
+      "log": ".agent-state/verify-20261010T053253364772Z.log",
+      "checks": 38
+    },
+    "remaining": [
+      "审阅本批修改、更新文档并推送；生产部署与发布另行记录",
+      "恢复分支所有权、容量/崩溃边界和星图恢复继续复核",
+      "真实向量服务、远程来源及SSH审批/网络边界验收",
+      "输入与输出运行中多页一致性、备份保留与清理管理闭环",
+      "主题/窄屏/性能、长时间使用及逐项发布证据审计",
+      "Windows真实设备验收未运行：用户暂无环境"
+    ],
+    "production": "本批未部署到9999；未release"
+  },
+  "implementation_batch_push_20261010": {
+    "status": "in_progress",
+    "scope": "closed chat branches; session input/output overview; settings ordering",
+    "full": {
+      "status": "pass",
+      "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
+      "head": "46c5868b6bbe286e6b67178a93dc8e935951b158",
+      "time": "20261010T053253364772Z",
+      "log": ".agent-state/verify-20261010T053253364772Z.log",
+      "checks": 38
+    },
+    "review": "Owned 18 paths reviewed; configuration schema IDs/values unchanged; task projection excludes reasoning; source and native Safari evidence recorded.",
+    "deployment": "production9999 unchanged; no release"
   }
 }

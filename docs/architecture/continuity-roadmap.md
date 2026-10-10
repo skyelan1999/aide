@@ -277,3 +277,19 @@ Import and undo archives each have a 64 MiB budget; ordinary records have 2 MiB 
 ### Recovery management follow-up (2026-10-10)
 
 Import preview and undo operations now precede inventory groups, keeping the action controls near the toolbar even after inspecting many scopes. Export checks the complete serialized envelope against the same 64 MiB file limit used by import, in addition to the incremental record budget. The earlier envelope-overhead gap is closed; no record is removed when an oversized export is refused. The directed fixture constructs records below the aggregate limit whose complete envelope exceeds it and verifies rejection. Actual maximum-size browser transfer remains unverified.
+
+### Closed chat draft branches (implementation candidate, 2026-10-10)
+
+Chat writes now retain divergent text/attachment snapshots in atomic `chat-branches` records per workspace and conversation. Branch limits match file drafts (32 branches, 8 MiB aggregate, 2 MiB each); rejection preserves existing shared records. Empty composers remove their current branch without erasing other branches. Recovery choices attach to the composer and adopt the selected branch explicitly, preserving the prior composer as another branch. They do not submit a task. Successful sends remove only matching text/attachment snapshots; new edits while the request is pending remain in the composer. Schema-1 recovery transfer supports these bounded records.
+
+Source VM and storage fixtures pass. Native Safari on isolated 18211 exposed an ownership bug: identical restored content was consolidated into the new tab, then overwritten by its next edit. The fix retains the original branch owner; after closing all owned candidate tabs, fresh reopen presents both divergent text drafts, and explicit recovery replaces the composer without submitting a task. Further native acceptance retains a workspace attachment after closing the only candidate page; a verified middle-text caret persists across close/reopen, confirmed by the next character insertion. Full regression completed with all 38 commands successful and an unchanged source fingerprint (873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465). Real quota/crash and Windows remain unverified. This is an implementation checkpoint, not full product acceptance or release.
+
+### 当前会话输入与输出（2026-10-10）
+
+轨迹中的“成果舱”入口改为“输入与输出”，默认展示当前会话总览。按轮次列出已提交任务、附件来源和插话／排队补充；输出展示已记录回复，系统文件应用回执不作为模型回复。成果展示文件路径及提案／应用记录，并保留单轮调用、审批、验证与原始证据入口。未发送草稿不计入；历史分页显示已加载／总轮数，并可加载更早内容。应用记录仅表示当时已有记录，不证明当前磁盘状态。
+
+成果 API 新增 inputs 与 outputs 投影：复制附件和补充指令，回复摘要最多8000字符，保留完整正文指纹；不暴露推理字段。原分页快照涵盖新增字段。Safari 在隔离18211验证总览、三段布局、单轮详情和返回总览；验收使用明确标记的历史接口夹具，没有产生模型调用。真实附件及回复展示另由源回归覆盖。生产9999尚未替换，窄屏、暗色及 Windows 原生验收未完成。
+
+### 设置选项顺序（2026-10-10）
+
+设置导航按日常查看、模型与执行、个性与交互、数据维护排列：外观、语言、文件查看与渲染、知识索引、模型参数、执行策略、权限管理、连接与能力、aide 性格、语音助理、虚拟形象、无障碍、消耗统计、归档、配置备份、账户、系统日志、软件升级、关于、恢复出厂设置。首次打开默认外观；本次打开期间选择的页面保留。文件页先展示常用查看与编辑选项，随后历史版本、草稿恢复及存储管理；语音页先名称和模型，再输入、调度、回复和音色。仅修改 schema 顺序，配置 ID、值及保存逻辑保持兼容。

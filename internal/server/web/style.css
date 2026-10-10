@@ -1487,3 +1487,13 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 @media(max-width:600px){.recovery-manager-row{grid-template-columns:minmax(0,1fr)}.recovery-manager-row small{grid-column:auto}}
 
 .recovery-transfer-preview{display:grid;gap:10px;margin-top:12px}.recovery-conflict-key{font-size:12px;overflow-wrap:anywhere;white-space:normal;color:var(--muted)}
+
+/* Recovery is attached to the composer, with controls fixed outside its text. */
+.chat-recovery{margin:0 0 10px;border-bottom:1px solid var(--border);padding:0 0 8px;font-size:12px;color:var(--muted)}
+.chat-recovery[hidden]{display:none}
+.chat-recovery summary{cursor:pointer;padding:6px 0;color:var(--text)}
+.chat-recovery-body{display:flex;flex-wrap:wrap;gap:8px;padding:6px 0}
+.chat-recovery-body p{flex-basis:100%;margin:0;line-height:1.6}
+.chat-recovery-body select{flex:1 1 240px;min-width:0;max-width:100%;font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px}
+.chat-recovery-body button{font:inherit;min-height:34px}
+.chat-recovery :focus-visible{outline:2px solid var(--brand);outline-offset:2px}
