@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Markdown import baseline/revision allocation fix and docs pushed at 6a56dca. Compilation and docs checks passed; runtime acceptance delegated to Luna; production unchanged.",
+    "latest_completed": "Autosave stale async callback guards implemented; preparing documentation/source push. Runtime acceptance delegated to Luna; production unchanged.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2220,6 +2220,21 @@
       "command": "git push origin main",
       "exit": 0
     },
+    "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md"
+  },
+  "autosave_stale_callback_fix_20261010": {
+    "status": "implemented_pending_acceptance",
+    "cause": "Old file asynchronous errors could update shared save/recovery status after switching files; callback exceptions could leave queue ownership uncleared",
+    "changes": [
+      "Generation and complete file identity guards for asynchronous save and recovery callbacks",
+      "Guard old conflict dialogs and draft dismiss actions; reset saving visual on activation",
+      "Catch synchronous conflict-read exceptions and release queue ownership in finally"
+    ],
+    "checks": {
+      "javascript_syntax": "PASS node --check file-autosave.js",
+      "runtime_safari_full": "NOT_RUN; delegated to Luna"
+    },
+    "push": "pending",
     "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md"
   }
 }
