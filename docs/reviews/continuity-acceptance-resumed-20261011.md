@@ -2,11 +2,11 @@
 
 ## 分工与基线
 
-用户改为由 Codex 继续完整验收，真实向量测试仍暂缓。Windows 无设备，保留 NOT_RUN。基线 `2240eea60c6bcaf9871d6d96766ab75d471ab46a`；本轮只修复历史 UI 回归的 VM 测试夹具，未改变产品源码。生产 9999 未替换，未 Release。
+用户改为由 Codex 继续完整验收，真实向量测试仍暂缓。Windows 无设备，保留 NOT_RUN。验收基线提交 `399e0bebebe58c4528075d2f3e2dd3510410a44e`（远端 main 已核对）；产品源码未变化，仅修复历史 UI 回归的 VM 测试夹具并补充验收文档。生产 9999 未替换，未 Release。
 
 ## 自动回归
 
-`python3 scripts/agent-route.py verify full` 终态 exit0，38 项 PASS，包含 Docker Go race/vet。指纹 `7fbdd76d7a9bce49e29595e01dabb2218ef191b536622876fac4c4436134e03a`，日志 `.agent-state/verify-20261010T160155645421Z.log`。
+`python3 scripts/agent-route.py verify full` 在当前 HEAD `399e0bebebe58c4528075d2f3e2dd3510410a44e` 终态 exit0，38 项 PASS，包含隔离 Docker Go race/vet。指纹 `7fbdd76d7a9bce49e29595e01dabb2218ef191b536622876fac4c4436134e03a`，日志 `.agent-state/verify-20261010T165608392339Z.log`。同一指纹下普通沙箱第一次因 Docker API 不可见而在 `aide.sh test` 失败（`.agent-state/verify-20261010T165437597688Z.log`）；只读确认引擎可用后在隔离权限下重跑通过，没有触碰生产容器。
 
 前一轮 `.agent-state/verify-20261010T155248666849Z.log` 保留 FAIL：历史备份测试抽取的 VM 未提供新管理模块所需 `window`。夹具增加 window 和管理模块契约断言，定向 PASS 后重跑 full。不能把这次 full 当作全部真实交互通过；后续源码变化须重新生成指纹。
 
@@ -34,6 +34,20 @@
 ## 星图观察补充
 
 从工作台真实入口打开星图后，自动索引包含新建 `acceptance-20261011/page.md`，节点原文与服务器一致。节点/名称搜索返回两个同名文件，路径可区分。星际日志的连续观察比较显示插件清单 `surface.json` 的 generatedAt 从重启前变化至本次启动时间；随后扫描轮次从176继续至198，观察保留32/淘汰35保持不变。此次没有复现无内容变化的历史增长，不据此覆盖全部时间线/容量验收。截图 `starmap-current-node-2240eea-safari.png` 留存于候选证据目录。
+
+## 后续 Safari 星图实测 · 2026-10-11
+
+在系统 Safari 的 18211 候选执行文档原文检索 `Original A.`，实际继续分页到 129/129 份已索引文档，在 `acceptance-20261011/page.md` 第 3 行命中 1 条；模式显示“逐字原文”，没有调用模型。再以同词执行本地关键词 RAG，分页至 129/129，命中同一文件/行，显示“本地关键词 RAG”。该候选当前报告129份已索引文档，星图来源状态明确表示全库总数未统计、部分来源分批，故仅对这一索引快照成立。
+
+打开代码层级视图后，Safari 显示 1 个恒星系统、218 个真实节点、6 份源码、53 个声明、41 条调用候选、133 个未解析调用、0 个类型绑定，并显示“静态调用候选”和完整性限制说明。证明UI将候选与未解析项如实区分；不证明运行时或整个仓库代码关系正确。截图 `code-hierarchy-current-399e0be-safari.png`。
+
+同一系统 Safari 当前代码视图内用两个实际检索出的隔离文件编号执行路径查询，并启用目录归属关系。当前有限索引返回“未找到路径 · 索引不完整。不代表没有真实联系。”没有把不完整索引误报为无关系。此处证明了路径查询的边界提示；正向多跳路径和关系源跳转仍沿用已有 `path_multihop_system_browser` 收据，不据此扩大到完整仓库。
+
+## 成果舱 Safari 实测 · 2026-10-11
+
+新开系统 Safari 标签访问隔离候选 `https://localhost:18211/`，打开已有隔离会话 `#42 成果舱 API 验收（测试记录）` 的轨迹，切到“输入与输出”，再打开单轮详情和 `E0001 read_file` 原始回执。UI显示1轮、输入1条、回复0条；`first.md` 是“提案未应用”，`second.txt` 是“应用已有记录，当前文件未复核”；同时明示2条工具调用、1个 pending/dispatched 的 `run_shell` 未取得持久化结果、建议命令尚未运行。虽测试会话状态标记 `completed`，视图仍没有将其提升为已验证成功，也明确建议/验证报告不等于独立验收证据。原始参数 `{\"path\":\"first.md\"}`、截断返回和内容指纹可展开。截图 `.agent-state/continuity-runtime/outcome-input-output-20261011-safari.jpg`。
+
+这是持久化测试夹具的 UI/证据格式验收，不代表本轮模型或 shell 真正执行，也不闭合跨页运行中快照、当前文件应用状态重读或发布成果卡。
 
 ## 剩余验收
 
