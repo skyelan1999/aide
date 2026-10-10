@@ -10,8 +10,9 @@
     const upload=node('button','quiet',t('导入恢复备份')),input=node('input');input.type='file';input.accept='.json,application/json';input.hidden=true;
     inspect.type=download.type=upload.type='button';toolbar.append(inspect,download,upload);
     const status=node('p','muted'),list=node('div','recovery-manager-list');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
-    wrap.append(toolbar,status,list,node('p','muted',t('浏览器估算包含同地址的其他存储，并非恢复记录的磁盘大小。导出不含其他已打开标签页独有的即时快照；导入不会修改正在编辑的标签页，首次打开的新标签页才能使用导入记录；撤销记录单独保留，不包含在导出中。当前不自动清理。')));
-    const transfer=node('div','recovery-transfer-preview'),operations=node('div','recovery-manager-list');wrap.append(input,transfer,operations);
+    const transfer=node('div','recovery-transfer-preview'),operations=node('div','recovery-manager-list recovery-import-operations');
+    wrap.append(toolbar,status,transfer,operations,list,node('p','muted',t('浏览器估算包含同地址的其他存储，并非恢复记录的磁盘大小。导出不含其他已打开标签页独有的即时快照；导入不会修改正在编辑的标签页，首次打开的新标签页才能使用导入记录；撤销记录单独保留，不包含在导出中。当前不自动清理。')));
+    wrap.append(input);
     const blocked=()=>{const s=window.LockCluster?.snapshot();return !!s&&(!s.settled||s.locked);};
     let epoch=0;
     const valid=e=>wrap.isConnected&&isActive()&&!blocked()&&epoch===e;

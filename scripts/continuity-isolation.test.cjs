@@ -112,7 +112,11 @@ const invalidKey='invalid-json-key';records.set(invalidKey,{key:invalidKey,value
 await assert.rejects(api.exportRecovery(),/JSON/);assert.equal(records.get(invalidKey).value.text,'keep');records.delete(invalidKey);
 context.navigator.storage.estimate=async()=>{throw Error('unavailable');};
 assert.equal((await api.inventory()).originStorage,null);
-console.log('Recovery inventory, disabled-mode export, snapshot integrity and non-mutating errors PASS');
+const held=new Map(records);records.clear();
+const boundaryKey=JSON.stringify(['x','chat','x']);records.set(boundaryKey,{key:boundaryKey,value:{text:'x'.repeat(64*1024*1024-200)},updated:1});
+assert.ok(new Blob([JSON.stringify([...records.values()][0])]).size<64*1024*1024);
+await assert.rejects(api.exportRecovery(),/64 MiB/);records.clear();for(const [k,v] of held)records.set(k,v);
+console.log('Recovery inventory, disabled-mode export, envelope capacity, snapshot integrity and non-mutating errors PASS');
 console.log('Closed-file branches, explicit dismissal, save matching and non-evicting capacity guard PASS');
 console.log('Same-file tab drafts, cursor positions and matching cleanup PASS');
 console.log('Tab snapshots, reload, opener copy, empty scene, fallback race and size guard PASS');
@@ -128,8 +132,9 @@ console.log('Recovery workspace isolation and matching deletion PASS (in-memory 
  const errors=[];const render=()=>managerContext.window.AideRecoveryManager.render({t:x=>x,error:e=>errors.push(e)});
  const summary={count:1,bytes:100,groups:[{scope:'scope',count:1,bytes:100,kinds:{file:1}}]};
  const panel=render(),buttons=panel.children[2].children;
+ assert.equal(panel.children[4].className,'recovery-transfer-preview');assert.ok(panel.children[5].className.includes('recovery-import-operations'));assert.equal(panel.children[6].className,'recovery-manager-list');
  result=buttons[0].onclick();finish(summary);await result;
- assert.ok(panel.children[3].textContent.includes('共享记录 1'));assert.equal(panel.children[4].children.length,1);
+ assert.ok(panel.children[3].textContent.includes('共享记录 1'));assert.equal(panel.children[6].children.length,1);
  result=buttons[1].onclick();locked=true;finish({format:'aide-local-recovery',created:'2026-10-10',count:1,records:[]});await result;assert.equal(downloads,0);
  locked=false;result=buttons[1].onclick();panel.isConnected=false;finish({created:'2026-10-10',count:1});await result;assert.equal(downloads,0);
  const live=render();result=live.children[2].children[1].onclick();finish({created:'2026-10-10',count:1});await result;assert.equal(downloads,1);assert.equal(errors.length,0);

@@ -140,7 +140,9 @@
   }
   async function exportRecovery(){
     const snapshot=await recoverySnapshot(true);
-    return {format:'aide-local-recovery',schema:1,created:new Date().toISOString(),...snapshot};
+    const backup={format:'aide-local-recovery',schema:1,created:new Date().toISOString(),...snapshot};
+    if(new Blob([JSON.stringify(backup)]).size>64*1024*1024)throw Error('恢复备份超过 64 MiB，请保留现有记录并分批处理');
+    return backup;
   }
   window.AideContinuity={...window.AideRecoveryTransfer?.create({open}),inventory,exportRecovery,enabled,read,write,readTab,writeTab,remove,removeMatching,removeMatchingTab,writeFileDraft,listFileDrafts,dismissFileDraft,savedFileDraft};
 })();

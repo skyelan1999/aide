@@ -272,3 +272,8 @@ Settings / file rendering now accepts schema-1 aide-local-recovery JSON backups.
 Undo requires every target to still equal the imported value. Later edits reject the whole undo and retain its archive; successful undo restores prior records or removes imported additions atomically. Operations affect shared browser records only, never live tab snapshots, server files or task submission. A first-opened new tab can consume shared fallback data.
 
 Import and undo archives each have a 64 MiB budget; ordinary records have 2 MiB and file branch arrays 32 entries / 8 MiB limits. Undo archives are excluded from record counts and exports, but included in browser usage. Automatic cleanup and retention are not implemented. Export envelope overhead near 64 MiB may exceed the import file limit; this boundary remains to be unified. Cross-device consumption and real quota/crash evidence remain open. Preview and undo controls below a long inventory also need layout refinement.
+
+
+### Recovery management follow-up (2026-10-10)
+
+Import preview and undo operations now precede inventory groups, keeping the action controls near the toolbar even after inspecting many scopes. Export checks the complete serialized envelope against the same 64 MiB file limit used by import, in addition to the incremental record budget. The earlier envelope-overhead gap is closed; no record is removed when an oversized export is refused. The directed fixture constructs records below the aggregate limit whose complete envelope exceeds it and verifies rejection. Actual maximum-size browser transfer remains unverified.

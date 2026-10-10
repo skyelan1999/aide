@@ -212,3 +212,19 @@ The isolated 18211 candidate was rebuilt through start.command. The running /pro
 This batch exercised professional light desktop core actions only. New controls have not been rechecked in classic/dark/narrow layouts or through the complete keyboard path. recovery-import-preview-safari-20261010.png shows the upper inventory rather than the lower preview, so it is not preview visual evidence. Long-inventory layout, cross-device consumer actions, actual quota/crash and Windows acceptance remain open.
 
 Initial full failed because sandbox Docker access was unavailable (20261010T042649210796Z). The authorized stable rerun passed all 38 commands, including Go race/vet: 20261010T042715333380Z; fingerprint a6f9cd02d9ae08e13472e982b24fd9221a80a246752ccd6022a82134876a18f2; log .agent-state/verify-20261010T042715333380Z.log. Source push is separate from formal release. The full goal remains active.
+
+
+## Recovery management layout and envelope boundary follow-up
+
+Baseline12ca84e. Preview/undo containers moved before the inventory; DOM fixture checks their ordering. Export now applies the 64MiB limit to the whole JSON envelope. The directed continuity fixture verified a below-limit record aggregate with an oversized envelope is rejected without modifying stored records. Existing recovery-transfer fixtures remain PASS.
+
+Native Safari18211 loaded nine inventory groups /35 records, selected the prior36-record A backup, and visibly showed preview1 new/35 identical/0 conflicts before the inventory. Confirming imported one record and placed its undo near the toolbar; undo succeeded, and inspecting again showed35. Actual screenshot recovery-layout-preview-safari-20261010.png now includes the preview and both action buttons, correcting the earlier missing visual evidence. Professional dark inventory action and layout were also observed, screenshot recovery-layout-dark-safari-20261010.png. Professional follow-system restored; one owned startup tab closed and original six retained. Classic, narrow and complete keyboard paths are still NOT_RUN for these new controls.
+
+The isolated candidate was rebuilt and started through start.command. Production9999 was not replaced. The completed full regression receipt is recorded below.
+
+Runtime process SHA-256 verified: 561e80964a7429c82a4b7f4e73ef1b5180695808ca551cedacf0d8c0958ff3bc. Candidate backup: .agent-state/continuity-runtime/aide.before-recovery-layout.
+
+### Recovery layout full regression receipt
+
+- `python3 scripts/agent-route.py verify full`: PASS, 38 commands returned exit 0, including Docker Go race/vet. Receipt time `20261010T044132161590Z`; source fingerprint `c2ef00fadeb299274bd090f1958be0f1f85f26840d441b752bb37730264e17cd`. Log: `.agent-state/verify-20261010T044132161590Z.log`.
+- This receipt covers the current recovery layout and export envelope capacity changes. The native Safari interaction evidence and remaining UI/environment limits above still apply; it does not close the full product goal or authorize a release claim.

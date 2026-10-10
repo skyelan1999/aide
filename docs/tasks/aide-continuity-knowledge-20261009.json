@@ -1900,12 +1900,35 @@
     },
     "cleanup": "Two owned startup tabs closed; six original tabs retained; test records and undo archives removed through undo",
     "remaining": [
-      "Long inventory layout",
-      "Classic/dark/narrow/keyboard new controls",
+      "Classic/narrow/keyboard acceptance for new controls",
       "Cross-device consumer",
       "Quota/crash/Windows",
       "Cleanup and retention"
     ],
     "release": "not_run; full goal active"
+  },
+  "recovery_layout_followup_20261010": {
+    "status": "pass",
+    "implementation": "Preview/undo before inventory; complete export envelope capacity check",
+    "system_safari": "Nine groups inspected; prior backup preview 1 new/35 identical/0 conflict; import one and undo; professional light/dark observed",
+    "evidence": [
+      ".agent-state/continuity-runtime/recovery-layout-preview-safari-20261010.png",
+      ".agent-state/continuity-runtime/recovery-layout-dark-safari-20261010.png"
+    ],
+    "full": {
+      "status": "pass",
+      "time": "20261010T044132161590Z",
+      "fingerprint": "c2ef00fadeb299274bd090f1958be0f1f85f26840d441b752bb37730264e17cd",
+      "log": ".agent-state/verify-20261010T044132161590Z.log",
+      "checks": 38
+    },
+    "cleanup": "Professional follow-system restored; owned startup tab closed; six original tabs retained",
+    "release": "not_run",
+    "runtime_sha256": "561e80964a7429c82a4b7f4e73ef1b5180695808ca551cedacf0d8c0958ff3bc",
+    "remaining": [
+      "Classic/narrow/keyboard acceptance for new controls",
+      "Actual browser maximum capacity transfer",
+      "Whole goal acceptance and release"
+    ]
   }
 }
