@@ -1,5 +1,9 @@
 # Aide 验收交接 · Luna · 2026-10-10
 
+## 源码交付收据
+
+开发提交 `14cf7f8765228b8f2e19693acb6180ef2359cf77` 已通过 `git push origin main` 推送，并使用 `git ls-remote origin refs/heads/main` 独立核对。Go Docker编译exit0；新模块JS语法检查exit0；文档检查184份Markdown、485条本地链接通过。此收据只证明源码交付和基础检查，新行为验收未执行。后续文档收据提交不改变产品代码；Luna以实际HEAD为准。
+
 ## 用户授权与分工
 
 用户要求先完成开发、更新文档并推送，将验收交给 Luna。本文是验收交接，不能当作验收通过或发布许可门禁通过。向量服务/真实向量检索按用户要求暂缓；Windows 暂无设备，记录 NOT_RUN，不反复索要环境。后续 UI 验收必须使用系统 Safari。启动入口使用 `start.command`，不能以临时直接启动后端代替启动链路。

@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Markdown import/retention/GC and permanent undo-backup disposal implemented; syntax/build passed. User assigned runtime acceptance to Luna; handoff prepared. No new full or production deployment.",
+    "latest_completed": "Development and Luna acceptance handoff pushed at14cf7f8; implementation compiled, syntax/docs passed. Runtime acceptance and remaining explicitly documented development boundaries are not complete.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2132,7 +2132,7 @@
     "remaining": "Resume service setup and real hybrid retrieval acceptance when requested"
   },
   "development_handoff_20261010": {
-    "status": "in_progress",
+    "status": "pass for source delivery; product acceptance pending",
     "user_instruction": "先把开发的部分做完，验收的部分写个交接文档，我让luna后面去做；其他的部分改完文档全部push",
     "implementation": [
       "File restored draft ownership preservation",
@@ -2146,13 +2146,19 @@
     "verification": {
       "js_syntax": "PASS node --check markdown-history-manager.js, markdown-history.js, recovery-manager.js, recovery-transfer.js, locales/en.js",
       "go_build": "PASS Docker golang:1.26 go build -mod=vendor ./cmd/aide; final formatting/build exit0",
-      "docs": "PASS check_docs.py:184 Markdown,481 links before handoff index link",
+      "docs": "PASS 184 Markdown,485 links",
       "runtime_browser_ssh_full": "NOT_RUN for new development; deferred to Luna per user"
     },
     "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md",
     "production": "9999 not restarted;18211 does not yet contain new Markdown management",
     "release": "not_run",
-    "push": "authorized; pending final review and git push",
+    "push": {
+      "status": "pass",
+      "implementation_commit": "14cf7f8765228b8f2e19693acb6180ef2359cf77",
+      "command": "git push origin main",
+      "exit": 0,
+      "remote_probe": "git ls-remote confirmed main at implementation commit"
+    },
     "remaining_development_boundaries": [
       "Cross-device recovery requires explicit JSON import and matching workspace identities; no automatic path remapping",
       "No automatic expiry of browser undo backups; explicit disposal implemented",
