@@ -86,3 +86,17 @@ Docker 定向 race 检查 `TestSFTPFailureWithZeroExit` 与 `TestWebAuthnManager
 ### 提交与推送
 
 修复提交 `c21189b`（`fix: stop WebAuthn cleanup loop on shutdown`），包含生命周期修复、测试、正式 Go 超时设置和验收收据。`git push origin main` 返回 exit 0：`4704cf1..c21189b main -> main`。随后独立 `git ls-remote origin refs/heads/main` 因本机 DNS 无法解析 `github.com` 失败；因此记录 push 客户端的成功回执，但不声称已独立核实远端 HEAD。release-check 在本地干净提交上仍因缺 rollback 及五个阶段未完成而 BLOCKED；未发布或部署。
+
+## 全局审批反向切换回归 · 2026-10-11
+
+为补齐全局审批“辅助 → 手动”后“手动 → 辅助”的自动回归，新增 `internal/server/approval_policy_test.go`。三个测试覆盖：手动切换会取消两个活动会话的审核上下文、提高代次、持久化会话快照并广播跨标签策略事件；辅助模式切回会同步两个暂停会话、持久化状态并广播；已记住的精确审批规则不跨 SSH 主机或工作区命中。
+
+在现有 `aide:local` Docker 镜像中运行：`/usr/local/go/bin/gofmt -w internal/server/approval_policy_test.go`，随后 `go test -race -count=1 ./internal/server -run '^Test(GlobalApprovalModeManualStopsReviewAcrossSessions|GlobalApprovalModeAssistedResumesAcrossSessions|RememberedApprovalDoesNotCrossSSHRoot)$' -timeout=90s`，结果 `ok aide/internal/server 6.593s`；`git diff --check` 通过。此为服务端持久化/通知回归，不替代真实系统浏览器的两标签交互验收。
+
+本轮再次检查系统 Safari 时，电脑处于锁定状态，桌面控制返回“Mac is locked”；没有继续改动实际实例的全局审批设置，也没有发送模型任务。审批 UI 的真实反向切换和规则面板操作保留为未完成验收。真实向量检索仍按用户要求暂缓，Windows 实机仍无环境。
+
+## 当前输入完整自动门禁 · 2026-10-11
+
+在审批回归测试及本交接更新后，运行 `python3 scripts/agent-route.py verify full`。终态 exit 0，38 项 PASS；当前输入指纹 `4afd7fbdc94871cb216388bf2481e5a26af69bb29b4c23c641fe4a56d652df34`，基线 HEAD `f6c3ea53bef2c41e71faa0a41ca4a1cad21742d5`，日志 `.agent-state/verify-20261010T191351778252Z.log`。Docker race：`aide/internal/server` 756.829s、`aide/internal/server/tts` 3.710s；`scripts/aide.sh test` exit 0（含 `go vet ./...`）。完整结果在 `.agent-state/full.json`。
+
+此收据覆盖当前代码和审批定向回归，但不关闭真实浏览器跨标签审批交互、真实模型/插件、生产 SSH、物理断网、长时与锁屏恢复等产品验收。Safari 在本次尝试时 Mac 锁定，未操作工作台或修改现有会话。真实向量验收遵照用户指示暂缓；Windows 实机没有可用环境。发布仍需 release-check 所要求的前置阶段、备份/回滚步骤和候选发布验证，不因 full 通过而自动完成。

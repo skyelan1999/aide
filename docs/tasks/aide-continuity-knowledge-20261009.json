@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "保留此前37/38项full及Safari/隔离SSH历史收据；后续源码已变化，当前full与完整产品验收未运行，不能沿用历史PASS。运行验收按用户分工交给Luna；真实向量暂缓，Windows缺环境。",
+      "summary": "当前输入 verify full exit0，38项 PASS，Docker Go race 与 vet通过；指纹4afd7fbdc94871cb216388bf2481e5a26af69bb29b4c23c641fe4a56d652df34。真实系统Safari本次锁定未操作；真实向量按用户指示暂缓，Windows无设备；生产SSH/真实模型等完整产品验收仍未闭环。",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -102,7 +102,10 @@
         ".agent-state/verify-20261009T190145752734Z.log",
         "docs/reviews/continuity-acceptance-audit-20261010.md",
         ".agent-state/verify-20261009T193942124289Z.log",
-        ".agent-state/continuity-runtime/ssh-branches-receipt-20261010.json"
+        ".agent-state/continuity-runtime/ssh-branches-receipt-20261010.json",
+        "internal/server/approval_policy_test.go: TestGlobalApprovalModeManualStopsReviewAcrossSessions、TestGlobalApprovalModeAssistedResumesAcrossSessions、TestRememberedApprovalDoesNotCrossSSHRoot；aide:local Docker -race PASS 6.593s；git diff --check PASS",
+        "docs/reviews/continuity-acceptance-resumed-20261011.md: 全局审批反向切换回归与本轮 Safari 锁定限制",
+        "python3 scripts/agent-route.py verify full PASS 38/38; .agent-state/verify-20261010T191351778252Z.log; server race 756.829s; tts race 3.710s; go vet included; current fingerprint 4afd7fbdc94871cb216388bf2481e5a26af69bb29b4c23c641fe4a56d652df34"
       ]
     },
     "documentation": {
@@ -123,9 +126,11 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "源码及文档已推送到f074d65；当前release-check exit1，缺回滚、当前full与阶段闭环。已有用户发布授权记录，未发布、未部署本批。",
-      "evidence": []
+      "status": "blocked",
+      "summary": "当前输入 full 已通过，但完整产品阶段未闭环、缺可执行回滚与候选发布验证；真实向量暂缓、Windows无环境、系统Safari因锁定未做本轮交互；不发布。源码与文档可按用户已授权范围推送。",
+      "evidence": [
+        "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009：当前阶段检查仍要求回滚说明及前置阶段通过；本轮没有运行发布/部署"
+      ]
     }
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
@@ -2470,13 +2475,22 @@
   },
   "latest_source_revision": {
     "branch": "main",
-    "head_at_start": "27ad7af76450e3c2b48625e9bc7216318c4a43b6",
-    "working_changes": [],
-    "status": "pushed_to_origin_main_remote_probe_dns_unavailable",
-    "note": "Earlier source_head 399e0be is historical acceptance evidence, not current source.",
-    "full_fingerprint": "6f93ef31c2185705f565a9e6aa596b87a042fe759cb910c66e5d2076a3569cf5",
+    "head_at_start": "f6c3ea53bef2c41e71faa0a41ca4a1cad21742d5",
+    "working_changes": [
+      "internal/server/approval_policy_test.go",
+      "docs/reviews/continuity-acceptance-resumed-20261011.md",
+      "docs/tasks/aide-continuity-knowledge-20261009.json"
+    ],
+    "status": "full_verified_uncommitted_changes; push pending",
+    "note": "Baseline was pushed as f6c3ea5. The current full verification includes the new approval policy regression test; its receipt is recorded below.",
+    "full_fingerprint": "4afd7fbdc94871cb216388bf2481e5a26af69bb29b4c23c641fe4a56d652df34",
     "commit": "c21189b",
-    "push": "exit0 origin main; 4704cf1..c21189b main -> main",
-    "remote_probe": "git ls-remote origin refs/heads/main failed: local DNS could not resolve github.com"
+    "push": "pending for this turn",
+    "remote_probe": "not run for this turn",
+    "full_log": ".agent-state/verify-20261010T191351778252Z.log"
+  },
+  "release_gate": {
+    "status": "blocked",
+    "reason": "Full verification passes for current input, but release prerequisites remain incomplete: rollback procedure and design/implementation/verification/documentation/cleanup stage closure; real Safari/model/SSH/Windows acceptance remains limited and vector is deferred."
   }
 }
