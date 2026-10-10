@@ -2418,7 +2418,7 @@
     "limits": [
       "Does not prove workspace/tab isolation, exact camera coordinates/phase or service-restart recovery",
       "First Safari tab-selection action was interrupted; rebinding and workbench-entry navigation succeeded",
-      "Remote main probe failed DNS resolution during this run; local push status not reconfirmed",
+      "git push origin main returned exit 0 with 827bc23..e297a46 main -> main; subsequent ls-remote failed DNS, so remote HEAD was not independently confirmed",
       "CSV acceptance covers only a small basic table; encoding, large files, formulas and edit round-trip remain unverified",
       "Temporary CSV fixture remains because Aide labeled deletion permanent and irreversible; no confirmation was given"
     ],
@@ -2426,7 +2426,9 @@
       "local_head": "827bc235621f3550386824cf4984ad741e4676b1",
       "branch": "main",
       "working_tree_before_followup_docs": "clean",
-      "remote_probe": "not_confirmed_dns_failure"
+      "push": "exit0_main_827bc23_to_e297a46",
+      "remote_probe": "ls_remote_dns_failure_after_successful_push",
+      "local_worktree": "clean"
     },
     "vector": "deferred_by_user",
     "windows": "not_run_no_environment",
