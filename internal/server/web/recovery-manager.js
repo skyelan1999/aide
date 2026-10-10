@@ -13,14 +13,26 @@
     const transfer=node('div','recovery-transfer-preview'),operations=node('div','recovery-manager-list recovery-import-operations');
     wrap.append(toolbar,status,transfer,operations,list,node('p','muted',t('浏览器估算包含同地址的其他存储，并非恢复记录的磁盘大小。导出不含其他已打开标签页独有的即时快照；导入不会修改正在编辑的标签页，首次打开的新标签页才能使用导入记录；撤销记录单独保留，不包含在导出中。当前不自动清理。')));
     wrap.append(input);
+    const retentionRow=node('div','recovery-manager-toolbar'),retentionDays=node('input'),retentionLabel=node('label','',t('撤销备份保留天数（0 永久保留）')),retentionButton=node('button','quiet',t('预览撤销备份保留期'));
+    retentionDays.type='number';retentionDays.min='0';retentionDays.max='3650';retentionDays.step='1';retentionDays.value='0';retentionLabel.append(retentionDays);retentionButton.type='button';retentionRow.append(retentionLabel,retentionButton);toolbar.append(retentionRow);
+
     const blocked=()=>{const s=window.LockCluster?.snapshot();return !!s&&(!s.settled||s.locked);};
     let epoch=0;
     const valid=e=>wrap.isConnected&&isActive()&&!blocked()&&epoch===e;
     const size=n=>(Number(n||0)/1048576).toFixed(2)+' MiB';
     async function execute(operation){if(blocked())return;const e=++epoch;inspect.disabled=download.disabled=upload.disabled=true;
       try{await operation(e);}catch(err){if(valid(e))error(err);}finally{inspect.disabled=download.disabled=upload.disabled=false;}}
+    retentionButton.onclick=()=>execute(async e=>{
+      const plan=await window.AideContinuity.previewRecoveryRetention(Number(retentionDays.value));if(!valid(e))return;
+      transfer.replaceChildren();transfer.append(node('p','',t('仅清理过期的撤销备份，不删除草稿、现有标签页快照或服务器文件。启用后每分钟在可见且已解锁页面检查；过期备份永久删除，不能撤销。')),node('p','',plan.expired.length+' · '+size(plan.bytes)));
+      const confirm=node('button','quiet',t('确认保留策略')),cancel=node('button','quiet',t('取消'));confirm.type=cancel.type='button';transfer.append(confirm,cancel);cancel.onclick=()=>{epoch++;transfer.replaceChildren();};
+      confirm.onclick=()=>execute(async n=>{const result=await window.AideContinuity.applyRecoveryRetention(plan,{active:()=>valid(n)});if(!valid(n))return;transfer.replaceChildren();status.textContent=t('保留策略已保存')+' · '+result.count;await showOperations(n);});
+    });
     async function showOperations(e){
+      const policy=await window.AideContinuity.recoveryRetention?.()||{days:0};if(!valid(e))return;retentionDays.value=String(policy.days);
+
       const items=await window.AideContinuity.listRecoveryOperations?.()||[];if(!valid(e))return;operations.replaceChildren();
+      if(window.aideRecoveryMaintenanceError)operations.append(node('p','muted',t('上次撤销备份维护失败：')+window.aideRecoveryMaintenanceError));
       for(const item of items){const row=node('div','recovery-manager-row'),undo=node('button','quiet',t(item.type==='archive'?'恢复此归档':'撤销此导入'));undo.type='button';row.append(node('span','',new Date(item.updated).toLocaleString()+' · '+item.count+' '+t('条记录')),node('small','muted',t('可撤销备份')+' · '+size(item.bytes)+(item.scope?' · '+item.scope:'')),undo);
         undo.onclick=()=>execute(async n=>{await window.AideContinuity.undoRecovery(item.id,{active:()=>valid(n)});if(!valid(n))return;status.textContent=t(item.type==='archive'?'已恢复归档；现有标签页快照保持不变':'已撤销导入；现有标签页快照保持不变');await showOperations(n);});
         const discard=node('button','quiet',t('清除撤销备份'));discard.type='button';row.append(discard);

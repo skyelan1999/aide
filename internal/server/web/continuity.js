@@ -186,7 +186,7 @@
       request.onsuccess=()=>{const cursor=request.result;if(!cursor)return;
         try {
           const record=cursor.value,parts=JSON.parse(record.key);
-          if(parts?.[1]==='recovery-operation'){cursor.continue();return;}
+          if(['recovery-operation','recovery-policy'].includes(parts?.[1])){cursor.continue();return;}
           if(!Array.isArray(parts)||parts.length!==3)throw Error('恢复记录键无效');
           const size=new Blob([JSON.stringify(record)]).size;bytes+=size;
           if(includeValues&&bytes>64*1024*1024)throw Error('恢复备份超过 64 MiB，请保留现有记录并分批处理');
@@ -213,4 +213,10 @@
     return backup;
   }
   window.AideContinuity={...window.AideRecoveryTransfer?.create({open}),inventory,exportRecovery,enabled,read,write,readTab,writeTab,writeChatDraft,adoptChatDraft,listChatDrafts,dismissChatDraft,sentChatDraft,remove,removeMatching,removeMatchingTab,writeFileDraft,listFileDrafts,dismissFileDraft,savedFileDraft};
+  // Default retention is disabled. Only maintain confirmed undo-backup policy;
+  // hidden or locked pages do not purge, and live tab snapshots are untouched.
+  if(typeof window.setInterval==='function')window.setInterval(()=>{
+    const active=()=>document.visibilityState!=='hidden'&&window.LockCluster?.snapshot()?.settled&&!window.LockCluster.snapshot().locked;
+    if(active())window.AideContinuity.pruneExpiredRecoveryOperations({active}).then(()=>{window.aideRecoveryMaintenanceError='';}).catch(e=>{window.aideRecoveryMaintenanceError=String(e.message||e);});
+  },60000);
 })();

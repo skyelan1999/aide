@@ -5,6 +5,7 @@
   const bytes=value=>new Blob([JSON.stringify(value)]).size;
   const same=(a,b)=>JSON.stringify(a??null)===JSON.stringify(b??null);
   const operationKey=id=>JSON.stringify(['',operationKind,id]);
+  const retentionKey=JSON.stringify(['','recovery-policy','undo-retention']);
   function validate(backup){
     if(!backup||backup.format!=='aide-local-recovery'||backup.schema!==1||!Array.isArray(backup.records)||backup.count!==backup.records.length||bytes(backup)>LIMIT)throw Error('恢复备份格式、数量或大小无效');
     const keys=new Set(),kinds=new Set(['chat','scene','file','file-view','file-branches','chat-branches']);
@@ -74,6 +75,33 @@
         tx.oncomplete=()=>resolve(result);tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('恢复存储事务中断'));
       });
     }
+    async function recoveryRetention(){const policy=(await collect()).get(retentionKey);return {days:policy?.value?.days||0};}
+    async function previewRecoveryRetention(days){
+      if(!Number.isInteger(days)||days<0||days>3650)throw Error('撤销备份保留天数须为 0–3650 的整数');
+      const all=await collect(),entries=[...all.values()].filter(r=>{try{return JSON.parse(r.key)[1]===operationKind;}catch(_e){return false;}}),cutoff=Date.now()-days*86400000;
+      const expired=days?entries.filter(r=>Number.isFinite(r.updated)&&r.updated<cutoff):[];
+      return {days,beforePolicy:all.get(retentionKey)||null,entries,expired:expired.map(r=>r.key),bytes:expired.reduce((n,r)=>n+bytes(r),0)};
+    }
+    async function applyRecoveryRetention(plan,{active=()=>true}={}){
+      if(!Number.isInteger(plan?.days)||plan.days<0||plan.days>3650||!Array.isArray(plan.entries)||!Array.isArray(plan.expired))throw Error('保留策略预览无效');
+      const expected=new Map(plan.entries.map(r=>{const parts=JSON.parse(r.key);if(parts?.[0]!==''||parts?.[1]!==operationKind||r.key!==operationKey(r.value?.id))throw Error('保留策略预览无效');return [r.key,r];}));
+      if(expected.size!==plan.entries.length)throw Error('保留策略预览无效');
+      if(plan.expired.some(k=>!expected.has(k)))throw Error('保留策略预览无效');
+      const db=await open();return new Promise((resolve,reject)=>{
+        const tx=db.transaction('records','readwrite'),store=tx.objectStore('records');let failure,policyMatched=false;
+        const fail=e=>{failure=e;tx.abort();};const request=store.openCursor();
+        request.onsuccess=()=>{if(failure)return;try{const cursor=request.result;if(cursor){const r=cursor.value;
+          if(r.key===retentionKey){if(!same(r,plan.beforePolicy))throw Error('保留策略已变化，请重新预览');policyMatched=true;}
+          let parts;try{parts=JSON.parse(r.key);}catch(_e){}
+          if(parts?.[1]===operationKind){if(!same(r,expected.get(r.key)))throw Error('撤销备份已变化，请重新预览');expected.delete(r.key);}
+          cursor.continue();
+        }else{if(expected.size||(!policyMatched&&plan.beforePolicy))throw Error('撤销备份或保留策略已变化，请重新预览');if(!active())throw Error('恢复操作已取消');
+          for(const k of plan.expired)store.delete(k);store.put({key:retentionKey,updated:Date.now(),value:{days:plan.days}});
+        }}catch(e){fail(e);}};
+        tx.oncomplete=()=>resolve({count:plan.expired.length,days:plan.days});tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('恢复存储事务中断'));
+      });
+    }
+    async function pruneExpiredRecoveryOperations({active=()=>true}={}){const policy=await recoveryRetention();if(!policy.days||!active())return {count:0};const plan=await previewRecoveryRetention(policy.days);if(!plan.expired.length)return {count:0};return applyRecoveryRetention(plan,{active});}
     async function listRecoveryOperations(){return [...(await collect()).values()].filter(r=>{try{return JSON.parse(r.key)[1]===operationKind;}catch(_e){return false;}}).map(r=>({id:r.value.id,type:r.value.type,scope:r.value.scope||'',updated:r.updated,count:r.value.changes.length,bytes:bytes(r)})).sort((a,b)=>b.updated-a.updated);}
     // Discard only the undo journal. Live drafts and server files are untouched.
     // Requiring the displayed timestamp prevents deleting a changed operation.
@@ -96,7 +124,7 @@
         tx.oncomplete=()=>resolve({count});tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('恢复存储事务中断'));
       });
     }
-    return {previewImport,importRecovery,previewArchive,archiveRecovery,listRecoveryOperations,undoRecovery,discardRecoveryOperation};
+    return {previewImport,importRecovery,previewArchive,archiveRecovery,listRecoveryOperations,undoRecovery,discardRecoveryOperation,recoveryRetention,previewRecoveryRetention,applyRecoveryRetention,pruneExpiredRecoveryOperations};
   }
   window.AideRecoveryTransfer={create,validate};
 })();

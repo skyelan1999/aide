@@ -1,6 +1,12 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "上次撤销备份维护失败：": "Last undo-backup maintenance failed: ",
+  "撤销备份保留天数（0 永久保留）": "Undo backup retention days (0 forever)",
+  "预览撤销备份保留期": "Preview undo backup retention",
+  "仅清理过期的撤销备份，不删除草稿、现有标签页快照或服务器文件。启用后每分钟在可见且已解锁页面检查；过期备份永久删除，不能撤销。": "Only expire undo backups; drafts, live tab snapshots and server files remain. Once enabled, visible unlocked pages check every minute. Expired backups are permanently deleted.",
+  "确认保留策略": "Confirm retention policy",
+  "保留策略已保存": "Retention policy saved",
   "清除撤销备份": "Discard undo backup",
   "永久删除此操作的撤销备份以释放空间；此操作不能撤销，不修改当前草稿或服务器文件。": "Permanently delete this undo backup to release storage. This cannot be undone; current drafts and server files are unchanged.",
   "确认永久清除": "Confirm permanent deletion",

@@ -2161,9 +2161,15 @@
     },
     "remaining_development_boundaries": [
       "Cross-device recovery requires explicit JSON import and matching workspace identities; no automatic path remapping",
-      "No automatic expiry of browser undo backups; explicit disposal implemented",
       "No structured release receipt in input/output yet",
       "Full service data disaster recovery not supplied by single-document ZIP"
     ]
+  },
+  "undo_retention_development_20261010": {
+    "status": "implemented_pending_acceptance",
+    "policy": "0–3650 days; default0 forever; explicit preview/confirmation; separate IndexedDB metadata excluded from export",
+    "maintenance": "Visible unlocked page every60seconds; only undo journals; active drafts/sessionStorage/server files untouched; transaction guards whole operation snapshot and policy",
+    "verification": "JS syntax PASS; no runtime/full/browser acceptance per user; Luna handoff updated",
+    "push": "authorized pending current batch push"
   }
 }
