@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Capability dashboard unlock refresh repair and docs pushed at 3c007df. Syntax/docs checks passed; runtime/full/Safari acceptance remains with Luna; production unchanged.",
+    "latest_completed": "Knowledge timeline selection consistency repair and handoff complete. Syntax/docs PASS; push pending. Runtime/full/Safari delegated to Luna.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2259,6 +2259,23 @@
       "implementation_commit": "3c007df399905b1c1282bad853f747a147413f5d",
       "command": "git push origin main",
       "exit": 0
+    },
+    "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md"
+  },
+  "knowledge_timeline_selection_fix_20261010": {
+    "status": "implemented_pending_acceptance",
+    "cause": "History retention could change selected observation IDs while retaining a comparison for the old pair",
+    "changes": [
+      "Clear comparison evidence and pagination when refreshed selection changes",
+      "Preserve retained selections; explain manual selection invalidation"
+    ],
+    "checks": {
+      "javascript_syntax": "PASS node --check internal/server/web/starmap-timeline.js exit0",
+      "documentation": "PASS python3 scripts/check_docs.py: 185 Markdown / 488 local links; git diff --check exit0",
+      "runtime_safari_full": "NOT_RUN; delegated to Luna"
+    },
+    "push": {
+      "status": "pending"
     },
     "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md"
   }
