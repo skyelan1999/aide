@@ -2370,14 +2370,22 @@
         "System Safari local keyword RAG searched 129/129 indexed docs; hit same file/line; this is the bounded candidate index, not full workspace coverage",
         "Code hierarchy UI: 218 nodes, 6 source files, 53 declarations, 41 call candidates, 133 unresolved, zero type bindings; UI labels static candidates and limitations",
         "Two current isolated file IDs path query with directory ownership enabled returned no path and explicitly said index incomplete, not proof of no real relation",
-        "Isolated persisted fixture session #42 Inputs/Outputs and detail: 1 input, 0 replies, proposal vs historical application record, pending run_shell unresolved; no false-success inference; expanded original args/return/hash"
+        "Isolated persisted fixture session #42 Inputs/Outputs and detail: 1 input, 0 replies, proposal vs historical application record, pending run_shell unresolved; no false-success inference; expanded original args/return/hash",
+        "Safari 18211 工作台刷新后，#42 隔离会话未发送草稿、notes.md附件仍在；未触发发送；",
+        "从工作台知识星图入口重开后，page.md搜索词、代码层级筛选及两个同名结果仍在；状态提示已恢复视角与筛选且未自动检索/调用AI；",
+        "星际日志面板展开，展示来源索引状态、累计扫描/预算/轮次/待扫描量/容量与文本截取限制，以及静态调用关系限制",
+        "文件查看器设置实际显示行号、语法高亮、Markdown预览/标题目录/插入工具栏、CSV表格预览、历史追踪和草稿恢复均启用，编辑模式为左右对比；未改设置；",
+        "Markdown标题目录吸附在编辑/预览中线，点击后于中线旁弹出标题项，不在编辑器顶部占位；",
+        "候选工作区UI新建并保存 acceptance-20261011/csv-render-acceptance.csv，状态显示服务器已保存；预览实际呈现正确的3行×3列表格与alpha/3/true、beta/8/false；",
+        "临时CSV删除弹窗标注永久且不可撤销；未执行不可恢复删除，文件保留在隔离验收目录"
       ],
       "screenshot": ".agent-state/continuity-runtime/history-import-idempotent-2240eea-safari.png",
       "archive_sha256": "1b2c62a98c533b93349ea3f27de077782af10639580fabaec156c47acebba4a2",
       "limits": [
         "Candidate copied launcher lacks three bridge-control scripts; bridge startup not accepted",
         "Permanent retention/GC not executed",
-        "Other embeddings and cross-workspace import remain pending"
+        "Other embeddings and cross-workspace import remain pending",
+        "本次只确认当前Safari页面刷新/入口重开状态；其他工作区/标签隔离、精确镜头坐标与相位、服务重启恢复仍待验证"
       ],
       "screenshots": [
         ".agent-state/continuity-runtime/history-management-2240eea-safari.png",
@@ -2389,12 +2397,39 @@
       ]
     },
     "remaining": [
-      "System Safari remaining goal-specific workflows/themes/narrow layouts",
       "Real approval/plugin/model workflows and network/conflict boundaries",
+      "Real vector acceptance deferred by user",
       "Release/rollback gate closure",
+      "System Safari remaining goal-specific workflows/themes/narrow layouts",
       "Windows NOT_RUN: user has no environment",
-      "Real vector acceptance deferred by user"
+      "Workspace and tab isolation plus exact starmap camera persistence"
     ],
+    "document": "docs/reviews/continuity-acceptance-resumed-20261011.md"
+  },
+  "acceptance_followup_20261011": {
+    "status": "in_progress",
+    "owner": "Codex",
+    "browser": "System Safari on https://localhost:18211; existing isolated fixture only",
+    "actions": [
+      "Reloaded candidate workbench and observed unsent session fixture draft plus notes.md attachment remain; no send occurred",
+      "Opened Knowledge Map from workbench; prior page.md query, code hierarchy filter and two same-name results remained; page reported restored view/filter without auto search or AI",
+      "Expanded upper-right Stellar Log and observed source coverage, scan budgets/counters, text scope and static-call limitations"
+    ],
+    "limits": [
+      "Does not prove workspace/tab isolation, exact camera coordinates/phase or service-restart recovery",
+      "First Safari tab-selection action was interrupted; rebinding and workbench-entry navigation succeeded",
+      "Remote main probe failed DNS resolution during this run; local push status not reconfirmed",
+      "CSV acceptance covers only a small basic table; encoding, large files, formulas and edit round-trip remain unverified",
+      "Temporary CSV fixture remains because Aide labeled deletion permanent and irreversible; no confirmation was given"
+    ],
+    "repository": {
+      "local_head": "827bc235621f3550386824cf4984ad741e4676b1",
+      "branch": "main",
+      "working_tree_before_followup_docs": "clean",
+      "remote_probe": "not_confirmed_dns_failure"
+    },
+    "vector": "deferred_by_user",
+    "windows": "not_run_no_environment",
     "document": "docs/reviews/continuity-acceptance-resumed-20261011.md"
   }
 }
