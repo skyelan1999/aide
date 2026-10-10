@@ -976,6 +976,9 @@ func (a *App) Close() {
 		a.bgCancel() // 通知后台 goroutine 停止（中断其 HTTP 请求）
 	}
 	a.bgWg.Wait() // 等后台写盘结束，避免与临时目录清理竞争
+	if a.webAuthn != nil {
+		a.webAuthn.Close()
+	}
 	if a.daemons != nil {
 		a.daemons.StopAll() // 协议 v1.2：终止常驻插件子进程并释放端口
 	}

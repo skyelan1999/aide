@@ -51,6 +51,9 @@ type webAuthnStore struct {
 
 type webAuthnManager struct {
 	mu       sync.Mutex
+	stopOnce sync.Once
+	stopCh   chan struct{}
+	doneCh   chan struct{}
 	wa       *webauthn.WebAuthn
 	dataPath string
 	store    webAuthnStore
@@ -90,6 +93,8 @@ func newWebAuthnManager(dataPath string) *webAuthnManager {
 	}
 	m.wa = wa
 	m.loadLocked()
+	m.stopCh = make(chan struct{})
+	m.doneCh = make(chan struct{})
 	// 后台每 60s 清理过期 challenge 会话，避免客户端只 start 不 finish 时 map 无限增长。
 	go m.pruneLoop()
 	return m
@@ -117,13 +122,29 @@ func (m *webAuthnManager) forOrigin(origin string) *webauthn.WebAuthn {
 
 // pruneLoop 定时清理过期 WebAuthn challenge 会话。
 func (m *webAuthnManager) pruneLoop() {
+	defer close(m.doneCh)
 	t := time.NewTicker(60 * time.Second)
 	defer t.Stop()
-	for range t.C {
-		m.mu.Lock()
-		m.pruneSessionsLocked()
-		m.mu.Unlock()
+	for {
+		select {
+		case <-m.stopCh:
+			return
+		case <-t.C:
+			m.mu.Lock()
+			m.pruneSessionsLocked()
+			m.mu.Unlock()
+		}
 	}
+}
+
+// Close stops the periodic challenge cleanup worker and waits for it to exit.
+// It is safe to call from App.Close and test cleanup more than once.
+func (m *webAuthnManager) Close() {
+	if m == nil || m.stopCh == nil {
+		return
+	}
+	m.stopOnce.Do(func() { close(m.stopCh) })
+	<-m.doneCh
 }
 
 func (m *webAuthnManager) enabled() bool { return m != nil && m.wa != nil }

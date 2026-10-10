@@ -6,7 +6,7 @@ MODE="${1:-start}"
 if [[ "$MODE" == test && "${AIDE_VERIFY_IN_CONTAINER:-0}" == 1 ]]; then
   # The caller already launched an isolated aide:local verification container.
   export AIDE_BUILTIN_PLUGINS=
-  go test -race -count=1 ./... && go vet ./...
+  go test -race -count=1 -timeout=15m ./... && go vet ./...
   exit
 fi
 DOCKER_BIN="$(command -v docker || true)"
@@ -260,7 +260,7 @@ case "$MODE" in
     ;;
   status) "$DOCKER_BIN" compose ps ;;
   logs) "$DOCKER_BIN" compose logs --tail=100 aide ;;
-  test) "$DOCKER_BIN" run --rm -e AIDE_BUILTIN_PLUGINS= -v "$PROJECT_DIR:/src" -w /src --entrypoint bash aide:local -c 'go test -race -count=1 ./... && go vet ./...' ;;
+  test) "$DOCKER_BIN" run --rm -e AIDE_BUILTIN_PLUGINS= -v "$PROJECT_DIR:/src" -w /src --entrypoint bash aide:local -c 'go test -race -count=1 -timeout=15m ./... && go vet ./...' ;;
   export)
     mkdir -p docker-images
     ARCHIVE="$PROJECT_DIR/docker-images/aide-local.tar.gz"

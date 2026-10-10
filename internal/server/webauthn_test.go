@@ -25,10 +25,26 @@ import (
 	"github.com/go-webauthn/webauthn/webauthn"
 )
 
+func TestWebAuthnManagerCloseStopsPruner(t *testing.T) {
+	m := newWebAuthnManager(t.TempDir())
+	if !m.enabled() {
+		t.Fatal("WebAuthn manager is unavailable")
+	}
+	done := m.doneCh
+	m.Close()
+	select {
+	case <-done:
+	default:
+		t.Fatal("Close returned before the challenge cleanup worker stopped")
+	}
+	m.Close() // App.Close and test cleanup may both own shutdown.
+}
+
 // newWebAuthnTestApp 构造一个最小可用 App：启用 WebAuthn 管理器 + 已知登录密码。
 func newWebAuthnTestApp(t *testing.T, dataDir string) *App {
 	t.Helper()
 	m := newWebAuthnManager(dataDir)
+	t.Cleanup(m.Close)
 	if !m.enabled() {
 		t.Fatal("WebAuthn 管理器未启用（webauthn.New 失败）")
 	}

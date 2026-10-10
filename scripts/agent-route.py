@@ -184,7 +184,11 @@ def main():
                 print('RUN ' + ' '.join(command), flush=True)
                 stream.write('\n$ ' + ' '.join(command) + '\n'); stream.flush()
                 try:
-                    code = subprocess.run(resolve_check_command(command), cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, timeout=600).returncode
+                    # The race-enabled server suite takes longer than ten minutes
+                    # on the supported Docker runner. Keep other checks bounded,
+                    # but allow the full suite to finish and produce a real receipt.
+                    timeout = 1200 if command[:3] == ['bash', 'scripts/aide.sh', 'test'] else 600
+                    code = subprocess.run(resolve_check_command(command), cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, timeout=timeout).returncode
                 except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
                     stream.write(str(exc) + '\n'); code = 1
                 records.append({'command': command, 'exit': code})

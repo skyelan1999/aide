@@ -2437,6 +2437,48 @@
       "command": "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009",
       "result": "Missing rollback; incomplete design, implementation, verification, documentation and cleanup stages"
     },
-    "document": "docs/reviews/continuity-acceptance-resumed-20261011.md"
+    "document": "docs/reviews/continuity-acceptance-resumed-20261011.md",
+    "race_diagnostic": {
+      "status": "pass",
+      "targeted": "TestSFTPFailureWithZeroExit and TestWebAuthnManagerCloseStopsPruner; -race; 18.086s",
+      "full": "go test -race -v -count=1 ./internal/server -timeout=15m; PASS; 702.018s",
+      "observation": "The formerly stalled TestSFTPFailureWithZeroExit/source/missing and all sibling SFTP cases passed after WebAuthn pruner shutdown was wired to App.Close.",
+      "external_fixture_skips": [
+        "TestKnowledgeLocalProcessHelper",
+        "TestSourceFileActionsLiveSFTP"
+      ],
+      "formal_verify_full": {
+        "status": "pass",
+        "checks": 38,
+        "fingerprint": "6f93ef31c2185705f565a9e6aa596b87a042fe759cb910c66e5d2076a3569cf5",
+        "head": "27ad7af76450e3c2b48625e9bc7216318c4a43b6",
+        "time": "20261010T183733620736Z",
+        "log": ".agent-state/verify-20261010T183733620736Z.log",
+        "exit": 0,
+        "go_server_race_seconds": 679.043,
+        "vet": "included and exit 0",
+        "supersedes_prior_failures": [
+          "20261010T182246090895Z: Docker socket permission denied",
+          "20261010T182507935433Z: default Go 10m package timeout"
+        ]
+      },
+      "harness_change": [
+        "scripts/agent-route.py gives scripts/aide.sh test a 1200s outer timeout; all other checks remain 600s",
+        "scripts/aide.sh test now passes -timeout=15m to go test -race"
+      ]
+    }
+  },
+  "latest_source_revision": {
+    "branch": "main",
+    "head_at_start": "27ad7af76450e3c2b48625e9bc7216318c4a43b6",
+    "working_changes": [
+      "internal/server/server.go",
+      "internal/server/webauthn.go",
+      "internal/server/webauthn_test.go",
+      "scripts/agent-route.py"
+    ],
+    "status": "full_verification_pass_documentation_and_push_pending",
+    "note": "Earlier source_head 399e0be is historical acceptance evidence, not current source.",
+    "full_fingerprint": "6f93ef31c2185705f565a9e6aa596b87a042fe759cb910c66e5d2076a3569cf5"
   }
 }

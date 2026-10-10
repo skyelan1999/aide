@@ -68,3 +68,17 @@ Safari 控制连接在首次选择既有星图标签时中断；重新绑定后�
 真实向量暂缓；Windows NOT_RUN。发布须补可执行回滚、当前输入 full 和阶段证据，再运行 release-check；本页不是发布收据。
 
 2026-10-11 再运行 `python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009`，当前门禁仍 BLOCKED：缺少 rollback，design、implementation、verification、documentation、cleanup 阶段未完成。不得将成功 push 等同于 release。
+
+## Go race 全包复核 · 2026-10-11
+
+修复 `webAuthnManager` 的后台 pruner 生命周期：manager 提供幂等 `Close()`，通过停止/完成通道结束定时循环；`App.Close()` 负责关闭 manager；WebAuthn 测试 app 注册清理，并增加关闭后退出及重复关闭测试。原因依据此前 600 秒失败日志中的 goroutine 堆栈：大量 `pruneLoop` 停在 ticker，并使 SFTP 缺失目录用例迟迟无法结束。
+
+Docker 定向 race 检查 `TestSFTPFailureWithZeroExit` 与 `TestWebAuthnManagerCloseStopsPruner` 通过，18.086 秒。随后完整 `go test -race -v -count=1 ./internal/server -timeout=15m` 通过，`ok aide/internal/server 702.018s`；此前挂住的 `TestSFTPFailureWithZeroExit/source/missing` 及其余 SFTP 子用例均 PASS。`TestKnowledgeLocalProcessHelper` 与 `TestSourceFileActionsLiveSFTP` 因需要单独启动的外部夹具按测试设计 SKIP；它们不计为真实生产 SSH 验收。
+
+正式 `verify full` 的外层默认给每条命令 600 秒，短于本机此全包 race 实测时长。正式路由首次在无 Docker socket 的普通权限下失败；提权重跑后，Go 默认 10 分钟测试超时在 `TestSSHSessionInvalidatedMasterAfterKillTimeout` 处触发，虽然单独 15 分钟诊断运行已完成。现将 `scripts/aide.sh test` 的 `go test` 超时显式设为 15 分钟，并将 `scripts/agent-route.py` 对该完整命令的外层上限设为 1200 秒，其他检查仍为 600 秒；正式全量复核再次运行，只有它完成且源码指纹一致后才登记 PASS。该单独手工 Docker 结果不替代 full 收据。真实向量仍按用户要求暂缓，Windows 无测试环境仍为 NOT_RUN；Safari 锁屏或未操作到的边界也不会因单测 PASS 自动关闭。
+
+### 正式 Full 收据
+
+`python3 scripts/agent-route.py verify full` 最终 exit 0，38 项全部通过，源码指纹 `6f93ef31c2185705f565a9e6aa596b87a042fe759cb910c66e5d2076a3569cf5`，记录时间 `20261010T183733620736Z`，日志 `.agent-state/verify-20261010T183733620736Z.log`。Docker `internal/server` race 全包 679.043 秒，`go vet ./...` exit 0。此前两次失败日志保留：普通权限无法访问 Docker socket，以及原 Go 默认 10 分钟超时；此收据是在提权本地 Docker 环境、显式 15 分钟 Go 超时和指纹未变化的正式重跑结果。
+
+该收据证明源码回归，不覆盖尚未执行的真实向量检索、Windows 实机、产品级跨工作区/标签隔离与全部人工审批路径；是否 release 仍以 release-check 和其余阶段证据为准。
