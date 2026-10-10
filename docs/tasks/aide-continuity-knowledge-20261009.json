@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Development and Luna acceptance handoff pushed at14cf7f8; implementation compiled, syntax/docs passed. Runtime acceptance and remaining explicitly documented development boundaries are not complete.",
+    "latest_completed": "Structured operator release records implemented and compiled; preparing source/docs push. Acceptance delegated to Luna; embedding deferred; Windows unavailable.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2161,7 +2161,6 @@
     },
     "remaining_development_boundaries": [
       "Cross-device recovery requires explicit JSON import and matching workspace identities; no automatic path remapping",
-      "No structured release receipt in input/output yet",
       "Full service data disaster recovery not supplied by single-document ZIP"
     ]
   },
@@ -2176,5 +2175,25 @@
       "exit": 0,
       "remote_probe": "ls-remote confirmed exact main commit"
     }
+  },
+  "release_receipts_development_20261010": {
+    "status": "implemented_pending_acceptance",
+    "features": [
+      "Task-bound operator JSON release records with preview and explicit confirmation",
+      "Server persistence rollback, duplicate digest, snapshot guard and 50-record cap",
+      "Input/output display and JSON export; local asset receipt generation tool"
+    ],
+    "checks": {
+      "go_build": "PASS Docker golang:1.26 exit0",
+      "js_python_syntax": "PASS exit0",
+      "docs": "PASS 185 Markdown / 488 local links",
+      "runtime_api_browser_full": "NOT_RUN; acceptance handed to Luna"
+    },
+    "limitations": [
+      "No independent remote asset/tag/deployment verification",
+      "No production restart or Release"
+    ],
+    "handoff": "docs/reviews/release-receipts-20261010.md",
+    "push": "pending"
   }
 }

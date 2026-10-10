@@ -93,6 +93,7 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 		t.Steps = append([]Step(nil), run.Steps...)
 		for _, pair := range []struct{ src, dst any }{
 			{run.ApprovalReviews, &t.ApprovalReviews},
+			{run.ReleaseReceipts, &t.ReleaseReceipts},
 			{run.ResearchFindings, &t.ResearchFindings},
 			{run.ToolExecutionIntents, &t.ToolExecutionIntents},
 		} {
@@ -196,7 +197,7 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		"systemReceipts": receipts, "systemReceiptNote": "系统应用回执记录应用后的检查及其限制，不等于当前文件复核或完整产品验收；completed也可能记录待人工审批或远程未读回，请查看原文",
 		"files": files, "executions": uses, "verification": reports, "findings": task.ResearchFindings, "suggestedCommands": task.Commands, "unknownCalls": unknown, "gaps": gaps,
 		"approvals": task.ApprovalReviews, "approvalNote": "审批记录仅证明当时的决策及匹配依据，不证明执行成功；最多保留最近50条，旧记录可能缺少来源字段",
-		"release": map[string]string{"state": "not_recorded", "message": "尚无结构化发布验收记录；聊天结论与命令文本不证明远端发布成功"},
+		"release": taskReleaseProjection(task.ReleaseReceipts),
 		"page":    map[string]any{"fileNext": fEnd, "filesMore": fEnd < len(task.Files), "executionNext": eEnd, "executionsMore": eEnd < len(task.ToolUses), "limit": limit},
 		"journal": map[string]any{"sequence": task.ExecutionSequence, "url": "/api/sessions/" + url.PathEscape(sessionID) + "/runs/" + url.PathEscape(task.ID) + "/journal", "note": "执行日志为独立记录；工具结果可由证据编号读取原文与摘要"},
 	}

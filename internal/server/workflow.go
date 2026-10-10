@@ -66,6 +66,7 @@ type AgentRoot struct {
 }
 
 type Task struct {
+	ReleaseReceipts          []taskReleaseReceipt  `json:"releaseReceipts,omitempty"`
 	HookRecoveryRequired     bool                  `json:"hookRecoveryRequired,omitempty"`
 	HarnessConfig            *HarnessConfig        `json:"harnessConfig,omitempty"`
 	AgentName                string                `json:"agentName,omitempty"`

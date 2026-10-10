@@ -71,6 +71,17 @@
     if(data.suggestedCommands?.length){const s=section('建议命令（尚未运行）');for(const command of data.suggestedCommands)s.append(node('pre','',command));}
     if(data.unknownCalls?.length){const s=section('未取得结果的调用');for(const call of data.unknownCalls)s.append(node('p','',call.tool+' · '+(call.callId||'—')+' · '+call.state));}
     const gaps=section('缺口与发布');for(const gap of data.gaps)gaps.append(node('p','',gap));gaps.append(node('p','muted',data.release.message));
+    for(const receipt of data.release.receipts||[]){const card=node('details','outcome-execution');card.append(node('summary','',receipt.tag+' · '+t('操作者记录')),node('p','muted',receipt.observedAt+' · '+receipt.deployment),node('code','outcome-digest',receipt.commit),node('pre','',JSON.stringify(receipt.artifacts,null,2)),node('small','outcome-digest',receipt.digest));gaps.append(card);}
+    const receiptFile=node('input');receiptFile.type='file';receiptFile.accept='.json,application/json';receiptFile.hidden=true;
+    const importReceipt=node('button','quiet',t('导入发布记录'));importReceipt.type='button';importReceipt.disabled=stale;
+    importReceipt.onclick=()=>{if(valid()&&!stale){receiptFile.value='';receiptFile.click();}};
+    receiptFile.onchange=async()=>{const file=receiptFile.files?.[0];if(!file||!valid()||stale)return;try{if(file.size>65536)throw new Error(t('发布记录超过64 KiB'));const receipt=JSON.parse(await file.text());if(!valid()||stale)return;
+      const preview=node('div','outcome-boundary');preview.append(node('p','',t('此记录由操作者提供，导入不代表远端发布或生产部署已核验。')),node('pre','',JSON.stringify(receipt,null,2)));
+      const confirm=node('button','quiet',t('确认导入发布记录')),cancel=node('button','quiet',t('取消'));confirm.type=cancel.type='button';cancel.onclick=()=>preview.remove();
+      confirm.onclick=async()=>{if(!valid()||stale||!preview.isConnected)return;confirm.disabled=true;try{await api(base+'/releases',{method:'POST',body:JSON.stringify({snapshot:data.snapshot,receipt})});if(valid())await reloadRecords();}catch(e){if(valid()){error?.(e.message);confirm.disabled=false;}}};preview.append(confirm,cancel);gaps.append(preview);
+     }catch(e){if(valid())error?.(e.message);}};
+    gaps.append(importReceipt,receiptFile);
+
     const actions=node('div','outcome-actions');const exportButton=node('button','quiet',t('导出成果 JSON'));exportButton.disabled=stale;exportButton.onclick=()=>{if(!valid()||stale)return;const blob=new Blob([JSON.stringify({...data,files,executions,exportScope:{kind:'summary',snapshot:data.snapshot||null,consistentSnapshot:!!data.snapshot&&!stale,allPagesLoaded:!data.page.filesMore&&!data.page.executionsMore,rawEvidenceIncluded:false,textTruncated:!!data.goalTruncated||executions.some(e=>e.truncated)||data.verification.some(r=>r.truncated)||(data.systemReceipts||[]).some(r=>r.truncated)}},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='aide-outcome-'+runId+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};actions.append(exportButton);content.append(actions);
    }
    try{data=await api(base);if(!valid())return;files=data.files;executions=data.executions;render();}catch(e){if(valid()){content.replaceChildren(node('p','task-error',e.message));}}

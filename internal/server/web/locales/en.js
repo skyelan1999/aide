@@ -2128,3 +2128,10 @@ Object.assign(window.aideEnglish, {
  '回复摘要已截断，完整回复见会话历史':'Reply preview truncated. See conversation history for the full reply.',
  '历史记录会话内容，输入与输出展示任务、资料、回复和成果；详情保留调用、审批与证据。':'History contains conversation content. Input & output shows tasks, sources, replies and artifacts; details retain calls, approvals and evidence.'
 });
+
+Object.assign(window.aideEnglish, {
+ '操作者记录':'Operator record', '导入发布记录':'Import release record',
+ '发布记录超过64 KiB':'Release record exceeds 64 KiB',
+ '此记录由操作者提供，导入不代表远端发布或生产部署已核验。':'This record is supplied by an operator. Importing it does not verify remote publication or production deployment.',
+ '确认导入发布记录':'Confirm release record import'
+});

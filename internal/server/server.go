@@ -1368,6 +1368,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/events", a.runEvents)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/journal", a.executionJournal)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/outcome", a.taskOutcomeAPI)
+	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/outcome/releases", a.taskReleaseReceiptAPI)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/outcome/evidence/{evidence}", a.taskOutcomeEvidenceAPI)
 	mux.HandleFunc("GET /api/sessions/{id}/tool-calls", a.sessionToolCalls) // #45 调用记录聚合（主/子 Agent）
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/queue/{index}", a.queueUpdate)
