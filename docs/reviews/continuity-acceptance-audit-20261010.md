@@ -129,3 +129,13 @@
 本次无源码修改，验证运行源码741103c2746475e1e073d5b565c688d0ed31bbce92cb7f60c393c3ab59093a4b（提交012194b）。证据为.agent-state/continuity-runtime/sky-nested-recovery-20261010.json、sky-nested-before/after-safari-20261010.txt及sky-nested-after-safari-20261010.png。临时星图标签关闭，原用户工作台标签保留。
 
 此PASS仅覆盖同一标签页中上述真实嵌套路径刷新恢复，镜头为该场景归位数值；非默认镜头已有前次独立验收。关闭全部标签后的多分支恢复、容量淘汰及Windows实机仍未验收。此次仅更新验收文档并推送；沿用源码指纹1222cfa1f70dee6bbf92586f9279816e5f032edd0c3cabcd81431fcec2f5e4f7的36项full PASS，不将文档更新称为正式release。
+
+## 同文件多标签草稿隔离（2026-10-10）
+
+源码复核发现文件编辑器仍使用共享file/file-view恢复记录，与聊天/星图标签页隔离机制不一致。现在文件草稿和光标/滚动位置使用readTab/writeTab；保存或忽略草稿使用removeMatchingTab，仅清除当前页正文匹配的快照，共享记录正文不一致时保留另一页草稿。既有IndexedDB记录继续作为新页首次读取的兼容回退，没有删除用户原有记录。
+
+VM通过同文件A/B不同草稿和位置、过期清理、清理A后B及共享回退仍在。项目start.command重建实际9999退出0，source_sha=20d83db7588f55e1b1f327732a54331725c2976ae17b9810909ebbfdc85235a6。原生Safari打开独立.cache/aide/tab-file-isolation-20261010.txt，自动保存原为关闭且保持不变；A/B分别编辑不同未保存正文，先刷新恢复B再刷新恢复A，各自保持对应正文。随后保存A，刷新B显示“服务器已更新，本地草稿等待合并”；对比窗口同时展示服务器A与本地B，没有静默覆盖。取消对比并仅忽略测试B草稿，两个临时文件标签关闭；原用户标签保留。
+
+证据位于.agent-state/continuity-runtime/file-tab-A-after-safari-20261010.txt、file-tab-B-after-safari-20261010.txt和file-tab-conflict-safari-20261010.txt/.png。验收文件保留在实际工作区.cache/aide中作为独立记录，未修改其他用户文件。此次是本地TXT同文件浏览器链路证据；同文件SSH及Windows仍缺实机验证，关闭全部标签后的分支选择和容量管理尚未完成。新full正在运行，最终状态另行追加。
+
+补充独立磁盘读回：实际绑定工作区测试文件28字节，SHA-256 7c1798266274ae6a17d35a4524a0db15afa2875af7ecc204a6449226d2c5005b，正文精确匹配保存的A。full最终exit0，36项全部PASS（含Go race/vet），时间20261010T021726769602Z，指纹664255c581f8b326651a585492853fb35fd74bc375c56552e3b8033a21038f58，日志.agent-state/verify-20261010T021726769602Z.log。仅源码推送，本次不进入正式release。

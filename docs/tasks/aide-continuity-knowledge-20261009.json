@@ -1603,6 +1603,46 @@
         "Closed-tab branches, eviction, Windows not verified"
       ],
       "cleanup": "Temporary star map tab closed; existing user workbench tabs preserved"
+    },
+    "file_tab_isolation_20261010": {
+      "status": "pass",
+      "fix": "File drafts and saved positions use readTab/writeTab; removeMatchingTab clears own matching snapshot and preserves a different shared draft",
+      "runtime_source_sha": "20d83db7588f55e1b1f327732a54331725c2976ae17b9810909ebbfdc85235a6",
+      "source_vm": "pass: same-file divergent drafts/positions, stale cleanup, own cleanup, other tab/shared fallback preserved",
+      "browser": {
+        "environment": "native Safari actual9999",
+        "file": ".cache/aide/tab-file-isolation-20261010.txt",
+        "steps": [
+          "A and B edit same file with different unsaved text, autosave remains off",
+          "Reload B and explicitly recover B text",
+          "Reload A and explicitly recover A text",
+          "Save A, reload B: server-update/merge banner appears",
+          "Compare shows server A text and local B text; cancel without overwrite",
+          "Ignore only disposable B draft, close both temporary tabs"
+        ],
+        "evidence": [
+          ".agent-state/continuity-runtime/file-tab-A-after-safari-20261010.txt",
+          ".agent-state/continuity-runtime/file-tab-B-after-safari-20261010.txt",
+          ".agent-state/continuity-runtime/file-tab-conflict-safari-20261010.txt",
+          ".agent-state/continuity-runtime/file-tab-conflict-safari-20261010.png"
+        ]
+      },
+      "remaining": [
+        "Closed-tab branch selection and storage capacity management",
+        "Same-file SSH and Windows browser validation"
+      ],
+      "full": {
+        "status": "pass",
+        "checks": 36,
+        "fingerprint": "664255c581f8b326651a585492853fb35fd74bc375c56552e3b8033a21038f58",
+        "time": "20261010T021726769602Z",
+        "log": ".agent-state/verify-20261010T021726769602Z.log"
+      },
+      "disk_readback": {
+        "bytes": 28,
+        "sha256": "7c1798266274ae6a17d35a4524a0db15afa2875af7ecc204a6449226d2c5005b",
+        "matches_saved_A": true
+      }
     }
   },
   "implementation_batch_20261010": {

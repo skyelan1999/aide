@@ -56,6 +56,27 @@ assert.equal(await off.api.readTab(scope,'scene','workbench'),null);
 assert.equal(off.storage.size,0);
 await assert.rejects(a.api.writeTab(scope,'chat','oversize',{text:'x'.repeat(2*1024*1024)}),/2 MiB/);
 assert.equal(await a.api.readTab(scope,'chat','oversize'),null);
+// Same-file drafts and positions remain independent on reload. Saving or
+// discarding A must not delete B's newer shared fallback or tab-local draft.
+await a.api.writeTab(scope,'file','same-file',{text:'file A unsaved',hash:'h',start:3});
+await b.api.writeTab(scope,'file','same-file',{text:'file B unsaved',hash:'h',start:8});
+await a.api.writeTab(scope,'file-view','same-file',{hash:'h',start:3,scrollTop:600});
+await b.api.writeTab(scope,'file-view','same-file',{hash:'h',start:8,scrollTop:1200});
+assert.equal((await tab(a.storage).api.readTab(scope,'file','same-file')).text,'file A unsaved');
+assert.equal((await tab(b.storage).api.readTab(scope,'file','same-file')).text,'file B unsaved');
+assert.equal((await tab(a.storage).api.readTab(scope,'file-view','same-file')).scrollTop,600);
+assert.equal((await tab(b.storage).api.readTab(scope,'file-view','same-file')).scrollTop,1200);
+await a.api.removeMatchingTab(scope,'file','same-file','stale save');
+assert.equal((await a.api.readTab(scope,'file','same-file')).text,'file A unsaved');
+await a.api.removeMatchingTab(scope,'file','same-file','file A unsaved');
+assert.equal(await tab(a.storage).api.readTab(scope,'file','same-file'),null);
+assert.equal((await b.api.readTab(scope,'file','same-file')).text,'file B unsaved');
+assert.equal((await api.read(scope,'file','same-file')).text,'file B unsaved');
+assert.equal((await tab().api.readTab(scope,'file','same-file')).text,'file B unsaved');
+const auto=fs.readFileSync('internal/server/web/file-autosave.js','utf8');
+assert.ok(auto.includes('AideContinuity.writeTab(')&&auto.includes('AideContinuity.readTab(')&&auto.includes('AideContinuity.removeMatchingTab('));
+assert.ok(!/AideContinuity\.(write|read|removeMatching)\(/.test(auto));
+console.log('Same-file tab drafts, cursor positions and matching cleanup PASS');
 console.log('Tab snapshots, reload, opener copy, empty scene, fallback race and size guard PASS');
 console.log('Recovery workspace isolation and matching deletion PASS (in-memory IndexedDB fixture)');
 })().catch(e=>{console.error(e);process.exitCode=1;});

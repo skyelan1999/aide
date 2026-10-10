@@ -15,11 +15,11 @@
     function storeRecovery(){
       clearTimeout(recoveryTimer);const c={...getContext()};
       if(identity(c)!==activeKey||!c.path||blocked?.()||!window.AideContinuity?.enabled()||!scope(c))return;
-      AideContinuity.write(scope(c),'file-view',identity(c),{hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft}).catch(e=>error?.(e.message));
+      AideContinuity.writeTab(scope(c),'file-view',identity(c),{hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft}).catch(e=>error?.(e.message));
       if(!writable())return;
       const dirty=editor.value!==baseline;
       if(!dirty)return;
-      const operation=AideContinuity.write(scope(c),'file',identity(c),{text:editor.value,hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft});
+      const operation=AideContinuity.writeTab(scope(c),'file',identity(c),{text:editor.value,hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft});
       operation.catch(e=>{status.textContent=t('本地草稿保存失败');error?.(e.message);});
     }
     function queueRecovery(){clearTimeout(recoveryTimer);recoveryTimer=setTimeout(storeRecovery,180);}
@@ -46,7 +46,7 @@
     async function offerRecovery(gen){
       const c={...getContext()},stamp=viewChanges;if(!window.AideContinuity||!scope(c)||!c.path||identity(c)!==activeKey)return;
       try{
-        const [draft,view]=await Promise.all([AideContinuity.read(scope(c),'file',identity(c)),AideContinuity.read(scope(c),'file-view',identity(c))]);
+        const [draft,view]=await Promise.all([AideContinuity.readTab(scope(c),'file',identity(c)),AideContinuity.readTab(scope(c),'file-view',identity(c))]);
         if(blocked?.()||gen!==generation||identity(c)!==activeKey||editor.value!==baseline)return;
         if(stamp===viewChanges&&view&&typeof c.hash==='string'&&c.hash&&view.hash===c.hash){
           const number=(v,max)=>Number.isFinite(v)?Math.max(0,Math.min(max,v)):0;
@@ -60,7 +60,7 @@
         const changed=draft.hash!==c.hash;text.textContent=t(changed?'服务器已更新，本地草稿等待合并':'发现未保存的本地草稿');
         restore.textContent=t(changed?'对比并合并':'恢复草稿');discard.textContent=t('忽略此草稿');
         restore.onclick=()=>{if(gen!==generation||blocked?.())return;if(changed)compareRecovery(draft,gen);else applyRecovery(draft,draft.text);};
-        discard.onclick=()=>{AideContinuity.removeMatching(scope(c),'file',identity(c),draft.text).catch(e=>error?.(e.message));recoveryBanner?.remove();recoveryBanner=null;};
+        discard.onclick=()=>{AideContinuity.removeMatchingTab(scope(c),'file',identity(c),draft.text).catch(e=>error?.(e.message));recoveryBanner?.remove();recoveryBanner=null;};
         recoveryBanner.append(text,restore,discard);manual.parentElement.after(recoveryBanner);
       }catch(e){status.textContent=t('本地恢复暂不可用');}
     }
@@ -79,7 +79,7 @@
           if(gen!==generation || key!==identity(getContext()))return;
           baseline=content;suspended=false;onSaved?.(context,content,result,manualRequest);
           status.textContent=t('服务器已保存');
-          if(window.AideContinuity?.enabled()&&scope(context))await AideContinuity.removeMatching(scope(context),'file',identity(context),content).catch(e=>error?.(e.message));
+          if(window.AideContinuity?.enabled()&&scope(context))await AideContinuity.removeMatchingTab(scope(context),'file',identity(context),content).catch(e=>error?.(e.message));
           if(gen===generation)storeRecovery();
         } catch(e) {
           if(gen!==generation)return;

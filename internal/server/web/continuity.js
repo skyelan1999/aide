@@ -55,5 +55,13 @@
       tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
     });
   }
-  window.AideContinuity={enabled,read,write,readTab,writeTab,remove,removeMatching};
+  async function removeMatchingTab(scope,kind,id,text){
+    // Clear only this browsing context's matching draft. A different tab's
+    // shared fallback must survive when its content differs from the save.
+    const cached=sessionStorage.getItem(tabKey(scope,kind,id));
+    if(cached!==null&&JSON.parse(cached)?.text===text)
+      sessionStorage.setItem(tabKey(scope,kind,id),'null');
+    await removeMatching(scope,kind,id,text);
+  }
+  window.AideContinuity={enabled,read,write,readTab,writeTab,remove,removeMatching,removeMatchingTab};
 })();
