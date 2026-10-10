@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Knowledge timeline selection consistency repair and handoff complete. Syntax/docs PASS; push pending. Runtime/full/Safari delegated to Luna.",
+    "latest_completed": "Knowledge timeline selection repair and docs pushed at 9b91ce65b6cac2bc74baf59bb07a81013687fbb9. Source delivery complete for reviewed batch; runtime/full/Safari acceptance delegated to Luna.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2033,14 +2033,19 @@
       "checks": 38
     },
     "remaining": [
-      "Finish reviewed development handoff push; Luna runtime acceptance; production deployment/release remain gated",
-      "恢复分支所有权、容量/崩溃边界和星图恢复继续复核",
-      "真实向量服务、远程来源及SSH审批/网络边界验收",
-      "输入与输出运行中多页一致性、备份保留与清理管理闭环",
-      "主题/窄屏/性能、长时间使用及逐项发布证据审计",
-      "Windows真实设备验收未运行：用户暂无环境"
+      "Luna: recovery ownership/capacity/crash and star-map restoration runtime acceptance",
+      "Luna: real SSH/source/approval/network boundary acceptance",
+      "Luna: input/output pagination, release records, history import/retention/cleanup acceptance",
+      "Luna: Safari themes/narrow layouts/performance/long-lived viewing and unlock refresh",
+      "Windows real-device acceptance NOT_RUN: user has no environment",
+      "Real embedding service/vector acceptance deferred by user",
+      "Production deployment and release gated by fresh full and item evidence"
     ],
-    "production": "本批未部署到9999；未release"
+    "production": "本批未部署到9999；未release",
+    "current_head_full": {
+      "status": "not_run",
+      "reason": "Source changed after historical full receipt; acceptance delegated to Luna. Historical full is not current release evidence."
+    }
   },
   "implementation_batch_push_20261010": {
     "status": "pass",
@@ -2275,7 +2280,10 @@
       "runtime_safari_full": "NOT_RUN; delegated to Luna"
     },
     "push": {
-      "status": "pending"
+      "status": "pass",
+      "implementation_commit": "9b91ce65b6cac2bc74baf59bb07a81013687fbb9",
+      "command": "git push origin main",
+      "exit": 0
     },
     "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md"
   }
