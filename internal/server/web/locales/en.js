@@ -1,11 +1,24 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "导入恢复备份": "Import recovery backup",
+  "撤销此导入": "Undo this import",
+  "条记录": "records",
+  "已撤销导入；现有标签页快照保持不变": "Import undone; existing tab snapshots remain unchanged",
+  "恢复备份超过 64 MiB": "Recovery backup exceeds 64 MiB",
+  "导入预览": "Import preview",
+  "新增": "New",
+  "相同": "Identical",
+  "冲突": "Conflicts",
+  "替换冲突记录，保留旧记录以便撤销": "Replace conflicting records; keep originals for undo",
+  "已导入共享记录": "Shared records imported",
+  "现有标签页快照保持不变": "Existing tab snapshots remain unchanged",
+
   "本地恢复存储": "Local recovery storage",
-  "仅统计当前浏览器、当前地址的共享恢复记录。备份可能包含未发送文字和文件草稿，请妥善保管；不含模型配置或凭据。": "Shared recovery records in this browser and origin only. Backups may contain unsent messages and file drafts; keep them private. Model configuration and credentials are excluded.",
+  "仅统计当前浏览器、当前地址的共享恢复记录。备份可能包含未发送文字和文件草稿，请妥善保管；不读取模型配置或凭据；草稿中的敏感文字仍可能被导出。": "Shared recovery records in this browser and origin only. Backups may contain unsent messages and file drafts; keep them private. Model configuration and credentials are not read; sensitive text typed in drafts may still be exported.",
   "查看恢复占用": "Inspect recovery usage",
   "导出本地恢复记录": "Export local recovery records",
-  "浏览器估算包含同地址的其他存储，并非恢复记录的磁盘大小。导出不含其他已打开标签页独有的即时快照；当前不提供导入或自动清理。": "Browser estimates include other storage at this origin, not just recovery data. Exports exclude snapshots exclusive to other open tabs. Import and automatic cleanup are not available yet.",
+  "浏览器估算包含同地址的其他存储，并非恢复记录的磁盘大小。导出不含其他已打开标签页独有的即时快照；导入不会修改正在编辑的标签页，首次打开的新标签页才能使用导入记录；撤销记录单独保留，不包含在导出中。当前不自动清理。": "Browser estimates include other storage at this origin, not just recovery data. Exports exclude snapshots exclusive to other open tabs. Import leaves existing tab snapshots intact; a newly opened tab can use imported records. Undo records are kept separately and excluded from exports. There is no automatic cleanup.",
   "共享记录": "Shared records",
   "序列化大小": "Serialized size",
   "浏览器使用／配额": "Browser usage / quota",

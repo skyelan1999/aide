@@ -1,0 +1,23 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),crypto=require('node:crypto');
+const records=new Map();let failPut=false;
+const db={transaction(){const work=new Map([...records].map(([k,v])=>[k,structuredClone(v)]));let pending=0;const tx={abort(){if(tx.aborted)return;tx.aborted=true;setTimeout(()=>tx.onabort?.(),0);}};
+ const queue=fn=>{pending++;setTimeout(()=>{if(!tx.aborted)fn();pending--;if(!pending&&!tx.aborted){records.clear();for(const [k,v] of work)records.set(k,v);tx.oncomplete?.();}},0);};
+ tx.objectStore=()=>({get(k){const r={};queue(()=>{r.result=structuredClone(work.get(k));r.onsuccess?.();});return r;},put(v){queue(()=>{if(failPut){tx.error=Error('QuotaExceededError');tx.abort();return;}work.set(v.key,structuredClone(v));});},delete(k){queue(()=>work.delete(k));},openCursor(){const values=[...work.values()],r={};let i=0;const next=()=>queue(()=>{r.result=i<values.length?{value:values[i++],continue:next}:null;r.onsuccess?.();});next();return r;}});return tx;}};
+const ctx={window:{},Blob,structuredClone,crypto,Date,JSON,Promise,Error};vm.runInNewContext(fs.readFileSync('internal/server/web/recovery-transfer.js','utf8'),ctx);
+const api=ctx.window.AideRecoveryTransfer.create({open:async()=>db});
+const r=(id,text,updated=1)=>({key:JSON.stringify(['workspace','chat',id]),value:{text},updated});
+const backup=values=>({format:'aide-local-recovery',schema:1,count:values.length,records:values});
+(async()=>{
+ const a=r('A','original'),b=r('B','same');records.set(a.key,a);records.set(b.key,b);
+ let plan=await api.previewImport(backup([r('A','imported'),b,r('C','new')]));assert.equal(plan.added,1);assert.equal(plan.identical,1);assert.equal(plan.conflicts.length,1);
+ let result=await api.importRecovery(plan);assert.equal(result.count,1);assert.equal(records.get(a.key).value.text,'original');assert.equal((await api.listRecoveryOperations()).length,1);
+ await api.undoRecovery(result.id);assert.equal(records.has(r('C','').key),false);assert.equal((await api.listRecoveryOperations()).length,0);
+ plan=await api.previewImport(backup([r('A','replacement'),r('C','new')]));result=await api.importRecovery(plan,{replace:true});assert.equal(result.count,2);assert.equal(records.get(a.key).value.text,'replacement');await api.undoRecovery(result.id);assert.deepEqual(records.get(a.key),a);
+ plan=await api.previewImport(backup([r('A','replacement'),r('C','new')]));records.set(a.key,r('A','live edit',2));const before=JSON.stringify([...records]);await assert.rejects(api.importRecovery(plan,{replace:true}),/发生变化/);assert.equal(JSON.stringify([...records]),before);
+ plan=await api.previewImport(backup([r('D','new')]));await assert.rejects(api.importRecovery(plan,{active:()=>false}),/取消/);assert.equal(records.has(r('D','').key),false);
+ failPut=true;await assert.rejects(api.importRecovery(plan),/Quota/);failPut=false;assert.equal(JSON.stringify([...records]),before);
+ result=await api.importRecovery(plan);records.set(r('D','').key,r('D','subsequent edit',2));const changed=JSON.stringify([...records]);await assert.rejects(api.undoRecovery(result.id),/已变化/);assert.equal(JSON.stringify([...records]),changed);
+ for(const bad of [{schema:2}, {count:2},{records:[r('A','x'),r('A','x')],count:2},{records:[{...r('A','x'),key:JSON.stringify(['workspace','unknown','A'])}]},{records:[{...r('A','x'),value:JSON.parse('{"text":"x","__proto__":{}}')}]}])await assert.rejects(api.previewImport({...backup([r('A','x')]),...bad}));
+ assert.equal(JSON.stringify([...records]),changed);
+ console.log('Recovery import preview, default skip, explicit replacement, transactional undo, concurrent changes, quota rollback and invalid input PASS (in-memory IndexedDB fixture)');
+})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1885,5 +1885,27 @@
     "release": "not_run; product acceptance remains active",
     "format_review": "Full parent-to-commit diff checked; test trailing whitespace removed, exact jsPDF official bytes preserved with a single-file blank-at-eol attribute exemption",
     "meaning": "Implementation batch delivery passed; full product goal and acceptance remain in_progress"
+  },
+  "recovery_import_batch_20261010": {
+    "status": "in_progress",
+    "implementation": "Validated preview, conflict opt-in, atomic import and undo, stale-record guards; live snapshots retained",
+    "verification": {
+      "full": "pass",
+      "checks": 38,
+      "time": "20261010T042715333380Z",
+      "fingerprint": "a6f9cd02d9ae08e13472e982b24fd9221a80a246752ccd6022a82134876a18f2",
+      "log": ".agent-state/verify-20261010T042715333380Z.log",
+      "system_safari": "A import; B opt-in replacement; export B; undo A; undo addition; original 35 records no-op import",
+      "runtime_sha256": "de5a7333878729839d9ac504c41f6e774b241491e7b97f037bd60fe035f09356"
+    },
+    "cleanup": "Two owned startup tabs closed; six original tabs retained; test records and undo archives removed through undo",
+    "remaining": [
+      "Long inventory layout",
+      "Classic/dark/narrow/keyboard new controls",
+      "Cross-device consumer",
+      "Quota/crash/Windows",
+      "Cleanup and retention"
+    ],
+    "release": "not_run; full goal active"
   }
 }

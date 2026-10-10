@@ -345,6 +345,10 @@
       [
         "node",
         "scripts/outcome-pagination.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/recovery-transfer.test.cjs"
       ]
     ],
     "full": [

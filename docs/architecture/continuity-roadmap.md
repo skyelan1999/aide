@@ -263,3 +263,12 @@ Native Safari on actual 9999 verified two different TXT drafts, closing both tab
 成果接口返回 `snapshot` 内容指纹；客户端加载下一页时携带该指纹。指纹涵盖完整成果投影，包括文件提案、工具返回摘要及原文指纹、审批、系统回执、验证报告、状态和会话标题。即使执行日志序号未递增，修改已有工具返回也会使旧分页失效。接口返回 HTTP 409；成果舱保留已有页以便查看，但停止追加、禁用导出，提供“重新加载成果记录”，显式丢弃旧页后从第一页重新收集。
 
 导出字段 `exportScope.snapshot` 和 `consistentSnapshot` 标识已加载记录属于同一版本；`allPagesLoaded` 单独表示是否已加载全部页。导出仍是摘要，原始证据按编号及其独立指纹读取。该机制不冻结服务器任务、不自动重放工具，不证明文件现状或验收成功。持续更新的任务可能反复使分页失效；旧 API 客户端不传 `snapshot` 时仍可访问，但不获得分页一致性保证。计算指纹需要遍历当前成果记录；大型任务的成本尚需专项测量。
+
+
+### Recovery backup import and transactional undo (2026-10-10)
+
+Settings / file rendering now accepts schema-1 aide-local-recovery JSON backups. Preview classifies new, identical and conflicting records. Identical values do not produce writes; conflicts are skipped unless replacement is explicitly selected. Imported values and prior values are archived in one IndexedDB transaction. If any current record changed since preview, the whole import is rejected. Cancellation, lock and write failure abort rather than partially apply.
+
+Undo requires every target to still equal the imported value. Later edits reject the whole undo and retain its archive; successful undo restores prior records or removes imported additions atomically. Operations affect shared browser records only, never live tab snapshots, server files or task submission. A first-opened new tab can consume shared fallback data.
+
+Import and undo archives each have a 64 MiB budget; ordinary records have 2 MiB and file branch arrays 32 entries / 8 MiB limits. Undo archives are excluded from record counts and exports, but included in browser usage. Automatic cleanup and retention are not implemented. Export envelope overhead near 64 MiB may exceed the import file limit; this boundary remains to be unified. Cross-device consumption and real quota/crash evidence remain open. Preview and undo controls below a long inventory also need layout refinement.

@@ -1485,3 +1485,5 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 .recovery-manager-row code{overflow-wrap:anywhere;white-space:normal}
 .recovery-manager-row small{grid-column:1/-1;overflow-wrap:anywhere}
 @media(max-width:600px){.recovery-manager-row{grid-template-columns:minmax(0,1fr)}.recovery-manager-row small{grid-column:auto}}
+
+.recovery-transfer-preview{display:grid;gap:10px;margin-top:12px}.recovery-conflict-key{font-size:12px;overflow-wrap:anywhere;white-space:normal;color:var(--muted)}
