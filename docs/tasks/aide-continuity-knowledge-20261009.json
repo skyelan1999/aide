@@ -2432,6 +2432,11 @@
     },
     "vector": "deferred_by_user",
     "windows": "not_run_no_environment",
+    "release_gate": {
+      "status": "blocked",
+      "command": "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009",
+      "result": "Missing rollback; incomplete design, implementation, verification, documentation and cleanup stages"
+    },
     "document": "docs/reviews/continuity-acceptance-resumed-20261011.md"
   }
 }

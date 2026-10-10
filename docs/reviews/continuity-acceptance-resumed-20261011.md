@@ -66,3 +66,5 @@ Safari 控制连接在首次选择既有星图标签时中断；重新绑定后�
 永久裁剪/对象清理、跨工作区导入、其他嵌入类型、恢复容量/强杀/断网/冲突、跨会话审批/规则管理、实际插件和模型、星图路径/时间线/镜头/增量更新、输入输出分页、锁态同步、主题与窄屏仍需逐项证据。按[完整验收清单](luna-acceptance-handoff-20261010.md)和[目标源码核对表](continuity-acceptance-audit-20261010.md)继续，不能用本页的部分 PASS 关闭总目标。
 
 真实向量暂缓；Windows NOT_RUN。发布须补可执行回滚、当前输入 full 和阶段证据，再运行 release-check；本页不是发布收据。
+
+2026-10-11 再运行 `python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009`，当前门禁仍 BLOCKED：缺少 rollback，design、implementation、verification、documentation、cleanup 阶段未完成。不得将成功 push 等同于 release。
