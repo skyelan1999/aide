@@ -1,6 +1,16 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "本地恢复存储": "Local recovery storage",
+  "仅统计当前浏览器、当前地址的共享恢复记录。备份可能包含未发送文字和文件草稿，请妥善保管；不含模型配置或凭据。": "Shared recovery records in this browser and origin only. Backups may contain unsent messages and file drafts; keep them private. Model configuration and credentials are excluded.",
+  "查看恢复占用": "Inspect recovery usage",
+  "导出本地恢复记录": "Export local recovery records",
+  "浏览器估算包含同地址的其他存储，并非恢复记录的磁盘大小。导出不含其他已打开标签页独有的即时快照；当前不提供导入或自动清理。": "Browser estimates include other storage at this origin, not just recovery data. Exports exclude snapshots exclusive to other open tabs. Import and automatic cleanup are not available yet.",
+  "共享记录": "Shared records",
+  "序列化大小": "Serialized size",
+  "浏览器使用／配额": "Browser usage / quota",
+  "已导出共享恢复记录": "Shared recovery records exported",
+
   "历史存储统计": "History storage usage",
   "下载完整历史备份": "Download full history backup",
   "已归档版本": "Archived versions",

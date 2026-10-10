@@ -131,6 +131,11 @@
           "description": "在当前浏览器保存会话草稿、目录和编辑恢复记录；服务器保存状态单独显示。"
         },
         {
+          "id": "recovery-storage",
+          "type": "recovery-storage",
+          "label": "本地恢复存储"
+        },
+        {
           "id": "fileLineNumbers",
           "type": "checkbox",
           "label": "显示行号",

@@ -1834,6 +1834,32 @@
         "log": ".agent-state/verify-20261010T033647298786Z.log"
       },
       "cleanup": "Owned file page and three start.command workbench tabs closed; native Safari returned to original six workbench tabs, candidate data/draft retained"
+    },
+    "recovery_storage_20261010": {
+      "implementation": "shared origin inventory and read-only JSON export; settings control",
+      "targeted": "continuity-isolation PASS; VM and in-memory IndexedDB only",
+      "browser": "PASS: native Safari isolated18211 inventory 35 records / 9 groups; direct JSON download independently validated; professional light/dark and 390x844 layout inspected",
+      "runtime": "isolated18211 via start.command; binary e703f1ad215dfafbbd848e4dc4a40db24f4c82aa9871a8487398a0edf69977a7; production unchanged",
+      "full": {
+        "status": "pass",
+        "fingerprint": "781c1683bd88e17ba58bac461dfb114a3eff0642fdc9b878aae4fb661a34ce6a",
+        "time": "20261010T035153222023Z",
+        "log": ".agent-state/verify-20261010T035153222023Z.log",
+        "commands": 37
+      },
+      "push": "authorized batch ready for commit and push after browser acceptance",
+      "remaining": [
+        "import and recoverable cleanup",
+        "closed chat and sky branch management",
+        "browser quota and crash acceptance"
+      ],
+      "download": {
+        "bytes": 23080,
+        "records": 35,
+        "sha256": "d56320f616d6b3e04b52cabd9d5ae5d6f9bf82d998984ae5f6ac26900131f879",
+        "receipt": ".agent-state/continuity-runtime/recovery-storage-download-receipt-20261010.json"
+      },
+      "cleanup": "Restored professional follow-system; exited responsive mode; closed owned start.command tab; original six tabs retained; candidate draft and attachment preserved"
     }
   },
   "implementation_batch_20261010": {

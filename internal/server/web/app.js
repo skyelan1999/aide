@@ -4150,7 +4150,7 @@ function renderMarkdownHistoryControl() {
  api('/plugins').then(data=>{const plugin=(data.plugins||[]).find(p=>p.id==='markdown-history');if(!plugin){copy.append(el('small','',t('需要安装 Markdown 历史版本插件。')));return;}check.checked=plugin.enabled;check.disabled=false;check.onchange=async()=>{check.disabled=true;try{await api('/plugins/markdown-history',{method:'PUT',body:JSON.stringify({enabled:check.checked})});}catch(e){check.checked=!check.checked;toast(e.message);}finally{check.disabled=false;}};}).catch(e=>copy.append(el('small','',e.message)));
  return row;
 }
-const controlRenderers = {
+const controlRenderers = { 'recovery-storage': () => window.AideRecoveryManager.render({t,error:e=>toast(e.message||String(e)),isActive:()=>$('settings-sheet').classList.contains('open')}),
   "knowledge-index-policy": renderKnowledgeIndexPolicy,
   "knowledge-embedding-policy": renderKnowledgeEmbeddingPolicy,
   "capabilities": () => window.aideCapabilities.render({api,t,blocked:()=>lockScreen.locked||!state.token,active:()=>settingsPanel.active==='capabilities'&&$('settings-sheet').classList.contains('open')}),

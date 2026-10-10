@@ -1,0 +1,33 @@
+/* Local recovery inventory is deliberately separate from configuration backups. */
+(() => {
+  'use strict';
+  function render({t,error,isActive=()=>true}) {
+    const node=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text)n.textContent=text;return n;};
+    const wrap=node('div','settings-control recovery-manager');
+    wrap.append(node('h3','',t('本地恢复存储')),
+      node('p','muted',t('仅统计当前浏览器、当前地址的共享恢复记录。备份可能包含未发送文字和文件草稿，请妥善保管；不含模型配置或凭据。')));
+    const toolbar=node('div','recovery-manager-toolbar'),inspect=node('button','quiet',t('查看恢复占用')),download=node('button','quiet',t('导出本地恢复记录'));
+    inspect.type=download.type='button';toolbar.append(inspect,download);
+    const status=node('p','muted'),list=node('div','recovery-manager-list');status.setAttribute('role','status');status.setAttribute('aria-live','polite');
+    wrap.append(toolbar,status,list,node('p','muted',t('浏览器估算包含同地址的其他存储，并非恢复记录的磁盘大小。导出不含其他已打开标签页独有的即时快照；当前不提供导入或自动清理。')));
+    const blocked=()=>{const s=window.LockCluster?.snapshot();return !!s&&(!s.settled||s.locked);};
+    let epoch=0;
+    const valid=e=>wrap.isConnected&&isActive()&&!blocked()&&epoch===e;
+    const size=n=>(Number(n||0)/1048576).toFixed(2)+' MiB';
+    async function execute(operation){if(blocked())return;const e=++epoch;inspect.disabled=download.disabled=true;
+      try{await operation(e);}catch(err){if(valid(e))error(err);}finally{inspect.disabled=download.disabled=false;}}
+    inspect.onclick=()=>execute(async e=>{
+      const data=await window.AideContinuity.inventory();if(!valid(e))return;
+      status.textContent=t('共享记录')+' '+data.count+' · '+t('序列化大小')+' '+size(data.bytes);
+      if(data.originStorage)status.textContent+=' · '+t('浏览器使用／配额')+' '+size(data.originStorage.usage)+' / '+size(data.originStorage.quota);
+      list.replaceChildren();for(const group of data.groups){const row=node('div','recovery-manager-row');row.append(node('code','',group.scope),node('span','',group.count+' · '+size(group.bytes)),node('small','muted',Object.entries(group.kinds).map(([kind,count])=>kind+': '+count).join(' · ')));list.append(row);}
+    });
+    download.onclick=()=>execute(async e=>{
+      const data=await window.AideContinuity.exportRecovery();if(!valid(e))return;
+      const blob=new Blob([JSON.stringify(data)],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='aide-local-recovery-'+data.created.replace(/[:.]/g,'-')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+      status.textContent=t('已导出共享恢复记录')+' '+data.count+' · '+size(blob.size);
+    });
+    return wrap;
+  }
+  window.AideRecoveryManager={render};
+})();

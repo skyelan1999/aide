@@ -109,5 +109,37 @@
       sessionStorage.setItem(tabKey(scope,kind,id),'null');
     await removeMatching(scope,kind,id,text);
   }
-  window.AideContinuity={enabled,read,write,readTab,writeTab,remove,removeMatching,removeMatchingTab,writeFileDraft,listFileDrafts,dismissFileDraft,savedFileDraft};
+  // Management reads remain available when recovery is disabled. A read-only
+  // cursor takes one transaction snapshot; no draft is evicted or rewritten.
+  async function recoverySnapshot(includeValues=false){
+    const db=await open();return new Promise((resolve,reject)=>{
+      const tx=db.transaction('records','readonly'),store=tx.objectStore('records'),request=store.openCursor();
+      const records=[],groups=new Map();let bytes=0,failure;
+      request.onsuccess=()=>{const cursor=request.result;if(!cursor)return;
+        try {
+          const record=cursor.value,parts=JSON.parse(record.key);
+          if(!Array.isArray(parts)||parts.length!==3)throw Error('恢复记录键无效');
+          const size=new Blob([JSON.stringify(record)]).size;bytes+=size;
+          if(includeValues&&bytes>64*1024*1024)throw Error('恢复备份超过 64 MiB，请保留现有记录并分批处理');
+          const scope=String(parts[0]),kind=String(parts[1]);
+          const group=groups.get(scope)||{scope,count:0,bytes:0,kinds:{}};
+          group.count++;group.bytes+=size;group.kinds[kind]=(group.kinds[kind]||0)+1;groups.set(scope,group);
+          if(includeValues)records.push(record);
+          cursor.continue();
+        }catch(e){failure=e;tx.abort();}
+      };
+      tx.oncomplete=()=>resolve({count:[...groups.values()].reduce((n,g)=>n+g.count,0),bytes,groups:[...groups.values()],...(includeValues?{records}: {})});
+      tx.onerror=()=>reject(failure||tx.error);tx.onabort=()=>reject(failure||tx.error);
+    });
+  }
+  async function inventory(){
+    const result=await recoverySnapshot();let originStorage=null;
+    try{const estimate=await navigator.storage?.estimate();if(estimate)originStorage={usage:estimate.usage,quota:estimate.quota};}catch(_e){}
+    return {...result,originStorage};
+  }
+  async function exportRecovery(){
+    const snapshot=await recoverySnapshot(true);
+    return {format:'aide-local-recovery',schema:1,created:new Date().toISOString(),...snapshot};
+  }
+  window.AideContinuity={inventory,exportRecovery,enabled,read,write,readTab,writeTab,remove,removeMatching,removeMatchingTab,writeFileDraft,listFileDrafts,dismissFileDraft,savedFileDraft};
 })();

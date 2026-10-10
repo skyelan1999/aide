@@ -1477,3 +1477,11 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 
 /* Capability observations share the settings palette and remain usable at narrow widths. */
 .capability-dashboard{display:grid;gap:16px}.capability-toolbar{display:flex;justify-content:flex-end}.capability-list{display:grid;gap:12px}.capability-card{padding:18px;border:1px solid var(--line);border-radius:14px;background:var(--panel);display:grid;gap:10px;min-width:0}.capability-card p,.capability-card h4{margin:0;overflow-wrap:anywhere}.capability-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.capability-card-head h4{margin-top:4px;font-size:15px}.capability-card .quiet{justify-self:start;min-height:36px}.capability-state{font-size:12px;padding:4px 8px;border-radius:6px;white-space:nowrap;background:var(--bg);color:var(--muted)}.capability-state.pass{color:var(--success,var(--accent))}.capability-state.failed{color:var(--danger)}.capability-state.checking{color:var(--accent)}.capability-meta{font-size:12px;color:var(--muted);line-height:1.6}.capability-result{font-size:13px;line-height:1.6}@media(max-width:480px){.capability-card{padding:14px}.capability-card-head{flex-wrap:wrap}.capability-state{white-space:normal}}
+
+/* Recovery inventory wraps long workspace identities without widening settings. */
+.recovery-manager-toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.recovery-manager-list{display:grid;gap:8px;margin:12px 0}
+.recovery-manager-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:12px;border-bottom:1px solid var(--border)}
+.recovery-manager-row code{overflow-wrap:anywhere;white-space:normal}
+.recovery-manager-row small{grid-column:1/-1;overflow-wrap:anywhere}
+@media(max-width:600px){.recovery-manager-row{grid-template-columns:minmax(0,1fr)}.recovery-manager-row small{grid-column:auto}}

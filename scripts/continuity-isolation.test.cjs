@@ -1,8 +1,8 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 const records=new Map();
 const crypto=require('node:crypto');
-const database={transaction(){const tx={abort(){tx.aborted=true;setTimeout(()=>tx.onabort?.(),0);}};tx.objectStore=()=>({get(key){const req={result:records.get(key)};setTimeout(()=>{req.onsuccess?.();if(!tx.aborted)tx.oncomplete?.();},0);return req;},put(record){records.set(record.key,structuredClone(record));const req={};setTimeout(()=>tx.oncomplete?.(),0);return req;},delete(key){records.delete(key);const req={};setTimeout(()=>tx.oncomplete?.(),0);return req;}});return tx;}};
-const context={window:{aideUI:{get:()=>true}},crypto,Blob,Date,JSON,Promise,Error,setTimeout,indexedDB:{open(){const req={result:database};setTimeout(()=>req.onsuccess?.(),0);return req;}}};
+const database={transaction(){const tx={abort(){tx.aborted=true;setTimeout(()=>tx.onabort?.(),0);}};tx.objectStore=()=>({openCursor(){const entries=[...records.values()].map(value=>structuredClone(value));let i=0;const req={};const advance=()=>{req.result=i<entries.length?{value:entries[i++],continue(){setTimeout(advance,0);}}:null;req.onsuccess?.();if(!req.result&&!tx.aborted)tx.oncomplete?.();};setTimeout(advance,0);return req;},get(key){const req={result:records.get(key)};setTimeout(()=>{req.onsuccess?.();if(!tx.aborted)tx.oncomplete?.();},0);return req;},put(record){records.set(record.key,structuredClone(record));const req={};setTimeout(()=>tx.oncomplete?.(),0);return req;},delete(key){records.delete(key);const req={};setTimeout(()=>tx.oncomplete?.(),0);return req;}});return tx;}};
+const context={navigator:{storage:{estimate:async()=>({usage:1024,quota:4096})}},window:{aideUI:{get:()=>true}},crypto,Blob,Date,JSON,Promise,Error,setTimeout,indexedDB:{open(){const req={result:database};setTimeout(()=>req.onsuccess?.(),0);return req;}}};
 vm.runInNewContext(fs.readFileSync('internal/server/web/continuity.js','utf8'),context);
 (async()=>{const api=context.window.AideContinuity;
 const scopes=['local||','local|recovery-isolation-b|'];
@@ -97,8 +97,41 @@ const byteScope='branch-byte-budget';
 for(let i=0;i<7;i++)await tab().api.writeFileDraft(byteScope,'large',{text:String(i)+'x'.repeat(1024*1024),hash:'base'});
 await assert.rejects(tab().api.writeFileDraft(byteScope,'large',{text:'8'+'x'.repeat(1024*1024),hash:'base'}),/上限/);
 assert.equal((await tab().api.listFileDrafts(byteScope,'large')).length,7);
+const before=JSON.stringify([...records.entries()]);
+const usage=await off.api.inventory();
+assert.equal(usage.count,records.size);assert.equal(usage.originStorage.quota,4096);
+assert.equal(usage.bytes,[...records.values()].reduce((n,r)=>n+new Blob([JSON.stringify(r)]).size,0));
+assert.equal(usage.groups.reduce((n,g)=>n+g.count,0),records.size);
+assert.ok(usage.groups.some(g=>g.scope===byteScope));
+assert.equal('records' in usage,false);
+const backup=await off.api.exportRecovery();
+assert.equal(backup.format,'aide-local-recovery');assert.equal(backup.schema,1);
+assert.equal(backup.records.length,records.size);
+assert.equal(JSON.stringify([...records.entries()]),before);
+const invalidKey='invalid-json-key';records.set(invalidKey,{key:invalidKey,value:{text:'keep'},updated:1});
+await assert.rejects(api.exportRecovery(),/JSON/);assert.equal(records.get(invalidKey).value.text,'keep');records.delete(invalidKey);
+context.navigator.storage.estimate=async()=>{throw Error('unavailable');};
+assert.equal((await api.inventory()).originStorage,null);
+console.log('Recovery inventory, disabled-mode export, snapshot integrity and non-mutating errors PASS');
 console.log('Closed-file branches, explicit dismissal, save matching and non-evicting capacity guard PASS');
 console.log('Same-file tab drafts, cursor positions and matching cleanup PASS');
 console.log('Tab snapshots, reload, opener copy, empty scene, fallback race and size guard PASS');
 console.log('Recovery workspace isolation and matching deletion PASS (in-memory IndexedDB fixture)');
+})().catch(e=>{console.error(e);process.exitCode=1;});
+
+// Detached settings and a lock that arrives during a read must not download drafts.
+(async()=>{
+ class Element{constructor(tag){this.tag=tag;this.children=[];this.isConnected=true;}append(...items){this.children.push(...items);}setAttribute(){}replaceChildren(...items){this.children=items;}click(){if(this.tag==='a')downloads++;}}
+ let locked=false,downloads=0,finish,result;
+ const managerContext={window:{LockCluster:{snapshot:()=>({settled:true,locked})},AideContinuity:{inventory:()=>new Promise(r=>finish=r),exportRecovery:()=>new Promise(r=>finish=r)}},document:{createElement:tag=>new Element(tag)},Blob,URL:{createObjectURL:()=> 'blob:fixture',revokeObjectURL(){}},setTimeout:fn=>fn()};
+ vm.runInNewContext(fs.readFileSync('internal/server/web/recovery-manager.js','utf8'),managerContext);
+ const errors=[];const render=()=>managerContext.window.AideRecoveryManager.render({t:x=>x,error:e=>errors.push(e)});
+ const summary={count:1,bytes:100,groups:[{scope:'scope',count:1,bytes:100,kinds:{file:1}}]};
+ const panel=render(),buttons=panel.children[2].children;
+ result=buttons[0].onclick();finish(summary);await result;
+ assert.ok(panel.children[3].textContent.includes('共享记录 1'));assert.equal(panel.children[4].children.length,1);
+ result=buttons[1].onclick();locked=true;finish({format:'aide-local-recovery',created:'2026-10-10',count:1,records:[]});await result;assert.equal(downloads,0);
+ locked=false;result=buttons[1].onclick();panel.isConnected=false;finish({created:'2026-10-10',count:1});await result;assert.equal(downloads,0);
+ const live=render();result=live.children[2].children[1].onclick();finish({created:'2026-10-10',count:1});await result;assert.equal(downloads,1);assert.equal(errors.length,0);
+ console.log('Recovery manager inventory, direct download, lock and detached-view guards PASS');
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,5 +1,13 @@
 # 连续工作与知识能力：验收审计 · 2026-10-10
 
+## 本地恢复记录整体统计与导出候选
+
+设置 → 文件查看与渲染新增本地恢复存储：同源IndexedDB记录数量、按工作区/类型的序列化占用及浏览器使用/配额估算。关闭恢复开关仍可查看既有记录。只读JSON导出标记格式与schema，记录最多64MiB，失败不删除或部分导出。可能含未发送文字及文件草稿，不发送服务器或第三方；不读取模型配置或配置凭据，不含其他打开标签页独有即时sessionStorage；用户草稿若自行包含敏感文字，仍会被导出。尚无导入、保留期、跨设备恢复或自动清理。
+
+定向continuity-isolation回归实际PASS：分组统计、关闭恢复时导出、事务前后记录不变、坏键拒绝并保留、配额接口不可用、直接下载、锁定中返回不下载、设置内容移除后不下载。VM/内存IndexedDB测试不代替Safari或真实浏览器配额验收。
+
+隔离start.command已启动18211，进程与候选二进制摘要均为e703f1ad215dfafbbd848e4dc4a40db24f4c82aa9871a8487398a0edf69977a7；保留aide.before-recovery-manager回滚备份；生产9999未替换。此前Mac锁定阻碍已在本轮解锁后解除。原生Safari实际统计35条共享记录、9个分组，序列化大小0.02MiB；浏览器同源使用/配额估算另列为0.35/78643.20MiB。直接下载JSON独立校验格式aide-local-recovery、schema 1、35个唯一记录键及分组数量一致，文件23080字节，SHA-256 d56320f616d6b3e04b52cabd9d5ae5d6f9bf82d998984ae5f6ac26900131f879。专业配色浅/深色及390×844窄屏检查通过；恢复专业配色跟随系统、退出响应式模式，关闭本轮临时标签页，原6个标签页保留，候选原草稿及附件仍在。截图、下载校验收据位于.agent-state/continuity-runtime/recovery-storage-*。首轮full因沙箱无法访问Docker失败，失败日志保留；重跑37项PASS，含Go race/vet。此批按既有授权准备提交并推送，正式发布及余下验收仍待完成。
+
 总目标仍进行中，12项工作流均不能按完整范围标记完成。当前证据优先于任务账本中较早的阶段摘要；历史失败及修复记录保留。
 
 ## 当前基线
@@ -191,3 +199,5 @@ VM通过同文件A/B不同草稿和位置、过期清理、清理A后B及共享�
 经隔离 `start.command` 重建18211，候选二进制SHA-256 `d869d7fb781aef7383e14d5ecfa9b00a65450c080fe695b7f1a07dcd28a3e0b1`。原生Safari打开notes.md历史窗口，实际显示7版本/6去重对象并点击下载；浏览器下载路径中的ZIP独立解包，所有清单引用对象齐全且每项SHA-256匹配，ZIP摘要 `d99c6d7ee2fcb069c2a9ec52aa48ef2290607a6227b562b5a7ae042e4b045618`。收据 `.agent-state/continuity-runtime/markdown-backup-download-receipt-20261010.json`，截图同目录 `markdown-history-backup-safari-20261010.png`。未编辑源文件、未复制模型凭据、生产9999未替换。
 
 不等同于服务灾备或备份导入验收；恢复操作记录、未引用旧对象不在此单文档包中；64MiB真实浏览器下载、SSH该入口及跨设备导入尚未验收。本轮稳定full收据 `20261010T033647298786Z` PASS，37条命令全部exit0（Go race/vet在内），指纹 `d65ff441584ea813b85a9ca46f4fda785c7f6e57563d77ae7a8cef5e802f52dd`；日志 `.agent-state/verify-20261010T033647298786Z.log`。本轮文件页及start.command产生的临时工作台标签已关闭，Safari恢复原6个工作台标签。此收据不补足以上未验收边界。
+
+Recovery-storage stable full receipt: PASS, 37 commands, Go race/vet included. Time 20261010T035153222023Z, fingerprint 781c1683bd88e17ba58bac461dfb114a3eff0642fdc9b878aae4fb661a34ce6a, log .agent-state/verify-20261010T035153222023Z.log. System Safari inventory, direct download, light/dark and narrow layout acceptance passed after unlock; this batch is prepared for the authorized push. Import, cleanup, quota/crash and Windows acceptance remain incomplete.
