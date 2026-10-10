@@ -65,7 +65,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "当前35项full PASS、指纹匹配；类型诊断修复及本地CSV/draw.io源/ZIP资源整版恢复已通过Safari和字节读回。真实模型、Windows、SSH剩余边界/长时性能和其他完整范围继续验收。",
+      "summary": "最新稳定源码 full 37 条命令 PASS，内容指纹匹配；原生 Safari 本地及隔离 SSH 草稿分支、光标滚动、保存和冲突链路已有读回证据。Windows、真实向量提供商、SSH其余边界/长时性能及完整产品范围继续验收。",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -100,7 +100,8 @@
         ".agent-state/ssh-process-restart-20261009/aide-ssh-test-20261009211727-88998.log",
         ".agent-state/verify-20261009T190145752734Z.log",
         "docs/reviews/continuity-acceptance-audit-20261010.md",
-        ".agent-state/verify-20261009T193942124289Z.log"
+        ".agent-state/verify-20261009T193942124289Z.log",
+        ".agent-state/continuity-runtime/ssh-branches-receipt-20261010.json"
       ]
     },
     "documentation": {
@@ -1714,6 +1715,83 @@
         "allExitZero": true,
         "log": ".agent-state/verify-20261010T025532050610Z.log"
       }
+    },
+    "ssh_closed_file_branches_system_browser_20261010": {
+      "date": "2026-10-10",
+      "sourceCommit": "105089d61c4e0b315313e476cc7fba6bda7f6028",
+      "browser": "Native macOS Safari",
+      "instance": "https://localhost:18211",
+      "startup": "start.command, isolated compose recreate",
+      "runningBinarySha256": "7827d551dede2bd71148d6d3420392594c95dc927eb54e8033c451849f758905",
+      "fixture": "Real OpenSSH/SFTP on Docker internal-only network, no host port, Chinese and space path",
+      "sourceId": "ssh-branches-20261010",
+      "path": "中文 分支/branches.txt",
+      "status": "pass for scoped closed-tab branches and exact restored positions",
+      "positions": {
+        "alpha": {
+          "before": {
+            "start": 101,
+            "end": 101,
+            "top": 701,
+            "left": 0,
+            "length": 3663
+          },
+          "after": {
+            "start": 101,
+            "end": 101,
+            "top": 701,
+            "left": 0,
+            "length": 3663
+          }
+        },
+        "beta": {
+          "before": {
+            "start": 191,
+            "end": 191,
+            "top": 1402,
+            "left": 0,
+            "length": 3662
+          },
+          "after": {
+            "start": 191,
+            "end": 191,
+            "top": 1402,
+            "left": 0,
+            "length": 3662
+          }
+        }
+      },
+      "baselineSha256": "3209ebad5295b9f8420d107775fa097f52a4280fdb4cb8b776f2925d711ac981",
+      "remoteUnchangedBeforeExplicitSave": true,
+      "savedBetaSha256": "074aa79238412cca8dcd1b1e9b9c6c6e38ac0e7052eed4bdc62449c206388259",
+      "savedBytes": 3662,
+      "remainingAlphaConflict": {
+        "server": "Beta",
+        "local": "Alpha",
+        "mergedOrSaved": false
+      },
+      "autosave": "off throughout, unchanged",
+      "cleanup": {
+        "temporarySourceRemoved": true,
+        "originalSourcesUnchanged": true,
+        "originalSourceCount": 4,
+        "remainingSourceCount": 4
+      },
+      "testContainerAndInternalNetworkRemoved": true,
+      "originalWorkbenchDraftAttachmentRetained": true,
+      "evidence": [
+        "ssh-branches-two-options-20261010.png",
+        "ssh-alpha-position-restored-20261010.png",
+        "ssh-beta-position-restored-20261010.png",
+        "ssh-branches-conflict-20261010.png"
+      ],
+      "limits": [
+        "Not WAN or physical network fault",
+        "Not Windows",
+        "Not forced browser crash or quota exhaustion",
+        "No model/provider call",
+        "No production settings changed"
+      ]
     }
   },
   "implementation_batch_20261010": {

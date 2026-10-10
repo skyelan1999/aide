@@ -17,7 +17,7 @@
 
 | 原始工作流 | 当前证据定位 | 尚未满足的范围 |
 | --- | --- | --- |
-| 工作现场恢复 | chat_refresh_browser, workspace_scene_fix, file_scroll_recovery, file_workspace_isolation_browser, sky_workspace_default_fix, ssh_workspace_recovery_browser | 本地与隔离SSH草稿/目录恢复已有Safari证据；精确星图镜头与相位、标签页隔离和首次503恢复已有Safari证据（sky_recovery）；SSH光标滚动、关闭标签后的草稿分支/容量管理仍缺验收。 |
+| 工作现场恢复 | chat_refresh_browser, workspace_scene_fix, file_scroll_recovery, file_workspace_isolation_browser, sky_workspace_default_fix, ssh_workspace_recovery_browser | 本地与隔离SSH草稿/目录恢复已有Safari证据；精确星图镜头与相位、标签页隔离和首次503恢复已有Safari证据（sky_recovery）；隔离SSH同文件关闭标签后的双草稿选择和精确光标/滚动已补验（ssh_closed_file_branches_system_browser_20261010）；浏览器强制退出、容量管理与Windows仍缺验收。 |
 | 保存状态与冲突 | autosave_conflict_browser, offline_save_browser, ssh_browser_save_conflict, ssh_autosave_assets_browser, history_autosave_lifecycle_fix | 本地合并、服务中断重试与SSH保存已验证；修复后的SSH历史恢复及立即自动保存已由Safari和远端读回复验（ssh_history_postfix_system_browser）；物理网络中断仍未测。 |
 | Markdown 历史闭环 | history_assets_browser, ssh_autosave_assets_browser, history_autosave_lifecycle_fix | 本地/SSH SVG外部变更与整版恢复有读回证据；本地CSV、draw.io源文件和ZIP附件外部更新/整版恢复/去重已通过Safari与SHA256读回；本地draw.io实际插入/再次编辑/SVG嵌入XML/资源独立变更/历史恢复渲染及SHA256读回通过（drawio_embed_system_browser）；SSH图表编辑、其他类型和备份管理未全部覆盖。 |
 | 真实环境验收 | lock_browser, lock_entry_fix, ssh_workspace_recovery_browser, windows_acceptance, approval_cross_session_real_20261010 | Safari锁态同步与点击解锁、隔离SSH及实际9999跨会话精确命令审批已有证据；键盘锁入口、长时间使用和其余远程边界未完整验证；Windows not_run。 |
@@ -170,3 +170,16 @@ VM通过同文件A/B不同草稿和位置、过期清理、清理A后B及共享�
 先启动的全量收据 `20261010T025405088815Z` 为 FAIL：Go server 测试运行 484.122 秒后返回 `signal: killed`，不能视为通过；该轮过程中还发生格式化/新增测试，不能用于最终指纹门禁。随后针对稳定源码的独立收据另行记录，保留失败日志而不删除。
 
 最终稳定收据 `20261010T025532050610Z`：full PASS，37 个命令全部退出 0，包含 Go race/vet。内容指纹 `9bf65131ae85b602506506afff9366f90e74cb732197dd779c174d0e7402cc74`，日志 `.agent-state/verify-20261010T025532050610Z.log`；验证时基线 HEAD 为 4403146，代码内容以此指纹绑定。该收据不补足上文的真实长任务分页、Windows、向量 provider 或其他剩余产品验收。
+
+
+## SSH 同文件关闭标签后的草稿分支与位置（2026-10-10）
+
+候选源码 `105089d61c4e0b315313e476cc7fba6bda7f6028` 经隔离实例 `start.command` 重建；运行进程与候选二进制 SHA-256 一致，为 `7827d551dede2bd71148d6d3420392594c95dc927eb54e8033c451849f758905`。18211 连接真实 OpenSSH/SFTP 测试服务，仅 Docker 内部网络可达、无宿主端口；文件路径包含中文和空格。生产9999未调整。
+
+原生 Safari 两个标签分别编辑 Alpha/Beta，自动保存始终关闭；关闭两页后，新页实际提供两份恢复选项。分别明确恢复后，以 Safari 检查器只读读取 textarea：Alpha 光标起止 `101/101`、滚动 `701/0`、3663字符；Beta 为 `191/191`、`1402/0`、3662字符，与关闭前记录一致。恢复两份草稿后服务器仍为原始3629字节，SHA-256 `3209ebad5295b9f8420d107775fa097f52a4280fdb4cb8b776f2925d711ac981`。
+
+显式保存 Beta 后界面显示服务器已保存；独立服务器读回3662字节，SHA-256 `074aa79238412cca8dcd1b1e9b9c6c6e38ac0e7052eed4bdc62449c206388259`，Beta标记存在、Alpha标记不存在。重开仍保留Alpha，提示服务器更新等待合并；对比两侧实际为服务器Beta/本地Alpha，未采用合并或再次保存。
+
+收据 `.agent-state/continuity-runtime/ssh-branches-receipt-20261010.json`；截图为同目录 `ssh-branches-two-options-20261010.png`、`ssh-alpha-position-restored-20261010.png`、`ssh-beta-position-restored-20261010.png`、`ssh-branches-conflict-20261010.png`。测试文件已归档；临时来源、一次性凭据、容器和内部网络已清理，原4个来源逐字段核对不变，原工作台草稿与附件保留。隔离候选保留最新二进制及原备份。
+
+此为SSH同文件双分支/精确位置/显式保存与冲突的系统浏览器证据，不覆盖WAN丢包、Windows、强制浏览器崩溃或真实配额耗尽。本轮无产品源码变动，沿用前节37条稳定源码full收据；文档另行检查。检查器中还观察到页面内联样式CSP拒绝及docx-preview sourcemap 404，未将其归因为草稿故障或声称已修复。
