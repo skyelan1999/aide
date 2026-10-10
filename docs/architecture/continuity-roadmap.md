@@ -245,3 +245,11 @@ Go race覆盖失败/待人工状态、长回执截断、独立快照、摘要分
 ### 同文件标签页草稿与位置隔离（2026-10-10）
 
 文件草稿和已保存位置现在同样优先使用标签页sessionStorage，首次新页从工作区内共享IndexedDB读取回退。已有标签刷新保持自己的正文、位置；保存/忽略仅清理本页匹配正文，不删除另一页不同正文的共享草稿。原生Safari实际9999验证本地TXT的A/B不同草稿分别刷新恢复，以及保存A后B保留并提示对比合并。仍未提供关闭所有标签后的多分支选择，也没有配额清理管理；SSH同文件、Windows及浏览器强杀证据未完成。
+
+### 2026-10-10: closed-tab file draft branches
+
+File recovery now retains divergent loaded-document branches in IndexedDB, scoped by workspace and file identity. A new tab offers a compact draft selector with saved time and UTF-16 text length; a live tab's own snapshot stays first. The user explicitly restores or compares a branch. Saving removes only branches with the saved body; ignoring removes the selected branch. Identical body/hash snapshots consolidate. Typing dismisses the stale recovery banner to prevent accidental replacement of newly entered text. Existing single-record drafts remain a compatibility fallback.
+
+Each serialized draft remains limited to 2 MiB; each file's serialized branch array is capped at 32 records and 8 MiB. Exceeding either branch budget aborts the persistent transaction and shows an error; existing persistent drafts are not evicted. The current edit can remain in tab-local storage if that write succeeds. Browser storage quota may fail earlier; this is not a server backup or a whole-origin storage manager. Closing immediately before an IndexedDB transaction finishes remains subject to browser unload behavior. Chat/star-map closed-tab branch selection is not provided by this file-only change.
+
+Native Safari on actual 9999 verified two different TXT drafts, closing both tabs, selecting Alpha in a fresh tab, saving Alpha, and comparing retained Beta against Alpha after reload. Disk readback exactly matched Alpha. Capacity and workspace isolation are source-fixture checks; SSH, Windows, quota-exhaustion UI and abrupt browser termination remain unverified.

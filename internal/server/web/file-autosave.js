@@ -19,7 +19,7 @@
       if(!writable())return;
       const dirty=editor.value!==baseline;
       if(!dirty)return;
-      const operation=AideContinuity.writeTab(scope(c),'file',identity(c),{text:editor.value,hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft});
+      const operation=AideContinuity.writeFileDraft(scope(c),identity(c),{text:editor.value,hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft});
       operation.catch(e=>{status.textContent=t('本地草稿保存失败');error?.(e.message);});
     }
     function queueRecovery(){clearTimeout(recoveryTimer);recoveryTimer=setTimeout(storeRecovery,180);}
@@ -46,7 +46,8 @@
     async function offerRecovery(gen){
       const c={...getContext()},stamp=viewChanges;if(!window.AideContinuity||!scope(c)||!c.path||identity(c)!==activeKey)return;
       try{
-        const [draft,view]=await Promise.all([AideContinuity.readTab(scope(c),'file',identity(c)),AideContinuity.readTab(scope(c),'file-view',identity(c))]);
+        const [storedDrafts,view]=await Promise.all([AideContinuity.listFileDrafts(scope(c),identity(c)),AideContinuity.readTab(scope(c),'file-view',identity(c))]);
+        const drafts=storedDrafts.filter(d=>typeof d.text==='string'&&d.text!==baseline);let draft=drafts[0];
         if(blocked?.()||gen!==generation||identity(c)!==activeKey||editor.value!==baseline)return;
         if(stamp===viewChanges&&view&&typeof c.hash==='string'&&c.hash&&view.hash===c.hash){
           const number=(v,max)=>Number.isFinite(v)?Math.max(0,Math.min(max,v)):0;
@@ -57,11 +58,13 @@
         if(blocked?.()||gen!==generation||identity(c)!==activeKey||!draft||typeof draft.text!=='string'||draft.text===baseline||editor.value!==baseline)return;
         recoveryBanner=document.createElement('div');recoveryBanner.className='file-recovery-banner';recoveryBanner.setAttribute('role','status');
         const text=document.createElement('span'),restore=document.createElement('button'),discard=document.createElement('button');
-        const changed=draft.hash!==c.hash;text.textContent=t(changed?'服务器已更新，本地草稿等待合并':'发现未保存的本地草稿');
-        restore.textContent=t(changed?'对比并合并':'恢复草稿');discard.textContent=t('忽略此草稿');
-        restore.onclick=()=>{if(gen!==generation||blocked?.())return;if(changed)compareRecovery(draft,gen);else applyRecovery(draft,draft.text);};
-        discard.onclick=()=>{AideContinuity.removeMatchingTab(scope(c),'file',identity(c),draft.text).catch(e=>error?.(e.message));recoveryBanner?.remove();recoveryBanner=null;};
-        recoveryBanner.append(text,restore,discard);manual.parentElement.after(recoveryBanner);
+        const picker=document.createElement('select');picker.setAttribute('aria-label',t('选择恢复草稿'));
+        drafts.forEach((d,i)=>{const option=document.createElement('option');option.value=String(i);option.textContent=`${i+1} · ${d.updated?new Date(d.updated).toLocaleString():t('旧版草稿')} · ${d.text.length} ${t('字符')}`;picker.append(option);});
+        const paintDraft=()=>{const changed=draft.hash!==c.hash;text.textContent=t(changed?'服务器已更新，本地草稿等待合并':'发现未保存的本地草稿');restore.textContent=t(changed?'对比并合并':'恢复草稿');};
+        picker.onchange=()=>{draft=drafts[Number(picker.value)];paintDraft();};paintDraft();discard.textContent=t('忽略此草稿');
+        restore.onclick=()=>{if(gen!==generation||blocked?.())return;if(draft.hash!==c.hash)compareRecovery(draft,gen);else applyRecovery(draft,draft.text);};
+        discard.onclick=async()=>{if(gen!==generation||blocked?.())return;discard.disabled=true;try{await AideContinuity.dismissFileDraft(scope(c),identity(c),draft);if(gen!==generation)return;recoveryBanner?.remove();recoveryBanner=null;offerRecovery(gen);}catch(e){error?.(e.message);discard.disabled=false;}};
+        recoveryBanner.append(text);if(drafts.length>1)recoveryBanner.append(picker);recoveryBanner.append(restore,discard);manual.parentElement.after(recoveryBanner);
       }catch(e){status.textContent=t('本地恢复暂不可用');}
     }
     function schedule() {clearTimeout(timer);if(enabled() && getContext()?.autoEligible !== false && writable() && !suspended && !composing && editor.value!==baseline)timer=setTimeout(()=>flush(false),1200);}
@@ -79,7 +82,7 @@
           if(gen!==generation || key!==identity(getContext()))return;
           baseline=content;suspended=false;onSaved?.(context,content,result,manualRequest);
           status.textContent=t('服务器已保存');
-          if(window.AideContinuity?.enabled()&&scope(context))await AideContinuity.removeMatchingTab(scope(context),'file',identity(context),content).catch(e=>error?.(e.message));
+          if(window.AideContinuity?.enabled()&&scope(context))await AideContinuity.savedFileDraft(scope(context),identity(context),content).catch(e=>error?.(e.message));
           if(gen===generation)storeRecovery();
         } catch(e) {
           if(gen!==generation)return;
@@ -93,7 +96,7 @@
     function activate(){activeDialog?.close();generation++;activeKey=identity(getContext());clearTimeout(timer);clearTimeout(recoveryTimer);recoveryBanner?.remove();recoveryBanner=null;baseline=editor.value;suspended=false;composing=false;status.textContent='';paint();offerRecovery(generation);}
     button.onclick=()=>{window.aideUI?.set('editorAutoSave',!enabled());suspended=false;paint();schedule();};
     manual.onclick=()=>flush(true);
-    editor.addEventListener('input',schedule);for(const event of ['input','scroll','select'])editor.addEventListener(event,()=>{viewChanges++;queueRecovery();},{passive:true});window.addEventListener('pagehide',storeRecovery);
+    editor.addEventListener('input',()=>{recoveryBanner?.remove();recoveryBanner=null;schedule();});for(const event of ['input','scroll','select'])editor.addEventListener(event,()=>{viewChanges++;queueRecovery();},{passive:true});window.addEventListener('pagehide',storeRecovery);
     editor.addEventListener('compositionstart',()=>{composing=true;clearTimeout(timer);});
     editor.addEventListener('compositionend',()=>{composing=false;schedule();});
     window.aideUI?.subscribe(()=>{paint();schedule();});

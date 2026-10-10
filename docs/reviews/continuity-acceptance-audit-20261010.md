@@ -139,3 +139,17 @@ VM通过同文件A/B不同草稿和位置、过期清理、清理A后B及共享�
 证据位于.agent-state/continuity-runtime/file-tab-A-after-safari-20261010.txt、file-tab-B-after-safari-20261010.txt和file-tab-conflict-safari-20261010.txt/.png。验收文件保留在实际工作区.cache/aide中作为独立记录，未修改其他用户文件。此次是本地TXT同文件浏览器链路证据；同文件SSH及Windows仍缺实机验证，关闭全部标签后的分支选择和容量管理尚未完成。新full正在运行，最终状态另行追加。
 
 补充独立磁盘读回：实际绑定工作区测试文件28字节，SHA-256 7c1798266274ae6a17d35a4524a0db15afa2875af7ecc204a6449226d2c5005b，正文精确匹配保存的A。full最终exit0，36项全部PASS（含Go race/vet），时间20261010T021726769602Z，指纹664255c581f8b326651a585492853fb35fd74bc375c56552e3b8033a21038f58，日志.agent-state/verify-20261010T021726769602Z.log。仅源码推送，本次不进入正式release。
+
+## 关闭文件标签后的草稿分支（2026-10-10）
+
+新增工作区/文件隔离的持久分支，不再只保留共享最后写入。恢复提示中多份草稿通过选择器切换；本页快照优先；保存只清除正文匹配的分支，忽略只清除选择项。单份2 MiB、每文件32份/8 MiB序列化预算，超限拒绝新持久写入并提示，不自动淘汰未保存稿。旧记录兼容，开始输入后收起过期恢复提示。
+
+原生Safari实际9999：专用.cache/aide/closed-drafts-20261010.txt分别编辑Alpha与Beta，关闭两页并在新页看到两份选择项；明确选择并恢复Alpha，保存后刷新，Beta仍可对比。对比中服务器为Alpha、本地为Beta。取消并关闭临时页，保留Beta恢复分支，用户原标签未关闭。自动保存保持关闭；未调用模型。磁盘29字节，SHA-256 0c315ee704023feb777ff3fba192845630020099ff44bbeaecf00912f2fc75bb，精确匹配Alpha。证据.agent-state/continuity-runtime/closed-file-branches-safari-20261010.txt/.png。
+
+容量拒绝、工作区隔离、匹配保存和逐项忽略通过VM；不等同于实际浏览器配额耗尽、SSH、Windows或强制退出验收。全局恢复容量管理和聊天/星图关闭标签后的分支管理仍待完成。本轮full和最后提示修复Safari复验状态随后追加。
+
+最后提示修复经start.command再次重建，运行source_sha=0f550e24940bb3e6fdd6c81d2cd2c990d35e59899fefb772b6b1a45d38da6156。Safari明确看到恢复提示后开始输入新标记，旧提示与按钮即时消失，新正文保留；记录file-recovery-banner-input-safari-20261010.txt/.png。临时页关闭，新增测试草稿保留，原有用户页面未关闭。
+
+最终运行源码的新页再次列出Beta及新输入两份分支；切换Beta后按钮从恢复变为对比，正文准确显示Alpha/Beta。截图closed-file-branches-final-safari-20261010.png。前次full时间20261010T023042725408Z的36条命令均exit0，但运行期间源码指纹改变，收据判FAIL；不作为最终门禁证据，已重跑。
+
+最终稳定源码full结束exit0，36项全部PASS，含Go race/vet；时间20261010T023837755925Z，指纹a192f80d44bc3e85c59e5033a5630968dc2848b438d1b1a3bae25d608cc5fd8e，日志.agent-state/verify-20261010T023837755925Z.log。本次只更新实现/文档并推送，不进入正式release，持续目标仍active。

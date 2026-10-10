@@ -1643,6 +1643,58 @@
         "sha256": "7c1798266274ae6a17d35a4524a0db15afa2875af7ecc204a6449226d2c5005b",
         "matches_saved_A": true
       }
+    },
+    "closed_file_branches_20261010": {
+      "status": "pass for tested local closed-file draft branches",
+      "environment": "native Safari actual9999; autosave off, no model calls",
+      "runtime_source_sha": "0f550e24940bb3e6fdd6c81d2cd2c990d35e59899fefb772b6b1a45d38da6156",
+      "file": ".cache/aide/closed-drafts-20261010.txt",
+      "checks": [
+        "Two different drafts persisted, both tabs closed, fresh tab offered both branches",
+        "Explicit Alpha selection/restoration and save",
+        "Beta remained after save and reload; comparison showed server Alpha/local Beta",
+        "On final rebuilt source, entering new text removed stale recovery banner",
+        "Final rebuilt source offered both retained branches; selecting Beta changed Restore to Compare and displayed Alpha/Beta accurately"
+      ],
+      "capacity_fixture": "PASS: single draft 2 MiB, branch array 32 records/8 MiB; rejection preserves persisted drafts; no automatic eviction",
+      "disk_readback": {
+        "bytes": 29,
+        "sha256": "0c315ee704023feb777ff3fba192845630020099ff44bbeaecf00912f2fc75bb",
+        "matches_saved_alpha": true
+      },
+      "evidence": [
+        ".agent-state/continuity-runtime/closed-file-branches-safari-20261010.txt",
+        ".agent-state/continuity-runtime/closed-file-branches-safari-20261010.png",
+        ".agent-state/continuity-runtime/file-recovery-banner-input-safari-20261010.txt",
+        ".agent-state/continuity-runtime/file-recovery-banner-input-safari-20261010.png",
+        ".agent-state/continuity-runtime/closed-file-branches-final-safari-20261010.png"
+      ],
+      "remaining": [
+        "SSH/Windows same-file branches",
+        "Actual browser quota exhaustion/abrupt termination",
+        "Whole-origin capacity manager and chat/star closed-tab branch UI"
+      ],
+      "cleanup": "Temporary file tabs closed; Alpha server file and Beta/new-input draft retained in dedicated cache; original user tabs preserved",
+      "superseded_full": {
+        "time": "20261010T023042725408Z",
+        "status": "fail",
+        "commands": 36,
+        "all_commands_exit_zero": true,
+        "reason": "Source fingerprint changed during run; final-source full rerun required"
+      },
+      "runtime": {
+        "startup": "bash start.command exit0",
+        "health": "healthy",
+        "image": "sha256:ca4d2a7073e6dffec4b35e27286ac6a3cad90edf86c08b5d381709a484444884",
+        "version": "v0.1.17.0 RC2"
+      },
+      "full": {
+        "status": "pass",
+        "fingerprint": "a192f80d44bc3e85c59e5033a5630968dc2848b438d1b1a3bae25d608cc5fd8e",
+        "time": "20261010T023837755925Z",
+        "log": ".agent-state/verify-20261010T023837755925Z.log",
+        "checks": 36
+      }
     }
   },
   "implementation_batch_20261010": {
