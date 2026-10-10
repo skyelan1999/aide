@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Autosave stale async callback guards implemented; preparing documentation/source push. Runtime acceptance delegated to Luna; production unchanged.",
+    "latest_completed": "Autosave stale callback isolation and handoff pushed at 58c230c. Syntax/docs checks passed; runtime/full/Safari acceptance delegated to Luna; production unchanged.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2234,7 +2234,12 @@
       "javascript_syntax": "PASS node --check file-autosave.js",
       "runtime_safari_full": "NOT_RUN; delegated to Luna"
     },
-    "push": "pending",
+    "push": {
+      "status": "pass",
+      "implementation_commit": "58c230c5946b1e63f469e284916f5f4924587e2e",
+      "command": "git push origin main",
+      "exit": 0
+    },
     "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md"
   }
 }
