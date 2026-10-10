@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
-	"math"
 	"net/http"
 	"os"
 	"os/exec"
@@ -41,6 +41,7 @@ type documentHit struct {
 	Offset  int           `json:"offset"`
 }
 type documentRequest struct {
+	Cursor    string   `json:"cursor,omitempty"`
 	Query     string   `json:"query"`
 	Mode      string   `json:"mode"`
 	Workspace string   `json:"workspace"`
@@ -51,14 +52,17 @@ type documentRequest struct {
 	Region    string   `json:"region"`
 }
 type documentResult struct {
-	Mode      string        `json:"mode"`
-	Engine    string        `json:"engine"`
-	Workspace string        `json:"workspace"`
-	Hits      []documentHit `json:"hits"`
-	Warnings  []string      `json:"warnings"`
-	Files     int           `json:"files"`
-	Chunks    int           `json:"chunks"`
-	Truncated bool          `json:"truncated"`
+	NextCursor string        `json:"nextCursor,omitempty"`
+	Scanned    int           `json:"scanned"`
+	Total      int           `json:"total"`
+	Mode       string        `json:"mode"`
+	Engine     string        `json:"engine"`
+	Workspace  string        `json:"workspace"`
+	Hits       []documentHit `json:"hits"`
+	Warnings   []string      `json:"warnings"`
+	Files      int           `json:"files"`
+	Chunks     int           `json:"chunks"`
+	Truncated  bool          `json:"truncated"`
 }
 
 var documentGate = make(chan struct{}, 2)
@@ -293,18 +297,46 @@ func (a *App) retrieveDocuments(ctx context.Context, g knowledgeGraph, in docume
 			}
 			return 0
 		}
-		return score(candidates[i]) > score(candidates[j])
+		if score(candidates[i]) != score(candidates[j]) {
+			return score(candidates[i]) > score(candidates[j])
+		}
+		return candidates[i].ID < candidates[j].ID
 	})
+	// Bind continuation to this exact query and ordered catalogue. Origin changes
+	// invalidate old positions; cursors never grant access beyond graph filters.
+	binding := in
+	binding.Cursor = ""
+	identity, _ := json.Marshal([]any{g.Workspace, binding, candidates})
+	catalogue := hash(identity)
+	start := 0
+	if in.Cursor != "" {
+		if len(in.Cursor) > 512 {
+			return result, fmt.Errorf("检索续查位置无效")
+		}
+		raw, err := base64.RawURLEncoding.DecodeString(in.Cursor)
+		var cursor struct {
+			Position  int
+			Catalogue string
+		}
+		if err != nil || json.Unmarshal(raw, &cursor) != nil || cursor.Catalogue != catalogue || cursor.Position < 0 || cursor.Position >= len(candidates) {
+			return result, fmt.Errorf("检索范围已变化，请重新搜索")
+		}
+		start = cursor.Position
+	}
+	result.Total, result.Scanned = len(candidates), start
 	chunks := []documentHit{}
 	bytesRead := 0
-	for _, n := range candidates {
+	attempted := 0
+	for _, n := range candidates[start:] {
 		if err := ctx.Err(); err != nil {
 			return result, err
 		}
-		if result.Files >= 32 || bytesRead >= 64<<20 || len(chunks) >= 2500 {
+		if attempted >= 32 || bytesRead >= 64<<20 || len(chunks) >= 2500 {
 			result.Truncated = true
 			break
 		}
+		attempted++
+		result.Scanned++
 		b, err := a.documentRawContext(ctx, n, g.Workspace)
 		if err != nil {
 			if ctx.Err() != nil {
@@ -314,6 +346,7 @@ func (a *App) retrieveDocuments(ctx context.Context, g knowledgeGraph, in docume
 			continue
 		}
 		if bytesRead+len(b) > 64<<20 {
+			result.Scanned--
 			result.Truncated = true
 			break
 		}
@@ -359,6 +392,14 @@ func (a *App) retrieveDocuments(ctx context.Context, g knowledgeGraph, in docume
 			}
 		}
 	}
+	if result.Scanned < result.Total {
+		raw, _ := json.Marshal(struct {
+			Position  int
+			Catalogue string
+		}{result.Scanned, catalogue})
+		result.NextCursor = base64.RawURLEncoding.EncodeToString(raw)
+		result.Truncated = true
+	}
 	if len(result.Warnings) > 50 {
 		omitted := len(result.Warnings) - 50
 		result.Warnings = result.Warnings[:50]
@@ -377,38 +418,17 @@ func (a *App) retrieveDocuments(ctx context.Context, g knowledgeGraph, in docume
 			}
 		}
 	} else {
-		query := documentTokens(in.Query)
-		df := map[string]int{}
-		terms := make([]map[string]float64, len(chunks))
-		for i, c := range chunks {
-			terms[i] = documentTokens(c.Text)
-			for term := range terms[i] {
-				df[term]++
-			}
+		var warning string
+		var err error
+		result.Hits, result.Engine, warning, err = a.hybridDocumentHits(ctx, g.Workspace, in.Query, chunks)
+		if err != nil {
+			return result, err
 		}
-		idf := func(t string) float64 { return math.Log(1+float64(len(chunks))/float64(1+df[t])) + 1 }
-		qn := 0.0
-		for t, v := range query {
-			qn += math.Pow(v*idf(t), 2)
-		}
-		for i, c := range chunks {
-			dot, norm := 0.0, 0.0
-			for t, v := range terms[i] {
-				w := (1 + math.Log(v)) * idf(t)
-				norm += w * w
-				dot += w * query[t] * idf(t)
-			}
-			if dot > 0 && qn > 0 && norm > 0 {
-				c.Score = dot / math.Sqrt(qn*norm)
-				result.Hits = append(result.Hits, c)
-			}
-		}
-		sort.SliceStable(result.Hits, func(i, j int) bool { return result.Hits[i].Score > result.Hits[j].Score })
-		if len(result.Hits) > 12 {
-			result.Hits = result.Hits[:12]
+		if warning != "" {
+			result.Warnings = append(result.Warnings, warning)
 		}
 	}
-	result.Warnings = append(result.Warnings, "原文指提取文本，格式换行可能与视觉排版不同；未包含OCR、批注、页眉页脚或完整覆盖保证。RAG使用本地TF-IDF片段排序，不是向量语义搜索。")
+	result.Warnings = append(result.Warnings, "原文指提取文本，格式换行可能与视觉排版不同；未包含OCR、批注、页眉页脚或完整覆盖保证。检索引擎与降级状态以 engine 和诊断为准。")
 	return result, nil
 }
 func (a *App) knowledgeDocumentSearch(w http.ResponseWriter, r *http.Request) {
@@ -419,7 +439,11 @@ func (a *App) knowledgeDocumentSearch(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
-	g := a.knowledgeSnapshot(ctx)
+	g, syncErr := a.knowledgeCurrentGraph(ctx, false)
+	if syncErr != nil {
+		knowledgeSyncFail(w, syncErr)
+		return
+	}
 	result, err := a.retrieveDocuments(ctx, g, in)
 	if err != nil {
 		fail(w, 400, err)
@@ -430,7 +454,12 @@ func (a *App) knowledgeDocumentSearch(w http.ResponseWriter, r *http.Request) {
 func (a *App) knowledgeDocumentAnswer(w http.ResponseWriter, r *http.Request, in documentRequest) {
 	ctx, cancel := context.WithTimeout(r.Context(), 45*time.Second)
 	defer cancel()
-	g := a.knowledgeForAI(a.knowledgeSnapshot(ctx))
+	g, syncErr := a.knowledgeCurrentGraph(ctx, false)
+	if syncErr != nil {
+		knowledgeSyncFail(w, syncErr)
+		return
+	}
+	g = a.knowledgeForAI(g)
 	in.Mode = "rag"
 	result, err := a.retrieveDocuments(ctx, g, in)
 	if err != nil {
@@ -524,7 +553,11 @@ func (a *App) knowledgeDocumentReference(w http.ResponseWriter, r *http.Request)
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 	defer cancel()
-	g := a.knowledgeSnapshot(ctx)
+	g, syncErr := a.knowledgeCurrentGraph(ctx, false)
+	if syncErr != nil {
+		knowledgeSyncFail(w, syncErr)
+		return
+	}
 	if g.Workspace != in.Workspace {
 		fail(w, 409, fmt.Errorf("工作区已切换"))
 		return
@@ -561,7 +594,11 @@ func (a *App) documentSearchTool(ctx context.Context, wsRoot *os.Root, task *Tas
 	}
 	child, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
-	g := a.knowledgeForAI(a.knowledgeSnapshot(child))
+	g, syncErr := a.knowledgeCurrentGraph(child, false)
+	if syncErr != nil {
+		return "错误：" + syncErr.Error()
+	}
+	g = a.knowledgeForAI(g)
 	if g.Workspace != knowledgeID(scope, "scope", "", ".") {
 		return "错误：工作区已切换，未检索其他工作区"
 	}

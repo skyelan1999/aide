@@ -99,3 +99,43 @@ func TestTaskOutcomeSnapshotIsDetached(t *testing.T) {
 		t.Fatal("snapshot aliases live task")
 	}
 }
+
+func TestTaskOutcomeSystemReceipt(t *testing.T) {
+	a, task := outcomeFixture(t)
+	task.Steps = []Step{{Name: "chat", Content: "model response"}, {Name: "file_application_receipt", Status: "failed", Content: strings.Repeat("actual receipt ", 300)}}
+	d := taskOutcomeProjection(task, "outcome-session", 42, "test", 0, 0, 100)
+	receipts := d["systemReceipts"].([]outcomeSystemReceipt)
+	if len(receipts) != 1 || receipts[0].ID != "S0002" || receipts[0].State != "failed" || !receipts[0].Truncated {
+		t.Fatal(receipts)
+	}
+	if d["summary"].(map[string]any)["verificationReports"] != 1 {
+		t.Fatal("system receipt must not become model verification report")
+	}
+	url := "/api/sessions/outcome-session/runs/outcome-run/outcome/evidence/S0002?digest=" + receipts[0].Digest
+	w := request(a, "GET", url, nil)
+	requireStatus(t, w, 200)
+	var raw map[string]any
+	_ = json.Unmarshal(w.Body.Bytes(), &raw)
+	if raw["source"] != "system" || raw["result"] != task.Steps[1].Content || raw["state"] != "failed" {
+		t.Fatal(raw)
+	}
+	snapshot, _, _, err := a.outcomeTaskSnapshot("outcome-session", "outcome-run")
+	if err != nil {
+		t.Fatal(err)
+	}
+	snapshot.Steps[1].Content = "changed snapshot"
+	if task.Steps[1].Content == "changed snapshot" {
+		t.Fatal("steps snapshot aliases live task")
+	}
+	task.Steps[1].Content = "pending manual approval"
+	task.Steps[1].Status = "completed"
+	requireStatus(t, request(a, "GET", url, nil), 409)
+	d = taskOutcomeProjection(task, "outcome-session", 42, "test", 0, 0, 100)
+	if d["systemReceipts"].([]outcomeSystemReceipt)[0].Content != "pending manual approval" {
+		t.Fatal("completed must retain limited receipt contents")
+	}
+	for _, id := range []string{"S0000", "S0001", "S0003", "Sbad"} {
+		requireStatus(t, request(a, "GET", "/api/sessions/outcome-session/runs/outcome-run/outcome/evidence/"+id, nil), 404)
+	}
+	requireStatus(t, request(a, "GET", "/api/sessions/other/runs/outcome-run/outcome/evidence/S0002", nil), 404)
+}

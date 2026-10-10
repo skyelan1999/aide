@@ -210,6 +210,10 @@
       ],
       [
         "node",
+        "scripts/test_approval_persistence.cjs"
+      ],
+      [
+        "node",
         "--check",
         "internal/server/web/settings-init.js"
       ],
@@ -273,6 +277,70 @@
       [
         "python3",
         "scripts/test_control_bridge_launchers.py"
+      ],
+      [
+        "node",
+        "scripts/test_ui_click_latency.cjs"
+      ],
+      [
+        "node",
+        "scripts/markdown-image-path.test.js"
+      ],
+      [
+        "node",
+        "scripts/markdown-download-export.test.js"
+      ],
+      [
+        "node",
+        "scripts/starmap-infrared.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/starmap-path.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/starmap-timeline.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/markdown-live-preview.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/markdown-history-writable.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/starmap-document-continuation.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/starmap-workspace-scene.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/starmap-coverage-state.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/toast-lifecycle.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/lock-entry.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/file-recovery-scroll.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/continuity-isolation.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/workspace-scene-transition.test.cjs"
       ]
     ],
     "full": [

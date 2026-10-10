@@ -1,0 +1,2 @@
+# Preserve official vendored bytes, including license comment line endings.
+internal/server/web/vendor/markdown-export/jspdf.umd.min.js whitespace=-blank-at-eol

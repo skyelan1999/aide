@@ -643,11 +643,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .md-outline a:hover { color: var(--text); background: var(--selected); }
 .md-outline a.active { color: var(--brand-text, var(--brand)); border-left-color: var(--brand); background: color-mix(in srgb, var(--brand) 10%, transparent); }
 .md-outline a:focus-visible, .md-outline summary:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; border-radius: 4px; }
-@container markdown-reader (max-width: 639px) {
-  .md-reader { display: block; }
-  .md-outline { margin-bottom: 18px; border-bottom: 1px solid var(--line); }
-  .md-outline nav { max-height: 24dvh; }
-}
+.md-reader.md-reader-medium { grid-template-columns: 132px minmax(0, 1fr); gap: 16px; }
+.md-reader.md-reader-compact { display: block; position: relative; }
+.md-reader-compact > .md-outline { float: right; width: 36px; height: 36px; margin: 0 0 0 8px; border: 1px solid var(--line); }
+.md-reader-compact > .md-outline > summary { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; font-size: 0; list-style: none; }
+.md-reader-compact > .md-outline > summary::-webkit-details-marker { display: none; }
+.md-reader-compact > .md-outline > summary::after { content: '☷'; font-size: 21px; line-height: 1; font-weight: 400; }
+.md-reader-compact > .md-outline[open] { z-index: 4; }
+.md-reader-compact > .md-outline nav { position: absolute; right: 0; top: 42px; width: min(260px, 75cqi); max-height: 48dvh; padding: 8px; background: var(--panel, var(--bg)); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 10px 30px #0002; }
 @media (prefers-reduced-motion: reduce) { .md-outline a { transition: none; } }
 
 .md-media-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 9px 0; flex: 0 0 auto; border-bottom: 1px solid var(--line); }
@@ -737,3 +740,22 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
 .file-view.md-split>.file-view-content{display:none}
 .markdown-print-frame{position:fixed;left:-10000px;top:0;width:794px;height:1123px;border:0;pointer-events:none}
 @media(max-width:720px){.editor-dialog.md-split,.file-view.md-split{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(220px,40dvh) minmax(200px,40dvh);row-gap:12px}.editor-dialog.md-split>.editor-preview,.file-view.md-split>.file-view-preview{grid-column:1;grid-row:3;border-left:0;border-top:1px solid var(--line);padding-left:16px}.editor-dialog.md-split{max-height:92dvh;overflow:auto}.file-view.md-split{overflow:auto}}
+
+/* Format chooser stays in the top layer, including inside modal editors. */
+.markdown-export-menu{box-sizing:border-box;position:fixed;inset:auto;margin:0;padding:6px;width:280px;max-width:calc(100vw - 16px);border:1px solid var(--line,#d7dce4);border-radius:14px;background:var(--panel,#fff);color:var(--text,#202630);box-shadow:0 12px 36px #0002;z-index:2000}
+.markdown-export-menu button{display:flex;gap:12px;align-items:center;width:100%;padding:11px 12px;border:0;border-radius:9px;background:transparent;color:inherit;text-align:left;cursor:pointer}
+.markdown-export-menu button:hover,.markdown-export-menu button:focus-visible{background:var(--surface-alt,#8295ab20);outline:2px solid transparent}
+.markdown-export-menu button:focus-visible{outline-color:var(--brand,#557da2)}
+.markdown-export-format{display:grid;place-items:center;flex:0 0 40px;height:35px;border-radius:8px;background:#8295ab18;color:var(--brand,#557da2);font:600 11px/1 ui-monospace,monospace;letter-spacing:.04em}
+.markdown-export-menu strong,.markdown-export-menu small{display:block}.markdown-export-menu strong{font-size:13px;font-weight:600;line-height:1.5}.markdown-export-menu small{margin-top:2px;font-size:11px;opacity:.68;line-height:1.5}
+
+/* Split Markdown outline docks to the pane divider without reserving a column. */
+.md-reader.md-reader-docked { display: block; }
+.md-split > .md-outline-dock { grid-column: 2; grid-row: 2; align-self: center; justify-self: start; position: relative; top: auto; margin: 0; width: 30px; z-index: 8; border: 1px solid var(--line); border-left: 0; border-radius: 0 9px 9px 0; box-shadow: 2px 2px 8px #0001; }
+.md-outline-dock > summary { display: grid; place-items: center; width: 29px; min-height: 76px; padding: 10px 6px; writing-mode: vertical-rl; list-style: none; font-size: 11px; letter-spacing: .12em; color: var(--muted, var(--text)); transition: color .16s ease, background .16s ease; }
+.md-outline-dock > summary::-webkit-details-marker { display: none; }
+.md-outline-dock > summary:hover, .md-outline-dock[open] > summary { color: var(--brand-text, var(--brand)); background: var(--selected); border-radius: 0 9px 9px 0; }
+.md-outline-dock nav { position: absolute; left: 100%; top: 50%; transform: translateY(-50%); width: min(260px, 38vw); max-height: 58dvh; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel, var(--bg)); box-shadow: 0 12px 36px #0003; animation: md-outline-reveal .16s ease-out; }
+@keyframes md-outline-reveal { from { opacity: 0; transform: translate( -6px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
+@media(max-width:720px) { .md-split > .md-outline-dock { grid-column: 1; grid-row: 3; align-self: start; } .md-outline-dock nav { top: 0; transform: none; width: min(260px, 72vw); animation: none; } }
+@media(prefers-reduced-motion:reduce) { .md-outline-dock nav { animation: none; } .md-outline-dock > summary { transition: none; } }

@@ -1,0 +1,12 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const source=fs.readFileSync('internal/server/web/markdown-export.js','utf8');
+const context={window:{addEventListener(){}},setTimeout,clearTimeout,setInterval,clearInterval,AbortController,DOMException};vm.createContext(context);vm.runInContext(source,context);
+const refs=context.window.AideMarkdownExport.references;
+const md='![inline](a.png)\n[x][ref]\n[ref]: <assets/file name.txt>\n<img src="graph.drawio.svg">\n```md\n![ignored](private.png)\n```\n`[ignored](secret.txt)`\n![paren](folder/a(b).png)';
+assert.deepEqual(Array.from(refs(md),r=>r.value),['a.png','assets/file name.txt','graph.drawio.svg','folder/a(b).png']);
+for(const ref of refs(md))assert.equal(md.slice(ref.start,ref.start+ref.length),ref.value);
+assert(!source.includes('.print('));assert(source.includes("a.download=name"));assert(source.includes('signal:job.controller.signal'));
+const app=fs.readFileSync('internal/server/web/app.js','utf8');assert(app.includes('fetch(fileRawUrl(path,spec.root,spec.source,spec),{signal})'));assert(app.includes("panelId==='editor-dialog'?$(panelId).open"));
+const index=fs.readFileSync('internal/server/web/index.html','utf8');assert(!index.includes('data-i18n="导出 PDF"'));for(const id of ['editor-export-pdf','file-view-export-pdf'])assert(index.includes('id="'+id+'" class="quiet quiet-sm hidden" data-i18n="导出">导出'));
+(async()=>{const pending=context.window.AideMarkdownExport.run('pdf',{valid:()=>true,title:'a.md',load:()=>new Promise(()=>{})});context.window.AideMarkdownExport.close();await assert.rejects(pending,e=>e.name==='AbortError');console.log('PASS: direct downloads, resource offsets/code exclusion, source pinning, stale editor guard and cancellation during library loading');})().catch(e=>{console.error(e);process.exitCode=1;});

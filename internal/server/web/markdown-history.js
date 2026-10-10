@@ -40,7 +40,7 @@
          if(blocked()||isDirty()||editor.value!==currentText||['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))throw Error(t('编辑状态已变化，请重新对比。'));
          editor.readOnly=true;restoring=true;const result=await api('/file/history/restore',{method:'POST',body:JSON.stringify({path:spec.path,source:spec.source||'',workspaceId:spec.wsId||'',revision:v.id,identity:plan.identity,assets:restoreAssets,expected:Object.fromEntries(plan.files.map(f=>[f.path,f.before]))})});
          if(blocked()||!dialog.open||['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return;
-         onRestored(result);dialog.close();
+         editor.readOnly=wasReadOnly;onRestored(result);dialog.close();
         }catch(e){if(e.data?.journal){const receipt=document.createElement('p');receipt.textContent=t('恢复未完成，操作记录：')+e.data.journal+' · '+(e.data.files||[]).filter(f=>f.applied).map(f=>f.path).join(', ');changes.append(receipt);}error(e);}finally{if(restoring&&!['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))editor.readOnly=wasReadOnly;confirm.disabled=false;checkbox.disabled=false;}};
        }catch(e){error(e);}finally{preview.disabled=false;}};
        checkbox.onchange=()=>changes.replaceChildren();restoreArea.append(label,preview,changes);detail.append(restoreArea);

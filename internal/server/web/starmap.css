@@ -366,7 +366,7 @@ html[data-motion=reduced] #cosmic-nav { transition:none; }
 }
 
 /* Header logbook: the index evidence belongs to this sky's observing tools. */
-header:has(#limits[open]) { z-index:6; }
+header:has(#limits[open]) { z-index:8; }
 header #limits,header #limits[open] {
   position:relative;inset:auto;margin:0;padding:0;max-width:none;
   flex-shrink:0;background:transparent;border:0;border-radius:0;color:var(--map-muted);
@@ -467,7 +467,7 @@ html[data-motion=reduced] #ai-toggle::after { transition:none; }
 .chips button,.chips button.source-chip { min-height:34px;padding:7px 38px 7px 10px; }
 .chips button[data-region=""] { grid-column:1/-1; }
 .chips .source-chip-name { font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%; }
-.chips .source-chip-meta { display:none; }
+.chips .source-chip-meta { display:block;font-size:9px;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
 .chips button::after { right:7px;padding:2px 4px;font-size:9px; }
 @media(max-height:780px) and (min-width:721px) { .search-panel { top:258px; } }
 @media(max-height:580px) and (min-width:721px) { .search-panel { top:108px; } }
@@ -479,3 +479,35 @@ html[data-motion=reduced] #ai-toggle::after { transition:none; }
 .session-destination label{display:block;font-size:12px;color:var(--map-muted);margin-bottom:8px}
 .session-destination input{box-sizing:border-box;width:100%;min-height:40px;padding:10px 12px;border-radius:10px;font:12px/1.5 ui-monospace,SFMono-Regular,monospace}
 .session-destination p{font-size:11px;line-height:1.6;color:var(--map-muted);margin:8px 0 0}
+
+/* The infrared observation control keeps normal text and source colours intact. */
+#infrared{display:inline-flex;align-items:center;gap:7px}#infrared .control-icon{width:16px;height:16px}
+#infrared[aria-pressed=true]{color:var(--map-text);background:var(--selected);box-shadow:inset 0 -2px #b77962}
+#infrared-note{position:fixed;right:var(--map-gutter,30px);top:94px;pointer-events:none;color:var(--map-muted);font-size:10px;letter-spacing:.5px;z-index:2}
+#infrared-note[hidden]{display:none}
+@media(max-width:720px){#infrared-note{top:72px;right:18px;font-size:9px}.sky-controls button{padding-left:9px;padding-right:9px}}
+@media(forced-colors:active){#infrared[aria-pressed=true]{background:Highlight;color:HighlightText;box-shadow:none}}
+
+.code-relation small{display:block;color:var(--map-muted);font-size:10px;line-height:1.6;margin-top:3px}.code-relation[href]{color:var(--map-text);text-decoration:none;box-sizing:border-box}.code-relation[href]:focus-visible{outline:2px solid var(--brand-text);outline-offset:2px}
+
+/* Long code evidence must remain visible when keyboard focus scrolls it. */
+#detail:has(#code-insight:not([hidden])) .detail-actions{position:static}
+
+.path-explorer{margin:18px 0;border-block:1px solid var(--border, #ffffff20);padding:14px 0}.path-explorer summary{cursor:pointer;font-weight:600}.path-explorer summary span{font-size:11px;font-weight:400;opacity:.65;margin-left:10px}.path-explorer form{margin-top:14px}.path-endpoint{display:flex;gap:8px;margin:6px 0 12px}.path-endpoint input{min-width:0;flex:1}.path-endpoint button{font-size:11px;white-space:nowrap}.path-option{display:flex!important;gap:8px;align-items:center;font-size:12px!important;margin:12px 0}.path-option input{width:auto!important}.path-actions{display:flex;gap:8px;margin:14px 0}.path-explorer ol{padding-left:22px}.path-explorer li{padding:8px 0;border-bottom:1px solid var(--border,#ffffff15)}.path-explorer li p,#path-status{font-size:12px;line-height:1.65;overflow-wrap:anywhere}.path-explorer li a{display:inline-block;font-size:11px;margin:4px 8px 4px 0;color:inherit}.path-explorer button:focus-visible,.path-explorer a:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+
+/* Historical evidence lives in the existing logbook, leaving the sky fixed. */
+#knowledge-timeline{margin:18px 0;padding:14px 0;border-block:1px solid var(--map-line)}
+#knowledge-timeline>summary{cursor:pointer;font-weight:600;color:var(--map-text)}
+#timeline-form{display:grid;gap:12px;margin-block:14px}
+#timeline-form label{display:grid;gap:6px;font-size:12px}
+#timeline-form select{width:100%;min-width:0;padding:9px;color:var(--map-text);background:var(--map-surface);border:1px solid var(--map-line);border-radius:8px}
+#knowledge-timeline button{padding:9px 12px;border-radius:8px;border:1px solid var(--map-line);background:var(--map-surface);color:var(--map-text);cursor:pointer}
+#knowledge-timeline button:disabled{opacity:.45;cursor:default}
+#timeline-results{padding-left:20px}#timeline-results li{margin:14px 0}#timeline-results p,#timeline-evidence p{overflow-wrap:anywhere}
+#timeline-results pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;font:12px/1.7 ui-monospace,monospace;color:var(--map-text)}
+#timeline-results summary{cursor:pointer;overflow-wrap:anywhere;margin-block:8px}
+#timeline-pages:not([hidden]){display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+#document-progress{padding:12px 2px 4px;border-top:1px solid var(--line,rgba(150,174,199,.16));margin-top:12px}
+#document-coverage{font-size:12px;line-height:1.6;color:var(--map-muted);margin:0 0 8px}
+#document-next{width:100%;min-height:38px;text-align:center}

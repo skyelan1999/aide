@@ -31,17 +31,17 @@ func TestBundledControlPluginsUpgradeExistingWorkspace(t *testing.T) {
 	defer a.Close()
 	w := request(a, "GET", "/api/plugins", nil)
 	requireStatus(t, w, 200)
-	for _, id := range []string{"user-tool", "browser-control", "computer-control"} {
+	for _, id := range []string{"user-tool", "browser-control", "computer-control", "markdown-history"} {
 		if !strings.Contains(w.Body.String(), `"id":"`+id+`"`) {
 			t.Fatalf("missing plugin %s: %s", id, w.Body.String())
 		}
 	}
-	if len(a.pluginRegistry.Plugins) != 3 {
+	if len(a.pluginRegistry.Plugins) != 4 {
 		t.Fatalf("registry size: %d", len(a.pluginRegistry.Plugins))
 	}
 	for _, p := range a.pluginRegistry.Plugins {
-		if p.Enabled {
-			t.Fatalf("upgrade unexpectedly enabled %s", p.ID)
+		if p.Enabled != (p.ID == "markdown-history") {
+			t.Fatalf("unexpected default enabled state for %s: %t", p.ID, p.Enabled)
 		}
 	}
 	requireStatus(t, request(a, "PUT", "/api/plugins/browser-control/settings", map[string]any{"settings": map[string]any{"allowedHosts": []string{"example.com"}}}), 200)
@@ -61,7 +61,7 @@ func TestBundledControlPluginsUpgradeExistingWorkspace(t *testing.T) {
 	if err := a.loadPlugins(); err != nil {
 		t.Fatal(err)
 	}
-	if len(a.pluginRegistry.Plugins) != 3 || !a.pluginRegistry.Plugins[1].Enabled || a.pluginRegistry.Plugins[1].Settings["allowedHosts"] == nil {
+	if len(a.pluginRegistry.Plugins) != 4 || !a.pluginRegistry.Plugins[1].Enabled || a.pluginRegistry.Plugins[1].Settings["allowedHosts"] == nil {
 		t.Fatalf("reload replaced registry state: %+v", a.pluginRegistry)
 	}
 	code, _ := os.ReadFile(codePath)
@@ -70,11 +70,11 @@ func TestBundledControlPluginsUpgradeExistingWorkspace(t *testing.T) {
 	}
 	var persisted pluginRegistry
 	registryBytes, err := os.ReadFile(filepath.Join(pluginDir, "registry.json"))
-	if err != nil || json.Unmarshal(registryBytes, &persisted) != nil || len(persisted.Plugins) != 3 {
+	if err != nil || json.Unmarshal(registryBytes, &persisted) != nil || len(persisted.Plugins) != 4 {
 		t.Fatal("installed plugin registry was not persisted")
 	}
 	requireStatus(t, request(a, "DELETE", "/api/plugins/computer-control", nil), 200)
-	if err := a.loadPlugins(); err != nil || len(a.pluginRegistry.Plugins) != 2 {
+	if err := a.loadPlugins(); err != nil || len(a.pluginRegistry.Plugins) != 3 {
 		t.Fatalf("startup resurrected an explicitly removed builtin: %v", err)
 	}
 }
@@ -86,11 +86,22 @@ func TestBundledControlPluginsRegisterInEmptyWorkspace(t *testing.T) {
 	if err := a.loadPlugins(); err != nil {
 		t.Fatal(err)
 	}
-	if len(a.pluginRegistry.Plugins) != 2 {
-		t.Fatalf("expected two bundled control plugins, got %d", len(a.pluginRegistry.Plugins))
+	if len(a.pluginRegistry.Plugins) != 3 {
+		t.Fatalf("expected three bundled plugins, got %d", len(a.pluginRegistry.Plugins))
 	}
-	if err := a.loadPlugins(); err != nil || len(a.pluginRegistry.Plugins) != 2 {
+	if err := a.loadPlugins(); err != nil || len(a.pluginRegistry.Plugins) != 3 {
 		t.Fatalf("repeat startup duplicated registration: %v", err)
+	}
+	want := map[string]bool{"browser-control": false, "computer-control": false, "markdown-history": true}
+	for _, plugin := range a.pluginRegistry.Plugins {
+		enabled, exists := want[plugin.ID]
+		if !exists || plugin.Enabled != enabled {
+			t.Fatalf("unexpected bundled plugin/default: %+v", plugin)
+		}
+		delete(want, plugin.ID)
+	}
+	if len(want) != 0 {
+		t.Fatalf("missing bundled plugins: %v", want)
 	}
 }
 

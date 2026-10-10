@@ -36,6 +36,18 @@ type outcomeReport struct {
 	State     string `json:"state"`
 	Truncated bool   `json:"truncated"`
 }
+type outcomeSystemReceipt struct {
+	ID        string `json:"id"`
+	State     string `json:"state"`
+	Content   string `json:"content"`
+	Digest    string `json:"digest"`
+	Truncated bool   `json:"truncated"`
+}
+
+func outcomeReceiptDigest(step Step) string {
+	b, _ := json.Marshal([]string{step.Name, step.Status, step.Content})
+	return hash(b)
+}
 
 func outcomeDigest(use ToolUse) string {
 	b, _ := json.Marshal([]string{use.Tool, use.Args, use.Result})
@@ -76,6 +88,7 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 		t.Files = append([]Change(nil), run.Files...)
 		t.Commands = append([]string(nil), run.Commands...)
 		t.ToolUses = append([]ToolUse(nil), run.ToolUses...)
+		t.Steps = append([]Step(nil), run.Steps...)
 		t.ApprovalReviews = append([]ApprovalReview(nil), run.ApprovalReviews...)
 		t.ResearchFindings = append([]ResearchFinding(nil), run.ResearchFindings...)
 		t.ToolExecutionIntents = append([]ToolExecutionIntent(nil), run.ToolExecutionIntents...)
@@ -91,6 +104,7 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 	files := []outcomeFile{}
 	uses := []outcomeExecution{}
 	reports := []outcomeReport{}
+	receipts := []outcomeSystemReceipt{}
 	gaps := []string{}
 	applied := 0
 	unknown := []ToolExecutionIntent{}
@@ -137,6 +151,13 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		}
 		reports = append(reports, outcomeReport{title, content, fmt.Sprintf("E%04d", i+1), state, truncated})
 	}
+	for i, step := range task.Steps {
+		if step.Name != "file_application_receipt" {
+			continue
+		}
+		content, truncated := outcomeText(step.Content, 2400)
+		receipts = append(receipts, outcomeSystemReceipt{fmt.Sprintf("S%04d", i+1), step.Status, content, outcomeReceiptDigest(step), truncated})
+	}
 	if len(reports) == 0 {
 		gaps = append(gaps, "没有验证报告记录；任务完成不代表验收通过")
 	}
@@ -155,8 +176,9 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 	goal, goalTruncated := outcomeText(task.Prompt, 20000)
 	return map[string]any{
 		"version": 1, "taskId": task.ID, "sessionId": sessionID, "sessionNumber": number, "sessionTitle": title, "workspaceId": task.WorkspaceID, "created": task.Created, "status": task.Status, "goal": goal, "goalTruncated": goalTruncated, "goalDigest": hash([]byte(task.Prompt)), "plan": task.AgentPlan,
-		"summary": map[string]any{"files": len(task.Files), "applicationRecords": applied, "executions": len(task.ToolUses), "verificationReports": len(reports), "findings": len(task.ResearchFindings), "unknownOutcomes": len(unknown)},
-		"files":   files, "executions": uses, "verification": reports, "findings": task.ResearchFindings, "suggestedCommands": task.Commands, "unknownCalls": unknown, "gaps": gaps,
+		"summary":        map[string]any{"files": len(task.Files), "applicationRecords": applied, "executions": len(task.ToolUses), "verificationReports": len(reports), "systemReceipts": len(receipts), "findings": len(task.ResearchFindings), "unknownOutcomes": len(unknown)},
+		"systemReceipts": receipts, "systemReceiptNote": "系统应用回执记录应用后的检查及其限制，不等于当前文件复核或完整产品验收；completed也可能记录待人工审批或远程未读回，请查看原文",
+		"files": files, "executions": uses, "verification": reports, "findings": task.ResearchFindings, "suggestedCommands": task.Commands, "unknownCalls": unknown, "gaps": gaps,
 		"approvals": task.ApprovalReviews, "approvalNote": "审批记录仅证明当时的决策及匹配依据，不证明执行成功；最多保留最近50条，旧记录可能缺少来源字段",
 		"release": map[string]string{"state": "not_recorded", "message": "尚无结构化发布验收记录；聊天结论与命令文本不证明远端发布成功"},
 		"page":    map[string]any{"fileNext": fEnd, "filesMore": fEnd < len(task.Files), "executionNext": eEnd, "executionsMore": eEnd < len(task.ToolUses), "limit": limit},
@@ -196,6 +218,21 @@ func (a *App) taskOutcomeEvidenceAPI(w http.ResponseWriter, r *http.Request) {
 	task, _, _, err := a.outcomeTaskSnapshot(r.PathValue("id"), r.PathValue("run"))
 	if err != nil {
 		fail(w, 404, err)
+		return
+	}
+	if strings.HasPrefix(r.PathValue("evidence"), "S") {
+		index, err := strconv.Atoi(strings.TrimPrefix(r.PathValue("evidence"), "S"))
+		if err != nil || index < 1 || index > len(task.Steps) || task.Steps[index-1].Name != "file_application_receipt" {
+			fail(w, 404, errors.New("系统回执编号不存在"))
+			return
+		}
+		step := task.Steps[index-1]
+		digest := outcomeReceiptDigest(step)
+		if expected := r.URL.Query().Get("digest"); expected != "" && expected != digest {
+			fail(w, 409, errors.New("证据记录已变化，请重新打开成果舱"))
+			return
+		}
+		jsonOut(w, 200, map[string]any{"id": fmt.Sprintf("S%04d", index), "index": index, "tool": step.Name, "source": "system", "state": step.Status, "result": step.Content, "digest": digest, "note": "历史系统应用回执；查看原文中的检查范围，不推断当前文件或产品验收通过"})
 		return
 	}
 	index, err := strconv.Atoi(strings.TrimPrefix(r.PathValue("evidence"), "E"))

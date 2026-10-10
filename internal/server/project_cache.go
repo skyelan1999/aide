@@ -42,13 +42,13 @@ func (a *App) pullProjectCacheDir(rel string) error {
 			remoteNames[name] = true
 		}
 	}
-	// Remove only stale Markdown working copies; the remote source is authoritative.
+	// Remove stale Markdown and the one owned token-memory working copy; the remote source is authoritative.
 	old, err := os.ReadDir(local)
 	if err != nil {
 		return err
 	}
 	for _, entry := range old {
-		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".md") && !remoteNames[entry.Name()] {
+		if !entry.IsDir() && (strings.HasSuffix(entry.Name(), ".md") || rel == "aide" && entry.Name() == memoryTokenFile) && !remoteNames[entry.Name()] {
 			if err := os.Remove(filepath.Join(local, entry.Name())); err != nil {
 				return err
 			}
@@ -56,7 +56,7 @@ func (a *App) pullProjectCacheDir(rel string) error {
 	}
 	for _, entry := range entries {
 		name, _ := entry["name"].(string)
-		if entry["dir"] == true || !strings.HasSuffix(name, ".md") || path.Base(name) != name || safePath(name) != nil {
+		if entry["dir"] == true || !(strings.HasSuffix(name, ".md") || rel == "aide" && name == memoryTokenFile) || path.Base(name) != name || safePath(name) != nil {
 			continue
 		}
 		data, err := a.sftpRead(path.Join(dir, name))

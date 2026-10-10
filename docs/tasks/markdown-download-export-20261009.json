@@ -1,0 +1,70 @@
+{
+  "id": "markdown-download-export-20261009",
+  "request": "导出改成格式菜单，PDF、Markdown、带资源 ZIP、图片直接渲染下载，不弹打印窗口",
+  "baseline": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+  "initial_status": "M docs/architecture/continuity-roadmap.md\n M docs/architecture/knowledge-map.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M internal/server/knowledge_map.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/settings-schema.json\n?? docs/tasks/knowledge-index-policy-20261009.json\n?? internal/server/knowledge_index_policy.go\n?? internal/server/knowledge_index_policy_test.go",
+  "acceptance": [
+    "两个 Markdown 工具栏导出菜单选择 PDF/MD/ZIP/PNG",
+    "直接浏览器下载，不调用打印或额外窗口",
+    "当前草稿和源上下文固定；ZIP 保留直接引用资源",
+    "锁屏/切换文件取消；资源错误不静默漏图"
+  ],
+  "scope": [
+    "internal/server/web/markdown-export.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/macos.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/vendor/markdown-export",
+    "scripts/markdown-download-export.test.js",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/tasks/markdown-download-export-20261009.json",
+    "scripts/markdown-image-path.test.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "按需加载本地 HTML 渲染库；分片生成 PDF；ZIP 重写直接引用资源；下载 Blob；不新增服务端接口",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "两处工具栏导出格式菜单；本地按需渲染 PDF/PNG、源 MD 与直接资源 ZIP；取消、资源限额和下载处理",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "组件浏览器四种真实下载、ZIP 解包、1/8 页 PDF 渲染、失效图片、模态菜单与窄屏；两项脚本及 quick pass。完整鉴权工作台、SSH、Windows NOT_RUN",
+      "evidence": [
+        "node scripts/markdown-download-export.test.js",
+        "node scripts/markdown-image-path.test.js",
+        ".agent-state/verify-20261009T092529521380Z.log",
+        ".agent-state/markdown-download-preview/menu.png",
+        "Downloads/草稿.md, 草稿.zip, 草稿.pdf, 草稿.png, 草稿 (2).pdf"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新 Markdown 编辑与直接下载说明、位图 PDF 边界、ZIP 资源范围、超时与容量限制",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留继承的索引策略改动；依赖固定版本含许可证；组件临时资料归 .agent-state；临时 18219 服务与验收浏览器标签已关闭",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本轮未发布、未部署；生产服务未替换",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "还原本任务导出模块、工具栏绑定/样式/依赖版本；无需数据迁移。不得覆盖继承的索引策略改动。",
+  "handoff": "导出需求完成源码和组件验收，生产未更新；完整鉴权工作台、SSH、Windows 仍需端到端验收。整体连续性目标继续 active。"
+}

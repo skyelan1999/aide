@@ -18,7 +18,7 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
  for(const node of byID.values()){const file=node.kind==='symbol'&&byID.has(node.parentFile)?byID.get(node.parentFile):node;scopeByID.set(node.id,JSON.stringify([file.id,declarationFor(node)]));}
  function representative(id){let root=id;while(union.get(root)!==root)root=union.get(root);while(id!==root){const next=union.get(id);union.set(id,root);id=next;}return root;}
  function join(a,b){a=representative(a);b=representative(b);if(a===b)return;if(rank.get(a)<rank.get(b))[a,b]=[b,a];union.set(b,a);minimum.set(a,minimum.get(a)<minimum.get(b)?minimum.get(a):minimum.get(b));if(rank.get(a)===rank.get(b))rank.set(a,rank.get(a)+1);}
- for(const edge of validEdges){if(edge.kind!=='call_candidate')continue;
+ for(const edge of validEdges){if(!['call_candidate','call_typed'].includes(edge.kind))continue;
   if(!out.has(edge.from)){out.set(edge.from,new Set());back.set(edge.from,new Set());}
   if(!out.has(edge.to)){out.set(edge.to,new Set());back.set(edge.to,new Set());}
   out.get(edge.from).add(edge.to);back.get(edge.to).add(edge.from);
@@ -37,7 +37,7 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
  }
  const callGroups=new Map();
  for(const id of localIncident){const key=minimum.get(representative(id));if(!callGroups.has(key))callGroups.set(key,{key,members:[],edges:0});callGroups.get(key).members.push(id);}
- for(const edge of validEdges)if(edge.kind==='call_candidate'&&scopeByID.get(edge.from)===scopeByID.get(edge.to))callGroups.get(minimum.get(representative(edge.from))).edges++;
+ for(const edge of validEdges)if(['call_candidate','call_typed'].includes(edge.kind)&&scopeByID.get(edge.from)===scopeByID.get(edge.to))callGroups.get(minimum.get(representative(edge.from))).edges++;
  const normalized=value=>String(value||'').replace(/\\/g,'/').split('/').filter(part=>part&&part!=='.').join('/');
  const dirname=value=>{const parts=value.split('/');parts.pop();return parts.join('/')||'.';};
  const base=value=>value.split('/').filter(Boolean).pop()||value;
@@ -67,7 +67,7 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
   const declarationGroup=create(fileGroup,5,declarationIdentity,declarationLabel,region,'实际 defines 所属对象或声明种类；须有至少三个不同已成立恒星系统才显示为旋臂。',symbolOwner?'defines '+symbolOwner.id:'symbolKind / kind',{ownerID:symbolOwner?.id||'',symbolKind:node.symbolKind||node.kind});
   const callKey=localIncident.has(node.id)?minimum.get(representative(node.id)):null,callGroup=callKey?callGroups.get(callKey):null;
   const orbitIdentity=callKey?'calls:'+callKey:'node:'+node.id;
-  const orbit=create(declarationGroup,6,orbitIdentity,(node.name||node.id)+' · 调用单元',region,callGroup?'同一真实 file/owner 范围内的局部 call_candidate 联通分量；至少四个不同真实节点才成立恒星系统。':'此范围没有已解析的局部调用联通分量，单节点保留行星；跨范围调用仍保留真实关系。',callGroup?'局部静态调用联通分量':'不推断未使用或不存在运行时调用',{scope:scopeByID.get(node.id),componentKey:callKey||''});
+  const orbit=create(declarationGroup,6,orbitIdentity,(node.name||node.id)+' · 调用单元',region,callGroup?'同一真实 file/owner 范围内的局部静态调用联通分量；至少四个不同真实节点才成立恒星系统。':'此范围没有已解析的局部调用联通分量，单节点保留行星；跨范围调用仍保留真实关系。',callGroup?'局部静态调用联通分量':'不推断未使用或不存在运行时调用',{scope:scopeByID.get(node.id),componentKey:callKey||''});
   if(callGroup){orbit.unitID='local-calls:'+scopeByID.get(node.id)+':'+callKey;orbit.componentKey=callKey;orbit.componentMemberCount=callGroup.members.length;orbit.componentEdgeCount=callGroup.edges;
    if(!orbit.localCenterID||node.id<orbit.localCenterID){orbit.localCenterID=node.id;orbit.label=(node.name||node.id)+' · 调用单元';}}
   const leaf=create(orbit,7,node.id,node.name||node.id,region,'真实知识节点；编号、原文位置和会话回调保持不变。','node '+node.id,{nodeID:node.id});leaf.nodeID=node.id;leaf.unitID='node:'+node.id;

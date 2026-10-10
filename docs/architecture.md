@@ -83,6 +83,7 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 | GET | `/api/knowledge-map`、`/api/knowledge-map/updates` | 知识／代码快照、稳定编号与版本差量同步；详见[知识星图](architecture/knowledge-map.md) |
 | POST | `/api/knowledge-map/assist` | 带编号和片段证据的知识／代码／RAG辅助理解 |
 | POST | `/api/knowledge-map/documents/search`、`/api/knowledge-map/documents/reference` | 原文或RAG检索、回填前重查文件指纹与定位 |
+| GET / PUT | `/api/knowledge-map/embedding-policy` | 工作区向量检索配置；密钥保存在保险库，默认关闭；配置版本冲突返回409 |
 | GET | `/api/config` | 脱敏配置、version/revision/buildCommit |
 | PUT | `/api/settings` | 模型连接与模型列表 |
 | GET | `/api/models`、`/api/balance` | 提供商代理；支持程度依赖上游 |
@@ -258,3 +259,7 @@ stateDiagram-v2
 星图使用独立页、自然尺度及调用层星等；知识／代码变更通过 `/api/knowledge-map/updates` 按稳定编号自动合并，未变布局与镜头保留。节点视图、文档原文及本地TF-IDF RAG分别表达不同检索范围，Office插件共用原文提取与引用校验。已删除星图刷新按钮和入场过场，保留持续星空、新星渐入与归位。接口、预算、缓存边界、主题和验收状态见[知识星图架构](architecture/knowledge-map.md)与[源码交接](reviews/2026-10-08-starmap-source-sync.md)。
 
 轨迹面板统一提供历史、调用记录与成果舱切换，成果舱按当前会话任务选择查看文件提案、审批依据与原始证据。见 [持续性路线图](architecture/continuity-roadmap.md)。
+
+### 记忆神经
+
+记忆神经视图已撤下，代码作为[备用提案](proposals/memory-neural-20261010/README.md)归档。普通项目记忆读写与既有 token 存储兼容保留。

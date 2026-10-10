@@ -39,3 +39,15 @@ Docker aide:local 的相关 Go race 回归已运行：固定目录读取不修�
 最终 quick 全部通过；另行检查 capabilities.js 语法通过。收据 `.agent-state/verify-20261009T083055838525Z.log`，源码指纹 `3dab88160541b0c5cb7985102674a7ed2ce4b056783f960650087d33cb25698a`。临时组件预览已停止并关闭。
 
 尚未完成：完整工作台、真实SSH/SFTP/网络引用、真实提供商元数据、写权限探测、插件工具实际执行、具体文档提取和能力回执持久化。未部署到18211或生产9999，未发布。
+
+## 系统 Safari 设置页验收（2026-10-10）
+
+在 `start.command` 启动的 18211 隔离候选中，实际打开完整工作台的设置→连接与能力，点击工作空间、Markdown 历史版本和 pypdf 检查。工作区根目录读取通过；插件入口 SHA-256 显示为 `9819e2c8b327682d4e91003c0a66b6c02270be2bef5500c0f1c71092ffdd9129`，界面明确注明未执行插件；pypdf 隔离导入通过，152 ms，明确注明未验证具体文件提取/渲染。该结果补齐上述本地完整设置页检查，不覆盖 SSH、提供商、插件工具执行或能力回执持久化。截图：`.agent-state/continuity-runtime/capabilities-safari-20261010.png`。生产未部署。
+
+## 插件实际执行的独立收据（2026-10-10）
+
+隔离18211容器中使用实际插件宿主 call 协议运行随候选挂载的 `current-time/get_current_datetime`：有效时区 Asia/Shanghai 成功返回当前时间及ISO周，无效时区返回明确失败。收据 `.agent-state/continuity-runtime/plugin-current-time-execution-20261010.json`。此调用不使用模型或凭据，临时结果文件已清理。它是该插件的独立执行验收，不改变仪表“入口可读”的检查语义，也不证明Go派发、模型编排或其他插件已可用。
+
+## SSH 能力检查系统 Safari 补充（2026-10-10）
+
+隔离18211配置内部网络中的真实OpenSSH测试来源。系统Safari点击检查：根目录读取通过196ms；停止测试服务器后重新检查失败213ms，旧通过结果被替换；同一服务器恢复后检查通过255ms，无需刷新。三次界面均明确配置可写不代表写权限已验证。收据 `.agent-state/continuity-runtime/capabilities-ssh-receipt-20261010.json`，截图 `capabilities-ssh-pass-safari-20261010.png`、`capabilities-ssh-failed-safari-20261010.png`、`capabilities-ssh-recovered-safari-20261010.png` 均在同目录。临时来源和凭据已移除并核对，原来源身份保留，内部测试服务器及网络已清理。此项不覆盖WAN、物理丢包、所有子目录权限或写操作。

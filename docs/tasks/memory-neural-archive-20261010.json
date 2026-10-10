@@ -1,0 +1,91 @@
+{
+  "id": "memory-neural-archive-20261010",
+  "request": "用户要求删除记忆神经功能，代码暂存为备用提案，效果未达预期",
+  "baseline": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+  "initial_status": "M cmd/aide/main.go\n M docs/agent/WORKFLOW.md\n M docs/agent/router.json\n M docs/architecture.md\n M docs/architecture/continuity-roadmap.md\n M docs/architecture/knowledge-map.md\n M docs/architecture/markdown-editing-export.md\n M docs/architecture/memory-access.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M docs/tasks/approval-global-memory-20261009.json\n M docs/workspace-paths.md\n M internal/server/knowledge_code.go\n M internal/server/knowledge_coverage_test.go\n M internal/server/knowledge_documents.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_sources.go\n M internal/server/knowledge_updates.go\n M internal/server/plugins_builtin_test.go\n M internal/server/project_cache.go\n M internal/server/remediation_test.go\n M internal/server/server.go\n M internal/server/ssh_live_test.go\n M internal/server/ssh_session.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/markdown-export.js\n M internal/server/web/markdown-outline.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap-cosmos.js\n M internal/server/web/starmap-structure.js\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M plugins/office/index.js\n M scripts/markdown-image-path.test.js\n M scripts/test_approval_persistence.cjs\n M scripts/test_ui_click_latency.cjs\n?? docs/architecture/memory-neural.md\n?? docs/tasks/knowledge-code-confidence-20261009.json\n?? docs/tasks/knowledge-hybrid-retrieval-20261009.json\n?? docs/tasks/knowledge-index-policy-20261009.json\n?? docs/tasks/knowledge-language-service-20261009.json\n?? docs/tasks/knowledge-path-exploration-20261009.json\n?? docs/tasks/knowledge-progressive-index-20261009.json\n?? docs/tasks/knowledge-timeline-20261009.json\n?? docs/tasks/markdown-download-export-20261009.json\n?? docs/tasks/memory-neural-20261009.json\n?? docs/tasks/ssh-continuity-integration-20261009.json\n?? docs/tasks/starmap-infrared-20261009.json\n?? internal/server/knowledge_code_test.go\n?? internal/server/knowledge_cursor_process_test.go\n?? internal/server/knowledge_cursor_store.go\n?? internal/server/knowledge_cursor_store_test.go\n?? internal/server/knowledge_discovery.go\n?? internal/server/knowledge_discovery_test.go\n?? internal/server/knowledge_document_continuation_test.go\n?? internal/server/knowledge_embedding_policy.go\n?? internal/server/knowledge_embedding_policy_test.go\n?? internal/server/knowledge_embeddings.go\n?? internal/server/knowledge_embeddings_test.go\n?? internal/server/knowledge_ftp_progressive_test.go\n?? internal/server/knowledge_go_types.go\n?? internal/server/knowledge_go_types_test.go\n?? internal/server/knowledge_hybrid.go\n?? internal/server/knowledge_hybrid_test.go\n?? internal/server/knowledge_index_policy.go\n?? internal/server/knowledge_index_policy_test.go\n?? internal/server/knowledge_local_store.go\n?? internal/server/knowledge_local_store_test.go\n?? internal/server/knowledge_paths.go\n?? internal/server/knowledge_paths_test.go\n?? internal/server/knowledge_progressive.go\n?? internal/server/knowledge_progressive_test.go\n?? internal/server/knowledge_remote_progressive.go\n?? internal/server/knowledge_remote_progressive_test.go\n?? internal/server/knowledge_shared_test.go\n?? internal/server/knowledge_timeline.go\n?? internal/server/knowledge_timeline_test.go\n?? internal/server/knowledge_vector_cache.go\n?? internal/server/knowledge_vector_cache_test.go\n?? internal/server/memory_neural.go\n?? internal/server/memory_neural_test.go\n?? internal/server/ssh_continuity_live_test.go\n?? internal/server/web/memory-neural-icon.svg\n?? internal/server/web/memory-neural.css\n?? internal/server/web/memory-neural.html\n?? internal/server/web/memory-neural.js\n?? internal/server/web/starmap-infrared.js\n?? internal/server/web/starmap-timeline.js\n?? internal/server/web/vendor/markdown-export/\n?? scripts/markdown-download-export.test.js\n?? scripts/markdown-live-preview.test.cjs\n?? scripts/starmap-document-continuation.test.cjs\n?? scripts/starmap-infrared.test.cjs\n?? scripts/starmap-path.test.cjs\n?? scripts/starmap-timeline.test.cjs",
+  "acceptance": [
+    "Remove entry, page assets, graph handler/API from product",
+    "Archive implementation and design outside build/runtime",
+    "Preserve project memory persistence and user data",
+    "System Safari verifies entry absent and starmap still available"
+  ],
+  "scope": [
+    "internal/server/memory_neural.go",
+    "internal/server/memory_neural_test.go",
+    "internal/server/web/memory-neural.html",
+    "internal/server/web/memory-neural.js",
+    "internal/server/web/memory-neural.css",
+    "internal/server/web/memory-neural-icon.svg",
+    "internal/server/memory_tokens.go",
+    "internal/server/memory_tokens_test.go",
+    "internal/server/server.go",
+    "internal/server/web/index.html",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "internal/server/ssh_continuity_live_test.go",
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求撤下记忆神经，归档作为备用提案；保留普通记忆与已有数据。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "归档可视化、图接口和原设计；分离保留存储兼容层。",
+      "evidence": [
+        "docs/proposals/memory-neural-20261010/README.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "移除工作台入口、页面资产、图路由和图处理器。",
+      "evidence": [
+        "internal/server/memory_tokens.go",
+        "docs/proposals/memory-neural-20261010/manifest.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "聚焦 race 回归、构建、quick 均通过；系统 Safari 验证入口移除，知识星图加载 142 节点、140 连接。",
+      "evidence": [
+        ".agent-state/memory-neural-archive-20261010.log",
+        ".agent-state/quick.json",
+        ".agent-state/continuity-runtime/memory-neural-removed-safari-20261010.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "设计文档改为撤回说明，原任务记录取消子功能，源码与历史设计完整归档。",
+      "evidence": [
+        "docs/architecture/memory-neural.md",
+        "docs/tasks/memory-neural-20261009.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "归档源码使用 txt 后缀，位于运行构建目录之外；用户数据未删除。隔离实例保存原二进制供回滚。",
+      "evidence": [
+        "docs/proposals/memory-neural-20261010/source"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次仅更新隔离验收实例 18211；未推送、未发布、未更新生产 9999。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Restore archived view separately from memory_tokens.go after user explicitly requests reactivation",
+  "handoff": "记忆神经可视化已撤下并归档；普通记忆读写、已有 token 数据兼容保留。候选验收通过，生产与远端未变更。",
+  "fingerprint": "1c117eae047bc3f424c8689c60fe33700959b91fb66b4656462225a30d6ede2f",
+  "verification": {
+    "focused_race": "PASS 5.038s",
+    "log": ".agent-state/memory-neural-archive-20261010.log",
+    "quick": "PASS",
+    "quick_wrapper": ".agent-state/memory-neural-archive-quick-20261010.log",
+    "system_browser": "PASS: Safari https://localhost:18211/ entry removed; starmap loaded 142 stars / 140 connections",
+    "screenshot": ".agent-state/continuity-runtime/memory-neural-removed-safari-20261010.png"
+  }
+}

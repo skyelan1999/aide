@@ -2,6 +2,9 @@
 
 用户于 2026-10-09 授权全部执行。总目标处于进行中；以下不是已经完成的功能列表。
 
+
+当前逐项状态以[2026-10-10验收审计](../reviews/continuity-acceptance-audit-20261010.md)为准；下文保留各阶段历史边界。
+
 ## 工作现场恢复
 
 会话草稿与附件、文件草稿、目录、光标、滚动、星图镜头，按工作区隔离；刷新/重启恢复，不自动发送。
@@ -133,3 +136,108 @@ JSON导出为成果摘要：标注分页是否全部载入、文本是否截断�
 - 成果舱默认选最新任务，可切换同会话其他任务；原始证据、分页、审批依据、缺口和摘要 JSON 导出沿用原接口。小秘会话仅提供对话历史，成果页显示无任务成果提示。
 - 历史格式和压缩按钮只在历史页显示；成果摘要使用成果页自身导出按钮。切换页签、关闭轨迹及锁定会使旧请求失效，避免延迟返回覆盖新视图。
 - 浏览器组件夹具验收覆盖三页签、历史任务选择、原始证据展开、快速切换和 390px 窄屏；使用真实前端源码与模拟 API，不代表生产会话完整联调。未部署、未发布。
+
+
+## 索引配置首批
+
+当前工作区可保存本地文件/目录/深度预算与重点相对路径，更新使星图缓存失效。优先处理已发现的重点目录，不把预算内结果当全库。配置API与实际扫描回归通过，组件UI保存及重读已操作；本地目录范围与续扫队列已接入，远端SSH续扫与大库性能仍待验收。详情见[知识星图](knowledge-map.md)。整体目标继续进行中。
+
+## 混合检索缓存检查点
+
+工作区可配置兼容 embedding 接口、模型和融合权重，默认关闭；密钥保存在 SecretVault。原文检索不请求模型。文档向量按工作区/提供商/模型/配置代次和片段内容身份加密缓存，查询向量实时生成；旧维度缓存失效后降级并重建。后端本机HTTP夹具已验证重复查询、冷启动、内容变化与模型变化；真实提供商、完整鉴权工作台与SSH联调仍待完成，生产尚未部署。
+
+## Go 快照类型解析检查点
+
+可选 Go 类型服务已接入当前工作区索引配置与代码图；只提升成功检查的已索引包具体绑定，接口/函数变量保持未确认。当前本机隔离鉴权工作台已实际保存重读配置、查看类型标签、点击源文件并选中对应行。完整项目依赖、SSH、Windows和其他语言的可选类型服务仍待验收或扩展。详情见[知识星图](knowledge-map.md)。总目标保持进行中。
+
+## 系统浏览器成果导出补验（2026-10-09）
+
+在 `start.command` 启动的 18211 隔离候选中，系统 Safari 从会话 #42 的轨迹切换到成果舱并点击“导出成果 JSON”。文件实际写入浏览器下载目录，4311 字节；解析后包含 2 份文件提案和 2 条执行记录，明确标注摘要导出、全部页已载入、文本有截断及未包含原始证据。SHA-256 为 `3add73be880aa438127142e9342e20a9f5cafc70bba16209b03473fa8a5ed79a`。收据为 `.agent-state/continuity-runtime/outcome-safari-download-20261009.json`，截图为同目录 `outcome-safari-20261009.png`。此前组件下载等待超时保留为历史失败，本次真实浏览器下载通过。会话为持久化合成验收数据，不代表模型执行；运行中任务跨页一致性与真实任务全链仍需单独验收。
+
+## 当前源码 SSH/SFTP 复验（2026-10-10）
+
+撤下记忆神经可视化并保留普通记忆兼容层后，运行双服务器隔离验收，`-race -count=2` 通过（28.223 秒）。覆盖远端记忆回读、工作区/自动系统文档/独立 SFTP 的 Markdown 整版恢复与冲突拒绝、来源文件操作、原文检索与时间线、渐进索引及独立进程续扫。测试前后源码 SHA-256 一致。收据见 [SSH 联调任务](../tasks/ssh-continuity-integration-20261009.json)。
+
+这是容器内真实 SSH/SFTP 服务及 API 验收，未替代系统浏览器 SSH 工作现场恢复、物理断网、Windows 或真实模型/向量提供商验收。生产实例未更新；总目标保持进行中。
+
+当前源码指纹 `1c117eae047bc3f424c8689c60fe33700959b91fb66b4656462225a30d6ede2f` 的完整门禁通过：server Go race 398.779 秒、TTS 2.861 秒、go vet 通过。日志 `.agent-state/verify-20261009T161646006596Z.log`。系统 Safari 的本地能力仪表检查见[能力仪表验收](capability-dashboard.md)。完整门禁与局部浏览器检查仍不代表总目标全部验收或已发布。
+
+### 2026-10-10 Safari 锁屏同步验收
+
+在隔离实例 18211 临时配置测试密码，实际验证后端锁态同步、工作台密码解锁、解锁后刷新不保持锁屏，以及原工作台解锁后原星图自动恢复。锁态代际依次为 1、3；这证明该次后端驱动路径，不能替代所有入口或长时间空闲验收。
+
+左下角运行卡片的锁定入口点击未改变锁态，原因尚未确认，该项仍未通过。测试结束恢复原设置并移除本次创建的锁态文件；生产 9999 未改。实际记录见 `.agent-state/continuity-runtime/lock-browser-receipt-20261010.json`。
+
+### 2026-10-10 锁定入口修复
+
+锁定蒙版原先仅在悬停时启用命中；已配置密码时改为持续可点击，悬停仍只控制视觉呈现。增加 Enter/空格操作及未配置密码时的禁用和焦点状态。`node scripts/lock-entry.test.cjs` 覆盖真实绑定源码的鼠标、键盘、重复绑定与禁用状态；系统 Safari 在 18211 连续两次点击显示密码锁屏，一次密码解锁成功。键盘实际 Tab 导航仍未验收。临时配置已恢复，生产实例未改。此前无响应项由这次证据补齐；不代表全部锁屏场景完成。
+
+### 2026-10-10 星图刷新恢复
+
+系统 Safari 在隔离实例 18211 改变未执行搜索文字、工作区来源筛选和动效状态后刷新，三项状态恢复，页面提示未自动执行检索或 AI。拖动和滚轮操作已执行，但暗背景截图不足以证明精确镜头坐标一致，镜头精确一致性与跨工作区隔离仍待验收。测试后恢复原搜索文字、全部来源及动效，镜头归位。
+
+### 2026-10-10 Safari code-path acceptance
+
+Current full gate: 30 checks PASS; fingerprint `f1dd7d2f07601035d85d5804e9b0253de5db57ac9203448a786868e94808a2d4`; log `.agent-state/verify-20261009T173108678885Z.log`. Native Safari on isolated 18211 verified the one-step static candidate path entryPoint to collectEvidence at L8:9. Opening the relation source selected `return collectEvidence()` in the read-only viewer at L8. Evidence screenshots: `.agent-state/continuity-runtime/code-path-safari-20261010.png` and `code-path-source-safari-20261010.png`. This proves local candidate-path navigation, not runtime execution or type binding. Search and knowledge view restored; fixture retained. Production 9999 unchanged; SSH/theme/performance and release acceptance remain.
+
+### 2026-10-10 File draft scroll recovery fix
+
+Native Safari exposed a focus-order defect: restoring a draft preserved selection but moved the viewport back to the caret. Recovery now focuses with preventScroll before restoring selection, applies input updates, then restores scroll and dispatches the scroll event for the line gutter. Focused source regression passes. On isolated 18211, before/after refresh and explicit draft restore both show line 60 at the top and the same selected draft text. The server fixture remains 8000 bytes without the unsaved marker. Screenshots: `.agent-state/continuity-runtime/file-recovery-fixed-before-safari-20261010.png` and `file-recovery-fixed-after-safari-20261010.png`. This is local TXT acceptance; SSH/Windows and exact pixel measurement remain. Candidate restarted through start.command; production unchanged. Full gate requires a fresh run after this fix.
+
+### Workspace isolation checkpoint (2026-10-10)
+
+The isolated authenticated API switched to a second local workspace and read its distinct baseline. The original workspace configuration was restored and its server file remained unchanged. `node scripts/continuity-isolation.test.cjs` passed for same-ID chat, scene, file and file-view records, including stale and matching deletion. This uses an in-memory IndexedDB fixture, not Safari storage acceptance; actual browser workspace switching remains pending.
+
+The recovery-scroll full run completed 31 commands with exit 0, but the source fingerprint changed during the run, so the aggregate gate is FAIL. A fixed-source full rerun is required before release.
+
+### Live workspace transition defect (2026-10-10)
+
+Native Safari at the isolated 18211 instance saved workspace B and the authenticated API confirmed the B path. Workspace A's unsent session #42 excerpt and file attachment remained visible. Settings read back the B path, establishing that this was an actual transition rather than a failed save. The original empty path was restored through Safari. `saveWorkspaceConfig` refreshes configuration, sources and files but does not reset or restore the workspace chat scene; its in-memory draft map is keyed only by session ID. This acceptance is FAIL. A storage-key fixture cannot substitute for the live transition. The fix must preserve A before switching, suspend recovery writes during transition, reject stale asynchronous responses, clear A scene state, and recover only B records; Safari A/B/A verification remains required.
+
+### Live workspace transition repair (2026-10-10)
+
+The workbench now persists the old workspace before saving its replacement, scopes the in-memory draft cache by workspace and session, suspends local writes while switching, invalidates pending session selection, rejects file-list replies for an old scope/location/query, clears the old scene, and restores the destination's scene. The workspace label updates immediately.
+
+Native Safari on isolated 18211 verified distinct B unsent text without A's attachment, restoration of A's original excerpt and attachment, repeat B recovery, and B reload recovery. Final A was restored. Earlier contaminated B records were explicitly replaced with a disposable B draft for this test; no automatic migration of legacy contaminated drafts is claimed. The source VM transition test and lock-entry regression passed. The previous 32-check full PASS predates this repair and must be superseded. SSH transitions, standalone file/camera isolation, and unavailable Windows remain outside this browser evidence.
+
+### Same-path file workspace isolation in Safari (2026-10-10)
+
+The disposable standalone TXT route was opened in workspace A with an existing local draft. After switching only the isolated backend to B, reloading the same route displayed B's distinct baseline without A's recovery prompt. Restoring A and reloading brought back its prompt; explicit restoration selected `AFT-RECOVERY-20261010`. A's server file remained 8000 bytes without the draft marker; B's baseline was unchanged. The temporary tab was closed and original workspace configuration restored. This proves local same-path reload isolation for an existing A draft; it does not prove live standalone workspace transitions, a B draft, SSH or Windows.
+
+### 2026-10-10: star map workspace defaults
+
+When changing to a workspace without a saved sky scene, the map resets search, retrieval mode, filters, camera, motion phase and selection to defaults. Old AI questions, answers and retrieval batches are cleared. A saved destination scene is restored instead; asynchronous recovery does not overwrite input made while loading.
+
+Safari on isolated port 18211 verified a live local A → fresh C → A transition without reload: C had an empty query and node retrieval; A recovered its previous query and RAG mode. The candidate was launched with `start.command`. This does not prove SSH scene isolation, Windows behavior or real model retrieval. The previous full run passed Docker Go race/vet but failed the session-click VM test because its fixture omitted the new draft-key helper. The fixture now loads the actual helper and the focused check passes; the full gate must be rerun.
+
+### 2026-10-10: remote autosave and asset restoration
+
+System Safari on isolated 18211 saved a Markdown edit through a real disposable SFTP service; direct remote readback matched. An external SVG-only edit produced a new history version with identical Markdown. Safari restored the prior resource, and remote SHA256 readback confirmed both the restored SVG and unchanged body.
+
+The autosave switch remained disabled after history restoration until reload. This is an open UI lifecycle defect, so the whole flow is only partially accepted. Original autosave settings and source registrations were restored, and the temporary SFTP container/network and test credential were removed. This local fixture does not establish WAN SSH reliability or Windows behavior.
+
+### 2026-10-10: restore callback writable-state repair
+
+History restore now returns the editor to its prior writable state before invoking the successful update callback. This lets autosave recompute the control state correctly. Source VM checks cover success, request failure and stale workspace guards. Safari on isolated 18211 confirmed successful restoration followed by an immediately usable autosave switch, including enabling it without a reload; the original off preference was restored. The post-fix browser check used a local history fixture; remote body and asset restore were verified earlier through SFTP, with the defect then observed. Latest full gate remains in progress.
+
+### 2026-10-10: incremental thousand-node browser acceptance
+
+Safari on isolated 18211 automatically grew a one-directory, 1105-file fixture from 806 total nodes to 1111 without a reload. The source log exposed per-batch quotas and a 1732-entry catalogue limit; the actual API confirmed 1105 files and one directory ready with no limiting reasons. This demonstrates rendering beyond 1000 and incremental discovery under a configured budget, not unlimited indexing or measured large-library performance. Original configuration was restored and generated fixtures were removed.
+
+### 2026-10-10: SSH workspace scene recovery
+
+Native Safari on isolated 18211 opened a real disposable SSH workspace without inheriting the local draft or attachment. An unsent SSH-specific chat draft and remote child directory survived refresh. A standalone remote Markdown unsaved draft also survived refresh and explicit recovery; remote readback confirmed the baseline was not overwritten. Restoring the original local configuration and refreshing returned the original local excerpt and attachment. Configuration switching used the authenticated API followed by Safari reload; this does not establish live UI switching or WAN interruption handling. Temporary SSH credentials were cleared and the container/network removed.
+
+The latest full gate completed successfully with 35 checks, including Docker Go race/vet, against content fingerprint `a1b1cb65ed56b5e981cbe1309636134c2f483ff10c983980ce664f8babd6d7de`. Completion of that gate does not close the remaining real-provider, Windows, performance or release acceptance.
+
+### 成果舱系统回执（2026-10-10）
+
+成果API将服务端持久化步骤file_application_receipt投影到独立systemReceipts，编号S+步骤序号，单条预览2400字符；摘要systemReceipts不计入模型提交的verificationReports。原始证据端点同时支持S编号，以任务所有权和name白名单限制读取，digest变化返回409。现存任务无需重跑模型即可展示保存的回执。完整原文和执行状态保留，不从completed推断本地验证成功：回执也可能明确说明待人工审批、远程未读回或工作区变化。
+
+界面独立显示系统回执及历史范围提示，支持展开原始记录；JSON导出包含回执预览、哈希与截断标志，textTruncated涵盖回执。导出仍是摘要，不包含所有原始工具证据，也不重新验证当前文件。
+
+Go race覆盖失败/待人工状态、长回执截断、独立快照、摘要分类、编号白名单、任务身份和digest冲突。原生Safari在实际9999会话40验证S0002原文与下载JSON4708字节，SHA-256 b7686477fa9bc92399f469213fd312456270448ec47216ab412d145aa24f8003。多分页运行中快照和发布记录仍待验收。
+
+### 星图标签页隔离与首次失败恢复（2026-10-10）
+
+星图现场记录按工作区与当前标签页保存，使用同步sessionStorage快照和IndexedDB共享回退。已有页面刷新恢复自身视角；新标签首次读取最近共享现场，不提供关闭标签后的多分支选择。首次索引请求失败后，自动同步先重试完整加载与现场恢复，再进入增量更新；恢复时不自动执行AI或正文检索。数值source VM通过；最终原生Safari验证两页独立镜头和相位，真实首次HTTP 503后自动重试仍恢复本页现场。详情非零滚动、嵌套路径、关闭标签后多分支和容量淘汰尚缺浏览器证据，见当日审计。

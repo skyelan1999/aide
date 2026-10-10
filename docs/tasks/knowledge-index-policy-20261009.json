@@ -1,0 +1,67 @@
+{
+  "id": "knowledge-index-policy-20261009",
+  "request": "继续整体目标：索引范围与预算、重点目录优先，持久配置并记录验收",
+  "baseline": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+  "initial_status": "",
+  "acceptance": [
+    "工作区独立保存本地索引预算和优先路径，无编译重启",
+    "非法或越界路径拒绝，版本或工作区变化拒绝陈旧保存",
+    "优先路径在预算内进入真实扫描，缓存和覆盖报告使用新预算",
+    "组件实际操作并注明与完整产品联调的差别"
+  ],
+  "scope": [
+    "internal/server/knowledge_index_policy.go",
+    "internal/server/knowledge_index_policy_test.go",
+    "internal/server/knowledge_map.go",
+    "internal/server/server.go",
+    "internal/server/web/app.js",
+    "internal/server/web/settings-schema.json",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "整体渐进索引目标下，先完成预算与重点路径优先；完整续扫仍保留。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "按工作区持久化配置，显式版本校验，来源内安全相对路径，现有预算扫描优先排序。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "设置与GET/PUT API、原子持久化、覆盖预算与扫描排序；不改变权限或远端预算。",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "相关Go race通过5.437秒，覆盖持久化、工作区隔离、冲突拒绝、优先扫描和已有覆盖状态。组件保存与重读通过，API模拟；完整工作台/SSH/大库性能 NOT_RUN。",
+      "evidence": [
+        ".agent-state/index-policy-preview/settings.png",
+        "Docker aide:local go test -buildvcs=false -race ./internal/server -run TestKnowledge(Index|Coverage) -count=1 PASS 5.437s",
+        "quick PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录默认值、限制、配置路径、实际证据和未完成项。",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "静态服务已停止，临时浏览器已关闭；未修改生产数据或凭据。",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "源码候选，本轮未提交、推送、部署或升版。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本轮源码；保留工作区索引配置，无文件正文迁移。",
+  "handoff": "下一步实现真实分批续扫和范围选择；整体目标仍active。"
+}

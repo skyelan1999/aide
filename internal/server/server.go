@@ -371,6 +371,7 @@ type App struct {
 	wsConfig                  WorkspaceConfig
 	wsSecrets                 workspaceSecrets
 	vault                     *SecretVault // 统一加密凭证保险库（#38）
+	knowledgeVectors          *knowledgeVectorCache
 	// 旧明文模型 API Key 暂存：启动时从 settings.json/环境变量检出、内存暂存待 vault 解锁后加密入库；
 	// 不落盘（内存中即 settings.APIKey 的待迁移副本），解锁入库后清空。
 	pendingLegacyAPIKey       string
@@ -1205,8 +1206,15 @@ func (a *App) buildHandler() {
 		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
+	mux.HandleFunc("GET /api/knowledge-map/index-policy", a.getKnowledgeIndexPolicy)
+	mux.HandleFunc("PUT /api/knowledge-map/index-policy", a.putKnowledgeIndexPolicy)
+	mux.HandleFunc("GET /api/knowledge-map/embedding-policy", a.getEmbeddingPolicy)
+	mux.HandleFunc("PUT /api/knowledge-map/embedding-policy", a.putEmbeddingPolicy)
 	mux.HandleFunc("GET /api/knowledge-map", a.knowledgeMap)
 	mux.HandleFunc("GET /api/knowledge-map/updates", a.knowledgeMapUpdates)
+	mux.HandleFunc("POST /api/knowledge-map/paths", a.knowledgePaths)
+	mux.HandleFunc("GET /api/knowledge-map/timeline", a.knowledgeTimeline)
+	mux.HandleFunc("POST /api/knowledge-map/timeline/compare", a.knowledgeTimeline)
 	mux.HandleFunc("POST /api/knowledge-map/assist", a.knowledgeAssist)
 	mux.HandleFunc("POST /api/knowledge-map/documents/search", a.knowledgeDocumentSearch)
 	mux.HandleFunc("POST /api/knowledge-map/documents/reference", a.knowledgeDocumentReference)

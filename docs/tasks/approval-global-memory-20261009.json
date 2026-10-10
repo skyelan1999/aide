@@ -21,7 +21,9 @@
     "internal/server/web/locales/en.js",
     "internal/server/web/index.html",
     "docs/architecture/execution-policy.md",
-    "docs/architecture.md"
+    "docs/architecture.md",
+    "scripts/test_approval_persistence.cjs",
+    "docs/agent/router.json"
   ],
   "stages": {
     "requirements": {
@@ -112,5 +114,9 @@
     "internal/server/web/app.js": "c777e07360fd0104bd26ef523d6d47d859c95b1fc3fa6abfbab82a2c364e7191",
     "internal/server/web/locales/en.js": "3d7a95288b81ef2347f3acc39150b946937334bfbca5a6fbff84f6ddf5a0b28a",
     "internal/server/web/index.html": "d87948681095d3ebc8ed28e4eb50224c272bf82793c3180a1a0f0698354a611e"
+  },
+  "regression_checkpoint": {
+    "status": "in_progress",
+    "summary": "Replaced obsolete per-session JS regression with current global policy, SSE, reconnect, stale GET and failed save tests. VM fixture passed; real browser/model remains pending. Added regression to quick gate."
   }
 }

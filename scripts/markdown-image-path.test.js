@@ -9,5 +9,5 @@ assert.equal(path('docs/readme.md','../images/test.png'),'images/test.png');
 assert.equal(path('readme.md','images/a%20b.png'),'images/a b.png');
 assert.equal(path('docs/readme.md','/images/test.png?raw=1#view'),'images/test.png');
 assert(source.includes("fileRawUrl(resolved, viewerSpec?.root || 'workspace', viewerSpec?.source || '', viewerSpec)"));
-assert(source.includes("renderMarkdown($('editor').value, false, state.file ? state.file.path : '', state.file)"));
+assert(source.includes("setupMarkdownPreview($('editor-preview'), $('editor').value, state.file?.path || '', state.file)"));
 console.log('PASS: Markdown image normalization and viewer source routing');

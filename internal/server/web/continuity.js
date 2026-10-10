@@ -20,6 +20,33 @@
     if(new Blob([JSON.stringify(value)]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
     await run('readwrite',store=>store.put({key:key(scope,kind,id),value,updated:Date.now()}));return true;
   }
+  // sessionStorage belongs to a browsing context: even an opener's initial
+  // copy becomes independent on the first edit. IndexedDB remains the shared
+  // fallback for a newly opened tab; it must not overwrite a live tab on reload.
+  const tabKey=(scope,kind,id)=>'aide-recovery-tab:'+key(scope,kind,id);
+  async function readTab(scope,kind,id){
+    if(!enabled()||!scope)return null;
+    const cached=sessionStorage.getItem(tabKey(scope,kind,id));
+    if(cached!==null)return JSON.parse(cached);
+    const value=await read(scope,kind,id);
+    // An edit or another restoration may finish while IndexedDB is loading.
+    // Never replace that newer tab snapshot with the shared fallback.
+    const latest=sessionStorage.getItem(tabKey(scope,kind,id));
+    if(latest!==null)return JSON.parse(latest);
+    // Cache null as well: another tab creating a draft later must not change
+    // this tab's initial empty scene or composer.
+    sessionStorage.setItem(tabKey(scope,kind,id),JSON.stringify(value));
+    return value;
+  }
+  async function writeTab(scope,kind,id,value){
+    if(!enabled()||!scope)return false;
+    const serialized=JSON.stringify(value);
+    if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
+    // The synchronous tab snapshot survives pagehide even if its IndexedDB
+    // transaction has not completed when the browser unloads the document.
+    sessionStorage.setItem(tabKey(scope,kind,id),serialized);
+    return write(scope,kind,id,value);
+  }
   async function remove(scope,kind,id){if(scope)await run('readwrite',store=>store.delete(key(scope,kind,id)));}
   async function removeMatching(scope,kind,id,text){
     const db=await open();return new Promise((resolve,reject)=>{
@@ -28,5 +55,5 @@
       tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
     });
   }
-  window.AideContinuity={enabled,read,write,remove,removeMatching};
+  window.AideContinuity={enabled,read,write,readTab,writeTab,remove,removeMatching};
 })();

@@ -80,3 +80,7 @@ flowchart LR
 
 - 小秘记忆与历史加密保存（#29），aide 进程内任何工具/命令都无法触达。
 - 权限在代码层显式判定，不依赖前端/提示词约束；提示词里的“只读”只是给模型的行为指引，真正的强制在 `canAccessMemory` 与 `shellTouchesAssistantZone`。
+
+## 独立 token 记忆
+
+Aide 项目记忆新增 `memory-tokens.json`，仅位于现有项目记忆目录；`memory.md` 保留为小秘只读的兼容投影。记忆神经端点及页面已撤下，源码归档为备用提案。token 记录、外部编辑导入与远端缓存同步边界见 [记忆神经](memory-neural.md)。

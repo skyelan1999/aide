@@ -1,17 +1,68 @@
 'use strict';
 const $=id=>document.getElementById(id), canvas=$('sky'), ctx=canvas.getContext('2d');
 const logbook=$('limits'),logbookToggle=$('logbook-toggle');
+const knowledgeTimeline=window.AideKnowledgeTimeline.create({request:(path,options)=>api(path,options)});
 addEventListener('pointerdown',e=>{if(logbook.open&&!logbook.contains(e.target))logbook.open=false;});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&logbook.open){e.preventDefault();e.stopImmediatePropagation();logbook.open=false;logbookToggle.focus();}},true);
 const params=new URLSearchParams(location.search), channelName=params.get('channel');
 const channel=channelName&&/^[a-zA-Z0-9-]{10,100}$/.test(channelName)?new BroadcastChannel('aide-stars-'+channelName):null;
 let token=localStorage.getItem('aide-token')||'',graph={nodes:[],edges:[],sources:[],warnings:[]},selected=null,region='',results=[],yaw=0,pitch=.1,zoom=1,drag=null,projection=[],width=0,height=0,pixelRatio=0,loading=false;
 const motionReduced=()=>document.documentElement.dataset.motion==='reduced'||matchMedia('(prefers-reduced-motion: reduce)').matches;
+const infrared=window.AideInfrared.create({button:$('infrared'),note:$('infrared-note'),redraw:()=>redraw(),motionEnabled:()=>motionEnabled(),onChange:enabled=>{scheduleSkyRecovery();say(enabled?'红外伪彩视觉模拟已开启 · 非真实观测数据':'已恢复可见光星图配色');}});
 let codeView=params.get('code')==='1',edgeMode='all',focusCode=false,focusCache=null,focusKey='',graphGeneration=0,loadAbort=null,aiAbort=null;
-let documentAbort=null,documentGeneration=0;
+let documentAbort=null,documentGeneration=0,documentBatch=null;
+function resetDocumentBatch(){documentBatch=null;$('document-progress').hidden=true;$('document-next').hidden=true;}
 // Data revisions and rendering lifetimes are separate: polling never reloads the page.
 let liveCursor='',liveTimer=0,liveAbort=null,liveEpoch=0,liveFailures=0,liveAnimationUntil=0;
 let liveReconcile=false,liveWireNodes=new Map(),liveStableScenes=new Map(),liveGhosts=[];
+let pathAbort=null,pathGeneration=0,pathResult=null;
+function clearEvidencePath(message='路径基于当前索引，不等于运行轨迹。',clearInputs=false){
+ pathGeneration++;pathAbort?.abort();pathAbort=null;pathResult=null;$('path-run').disabled=false;$('path-steps').replaceChildren();$('path-status').textContent=message;
+ if(clearInputs){$('path-from').value='';$('path-to').value='';}redraw();
+}
+function pathSourceLink(n,line){
+ if(!n?.path||n.kind==='directory')return null;
+ const spec={root:n.root,path:n.path,origin:n.origin||'',readOnly:true,knowledgeWorkspace:graph.workspace};
+ if(n.source)spec.source=n.source;if(n.format)spec.format=n.format;
+ if(line||n.line){spec.line=line||n.line;spec.endLine=line||n.endLine;spec.codeHash=n.contentHash;}
+ return '/#file='+encodeURIComponent(JSON.stringify(spec));
+}
+function renderEvidencePath(result){
+ $('path-steps').replaceChildren();
+ $('path-status').textContent=result.found?`${result.steps.length} 步 · 当前索引证据路径${result.truncated?' · 索引仍有缺口':''}`:`当前索引及规则下未找到路径${result.limited?' · 搜索达到32步或16000节点限制':''}${result.truncated?' · 索引不完整':''}。不代表没有真实联系。`;
+ const labels={call_typed:'快照类型绑定',call_candidate:'静态名称候选',defines:'源码声明',imports:'导入路径',mention:'文本提及',attachment:'会话附件',contains:'目录归属'};
+ for(const [i,n] of result.nodes.entries()){
+  const row=document.createElement('li'),button=document.createElement('button');button.type='button';button.className='code-relation';button.textContent=n.name+' · '+n.id;button.onclick=()=>{const current=nodeByID.get(n.id);if(current)select(current);};row.append(button);
+  const link=pathSourceLink(n);if(link){const a=document.createElement('a');a.href=link;a.target='_blank';a.rel='noopener';a.textContent='打开原文件 ↗';row.append(a);}
+  const step=result.steps[i];if(step){const e=step.edge,p=document.createElement('p');p.textContent=`${step.reversed?'逆向探索 ←':'沿关系 →'} ${labels[e.kind]||e.kind}${e.line?' · L'+e.line+(e.column?':'+e.column:''):''}`+(e.evidence?' · '+e.evidence:' · 此关系未提供源位置证据');row.append(p);
+   const origin=nodeByID.get(e.from),href=e.line&&pathSourceLink(origin,e.line);if(href){const a=document.createElement('a');a.href=href;a.target='_blank';a.rel='noopener';a.textContent='查看关系源位置 ↗';row.append(a);}}
+  $('path-steps').append(row);
+ }
+}
+async function queryEvidencePath(){
+ if(locked||loading||!liveCursor)return;
+ clearEvidencePath('正在寻找当前索引中的证据路径…');
+ const gen=pathGeneration,revision=liveCursor,workspace=graph.workspace,mode=codeView,controller=new AbortController();pathAbort=controller;$('path-run').disabled=true;
+ const timeout=setTimeout(()=>controller.abort(),6000);
+ try{const result=await api('/paths',{method:'POST',signal:controller.signal,body:JSON.stringify({workspace,revision,code:mode,from:$('path-from').value.trim(),to:$('path-to').value.trim(),undirected:$('path-undirected').checked,includeStructure:$('path-structure').checked})});
+  if(locked||gen!==pathGeneration||revision!==liveCursor||workspace!==graph.workspace||mode!==codeView)return;
+  if(result.revision!==revision||result.workspace!==workspace)throw Error('路径版本不一致，请重新查询。');
+  pathResult=result;renderEvidencePath(result);redraw();
+ }catch(e){if(gen===pathGeneration&&!locked)$('path-status').textContent=e.name==='AbortError'?'查询已取消或超时，请重试。':e.message;}
+ finally{clearTimeout(timeout);if(gen===pathGeneration){pathAbort=null;$('path-run').disabled=false;}}
+}
+$('path-form').onsubmit=e=>{e.preventDefault();queryEvidencePath();};
+for(const side of ['from','to'])$('path-set-'+side).onclick=()=>{if(!selected){$('path-status').textContent='先搜索或点击一个节点。';return;}clearEvidencePath();$('path-'+side).value=selected.id;$('path-explorer').open=true;};
+$('path-clear').onclick=()=>clearEvidencePath(undefined,true);
+for(const id of ['path-from','path-to','path-undirected','path-structure'])$(id).addEventListener('input',()=>clearEvidencePath());
+function drawEvidencePath(){
+ if(!pathResult?.found||locked)return;
+ const visible=cosmicEnabled?new Map(cosmicStars.map(s=>[s.n.id,s.p])):new Map(renderNodes.map(n=>[n.id,n.projected]));
+ ctx.save();ctx.strokeStyle=mapPalette.star;ctx.lineWidth=1.5;ctx.globalAlpha=.8;
+ for(const step of pathResult.steps){const a=visible.get(step.edge.from),b=visible.get(step.edge.to);if(!a?.onScreen||!b?.onScreen)continue;ctx.setLineDash(step.edge.kind==='call_candidate'||step.edge.kind==='mention'?[3,6]:[]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+ ctx.setLineDash([]);for(const n of pathResult.nodes){const p=visible.get(n.id);if(!p?.onScreen)continue;ctx.beginPath();ctx.arc(p.x,p.y,10,0,Math.PI*2);ctx.stroke();}ctx.restore();
+}
+
 
 // Store navigation metadata only: no document excerpts, model answers or tokens.
 let recoveryTimer=0,recoveryLoading=false,recoveryScopeLoaded='',pendingRecoveredView=null,recoveryInput=0,recoveryWarning=false;
@@ -22,10 +73,13 @@ function persistSkyView(){
  const value={version:1,codeView,region,query:$('search').value,retrievalMode:$('retrieval-mode').value,edgeMode,callDepth,focusCode,
   camera:{yaw:destination.yaw,pitch:destination.pitch,zoom:wheelZoom?.target??destination.zoom},motionPhase:{skyTime,driftTime},
   scroll:{search:document.querySelector('.search-panel').scrollTop,detail:$('detail').scrollTop},
-  path:cosmicScene?cosmicPath(cosmicScene.group).map(g=>g.key):[],selected:selected?{id:selected.id,origin:selected.origin||''}:null,animate};
- AideContinuity.write('knowledge:'+graph.workspace,'scene','starmap',value).catch(e=>{if(!recoveryWarning){recoveryWarning=true;say('星图恢复记录保存失败 · '+e.message);}});
+  path:cosmicScene?cosmicPath(cosmicScene.group).map(g=>g.key):[],selected:selected?{id:selected.id,origin:selected.origin||''}:null,animate,infrared:infrared.enabled};
+ AideContinuity.writeTab('knowledge:'+graph.workspace,'scene','starmap',value).catch(e=>{if(!recoveryWarning){recoveryWarning=true;say('星图恢复记录保存失败 · '+e.message);}});
 }
 function scheduleSkyRecovery(){if(locked)return;clearTimeout(recoveryTimer);recoveryTimer=setTimeout(persistSkyView,850);}
+function defaultSkyView(){
+ return {version:1,codeView:params.get('code')==='1',region:'',query:'',retrievalMode:'nodes',edgeMode:'all',callDepth:'all',focusCode:false,camera:{yaw:0,pitch:.1,zoom:1},motionPhase:{skyTime:0,driftTime:0},scroll:{search:0,detail:0},path:[],selected:null,animate:!motionReduced(),infrared:false};
+}
 function restoreSkyView(value){
  if(!value||value.version!==1||locked)return;
  region=typeof value.region==='string'&&currentSources().some(s=>s.region===value.region)?value.region:'';
@@ -45,6 +99,7 @@ function restoreSkyView(value){
  yaw=finite(value.camera?.yaw,0,-2.5,2.5);pitch=finite(value.camera?.pitch,.1,-1,1);zoom=finite(value.camera?.zoom,1,.5,2.8);
  skyTime=finite(value.motionPhase?.skyTime,0,0,604800000);driftTime=finite(value.motionPhase?.driftTime,0,0,604800000);skyFloat.x=Math.sin(driftTime/22000)*.038;skyFloat.y=Math.sin(driftTime/29000)*.024;
  if(typeof value.animate==='boolean')animate=value.animate&&!motionReduced();
+ if(typeof value.infrared==='boolean')infrared.set(value.infrared,false);
  document.querySelector('.search-panel').scrollTop=finite(value.scroll?.search,0,0,1000000);$('detail').scrollTop=finite(value.scroll?.detail,0,0,1000000);
  syncMotion();syncCodeView();syncGraphChrome();syncCosmicNav();redraw();say('已恢复上次星图视角与筛选；未自动执行检索或 AI。');
 }
@@ -64,11 +119,23 @@ function currentSources(){
  if(Array.isArray(graph.sources))return graph.sources.filter(s=>s&&typeof s.region==='string'&&s.region).map(s=>({...s,name:s.name||fallbackSourceName(s.region),nodeCount:Math.max(0,Number(s.nodeCount)||0)}));
  const byRegion=new Map();for(const n of graph.nodes){if(!n.region)continue;let s=byRegion.get(n.region);if(!s){s={id:n.source||n.region,name:n.sourceName||fallbackSourceName(n.region),type:n.sourceType||(n.region==='sessions'?'session':''),region:n.region,state:'ready',nodeCount:0};byRegion.set(n.region,s);}s.nodeCount++;}return [...byRegion.values()];
 }
+function sourceCoverageState(source){
+ const c=source.coverage;
+ if(source.state!=='ready'&&source.state!=='partial')return sourceStateLabel(source.state);
+ if(!c)return sourceStateLabel(source.state);
+ if(c.reasons?.length)return '范围受限';
+ if(c.progressive&&c.pending>0)return '分批扫描中';
+ return source.state==='partial'?'部分索引':'限定范围已扫描';
+}
 function sourceCoverageLabel(source){
  const c=source.coverage;if(!c)return '';
- const reasons={files:'文件预算',directories:'目录预算',depth:'目录深度',time:'扫描时限',directory_entries:'单目录条目预算',read_error:'读取失败'};
- return `已扫描 ${c.files} 个文件 / ${c.directories} 个目录；预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层；文本仅前 ${c.textBytesPerFile/1024} KiB；全库总数未统计`+(c.reasons?.length?'；受限：'+c.reasons.map(r=>reasons[r]||r).join('、'):'；限定目录范围内扫描完成');
+ const reasons={files:'文件预算',directories:'目录预算',depth:'目录深度',time:'扫描时限',directory_entries:'单目录条目预算',read_error:'读取失败',catalog_limit:'索引目录容量上限',scope_missing:'配置范围不存在'};
+ const progress=c.progressive?`累计索引 ${c.files} 个文件 / ${c.directories} 个目录；单批预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层；第 ${c.cycle||1} 轮；待扫描 ${c.pending||0} 个目录任务；容量上限 ${c.catalogLimit||0} 条`:`已扫描 ${c.files} 个文件 / ${c.directories} 个目录；预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层`;
+ const limits=c.reasons?.length?'；受限：'+c.reasons.map(r=>reasons[r]||r).join('、'):'';
+ const status=c.progressive?(c.pending?'；分批扫描中，保留上一轮已知节点':c.reasons?.length?'；本轮队列已结束，仍有未覆盖范围':'；本轮限定范围扫描完成'):c.reasons?.length?'':'；限定目录范围内扫描完成';
+ return progress+(c.scopePaths?.length?'；索引范围：'+c.scopePaths.join('、'):'')+`；文本仅前 ${c.textBytesPerFile/1024} KiB；全库总数未统计`+limits+status;
 }
+
 function nodeSource(n){const s=sourceByRegion.get(n.region);return {id:s?.id||n.source||n.region,name:s?.name||n.sourceName||fallbackSourceName(n.region),type:s?.type||n.sourceType||(n.region==='sessions'?'session':''),state:s?.state||'',message:s?.message||''};}
 function nodeSourceLabel(n){const s=nodeSource(n);return [s.name,s.type?sourceTypeLabel(s.type):'',n.format].filter(Boolean).join(' · ');}
 function syncNodeSourceChrome(){
@@ -76,19 +143,22 @@ function syncNodeSourceChrome(){
  for(const box of [$('results'),$('ai-found')])for(const b of box.querySelectorAll('[data-source-node]')){const current=nodeByID.get(b.dataset.sourceNode),original=b.sourceNode;const n=current?{...current,format:current.origin===original?.origin?original?.format||current.format:current.format}:original;if(n){b.textContent=nodeSourceLabel(n);b.title=b.textContent;}}
 }
 function appendSourceLabel(parent,n){const meta=document.createElement('small');meta.className='source-meta';meta.dataset.sourceNode=n.id;meta.sourceNode=n;meta.textContent=nodeSourceLabel(n);meta.title=meta.textContent;parent.append(meta);return meta;}
-const edgeKey=e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.evidence||'']);
+const edgeKey=e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.column||0,e.evidence||'',e.confidence||'']);
 function birthAlpha(n,now){if(!n.bornAt)return 1;return easing(clamp((now-n.bornAt)/680,0,1));}
 function liveReady(){return !locked&&!document.hidden&&!pageLeaving&&!loading&&!drag&&!cosmicFlight;}
 function stopLive(clearCursor=false){clearTimeout(liveTimer);liveTimer=0;liveEpoch++;liveAbort?.abort();liveAbort=null;if(clearCursor)liveCursor='';}
 function scheduleLive(delay=4000){clearTimeout(liveTimer);liveTimer=0;if(locked||document.hidden||pageLeaving)return;liveTimer=setTimeout(pollLive,delay);}
 async function pollLive(){
  liveTimer=0;if(!liveReady()){scheduleLive(650);return;}if(liveAbort)return;
+ // Initial/transient load failures must retry the restoration path, not seed
+ // a graph through delta polling and silently replace the saved camera.
+ if(!graph.workspace||recoveryScopeLoaded!==graph.workspace){load();return;}
  const epoch=liveEpoch,mode=codeView,cursor=liveCursor,controller=new AbortController();liveAbort=controller;
  const timeout=setTimeout(()=>controller.abort(),14000);
  try{const update=await api('/updates?code='+(mode?'1':'0')+'&cursor='+encodeURIComponent(cursor),{signal:controller.signal});
   if(epoch!==liveEpoch||mode!==codeView||!liveReady())return;
   if(graph.workspace&&update.workspace!==graph.workspace){persistSkyView();load();return;}
-  applyLiveUpdate(update);liveCursor=update.revision;liveFailures=0;
+  applyLiveUpdate(update);liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;
  }catch(e){if(epoch===liveEpoch&&!locked&&!document.hidden){liveFailures++;if(liveFailures===1)say('自动同步暂不可用，保留当前星图并稍后重试。');}}
  finally{clearTimeout(timeout);if(liveAbort===controller)liveAbort=null;if(epoch===liveEpoch)scheduleLive(Math.min(30000,4000*Math.pow(2,liveFailures)));}
 }
@@ -308,6 +378,7 @@ function drawCosmos(now,t){
  for(const zone of data?.gas||[]){const x=cx+(zone.x+yaw*.22+drift)*width*zoom,y=cy+(zone.y+(pitch-.1)*.18)*height*zoom,size=Math.max(90,zone.spread*width*3.1*zoom);if(x+size/2<0||x-size/2>width||y+size*.4<0||y-size*.4>height)continue;ctx.save();ctx.globalAlpha=fade*.12;ctx.translate(x,y);ctx.rotate(-.32);ctx.drawImage(zone.texture,-size/2,-size*.36,size,size*.72);ctx.restore();}
  for(const r of cosmicRecords){const p=r.p;p.x=cx+(r.x+yaw*.22+drift)*width*zoom/r.z;p.y=cy+(r.y+(pitch-.1)*.18)*height*zoom/r.z;p.onScreen=p.x>-100&&p.x<width+100&&p.y>-100&&p.y<height+100;r.radius=r.group.nodeID?10:Math.max(25,r.spread*width*zoom/r.z*.65);if(r.texture&&p.onScreen){const size=Math.max(110,r.spread*width*3.6*zoom/r.z);ctx.save();ctx.globalAlpha=fade*.13;ctx.translate(p.x,p.y);ctx.rotate(-.32+r.phase*.13);ctx.drawImage(r.texture,-size/2,-size/2,size,size);ctx.restore();}}
  for(const star of cosmicStars){const p=star.p;p.x=cx+(star.x+yaw*.22+drift)*width*zoom/star.z;p.y=cy+(star.y+(pitch-.1)*.18)*height*zoom/star.z;p.onScreen=p.x>-30&&p.x<width+30&&p.y>-30&&p.y<height+30;if(star.owner.group.nodeID){star.owner.p.x=p.x;star.owner.p.y=p.y;star.owner.p.onScreen=p.onScreen;}}
+ infrared.draw(ctx,cosmicStars.map(star=>({x:star.p.x,y:star.p.y,degree:star.n.connectionCount||0,distance:star.z,scale:zoom/star.z,birth:birthAlpha(star.n,now)})),width,height,now);
  const calls=structure?.entry('calls');cosmicCallState=selected&&calls?.levels.has(selected.id)?structure.describe(selected.id,'calls'):calls;
  for(const batch of data?.batches||[]){if(cosmicStars.length>140&&batch.hierarchy)continue;ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'18':'30');ctx.lineWidth=.6;ctx.setLineDash(batch.dashed?[3,7]:[]);ctx.beginPath();for(const e of batch.edges){if(!edgeInView(e)||selected&&(e.from===selected.id||e.to===selected.id))continue;if(birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}ctx.stroke();}ctx.setLineDash([]);
  let particles=0;for(const e of cosmicStarEdges){if(!edgeInView(e))continue;const birth=Math.min(birthAlpha(nodeByID.get(e.from)||{},now),birthAlpha(nodeByID.get(e.to)||{},now));if(birth<.97)continue;const active=selected&&(e.from===selected.id||e.to===selected.id);if(active){ctx.strokeStyle=mapPalette.star+'90';ctx.lineWidth=1;ctx.setLineDash(e.dashed?[3,6]:[]);ctx.beginPath();ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);ctx.stroke();ctx.setLineDash([]);}if(active&&animate&&particles++<24){const q=(t/6500+e.phase)%1;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(e.a.x+(e.b.x-e.a.x)*q,e.a.y+(e.b.y-e.a.y)*q,1,0,tau);ctx.fill();}}
@@ -342,14 +413,14 @@ function layout(preserve=false){
    c.nodes.forEach(n=>{const angle=seeded(n.id+'a')*tau,r=Math.sqrt(seeded(n.id+'r'))*spread;n.x=c.x+Math.cos(angle)*r;n.y=c.y+Math.sin(angle)*r*.68;n.depth=c.depth+(seeded(n.id+'z')-.5)*.08;if(oldPositions.has(n.id))Object.assign(n,oldPositions.get(n.id));n.cluster=c;
     applyStellarColor(n);n.drawLabel=n.name.length>27?n.name.slice(0,27)+'…':n.name;n.projected=preserve&&n.projected?n.projected:{n,x:0,y:0,onScreen:false};});});}
  for(const n of graph.nodes){if(n.kind!=='symbol'||preserve&&oldPositions.has(n.id))continue;const p=nodeByID.get(n.parentFile);if(!p)continue;const a=seeded(n.id+'orbit')*tau,r=.016+seeded(n.id+'span')*.038;n.x=p.x+Math.cos(a)*r;n.y=p.y+Math.sin(a)*r;n.depth=p.depth-.01;}
- for(const e of graph.edges){e.a=nodeByID.get(e.from)?.projected;e.b=nodeByID.get(e.to)?.projected;e.phase=seeded(e.from+e.to);e.hierarchy=['contains','defines'].includes(e.kind);e.dashed=['mention','call_candidate'].includes(e.kind);e.directed=['call_candidate','imports'].includes(e.kind);
+ for(const e of graph.edges){e.a=nodeByID.get(e.from)?.projected;e.b=nodeByID.get(e.to)?.projected;e.phase=seeded(e.from+e.to);e.hierarchy=['contains','defines'].includes(e.kind);e.dashed=['mention','call_candidate'].includes(e.kind);e.directed=['call_candidate','call_typed','imports'].includes(e.kind);
   for(const id of [e.from,e.to]){if(!edgeAdjacency.has(id))edgeAdjacency.set(id,[]);edgeAdjacency.get(id).push(e);}}
  if(!preserve){cosmos=window.AideStarCosmos?.build(graph.nodes,graph.edges)||null;cosmicSceneCache.clear();cosmicTextureCache.clear();cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicFlight=null;cosmicScopeKey='';liveStableScenes.clear();
   if(cosmos)enterCosmic(cosmos.root.key,false);else{cosmicEnabled=false;syncCosmicNav();}
  }else liveReconcile=true;
  invalidateView();
 }
-function eligibleEdge(e){return !codeView||edgeMode==='all'||edgeMode==='calls'&&e.kind==='call_candidate'||edgeMode==='imports'&&e.kind==='imports'||edgeMode==='hierarchy'&&e.hierarchy;}
+function eligibleEdge(e){return !codeView||edgeMode==='all'||edgeMode==='calls'&&['call_candidate','call_typed'].includes(e.kind)||edgeMode==='imports'&&e.kind==='imports'||edgeMode==='hierarchy'&&e.hierarchy;}
 function focusIDs(){
  if(!codeView||!focusCode||!selected)return null;
  const key=selected.id+'|'+edgeMode+'|'+callDepth+'|'+renderRevision;if(focusKey===key&&focusCache)return focusCache;
@@ -385,11 +456,11 @@ function updateLayerLabels(){
  const localRange=selected?'已解析至 '+maxDepth+' 跳'+(focusCode?' · 聚焦 '+(callDepth==='all'?'全部已解析跳数':'向外 '+callDepth+' 跳'):''):'';
  if($('layer-summary'))$('layer-summary').textContent=hasLayers?`${title} · ${selected?'从当前节点向外':(layerState.rootIDs?.size||0)+' 个入口候选'} · ${selected?localRange:'全局 '+(maxDepth+1)+' 层'}`:'当前索引没有可分层的连接';
  const callLayers=structure?.entry('calls'),selectedHasCalls=selected&&callLayers?.levels.has(selected.id);
- if($('magnitude-key'))$('magnitude-key').textContent=callLayers?.levels.size?(selectedHasCalls?'当前节点最亮 · 调用跳数 1、2、3…逐步变暗':'同等关联数下，调用候选层 1、2、3…逐层变暗')+' · 星等仅表示调用结构距离':'无调用层证据 · 星色与光晕按有效关联数';
+ if($('magnitude-key'))$('magnitude-key').textContent=callLayers?.levels.size?(selectedHasCalls?'当前节点最亮 · 调用跳数 1、2、3…逐步变暗':'同等关联数下，静态调用层 1、2、3…逐层变暗')+' · 星等仅表示调用结构距离':'无调用层证据 · 星色与光晕按有效关联数';
  if($('detail-level')){
   $('detail-level').hidden=!selected;
   const globalDepth=selected?.globalVisualDepth,cycle=selected&&callLayers?.cycles.has(selected.id);
-  $('detail-level').textContent=(selected?`${selected.connectionCount||0} 个有效关联 · ${selected.stellarBand} · `:'')+(Number.isFinite(globalDepth)?`调用星等 · 全局调用候选层 ${globalDepth+1}`:'调用关系未知 · 基准星等')+(selected?' · 当前节点（选中增亮）':'')+(cycle?' · 候选闭环':'');
+  $('detail-level').textContent=(selected?`${selected.connectionCount||0} 个有效关联 · ${selected.stellarBand} · `:'')+(Number.isFinite(globalDepth)?`调用星等 · 全局静态调用层 ${globalDepth+1}`:'调用关系未知 · 基准星等')+(selected?' · 当前节点（选中增亮）':'')+(cycle?' · 候选闭环':'');
 
  }
 }
@@ -411,9 +482,9 @@ function draw(now=performance.now()){
  for(const s of stars){const x=((s.x*width-yaw*33-t/2800)%width+width)%width,y=((s.y*height+pitch*20)%height+height)%height;ctx.globalAlpha=.06+s.a*.16+Math.sin(t/2400+s.a*17)*.04;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(x,y,s.r,0,tau);ctx.fill();}ctx.globalAlpha=1;
  refreshView();ensureCosmicView();
  if(cosmicEnabled&&cosmicScene){
-  drawCosmos(now,t);
+  drawCosmos(now,t);drawEvidencePath();
   if(graphFade){const u=clamp((now-graphFade.start)/graphFade.duration,0,1);ctx.save();ctx.globalAlpha=1-easing(u);ctx.drawImage(graphFade.canvas,0,0,width,height);ctx.restore();if(u===1)graphFade=null;}
-  if(animate||cameraTween||wheelZoom||graphFade||cosmicFlight||now<liveAnimationUntil)redraw(false);return;
+  if(infrared.transitioning||animate||cameraTween||wheelZoom||graphFade||cosmicFlight||now<liveAnimationUntil)redraw(false);return;
  }
  refreshView();const driftX=0,driftY=0;
  for(const c of clusters){if(region&&c.region!==region)continue;const p=projectInto(c,c.projected,driftX,driftY),size=Math.max(110,c.radius*width*3.3*zoom),density=Math.min(.85,.16+c.nodes.length/85);
@@ -421,6 +492,7 @@ function draw(now=performance.now()){
   ctx.save();ctx.globalAlpha=density;ctx.translate(p.x,p.y);ctx.rotate(-.3+Math.sin(t/32000+c.phase)*.018);ctx.drawImage(c.texture,-size/2,-size*.38,size,size*.76);ctx.restore();
   if(c.nodes.length>8){ctx.font='10px -apple-system,sans-serif';ctx.fillStyle=c.color+'99';ctx.fillText(c.name+' / '+c.nodes.length,p.x+18,p.y-size*.2);}}
  for(const n of renderNodes)projectInto(n,n.projected,driftX,driftY,n.spatialDepth);
+ infrared.draw(ctx,renderNodes.map(n=>({x:n.projected.x,y:n.projected.y,degree:n.connectionCount||0,distance:n.spatialDepth,scale:zoom,birth:birthAlpha(n,now)})),width,height,now);
  // Each non-selected relation kind is stroked as one path. A dense graph no
  // longer dispatches a separate Canvas stroke/state change for every edge.
  for(const batch of edgeBatches){if(renderNodes.length>120&&batch.hierarchy)continue;
@@ -441,10 +513,11 @@ function draw(now=performance.now()){
   if(birthAlpha(n,now)>.5&&(chosen||match||renderNodes.length<120&&n.kind==='directory'&&n.path==='.')){ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=chosen?mapPalette.text:mapPalette.muted;ctx.fillText(n.drawLabel,x+10,y+4);}
   if(chosen){ctx.strokeStyle=mapPalette.star+'80';ctx.beginPath();ctx.arc(x,y,15+Math.sin(t/650)*1.4,0,tau);ctx.stroke();
    ctx.strokeStyle=mapPalette.star+'45';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x-10,y);ctx.lineTo(x+10,y);ctx.moveTo(x,y-10);ctx.lineTo(x,y+10);ctx.stroke();}}
+ drawEvidencePath();
  ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=mapPalette.muted+'66';for(let i=0;i<9;i++){const x=width*(i+1)/10;ctx.fillRect(x,height*.82,1,5);ctx.fillText(String(i*30).padStart(3,'0')+'°',x-8,height*.82+19);}
  if(graphFade){const u=clamp((now-graphFade.start)/graphFade.duration,0,1);ctx.save();ctx.globalAlpha=1-easing(u);ctx.drawImage(graphFade.canvas,0,0,width,height);ctx.restore();if(u===1)graphFade=null;}
  drawLiveGhosts(now,0);
- if(animate||cameraTween||wheelZoom||graphFade||now<liveAnimationUntil)redraw(false);
+ if(infrared.transitioning||animate||cameraTween||wheelZoom||graphFade||now<liveAnimationUntil)redraw(false);
 }
 function redraw(dirty=true){if(dirty)paintRequested=true;if(!frame&&!document.hidden)frame=requestAnimationFrame(draw);}
 function nodeResults(announce=true){
@@ -463,7 +536,7 @@ function nodeResults(announce=true){
  for(const child of [...box.children])if(!keep.has(child))child.remove();
  if(announce){const s=sourceByRegion.get(region);say(!results.length&&s?`${s.name} · ${sourceStateLabel(s.state)} · 当前范围暂无可检索节点`:q?`找到 ${results.length} 个节点`:'点击星点，开始探索');}redraw();
 }
-function search(){searchQuery=$('search').value.trim().toLowerCase();if(retrievalMode()!=='nodes'){documentGeneration++;selected=null;revealPanel($('detail'),false);documentAbort?.abort();$('results').replaceChildren();results=[];resultIDs.clear();invalidateView();say('输入问题后点击探索，检索文档正文。');redraw();return;}nodeResults();}
+function search(){resetDocumentBatch();searchQuery=$('search').value.trim().toLowerCase();if(retrievalMode()!=='nodes'){documentGeneration++;selected=null;revealPanel($('detail'),false);documentAbort?.abort();$('results').replaceChildren();results=[];resultIDs.clear();invalidateView();say('输入问题后点击探索，检索文档正文。');redraw();return;}nodeResults();}
 
 function select(n,focus=true){if(selected?.id!==n.id)beginGraphTransition();$('document-insight').hidden=true;selected=nodeByID.get(n.id)||n;revealPanel($('detail'),true);if(cosmicEnabled&&focus)cosmicLocate(selected);else if(!cosmicEnabled&&focus&&Number.isFinite(selected.x))moveCamera({yaw:-selected.x,pitch:-selected.y,zoom:Math.max(zoom,1.08)},650);$('detail-name').textContent=n.name;$('detail-region').textContent=n.kind==='symbol'?'CODE / '+n.language:n.region==='sessions'?'CONVERSATION / 会话':n.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('detail-id').textContent=n.id;$('detail-path').textContent=(n.path||'会话 #'+n.number)+(n.line?' : '+n.line+'–'+n.endLine:'');$('detail-text').textContent=n.text||'此节点仅索引名称，尚未读取正文。';const edges=edgeAdjacency.get(n.id)||[];$('neighbors').textContent=`${edges.length} 条连接 · ${n.kind==='symbol'?'声明附近片段':(n.size||0)+' 字节'}`;$('insert').disabled=n.kind==='directory';$('understand').disabled=n.kind==='directory';syncNodeSourceChrome();renderCodeInsight(n);redraw();}
 function renderCodeInsight(n){
@@ -471,11 +544,17 @@ function renderCodeInsight(n){
  $('code-signature').textContent=n.signature||'';$('code-location').textContent=n.kind==='symbol'?`${n.language} · ${n.symbolKind} · L${n.line}–L${n.endLine} · ${n.id}`+(n.contentHash?' · SHA '+n.contentHash.slice(0,10):''):'文件 / 模块视角';
  $('code-open').hidden=!n.path||n.kind==='directory';const spec={root:n.root,path:n.path,readOnly:true,origin:n.origin||'',knowledgeWorkspace:graph.workspace};if(n.line){spec.line=n.line;spec.endLine=n.endLine;spec.codeHash=n.contentHash;}if(n.source)spec.source=n.source;if(n.format)spec.format=n.format;$('code-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));
  const byID=nodeByID,edges=graph.edges;
- function list(id,title,items){const box=$(id);box.replaceChildren();const h=document.createElement('h3');h.textContent=title+' · '+items.length;box.append(h);for(const {node,edge,label}of items.slice(0,24)){const b=document.createElement('button');b.type='button';b.className='code-relation';b.textContent=(label||'')+node.name+(edge?.line?' · L'+edge.line:'');b.title=(node.path||'')+' / '+node.id;b.onclick=()=>select(node);box.append(b);}if(items.length>24){const p=document.createElement('p');p.textContent='仅显示前24项，可用函数名继续搜索。';box.append(p);}if(!items.length){const p=document.createElement('p');p.textContent='当前索引内未发现；不代表项目中不存在。';box.append(p);}}
+ function list(id,title,items){const box=$(id);box.replaceChildren();const h=document.createElement('h3');h.textContent=title+' · '+items.length;box.append(h);for(const {node,edge,label}of items.slice(0,24)){const b=document.createElement('button');b.type='button';b.className='code-relation';b.textContent=(label||'')+node.name+(edge?.line?' · L'+edge.line:'');const confidence={source_declaration:'声明证据',source_path:'路径匹配',name_candidate:'名称候选',type_binding:'类型绑定'}[edge?.confidence]||'';if(confidence){const tag=document.createElement('small');tag.textContent=confidence;b.append(tag);}b.title=(node.path||'')+' / '+node.id+(edge?.evidence?' / '+edge.evidence:'');b.onclick=()=>select(node);box.append(b);}if(items.length>24){const p=document.createElement('p');p.textContent='仅显示前24项，可用函数名继续搜索。';box.append(p);}if(!items.length){const p=document.createElement('p');p.textContent='当前索引内未发现；不代表项目中不存在。';box.append(p);}}
  const mapped=(es,dir)=>es.map(e=>({node:byID.get(e[dir]),edge:e})).filter(x=>x.node);
  const hierarchy=[...mapped(edges.filter(e=>['defines','contains'].includes(e.kind)&&e.to===n.id),'from').map(x=>({...x,label:'上级 / '})),...mapped(edges.filter(e=>['defines','contains'].includes(e.kind)&&e.from===n.id),'to').map(x=>({...x,label:'声明 / '}))];
- list('code-hierarchy','代码层级',hierarchy);list('code-callers','调用者候选 ←',mapped(edges.filter(e=>e.kind==='call_candidate'&&e.to===n.id),'from'));list('code-callees','被调用候选 →',mapped(edges.filter(e=>e.kind==='call_candidate'&&e.from===n.id),'to'));
- const adj=new Map();for(const e of edges.filter(e=>e.kind==='call_candidate')){if(!adj.has(e.from))adj.set(e.from,[]);adj.get(e.from).push(e.to)}
+ list('code-hierarchy','代码层级',hierarchy);list('code-callers','调用关系 ←',mapped(edges.filter(e=>['call_candidate','call_typed'].includes(e.kind)&&e.to===n.id),'from'));list('code-callees','调用关系 →',mapped(edges.filter(e=>['call_candidate','call_typed'].includes(e.kind)&&e.from===n.id),'to'));
+ list('code-imports','导入路径证据',mapped(edges.filter(e=>e.kind==='imports'&&(e.from===n.id||e.from===n.parentFile)),'to'));
+ const unresolved=(graph.code?.unresolvedRelations||[]).filter(r=>r.from===n.id||r.file===n.id),unresolvedBox=$('code-unresolved');unresolvedBox.replaceChildren();
+ const unresolvedTitle=document.createElement('h3');unresolvedTitle.textContent='未解析关系 · '+unresolved.length+(graph.code?.relationsTruncated?'（记录达到上限）':'');unresolvedBox.append(unresolvedTitle);
+ const reasons={dynamic_binding:'动态绑定',ambiguous_name:'名称歧义',outside_index_or_unknown_binding:'索引外或绑定未知',outside_index_or_unresolved_path:'索引外或路径未解析'};
+ for(const r of unresolved.slice(0,24)){const file=byID.get(r.file),row=document.createElement(file?.path?'a':'p');row.className='code-relation';row.textContent=(r.kind==='import'?'导入 / ':'调用 / ')+r.name+(r.line?' · L'+r.line:'');const reason=document.createElement('small');reason.textContent=reasons[r.reason]||'未解析';row.append(reason);if(file?.path){const link={root:file.root,path:file.path,origin:file.origin||'',readOnly:true,knowledgeWorkspace:graph.workspace,codeHash:file.contentHash};if(file.source)link.source=file.source;if(r.line)link.line=r.line;row.href='/#file='+encodeURIComponent(JSON.stringify(link));row.target='_blank';row.rel='noopener';row.title='查看源位置 · '+file.path;}unresolvedBox.append(row);}
+ if(unresolved.length>24||!unresolved.length){const p=document.createElement('p');p.className='code-caveat';p.textContent=unresolved.length>24?'仅显示前24项；更多记录可在索引证据中检查。':'当前记录未发现；不代表没有未解析关系。';unresolvedBox.append(p);}
+ const adj=new Map();for(const e of edges.filter(e=>['call_candidate','call_typed'].includes(e.kind))){if(!adj.has(e.from))adj.set(e.from,[]);adj.get(e.from).push(e.to)}
  let cycle=null,visited=0;const pending=[[n.id]];while(pending.length&&visited++<600){const route=pending.shift();if(route.length>12)continue;for(const to of adj.get(route.at(-1))||[]){if(to===n.id){cycle=[...route,to];break;}if(!route.includes(to)&&pending.length<600)pending.push([...route,to]);}if(cycle)break;}
  $('code-recursion').textContent=cycle?'静态候选闭环：'+cycle.map(id=>byID.get(id)?.name||id).join(' → '):'未发现12层 / 600步范围内的候选闭环；不构成无递归证明。';
 }
@@ -486,7 +565,7 @@ $('edge-mode').onchange=()=>{beginGraphTransition();relationshipOverview();edgeM
 
 function syncGraphChrome(){
  $('counts').textContent=`${graph.nodes.length} STARS / ${graph.edges.length} CONNECTIONS`;
- $('code-summary').textContent=graph.code?`${graph.code.files} 份源码 · ${graph.code.symbols} 个声明 · ${graph.code.calls} 条调用候选 · ${graph.code.unresolved} 个未解析调用`:'';
+ $('code-summary').textContent=graph.code?`${graph.code.files} 份源码 · ${graph.code.symbols} 个声明 · ${graph.code.calls} 条调用候选 · ${graph.code.typedCalls||0} 条类型绑定 · ${graph.code.unresolved} 个未解析调用 · ${graph.code.unresolvedImports||0} 个未解析导入`:'';
  $('warnings').textContent=[...(graph.warnings||[]),...(graph.code?.diagnostics||[]),...(graph.truncated?['索引达到数量、深度或时间上限；未覆盖全部文件。']:[])].join('\n');
  const box=$('regions'),previous=new Map([...box.children].map(el=>[el.dataset.region,el])),keep=new Set();
  sourceCatalog=currentSources();
@@ -497,8 +576,8 @@ function syncGraphChrome(){
  for(const [i,s]of [{region:'',name:'全部星域'},...sourceCatalog].entries()){
   const r=s.region;let button=previous.get(r);if(!button){button=document.createElement('button');button.type='button';button.dataset.region=r;button.append(document.createElement('span'),document.createElement('small'));button.firstChild.className='source-chip-name';button.lastChild.className='source-chip-meta';button.onclick=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiAbort?.abort();$('ai-found').replaceChildren();$('answer').textContent='';selected=null;revealPanel($('detail'),false);region=button.dataset.region;cosmicSceneCache.clear();cosmicKey='';if(cosmos)enterCosmic(cosmos.root.key,true);syncGraphChrome();search();};}
   button.sourceDescriptor=s;button.classList.toggle('source-chip',!!r);button.dataset.state=s.state||'';button.firstChild.textContent=s.name;
-  const state=s.detached?'已移除':sourceStateLabel(s.state),type=sourceTypeLabel(s.type),meta=r?`${type} · ${state} · ${s.nodeCount} 颗星`:'';
-  button.dataset.count=r?String(s.nodeCount):String(graph.nodes.length);button.lastChild.textContent=r?`${type} · ${state}`:'全部已索引来源';button.lastChild.hidden=false;button.title=r?[s.name,meta,'来源 #'+s.id,s.message].filter(Boolean).join(' · '):'查看全部已索引来源';button.setAttribute('aria-label',r?s.name+'，'+meta+'，来源 '+s.id:s.name);button.setAttribute('aria-pressed',String(region===r));keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
+  const state=s.detached?'已移除':sourceCoverageState(s),type=sourceTypeLabel(s.type),meta=r?`${type} · ${state} · ${s.nodeCount} 颗星`:'';
+  button.dataset.count=r?String(s.nodeCount):String(graph.nodes.length);button.lastChild.textContent=r?state:'已索引节点，非文件总数';button.lastChild.hidden=false;button.title=r?[s.name,meta,'来源 #'+s.id,sourceCoverageLabel(s),s.message].filter(Boolean).join(' · '):'查看全部已索引来源';button.setAttribute('aria-label',r?s.name+'，'+meta+'，来源 '+s.id:s.name);button.setAttribute('aria-pressed',String(region===r));keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
  }
  for(const child of [...box.children])if(!keep.has(child))child.remove();
  const catalog=$('source-catalog'),prior=new Map([...catalog.children].map(el=>[el.dataset.region,el])),retained=new Set();
@@ -515,6 +594,16 @@ function drawLiveGhosts(now,drift){
 }
 function applyLiveUpdate(update,initial=false){
  if(!update||typeof update.revision!=='string'||!Array.isArray(update.nodes)||!Array.isArray(update.edges))throw Error('自动同步响应不完整');
+ if(initial||update.workspace!==graph.workspace)clearEvidencePath('星图已同步，请选择路径节点。',true);
+ else if(update.revision!==liveCursor){
+  if(pathAbort)clearEvidencePath('查询期间索引已更新，请重新查询。');
+  else if(pathResult){
+   const ids=new Set(pathResult.nodes.map(n=>n.id)),keys=new Set(pathResult.steps.map(s=>edgeKey(s.edge)));
+   const changed=!pathResult.found||(update.reset&&pathResult.nodes.some(n=>!update.nodes.some(current=>current.id===n.id)))||(update.removedNodes||[]).some(id=>ids.has(id))||update.nodes.some(n=>ids.has(n.id)&&liveWireNodes.get(n.id)!==JSON.stringify(n))||(update.removedEdges||[]).some(e=>keys.has(edgeKey(e)))||(update.reset&&pathResult.steps.some(s=>!update.edges.some(e=>edgeKey(e)===edgeKey(s.edge))));
+   if(changed)clearEvidencePath('路径涉及的节点或关系已变化，请重新查询。');
+   else pathResult.revision=update.revision; // Every displayed node and edge is still present, unchanged.
+  }
+ }
  const differentWorkspace=!!graph.workspace&&graph.workspace!==update.workspace;
  if(initial||differentWorkspace||!graph.workspace){
   if(!initial)graphGeneration++;
@@ -551,18 +640,21 @@ function applyLiveUpdate(update,initial=false){
  say('已同步'+(added.length?' · '+added.length+' 颗新星':'')+(removed.size?' · '+removed.size+' 个节点移出':'')+(changed.length>added.length?' · '+(changed.length-added.length)+' 个节点更新':''));redraw();
 }
 async function load(){
+ clearEvidencePath('正在同步星图，请同步完成后查询。',true);
  if(loading||locked)return;stopLive(true);loading=true;const generation=++graphGeneration,mode=codeView;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
  try{const update=await api('/updates?code='+(mode?'1':'0'),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
   const input=recoveryInput;
   if(recoveryScopeLoaded!==update.workspace){
    recoveryLoading=true;
-   const saved=await window.AideContinuity?.read('knowledge:'+update.workspace,'scene','starmap').catch(()=>null);
+   const saved=await window.AideContinuity?.readTab('knowledge:'+update.workspace,'scene','starmap').catch(()=>null);
    recoveryLoading=false;
    if(locked||generation!==graphGeneration||mode!==codeView)return;
-   recoveryScopeLoaded=update.workspace;pendingRecoveredView=input===recoveryInput?saved:null;
-   if(pendingRecoveredView?.version===1&&!params.has('code')&&typeof saved.codeView==='boolean'&&saved.codeView!==codeView){codeView=saved.codeView;graphGeneration++;return;}
+   const changedWorkspace=!!graph.workspace&&graph.workspace!==update.workspace;
+   recoveryScopeLoaded=update.workspace;pendingRecoveredView=input===recoveryInput?(saved?.version===1?saved:changedWorkspace?defaultSkyView():null):null;
+   if(changedWorkspace){aiAbort?.abort();aiAbort=null;$('answer').textContent='';$('question').value='';$('usage').textContent='';$('ai-found').replaceChildren();resetDocumentBatch();}
+   if(pendingRecoveredView?.version===1&&!params.has('code')&&typeof pendingRecoveredView.codeView==='boolean'&&pendingRecoveredView.codeView!==codeView){codeView=pendingRecoveredView.codeView;graphGeneration++;return;}
   }
-  beginGraphTransition();applyLiveUpdate(update,true);if(pendingRecoveredView){restoreSkyView(pendingRecoveredView);pendingRecoveredView=null;}liveCursor=update.revision;liveFailures=0;
+  beginGraphTransition();applyLiveUpdate(update,true);if(pendingRecoveredView){restoreSkyView(pendingRecoveredView);pendingRecoveredView=null;}liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;
  }catch(e){if(!locked&&e.name!=='AbortError'){liveFailures++;say(e.message);}}
  finally{loading=false;syncCodeView();redraw();if(!locked&&generation!==graphGeneration)load();else scheduleLive();}
 }
@@ -637,7 +729,7 @@ function setLocked(value){
  // should clear or reload the graph; the first notification still initializes it.
  if(lockStateKnown&&locked===value)return;
  if(value&&!locked)persistSkyView();
- lockStateKnown=true;locked=value;if(value){clearTimeout(recoveryTimer);recoveryScopeLoaded='';pendingRecoveredView=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];selected=null;renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
+ lockStateKnown=true;locked=value;knowledgeTimeline.lock(value);if(value)clearEvidencePath('星图已锁定。',true);if(value){clearTimeout(recoveryTimer);recoveryScopeLoaded='';pendingRecoveredView=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){resetDocumentBatch();documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];selected=null;renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
 if(window.LockCluster){LockCluster.on('effective',setLocked);LockCluster.onReady().then(setLocked);}else setLocked(false);
 for(const event of ['pointerdown','pointermove','keydown','wheel'])addEventListener(event,()=>{if(!locked)window.LockCluster?.noteActivity();},{passive:true});
 redraw();
@@ -650,4 +742,28 @@ matchMedia('(forced-colors: active)').addEventListener('change',syncMapPalette);
 $('retrieval-mode').onchange=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiAbort?.abort();$('ai-found').replaceChildren();$('answer').textContent='';selected=null;revealPanel($('detail'),false);search();};
 function selectDocument(hit){select(hit.file);const origin=hit.file.origin||selected.origin||'';selected={...selected,format:hit.file.format||selected.format,origin,documentCitation:{locator:hit.locator,offset:hit.offset,hash:hit.hash,origin}};syncNodeSourceChrome();$('detail-text').textContent=hit.text;$('document-insight').hidden=false;$('document-locator').textContent=hit.id+' · '+hit.locator+' · 段内字符偏移 '+hit.offset;$('document-hash').textContent='SHA-256 '+hit.hash;const spec={root:hit.file.root,path:hit.file.path,readOnly:true,origin,knowledgeWorkspace:graph.workspace};if(hit.file.source)spec.source=hit.file.source;if(hit.file.format)spec.format=hit.file.format;$('document-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));}
 function renderDocumentResults(data,id='results'){const box=$(id);box.replaceChildren();for(const hit of data.hits||[]){const b=document.createElement('button');b.type='button';b.className='result document-result';const title=document.createElement('span');title.textContent=hit.file.name+' · '+hit.locator;appendSourceLabel(title,hit.file);const snippet=document.createElement('small');snippet.textContent=hit.text.slice(0,220);title.append(snippet);const code=document.createElement('code');code.textContent=hit.file.id;b.append(code,title);b.onclick=()=>selectDocument(hit);box.append(b);}if(!(data.hits||[]).length){const p=document.createElement('p');p.textContent='未检索到匹配原文；请检查关键词、来源范围与提取诊断。';box.append(p);}}
-async function searchDocuments(){if(locked||loading)return;const gen=++documentGeneration,graphGen=graphGeneration,mode=retrievalMode(),query=$('search').value;documentAbort?.abort();documentAbort=new AbortController();say('正在提取与检索文档正文…');try{const d=await api('/documents/search',{method:'POST',signal:documentAbort.signal,body:JSON.stringify({query,mode,workspace:graph.workspace,region})});if(locked||gen!==documentGeneration||graphGen!==graphGeneration)return;renderDocumentResults(d);$('warnings').textContent=[...d.warnings,...(d.truncated?['索引／提取／结果达到限制，不能据此声称全文无匹配。']:[])].join('\n');say(`${d.files} 份文档 · ${d.chunks} 个片段 · ${d.hits.length} 条结果 · ${mode==='original'?'逐字原文':'本地 TF-IDF RAG'}`);}catch(e){if(!locked&&gen===documentGeneration&&e.name!=='AbortError')say(e.message);}}
+async function searchDocuments(continuing=false){
+ if(locked||loading)return;
+ const mode=retrievalMode(),query=$('search').value,workspace=graph.workspace;
+ const key=JSON.stringify({query,mode,workspace,region});
+ const previous=continuing&&documentBatch?.key===key?documentBatch:null;
+ if(continuing&&!previous?.cursor)return;
+ const gen=++documentGeneration,graphGen=graphGeneration;
+ documentAbort?.abort();documentAbort=new AbortController();$('document-next').disabled=true;
+ if(!previous)resetDocumentBatch();
+ say('正在提取与检索文档正文…');
+ try{
+  const d=await api('/documents/search',{method:'POST',signal:documentAbort.signal,body:JSON.stringify({query,mode,workspace,region,cursor:previous?.cursor||''})});
+  if(locked||gen!==documentGeneration||graphGen!==graphGeneration)return;
+  const hits=[...(previous?.hits||[]),...d.hits],seen=new Set();
+  documentBatch={key,cursor:d.nextCursor||'',hits:hits.filter(h=>!seen.has(h.id)&&seen.add(h.id))};
+  renderDocumentResults({hits:documentBatch.hits});
+  $('document-progress').hidden=false;
+  $('document-coverage').textContent=`已检查 ${d.scanned} / ${d.total} 份已索引文档${d.nextCursor?' · 可继续检索':' · 当前范围检查完毕'}`;
+  $('document-next').hidden=!d.nextCursor;
+  $('warnings').textContent=[...d.warnings,...(d.truncated?['索引／提取／结果达到限制，不能据此声称全文无匹配。']:[])].join('\n');
+  say(`${d.files} 份文档 · ${d.chunks} 个片段 · 累计 ${documentBatch.hits.length} 条结果 · ${mode==='original'?'逐字原文':d.engine?.startsWith('weighted-rrf')?'关键词 + 向量 RAG':'本地关键词 RAG'}`);
+ }catch(e){if(!locked&&gen===documentGeneration&&e.name!=='AbortError'){resetDocumentBatch();say(e.message);}}
+ finally{if(gen===documentGeneration)$('document-next').disabled=false;}
+}
+$('document-next').onclick=()=>searchDocuments(true);

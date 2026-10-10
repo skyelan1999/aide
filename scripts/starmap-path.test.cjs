@@ -1,0 +1,22 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
+const block=source.slice(source.indexOf('let pathAbort='),source.indexOf('// Store navigation metadata'));
+const elements=new Map();
+const el=id=>{if(!elements.has(id))elements.set(id,{value:'',checked:false,children:[],disabled:false,textContent:'',append(...children){this.children.push(...children)},replaceChildren(){this.children=[]},addEventListener(){}});return elements.get(id)};
+const node={id:'a',name:'入口',path:'main.go',root:'workspace',line:2,endLine:3,contentHash:'hash',origin:'origin'};
+let answer,resolve;
+const c=vm.createContext({$:el,document:{createElement:()=>({children:[],append(...nodes){this.children.push(...nodes)}})},locked:false,loading:false,liveCursor:'r',graph:{workspace:'w'},codeView:true,selected:node,nodeByID:new Map([['a',node]]),redraw(){},select(){},api:async()=>answer,AbortController,setTimeout,clearTimeout,console});
+vm.runInContext(block,c);
+(async()=>{
+ el('path-set-from').onclick();assert.equal(el('path-from').value,'a');assert.equal(el('path-explorer').open,true);
+ el('path-to').value='a';answer={workspace:'w',revision:'r',found:true,nodes:[node],steps:[]};await vm.runInContext('queryEvidencePath()',c);assert.match(el('path-status').textContent,/0 步/);assert.equal(el('path-steps').children.length,1);assert.equal(el('path-run').disabled,false);
+ c.api=async()=>answer;const reconcile=source.slice(source.indexOf(' if(initial||update.workspace!==graph.workspace)'),source.indexOf(' const differentWorkspace=!!graph.workspace'));
+ c.initial=false;c.liveWireNodes=new Map([['a',JSON.stringify(node)]]);c.edgeKey=e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.column||0,e.evidence||'',e.confidence||'']);
+ c.update={workspace:'w',revision:'r2',nodes:[node],edges:[],reset:true};vm.runInContext(reconcile,c);assert.equal(el('path-steps').children.length,1,'unchanged coverage must preserve route');
+ c.update={workspace:'w',revision:'r3',nodes:[],edges:[],reset:true};vm.runInContext(reconcile,c);assert.equal(el('path-steps').children.length,0,'reset omission must invalidate route');
+ answer.revision='r';await vm.runInContext('queryEvidencePath()',c);
+ c.api=()=>new Promise(r=>resolve=r);const pending=vm.runInContext('queryEvidencePath()',c);vm.runInContext("clearEvidencePath('锁定',true)",c);resolve(answer);await pending;assert.equal(el('path-status').textContent,'锁定');assert.equal(el('path-steps').children.length,0);assert.equal(el('path-from').value,'');
+ c.api=async()=>({...answer,revision:'wrong'});await vm.runInContext('queryEvidencePath()',c);assert.match(el('path-status').textContent,/版本不一致/);
+ c.api=async()=>({...answer,found:false,nodes:[],steps:[],truncated:true,limited:true});await vm.runInContext('queryEvidencePath()',c);assert.match(el('path-status').textContent,/索引不完整/);assert.match(el('path-status').textContent,/32步/);
+ console.log('PASS: selection, rendering, cancellation, stale response, bounded no-path');
+})().catch(e=>{console.error(e);process.exitCode=1});

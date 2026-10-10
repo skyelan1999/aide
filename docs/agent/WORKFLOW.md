@@ -35,7 +35,7 @@ aide = AI + IDE，产品主旨是让人更专注于专业工作。本路由用�
 
 ## 检查与证据
 
-- `python3 scripts/agent-route.py verify quick`：JS 语法、diff、版本格式、路由自身回归。
+- `python3 scripts/agent-route.py verify quick`：JS 语法、diff、版本格式、路由自身回归，以及全局审批、会话切换、Markdown 图片与下载、星图红外/路径/时间线前端逻辑回归（使用 VM/模拟 API，不替代真实模型或浏览器验收）。
 - `python3 scripts/agent-route.py verify full`：quick + 隔离的一次性 Docker Go race/vet。
   Docker 不可用即失败；不重启生产，不自动调用付费模型。
 - UI：实际查看桌面/窄屏、专业/经典明暗、键盘与核心交互；保留截图或具体观察记录。

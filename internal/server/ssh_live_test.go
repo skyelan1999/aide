@@ -339,7 +339,21 @@ func TestSSHLiveWorkspaceAndIndependentSource(t *testing.T) {
 			}), 200)
 		}
 		saveSource("password", "/home/fixture", map[string]any{"password": "fixture-pass"})
-		requireStatus(t, request(a, "PUT", "/api/file", map[string]string{"source": id, "path": ".ssh/authorized_keys", "content": string(pub)}), 200)
+		// Repeat runs share the disposable server. Existing files require their
+		// observed version; never disable the product's overwrite protection.
+		keyHash := ""
+		q := url.Values{"source": {id}, "path": {".ssh/authorized_keys"}}
+		current := request(a, "GET", "/api/file?"+q.Encode(), nil)
+		if current.Code == 200 {
+			var file map[string]string
+			if err := json.Unmarshal(current.Body.Bytes(), &file); err != nil {
+				t.Fatal(err)
+			}
+			keyHash = file["hash"]
+		} else if current.Code != 400 || (!strings.Contains(current.Body.String(), "not found") && !strings.Contains(current.Body.String(), "No such file")) {
+			t.Fatalf("cannot observe disposable key file: %s", current.Body.String())
+		}
+		requireStatus(t, request(a, "PUT", "/api/file", map[string]string{"source": id, "path": ".ssh/authorized_keys", "content": string(pub), "hash": keyHash}), 200)
 		saveSource("key", "/srv/refs", map[string]any{"key": string(key)})
 		if body := readFile(t, id, "server-id.txt"); !strings.Contains(body, "SERVER-B") {
 			t.Fatal("source key authentication did not reach server B:", body)
@@ -397,7 +411,9 @@ func TestSSHLiveWorkspaceAndIndependentSource(t *testing.T) {
 		}
 	})
 	t.Run("absolute_cache_push_pull_and_local_mirror", func(t *testing.T) {
-		config(t, workspace, "workspace", docsAbs, "workspace", cacheAbs)
+		// Unbound documents retain the legacy cache destination. Bound documents
+		// are tested separately; they must follow the selected system-docs root.
+		config(t, workspace, "workspace", "", "workspace", cacheAbs)
 		if got := a.workspaceRemoteCachePath(); got != cacheAbs {
 			t.Fatalf("absolute cache path changed: got %q want %q", got, cacheAbs)
 		}
@@ -441,6 +457,10 @@ func TestSSHLiveWorkspaceAndIndependentSource(t *testing.T) {
 		if err != nil || !bytes.Equal(pulled, local) {
 			t.Fatalf("remote cache pull did not restore the working copy: %v", err)
 		}
+	})
+	t.Run("continuity_history_and_memory", func(t *testing.T) {
+		config(t, workspace, "workspace", docsAbs, "workspace", cacheAbs)
+		runSSHContinuity(t, a, workspace, docsAbs, cacheAbs, "live-server-b-"+run, remote)
 	})
 	t.Run("command_exit_status", func(t *testing.T) {
 		for _, test := range []struct {

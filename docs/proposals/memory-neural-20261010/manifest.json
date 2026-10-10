@@ -1,0 +1,35 @@
+[
+  {
+    "original": "internal/server/memory_neural.go",
+    "archive": "docs/proposals/memory-neural-20261010/source/internal/server/memory_neural.go.txt",
+    "sha256": "ac4af3efc5e5dc870386ceef041bfe0544a6351db9b96941c28d889273559b12"
+  },
+  {
+    "original": "internal/server/memory_neural_test.go",
+    "archive": "docs/proposals/memory-neural-20261010/source/internal/server/memory_neural_test.go.txt",
+    "sha256": "f925660fc92da870ce5cc422904e68486c85625345b255c66a950491359d46e9"
+  },
+  {
+    "original": "internal/server/web/memory-neural.html",
+    "archive": "docs/proposals/memory-neural-20261010/source/internal/server/web/memory-neural.html.txt",
+    "sha256": "99d1750e752f606a25736bcbad34d7ae763b62df5a198202c53052c6a6aaa326"
+  },
+  {
+    "original": "internal/server/web/memory-neural.js",
+    "archive": "docs/proposals/memory-neural-20261010/source/internal/server/web/memory-neural.js.txt",
+    "sha256": "edbc39939167be240d96aa21c0947fdbc91fad8b9bebcfa753e2b0ad9d49e0e3"
+  },
+  {
+    "original": "internal/server/web/memory-neural.css",
+    "archive": "docs/proposals/memory-neural-20261010/source/internal/server/web/memory-neural.css.txt",
+    "sha256": "a36fdab8207012cc7380ffe483df202561aaeadfae5b58fe8141a0a7dfe4178e"
+  },
+  {
+    "original": "internal/server/web/memory-neural-icon.svg",
+    "archive": "docs/proposals/memory-neural-20261010/source/internal/server/web/memory-neural-icon.svg.txt",
+    "sha256": "caf6b97b6081828c40bab6099766d32b85a9a5f63db839199f88e9d46355cbac"
+  },
+  {
+    "note": "Storage codec and persistence remain active in memory_tokens.go for existing data compatibility; archived full source includes these definitions and must not be copied back alongside the active file."
+  }
+]

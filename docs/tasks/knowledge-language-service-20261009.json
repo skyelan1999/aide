@@ -1,0 +1,139 @@
+{
+  "id": "knowledge-language-service-20261009",
+  "request": "可选语言服务：独立Go类型绑定解析，引擎有超时与输出边界；配置和代码星图集成，实际证据验收",
+  "baseline": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/continuity-roadmap.md\n M docs/architecture/knowledge-map.md\n M docs/architecture/markdown-editing-export.md\n M docs/architecture/memory-access.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M internal/server/knowledge_code.go\n M internal/server/knowledge_documents.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_sources.go\n M internal/server/knowledge_updates.go\n M internal/server/project_cache.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/markdown-export.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M scripts/markdown-image-path.test.js\n?? docs/architecture/memory-neural.md\n?? docs/tasks/knowledge-code-confidence-20261009.json\n?? docs/tasks/knowledge-hybrid-retrieval-20261009.json\n?? docs/tasks/knowledge-index-policy-20261009.json\n?? docs/tasks/knowledge-progressive-index-20261009.json\n?? docs/tasks/markdown-download-export-20261009.json\n?? docs/tasks/memory-neural-20261009.json\n?? docs/tasks/starmap-infrared-20261009.json\n?? internal/server/knowledge_code_test.go\n?? internal/server/knowledge_discovery.go\n?? internal/server/knowledge_discovery_test.go\n?? internal/server/knowledge_embedding_policy.go\n?? internal/server/knowledge_embedding_policy_test.go\n?? internal/server/knowledge_embeddings.go\n?? internal/server/knowledge_embeddings_test.go\n?? internal/server/knowledge_hybrid.go\n?? internal/server/knowledge_hybrid_test.go\n?? internal/server/knowledge_index_policy.go\n?? internal/server/knowledge_index_policy_test.go\n?? internal/server/knowledge_progressive.go\n?? internal/server/knowledge_progressive_test.go\n?? internal/server/knowledge_vector_cache.go\n?? internal/server/knowledge_vector_cache_test.go\n?? internal/server/memory_neural.go\n?? internal/server/memory_neural_test.go\n?? internal/server/web/memory-neural-icon.svg\n?? internal/server/web/memory-neural.css\n?? internal/server/web/memory-neural.html\n?? internal/server/web/memory-neural.js\n?? internal/server/web/starmap-infrared.js\n?? internal/server/web/vendor/markdown-export/\n?? scripts/markdown-download-export.test.js\n?? scripts/starmap-infrared.test.cjs",
+  "acceptance": [
+    "默认不启动类型服务；工作区配置可保存重读且冲突/隔离保护有效",
+    "同名方法按接收者类型区分；动态接口/变量调用不冒充静态类型目标",
+    "仅成功检查的已索引包连接现有符号，行列位置准确，失败保留AST候选",
+    "子进程取消、输入输出限额和必要环境传递通过实际测试",
+    "真实本机鉴权设置/图谱/源文件行号跳转验收，记录SSH与Windows缺口"
+  ],
+  "scope": [
+    "cmd/aide/main.go",
+    "internal/server/knowledge_go_types.go",
+    "internal/server/knowledge_go_types_test.go",
+    "internal/server/knowledge_index_policy.go",
+    "internal/server/knowledge_index_policy_test.go",
+    "internal/server/knowledge_code.go",
+    "internal/server/knowledge_map.go",
+    "internal/server/knowledge_updates.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap-structure.js",
+    "internal/server/web/starmap-cosmos.js",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/knowledge-map.md",
+    "docs/architecture/continuity-roadmap.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "延续总目标的可选语言服务条目；首个实现为独立 Go 已索引快照类型检查，不宣称完整LSP/运行验证",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用工作区索引策略和现有AST节点；独立模式、5秒、2并发、边界输出和精确行列位置",
+      "evidence": [
+        "internal/server/knowledge_go_types.go",
+        "internal/server/knowledge_updates.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "设置、版本化API策略、类型边、AST候选替换、失败降级和图层筛选已接入",
+      "evidence": [
+        "cmd/aide/main.go",
+        "internal/server/knowledge_go_types.go",
+        "internal/server/knowledge_go_types_test.go",
+        "internal/server/knowledge_index_policy.go",
+        "internal/server/knowledge_index_policy_test.go",
+        "internal/server/knowledge_code.go",
+        "internal/server/knowledge_map.go",
+        "internal/server/knowledge_updates.go",
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap-structure.js",
+        "internal/server/web/starmap-cosmos.js",
+        "internal/server/web/locales/en.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "系统Safari两包Go样例及诊断修复通过；当前35项full PASS且指纹匹配。第三方依赖、SSH、其他语言、Windows完整验收待完成。",
+      "evidence": [
+        "go test -buildvcs=false -race ./internal/server -run TestKnowledge -count=1 -timeout=180s",
+        ".agent-state/go-types-preview/settings.png",
+        ".agent-state/go-types-preview/final-narrow.png",
+        ".agent-state/go-types-preview/source.png",
+        ".agent-state/go-types-preview/graph.json",
+        "cmd/aide 构建成功及 helper 模式实际返回 line4/column14 到 target line3",
+        "隔离18224挂载UID不匹配导致第一次重启失败；隔离容器user0:0重启成功，源码只读，不代表正常用户部署验收",
+        "viewport设置未改变实际427px宽度；已reset，不宣称桌面验收",
+        ".agent-state/verify-20261009T193942124289Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录引擎范围、限制、配置/边类别及验收边界",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docs/architecture/continuity-roadmap.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "临时18224容器与22/23/24标签已关闭；本次临时凭据/数据删除，保留样例入口、构建和截图；继承改动完整保留",
+      "evidence": [
+        ".agent-state/go-types-preview/main.go",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "总目标与发布门禁尚未完成；未推送、未发布或部署",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "总目标仍 active。仅本机隔离样例已检查；真实SSH、大型依赖项目、Windows、其他语言类型解析待完成。保留继承改动。",
+  "system_safari_20261010": {
+    "status": "in_progress",
+    "environment": "18211 isolated, system Safari, local two-package Go module",
+    "evidence": [
+      ".agent-state/continuity-runtime/go-types-module-safari-20261010.png",
+      ".agent-state/continuity-runtime/go-types-source-line12-safari-20261010.png",
+      ".agent-state/continuity-runtime/go-types-module-api-receipt-20261010.json",
+      ".agent-state/continuity-runtime/go-types-diagnostics-fixed-safari-20261010.png",
+      ".agent-state/continuity-runtime/go-types-diagnostics-fixed-api-20261010.json"
+    ],
+    "observed": [
+      "2 packages checked; 4 typed bindings, 0 candidates, 2 dynamic unresolved calls",
+      "Primary.Compute and Secondary.Compute on L9 distinguish columns12/33 and targets; cross-package Build resolves",
+      "Interface c.Compute and function variable f remain unresolved; Safari link selects main.go line12 in readonly view",
+      "Original index policy and workspace config restored and API readback matched; original note037 unsent draft and attachment restored after Safari reload"
+    ],
+    "repair": "Stale AST diagnostics removed by exact file/line/column/name; unrelated diagnostics retained; TestKnowledgeGoTypes race PASS 1.044s; rebuilt candidate via start.command, authenticated API and system Safari stellar log confirmed only two remaining dynamic calls.",
+    "remaining": [
+      "External dependencies/build tags/large project and SSH type binding not verified",
+      "Other languages and Windows not verified"
+    ],
+    "full_gate": {
+      "status": "pass",
+      "checks": 35,
+      "fingerprint": "12f205fe94dac9c155ae8fd4cffc6c649f30700f8c89fc5abe1162890e67d925",
+      "log": ".agent-state/verify-20261009T193942124289Z.log",
+      "goRaceSeconds": 424.352,
+      "head": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0"
+    }
+  }
+}

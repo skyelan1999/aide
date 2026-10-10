@@ -54,8 +54,8 @@ func TestKnowledgeCoverageFileBudget(t *testing.T) {
 	for _, r := range c.Reasons {
 		found = found || r == "files"
 	}
-	if !found {
-		t.Fatal(c)
+	if !found && (!c.Progressive || c.Pending == 0) {
+		t.Fatal("missing explicit budget or pending coverage", c)
 	}
 	// Coverage is part of revision identity and survives a delta with no node changes.
 	rev := knowledgeGraphRevision(&g)

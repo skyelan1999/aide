@@ -2,8 +2,8 @@
 // Visual layers describe indexed static relationships, never runtime stack depth.
 window.AideStarStructure = Object.freeze({build(nodes, edges) {
  const byID=new Map(nodes.map(n=>[n.id,n])),graphs=new Map(),globalViews=new Map(),localViews=new Map();
- const kinds={calls:new Set(['call_candidate']),imports:new Set(['imports']),hierarchy:new Set(['contains','defines'])};
- const resolve=mode=>mode!=='all'&&kinds[mode]?mode:edges.some(e=>e.kind==='call_candidate')?'calls':edges.some(e=>e.kind==='imports')?'imports':'hierarchy';
+ const kinds={calls:new Set(['call_candidate','call_typed']),imports:new Set(['imports']),hierarchy:new Set(['contains','defines'])};
+ const resolve=mode=>mode!=='all'&&kinds[mode]?mode:edges.some(e=>['call_candidate','call_typed'].includes(e.kind))?'calls':edges.some(e=>e.kind==='imports')?'imports':'hierarchy';
  function adjacency(mode){
   if(graphs.has(mode))return graphs.get(mode);
   const out=new Map(),back=new Map();

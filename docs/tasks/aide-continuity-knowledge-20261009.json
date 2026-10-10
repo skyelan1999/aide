@@ -21,7 +21,9 @@
     "internal/server",
     "plugins",
     "docs",
-    "scripts"
+    "scripts",
+    "internal/server/knowledge_local_store.go",
+    "internal/server/knowledge_local_store_test.go"
   ],
   "stages": {
     "requirements": {
@@ -56,12 +58,14 @@
         "审批规则管理首批：按精确身份列出、单条撤销、有效期设置、revision冲突与执行前到期检查。UI待实际浏览器验收。",
         "审批来源证据：人工、模型、有效规则匹配的范围/指纹/规则编号/期限，放行前持久化；成果舱独立审批快照。",
         "internal/server/capabilities.go 与 web/capabilities.js：显式能力检查和设置面板",
-        "本地来源coverage实际计数/预算/截断原因；会话200条截断来源状态；星际日志呈现。渐进继续扫描和优先范围仍待实现。"
+        "本地来源coverage实际计数/预算/截断原因；会话200条截断来源状态；星际日志呈现。渐进继续扫描和优先范围仍待实现。",
+        "knowledge-progressive-index-20261009: resumable local discovery cursor foundation; not yet integrated into graph polling",
+        "knowledge-progressive-index-20261009: local discovery integrated into incremental graph polling; cumulative nodes and refresh-cycle removal, bounded catalog and progressive coverage"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Go编译、JS语法检查；浏览器实际观察IndexedDB重新打开恢复与模拟服务器409冲突对比、取消；真实完整实例/SSH未执行；三个 Markdown 历史临时文件/API 回归及 race 通过；历史组件锁定关闭、禁止重开、解锁重开通过；5项历史/恢复 Go race 回归通过；恢复组件实际点击范围预览、确认恢复和编辑器更新，未替代完整工作台/SSH验收；真实 IndexedDB 组件刷新恢复星点位置/筛选/详情/动效，以及代码视图调用候选和2跳，真实锁态/工作区切换仍未验收；文件位置组件刷新保持选区与滚动、指纹变化不恢复旧位置；start.command隔离18211实际文件API验证保存/去重/外部资源变化/整版恢复/409拒绝写入，浏览器受新实例证书提示限制，等待用户处理；该批旧二进制已在后续重建；3项成果舱race回归通过；start.command重建18211最新二进制，合成持久化会话真实鉴权API通过，未调用模型；组件原始证据展开/窄屏无溢出通过，JSON下载事件15秒超时未通过；可写引用本地/18211真实API及独立SFTP操作闭环通过，组件菜单验证通过，workspace-sftp真实操作待验收",
+      "summary": "当前35项full PASS、指纹匹配；类型诊断修复及本地CSV/draw.io源/ZIP资源整版恢复已通过Safari和字节读回。真实模型、Windows、SSH剩余边界/长时性能和其他完整范围继续验收。",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -87,16 +91,26 @@
         "能力仪表最终 quick: .agent-state/verify-20261009T083055838525Z.log; fingerprint 3dab88160541b0c5cb7985102674a7ed2ce4b056783f960650087d33cb25698a",
         "node --check internal/server/web/capabilities.js 通过",
         "TestKnowledgeCoverage定向race及 .agent-state/coverage-preview/logbook.png：临时本地目录与模拟日志数据，非完整实例/SSH验收",
-        "最终 TestKnowledgeCoverage -race PASS 3.978s；node --check starmap.js PASS；check_docs.py 176文件455链接 PASS；git diff --check PASS。初次夹具假设空工作区失败，已按testApp初始化内容的实测基线修正。"
+        "最终 TestKnowledgeCoverage -race PASS 3.978s；node --check starmap.js PASS；check_docs.py 176文件455链接 PASS；git diff --check PASS。初次夹具假设空工作区失败，已按testApp初始化内容的实测基线修正。",
+        "TestKnowledge(Discovery|Index|Coverage) race PASS 5.521s: temporary local directories, not SSH/workbench",
+        ".agent-state/ssh-progressive-final-20261009/aide-ssh-test-20261009210015-87938.log",
+        ".agent-state/ssh-cursor-20261009/aide-ssh-test-20261009210544-88246.log",
+        ".agent-state/ssh-cursor-failure-20261009/aide-ssh-test-20261009210928-88452.log",
+        ".agent-state/ssh-code-budget-final-20261009/aide-ssh-test-20261009211410-88788.log",
+        ".agent-state/ssh-process-restart-20261009/aide-ssh-test-20261009211727-88998.log",
+        ".agent-state/verify-20261009T190145752734Z.log",
+        "docs/reviews/continuity-acceptance-audit-20261010.md",
+        ".agent-state/verify-20261009T193942124289Z.log"
       ]
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "路线图和真实完成范围已记录，后续各项继续更新",
+      "summary": "已按12项原始验收更新当前证据和缺口，保留历史失败与后续修复，不将35项回归替代产品完整验收。",
       "evidence": [
         "docs/architecture/continuity-roadmap.md",
         "docs/reviews/approval-checkpoint-20261009.md",
-        "docs/architecture/capability-dashboard.md"
+        "docs/architecture/capability-dashboard.md",
+        "docs/reviews/continuity-acceptance-audit-20261010.md"
       ]
     },
     "cleanup": {
@@ -114,67 +128,1357 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "目标active；18211已由start.command重建最新二进制，包含file-view和成果舱。等待用户处理证书后完整工作台/锁态验收；继续SSH与其他工作流，成果摘要下载未验收、结构化发布回执未接入。 本批能力仪表源码未部署；完整工作台/SSH/真实提供商检查仍待完成。 本地索引覆盖观测已实现；渐进队列、范围与预算配置尚未实现。",
+  "handoff": "2026-10-10 user requests implementation batch commit/push first and continued acceptance afterward. Current full PASS 36 checks, content fingerprint 7f2a30689e7d906b930d0733f3ef1a323290772e17eb9e2bfdf0226842e09da9. Actual 9999 started through start.command; native Safari verified real assisted approval, outcome system receipt/export, and independent star-map tab camera restoration after actual initial HTTP 503. Windows not_run; actual embedding disabled/unconfigured. Remaining acceptance and implementation limits are controlled in docs/reviews/function-batch-20261010.md and continuity-acceptance-audit-20261010.md. Goal remains active; this batch push is not formal release.",
   "workstreams": [
     {
       "name": "工作现场恢复",
       "acceptance": "会话草稿与附件、文件草稿、目录、光标、滚动、星图镜头，按工作区隔离；刷新/重启恢复，不自动发送",
-      "status": "in_progress"
+      "status": "in_progress",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "chat_refresh_browser",
+          "workspace_scene_fix",
+          "file_scroll_recovery",
+          "file_workspace_isolation_browser",
+          "sky_workspace_default_fix",
+          "ssh_workspace_recovery_browser"
+        ],
+        "remaining": "本地与隔离SSH草稿/目录恢复已有Safari证据；精确星图镜头数值、SSH光标滚动、跨标签页草稿分支/容量管理仍缺验收。"
+      }
     },
     {
       "name": "保存状态与冲突",
       "acceptance": "区分本地记录和服务器保存；断网保留、409暂停、对比合并、重试、不静默覆盖",
-      "status": "in_progress"
+      "status": "in_progress",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "autosave_conflict_browser",
+          "offline_save_browser",
+          "ssh_browser_save_conflict",
+          "ssh_autosave_assets_browser",
+          "history_autosave_lifecycle_fix"
+        ],
+        "remaining": "本地合并、服务中断重试与SSH保存已验证；修复后的SSH历史恢复自动保存开关需直接复验，物理网络中断仍未测。"
+      }
     },
     {
       "name": "Markdown 历史闭环",
       "acceptance": "正文+嵌入资源整版恢复；外部编辑检测、无实际变更不追加、存储与备份管理",
-      "status": "in_progress"
+      "status": "in_progress",
+      "ssh_checkpoint": "2026-10-09 双服务器 SSH/SFTP race 两轮19.962秒 PASS；三种文件位置整版恢复、引用文件夹完整操作，独立来源原文检索/旧引用拒绝/时间线前后原文已验收。内部时钟加速，不证明 UI 轮询时延。浏览器SSH/跨主机故障/真实模型/Windows及发布仍待完成。见ssh-continuity-integration-20261009。",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "history_assets_browser",
+          "ssh_autosave_assets_browser",
+          "history_autosave_lifecycle_fix",
+          "history_attachments_system_browser"
+        ],
+        "remaining": "本地/SSH SVG及本地CSV、draw.io源文件、ZIP附件外部更新/整版恢复已验证；不等于draw.io嵌入渲染通过，其他嵌入类型和备份管理交互未全部覆盖。"
+      }
     },
     {
       "name": "真实环境验收",
       "acceptance": "本地及可用SSH：创建/修改/保存/重开/恢复、跨会话审批、锁屏、Windows输入与长时间打开",
-      "status": "in_progress"
+      "status": "in_progress",
+      "ssh_checkpoint": "2026-10-09 双服务器 SSH/SFTP race 两轮19.962秒 PASS；三种文件位置整版恢复、引用文件夹完整操作，独立来源原文检索/旧引用拒绝/时间线前后原文已验收。内部时钟加速，不证明 UI 轮询时延。浏览器SSH/跨主机故障/真实模型/Windows及发布仍待完成。见ssh-continuity-integration-20261009。",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "lock_browser",
+          "lock_entry_fix",
+          "ssh_workspace_recovery_browser",
+          "windows_acceptance"
+        ],
+        "remaining": "Safari锁态同步与点击解锁、隔离SSH已有验证；跨会话真实模型审批、键盘锁入口、长时间使用未完整验证；Windows not_run。"
+      }
     },
     {
       "name": "任务成果舱",
       "acceptance": "目标、文件变化、执行、验证、证据、缺口、发布状态统一成果卡",
-      "status": "in_progress"
+      "status": "in_progress",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "outcome_system_browser_download"
+        ],
+        "remaining": "合成持久化任务的Safari JSON下载通过；真实模型任务、运行中跨页快照一致性和发布成果卡未验收。"
+      }
     },
     {
       "name": "审批与授权管理",
       "acceptance": "解释自动通过和人工原因，作用范围、有效期、撤销和全局同步",
-      "status": "in_progress"
+      "status": "in_progress",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "approval_management_browser"
+        ],
+        "remaining": "Safari规则到期设置/撤销与持久化通过；真实任务建立记忆规则、跨会话匹配和人工/辅助审批全局切换尚缺实际模型证据。"
+      }
     },
     {
       "name": "连接能力仪表",
       "acceptance": "SSH连接/目录/权限、解析器、插件工具可用性、模型连接及实际检查",
-      "status": "in_progress"
+      "status": "in_progress",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "capabilities_browser"
+        ],
+        "remaining": "本地目录及解析器导入已查；插件工具实际执行、独立SSH权限诊断和真实模型连接未闭环。"
+      }
     },
     {
       "name": "渐进索引",
       "acceptance": "项目/目录范围、索引覆盖和预算状态、重点优先、不虚报全库",
-      "status": "in_progress"
+      "status": "in_progress",
+      "checkpoint": "Local incremental and SSH/workspace-sftp/SFTP cursors integrated with scopes and coverage. Knowledge race PASS 19.213s; real dual-server SSH repeat=2 PASS 24.639s. Persistent cursors, non-SSH adapters, local direct snapshot/search, browser and performance pending.",
+      "persistence_checkpoint": "Remote encrypted disk cursors implemented and real SSH continuation after volatile memo reset passed twice (25.681s). Final knowledge race passed 19.723s. Local persistence and actual process restart/browser/performance remain.",
+      "failure_checkpoint": "Restored first cancelled scan retains nodes, rejects complete coverage and preserves disk bytes; subsequent real SSH request continues. Repeat=2 PASS 25.161s. Physical network interruption/process restart remain pending.",
+      "code_budget_checkpoint": "Remote current and retained code each bounded to 80 files/4MiB; content limits report partial but complete enumeration clears vanished metadata. Knowledge race PASS 20.493s; real SSH repeat=2 PASS 25.973s. Full restart/browser/performance remain.",
+      "process_restart_checkpoint": "Fresh test process executes real App.New from saved fixture config, disk cursor resumes 10 -> 20 files with new citation origin and live SSH reread; two repeats PASS 28.433s. start.command/listener/browser restart and local persistence/performance remain.",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "local_cursor_persistence",
+          "shared_catalogue_checkpoint",
+          "progressive_over1000_browser"
+        ],
+        "remaining": "本地进程重启续扫及Safari超过1000节点增量加载已验证；大库性能、远程大目录及真实FTP/FTPS/HTTP/SMB/MCP来源语义仍需验收。"
+      }
     },
     {
       "name": "混合检索",
       "acceptance": "关键词+可配置向量检索、原文精确检索、来源定位和内容指纹",
-      "status": "pending"
+      "status": "in_progress",
+      "task": "knowledge-hybrid-retrieval-20261009",
+      "checkpoint": "提供商适配、配置API/UI、密钥保险库及有界加密缓存已接入；真实提供商、完整鉴权工作台与SSH验收待完成。",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "document_continuation_checkpoint",
+          "knowledge-hybrid-retrieval-20261009"
+        ],
+        "remaining": "Safari原文和关键词RAG续查通过；向量真实提供商及远程全文检索未完整验证。"
+      }
     },
     {
       "name": "代码关系可信度",
       "acceptance": "确定引用/候选调用/未解析显式区分，可选语言服务",
-      "status": "pending"
+      "status": "in_progress",
+      "task": "knowledge-code-confidence-20261009",
+      "checkpoint": "AST证据类别与可选Go快照类型服务已接入；最终知识回归race通过14.339秒，本机真实Handler配置重启保存、427px浏览器类型标签/动态调用及只读L7跳转通过。完整依赖项目、SSH、Windows和桌面验收仍待完成；见knowledge-language-service-20261009。",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "code_path_browser",
+          "knowledge-language-service-20261009",
+          "go_types_module_system_browser"
+        ],
+        "remaining": "Safari两包Go样例类型绑定/动态未解析/L12跳转及诊断修复通过；当前35项full PASS。第三方依赖、SSH及其他语言仍缺证据。"
+      }
     },
     {
       "name": "星图路径探索",
       "acceptance": "节点间证据路径、按钮到服务和报告到来源，跳转行号或段落",
-      "status": "pending"
+      "status": "in_progress",
+      "task": "knowledge-path-exploration-20261009",
+      "checkpoint": "后端与页面路径、逐步类型绑定证据、真实L7源码跳转、自动同步保留与源码变更失效已验证；SSH/响应式/多主题/报告定位未验收。",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "code_path_browser",
+          "knowledge-path-exploration-20261009"
+        ],
+        "remaining": "Safari单跳代码候选路径已查；按钮到服务的完整链、报告到来源段落、SSH和主题/响应式尚未全部验收。"
+      }
     },
     {
       "name": "知识时光",
       "acceptance": "按时间比较真实节点增改移除、历史依据与结论演变",
-      "status": "pending"
+      "status": "in_progress",
+      "task": "knowledge-timeline-20261009",
+      "checkpoint": "加密有界历史、时间选择/分页与前后证据已接入；知识race回归19.405秒。本机真实文件增改自动入历史、427/1280px日志及前后原文已验收。主题/真实SSH/大容量性能和发布待完成。",
+      "ssh_checkpoint": "2026-10-09 双服务器 SSH/SFTP race 两轮19.962秒 PASS；三种文件位置整版恢复、引用文件夹完整操作，独立来源原文检索/旧引用拒绝/时间线前后原文已验收。内部时钟加速，不证明 UI 轮询时延。浏览器SSH/跨主机故障/真实模型/Windows及发布仍待完成。见ssh-continuity-integration-20261009。",
+      "current_audit_20261010": {
+        "status": "in_progress",
+        "evidence_locators": [
+          "knowledge-timeline-20261009",
+          "ssh-continuity-integration-20261009",
+          "timeline_system_browser"
+        ],
+        "remaining": "系统Safari本地增改移除及前后原文、32条保留与淘汰显示已验证；SSH浏览器、主题/窄屏、存储故障与性能仍未完整覆盖。不推断语义结论演变。"
+      }
     }
-  ]
+  ],
+  "index_policy_progress": {
+    "status": "in_progress",
+    "task": "knowledge-index-policy-20261009",
+    "implemented": "本地预算、优先目标直接寻址、范围持久配置与缓存代际失效、渐进覆盖提示",
+    "remaining": "Authenticated workbench, persisted cursors/catalog, non-SSH adapters, local direct snapshot/search integration and large-library performance."
+  },
+  "full_regression_checkpoint": {
+    "status": "in_progress",
+    "log": ".agent-state/verify-20261009T132004504735Z.log",
+    "summary": "Full gate failed: bundled plugin tests expected two builtins, while Markdown history adds third. Updated exact membership/default assertions; next full gate pending. Approval JS regression modernized and added to quick gate.",
+    "focused": [
+      {
+        "command": "node scripts/test_approval_persistence.cjs",
+        "result": "pass",
+        "boundary": "VM and mocked server policy; not real browser/provider acceptance"
+      },
+      {
+        "command": "go test -race -count=1 ./internal/server -run ^TestBundledControlPlugins",
+        "result": "pass 2.332s",
+        "boundary": "aide:local isolated container; exact builtin IDs, defaults, persistence, removal, upgrade preservation"
+      },
+      {
+        "command": "python3 scripts/agent-route.py verify quick",
+        "result": "pass",
+        "log": ".agent-state/verify-20261009T132815447770Z.log"
+      },
+      {
+        "command": "python3 scripts/check_docs.py",
+        "result": "pass: 178 Markdown, 466 local links"
+      }
+    ],
+    "rerun": {
+      "status": "pass",
+      "log": ".agent-state/verify-20261009T132859612879Z.log",
+      "command": "python3 scripts/agent-route.py verify full",
+      "fingerprint": "e52080cea1d9638ee3a8e89cfbccd293c4ea25a278e02146cab7936e04b3a5a7",
+      "summary": "All commands passed; Go server race 358.404s, tts 2.998s, vet exit 0. Historical after later script/router changes."
+    },
+    "additional_checks": {
+      "passed": [
+        "markdown-image-path.test.js",
+        "test_file_type_detection.cjs",
+        "test_prompt_shortcut.cjs",
+        "test_assistant_mode_controls.cjs"
+      ],
+      "test_ui_click_latency.cjs": "PASS; included in completed full gate."
+    },
+    "browser_checkpoint": {
+      "status": "in_progress",
+      "environment": "Safari https://localhost:18211",
+      "summary": "start.command rebuilt candidate, Safari authenticated workbench. Actual Markdown image/outline, unsaved draft refresh+restore, server save and old-version body/resource restore passed. Downloaded ZIP body/SVG verified, PDF header/EOF verified; PDF layout pending. Found preview-only draft recovery leaves preview stale until edit toggle; product fix pending.",
+      "screenshot": ".agent-state/continuity-runtime/browser-recovery-saved-20261009.png",
+      "candidate_fingerprint": "ecc42e25b5846ad417a2d115b32957c8b4fc9f9aea8d447ac261184b948deb33",
+      "launch_log": ".agent-state/continuity-runtime/launch-regression-20261009.log",
+      "download_zip_sha256": "58a6345d64a95656e15762007e8dc4a1edf43c2375c26bd35d8861b326ee53e4",
+      "download_pdf_sha256": "f370ce54b205a81500ce5c81de76a58b6acee81ed00ceb480e5de0463d38ddab"
+    },
+    "latest_rerun": {
+      "status": "pass",
+      "log": ".agent-state/verify-20261009T133735987731Z.log",
+      "fingerprint": "ecc42e25b5846ad417a2d115b32957c8b4fc9f9aea8d447ac261184b948deb33",
+      "summary": "All quick commands and isolated Docker Go race/vet passed. Receipt is historical after Markdown live-preview fix."
+    },
+    "preview_fix": {
+      "status": "pass",
+      "source_fingerprint": "19de2712dfdd16d69e386ec4f800d83396861b8b4091077a28cca932c3a63299",
+      "quick_log": ".agent-state/verify-20261009T134737864120Z.log",
+      "browser": "Safari https://localhost:18211: edit marker, preview, refresh, leave unsaved page, restore draft; marker immediately visible without edit toggle. Original fixture saved back.",
+      "screenshot": ".agent-state/continuity-runtime/browser-preview-recovery-fixed-20261009.png"
+    },
+    "current_full": {
+      "status": "pass",
+      "log": ".agent-state/verify-20261009T134833314804Z.log",
+      "summary": "All checks passed before outline layout change; historical receipt."
+    },
+    "outline_layout": {
+      "status": "pass",
+      "request": "标题目录在编辑模式跑到顶部",
+      "root_cause": "639px container breakpoint applies to split preview; screenshot confirms full-width outline above body.",
+      "plan": "Compact side navigation at medium widths; floating collapsed entry at narrow widths; verify actual Safari.",
+      "fingerprint": "041c78c54857e766d2dfec42f8d93aa0eace52af9bad42268ac2303093559e40",
+      "browser": "System Safari https://localhost:18211; normal split side outline; enlarged page compact icon; expand list and click heading focuses target; reset zoom to 100%.",
+      "quick_log": ".agent-state/verify-20261009T135828397992Z.log",
+      "screenshots": [
+        ".agent-state/continuity-runtime/browser-outline-side-20261009.png",
+        ".agent-state/continuity-runtime/browser-outline-compact-20261009.png"
+      ],
+      "boundary": "Mac system Safari; Windows browser acceptance pending. Full gate needs final layout fingerprint."
+    }
+  },
+  "system_browser_acceptance_requirement": {
+    "request": "后续所有的改动都要以系统浏览器进行验证",
+    "client": "macOS Safari system browser",
+    "rule": "UI and browser behavior changes require actual system-browser verification. Script or component fixtures do not substitute; unavailable platform checks remain pending."
+  },
+  "markdown_outline_dock_acceptance": {
+    "status": "pass",
+    "date": "2026-10-09",
+    "source_fingerprint": "0ba58b3c6b24ae0286fc8dbb80302e39e95ba56f525467cee554e7550ea7fc01",
+    "client": "macOS system Safari",
+    "runtime": "https://localhost:18211 (isolated start.command candidate)",
+    "verified": [
+      "split default collapsed divider tab",
+      "click opens adjacent overlay without reserved column",
+      "heading focuses target and closes outline",
+      "Escape closes and focuses tab",
+      "outside editor click closes",
+      "Safari zoom enlarged layout remains docked; restored 100%"
+    ],
+    "screenshot": ".agent-state/continuity-runtime/browser-outline-dock-open-20261009.png",
+    "quick_log": ".agent-state/verify-20261009T142424766523Z.log",
+    "boundary": "Windows and full release gates pending"
+  },
+  "historical_full_135640": {
+    "status": "fail",
+    "reason": "Source changed during verification; all commands exited 0 including Go race/vet; not valid for current release",
+    "fingerprint": "dab835564a8b66f9faf49ac301e653c49c25004968b5817faee862e704d3ffa7",
+    "log": ".agent-state/verify-20261009T135640317714Z.log"
+  },
+  "outline_full_regression": {
+    "status": "pass",
+    "fingerprint": "0ba58b3c6b24ae0286fc8dbb80302e39e95ba56f525467cee554e7550ea7fc01",
+    "log": ".agent-state/verify-20261009T142815904347Z.log",
+    "scope": "current before local cursor persistence implementation"
+  },
+  "local_cursor_persistence": {
+    "status": "pass",
+    "source_fingerprint": "95a4dd0ea4ced919059447b9d56c7962acce678aac6186b4f8d41829a5fdd358",
+    "implementation": [
+      "internal/server/knowledge_local_store.go",
+      "internal/server/knowledge_progressive.go",
+      "internal/server/knowledge_updates.go"
+    ],
+    "tests": [
+      "knowledge_local_store_test.go: API/fresh App/subprocess/encryption/cancellation/policy isolation/cross cycle/deletion",
+      "all TestKnowledge -race PASS 25.850s",
+      "quick PASS .agent-state/verify-20261009T144242864570Z.log"
+    ],
+    "real_runtime": {
+      "startup": "start.command isolated 18211",
+      "files": 120,
+      "observed_resume": "8 -> 16",
+      "origin_changed": true,
+      "receipt": ".agent-state/continuity-runtime/local-runtime-restart-receipt-20261009.json",
+      "system_browser": {
+        "client": "Safari native",
+        "observed_files": 120,
+        "graph_nodes": 127,
+        "workspace_nodes": 122,
+        "method": "Automatic delta sync without page reload; stellar log retained partial cycle state",
+        "evidence": ".agent-state/continuity-runtime/browser-local-cursor-log-20261009.png"
+      },
+      "policy_restored": true
+    },
+    "boundary": "16 MiB plain checkpoint limit; metadata-preserving writers not detected; Safari automatic updates observed; Windows and large-library performance pending"
+  },
+  "outcome_system_browser_download": {
+    "status": "pass",
+    "client": "Safari native",
+    "instance": "https://localhost:18211/",
+    "route": "Trajectory -> outcome -> export JSON",
+    "receipt": ".agent-state/continuity-runtime/outcome-safari-download-20261009.json",
+    "screenshot": ".agent-state/continuity-runtime/outcome-safari-20261009.png",
+    "bytes": 4311,
+    "sha256": "3add73be880aa438127142e9342e20a9f5cafc70bba16209b03473fa8a5ed79a",
+    "boundary": "Synthetic persisted task with two files and two executions; verifies actual UI download, not model execution or live multi-page snapshot consistency"
+  },
+  "outline_current_build_browser": {
+    "status": "pass",
+    "instance": "https://localhost:18211/",
+    "client": "Safari native",
+    "source_fingerprint": "95a4dd0ea4ced919059447b9d56c7962acce678aac6186b4f8d41829a5fdd358",
+    "observed": "Real notes.md edit split: centered dock collapsed initially, opens directly beside divider; document keeps full preview width",
+    "screenshot": ".agent-state/continuity-runtime/browser-outline-local-build-20261009.png"
+  },
+  "local_cursor_full_regression": {
+    "status": "pass",
+    "fingerprint": "95a4dd0ea4ced919059447b9d56c7962acce678aac6186b4f8d41829a5fdd358",
+    "head": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+    "command": "python3 scripts/agent-route.py verify full",
+    "log": ".agent-state/verify-20261009T145240318981Z.log",
+    "scope": "Repository full profile; Go race/vet and quick checks; separate native Safari evidence in this task"
+  },
+  "shared_catalogue_checkpoint": {
+    "status": "in_progress",
+    "source_fingerprint": "69a0cc308794e269e86825b39a631e9148694b3f6ad19fd8adb3bb6927610cbe",
+    "implementation": [
+      "knowledgeAcquireView shared gate/catalogue/revisions/checkpoints",
+      "snapshot/detail/search/reference/AI retrieval use same current graph",
+      "external policy revision invalidates retained catalogue"
+    ],
+    "tests": [
+      "All TestKnowledge -race PASS 29.365s .agent-state/shared-knowledge-race-20261009.log",
+      "quick PASS .agent-state/verify-20261009T150557647780Z.log",
+      "Full profile PASS: .agent-state/verify-20261009T150718832757Z.log"
+    ],
+    "runtime": {
+      "start": "start.command isolated 18211",
+      "receipt": ".agent-state/continuity-runtime/shared-runtime-receipt-20261009.json",
+      "counts": "8,16,24,32,40,48,56,64,72,80,88,96,104,112,120",
+      "late_file": "index-resume-acceptance/note-119.md",
+      "search_and_reference": "pass",
+      "updates_contains_120": true,
+      "policy_restored": true
+    },
+    "system_browser": {
+      "status": "partial",
+      "runtime_fingerprint": "69a0cc308794e269e86825b39a631e9148694b3f6ad19fd8adb3bb6927610cbe",
+      "instance": "https://localhost:18211/",
+      "observations": [
+        "Safari unlocked; map shows 142 real nodes",
+        "Original search Local restart acceptance returns 31 results / 32 documents / 65 chunks",
+        "note-037.md details show text line 1, SHA-256 and current origin",
+        "Insert target #42 confirms draft-only; workbench shows attachment and exact source/text/hash in composer",
+        "Query Local restart acceptance 119 returns no match because bounded search reads only first 32 eligible documents"
+      ],
+      "evidence": [
+        ".agent-state/continuity-runtime/shared-search-safari-20261009.png",
+        ".agent-state/continuity-runtime/shared-insertion-draft-safari-20261009.png"
+      ],
+      "remaining": "Add targeted node search and/or cancellable bounded continuation; cannot claim complete raw-text search of known catalogue."
+    },
+    "full_regression": {
+      "status": "pass",
+      "fingerprint": "69a0cc308794e269e86825b39a631e9148694b3f6ad19fd8adb3bb6927610cbe",
+      "log": ".agent-state/verify-20261009T150718832757Z.log"
+    },
+    "boundary": "Partial known catalogue with configured caps; cannot guarantee unseen files; no paid model or Windows verification"
+  },
+  "ftp_progressive_checkpoint": {
+    "status": "in_progress",
+    "fingerprint": "10acd3be1400b95c06467fae8cc7bb039830cd6709ea28d4725b460962d74ad8",
+    "implementation": "FTP/FTPS join progressive remote catalogue and encrypted checkpoints; bounded knowledge listings retain entries beyond 2000; interactive listing limit unchanged",
+    "verification": {
+      "knowledge_race": "PASS 31.632s",
+      "knowledge_log": ".agent-state/ftp-progressive-race-20261009.log",
+      "quick": "PASS",
+      "quick_log": ".agent-state/verify-20261009T152306929453Z.log",
+      "full": {
+        "status": "pass",
+        "fingerprint": "10acd3be1400b95c06467fae8cc7bb039830cd6709ea28d4725b460962d74ad8",
+        "log": ".agent-state/verify-20261009T152340236405Z.log"
+      },
+      "full_wrapper": ".agent-state/ftp-progressive-full-20261009.log"
+    },
+    "boundary": "Configured adapters tested with deterministic curl subprocess, not live FTP/FTPS protocol or TLS acceptance. Production and isolated runtime unchanged. Safari resumed on previous 69a0 candidate.",
+    "remaining": [
+      "Real FTP/FTPS network acceptance",
+      "Single-resource HTTP/SMB and MCP scope semantics",
+      "Large-library performance",
+      "System Safari and Windows acceptance",
+      "Real provider integration"
+    ]
+  },
+  "document_continuation_checkpoint": {
+    "status": "in_progress",
+    "fingerprint": "a05133bbe5580855a976ceadc29639368ee60de4adc205e38e05bbb1e1097c43",
+    "implementation": [
+      "Bounded 32-document attempt batches, deterministic ordered catalogue, cursor bound to workspace/query/filter/current nodes",
+      "scanned/total/nextCursor in result; failed extraction still reported; UI accumulated deduplicated hits and explicit continue button",
+      "document_search and Office tool accept cursor; cancellation/query/filter/lock invalidate or suppress stale results"
+    ],
+    "verification": {
+      "focused_race": "PASS 6.471s",
+      "knowledge_race": "PASS 32.349s",
+      "ui_logic": "PASS continuation/coverage/dedup/query mismatch/locked stale response",
+      "office_plugin": "PASS registration",
+      "full": "FAIL: TestStartTaskCompactsOverBudgetHistoryBeforeProviderCall; after compaction input 7841 + output 8192 = 16033 > window 16000",
+      "full_wrapper": ".agent-state/document-continuation-full-20261009.log",
+      "full_log": ".agent-state/verify-20261009T153700367908Z.log"
+    },
+    "runtime": {
+      "instance": "https://localhost:18211",
+      "startup": "start.command PASS; optional computer bridge/headless browser not started",
+      "backup": ".agent-state/continuity-runtime/aide.before-document-continuation-20261009"
+    },
+    "system_browser": {
+      "client": "native Safari",
+      "status": "pass for local original-text and keyword-RAG continuation and query reset",
+      "observations": [
+        "Query Local restart acceptance 119",
+        "32/121 no hit; 64/121 no hit; 96/121 one hit; 121/121 one retained hit, continue control hidden",
+        "note-119.md opens line 1 with SHA-256 62f804c0d8c5a9fe71ccfe0c3621123af0138d9d5bd0ed54eef6b7cef4c1ea07 and current source origin",
+        "Native Safari keyword RAG 32/121 -> 64/121; accumulated results 12 -> 24, retained original first batch",
+        "Changing query to absent-continuation-fixture clears old results and continuation coverage before new search"
+      ],
+      "screenshot": ".agent-state/continuity-runtime/document-continuation-safari-20261009.png"
+    },
+    "remaining": [
+      "Full gate current fingerprint",
+      "Real remote/provider and Windows acceptance",
+      "Current range completion does not prove extraction, hit-limit or unindexed corpus completeness",
+      "Narrow layouts/themes and broad goal release acceptance"
+    ]
+  },
+  "document_compaction_followup": {
+    "status": "pass for bounded compaction and repository full profile",
+    "root_cause": "snapshotForCompactBudget checked only prior running sum, so retaining another whole message could exceed keepBudget",
+    "fix": "Check next complete message token estimate before retention; retain existing minimum-last-message safeguard",
+    "test": "TestCompactionRetainedHistoryStaysWithinBudget plus existing 16K task and overflow regression",
+    "verification": {
+      "focused_race": "PASS 4.533s",
+      "focused_log": ".agent-state/document-compaction-race-20261009.log",
+      "full": "PASS",
+      "full_wrapper": ".agent-state/document-compaction-full-retry-20261009.log",
+      "environment_attempt": "NOT_RUN Go: sandbox Docker access unavailable; .agent-state/verify-20261009T154846541282Z.log",
+      "full_log": ".agent-state/verify-20261009T154927450768Z.log",
+      "fingerprint": "fb6e79d2f9ae6beaee7b5731a4a39df7e46f713bcb9af8dcca00a884858ec475"
+    },
+    "production": "9999 unchanged; current Safari runtime a051 checkpoint, followup not activated yet",
+    "fingerprint": "fb6e79d2f9ae6beaee7b5731a4a39df7e46f713bcb9af8dcca00a884858ec475",
+    "runtime": {
+      "status": "start.command PASS",
+      "instance": "https://localhost:18211",
+      "fingerprint": "fb6e79d2f9ae6beaee7b5731a4a39df7e46f713bcb9af8dcca00a884858ec475",
+      "backup": ".agent-state/continuity-runtime/aide.before-compaction-budget-20261009",
+      "launch_log": ".agent-state/continuity-runtime/launch-compaction-budget-20261009.log",
+      "optional_bridges": "Safari/computer/headless launch scripts absent from isolated bundle; not started",
+      "system_browser": {
+        "status": "PASS for updated split Markdown outline",
+        "date": "2026-10-10",
+        "client": "native Safari",
+        "observed": [
+          "Edit starts with collapsed divider tab",
+          "Click expands adjacent overlay, no reserved preview column",
+          "Click heading closes outline and focuses rendered heading"
+        ],
+        "screenshot": ".agent-state/continuity-runtime/browser-outline-dock-followup-20261010.png"
+      },
+      "authenticated_api_recheck": "NOT_RUN: local request blocked first by sandbox; authorized retry rejected TLS issuer validation with the isolated cert.pem. Certificate validation retained. No model request or new API receipt."
+    }
+  },
+  "cancelled_subfeatures": [
+    {
+      "feature": "记忆神经可视化",
+      "date": "2026-10-10",
+      "user_request": "删除或暂存到别处作为备用提案",
+      "archive": "docs/proposals/memory-neural-20261010/README.md",
+      "task": "memory-neural-archive-20261010",
+      "data": "普通项目记忆读写与已有数据保留"
+    }
+  ],
+  "current_checkpoint_20261010": {
+    "previous_goal_turn": "progress: neural visualization archived and removed; ordinary memory preserved",
+    "ssh": "PASS race repeat=2 28.223s, current source",
+    "evidence": ".agent-state/ssh-continuity-20261010/aide-ssh-test-20261010001359-6145.log",
+    "full": {
+      "status": "pass",
+      "fingerprint": "91a364ad912b6bdfa014d7ad35586a7215afeaa04fa30c845ce4c3f1211a1050",
+      "head": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+      "time": "20261010T001752317315Z",
+      "log": ".agent-state/verify-20261010T001752317315Z.log",
+      "checks": 36
+    },
+    "runtime": "production9999 rebuilt via project start.command on explicit user instruction; isolated18211 retained",
+    "remaining": [
+      "Windows real browser/input/long duration acceptance (no device available)",
+      "Embedding real provider configuration and end-to-end hybrid retrieval",
+      "Cross-session remembered approval rules and global mode switching with real tasks",
+      "Exact star-map camera/path restoration, closed-tab draft branches and capacity management",
+      "Remaining SSH cursor/scroll, diagram editing and network-failure acceptance boundaries",
+      "Live multi-page outcome consistency and structured release evidence",
+      "Broad responsive/theme/performance and remaining source-type acceptance",
+      "Release gates and final requirement-by-requirement evidence audit"
+    ],
+    "capabilities_browser": {
+      "status": "pass for local workbench settings actions only",
+      "client": "system Safari",
+      "instance": "https://localhost:18211",
+      "observed": [
+        "Workspace root-read result and limited scope",
+        "Markdown history plugin entry hash and explicit not-executed boundary",
+        "pypdf isolated import PASS 152 ms, document extraction not checked"
+      ],
+      "screenshot": ".agent-state/continuity-runtime/capabilities-safari-20261010.png"
+    },
+    "approval_management_browser": {
+      "client": "native Safari",
+      "instance": "https://localhost:18211",
+      "status": "PASS for persisted test-rule management",
+      "fixture": "Initially expired rule with unbound nonexistent workspace/root; no task execution/model call",
+      "observed": [
+        "expired label and exact scope/fingerprint",
+        "past-date save rejected",
+        "native date control edit and successful expiry save/reload",
+        "revocation confirmation, empty list and persisted rules=0",
+        "original isolated policy restored; start.command restart; manual mode and management entry absent"
+      ],
+      "receipt": ".agent-state/continuity-runtime/approval-browser-receipt-20261010.json",
+      "screenshot": ".agent-state/continuity-runtime/approval-expiry-safari-20261010.png",
+      "remaining": "Real task creates remembered rule and cross-session automatic matching not verified by this browser check."
+    },
+    "autosave_conflict_browser": {
+      "status": "pass",
+      "environment": "Safari https://localhost:18211 isolated local workspace",
+      "fixture": ".agent-state/continuity-runtime/workspace/autosave-conflict-20261010.md",
+      "observations": [
+        "External server modification retained after autosave hash conflict",
+        "Safari conflict dialog displayed server text and local draft",
+        "Merged text saved automatically and UI reported server saved",
+        "Autosave toggle restored to original off state"
+      ],
+      "saved_sha256": "66d03780d34039cf22f3269eae1477e45f125abe0c98223f562c9f00dc851e83",
+      "screenshot": ".agent-state/continuity-runtime/autosave-conflict-safari-20261010.png",
+      "limitations": [
+        "Does not establish SSH browser conflict handling or Windows input behavior"
+      ]
+    },
+    "history_restore_toast_fix": {
+      "status": "pass",
+      "environment": "System Safari https://localhost:18211 isolated candidate",
+      "bug": "Toast moved into temporary conflict dialog was removed with dialog; subsequent history restoration callback threw and rendered null",
+      "fix": "Recreate missing notification and return it to body on dialog close; timer captures actual element",
+      "checks": [
+        "Node VM: dialog close, reuse, missing element recreation and timer passed",
+        "node --check app.js passed",
+        "Go candidate build passed",
+        "Safari restore revision 000002 closed dialog and displayed success",
+        "Disk contains restored merged text"
+      ],
+      "screenshot": ".agent-state/continuity-runtime/history-restore-toast-fixed-safari-20261010.png",
+      "app_js_sha256": "ac933a805b61254288b44ab610d7b973c89b5b9d9543f20269029544794e0b20",
+      "full_gate": "Previous full receipt predates this app.js fix; rerun required",
+      "limitations": [
+        "Embedded resource browser restore not verified by this fixture",
+        "SSH browser and Windows remain pending"
+      ]
+    },
+    "history_assets_browser": {
+      "status": "pass",
+      "environment": "System Safari https://localhost:18211 local workspace",
+      "observations": [
+        "Initial history inspection captured Markdown and SVG revision 000001",
+        "External SVG-only change produced 000002 with identical Markdown",
+        "Restore preview showed SVG changed and Markdown unchanged",
+        "Safari restored old SVG and closed dialog successfully",
+        "Disk SHA256 matched old SVG snapshot",
+        "Unchanged manual save and next history inspection retained exactly 3 versions"
+      ],
+      "svg_sha256": "d94b7c9113a12b7049c66946ff055551484ceeb0018b154273c8955c3379e737",
+      "screenshot": ".agent-state/continuity-runtime/history-assets-safari-20261010.png",
+      "limitations": [
+        "Local SVG fixture only; does not cover every embed type or SSH browser path"
+      ]
+    },
+    "toast_full_gate": {
+      "status": "pass",
+      "session": 58066,
+      "log": ".agent-state/continuity-toast-full-docker-20261010.log",
+      "first_attempt": "Sandbox Docker access failed before Go test; quick checks passed",
+      "fingerprint": "92874d1c5d1687267d865298845c60ee9bd1de6d6f99a86835a0f35d03fa3256",
+      "receipt": ".agent-state/full.json",
+      "exit": 0
+    },
+    "ssh_browser_save_conflict": {
+      "status": "pass",
+      "environment": "Safari https://localhost:18211; isolated internal Docker SFTP fixture",
+      "checks": [
+        "Unsaved source credentials browse directory, enter child, parent and select path",
+        "Create writable SFTP source; list and open remote Markdown",
+        "Manual save confirmed by remote file readback",
+        "External remote update triggers conflict comparison; merge preserves both changes and save confirmed by readback",
+        "Remove temporary source using Safari; remove fixture container and internal network"
+      ],
+      "screenshot": ".agent-state/continuity-runtime/ssh-save-conflict-safari-20261010.png",
+      "limitations": [
+        "Disposable local SFTP fixture; not a WAN or user production SSH host",
+        "Does not cover SSH browser autosave or embedded asset restore"
+      ]
+    },
+    "windows_acceptance": {
+      "status": "not_run",
+      "reason": "User confirmed no Windows environment available for this acceptance",
+      "scope": "Real Windows cursor/input and long-duration file viewing; no substitute pass"
+    },
+    "chat_refresh_browser": {
+      "status": "pass",
+      "environment": "Native Safari https://localhost:18211 session #42",
+      "checks": [
+        "New unsent text marker survives reload",
+        "Existing file attachment survives reload",
+        "Same session and reference directory restored",
+        "No new message appeared; no send action taken",
+        "Original isolated draft restored afterwards"
+      ],
+      "screenshot": ".agent-state/continuity-runtime/chat-draft-refresh-safari-20261010.png",
+      "limitations": [
+        "No cross-workspace isolation or cursor position assertion in this check"
+      ]
+    },
+    "offline_save_browser": {
+      "status": "pass",
+      "environment": "Native Safari https://localhost:18211; workspace fixture",
+      "checks": [
+        "Stopped only isolated 18211 service",
+        "Manual save fails; draft and preview retained",
+        "Server file remains baseline during failure",
+        "Restarted isolated service via start.command",
+        "Reopen detects local unsaved draft; explicit restore immediately updates preview",
+        "Manual retry saves draft; filesystem readback matches"
+      ],
+      "file": "offline-save-20261010.md",
+      "sha256": "9ae250a6bca942fa4d9216fd8c981eb41e5d0c42d4b0c5c456d7447330c3af47",
+      "screenshot": ".agent-state/continuity-runtime/offline-recovery-saved-safari-20261010.png",
+      "launch_log": ".agent-state/continuity-runtime/offline-recovery-launch-20261010.log",
+      "limitations": [
+        "Service outage, not physical network interruption",
+        "Manual save; no SSH autosave or Windows proof"
+      ]
+    },
+    "lock_browser": {
+      "environment": "isolated 18211 Safari",
+      "status": "partial",
+      "passed": [
+        "Backend lock gen 1 synchronized to workbench",
+        "Password unlock succeeded",
+        "Reload after unlock completed without remaining lock veil",
+        "Backend lock gen 3 synchronized to starmap",
+        "Unlock in original workbench restored original starmap without reload"
+      ],
+      "failed": [
+        "Runtime card lock entry click did not change lock state; cause unconfirmed"
+      ],
+      "cleanup": {
+        "settings_restored": true,
+        "test_created_lock_state_removed": true
+      },
+      "screenshot": ".agent-state/continuity-runtime/starmap-lock-safari-20261010.png"
+    },
+    "lock_entry_fix": {
+      "status": "pass for Safari click and password unlock",
+      "cause": "Hit target pointer-events required hover; role=button had no keyboard activation",
+      "implementation": [
+        "style.css lock-enabled hit target",
+        "app.js Enter/Space activation and disabled/tabIndex state"
+      ],
+      "checks": [
+        "Node VM focused regression PASS",
+        "node --check PASS",
+        "Go candidate build PASS",
+        "Native Safari click twice displayed lock/password dialog",
+        "Native Safari password unlock succeeded"
+      ],
+      "screenshot": ".agent-state/continuity-runtime/lock-entry-fixed-safari-20261010.png",
+      "cleanup": "Original passwordless settings restored; test-created lock-state removed",
+      "remaining": "Keyboard tested by VM only, not Safari tab navigation",
+      "full_gate": {
+        "status": "pass",
+        "fingerprint": "f1dd7d2f07601035d85d5804e9b0253de5db57ac9203448a786868e94808a2d4",
+        "head": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+        "checks": 30,
+        "log": ".agent-state/verify-20261009T173108678885Z.log"
+      }
+    },
+    "sky_refresh_browser": {
+      "status": "pass for search draft, source filter and motion setting",
+      "client": "native Safari",
+      "instance": "https://localhost:18211",
+      "checks": [
+        "Unexecuted search marker restored after reload",
+        "Workspace-only source selection restored",
+        "Motion off restored",
+        "No search or AI executed; restoration notice displayed"
+      ],
+      "camera": "Drag and wheel exercised; restoration notice shown, screenshot insufficient for exact camera equality",
+      "screenshot": ".agent-state/continuity-runtime/sky-recovery-after-safari-20261010.png",
+      "cleanup": "Original search text, all-source selection and motion on restored; camera reset",
+      "remaining": [
+        "Exact camera equality",
+        "Cross-workspace isolation"
+      ]
+    },
+    "code_path_browser": {
+      "status": "pass for local static candidate path and source line jump",
+      "client": "native Safari",
+      "instance": "https://localhost:18211",
+      "fixture": "code-path-acceptance/main.go",
+      "checks": [
+        "entryPoint C2efcb0890264 to collectEvidence C02550c0f8cbd: one directed step",
+        "UI labels static name candidate at L8:9 and index gaps",
+        "Source opened read-only at L8 and selected return collectEvidence()"
+      ],
+      "screenshots": [
+        ".agent-state/continuity-runtime/code-path-safari-20261010.png",
+        ".agent-state/continuity-runtime/code-path-source-safari-20261010.png"
+      ],
+      "limits": [
+        "No runtime or type-binding proof",
+        "SSH and broad responsive/theme acceptance remain"
+      ],
+      "cleanup": "Path cleared, prior search and knowledge view restored; fixture retained"
+    },
+    "file_scroll_recovery": {
+      "status": "pass for native Safari TXT draft, selection and visual scroll restoration",
+      "cause": "focus after setting scroll moved viewport to caret",
+      "fix": "Focus preventScroll before selection; restore scroll after input; dispatch scroll to synchronize gutter",
+      "checks": [
+        "Focused source VM regression PASS",
+        "Native Safari reload prompts for unsaved page",
+        "Explicit restore returns selected AFT-RECOVERY-20261010 text",
+        "Before and after screenshots both start at line 60",
+        "Host server file remains 8000 bytes without draft marker"
+      ],
+      "screenshots": [
+        ".agent-state/continuity-runtime/file-recovery-fixed-before-safari-20261010.png",
+        ".agent-state/continuity-runtime/file-recovery-fixed-after-safari-20261010.png"
+      ],
+      "runtime": "Isolated 18211 restarted via bash start.command; production 9999 unchanged",
+      "limits": "TXT local fixture only; pixel-level scroll measurements, SSH and Windows remain",
+      "full_gate": {
+        "status": "fail",
+        "session": 68644,
+        "checks": 31,
+        "command_failures": 0,
+        "reason": "Worktree fingerprint changed during verification; all commands exit 0 is insufficient for gate PASS",
+        "receipt": ".agent-state/full.json",
+        "log": ".agent-state/verify-20261009T175957952710Z.log"
+      }
+    },
+    "workspace_isolation_checkpoint": {
+      "status": "fail for live workbench switching; API and storage fixture passed",
+      "checks": [
+        "Actual isolated authenticated API switch to local|recovery-isolation-b| reads B baseline",
+        "Original configuration restored; A server baseline unchanged",
+        "node scripts/continuity-isolation.test.cjs PASS: same record IDs separated for chat, scene, file and file-view; stale deletion retains records; matching deletion stays in scope"
+      ],
+      "limitations": [
+        "IndexedDB test uses an in-memory fixture; actual Safari cross-workspace recovery remains pending"
+      ],
+      "production": "No production mutations",
+      "browser": {
+        "client": "native Safari",
+        "instance": "https://localhost:18211",
+        "observed": [
+          "Workspace save accepted recovery-isolation-b; authenticated API confirms B configuration",
+          "A session #42 unsent Markdown excerpt and file attachment remain visible after switching to B",
+          "Opening workspace settings reads B path while stale A draft remains",
+          "Original empty workspace path restored through Safari settings"
+        ],
+        "screenshot": ".agent-state/continuity-runtime/workspace-isolation-stale-draft-safari-20261010.png",
+        "cause": "saveWorkspaceConfig refreshes config/sources/files but does not clear or restore the workspace-specific chat scene; sessionDrafts memory map keyed only by session ID",
+        "remaining": "Fix live workspace transition and verify A/B/A in system Safari, including stale asynchronous responses"
+      }
+    },
+    "isolation_storage_full_gate": {
+      "status": "pass",
+      "checks": 32,
+      "fingerprint": "f8aef01ccf9836cdee1ad1bff63450c27ac6949fb9ce82b7ff30fa54bd1c9eac",
+      "session": 36820,
+      "note": "Predates live scene transition fix; historical only"
+    },
+    "workspace_scene_fix": {
+      "status": "pass for local Safari chat draft/attachment A-B-A and B reload",
+      "changes": [
+        "Scope in-memory session drafts by workspace identity and session ID",
+        "Persist old scene before changing config; suspend recovery timers during transition",
+        "Invalidate old session selection and file-list responses",
+        "Clear old chat/attachments/file selection; restore destination scene and draft",
+        "Update workspace summary immediately after config reload"
+      ],
+      "checks": [
+        "node --check app.js PASS",
+        "node scripts/workspace-scene-transition.test.cjs PASS (source VM fixture)",
+        "node scripts/lock-entry.test.cjs PASS",
+        "Go candidate build PASS",
+        "Native Safari: B unique unsent text/no attachment; A original excerpt and attachment restored; B unique text restored again and after refresh; final A restored"
+      ],
+      "screenshots": [
+        ".agent-state/continuity-runtime/workspace-scene-A-safari-20261010.png",
+        ".agent-state/continuity-runtime/workspace-scene-B-safari-20261010.png"
+      ],
+      "runtime": "18211 isolated candidate via start.command; previous binary preserved as aide.before-workspace-scene",
+      "limits": [
+        "Local workbench only; SSH and file/camera cross-workspace browser coverage remain",
+        "Pre-fix B records contained stale A data; test explicitly set distinct B draft; no automatic repair of legacy contaminated records"
+      ],
+      "full_gate": {
+        "status": "in_progress",
+        "session": 31402,
+        "log": ".agent-state/workspace-scene-full-20261010.log"
+      }
+    },
+    "file_workspace_isolation_browser": {
+      "status": "pass for local same-path file content and A draft separation across reload",
+      "client": "native Safari",
+      "instance": "18211 isolated",
+      "file": "file-view-recovery-20261010.txt",
+      "checks": [
+        "A shows unsaved draft recovery banner",
+        "Switch isolated backend to B; reload same URL reads Workspace B isolated baseline with no A recovery banner",
+        "Restore A config; reload shows A draft banner; explicit restore selects AFT-RECOVERY-20261010",
+        "A server file remains 8000 bytes without draft marker; B baseline unchanged",
+        "Temporary browser tab closed; original workspace A restored"
+      ],
+      "screenshots": [
+        ".agent-state/continuity-runtime/file-workspace-B-safari-20261010.png",
+        ".agent-state/continuity-runtime/file-workspace-A-restored-safari-20261010.png"
+      ],
+      "limits": [
+        "No B unsaved draft created in this check",
+        "Local reload path only; not live standalone file workspace changes or SSH/Windows"
+      ]
+    },
+    "sky_workspace_sync_browser": {
+      "status": "partial: graph synchronization pass, empty destination scene isolation fail",
+      "client": "native Safari",
+      "instance": "18211 isolated",
+      "checks": [
+        "Live graph changed from A 146 nodes to B 7 nodes without page reload",
+        "B workspace contribution is 2 nodes",
+        "A search absent-continuation-fixture remained visible in B despite no B scene being established in this check",
+        "Original A workspace config restored"
+      ],
+      "cause": "load only applies an existing saved destination view; applyLiveUpdate clears selected node/region but retains search, camera and other controls when destination has no saved view",
+      "screenshot": ".agent-state/continuity-runtime/sky-workspace-stale-query-safari-20261010.png",
+      "remaining": "Reset destination scene to defined defaults when no saved view exists, then verify A/B/A"
+    },
+    "sky_workspace_default_fix": {
+      "status": "pass",
+      "summary": "Reset destination sky scene to workspace defaults when no saved scene exists; clear old AI question, results, usage and document batch. Restore valid saved scene; preserve recovery input race guard.",
+      "evidence": [
+        "node scripts/starmap-workspace-scene.test.cjs PASS source VM",
+        "node --check internal/server/web/starmap.js PASS",
+        "Safari candidate rebuild and A/B/A acceptance pending",
+        "Isolated 18211 candidate rebuilt with -buildvcs=false and launched via start.command; production 9999 unchanged",
+        "Safari live A -> fresh recovery-sky-C -> A: 155/154 -> 7/1 -> 155/154; C blank query and nodes mode; A absent-continuation-fixture and RAG restored without reload",
+        ".agent-state/continuity-runtime/sky-workspace-C-default-safari-20261010.png",
+        ".agent-state/continuity-runtime/sky-workspace-A-restored-safari-20261010.png"
+      ],
+      "full_gate": {
+        "status": "fail",
+        "log": ".agent-state/verify-20261009T182612890403Z.log",
+        "summary": "Docker Go race/vet passed; scripts/test_ui_click_latency.cjs failed because its VM fixture omitted the actual chatDraftKey helper. Fixture now loads actual helper; focused check PASS. Aggregate full receipt fail; rerun required."
+      },
+      "limits": "Local live workspace scene only. SSH scene restoration, exact camera motion values, Windows and real model acceptance remain separate. Full gate must be rerun on changed source."
+    },
+    "ssh_autosave_assets_browser": {
+      "status": "partial",
+      "client": "native Safari https://localhost:18211",
+      "environment": "Disposable SFTP service in internal Docker network; no production SSH connection",
+      "passed": [
+        "Safari enabled autosave and edited remote notes.md; server saved status observed; remote readback matches",
+        "SVG-only external change creates revision 000003; comparing 000002 reports identical body and stored resource",
+        "Restore preview marks diagram.svg changed and notes.md unchanged; Safari confirms restore; remote SHA256 verifies old SVG",
+        "Refreshing after restore re-enables autosave; original autosave off restored"
+      ],
+      "failed": [
+        "Autosave switch remains disabled after successful history restore until page reload"
+      ],
+      "readback": {
+        "notes.md": "c2c8fbc7fb4ead5e38282b9c0c647a71465d821fc2d3d3dde0f3b244e8715546",
+        "diagram.svg": "a5a65d29173016466a4a7a7d2d0366dd85c4ab26ed856e423045c0848fa93b53"
+      },
+      "screenshots": [
+        ".agent-state/continuity-runtime/ssh-autosave-safari-20261010.png",
+        ".agent-state/continuity-runtime/ssh-assets-restored-safari-20261010.png"
+      ],
+      "cleanup": "Removed temporary source and cleared test credential; closed agent-created Safari tab; removed fixture container/internal network; candidate retains original source list and autosave off",
+      "remaining": [
+        "Repair autosave control after history callback; full and Safari regression",
+        "SSH workspace recovery and WAN/Windows acceptance separate"
+      ]
+    },
+    "sky_scene_full_gate": {
+      "status": "pass",
+      "checks": 34,
+      "session": 93554,
+      "fingerprint": "90251b37706dde7f3a86a914ca5537e74d51408594169eb1816b786044a45518",
+      "log": ".agent-state/verify-20261009T185110956433Z.log",
+      "scope": "Before subsequent Markdown history writable callback fix; historical only"
+    },
+    "history_autosave_lifecycle_fix": {
+      "status": "pass for source VM and local Safari callback",
+      "cause": "onRestored invoked while editor.readOnly=true; autosave.activate painted disabled before finally released readonly",
+      "fix": "Restore original editor writable state before invoking successful onRestored callback; error and stale guards retained",
+      "checks": [
+        "node scripts/markdown-history-writable.test.cjs PASS",
+        "node --check internal/server/web/markdown-history.js PASS",
+        "Isolated candidate rebuilt and launched with start.command; production unchanged",
+        "Safari history restore preview showed unchanged body and SVG; confirmation success; autosave remained enabled for interaction, switched on without refresh; original off restored",
+        ".agent-state/continuity-runtime/history-autosave-writable-safari-20261010.png"
+      ],
+      "remaining": "Current full gate passed 35 checks; direct post-fix SSH replay remains separate from local callback proof.",
+      "full_gate": {
+        "status": "pass",
+        "session": 8077,
+        "checks": 35,
+        "fingerprint": "a1b1cb65ed56b5e981cbe1309636134c2f483ff10c983980ce664f8babd6d7de",
+        "log": ".agent-state/verify-20261009T190145752734Z.log"
+      }
+    },
+    "progressive_over1000_browser": {
+      "status": "pass for finite local fixture discovery and Safari incremental rendering",
+      "client": "native Safari https://localhost:18211",
+      "fixture": "1105 generated Markdown files in one fresh temporary workspace directory",
+      "policy": {
+        "fileBudget": 2400,
+        "directoryBudget": 200,
+        "depthBudget": 7,
+        "activeAreas": 6,
+        "actualFileQuota": 400,
+        "actualDirectoryQuota": 33,
+        "catalogLimit": 1732
+      },
+      "observations": [
+        "Safari displayed 806 nodes and partial workspace 801, then automatically 1111 nodes and workspace 1106 without reload",
+        "Star log displayed cumulative 1105 files / 1 directory, per-batch 400 files / 33 dirs and capacity 1732",
+        "Authenticated actual update API reports workspace ready, nodeCount1106, files1105, directories1, no reasons; totalKnown false, not a global total claim",
+        "Subsequent refresh cycle marks partial with retained 1106 nodes; previous known nodes remain visible"
+      ],
+      "screenshots": [
+        ".agent-state/continuity-runtime/index-progressive-partial-safari-20261010.png",
+        ".agent-state/continuity-runtime/index-over1000-safari-20261010.png"
+      ],
+      "cleanup": "Restored original workspace and temporary workspace policy; removed only exact generated files and empty generated cache directories; closed agent-created map tab",
+      "limitations": [
+        "No measured frame rate or input latency",
+        "No WAN or remote source 1000-node test",
+        "Catalogue capacity remains bounded; raising scan batch budget raises capacity, not unlimited indexing"
+      ]
+    },
+    "ssh_workspace_recovery_browser": {
+      "status": "pass for native Safari local-to-SSH workspace isolation and refresh recovery",
+      "environment": "18211 isolated; disposable internal Docker SSH service ssh-scene, /srv/scene",
+      "checks": [
+        "SSH workspace opened without original local unsent draft or attachment",
+        "Unique unsent SSH-SCENE-RECOVERY-20261010 draft and child directory restored after Safari refresh",
+        "Standalone child/scene.md local unsaved SSH-FILE-DRAFT-RECOVERY-20261010 restored after refresh and explicit recovery",
+        "Direct SSH service readback remained original Remote baseline; no automatic server write",
+        "Original local workspace restored; Safari refresh restored note-037 excerpt and attachment; SSH marker did not leak"
+      ],
+      "screenshots": [
+        ".agent-state/continuity-runtime/ssh-workspace-scene-safari-20261010.png",
+        ".agent-state/continuity-runtime/ssh-file-draft-restored-safari-20261010.png"
+      ],
+      "cleanup": "Original local config restored and hasPassword false verified; test container/network removed; agent file tab closed; local IndexedDB fixture records remain isolated",
+      "limits": [
+        "Switching was performed through authenticated configuration API then Safari refresh, not live UI save transition",
+        "No physical WAN interruption, Windows or true long-duration acceptance",
+        "No SSH caret/scroll exact numeric assertion in this check"
+      ]
+    },
+    "timeline_system_browser": {
+      "status": "pass for native Safari local automatic observation and historical excerpts",
+      "client": "System Safari https://localhost:18211; start.command isolated candidate",
+      "fixture": "timeline-safari-20261010.md; before/after unique text; preserved outside indexed workspace after test",
+      "observations": [
+        "Existing timeline showed 32 retained snapshots / 8 MiB and 20 evicted; subsequent bounded history retained 32 and eviction count rose to 26",
+        "Real file creation automatically changed graph155->156; comparison includes added file Fb62b3aa9c5ab and TIMELINE_BEFORE_20261010",
+        "External body edit compared 03:21:19 ->03:22:32; node count remains156, changed file shows both TIMELINE_BEFORE_20261010 and TIMELINE_AFTER_20261010",
+        "Moved exact fixture outside workspace; graph automatically returned156->155; comparison shows one removed node and one contains edge, explicit not-file-deletion label; old excerpt remains",
+        "Existing result pagination1/2 and next-page control observed, not clicked in this check"
+      ],
+      "screenshots": [
+        ".agent-state/continuity-runtime/timeline-before-after-safari-20261010.png",
+        ".agent-state/continuity-runtime/timeline-removed-safari-20261010.png"
+      ],
+      "cleanup": "Agent-created map tab closed; workbench draft/attachment unchanged; fixture archived as .agent-state/continuity-runtime/timeline-safari-20261010.archived.md; no production/model action",
+      "limits": [
+        "Local Markdown only; SSH browser timeline and all themes/narrow viewport remain",
+        "Eviction display observed with existing bounded history; no disk capacity fault injection",
+        "Comparison can include directory metadata changes; no inferred semantic conclusion or runtime trajectory",
+        "No measured synchronization latency/frame rate; full receipt source fingerprint unchanged"
+      ]
+    },
+    "go_types_module_system_browser": {
+      "status": "in_progress",
+      "environment": "18211 isolated, system Safari, local two-package Go module",
+      "evidence": [
+        ".agent-state/continuity-runtime/go-types-module-safari-20261010.png",
+        ".agent-state/continuity-runtime/go-types-source-line12-safari-20261010.png",
+        ".agent-state/continuity-runtime/go-types-module-api-receipt-20261010.json",
+        ".agent-state/continuity-runtime/go-types-diagnostics-fixed-safari-20261010.png",
+        ".agent-state/continuity-runtime/go-types-diagnostics-fixed-api-20261010.json"
+      ],
+      "observed": [
+        "2 packages checked; 4 typed bindings, 0 candidates, 2 dynamic unresolved calls",
+        "Primary.Compute and Secondary.Compute on L9 distinguish columns12/33 and targets; cross-package Build resolves",
+        "Interface c.Compute and function variable f remain unresolved; Safari link selects main.go line12 in readonly view",
+        "Original index policy and workspace config restored and API readback matched; original note037 unsent draft and attachment restored after Safari reload"
+      ],
+      "repair": "Stale AST diagnostics removed by exact file/line/column/name; unrelated diagnostics retained; TestKnowledgeGoTypes race PASS 1.044s; rebuilt candidate via start.command, authenticated API and system Safari stellar log confirmed only two remaining dynamic calls.",
+      "remaining": [
+        "External dependencies/build tags/large project and SSH type binding not verified",
+        "Other languages and Windows not verified"
+      ],
+      "full_gate": {
+        "status": "pass",
+        "checks": 35,
+        "fingerprint": "12f205fe94dac9c155ae8fd4cffc6c649f30700f8c89fc5abe1162890e67d925",
+        "log": ".agent-state/verify-20261009T193942124289Z.log",
+        "goRaceSeconds": 424.352,
+        "head": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0"
+      }
+    },
+    "diagnostics_full_gate": {
+      "status": "pass",
+      "checks": 35,
+      "fingerprint": "12f205fe94dac9c155ae8fd4cffc6c649f30700f8c89fc5abe1162890e67d925",
+      "log": ".agent-state/verify-20261009T193942124289Z.log",
+      "goRaceSeconds": 424.352,
+      "head": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0"
+    },
+    "history_attachments_system_browser": {
+      "status": "pass for linked local attachments",
+      "environment": "isolated18211 system Safari; fresh local fixture",
+      "checks": [
+        "CSV/draw.io source/ZIP-only external changes generated version000002 while Markdown body remained unchanged",
+        "Safari old-version comparison displayed identical body and three stored resource fingerprints",
+        "Explicit Safari restore scope marked three attachments changed and Markdown unchanged",
+        "Confirmed restoration readback: all three SHA256 equal revision000001; ZIP member, CSV text and XML baseline marker verified",
+        "Restore generated version000003; repeat history list remained total3",
+        "Autosave on/off immediately after restore succeeded without reload; original off retained"
+      ],
+      "evidence": [
+        ".agent-state/continuity-runtime/history-attachments-range-safari-20261010.png",
+        ".agent-state/continuity-runtime/history-attachments-api-receipt-20261010.json"
+      ],
+      "cleanup": "Agent-created Safari tab closed; test directory recoverably moved outside workspace to history-attachments-safari-20261010.archived; original draft/attachment retained",
+      "remaining": [
+        "draw.io visual embed rendering not verified in this check",
+        "SSH post-fix restore switch and other resource types/storage backup UI remain"
+      ]
+    },
+    "ssh_history_postfix_system_browser": {
+      "status": "pass for isolated SSH SVG restore and immediate autosave",
+      "environment": "system Safari https://localhost:18211; internal disposable SFTP server ssh-postfix",
+      "checks": [
+        "Safari compared revision000001: body unchanged, diagram.svg changed",
+        "Confirmed restore; remote diagram.svg SHA256 equals original revision000001",
+        "Immediately enabled autosave without reload; edited SSH_POSTFIX_AUTOSAVE_20261010 and remote readback matched",
+        "History list has four versions: baseline, resource-only external update, restoration, autosaved body change",
+        "Autosave returned to original off; original source identities restored; temporary credential cleared; temporary Safari tab closed; original note037 draft and attachment retained",
+        "Disposable SSH container and internal network removed; candidate18211 and production9999 retained"
+      ],
+      "assetSha256": "a5a65d29173016466a4a7a7d2d0366dd85c4ab26ed856e423045c0848fa93b53",
+      "historyTotal": 4,
+      "evidence": [
+        ".agent-state/continuity-runtime/ssh-history-postfix-safari-20261010.png",
+        ".agent-state/continuity-runtime/ssh-history-postfix-receipt-20261010.json"
+      ],
+      "remaining": [
+        "Physical network interruption/WAN not tested",
+        "Other resource formats and backup management not fully covered"
+      ]
+    },
+    "coverage_visible_system_browser": {
+      "status": "pass for local source display and automatic completion transition",
+      "environment": "isolated18211 rebuilt offline Go1.26 candidate; start.command; system Safari",
+      "repair": "Previously CSS hid source coverage metadata; restored compact visible status. All sources marked indexed nodes rather than total files; tooltips include budgets and coverage reasons.",
+      "evidence": [
+        "scripts/starmap-coverage-state.test.cjs PASS",
+        ".agent-state/continuity-runtime/starmap-coverage-safari-20261010.png",
+        ".agent-state/continuity-runtime/starmap-coverage-complete-safari-20261010.png"
+      ],
+      "observed": [
+        "Workspace 156 nodes,142 files,14 directories; status scanning pending5 then limited-scope complete pending0 without reload",
+        "Original search/RAG recovery retained; temporary tab closed; original draft and attachment retained"
+      ],
+      "remaining": [
+        "Large catalogue performance and remote-source browser coverage still pending"
+      ],
+      "quickGate": {
+        "status": "pass",
+        "fingerprint": "cdebbde680ed70f72d66bca7f7a80cd1a811ec3ddca154cb6804d42099c79a09",
+        "head": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+        "log": ".agent-state/verify-20261009T200911505648Z.log"
+      }
+    },
+    "drawio_embed_system_browser": {
+      "status": "pass for local embedded draw.io SVG lifecycle",
+      "environment": "system Safari https://localhost:18211; bundled local draw.io iframe; fresh Markdown fixture",
+      "checks": [
+        "Clicked insert draw.io, created rectangle and label in actual editor",
+        "Save exported XML SVG and inserted relative notes.assets path; Markdown saved to disk",
+        "SVG contains rendered label and editable mxfile XML",
+        "Reopened embedded SVG in local editor; changed label; saved resource, Markdown body unchanged",
+        "Safari history000003 compared against000002: identical body, changed stored resource",
+        "Explicit restore plan and confirmation; baseline label rendered; SHA256 matches original",
+        "Temporary browser tab closed; original note037 draft/attachment preserved; fixture recoverably archived outside indexed workspace"
+      ],
+      "evidence": [
+        ".agent-state/continuity-runtime/drawio-embed-restored-safari-20261010.png",
+        ".agent-state/continuity-runtime/drawio-embed-baseline-receipt-20261010.json",
+        ".agent-state/continuity-runtime/drawio-embed-restored-receipt-20261010.json"
+      ],
+      "remaining": [
+        "SSH embedded diagram editor lifecycle not verified",
+        "Other media formats/backup management not fully covered"
+      ]
+    },
+    "coverage_full_gate_run": {
+      "status": "pass",
+      "sessionId": 82161,
+      "command": "python3 scripts/agent-route.py verify full",
+      "output": ".agent-state/coverage-full-output-20261010.txt",
+      "note": "Session82161 returned terminal exit0; full receipt includes new coverage-state check. Regression does not complete all product acceptance.",
+      "checks": 36,
+      "fingerprint": "cdebbde680ed70f72d66bca7f7a80cd1a811ec3ddca154cb6804d42099c79a09",
+      "head": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+      "log": ".agent-state/verify-20261009T200953340880Z.log"
+    },
+    "capability_plugin_host_execution": {
+      "status": "pass for bundled current-time host execution only",
+      "environment": "isolated18211 container Node24.21.0; actual plugin_host.js call protocol",
+      "checks": [
+        "Asia/Shanghai actual datetime returned with UTC timestamp and ISO week",
+        "Invalid IANA timezone returned ok:false with explicit error",
+        "Temporary result files removed; no model or credentials used"
+      ],
+      "evidence": [
+        ".agent-state/continuity-runtime/plugin-current-time-execution-20261010.json"
+      ],
+      "remaining": [
+        "Capability dashboard still entry-read only; receipt is separate",
+        "Model-led Go dispatch and other plugins are not verified by this check"
+      ]
+    },
+    "path_multihop_system_browser": {
+      "status": "pass for local candidate two-hop direction, source jump and invalidation",
+      "receipt": ".agent-state/continuity-runtime/path-multihop-receipt-20261010.json",
+      "checks": [
+        "New fixture incrementally discovered without reload",
+        "Entry C1e46d6584806 to Leaf C04eb985d9d27 returned two steps through Middle C6091329f18e2",
+        "Both edges labelled static-name candidate with L3:37 and L4:38 evidence",
+        "Second relation source link opened actual read-only file viewer with L4 selected",
+        "Default Leaf->Entry found no directed path",
+        "Explicit reverse option returned two reverse-labelled steps preserving original relationship direction",
+        "External edit removed Middle->Leaf edge; auto update changed connection count259->258 and cleared old path with re-query prompt",
+        "Original query/RAG/knowledge view restored; temporary tabs closed; note037 workbench draft/attachment retained"
+      ],
+      "remaining": [
+        "Cross-package main->Build not found with Go type analysis disabled; not treated as no actual relationship",
+        "No SSH, complete application entry-to-service, report-to-source, narrow-screen or performance claim"
+      ]
+    },
+    "capabilities_ssh_system_browser": {
+      "status": "pass for actual SSH root read, interruption failure and recovery",
+      "receipt": ".agent-state/continuity-runtime/capabilities-ssh-receipt-20261010.json",
+      "states": [
+        {
+          "state": "pass",
+          "durationMs": 196
+        },
+        {
+          "state": "failed",
+          "durationMs": 213,
+          "cause": "temporary SSH server stopped"
+        },
+        {
+          "state": "pass",
+          "durationMs": 255,
+          "cause": "same SSH server restarted"
+        }
+      ],
+      "cleanup": [
+        "Temporary source removed; original four identities verified",
+        "Temporary credential cleared and absence verified",
+        "Internal network disconnected from candidate; temporary container/network removed",
+        "Settings closed; original workbench draft and attachment retained"
+      ],
+      "remaining": [
+        "No WAN/physical packet loss or all remote directory permissions proof",
+        "No capability write probe; not a model or all-plugin acceptance"
+      ]
+    },
+    "production_real_approval": {
+      "status": "in_progress",
+      "environment": "production9999",
+      "receipt": ".agent-state/continuity-runtime/production-approval-receipt-20261010.json",
+      "summary": "真实模型只读shell和新文件独立审核/落盘通过；发现生成前读回与审核阶段UI失同步，轮询源码及VM修复通过，修复后Safari复验/新full待完成。用户授权在实际环境测试，不复制凭据。"
+    },
+    "approval_postreview_receipt": {
+      "status": "in_progress",
+      "summary": "待审批新文件读回明确返回提案状态；独立审核后追加系统应用回执，验证当前工作区实际字节。Go 定向 race PASS，Safari 本机模拟模型等待16秒后无需刷新自动完成及读回一致；真实模型修复后复验仍缺，生产9999未更新。",
+      "evidence": [
+        "internal/server/approval_file_result.go",
+        "internal/server/assisted_approval_files_test.go",
+        ".agent-state/continuity-runtime/review-receipt-browser-20261010.json",
+        ".agent-state/verify-20261010T000112159183Z.log"
+      ],
+      "limits": [
+        "无 Windows 环境",
+        "本次 Safari 模型为本机模拟，不是实际 provider"
+      ],
+      "full": {
+        "status": "pass",
+        "checks": 36,
+        "fingerprint": "9c6ef98e704c88bc665fb38134a84ebef40ab11f279a36a04b267b62deb7dd2f",
+        "log": ".agent-state/verify-20261010T000112159183Z.log"
+      }
+    },
+    "tab_recovery": {
+      "status": "pass for tested reload isolation",
+      "receipt": ".agent-state/continuity-runtime/tab-recovery-browser-20261010.json",
+      "source": [
+        "internal/server/web/continuity.js",
+        "internal/server/web/app.js"
+      ],
+      "tests": [
+        "scripts/continuity-isolation.test.cjs",
+        "scripts/workspace-scene-transition.test.cjs",
+        "scripts/test_ui_click_latency.cjs"
+      ],
+      "remaining": "Closed-tab branches/capacity eviction/Windows and long-duration not verified"
+    },
+    "approval_postfix_real_provider": {
+      "status": "pass for one actual local file workflow",
+      "receipt": ".agent-state/continuity-runtime/production-postfix-approval-20261010.json",
+      "remaining": "Cross-session remembered rules/global switching/SSH not covered"
+    },
+    "outcome_real_provider": {
+      "status": "in_progress",
+      "receipt": ".agent-state/continuity-runtime/production-real-outcome-20261010.json",
+      "remaining": "Multi-page live snapshot and release evidence not verified; system application receipt/export omission fixed and verified in native Safari"
+    },
+    "outcome_system_receipts": {
+      "status": "pass for tested persisted real task",
+      "receipt": ".agent-state/continuity-runtime/outcome-system-receipt-20261010.json",
+      "targeted": "go test -race TestTaskOutcome PASS 4.007s",
+      "remaining": "Multi-page live snapshot/release evidence not verified",
+      "full": {
+        "status": "pass",
+        "checks": 36,
+        "fingerprint": "ac7642295583c89f9f0ac6c8e709607b497fb6cb920441bb6db1497a7b0064ee",
+        "time": "20261010T003711950608Z",
+        "log": ".agent-state/verify-20261010T003711950608Z.log"
+      }
+    },
+    "sky_recovery": {
+      "status": "in_progress",
+      "receipt": ".agent-state/continuity-runtime/sky-recovery-20261010.json",
+      "changes": [
+        "Star map readTab/writeTab isolation",
+        "Initial API failure retries complete scene restoration before delta polling"
+      ],
+      "tests": "starmap-workspace-scene and continuity-isolation source VM PASS",
+      "browser": "Final native Safari: tab A exact camera/phase restored after tab B reset; tab B restored its own reset camera, phase and search scroll after actual initial HTTP 503; both temporary tabs closed and original draft retained",
+      "runtime_source_sha": "9cee0caa93096bfe33e523334f543f23ca3c983abf66b6ef5ef912d6982f123d",
+      "remaining": [
+        "Nonzero detail scroll and nested path browser restore",
+        "Closed-tab branches, capacity, Windows",
+        "Independent infrared-enabled persistence assertion not established by this run"
+      ],
+      "full_gate": {
+        "status": "pass",
+        "checks": 36,
+        "fingerprint": "7f2a30689e7d906b930d0733f3ef1a323290772e17eb9e2bfdf0226842e09da9",
+        "time": "20261010T011324648367Z",
+        "log": ".agent-state/verify-20261010T011324648367Z.log"
+      }
+    }
+  },
+  "implementation_batch_20261010": {
+    "status": "in_progress",
+    "authorization": "先实现所有功能推上去，剩下的在继续",
+    "scope": "129 existing task files plus batch handoff documentation; no runtime data, credentials or local screenshots",
+    "verification": {
+      "status": "pass",
+      "checks": 36,
+      "fingerprint": "7f2a30689e7d906b930d0733f3ef1a323290772e17eb9e2bfdf0226842e09da9",
+      "time": "20261010T011324648367Z"
+    },
+    "documentation": "docs/reviews/function-batch-20261010.md",
+    "push": "pending",
+    "release": "not_run; product acceptance remains active"
+  }
 }

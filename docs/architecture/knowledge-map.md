@@ -199,6 +199,214 @@ MCP插件继续通过 `list_sources`／已发现只读 `mcp_call` 使用；工�
 
 本地目录来源返回 `coverage`：实际文件与目录数、该来源文件/目录预算、7 层深度预算、每文本前 8192 字节范围与限制原因。`totalKnown=false` 明确未遍历统计全库，不能计算完成百分比。隐藏文件、密钥、符号链接和依赖目录仍按已有策略排除。星际日志展示这些观测，而非以星点数表示全文完成。
 
-会话索引超过 200 条时来源状态为 `partial`；每目录读取 1001 个条目用于判断是否超过 1000 的保留上限，避免恰好 1000 条时误报超限。覆盖变化参与版本指纹并随增量响应传递。远端来源目前维持原状态与诊断，不声称已有本地覆盖计数。渐进继续扫描、范围优先级和可配置预算仍未实现。
+会话索引超过 200 条时来源状态为 `partial`；每目录读取 1001 个条目用于判断是否超过 1000 的保留上限，避免恰好 1000 条时误报超限。覆盖变化参与版本指纹并随增量响应传递。远端来源目前维持原状态与诊断，不声称已有本地覆盖计数。本批当时尚无继续扫描、路径优先级和可配置预算；后续预算与优先路径实现见下节，续扫队列仍待完成。
 
 定向覆盖测试使用临时本地目录：少量文件、数量截断、深度截断、会话截断和无节点变化的覆盖版本传递。浏览器使用实际日志源码与模拟数据验收，未替代完整已鉴权星图、真实 SSH 来源或大库性能验收。
+
+
+### 工作区索引预算与重点优先（源码候选）
+
+设置 → 知识索引。文件预算50–4000、目录预算20–1000、目录深度1–12，默认800/200/7。文件和目录预算按启用来源数均分，用于本地目录扫描；SSH、MCP等远端沿用已有预算。优先路径以来源编号映射相对路径数组，例如 `{"workspace":["src","docs"]}`；普通引用使用来源ID。只改变已发现目录项的遍历顺序，祖先目录先进入，再读取目标内容。不改变权限、来源可见性、隐藏/敏感/依赖目录排除规则。
+
+`GET/PUT /api/knowledge-map/index-policy` 提供 policy、workspaceId、revision。PUT严格解析并校验相对路径，拒绝越界、重复和排除路径；工作区或内容版本变化返回409。配置原子保存于 `config/knowledge-index/<工作区身份摘要>.json`，次轮同步失效知识/代码图缓存，不需重启或编译。损坏配置读取时使用默认预算并提示；保存前读取失败返回错误，不静默覆盖损坏文件。图接口直接扫描也读取相同配置。
+
+每目录仍只保留前1000个发现条目，优先排序在这组条目中进行；不能保证超大平面目录中未被读取的目标优先进入。配置范围不影响会话200条、正文8KiB、代码解析数量等其他限制。`coverage`报告实际生效的来源预算和深度，仍不提供全库百分比。目录范围排除/专项扫描、真正增量续扫队列和远端渐进扫描尚待实现。
+
+定向Go race测试覆盖持久化、工作区隔离、revision冲突、缓存代际失效、非法路径拒绝及低预算下后排序重点目录被实际扫描。浏览器设置组件实际保存1200文件预算及docs/src优先路径并重新加载；接口为模拟，持久化证据来自Go API测试。完整鉴权工作台、真实SSH和大库性能未验收；本批尚未部署或推送。
+
+### 渐进枚举游标基础（2026-10-09，尚未接入星图）
+
+`knowledge_discovery.go` 新增本地来源分批枚举器：保存相对目录、枚举位置与目录元数据，不保留打开的文件句柄或文件正文。每批分别限制文件、进入目录数及检查条目数；隐藏/依赖/符号链接排除，避免全为隐藏项的大目录无限占用一次请求。可复制候选状态，取消或失败不修改原游标。目录发生增删导致元数据变化时，重新校准该目录的枚举位置并清除陈旧子项；容量上限有明确原因，增大后可继续。
+
+这是可续扫的底层实现，不代表星图已经自动补齐。现行图谱仍使用原有单轮预算扫描；尚需接入缓存代际、累计节点与覆盖状态、完整周期外部变更/删除检测、可配置范围及 SSH 适配。游标逐步重开目录并跳过已消费位置，大目录的重复枚举成本仍需真实性能测量。`Complete` 只表示当前队列在深度/容量策略内结束；有 `depth` 原因时不得声称全来源覆盖。
+
+### 渐进图谱接入检查点（2026-10-09，源码候选）
+
+`/api/knowledge-map/updates` 的本地来源现已使用游标，候选扫描复制原状态，成功后由现有工作区/代际检查提交。节点逐批累积；新周期扫描期间保留上一周期未重访的节点，完整周期后剔除未再发现项。对当前周期已观察的文件重新校验元数据，检测外部正文修改或明确删除；重新验证目录类型，阻止通过被替换的符号链接祖先读取资源。目录和文件句柄均不跨请求保留。
+
+`coverage` 增加 `progressive`、`pending`、`cycle`、`catalogLimit`：文件/目录数是累计可见目录项，`fileBudget`、`directoryBudget` 是本批共享预算。每来源元数据容量为该来源单批文件与目录预算之和的四倍，达到容量时明确报告 `catalog_limit`，不会声称全库覆盖。此上限限制保留正文和图谱内存；独立单次快照/检索路径仍使用原有预算，尚未改为统一索引库。
+
+实际增量 HTTP handler 与临时多来源目录回归证明：首批之外节点逐批进入、完成周期后移除删除文件、外部正文更新、候选取消隔离。独立快照兼容测试继续通过。优先路径目前仅影响已发现的子目录排序，首批直接寻址优先路径、用户范围选择、游标持久化、SSH 续扫、日志待扫计数 UI 及大库性能仍待完善；没有部署生产或宣布整项完成。
+
+### 渐进覆盖提示（2026-10-09）
+
+星图来源详情区分累计索引量与单批扫描预算，显示当前扫描周期、待扫描目录任务和索引容量上限。到达容量或深度限制时保留受限说明，不把队列结束等同于全库覆盖。普通快照沿用原提示；所有路径仍明确全库总数未统计。
+
+本次已执行 JavaScript 语法检查，以及待扫描、容量限制、深度限制、限定范围完成、旧协议和缺少覆盖字段的提示函数断言。真实星图页面视觉验收仍为 NOT_RUN；生产服务未更新。
+
+### 优先路径直接寻址（2026-10-09）
+
+增量本地扫描每轮首次入队时，按配置优先路径直接加入目标文件或目录，并仅收集父目录元信息。父目录的兄弟文件不会先于该目标被枚举。目标和父目录仍受文件、目录、条目、深度及目录容量预算约束，缺失目标跳过；隐藏或依赖目录及符号链接祖先被排除。普通根目录扫描继续执行，不因优先项丢弃其余文件。源配置变更仍沿用工作区版本失效机制。
+
+该行为适用于增量本地索引。普通快照／搜索及远端扫描尚未统一接入，目录范围配置、跨进程游标持久化和大规模性能仍待补齐。
+
+### 本地索引目录范围（2026-10-09）
+
+工作区索引策略新增 `scopePaths`，格式为来源编号到相对路径数组。未配置来源或空数组保持整个来源；非空数组限定目标文件／目录及其子项，父目录仅作为关系元信息。优先路径必须落在该范围内。禁止绝对、逃逸、重复及隐藏／依赖／敏感路径。保存通过已有工作区身份与配置版本冲突检查，并使增量缓存失效。设置的“索引目录范围”栏可保存、重新加载该配置。
+
+本地普通快照和增量扫描均按范围直接寻址，不必先枚举根目录所有条目；覆盖信息报告 `scopePaths`。配置范围缺失标为受限，不能宣称全库完整。范围约束索引，不改变来源读写权限或 AI 可见性。SSH／workspace-sftp／SFTP／FTP／FTPS 已接入范围配置与渐进扫描，见下文远端检查点；单资源 HTTP／SMB 及 MCP 工具目录仍保留原扫描。空范围不会停用来源。
+
+真实临时目录与 HTTP handler 测试已验证范围持久化、旧版本冲突、快照／增量排除范围外文件以及路径校验。浏览器验收使用当前设置函数的隔离组件页，确认填写、保存和重新加载恢复范围；此页为组件桩 API，不能证明完整鉴权工作台或真实 SSH 联调。截图位于 `.agent-state/index-scope-preview/settings.png`。生产未更新。
+
+### 混合检索排序核心检查点（2026-10-09）
+
+现有 RAG 的 TF-IDF 排序抽出为共享函数，保持原检索口径。新增向量余弦排序与加权 reciprocal rank fusion 核心：关键词与向量排名绑定同一抽取快照的片段索引，融合结果复制原片段编号、来源、定位和内容指纹。向量要求一致维度（最多4096）和数量（最多2500），拒绝非有限值；归一化避免平方和溢出，零向量不提供语义证据；排名重复或越界拒绝。融合不直接比较两路原始分数，权重为0–1，稳定处理平分。
+
+新增 OpenAI 兼容 embedding HTTP 适配层（`knowledge_embeddings.go`），每批最多32段，最多2501个输入；输入和响应有大小上限。响应根据批内 index 恢复顺序，拒绝缺失／重复／越界索引以及跨批次维度变化。请求遵守 context 取消、30秒单请求超时和正常 TLS 验证；不跟随重定向，不输出提供商响应正文或携带端点／文档／密钥的传输错误。密钥由调用者注入，适配层不保存凭据。
+
+后端已接入按工作区隔离的 `GET/PUT /api/knowledge-map/embedding-policy`：开关、Base URL、模型与0–1融合权重，默认关闭；密钥按工作区保存到 SecretVault，返回值只有 hasKey。更新须提交当前 workspaceId/revision，旧版本返回409。每次保存增加配置代次并使工作区版本失效。密钥与配置分两份保存，失败会尝试恢复旧密钥并报告恢复错误；尚无跨文件崩溃事务保证。
+
+当前 `rag` 在显式启用且权重大于0后使用向量与关键词加权融合；关闭、配置／密钥不可用或提供商错误时返回 TF-IDF 命中与降级诊断。`original` 从不请求 embedding。仅返回当前片段快照的原始编号、来源、定位与指纹；向量请求后重查工作区与版本，变化时拒绝旧结果；取消返回取消错误。候选片段向量采用有界加密缓存：命名空间绑定工作区、提供商地址、模型和配置代次；条目绑定片段编号、文件指纹、来源、定位、偏移及正文指纹。查询向量每次生成，未变化的文档向量复用；源正文仍在每次检索时经当前权限重新读取。缓存内存最多4MiB／4096条，磁盘最多8个身份文件，存储于实例 data/cache/knowledge-vectors；采用由实例访问令牌域分离派生的密钥加密，不保存明文片段或密钥。损坏／解密失败重建，模型维度变化时清除旧缓存并回退关键词；后续查询重建。配置代次变更使用新命名空间。尚未完成大库真实性能测量，不能宣称性能就绪。
+
+设置中“知识索引 → 向量混合检索”提供开关、Base URL、模型、融合权重、密钥保存／清除。密钥栏保存后清空，返回仅显示是否已保存；地址与权重在禁用控件前校验。星图结果按响应 engine 显示关键词或关键词＋向量 RAG，提供商错误在星际日志诊断中体现。真实／付费提供商、完整鉴权工作台与SSH端到端联调尚未验收；内容与模型身份绑定的加密缓存已实现，真实提供商性能仍待验收。
+
+本次 `TestKnowledge` 含 race 回归通过（11.467 秒）。真实临时 TXT 已验证原文大小写精确匹配、RAG 命中、来源路径／定位／内容指纹及 TF-IDF 引擎声明。向量与融合测试使用人工向量验证算法与边界，不代表 embedding 模型质量或真实提供商联调。
+
+适配层本机 HTTP 服务夹具已验证33段分两批、乱序响应还原、取消、重定向拒绝、畸形响应及跨批次维度一致性。最终 `TestKnowledge` race 回归通过（11.626秒）。首轮取消测试夹具未读请求体导致关闭超时；修正后重跑通过。尚未调用真实或付费 embedding 服务。
+
+### 红外伪彩观察蒙版（2026-10-09）
+
+星图底部“动效”与“归位”之间提供“红外”按钮。开启后不再做全屏染色或按星域任意叠渐变，而是从当前视图的每个真实节点构建辐射标量场，再统一曝光映射。普通与宇宙尺度视图均使用实际节点投影，目录分团和选择增亮不额外产生热源。
+
+能量代理 `E=(0.06+log2(1+有效关联数)^2)/z²`：孤立节点保留弱基线，强关联节点更高，投影深度 z 为场景相对距离而非物理距离。核 `K(r)=exp(-r/(6σ))/(1+(r/σ)²)` 采用软化距离衰减与有限尘埃包络，σ随关联数和缩放调整（5–45 CSS像素）。在6σ内用径向积分归一化：`D=K/(2πσ²∫₀⁶ u·exp(-u/6)/(1+u²)du)`，宽度增加只分散能量，不增加源总量。场内各节点贡献 `F=ΣE·D`，最后使用独立相机曝光 `1-exp(-720F)`并映射暗红／铜金伪彩；叠加发生在曝光前，因此邻近节点形成连续热区。核在6σ截断且连续平面积分为1；视口之外的能量不回填。该近似并非包含吸收、温度、光谱与多次散射的完整辐射输运解。没有温度、光谱、尘埃实测或绝对功率输入，不能称为真实红外观测。
+
+设计参考 [NASA 红外天文学说明](https://science.nasa.gov/mission/webb/science-overview/science-explainers/infrared-astronomy/) 中尘埃吸收星光并再辐射的机制；上述关联数映射、核和曝光均为知识图谱视觉模型，不是 NASA 观测公式。
+
+性能约束：栅格最多192×144，每个真实节点均参与，没有前32节点截断；重算间隔约48ms，复用栅格和画布，只在有限包络内累加。星点、连线和面板保留原配色与操作；约420ms切换，关闭动效时立即切换；偏好沿用按工作区隔离的恢复记录。
+
+本次运行 `node scripts/starmap-infrared.test.cjs` 通过：关联数单调能量、距离翻倍为1/4、径向衰减、重叠叠加、100节点全部贡献、空视图无蒙版、开关和画布恢复。JS语法与diff检查通过。完整当前星图前端搭配245个合成节点（299条关系）在本机浏览器检查高关联／孤立热区、红外开关、关闭动效及详情操作，截图 `.agent-state/infrared-preview/energy-field.png`；夹具不是生产索引。生产部署、Windows、窄屏和大规模性能仍未验收。
+
+后端接入检查点：`TestKnowledge` race 回归通过（13.579秒）。测试通过鉴权API配置／清除保险库密钥，验证配置无明文密钥、旧revision拒绝、默认无外发、原文无外发、实际临时TXT的语义排名与原始指纹定位、HTTP503回退和请求期间版本变化拒绝。提供商为本机HTTP夹具，不代表真实模型质量；测试之后仅更新工具说明文案。
+
+配置前端检查点：当前 renderKnowledgeEmbeddingPolicy 组件搭配桩API，实际浏览器填写本机地址／模型／0.75权重、保存、重新加载恢复及1.5权重拒绝通过。首次验收发现禁用输入导致 checkValidity 跳过；调整为先校验后禁用，再验通过。完整当前星图前端搭配桩检索响应，已显示“关键词 + 向量 RAG”。组件与检索桩不是完整鉴权工作台或真实提供商联调。截图 `.agent-state/embedding-settings-preview/settings.png` 与 `map-engine.png`。语法、i18n回归及diff检查通过。临时18220／18221服务和验收标签已关闭，生产未部署。
+
+归一化补充验收：散射核宽度5/12/45的径向积分误差小于1e-5，改变宽度不改变总源能量；Node回归与语法检查通过。245节点夹具浏览器红外开启、局部热区显示通过，截图 `.agent-state/infrared-preview/normalized-energy-field.png`。生产仍未部署。
+
+缓存最终回归：Docker `aide:local` 中 `go test -buildvcs=false -race ./internal/server -run TestKnowledge -count=1 -timeout=120s` 通过（15.916秒）。加密文件冷读、身份/正文指纹失效、4MiB容量及8文件上限、损坏重建和并发检查通过；HTTP夹具实际输入数量验证3→1→冷读1→单片段变化2→模型变化3，维度变化降级后全量重建。仅为本机夹具证据，不表示真实服务质量或SSH已验收。
+
+## 代码证据类别与未解析定位（2026-10-09）
+
+代码边新增 `confidence` 类别：`source_declaration` 为 AST 声明证据，`source_path` 为当前索引内的导入路径匹配，`name_candidate` 为静态名称调用候选。这些类别不是概率，不证明运行时执行；Go包导入仍指向索引内代表文件，不证明整个模块加载或所有文件依赖。保留原边 kind 与 evidence，增量边身份包含新增字段。
+
+代码摘要新增 `engine=ast-name-resolution`、`unresolvedImports` 和 `unresolvedRelations`。未解析调用/导入记录包含起点编号、文件编号、调用行号（可得时）、目标名称、关系类别和原因；区分动态绑定、名称歧义、索引外/绑定未知、路径未解析。最多保留1000条逐项记录，计数仍累计全部扫描项，达到上限标记 `relationsTruncated`。未解析项不创建目标节点或虚构边。AI理解仅携带所选及相关编号的未解析记录，最多80项。
+
+详情分别显示声明证据、导入路径、名称候选与未解析项（前24条）；未解析链接保留当前工作区、来源和源码指纹，按调用行号打开源码。长代码详情操作区随内容滚动，修复固定底栏遮挡证据与键盘焦点的问题。该阶段尚未接入类型解析；后续可选 Go 快照服务的范围与验收见下节。
+
+本次 Docker `aide:local` 中 `go test -buildvcs=false -race ./internal/server -run TestKnowledge -count=1 -timeout=120s` 通过（14.382秒）：Go源码真实AST验证3个声明、1条内部路径、2条候选调用、3个未解析调用与1个外部导入；1100个未解析调用保留1000条并标记截断，不产生虚构节点。当前完整前端搭配247节点合成响应，浏览器已检查证据标签、未解析原因、L4/L5定位链接参数和键盘焦点可见性；首次固定底栏遮挡已修复并重验，截图 `.agent-state/code-confidence-preview/evidence.png`。未点击进入真实源码编辑器，完整鉴权、本地/SSH端到端及语言服务验收仍待完成。
+
+
+## 可选 Go 类型绑定服务（2026-10-09）
+
+设置 → 知识索引 → 代码语言服务可选择 AST 名称候选（默认）或 Go 类型绑定（已索引快照）。配置为当前工作区 `knowledgeIndexPolicy.languageService`，允许空字符串或 `go-types`；沿用 revision 冲突保护、工作区隔离和索引缓存失效。下一次代码图同步生效，不改变来源权限。
+
+Go 服务使用产品二进制 `--knowledge-go-types` 独立模式。输入是已授权索引中的 Go 正文快照，最多80文件、单文件256KiB、合计4MiB。按来源/目录/包组织 go/types 检查，内部 import 只能落到同一来源快照；标准库可用产品 Go 工具链解析，第三方模块不会下载。语法损坏或类型检查失败的包不产生类型绑定。它不是外部 LSP，也不是完整项目构建：未加载全部源码、构建标签、工作区依赖和实际运行环境。接口动态分派、函数变量和未支持的泛型调用形式仍未确认。
+
+子进程最多并发2个、排队和运行合计5秒，输出最多2MiB；请求取消终止进程组。只传递必要运行环境，不继承父进程任意凭据变量。`GOPROXY=off`、`GOSUMDB=off`、`GOTOOLCHAIN=local`、`GOENV=off`，256MiB为 Go 运行时软内存目标，不宣称操作系统硬内存隔离。模式跳过正常服务、模型、插件及凭据初始化，不执行项目代码。失败保留 AST 图并给出诊断，下次同步重试。
+
+成功绑定只连接已存在的源码符号节点。边为 `kind=call_typed` / `confidence=type_binding`；保留行号和列号，同一行多个调用不会互相替换。对应的名称候选或未解析项按精确调用位置替换；旧未解析诊断同时移除，诊断包含行号和列号，同一行其他动态调用与语法错误保留。`code.calls` 统计剩余名称候选，`code.typedCalls` 统计成功显示的类型绑定，`code.languageService` 记录引擎、包检查数、诊断和截断。声明、导入与未解析证据仍可查看。调用层、星等和关系筛选接纳两类静态调用，详情明确标出每条的证据等级，不能由类型绑定断言运行顺序或无缺陷。
+
+验收使用隔离真实 Aide Handler、当前设置组件与子进程：配置保存/重读，具体 A/B 接收者同名方法绑定及 i 接口、f 函数变量保持动态，源码跳转只读选中 L7。原生产品二进制构建及 `--knowledge-go-types` 模式另行核验。具体命令、输出与限制记录在 [语言服务任务](../tasks/knowledge-language-service-20261009.json)。真实 SSH 大型项目、第三方依赖环境和 Windows 浏览器仍未完成，生产未更新。
+
+## 节点证据路径
+
+`POST /api/knowledge-map/paths` 使用已提交的 `/updates` 视图，不重新扫描、调用模型或访问 SSH。请求必须包含 `workspace`、`revision`、`from`、`to`，`code` 选择代码视图；默认沿关系方向寻找最短路径。`undirected=true` 允许逆向探索，返回每一步的原始边和 `reversed`，不修改证据方向。`includeStructure=true` 才使用目录 `contains` 关系；目录归属不等于知识或调用依据。
+
+结果包括 `found`、有序 `nodes`、`steps`、原始警告、索引 `truncated` 和搜索 `limited`。逐边保留关系种类、置信度、行列与证据；名称候选不会升级为类型绑定。搜索最多32步、16000个节点，超限不等于没有真实关系。未发现路径仅说明在当前已索引范围及选定规则下未发现。
+
+版本、工作区、索引模式或失败状态不匹配返回409；参数或不存在的节点返回400；配置密码且锁定返回423。查询受现有 Bearer 鉴权保护。返回前重新确认工作区和锁态。搜索区提供证据路径折叠面板，可从选中节点设置起终点或输入编号；结果展示逐步关系、证据、方向及只读原文件/关系源行跳转。仅高亮当前画面实际可见的路径节点与边，不补画聚合星域间的虚拟调用。扫描覆盖状态更新时逐一确认路径节点及边仍然存在且未变化；证据变化、工作区/模式切换或锁屏清除结果并中止请求。无路径结果不会在新索引版本上沿用。
+
+隔离真实 Handler 页面已验证 entry 到 A.Same 的类型绑定、L7 源行实际选中、跨自动同步保留及源码外部改动后失效；反向查询默认无路径，明确允许逆向后展示原始关系方向。组件回归另测取消和过期响应。Windows、SSH 与多主题/窄屏覆盖仍未完成；文档 mention 边未必带行列，此时明确提示没有源位置证据，不能宣称完整报告到来源定位已经验收。
+
+
+## 知识变化时间线
+
+右上角“星际日志”内的时间线提供两个索引观察时间的比较。知识和代码视图各自保存；显示节点增改移除、历史原文摘录、关系类别及证据等级，并保留当时来源覆盖、截断和警告。移除表示节点不再出现在该次索引，不等于磁盘文件删除。文本变化是原文比较，不自动宣称推理结论变化；历史关系不是运行轨迹。历史摘录不作为当前文件引用，源码当前状态仍通过现有节点/路径打开。
+
+成功的 `/api/knowledge-map/updates` 扫描写入历史；节点、去重关系或代码诊断变化才新增观察，覆盖循环进度、警告及进程引用身份本身不会重复保存。已索引新节点的渐进发现会形成观察。时间是扫描观察时间，不是实际编辑时间；两次扫描间以及服务停止期间的中间编辑不能重建。索引截取的文本仍受每文件文本预算约束，时间线不能替代 Markdown 文件版本工具。
+
+历史存储在本机 `<dataPath>/cache/knowledge-timeline/`，按工作区身份和视图模式隔离，AES-GCM 加密（密钥由本机访问令牌派生）。每个视图最多保存 32 次观察、8 MiB 明文序列化数据，超限从最旧开始淘汰并显示计数；单次快照超过容量则拒绝新增、保留既有历史并在星图警告中显示。令牌变更后旧历史不能用新密钥解密，当前版本没有自动迁移密钥功能。损坏、错误身份、未知版本、非普通文件拒绝读取并保留原文件。历史不向项目缓存服务器同步，不代表多服务器历史共享。
+
+`GET /api/knowledge-map/timeline?workspace=<知识工作区ID>&code=1` 返回观察列表和保留范围；`POST /api/knowledge-map/timeline/compare` 使用相同查询参数和 `{before,after}` 观察编号返回比较。`code=1` 是代码视图，省略为知识视图。均复用 Bearer 鉴权，配置密码且锁定返回 423，工作区身份不符返回 409，快照已淘汰或不属于此视图返回 404。页面锁定/切换工作区时清除历史摘录并取消请求；超过 7 秒明确提示重试。比较结果每页 20 项，所有已保留差异可翻页查看。原图保持当前索引，不以历史节点覆盖正在更新的星图。
+
+## 真实 SFTP 证据链验收（2026-10-09）
+
+在隔离双服务器环境，独立 SFTP 来源文件进入星图，原文搜索返回来源 ID、相对路径、定位和内容指纹。通过外部 SFTP 修改原文后，旧引用请求返回 409；重新扫描与检索返回新原文和新指纹，持久时间线保留前后文本。此项包含实际网络 I/O 与鉴权 Handler；测试将内部轮询时间戳置为过期以触发扫描，不证明浏览器实际轮询时延。向量提供商和远端渐进全库索引未由此覆盖。最终双服务器 race 回归两轮 19.962 秒 PASS。见 [SSH 验收记录](../tasks/ssh-continuity-integration-20261009.json)。
+
+### Remote progressive indexing checkpoint (2026-10-09)
+
+SSH workspaces, workspace-sftp system documents and independent SFTP sources now retain directory cursors in process memory. Each batch handles at most 32 files; directory budgets are shared among active sources. Source identity, credential configuration and indexing policy changes invalidate the cursor. The existing 30-second cache interval remains. Failed or cancelled speculative scans preserve the previous committed cursor and observations.
+
+Scope paths restrict indexed files; ancestor directories provide structure. Priority paths and their ancestors are sorted first within remote directory listings. Remote discovery still enumerates ancestors; this is not direct addressing. A changed listing fingerprint during resumed enumeration restarts the cycle. Missing nodes are removed only after an unrestricted successful full cycle. Depth, text and catalogue limits retain partial coverage rather than claim completeness.
+
+Catalogue capacity is `min(50000, max(1000, 4 * (FileBudget + DirectoryBudget)))`; indexed text fragments are bounded to 8192 bytes per file. Coverage exposes cycle, pending tasks, scopes, actual batch limits and reasons. Remote cursor checkpoint persistence is described below; local cursors remain volatile. Non-SSH remote adapters and local direct snapshots/search remain non-progressive. Large-library performance and full workbench browser polling are pending.
+
+Real isolated dual-server SSH/SFTP acceptance passed twice (25.516 seconds), including 50-file cumulative discovery, scoped exclusion, priority in the first file batch, complete coverage, raw-text search and timeline. Internal cache clocks were accelerated; this does not prove normal UI polling latency. Evidence: `.agent-state/ssh-progressive-20261009/aide-ssh-test-20261009205440-87685.log`. After adding boundary tests, the knowledge package race regression passed in 19.213 seconds. Final SSH revalidation is recorded in the task ledger. Production unchanged.
+
+### 远端扫描检查点（2026-10-09）
+
+成功且来源配置仍有效的远端批次，在应用数据目录 `cache/knowledge-cursors/` 原子保存加密检查点。记录包括相对目录偏移、枚举指纹、周期、已发布节点和受限代码片段；不保存连接句柄或明文凭据。身份绑定工作区、来源配置、凭据、规则及预算，身份改变时弃用旧检查点。文件名仅使用工作区／来源／视图的哈希，同一来源配置更新覆盖同一缓存槽。
+
+解密明文最多16MiB，文件读取最多24MiB，节点与目录队列分别最多50000项，代码每组最多80文件／4MiB。校验相对路径、节点身份、类型、文本长度、队列完整状态；拒绝损坏文件、错误密钥、逃逸和符号链接目标。恢复时节点引用身份替换为当前进程身份，后续原文检索仍需重新读取授权来源。锁定或工作区变更拒绝检查点读写；保存失败显示诊断，本次扫描结果仍可保留在内存。
+
+知识 race 回归通过19.723秒。真实双服务器 SSH/SFTP 两轮通过25.681秒，包括50文件扫描中途清空内存来源缓存、下一次鉴权请求从磁盘继续且累计文件数增加。证据位于 `.agent-state/ssh-cursor-20261009/aide-ssh-test-20261009210544-88246.log`。这验证了磁盘重建与实际网络续扫，尚未执行完整服务进程重启；本地目录游标／正文缓存持久化、大库性能和完整页面仍待验收。生产未更新。
+
+恢复后首次扫描失败时，响应从已提交游标生成，保留已发布节点、正文片段及结构关系；标记来源不可用，并设置 `TotalKnown=false`、`source-unavailable`，不提交失败候选或重写检查点。最新知识 race 回归通过18.665秒；真实双服务器两轮通过25.161秒，实际检查磁盘恢复后首次取消的节点数量、覆盖标记和检查点字节不变，随后请求继续累计发现。取消在读取前触发，不代表已验证物理网络中断的所有时序。证据：`.agent-state/ssh-cursor-failure-20261009/aide-ssh-test-20261009210928-88452.log`。
+
+### 代码片段预算与元信息覆盖（2026-10-09）
+
+远端当前周期代码片段与跨周期保留片段各自限制80文件／4MiB，单文件最多256KiB；当前周期观测优先，旧片段只能占用剩余预算。超过预算返回 `code-budget`，文件元信息仍进入索引，内容覆盖保持部分状态。预算与检查点载入校验一致，避免生成无法恢复的代码缓存。
+
+目录已完整枚举且仅遇到文本／代码预算时，仍移除已消失文件的元信息及旧代码片段；不能因为内容截取限制永久保留过期星点。目录深度或目录容量超限时仍保留未核实区域，继续报告部分覆盖。知识 race 最终回归通过20.493秒，包含第81文件元信息保留、两个周期各17个256KiB文件、缓存预算与可恢复校验，以及内容受限时清除上一周期消失文件。真实 SSH 最终回归另记任务账本，生产未更新。
+
+### 跨进程恢复验收（2026-10-09）
+
+隔离 SSH 验收新增独立测试进程：重新执行真实 `App.New`，从同一测试工作区与应用数据目录加载来源、凭据和索引策略，读取加密检查点，再续扫真实 SSH 来源。两轮均观察到累计文件数10→20，进程引用身份改变，并在新进程中重新读取远端原文。旧进程随后丢弃内存游标，继续读取新进程保存的检查点，最终完成50文件扫描。
+
+双服务器 race 回归两轮通过28.433秒，日志 `.agent-state/ssh-process-restart-20261009/aide-ssh-test-20261009211727-88998.log`。这是后端初始化及跨进程续扫验收；父测试进程仍在运行，子进程使用测试可执行文件，不是生产二进制、`start.command`、HTTP监听器或浏览器重启验收。该 SSH 检查点当时尚未完成本地游标持久化及完整启动链路；后续本地 updates 的实现与启动／Safari 验收见下节。SSH 的完整启动与页面恢复、跨主机异常和大库性能仍待完成，生产未更新。
+
+
+### 本地渐进索引重启恢复（2026-10-09）
+
+`/api/knowledge-map/updates` 的本地目录扫描在成功候选完成、取消和工作区身份复核后保存检查点。文件位于应用数据目录 `cache/knowledge-cursors/local-<身份哈希>.json`，使用访问令牌派生的独立密钥进行 AES-GCM 加密。保存相对目录偏移、文件元数据、当前周期、上一周期已发布目录和必要的受限文本／代码片段；不序列化 `os.Root`、目录句柄或来源凭据。
+
+检查点身份绑定工作区、来源配置、索引范围、优先规则、模式和每来源预算。配置改变后重新扫描，进程重启后重新生成节点引用身份。每份明文检查点最多 16 MiB，读取上限 24 MiB；当前目录容量上限为单批文件／目录预算之和的四倍（最多 20000 条），跨周期已发布并集最多两倍容量。代码片段仍限 80 文件／4 MiB。损坏、错误密钥、非法路径、符号链接缓存目标拒绝读取；保存失败在星际日志显示警告，内存扫描结果继续可用，不声称已持久化。
+
+本地目录仍以大小、纳秒修改时间和文件类型判断片段可复用；外部写入若保留这三项元数据，当前缓存不能保证识别变化。未完成一个扫描周期时保留旧区域快照；限定范围或容量不足不能冒称全库覆盖。
+
+针对性回归包括鉴权 updates API、新建 `App.New`、独立测试进程、加密内容、取消不改检查点、策略范围变化隔离、跨周期片段保留及删除收敛。全部知识 race 测试通过 25.850 秒（`.agent-state/local-cursor-race-20261009.log`）。真实 18211 隔离候选经 `start.command` 重建服务，观察 120 个测试文件的累计发现数 8→16，来源进程身份改变；收据为 `.agent-state/continuity-runtime/local-runtime-restart-receipt-20261009.json`。这不代表生产升级、Windows 或大库性能验收。
+
+系统 Safari 在同一星图页面自动累计到 120 个验收文件（127 节点，工作区 122 节点），星际日志继续标明周期、待扫描任务与部分覆盖；没有手动刷新页面。证据截图为 `.agent-state/continuity-runtime/browser-local-cursor-log-20261009.png`。完成观察后通过鉴权 API 恢复隔离实例原索引策略并读回确认；120 个测试文件保留在隔离工作区作为复现夹具。以上不替代真实模型、Windows、完整来源或大规模性能验收。
+
+### 快照、检索与增量共用索引（2026-10-09）
+
+直接快照、节点详情、正文搜索、原文引用、AI 检索与 updates 共用 `knowledgeAcquireView` 的扫描门、当前工作区两种图模式、累积目录、版本历史及加密检查点。显式读取请求推进一个预算批次，自动轮询继续沿用 2 秒最小扫描间隔；节点不会因切换检索入口退回首批。候选扫描取消或失败不发布旧候选，接口返回错误；工作区／策略变化重新建立目录。外部修改索引策略也校验配置摘要，不只依赖 API 增加的工作区 revision。
+
+所有已知节点仍受容量、范围、文本和代码预算限制；搜索仅检索当前已知目录，不表示未扫描文件已查全。来源原文在检索与引用时独立读回，保留内容指纹冲突检查。
+
+知识 race 回归通过 29.365 秒，包含连续快照累计、后批文件原文检索／引用、与 updates 一致、直接 API 建立的目录跨服务初始化恢复、外部策略变化、扫描门取消和并发请求。真实 18211 候选通过 `start.command` 启动，15 次快照累计 8→120 个验收文件，并成功搜索及读回 `note-119.md`，随后恢复原策略；收据 `.agent-state/continuity-runtime/shared-runtime-receipt-20261009.json`。系统 Safari 此时被 Mac 锁屏阻止，等待用户解锁，不据此声称浏览器验收。完整回归另记任务账本。生产未更新。
+
+### FTP／FTPS 分批索引（2026-10-09）
+
+FTP 与 FTPS 目录沿用同一远端游标、范围与优先级规则、加密检查点及配置身份检查。每批至多 32 个文件，维持 30 秒来源缓存间隔；失败或取消不发布候选游标。Unix 列表与简单名称列表在读取字节上限内保留全部合法条目，知识索引不再于 2,000 项处静默截断；交互目录浏览的原有上限保持不变。超过 256 KiB 的列表仍返回受限错误，不能标为完整；不同 FTP 列表格式仍须服务器实测。
+
+知识模块 race 回归 PASS 31.632 秒，包含 2,105 项解析、FTP／FTPS 配置适配器、范围排除、优先文件、分批累计与新 App 初始化后磁盘续扫。测试使用可控 curl 子进程夹具，未验证真实 FTP 控制／数据连接或 FTPS TLS；生产服务及系统 Safari 候选仍未更新。当前源码指纹 `10acd3be1400b95c06467fae8cc7bb039830cd6709ea28d4725b460962d74ad8`，完整门禁状态见任务账本。
+
+Safari 解锁后补验：142 节点星图的原文检索返回 31 条结果（读取 32 份文档、65 个片段）；`note-037.md` 的行定位与 SHA-256 随引用插入指定 `#42`，工作台确认附件及正文仅进入草稿，未发送。此验收对应先前 `69a0cc30` 候选。后批 `note-119.md` 的独特正文查询因 32 文档上限未命中；仍需定向检索／分批继续入口，不能称完整检索验收通过。
+
+### 文档检索继续检查（2026-10-09）
+
+原文及 RAG 请求每批最多尝试 32 份文档，返回 `scanned`、`total` 和 `nextCursor`。同一查询、模式、来源、路径及已索引文档序列可以带 `cursor` 继续；工作区、来源身份或文档目录变化时旧位置无效，提示重新检索。读取失败也计入已检查数量并保留诊断；单文档提取、片段和命中数上限仍可造成不完整结果，不能把 `scanned == total` 解释为全文无遗漏。
+
+星图在结果下显示已检查／已索引数量及“继续检索”，累计并去重本次查询的结果，查询／筛选／锁屏变化不会发布旧响应。`document_search` 与 Office 插件 `office_document_search` 支持相同 `cursor` 参数，模型保持 query/mode/source/path 不变使用返回的 `nextCursor` 继续。RAG 分批结果属于各批局部排序，未进行跨批全库向量排名；工具仍会限制返回片段数量并标注受限。
+
+当前 `a05133bb` 候选通过 `start.command` 在隔离 18211 启动。系统 Safari 实测 `Local restart acceptance 119` 查询在 32、64 份文档无命中，96 份时找到 `note-119.md`，121／121 份结束后保留该结果，详情呈现文本行 1、内容指纹和当前来源身份。知识 race PASS 32.349 秒、定向续查 race PASS 6.471 秒，前端续查／去重／锁屏旧响应与 Office 注册检查通过；完整门禁另记任务账本。生产未更新。
+
+后续系统 Safari 也验证本地关键词 RAG 从 32／121 到 64／121 份，累计结果从 12 增至 24 条，前批结果保留；切换查询清除旧结果及续查范围。`a05133bb` 的全量回归发现自动历史压缩后超窗 33 tokens，原因是保留完整消息时未提前检查下一条预算；后续 `fb6e79d2` 候选修正加入前判断，针对性 race PASS 4.533 秒。完整重跑和更新候选后的浏览器状态见任务账本，不沿用旧门禁通过记录。
+
+`fb6e79d2` 完整门禁已通过：Go server race 390.790 秒、TTS 3.011 秒、vet 与快速检查均返回 0，源码指纹前后相同；收据 `.agent-state/verify-20261009T154927450768Z.log`。2026-10-10 系统 Safari 对更新候选补验 Markdown 中线目录：点击在紧邻分隔线展开，选择标题聚焦正文并收起。此完整仓库测试不替代 Windows、真实远端协议、大库性能或模型供应商验收；总目标仍未完成。
+
+### Current browser evidence: more than 1000 nodes (2026-10-10)
+
+Native Safari on isolated 18211 rendered a finite 1105-file local fixture progressively: 806 total nodes with partial coverage, then 1111 total nodes including 1106 workspace entries, without reload. The test policy used a global file batch budget of 2400 and directory budget of 200, shared across six active areas; actual local quotas were 400 files and 33 directories, and per-area catalogue capacity was 1732. The actual API returned `ready`, 1105 files and one directory, with no limiting reasons. `totalKnown` remained false: this is a finite fixture verification, not a claim about a user library total.
+
+The frontend has no fixed 1000-star ceiling. Backend catalogue capacity, per-batch scan budgets, depth and time limits still bound coverage. The log distinguishes accumulated entries from per-batch work. A subsequent partial scan cycle retains the previously discovered entries; partial is not a disappearance of nodes. Settings and test files were restored/removed after acceptance. Frame rate, large-library input latency and remote thousand-node performance remain unmeasured. Earlier dated checkpoints above describe earlier states; current local and remote cursor persistence and shared retrieval are documented in their later checkpoint sections.

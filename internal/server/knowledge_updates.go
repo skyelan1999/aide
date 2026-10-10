@@ -22,6 +22,7 @@ type knowledgeUpdateState struct {
 	gate       chan struct{}
 	workspace  string
 	epoch      uint64
+	policy     string
 	views      [2]*knowledgeUpdateView
 	remoteMu   sync.Mutex
 	remote     map[string]*knowledgeRemoteMemo
@@ -87,16 +88,21 @@ type knowledgeCodeMemo struct {
 }
 
 type knowledgeScanCache struct {
-	previous map[string]knowledgeFileMemo
-	files    map[string]knowledgeFileMemo
-	code     *knowledgeCodeMemo
-	err      error
+	localCheckpoints []knowledgeLocalCheckpoint
+	discovery        map[string]*knowledgeDiscoveryView
+	previous         map[string]knowledgeFileMemo
+	files            map[string]knowledgeFileMemo
+	code             *knowledgeCodeMemo
+	err              error
 }
 
 func newKnowledgeScanCache(previous *knowledgeScanCache) *knowledgeScanCache {
-	c := &knowledgeScanCache{files: make(map[string]knowledgeFileMemo)}
+	c := &knowledgeScanCache{files: make(map[string]knowledgeFileMemo), discovery: make(map[string]*knowledgeDiscoveryView)}
 	if previous != nil {
 		c.previous, c.code = previous.files, previous.code
+		for k, v := range previous.discovery {
+			c.discovery[k] = v.clone()
+		}
 	}
 	return c
 }
@@ -155,12 +161,15 @@ func (c *knowledgeScanCache) material(root *os.Root, location, p string, info os
 // Cross-file name resolution is rebuilt whenever a source input changes. When
 // all admitted source inputs and the base edge budget are identical, reuse the
 // complete code expansion; unchanged polls do not launch parser subprocesses.
-func (c *knowledgeScanCache) expandCode(ctx context.Context, g *knowledgeGraph, files []knowledgeCodeFile) {
+func (c *knowledgeScanCache) expandCode(ctx context.Context, g *knowledgeGraph, files []knowledgeCodeFile, service string) {
 	if c == nil {
 		expandKnowledgeCode(ctx, g, files)
+		if service == "go-types" {
+			enrichKnowledgeGoTypes(ctx, g, files)
+		}
 		return
 	}
-	inputs := []string{g.Workspace, fmt.Sprint(len(g.Edges))}
+	inputs := []string{g.Workspace, service, fmt.Sprint(len(g.Edges))}
 	for _, f := range files {
 		inputs = append(inputs, f.ID, f.Node.Root, f.Node.Source, f.Node.Path, f.Node.Origin, f.Module, hash([]byte(f.Text)))
 	}
@@ -182,6 +191,9 @@ func (c *knowledgeScanCache) expandCode(ctx context.Context, g *knowledgeGraph, 
 	beforeTruncated := g.Truncated
 	g.Truncated = false
 	expandKnowledgeCode(ctx, g, files)
+	if service == "go-types" {
+		enrichKnowledgeGoTypes(ctx, g, files)
+	}
 	codeTruncated := g.Truncated
 	g.Truncated = beforeTruncated || codeTruncated
 	for i := nodeCount; i < len(g.Nodes); i++ {
@@ -191,7 +203,7 @@ func (c *knowledgeScanCache) expandCode(ctx context.Context, g *knowledgeGraph, 
 		return
 	}
 	for _, diagnostic := range g.Code.Diagnostics {
-		if strings.Contains(diagnostic, "解析器") || strings.Contains(diagnostic, "代码分析等待超时") || strings.Contains(diagnostic, "代码分析超时") {
+		if strings.Contains(diagnostic, "Go类型服务失败") || strings.Contains(diagnostic, "Go类型服务超时") || strings.Contains(diagnostic, "解析器") || strings.Contains(diagnostic, "代码分析等待超时") || strings.Contains(diagnostic, "代码分析超时") {
 			c.code = nil // Transient parser failures must be retried.
 			return
 		}
@@ -281,30 +293,55 @@ func (a *App) knowledgeUpdatesWorkspace() (string, uint64) {
 	return knowledgeID(a.wsID(), "scope", "", "."), a.wsRevision
 }
 
-func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Cache-Control", "no-store")
-	cursor := r.URL.Query().Get("cursor")
-	if len(cursor) > 128 {
-		fail(w, http.StatusBadRequest, fmt.Errorf("星图版本编号无效"))
-		return
+func (a *App) knowledgeUpdatesIdentity() (string, uint64, string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	p, err := a.loadKnowledgeIndexPolicy()
+	policy := knowledgeIndexRevision(p)
+	if err != nil {
+		policy += ":unreadable"
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
+	return knowledgeID(a.wsID(), "scope", "", "."), a.wsRevision, policy
+}
+
+type knowledgeSyncFailure struct {
+	status  int
+	message string
+}
+
+func (e knowledgeSyncFailure) Error() string { return e.message }
+func knowledgeSyncFail(w http.ResponseWriter, err error) {
+	status := http.StatusServiceUnavailable
+	if e, ok := err.(knowledgeSyncFailure); ok {
+		status = e.status
+	}
+	fail(w, status, err)
+}
+
+// All public snapshots and searches share the update catalogue and scan gate.
+// A returned view remains protected until release; published graphs are immutable.
+func (a *App) knowledgeAcquireView(ctx context.Context, includeCode, force bool) (*knowledgeUpdateView, func(), error) {
 	state := &a.knowledgeUpdates
 	state.once.Do(func() { state.gate = make(chan struct{}, 1) })
 	select {
 	case state.gate <- struct{}{}:
-		defer func() { <-state.gate }()
+
 	case <-ctx.Done():
-		fail(w, http.StatusServiceUnavailable, fmt.Errorf("资料更新扫描繁忙；保留当前星图，稍后重试"))
-		return
+		return nil, nil, knowledgeSyncFailure{503, "资料更新扫描繁忙；保留当前星图，稍后重试"}
 	}
-	workspace, epoch := a.knowledgeUpdatesWorkspace()
-	if state.workspace != workspace || state.epoch != epoch {
-		state.workspace, state.epoch, state.views = workspace, epoch, [2]*knowledgeUpdateView{}
+	release := func() { <-state.gate }
+	success := false
+	defer func() {
+		if !success {
+			release()
+		}
+	}()
+	workspace, epoch, policy := a.knowledgeUpdatesIdentity()
+	if state.workspace != workspace || state.epoch != epoch || state.policy != policy {
+		state.workspace, state.epoch, state.policy, state.views = workspace, epoch, policy, [2]*knowledgeUpdateView{}
 	}
 	mode := 0
-	if r.URL.Query().Get("code") == "1" {
+	if includeCode {
 		mode = 1
 	}
 	view := state.views[mode]
@@ -312,20 +349,24 @@ func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
 		view = &knowledgeUpdateView{}
 		state.views[mode] = view
 	}
-	if view.checked.IsZero() || time.Since(view.checked) >= knowledgeUpdateInterval {
+	if force || view.checked.IsZero() || time.Since(view.checked) >= knowledgeUpdateInterval {
 		cache := newKnowledgeScanCache(view.cache)
 		g := a.knowledgeSnapshotModeCached(ctx, mode == 1, cache)
 		view.checked = time.Now() // Also throttle failed/cancelled attempts.
 		if ctx.Err() != nil || cache.err != nil {
 			view.failed = true
-			fail(w, http.StatusServiceUnavailable, fmt.Errorf("资料更新扫描未完成；保留当前星图，稍后自动重试"))
-			return
+			return nil, nil, knowledgeSyncFailure{503, "资料更新扫描未完成；保留当前星图，稍后自动重试"}
 		}
-		currentWorkspace, currentEpoch := a.knowledgeUpdatesWorkspace()
-		if workspace != g.Workspace || currentWorkspace != workspace || currentEpoch != epoch {
+		currentWorkspace, currentEpoch, currentPolicy := a.knowledgeUpdatesIdentity()
+		if workspace != g.Workspace || currentWorkspace != workspace || currentEpoch != epoch || currentPolicy != policy {
 			state.workspace, state.views = "", [2]*knowledgeUpdateView{}
-			fail(w, http.StatusConflict, fmt.Errorf("工作区已切换，请重新同步星图"))
-			return
+			return nil, nil, knowledgeSyncFailure{409, "工作区已切换，请重新同步星图"}
+		}
+		if err := a.knowledgeLocalCommit(ctx, cache, epoch); err != nil {
+			g.Warnings = append(g.Warnings, "本地索引检查点未保存："+err.Error())
+		}
+		if err := a.recordKnowledgeTime(g, mode == 1, epoch); err != nil {
+			g.Warnings = append(g.Warnings, "知识历史未保存："+err.Error())
 		}
 		revision := knowledgeGraphRevision(&g)
 		revision.id = "K" + hash([]byte(fmt.Sprintf("%d:%s", epoch, revision.id)))[:24]
@@ -338,13 +379,37 @@ func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
 		view.graph, view.revision, view.cache, view.failed = g, revision.id, cache, false
 	}
 	if view.failed || view.revision == "" {
-		fail(w, http.StatusServiceUnavailable, fmt.Errorf("资料更新扫描未完成；保留当前星图，稍后自动重试"))
+		return nil, nil, knowledgeSyncFailure{503, "资料更新扫描未完成；保留当前星图，稍后自动重试"}
+	}
+	currentWorkspace, currentEpoch, currentPolicy := a.knowledgeUpdatesIdentity()
+	if ctx.Err() != nil || currentWorkspace != workspace || currentEpoch != epoch || currentPolicy != policy {
+		return nil, nil, knowledgeSyncFailure{409, "工作区已切换或请求已取消，请重新同步星图"}
+	}
+	success = true
+	return view, release, nil
+}
+func (a *App) knowledgeCurrentGraph(ctx context.Context, includeCode bool) (knowledgeGraph, error) {
+	view, release, err := a.knowledgeAcquireView(ctx, includeCode, true)
+	if err != nil {
+		return knowledgeGraph{}, err
+	}
+	defer release()
+	return view.graph, nil
+}
+func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	cursor := r.URL.Query().Get("cursor")
+	if len(cursor) > 128 {
+		fail(w, http.StatusBadRequest, fmt.Errorf("星图版本编号无效"))
 		return
 	}
-	currentWorkspace, currentEpoch := a.knowledgeUpdatesWorkspace()
-	if ctx.Err() != nil || currentWorkspace != workspace || currentEpoch != epoch {
-		fail(w, http.StatusConflict, fmt.Errorf("工作区已切换或请求已取消，请重新同步星图"))
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	view, release, err := a.knowledgeAcquireView(ctx, r.URL.Query().Get("code") == "1", false)
+	if err != nil {
+		knowledgeSyncFail(w, err)
 		return
 	}
+	defer release()
 	jsonOut(w, http.StatusOK, knowledgeDelta(view, cursor))
 }

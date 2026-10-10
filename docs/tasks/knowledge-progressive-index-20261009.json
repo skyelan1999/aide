@@ -1,0 +1,345 @@
+{
+  "id": "knowledge-progressive-index-20261009",
+  "request": "持续目标：实现真实分批续扫、来源范围与覆盖状态，接入星图增量同步，保留既有改动",
+  "baseline": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+  "initial_status": "M docs/architecture/continuity-roadmap.md\n M docs/architecture/knowledge-map.md\n M docs/architecture/markdown-editing-export.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M internal/server/knowledge_map.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/markdown-export.js\n M internal/server/web/settings-schema.json\n M scripts/markdown-image-path.test.js\n?? docs/tasks/knowledge-index-policy-20261009.json\n?? docs/tasks/markdown-download-export-20261009.json\n?? internal/server/knowledge_index_policy.go\n?? internal/server/knowledge_index_policy_test.go\n?? internal/server/web/vendor/markdown-export/\n?? scripts/markdown-download-export.test.js",
+  "acceptance": [
+    "Resume real directory traversal beyond per-request limits",
+    "Cancellation, source switching and failed speculative scans cannot corrupt published state",
+    "Exclude secrets/dependencies/symlinks; revalidate directory enumeration after external changes",
+    "Integrate progressive graph synchronization, scoped coverage and settings without claiming whole-source coverage",
+    "Verify local and SSH integrations and large-library performance"
+  ],
+  "scope": [
+    "internal/server/knowledge_discovery.go",
+    "internal/server/knowledge_discovery_test.go",
+    "internal/server/knowledge_map.go",
+    "internal/server/knowledge_updates.go",
+    "internal/server/knowledge_sources.go",
+    "docs",
+    "internal/server/knowledge_progressive.go",
+    "internal/server/knowledge_progressive_test.go",
+    "internal/server/knowledge_remote_progressive.go",
+    "internal/server/knowledge_remote_progressive_test.go",
+    "internal/server/ssh_continuity_live_test.go",
+    "internal/server/ssh_live_test.go",
+    "internal/server/knowledge_cursor_store.go",
+    "internal/server/knowledge_cursor_store_test.go",
+    "internal/server/knowledge_cursor_process_test.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Preserve complete progressive indexing scope; this checkpoint implements the local cursor foundation only.",
+      "evidence": []
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Relative directory cursors, no retained handles, bounded metadata and clone isolation; graph integration and source-scope selection remain.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Local incremental and SSH/workspace-sftp/SFTP progressive indexing integrated: scope, coverage, policy isolation and complete-cycle deletion. Local direct snapshots/search and non-SSH remote adapters remain non-progressive.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Knowledge package race PASS 19.213s, including changed listing and depth/catalog limits. Final real dual-server SSH/SFTP repeat=2 PASS 24.639s. Browser, persistence and large-library performance remain NOT_RUN.",
+      "evidence": [
+        "TestKnowledge race PASS 11.397s",
+        "TestKnowledge race PASS 12.757s",
+        "internal/server/knowledge_progressive_test.go",
+        "TestKnowledge race PASS 11.485s",
+        ".agent-state/verify-20261009T095000754669Z.log",
+        ".agent-state/ssh-progressive-final-20261009/aide-ssh-test-20261009210015-87938.log",
+        ".agent-state/ssh-progressive-final-20261009/aide-ssh-test-20261009210015-87938.log.sha256",
+        ".agent-state/ssh-cursor-20261009/aide-ssh-test-20261009210544-88246.log",
+        ".agent-state/ssh-cursor-20261009/aide-ssh-test-20261009210544-88246.log.sha256",
+        ".agent-state/ssh-cursor-failure-20261009/aide-ssh-test-20261009210928-88452.log",
+        ".agent-state/ssh-cursor-failure-20261009/aide-ssh-test-20261009210928-88452.log.sha256",
+        ".agent-state/ssh-code-budget-final-20261009/aide-ssh-test-20261009211410-88788.log",
+        ".agent-state/ssh-code-budget-final-20261009/aide-ssh-test-20261009211410-88788.log.sha256",
+        ".agent-state/ssh-process-restart-20261009/aide-ssh-test-20261009211727-88998.log",
+        ".agent-state/ssh-process-restart-20261009/aide-ssh-test-20261009211727-88998.log.sha256"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Recorded remote cursor behavior, limits, compatibility boundary and actual regression scope. check_docs PASS 178 Markdown files / 466 local links; git diff --check PASS.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "No deployment or release. Goal remains active.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Remove the standalone discovery module and tests; no production state or data migration.",
+  "handoff": "Goal active. FTP/FTPS progressive adapter checkpoint: knowledge race PASS 31.632s and quick PASS at 10acd3be; full running. Runtime remains prior 69a0 candidate, production unchanged. Safari waits for Mac unlock. Live FTP/FTPS, broad provider/Windows/performance and release gates remain.",
+  "coverage_ui_checkpoint": {
+    "status": "in_progress",
+    "implementation": "区分累计与单批预算，显示周期、待扫描任务、目录容量上限，受限不声称全库完成",
+    "verification": [
+      "node --check internal/server/web/starmap.js PASS",
+      "提示函数实际断言 PASS：待扫描、容量限制、深度限制、限定范围完成、旧协议、缺少覆盖字段"
+    ],
+    "browser": "NOT_RUN",
+    "deployment": "NOT_RUN"
+  },
+  "priority_addressing_checkpoint": {
+    "status": "pass",
+    "implementation": "每轮首次直接加入优先目标及仅元信息父目录；遵循单批预算与目录深度；检查符号链接祖先；继续普通扫描",
+    "verification": [
+      {
+        "command": "Docker aide:local: go test -buildvcs=false -race ./internal/server -run TestKnowledge -count=1 -timeout=120s",
+        "result": "PASS 11.003s",
+        "scope": "知识索引包测试；含1000普通文件下首批深层目标、后续普通文件完整性、符号链接祖先拒绝；不证明真实浏览器或SSH联调"
+      },
+      {
+        "command": "git diff --check",
+        "result": "PASS"
+      }
+    ],
+    "pending": [
+      "Local direct snapshot/search continuation",
+      "Local cursor/material persistence",
+      "Non-SSH progressive remote adapters",
+      "Large-library performance",
+      "Full authenticated browser acceptance"
+    ],
+    "deployment": "NOT_RUN"
+  },
+  "scope_configuration_checkpoint": {
+    "status": "in_progress",
+    "implementation": "scopePaths 工作区版本保护持久化；本地快照和增量按范围寻址；设置保存/重新加载；覆盖返回范围与缺失原因",
+    "verification": [
+      {
+        "command": "Docker aide:local: go test -buildvcs=false -race ./internal/server -run TestKnowledge -count=1 -timeout=120s",
+        "result": "PASS 11.786s",
+        "scope": "知识索引包，含真实临时目录与HTTP handler范围保存和图谱排除测试"
+      },
+      {
+        "command": "node --check app.js / starmap.js / locales/en.js",
+        "result": "PASS"
+      },
+      {
+        "command": "git diff --check",
+        "result": "PASS"
+      }
+    ],
+    "browser": {
+      "result": "组件 PASS",
+      "scope": "当前 renderKnowledgeIndexPolicy 函数搭配临时桩 API，填写/保存/重新加载恢复范围；不证明完整鉴权工作台",
+      "screenshot": ".agent-state/index-scope-preview/settings.png"
+    },
+    "remaining": [
+      "Full authenticated workbench and map integration",
+      "Actual process restart acceptance",
+      "Local cursor/material persistence",
+      "Large-library performance"
+    ],
+    "deployment": "NOT_RUN",
+    "cleanup": "临时18219服务停止，验收标签关闭，保留证据"
+  },
+  "remote_checkpoint": {
+    "status": "in_progress",
+    "acceptance": [
+      "SSH/workspace-sftp/SFTP 分批累计节点，完整周期后移除消失节点",
+      "配置/策略变化游标隔离，失败不提交候选游标",
+      "范围/优先/深度预算及覆盖状态返回，真实 SSH 验收"
+    ],
+    "design": "远端 memo 持有可克隆目录游标与本周期节点；配置+策略指纹固定，每批经现有受限远端适配器读取。",
+    "implementation": "SSH/workspace-sftp/SFTP cloned candidate cursors, scope and priority ordering, restart on changed directory stamp, cumulative nodes and complete-cycle deletion. At most 32 files per batch; failures do not commit cursors.",
+    "verification": [
+      {
+        "result": "PASS 25.516s, repeat=2",
+        "evidence": ".agent-state/ssh-progressive-20261009/aide-ssh-test-20261009205440-87685.log",
+        "scope": "Real isolated dual-server SSH/SFTP and authenticated Handler; 50-file progressive coverage and scope/priority. Test clocks accelerated. Historical checkpoint before added boundary tests."
+      },
+      {
+        "result": "PASS 19.213s",
+        "command": "Docker aide:local go test -mod=vendor -race ./internal/server -run TestKnowledge -count=1 -timeout=120s",
+        "scope": "Knowledge package including mid-directory deletion restart, depth/catalog limits and bounded batch tests."
+      },
+      {
+        "result": "PASS 24.639s, repeat=2",
+        "evidence": ".agent-state/ssh-progressive-final-20261009/aide-ssh-test-20261009210015-87938.log",
+        "command": "DOCKER_BIN=/Users/skyelan/.docker/bin/docker AIDE_SSH_REPEAT=2 AIDE_SSH_TEST_EVIDENCE_DIR=.agent-state/ssh-progressive-final-20261009 bash scripts/test-ssh-workspace.sh",
+        "scope": "Final server/test fingerprint; real isolated dual-server SSH/SFTP and authenticated Handler. Does not prove workbench UI, normal polling delay, provider behavior or large-library performance."
+      }
+    ],
+    "remaining": [
+      "Authenticated workbench browser acceptance",
+      "Persistent cursors across process restart",
+      "Large-library performance",
+      "Progressive adapters for non-SSH remote protocols"
+    ]
+  },
+  "cursor_persistence_checkpoint": {
+    "status": "in_progress",
+    "acceptance": [
+      "Encrypted bounded remote checkpoint survives process-local memo reset",
+      "Policy/source identity change discards checkpoint",
+      "Corrupt/oversized/symlink cache cannot become source evidence",
+      "Restored nodes use current process citation identity; failed scans never persist candidate state",
+      "Restored checkpoint observations remain visible after first speculative network failure; source unavailable never claims complete coverage"
+    ],
+    "remaining": [
+      "Full launcher/listener/browser restart acceptance",
+      "Local cursor and material persistence",
+      "Large-library performance",
+      "Full authenticated browser acceptance"
+    ],
+    "implementation": "Remote JSON checkpoints encrypted using a domain-separated key; configuration/credential/policy/budget identity, bounded payload and validated relative cursors; loaded nodes receive current process origin. Successful current-source candidates only are saved atomically. Locked or changed workspace refuses checkpoint I/O.",
+    "verification": [
+      {
+        "result": "PASS 19.533s",
+        "scope": "Knowledge race suite including encrypted disk roundtrip, offset continuation, current-origin rebinding, policy mismatch, corrupt envelope, wrong key, unsafe path and symlink rejection."
+      },
+      {
+        "result": "PASS 19.723s",
+        "command": "Docker aide:local go test -mod=vendor -race ./internal/server -run TestKnowledge -count=1 -timeout=120s",
+        "scope": "Final knowledge package regression."
+      },
+      {
+        "result": "PASS 25.681s, repeat=2",
+        "evidence": ".agent-state/ssh-cursor-20261009/aide-ssh-test-20261009210544-88246.log",
+        "scope": "Real dual-server SSH/SFTP with authenticated Handler. Memory source memos discarded mid-scan, disk checkpoint resumes with increased cumulative file count. Not a full service process restart."
+      }
+    ],
+    "failure_checkpoint": {
+      "status": "pass",
+      "implementation": "Committed cursor snapshot projection shared with successful scan; restored speculative failure keeps published nodes, rejects TotalKnown and appends source-unavailable without mutating persisted state.",
+      "verification": [
+        {
+          "result": "PASS 18.665s",
+          "command": "Docker aide:local go test -mod=vendor -race ./internal/server -run TestKnowledge -count=1 -timeout=120s",
+          "scope": "Knowledge suite; loaded disk cursor cancelled candidate preserves text, current origin and offset."
+        },
+        {
+          "result": "PASS 25.161s, repeat=2",
+          "evidence": ".agent-state/ssh-cursor-failure-20261009/aide-ssh-test-20261009210928-88452.log",
+          "scope": "Real isolated dual-server SSH/SFTP. Restored first scan cancelled before source read: published count preserved, unavailable not complete, checkpoint bytes unchanged, next request resumes. Not a physical network interruption or full process restart."
+        }
+      ],
+      "pending": []
+    },
+    "code_budget_checkpoint": {
+      "status": "pass",
+      "implementation": "Current and retained remote code maps each capped at 80 files / 4MiB, per-file 256KiB; current cycle takes precedence, old snippets share the budget. Explicit code-budget coverage reason.",
+      "acceptance": [
+        "Both maps remain within persistence validation budget across two generations",
+        "Code limit cannot claim complete coverage",
+        "Every admitted cursor remains restorable by bounded checkpoint validator",
+        "Completed directory enumeration removes vanished metadata despite text/code limits; depth/catalog limits still retain unknown regions"
+      ],
+      "verification": [
+        {
+          "result": "PASS 20.299s",
+          "scope": "Knowledge race suite with 81-file count boundary and two generations of 17x256KiB code. Historical checkpoint before metadata deletion fix."
+        },
+        {
+          "result": "PASS 26.266s, repeat=2",
+          "evidence": ".agent-state/ssh-code-budget-20261009/aide-ssh-test-20261009211311-88678.log",
+          "scope": "Real dual-server SSH/SFTP; historical checkpoint before metadata deletion fix."
+        },
+        {
+          "result": "PASS 20.493s",
+          "command": "Docker aide:local go test -mod=vendor -race ./internal/server -run TestKnowledge -count=1 -timeout=120s",
+          "scope": "Final knowledge suite: byte and count limits, two generations, checkpoint validator, deletion despite content limits."
+        },
+        {
+          "result": "PASS 25.973s, repeat=2",
+          "evidence": ".agent-state/ssh-code-budget-final-20261009/aide-ssh-test-20261009211410-88788.log",
+          "scope": "Final real dual-server SSH/SFTP continuity/cursor regressions. Synthetic large-code bounds are covered by unit tests, not remote scale/performance acceptance."
+        }
+      ],
+      "pending": []
+    }
+  },
+  "process_restart_checkpoint": {
+    "status": "pass",
+    "acceptance": [
+      "Fresh executable process reloads saved workspace, source credentials and policy",
+      "Disk cursor continues real isolated SSH enumeration",
+      "Process citation identity changes and live source bytes are re-read"
+    ],
+    "boundary": "Uses the Go test executable with real App.New initialization and SSH I/O. Not production activation, launcher/browser acceptance or an HTTP listener restart.",
+    "verification": [
+      {
+        "result": "PASS 28.433s, repeat=2",
+        "evidence": ".agent-state/ssh-process-restart-20261009/aide-ssh-test-20261009211727-88998.log",
+        "scope": "Fresh test executable process runs real App.New from saved fixture workspace/data; both repeats resume 10 -> 20 files, current citation origin, real SSH source reread; parent resumes successor disk state and finishes 50 files."
+      },
+      {
+        "result": "PASS 18.905s",
+        "command": "Docker aide:local go test -mod=vendor -race ./internal/server -run TestKnowledge -count=1 -timeout=120s",
+        "scope": "Final knowledge package regression; process helper is exercised by the separate real SSH run."
+      }
+    ],
+    "remaining": [
+      "Production executable/HTTP listener/start.command and browser restart acceptance",
+      "Local cursor/material persistence",
+      "Large-library performance"
+    ]
+  },
+  "local_persistence_current_checkpoint": {
+    "status": "pass",
+    "task": "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "scope": "Local updates cursor/material encrypted persistence and actual restart continuation",
+    "test": "all TestKnowledge -race PASS 25.850s",
+    "runtime": "start.command isolated 18211 recreation: 8 -> 16 files, process origin changed",
+    "browser": "Safari automatic updates reached 120 target files; original policy restored",
+    "pending": [
+      "Local direct snapshot/search continuation",
+      "Non-SSH progressive remote adapters",
+      "Large-library performance",
+      "Full real-provider and Windows acceptance"
+    ]
+  },
+  "shared_catalogue_checkpoint": {
+    "status": "in_progress",
+    "reference": "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "implementation": "Direct snapshot/search/reference and updates share progressive state and checkpoint",
+    "test": "All TestKnowledge -race PASS 29.365s",
+    "runtime": "Real start.command HTTP snapshots 8 -> 120, late-file search and reference PASS",
+    "system_browser": "Safari resumed on 69a0 candidate: original search, line/hash and #42 draft callback verified; late-file raw-text search limited by 32-file read budget, targeted/continuation UI pending.",
+    "remaining": [
+      "Non-SSH progressive remote adapters",
+      "Large-library performance",
+      "Full real-provider and Windows acceptance"
+    ]
+  },
+  "ftp_progressive_checkpoint": {
+    "status": "in_progress",
+    "fingerprint": "10acd3be1400b95c06467fae8cc7bb039830cd6709ea28d4725b460962d74ad8",
+    "implementation": "FTP/FTPS join progressive remote catalogue and encrypted checkpoints; bounded knowledge listings retain entries beyond 2000; interactive listing limit unchanged",
+    "verification": {
+      "knowledge_race": "PASS 31.632s",
+      "knowledge_log": ".agent-state/ftp-progressive-race-20261009.log",
+      "quick": "PASS",
+      "quick_log": ".agent-state/verify-20261009T152306929453Z.log",
+      "full": {
+        "status": "pass",
+        "fingerprint": "10acd3be1400b95c06467fae8cc7bb039830cd6709ea28d4725b460962d74ad8",
+        "log": ".agent-state/verify-20261009T152340236405Z.log"
+      },
+      "full_wrapper": ".agent-state/ftp-progressive-full-20261009.log"
+    },
+    "boundary": "Deterministic curl subprocess fixture, not live FTP/FTPS TLS; runtime remains 69a0; native Safari resumed and discovered bounded raw-text search gap.",
+    "remaining": [
+      "Real FTP/FTPS network acceptance",
+      "Single-resource HTTP/SMB and MCP scope semantics",
+      "Large-library performance",
+      "System Safari and Windows acceptance",
+      "Real provider integration"
+    ]
+  }
+}

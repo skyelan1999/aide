@@ -35,9 +35,10 @@ async function testSessionSelection() {
   const assistant = node('assistant');
   const nodes = {'assistant-entry': assistant, conversation: node(), 'session-title': node(), prompt: node()};
   const requests = [], gets = new Map();
-  const state = {session: {id:'s1',title:'s1'}, sessionJSON:'', pendingSessionId:'', live:{}, liveStable:{}, liveRound:{}, liveTool:{}, liveReasoning:{}, runPhase:{}};
+  const state = {session: {id:'s1',title:'s1'}, sessionJSON:'', pendingSessionId:'', live:{}, liveStable:{}, liveRound:{}, liveTool:{}, liveReasoning:{}, runPhase:{}, attachments:[]};
   const context = {
-    state, $: id => nodes[id],
+    state, $: id => nodes[id], window: {},
+    persistChatDraft() {}, renderAttachments() {}, restoreChatSelection() {}, scheduleChatRecovery() {},
     document: {querySelectorAll: selector => {
       assert.equal(selector, '.session-item[data-session-id]'); return [s1,s2,s3];
     }},
@@ -52,6 +53,7 @@ async function testSessionSelection() {
     t: key => key,
   };
   vm.createContext(context);
+  vm.runInContext('const recoveryScope=()=>"test-workspace";'+excerpt('const chatDraftKey=', 'function persistChatDraft('), context);
   vm.runInContext(excerpt('const sessionSeq =', 'function closeStream()'), context);
 
   const first = context.selectSession('s2');
@@ -81,6 +83,29 @@ async function testSessionSelection() {
   assert.equal(state.session.id, 's3');
   assert.equal(s3.classList.contains('active'), true, 'failed GET must restore prior selection');
   assert.equal(nodes['session-title'].textContent, 's3');
+
+  // Recovery reads are asynchronous; selection still paints immediately and
+  // restored drafts stay in the composer until the user explicitly submits.
+  const recovery = deferred();
+  context.window.AideContinuity = true;
+  context.AideContinuity = {readTab: () => recovery.promise};
+  context.recoveryScope = () => 'workspace-fixture';
+  const recovering = context.selectSession('s1');
+  assert.equal(s1.classList.contains('active'), true);
+  const priorPosts = requests.filter(([,method]) => method === 'POST').length;
+  recovery.resolve({text:'Recovered draft', attachments:[{name:'note.md'}],start:3,end:3,scroll:20});
+  await new Promise(resolve => setImmediate(resolve));
+  gets.get('/sessions/s1?limit=30').resolve({id:'s1',title:'s1',runs:[]});
+  await recovering;
+  // This session already has an in-memory draft, which takes precedence.
+  assert.equal(requests.filter(([,method]) => method === 'POST').length, priorPosts);
+  const fresh = context.selectSession('restored');
+  await new Promise(resolve => setImmediate(resolve));
+  gets.get('/sessions/restored?limit=30').resolve({id:'restored',title:'restored',runs:[]});
+  await fresh;
+  assert.equal(nodes.prompt.value, 'Recovered draft');
+  assert.equal(state.attachments[0].name, 'note.md');
+  assert.equal(requests.filter(([,method]) => method === 'POST').length, priorPosts, 'recovery never submits a task');
 }
 
 async function testSendSubmission() {
@@ -91,7 +116,7 @@ async function testSendSubmission() {
   let posts = 0, refreshes = 0, cancels = 0;
   let run = deferred();
   const context = {
-    state, $: id => nodes[id], t: key => key, xiaomiDictation:{active:false,starting:false},
+    state, $: id => nodes[id], window: {}, composerAutoReview: () => false, reconcileAvatarRun() {}, t: key => key, xiaomiDictation:{active:false,starting:false},
     voice:{queuedOverride:null}, action: fn => fn, toast() {}, openSettings() {}, renderAttachments() {},
     cancelContextPreview() { cancels++; }, setSendMode() {},
     updateSendEnabled() { refreshes++; send.disabled = state.submitting || state.previewOverLimit; send.classList.toggle('submitting',state.submitting); },

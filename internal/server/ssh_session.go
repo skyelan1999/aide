@@ -717,6 +717,10 @@ func decodeSFTPName(raw string) string {
 }
 
 func parseSFTPList(out, relativePath string) []map[string]any {
+	return parseSFTPListLimit(out, relativePath, 2000)
+}
+
+func parseSFTPListLimit(out, relativePath string, limit int) []map[string]any {
 	items := []map[string]any{}
 	for _, line := range strings.Split(out, "\n") {
 		line = strings.TrimSpace(line)
@@ -741,7 +745,7 @@ func parseSFTPList(out, relativePath string) []map[string]any {
 		}
 		size, _ := strconv.ParseInt(fields[4], 10, 64)
 		items = append(items, map[string]any{"name": name, "path": path.Join(relativePath, name), "dir": dir, "symlink": symlink, "size": size, "modified": strings.Join(fields[5:8], " ")})
-		if len(items) >= 2000 {
+		if limit > 0 && len(items) >= limit {
 			break
 		}
 	}

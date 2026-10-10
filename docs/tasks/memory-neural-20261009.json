@@ -1,0 +1,85 @@
+{
+  "id": "memory-neural-20261009",
+  "request": "星图左侧新增记忆神经整页入口，token神经元、跨记忆联系与功能区域；独立token图，分词器可扩展",
+  "baseline": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/continuity-roadmap.md\n M docs/architecture/knowledge-map.md\n M docs/architecture/markdown-editing-export.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M internal/server/knowledge_code.go\n M internal/server/knowledge_documents.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_sources.go\n M internal/server/knowledge_updates.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/markdown-export.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M scripts/markdown-image-path.test.js\n?? docs/tasks/knowledge-code-confidence-20261009.json\n?? docs/tasks/knowledge-hybrid-retrieval-20261009.json\n?? docs/tasks/knowledge-index-policy-20261009.json\n?? docs/tasks/knowledge-progressive-index-20261009.json\n?? docs/tasks/markdown-download-export-20261009.json\n?? docs/tasks/starmap-infrared-20261009.json\n?? internal/server/knowledge_code_test.go\n?? internal/server/knowledge_discovery.go\n?? internal/server/knowledge_discovery_test.go\n?? internal/server/knowledge_embedding_policy.go\n?? internal/server/knowledge_embedding_policy_test.go\n?? internal/server/knowledge_embeddings.go\n?? internal/server/knowledge_embeddings_test.go\n?? internal/server/knowledge_hybrid.go\n?? internal/server/knowledge_hybrid_test.go\n?? internal/server/knowledge_index_policy.go\n?? internal/server/knowledge_index_policy_test.go\n?? internal/server/knowledge_progressive.go\n?? internal/server/knowledge_progressive_test.go\n?? internal/server/knowledge_vector_cache.go\n?? internal/server/knowledge_vector_cache_test.go\n?? internal/server/web/starmap-infrared.js\n?? internal/server/web/vendor/markdown-export/\n?? scripts/markdown-download-export.test.js\n?? scripts/starmap-infrared.test.cjs",
+  "acceptance": [
+    "星图入口左侧记忆神经按钮和独立整页",
+    "独立token字典与有序记录，明确本地分词规则和扩展点",
+    "跨记忆token共享、顺序关系与区域来源可查",
+    "兼容旧记忆读写与小秘只读，私有记忆隔离",
+    "搜索、区域筛选、动态神经图与锁屏同步"
+  ],
+  "scope": [
+    "internal/server/memory_neural.go",
+    "internal/server/memory_neural_test.go",
+    "记忆工具与受控项目缓存同步",
+    "internal/server/web/memory-neural.* 与工作台入口",
+    "docs/architecture/memory-neural.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户选择独立token图，分词器可扩展",
+      "evidence": [
+        "docs/architecture/memory-neural.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "token类型共享节点，Unicode标量codec，顺序边/关键词区域显式证据",
+      "evidence": [
+        "docs/architecture/memory-neural.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "token记录与兼容文本投影，独立神经图页面、锁态清理、搜索与区域过滤",
+      "evidence": [
+        "docs/architecture/memory-neural.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "本机首版验收及本次API分词器规则说明浏览器复验通过；真实SSH/模型联调、Windows仍不在已验收范围",
+      "evidence": [
+        "Docker aide:local go test -buildvcs=false -race ./internal/server -run TestMemoryNeural|TestProjectCache|TestLocalCache|TestMemory -count=1 -timeout=120s PASS 5.966s",
+        "node --check memory-neural.js/app.js/locales/en.js PASS; git diff --check PASS",
+        "127.0.0.1:18224 真实Aide Handler + 样例记忆；工作台入口打开独立tab20",
+        "IAB tab21 搜索文优先精确token；7次出现/6条记忆/跨4区域；筛选、归位、动效关验证",
+        "样例文本追加后115/193自动更新到129/216，选中节点与详情保留，浏览器错误日志为空",
+        ".agent-state/memory-neural-preview/evidence.png",
+        "2026-10-09 Docker aide:local go test -buildvcs=false ./internal/server -run TestMemoryNeural -count=1 -timeout=120s PASS 1.617s; tokenizerName/tokenizerDescription assertion",
+        "2026-10-09 node --check internal/server/web/memory-neural.js; git diff --check PASS",
+        "2026-10-09 final isolated Handler 18224 IAB tab27 /memory-neural.html DOM #scope confirmed API tokenizerName=Unicode 字符级 and tokenizerDescription=本地 Unicode 标量分词；非模型 BPE; console errors empty"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录存储、同步边界、规则和能力限制",
+      "evidence": [
+        "docs/architecture/memory-neural.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "关闭验收容器与本次19/20/21标签；保留忽略目录内夹具与截图，未改生产9999",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未部署生产或推送发布",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "源码未部署；投影memory.md继续兼容旧读者。实际用户数据回滚前先备份token JSON和投影，不删除任一文件。",
+  "handoff": "用户确认独立token图、可扩展分词器；元数据回归及实际页面说明复验完成。生产未更新，真实SSH/模型联调仍需完成。",
+  "withdrawal": {
+    "date": "2026-10-10",
+    "reason": "用户反馈效果未达预期，要求删除或暂存为备用提案",
+    "status": "archived",
+    "archive": "docs/proposals/memory-neural-20261010/README.md",
+    "boundary": "Historical acceptance only; product entry/page/graph API removed; project memory storage remains compatible."
+  }
+}

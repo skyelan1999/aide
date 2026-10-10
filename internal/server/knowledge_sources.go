@@ -29,6 +29,11 @@ func knowledgeSafePath(p string) bool {
 // A source's public catalogue never contains its endpoint, credentials or MCP
 // command. Origin is an opaque configuration identity used for stale citations.
 type knowledgeCoverage struct {
+	ScopePaths       []string `json:"scopePaths,omitempty"`
+	Progressive      bool     `json:"progressive,omitempty"`
+	Pending          int      `json:"pending,omitempty"`
+	Cycle            int      `json:"cycle,omitempty"`
+	CatalogLimit     int      `json:"catalogLimit,omitempty"`
 	Files            int      `json:"files"`
 	Directories      int      `json:"directories"`
 	FileBudget       int      `json:"fileBudget"`
@@ -172,6 +177,7 @@ type knowledgeRemoteResult struct {
 	code           []knowledgeCodeFile
 	state, message string
 	truncated      bool
+	coverage       *knowledgeCoverage
 }
 type knowledgeRemoteMemo struct {
 	origin              string
@@ -179,10 +185,20 @@ type knowledgeRemoteMemo struct {
 	checked             time.Time
 	result              knowledgeRemoteResult
 	pending             chan struct{}
+	policy              string
+	discovery           *knowledgeRemoteDiscovery
 }
 
 func (a *App) knowledgeRemoteCached(ctx context.Context, ar knowledgeArea, code bool, fileLimit, dirLimit int) knowledgeRemoteResult {
 	state := &a.knowledgeUpdates
+	a.mu.Lock()
+	policy, policyErr := a.loadKnowledgeIndexPolicy()
+	a.mu.Unlock()
+	if policyErr != nil {
+		return knowledgeRemoteResult{state: "unavailable", message: "索引规则读取失败，保留上次星图", truncated: true}
+	}
+	policyID := knowledgeIndexRevision(policy)
+	progressive := ar.kind == "ssh" || ar.kind == "workspace-sftp" || ar.kind == "sftp" || ar.kind == "ftp" || ar.kind == "ftps"
 	key := ar.scope + "\x00" + ar.region() + "\x00" + fmt.Sprint(code)
 	for {
 		state.remoteMu.Lock()
@@ -190,7 +206,7 @@ func (a *App) knowledgeRemoteCached(ctx context.Context, ar knowledgeArea, code 
 			state.remote = map[string]*knowledgeRemoteMemo{}
 		}
 		memo := state.remote[key]
-		if memo != nil && memo.origin == ar.origin && memo.fileLimit == fileLimit && memo.dirLimit == dirLimit {
+		if memo != nil && memo.origin == ar.origin && memo.policy == policyID && memo.fileLimit == fileLimit && memo.dirLimit == dirLimit {
 			if memo.pending != nil {
 				pending := memo.pending
 				state.remoteMu.Unlock()
@@ -208,17 +224,53 @@ func (a *App) knowledgeRemoteCached(ctx context.Context, ar knowledgeArea, code 
 			}
 		}
 		var previous knowledgeRemoteResult
-		if memo != nil && memo.origin == ar.origin && memo.fileLimit == fileLimit && memo.dirLimit == dirLimit {
+		var discovery *knowledgeRemoteDiscovery
+		if memo != nil && memo.origin == ar.origin && memo.policy == policyID && memo.fileLimit == fileLimit && memo.dirLimit == dirLimit {
 			previous = memo.result
+			discovery = memo.discovery.clone()
 		}
-		memo = &knowledgeRemoteMemo{origin: ar.origin, fileLimit: fileLimit, dirLimit: dirLimit, pending: make(chan struct{})}
+		memo = &knowledgeRemoteMemo{origin: ar.origin, policy: policyID, fileLimit: fileLimit, dirLimit: dirLimit, pending: make(chan struct{})}
 		state.remote[key] = memo
 		state.remoteMu.Unlock()
-		result := a.knowledgeRemoteScan(ctx, ar, code, fileLimit, dirLimit)
+		var result knowledgeRemoteResult
+		if progressive {
+			checkpointWarning := ""
+			if discovery == nil {
+				var restoreErr error
+				discovery, restoreErr = a.knowledgeCursorCheckpoint(ar, policyID, code, fileLimit, dirLimit, nil)
+				if restoreErr != nil {
+					checkpointWarning = "索引检查点不可恢复，重新扫描"
+				}
+				if discovery == nil {
+					discovery = newKnowledgeRemoteDiscovery()
+				}
+			}
+			candidate := discovery.clone()
+			var err error
+			result, err = candidate.step(ctx, ar, policy, code, fileLimit, dirLimit, func(p string) ([]map[string]any, error) { return a.knowledgeAreaList(ctx, ar, p) }, func(p string, limit int64) ([]byte, error) { return a.knowledgeAreaRead(ctx, ar, p, limit) })
+			if err == nil && a.knowledgeAreaCurrent(ar) {
+				discovery = candidate
+				if _, saveErr := a.knowledgeCursorCheckpoint(ar, policyID, code, fileLimit, dirLimit, discovery); saveErr != nil {
+					checkpointWarning = "索引检查点未保存；本次结果仅保留在内存"
+				}
+			} else {
+				result = discovery.snapshot(ar, policy, fileLimit, dirLimit)
+				result.state = "unavailable"
+				result.message = "来源扫描未完成，保留已发布节点并稍后重试"
+				result.truncated = true
+				result.coverage.TotalKnown = false
+				result.coverage.Reasons = append(result.coverage.Reasons, "source-unavailable")
+			}
+			if checkpointWarning != "" {
+				result.message = strings.TrimSpace(result.message + "；" + checkpointWarning)
+			}
+		} else {
+			result = a.knowledgeRemoteScan(ctx, ar, code, fileLimit, dirLimit)
+		}
 		if !a.knowledgeAreaCurrent(ar) {
 			result = knowledgeRemoteResult{state: "unavailable", message: "来源配置已变化，等待重新同步", truncated: true}
 		}
-		if (result.state == "unavailable" || result.state == "partial") && len(previous.nodes) != 0 {
+		if !progressive && (result.state == "unavailable" || result.state == "partial") && len(previous.nodes) != 0 {
 			seen := map[string]bool{}
 			for _, n := range result.nodes {
 				seen[n.ID] = true
@@ -251,7 +303,7 @@ func (a *App) knowledgeRemoteCached(ctx context.Context, ar knowledgeArea, code 
 			result.message += "；保留未核实的上次节点，正文读取仍需重新核实"
 		}
 		state.remoteMu.Lock()
-		memo.checked, memo.result = time.Now(), result
+		memo.checked, memo.result, memo.discovery = time.Now(), result, discovery
 		close(memo.pending)
 		memo.pending = nil
 		state.remoteMu.Unlock()
@@ -293,6 +345,21 @@ func (a *App) knowledgeAppendRemote(ctx context.Context, g *knowledgeGraph, area
 	sem := make(chan struct{}, 3)
 	var wg sync.WaitGroup
 	fileLimit, dirLimit := knowledgeAreaQuotas(areas)
+	a.mu.Lock()
+	policy, policyErr := a.loadKnowledgeIndexPolicy()
+	a.mu.Unlock()
+	if policyErr == nil {
+		active := 0
+		for _, ar := range areas {
+			if ar.enabled {
+				active++
+			}
+		}
+		if active > 0 {
+			fileLimit = max(1, policy.FileBudget/active)
+			dirLimit = max(1, policy.DirectoryBudget/active)
+		}
+	}
 	for i, ar := range remote {
 		wg.Add(1)
 		go func(i int, ar knowledgeArea) {
@@ -317,6 +384,12 @@ func (a *App) knowledgeAppendRemote(ctx context.Context, g *knowledgeGraph, area
 		}
 		g.Nodes, g.Edges = append(g.Nodes, result.nodes...), append(g.Edges, result.edges...)
 		knowledgeSetSource(g, ar, result.state, result.message, len(result.nodes))
+		for j := range g.Sources {
+			if g.Sources[j].Region == ar.region() {
+				g.Sources[j].Coverage = result.coverage
+				break
+			}
+		}
 		g.Truncated = g.Truncated || result.truncated
 		if result.message != "" {
 			g.Warnings = append(g.Warnings, ar.name+"："+result.message)
@@ -642,7 +715,7 @@ func (a *App) knowledgeAreaList(ctx context.Context, ar knowledgeArea, p string)
 		if err != nil {
 			return nil, err
 		}
-		return parseSFTPList(string(out), p), nil
+		return parseSFTPListLimit(string(out), p, 0), nil
 	case "link", "smb":
 		if p != "." {
 			return nil, fmt.Errorf("单资源来源不支持目录浏览")
@@ -655,30 +728,32 @@ func (a *App) knowledgeAreaList(ctx context.Context, ar knowledgeArea, p string)
 		if err != nil {
 			return nil, err
 		}
-		// The existing FTP driver accepts Unix ls -l and simple name listings.
-		items := parseSFTPList(string(out), p)
-		if len(items) > 0 {
-			return items, nil
-		}
-		for _, line := range strings.Split(string(out), "\n") {
-			name := strings.TrimSpace(line)
-			fields := strings.Fields(name)
-			if len(fields) >= 8 && len(fields[0]) >= 10 && strings.ContainsRune("-dlpsbc?", rune(fields[0][0])) {
-				continue
-			}
-			dir := strings.HasSuffix(name, "/")
-			name = strings.TrimSuffix(name, "/")
-			if name == "" || strings.HasPrefix(name, "total ") || strings.Contains(name, "/") || safePath(name) != nil {
-				continue
-			}
-			items = append(items, map[string]any{"name": name, "path": path.Join(p, name), "dir": dir})
-			if len(items) >= 2000 {
-				break
-			}
-		}
-		return items, nil
+		return knowledgeFTPListing(string(out), p), nil
 	}
 	return nil, fmt.Errorf("不支持的引用来源类型")
+}
+
+// The subprocess already bounds listing bytes. Preserve all returned entries so
+// a resumable catalogue cannot silently treat the first 2,000 as a full directory.
+func knowledgeFTPListing(out, p string) []map[string]any {
+	items := parseSFTPListLimit(out, p, 0)
+	if len(items) > 0 {
+		return items
+	}
+	for _, line := range strings.Split(out, "\n") {
+		name := strings.TrimSpace(line)
+		fields := strings.Fields(name)
+		if len(fields) >= 8 && len(fields[0]) >= 10 && strings.ContainsRune("-dlpsbc?", rune(fields[0][0])) {
+			continue
+		}
+		dir := strings.HasSuffix(name, "/")
+		name = strings.TrimSuffix(name, "/")
+		if name == "" || strings.HasPrefix(name, "total ") || strings.Contains(name, "/") || !knowledgeSafePath(name) || name == "." || name == ".." {
+			continue
+		}
+		items = append(items, map[string]any{"name": name, "path": path.Join(p, name), "dir": dir})
+	}
+	return items
 }
 
 // A cancellation-aware bounded writer closes the subprocess as soon as its

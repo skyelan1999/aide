@@ -1,0 +1,67 @@
+{
+  "id": "knowledge-code-confidence-20261009",
+  "request": "代码关系可信度：声明与导入源证据、调用候选和逐条未解析定位；可选语言服务后续接入",
+  "baseline": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/continuity-roadmap.md\n M docs/architecture/knowledge-map.md\n M docs/architecture/markdown-editing-export.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M internal/server/knowledge_documents.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_sources.go\n M internal/server/knowledge_updates.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/markdown-export.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M scripts/markdown-image-path.test.js\n?? docs/tasks/knowledge-hybrid-retrieval-20261009.json\n?? docs/tasks/knowledge-index-policy-20261009.json\n?? docs/tasks/knowledge-progressive-index-20261009.json\n?? docs/tasks/markdown-download-export-20261009.json\n?? docs/tasks/starmap-infrared-20261009.json\n?? internal/server/knowledge_discovery.go\n?? internal/server/knowledge_discovery_test.go\n?? internal/server/knowledge_embedding_policy.go\n?? internal/server/knowledge_embedding_policy_test.go\n?? internal/server/knowledge_embeddings.go\n?? internal/server/knowledge_embeddings_test.go\n?? internal/server/knowledge_hybrid.go\n?? internal/server/knowledge_hybrid_test.go\n?? internal/server/knowledge_index_policy.go\n?? internal/server/knowledge_index_policy_test.go\n?? internal/server/knowledge_progressive.go\n?? internal/server/knowledge_progressive_test.go\n?? internal/server/knowledge_vector_cache.go\n?? internal/server/knowledge_vector_cache_test.go\n?? internal/server/web/starmap-infrared.js\n?? internal/server/web/vendor/markdown-export/\n?? scripts/markdown-download-export.test.js\n?? scripts/starmap-infrared.test.cjs",
+  "acceptance": [
+    "声明/导入源路径证据与调用名称候选区别显示",
+    "未解析调用/导入有来源编号、行号和原因，不虚构目标",
+    "记录有上限与截断状态，AI仅携带相关证据",
+    "代码详情键盘焦点不被操作区遮挡",
+    "可选语言服务配置和真实服务联调（后续）"
+  ],
+  "scope": [
+    "internal/server/knowledge_code.go",
+    "internal/server/knowledge_code_test.go",
+    "internal/server/knowledge_map.go",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.css",
+    "docs/architecture/knowledge-map.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "保留静态候选口径，先实现类别及未解析定位，语言服务仍属目标",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "类别而非概率；有界未解析记录与来源身份定位",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "AST类别和逐条未解析已实现；可选语言服务尚未接入",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Go AST/race及前端夹具浏览器通过；真实编辑器跳转、本地/SSH、语言服务未验收",
+      "evidence": [
+        "Docker aide:local TestKnowledge race PASS 14.382s",
+        "TestKnowledgeCodeConfidenceAndUnresolved / UnresolvedEvidenceBound PASS",
+        "node --check internal/server/web/starmap.js PASS",
+        ".agent-state/code-confidence-preview/evidence.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "新增架构、字段和验收限制",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "临时18223服务与浏览器标签关闭，保留夹具/截图",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未部署或发布",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "整体目标active。代码证据分类与未解析定位完成本机AST和前端夹具验证；语言服务配置/适配及真实本地/SSH跳转仍待实现/验收。"
+}

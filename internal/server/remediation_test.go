@@ -108,6 +108,23 @@ func TestContextOverflowCompactsHistoryBeforeRetry(t *testing.T) {
 	}
 }
 
+func TestCompactionRetainedHistoryStaysWithinBudget(t *testing.T) {
+	a := testApp(t)
+	s := &Session{}
+	for i := 0; i < 6; i++ {
+		s.Messages = append(s.Messages, Message{Role: "user", Content: strings.Repeat("a", 6000)})
+	}
+	budget := contextMessageTokens(s.Messages[0]) + 100
+	_, split := a.snapshotForCompactBudget(s, budget)
+	retained := 0
+	for _, message := range s.Messages[split:] {
+		retained += contextMessageTokens(message)
+	}
+	if split != 5 || retained > budget {
+		t.Fatalf("retained history exceeds budget: split=%d tokens=%d budget=%d", split, retained, budget)
+	}
+}
+
 func TestStartTaskCompactsOverBudgetHistoryBeforeProviderCall(t *testing.T) {
 	a := testApp(t)
 	s := createSession(t, a)

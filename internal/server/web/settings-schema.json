@@ -454,6 +454,22 @@
           "label": "连接与插件能力仪表"
         }
       ]
+    },
+    {
+      "id": "knowledge-index",
+      "title": "知识索引",
+      "controls": [
+        {
+          "id": "knowledge-index-policy",
+          "type": "knowledge-index-policy",
+          "label": "索引预算与优先路径"
+        },
+        {
+          "id": "knowledge-embedding-policy",
+          "type": "knowledge-embedding-policy",
+          "label": "向量混合检索"
+        }
+      ]
     }
   ]
 }

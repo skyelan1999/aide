@@ -1,0 +1,110 @@
+{
+  "id": "knowledge-timeline-20261009",
+  "request": "总目标知识变化时间线：持久化真实节点与证据关系快照，比较增改移除和历史证据，区分覆盖状态进度，保留原有变更",
+  "baseline": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+  "initial_status": "M cmd/aide/main.go\n M docs/architecture.md\n M docs/architecture/continuity-roadmap.md\n M docs/architecture/knowledge-map.md\n M docs/architecture/markdown-editing-export.md\n M docs/architecture/memory-access.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M internal/server/knowledge_code.go\n M internal/server/knowledge_documents.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_sources.go\n M internal/server/knowledge_updates.go\n M internal/server/project_cache.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/markdown-export.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap-cosmos.js\n M internal/server/web/starmap-structure.js\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M scripts/markdown-image-path.test.js\n?? docs/architecture/memory-neural.md\n?? docs/tasks/knowledge-code-confidence-20261009.json\n?? docs/tasks/knowledge-hybrid-retrieval-20261009.json\n?? docs/tasks/knowledge-index-policy-20261009.json\n?? docs/tasks/knowledge-language-service-20261009.json\n?? docs/tasks/knowledge-path-exploration-20261009.json\n?? docs/tasks/knowledge-progressive-index-20261009.json\n?? docs/tasks/markdown-download-export-20261009.json\n?? docs/tasks/memory-neural-20261009.json\n?? docs/tasks/starmap-infrared-20261009.json\n?? internal/server/knowledge_code_test.go\n?? internal/server/knowledge_discovery.go\n?? internal/server/knowledge_discovery_test.go\n?? internal/server/knowledge_embedding_policy.go\n?? internal/server/knowledge_embedding_policy_test.go\n?? internal/server/knowledge_embeddings.go\n?? internal/server/knowledge_embeddings_test.go\n?? internal/server/knowledge_go_types.go\n?? internal/server/knowledge_go_types_test.go\n?? internal/server/knowledge_hybrid.go\n?? internal/server/knowledge_hybrid_test.go\n?? internal/server/knowledge_index_policy.go\n?? internal/server/knowledge_index_policy_test.go\n?? internal/server/knowledge_paths.go\n?? internal/server/knowledge_paths_test.go\n?? internal/server/knowledge_progressive.go\n?? internal/server/knowledge_progressive_test.go\n?? internal/server/knowledge_vector_cache.go\n?? internal/server/knowledge_vector_cache_test.go\n?? internal/server/memory_neural.go\n?? internal/server/memory_neural_test.go\n?? internal/server/web/memory-neural-icon.svg\n?? internal/server/web/memory-neural.css\n?? internal/server/web/memory-neural.html\n?? internal/server/web/memory-neural.js\n?? internal/server/web/starmap-infrared.js\n?? internal/server/web/vendor/markdown-export/\n?? scripts/markdown-download-export.test.js\n?? scripts/starmap-infrared.test.cjs\n?? scripts/starmap-path.test.cjs",
+  "acceptance": [
+    "知识及代码视图按工作区独立持久保存真实索引快照，重启后可比较",
+    "只在节点、关系或代码证据变化时增加记录，不因覆盖扫描进度重复保存",
+    "对比增改移除与历史原文摘录、证据等级，并保留当时覆盖限制",
+    "认证、锁屏、损坏保护、存储容量和保留范围明确；页面时间选择及实际浏览器验收"
+  ],
+  "scope": [
+    "internal/server/knowledge_timeline.go",
+    "internal/server/knowledge_timeline_test.go",
+    "internal/server/knowledge_updates.go",
+    "internal/server/server.go 路由",
+    "internal/server/web/starmap.* 时间界面",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks/knowledge-timeline-20261009.json",
+    "internal/server/web/starmap-timeline.js",
+    "scripts/starmap-timeline.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "本机加密有界历史，观察时间/索引版本/历史摘录及证据；不推断运行轨迹或真实删除，页面待接入",
+      "evidence": [
+        "internal/server/knowledge_updates.go",
+        "docs/tasks/knowledge-timeline-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "本机加密有界历史，观察时间/索引版本/历史摘录及证据；不推断运行轨迹或真实删除，页面待接入",
+      "evidence": [
+        "internal/server/knowledge_updates.go",
+        "docs/tasks/knowledge-timeline-20261009.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "加密有界快照、工作区epoch保护、去重语义比较、星际日志时间选择/分页/历史摘录/范围折叠和锁态清除",
+      "evidence": [
+        "internal/server/knowledge_timeline.go",
+        "internal/server/web/starmap-timeline.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "旧组件和API证据保留；本轮start.command隔离实例系统Safari实际本地增改移除、前后原文及淘汰显示通过。SSH浏览器、主题/窄屏、存储故障和性能仍待验收。",
+      "evidence": [
+        "Docker aide:local go test -buildvcs=false -race ./internal/server -run TestKnowledge -count=1 -timeout=180s PASS 19.405s",
+        "node scripts/starmap-timeline.test.cjs PASS metadata/comparison/literal excerpts/scope/late locked response",
+        "node scripts/starmap-path.test.cjs PASS; node --check starmap.js/starmap-timeline.js; git diff --check PASS",
+        "127.0.0.1:18224 real App.Handler + ephemeral fixture; IAB tab27 actual create file auto-observation and edit budget10 ->12 historical excerpts; scan cycles did not append history",
+        "Final build: 427px/1280px visual logbook, collapsed historical coverage, real added node/contains relation comparison, Escape dismissal, no browser console errors",
+        ".agent-state/timeline-preview/narrow.jpg",
+        ".agent-state/timeline-preview/desktop.jpg",
+        ".agent-state/continuity-runtime/timeline-before-after-safari-20261010.png",
+        ".agent-state/continuity-runtime/timeline-removed-safari-20261010.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "API、加密存储/密钥旋转限制、范围/观察时间、历史摘录与当前文件/版本的区别、分页和失败保护已记录",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "scripts/check_docs.py PASS 178 Markdown / 464 local links"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "本轮创建的三个预览容器已关闭，tab27关闭、视口override复位。保留忽略目录中的样例二进制与截图；整目录凭据复制被自动审查拒绝，未执行，改用全新样例。",
+      "evidence": [
+        "docker stop aide-timeline-preview-20261009 / aide-timeline-preview-final-20261009 / aide-timeline-preview-verified-20261009"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "总目标及发布门禁尚未完成；未推送或更新生产实例",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "尚未部署。回退源码后可保留本机加密历史文件；令牌变更前需设计旧密钥迁移，本版本没有自动历史迁移。",
+  "handoff": "继续总目标。已索引文本变化可看前后原文，不自动构造语义结论变化；本机历史不在SSH项目缓存同步范围。本轮未做start.command整套启动/部署验收，使用隔离真实Handler。",
+  "system_safari_20261010": {
+    "status": "pass for native Safari local automatic observation and historical excerpts",
+    "client": "System Safari https://localhost:18211; start.command isolated candidate",
+    "fixture": "timeline-safari-20261010.md; before/after unique text; preserved outside indexed workspace after test",
+    "observations": [
+      "Existing timeline showed 32 retained snapshots / 8 MiB and 20 evicted; subsequent bounded history retained 32 and eviction count rose to 26",
+      "Real file creation automatically changed graph155->156; comparison includes added file Fb62b3aa9c5ab and TIMELINE_BEFORE_20261010",
+      "External body edit compared 03:21:19 ->03:22:32; node count remains156, changed file shows both TIMELINE_BEFORE_20261010 and TIMELINE_AFTER_20261010",
+      "Moved exact fixture outside workspace; graph automatically returned156->155; comparison shows one removed node and one contains edge, explicit not-file-deletion label; old excerpt remains",
+      "Existing result pagination1/2 and next-page control observed, not clicked in this check"
+    ],
+    "screenshots": [
+      ".agent-state/continuity-runtime/timeline-before-after-safari-20261010.png",
+      ".agent-state/continuity-runtime/timeline-removed-safari-20261010.png"
+    ],
+    "cleanup": "Agent-created map tab closed; workbench draft/attachment unchanged; fixture archived as .agent-state/continuity-runtime/timeline-safari-20261010.archived.md; no production/model action",
+    "limits": [
+      "Local Markdown only; SSH browser timeline and all themes/narrow viewport remain",
+      "Eviction display observed with existing bounded history; no disk capacity fault injection",
+      "Comparison can include directory metadata changes; no inferred semantic conclusion or runtime trajectory",
+      "No measured synchronization latency/frame rate; full receipt source fingerprint unchanged"
+    ]
+  }
+}

@@ -24,9 +24,11 @@
     }
     function queueRecovery(){clearTimeout(recoveryTimer);recoveryTimer=setTimeout(storeRecovery,180);}
     function applyRecovery(draft,text){
-      editor.value=text;editor.setSelectionRange(Math.min(draft.start||0,text.length),Math.min(draft.end||0,text.length));
+      editor.value=text;editor.focus({preventScroll:true});
+      editor.setSelectionRange(Math.min(draft.start||0,text.length),Math.min(draft.end||0,text.length));
+      recoveryBanner?.remove();recoveryBanner=null;suspended=false;editor.dispatchEvent(new Event('input',{bubbles:true}));
       editor.scrollTop=draft.scrollTop||0;editor.scrollLeft=draft.scrollLeft||0;
-      recoveryBanner?.remove();recoveryBanner=null;suspended=false;editor.dispatchEvent(new Event('input',{bubbles:true}));editor.focus();
+      editor.dispatchEvent(new Event('scroll'));
     }
     function compareRecovery(draft,gen,latest=null){
       if(blocked?.())return;

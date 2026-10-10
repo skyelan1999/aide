@@ -1,0 +1,93 @@
+{
+  "id": "ssh-continuity-integration-20261009",
+  "request": "完成 Markdown 正文嵌入资源版本恢复与独立 token 记忆缓存真实 SSH 联调，保留现有改动",
+  "baseline": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+  "initial_status": "M cmd/aide/main.go\n M docs/architecture.md\n M docs/architecture/continuity-roadmap.md\n M docs/architecture/knowledge-map.md\n M docs/architecture/markdown-editing-export.md\n M docs/architecture/memory-access.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M internal/server/knowledge_code.go\n M internal/server/knowledge_documents.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_sources.go\n M internal/server/knowledge_updates.go\n M internal/server/project_cache.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/markdown-export.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap-cosmos.js\n M internal/server/web/starmap-structure.js\n M internal/server/web/starmap.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/workflow.go\n M scripts/markdown-image-path.test.js\n?? docs/architecture/memory-neural.md\n?? docs/tasks/knowledge-code-confidence-20261009.json\n?? docs/tasks/knowledge-hybrid-retrieval-20261009.json\n?? docs/tasks/knowledge-index-policy-20261009.json\n?? docs/tasks/knowledge-language-service-20261009.json\n?? docs/tasks/knowledge-path-exploration-20261009.json\n?? docs/tasks/knowledge-progressive-index-20261009.json\n?? docs/tasks/knowledge-timeline-20261009.json\n?? docs/tasks/markdown-download-export-20261009.json\n?? docs/tasks/memory-neural-20261009.json\n?? docs/tasks/starmap-infrared-20261009.json\n?? internal/server/knowledge_code_test.go\n?? internal/server/knowledge_discovery.go\n?? internal/server/knowledge_discovery_test.go\n?? internal/server/knowledge_embedding_policy.go\n?? internal/server/knowledge_embedding_policy_test.go\n?? internal/server/knowledge_embeddings.go\n?? internal/server/knowledge_embeddings_test.go\n?? internal/server/knowledge_go_types.go\n?? internal/server/knowledge_go_types_test.go\n?? internal/server/knowledge_hybrid.go\n?? internal/server/knowledge_hybrid_test.go\n?? internal/server/knowledge_index_policy.go\n?? internal/server/knowledge_index_policy_test.go\n?? internal/server/knowledge_paths.go\n?? internal/server/knowledge_paths_test.go\n?? internal/server/knowledge_progressive.go\n?? internal/server/knowledge_progressive_test.go\n?? internal/server/knowledge_timeline.go\n?? internal/server/knowledge_timeline_test.go\n?? internal/server/knowledge_vector_cache.go\n?? internal/server/knowledge_vector_cache_test.go\n?? internal/server/memory_neural.go\n?? internal/server/memory_neural_test.go\n?? internal/server/web/memory-neural-icon.svg\n?? internal/server/web/memory-neural.css\n?? internal/server/web/memory-neural.html\n?? internal/server/web/memory-neural.js\n?? internal/server/web/starmap-infrared.js\n?? internal/server/web/starmap-timeline.js\n?? internal/server/web/vendor/markdown-export/\n?? scripts/markdown-download-export.test.js\n?? scripts/starmap-infrared.test.cjs\n?? scripts/starmap-path.test.cjs\n?? scripts/starmap-timeline.test.cjs",
+  "acceptance": [
+    "真实 SSH 工作区与自动系统文档分别完成正文及资源恢复、预览后冲突拒绝和恢复读回",
+    "token JSON 与兼容文本保存到 SSH 缓存，删除本地测试副本后显式读记忆从远端恢复",
+    "保留既有双服务器回归；证据绑定源码指纹；清理一次性容器网络",
+    "独立 SFTP 引用来源 server B 完成整版恢复和文件夹属性/重命名/压缩/解压/删除，确认 server A 未出现同路径文件",
+    "独立 SFTP 文件进入知识索引与原文搜索，外部修改后旧引用拒绝并取得新原文及前后时间线证据；测试只加速轮询时钟，不冒称实际 UI 轮询时间验收"
+  ],
+  "scope": [
+    "internal/server/ssh_live_test.go",
+    "internal/server/ssh_continuity_live_test.go",
+    "docs/tasks/ssh-continuity-integration-20261009.json",
+    "docs/architecture/memory-neural.md",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/architecture/knowledge-map.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "使用现有真实鉴权 Handler、双服务器验收脚本及 API 恢复预览，独立测试目录，无用户数据",
+      "evidence": [
+        "scripts/test-ssh-workspace.sh",
+        "internal/server/markdown_restore.go",
+        "internal/server/memory_tokens.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "使用现有真实鉴权 Handler、双服务器验收脚本及 API 恢复预览，独立测试目录，无用户数据",
+      "evidence": [
+        "scripts/test-ssh-workspace.sh",
+        "internal/server/markdown_restore.go",
+        "internal/server/memory_tokens.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "扩展真实独立 SFTP 来源整版恢复、引用文件夹操作、原文检索/旧引用拒绝/时间线证据回归；保留所有产品改动",
+      "evidence": [
+        "internal/server/ssh_continuity_live_test.go",
+        "internal/server/ssh_live_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "双服务器 SSH/SFTP -race -count=2 全部 PASS，19.962 秒；最终源码指纹前后相同。覆盖工作区、workspace-sftp 与独立 server B 整版恢复；后两者文件夹完整操作；独立来源知识搜索/旧指纹拒绝/前后原文时间线。仅内部测试时钟过期加速扫描，未验证 UI 真实轮询时延、向量服务、真实模型或 Windows。",
+      "evidence": [
+        ".agent-state/ssh-continuity-20261009/aide-ssh-test-20261009204513-87187.log",
+        ".agent-state/ssh-continuity-20261009/aide-ssh-test-20261009204513-87187.log.sha256",
+        "DOCKER_BIN=/Users/skyelan/.docker/bin/docker AIDE_SSH_REPEAT=2 AIDE_SSH_TEST_EVIDENCE_DIR=.agent-state/ssh-continuity-20261009 bash scripts/test-ssh-workspace.sh"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新 Markdown 与知识图谱验收范围和总目标账本；check_docs PASS 178 Markdown、466 本地链接，git diff --check PASS",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md",
+        "docs/architecture/knowledge-map.md",
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "docker ps 与 network 按本轮实例前缀查询均为空；仅清理自身一次性测试容器/网络，证据留存忽略目录，生产未改动",
+      "evidence": [
+        "scripts/test-ssh-workspace.sh"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "总目标完整验收和发布门禁仍未完成，未更新生产",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "真实 SSH/SFTP API 恢复和来源操作、知识原文检索/指纹/时间线回归通过；浏览器 SSH 工作现场恢复/锁屏、跨主机中断故障恢复、真实模型/向量、Windows与全量发布仍待完成。",
+  "progressive_checkpoint": {
+    "result": "PASS 24.639s, repeat=2",
+    "evidence": ".agent-state/ssh-progressive-final-20261009/aide-ssh-test-20261009210015-87938.log",
+    "scope": "Final real dual-server regression including 50-file scope/priority progressive coverage, three-location Markdown history/restore, source file actions, token cache and raw search/timeline. Accelerated test clocks; UI/performance/provider not covered."
+  },
+  "archive_followup_20261010": {
+    "result": "PASS 28.223s, race, repeat=2",
+    "log": ".agent-state/ssh-continuity-20261010/aide-ssh-test-20261010001359-6145.log",
+    "scope": "Real dual-server SSH/SFTP current source: remote token memory retained after neural visualization withdrawal, Markdown full restore/conflicts, source actions, raw retrieval/timeline, progressive cursor/process restart. No user data or published ports. Source hashes unchanged during test.",
+    "remaining": "System-browser SSH state recovery, physical network interruption, real model/vector provider and Windows acceptance."
+  }
+}

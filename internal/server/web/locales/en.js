@@ -1,6 +1,16 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "导出": "Export",
+  "直接下载 · 分页文档": "Direct download · paginated document",
+  "下载原文 · .md": "Download source · .md",
+  "Markdown + 资源": "Markdown + assets",
+  "图片与附件 · .zip": "Images and attachments · .zip",
+  "PNG 图片": "PNG image",
+  "渲染为一张长图": "Render as a long image",
+  "正在导出…": "Exporting…",
+  "导出当前内容；包含未保存的修改": "Export current content, including unsaved changes",
+
 "对工作区可见：{0}":"AI access in workspace: {0}",
 "对工作区可见 · AI 可使用":"Visible to workspace · AI access allowed",
 "对工作区不可见 · AI 不可使用":"Hidden from workspace · AI access denied",
@@ -1892,6 +1902,11 @@ window.aideEnglish = {
   '自动保存': 'Auto-save',
   '正在保存…': 'Saving…',
   '保存失败，自动保存已暂停': 'Save failed; auto-save paused',
+  "系统应用回执": "System application receipts",
+  "系统记录来源": "System record source",
+  "历史系统记录，不代表当前文件或完整验收。": "Historical system records do not verify current files or full acceptance.",
+  "回执检查失败": "Receipt check failed",
+  "系统记录": "System record",
   "成果舱": "Outcome",
   "任务成果舱": "Task outcome",
   "关闭成果舱": "Close outcome",
@@ -1991,4 +2006,34 @@ window.aideEnglish = {
   '打开打印窗口，选择存储为 PDF；包含当前未保存的编辑内容': 'Open print dialog and select Save as PDF; includes current unsaved edits',
   '图片读取超时，请检查引用后重试': 'Image loading timed out; check the reference and retry',
   '图片读取失败，请检查引用后重试': 'Image failed to load; check the reference and retry',
+ "索引目录范围":"Index scope paths",
+ "范围 JSON 使用来源编号和相对路径数组；空数组表示整个来源。仅作用于本地索引，不改变 AI 文件访问权限。优先路径须在范围内。":"Scope JSON maps source IDs to relative paths; an empty array includes the whole source. Applies to local indexing only, without changing AI file access. Priority paths must be within scope.",
+ "JSON：来源编号映射到相对路径数组，例如 {\"workspace\":[\"src\",\"docs\"]}。本地增量扫描先寻址优先目标；SSH等远程来源沿用原预算。":"JSON maps source IDs to relative path arrays, for example {\"workspace\":[\"src\",\"docs\"]}. Local incremental scans address priority targets first; remote sources retain existing budgets.",
 };
+
+Object.assign(window.aideEnglish, {
+ '知识索引':'Knowledge indexing','索引预算与优先路径':'Index budgets and priority paths','文件预算':'File budget','目录预算':'Directory budget','目录深度':'Directory depth','优先索引路径':'Priority index paths','保存后下次星图同步生效。':'Applies on the next star map synchronization.','索引预算超出允许范围':'Index budget is outside the allowed range.',
+ '按当前工作区保存本地索引预算与优先相对路径；不扩大来源权限，不代表全库已索引。':'Save local index budgets and relative priority paths for this workspace. This does not expand permissions or imply full coverage.',
+ 'JSON：来源编号映射到相对路径数组，例如 {"workspace":["src","docs"]}。仅调整已读取目录项的顺序；SSH等远程来源沿用原预算。':'JSON maps source IDs to relative paths, e.g. {"workspace":["src","docs"]}. Reorders discovered entries only; remote sources retain their existing budgets.'
+});
+
+Object.assign(window.aideEnglish, {
+ "向量混合检索": "Hybrid vector retrieval",
+ "启用向量混合检索": "Enable hybrid vector retrieval",
+ "Embedding API 地址": "Embedding API base URL",
+ "Embedding 模型": "Embedding model",
+ "向量融合权重": "Vector rank weight",
+ "Embedding API 密钥": "Embedding API key",
+ "清除已保存的向量密钥": "Clear stored embedding key",
+ "默认使用本地关键词检索。启用后，仅在文档 RAG 查询时将查询与已授权候选片段发送到此提供商；可能产生费用。原文搜索始终本地。": "Local keyword retrieval is the default. Enabling this sends the query and authorized candidate chunks to this provider only during document RAG queries. Charges may apply. Literal search remains local.",
+ "权重 0 仅使用关键词；1 仅使用向量排名。服务失败时回退关键词并显示诊断。密钥保存在保险库，不会读回浏览器。": "Weight 0 uses keywords only; 1 uses vector ranks only. Provider failures fall back to keywords with diagnostics. Keys stay in the vault and are never returned to the browser.",
+ "密钥已保存；留空保持原密钥。": "Key saved; leave blank to keep it.",
+ "未保存密钥；支持无需密钥的本机提供商。": "No stored key; local providers without a key are supported.",
+ "配置按当前工作区保存，下一次检索生效。": "Saved for this workspace and applied on the next query.",
+ "请检查地址和 0–1 范围内的融合权重。": "Check the base URL and a rank weight between 0 and 1.",
+ "启用向量检索需要地址和模型名称。": "A base URL and model name are required to enable vector retrieval.",
+ "不能同时保存和清除密钥。": "Cannot save and clear the key together."
+});
+
+
+Object.assign(window.aideEnglish, {'代码语言服务':'Code language service','AST 名称候选':'AST name candidates','Go 类型绑定（已索引快照）':'Go type bindings (indexed snapshot)','可选 Go 服务只检查已索引包，不运行项目代码或下载依赖；类型错误、接口动态调用仍保留未确认。':'The optional Go service checks indexed packages only. It does not execute project code or download dependencies; type errors and dynamic interface dispatch remain unconfirmed.'});

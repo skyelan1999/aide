@@ -1,0 +1,14 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('internal/server/web/app.js','utf8');
+const helper=source.slice(source.indexOf('async function restoreWorkspaceScene() {'),source.indexOf('async function saveWorkspaceConfig() {'));
+const elements=new Map();const $=id=>{if(!elements.has(id))elements.set(id,{value:'A draft',classList:{toggle(){}}});return elements.get(id);};
+const records=new Map([['B:scene', {root:'workspace',dir:'child',fileDirs:{workspace:'child'}}],['B:chat',{text:'B draft',attachments:[{path:'b.txt'}],start:2,end:4,scroll:22}]]);
+const state={session:{id:'A'},sessionJSON:'old',attachments:[{path:'a.txt'}],file:{path:'a.txt'},root:'context',source:'A',dir:'old',fileDirs:{old:'dir'},fileSelection:new Set(['a.txt']),fileSearch:'A',sources:[],config:{workspaceId:'B'}};
+let scopes=[],selected=[];
+const context={state,recoveryReady:true,recoveryTimer:0,sessionSeq:{value:1},clearTimeout,window:{AideContinuity:{readTab:async(scope,kind,id)=>{scopes.push(scope);return records.get(scope+':'+kind)||null;}},AideTaskOutcome:{close(){}}},recoveryScope:()=>state.config.workspaceId,$,document:{querySelectorAll:()=>[]},closeStream(){},cancelContextPreview(){},ttsCancel(){},renderAttachments(){},renderSession(){},paintSessionSelection(){},loadSessions:async()=>{},loadSourcesList:async()=>{},loadFiles:async()=>{},renderSourceChips(){},selectSession:async id=>{selected.push(id);},restoreChatSelection(draft){context.selection=draft;},toast(){},t:x=>x};
+vm.createContext(context);vm.runInContext(helper,context);
+(async()=>{await context.restoreWorkspaceScene();assert.equal($('prompt').value,'B draft');assert.equal(state.attachments[0].path,'b.txt');assert.equal(state.session,null);assert.equal(state.file,null);assert.equal(state.dir,'child');assert.equal(state.fileSelection.size,0);assert.equal(context.recoveryReady,true);assert(scopes.every(x=>x==='B'));assert.equal(context.selection.start,2);
+ state.config.workspaceId='C';await context.restoreWorkspaceScene();assert.equal($('prompt').value,'');assert.equal(state.attachments.length,0);assert.equal(state.dir,'.');
+ assert(source.includes('sessionDrafts.get(chatDraftKey(id))'));assert(source.includes('if(scope!==recoveryScope())return;'));
+ console.log('Workspace scene transition PASS (source VM fixture; browser acceptance separate)');
+})().catch(e=>{console.error(e);process.exitCode=1;});

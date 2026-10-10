@@ -1,0 +1,35 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const source = fs.readFileSync('internal/server/web/app.js', 'utf8');
+const start = source.indexOf("  const rcLock = $('runtime-card');");
+const end = source.indexOf('  if(workspaceChanged)await restoreWorkspaceScene();', start);
+assert.ok(start > 0 && end > start);
+const handlers = {}, classes = {};
+const overlay = { dataset: {}, addEventListener(k, fn) { assert.equal(handlers[k], undefined); handlers[k] = fn; }, setAttribute(k, v) { this[k] = v; } };
+const card = { classList: { toggle(k,v) { classes[k] = v; } } };
+let locked = 0;
+const context = { state: { config: { hasPassword: true } }, $: id => id === 'runtime-card' ? card : overlay, lockScreenNow() { locked++; } };
+vm.createContext(context);
+const bind = () => vm.runInContext("{\n" + source.slice(start, end) + "\n}", context);
+bind(); bind();
+assert.equal(overlay.tabIndex, 0);
+assert.equal(overlay['aria-disabled'], 'false');
+handlers.click({stopPropagation(){}});
+for (const key of ['Enter', ' ']) {
+ let prevented = false;
+ handlers.keydown({key,preventDefault(){prevented=true;},stopPropagation(){}});
+ assert.ok(prevented);
+}
+assert.equal(locked, 3);
+handlers.keydown({key:'Escape'});
+assert.equal(locked,3);
+context.state.config.hasPassword = false; bind();
+assert.equal(overlay.tabIndex,-1);
+assert.equal(overlay['aria-disabled'],'true');
+handlers.click({stopPropagation(){}});
+handlers.keydown({key:'Enter',preventDefault(){},stopPropagation(){}});
+assert.equal(locked,3);
+const css = fs.readFileSync('internal/server/web/style.css','utf8');
+assert.match(css,/\.runtime-card\.lock-enabled \.runtime-lock-overlay\{pointer-events:auto;cursor:pointer\}/);
+console.log('Lock entry mouse, keyboard, disabled state and hit target PASS');

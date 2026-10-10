@@ -47,6 +47,7 @@ type codeCall struct {
 	Name      string `json:"name"`
 	Qualifier string `json:"qualifier"`
 	Line      int    `json:"line"`
+	Column    int    `json:"column,omitempty"`
 	Dynamic   bool   `json:"dynamic"`
 }
 type codeImport struct {
@@ -64,11 +65,31 @@ type codeUnit struct {
 	Diagnostics []string     `json:"diagnostics"`
 }
 type knowledgeCodeSummary struct {
-	Files       int      `json:"files"`
-	Symbols     int      `json:"symbols"`
-	Calls       int      `json:"calls"`
-	Unresolved  int      `json:"unresolved"`
-	Diagnostics []string `json:"diagnostics"`
+	LanguageService     *goTypeResult                 `json:"languageService,omitempty"`
+	TypedCalls          int                           `json:"typedCalls,omitempty"`
+	Files               int                           `json:"files"`
+	Symbols             int                           `json:"symbols"`
+	Calls               int                           `json:"calls"`
+	Unresolved          int                           `json:"unresolved"`
+	Diagnostics         []string                      `json:"diagnostics"`
+	Engine              string                        `json:"engine"`
+	UnresolvedImports   int                           `json:"unresolvedImports"`
+	UnresolvedRelations []knowledgeUnresolvedRelation `json:"unresolvedRelations,omitempty"`
+	RelationsTruncated  bool                          `json:"relationsTruncated,omitempty"`
+}
+
+type knowledgeUnresolvedRelation struct {
+	From   string `json:"from"`
+	File   string `json:"file"`
+	Line   int    `json:"line,omitempty"`
+	Column int    `json:"column,omitempty"`
+	Name   string `json:"name"`
+	Kind   string `json:"kind"`
+	Reason string `json:"reason"`
+}
+
+func knowledgeUnresolvedCallDiagnostic(file string, r knowledgeUnresolvedRelation) string {
+	return fmt.Sprintf("%s:%d:%d %s（外部、动态或歧义调用；未连线）", file, r.Line, r.Column, r.Name)
 }
 
 func codeLanguage(p string) string {
@@ -173,7 +194,7 @@ func codeGo(f knowledgeCodeFile) codeUnit {
 				return false
 			}
 			if c, ok := n.(*ast.CallExpr); ok {
-				call := codeCall{Caller: caller, Line: fs.Position(c.Pos()).Line, Name: "<dynamic>", Dynamic: true}
+				call := codeCall{Caller: caller, Line: fs.Position(c.Pos()).Line, Column: fs.Position(c.Pos()).Column, Name: "<dynamic>", Dynamic: true}
 				switch fun := c.Fun.(type) {
 				case *ast.Ident:
 					call.Name = fun.Name
@@ -276,7 +297,14 @@ func codeSnippet(lines []string, line, end int) string {
 var knowledgeCodeGate = make(chan struct{}, 2)
 
 func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowledgeCodeFile) {
-	summary := &knowledgeCodeSummary{Files: len(files), Diagnostics: []string{}}
+	summary := &knowledgeCodeSummary{Files: len(files), Diagnostics: []string{}, Engine: "ast-name-resolution"}
+	recordUnresolved := func(r knowledgeUnresolvedRelation) {
+		if len(summary.UnresolvedRelations) < 1000 {
+			summary.UnresolvedRelations = append(summary.UnresolvedRelations, r)
+		} else {
+			summary.RelationsTruncated = true
+		}
+	}
 	g.Code = summary
 	select {
 	case knowledgeCodeGate <- struct{}{}:
@@ -469,11 +497,14 @@ func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowled
 					}
 				}
 			}
-			addEdge(knowledgeEdge{From: parent, To: d.node.ID, Kind: "defines", Line: s.Line, Evidence: "AST declaration"})
+			addEdge(knowledgeEdge{From: parent, To: d.node.ID, Kind: "defines", Line: s.Line, Evidence: "AST declaration", Confidence: "source_declaration"})
 		}
 		for _, im := range u.Imports {
 			if other := resolveImport(f, u, im); other != nil {
-				addEdge(knowledgeEdge{From: f.ID, To: other.ID, Kind: "imports", Evidence: "source import"})
+				addEdge(knowledgeEdge{From: f.ID, To: other.ID, Kind: "imports", Evidence: "source import path matched inside current index; not module loader proof", Confidence: "source_path"})
+			} else {
+				summary.UnresolvedImports++
+				recordUnresolved(knowledgeUnresolvedRelation{From: f.ID, File: f.ID, Name: im.Path, Kind: "import", Reason: "outside_index_or_unresolved_path"})
 			}
 		}
 		for _, c := range u.Calls {
@@ -560,18 +591,25 @@ func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowled
 				}
 			}
 			if len(candidates) == 1 {
-				if addEdge(knowledgeEdge{From: from, To: candidates[0].node.ID, Kind: "call_candidate", Line: c.Line, Evidence: evidence}) {
+				if addEdge(knowledgeEdge{From: from, To: candidates[0].node.ID, Kind: "call_candidate", Line: c.Line, Column: c.Column, Evidence: evidence, Confidence: "name_candidate"}) {
 					summary.Calls++
 				}
 			} else {
 				summary.Unresolved++
+				reason := "outside_index_or_unknown_binding"
+				if c.Dynamic {
+					reason = "dynamic_binding"
+				} else if len(candidates) > 1 {
+					reason = "ambiguous_name"
+				}
+				name := c.Name
+				if c.Qualifier != "" {
+					name = c.Qualifier + "." + name
+				}
+				relation := knowledgeUnresolvedRelation{From: from, File: f.ID, Line: c.Line, Column: c.Column, Name: name, Kind: "call", Reason: reason}
+				recordUnresolved(relation)
 				if len(summary.Diagnostics) < 100 {
-					summary.Diagnostics = append(summary.Diagnostics, fmt.Sprintf("%s:%d %s%s（外部、动态或歧义调用；未连线）", f.Node.Path, c.Line, func() string {
-						if c.Qualifier != "" {
-							return c.Qualifier + "."
-						}
-						return ""
-					}(), c.Name))
+					summary.Diagnostics = append(summary.Diagnostics, knowledgeUnresolvedCallDiagnostic(f.Node.Path, relation))
 				}
 			}
 		}

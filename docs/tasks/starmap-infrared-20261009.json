@@ -1,0 +1,72 @@
+{
+  "id": "starmap-infrared-20261009",
+  "request": "星图红外模式根据星体能量散射，而不是任意蒙版；有效关联数能量代理、距离衰减与叠加",
+  "baseline": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0",
+  "initial_status": "M docs/architecture/continuity-roadmap.md\n M docs/architecture/knowledge-map.md\n M docs/architecture/markdown-editing-export.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M internal/server/knowledge_documents.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_sources.go\n M internal/server/knowledge_updates.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/markdown-export.js\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M scripts/markdown-image-path.test.js\n?? docs/tasks/knowledge-hybrid-retrieval-20261009.json\n?? docs/tasks/knowledge-index-policy-20261009.json\n?? docs/tasks/knowledge-progressive-index-20261009.json\n?? docs/tasks/markdown-download-export-20261009.json\n?? internal/server/knowledge_discovery.go\n?? internal/server/knowledge_discovery_test.go\n?? internal/server/knowledge_hybrid.go\n?? internal/server/knowledge_hybrid_test.go\n?? internal/server/knowledge_index_policy.go\n?? internal/server/knowledge_index_policy_test.go\n?? internal/server/knowledge_progressive.go\n?? internal/server/knowledge_progressive_test.go\n?? internal/server/web/vendor/markdown-export/\n?? scripts/markdown-download-export.test.js",
+  "acceptance": [
+    "红外按钮位于动效和归位之间",
+    "温和伪彩蒙版，不阻挡星点/拖动与面板操作",
+    "明确视觉模拟无真实红外数据，减少动态时不渐变",
+    "随工作区星图恢复偏好保存；开关与回到普通配色验收",
+    "每个真实节点参与能量场；孤立弱、高关联强，径向衰减及重叠叠加可验证"
+  ],
+  "scope": [
+    "internal/server/web/starmap-infrared.js",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.css",
+    "docs/architecture/knowledge-map.md",
+    "scripts/starmap-infrared.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "采用尘埃受热红外再辐射的视觉类比；关联数不是物理能量测量，公式、核与曝光明确记录",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "逐节点关联能量与场景距离驱动，软化衰减核、叠加后曝光、栅格伪彩；取消整屏染色和32节点截断；有限包络径向积分归一化，源总量与散射宽度解耦，相机曝光独立",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "能量/距离/核/叠加/100节点/空视图回归通过；245节点实际前端浏览器高关联热区、开关、动效关闭和详情验证；生产/Windows/窄屏/规模性能NOT_RUN",
+      "evidence": [
+        ".agent-state/infrared-preview/dark-on.png",
+        ".agent-state/infrared-preview/infrared-on.png",
+        "Node renderer assertions PASS: toggle, reduced motion, bounded draw, context restoration",
+        "node --check starmap.js / starmap-infrared.js PASS",
+        "git diff --check PASS",
+        "node scripts/starmap-infrared.test.cjs PASS",
+        ".agent-state/infrared-preview/energy-field.png",
+        "node scripts/starmap-infrared.test.cjs PASS: kernel radial integral within 1e-5 at sigma 5/12/45",
+        "node --check internal/server/web/starmap-infrared.js PASS",
+        ".agent-state/infrared-preview/normalized-energy-field.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "临时18220服务与浏览器验收标签已关闭；保留截图和夹具",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "按用户纠正完成逐节点辐射场源码及本机夹具验收，生产未部署；真实物理测量与大规模性能不宣称完成。整体目标active。"
+}
