@@ -17,7 +17,7 @@ function context(saved,workspace='B'){
 // Execute the actual camera snapshot/restore functions, including transition
 // destinations and wheel targets. Numeric proof is separate from Safari proof.
 const widgets=new Map(),widget=id=>{if(!widgets.has(id))widgets.set(id,{value:'nodes',options:[{value:'all'},{value:'nodes'}],scrollTop:0,setAttribute(){}});return widgets.get(id)};
-const searchPanel={scrollTop:81};widget('detail').scrollTop=131;
+const searchPanel={scrollTop:81};widget('detail').scrollTop=131;widget('detail-text').scrollTop=870;
 let snapshot;
 const sky=vm.createContext({clearTimeout,locked:false,loading:false,recoveryLoading:false,recoveryTimer:0,recoveryWarning:false,
  window:{AideContinuity:{enabled:()=>true}},AideContinuity:{writeTab:async(scope,kind,id,value)=>{snapshot=structuredClone(value)}},
@@ -32,10 +32,15 @@ vm.runInContext(source.slice(source.indexOf('function persistSkyView(){'),source
 vm.runInContext(source.slice(source.indexOf('function restoreSkyView(value){'),source.indexOf("addEventListener('scroll'")),sky);
 vm.runInContext('persistSkyView()',sky);
 assert.deepEqual(snapshot.camera,{yaw:1.2,pitch:-.25,zoom:2.1});
+assert.equal(snapshot.scroll.detailText,870,'save the independently scrolling node text, not just its outer panel');
+widget('detail-text').scrollTop=0;
 sky.saved=snapshot;vm.runInContext('restoreSkyView(saved)',sky);
 assert.equal(sky.yaw,1.2);assert.equal(sky.pitch,-.25);assert.equal(sky.zoom,2.1);
 assert.equal(sky.skyTime,170);assert.equal(sky.driftTime,220);assert.equal(sky.entered,'deep');
 assert.equal(searchPanel.scrollTop,81);assert.equal(widget('detail').scrollTop,131);assert.equal(sky.infrared.enabled,true);
+assert.equal(widget('detail-text').scrollTop,870,'restore nonzero node text scroll after selection');
+const legacy=structuredClone(snapshot);delete legacy.scroll.detailText;sky.legacy=legacy;
+vm.runInContext('restoreSkyView(legacy)',sky);assert.equal(widget('detail-text').scrollTop,0,'older scene snapshots remain compatible');
 sky.cosmos.find=k=>k==='root';vm.runInContext('restoreSkyView(saved)',sky);assert.equal(sky.entered,'root');
 console.log('Star map tab-scoped snapshot, camera/wheel targets, motion phase, panel scroll and ancestor fallback PASS (source VM)');
 

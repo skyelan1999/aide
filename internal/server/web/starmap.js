@@ -72,7 +72,7 @@ function persistSkyView(){
  const destination=cameraTween?.to||{yaw,pitch,zoom};
  const value={version:1,codeView,region,query:$('search').value,retrievalMode:$('retrieval-mode').value,edgeMode,callDepth,focusCode,
   camera:{yaw:destination.yaw,pitch:destination.pitch,zoom:wheelZoom?.target??destination.zoom},motionPhase:{skyTime,driftTime},
-  scroll:{search:document.querySelector('.search-panel').scrollTop,detail:$('detail').scrollTop},
+  scroll:{search:document.querySelector('.search-panel').scrollTop,detail:$('detail').scrollTop,detailText:$('detail-text').scrollTop},
   path:cosmicScene?cosmicPath(cosmicScene.group).map(g=>g.key):[],selected:selected?{id:selected.id,origin:selected.origin||''}:null,animate,infrared:infrared.enabled};
  AideContinuity.writeTab('knowledge:'+graph.workspace,'scene','starmap',value).catch(e=>{if(!recoveryWarning){recoveryWarning=true;say('星图恢复记录保存失败 · '+e.message);}});
 }
@@ -100,7 +100,7 @@ function restoreSkyView(value){
  skyTime=finite(value.motionPhase?.skyTime,0,0,604800000);driftTime=finite(value.motionPhase?.driftTime,0,0,604800000);skyFloat.x=Math.sin(driftTime/22000)*.038;skyFloat.y=Math.sin(driftTime/29000)*.024;
  if(typeof value.animate==='boolean')animate=value.animate&&!motionReduced();
  if(typeof value.infrared==='boolean')infrared.set(value.infrared,false);
- document.querySelector('.search-panel').scrollTop=finite(value.scroll?.search,0,0,1000000);$('detail').scrollTop=finite(value.scroll?.detail,0,0,1000000);
+ document.querySelector('.search-panel').scrollTop=finite(value.scroll?.search,0,0,1000000);$('detail').scrollTop=finite(value.scroll?.detail,0,0,1000000);$('detail-text').scrollTop=finite(value.scroll?.detailText,0,0,1000000);
  syncMotion();syncCodeView();syncGraphChrome();syncCosmicNav();redraw();say('已恢复上次星图视角与筛选；未自动执行检索或 AI。');
 }
 addEventListener('scroll',()=>{if(!locked&&!loading)scheduleSkyRecovery();},{capture:true,passive:true});

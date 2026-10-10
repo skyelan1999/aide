@@ -113,3 +113,11 @@
 最终候选经start.command重建exit0，source_sha=9cee0caa93096bfe33e523334f543f23ca3c983abf66b6ef5ef912d6982f123d，image=sha256:7fd1027ac8676e51dfa670f81e1f65ab42621a02b1d21ce6e834c334bb9e5e56。解锁后原生Safari完成复验：B归位后A刷新，yaw=0.1510574018126888、pitch=0.2153846153846154、zoom=1.2712491503214047、skyTime/driftTime=104470完全匹配A刷新前；动效与红外均关闭。B随后刷新真实出现首次updates请求503，自动重试后显示已恢复，镜头为自身归位值0/0.1/1，skyTime=7337077、driftTime=7289471、搜索滚动102、动效/红外关闭，recoveryScopeLoaded=F59ba0de58edd。此次未建立红外开启持久化的独立数值断言，不能据此声称该项完成。
 
 收据.agent-state/continuity-runtime/sky-recovery-20261010.json，AX记录sky-final-before/after及sky-final-b-after-safari-20261010.txt，截图sky-final-after-safari-20261010.png。两个临时实际环境星图标签已关闭，原18211会话42草稿及note-037附件保留。非零详情滚动、嵌套路径、关闭标签后的多分支恢复与容量淘汰仍待浏览器验收，Windows无设备。全量进程4373的36项命令均退出0，但因期间源码指纹变化，门禁最终exit1；最终代码全量重跑76976已完成exit0：36项全部PASS，Go race/vet退出0，源码指纹前后一致；时间20261010T011324648367Z，指纹7f2a30689e7d906b930d0733f3ef1a323290772e17eb9e2bfdf0226842e09da9，日志.agent-state/verify-20261010T011324648367Z.log。这只证明本次全量代码检查，不替代仍缺失的产品验收或正式发布。
+
+## 星图详情正文滚动缺口（2026-10-10）
+
+实际9999、原生Safari：红外开启、动效关闭，选择CONTEXT.md并滚动详情正文。刷新前正文scrollTop=870、外层详情scrollTop=0、搜索面板scrollTop=337；刷新后红外仍开启、选择和搜索保留，但正文scrollTop=0。原因是详情正文独立滚动，已有现场仅保存外层面板。
+
+源码现在额外记录并恢复scroll.detailText；旧现场缺少此字段时回退0，保持version1兼容。starmap-workspace-scene source VM覆盖非零正文滚动及旧快照，已通过。经项目start.command重建实际9999退出0，source_sha=741103c2746475e1e073d5b565c688d0ed31bbce92cb7f60c393c3ab59093a4b。用户解锁后原生Safari实际复验通过：刷新前后详情正文scrollTop=870、外层0、搜索337、infrared=true、animate=false及selected=F00fd3f918b5c完全一致。收据sky-detail-fixed-before/after-safari-20261010.txt与sky-detail-fixed-after-safari-20261010.png位于.agent-state/continuity-runtime。覆盖本次本地详情正文和红外开启刷新恢复，不覆盖嵌套路径。
+
+本次full结束exit0，36项全部PASS，含Go race/vet；时间20261010T015338938460Z，指纹1222cfa1f70dee6bbf92586f9279816e5f032edd0c3cabcd81431fcec2f5e4f7，日志.agent-state/verify-20261010T015338938460Z.log。嵌套路径、关闭全部标签后的多分支恢复、容量淘汰及Windows实际设备仍未验收；本次仅源码推送，不进入正式release。

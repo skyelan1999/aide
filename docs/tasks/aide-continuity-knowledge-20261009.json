@@ -1516,6 +1516,47 @@
         "Only manual-to-assisted was observed in an already-open second tab without reload"
       ],
       "cleanup": "New rule revoked, original mode restored, temporary Safari tabs closed; original18211 draft and attachment preserved; test sessions/file retained"
+    },
+    "sky_detail_scroll_20261010": {
+      "status": "pass for tested local infrared-enabled reload and inner detail scroll",
+      "observed_failure": {
+        "browser": "native Safari actual9999",
+        "infrared": true,
+        "detailTextBefore": 870,
+        "detailTextAfter": 0,
+        "outerDetail": 0,
+        "search": 337
+      },
+      "fix": "Persist and restore scroll.detailText; legacy snapshot defaults to zero",
+      "source_vm": "pass",
+      "runtime_source_sha": "741103c2746475e1e073d5b565c688d0ed31bbce92cb7f60c393c3ab59093a4b",
+      "browser_retest": {
+        "environment": "native Safari actual9999",
+        "infraredBefore": true,
+        "infraredAfter": true,
+        "detailTextBefore": 870,
+        "detailTextAfter": 870,
+        "outerDetail": 0,
+        "search": 337,
+        "selected": "F00fd3f918b5c",
+        "animate": false,
+        "evidence": [
+          ".agent-state/continuity-runtime/sky-detail-fixed-before-safari-20261010.txt",
+          ".agent-state/continuity-runtime/sky-detail-fixed-after-safari-20261010.txt",
+          ".agent-state/continuity-runtime/sky-detail-fixed-after-safari-20261010.png"
+        ]
+      },
+      "remaining": [
+        "Nested cosmic path restore",
+        "Closed-tab branches, capacity, Windows"
+      ],
+      "full": {
+        "status": "pass",
+        "fingerprint": "1222cfa1f70dee6bbf92586f9279816e5f032edd0c3cabcd81431fcec2f5e4f7",
+        "time": "20261010T015338938460Z",
+        "log": ".agent-state/verify-20261010T015338938460Z.log",
+        "checks": 36
+      }
     }
   },
   "implementation_batch_20261010": {
