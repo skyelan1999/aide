@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Fixed Markdown import capture baseline and allocation high watermark; preparing docs/source push. Runtime acceptance still delegated to Luna.",
+    "latest_completed": "Markdown import baseline/revision allocation fix and docs pushed at 6a56dca. Compilation and docs checks passed; runtime acceptance delegated to Luna; production unchanged.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2214,7 +2214,12 @@
       "go_build": "PASS Docker golang:1.26 exit0",
       "runtime_tests_safari": "NOT_RUN; delegated to Luna"
     },
-    "push": "pending",
+    "push": {
+      "status": "pass",
+      "implementation_commit": "6a56dca8f4cc44839887a1e81897f882826813ad",
+      "command": "git push origin main",
+      "exit": 0
+    },
     "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md"
   }
 }
