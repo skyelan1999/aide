@@ -22,5 +22,23 @@ const backup=values=>({format:'aide-local-recovery',schema:1,count:values.length
  await assert.rejects(api.previewImport(backup([{...chatBranches,value:[{branch:'huge',text:'x'.repeat(2*1024*1024)}]}])),/上限/);
  for(const bad of [{schema:2}, {count:2},{records:[r('A','x'),r('A','x')],count:2},{records:[{...r('A','x'),key:JSON.stringify(['workspace','unknown','A'])}]},{records:[{...r('A','x'),value:JSON.parse('{"text":"x","__proto__":{}}')}]}])await assert.rejects(api.previewImport({...backup([r('A','x')]),...bad}));
  assert.equal(JSON.stringify([...records]),changed);
+ // Scoped archive keeps reversible backups; no server or tab snapshots involved.
+ const scoped=(id,text,updated=1)=>({...r(id,text,updated),key:JSON.stringify(['archive-workspace','chat',id])});
+ const archiveA=scoped('alpha','old alpha'),archiveB=scoped('beta','old beta');records.set(archiveA.key,archiveA);records.set(archiveB.key,archiveB);
+ let archivePlan=await api.previewArchive('archive-workspace');assert.equal(archivePlan.count,2);
+ const untouched=structuredClone(records.get(a.key));
+ let archived=await api.archiveRecovery(archivePlan);assert.equal(archived.count,2);assert.equal(records.has(archiveA.key),false);assert.deepEqual(records.get(a.key),untouched);
+ assert.equal((await api.listRecoveryOperations()).find(o=>o.id===archived.id).type,'archive');
+ await api.undoRecovery(archived.id);assert.deepEqual(records.get(archiveA.key),archiveA);assert.deepEqual(records.get(archiveB.key),archiveB);
+ archivePlan=await api.previewArchive('archive-workspace');records.set(scoped('new','new').key,scoped('new','new'));let snapshot=JSON.stringify([...records]);
+ await assert.rejects(api.archiveRecovery(archivePlan),/发生变化/);assert.equal(JSON.stringify([...records]),snapshot);
+ archivePlan=await api.previewArchive('archive-workspace');records.set(archiveA.key,scoped('alpha','new edit',2));snapshot=JSON.stringify([...records]);
+ await assert.rejects(api.archiveRecovery(archivePlan),/发生变化/);assert.equal(JSON.stringify([...records]),snapshot);
+ archivePlan=await api.previewArchive('archive-workspace');await assert.rejects(api.archiveRecovery(archivePlan,{active:()=>false}),/取消/);assert.equal(JSON.stringify([...records]),snapshot);
+ failPut=true;await assert.rejects(api.archiveRecovery(archivePlan),/Quota/);failPut=false;assert.equal(JSON.stringify([...records]),snapshot,'quota failure must roll back archive deletions');
+ archived=await api.archiveRecovery(archivePlan);records.set(archiveA.key,scoped('alpha','editing tab regenerated',3));snapshot=JSON.stringify([...records]);
+ await assert.rejects(api.undoRecovery(archived.id),/已变化/);assert.equal(JSON.stringify([...records]),snapshot,'restore must not overwrite new tab records');
+ const empty=await api.archiveRecovery(await api.previewArchive('empty'));assert.equal(empty.count,0);assert.equal(empty.id,null);
+ console.log('Scoped recovery archive, undo, concurrent added/edited records, cancellation, quota rollback and restore conflict PASS (in-memory IndexedDB fixture)');
  console.log('Recovery import preview, default skip, explicit replacement, transactional undo, concurrent changes, quota rollback and invalid input PASS (in-memory IndexedDB fixture)');
 })().catch(e=>{console.error(e);process.exitCode=1;});

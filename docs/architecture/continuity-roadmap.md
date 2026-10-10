@@ -3,13 +3,13 @@
 用户于 2026-10-09 授权全部执行。总目标处于进行中；以下不是已经完成的功能列表。
 
 
-当前逐项状态以[2026-10-10验收审计](../reviews/continuity-acceptance-audit-20261010.md)为准；下文保留各阶段历史边界。
+开发交接与最新待验收范围见[Luna交接](../reviews/luna-acceptance-handoff-20261010.md)。当前逐项状态以[2026-10-10验收审计](../reviews/continuity-acceptance-audit-20261010.md)为准；下文保留各阶段历史边界。
 
 ## 工作现场恢复
 
 会话草稿与附件、文件草稿、目录、光标、滚动、星图镜头，按工作区隔离；刷新/重启恢复，不自动发送。
 
-候选提供同源共享恢复记录统计与只读JSON导出，按工作区/类型列出序列化大小，浏览器使用/配额另列。导出不含其他打开标签页独有的即时快照；尚无导入、配额清理、保留期或跨设备恢复。原生Safari已验证统计、直接下载及专业配色浅/深色、390×844窄屏布局；尚不能视为完整容量管理。
+候选提供同源共享恢复记录统计、JSON导出、导入预览和原子撤销；按工作区/类型列出序列化大小，浏览器使用/配额另列。导出不含其他打开标签页独有的即时快照，导入不替换正在编辑的标签页。统计、下载、导入冲突和撤销已有原生Safari证据；配额清理、保留期、真实容量/崩溃及跨设备消费者仍待完成。
 
 ## 保存状态与冲突
 
@@ -293,3 +293,16 @@ Source VM and storage fixtures pass. Native Safari on isolated 18211 exposed an 
 ### 设置选项顺序（2026-10-10）
 
 设置导航按日常查看、模型与执行、个性与交互、数据维护排列：外观、语言、文件查看与渲染、知识索引、模型参数、执行策略、权限管理、连接与能力、aide 性格、语音助理、虚拟形象、无障碍、消耗统计、归档、配置备份、账户、系统日志、软件升级、关于、恢复出厂设置。首次打开默认外观；本次打开期间选择的页面保留。文件页先展示常用查看与编辑选项，随后历史版本、草稿恢复及存储管理；语音页先名称和模型，再输入、调度、回复和音色。仅修改 schema 顺序，配置 ID、值及保存逻辑保持兼容。
+
+### File draft ownership follow-up (2026-10-10)
+
+A directed restore-then-edit fixture reproduced the same ownership loss in file drafts: a fresh document restoring identical text replaced the previous owner, and the following edit removed the older draft. File writes now retain the original owner when consolidating identical snapshots; divergent edits create their own branch. Tab-local caret and scroll snapshots remain separate. Directed storage regression passes, including branch count and aggregate budget guards. Native Safari current-candidate acceptance and final full regression are pending; no production deployment or release is claimed.
+
+### 可撤销恢复记录归档（候选，2026-10-10）
+
+恢复存储分组新增“归档此范围”：先显示范围、记录数量与序列化大小，再显式确认。归档事务比较该范围全部记录，包括预览后新增的键；任何变化、取消或备份写入配额失败均不提交删除。归档保存同源撤销备份，原有标签页与服务器文件不变；现有标签页继续编辑可重新生成记录。恢复归档检查所有目标键仍为空，拒绝覆盖新记录。撤销备份仍占空间并单独显示大小，不将活动记录数量减少声称为释放浏览器配额。它不包含自动保留期、永久清理或跨设备归档；归档备份不含在常规恢复导出中。源/VM回归已通过；当前候选原生Safari和新完整回归待完成。
+
+
+## 开发交接：历史管理与恢复空间
+
+本批增加Markdown单文档完整历史ZIP导入（预览/校验/合并）、版本数与天数保留策略、同一历史身份目录的未引用对象预览与清理。保留默认关闭且始终保留最新版本，不自动删除源文件。恢复记录支持按范围归档、冲突校验撤销，以及单条永久清除撤销备份以释放相应存储。没有浏览器撤销备份自动过期或跨设备路径自动映射。新增实现尚未行为验收，后续按用户指定由Luna执行系统Safari、真实环境及full，并报告开发缺口；不能将语法/编译通过写成产品验收完成。详细API与边界见[Markdown历史](../plugins/markdown-history.md)。

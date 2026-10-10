@@ -119,6 +119,14 @@ assert.equal((await tab().api.readTab(scope,'file','same-file')).text,'file B un
 const auto=fs.readFileSync('internal/server/web/file-autosave.js','utf8');
 assert.ok(auto.includes('AideContinuity.writeTab(')&&auto.includes('AideContinuity.readTab(')&&auto.includes('AideContinuity.savedFileDraft(')&&auto.includes('AideContinuity.writeFileDraft(')&&auto.includes('AideContinuity.listFileDrafts('));
 assert.ok(!/AideContinuity\.(write|read|removeMatching)\(/.test(auto));
+// A new document restoring identical text must not take over the old owner.
+const fileOwner=tab(),fileRestorer=tab();
+await fileOwner.api.writeFileDraft(scope,'file-restore-edit',{text:'original draft',hash:'base',start:4});
+await fileRestorer.api.writeFileDraft(scope,'file-restore-edit',{text:'original draft',hash:'base',start:4});
+await fileRestorer.api.writeFileDraft(scope,'file-restore-edit',{text:'edited restored draft',hash:'base',start:8});
+const fileRestoredChoices=await tab().api.listFileDrafts(scope,'file-restore-edit');
+assert.deepEqual(fileRestoredChoices.map(d=>d.text).sort(),['edited restored draft','original draft'],'restore then edit must preserve the original file branch');
+assert.equal(fileRestoredChoices.find(d=>d.text==='original draft').start,4);
 // Closed contexts preserve divergent file branches without last-writer loss.
 await a.api.writeFileDraft(scope,'branch-file',{text:'closed A',hash:'base',start:3});
 await b.api.writeFileDraft(scope,'branch-file',{text:'closed B',hash:'base',start:7});
@@ -180,5 +188,20 @@ console.log('Recovery workspace isolation and matching deletion PASS (in-memory 
  result=buttons[1].onclick();locked=true;finish({format:'aide-local-recovery',created:'2026-10-10',count:1,records:[]});await result;assert.equal(downloads,0);
  locked=false;result=buttons[1].onclick();panel.isConnected=false;finish({created:'2026-10-10',count:1});await result;assert.equal(downloads,0);
  const live=render();result=live.children[2].children[1].onclick();finish({created:'2026-10-10',count:1});await result;assert.equal(downloads,1);assert.equal(errors.length,0);
+ let archived=0,undone=0;
+ const recovery=managerContext.window.AideContinuity;
+ recovery.previewArchive=async scope=>({scope,count:1,bytes:100,entries:[]});
+ recovery.archiveRecovery=async(plan,{active})=>{assert.equal(active(),true);assert.equal(plan.scope,'scope');archived++;return {count:1,id:'archive-fixture'};};
+ recovery.listRecoveryOperations=async()=>archived&&!undone?[{id:'archive-fixture',type:'archive',scope:'scope',count:1,updated:1,bytes:180}]:[];
+ recovery.undoRecovery=async(id,{active})=>{assert.equal(id,'archive-fixture');assert.equal(active(),true);undone++;};
+ const managed=render();result=managed.children[2].children[0].onclick();finish(summary);await result;
+ const archiveButton=managed.children[6].children[0].children.find(e=>e.textContent==='归档此范围');
+ await archiveButton.onclick();assert.equal(archived,0,'preview must not archive');
+ const preview=managed.children[4];assert.ok(preview.children.some(e=>e.textContent?.includes('不等于释放配额')));
+ const confirm=preview.children.find(e=>e.textContent==='确认归档');
+ locked=true;await confirm.onclick();assert.equal(archived,0,'lock must block archiving');locked=false;
+ await confirm.onclick();assert.equal(archived,1);assert.equal(managed.children[6].children.length,0);
+ const undo=managed.children[5].children[0].children.find(e=>e.textContent==='恢复此归档');await undo.onclick();assert.equal(undone,1);
+ console.log('Recovery archive preview, explicit confirmation, lock guard and restore action PASS (VM UI fixture)');
  console.log('Recovery manager inventory, direct download, lock and detached-view guards PASS');
 })().catch(e=>{console.error(e);process.exitCode=1;});

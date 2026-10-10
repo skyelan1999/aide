@@ -1,6 +1,27 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "清除撤销备份": "Discard undo backup",
+  "永久删除此操作的撤销备份以释放空间；此操作不能撤销，不修改当前草稿或服务器文件。": "Permanently delete this undo backup to release storage. This cannot be undone; current drafts and server files are unchanged.",
+  "确认永久清除": "Confirm permanent deletion",
+  "已清除撤销备份": "Undo backup discarded",
+  "历史备份与保留管理": "History backup and retention",
+  "导入历史 ZIP": "Import history ZIP",
+  "预览保留策略": "Preview retention policy",
+  "预览未引用对象": "Preview unreferenced objects",
+  "最多保留版本数（0 不限）": "Maximum versions (0 unlimited)",
+  "最多保留天数（0 不限）": "Maximum age in days (0 unlimited)",
+  "先下载备份。导入仅合并历史；保留策略会移除旧版本索引，至少保留最新版本。对象清理覆盖同一来源的历史库，并保护其他文档和恢复记录。": "Download a backup first. Import merges history only. Retention removes old version entries, preserving the latest. Object cleanup covers history for this source and protects other documents and restore journals.",
+  "确认执行": "Confirm action",
+  "历史管理操作已完成；重新打开历史查看最新列表": "History operation complete; reopen history for the updated list",
+  "保留设置必须为整数": "Retention values must be integers",
+  "将移除旧版本索引": "Old version entries to remove",
+  "保留": "Retain",
+  "此操作不能撤销，建议先下载历史备份。": "This cannot be undone. Download a history backup first.",
+  "将永久清理未引用对象": "Unreferenced objects to permanently remove",
+  "历史备份超过 64 MiB": "History backup exceeds 64 MiB",
+  "将合并历史版本": "History versions to merge",
+  "当前文档和资源不会修改": "Current document and resources remain unchanged",
   "导入恢复备份": "Import recovery backup",
   "撤销此导入": "Undo this import",
   "条记录": "records",
@@ -2043,6 +2064,14 @@ window.aideEnglish = {
  "索引目录范围":"Index scope paths",
  "范围 JSON 使用来源编号和相对路径数组；空数组表示整个来源。仅作用于本地索引，不改变 AI 文件访问权限。优先路径须在范围内。":"Scope JSON maps source IDs to relative paths; an empty array includes the whole source. Applies to local indexing only, without changing AI file access. Priority paths must be within scope.",
  "JSON：来源编号映射到相对路径数组，例如 {\"workspace\":[\"src\",\"docs\"]}。本地增量扫描先寻址优先目标；SSH等远程来源沿用原预算。":"JSON maps source IDs to relative path arrays, for example {\"workspace\":[\"src\",\"docs\"]}. Local incremental scans address priority targets first; remote sources retain existing budgets.",
+  "恢复此归档": "Restore this archive",
+  "已恢复归档；现有标签页快照保持不变": "Archive restored; existing tab snapshots are unchanged",
+  "归档此范围": "Archive this scope",
+  "恢复记录归档预览": "Recovery archive preview",
+  "仅归档此范围的共享恢复记录，保留可撤销备份；不会修改服务器文件或现有标签页。备份仍占空间，此操作不等于释放配额。现有标签页继续编辑可重新生成记录。": "Archive shared recovery records in this scope with an undo backup. Server files and existing tabs are unchanged. The backup still uses space; this does not free quota. Editing in existing tabs may create records again.",
+  "确认归档": "Confirm archive",
+  "已归档共享恢复记录": "Shared recovery records archived",
+  "可撤销备份": "Undo backup",
 };
 
 Object.assign(window.aideEnglish, {

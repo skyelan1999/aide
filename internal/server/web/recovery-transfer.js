@@ -41,20 +41,62 @@
         if(!pending)finish();tx.oncomplete=()=>resolve(result);tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('恢复存储事务中断'));
       });
     }
-    async function listRecoveryOperations(){return [...(await collect()).values()].filter(r=>{try{return JSON.parse(r.key)[1]===operationKind;}catch(_e){return false;}}).map(r=>({id:r.value.id,updated:r.updated,count:r.value.changes.length})).sort((a,b)=>b.updated-a.updated);}
+    async function previewArchive(scope){
+      if(typeof scope!=='string'||!scope||scope.length>4096)throw Error('恢复范围无效');
+      const records=[...(await collect()).values()].filter(r=>{try{const p=JSON.parse(r.key);return p[0]===scope&&p[1]!==operationKind;}catch(_e){return false;}});
+      validate({format:'aide-local-recovery',schema:1,count:records.length,records});
+      return {scope,entries:records.map(before=>({key:before.key,before})),count:records.length,bytes:bytes(records)};
+    }
+    async function archiveRecovery(plan,{active=()=>true}={}){
+      if(!plan||!Array.isArray(plan.entries)||!plan.scope||plan.entries.some(e=>e.key!==e.before?.key||JSON.parse(e.key)[0]!==plan.scope))throw Error('恢复归档预览无效');
+      validate({format:'aide-local-recovery',schema:1,count:plan.entries.length,records:plan.entries.map(e=>e.before)});
+      const db=await open();return new Promise((resolve,reject)=>{
+        const tx=db.transaction('records','readwrite'),store=tx.objectStore('records');let failure,result;
+        const fail=e=>{failure=e;tx.abort();};
+        const finish=()=>{try{
+          if(!active())throw Error('恢复操作已取消');
+          if(!plan.entries.length){result={count:0,id:null};return;}
+          const id=crypto.randomUUID(),changes=plan.entries.map(e=>({key:e.key,before:e.before,after:null}));
+          const operation={key:operationKey(id),updated:Date.now(),value:{id,type:'archive',scope:plan.scope,changes}};
+          if(bytes(operation)>LIMIT)throw Error('恢复操作备份超过 64 MiB');
+          for(const c of changes)store.delete(c.key);store.put(operation);result={count:changes.length,id};
+        }catch(e){fail(e);}};
+        // Compare the whole scope inside the same transaction, including added
+        // keys, so preview cannot silently miss another tab's new draft.
+        const request=store.openCursor(),expected=new Map(plan.entries.map(e=>[e.key,e.before]));
+        request.onsuccess=()=>{if(failure)return;try{
+          const cursor=request.result;
+          if(cursor){const record=cursor.value;let parts;try{parts=JSON.parse(record.key);}catch(_e){}
+            if(parts?.[0]===plan.scope&&parts[1]!==operationKind){if(!same(record,expected.get(record.key)))throw Error('恢复记录发生变化，请重新查看归档范围');expected.delete(record.key);}
+            cursor.continue();
+          }else{if(expected.size)throw Error('恢复记录发生变化，请重新查看归档范围');finish();}
+        }catch(e){fail(e);}};
+        tx.oncomplete=()=>resolve(result);tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('恢复存储事务中断'));
+      });
+    }
+    async function listRecoveryOperations(){return [...(await collect()).values()].filter(r=>{try{return JSON.parse(r.key)[1]===operationKind;}catch(_e){return false;}}).map(r=>({id:r.value.id,type:r.value.type,scope:r.value.scope||'',updated:r.updated,count:r.value.changes.length,bytes:bytes(r)})).sort((a,b)=>b.updated-a.updated);}
+    // Discard only the undo journal. Live drafts and server files are untouched.
+    // Requiring the displayed timestamp prevents deleting a changed operation.
+    async function discardRecoveryOperation(id,updated,{active=()=>true}={}){
+      const db=await open();return new Promise((resolve,reject)=>{
+        const tx=db.transaction('records','readwrite'),store=tx.objectStore('records'),req=store.get(operationKey(id));let failure;
+        req.onsuccess=()=>{try{if(!active())throw Error('恢复操作已取消');const r=req.result;if(!r||r.updated!==updated||r.value.id!==id)throw Error('恢复操作记录已变化，请重新加载');store.delete(r.key);}catch(e){failure=e;tx.abort();}};
+        tx.oncomplete=()=>resolve({discarded:id});tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('恢复存储事务中断'));
+      });
+    }
     async function undoRecovery(id,{active=()=>true}={}){
       const db=await open();return new Promise((resolve,reject)=>{
         const tx=db.transaction('records','readwrite'),store=tx.objectStore('records'),request=store.get(operationKey(id));let failure,count=0;
         const fail=e=>{failure=e;tx.abort();};
         request.onsuccess=()=>{try{const op=request.result;if(!op)throw Error('恢复操作记录不存在');const changes=op.value.changes;let pending=changes.length;
           const finish=()=>{try{if(!active())throw Error('恢复操作已取消');for(const c of changes){if(c.before)store.put(c.before);else store.delete(c.key);}store.delete(op.key);count=changes.length;}catch(e){fail(e);}};
-          for(const c of changes){const r=store.get(c.key);r.onsuccess=()=>{if(failure)return;if(!same(r.result||null,c.after))return fail(Error('导入后的记录已变化，不能撤销覆盖新内容'));if(!--pending)finish();};}
+          for(const c of changes){const r=store.get(c.key);r.onsuccess=()=>{if(failure)return;if(!same(r.result||null,c.after))return fail(Error('操作后的记录已变化，不能撤销覆盖新内容'));if(!--pending)finish();};}
           if(!pending)finish();
         }catch(e){fail(e);}};
         tx.oncomplete=()=>resolve({count});tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('恢复存储事务中断'));
       });
     }
-    return {previewImport,importRecovery,listRecoveryOperations,undoRecovery};
+    return {previewImport,importRecovery,previewArchive,archiveRecovery,listRecoveryOperations,undoRecovery,discardRecoveryOperation};
   }
   window.AideRecoveryTransfer={create,validate};
 })();

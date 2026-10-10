@@ -14,8 +14,8 @@
     tx.oncomplete=()=>resolve(request.result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('恢复存储事务中断'));
   });}
   const key=(scope,kind,id)=>JSON.stringify([scope,kind,id]);
-  // Each loaded document owns a branch. Reloads may consolidate identical
-  // content, but divergent documents never replace each other's branch.
+  // Each loaded document owns a branch. Identical restoration keeps the
+  // original owner so the next edit cannot overwrite another draft.
   const fileBranch=crypto.randomUUID();
   async function fileTransaction(scope,id,change){
     const db=await open();return new Promise((resolve,reject)=>{
@@ -31,8 +31,8 @@
     if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
     sessionStorage.setItem(tabKey(scope,'file',id),serialized);
     return fileTransaction(scope,id,(store,branches)=>{
-      const next=branches.filter(b=>b.branch!==fileBranch&&!(b.text===value.text&&b.hash===value.hash));
-      next.push({...value,branch:fileBranch,updated:Date.now()});
+      const next=branches.filter(b=>b.branch!==fileBranch);
+      if(!next.some(b=>b.text===value.text&&b.hash===value.hash))next.push({...value,branch:fileBranch,updated:Date.now()});
       if(next.length>32||new Blob([JSON.stringify(next)]).size>8*1024*1024)
         throw new Error('此文件恢复草稿已达上限；请保存或逐项忽略旧草稿，当前编辑仅保留在本标签页');
       store.put({key:key(scope,'file-branches',id),value:next,updated:Date.now()});

@@ -196,7 +196,12 @@ func (a *App) captureMarkdown(dir, p string, b []byte, embedded bool, read func(
 	if len(index.Versions) > 0 && index.Versions[len(index.Versions)-1].Fingerprint == fingerprint {
 		return nil
 	}
-	index.Versions = append(index.Versions, markdownRevision{ID: fmt.Sprintf("%06d", len(index.Versions)+1), Created: time.Now().UTC().Format(time.RFC3339Nano), Content: digest, Fingerprint: fingerprint, Assets: assets})
+	index.Versions = append(index.Versions, markdownRevision{ID: nextMarkdownRevision(index), Created: time.Now().UTC().Format(time.RFC3339Nano), Content: digest, Fingerprint: fingerprint, Assets: assets})
+	policy, err := loadMarkdownRetention(dir, p)
+	if err != nil {
+		return err
+	}
+	index = retainMarkdown(index, policy, time.Now().UTC())
 	return atomicJSON(historyIndexPath(dir, p), index)
 }
 func (a *App) withMarkdownHistory(identity, p string, b []byte, read func(string) ([]byte, error), write func() error) error {

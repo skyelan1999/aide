@@ -57,6 +57,7 @@
     storage.onclick=async()=>{storage.disabled=true;try{const result=await backupRequest(false);if(result)describe(result);}catch(e){error(e);}finally{storage.disabled=false;}};
     download.onclick=async()=>{download.disabled=true;try{const result=await backupRequest(true);if(!result)return;describe(result);const raw=Uint8Array.from(atob(result.base64),c=>c.charCodeAt(0)),url=URL.createObjectURL(new Blob([raw],{type:'application/zip'}));const link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);storageInfo.textContent+=' · '+t('已验证归档对象摘要');}catch(e){error(e);}finally{download.disabled=false;}};
     backupArea.append(storage,download,storageInfo);
+    if(window.AideMarkdownHistoryManager)backupArea.append(window.AideMarkdownHistoryManager.render({spec,api,t,error,isActive:()=>!blocked()&&dialog.open&&request===epoch&&!['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')),onChanged:()=>dialog.close()}));
     dialog.append(head,status,backupArea,layout);dialog.addEventListener('close',()=>{selection++;if(activeDialog===dialog)activeDialog=null;dialog.remove();},{once:true});document.body.append(dialog);dialog.showModal();close.focus();
    }catch(e){error(e);}finally{button.disabled=false;}
   };

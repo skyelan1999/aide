@@ -21,8 +21,10 @@
       try{await operation(e);}catch(err){if(valid(e))error(err);}finally{inspect.disabled=download.disabled=upload.disabled=false;}}
     async function showOperations(e){
       const items=await window.AideContinuity.listRecoveryOperations?.()||[];if(!valid(e))return;operations.replaceChildren();
-      for(const item of items){const row=node('div','recovery-manager-row'),undo=node('button','quiet',t('撤销此导入'));undo.type='button';row.append(node('span','',new Date(item.updated).toLocaleString()+' · '+item.count+' '+t('条记录')),undo);
-        undo.onclick=()=>execute(async n=>{await window.AideContinuity.undoRecovery(item.id,{active:()=>valid(n)});if(!valid(n))return;status.textContent=t('已撤销导入；现有标签页快照保持不变');await showOperations(n);});operations.append(row);}
+      for(const item of items){const row=node('div','recovery-manager-row'),undo=node('button','quiet',t(item.type==='archive'?'恢复此归档':'撤销此导入'));undo.type='button';row.append(node('span','',new Date(item.updated).toLocaleString()+' · '+item.count+' '+t('条记录')),node('small','muted',t('可撤销备份')+' · '+size(item.bytes)+(item.scope?' · '+item.scope:'')),undo);
+        undo.onclick=()=>execute(async n=>{await window.AideContinuity.undoRecovery(item.id,{active:()=>valid(n)});if(!valid(n))return;status.textContent=t(item.type==='archive'?'已恢复归档；现有标签页快照保持不变':'已撤销导入；现有标签页快照保持不变');await showOperations(n);});
+        const discard=node('button','quiet',t('清除撤销备份'));discard.type='button';row.append(discard);
+        discard.onclick=()=>{if(blocked())return;transfer.replaceChildren();transfer.append(node('p','',t('永久删除此操作的撤销备份以释放空间；此操作不能撤销，不修改当前草稿或服务器文件。')),node('code','',item.id));const confirm=node('button','quiet',t('确认永久清除')),cancel=node('button','quiet',t('取消'));confirm.type=cancel.type='button';transfer.append(confirm,cancel);cancel.onclick=()=>{epoch++;transfer.replaceChildren();};confirm.onclick=()=>execute(async n=>{await window.AideContinuity.discardRecoveryOperation(item.id,item.updated,{active:()=>valid(n)});if(!valid(n))return;transfer.replaceChildren();status.textContent=t('已清除撤销备份');await showOperations(n);});};operations.append(row);}
     }
     upload.onclick=()=>{if(!blocked())input.click();};
     input.onchange=()=>execute(async e=>{
@@ -38,7 +40,14 @@
       const data=await window.AideContinuity.inventory();if(!valid(e))return;
       status.textContent=t('共享记录')+' '+data.count+' · '+t('序列化大小')+' '+size(data.bytes);
       if(data.originStorage)status.textContent+=' · '+t('浏览器使用／配额')+' '+size(data.originStorage.usage)+' / '+size(data.originStorage.quota);
-      list.replaceChildren();for(const group of data.groups){const row=node('div','recovery-manager-row');row.append(node('code','',group.scope),node('span','',group.count+' · '+size(group.bytes)),node('small','muted',Object.entries(group.kinds).map(([kind,count])=>kind+': '+count).join(' · ')));list.append(row);}
+      list.replaceChildren();for(const group of data.groups){const row=node('div','recovery-manager-row');row.append(node('code','',group.scope),node('span','',group.count+' · '+size(group.bytes)),node('small','muted',Object.entries(group.kinds).map(([kind,count])=>kind+': '+count).join(' · ')));const archive=node('button','quiet',t('归档此范围'));archive.type='button';row.append(archive);
+        archive.onclick=()=>execute(async n=>{
+          const plan=await window.AideContinuity.previewArchive(group.scope);if(!valid(n))return;
+          transfer.replaceChildren();transfer.append(node('h4','',t('恢复记录归档预览')),node('code','',group.scope),node('p','',t('共享记录')+' '+plan.count+' · '+size(plan.bytes)),node('p','muted',t('仅归档此范围的共享恢复记录，保留可撤销备份；不会修改服务器文件或现有标签页。备份仍占空间，此操作不等于释放配额。现有标签页继续编辑可重新生成记录。')));
+          const apply=node('button','quiet',t('确认归档')),cancel=node('button','quiet',t('取消'));apply.type=cancel.type='button';apply.disabled=!plan.count;transfer.append(apply,cancel);
+          cancel.onclick=()=>{epoch++;transfer.replaceChildren();};
+          apply.onclick=()=>execute(async current=>{const result=await window.AideContinuity.archiveRecovery(plan,{active:()=>valid(current)});if(!valid(current))return;transfer.replaceChildren();list.replaceChildren();status.textContent=t('已归档共享恢复记录')+' '+result.count;await showOperations(current);});
+        });list.append(row);}
       await showOperations(e);
     });
     download.onclick=()=>execute(async e=>{

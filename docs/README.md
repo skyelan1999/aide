@@ -81,3 +81,5 @@ docs/
 
 - [Markdown 编辑布局与 PDF 导出](architecture/markdown-editing-export.md)：左右对比、纯文本及浏览器 PDF 排版。
 - [Markdown 历史版本插件](plugins/markdown-history.md)：原文编辑、保存去重与嵌入资源快照。
+
+- [Luna 连续工作与知识能力验收交接](reviews/luna-acceptance-handoff-20261010.md)：本批开发、验收步骤、运行服务与发布边界。

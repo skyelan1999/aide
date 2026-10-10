@@ -2023,7 +2023,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "当前候选完整回归38项通过，源码指纹一致；关闭页面后的会话草稿、附件和中间光标恢复已完成系统Safari验收。",
+    "latest_completed": "Markdown import/retention/GC and permanent undo-backup disposal implemented; syntax/build passed. User assigned runtime acceptance to Luna; handoff prepared. No new full or production deployment.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2033,7 +2033,7 @@
       "checks": 38
     },
     "remaining": [
-      "审阅本批修改、更新文档并推送；生产部署与发布另行记录",
+      "Finish reviewed development handoff push; Luna runtime acceptance; production deployment/release remain gated",
       "恢复分支所有权、容量/崩溃边界和星图恢复继续复核",
       "真实向量服务、远程来源及SSH审批/网络边界验收",
       "输入与输出运行中多页一致性、备份保留与清理管理闭环",
@@ -2043,7 +2043,7 @@
     "production": "本批未部署到9999；未release"
   },
   "implementation_batch_push_20261010": {
-    "status": "in_progress",
+    "status": "pass",
     "scope": "closed chat branches; session input/output overview; settings ordering",
     "full": {
       "status": "pass",
@@ -2054,6 +2054,110 @@
       "checks": 38
     },
     "review": "Owned 18 paths reviewed; configuration schema IDs/values unchanged; task projection excludes reasoning; source and native Safari evidence recorded.",
-    "deployment": "production9999 unchanged; no release"
+    "deployment": "production9999 unchanged; no release",
+    "commit": "5db4e66",
+    "push": "git push origin main exit0; main tracking origin/main clean before next batch",
+    "remote_probe": "PASS git ls-remote origin refs/heads/main: 5db4e6672399a01c3972ff2c5b8c235b671990c1"
+  },
+  "file_branch_ownership_followup_20261010": {
+    "status": "in_progress",
+    "reproduced": "Source fixture restore same text in fresh document then edit lost original branch; assertion failed before fix.",
+    "implementation": "Deduplicate identical snapshots without transferring their ownership; next divergent edit adds its own branch.",
+    "evidence": ".agent-state/file-ownership-before-20261010.txt",
+    "remaining": [
+      "native Safari pending Mac unlock",
+      "review and push"
+    ],
+    "production": "9999 unchanged",
+    "directed_regression": "PASS node scripts/continuity-isolation.test.cjs; before-fix assertion reproduced lost original branch",
+    "browser": "pending: system Mac locked, manual unlock requested",
+    "full": {
+      "profile": "full",
+      "status": "pass",
+      "fingerprint": "6245a69b9e4049f643c00a9370e8c031083a04cfa675302ece5ebc28d6e2bc2a",
+      "head": "5db4e6672399a01c3972ff2c5b8c235b671990c1",
+      "time": "20261010T054642705523Z",
+      "log": ".agent-state/verify-20261010T054642705523Z.log",
+      "checks": 38
+    },
+    "startup": "PASS isolated18211 start.command exit0; current candidate file-ownership-20261010; production9999 unchanged",
+    "candidate": {
+      "startup": "start.command exit0",
+      "instance": "18211",
+      "container": "10252103f1c7",
+      "binarySha256": "c79c39a0115a8f72772329246da07bec9a01c9adfff31835f88d3f67ae325a48",
+      "health": "healthy",
+      "production": "9999 unchanged"
+    },
+    "full_live_evidence": "Terminal PASS session58669; no longer live. See full receipt above."
+  },
+  "documentation_reconciliation_20261010": {
+    "status": "pass",
+    "scope": "Latest audit checkpoint and roadmap current recovery import boundary",
+    "check": "python3 scripts/check_docs.py exit0:183 Markdown,481 local links",
+    "reason": "Old top-level no-import claim contradicted implemented and native-accepted import/undo; historical sections retained as historical.",
+    "remaining": "file candidate system Safari pending manual unlock; full regression live58669; no release/deployment"
+  },
+  "embedding_actual_instance_check_20261010": {
+    "status": "not_run",
+    "read_only_probe": "PASS docker exec aide-aide-1 filtered policy metadata; /data/config/knowledge-embedding absent,0 configured policies",
+    "source": "internal/server/knowledge_embedding_policy.go: per-workspace independent policy, default opt-out; start.command delegates startup only",
+    "meaning": "Chat model startup configuration does not establish an embedding provider; real vector E2E cannot be claimed.",
+    "credentials": "No model key read or output; no credential copy",
+    "next": "User configuration requested in settings; other work continues"
+  },
+  "recovery_archive_candidate_20261010": {
+    "status": "in_progress",
+    "scope": "Explicit scoped shared-record archive with same-origin undo backup",
+    "implementation": "Preview then explicit confirmation; atomically compare all scoped keys including new records, preserve backup then remove shared entries; undo refuses regenerated/changed keys. Existing tab snapshots and server files unchanged.",
+    "directed": "PASS in-memory IndexedDB archive/restore/concurrent-new/concurrent-edit/cancel/quota rollback/restore conflicts; VM UI preview/confirm/lock/restore; i18n PASS",
+    "limits": [
+      "Undo backup retains bytes; not quota reclamation",
+      "No auto expiry, permanent purge, retention or cross-device archive",
+      "Native Safari current candidate pending Mac unlock",
+      "New full required because source changed after file-only6245a69 receipt"
+    ],
+    "production": "9999 unchanged; candidate not pushed or released",
+    "full": {
+      "status": "failed",
+      "reason": "Docker Go race/vet command exceeded full verifier 600-second timeout",
+      "log": ".agent-state/verify-20261010T062740719431Z.log",
+      "meaning": "Not a passing full receipt; Luna must inspect and rerun latest source"
+    }
+  },
+  "local_docker_embedding_20261010": {
+    "status": "deferred_by_user",
+    "request": "Self-host embedding with Docker; user subsequently requested postponing this test",
+    "observed": "Production embedding policy disabled, no endpoint/model/key configured. Official Ollama image pull interrupted with exit 130. No embedding service created and no production policy changed.",
+    "remaining": "Resume service setup and real hybrid retrieval acceptance when requested"
+  },
+  "development_handoff_20261010": {
+    "status": "in_progress",
+    "user_instruction": "先把开发的部分做完，验收的部分写个交接文档，我让luna后面去做；其他的部分改完文档全部push",
+    "implementation": [
+      "File restored draft ownership preservation",
+      "Scope archive and conflict guarded undo",
+      "Explicit permanent undo-backup disposal",
+      "Markdown history ZIP validation, preview and additive import",
+      "Per-document opt-in count/day retention; preserve latest and stable IDs",
+      "Namespace unreferenced object preview and guarded cleanup protecting indexes and restore journals",
+      "History management UI and translations"
+    ],
+    "verification": {
+      "js_syntax": "PASS node --check markdown-history-manager.js, markdown-history.js, recovery-manager.js, recovery-transfer.js, locales/en.js",
+      "go_build": "PASS Docker golang:1.26 go build -mod=vendor ./cmd/aide; final formatting/build exit0",
+      "docs": "PASS check_docs.py:184 Markdown,481 links before handoff index link",
+      "runtime_browser_ssh_full": "NOT_RUN for new development; deferred to Luna per user"
+    },
+    "handoff": "docs/reviews/luna-acceptance-handoff-20261010.md",
+    "production": "9999 not restarted;18211 does not yet contain new Markdown management",
+    "release": "not_run",
+    "push": "authorized; pending final review and git push",
+    "remaining_development_boundaries": [
+      "Cross-device recovery requires explicit JSON import and matching workspace identities; no automatic path remapping",
+      "No automatic expiry of browser undo backups; explicit disposal implemented",
+      "No structured release receipt in input/output yet",
+      "Full service data disaster recovery not supplied by single-document ZIP"
+    ]
   }
 }
