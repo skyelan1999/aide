@@ -85,3 +85,7 @@ Luna须验收：默认0不删除；设置1天后已过期备份清除及未过�
 ## 后续开发：结构化发布记录（待验收）
 
 任务详情支持JSON预览/确认导入、持久保存、重复摘要幂等和旧快照拒绝。不会推断已核验状态，也不会调用远端发布或部署。操作契约、生成工具及验收清单见 [任务发布记录](release-receipts-20261010.md)。Go Docker编译、JS/Python语法检查通过；API、运行回归与Safari NOT_RUN。将这组验收加入完整回归，核对源代码变化后的新指纹，不能复用旧full收据。
+
+### 最新源码交付回执
+
+结构化发布记录源码及文档提交 `cc20d13f9cd5bf8876a88d4b149052cd94041867` 已推送，`git push origin main` exit0，`git ls-remote origin refs/heads/main` 独立核对相同提交。Docker Go编译exit0；JS/Python语法、diff检查通过；文档185份Markdown、488条本地链接通过。本批运行/API/full/Safari验收未执行；生产9999及候选18211未更新，未Release。验收以实际HEAD为准，后续纯文档收据不改变产品代码。
