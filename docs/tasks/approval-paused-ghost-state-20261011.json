@@ -76,5 +76,5 @@
   },
   "release_authorization": "",
   "rollback": "源码回退可由单独 revert 本任务提交恢复；运行实例通过同一 start.command 重建上一提交源码镜像。Compose named volumes aide-data/aide-home 与工作区 bind mount 保持不变；本修复不迁移或删除数据。",
-  "handoff": "全量门禁38/38、start.command本机9999候选与原生Safari全局模式往返/跨标签策略读回均通过；原辅助审批已恢复。待提交并推送本修复；不代表上位12项持续目标整体验收或release完成。"
+  "handoff": "已提交并推送至 origin/main：c97fd75 (fix: avoid ghost review state on paused tasks)。全量门禁38/38、start.command本机9999候选与原生Safari全局模式往返/跨标签策略读回均通过；原辅助审批已恢复。不代表上位12项持续目标整体验收或release完成。"
 }
