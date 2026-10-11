@@ -39,15 +39,12 @@
       ]
     },
     "verification": {
-      "status": "blocked",
-      "summary": "锁屏集群状态、选举、锁屏入口及仓库 quick 通过；完整门禁因 Docker Desktop 不可用失败；start.command 同因无法打开 Docker 而未启动候选，Safari 候选验证待重试。",
+      "status": "pass",
+      "summary": "Safari 实机新标签及刷新验证：首屏中性加载后稳定读回 /Users/skyelan/debug，会话列表可用，锁定入口为“点击锁定”，无锁屏遮罩；完整门禁 38/38 PASS，Docker Go race/vet included。",
       "evidence": [
-        "node scripts/lock-cluster-state.test.js PASS including stale persisted peer snapshot and bounded unavailable-server fallback",
-        "node scripts/lock-cluster-election.test.js PASS",
-        "node scripts/lock-entry.test.cjs PASS",
-        "python3 scripts/agent-route.py verify quick PASS, fingerprint 0c3e6ed7595561c08f2ea1a9d828d42366d0ee37354642325f13ec7f1aeb6b32",
-        "python3 scripts/agent-route.py verify full blocked at bash scripts/aide.sh test; Docker unavailable; .agent-state/verify-20261011T035811759785Z.log",
-        "AIDE_OPEN_BROWSER=0 ./start.command EXIT 1: Unable to find application named Docker; Safari candidate acceptance NOT_RUN"
+        "python3 scripts/agent-route.py verify full PASS; 38 checks; fingerprint 0c3e6ed7595561c08f2ea1a9d828d42366d0ee37354642325f13ec7f1aeb6b32; head 0c3776618abb3df09a7e465a0f512f0e717cb2a1; log .agent-state/verify-20261011T041027593718Z.log",
+        "Native Safari https://localhost:9999 fresh-tab/reload stable AX state: workspace /Users/skyelan/debug; session list loaded; lock entry is “点击锁定” (unlocked action); latest screenshot shows workbench without lock curtain.",
+        "AIDE_OPEN_BROWSER=0 ./start.command successfully rebuilt and started candidate with source commit 0c3776618abb3df09a7e465a0f512f0e717cb2a1; no session/password/approval configuration changed."
       ]
     },
     "documentation": {
@@ -66,13 +63,13 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "实现提交 54c031a 已推送到 origin/main；产品 release/部署未执行，继续等待 Safari 候选验收和 Docker 完整门禁。",
+      "summary": "修复代码 54c031a 已推送；验收收据随 0c37766 已推送。完整代码门禁和本次锁态 Safari 验收通过；未执行产品 release/deploy，因为总目标仍有多个工作流验收、回滚和 release gate 未闭合。",
       "evidence": [
-        "git push origin main: 0540a27..54c031a"
+        "origin/main candidate source 0c3776618abb3df09a7e465a0f512f0e717cb2a1"
       ]
     }
   },
   "release_authorization": "",
   "rollback": "仅还原 lock-cluster.js 本次 authorityPending 屏障及定向回归，不触碰其他任务或用户运行数据。",
-  "handoff": "源码已推送：54c031a。恢复 Docker Desktop 后运行 AIDE_OPEN_BROWSER=0 ./start.command，在 Safari 对 https://localhost:9999 新标签启动与刷新重复验收；确认稳定后再跑 verify full。向量检索验收继续按用户要求暂缓，Windows 设备验收无环境。"
+  "handoff": "锁屏启动状态子任务已完成并推送：54c031a 实现，0c37766 验收收据。完整门禁 38/38 PASS（.agent-state/verify-20261011T041027593718Z.log）；原生 Safari 新标签及刷新稳定恢复到 /Users/skyelan/debug 且无锁屏遮罩。继续总目标剩余验收；向量仍按用户要求暂缓，Windows 无环境。"
 }

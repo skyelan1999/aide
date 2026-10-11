@@ -1,0 +1,74 @@
+{
+  "id": "starmap-scene-safari-20261011",
+  "request": "继续完整验收：使用系统 Safari 验证知识星图镜头、筛选和视角在同工作区新标签/刷新/入口重开时的隔离与恢复；记录真实观察，避免自动搜索或AI调用，并在验后恢复原视角。",
+  "baseline": "0c3776618abb3df09a7e465a0f512f0e717cb2a1",
+  "initial_status": "M docs/tasks/aide-continuity-knowledge-20261009.json\n M docs/tasks/lock-bootstrap-state-20261011.json",
+  "acceptance": [
+    "同一工作区星图刷新后，镜头与筛选恢复；不自动执行搜索或 AI。",
+    "归位动作回到初始镜头，保存后的页面画面可读且未意外更改筛选。",
+    "不同工作区镜头/筛选隔离，多标签镜头状态按标签独立；服务重启后恢复范围明确。"
+  ],
+  "scope": [
+    "internal/server/web/starmap.js",
+    "internal/server/web/continuity.js",
+    "scripts/starmap-workspace-scene.test.cjs",
+    "docs/tasks/starmap-scene-safari-20261011.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "本轮只验收现有星图场景恢复：同工作区刷新要恢复视角/筛选且不能自动搜索或调用 AI。",
+      "evidence": [
+        "用户授权完整验收，向量检索仍暂缓；按系统 Safari 要求使用 https://localhost:9999 的当前候选。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用按 workspace 分区、按 tab 写入的 Continuity scene；恢复视角通过允许值校验，恢复 query 不自动发起文档搜索。",
+      "evidence": [
+        "internal/server/web/starmap.js: persistSkyView / restoreSkyView / scheduleSkyRecovery",
+        "scripts/starmap-workspace-scene.test.cjs"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "本任务未修改产品源码；验收已推送版本现有实现及工作区/标签页场景保存逻辑。",
+      "evidence": [
+        "HEAD 0c3776618abb3df09a7e465a0f512f0e717cb2a1"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Safari 原生浏览器在 channel 5b8febfe-461b-44c0-94c9-57e6d55da8a3 上刷新后显示“已恢复上次星图视角与筛选；未自动执行检索或 AI”，检索输入为空、知识视图/全部星域保持。点击归位后仍看到大规模星图偏在画布右侧，无法确认画面回到预期基准；多标签/跨工作区/服务重启隔离未实测。因此仅刷新恢复一项通过，本验收整体未通过。",
+      "evidence": [
+        "Safari native https://localhost:9999/starmap.html?channel=5b8febfe-461b-44c0-94c9-57e6d55da8a3 before and after toolbar refresh; AX toast confirms restored scene and no search/AI.",
+        "Safari screenshot after refresh/reset shows 2148 stars / 3567 connections and graph heavily right-biased; reset visual result inconclusive.",
+        "AX: Knowledge on, code hierarchy off, all regions on; search placeholder visible and no query text. No AI panel opened or submitted."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "新增此 Safari 场景验收收据，区分单页刷新证据与尚缺的隔离/重启证据。",
+      "evidence": [
+        "docs/tasks/starmap-scene-safari-20261011.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "恢复操作仅尝试归位；没有修改筛选、搜索输入或 AI 状态；工作区代码没有产品源码差异。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "仅更新验收收据。候选代码 HEAD 0c3776618abb3df09a7e465a0f512f0e717cb2a1；整体 release gate 仍被多个未完成验收阻塞。",
+      "evidence": [
+        "0c3776618abb3df09a7e465a0f512f0e717cb2a1"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "本任务没有产品代码更改；Safari 只读验证，不触碰模型、审批、工作区来源或搜索数据。",
+  "handoff": "部分验收：同页刷新恢复视角/筛选且不自动检索/调用 AI 已确认。归位构图、多标签/跨工作区隔离及服务重启持久性需后续补测。当前 Safari 视图画面已保持在归位操作之后，动效开关保持关闭。"
+}
