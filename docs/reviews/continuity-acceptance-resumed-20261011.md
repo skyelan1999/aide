@@ -100,3 +100,14 @@ Docker 定向 race 检查 `TestSFTPFailureWithZeroExit` 与 `TestWebAuthnManager
 在审批回归测试及本交接更新后，运行 `python3 scripts/agent-route.py verify full`。终态 exit 0，38 项 PASS；当前输入指纹 `4afd7fbdc94871cb216388bf2481e5a26af69bb29b4c23c641fe4a56d652df34`，基线 HEAD `f6c3ea53bef2c41e71faa0a41ca4a1cad21742d5`，日志 `.agent-state/verify-20261010T191351778252Z.log`。Docker race：`aide/internal/server` 756.829s、`aide/internal/server/tts` 3.710s；`scripts/aide.sh test` exit 0（含 `go vet ./...`）。完整结果在 `.agent-state/full.json`。
 
 此收据覆盖当前代码和审批定向回归，但不关闭真实浏览器跨标签审批交互、真实模型/插件、生产 SSH、物理断网、长时与锁屏恢复等产品验收。Safari 在本次尝试时 Mac 锁定，未操作工作台或修改现有会话。真实向量验收遵照用户指示暂缓；Windows 实机没有可用环境。发布仍需 release-check 所要求的前置阶段、备份/回滚步骤和候选发布验证，不因 full 通过而自动完成。
+
+
+## 全局辅助审批暂停任务状态修复 · 2026-10-11
+
+Safari 对当前 9999 实例的只读检查发现：全局审批显示“辅助审批”，会话列表包含普通聊天 #43；代码路径 `changeGlobalApprovalMode` 曾把所有 running/paused/queued task 都设为 reviewing，而 `reviewPendingCommand` 仅会审核真正等待答复的 shell，文件审核也仅处理真实 awaiting_approval 文件，因此普通暂停任务会出现幽灵审核状态。未对 #43 发送消息或执行操作。
+
+修复位于 `internal/server/approval_policy.go`：只有含未响应 shell clarification/live AnswerCh 或含真实 awaiting_approval 文件的任务才进入审核；全局切模式会清除非待审批任务上的陈旧状态，同时保留跨会话模式、generation 和取消逻辑。`approval_policy_test.go` 增加暂停任务遗留 reviewing 状态清除断言。
+
+验证：定向审批 race PASS，`python3 scripts/agent-route.py verify quick` PASS；随后当前源码完整 `verify full` exit 0，38 项 PASS（包括 Docker Go race 与 vet），指纹 `1aa494bfeec3d9b3d8a8c79a76843e7db8692b30dd1568c95b448607e2ae2249`，日志 `.agent-state/verify-20261010T235350052960Z.log`。候选通过仓库 `start.command` 重建后，Safari 实际在 #43 普通暂停聊天期间切到手动审批，再切回辅助审批；两次页面均显示“审批模式已全局生效”，#43 保持“已暂停”且无“审核中”标记。另在新标签打开同一 Aide 后，策略菜单读回全局辅助审批已选中。全程没有发送会话消息或触发工具，原辅助审批模式已恢复。新标签首次打开短暂出现“已锁屏”遮罩，切回原页后再次打开同一标签恢复正常；这一锁屏生命周期表现另列为尚待分析的问题。此次只验证审批状态呈现和模式同步，不证明真实模型审核决策质量。
+
+候选启动收据：`AIDE_OPEN_BROWSER=0 ./start.command` exit 0，重建 `aide:local` 并启动 `https://127.0.0.1:9999`，脚本健康检查通过；镜像 manifest `sha256:e04232b79f84e13177a95570ed074e5e62fcaf94931c0bef0247bd449c074537`。既有 `aide-data`、`aide-home` 命名卷和工作区挂载未移除。

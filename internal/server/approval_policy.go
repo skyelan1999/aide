@@ -90,6 +90,26 @@ func (a *App) broadcastApprovalPolicy() {
 		}
 	}
 }
+
+// hasPendingApproval reports whether switching the global reviewer should
+// update this task's visible approval state or schedule a review. Ordinary
+// running/paused work has no approval to review.
+func hasPendingApproval(task *Task) bool {
+	if task == nil {
+		return false
+	}
+	if task.Status == "awaiting_approval" {
+		return len(task.Files) > 0
+	}
+	if task.Status != "awaiting_clarification" || task.AnswerCh == nil || task.approvalAnswered {
+		return false
+	}
+	var question struct {
+		Kind string `json:"approvalKind"`
+	}
+	return json.Unmarshal(task.PendingQuestion, &question) == nil && question.Kind == "shell"
+}
+
 func (a *App) changeGlobalApprovalMode(w http.ResponseWriter, enabled bool) {
 	a.mu.Lock()
 	p := a.approvalPolicy
@@ -119,10 +139,14 @@ func (a *App) changeGlobalApprovalMode(w http.ResponseWriter, enabled bool) {
 			if task.approvalCancel != nil {
 				task.approvalCancel()
 			}
-			task.ApprovalState = "manual"
-			if enabled {
-				task.ApprovalState = "reviewing"
-				pending = append(pending, task)
+			task.ApprovalState = ""
+			if hasPendingApproval(task) {
+				if enabled {
+					task.ApprovalState = "reviewing"
+					pending = append(pending, task)
+				} else {
+					task.ApprovalState = "manual"
+				}
 			}
 		}
 		if changed {

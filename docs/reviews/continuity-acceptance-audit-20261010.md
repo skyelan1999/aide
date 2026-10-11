@@ -268,3 +268,10 @@ Runtime process SHA-256 verified: 561e80964a7429c82a4b7f4e73ef1b5180695808ca551c
 
 - `python3 scripts/agent-route.py verify full`: PASS, 38 commands returned exit 0, including Docker Go race/vet. Receipt time `20261010T044132161590Z`; source fingerprint `c2ef00fadeb299274bd090f1958be0f1f85f26840d441b752bb37730264e17cd`. Log: `.agent-state/verify-20261010T044132161590Z.log`.
 - This receipt covers the current recovery layout and export envelope capacity changes. The native Safari interaction evidence and remaining UI/environment limits above still apply; it does not close the full product goal or authorize a release claim.
+
+
+## 2026-10-11 继续验收记录
+
+全局辅助审批切换的后端状态修复和完整自动门禁已通过（38/38，Docker Go race/vet 包含在内），但完整 12 项产品验收仍未整体闭环。此次实际 Safari 只读检查发现并定位了普通暂停聊天被错误标作“审核中”的问题；实现见 `internal/server/approval_policy.go`，新增回归见 `internal/server/approval_policy_test.go`。候选已按 `start.command` 重建；Safari 完成辅助审批→手动→辅助往返、确认普通暂停任务没有幽灵审核状态，并在第二个浏览器标签读回全局辅助审批。独立子任务验证收据见[恢复验收续记](continuity-acceptance-resumed-20261011.md)和[审批子任务](../tasks/approval-paused-ghost-state-20261011.json)。
+
+向量检索测试遵照用户要求暂缓；Windows 缺少环境，记为 NOT_RUN。其他工作流的历史缺口仍以各自收据为准，本次 38 项源码门禁不等同于完整端到端验收或正式 Release。

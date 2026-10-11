@@ -1,0 +1,80 @@
+{
+  "id": "approval-paused-ghost-state-20261011",
+  "request": "修复全局辅助审批切换时普通暂停任务被错误标为审核中，并在实际Safari中验证。用户要求继续完成 Aide 持续目标，更新任务状态并保留未验收缺口。",
+  "baseline": "29148ce1601ffd8fbb7e5bd6e0347b73dad01aea",
+  "initial_status": "M internal/server/approval_policy.go\n M internal/server/approval_policy_test.go",
+  "acceptance": [
+    "切换全局审批模式时，仅真实 awaiting_approval 文件提案或仍等待用户答复的 shell clarification 可进入审核状态。",
+    "普通 running/paused/queued 会话不得被标记为 reviewing；旧的陈旧审核标记应清除。",
+    "全局审批模式、generation/cancel 和跨会话设置持久化行为不回退；Safari 实例应验证真实状态切换及恢复。"
+  ],
+  "scope": [
+    "internal/server/approval_policy.go",
+    "internal/server/approval_policy_test.go",
+    "docs/tasks/approval-paused-ghost-state-20261011.json",
+    "docs/reviews/continuity-acceptance-resumed-20261011.md",
+    "docs/reviews/continuity-acceptance-audit-20261010.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户授权持续目标继续；实际 Safari 会话清单显示全局辅助审批下普通暂停会话也被当作待查对象，目标限定为修复错误状态并验证。",
+      "evidence": [
+        "Safari https://localhost:9999/ AX state: global assisted mode, sessions #39–44; #43 is ordinary paused chat."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "审批状态应由真实待处理对象决定，不应随全局模式覆盖所有运行/暂停任务；仅文件 awaiting_approval 与仍有 live AnswerCh 的 shell awaiting_clarification 是本路径的有效候选。",
+      "evidence": [
+        "internal/server/approval_policy.go: hasPendingApproval, changeGlobalApprovalMode"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "全局模式同步先清除陈旧 ApprovalState，仅将具备真实待处理命令/文件的会话置为 reviewing/manual 并安排审核；增加普通暂停任务陈旧 reviewing 状态清除回归。",
+      "evidence": [
+        "internal/server/approval_policy.go",
+        "internal/server/approval_policy_test.go: TestGlobalApprovalModeAssistedDoesNotMarkPausedTasksReviewing"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "当前源码 full 38/38 PASS（Docker Go race/vet含在内）；按 start.command 重建9999候选并通过健康检查。原生Safari在#43普通聊天暂停状态下切换手动→辅助，页面提示审批模式全局生效；切回#43仍显示已暂停、无审核中；在第二个Aide浏览器标签重新加载后，策略菜单也显示全局辅助审批已选中。临时测试结束已恢复原辅助审批。",
+      "evidence": [
+        "python3 scripts/agent-route.py verify full exit 0; fingerprint 1aa494bfeec3d9b3d8a8c79a76843e7db8692b30dd1568c95b448607e2ae2249; .agent-state/verify-20261010T235350052960Z.log",
+        "AIDE_OPEN_BROWSER=0 ./start.command exit 0; image manifest sha256:e04232b79f84e13177a95570ed074e5e62fcaf94931c0bef0247bd449c074537; https://127.0.0.1:9999 healthz success",
+        "Safari https://localhost:9999/: #43 paused chat has no reviewing marker after manual→assisted; sessions #39–42 are completed with no pending approvals; menu confirms global mode and two-tab readback",
+        "Safari second tab briefly displayed lock overlay after initial load, then after switching back and reopening the tab it rendered normally; lock lifecycle is recorded as an independent remaining issue, not concealed"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "本任务记录及总体连续性验收审计已补充，链接检查通过。",
+      "evidence": [
+        "docs/reviews/continuity-acceptance-resumed-20261011.md",
+        "docs/reviews/continuity-acceptance-audit-20261010.md",
+        "python3 scripts/check_docs.py PASS: 186 Markdown files, 530 local links"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅保留修复所需两份源码、两份审计文档和本任务账本；本轮临时Safari标签已关闭，未删除用户数据。",
+      "evidence": [
+        "git diff --check exit 0",
+        "Safari temporary second tab closed; original Knowledge Map tab remains"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "本修复可经提交推送交付，但不单独发布版本；上位 Aide 持续目标尚有向量（用户暂缓）、Windows设备（不可用）及其他逐项验收缺口，整体发布门禁此前未通过。",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docs/reviews/continuity-acceptance-audit-20261010.md"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "源码回退可由单独 revert 本任务提交恢复；运行实例通过同一 start.command 重建上一提交源码镜像。Compose named volumes aide-data/aide-home 与工作区 bind mount 保持不变；本修复不迁移或删除数据。",
+  "handoff": "全量门禁38/38、start.command本机9999候选与原生Safari全局模式往返/跨标签策略读回均通过；原辅助审批已恢复。待提交并推送本修复；不代表上位12项持续目标整体验收或release完成。"
+}

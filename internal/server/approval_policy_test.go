@@ -23,9 +23,11 @@ func TestGlobalApprovalModeManualStopsReviewAcrossSessions(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		task := &Task{
 			ID:                 sessionID + "-run",
-			Status:             "running",
+			Status:             "awaiting_clarification",
 			AutoReview:         true,
 			ApprovalState:      "reviewing",
+			PendingQuestion:    json.RawMessage(`{"approvalKind":"shell","command":"mkdir reports"}`),
+			AnswerCh:           make(chan string, 1),
 			WorkspaceID:        a.wsID(),
 			approvalGeneration: 4,
 			approvalCancel:     cancel,
@@ -110,7 +112,7 @@ func TestRememberedApprovalDoesNotCrossSSHRoot(t *testing.T) {
 	}
 }
 
-func TestGlobalApprovalModeAssistedResumesAcrossSessions(t *testing.T) {
+func TestGlobalApprovalModeAssistedDoesNotMarkPausedTasksReviewing(t *testing.T) {
 	a := testApp(t)
 	a.approvalPolicy = ApprovalPolicy{Enabled: false, Revision: 20}
 	policyEvents := make(chan string, 1)
@@ -121,7 +123,7 @@ func TestGlobalApprovalModeAssistedResumesAcrossSessions(t *testing.T) {
 			ID:                 sessionID + "-run",
 			Status:             "paused",
 			AutoReview:         false,
-			ApprovalState:      "manual",
+			ApprovalState:      "reviewing",
 			WorkspaceID:        a.wsID(),
 			approvalGeneration: 8,
 		}
@@ -132,7 +134,7 @@ func TestGlobalApprovalModeAssistedResumesAcrossSessions(t *testing.T) {
 	requireStatus(t, w, 200)
 	for _, sessionID := range []string{"assisted-switch-a", "assisted-switch-b"} {
 		task := a.sessions[sessionID].Runs[0]
-		if !task.AutoReview || task.ApprovalState != "reviewing" || task.approvalGeneration != 9 {
+		if !task.AutoReview || task.ApprovalState != "" || task.approvalGeneration != 9 {
 			t.Fatalf("session %s did not receive the global assisted mode: %+v", sessionID, task)
 		}
 		stored, err := os.ReadFile(SessionPath(a.dataPath, sessionID, "active"))
@@ -143,7 +145,7 @@ func TestGlobalApprovalModeAssistedResumesAcrossSessions(t *testing.T) {
 		if err := json.Unmarshal(stored, &session); err != nil {
 			t.Fatal(err)
 		}
-		if len(session.Runs) != 1 || !session.Runs[0].AutoReview || session.Runs[0].ApprovalState != "reviewing" {
+		if len(session.Runs) != 1 || !session.Runs[0].AutoReview || session.Runs[0].ApprovalState != "" {
 			t.Fatalf("session %s assisted mode was not persisted: %+v", sessionID, session.Runs)
 		}
 	}

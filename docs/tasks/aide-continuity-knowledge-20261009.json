@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "当前输入 verify full exit0，38项 PASS，Docker Go race 与 vet通过；指纹4afd7fbdc94871cb216388bf2481e5a26af69bb29b4c23c641fe4a56d652df34。真实系统Safari本次锁定未操作；真实向量按用户指示暂缓，Windows无设备；生产SSH/真实模型等完整产品验收仍未闭环。",
+      "summary": "当前输入 verify full exit0，38项 PASS，Docker Go race 与 vet通过；指纹4afd7fbdc94871cb216388bf2481e5a26af69bb29b4c23c641fe4a56d652df34。真实系统Safari本次锁定未操作；真实向量按用户指示暂缓，Windows无设备；生产SSH/真实模型等完整产品验收仍未闭环。 新增 2026-10-11 审批状态修复：全量38/38 PASS，当前9999由start.command重建并通过原生Safari审批模式往返、暂停任务ghost-review与第二标签策略读回；收据 docs/tasks/approval-paused-ghost-state-20261011.json。向量继续按用户要求暂缓、Windows缺设备；整体12项产品验收和release仍未闭环。",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -105,12 +105,13 @@
         ".agent-state/continuity-runtime/ssh-branches-receipt-20261010.json",
         "internal/server/approval_policy_test.go: TestGlobalApprovalModeManualStopsReviewAcrossSessions、TestGlobalApprovalModeAssistedResumesAcrossSessions、TestRememberedApprovalDoesNotCrossSSHRoot；aide:local Docker -race PASS 6.593s；git diff --check PASS",
         "docs/reviews/continuity-acceptance-resumed-20261011.md: 全局审批反向切换回归与本轮 Safari 锁定限制",
-        "python3 scripts/agent-route.py verify full PASS 38/38; .agent-state/verify-20261010T191351778252Z.log; server race 756.829s; tts race 3.710s; go vet included; current fingerprint 4afd7fbdc94871cb216388bf2481e5a26af69bb29b4c23c641fe4a56d652df34"
+        "python3 scripts/agent-route.py verify full PASS 38/38; .agent-state/verify-20261010T191351778252Z.log; server race 756.829s; tts race 3.710s; go vet included; current fingerprint 4afd7fbdc94871cb216388bf2481e5a26af69bb29b4c23c641fe4a56d652df34",
+        "2026-10-11: docs/tasks/approval-paused-ghost-state-20261011.json; verify full fingerprint 1aa494bfeec3d9b3d8a8c79a76843e7db8692b30dd1568c95b448607e2ae2249; Safari global approval mode roundtrip and second-tab readback"
       ]
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "已按12项原始验收更新当前证据和缺口，保留历史失败与后续修复，不将35项回归替代产品完整验收。",
+      "summary": "已按12项原始验收更新当前证据和缺口，保留历史失败与后续修复，不将35项回归替代产品完整验收。 2026-10-11 审批幽灵审核修复、full38/38及Safari模式同步证据已录入子任务与恢复验收续记；向量暂缓和Windows无设备仍保持未验收。",
       "evidence": [
         "docs/architecture/continuity-roadmap.md",
         "docs/reviews/approval-checkpoint-20261009.md",
@@ -137,7 +138,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "",
-  "handoff": "2026-10-10 continuation: closed-file draft branches previously pushed in 4403146; new outcome paging version guards and explicit reload implemented, native Safari actual one-page export plus simulated changing paginated API passed, final full 37 checks PASS (025532050610Z). Earlier parallel full returned signal: killed and remains FAIL evidence. Actual 9999 started using start.command, healthy source 49147a1c8f6d5b58dd90a9094235b9793c5ebda14f9e0852b9c4d567661ad61d. Goal remains active; production live multi-page, scale, structured release evidence and broader outstanding acceptance remain pending; Windows unavailable, embedding not configured. This batch is a source push, not formal release.",
+  "handoff": "2026-10-10 continuation: closed-file draft branches previously pushed in 4403146; new outcome paging version guards and explicit reload implemented, native Safari actual one-page export plus simulated changing paginated API passed, final full 37 checks PASS (025532050610Z). Earlier parallel full returned signal: killed and remains FAIL evidence. Actual 9999 started using start.command, healthy source 49147a1c8f6d5b58dd90a9094235b9793c5ebda14f9e0852b9c4d567661ad61d. Goal remains active; production live multi-page, scale, structured release evidence and broader outstanding acceptance remain pending; Windows unavailable, embedding not configured. This batch is a source push, not formal release. 2026-10-11：审批暂停任务误标reviewing已修复；38项full通过，9999由start.command重建，Safari全局模式往返、#43无幽灵审核及第二标签读取均通过。见 docs/tasks/approval-paused-ghost-state-20261011.json。",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -229,7 +230,7 @@
           "approval_management_browser",
           "approval_cross_session_real_20261010"
         ],
-        "remaining": "Real9999 local exact command remember/match/revoke and manual-to-assisted other-tab sync passed. Live SSH scope, expiry/concurrency and reverse-mode immediate sync remain."
+        "remaining": "Safari实际9999精确命令的永久记忆匹配/拒绝旁路已验收；全局辅助审批→手动→辅助、普通暂停会话无幽灵reviewing及第二标签策略读回已验收（2026-10-11）。SSH根目录作用域、规则有效期/并发撤销、逆向模式即时同步仍未完整验收。"
       }
     },
     {
