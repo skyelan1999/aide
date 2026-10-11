@@ -57,6 +57,9 @@
   let masterFrom = null;
   // 后端权威状态：null = 未取到/不可达；{ locked:bool, gen:number } = 已知
   let backendState = null;
+  // Joining tabs keep the neutral veil until the persisted lock state is read.
+  // Peer heartbeats may describe a lock/unlock that is still being persisted.
+  let authorityPending = true;
   let writeQueue = Promise.resolve(), pendingWrites = 0, syncTimer = null;
   let dismissGen = -1;
   let joinTimer = null, watchdogTimer = null, heartbeatTimer = null, electionTimer = null, hardJoinTimer = null;
@@ -90,17 +93,20 @@
     try { return localStorage.getItem('aide-token') || ''; } catch (_) { return ''; }
   }
   // Server generations never move backwards, even when HTTP responses arrive out of order.
-  function acceptBackendState(data) {
+  function acceptBackendState(data, confirmed = false) {
     if (!data || typeof data.locked !== 'boolean' || !Number.isSafeInteger(data.gen) || data.gen < 0) throw new Error('锁屏状态响应无效');
     if (backendState && data.gen < backendState.gen) return backendState;
     const changed = !backendState || data.gen !== backendState.gen || data.locked !== backendState.locked;
     backendState = {locked:data.locked, gen:data.gen};
-    if (phase !== 'joining' && changed && !pendingWrites) {
+    const reconcile = phase !== 'joining' && !pendingWrites && (changed || (confirmed && authorityPending));
+    if(confirmed)authorityPending = false;
+    if (reconcile) {
       masterLocked=data.locked; lastSeenMasterLocked=data.locked;
       if(data.locked && data.gen !== dismissGen) localDismiss=false;
       masterGen=Math.max(masterGen,data.gen);
       if(phase==='master') send('assert',{masterLocked});
       emit('effective',effectiveLocked());
+      settleReady();
     }
     return backendState;
   }
@@ -111,7 +117,7 @@
     try {
       const resp=await fetch('/api/lock-state',{cache:'no-store',headers:{Authorization:'Bearer '+authToken()},signal:ctrl?.signal});
       if(!resp.ok)throw new Error('锁屏状态读取失败');
-      return acceptBackendState(await resp.json());
+      return acceptBackendState(await resp.json(), true);
     } catch (_) { return null; } finally {clearTimeout(timer);}
   }
   function persistBackend(locked) {
@@ -124,7 +130,7 @@
         return await resp.json();
       } finally {clearTimeout(timer);}
     });
-    writeQueue=write.then(data=>{pendingWrites--;acceptBackendState(data);send('state');return data;},err=>{pendingWrites--;emit('error',err.message);throw err;});
+    writeQueue=write.then(data=>{pendingWrites--;acceptBackendState(data,true);send('state');return data;},err=>{pendingWrites--;emit('error',err.message);throw err;});
     writeQueue.catch(()=>{});
     return writeQueue;
   }
@@ -139,6 +145,7 @@
   function settleReady() {
     if (readySettled) return;
     readySettled = true;
+    clearT(hardJoinTimer); hardJoinTimer = null;
     readyResolve(effectiveLocked());
   }
   function clearT(t) { if (t) { clearTimeout(t); clearInterval(t); } }
@@ -162,13 +169,13 @@
     clearT(joinTimer); joinTimer = null;
     clearT(electionTimer); electionTimer = null;
     clearT(watchdogTimer); watchdogTimer = null;
-    clearT(hardJoinTimer); hardJoinTimer = null;
     scheduleHeartbeat();
     send('assert', { masterLocked });
-    emit('effective', effectiveLocked());
-    settleReady();
+    if(!authorityPending){emit('effective', effectiveLocked());settleReady();}
   }
   function becomeSlave(from, mLocked, gen) {
+    const wasJoining=phase==='joining';
+    if(wasJoining && backendState && !pendingWrites)mLocked=backendState.locked;
     const keepDismiss=phase==='slave' && masterFrom===from && localDismiss;
     phase = 'slave';
     clearT(heartbeatTimer); heartbeatTimer=null;
@@ -179,10 +186,8 @@
     localDismiss = keepDismiss && !!mLocked;
     clearT(joinTimer); joinTimer = null;
     clearT(electionTimer); electionTimer = null;
-    clearT(hardJoinTimer); hardJoinTimer = null;
     scheduleWatchdog();
-    emit('effective', effectiveLocked());
-    settleReady();
+    if(!authorityPending){emit('effective', effectiveLocked());settleReady();}
   }
   // 当选时继承锁态：后端权威优先，其次集群内见过的锁态，最后回退保守默认。
   function inheritLockedDecision() {
@@ -211,6 +216,8 @@
   // joining veil 硬超时：面纱不得卡死在“正在确认安全状态”。
   function onJoinHardTimeout() {
     if (readySettled) return;
+    // The server is unreachable; end the neutral wait with the existing conservative fallback.
+    authorityPending=false;
     if (phase === 'joining') {
       becomeMaster(inheritLockedDecision());
     } else {
@@ -354,9 +361,9 @@
   function boot() {
     // 降级：无 BroadcastChannel 时退化为现状（各 tab 独立锁）。
     // onReady 直接 resolve true，让 app 走“加载即锁”的旧本地路径。
-    if (!supported) { fetchBackendState().then(()=>becomeMaster(inheritLockedDecision())); return; }
+    if (!supported) { fetchBackendState().then(()=>{authorityPending=false;becomeMaster(inheritLockedDecision());}); return; }
     try { bc = new BroadcastChannel(CHANNEL); }
-    catch (_) { bc = null; fetchBackendState().then(()=>becomeMaster(inheritLockedDecision())); return; }
+    catch (_) { bc = null; fetchBackendState().then(()=>{authorityPending=false;becomeMaster(inheritLockedDecision());}); return; }
     bc.onmessage = onMessage;
     send('hello');
     // 并发拉取后端权威状态：选举/veil 超时决策时通常已就绪；不阻塞选举。

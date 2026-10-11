@@ -1,0 +1,76 @@
+{
+  "id": "lock-bootstrap-state-20261011",
+  "request": "修复新标签或刷新启动时短暂错误显示已锁屏、随后解锁的锁态不同步问题；用 Safari 验证，不改变会话/密码/审批设置。",
+  "baseline": "0540a2733bb7de6a465c36a5aff74ed32ee63bb0",
+  "initial_status": "Clean at 0540a273; new Safari tab transiently displayed lock overlay and /workspace, then backend sync restored unlocked state and /Users/skyelan/debug. Existing lock files had no prior changes.",
+  "acceptance": [
+    "新标签启动时，在服务端权威锁态读回前保持中性安全遮罩，不把滞后的 BroadcastChannel 锁态显示为确定的已锁屏或已解锁",
+    "权威状态读回后按服务端 locked/gen 收敛；服务端不可达时沿用有界超时和保守锁定回退",
+    "锁定写入、同代次从标签本地解锁、刷新恢复、失序 GET 和锁屏选举既有行为不回归",
+    "用 start.command 启动候选并在 Safari 新标签验证，无会话、密码或审批配置变更"
+  ],
+  "scope": [
+    "internal/server/web/lock-cluster.js",
+    "scripts/lock-cluster-state.test.js",
+    "docs/architecture.md",
+    "docs/tasks/lock-bootstrap-state-20261011.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目标限定为新标签启动时锁态短暂错误；Safari 实测未锁页面新标签先见已锁屏与默认工作区，随后权威状态/工作区恢复。",
+      "evidence": [
+        "Safari https://localhost:9999 新标签首次 AX 状态显示已锁屏、/workspace；后续状态为解锁、/Users/skyelan/debug"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "加入 authorityPending 启动屏障。BroadcastChannel 可提示/选举，但不结束首次 UI 锁态确认；只由已确认的 GET/PUT 清除屏障并发布有效状态。后端不可达仍走 2.5 秒有界保守回退。",
+      "evidence": [
+        "internal/server/web/lock-cluster.js: 后端确认与启动阶段转换"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "启动锁态屏障：joining 期间 BroadcastChannel 不得结束首次锁态确认；已确认 GET/PUT 收敛状态并完成就绪；后端不可达仍在 2.5 秒上限使用保守回退。新增旧代次广播竞态与服务不可用超时回归。",
+      "evidence": [
+        "internal/server/web/lock-cluster.js",
+        "scripts/lock-cluster-state.test.js"
+      ]
+    },
+    "verification": {
+      "status": "blocked",
+      "summary": "锁屏集群状态、选举、锁屏入口及仓库 quick 通过；完整门禁因 Docker Desktop 不可用失败；start.command 同因无法打开 Docker 而未启动候选，Safari 候选验证待重试。",
+      "evidence": [
+        "node scripts/lock-cluster-state.test.js PASS including stale persisted peer snapshot and bounded unavailable-server fallback",
+        "node scripts/lock-cluster-election.test.js PASS",
+        "node scripts/lock-entry.test.cjs PASS",
+        "python3 scripts/agent-route.py verify quick PASS, fingerprint 0c3e6ed7595561c08f2ea1a9d828d42366d0ee37354642325f13ec7f1aeb6b32",
+        "python3 scripts/agent-route.py verify full blocked at bash scripts/aide.sh test; Docker unavailable; .agent-state/verify-20261011T035811759785Z.log",
+        "AIDE_OPEN_BROWSER=0 ./start.command EXIT 1: Unable to find application named Docker; Safari candidate acceptance NOT_RUN"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "补充锁屏集群启动权威状态屏障与不可达回退说明。",
+      "evidence": [
+        "docs/architecture.md:150"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Diff 仅含本次锁屏逻辑、定向回归、架构说明和任务账本；运行日志在忽略的 .agent-state。",
+      "evidence": [
+        "git diff --check PASS"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未推送、未发布；Safari 候选验收和完整 Docker 门禁未通过。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "仅还原 lock-cluster.js 本次 authorityPending 屏障及定向回归，不触碰其他任务或用户运行数据。",
+  "handoff": "锁态竞态实现及 VM 回归完成。恢复 Docker Desktop 后执行 AIDE_OPEN_BROWSER=0 ./start.command，在 Safari 对 https://localhost:9999 新标签启动与刷新重复验收，确认不会先出现确定的错误锁屏；再补全门禁并按现有发布授权推送。"
+}

@@ -6,7 +6,7 @@ const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/st
 const source=fs.readFileSync('internal/server/web/lock-cluster.js','utf8');
 function environment(){
  let now=0,seq=0,tabSeq=0,timers=new Map(),channels=[];
- const server={locked:false,gen:0,failPut:false,delayGet:0};
+ const server={locked:false,gen:0,failPut:false,failGet:false,delayGet:0};
  function schedule(fn,ms,interval=0,owner){const id=++seq;timers.set(id,{fn,time:now+ms,interval,owner});return id;}
  async function flush(){for(let i=0;i<20;i++)await Promise.resolve();}
  async function advance(ms){const end=now+ms;await flush();let count=0;while(true){const tasks=[...timers].filter(([,t])=>t.time<=end).sort((a,b)=>a[1].time-b[1].time||a[0]-b[0]);if(!tasks.length)break;const [id,t]=tasks[0];if(++count>10000)throw Error('timer loop');now=t.time;if(t.interval) t.time+=t.interval;else timers.delete(id);t.fn();await flush();}now=end;await flush();}
@@ -20,6 +20,7 @@ function environment(){
    setTimeout:(fn,ms)=>schedule(fn,ms,0,id),setInterval:(fn,ms)=>schedule(fn,ms,ms,id),
    clearTimeout:x=>timers.delete(x),clearInterval:x=>timers.delete(x),
    fetch:async (url,options={})=>{
+    if(options.method!=='PUT'&&server.failGet)return {ok:false,status:503,json:async()=>({})};
     if(options.method==='PUT'){
      if(server.failPut)return {ok:false,status:500,json:async()=>({error:'disk full'})};
      server.locked=JSON.parse(options.body).locked;server.gen++;
@@ -56,5 +57,16 @@ function environment(){
  e.server.locked=false;e.server.gen++;await e.advance(5500);assert.equal(file.lc.effectiveLocked(),false);assert.equal(refreshed.lc.effectiveLocked(),false);
  // A slow GET captured before locking must not resurrect the earlier unlocked generation.
  e.server.delayGet=4000;const late=file.lc.prepareUnlock();await e.flush();await refreshed.lc.requestLock();await e.advance(4500);await late.catch(()=>{});assert.equal(file.lc.effectiveLocked(),true);
+ // A late joiner must keep its neutral startup veil while a peer advertises an
+ // old persisted lock snapshot; only the current server generation may settle it.
+ const b=environment(),master=b.tab('/');await b.advance(1800);await master.lc.requestLock();
+ b.server.locked=false;b.server.gen++;b.server.delayGet=500;
+ const joining=b.tab('/starmap.html'),effective=[];joining.lc.on('effective',value=>effective.push(value));
+ let ready=false;joining.lc.onReady().then(()=>{ready=true;});
+ await b.advance(100);assert.equal(ready,false,'peer broadcast settled startup before the server read');assert.deepEqual(effective,[],'stale peer lock escaped the neutral startup veil');
+ await b.advance(500);assert.equal(ready,true);assert.equal(joining.lc.effectiveLocked(),false);assert.deepEqual(effective,[false]);
+ const c=environment();c.server.failGet=true;const unavailable=c.tab('/');let fallbackReady=false; c.tab('/starmap.html').lc.onReady().then(()=>{fallbackReady=true;});
+ await c.advance(2400);assert.equal(fallbackReady,false,'unavailable server should preserve the bounded neutral join');
+ await c.advance(200);assert.equal(fallbackReady,true,'unavailable server must settle at the hard timeout');
  console.log('PASS: master demotion, map sync, local dismissal, new-tab welcome, unlock then refresh, write failure, stale unlock, server recovery, out-of-order GET');
 })().catch(error=>{console.error(error);process.exitCode=1;});
