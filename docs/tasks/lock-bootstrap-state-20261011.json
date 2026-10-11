@@ -66,11 +66,13 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "未推送、未发布；Safari 候选验收和完整 Docker 门禁未通过。",
-      "evidence": []
+      "summary": "实现提交 54c031a 已推送到 origin/main；产品 release/部署未执行，继续等待 Safari 候选验收和 Docker 完整门禁。",
+      "evidence": [
+        "git push origin main: 0540a27..54c031a"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "仅还原 lock-cluster.js 本次 authorityPending 屏障及定向回归，不触碰其他任务或用户运行数据。",
-  "handoff": "锁态竞态实现及 VM 回归完成。恢复 Docker Desktop 后执行 AIDE_OPEN_BROWSER=0 ./start.command，在 Safari 对 https://localhost:9999 新标签启动与刷新重复验收，确认不会先出现确定的错误锁屏；再补全门禁并按现有发布授权推送。"
+  "handoff": "源码已推送：54c031a。恢复 Docker Desktop 后运行 AIDE_OPEN_BROWSER=0 ./start.command，在 Safari 对 https://localhost:9999 新标签启动与刷新重复验收；确认稳定后再跑 verify full。向量检索验收继续按用户要求暂缓，Windows 设备验收无环境。"
 }
