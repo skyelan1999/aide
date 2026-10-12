@@ -35,19 +35,23 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "实现稳定区 DOM 复用、超长活动块增量文本、限定思考缓冲大小、默认折叠的一行摘要和展开按需装载。",
+      "summary": "实现稳定区 DOM 复用、超长活动块仅追加新到达文本（不逐帧复制累计活动尾部）、边界移动/文本回退时重建活动节点、限定思考缓冲大小、默认折叠的一行摘要和展开按需装载。",
       "evidence": [
-        "internal/server/web/app.js、style.css；index.html 缓存键已更新。"
+        "internal/server/web/app.js、style.css；index.html 缓存键已更新。",
+        "2026-10-13: app.js 活动块保存起始偏移，仅对新字符调用 slice/appendData；稳定块不再创建完整稳定前缀副本。scripts/stable-markdown-cache.test.cjs 覆盖 20,000 字符初始段、后续 3 字符追加、活动区偏移变化和文本回退重置。"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "2026-10-12 通过 start.command 重建当前源码并在系统 Safari localhost:9999 检查长回复：约 6,963 token、40 节及多表格/代码完整呈现；思考区默认折叠、一行摘要，点击展开后正文可见，再次点击恢复折叠。仍需真实流式超长输出期间稳定性与长时间会话验收。",
+      "summary": "静态与快速回归通过；隔离 `start.command` 候选已在 18220 健康启动，使用空 fixture 与独立 Compose 存储。Safari 访问时出现系统证书安全拦截，按浏览器策略等待用户亲自处理后继续界面验收。历史 Safari 已确认长回复完整呈现和思考折叠行为；本轮新增差异尚未浏览器复核，真实流式超长输出和长时间会话仍待验收。",
       "evidence": [
         "node --check internal/server/web/app.js：exit 0。",
         "git diff --check（本任务文件）：通过。",
+        "2026-10-13: node --check internal/server/web/app.js、node scripts/stable-markdown-cache.test.cjs、git diff --check PASS；python3 scripts/agent-route.py verify quick 40/40 PASS, fingerprint 16ebcee31ba05aa337f594eb9f6e7ce50ebd3a2aaaab1d0b6d8b2b009fb0f4da, receipt .agent-state/verify-20261012T195438805136Z.log. The route includes long-output, history-cache, continuity, knowledge-map, task-outcome, i18n and docs checks.",
         "2026-10-12：系统 Safari localhost:9999 长输出复验：已完成的合成回复约6,963 token，正文含40节、多张表格和代码块，内容完整呈现；思考 details Value=off，摘要单行并带省略号，摘要无 title/Help 悬停全文。CSS rsp-think-summary 与 rsp-think-preview 均限制单行。展开正文交互未复验；工作台随后显示“已锁屏”，未输入凭据。",
-        "2026-10-12：执行 AIDE_OPEN_BROWSER=0 ./start.command，Docker aide:local 依据源码摘要 719cdd211f0b84e5501a0b39485116b2914bcf06b21587fc9e7359f43c18efd4 重建并重启，健康检查通过，服务 https://127.0.0.1:9999 就绪。系统 Safari 既有长回复约6,963 token/40节完整渲染；思考折叠 Value=off，点击后 Value=on 且正文显现，再点恢复 Value=off；未改动会话内容。"
+        "2026-10-12：执行 AIDE_OPEN_BROWSER=0 ./start.command，Docker aide:local 依据源码摘要 719cdd211f0b84e5501a0b39485116b2914bcf06b21587fc9e7359f43c18efd4 重建并重启，健康检查通过，服务 https://127.0.0.1:9999 就绪。系统 Safari 既有长回复约6,963 token/40节完整渲染；思考折叠 Value=off，点击后 Value=on 且正文显现，再点恢复 Value=off；未改动会话内容。",
+        "2026-10-13: Isolated `start.command` checkout built candidate source fingerprint b635eeaf00efb34fa2dd4da426f0b52a4d1e37b368c49636580fce34e13ff218 and started separate Compose project aide-longturn-20261013 on localhost:18220 with empty workspace/context/local fixtures; service health check passed. System Safari navigation reached its native “此连接非私人连接” certificate interstitial before any app content loaded. Browser policy requires the user to handle the interstitial; Safari UI acceptance is pending.",
+        "Operational note: candidate image is retained as `aide:longturn-20261013`; the existing 9999 container remains running and unchanged. Docker had already discarded the image object previously tagged `aide:local`, so exact retagging was unavailable after the candidate build; the temporary candidate was detached from `aide:local` to prevent accidental reuse. A future normal `start.command` run will rebuild its configured image from source."
       ]
     },
     "documentation": {
@@ -78,5 +82,5 @@
   },
   "release_authorization": "",
   "rollback": "只回退本任务在 internal/server/web/app.js、style.css、index.html 中的变更；不要整体恢复工作树，以免覆盖并行改动。",
-  "handoff": "前端实现、候选源码长回复完整渲染，以及思考过程默认折叠/单行摘要/展开/再次折叠均已在系统 Safari 实际运行的 9999 候选复核。仍需真实模型生成长回复时观察持续流式渲染的稳定性和长时间会话。检查点 64e598c 已推送；本轮新增 Safari 验收账本待随阶段提交推送。"
+  "handoff": "既有 Safari 证据覆盖长回复最终呈现以及思考过程默认折叠/单行摘要/展开/再次折叠；2026-10-13 新增超长活动文本按增量追加的前端逻辑与定向回归，候选已隔离启动，但 Safari 18220 证书安全拦截尚待用户亲自处理，故尚未复验。真实模型持续流式稳定性与长时间会话仍待验收。检查点 64e598c 已推送；本轮源码及验收账本未推送。"
 }

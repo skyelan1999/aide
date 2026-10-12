@@ -29,7 +29,9 @@
     "docs/architecture/execution-policy.md",
     "docs/user-guide.md",
     "docs/system-overview.md",
-    "docs/PRD.md"
+    "docs/PRD.md",
+    "scripts/stable-markdown-cache.test.cjs",
+    "docs/agent/router.json"
   ],
   "stages": {
     "requirements": {
@@ -51,19 +53,20 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "超长流式回答按新增文本增量扫描；摘要以 3000 DSH 估算预算分批 map/reduce，结构错误即中止；压缩使用完整工具调用快照比对并在原子持久化成功后提交内存态；加入记忆并发一致性回归。 2026-10-12 后续：发送前上下文超限压缩截止值从 6 分钟调至 2 小时，保留请求取消及原子提交保护；待 Go 回归。 同步压缩新增会话级进度 API 与工作台轮询，在左侧卡片显示摘要整理、折叠保存、完成/失败、折叠条数和前后估算值；状态不含会话正文。 摘要整理阶段进一步提供逐批进度，显示实际 map/reduce 当前批次及总批数。",
+      "summary": "超长流式回答按新增文本增量扫描；摘要以 3000 DSH 估算预算分批 map/reduce，结构错误即中止；压缩使用完整工具调用快照比对并在原子持久化成功后提交内存态；加入记忆并发一致性回归。 2026-10-12 后续：发送前上下文超限压缩截止值从 6 分钟调至 2 小时，保留请求取消及原子提交保护；待 Go 回归。 同步压缩新增会话级进度 API 与工作台轮询，在左侧卡片显示摘要整理、折叠保存、完成/失败、折叠条数和前后估算值；状态不含会话正文。 摘要整理阶段进一步提供逐批进度，显示实际 map/reduce 当前批次及总批数。 可见时间线全量重建时，新增完成态、无路径依赖 Markdown 的2 MiB LRU HTML缓存，避免流式刷新重复解析既有正文；实时内容和相对路径资源渲染不缓存，语言切换清空缓存。",
       "evidence": [
         "internal/server/web/app.js：增量 live boundary scanner；超长活动段落纯文本回退逻辑沿用现有工作区实现。",
         "internal/server/workflow.go：摘要连续归并、结构化验证、快照校验与候选会话原子提交。",
         "internal/server/remediation_test.go 与 memory_tokens_test.go：新增预算/连续摘要/失败保护/工具参数并发改变/项目记忆并发测试。",
         "internal/server/workflow.go：contextCompactionTimeout=2*time.Hour，用于发送前压缩；internal/server/workflow_timeout_test.go 增加预算断言。",
         "internal/server/server.go 注册 GET /api/sessions/{id}/compaction-progress；internal/server/workflow.go 记录带过期清理的阶段/计数状态；internal/server/web/app.js 在发送等待期轮询并复用上下文压缩卡，英文界面键在 locales/en.js。",
-        "internal/server/workflow.go：buildCompactionSummary 提供逐批 map/reduce 回调；internal/server/remediation_test.go 补充回调阶段、批次范围和每次 provider 请求一一对应的断言（待 Go 环境运行）。"
+        "internal/server/workflow.go：buildCompactionSummary 提供逐批 map/reduce 回调；internal/server/remediation_test.go 补充回调阶段、批次范围和每次 provider 请求一一对应的断言（待 Go 环境运行）。",
+        "internal/server/web/app.js：上下文无关完成态 Markdown 使用估算上限2 MiB的 LRU 缓存；live、相对路径及查看器资源上下文绕过缓存；语言切换清空缓存。"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "当前源码指纹下隔离 full 回归（含全包 race 与 go vet）通过；Safari 已登录重编译的只读源码候选 18217 并读回工作台。真实模型长任务续跑、长历史压缩动态/时延/恢复、长输出稳定性及其他产品边界仍未完成。向量按用户要求暂缓；Windows 由用户实测正常并从后续验收移除。候选未配置模型，本轮未发送模型任务；生产 9999 未重启。",
+      "summary": "历史 full race/vet 曾在先前指纹通过；当前差异 quick 检查通过，相关记忆/压缩 race 与 server go vet 定向通过。最新完整 Docker race 再次在既有 TestDaemonConcurrentStartStopConsistency 挂住并触发15分钟包超时，故当前差异的 full profile 不通过。Safari 18219 仍处系统证书警告，界面验收未做；向量按要求暂缓，Windows由用户验收。",
       "evidence": [
         "离线 Docker Go 1.26 扩展回归：覆盖 TestMemoryTokensLegacyAndExternalEdit、容量/损坏投影测试、24 写并发一致性、连续摘要请求预算、畸形摘要、工具参数快照变化、超限/新任务/自动/并发压缩；`go test -mod=vendor ./internal/server -run 'Test(MemoryTokens.*|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall|RemediationAutoCompactNotBlockedByHeldMutex|RemediationConcurrentCompactionNoPanicNoDeadlock)$' -count=1`：PASS（6.920s）。",
         "离线 Docker Go 1.26：`go test -mod=vendor ./internal/server -run 'Test(CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|MemoryTokens|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall)$' -count=1`：PASS（3.828s）。",
@@ -88,8 +91,23 @@
         "2026-10-12 quick 回归首次发现 `scripts/test_ui_click_latency.cjs` 夹具缺少发送路径新依赖的上下文压缩 watcher，导致提交 UI 断言前抛 ReferenceError；补入会话范围 watcher 接口及启停断言后，`node scripts/test_ui_click_latency.cjs` PASS，随后 `python3 scripts/agent-route.py verify quick` PASS（fingerprint 7a780784b82c696c9bad1e643673c73588188f79c84fcd8b8cfde3bd51a5b45b）。该 quick 不含 Go 编译/回归；本地 Docker socket 仍拒绝访问，候选 Safari 未运行。",
         "2026-10-12 候选启动尝试：`AIDE_OPEN_BROWSER=0 ./start.command` exit 1，启动脚本无法通过 `open -a Docker` 定位 Docker；`open -a /Applications/Docker.app` 报 `kLSNoExecutableErr`，直接 `docker info` 仍因 Unix socket permission denied。9999 未重建，Safari 当前页不是本轮候选源码验收。",
         "2026-10-12 后续隔离 full：`python3 scripts/agent-route.py verify full` PASS，fingerprint `7a780784b82c696c9bad1e643673c73588188f79c84fcd8b8cfde3bd51a5b45b`，收据 `.agent-state/verify-20261012T144352718310Z.log` 与 `.agent-state/full.json`；仓库全量 Go race 测试和 `go vet ./...` 均 exit 0。",
-        "2026-10-12 Safari 候选复核：只重启隔离源码只读挂载的 `aide-budget-20261012`（18217），服务根页 HTTP 200；Safari 使用候选本地自动登录后读回认证工作台。候选未配置模型，未触发真实压缩流程或发送模型请求；9999 未重启。"
-      ]
+        "2026-10-12 Safari 候选复核：只重启隔离源码只读挂载的 `aide-budget-20261012`（18217），服务根页 HTTP 200；Safari 使用候选本地自动登录后读回认证工作台。候选未配置模型，未触发真实压缩流程或发送模型请求；9999 未重启。",
+        "2026-10-13: scripts/live-markdown-scan.test.cjs: PASS; test covers large text and incremental scan work. Added to docs/agent/router.json quick profile; python3 scripts/agent-route.py verify quick PASS 39/39, fingerprint 36305137f029eb9cbebd8ec75ebc41d4a64d27f7727d838d68b844c8620d8f85. Browser long-output behavior remains unverified in system Safari.",
+        "2026-10-13: python3 scripts/agent-route.py verify full PASS. Fingerprint 36305137f029eb9cbebd8ec75ebc41d4a64d27f7727d838d68b844c8620d8f85; 40 configured checks; complete go test -race -count=1 -timeout=15m ./... passed (internal/server 427.288s, tts 3.339s) and go vet ./... passed; receipt .agent-state/verify-20261012T170952263439Z.log.",
+        "2026-10-13：`scripts/stable-markdown-cache.test.cjs` 覆盖完成态命中、live/路径上下文隔离、Mermaid命中后调度、2 MiB内存上限和淘汰；`python3 scripts/agent-route.py verify quick` PASS，当前指纹 `0e55527eba9138d3785d89c648f91f5bfb49f207f53de1e0b427532d1edf9632`，收据 `.agent-state/verify-20261012T181955440492Z.log`。Safari候选18219仍停在证书警告，系统浏览器交互验收未做。",
+        "2026-10-13 当前缓存差异：`scripts/stable-markdown-cache.test.cjs` 覆盖完成态缓存、live/相对路径隔离、Mermaid调度和2 MiB淘汰上限；quick profile PASS，收据 `.agent-state/verify-20261012T182147341488Z.log`（通过当时的工作区差异指纹）。",
+        "2026-10-13：最新 `python3 scripts/agent-route.py verify full` 在沙箱首次因 `Unable to find application named Docker` 中止；随后授权 Docker Desktop 中 `bash scripts/aide.sh test` 跑完15分钟仍失败：`TestDaemonConcurrentStartStopConsistency` 挂住并造成 `panic: test timed out after 15m0s`，`internal/server` FAIL，`internal/server/tts` PASS。当前 full 不记为通过。",
+        "2026-10-13：Docker Go 1.26 定向 race 覆盖 `TestMemoryTokens.*`、项目记忆并发写、压缩有界预算/无效结构/工具快照变化，通过；`go vet ./internal/server` 通过，包用时5.932s。",
+        "2026-10-13：为排查 full race 超时，隔离重复执行 `TestDaemonConcurrentStartStopConsistency` 20 次，`go test -race -count=20 -timeout=90s ./internal/server -run ^TestDaemonConcurrentStartStopConsistency$` PASS（15.480s）。这说明该用例在隔离压力下未复现挂起，但不能覆盖完整套件超时根因；full 仍保持 FAIL。"
+      ],
+      "full_profile": "FAIL",
+      "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504",
+      "previous_full_profile": {
+        "status": "PASS",
+        "fingerprint": "36305137f029eb9cbebd8ec75ebc41d4a64d27f7727d838d68b844c8620d8f85",
+        "receipt": ".agent-state/verify-20261012T170952263439Z.log",
+        "note": "历史全量结果只适用于当时通过的源指纹，不覆盖本轮后续差异。"
+      }
     },
     "documentation": {
       "status": "pass",
@@ -118,5 +136,5 @@
   },
   "release_authorization": "推送检查点授权：用户此前要求阶段性测完后及时 push；本次仅推送已验证的后端与文档检查点，不打 tag、不发布。",
   "rollback": "回滚仅撤销此任务记录范围文件中的对应提交/差异；不整体恢复工作区、不清理会话或记忆数据。内存模型/API schema 不变；token 文件格式不变。",
-  "handoff": "长对话改进任务仍 active。预算修复已推送 bec1653；压缩超时与逐批进度检查点已推送 origin/main 提交 c4cda4267104f24585777dfb32a3595d583e1b7b，隔离 full race/vet PASS（fingerprint 7a780784b82c696c9bad1e643673c73588188f79c84fcd8b8cfde3bd51a5b45b）。系统 Safari 已登录当前源码候选 18217 并读回工作台，但候选无模型配置，真实压缩动态与真实模型验收未完成。生产 9999 未重启；Windows 用户已实测正常并移除待办；向量仍按用户要求暂缓。工业长对话其他记忆/恢复/稳定性边界逐项跟踪。"
+  "handoff": "长对话改进任务仍 active。预算修复已推送 bec1653；压缩超时与逐批进度检查点已推送 origin/main 提交 c4cda4267104f24585777dfb32a3595d583e1b7b，隔离 full race/vet PASS（fingerprint 7a780784b82c696c9bad1e643673c73588188f79c84fcd8b8cfde3bd51a5b45b）。系统 Safari 已登录当前源码候选 18217 并读回工作台，但候选无模型配置，真实压缩动态与真实模型验收未完成。生产 9999 未重启；Windows 用户已实测正常并移除待办；向量仍按用户要求暂缓。工业长对话其他记忆/恢复/稳定性边界逐项跟踪。 2026-10-13 又加入超长会话历史 Markdown 的2 MiB有界 LRU 缓存，隔离live和相对资源渲染；quick profile PASS（0e55527...），full race/vet 尚未对此新差异重跑。Safari系统浏览器18219仍停在证书警告，交互验收未完成；长对话、真实模型压缩和产品验收任务保持 active。 2026-10-13 超长历史完成态 Markdown 加入2 MiB LRU缓存及缓存边界回归；quick与记忆/压缩定向 race、server go vet 通过。最新全量 race 在 TestDaemonConcurrentStartStopConsistency 15分钟超时，故该源码指纹 full 未通过。Safari 18219仍为证书告警，系统浏览器验收未完成。 补充诊断：TestDaemonConcurrentStartStopConsistency 独立 race 重复20次通过（15.480s），完整套件中的超时目前仅在高负载全包条件观察到，根因未定。"
 }

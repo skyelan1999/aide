@@ -1076,6 +1076,24 @@ function advanceLiveBoundary(src, scan) {
   if (src.length > scan.lineStart && /^ {0,3}(```|~~~)/.test(scan.linePrefix)) return scan.lineStart;
   return scan.fenceOpen ? scan.fenceStart : scan.boundary;
 }
+// A large open Markdown block is plain text while the model is streaming.
+// Keep its start offset and append only newly arrived UTF-16 code units; slicing
+// the complete active tail on every frame caused quadratic string copying.
+function updatePlainLiveTail(activeEl, full, start) {
+  const total = full.length - start;
+  const rendered = Number(activeEl.dataset.len || 0);
+  const textNode = activeEl.firstChild;
+  if (activeEl.dataset.mode !== 'plain' || Number(activeEl.dataset.start) !== start ||
+      total < rendered || !textNode || textNode.nodeType !== Node.TEXT_NODE) {
+    activeEl.replaceChildren(document.createTextNode(full.slice(start)));
+    activeEl.dataset.mode = 'plain';
+    activeEl.dataset.start = String(start);
+    activeEl.dataset.len = String(total);
+  } else if (total > rendered) {
+    textNode.appendData(full.slice(start + rendered, full.length));
+    activeEl.dataset.len = String(total);
+  }
+}
 function renderLiveAnswer(runId) {
   const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
   const all = document.querySelectorAll('#timeline .chat-answer');
@@ -1090,9 +1108,8 @@ function renderLiveAnswer(runId) {
   let cache = state.liveStable[runId];
   if (!cache) cache = state.liveStable[runId] = { length: 0, element: null, scan: newLiveBoundaryState() };
   const split = advanceLiveBoundary(full, cache.scan);
-  const stableText = full.slice(0, split);
-  const activeText = full.slice(split);
-  liveActiveBytes[runId] = activeText.length;
+  const activeLength = full.length - split;
+  liveActiveBytes[runId] = activeLength;
   // 双分区：stable 只在新块闭合时重建，active 每帧重建（但只含活动小块）
   let stableEl = ans.querySelector('.live-stable');
   let activeEl = ans.querySelector('.live-active');
@@ -1107,33 +1124,24 @@ function renderLiveAnswer(runId) {
   if (!cache.element) { stableEl.replaceChildren(); cache.element = stableEl; }
   else if (stableEl !== cache.element && stableEl?.parentNode === ans) { stableEl.replaceWith(cache.element); stableEl = cache.element; }
   cache.element = stableEl;
-  if (stableText.length < cache.length) { stableEl.replaceChildren(); cache.length = 0; }
-  if (cache.length < stableText.length) {
+  if (split < cache.length) { stableEl.replaceChildren(); cache.length = 0; }
+  if (cache.length < split) {
     // Closed Markdown blocks are append-only. Parse only newly closed blocks,
     // rather than reparsing the entire answer on each session refresh.
-    stableEl.insertAdjacentHTML('beforeend', renderMarkdown(stableText.slice(cache.length), true));
-    cache.length = stableText.length;
+    stableEl.insertAdjacentHTML('beforeend', renderMarkdown(full.slice(cache.length, split), true));
+    cache.length = split;
   }
   // live 渲染跳过代码高亮（每帧高亮代价高），完成态由 renderSession 全量补全
-  if (activeText.length > 16384) {
+  if (activeLength > 16384) {
     // Very long, still-open paragraphs/code fences are expensive to reparse on
     // every token. Keep streaming them as text; the completed answer receives
     // its normal Markdown render once the model finishes.
-    const rendered = Number(activeEl.dataset.len || 0);
-    const textNode = activeEl.firstChild;
-    if (activeEl.dataset.mode !== 'plain' || activeText.length < rendered || !textNode || textNode.nodeType !== Node.TEXT_NODE) {
-      activeEl.replaceChildren(document.createTextNode(activeText));
-      activeEl.dataset.mode = 'plain';
-      activeEl.dataset.len = String(activeText.length);
-    } else if (activeText.length > rendered) {
-      textNode.appendData(activeText.slice(rendered));
-      activeEl.dataset.len = String(activeText.length);
-    }
+    updatePlainLiveTail(activeEl, full, split);
     let cursor = activeEl.querySelector('.stream-cursor');
     if (!cursor) { cursor = el('span', 'stream-cursor', '▍'); cursor.setAttribute('aria-hidden', 'true'); activeEl.append(cursor); }
   } else {
-    delete activeEl.dataset.mode; delete activeEl.dataset.len;
-    activeEl.innerHTML = (activeText ? renderMarkdown(activeText, true) : '') +
+    delete activeEl.dataset.mode; delete activeEl.dataset.len; delete activeEl.dataset.start;
+    activeEl.innerHTML = (activeLength ? renderMarkdown(full.slice(split), true) : '') +
       '<span class="stream-cursor" aria-hidden="true">▍</span>';
   }
   const c = $('conversation');
@@ -8746,6 +8754,7 @@ $('compact-button').onclick = action(async () => {
   if (!state.session) { toast(t("请先选择会话")); return; }
   const sessionId = state.session.id;
   showContextCompaction({ phase: 'started', folded: 0, text: t('正在分析可压缩的早期消息'), sessionId: sessionId });
+  const stopCompactionWatch = startContextCompactionWatch(sessionId);
   try {
     const res = await api('/sessions/' + sessionId + '/compact', { method: 'POST', body: '{}' });
     if (res.folded) {
@@ -8761,6 +8770,8 @@ $('compact-button').onclick = action(async () => {
   } catch (error) {
     showContextCompaction({ phase: 'failed', text: error?.message || t('压缩失败，原会话内容已保留'), sessionId });
     throw error;
+  } finally {
+    await stopCompactionWatch();
   }
 });
 async function initialize() {
@@ -8833,6 +8844,7 @@ document.addEventListener('keydown', event => {
 });
 
 window.addEventListener('aide:language', () => {
+  clearStableMarkdownCache();
   const languageFocused = document.activeElement?.hasAttribute('data-language-button');
   if (settingsPanel.schema) renderSettingsSheet();
   if (languageFocused && $('settings-sheet').classList.contains('open')) $('settings-content').querySelector('[data-language-button][aria-pressed="true"]')?.focus();
@@ -8857,7 +8869,33 @@ async function renderMermaid(){
  } catch {for(const node of nodes){delete node.dataset.processed;node.textContent=t('流程图渲染失败');}}
 }
 const originalMarkdownRender=renderMarkdown;
-renderMarkdown=function(src,live,basePath,viewerSpec){const html=originalMarkdownRender(src,live,basePath,viewerSpec);if(/```mermaid|class="mermaid"/.test(src||''))scheduleMermaid();return html;};
+const stableMarkdownCache = new Map();
+let stableMarkdownCacheBytes = 0;
+const STABLE_MARKDOWN_CACHE_MAX_BYTES = 2 * 1024 * 1024;
+function clearStableMarkdownCache() { stableMarkdownCache.clear(); stableMarkdownCacheBytes = 0; }
+renderMarkdown=function(src,live,basePath,viewerSpec){
+  const text=String(src||'');
+  const cacheable=!live&&!basePath&&!viewerSpec&&text.length<=256*1024;
+  let html, cached=cacheable?stableMarkdownCache.get(text):null;
+  if(cached){
+    stableMarkdownCache.delete(text);stableMarkdownCache.set(text,cached);
+    html=cached.html;
+  }else{
+    html=originalMarkdownRender(text,live,basePath,viewerSpec);
+    if(cacheable){
+      const bytes=(text.length+html.length)*2;
+      if(bytes<=STABLE_MARKDOWN_CACHE_MAX_BYTES){
+        while(stableMarkdownCache.size&&stableMarkdownCacheBytes+bytes>STABLE_MARKDOWN_CACHE_MAX_BYTES){
+          const [oldText,old]=stableMarkdownCache.entries().next().value;
+          stableMarkdownCache.delete(oldText);stableMarkdownCacheBytes-=old.bytes;
+        }
+        stableMarkdownCache.set(text,{html,bytes});stableMarkdownCacheBytes+=bytes;
+      }
+    }
+  }
+  if(/```mermaid|class="mermaid"/.test(text))scheduleMermaid();
+  return html;
+};
 /* ── 语音小秘（Web Speech API 实时断句 + AI 甄别 + 直接发送）──────────
    边说边断：按句末标点/停顿自动成句 → 后端甄别 → 判定为指令的句子直接
    发送到当前会话（与手动提交同一 run 入口，兼容排队/工作流模式）；

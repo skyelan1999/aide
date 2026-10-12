@@ -206,6 +206,14 @@
       ],
       [
         "node",
+        "scripts/live-markdown-scan.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/stable-markdown-cache.test.cjs"
+      ],
+      [
+        "node",
         "scripts/test_reminder_styles.cjs"
       ],
       [
@@ -305,6 +313,10 @@
       [
         "node",
         "scripts/markdown-live-preview.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/markdown-template-icons.test.cjs"
       ],
       [
         "node",
