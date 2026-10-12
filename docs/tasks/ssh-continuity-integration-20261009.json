@@ -47,11 +47,12 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "双服务器 SSH/SFTP -race -count=2 全部 PASS，19.962 秒；最终源码指纹前后相同。覆盖工作区、workspace-sftp 与独立 server B 整版恢复；后两者文件夹完整操作；独立来源知识搜索/旧指纹拒绝/前后原文时间线。仅内部测试时钟过期加速扫描，未验证 UI 真实轮询时延、向量服务、真实模型或 Windows。",
+      "summary": "双服务器 SSH/SFTP -race -count=2 全部 PASS，19.962 秒；最终源码指纹前后相同。覆盖工作区、workspace-sftp 与独立 server B 整版恢复；后两者文件夹完整操作；独立来源知识搜索/旧指纹拒绝/前后原文时间线。仅内部测试时钟过期加速扫描，未验证 UI 真实轮询时延、向量服务、真实模型或 Windows。 当前主线复验：双服务器 disposable SSH/SFTP -race repeat=2 PASS（25.32s/27.12s），输入哈希前后相同；范围仍为隔离实机服务，不代表用户 SSH 主机、浏览器流程、模型或 Windows 验收。",
       "evidence": [
         ".agent-state/ssh-continuity-20261009/aide-ssh-test-20261009204513-87187.log",
         ".agent-state/ssh-continuity-20261009/aide-ssh-test-20261009204513-87187.log.sha256",
-        "DOCKER_BIN=/Users/skyelan/.docker/bin/docker AIDE_SSH_REPEAT=2 AIDE_SSH_TEST_EVIDENCE_DIR=.agent-state/ssh-continuity-20261009 bash scripts/test-ssh-workspace.sh"
+        "DOCKER_BIN=/Users/skyelan/.docker/bin/docker AIDE_SSH_REPEAT=2 AIDE_SSH_TEST_EVIDENCE_DIR=.agent-state/ssh-continuity-20261009 bash scripts/test-ssh-workspace.sh",
+        "2026-10-12 current checkout repeat acceptance: `DOCKER_BIN=docker AIDE_SSH_REPEAT=2 AIDE_SSH_TEST_EVIDENCE_DIR=.agent-state/ssh-continuity-20261012 bash scripts/test-ssh-workspace.sh` PASS; both live dual-server runs passed under race (25.32s and 27.12s), source inputs unchanged, internal-only Docker network and automatic fixture cleanup. Receipt .agent-state/ssh-continuity-20261012/aide-ssh-test-20261012134037-15856.log; SHA-256 27f4554858d94003d119b59f8e92db4d17010904ef9ff8895ac26a19cdad3abf."
       ]
     },
     "documentation": {
@@ -78,7 +79,7 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "真实 SSH/SFTP API 恢复和来源操作、知识原文检索/指纹/时间线回归通过；浏览器 SSH 工作现场恢复/锁屏、跨主机中断故障恢复、真实模型/向量、Windows与全量发布仍待完成。",
+  "handoff": "真实 SSH/SFTP API 恢复和来源操作、知识原文检索/指纹/时间线回归通过；浏览器 SSH 工作现场恢复/锁屏、跨主机中断故障恢复、真实模型/向量、Windows与全量发布仍待完成。 2026-10-12 主线双服务器 SSH/SFTP 重复真实服务回归通过，详见 .agent-state/ssh-continuity-20261012/aide-ssh-test-20261012134037-15856.log；用户环境SSH实际连接与Safari全工作流操作仍需独立验证。",
   "progressive_checkpoint": {
     "result": "PASS 24.639s, repeat=2",
     "evidence": ".agent-state/ssh-progressive-final-20261009/aide-ssh-test-20261009210015-87938.log",
