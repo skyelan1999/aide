@@ -87,12 +87,14 @@
       "evidence": []
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "桌面验收阶段按用户的分阶段推送要求已推送到 origin/main；窄屏 Safari 验收仍待完成。",
+      "evidence": [
+        "2026-10-13: commit 635c2f4 Add direct Markdown template toolbar icons 已推送至 github.com:skyelan1999/aide.git main，更新 e1e4055..635c2f4。提交仅含本功能 8 个文件。"
+      ]
     }
   },
-  "release_authorization": "",
+  "release_authorization": "用户此前明确要求阶段性测完后及时 push。",
   "rollback": "",
-  "handoff": "功能及静态检查已完成；Safari 系统浏览器已验收桌面宽度的同级 26 模板图标、插入焦点/占位选取和预览模式。验收草稿未保存并已忽略。需解锁 Aide 后完成 Safari 窄屏检查，再依用户此前的分阶段推送要求选择性提交本任务文件并推送；不得把全仓其他脏改动带入提交。"
+  "handoff": "桌面宽度 Safari 系统浏览器已验收 26 个同级模板图标、表格模板插入焦点/占位选择和预览页面；验收草稿已忽略且未保存。commit 635c2f4 已推送到 origin/main。待解锁 Aide 后完成窄屏 Safari 检查。最新静态检查通过；独立全量 race 验收仍有既有失败记录，应在发布整体工作前单独修复/复核。"
 }
