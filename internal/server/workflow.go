@@ -4458,8 +4458,8 @@ type contextCompactionProgress struct {
 }
 
 // contextCompactionProgressHandler exposes only bounded progress metadata for
-// the synchronous preflight compaction. No prompt, source message, or summary
-// text is included; normal session authorization applies to this route.
+// automatic preflight and user-requested compaction. No prompt, source message,
+// or summary text is included; normal session authorization applies to this route.
 func (a *App) contextCompactionProgressHandler(w http.ResponseWriter, r *http.Request) {
 	sessionID := r.PathValue("id")
 	a.mu.Lock()
@@ -4519,7 +4519,7 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 		a.contextCompactionProgress = map[string]contextCompactionProgress{}
 	}
 	a.contextCompactionProgress[sessionID] = contextCompactionProgress{
-		Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", BeforeTokens: beforeTokens, Folded: split, Preflight: true},
+		Event:     streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", BeforeTokens: beforeTokens, Folded: split, Preflight: true},
 		UpdatedAt: time.Now(),
 	}
 	a.mu.Unlock()
@@ -4663,7 +4663,6 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("该会话正在压缩，请稍后重试"))
 		return
 	}
-	a.compactingSessions[sessionID] = true
 	snap, split := a.snapshotForCompact(sess)
 	cfg := a.settings
 	if modelKey, keyErr := a.modelAPIKeyLocked(); keyErr != nil {
@@ -4673,8 +4672,18 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 	} else {
 		cfg.APIKey = modelKey
 	}
+	a.compactingSessions[sessionID] = true
 	baseLen := len(sess.Messages)
 	beforeTokens := sessionContextTokens(sess)
+	if a.contextCompactionProgress == nil {
+		a.contextCompactionProgress = map[string]contextCompactionProgress{}
+	}
+	if split > 0 {
+		a.contextCompactionProgress[sessionID] = contextCompactionProgress{
+			Event:     streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", BeforeTokens: beforeTokens, Folded: split},
+			UpdatedAt: time.Now(),
+		}
+	}
 	a.mu.Unlock()
 	defer func() {
 		a.mu.Lock()
@@ -4685,24 +4694,31 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"ok": true, "folded": 0, "compact": snap.prevCompact})
 		return
 	}
-	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact)
+	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact, func(stage string, batch, batches int) {
+		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "started", BeforeTokens: beforeTokens, Folded: split, BatchStage: stage, Batch: batch, Batches: batches})
+	})
 	if err != nil {
+		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "摘要请求未完成，原会话内容已保留"})
 		fail(w, 400, err)
 		return
 	}
+	a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "folding", BeforeTokens: beforeTokens, Folded: split})
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	// 提交校验：消息前缀必须仍与快照一致（未被并发修改）
 	if len(sess.Messages) != baseLen {
+		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话已被修改，压缩取消；原会话内容已保留"}, UpdatedAt: time.Now()}
 		fail(w, 409, errors.New("会话已被修改，压缩取消；请重试"))
 		return
 	}
 	if !compactSnapshotMatches(sess.Messages[:split], snap.messages) {
+		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话内容已被修改，压缩取消；原会话内容已保留"}, UpdatedAt: time.Now()}
 		fail(w, 409, errors.New("会话已被修改，压缩取消；请重试"))
 		return
 	}
 	candidate := compactedSessionCandidate(sess, snap, split, summary)
 	if err := a.save(&candidate); err != nil {
+		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "压缩结果保存失败，会话原历史已保留"}, UpdatedAt: time.Now()}
 		fail(w, 500, err)
 		return
 	}
@@ -4713,6 +4729,7 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		go a.runAutoEvolve(personaAide, modeCompress, "compaction", sample)
 	}
 	afterTokens := sessionContextTokens(sess)
+	a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: afterTokens, Folded: split}, UpdatedAt: time.Now()}
 	jsonOut(w, 200, map[string]any{"ok": true, "folded": split, "compact": summary, "compactedMessages": sess.CompactedMessages, "beforeTokens": beforeTokens, "afterTokens": afterTokens})
 }
 

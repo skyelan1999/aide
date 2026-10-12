@@ -171,6 +171,73 @@ func TestAutoCompactionPublishesObservableLifecycle(t *testing.T) {
 	}
 }
 
+func TestManualCompactionPublishesLiveProgressAndTokenEstimates(t *testing.T) {
+	a := testApp(t)
+	s := createSession(t, a)
+	requestStarted := make(chan struct{}, 1)
+	releaseRequest := make(chan struct{})
+	var releaseOnce sync.Once
+	defer releaseOnce.Do(func() { close(releaseRequest) })
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case requestStarted <- struct{}{}:
+		default:
+		}
+		<-releaseRequest
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": `{"goal":"keep manual progress","constraints":[],"decisions":[],"files":[],"facts":[],"evidence":[],"pending":[]}`}}}})
+	}))
+	defer provider.Close()
+	a.mu.Lock()
+	a.settings = Settings{BaseURL: provider.URL, Model: "test"}
+	s = a.sessions[s.ID]
+	for i := 0; i < 40; i++ {
+		s.Messages = append(s.Messages, Message{Role: "user", Content: fmt.Sprintf("history %d %s", i, strings.Repeat("continuity evidence ", 260))})
+	}
+	if err := a.save(s); err != nil {
+		a.mu.Unlock()
+		t.Fatal(err)
+	}
+	a.mu.Unlock()
+
+	result := make(chan *httptest.ResponseRecorder, 1)
+	go func() { result <- request(a, "POST", "/api/sessions/"+s.ID+"/compact", map[string]any{}) }()
+	select {
+	case <-requestStarted:
+	case <-time.After(5 * time.Second):
+		t.Fatal("manual compaction did not reach its model request")
+	}
+	progress := request(a, "GET", "/api/sessions/"+s.ID+"/compaction-progress", nil)
+	requireStatus(t, progress, 200)
+	var running struct {
+		Active bool        `json:"active"`
+		Event  streamEvent `json:"event"`
+	}
+	if err := json.Unmarshal(progress.Body.Bytes(), &running); err != nil {
+		t.Fatal(err)
+	}
+	if !running.Active || running.Event.Phase != "started" || running.Event.SessionID != s.ID || running.Event.Batch < 1 || running.Event.Batches < running.Event.Batch || running.Event.BatchStage != "map" || running.Event.Folded <= 0 || running.Event.BeforeTokens <= 0 {
+		t.Fatalf("manual compaction progress is not observable during summarization: %+v", running)
+	}
+	releaseOnce.Do(func() { close(releaseRequest) })
+	select {
+	case response := <-result:
+		requireStatus(t, response, 200)
+	case <-time.After(10 * time.Second):
+		t.Fatal("manual compaction did not finish after the provider resumed")
+	}
+	progress = request(a, "GET", "/api/sessions/"+s.ID+"/compaction-progress", nil)
+	var completed struct {
+		Active bool        `json:"active"`
+		Event  streamEvent `json:"event"`
+	}
+	if err := json.Unmarshal(progress.Body.Bytes(), &completed); err != nil {
+		t.Fatal(err)
+	}
+	if completed.Active || completed.Event.Phase != "completed" || completed.Event.Folded <= 0 || completed.Event.AfterTokens <= 0 || completed.Event.AfterTokens >= completed.Event.BeforeTokens {
+		t.Fatalf("manual compaction completion lacks persisted before/after evidence: %+v", completed)
+	}
+}
+
 func TestCompactionRetainedHistoryStaysWithinBudget(t *testing.T) {
 	a := testApp(t)
 	s := &Session{}

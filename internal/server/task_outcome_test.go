@@ -63,6 +63,39 @@ func TestTaskOutcomePreservesEvidenceBoundaries(t *testing.T) {
 		t.Fatal(d)
 	}
 }
+
+func TestOutcomeShellWriteTargetsRemainUnverifiedHints(t *testing.T) {
+	command := `printf 'a > b' > .cache/aide/approval-remember.txt 2>&1`
+	targets := shellRedirectionTargets(command)
+	if len(targets) != 1 || targets[0] != ".cache/aide/approval-remember.txt" {
+		t.Fatalf("quoted text and fd redirects must not become file targets: %#v", targets)
+	}
+	if got := shellRedirectionTargets(`printf x > one.txt; printf y >> "folder/two file.txt"`); len(got) != 2 || got[0] != "one.txt" || got[1] != "folder/two file.txt" {
+		t.Fatalf("explicit output targets: %#v", got)
+	}
+	if got := shellRedirectionTargets(`echo 'literal > not-a-target'`); len(got) != 0 {
+		t.Fatalf("quoted greater-than must not be treated as redirection: %#v", got)
+	}
+	if got := shellRedirectionTargets("printf x # > comment-only.txt\nprintf y > actual.txt"); len(got) != 1 || got[0] != "actual.txt" {
+		t.Fatalf("comment contents must not become output target evidence: %#v", got)
+	}
+
+	_, task := outcomeFixture(t)
+	use := ToolUse{Tool: "run_shell", Args: `{"command":"printf x > .cache/aide/approval-remember.txt"}`, Result: "exit code: 0"}
+	task.ToolUses = append(task.ToolUses, use)
+	d := taskOutcomeProjection(task, "outcome-session", 42, "test", 0, 2, 2)
+	writeTargets := d["writeTargets"].([]outcomeWriteTarget)
+	if len(writeTargets) != 1 || writeTargets[0].Path != ".cache/aide/approval-remember.txt" || writeTargets[0].Execution != "E0003" || !writeTargets[0].ResultRecorded || writeTargets[0].State != "command_redirection_unverified" {
+		t.Fatalf("target hint lost its evidence boundary: %#v", writeTargets)
+	}
+	if d["summary"].(map[string]any)["writeTargets"] != 1 {
+		t.Fatalf("target count missing from summary: %#v", d["summary"])
+	}
+	if got := strings.Join(d["gaps"].([]string), " "); !strings.Contains(got, "需单独读回复核") {
+		t.Fatalf("projection must say the target is not read back: %s", got)
+	}
+}
+
 func TestTaskOutcomeEvidenceDigestAndOwnership(t *testing.T) {
 	a, task := outcomeFixture(t)
 	digest := outcomeDigest(task.ToolUses[0])

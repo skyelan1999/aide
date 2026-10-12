@@ -29,6 +29,13 @@ type outcomeExecution struct {
 	Preview   string `json:"preview"`
 	Truncated bool   `json:"truncated"`
 }
+type outcomeWriteTarget struct {
+	Path           string `json:"path"`
+	Execution      string `json:"execution"`
+	Digest         string `json:"digest"`
+	ResultRecorded bool   `json:"resultRecorded"`
+	State          string `json:"state"`
+}
 type outcomeReport struct {
 	Title     string `json:"title"`
 	Content   string `json:"content"`
@@ -59,6 +66,117 @@ func outcomeText(s string, n int) (string, bool) {
 		return string(r[:n]), true
 	}
 	return s, false
+}
+
+// shellRedirectionTargets extracts only explicit, standalone > and >> shell
+// redirection tokens. These are command-declared destinations, never proof
+// that a file exists or that its content was saved.
+func shellRedirectionTargets(command string) []string {
+	var tokens []string
+	var word strings.Builder
+	flush := func() {
+		if word.Len() > 0 {
+			tokens = append(tokens, word.String())
+			word.Reset()
+		}
+	}
+	quote := byte(0)
+	escaped := false
+	for i := 0; i < len(command); i++ {
+		c := command[i]
+		if escaped {
+			word.WriteByte(c)
+			escaped = false
+			continue
+		}
+		if quote == '\'' {
+			if c == '\'' {
+				quote = 0
+			} else {
+				word.WriteByte(c)
+			}
+			continue
+		}
+		if quote == '"' {
+			switch c {
+			case '"':
+				quote = 0
+			case '\\':
+				escaped = true
+			default:
+				word.WriteByte(c)
+			}
+			continue
+		}
+		switch {
+		case c == '\\':
+			escaped = true
+		case c == '#' && word.Len() == 0:
+			// In POSIX shells an unquoted # at the beginning of a word
+			// starts a comment through the end of this command line.
+			for i+1 < len(command) && command[i+1] != '\n' {
+				i++
+			}
+		case c == '\'' || c == '"':
+			quote = c
+		case c == '>':
+			flush()
+			if i+1 < len(command) && command[i+1] == '>' {
+				tokens = append(tokens, ">>")
+				i++
+			} else {
+				tokens = append(tokens, ">")
+			}
+		case c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == ';' || c == '|':
+			flush()
+		case c == '&':
+			flush()
+			tokens = append(tokens, "&")
+		default:
+			word.WriteByte(c)
+		}
+	}
+	flush()
+	seen := map[string]bool{}
+	targets := []string{}
+	for i := 0; i+1 < len(tokens); i++ {
+		if tokens[i] != ">" && tokens[i] != ">>" {
+			continue
+		}
+		path := tokens[i+1]
+		// `2>&1` redirects to another descriptor, not to a file path.
+		if path == "" || path == "&" || strings.HasPrefix(path, "&") || seen[path] {
+			continue
+		}
+		seen[path] = true
+		targets = append(targets, path)
+	}
+	return targets
+}
+
+func outcomeWriteTargets(uses []ToolUse, start, end int) []outcomeWriteTarget {
+	start = min(start, len(uses))
+	end = min(end, len(uses))
+	if end < start {
+		return nil
+	}
+	var targets []outcomeWriteTarget
+	for i := start; i < end; i++ {
+		use := uses[i]
+		if use.Tool != "run_shell" {
+			continue
+		}
+		var args struct {
+			Command string `json:"command"`
+		}
+		if json.Unmarshal([]byte(use.Args), &args) != nil {
+			continue
+		}
+		for _, path := range shellRedirectionTargets(args.Command) {
+			targets = append(targets, outcomeWriteTarget{Path: path, Execution: fmt.Sprintf("E%04d", i+1), Digest: outcomeDigest(use), ResultRecorded: use.Result != "", State: "command_redirection_unverified"})
+		}
+	}
+	return targets
 }
 func outcomeOffset(r *http.Request, key string) (int, error) {
 	raw := r.URL.Query().Get(key)
@@ -145,6 +263,8 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		}
 		uses = append(uses, outcomeExecution{fmt.Sprintf("E%04d", i+1), i + 1, u.Tool, u.Who, state, outcomeDigest(u), preview, truncated})
 	}
+	writeTargets := outcomeWriteTargets(task.ToolUses, executionOffset, eEnd)
+	allWriteTargets := outcomeWriteTargets(task.ToolUses, 0, len(task.ToolUses))
 	for i, u := range task.ToolUses {
 		if u.Tool != "record_verification" {
 			continue
@@ -178,6 +298,9 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 	if len(unknown) > 0 {
 		gaps = append(gaps, "存在未取得持久化结果的调用；不得自动重放有副作用操作")
 	}
+	if len(allWriteTargets) > 0 {
+		gaps = append(gaps, "命令中存在 shell 输出重定向目标线索；未据此确认文件存在或内容已保存，需单独读回复核")
+	}
 	if task.Error != "" {
 		gaps = append(gaps, task.Error)
 	}
@@ -193,9 +316,9 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 	return map[string]any{
 		"version": 1, "taskId": task.ID, "sessionId": sessionID, "sessionNumber": number, "sessionTitle": title, "workspaceId": task.WorkspaceID, "created": task.Created, "status": task.Status, "mode": task.Mode, "goal": goal, "goalTruncated": goalTruncated, "goalDigest": hash([]byte(task.Prompt)), "plan": task.AgentPlan,
 		"inputs": map[string]any{"attachments": task.Attachments, "steers": task.Steers}, "outputs": outputs,
-		"summary":        map[string]any{"files": len(task.Files), "applicationRecords": applied, "executions": len(task.ToolUses), "verificationReports": len(reports), "systemReceipts": len(receipts), "findings": len(task.ResearchFindings), "unknownOutcomes": len(unknown)},
+		"summary":        map[string]any{"files": len(task.Files), "applicationRecords": applied, "writeTargets": len(allWriteTargets), "executions": len(task.ToolUses), "verificationReports": len(reports), "systemReceipts": len(receipts), "findings": len(task.ResearchFindings), "unknownOutcomes": len(unknown)},
 		"systemReceipts": receipts, "systemReceiptNote": "系统应用回执记录应用后的检查及其限制，不等于当前文件复核或完整产品验收；completed也可能记录待人工审批或远程未读回，请查看原文",
-		"files": files, "executions": uses, "verification": reports, "findings": task.ResearchFindings, "suggestedCommands": task.Commands, "unknownCalls": unknown, "gaps": gaps,
+		"files": files, "writeTargets": writeTargets, "writeTargetNote": "来自已记录 run_shell 参数中的显式 > 或 >> 重定向；只是命令目标线索，不证明写入或当前文件内容。", "executions": uses, "verification": reports, "findings": task.ResearchFindings, "suggestedCommands": task.Commands, "unknownCalls": unknown, "gaps": gaps,
 		"approvals": task.ApprovalReviews, "approvalNote": "审批记录仅证明当时的决策及匹配依据，不证明执行成功；最多保留最近50条，旧记录可能缺少来源字段",
 		"release": taskReleaseProjection(task.ReleaseReceipts),
 		"page":    map[string]any{"fileNext": fEnd, "filesMore": fEnd < len(task.Files), "executionNext": eEnd, "executionsMore": eEnd < len(task.ToolUses), "limit": limit},

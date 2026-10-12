@@ -35,30 +35,44 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "自动压缩现在在关闭 run SSE 前完成，并发送开始、摘要生成/折叠、完成或失败事件；事件绑定会话 ID、折叠条数和压缩前后同口径估算。手动压缩响应返回前后估算。侧栏只显示当前阶段，显示当前估算与完成后的节省量。",
+      "summary": "自动与手动压缩统一写入会话级进度状态，显示模型摘要 map/reduce 当前批次、阶段、待折叠条数与压缩前估算；摘要完成后显示折叠保存，持久化成功后显示同口径前后估算与节省量，失败记录原会话保留。前端手动压缩期间轮询同一状态接口；模型密钥读取失败不会遗留 compactingSessions 锁。",
       "evidence": [
         "internal/server/workflow.go: maybeAutoCompact、streamEvent、sessionContextTokens 与 compactSession。",
         "internal/server/web/app.js: compaction SSE 订阅、状态会话隔离、阶段更新与重复状态清除。",
-        "internal/server/web/style.css: 卡片呼吸、进度扫光、阶段标记及减少动态效果适配。"
+        "internal/server/web/style.css: 卡片呼吸、进度扫光、阶段标记及减少动态效果适配。",
+        "internal/server/workflow.go：compactSession 写入 started/map/reduce/folding/completed/failed 会话进度；批次不含会话正文或摘要正文。",
+        "internal/server/web/app.js：手动压缩与自动压缩共用 startContextCompactionWatch，进度按 sessionId 隔离。"
       ]
     },
     "verification": {
       "status": "partial",
-      "summary": "JS 语法检查与差异空白检查通过；通过 start.command 对应的 aide.sh source build 重建 9999 服务，Go vet/build 通过。新增隔离自动压缩生命周期回归，使用本地 mock provider 触发真实 maybeAutoCompact 流程并校验 SSE 阶段、会话身份、折叠数及前后估算。Safari 复核了真实页面中的开始、折叠、完成三态，使用本地合成 UI 事件验证渲染；未完成真实模型触发的自动压缩端到端观察。此前 quick 路由有一项与本任务无关的既有 task-outcome 标签断言失败。",
+      "summary": "2026-10-13 current-run: offline Docker Go 1.26, `-race -p=1`, five focused tests covering manual progress/token estimates, automatic lifecycle, shell target extraction, outcome evidence boundaries, and input/output projection: PASS (`aide/internal/server` 5.798s). Safari 18218 loads, but has no session/model configured, so no real compaction animation could be triggered; visual acceptance remains pending.",
       "evidence": [
         "node --check internal/server/web/app.js：通过。",
         "git diff --check（本任务四个目标文件）：通过。",
         "bash scripts/aide.sh start：Docker Go vet/build 通过，9999 服务就绪。",
         "Safari AX：整理中“12 条早期消息 · 当前约 17.2K”；折叠阶段替换前态；完成“17.2K → 10.9K（−6.3K）”。",
         "未运行真实会话压缩，避免改动现有会话历史。",
-        "新增 TestAutoCompactionPublishesObservableLifecycle：离线 Docker Go 定向测试 PASS（1.124s），触发自动压缩并断言 started → folding → completed、sessionId、Folded、BeforeTokens/AfterTokens 与压缩后会话状态一致。"
-      ]
+        "新增 TestAutoCompactionPublishesObservableLifecycle：离线 Docker Go 定向测试 PASS（1.124s），触发自动压缩并断言 started → folding → completed、sessionId、Folded、BeforeTokens/AfterTokens 与压缩后会话状态一致。",
+        "2026-10-13 当前工作树复跑：docker run --rm --network none -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor ./internal/server -run '^(TestContextPreviewAccumulatesHistoryAndReflectsCompaction|TestAutoCompactionPublishesObservableLifecycle|TestContextOverflowCompactsHistoryBeforeRetry|TestCompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|TestMalformedCompactionSummaryAbortsWithoutChangingSource)$' -count=1：PASS（1.565s，5 项）。宿主无 Go，使用网络隔离容器；本次为源码定向回归，不触发当前用户会话压缩。",
+        "2026-10-13: python3 scripts/agent-route.py verify full PASS. Fingerprint 36305137f029eb9cbebd8ec75ebc41d4a64d27f7727d838d68b844c8620d8f85; 40 configured checks; complete go test -race -count=1 -timeout=15m ./... passed (internal/server 427.288s, tts 3.339s) and go vet ./... passed; receipt .agent-state/verify-20261012T170952263439Z.log.",
+        "2026-10-13: 网络隔离的 aide:local 工具链执行 gofmt、node --check internal/server/web/app.js、git diff --check 均通过。",
+        "2026-10-13: TestManualCompactionPublishesLiveProgressAndTokenEstimates、TestAutoCompactionPublishesObservableLifecycle、TestCompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary 定向 Go 回归 PASS（internal/server 1.254s）。手动用例暂停第一批 mock provider 请求，在压缩实际运行时读取会话进度接口，验证当前批次/阶段/条数/前估算，放行后再核对 completed 与持久化后的前后估算。",
+        "Safari 18219 仍显示系统证书安全拦截，手动压缩新增进度尚未做系统浏览器交互验证；未 push。",
+        "2026-10-13: 最新全部 28 个工作树变更已同步到隔离候选并用 start.command 重建；候选源码指纹 bda1ad77c3a7bad747c217307cdbb832b094860e7dfb17d2ab4ca82bebca6258。Docker 容器 healthy，/healthz status=ok，首页 HTTPS 返回 59,623 字节且包含 app.js/markdown-media.js/macos.css。完整性状态 degraded；只读对照证明候选持久卷旧 binary baseline 与这次重建二进制不一致，未删除/重置该基线。Safari 18219 仍停在系统证书警告，因此新增 UI 验收 pending。",
+        "2026-10-13 current-state reconciliation: Compaction-specific Go regressions pass; current quick profile passes. Latest repository-wide race attempt timed out after 15m in TestDaemonConcurrentStartStopConsistency and therefore full_profile is not a pass. Manual compaction Safari UI acceptance remains pending on 18219 certificate interstitial.",
+        "2026-10-13 current worktree in healthy container aide-aide-1: PATH=/usr/local/go/bin:$PATH GOCACHE=/home/aide/.cache/go-build GOMAXPROCS=2 go test -mod=vendor -p=1 -race ./internal/server -run \"Test(ContextOverflowCompactsHistoryBeforeRetry|AutoCompactionPublishesObservableLifecycle|ManualCompactionPublishesLiveProgressAndTokenEstimates|CompactionRetainedHistoryStaysWithinBudget|RemediationConcurrentCompactionNoPanicNoDeadlock|RemediationCompactionChainRetainsPreviousSummary|CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges)$\" -count=1 -timeout=180s: PASS 10.878s. This is Go/API evidence only; no Safari animation or live long-session acceptance.",
+        "2026-10-13 current-run: offline Docker Go 1.26, `-race -p=1`, five focused tests covering manual progress/token estimates, automatic lifecycle, shell target extraction, outcome evidence boundaries, and input/output projection: PASS (`aide/internal/server` 5.798s). Safari 18218 loads, but has no session/model configured, so no real compaction animation could be triggered; visual acceptance remains pending."
+      ],
+      "full_profile": "FAIL",
+      "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504"
     },
     "documentation": {
       "status": "pass",
       "summary": "架构文档说明自动和手动压缩反馈阶段、SSE 展示与活动上下文估算口径。",
       "evidence": [
-        "docs/architecture.md：上下文预算与压缩段落已更新。"
+        "docs/architecture.md：上下文预算与压缩段落已更新。",
+        "docs/architecture.md 与 docs/user-guide.md 说明自动和手动压缩共享阶段反馈；本轮新增的手动批次轮询仍需系统 Safari 验收。"
       ]
     },
     "cleanup": {
@@ -69,12 +83,12 @@
       ]
     },
     "release": {
-      "status": "not_requested",
-      "summary": "本轮未请求推送或发布。",
+      "status": "partial",
+      "summary": "后端压缩进度 API 与定向回归已按阶段推送；Safari 中的压缩动画验收仍未完成。未发布或部署。",
       "evidence": []
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": ""
+  "handoff": "Backend stage pushed after focused race regressions passed. Safari 18218 loads but has no model or session, so manual/automatic compaction animation remains unverified in the system browser. The 15-minute full-profile timeout recorded in the industrial long-conversation ledger remains unresolved."
 }
