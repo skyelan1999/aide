@@ -76,5 +76,13 @@
   },
   "release_authorization": "",
   "rollback": "源码回退可由单独 revert 本任务提交恢复；运行实例通过同一 start.command 重建上一提交源码镜像。Compose named volumes aide-data/aide-home 与工作区 bind mount 保持不变；本修复不迁移或删除数据。",
-  "handoff": "已提交并推送至 origin/main：c97fd75 (fix: avoid ghost review state on paused tasks)。全量门禁38/38、start.command本机9999候选与原生Safari全局模式往返/跨标签策略读回均通过；原辅助审批已恢复。不代表上位12项持续目标整体验收或release完成。"
+  "handoff": "已提交并推送至 origin/main：c97fd75 (fix: avoid ghost review state on paused tasks)。全量门禁38/38、start.command本机9999候选与原生Safari全局模式往返/跨标签策略读回均通过；原辅助审批已恢复。不代表上位12项持续目标整体验收或release完成。",
+  "verification_20261012_isolated_two_tab": {
+    "environment": "Source-mounted isolated candidate https://localhost:18217 in native Safari; not production 9999.",
+    "initial_mode": "Manual approval was selected before the test.",
+    "procedure": "Temporarily selected global Assisted approval in one Safari tab; switched to the other already-open candidate tab and read the selected state; restored global Manual approval in the first tab and verified the other tab showed Manual. No approval tasks were run and no remembered rules were created.",
+    "result": "PASS: cross-tab approval-mode propagation was visible immediately, and the original Manual mode was restored and read back in the second tab.",
+    "evidence": "Safari AX state on 18217 showed “审批模式已全局生效”; second tab strategy label changed to “辅助审批” after the first-tab switch, then to “手动审批” after restoration. The disposable recovery.md fixture was permanently deleted after separate user confirmation; its candidate folder is empty.",
+    "limits": "This verifies UI-level global state propagation and restoration on the isolated candidate only; it does not exercise real command approval or production state."
+  }
 }
