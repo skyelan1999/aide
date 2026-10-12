@@ -278,9 +278,14 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 				g.Truncated = true
 				return
 			}
-			entries, err := f.ReadDir(1001)
-			if len(entries) > 1000 {
-				entries = entries[:1000]
+			// Bound one directory by this source's remaining node budget, not by a
+			// fixed 1,000-entry ceiling. The extra entry proves that the directory
+			// exceeds the available budget; it is never silently mistaken for a
+			// complete scan. This still caps memory when a directory is enormous.
+			entryBudget := max(1, fileQuota-files+dirQuota-dirs)
+			entries, err := f.ReadDir(entryBudget + 1)
+			if len(entries) > entryBudget {
+				entries = entries[:entryBudget]
 				reasons["directory_entries"] = true
 				partial = true
 				g.Truncated = true

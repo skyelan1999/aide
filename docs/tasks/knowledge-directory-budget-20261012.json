@@ -1,0 +1,32 @@
+{
+  "id": "knowledge-directory-budget-20261012",
+  "request": "Remove the fixed 1,000-entry local directory ceiling from Knowledge Map scans so a directory is bounded by its configured source budgets and reports incomplete coverage explicitly.",
+  "status": "stage_verified_browser_pending",
+  "baseline": "a74f1e60cb3d94608bfb9b88a972c8406a408818",
+  "change": {
+    "files": [
+      "internal/server/knowledge_map.go",
+      "internal/server/knowledge_coverage_test.go",
+      "docs/architecture/knowledge-map.md"
+    ],
+    "implementation": "The direct local scan derives its per-directory ReadDir safety bound from the remaining file and directory budget for that source, plus one look-ahead entry. If that bound is exceeded, the graph remains explicitly partial. Added a regression case with 1,105 files in one directory and sufficient configured budget."
+  },
+  "verification": {
+    "status": "partial",
+    "evidence": [
+      "gofmt check passed in the locally cached Go 1.26 image.",
+      "TestKnowledgeCoverageDirectoryBeyondLegacyThousandEntryLimit passed (1.152s) in a network-disabled Go 1.26 container using the current source mount.",
+      "TestKnowledgeCoverageDirectoryBeyondDynamicEntryBudgetIsExplicit confirms an over-budget flat directory is capped at 800 files and reports directory_entries; both direct-snapshot boundary tests pass under -race.",
+      "go test -mod=vendor -race ./internal/server -run TestKnowledge -count=1 passed (39.481s) in a network-disabled Go 1.26 container using the current source mount.",
+      "Latest go test -mod=vendor -race ./internal/server -run TestKnowledge -count=1 -timeout=120s passed (36.632s) after adding the over-budget boundary case.",
+      "python3 scripts/check_docs.py passed: 188 Markdown files, 537 local links, JPEG signatures, FR-01..100.",
+      "python3 scripts/agent-route.py verify quick passed at HEAD a74f1e60cb3d94608bfb9b88a972c8406a408818; fingerprint 8d6561133f189c66c0c9730182c982d25c27ca226017e068246a60a7e5f01773.",
+      "Current-source isolated candidate aide-budget-20261012 was restarted; https://127.0.0.1:18217/healthz returned healthy.",
+      "System Safari currently shows the isolated localhost:18217 token-entry page; authenticated product verification remains pending."
+    ],
+    "required": [
+      "Build and inspect the updated graph in system Safari, including coverage state and a directory exceeding 1,000 files."
+    ]
+  },
+  "release": "Stage-tested commit 311fe21 is ready to push; authenticated system Safari product verification and deployment remain pending"
+}

@@ -70,6 +70,95 @@ func TestKnowledgeCoverageFileBudget(t *testing.T) {
 		t.Fatal("coverage change did not revise graph")
 	}
 }
+
+func TestKnowledgeCoverageDirectoryBeyondLegacyThousandEntryLimit(t *testing.T) {
+	a := testApp(t)
+	// Keep this fixture to one active area so its configured budget can exceed
+	// 1,000 files; production divides the global budget among active areas.
+	a.mu.Lock()
+	reference, sources := a.reference, a.sourceRegistry.Sources
+	a.reference, a.sourceRegistry.Sources = nil, nil
+	a.mu.Unlock()
+	t.Cleanup(func() {
+		a.mu.Lock()
+		a.reference, a.sourceRegistry.Sources = reference, sources
+		a.mu.Unlock()
+	})
+	const count = 1105
+	flat := filepath.Join(a.workPath, "flat")
+	if err := os.MkdirAll(flat, 0700); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < count; i++ {
+		name := filepath.Join(flat, fmt.Sprintf("f%04d.txt", i))
+		if err := os.WriteFile(name, []byte("text"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	p := defaultKnowledgeIndexPolicy()
+	p.FileBudget = 3000
+	p.DirectoryBudget = 500
+	v := indexPolicyResponse(t, a)
+	requireStatus(t, request(a, "PUT", "/api/knowledge-map/index-policy", map[string]any{
+		"policy": p, "workspaceId": v["workspaceId"], "revision": v["revision"],
+	}), 200)
+
+	// A nil scan cache deliberately exercises the bounded direct snapshot path.
+	source := coverageSource(t, a.knowledgeSnapshotModeCached(context.Background(), false, nil), "workspace")
+	if source.State != "ready" || source.Coverage == nil || source.Coverage.Files != count {
+		t.Fatalf("large but in-budget directory was truncated: state=%s coverage=%+v", source.State, source.Coverage)
+	}
+	if len(source.Coverage.Reasons) != 0 {
+		t.Fatalf("complete directory reported truncation: %+v", source.Coverage)
+	}
+}
+
+func TestKnowledgeCoverageDirectoryBeyondDynamicEntryBudgetIsExplicit(t *testing.T) {
+	a := testApp(t)
+	// Isolate the workspace source so this fixture exercises its full configured
+	// budget instead of the production per-area split.
+	a.mu.Lock()
+	reference, sources := a.reference, a.sourceRegistry.Sources
+	a.reference, a.sourceRegistry.Sources = nil, nil
+	a.mu.Unlock()
+	t.Cleanup(func() {
+		a.mu.Lock()
+		a.reference, a.sourceRegistry.Sources = reference, sources
+		a.mu.Unlock()
+	})
+	const count = 1105
+	flat := filepath.Join(a.workPath, "flat")
+	if err := os.MkdirAll(flat, 0700); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < count; i++ {
+		name := filepath.Join(flat, fmt.Sprintf("f%04d.txt", i))
+		if err := os.WriteFile(name, []byte("text"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	p := defaultKnowledgeIndexPolicy()
+	p.FileBudget = 800
+	p.DirectoryBudget = 200
+	v := indexPolicyResponse(t, a)
+	requireStatus(t, request(a, "PUT", "/api/knowledge-map/index-policy", map[string]any{
+		"policy": p, "workspaceId": v["workspaceId"], "revision": v["revision"],
+	}), 200)
+
+	// A nil scan cache deliberately exercises the bounded direct snapshot path.
+	source := coverageSource(t, a.knowledgeSnapshotModeCached(context.Background(), false, nil), "workspace")
+	if source.State != "partial" || source.Coverage == nil || source.Coverage.Files != p.FileBudget {
+		t.Fatalf("directory over budget was not explicitly bounded: state=%s coverage=%+v", source.State, source.Coverage)
+	}
+	found := false
+	for _, reason := range source.Coverage.Reasons {
+		found = found || reason == "directory_entries"
+	}
+	if !found {
+		t.Fatalf("directory boundary was not reported: %+v", source.Coverage)
+	}
+}
+
 func TestKnowledgeCoverageDepthBudget(t *testing.T) {
 	a := testApp(t)
 	before := coverageSource(t, a.knowledgeSnapshot(context.Background()), "workspace").Coverage
