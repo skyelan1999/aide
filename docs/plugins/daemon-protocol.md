@@ -119,6 +119,8 @@ ctx.emit('log',    { level: 'warn', message: '重连中...' });
 
 ### 6.1 状态机
 
+同一插件的启动、停止和重启由管理器按插件串行处理。并发的启动请求会共享一个 supervisor 生命周期，并等待同一就绪结果；停止或恢复不会与启动交错，避免重复宿主进程和重复 supervisor。
+
 ```mermaid
 stateDiagram-v2
     [*] --> stopped

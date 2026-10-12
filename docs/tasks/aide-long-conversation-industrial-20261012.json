@@ -61,12 +61,13 @@
         "internal/server/workflow.go：contextCompactionTimeout=2*time.Hour，用于发送前压缩；internal/server/workflow_timeout_test.go 增加预算断言。",
         "internal/server/server.go 注册 GET /api/sessions/{id}/compaction-progress；internal/server/workflow.go 记录带过期清理的阶段/计数状态；internal/server/web/app.js 在发送等待期轮询并复用上下文压缩卡，英文界面键在 locales/en.js。",
         "internal/server/workflow.go：buildCompactionSummary 提供逐批 map/reduce 回调；internal/server/remediation_test.go 补充回调阶段、批次范围和每次 provider 请求一一对应的断言（待 Go 环境运行）。",
-        "internal/server/web/app.js：上下文无关完成态 Markdown 使用估算上限2 MiB的 LRU 缓存；live、相对路径及查看器资源上下文绕过缓存；语言切换清空缓存。"
+        "internal/server/web/app.js：上下文无关完成态 Markdown 使用估算上限2 MiB的 LRU 缓存；live、相对路径及查看器资源上下文绕过缓存；语言切换清空缓存。",
+        "2026-10-13：DaemonManager 新增按插件生命周期互斥锁，串行化 Start/Stop；并发 Start 等待并复用同一 supervisor 与 readiness 生命周期。"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "历史 full race/vet 曾在先前指纹通过；当前差异 quick 检查通过，相关记忆/压缩 race 与 server go vet 定向通过。最新完整 Docker race 再次在既有 TestDaemonConcurrentStartStopConsistency 挂住并触发15分钟包超时，故当前差异的 full profile 不通过。Safari 18219 仍处系统证书警告，界面验收未做；向量按要求暂缓，Windows由用户验收。",
+      "summary": "本轮定向 daemon 并发、控制审批 race 测试与 server vet 通过；此前完整 Docker race 的 daemon 超时仍未解除。Safari 证书经用户明确授权由代理处理并到达 18220 登录页；本轮后端改动的认证界面验收未运行。向量按用户要求暂缓。",
       "evidence": [
         "离线 Docker Go 1.26 扩展回归：覆盖 TestMemoryTokensLegacyAndExternalEdit、容量/损坏投影测试、24 写并发一致性、连续摘要请求预算、畸形摘要、工具参数快照变化、超限/新任务/自动/并发压缩；`go test -mod=vendor ./internal/server -run 'Test(MemoryTokens.*|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall|RemediationAutoCompactNotBlockedByHeldMutex|RemediationConcurrentCompactionNoPanicNoDeadlock)$' -count=1`：PASS（6.920s）。",
         "离线 Docker Go 1.26：`go test -mod=vendor ./internal/server -run 'Test(CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|MemoryTokens|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall)$' -count=1`：PASS（3.828s）。",
@@ -98,9 +99,16 @@
         "2026-10-13 当前缓存差异：`scripts/stable-markdown-cache.test.cjs` 覆盖完成态缓存、live/相对路径隔离、Mermaid调度和2 MiB淘汰上限；quick profile PASS，收据 `.agent-state/verify-20261012T182147341488Z.log`（通过当时的工作区差异指纹）。",
         "2026-10-13：最新 `python3 scripts/agent-route.py verify full` 在沙箱首次因 `Unable to find application named Docker` 中止；随后授权 Docker Desktop 中 `bash scripts/aide.sh test` 跑完15分钟仍失败：`TestDaemonConcurrentStartStopConsistency` 挂住并造成 `panic: test timed out after 15m0s`，`internal/server` FAIL，`internal/server/tts` PASS。当前 full 不记为通过。",
         "2026-10-13：Docker Go 1.26 定向 race 覆盖 `TestMemoryTokens.*`、项目记忆并发写、压缩有界预算/无效结构/工具快照变化，通过；`go vet ./internal/server` 通过，包用时5.932s。",
-        "2026-10-13：为排查 full race 超时，隔离重复执行 `TestDaemonConcurrentStartStopConsistency` 20 次，`go test -race -count=20 -timeout=90s ./internal/server -run ^TestDaemonConcurrentStartStopConsistency$` PASS（15.480s）。这说明该用例在隔离压力下未复现挂起，但不能覆盖完整套件超时根因；full 仍保持 FAIL。"
+        "2026-10-13：为排查 full race 超时，隔离重复执行 `TestDaemonConcurrentStartStopConsistency` 20 次，`go test -race -count=20 -timeout=90s ./internal/server -run ^TestDaemonConcurrentStartStopConsistency$` PASS（15.480s）。这说明该用例在隔离压力下未复现挂起，但不能覆盖完整套件超时根因；full 仍保持 FAIL。",
+        "2026-10-13：修复 daemon 生命周期并发竞态：DaemonManager 对每个插件串行执行 Start/Stop，避免首个子进程尚未发布运行态时并发 Start 启动多个 supervisor；补充 12 路并发只创建一个 supervisor 的 race 回归。`go test -mod=vendor -p=1 -race ./internal/server -run '^(TestDaemonConcurrentStartsShareSupervisor|TestDaemonConcurrentStartStopConsistency)$' -count=20 -timeout=120s` PASS（34.258s）。",
+        "2026-10-13：`TestControlWorkflowConfirmationAndRevocation` 在容器预置内建插件环境中改为只替换临时测试 App 的入口文件，继续使用真实 browser-control/computer-control ID 覆盖产品审批策略；race 定向测试 PASS（22.877s）。",
+        "2026-10-13：daemon 全组 race 回归 `go test -mod=vendor -p=1 -race ./internal/server -run '^TestDaemon' -count=1 -timeout=180s` PASS（11.5s）；`go vet -mod=vendor ./internal/server` exit 0。"
       ],
-      "full_profile": "FAIL",
+      "full_profile": {
+        "status": "FAIL",
+        "fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504",
+        "note": "Latest previously observed full Docker race timed out in TestDaemonConcurrentStartStopConsistency. The new targeted concurrency tests pass, but full-profile root cause and full rerun remain outstanding."
+      },
       "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504",
       "previous_full_profile": {
         "status": "PASS",
@@ -136,5 +144,5 @@
   },
   "release_authorization": "推送检查点授权：用户此前要求阶段性测完后及时 push；本次仅推送已验证的后端与文档检查点，不打 tag、不发布。",
   "rollback": "回滚仅撤销此任务记录范围文件中的对应提交/差异；不整体恢复工作区、不清理会话或记忆数据。内存模型/API schema 不变；token 文件格式不变。",
-  "handoff": "长对话改进任务仍 active。预算修复已推送 bec1653；压缩超时与逐批进度检查点已推送 origin/main 提交 c4cda4267104f24585777dfb32a3595d583e1b7b，隔离 full race/vet PASS（fingerprint 7a780784b82c696c9bad1e643673c73588188f79c84fcd8b8cfde3bd51a5b45b）。系统 Safari 已登录当前源码候选 18217 并读回工作台，但候选无模型配置，真实压缩动态与真实模型验收未完成。生产 9999 未重启；Windows 用户已实测正常并移除待办；向量仍按用户要求暂缓。工业长对话其他记忆/恢复/稳定性边界逐项跟踪。 2026-10-13 又加入超长会话历史 Markdown 的2 MiB有界 LRU 缓存，隔离live和相对资源渲染；quick profile PASS（0e55527...），full race/vet 尚未对此新差异重跑。Safari系统浏览器18219仍停在证书警告，交互验收未完成；长对话、真实模型压缩和产品验收任务保持 active。 2026-10-13 超长历史完成态 Markdown 加入2 MiB LRU缓存及缓存边界回归；quick与记忆/压缩定向 race、server go vet 通过。最新全量 race 在 TestDaemonConcurrentStartStopConsistency 15分钟超时，故该源码指纹 full 未通过。Safari 18219仍为证书告警，系统浏览器验收未完成。 补充诊断：TestDaemonConcurrentStartStopConsistency 独立 race 重复20次通过（15.480s），完整套件中的超时目前仅在高负载全包条件观察到，根因未定。2026-10-13: current quick profile PASS, fingerprint f00eeff0e9be8d80c8f32203da3741227f438a491e0a3587326ec1dc94e353c6; commit df780ce pushed to origin/main with stable 2 MiB Markdown cache and incremental appends for very long active text. The latest full race profile remains FAIL on TestDaemonConcurrentStartStopConsistency timeout. System Safari localhost:18220 certificate acceptance and new UI verification still pending."
+  "handoff": "长对话改进任务仍 active。预算修复已推送 bec1653；压缩超时与逐批进度检查点已推送 origin/main 提交 c4cda4267104f24585777dfb32a3595d583e1b7b，隔离 full race/vet PASS（fingerprint 7a780784b82c696c9bad1e643673c73588188f79c84fcd8b8cfde3bd51a5b45b）。系统 Safari 已登录当前源码候选 18217 并读回工作台，但候选无模型配置，真实压缩动态与真实模型验收未完成。生产 9999 未重启；Windows 用户已实测正常并移除待办；向量仍按用户要求暂缓。工业长对话其他记忆/恢复/稳定性边界逐项跟踪。 2026-10-13 又加入超长会话历史 Markdown 的2 MiB有界 LRU 缓存，隔离live和相对资源渲染；quick profile PASS（0e55527...），full race/vet 尚未对此新差异重跑。Safari系统浏览器18219仍停在证书警告，交互验收未完成；长对话、真实模型压缩和产品验收任务保持 active。 2026-10-13 超长历史完成态 Markdown 加入2 MiB LRU缓存及缓存边界回归；quick与记忆/压缩定向 race、server go vet 通过。最新全量 race 在 TestDaemonConcurrentStartStopConsistency 15分钟超时，故该源码指纹 full 未通过。Safari 18219仍为证书告警，系统浏览器验收未完成。 补充诊断：TestDaemonConcurrentStartStopConsistency 独立 race 重复20次通过（15.480s），完整套件中的超时目前仅在高负载全包条件观察到，根因未定。2026-10-13: current quick profile PASS, fingerprint f00eeff0e9be8d80c8f32203da3741227f438a491e0a3587326ec1dc94e353c6; commit df780ce pushed to origin/main with stable 2 MiB Markdown cache and incremental appends for very long active text. The latest full race profile remains FAIL on TestDaemonConcurrentStartStopConsistency timeout. System Safari localhost:18220 certificate acceptance and new UI verification still pending. 2026-10-13 daemon 生命周期互斥修复已通过定向 race 回归与 go vet；完整 race 根因仍待分批定位，Safari 已接受 18220 证书并到达候选登录页，但此后端改动未做认证 UI 验收。"
 }

@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -399,4 +400,58 @@ func TestDaemonConcurrentStartStopConsistency(t *testing.T) {
 	n := len(a.daemons.procs["race-daemon"].events) // 仅断言条目存在、不 panic
 	a.daemons.mu.Unlock()
 	_ = n
+}
+
+func TestDaemonConcurrentStartsShareSupervisor(t *testing.T) {
+	a := testApp(t)
+	var launches atomic.Int32
+	var active atomic.Int32
+	var maxActive atomic.Int32
+	var p *daemonProc
+	p = installHookedDaemon(t, a, "single-supervisor", func(readyCh, doneCh chan struct{}) {
+		launches.Add(1)
+		current := active.Add(1)
+		for previous := maxActive.Load(); current > previous && !maxActive.CompareAndSwap(previous, current); previous = maxActive.Load() {
+		}
+		p.mu.Lock()
+		stopCh := p.stopCh
+		p.mu.Unlock()
+		p.closeReadyOnce()
+		<-stopCh
+		active.Add(-1)
+		close(doneCh)
+	})
+
+	const callers = 12
+	start := make(chan struct{})
+	var wg sync.WaitGroup
+	errs := make(chan error, callers)
+	for i := 0; i < callers; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			<-start
+			errs <- a.daemons.StartWithPath("single-supervisor", "/nonexistent/single-supervisor")
+		}()
+	}
+	close(start)
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got := launches.Load(); got != 1 {
+		t.Fatalf("concurrent Start calls launched %d supervisor loops; want exactly one", got)
+	}
+	if got := maxActive.Load(); got != 1 {
+		t.Fatalf("concurrent active daemon generations = %d; want 1", got)
+	}
+	if err := a.daemons.Stop("single-supervisor"); err != nil {
+		t.Fatal(err)
+	}
+	if got := active.Load(); got != 0 {
+		t.Fatalf("active daemon generations after Stop = %d; want 0", got)
+	}
 }

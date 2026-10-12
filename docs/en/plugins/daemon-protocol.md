@@ -119,6 +119,8 @@ ctx.emit('log',    { level: 'warn', message: 'reconnecting...' });
 
 ### 6.1 State machine
 
+The manager serializes start, stop, and restart operations per plugin. Concurrent start requests share one supervisor lifecycle and wait for the same readiness result. Stop and restore cannot interleave with a start, preventing duplicate host processes and supervisors.
+
 ```mermaid
 stateDiagram-v2
     [*] --> stopped

@@ -76,6 +76,7 @@ type daemonProc struct {
 	id           string
 	pluginPath   string
 	settingsJSON string
+	lifecycleMu  sync.Mutex // 串行化 Start/Stop，防止并发启动多个 supervise 循环
 	cmd          *exec.Cmd
 	stdin        io.WriteCloser
 
@@ -236,11 +237,21 @@ func (m *DaemonManager) StartWithSettings(id, pluginMain string, settings map[st
 			backoff:      daemonBaseBackoff,
 		}
 		m.procs[id] = p
-	} else {
+	}
+	m.mu.Unlock()
+
+	// Keep the per-process lifecycle serialized while starting and waiting for
+	// readiness. In particular, another Start must not launch a second
+	// supervisor before the first spawn has published its running state.
+	p.lifecycleMu.Lock()
+	defer p.lifecycleMu.Unlock()
+
+	if exists {
 		p.mu.Lock()
 		p.settingsJSON = string(settingsBytes)
 		p.mu.Unlock()
 	}
+	m.mu.Lock()
 	st := p.statusSnapshot()
 	already := st == dsRunning || st == dsBackoff
 	if already {
@@ -504,6 +515,8 @@ func (m *DaemonManager) Stop(id string) error {
 	if p == nil {
 		return nil
 	}
+	p.lifecycleMu.Lock()
+	defer p.lifecycleMu.Unlock()
 	p.stop()
 	return nil
 }
@@ -571,7 +584,9 @@ func (m *DaemonManager) StopAll() {
 	}
 	m.mu.Unlock()
 	for _, p := range procs {
+		p.lifecycleMu.Lock()
 		p.stop()
+		p.lifecycleMu.Unlock()
 	}
 }
 

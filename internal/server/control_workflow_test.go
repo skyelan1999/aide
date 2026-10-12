@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -16,12 +18,13 @@ func TestControlWorkflowConfirmationAndRevocation(t *testing.T) {
 		for _, action := range []string{"confirm", "decline", "cancel", "revoke"} {
 			t.Run(tool+"/"+action, func(t *testing.T) {
 				a := testApp(t)
-				owner := "browser-control"
+				pluginName := "browser-control"
 				if strings.HasPrefix(tool, "computer_") {
-					owner = "computer-control"
+					pluginName = "computer-control"
 				}
-				code := `module.exports={name:` + `"` + owner + `"` + `,apply(ctx){ctx.tool({name:"` + tool + `",handler:args=>({text:args.approved===true?"EXECUTED":"UNAPPROVED"})});}};`
-				requireStatus(t, request(a, "POST", "/api/plugins", map[string]any{"id": owner, "name": owner, "code": code}), 201)
+				code := `module.exports={name:` + `"` + pluginName + `"` + `,apply(ctx){ctx.tool({name:"` + tool + `",handler:args=>({text:args.approved===true?"EXECUTED":"UNAPPROVED"})});}};`
+				installControlWorkflowFixture(t, a, pluginName, code)
+				pluginID := pluginName
 				task := &Task{ID: "control-task", Mode: "chat", Status: "running", WorkspaceMode: "workspace-write"}
 				session := &Session{ID: "control-session", Runs: []*Task{task}}
 				a.mu.Lock()
@@ -54,7 +57,7 @@ func TestControlWorkflowConfirmationAndRevocation(t *testing.T) {
 					cancel()
 				} else {
 					if action == "revoke" {
-						requireStatus(t, request(a, "PUT", "/api/plugins/"+owner, map[string]any{"enabled": false}), 200)
+						requireStatus(t, request(a, "PUT", "/api/plugins/"+pluginID, map[string]any{"enabled": false}), 200)
 					}
 					answer := "确认"
 					if action == "decline" {
@@ -73,6 +76,35 @@ func TestControlWorkflowConfirmationAndRevocation(t *testing.T) {
 			})
 		}
 	}
+}
+
+// installControlWorkflowFixture replaces only the temporary App's built-in
+// plugin entry point when container bootstrap already registered it. The real
+// owner ID matters because approval policy is keyed to these control plugins.
+func installControlWorkflowFixture(t *testing.T, a *App, pluginID, code string) {
+	t.Helper()
+	a.mu.Lock()
+	for i := range a.pluginRegistry.Plugins {
+		if a.pluginRegistry.Plugins[i].ID != pluginID {
+			continue
+		}
+		main := "control-workflow-test.js"
+		if err := os.WriteFile(filepath.Join(a.pluginsPath, pluginID, main), []byte(code), 0600); err != nil {
+			a.mu.Unlock()
+			t.Fatal(err)
+		}
+		a.pluginRegistry.Plugins[i].Main = main
+		a.pluginRegistry.Plugins[i].Enabled = true
+		if err := a.savePluginRegistry(); err != nil {
+			a.mu.Unlock()
+			t.Fatal(err)
+		}
+		a.mu.Unlock()
+		a.runPluginHost(context.Background())
+		return
+	}
+	a.mu.Unlock()
+	requireStatus(t, request(a, "POST", "/api/plugins", map[string]any{"id": pluginID, "name": pluginID, "code": code}), 201)
 }
 
 func TestControlPluginCanceledContext(t *testing.T) {
