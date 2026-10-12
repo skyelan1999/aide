@@ -50,12 +50,13 @@
     },
     "copy_refinement_2026_10_13": {
       "status": "pending_browser_acceptance",
-      "summary": "Template help text was expanded from generic labels to specific usage guidance, matched in English, and documented in both user guides. The rebuilt 9999 service returned status=ok and served asset hashes matching source. Safari is currently covered by the app's lock overlay, so these latest help-text changes have not received interactive UI review.",
+      "summary": "Template help text was expanded from generic labels to specific usage guidance, matched in English, and documented in both user guides. The rebuilt 9999 service serves the latest source, but Safari is covered by the app's lock overlay, so these copy refinements have not received interactive UI review. The focused regression script was corrected to assert the current v5/v109 assets.",
       "evidence": [
         "git diff --check passes.",
         "start.command rebuilt and restarted the local Aide service; /healthz returned status=ok (integrity=degraded).",
         "Served markdown-media.js?v=5 and locales/en.js?v=109 hashes matched the source files.",
-        "Safari AX showed the app lock overlay; no unlock or password interaction was attempted."
+        "node scripts/markdown-template-icons.test.cjs passes all 26 first-level template actions, labels, usage guidance, insertion affordance, and narrow-row scrolling; its previous cache assertions incorrectly expected v4/v108 and now match v5/v109.",
+        "System Safari reloaded https://localhost:9999 and exposed the Aide lock overlay, so no Markdown file page could be opened. The old 18217 acceptance service is not listening. No certificate warning or lock credential was bypassed."
       ]
     },
     "documentation": {
