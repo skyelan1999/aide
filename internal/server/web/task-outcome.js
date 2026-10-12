@@ -3,6 +3,37 @@
  'use strict';
  let generation=0,active=null;
  const node=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=String(text);return e;};
+ const replyNames=['chat','agent','review','propose','plan'];
+ const preferredReply={chat:'chat',workflow:'agent',review:'review',propose:'propose',plan:'plan'};
+ const finalOutput=(steps,mode)=>{const available=(steps||[]).filter(s=>s?.content&&s.name!=='file_application_receipt');const preferred=preferredReply[mode];return (preferred&&[...available].reverse().find(s=>s.name===preferred))||[...available].reverse().find(s=>replyNames.includes(s.name))||available[available.length-1]||null;};
+ function shellWriteTargets(toolUses){
+  const found=[];
+  for(const [index,use] of (toolUses||[]).entries()){
+   if(use.tool!=='run_shell')continue;
+   let command='';try{command=JSON.parse(use.args||'{}').command||'';}catch{}
+   let word='',quote='',escaped=false;const tokens=[];
+   const flush=()=>{if(word){tokens.push(word);word='';}};
+   for(let i=0;i<command.length;i++){
+    const c=command[i];
+    if(escaped){word+=c;escaped=false;continue;}
+    if(quote==="'"){if(c==="'")quote='';else word+=c;continue;}
+    if(quote==='"'){if(c==='"')quote='';else if(c==='\\')escaped=true;else word+=c;continue;}
+    if(c==='\\'){escaped=true;continue;}
+    if(c==='"'||c==="'"){quote=c;continue;}
+    if(c==='#'&&!word){while(i+1<command.length&&command[i+1]!=='\n')i++;continue;}
+    if(c==='>'){flush();if(command[i+1]==='>'){tokens.push('>>');i++;}else tokens.push('>');continue;}
+    if(c===' '||c==='\t'||c==='\r'||c==='\n'||c===';'||c==='|'){flush();continue;}
+    if(c==='&'){flush();tokens.push('&');continue;}
+    word+=c;
+   }
+   flush();
+   for(let i=0;i+1<tokens.length;i++)if(tokens[i]==='>'||tokens[i]==='>>'){
+    const path=tokens[i+1];if(!path||path==='&'||path.startsWith('&'))continue;
+    found.push({path,call:index+1,resultRecorded:!!(use.result||use.preview)});
+   }
+  }
+  return found;
+ }
  function close(){generation++;active?.close();}
  window.LockCluster?.on('effective',value=>{if(value)close();});
  window.addEventListener('pagehide',close);
@@ -10,9 +41,10 @@
   close();content.replaceChildren();
   const runs=session.runs||[],intro=node('div','outcome-intro');
   intro.append(node('h3','',t('当前会话 · 输入与输出')),node('p','muted','#'+(session.number||'?')+' · '+session.title),node('p','muted',t('已展示 {0} / {1} 轮任务',runs.length,session.runsTotal??runs.length)));content.append(intro);
-  const replyFor=run=>{const steps=(run.steps||[]).filter(s=>s.content&&s.name!=='file_application_receipt');for(const name of ['chat','agent','review','propose','plan']){const step=[...steps].reverse().find(s=>s.name===name);if(step)return step;}return steps[steps.length-1]||null;};
-  const totals={inputs:runs.length,outputs:runs.filter(r=>replyFor(r)||r.error).length,files:runs.reduce((n,r)=>n+(r.files||[]).length,0)};
-  const metrics=node('div','outcome-metrics outcome-io-metrics');for(const [key,label]of [['inputs','输入轮次'],['outputs','助手回复'],['files','文件成果']]){const cell=node('div');cell.append(node('strong','',totals[key]),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
+  const replyFor=run=>finalOutput(run.steps,run.mode);
+  const runTargets=new Map(runs.map(run=>[run.id,shellWriteTargets(run.toolUses)]));
+  const totals={inputs:runs.length,outputs:runs.filter(r=>replyFor(r)||r.error).length,files:runs.reduce((n,r)=>n+(r.files||[]).length,0),writeTargets:[...runTargets.values()].reduce((n,items)=>n+items.length,0)};
+  const metrics=node('div','outcome-metrics outcome-io-metrics');for(const [key,label]of [['inputs','输入轮次'],['outputs','助手回复'],['files','文件成果'],['writeTargets','写入目标线索']]){const cell=node('div');cell.append(node('strong','',totals[key]),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
   const text=(host,value,markdown=false)=>{const body=node(markdown?'div':'pre',markdown?'outcome-io-answer md-body':'outcome-io-text');const source=String(value||'');if(markdown&&renderMarkdown)body.innerHTML=renderMarkdown(source);else body.textContent=source;host.append(body);};
   const phaseName=name=>({chat:t('助手回复'),agent:t('自主执行'),review:t('审查'),propose:t('方案'),plan:t('规划')})[name]||name||t('处理阶段');
   for(let i=runs.length-1;i>=0;i--){const run=runs[i],card=node('article','outcome-io-round outcome-io-turn'),number=(session.runsTotal??runs.length)-runs.length+i+1,final=replyFor(run);
@@ -26,8 +58,10 @@
    else output.append(node('p','muted',t(run.status==='running'?'正在生成回复…':'没有记录到助手正文')));
    if(final&&run.error)output.append(node('p','outcome-io-error','⚠ '+run.error));
    const artifacts=node('section','outcome-io-block outcome-io-artifacts');artifacts.append(node('h4','','文件成果'));
-   if(!(run.files||[]).length)artifacts.append(node('p','muted',t('本轮没有文件变更记录')));
+   const targets=runTargets.get(run.id)||[];
+   if(!(run.files||[]).length&&!targets.length)artifacts.append(node('p','muted',t('本轮没有文件变更记录')));
    for(const f of run.files||[])artifacts.append(node('p','outcome-io-resource',f.path+' · '+t(f.applied?'已记录应用，仍需复核':'变更提案，尚无应用标记')));
+   for(const target of targets){const hint=node('p','outcome-io-resource',t('命令写入目标线索')+' · '+target.path+' · '+t('工具调用 {0}',target.call)+' · '+t('未验证文件存在或正文'));artifacts.append(hint);}
    const processSteps=(run.steps||[]).filter(s=>s!==final&&s.content&&s.name!=='file_application_receipt'),toolUses=run.toolUses||[];
    if(processSteps.length||toolUses.length){const activity=node('details','outcome-io-activity');activity.append(node('summary','',t('查看运行过程 · {0} 阶段 · {1} 次工具调用',processSteps.length,toolUses.length)));
     for(const step of processSteps){const d=node('details','outcome-io-process-step');d.append(node('summary','',phaseName(step.name)+' · '+t(step.status||'已记录')));text(d,step.content,true);activity.append(d);}
@@ -45,9 +79,9 @@
    content.replaceChildren(node('p','muted',t('正在读取任务记录…')));
    const valid=()=>gen===generation&&content.isConnected&&!blocked?.();
    const base='/sessions/'+encodeURIComponent(sessionId)+'/runs/'+encodeURIComponent(runId)+'/outcome';
-   let data,files=[],executions=[],stale=false;
+  let data,files=[],executions=[],writeTargets=[],stale=false;
    async function reloadRecords(){
-    try{const next=await api(base);if(!valid())return;data=next;files=next.files;executions=next.executions;stale=false;render();}
+    try{const next=await api(base);if(!valid())return;data=next;files=next.files;executions=next.executions;writeTargets=next.writeTargets||[];stale=false;render();}
     catch(e){if(valid())error?.(e.message);}
    }
    const section=(title)=>{const s=node('section','outcome-section');s.append(node('h3','',t(title)));content.append(s);return s;};
@@ -64,17 +98,17 @@
     for(const a of data.inputs?.attachments||[])input.append(node('p','outcome-io-resource',a.path+' · '+(a.source||a.root||'workspace')));
     for(const steer of data.inputs?.steers||[])input.append(node('p','',t(steer.queued?'排队补充':'插话补充')+' · '+steer.content));
     const output=section('输出了什么'),replies=data.outputs||[];if(!replies.length)output.append(node('p','muted',t('尚无回复记录')));
-    const preferred={chat:'chat',workflow:'agent',review:'review',propose:'propose',plan:'plan'}[data.mode];
-    const finalReply=[...replies].reverse().find(reply=>reply.name===preferred)||[...replies].reverse().find(reply=>['chat','agent','review','propose','plan'].includes(reply.name))||replies[replies.length-1];
+    const finalReply=finalOutput(replies,data.mode);
     if(finalReply){const answer=node('article','outcome-io-final');answer.append(node('p','outcome-io-model',t('助手回复')+' · '+t(finalReply.status||'已记录')));const body=node('div','outcome-io-answer md-body');if(renderMarkdown)body.innerHTML=renderMarkdown(finalReply.content);else body.textContent=finalReply.content;answer.append(body);if(finalReply.truncated)answer.append(node('p','muted',t('回复摘要已截断，完整回复见会话历史')));output.append(answer);}
     const otherReplies=replies.filter(reply=>reply!==finalReply);if(otherReplies.length){const other=node('details','outcome-io-reply');other.append(node('summary','',t('展开其他阶段输出 · {0}',otherReplies.length)));for(const reply of otherReplies){const phase=node('details','outcome-io-process-step');phase.append(node('summary','',reply.name+' · '+t(reply.status||'已记录')),node('pre','outcome-io-text',reply.content));if(reply.truncated)phase.append(node('p','muted',t('回复摘要已截断，完整回复见会话历史')));other.append(phase);}output.append(other);}
     section('形成了什么成果');
-    const metrics=node('div','outcome-metrics');for(const [key,label]of [['files','文件提案'],['applicationRecords','应用记录'],['executions','执行返回'],['verificationReports','验证报告'],['unknownOutcomes','未知结果']]){const cell=node('div');cell.append(node('strong','',data.summary[key]),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
+    const metrics=node('div','outcome-metrics');for(const [key,label]of [['files','文件提案'],['writeTargets','写入目标线索'],['applicationRecords','应用记录'],['executions','执行返回'],['verificationReports','验证报告'],['unknownOutcomes','未知结果']]){const cell=node('div');cell.append(node('strong','',data.summary[key]??0),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
     content.append(node('p','outcome-boundary',t('任务状态、模型计划与验证报告不是独立验收证明；展开证据查看原始返回。')));
     if(data.plan?.items?.length){const s=section('目标与计划');for(const item of data.plan.items)s.append(node('p','',item.step+' · '+item.status+(item.evidence?.length?' · '+item.evidence.map(i=>'E'+String(i).padStart(4,'0')).join(', '):'')));}
     const fs=section('文件变更');if(!files.length)fs.append(node('p','muted',t('没有文件提案记录')));for(const f of files){const row=node('div','outcome-file');row.append(node('code','',f.path),node('span','muted',t(f.state==='proposed'?'提案未应用':'应用已有记录，当前文件未复核')),node('small','outcome-digest',(f.beforeHash||'—')+' → '+f.proposedHash),node('small','muted',f.proposedBytes+' bytes'));fs.append(row);}
+    if(writeTargets.length){const hints=section('命令写入目标线索');hints.append(node('p','muted',data.writeTargetNote||t('命令目标线索不证明写入或当前文件内容')));for(const target of writeTargets){const row=node('div','outcome-file');row.append(node('code','',target.path),node('span','muted',target.execution+' · '+t('命令重定向目标，未回读验证')),node('small','outcome-digest',target.digest||'—'));const execution=executions.find(item=>item.id===target.execution);if(execution){const inspect=node('button','quiet',t('查看原始证据'));inspect.type='button';inspect.onclick=()=>evidence(execution);row.append(inspect);}hints.append(row);}}
     const es=section('执行与证据');if(!executions.length)es.append(node('p','muted',t('没有工具返回记录')));for(const record of executions){const row=node('details','outcome-execution'),summary=node('summary');summary.append(node('code','',record.id),node('span','',record.tool),node('small','muted',t(record.state==='no_result'?'没有返回记录':'已记录返回')));row.append(summary,node('pre','',record.preview||'—'));if(record.truncated)row.append(node('p','muted',t('预览已截断，可展开原始证据')));const b=node('button','quiet',t('查看原始证据'));b.onclick=()=>evidence(record);row.append(b,node('small','outcome-digest',record.digest));es.append(row);}
-    if(stale){const notice=node('p','outcome-boundary',t('成果记录已更新，请重新加载；旧页与新页不能混合'));notice.setAttribute('role','status');const reload=node('button','quiet',t('重新加载成果记录'));reload.onclick=async()=>{reload.disabled=true;await reloadRecords();if(valid()&&reload.isConnected)reload.disabled=false;};es.append(notice,reload);}else if(data.page.filesMore||data.page.executionsMore){const more=node('button','quiet',t('加载更多成果记录'));more.onclick=async()=>{more.disabled=true;try{const next=await api(base+'?fileOffset='+data.page.fileNext+'&executionOffset='+data.page.executionNext+'&snapshot='+encodeURIComponent(data.snapshot||''));if(!valid())return;if(!data.snapshot||next.snapshot!==data.snapshot){stale=true;render();return;}files.push(...next.files);executions.push(...next.executions);data={...next,files,executions};render();}catch(e){if(valid()){if(e.status===409){stale=true;render();}else{error?.(e.message);more.disabled=false;}}}};es.append(more);}
+    if(stale){const notice=node('p','outcome-boundary',t('成果记录已更新，请重新加载；旧页与新页不能混合'));notice.setAttribute('role','status');const reload=node('button','quiet',t('重新加载成果记录'));reload.onclick=async()=>{reload.disabled=true;await reloadRecords();if(valid()&&reload.isConnected)reload.disabled=false;};es.append(notice,reload);}else if(data.page.filesMore||data.page.executionsMore){const more=node('button','quiet',t('加载更多成果记录'));more.onclick=async()=>{more.disabled=true;try{const next=await api(base+'?fileOffset='+data.page.fileNext+'&executionOffset='+data.page.executionNext+'&snapshot='+encodeURIComponent(data.snapshot||''));if(!valid())return;if(!data.snapshot||next.snapshot!==data.snapshot){stale=true;render();return;}files.push(...next.files);executions.push(...next.executions);writeTargets.push(...(next.writeTargets||[]));data={...next,files,executions,writeTargets};render();}catch(e){if(valid()){if(e.status===409){stale=true;render();}else{error?.(e.message);more.disabled=false;}}}};es.append(more);}
     const receipts=data.systemReceipts||[];
     if(receipts.length){const rs=section('系统应用回执');rs.append(node('p','muted',data.systemReceiptNote||t('历史系统记录，不代表当前文件或完整验收。')));for(const receipt of receipts){const d=node('details','outcome-execution');d.append(node('summary','',receipt.id+' · '+t(receipt.state==='failed'?'回执检查失败':'系统记录')),node('pre','',receipt.content||'—'));const b=node('button','quiet',t('查看原始证据'));b.onclick=()=>evidence(receipt);d.append(b,node('small','outcome-digest',receipt.digest));if(receipt.truncated)d.append(node('p','muted',t('预览已截断，可展开原始证据')));rs.append(d);}}
     const approvals=section('审批依据');approvals.append(node('p','muted',data.approvalNote||t('历史记录可能缺少审批来源')));for(const review of data.approvals||[]){const entry=node('details'),source={model:'模型独立审核',human:'人工确认',remembered:'授权规则匹配'};entry.append(node('summary','',t(source[review.source]||'历史来源未记录')+' · '+t(({approved:'已自动放行',confirmed:'人工已确认',declined:'人工未批准',reviewing:'审核中',manual:'需手动确认',aborted:'未自动放行'})[review.status]||'历史状态未记录')),node('p','',review.reason),node('pre','',review.command),node('p','muted',(review.at||'')+' · '+(review.workspace||'—')+' · '+(review.root?.displayHost||review.root?.containerAbs||'—')),node('code','outcome-digest',review.fingerprint||'—'));if(review.ruleId)entry.append(node('p','muted',review.ruleId+' · '+(review.expiresAt||t('永久'))));approvals.append(entry);}
@@ -94,9 +128,9 @@
      }catch(e){if(valid())error?.(e.message);}};
     gaps.append(importReceipt,receiptFile);
 
-    const actions=node('div','outcome-actions');const exportButton=node('button','quiet',t('导出成果 JSON'));exportButton.disabled=stale;exportButton.onclick=()=>{if(!valid()||stale)return;const blob=new Blob([JSON.stringify({...data,files,executions,exportScope:{kind:'summary',snapshot:data.snapshot||null,consistentSnapshot:!!data.snapshot&&!stale,allPagesLoaded:!data.page.filesMore&&!data.page.executionsMore,rawEvidenceIncluded:false,textTruncated:!!data.goalTruncated||executions.some(e=>e.truncated)||data.verification.some(r=>r.truncated)||(data.systemReceipts||[]).some(r=>r.truncated)}},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='aide-outcome-'+runId+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};actions.append(exportButton);content.append(actions);
+    const actions=node('div','outcome-actions');const exportButton=node('button','quiet',t('导出成果 JSON'));exportButton.disabled=stale;exportButton.onclick=()=>{if(!valid()||stale)return;const blob=new Blob([JSON.stringify({...data,files,executions,writeTargets,exportScope:{kind:'summary',snapshot:data.snapshot||null,consistentSnapshot:!!data.snapshot&&!stale,allPagesLoaded:!data.page.filesMore&&!data.page.executionsMore,rawEvidenceIncluded:false,textTruncated:!!data.goalTruncated||executions.some(e=>e.truncated)||data.verification.some(r=>r.truncated)||(data.systemReceipts||[]).some(r=>r.truncated)}},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='aide-outcome-'+runId+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};actions.append(exportButton);content.append(actions);
    }
-   try{data=await api(base);if(!valid())return;files=data.files;executions=data.executions;render();}catch(e){if(valid()){content.replaceChildren(node('p','task-error',e.message));}}
+   try{data=await api(base);if(!valid())return;files=data.files;executions=data.executions;writeTargets=data.writeTargets||[];render();}catch(e){if(valid()){content.replaceChildren(node('p','task-error',e.message));}}
    return {close};
  }
  window.AideTaskOutcome={mount,sessionOverview,close};

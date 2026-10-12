@@ -35,8 +35,8 @@
       "evidence": []
     },
     "verification": {
-      "status": "pass",
-      "summary": "Front-end syntax, documentation links and fixture regression pass. Authenticated system Safari on rebuilt localhost:9999 confirms the submitted prompt and primary final assistant response expanded by default, process/tool evidence collapsed and no reasoning exposed. Task mode is preserved through secure snapshot projection; focused Go regression, start.command vet/build and post-rebuild Safari verification pass. Export download contents, attachment-bearing turns, non-chat mode fixtures, narrow viewport and Windows native UI remain unverified.",
+      "status": "partial",
+      "summary": "2026-10-13 system Safari on actual localhost:9999, session #42, verifies submitted task, mode-specific final response, separate 0 file artifacts / 1 unverified shell target hint, and target-to-raw-E0001 evidence navigation. Existing focused front-end and Go regressions pass. Overall trajectory acceptance remains partial: export contents, attachment-bearing turns, narrow viewport, dynamic compaction, and Windows native UI are not verified; current full_profile remains FAIL.",
       "evidence": [
         "node --check app.js/task-outcome.js/locales/en.js: PASS",
         "check_docs.py: 176 Markdown / 455 links PASS",
@@ -50,8 +50,17 @@
         "git diff --check: PASS; Go test unavailable (host Go absent; Docker socket inaccessible)",
         "docker run --rm --network=none -v $PWD:/src -w /src golang:1.26-bookworm go test -mod=vendor ./internal/server -run TestTaskOutcomePreservesEvidenceBoundaries -count=1: PASS",
         "AIDE_OPEN_BROWSER=0 ./start.command: vet/build/container recreate/health check PASS (full tests not run)",
-        "Safari reload localhost:9999 #42 · 输入与输出: submitted prompt, expanded final response and no-file-artifact state visible"
-      ]
+        "Safari reload localhost:9999 #42 · 输入与输出: submitted prompt, expanded final response and no-file-artifact state visible",
+        "2026-10-13: scripts/outcome-pagination.test.cjs PASS after adding review-mode fixture; overview now chooses review output as final while keeping intermediate chat response in the collapsed process. This fixture does not replace system Safari verification of the changed source.",
+        "2026-10-13: docker run --rm --network none ... go test -mod=vendor -race ./internal/server -run ^(TestTaskOutcome|TestOutcomeShellWriteTargets) -count=1 -timeout=120s PASS (6.301s); quick engineering profile PASS 38/38, fingerprint ed75e5d04d571ec6771a87acd081cf5dba08bcbea5c0648edf7b82c924cf86ee. System Safari still required for UI acceptance.",
+        "2026-10-13: python3 scripts/agent-route.py verify full PASS. Fingerprint 36305137f029eb9cbebd8ec75ebc41d4a64d27f7727d838d68b844c8620d8f85; 40 configured checks; complete go test -race -count=1 -timeout=15m ./... passed (internal/server 427.288s, tts 3.339s) and go vet ./... passed; receipt .agent-state/verify-20261012T170952263439Z.log.",
+        "2026-10-13: shell write-target extraction now skips unquoted shell comments, preventing `# > comment-only.txt` from appearing as a file artifact. `TestOutcomeShellWriteTargetsRemainUnverifiedHints` race PASS (2.616s); `node scripts/outcome-pagination.test.cjs` PASS; quick 40/40 PASS fingerprint ccb8600158996aaa82c150c7ad0d1861a89a1eb7c73abbde181e73cddc39400a; full 40 checks PASS, go test -race full package PASS (internal/server 401.324s, tts 2.869s), go vet PASS; receipt .agent-state/verify-20261012T173456053409Z.log. Safari UI acceptance remains pending on 18219 due its system certificate interstitial.",
+        "2026-10-13 current-state reconciliation: 2026-10-13 latest current-worktree full test attempt failed after the 15m timeout in TestDaemonConcurrentStartStopConsistency; task-specific outcome/write-target race and quick checks pass. Earlier full PASS remains historical only. System Safari UI acceptance is pending on the 18219 certificate interstitial.",
+        "2026-10-13 current worktree, healthy container aide-aide-1: PATH=/usr/local/go/bin:$PATH GOCACHE=/home/aide/.cache/go-build GOMAXPROCS=2 go test -mod=vendor -p=1 -race ./internal/server -run \"Test(TaskOutcomePreservesEvidenceBoundaries|OutcomeShellWriteTargetsRemainUnverifiedHints|TaskOutcomeEvidenceDigestAndOwnership|TaskOutcomeSnapshotIsDetached|TaskOutcomeSystemReceipt|TaskOutcomePaginationSnapshot|TaskOutcomeInputsAndOutputs)$\" -count=1 -timeout=180s: PASS 11.950s. Scope: Go outcome input/output, evidence boundary/digest ownership, detached snapshots, system receipts and pagination snapshot. This proves backend behavior only, not current-candidate Safari interaction/persistence.",
+        "2026-10-13: system Safari localhost:9999 #42 · 输入与输出: 1 input, 1 final reply, 0 verified file artifacts, 1 shell redirection hint; detail reports 0 proposals, 1 target hint, 0 application records, 1 execution, 0 verification reports; opening target evidence shows raw E0001 args and exit code 0 without claiming readback."
+      ],
+      "full_profile": "FAIL",
+      "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504"
     },
     "documentation": {
       "status": "pass",
@@ -71,5 +80,5 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "2026-10-12: Outcome snapshots now retain task mode; focused Go test and system Safari after start.command rebuild pass. Real chat-mode run confirmed Codex-style submitted input + expanded final answer + truthful artifacts, with process evidence collapsed. Non-chat real mode, attachment/artifact sample, narrow viewport, export file and Windows remain open; no release."
+  "handoff": "2026-10-13: current localhost:9999 system Safari verifies task outcome UI and raw evidence navigation for session #42. Shell redirection remains an unverified target hint. Still pending: downloaded export inspection, attachment-bearing real turn, narrow viewport, dynamic compaction browser run, and Windows native UI. Full profile is FAIL per latest recorded current-worktree timeout; targeted outcome tests pass."
 }

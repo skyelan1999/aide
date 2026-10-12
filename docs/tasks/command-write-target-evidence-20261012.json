@@ -19,8 +19,8 @@
       "summary": "服务端仅提取显式重定向目标，并标记为 command_redirection_unverified；前端总览、详情及 JSON 导出展示该线索和执行编号。详情中的目标可直达匹配执行记录的原始参数与返回。"
     },
     "verification": {
-      "status": "partial",
-      "summary": "2026-10-13 current-run: offline Docker Go 1.26, `-race -p=1`, five focused tests covering explicit shell redirection targets and outcome projections: PASS (`aide/internal/server` 5.798s). Safari input/output UI, target-to-evidence navigation, and export remain unverified on the current source candidate.",
+      "status": "pass",
+      "summary": "2026-10-13：当前工作树聚焦 race 回归通过；系统 Safari 在实际 localhost:9999 会话 #42 验证总览与单轮详情，0 个文件成果与 1 条命令目标线索分别显示；线索可跳转 E0001 原始参数与返回。exit code 0 没有被表述为文件持久化或正文验证。",
       "evidence": [
         "docker run --rm --network none ... go test -mod=vendor ./internal/server -run '^TestOutcomeShellWriteTargetsRemainUnverifiedHints$' -count=1: PASS",
         "node --check internal/server/web/task-outcome.js: PASS",
@@ -36,7 +36,8 @@
         "2026-10-13: 新增 scripts/markdown-template-icons.test.cjs 到 docs/agent/router.json 的 quick profile；python3 scripts/agent-route.py verify quick 再跑后 38/38 PASS，fingerprint ed75e5d04d571ec6771a87acd081cf5dba08bcbea5c0648edf7b82c924cf86ee。",
         "2026-10-13: python3 scripts/agent-route.py verify full PASS. Fingerprint 36305137f029eb9cbebd8ec75ebc41d4a64d27f7727d838d68b844c8620d8f85; 40 configured checks; complete go test -race -count=1 -timeout=15m ./... passed (internal/server 427.288s, tts 3.339s) and go vet ./... passed; receipt .agent-state/verify-20261012T170952263439Z.log.",
         "2026-10-13 current-state reconciliation: Current quick profile passes. Latest repository-wide race attempt timed out after 15m in TestDaemonConcurrentStartStopConsistency; targeted outcome/write-target race passes. System Safari remains blocked at localhost certificate warning.",
-        "2026-10-13 current-run: offline Docker Go 1.26, `-race -p=1`, five focused tests covering explicit shell redirection targets and outcome projections: PASS (`aide/internal/server` 5.798s). Safari input/output UI, target-to-evidence navigation, and export remain unverified on the current source candidate."
+        "2026-10-13 current-run: offline Docker Go 1.26, `-race -p=1`, five focused tests covering explicit shell redirection targets and outcome projections: PASS (`aide/internal/server` 5.798s). Safari input/output UI, target-to-evidence navigation, and export remain unverified on the current source candidate.",
+        "2026-10-13 system Safari https://127.0.0.1:9999, session #42: input/output overview reports 1 input, 1 reply, 0 file artifacts, 1 command-target hint; detail links that hint to E0001 raw arguments and exit code 0; raw content is explicitly not read back and remains unverified."
       ],
       "full_profile": "FAIL",
       "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504"
@@ -47,8 +48,8 @@
     },
     "release": {
       "status": "partial",
-      "summary": "后端重定向目标提取与 API 回归已按阶段推送；前端展示及 Safari 验收仍未完成。"
+      "summary": "后端目标提取已随 88fbce2 推送；本轮前端成果舱展示与 Safari 验收已通过，前端阶段推送状态待本次发布后回填。"
     }
   },
-  "handoff": "Backend stage pushed after focused race regressions passed. The API exposes only unverified command-target hints; it never claims persistence. Safari input/output UI, target-to-evidence navigation, and export remain pending."
+  "handoff": "Safari verified current localhost:9999 source on session #42. The command target is clearly an unverified hint and opens raw E0001 evidence. Do not claim file existence or persistence without readback. Broader trajectory acceptance still has independent export, attachment-bearing, narrow viewport, and compaction gaps."
 }

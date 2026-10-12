@@ -30,10 +30,12 @@ function overviewScenario(){
  const content=new Element('div'),context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)}};
  vm.runInNewContext(fs.readFileSync('internal/server/web/task-outcome.js','utf8'),context);
  let chosen,older=0;
- const session={number:9,title:'IO fixture',runsTotal:3,hasOlder:true,runs:[{id:'round',prompt:'Create diagram',status:'completed',attachments:[{path:'input.csv',source:'ssh-data'}],steers:[{content:'Use blue'}],steps:[{name:'chat',status:'completed',content:'Diagram response'},{name:'file_application_receipt',content:'receipt'}],files:[{path:'diagram.svg',applied:false}],toolUses:[{tool:'write_file'}]}]};
+ const session={number:9,title:'IO fixture',runsTotal:3,hasOlder:true,runs:[{id:'round',mode:'review',prompt:'Review diagram',status:'completed',attachments:[{path:'input.csv',source:'ssh-data'}],steers:[{content:'Use blue'}],steps:[{name:'chat',status:'completed',content:'Intermediate chat response'},{name:'review',status:'completed',content:'Review findings'},{name:'file_application_receipt',content:'receipt'}],files:[{path:'diagram.svg',applied:false}],toolUses:[{tool:'run_shell',args:JSON.stringify({command:'printf x # > comment-only.txt\nprintf y > actual.txt'}),result:'exit code: 0'},{tool:'write_file'}]}]};
  context.window.AideTaskOutcome.sessionOverview(content,{session,t:(key,...a)=>key.replace(/\{(\d+)\}/g,(_,i)=>a[i]),selectRun:id=>chosen=id,loadOlder:()=>older++});
  const all=descendants(content),texts=all.map(e=>e.textContent||'').join('\n');
- for(const text of ['你','助手','文件成果','Create diagram','input.csv','ssh-data','Use blue','Diagram response','diagram.svg','变更提案，尚无应用标记','已展示 1 / 3'])assert.ok(texts.includes(text),text);
+ for(const text of ['你','助手','文件成果','Review diagram','input.csv','ssh-data','Use blue','Intermediate chat response','Review findings','diagram.svg','变更提案，尚无应用标记','已展示 1 / 3','actual.txt'])assert.ok(texts.includes(text),text);
+ assert.ok(!all.some(e=>String(e.className||'').includes('outcome-io-resource')&&e.textContent.includes('comment-only.txt')),'comment text must not be reported as a shell write target');
+ const assistant=all.find(e=>String(e.className||'').includes('outcome-io-assistant')),answer=assistant&&descendants(assistant).find(e=>String(e.className||'').includes('outcome-io-answer'));assert.ok(answer&&answer.textContent==='Review findings','review-mode summary must show the review output as final');assert.ok(!answer.textContent.includes('Intermediate chat response'),'intermediate chat output must not replace the mode-specific final output');
  assert.ok(!texts.includes('receipt'),'system receipt must not count as a model reply');
  all.find(e=>e.textContent==='查看本轮详情、审批与证据').onclick();assert.equal(chosen,'round');
  all.find(e=>e.textContent==='加载更早的输入与输出').onclick();assert.equal(older,1);
