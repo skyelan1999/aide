@@ -1488,7 +1488,9 @@ function updateThinkingSummary(details, reasoning, running) {
   const preview = firstLine.length > 110 ? firstLine.slice(0, 109) + '…' : firstLine;
   summary.replaceChildren(el('span', 'rsp-think-label', t(running ? '思考中' : '思考过程')));
   if (preview) summary.append(el('span', 'rsp-think-preview', preview));
-  summary.title = String(reasoning || '').slice(0, 2000);
+  // Keep collapsed reasoning limited to the visible one-line preview. A title
+  // tooltip would expose a large hidden excerpt without the user expanding it.
+  summary.removeAttribute('title');
 }
 function renderRunStatus(runId) {
   const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');

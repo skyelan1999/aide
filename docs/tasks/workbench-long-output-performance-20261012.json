@@ -41,13 +41,12 @@
       ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "前端语法和差异空白检查通过；长消息性能与折叠交互尚未在系统 Safari 候选实例验证。尝试按用户此前指示运行 start.command，但脚本因无法找到 Docker 应用而退出；Safari 仍指向旧运行实例。",
+      "status": "in_progress",
+      "summary": "系统 Safari 在重建后的 localhost:9999 检查了完整长回复与收起态：约 6,963 token、40 节，含多张表格和代码块；详情 Value=off，摘要仅一行，无长文本 title/Help。展开交互未复验：随后工作台自身进入“已锁屏”，未输入解锁凭据。",
       "evidence": [
         "node --check internal/server/web/app.js：exit 0。",
         "git diff --check（本任务文件）：通过。",
-        "bash start.command：exit 1，Unable to find application named 'Docker'。",
-        "真实系统浏览器验收：NOT_RUN；Safari 的 localhost:9999 仍是旧运行实例，未用于验收新代码。"
+        "2026-10-12：系统 Safari localhost:9999 长输出复验：已完成的合成回复约6,963 token，正文含40节、多张表格和代码块，内容完整呈现；思考 details Value=off，摘要单行并带省略号，摘要无 title/Help 悬停全文。CSS rsp-think-summary 与 rsp-think-preview 均限制单行。展开正文交互未复验；工作台随后显示“已锁屏”，未输入凭据。"
       ]
     },
     "documentation": {
@@ -75,5 +74,5 @@
   },
   "release_authorization": "",
   "rollback": "只回退本任务在 internal/server/web/app.js、style.css、index.html 中的变更；不要整体恢复工作树，以免覆盖并行改动。",
-  "handoff": "实现已完成。剩余工作：Docker 可启动后重新运行 start.command，并在系统 Safari 中验收长输出及思考区默认折叠/展开；当前 localhost:9999 是旧实例，未提交、未推送。"
+  "handoff": "前端实现与长回复/思考默认折叠收起态已在系统 Safari 实际运行实例初步验收；思考正文展开态仍待复验。Safari 检查期间 Aide 工作台进入自身锁屏界面，需要用户解锁后继续。尚未提交或推送本次改动。"
 }
