@@ -718,10 +718,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .md-media-toolbar>.md-media-status{flex:1 1 72px;min-width:0;max-width:240px;margin-left:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
 .md-media-toolbar .md-tool-icon{width:32px;height:30px;border-radius:8px}
 .md-media-toolbar .md-tool-icon .ui-icon{width:15px;height:15px}
-.md-template-tools{display:flex;align-items:center;gap:2px;flex:1 1 auto;min-width:0;max-width:calc(100% - 150px);padding-left:4px;border-left:1px solid var(--line);overflow-x:auto;overflow-y:hidden;scrollbar-width:thin;overscroll-behavior-x:contain}
-.md-template-tool{position:relative;flex:0 0 29px!important;width:29px!important;height:29px!important;border-radius:8px!important}
+.md-template-tool{position:relative;flex:0 0 27px!important;width:27px!important;height:29px!important;border-radius:8px!important}
+.md-template-first{margin-left:4px;border-left:1px solid var(--line)!important;border-top-left-radius:0!important;border-bottom-left-radius:0!important}
 .md-template-tool:hover,.md-template-tool:focus-visible{color:var(--brand-text);background:var(--selected)}
-@media(max-width:640px){.md-media-toolbar{gap:2px;padding:3px 0}.file-view>.md-media-toolbar{padding:4px 16px}.md-media-toolbar>.md-media-status{width:auto;max-width:72px;flex:0 0 56px;font-size:10px}.md-template-tools{max-width:calc(100% - 128px);gap:1px;padding-left:3px}.md-template-tool{flex-basis:27px!important;width:27px!important;height:28px!important}}
+@media(max-width:640px){.md-media-toolbar{gap:2px;padding:3px 0}.file-view>.md-media-toolbar{padding:4px 16px}.md-media-toolbar>.md-media-status{width:auto;max-width:72px;flex:0 0 56px;font-size:10px}.md-template-tool{flex-basis:25px!important;width:25px!important;height:28px!important;margin-left:0!important}.md-template-first{margin-left:2px!important;padding-left:3px!important}}
 .md-code-copy-wrap{position:relative;margin:10px 0;border:1px solid var(--line-soft-2);border-radius:10px;background:var(--code-bg);overflow:hidden}
 .md-code-copy-wrap>pre{margin:0;padding:42px 12px 12px;overflow:auto;max-height:420px;font:11.5px/1.7 ui-monospace,SFMono-Regular,monospace;color:var(--text-code)}
 .md-code-copy-wrap>pre code{font:inherit}

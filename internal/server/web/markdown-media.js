@@ -84,7 +84,6 @@
     button('插入 draw.io 图','diagram',()=>{ const range=capture();run(async()=>{const svg=await diagram('',t);const ref=await saveAsset(svg,'diagram.drawio.svg');commit(`\n![draw.io](${url(ref)})\n`,range);}); });
     // CommonMark/GFM structures stay one click away; each icon carries a
     // visible-on-focus tooltip and a complete screen-reader label.
-    const templateTools=document.createElement('div');templateTools.className='md-template-tools';templateTools.setAttribute('role','group');templateTools.setAttribute('aria-label',t('Markdown 常用模板'));
     const templateIcons={
       paragraph:'<path d="M5 5h14M5 9h14M5 13h9M5 17h11"/>',
       h1:'<path d="M4 5v14m0-7h7m0-7v14M16 8v8m-2-6 2-2 2 2m-3 6h3"/>',
@@ -143,6 +142,7 @@
     ];
     for(const [name,description,icon,snippet,placeholder] of templates){
       const item=document.createElement('button');item.type='button';item.className='md-tool-icon md-template-tool';
+      if(!bar.querySelector('.md-template-tool'))item.classList.add('md-template-first');
       const label=t(name),help=t(description),accessible=`${label}。${help}`;
       item.title=accessible;item.setAttribute('aria-label',accessible);
       item.addEventListener('mouseenter',()=>{status.textContent=accessible;});
@@ -162,9 +162,8 @@
           status.textContent=t('已插入 Markdown 模板');
         }catch(e){status.textContent=e.message;options.error(e.message);}
       };
-      buttons.push(item);templateTools.append(item);
+      buttons.push(item);bar.append(item);
     }
-    bar.append(templateTools);
     bar.append(status); const anchor=editor.parentNode.classList.contains('code-wrapper')?editor.parentNode:editor; anchor.parentNode.insertBefore(bar,anchor);
     const paste = e => {const files=[...(e.clipboardData?.files || [])]; if(files.length && valid()){e.preventDefault();e.stopPropagation();const range=capture();run(()=>addFiles(files,range));} };
     const drop = e => {const files=[...(e.dataTransfer?.files || [])];if(files.length && valid()){e.preventDefault();e.stopPropagation();const range=capture();run(()=>addFiles(files,range));} };

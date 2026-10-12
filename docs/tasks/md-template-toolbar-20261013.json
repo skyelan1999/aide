@@ -1,0 +1,70 @@
+{
+  "id": "md-template-toolbar-20261013",
+  "request": "把 Markdown 示例菜单里的模板都做成一级工具栏图标，和插入 draw.io 同级；覆盖所有 Markdown 类型模板，方便新手使用",
+  "baseline": "d55df3250c30ff0d25e7fb6d789393610225cc6f",
+  "initial_status": "M docs/agent/router.json\n M docs/architecture.md\n M docs/architecture/continuity-roadmap.md\n M docs/industrial-long-conversation-support.md\n M docs/reviews/continuity-acceptance-audit-20261010.md\n M docs/tasks/aide-capability-gap-20261006.json\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M docs/tasks/aide-long-conversation-industrial-20261012.json\n M docs/tasks/approval-global-memory-20261009.json\n M docs/tasks/knowledge-code-confidence-20261009.json\n M docs/tasks/knowledge-path-exploration-20261009.json\n M docs/tasks/knowledge-timeline-20261009.json\n M docs/tasks/markdown-history-20261009.json\n M docs/tasks/ssh-continuity-integration-20261009.json\n M docs/tasks/workbench-long-output-performance-20261012.json\n M internal/server/web/app.js\n?? scripts/stable-markdown-cache.test.cjs",
+  "acceptance": [
+    "Remove the Markdown example dropdown and render all Markdown templates as first-level icon buttons alongside image, file, link and draw.io controls.",
+    "Cover paragraph, headings 1-6, inline formatting/code, code block, Mermaid, table, links/images, quote, lists, rule, footnote, callout, collapsible block, math and YAML front matter.",
+    "Keep labels available on hover/focus and to assistive technology; keep the one-row toolbar usable with horizontal scrolling on narrow editors.",
+    "Open the actual changed UI in system Safari and verify the icons and insertion behavior."
+  ],
+  "scope": [
+    "internal/server/web/markdown-media.js",
+    "internal/server/web/macos.css",
+    "internal/server/web/index.html",
+    "docs/architecture/markdown-editing-export.md",
+    "scripts/markdown-template-icons.test.cjs",
+    "docs/tasks/md-template-toolbar-20261013.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "The user requests direct, single-row icon access to all Markdown examples, at the same level as image/file/link/draw.io insertion, with no dropdown.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Flatten the existing complete template set into toolbar sibling buttons; keep purpose tooltips, keyboard focus/ARIA labels, compact horizontal scrolling, and bump static asset versions to invalidate cached menu code.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "All 26 Markdown template actions render as compact sibling icon buttons directly in the one-row toolbar, alongside media and draw.io insertion. Tooltips, focus guidance, screen-reader labels and narrow-row scrolling remain available.",
+      "evidence": [
+        "internal/server/web/markdown-media.js flattens template controls into the toolbar; internal/server/web/index.html bumps markdown-media.js to v4 and macos.css to v110."
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused test and repository quick profile pass. Required system Safari view/interaction acceptance is NOT_RUN because Safari is stopped on a browser-generated certificate warning; hand-off is required to proceed.",
+      "evidence": [
+        "node scripts/markdown-template-icons.test.cjs PASS: 26 first-level icons, locale/help, selection behavior, no nested menu/container, single-row overflow and updated asset versions.",
+        "python3 scripts/agent-route.py verify quick PASS; fingerprint f00eeff0e9be8d80c8f32203da3741227f438a491e0a3587326ec1dc94e353c6; log .agent-state/verify-20261012T201922128986Z.log.",
+        "node --check internal/server/web/markdown-media.js PASS; python3 -m json.tool docs/tasks/md-template-toolbar-20261013.json PASS; git diff --check PASS.",
+        "python3 scripts/check_docs.py PASS: 188 Markdown files, 538 local links, JPEG signatures and FR-01..100.",
+        "System Safari NOT_RUN for this change: current tab is the browser-generated ‘此连接非私人连接’ interstitial at https://localhost:18220; browser-use hand-off policy prohibits agent bypass."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Markdown editing/export architecture notes describe same-level icon controls, complete template coverage and tooltip/accessibility behavior.",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md updated and validated by check_docs.py."
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the focused Markdown media toolbar, cache-version and documentation changes.",
+  "handoff": "Implementation checkpoint may be pushed with system-browser acceptance pending. Safari must be advanced by the user through the localhost certificate warning; then inspect the single-row icons in the split Markdown editor and insert a representative template."
+}

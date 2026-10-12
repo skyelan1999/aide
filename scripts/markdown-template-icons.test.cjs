@@ -17,13 +17,14 @@ for (const [, name, description] of templates) {
   assert.ok(en.includes(`"${description}"`), `English usage hint is missing: ${description}`);
 }
 assert.ok(js.includes("item.className='md-tool-icon md-template-tool'"), 'templates use the same toolbar level as media and diagram buttons');
-assert.ok(js.includes('templateTools.append(item)'), 'templates are direct buttons, not a popup menu');
+assert.ok(js.includes('buttons.push(item);bar.append(item)'), 'templates are sibling buttons in the single toolbar row');
+assert.ok(!js.includes('templateTools') && !css.includes('.md-template-tools'), 'templates are not hidden in a nested menu or template-only container');
 assert.ok(js.includes('item.title=accessible;item.setAttribute(\'aria-label\',accessible)'), 'each template exposes its name and usage hint');
 assert.ok(js.includes("item.addEventListener('focus'"), 'keyboard focus announces template guidance');
 assert.ok(js.includes("editor.setSelectionRange(start,start+placeholder.length)"), 'insertion selects the editable example text');
-assert.match(css, /\.md-template-tools\{[^}]*overflow-x:auto/);
-assert.ok(css.includes('.md-template-tools{max-width:calc(100% - 128px)'), 'narrow layout keeps the template row scrollable beside media controls');
-for (const asset of ['/markdown-media.js?v=3', '/locales/en.js?v=108', '/task-outcome.js?v=8', '/macos.css?v=109']) {
+assert.match(css, /\.md-media-toolbar\{[^}]*overflow-x:auto/);
+assert.ok(css.includes('.md-template-tool{position:relative;flex:0 0 27px!important'), 'compact icons fit the row and remain reachable with toolbar scrolling');
+for (const asset of ['/markdown-media.js?v=4', '/locales/en.js?v=108', '/task-outcome.js?v=8', '/macos.css?v=110']) {
   assert.ok(html.includes(asset), `updated UI asset must bypass the old browser cache: ${asset}`);
 }
-console.log('PASS: 26 direct Markdown template icons, labels, guidance, insertion affordance and narrow-screen scrolling');
+console.log('PASS: 26 first-level Markdown template icons, labels, guidance, insertion affordance and narrow-screen toolbar scrolling');
