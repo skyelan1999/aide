@@ -278,7 +278,10 @@ func (d *knowledgeDiscovery) Step(ctx context.Context, root *os.Root, fileBudget
 			var entries []os.DirEntry
 			entries, err = dir.ReadDir(count)
 			skipped += len(entries)
-			if err != nil {
+			if err != nil && err != io.EOF {
+				break
+			}
+			if len(entries) == 0 {
 				break
 			}
 		}
@@ -292,7 +295,9 @@ func (d *knowledgeDiscovery) Step(ctx context.Context, root *os.Root, fileBudget
 			cursor.Started = false
 			continue
 		}
-		// One entry at a time avoids losing buffered entries when a budget is hit.
+		// Read bounded batches to reduce directory calls; only advance the saved
+		// offset for entries actually inspected so a later step can safely replay
+		// any entries buffered past a per-step budget.
 		done := false
 		limitReached := false
 		children := []knowledgeDiscoveryCursor{}
@@ -300,64 +305,83 @@ func (d *knowledgeDiscovery) Step(ctx context.Context, root *os.Root, fileBudget
 			if err = ctx.Err(); err != nil {
 				break
 			}
+			readCount := entryBudget - b.Inspected
+			if readCount > 128 {
+				readCount = 128
+			}
 			var entries []os.DirEntry
-			entries, err = dir.ReadDir(1)
+			entries, readErr := dir.ReadDir(readCount)
 			if len(entries) == 0 {
-				done = err == io.EOF
-				break
-			}
-			e := entries[0]
-			cursor.Offset++
-			b.Inspected++
-			if knowledgeSkip(e.Name()) || e.Type()&os.ModeSymlink != 0 {
-				continue
-			}
-			rel := path.Join(cursor.Path, e.Name())
-			if !knowledgeSafePath(rel) {
-				continue
-			}
-			current, readErr := root.Lstat(rel)
-			if os.IsNotExist(readErr) {
-				continue
-			}
-			if readErr != nil {
+				done = readErr == io.EOF
 				err = readErr
 				break
 			}
-			if !knowledgeInScope(rel, d.ScopePaths, current.IsDir()) {
-				continue
-			}
-			if current.Mode()&os.ModeSymlink != 0 {
-				continue
-			}
-			if current.IsDir() {
-				if !d.Visited[rel] {
-					d.Visited[rel] = true
-					queued := false
-					for _, pending := range d.Queue {
-						if pending.Path == rel {
-							queued = true
-							break
+			for _, e := range entries {
+				if b.Files >= fileBudget || b.Inspected >= entryBudget {
+					break
+				}
+				if err = ctx.Err(); err != nil {
+					break
+				}
+				cursor.Offset++
+				b.Inspected++
+				if knowledgeSkip(e.Name()) || e.Type()&os.ModeSymlink != 0 {
+					continue
+				}
+				rel := path.Join(cursor.Path, e.Name())
+				if !knowledgeSafePath(rel) {
+					continue
+				}
+				current, statErr := root.Lstat(rel)
+				if os.IsNotExist(statErr) {
+					continue
+				}
+				if statErr != nil {
+					err = statErr
+					break
+				}
+				if !knowledgeInScope(rel, d.ScopePaths, current.IsDir()) {
+					continue
+				}
+				if current.Mode()&os.ModeSymlink != 0 {
+					continue
+				}
+				if current.IsDir() {
+					if !d.Visited[rel] {
+						d.Visited[rel] = true
+						queued := false
+						for _, pending := range d.Queue {
+							if pending.Path == rel {
+								queued = true
+								break
+							}
+						}
+						if !queued {
+							children = append(children, knowledgeDiscoveryCursor{Path: rel, Depth: cursor.Depth + 1})
 						}
 					}
-					if !queued {
-						children = append(children, knowledgeDiscoveryCursor{Path: rel, Depth: cursor.Depth + 1})
-					}
+					continue
 				}
-				continue
+				if !current.Mode().IsRegular() {
+					continue
+				}
+				if _, exists := d.Entries[rel]; !exists && len(d.Entries) >= d.MaxEntries {
+					// Keep this entry pending for an explicit higher catalog limit.
+					cursor.Offset--
+					d.Reasons["catalog_limit"] = true
+					limitReached = true
+					break
+				}
+				d.Entries[rel] = knowledgeDiscoveryEntry{rel, current}
+				b.Files++
 			}
-			if !current.Mode().IsRegular() {
-				continue
-			}
-			if _, exists := d.Entries[rel]; !exists && len(d.Entries) >= d.MaxEntries {
-				// Keep this entry pending for an explicit higher catalog limit.
-				cursor.Offset--
-				d.Reasons["catalog_limit"] = true
-				limitReached = true
+			if err != nil {
 				break
 			}
-			d.Entries[rel] = knowledgeDiscoveryEntry{rel, current}
-			b.Files++
+			if readErr != nil && readErr != io.EOF {
+				err = readErr
+				break
+			}
 		}
 		dir.Close()
 		sort.SliceStable(children, func(i, j int) bool {

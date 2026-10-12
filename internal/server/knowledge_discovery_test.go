@@ -47,6 +47,38 @@ func TestKnowledgeDiscoveryResumesLargeDirectory(t *testing.T) {
 		t.Fatal(d.Queue)
 	}
 }
+
+func BenchmarkKnowledgeDiscoveryLargeLibrary(b *testing.B) {
+	for _, fileCount := range []int{1_000, 10_000} {
+		b.Run(fmt.Sprintf("%d_files", fileCount), func(b *testing.B) {
+			workspace := b.TempDir()
+			for i := 0; i < fileCount; i++ {
+				name := filepath.Join(workspace, fmt.Sprintf("file-%05d.md", i))
+				if err := os.WriteFile(name, []byte("benchmark fixture\n"), 0600); err != nil {
+					b.Fatal(err)
+				}
+			}
+			root, err := os.OpenRoot(workspace)
+			if err != nil {
+				b.Fatal(err)
+			}
+			defer root.Close()
+
+			b.ReportAllocs()
+			b.ResetTimer()
+			for i := 0; i < b.N; i++ {
+				discovery := newKnowledgeDiscovery(fileCount + 1)
+				batch, err := discovery.Step(context.Background(), root, fileCount+1, 1, 0, fileCount+2, nil)
+				if err != nil {
+					b.Fatal(err)
+				}
+				if !batch.Complete || batch.Files != fileCount {
+					b.Fatalf("incomplete scan: files=%d complete=%v pending=%d", batch.Files, batch.Complete, batch.Pending)
+				}
+			}
+		})
+	}
+}
 func TestKnowledgeDiscoveryExcludedAndCancel(t *testing.T) {
 	root, p := discoveryRoot(t)
 	for i := 0; i < 90; i++ {

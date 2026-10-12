@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -104,9 +105,16 @@ func TestKnowledgeCoverageDirectoryBeyondLegacyThousandEntryLimit(t *testing.T) 
 	}), 200)
 
 	// A nil scan cache deliberately exercises the bounded direct snapshot path.
-	source := coverageSource(t, a.knowledgeSnapshotModeCached(context.Background(), false, nil), "workspace")
-	if source.State != "ready" || source.Coverage == nil || source.Coverage.Files != count {
-		t.Fatalf("large but in-budget directory was truncated: state=%s coverage=%+v", source.State, source.Coverage)
+	graph := a.knowledgeSnapshotModeCached(context.Background(), false, nil)
+	source := coverageSource(t, graph, "workspace")
+	indexedFixtures := 0
+	for _, node := range graph.Nodes {
+		if node.Root == "workspace" && node.Kind == "file" && strings.HasPrefix(node.Path, "flat/") {
+			indexedFixtures++
+		}
+	}
+	if source.State != "ready" || source.Coverage == nil || source.Coverage.Files < count || indexedFixtures != count {
+		t.Fatalf("large but in-budget directory was truncated: state=%s coverage=%+v indexed fixtures=%d want=%d", source.State, source.Coverage, indexedFixtures, count)
 	}
 	if len(source.Coverage.Reasons) != 0 {
 		t.Fatalf("complete directory reported truncation: %+v", source.Coverage)

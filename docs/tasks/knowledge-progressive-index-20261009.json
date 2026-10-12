@@ -45,7 +45,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "本地游标加密与新进程续扫、SSH/SFTP 双服务器真实续扫已由当前工作树回归通过；FTP/FTPS 适配器 stub 回归通过。Safari 配置与星图完整鉴权联动、大库性能、真实 FTP/FTPS 网络服务仍未完成。",
+      "summary": "本地游标加密与新进程续扫、SSH/SFTP 双服务器真实续扫已由当前工作树回归通过；FTP/FTPS 适配器 stub 回归通过。目录批量读取降低大目录扫描分配次数，但稳定延迟收益尚未证实；Safari 配置与星图完整鉴权联动、真实 FTP/FTPS 网络服务仍未完成。",
       "evidence": [
         "TestKnowledge race PASS 11.397s",
         "TestKnowledge race PASS 12.757s",
@@ -66,7 +66,8 @@
         "2026-10-13 当前工作树：容器 aide-aide-1，PATH=/usr/local/go/bin:$PATH，GOCACHE=/home/aide/.cache/go-build；go test -mod=vendor -race ./internal/server -run \"TestKnowledgeLocal(RestartAPI|FreshProcess|InvalidCheckpoint|RestartAcrossCycles)$\" -count=1 -timeout=180s：PASS 27.304s。覆盖加密检查点、跨新进程续扫/材料恢复、策略隔离、取消不提交和后续周期删除更新。",
         "2026-10-13 当前工作树：容器 aide-aide-1；go test -mod=vendor -race ./internal/server -run \"TestKnowledgeFTPProgressiveAdapter$\" -count=1 -timeout=120s：PASS 3.930s。该测试使用 stub FTP/FTPS 客户端，不证明真实 FTP/FTPS 网络服务。",
         "2026-10-13 当前工作树：DOCKER_BIN=/Users/skyelan/.docker/bin/docker AIDE_SSH_REPEAT=2 AIDE_SSH_TEST_EVIDENCE_DIR=.agent-state/ssh-continuity-20261013 bash scripts/test-ssh-workspace.sh：PASS，重复2次。真实一次性双服务器 SSH/SFTP、跨进程游标 10->20 文件、更新来源引用身份、远端读回和取消清理均通过；使用内部 Docker 网络，无外部主机或用户数据。日志 .agent-state/ssh-continuity-20261013/aide-ssh-test-20261013030236-71290.log，SHA-256 20d0cfa53aef2f01bc735f14ab1f02301b56412462177aed6db573c8380b92a5。",
-        "2026-10-13 continuation: Docker Go 1.26 network-isolated focused race regression `go test -mod=vendor -race ./internal/server -run '^(TestKnowledgeDiscovery|TestKnowledgeCoverage)' -count=1 -timeout=180s` PASS (6.978s). Supports the index-catalogue/coverage semantics; does not claim Safari candidate or full-library performance acceptance."
+        "2026-10-13 continuation: Docker Go 1.26 network-isolated focused race regression `go test -mod=vendor -race ./internal/server -run '^(TestKnowledgeDiscovery|TestKnowledgeCoverage)' -count=1 -timeout=180s` PASS (6.978s). Supports the index-catalogue/coverage semantics; does not claim Safari candidate or full-library performance acceptance.",
+        "2026-10-13 continuation: Docker Go 1.26 ARM64 `BenchmarkKnowledgeDiscoveryLargeLibrary`, same 1k/10k fixture and 5 iterations. HEAD baseline: 1k 1,543,567 ns/op, 819,014 B/op, 12,036 allocs/op; 10k 15,115,642 ns/op, 7,755,643 B/op, 120,098 allocs/op. Batched candidate: 1k 1,389,500 ns/op, 840,369 B/op, 11,101 allocs/op; 10k 16,432,367 ns/op, 7,944,308 B/op, 110,726 allocs/op. Allocation count improves ~7.8% at 10k, allocated bytes rise ~2.4%, latency is variable/inconclusive. This microbenchmark covers one local directory enumeration only, not remote sources, parsing, concurrency, or production-library latency."
       ]
     },
     "documentation": {
@@ -87,7 +88,7 @@
   },
   "release_authorization": "",
   "rollback": "Remove the standalone discovery module and tests; no production state or data migration.",
-  "handoff": "Goal active. FTP/FTPS progressive adapter checkpoint: knowledge race PASS 31.632s and quick PASS at 10acd3be; full running. Runtime remains prior 69a0 candidate, production unchanged. Safari waits for Mac unlock. Live FTP/FTPS, broad provider/Windows/performance and release gates remain. 2026-10-13 当前工作树新增：本地加密游标/材料四项 race 回归 PASS 27.304s；真实隔离双服务器 SSH/SFTP race 验收重复2次 PASS，10->20 文件跨进程续扫及远端读回通过；FTP/FTPS stub 适配器 PASS 3.930s。仍待 Safari 设置/星图鉴权流程、真实 FTP/FTPS 服务及大库性能。",
+  "handoff": "Goal active. FTP/FTPS progressive adapter checkpoint: knowledge race PASS 31.632s and quick PASS at 10acd3be; full running. Runtime remains prior 69a0 candidate, production unchanged. Safari waits for Mac unlock. Live FTP/FTPS, broad provider/Windows/performance and release gates remain. 2026-10-13 当前工作树新增：本地加密游标/材料四项 race 回归 PASS 27.304s；真实隔离双服务器 SSH/SFTP race 验收重复2次 PASS，10->20 文件跨进程续扫及远端读回通过；FTP/FTPS stub 适配器 PASS 3.930s。仍待 Safari 设置/星图鉴权流程、真实 FTP/FTPS 服务及大库性能。 2026-10-13: bounded local ReadDir(128) batching and 1k/10k benchmark added; focused KnowledgeDiscovery/KnowledgeCoverage race tests PASS. At 10k allocs/op fell 7.8%, allocated bytes rose 2.4%, measured time was inconclusive. Full-library/remote performance and current authenticated-browser checks remain open.",
   "coverage_ui_checkpoint": {
     "status": "in_progress",
     "implementation": "区分累计与单批预算，显示周期、待扫描任务、目录容量上限，受限不声称全库完成",
