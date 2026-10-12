@@ -2116,6 +2116,8 @@ window.aideEnglish = {
   '正在保存…': 'Saving…',
   '保存失败，自动保存已暂停': 'Save failed; auto-save paused',
   "系统应用回执": "System application receipts",
+  "助手回复": "Assistant reply",
+  "展开其他阶段输出 · {0}": "Show other stage outputs · {0}",
   "系统记录来源": "System record source",
   "历史系统记录，不代表当前文件或完整验收。": "Historical system records do not verify current files or full acceptance.",
   "回执检查失败": "Receipt check failed",

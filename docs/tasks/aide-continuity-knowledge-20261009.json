@@ -1996,23 +1996,26 @@
     "ownership_fix": "Identical restored content no longer transfers another document branch ownership; source regression covers attachment identity and later divergent edit."
   },
   "session_input_output_20261010": {
-    "status": "in_progress",
+    "status": "partial",
     "request": "把成果仓改为输入和输出，重点展示当前会话输入、输出和成果",
     "implementation": [
       "Trajectory tab renamed 输入与输出; current-session overview is default",
       "Rounds show submitted prompts, attachments and steers, recorded replies and artifact application states",
       "Single-round detail includes input/output projection and original evidence; no reasoning field exposed",
-      "Loaded/total round counts and older-history loading prevent claiming complete history from a partial page"
+      "Loaded/total round counts and older-history loading prevent claiming complete history from a partial page",
+      "The selected run presents the submitted prompt and the final user-facing assistant phase as the primary Markdown reply; supporting phases and tool calls stay in a collapsed run-process disclosure, and internal reasoning is not exposed."
     ],
     "verification": {
-      "source": "outcome-pagination source VM, i18n and directed Go race TestTaskOutcome PASS",
-      "system_safari": "PASS on isolated https://localhost:18211 for overview, three sections, detail and return selector using a clearly labeled historical fixture; unsent composer excluded. 2026-10-12 additional actual-session check on rebuilt localhost:9999: session #45 shows the exact submitted prompt, actual 6,963-token assistant reply, 1 input / 1 reply / 0 file artifacts; complete long Markdown output is rendered, and input/output view preserves all 40 sections including the final table. Trajectory closed afterward; no session data changed.",
+      "source": "outcome-pagination source VM, i18n and directed Go race TestTaskOutcome PASS; scripts/outcome-pagination.test.cjs PASS; node --check for task-outcome.js, app.js, locales/en.js PASS; git diff --check PASS. Go test could not run because host Go is absent and Docker socket is inaccessible.",
+      "system_safari": "PASS on isolated https://localhost:18211 for overview, three sections, detail and return selector using a clearly labeled historical fixture; unsent composer excluded. 2026-10-12 additional actual-session check on rebuilt localhost:9999: session #45 shows the exact submitted prompt, actual 6,963-token assistant reply, 1 input / 1 reply / 0 file artifacts; complete long Markdown output is rendered, and input/output view preserves all 40 sections including the final table. Trajectory closed afterward; no session data changed. 2026-10-12 follow-up after rebuilding localhost:9999: selected historical run #42 and confirmed full user prompt, final assistant reply expanded by default, file artifact count truthful at 0, and tool/phase evidence remains under the collapsed run-process disclosure. No conversation data changed.",
       "screenshot": ".agent-state/continuity-runtime/input-output-overview-safari-20261010.png",
       "full": "running"
     },
     "limits": [
       "Isolated historical fixture still had no model reply; current 9999 #45 provides a real assistant-reply path but no file artifact in that round. File-attachment and artifact rendering still need a round that actually includes those items.",
-      "Narrow, dark and Windows native acceptance not run for this change."
+      "Narrow, dark and Windows native acceptance not run for this change.",
+      "Current selected Safari sample contains one chat phase and no file artifacts; attachment-bearing and actual artifact-producing turns still need direct browser coverage.",
+      "Narrow viewport and Windows native rendering remain unverified for this follow-up."
     ],
     "release": "not_run",
     "full": {

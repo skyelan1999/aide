@@ -40,7 +40,7 @@
   if(session.hasOlder){const more=node('button','quiet',t('加载更早的输入与输出'));more.type='button';more.onclick=loadOlder;content.append(more);}
   content.append(node('p','outcome-boundary',t('这里展示已提交的输入和已记录的输出；未发送草稿不计入。已应用记录不代表当前文件已复核。')));
  }
- async function mount(content,{sessionId,runId,api,blocked,t,error}){
+ async function mount(content,{sessionId,runId,api,blocked,t,error,renderMarkdown}){
    close();const gen=++generation;active={close:()=>{active=null;}};
    content.replaceChildren(node('p','muted',t('正在读取任务记录…')));
    const valid=()=>gen===generation&&content.isConnected&&!blocked?.();
@@ -63,8 +63,11 @@
     const input=section('输入了什么');input.append(node('pre','outcome-io-text',data.goal));
     for(const a of data.inputs?.attachments||[])input.append(node('p','outcome-io-resource',a.path+' · '+(a.source||a.root||'workspace')));
     for(const steer of data.inputs?.steers||[])input.append(node('p','',t(steer.queued?'排队补充':'插话补充')+' · '+steer.content));
-    const output=section('输出了什么');if(!data.outputs?.length)output.append(node('p','muted',t('尚无回复记录')));
-    for(const reply of data.outputs||[]){const d=node('details','outcome-io-reply');d.append(node('summary','',reply.name+' · '+reply.status),node('pre','outcome-io-text',reply.content));if(reply.truncated)d.append(node('p','muted',t('回复摘要已截断，完整回复见会话历史')));output.append(d);}
+    const output=section('输出了什么'),replies=data.outputs||[];if(!replies.length)output.append(node('p','muted',t('尚无回复记录')));
+    const preferred={chat:'chat',workflow:'agent',review:'review',propose:'propose',plan:'plan'}[data.mode];
+    const finalReply=[...replies].reverse().find(reply=>reply.name===preferred)||[...replies].reverse().find(reply=>['chat','agent','review','propose','plan'].includes(reply.name))||replies[replies.length-1];
+    if(finalReply){const answer=node('article','outcome-io-final');answer.append(node('p','outcome-io-model',t('助手回复')+' · '+t(finalReply.status||'已记录')));const body=node('div','outcome-io-answer md-body');if(renderMarkdown)body.innerHTML=renderMarkdown(finalReply.content);else body.textContent=finalReply.content;answer.append(body);if(finalReply.truncated)answer.append(node('p','muted',t('回复摘要已截断，完整回复见会话历史')));output.append(answer);}
+    const otherReplies=replies.filter(reply=>reply!==finalReply);if(otherReplies.length){const other=node('details','outcome-io-reply');other.append(node('summary','',t('展开其他阶段输出 · {0}',otherReplies.length)));for(const reply of otherReplies){const phase=node('details','outcome-io-process-step');phase.append(node('summary','',reply.name+' · '+t(reply.status||'已记录')),node('pre','outcome-io-text',reply.content));if(reply.truncated)phase.append(node('p','muted',t('回复摘要已截断，完整回复见会话历史')));other.append(phase);}output.append(other);}
     section('形成了什么成果');
     const metrics=node('div','outcome-metrics');for(const [key,label]of [['files','文件提案'],['applicationRecords','应用记录'],['executions','执行返回'],['verificationReports','验证报告'],['unknownOutcomes','未知结果']]){const cell=node('div');cell.append(node('strong','',data.summary[key]),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
     content.append(node('p','outcome-boundary',t('任务状态、模型计划与验证报告不是独立验收证明；展开证据查看原始返回。')));

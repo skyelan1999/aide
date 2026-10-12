@@ -10,7 +10,7 @@ import (
 
 func outcomeFixture(t *testing.T) (*App, *Task) {
 	a := testApp(t)
-	task := &Task{ID: "outcome-run", Status: "completed", Prompt: "Implement and verify", WorkspaceID: "original-workspace", Files: []Change{{Path: "first.txt", Content: "proposal", BaseHash: "before"}, {Path: "second.txt", Content: "applied", Applied: true}}, Commands: []string{"go test ./..."}, ToolUses: []ToolUse{{Tool: "read_file", Args: `{"path":"first.txt"}`, Result: strings.Repeat("returned ", 300)}, {Tool: "record_verification", Args: `{"title":"Checks","content":"A report claims success"}`, Result: "record created"}}, AgentPlan: &AgentPlan{Items: []AgentPlanItem{{Step: "Finish", Status: "completed", Evidence: []int{1}}}}, ToolExecutionIntents: []ToolExecutionIntent{{CallID: "pending", Tool: "run_shell", State: "dispatched"}}}
+	task := &Task{ID: "outcome-run", Mode: "chat", Status: "completed", Prompt: "Implement and verify", WorkspaceID: "original-workspace", Files: []Change{{Path: "first.txt", Content: "proposal", BaseHash: "before"}, {Path: "second.txt", Content: "applied", Applied: true}}, Commands: []string{"go test ./..."}, ToolUses: []ToolUse{{Tool: "read_file", Args: `{"path":"first.txt"}`, Result: strings.Repeat("returned ", 300)}, {Tool: "record_verification", Args: `{"title":"Checks","content":"A report claims success"}`, Result: "record created"}}, AgentPlan: &AgentPlan{Items: []AgentPlanItem{{Step: "Finish", Status: "completed", Evidence: []int{1}}}}, ToolExecutionIntents: []ToolExecutionIntent{{CallID: "pending", Tool: "run_shell", State: "dispatched"}}}
 	a.sessions["outcome-session"] = &Session{ID: "outcome-session", Number: 42, Title: "Outcome acceptance", Runs: []*Task{task}}
 	return a, task
 }
@@ -23,6 +23,9 @@ func TestTaskOutcomePreservesEvidenceBoundaries(t *testing.T) {
 	_ = json.Unmarshal(w.Body.Bytes(), &d)
 	if d["status"] != "completed" || d["workspaceId"] != "original-workspace" {
 		t.Fatal(d)
+	}
+	if d["mode"] != task.Mode {
+		t.Fatal("task mode must be available to select the final user-facing response", d["mode"])
 	}
 	if d["summary"].(map[string]any)["unknownOutcomes"] != float64(1) || len(d["unknownCalls"].([]any)) != 1 {
 		t.Fatal("completed intent must not be reported unknown", d)

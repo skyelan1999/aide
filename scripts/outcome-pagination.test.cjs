@@ -1,12 +1,12 @@
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
 class Element {
- constructor(tag){this.tagName=tag;this.children=[];this.isConnected=true;this.disabled=false;}
+ constructor(tag){this.tagName=tag;this.children=[];this.isConnected=true;this.disabled=false;this.open=false;this.textContent='';}
  append(...items){this.children.push(...items);}
  replaceChildren(...items){this.children=items;}
  click(){} setAttribute(){} querySelector(){return null;} scrollIntoView(){}
 }
 const descendants=root=>[root,...root.children.flatMap(descendants)];
-const page=(snapshot,offset=0)=>({snapshot,taskId:'test',goal:'Fixture',status:'running',summary:{files:2,executions:2},files:[{path:'file'+offset,proposedHash:'hash'}],executions:[{id:'E'+offset,tool:'read_file',digest:'digest',preview:'return'}],verification:[],gaps:[],release:{message:'not recorded'},page:{filesMore:offset===0,executionsMore:offset===0,fileNext:offset+1,executionNext:offset+1}});
+const page=(snapshot,offset=0)=>({snapshot,taskId:'test',goal:'Fixture',mode:'chat',status:'running',outputs:[{name:'plan',status:'completed',content:'Internal stage output'},{name:'chat',status:'completed',content:'Visible final answer'}],summary:{files:2,executions:2},files:[{path:'file'+offset,proposedHash:'hash'}],executions:[{id:'E'+offset,tool:'read_file',digest:'digest',preview:'return'}],verification:[],gaps:[],release:{message:'not recorded'},page:{filesMore:offset===0,executionsMore:offset===0,fileNext:offset+1,executionNext:offset+1}});
 async function scenario(kind){
  let calls=[],blob,phase=0;
  const content=new Element('div');
@@ -14,6 +14,7 @@ async function scenario(kind){
  vm.runInNewContext(fs.readFileSync('internal/server/web/task-outcome.js','utf8'),context);
  const api=async path=>{calls.push(path);if(calls.length===1)return page('old');if(path.includes('snapshot=')){assert.match(path,/snapshot=old/);if(kind==='409'){const e=new Error('changed');e.status=409;throw e;}if(kind==='mismatch')return page('new',1);return page('old',1);}phase++;return page('new');};
  await context.window.AideTaskOutcome.mount(content,{sessionId:'s',runId:'r',api,t:x=>x,blocked:()=>false,error:e=>{throw new Error(e);}});
+ const initial=descendants(content),final=initial.find(e=>e.className==='outcome-io-final');assert.ok(final&&descendants(final).some(e=>e.textContent.includes('Visible final answer')),'the final assistant answer must be visible by default');assert.ok(initial.some(e=>e.tagName==='details'&&e.className==='outcome-io-reply'&&!e.open),'other stage outputs stay collapsed');
  const button=text=>descendants(content).find(e=>e.tagName==='button'&&e.textContent===text);
  await button('加载更多成果记录').onclick();
  if(kind==='stable'){

@@ -773,6 +773,9 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
 .outcome-io-user{background:var(--selected)!important}
 .outcome-io-turn .outcome-io-text{max-height:280px;margin:0;padding:0;background:transparent;border:0;white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;line-height:1.65}
 .outcome-io-answer{min-width:0;line-height:1.72;overflow-wrap:anywhere}
+.outcome-io-final{padding:14px 16px;border-left:2px solid var(--accent);border-radius:0 10px 10px 0;background:var(--surface-alt,var(--bg))}
+.outcome-io-reply{margin-top:10px;padding:0 12px;border:1px solid var(--line-soft);border-radius:10px;background:var(--surface-alt,var(--bg))}
+.outcome-io-reply>summary{cursor:pointer;padding:10px 0;color:var(--muted);font-size:11px}
 .outcome-io-answer>:first-child{margin-top:0}.outcome-io-answer>:last-child{margin-bottom:0}
 .outcome-io-model{margin:0 0 8px;color:var(--muted);font-size:10px}
 .outcome-io-error{padding:9px 11px;border-left:2px solid var(--danger);background:var(--danger-soft,var(--surface-alt));color:var(--danger);white-space:pre-wrap;overflow-wrap:anywhere}

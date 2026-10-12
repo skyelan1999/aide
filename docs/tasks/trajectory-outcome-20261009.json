@@ -36,14 +36,18 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "前端语法与文档检查通过；实际浏览器组件夹具覆盖三个页签、任务选择、证据、快速切换及390px布局。完整已鉴权工作台联调 NOT_RUN；导出按钮已点击，下载文件内容未验收。",
+      "summary": "Front-end syntax, documentation links and fixture regression pass. Authenticated system Safari on rebuilt localhost:9999 now confirms current-session input/output view renders the submitted prompt and primary final assistant response expanded by default, with process/tool evidence collapsed and no reasoning exposed. The exact selected run had no file artifacts; export download contents, attachment-bearing turns, narrow viewport and Windows native UI remain unverified.",
       "evidence": [
         "node --check app.js/task-outcome.js/locales/en.js: PASS",
         "check_docs.py: 176 Markdown / 455 links PASS",
         "git diff --check: PASS",
         ".agent-state/trajectory-preview/desktop.png",
         ".agent-state/trajectory-preview/narrow.png",
-        "source SHA256 60e64127db652e2f79b4369b49fa29ca59456f4d1fd067837393294fd3253507"
+        "source SHA256 60e64127db652e2f79b4369b49fa29ca59456f4d1fd067837393294fd3253507",
+        "Safari localhost:9999 session #42 · input/output tab: full submitted prompt and final assistant reply visible; tool/phase details collapsed; file artifact count 0 accurately shown",
+        "scripts/outcome-pagination.test.cjs: PASS (final response primary, secondary phase output collapsed)",
+        "node --check internal/server/web/task-outcome.js internal/server/web/app.js internal/server/web/locales/en.js: PASS",
+        "git diff --check: PASS; Go test unavailable (host Go absent; Docker socket inaccessible)"
       ]
     },
     "documentation": {
@@ -64,5 +68,5 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "成果舱改为轨迹内页签；完整工作台联调和发布尚未进行。"
+  "handoff": "2026-10-12: Actual authenticated Safari #42 run confirms Codex-style submitted input + expanded final assistant answer + truthful artifacts, with tool/process evidence collapsed. Export artifact, attachment sample, narrow viewport and Windows remain open; no release."
 }
