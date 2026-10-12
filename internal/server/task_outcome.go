@@ -84,7 +84,7 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 		}
 		// Copy only the inputs this projection uses. Never expose request snapshots,
 		// checkpoint prompts, live approval channels, or model credentials.
-		t := &Task{ID: run.ID, Prompt: run.Prompt, Status: run.Status, Created: run.Created, WorkspaceID: run.WorkspaceID, Error: run.Error, Applied: run.Applied, ExecutionSequence: run.ExecutionSequence}
+		t := &Task{ID: run.ID, Mode: run.Mode, Prompt: run.Prompt, Status: run.Status, Created: run.Created, WorkspaceID: run.WorkspaceID, Error: run.Error, Applied: run.Applied, ExecutionSequence: run.ExecutionSequence}
 		t.Files = append([]Change(nil), run.Files...)
 		t.Attachments = append([]Attachment(nil), run.Attachments...)
 		t.Steers = append([]SteerMsg(nil), run.Steers...)

@@ -2003,11 +2003,12 @@
       "Rounds show submitted prompts, attachments and steers, recorded replies and artifact application states",
       "Single-round detail includes input/output projection and original evidence; no reasoning field exposed",
       "Loaded/total round counts and older-history loading prevent claiming complete history from a partial page",
-      "The selected run presents the submitted prompt and the final user-facing assistant phase as the primary Markdown reply; supporting phases and tool calls stay in a collapsed run-process disclosure, and internal reasoning is not exposed."
+      "The selected run presents the submitted prompt and the final user-facing assistant phase as the primary Markdown reply; supporting phases and tool calls stay in a collapsed run-process disclosure, and internal reasoning is not exposed.",
+      "Secure task outcome snapshots now preserve task mode, allowing the API preferred-reply selector to choose the mode-specific final assistant phase."
     ],
     "verification": {
-      "source": "outcome-pagination source VM, i18n and directed Go race TestTaskOutcome PASS; scripts/outcome-pagination.test.cjs PASS; node --check for task-outcome.js, app.js, locales/en.js PASS; git diff --check PASS. Go test could not run because host Go is absent and Docker socket is inaccessible.",
-      "system_safari": "PASS on isolated https://localhost:18211 for overview, three sections, detail and return selector using a clearly labeled historical fixture; unsent composer excluded. 2026-10-12 additional actual-session check on rebuilt localhost:9999: session #45 shows the exact submitted prompt, actual 6,963-token assistant reply, 1 input / 1 reply / 0 file artifacts; complete long Markdown output is rendered, and input/output view preserves all 40 sections including the final table. Trajectory closed afterward; no session data changed. 2026-10-12 follow-up after rebuilding localhost:9999: selected historical run #42 and confirmed full user prompt, final assistant reply expanded by default, file artifact count truthful at 0, and tool/phase evidence remains under the collapsed run-process disclosure. No conversation data changed.",
+      "source": "outcome-pagination source VM, i18n and directed Go race TestTaskOutcome PASS; scripts/outcome-pagination.test.cjs PASS; node --check for task-outcome.js, app.js, locales/en.js PASS; git diff --check PASS. Focused Docker Go regression TestTaskOutcomePreservesEvidenceBoundaries PASS after discovering and fixing mode omission in outcomeTaskSnapshot; broader Go package/full suite was not run.",
+      "system_safari": "PASS on isolated https://localhost:18211 for overview, three sections, detail and return selector using a clearly labeled historical fixture; unsent composer excluded. 2026-10-12 additional actual-session check on rebuilt localhost:9999: session #45 shows the exact submitted prompt, actual 6,963-token assistant reply, 1 input / 1 reply / 0 file artifacts; complete long Markdown output is rendered, and input/output view preserves all 40 sections including the final table. Trajectory closed afterward; no session data changed. 2026-10-12 follow-up after rebuilding localhost:9999: selected historical run #42 and confirmed full user prompt, final assistant reply expanded by default, file artifact count truthful at 0, and tool/phase evidence remains under the collapsed run-process disclosure. No conversation data changed. Post-fix rebuild via AIDE_OPEN_BROWSER=0 ./start.command; authenticated Safari reload of localhost:9999 and re-opened #42 input/output view: submitted prompt, final assistant response, and truthful zero artifact count render correctly.",
       "screenshot": ".agent-state/continuity-runtime/input-output-overview-safari-20261010.png",
       "full": "running"
     },
@@ -2015,7 +2016,7 @@
       "Isolated historical fixture still had no model reply; current 9999 #45 provides a real assistant-reply path but no file artifact in that round. File-attachment and artifact rendering still need a round that actually includes those items.",
       "Narrow, dark and Windows native acceptance not run for this change.",
       "Current selected Safari sample contains one chat phase and no file artifacts; attachment-bearing and actual artifact-producing turns still need direct browser coverage.",
-      "Narrow viewport and Windows native rendering remain unverified for this follow-up."
+      "The selected real Safari sample is chat mode; preferred reply selection for other modes is covered by source projection regression but needs mode-specific system-browser samples. Narrow viewport, attachments/artifact-bearing turns and Windows remain unverified."
     ],
     "release": "not_run",
     "full": {
@@ -2625,5 +2626,12 @@
       "Real SSH workspace approval confirmation and revocation",
       "Reverse global approval mode immediate propagation across sessions"
     ]
+  },
+  "progress_checkpoint_20261012": {
+    "status": "in_progress",
+    "active_workstreams": 12,
+    "latest_completed": "Trajectory input/output follow-up: final assistant response is primary and visible; secure outcome snapshots carry task mode. Focused Go regression, start.command vet/build, browser and static/doc checks passed.",
+    "remaining": "All 12 overarching workstreams remain open at the broader scope; consult each workstream current_audit_20261010.remaining. Do not reuse the 2026-10-10 80% rough estimate as current.",
+    "release": "not_run"
   }
 }

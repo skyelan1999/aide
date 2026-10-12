@@ -36,7 +36,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Front-end syntax, documentation links and fixture regression pass. Authenticated system Safari on rebuilt localhost:9999 now confirms current-session input/output view renders the submitted prompt and primary final assistant response expanded by default, with process/tool evidence collapsed and no reasoning exposed. The exact selected run had no file artifacts; export download contents, attachment-bearing turns, narrow viewport and Windows native UI remain unverified.",
+      "summary": "Front-end syntax, documentation links and fixture regression pass. Authenticated system Safari on rebuilt localhost:9999 confirms the submitted prompt and primary final assistant response expanded by default, process/tool evidence collapsed and no reasoning exposed. Task mode is preserved through secure snapshot projection; focused Go regression, start.command vet/build and post-rebuild Safari verification pass. Export download contents, attachment-bearing turns, non-chat mode fixtures, narrow viewport and Windows native UI remain unverified.",
       "evidence": [
         "node --check app.js/task-outcome.js/locales/en.js: PASS",
         "check_docs.py: 176 Markdown / 455 links PASS",
@@ -47,7 +47,10 @@
         "Safari localhost:9999 session #42 · input/output tab: full submitted prompt and final assistant reply visible; tool/phase details collapsed; file artifact count 0 accurately shown",
         "scripts/outcome-pagination.test.cjs: PASS (final response primary, secondary phase output collapsed)",
         "node --check internal/server/web/task-outcome.js internal/server/web/app.js internal/server/web/locales/en.js: PASS",
-        "git diff --check: PASS; Go test unavailable (host Go absent; Docker socket inaccessible)"
+        "git diff --check: PASS; Go test unavailable (host Go absent; Docker socket inaccessible)",
+        "docker run --rm --network=none -v $PWD:/src -w /src golang:1.26-bookworm go test -mod=vendor ./internal/server -run TestTaskOutcomePreservesEvidenceBoundaries -count=1: PASS",
+        "AIDE_OPEN_BROWSER=0 ./start.command: vet/build/container recreate/health check PASS (full tests not run)",
+        "Safari reload localhost:9999 #42 · 输入与输出: submitted prompt, expanded final response and no-file-artifact state visible"
       ]
     },
     "documentation": {
@@ -68,5 +71,5 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "2026-10-12: Actual authenticated Safari #42 run confirms Codex-style submitted input + expanded final assistant answer + truthful artifacts, with tool/process evidence collapsed. Export artifact, attachment sample, narrow viewport and Windows remain open; no release."
+  "handoff": "2026-10-12: Outcome snapshots now retain task mode; focused Go test and system Safari after start.command rebuild pass. Real chat-mode run confirmed Codex-style submitted input + expanded final answer + truthful artifacts, with process evidence collapsed. Non-chat real mode, attachment/artifact sample, narrow viewport, export file and Windows remain open; no release."
 }
