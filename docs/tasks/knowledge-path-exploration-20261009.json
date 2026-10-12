@@ -46,7 +46,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Go Handler/算法、前端组件和文档回归通过；实际 Safari 路径查询仍需在已认证候选页验收，SSH、多主题/窄屏也仍待验收。",
+      "summary": "Go Handler/算法、前端组件和文档回归既有收据通过；2026-10-12 已在系统 Safari localhost:9999 当前代码索引中完成 Commands.cmd_help → Commands.basic_help 一步路径，逐边呈现 commands.py 第1123行静态名称候选与源位置链接。页面保留“索引仍有缺口”和“不是运行轨迹”提示。SSH、多主题/窄屏及知识时间线联动仍未验收。",
       "evidence": [
         "Docker aide:local go test -buildvcs=false -race ./internal/server -run TestKnowledgePath -count=1 -timeout=120s PASS 2.025s",
         "git diff --check PASS",
@@ -61,7 +61,8 @@
         "Docker golang:1.26（--network none）：gofmt；go test -mod=vendor ./internal/server -run TestKnowledgeMentionLocation -count=1：PASS。",
         "node scripts/starmap-path.test.cjs：PASS；新增断言确认 mention 关系跳转携带源文件、行号及内容指纹。",
         "python3 scripts/check_docs.py：PASS（188 Markdown、537 local links、JPEG signatures、FR-01..100）；git diff --check：PASS。",
-        "Safari：本轮未验收路径界面；localhost:18217 当前为连接工作台登录页，不能作为产品浏览器通过证据。"
+        "Safari：本轮未验收路径界面；localhost:18217 当前为连接工作台登录页，不能作为产品浏览器通过证据。",
+        "2026-10-12 native Safari https://localhost:9999/starmap.html?channel=fc75908f-3842-48a4-be49-6d75010ee633：当前索引 C072c217f8209 Commands.cmd_help → C93c0aec588c0 Commands.basic_help；1步，commands.py L1123 AST call 静态名称候选，查看关系源位置链接可用。"
       ]
     },
     "documentation": {
@@ -87,5 +88,5 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "继续在已认证系统 Safari 中验收报告提及边的实际源位置跳转，以及 SSH、主题/窄屏、锁屏现场恢复。当前实现和组件回归通过，但 Safari 产品验收未完成。知识时间线与其他总目标联调未完成。未发布、未部署。"
+  "handoff": "继续完整验收剩余总体目标。知识路径界面已在系统 Safari 当前真实索引通过一条有证据路径；不可将名称候选描述为运行时调用证明。后续完成多主题/窄屏、SSH或跨来源路径、知识时间线联动；向量检索按用户要求暂缓。Windows 用户已自行测试并明确无需后续验收。未发布、未部署。"
 }

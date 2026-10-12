@@ -2560,8 +2560,7 @@
       ]
     },
     "deferred": [
-      "Real embedding/vector search per user instruction",
-      "Windows UI/long-open acceptance; no Windows environment"
+      "Real embedding/vector search per user instruction"
     ],
     "release_status": "not released; broad goal remains in progress",
     "push": {
@@ -2593,6 +2592,17 @@
         "真实模型生成/视觉/工具调用，以及连接与能力仪表全项回归"
       ],
       "user_data_modified": false
+    },
+    "windows": "user_tested_no_issue_no_further_agent_acceptance_requested",
+    "scope_update": "2026-10-12 用户确认 Windows 已自行测试且感觉无问题，明确表示不需再处理；历史“无环境/未运行”只保留为历史记录，不列为当前未完成项。向量测试仍暂缓。",
+    "knowledge_map_path_safari": {
+      "status": "pass_scoped",
+      "client": "native system Safari",
+      "instance": "https://localhost:9999/starmap.html?channel=fc75908f-3842-48a4-be49-6d75010ee633",
+      "index": "2880 stars / 3991 connections; code view; 80 source files, 730 declarations, 734 static call candidates, 0 type bindings, 5231 unresolved calls, 627 unresolved imports",
+      "path": "C072c217f8209 Commands.cmd_help -> C93c0aec588c0 Commands.basic_help; 1 step",
+      "edge_evidence": "commands.py line 1123, AST call; static name candidate, not runtime/type proof; source location link visible",
+      "limitations": "Page explicitly reported index gaps; this is current-index evidence-path UI acceptance only, not runtime call verification, whole-project coverage, SSH, narrow layout, or release acceptance."
     }
   },
   "knowledge_directory_budget_20261012": {
@@ -2631,7 +2641,12 @@
     "status": "in_progress",
     "active_workstreams": 12,
     "latest_completed": "Trajectory input/output follow-up: final assistant response is primary and visible; secure outcome snapshots carry task mode. Focused Go regression, start.command vet/build, browser and static/doc checks passed.",
-    "remaining": "All 12 overarching workstreams remain open at the broader scope; consult each workstream current_audit_20261010.remaining. Do not reuse the 2026-10-10 80% rough estimate as current.",
-    "release": "not_run"
+    "remaining": "12条总体工作流仍按各自 current_audit_20261010.remaining 继续；Windows不再是待验收或阻塞项。真实向量检索按用户要求暂缓；其余真实Safari、SSH/审批边界、长时运行、数据容量与release/rollback均需按各自清单逐项完成。",
+    "release": "not_run",
+    "scope_adjustments_20261012": [
+      "Windows验收：用户已在自己的Windows环境直接测试并反馈“感觉没什么问题”，明确表示后续无需我处理；从当前待办移除，不再作为阻塞项。历史日志中的“无Windows环境/未运行”保留为当时记录。",
+      "向量/embedding验收仍按用户此前指示暂缓。"
+    ],
+    "latest_browser_acceptance": "2026-10-12 系统 Safari 在 localhost:9999 当前知识星图索引中，以现存节点 C072c217f8209 Commands.cmd_help 与 C93c0aec588c0 Commands.basic_help 查询到 1 步证据路径；路径逐边显示 commands.py 第1123行 AST 静态名称候选及源位置链接，并明确提示索引有缺口、路径不代表运行轨迹。"
   }
 }
