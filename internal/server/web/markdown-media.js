@@ -82,41 +82,95 @@
       dlg.append(heading,path,caption,imageLabel,ok,cancel);dlg.onclose=()=>dlg.remove();document.body.append(dlg);dlg.showModal();path.focus();
     });
     button('插入 draw.io 图','diagram',()=>{ const range=capture();run(async()=>{const svg=await diagram('',t);const ref=await saveAsset(svg,'diagram.drawio.svg');commit(`\n![draw.io](${url(ref)})\n`,range);}); });
-    // Common Markdown structures are inserted as editable source at the caret.
-    const templateWrap=document.createElement('div');templateWrap.className='md-template-wrap';
-    const templateButton=document.createElement('button');templateButton.type='button';templateButton.className='md-tool-icon md-template-trigger';templateButton.title=t('插入 Markdown 示例');templateButton.setAttribute('aria-label',t('插入 Markdown 示例'));templateButton.setAttribute('aria-haspopup','menu');templateButton.setAttribute('aria-expanded','false');
-    const templateSvg=document.createElementNS('http://www.w3.org/2000/svg','svg');templateSvg.setAttribute('class','ui-icon');templateSvg.setAttribute('viewBox','0 0 24 24');templateSvg.setAttribute('fill','none');templateSvg.setAttribute('stroke','currentColor');templateSvg.setAttribute('stroke-width','1.7');templateSvg.setAttribute('stroke-linecap','round');templateSvg.setAttribute('stroke-linejoin','round');templateSvg.setAttribute('aria-hidden','true');templateSvg.innerHTML='<path d="M4 5h16M4 12h16M4 19h16"/><path d="M8 3v4m8-4v4M8 10v4m8-4v4M8 17v4m8-4v4"/>';templateButton.append(templateSvg,document.createTextNode(t('MD 示例')));
-    const menu=document.createElement('div');menu.className='md-template-menu';menu.setAttribute('role','menu');menu.setAttribute('aria-label',t('Markdown 常用结构'));menu.hidden=true;
+    // CommonMark/GFM structures stay one click away; each icon carries a
+    // visible-on-focus tooltip and a complete screen-reader label.
+    const templateTools=document.createElement('div');templateTools.className='md-template-tools';templateTools.setAttribute('role','group');templateTools.setAttribute('aria-label',t('Markdown 常用模板'));
+    const templateIcons={
+      paragraph:'<path d="M5 5h14M5 9h14M5 13h9M5 17h11"/>',
+      h1:'<path d="M4 5v14m0-7h7m0-7v14M16 8v8m-2-6 2-2 2 2m-3 6h3"/>',
+      h2:'<path d="M4 5v14m0-7h7m0-7v14M14 9a2.5 2.5 0 1 1 5 0c0 2-5 3-5 6h5"/>',
+      h3:'<path d="M4 5v14m0-7h7m0-7v14M14 9a2.5 2.5 0 1 1 5 0c0 1-.6 1.8-1.5 2.2A2.5 2.5 0 1 1 14 14"/>',
+      h4:'<path d="M4 5v14m0-7h7m0-7v14M18 5v7h4m0-7v14"/>',
+      h5:'<path d="M4 5v14m0-7h7m0-7v14M21 5h-6v5h3a3 3 0 1 1-3 4"/>',
+      h6:'<path d="M4 5v14m0-7h7m0-7v14M20 5h-2a3 3 0 0 0-3 3v7a3 3 0 1 0 6 0v-1a3 3 0 0 0-6 0"/>',
+      bold:'<path d="M6 4h7a4 4 0 0 1 0 8H6zM6 12h8a4 4 0 0 1 0 8H6z"/>',
+      italic:'<path d="M19 4h-9M14 20H5m9-16-5 16"/>',
+      strike:'<path d="M4 12h16M7 7c.7-2 2.5-3 5-3 3 0 5 1.5 5 3.5M7 17c.8 2 2.5 3 5 3 2.4 0 4.2-1 5-3"/>',
+      inline:'<path d="m8 8-4 4 4 4m8-8 4 4-4 4M14 5l-4 14"/>',
+      code:'<path d="m8 8-4 4 4 4m8-8 4 4-4 4M14 5l-4 14"/><path d="M3 21h18"/>',
+      mermaid:'<rect x="2.5" y="3" width="6" height="5" rx="1"/><rect x="15.5" y="16" width="6" height="5" rx="1"/><rect x="15.5" y="3" width="6" height="5" rx="1"/><path d="M8.5 5.5h4a3 3 0 0 1 3 3V16M8.5 6v11.5a2.5 2.5 0 0 0 2.5 2.5h4.5"/>',
+      table:'<rect x="3" y="4" width="18" height="16" rx="1.5"/><path d="M3 10h18M9 4v16m6-16v16"/>',
+      link:'<path d="M10 13.5a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1.7 1.7M14 10.5a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1.7-1.7"/>',
+      image:'<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m4 17 5-5 3 3 3-4 5 6"/>',
+      footnote:'<path d="M7 5v14m0-7h8M15 5v14M18 7h3v4h-3zM18 14h3v5h-3z"/>',
+      alert:'<path d="M12 3 2.8 19h18.4L12 3Z"/><path d="M12 9v4m0 3h.01"/>',
+      details:'<path d="m8 10 4 4 4-4"/><path d="M4 4h16v16H4zM7 17h10"/>',
+      math:'<path d="M4 6h16M4 18h16M8 8l8 8m0-8-8 8"/>',
+      frontmatter:'<path d="M4 4h16M4 20h16M7 9h10m-10 3h7m-7 3h10"/><path d="M4 2v4m16-4v4M4 18v4m16-4v4"/>',
+      quote:'<path d="M4 10h6v7H3v-5l3-5m8 3h7v7h-7v-5l3-5"/>',
+      unordered:'<circle cx="5" cy="6" r="1"/><circle cx="5" cy="12" r="1"/><circle cx="5" cy="18" r="1"/><path d="M10 6h10M10 12h10M10 18h10"/>',
+      ordered:'<path d="M9 6h11M9 12h11M9 18h11M4 5v3m-1 0h3m-3 6c0-1.5 3-1.5 3 0 0 .8-3 2.5-3 3h3"/>',
+      task:'<rect x="3" y="4" width="6" height="6" rx="1"/><path d="m4.5 7 1.3 1.3L8 6m4 1h9M3 15h6v6H3zm9 3h9"/>',
+      rule:'<path d="M3 12h18"/>'
+    };
     const templates=[
-      ['插入表格','table','| 标题 1 | 标题 2 |\n| --- | --- |\n| 内容 | 内容 |\n| 内容 | 内容 |\n'],
-      ['插入代码块','code','```\n代码\n```\n'],
-      ['插入标题','heading','## 标题\n'],
-      ['插入引用','quote','> 引用内容\n'],
-      ['插入无序列表','list','- 列表项\n- 列表项\n'],
-      ['插入任务列表','task','- [ ] 待办事项\n- [x] 已完成事项\n'],
-      ['插入分隔线','rule','\n---\n']
+      ['插入段落','段落用途','paragraph','段落内容\n\n','段落内容'],
+      ['插入一级标题','一级标题用途','h1','# 标题\n','标题'],
+      ['插入二级标题','二级标题用途','h2','## 标题\n','标题'],
+      ['插入三级标题','三级标题用途','h3','### 标题\n','标题'],
+      ['插入四级标题','四级标题用途','h4','#### 标题\n','标题'],
+      ['插入五级标题','五级标题用途','h5','##### 标题\n','标题'],
+      ['插入六级标题','六级标题用途','h6','###### 标题\n','标题'],
+      ['插入粗体','粗体用途','bold','**粗体文本**','粗体文本'],
+      ['插入斜体','斜体用途','italic','*斜体文本*','斜体文本'],
+      ['插入删除线','删除线用途','strike','~~删除线文本~~','删除线文本'],
+      ['插入行内代码','行内代码用途','inline','`代码`','代码'],
+      ['插入代码块','代码块用途','code','```语言\n代码\n```\n','代码'],
+      ['插入 Mermaid 流程图','Mermaid 流程图用途','mermaid','```mermaid\nflowchart TD\n    A[开始] --> B[步骤]\n    B --> C[结束]\n```\n','步骤'],
+      ['插入表格','表格用途','table','| 标题 1 | 标题 2 |\n| --- | --- |\n| 内容 1 | 内容 2 |\n| 内容 1 | 内容 2 |\n','标题 1'],
+      ['插入链接语法','链接语法用途','link','[链接文本](https://example.com)','链接文本'],
+      ['插入图片语法','图片语法用途','image','![替代文字](images/image.png)','替代文字'],
+      ['插入引用','引用用途','quote','> 引用内容\n','引用内容'],
+      ['插入无序列表','无序列表用途','unordered','- 列表项\n- 列表项\n','列表项'],
+      ['插入有序列表','有序列表用途','ordered','1. 第一步\n2. 第二步\n','第一步'],
+      ['插入任务列表','任务列表用途','task','- [ ] 待办事项\n- [x] 已完成事项\n','待办事项'],
+      ['插入分隔线','分隔线用途','rule','\n---\n',''],
+      ['插入脚注','脚注用途','footnote','需要补充说明的内容[^1]\n\n[^1]: 脚注内容\n','脚注内容'],
+      ['插入提示块','提示块用途','alert','> [!NOTE]\n> 重要提示\n','重要提示'],
+      ['插入折叠块','折叠块用途','details','<details>\n<summary>点击展开</summary>\n\n折叠内容\n</details>\n','点击展开'],
+      ['插入数学公式','数学公式用途','math','$$\nE = mc^2\n$$\n','E = mc^2'],
+      ['插入文档元数据','文档元数据用途','frontmatter','---\ntitle: 文档标题\ndescription: 文档简介\ntags:\n  - 标签\n---\n\n','文档标题']
     ];
-    const templateButtons=[];
-    function closeMenu(){menu.hidden=true;templateButton.setAttribute('aria-expanded','false');}
-    for(const [title,icon,snippet] of templates){
-      const item=document.createElement('button');item.type='button';item.className='md-template-item';item.setAttribute('role','menuitem');item.textContent=t(title);item.onclick=()=>{
-        const range=templateRange||capture();
-        try{if(!valid()||editor.value!==range.value)throw new Error(t('文档内容已变化，请重新插入'));options.edit();editor.focus();editor.setRangeText(snippet,range.start,range.end,'end');editor.dispatchEvent(new Event('input',{bubbles:true}));const start=range.start+snippet.indexOf(icon==='table'?'内容':icon==='code'?'代码':icon==='heading'?'标题':icon==='quote'?'引用内容':icon==='task'?'待办事项':icon==='list'?'列表项':'');if(icon!=='rule'&&start>=range.start){const end=start+(icon==='table'?2:icon==='code'?2:icon==='heading'?2:icon==='quote'?4:icon==='task'?4:3);editor.setSelectionRange(start,end);}status.textContent=t('已插入 Markdown 示例');}catch(e){status.textContent=e.message;options.error(e.message);}closeMenu();templateButton.focus();
-      };menu.append(item);templateButtons.push(item);
+    for(const [name,description,icon,snippet,placeholder] of templates){
+      const item=document.createElement('button');item.type='button';item.className='md-tool-icon md-template-tool';
+      const label=t(name),help=t(description),accessible=`${label}。${help}`;
+      item.title=accessible;item.setAttribute('aria-label',accessible);
+      item.addEventListener('mouseenter',()=>{status.textContent=accessible;});
+      item.addEventListener('focus',()=>{status.textContent=accessible;});
+      item.addEventListener('mouseleave',()=>{status.textContent='';});
+      item.addEventListener('blur',()=>{status.textContent='';});
+      item.addEventListener('mousedown',e=>{if(e.button===0)e.preventDefault();});
+      const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('class','ui-icon');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('fill','none');svg.setAttribute('stroke','currentColor');svg.setAttribute('stroke-width','1.7');svg.setAttribute('stroke-linecap','round');svg.setAttribute('stroke-linejoin','round');svg.setAttribute('aria-hidden','true');svg.innerHTML=templateIcons[icon];
+      item.append(svg);
+      item.onclick=()=>{
+        const range=capture();
+        try{
+          if(!valid()||editor.value!==range.value)throw new Error(t('文档内容已变化，请重新插入'));
+          options.edit();editor.focus();editor.setRangeText(snippet,range.start,range.end,'end');editor.dispatchEvent(new Event('input',{bubbles:true}));
+          const start=placeholder?range.start+snippet.indexOf(placeholder):-1;
+          if(start>=range.start)editor.setSelectionRange(start,start+placeholder.length);
+          status.textContent=t('已插入 Markdown 模板');
+        }catch(e){status.textContent=e.message;options.error(e.message);}
+      };
+      buttons.push(item);templateTools.append(item);
     }
-    let templateRange=null;
-    templateButton.onclick=()=>{if(!menu.hidden){closeMenu();return;}templateRange=capture();menu.hidden=false;templateButton.setAttribute('aria-expanded','true');templateButtons[0]?.focus();};
-    templateButton.onkeydown=e=>{if(e.key==='ArrowDown'){e.preventDefault();templateRange=capture();menu.hidden=false;templateButton.setAttribute('aria-expanded','true');templateButtons[0]?.focus();}};
-    menu.addEventListener('keydown',e=>{const i=templateButtons.indexOf(document.activeElement);if(e.key==='Escape'){e.preventDefault();closeMenu();templateButton.focus();}else if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();templateButtons[(i+(e.key==='ArrowDown'?1:-1)+templateButtons.length)%templateButtons.length].focus();}});
-    const outsideTemplateClick=e=>{if(!templateWrap.contains(e.target))closeMenu();};
-    document.addEventListener('pointerdown',outsideTemplateClick,true);
-    templateWrap.append(templateButton,menu);bar.append(templateWrap);buttons.push(templateButton);
+    bar.append(templateTools);
     bar.append(status); const anchor=editor.parentNode.classList.contains('code-wrapper')?editor.parentNode:editor; anchor.parentNode.insertBefore(bar,anchor);
     const paste = e => {const files=[...(e.clipboardData?.files || [])]; if(files.length && valid()){e.preventDefault();e.stopPropagation();const range=capture();run(()=>addFiles(files,range));} };
     const drop = e => {const files=[...(e.dataTransfer?.files || [])];if(files.length && valid()){e.preventDefault();e.stopPropagation();const range=capture();run(()=>addFiles(files,range));} };
     const over = e => {if(e.dataTransfer?.types.includes('Files')) {e.preventDefault();e.stopPropagation();}};
     editor.addEventListener('paste',paste);editor.addEventListener('drop',drop);editor.addEventListener('dragover',over);
-    mounted.set(editor,()=>{bar.remove();document.removeEventListener('pointerdown',outsideTemplateClick,true);editor.removeEventListener('paste',paste);editor.removeEventListener('drop',drop);editor.removeEventListener('dragover',over);});
+    mounted.set(editor,()=>{bar.remove();editor.removeEventListener('paste',paste);editor.removeEventListener('drop',drop);editor.removeEventListener('dragover',over);});
   }
   function dispose(editor) { mounted.get(editor)?.();mounted.delete(editor); }
   function diagram(xml, t = s => s) {

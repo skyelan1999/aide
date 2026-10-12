@@ -1,0 +1,98 @@
+{
+  "id": "markdown-template-icons-20261012",
+  "request": "把插入 Markdown 示例菜单里的内容全部改成与插入 draw.io 同级的图标按钮，不再弹菜单；扩展常用 Markdown 类型模板，并提供名称与易懂的用途提示，方便新手使用。",
+  "baseline": "e1e4055d2ff4b193f693e773891edfb44a8742e0",
+  "initial_status": "?? docs/tasks/markdown-template-icons-20261012.json",
+  "acceptance": [
+    "移除 MD 示例弹出菜单；每种模板都有可识别图标，直接与图片、文件、链接、draw.io 按钮同级呈现。",
+    "覆盖常见 CommonMark/GFM 作者操作：段落、H1-H6、粗体、斜体、删除线、行内代码、代码块、Mermaid 流程图、表格、Markdown 链接与图片语法、引用、有序/无序/任务列表、分隔线；保留文件和 draw.io 插入。",
+    "每个图标有中文和英文名称、简洁用途说明；鼠标悬停与键盘焦点可读，屏幕阅读器可辨认。",
+    "插入遵循编辑器当前选区，插入后将光标放到示例占位内容；Safari 中确认常用模板来源与预览效果。"
+  ],
+  "scope": [
+    "internal/server/web/markdown-media.js",
+    "internal/server/web/index.html",
+    "internal/server/web/macos.css",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/user-guide.md",
+    "docs/tasks/markdown-template-icons-20261012.json",
+    "scripts/markdown-template-icons.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "将模板菜单改为同级图标工具，模板需覆盖新手常用 Markdown 写作结构并能从名称/用途提示中理解如何使用。",
+      "evidence": [
+        "用户原话：把这个菜单内的内容都做成图标拿到上一级，就不要用菜单了，和插入draw.io一级，需要注意的是，这里需要你把所有的md的类型模板都放一下，防止没接触过的人不知道怎么用。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "将现有弹出菜单模板变成直接图标按钮，并扩展通用文本格式和列表模板；每个工具在 hover/focus 时提供用途浮层与 ARIA 标签。工具条保持一行，在窄视口横向滚动，避免压扁图标或换行。",
+      "evidence": [
+        "现有实现与 caret 捕获在 internal/server/web/markdown-media.js；样式在 internal/server/web/macos.css。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "移除 Markdown 示例弹出菜单，将 26 种模板做成可横向滚动的同级图标；覆盖基础 Markdown、GFM 常用结构和脚注、提示块、折叠块、数学公式、YAML 元数据等扩展语法。每个图标提供用途 title、ARIA 标签及可见状态说明，插入时按编辑器选区替换并选中示例占位内容。修复工具栏卸载时移除未定义事件回调的问题。",
+      "evidence": [
+        "node --check internal/server/web/markdown-media.js 通过。",
+        "模板涵盖段落、H1-H6、粗体、斜体、删除线、行内代码、代码块、Mermaid、表格、Markdown 链接和图片语法、引用、有序/无序/任务列表及分隔线。"
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "Safari 系统浏览器已确认 26 个独立模板图标紧跟媒体插入按钮、单行呈现；实际点击表格模板后，光标处占位文本被选中并显示插入状态。预览中确认文档仍可渲染。为避免污染现有文档，测试草稿未保存并已在界面忽略。窄屏系统浏览器验收尚未完成；尝试进入 Safari 响应式模式时触发 Aide 锁屏，需解锁后继续。",
+      "evidence": [
+        "2026-10-13: node --check internal/server/web/markdown-media.js && node --check internal/server/web/locales/en.js && node --check internal/server/web/task-outcome.js: PASS。",
+        "2026-10-13: node scripts/test_i18n.cjs: PASS (localization, placeholder integrity, schema ownership, locale fallback and path mapping)。",
+        "2026-10-13: python3 scripts/check_docs.py: PASS (188 Markdown, 537 local links, JPEG signatures, FR-01..100)。",
+        "2026-10-13: git diff --check: PASS。",
+        "2026-10-13: Docker 初次直接调用返回 permission denied；经授权在隔离副本运行 AIDE_OPEN_BROWSER=0 AIDE_PORT=18219 COMPOSE_PROJECT_NAME=aide-markdown-icons-20261013 ./start.command，Go vet/build 与容器 health PASS；源码 SHA-256 2d3f294e42a44bbfd5866fa981a21b5dc4fc944edf37d2aeed80e0346ded5445。",
+        "18219 候选 Safari/电脑桥接启动失败，因为其共享桥接端口已有服务；候选 Aide 容器健康。Safari 当前显示系统生成的“此连接非私人连接”证书警告，UI 验收尚未开始。",
+        "2026-10-13: scripts/markdown-template-icons.test.cjs PASS；验证 26 个直接同级图标、英文名称/用途、键盘提示、选区占位插入与窄屏横向滚动样式。",
+        "2026-10-13: node --check、node scripts/test_i18n.cjs、node scripts/outcome-pagination.test.cjs、python3 scripts/check_docs.py、git diff --check 全部 PASS。",
+        "2026-10-13: 将当前全部 18 个修改路径同步到隔离副本后重新运行 start.command；Go vet/build、容器重建启动 PASS，当前候选源码指纹 c42df2decd0ffc65d77bede7b7323d5682cdfb6bbd8e643e5870008c4504153d。全量 Go 测试未运行。",
+        "Safari 系统证书警告仍在阻挡 18219 的 UI 验收；代理未操作绕过按钮。",
+        "2026-10-13: scripts/markdown-template-icons.test.cjs PASS；验证 26 个直接同级图标、英文名称/用途、键盘提示、选区占位插入、窄屏横向滚动和静态资源缓存版本。",
+        "2026-10-13: 更新 index.html 的 markdown-media.js?v=3、locales/en.js?v=108、task-outcome.js?v=8、macos.css?v=109，确保浏览器请求新资产。",
+        "2026-10-13: 复制当前 index.html 到隔离副本后再次运行 start.command；Go vet/build、容器重建启动 PASS，最终候选源码指纹 7683f6487853d683803644f6db5f0a99a8caf527f06f1e0ca69d88eff34fb72e。全量 Go 测试未运行。",
+        "2026-10-13: 将 scripts/markdown-template-icons.test.cjs 纳入标准快速门禁；python3 scripts/agent-route.py verify quick 38/38 PASS，fingerprint ed75e5d04d571ec6771a87acd081cf5dba08bcbea5c0648edf7b82c924cf86ee。",
+        "2026-10-13: python3 scripts/agent-route.py verify full PASS. Fingerprint 36305137f029eb9cbebd8ec75ebc41d4a64d27f7727d838d68b844c8620d8f85; 40 configured checks; complete go test -race -count=1 -timeout=15m ./... passed (internal/server 427.288s, tts 3.339s) and go vet ./... passed; receipt .agent-state/verify-20261012T170952263439Z.log.",
+        "2026-10-13 continuation: candidate 18219 serves the Aide HTML shell; isolated candidate and source match for markdown-media.js, index.html, macos.css, and locales/en.js. System Safari is at its generated localhost certificate warning page, so interactive browser acceptance remains blocked pending the user handling that interstitial.",
+        "2026-10-13: node --check markdown-media.js/locales/en.js, scripts/markdown-template-icons.test.cjs, scripts/test_i18n.cjs, python3 scripts/check_docs.py, and git diff --check PASS. Quick gate PASS 40/40; fingerprint ccb8600158996aaa82c150c7ad0d1861a89a1eb7c73abbde181e73cddc39400a, receipt .agent-state/verify-20261012T174500641898Z.log.",
+        "2026-10-13: 重新启动隔离候选 `/private/tmp/aide-markdown-icons-20261013`，源码指纹 c1eaf7c0063f07196500fd7e7de60f70e87faab3c124bfb0f0856afde66e228f；容器 healthy，HTTPS healthz 返回 status=ok/integrity=degraded。首页 59,623 字节并引用 markdown-media.js?v=3、locales/en.js?v=108、macos.css?v=109；工作树与候选的四个相关资源逐字节相同。node --check markdown-media.js、scripts/markdown-template-icons.test.cjs、scripts/test_i18n.cjs 和 git diff --check PASS。Safari 停在 localhost:18219 系统生成的“此连接非私人连接”拦截页；按浏览器交互规则必须由用户处理，故未进入页面、未完成 UI 验收、未 push。",
+        "2026-10-13 current-state reconciliation: Current quick 40/40 PASS including the 26-template catalog test. Latest full race attempt timed out after 15m in TestDaemonConcurrentStartStopConsistency, so full_profile is FAIL for this worktree. Safari 18219 system certificate warning still blocks visual/keyboard/narrow-screen acceptance; no push.",
+        "2026-10-13: latest python3 scripts/agent-route.py verify quick PASS, 40 checks, fingerprint 201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504; receipt .agent-state/verify-20261012T184554802003Z.log. Includes direct 26-icon catalog test, i18n, docs, frontend syntax and continuity regressions.",
+        "2026-10-13: Safari now displays the system-generated certificate warning at https://127.0.0.1:9999 for the rebuilt local candidate (source hash cf7ba252be9b87ebd64a9c3c1319ef5ce1ec89f568531bec55241bde41520627). Browser policy requires the user to handle the warning manually; the agent cannot bypass it. No interactive UI acceptance or push.",
+        "2026-10-13: python3 scripts/agent-route.py verify quick PASS, 40 checks, fingerprint 16ebcee31ba05aa337f594eb9f6e7ce50ebd3a2aaaab1d0b6d8b2b009fb0f4da, receipt .agent-state/verify-20261012T185516722577Z.log. Includes scripts/markdown-template-icons.test.cjs and docs/i18n checks.",
+        "2026-10-13 Safari 系统浏览器：当前 9999 Aide 实例显示媒体插入按钮后的 26 个同级图标及中文可访问名称/用途；点“插入表格”后编辑器焦点处出现表格模板且“标题 1”占位被选中；预览模式显示渲染正文。自动保存关闭，未点保存；忽略本地未保存草稿后原文件内容恢复。窄屏验收因 Aide 锁屏尚未完成。"
+      ],
+      "full_profile": "FAIL",
+      "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504"
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "用户指南与 Markdown 编辑/导出架构文档已更新 26 种模板、名称与用途提示、扩展语法的渲染依赖和窄屏横向滚动行为。",
+      "evidence": [
+        "docs/user-guide.md 与 docs/architecture/markdown-editing-export.md 已描述全部模板、用途提示、占位文本选择及横向滚动行为。",
+        "python3 scripts/check_docs.py PASS。"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "功能及静态检查已完成；Safari 系统浏览器已验收桌面宽度的同级 26 模板图标、插入焦点/占位选取和预览模式。验收草稿未保存并已忽略。需解锁 Aide 后完成 Safari 窄屏检查，再依用户此前的分阶段推送要求选择性提交本任务文件并推送；不得把全仓其他脏改动带入提交。"
+}
