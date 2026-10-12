@@ -2968,5 +2968,21 @@
     },
     "release": "not_run",
     "push": "Documentation checkpoint follows in a separate commit; no release or deployment."
+  },
+  "progress_checkpoint_20261013_followup8": {
+    "status": "partial",
+    "completed": [
+      "SSH integration repeat=1 passed and docs pushed in 5fd6fbb",
+      "start.command rebuilt and restarted current source; Safari localhost:9999 showed long-session #46 post-compaction meter at 14.0K/64K, summary 298 tokens, cumulative 329,423 input and 61,416 output"
+    ],
+    "remaining": [
+      "Capture the live context-compaction sequence in Safari from started through map/reduce batches and completion",
+      "Continue remaining per-workstream browser and provider acceptance; vector provider remains deferred by user; Windows acceptance remains out of scope by user direction"
+    ],
+    "verification": [
+      "Docker vet/build succeeded through start.command",
+      "Safari system-browser current-source observation recorded in docs/tasks/context-compaction-observability-20261012.json"
+    ],
+    "release": "SSH checkpoint docs pushed as 5fd6fbb; local worktree clean before this checkpoint update. No product source change in this checkpoint."
   }
 }

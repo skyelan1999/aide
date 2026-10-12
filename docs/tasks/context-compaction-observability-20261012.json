@@ -48,7 +48,7 @@
     },
     "verification": {
       "status": "partial",
-      "summary": "Go 定向回归、40 项 quick profile、前端定向状态隔离/批次/耗时渲染回归和文档检查通过。Safari 9999 的实测已确认旧候选在真实自动压缩时会长期停在静态“正在整理”，修复已完成；修复代码尚未在系统 Safari 中运行，因此浏览器验收待做。",
+      "summary": "定向 Go 回归、40 项 quick profile、前端定向状态隔离/批次/耗时渲染回归和文档检查通过。Safari 系统浏览器现已在启动后的当前源码上确认长会话选中态显示压缩后估算与摘要 token；实时压缩动画过程仍未捕获，故浏览器验收 partial。",
       "evidence": [
         "node --check internal/server/web/app.js：通过。",
         "git diff --check（本任务四个目标文件）：通过。",
@@ -78,7 +78,8 @@
         "2026-10-13 native Safari localhost:9999 #46: 合成长对话的助手任务已回复“收到”，页面仍显示静态“正在整理 8 条早期消息并生成连续摘要 · 当前约 12.9K”；切到 #45 时不显示压缩状态，切回 #46 显示状态仍在但无批次/耗时/终态。说明旧候选的自动进度不够可观测；本轮未重启服务，避免中断正在显示整理状态的会话。",
         "本轮修复后：node --check internal/server/web/app.js PASS；node scripts/test_context_compaction_ui.cjs PASS，覆盖自动 map 第 2/5 批、累计 1分5秒显示、切换会话隔离与终态前后估算；git diff --check PASS。",
         "2026-10-13 网络隔离容器 Go 定向回归：gofmt 后 `go test -mod=vendor ./internal/server -run \"^(TestAutoCompactionPublishesObservableLifecycle|TestManualCompactionPublishesLiveProgressAndTokenEstimates)$\" -count=1` PASS（1.266s）。",
-        "2026-10-13 `python3 scripts/agent-route.py verify quick` PASS，40 项 configured checks，fingerprint e4ba964673b37e86c85114e7ec041e83147da71347cd7b550e851c255c9a31d4，HEAD 71ed7d6009a171c403354ceec7aab9e7582d1139。此 quick 不包含 Go 编译，也不替代 Safari 修复版验收。"
+        "2026-10-13 `python3 scripts/agent-route.py verify quick` PASS，40 项 configured checks，fingerprint e4ba964673b37e86c85114e7ec041e83147da71347cd7b550e851c255c9a31d4，HEAD 71ed7d6009a171c403354ceec7aab9e7582d1139。此 quick 不包含 Go 编译，也不替代 Safari 修复版验收。",
+        "2026-10-13 Safari 系统浏览器 localhost:9999，在 ./start.command 重建并启动当前源码后查看长会话 #46：侧栏显示活动上下文估算 14.0K/64K、历史摘要 298 tokens、会话累计输入 329,423/输出 61,416。该读数证明选中会话当前呈现压缩后的估算与摘要分项；本次只观察到静态完成态，没有捕获折叠/生成期间的实时动效，因此动画验收仍为 partial。"
       ],
       "full_profile": "FAIL",
       "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504"
@@ -112,5 +113,5 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "Safari 9999 长会话 #46 实际显示回复完成后仍静态“正在整理”，无批次、耗时或终态。源码已补齐自动压缩 map/reduce 进度写入 SSE 与会话状态缓存，前端显示批次和累计耗时。网络隔离容器 Go 定向回归 PASS，40 项 quick profile PASS，UI VM 回归和文档检查 PASS。修复版系统 Safari 验收仍待做；需使用已可信的本机服务入口验证，不可绕过证书安全拦截。"
+  "handoff": "Safari 系统浏览器 localhost:9999 当前源码启动后可见长会话 #46：活动估算 14.0K/64K、历史摘要 298 tokens、累计输入 329,423/输出 61,416。压缩后展示有证据；尚未在一次真实压缩进行时记录开始、批次、耗时、完成动画的完整屏幕过程，因此该需求保持 active。用户已授权后续本机证书提示由助手直接处理。"
 }
