@@ -89,13 +89,14 @@
     },
     "release": {
       "status": "pass",
-      "summary": "桌面验收阶段按用户的分阶段推送要求已推送到 origin/main；窄屏 Safari 验收仍待完成。",
+      "summary": "模板实现与 Safari 桌面验收记录均已按用户的分阶段推送要求推送到 origin/main；窄屏 Safari 验收仍待完成。",
       "evidence": [
-        "2026-10-13: commit 635c2f4 Add direct Markdown template toolbar icons 已推送至 github.com:skyelan1999/aide.git main，更新 e1e4055..635c2f4。提交仅含本功能 8 个文件。"
+        "2026-10-13: commit 635c2f4 Add direct Markdown template toolbar icons 已推送至 github.com:skyelan1999/aide.git main，更新 e1e4055..635c2f4。提交仅含本功能 8 个文件。",
+        "2026-10-13: commit d9abd28 docs: record markdown template Safari acceptance 已推送至 origin/main，更新 f3ca0b7..d9abd28。仅提交此功能任务账本。"
       ]
     }
   },
   "release_authorization": "用户此前明确要求阶段性测完后及时 push。",
   "rollback": "",
-  "handoff": "Safari 系统浏览器在 9999 与隔离候选 18218 均验收 26 个同级模板图标和表格模板插入/占位选择；9999 另确认预览渲染。commit 635c2f4 已推送到 origin/main。窄屏 Markdown 编辑器尚未验收；响应式 Safari 的文件打开步骤切回了 9999，已停止交互。最新静态检查通过；整体全量 race 验收另见主任务账本。"
+  "handoff": "Safari 系统浏览器在 9999 与隔离候选 18218 均验收 26 个同级模板图标和表格模板插入/占位选择；9999 另确认预览渲染。实现 commit 635c2f4 与验收记录 commit d9abd28 均已推送到 origin/main。窄屏 Markdown 编辑器尚未验收；响应式 Safari 的文件打开步骤切回了 9999，已停止交互。最新静态检查通过；整体全量 race 验收另见主任务账本。"
 }
