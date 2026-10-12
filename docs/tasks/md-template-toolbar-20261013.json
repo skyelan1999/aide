@@ -30,7 +30,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "All 26 Markdown template actions render as compact sibling icon buttons directly in the one-row toolbar, alongside media and draw.io insertion. Tooltips, focus guidance, screen-reader labels and narrow-row scrolling remain available.",
+      "summary": "All 26 Markdown template actions render as compact sibling icon buttons directly in the one-row toolbar, alongside media and draw.io insertion. Tooltips, focus guidance, screen-reader labels and narrow-row scrolling remain available. Implementation checkpoint pushed to origin/main as 42f7f47.",
       "evidence": [
         "internal/server/web/markdown-media.js flattens template controls into the toolbar; internal/server/web/index.html bumps markdown-media.js to v4 and macos.css to v110."
       ]
@@ -54,9 +54,11 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Reviewed the focused six-file diff and committed only scoped toolbar, test, documentation and task-ledger files; unrelated worktree modifications remain unstaged.",
+      "evidence": [
+        "Commit 42f7f47 contains only the Markdown template toolbar task files; git diff --cached --check passed before commit."
+      ]
     },
     "release": {
       "status": "pending",
@@ -66,5 +68,5 @@
   },
   "release_authorization": "",
   "rollback": "Revert the focused Markdown media toolbar, cache-version and documentation changes.",
-  "handoff": "Implementation checkpoint may be pushed with system-browser acceptance pending. Safari must be advanced by the user through the localhost certificate warning; then inspect the single-row icons in the split Markdown editor and insert a representative template."
+  "handoff": "Implementation checkpoint 42f7f47 is pushed. Safari acceptance remains pending: the user must personally proceed past the localhost certificate warning; then inspect the single-row icons in the split Markdown editor and insert a representative template."
 }
