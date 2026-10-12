@@ -180,6 +180,8 @@ Source registrations are stored in cache `sources.json`; credentials are stored 
 
 Open a text file to edit it. Markdown opens in preview; switch to **Edit** to change source text. **New tab** opens a standalone view with path, preview, edit, and save controls where permitted.
 
+The Markdown editor keeps image, file, link, draw.io, and common Markdown templates on one icon toolbar. Templates cover paragraphs, H1–H6 headings, bold, italic, strikethrough, inline and fenced code, Mermaid flowcharts, tables, Markdown links and image syntax, blockquotes, ordered/bulleted/task lists, horizontal rules, footnotes, callouts, collapsible sections, math, and YAML front matter. Hover or keyboard-focus an icon to see its purpose, what to replace, and any renderer requirement. Inserting a template selects its example placeholder so you can type over it. The toolbar scrolls horizontally on narrow screens. Footnotes, GitHub-style callouts, HTML details, math, and front matter are extensions; rendering depends on the Markdown renderer.
+
 Saves use the original file hash and workspace identity. If a file changed externally or the workspace changed, reopen it rather than bypassing a conflict. Unsaved content is not translated or rewritten by a language switch.
 
 Select **Attach to task** to include saved text in the next request (up to eight files). AI read tools may also read authorized workspace files; attachments are not the complete boundary of model context. Avoid including sensitive material you do not want the configured provider to receive.
