@@ -49,14 +49,16 @@
       ]
     },
     "copy_refinement_2026_10_13": {
-      "status": "pending_browser_acceptance",
-      "summary": "Template help text was expanded from generic labels to specific usage guidance, matched in English, and documented in both user guides. The rebuilt 9999 service serves the latest source, but Safari is covered by the app's lock overlay, so these copy refinements have not received interactive UI review. The focused regression script was corrected to assert the current v5/v109 assets.",
+      "status": "pass",
+      "summary": "Template help text is specific in Chinese and English and documented in both user guides. Safari on the running 9999 service shows the current editing UI with all 26 template controls as first-level toolbar siblings after image, file, link and draw.io. Accessibility names expose each action and its usage guidance. An existing local-draft recovery notice was present; it was left untouched, and no template was inserted or saved during this review.",
       "evidence": [
         "git diff --check passes.",
         "start.command rebuilt and restarted the local Aide service; /healthz returned status=ok (integrity=degraded).",
         "Served markdown-media.js?v=5 and locales/en.js?v=109 hashes matched the source files.",
         "node scripts/markdown-template-icons.test.cjs passes all 26 first-level template actions, labels, usage guidance, insertion affordance, and narrow-row scrolling; its previous cache assertions incorrectly expected v4/v108 and now match v5/v109.",
-        "System Safari reloaded https://localhost:9999 and exposed the Aide lock overlay, so no Markdown file page could be opened. The old 18217 acceptance service is not listening. No certificate warning or lock credential was bypassed."
+        "System Safari at https://localhost:9999 opened the existing approval-normal-20261008.md editor. The visible toolbar contains image, file, link, draw.io and 26 first-level template icons in one row; the AX tree exposes each icon's Chinese name and concrete usage help. No file content was changed or saved.",
+        "A local-draft recovery notice was visible in the editor. Neither Restore nor Ignore was selected, preserving the user's draft state.",
+        "node scripts/markdown-template-icons.test.cjs passes all 26 template controls and their Chinese/English guidance; python3 scripts/check_docs.py passes 188 Markdown files and 540 local links."
       ]
     },
     "documentation": {
@@ -81,5 +83,5 @@
   },
   "release_authorization": "",
   "rollback": "Revert the focused Markdown media toolbar, cache-version and documentation changes.",
-  "handoff": "Implementation checkpoint 42f7f47 is pushed to origin/main. System Safari acceptance is complete on isolated candidate 18221 for the 26 first-level template icons and table insertion. This later copy refinement adds concrete Chinese/English template guidance and user-guide notes; source build and served asset hashes are verified, but Safari review is pending because 9999 currently shows the Aide lock overlay. No file was saved during acceptance."
+  "handoff": "Implementation checkpoint 42f7f47 is pushed to origin/main. Isolated candidate 18221 acceptance verified the 26 first-level icons and table insertion. On 2026-10-13, system Safari at 9999 verified the current editor toolbar and per-icon Chinese usage guidance; the existing draft-recovery notice was left untouched, and no file was changed or saved. English guidance is covered by the focused regression; vector retrieval remains deferred by user request. The product release stage is still pending separate release authorization and gates."
 }
