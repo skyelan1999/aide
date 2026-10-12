@@ -690,13 +690,21 @@ func TestCompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary(t *testing.T
 	priorSeen := false
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
-			Messages []Message `json:"messages"`
+			Messages  []Message      `json:"messages"`
+			Thinking  map[string]any `json:"thinking"`
+			MaxTokens int            `json:"max_tokens"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 			t.Errorf("decode provider request: %v", err)
 			return
 		}
 		requests++
+		if body.Thinking["type"] != "disabled" {
+			t.Errorf("compaction should disable hidden reasoning to reserve output for the ledger, got %+v", body.Thinking)
+		}
+		if body.MaxTokens != compactSummaryOutput || body.MaxTokens < 1024 {
+			t.Errorf("compaction max_tokens = %d, want bounded output reserve %d", body.MaxTokens, compactSummaryOutput)
+		}
 		tokens, joined := 0, strings.Builder{}
 		for _, message := range body.Messages {
 			tokens += contextMessageTokens(message)

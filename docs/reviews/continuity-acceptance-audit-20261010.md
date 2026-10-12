@@ -308,3 +308,11 @@ Runtime process SHA-256 verified: 561e80964a7429c82a4b7f4e73ef1b5180695808ca551c
 全局辅助审批切换的后端状态修复和完整自动门禁已通过（38/38，Docker Go race/vet 包含在内），但完整 12 项产品验收仍未整体闭环。此次实际 Safari 只读检查发现并定位了普通暂停聊天被错误标作“审核中”的问题；实现见 `internal/server/approval_policy.go`，新增回归见 `internal/server/approval_policy_test.go`。候选已按 `start.command` 重建；Safari 完成辅助审批→手动→辅助往返、确认普通暂停任务没有幽灵审核状态，并在第二个浏览器标签读回全局辅助审批。独立子任务验证收据见[恢复验收续记](continuity-acceptance-resumed-20261011.md)和[审批子任务](../tasks/approval-paused-ghost-state-20261011.json)。
 
 向量检索测试遵照用户要求暂缓；Windows 缺少环境，记为 NOT_RUN。其他工作流的历史缺口仍以各自收据为准，本次 38 项源码门禁不等同于完整端到端验收或正式 Release。
+
+## 2026-10-13 后续：摘要预算与 Markdown 模板核对
+
+摘要压缩曾在真实 Safari 会话中进入“整理早期消息”，但 provider 以 `finish_reason=length` 返回空正文；界面报告失败，原历史保留。修复让摘要请求单独关闭隐藏推理、使用 1,280 token 输出预算，并约束摘要条目数量与长度。定向 Go race 回归 4 项通过（5.175 秒）。原生 Safari 9999 的专用长会话 #46 随后成功折叠 8 条早期消息，活动上下文估算由 13.6K 降至 5.4K，减少 8.1K。自动压缩动画的浏览器端到端触发和长时间稳定性仍待验证。
+
+同次对 Safari 9999 做了只读 Markdown 编辑器检查：段落、H1–H6、文本强调、代码、Mermaid、表格、链接/图片语法、引用、列表、分隔线、脚注、提示块、折叠块、公式及文档元数据共 26 个模板均为与图片、文件、链接、draw.io 同级的图标按钮，辅助标签含名称和使用说明。用户截图中的 18217 页面显示旧下拉菜单，与当前 9999 不一致；未对该页面执行修改。
+
+这一批不是完整产品验收或正式发布。真实向量检索仍按用户要求暂缓，Windows 验收已由用户说明完成；其他开放项见 `docs/tasks/aide-continuity-knowledge-20261009.json` 的 followup4。

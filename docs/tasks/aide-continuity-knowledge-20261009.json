@@ -2843,5 +2843,33 @@
       "command": "docker run --rm --network none -e AIDE_BUILTIN_PLUGINS= -v <repository>:/src -w /src --entrypoint bash aide:local -c \"gofmt -w internal/server/knowledge_coverage_test.go && go test -mod=vendor -race -count=1 ./internal/server -run ^TestKnowledgeCoverageDirectoryBeyond(LegacyThousandEntryLimit|DynamicEntryBudgetIsExplicit)$ -v\"",
       "result": "PASS (7.238s). In-budget 3,800-file scan 1.385s; 10,000-entry over-budget scan capped at 4,000 and marked partial in 1.739s. Docker network disabled."
     }
+  },
+  "progress_checkpoint_20261013_followup4": {
+    "status": "in_progress",
+    "date": "2026-10-13",
+    "completed": [
+      "Safari 9999 read-only spot-check: all 26 Markdown templates are first-level icon buttons alongside image, file, link and draw.io. Accessible labels include names and use guidance. The screenshot from 18217 is inconsistent with current 9999; no edits were made in the read-only check.",
+      "Manual real-model compaction verified in native Safari on dedicated long-context test session #46: after one bounded summary request failed with finish_reason=length while preserving history, retry after budget fix compacted 8 early messages and displayed estimate 13.6K → 5.4K (−8.1K).",
+      "Compaction summary budget fix passed four focused server race regressions (5.175s); architecture and task evidence updated."
+    ],
+    "remaining": [
+      "Automatic compaction progress animation through a real Safari-triggered task and verify session switching isolation",
+      "Long-duration continuity/stability and larger conversation boundaries",
+      "Large-library browser performance and independent user-hosted SSH/FTP/FTPS/provider acceptance",
+      "Requirement-by-requirement audit and release/rollback gates"
+    ],
+    "deferred_by_user": [
+      "Real embedding/vector model acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reported it tested successfully"
+    ],
+    "verification": {
+      "focused_compaction_race": "PASS: 4 targeted tests, Go 1.26 Docker, -race -p=1, 5.175s",
+      "native_safari": "PASS scoped for manual compaction success and current 9999 Markdown first-level icon toolbar",
+      "full_profile": "Not rerun against this uncommitted summary-budget change; do not inherit the previous fingerprint receipt as evidence for the modified source"
+    },
+    "release": "not_run",
+    "push": "pending this checkpoint commit"
   }
 }

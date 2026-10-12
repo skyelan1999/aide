@@ -46,7 +46,7 @@
     },
     "verification": {
       "status": "partial",
-      "summary": "2026-10-13 current-run: offline Docker Go 1.26, `-race -p=1`, five focused tests covering manual progress/token estimates, automatic lifecycle, shell target extraction, outcome evidence boundaries, and input/output projection: PASS (`aide/internal/server` 5.798s). Safari 18218 loads, but has no session/model configured, so no real compaction animation could be triggered; visual acceptance remains pending.",
+      "summary": "2026-10-13: focused offline Docker Go race regressions PASS and native Safari 9999 manual compaction success path PASS on the dedicated long-context test conversation. Earlier real request failed with finish_reason=length and left source history intact; after reserving output budget and disabling hidden reasoning only for summary extraction, a retry compacted 8 early messages and displayed 13.6K → 5.4K (−8.1K). Automatic compaction animation and extended stability remain unverified in Safari.",
       "evidence": [
         "node --check internal/server/web/app.js：通过。",
         "git diff --check（本任务四个目标文件）：通过。",
@@ -62,7 +62,9 @@
         "2026-10-13: 最新全部 28 个工作树变更已同步到隔离候选并用 start.command 重建；候选源码指纹 bda1ad77c3a7bad747c217307cdbb832b094860e7dfb17d2ab4ca82bebca6258。Docker 容器 healthy，/healthz status=ok，首页 HTTPS 返回 59,623 字节且包含 app.js/markdown-media.js/macos.css。完整性状态 degraded；只读对照证明候选持久卷旧 binary baseline 与这次重建二进制不一致，未删除/重置该基线。Safari 18219 仍停在系统证书警告，因此新增 UI 验收 pending。",
         "2026-10-13 current-state reconciliation: Compaction-specific Go regressions pass; current quick profile passes. Latest repository-wide race attempt timed out after 15m in TestDaemonConcurrentStartStopConsistency and therefore full_profile is not a pass. Manual compaction Safari UI acceptance remains pending on 18219 certificate interstitial.",
         "2026-10-13 current worktree in healthy container aide-aide-1: PATH=/usr/local/go/bin:$PATH GOCACHE=/home/aide/.cache/go-build GOMAXPROCS=2 go test -mod=vendor -p=1 -race ./internal/server -run \"Test(ContextOverflowCompactsHistoryBeforeRetry|AutoCompactionPublishesObservableLifecycle|ManualCompactionPublishesLiveProgressAndTokenEstimates|CompactionRetainedHistoryStaysWithinBudget|RemediationConcurrentCompactionNoPanicNoDeadlock|RemediationCompactionChainRetainsPreviousSummary|CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges)$\" -count=1 -timeout=180s: PASS 10.878s. This is Go/API evidence only; no Safari animation or live long-session acceptance.",
-        "2026-10-13 current-run: offline Docker Go 1.26, `-race -p=1`, five focused tests covering manual progress/token estimates, automatic lifecycle, shell target extraction, outcome evidence boundaries, and input/output projection: PASS (`aide/internal/server` 5.798s). Safari 18218 loads, but has no session/model configured, so no real compaction animation could be triggered; visual acceptance remains pending."
+        "2026-10-13 current-run after summary-budget fix: offline Docker Go 1.26, `-race -p=1`, TestCompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary, TestMalformedCompactionSummaryAbortsWithoutChangingSource, TestManualCompactionPublishesLiveProgressAndTokenEstimates, and TestAutoCompactionPublishesObservableLifecycle: PASS (`aide/internal/server` 5.175s).",
+        "2026-10-13 native Safari 9999 on dedicated session #46 (f1b7774ec1aae13e5e09384c36353c88): first actual manual compaction attempt showed ‘整理早期消息 / 8 条早期消息 / 当前约 13.6K’ then failed with finish_reason=length; UI reported summary failure and original history was preserved. After retry with the budget fix, Safari showed ‘已压缩 8 条 · 活动上下文估算 13.6K → 5.4K (−8.1K)’ and ‘已压缩 8 条历史消息’. No unrelated conversation or file was edited.",
+        "2026-10-13 native Safari 9999 read-only Markdown toolbar spot-check: 26 direct sibling template icon buttons appeared alongside image, file, link, and draw.io controls. Each accessible label contained the template name and usage guidance. This confirms the current 9999 frontend; screenshot-provided 18217 view appears to be a stale candidate and was not modified."
       ],
       "full_profile": "FAIL",
       "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504"
@@ -84,11 +86,11 @@
     },
     "release": {
       "status": "partial",
-      "summary": "后端压缩进度 API 与定向回归已按阶段推送；Safari 中的压缩动画验收仍未完成。未发布或部署。",
+      "summary": "后端压缩进度 API 已按阶段推送。当前本地源码的手动真实模型压缩成功路径已在 Safari 9999 验证；自动压缩真实触发、跨会话隔离的浏览器观察与延长运行仍待验证。未发布。",
       "evidence": []
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "Backend stage pushed after focused race regressions passed. Safari 18218 loads but has no model or session, so manual/automatic compaction animation remains unverified in the system browser. The 15-minute full-profile timeout recorded in the industrial long-conversation ledger remains unresolved."
+  "handoff": "Focused race regressions pass. Native Safari 9999 manual real-model compaction succeeded after an initial finish_reason=length failure; 8 early messages were compacted and activity estimate fell from 13.6K to 5.4K. Remaining: observe the full automatic-compression animation in Safari, verify session switching does not leak progress, and repeat long-running stability. This checkpoint does not claim full product acceptance or release readiness."
 }
