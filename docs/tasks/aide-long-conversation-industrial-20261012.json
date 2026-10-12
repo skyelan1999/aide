@@ -1,0 +1,85 @@
+{
+  "id": "aide-long-conversation-industrial-20261012",
+  "request": "提升超长对话整体能力与性能：工作台稳定运行、会话准确性、记忆压缩、记忆读写，并形成工业应用领域支持说明文档",
+  "baseline": "b0afa90ba2031da0f6f69260d450502c153f582b",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/knowledge-map.md\n M docs/plugin-protocol.md\n M docs/plugins/computer-browser-control.md\n M docs/security/secret-vault.md\n M docs/system-overview.md\n M docs/user-guide.md\n M internal/server/config_backup.go\n M internal/server/plugins.go\n M internal/server/secret_vault.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/sanctum.css\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/web/style.css\n M internal/server/web/task-outcome.js\n M internal/server/web/text-editor.js\n M internal/server/workflow.go\n M plugins/browser-control/manifest.json\n M plugins/comm-serial/manifest.json\n M plugins/comm-ssh/manifest.json\n M plugins/comm-tcp/manifest.json\n M plugins/comm-udp/manifest.json\n M plugins/computer-control/manifest.json\n M plugins/current-time/manifest.json\n M plugins/environment-guide/manifest.json\n M plugins/feedback/manifest.json\n M plugins/goal/manifest.json\n M plugins/lunar-calendar/manifest.json\n M plugins/markdown-history/manifest.json\n M plugins/office/manifest.json\n M plugins/plan/manifest.json\n M plugins/propeller-aero/manifest.json\n M plugins/skill/manifest.json\n M plugins/sqlite/manifest.json\n M plugins/subagent/manifest.json\n M plugins/terminal/manifest.json\n M plugins/todo/manifest.json\n M plugins/workflow/manifest.json\n M scripts/build-native-computer-bridge.sh\n?? docs/tasks/aide-computer-bridge-icon-20261011.json\n?? docs/tasks/context-compaction-observability-20261012.json\n?? docs/tasks/local-secret-custody-keys-20261012.json\n?? docs/tasks/markdown-split-scroll-lock-20261012.json\n?? docs/tasks/plugin-settings-rendered-schema-20261012.json\n?? docs/tasks/starmap-highlight-blackholes-20261011.json\n?? docs/tasks/workbench-long-output-performance-20261012.json\n?? internal/server/custody_keys.go\n?? internal/server/custody_keys_test.go\n?? internal/server/web/starmap-gravity.js\n?? scripts/render-computer-bridge-icon.swift\n?? scripts/starmap-gravity.test.cjs",
+  "acceptance": [
+    "大体量模型输出的实时渲染工作量随新增内容增长，不在每帧拆分/重扫完整回答；完成态 Markdown 与实时态一致，正文仍可正常复制、选择和滚动。",
+    "自动/手动/上下文超限压缩对压缩请求设置明确预算；多批次连续压缩保留前序摘要与角色/事实/限制/决定/待办；模型失败或摘要结构无效时原消息不丢失。",
+    "同一项目的并发记忆写入不会互相覆盖；token JSON 与可读 memory.md 可在下一次读取和重启后恢复一致，容量拒绝不会截断现存记忆。",
+    "工业应用支持文档区分实现能力、估算口径、验证证据与明确限制，说明长任务/长会话的恢复、数据边界、人工审批和安全关键场景使用边界。",
+    "变化相关 Go/JS 检查通过；真实 Safari 验证长输出 UI 与会话状态；任何未经真实模型/工业设备验证的能力明示为未验证。"
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/memory_tokens_test.go",
+    "internal/server/remediation_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "docs/architecture.md",
+    "docs/architecture/continuity-roadmap.md",
+    "docs/industrial-long-conversation-support.md",
+    "docs/tasks/aide-long-conversation-industrial-20261012.json",
+    "scripts/live-markdown-scan.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "范围覆盖工作台长输出性能、会话上下文准确性、压缩请求上界与连续摘要、项目记忆并发读写、工业领域能力与安全边界。实现声明与验收证据分开。",
+      "evidence": [
+        "用户原话：提升超长对话整体能力与性能，包括但不限于工作台稳定运行、会话准确性、记忆压缩整体性能、记忆读写等，最后整理成文档体现 aide 对超长对话复杂情况下工业应用领域的支持。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "实时 Markdown 使用增量边界扫描；摘要压缩采用有界 map/reduce，并在每阶段校验结构与保存快照；项目记忆沿用 filesMu 串行读写及文本投影+token JSON 的原子恢复协议；工业支持文档把实现、估算、验证与安全边界分开。",
+      "evidence": [
+        "internal/server/context.go 使用 DSH UTF-16 字符密度估算并截取最多约 15000 个历史 token；provider usage 可校准估算，不等于所有提供商精确 tokenizer。",
+        "internal/server/workflow.go 的 readMemory/writeMemory 已由 App.filesMu 串行化；memory_tokens.go 先原子写文本投影再原子写 JSON，后续读取能从完整投影恢复；无需增加第二把进程内锁。",
+        "原压缩摘要一次整理最多400条消息，但累计输入无总预算；失败时旧的原始会话仍保留。本轮收紧摘要 map/reduce 的输入预算与结构校验。",
+        "internal/server/web/app.js 已有活动块 Markdown 渲染和超长活动段落纯文本回退；边界扫描已改为只扫描新增字符。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "超长流式回答按新增文本增量扫描；摘要以 3000 DSH 估算预算分批 map/reduce，结构错误即中止；压缩使用完整工具调用快照比对并在原子持久化成功后提交内存态；加入记忆并发一致性回归。",
+      "evidence": [
+        "internal/server/web/app.js：增量 live boundary scanner；超长活动段落纯文本回退逻辑沿用现有工作区实现。",
+        "internal/server/workflow.go：摘要连续归并、结构化验证、快照校验与候选会话原子提交。",
+        "internal/server/remediation_test.go 与 memory_tokens_test.go：新增预算/连续摘要/失败保护/工具参数并发改变/项目记忆并发测试。"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "定向 Go 回归、前端扫描回归、JS 语法和文档链接检查通过；系统 Safari 尚未对 18212 当前源码候选操作，当前受 Mac 锁定阻塞。",
+      "evidence": [
+        "离线 Docker Go 1.26 扩展回归：覆盖 TestMemoryTokensLegacyAndExternalEdit、容量/损坏投影测试、24 写并发一致性、连续摘要请求预算、畸形摘要、工具参数快照变化、超限/新任务/自动/并发压缩；`go test -mod=vendor ./internal/server -run 'Test(MemoryTokens.*|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall|RemediationAutoCompactNotBlockedByHeldMutex|RemediationConcurrentCompactionNoPanicNoDeadlock)$' -count=1`：PASS（6.920s）。",
+        "离线 Docker Go 1.26：`go test -mod=vendor ./internal/server -run 'Test(CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|MemoryTokens|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall)$' -count=1`：PASS（3.828s）。",
+        "`node --check internal/server/web/app.js && node scripts/live-markdown-scan.test.cjs`：PASS；2M 字符/4096 增量扫描回归 PASS。",
+        "`python3 scripts/check_docs.py`：PASS（187 Markdown、533 本地链接）；`git diff --check`：PASS。",
+        "隔离源码服务：Docker `aide-longconv-20261012`，Safari 候选 `https://localhost:18212`，空数据卷与只读源码绑定；9999/18211 未触碰。Safari：NOT_RUN，系统检测 Mac 锁定，等用户手动解锁后操作。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "新增工业长对话能力说明，覆盖架构、上下文估算、摘要压缩、工作台渲染、记忆读写、数据路径及工业安全边界，并从架构索引链接。",
+      "evidence": [
+        "docs/industrial-long-conversation-support.md",
+        "docs/architecture.md 链接已由 scripts/check_docs.py 验证。"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "推送检查点授权：用户此前要求阶段性测完后及时 push；本次仅推送已验证的后端与文档检查点，不打 tag、不发布。",
+  "rollback": "回滚仅撤销此任务记录范围文件中的对应提交/差异；不整体恢复工作区、不清理会话或记忆数据。内存模型/API schema 不变；token 文件格式不变。",
+  "handoff": "阶段进度：需求与设计、实现、文档完成；静态和定向 Go 验证通过。仅 Safari 实机验收待继续：Mac 手动解锁后在 Safari 打开 https://localhost:18212；若出现“连接非私人”证书页面，须用户亲自处理后回“已处理”。验收容器 aide-longconv-20261012 持续运行，停止命令为 `docker stop aide-longconv-20261012`。此容器源码只读、数据目录 /private/tmp/aide-longconv-20261012/data，工作区为空隔离目录。"
+}

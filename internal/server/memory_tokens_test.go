@@ -1,9 +1,11 @@
 package server
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -92,5 +94,45 @@ func TestMemoryTokensRejectsLinkedMemory(t *testing.T) {
 	}
 	if got := a.writeMemory("safe"); !strings.Contains(got, "失败") {
 		t.Fatal(got)
+	}
+}
+
+func TestConcurrentProjectMemoryWritesRemainReadableAndConsistent(t *testing.T) {
+	a := testApp(t)
+	const writes = 24
+	var wg sync.WaitGroup
+	results := make(chan string, writes)
+	for i := 0; i < writes; i++ {
+		wg.Add(1)
+		go func(n int) {
+			defer wg.Done()
+			entry := fmt.Sprintf("parallel-memory-entry-%02d", n)
+			results <- a.writeMemory(entry)
+		}(i)
+	}
+	wg.Wait()
+	close(results)
+	for result := range results {
+		if !strings.Contains(result, "已写入") {
+			t.Fatalf("memory write failed: %s", result)
+		}
+	}
+	store, _, err := loadMemoryTokenStore(a.projectCacheDir())
+	if err != nil {
+		t.Fatalf("load token memory: %v", err)
+	}
+	projection, err := os.ReadFile(a.memoryPath())
+	if err != nil {
+		t.Fatalf("read memory projection: %v", err)
+	}
+	if got := hash(projection); got != store.ProjectionHash {
+		t.Fatalf("projection hash mismatch: got %s want %s", got, store.ProjectionHash)
+	}
+	text := string(projection)
+	for i := 0; i < writes; i++ {
+		entry := fmt.Sprintf("parallel-memory-entry-%02d", i)
+		if !strings.Contains(text, entry) {
+			t.Fatalf("concurrent update was lost: %s", entry)
+		}
 	}
 }

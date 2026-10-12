@@ -6,10 +6,12 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -539,4 +541,88 @@ func TestR08LegacyMigration(t *testing.T) {
 	}
 	check(a2) // 重启不重复累加、不清零
 	a2.Close()
+}
+
+func TestCompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary(t *testing.T) {
+	a := testApp(t)
+	priorMarker := "PRIOR_CONTINUITY_MARKER_20261012"
+	var requests int
+	priorSeen := false
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			t.Errorf("decode provider request: %v", err)
+			return
+		}
+		requests++
+		tokens, joined := 0, strings.Builder{}
+		for _, message := range body.Messages {
+			tokens += contextMessageTokens(message)
+			joined.WriteString(message.Content)
+		}
+		if tokens > compactSummaryInputBudget+400 {
+			t.Errorf("compaction request exceeds bounded payload and prompt headroom: %d tokens", tokens)
+		}
+		if strings.Contains(joined.String(), priorMarker) {
+			priorSeen = true
+		}
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": `{"goal":"long project","constraints":["retain threshold"],"decisions":["keep design"],"files":[],"facts":["confirmed"],"evidence":["not verified"],"pending":["browser check"]}`}}}})
+	}))
+	defer provider.Close()
+	messages := make([]Message, 0, 80)
+	for i := 0; i < 80; i++ {
+		messages = append(messages, Message{Role: "user", Content: fmt.Sprintf("message %d %s", i, strings.Repeat("长对话证据", 500))})
+	}
+	previous := priorMarker + strings.Repeat(" prior constraint and decision.", 500)
+	summary, err := a.buildCompactionSummary(context.Background(), messages, Settings{BaseURL: provider.URL, Model: "test"}, previous)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if requests < 2 {
+		t.Fatalf("large history should use multiple bounded requests, got %d", requests)
+	}
+	if !priorSeen {
+		t.Fatal("previous continuity summary was not included in the bounded pipeline")
+	}
+	var record compactSummaryRecord
+	if err := json.Unmarshal([]byte(summary), &record); err != nil {
+		t.Fatalf("result is not canonical structured summary: %v", err)
+	}
+	if record.Goal == "" || len(record.Constraints) == 0 || len(record.Decisions) == 0 || len(record.Pending) == 0 {
+		t.Fatalf("summary dropped required continuity fields: %+v", record)
+	}
+}
+
+func TestMalformedCompactionSummaryAbortsWithoutChangingSource(t *testing.T) {
+	a := testApp(t)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": "not json"}}}})
+	}))
+	defer provider.Close()
+	source := []Message{{Role: "user", Content: "keep this history"}}
+	before := append([]Message(nil), source...)
+	if _, err := a.buildCompactionSummary(context.Background(), source, Settings{BaseURL: provider.URL, Model: "test"}, ""); err == nil {
+		t.Fatal("malformed model summary must abort")
+	}
+	if !reflect.DeepEqual(source, before) {
+		t.Fatal("failed summary mutated original messages")
+	}
+}
+
+func TestCompactionSnapshotDetectsToolCallChanges(t *testing.T) {
+	var call ToolCall
+	call.ID = "tool-1"
+	call.Function.Name = "read_file"
+	call.Function.Arguments = `{"path":"before.md"}`
+	before := []Message{{Role: "assistant", Content: "", ToolCalls: []ToolCall{call}}}
+	snapshot := cloneCompactMessages(before)
+	if !compactSnapshotMatches(before, snapshot) {
+		t.Fatal("matching snapshot rejected")
+	}
+	before[0].ToolCalls[0].Function.Arguments = `{"path":"after.md"}`
+	if compactSnapshotMatches(before, snapshot) {
+		t.Fatal("snapshot ignored changed tool arguments")
+	}
 }
