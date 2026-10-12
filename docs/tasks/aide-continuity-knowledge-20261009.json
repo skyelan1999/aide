@@ -2590,5 +2590,23 @@
       ],
       "user_data_modified": false
     }
+  },
+  "knowledge_directory_budget_20261012": {
+    "status": "stage_verified_pushed_browser_pending",
+    "commit": "22b2bb495b67e97d78cbba0f3f29ad82635ef09b",
+    "remote": "origin/main",
+    "summary": "Removed the fixed 1,000-entry cap from direct local Knowledge Map scans. ReadDir is bounded by the current source's remaining file and directory budgets, with one lookahead entry and explicit partial coverage when exceeded.",
+    "verification": [
+      "Direct scan reads 1,105 flat files completely with a 3,000-file source budget.",
+      "Direct scan with an 800-file budget stops at 800 and reports directory_entries for a larger flat directory.",
+      "go test -mod=vendor -race ./internal/server -run TestKnowledge -count=1 -timeout=120s PASS in a network-disabled Go 1.26 container (36.632s).",
+      "python3 scripts/check_docs.py PASS: 188 Markdown files, 537 local links.",
+      "python3 scripts/agent-route.py verify quick PASS, fingerprint 8d6561133f189c66c0c9730182c982d25c27ca226017e068246a60a7e5f01773.",
+      "Push receipt a74f1e6..22b2bb4 main -> main; git ls-remote confirmed origin/main equals 22b2bb495b67e97d78cbba0f3f29ad82635ef09b."
+    ],
+    "not_verified": [
+      "Authenticated system Safari inspection of the rebuilt graph with a real >1,000-file directory; localhost:18217 currently shows the access-token sign-in page.",
+      "No deployment or release was performed."
+    ]
   }
 }
