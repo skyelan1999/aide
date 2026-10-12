@@ -19,7 +19,10 @@ func staticAssetServer(public fs.FS) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		name := strings.TrimPrefix(path.Clean(r.URL.Path), "/")
 		ext := strings.ToLower(path.Ext(name))
-		allowed := ext == ".js" || ext == ".mjs" || ext == ".css" || ext == ".svg" || ext == ".png" || ext == ".jpg" || ext == ".webp" || ext == ".woff2" || ext == ".woff" || ext == ".json"
+		allowed := ext == ".js" || ext == ".mjs" || ext == ".wasm" || ext == ".css" || ext == ".svg" || ext == ".png" || ext == ".jpg" || ext == ".webp" || ext == ".woff2" || ext == ".woff" || ext == ".json"
+		if ext == ".wasm" {
+			w.Header().Set("Content-Type", "application/wasm")
+		}
 		if allowed && (r.Method == http.MethodGet || r.Method == http.MethodHead) {
 			tag, ok := validators.Load(name)
 			if !ok {

@@ -1396,6 +1396,7 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 		".csv": "text/csv; charset=utf-8", ".tsv": "text/tab-separated-values; charset=utf-8",
 		".md": "text/markdown; charset=utf-8", ".drawio": "application/xml; charset=utf-8",
 		".stl": "model/stl",
+		".step": "application/step", ".stp": "application/step",
 	}[ext]
 	if ct == "" {
 		ct = "application/octet-stream"

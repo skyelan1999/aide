@@ -296,6 +296,7 @@ dialog label, dialog p { font-size: 12px; }
 }
 .editor-preview.editor-preview-immersive .img-viewer,
 .editor-preview.editor-preview-immersive .stl-viewer,
+.editor-preview.editor-preview-immersive .step-viewer,
 .editor-preview.editor-preview-immersive .pdf-viewer,
 .editor-preview.editor-preview-immersive .dxf-viewer {
   flex: 1 1 auto;

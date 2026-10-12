@@ -1,0 +1,95 @@
+{
+  "id": "stp-preview",
+  "request": "让aide支持stp格式的预览",
+  "baseline": "97873aff8f1238edcf1031cd81991db75eca3016",
+  "initial_status": "基线 97873aff8f1238edcf1031cd81991db75eca3016；工作树含既有索引路径选择器实现，按文件分块保留未纳入本次提交。",
+  "acceptance": [
+    "从工作区、引用来源与文件新标签页直接打开 .step/.stp 文件时，走同源原始字节端点并显示真实 STEP 几何的可交互三维预览。",
+    "预览支持轨道旋转、缩放、归位、模型颜色/多实体以及三角面和尺寸信息；解析在 Web Worker 内运行，切换/关闭查看器时终止解析并释放资源。",
+    "预览资源仅在打开 STEP/STP 时从 Aide 同源懒加载；无法解析、WebGL 不可用、文件超限均给出可读提示与原文件下载入口。",
+    "解析器及其 OpenCascade 许可证随源码保留；架构文档记录解析器版本、许可证、离线行为和大小限制。",
+    "通过相关 JS/Go 回归、仓库 quick 验证，并在系统 Safari 用实际 STEP 样例验证加载与交互。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/macos.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/step-import-worker.js",
+    "internal/server/web/vendor/occt-import-js/",
+    "internal/server/files.go",
+    "internal/server/*test.go",
+    "docs/architecture.md",
+    "docs/tasks/stp-preview.json",
+    "internal/server/server.go",
+    "internal/server/static_assets.go",
+    "scripts/test_step_import.cjs",
+    "docs/PRD.md",
+    "internal/server/web/index.html"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "将请求解释为 Aide 工作台与独立文件视图均支持本地 STEP/STP 三维预览。",
+      "evidence": [
+        "用户原话：让aide支持stp格式的预览。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用现有 Three.js 查看器；采用 LGPL-2.1 的 occt-import-js 0.0.23 在 Worker 内进行本地 B-rep/STEP 解析，不上传模型内容。",
+      "evidence": [
+        "上游 README 与 npm 元数据确认版本 0.0.23、LGPL-2.1；保留上游源码包与许可证。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "工作区、引用来源与独立文件页均识别 .step/.stp；同源 raw/MIME/WASM/CSP 已接通。Viewer 提供旋转、缩放、归位、实体/面颜色、毫米尺寸与三角面数、WebGL/解析/大小错误提示、下载原件和销毁清理。",
+      "evidence": [
+        "node --check internal/server/web/app.js",
+        "node --check internal/server/web/step-import-worker.js",
+        "node --check internal/server/web/locales/en.js",
+        "服务返回 /vendor/occt-import-js/occt-import-js.wasm HTTP 200, Content-Type application/wasm, 7,604,031 bytes",
+        "首页加载 app.js?v=126；style.css?v=88、locales/en.js?v=107、macos.css?v=107。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "针对性 JS/Go 回归与 start.command vet/build 通过；系统 Safari 实际 STEP 样例解析、尺寸显示、三维旋转、滚轮缩放与视角归位均通过。",
+      "evidence": [
+        "node --check internal/server/web/app.js、step-import-worker.js、locales/en.js：通过",
+        "node scripts/test_step_import.cjs：1 mesh, 12 triangles",
+        "单位测试：cube-in/cube-m/cube-mm 均显示 1000×1000×1000 mm",
+        "go test -mod=vendor -count=1 ./internal/server -run 'TestReadFileRaw(Step|BackupUsesUnderlyingMIME)$'：通过",
+        "AIDE_OPEN_BROWSER=0 ./start.command：Go vet、应用构建、容器重建与健康检查通过",
+        "系统 Safari 2026-10-12：qa-step-cube.stp 显示 12 三角面、300×300×300 mm；拖动旋转改变视角，滚轮调整视图，重置视角恢复初始状态。",
+        "python3 scripts/agent-route.py verify quick：pass；fingerprint 57e181953219bc3532847da93e0b44cfa36395eb660650fe3f55b9eae2b02dbe；2026-10-12T09:30:08Z。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "补充 PRD 功能条目、架构的解析/授权/离线/限制说明、英文界面文案与解析器来源及哈希。",
+      "evidence": [
+        "docs/PRD.md",
+        "docs/architecture.md",
+        "internal/server/web/locales/en.js",
+        "internal/server/web/vendor/occt-import-js/README.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "关闭了 Safari 临时验收标签页，并删除仓库与工作区中的一次性纯几何 STEP 样例。解析器发行文件、许可文本和测试夹具保留在各自源码目录。",
+      "evidence": [
+        "临时样例已删除：仓库 qa-step-cube.stp 与 /Users/skyelan/debug/qa-step-cube.stp 均不存在。"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "未发布；本次用户请求为增加预览功能。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

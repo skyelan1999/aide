@@ -1441,10 +1441,16 @@ func (a *App) buildHandler() {
 		// 未来若引入 Cookie，必须同时设置 Secure、HttpOnly、SameSite=Lax，且仅在 HTTPS 连接下发。
 		w.Header().Set("X-Content-Type-Options", "nosniff")
 		w.Header().Set("Referrer-Policy", "no-referrer")
-		if strings.HasPrefix(r.URL.Path, "/vendor/drawio/") {
+		if r.URL.Path == "/step-import-worker.js" {
+			// The upstream OCCT STEP importer builds Embind wrappers at runtime with
+			// Function constructors. Keep that requirement confined to its isolated
+			// worker instead of allowing JavaScript eval on the application document.
+			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-eval' 'wasm-unsafe-eval'; connect-src 'self'; worker-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+		} else if strings.HasPrefix(r.URL.Path, "/vendor/drawio/") {
 			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'self'; base-uri 'none'")
 		} else {
-			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'")
+			// wasm-unsafe-eval permits same-origin WebAssembly modules (PDF/CAD viewers) without enabling JavaScript eval.
+			w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'")
 		}
 		// HSTS：仅在非回环的真实 HTTPS 站点下发；localhost/127.0.0.1 不加，避免浏览器把本机
 		// http://localhost 永久强制改写。max-age 取短值 300s，本地自签场景可快速回收。

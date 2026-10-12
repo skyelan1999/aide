@@ -2427,7 +2427,7 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
 
 async function openFile(path) {
   // 图片 / STL / PDF 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
-  if (isImagePath(path) || isStlPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path) || isXlsxPath(path) || isSqlitePath(path) || isZipPath(path)) {
+  if (isImagePath(path) || isStlPath(path) || isStepPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path) || isXlsxPath(path) || isSqlitePath(path) || isZipPath(path)) {
     state.file = { path, root: state.root, source: state.root === 'context' ? state.source : '', content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
     showEditor();
     return;
@@ -2444,6 +2444,7 @@ function isBackupPath(path) { return /\.bak$/i.test(path || ''); }
 function isMarkdownPath(path) { return /\.(md|markdown)$/i.test(effectiveFileTypePath(path)); }
 function isImagePath(path) { return /\.(png|jpe?g|gif|webp|svg|bmp|ico)$/i.test(effectiveFileTypePath(path)); }
 function isStlPath(path) { return /\.stl$/i.test(effectiveFileTypePath(path)); }
+function isStepPath(path) { return /\.(step|stp)$/i.test(effectiveFileTypePath(path)); }
 function isPdfPath(path) { return /\.pdf$/i.test(effectiveFileTypePath(path)); }
 function isZipPath(path) { return /\.zip$/i.test(effectiveFileTypePath(path)); }
 function isDelimitedPath(path) { return /\.(csv|tsv)$/i.test(effectiveFileTypePath(path)); }
@@ -2524,28 +2525,29 @@ function showEditor() {
   const isDrawio = /\.drawio$/i.test(effectiveFileTypePath(state.file.path));
   const isImg = isImagePath(state.file.path);
   const isStl = isStlPath(state.file.path);
+  const isStep = isStepPath(state.file.path);
   const isPdf = isPdfPath(state.file.path);
   const isDxf = isDxfPath(state.file.path);
   const isDocx = isDocxPath(state.file.path);
   const isXlsx = isXlsxPath(state.file.path);
   const isSqlite = isSqlitePath(state.file.path);
   const isZip = isZipPath(state.file.path);
-  $('editor-preview').classList.toggle('editor-preview-immersive', isImg || isStl || isPdf || isDxf || isDocx || isXlsx || isSqlite || isDrawio);
+  $('editor-preview').classList.toggle('editor-preview-immersive', isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isSqlite || isDrawio);
   $('editor').readOnly = readOnly;
   // #64: code syntax highlighting
   teardownCodeHighlight($('editor'));
   teardownViewer($('editor-preview')); // 切文件前回收上一个可视化查看器（WebGL/PDF/Observer）
   var _cl = codeLang(state.file.path);
   setupCodeHighlight($('editor'), _cl);
-  const visualPreview = isZip || isStl || isPdf || isDxf || isDocx || isXlsx || isSqlite || isImg || isDrawio;
+  const visualPreview = isZip || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isSqlite || isImg || isDrawio;
   if ($('editor').parentNode.classList.contains('code-wrapper')) $('editor').parentNode.classList.toggle('hidden', visualPreview);
   // 图片 / STL / PDF 为只读可视化查看器，无文本可保存，禁用保存（避免空内容覆盖原文件）；drawio 可保存
   // 可视化查看器（图片/STL/PDF/DXF）无文本可保存 → 隐藏保存按钮；只读来源的文本文件 → 禁用
-  $("save-file").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx || isXlsx || isSqlite || isZip);
+  $("save-file").classList.toggle("hidden", isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isSqlite || isZip);
   $("save-file").disabled = readOnly;
   $('attach-file').disabled = state.file.fresh;
-  $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx || isSqlite || isZip));
-  $("editor-ro-badge").title = isBackupPath(state.file.path) ? t("备份文件 · 只读") : ((readOnly && state.file.root === "context") ? (sourceIsRW() ? t("引用 · 读写来源") : t("引用 · 只读")) : (isDocx ? t("DOCX 正文预览 · 批注可写入文档") : (isImg || isStl || isPdf || isDxf || isSqlite || isZip ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"))));
+  $("editor-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isStep || isPdf || isDxf || isDocx || isSqlite || isZip));
+  $("editor-ro-badge").title = isBackupPath(state.file.path) ? t("备份文件 · 只读") : ((readOnly && state.file.root === "context") ? (sourceIsRW() ? t("引用 · 读写来源") : t("引用 · 只读")) : (isDocx ? t("DOCX 正文预览 · 批注可写入文档") : (isImg || isStl || isStep || isPdf || isDxf || isSqlite || isZip ? t("只读 · 可视化查看器") : t("工作目录 · 保存后同步到主机"))));
   $('editor-mode-switch').classList.toggle('hidden', !md && !isDelimitedPath(state.file.path));
   if (isZip) {
     $('editor').classList.add('hidden');
@@ -2555,6 +2557,10 @@ function showEditor() {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
     setupStlPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
+  } else if (isStep) {
+    $('editor').classList.add('hidden');
+    $('editor-preview').classList.remove('hidden');
+    setupStepPreview($('editor-preview'), state.file.path, state.file.root, state.file.source || '');
   } else if (isPdf) {
     $('editor').classList.add('hidden');
     $('editor-preview').classList.remove('hidden');
@@ -6780,6 +6786,138 @@ async function setupStlPreview(container, filePath, root, source, viewerSpec) {
       resize(); resizeObs = new ResizeObserver(resize); resizeObs.observe(canvasWrap);
     }).catch(err => { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">' + t('STL 加载失败：') + escapeHtml(err.message) + '</div>'; meta.textContent = t('解析失败'); });
 }
+/* STEP/STP 由 LGPL 的 OpenCascade WebAssembly 在同源 Worker 内进行 B-rep 三角化；CAD 文件始终留在本机。 */
+async function setupStepPreview(container, filePath, root, source, viewerSpec) {
+  teardownViewer(container);
+  container.replaceChildren();
+  const viewer = el('div', 'step-viewer');
+  const toolbar = el('div', 'stl-toolbar');
+  const title = el('span', 'stl-info', filePath.split('/').pop());
+  const meta = el('span', 'stl-meta', t('准备加载 STEP 模型…'));
+  const reset = el('button', 'stl-ctrl', t('重置视角'));
+  const close = el('button', 'stl-ctrl', '✕');
+  const canvas = el('div', 'stl-canvas');
+  toolbar.append(title, meta, reset, close); viewer.append(toolbar, canvas); container.append(viewer);
+  close.onclick = () => { const dlg = container.closest('dialog'); if (dlg) dlg.close(); else if (document.body.classList.contains('file-view-mode')) history.back(); };
+
+  const rawUrl = fileRawUrl(filePath, root, source, viewerSpec);
+  let releaseViewer = () => {};
+  const showError = (message) => {
+    releaseViewer();
+    const notice = el('div', 'step-error');
+    notice.append(el('strong', '', t('STEP 预览不可用')));
+    notice.append(el('p', '', message));
+    const download = el('a', 'stl-download', t('下载原始 STEP 文件'));
+    download.href = rawUrl; download.download = filePath.split('/').pop(); notice.append(download);
+    canvas.replaceChildren(notice); meta.textContent = t('预览失败');
+  };
+  if (!detectWebGLContext()) { showError(t('当前浏览器未提供可用的 WebGL 图形上下文。')); return; }
+  try { await ensureThreeStack(); } catch (err) { showError(t('无法加载 3D 预览组件：') + (err?.message || err)); return; }
+
+  let worker = null, renderer = null, controls = null, resizeObs = null, animId = 0, disposed = false;
+  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1a1a2e);
+  const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 1e9); camera.up.set(0, 0, 1);
+  try {
+    renderer = new THREE.WebGLRenderer({antialias:true, failIfMajorPerformanceCaveat:false});
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); canvas.replaceChildren(renderer.domElement);
+  } catch (err) { showError(t('无法创建 WebGL 渲染器：') + (err?.message || err)); return; }
+  scene.add(new THREE.AmbientLight(0xffffff, 0.58));
+  const lightA = new THREE.DirectionalLight(0xffffff, 0.92); lightA.position.set(3, -4, 7); scene.add(lightA);
+  const lightB = new THREE.DirectionalLight(0xbad7ff, 0.3); lightB.position.set(-5, 4, 2); scene.add(lightB);
+  const grid = new THREE.GridHelper(10, 10, 0x52627e, 0x303a51); grid.rotation.x = Math.PI / 2; scene.add(grid);
+  controls = new THREE.OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.dampingFactor = 0.08;
+  let group = null, materials = [];
+  const draw = () => { animId = 0; if (disposed || document.hidden || !container.isConnected) return; controls.update(); renderer.render(scene,camera); if (document.documentElement.dataset.motion !== 'reduced') animId = requestAnimationFrame(draw); };
+  const syncMotion = () => { if (animId) cancelAnimationFrame(animId); animId = 0; controls.enableDamping = document.documentElement.dataset.motion !== 'reduced'; draw(); };
+  const drawReduced = () => { if (!disposed && document.documentElement.dataset.motion === 'reduced') renderer.render(scene,camera); };
+  document.addEventListener('visibilitychange', syncMotion); window.addEventListener('aide:motion', syncMotion); controls.addEventListener('change', drawReduced);
+  const teardown = () => {
+    if (disposed) return; disposed = true;
+    document.removeEventListener('visibilitychange', syncMotion); window.removeEventListener('aide:motion', syncMotion); controls.removeEventListener('change', drawReduced);
+    if (worker) { worker.terminate(); worker = null; }
+    if (animId) cancelAnimationFrame(animId); if (resizeObs) resizeObs.disconnect();
+    try { controls.dispose(); } catch (_) {}
+    if (group) group.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); });
+    for (const material of materials) try { material.dispose(); } catch (_) {}
+    try { renderer.dispose(); renderer.forceContextLoss(); } catch (_) {}
+  };
+  releaseViewer = teardown;
+  bindViewerTeardown(container, teardown);
+  const resize = () => { if (disposed) return; const w=canvas.clientWidth,h=canvas.clientHeight; if (w>0&&h>0) { camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h); drawReduced(); } };
+  resizeObs = new ResizeObserver(resize); resizeObs.observe(canvas);
+  reset.onclick = () => { if (!group) return; const box=new THREE.Box3().setFromObject(group), center=box.getCenter(new THREE.Vector3()), size=box.getSize(new THREE.Vector3()); const maxDim=Math.max(size.x,size.y,size.z)||1; const dist=(maxDim/2/Math.tan(camera.fov*Math.PI/360))*2.2; camera.position.copy(center).add(new THREE.Vector3(dist, -dist, dist*0.8)); camera.near=Math.max(dist/10000,0.001); camera.far=dist*100; camera.updateProjectionMatrix(); controls.target.copy(center); controls.update(); };
+
+  try {
+    const response = await fetch(rawUrl);
+    if (!response.ok) throw new Error('HTTP ' + response.status);
+    const limit = 64 * 1024 * 1024;
+    const announcedLength = Number(response.headers.get('Content-Length') || 0);
+    if (announcedLength > limit) throw new Error(t('STEP 文件超过 64 MiB 预览上限。'));
+    let buffer;
+    if (response.body?.getReader) {
+      const reader = response.body.getReader(), chunks = []; let total = 0;
+      try {
+        while (true) {
+          const {done, value} = await reader.read(); if (done) break;
+          total += value.byteLength;
+          if (total > limit) { await reader.cancel(); throw new Error(t('STEP 文件超过 64 MiB 预览上限。')); }
+          chunks.push(value);
+        }
+      } finally { reader.releaseLock(); }
+      buffer = new Uint8Array(total);
+      let offset = 0; for (const chunk of chunks) { buffer.set(chunk, offset); offset += chunk.byteLength; }
+    } else {
+      buffer = await response.arrayBuffer();
+      if (buffer.byteLength > limit) throw new Error(t('STEP 文件超过 64 MiB 预览上限。'));
+    }
+    if (disposed) return;
+    meta.textContent = t('正在解析 STEP 几何…');
+    worker = new Worker('/step-import-worker.js');
+    worker.onmessage = (event) => {
+      if (disposed) return;
+      const data = event.data || {};
+      if (data.error) { showError(t(data.error)); return; }
+      if (!data.result?.success || !Array.isArray(data.result.meshes) || !data.result.meshes.length) { showError(t('文件中没有可显示的 STEP 实体。')); return; }
+      group = new THREE.Group(); let triangles=0; const box = new THREE.Box3();
+      for (const item of data.result.meshes) {
+        const geo = new THREE.BufferGeometry();
+        const positions = item.attributes?.position?.array;
+        const indices = item.index?.array;
+        if (!positions?.length || !indices?.length) continue;
+        geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
+        if (item.attributes?.normal?.array?.length) geo.setAttribute('normal',new THREE.BufferAttribute(item.attributes.normal.array,3)); else geo.computeVertexNormals();
+        geo.setIndex(new THREE.BufferAttribute(indices,1)); triangles += indices.length/3;
+        const baseColor = Array.isArray(item.color) ? new THREE.Color(item.color[0],item.color[1],item.color[2]) : new THREE.Color(0x9dbfe3);
+        const baseMaterial = new THREE.MeshPhongMaterial({color:baseColor,specular:0x202633,shininess:48,side:THREE.DoubleSide});
+        const faceMaterials=[baseMaterial];
+        const faces=Array.isArray(item.brep_faces)?item.brep_faces:[];
+        let cursor=0;
+        for (const face of faces) {
+          const first=Math.max(cursor,Math.min(indices.length/3,Number(face.first)||0));
+          const last=Math.max(first,Math.min(indices.length/3,(Number(face.last)||0)+1));
+          if (first>cursor) geo.addGroup(cursor*3,(first-cursor)*3,0);
+          let materialIndex=0;
+          if (Array.isArray(face.color)) { materialIndex=faceMaterials.length; const m=new THREE.MeshPhongMaterial({color:new THREE.Color(face.color[0],face.color[1],face.color[2]),specular:0x202633,shininess:48,side:THREE.DoubleSide}); faceMaterials.push(m); }
+          geo.addGroup(first*3,(last-first)*3,materialIndex); cursor=last;
+        }
+        if (cursor<indices.length/3) geo.addGroup(cursor*3,indices.length-cursor*3,0);
+        materials.push(...faceMaterials);
+        const mesh=new THREE.Mesh(geo,faceMaterials.length>1?faceMaterials:baseMaterial); mesh.name=item.name||''; group.add(mesh); geo.computeBoundingBox(); box.union(geo.boundingBox);
+      }
+      if (!group.children.length) { showError(t('文件中没有可显示的 STEP 实体。')); return; }
+      const center=box.getCenter(new THREE.Vector3()); group.position.sub(center); scene.add(group);
+      const size=box.getSize(new THREE.Vector3()), maxDim=Math.max(size.x,size.y,size.z)||1;
+      grid.position.z=box.min.z-center.z; grid.scale.setScalar(Math.max(1,maxDim/10));
+      const dist=(maxDim/2/Math.tan(camera.fov*Math.PI/360))*2.2; camera.position.set(dist,-dist,dist*.8); camera.near=Math.max(dist/10000,.001); camera.far=dist*100; camera.updateProjectionMatrix(); controls.target.set(0,0,0); controls.update();
+      meta.textContent=Math.round(triangles).toLocaleString()+' '+t('三角面')+' · '+size.x.toFixed(2)+'×'+size.y.toFixed(2)+'×'+size.z.toFixed(2)+' mm';
+      worker.terminate(); worker=null; resize(); draw();
+    };
+    worker.onerror = (event) => { if (!disposed) showError(event.message || t('STEP 解析器启动失败。')); };
+    const transferable = buffer instanceof Uint8Array ? buffer.buffer : buffer;
+    worker.postMessage({buffer: transferable},[transferable]);
+    resize();
+  } catch (err) { showError(err?.message || String(err)); }
+}
 /* ── ZIP 查看器：只列出目录，不会在浏览器中解压或执行归档内容。 ── */
 async function setupZipPreview(container, filePath, root, source, viewerSpec) {
   container.innerHTML = '';
@@ -7984,7 +8122,7 @@ async function openFileViewMode() {
   // Single URL resources retain their virtual path; the graph carries a bounded
   // format hint for choosing an existing viewer. Requests still use spec.path.
   const format = String(spec.format || '').toLowerCase();
-  const viewerFormats = ['.pdf','.docx','.xlsx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.dxf','.zip','.drawio'];
+  const viewerFormats = ['.pdf','.docx','.xlsx','.csv','.tsv','.md','.markdown','.txt','.html','.xml','.png','.jpg','.jpeg','.gif','.webp','.svg','.bmp','.ico','.stl','.step','.stp','.dxf','.zip','.drawio'];
   const typePath = spec.readOnly === true && spec.source && viewerFormats.includes(format) ? 'resource' + format : spec.path;
   const md = isMarkdownPath(typePath);
   $('file-view-export-pdf').classList.toggle('hidden', !md);
@@ -7992,6 +8130,7 @@ async function openFileViewMode() {
   const isDrawio = /\.drawio$/i.test(effectiveFileTypePath(typePath));
   const isImg = isImagePath(typePath);
   const isStl = isStlPath(typePath);
+  const isStep = isStepPath(typePath);
   const isPdf = isPdfPath(typePath);
   const isDxf = isDxfPath(typePath);
   const isDocx = isDocxPath(typePath);
@@ -7999,10 +8138,10 @@ async function openFileViewMode() {
   const isZip = isZipPath(typePath);
   // 只有二进制/画布查看器需要占满剩余空间并自行处理滚动；Markdown
   // 预览必须保留外层滚动容器，避免被沉浸式查看器样式锁死。
-  $('file-view-preview').classList.toggle('file-view-immersive', isImg || isStl || isPdf || isDxf || isDocx || isXlsx || isDrawio);
+  $('file-view-preview').classList.toggle('file-view-immersive', isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isDrawio);
   // 图片 / STL / PDF / DXF 走独立 raw 查看器，跳过只支持文本、会拒绝二进制的 /api/file
   let data;
-  if (isImg || isStl || isPdf || isDxf || isDocx || isXlsx || isZip) {
+  if (isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isZip) {
     data = { content: '', hash: '', workspaceId: '', wsId: '' };
   } else {
     const query = new URLSearchParams({path:spec.path});
@@ -8020,12 +8159,12 @@ async function openFileViewMode() {
   teardownViewer($('file-view-preview')); // file-view 页签切文件前回收上一个查看器
   var _fvcl = codeLang(typePath);
   setupCodeHighlight($('file-view-editor'), _fvcl);
-  const visualPreview = isZip || isStl || isPdf || isDxf || isDocx || isXlsx || isImg || isDrawio;
+  const visualPreview = isZip || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isImg || isDrawio;
   if ($('file-view-editor').parentNode.classList.contains('code-wrapper')) $('file-view-editor').parentNode.classList.toggle('hidden', visualPreview);
   // 图片 / STL / PDF 只读查看器禁用保存；drawio 可保存
-  $("file-view-save").classList.toggle("hidden", isImg || isStl || isPdf || isDxf || isDocx || isXlsx || isZip);
+  $("file-view-save").classList.toggle("hidden", isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isZip);
   $("file-view-save").disabled = readOnly;
-  $("file-view-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isPdf || isDxf || isDocx || isZip));
+  $("file-view-ro-badge").classList.toggle("hidden", !(readOnly || isImg || isStl || isStep || isPdf || isDxf || isDocx || isZip));
   if (isZip) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
@@ -8034,6 +8173,10 @@ async function openFileViewMode() {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');
     setupStlPreview($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
+  } else if (isStep) {
+    $('file-view-editor').classList.add('hidden');
+    $('file-view-preview').classList.remove('hidden');
+    setupStepPreview($('file-view-preview'), spec.path, spec.root, spec.source || '', spec);
   } else if (isPdf) {
     $('file-view-editor').classList.add('hidden');
     $('file-view-preview').classList.remove('hidden');

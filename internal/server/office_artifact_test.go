@@ -94,6 +94,20 @@ func TestReadFileRawBackupUsesUnderlyingMIME(t *testing.T) {
 	}
 }
 
+func TestReadFileRawStepMIME(t *testing.T) {
+	a := testApp(t)
+	for _, name := range []string{"model.step", "model.STP"} {
+		if err := os.WriteFile(filepath.Join(a.workPath, name), []byte("ISO-10303-21;\n"), 0644); err != nil {
+			t.Fatal(err)
+		}
+		w := request(a, "GET", "/api/file/raw?root=workspace&path="+name, nil)
+		requireStatus(t, w, 200)
+		if got := w.Header().Get("Content-Type"); got != "application/step" {
+			t.Errorf("%s MIME = %q, want application/step", name, got)
+		}
+	}
+}
+
 func TestOfficeXlsxReferencePermissions(t *testing.T) {
 	a := testApp(t)
 	b, err := officeCreateBytes("xlsx", map[string]any{"sheets": []any{map[string]any{"name": "引用", "rows": []any{[]any{"原值"}}}}})

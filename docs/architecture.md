@@ -236,10 +236,16 @@ stateDiagram-v2
 ### 2026-10-08：舒适配色、共享动效与静态加载
 
 - `web/experience.css` 在现有主题与 macos 样式之后加载，统一短交互时长 140/200/260ms、稳定焦点轮廓与选中勾选。主题预览限定于 `data-palette`，普通分段选项保持紧凑。专业主题为中性灰与石板蓝，舒适主题为灰绿；图片、图表、文件预览没有整体滤色，经典主题偏好兼容保留。
-- `aide.ui.motion` 支持 `system/full/reduced`；系统 `prefers-reduced-motion` 优先。`settings-init.js` 仍同步执行以避免主题闪烁，同时应用 `data-motion` 并广播 `aide:motion`。CSS、共享形象播放器、星图和 STL 持续绘制遵循该偏好；后台暂停动画，STL 交互在减少动效时仍可重绘。
+- `aide.ui.motion` 支持 `system/full/reduced`；系统 `prefers-reduced-motion` 优先。`settings-init.js` 仍同步执行以避免主题闪烁，同时应用 `data-motion` 并广播 `aide:motion`。CSS、共享形象播放器、星图、STL 与 STEP 查看器遵循该偏好；后台暂停绘制，减少动效时模型交互仍可立即重绘。
 - `web/experience.js` 为装饰性的短星轨汇聚，动画 940ms，980ms 回收，当前标签页会话首次显示。`startupAnimation=off` 关闭自动播放；外观中可以主动重播。减少动态效果优先关闭；点击、键盘操作或切到后台提前回收。覆盖层 `aria-hidden`、`pointer-events:none`，无输入或初始化等待门禁。
 - 除主题初始化外首页脚本使用 `defer`。Mermaid 与 Three/STLLoader/OrbitControls 按需加载且并发去重：合计 3,977,524 字节（约 3.79MiB）从首页初始脚本移出，并非库被移除。Mermaid 首次绘制不依赖语言切换；失败保留文字提示。代码编辑器输入通过 RAF 合帧，滚动只同步偏移，避免每次滚动重复高亮。
-- `static_assets.go` 只对嵌入的公共 JS/CSS/图片/字体/JSON 资源发出 SHA-256 ETag 与 `public,max-age=0,must-revalidate`，摘要按进程缓存。浏览器仍向服务端校验，资源变化不会沿用旧摘要。HTML、API、工作区文件继续 `no-store`；并未改变鉴权、CSP 或跨工作区权限。
+- `static_assets.go` 只对嵌入的公共 JS/CSS/WASM/图片/字体/JSON 资源发出 SHA-256 ETag 与 `public,max-age=0,must-revalidate`，摘要按进程缓存。浏览器仍向服务端校验，资源变化不会沿用旧摘要。HTML、API、工作区文件继续 `no-store`；并未改变鉴权或跨工作区权限。
+
+### 2026-10-12：STEP/STP 本地三维预览
+
+- `.step/.stp` 文件在工作台和独立文件视图中使用同源、按需加载的 `occt-import-js@0.0.23`（OpenCascade WebAssembly，LGPL-2.1）解析 B-rep 几何。解析运行于专用 Worker，模型数据留在浏览器本机；64 MiB 输入与 300 万三角面为预览上限。解析器和 OCCT 许可证、上游源代码包放在 `web/vendor/occt-import-js/`；无 WebGL、损坏、超限或解析失败时显示说明及原文件下载。
+- STEP 单位经 OpenCascade 解析为毫米；预览保留实体/面颜色，显示尺寸与三角面数，并支持轨道旋转、缩放和归位。Worker 在视图关闭或切换时终止，Three.js 场景和 WebGL 资源随之释放。
+- 主文档 CSP 为同源 `script-src 'self' 'wasm-unsafe-eval'`，允许本机 WebAssembly 模块且不开放 JavaScript `unsafe-eval`。为兼容 OCCT Embind，仅 `/step-import-worker.js` 的隔离 Worker 响应增加 `unsafe-eval`；该 Worker 使用 `connect-src 'self'`，不能继续创建 Worker，也不能加载远端脚本。
 - 所选正文/背景颜色的算术对比值约 12.0–12.87，白色主按钮文字/石板蓝底约 6.47。数值是设计计算，不是全页面可访问性认证，也不能证明保护视力、消除疲劳或保证每个人的颜色识别。实际首屏时长、FPS、持续使用效果需要设备测量。
 - 本次 Safari 观察与构建范围见 `docs/tasks/ui-comfort-motion-20261008.json`。仅隔离候选18189；未发布或替换生产。
 
