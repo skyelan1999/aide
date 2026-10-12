@@ -38,11 +38,16 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "相关Go race通过5.437秒，覆盖持久化、工作区隔离、冲突拒绝、优先扫描和已有覆盖状态。组件保存与重读通过，API模拟；完整工作台/SSH/大库性能 NOT_RUN。",
+      "summary": "Go race与既有索引策略回归通过（历史记录）。2026-10-12 系统 Safari https://localhost:9999 实际操作：打开“设置→知识索引→优先索引路径→浏览目录”，浏览工作区根目录并进入 .cache，选择该目录后显示相对路径；加入列表后显示“工作区 · .cache”，移除并重新加载后仍是“未设置优先路径”，证明该演练未持久化。随后打开“引用”来源目录浏览，根目录列出多个本地引用仓库并成功进入 openai--codex 查看其子目录。源码 quick gates：app.js/locales 英文脚本语法、i18n、docs、git diff --check 均通过。当前验证覆盖本地工作区与本地引用来源目录浏览；引用路径保存、SSH来源、保存后星图增量重扫及大库性能未覆盖。",
       "evidence": [
         ".agent-state/index-policy-preview/settings.png",
         "Docker aide:local go test -buildvcs=false -race ./internal/server -run TestKnowledge(Index|Coverage) -count=1 PASS 5.437s",
-        "quick PASS"
+        "quick PASS",
+        "Safari 9999：设置→知识索引→优先索引路径→浏览目录，根目录列出 .cache、approval-normal-20261008.assets、avatar360_official_docs、avatar360_prop_concept、doc、kunlun_ws、other；进入 .cache 后目录路径字段为 .cache；选择填充、添加显示“工作区 · .cache”；移除并点重新加载恢复“未设置优先路径”",
+        "Safari 9999：索引路径来源改选为“引用”后，目录浏览列出本地引用仓库，进入 openai--codex 后显示 .codex、.github、.idea、.vscode、bazel、codex-cli、codex-rs、docs、patches、scripts、sdk、third_party、tools；只验证目录浏览，未验证路径保存/星图扫描",
+        "node --check internal/server/web/app.js && node --check internal/server/web/locales/en.js && git diff --check PASS",
+        "node scripts/test_i18n.cjs PASS: localization, placeholder integrity, schema ownership, locale fallback and path mapping",
+        "python3 scripts/check_docs.py PASS: 188 Markdown files, 537 local links, JPEG signatures, FR-01..100"
       ]
     },
     "documentation": {

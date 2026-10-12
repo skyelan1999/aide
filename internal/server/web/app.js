@@ -4217,21 +4217,52 @@ function renderExecutionPolicy() {
 function renderKnowledgeIndexPolicy() {
  const host=el('div','execution-policy-form'),status=el('p','section-desc',t('正在加载…')),fields=el('div');
  host.append(el('p','section-desc',t('按当前工作区保存本地索引预算与优先相对路径；不扩大来源权限，不代表全库已索引。')),status,fields);
+ let snapshot=null,busy=false;
  const inputs={};
  for(const [key,label,min,max] of [['fileBudget','文件预算',50,4000],['directoryBudget','目录预算',20,1000],['depthBudget','目录深度',1,12]]){
   const row=el('label','execution-policy-field'),input=el('input');input.type='number';input.min=min;input.max=max;input.step=1;input.setAttribute('aria-label',t(label));row.append(el('span','',t(label)),input);fields.append(row);inputs[key]=input;
  }
  const serviceRow=el('label','execution-policy-field'),service=el('select');service.setAttribute('aria-label',t('代码语言服务'));for(const [value,title] of [['','AST 名称候选'],['go-types','Go 类型绑定（已索引快照）']]){const option=el('option','',t(title));option.value=value;service.append(option);}serviceRow.append(el('span','',t('代码语言服务')),service);fields.append(serviceRow,el('p','section-desc',t('可选 Go 服务只检查已索引包，不运行项目代码或下载依赖；类型错误、接口动态调用仍保留未确认。')));
- const label=el('label','execution-policy-field'),priority=el('textarea');priority.rows=5;priority.spellcheck=false;priority.setAttribute('aria-label',t('优先索引路径'));label.append(el('span','',t('优先索引路径')),priority);fields.append(label);
- fields.append(el('p','section-desc',t('JSON：来源编号映射到相对路径数组，例如 {"workspace":["src","docs"]}。本地增量扫描先寻址优先目标；SSH等远程来源沿用原预算。')));
- const scopeLabel=el('label','execution-policy-field'),scope=el('textarea');scope.rows=5;scope.spellcheck=false;scope.setAttribute('aria-label',t('索引目录范围'));scopeLabel.append(el('span','',t('索引目录范围')),scope);fields.append(scopeLabel);
- fields.append(el('p','section-desc',t('范围 JSON 使用来源编号和相对路径数组；空数组表示整个来源。仅作用于本地索引，不改变 AI 文件访问权限。优先路径须在范围内。')));
+ const indexPathEditor=(labelText,kind)=>{
+  const wrap=el('section','index-path-editor'),heading=el('h3','',t(labelText)),row=el('div','index-path-controls'),source=el('select'),pathInput=el('input'),browse=el('button','quiet',t('浏览目录')),add=el('button','quiet',t('添加路径')),items=el('div','index-path-items'),help=el('p','section-desc');
+  source.setAttribute('aria-label',t('索引来源'));
+  const sources=[{id:'workspace',name:t('工作区')},...(state.sources||[]).map(s=>({id:s.id,name:s.name||s.id}))];
+  for(const item of sources){const o=el('option','',item.name);o.value=item.id;source.append(o);}
+  pathInput.type='text';pathInput.autocomplete='off';pathInput.spellcheck=false;pathInput.placeholder=t('相对路径，例如 src 或 docs/guide.md');pathInput.setAttribute('aria-label',t('索引相对路径'));
+  browse.type='button';add.type='button';
+  row.append(source,pathInput,browse,add);wrap.append(heading,row,items,help);
+  let values={};
+  const render=()=>{
+   items.replaceChildren();
+   const ids=Object.keys(values).sort();
+   if(!ids.some(id=>values[id]?.length)){items.append(el('span','muted',t(kind==='scope'?'未限定范围：按来源默认扫描':'未设置优先路径')));return;}
+   for(const id of ids){for(const value of values[id]||[]){const chip=el('span','index-path-chip'),text=el('span','', (sources.find(s=>s.id===id)?.name||id)+' · '+value),remove=el('button','', '×');remove.type='button';remove.setAttribute('aria-label',t('移除索引路径 {0}',value));remove.onclick=()=>{values[id]=values[id].filter(x=>x!==value);if(!values[id].length)delete values[id];render();};chip.append(text,remove);items.append(chip);}}
+  };
+  const setValues=data=>{values={};for(const [id,paths] of Object.entries(data||{})){if(!sources.some(s=>s.id===id)&&![...source.options].some(o=>o.value===id)){const o=el('option','',id+' · '+t('来源未登记'));o.value=id;source.append(o);}if(Array.isArray(paths)&&paths.length)values[id]=[...new Set(paths)];}render();};
+  const addPath=()=>{
+   const raw=pathInput.value.trim().replace(/\\/g,'/');
+   if(!raw||raw.startsWith('/')||/^[a-z]:/i.test(raw)||raw.split('/').some(x=>x==='..'||x==='.'||!x)){status.textContent=t('请输入来源内的安全相对路径');return;}
+   const normalized=raw.split('/').join('/');
+   values[source.value]=values[source.value]||[];
+   if(!values[source.value].includes(normalized))values[source.value].push(normalized);
+   pathInput.value='';status.textContent='';render();
+  };
+  add.onclick=addPath;pathInput.onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();addPath();}};
+  browse.onclick=()=>{
+   const id=source.value,root=id==='workspace'?'workspace':'';
+   wsState.browse={field:'',dir:'.',root,workspace:root==='workspace',remote:false,source:root?'':id,indexMode:true,indexTarget:pathInput};
+   $('ws-browse-dialog').showModal();action(loadBrowseDir)();
+  };
+  help.textContent=t(kind==='scope'?'范围留空表示按来源默认扫描；添加一个或多个目录后仅索引所选目录及其子目录。':'优先路径在单批预算内先扫描；目录与文件都可添加。优先路径必须在已设置的范围中。');
+  return {element:wrap,setValues,toObject:()=>Object.fromEntries(Object.entries(values).filter(([,paths])=>paths.length).map(([id,paths])=>[id,[...new Set(paths)].sort()]))};
+ };
+ const priorityEditor=indexPathEditor('优先索引路径','priority'),scopeEditor=indexPathEditor('索引目录范围','scope');fields.append(priorityEditor.element,scopeEditor.element);
+ fields.append(el('p','section-desc',t('优先扫描会先检查目标目录，再继续普通目录；索引范围只限制知识索引，不改变文件查看或 AI 文件访问权限。')));
  const actions=el('div','execution-policy-actions'),save=el('button','',t('保存配置')),reload=el('button','',t('重新加载'));actions.append(save,reload);host.append(actions);
- let snapshot=null,busy=false;
- const disable=v=>{busy=v;[...Object.values(inputs),priority,scope,service,save,reload].forEach(e=>e.disabled=v);};
- const fill=data=>{snapshot=data;service.value=data.policy.languageService||'';for(const key in inputs)inputs[key].value=data.policy[key];priority.value=JSON.stringify(data.policy.priorityPaths||{},null,2);scope.value=JSON.stringify(data.policy.scopePaths||{},null,2);status.textContent=data.warning||t('保存后下次星图同步生效。');};
+ const disable=v=>{busy=v;[...Object.values(inputs),...host.querySelectorAll('.index-path-editor select,.index-path-editor input,.index-path-editor button'),service,save,reload].forEach(e=>e.disabled=v);};
+ const fill=data=>{snapshot=data;service.value=data.policy.languageService||'';for(const key in inputs)inputs[key].value=data.policy[key];priorityEditor.setValues(data.policy.priorityPaths);scopeEditor.setValues(data.policy.scopePaths);status.textContent=data.warning||t('保存后下次星图同步生效。');};
  const load=async()=>{disable(true);try{fill(await api('/knowledge-map/index-policy'));}catch(e){status.textContent=e.message;}finally{disable(false);}};
- save.onclick=async()=>{if(busy||!snapshot)return;disable(true);try{const policy={version:1,languageService:service.value,priorityPaths:JSON.parse(priority.value),scopePaths:JSON.parse(scope.value)};for(const key in inputs){if(!inputs[key].checkValidity())throw Error(t('索引预算超出允许范围'));policy[key]=Number(inputs[key].value);}fill(await api('/knowledge-map/index-policy',{method:'PUT',body:JSON.stringify({policy,workspaceId:snapshot.workspaceId,revision:snapshot.revision})}));}catch(e){status.textContent=e.message;}finally{disable(false);}};
+ save.onclick=async()=>{if(busy||!snapshot)return;disable(true);try{const policy={version:1,languageService:service.value,priorityPaths:priorityEditor.toObject(),scopePaths:scopeEditor.toObject()};for(const key in inputs){if(!inputs[key].checkValidity())throw Error(t('索引预算超出允许范围'));policy[key]=Number(inputs[key].value);}fill(await api('/knowledge-map/index-policy',{method:'PUT',body:JSON.stringify({policy,workspaceId:snapshot.workspaceId,revision:snapshot.revision})}));}catch(e){status.textContent=e.message;}finally{disable(false);}};
  reload.onclick=load;load();return host;
 }
 
@@ -6172,10 +6203,11 @@ function openBrowse(field) {
 }
 async function loadBrowseDir() {
   const b = wsState.browse;
-  const files = b.sourceDraft ? await browseSourceDraft(b.dir) : await api('/files?root=' + b.root + '&path=' + encodeURIComponent(b.dir));
-  $('ws-browse-new').hidden=!!b.sourceDraft;
-  $('ws-browse-path').textContent = b.remote ? t('可访问范围：远程账户目录') : b.workspace ? t('可访问范围：远程工作空间') : t('可访问范围：{0}', hostPathOf('.'));
-  $('ws-browse-address').value = b.workspace || b.remote ? b.dir : hostPathOf(b.dir);
+  const files = b.indexMode ? await api('/files?' + (b.source ? 'source='+encodeURIComponent(b.source)+'&' : 'root='+encodeURIComponent(b.root)+'&') + 'path=' + encodeURIComponent(b.dir)) : b.sourceDraft ? await browseSourceDraft(b.dir) : await api('/files?root=' + b.root + '&path=' + encodeURIComponent(b.dir));
+  $('ws-browse-new').hidden=!!b.sourceDraft||!!b.indexMode;
+  const sourceName=b.indexMode&&b.source?(state.sources||[]).find(s=>s.id===b.source)?.name||b.source:'';
+  $('ws-browse-path').textContent = b.indexMode ? t('索引来源：{0}',sourceName||t('工作区')) : b.remote ? t('可访问范围：远程账户目录') : b.workspace ? t('可访问范围：远程工作空间') : t('可访问范围：{0}', hostPathOf('.'));
+  $('ws-browse-address').value = b.indexMode || b.workspace || b.remote ? b.dir : hostPathOf(b.dir);
   $('ws-browse-parent').disabled = !b.remote && b.dir === '.';
   $('ws-browse-status').textContent = '';
   const list = $('ws-browse-list');
@@ -6189,13 +6221,13 @@ async function loadBrowseDir() {
     const rename = el('button', 'quiet ws-browse-rename', t('重命名'));
     rename.type = 'button'; rename.title = t('重命名文件夹');
     rename.onclick = () => renameBrowseDirectory(d);
-    row.append(open); if(!b.sourceDraft)row.append(rename); list.append(row);
+    row.append(open); if(!b.sourceDraft&&!b.indexMode)row.append(rename); list.append(row);
   });
 }
 async function browseAddress() {
   const b = wsState.browse, previous = b.dir;
   try {
-    b.dir = b.remote ? browseRemoteDirFromValue($('ws-browse-address').value) : b.workspace ? browseWorkspaceDirFromValue($('ws-browse-address').value) : browseDirFromValue($('ws-browse-address').value);
+    b.dir = b.indexMode ? browseWorkspaceDirFromValue($('ws-browse-address').value) : b.remote ? browseRemoteDirFromValue($('ws-browse-address').value) : b.workspace ? browseWorkspaceDirFromValue($('ws-browse-address').value) : browseDirFromValue($('ws-browse-address').value);
     await loadBrowseDir();
   } catch (error) {
     b.dir = previous;
@@ -6250,7 +6282,7 @@ function setupBrowseDirectoryActions() {
 }
 setupBrowseDirectoryActions();
 $('ws-browse-parent').onclick = () => { const b = wsState.browse; b.dir = browseParent(b.dir, b.remote); action(loadBrowseDir)(); };
-$('ws-browse-select').onclick = () => { const b = wsState.browse; $(b.field).value = b.remote ? (b.dir === '.' ? '' : b.dir) : b.workspace ? (b.dir === '.' ? '' : b.dir) : b.field === 'ws-key-refpath' ? ('/local/' + b.dir).replace(/\/+/g,'/') : hostPathOf(b.dir); $('ws-browse-dialog').close(); };
+$('ws-browse-select').onclick = () => { const b = wsState.browse; if(b.indexMode){b.indexTarget.value=b.dir==='.'?'':b.dir;$('ws-browse-dialog').close();return;} $(b.field).value = b.remote ? (b.dir === '.' ? '' : b.dir) : b.workspace ? (b.dir === '.' ? '' : b.dir) : b.field === 'ws-key-refpath' ? ('/local/' + b.dir).replace(/\/+/g,'/') : hostPathOf(b.dir); $('ws-browse-dialog').close(); };
 
 /* ── 引用多来源（FR-82~84） ── */
 let editingSourceID = '';

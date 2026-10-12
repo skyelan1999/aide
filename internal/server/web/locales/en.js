@@ -2269,6 +2269,9 @@ Object.assign(window.aideEnglish, {
 
 
 Object.assign(window.aideEnglish, {'代码语言服务':'Code language service','AST 名称候选':'AST name candidates','Go 类型绑定（已索引快照）':'Go type bindings (indexed snapshot)','可选 Go 服务只检查已索引包，不运行项目代码或下载依赖；类型错误、接口动态调用仍保留未确认。':'The optional Go service checks indexed packages only. It does not execute project code or download dependencies; type errors and dynamic interface dispatch remain unconfirmed.'});
+Object.assign(window.aideEnglish, {
+ '索引来源':'Index source','索引相对路径':'Index relative path','相对路径，例如 src 或 docs/guide.md':'Relative path, e.g. src or docs/guide.md','添加路径':'Add path','来源未登记':'source not registered','未限定范围：按来源默认扫描':'No scope limit: use the source defaults','未设置优先路径':'No priority paths set','移除索引路径 {0}':'Remove index path {0}','请输入来源内的安全相对路径':'Enter a safe relative path within the source','范围留空表示按来源默认扫描；添加一个或多个目录后仅索引所选目录及其子目录。':'Leave scopes empty to use each source\'s default. Add one or more directories to index only those directories and their descendants.','优先路径在单批预算内先扫描；目录与文件都可添加。优先路径必须在已设置的范围中。':'Priority paths are scanned first within each batch. Add files or directories; each priority path must be within its configured scope.','优先扫描会先检查目标目录，再继续普通目录；索引范围只限制知识索引，不改变文件查看或 AI 文件访问权限。':'Priority paths are checked before ordinary directories. Index scopes limit knowledge indexing only; they do not change file viewing or AI file access permissions.','索引来源：{0}':'Index source: {0}'
+});
 
 Object.assign(window.aideEnglish, {
  '其他恢复草稿 · {0}':'Other recovery drafts · {0}',
