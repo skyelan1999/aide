@@ -6,7 +6,7 @@
 
 ### 续验更新 · 2026-10-12
 
-用户已处理本机隔离验收证书提示。按用户指示运行 `./start.command`，Docker 实际重建并健康；系统 Safari 在本机 `localhost:9999` 桌面视口通过 Markdown 单行插入栏和 MD 示例表格插入/实时预览检查，未保存验收内容。随后 `python3 scripts/agent-route.py verify full` 对指纹 `cacbf4495fb88d3a68494290f4e122d99341e0adc460b54bf78398cde93b0e5b` 通过 38 项，含全 Go race/vet；完整收据 `.agent-state/verify-20261012T043636627018Z.log`。这些证据不代表全部功能已验收。
+用户已处理本机隔离验收证书提示。按用户指示运行 `./start.command`，Docker 实际重建并健康；系统 Safari 在本机 `localhost:9999` 桌面视口通过 Markdown 单行插入栏和 MD 示例表格插入/实时预览检查，未保存验收内容。随后 `python3 scripts/agent-route.py verify full` 对指纹 `cacbf4495fb88d3a68494290f4e122d99341e0adc460b54bf78398cde93b0e5b` 通过 38 项，含全 Go race/vet；完整收据 `.agent-state/verify-20261012T043636627018Z.log`。这些证据不代表全部功能已验收。阶段性功能、文档与英文界面已提交并推送 `origin/main`：`4c33da7`（67 个文件）。
 
 当前未完成：窄屏工具栏、光标精确位置及其它媒体插入仍需系统 Safari 操作验证；Safari 随后不可操作，未形成窄屏证据。真实向量仍按用户要求暂缓，Windows 无测试环境。系统 Safari 曾显示会话 #43 本段执行达到 6 分钟并暂停，超长任务连续运行仍需独立跟进。整体发布门禁、Release 和未验收工作流继续开放。
 

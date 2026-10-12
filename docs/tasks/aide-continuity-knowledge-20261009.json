@@ -2550,6 +2550,13 @@
       "Real embedding/vector search per user instruction",
       "Windows UI/long-open acceptance; no Windows environment"
     ],
-    "release_status": "not released; broad goal remains in progress"
+    "release_status": "not released; broad goal remains in progress",
+    "push": {
+      "status": "pushed",
+      "branch": "main",
+      "commit": "4c33da7",
+      "remote": "origin/main",
+      "included_files": 67
+    }
   }
 }
