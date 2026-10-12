@@ -237,7 +237,7 @@
           "approval_management_browser",
           "approval_cross_session_real_20261010"
         ],
-        "remaining": "Safari实际9999精确命令的永久记忆匹配/拒绝旁路已验收；全局辅助审批→手动→辅助、普通暂停会话无幽灵reviewing及第二标签策略读回已验收（2026-10-11）。SSH根目录作用域、规则有效期/并发撤销、逆向模式即时同步仍未完整验收。"
+        "remaining": "Safari实际9999精确命令的永久记忆匹配/拒绝旁路已验收；全局辅助审批→手动→辅助、普通暂停会话无幽灵reviewing及第二标签策略读回已验收（2026-10-11）。后端已验证 SSH AgentRoot 隔离、有效期及并发更新/撤销 revision 冲突；剩余真实 SSH 授权工作流、Safari 并发撤销/过期管理交互及逆向模式即时同步验收。"
       }
     },
     {
@@ -2607,6 +2607,20 @@
     "not_verified": [
       "Authenticated system Safari inspection of the rebuilt graph with a real >1,000-file directory; localhost:18217 currently shows the access-token sign-in page.",
       "No deployment or release was performed."
+    ]
+  },
+  "approval_rule_concurrency_20261012": {
+    "status": "backend_race_verified_browser_pending",
+    "change": "Added a concurrent API regression for changing a remembered approval's expiry and revoking it using the same revision. Exactly one mutation may win; a stale write must conflict and cannot recreate or remove the newer permission state.",
+    "verification": [
+      "go test -mod=vendor -race ./internal/server -run 'Test(ApprovalRule|ConcurrentApproval|RememberedApprovalDoesNotCrossSSHRoot)' -count=5 -timeout=120s PASS (15.455s).",
+      "Coverage includes SSH AgentRoot mismatch isolation and revision-guarded expiry/revocation state.",
+      "No authenticated Safari interaction or real SSH approval invocation was performed in this checkpoint."
+    ],
+    "remaining": [
+      "System Safari UI concurrent edit/revoke and expiry interaction",
+      "Real SSH workspace approval confirmation and revocation",
+      "Reverse global approval mode immediate propagation across sessions"
     ]
   }
 }
