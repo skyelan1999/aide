@@ -44,7 +44,7 @@
     },
     "verification": {
       "status": "partial",
-      "summary": "Safari 系统浏览器已确认 26 个独立模板图标紧跟媒体插入按钮、单行呈现；实际点击表格模板后，光标处占位文本被选中并显示插入状态。预览中确认文档仍可渲染。为避免污染现有文档，测试草稿未保存并已在界面忽略。窄屏系统浏览器验收尚未完成；尝试进入 Safari 响应式模式时触发 Aide 锁屏，需解锁后继续。",
+      "summary": "Safari 系统浏览器已确认 26 个独立模板图标紧跟媒体插入按钮、单行呈现；实际点击表格模板后，光标处占位文本被选中并显示插入状态。预览中确认文档仍可渲染。隔离候选 18218 的 Safari 证书提示经用户授权后处理，候选中再次确认模板工具条及表格插入。窄屏编辑器验收仍未完成。",
       "evidence": [
         "2026-10-13: node --check internal/server/web/markdown-media.js && node --check internal/server/web/locales/en.js && node --check internal/server/web/task-outcome.js: PASS。",
         "2026-10-13: node scripts/test_i18n.cjs: PASS (localization, placeholder integrity, schema ownership, locale fallback and path mapping)。",
@@ -68,7 +68,8 @@
         "2026-10-13: latest python3 scripts/agent-route.py verify quick PASS, 40 checks, fingerprint 201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504; receipt .agent-state/verify-20261012T184554802003Z.log. Includes direct 26-icon catalog test, i18n, docs, frontend syntax and continuity regressions.",
         "2026-10-13: Safari now displays the system-generated certificate warning at https://127.0.0.1:9999 for the rebuilt local candidate (source hash cf7ba252be9b87ebd64a9c3c1319ef5ce1ec89f568531bec55241bde41520627). Browser policy requires the user to handle the warning manually; the agent cannot bypass it. No interactive UI acceptance or push.",
         "2026-10-13: python3 scripts/agent-route.py verify quick PASS, 40 checks, fingerprint 16ebcee31ba05aa337f594eb9f6e7ce50ebd3a2aaaab1d0b6d8b2b009fb0f4da, receipt .agent-state/verify-20261012T185516722577Z.log. Includes scripts/markdown-template-icons.test.cjs and docs/i18n checks.",
-        "2026-10-13 Safari 系统浏览器：当前 9999 Aide 实例显示媒体插入按钮后的 26 个同级图标及中文可访问名称/用途；点“插入表格”后编辑器焦点处出现表格模板且“标题 1”占位被选中；预览模式显示渲染正文。自动保存关闭，未点保存；忽略本地未保存草稿后原文件内容恢复。窄屏验收因 Aide 锁屏尚未完成。"
+        "2026-10-13 Safari 系统浏览器：当前 9999 Aide 实例显示媒体插入按钮后的 26 个同级图标及中文可访问名称/用途；点“插入表格”后编辑器焦点处出现表格模板且“标题 1”占位被选中；预览模式显示渲染正文。自动保存关闭，未点保存；忽略本地未保存草稿后原文件内容恢复。窄屏验收因 Aide 锁屏尚未完成。",
+        "2026-10-13 Safari 系统浏览器：按用户授权继续到本机隔离候选 https://localhost:18218 并处理 Safari 本机证书警告。候选工作台中 Markdown 常用模板含 26 个直接图标按钮，名称和用途保留在可访问标签；点击表格按钮后文本区出现完整表格模板，示例单元格处于选中状态。窄屏编辑器实际交互未完成；响应式模式误将焦点切回 localhost:9999 后停止操作，未保存或改动工作区内容。"
       ],
       "full_profile": "FAIL",
       "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504"
@@ -96,5 +97,5 @@
   },
   "release_authorization": "用户此前明确要求阶段性测完后及时 push。",
   "rollback": "",
-  "handoff": "桌面宽度 Safari 系统浏览器已验收 26 个同级模板图标、表格模板插入焦点/占位选择和预览页面；验收草稿已忽略且未保存。commit 635c2f4 已推送到 origin/main。待解锁 Aide 后完成窄屏 Safari 检查。最新静态检查通过；独立全量 race 验收仍有既有失败记录，应在发布整体工作前单独修复/复核。"
+  "handoff": "Safari 系统浏览器在 9999 与隔离候选 18218 均验收 26 个同级模板图标和表格模板插入/占位选择；9999 另确认预览渲染。commit 635c2f4 已推送到 origin/main。窄屏 Markdown 编辑器尚未验收；响应式 Safari 的文件打开步骤切回了 9999，已停止交互。最新静态检查通过；整体全量 race 验收另见主任务账本。"
 }
