@@ -2812,5 +2812,36 @@
     ],
     "browser_security_boundary": "Safari certificate warning remains handoff-required under computer-use policy; no browser security interstitial was bypassed.",
     "release": "not_run"
+  },
+  "progress_checkpoint_20261013_followup3": {
+    "status": "in_progress",
+    "date": "2026-10-13",
+    "completed": [
+      "Knowledge Map local snapshot scan measured near configured ceiling: 3,800 files indexed fully under the 4,000/source cap in 1.385s; a 10,000-entry flat directory stopped at 4,000 and reported partial coverage in 1.739s. Both isolated network-disabled Docker Go race regressions passed."
+    ],
+    "remaining": [
+      "Authenticated Safari inspection of large-directory coverage and star rendering",
+      "Performance for multi-source production budget splits, incremental browser sync, and genuinely large libraries",
+      "Independent user-hosted SSH/FTP/FTPS acceptance and broader remote-provider semantics",
+      "Long-output/compaction browser progress animation and end-to-end continuation acceptance",
+      "Requirement-by-requirement audit and release/rollback gates"
+    ],
+    "deferred_by_user": [
+      "Real embedding/vector model acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reported it tested successfully"
+    ],
+    "environment_boundary": "System Safari localhost:9999 shows Aide app lock on the fresh tab; no existing session, lock state, or unsaved Markdown draft was changed. No browser UI acceptance is claimed for this checkpoint.",
+    "evidence": [
+      "internal/server/knowledge_coverage_test.go",
+      "docs/tasks/knowledge-directory-budget-20261012.json",
+      "docs/reviews/continuity-acceptance-audit-20261010.md"
+    ],
+    "verification": {
+      "status": "pass",
+      "command": "docker run --rm --network none -e AIDE_BUILTIN_PLUGINS= -v <repository>:/src -w /src --entrypoint bash aide:local -c \"gofmt -w internal/server/knowledge_coverage_test.go && go test -mod=vendor -race -count=1 ./internal/server -run ^TestKnowledgeCoverageDirectoryBeyond(LegacyThousandEntryLimit|DynamicEntryBudgetIsExplicit)$ -v\"",
+      "result": "PASS (7.238s). In-budget 3,800-file scan 1.385s; 10,000-entry over-budget scan capped at 4,000 and marked partial in 1.739s. Docker network disabled."
+    }
   }
 }

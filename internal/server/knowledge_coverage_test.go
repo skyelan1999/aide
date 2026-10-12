@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func coverageSource(t *testing.T, graph knowledgeGraph, region string) knowledgeSource {
@@ -74,8 +75,8 @@ func TestKnowledgeCoverageFileBudget(t *testing.T) {
 
 func TestKnowledgeCoverageDirectoryBeyondLegacyThousandEntryLimit(t *testing.T) {
 	a := testApp(t)
-	// Keep this fixture to one active area so its configured budget can exceed
-	// 1,000 files; production divides the global budget among active areas.
+	// Keep this fixture to one active area so it can use most of the 4,000-file
+	// per-source ceiling; production divides the global budget among active areas.
 	a.mu.Lock()
 	reference, sources := a.reference, a.sourceRegistry.Sources
 	a.reference, a.sourceRegistry.Sources = nil, nil
@@ -85,7 +86,7 @@ func TestKnowledgeCoverageDirectoryBeyondLegacyThousandEntryLimit(t *testing.T) 
 		a.reference, a.sourceRegistry.Sources = reference, sources
 		a.mu.Unlock()
 	})
-	const count = 1105
+	const count = 3800
 	flat := filepath.Join(a.workPath, "flat")
 	if err := os.MkdirAll(flat, 0700); err != nil {
 		t.Fatal(err)
@@ -97,7 +98,7 @@ func TestKnowledgeCoverageDirectoryBeyondLegacyThousandEntryLimit(t *testing.T) 
 		}
 	}
 	p := defaultKnowledgeIndexPolicy()
-	p.FileBudget = 3000
+	p.FileBudget = 4000
 	p.DirectoryBudget = 500
 	v := indexPolicyResponse(t, a)
 	requireStatus(t, request(a, "PUT", "/api/knowledge-map/index-policy", map[string]any{
@@ -105,7 +106,9 @@ func TestKnowledgeCoverageDirectoryBeyondLegacyThousandEntryLimit(t *testing.T) 
 	}), 200)
 
 	// A nil scan cache deliberately exercises the bounded direct snapshot path.
+	started := time.Now()
 	graph := a.knowledgeSnapshotModeCached(context.Background(), false, nil)
+	elapsed := time.Since(started)
 	source := coverageSource(t, graph, "workspace")
 	indexedFixtures := 0
 	for _, node := range graph.Nodes {
@@ -119,12 +122,13 @@ func TestKnowledgeCoverageDirectoryBeyondLegacyThousandEntryLimit(t *testing.T) 
 	if len(source.Coverage.Reasons) != 0 {
 		t.Fatalf("complete directory reported truncation: %+v", source.Coverage)
 	}
+	t.Logf("indexed %d flat files in %s (%.0f files/s)", indexedFixtures, elapsed.Round(time.Millisecond), float64(indexedFixtures)/elapsed.Seconds())
 }
 
 func TestKnowledgeCoverageDirectoryBeyondDynamicEntryBudgetIsExplicit(t *testing.T) {
 	a := testApp(t)
 	// Isolate the workspace source so this fixture exercises its full configured
-	// budget instead of the production per-area split.
+	// 4,000-file budget instead of the production per-area split.
 	a.mu.Lock()
 	reference, sources := a.reference, a.sourceRegistry.Sources
 	a.reference, a.sourceRegistry.Sources = nil, nil
@@ -134,7 +138,7 @@ func TestKnowledgeCoverageDirectoryBeyondDynamicEntryBudgetIsExplicit(t *testing
 		a.reference, a.sourceRegistry.Sources = reference, sources
 		a.mu.Unlock()
 	})
-	const count = 1105
+	const count = 10000
 	flat := filepath.Join(a.workPath, "flat")
 	if err := os.MkdirAll(flat, 0700); err != nil {
 		t.Fatal(err)
@@ -146,18 +150,31 @@ func TestKnowledgeCoverageDirectoryBeyondDynamicEntryBudgetIsExplicit(t *testing
 		}
 	}
 	p := defaultKnowledgeIndexPolicy()
-	p.FileBudget = 800
-	p.DirectoryBudget = 200
+	p.FileBudget = 4000
+	p.DirectoryBudget = 1000
 	v := indexPolicyResponse(t, a)
 	requireStatus(t, request(a, "PUT", "/api/knowledge-map/index-policy", map[string]any{
 		"policy": p, "workspaceId": v["workspaceId"], "revision": v["revision"],
 	}), 200)
 
 	// A nil scan cache deliberately exercises the bounded direct snapshot path.
-	source := coverageSource(t, a.knowledgeSnapshotModeCached(context.Background(), false, nil), "workspace")
+	started := time.Now()
+	graph := a.knowledgeSnapshotModeCached(context.Background(), false, nil)
+	elapsed := time.Since(started)
+	source := coverageSource(t, graph, "workspace")
 	if source.State != "partial" || source.Coverage == nil || source.Coverage.Files != p.FileBudget {
 		t.Fatalf("directory over budget was not explicitly bounded: state=%s coverage=%+v", source.State, source.Coverage)
 	}
+	indexedFixtures := 0
+	for _, node := range graph.Nodes {
+		if node.Root == "workspace" && node.Kind == "file" && strings.HasPrefix(node.Path, "flat/") {
+			indexedFixtures++
+		}
+	}
+	if indexedFixtures != p.FileBudget {
+		t.Fatalf("over-budget flat directory indexed %d fixture files, want %d", indexedFixtures, p.FileBudget)
+	}
+	t.Logf("bounded a %d-file flat directory at %d files in %s (%.0f indexed files/s)", count, indexedFixtures, elapsed.Round(time.Millisecond), float64(indexedFixtures)/elapsed.Seconds())
 	found := false
 	for _, reason := range source.Coverage.Reasons {
 		found = found || reason == "directory_entries"

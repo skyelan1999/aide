@@ -1,7 +1,7 @@
 {
   "id": "knowledge-directory-budget-20261012",
   "request": "Remove the fixed 1,000-entry local directory ceiling from Knowledge Map scans so a directory is bounded by its configured source budgets and reports incomplete coverage explicitly.",
-  "status": "stage_verified_browser_pending",
+  "status": "stage_verified_performance_browser_pending",
   "baseline": "a74f1e60cb3d94608bfb9b88a972c8406a408818",
   "change": {
     "files": [
@@ -22,11 +22,15 @@
       "python3 scripts/check_docs.py passed: 188 Markdown files, 537 local links, JPEG signatures, FR-01..100.",
       "python3 scripts/agent-route.py verify quick passed at HEAD a74f1e60cb3d94608bfb9b88a972c8406a408818; fingerprint 8d6561133f189c66c0c9730182c982d25c27ca226017e068246a60a7e5f01773.",
       "Current-source isolated candidate aide-budget-20261012 was restarted; https://127.0.0.1:18217/healthz returned healthy.",
-      "System Safari currently shows the isolated localhost:18217 token-entry page; authenticated product verification remains pending."
+      "System Safari currently shows the isolated localhost:18217 token-entry page; authenticated product verification remains pending.",
+      "Expanded the in-budget flat directory fixture to 3,800 files at the maximum accepted 4,000-file source budget. In isolated network-disabled aide:local Go 1.26 race run, the scan completed in 1.385s (about 2,744 indexed files/s).",
+      "Expanded the over-budget fixture to 10,000 physical files with a 4,000-file cap. It indexed exactly 4,000 fixture files and returned partial coverage with directory_entries in 1.739s (about 2,300 indexed files/s); race run passed. Both tests completed in 7.238s including fixture creation."
     ],
     "required": [
-      "Build and inspect the updated graph in system Safari, including coverage state and a directory exceeding 1,000 files."
+      "Inspect the updated Knowledge Map in authenticated system Safari, including visible partial coverage for a directory exceeding 1,000 files.",
+      "Measure multi-source budget split, browser star rendering, and incremental scan behavior at representative library sizes.",
+      "Test the configured budget and coverage behavior against a user-hosted SSH/source endpoint; container fixtures alone do not establish host interoperability."
     ]
   },
-  "release": "Pushed 22b2bb495b67e97d78cbba0f3f29ad82635ef09b to origin/main; authenticated system Safari product verification and deployment remain pending"
+  "release": "Implementation and isolated local scan-performance checks pushed to origin/main when checkpoint is ready; authenticated Safari, multi-source/UI performance, real user-hosted sources, and deployment remain pending."
 }
