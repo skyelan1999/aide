@@ -43,16 +43,26 @@
       frame=0; if(disposed)return; const text=textarea.value; count=text.split('\n').length;
       wrapper.style.setProperty('--code-gutter-width',enabled('fileLineNumbers')?Math.max(48,String(count).length*9+24)+'px':'0px');
       gutter.hidden=!enabled('fileLineNumbers');
-      highlight=!!(!composing && enabled('fileSyntaxHighlight') && window.hljs && lang && text.length<=500000);
+      // Safari paints native text selection in the textarea while syntax colors
+      // live on a mirrored <pre>. Let the textarea own both text and selection
+      // during a Markdown selection so their highlight geometry cannot diverge.
+      const hasMarkdownSelection=lang==='markdown' && textarea.selectionStart!==textarea.selectionEnd;
+      highlight=!!(!composing && !hasMarkdownSelection && enabled('fileSyntaxHighlight') && window.hljs && lang && text.length<=500000);
       textarea.classList.toggle('code-editable',highlight); pre.hidden=!highlight;
       if(highlight) { try {code.innerHTML=window.hljs.highlight(text+'\n',{language:lang,ignoreIllegals:true}).value;} catch {code.textContent=text+'\n';} }
       layout();
     }
     function schedule(){if(!disposed && !frame)frame=requestAnimationFrame(render);}
+    function selectionChange(){
+      if(document.activeElement!==textarea || lang!=='markdown')return;
+      const shouldHighlight=!!(!composing && textarea.selectionStart===textarea.selectionEnd && enabled('fileSyntaxHighlight') && window.hljs && lang && textarea.value.length<=500000);
+      if(shouldHighlight!==highlight)schedule();
+    }
     function compositionStart(){composing=true;textarea.classList.remove('code-editable');pre.hidden=true;layout();}
     function compositionEnd(){composing=false;schedule();}
     const fonts=document.fonts; fonts?.addEventListener('loadingdone',schedule); fonts?.ready.then(schedule);
     textarea.addEventListener('compositionstart',compositionStart); textarea.addEventListener('compositionend',compositionEnd);
+    document.addEventListener('selectionchange',selectionChange);
     const observer=typeof ResizeObserver==='function'?new ResizeObserver(layout):null; observer?.observe(textarea);
     textarea.addEventListener('input',schedule); textarea.addEventListener('scroll',syncScroll,{passive:true}); window.addEventListener('resize',layout);
     let prefs=[enabled('fileLineNumbers'),enabled('fileSyntaxHighlight')].join(':');
@@ -60,6 +70,7 @@
     mounted.set(textarea,()=>{
       disposed=true; cancelAnimationFrame(frame); fonts?.removeEventListener('loadingdone',schedule);
       textarea.removeEventListener('compositionstart',compositionStart); textarea.removeEventListener('compositionend',compositionEnd);
+      document.removeEventListener('selectionchange',selectionChange);
       observer?.disconnect(); unsub?.(); window.removeEventListener('resize',layout);
       textarea.removeEventListener('input',schedule); textarea.removeEventListener('scroll',syncScroll); textarea.classList.remove('code-editable');
       textarea.wrap=original.wrap; for(const key of ['whiteSpace','wordBreak','overflowWrap','fontVariantLigatures'])textarea.style[key]=original[key];

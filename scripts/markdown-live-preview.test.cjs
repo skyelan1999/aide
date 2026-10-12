@@ -15,6 +15,9 @@ function fixture(panelId = 'file-view') {
   let spec = {path: 'notes.md'}, serial = 0, disposed = 0;
   const context = {
     $: id => id === 'editor' ? editor : id === 'preview' ? host : panel,
+    // Scroll-lock synchronization is tested separately; this fixture exercises
+    // the live-preview debounce and should not depend on page-level bindings.
+    syncSplitScroll: () => {},
     lockScreen, isMarkdownPath: p => /\.(md|markdown)$/i.test(p || ''),
     window: {AideMarkdownOutline: {dispose: () => disposed++}},
     setupMarkdownPreview: (h, text, p, s) => {renders.push({text, p, s}); h.scrollTop = 0;},

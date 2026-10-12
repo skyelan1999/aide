@@ -6,27 +6,36 @@
  function close(){generation++;active?.close();}
  window.LockCluster?.on('effective',value=>{if(value)close();});
  window.addEventListener('pagehide',close);
- function sessionOverview(content,{session,t,selectRun,loadOlder}){
+ function sessionOverview(content,{session,t,selectRun,loadOlder,renderMarkdown}){
   close();content.replaceChildren();
   const runs=session.runs||[],intro=node('div','outcome-intro');
   intro.append(node('h3','',t('当前会话 · 输入与输出')),node('p','muted','#'+(session.number||'?')+' · '+session.title),node('p','muted',t('已展示 {0} / {1} 轮任务',runs.length,session.runsTotal??runs.length)));content.append(intro);
-  const totals={inputs:runs.length,outputs:runs.reduce((n,r)=>n+(r.steps||[]).filter(s=>s.content&&s.name!=='file_application_receipt').length,0),files:runs.reduce((n,r)=>n+(r.files||[]).length,0)};
-  const metrics=node('div','outcome-metrics outcome-io-metrics');for(const [key,label]of [['inputs','输入任务'],['outputs','输出回复'],['files','成果文件记录']]){const cell=node('div');cell.append(node('strong','',totals[key]),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
-  const text=(host,value)=>{const pre=node('pre','outcome-io-text',String(value||''));host.append(pre);};
-  for(let i=runs.length-1;i>=0;i--){const run=runs[i],card=node('article','outcome-io-round');card.append(node('h3','',t('第 {0} 轮', (session.runsTotal??runs.length)-runs.length+i+1)+' · '+(run.created||'')),node('p','muted',t('任务状态')+' · '+run.status));
-   const input=node('section','outcome-io-block');input.append(node('h4','',t('输入了什么')));text(input,run.prompt);
-   for(const a of run.attachments||[])input.append(node('p','outcome-io-resource',(a.directory?t('文件夹'):t('文件'))+' · '+a.path+' · '+(a.source||a.root||'workspace')));
-   for(const steer of run.steers||[])input.append(node('p','',t(steer.queued?'排队补充':'插话补充')+' · '+steer.content));
-   const output=node('section','outcome-io-block');output.append(node('h4','',t('输出了什么')));
-   const replies=(run.steps||[]).filter(s=>s.content&&s.name!=='file_application_receipt');
-   if(!replies.length)output.append(node('p','muted',t('尚无回复记录')));
-   for(const step of replies){const d=node('details','outcome-io-reply');d.append(node('summary','',step.name+' · '+step.status));text(d,step.content);output.append(d);}
-   const results=node('section','outcome-io-block');results.append(node('h4','',t('形成了什么成果')));
-   if(!(run.files||[]).length)results.append(node('p','muted',t('没有成果文件记录；回复和执行结果见输出及详情。')));
-   for(const f of run.files||[])results.append(node('p','outcome-io-resource',f.path+' · '+t(f.applied?'已应用记录':'提案未应用')));
-   results.append(node('p','muted',t('{0} 条工具调用记录',run.toolUses?.length||0)));
-   const detail=node('button','quiet',t('查看此轮详情与证据'));detail.type='button';detail.onclick=()=>selectRun(run.id);results.append(detail);
-   card.append(input,output,results);content.append(card);
+  const replyFor=run=>{const steps=(run.steps||[]).filter(s=>s.content&&s.name!=='file_application_receipt');for(const name of ['chat','agent','review','propose','plan']){const step=[...steps].reverse().find(s=>s.name===name);if(step)return step;}return steps[steps.length-1]||null;};
+  const totals={inputs:runs.length,outputs:runs.filter(r=>replyFor(r)||r.error).length,files:runs.reduce((n,r)=>n+(r.files||[]).length,0)};
+  const metrics=node('div','outcome-metrics outcome-io-metrics');for(const [key,label]of [['inputs','输入轮次'],['outputs','助手回复'],['files','文件成果']]){const cell=node('div');cell.append(node('strong','',totals[key]),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
+  const text=(host,value,markdown=false)=>{const body=node(markdown?'div':'pre',markdown?'outcome-io-answer md-body':'outcome-io-text');const source=String(value||'');if(markdown&&renderMarkdown)body.innerHTML=renderMarkdown(source);else body.textContent=source;host.append(body);};
+  const phaseName=name=>({chat:t('助手回复'),agent:t('自主执行'),review:t('审查'),propose:t('方案'),plan:t('规划')})[name]||name||t('处理阶段');
+  for(let i=runs.length-1;i>=0;i--){const run=runs[i],card=node('article','outcome-io-round outcome-io-turn'),number=(session.runsTotal??runs.length)-runs.length+i+1,final=replyFor(run);
+   const head=node('header','outcome-io-turn-head');head.append(node('strong','',t('第 {0} 轮',number)),node('time','',run.created||''),node('span','outcome-io-status',t(run.status||'未知状态')));card.append(head);
+   const input=node('section','outcome-io-block outcome-io-user');input.append(node('h4','','你'));text(input,run.prompt);
+   for(const a of run.attachments||[])input.append(node('p','outcome-io-resource',(a.directory?t('文件夹'):t('附件'))+' · '+a.path+' · '+(a.source||a.root||'workspace')));
+   for(const steer of run.steers||[])input.append(node('p','outcome-io-resource',t(steer.queued?'排队补充':'插话补充')+' · '+steer.content));
+   const output=node('section','outcome-io-block outcome-io-assistant');output.append(node('h4','','助手'));
+   if(final){output.append(node('p','outcome-io-model',(run.model||'Aide')+' · '+phaseName(final.name)));text(output,final.content,true);}
+   else if(run.error)output.append(node('p','outcome-io-error','⚠ '+run.error));
+   else output.append(node('p','muted',t(run.status==='running'?'正在生成回复…':'没有记录到助手正文')));
+   if(final&&run.error)output.append(node('p','outcome-io-error','⚠ '+run.error));
+   const artifacts=node('section','outcome-io-block outcome-io-artifacts');artifacts.append(node('h4','','文件成果'));
+   if(!(run.files||[]).length)artifacts.append(node('p','muted',t('本轮没有文件变更记录')));
+   for(const f of run.files||[])artifacts.append(node('p','outcome-io-resource',f.path+' · '+t(f.applied?'已记录应用，仍需复核':'变更提案，尚无应用标记')));
+   const processSteps=(run.steps||[]).filter(s=>s!==final&&s.content&&s.name!=='file_application_receipt'),toolUses=run.toolUses||[];
+   if(processSteps.length||toolUses.length){const activity=node('details','outcome-io-activity');activity.append(node('summary','',t('查看运行过程 · {0} 阶段 · {1} 次工具调用',processSteps.length,toolUses.length)));
+    for(const step of processSteps){const d=node('details','outcome-io-process-step');d.append(node('summary','',phaseName(step.name)+' · '+t(step.status||'已记录')));text(d,step.content,true);activity.append(d);}
+    for(const [index,use]of toolUses.entries()){const d=node('details','outcome-io-tool');d.append(node('summary','',t('工具调用 {0}',index+1)+' · '+(use.tool||t('未知工具'))));if(use.childTitle||use.childNumber)d.append(node('p','muted',t('子会话')+' · '+(use.childTitle||('#'+use.childNumber))));if(use.args)d.append(node('h5','','参数'),node('pre','outcome-io-text',use.args));if(use.preview||use.result)d.append(node('h5','','返回'),node('pre','outcome-io-text',use.preview||use.result));activity.append(d);}
+    card.append(activity);
+   }
+   const detail=node('button','quiet outcome-io-evidence-link',t('查看本轮详情、审批与证据'));detail.type='button';detail.onclick=()=>selectRun(run.id);
+   card.append(input,output,artifacts,detail);content.append(card);
   }
   if(session.hasOlder){const more=node('button','quiet',t('加载更早的输入与输出'));more.type='button';more.onclick=loadOlder;content.append(more);}
   content.append(node('p','outcome-boundary',t('这里展示已提交的输入和已记录的输出；未发送草稿不计入。已应用记录不代表当前文件已复核。')));

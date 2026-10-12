@@ -84,7 +84,7 @@ func (a *App) exportConfigBackup(w http.ResponseWriter, r *http.Request) {
 		// 旧安装（无 vault 文件）回退读旧明文文件，仅作迁移过渡。
 		if a.vault != nil {
 			if b, e := os.ReadFile(a.vault.Path()); e == nil && len(b) > 0 {
-				bk.WorkspaceSecrets = b
+				bk.WorkspaceSecrets = excludeCustodyKeysFromEnvelope(b)
 			}
 		}
 		if len(bk.WorkspaceSecrets) == 0 {
@@ -189,7 +189,8 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		// 旧备份若是明文 workspaceSecrets JSON，则仍写回旧文件，下次解锁时迁移入 vault。
 		if len(bk.WorkspaceSecrets) != 0 {
 			if a.vault != nil && IsEnvelope(bk.WorkspaceSecrets) {
-				if n, e := a.vault.ImportEnvelope(bk.WorkspaceSecrets); e == nil && n > 0 {
+				localOnlyEnvelope := excludeCustodyKeysFromEnvelope(bk.WorkspaceSecrets)
+				if n, e := a.vault.ImportEnvelope(localOnlyEnvelope); e == nil && n > 0 {
 					_ = a.vault.Save()
 				}
 			} else {
@@ -225,6 +226,28 @@ func (a *App) importConfigBackup(w http.ResponseWriter, r *http.Request) {
 		"voiceImported": voiceImported, "migratedKey": migratedKey,
 		"exportedAt": bk.ExportedAt, "appVersion": bk.AppVersion,
 	})
+}
+
+// excludeCustodyKeysFromEnvelope prevents app-level config backup/restore from
+// transporting locally held user keys, even as ciphertext. Their only lifecycle is
+// the local Account settings and encrypted vault on this installation.
+func excludeCustodyKeysFromEnvelope(raw []byte) []byte {
+	var env vaultEnvelope
+	if err := json.Unmarshal(raw, &env); err != nil || env.Version == 0 {
+		return raw
+	}
+	entries := env.Entries[:0]
+	for _, entry := range env.Entries {
+		if entry.Type != VaultTypeCustodyKey {
+			entries = append(entries, entry)
+		}
+	}
+	env.Entries = entries
+	out, err := json.Marshal(env)
+	if err != nil {
+		return raw
+	}
+	return out
 }
 
 // migrateSettings 跨版本设置迁移钩子：按备份导出时的 settingsVersion 逐段处理语义变化

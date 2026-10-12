@@ -5,5 +5,21 @@
   "version": "1.1.0",
   "author": "aide",
   "main": "index.js",
-  "enabled": false
+  "enabled": false,
+  "settingsSchema":   {
+    "type": "object",
+    "title": "电脑控制参数",
+    "properties": {
+      "allowedApps": {
+        "type": "array",
+        "title": "允许的应用",
+        "items": {
+          "type": "string"
+        },
+        "default": [],
+        "description": "每行填写一个应用名称。点击、输入与按键仍须逐次确认。"
+      }
+    },
+    "additionalProperties": true
+  }
 }

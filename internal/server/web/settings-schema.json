@@ -284,18 +284,6 @@
       ]
     },
     {
-      "id": "capabilities",
-      "title": "连接与能力",
-      "description": "分别观察配置、工具登记和具体检查；检查结果有时间与范围，不代替完整验收。",
-      "controls": [
-        {
-          "id": "capabilities",
-          "type": "capabilities",
-          "label": "连接与插件能力仪表"
-        }
-      ]
-    },
-    {
       "id": "persona",
       "title": "aide 性格",
       "description": "aide 性格系统，仅作用于基本聊天。可自定义性格提示词，系统会随使用自动精简演化以节约 token。",
@@ -371,16 +359,34 @@
     {
       "id": "accessibility",
       "title": "无障碍",
-      "controls": [
+      "children": [
         {
-          "id": "accessibilityAutoRead",
-          "type": "accessibility-read",
-          "label": "输出完成后自动朗读"
+          "id": "accessibility-options",
+          "title": "无障碍设置",
+          "controls": [
+            {
+              "id": "accessibilityAutoRead",
+              "type": "accessibility-read",
+              "label": "输出完成后自动朗读"
+            },
+            {
+              "id": "debug-access",
+              "type": "debug-access",
+              "label": "允许外部 AI 接入调试"
+            }
+          ]
         },
         {
-          "id": "debug-access",
-          "type": "debug-access",
-          "label": "允许外部 AI 接入调试"
+          "id": "interface-tests",
+          "title": "接口测试",
+          "description": "分别观察配置、工具登记和具体检查；检查结果有时间与范围，不代替完整验收。",
+          "controls": [
+            {
+              "id": "capabilities",
+              "type": "capabilities",
+              "label": "连接与插件能力仪表"
+            }
+          ]
         }
       ]
     },

@@ -1,10 +1,10 @@
-# 连续工作与知识能力：验收审计 · 2026-10-10
+# 连续工作与知识能力：验收审计 · 2026-10-12
 
 ## 当前交接索引：按总目标核对源码
 
-本节依据 `a61ee25` 工作树静态检查补充；以下源码入口存在且接入，不等于完整行为已验收。其后带提交号的章节是历史观察，不能将其中“正在运行”“待开发”作为当前状态。最近一批修改未部署，运行验收由Luna接手，真实向量验收暂缓，Windows缺设备。当前完整发布门禁尚无覆盖最新源码的证据。
+本节于 2026-10-12 按当前工作树及其未提交差异复核；以下源码入口存在且接入，不等于完整行为已验收。用户已将验收从 Luna 改为由 Codex 继续；旧 Luna 交接仅作历史记录。真实向量验收按用户要求暂缓，Windows 暂无环境。此前 18214 证书与 Docker 不可用是用户处理及后续启动前的历史阻塞，当前证据见 [续验记录](continuity-acceptance-resumed-20261011.md#续验更新--2026-10-12)。
 
-| 总目标 | 当前源码入口 | Luna须取得的完成证据 |
+| 总目标 | 当前源码入口 | 仍需取得的完成证据 |
 | --- | --- | --- |
 | 文件、光标、滚动恢复 | [continuity.js](../../internal/server/web/continuity.js)、[file-autosave.js](../../internal/server/web/file-autosave.js) | 重开、跨标签分支、同名不同来源、配额/崩溃、陈旧回调隔离；恢复后的正文与位置读回 |
 | 会话草稿、附件、目录现场 | [app.js](../../internal/server/web/app.js)、[continuity.js](../../internal/server/web/continuity.js) | 关闭所有标签后恢复，附件身份与来源正确；恢复不发送；工作区切换互不覆盖 |
@@ -23,9 +23,16 @@
 | 代码关系可信度、可选语言服务 | [knowledge_code.go](../../internal/server/knowledge_code.go)、[knowledge_go_types.go](../../internal/server/knowledge_go_types.go) | AST候选、未解析与类型绑定明确区别；可选服务当前仅go-types，失败保留候选，不是通用LSP或运行调用证明 |
 | 节点间证据路径 | [knowledge_paths.go](../../internal/server/knowledge_paths.go)、[starmap.js](../../internal/server/web/starmap.js) | 同快照/模式/工作区、方向与反向、结构边规则、深度/节点限制、来源跳转；未找到不等于无真实联系 |
 | 知识变化时间线 | [knowledge_timeline.go](../../internal/server/knowledge_timeline.go)、[starmap-timeline.js](../../internal/server/web/starmap-timeline.js) | 两个历史索引与覆盖证据、容量淘汰后选择/对比一致、存储失败；索引移除不等于文件删除，不推断语义演变 |
-| 配色、动效、文档与发布 | [Luna交接](luna-acceptance-handoff-20261010.md)、[任务账本](../tasks/aide-continuity-knowledge-20261009.json) | 系统Safari明暗主题/窄屏/键盘/性能，最新SHA full及逐项证据，release-check和部署/回滚/资产摘要 |
+| 配色、动效、文档与发布 | [任务账本](../tasks/aide-continuity-knowledge-20261009.json)、[Codex续验记录](continuity-acceptance-resumed-20261011.md) | 系统 Safari 明暗主题/窄屏/键盘/性能、最新 SHA full 及逐项证据、release-check 和部署/回滚/资产摘要 |
 
 **明确边界**：跨设备恢复是显式JSON导入且需匹配工作区身份，未实现任意路径自动映射；单文档ZIP不是服务数据卷灾备；Go类型绑定不是所有语言的语言服务器；真实向量检索和Windows目前未验收。源码交付不能将这些项勾成全目标完成。
+
+### 当前复核检查点 · 2026-10-12
+
+- 用户指南、架构、Markdown、插件协议、密钥安全、星图与工业长对话说明已按当前源码候选更新；英文目录覆盖运行时翻译调用、HTML 国际化属性和插件 `settingsSchema` 标签。`node scripts/test_i18n.cjs`、`python3 scripts/check_docs.py`（187 Markdown / 536 本地链接）及 `git diff --check` 通过。该结果只证明文档/静态国际化检查。
+- 当前工作树已于 2026-10-12 通过完整门禁（38 项，含 Go race/vet），源码指纹 `cacbf4495fb88d3a68494290f4e122d99341e0adc460b54bf78398cde93b0e5b`；系统 Safari 在重建后的 localhost:9999 桌面页完成 Markdown 单行工具栏及表格插入/实时预览检查。证据和边界见续验记录。
+- Safari 当前候选未取得窄屏、精确 caret 和媒体插入证据；长输出折叠行为也不等同于长会话连续运行验收。工作树仍有多个未提交功能批次，基线提交 `f5c298d` 与 `origin/main` 一致。推送和 Release 状态另行记录。
+- 用户切换由 Codex 继续验收。真实向量保持暂缓；Windows 保持 NOT_RUN。静态检查、full 回归和局部 Safari 交互均不等于所有工作流完成。
 
 ## 开发交接检查点（2026-10-10）
 

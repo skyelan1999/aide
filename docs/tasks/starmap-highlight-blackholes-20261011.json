@@ -1,0 +1,80 @@
+{
+  "id": "starmap-highlight-blackholes-20261011",
+  "request": "星图添加基于有效关联数的高亮星，并根据真实高密度关联区域显示大质量黑洞视觉对象；保持物理含义透明并验证实际 Safari 渲染。",
+  "baseline": "c4830423e4929b05c3e929b308d83400928a8fe2",
+  "initial_status": "M docs/plugins/computer-browser-control.md\n M scripts/build-native-computer-bridge.sh\n?? docs/tasks/aide-computer-bridge-icon-20261011.json\n?? scripts/render-computer-bridge-icon.swift",
+  "acceptance": [
+    "高亮星由真实有效关联数确定，阈值随当前图谱分布自适应，不创建伪节点。",
+    "黑洞仅标记真实分组中的高关系密度区域，视觉大小同时响应区域规模与密度。",
+    "降低动态效果、明暗主题和现有搜索/选择/连线渲染保持可用；图例说明这是图谱结构隐喻。",
+    "运行专项逻辑验证并通过系统浏览器检查真实星图渲染。"
+  ],
+  "scope": [
+    "internal/server/web/starmap-gravity.js",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "docs/architecture/knowledge-map.md",
+    "scripts/starmap-gravity.test.cjs",
+    "docs/tasks/starmap-highlight-blackholes-20261011.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Add real-link-driven bright stars and high-density black-hole visualizations to the Knowledge Map.",
+      "evidence": [
+        "The existing map already derives unique-neighbor degree from non-structural indexed edges; no physical mass dataset exists."
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Adaptive degree threshold for bright stars; density candidates from real cosmos groups and unique effective relations, rendered as a bounded visual metaphor.",
+      "evidence": [
+        "Highlights: p97 degree cutoff with minimum degree 8, ties retained.",
+        "Black-hole candidates: groups with at least 12 members and 12 unique internal effective edges, average degree >=2.4, then p80 density cutoff, maximum 3."
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented graph-derived highlight stars and accretion-ring overlays; added a legend and documented that black-hole appearance is not physical mass.",
+      "evidence": [
+        "Added internal/server/web/starmap-gravity.js and integrated it into starmap rendering.",
+        "Highlight color, halo, and flare scale from effective degree; black-hole radius scales from group size and density.",
+        "Reduced-motion setting suppresses black-hole spin."
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused logic checks and local service startup passed; Safari visual/interaction acceptance is pending because the Mac is locked.",
+      "evidence": [
+        "node --check internal/server/web/starmap-gravity.js passed.",
+        "node --check internal/server/web/starmap.js passed.",
+        "node scripts/starmap-gravity.test.cjs passed.",
+        "git diff --check passed.",
+        "bash start.command built with go vet and application build, then started the local service; container reported healthy at 127.0.0.1:9999.",
+        "System-browser check not completed: CUA reports the Mac is locked and cannot unlock automatically."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented the degree and density rules and their graph-metaphor limits in the Knowledge Map architecture guide.",
+      "evidence": [
+        "Updated docs/architecture/knowledge-map.md."
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "No generated artifacts or temporary test fixtures added; unrelated Computer Bridge changes remain untouched.",
+      "evidence": [
+        "Task-scoped diff check passed; existing unrelated files are preserved."
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Push/release was not requested for this feature.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "Pending system-browser visual and interaction acceptance. After the Mac is unlocked, inspect real graph high-degree highlights, density overlays, motion toggle, and selection/search continuity. Do not claim release."
+}

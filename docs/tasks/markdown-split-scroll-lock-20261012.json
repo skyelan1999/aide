@@ -1,0 +1,81 @@
+{
+  "id": "markdown-split-scroll-lock-20261012",
+  "request": "md在两栏编辑模式下可以添加按钮锁定滚动，这样在浏览文档时和写文档时可以一块看",
+  "baseline": "c4830423e4929b05c3e929b308d83400928a8fe2",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/knowledge-map.md\n M docs/plugin-protocol.md\n M docs/plugins/computer-browser-control.md\n M docs/security/secret-vault.md\n M docs/system-overview.md\n M docs/user-guide.md\n M internal/server/config_backup.go\n M internal/server/plugins.go\n M internal/server/secret_vault.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/sanctum.css\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/web/style.css\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M plugins/browser-control/manifest.json\n M plugins/comm-serial/manifest.json\n M plugins/comm-ssh/manifest.json\n M plugins/comm-tcp/manifest.json\n M plugins/comm-udp/manifest.json\n M plugins/computer-control/manifest.json\n M plugins/current-time/manifest.json\n M plugins/environment-guide/manifest.json\n M plugins/feedback/manifest.json\n M plugins/goal/manifest.json\n M plugins/lunar-calendar/manifest.json\n M plugins/markdown-history/manifest.json\n M plugins/office/manifest.json\n M plugins/plan/manifest.json\n M plugins/propeller-aero/manifest.json\n M plugins/skill/manifest.json\n M plugins/sqlite/manifest.json\n M plugins/subagent/manifest.json\n M plugins/terminal/manifest.json\n M plugins/todo/manifest.json\n M plugins/workflow/manifest.json\n M scripts/build-native-computer-bridge.sh\n?? docs/tasks/aide-computer-bridge-icon-20261011.json\n?? docs/tasks/context-compaction-observability-20261012.json\n?? docs/tasks/local-secret-custody-keys-20261012.json\n?? docs/tasks/plugin-settings-rendered-schema-20261012.json\n?? docs/tasks/starmap-highlight-blackholes-20261011.json\n?? docs/tasks/workbench-long-output-performance-20261012.json\n?? internal/server/custody_keys.go\n?? internal/server/custody_keys_test.go\n?? internal/server/web/starmap-gravity.js\n?? scripts/render-computer-bridge-icon.swift\n?? scripts/starmap-gravity.test.cjs",
+  "acceptance": [
+    "Markdown 两栏编辑模式的编辑区和预览区提供可切换滚动锁定按钮，单栏预览或纯文本模式隐藏按钮。",
+    "锁定后双向按滚动进度同步；点击锁定时沿用最近手动浏览的一侧作为对齐基准。",
+    "两栏预览因编辑内容重排后，在锁定状态下重新对齐。",
+    "在系统 Safari 的当前代码候选中实际检查按钮可见性和双向滚动交互。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "docs/tasks/markdown-split-scroll-lock-20261012.json",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/user-guide.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户希望在 Markdown 两栏编辑中锁定滚动，让编辑和预览浏览位置同步。",
+      "evidence": [
+        "用户本轮请求。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "新增每个编辑视图独立的可切换锁定；按滚动比例双向同步，锁定瞬间从最近手动滚动的一侧对齐。",
+      "evidence": [
+        "app.js 的 splitScrollLock、syncSplitScroll 与两个编辑器绑定。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "模态编辑器和独立文件视图均加入按钮；按钮只在 Markdown 两栏编辑时显示，提供 aria-pressed、锁定态样式和英文标签；预览重绘后锁定时重新对齐。",
+      "evidence": [
+        "internal/server/web/app.js、index.html、style.css、locales/en.js。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "静态检查和系统 Safari 实机交互验收通过。Safari 打开由当前工作树构建并通过 start.command 启动的本机候选服务，确认两栏编辑模式显示锁定按钮、默认关闭；开启后编辑区与预览区双向同步，关闭后两侧独立滚动。",
+      "evidence": [
+        "node --check internal/server/web/app.js：通过。",
+        "node --check internal/server/web/locales/en.js：通过。",
+        "git diff --check（任务文件）：通过。",
+        "python3 -m json.tool 任务记录：通过。",
+        "Docker Desktop 服务端可用（Docker Engine 29.8.0）；授权运行 bash start.command 后，候选镜像构建、Go vet、Go build 和 aide 服务重启成功。",
+        "Safari 本机候选 localhost:9999：Markdown 两栏编辑器显示“↕ 锁定滚动”，初始 Value off；点击后变为“↕ 解锁滚动”，Value on。",
+        "Safari 手动向下滚动编辑区后，预览同步至对应内容区域；反向滚动预览区后，编辑器同步至文档末尾附近。",
+        "Safari 点击解锁后只滚动预览区，编辑区保持在文档末尾；按钮回到“↕ 锁定滚动”，Value off。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "用户指南和 Markdown 编辑架构文档已说明双栏滚动锁的同步规则、适用视图与独立滚动行为。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md",
+        "docs/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "只编辑本需求涉及的前端文件和本任务账本，其他工作树改动保留。",
+      "evidence": [
+        "git diff --check 通过。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户没有要求提交、推送或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "仅回退本任务在 internal/server/web/app.js、index.html、style.css、locales/en.js 和本任务账本中的变更；不要整体恢复工作树。",
+  "handoff": "实现和验收完成。系统 Safari 已在当前工作树启动的本机候选中验证按钮状态、双向同步与解锁后的独立滚动。未提交、未推送。"
+}

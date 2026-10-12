@@ -1,0 +1,73 @@
+{
+  "id": "plugin-settings-rendered-schema-20261012",
+  "request": "把插件设置中的 JSON 改成文本/渲染选项，根据 JSON 格式自动渲染参数，每个插件有灵活的参数模板",
+  "baseline": "c4830423e4929b05c3e929b308d83400928a8fe2",
+  "initial_status": "Task began with pre-existing edits in docs/architecture.md, docs/architecture/knowledge-map.md, docs/plugins/computer-browser-control.md, docs/security/secret-vault.md, docs/system-overview.md, docs/user-guide.md; internal/server/config_backup.go, internal/server/secret_vault.go, internal/server/server.go, internal/server/web/app.js, internal/server/web/index.html, internal/server/web/locales/en.js, internal/server/web/macos.css, internal/server/web/sanctum.css, internal/server/web/settings-schema.json, internal/server/web/starmap.html, internal/server/web/starmap.js, internal/server/web/style.css, internal/server/web/task-outcome.js, internal/server/workflow.go; scripts/build-native-computer-bridge.sh; and untracked docs/tasks/aide-computer-bridge-icon-20261011.json, docs/tasks/context-compaction-observability-20261012.json, docs/tasks/local-secret-custody-keys-20261012.json, docs/tasks/starmap-highlight-blackholes-20261011.json, internal/server/custody_keys.go, internal/server/custody_keys_test.go, internal/server/web/starmap-gravity.js, scripts/render-computer-bridge-icon.swift, scripts/starmap-gravity.test.cjs.",
+  "acceptance": [
+    "插件设置提供渲染与 JSON 文本两种编辑方式，切换不丢字段，保存沿用现有接口和 32 KiB 限制。",
+    "内置插件和用户插件均可提供 manifest 参数模板；支持字符串、数值、布尔、枚举、列表、对象、默认值、必填及数值范围。",
+    "未声明字段在扩展参数区保留且可编辑；插件设置仍是非敏感数据，不授予额外权限。",
+    "在系统 Safari 中打开实际候选实例，验证插件模板渲染、文本/渲染切换及保存后读回。"
+  ],
+  "scope": [
+    "internal/server/plugins.go：加载并向插件列表提供参数模板。",
+    "internal/server/web/index.html、app.js、style.css、locales/en.js：插件设置双视图及 schema 控件。",
+    "plugins/*/manifest.json：随包内置插件模板。",
+    "docs/plugin-protocol.md：manifest schema 与编辑器行为。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按请求实现每插件可扩展参数模板及 JSON 文本/渲染切换；设置继续保存为插件非敏感 JSON。",
+      "evidence": [
+        "用户原话见 request；验证目标记录在 acceptance。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "插件 manifest 承载 settingsSchema；GET /api/plugins 增加模板元数据；前端按 JSON Schema 子集渲染并保留未声明扩展字段，PUT 接口与权限边界不变。",
+      "evidence": [
+        "docs/plugin-protocol.md 第 4 节及生命周期 API 更新。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "加入渲染/文本双视图；表单按 manifest schema 及现有 JSON 字段类型自动生成控件；未知值可留在扩展参数 JSON 区。21 个内置插件均有模板，已有三类配置具备具体字段。",
+      "evidence": [
+        "internal/server/web/app.js 与 index.html 实现编辑器；plugins/*/manifest.json 各含 settingsSchema。"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "静态检查通过；Go 编译/接口运行和系统 Safari 候选实例交互未验收。当前环境没有 go 命令，Docker socket 访问被拒；Safari localhost:9999 仍是旧运行实例，不能证明本次代码。",
+      "evidence": [
+        "node --check internal/server/web/app.js：exit 0。",
+        "Python JSON 解析和 32 KiB 限制检查：21 个 manifest 全部通过。",
+        "git diff --check（本任务涉及文件）：通过。",
+        "系统 Safari 当前仍连 localhost:9999 的已运行实例；候选未加载，浏览器验收 NOT_RUN。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "插件协议文档说明双视图、settingsSchema 子集、扩展字段与边界。",
+      "evidence": [
+        "docs/plugin-protocol.md 已更新。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅修改任务范围中的前端、插件服务、manifest 与协议文档；未触碰已有无关改动，未提交或推送。",
+      "evidence": [
+        "git diff --check 通过；目标文件 diff 已审阅。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户只请求实现功能，未请求 push 或 release；当前代码未部署。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "源码回退仅回退本任务列出的代码、插件 manifest 和协议文档文件；不要整体恢复工作树，以免覆盖并行的已有改动。",
+  "handoff": "实现已完成。剩余：在有 Go/Docker 的候选环境跑接口/构建检查，启动隔离候选并用系统 Safari 验证设置编辑与读回。9999 生产/当前实例尚未替换；未提交、未推送、未发布。"
+}

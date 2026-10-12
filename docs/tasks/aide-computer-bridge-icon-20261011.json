@@ -1,0 +1,66 @@
+{
+  "id": "aide-computer-bridge-icon-20261011",
+  "request": "为 Aide Computer Bridge 原生 macOS 应用添加 Aide 图标，构建时自动生成并写入 app bundle，并验证图标资源。",
+  "baseline": "c4830423e4929b05c3e929b308d83400928a8fe2",
+  "initial_status": "Clean main worktree at c4830423e4929b05c3e929b308d83400928a8fe2; task record was the only new file.",
+  "acceptance": [
+    "Native Aide Computer Bridge .app contains a valid AppIcon.icns and declares it in Info.plist.",
+    "Generated icon follows the existing Aide favicon blue square and white lowercase a mark.",
+    "Bridge bundle identifier and executable identity remain unchanged."
+  ],
+  "scope": [
+    "scripts/build-native-computer-bridge.sh",
+    "scripts/render-computer-bridge-icon.swift",
+    "docs/plugins/computer-browser-control.md",
+    "docs/tasks/aide-computer-bridge-icon-20261011.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requested an Aide icon for the native Computer Bridge; scope is the macOS app bundle icon only.",
+      "evidence": ["Existing favicon at internal/server/web/favicon.svg is the approved visual source."]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Generate a standard .icns resource from the existing blue-and-white Aide mark during bridge app packaging and declare CFBundleIconFile.",
+      "evidence": ["Keep local.aide.computer-bridge identifier, executable, configuration path, and OS permission behavior unchanged."]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added a CoreGraphics/CoreText icon renderer and wired build-native-computer-bridge.sh to generate a multi-resolution ICNS app resource and declare it in the bundle plist.",
+      "evidence": [
+        "scripts/render-computer-bridge-icon.swift creates standard 16–1024 px PNG variants in the Aide favicon style.",
+        "scripts/build-native-computer-bridge.sh embeds the ICNS resource and retains local.aide.computer-bridge."
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Built a temporary app bundle and installed the same build to the configured user Application Support location. Validated icon round-trip, bundle metadata, and code signature.",
+      "evidence": [
+        "bash -n scripts/build-native-computer-bridge.sh: PASS.",
+        "AIDE_NATIVE_BRIDGE_APP=/private/tmp/aide-computer-bridge-icon-test.app bash scripts/build-native-computer-bridge.sh: PASS.",
+        "iconutil decoded the embedded ICNS back into PNG sizes; visual inspection showed the blue rounded square and white Aide a.",
+        "Installed bundle Info.plist reports CFBundleIconFile AppIcon and CFBundleIdentifier local.aide.computer-bridge; codesign --verify --deep --strict: PASS.",
+        "git diff --check: PASS. No full product test suite was needed for this resource-only packaging change."
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated the computer/browser control guide with icon generation, bundle declaration, and permission-identity behavior.",
+      "evidence": ["docs/plugins/computer-browser-control.md describes the packaged Aide icon and unchanged bundle identity."]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Build trap removed generated iconset and renderer scratch files; only scoped source, docs, and task record are uncommitted.",
+      "evidence": ["git status --short lists only the two scoped source/doc edits, renderer source, and task record."]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "This request installs the updated local bridge app but did not request a Git push or product release.",
+      "evidence": ["Installed app bundle signature and icon metadata were verified locally."]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Rebuild from the preceding source revision with scripts/build-native-computer-bridge.sh; the bundle identifier was preserved. No configuration or permission data was changed.",
+  "handoff": "The on-disk bridge app has the new icon. If its Dock icon is stale while the app is already running, quit and reopen Aide Computer Bridge to refresh the displayed icon."
+}

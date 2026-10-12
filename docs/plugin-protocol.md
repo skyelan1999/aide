@@ -2,7 +2,7 @@
 
 | 项 | 值 |
 | --- | --- |
-| 协议版本 | v1.2（2026-10-06；新增 Python 工具调用与 ZIP 插件包导入） |
+| 协议版本 | v1.2（2026-10-06；新增 Python 工具调用与 ZIP 插件包导入；2026-10-12 补充不改变运行时能力边界的设置 schema 表单视图） |
 | 形态来源 | DeepSeek Harness（DSH）/ Cordis 插件形态的**兼容子集** |
 | 宿主 | aide 容器内 Node.js 宿主（`internal/server/plugin_host.js`，随 Go 二进制 embed） |
 | 存储 | 工程目录 `plugins/<id>/`（manifest.json + index.js + 可选资源） |
@@ -72,7 +72,7 @@ module.exports = () => ({
 
 Python 与插件运行在同一 aide 容器用户下。插件仍是受信代码，Python 可以读写该用户能访问的文件；`-I` 只隔离 Python 的用户环境和启动选项，不是权限沙箱。需要修改工作区文件时，插件应返回 `api.proposeWrite(...)`，由 aide 工作流进入已有审批流程。aide 不会在导入插件时运行 pip 或联网安装依赖。
 
-v1.2 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通过加载），不执行副作用；`tool/slot` 声明会被收集进插件 surface，供界面展示；带 handler 与参数声明的工具可进入模型工具循环。除上表 API 外，插件访问任何其他 ctx 属性将得到 `undefined`（不注入、不伪造）。设置由插件面板的每插件「设置」页编辑，作为 JSON 对象保存，单个对象上限 32 KiB；非 daemon 插件下次加载或工具调用时读取新值，daemon 插件保存后由宿主重启以应用新值。设置保存在 `plugins/registry.json`，是工作区明文数据，不能填写 API Key、密码或私钥。
+v1.2 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通过加载），不执行副作用；`tool/slot` 声明会被收集进插件 surface，供界面展示；带 handler 与参数声明的工具可进入模型工具循环。除上表 API 外，插件访问任何其他 ctx 属性将得到 `undefined`（不注入、不伪造）。设置由插件面板的每插件「设置」页编辑，作为 JSON 对象保存，单个对象上限 32 KiB；支持「渲染」与「文本」两种编辑方式：渲染方式读取 manifest 的 `settingsSchema` 生成参数控件，文本方式允许完整 JSON 编辑；未在 schema 中声明的字段保留在扩展参数区。非 daemon 插件下次加载或工具调用时读取新值，daemon 插件保存后由宿主重启以应用新值。设置保存在 `plugins/registry.json`，是工作区明文数据，不能填写 API Key、密码或私钥。
 
 ## 4. 清单（manifest）
 
@@ -87,6 +87,16 @@ v1.2 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通�
   "author": "",
   "main": "index.js",
   "enabled": true,
+  "settingsSchema": {
+    "type": "object",
+    "title": "参数模板",
+    "properties": {
+      "enabled": {"type": "boolean", "title": "启用选项", "default": true},
+      "timeoutSec": {"type": "integer", "title": "超时（秒）", "minimum": 1, "maximum": 600, "default": 30},
+      "allowedHosts": {"type": "array", "title": "允许的主机", "items": {"type": "string"}, "default": []}
+    },
+    "additionalProperties": true
+  },
   "installedAt": "2026-09-21T00:00:00Z"
 }
 ```
@@ -94,6 +104,7 @@ v1.2 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通�
 - `id`：`^[A-Za-z0-9_-]{1,64}$`，唯一；上传时可指定，缺省自动生成 `p-<随机>`。
 - `enabled` 是运行时状态，存储于注册表 `plugins/registry.json`，通过 `PUT /api/plugins/{id}` 切换（使用/停用）。
 - `settings`（可选）是该插件的非敏感 JSON 对象，由 `PUT /api/plugins/{id}/settings` 更新；不用于存储秘密或授予额外能力。
+- `settingsSchema`（可选）是渲染设置表单的 JSON Schema 子集：顶层 `type: object`，支持 `properties`、`required`、`title`、`description`、`default`、`enum`、`minimum`、`maximum`、`format`、`placeholder`、`items` 与 `additionalProperties`。字段类型支持 string、number、integer、boolean、array、object；数组可用换行编辑字符串项，复杂数组/对象以 JSON 编辑。未知设置保留为可编辑扩展字段。限制 32 KiB；它只定义 UI，不授权任何能力。
 
 ZIP 插件包根目录包含 `manifest.json`、清单指定的 JS 入口、可选 Python 脚本和资源。允许这些文件统一放在一个顶层目录中，导入时会剥掉该目录名。manifest 示例：
 

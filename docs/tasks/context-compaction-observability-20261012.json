@@ -1,0 +1,79 @@
+{
+  "id": "context-compaction-observability-20261012",
+  "request": "左侧上下文消耗要在会话实际上下文压缩时进行动画显示，真实展示被压缩的消息和压缩过程，方便观测。",
+  "baseline": "c4830423e4929b05c3e929b308d83400928a8fe2",
+  "initial_status": "M docs/architecture/knowledge-map.md\n M docs/plugins/computer-browser-control.md\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/macos.css\n M internal/server/web/sanctum.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/web/style.css\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M scripts/build-native-computer-bridge.sh\n?? docs/tasks/aide-computer-bridge-icon-20261011.json\n?? docs/tasks/starmap-highlight-blackholes-20261011.json\n?? internal/server/web/starmap-gravity.js\n?? scripts/render-computer-bridge-icon.swift\n?? scripts/starmap-gravity.test.cjs",
+  "acceptance": [
+    "自动压缩向当前任务 SSE 发布开始、摘要完成/折叠中、完成或失败阶段，事件携带会话身份、折叠消息数及真实压缩前后估算。",
+    "侧栏上下文卡在压缩期间持续可见动画与阶段文案，结束后显示压缩前后估算和节省值；切换到其他会话时不串状态。",
+    "手动压缩使用相同反馈；无可折叠历史或失败时不显示成功/节省假数据。",
+    "代码检查通过，并用 Safari 实际查看更新后的 Aide 页面。"
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "docs/architecture.md",
+    "docs/tasks/context-compaction-observability-20261012.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "需求明确为实际会话压缩可观测，覆盖自动/手动、真实数量与前后估算、失败和会话隔离。",
+      "evidence": [
+        "用户原话：左侧上下文消耗要在会话进行上下文压缩的时候进行动画显示，确实显示被压缩和压缩的过程，要方便被观测到。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "自动压缩复用当前任务 SSE 发布真实过程阶段，手动压缩 API 返回同一 token 估算口径的前后值；侧栏状态以 sessionId 绑定并遵守减少动态效果设置。",
+      "evidence": [
+        "internal/server/workflow.go：自动压缩在关闭 run SSE 前运行；新增 started/folding/completed/failed 阶段及估算字段。",
+        "internal/server/web/app.js：事件驱动侧栏反馈；状态按会话过滤。",
+        "internal/server/web/style.css：呼吸、高亮和扫描动效，prefers-reduced-motion 降级。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "自动压缩现在在关闭 run SSE 前完成，并发送开始、摘要生成/折叠、完成或失败事件；事件绑定会话 ID、折叠条数和压缩前后同口径估算。手动压缩响应返回前后估算。侧栏只显示当前阶段，显示当前估算与完成后的节省量。",
+      "evidence": [
+        "internal/server/workflow.go: maybeAutoCompact、streamEvent、sessionContextTokens 与 compactSession。",
+        "internal/server/web/app.js: compaction SSE 订阅、状态会话隔离、阶段更新与重复状态清除。",
+        "internal/server/web/style.css: 卡片呼吸、进度扫光、阶段标记及减少动态效果适配。"
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "JS 语法检查与差异空白检查通过；通过 start.command 对应的 aide.sh source build 重建 9999 服务，Go vet/build 通过。Safari 复核了真实页面中的开始、折叠、完成三态，使用本地合成 UI 事件验证渲染，不触发真实会话压缩。未完成真实模型触发的自动压缩端到端观察。此前 quick 路由有一项与本任务无关的既有 task-outcome 标签断言失败。",
+      "evidence": [
+        "node --check internal/server/web/app.js：通过。",
+        "git diff --check（本任务四个目标文件）：通过。",
+        "bash scripts/aide.sh start：Docker Go vet/build 通过，9999 服务就绪。",
+        "Safari AX：整理中“12 条早期消息 · 当前约 17.2K”；折叠阶段替换前态；完成“17.2K → 10.9K（−6.3K）”。",
+        "未运行真实会话压缩，避免改动现有会话历史。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构文档说明自动和手动压缩反馈阶段、SSE 展示与活动上下文估算口径。",
+      "evidence": [
+        "docs/architecture.md：上下文预算与压缩段落已更新。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留工作区已有的其他未提交改动；未进行提交或推送。",
+      "evidence": [
+        "本次修改限定在工作流、上下文卡样式、架构文档和本任务记录。"
+      ]
+    },
+    "release": {
+      "status": "not_requested",
+      "summary": "本轮未请求推送或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

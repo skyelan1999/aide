@@ -1,0 +1,79 @@
+{
+  "id": "workbench-long-output-performance-20261012",
+  "request": "当模型输出的信息比较多了之后，工作台的页面会死掉，然后思考的过程默认是折叠的，如果实在想看在进行打开，正常的默认只显示一行的输出在折叠情况下",
+  "baseline": "c4830423e4929b05c3e929b308d83400928a8fe2",
+  "initial_status": "M docs/architecture.md\n M docs/architecture/knowledge-map.md\n M docs/plugin-protocol.md\n M docs/plugins/computer-browser-control.md\n M docs/security/secret-vault.md\n M docs/system-overview.md\n M docs/user-guide.md\n M internal/server/config_backup.go\n M internal/server/plugins.go\n M internal/server/secret_vault.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/sanctum.css\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/web/style.css\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M plugins/browser-control/manifest.json\n M plugins/comm-serial/manifest.json\n M plugins/comm-ssh/manifest.json\n M plugins/comm-tcp/manifest.json\n M plugins/comm-udp/manifest.json\n M plugins/computer-control/manifest.json\n M plugins/current-time/manifest.json\n M plugins/environment-guide/manifest.json\n M plugins/feedback/manifest.json\n M plugins/goal/manifest.json\n M plugins/lunar-calendar/manifest.json\n M plugins/markdown-history/manifest.json\n M plugins/office/manifest.json\n M plugins/plan/manifest.json\n M plugins/propeller-aero/manifest.json\n M plugins/skill/manifest.json\n M plugins/sqlite/manifest.json\n M plugins/subagent/manifest.json\n M plugins/terminal/manifest.json\n M plugins/todo/manifest.json\n M plugins/workflow/manifest.json\n M scripts/build-native-computer-bridge.sh\n?? docs/tasks/aide-computer-bridge-icon-20261011.json\n?? docs/tasks/context-compaction-observability-20261012.json\n?? docs/tasks/local-secret-custody-keys-20261012.json\n?? docs/tasks/plugin-settings-rendered-schema-20261012.json\n?? docs/tasks/starmap-highlight-blackholes-20261011.json\n?? internal/server/custody_keys.go\n?? internal/server/custody_keys_test.go\n?? internal/server/web/starmap-gravity.js\n?? scripts/render-computer-bridge-icon.swift\n?? scripts/starmap-gravity.test.cjs",
+  "acceptance": [
+    "长聊天回复的流式渲染不重复解析已完成的 Markdown 块；过长的未闭合块在流式阶段按纯文本增量追加，完成后正常渲染。",
+    "会话快照重绘时复用已渲染的稳定 DOM 块，避免对整篇增长中的回复重复解析。",
+    "思考过程默认折叠；折叠状态只显示单行摘要预览，用户展开后才装载正文；开合偏好在当前会话的运行和完成态之间保留。",
+    "代码语法与差异检查通过；新代码由系统浏览器候选实例验收。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/index.html",
+    "docs/tasks/workbench-long-output-performance-20261012.json",
+    "docs/architecture.md",
+    "docs/industrial-long-conversation-support.md",
+    "docs/user-guide.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "处理模型输出较长时工作台页面卡死，以及思考过程折叠默认态与一行预览。",
+      "evidence": [
+        "用户原始请求记录于 request。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "增量复用已稳定 Markdown DOM；长活动块暂以纯文本追加，完成态仍用标准 Markdown 渲染；思考正文折叠时不生成文本节点。",
+      "evidence": [
+        "internal/server/web/app.js 流式聊天渲染和思考摘要实现。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "实现稳定区 DOM 复用、超长活动块增量文本、限定思考缓冲大小、默认折叠的一行摘要和展开按需装载。",
+      "evidence": [
+        "internal/server/web/app.js、style.css；index.html 缓存键已更新。"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "前端语法和差异空白检查通过；长消息性能与折叠交互尚未在系统 Safari 候选实例验证。尝试按用户此前指示运行 start.command，但脚本因无法找到 Docker 应用而退出；Safari 仍指向旧运行实例。",
+      "evidence": [
+        "node --check internal/server/web/app.js：exit 0。",
+        "git diff --check（本任务文件）：通过。",
+        "bash start.command：exit 1，Unable to find application named 'Docker'。",
+        "真实系统浏览器验收：NOT_RUN；Safari 的 localhost:9999 仍是旧运行实例，未用于验收新代码。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "补充架构、工业长对话说明与用户指南：记录思考缓冲上限、默认折叠的一行预览、长回答增量渲染及页面内存边界。Safari 候选验收状态仍按 verification 阶段记录。",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/industrial-long-conversation-support.md",
+        "docs/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅修改本任务关联的 app.js、style.css、index.html 与任务账本；没有提交或推送。",
+      "evidence": [
+        "仅触及本任务关联的 app.js、style.css、index.html 与任务账本；其他工作树修改均保留。",
+        "git diff --check 通过。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户请求修复，没有请求提交、推送或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "只回退本任务在 internal/server/web/app.js、style.css、index.html 中的变更；不要整体恢复工作树，以免覆盖并行改动。",
+  "handoff": "实现已完成。剩余工作：Docker 可启动后重新运行 start.command，并在系统 Safari 中验收长输出及思考区默认折叠/展开；当前 localhost:9999 是旧实例，未提交、未推送。"
+}

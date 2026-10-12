@@ -1276,6 +1276,9 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/workspace-config/test", a.testWorkspaceConnection)
 	mux.HandleFunc("GET /api/workspace/secrets", a.listWorkspaceSecrets)
 	mux.HandleFunc("DELETE /api/workspace/secrets/{id}", a.deleteWorkspaceSecret)
+	mux.HandleFunc("GET /api/account/custody-keys", a.listCustodyKeys)
+	mux.HandleFunc("PUT /api/account/custody-keys", a.putCustodyKey)
+	mux.HandleFunc("DELETE /api/account/custody-keys/{id}", a.deleteCustodyKey)
 	mux.HandleFunc("POST /api/workspace/unlock-vault", a.unlockWorkspaceVault)
 	mux.HandleFunc("POST /api/unlock", a.unlockApp)
 	mux.HandleFunc("POST /api/auth/verify", a.verifyMasterIdentity) // #43 统一主身份认证（密码/指纹二选一）

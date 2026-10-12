@@ -305,21 +305,32 @@ func TestRemediationVirtualRootTraversalRejected(t *testing.T) {
 // R04：连续压缩必须携带上一版摘要（早期唯一约束不丢失）。
 func TestRemediationCompactionChainRetainsPreviousSummary(t *testing.T) {
 	a := testApp(t)
-	var captured sync.Map
+	var capturedMu sync.Mutex
+	var captured []string
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		b, _ := json.Marshal(map[string]any{})
-		_ = json.Unmarshal(b, &map[string]any{})
 		body := map[string]any{}
 		dec := json.NewDecoder(r.Body)
 		_ = dec.Decode(&body)
+		var input strings.Builder
 		if msgs, ok := body["messages"].([]any); ok && len(msgs) > 0 {
-			if user, ok := msgs[len(msgs)-1].(map[string]any); ok {
-				if content, ok := user["content"].(string); ok {
-					captured.Store("last", content)
+			for _, raw := range msgs {
+				if msg, ok := raw.(map[string]any); ok {
+					if content, ok := msg["content"].(string); ok {
+						input.WriteString(content)
+						input.WriteByte('\n')
+					}
 				}
 			}
 		}
-		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": `{"goal":"t","decisions":[],"files":[],"facts":[],"pending":[]}`}}}})
+		capturedMu.Lock()
+		captured = append(captured, input.String())
+		capturedMu.Unlock()
+		constraints := `[]`
+		if strings.Contains(input.String(), "唯一约束") {
+			constraints = `["唯一约束: 必须使用绿色 UI"]`
+		}
+		result := `{"goal":"t","constraints":` + constraints + `,"decisions":[],"files":[],"facts":[],"pending":[]}`
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": result}}}})
 	}))
 	defer provider.Close()
 	a.mu.Lock()
@@ -342,14 +353,15 @@ func TestRemediationCompactionChainRetainsPreviousSummary(t *testing.T) {
 	_ = a.save(s)
 	prevCompact := s.Compact
 	a.mu.Unlock()
+	capturedMu.Lock()
+	firstRoundCalls := len(captured)
+	capturedMu.Unlock()
 	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/compact", map[string]any{}), 200)
-	v, _ := captured.Load("last")
-	lastReq, _ := v.(string)
-	if !strings.Contains(lastReq, "上一版") && !strings.Contains(lastReq, "唯一约束") {
-		// 摘要输入可能以两种形式携带约束（prompt 明确要求保留；或模型已合并）
-		if !strings.Contains(lastReq, "唯一约束") {
-			t.Fatalf("second compaction request must carry previous summary/constraint: %q", lastReq)
-		}
+	capturedMu.Lock()
+	secondRoundInputs := append([]string(nil), captured[firstRoundCalls:]...)
+	capturedMu.Unlock()
+	if !strings.Contains(prevCompact, "唯一约束") || !strings.Contains(strings.Join(secondRoundInputs, "\n"), "唯一约束") {
+		t.Fatalf("second compaction round must receive the previous summary's unique constraint; previous=%q inputs=%q", prevCompact, secondRoundInputs)
 	}
 	a.mu.Lock()
 	after := s.Compact

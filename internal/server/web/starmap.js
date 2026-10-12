@@ -168,7 +168,7 @@ let animate=!motionReduced(), frame=0, pageLeaving=false;
 let driftTime=0;const skyFloat={x:0,y:0};
 let skyTime=0,lastPaint=null,pausedAt=document.hidden?performance.now():null,cameraTween=null,graphFade=null;
 let wheelZoom=null,interactionUntil=0,paintRequested=true,renderRevision=0,renderKey='';
-let structure=null,layerState=null,nodeByID=new Map(),edgeAdjacency=new Map(),renderNodes=[],renderEdges=[],edgeBatches=[];
+let structure=null,layerState=null,nodeByID=new Map(),edgeAdjacency=new Map(),renderNodes=[],renderEdges=[],edgeBatches=[],highlightedStarIDs=new Set();
 let searchQuery='',resultIDs=new Set(),callDepth='all',skyCache=null;
 const glowCache=new Map(),cloudCache=new Map(),tau=Math.PI*2;
 let cosmos=null,cosmicEnabled=true,cosmicScene=null,cosmicKey='',cosmicRecords=[],cosmicLinks=[],cosmicSelected='',cosmicHover='',cosmicFlight=null;
@@ -194,6 +194,7 @@ function prepareStellarConnections(){
   const a=nodeByID.get(e.from),b=nodeByID.get(e.to);if(a&&b)link(a.parentFile||a.id,b.parentFile||b.id);
  }
  for(const n of graph.nodes){n.connectionCount=neighbors.get(n.id).size;applyStellarColor(n);}
+ highlightedStarIDs=window.AideStarGravity?.analyze(graph.nodes,graph.edges).highlightedIds||new Set();
 }
 function applyStellarColor(n){
  const count=n.connectionCount||0,band=stellarBands.findLast(b=>count>=b.min);n.stellarBand=band.name;
@@ -202,7 +203,8 @@ function applyStellarColor(n){
 }
 function stellarVisual(n,depth,chosen=false,incoming=false){
  const strength=n.stellarStrength||0,attenuation=codeView&&Number.isFinite(depth)?Math.max(.22,1/(1+Math.min(depth,16)*.38)):1;
- return {radius:chosen?2.8:incoming?2.1:(.65+strength*1.85)*attenuation,halo:chosen?32:incoming?24:(n.connectionCount?10+strength*30:5)*attenuation,alpha:chosen||mapPalette.highContrast?1:incoming?.86:(.38+strength*.54)*attenuation};
+ const highlight=highlightedStarIDs.has(n.id);
+ return {highlight,radius:chosen?2.8:incoming?2.1:highlight?3.25:(.65+strength*1.85)*attenuation,halo:chosen?32:incoming?24:highlight?42:(n.connectionCount?10+strength*30:5)*attenuation,alpha:chosen||highlight||mapPalette.highContrast?1:incoming?.86:(.38+strength*.54)*attenuation};
 }
 function syncMapPalette(){
  const next=readMapPalette();if(JSON.stringify(next)===JSON.stringify(mapPalette))return;mapPalette=next;
@@ -334,7 +336,10 @@ function cosmicData(key){
  // Faint source gas preserves region recognition; it is not counted as a unit.
  const gas=new Map();for(const star of stars){const key=star.n.cluster?.key||star.n.region||'source';if(!gas.has(key))gas.set(key,{x:0,y:0,count:0,key,texture:cloudTexture(key,mapPalette.nebula)});const zone=gas.get(key);zone.x+=star.x;zone.y+=star.y;zone.count++;}
  for(const zone of gas.values()){zone.x/=zone.count;zone.y/=zone.count;zone.spread=Math.min(.28,.05+Math.sqrt(zone.count)*.012);}
- const data={scene,records,stars,edges,batches:[...batches.values()],gas:[...gas.values()],projection:stars.map(star=>star.p)};cosmicSceneCache.set(key,data);while(cosmicSceneCache.size>4)cosmicSceneCache.delete(cosmicSceneCache.keys().next().value);return data;
+ const gravity=window.AideStarGravity?.analyze(graph.nodes,graph.edges,records.map(record=>record.group));
+ const recordByGroup=new Map(records.map(record=>[record.group.key,record]));
+ const blackHoles=(gravity?.blackHoles||[]).map(hole=>({...hole,record:recordByGroup.get(hole.groupKey),phase:seeded(hole.groupKey+'black-hole-phase')})).filter(hole=>hole.record);
+ const data={scene,records,stars,edges,batches:[...batches.values()],gas:[...gas.values()],blackHoles,projection:stars.map(star=>star.p)};cosmicSceneCache.set(key,data);while(cosmicSceneCache.size>4)cosmicSceneCache.delete(cosmicSceneCache.keys().next().value);return data;
 }
 function cosmicPath(group){const path=[];for(let g=group;g;g=g.parent)path.unshift(g);return path;}
 function cosmicPreferred(){return cosmicRecords.find(r=>r.group.key===cosmicSelected)?.group||cosmicRecords.find(r=>r.group.key===cosmicHover)?.group||cosmicScene?.children.reduce((best,g)=>!best||g.members.length>best.members.length?g:best,null);}
@@ -370,6 +375,15 @@ function ensureCosmicView(){
 function cosmicLocate(n){const path=cosmos?.pathFor(n.id);if(!path?.length)return;const target=path.length>2?path.at(-2):path[0];enterCosmic(target.key,true,true);}
 function cosmicPick(x,y){let nearest=null,score=Infinity;for(const r of cosmicRecords){if(!r.p.onScreen)continue;const radius=r.group.nodeID?12:Math.min(90,r.radius+15),d=Math.hypot(r.p.x-x,r.p.y-y);if(d<radius&&d/radius<score){nearest=r;score=d/radius;}}return nearest;}
 function cosmicStarPick(x,y){let nearest=null,distance=11;for(const star of cosmicStars){if(!star.p.onScreen)continue;const d=Math.hypot(star.p.x-x,star.p.y-y);if(d<distance){distance=d;nearest=star;}}return nearest;}
+function drawBlackHole(hole,now){
+ const p=hole.record.p;if(!p.onScreen)return;const r=hole.radius,spin=motionEnabled()?Math.sin(now/4700+hole.phase)*.045:0;
+ ctx.save();ctx.translate(p.x,p.y);ctx.rotate(spin);ctx.globalAlpha=.82;
+ const ring=ctx.createLinearGradient(-r*1.8,0,r*1.8,0);ring.addColorStop(0,mapPalette.reference+'20');ring.addColorStop(.26,mapPalette.nebula+'cc');ring.addColorStop(.52,mapPalette.text);ring.addColorStop(.78,mapPalette.star+'dd');ring.addColorStop(1,mapPalette.reference+'25');
+ ctx.shadowColor=mapPalette.nebula;ctx.shadowBlur=8+hole.linksPerNode*1.4;ctx.strokeStyle=ring;ctx.lineWidth=1.2+Math.min(1.4,hole.linksPerNode*.16);ctx.beginPath();ctx.ellipse(0,0,r*1.65,r*.56,-.12,0,tau);ctx.stroke();
+ ctx.shadowBlur=0;ctx.globalAlpha=.56;ctx.strokeStyle=mapPalette.star;ctx.lineWidth=.8;ctx.beginPath();ctx.ellipse(0,0,r*1.18,r*.40,.18,Math.PI*.08,Math.PI*.92);ctx.stroke();ctx.beginPath();ctx.ellipse(0,0,r*1.18,r*.40,.18,Math.PI*1.08,Math.PI*1.92);ctx.stroke();
+ ctx.globalAlpha=.94;const core=ctx.createRadialGradient(-r*.15,-r*.16,r*.08,0,0,r*.82);core.addColorStop(0,'#020407');core.addColorStop(.72,'#03060b');core.addColorStop(.91,'#101923');core.addColorStop(1,mapPalette.nebula+'aa');ctx.fillStyle=core;ctx.beginPath();ctx.arc(0,0,r*.82,0,tau);ctx.fill();
+ ctx.globalAlpha=.68;ctx.strokeStyle=mapPalette.text;ctx.lineWidth=.7;ctx.beginPath();ctx.arc(0,0,r*.82,0,tau);ctx.stroke();ctx.restore();
+}
 function drawCosmos(now,t){
  if(!cosmicScene)return;const data=cosmicSceneCache.get(cosmicKey),flight=cosmicFlight,u=flight?clamp((now-flight.start)/flight.duration,0,1):1,k=easing(u),fade=flight?k:1,scale=flight?(flight.direction>0?.83+.17*k:1.17-.17*k):1;
  const cx=width*(.57+skyFloat.x),cy=height*(.5+skyFloat.y),drift=0;
@@ -382,10 +396,12 @@ function drawCosmos(now,t){
  const calls=structure?.entry('calls');cosmicCallState=selected&&calls?.levels.has(selected.id)?structure.describe(selected.id,'calls'):calls;
  for(const batch of data?.batches||[]){if(cosmicStars.length>140&&batch.hierarchy)continue;ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'18':'30');ctx.lineWidth=.6;ctx.setLineDash(batch.dashed?[3,7]:[]);ctx.beginPath();for(const e of batch.edges){if(!edgeInView(e)||selected&&(e.from===selected.id||e.to===selected.id))continue;if(birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}ctx.stroke();}ctx.setLineDash([]);
  let particles=0;for(const e of cosmicStarEdges){if(!edgeInView(e))continue;const birth=Math.min(birthAlpha(nodeByID.get(e.from)||{},now),birthAlpha(nodeByID.get(e.to)||{},now));if(birth<.97)continue;const active=selected&&(e.from===selected.id||e.to===selected.id);if(active){ctx.strokeStyle=mapPalette.star+'90';ctx.lineWidth=1;ctx.setLineDash(e.dashed?[3,6]:[]);ctx.beginPath();ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);ctx.stroke();ctx.setLineDash([]);}if(active&&animate&&particles++<24){const q=(t/6500+e.phase)%1;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(e.a.x+(e.b.x-e.a.x)*q,e.a.y+(e.b.y-e.a.y)*q,1,0,tau);ctx.fill();}}
+ for(const hole of data?.blackHoles||[])drawBlackHole(hole,now);
  for(const star of cosmicStars){const {n,p}=star;if(!p.onScreen)continue;const participating=!!calls?.levels.has(n.id),depth=participating?cosmicCallState?.levels.get(n.id):null,known=Number.isFinite(depth),incoming=!!cosmicCallState?.incoming.has(n.id),chosen=selected?.id===n.id;
-  const visual=stellarVisual(n,known?depth:null,chosen,incoming),color=n.starColor,radius=visual.radius,halo=visual.halo,match=n.match,alpha=searchQuery&&!match&&!chosen?.18:visual.alpha;
+  const visual=stellarVisual(n,known?depth:null,chosen,incoming),color=visual.highlight&&!mapPalette.highContrast?(mapPalette.light?'#356f9e':'#d8edff'):n.starColor,radius=visual.radius,halo=visual.halo,match=n.match,alpha=searchQuery&&!match&&!chosen?.18:visual.alpha;
   const birth=birthAlpha(n,now);ctx.globalAlpha=fade*alpha*birth*(chosen?.65:.28);ctx.drawImage(glowSprite(color),p.x-halo/2,p.y-halo/2,halo,halo);ctx.globalAlpha=fade*alpha*birth;ctx.fillStyle=color;ctx.beginPath();ctx.arc(p.x,p.y,radius*(.4+.6*birth),0,tau);ctx.fill();ctx.globalAlpha=fade;
   if((chosen||match)&&birth>.5){ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=chosen?mapPalette.text:mapPalette.muted;ctx.fillText(n.drawLabel||n.name,p.x+9,p.y+4);}
+  if(visual.highlight&&birth>.5){ctx.strokeStyle=color+'cc';ctx.lineWidth=.65;ctx.beginPath();ctx.moveTo(p.x-radius*2.8,p.y);ctx.lineTo(p.x+radius*2.8,p.y);ctx.moveTo(p.x,p.y-radius*2.8);ctx.lineTo(p.x,p.y+radius*2.8);ctx.stroke();}
   if(chosen){ctx.strokeStyle=mapPalette.star+'70';ctx.lineWidth=.7;ctx.beginPath();ctx.arc(p.x,p.y,12+(motionEnabled()?Math.sin(t/1000)*.8:0),0,tau);ctx.stroke();}
  }
  for(const r of cosmicRecords){if(!r.p.onScreen||r.group.nodeID||r.group.key!==cosmicHover&&r.group.key!==cosmicSelected)continue;ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=mapPalette.text;ctx.fillText(r.label,r.p.x+15,r.p.y-15);ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=mapPalette.muted;ctx.fillText(r.group.members.length+' 个真实节点',r.p.x+15,r.p.y);}
@@ -460,7 +476,7 @@ function updateLayerLabels(){
  if($('detail-level')){
   $('detail-level').hidden=!selected;
   const globalDepth=selected?.globalVisualDepth,cycle=selected&&callLayers?.cycles.has(selected.id);
-  $('detail-level').textContent=(selected?`${selected.connectionCount||0} 个有效关联 · ${selected.stellarBand} · `:'')+(Number.isFinite(globalDepth)?`调用星等 · 全局静态调用层 ${globalDepth+1}`:'调用关系未知 · 基准星等')+(selected?' · 当前节点（选中增亮）':'')+(cycle?' · 候选闭环':'');
+  $('detail-level').textContent=(selected?`${selected.connectionCount||0} 个有效关联 · ${selected.stellarBand}${highlightedStarIDs.has(selected.id)?' · 高亮星':''} · `:'')+(Number.isFinite(globalDepth)?`调用星等 · 全局静态调用层 ${globalDepth+1}`:'调用关系未知 · 基准星等')+(selected?' · 当前节点（选中增亮）':'')+(cycle?' · 候选闭环':'');
 
  }
 }

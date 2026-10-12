@@ -14,5 +14,12 @@
     { "name": "sqlite_tables", "kind": "read", "readonlyDefault": true },
     { "name": "sqlite_schema", "kind": "read", "readonlyDefault": true },
     { "name": "sqlite_export", "kind": "read|write", "readonlyDefault": true }
-  ]
+  ],
+  "settingsSchema":   {
+    "type": "object",
+    "title": "插件参数",
+    "description": "此插件暂未声明专属选项。可在扩展参数中添加插件会读取的设置，也可切换到文本模式直接编辑 JSON。",
+    "properties": {},
+    "additionalProperties": true
+  }
 }

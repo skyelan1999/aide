@@ -1,8 +1,8 @@
 # 安全：统一凭证保险库（Secret Vault）
 
-- 版本：0.1.11.0-RC3
-- 日期：2026-09-26
-- 适用范围：工作空间 SSH/SFTP 凭据（密码、私钥、私钥口令）；**模型 Provider API Key**（RC2 起并入本保险库）；未来 comm-ssh（#37）共用同一保险库
+- 文档基线：0.1.11.0-RC3；账户代持密钥更新：0.1.17.0 RC2 源码候选
+- 复核日期：2026-10-12
+- 适用范围：工作空间 SSH/SFTP 凭据（密码、私钥、私钥口令）；模型 Provider API Key；账户设置中的本地代持密钥（0.1.17.0 起）；未来 comm-ssh（#37）共用同一保险库
 - 关联文档：[password-hashing.md](./password-hashing.md)（Argon2id 主密钥派生）、[config-backup.md](./config-backup.md)
 
 ## 1. 问题与目标
@@ -31,9 +31,15 @@
 
 - 文件：`/data/secrets/vault.enc`，目录权限 `0700`、文件权限 `0600`；机器主密钥 `/data/secrets/master-key.bin` 同为 `0600`；
 - 信封格式：`{ "version":1, "entries":[{id,type,name,ciphertext_b64,nonce_b64,fingerprint,createdAt,updatedAt}] }`；
-- 条目类型：`ssh-password`（登录密码）、`ssh-key`（私钥加密副本）、`ssh-passphrase`（私钥口令）、`model-api-key`（模型 Provider API Key，RC2 新增）；
+- 条目类型：`ssh-password`（登录密码）、`ssh-key`（私钥加密副本）、`ssh-passphrase`（私钥口令）、`model-api-key`（模型 Provider API Key）、`custody-key`（用户代持密钥）；
 - 固定条目 ID：`ws:ssh-password`、`ws:ssh-key`、`ws:ssh-passphrase`、`model:api-key`；
 - `List()` 只返回元数据与公钥指纹，**永不返回密文或明文**。
+
+### 2.2 账户代持密钥
+
+设置 → 账户中的代持密钥以 `custody-key` 类型保存于当前 Aide 实例的 `/data/secrets/vault.enc`。密钥正文经过 AES-256-GCM 加密；名称及时间戳是可展示的非机密元数据。`GET /api/account/custody-keys` 仅返回 ID、名称和时间戳，`PUT` 只写入，`DELETE` 只删除，不存在读取明文的 API。接口受主 API Bearer token 鉴权；写入和删除还要求保险库已解锁。
+
+代持密钥仅由明确的账户设置操作管理，不会被模型配置、提示词或模型 API 请求读取。配置备份导出与导入会过滤 `custody-key` 条目，即使选择包含其他密钥也不会携带代持密钥。服务部署在 Docker 或远程主机时，“本地”指该 Aide 实例的受限 `/data` 数据卷；应按部署环境保护该卷及主机。
 
 ### 2.1 模型 API Key 迁移（RC2，#43 配套）
 

@@ -37,6 +37,7 @@ const (
 	VaultTypeSSHPassword   = "ssh-password"   // SSH 登录密码
 	VaultTypeSSHKey        = "ssh-key"        // SSH 私钥（导入的加密副本）
 	VaultTypeSSHPassphrase = "ssh-passphrase" // 私钥口令（保护私钥本身）
+	VaultTypeCustodyKey    = "custody-key"    // 用户自行管理的本地代持密钥，不供模型请求使用
 )
 
 // 工作空间 SSH 凭据的固定条目 ID（单实例，与现有 workspace 语义一致）。

@@ -44,8 +44,9 @@ type PluginManifest struct {
 	Main        string         `json:"main"`
 	Enabled     bool           `json:"enabled"`
 	Daemon      bool           `json:"daemon,omitempty"` // 协议 v1.2：常驻守护插件
-	Settings    map[string]any `json:"settings,omitempty"`
-	InstalledAt string         `json:"installedAt"`
+	Settings       map[string]any `json:"settings,omitempty"`
+	SettingsSchema map[string]any `json:"settingsSchema,omitempty"`
+	InstalledAt    string         `json:"installedAt"`
 }
 
 type pluginRegistry struct {
@@ -253,9 +254,50 @@ func (a *App) listPlugins(w http.ResponseWriter, r *http.Request) {
 			"id": p.ID, "name": p.Name, "description": p.Description, "version": p.Version,
 			"author": p.Author, "enabled": p.Enabled, "installedAt": p.InstalledAt,
 			"error": a.pluginError(p.ID), "settings": pluginSettingsOrEmpty(p.Settings),
+			"settingsSchema": a.pluginSettingsSchema(p.ID, p.SettingsSchema),
 		})
 	}
 	jsonOut(w, 200, map[string]any{"plugins": items})
+}
+
+// pluginSettingsSchema reads the schema from the installed plugin manifest so
+// custom plugins can ship their own editor template without changing the host.
+func (a *App) pluginSettingsSchema(id string, fallback map[string]any) map[string]any {
+	if !pluginIDPattern.MatchString(id) {
+		return map[string]any{"type": "object", "properties": map[string]any{}, "additionalProperties": true}
+	}
+	paths := []string{filepath.Join(a.pluginsPath, id, "manifest.json")}
+	if bundle := os.Getenv("AIDE_BUILTIN_PLUGINS"); bundle != "" {
+		paths = append(paths, filepath.Join(bundle, id, "manifest.json"))
+	}
+	for _, path := range paths {
+		pluginDir, dirErr := os.Lstat(filepath.Dir(path))
+		manifestInfo, manifestErr := os.Lstat(path)
+		if dirErr != nil || !pluginDir.IsDir() || manifestErr != nil || !manifestInfo.Mode().IsRegular() {
+			continue
+		}
+		b, err := os.ReadFile(path)
+		if err != nil || len(b) > 128<<10 {
+			continue
+		}
+		var manifest PluginManifest
+		if json.Unmarshal(b, &manifest) == nil && manifest.ID == id && manifest.SettingsSchema != nil {
+			encoded, marshalErr := json.Marshal(manifest.SettingsSchema)
+			kind, _ := manifest.SettingsSchema["type"].(string)
+			if marshalErr == nil && len(encoded) <= 32<<10 && kind == "object" {
+				return manifest.SettingsSchema
+			}
+		}
+	}
+	if fallback != nil {
+		encoded, err := json.Marshal(fallback)
+		if err == nil && len(encoded) <= 32<<10 {
+			if kind, _ := fallback["type"].(string); kind == "object" {
+				return fallback
+			}
+		}
+	}
+	return map[string]any{"type": "object", "properties": map[string]any{}, "additionalProperties": true}
 }
 
 func pluginSettingsOrEmpty(settings map[string]any) map[string]any {

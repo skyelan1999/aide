@@ -12,7 +12,7 @@ function updateFavicon() {
 }
 updateFavicon();
 if (window.aideUI?.subscribe) window.aideUI.subscribe(updateFavicon);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, streamRetryAt: 0, queueMode: false, approvalPolicy: null, approvalModeBusy: false, autoScroll: true, jumpAnimating: false };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, thinkingOpen: new Set(), streamRetryAt: 0, queueMode: false, approvalPolicy: null, approvalModeBusy: false, autoScroll: true, jumpAnimating: false };
 let recoveryReady=false,recoveryTimer=0,recoveryNotice=false;
 const recoveryScope=()=>state.config?.workspaceId||'';
 const chatDraftKey=(id,scope=recoveryScope())=>JSON.stringify([scope,id]);
@@ -908,9 +908,22 @@ function openStream(run) {
   es.addEventListener('reasoning', e => {
     if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
-    state.liveReasoning[run.id] = (state.liveReasoning[run.id] || '') + (d.reasoning || '');
+    const previous = state.liveReasoning[run.id] || '';
+    const addition = d.reasoning || '';
+    const combined = previous + addition;
+    const maxReasoningChars = 131072;
+    state.liveReasoning[run.id] = combined.length > maxReasoningChars
+      ? combined.slice(0, 2048) + '\n…（思考记录过长，显示首尾部分）…\n' + combined.slice(-(maxReasoningChars - 2100))
+      : combined;
     const ph = state.runPhase[run.id];
-    if (ph) { ph.phase = 'reasoning'; touchRunActivity(run.id); renderRunStatus(run.id); }
+    if (ph) {
+      ph.phase = 'reasoning'; touchRunActivity(run.id);
+      const box = document.querySelector('#timeline .run[data-run="' + run.id + '"]');
+      const details = box?.querySelector('.rsp-thinking');
+      if (details?.open) renderRunStatus(run.id);
+      else if (details) updateThinkingSummary(details, state.liveReasoning[run.id], false);
+      else renderRunStatus(run.id);
+    }
   });
   es.addEventListener('heartbeat', e => {
     if (state.stream !== es) return;
@@ -929,6 +942,12 @@ function openStream(run) {
     const ph = state.runPhase[run.id];
     if (ph) { ph.note = d.text || ''; touchRunActivity(run.id); renderRunStatus(run.id); }
   }); // 空响应自动续接提示
+  es.addEventListener('compaction', e => {
+    if (state.stream !== es) return;
+    let d; try { d = JSON.parse(e.data); } catch (_) { return; }
+    showContextCompaction(d);
+    if (d.phase === 'completed' || d.phase === 'failed') refreshSessionSoon();
+  });
   es.addEventListener('clarification', () => { if (state.stream !== es) return; const ph = ensureRunPhase(run.id); const waitingRun = state.session?.runs?.find(r => r.id === run.id); if (waitingRun) waitingRun.status = 'awaiting_clarification'; ph.status = 'awaiting_clarification'; ph.stalled = false; renderRunStatus(run.id); avatarRunFeedback(run.id, 'awaiting_clarification'); refreshSessionSoon(); });
   es.addEventListener('clarification-resolved', () => {
     if (state.stream !== es) return;
@@ -948,6 +967,7 @@ function openStream(run) {
     // 同一步骤内每轮 toolLoop 会重开一次模型请求：轮次变化时重置，避免拼接上一轮的叙述
     if (typeof d.round === 'number' && state.liveRound[run.id] !== d.round) {
       state.live[run.id] = ''; state.liveRound[run.id] = d.round;
+      delete state.liveStable[run.id];
     }
     state.live[run.id] = (state.live[run.id] || '') + (d.text || '');
     scheduleLiveRender(run.id); // 按动画帧批量渲染，避免逐 token 全量 markdown 解析
@@ -1413,14 +1433,14 @@ function renderRunStatusInto(box, runId) {
     actions.append(stop, wait, retry);
     banner.append(actions);
   } else if (banner) { banner.remove(); }
-  // 思考折叠区（流式增量追加；运行中默认展开窥测；不重建节点以保留展开态与滚动位置）
+  // 思考内容默认折叠；折叠时只维护一行预览，展开后才装载正文。
   const reasoning = state.liveReasoning[runId] || '';
   let det = panel.querySelector('.rsp-thinking');
   if (reasoning) {
     if (!det) {
       det = el('details', 'rsp-thinking');
-      det.open = true;
-      const sum = el('summary', '');
+      det.open = state.thinkingOpen.has(runId);
+      const sum = el('summary', 'rsp-think-summary');
       const body = el('div', 'rsp-think-body');
       const follow = el('button', 'rsp-follow', t('↓ 最新'));
       follow.type = 'button';
@@ -1431,13 +1451,21 @@ function renderRunStatusInto(box, runId) {
       panel.append(det);
       follow.classList.add('hidden');
       body.addEventListener('scroll', () => follow.classList.toggle('hidden', thinkAtBottom(body)));
+      det.addEventListener('toggle', () => {
+        if (!det.open) { state.thinkingOpen.delete(runId); body.replaceChildren(); body.dataset.len = '0'; return; }
+        state.thinkingOpen.add(runId);
+        body.textContent = state.liveReasoning[runId] || '';
+        body.dataset.len = String(body.textContent.length);
+        body.scrollTop = body.scrollHeight;
+        follow.classList.toggle('hidden', thinkAtBottom(body) || !!state.runPhase[runId]?.done);
+      });
     }
-    det.querySelector('summary').textContent = ph.done ? t('思考过程') : t('思考中…');
+    updateThinkingSummary(det, reasoning, !ph.done);
     const body = det.querySelector('.rsp-think-body');
     const follow = det.querySelector('.rsp-follow');
-    // 增量追加：只把新增片段 append 为文本节点，避免全量 textContent 重置 scrollTop
+    // 展开时批量更新；收起时不在隐藏 DOM 中积累 token 文本节点。
     const rendered = Number(body.dataset.len || 0);
-    if (reasoning.length > rendered) {
+    if (det.open && reasoning.length > rendered) {
       const atBottom = thinkAtBottom(body);
       body.append(document.createTextNode(reasoning.slice(rendered)));
       body.dataset.len = String(reasoning.length);
@@ -1452,6 +1480,15 @@ function renderRunStatusInto(box, runId) {
     list.replaceChildren();
     ph.tools.forEach(tool => list.append(renderToolRow(tool)));
   } else if (list) { list.remove(); }
+}
+function updateThinkingSummary(details, reasoning, running) {
+  const summary = details?.querySelector('summary');
+  if (!summary) return;
+  const firstLine = String(reasoning || '').split(/\r?\n/, 1)[0].replace(/\s+/g, ' ').trim();
+  const preview = firstLine.length > 110 ? firstLine.slice(0, 109) + '…' : firstLine;
+  summary.replaceChildren(el('span', 'rsp-think-label', t(running ? '思考中' : '思考过程')));
+  if (preview) summary.append(el('span', 'rsp-think-preview', preview));
+  summary.title = String(reasoning || '').slice(0, 2000);
 }
 function renderRunStatus(runId) {
   const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
@@ -1501,10 +1538,14 @@ function schedulePoll() {
   clearTimeout(state.poll);
   // File review continues after model generation. Keep reconciling until the
   // reviewer applies the proposal or hands it back for manual confirmation.
-  const pending = r => r.status === 'running' || (r.status === 'awaiting_approval' && ['reviewing','approved'].includes(r.approvalState));
+  // Keep a stream attached while a run waits for user clarification/command
+  // approval. Assisted review may resolve that wait without a user click; if
+  // the page refreshed or its SSE disconnected, reconnect so the browser sees
+  // clarification-resolved and the following tool/result events.
+  const pending = r => r.status === 'running' || r.status === 'awaiting_clarification' || (r.status === 'awaiting_approval' && ['reviewing','approved'].includes(r.approvalState));
   const running = state.session?.runs?.find(pending);
   if (running) {
-    if (running.status === 'running' && (!state.stream || state.stream._runId !== running.id) && (!state.streamRetryAt || Date.now() >= state.streamRetryAt)) openStream(running);
+    if (['running','awaiting_clarification'].includes(running.status) && (!state.stream || state.stream._runId !== running.id) && (!state.streamRetryAt || Date.now() >= state.streamRetryAt)) openStream(running);
     state.poll = setTimeout(async () => {
       const id = state.session?.id;
       if (!id) return;
@@ -1813,14 +1854,32 @@ function renderSession() {
     if (!run.steps.length) box.append(el('p', 'muted', t("正在准备模型请求…")));
     run.steps.forEach((step, index) => {
       if (run.mode === 'chat') {
-        if (step.reasoning) { const rd = el('details', 'rsp-thinking rsp-thinking-done'); rd.append(el('summary', '', t("思考过程")), el('div', 'rsp-think-body', step.reasoning)); box.append(rd); }
+        if (step.reasoning) {
+          const rd = el('details', 'rsp-thinking rsp-thinking-done');
+          const thinkingKey = run.id + ':' + index;
+          rd.open = state.thinkingOpen.has(run.id) || state.thinkingOpen.has(thinkingKey);
+          const summary = el('summary', 'rsp-think-summary');
+          const body = el('div', 'rsp-think-body');
+          if (rd.open) body.textContent = step.reasoning;
+          rd.append(summary, body);
+          updateThinkingSummary(rd, step.reasoning, false);
+          rd.addEventListener('toggle', () => {
+            if (rd.open) { state.thinkingOpen.add(run.id); state.thinkingOpen.add(thinkingKey); body.textContent = step.reasoning; }
+            else { state.thinkingOpen.delete(run.id); state.thinkingOpen.delete(thinkingKey); body.replaceChildren(); }
+          });
+          box.append(rd);
+        }
         const ans = el('div', 'chat-answer md-body');
         const running = run.status === 'running';
         const liveText = state.live[run.id] || '';
         // 运行中优先显示实时增量（step.content 尚未提交，可能还是“工具调用中”），
         // 结束后只用持久化内容，避免 live 与 content 重复拼接
         const text = running && liveText ? liveText : (step.content || '');
-        if (text) {
+        if (running && liveText) {
+          // Rebuilding the timeline must not force a full Markdown parse of a
+          // growing answer. The RAF renderer restores cached stable blocks.
+          ans.append(el('div', 'live-stable'), el('div', 'live-active'));
+        } else if (text) {
           ans.innerHTML = renderMarkdown(text) + (running ? '<span class="stream-cursor" aria-hidden="true">▍</span>' : '');
         } else if (running) {
           // DSH/Codex 风格：首 token 前显示呼吸的思考点
@@ -1929,6 +1988,9 @@ function renderSession() {
       box.append(buildToolUses(run));
     }
     if (run.error) box.append(el('p', 'task-error', run.error)); $('timeline').append(box);
+  }
+  for (const run of state.session?.runs || []) {
+    if (run.status === 'running' && state.live[run.id]) scheduleLiveRender(run.id);
   }
   // 运行中：发送箭头原位切换为停止图标（插话/排队仍可用 Enter 或「排队」+Enter 提交）
   setSendMode(state.busy);
@@ -2385,11 +2447,58 @@ function isZipPath(path) { return /\.zip$/i.test(effectiveFileTypePath(path)); }
 function isDelimitedPath(path) { return /\.(csv|tsv)$/i.test(effectiveFileTypePath(path)); }
 function isXlsxPath(path) { return /\.xlsx$/i.test(effectiveFileTypePath(path)); }
 function isSqlitePath(path) { return /\.(db|sqlite|sqlite3)$/i.test(effectiveFileTypePath(path)); }
+const splitScrollLock = { editor: false, fileView: false };
+const splitScrollExpected = new WeakMap();
+const splitScrollLast = { editor: 'editor', fileView: 'file-view-editor' };
+function syncSplitScroll(source, target, key) {
+  if (!splitScrollLock[key] || !source || !target) return;
+  const expected = splitScrollExpected.get(source);
+  if (expected != null && Math.abs(source.scrollTop - expected) < 2) { splitScrollExpected.delete(source); return; }
+  splitScrollExpected.delete(source);
+  const sourceRange = Math.max(0, source.scrollHeight - source.clientHeight);
+  const targetRange = Math.max(0, target.scrollHeight - target.clientHeight);
+  if (!sourceRange || !targetRange) return;
+  const next = Math.round(source.scrollTop / sourceRange * targetRange);
+  if (Math.abs(target.scrollTop - next) < 2) return;
+  splitScrollExpected.set(target, next);
+  target.scrollTop = next;
+}
+function setSplitScrollLock(key, enabled) {
+  splitScrollLock[key] = !!enabled;
+  const button = $(key === 'editor' ? 'editor-scroll-lock' : 'file-view-scroll-lock');
+  if (!button) return;
+  button.classList.toggle('locked', splitScrollLock[key]);
+  button.setAttribute('aria-pressed', String(splitScrollLock[key]));
+  const label = splitScrollLock[key] ? t('解锁滚动') : t('锁定滚动');
+  const labelNode = button.querySelector('i18n-text');
+  if (labelNode) labelNode.textContent = label;
+  button.title = label;
+  button.setAttribute('aria-label', label);
+  if (splitScrollLock[key]) {
+    const editor = $(key === 'editor' ? 'editor' : 'file-view-editor');
+    const preview = $(key === 'editor' ? 'editor-preview' : 'file-view-preview');
+    const source = $(splitScrollLast[key]);
+    syncSplitScroll(source, source === editor ? preview : editor, key);
+  }
+}
+function bindSplitScrollLock(key, editorId, previewId, buttonId) {
+  const editor = $(editorId), preview = $(previewId), button = $(buttonId);
+  if (!editor || !preview || !button || button.dataset.scrollLockBound) return;
+  button.dataset.scrollLockBound = 'true';
+  editor.addEventListener('scroll', () => { if (!splitScrollExpected.has(editor)) splitScrollLast[key] = editorId; syncSplitScroll(editor, preview, key); }, { passive: true });
+  preview.addEventListener('scroll', () => { if (!splitScrollExpected.has(preview)) splitScrollLast[key] = previewId; syncSplitScroll(preview, editor, key); }, { passive: true });
+  button.addEventListener('click', () => setSplitScrollLock(key, !splitScrollLock[key]));
+}
+bindSplitScrollLock('editor', 'editor', 'editor-preview', 'editor-scroll-lock');
+bindSplitScrollLock('fileView', 'file-view-editor', 'file-view-preview', 'file-view-scroll-lock');
 function setEditorMode(mode) {
   window.AideMarkdownOutline?.dispose($('editor-preview'));
   const preview = mode === 'preview';
   const split = !preview && isMarkdownPath(state.file?.path) && window.aideUI?.get('fileMarkdownEditing') !== 'text';
   $('editor-dialog').classList.toggle('md-split', split);
+  $('editor-scroll-lock').classList.toggle('hidden', !split);
+  if (!split && splitScrollLock.editor) setSplitScrollLock('editor', false);
+  else if (split) setSplitScrollLock('editor', splitScrollLock.editor);
   $('editor-dialog').dataset.editMode = mode;
   $('editor').classList.toggle('hidden', preview);
   if ($('editor').parentNode.classList.contains('code-wrapper')) $('editor').parentNode.classList.toggle('hidden', preview);
@@ -2400,6 +2509,7 @@ function setEditorMode(mode) {
     if(isDelimitedPath(state.file?.path || ''))setupDelimitedPreview($('editor-preview'),$('editor'),state.file.path);
     else setupMarkdownPreview($('editor-preview'), $('editor').value, state.file?.path || '', state.file);
     $('editor-preview').scrollTop = 0;
+    if (split && splitScrollLock.editor) syncSplitScroll($('editor'), $('editor-preview'), 'editor');
   }
 }
 function showEditor() {
@@ -4228,7 +4338,7 @@ function renderMarkdownHistoryControl() {
 const controlRenderers = { 'recovery-storage': () => window.AideRecoveryManager.render({t,error:e=>toast(e.message||String(e)),isActive:()=>$('settings-sheet').classList.contains('open')}),
   "knowledge-index-policy": renderKnowledgeIndexPolicy,
   "knowledge-embedding-policy": renderKnowledgeEmbeddingPolicy,
-  "capabilities": () => window.aideCapabilities.render({api,t,blocked:()=>lockScreen.locked||!state.token,active:()=>settingsPanel.active==='capabilities'&&$('settings-sheet').classList.contains('open')}),
+  "capabilities": () => window.aideCapabilities.render({api,t,blocked:()=>lockScreen.locked||!state.token,active:()=>settingsPanel.active==='accessibility'&&settingsPanel.activeChild==='interface-tests'&&$('settings-sheet').classList.contains('open')}),
   "markdown-history": renderMarkdownHistoryControl,
   checkbox: renderCheckboxControl, 'experience-preview': renderExperiencePreview, 'managed-worktrees': renderManagedWorktrees, 'harness-config': renderHarnessConfig, 'workspace-policy': () => renderConfigDocument('/execution-policy/workspace', '当前工作区执行策略覆盖', 'overrides', 'effectivePolicy', true), 'execution-policy': renderExecutionPolicy, language: renderLanguageControl, 'about-project': renderAboutProject, 'software-updates': renderSoftwareUpdates, segmented: renderSegmentedControl, 'profiles-manager': renderProfilesManager, 'token-stats': renderTokenStats, 'sessions-manage': renderSessionsManage, 'permission-manager': renderPermissionManager, number: renderNumberControl, 'system-logs': renderSystemLogsControl, 'virtual-avatars': () => window.renderVirtualAvatarSettings() };
 
@@ -5378,7 +5488,56 @@ function renderContextMeter(data, isDraft) {
     actual.title = t("{0}：输入 {1} tokens · 输出 {2} tokens", source, usage.prompt || 0, usage.completion || 0);
     detail.append(actual);
   }
+  renderContextCompactionState(detail);
   detail.title = data.estimationNote || '';
+}
+let contextCompactionTimer = 0;
+function showContextCompaction(event) {
+  if (!event || !event.phase) return;
+  const targetSession = event.sessionId || state.session?.id || '';
+  if (targetSession !== (state.session?.id || '')) return;
+  const card = $('context-card');
+  if (!card) return;
+  state.contextCompaction = { ...event, at: Date.now(), sessionId: state.session?.id || '' };
+  card.classList.toggle('is-compacting', event.phase === 'started' || event.phase === 'folding');
+  card.classList.toggle('was-compacted', event.phase === 'completed');
+  clearTimeout(contextCompactionTimer);
+  if (event.phase === 'completed' || event.phase === 'failed') {
+    const stamp = state.contextCompaction.at;
+    contextCompactionTimer = setTimeout(() => {
+      if (state.contextCompaction?.at !== stamp) return;
+      state.contextCompaction = null;
+      card.classList.remove('was-compacted', 'is-compacting');
+      if (state.contextMeter && !state.contextMeterDraft) renderContextMeter(state.contextMeter, false);
+    }, 10000);
+  }
+  renderContextCompactionState($('context-card-detail'));
+}
+function renderContextCompactionState(detail) {
+  const event = state.contextCompaction;
+  if (!detail || !event || event.sessionId !== (state.session?.id || '')) return;
+  detail.querySelectorAll('.context-compaction-status').forEach(row => row.remove());
+  const running = event.phase === 'started' || event.phase === 'folding';
+  const row = el('div', 'context-compaction-status ' + (running ? 'running' : event.phase));
+  row.setAttribute('role', 'status');
+  row.setAttribute('aria-live', 'polite');
+  if (running) {
+    row.append(el('span', 'context-compaction-orbit', '◌'));
+    row.append(el('span', '', event.text || t('正在整理早期消息并生成摘要')));
+    const detailText = event.folded > 0
+      ? t('{0} 条早期消息 · 当前约 {1}', event.folded, fmtTokens(event.beforeTokens || 0))
+      : (event.beforeTokens > 0 ? t('当前约 {0}', fmtTokens(event.beforeTokens)) : '');
+    if (detailText) row.append(el('strong', '', detailText));
+  } else if (event.phase === 'completed') {
+    const saved = Math.max(0, (event.beforeTokens || 0) - (event.afterTokens || 0));
+    row.append(el('span', 'context-compaction-check', '✓'));
+    row.append(el('span', '', t('已压缩 {0} 条 · 活动上下文估算', event.folded || 0)));
+    row.append(el('strong', '', fmtTokens(event.beforeTokens || 0) + ' → ' + fmtTokens(event.afterTokens || 0) + ' (−' + fmtTokens(saved) + ')'));
+  } else {
+    row.append(el('span', 'context-compaction-check', ''));
+    row.append(el('span', '', event.text || t('压缩未完成，原会话内容已保留')));
+  }
+  detail.append(row);
 }
 async function refreshContextMeter() {
   if (!state.config?.configured || state.contextMeterDraft) return;
@@ -5432,39 +5591,125 @@ function trPlugin(text) {
   return t(text);
 }
 
-const pluginSettingsState = { plugin: null };
+const pluginSettingsState = { plugin: null, mode: 'rendered', schema: null, renderedProperties: {} };
+function pluginSettingDefault(schema) {
+  if (Object.prototype.hasOwnProperty.call(schema || {}, 'default')) return schema.default;
+  const type = schema?.type;
+  return type === 'boolean' ? false : type === 'array' ? [] : type === 'object' ? {} : type === 'number' || type === 'integer' ? 0 : '';
+}
+function pluginSettingLabel(key, schema) { return t(schema?.title || key); }
+function pluginSettingProperties(settings, schema) {
+  const properties = {};
+  for (const [key, value] of Object.entries(settings || {})) {
+    const type = Array.isArray(value) ? 'array' : value === null ? 'string' : typeof value === 'number' ? Number.isInteger(value) ? 'integer' : 'number' : typeof value;
+    properties[key] = {type, items: type === 'array' && value.length ? {type: typeof value[0]} : {type:'string'}};
+  }
+  Object.assign(properties, schema?.properties && typeof schema.properties === 'object' ? schema.properties : {});
+  return properties;
+}
+function renderPluginSettingField(key, schema, settings, requiredKeys = []) {
+  const value = Object.prototype.hasOwnProperty.call(settings, key) ? settings[key] : pluginSettingDefault(schema);
+  const label = el('label', 'plugin-setting-field', pluginSettingLabel(key, schema));
+  if (schema.description) label.append(el('small', 'muted', t(schema.description)));
+  const type = schema.type || (Array.isArray(value) ? 'array' : value === null ? 'string' : typeof value);
+  let input;
+  if (Array.isArray(schema.enum)) {
+    input = document.createElement('select');
+    for (const [index, item] of schema.enum.entries()) { const option = document.createElement('option'); option.value = String(index); option.dataset.pluginEnumValue = JSON.stringify(item); option.textContent = String(item); input.append(option); if (JSON.stringify(item) === JSON.stringify(value)) input.value = option.value; }
+    input.dataset.pluginEnum = 'true';
+  } else if (type === 'boolean') {
+    input = document.createElement('input'); input.type = 'checkbox'; input.checked = !!value;
+    label.classList.add('plugin-setting-checkbox');
+  } else if (type === 'number' || type === 'integer') {
+    input = document.createElement('input'); input.type = 'number'; input.step = type === 'integer' ? '1' : 'any'; input.value = Number.isFinite(Number(value)) ? String(value) : '';
+    if (Number.isFinite(schema.minimum)) input.min = String(schema.minimum); if (Number.isFinite(schema.maximum)) input.max = String(schema.maximum);
+  } else if (type === 'array' || type === 'object') {
+    input = document.createElement('textarea'); input.rows = type === 'array' ? 4 : 6;
+    if (type === 'array' && (schema.items?.type === 'string' || !schema.items?.type)) input.value = Array.isArray(value) ? value.join('\n') : '';
+    else input.value = JSON.stringify(value ?? (type === 'array' ? [] : {}), null, 2);
+    input.dataset.pluginJsonType = type === 'array' && schema.items?.type === 'string' ? 'lines' : type;
+    input.classList.add('plugin-setting-code');
+  } else {
+    input = document.createElement('input'); input.type = schema.format === 'uri' || schema.format === 'url' ? 'url' : 'text'; input.value = value == null ? '' : String(value);
+  }
+  input.dataset.pluginSettingKey = key; input.dataset.pluginSettingType = type;
+  if (requiredKeys.includes(key) && type !== 'boolean') input.required = true;
+  if (schema.placeholder) input.placeholder = schema.placeholder;
+  label.append(input); return label;
+}
+function renderPluginSettingsFields(settings) {
+  const host = $('plugin-settings-fields'), schema = pluginSettingsState.schema || {};
+  host.replaceChildren();
+  const properties = pluginSettingProperties(settings, schema);
+  pluginSettingsState.renderedProperties = properties;
+  if (schema.description) host.append(el('p', 'muted plugin-settings-template-description', t(schema.description)));
+  const grid = el('div', 'plugin-settings-grid');
+  const required = Array.isArray(schema.required) ? schema.required : [];
+  for (const [key, field] of Object.entries(properties)) grid.append(renderPluginSettingField(key, field || {}, settings, required));
+  if (grid.childElementCount) host.append(grid);
+  const extra = Object.fromEntries(Object.entries(settings || {}).filter(([key]) => !Object.prototype.hasOwnProperty.call(properties, key)));
+  const extension = document.createElement('details'); extension.className = 'plugin-settings-extra';
+  const summary = document.createElement('summary'); summary.textContent = t('扩展参数'); extension.append(summary);
+  extension.append(el('p', 'muted', t('添加 schema 未声明的插件参数；值使用合法 JSON。')));
+  const extraInput = document.createElement('textarea'); extraInput.id = 'plugin-settings-extra'; extraInput.rows = 5; extraInput.spellcheck = false; extraInput.value = JSON.stringify(extra, null, 2); extension.append(extraInput);
+  host.append(extension);
+}
+function readRenderedPluginSettings() {
+  const settings = {}, schema = pluginSettingsState.schema || {}, properties = pluginSettingsState.renderedProperties || {};
+  for (const input of $('plugin-settings-fields').querySelectorAll('[data-plugin-setting-key]')) {
+    const key = input.dataset.pluginSettingKey, type = input.dataset.pluginSettingType, field = properties[key] || {};
+    if (input.dataset.pluginEnum === 'true') { const selected = input.selectedOptions[0]; try { settings[key] = JSON.parse(selected.dataset.pluginEnumValue); } catch { throw new Error(t('参数 {0} 的选项无效', key)); } }
+    else if (type === 'boolean') settings[key] = input.checked;
+    else if (type === 'number' || type === 'integer') { if (input.value !== '') settings[key] = Number(input.value); }
+    else if (type === 'array' || type === 'object') {
+      const format = input.dataset.pluginJsonType;
+      if (format === 'lines') settings[key] = input.value.split(/\r?\n/).map(value => value.trim()).filter(Boolean);
+      else { try { settings[key] = JSON.parse(input.value || (type === 'array' ? '[]' : '{}')); } catch { throw new Error(t('参数 {0} 不是有效的 JSON', key)); } }
+    } else settings[key] = input.value;
+    if ((schema.required || []).includes(key) && (settings[key] === '' || settings[key] === undefined || settings[key] === null || (Array.isArray(settings[key]) && settings[key].length === 0))) throw new Error(t('参数 {0} 为必填项', key));
+    if (Array.isArray(field.enum) && !field.enum.some(item => String(item) === String(settings[key]))) throw new Error(t('参数 {0} 的选项无效', key));
+    if ((type === 'number' || type === 'integer') && settings[key] !== undefined && ((type === 'integer' && !Number.isInteger(settings[key])) || (Number.isFinite(field.minimum) && settings[key] < field.minimum) || (Number.isFinite(field.maximum) && settings[key] > field.maximum))) throw new Error(t('参数 {0} 超出允许范围', key));
+  }
+  let extra = {}; try { extra = JSON.parse($('plugin-settings-extra').value || '{}'); } catch { throw new Error(t('扩展参数必须是有效的 JSON 对象')); }
+  if (!extra || typeof extra !== 'object' || Array.isArray(extra)) throw new Error(t('扩展参数必须是 JSON 对象'));
+  return Object.assign(settings, extra);
+}
+function parsePluginSettingsText() {
+  let settings; try { settings = JSON.parse($('plugin-settings-json').value || '{}'); } catch { throw new Error(t('插件设置必须是有效的 JSON 对象')); }
+  if (!settings || typeof settings !== 'object' || Array.isArray(settings)) throw new Error(t('插件设置必须是 JSON 对象'));
+  return settings;
+}
+function setPluginSettingsMode(mode) {
+  if (mode === pluginSettingsState.mode) return;
+  try {
+    if (pluginSettingsState.mode === 'rendered') $('plugin-settings-json').value = JSON.stringify(readRenderedPluginSettings(), null, 2);
+    else renderPluginSettingsFields(parsePluginSettingsText());
+  } catch (error) { toast(error.message); return; }
+  pluginSettingsState.mode = mode;
+  const rendered = mode === 'rendered';
+  $('plugin-settings-fields').hidden = !rendered; $('plugin-settings-json-label').hidden = rendered;
+  $('plugin-settings-rendered').classList.toggle('active', rendered); $('plugin-settings-rendered').setAttribute('aria-selected', String(rendered));
+  $('plugin-settings-raw').classList.toggle('active', !rendered); $('plugin-settings-raw').setAttribute('aria-selected', String(!rendered));
+  if (!rendered) $('plugin-settings-json').focus();
+}
 function openPluginSettings(plugin) {
   pluginSettingsState.plugin = plugin;
+  pluginSettingsState.mode = 'rendered';
+  pluginSettingsState.schema = plugin.settingsSchema || {type:'object',title:t('通用参数'),properties:{},additionalProperties:true};
   $('plugin-settings-title').textContent = t("{0} 设置", trPlugin(plugin.name));
   $('plugin-settings-description').textContent = plugin.description ? trPlugin(plugin.description) : plugin.id;
-  $('plugin-settings-json').value = JSON.stringify(plugin.settings || {}, null, 2);
-  const jsonLabel = $('plugin-settings-json').closest('label');
-  $('control-plugin-fields')?.remove();
-  const control = ['browser-control', 'computer-control'].includes(plugin.id);
-  jsonLabel.style.display = control ? 'none' : '';
-  if (control) {
-    const fields = el('div', 'control-plugin-fields'); fields.id = 'control-plugin-fields';
-    const isBrowser = plugin.id === 'browser-control';
-    if (isBrowser) {
-      const label = el('label', '', t('浏览器引擎'));
-      const select = document.createElement('select'); select.id = 'control-plugin-engine';
-      for (const [value, text] of [['headless', '独立无头浏览器'], ['safari', 'Safari（需要远程自动化）']]) {
-        const option = document.createElement('option'); option.value = value; option.textContent = t(text); select.append(option);
-      }
-      select.value = plugin.settings?.engine || (String(plugin.settings?.bridgeUrl || '').endsWith(':17777') ? 'safari' : 'headless');
-      label.append(select); fields.append(label);
-    }
-    const label = el('label', '', t(isBrowser ? '允许的网站（每行一个域名）' : '允许的应用（每行一个应用名称）'));
-    const scope = document.createElement('textarea'); scope.id = 'control-plugin-scope'; scope.rows = 5;
-    scope.spellcheck = false; scope.value = (plugin.settings?.[isBrowser ? 'allowedHosts' : 'allowedApps'] || []).join('\n');
-    scope.placeholder = isBrowser ? 'example.com\nwww.dji.com\n*.dji.com' : 'TextEdit\nSafari';
-    label.append(scope); fields.append(label);
-    fields.append(el('p', 'muted', t(isBrowser ? '无头浏览器使用独立会话读取网页；Safari 需要本机开启远程自动化。保存后在插件列表启用，导航、点击和输入仍需确认。' : '先打开 Aide Computer Bridge，申请屏幕录制与辅助功能权限。保存后在插件列表启用；只操作名单内的前台应用。')));
-    jsonLabel.before(fields);
-  }
+  $('plugin-settings-template-name').textContent = t(pluginSettingsState.schema.title || t('通用参数'));
+  const settings = plugin.settings && typeof plugin.settings === 'object' && !Array.isArray(plugin.settings) ? plugin.settings : {};
+  $('plugin-settings-json').value = JSON.stringify(settings, null, 2);
+  $('plugin-settings-fields').hidden = false; $('plugin-settings-json-label').hidden = true;
+  $('plugin-settings-rendered').classList.add('active'); $('plugin-settings-rendered').setAttribute('aria-selected', 'true');
+  $('plugin-settings-raw').classList.remove('active'); $('plugin-settings-raw').setAttribute('aria-selected', 'false');
+  renderPluginSettingsFields(settings);
   $('plugin-settings-dialog').showModal();
-  (control ? $('control-plugin-scope') : $('plugin-settings-json')).focus();
+  $('plugin-settings-rendered').focus();
 }
+$('plugin-settings-rendered').onclick = () => setPluginSettingsMode('rendered');
+$('plugin-settings-raw').onclick = () => setPluginSettingsMode('raw');
 
 function renderPluginList() {
   const query = $('plugin-search').value.trim().toLowerCase();
@@ -5538,20 +5783,12 @@ $('plugin-settings-form').onsubmit = action(async event => {
   if (!plugin) return;
   let settings;
   try {
-    settings = JSON.parse($('plugin-settings-json').value || '{}');
-    if (!settings || typeof settings !== 'object' || Array.isArray(settings)) throw new Error('object');
-  } catch {
-    toast(t("插件设置必须是有效的 JSON 对象"));
-    $('plugin-settings-json').focus();
+    settings = pluginSettingsState.mode === 'raw' ? parsePluginSettingsText() : readRenderedPluginSettings();
+    if (new Blob([JSON.stringify(settings)]).size > 32 * 1024) throw new Error(t('插件设置不能超过 32 KiB'));
+  } catch (error) {
+    toast(error.message || t("插件设置必须是有效的 JSON 对象"));
+    if (pluginSettingsState.mode === 'raw') $('plugin-settings-json').focus();
     return;
-  }
-  if (['browser-control', 'computer-control'].includes(plugin.id)) {
-    const scope = [...new Set($('control-plugin-scope').value.split(/\r?\n/).map(s => s.trim()).filter(Boolean))];
-    if (plugin.id === 'browser-control') {
-      settings.allowedHosts = scope;
-      settings.engine = $('control-plugin-engine').value;
-      delete settings.bridgeUrl;
-    } else settings.allowedApps = scope;
   }
   const result = await api('/plugins/' + encodeURIComponent(plugin.id) + '/settings', { method: 'PUT', body: JSON.stringify({ settings }) });
   $('plugin-settings-dialog').close();
@@ -7717,6 +7954,9 @@ function setFileViewMode(mode) {
   const preview = mode === 'preview';
   const split = !preview && (isMarkdownPath(fileView.spec?.path) || ['.md','.markdown'].includes(fileView.spec?.format)) && window.aideUI?.get('fileMarkdownEditing') !== 'text';
   $('file-view').classList.toggle('md-split', split);
+  $('file-view-scroll-lock').classList.toggle('hidden', !split);
+  if (!split && splitScrollLock.fileView) setSplitScrollLock('fileView', false);
+  else if (split) setSplitScrollLock('fileView', splitScrollLock.fileView);
   $('file-view').dataset.editMode = mode;
   $('file-view-editor').classList.toggle('hidden', preview);
   if ($('file-view-editor').parentNode.classList.contains('code-wrapper')) $('file-view-editor').parentNode.classList.toggle('hidden', preview);
@@ -7727,6 +7967,7 @@ function setFileViewMode(mode) {
     if(isDelimitedPath(fileView.spec?.path || '') || ['.csv','.tsv'].includes(fileView.spec?.format))setupDelimitedPreview($('file-view-preview'),$('file-view-editor'),isDelimitedPath(fileView.spec.path)?fileView.spec.path:'resource'+fileView.spec.format);
     else setupMarkdownPreview($('file-view-preview'), $('file-view-editor').value, fileView.spec?.path || '', fileView.spec);
     $('file-view-preview').scrollTop = 0;
+    if (split && splitScrollLock.fileView) syncSplitScroll($('file-view-editor'), $('file-view-preview'), 'fileView');
   }
 }
 async function openFileViewMode() {
@@ -7871,6 +8112,7 @@ function bindMarkdownLivePreview(editorId, previewId, panelId, getSpec) {
       window.AideMarkdownOutline?.dispose(host);
       setupMarkdownPreview(host, $(editorId).value, spec.path, spec);
       host.scrollTop = scroll;
+      syncSplitScroll($(editorId), host, editorId === 'editor' ? 'editor' : 'fileView');
     }, 250);
   };
   $(editorId).addEventListener('input', event => { if (!event.isComposing) refresh(); });
@@ -7969,7 +8211,7 @@ function renderTrajectoryOutcome(host, session) {
   select.onchange = () => { trajOutcomeRun = {sessionId:session.id, runId:select.value}; renderTrajectory(); };
   bar.append(label, select);
   const content = el('div', 'outcome-content traj-outcome-content'); host.append(bar, content);
-  if(!selected){window.AideTaskOutcome?.sessionOverview(content,{session,t,selectRun:id=>{trajOutcomeRun={sessionId:session.id,runId:id};renderTrajectory();},loadOlder:action(async()=>{if(state.session?.id!==session.id)return;state.historyLimit=Math.min(2000,state.historyLimit+SESSION_HISTORY_PAGE);await selectSession(session.id);if(state.session?.id===session.id)renderTrajectory();})});return;}
+  if(!selected){window.AideTaskOutcome?.sessionOverview(content,{session,t,renderMarkdown,selectRun:id=>{trajOutcomeRun={sessionId:session.id,runId:id};renderTrajectory();},loadOlder:action(async()=>{if(state.session?.id!==session.id)return;state.historyLimit=Math.min(2000,state.historyLimit+SESSION_HISTORY_PAGE);await selectSession(session.id);if(state.session?.id===session.id)renderTrajectory();})});return;}
   window.AideTaskOutcome?.mount(content, {sessionId:session.id, runId:selected.id, api, t, error:toast,
     blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id !== session.id || trajView !== 'outcome'});
 }
@@ -8287,10 +8529,24 @@ function refreshCompactInfo() {
 }
 $('compact-button').onclick = action(async () => {
   if (!state.session) { toast(t("请先选择会话")); return; }
-  const res = await api('/sessions/' + state.session.id + '/compact', { method: 'POST', body: '{}' });
-  toast(res.folded ? t("已压缩 {0} 条历史消息", res.folded) : t("历史未超阈值，无需压缩"));
-  await selectSession(state.session.id);
-  refreshCompactInfo();
+  const sessionId = state.session.id;
+  showContextCompaction({ phase: 'started', folded: 0, text: t('正在分析可压缩的早期消息'), sessionId: sessionId });
+  try {
+    const res = await api('/sessions/' + sessionId + '/compact', { method: 'POST', body: '{}' });
+    if (res.folded) {
+      showContextCompaction({ phase: 'completed', folded: res.folded, beforeTokens: res.beforeTokens, afterTokens: res.afterTokens, sessionId });
+      toast(t("已压缩 {0} 条历史消息", res.folded));
+    } else {
+      state.contextCompaction = null;
+      $('context-card')?.classList.remove('is-compacting', 'was-compacted');
+      toast(t("历史未超阈值，无需压缩"));
+    }
+    await selectSession(sessionId);
+    refreshCompactInfo();
+  } catch (error) {
+    showContextCompaction({ phase: 'failed', text: error?.message || t('压缩失败，原会话内容已保留'), sessionId });
+    throw error;
+  }
 });
 async function initialize() {
   syncPanelButtons();
@@ -10419,6 +10675,79 @@ function renderAccountControl() {
     waSection.append(waList, regBtn);
     wrap.append(waSection);
   }
+
+  // Local-only user custody keys. The server returns metadata only; values cannot be read back.
+  const custody = el('section', 'wa-section custody-key-section');
+  custody.append(el('div', 'control-label', t('代持密钥')));
+  custody.append(el('small', 'custody-key-note', t('密钥仅保存在当前 Aide 实例的加密保险库，不会随模型 API 请求、配置备份或导出传输。此页面不会再次显示已保存的密钥。')));
+  const custodyStatus = el('div', 'wa-cred-meta', t('正在读取本地保险库…'));
+  const custodyList = el('div', 'wa-cred-list');
+  const custodyForm = el('div', 'custody-key-form');
+  const custodyName = el('input'); custodyName.type = 'text'; custodyName.maxLength = 80; custodyName.autocomplete = 'off'; custodyName.placeholder = t('密钥名称');
+  const custodySecret = el('input'); custodySecret.type = 'password'; custodySecret.autocomplete = 'new-password'; custodySecret.maxLength = 16384; custodySecret.placeholder = t('输入代持密钥');
+  const custodyActions = el('div', 'account-actions');
+  const custodySave = el('button', 'primary', t('保存代持密钥')); custodySave.type = 'button';
+  const custodyCancel = el('button', 'quiet', t('取消编辑')); custodyCancel.type = 'button'; custodyCancel.hidden = true;
+  custodyActions.append(custodySave, custodyCancel);
+  custodyForm.append(custodyName, custodySecret, custodyActions);
+  let editingCustodyID = '';
+  function resetCustodyForm() {
+    editingCustodyID = '';
+    custodyName.value = '';
+    custodySecret.value = '';
+    custodySecret.placeholder = t('输入代持密钥');
+    custodySave.textContent = t('保存代持密钥');
+    custodyCancel.hidden = true;
+  }
+  async function refreshCustodyKeys() {
+    custodyList.replaceChildren();
+    try {
+      const data = await api('/account/custody-keys');
+      custodyStatus.textContent = data.unlocked ? t('当前 Aide 实例的加密保险库已解锁') : t('保险库已锁定，请先解锁后管理密钥');
+      custodySave.disabled = !data.unlocked;
+      for (const entry of data.entries || []) {
+        const row = el('div', 'wa-cred-item');
+        const info = el('div', 'custody-key-info');
+        info.append(el('span', 'wa-cred-name', entry.name || t('未命名密钥')));
+        info.append(el('span', 'wa-cred-meta', t('已加密保存 · 更新于 {0}', new Date(entry.updatedAt).toLocaleString())));
+        const edit = el('button', 'quiet', t('替换密钥')); edit.type = 'button'; edit.disabled = !data.unlocked;
+        edit.onclick = () => {
+          editingCustodyID = entry.id;
+          custodyName.value = entry.name || '';
+          custodySecret.value = '';
+          custodySecret.placeholder = t('输入新的密钥值');
+          custodySave.textContent = t('保存替换');
+          custodyCancel.hidden = false;
+          custodySecret.focus();
+        };
+        const remove = el('button', 'quiet', t('删除')); remove.type = 'button'; remove.disabled = !data.unlocked;
+        remove.onclick = action(async () => {
+          if (!confirm(t('删除代持密钥“{0}”？此操作无法撤销。', entry.name))) return;
+          await api('/account/custody-keys/' + encodeURIComponent(entry.id), { method: 'DELETE' });
+          resetCustodyForm();
+          await refreshCustodyKeys();
+          toast(t('代持密钥已删除'));
+        });
+        row.append(info, edit, remove);
+        custodyList.append(row);
+      }
+      if (!(data.entries || []).length) custodyList.append(el('div', 'wa-cred-meta', t('尚无代持密钥')));
+    } catch (error) {
+      custodyStatus.textContent = error.message || t('无法读取当前 Aide 实例保险库状态');
+    }
+  }
+  custodySave.onclick = action(async () => {
+    if (!custodyName.value.trim() || !custodySecret.value) { toast(t('请填写名称和密钥')); return; }
+    await api('/account/custody-keys', { method: 'PUT', body: JSON.stringify({ id: editingCustodyID, name: custodyName.value, secret: custodySecret.value }) });
+    custodySecret.value = '';
+    resetCustodyForm();
+    await refreshCustodyKeys();
+    toast(t('代持密钥已加密保存'));
+  });
+  custodyCancel.onclick = resetCustodyForm;
+  custody.append(custodyStatus, custodyList, custodyForm);
+  wrap.append(custody);
+  refreshCustodyKeys();
 
   wrap.append(
     el('small', '', t('不设密码且锁屏时间为 0 时不锁屏。密码同时作为小秘对话历史的 AES-256-GCM 加密密钥，只存哈希、不明文回显。')));

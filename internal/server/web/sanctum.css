@@ -147,11 +147,11 @@ body .reminder-center-head { background:var(--panel);border-bottom-color:var(--l
 .global-search input { border-color:var(--line); background:var(--field); border-radius:10px; }
 .global-search input:focus { border-color:var(--brand); box-shadow:0 0 0 2px var(--sanctum-aura); }
 .top-actions .quiet[aria-pressed="true"] { color:var(--text); background:var(--selected); border-color:var(--sanctum-edge); }
-.session-item { min-height:36px; padding:6px 9px; }
+.session-item { min-height:30px; padding:2px 8px; margin-bottom:0; }
 .session-item.status-completed .session-label { font-weight:600; }
 .session-item.active .session-label { font-weight:550; }
 .session-item.active.status-completed .session-label { font-weight:400; }
-.session-more { width:30px; height:30px; border-radius:8px; color:var(--muted); opacity:1; }
+.session-more { width:24px; height:24px; border-radius:7px; color:var(--muted); opacity:1; }
 .session-more:hover { background:var(--surface); color:var(--text); }
 .session-menu,.file-ctx-menu {
   border-color:var(--sanctum-edge); border-radius:12px; background:var(--panel); box-shadow:var(--sanctum-elevation);
@@ -233,6 +233,21 @@ dialog::backdrop { background:var(--backdrop); }
 .pdf-page-input { min-height:32px; height:32px; border-radius:8px; }
 .pdf-toolbar,.dxf-toolbar { flex-wrap:wrap; }
 .terminal-heading { font-variant-numeric:tabular-nums; }
+
+/* Compact sidebar rhythm: tighter rows, with the runtime and lock affordance kept quiet. */
+.sidebar { padding-top:18px; padding-bottom:10px; }
+.brand { margin-bottom:18px; }
+.new-session { margin-bottom:18px; }
+.section-label { margin-bottom:5px; }
+.runtime-card { min-height:46px; padding:5px 8px; gap:6px; align-items:center; border-radius:10px; font-size:9px; }
+.runtime-card>.live-dot { margin-top:0; width:5px; height:5px; }
+.runtime-card small { display:block; margin-top:0; font-size:8px; line-height:1.2; }
+.runtime-card .app-version { color:var(--text-faint); }
+.runtime-tag { display:none; }
+.rlo-inner { gap:5px; }
+.rlo-icon { width:16px; height:16px; }
+.rlo-icon svg { width:9px; height:9px; }
+.rlo-text { font-size:9px; letter-spacing:.15px; }
 
 @media (pointer:coarse) {
   .session-more,.plugin-delete,.model-delete,.profile-delete,.pdf-ctrl,.dxf-ctrl,.narr-ctrl { min-width:40px; width:40px; min-height:40px; height:40px; }

@@ -1,0 +1,77 @@
+{
+  "id": "markdown-insert-toolbar-row-20261012",
+  "request": "把插入md用例做成窄窄一条和插入图片什么的都放在一行，让使用更简单一些",
+  "baseline": "f5c298d6914ced596786d5e504816168bd4fffcb",
+  "initial_status": "M docs/architecture/knowledge-map.md\n M docs/plugin-protocol.md\n M docs/plugins/computer-browser-control.md\n M docs/security/secret-vault.md\n M docs/system-overview.md\n M docs/user-guide.md\n M internal/server/config_backup.go\n M internal/server/plugins.go\n M internal/server/secret_vault.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/sanctum.css\n M internal/server/web/settings-schema.json\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/web/style.css\n M internal/server/web/task-outcome.js\n M internal/server/web/text-editor.js\n M plugins/browser-control/manifest.json\n M plugins/comm-serial/manifest.json\n M plugins/comm-ssh/manifest.json\n M plugins/comm-tcp/manifest.json\n M plugins/comm-udp/manifest.json\n M plugins/computer-control/manifest.json\n M plugins/current-time/manifest.json\n M plugins/environment-guide/manifest.json\n M plugins/feedback/manifest.json\n M plugins/goal/manifest.json\n M plugins/lunar-calendar/manifest.json\n M plugins/markdown-history/manifest.json\n M plugins/office/manifest.json\n M plugins/plan/manifest.json\n M plugins/propeller-aero/manifest.json\n M plugins/skill/manifest.json\n M plugins/sqlite/manifest.json\n M plugins/subagent/manifest.json\n M plugins/terminal/manifest.json\n M plugins/todo/manifest.json\n M plugins/workflow/manifest.json\n M scripts/build-native-computer-bridge.sh\n?? docs/tasks/aide-computer-bridge-icon-20261011.json\n?? docs/tasks/context-compaction-observability-20261012.json\n?? docs/tasks/local-secret-custody-keys-20261012.json\n?? docs/tasks/markdown-split-scroll-lock-20261012.json\n?? docs/tasks/plugin-settings-rendered-schema-20261012.json\n?? docs/tasks/starmap-highlight-blackholes-20261011.json\n?? docs/tasks/workbench-long-output-performance-20261012.json\n?? internal/server/custody_keys.go\n?? internal/server/custody_keys_test.go\n?? internal/server/web/starmap-gravity.js\n?? scripts/render-computer-bridge-icon.swift\n?? scripts/starmap-gravity.test.cjs",
+  "acceptance": [
+    "Markdown 编辑器中的图片、文件、链接、draw.io 与 MD 示例入口默认同处一条低高度工具栏；常见桌面和窄屏宽度下不换行、不挤压编辑区。",
+    "MD 示例入口有短而明确的可见标签，仍可打开现有结构菜单；键盘访问、菜单选择、光标插入和原有媒体功能保持有效。",
+    "修改仅限 Markdown 工具栏呈现、相应本地化、必要文档与本任务记录；语法/相关回归通过，并在 Safari 实际页面检查布局及插入交互。"
+  ],
+  "scope": [
+    "internal/server/web/markdown-media.js",
+    "internal/server/web/macos.css",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/tasks/markdown-insert-toolbar-row-20261012.json",
+    "docs/user-guide.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "将 MD 示例入口改为紧凑且可辨认的一项，与图片、文件、链接、draw.io 操作并排；工具栏一行显示并降低垂直占位。",
+      "evidence": [
+        "用户原话：把插入md用例做成窄窄一条和插入图片什么的都放在一行，让使用更简单一些。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留现有 Markdown 插入菜单和光标范围行为，仅把触发器改为短标签；工具栏采用不换行、按钮固定宽度、状态消息弹性截断，避免小屏状态文字把工具推到下一行。",
+      "evidence": [
+        "internal/server/web/markdown-media.js 当前负责 Markdown media/template 菜单构造与编辑器 caret 插入。",
+        "internal/server/web/macos.css 当前工具栏允许 wrap，窄屏把状态消息扩为全宽；改为一行紧凑布局并保留菜单浮层。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Markdown 插入栏改为紧凑不换行布局；MD 示例按钮增加短可见标签；状态信息在窄屏收缩，菜单与 caret 插入逻辑保持原实现。",
+      "evidence": [
+        "internal/server/web/markdown-media.js：MD 示例标签、图标与模板弹出菜单入口。",
+        "internal/server/web/macos.css：单行固定宽度控件、状态文本 flex 截断和移动断点覆盖。"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "当前源码指纹 cacbf4495fb88d3a68494290f4e122d99341e0adc460b54bf78398cde93b0e5b 完整门禁通过（38 项，含 Go race/vet）；重建后的本机 localhost:9999 已通过系统 Safari 桌面交互：插入栏图标与 MD 示例同处一行，表格模板插入并同步渲染成功。未点击保存。窄屏视口尚未实测，因此本项仍为部分验收。",
+      "evidence": [
+        "python3 scripts/agent-route.py verify full：终态 PASS，38 项检查通过，包含 go test -race -count=1 -timeout=15m ./... 与 go vet ./...；指纹 cacbf4495fb88d3a68494290f4e122d99341e0adc460b54bf78398cde93b0e5b；日志 .agent-state/verify-20261012T043636627018Z.log。",
+        "./start.command：通过 Docker 重建并启动本地实例，镜像源码指纹 72ab4622c09290aff7109d837836af9a551fa768e5326905444c6f78fb575812；容器健康检查通过。构建阶段 go vet ./... 与 CGO_ENABLED=0 go build 通过。",
+        "System Safari localhost:9999 实际编辑 approval-normal-20261008.md：工具栏显示图片、文件、链接、draw.io 图标及窄标签 MD 示例，单行紧凑排列。",
+        "System Safari 点击 MD 示例后可访问菜单项；选择“插入表格”后编辑器值出现表格 Markdown，实时预览显示标题和两行内容组成的表格；工具回报“已插入 Markdown 示例”。",
+        "未点击保存；随后返回工作台，未将临时模板写入测试文件。",
+        "窄屏断点（640px）本轮没有实机/Safari视口证据，需后续补测；实际插入栏不能据此标记完整验收。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "用户指南与 Markdown 编辑架构文档已说明紧凑单行工具栏、媒体图标、MD 示例菜单及窄屏行为。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md",
+        "docs/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "本任务未请求版本发布；用户要求阶段性测完后及时 push，已通过相关检查的本任务阶段可推送。",
+  "rollback": "仅回滚本任务提交中对 Markdown 工具栏、英文短标签和工具栏说明的对应差异；保留工作区中其他未提交更改。",
+  "handoff": "桌面 Safari 菜单与表格插入已验收，尚未验收 caret 的精确落点、窄屏布局及各媒体按钮动作；不把当前验收标为通过。系统 Safari 当前工作台还显示会话 #43“本段实际执行已达 6m0s”并暂停，需另行跟进连续会话稳定性。"
+}

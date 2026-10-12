@@ -15,5 +15,18 @@
       "kind": "read",
       "readonlyDefault": true
     }
-  ]
+  ],
+  "settingsSchema":   {
+    "type": "object",
+    "title": "Markdown 历史版本参数",
+    "properties": {
+      "trackEmbedded": {
+        "type": "boolean",
+        "title": "追踪内嵌资源",
+        "default": true,
+        "description": "保存 Markdown 时同时比较并记录图片、附件和 draw.io 资源的实际变更。"
+      }
+    },
+    "additionalProperties": true
+  }
 }
