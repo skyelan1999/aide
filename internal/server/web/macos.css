@@ -694,6 +694,37 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .file-autosave-status{font-size:11px;color:var(--muted);max-width:160px}
 .file-autosave:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .file-autosave:disabled{opacity:.45;cursor:not-allowed}
+.file-view-head-actions{gap:7px}
+.file-view-head-actions .icon-action{width:38px;min-width:38px;height:38px;padding:0;border-radius:11px;display:inline-grid;place-items:center;color:var(--text-dim);border:1px solid var(--line-soft);background:color-mix(in srgb,var(--surface) 76%,transparent);text-decoration:none;transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease}
+.file-view-head-actions .icon-action:hover{color:var(--text);background:var(--selected);border-color:var(--line-accent);transform:translateY(-1px)}
+.file-view-head-actions .icon-action:active{transform:scale(.96)}
+.file-view-head-actions .icon-action .ui-icon{width:17px;height:17px}
+.file-view-head-actions #file-view-save.icon-action{color:var(--on-brand);background:var(--brand-hi);border-color:transparent;box-shadow:0 3px 10px color-mix(in srgb,var(--brand) 18%,transparent)}
+.file-view-head-actions #file-view-save.icon-action:hover{background:color-mix(in srgb,var(--brand-hi) 88%,black)}
+.file-view-head-actions .editor-mode-switch{padding:3px;gap:2px;border-radius:12px;background:var(--bg-inset)}
+.file-view-head-actions .editor-mode-switch .icon-action{width:34px;min-width:34px;height:32px;border:0;background:transparent;box-shadow:none}
+.file-view-head-actions .editor-mode-switch .icon-action.active{background:var(--selected);color:var(--brand-text);box-shadow:0 1px 3px var(--shadow-1)}
+.file-view-head-actions .file-autosave{min-height:38px;padding:5px 9px;border-radius:11px}
+.md-media-toolbar{gap:8px;padding:8px 0}
+.md-tool-icon{width:38px;height:36px;display:inline-grid;place-items:center;border:1px solid transparent;border-radius:10px;color:var(--muted);background:transparent;transition:background .18s ease,color .18s ease,transform .18s ease}
+.md-tool-icon .ui-icon{width:17px;height:17px}
+.md-tool-icon:hover{background:var(--selected);color:var(--brand-text);transform:translateY(-1px)}
+.md-tool-icon:active{transform:scale(.96)}
+.md-tool-icon:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+.md-template-wrap{position:relative;display:inline-flex}
+.md-template-menu{position:absolute;left:0;top:calc(100% + 8px);z-index:30;display:grid;grid-template-columns:1fr;gap:3px;min-width:190px;max-height:min(52vh,380px);overflow:auto;padding:7px;background:var(--panel);border:1px solid var(--line);border-radius:13px;box-shadow:0 14px 36px color-mix(in srgb,var(--shadow-1) 75%,transparent);backdrop-filter:blur(20px)}
+.md-template-menu[hidden]{display:none}
+.md-template-item{padding:9px 12px;border:0;border-radius:8px;background:transparent;color:var(--text);text-align:left;font-size:12px;line-height:1.35;white-space:nowrap;transition:background .16s ease,color .16s ease}
+.md-template-item:hover,.md-template-item:focus-visible{background:var(--selected);color:var(--brand-text);outline:none}
+.md-code-copy-wrap{position:relative;margin:10px 0;border:1px solid var(--line-soft-2);border-radius:10px;background:var(--code-bg);overflow:hidden}
+.md-code-copy-wrap>pre{margin:0;padding:42px 12px 12px;overflow:auto;max-height:420px;font:11.5px/1.7 ui-monospace,SFMono-Regular,monospace;color:var(--text-code)}
+.md-code-copy-wrap>pre code{font:inherit}
+.md-code-copy{position:absolute;top:8px;right:8px;z-index:1;width:30px;height:30px;display:grid;place-items:center;border:1px solid var(--line-faint);border-radius:8px;background:var(--panel);color:var(--muted);opacity:.72;transition:opacity .16s ease,color .16s ease,background .16s ease,transform .16s ease}
+.md-code-copy svg{width:15px;height:15px}
+.md-code-copy-wrap:hover .md-code-copy,.md-code-copy:focus-visible{opacity:1}
+.md-code-copy:hover,.md-code-copy.copied{color:var(--brand-text);background:var(--selected);opacity:1}
+.md-code-copy:active{transform:scale(.94)}
+.md-code-copy:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){.file-autosave,.file-autosave-rail,.file-autosave-rail i{transition:none}}
 html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-autosave-rail,html[data-motion="reduced"] .file-autosave-rail i{transition:none}
 

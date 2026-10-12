@@ -7633,6 +7633,31 @@ function renderMarkdown(src, live, basePath, viewerSpec) {
       try { codeEl.innerHTML = window.hljs.highlight(codeEl.textContent, { language: hlLang, ignoreIllegals: true }).value; }
       catch (_) {}
     });
+    body.querySelectorAll('pre').forEach(pre => {
+      if (pre.parentElement?.classList.contains('md-code-copy-wrap')) return;
+      const wrap = el('div', 'md-code-copy-wrap');
+      pre.replaceWith(wrap); wrap.append(pre);
+      const copy = el('button', 'md-code-copy', '');
+      copy.type = 'button'; copy.title = t('复制代码'); copy.setAttribute('aria-label', t('复制代码'));
+      const icon = copied => copied
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>'
+        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>';
+      copy.innerHTML = icon(false);
+      copy.onclick = async () => {
+        const text = pre.querySelector('code')?.textContent ?? pre.textContent ?? '';
+        try {
+          if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
+          else {
+            const field = document.createElement('textarea'); field.value = text; field.setAttribute('readonly', '');
+            field.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.append(field); field.select();
+            const copied = document.execCommand('copy'); field.remove(); if (!copied) throw new Error('copy failed');
+          }
+          copy.classList.add('copied'); copy.title = t('已复制代码'); copy.setAttribute('aria-label', t('已复制代码')); copy.innerHTML = icon(true);
+          window.setTimeout(() => { if (!copy.isConnected) return; copy.classList.remove('copied'); copy.title = t('复制代码'); copy.setAttribute('aria-label', t('复制代码')); copy.innerHTML = icon(false); }, 1400);
+        } catch (_) { toast(t('复制失败')); }
+      };
+      wrap.append(copy);
+    });
     // 标记相对路径链接（事件委托在 timeline 上统一处理）
     body.querySelectorAll('a[href]').forEach(a => {
       const href = a.getAttribute('href') || '';
@@ -7651,7 +7676,7 @@ function renderMarkdown(src, live, basePath, viewerSpec) {
     }
     return body.innerHTML;
   }
-  return '<pre>' + escapeHtml(String(src || '')) + '</pre>';
+  return '<div class="md-code-copy-wrap"><pre>' + escapeHtml(String(src || '')) + '</pre></div>';
 }
 /* ── 单文件视图（新标签页）：路径 + 可编辑内容（保存带哈希校验）+ md 渲染预览 ── */
 const fileView = { spec: null, hash: '' };
