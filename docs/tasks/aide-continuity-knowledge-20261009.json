@@ -2626,7 +2626,13 @@
     "not_verified": [
       "Authenticated system Safari inspection of the rebuilt graph with a real >1,000-file directory; localhost:18217 currently shows the access-token sign-in page.",
       "No deployment or release was performed."
-    ]
+    ],
+    "live_safari_observation_20261013": {
+      "instance": "https://localhost:9999/starmap.html",
+      "result": "The running system Safari page displayed 2,880 stars and 3,991 connections. The context-directory source was explicitly marked range-limited and showed 945 files plus 55 directories in its catalog, 1,000-entry catalog capacity, and 333 directory tasks remaining; its graph contribution was 1,674 nodes. The separate reference source contributed 1,000 nodes. Counts reconcile across displayed source totals.",
+      "scope": "Read-only observation of the currently running 9999 service and its existing index state. It confirms that graph-node totals can exceed the directory-catalog capacity; it does not prove the 18217 candidate build, a fresh >1,000-file directory scan, incremental synchronization performance, or remote-provider behavior.",
+      "state_preserved": "The pre-existing Safari tab containing an unsaved Markdown draft was left untouched; observation used a newly opened tab."
+    }
   },
   "approval_rule_concurrency_20261012": {
     "status": "partially_verified_browser",
@@ -2871,5 +2877,29 @@
     },
     "release": "not_run",
     "push": "pushed to origin/main in commit c2f9b44"
+  },
+  "progress_checkpoint_20261013_followup5": {
+    "status": "in_progress",
+    "date": "2026-10-13",
+    "completed": [
+      "Native system Safari opened the existing localhost:9999 Knowledge Map in a new tab while preserving an existing unsaved Markdown draft in the prior tab.",
+      "Read-only live page observation confirmed 2,880 displayed stars / 3,991 connections; context directory is marked range-limited with 945 files and 55 directories cataloged, a 1,000-entry catalog budget, 333 directory tasks pending, and 1,674 graph nodes. The independent reference source displays 1,000 nodes. This clarifies that total graph nodes may exceed the directory-catalog budget."
+    ],
+    "remaining": [
+      "Authenticated Safari inspection of a freshly loaded current-source candidate against a real directory larger than 1,000 entries; the live 9999 index is existing state and is not proof of the 18217 candidate build.",
+      "Representative large-library browser rendering, multi-source budget allocation, and incremental synchronization performance.",
+      "Independent user-hosted SSH, FTP, FTPS, and broader provider acceptance.",
+      "Automatic compaction progress animation through a real task, including session-switch isolation; long-duration continuity and large conversation-boundary acceptance.",
+      "Requirement-by-requirement audit and release/rollback gates."
+    ],
+    "deferred_by_user": [
+      "Real embedding/vector model acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reported it tested successfully"
+    ],
+    "browser_security_boundary": "A localhost TLS interstitial remains handoff-required by the computer-use policy. User authorization to click it does not override that policy.",
+    "release": "not_run",
+    "push": "pending"
   }
 }
