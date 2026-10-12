@@ -75,7 +75,9 @@
         "向量混合检索真实模型验收按用户要求暂缓。",
         "2026-10-12 收尾后复跑：`go test -race -count=1 -timeout=5m ./internal/server -run \"TestTaskExecutionBudgetDefaults|TestTaskResumeRefreshesOnlyModeBudget\"` PASS 1.083s；`go vet ./internal/server` 同一命令链 exit 0。",
         "2026-10-12 文档和英文提示修改后再次 `python3 scripts/agent-route.py verify quick` PASS，fingerprint 46862cc3ff48aae5dba45d2f8c459d631c59be19b784bf915574d0dbbdd1ade9。",
-        "最新源码隔离候选 https://localhost:18217 Safari 到达证书警告页；按手动证书处理规则未绕过，页面验收 NOT_RUN。候选容器 aide-budget-20261012；9999 和既有18212未修改。"
+        "最新源码隔离候选 https://localhost:18217 Safari 到达证书警告页；按手动证书处理规则未绕过，页面验收 NOT_RUN。候选容器 aide-budget-20261012；9999 和既有18212未修改。",
+        "2026-10-12：重启隔离源码候选 aide-budget-20261012（仅源码只读挂载与空数据目录），HTTPS根页 HTTP/2 200；鉴权 GET /api/execution-policy 返回200，chatBudgetSec=7200、workflowBudgetSec=900；access token 留在容器内，未输出。",
+        "2026-10-12：重启后系统 Safari 仍在 https://localhost:18217 的证书警告页；浏览器验收未运行。未尝试绕过证书；9999未修改。"
       ]
     },
     "documentation": {
@@ -105,5 +107,5 @@
   },
   "release_authorization": "推送检查点授权：用户此前要求阶段性测完后及时 push；本次仅推送已验证的后端与文档检查点，不打 tag、不发布。",
   "rollback": "回滚仅撤销此任务记录范围文件中的对应提交/差异；不整体恢复工作区、不清理会话或记忆数据。内存模型/API schema 不变；token 文件格式不变。",
-  "handoff": "新增预算修复已完成，定向race/vet与quick通过；真实9999页面读回7200秒但源码版本旧，未重启生产。完整race超时不记通过。隔离候选最新源码 UI 验收和其他原验收条目仍未完成；向量检索按用户要求暂缓。"
+  "handoff": "长对话改进任务仍 active。预算修复已推送 bec1653；定向 race/vet/quick PASS，最新隔离候选根页与鉴权执行策略 API 通过（7200/900）。完整 race 超时不记通过，真实 Safari 源码候选受 localhost:18217 证书警告阻塞，需用户手动处理后继续。工业长对话其余 UI/记忆/稳定性验收仍按逐项证据跟踪；向量检索真实模型验收按用户要求暂缓。"
 }
