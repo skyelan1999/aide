@@ -2003,14 +2003,13 @@
     ],
     "verification": {
       "source": "outcome-pagination source VM, i18n and directed Go race TestTaskOutcome PASS",
-      "system_safari": "PASS on isolated https://localhost:18211 for overview, three sections, detail and return selector using a clearly labeled historical fixture; unsent composer excluded",
+      "system_safari": "PASS on isolated https://localhost:18211 for overview, three sections, detail and return selector using a clearly labeled historical fixture; unsent composer excluded. 2026-10-12 additional actual-session check on rebuilt localhost:9999: session #45 shows the exact submitted prompt, actual 6,963-token assistant reply, 1 input / 1 reply / 0 file artifacts; complete long Markdown output is rendered, and input/output view preserves all 40 sections including the final table. Trajectory closed afterward; no session data changed.",
       "screenshot": ".agent-state/continuity-runtime/input-output-overview-safari-20261010.png",
       "full": "running"
     },
     "limits": [
-      "Production 9999 not replaced",
-      "Native fixture has no model reply; attachment/reply rendering checked in source regression",
-      "Narrow, dark and Windows native acceptance not run for this change"
+      "Isolated historical fixture still had no model reply; current 9999 #45 provides a real assistant-reply path but no file artifact in that round. File-attachment and artifact rendering still need a round that actually includes those items.",
+      "Narrow, dark and Windows native acceptance not run for this change."
     ],
     "release": "not_run",
     "full": {
@@ -2538,7 +2537,8 @@
       "environment": "Docker rebuilt using ./start.command; localhost:9999; system Safari",
       "passed": [
         "Desktop Markdown insert toolbar displayed media icons and MD examples on one row",
-        "Inserted table template; editor received Markdown and preview rendered a table"
+        "Inserted table template; editor received Markdown and preview rendered a table",
+        "会话轨迹“输入与输出”在系统 Safari localhost:9999 实际显示 #45 已提交原文、实际助手长回复及文件成果=0；40节正文（含末尾表格）完整呈现；随后关闭轨迹恢复工作台。"
       ],
       "not_saved": true,
       "not_verified": [
