@@ -161,3 +161,23 @@ func TestGlobalApprovalModeAssistedDoesNotMarkPausedTasksReviewing(t *testing.T)
 		t.Fatal("global assisted mode did not notify other tabs")
 	}
 }
+
+func TestApprovalPolicyBroadcastSurvivesFullGlobalEventQueue(t *testing.T) {
+	a := testApp(t)
+	events := make(chan string, 2)
+	events <- "sessions:old-a"
+	events <- "sessions:old-b"
+	a.globalSubs[events] = struct{}{}
+
+	a.broadcastApprovalPolicy()
+
+	found := false
+	for len(events) > 0 {
+		if <-events == "approval:" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("approval policy event was dropped behind a full global event queue")
+	}
+}

@@ -87,6 +87,17 @@ func (a *App) broadcastApprovalPolicy() {
 		select {
 		case ch <- "approval:":
 		default:
+			// A policy change is more important than a stale session-list
+			// refresh. Replace the oldest queued event so every connected tab
+			// gets a chance to reread the authoritative approval revision.
+			select {
+			case <-ch:
+			default:
+			}
+			select {
+			case ch <- "approval:":
+			default:
+			}
 		}
 	}
 }

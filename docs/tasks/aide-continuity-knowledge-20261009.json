@@ -2640,12 +2640,23 @@
       "System Safari UI concurrent edit/revoke and expiry interaction",
       "Real SSH workspace approval confirmation and revocation",
       "Reverse global approval mode immediate propagation across sessions"
-    ]
+    ],
+    "event_queue_priority_checkpoint_20261012": {
+      "change": "全局事件队列满时，审批策略变更广播会挤出最旧的排队通知，保证连接中的标签页仍收到事件并重新读取服务端权威策略。",
+      "verification": [
+        "go test -mod=vendor -race ./internal/server -run 'TestApprovalPolicyBroadcastSurvivesFullGlobalEventQueue|TestGlobalApprovalMode' -count=1 -timeout=120s PASS (3.838s).",
+        "python3 scripts/agent-route.py verify quick PASS; fingerprint 75a4ea516cb657be0e71def1c2ea6a8f6cbc8632140cf2fc4eb82e362194e849.",
+        "Safari 当前标签仍连接先前构建的隔离候选；该 UI 本轮未加载新服务端二进制，因此不计为此改动的浏览器行为验收。"
+      ],
+      "remaining": [
+        "在加载本次改动的候选构建后，以系统 Safari 实测多标签审批模式 SSE 即时同步；需覆盖队列拥塞事件。"
+      ]
+    }
   },
   "progress_checkpoint_20261012": {
     "status": "in_progress",
     "active_workstreams": 12,
-    "latest_completed": "Trajectory input/output follow-up: final assistant response is primary and visible; secure outcome snapshots carry task mode. Focused Go regression, start.command vet/build, browser and static/doc checks passed.",
+    "latest_completed": "Approval SSE reliability: saturated global event queues now prioritize approval-policy updates; focused Go race regression and quick gate passed. Safari candidate browser behavior remains pending.",
     "remaining": "12条总体工作流仍按各自 current_audit_20261010.remaining 继续；Windows不再是待验收或阻塞项。真实向量检索按用户要求暂缓；其余真实Safari、SSH/审批边界、长时运行、数据容量与release/rollback均需按各自清单逐项完成。",
     "release": "not_run",
     "scope_adjustments_20261012": [
