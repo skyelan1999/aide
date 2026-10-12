@@ -5544,6 +5544,7 @@ function renderContextMeter(data, isDraft) {
   detail.title = data.estimationNote || '';
 }
 const contextCompactionTimers = new Map();
+const contextCompactionElapsedTimers = new Map();
 function startContextCompactionWatch(sessionID) {
   let stopped = false;
   let inFlight = null;
@@ -5574,15 +5575,29 @@ function showContextCompaction(event) {
   if (!event || !event.phase) return;
   const targetSession = event.sessionId || state.session?.id || '';
   if (!targetSession) return;
-  const record = { ...event, at: Date.now(), sessionId: targetSession };
+  const previous = state.contextCompactions.get(targetSession);
+  const startedAt = event.startedAt || previous?.startedAt || ((event.phase === 'started' || event.phase === 'folding') ? Date.now() : 0);
+  const record = { ...event, startedAt, at: Date.now(), sessionId: targetSession };
   state.contextCompactions.set(targetSession, record);
   clearTimeout(contextCompactionTimers.get(targetSession));
+  const running = event.phase === 'started' || event.phase === 'folding';
+  if (running && !contextCompactionElapsedTimers.has(targetSession)) {
+    contextCompactionElapsedTimers.set(targetSession, setInterval(() => {
+      if (state.session?.id === targetSession) renderContextCompactionState($('context-card-detail'));
+    }, 1000));
+  }
+  if (!running) {
+    clearInterval(contextCompactionElapsedTimers.get(targetSession));
+    contextCompactionElapsedTimers.delete(targetSession);
+  }
   if (event.phase === 'completed' || event.phase === 'failed') {
     const stamp = record.at;
     const timer = setTimeout(() => {
       if (state.contextCompactions.get(targetSession)?.at !== stamp) return;
       state.contextCompactions.delete(targetSession);
       contextCompactionTimers.delete(targetSession);
+      clearInterval(contextCompactionElapsedTimers.get(targetSession));
+      contextCompactionElapsedTimers.delete(targetSession);
       if (state.session?.id !== targetSession) return;
       $('context-card')?.classList.remove('was-compacted', 'is-compacting');
       renderContextCompactionState($('context-card-detail'));
@@ -5618,12 +5633,21 @@ function renderContextCompactionState(detail) {
         : (event.batch > 0
           ? t('摘要处理中 · {0} {1}/{2}', event.batchStage === 'map' ? t('分段整理') : t('连续归并'), event.batch, event.batches)
           : t('正在整理 {0} 条早期消息并生成连续摘要', event.folded || 0)))
-      : (event.text || t('正在整理早期消息并生成摘要'));
+      : (event.phase === 'folding'
+        ? (event.text || t('摘要已生成，正在折叠早期消息并保存'))
+        : (event.batch > 0
+          ? t('摘要处理中 · {0} {1}/{2}', event.batchStage === 'map' ? t('分段整理') : t('连续归并'), event.batch, event.batches)
+          : (event.text || t('正在整理早期消息并生成摘要'))));
     row.append(el('span', '', progressText));
     const detailText = event.folded > 0
       ? t('{0} 条早期消息 · 当前约 {1}', event.folded, fmtTokens(event.beforeTokens || 0))
       : (event.beforeTokens > 0 ? t('当前约 {0}', fmtTokens(event.beforeTokens)) : '');
     if (detailText) row.append(el('strong', '', detailText));
+    const elapsedSeconds = Math.max(0, Math.floor((Date.now() - (event.startedAt || event.at || Date.now())) / 1000));
+    const elapsedText = elapsedSeconds < 60
+      ? t('已用时 {0} 秒', elapsedSeconds)
+      : t('已用时 {0} 分 {1} 秒', Math.floor(elapsedSeconds / 60), elapsedSeconds % 60);
+    row.append(el('strong', 'context-compaction-elapsed', elapsedText));
   } else if (event.phase === 'completed') {
     const saved = Math.max(0, (event.beforeTokens || 0) - (event.afterTokens || 0));
     row.append(el('span', 'context-compaction-check', '✓'));

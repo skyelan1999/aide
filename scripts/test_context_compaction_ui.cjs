@@ -66,6 +66,11 @@ context.renderContextCompactionState(detail);
 assert.equal(card.classList.contains('is-compacting'), true, 'switching back restores the active animation');
 assert.equal(detail.children.at(-1).children[1].textContent.includes('正在整理'), true, 'active phase is visible after returning');
 
+context.showContextCompaction({ sessionId: sessionB, phase: 'started', folded: 8, beforeTokens: 13600, batchStage: 'map', batch: 2, batches: 5, startedAt: Date.now() - 65000 });
+context.renderContextCompactionState(detail);
+assert.equal(detail.children.at(-1).children[1].textContent.includes('分段整理 2/5'), true, 'automatic compaction shows map batch progress');
+assert.equal(detail.children.at(-1).children.at(-1).textContent.includes('已用时 1 分 5 秒'), true, 'active compaction exposes elapsed time');
+
 context.state.session = { id: sessionA };
 context.renderContextCompactionState(detail);
 assert.equal(card.classList.contains('is-compacting'), false, 'switching away clears the other session animation');

@@ -32,6 +32,8 @@ window.aideEnglish = {
   "摘要处理中 · {0} {1}/{2}": "Summarizing · {0} {1}/{2}",
   "分段整理": "mapping",
   "连续归并": "reducing",
+  "已用时 {0} 秒": "Elapsed {0}s",
+  "已用时 {0} 分 {1} 秒": "Elapsed {0}m {1}s",
   "{0} 条早期消息 · 当前约 {1}": "{0} earlier messages · about {1} active",
   "当前约 {0}": "About {0} active",
   "已压缩 {0} 条 · 活动上下文估算": "Compacted {0} messages · estimated active context",

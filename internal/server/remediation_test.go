@@ -146,6 +146,8 @@ func TestAutoCompactionPublishesObservableLifecycle(t *testing.T) {
 		events = append(events, <-ch)
 	}
 	var phases []string
+	var sawMapProgress bool
+	var startedAt int64
 	for _, event := range events {
 		if event.Event != "compaction" {
 			continue
@@ -153,7 +155,20 @@ func TestAutoCompactionPublishesObservableLifecycle(t *testing.T) {
 		if event.SessionID != s.ID {
 			t.Fatalf("event leaked or lost session identity: got %q want %q", event.SessionID, s.ID)
 		}
-		phases = append(phases, event.Phase)
+		if len(phases) == 0 || phases[len(phases)-1] != event.Phase {
+			phases = append(phases, event.Phase)
+		}
+		if event.StartedAt == 0 {
+			t.Fatalf("automatic compaction event must retain its start time: %+v", event)
+		}
+		if startedAt == 0 {
+			startedAt = event.StartedAt
+		} else if event.StartedAt != startedAt {
+			t.Fatalf("automatic compaction start time changed: got %d want %d", event.StartedAt, startedAt)
+		}
+		if event.Phase == "started" && event.BatchStage == "map" && event.Batch > 0 && event.Batches > 0 {
+			sawMapProgress = true
+		}
 		if event.Folded <= 0 || event.BeforeTokens < before {
 			t.Fatalf("event must report actual folded count and pre-compaction estimate: %+v, before=%d", event, before)
 		}
@@ -165,6 +180,9 @@ func TestAutoCompactionPublishesObservableLifecycle(t *testing.T) {
 	}
 	if !reflect.DeepEqual(phases, []string{"started", "folding", "completed"}) {
 		t.Fatalf("unexpected compaction lifecycle: %v", phases)
+	}
+	if !sawMapProgress {
+		t.Fatal("automatic compaction did not publish map batch progress")
 	}
 	if got := sessionContextTokens(s); got != events[len(events)-1].AfterTokens {
 		t.Fatalf("completed estimate differs from persisted session state: event=%d session=%d", events[len(events)-1].AfterTokens, got)

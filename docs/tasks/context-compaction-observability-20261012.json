@@ -4,8 +4,8 @@
   "baseline": "c4830423e4929b05c3e929b308d83400928a8fe2",
   "initial_status": "M docs/architecture/knowledge-map.md\n M docs/plugins/computer-browser-control.md\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/macos.css\n M internal/server/web/sanctum.css\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/web/style.css\n M internal/server/web/task-outcome.js\n M internal/server/workflow.go\n M scripts/build-native-computer-bridge.sh\n?? docs/tasks/aide-computer-bridge-icon-20261011.json\n?? docs/tasks/starmap-highlight-blackholes-20261011.json\n?? internal/server/web/starmap-gravity.js\n?? scripts/render-computer-bridge-icon.swift\n?? scripts/starmap-gravity.test.cjs",
   "acceptance": [
-    "自动压缩向当前任务 SSE 发布开始、摘要完成/折叠中、完成或失败阶段，事件携带会话身份、折叠消息数及真实压缩前后估算。",
-    "侧栏上下文卡在压缩期间持续可见动画与阶段文案，结束后显示压缩前后估算和节省值；切换到其他会话时不串状态。",
+    "自动压缩向当前任务 SSE 与会话进度接口发布开始、摘要 map/reduce 批次、折叠保存、完成或失败阶段，事件携带会话身份、开始时间、折叠消息数及真实压缩前后估算。",
+    "侧栏上下文卡持续显示摘要批次、累计耗时、折叠消息数与压缩前估算；完成后显示压缩前后估算和节省值；会话切换时状态隔离且切回恢复。",
     "手动压缩使用相同反馈；无可折叠历史或失败时不显示成功/节省假数据。",
     "代码检查通过，并用 Safari 实际查看更新后的 Aide 页面。"
   ],
@@ -36,18 +36,19 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "自动与手动压缩统一写入会话级进度状态，显示模型摘要 map/reduce 当前批次、阶段、待折叠条数与压缩前估算；摘要完成后显示折叠保存，持久化成功后显示同口径前后估算与节省量，失败记录原会话保留。前端手动压缩期间轮询同一状态接口；模型密钥读取失败不会遗留 compactingSessions 锁。",
+      "summary": "自动与手动压缩统一写入会话级进度状态；自动路径现在逐批发布 map/reduce 进度与稳定开始时间。上下文卡显示批次和累计耗时，摘要完成后显示折叠保存，持久化成功后显示同口径前后估算与节省量；失败保留原会话。模型密钥读取失败不会遗留 compactingSessions 锁。",
       "evidence": [
         "internal/server/workflow.go: maybeAutoCompact、streamEvent、sessionContextTokens 与 compactSession。",
         "internal/server/web/app.js: compaction SSE 订阅、状态会话隔离、阶段更新与重复状态清除。",
         "internal/server/web/style.css: 卡片呼吸、进度扫光、阶段标记及减少动态效果适配。",
         "internal/server/workflow.go：compactSession 写入 started/map/reduce/folding/completed/failed 会话进度；批次不含会话正文或摘要正文。",
-        "internal/server/web/app.js：手动压缩与自动压缩共用 startContextCompactionWatch，进度按 sessionId 隔离。"
+        "internal/server/web/app.js：手动压缩与自动压缩共用 startContextCompactionWatch，进度按 sessionId 隔离。",
+        "2026-10-13 后续改进：自动 maybeAutoCompact 为每个 map/reduce 批次写入 SSE 与会话进度缓存；streamEvent 新增 Unix 毫秒 StartedAt；前端统一渲染自动批次并每秒刷新耗时，切换会话时计时状态按 sessionId 隔离。"
       ]
     },
     "verification": {
       "status": "partial",
-      "summary": "2026-10-13: frontend per-session state-isolation regression passes. Native Safari 9999 exercised a dedicated long-output conversation; the visible context meter followed the selected conversation (17.6K in #46, 11.8K in #45, then 17.6K back in #46). Two additional fictional text continuations completed without a captured automatic-compaction event, so browser animation during automatic compaction and event restoration across session switching remain unverified.",
+      "summary": "Go 定向回归、40 项 quick profile、前端定向状态隔离/批次/耗时渲染回归和文档检查通过。Safari 9999 的实测已确认旧候选在真实自动压缩时会长期停在静态“正在整理”，修复已完成；修复代码尚未在系统 Safari 中运行，因此浏览器验收待做。",
       "evidence": [
         "node --check internal/server/web/app.js：通过。",
         "git diff --check（本任务四个目标文件）：通过。",
@@ -73,18 +74,23 @@
         "While the second text-only Aide task was running, switching to session #45 changed the active meter to 11.8K; returning to #46 restored 17.6K. This confirms the visible meter follows the selected session, but does not prove a hidden compaction event was retained.",
         "Source inspection: maybeAutoCompact uses a message-only DSH heuristic threshold of 12,000 tokens (or 55% of model window when lower); the UI meter includes additional system/tool components. Therefore 17.6K UI estimate alone does not prove the automatic threshold was crossed.",
         "2026-10-13 native Safari #46: second pure-text continuation completed and context meter rose to 19.3K/64K, but no automatic compaction progress event appeared. The automatic-compression browser animation acceptance is still pending; this observed meter value cannot be used as proof the DSH message-only trigger threshold was crossed.",
-        "python3 scripts/agent-route.py verify quick：PASS，38 configured checks，receipt fingerprint 6c92793aeb36954492c086019a7296adfd0719c9644feb44ec5f2f63a9c7624b, HEAD before commit c907250e10cc015c73f3152143b190b701f0c60b. The dedicated session-state VM regression was additionally run directly and passed."
+        "python3 scripts/agent-route.py verify quick：PASS，38 configured checks，receipt fingerprint 6c92793aeb36954492c086019a7296adfd0719c9644feb44ec5f2f63a9c7624b, HEAD before commit c907250e10cc015c73f3152143b190b701f0c60b. The dedicated session-state VM regression was additionally run directly and passed.",
+        "2026-10-13 native Safari localhost:9999 #46: 合成长对话的助手任务已回复“收到”，页面仍显示静态“正在整理 8 条早期消息并生成连续摘要 · 当前约 12.9K”；切到 #45 时不显示压缩状态，切回 #46 显示状态仍在但无批次/耗时/终态。说明旧候选的自动进度不够可观测；本轮未重启服务，避免中断正在显示整理状态的会话。",
+        "本轮修复后：node --check internal/server/web/app.js PASS；node scripts/test_context_compaction_ui.cjs PASS，覆盖自动 map 第 2/5 批、累计 1分5秒显示、切换会话隔离与终态前后估算；git diff --check PASS。",
+        "2026-10-13 网络隔离容器 Go 定向回归：gofmt 后 `go test -mod=vendor ./internal/server -run \"^(TestAutoCompactionPublishesObservableLifecycle|TestManualCompactionPublishesLiveProgressAndTokenEstimates)$\" -count=1` PASS（1.266s）。",
+        "2026-10-13 `python3 scripts/agent-route.py verify quick` PASS，40 项 configured checks，fingerprint e4ba964673b37e86c85114e7ec041e83147da71347cd7b550e851c255c9a31d4，HEAD 71ed7d6009a171c403354ceec7aab9e7582d1139。此 quick 不包含 Go 编译，也不替代 Safari 修复版验收。"
       ],
       "full_profile": "FAIL",
       "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504"
     },
     "documentation": {
       "status": "pass",
-      "summary": "Architecture docs describe actual per-session compaction feedback state and its observable limits; full automatic Safari animation remains pending.",
+      "summary": "架构与用户指南描述自动/手动压缩的批次与耗时可视化；实际 Safari 已发现旧候选静态状态缺陷，修复版浏览器验收待运行。",
       "evidence": [
         "docs/architecture.md：上下文预算与压缩段落已更新。",
         "docs/architecture.md 与 docs/user-guide.md 说明自动和手动压缩共享阶段反馈；本轮新增的手动批次轮询仍需系统 Safari 验收。",
-        "docs/architecture.md: context card progress is cached per session; cross-session state must not render, and actual automatic trigger/browser animation is not claimed from a meter-only observation."
+        "docs/architecture.md: context card progress is cached per session; cross-session state must not render, and actual automatic trigger/browser animation is not claimed from a meter-only observation.",
+        "docs/architecture.md、docs/user-guide.md 与本任务记录已同步说明自动批次缓存和每秒耗时显示，并保留 Safari 修复版验收待做的限制。"
       ]
     },
     "cleanup": {
@@ -97,13 +103,14 @@
     },
     "release": {
       "status": "partial",
-      "summary": "Source/UI fix committed and pushed to origin/main as a4d4db3. Not released. Task remains partial because real Safari automatic compaction animation and active-event switching acceptance were not captured.",
+      "summary": "既有实现曾推送 origin/main；本轮针对 Safari 实测缺陷的修复尚未提交或推送，也未发布。",
       "evidence": [
-        "git push origin main: PASS; origin/main advanced from 21ca93b to a4d4db3."
+        "git push origin main: PASS; origin/main advanced from 21ca93b to a4d4db3.",
+        "本轮自动批次/耗时修复尚未提交或推送；待 Go 定向回归及系统 Safari 修复版验收后按用户的阶段性推送要求提交。"
       ]
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "Frontend fix caches compaction progress by session ID and clears stale status safely; focused regression passes. Native Safari 9999 confirmed the meter follows session selection (#46 17.6K, #45 11.8K, return #46 17.6K). Two long fictional text continuations did not yield an observed automatic-compaction event. Do not claim complete browser acceptance; remaining: trigger actual automatic compression in Safari, observe started/map-reduce/folding/completed states and verify state restore/isolation, then repeat stability."
+  "handoff": "Safari 9999 长会话 #46 实际显示回复完成后仍静态“正在整理”，无批次、耗时或终态。源码已补齐自动压缩 map/reduce 进度写入 SSE 与会话状态缓存，前端显示批次和累计耗时。网络隔离容器 Go 定向回归 PASS，40 项 quick profile PASS，UI VM 回归和文档检查 PASS。修复版系统 Safari 验收仍待做；需使用已可信的本机服务入口验证，不可绕过证书安全拦截。"
 }

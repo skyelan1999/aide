@@ -1491,6 +1491,7 @@ type streamEvent struct {
 	CallID       string     `json:"callId,omitempty"`    // 关联 intent↔tool 事件，定位第几个工具
 	OK           bool       `json:"ok,omitempty"`        // tool 事件：是否执行成功
 	Phase        string     `json:"phase,omitempty"`     // compaction阶段：started | folding | completed | failed
+	StartedAt    int64      `json:"startedAt,omitempty"` // compaction开始时间（Unix毫秒），用于持续显示耗时
 	Preflight    bool       `json:"preflight,omitempty"` // 是否为发送任务前的同步压缩
 	BatchStage   string     `json:"batchStage,omitempty"`
 	Batch        int        `json:"batch,omitempty"`
@@ -4485,6 +4486,12 @@ func (a *App) contextCompactionProgressHandler(w http.ResponseWriter, r *http.Re
 func (a *App) setContextCompactionProgress(sessionID string, event streamEvent) {
 	event.SessionID = sessionID
 	a.mu.Lock()
+	if previous, ok := a.contextCompactionProgress[sessionID]; ok && event.StartedAt == 0 {
+		event.StartedAt = previous.Event.StartedAt
+	}
+	if event.StartedAt == 0 && (event.Phase == "started" || event.Phase == "folding") {
+		event.StartedAt = time.Now().UnixMilli()
+	}
 	a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: event, UpdatedAt: time.Now()}
 	a.mu.Unlock()
 }
@@ -4519,7 +4526,7 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 		a.contextCompactionProgress = map[string]contextCompactionProgress{}
 	}
 	a.contextCompactionProgress[sessionID] = contextCompactionProgress{
-		Event:     streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", BeforeTokens: beforeTokens, Folded: split, Preflight: true},
+		Event:     streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", StartedAt: time.Now().UnixMilli(), BeforeTokens: beforeTokens, Folded: split, Preflight: true},
 		UpdatedAt: time.Now(),
 	}
 	a.mu.Unlock()
@@ -4680,7 +4687,7 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 	}
 	if split > 0 {
 		a.contextCompactionProgress[sessionID] = contextCompactionProgress{
-			Event:     streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", BeforeTokens: beforeTokens, Folded: split},
+			Event:     streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", StartedAt: time.Now().UnixMilli(), BeforeTokens: beforeTokens, Folded: split},
 			UpdatedAt: time.Now(),
 		}
 	}
@@ -4984,32 +4991,48 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, ta
 	if split == 0 {
 		return
 	}
-	a.publishStream(taskID, streamEvent{Event: "compaction", SessionID: s.ID, Phase: "started", BeforeTokens: beforeTokens, Folded: split, Text: fmt.Sprintf("正在整理 %d 条早期消息并生成连续摘要", split)})
-	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact)
+	startedAt := time.Now().UnixMilli()
+	publishProgress := func(event streamEvent) {
+		event.StartedAt = startedAt
+		a.setContextCompactionProgress(s.ID, event)
+		a.publishStream(taskID, event)
+	}
+	publishLockedProgress := func(event streamEvent) {
+		event.StartedAt = startedAt
+		if a.contextCompactionProgress == nil {
+			a.contextCompactionProgress = map[string]contextCompactionProgress{}
+		}
+		a.contextCompactionProgress[s.ID] = contextCompactionProgress{Event: event, UpdatedAt: time.Now()}
+		a.publishStream(taskID, event)
+	}
+	publishProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "started", BeforeTokens: beforeTokens, Folded: split, Text: fmt.Sprintf("正在整理 %d 条早期消息并生成连续摘要", split)})
+	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact, func(stage string, batch, batches int) {
+		publishProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "started", BeforeTokens: beforeTokens, Folded: split, BatchStage: stage, Batch: batch, Batches: batches})
+	})
 	if err != nil {
-		a.publishStream(taskID, streamEvent{Event: "compaction", SessionID: s.ID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "摘要生成失败，原会话内容已保留"})
+		publishProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "摘要生成失败，原会话内容已保留"})
 		return
 	}
-	a.publishStream(taskID, streamEvent{Event: "compaction", SessionID: s.ID, Phase: "folding", BeforeTokens: beforeTokens, Folded: split, Text: fmt.Sprintf("摘要已生成，正在折叠这 %d 条早期消息并保存", split)})
+	publishProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "folding", BeforeTokens: beforeTokens, Folded: split, Text: fmt.Sprintf("摘要已生成，正在折叠这 %d 条早期消息并保存", split)})
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if len(s.Messages) != baseLen {
-		a.publishStream(taskID, streamEvent{Event: "compaction", SessionID: s.ID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话在压缩期间发生变化，本次折叠已取消"})
+		publishLockedProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话在压缩期间发生变化，本次折叠已取消"})
 		return // 会话已变化，放弃本轮自动压缩
 	}
 	if !compactSnapshotMatches(s.Messages[:split], snap.messages) {
-		a.publishStream(taskID, streamEvent{Event: "compaction", SessionID: s.ID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话内容在压缩期间发生变化，本次折叠已取消"})
+		publishLockedProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话内容在压缩期间发生变化，本次折叠已取消"})
 		return
 	}
 	candidate := compactedSessionCandidate(s, snap, split, summary)
 	if err := a.save(&candidate); err != nil {
 		log.Printf("自动压缩保存失败: %v", err)
-		a.publishStream(taskID, streamEvent{Event: "compaction", SessionID: s.ID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "压缩结果保存失败，会话原历史已保留"})
+		publishLockedProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "压缩结果保存失败，会话原历史已保留"})
 		return
 	}
 	*s = candidate
 	afterTokens := sessionContextTokens(s)
-	a.publishStream(taskID, streamEvent{Event: "compaction", SessionID: s.ID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: afterTokens, Folded: split, Text: fmt.Sprintf("已折叠 %d 条早期消息", split)})
+	publishLockedProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: afterTokens, Folded: split, Text: fmt.Sprintf("已折叠 %d 条早期消息", split)})
 }
 
 // runEvents 以 SSE 推送给定 run 的实时事件（step/delta/tool/status/done）。
