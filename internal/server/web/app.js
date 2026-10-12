@@ -1025,29 +1025,36 @@ function lineCharOffset(lines, k) {
   for (let i = 0; i < k; i++) n += lines[i].length + 1; // +1：'\n'
   return n;
 }
-// liveSplitPoint 返回「已稳定块 / 活动块」的字符分割点。
-// 已稳定块 = 已闭合的 markdown 顶层块（完整段落 / 代码块 / 列表 / 表格），
-// 只需解析一次；活动块 = 最后一个仍在增长的块，逐帧只解析它，让单帧渲染
-// 代价近似 O(活动块) 而非 O(全文)，长回答也不掉帧。
-function liveSplitPoint(src) {
-  const lines = src.split('\n');
-  let fenceOpen = false, fenceStart = -1, lastFenceEnd = -1;
-  for (let i = 0; i < lines.length; i++) {
-    // 围栏标记：行首 0-3 空格后紧跟 ``` 或 ~~~（含四反引号围栏）
-    if (/^ {0,3}(```|~~~)/.test(lines[i])) {
-      if (!fenceOpen) { fenceOpen = true; fenceStart = i; }
-      else { fenceOpen = false; lastFenceEnd = i; }
+// 已稳定块只解析一次；活动块逐帧渲染。边界扫描本身也只处理新增字符，
+// 避免超长回答每一帧都遍历累计全文。
+function newLiveBoundaryState() {
+  return { scanned: 0, lineStart: 0, linePrefix: '', lineWhitespace: true, fenceOpen: false, fenceStart: 0, boundary: 0 };
+}
+// Scan only newly arrived UTF-16 code units. Re-splitting the complete stream on
+// every animation frame made total work quadratic for very long model answers.
+function advanceLiveBoundary(src, scan) {
+  if (src.length < scan.scanned) Object.assign(scan, newLiveBoundaryState());
+  for (let i = scan.scanned; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === '\n') {
+      if (/^ {0,3}(```|~~~)/.test(scan.linePrefix)) {
+        if (!scan.fenceOpen) { scan.fenceOpen = true; scan.fenceStart = scan.lineStart; }
+        else scan.fenceOpen = false;
+      }
+      if (scan.lineWhitespace && !scan.fenceOpen) scan.boundary = scan.lineStart;
+      scan.lineStart = i + 1;
+      scan.linePrefix = '';
+      scan.lineWhitespace = true;
+    } else {
+      if (scan.linePrefix.length < 8) scan.linePrefix += ch;
+      if (ch !== '\r' && !/\s/.test(ch)) scan.lineWhitespace = false;
     }
   }
-  // 未闭合围栏：活动块从开启围栏的行开始，整段未完成代码块都在活动区。
-  if (fenceOpen) return lineCharOffset(lines, fenceStart);
-  // 围栏已闭合：分割点不得早于最后一个闭合围栏行，避免把代码块【内部】的
-  // 空行误判成顶层块边界而拆开代码块。
-  const lower = lastFenceEnd >= 0 ? lastFenceEnd : 0;
-  for (let i = lines.length - 1; i >= lower; i--) {
-    if (lines[i].trim() === '') return lineCharOffset(lines, i);
-  }
-  return lineCharOffset(lines, lower); // 围栏刚闭合 / 尚无空行：保守把最后块留在活动区
+  scan.scanned = src.length;
+  // Treat an unterminated final fence line as a pending boundary without
+  // mutating scanner state; the next appended characters may complete it.
+  if (src.length > scan.lineStart && /^ {0,3}(```|~~~)/.test(scan.linePrefix)) return scan.lineStart;
+  return scan.fenceOpen ? scan.fenceStart : scan.boundary;
 }
 function renderLiveAnswer(runId) {
   const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
@@ -1060,7 +1067,9 @@ function renderLiveAnswer(runId) {
   const live = state.live[runId] || '';
   const full = live || (step?.content || '');
   if (!full) { ans.innerHTML = ''; return; }
-  const split = liveSplitPoint(full);
+  let cache = state.liveStable[runId];
+  if (!cache) cache = state.liveStable[runId] = { length: 0, element: null, scan: newLiveBoundaryState() };
+  const split = advanceLiveBoundary(full, cache.scan);
   const stableText = full.slice(0, split);
   const activeText = full.slice(split);
   liveActiveBytes[runId] = activeText.length;
@@ -1068,22 +1077,45 @@ function renderLiveAnswer(runId) {
   let stableEl = ans.querySelector('.live-stable');
   let activeEl = ans.querySelector('.live-active');
   if (!stableEl || !activeEl) {
-    ans.innerHTML = '';
-    stableEl = document.createElement('div');
+    ans.replaceChildren();
+    stableEl = cache?.element || document.createElement('div');
     stableEl.className = 'live-stable';
     activeEl = document.createElement('div');
     activeEl.className = 'live-active';
     ans.append(stableEl, activeEl);
-    state.liveStable[runId] = null;
   }
-  const cache = state.liveStable[runId];
-  if (!cache || cache.text !== stableText) {
-    stableEl.innerHTML = stableText ? renderMarkdown(stableText, true) : '';
-    state.liveStable[runId] = { text: stableText };
+  if (!cache.element) { stableEl.replaceChildren(); cache.element = stableEl; }
+  else if (stableEl !== cache.element && stableEl?.parentNode === ans) { stableEl.replaceWith(cache.element); stableEl = cache.element; }
+  cache.element = stableEl;
+  if (stableText.length < cache.length) { stableEl.replaceChildren(); cache.length = 0; }
+  if (cache.length < stableText.length) {
+    // Closed Markdown blocks are append-only. Parse only newly closed blocks,
+    // rather than reparsing the entire answer on each session refresh.
+    stableEl.insertAdjacentHTML('beforeend', renderMarkdown(stableText.slice(cache.length), true));
+    cache.length = stableText.length;
   }
   // live 渲染跳过代码高亮（每帧高亮代价高），完成态由 renderSession 全量补全
-  activeEl.innerHTML = (activeText ? renderMarkdown(activeText, true) : '') +
-    '<span class="stream-cursor" aria-hidden="true">▍</span>';
+  if (activeText.length > 16384) {
+    // Very long, still-open paragraphs/code fences are expensive to reparse on
+    // every token. Keep streaming them as text; the completed answer receives
+    // its normal Markdown render once the model finishes.
+    const rendered = Number(activeEl.dataset.len || 0);
+    const textNode = activeEl.firstChild;
+    if (activeEl.dataset.mode !== 'plain' || activeText.length < rendered || !textNode || textNode.nodeType !== Node.TEXT_NODE) {
+      activeEl.replaceChildren(document.createTextNode(activeText));
+      activeEl.dataset.mode = 'plain';
+      activeEl.dataset.len = String(activeText.length);
+    } else if (activeText.length > rendered) {
+      textNode.appendData(activeText.slice(rendered));
+      activeEl.dataset.len = String(activeText.length);
+    }
+    let cursor = activeEl.querySelector('.stream-cursor');
+    if (!cursor) { cursor = el('span', 'stream-cursor', '▍'); cursor.setAttribute('aria-hidden', 'true'); activeEl.append(cursor); }
+  } else {
+    delete activeEl.dataset.mode; delete activeEl.dataset.len;
+    activeEl.innerHTML = (activeText ? renderMarkdown(activeText, true) : '') +
+      '<span class="stream-cursor" aria-hidden="true">▍</span>';
+  }
   const c = $('conversation');
   if (state.autoScroll) c.scrollTo({ top: c.scrollHeight, behavior: 'instant' });
   updateJumpBtn();

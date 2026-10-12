@@ -51,12 +51,13 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "定向 Go 回归、前端扫描回归、JS 语法和文档链接检查通过；系统 Safari 尚未对 18212 当前源码候选操作，当前受 Mac 锁定阻塞。",
+      "summary": "定向 Go 回归、前端扫描回归、JS 语法和文档链接检查通过；服务端全量测试未通过（包含插件校验失败及 Office 脚本路径缺失）；系统 Safari 尚未对 18212 当前源码候选操作，当前受 Mac 锁定阻塞。",
       "evidence": [
         "离线 Docker Go 1.26 扩展回归：覆盖 TestMemoryTokensLegacyAndExternalEdit、容量/损坏投影测试、24 写并发一致性、连续摘要请求预算、畸形摘要、工具参数快照变化、超限/新任务/自动/并发压缩；`go test -mod=vendor ./internal/server -run 'Test(MemoryTokens.*|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall|RemediationAutoCompactNotBlockedByHeldMutex|RemediationConcurrentCompactionNoPanicNoDeadlock)$' -count=1`：PASS（6.920s）。",
         "离线 Docker Go 1.26：`go test -mod=vendor ./internal/server -run 'Test(CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|MemoryTokens|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall)$' -count=1`：PASS（3.828s）。",
         "`node --check internal/server/web/app.js && node scripts/live-markdown-scan.test.cjs`：PASS；2M 字符/4096 增量扫描回归 PASS。",
         "`python3 scripts/check_docs.py`：PASS（187 Markdown、533 本地链接）；`git diff --check`：PASS。",
+        "离线 Docker Go 1.26 全量 `go test -mod=vendor ./internal/server -count=1`：FAIL（328s）。代表性既有集成失败：多项插件装配返回 `插件校验失败`；`TestRemoteWorkspaceDispatch` 未找到 `office_artifact.py`（需配置 AIDE_OFFICE_SCRIPTS）。定向超长对话和记忆回归仍 PASS。",
         "隔离源码服务：Docker `aide-longconv-20261012`，Safari 候选 `https://localhost:18212`，空数据卷与只读源码绑定；9999/18211 未触碰。Safari：NOT_RUN，系统检测 Mac 锁定，等用户手动解锁后操作。"
       ]
     },
@@ -81,5 +82,5 @@
   },
   "release_authorization": "推送检查点授权：用户此前要求阶段性测完后及时 push；本次仅推送已验证的后端与文档检查点，不打 tag、不发布。",
   "rollback": "回滚仅撤销此任务记录范围文件中的对应提交/差异；不整体恢复工作区、不清理会话或记忆数据。内存模型/API schema 不变；token 文件格式不变。",
-  "handoff": "阶段进度：需求与设计、实现、文档完成；静态和定向 Go 验证通过。仅 Safari 实机验收待继续：Mac 手动解锁后在 Safari 打开 https://localhost:18212；若出现“连接非私人”证书页面，须用户亲自处理后回“已处理”。验收容器 aide-longconv-20261012 持续运行，停止命令为 `docker stop aide-longconv-20261012`。此容器源码只读、数据目录 /private/tmp/aide-longconv-20261012/data，工作区为空隔离目录。"
+  "handoff": "阶段进度：需求与设计、实现、文档完成；静态和定向 Go 验证通过。服务端全量测试未通过，代表失败见 verification.evidence；插件装配校验和 AIDE_OFFICE_SCRIPTS 路径配置需单独定位。Safari 实机验收待继续：Mac 手动解锁后在 Safari 打开 https://localhost:18212；若出现“连接非私人”证书页面，须用户亲自处理后回“已处理”。验收容器 aide-longconv-20261012 持续运行，停止命令为 `docker stop aide-longconv-20261012`。此容器源码只读、数据目录 /private/tmp/aide-longconv-20261012/data，工作区为空隔离目录。"
 }
