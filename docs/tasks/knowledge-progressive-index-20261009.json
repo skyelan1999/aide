@@ -109,7 +109,6 @@
       }
     ],
     "pending": [
-      "Local direct snapshot/search continuation",
       "Local cursor/material persistence",
       "Non-SSH progressive remote adapters",
       "Large-library performance",
@@ -311,11 +310,11 @@
     "implementation": "Direct snapshot/search/reference and updates share progressive state and checkpoint",
     "test": "All TestKnowledge -race PASS 29.365s",
     "runtime": "Real start.command HTTP snapshots 8 -> 120, late-file search and reference PASS",
-    "system_browser": "Safari resumed on 69a0 candidate: original search, line/hash and #42 draft callback verified; late-file raw-text search limited by 32-file read budget, targeted/continuation UI pending.",
+    "system_browser": "2026-10-12 Safari on isolated current-source candidate localhost:18217: indexed 40 disposable Markdown fixtures in the local workspace, searched a unique raw-text marker, observed first page 32/40 with continuation control, continued and observed 40/40 documents and 40 cumulative exact-text results (32+8). Temporary fixture directory removed after acceptance. This verifies the local raw-text continuation UI/API path on the current candidate; it does not verify large-library performance, cursor persistence across restart, SSH/other adapters, or full authenticated production acceptance.",
     "remaining": [
       "Non-SSH progressive remote adapters",
       "Large-library performance",
-      "Full real-provider and Windows acceptance"
+      "Full real-provider acceptance"
     ]
   },
   "ftp_progressive_checkpoint": {
