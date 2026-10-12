@@ -2932,6 +2932,6 @@
       "quick_profile": "PASS: python3 scripts/agent-route.py verify quick; all 38 configured checks succeeded; receipt fingerprint 6c92793aeb36954492c086019a7296adfd0719c9644feb44ec5f2f63a9c7624b. Dedicated compaction UI isolation VM test ran separately and passed."
     },
     "release": "not_run",
-    "push": "pending"
+    "push": "a4d4db3 pushed to origin/main; this ledger status update follows."
   }
 }

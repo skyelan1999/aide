@@ -97,8 +97,10 @@
     },
     "release": {
       "status": "partial",
-      "summary": "Not released. Source/UI fix is ready for commit and push, but task remains partial because real Safari automatic compaction animation was not captured.",
-      "evidence": []
+      "summary": "Source/UI fix committed and pushed to origin/main as a4d4db3. Not released. Task remains partial because real Safari automatic compaction animation and active-event switching acceptance were not captured.",
+      "evidence": [
+        "git push origin main: PASS; origin/main advanced from 21ca93b to a4d4db3."
+      ]
     }
   },
   "release_authorization": "",
