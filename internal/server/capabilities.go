@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -34,6 +36,7 @@ type CapabilityItem struct {
 	DaemonState                  string          `json:"daemonState,omitempty"`
 	HostState                    string          `json:"hostState,omitempty"`
 	Check                        CapabilityCheck `json:"check"`
+	WriteCheck                   CapabilityCheck `json:"writeCheck"`
 	binding                      string
 	source                       Source
 	plugin                       PluginManifest
@@ -105,18 +108,35 @@ func (a *App) capabilityItemsLocked() []CapabilityItem {
 	items = append(items, model)
 	for i := range items {
 		items[i].Check = CapabilityCheck{State: "not_run", Message: "尚未检查"}
-		if saved, ok := a.capabilityChecks[items[i].Key]; ok {
-			items[i].Check = saved
-			if saved.Binding != items[i].binding {
-				items[i].Check.State = "stale"
-				items[i].Check.Message = "配置或凭据已变化，请重新检查"
-			} else if at, err := time.Parse(time.RFC3339Nano, saved.At); err != nil || time.Since(at) > 5*time.Minute {
-				items[i].Check.State = "stale"
-				items[i].Check.Message = "检查已超过5分钟，请重新检查"
-			}
-		}
+		items[i].WriteCheck = CapabilityCheck{State: "not_run", Message: "尚未实测写入"}
+		items[i].Check = a.currentCapabilityCheckLocked(items[i].Key, items[i].binding, "read")
+		items[i].WriteCheck = a.currentCapabilityCheckLocked(items[i].Key, items[i].binding, "write")
 	}
 	return items
+}
+
+func capabilityReceiptKey(key, mode string) string {
+	if mode == "write" {
+		return key + "#write"
+	}
+	return key
+}
+
+func (a *App) currentCapabilityCheckLocked(key, binding, mode string) CapabilityCheck {
+	message := "尚未检查"
+	if mode == "write" {
+		message = "尚未实测写入"
+	}
+	saved, ok := a.capabilityChecks[capabilityReceiptKey(key, mode)]
+	if !ok {
+		return CapabilityCheck{State: "not_run", Message: message}
+	}
+	if saved.Binding != binding {
+		saved.State, saved.Message = "stale", "配置或凭据已变化，请重新检查"
+	} else if at, err := time.Parse(time.RFC3339Nano, saved.At); err != nil || time.Since(at) > 5*time.Minute {
+		saved.State, saved.Message = "stale", "检查已超过5分钟，请重新检查"
+	}
+	return saved
 }
 func (a *App) listCapabilities(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
@@ -131,6 +151,7 @@ func (a *App) checkCapability(w http.ResponseWriter, r *http.Request) {
 		Key         string `json:"key"`
 		Fingerprint string `json:"fingerprint"`
 		WorkspaceID string `json:"workspaceId"`
+		Mode        string `json:"mode"`
 	}
 	r.Body = http.MaxBytesReader(w, r.Body, 4096)
 	if err := decode(w, r, &in); err != nil {
@@ -162,6 +183,19 @@ func (a *App) checkCapability(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("该能力未启用"))
 		return
 	}
+	if in.Mode == "" {
+		in.Mode = "read"
+	}
+	if in.Mode != "read" && in.Mode != "write" {
+		a.mu.Unlock()
+		fail(w, 400, errors.New("检查模式无效"))
+		return
+	}
+	if in.Mode == "write" && (!selected.WritableConfigured || !capabilityWriteSupported(selected)) {
+		a.mu.Unlock()
+		fail(w, 400, errors.New("该能力未配置可用的写入探测"))
+		return
+	}
 	if a.capabilityChecking {
 		a.mu.Unlock()
 		fail(w, 409, errors.New("已有能力检查正在运行"))
@@ -173,7 +207,13 @@ func (a *App) checkCapability(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	ctx, cancel := context.WithTimeout(r.Context(), 35*time.Second)
 	defer cancel()
-	message, err := a.probeCapability(ctx, selected)
+	var message string
+	var err error
+	if in.Mode == "write" {
+		message, err = a.probeCapabilityWrite(ctx, selected)
+	} else {
+		message, err = a.probeCapability(ctx, selected)
+	}
 	if ctx.Err() != nil {
 		err = errors.New("检查已取消或超时")
 	}
@@ -202,9 +242,174 @@ func (a *App) checkCapability(w http.ResponseWriter, r *http.Request) {
 	if len(a.capabilityChecks) >= 256 {
 		a.capabilityChecks = map[string]CapabilityCheck{}
 	}
-	a.capabilityChecks[selected.Key] = check
+	a.capabilityChecks[capabilityReceiptKey(selected.Key, in.Mode)] = check
 	a.mu.Unlock()
 	jsonOut(w, 200, check)
+}
+
+func capabilityWriteSupported(item CapabilityItem) bool {
+	switch item.Kind {
+	case "workspace":
+		return true
+	case "source":
+		return item.source.RW && (item.source.Type == "local" || item.source.Type == "skill" || item.source.Type == "sftp" || item.source.Type == "workspace-sftp")
+	default:
+		return false
+	}
+}
+
+func capabilityProbeName() (string, error) {
+	var b [16]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		return "", err
+	}
+	return ".aide-capability-probe-" + hex.EncodeToString(b[:]) + ".tmp", nil
+}
+
+func writeProbe(root *os.Root, name string) error {
+	f, err := root.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return errors.New("无法在目标目录创建独占临时探针")
+	}
+	marker := []byte("aide write permission probe\n")
+	n, writeErr := f.Write(marker)
+	closeErr := f.Close()
+	removeErr := root.Remove(name)
+	if writeErr != nil || n != len(marker) || closeErr != nil || removeErr != nil {
+		return errors.New("写入探针失败或清理未能确认；请检查目标目录")
+	}
+	return nil
+}
+
+func (a *App) probeCapabilityWrite(ctx context.Context, item CapabilityItem) (string, error) {
+	name, err := capabilityProbeName()
+	if err != nil {
+		return "", errors.New("无法生成安全探针名称")
+	}
+	switch item.Kind {
+	case "workspace":
+		if strings.HasPrefix(item.Detail, "ssh") {
+			if err := a.ensureSSHSession(ctx); err != nil {
+				return "", errors.New("SSH 认证或连接未通过")
+			}
+			return "", a.probeRemoteWrite(a.workspaceRemotePath(name), nil)
+		}
+		if item.root == nil {
+			return "", errors.New("工作区根目录不可用")
+		}
+		if err := writeProbe(item.root, name); err != nil {
+			return "", err
+		}
+	case "source":
+		if item.source.Type == "local" || item.source.Type == "skill" {
+			root, err := a.localSourceRoot(item.source)
+			if err != nil {
+				return "", errors.New("来源根目录不可用")
+			}
+			err = writeProbe(root, name)
+			_ = root.Close()
+			if err != nil {
+				return "", err
+			}
+		} else {
+			remote := pathJoinRemote(item.source.Config.Path, name)
+			if item.source.Type == "workspace-sftp" {
+				remote = a.workspaceRemoteSourcePath(item.source.Config.Path, name)
+				if err := a.probeRemoteWrite(remote, nil); err != nil {
+					return "", err
+				}
+			} else if item.source.Type == "sftp" {
+				if err := a.probeRemoteSourceWrite(item.source, remote); err != nil {
+					return "", err
+				}
+			} else {
+				return "", errors.New("该来源类型不支持写入实测")
+			}
+		}
+	default:
+		return "", errors.New("该能力不支持写入实测")
+	}
+	return "已在目标根目录创建并删除独占临时探针；写入与清理均通过", nil
+}
+
+func (a *App) probeRemoteWrite(remote string, expected *uint64) error {
+	dir := remote + ".d"
+	command := "mkdir " + shellQuoteRemote(dir) + "\n"
+	var out string
+	var err error
+	if expected != nil {
+		out, err = a.sftpBatchExpected(command, expected)
+	} else {
+		out, err = a.sftpBatch(command)
+	}
+	if err != nil || sftpCommandFailed(out) {
+		return errors.New("无法创建 SSH 临时探针目录")
+	}
+	file := pathJoinRemote(dir, "probe.txt")
+	tmp, err := os.CreateTemp("", "aide-capability-probe-*")
+	if err != nil {
+		if cleanupErr := a.sftpRemove(dir, true); cleanupErr != nil {
+			return errors.New("本地探针暂存失败，且远端临时目录清理未能确认")
+		}
+		return errors.New("本地探针暂存失败")
+	}
+	local := tmp.Name()
+	marker := []byte("aide write permission probe\n")
+	n, writeErr := tmp.Write(marker)
+	closeErr := tmp.Close()
+	defer os.Remove(local)
+	if writeErr == nil && n == len(marker) && closeErr == nil {
+		var out string
+		out, err = a.sftpBatch("put " + shellQuoteRemote(local) + " " + shellQuoteRemote(file) + "\n")
+		if err == nil && sftpCommandFailed(out) {
+			err = errors.New("SFTP 写入命令失败")
+		}
+	} else {
+		writeErr = errors.New("本地探针写入失败或不完整")
+	}
+	removeFileErr := a.sftpRemove(file, false)
+	removeDirErr := a.sftpRemove(dir, true)
+	if writeErr != nil || closeErr != nil || err != nil || removeFileErr != nil || removeDirErr != nil {
+		return errors.New("SSH 探针写入失败或远端清理未能确认")
+	}
+	return nil
+}
+
+func (a *App) probeRemoteSourceWrite(src Source, remote string) error {
+	dir := remote + ".d"
+	out, err := a.sftpBatchSource(src, "mkdir "+shellQuoteRemote(dir)+"\n")
+	if err != nil || sftpCommandFailed(out) {
+		return errors.New("无法创建 SSH 来源临时探针目录")
+	}
+	file := pathJoinRemote(dir, "probe.txt")
+	tmp, err := os.CreateTemp("", "aide-capability-probe-*")
+	if err != nil {
+		out, cleanupErr := a.sftpBatchSource(src, "rmdir "+shellQuoteRemote(dir)+"\n")
+		if cleanupErr != nil || sftpCommandFailed(out) {
+			return errors.New("本地探针暂存失败，且 SSH 来源临时目录清理未能确认")
+		}
+		return errors.New("本地探针暂存失败")
+	}
+	local := tmp.Name()
+	marker := []byte("aide write permission probe\n")
+	n, writeErr := tmp.Write(marker)
+	closeErr := tmp.Close()
+	defer os.Remove(local)
+	if writeErr == nil && n == len(marker) && closeErr == nil {
+		var out string
+		out, err = a.sftpBatchSource(src, "put "+shellQuoteRemote(local)+" "+shellQuoteRemote(file)+"\n")
+		if err == nil && sftpCommandFailed(out) {
+			err = errors.New("SFTP 写入命令失败")
+		}
+	} else {
+		writeErr = errors.New("本地探针写入失败或不完整")
+	}
+	removeFileOut, removeFileErr := a.sftpBatchSource(src, "rm "+shellQuoteRemote(file)+"\n")
+	removeDirOut, removeDirErr := a.sftpBatchSource(src, "rmdir "+shellQuoteRemote(dir)+"\n")
+	if writeErr != nil || closeErr != nil || err != nil || removeFileErr != nil || sftpCommandFailed(removeFileOut) || removeDirErr != nil || sftpCommandFailed(removeDirOut) {
+		return errors.New("SSH 来源探针写入失败或远端清理未能确认")
+	}
+	return nil
 }
 func (a *App) probeCapability(ctx context.Context, item CapabilityItem) (string, error) {
 	switch item.Kind {

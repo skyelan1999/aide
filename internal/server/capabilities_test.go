@@ -37,6 +37,49 @@ func capabilityFind(t *testing.T, items []CapabilityItem, key string) Capability
 func capabilityBody(workspace string, item CapabilityItem) map[string]any {
 	return map[string]any{"key": item.Key, "fingerprint": item.Fingerprint, "workspaceId": workspace}
 }
+
+func TestCapabilityWriteProbeCreatesAndCleansTemporaryFile(t *testing.T) {
+	a := testApp(t)
+	workspace, items := capabilitySnapshot(t, a)
+	item := capabilityFind(t, items, "workspace")
+	body := capabilityBody(workspace, item)
+	body["mode"] = "write"
+	w := request(a, "POST", "/api/capabilities/check", body)
+	requireStatus(t, w, 200)
+	var result CapabilityCheck
+	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.State != "pass" || !strings.Contains(result.Message, "写入与清理均通过") {
+		t.Fatal(result)
+	}
+	entries, err := os.ReadDir(a.workPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), ".aide-capability-probe-") {
+			t.Fatalf("probe left behind: %s", entry.Name())
+		}
+	}
+	_, items = capabilitySnapshot(t, a)
+	if capabilityFind(t, items, "workspace").WriteCheck.State != "pass" {
+		t.Fatal("write receipt was not exposed separately")
+	}
+}
+
+func TestCapabilityWriteProbeHonorsConfiguredReadOnly(t *testing.T) {
+	a := testApp(t)
+	a.mu.Lock()
+	a.settings.SandboxMode = "read-only"
+	a.mu.Unlock()
+	workspace, items := capabilitySnapshot(t, a)
+	body := capabilityBody(workspace, capabilityFind(t, items, "workspace"))
+	body["mode"] = "write"
+	w := request(a, "POST", "/api/capabilities/check", body)
+	requireStatus(t, w, 400)
+}
+
 func TestCapabilityLocalChecksAndStaleness(t *testing.T) {
 	a := testApp(t)
 	if err := os.WriteFile(filepath.Join(a.workPath, "keep.txt"), []byte("preserve"), 0600); err != nil {
