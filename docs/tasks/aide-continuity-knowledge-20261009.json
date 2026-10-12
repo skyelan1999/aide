@@ -2757,7 +2757,7 @@
     "system_browser": "PASS scoped: native Safari on a fresh start.command candidate at 18222 confirmed same-level Markdown icon templates and refresh recovery of an unsaved draft; exact evidence and limits are in safari_acceptance_20261013_markdown_toolbar_and_draft_recovery_18222. No production 9999 interaction.",
     "full_profile": "PASS for source fingerprint 2f86bc89bb035045035dc6e1c4aae6a95f24047765db60ad930157899517d5e2: go test -race -count=1 -timeout=15m ./... and go vet ./... exited 0 in the authorized disposable Docker test environment; see progress_checkpoint_20261013.full_race.",
     "remaining": [
-      "Large-library performance and real FTP/FTPS service acceptance",
+      "Large-library performance and independent user-hosted FTP/FTPS service acceptance",
       "Real user SSH host and long-running session/source-boundary acceptance",
       "Requirement-by-requirement completion and release/rollback gates",
       "Long-output/compaction browser progress animation and end-to-end continuation acceptance"
@@ -2768,10 +2768,18 @@
     "out_of_scope_by_user": [
       "Windows validation; user reported it tested successfully"
     ],
-    "notes": "This reconciles later pushes and browser state without changing earlier dated receipts. Source pushes are not a release or complete product acceptance. 2026-10-13: fresh 18222 start.command Safari candidate passed direct Markdown template toolbar and unsaved draft refresh recovery; scoped only, not restart/quota/caret acceptance. Candidate Compose project and temp checkout cleaned. Full repository race/vet now passes for fingerprint 2f86bc89bb035045035dc6e1c4aae6a95f24047765db60ad930157899517d5e2; the earlier daemon full-profile timeout is historical and was superseded by lifecycle serialization plus this full pass.",
+    "notes": "This reconciles later pushes and browser state without changing earlier dated receipts. Source pushes are not a release or complete product acceptance. 2026-10-13: fresh 18222 start.command Safari candidate passed direct Markdown template toolbar and unsaved draft refresh recovery; scoped only, not restart/quota/caret acceptance. Candidate Compose project and temp checkout cleaned. Full repository race/vet now passes for fingerprint 2f86bc89bb035045035dc6e1c4aae6a95f24047765db60ad930157899517d5e2; the earlier daemon full-profile timeout is historical and was superseded by lifecycle serialization plus this full pass. 2026-10-13 loopback FTP/implicit-FTPS live curl acceptance passed under race (5.438s); the server is a minimal in-process protocol fixture with temporary credentials/certificate, so it does not close independent provider/server or Safari acceptance.",
     "completed_this_checkpoint": [
-      "Native Safari 18222 acceptance: same-level Markdown icon templates and refresh/reopen/restore of an unsaved draft passed scoped; candidate-only volumes and temp checkout were removed."
-    ]
+      "Native Safari 18222 acceptance: same-level Markdown icon templates and refresh/reopen/restore of an unsaved draft passed scoped; candidate-only volumes and temp checkout were removed.",
+      "Loopback live-curl FTP and implicit-FTPS control/data protocol acceptance under Go race: directory listing, nested Markdown read and progressive batches passed; independent user service and browser remain pending."
+    ],
+    "ftp_loopback_acceptance_20261013": {
+      "status": "PASS scoped",
+      "command": "go test -mod=vendor -race -p=1 ./internal/server -run '^TestKnowledgeFTPAndFTPSLiveAdapters$' -count=1 -timeout=120s",
+      "result": "PASS 5.438s",
+      "scope": "Real system curl over loopback TCP FTP and implicit FTPS; authenticated directory listing, nested Markdown read and progressive indexing batches. FTPS curl wrapper explicitly trusts the temporary local CA.",
+      "limits": "Minimal in-process protocol fixture only. Does not establish independent vsftpd/provider interoperability, user-hosted remote acceptance, Safari/Aide browser behavior, alternate FTP listing formats, large-library performance or release readiness."
+    }
   },
   "safari_acceptance_20261013_markdown_toolbar_and_draft_recovery_18222": {
     "environment": "Native Safari, fresh isolated source snapshot started with start.command at https://localhost:18222; empty isolated workspace /workspace; model not configured; production port 9999 untouched.",
@@ -2785,5 +2793,24 @@
       "limits": "This candidate pass confirms Safari refresh recovery for a local Markdown draft and visible templates. It does not prove service restart recovery, precise caret restoration, quota/crash behavior, long-duration stability, or resource and SSH paths."
     },
     "cleanup": "Stopped and removed only Compose project aide-continuity-20261013, its two test-only volumes and network, and /tmp/aide-continuity-20261013."
+  },
+  "progress_checkpoint_20261013_followup2": {
+    "status": "in_progress",
+    "date": "2026-10-13",
+    "completed": "Loopback FTP and implicit FTPS protocol exercise with real curl client, nested file read and progressive scan passed under Go race.",
+    "remaining": [
+      "Large-library performance and independent user-hosted FTP/FTPS service acceptance",
+      "Real user SSH host and long-running session/source-boundary acceptance",
+      "Requirement-by-requirement completion and release/rollback gates",
+      "Long-output/compaction browser progress animation and end-to-end continuation acceptance"
+    ],
+    "deferred_by_user": [
+      "Real embedding/vector model acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reported it tested successfully"
+    ],
+    "browser_security_boundary": "Safari certificate warning remains handoff-required under computer-use policy; no browser security interstitial was bypassed.",
+    "release": "not_run"
   }
 }
