@@ -75,6 +75,24 @@ func knowledgeClip(s string, n int) string {
 	}
 	return s
 }
+
+// knowledgeMentionLocation returns a source locator for an indexed explicit
+// reference. Evidence is limited to the matched token so path results do not
+// duplicate surrounding document text.
+func knowledgeMentionLocation(text, token string) (line, column int, evidence string) {
+	if token == "" {
+		return 0, 0, ""
+	}
+	index := strings.Index(text, token)
+	if index < 0 {
+		return 0, 0, ""
+	}
+	prefix := text[:index]
+	line = strings.Count(prefix, "\n") + 1
+	lastNewline := strings.LastIndex(prefix, "\n")
+	column = utf8.RuneCountInString(prefix[lastNewline+1:]) + 1
+	return line, column, "显式引用：" + knowledgeClip(token, 160)
+}
 func knowledgeSkip(name string) bool {
 	lower := strings.ToLower(name)
 	return strings.HasPrefix(name, ".") || lower == "node_modules" || lower == "vendor" || lower == "docker-images" || lower == "dist" || lower == "build" || strings.Contains(lower, "secret") || strings.HasSuffix(lower, ".pem") || strings.HasSuffix(lower, ".key") || strings.Contains(lower, "credentials")
@@ -415,28 +433,52 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 		if from.Text == "" || from.Kind == "symbol" {
 			continue
 		}
-		refs := map[string]bool{}
+		refs := map[string]string{}
 		for _, match := range targets.FindAllStringSubmatch(from.Text, 200) {
 			rel := strings.Split(match[1], "#")[0]
 			if from.Kind == "file" {
 				rel = path.Clean(path.Join(path.Dir(from.Path), rel))
 			}
-			refs[rel] = true
+			if _, exists := refs[rel]; !exists {
+				refs[rel] = match[1]
+			}
 		}
 		for _, to := range g.Nodes {
 			if to.Kind != "file" || from.ID == to.ID {
 				continue
 			}
-			explicit := strings.Contains(from.Text, "["+to.ID+"]")
+			token := ""
+			stableID := "[" + to.ID + "]"
+			explicit := strings.Contains(from.Text, stableID)
+			if explicit {
+				token = stableID
+			}
 			if to.Root == "context" {
-				explicit = explicit || strings.Contains(from.Text, "/context/"+to.Path)
+				ref := "/context/" + to.Path
+				if strings.Contains(from.Text, ref) {
+					explicit = true
+					if token == "" {
+						token = ref
+					}
+				}
 			}
 			if to.Root == "source" {
-				explicit = explicit || strings.Contains(from.Text, to.Source+":"+to.Path)
+				ref := to.Source + ":" + to.Path
+				if strings.Contains(from.Text, ref) {
+					explicit = true
+					if token == "" {
+						token = ref
+					}
+				}
 			}
-			local := (from.Region == to.Region || from.Kind == "session" && pathCounts[to.Path] == 1) && refs[to.Path]
+			localRef := refs[to.Path]
+			local := (from.Region == to.Region || from.Kind == "session" && pathCounts[to.Path] == 1) && localRef != ""
+			if token == "" && local {
+				token = localRef
+			}
 			if explicit || local {
-				g.Edges = append(g.Edges, knowledgeEdge{From: from.ID, To: to.ID, Kind: "mention"})
+				line, column, evidence := knowledgeMentionLocation(from.Text, token)
+				g.Edges = append(g.Edges, knowledgeEdge{From: from.ID, To: to.ID, Kind: "mention", Line: line, Column: column, Evidence: evidence, Confidence: "explicit_reference"})
 				if len(g.Edges) >= 4000 {
 					g.Truncated = true
 					a.knowledgeRevalidateGraph(&g)

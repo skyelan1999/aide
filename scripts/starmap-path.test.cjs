@@ -4,12 +4,17 @@ const block=source.slice(source.indexOf('let pathAbort='),source.indexOf('// Sto
 const elements=new Map();
 const el=id=>{if(!elements.has(id))elements.set(id,{value:'',checked:false,children:[],disabled:false,textContent:'',append(...children){this.children.push(...children)},replaceChildren(){this.children=[]},addEventListener(){}});return elements.get(id)};
 const node={id:'a',name:'入口',path:'main.go',root:'workspace',line:2,endLine:3,contentHash:'hash',origin:'origin'};
+const target={id:'b',name:'报告来源',path:'report.md',root:'workspace',origin:'origin'};
 let answer,resolve;
 const c=vm.createContext({$:el,document:{createElement:()=>({children:[],append(...nodes){this.children.push(...nodes)}})},locked:false,loading:false,liveCursor:'r',graph:{workspace:'w'},codeView:true,selected:node,nodeByID:new Map([['a',node]]),redraw(){},select(){},api:async()=>answer,AbortController,setTimeout,clearTimeout,console});
 vm.runInContext(block,c);
 (async()=>{
  el('path-set-from').onclick();assert.equal(el('path-from').value,'a');assert.equal(el('path-explorer').open,true);
  el('path-to').value='a';answer={workspace:'w',revision:'r',found:true,nodes:[node],steps:[]};await vm.runInContext('queryEvidencePath()',c);assert.match(el('path-status').textContent,/0 步/);assert.equal(el('path-steps').children.length,1);assert.equal(el('path-run').disabled,false);
+ c.nodeByID.set('b',target);vm.runInContext(`renderEvidencePath(${JSON.stringify({workspace:'w',revision:'r',found:true,nodes:[node,target],steps:[{edge:{from:'a',to:'b',kind:'mention',line:2,column:4,evidence:'显式引用：report.md'},reversed:false}]})})`,c);
+ const sourceLink=el('path-steps').children[0].children.find(child=>child.textContent==='查看关系源位置 ↗');assert.ok(sourceLink,'mention edges should expose a source-position link');
+ const sourceSpec=JSON.parse(decodeURIComponent(sourceLink.href.split('=')[1]));assert.equal(sourceSpec.path,'main.go');assert.equal(sourceSpec.line,2);assert.equal(sourceSpec.endLine,2);assert.equal(sourceSpec.codeHash,'hash');
+ vm.runInContext(`renderEvidencePath(${JSON.stringify(answer)})`,c);
  c.api=async()=>answer;const reconcile=source.slice(source.indexOf(' if(initial||update.workspace!==graph.workspace)'),source.indexOf(' const differentWorkspace=!!graph.workspace'));
  c.initial=false;c.liveWireNodes=new Map([['a',JSON.stringify(node)]]);c.edgeKey=e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.column||0,e.evidence||'',e.confidence||'']);
  c.update={workspace:'w',revision:'r2',nodes:[node],edges:[],reset:true};vm.runInContext(reconcile,c);assert.equal(el('path-steps').children.length,1,'unchanged coverage must preserve route');
