@@ -36,14 +36,13 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Focused test and repository quick profile pass. Required system Safari view/interaction acceptance is NOT_RUN because Safari is stopped on a browser-generated certificate warning; hand-off is required to proceed.",
+      "status": "pass",
+      "summary": "Focused checks and system Safari interaction acceptance pass. The isolated candidate was started with start.command and opened in Safari at port 18221. No provider/model request was needed.",
       "evidence": [
-        "node scripts/markdown-template-icons.test.cjs PASS: 26 first-level icons, locale/help, selection behavior, no nested menu/container, single-row overflow and updated asset versions.",
-        "python3 scripts/agent-route.py verify quick PASS; fingerprint f00eeff0e9be8d80c8f32203da3741227f438a491e0a3587326ec1dc94e353c6; log .agent-state/verify-20261012T201922128986Z.log.",
-        "node --check internal/server/web/markdown-media.js PASS; python3 -m json.tool docs/tasks/md-template-toolbar-20261013.json PASS; git diff --check PASS.",
-        "python3 scripts/check_docs.py PASS: 188 Markdown files, 538 local links, JPEG signatures and FR-01..100.",
-        "System Safari NOT_RUN for this change: current tab is the browser-generated ‘此连接非私人连接’ interstitial at https://localhost:18220; browser-use hand-off policy prohibits agent bypass."
+        "Safari AX tree for README.md showed 26 template icon buttons as toolbar siblings immediately after image, file, link and draw.io buttons; each exposes a Chinese action label and purpose, with no template dropdown.",
+        "Safari interaction: clicked 插入表格; editor reported 已插入 Markdown 模板, preview rendered a 2-column table with header and two rows, and the 标题 1 placeholder was selected for replacement. Autosave remained off; Save was not clicked.",
+        "Earlier focused evidence remains valid: node scripts/markdown-template-icons.test.cjs PASS (26 icons, locale/help, selection behavior, no nested menu/container, single-row overflow and asset versions); syntax, quick profile, docs check and diff checks passed as recorded in prior checkpoint.",
+        "This acceptance used an isolated 18221 candidate with fresh volumes. The production 9999 instance was not modified. Vector retrieval remains deferred by user request."
       ]
     },
     "documentation": {
@@ -68,5 +67,5 @@
   },
   "release_authorization": "",
   "rollback": "Revert the focused Markdown media toolbar, cache-version and documentation changes.",
-  "handoff": "Implementation checkpoint 42f7f47 is pushed. Safari acceptance remains pending: the user must personally proceed past the localhost certificate warning; then inspect the single-row icons in the split Markdown editor and insert a representative template."
+  "handoff": "Implementation checkpoint 42f7f47 is pushed to origin/main. System Safari acceptance is now complete on isolated candidate 18221: 26 first-level template icons were visible and a table template inserted and selected its editable placeholder. No file was saved during acceptance."
 }
