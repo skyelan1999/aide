@@ -2531,9 +2531,12 @@
     "full_regression": {
       "status": "pass",
       "checks": 38,
-      "fingerprint": "cacbf4495fb88d3a68494290f4e122d99341e0adc460b54bf78398cde93b0e5b",
-      "receipt": ".agent-state/verify-20261012T043636627018Z.log",
-      "scope": "python3 scripts/agent-route.py verify full; includes go test -race -count=1 -timeout=15m ./... and go vet ./..."
+      "fingerprint": "f178ad438be52cf8a8cbbc61feabd386f48591a928a58ae2e4bc4c352fad7cfa",
+      "head": "112ab6b80aa00489a61995e7591c1ca15a608b45",
+      "time": "20261012T080019248412Z",
+      "receipt": ".agent-state/verify-20261012T080019248412Z.log",
+      "scope": "python3 scripts/agent-route.py verify full; includes go test -race -count=1 -timeout=15m ./... (aide/internal/server 745.907s) and go vet ./...",
+      "note": "A prior sandboxed attempt could not access Docker and did not start the container tests; this recorded run passed with Docker access enabled."
     },
     "system_browser": {
       "status": "partial",

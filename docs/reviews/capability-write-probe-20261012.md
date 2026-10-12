@@ -20,3 +20,9 @@ Local probes create a cryptographically random name with exclusive creation unde
 - Run the same UI probe against an authorized SFTP source.
 - Test failure and cleanup-failure reporting without leaving temporary files behind.
 - Broader connection/plugin capability acceptance remains open; this change does not close the continuity goal or release gate.
+
+## Full repository verification
+
+- `python3 scripts/agent-route.py verify full` passed on commit `112ab6b80aa00489a61995e7591c1ca15a608b45`: 38/38 configured checks, including `go test -race -count=1 -timeout=15m ./...` and `go vet ./...`.
+- The server race suite completed in 745.907 seconds. Receipt: `.agent-state/verify-20261012T080019248412Z.log`; fingerprint: `f178ad438be52cf8a8cbbc61feabd386f48591a928a58ae2e4bc4c352fad7cfa`.
+- An earlier run without Docker socket access failed before starting the container test. The successful full run used the same verifier with Docker access enabled; the earlier environment failure is not counted as a test failure.
