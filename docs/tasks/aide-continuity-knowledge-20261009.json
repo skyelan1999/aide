@@ -166,7 +166,10 @@
           "sky_recovery"
         ],
         "remaining": "本地/隔离SSH草稿目录、精确星图镜头相位及标签页隔离、首次503恢复已有Safari证据；SSH光标滚动、关闭标签后的多分支/容量边界继续验收。"
-      }
+      },
+      "evidence_20261013": [
+        "Fresh isolated SSH integration run verified remote continuity primitives and cleanup; real user-host/Safari tab+cursor recovery remains pending."
+      ]
     },
     {
       "name": "保存状态与冲突",
@@ -198,7 +201,10 @@
           "history_attachments_system_browser"
         ],
         "remaining": "本地/SSH SVG及本地CSV、draw.io源文件、ZIP附件外部更新/整版恢复已验证；不等于draw.io嵌入渲染通过，其他嵌入类型和备份管理交互未全部覆盖。"
-      }
+      },
+      "evidence_20261013": [
+        "Fresh isolated SSH integration run passed Markdown body+asset history, conflict, restore and readback against workspace and independent-source fixtures."
+      ]
     },
     {
       "name": "真实环境验收",
@@ -275,7 +281,10 @@
           "progressive_over1000_browser"
         ],
         "remaining": "本地进程重启续扫及Safari超过1000节点增量加载已验证；大库性能、远程大目录及真实FTP/FTPS/HTTP/SMB/MCP来源语义仍需验收。"
-      }
+      },
+      "evidence_20261013": [
+        "Fresh-process SSH progressive scan resumed coverage 10→20 files in latest integration run; large-library performance and remote provider acceptance remain pending."
+      ]
     },
     {
       "name": "混合检索",
@@ -338,7 +347,10 @@
           "timeline_system_browser"
         ],
         "remaining": "系统Safari本地增改移除及前后原文、32条保留与淘汰显示已验证；SSH浏览器、主题/窄屏、存储故障与性能仍未完整覆盖。不推断语义结论演变。"
-      }
+      },
+      "evidence_20261013": [
+        "Latest SSH integration run passed remote knowledge timeline and source update handling on isolated fixtures; user-host browser and capacity/failure injection remain pending."
+      ]
     }
   ],
   "index_policy_progress": {
@@ -2933,5 +2945,28 @@
     },
     "release": "not_run",
     "push": "a4d4db3 pushed to origin/main; this ledger status update follows."
+  },
+  "progress_checkpoint_20261013_followup7": {
+    "status": "in_progress",
+    "date": "2026-10-13",
+    "completed": [
+      "Re-ran latest committed source against two disposable SSH/SFTP servers with race instrumentation; package passed in 16.680s.",
+      "Observed workspace, system-docs and independent-SFTP restoration/conflict paths, remote encrypted token memory roundtrip, source folder actions, exact-text retrieval, knowledge timeline, and progressive scan resume from 10 to 20 files in a fresh process.",
+      "Cancellation test observed remote shell and child process absent after cleanup; acceptance script compared source snapshots and removed temporary containers and the internal-only network."
+    ],
+    "remaining": [
+      "Complete authenticated system-Safari SSH workflow against an available user-hosted SSH/SFTP server; isolated fixtures do not prove user-host routing, credentials, lock/reconnect flow or visual recovery.",
+      "Verify actual user-host network interruption and resume behavior, and long-duration multi-tab recovery.",
+      "Continue large-library performance, real model and plugin runtime acceptance, plus requirement-by-requirement release/rollback audit.",
+      "Real vector provider acceptance remains deferred by user; Windows validation remains out of scope because user reported it tested successfully."
+    ],
+    "verification": {
+      "live_fixture_ssh": "PASS: AIDE_SSH_REPEAT=1; race-enabled TestSSHLiveWorkspaceAndIndependentSource PASS 15.56s; package PASS 16.680s.",
+      "receipt": ".agent-state/ssh-continuity-20261013-followup/aide-ssh-test-20261013072119-89081.log; SHA-256 fb398c46a56b2df43e44706a9b05820ecb5d36fd0ec9a9d48542bfc5d9de6f0d.",
+      "scope": "Two disposable internal-network SSH/SFTP fixtures with fresh test data. Script captured source input SHA-256 before and after and only accepted unchanged input; automatic container/network cleanup. No external network or user data.",
+      "limits": "Does not verify the user SSH host, system Safari SSH editing/recovery flow, physical network interruption, real model/vector provider or large-directory performance."
+    },
+    "release": "not_run",
+    "push": "Documentation checkpoint follows in a separate commit; no release or deployment."
   }
 }
