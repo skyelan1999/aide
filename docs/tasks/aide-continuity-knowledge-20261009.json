@@ -2102,17 +2102,14 @@
     "remote_probe": "PASS git ls-remote origin refs/heads/main: 5db4e6672399a01c3972ff2c5b8c235b671990c1"
   },
   "file_branch_ownership_followup_20261010": {
-    "status": "in_progress",
+    "status": "pass",
     "reproduced": "Source fixture restore same text in fresh document then edit lost original branch; assertion failed before fix.",
     "implementation": "Deduplicate identical snapshots without transferring their ownership; next divergent edit adds its own branch.",
     "evidence": ".agent-state/file-ownership-before-20261010.txt",
-    "remaining": [
-      "native Safari pending Mac unlock",
-      "review and push"
-    ],
+    "remaining": [],
     "production": "9999 unchanged",
     "directed_regression": "PASS node scripts/continuity-isolation.test.cjs; before-fix assertion reproduced lost original branch",
-    "browser": "pending: system Mac locked, manual unlock requested",
+    "browser": "PASS native Safari on isolated 18217: restored a local file draft, made a divergent edit, reloaded the page, reopened the same file, and observed two selectable recovery branches (22 and 21 characters); original and edited branches were both retained. No server save was made for either draft.",
     "full": {
       "profile": "full",
       "status": "pass",
