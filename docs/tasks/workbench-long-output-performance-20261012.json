@@ -42,11 +42,12 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "系统 Safari 在重建后的 localhost:9999 检查了完整长回复与收起态：约 6,963 token、40 节，含多张表格和代码块；详情 Value=off，摘要仅一行，无长文本 title/Help。展开交互未复验：随后工作台自身进入“已锁屏”，未输入解锁凭据。",
+      "summary": "2026-10-12 通过 start.command 重建当前源码并在系统 Safari localhost:9999 检查长回复：约 6,963 token、40 节及多表格/代码完整呈现；思考区默认折叠、一行摘要，点击展开后正文可见，再次点击恢复折叠。仍需真实流式超长输出期间稳定性与长时间会话验收。",
       "evidence": [
         "node --check internal/server/web/app.js：exit 0。",
         "git diff --check（本任务文件）：通过。",
-        "2026-10-12：系统 Safari localhost:9999 长输出复验：已完成的合成回复约6,963 token，正文含40节、多张表格和代码块，内容完整呈现；思考 details Value=off，摘要单行并带省略号，摘要无 title/Help 悬停全文。CSS rsp-think-summary 与 rsp-think-preview 均限制单行。展开正文交互未复验；工作台随后显示“已锁屏”，未输入凭据。"
+        "2026-10-12：系统 Safari localhost:9999 长输出复验：已完成的合成回复约6,963 token，正文含40节、多张表格和代码块，内容完整呈现；思考 details Value=off，摘要单行并带省略号，摘要无 title/Help 悬停全文。CSS rsp-think-summary 与 rsp-think-preview 均限制单行。展开正文交互未复验；工作台随后显示“已锁屏”，未输入凭据。",
+        "2026-10-12：执行 AIDE_OPEN_BROWSER=0 ./start.command，Docker aide:local 依据源码摘要 719cdd211f0b84e5501a0b39485116b2914bcf06b21587fc9e7359f43c18efd4 重建并重启，健康检查通过，服务 https://127.0.0.1:9999 就绪。系统 Safari 既有长回复约6,963 token/40节完整渲染；思考折叠 Value=off，点击后 Value=on 且正文显现，再点恢复 Value=off；未改动会话内容。"
       ]
     },
     "documentation": {
@@ -77,5 +78,5 @@
   },
   "release_authorization": "",
   "rollback": "只回退本任务在 internal/server/web/app.js、style.css、index.html 中的变更；不要整体恢复工作树，以免覆盖并行改动。",
-  "handoff": "前端实现与长回复/思考默认折叠收起态已在系统 Safari 实际运行实例初步验收；思考正文展开态仍待复验。工作台检查期间进入自身锁屏界面，需要用户解锁后继续。检查点 64e598c 已推送到 origin/main。"
+  "handoff": "前端实现、候选源码长回复完整渲染，以及思考过程默认折叠/单行摘要/展开/再次折叠均已在系统 Safari 实际运行的 9999 候选复核。仍需真实模型生成长回复时观察持续流式渲染的稳定性和长时间会话。检查点 64e598c 已推送；本轮新增 Safari 验收账本待随阶段提交推送。"
 }
