@@ -31,7 +31,10 @@ func defaultExecutionPolicy(rounds int) ExecutionPolicy {
 	if rounds < 1 || rounds > 200 {
 		rounds = 60
 	}
-	return ExecutionPolicy{1, 360, 900, rounds, 3, 2, modelLedInstruction, researchPipelineInstruction, completionInstruction}
+	// Chat tasks default to the existing maximum active-execution budget so
+	// long investigations are not unexpectedly paused after six minutes. The
+	// persisted checkpoint/resume and explicit pause paths remain available.
+	return ExecutionPolicy{1, 7200, 900, rounds, 3, 2, modelLedInstruction, researchPipelineInstruction, completionInstruction}
 }
 
 func (p ExecutionPolicy) validate() error {
@@ -110,6 +113,20 @@ func taskExecutionPolicy(t *Task) ExecutionPolicy {
 	}
 	return defaultExecutionPolicy(60) // Old checkpoints retain historical defaults.
 }
+
+// taskExecutionPolicyForResume starts a fresh execution segment using the
+// currently configured budget for that task mode, while keeping the rest of
+// the original task's recorded policy stable.
+func taskExecutionPolicyForResume(t *Task, current ExecutionPolicy) ExecutionPolicy {
+	policy := taskExecutionPolicy(t)
+	if t.Mode == "chat" {
+		policy.ChatBudgetSec = current.ChatBudgetSec
+	} else {
+		policy.WorkflowBudgetSec = current.WorkflowBudgetSec
+	}
+	return policy
+}
+
 func taskExecutionTimeout(t *Task) time.Duration {
 	p := taskExecutionPolicy(t)
 	sec := p.WorkflowBudgetSec

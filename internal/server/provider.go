@@ -16,6 +16,8 @@ import (
 	"time"
 )
 
+const providerStreamTimeout = 2 * time.Hour
+
 // TokenUsage 一次模型调用的用量（FR-90）；Estimated 表示上游未返回 usage 时的估算值。
 type TokenUsage struct {
 	Prompt     int    `json:"prompt"`
@@ -292,7 +294,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		if cfg.APIKey != "" {
 			req.Header.Set("Authorization", "Bearer "+cfg.APIKey)
 		}
-		client := &http.Client{Timeout: 10 * time.Minute, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
+		client := &http.Client{Timeout: providerStreamTimeout, CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse }}
 		return client.Do(req)
 	}
 	b, err := json.Marshal(body)

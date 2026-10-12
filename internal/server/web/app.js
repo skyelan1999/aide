@@ -4175,7 +4175,7 @@ function renderExecutionPolicy() {
   save.onclick = action(async () => {
     if (busy) return;
     const p = draft(); disabled(true);
-    try { const result = await api('/execution-policy', {method: 'PUT', body: JSON.stringify(p)}); fill(result.policy); status.textContent = t('已保存，新任务生效；运行和续跑任务保留原策略。'); }
+    try { const result = await api('/execution-policy', {method: 'PUT', body: JSON.stringify(p)}); fill(result.policy); status.textContent = t('已保存，新任务生效；运行任务保留原策略，续跑仅刷新本段预算。'); }
     finally { disabled(false); }
   });
   reset.onclick = () => { if (!defaults || busy) return; fill(defaults); status.textContent = t('默认策略已载入，点击保存后生效。'); };
@@ -4313,7 +4313,7 @@ function renderConfigDocument(endpoint, title, storedKey, effectiveKey, workspac
   const fill = result => {
     workspaceId = result.workspaceId || ''; input.value = JSON.stringify(result[storedKey], null, 2);
     effective.textContent = JSON.stringify(result[effectiveKey], null, 2);
-    status.textContent = result.warning || t('保存后新任务生效；运行和续跑任务保留原配置。');
+    status.textContent = result.warning || t('保存后新任务生效；运行任务保留原策略，续跑仅刷新本段预算。');
   };
   const target = () => endpoint + (workspace ? '?workspaceId=' + encodeURIComponent(workspaceId) : '');
   const draft = () => { const value = JSON.parse(input.value); if (!value || Array.isArray(value) || typeof value !== 'object') throw new Error(t('配置必须是 JSON 对象')); if (new Blob([input.value]).size > 128 * 1024) throw new Error(t('配置不得超过 128 KiB')); return value; };

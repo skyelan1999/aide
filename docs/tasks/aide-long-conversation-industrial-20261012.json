@@ -8,7 +8,8 @@
     "自动/手动/上下文超限压缩对压缩请求设置明确预算；多批次连续压缩保留前序摘要与角色/事实/限制/决定/待办；模型失败或摘要结构无效时原消息不丢失。",
     "同一项目的并发记忆写入不会互相覆盖；token JSON 与可读 memory.md 可在下一次读取和重启后恢复一致，容量拒绝不会截断现存记忆。",
     "工业应用支持文档区分实现能力、估算口径、验证证据与明确限制，说明长任务/长会话的恢复、数据边界、人工审批和安全关键场景使用边界。",
-    "变化相关 Go/JS 检查通过；真实 Safari 验证长输出 UI 与会话状态；任何未经真实模型/工业设备验证的能力明示为未验证。"
+    "变化相关 Go/JS 检查通过；真实 Safari 验证长输出 UI 与会话状态；任何未经真实模型/工业设备验证的能力明示为未验证。",
+    "新增长任务连续执行要求：聊天预算默认7200秒；流式 provider 请求超时覆盖预算；暂停后的显式续跑刷新当前模式的执行段预算，保留其余原任务策略。"
   ],
   "scope": [
     "internal/server/workflow.go",
@@ -20,7 +21,15 @@
     "docs/architecture/continuity-roadmap.md",
     "docs/industrial-long-conversation-support.md",
     "docs/tasks/aide-long-conversation-industrial-20261012.json",
-    "scripts/live-markdown-scan.test.cjs"
+    "scripts/live-markdown-scan.test.cjs",
+    "internal/server/execution_policy.go",
+    "internal/server/provider.go",
+    "internal/server/workflow_timeout_test.go",
+    "internal/server/web/locales/en.js",
+    "docs/architecture/execution-policy.md",
+    "docs/user-guide.md",
+    "docs/system-overview.md",
+    "docs/PRD.md"
   ],
   "stages": {
     "requirements": {
@@ -51,22 +60,36 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "定向 Go 回归、前端扫描回归、JS 语法和文档链接检查通过；服务端全量测试未通过（包含插件校验失败及 Office 脚本路径缺失）；系统 Safari 尚未对 18212 当前源码候选操作，当前受 Mac 锁定阻塞。",
+      "summary": "长任务预算与显式续跑策略已有定向 race/vet 和快速检查通过；Safari 真实实例只确认了已保存设置读回，隔离源码候选尚未做最新界面验收。完整 race 全包超时；向量检索验收按用户要求暂缓。其余超长对话、记忆及长输出验收仍按下方逐项证据跟踪。",
       "evidence": [
         "离线 Docker Go 1.26 扩展回归：覆盖 TestMemoryTokensLegacyAndExternalEdit、容量/损坏投影测试、24 写并发一致性、连续摘要请求预算、畸形摘要、工具参数快照变化、超限/新任务/自动/并发压缩；`go test -mod=vendor ./internal/server -run 'Test(MemoryTokens.*|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall|RemediationAutoCompactNotBlockedByHeldMutex|RemediationConcurrentCompactionNoPanicNoDeadlock)$' -count=1`：PASS（6.920s）。",
         "离线 Docker Go 1.26：`go test -mod=vendor ./internal/server -run 'Test(CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|MemoryTokens|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall)$' -count=1`：PASS（3.828s）。",
         "`node --check internal/server/web/app.js && node scripts/live-markdown-scan.test.cjs`：PASS；2M 字符/4096 增量扫描回归 PASS。",
         "`python3 scripts/check_docs.py`：PASS（187 Markdown、533 本地链接）；`git diff --check`：PASS。",
         "离线 Docker Go 1.26 全量 `go test -mod=vendor ./internal/server -count=1`：FAIL（328s）。代表性既有集成失败：多项插件装配返回 `插件校验失败`；`TestRemoteWorkspaceDispatch` 未找到 `office_artifact.py`（需配置 AIDE_OFFICE_SCRIPTS）。定向超长对话和记忆回归仍 PASS。",
-        "隔离源码服务：Docker `aide-longconv-20261012`，Safari 候选 `https://localhost:18212`，空数据卷与只读源码绑定；9999/18211 未触碰。Safari：NOT_RUN，系统检测 Mac 锁定，等用户手动解锁后操作。"
+        "隔离源码服务：Docker `aide-longconv-20261012`，Safari 候选 `https://localhost:18212`，空数据卷与只读源码绑定；9999/18211 未触碰。Safari：NOT_RUN，系统检测 Mac 锁定，等用户手动解锁后操作。",
+        "2026-10-12：Safari 系统浏览器 localhost:9999 执行策略 UI 读回聊天预算7200秒、工作流预算900秒；9999 是真实运行实例，未重启；此前保存动作提示仅对新任务生效。该旧实例源码未包含本轮续跑修复，故此项不作为候选源码 UI 验收。",
+        "2026-10-12：隔离 Go 容器定向 `go test -race -count=1 -timeout=5m ./internal/server -run \"TestTaskExecutionBudgetDefaults|TestTaskResumeRefreshesOnlyModeBudget\"` 与 `go vet ./internal/server` PASS（加入续跑预算覆盖回归后）。",
+        "2026-10-12：`python3 scripts/agent-route.py verify quick` PASS，fingerprint 42d202b197c38d99082839ca6b116ec863c21416d04fd54ed93b6c7b88a312f3；包含文档与中英文资源检查。",
+        "2026-10-12：完整 `verify full` 未通过：internal/server race 全包测试超过15分钟并被测试超时终止；不是通过。需在资源充足环境分批复跑。",
+        "向量混合检索真实模型验收按用户要求暂缓。",
+        "2026-10-12 收尾后复跑：`go test -race -count=1 -timeout=5m ./internal/server -run \"TestTaskExecutionBudgetDefaults|TestTaskResumeRefreshesOnlyModeBudget\"` PASS 1.083s；`go vet ./internal/server` 同一命令链 exit 0。",
+        "2026-10-12 文档和英文提示修改后再次 `python3 scripts/agent-route.py verify quick` PASS，fingerprint 46862cc3ff48aae5dba45d2f8c459d631c59be19b784bf915574d0dbbdd1ade9。",
+        "最新源码隔离候选 https://localhost:18217 Safari 到达证书警告页；按手动证书处理规则未绕过，页面验收 NOT_RUN。候选容器 aide-budget-20261012；9999 和既有18212未修改。"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "新增工业长对话能力说明，覆盖架构、上下文估算、摘要压缩、工作台渲染、记忆读写、数据路径及工业安全边界，并从架构索引链接。",
+      "summary": "已补充长任务预算、续跑生效时点、流式超时及工业使用边界；架构说明、用户指南与工业支持说明同步。英语界面提示有对应翻译；快速检查覆盖中英文资源与文档链接。",
       "evidence": [
         "docs/industrial-long-conversation-support.md",
-        "docs/architecture.md 链接已由 scripts/check_docs.py 验证。"
+        "docs/architecture.md 链接已由 scripts/check_docs.py 验证。",
+        "docs/architecture/execution-policy.md",
+        "docs/user-guide.md",
+        "internal/server/web/locales/en.js",
+        "docs/system-overview.md 更新现行执行预算和续跑行为。",
+        "docs/PRD.md 限制表更新聊天/工作流默认预算，清除现行文档中的旧6分钟描述。",
+        "internal/server/web/app.js 与 locales/en.js 同步更新全局/工作区策略提示，明确续跑只刷新本段预算。"
       ]
     },
     "cleanup": {
@@ -82,5 +105,5 @@
   },
   "release_authorization": "推送检查点授权：用户此前要求阶段性测完后及时 push；本次仅推送已验证的后端与文档检查点，不打 tag、不发布。",
   "rollback": "回滚仅撤销此任务记录范围文件中的对应提交/差异；不整体恢复工作区、不清理会话或记忆数据。内存模型/API schema 不变；token 文件格式不变。",
-  "handoff": "阶段进度：需求与设计、实现、文档完成；静态和定向 Go 验证通过。服务端全量测试未通过，代表失败见 verification.evidence；插件装配校验和 AIDE_OFFICE_SCRIPTS 路径配置需单独定位。Safari 实机验收待继续：Mac 手动解锁后在 Safari 打开 https://localhost:18212；若出现“连接非私人”证书页面，须用户亲自处理后回“已处理”。验收容器 aide-longconv-20261012 持续运行，停止命令为 `docker stop aide-longconv-20261012`。此容器源码只读、数据目录 /private/tmp/aide-longconv-20261012/data，工作区为空隔离目录。"
+  "handoff": "新增预算修复已完成，定向race/vet与quick通过；真实9999页面读回7200秒但源码版本旧，未重启生产。完整race超时不记通过。隔离候选最新源码 UI 验收和其他原验收条目仍未完成；向量检索按用户要求暂缓。"
 }

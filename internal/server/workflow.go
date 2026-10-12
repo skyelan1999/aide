@@ -142,15 +142,6 @@ type Task struct {
 	discardedAnswers int64           `json:"-"`                         // 因轮次过期/任务不再 awaiting 而被丢弃的应答计数（诊断）
 }
 
-const workflowRunTimeout = 15 * time.Minute
-
-func taskRunTimeout(mode string) time.Duration {
-	if mode == "chat" {
-		return 6 * time.Minute
-	}
-	return workflowRunTimeout
-}
-
 // SteerMsg 记录一条运行中用户输入。
 type SteerMsg struct {
 	Content string `json:"content"`
@@ -928,6 +919,13 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	recoverExecutionCheckpoint(&resumed)
+	currentPolicy, err := a.loadExecutionPolicy()
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	resumedPolicy := taskExecutionPolicyForResume(&resumed, currentPolicy)
+	resumed.ExecutionPolicy = &resumedPolicy
 	for i := len(resumed.CheckpointMessages) - 1; i >= 0; i-- {
 		msg := &resumed.CheckpointMessages[i]
 		if msg.Role == "user" && strings.TrimSpace(msg.Content) == strings.TrimSpace(orig.Prompt) {

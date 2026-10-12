@@ -313,7 +313,7 @@ aide = **AI + IDE**，面向**可信单用户**的本地 AI 开发工作台。�
 | 沙箱隔离 | 命令在容器内 `bash --norc` 独立进程组执行；路径锁 workspace；远程模式不自动跑命令 | command.go / workflow.go execShellCommand |
 | 危险拦截 | 递归删除/提权/推送/pipe-to-shell 黑名单；read-only 模式只放只读命令 | shellBlocked / readOnlyAllowed |
 | 性能 | SSE 逐 token；标题总结并发；上下文预览与真实请求共用构建器避免重复构造 | context.go buildContextPreview |
-| 限制 | 单文件 256KiB；附件 8 个/80KB；提案 10 文件/512KiB；工具轮次默认 60(5–200)；命令 60s/并发4/输出 128KB；模型任务 6 分钟/全局 4 并发 | 见 §5 与各 handler |
+| 限制 | 单文件 256KiB；附件 8 个/80KB；提案 10 文件/512KiB；工具轮次默认 60(5–200)；命令 60s/并发4/输出 128KB；聊天执行预算默认 2 小时、工作流默认 15 分钟（可按策略调整） | 见 §5 与各 handler、执行策略说明 |
 | 兼容性 | 前端原生 JS/CSS，无 npm；marked/mermaid 随仓库分发；兼容 Chat Completions 协议 | README / index.html |
 | 隐私 | 本机单用户、回环绑定；云端模型时任务内容发往所配置提供商 | README 使用边界 |
 
