@@ -2646,7 +2646,8 @@
       "verification": [
         "go test -mod=vendor -race ./internal/server -run 'TestApprovalPolicyBroadcastSurvivesFullGlobalEventQueue|TestGlobalApprovalMode' -count=1 -timeout=120s PASS (3.838s).",
         "python3 scripts/agent-route.py verify quick PASS; fingerprint 75a4ea516cb657be0e71def1c2ea6a8f6cbc8632140cf2fc4eb82e362194e849.",
-        "Safari 当前标签仍连接先前构建的隔离候选；该 UI 本轮未加载新服务端二进制，因此不计为此改动的浏览器行为验收。"
+        "Safari 当前标签仍连接先前构建的隔离候选；该 UI 本轮未加载新服务端二进制，因此不计为此改动的浏览器行为验收。",
+        "Restarted source-mounted isolated candidate aide-budget-20261012; native Safari https://localhost:18217 loaded the current workbench and showed global Manual approval selected. No approval mode was changed; this confirms candidate UI startup only, not cross-tab propagation."
       ],
       "remaining": [
         "在加载本次改动的候选构建后，以系统 Safari 实测多标签审批模式 SSE 即时同步；需覆盖队列拥塞事件。"
