@@ -2047,7 +2047,7 @@
     "estimated_complete_percent": 80,
     "estimated_remaining_percent": 20,
     "estimate_kind": "rough engineering estimate, not acceptance pass rate",
-    "latest_completed": "Full PASS38 and SSH 2x PASS receipts at content fingerprint 7fbdd...; isolated Safari Markdown body/asset restore and idempotent ZIP import; latest Safari additionally verified 129-document bounded original/RAG searches and code hierarchy UI; full scope remains in progress.",
+    "latest_completed": "Full PASS38 receipt and SSH 2x PASS; isolated Safari Markdown body/asset restore and idempotent ZIP import; Safari verified bounded 129-document original/RAG searches, code hierarchy, and local capability probes. Latest: isolated dual-server SSH/SFTP live test passed twice with actual capability write probes for independent SFTP references and workspace-SFTP system docs; remote roots unchanged after cleanup. Full scope remains in progress.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -2058,6 +2058,7 @@
     },
     "remaining": [
       "System Safari remaining goal-specific workflows/themes/narrow layouts",
+      "Safari write-probe UI on a user-configured SFTP source and broader failure/cleanup reporting",
       "Real approval/plugin/model workflows and network/conflict boundaries",
       "Release/rollback gate closure",
       "Windows NOT_RUN: user has no environment",
@@ -2579,10 +2580,11 @@
         "自动系统文档来源卡片检查通过：local · 根目录／工具发现，来源根目录读取通过；未验证写权限，5 ms。",
         "技能插件卡片检查通过：入口文件可读，界面仅显示 SHA-256；宿主登记 2 个工具；未执行插件或工具，3 ms。",
         "2026-10-12 15:55:40，系统 Safari 在最终重建候选 https://localhost:9999 的设置 → 无障碍 → 接口测试中，对工作区 /Users/skyelan/debug 执行确认后的随机独占临时写探针；UI 回执写入与清理均通过，耗时 1 ms。",
-        "2026-10-12 15:55:54，系统 Safari 对自动系统文档根目录 /Users/skyelan/debug/doc 执行确认后的随机独占临时写探针；UI 回执写入与清理均通过，耗时 2 ms。两项分别展示写入状态，不代表通用文件操作或远程来源验收。"
+        "2026-10-12 15:55:54，系统 Safari 对自动系统文档根目录 /Users/skyelan/debug/doc 执行确认后的随机独占临时写探针；UI 回执写入与清理均通过，耗时 2 ms。两项分别展示写入状态，不代表通用文件操作或远程来源验收。",
+        "2026-10-12 16:28，scripts/test-ssh-workspace.sh 在隔离的双 OpenSSH/SFTP Docker 网络中启用 race detector 并重复两次通过；新增真实 API 写探针覆盖独立 SFTP 引用源 server B 和 workspace-SFTP 自动系统文档 server A，探针前后根目录条目一致。收据 .agent-state/ssh-storage-audit/live/aide-ssh-test-20261012162829-28432.log，SHA-256 4c2d061e0451a5530966aef2ebe0d55f7293c869412caad875a6c487efc999eb。Safari 当前实例只有本地来源，此项不是用户配置 SFTP 的浏览器验收。"
       ],
       "not_verified": [
-        "远程 SFTP 写入与清理探针，完整的文件创建/编辑/删除工作流",
+        "Safari 对用户实际配置的 SFTP 来源执行写入探针；完整的文件创建/编辑/删除工作流",
         "插件实际工具运行、SSH 独立权限诊断",
         "真实模型生成/视觉/工具调用，以及连接与能力仪表全项回归"
       ],

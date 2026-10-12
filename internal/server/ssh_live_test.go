@@ -7,11 +7,13 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 	"testing"
@@ -37,6 +39,54 @@ func leaveStaleSSHSocket(t *testing.T, sock string) {
 			os.Remove(sock)
 		}
 	})
+}
+
+func assertCapabilitySFTPWriteProbe(t *testing.T, a *App, sourceID string) {
+	t.Helper()
+	a.mu.Lock()
+	src, ok := a.findSource(sourceID)
+	a.mu.Unlock()
+	if !ok {
+		t.Fatalf("missing SFTP source %q", sourceID)
+	}
+	listNames := func() []string {
+		t.Helper()
+		var items []map[string]any
+		var err error
+		if src.Type == "workspace-sftp" {
+			items, err = a.sftpListWorkspaceSource(src.Config.Path, ".")
+		} else {
+			items, err = a.sftpListSource(src, ".")
+		}
+		if err != nil {
+			t.Fatalf("list SFTP source before/after probe: %v", err)
+		}
+		names := make([]string, 0, len(items))
+		for _, item := range items {
+			if name, ok := item["name"].(string); ok {
+				names = append(names, name)
+			}
+		}
+		sort.Strings(names)
+		return names
+	}
+	before := listNames()
+	workspace, items := capabilitySnapshot(t, a)
+	item := capabilityFind(t, items, "source:"+sourceID)
+	body := capabilityBody(workspace, item)
+	body["mode"] = "write"
+	w := request(a, "POST", "/api/capabilities/check", body)
+	requireStatus(t, w, http.StatusOK)
+	var result CapabilityCheck
+	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.State != "pass" || !strings.Contains(result.Message, "写入与清理均通过") {
+		t.Fatalf("SFTP capability write probe did not pass: %+v", result)
+	}
+	if after := listNames(); strings.Join(after, "\x00") != strings.Join(before, "\x00") {
+		t.Fatalf("SFTP probe left or removed root entries: before=%v after=%v", before, after)
+	}
 }
 
 func TestSSHFailedControlCheckPreservesLiveSocket(t *testing.T) {
@@ -319,6 +369,7 @@ func TestSSHLiveWorkspaceAndIndependentSource(t *testing.T) {
 		if body := readFile(t, "", "中文 子目录/设计 notes.md"); !strings.Contains(body, "A workspace body") {
 			t.Fatal("opening source B redirected the workspace:", body)
 		}
+		assertCapabilitySFTPWriteProbe(t, a, id)
 		keyPath := filepath.Join(a.workPath, "fixture-source-ed25519")
 		if out, err := exec.Command("ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", keyPath).CombinedOutput(); err != nil {
 			t.Fatalf("disposable source key generation failed: %v %s", err, out)
@@ -386,6 +437,7 @@ func TestSSHLiveWorkspaceAndIndependentSource(t *testing.T) {
 		if body := readFile(t, systemDocsSource, "absolute.md"); !strings.Contains(body, "A absolute docs body") {
 			t.Fatal("absolute system docs mismatch:", body)
 		}
+		assertCapabilitySFTPWriteProbe(t, a, systemDocsSource)
 		dir := "创建 目录-" + run
 		requireStatus(t, request(a, "POST", "/api/directory", directoryRequest{Root: "context", Source: systemDocsSource, Parent: ".", Name: dir}), 200)
 		query := url.Values{"source": []string{systemDocsSource}, "path": []string{"."}}
