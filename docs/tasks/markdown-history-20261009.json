@@ -88,11 +88,12 @@
       ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "Node 语法和 Docker Go 编译通过；真实浏览器组件使用示例数据检查 1280px/390px 历史列表、正文对比、资源按钮。真实保存去重、SSH、插件联调及完整实例验收未运行。",
+      "status": "in_progress",
+      "summary": "Node 语法和 Docker Go 编译通过；真实浏览器组件使用示例数据检查 1280px/390px 历史列表、正文对比、资源按钮。真实保存去重、SSH、插件联调及完整实例验收未运行。 2026-10-13 当前工作树 Go 定向 race 回归通过；系统浏览器当前候选端到端 UI 验收仍待完成。",
       "evidence": [
         ".agent-state/markdown-history-preview/history.png",
-        ".agent-state/markdown-history-preview/mobile.png"
+        ".agent-state/markdown-history-preview/mobile.png",
+        "2026-10-13 current worktree, healthy container aide-aide-1: PATH=/usr/local/go/bin:$PATH GOCACHE=/home/aide/.cache/go-build GOMAXPROCS=2 go test -mod=vendor -p=1 -race ./internal/server -run \"Test(MarkdownHistoryObservedAssetsAndDedup|MarkdownHistoryRejectsCorruptObjects|MarkdownHistoryReadPinsWorkspace|MarkdownRestoreBundleAndConflict|MarkdownRestoreUnavailableAssetAndReadOnlySource)$\" -count=1 -timeout=180s: PASS 11.950s. Scope: Go historical body/resource snapshot, content dedup, integrity rejection, workspace pinning, restore bundle conflict and read-only/asset-unavailable handling. This proves backend behavior only, not current-candidate Safari interaction/persistence."
       ]
     },
     "documentation": {
@@ -130,5 +131,5 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "源码和默认启用的内置插件集成已实现；运行实例需使用 start.command 更新后联调。"
+  "handoff": "源码和默认启用的内置插件集成已实现；运行实例需使用 start.command 更新后联调。 Current-source focused race regression PASS 11.950s for Go historical body/resource snapshot, content dedup, integrity rejection, workspace pinning, restore bundle conflict and read-only/asset-unavailable handling. Safari acceptance remains pending."
 }

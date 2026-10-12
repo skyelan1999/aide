@@ -42,7 +42,8 @@
         "Docker aide:local TestKnowledge race PASS 14.382s",
         "TestKnowledgeCodeConfidenceAndUnresolved / UnresolvedEvidenceBound PASS",
         "node --check internal/server/web/starmap.js PASS",
-        ".agent-state/code-confidence-preview/evidence.png"
+        ".agent-state/code-confidence-preview/evidence.png",
+        "2026-10-13 当前工作树：docker run --rm --network none -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor -race ./internal/server -run '^TestKnowledge(Code|Path|Timeline)' -count=1 -timeout=120s：PASS（10项，5.356s）。本机代码关系/路径/时间线定向 race 回归；未替代真实工作区、SSH、Safari或大规模性能验收。"
       ]
     },
     "documentation": {

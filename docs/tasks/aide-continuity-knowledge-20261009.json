@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "历史输入 verify full exit0、38项 PASS 仅代表当时检查，不代表当前源码本轮全量通过。真实系统Safari的18217隔离页停在登录页，尚未完成工作台验收；真实向量按用户指示暂缓；Windows已由用户实测且无需后续验收；SSH用户主机/真实模型等完整产品验收仍未闭环。新增2026-10-11审批状态修复与锁屏启动/Safari部分结果分别见 docs/tasks/approval-paused-ghost-state-20261011.json、docs/tasks/starmap-scene-safari-20261011.json。2026-10-12主线双disposable SSH/SFTP服务器internal-only Docker network，`TestSSHLiveWorkspaceAndIndependentSource` race repeat=2 PASS（25.32s/27.12s），涵盖Unicode/空格路径、独立来源、会话文件恢复、token记忆往返、远程搜索/时间线、渐进覆盖及取消清理；源码输入哈希前后一致。2026-10-12 current verify quick PASS（静态/UI/文档/i18n等检查）；full profile 其余37项PASS，Go race阶段 `aide/internal/server` 总超时15分钟（panic时刚进入TestQueueEnqueuedDispatch，不证明该单测自身挂起）；单测隔离重跑 -race PASS 3.640s；Go vet未运行。收据 .agent-state/verify-20261012T054453623127Z.log；当前Safari产品验收、向量(按用户暂缓)及全量release仍未闭环；Windows已由用户自行实测并从当前待办移除。",
+      "summary": "历史输入 verify full exit0、38项 PASS 仅代表当时检查，不代表当前源码本轮全量通过。真实系统Safari的18217隔离页停在登录页，尚未完成工作台验收；真实向量按用户指示暂缓；Windows已由用户实测且无需后续验收；SSH用户主机/真实模型等完整产品验收仍未闭环。新增2026-10-11审批状态修复与锁屏启动/Safari部分结果分别见 docs/tasks/approval-paused-ghost-state-20261011.json、docs/tasks/starmap-scene-safari-20261011.json。2026-10-12主线双disposable SSH/SFTP服务器internal-only Docker network，`TestSSHLiveWorkspaceAndIndependentSource` race repeat=2 PASS（25.32s/27.12s），涵盖Unicode/空格路径、独立来源、会话文件恢复、token记忆往返、远程搜索/时间线、渐进覆盖及取消清理；源码输入哈希前后一致。2026-10-12 current verify quick PASS（静态/UI/文档/i18n等检查）；full profile 其余37项PASS，Go race阶段 `aide/internal/server` 总超时15分钟（panic时刚进入TestQueueEnqueuedDispatch，不证明该单测自身挂起）；单测隔离重跑 -race PASS 3.640s；Go vet未运行。收据 .agent-state/verify-20261012T054453623127Z.log；当前Safari产品验收、向量(按用户暂缓)及全量release仍未闭环；Windows已由用户自行实测并从当前待办移除。 2026-10-13：本地索引跨进程恢复与真实双服务器 SSH/SFTP 续扫在当前源码复验通过；浏览器全流程、用户外部服务器和大库性能仍待完成。",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -109,7 +109,9 @@
         "docs/reviews/continuity-acceptance-resumed-20261011.md: 全局审批反向切换回归与本轮 Safari 锁定限制",
         "python3 scripts/agent-route.py verify full PASS 38/38; .agent-state/verify-20261010T191351778252Z.log; server race 756.829s; tts race 3.710s; go vet included; current fingerprint 4afd7fbdc94871cb216388bf2481e5a26af69bb29b4c23c641fe4a56d652df34",
         "2026-10-11: docs/tasks/approval-paused-ghost-state-20261011.json; verify full fingerprint 1aa494bfeec3d9b3d8a8c79a76843e7db8692b30dd1568c95b448607e2ae2249; Safari global approval mode roundtrip and second-tab readback",
-        "2026-10-12 continuation: Safari foreground remains on https://localhost:18214 certificate warning; no browser bypass performed. Docker API access is denied and no host Go binary is available, so no current full regression/build was run. These environment observations do not invalidate earlier recorded test receipts, but they do not verify this checkout in Safari."
+        "2026-10-12 continuation: Safari foreground remains on https://localhost:18214 certificate warning; no browser bypass performed. Docker API access is denied and no host Go binary is available, so no current full regression/build was run. These environment observations do not invalidate earlier recorded test receipts, but they do not verify this checkout in Safari.",
+        "2026-10-13 当前源码复验：本地加密索引检查点与新进程恢复 race 回归 PASS 27.304s；真实隔离双服务器 SSH/SFTP 渐进续扫/历史/引用资源/token记忆集成验收重复2次 PASS 28.707s；FTP/FTPS stub 渐进适配器 PASS 3.930s。真实用户主机、系统浏览器完整流程、真实 FTP/FTPS 与大库性能仍未验证。",
+        "2026-10-13 当前工作树 Markdown 正文/嵌入资源历史与恢复冲突保护、成果舱输入输出/证据边界/分页快照定向 race 回归 PASS 11.950s（容器 aide-aide-1）；只证明后端，当前候选 Safari UI 仍待验收。"
       ]
     },
     "documentation": {
@@ -2680,5 +2682,85 @@
       "side_effect_boundary": "No task was executed, no remembered approval rules were created, and production port 9999 was untouched."
     },
     "limits": "These observations cover one local Safari candidate and a single disposable file; they do not close long-duration, quota/crash, real command approval, production, SSH or vector acceptance. Vector remains deferred at user request; Windows remains user-tested and out of current scope."
+  },
+  "progress_checkpoint_20261013": {
+    "status": "in_progress",
+    "active_workstreams": 12,
+    "completed_this_checkpoint": [
+      "Trajectory outputs now select the final assistant response by task mode in both session overview and run detail.",
+      "Shell command redirection destinations are shown as unverified hints, separate from saved file artifacts; linked to execution evidence.",
+      "Markdown examples are 26 direct same-level icon tools with English/localized guidance; cache-busting versions updated.",
+      "Markdown template catalog regression added to the standard quick profile.",
+      "Incremental live Markdown scan performance regression is now part of the standard quick profile; 2M-character fixture and quick profile pass.",
+      "Task outcome shell target parser ignores unquoted shell comments so comment-only `> path` text is not misreported as a file write target.",
+      "Current worktree isolated dual-server SSH/SFTP acceptance passed under race in 14.508s; covers workspace, autosystem document and separate reference server paths, Markdown body+asset restore/conflict/readback, token-memory round trip, source file actions, original-text retrieval, timeline and process-resumed progressive coverage. Input hashes unchanged; disposable containers/network auto-cleaned; receipt `.agent-state/ssh-continuity-20261013/aide-ssh-test-20261013015657-62786.log`, SHA-256 `f8e3390d1b9e147e37d6f5539ccfec01476d5612ec8a5e5be70fd750f07508d8`.",
+      "Manual context compaction now reports the same live map/reduce, folding, completion/failure progress as automatic compaction; a stuck compacting lock after model-key lookup failure was also fixed.",
+      "Long-history stable Markdown now uses a 2 MiB bounded LRU cache for context-free completed renders; live output and relative-resource renderings bypass it. Language changes clear the cache. Added focused cache regression and quick-profile coverage.",
+      "Current source local encrypted progressive-index cursor and material persistence/restart regressions passed under race (4 focused tests, 27.304s); policy isolation, cancelled commit rejection, complete-cycle refresh and fresh-process continuation verified.",
+      "Current source real disposable dual-server SSH/SFTP acceptance passed twice under race (28.707s); cross-process cursor resumed 10→20 files, citation identity was refreshed and live remote readback passed. Receipt `.agent-state/ssh-continuity-20261013/aide-ssh-test-20261013030236-71290.log`, SHA-256 `20d0cfa53aef2f01bc735f14ab1f02301b56412462177aed6db573c8380b92a5`.",
+      "FTP/FTPS progressive adapter stub regression passed under race (3.930s); real FTP/FTPS network acceptance remains open.",
+      "Approval expiry/revocation/global propagation and capability-dashboard probe/boundary focused ordinary Go tests passed (14 tests, 4.097s). The race-enabled combined process was killed by the container before assertions; this is recorded as a failure, not a pass.",
+      "Context compaction lifecycle, batch budget, failure rollback and concurrency focused race regressions passed (9 tests, 10.878s).",
+      "Markdown history/resource restore conflict handling and trajectory/outcome evidence boundary/pagination focused race regressions passed (12 tests, 11.950s).",
+      "Task ledgers for progressive indexing, approval, capabilities, compaction, Markdown history and trajectory/outcome were reconciled with current evidence. `python3 scripts/check_docs.py` PASS: 188 Markdown files and 538 local links; `git diff --check` PASS."
+    ],
+    "verification": {
+      "quick_profile": "PASS 40/40; fingerprint 16ebcee31ba05aa337f594eb9f6e7ce50ebd3a2aaaab1d0b6d8b2b009fb0f4da; receipt `.agent-state/verify-20261012T185516722577Z.log`.",
+      "fingerprint": "ccb8600158996aaa82c150c7ad0d1861a89a1eb7c73abbde181e73cddc39400a",
+      "task_outcome_go_race": "PASS targeted TestOutcomeShellWriteTargetsRemainUnverifiedHints in 2.616s",
+      "isolated_candidate": "18219 rebuilt from all 28 current changed paths via start.command; fingerprint bda1ad77c3a7bad747c217307cdbb832b094860e7dfb17d2ab4ca82bebca6258; container healthy, healthz status=ok, 59,623-byte HTML and app.js/markdown-media.js/macos.css references confirmed. Integrity degraded because preserved candidate data volume has an older binary baseline; baseline was not modified.",
+      "system_browser": "Pending: System Safari is currently at https://localhost:18220 and shows its native certificate warning. UI acceptance for the current candidate has not started. User authorized agent handling, but desktop browser security policy requires the user to process this warning; no bypass was performed.",
+      "full_profile": {
+        "status": "FAIL",
+        "fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504",
+        "note": "Latest full Docker race timed out at 15m in TestDaemonConcurrentStartStopConsistency. Earlier full PASS is historical and stale for current changes."
+      },
+      "manual_compaction_progress": "PASS focused Go tests: TestManualCompactionPublishesLiveProgressAndTokenEstimates, TestAutoCompactionPublishesObservableLifecycle, TestCompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary (internal/server 1.254s); app.js node syntax and diff check PASS.",
+      "markdown_cache_test": "PASS: completed-render reuse, live/path isolation, Mermaid rescheduling, bounded eviction at 2 MiB.",
+      "long_conversation_targeted": "PASS: Go 1.26 Docker race for memory token/concurrency and bounded compaction tests; go vet ./internal/server; 5.932s.",
+      "daemon_concurrency_stress": "PASS: TestDaemonConcurrentStartStopConsistency -race -count=20 in 15.480s; full-profile-only 15m timeout root cause remains unresolved.",
+      "local_cursor_race": "PASS: four local encrypted cursor/process-restart tests, 27.304s.",
+      "ssh_live_current": "PASS twice under race: disposable real dual-server SSH/SFTP, 28.707s; 10→20 file cursor resume/readback; receipt .agent-state/ssh-continuity-20261013/aide-ssh-test-20261013030236-71290.log.",
+      "ftp_adapter": "PASS under race, 3.930s using stub client; real FTP/FTPS not tested.",
+      "approval_capability": "Ordinary Go focused tests PASS, 4.097s; combined race attempt terminated by container signal: killed before assertions.",
+      "compaction_race": "PASS focused race tests, 10.878s; browser progress animation still pending.",
+      "markdown_outcome_race": "PASS focused race tests, 11.950s; browser interaction still pending."
+    },
+    "remaining": "12 overall workstreams remain active. Backend evidence improved for local/SSH progressive indexing, approval policy, capability checks, context compaction, Markdown history and task outcomes. Still pending: current-candidate Safari acceptance across UI changes, full-profile race timeout at TestDaemonConcurrentStartStopConsistency, large-library performance, longer live-session and source/provider boundaries, requirement-by-requirement audit and release/rollback gates. Real vector/embedding remains deferred by user; Windows was user-tested and removed from agent scope.",
+    "scope_adjustments": [
+      "Windows: user tested and said no more agent work is needed.",
+      "Real vector/embedding validation: paused by user."
+    ]
+  },
+  "progress_checkpoint_20261013_followup": {
+    "status": "in_progress",
+    "date": "2026-10-13",
+    "source_delivery": {
+      "markdown_template_toolbar": [
+        "42f7f47",
+        "20f1208"
+      ],
+      "long_conversation_rendering": [
+        "df780ce",
+        "456643b"
+      ],
+      "remote": "origin/main"
+    },
+    "system_browser": "Pending: Safari remains on its native certificate warning at https://localhost:18220. The template toolbar acceptance and current long-output UI acceptance have not started in Safari.",
+    "full_profile": "FAIL remains current for the recorded fingerprint: full race profile timed out after 15 minutes at TestDaemonConcurrentStartStopConsistency; isolated 20-run stress passes do not clear the full-profile failure.",
+    "remaining": [
+      "Safari current-candidate interaction and visual acceptance",
+      "Root cause of full-profile-only race timeout",
+      "Large-library performance and real FTP/FTPS service acceptance",
+      "Real user SSH host and long-running session/source-boundary acceptance",
+      "Requirement-by-requirement completion and release/rollback gates"
+    ],
+    "deferred_by_user": [
+      "Real embedding/vector model acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reported it tested successfully"
+    ],
+    "notes": "This reconciles later pushes and browser state without changing earlier dated receipts. Source pushes are not a release or complete product acceptance."
   }
 }

@@ -57,7 +57,8 @@
         ".agent-state/timeline-preview/narrow.jpg",
         ".agent-state/timeline-preview/desktop.jpg",
         ".agent-state/continuity-runtime/timeline-before-after-safari-20261010.png",
-        ".agent-state/continuity-runtime/timeline-removed-safari-20261010.png"
+        ".agent-state/continuity-runtime/timeline-removed-safari-20261010.png",
+        "2026-10-13 当前工作树：docker run --rm --network none -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor -race ./internal/server -run '^TestKnowledge(Code|Path|Timeline)' -count=1 -timeout=120s：PASS（10项，5.356s）。本机代码关系/路径/时间线定向 race 回归；未替代真实工作区、SSH、Safari或大规模性能验收。"
       ]
     },
     "documentation": {

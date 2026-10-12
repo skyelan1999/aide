@@ -63,7 +63,8 @@
         "python3 scripts/check_docs.py：PASS（188 Markdown、537 local links、JPEG signatures、FR-01..100）；git diff --check：PASS。",
         "Safari：本轮未验收路径界面；localhost:18217 当前为连接工作台登录页，不能作为产品浏览器通过证据。",
         "2026-10-12 native Safari https://localhost:9999/starmap.html?channel=fc75908f-3842-48a4-be49-6d75010ee633：当前索引 C072c217f8209 Commands.cmd_help → C93c0aec588c0 Commands.basic_help；1步，commands.py L1123 AST call 静态名称候选，查看关系源位置链接可用。",
-        "2026-10-12 native Safari click-through: relation-source link navigated to localhost:9999/#file with root=context, path=aider-ai--aider/aider/commands.py, line=1123, endLine=1123, readOnly=true; target workbench showed “已锁屏”, so source body/highlight could not be visually confirmed."
+        "2026-10-12 native Safari click-through: relation-source link navigated to localhost:9999/#file with root=context, path=aider-ai--aider/aider/commands.py, line=1123, endLine=1123, readOnly=true; target workbench showed “已锁屏”, so source body/highlight could not be visually confirmed.",
+        "2026-10-13 当前工作树：docker run --rm --network none -v \"$PWD:/src\" -w /src golang:1.26-bookworm go test -mod=vendor -race ./internal/server -run '^TestKnowledge(Code|Path|Timeline)' -count=1 -timeout=120s：PASS（10项，5.356s）。本机代码关系/路径/时间线定向 race 回归；未替代真实工作区、SSH、Safari或大规模性能验收。"
       ]
     },
     "documentation": {

@@ -53,12 +53,13 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "完整 go test -race -count=1 ./... 通过（server 340.829s、tts 2.955s），随后对最后的 shell 语法白名单加固运行相关模型/审批 race 用例通过；go vet ./... 退出码 0；agent-route verify quick 通过。Safari 仍运行旧 RC15，因此没有进行当前工作树的真实 UI 验收。",
+      "summary": "完整 go test -race -count=1 ./... 通过（server 340.829s、tts 2.955s），随后对最后的 shell 语法白名单加固运行相关模型/审批 race 用例通过；go vet ./... 退出码 0；agent-route verify quick 通过。Safari 仍运行旧 RC15，因此没有进行当前工作树的真实 UI 验收。 2026-10-13 当前源码连接与能力仪表后端定向回归（权限写探测/清理、来源与插件边界、能力状态过期、模型并发变更、MCP只发现不调用）普通 Go PASS 4.097s；race尝试被容器 signal: killed，Safari当前设置界面验收未完成。",
       "evidence": [
         ".agent-state/verify-20261006T140418616251Z.log",
         "Docker Go race test output: ok aide/internal/server 340.829s; ok aide/internal/server/tts 2.955s",
         "Post-gofmt targeted race tests: TestMultiModelSettings, TestExplicitModelCapabilitiesControlProviderFeatures, TestRunShellRequiresExactConfirmationForWrites, TestReadOnlyAllowedRejectsShellEvaluation passed.",
-        "go vet ./... exit code 0; Safari UI acceptance not run because the visible service is the old RC15 runtime."
+        "go vet ./... exit code 0; Safari UI acceptance not run because the visible service is the old RC15 runtime.",
+        "2026-10-13 current worktree in healthy container aide-aide-1: go test -mod=vendor -p=1 ./internal/server -run \"Test(CapabilityWriteProbeCreatesAndCleansTemporaryFile|CapabilityWriteProbeHonorsConfiguredReadOnly|CapabilityLocalChecksAndStaleness|CapabilityPluginAndSourceBoundaries|CapabilityModelMetadataAndConcurrentChange|CapabilityMCPDiscoveryDoesNotCallTools|CapabilityParserDependencyObservations)$\" -count=1 -timeout=180s: PASS 4.097s; race-enabled combined approval/capability run was killed before producing assertions; Safari UI remains pending."
       ]
     },
     "documentation": {
@@ -83,5 +84,5 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "已完成模型能力登记/门禁与逐命令 run_shell 确认，并通过全仓 race 测试、go vet、快速静态验证。仍需继续实现并验收：每插件 OS 隔离、宿主浏览器和桌面控制桥接、MCP HTTP/OAuth 写操作审批、Git worktree/diff 审阅、环境复现、插件签名目录及更完整的跨重启长任务恢复。Safari UI 尚未针对当前未提交工作树验收；未提交、未推送、未发布。模型本身缺少的视觉/工具能力不能靠插件或提示词创造。"
+  "handoff": "已完成模型能力登记/门禁与逐命令 run_shell 确认，并通过全仓 race 测试、go vet、快速静态验证。仍需继续实现并验收：每插件 OS 隔离、宿主浏览器和桌面控制桥接、MCP HTTP/OAuth 写操作审批、Git worktree/diff 审阅、环境复现、插件签名目录及更完整的跨重启长任务恢复。Safari UI 尚未针对当前未提交工作树验收；未提交、未推送、未发布。模型本身缺少的视觉/工具能力不能靠插件或提示词创造。 Capability dashboard backend checks pass in the current worktree (non-race); current-candidate settings UI and OS/browser bridge acceptance remain unverified."
 }

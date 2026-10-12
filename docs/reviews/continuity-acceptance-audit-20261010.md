@@ -25,6 +25,26 @@
 | 知识变化时间线 | [knowledge_timeline.go](../../internal/server/knowledge_timeline.go)、[starmap-timeline.js](../../internal/server/web/starmap-timeline.js) | 两个历史索引与覆盖证据、容量淘汰后选择/对比一致、存储失败；索引移除不等于文件删除，不推断语义演变 |
 | 配色、动效、文档与发布 | [任务账本](../tasks/aide-continuity-knowledge-20261009.json)、[Codex续验记录](continuity-acceptance-resumed-20261011.md) | 系统 Safari 明暗主题/窄屏/键盘/性能、最新 SHA full 及逐项证据、release-check 和部署/回滚/资产摘要 |
 
+### 2026-10-13 手动压缩进度补记
+
+- 复核发现手动“压缩”此前只在前端显示开始提示，后端分批摘要过程只有自动压缩会持续发布。现手动与自动流程共用会话级压缩进度记录；手动路径逐批报告 map/reduce 当前批次，随后报告折叠保存、失败或完成前后估算。模型密钥读取失败会在建立压缩锁之前返回，避免遗留“压缩中”状态。
+- 网络隔离 Go 定向回归 PASS：`TestManualCompactionPublishesLiveProgressAndTokenEstimates` 在第一批模型请求暂停时读回进度接口，再校验保存完成后的 token 估算；同批自动生命周期与分批摘要回归亦 PASS（1.254s）。`node --check internal/server/web/app.js`、`git diff --check` PASS。
+- 隔离候选 18219 已同步当前 28 个变更并由 `start.command` 重建，指纹 `bda1ad77c3a7bad747c217307cdbb832b094860e7dfb17d2ab4ca82bebca6258`；容器 healthy，healthz `status=ok`，首页与静态资源引用可读。完整性状态为 `degraded`，只读比较确认是该候选持久卷内保留的旧二进制基线与新构建不一致；未重置基线或清理卷。
+- Safari 仍停在系统 localhost 证书拦截页。按电脑控制规则该拦截必须由用户亲自处理，代理不能继续越过；当前手动压缩 UI 验收与 push 未完成。
+
+### 2026-10-13 当前复核补记
+
+- 在当前工作树运行代码关系、路径探索及知识时间线 10 项定向 Go race 回归：`PASS`（5.356s，Docker `--network none`）。证据分别追加至 `knowledge-code-confidence-20261009.json`、`knowledge-path-exploration-20261009.json` 与 `knowledge-timeline-20261009.json`。这只证明本机代码回归，不覆盖 SSH、当前系统浏览器产品页或大规模索引性能。
+- 2026-10-13 当前工作树重新运行隔离双服务器 SSH/SFTP 连续性验收：`AIDE_SSH_REPEAT=1 ... bash scripts/test-ssh-workspace.sh` 在 race 模式下通过（14.508s），覆盖 workspace、自动系统文档与独立 Server B 的读写、Markdown 正文和嵌入资源历史去重/冲突拒绝/恢复读回、token 记忆远端往返、来源目录操作、原文检索、时间线与进程重启后的渐进覆盖续扫。测试输入哈希前后相同；临时容器和 internal 网络由脚本清理。收据及SHA见[SSH任务记录](../tasks/ssh-continuity-integration-20261009.json)。这缩小了 fixture 双服务器实现回归缺口，不替代实际用户SSH主机和系统Safari联调。
+- Safari AX 复核 `https://localhost:18219` 仍停留在 Safari 自身的“此连接非私人连接”拦截页，UI 测试尚未开始。用户曾授权代理处理证书，但电脑控制规则不允许代理绕过安全警告；需要用户在系统 Safari 手动处理后才能继续该候选交互验收。
+- Markdown 模板图标候选已包含在同一 18219 实例，`start.command` vet/build 与容器 health 通过；工具栏 26 项、悬浮说明、选区插入、预览渲染及窄屏滚动的系统 Safari 证据仍缺，尚未 push。
+
+### 2026-10-13 后续检查点校正
+
+- 上两条记录的是其写入时状态。之后手动压缩观测、长输出渐进渲染及 Markdown 模板图标实现已分别推送至 `origin/main`；相关检查点包括 `c4cda426`、`df780ce`、`456643b`、`42f7f47` 与 `20f1208`。当前 Safari 交互验收仍未完成。
+- 当前系统 Safari 地址为 `https://localhost:18220`，显示系统生成的“此连接非私人连接”告警。用户已授权代理处理本机候选证书，但当前电脑控制安全规则仍要求证书例外由用户在系统浏览器处理；本轮未点击绕过。18220 的模板工具栏画面、插入、预览和窄屏操作尚未验收。
+- 当前 `main` 与 `origin/main` 同步；本轮剩余工作树差异限于文档和任务账本，尚需经过文档门禁后另行提交。全仓 race 15 分钟超时仍是失败状态，不受上述阶段推送影响。
+
 **明确边界**：跨设备恢复是显式JSON导入且需匹配工作区身份，未实现任意路径自动映射；单文档ZIP不是服务数据卷灾备；Go类型绑定不是所有语言的语言服务器；真实向量检索和Windows目前未验收。源码交付不能将这些项勾成全目标完成。
 
 ### 当前复核检查点 · 2026-10-12

@@ -69,14 +69,17 @@
       ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "Go build、JS语法和文档检查；浏览器、跨会话即时生效与真实模型验收尚未运行；本轮未增加或执行测试",
+      "status": "in_progress",
+      "summary": "当前源码中审批范围、过期与撤销规则的 Go 定向回归通过；浏览器跨会话即时同步、重启保持与 UI 授权流程须对当前候选复验后才能关闭。",
       "evidence": [
         "Docker aide:local CGO_ENABLED=0 go build -buildvcs=false -mod=vendor ./cmd/aide",
         "node --check internal/server/web/app.js",
         "node --check internal/server/web/locales/en.js",
         "git diff --check",
-        "python3 scripts/check_docs.py"
+        "python3 scripts/check_docs.py",
+        "2026-10-13 current worktree in healthy container aide-aide-1: go test -mod=vendor -p=1 ./internal/server -run \"Test(ApprovalRememberExpiryFromAnswer|ApprovalRuleManagement|ConcurrentApprovalExpiryAndRevocationUseRevisionGuard|GlobalApprovalModeManualStopsReviewAcrossSessions|RememberedApprovalDoesNotCrossSSHRoot|GlobalApprovalModeAssistedDoesNotMarkPausedTasksReviewing|ApprovalPolicyBroadcastSurvivesFullGlobalEventQueue)$\" -count=1 -timeout=180s: PASS 4.097s. This run was not race-enabled.",
+        "2026-10-13 same targeted set with -race was terminated by the container (signal: killed); no test assertion result was produced. Race verification remains pending.",
+        "Current-source system Safari acceptance of global mode propagation and remembered-rule UI is still pending; do not infer it from Go tests."
       ]
     },
     "documentation": {
@@ -102,7 +105,7 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "源码候选，未替换9999生产服务。下一步通过start.command在隔离实例验收两个会话/标签页、重启、一次与长期授权、撤销和保存失败。未推送或发布。",
+  "handoff": "源码候选，未替换9999生产服务。下一步通过start.command在隔离实例验收两个会话/标签页、重启、一次与长期授权、撤销和保存失败。未推送或发布。 2026-10-13 当前源码普通 Go 定向回归 PASS 4.097s；同组 race 进程被容器 signal: killed，故 race 与 Safari 跨会话 UI 验收仍待完成。",
   "source_fingerprints": {
     "internal/server/approval_policy.go": "e3bd468b239676852182b2c96ed089743d1fa7337d662d2850096c7f5e534b8d",
     "internal/server/assisted_approval.go": "7e9d790f36cc73aefcac77d95e20f0276af564979f154c190f601a5cab92a299",
