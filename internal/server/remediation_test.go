@@ -110,6 +110,67 @@ func TestContextOverflowCompactsHistoryBeforeRetry(t *testing.T) {
 	}
 }
 
+func TestAutoCompactionPublishesObservableLifecycle(t *testing.T) {
+	a := testApp(t)
+	s := createSession(t, a)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"content": `{"goal":"keep continuity","constraints":[],"decisions":[],"files":[],"facts":[],"evidence":[],"pending":[]}`}}}})
+	}))
+	defer provider.Close()
+	cfg := Settings{BaseURL: provider.URL, Model: "test", Models: []ModelRef{{ID: "test", ContextWindow: 16000}}}
+	a.mu.Lock()
+	s = a.sessions[s.ID]
+	for i := 0; i < 12; i++ {
+		s.Messages = append(s.Messages,
+			Message{Role: "user", Content: strings.Repeat("user context ", 900)},
+			Message{Role: "assistant", Content: strings.Repeat("assistant context ", 900)},
+		)
+	}
+	if err := a.save(s); err != nil {
+		a.mu.Unlock()
+		t.Fatal(err)
+	}
+	a.settings = cfg
+	a.mu.Unlock()
+
+	before := sessionContextTokens(s)
+	if before <= compactAutoTokens {
+		t.Fatalf("fixture must cross auto-compaction threshold: %d <= %d", before, compactAutoTokens)
+	}
+	ch, cancel := a.subscribeStream("compaction-observation-test")
+	defer cancel()
+	a.maybeAutoCompact(context.Background(), s, cfg, "compaction-observation-test")
+
+	var events []streamEvent
+	for len(ch) > 0 {
+		events = append(events, <-ch)
+	}
+	var phases []string
+	for _, event := range events {
+		if event.Event != "compaction" {
+			continue
+		}
+		if event.SessionID != s.ID {
+			t.Fatalf("event leaked or lost session identity: got %q want %q", event.SessionID, s.ID)
+		}
+		phases = append(phases, event.Phase)
+		if event.Folded <= 0 || event.BeforeTokens < before {
+			t.Fatalf("event must report actual folded count and pre-compaction estimate: %+v, before=%d", event, before)
+		}
+		if event.Phase == "completed" {
+			if event.AfterTokens <= 0 || event.AfterTokens >= event.BeforeTokens {
+				t.Fatalf("completed event must report a lower post-compaction estimate: %+v", event)
+			}
+		}
+	}
+	if !reflect.DeepEqual(phases, []string{"started", "folding", "completed"}) {
+		t.Fatalf("unexpected compaction lifecycle: %v", phases)
+	}
+	if got := sessionContextTokens(s); got != events[len(events)-1].AfterTokens {
+		t.Fatalf("completed estimate differs from persisted session state: event=%d session=%d", events[len(events)-1].AfterTokens, got)
+	}
+}
+
 func TestCompactionRetainedHistoryStaysWithinBudget(t *testing.T) {
 	a := testApp(t)
 	s := &Session{}

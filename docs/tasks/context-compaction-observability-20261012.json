@@ -44,13 +44,14 @@
     },
     "verification": {
       "status": "partial",
-      "summary": "JS 语法检查与差异空白检查通过；通过 start.command 对应的 aide.sh source build 重建 9999 服务，Go vet/build 通过。Safari 复核了真实页面中的开始、折叠、完成三态，使用本地合成 UI 事件验证渲染，不触发真实会话压缩。未完成真实模型触发的自动压缩端到端观察。此前 quick 路由有一项与本任务无关的既有 task-outcome 标签断言失败。",
+      "summary": "JS 语法检查与差异空白检查通过；通过 start.command 对应的 aide.sh source build 重建 9999 服务，Go vet/build 通过。新增隔离自动压缩生命周期回归，使用本地 mock provider 触发真实 maybeAutoCompact 流程并校验 SSE 阶段、会话身份、折叠数及前后估算。Safari 复核了真实页面中的开始、折叠、完成三态，使用本地合成 UI 事件验证渲染；未完成真实模型触发的自动压缩端到端观察。此前 quick 路由有一项与本任务无关的既有 task-outcome 标签断言失败。",
       "evidence": [
         "node --check internal/server/web/app.js：通过。",
         "git diff --check（本任务四个目标文件）：通过。",
         "bash scripts/aide.sh start：Docker Go vet/build 通过，9999 服务就绪。",
         "Safari AX：整理中“12 条早期消息 · 当前约 17.2K”；折叠阶段替换前态；完成“17.2K → 10.9K（−6.3K）”。",
-        "未运行真实会话压缩，避免改动现有会话历史。"
+        "未运行真实会话压缩，避免改动现有会话历史。",
+        "新增 TestAutoCompactionPublishesObservableLifecycle：离线 Docker Go 定向测试 PASS（1.124s），触发自动压缩并断言 started → folding → completed、sessionId、Folded、BeforeTokens/AfterTokens 与压缩后会话状态一致。"
       ]
     },
     "documentation": {
