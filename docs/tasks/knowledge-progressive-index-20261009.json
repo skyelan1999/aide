@@ -45,7 +45,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Knowledge package race PASS 19.213s, including changed listing and depth/catalog limits. Final real dual-server SSH/SFTP repeat=2 PASS 24.639s. Browser, persistence and large-library performance remain NOT_RUN.",
+      "summary": "Knowledge package race 与真实双服务器 SSH/SFTP 渐进扫描回归通过。2026-10-12 系统 Safari 在实际图谱观察到会话/工作区/引用来源的累计数及范围受限标签，证实该页面未把来源范围上限当作全库总数；这是图谱 UI 观察，不等于完整的索引配置浏览器验收。非SSH适配、重启/搜索端到端与大库性能仍未完成。",
       "evidence": [
         "TestKnowledge race PASS 11.397s",
         "TestKnowledge race PASS 12.757s",
@@ -61,7 +61,8 @@
         ".agent-state/ssh-code-budget-final-20261009/aide-ssh-test-20261009211410-88788.log",
         ".agent-state/ssh-code-budget-final-20261009/aide-ssh-test-20261009211410-88788.log.sha256",
         ".agent-state/ssh-process-restart-20261009/aide-ssh-test-20261009211727-88998.log",
-        ".agent-state/ssh-process-restart-20261009/aide-ssh-test-20261009211727-88998.log.sha256"
+        ".agent-state/ssh-process-restart-20261009/aide-ssh-test-20261009211727-88998.log.sha256",
+        "2026-10-12 系统 Safari https://localhost:9999/starmap.html：2,149 个真实图谱节点；来源计数会话38、工作区109、引用目录1000、引用1000、自动系统文档2。workspace/system-docs标为限定范围已扫描，context两项标为范围受限；悬停说明累计文件/目录、批次预算、轮次、容量上限及全库总数未统计，未虚报全源完成或全局1000点上限。"
       ]
     },
     "documentation": {
@@ -90,7 +91,7 @@
       "node --check internal/server/web/starmap.js PASS",
       "提示函数实际断言 PASS：待扫描、容量限制、深度限制、限定范围完成、旧协议、缺少覆盖字段"
     ],
-    "browser": "NOT_RUN",
+    "browser": "PARTIAL: 2026-10-12 系统 Safari 实际图谱显示各来源范围与覆盖标签；尚未打开索引设置或验证改变范围后的继续扫描/覆盖更新。",
     "deployment": "NOT_RUN"
   },
   "priority_addressing_checkpoint": {
