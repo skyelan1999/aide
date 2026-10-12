@@ -60,7 +60,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "长任务预算与显式续跑策略已有定向 race/vet 和快速检查通过；Safari 真实实例只确认了已保存设置读回，隔离源码候选尚未做最新界面验收。完整 race 全包超时；向量检索验收按用户要求暂缓。其余超长对话、记忆及长输出验收仍按下方逐项证据跟踪。",
+      "summary": "全仓 race 与 go vet 已通过；长会话生效预算及 9999 Safari 暂停状态已读回。真实模型下长任务续跑、长历史压缩时延/恢复、长输出 Safari 稳定性及其他产品边界仍未完成。向量按用户要求暂缓。",
       "evidence": [
         "离线 Docker Go 1.26 扩展回归：覆盖 TestMemoryTokensLegacyAndExternalEdit、容量/损坏投影测试、24 写并发一致性、连续摘要请求预算、畸形摘要、工具参数快照变化、超限/新任务/自动/并发压缩；`go test -mod=vendor ./internal/server -run 'Test(MemoryTokens.*|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall|RemediationAutoCompactNotBlockedByHeldMutex|RemediationConcurrentCompactionNoPanicNoDeadlock)$' -count=1`：PASS（6.920s）。",
         "离线 Docker Go 1.26：`go test -mod=vendor ./internal/server -run 'Test(CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|MemoryTokens|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall)$' -count=1`：PASS（3.828s）。",
@@ -77,7 +77,8 @@
         "2026-10-12 文档和英文提示修改后再次 `python3 scripts/agent-route.py verify quick` PASS，fingerprint 46862cc3ff48aae5dba45d2f8c459d631c59be19b784bf915574d0dbbdd1ade9。",
         "最新源码隔离候选 https://localhost:18217 Safari 到达证书警告页；按手动证书处理规则未绕过，页面验收 NOT_RUN。候选容器 aide-budget-20261012；9999 和既有18212未修改。",
         "2026-10-12：重启隔离源码候选 aide-budget-20261012（仅源码只读挂载与空数据目录），HTTPS根页 HTTP/2 200；鉴权 GET /api/execution-policy 返回200，chatBudgetSec=7200、workflowBudgetSec=900；access token 留在容器内，未输出。",
-        "2026-10-12：重启后系统 Safari 仍在 https://localhost:18217 的证书警告页；浏览器验收未运行。未尝试绕过证书；9999未修改。"
+        "2026-10-12：重启后系统 Safari 仍在 https://localhost:18217 的证书警告页；浏览器验收未运行。未尝试绕过证书；9999未修改。",
+        "2026-10-12：隔离 Docker 全仓复跑 `go test -race -count=1 -timeout=30m ./...` exit 0（internal/server 989.296s、internal/server/tts 3.356s），随后 `go vet ./...` exit 0。运行起始代码基线 645fbbf；后续仅追加验收文档。"
       ]
     },
     "documentation": {
