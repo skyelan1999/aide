@@ -2629,7 +2629,7 @@
     ]
   },
   "approval_rule_concurrency_20261012": {
-    "status": "backend_race_verified_browser_pending",
+    "status": "partially_verified_browser",
     "change": "Added a concurrent API regression for changing a remembered approval's expiry and revoking it using the same revision. Exactly one mutation may win; a stale write must conflict and cannot recreate or remove the newer permission state.",
     "verification": [
       "go test -mod=vendor -race ./internal/server -run 'Test(ApprovalRule|ConcurrentApproval|RememberedApprovalDoesNotCrossSSHRoot)' -count=5 -timeout=120s PASS (15.455s).",
@@ -2638,8 +2638,7 @@
     ],
     "remaining": [
       "System Safari UI concurrent edit/revoke and expiry interaction",
-      "Real SSH workspace approval confirmation and revocation",
-      "Reverse global approval mode immediate propagation across sessions"
+      "Real SSH workspace approval confirmation and revocation"
     ],
     "event_queue_priority_checkpoint_20261012": {
       "change": "全局事件队列满时，审批策略变更广播会挤出最旧的排队通知，保证连接中的标签页仍收到事件并重新读取服务端权威策略。",
@@ -2652,6 +2651,11 @@
       "remaining": [
         "在加载本次改动的候选构建后，以系统 Safari 实测多标签审批模式 SSE 即时同步；需覆盖队列拥塞事件。"
       ]
+    },
+    "system_safari_18217": {
+      "result": "PASS for global mode synchronization in both directions across two open candidate tabs.",
+      "evidence": "Manual was initially selected. After switching the first tab to Assisted, the other tab showed Assisted immediately. Switching the first tab back to Manual caused the other tab to show Manual. Candidate ended Manual.",
+      "boundary": "No approval task or remembered rule was created. Not production or real SSH approval evidence."
     }
   },
   "progress_checkpoint_20261012": {
