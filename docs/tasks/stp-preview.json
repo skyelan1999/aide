@@ -63,7 +63,8 @@
         "go test -mod=vendor -count=1 ./internal/server -run 'TestReadFileRaw(Step|BackupUsesUnderlyingMIME)$'：通过",
         "AIDE_OPEN_BROWSER=0 ./start.command：Go vet、应用构建、容器重建与健康检查通过",
         "系统 Safari 2026-10-12：qa-step-cube.stp 显示 12 三角面、300×300×300 mm；拖动旋转改变视角，滚轮调整视图，重置视角恢复初始状态。",
-        "python3 scripts/agent-route.py verify quick：pass；fingerprint 57e181953219bc3532847da93e0b44cfa36395eb660650fe3f55b9eae2b02dbe；2026-10-12T09:30:08Z。"
+        "python3 scripts/agent-route.py verify quick：pass；fingerprint 57e181953219bc3532847da93e0b44cfa36395eb660650fe3f55b9eae2b02dbe；2026-10-12T09:30:08Z。",
+        "系统 Safari 再次实际打开工作区样例 aide-step-preview-acceptance.stp：预览可见立方体，界面报告 12 三角面、300×300×300 mm；完成后关闭预览并刷新工作区列表，该样例不再列出。"
       ]
     },
     "documentation": {
@@ -78,9 +79,10 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "关闭了 Safari 临时验收标签页，并删除仓库与工作区中的一次性纯几何 STEP 样例。解析器发行文件、许可文本和测试夹具保留在各自源码目录。",
+      "summary": "已从预览返回工作台、刷新工作区，并删除本轮一次性纯几何 STEP 样例。解析器发行文件、许可文本和测试夹具保留在各自源码目录。",
       "evidence": [
-        "临时样例已删除：仓库 qa-step-cube.stp 与 /Users/skyelan/debug/qa-step-cube.stp 均不存在。"
+        "既有一次性样例已删除：仓库 qa-step-cube.stp 与 /Users/skyelan/debug/qa-step-cube.stp 均不存在。",
+        "本轮 Safari 样例 /Users/skyelan/debug/aide-step-preview-acceptance.stp 经显式授权创建；验收后已删除，系统 Safari 刷新后的 /workspace 文件列表不再包含该文件，且 host 文件检查确认不存在。"
       ]
     },
     "release": {
