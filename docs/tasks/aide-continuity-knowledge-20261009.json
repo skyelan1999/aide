@@ -2870,6 +2870,6 @@
       "full_profile": "Not rerun against this uncommitted summary-budget change; do not inherit the previous fingerprint receipt as evidence for the modified source"
     },
     "release": "not_run",
-    "push": "pending this checkpoint commit"
+    "push": "pushed to origin/main in commit c2f9b44"
   }
 }
