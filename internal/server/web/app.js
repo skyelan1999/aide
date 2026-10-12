@@ -2925,6 +2925,7 @@ $('task-form').onsubmit = action(async event => {
     if(chatContent(cached)===chatContent(submittedDraft))sessionDrafts.delete(chatDraftKey(draftSession?.id||'',submittedScope));
   };
   let created = null;
+  let stopContextCompactionWatch = null;
   try {
     if (!draftSession) {
       created = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: t("新会话") }) });
@@ -2971,7 +2972,10 @@ $('task-form').onsubmit = action(async event => {
     // #41：小秘语音经 typeIntoPrompt 提交时，用 analyze 判定的 mode 一次性覆盖手动排队开关
     let queued = state.queueMode;
     if (voice.queuedOverride != null) { queued = voice.queuedOverride; voice.queuedOverride = null; }
+    stopContextCompactionWatch = startContextCompactionWatch(target.id);
     const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, autoReview, mode: state.mode, attachments: submittedDraft.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+    await stopContextCompactionWatch();
+    stopContextCompactionWatch = null;
     await clearSubmittedDraft();
     if (recoveryScope()===submittedScope&&state.session?.id === target.id&&chatContent({text:$('prompt').value,attachments:state.attachments})===chatContent(submittedDraft)) { // 只清空成功发送且未继续编辑的快照
       $('prompt').value = ''; state.attachments = []; renderAttachments();
@@ -2982,6 +2986,7 @@ $('task-form').onsubmit = action(async event => {
       $('conversation').scrollTo({ top: $('conversation').scrollHeight, behavior: 'instant' });
     }
   } catch (err) {
+    if (stopContextCompactionWatch) { await stopContextCompactionWatch(); stopContextCompactionWatch = null; }
     window.aideAvatarFeedback?.('error');
     // 任务未启动成功：删掉刚创建的空壳会话，避免侧栏残留“新会话”空项；正展示时退回空白页
     if (created) {
@@ -2990,7 +2995,7 @@ $('task-form').onsubmit = action(async event => {
       await loadSessions().catch(() => {});
     }
     throw err;
-  } finally { state.submitting = false; updateSendEnabled(); setSendMode(state.busy); }
+  } finally { if (stopContextCompactionWatch) await stopContextCompactionWatch(); state.submitting = false; updateSendEnabled(); setSendMode(state.busy); }
 });
   $('queue-toggle')?.addEventListener('click', () => { state.queueMode = !state.queueMode; $('queue-toggle').classList.toggle('active', state.queueMode); });
   $('prompt').addEventListener('keydown', event => {
@@ -5531,6 +5536,32 @@ function renderContextMeter(data, isDraft) {
   detail.title = data.estimationNote || '';
 }
 let contextCompactionTimer = 0;
+function startContextCompactionWatch(sessionID) {
+  let stopped = false;
+  let inFlight = null;
+  const watchStartedAt = Date.now();
+  const refresh = async (force = false) => {
+    if (stopped && !force) return;
+    if (inFlight) { await inFlight; if (force) return refresh(true); return; }
+    inFlight = (async () => {
+      try {
+        const data = await api(`/sessions/${sessionID}/compaction-progress`);
+        if (data?.event?.phase) {
+          const terminal = data.event.phase === 'completed' || data.event.phase === 'failed';
+          if (!terminal || Number(data.updatedAt || 0) >= watchStartedAt) showContextCompaction(data.event);
+        }
+      } catch (_) { /* Status polling must never block or fail task submission. */ }
+    })();
+    try { await inFlight; } finally { inFlight = null; }
+  };
+  void refresh();
+  const timer = setInterval(() => { void refresh(); }, 650);
+  return async () => {
+    if (!stopped) { stopped = true; clearInterval(timer); }
+    if (inFlight) await inFlight;
+    await refresh(true);
+  };
+}
 function showContextCompaction(event) {
   if (!event || !event.phase) return;
   const targetSession = event.sessionId || state.session?.id || '';
@@ -5562,7 +5593,14 @@ function renderContextCompactionState(detail) {
   row.setAttribute('aria-live', 'polite');
   if (running) {
     row.append(el('span', 'context-compaction-orbit', '◌'));
-    row.append(el('span', '', event.text || t('正在整理早期消息并生成摘要')));
+    const progressText = event.preflight
+      ? (event.phase === 'folding'
+        ? t('摘要已生成，正在折叠这 {0} 条早期消息并保存', event.folded || 0)
+        : (event.batch > 0
+          ? t('摘要处理中 · {0} {1}/{2}', event.batchStage === 'map' ? t('分段整理') : t('连续归并'), event.batch, event.batches)
+          : t('正在整理 {0} 条早期消息并生成连续摘要', event.folded || 0)))
+      : (event.text || t('正在整理早期消息并生成摘要'));
+    row.append(el('span', '', progressText));
     const detailText = event.folded > 0
       ? t('{0} 条早期消息 · 当前约 {1}', event.folded, fmtTokens(event.beforeTokens || 0))
       : (event.beforeTokens > 0 ? t('当前约 {0}', fmtTokens(event.beforeTokens)) : '');
@@ -5570,11 +5608,11 @@ function renderContextCompactionState(detail) {
   } else if (event.phase === 'completed') {
     const saved = Math.max(0, (event.beforeTokens || 0) - (event.afterTokens || 0));
     row.append(el('span', 'context-compaction-check', '✓'));
-    row.append(el('span', '', t('已压缩 {0} 条 · 活动上下文估算', event.folded || 0)));
+    row.append(el('span', '', event.preflight ? t('发送前已压缩 {0} 条 · 活动上下文估算', event.folded || 0) : t('已压缩 {0} 条 · 活动上下文估算', event.folded || 0)));
     row.append(el('strong', '', fmtTokens(event.beforeTokens || 0) + ' → ' + fmtTokens(event.afterTokens || 0) + ' (−' + fmtTokens(saved) + ')'));
   } else {
     row.append(el('span', 'context-compaction-check', ''));
-    row.append(el('span', '', event.text || t('压缩未完成，原会话内容已保留')));
+    row.append(el('span', '', event.preflight ? t('压缩未完成，原会话内容已保留') : (event.text || t('压缩未完成，原会话内容已保留'))));
   }
   detail.append(row);
 }

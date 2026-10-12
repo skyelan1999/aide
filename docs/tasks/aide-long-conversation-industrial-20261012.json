@@ -50,17 +50,20 @@
       ]
     },
     "implementation": {
-      "status": "pass",
-      "summary": "超长流式回答按新增文本增量扫描；摘要以 3000 DSH 估算预算分批 map/reduce，结构错误即中止；压缩使用完整工具调用快照比对并在原子持久化成功后提交内存态；加入记忆并发一致性回归。",
+      "status": "in_progress",
+      "summary": "超长流式回答按新增文本增量扫描；摘要以 3000 DSH 估算预算分批 map/reduce，结构错误即中止；压缩使用完整工具调用快照比对并在原子持久化成功后提交内存态；加入记忆并发一致性回归。 2026-10-12 后续：发送前上下文超限压缩截止值从 6 分钟调至 2 小时，保留请求取消及原子提交保护；待 Go 回归。 同步压缩新增会话级进度 API 与工作台轮询，在左侧卡片显示摘要整理、折叠保存、完成/失败、折叠条数和前后估算值；状态不含会话正文。 摘要整理阶段进一步提供逐批进度，显示实际 map/reduce 当前批次及总批数。",
       "evidence": [
         "internal/server/web/app.js：增量 live boundary scanner；超长活动段落纯文本回退逻辑沿用现有工作区实现。",
         "internal/server/workflow.go：摘要连续归并、结构化验证、快照校验与候选会话原子提交。",
-        "internal/server/remediation_test.go 与 memory_tokens_test.go：新增预算/连续摘要/失败保护/工具参数并发改变/项目记忆并发测试。"
+        "internal/server/remediation_test.go 与 memory_tokens_test.go：新增预算/连续摘要/失败保护/工具参数并发改变/项目记忆并发测试。",
+        "internal/server/workflow.go：contextCompactionTimeout=2*time.Hour，用于发送前压缩；internal/server/workflow_timeout_test.go 增加预算断言。",
+        "internal/server/server.go 注册 GET /api/sessions/{id}/compaction-progress；internal/server/workflow.go 记录带过期清理的阶段/计数状态；internal/server/web/app.js 在发送等待期轮询并复用上下文压缩卡，英文界面键在 locales/en.js。",
+        "internal/server/workflow.go：buildCompactionSummary 提供逐批 map/reduce 回调；internal/server/remediation_test.go 补充回调阶段、批次范围和每次 provider 请求一一对应的断言（待 Go 环境运行）。"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "全仓 race 与 go vet 已通过；长会话生效预算及 9999 Safari 暂停状态已读回。真实模型下长任务续跑、长历史压缩时延/恢复、长输出 Safari 稳定性及其他产品边界仍未完成。向量按用户要求暂缓。",
+      "summary": "当前源码指纹下隔离 full 回归（含全包 race 与 go vet）通过；Safari 已登录重编译的只读源码候选 18217 并读回工作台。真实模型长任务续跑、长历史压缩动态/时延/恢复、长输出稳定性及其他产品边界仍未完成。向量按用户要求暂缓；Windows 由用户实测正常并从后续验收移除。候选未配置模型，本轮未发送模型任务；生产 9999 未重启。",
       "evidence": [
         "离线 Docker Go 1.26 扩展回归：覆盖 TestMemoryTokensLegacyAndExternalEdit、容量/损坏投影测试、24 写并发一致性、连续摘要请求预算、畸形摘要、工具参数快照变化、超限/新任务/自动/并发压缩；`go test -mod=vendor ./internal/server -run 'Test(MemoryTokens.*|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall|RemediationAutoCompactNotBlockedByHeldMutex|RemediationConcurrentCompactionNoPanicNoDeadlock)$' -count=1`：PASS（6.920s）。",
         "离线 Docker Go 1.26：`go test -mod=vendor ./internal/server -run 'Test(CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|MemoryTokens|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall)$' -count=1`：PASS（3.828s）。",
@@ -78,7 +81,14 @@
         "最新源码隔离候选 https://localhost:18217 Safari 到达证书警告页；按手动证书处理规则未绕过，页面验收 NOT_RUN。候选容器 aide-budget-20261012；9999 和既有18212未修改。",
         "2026-10-12：重启隔离源码候选 aide-budget-20261012（仅源码只读挂载与空数据目录），HTTPS根页 HTTP/2 200；鉴权 GET /api/execution-policy 返回200，chatBudgetSec=7200、workflowBudgetSec=900；access token 留在容器内，未输出。",
         "2026-10-12：重启后系统 Safari 仍在 https://localhost:18217 的证书警告页；浏览器验收未运行。未尝试绕过证书；9999未修改。",
-        "2026-10-12：隔离 Docker 全仓复跑 `go test -race -count=1 -timeout=30m ./...` exit 0（internal/server 989.296s、internal/server/tts 3.356s），随后 `go vet ./...` exit 0。运行起始代码基线 645fbbf；后续仅追加验收文档。"
+        "2026-10-12：隔离 Docker 全仓复跑 `go test -race -count=1 -timeout=30m ./...` exit 0（internal/server 989.296s、internal/server/tts 3.356s），随后 `go vet ./...` exit 0。运行起始代码基线 645fbbf；后续仅追加验收文档。",
+        "2026-10-12 当前会话：`git diff --check` PASS；`command -v go`/`gofmt` 未找到；`docker info` 因 Docker socket permission denied 失败；两小时压缩超时修改未通过回归。",
+        "2026-10-12 后续差异：`node --check internal/server/web/app.js` PASS；`node --check internal/server/web/locales/en.js` PASS；任务 JSON 解析 PASS；`git diff --check` PASS。Go 编译/回归及 Safari 产品验收尚未运行。",
+        "2026-10-12 本轮后续变更：`node --check internal/server/web/app.js` PASS；`node --check internal/server/web/locales/en.js` PASS；`python3 -m json.tool docs/tasks/aide-long-conversation-industrial-20261012.json` PASS；`python3 scripts/check_docs.py` PASS（188 Markdown/537 链接）；`node scripts/test_i18n.cjs` PASS；`git diff --check` PASS。新增 Go 逐批回归尚未运行，Safari 产品验收未运行。",
+        "2026-10-12 quick 回归首次发现 `scripts/test_ui_click_latency.cjs` 夹具缺少发送路径新依赖的上下文压缩 watcher，导致提交 UI 断言前抛 ReferenceError；补入会话范围 watcher 接口及启停断言后，`node scripts/test_ui_click_latency.cjs` PASS，随后 `python3 scripts/agent-route.py verify quick` PASS（fingerprint 7a780784b82c696c9bad1e643673c73588188f79c84fcd8b8cfde3bd51a5b45b）。该 quick 不含 Go 编译/回归；本地 Docker socket 仍拒绝访问，候选 Safari 未运行。",
+        "2026-10-12 候选启动尝试：`AIDE_OPEN_BROWSER=0 ./start.command` exit 1，启动脚本无法通过 `open -a Docker` 定位 Docker；`open -a /Applications/Docker.app` 报 `kLSNoExecutableErr`，直接 `docker info` 仍因 Unix socket permission denied。9999 未重建，Safari 当前页不是本轮候选源码验收。",
+        "2026-10-12 后续隔离 full：`python3 scripts/agent-route.py verify full` PASS，fingerprint `7a780784b82c696c9bad1e643673c73588188f79c84fcd8b8cfde3bd51a5b45b`，收据 `.agent-state/verify-20261012T144352718310Z.log` 与 `.agent-state/full.json`；仓库全量 Go race 测试和 `go vet ./...` 均 exit 0。",
+        "2026-10-12 Safari 候选复核：只重启隔离源码只读挂载的 `aide-budget-20261012`（18217），服务根页 HTTP 200；Safari 使用候选本地自动登录后读回认证工作台。候选未配置模型，未触发真实压缩流程或发送模型请求；9999 未重启。"
       ]
     },
     "documentation": {
@@ -108,5 +118,5 @@
   },
   "release_authorization": "推送检查点授权：用户此前要求阶段性测完后及时 push；本次仅推送已验证的后端与文档检查点，不打 tag、不发布。",
   "rollback": "回滚仅撤销此任务记录范围文件中的对应提交/差异；不整体恢复工作区、不清理会话或记忆数据。内存模型/API schema 不变；token 文件格式不变。",
-  "handoff": "长对话改进任务仍 active。预算修复已推送 bec1653；定向 race/vet/quick PASS，最新隔离候选根页与鉴权执行策略 API 通过（7200/900）。完整 race 超时不记通过，真实 Safari 源码候选受 localhost:18217 证书警告阻塞，需用户手动处理后继续。工业长对话其余 UI/记忆/稳定性验收仍按逐项证据跟踪；向量检索真实模型验收按用户要求暂缓。"
+  "handoff": "长对话改进任务仍 active。预算修复已推送 bec1653；当前未提交差异通过隔离 full race/vet（fingerprint 7a780784b82c696c9bad1e643673c73588188f79c84fcd8b8cfde3bd51a5b45b）。系统 Safari 已登录当前源码候选 18217 并读回工作台，但候选无模型配置，真实压缩动态与真实模型验收未完成。生产 9999 未重启；Windows 用户已实测正常并移除待办；向量仍按用户要求暂缓。工业长对话其他记忆/恢复/稳定性边界逐项跟踪。"
 }

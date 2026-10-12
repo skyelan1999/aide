@@ -391,6 +391,7 @@ type App struct {
 	tokenStatsMu              sync.Mutex
 	wsRevision                uint64
 	compactingSessions        map[string]bool
+	contextCompactionProgress map[string]contextCompactionProgress
 	retiredRoots              []*os.Root
 	worktreeMu                sync.Mutex
 	wsRoots                   map[string]*os.Root // 工作区身份 → 打开中的根（R02 运行中任务的工具绑定）
@@ -725,7 +726,7 @@ func New(work, reference, data string) (*App, error) {
 		w.Close()
 		return nil, err
 	}
-	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}, globalSubs: map[chan string]struct{}{}, liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}}
+	a := &App{workspace: w, reference: r, workPath: work, dataPath: data, refPath: reference, sessions: map[string]*Session{}, cancels: map[string]context.CancelFunc{}, commands: make(chan struct{}, 4), compactingSessions: map[string]bool{}, contextCompactionProgress: map[string]contextCompactionProgress{}, wsRoots: map[string]*os.Root{defaultWorkspaceID: w}, eventSubs: map[string]map[chan streamEvent]struct{}{}, globalSubs: map[chan string]struct{}{}, liveBroker: NewStreamBroker(), liveTaskSess: map[string]string{}}
 	if err := a.loadReminders(); err != nil {
 		a.Close()
 		return nil, err
@@ -1337,6 +1338,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/sessions", a.listSessions)
 	mux.HandleFunc("POST /api/sessions", a.createSession)
 	mux.HandleFunc("GET /api/sessions/{id}", a.getSession)
+	mux.HandleFunc("GET /api/sessions/{id}/compaction-progress", a.contextCompactionProgressHandler)
 	mux.HandleFunc("GET /api/export", a.exportSessions)
 	mux.HandleFunc("POST /api/config/export", a.exportConfigBackup)
 	mux.HandleFunc("GET /api/factory-reset/preview", a.previewFactoryReset)

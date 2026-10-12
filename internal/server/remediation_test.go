@@ -649,12 +649,29 @@ func TestCompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary(t *testing.T
 		messages = append(messages, Message{Role: "user", Content: fmt.Sprintf("message %d %s", i, strings.Repeat("长对话证据", 500))})
 	}
 	previous := priorMarker + strings.Repeat(" prior constraint and decision.", 500)
-	summary, err := a.buildCompactionSummary(context.Background(), messages, Settings{BaseURL: provider.URL, Model: "test"}, previous)
+	var progressCalls int
+	var sawMap, sawReduce bool
+	summary, err := a.buildCompactionSummary(context.Background(), messages, Settings{BaseURL: provider.URL, Model: "test"}, previous, func(stage string, batch, batches int) {
+		progressCalls++
+		if batch < 1 || batches < batch {
+			t.Errorf("invalid compaction progress: stage=%q batch=%d batches=%d", stage, batch, batches)
+		}
+		if stage == "map" {
+			sawMap = true
+		} else if strings.HasPrefix(stage, "reduce-") {
+			sawReduce = true
+		} else {
+			t.Errorf("unexpected compaction progress stage %q", stage)
+		}
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if requests < 2 {
 		t.Fatalf("large history should use multiple bounded requests, got %d", requests)
+	}
+	if progressCalls != requests || !sawMap || !sawReduce {
+		t.Fatalf("progress did not represent every map/reduce request: progress=%d requests=%d map=%t reduce=%t", progressCalls, requests, sawMap, sawReduce)
 	}
 	if !priorSeen {
 		t.Fatal("previous continuity summary was not included in the bounded pipeline")

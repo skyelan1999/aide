@@ -338,7 +338,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		sessionID := s.ID
 		modelBeforeCompact := compactCfg.Model
 		a.mu.Unlock()
-		compactCtx, cancel := context.WithTimeout(r.Context(), 6*time.Minute)
+		compactCtx, cancel := context.WithTimeout(r.Context(), contextCompactionTimeout)
 		compactErr := a.compactSessionForContext(compactCtx, sessionID, compactCfg, params.MaxTokens)
 		cancel()
 		a.mu.Lock()
@@ -1490,7 +1490,11 @@ type streamEvent struct {
 	Args         string     `json:"args,omitempty"`      // intent 事件：工具参数摘要（命令/路径）
 	CallID       string     `json:"callId,omitempty"`    // 关联 intent↔tool 事件，定位第几个工具
 	OK           bool       `json:"ok,omitempty"`        // tool 事件：是否执行成功
-	Phase        string     `json:"phase,omitempty"`     // compaction 事件阶段：started | completed
+	Phase        string     `json:"phase,omitempty"`     // compaction阶段：started | folding | completed | failed
+	Preflight    bool       `json:"preflight,omitempty"` // 是否为发送任务前的同步压缩
+	BatchStage   string     `json:"batchStage,omitempty"`
+	Batch        int        `json:"batch,omitempty"`
+	Batches      int        `json:"batches,omitempty"`
 	BeforeTokens int        `json:"beforeTokens,omitempty"`
 	AfterTokens  int        `json:"afterTokens,omitempty"`
 	Folded       int        `json:"folded,omitempty"`
@@ -4441,7 +4445,49 @@ const (
 	compactKeepTokens = 6000  // 保留最近消息的估算 token 预算
 	compactAutoTokens = 12000 // 超过该总量时自动压缩
 	compactMaxFolded  = 400   // 单次最多折叠消息数
+	// Compaction may require several bounded model calls; keep the deadline
+	// aligned with provider streaming rather than an unrelated six-minute cap.
+	// The request context still cancels work on disconnect, and history remains
+	// intact until the completed summary is atomically committed.
+	contextCompactionTimeout = 2 * time.Hour
 )
+
+type contextCompactionProgress struct {
+	Event     streamEvent
+	UpdatedAt time.Time
+}
+
+// contextCompactionProgressHandler exposes only bounded progress metadata for
+// the synchronous preflight compaction. No prompt, source message, or summary
+// text is included; normal session authorization applies to this route.
+func (a *App) contextCompactionProgressHandler(w http.ResponseWriter, r *http.Request) {
+	sessionID := r.PathValue("id")
+	a.mu.Lock()
+	if a.sessions[sessionID] == nil {
+		a.mu.Unlock()
+		fail(w, 404, errors.New("会话不存在"))
+		return
+	}
+	record, ok := a.contextCompactionProgress[sessionID]
+	if ok && record.Event.Phase != "started" && record.Event.Phase != "folding" && time.Since(record.UpdatedAt) > time.Minute {
+		delete(a.contextCompactionProgress, sessionID)
+		ok = false
+	}
+	a.mu.Unlock()
+	if !ok {
+		jsonOut(w, 200, map[string]any{"active": false})
+		return
+	}
+	active := record.Event.Phase == "started" || record.Event.Phase == "folding"
+	jsonOut(w, 200, map[string]any{"active": active, "event": record.Event, "updatedAt": record.UpdatedAt.UnixMilli()})
+}
+
+func (a *App) setContextCompactionProgress(sessionID string, event streamEvent) {
+	event.SessionID = sessionID
+	a.mu.Lock()
+	a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: event, UpdatedAt: time.Now()}
+	a.mu.Unlock()
+}
 
 // compactSessionForContext compacts the oldest history before a request is rejected for exceeding
 // the model window. The model call is outside a.mu; commit is allowed only if the session snapshot
@@ -4468,6 +4514,14 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 	}
 	snap, split := a.snapshotForCompactBudget(sess, keepBudget)
 	baseLen := len(sess.Messages)
+	beforeTokens := sessionContextTokens(sess)
+	if a.contextCompactionProgress == nil {
+		a.contextCompactionProgress = map[string]contextCompactionProgress{}
+	}
+	a.contextCompactionProgress[sessionID] = contextCompactionProgress{
+		Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "started", BeforeTokens: beforeTokens, Folded: split, Preflight: true},
+		UpdatedAt: time.Now(),
+	}
 	a.mu.Unlock()
 	defer func() {
 		a.mu.Lock()
@@ -4475,26 +4529,35 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 		a.mu.Unlock()
 	}()
 	if split == 0 {
+		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "failed", BeforeTokens: beforeTokens, Text: "历史消息不足以压缩，原会话内容已保留", Preflight: true})
 		return errors.New("历史消息不足以压缩")
 	}
-	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact)
+	summary, err := a.buildCompactionSummary(ctx, snap.messages, cfg, snap.prevCompact, func(stage string, batch, batches int) {
+		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "started", BeforeTokens: beforeTokens, Folded: split, Preflight: true, BatchStage: stage, Batch: batch, Batches: batches})
+	})
 	if err != nil {
+		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "摘要请求未完成，原会话内容已保留", Preflight: true})
 		return err
 	}
+	a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "folding", BeforeTokens: beforeTokens, Folded: split, Preflight: true})
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	sess = a.sessions[sessionID]
 	if sess == nil || len(sess.Messages) != baseLen {
+		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话在压缩期间发生变化，本次折叠已取消", Preflight: true}, UpdatedAt: time.Now()}
 		return errors.New("压缩期间会话已变化")
 	}
 	if !compactSnapshotMatches(sess.Messages[:split], snap.messages) {
+		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "会话内容在压缩期间发生变化，本次折叠已取消", Preflight: true}, UpdatedAt: time.Now()}
 		return errors.New("压缩期间会话已变化")
 	}
 	candidate := compactedSessionCandidate(sess, snap, split, summary)
 	if err := a.save(&candidate); err != nil {
+		a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "压缩结果保存失败，会话原历史已保留", Preflight: true}, UpdatedAt: time.Now()}
 		return err
 	}
 	*sess = candidate
+	a.contextCompactionProgress[sessionID] = contextCompactionProgress{Event: streamEvent{Event: "compaction", SessionID: sessionID, Phase: "completed", BeforeTokens: beforeTokens, AfterTokens: sessionContextTokens(sess), Folded: split, Preflight: true}, UpdatedAt: time.Now()}
 	return nil
 }
 
@@ -4800,7 +4863,7 @@ func (a *App) summarizeCompactionBatch(ctx context.Context, cfg Settings, messag
 // same budgeted pipeline as source messages so a long continuity chain cannot
 // create a single oversized provider request. Source messages remain untouched
 // until the caller validates and commits the complete result.
-func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg Settings, prevCompact string) (string, error) {
+func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg Settings, prevCompact string, progress ...func(stage string, batch, batches int)) (string, error) {
 	if len(folded) == 0 {
 		return "", errors.New("没有可压缩的历史消息")
 	}
@@ -4821,20 +4884,29 @@ func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg 
 	}
 	groups := compactBatches(bounded, compactSummaryInputBudget)
 	partials := make([]string, 0, len(groups))
-	for _, group := range groups {
+	for index, group := range groups {
+		if len(progress) > 0 && progress[0] != nil {
+			progress[0]("map", index+1, len(groups))
+		}
 		summary, err := a.summarizeCompactionBatch(ctx, cfg, group)
 		if err != nil {
 			return "", err
 		}
 		partials = append(partials, summary)
 	}
+	reduceRound := 0
 	for len(partials) > 1 {
+		reduceRound++
 		messages := make([]Message, 0, len(partials))
 		for _, partial := range partials {
 			messages = append(messages, Message{Role: "assistant", Content: partial})
 		}
 		next := make([]string, 0, len(messages))
-		for _, group := range compactBatches(messages, compactSummaryInputBudget) {
+		reduceGroups := compactBatches(messages, compactSummaryInputBudget)
+		for index, group := range reduceGroups {
+			if len(progress) > 0 && progress[0] != nil {
+				progress[0](fmt.Sprintf("reduce-%d", reduceRound), index+1, len(reduceGroups))
+			}
 			summary, err := a.summarizeCompactionBatch(ctx, cfg, group)
 			if err != nil {
 				return "", err

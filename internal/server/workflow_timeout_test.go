@@ -25,6 +25,9 @@ func TestTaskExecutionBudgetDefaults(t *testing.T) {
 	if providerStreamTimeout != 2*time.Hour {
 		t.Fatalf("provider stream timeout = %s, want 2h", providerStreamTimeout)
 	}
+	if contextCompactionTimeout != 2*time.Hour {
+		t.Fatalf("context compaction timeout = %s, want 2h", contextCompactionTimeout)
+	}
 }
 
 func TestTaskResumeRefreshesOnlyModeBudget(t *testing.T) {

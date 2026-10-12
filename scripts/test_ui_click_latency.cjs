@@ -113,13 +113,18 @@ async function testSendSubmission() {
   const conversation = node(); conversation.scrollHeight = 100; conversation.scrollTo = () => {};
   const nodes = {send, 'composer-hint':hint, prompt, conversation, 'task-form':node()};
   const state = {session:{id:'s1',kind:'normal'}, config:{configured:true}, previewOverLimit:false, submitting:false, attachments:[], profiles:{strategy:'auto'}, mode:'chat', workflowPhase:''};
-  let posts = 0, refreshes = 0, cancels = 0;
+  let posts = 0, refreshes = 0, cancels = 0, compactionWatches = 0, compactionStops = 0;
   let run = deferred();
   const context = {
     recoveryScope:()=> 'workspace', chatDraftKey:id=>id, sessionDrafts:new Map(), chatContent:d=>JSON.stringify([d?.text||'',d?.attachments||[]]), recoveryFailure(){},
     state, $: id => nodes[id], window: {}, composerAutoReview: () => false, reconcileAvatarRun() {}, t: key => key, xiaomiDictation:{active:false,starting:false},
     voice:{queuedOverride:null}, action: fn => fn, toast() {}, openSettings() {}, renderAttachments() {},
     cancelContextPreview() { cancels++; }, setSendMode() {},
+    startContextCompactionWatch(sessionID) {
+      assert.equal(sessionID, 's1');
+      compactionWatches++;
+      return async () => { compactionStops++; };
+    },
     updateSendEnabled() { refreshes++; send.disabled = state.submitting || state.previewOverLimit; send.classList.toggle('submitting',state.submitting); },
     api(url, options) { assert.equal(url,'/sessions/s1/runs'); assert.equal(options.method,'POST'); posts++; return run.promise; },
     selectSession() { return Promise.resolve(); },
@@ -141,6 +146,8 @@ async function testSendSubmission() {
   assert.equal(send.disabled, false);
   assert.equal(prompt.value, '');
   assert.equal(cancels, 1);
+  assert.equal(compactionWatches, 1, 'submission must start the session-scoped compaction watcher');
+  assert.equal(compactionStops, 1, 'submission must stop the watcher after the POST resolves');
   assert.ok(refreshes >= 2);
 
   prompt.value = 'submitted snapshot';state.attachments=[{path:'first.md'}];
