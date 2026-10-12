@@ -2754,14 +2754,13 @@
       ],
       "remote": "origin/main"
     },
-    "system_browser": "Pending: Safari remains on its native certificate warning at https://localhost:18220. The template toolbar acceptance and current long-output UI acceptance have not started in Safari.",
-    "full_profile": "FAIL remains current for the recorded fingerprint: full race profile timed out after 15 minutes at TestDaemonConcurrentStartStopConsistency; isolated 20-run stress passes do not clear the full-profile failure.",
+    "system_browser": "PASS scoped: native Safari on a fresh start.command candidate at 18222 confirmed same-level Markdown icon templates and refresh recovery of an unsaved draft; exact evidence and limits are in safari_acceptance_20261013_markdown_toolbar_and_draft_recovery_18222. No production 9999 interaction.",
+    "full_profile": "PASS for source fingerprint 2f86bc89bb035045035dc6e1c4aae6a95f24047765db60ad930157899517d5e2: go test -race -count=1 -timeout=15m ./... and go vet ./... exited 0 in the authorized disposable Docker test environment; see progress_checkpoint_20261013.full_race.",
     "remaining": [
-      "Safari current-candidate interaction and visual acceptance",
-      "Root cause of full-profile-only race timeout",
       "Large-library performance and real FTP/FTPS service acceptance",
       "Real user SSH host and long-running session/source-boundary acceptance",
-      "Requirement-by-requirement completion and release/rollback gates"
+      "Requirement-by-requirement completion and release/rollback gates",
+      "Long-output/compaction browser progress animation and end-to-end continuation acceptance"
     ],
     "deferred_by_user": [
       "Real embedding/vector model acceptance"
@@ -2769,6 +2768,22 @@
     "out_of_scope_by_user": [
       "Windows validation; user reported it tested successfully"
     ],
-    "notes": "This reconciles later pushes and browser state without changing earlier dated receipts. Source pushes are not a release or complete product acceptance."
+    "notes": "This reconciles later pushes and browser state without changing earlier dated receipts. Source pushes are not a release or complete product acceptance. 2026-10-13: fresh 18222 start.command Safari candidate passed direct Markdown template toolbar and unsaved draft refresh recovery; scoped only, not restart/quota/caret acceptance. Candidate Compose project and temp checkout cleaned. Full repository race/vet now passes for fingerprint 2f86bc89bb035045035dc6e1c4aae6a95f24047765db60ad930157899517d5e2; the earlier daemon full-profile timeout is historical and was superseded by lifecycle serialization plus this full pass.",
+    "completed_this_checkpoint": [
+      "Native Safari 18222 acceptance: same-level Markdown icon templates and refresh/reopen/restore of an unsaved draft passed scoped; candidate-only volumes and temp checkout were removed."
+    ]
+  },
+  "safari_acceptance_20261013_markdown_toolbar_and_draft_recovery_18222": {
+    "environment": "Native Safari, fresh isolated source snapshot started with start.command at https://localhost:18222; empty isolated workspace /workspace; model not configured; production port 9999 untouched.",
+    "markdown_template_toolbar": {
+      "status": "PASS scoped",
+      "evidence": "Opened a new Markdown file in Safari. The toolbar showed direct same-level icon actions for paragraph, H1-H6, bold, italic, strikethrough, inline/code block, Mermaid, table, link/image syntax, quote, unordered/ordered/task lists, divider, footnote, callout, fold, math, and document metadata; no template dropdown was needed. Accessible labels included each template's use guidance."
+    },
+    "unsaved_draft_recovery": {
+      "status": "PASS scoped",
+      "procedure": "Created a disposable directory and Markdown file from the workspace panel. With server save and autosave off, entered a heading and two body lines, refreshed Safari, reopened the same path, accepted the local draft recovery prompt, and confirmed the heading and body were restored in the rendered preview. A second edit survived another refresh and was offered as the latest 86-character draft.",
+      "limits": "This candidate pass confirms Safari refresh recovery for a local Markdown draft and visible templates. It does not prove service restart recovery, precise caret restoration, quota/crash behavior, long-duration stability, or resource and SSH paths."
+    },
+    "cleanup": "Stopped and removed only Compose project aide-continuity-20261013, its two test-only volumes and network, and /tmp/aide-continuity-20261013."
   }
 }
