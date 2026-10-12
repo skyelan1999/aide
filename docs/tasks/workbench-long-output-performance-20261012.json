@@ -60,19 +60,22 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "仅修改本任务关联的 app.js、style.css、index.html 与任务账本；没有提交或推送。",
+      "summary": "只包含本任务关联的 app.js、index.html 与任务台账；diff check 通过，单独提交并推送至 origin/main。",
       "evidence": [
-        "仅触及本任务关联的 app.js、style.css、index.html 与任务账本；其他工作树修改均保留。",
-        "git diff --check 通过。"
+        "提交 64e598c fix: keep collapsed reasoning preview concise，包含 app.js、index.html 与本任务台账。",
+        "git push origin main 成功返回 main 从 a228354 前进至 64e598c。",
+        "本提交前 git diff --check 与 node --check internal/server/web/app.js 均通过。"
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "用户请求修复，没有请求提交、推送或发布。",
-      "evidence": []
+      "status": "not_requested",
+      "summary": "用户要求阶段性 push；已推送检查点，未打 tag、未发布二进制。",
+      "evidence": [
+        "2026-10-12：git push origin main 成功，a228354..64e598c。"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "只回退本任务在 internal/server/web/app.js、style.css、index.html 中的变更；不要整体恢复工作树，以免覆盖并行改动。",
-  "handoff": "前端实现与长回复/思考默认折叠收起态已在系统 Safari 实际运行实例初步验收；思考正文展开态仍待复验。Safari 检查期间 Aide 工作台进入自身锁屏界面，需要用户解锁后继续。尚未提交或推送本次改动。"
+  "handoff": "前端实现与长回复/思考默认折叠收起态已在系统 Safari 实际运行实例初步验收；思考正文展开态仍待复验。工作台检查期间进入自身锁屏界面，需要用户解锁后继续。检查点 64e598c 已推送到 origin/main。"
 }
