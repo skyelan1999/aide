@@ -7,7 +7,7 @@
     "工作现场恢复：会话草稿与附件、文件草稿、目录、光标、滚动、星图镜头，按工作区隔离；刷新/重启恢复，不自动发送",
     "保存状态与冲突：区分本地记录和服务器保存；断网保留、409暂停、对比合并、重试、不静默覆盖",
     "Markdown 历史闭环：正文+嵌入资源整版恢复；外部编辑检测、无实际变更不追加、存储与备份管理",
-    "真实环境验收：本地及可用SSH：创建/修改/保存/重开/恢复、跨会话审批、锁屏、Windows输入与长时间打开",
+    "真实环境验收：本地及可用SSH：创建/修改/保存/重开/恢复、跨会话审批、锁屏与长时间打开；Windows用户已自行测试并表示无需后续验收",
     "任务成果舱：目标、文件变化、执行、验证、证据、缺口、发布状态统一成果卡",
     "审批与授权管理：解释自动通过和人工原因，作用范围、有效期、撤销和全局同步",
     "连接能力仪表：SSH连接/目录/权限、解析器、插件工具可用性、模型连接及实际检查",
@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "历史输入 verify full exit0、38项 PASS 仅代表当时检查，不代表当前源码本轮全量通过。真实系统Safari的18217隔离页停在登录页，尚未完成工作台验收；真实向量按用户指示暂缓，Windows无设备；SSH用户主机/真实模型等完整产品验收仍未闭环。新增2026-10-11审批状态修复与锁屏启动/Safari部分结果分别见 docs/tasks/approval-paused-ghost-state-20261011.json、docs/tasks/starmap-scene-safari-20261011.json。2026-10-12主线双disposable SSH/SFTP服务器internal-only Docker network，`TestSSHLiveWorkspaceAndIndependentSource` race repeat=2 PASS（25.32s/27.12s），涵盖Unicode/空格路径、独立来源、会话文件恢复、token记忆往返、远程搜索/时间线、渐进覆盖及取消清理；源码输入哈希前后一致。2026-10-12 current verify quick PASS（静态/UI/文档/i18n等检查）；full profile 其余37项PASS，Go race阶段 `aide/internal/server` 总超时15分钟（panic时刚进入TestQueueEnqueuedDispatch，不证明该单测自身挂起）；单测隔离重跑 -race PASS 3.640s；Go vet未运行。收据 .agent-state/verify-20261012T054453623127Z.log；当前Safari产品验收、向量(按用户暂缓)、Windows及全量release仍未闭环。",
+      "summary": "历史输入 verify full exit0、38项 PASS 仅代表当时检查，不代表当前源码本轮全量通过。真实系统Safari的18217隔离页停在登录页，尚未完成工作台验收；真实向量按用户指示暂缓；Windows已由用户实测且无需后续验收；SSH用户主机/真实模型等完整产品验收仍未闭环。新增2026-10-11审批状态修复与锁屏启动/Safari部分结果分别见 docs/tasks/approval-paused-ghost-state-20261011.json、docs/tasks/starmap-scene-safari-20261011.json。2026-10-12主线双disposable SSH/SFTP服务器internal-only Docker network，`TestSSHLiveWorkspaceAndIndependentSource` race repeat=2 PASS（25.32s/27.12s），涵盖Unicode/空格路径、独立来源、会话文件恢复、token记忆往返、远程搜索/时间线、渐进覆盖及取消清理；源码输入哈希前后一致。2026-10-12 current verify quick PASS（静态/UI/文档/i18n等检查）；full profile 其余37项PASS，Go race阶段 `aide/internal/server` 总超时15分钟（panic时刚进入TestQueueEnqueuedDispatch，不证明该单测自身挂起）；单测隔离重跑 -race PASS 3.640s；Go vet未运行。收据 .agent-state/verify-20261012T054453623127Z.log；当前Safari产品验收、向量(按用户暂缓)、Windows及全量release仍未闭环。",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -114,7 +114,7 @@
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "已按12项原始验收更新当前证据和缺口，保留历史失败与后续修复，不将35项回归替代产品完整验收。 2026-10-11 审批幽灵审核修复、full38/38及Safari模式同步证据已录入子任务与恢复验收续记；向量暂缓和Windows无设备仍保持未验收。 2026-10-12：补齐 RC2 源码候选的用户指南、工业长对话、Markdown 编辑、插件 schema、星图关系与密钥保险库说明；英文界面键覆盖复核运行时 t()、HTML data-i18n 属性及所有插件 settingsSchema 标签，零缺项。`node scripts/test_i18n.cjs` 与 `python3 scripts/check_docs.py` 通过（187 Markdown / 535 本地链接）。",
+      "summary": "已按12项原始验收更新当前证据和缺口，保留历史失败与后续修复，不将35项回归替代产品完整验收。 2026-10-11 审批幽灵审核修复、full38/38及Safari模式同步证据已录入子任务与恢复验收续记；向量检索按用户要求暂缓；Windows由用户实测并从当前验收待办移除。 2026-10-12：补齐 RC2 源码候选的用户指南、工业长对话、Markdown 编辑、插件 schema、星图关系与密钥保险库说明；英文界面键覆盖复核运行时 t()、HTML data-i18n 属性及所有插件 settingsSchema 标签，零缺项。`node scripts/test_i18n.cjs` 与 `python3 scripts/check_docs.py` 通过（187 Markdown / 535 本地链接）。",
       "evidence": [
         "docs/architecture/continuity-roadmap.md",
         "docs/reviews/approval-checkpoint-20261009.md",
@@ -199,7 +199,7 @@
     },
     {
       "name": "真实环境验收",
-      "acceptance": "本地及可用SSH：创建/修改/保存/重开/恢复、跨会话审批、锁屏、Windows输入与长时间打开",
+      "acceptance": "本地及可用SSH：创建/修改/保存/重开/恢复、跨会话审批、锁屏与长时间打开；Windows用户已自行测试并表示无需后续验收",
       "status": "in_progress",
       "ssh_checkpoint": "2026-10-09 双服务器 SSH/SFTP race 两轮19.962秒 PASS；三种文件位置整版恢复、引用文件夹完整操作，独立来源原文检索/旧引用拒绝/时间线前后原文已验收。内部时钟加速，不证明 UI 轮询时延。浏览器SSH/跨主机故障/真实模型/Windows及发布仍待完成。见ssh-continuity-integration-20261009。",
       "current_audit_20261010": {
@@ -210,7 +210,7 @@
           "ssh_workspace_recovery_browser",
           "windows_acceptance"
         ],
-        "remaining": "Safari锁态同步与点击解锁、隔离SSH及实际9999跨会话精确命令审批已有证据；键盘锁入口、长时间使用和其余远程边界未完整验证；Windows not_run。"
+        "remaining": "Safari锁态同步与点击解锁、隔离SSH及实际9999跨会话精确命令审批已有证据；键盘锁入口、长时间使用和其余远程边界未完整验证；Windows由用户实测且无需后续验收。"
       }
     },
     {
@@ -572,7 +572,8 @@
       "fingerprint": "69a0cc308794e269e86825b39a631e9148694b3f6ad19fd8adb3bb6927610cbe",
       "log": ".agent-state/verify-20261009T150718832757Z.log"
     },
-    "boundary": "Partial known catalogue with configured caps; cannot guarantee unseen files; no paid model or Windows verification"
+    "boundary": "Partial known catalogue with configured caps; cannot guarantee unseen files; no paid model or complete unseen-file coverage guarantee",
+    "scope_update_20261012": "Windows由用户自行测试且无需后续代理验收。"
   },
   "ftp_progressive_checkpoint": {
     "status": "in_progress",
@@ -595,9 +596,10 @@
       "Real FTP/FTPS network acceptance",
       "Single-resource HTTP/SMB and MCP scope semantics",
       "Large-library performance",
-      "System Safari and Windows acceptance",
+      "Large-library performance",
       "Real provider integration"
-    ]
+    ],
+    "scope_update_20261012": "Windows由用户自行测试并确认无需后续验收；当前仅保留与本任务相关的 Safari/网络来源和规模边界。"
   },
   "document_continuation_checkpoint": {
     "status": "in_progress",
@@ -635,10 +637,11 @@
     },
     "remaining": [
       "Full gate current fingerprint",
-      "Real remote/provider and Windows acceptance",
+      "Real remote/provider acceptance",
       "Current range completion does not prove extraction, hit-limit or unindexed corpus completeness",
       "Narrow layouts/themes and broad goal release acceptance"
-    ]
+    ],
+    "scope_update_20261012": "Windows由用户自行测试并确认无需后续验收。"
   },
   "document_compaction_followup": {
     "status": "pass for bounded compaction and repository full profile",
@@ -1927,10 +1930,11 @@
     "remaining": [
       "Classic/narrow/keyboard acceptance for new controls",
       "Cross-device consumer",
-      "Quota/crash/Windows",
+      "Quota/crash",
       "Cleanup and retention"
     ],
-    "release": "not_run; full goal active"
+    "release": "not_run; full goal active",
+    "scope_update_20261012": "Windows由用户自行测试并确认无需后续验收。"
   },
   "recovery_layout_followup_20261010": {
     "status": "pass",
@@ -1971,7 +1975,7 @@
       "fingerprint": "8ebf4c6fd76704243b3db4712049f863ff0be786bfd23a14bbb3d7f728ec61ce",
       "log": ".agent-state/verify-20261010T050307397194Z.log"
     },
-    "system_safari": "PASS scoped: native Safari 18211 retained two text branches after all owned pages closed; explicit restore does not submit. Workspace attachment retained and middle-text caret restored after close/reopen, confirmed by character insertion. Quota/crash and Windows unverified.",
+    "system_safari": "PASS scoped: native Safari 18211 retained two text branches after all owned pages closed; explicit restore does not submit. Workspace attachment retained and middle-text caret restored after close/reopen, confirmed by character insertion. Quota/crash remain unverified; Windows was user-tested with no further agent acceptance requested.",
     "full": {
       "status": "pass",
       "fingerprint": "873f169db42ef5733c20e079f85b74f804d1fe522e371f4786ffa566e49dc465",
@@ -1982,7 +1986,7 @@
     },
     "remaining": [
       "Full regression and reviewed source push",
-      "Actual quota/crash and Windows"
+      "Actual quota/crash"
     ],
     "release": "not_run",
     "candidate": {
@@ -1993,7 +1997,8 @@
       "screenshot": ".agent-state/continuity-runtime/chat-ownership-safari-20261010.png",
       "attachment_caret_screenshot": ".agent-state/continuity-runtime/chat-attachment-caret-safari-20261010.png"
     },
-    "ownership_fix": "Identical restored content no longer transfers another document branch ownership; source regression covers attachment identity and later divergent edit."
+    "ownership_fix": "Identical restored content no longer transfers another document branch ownership; source regression covers attachment identity and later divergent edit.",
+    "scope_update_20261012": "Windows由用户自行测试并确认无需后续验收。"
   },
   "session_input_output_20261010": {
     "status": "partial",
@@ -2430,7 +2435,6 @@
       "Real vector acceptance deferred by user",
       "Release/rollback gate closure",
       "System Safari remaining goal-specific workflows/themes/narrow layouts",
-      "Windows NOT_RUN: user has no environment",
       "Workspace and tab isolation plus exact starmap camera persistence"
     ],
     "document": "docs/reviews/continuity-acceptance-resumed-20261011.md",
@@ -2442,7 +2446,8 @@
       "time": "20261011T041027593718Z",
       "log": ".agent-state/verify-20261011T041027593718Z.log",
       "exit": 0
-    }
+    },
+    "scope_update_20261012": "后续用户确认Windows已由其自行实测、无需agent继续验收；原Windows NOT_RUN项目已关闭为用户自验收，不作本代理实机通过声明。"
   },
   "acceptance_followup_20261011": {
     "status": "in_progress",
@@ -2528,7 +2533,7 @@
   "release_gate": {
     "status": "blocked",
     "command": "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009",
-    "result": "BLOCKED: overall 12 workstreams remain in progress; release/rollback gate not closed. Latest source full profile passed 38/38 at 0c37766, but that alone does not close product-specific acceptance; vector retrieval deferred by user, Windows has no test environment."
+    "result": "BLOCKED: overall 12 workstreams remain in progress; release/rollback gate not closed. Latest source full profile passed 38/38 at 0c37766, but that alone does not close product-specific acceptance; vector retrieval deferred by user; Windows has been tested by the user with no further agent acceptance requested."
   },
   "acceptance_followup_20261012": {
     "status": "in_progress",
@@ -2647,6 +2652,6 @@
       "Windows验收：用户已在自己的Windows环境直接测试并反馈“感觉没什么问题”，明确表示后续无需我处理；从当前待办移除，不再作为阻塞项。历史日志中的“无Windows环境/未运行”保留为当时记录。",
       "向量/embedding验收仍按用户此前指示暂缓。"
     ],
-    "latest_browser_acceptance": "2026-10-12 系统 Safari 在 localhost:9999 当前知识星图索引中，以现存节点 C072c217f8209 Commands.cmd_help 与 C93c0aec588c0 Commands.basic_help 查询到 1 步证据路径；路径逐边显示 commands.py 第1123行 AST 静态名称候选及源位置链接，并明确提示索引有缺口、路径不代表运行轨迹。"
+    "latest_browser_acceptance": "2026-10-12 系统 Safari 在 localhost:9999 当前知识星图索引中，以现存节点 C072c217f8209 Commands.cmd_help 与 C93c0aec588c0 Commands.basic_help 查询到 1 步证据路径；路径逐边显示 commands.py 第1123行 AST 静态名称候选及源位置链接，并明确提示索引有缺口、路径不代表运行轨迹。 随后点击“查看关系源位置”实际进入 Aide 路由并携带 root=context、commands.py、line=1123/endLine=1123 与只读标志；工作台当时显示“已锁屏”，因此文件正文/行号高亮未确认，未尝试绕过锁屏。引用目录当前状态仍为部分覆盖：945文件/55目录，容量1000条，333个目录任务待扫描。"
   }
 }
