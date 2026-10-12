@@ -2901,5 +2901,37 @@
     "browser_security_boundary": "A localhost TLS interstitial remains handoff-required by the computer-use policy. User authorization to click it does not override that policy.",
     "release": "not_run",
     "push": "pending"
+  },
+  "progress_checkpoint_20261013_followup6": {
+    "status": "in_progress",
+    "date": "2026-10-13",
+    "completed": [
+      "Context compaction frontend now stores progress per session, renders only the selected session, restores a still-active indicator after switching back, and expires terminal state after the display interval.",
+      "Focused app.js VM regression passes active-state cache/restore, no cross-session leak, and correct completed token delta.",
+      "Native Safari localhost:9999 verified context-meter selection isolation in the dedicated synthetic conversation: #46 17.6K, #45 11.8K, returning to #46 17.6K.",
+      "Documentation link validation passes (188 Markdown files, 540 local links)."
+    ],
+    "remaining": [
+      "Trigger and visibly capture actual automatic compaction phases in Safari; current long-output attempts did not produce an observed automatic-compaction event.",
+      "Verify compaction animation is restored after switching away and back while the real event is active, not only by source regression.",
+      "Long-duration continuity and large conversation boundary acceptance.",
+      "Large-library browser performance and independent user-hosted SSH/FTP/FTPS/provider acceptance.",
+      "Requirement-by-requirement audit and release/rollback gates."
+    ],
+    "deferred_by_user": [
+      "Real embedding/vector model acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reported it tested successfully"
+    ],
+    "verification": {
+      "focused_frontend": "PASS: node --check internal/server/web/app.js; node scripts/test_context_compaction_ui.cjs; git diff --check.",
+      "documentation": "PASS: python3 scripts/check_docs.py (188 Markdown files, 540 local links).",
+      "native_safari": "PASS scoped for selected-session context-meter isolation only; two long fictional continuations ended at 19.3K/64K without a captured automatic compaction event/animation.",
+      "threshold_boundary": "Automatic trigger counts DSH estimated session message tokens at 12,000 or lower model-specific threshold; the UI meter also includes system/tool components, so 17.6K visible context did not establish trigger eligibility.",
+      "quick_profile": "PASS: python3 scripts/agent-route.py verify quick; all 38 configured checks succeeded; receipt fingerprint 6c92793aeb36954492c086019a7296adfd0719c9644feb44ec5f2f63a9c7624b. Dedicated compaction UI isolation VM test ran separately and passed."
+    },
+    "release": "not_run",
+    "push": "pending"
   }
 }

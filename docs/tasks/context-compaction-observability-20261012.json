@@ -14,7 +14,8 @@
     "internal/server/web/app.js",
     "internal/server/web/style.css",
     "docs/architecture.md",
-    "docs/tasks/context-compaction-observability-20261012.json"
+    "docs/tasks/context-compaction-observability-20261012.json",
+    "scripts/test_context_compaction_ui.cjs"
   ],
   "stages": {
     "requirements": {
@@ -46,7 +47,7 @@
     },
     "verification": {
       "status": "partial",
-      "summary": "2026-10-13: focused offline Docker Go race regressions PASS and native Safari 9999 manual compaction success path PASS on the dedicated long-context test conversation. Earlier real request failed with finish_reason=length and left source history intact; after reserving output budget and disabling hidden reasoning only for summary extraction, a retry compacted 8 early messages and displayed 13.6K → 5.4K (−8.1K). Automatic compaction animation and extended stability remain unverified in Safari.",
+      "summary": "2026-10-13: frontend per-session state-isolation regression passes. Native Safari 9999 exercised a dedicated long-output conversation; the visible context meter followed the selected conversation (17.6K in #46, 11.8K in #45, then 17.6K back in #46). Two additional fictional text continuations completed without a captured automatic-compaction event, so browser animation during automatic compaction and event restoration across session switching remain unverified.",
       "evidence": [
         "node --check internal/server/web/app.js：通过。",
         "git diff --check（本任务四个目标文件）：通过。",
@@ -64,33 +65,43 @@
         "2026-10-13 current worktree in healthy container aide-aide-1: PATH=/usr/local/go/bin:$PATH GOCACHE=/home/aide/.cache/go-build GOMAXPROCS=2 go test -mod=vendor -p=1 -race ./internal/server -run \"Test(ContextOverflowCompactsHistoryBeforeRetry|AutoCompactionPublishesObservableLifecycle|ManualCompactionPublishesLiveProgressAndTokenEstimates|CompactionRetainedHistoryStaysWithinBudget|RemediationConcurrentCompactionNoPanicNoDeadlock|RemediationCompactionChainRetainsPreviousSummary|CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges)$\" -count=1 -timeout=180s: PASS 10.878s. This is Go/API evidence only; no Safari animation or live long-session acceptance.",
         "2026-10-13 current-run after summary-budget fix: offline Docker Go 1.26, `-race -p=1`, TestCompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary, TestMalformedCompactionSummaryAbortsWithoutChangingSource, TestManualCompactionPublishesLiveProgressAndTokenEstimates, and TestAutoCompactionPublishesObservableLifecycle: PASS (`aide/internal/server` 5.175s).",
         "2026-10-13 native Safari 9999 on dedicated session #46 (f1b7774ec1aae13e5e09384c36353c88): first actual manual compaction attempt showed ‘整理早期消息 / 8 条早期消息 / 当前约 13.6K’ then failed with finish_reason=length; UI reported summary failure and original history was preserved. After retry with the budget fix, Safari showed ‘已压缩 8 条 · 活动上下文估算 13.6K → 5.4K (−8.1K)’ and ‘已压缩 8 条历史消息’. No unrelated conversation or file was edited.",
-        "2026-10-13 native Safari 9999 read-only Markdown toolbar spot-check: 26 direct sibling template icon buttons appeared alongside image, file, link, and draw.io controls. Each accessible label contained the template name and usage guidance. This confirms the current 9999 frontend; screenshot-provided 18217 view appears to be a stale candidate and was not modified."
+        "2026-10-13 native Safari 9999 read-only Markdown toolbar spot-check: 26 direct sibling template icon buttons appeared alongside image, file, link, and draw.io controls. Each accessible label contained the template name and usage guidance. This confirms the current 9999 frontend; screenshot-provided 18217 view appears to be a stale candidate and was not modified.",
+        "node --check internal/server/web/app.js：PASS。",
+        "node scripts/test_context_compaction_ui.cjs：PASS；正在压缩的后台会话状态被缓存，切回时恢复动画；切换离开后不在其他会话显示；完成状态保留正确前后估算。",
+        "git diff --check：PASS。python3 scripts/check_docs.py：PASS（188 Markdown files, 540 local links）。",
+        "Native Safari localhost:9999 dedicated session #46: long fictional continuation completed, active meter read 17.6K/64K. A second long fictional continuation was sent and observed running; no automatic compaction progress state appeared during captured browser observations. No files/tools/network were used by those Aide prompts.",
+        "While the second text-only Aide task was running, switching to session #45 changed the active meter to 11.8K; returning to #46 restored 17.6K. This confirms the visible meter follows the selected session, but does not prove a hidden compaction event was retained.",
+        "Source inspection: maybeAutoCompact uses a message-only DSH heuristic threshold of 12,000 tokens (or 55% of model window when lower); the UI meter includes additional system/tool components. Therefore 17.6K UI estimate alone does not prove the automatic threshold was crossed.",
+        "2026-10-13 native Safari #46: second pure-text continuation completed and context meter rose to 19.3K/64K, but no automatic compaction progress event appeared. The automatic-compression browser animation acceptance is still pending; this observed meter value cannot be used as proof the DSH message-only trigger threshold was crossed.",
+        "python3 scripts/agent-route.py verify quick：PASS，38 configured checks，receipt fingerprint 6c92793aeb36954492c086019a7296adfd0719c9644feb44ec5f2f63a9c7624b, HEAD before commit c907250e10cc015c73f3152143b190b701f0c60b. The dedicated session-state VM regression was additionally run directly and passed."
       ],
       "full_profile": "FAIL",
       "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504"
     },
     "documentation": {
       "status": "pass",
-      "summary": "架构文档说明自动和手动压缩反馈阶段、SSE 展示与活动上下文估算口径。",
+      "summary": "Architecture docs describe actual per-session compaction feedback state and its observable limits; full automatic Safari animation remains pending.",
       "evidence": [
         "docs/architecture.md：上下文预算与压缩段落已更新。",
-        "docs/architecture.md 与 docs/user-guide.md 说明自动和手动压缩共享阶段反馈；本轮新增的手动批次轮询仍需系统 Safari 验收。"
+        "docs/architecture.md 与 docs/user-guide.md 说明自动和手动压缩共享阶段反馈；本轮新增的手动批次轮询仍需系统 Safari 验收。",
+        "docs/architecture.md: context card progress is cached per session; cross-session state must not render, and actual automatic trigger/browser animation is not claimed from a meter-only observation."
       ]
     },
     "cleanup": {
       "status": "pass",
-      "summary": "保留工作区已有的其他未提交改动；未进行提交或推送。",
+      "summary": "Only the compaction-state UI and focused regression script were changed in code; previous unrelated local changes were preserved.",
       "evidence": [
-        "本次修改限定在工作流、上下文卡样式、架构文档和本任务记录。"
+        "本次修改限定在工作流、上下文卡样式、架构文档和本任务记录。",
+        "scripts/test_context_compaction_ui.cjs is a tracked-intent regression fixture for session-scoped status caching and rendering."
       ]
     },
     "release": {
       "status": "partial",
-      "summary": "后端压缩进度 API 已按阶段推送。当前本地源码的手动真实模型压缩成功路径已在 Safari 9999 验证；自动压缩真实触发、跨会话隔离的浏览器观察与延长运行仍待验证。未发布。",
+      "summary": "Not released. Source/UI fix is ready for commit and push, but task remains partial because real Safari automatic compaction animation was not captured.",
       "evidence": []
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "Focused race regressions pass. Native Safari 9999 manual real-model compaction succeeded after an initial finish_reason=length failure; 8 early messages were compacted and activity estimate fell from 13.6K to 5.4K. Remaining: observe the full automatic-compression animation in Safari, verify session switching does not leak progress, and repeat long-running stability. This checkpoint does not claim full product acceptance or release readiness."
+  "handoff": "Frontend fix caches compaction progress by session ID and clears stale status safely; focused regression passes. Native Safari 9999 confirmed the meter follows session selection (#46 17.6K, #45 11.8K, return #46 17.6K). Two long fictional text continuations did not yield an observed automatic-compaction event. Do not claim complete browser acceptance; remaining: trigger actual automatic compression in Safari, observe started/map-reduce/folding/completed states and verify state restore/isolation, then repeat stability."
 }

@@ -12,7 +12,7 @@ function updateFavicon() {
 }
 updateFavicon();
 if (window.aideUI?.subscribe) window.aideUI.subscribe(updateFavicon);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, thinkingOpen: new Set(), streamRetryAt: 0, queueMode: false, approvalPolicy: null, approvalModeBusy: false, autoScroll: true, jumpAnimating: false };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, thinkingOpen: new Set(), streamRetryAt: 0, queueMode: false, approvalPolicy: null, approvalModeBusy: false, autoScroll: true, jumpAnimating: false, contextCompactions: new Map() };
 let recoveryReady=false,recoveryTimer=0,recoveryNotice=false;
 const recoveryScope=()=>state.config?.workspaceId||'';
 const chatDraftKey=(id,scope=recoveryScope())=>JSON.stringify([scope,id]);
@@ -5543,7 +5543,7 @@ function renderContextMeter(data, isDraft) {
   renderContextCompactionState(detail);
   detail.title = data.estimationNote || '';
 }
-let contextCompactionTimer = 0;
+const contextCompactionTimers = new Map();
 function startContextCompactionWatch(sessionID) {
   let stopped = false;
   let inFlight = null;
@@ -5573,29 +5573,40 @@ function startContextCompactionWatch(sessionID) {
 function showContextCompaction(event) {
   if (!event || !event.phase) return;
   const targetSession = event.sessionId || state.session?.id || '';
+  if (!targetSession) return;
+  const record = { ...event, at: Date.now(), sessionId: targetSession };
+  state.contextCompactions.set(targetSession, record);
+  clearTimeout(contextCompactionTimers.get(targetSession));
+  if (event.phase === 'completed' || event.phase === 'failed') {
+    const stamp = record.at;
+    const timer = setTimeout(() => {
+      if (state.contextCompactions.get(targetSession)?.at !== stamp) return;
+      state.contextCompactions.delete(targetSession);
+      contextCompactionTimers.delete(targetSession);
+      if (state.session?.id !== targetSession) return;
+      $('context-card')?.classList.remove('was-compacted', 'is-compacting');
+      renderContextCompactionState($('context-card-detail'));
+      if (state.contextMeter && !state.contextMeterDraft) renderContextMeter(state.contextMeter, false);
+    }, 10000);
+    contextCompactionTimers.set(targetSession, timer);
+  }
   if (targetSession !== (state.session?.id || '')) return;
   const card = $('context-card');
   if (!card) return;
-  state.contextCompaction = { ...event, at: Date.now(), sessionId: state.session?.id || '' };
   card.classList.toggle('is-compacting', event.phase === 'started' || event.phase === 'folding');
   card.classList.toggle('was-compacted', event.phase === 'completed');
-  clearTimeout(contextCompactionTimer);
-  if (event.phase === 'completed' || event.phase === 'failed') {
-    const stamp = state.contextCompaction.at;
-    contextCompactionTimer = setTimeout(() => {
-      if (state.contextCompaction?.at !== stamp) return;
-      state.contextCompaction = null;
-      card.classList.remove('was-compacted', 'is-compacting');
-      if (state.contextMeter && !state.contextMeterDraft) renderContextMeter(state.contextMeter, false);
-    }, 10000);
-  }
   renderContextCompactionState($('context-card-detail'));
 }
 function renderContextCompactionState(detail) {
-  const event = state.contextCompaction;
-  if (!detail || !event || event.sessionId !== (state.session?.id || '')) return;
+  if (!detail) return;
+  const sessionID = state.session?.id || '';
+  const event = state.contextCompactions.get(sessionID);
+  const card = $('context-card');
+  const running = event?.phase === 'started' || event?.phase === 'folding';
+  card?.classList.toggle('is-compacting', !!running);
+  card?.classList.toggle('was-compacted', event?.phase === 'completed');
   detail.querySelectorAll('.context-compaction-status').forEach(row => row.remove());
-  const running = event.phase === 'started' || event.phase === 'folding';
+  if (!event) return;
   const row = el('div', 'context-compaction-status ' + (running ? 'running' : event.phase));
   row.setAttribute('role', 'status');
   row.setAttribute('aria-live', 'polite');
@@ -8761,8 +8772,11 @@ $('compact-button').onclick = action(async () => {
       showContextCompaction({ phase: 'completed', folded: res.folded, beforeTokens: res.beforeTokens, afterTokens: res.afterTokens, sessionId });
       toast(t("已压缩 {0} 条历史消息", res.folded));
     } else {
-      state.contextCompaction = null;
+      state.contextCompactions.delete(sessionId);
+      clearTimeout(contextCompactionTimers.get(sessionId));
+      contextCompactionTimers.delete(sessionId);
       $('context-card')?.classList.remove('is-compacting', 'was-compacted');
+      renderContextCompactionState($('context-card-detail'));
       toast(t("历史未超阈值，无需压缩"));
     }
     await selectSession(sessionId);
