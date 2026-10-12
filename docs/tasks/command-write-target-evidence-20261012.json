@@ -47,8 +47,8 @@
       "summary": "更新输入与输出用户说明和连续性路线图，说明线索边界与有限 shell 重定向解析规则。"
     },
     "release": {
-      "status": "partial",
-      "summary": "后端目标提取已随 88fbce2 推送；本轮前端成果舱展示与 Safari 验收已通过，前端阶段推送状态待本次发布后回填。"
+      "status": "pass",
+      "summary": "后端目标提取随 88fbce2 推送；成果舱前端、回归与 Safari 验收记录已随 4225196 推送到 origin/main。"
     }
   },
   "handoff": "Safari verified current localhost:9999 source on session #42. The command target is clearly an unverified hint and opens raw E0001 evidence. Do not claim file existence or persistence without readback. Broader trajectory acceptance still has independent export, attachment-bearing, narrow viewport, and compaction gaps."
