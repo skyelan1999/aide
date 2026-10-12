@@ -72,13 +72,16 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "仅提交路径关系源定位相关源码、回归、架构和任务台账；阶段提交已推送至 origin/main。",
+      "evidence": [
+        "966eb62 feat: add source locators to knowledge mentions；git push origin main 返回成功（9ce9565..966eb62）。",
+        "git status --short：提交后工作树干净。"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
+      "status": "not_requested",
+      "summary": "本检查点按用户要求推送源码，不打 tag、不发布或部署。",
       "evidence": []
     }
   },
