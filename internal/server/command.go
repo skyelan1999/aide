@@ -79,6 +79,12 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		remote := in.Command
+		if in.Interactive {
+			// Keep one login shell attached to the PTY. The first command is
+			// delivered through stdin below so subsequent input, sudo prompts,
+			// shell history and Tab completion all share the same shell state.
+			remote = sshInteractiveShellCommand()
+		}
 		if rp := strings.TrimSpace(a.wsConfig.Workspace.Path); rp != "" {
 			remote = "cd " + shellQuote(rp) + " && " + remote
 		}
@@ -108,7 +114,8 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 			a.commandInputs[inputID] = writer
 			a.commandInputMu.Unlock()
 			stream.event(map[string]string{"type": "session", "id": inputID})
-			code, runErr = a.execRemotePTY(ctx, remote, reader, stream, stream)
+			ptyInput := sshInteractivePTYInput(in.Command, reader)
+			code, runErr = a.execRemotePTY(ctx, remote, ptyInput, stream, stream)
 			a.commandInputMu.Lock()
 			delete(a.commandInputs, inputID)
 			a.commandInputMu.Unlock()
@@ -202,6 +209,17 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 		message = "命令已取消或超过 60 秒"
 	}
 	stream.event(map[string]any{"type": "exit", "code": code, "error": message, "elapsedMS": time.Since(start).Milliseconds()})
+}
+
+func sshInteractiveShellCommand() string {
+	return `"${SHELL:-/bin/bash}" -l`
+}
+
+func sshInteractivePTYInput(firstCommand string, liveInput io.Reader) io.Reader {
+	if firstCommand == "" {
+		return liveInput
+	}
+	return io.MultiReader(strings.NewReader(firstCommand+"\r"), liveInput)
 }
 
 // commandInput writes transient terminal input to an active SSH PTY. Input is

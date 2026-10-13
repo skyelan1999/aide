@@ -113,7 +113,8 @@
         "2026-10-13 当前源码复验：本地加密索引检查点与新进程恢复 race 回归 PASS 27.304s；真实隔离双服务器 SSH/SFTP 渐进续扫/历史/引用资源/token记忆集成验收重复2次 PASS 28.707s；FTP/FTPS stub 渐进适配器 PASS 3.930s。真实用户主机、系统浏览器完整流程、真实 FTP/FTPS 与大库性能仍未验证。",
         "2026-10-13 当前工作树 Markdown 正文/嵌入资源历史与恢复冲突保护、成果舱输入输出/证据边界/分页快照定向 race 回归 PASS 11.950s（容器 aide-aide-1）；只证明后端，当前候选 Safari UI 仍待验收。",
         "2026-10-13: current HEAD 0bd4c41, authorized `bash scripts/aide.sh test` exit 0; full Go race (`internal/server` 430.890s, tts 3.056s) and `go vet ./...` pass; fingerprint 2f86bc89bb035045035dc6e1c4aae6a95f24047765db60ad930157899517d5e2. Initial agent-route wrapper failure was sandbox Docker socket permission only; live product acceptance remains separately tracked.",
-        "2026-10-13 HEAD cdc7d7d：全仓 race 与 go vet 等价命令在本机 aide:local Docker 容器中通过（internal/server 454.113s，tts 3.374s）。agent-route full wrapper 自身仍因 `open -a Docker` 找不到该应用名而记 FAIL；快速40项 PASS；证据收据 .agent-state/verify-20261012T234114395870Z.log。"
+        "2026-10-13 HEAD cdc7d7d：全仓 race 与 go vet 等价命令在本机 aide:local Docker 容器中通过（internal/server 454.113s，tts 3.374s）。agent-route full wrapper 自身仍因 `open -a Docker` 找不到该应用名而记 FAIL；快速40项 PASS；证据收据 .agent-state/verify-20261012T234114395870Z.log。",
+        "2026-10-13 当前工作树 HEAD 3af5e3b：`python3 scripts/agent-route.py verify quick` 40项 PASS，fingerprint 55a65bb8b25e235dacf93e1bd71c5ffd96bc6cabde585cd46e9fd4fe363148b2，收据 `.agent-state/verify-20261013T040326065962Z.log`。本 profile 不覆盖 SSH PTY Go 行为、真实 Safari 交互、真实模型或用户主机联调。"
       ]
     },
     "documentation": {
@@ -127,7 +128,8 @@
         "docs/user-guide.md",
         "docs/industrial-long-conversation-support.md",
         "docs/architecture/markdown-editing-export.md",
-        "internal/server/web/locales/en.js"
+        "internal/server/web/locales/en.js",
+        "2026-10-13: aligned the English user guide source-workline note with the Chinese 0.1.17.0 RC2 statement; python3 scripts/check_docs.py PASS (188 Markdown, 542 local links), node scripts/test_i18n.cjs PASS; git diff --check and task-ledger JSON parse PASS."
       ]
     },
     "cleanup": {
@@ -3126,5 +3128,75 @@
     },
     "release": "not_run",
     "push": "Product source and this progress checkpoint will be pushed after documentation validation."
+  },
+  "progress_checkpoint_20261013_followup14": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "baseline": "current working tree; no new commit",
+    "completed": [
+      "Unified compaction terminal-state detection across progress polling, visible status cleanup, and the live event stream.",
+      "A cancelled compaction now refreshes the selected session immediately so its persisted context estimate is not left stale after the animation stops.",
+      "Added regression assertions for completed/failed/cancelled terminal phases, active folding phase, and live-event refresh wiring."
+    ],
+    "remaining": [
+      "System Safari verification of a real automatic-compaction lifecycle and session switching; Safari currently shows a local certificate interstitial, which must be handled by the user.",
+      "Continue current-candidate browser, user-host remote, large-library, long-duration, and requirement-by-requirement release/rollback acceptance."
+    ],
+    "deferred_by_user": [
+      "Real embedding/vector provider acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reports successful testing"
+    ],
+    "verification": {
+      "focused": "PASS: node scripts/test_context_compaction_ui.cjs; node --check internal/server/web/app.js; focused git diff --check.",
+      "system_safari": "NOT_RUN: native Safari is on https://localhost:18531 certificate warning; browser policy requires user handoff and does not permit bypass.",
+      "release": "No commit, push, or release."
+    },
+    "release": "not_run",
+    "push": "Pending required system-browser acceptance."
+  },
+  "progress_checkpoint_20261013_followup15": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "统一图标类控件为36px方形并校正按钮SVG字体基线；文本按钮继承一致行高与盒模型，样式缓存版本升至macos.css?v=112。",
+      "git diff --check通过。已用系统Safari截取并检查localhost:18531工作台。"
+    ],
+    "not_verified": [
+      "Safari当前页可见Aide界面，但未取得其运行二进制/静态资源指纹，不能证明当前页面加载了本轮macos.css?v=112；截图仅核对工作台可见状态，不能作为改动后的控件像素尺寸对照验收。"
+    ],
+    "evidence": [
+      "internal/server/web/macos.css",
+      "internal/server/web/index.html",
+      "/var/folders/39/yqy3w_ns7js4mf051y6yn26w0000gn/T/codex-shot-2026-10-13_12-23-26-w15540.png"
+    ]
+  },
+  "progress_checkpoint_20261013_followup16": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "SSH 命令面板实现了持久登录 PTY，首条输入经 stdin 进入远端 shell，后续输入、sudo 密码与控制键共用会话；本地和 SSH 单次模式仍独立。",
+      "SSH PTY 定向 Go 回归通过：容器 aide-toolchain:local 执行 TestCommandInput 与 TestSSHInteractive，0.016s。",
+      "系统 Safari 9999 已检查命令面板：交互终端及 sudo/Tab 说明可见；当前 /Users/skyelan/debug 为本地模式，SSH 开关按设计禁用。"
+    ],
+    "remaining": [
+      "真实 SSH 主机浏览器端到端验证 sudo 密码提示、Tab 补全、连续命令、历史、Ctrl+C/D 与断连恢复。",
+      "继续自动压缩完整生命周期、跨标签页长会话恢复、大库展示、其他远端协议与完整需求/发布门禁审计。"
+    ],
+    "deferred_by_user": [
+      "真实 embedding/vector provider acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reported successful testing"
+    ],
+    "verification": {
+      "focused_go": "PASS: go test -mod=vendor ./internal/server -run TestCommandInput|TestSSHInteractive -count=1; 0.016s in aide-toolchain:local.",
+      "system_safari": "PARTIAL: https://localhost:9999/ shows the command panel and disabled SSH interaction toggle in local mode; no SSH profile is configured in this workspace.",
+      "remote": "NOT_RUN: no configured reachable SSH target; no remote host or files were changed.",
+      "release": "No formal release or version bump."
+    },
+    "release": "not_run",
+    "push": "Push the SSH command-panel implementation and its partial acceptance record as a focused checkpoint."
   }
 }

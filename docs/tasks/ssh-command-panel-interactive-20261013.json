@@ -1,0 +1,60 @@
+{
+  "id": "ssh-command-panel-interactive-20261013",
+  "request": "修复 SSH 工作区命令面板无法正常使用 sudo su 与 Tab 补全的问题。",
+  "baseline": "工作区当前源码状态；保留既有未提交改动。",
+  "acceptance": [
+    "SSH 工作区默认使用持续 PTY 登录 Shell，首条命令输入、后续命令及密码提示共用一个会话。",
+    "Tab 在已连接 PTY 中发送远端补全键，Ctrl+C、Ctrl+D 和空行方向键继续工作。",
+    "非交互模式保留单次命令行为；本地工作区保持非交互模式。",
+    "相关回归检查通过，并在系统 Safari 工作台复核命令面板。"
+  ],
+  "scope": [
+    "internal/server/command.go: SSH interactive shell startup and first-command PTY input",
+    "internal/server/command_input_test.go: PTY byte forwarding and initial command regression",
+    "internal/server/web/app.js: SSH command input and terminal controls",
+    "docs/user-guide.md and docs/en/user-guide.md: command panel behavior"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "SSH 面板原先默认单次命令，PTY 可选；首条输入时 Tab 尚无远端 PTY 会话，sudo 密码和后续 Shell 状态也无法顺畅连续交互。",
+      "evidence": ["internal/server/web/app.js 根据显式复选框才请求 interactive PTY；internal/server/command.go 将复选框输入直接作为单次远端命令执行。"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "SSH 模式切换时默认打开交互终端；PTY 启动远端登录 Shell，把第一次提交的命令作为 stdin 首行写入；后续命令和控制键继续复用活动 PTY。",
+      "evidence": ["单次模式请求与本地模式逻辑维持原路径。"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "SSH 交互模式启动持续登录 Shell，并将首次命令经 PTY stdin 送入；活动会话继续透传命令、密码和控制键。交互输入不进入命令历史，本地与 SSH 单次命令路径保留。",
+      "evidence": [
+        "internal/server/command.go：sshInteractiveShellCommand、sshInteractivePTYInput 与 execRemotePTY 接线。",
+        "internal/server/web/app.js：SSH 模式默认勾选交互终端；Tab、Ctrl+C/D/Z/L、历史方向键和后续输入发送给活动 PTY。",
+        "中文和英文用户指南均记录持续登录 Shell、sudo 密码、Tab 补全、控制键和退出行为。"
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "SSH PTY 相关 Go 定向测试已在仓库工具链容器通过；系统 Safari 9999 已确认命令面板与交互终端开关由当前页面渲染，但当前工作区为本地模式，开关按设计禁用。真实 SSH 主机上的 sudo 密码提示、Tab 补全和后续命令仍未端到端复测。",
+      "evidence": [
+        "2026-10-13：容器 aide-toolchain:local 中执行 go test -mod=vendor ./internal/server -run 'TestCommandInput|TestSSHInteractive' -count=1，PASS（0.016s）。",
+        "2026-10-13：系统 Safari https://localhost:9999/ 展开命令面板，观察到 SSH 交互终端开关与 sudo/Tab 辅助说明；当前 /Users/skyelan/debug 是本地工作区，因此开关 disabled。",
+        "2026-10-13：aide:local 运行镜像不含 Go；工具链镜像中的 bash -lc 会重置 PATH，本次改用 bash -c 后定向测试正常运行。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英文用户指南均说明 SSH 交互终端工作方式与边界。",
+      "evidence": [
+        "docs/user-guide.md：SSH 工作区默认启用持续登录 Shell，并说明 sudo、Tab、控制键及命令历史行为。",
+        "docs/en/user-guide.md：对应英文说明同样覆盖持续 Shell、sudo、Tab、Ctrl+C/D、历史与停止行为。"
+      ]
+    },
+    "cleanup": {"status": "pass", "summary": "本轮只使用临时 Docker 测试容器；未配置 SSH 主机，未连接或更改用户远端数据。", "evidence": ["测试容器退出后自动移除；本地工具链镜像保留供后续 Go 回归复用。"]},
+    "release": {"status": "pending", "summary": "", "evidence": []}
+  },
+  "release_authorization": "用户持续要求阶段性测试后及时推送；仅推送本任务相关文件。",
+  "rollback": "单独 revert 本任务提交。",
+  "handoff": "需在 Safari 配置且连通 SSH 工作区后，实际验证 sudo 密码提示、Tab 补全、连续命令、Ctrl+C/Ctrl+D 与退出行为；再补充该主机的浏览器证据。"
+}

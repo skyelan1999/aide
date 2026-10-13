@@ -59,3 +59,16 @@ func TestCommandInputRejectsClosedSession(t *testing.T) {
 		t.Fatalf("status = %d, want 404", w.Code)
 	}
 }
+
+func TestSSHInteractiveSessionStartsLoginShellAndFeedsFirstCommand(t *testing.T) {
+	if got, want := sshInteractiveShellCommand(), `"${SHELL:-/bin/bash}" -l`; got != want {
+		t.Fatalf("interactive SSH command = %q, want persistent login shell %q", got, want)
+	}
+	got, err := io.ReadAll(sshInteractivePTYInput("sudo su", strings.NewReader("secret\r")))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != "sudo su\rsecret\r" {
+		t.Fatalf("interactive PTY input = %q, want first command followed by live prompt input", got)
+	}
+}
