@@ -3264,6 +3264,6 @@
       "windows": "OUT_OF_SCOPE for agent acceptance per user; user reports testing it."
     },
     "release": "not_run",
-    "push": "pending checkpoint commit"
+    "push": "Checkpoint d13d0d3 pushed to origin/main."
   }
 }
