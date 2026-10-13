@@ -3067,5 +3067,34 @@
     },
     "release": "not_run",
     "push": "Product source e3f5ac6 and documentation checkpoint bba6719 are pushed to origin/main. This result update is documentation-only; no release or deployment."
+  },
+  "progress_checkpoint_20261013_followup12": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "baseline": "e00ddfe (origin/main)",
+    "completed": [
+      "With the user's authorization, start.command rebuilt and restarted the actual localhost:9999 Aide service from the current worktree while retaining existing data volumes; no credentials were copied and no model settings were changed.",
+      "Native Safari confirmed deepseek-flash is configured and observed real task #47 complete; the first round's exact input, full assistant reply, completed state, zero file artifacts and zero write-target clues appeared in the input/output trajectory view.",
+      "Native Safari opened the input/output trajectory while a second task round displayed running, current input and 'generating reply'; the next browser observation showed the round completed and its reply rendered. This provides partial live UI evidence that the panel can be entered during a run and later render terminal state."
+    ],
+    "remaining": [
+      "The second round's Chinese text was corrupted by browser text input into punctuation and digits, so it is excluded as valid content acceptance evidence.",
+      "The observations were less than one 2.5-second polling interval apart; they do not prove the outcome panel's timer fired, streamed text growth refreshed, or polling stopped at terminal state. Repeat with a valid longer task and keep the outcome panel open beyond at least one interval.",
+      "Continue automatic-compaction healthy lifecycle, cross-tab long-session recovery, user-host remote workflows, representative large-library rendering, requirement-by-requirement audit and release/rollback gates."
+    ],
+    "deferred_by_user": [
+      "Real embedding/vector provider acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reported successful testing"
+    ],
+    "verification": {
+      "source": "Actual local service rebuilt from current worktree via start.command; Safari system-browser route and authenticated UI observed.",
+      "real_model": "Partial: first #47 task completed and its input/output/artifact counts rendered in the trajectory. Second-round content was garbled and excluded from valid content checks.",
+      "live_outcome_browser": "PARTIAL: trajectory panel opened while round 2 showed running and next Safari observation showed completed. Poll interval, output growth while open, and stop-on-terminal remain unverified.",
+      "release": "No formal release, deployment or version bump."
+    },
+    "release": "not_run",
+    "push": "Documentation-only checkpoint to be pushed after JSON/docs validation."
   }
 }
