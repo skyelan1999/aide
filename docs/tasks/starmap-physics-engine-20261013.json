@@ -70,8 +70,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "基础物理引擎已在 b1091df 推送。本轮辐射传递、绘制异常修复、双语文档与验收账本已在 Safari 验证绘制后准备增量推送；扫描繁忙下的最新数据同步与近景光学仍列为未验收项。"
+      "status": "pass",
+      "summary": "基础物理引擎 b1091df 及本轮辐射传递/绘制修复 df94544 已推送 origin/main。Safari 已核实更新代码渲染缓存星图；最新快照同步在扫描繁忙 503 时保留缓存。近景透镜/行星/星门的浏览器验收仍未完成。"
     }
   },
   "rollback": "revert the isolated starmap physics engine commit",
