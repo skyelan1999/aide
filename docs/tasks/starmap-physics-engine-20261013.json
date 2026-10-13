@@ -54,8 +54,8 @@
       "evidence": ["docs/architecture/knowledge-map.md", "docs/en/user-guide.md"]
     },
     "release": {
-      "status": "pending",
-      "summary": "系统Safari已查看最新隔离候选；密集星团过曝已修正。需提交并推送本阶段变更；黑洞/行星近景与真实天文数据仍是后续验收项。"
+      "status": "pass",
+      "summary": "修正后的隔离候选已在系统Safari查看；阶段代码和文档已提交并推送到origin/main（a067be3）。黑洞/行星近景与真实天文数据仍是后续验收项。"
     }
   },
   "rollback": "revert the isolated starmap physics engine commit",
