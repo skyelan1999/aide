@@ -38,12 +38,13 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "系统 Safari 的 9999 页面在修改前观察到窄视口断点的能力核验元数据布局错误：来源输入框被 flex 拉伸、日期框横向撑满。已修正窄屏 CSS。修改后验收尚未运行：start.command 因 Docker 应用不可用退出，9999 当前无监听服务；不得以修改前截图声称修复通过。",
+      "status": "partial",
+      "summary": "本次紧凑排版与保存按钮遮挡修复已在重启后的系统 Safari 桌面页面复核。展开的 DeepSeek 卡片中地址、1 个已保存密钥、3 个模型、提供商选择和协议说明均可见；保存按钮已位于正常内容流，不再覆盖底部内容。未修改或保存凭据。窄屏 Safari 与保存交互尚未验收。",
       "evidence": [
-        "修改前系统 Safari：模型设置卡片在窄视口截图中显示能力核验来源输入框异常纵向拉伸，日期输入框占满卡片宽度；未更改或保存模型设置。",
-        "修改后：git diff --check 通过；尚无修改后浏览器证据。",
-        "./start.command：exit 1，输出 Unable to find application named Docker；curl https://127.0.0.1:9999/healthz：连接失败；修改后桌面/窄屏及保存交互均 NOT_RUN。"
+        "修改后系统 Safari https://localhost:9999/：实际展开原有 DeepSeek 配置；确认 API 地址、密钥存在状态、deepseek-chat/deepseek-flash/deepseek-v4-pro、添加提供商选择和协议说明可见；未更改或保存模型设置。",
+        "视觉检查确认保存设置按钮在弹窗内容末尾的正常布局位置，不再使用 sticky 浮层遮挡提供商选择和协议说明。",
+        "./start.command：构建通过（go vet ./... 与 go build），Aide 已就绪；git diff --check 通过。",
+        "窄屏 Safari、真实模型请求及保存交互：NOT_RUN。"
       ]
     },
     "documentation": {
@@ -61,12 +62,12 @@
       ]
     },
     "release": {
-      "status": "not_run",
-      "summary": "未提交、推送或发布；本请求未授权发布。",
+      "status": "in_progress",
+      "summary": "用户已明确要求将本地完成的阶段性成果及时推送；本 CSS 微调和相应台账更新正在单独提交并推送。",
       "evidence": []
     }
   },
   "release_authorization": "User explicitly requested on 2026-10-13 to push all unpushed changes in this directory; this partial CSS fix and its pending-verification record are included. Product Safari acceptance remains pending.",
   "rollback": "Revert the model-settings block appended to internal/server/web/style.css.",
-  "handoff": "Docker Desktop 在当前主机不可用，9999 没有监听。恢复 Docker 后运行 ./start.command，在系统 Safari 验证 <=620px 元数据来源/日期输入均为正常单行控件，再复核桌面布局和保存行为（不更改凭据）。"
+  "handoff": "桌面系统 Safari 已复核提供商展开布局和保存按钮位置。后续在系统 Safari 窄屏视口复核 <=620px 元数据来源/日期输入均为正常单行控件，并在不更改凭据的条件下验收保存交互。"
 }
