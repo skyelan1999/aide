@@ -3287,5 +3287,25 @@
     },
     "release": "not_run",
     "push": "PASS: commit 29a1041 Restore file editor caret and scroll pushed to origin/main; system Safari verification of the rebuilt candidate remains pending."
+  },
+  "progress_checkpoint_20261013_followup21": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "按用户既有授权运行 AIDE_OPEN_BROWSER=0 bash ./start.command；当前 HEAD de462bf7d72dff663abcf232040bf7238e15ba68 已构建并重建 aide:local，源码输入指纹 3f8e365f85c5b3b9b4e7aecc290b7d8e8b1c2f4af02d026c5685f2eca3feea0a。",
+      "Docker 构建阶段 go vet 与 Go 编译通过；aide-aide-1 启动并通过启动器 health check。数据卷保留，没有触发会话压缩或修改模型/密钥配置。"
+    ],
+    "remaining": [
+      "系统 Safari 刷新后显示当前 localhost:9999 页面，但电脑随后处于 macOS 锁定态；截图接口确认锁定，无法验收压缩 UI。",
+      "手动/自动真实长会话压缩的开始、批次、折叠保存及前后估算完整过程仍需系统 Safari 实测；不能用 build 或定向测试代替。"
+    ],
+    "verification": {
+      "build": "PASS: current source rebuilt through start.command; Go vet/build completed and service readiness check passed.",
+      "system_browser": "NOT_VERIFIED: native Safari could not be inspected after OS lock; no compaction was initiated.",
+      "user_data": "No chat history or files were changed."
+    },
+    "documentation": "Detailed receipt added to docs/tasks/context-compaction-observability-20261012.json.",
+    "release": "not_run",
+    "push": "pending documentation checkpoint"
   }
 }

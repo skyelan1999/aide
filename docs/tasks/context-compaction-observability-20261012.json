@@ -135,5 +135,24 @@
     ],
     "verification": "Focused Docker Go tests passed for idle cancellation and existing SSE behavior. Documentation updated in architecture.md and industrial-long-conversation-support.md.",
     "push": "pushed to origin/main in commit e23d6b8; no product release/deployment."
+  },
+  "latest_rebuild_20261013": {
+    "status": "partial",
+    "source_commit": "de462bf7d72dff663abcf232040bf7238e15ba68",
+    "source_fingerprint": "3f8e365f85c5b3b9b4e7aecc290b7d8e8b1c2f4af02d026c5685f2eca3feea0a",
+    "completed": [
+      "AIDE_OPEN_BROWSER=0 bash ./start.command rebuilt aide:local from current HEAD; build-stage go vet and Go compile passed.",
+      "Compose recreated and started aide-aide-1 using the existing data volume; startup reported the service ready at localhost:9999. No model settings or credentials were changed by this action."
+    ],
+    "remaining": [
+      "After refresh, native Safari reported the Mac locked; screenshot acquisition also confirmed the OS lock. The changed compaction UI could not be inspected, so system-browser acceptance remains pending.",
+      "A complete real-session compaction animation from start through batch summaries, fold/save and final estimates remains unverified."
+    ],
+    "verification": {
+      "build": "PASS: start.command Docker build completed go vet and Go compile; app container started healthy according to the launcher health check.",
+      "system_browser": "NOT_VERIFIED: Safari refresh reached the current localhost:9999 page, but the computer became OS-locked before visual inspection; no compaction was triggered.",
+      "data_mutation": "No session was compacted or edited. The existing Aide data volume was retained."
+    },
+    "push": "This documentation checkpoint is pending; product release/deployment was not performed."
   }
 }
