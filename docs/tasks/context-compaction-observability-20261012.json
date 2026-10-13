@@ -48,7 +48,7 @@
     },
     "verification": {
       "status": "partial",
-      "summary": "定向 Go 回归、40 项 quick profile、前端定向状态隔离/批次/耗时渲染回归和文档检查通过。Safari 系统浏览器现已在启动后的当前源码上确认长会话选中态显示压缩后估算与摘要 token；实时压缩动画过程仍未捕获，故浏览器验收 partial。",
+      "summary": "定向 Go/前端回归通过；Safari 已验证手动压缩完成态与跨会话 meter 隔离。最新真实自动压缩现场显示 1/1 批次和 7 条早期消息，但 9 分钟内没有阶段变化，关联合成回复长时间无响应；停止操作仅回执已请求，终态未确认。因此真实自动压缩过程验收仍 partial。",
       "evidence": [
         "node --check internal/server/web/app.js：通过。",
         "git diff --check（本任务四个目标文件）：通过。",
@@ -79,7 +79,8 @@
         "本轮修复后：node --check internal/server/web/app.js PASS；node scripts/test_context_compaction_ui.cjs PASS，覆盖自动 map 第 2/5 批、累计 1分5秒显示、切换会话隔离与终态前后估算；git diff --check PASS。",
         "2026-10-13 网络隔离容器 Go 定向回归：gofmt 后 `go test -mod=vendor ./internal/server -run \"^(TestAutoCompactionPublishesObservableLifecycle|TestManualCompactionPublishesLiveProgressAndTokenEstimates)$\" -count=1` PASS（1.266s）。",
         "2026-10-13 `python3 scripts/agent-route.py verify quick` PASS，40 项 configured checks，fingerprint e4ba964673b37e86c85114e7ec041e83147da71347cd7b550e851c255c9a31d4，HEAD 71ed7d6009a171c403354ceec7aab9e7582d1139。此 quick 不包含 Go 编译，也不替代 Safari 修复版验收。",
-        "2026-10-13 Safari 系统浏览器 localhost:9999，在 ./start.command 重建并启动当前源码后查看长会话 #46：侧栏显示活动上下文估算 14.0K/64K、历史摘要 298 tokens、会话累计输入 329,423/输出 61,416。该读数证明选中会话当前呈现压缩后的估算与摘要分项；本次只观察到静态完成态，没有捕获折叠/生成期间的实时动效，因此动画验收仍为 partial。"
+        "2026-10-13 Safari 系统浏览器 localhost:9999，在 ./start.command 重建并启动当前源码后查看长会话 #46：侧栏显示活动上下文估算 14.0K/64K、历史摘要 298 tokens、会话累计输入 329,423/输出 61,416。该读数证明选中会话当前呈现压缩后的估算与摘要分项；本次只观察到静态完成态，没有捕获折叠/生成期间的实时动效，因此动画验收仍为 partial。",
+        "2026-10-13 native Safari localhost:9999 dedicated fictional session #46: live AX observation captured an actual automatic compaction indicator at “分段整理 1/1 · 7 条早期消息 · 当前约 12.4K”; elapsed advanced from 2:38 to 9:02 while batch/phase remained unchanged. The same synthetic-only assistant request was marked long-unresponsive. Clicking its Stop control returned “已请求停止”, but the UI still showed generation in progress on the next observation; terminal cancellation and automatic-compaction completion were not verified. This is NOT a pass for the start→batch→fold→complete flow; preserve the original session history and treat the live request outcome as unresolved. No real user data or files were used."
       ],
       "full_profile": "FAIL",
       "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504"

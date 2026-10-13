@@ -2985,5 +2985,32 @@
       "Safari system-browser current-source observation recorded in docs/tasks/context-compaction-observability-20261012.json"
     ],
     "release": "SSH checkpoint docs pushed as 5fd6fbb; local worktree clean before this checkpoint update. No product source change in this checkpoint."
+  },
+  "progress_checkpoint_20261013_followup9": {
+    "status": "in_progress",
+    "date": "2026-10-13",
+    "completed": [
+      "Native Safari confirmed that automatic-compaction progress appears for the selected synthetic session and remains isolated to its session context.",
+      "Live evidence now bounds a real stall: batch stayed at 1/1 for 9:02 while the companion synthetic model response showed long-unresponsive. A Stop click only returned “已请求停止”; neither request cancellation nor compaction terminal state was verified."
+    ],
+    "remaining": [
+      "Capture a healthy automatic compaction from started through changing map/reduce batches, fold/save, and completed in Safari.",
+      "Verify active progress restores on a real session switch and reports a truthful terminal state on cancellation/failure.",
+      "Continue remaining current-candidate Safari, user-host remote, large-library, long-duration and requirement/release-gate acceptance."
+    ],
+    "deferred_by_user": [
+      "Real embedding/vector provider acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reports successful testing"
+    ],
+    "evidence": [
+      "docs/tasks/context-compaction-observability-20261012.json; native Safari localhost:9999, dedicated fictional session #46, observation 2026-10-13."
+    ],
+    "verification": {
+      "status": "partial",
+      "scope": "System Safari live automatic-compaction observation; observed no batch advance or terminal result after 9:02. One Stop click produced only a request toast; cancellation completion is unknown."
+    },
+    "release": "not_run"
   }
 }
