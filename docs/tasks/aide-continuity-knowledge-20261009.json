@@ -3329,5 +3329,26 @@
     },
     "release": "not_run",
     "push": "Documentation checkpoint pending; no product source changes in this checkpoint."
+  },
+  "progress_checkpoint_20261013_followup23": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "系统 Safari 对同一合成会话 #46 再次只读观察：自动压缩仍停留在 map 1/1、4 条早期消息、当前约 13.3K，计时约 25 分 35 秒；同一合成助手输出也仍显示运行中和长时间无响应提示。未点击停止、继续等待或重试。",
+      "读取运行环境：aide-aide-1 状态 running，容器启动时间 2026-10-13T10:14:55Z；近 40 分钟 docker logs 无输出；/workspace 挂载源码摘要与当前仓库一致。"
+    ],
+    "remaining": [
+      "运行镜像标签仍为 aide.srcsha=3f8e365f85c5b3b9b4e7aecc290b7d8e8b1c2f4af02d026c5685f2eca3feea0a，与当前构建输入摘要 ec3280f85b1dae9738dd6a258eaa56d4b34f32f63340143ee06d24bce1f0bd64 不同；容器挂载源码虽与仓库一致，但正在服务的 /usr/local/bin/aide 构建提交尚未识别。",
+      "没有观察到压缩批次推进、fold/save 或 completed/failed 终态；本快照不能证明其已完成或失败。须保留当前会话，继续寻找不重启服务的二进制/运行状态诊断方式；本次未重启。"
+    ],
+    "verification": {
+      "system_browser": "Safari native app, https://localhost:9999/; same synthetic session #46. Read-only accessibility snapshot at approximately 2026-10-13 19:20 Asia/Shanghai.",
+      "live_observation": "Context meter 22.7K/64K; current activity estimate 31,425/65,536; upstream conversation usage 538,764 prompt / 72,453 completion. Compression card: 摘要处理中 · 分段整理 1/1 · 4 条早期消息 · 当前约 13.3K · 已用时 25 分 35 秒. A synthetic assistant request also showed 25:39 and stop/wait/retry controls; no controls were operated.",
+      "container": "docker inspect: container ID 3a051fc6342ec1d13826d3c3638922e83e2bced51170848cb112cbcb2413b45e, running, started 2026-10-13T10:14:55.188215594Z, image label aide.srcsha=3f8e365f85c5b3b9b4e7aecc290b7d8e8b1c2f4af02d026c5685f2eca3feea0a. docker logs --since=40m returned no lines.",
+      "source_hash": "Current repository and container /workspace mounted sources both hash to ec3280f85b1dae9738dd6a258eaa56d4b34f32f63340143ee06d24bce1f0bd64 using scripts/aide.sh source_sha algorithm. The image label differs; mounted source equality does not identify the executing /usr/local/bin/aide build revision.",
+      "user_data": "Synthetic test conversation observed only. No session switch, stop/retry action, file edit, model-setting change, or service restart."
+    },
+    "release": "not_run",
+    "push": "Documentation checkpoint pending; no product source changes in this checkpoint."
   }
 }
