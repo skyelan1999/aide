@@ -23,6 +23,22 @@
       const operation=AideContinuity.writeFileDraft(scope(c),identity(c),{text:editor.value,hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft});
       operation.catch(e=>{if(!current(gen,key))return;status.textContent=t('本地草稿保存失败');error?.(e.message);});
     }
+    async function restoreView(){
+      const c={...getContext()},gen=generation,key=identity(c);
+      if(!window.AideContinuity||!scope(c)||!c.path||key!==activeKey)return;
+      try{
+        const view=await AideContinuity.readTab(scope(c),'file-view',key);
+        if(!view||blocked?.()||gen!==generation||key!==identity(getContext())||view.hash!==c.hash)return;
+        const stamp=viewChanges;
+        const apply=()=>{
+          if(blocked?.()||gen!==generation||key!==identity(getContext())||stamp!==viewChanges||editor.classList.contains('hidden')||editor.parentElement?.classList.contains('hidden'))return;
+          const number=(v,max)=>Number.isFinite(v)?Math.max(0,Math.min(max,v)):0;
+          const start=number(view.start,editor.value.length),end=Math.max(start,number(view.end,editor.value.length));
+          editor.focus({preventScroll:true});editor.setSelectionRange(start,end);editor.scrollTop=number(view.scrollTop,10000000);editor.scrollLeft=number(view.scrollLeft,10000000);
+        };
+        requestAnimationFrame(()=>requestAnimationFrame(apply));
+      }catch(e){if(current(gen,key))status.textContent=t('本地恢复暂不可用');}
+    }
     function queueRecovery(){clearTimeout(recoveryTimer);recoveryTimer=setTimeout(storeRecovery,180);}
     function applyRecovery(draft,text){
       editor.value=text;editor.focus({preventScroll:true});
@@ -50,11 +66,7 @@
         const [storedDrafts,view]=await Promise.all([AideContinuity.listFileDrafts(scope(c),identity(c)),AideContinuity.readTab(scope(c),'file-view',identity(c))]);
         const drafts=storedDrafts.filter(d=>typeof d.text==='string'&&d.text!==baseline);let draft=drafts[0];
         if(blocked?.()||gen!==generation||identity(c)!==activeKey||editor.value!==baseline)return;
-        if(stamp===viewChanges&&view&&typeof c.hash==='string'&&c.hash&&view.hash===c.hash){
-          const number=(v,max)=>Number.isFinite(v)?Math.max(0,Math.min(max,v)):0;
-          const start=number(view.start,editor.value.length),end=Math.max(start,number(view.end,editor.value.length));
-          editor.setSelectionRange(start,end);editor.scrollTop=number(view.scrollTop,10000000);editor.scrollLeft=number(view.scrollLeft,10000000);
-        }
+        if(stamp===viewChanges&&view&&typeof c.hash==='string'&&c.hash&&view.hash===c.hash&&!editor.classList.contains('hidden'))restoreView();
         if(!writable())return;
         if(blocked?.()||gen!==generation||identity(c)!==activeKey||!draft||typeof draft.text!=='string'||draft.text===baseline||editor.value!==baseline)return;
         recoveryBanner=document.createElement('div');recoveryBanner.className='file-recovery-banner';recoveryBanner.setAttribute('role','status');
@@ -98,14 +110,14 @@
     function activate(){activeDialog?.close();generation++;activeKey=identity(getContext());clearTimeout(timer);clearTimeout(recoveryTimer);recoveryBanner?.remove();recoveryBanner=null;baseline=editor.value;suspended=false;composing=false;status.textContent='';button.classList.remove('saving');paint();offerRecovery(generation);}
     button.onclick=()=>{window.aideUI?.set('editorAutoSave',!enabled());suspended=false;paint();schedule();};
     manual.onclick=()=>flush(true);
-    editor.addEventListener('input',()=>{recoveryBanner?.remove();recoveryBanner=null;schedule();});for(const event of ['input','scroll','select'])editor.addEventListener(event,()=>{viewChanges++;queueRecovery();},{passive:true});window.addEventListener('pagehide',storeRecovery);
+    editor.addEventListener('input',()=>{recoveryBanner?.remove();recoveryBanner=null;schedule();});for(const event of ['input','scroll','select','keyup','click','blur'])editor.addEventListener(event,()=>{viewChanges++;queueRecovery();},{passive:true});document.addEventListener('selectionchange',()=>{if(document.activeElement===editor){viewChanges++;queueRecovery();}});window.addEventListener('pagehide',storeRecovery);
     editor.addEventListener('compositionstart',()=>{composing=true;clearTimeout(timer);});
     editor.addEventListener('compositionend',()=>{composing=false;schedule();});
     window.aideUI?.subscribe(()=>{paint();schedule();});
     window.LockCluster?.on('effective',value=>{if(value)activeDialog?.close();});
     document.addEventListener('visibilitychange',()=>{if(!document.hidden)schedule();});
     window.addEventListener('beforeunload',event=>{if(writable() && editor.value!==baseline){event.preventDefault();event.returnValue='';}});
-    return {activate,flush,resume:schedule,busy:()=>!!inFlight,dirty:()=>writable() && editor.value!==baseline};
+    return {activate,flush,restoreView,resume:schedule,busy:()=>!!inFlight,dirty:()=>writable() && editor.value!==baseline};
   }
   window.AideFileAutoSave={bind};
 })();

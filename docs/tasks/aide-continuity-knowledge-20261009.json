@@ -3265,5 +3265,27 @@
     },
     "release": "not_run",
     "push": "Checkpoint d13d0d3 pushed to origin/main."
+  },
+  "progress_checkpoint_20261013_followup20": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "复核保存的工作区文件场景恢复：Safari 刷新后同一 Markdown 文件自动重开，但编辑器默认预览态；切换编辑态后光标/滚动回到顶部，复现了 caret/view 恢复缺陷。",
+      "文件视图恢复现在延迟到编辑器可见后应用，并重新应用光标、选区及水平/垂直滚动；键盘光标移动和 selectionchange 也会持久化视图状态。"
+    ],
+    "remaining": [
+      "当前补丁尚未由 start.command 重建并在系统 Safari 上复验；Docker socket 当前拒绝连接，start.command 无法启动候选服务。",
+      "Safari 对当前运行的 localhost:9999 只能证明既有实例仍打开该文件，不能证明加载了本轮 source 改动。",
+      "崩溃恢复、SSH 实机恢复、长时间恢复及其他目标中的完整验收仍未完成。"
+    ],
+    "verification": {
+      "focused_source": "PASS: node --check internal/server/web/app.js; node --check internal/server/web/file-autosave.js.",
+      "focused_regression": "PASS: node scripts/file-recovery-scroll.test.cjs; node scripts/workspace-scene-transition.test.cjs.",
+      "system_browser": "PENDING for this patch: Safari remains on the pre-existing localhost:9999 instance and the changed bundle was not rebuilt.",
+      "startup_blocker": "docker info failed to connect to unix:///Users/skyelan/.docker/run/docker.sock; start.command cannot rebuild/restart until Docker Engine is available.",
+      "user_data": "No content was edited or saved in the user's open Markdown file during this checkpoint."
+    },
+    "release": "not_run",
+    "push": "not_run pending system Safari verification of the rebuilt candidate."
   }
 }

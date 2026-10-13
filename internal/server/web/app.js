@@ -2604,6 +2604,7 @@ function setEditorMode(mode) {
     $('editor-preview').scrollTop = 0;
     if (split && splitScrollLock.editor) syncSplitScroll($('editor'), $('editor-preview'), 'editor');
   }
+  if (!preview) editorAutoSave?.restoreView();
 }
 function showEditor() {
   window.AideMarkdownMedia?.dispose($("editor"));
@@ -8386,6 +8387,7 @@ function setFileViewMode(mode) {
     $('file-view-preview').scrollTop = 0;
     if (split && splitScrollLock.fileView) syncSplitScroll($('file-view-editor'), $('file-view-preview'), 'fileView');
   }
+  if (!preview) fileViewAutoSave?.restoreView();
 }
 async function openFileViewMode() {
   let spec = null;
