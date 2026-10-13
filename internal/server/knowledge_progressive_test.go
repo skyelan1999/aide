@@ -104,6 +104,55 @@ func TestKnowledgeProgressiveCancelledCandidateDoesNotAdvance(t *testing.T) {
 		}
 	}
 }
+
+func TestKnowledgeDiscoveryBudgetIncreaseKeepsCursor(t *testing.T) {
+	a := testApp(t)
+	for i := 0; i < 80; i++ {
+		if err := os.WriteFile(filepath.Join(a.workPath, fmt.Sprintf("budget-%03d.txt", i)), []byte("entry"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	root, err := os.OpenRoot(a.workPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	area := knowledgeArea{scope: knowledgeID("scope", "", "", ""), root: "workspace", source: "workspace", kind: "local", location: a.workPath, enabled: true}
+	policy := defaultKnowledgeIndexPolicy()
+	cache := newKnowledgeScanCache(nil)
+	first, _, err := cache.discover(context.Background(), root, area, policy, 2, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if first.Cursor.MaxEntries != 12 || first.Cursor.Complete {
+		t.Fatalf("expected a partial small catalog, got max=%d complete=%v", first.Cursor.MaxEntries, first.Cursor.Complete)
+	}
+	cycle := first.Cycle
+	visited := len(first.Cursor.Visited)
+	second, _, err := cache.discover(context.Background(), root, area, policy, 20, 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if second.Cycle != cycle || second.Cursor.MaxEntries != 100 || len(second.Cursor.Visited) < visited {
+		t.Fatalf("budget increase reset or shrank cursor: cycle %d->%d max=%d visited %d->%d", cycle, second.Cycle, second.Cursor.MaxEntries, visited, len(second.Cursor.Visited))
+	}
+}
+
+func TestKnowledgeLocalDiscoveryRevisionIgnoresOnlyBudgets(t *testing.T) {
+	base := defaultKnowledgeIndexPolicy()
+	changedBudget := base
+	changedBudget.FileBudget += 100
+	changedBudget.DirectoryBudget += 20
+	if knowledgeLocalDiscoveryRevision(base) != knowledgeLocalDiscoveryRevision(changedBudget) {
+		t.Fatal("budget-only change invalidated local discovery")
+	}
+	changedScope := base
+	changedScope.ScopePaths = map[string][]string{"workspace": {"docs"}}
+	if knowledgeLocalDiscoveryRevision(base) == knowledgeLocalDiscoveryRevision(changedScope) {
+		t.Fatal("scope change reused local discovery")
+	}
+}
+
 func TestKnowledgeProgressiveUpdateAPI(t *testing.T) {
 	a := testApp(t)
 	for i := 0; i < 850; i++ {

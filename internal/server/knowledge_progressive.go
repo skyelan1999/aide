@@ -37,6 +37,11 @@ func (c *knowledgeScanCache) discover(ctx context.Context, root *os.Root, ar kno
 		v = &knowledgeDiscoveryView{Cursor: newKnowledgeDiscovery(4 * (files + dirs)), Published: map[string]knowledgeDiscoveryEntry{}, Cycle: 1}
 		c.discovery[key] = v
 	}
+	// A budget increase should extend the catalog in place. Replacing the
+	// cursor here would discard its directory offsets and rescan from the root.
+	if limit := 4 * (files + dirs); limit > v.Cursor.MaxEntries {
+		v.Cursor.MaxEntries = limit
+	}
 	if v.Cursor.Complete {
 		v.Cursor = newKnowledgeDiscovery(v.Cursor.MaxEntries)
 		v.Cycle++
@@ -168,7 +173,7 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 			}
 		}
 	}
-	cache.localCheckpoints = append(cache.localCheckpoints, knowledgeLocalCheckpoint{ar, knowledgeIndexRevision(p), includeCode, fileQuota, dirQuota, v})
+	cache.localCheckpoints = append(cache.localCheckpoints, knowledgeLocalCheckpoint{ar, knowledgeLocalDiscoveryRevision(p), includeCode, 0, 0, v})
 	state, message := "ready", ""
 	if !b.Complete || len(b.Reasons) > 0 {
 		state, message = "partial", "分批索引中，未扫描区域保持上一周期快照"

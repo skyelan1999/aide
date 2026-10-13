@@ -259,7 +259,7 @@ func (a *App) knowledgeLocalResume(cache *knowledgeScanCache, ar knowledgeArea, 
 	if ar.epoch != a.wsRevision || a.settings.UserPasswordHash != "" && a.loadLockStateLocked().Locked {
 		return fmt.Errorf("local cursor workspace changed or locked")
 	}
-	identity := a.knowledgeCursorIdentityLocked(ar, knowledgeIndexRevision(p), code, files, dirs)
+	identity := a.knowledgeCursorIdentityLocked(ar, knowledgeLocalDiscoveryRevision(p), code, 0, 0)
 	d, err := loadKnowledgeLocalCursor(knowledgeLocalCursorFile(a.dataPath, ar, code), identity, knowledgeTimeKey("local-cursor-v1\x00"+a.token))
 	if err != nil || d == nil {
 		return err

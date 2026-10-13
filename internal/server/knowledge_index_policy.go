@@ -122,6 +122,15 @@ func (a *App) loadKnowledgeIndexPolicy() (knowledgeIndexPolicy, error) {
 	return loaded, nil
 }
 func knowledgeIndexRevision(p knowledgeIndexPolicy) string { b, _ := json.Marshal(p); return hash(b) }
+
+// Local discovery progress remains valid when only the amount to scan per
+// cycle changes. Keep semantic traversal settings in the cursor identity, but
+// let a larger file/directory budget continue the existing queue.
+func knowledgeLocalDiscoveryRevision(p knowledgeIndexPolicy) string {
+	p.FileBudget = 0
+	p.DirectoryBudget = 0
+	return knowledgeIndexRevision(p)
+}
 func (a *App) getKnowledgeIndexPolicy(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
