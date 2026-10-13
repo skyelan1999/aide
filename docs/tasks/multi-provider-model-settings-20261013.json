@@ -60,9 +60,9 @@
     },
     "verification": {
       "status": "partial",
-      "summary": "Safari 桌面端实际检查默认收起、展开编辑、OpenAI 预设新增草稿和保存按钮对比度；Go 定向测试、Docker build/vet、JS 语法和 i18n 检查通过。未向真实提供商发送请求，也未在用户现有配置中保存多厂商密钥；窄屏设备未做系统 Safari 实测。",
+      "summary": "Safari 桌面端实际检查默认收起、展开编辑、OpenAI 预设新增草稿和保存按钮对比度；2026-10-13 再次展开现有 DeepSeek 提供商，确认 API 地址、加密密钥存在状态、3 个模型和折叠高级参数可见，并查看厂商菜单含 DeepSeek、OpenAI、通义、Moonshot、智谱、硅基流动、Ollama 和自定义兼容服务。Go 定向测试、Docker build/vet、JS 语法和 i18n 检查通过。未向真实提供商发送请求，也未在用户现有配置中保存多厂商密钥；窄屏设备未做系统 Safari 实测。",
       "evidence": [
-        "Safari https://localhost:9999/ 实际页面",
+        "Safari https://localhost:9999/ 实际页面：2026-10-13 展开 DeepSeek 配置显示 API 地址、已加密保存状态、3 个模型及折叠的高级参数；提供商菜单列出 DeepSeek、OpenAI、通义千问、Moonshot、智谱、硅基流动、Ollama、本地自定义 OpenAI 兼容服务。仅查看草稿菜单，没有选择或保存，不更改凭据。",
         "go test -mod=vendor ./internal/server -run \"TestMultiModelSettings|TestSettingsMigrationFromSingleModel|TestModelListProxy|TestModelDiscoveryDraft|TestMultipleModelProvidersUseTheirOwnVaultKeys\" -count=1",
         "./start.command build: go vet + go build",
         "node --check internal/server/web/app.js",
@@ -101,5 +101,5 @@
   },
   "release_authorization": "",
   "rollback": "Revert the task-scoped provider configuration, key vault and model settings UI commits; preserve existing legacy model:api-key vault entry and settings before rollback.",
-  "handoff": "实现和文档完成。OpenAI Chat Completions 兼容服务、多密钥和多提供商逻辑已落地；不包含原生 Anthropic/Gemini 协议。桌面 Safari 布局已检查；真实模型 API、密钥持久化端到端以及窄屏 Safari 实测尚未完成。"
+  "handoff": "实现和文档完成。OpenAI Chat Completions 兼容服务、多密钥和多提供商逻辑已落地；不包含原生 Anthropic/Gemini 协议。桌面 Safari 展开配置与厂商菜单已复核；真实模型 API、密钥持久化端到端以及窄屏 Safari 实测尚未完成。"
 }

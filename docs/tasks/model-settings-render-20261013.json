@@ -39,9 +39,9 @@
     },
     "verification": {
       "status": "partial",
-      "summary": "本次紧凑排版与保存按钮遮挡修复已在重启后的系统 Safari 桌面页面复核。展开的 DeepSeek 卡片中地址、1 个已保存密钥、3 个模型、提供商选择和协议说明均可见；保存按钮已位于正常内容流，不再覆盖底部内容。未修改或保存凭据。窄屏 Safari 与保存交互尚未验收。",
+      "summary": "本次紧凑排版与保存按钮遮挡修复已在重启后的系统 Safari 桌面页面复核。展开的 DeepSeek 卡片中地址、1 个已保存密钥、3 个模型、提供商选择和协议说明均可见；保存按钮已位于正常内容流，不再覆盖底部内容。2026-10-13 再次打开系统 Safari 检查紧凑摘要行和完整展开配置，未修改或保存凭据。窄屏 Safari 与保存交互尚未验收。",
       "evidence": [
-        "修改后系统 Safari https://localhost:9999/：实际展开原有 DeepSeek 配置；确认 API 地址、密钥存在状态、deepseek-chat/deepseek-flash/deepseek-v4-pro、添加提供商选择和协议说明可见；未更改或保存模型设置。",
+        "修改后系统 Safari https://localhost:9999/：实际展开原有 DeepSeek 配置；确认 API 地址、密钥存在状态、deepseek-chat/deepseek-flash/deepseek-v4-pro、添加提供商选择和协议说明可见；2026-10-13 复核紧凑摘要行及展开表单，并查看预置厂商菜单；未更改或保存模型设置。",
         "视觉检查确认保存设置按钮在弹窗内容末尾的正常布局位置，不再使用 sticky 浮层遮挡提供商选择和协议说明。",
         "./start.command：构建通过（go vet ./... 与 go build），Aide 已就绪；git diff --check 通过。",
         "窄屏 Safari、真实模型请求及保存交互：NOT_RUN。"
