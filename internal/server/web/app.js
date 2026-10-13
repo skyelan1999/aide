@@ -2093,8 +2093,11 @@ async function loadFiles(auto) {
   $('file-path').textContent = '/' + label + (state.dir === '.' ? '' : '/' + state.dir); $('file-path').title = $('file-path').textContent;
   const writable = currentFileTarget().writable;
   $('new-file').disabled = !writable;
+  const unchanged = state.fileEntries.length === files.length &&
+    state.fileEntries.every((entry, index) => JSON.stringify(entry) === JSON.stringify(files[index]));
   state.fileEntries = files;
-  renderFileEntries();
+  if (unchanged) syncFileSelection();
+  else renderFileEntries();
   rememberFileLocation();scheduleChatRecovery();
 }
 function fileLocationKey() { return state.root === 'context' ? 'context:' + (state.source || '') : 'workspace'; }

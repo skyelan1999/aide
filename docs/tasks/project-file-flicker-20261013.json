@@ -1,0 +1,70 @@
+{
+  "id": "project-file-flicker-20261013",
+  "request": "项目文件里的内容点不动了，然后一直在那闪",
+  "baseline": "80307c91bfce9dea78b1514af0704093266ca4f1",
+  "initial_status": "M internal/server/plugins_builtin_test.go\n M scripts/test_context_compaction_ui.cjs",
+  "acceptance": [
+    "点击项目文件夹可进入，点击文件可打开；无变化的文件面板刷新不应销毁并重建列表 DOM。",
+    "项目文件面板在系统 Safari 中操作时无持续闪烁，选择状态保持稳定。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "docs/tasks/project-file-flicker-20261013.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户报告项目文件内容点击无响应且持续闪烁。复现路径在系统 Safari 中目录与文件均能点击打开；源码显示每次文件加载都会无条件重建整个列表，刷新遇到相同行时会造成点击目标闪断。",
+      "evidence": [
+        "系统 Safari：点击 /workspace/doc 目录成功进入；点击 ROS2编译工程创建步骤_kunlun_ws.md 成功打开。编辑区点击后获得焦点。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "文件列表数据未变化时保留现有 DOM，仅同步选择状态；变化时照常重绘。",
+      "evidence": [
+        "internal/server/web/app.js loadFiles：后台和手动刷新均汇入同一渲染路径。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "loadFiles 比较新旧文件条目；完全相同时保留现有列表 DOM，只更新选中态，避免后台/手动重复刷新销毁点击目标。",
+      "evidence": [
+        "internal/server/web/app.js：相同条目分支调用 syncFileSelection()，仅变化时调用 renderFileEntries()。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "系统 Safari 在本机 9999 服务验证目录进入、文件打开、手动刷新后文件行保持稳定；截图观察未见持续闪烁。start.command 重建并启动成功；镜像构建内 node --check、go vet、go build 均完成。",
+      "evidence": [
+        "Safari：/workspace/doc 目录可进入；ROS2编译工程创建步骤_kunlun_ws.md 可打开。",
+        "Safari：手动刷新后原文件行仍保留且选中状态不丢；截图无持续闪烁。",
+        "AIDE_OPEN_BROWSER=0 ./start.command：源码哈希变化后重建镜像并重启 aide-aide-1，健康检查成功。",
+        "node --check internal/server/web/app.js：exit 0。",
+        "git diff --check：exit 0。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已把问题、验收标准、实现方式与实测证据记入任务账本。",
+      "evidence": [
+        "docs/tasks/project-file-flicker-20261013.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅准备提交本次 app.js 与任务记录；既有无关改动保留未暂存。",
+      "evidence": [
+        "git status --short 显示其他已有改动仅位于 internal/server/plugins_builtin_test.go 与 scripts/test_context_compaction_ui.cjs。"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "准备按用户此前“阶段性测完及时 push”的授权提交并推送本修复。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "已部署至本机 Aide 9999；Safari 手动验证通过。等待本修复提交并推送后供用户跨设备复测。"
+}
