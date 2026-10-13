@@ -101,16 +101,24 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
  // a claim that the indexed relationship is a physical wormhole.
  for(const [id,path] of paths){const system=path.find(group=>group.depth===6);if(system)systemByNode.set(id,system);}
  for(const edge of validEdges){if(['contains','defines'].includes(edge.kind))continue;const from=systemByNode.get(edge.from),to=systemByNode.get(edge.to);if(!from||!to||from.key===to.key)continue;
-  for(const [owner,target,nodeID] of [[from,to,edge.from],[to,from,edge.to]]){
+  const a=byID.get(edge.from),b=byID.get(edge.to),dx=(b?.x||0)-(a?.x||0),dy=(b?.y||0)-(a?.y||0),length=Math.hypot(dx,dy)||1;
+  for(const [owner,target,nodeID,vx,vy] of [[from,to,edge.from,dx/length,dy/length],[to,from,edge.to,-dx/length,-dy/length]]){
    if(!gatesBySystem.has(owner.key))gatesBySystem.set(owner.key,new Map());const gates=gatesBySystem.get(owner.key),old=gates.get(target.key);
-   if(old){old.count++;old.nodes.add(nodeID);old.kinds.add(edge.kind||'relation');}
-   else gates.set(target.key,{targetKey:target.key,targetLabel:target.label,count:1,nodes:new Set([nodeID]),kinds:new Set([edge.kind||'relation'])});
+   if(old){old.count++;old.nodes.add(nodeID);old.kinds.add(edge.kind||'relation');old.directionX+=vx;old.directionY+=vy;}
+   else gates.set(target.key,{targetKey:target.key,targetLabel:target.label,count:1,nodes:new Set([nodeID]),kinds:new Set([edge.kind||'relation']),directionX:vx,directionY:vy});
   }
  }
- for(const gates of gatesBySystem.values())for(const gate of gates.values()){
+ for(const [ownerKey,gates] of gatesBySystem)for(const gate of gates.values()){
+  let directionLength=Math.hypot(gate.directionX,gate.directionY);
+  if(directionLength<1e-6){const center=key=>{const members=byKey.get(key)?.members||[];let x=0,y=0,count=0;for(const id of members){const n=byID.get(id);if(Number.isFinite(n?.x)&&Number.isFinite(n?.y)){x+=n.x;y+=n.y;count++;}}return count?{x:x/count,y:y/count}:null;},a=center(ownerKey),b=center(gate.targetKey);
+   if(a&&b){gate.directionX=b.x-a.x;gate.directionY=b.y-a.y;directionLength=Math.hypot(gate.directionX,gate.directionY);}}
+  if(directionLength<1e-6){gate.directionX=1;gate.directionY=0;directionLength=1;}
+  gate.directionX/=directionLength;gate.directionY/=directionLength;
+  gate.directionSector=Math.floor((Math.atan2(gate.directionY,gate.directionX)+Math.PI+Math.PI/24)/(Math.PI/12))%24;
   gate.anchorNodeID=[...gate.nodes].sort((a,b)=>(byID.get(b)?.connectionCount||0)-(byID.get(a)?.connectionCount||0)||a.localeCompare(b))[0];
   gate.nodes=undefined;gate.kinds=[...gate.kinds].sort();
  }
+ for(const gates of gatesBySystem.values()){const ranks=new Map();for(const gate of [...gates.values()].sort((a,b)=>a.targetKey.localeCompare(b.targetKey))){const ring=ranks.get(gate.directionSector)||0;gate.clearanceRing=ring;ranks.set(gate.directionSector,ring+1);}}
  for(const edge of validEdges){const from=paths.get(edge.from),to=paths.get(edge.to);let common=0;
   while(common<from.length&&common<to.length&&from[common]===to[common])common++;
   if(common===0||common===from.length||common===to.length)continue;
