@@ -214,5 +214,23 @@
       "Go 未安装在宿主；Docker API socket permission denied，本轮无法从宿主启动服务端 Go/race/vet 全包回归。"
     ],
     "release": "系统 Safari 的星图主视图已检查，专项脚本、quick 门禁和文档检查通过；黑洞近景及 Go 全包回归保持未验收。本批代码和状态文档按用户的分阶段推送要求提交。"
+  },
+  "followup_20261014_annular_black_hole_disk": {
+    "status": "source_regression_pass_safari_closeup_pending",
+    "date": "2026-10-14",
+    "summary": "黑洞吸积盘由离散短弧改为连续光学薄环带扇区，逐方位沿用薄盘辐射、温度色与 Doppler 强度；独立保留圆形 Schwarzschild 阴影及窄临界光子环。",
+    "evidence": [
+      "internal/server/web/starmap.js · drawBlackHole 使用4个径向带和112个方位扇区绘制连续环带；圆形阴影/光子环继续使用屏幕空间变换",
+      "scripts/starmap-lensing.test.cjs · 验证连续闭合扇区、独立径向光学层和方位 Doppler 光子环",
+      "node --check internal/server/web/starmap.js · PASS",
+      "node scripts/starmap-lensing.test.cjs · PASS",
+      "git diff --check · PASS",
+      "系统 Safari 2026-10-14 · 当前星图标签为 https://localhost:18540/starmap.html，AX 显示 32 星 / 164 连接；该图谱无可见黑洞特写，且未确认它加载了本轮工作树，因此不作为新黑洞渲染的视觉验收证据。"
+    ],
+    "not_verified": [
+      "连续吸积盘、阴影、光子环和背景薄透镜的实际近景融合效果仍需可生成黑洞的高密度图谱及本轮候选服务进行 Safari 复验。",
+      "真实天文质量/距离标定、大星域长时间帧率、多个黑洞叠加"
+    ],
+    "release": "针对性源码回归通过；黑洞近景 Safari 视觉验收未完成。"
   }
 }

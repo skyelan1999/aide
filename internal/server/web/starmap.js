@@ -439,23 +439,29 @@ function drawBlackHole(hole,now,fade=1){
  // The image scale is graph-derived, but disk color and sector brightness use
  // Schwarzschild redshift, local orbital velocity and relativistic beaming.
  const physics=window.AideCosmicPhysics,view=physics?.diskView(pitch)||.28,tilt=physics?.diskPositionAngle(yaw)||0,shadowR=Math.max(.55,cosmicProjectedShadowRadius(hole)),rs=shadowR/(1.5*Math.sqrt(3));
- ctx.save();ctx.translate(p.x,p.y);ctx.rotate(tilt);
- ctx.scale(1,view);ctx.lineCap='round';ctx.lineJoin='round';ctx.globalCompositeOperation='lighter';
- // Multiple optically thin disk bands; each azimuth uses its own line-of-sight
- // Doppler factor. The near side is brighter and bluer, the receding side dimmer.
- const bands=[[3.15,3.7],[3.85,4.8],[5.0,6.5],[6.8,9.0]];
- for(const [inner,outer] of bands){const radius=rs*(inner+outer)*.5,pixelRadius=radius,thickness=rs*(outer-inner)*.82;
-  for(let i=0;i<72;i++){const a=tau*(i+.5)/72,los=Math.sin(a)*Math.sqrt(1-view*view),emission=physics?.accretionEmission(rs,radius,los)||{shift:.8+Math.max(0,los)*.45,intensity:.35,observedTemperature:.5};
-   const opacity=(.035+(physics?.displayRadiance(emission.intensity,7.2)||0)*.86)*(1-Math.abs(Math.cos(a))*.16);ctx.globalAlpha=fade*opacity;ctx.strokeStyle=physics?.temperatureColor(emission.observedTemperature)||(los>0?'#cde8ff':'#e38b61');ctx.lineWidth=Math.max(.5,thickness);ctx.beginPath();ctx.arc(0,0,pixelRadius,a-.035,a+.035);ctx.stroke();
-  }
- }
+ ctx.save();ctx.translate(p.x,p.y);ctx.rotate(tilt);ctx.scale(1,view);
+ // Render a continuous, optically thin annulus. The previous short arc strokes
+ // left visible gaps and made the disk read as dotted concentric UI rings.
+ // Each wedge now carries its own redshifted temperature and Doppler brightness.
+ const bands=[[3,3.8],[3.8,5.1],[5.1,6.8],[6.8,9]],segments=112;
+ ctx.globalCompositeOperation='screen';
+ for(const [inner,outer] of bands){for(let i=0;i<segments;i++){
+  const a=tau*i/segments,b=tau*(i+1)/segments,mid=(a+b)*.5,los=Math.sin(mid)*Math.sqrt(1-view*view),radius=rs*(inner+outer)*.5;
+  const emission=physics?.accretionEmission(rs,radius,los)||{intensity:.2,observedTemperature:.5};
+  const base=physics?.displayRadiance(emission.intensity,10)||0,opacity=clamp(.035+base*.62,.035,.48)*(1-Math.abs(Math.cos(mid))*.13);
+  ctx.globalAlpha=fade*opacity;ctx.fillStyle=physics?.temperatureColor(emission.observedTemperature)||(los>0?'#cde8ff':'#e38b61');ctx.beginPath();
+  ctx.moveTo(Math.cos(a)*rs*inner,Math.sin(a)*rs*inner);ctx.arc(0,0,rs*outer,a,b);ctx.lineTo(Math.cos(b)*rs*inner,Math.sin(b)*rs*inner);ctx.arc(0,0,rs*inner,b,a,true);ctx.closePath();ctx.fill();
+ }}
  // The disk is flattened by inclination; a Schwarzschild shadow is not.
- // Draw the optical shadow/ring in a fresh circular screen-space transform.
- ctx.restore();ctx.save();ctx.translate(p.x,p.y);ctx.rotate(tilt);
- ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*.42;
- const photonGlow=ctx.createRadialGradient(0,0,Math.max(.1,shadowR*.94),0,0,shadowR*1.16);
- photonGlow.addColorStop(0,'#00000000');photonGlow.addColorStop(.46,mapPalette.light?'#c9e4ff35':'#eaf4ff4a');photonGlow.addColorStop(.72,mapPalette.light?'#f4c98e80':'#ffd7a980');photonGlow.addColorStop(1,'#ffffff00');
- ctx.fillStyle=photonGlow;ctx.beginPath();ctx.arc(0,0,shadowR*1.16,0,tau);ctx.fill();
+ // Draw a near-critical optical ring and capture shadow in circular screen space.
+ ctx.restore();ctx.save();ctx.translate(p.x,p.y);ctx.rotate(tilt);ctx.globalCompositeOperation='screen';
+ const glow=ctx.createRadialGradient(0,0,shadowR*.99,0,0,shadowR*1.12);glow.addColorStop(0,'#ffffff00');glow.addColorStop(.42,mapPalette.light?'#c9e4ff20':'#eaf4ff24');glow.addColorStop(.7,mapPalette.light?'#f4c98e48':'#ffd7a94c');glow.addColorStop(1,'#ffffff00');
+ ctx.globalAlpha=fade*.7;ctx.fillStyle=glow;ctx.beginPath();ctx.arc(0,0,shadowR*1.12,0,tau);ctx.fill();
+ // The photon ring is deliberately a narrow, uneven lensed image, not a solid
+ // outline. Its brightness follows the same orbital beaming as the disk.
+ for(let i=0;i<segments;i++){const a=tau*i/segments,b=tau*(i+1)/segments,mid=(a+b)*.5,los=Math.sin(mid)*Math.sqrt(1-view*view),emission=physics?.accretionEmission(rs,Math.max(3*rs,shadowR*1.035),los),boost=emission?physics.dopplerFactor(emission.beta,los):1;
+  ctx.globalAlpha=fade*clamp(.025+boost*.055,.025,.09);ctx.strokeStyle=physics?.temperatureColor(emission?.observedTemperature||.35)||'#e8cba1';ctx.lineWidth=Math.max(.45,shadowR*.035);ctx.beginPath();ctx.arc(0,0,shadowR*1.035,a,b);ctx.stroke();
+ }
  ctx.globalCompositeOperation='source-over';ctx.globalAlpha=fade*.995;ctx.fillStyle='#010205';ctx.beginPath();ctx.arc(0,0,shadowR,0,tau);ctx.fill();
  ctx.restore();ctx.globalCompositeOperation='source-over';
 }
