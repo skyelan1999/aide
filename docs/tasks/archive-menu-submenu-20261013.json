@@ -1,0 +1,79 @@
+{
+  "id": "archive-menu-submenu-20261013",
+  "request": "项目文件右键菜单压缩项改为保留一键 ZIP，其他格式收进压缩为二级菜单。",
+  "baseline": "2064b6e7401749cbab394fba7a61d0cf15565d86",
+  "initial_status": "M docs/agent/router.json\n M docs/architecture.md\n M docs/architecture/knowledge-map.md\n M internal/server/knowledge_updates.go\n M internal/server/plugins_builtin_test.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M scripts/starmap-workspace-scene.test.cjs\n M scripts/test_context_compaction_ui.cjs\n?? docs/tasks/project-file-tab-title.json\n?? docs/tasks/starmap-local-cache.json\n?? internal/server/web/starmap-cache.js\n?? scripts/starmap-cache.test.cjs",
+  "acceptance": [
+    "文件/文件夹右键菜单提供直接“压缩成 ZIP”操作。",
+    "TAR、TAR.GZ、TAR.BZ2、TAR.XZ 收进“压缩为…”二级菜单，展开后可选择并调用既有压缩操作。",
+    "子菜单可从屏幕两侧正常展开，键盘焦点可进入格式选项；多选和只读状态继续正确禁用压缩。",
+    "Safari 系统浏览器中检查菜单层级与打开交互；运行 JavaScript 语法和差异检查。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/index.html",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "docs/tasks/archive-menu-submenu-20261013.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "保持一键 ZIP 快捷操作，其余归档格式通过“压缩为…”二级菜单提供。",
+      "evidence": [
+        "用户原话：压缩不要一次全显示出来，改成压缩为。。。然后二级菜单；压缩成zip还是可以保留的，那个比较快。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "子菜单以独立 fixed 层渲染，按视口空间自动向左或向右展开，避免被右键菜单的滚动容器裁切；格式按钮沿用现有压缩 API 与权限状态。",
+      "evidence": [
+        "源码检查：openFileContextMenu 现有压缩按钮共用 /file/archive 请求；上下文菜单采用 fixed 定位。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "右键菜单保留直接 ZIP 压缩；TAR、TAR.GZ、TAR.BZ2、TAR.XZ 收进独立二级浮层，浮层按视口自动左右放置，并保留单选/只读禁用逻辑。同步更新中英文用户指南、英文标签、静态资源缓存版本。",
+      "evidence": [
+        "internal/server/web/app.js 的 openFileContextMenu 共用既有 /file/archive API，并保留现有目标路径、错误提示和列表刷新逻辑。",
+        "internal/server/web/style.css 新增二级浮层样式；internal/server/web/index.html 更新 app.js/style.css 缓存版本。"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "Node 语法检查与 git diff --check 通过；Safari 实际菜单点击未完成。",
+      "evidence": [
+        "node --check internal/server/web/app.js：通过。",
+        "node --check internal/server/web/locales/en.js：通过。",
+        "git diff --check：通过。",
+        "CUA 可读取系统 Safari 当前页面，但打开 Safari 控制目标返回 Browser is not available: Safari；因此未能在系统浏览器实际打开右键菜单或检查子菜单点击。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英文用户指南均说明 ZIP 为直接快捷操作、其他格式位于“压缩为…”子菜单。",
+      "evidence": [
+        "docs/user-guide.md 与 docs/en/user-guide.md 的归档操作段落已同步。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "改动限定在菜单、样式、英文标签、静态缓存版本、中英文用户指南与本任务记录；保留工作区内其他已有改动。",
+      "evidence": [
+        "git diff --check 通过；未提交或重启服务。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "用户未要求提交或推送，本轮未发布。",
+      "evidence": [
+        "工作区变更保持未提交。"
+      ]
+    }
+  },
+  "release_authorization": "未请求提交或推送；仅修改并验证本地工作树。",
+  "rollback": "撤销本任务涉及的菜单、样式、翻译、缓存版本、文档和任务记录改动即可；无数据迁移。",
+  "handoff": "实现与静态检查完成；系统 Safari 实际交互验收未运行，因为 CUA 报告 Safari 浏览器控制目标不可用。需要在 Safari 实际打开项目文件右键菜单，确认 ZIP 仍为直接项、压缩为…可弹出四种 TAR 格式，并能从子菜单触发压缩后列表刷新。"
+}

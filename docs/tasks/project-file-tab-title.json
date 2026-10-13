@@ -1,0 +1,71 @@
+{
+  "id": "project-file-tab-title",
+  "request": "从项目文件中打开的浏览器标题要显示文件名",
+  "baseline": "2064b6e7401749cbab394fba7a61d0cf15565d86",
+  "initial_status": "M internal/server/plugins_builtin_test.go\n M scripts/test_context_compaction_ui.cjs",
+  "acceptance": [
+    "从项目文件编辑器使用“在新标签页打开此文件”后，浏览器标题显示所打开文件的文件名。",
+    "应用工作台原有标题保持不变。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "docs/architecture.md",
+    "docs/tasks/project-file-tab-title.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求项目文件新标签页显示文件名；验收限定于文件独立视图的浏览器标题。",
+      "evidence": [
+        "用户原始需求：从项目文件中打开的浏览器标题要显示文件名。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "独立文件视图启动时从路由 path 取 basename 设置 document.title；返回工作台会加载默认标题。",
+      "evidence": [
+        "internal/server/web/app.js openFileViewMode 读取 AideFileRoute 并初始化独立文件页。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "独立文件视图启动时将标签标题设为路径 basename 加 aide 标识；工作台标题保持 HTML 默认值。",
+      "evidence": [
+        "node --check internal/server/web/app.js：通过。",
+        "git diff --check：通过。"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "系统 Safari 当前连接的是旧服务，无法观察此源码改动。更新服务时 start.command 因缺少 Docker 应用失败；本机未安装 go，无法用原生服务构建替代。",
+      "evidence": [
+        "Safari 仍显示旧标题 aide · AI 开发工作台。",
+        "AIDE_OPEN_BROWSER=0 ./start.command：失败，Unable to find application named Docker。",
+        "go run ./cmd/aide --help：失败，zsh: command not found: go。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构文档记录独立文件页标题规则。",
+      "evidence": [
+        "docs/architecture.md：2026-10-13 独立文件页浏览器标题。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审阅了本任务 diff；保留了用户/其他任务的既有改动，不做清理。",
+      "evidence": [
+        "git diff --check：通过。"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "未推送；系统浏览器验收未能运行，且用户本轮未授权推送。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "实现和静态检查完成。待安装/启动 Docker 或提供已运行的新候选服务后，用 Safari 从项目文件编辑器点“在新标签页打开此文件”，确认标签显示 basename · aide，再决定推送。"
+}

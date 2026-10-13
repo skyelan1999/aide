@@ -1727,7 +1727,7 @@ function renderClarification(run, box) {
     status.append(el('p', '', t(run.approvalState === 'approved' ? '已自动放行' : '辅助审批中，无需操作')), el('pre', 'approval-command', q.command));
     box.append(status); return;
   }
-  const card = el('div', 'clarify-card');
+  const card = el('div', q.approvalKind === 'shell' ? 'clarify-card shell-approval-card' : 'clarify-card');
   if (q.progressTotal) card.append(el('div', 'clarify-progress', t('澄清 {0}/{1}', q.progressCurrent || 1, q.progressTotal)));
   if (q.approvalKind === 'shell') {
     card.append(el('div', 'clarify-question', t('执行命令前确认')));
@@ -1735,34 +1735,55 @@ function renderClarification(run, box) {
   } else card.append(el('div', 'clarify-question', q.question));
   const key = `${sessionId}/${run.id}/${q.questionId || q.approvalRound || JSON.stringify(q)}`;
   const disable = value => card.querySelectorAll('button,input,select').forEach(x => x.disabled = value);
-  const refresh = async () => { if (state.session?.id === sessionId) await selectSession(sessionId); schedulePoll(); };
+  // The approval decision is already persisted by the answer endpoint. Let the
+  // stream/poll reconcile the full session snapshot in the background instead
+  // of making the user wait through recovery reads and a complete rerender.
+  const refresh = () => { if (state.session?.id === sessionId) refreshSessionSoon(); schedulePoll(); };
   const answer = async (text, remember = false, expiresAt = '') => {
     if (clarificationSubmissions.has(key)) return;
     clarificationSubmissions.add(key); disable(true);
     let accepted = false;
+    const feedback = el('div', 'approval-submit-status', t('正在提交审批决定…'));
+    feedback.setAttribute('role', 'status');
+    card.append(feedback);
     try {
       await api(`/sessions/${sessionId}/runs/${run.id}/answer`, { method: 'POST', body: JSON.stringify({ answer: text, round: q.approvalRound || '', questionId: q.questionId || '', remember, expiresAt }) });
       accepted = true; card.remove();
-      await refresh();
+      if (text === '拒绝') toast(t('已拒绝执行当前命令'));
+      refresh();
     } catch (e) {
       if (e.status === 409) {
         card.remove();
         toast(t('问题状态已变化，正在同步会话'));
-        await refresh().catch(err => toast(err.message));
+        refresh();
       } else {
         toast(e.message);
-        if (!accepted) { clarificationSubmissions.delete(key); disable(false); }
+        if (!accepted) { clarificationSubmissions.delete(key); feedback.remove(); disable(false); }
       }
     }
   };
   if (q.type === 'confirm') {
     const row = el('div', 'clarify-actions');
     const ok = el('button', 'primary', t(q.approvalKind === 'shell' ? '仅本次允许' : '确认，继续')); ok.onclick = () => answer('确认');
-    const adj = el('button', 'quiet', t('需要调整')); adj.onclick = () => answer('需要调整');
     row.append(ok);
-    if (q.approvalKind === 'shell') { const always = el('button', 'quiet', t('永远记住并允许')); always.title=t('记住此工作空间中的完整命令，不扩大沙箱权限'); const validity=approvalValidityPicker(always,'永远记住并允许');always.onclick=()=>answer('确认',true,validity.expiresAt()); row.append(validity.node,always); }
-    row.append(adj);
-    card.append(row);
+    if (q.approvalKind === 'shell') {
+      const deny = el('button', 'approval-deny', t('拒绝执行')); deny.title=t('拒绝这条命令；命令不会运行'); deny.onclick = () => answer('拒绝');
+      row.append(deny);
+      card.append(row);
+      const more = el('details', 'approval-more');
+      more.append(el('summary', '', t('更多审批选项')));
+      const secondary = el('div', 'approval-more-actions');
+      const adj = el('button', 'quiet approval-adjust', t('要求调整命令')); adj.onclick = () => answer('需要调整');
+      const always = el('button', 'quiet approval-remember', t('记住并允许')); always.title=t('记住此工作空间中的完整命令，不扩大沙箱权限'); const validity=approvalValidityPicker(always,'记住并允许');always.onclick=()=>answer('确认',true,validity.expiresAt());
+      secondary.append(validity.node, always, adj);
+      more.append(secondary);
+      card.append(more);
+      card.append(el('p', 'approval-help', t('拒绝会停止当前命令；允许只适用于上方显示的这条完整命令。')));
+    } else {
+      const adj = el('button', 'quiet', t('需要调整')); adj.onclick = () => answer('需要调整');
+      row.append(adj);
+      card.append(row);
+    }
   } else if (q.type === 'input') {
     const row = el('div', 'clarify-actions');
     const input = el('input', 'clarify-input'); input.placeholder = t('输入你的回答…');
@@ -2318,9 +2339,11 @@ function openFileInNewTab(file){
   window.open(location.pathname + '#file=' + encodeURIComponent(JSON.stringify(spec)), '_blank', 'noopener');
 }
 let fileCtxMenuEl = null;
+let fileCtxSubmenuEl = null;
 function closeFileContextMenu() {
   if (!fileCtxMenuEl) return;
   const menu = fileCtxMenuEl; fileCtxMenuEl = null;
+  fileCtxSubmenuEl?.remove(); fileCtxSubmenuEl = null;
   document.removeEventListener('click', closeFileContextMenu);
   document.removeEventListener('keydown', onFileCtxKey);
   leaveUISurface(menu, null, true);
@@ -2411,10 +2434,7 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   const copyTo = el('button', 'file-ctx-item', t('复制到…') + (multiple ? ' (' + selectedPaths.length + ')' : ''));
   const moveTo = el('button', 'file-ctx-item', t('移动到…') + (multiple ? ' (' + selectedPaths.length + ')' : ''));
   const download = el('button', 'file-ctx-item', t('下载'));
-  const compressButtons = [
-    ['zip', '压缩为 ZIP'], ['tar', '压缩为 TAR'], ['tar.gz', '压缩为 TAR.GZ'],
-    ['tar.bz2', '压缩为 TAR.BZ2'], ['tar.xz', '压缩为 TAR.XZ'],
-  ].map(([format, label]) => {
+  const makeCompressButton = (format, label) => {
     const button = el('button', 'file-ctx-item', t(label));
     button.onclick = async (e) => {
       e.stopPropagation(); closeFileContextMenu();
@@ -2424,14 +2444,51 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
       } catch (err) { toast(err.message || String(err)); }
     };
     return button;
+  };
+  const zipButton = makeCompressButton('zip', '压缩成 ZIP');
+  const compressMore = el('div', 'file-ctx-submenu-wrap');
+  const compressMoreButton = el('button', 'file-ctx-item file-ctx-submenu-trigger', t('压缩为…'));
+  compressMoreButton.type = 'button';
+  compressMoreButton.setAttribute('aria-haspopup', 'menu');
+  compressMoreButton.setAttribute('aria-expanded', 'false');
+  compressMoreButton.append(el('span', 'file-ctx-submenu-chevron', '›'));
+  const compressSubmenu = el('div', 'file-ctx-submenu');
+  compressSubmenu.setAttribute('role', 'menu');
+  compressSubmenu.hidden = true;
+  const compressOtherButtons = [
+    ['tar', 'TAR'], ['tar.gz', 'TAR.GZ'], ['tar.bz2', 'TAR.BZ2'], ['tar.xz', 'TAR.XZ'],
+  ].map(([format, label]) => {
+    const button = makeCompressButton(format, label);
+    button.setAttribute('role', 'menuitem');
+    compressSubmenu.append(button);
+    return button;
   });
+  compressMoreButton.onclick = (e) => {
+    e.stopPropagation();
+    const open = compressSubmenu.hidden;
+    compressSubmenu.hidden = !open;
+    compressMoreButton.setAttribute('aria-expanded', String(open));
+    if (open) {
+      document.body.append(compressSubmenu);
+      fileCtxSubmenuEl = compressSubmenu;
+      const triggerRect = compressMoreButton.getBoundingClientRect();
+      const menuRect = compressSubmenu.getBoundingClientRect();
+      const placeRight = triggerRect.right + 7 + menuRect.width <= innerWidth - 8;
+      compressSubmenu.style.left = Math.max(8, placeRight ? triggerRect.right + 7 : triggerRect.left - menuRect.width - 7) + 'px';
+      compressSubmenu.style.top = Math.max(8, Math.min(triggerRect.top - 5, innerHeight - menuRect.height - 8)) + 'px';
+      compressOtherButtons[0]?.focus();
+    } else {
+      compressSubmenu.remove(); fileCtxSubmenuEl = null;
+    }
+  };
+  compressMore.append(compressMoreButton);
   const extract = el('button', 'file-ctx-item', t('解压到新文件夹'));
   const ren = el('button', 'file-ctx-item', t('重命名'));
   const props = el('button', 'file-ctx-item', t('属性'));
   const del = el('button', 'file-ctx-item danger-item', t('删除'));
   if (!currentFileTarget().writable) { moveTo.disabled = true; moveTo.title = t('只读引用不能移动'); }
-  if (multiple) [download, ...compressButtons, extract, ren, props, del].forEach(x => { x.disabled = true; x.title = t('此操作仅支持单个文件'); });
-  if (!writable) [...compressButtons, ren, del, extract].forEach(x => { x.classList.add('disabled'); x.disabled = true; x.title = t('引用为只读'); });
+  if (multiple) [download, zipButton, compressMoreButton, ...compressOtherButtons, extract, ren, props, del].forEach(x => { x.disabled = true; x.title = t('此操作仅支持单个文件'); });
+  if (!writable) [zipButton, compressMoreButton, ...compressOtherButtons, ren, del, extract].forEach(x => { x.classList.add('disabled'); x.disabled = true; x.title = t('引用为只读'); });
   if (!isSupportedArchivePath(file.path) || file.dir) { extract.classList.add('disabled'); extract.disabled = true; extract.title = t('不支持此归档格式'); }
   download.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); downloadFileEntry(file, !!file.dir, target); };
   copyTo.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); openFileTransferPicker('copy', selectedPaths, target); };
@@ -2440,7 +2497,7 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   ren.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); selectFileRow(rowBtn, file.path, state.fileEntries.indexOf(file)); beginInlineRename(rowBtn, nameSpan, file, target); };
   props.onclick = action(async (e) => { e.stopPropagation(); closeFileContextMenu(); await showFileProperties(file, target); });
   del.onclick = action(async (e) => { e.stopPropagation(); closeFileContextMenu(); await deleteFileEntry(file, target); });
-  m.append(attach, copyTo, moveTo, download, ...compressButtons, extract, ren, props, del);
+  m.append(attach, copyTo, moveTo, download, zipButton, compressMore, extract, ren, props, del);
   document.body.append(m);
   fileCtxMenuEl = m;
   m.style.left = Math.max(8, Math.min(ev.clientX, innerWidth - 198)) + 'px';
@@ -7444,6 +7501,8 @@ async function setupXlsxPreview(container, filePath, root, source, viewerSpec) {
 }
 function isDocPath(path) { return /\.doc$/i.test(effectiveFileTypePath(path)); }
 function codeLang(path) {
+  var basename = String(path || '').split(/[\\/]/).pop().toLowerCase();
+  if (basename === 'cmakelists.txt' || /\.cmake(?:\.|$)/i.test(basename)) return 'cmake';
   var ext = AideFileTypes.extension(path);
   var map = {
     // Python
@@ -8285,6 +8344,8 @@ async function openFileViewMode() {
   document.body.classList.add('file-view-mode');
   $('file-view').classList.remove('hidden');
   fileView.spec = spec; fileView.wsId = '';
+  const fileName = String(spec.path).split(/[\\/]/).filter(Boolean).pop() || String(spec.path);
+  document.title = fileName + ' · aide';
   $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;
   // Single URL resources retain their virtual path; the graph carries a bounded
   // format hint for choosing an existing viewer. Requests still use spec.path.

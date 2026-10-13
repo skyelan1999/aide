@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"bytes"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -20,6 +21,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf16"
 	"unicode/utf8"
 )
 
@@ -58,6 +60,63 @@ func validateTextContent(b []byte) error {
 	}
 	return nil
 }
+
+// normalizeJSONEncoding accepts BOM-marked UTF-16 JSON as text. JSON is
+// ordinarily UTF-8, but Windows tools can emit UTF-16LE/BE; the NUL bytes in
+// those files must not make the editor classify them as binary. The returned
+// UTF-8 bytes are the canonical editor representation (saving such a file
+// writes UTF-8, matching the rest of the text-file contract).
+func normalizeJSONEncoding(p string, b []byte) ([]byte, error) {
+	ext := strings.ToLower(path.Ext(p))
+	if ext != ".json" && ext != ".jsonl" && ext != ".jsonc" {
+		return b, nil
+	}
+	var order binary.ByteOrder
+	data := b
+	switch {
+	case bytes.HasPrefix(b, []byte{0xff, 0xfe}):
+		order, data = binary.LittleEndian, b[2:]
+	case bytes.HasPrefix(b, []byte{0xfe, 0xff}):
+		order, data = binary.BigEndian, b[2:]
+	default:
+		return b, nil
+	}
+	if len(data)%2 != 0 {
+		return nil, errors.New("JSON 文件的 UTF-16 编码不完整")
+	}
+	units := make([]uint16, len(data)/2)
+	for i := range units {
+		units[i] = order.Uint16(data[i*2 : i*2+2])
+	}
+	for i := 0; i < len(units); i++ {
+		u := units[i]
+		if u >= 0xd800 && u <= 0xdbff {
+			if i+1 >= len(units) || units[i+1] < 0xdc00 || units[i+1] > 0xdfff {
+				return nil, errors.New("JSON 文件包含无效的 UTF-16 字符")
+			}
+			i++
+		} else if u >= 0xdc00 && u <= 0xdfff {
+			return nil, errors.New("JSON 文件包含无效的 UTF-16 字符")
+		}
+	}
+	decoded := []byte(string(utf16.Decode(units)))
+	if !utf8.Valid(decoded) || bytes.IndexByte(decoded, 0) >= 0 {
+		return nil, errors.New("JSON 文件包含无效文本")
+	}
+	return decoded, nil
+}
+
+func validateTextFileContent(p string, b []byte) ([]byte, error) {
+	b, err := normalizeJSONEncoding(p, b)
+	if err != nil {
+		return nil, err
+	}
+	if err := validateTextContent(b); err != nil {
+		return nil, err
+	}
+	return b, nil
+}
+
 func readText(root *os.Root, p string) ([]byte, error) {
 	if err := safePath(p); err != nil {
 		return nil, err
@@ -81,10 +140,7 @@ func readText(root *os.Root, p string) ([]byte, error) {
 	if len(b) > maxFile {
 		return nil, fmt.Errorf("文件超过 %d MiB 限制", maxFile>>20)
 	}
-	if !utf8.Valid(b) || bytes.IndexByte(b, 0) >= 0 {
-		return nil, errors.New("不支持二进制文件")
-	}
-	return b, nil
+	return validateTextFileContent(p, b)
 }
 
 // readTextLines 按行流式读取（模型 read_file 工具的分段模式）。
@@ -92,6 +148,25 @@ func readText(root *os.Root, p string) ([]byte, error) {
 // 全程只缓冲目标窗口，逐行扫描时同时检测整个文件是否含 NUL（二进制拒绝），
 // 对返回窗口做 UTF-8 校验。返回：窗口内容、文件总行数。
 func readTextLines(root *os.Root, p string, offset, limit int) ([]byte, int, error) {
+	if ext := strings.ToLower(path.Ext(p)); ext == ".json" || ext == ".jsonl" || ext == ".jsonc" {
+		b, err := readText(root, p)
+		if err != nil {
+			return nil, 0, err
+		}
+		lines := bytes.Split(b, []byte{'\n'})
+		if len(lines) > 0 && len(lines[len(lines)-1]) == 0 && len(b) > 0 && b[len(b)-1] == '\n' {
+			lines = lines[:len(lines)-1]
+		}
+		start := max(0, offset)
+		if start > len(lines) {
+			start = len(lines)
+		}
+		end := len(lines)
+		if limit > 0 && start+limit < end {
+			end = start + limit
+		}
+		return bytes.Join(lines[start:end], []byte{'\n'}), len(lines), nil
+	}
 	if err := safePath(p); err != nil {
 		return nil, 0, err
 	}
@@ -148,6 +223,30 @@ func readTextLines(root *os.Root, p string, offset, limit int) ([]byte, int, err
 // off/limit 为字节偏移与长度（limit<=0 表示读到文件尾）。
 // 返回窗口内容与文件总字节数；对窗口做 NUL/UTF-8 校验。
 func readTextRange(root *os.Root, p string, off, limit int64) ([]byte, int64, error) {
+	if ext := strings.ToLower(path.Ext(p)); ext == ".json" || ext == ".jsonl" || ext == ".jsonc" {
+		b, err := readText(root, p)
+		if err != nil {
+			return nil, 0, err
+		}
+		size := int64(len(b))
+		if off < 0 {
+			off = 0
+		}
+		if off > size {
+			off = size
+		}
+		end := size
+		if limit > 0 && off+limit < end {
+			end = off + limit
+		}
+		for off > 0 && off < size && !utf8.RuneStart(b[off]) {
+			off++
+		}
+		for end < size && !utf8.RuneStart(b[end]) {
+			end++
+		}
+		return b[off:end], size, nil
+	}
 	if err := safePath(p); err != nil {
 		return nil, 0, err
 	}
@@ -1423,7 +1522,7 @@ func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		b, err = a.knowledgeReadViewer(r.Context(), q.Get("root"), q.Get("source"), q.Get("path"), origin, q.Get("knowledgeWorkspace"), maxFile)
 		if err == nil {
-			err = validateTextContent(b)
+			b, err = validateTextFileContent(q.Get("path"), b)
 		}
 		if err != nil {
 			fail(w, 409, err)

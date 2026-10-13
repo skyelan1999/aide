@@ -1215,6 +1215,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/knowledge-map/embedding-policy", a.getEmbeddingPolicy)
 	mux.HandleFunc("PUT /api/knowledge-map/embedding-policy", a.putEmbeddingPolicy)
 	mux.HandleFunc("GET /api/knowledge-map", a.knowledgeMap)
+	mux.HandleFunc("GET /api/knowledge-map/identity", a.knowledgeMapIdentity)
 	mux.HandleFunc("GET /api/knowledge-map/updates", a.knowledgeMapUpdates)
 	mux.HandleFunc("POST /api/knowledge-map/paths", a.knowledgePaths)
 	mux.HandleFunc("GET /api/knowledge-map/timeline", a.knowledgeTimeline)

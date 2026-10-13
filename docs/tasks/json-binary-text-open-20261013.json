@@ -1,0 +1,72 @@
+{
+  "id": "json-binary-text-open-20261013",
+  "request": "修复 JSON 文件在项目文件中打开时被误报为二进制文件；补充 UTF-16 JSON 读取回归验证，并使用系统 Safari 验收。",
+  "baseline": "2064b6e7401749cbab394fba7a61d0cf15565d86",
+  "initial_status": "M docs/agent/router.json\n M docs/architecture.md\n M docs/architecture/knowledge-map.md\n M docs/en/user-guide.md\n M docs/tasks/starmap-highlight-blackholes-20261011.json\n M docs/user-guide.md\n M internal/server/files.go\n M internal/server/files_limit_test.go\n M internal/server/knowledge_updates.go\n M internal/server/plugins_builtin_test.go\n M internal/server/server.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/web/style.css\n M scripts/starmap-workspace-scene.test.cjs\n M scripts/test_context_compaction_ui.cjs\n?? docs/tasks/archive-menu-submenu-20261013.json\n?? docs/tasks/project-file-tab-title.json\n?? docs/tasks/starmap-local-cache.json\n?? internal/server/web/starmap-cache.js\n?? scripts/starmap-cache.test.cjs",
+  "acceptance": [
+    "BOM 标记的 UTF-16LE/BE .json 文件通过文本文件 API 返回 UTF-8 内容及匹配编辑器文本的哈希。",
+    "同一文本规范化覆盖工作区 SSH、引用 SFTP/远程来源和知识查看器；非 JSON 二进制仍被拒绝。",
+    "系统 Safari 实际打开 JSON 文件并确认正文可见。"
+  ],
+  "scope": [
+    "internal/server/files.go",
+    "internal/server/files_limit_test.go",
+    "internal/server/sources.go",
+    "internal/server/workspace_config.go",
+    "docs/tasks/json-binary-text-open-20261013.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "明确问题为 JSON 打开时返回“不支持二进制文件”；范围覆盖项目文件常用本地、SSH、引用及知识查看读取路径。",
+      "evidence": [
+        "用户反馈：“说是二进制文件”。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "在文本边界按路径扩展名规范化带 BOM 的 UTF-16 JSON 为 UTF-8，再使用原有 UTF-8/NUL/大小校验；编辑器保存与哈希继续以 UTF-8 规范内容为准。",
+      "evidence": [
+        "复核 readFile -> readText/readWorkspaceText/readSourceText/knowledgeReadViewer 调用链。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增共用 validateTextFileContent；本地、SSH 工作区、引用来源和知识查看器统一使用；添加 UTF-16LE/BE API 回归。",
+      "evidence": [
+        "已修改 scope 列出的四个服务/测试文件。"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "UTF-16 JSON 后端定向回归先前通过，全仓 quick 检查本轮通过；系统 Safari 实际打开 JSON 文件仍未验收，当前 localhost:9999 工作台已锁屏。",
+      "evidence": [
+        "PASS: docker run --rm --network none -v <repo>:/src -w /src golang:1.26 go test ./internal/server -run 'Test(JSONUTF16BOMOpensAsText|TextRejectBinaryAndUnsafePath|HTTPFileRangeWindow|ReadTextLinesPaging)$' -count=1 — ok aide/internal/server 4.446s。",
+        "PASS: python3 scripts/agent-route.py verify quick — 本轮检查状态 pass。",
+        "NOT_RUN: Safari 打开 http://localhost:9999/ 后显示 Aide“已锁屏”；未绕过应用锁，也未从项目文件实际打开 JSON。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "在任务账本记录实现方案、验收范围和真实验证边界；未改通用用户文档，因为文本编码兼容属于内部文件读取行为。",
+      "evidence": [
+        "已更新本任务 acceptance、scope 和各阶段状态。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留并仅核查本次相关文件；没有清理或改动其他预存工作。",
+      "evidence": [
+        "git diff --check -- internal/server/files.go internal/server/files_limit_test.go internal/server/sources.go internal/server/workspace_config.go 通过。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "尚未提交或推送；待真实 Safari 验收与既有全仓检查冲突处理后，按用户已表达的及时推送偏好进行。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "只回退任务账本与本次四个代码/测试文件中的对应改动；不恢复或覆盖本地预存的其他文件。",
+  "handoff": "后续在 Safari 解锁工作台后，分别打开实际 UTF-16 BOM JSON、常规 UTF-8 JSON 和真实二进制文件，核对正文/哈希与二进制预览路径。CMake 支持另记于 cmake-list-render-20261013 任务账本。"
+}

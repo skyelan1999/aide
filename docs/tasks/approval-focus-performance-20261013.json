@@ -1,0 +1,91 @@
+{
+  "id": "approval-focus-performance-20261013",
+  "request": "排查并修复：审批界面为什么没有拒绝选项；会话审批响应偏慢；工作台使用时视觉注意力分散。按需改善布局和交互，使用 Safari 验收。",
+  "baseline": "2064b6e7401749cbab394fba7a61d0cf15565d86",
+  "initial_status": "M docs/agent/router.json\n M docs/architecture.md\n M docs/architecture/knowledge-map.md\n M docs/en/user-guide.md\n M docs/tasks/starmap-highlight-blackholes-20261011.json\n M docs/user-guide.md\n M internal/server/files.go\n M internal/server/files_limit_test.go\n M internal/server/knowledge_updates.go\n M internal/server/plugins_builtin_test.go\n M internal/server/server.go\n M internal/server/sources.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M internal/server/web/style.css\n M internal/server/workspace_config.go\n M scripts/markdown-template-icons.test.cjs\n M scripts/starmap-workspace-scene.test.cjs\n M scripts/test_context_compaction_ui.cjs\n?? docs/tasks/archive-menu-submenu-20261013.json\n?? docs/tasks/cmake-list-render-20261013.json\n?? docs/tasks/json-binary-text-open-20261013.json\n?? docs/tasks/project-file-tab-title.json\n?? docs/tasks/starmap-local-cache.json\n?? internal/server/web/starmap-cache.js\n?? internal/server/web/vendor/highlight.js/languages/cmake.min.js\n?? scripts/cmake-render.test.cjs\n?? scripts/starmap-cache.test.cjs",
+  "acceptance": [
+    "shell 审批卡提供明确的“拒绝执行”动作；拒绝结果记为 declined，命令不执行；允许与拒绝在视觉层级上明确区分。",
+    "应答后立即解除审批卡的交互锁定并显示结果，不等待完整会话刷新；会话状态仍通过现有 SSE/轮询收敛。",
+    "审批卡突出待决操作与三种选择，减少无关说明造成的注意力分散；桌面及窄屏均可操作。",
+    "在系统 Safari 实例中实际确认审批卡、拒绝动作与应答后反馈。"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/workflow_shell_approval_test.go",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "docs/tasks/approval-focus-performance-20261013.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "已区分根因：shell declined 已由后端记录，UI 只有语义含糊的“需要调整”；前端完整会话重载追加在应答后，增加可见等待。",
+      "evidence": [
+        "internal/server/web/app.js:1719-1764",
+        "internal/server/workflow.go:995-1086",
+        "internal/server/workflow_shell_approval_test.go:15-73"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "shell 审批复用现有轮次校验、人工决定持久化和执行器拒绝语义；UI 明确允许/拒绝，保留要求调整与精确记忆授权。成功应答后不再等待同步完整会话重载，减少额外往返对感知延迟的影响。",
+      "evidence": [
+        "internal/server/workflow.go:995-1086",
+        "internal/server/workflow.go:4273-4300",
+        "internal/server/web/app.js:1740-1782"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "增加拒绝执行按钮、拒绝提示与提交中状态；应答后异步刷新；审批卡主视图仅突出允许/拒绝，记忆授权与要求调整收进更多选项；补充窄屏样式、英文翻译、架构和中英文用户指南；审批回归样例改为拒绝。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/style.css",
+        "internal/server/web/locales/en.js",
+        "internal/server/workflow_shell_approval_test.go",
+        "docs/architecture.md",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "verification": {
+      "status": "not_run",
+      "summary": "node --check internal/server/web/app.js 与 locales/en.js 通过；git diff --check 通过。Go 定向审批回归未运行：本机没有 go 命令；Docker 不可连接，无法使用仓库容器环境。系统 Safari 当前留在旧服务页面但 localhost:9999 服务不可达，无法加载候选源码进行交互验收。辅助审批的模型推理耗时未做端到端基准。",
+      "evidence": [
+        "node --check internal/server/web/app.js：exit 0",
+        "node --check internal/server/web/locales/en.js：exit 0",
+        "git diff --check：exit 0",
+        "go test ./internal/server -run ^TestRunShellRequiresExactConfirmationForWrites$ -count=1：NOT_RUN（go: command not found）",
+        "docker ps：失败（Docker API permission denied）",
+        "curl https://127.0.0.1:9999/healthz：连接失败"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新架构说明及中英文用户指南，记录明确拒绝语义、记忆授权与应答后的异步同步行为。",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/user-guide.md",
+        "docs/en/user-guide.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "本次代码差异仅限审批交互、样式、翻译和审批文档；保留同一工作树中其他任务已有变更与新增文件。",
+      "evidence": [
+        "git diff --check：exit 0",
+        "git status --short：已复核本轮文件与既有文件状态"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "尚未提交或推送。候选验收受环境阻塞：宿主无 Go，Docker API 权限拒绝且 9999 健康端点不可达；Safari 中虽有旧工作台页面但无法连接服务。提交/推送前应在服务可用时运行定向 Go 审批测试并在系统 Safari 实际验证拒绝按钮、拒绝后命令不运行及异步状态收敛。辅助审批中独立模型审核调用仍可能接近 60 秒上限；此次改善主要缩短人工应答后的前端等待。"
+}

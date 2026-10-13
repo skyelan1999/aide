@@ -271,10 +271,7 @@ func (a *App) readSourceText(src Source, p string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err := validateTextContent(b); err != nil {
-			return nil, err
-		}
-		return b, nil
+		return validateTextFileContent(p, b)
 	case "workspace-sftp":
 		if err := safePath(p); err != nil {
 			return nil, err
@@ -283,10 +280,7 @@ func (a *App) readSourceText(src Source, p string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err := validateTextContent(b); err != nil {
-			return nil, err
-		}
-		return b, nil
+		return validateTextFileContent(p, b)
 	case "link", "ftp", "ftps", "smb":
 		return a.curlReadSource(src, p)
 	case "mcp":
@@ -445,11 +439,7 @@ func (a *App) curlReadSource(src Source, p string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("读取失败: %v", err)
 	}
-	if err := validateTextContent(out); err != nil {
-		return nil, err
-	}
-
-	return out, nil
+	return validateTextFileContent(p, out)
 }
 
 // ── handlers ──

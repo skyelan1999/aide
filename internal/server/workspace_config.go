@@ -777,10 +777,7 @@ func (a *App) readWorkspaceText(p string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err := validateTextContent(b); err != nil {
-			return nil, err
-		}
-		return b, nil
+		return validateTextFileContent(p, b)
 	}
 	return readText(a.workspace, p)
 }

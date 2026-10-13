@@ -1,0 +1,85 @@
+{
+  "id": "starmap-local-cache",
+  "request": "星图加载缓慢，添加本地可存储缓存，然后持续不断更新",
+  "baseline": "2064b6e7401749cbab394fba7a61d0cf15565d86",
+  "initial_status": "M docs/architecture.md\n M internal/server/plugins_builtin_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M scripts/test_context_compaction_ui.cjs\n?? docs/tasks/project-file-tab-title.json",
+  "acceptance": [
+    "重复打开同一工作区和索引策略时，先校验服务端身份，再从本地快照绘制星图，随后通过服务端差量追平。",
+    "缓存按知识／代码视图分离，并绑定不透明工作区身份、工作区代次及索引策略指纹；不匹配的缓存不得显示。",
+    "页面可见且已解锁时持续增量同步；隐藏、离开或锁屏时暂停，更新失败保留当前图并退避重试。",
+    "浏览器存储不可用或图超过上限时退回现有全量加载路径，缓存读写失败不阻断星图。",
+    "用系统 Safari 验证冷启动、缓存命中、更新追平、身份切换及锁屏；未完成的验收明确记录。"
+  ],
+  "scope": [
+    "internal/server/knowledge_updates.go、internal/server/server.go：提供不扫描图谱的缓存身份接口。",
+    "internal/server/web/starmap.js、starmap-cache.js、starmap.html：本地快照优先渲染与连续差量同步。",
+    "scripts/starmap-cache.test.cjs、scripts/starmap-workspace-scene.test.cjs、docs/agent/router.json：缓存隔离和加载恢复回归。",
+    "docs/architecture/knowledge-map.md 与本任务账本：描述最终行为及验收边界。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "确认首次扫描慢、回访重复扫描；要求本地持久快照先显示并持续与服务端差量同步。",
+      "evidence": [
+        "用户请求：星图慢，建议添加本地可存储缓存并持续更新。",
+        "边界：身份接口不扫描；锁屏不读缓存；不同工作区／策略／视图隔离。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "新增轻量 identity 接口，IndexedDB 每个视图仅存当前身份的有界快照，沿用现有 updates 游标与 reset 语义。",
+      "evidence": [
+        "internal/server/knowledge_updates.go: knowledgeMapIdentity 不调用 knowledgeAcquireView。",
+        "internal/server/web/starmap-cache.js：身份校验、24 MiB 上限、knowledge/code 独立键。",
+        "现有服务端知识更新周期为 2 秒；前端可见轮询调整为 2 秒并保留指数退避。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "实现本地快照优先绘制、差量追平、延迟空闲写回和锁屏取消缓存写入。",
+      "evidence": [
+        "新增 GET /api/knowledge-map/identity。",
+        "新增 internal/server/web/starmap-cache.js 并在 starmap.html 引入。",
+        "更新 starmap.js 加载身份、读缓存、带游标追平和 2 秒轮询。"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "变更相关 Node 检查已通过；仓库快速验证发现一项与既有 Markdown 工具栏版本断言有关的失败。Safari 与 Go 后端测试当前无法运行。",
+      "evidence": [
+        "PASS node --check internal/server/web/starmap.js。",
+        "PASS node --check internal/server/web/starmap-cache.js。",
+        "PASS node scripts/starmap-cache.test.cjs：持久写读及工作区、策略、视图隔离。",
+        "PASS node scripts/starmap-workspace-scene.test.cjs：工作区恢复和竞态。",
+        "PASS git diff --check。",
+        "FAIL python3 scripts/agent-route.py verify quick：scripts/markdown-template-icons.test.cjs 期待 /app.js?v=128；当前工作区 index.html 资源版本不满足该断言，与本次星图修改无关；其余 quick 用例通过。",
+        "NOT_RUN Go 后端测试：当前环境没有 go 可执行文件。",
+        "NOT_RUN Safari：当前 9999 服务为现有运行实例，候选服务启动依赖 Docker，但本机 Docker 应用不可用；没有用旧运行代码冒充新代码验收。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "知识星图架构文档说明缓存身份、存储、同步和失效边界。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md 新增“星图本地快照与持续同步”说明。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "新增文件均归属缓存实现或回归；未清理或改写已有无关工作。",
+      "evidence": [
+        "git diff --check 通过；已有工作树改动保持原样。"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "未提交、未推送、未发布或部署。",
+      "evidence": [
+        "本轮用户要求实现功能，没有提出推送或发布。"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "移除 GET /api/knowledge-map/identity 与 starmap-cache.js 引用，恢复 starmap.js 原有全量初载/4 秒轮询逻辑，并递增静态资源版本；IndexedDB aide-starmap-cache-v1 可作为旧版忽略的数据留存。",
+  "handoff": "待系统 Safari 在包含本次源码的候选实例完成冷启动、缓存命中、数据追平、工作区/策略切换与锁屏检查；待有 Go 环境时运行后端测试。缓存快照包含本地索引摘要，仅保存在本机同源 IndexedDB，不发送给模型 API。"
+}

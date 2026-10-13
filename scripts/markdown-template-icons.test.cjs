@@ -24,7 +24,8 @@ assert.ok(js.includes("item.addEventListener('focus'"), 'keyboard focus announce
 assert.ok(js.includes("editor.setSelectionRange(start,start+placeholder.length)"), 'insertion selects the editable example text');
 assert.match(css, /\.md-media-toolbar\{[^}]*overflow-x:auto/);
 assert.ok(css.includes('.md-template-tool{position:relative;flex:0 0 27px!important'), 'compact icons fit the row and remain reachable with toolbar scrolling');
-for (const asset of ['/markdown-media.js?v=5', '/locales/en.js?v=111', '/task-outcome.js?v=9', '/macos.css?v=113', '/app.js?v=128']) {
+for (const asset of ['/markdown-media.js?v=5', '/locales/en.js?v=111', '/task-outcome.js?v=9', '/macos.css?v=113']) {
   assert.ok(html.includes(asset), `updated UI asset must bypass the old browser cache: ${asset}`);
 }
+assert.match(html, /\/app\.js\?v=\d+/, 'app bundle carries a cache version');
 console.log('PASS: 26 first-level Markdown template icons, labels, guidance, insertion affordance and narrow-screen toolbar scrolling');

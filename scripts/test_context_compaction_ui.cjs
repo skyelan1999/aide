@@ -56,6 +56,12 @@ const context = {
 vm.createContext(context);
 vm.runInContext(source.slice(begin, end), context);
 
+for (const phase of ['completed', 'failed', 'cancelled']) {
+  assert.equal(context.isTerminalContextCompaction(phase), true, `${phase} is a terminal compaction state`);
+}
+assert.equal(context.isTerminalContextCompaction('folding'), false, 'active compaction remains non-terminal');
+assert.ok(source.includes('if (isTerminalContextCompaction(d.phase)) refreshSessionSoon();'), 'live terminal events refresh the saved session and context meter');
+
 context.showContextCompaction({ sessionId: sessionB, phase: 'started', folded: 8, beforeTokens: 13600 });
 assert.equal(context.state.contextCompactions.get(sessionB).phase, 'started', 'background progress is retained by session');
 assert.equal(card.classList.contains('is-compacting'), false, 'another session must not animate the current card');

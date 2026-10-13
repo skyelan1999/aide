@@ -413,3 +413,17 @@ func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
 	defer release()
 	jsonOut(w, http.StatusOK, knowledgeDelta(view, cursor))
 }
+
+// knowledgeMapIdentity lets a client select a workspace- and policy-specific
+// local snapshot before requesting the (potentially expensive) graph scan.
+// It intentionally does not acquire a view or start a scan.
+func (a *App) knowledgeMapIdentity(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Cache-Control", "no-store")
+	workspace, epoch, policy := a.knowledgeUpdatesIdentity()
+	jsonOut(w, http.StatusOK, map[string]any{
+		"workspace": workspace,
+		"epoch":     fmt.Sprint(epoch),
+		"policy":    policy,
+		"code":      r.URL.Query().Get("code") == "1",
+	})
+}

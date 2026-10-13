@@ -1,21 +1,22 @@
 {
   "id": "starmap-highlight-blackholes-20261011",
-  "request": "星图添加基于有效关联数的高亮星，并根据真实高密度关联区域显示大质量黑洞视觉对象；保持物理含义透明并验证实际 Safari 渲染。",
+  "request": "星图添加基于有效关联数的高亮星，并根据真实高密度关联区域显示大质量黑洞视觉对象；保持物理含义透明并验证实际 Safari 渲染。；按黑洞物理观测线索重做吸积盘、暗影、透镜和光子环视觉。",
   "baseline": "c4830423e4929b05c3e929b308d83400928a8fe2",
   "initial_status": "M docs/plugins/computer-browser-control.md\n M scripts/build-native-computer-bridge.sh\n?? docs/tasks/aide-computer-bridge-icon-20261011.json\n?? scripts/render-computer-bridge-icon.swift",
   "acceptance": [
     "高亮星由真实有效关联数确定，阈值随当前图谱分布自适应，不创建伪节点。",
     "黑洞仅标记真实分组中的高关系密度区域，视觉大小同时响应区域规模与密度。",
     "降低动态效果、明暗主题和现有搜索/选择/连线渲染保持可用；图例说明这是图谱结构隐喻。",
-    "运行专项逻辑验证并通过系统浏览器检查真实星图渲染。"
+    "运行专项逻辑验证并通过系统浏览器检查真实星图渲染。",
+    "黑洞图标呈现非对称吸积盘、中央暗影、分离透镜弧及细光子环；清楚注明它是图谱密度隐喻而非真实质量或光线追踪。"
   ],
   "scope": [
-    "internal/server/web/starmap-gravity.js",
-    "internal/server/web/starmap.js",
-    "internal/server/web/starmap.html",
     "docs/architecture/knowledge-map.md",
-    "scripts/starmap-gravity.test.cjs",
-    "docs/tasks/starmap-highlight-blackholes-20261011.json"
+    "docs/tasks/starmap-highlight-blackholes-20261011.json",
+    "internal/server/web/starmap-gravity.js",
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.js",
+    "scripts/starmap-gravity.test.cjs"
   ],
   "stages": {
     "requirements": {
@@ -35,16 +36,17 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Implemented graph-derived highlight stars and accretion-ring overlays; added a legend and documented that black-hole appearance is not physical mass.",
+      "summary": "黑洞绘制采用近侧视分层：先绘背侧透镜弧，再以暗影遮挡中心，叠加细光子环与前景不对称吸积盘；缓慢移动热点受动效偏好控制。图谱密度仍仅决定高密度组的位置与标记尺度。",
       "evidence": [
         "Added internal/server/web/starmap-gravity.js and integrated it into starmap rendering.",
         "Highlight color, halo, and flare scale from effective degree; black-hole radius scales from group size and density.",
-        "Reduced-motion setting suppresses black-hole spin."
+        "Reduced-motion setting suppresses the accretion-disk hotspot motion; no rigid icon spin is used.",
+        "NASA 黑洞结构资料用于暗影、吸积盘透镜成像及多普勒亮度不对称的定性表现；Canvas 图形并非数值相对论光线追踪。"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "专项逻辑检查通过。2026-10-12 使用系统 Safari 打开本机 9999 实际星图：索引完成后显示 2,149 个节点和 3,567 条连接；真实图谱渲染出高关联星/密集区视觉标识及图例。原文搜索 DEVELOPMENT.md 命中34个节点，选择 Fcd1a5ca9c8b5 后显示真实来源内容、8条连接/4条有效关联与选中态；检索未调用 AI。单次浅色界面与现有运行状态已观察；未完整验收深浅主题、显式降低动效状态下的动画、基于分布阈值的高亮分界及大图多帧交互。",
+      "summary": "专项逻辑检查通过。2026-10-12 使用系统 Safari 打开本机 9999 实际星图：索引完成后显示 2,149 个节点和 3,567 条连接；真实图谱渲染出高关联星/密集区视觉标识及图例。原文搜索 DEVELOPMENT.md 命中34个节点，选择 Fcd1a5ca9c8b5 后显示真实来源内容、8条连接/4条有效关联与选中态；检索未调用 AI。单次浅色界面与现有运行状态已观察；未完整验收深浅主题、显式降低动效状态下的动画、基于分布阈值的高亮分界及大图多帧交互。 本轮黑洞物理启发式渲染已实现，专项代码检查通过；Safari 实际视觉复核尚未运行，因为 Docker 引擎不可访问，现有 9999 服务无法启动。",
       "evidence": [
         "node --check internal/server/web/starmap-gravity.js passed.",
         "node --check internal/server/web/starmap.js passed.",
@@ -52,14 +54,18 @@
         "git diff --check passed.",
         "bash start.command built with go vet and application build, then started the local service; container reported healthy at 127.0.0.1:9999.",
         "Earlier 2026-10-11 browser attempt was blocked while the Mac was locked; superseded by the live Safari observation below.",
-        "2026-10-12 系统 Safari 打开 https://localhost:9999/starmap.html：索引稳定后 2,149 STARS / 3,567 CONNECTIONS；搜索 DEVELOPMENT.md 显示34个结果；选择真实节点 Fcd1a5ca9c8b5，详情显示引用来源及8条连接、4个有效关联；关闭临时验收标签前清空搜索并关闭节点详情。"
+        "2026-10-12 系统 Safari 打开 https://localhost:9999/starmap.html：索引稳定后 2,149 STARS / 3,567 CONNECTIONS；搜索 DEVELOPMENT.md 显示34个结果；选择真实节点 Fcd1a5ca9c8b5，详情显示引用来源及8条连接、4个有效关联；关闭临时验收标签前清空搜索并关闭节点详情。",
+        "本轮 node --check internal/server/web/starmap.js、node scripts/starmap-gravity.test.cjs、git diff --check 与任务 JSON 解析均通过。",
+        "2026-10-13 尝试 bash start.command；Docker CLI 存在，但 Docker Engine socket 返回 permission denied，且 open -a Docker 返回 Unable to find application named Docker。",
+        "Safari 当前仍显示 localhost:9999 的 Markdown 文件页；由于服务未运行，未观察候选代码的实时星图画面，不计为本轮视觉验收。"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "Documented the degree and density rules and their graph-metaphor limits in the Knowledge Map architecture guide.",
+      "summary": "架构文档与星际日志说明黑洞图标的物理启发式形态和图谱隐喻边界，并提供 NASA/EHT 参考。",
       "evidence": [
-        "Updated docs/architecture/knowledge-map.md."
+        "Updated docs/architecture/knowledge-map.md.",
+        "docs/architecture/knowledge-map.md 与星图星际日志已加入物理依据、可视化限制和外部来源。"
       ]
     },
     "cleanup": {
@@ -77,5 +83,5 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "Pending system-browser visual and interaction acceptance. After the Mac is unlocked, inspect real graph high-degree highlights, density overlays, motion toggle, and selection/search continuity. Do not claim release."
+  "handoff": "待完成专项检查并使用系统 Safari 查看真实星图，重点检查黑暗阴影、侧视吸积盘、分离透镜弧、非对称增亮以及关闭动效后热点静止。"
 }

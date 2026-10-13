@@ -164,6 +164,8 @@ Ordinary conversations show four columns: Strategy, Model, Reasoning effort, and
 - **Manual approval:** decide each command that requires confirmation.
 - **Assisted approval:** the backend independently reviews one exact command using the task's current model and records the model usage and decision. Only authorized low-risk or reversible medium-risk work may pass. Deletion, external transfer, publication, writes outside the workspace, or insufficient evidence return to manual confirmation. Failure, timeout, or a changed command never grants automatic approval.
 
+Manual approval shows the complete command with **Allow once** and **Reject command** actions. Rejecting records the command as declined and does not run it. **Request command changes** returns the request to the current task; it is not approval. Remembered grants match the complete command in the current workspace and can have an expiry. After a decision is accepted, the conversation refreshes asynchronously while live events reconcile the task state.
+
 The selection uses existing conversation-draft and task approval state; you can switch a running task or one waiting for command clarification. It does not change sandbox or plugin permissions, apply file proposals, or grant authority through model routing. Execution-loop prompts, budgets, and research rules are separately editable in settings without recompilation or restart; saved changes affect new tasks, while running and resumed tasks retain their policy snapshot. See [Execution policy](../architecture/execution-policy.md).
 
 ## 4. Workspaces and references
@@ -178,7 +180,7 @@ Source registrations are stored in cache `sources.json`; credentials are stored 
 
 ## 5. Files and attachments
 
-Open a text file to edit it. Markdown opens in preview; switch to **Edit** to change source text. **New tab** opens a standalone view with path, preview, edit, and save controls where permitted.
+Open a text file to edit it. Markdown opens in preview; switch to **Edit** to change source text. **New tab** opens a standalone view with path, preview, edit, and save controls where permitted. Common source files use local syntax highlighting; `CMakeLists.txt`, `.cmake`, and `.cmake.in` files are rendered as CMake.
 
 The Markdown editor keeps image, file, link, draw.io, and common Markdown templates on one icon toolbar. Templates cover paragraphs, H1–H6 headings, bold, italic, strikethrough, inline and fenced code, Mermaid flowcharts, tables, Markdown links and image syntax, blockquotes, ordered/bulleted/task lists, horizontal rules, footnotes, callouts, collapsible sections, math, and YAML front matter. Hover or keyboard-focus an icon to see its purpose, what to replace, and any renderer requirement. Inserting a template selects its example placeholder so you can type over it. The toolbar scrolls horizontally on narrow screens. Footnotes, GitHub-style callouts, HTML details, math, and front matter are extensions; rendering depends on the Markdown renderer.
 
@@ -244,7 +246,7 @@ Open **Trajectory** for tasks, steps, tools, proposals, suggested commands, erro
 
 Compaction summarizes older history into structured context for later requests. It runs automatically as history approaches the model budget, and an over-budget request attempts compaction before rejection. It may also be triggered manually. It is not ZIP compression and does not guarantee less disk usage or lossless recall. Reopen source files and task history for precise facts.
 
-**Archive actions**: The project file menu can create sibling ZIP, TAR, TAR.GZ, TAR.BZ2, or TAR.XZ archives; an existing destination is never overwritten. ZIP, TAR, TAR.GZ/TGZ, TAR.BZ2/TBZ2, TAR.XZ/TXZ, and standalone GZ/BZ2/XZ streams can be extracted to a sibling folder, with a numbered name chosen when needed. Extraction is limited to 1,000 archive entries and 64 MiB of expanded data and rejects absolute/traversal paths, links, and special files. Writable references support the same actions; read-only references cannot be modified. The built-in **Archive Tools** plugin exposes the same bounded workspace compression and extraction to the assistant.
+**Archive actions**: The project file menu offers a direct “Compress to ZIP” action. Other formats are grouped under “Compress as…”: TAR, TAR.GZ, TAR.BZ2, and TAR.XZ. Archives are created beside the selected item, and an existing destination is never overwritten. ZIP, TAR, TAR.GZ/TGZ, TAR.BZ2/TBZ2, TAR.XZ/TXZ, and standalone GZ/BZ2/XZ streams can be extracted to a sibling folder, with a numbered name chosen when needed. Extraction is limited to 1,000 archive entries and 64 MiB of expanded data and rejects absolute/traversal paths, links, and special files. Writable references support the same actions; read-only references cannot be modified. The built-in **Archive Tools** plugin exposes the same bounded workspace compression and extraction to the assistant.
 
 Project memory, helper scripts, and intermediate artifacts live under the workspace's `.cache/aide/`, isolated per project. Requested deliverables still go to their specified locations. At most 4,000 characters of project memory are injected into context.
 

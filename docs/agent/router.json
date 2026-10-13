@@ -332,6 +332,10 @@
       ],
       [
         "node",
+        "scripts/starmap-cache.test.cjs"
+      ],
+      [
+        "node",
         "scripts/starmap-coverage-state.test.cjs"
       ],
       [

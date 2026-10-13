@@ -16,7 +16,7 @@ func TestRunShellRequiresExactConfirmationForWrites(t *testing.T) {
 		wantFile     bool
 	}{
 		{name: "confirmed", answer: "确认", wantFile: true},
-		{name: "declined", answer: "需要调整", wantFile: false},
+		{name: "declined", answer: "拒绝", wantFile: false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			a := testApp(t)

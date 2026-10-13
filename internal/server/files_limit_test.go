@@ -2,11 +2,13 @@ package server
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"unicode/utf16"
 )
 
 // 旧上限 256 KiB 已提升到 64 MiB：这里用 300 KiB 文本验证“超过旧限制但低于新上限”可正常读写。
@@ -172,6 +174,48 @@ func TestTextRejectBinaryAndUnsafePath(t *testing.T) {
 	requireStatus(t, request(a, "GET", "/api/file?path=nul.bin", nil), 400)
 	for _, p := range []string{"../etc", ".git/config", ".env"} {
 		requireStatus(t, request(a, "GET", "/api/file?path="+p, nil), 400)
+	}
+}
+
+func TestJSONUTF16BOMOpensAsText(t *testing.T) {
+	a := testApp(t)
+	content := "{\n  \"name\": \"星图\",\n  \"enabled\": true\n}\n"
+	for _, tc := range []struct {
+		name string
+		bom  []byte
+		enc  binary.ByteOrder
+	}{
+		{name: "utf16le", bom: []byte{0xff, 0xfe}, enc: binary.LittleEndian},
+		{name: "utf16be", bom: []byte{0xfe, 0xff}, enc: binary.BigEndian},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			encoded := append([]byte(nil), tc.bom...)
+			for _, r := range content {
+				for _, unit := range utf16.Encode([]rune{r}) {
+					var pair [2]byte
+					tc.enc.PutUint16(pair[:], unit)
+					encoded = append(encoded, pair[:]...)
+				}
+			}
+			if err := a.workspace.WriteFile("utf16-"+tc.name+".json", encoded, 0644); err != nil {
+				t.Fatal(err)
+			}
+			w := request(a, "GET", "/api/file?path=utf16-"+tc.name+".json", nil)
+			requireStatus(t, w, 200)
+			var resp struct {
+				Content string `json:"content"`
+				Hash    string `json:"hash"`
+			}
+			if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+				t.Fatal(err)
+			}
+			if resp.Content != content {
+				t.Fatalf("content = %q, want %q", resp.Content, content)
+			}
+			if resp.Hash != hash([]byte(content)) {
+				t.Fatal("hash must match the UTF-8 editor representation")
+			}
+		})
 	}
 }
 
