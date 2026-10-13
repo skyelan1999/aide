@@ -3034,6 +3034,6 @@
       "docs": "PASS: JSON validation, python3 scripts/check_docs.py (188 Markdown files, 540 local links), git diff --check.",
       "browser": "Pending; Safari native passkey prompt prevents reading the Aide page until authenticated."
     },
-    "release": "pending push of this checkpoint; no product release/deployment."
+    "release": "pushed to origin/main as e23d6b8; no product release/deployment."
   }
 }

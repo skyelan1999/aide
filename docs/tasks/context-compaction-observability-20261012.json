@@ -128,6 +128,7 @@
       "Observe healthy automatic compaction from start through map/reduce batches, fold/save, and completion.",
       "Update overall continuity ledger and push the verified source/docs checkpoint."
     ],
-    "verification": "Focused Docker Go tests passed for idle cancellation and existing SSE behavior. Documentation updated in architecture.md and industrial-long-conversation-support.md."
+    "verification": "Focused Docker Go tests passed for idle cancellation and existing SSE behavior. Documentation updated in architecture.md and industrial-long-conversation-support.md.",
+    "push": "pushed to origin/main in commit e23d6b8; no product release/deployment."
   }
 }
