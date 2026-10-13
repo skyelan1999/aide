@@ -406,7 +406,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	runTimeout := taskExecutionTimeout(task)
 	ctx, cancel := withTaskRunBudget(context.Background(), runTimeout)
 	a.cancels[task.ID] = cancel
-	go a.execute(ctx, s, task, a.settings, history, firstInput, versions, params)
+	a.background(func() { a.execute(ctx, s, task, a.settings, history, firstInput, versions, params) })
 	a.broadcastSessionsChanged(s.ID) // #60：run 启动，会话状态变更
 	jsonOut(w, 202, task)
 }
@@ -812,7 +812,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	runTimeout := taskExecutionTimeout(task)
 	ctx, cancel := withTaskRunBudget(context.Background(), runTimeout)
 	a.cancels[task.ID] = cancel
-	go a.execute(ctx, s, task, a.settings, history, firstInput, versions, params)
+	a.background(func() { a.execute(ctx, s, task, a.settings, history, firstInput, versions, params) })
 	a.broadcastSessionsChanged(s.ID) // #60：run 启动，会话状态变更
 	jsonOut(w, 202, task)
 }
@@ -987,7 +987,7 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := withTaskRunBudget(context.Background(), taskExecutionTimeout(&resumed))
 	a.cancels[resumed.ID] = cancel
-	go a.execute(ctx, s, &resumed, cfg, resumed.CheckpointMessages, nil, versions, params)
+	a.background(func() { a.execute(ctx, s, &resumed, cfg, resumed.CheckpointMessages, nil, versions, params) })
 	a.broadcastSessionsChanged(s.ID)
 	jsonOut(w, 202, &resumed)
 }
@@ -2339,7 +2339,7 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt, profileID string, agent
 	a.cancels[subTask.ID] = cancel
 	a.mu.Unlock()
 
-	go a.execute(ctx, subSess, subTask, cfg, history, firstInput, map[string]Change{}, params)
+	a.background(func() { a.execute(ctx, subSess, subTask, cfg, history, firstInput, map[string]Change{}, params) })
 
 	return subID, subSess.Title, nil
 }

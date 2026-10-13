@@ -6,7 +6,7 @@ class Element {
  click(){} setAttribute(){} querySelector(){return null;} scrollIntoView(){}
 }
 const descendants=root=>[root,...root.children.flatMap(descendants)];
-const page=(snapshot,offset=0)=>({snapshot,taskId:'test',goal:'Fixture',mode:'chat',status:'running',outputs:[{name:'plan',status:'completed',content:'Internal stage output'},{name:'chat',status:'completed',content:'Visible final answer'}],summary:{files:2,executions:2},files:[{path:'file'+offset,proposedHash:'hash'}],executions:[{id:'E'+offset,tool:'read_file',digest:'digest',preview:'return'}],verification:[],gaps:[],release:{message:'not recorded'},page:{filesMore:offset===0,executionsMore:offset===0,fileNext:offset+1,executionNext:offset+1}});
+const page=(snapshot,offset=0)=>({snapshot,taskId:'test',goal:'Fixture',mode:'chat',status:'running',outputs:[{name:'plan',status:'completed',content:'Internal stage output'},{name:'chat',status:'completed',content:'Visible final answer'}],summary:{files:2,executions:2},files:[{path:'file'+offset,proposedHash:'hash'}],executions:[{id:'E'+offset,tool:'read_file',digest:'digest',preview:'return'}],journal:{sequence:2,url:'/api/sessions/s/runs/r/journal'},verification:[],gaps:[],release:{message:'not recorded'},page:{filesMore:offset===0,executionsMore:offset===0,fileNext:offset+1,executionNext:offset+1}});
 async function scenario(kind){
  let calls=[],blob,phase=0;
  const content=new Element('div');
@@ -37,6 +37,36 @@ async function runningRefreshScenario(){
  await timers[0].fn();
  assert.ok(descendants(content).some(e=>e.textContent==='完整回复已生成'),'running outcome refreshes the first page as the model produces output');
  assert.ok(cleared.includes(1),'polling stops once the run is terminal');
+}
+async function executionJournalScenario(){
+ const content=new Element('div'),calls=[];let journalPage=0;
+ const context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)},setTimeout(){},setInterval(){return 1;},clearInterval(){},encodeURIComponent,matchMedia:()=>({matches:true})};
+ vm.runInNewContext(fs.readFileSync('internal/server/web/task-outcome.js','utf8'),context);
+ const api=async path=>{calls.push(path);if(path.endsWith('/journal?limit=100')){journalPage++;return {events:[{version:1,taskId:'r',sequence:1,kind:'tool_dispatch',step:'chat',callId:'call-1',tool:'run_shell',at:'2026-10-14T00:00:00Z',digest:'dispatch-digest'}],next:1,hasMore:true};}if(path.includes('/journal?limit=100&after=1'))return {events:[{version:1,taskId:'r',sequence:2,kind:'tool_result',step:'chat',callId:'call-1',tool:'run_shell',at:'2026-10-14T00:00:01Z',digest:'result-digest'}],next:2,hasMore:false,warning:'torn tail ignored'};return page('stable');};
+ await context.window.AideTaskOutcome.mount(content,{sessionId:'s',runId:'r',api,t:x=>x,blocked:()=>false});
+ assert.equal(calls.some(path=>path.includes('/journal')),false,'journal stays lazy until the user opens it');
+ let details=descendants(content).find(e=>e.className==='outcome-journal');assert.ok(details&&!details.open);details.open=true;details.ontoggle.call(details);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(journalPage,1);let all=descendants(content);assert.ok(all.some(e=>e.textContent==='工具已派发'));assert.ok(all.some(e=>e.textContent.includes('call-1')));assert.ok(all.some(e=>e.textContent.includes('dispatch-digest')));
+ let more=all.find(e=>e.tagName==='button'&&e.textContent==='加载更多执行事件');assert.ok(more);await more.onclick();all=descendants(content);assert.ok(all.some(e=>e.textContent==='工具返回已记录'));assert.ok(all.some(e=>e.textContent==='torn tail ignored'));assert.ok(calls.some(path=>path.includes('after=1')),'journal pagination advances using the last persisted sequence');
+}
+async function terminalJournalDrainScenario(){
+ const content=new Element('div'),timers=[];let outcomeCalls=0,journalCalls=0;
+ const context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)},setTimeout(){},setInterval(fn,ms){timers.push({fn,ms});return timers.length;},clearInterval(){},encodeURIComponent,matchMedia:()=>({matches:true})};
+ vm.runInNewContext(fs.readFileSync('internal/server/web/task-outcome.js','utf8'),context);
+ const running={...page('running'),status:'running'},complete={...page('complete'),status:'completed'};
+ const api=async path=>{if(path.includes('/journal?')){journalCalls++;return journalCalls===1?{events:[{sequence:1,kind:'tool_dispatch',step:'chat',tool:'run_shell',at:'t1'}],next:1,hasMore:true}:{events:[{sequence:2,kind:'tool_result',step:'chat',tool:'run_shell',at:'t2'}],next:2,hasMore:false};}outcomeCalls++;return outcomeCalls===1?running:complete;};
+ await context.window.AideTaskOutcome.mount(content,{sessionId:'s',runId:'r',api,t:x=>x,blocked:()=>false});
+ let details=descendants(content).find(e=>e.className==='outcome-journal');details.open=true;details.ontoggle.call(details);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(timers.length,1);await timers[0].fn();const all=descendants(content);assert.ok(all.some(e=>e.textContent==='工具返回已记录'),'the final poll drains the last journal event before stopping on a terminal outcome');assert.equal(journalCalls,2);
+}
+async function journalRetryScenario(){
+ const content=new Element('div');let journalCalls=0;
+ const context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)},setTimeout(){},setInterval(){return 1;},clearInterval(){},encodeURIComponent,matchMedia:()=>({matches:true})};
+ vm.runInNewContext(fs.readFileSync('internal/server/web/task-outcome.js','utf8'),context);
+ const api=async path=>{if(path.includes('/journal?')){journalCalls++;if(journalCalls===1)throw new Error('temporary journal error');return {events:[{sequence:1,kind:'model_request',step:'chat',at:'t'}],next:1,hasMore:false};}return page('stable');};
+ await context.window.AideTaskOutcome.mount(content,{sessionId:'s',runId:'r',api,t:x=>x,blocked:()=>false});
+ let details=descendants(content).find(e=>e.className==='outcome-journal');details.open=true;details.ontoggle.call(details);await new Promise(resolve=>setImmediate(resolve));
+ let retry=descendants(content).find(e=>e.tagName==='button'&&e.textContent==='重试读取');assert.ok(retry,'initial journal failures offer an explicit retry');await retry.onclick();assert.equal(journalCalls,2);assert.ok(descendants(content).some(e=>e.textContent==='模型请求已记录'));
 }
 function overviewScenario(){
  const content=new Element('div'),context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)}};
@@ -77,4 +107,4 @@ async function overviewRefreshScenario(){
  await timers[0].fn();assert.equal(calls,1);assert.equal(updated.runs[0].status,'completed');assert.equal(updated.runs[0].steps[0].content,'The final answer');
  mounted.close();assert.ok(cleared.includes(1),'overview polling stops when the view closes');
 }
-(async()=>{overviewScenario();overviewReplyCountScenario();await overviewRefreshScenario();for(const kind of ['stable','409','mismatch'])await scenario(kind);await runningRefreshScenario();console.log('PASS outcome overview reply counts, live refresh, polling cleanup, pagination snapshot, stale export guard, explicit reload and running refresh');})().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{overviewScenario();overviewReplyCountScenario();await overviewRefreshScenario();for(const kind of ['stable','409','mismatch'])await scenario(kind);await runningRefreshScenario();await executionJournalScenario();await terminalJournalDrainScenario();await journalRetryScenario();console.log('PASS outcome overview reply counts, live refresh, polling cleanup, pagination snapshot, stale export guard, explicit reload, running refresh, lazy execution journal, terminal journal drain and retry');})().catch(e=>{console.error(e);process.exitCode=1;});

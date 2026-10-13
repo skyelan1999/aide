@@ -52,17 +52,19 @@ type documentRequest struct {
 	Region    string   `json:"region"`
 }
 type documentResult struct {
-	NextCursor string        `json:"nextCursor,omitempty"`
-	Scanned    int           `json:"scanned"`
-	Total      int           `json:"total"`
-	Mode       string        `json:"mode"`
-	Engine     string        `json:"engine"`
-	Workspace  string        `json:"workspace"`
-	Hits       []documentHit `json:"hits"`
-	Warnings   []string      `json:"warnings"`
-	Files      int           `json:"files"`
-	Chunks     int           `json:"chunks"`
-	Truncated  bool          `json:"truncated"`
+	NextCursor  string        `json:"nextCursor,omitempty"`
+	Scanned     int           `json:"scanned"`
+	MatchOffset int           `json:"matchOffset,omitempty"`
+	ChunkOffset int           `json:"chunkOffset,omitempty"`
+	Total       int           `json:"total"`
+	Mode        string        `json:"mode"`
+	Engine      string        `json:"engine"`
+	Workspace   string        `json:"workspace"`
+	Hits        []documentHit `json:"hits"`
+	Warnings    []string      `json:"warnings"`
+	Files       int           `json:"files"`
+	Chunks      int           `json:"chunks"`
+	Truncated   bool          `json:"truncated"`
 }
 
 var documentGate = make(chan struct{}, 2)
@@ -309,44 +311,58 @@ func (a *App) retrieveDocuments(ctx context.Context, g knowledgeGraph, in docume
 	identity, _ := json.Marshal([]any{g.Workspace, binding, candidates})
 	catalogue := hash(identity)
 	start := 0
+	hitOffset := 0
+	chunkOffset := 0
+	cursorVersion := 2
 	if in.Cursor != "" {
 		if len(in.Cursor) > 512 {
 			return result, fmt.Errorf("检索续查位置无效")
 		}
 		raw, err := base64.RawURLEncoding.DecodeString(in.Cursor)
 		var cursor struct {
-			Position  int
-			Catalogue string
+			Version     int
+			Position    int
+			HitOffset   int
+			ChunkOffset int
+			Catalogue   string
 		}
-		if err != nil || json.Unmarshal(raw, &cursor) != nil || cursor.Catalogue != catalogue || cursor.Position < 0 || cursor.Position >= len(candidates) {
+		if err != nil || json.Unmarshal(raw, &cursor) != nil || cursor.Version != 0 && cursor.Version != 2 || cursor.Catalogue != catalogue || cursor.Position < 0 || cursor.Position >= len(candidates) || cursor.HitOffset < 0 || cursor.Version == 0 && cursor.HitOffset > 2500 || cursor.Version == 2 && cursor.HitOffset > 50_000_000 || cursor.ChunkOffset < 0 || cursor.ChunkOffset > 2500 {
 			return result, fmt.Errorf("检索范围已变化，请重新搜索")
 		}
 		start = cursor.Position
+		hitOffset = cursor.HitOffset
+		chunkOffset = cursor.ChunkOffset
+		cursorVersion = cursor.Version
 	}
-	result.Total, result.Scanned = len(candidates), start
+	streamOriginal := in.Mode == "original" && (in.Cursor == "" || cursorVersion >= 2)
+	result.Total, result.Scanned, result.MatchOffset, result.ChunkOffset = len(candidates), start, hitOffset, chunkOffset
 	chunks := []documentHit{}
+	processedChunks := 0
 	bytesRead := 0
 	attempted := 0
-	for _, n := range candidates[start:] {
+	continuationPosition, continuationChunkOffset := -1, 0
+	for relativePosition, n := range candidates[start:] {
+		position := start + relativePosition
 		if err := ctx.Err(); err != nil {
 			return result, err
 		}
-		if attempted >= 32 || bytesRead >= 64<<20 || len(chunks) >= 2500 {
+		if attempted >= 32 || bytesRead >= 64<<20 || streamOriginal && processedChunks >= 2500 || !streamOriginal && len(chunks) >= 2500 {
+			continuationPosition = position
 			result.Truncated = true
 			break
 		}
 		attempted++
-		result.Scanned++
 		b, err := a.documentRawContext(ctx, n, g.Workspace)
 		if err != nil {
 			if ctx.Err() != nil {
 				return result, ctx.Err()
 			}
 			result.Warnings = append(result.Warnings, documentProvenance(n)+": "+err.Error())
+			result.Scanned = position + 1
 			continue
 		}
 		if bytesRead+len(b) > 64<<20 {
-			result.Scanned--
+			continuationPosition = position
 			result.Truncated = true
 			break
 		}
@@ -362,6 +378,7 @@ func (a *App) retrieveDocuments(ctx context.Context, g knowledgeGraph, in docume
 				return result, ctx.Err()
 			}
 			result.Warnings = append(result.Warnings, documentProvenance(n)+": "+err.Error())
+			result.Scanned = position + 1
 			continue
 		}
 		if doc.Truncated {
@@ -371,53 +388,110 @@ func (a *App) retrieveDocuments(ctx context.Context, g knowledgeGraph, in docume
 		if len(doc.Blocks) == 0 {
 			result.Warnings = append(result.Warnings, documentProvenance(n)+": 未提取到正文；无OCR结果")
 		}
+		candidateChunkOffset := 0
+		partialCandidate := false
+		resumeOffset := 0
+		if position == start {
+			resumeOffset = chunkOffset
+		}
 		for _, block := range doc.Blocks {
 			runes := []rune(block.Text)
 			for off := 0; off < len(runes); off += 800 {
-				if len(chunks) >= 2500 {
+				end := min(off+1000, len(runes))
+				text := string(runes[off:end])
+				if strings.TrimSpace(text) == "" {
+					if end == len(runes) {
+						break
+					}
+					continue
+				}
+				if candidateChunkOffset < resumeOffset {
+					candidateChunkOffset++
+					if end == len(runes) {
+						break
+					}
+					continue
+				}
+				if streamOriginal && processedChunks >= 2500 || !streamOriginal && len(chunks) >= 2500 {
+					continuationPosition, continuationChunkOffset = position, candidateChunkOffset
+					partialCandidate = true
 					result.Truncated = true
 					break
 				}
-				end := min(off+1000, len(runes))
-				text := string(runes[off:end])
-				if strings.TrimSpace(text) != "" {
-					chunks = append(chunks, documentHit{ID: n.ID + "-" + hash([]byte(h + block.Locator + fmt.Sprint(off)))[:10], File: n, Locator: block.Locator, Text: text, Hash: h, Offset: off})
+				hit := documentHit{ID: n.ID + "-" + hash([]byte(h + block.Locator + fmt.Sprint(off)))[:10], File: n, Locator: block.Locator, Text: text, Hash: h, Offset: off}
+				if streamOriginal {
+					if strings.Contains(text, in.Query) {
+						if len(result.Hits) >= 40 {
+							processedChunks++
+							continuationPosition, continuationChunkOffset = position, candidateChunkOffset
+							partialCandidate = true
+							result.Truncated = true
+							break
+						}
+						hit.Score = 1
+						result.Hits = append(result.Hits, hit)
+					}
+				} else {
+					chunks = append(chunks, hit)
 				}
+				candidateChunkOffset++
+				processedChunks++
 				if end == len(runes) {
 					break
 				}
 			}
-			if len(chunks) >= 2500 {
+			if partialCandidate {
 				break
 			}
 		}
-	}
-	if result.Scanned < result.Total {
-		raw, _ := json.Marshal(struct {
-			Position  int
-			Catalogue string
-		}{result.Scanned, catalogue})
-		result.NextCursor = base64.RawURLEncoding.EncodeToString(raw)
-		result.Truncated = true
+		if partialCandidate {
+			break
+		}
+		if position == start && candidateChunkOffset < resumeOffset {
+			return result, fmt.Errorf("检索范围已变化，请重新搜索")
+		}
+		result.Scanned = position + 1
 	}
 	if len(result.Warnings) > 50 {
 		omitted := len(result.Warnings) - 50
 		result.Warnings = result.Warnings[:50]
 		result.Warnings = append(result.Warnings, fmt.Sprintf("另有%d条提取诊断未展开", omitted))
 	}
-	result.Chunks = len(chunks)
-	if in.Mode == "original" {
+	if streamOriginal {
+		result.Chunks = processedChunks
+		if continuationPosition >= 0 {
+			result.NextCursor = encodeDocumentCursor(continuationPosition, continuationChunkOffset, hitOffset+len(result.Hits), catalogue)
+			result.Truncated = true
+		} else if result.Scanned < result.Total {
+			result.NextCursor = encodeDocumentCursor(result.Scanned, 0, hitOffset+len(result.Hits), catalogue)
+			result.Truncated = true
+		}
+	} else if in.Mode == "original" {
+		result.Chunks = len(chunks)
+		matches := make([]documentHit, 0)
 		for _, c := range chunks {
 			if strings.Contains(c.Text, in.Query) {
 				c.Score = 1
-				result.Hits = append(result.Hits, c)
-				if len(result.Hits) >= 40 {
-					result.Truncated = true
-					break
-				}
+				matches = append(matches, c)
 			}
 		}
+		if hitOffset > len(matches) {
+			return result, fmt.Errorf("检索范围已变化，请重新搜索")
+		}
+		end := min(hitOffset+40, len(matches))
+		result.Hits = matches[hitOffset:end]
+		if end < len(matches) {
+			result.NextCursor = encodeLegacyDocumentCursor(start, chunkOffset, end, catalogue)
+			result.Truncated = true
+		} else if continuationPosition >= 0 {
+			result.NextCursor = encodeLegacyDocumentCursor(continuationPosition, continuationChunkOffset, 0, catalogue)
+			result.Truncated = true
+		} else if result.Scanned < result.Total {
+			result.NextCursor = encodeLegacyDocumentCursor(result.Scanned, 0, 0, catalogue)
+			result.Truncated = true
+		}
 	} else {
+		result.Chunks = len(chunks)
 		var warning string
 		var err error
 		result.Hits, result.Engine, warning, err = a.hybridDocumentHits(ctx, g.Workspace, in.Query, chunks)
@@ -427,10 +501,39 @@ func (a *App) retrieveDocuments(ctx context.Context, g knowledgeGraph, in docume
 		if warning != "" {
 			result.Warnings = append(result.Warnings, warning)
 		}
+		if continuationPosition >= 0 {
+			result.NextCursor = encodeDocumentCursor(continuationPosition, continuationChunkOffset, 0, catalogue)
+			result.Truncated = true
+		} else if result.Scanned < result.Total {
+			result.NextCursor = encodeDocumentCursor(result.Scanned, 0, 0, catalogue)
+			result.Truncated = true
+		}
 	}
 	result.Warnings = append(result.Warnings, "原文指提取文本，格式换行可能与视觉排版不同；未包含OCR、批注、页眉页脚或完整覆盖保证。检索引擎与降级状态以 engine 和诊断为准。")
 	return result, nil
 }
+
+func encodeDocumentCursor(position, chunkOffset, hitOffset int, catalogue string) string {
+	raw, _ := json.Marshal(struct {
+		Version     int
+		Position    int
+		HitOffset   int
+		ChunkOffset int
+		Catalogue   string
+	}{2, position, hitOffset, chunkOffset, catalogue})
+	return base64.RawURLEncoding.EncodeToString(raw)
+}
+
+func encodeLegacyDocumentCursor(position, chunkOffset, hitOffset int, catalogue string) string {
+	raw, _ := json.Marshal(struct {
+		Position    int
+		HitOffset   int
+		ChunkOffset int
+		Catalogue   string
+	}{position, hitOffset, chunkOffset, catalogue})
+	return base64.RawURLEncoding.EncodeToString(raw)
+}
+
 func (a *App) knowledgeDocumentSearch(w http.ResponseWriter, r *http.Request) {
 	var in documentRequest
 	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 8192)).Decode(&in); err != nil {

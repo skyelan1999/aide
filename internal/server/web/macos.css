@@ -794,6 +794,7 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
 .outcome-io-tool h5{margin:8px 0;font-size:10px;color:var(--muted)}
 .outcome-io-evidence-link{margin-top:8px}
 .outcome-io-resource{overflow-wrap:anywhere}
+.outcome-journal{margin:10px 0;padding:0 14px;border:1px solid var(--line-soft);border-radius:12px;background:var(--surface-alt,var(--bg))}.outcome-journal>summary{cursor:pointer;padding:13px 0;color:var(--muted);font-size:12px;font-weight:600}.outcome-journal-event{padding:10px 0;border-top:1px solid var(--line-soft)}.outcome-journal-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:11px}.outcome-journal-head time{font-variant-numeric:tabular-nums;color:var(--muted)}.outcome-journal-kind{font-weight:600}.outcome-journal-event p{margin:6px 0;font-size:11px;overflow-wrap:anywhere}.outcome-journal-event .outcome-digest{margin-top:6px}
 .traj-header-controls:has(#traj-fmt-seg.hidden) .traj-ctrl-divider{display:none}
 @media(max-width:760px){#trajectory-sheet .sheet-head{align-items:flex-start;flex-wrap:wrap;gap:12px}#trajectory-sheet .traj-header-controls{flex-wrap:wrap;width:100%;gap:6px}.traj-main-seg{flex-shrink:0}#trajectory-sheet-close{margin-left:auto}.traj-outcome-picker{gap:10px}.traj-outcome-content .outcome-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 

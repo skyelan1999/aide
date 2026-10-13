@@ -99,5 +99,120 @@
     }
   },
   "rollback": "revert the isolated starmap physics engine commit",
-  "handoff": ""
+  "handoff": "",
+  "followup_20261014_shadow_scale": {
+    "status": "implemented_browser_pending",
+    "summary": "修复黑洞视觉半径与透镜质量尺度脱节：从图谱黑洞标记的屏幕半径反推归一化 Schwarzschild 质量代理，并与关联密度质量下限取较大值；暗影、临界光子轨道、盘与薄透镜共用同一质量。公式仍是屏幕场景代理，不反演真实质量。",
+    "evidence": [
+      "internal/server/web/starmap-physics.js · 新增临界冲击参数反算归一化质量函数",
+      "internal/server/web/starmap.js · cosmicLensMassLength 将图谱密度与标记半径统一到可读屏幕尺度",
+      "scripts/starmap-lensing.test.cjs · 三种屏幕尺度下由临界暗影半径反算质量并正向投影，结果往返误差小于 1e-12；非法观察距离返回零",
+      "node scripts/starmap-lensing.test.cjs · PASS",
+      "node --check internal/server/web/starmap.js && node --check internal/server/web/starmap-physics.js && git diff --check · PASS",
+      "docs/architecture/knowledge-map.md",
+      "docs/en/user-guide.md"
+    ],
+    "not_verified": [
+      "18545 系统 Safari 当前停在证书警告页；用户授权长期协助，但浏览器安全边界要求用户本人处理警告后才能验收近景",
+      "18545 候选当前容器健康状态无法复核：本轮 Docker API socket 返回 permission denied",
+      "已鉴权候选中存在可绘制黑洞的 Safari 近景实画面；此前 18540 工作区星域无黑洞候选",
+      "多黑洞重叠与真实天文数据校准"
+    ]
+  },
+  "followup_20261014_shadow_scale_recheck": {
+    "status": "source_regression_pass_safari_handoff_required",
+    "summary": "重跑透镜、引力代理、星门与星域渲染专项回归均通过。系统 Safari 当前仍停留在新隔离候选18545的证书警告；根据浏览器安全策略，该警告必须由用户在页面上亲自处理，长期授权不能替代这一步。",
+    "evidence": [
+      "node scripts/starmap-lensing.test.cjs · PASS",
+      "node scripts/starmap-gravity.test.cjs · PASS",
+      "node scripts/starmap-gates.test.cjs · PASS",
+      "node scripts/starmap-workspace-scene.test.cjs · PASS",
+      "node --check internal/server/web/starmap.js && node --check internal/server/web/starmap-physics.js && node --check internal/server/web/starmap-optics.js && git diff --check · PASS",
+      "系统 Safari 2026-10-14 · https://localhost:18545/starmap.html · 仍显示 Safari 原生证书警告；未访问候选页面"
+    ],
+    "not_verified": [
+      "18545中黑洞吸积盘、透镜光学叠层、行星及星门的系统 Safari 视觉验收",
+      "真实天文数据标定与大图谱长期帧率"
+    ],
+    "release": "当前浏览器门禁未通过；本阶段不推送。"
+  },
+  "followup_20261014_directional_dust_scattering": {
+    "status": "source_regression_pass_safari_handoff_required",
+    "summary": "星云散射不再使用固定散射角。场景缓存按尘埃前方/背景深度筛选真实按代理光度选出的最多64个图谱团簇光源，按归一化场景距离平方反比累计入射通量，并依据光源→尘埃→观察方向计算通量加权 Henyey–Greenstein 散射角。没有背景照明的云团使用单独内部发射代理。此修改降低逐帧成本，但场景位置与光度仍是图谱归一化代理。",
+    "evidence": [
+      "internal/server/web/starmap-physics.js · 新增三维场景向量散射夹角函数，含非法向量和零长度保护",
+      "internal/server/web/starmap.js · 从最多64个主导团簇按深度预计算背景辐照及通量加权散射角；逐帧读取缓存结果",
+      "scripts/starmap-lensing.test.cjs · 前向/后向散射、重合向量和非法输入专项断言通过",
+      "node scripts/starmap-lensing.test.cjs && node scripts/starmap-gravity.test.cjs && node scripts/starmap-gates.test.cjs && node scripts/starmap-workspace-scene.test.cjs && node scripts/starmap-path.test.cjs && node scripts/starmap-timeline.test.cjs · PASS",
+      "node --check internal/server/web/starmap.js && node --check internal/server/web/starmap-physics.js · PASS",
+      "python3 scripts/check_docs.py · PASS，188 Markdown / 542 本地链接",
+      "git diff --check · PASS",
+      "docs/architecture/knowledge-map.md 与 docs/en/user-guide.md · 同步记录方向性散射、代理边界及缺少背景源时的内部发射代理"
+    ],
+    "not_verified": [
+      "系统 Safari 星云渲染视觉效果：当前 Safari 仍停在 https://localhost:18545/starmap.html 的原生证书警告页；该步骤必须由用户本人处理",
+      "Safari 中出现至少两个位于前后不同深度、且有明显能量差的真实图谱团簇，以验证可见前向/后向散射差异",
+      "长时间大星域帧率及真实天体数据标定"
+    ],
+    "release": "浏览器安全 interstitial 尚未由用户处理；不推送此尚未完成视觉验收的阶段。"
+  },
+  "followup_20261014_physics_review": {
+    "status": "physics_source_regressions_pass_safari_handoff_required",
+    "summary": "复核星图统一场景光学实现：恒星按有效连接数代理光度并遵守逆平方衰减；星云按场景前后关系汇总最多64个真实图谱光源、计算通量加权散射方向及 Beer–Lambert 吸收；行星使用 Kepler/vis-viva 与 Lambert 受光；黑洞吸积盘使用 Schwarzschild 稳定轨道、红移、Doppler 与薄盘温度剖面；背景星与连线由独立薄透镜 Canvas 光学层叠加。所有空间尺度均是归一化图谱代理，不冒充真实天文测量。",
+    "evidence": [
+      "node scripts/starmap-lensing.test.cjs · PASS：逆平方、方向散射、能量账目、行星相位、轨道、Schwarzschild 薄盘、薄透镜及暗影尺度反算",
+      "node scripts/starmap-gravity.test.cjs · PASS",
+      "node scripts/starmap-gates.test.cjs · PASS",
+      "node scripts/starmap-workspace-scene.test.cjs · PASS",
+      "node scripts/starmap-path.test.cjs · PASS",
+      "node scripts/starmap-timeline.test.cjs · PASS",
+      "node --check internal/server/web/starmap.js && node --check internal/server/web/starmap-physics.js && node --check internal/server/web/starmap-optics.js · PASS",
+      "git diff --check · PASS",
+      "系统 Safari 2026-10-14 · https://localhost:18545/starmap.html · 当前显示原生证书告警页；未绕过告警或观察候选渲染。"
+    ],
+    "not_verified": [
+      "18545 的黑洞近景、星云散射、行星受光、星门方向及实际画面融合效果仍待系统 Safari 查看。用户已确认处理此前18544证书；当前18545是新的证书告警，仍须用户本人处理。",
+      "真实恒星/黑洞质量、距离、温度及轨道参数标定",
+      "长时间大图谱帧率及多黑洞重叠光线追踪"
+    ],
+    "release": "源码专项回归通过；系统 Safari 当前候选尚不可见，本阶段不宣称视觉验收或推送。"
+  },
+  "followup_20261014_circular_shadow_optics": {
+    "status": "source_regression_pass_safari_handoff_required",
+    "summary": "修正黑洞近景的投影：倾角只压扁吸积盘，Schwarzschild 阴影和连续径向光子环光晕保持圆形；移除两段任意方位的破碎亮弧。背景星点与连线的薄透镜仍在独立光学层计算和叠加。",
+    "evidence": [
+      "internal/server/web/starmap.js · drawBlackHole 先以倾角绘制吸积盘，再切换到圆形屏幕空间绘制阴影和径向光晕",
+      "scripts/starmap-lensing.test.cjs · 验证吸积盘投影与圆形阴影分层，并禁止旧的任意断弧高光",
+      "node scripts/starmap-lensing.test.cjs · PASS",
+      "node scripts/starmap-gravity.test.cjs · PASS",
+      "node scripts/starmap-gates.test.cjs · PASS",
+      "node scripts/starmap-workspace-scene.test.cjs · PASS",
+      "node --check internal/server/web/starmap.js && git diff --check · PASS",
+      "docs/architecture/knowledge-map.md 与 docs/en/user-guide.md 已记录画面模型及归一化代理边界"
+    ],
+    "not_verified": [
+      "系统 Safari 尚未打开本候选画面；浏览器停在新的 localhost 证书拦截页，按浏览器确认策略需用户在页面上处理该拦截后才能继续",
+      "大星域持续渲染帧率、多个黑洞重叠和真实观测数据标定"
+    ],
+    "release": "源码与专项回归通过；Safari 视觉验收未完成，不推送此阶段。"
+  },
+  "followup_20261014_safari_actual_9999": {
+    "status": "system_safari_map_verified_black_hole_closeup_pending",
+    "date": "2026-10-14",
+    "summary": "在用户实际运行的 localhost:9999 系统 Safari 打开星图，确认 2152 个节点 / 3567 条关系的当前图谱可见，星云背景、关系线和明亮节点正常呈现；归位和滚轮缩放均有响应。现有真实图谱未显示可辨识黑洞近景，因此不把吸积盘、透镜重叠或行星特写记为通过。",
+    "evidence": [
+      "系统 Safari 2026-10-14 · https://localhost:9999/starmap.html · 页面加载成功；AX 状态显示知识宇宙、2152 个节点 / 3567 条连接，来源筛选和红外/动效/归位控件可用。",
+      "系统 Safari 截图 · 深色星云背景、空间分布星点、明亮关系团簇与连接线实际可见；滚轮缩放后场景位置/尺度发生变化；点击归位返回全景。",
+      "node scripts/starmap-lensing.test.cjs && node scripts/starmap-gravity.test.cjs && node scripts/starmap-gates.test.cjs && node scripts/starmap-workspace-scene.test.cjs && node scripts/starmap-path.test.cjs && node scripts/starmap-timeline.test.cjs · PASS",
+      "node --check internal/server/web/starmap.js && node --check internal/server/web/starmap-physics.js && git diff --check · PASS",
+      "python3 scripts/agent-route.py verify quick · PASS，44 项；fingerprint 8b8fb2de6162464db2b09092bdfe150be9a31d9a77c7cba47aa3bb07bcc4eaeb；receipt .agent-state/verify-20261013T201439904265Z.log",
+      "python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接 / JPEG signatures / FR-01..100"
+    ],
+    "not_verified": [
+      "实际图谱中没有可识别的黑洞节点/特写；吸积盘、阴影轮廓、透镜背景像叠加仍未作 Safari 视觉验收。",
+      "真实天文数据标定与大星域长时间动画帧率。",
+      "Go 未安装在宿主；Docker API socket permission denied，本轮无法从宿主启动服务端 Go/race/vet 全包回归。"
+    ],
+    "release": "系统 Safari 的星图主视图已检查，专项脚本、quick 门禁和文档检查通过；黑洞近景及 Go 全包回归保持未验收。本批代码和状态文档按用户的分阶段推送要求提交。"
+  }
 }

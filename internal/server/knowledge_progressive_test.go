@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 )
 
 func progressiveFileCount(g knowledgeGraph) int {
@@ -87,6 +89,72 @@ func TestKnowledgeProgressiveGraphAccumulatesAndRemoves(t *testing.T) {
 		t.Fatal("missing changed file")
 	}
 }
+
+func TestKnowledgeProgressiveCatalogAccumulatesBeyondOneLargeDirectory(t *testing.T) {
+	a := testApp(t)
+	// Give the workspace the full saved budget so this exercises a realistic
+	// multi-cycle catalogue rather than the direct one-shot snapshot path.
+	a.mu.Lock()
+	reference, sources := a.reference, a.sourceRegistry.Sources
+	a.reference, a.sourceRegistry.Sources = nil, nil
+	policyPath := a.knowledgeIndexPolicyPath()
+	a.mu.Unlock()
+	t.Cleanup(func() {
+		a.mu.Lock()
+		a.reference, a.sourceRegistry.Sources = reference, sources
+		a.mu.Unlock()
+	})
+	policy := defaultKnowledgeIndexPolicy()
+	policy.FileBudget = 4000
+	policy.DirectoryBudget = 500
+	if err := os.MkdirAll(filepath.Dir(policyPath), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := atomicJSON(policyPath, policy); err != nil {
+		t.Fatal(err)
+	}
+	const want = 3800
+	flat := filepath.Join(a.workPath, "flat")
+	if err := os.MkdirAll(flat, 0700); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < want; i++ {
+		name := filepath.Join(flat, fmt.Sprintf("f%04d.txt", i))
+		if err := os.WriteFile(name, []byte("text"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var previous *knowledgeScanCache
+	lastCount := 0
+	var graph knowledgeGraph
+	started := time.Now()
+	for cycle := 0; cycle < 10; cycle++ {
+		candidate := newKnowledgeScanCache(previous)
+		graph = a.knowledgeSnapshotModeCached(context.Background(), false, candidate)
+		if candidate.err != nil {
+			t.Fatal(candidate.err)
+		}
+		count := 0
+		for _, node := range graph.Nodes {
+			if node.Root == "workspace" && node.Kind == "file" && strings.HasPrefix(node.Path, "flat/") {
+				count++
+			}
+		}
+		if count < lastCount {
+			t.Fatalf("progressive view dropped files between cycles: %d -> %d", lastCount, count)
+		}
+		lastCount, previous = count, candidate
+		if count == want {
+			break
+		}
+	}
+	source := coverageSource(t, graph, "workspace")
+	if lastCount != want || source.State != "ready" || source.Coverage == nil || source.Coverage.Files < want || source.Coverage.Pending != 0 || len(source.Coverage.Reasons) != 0 {
+		t.Fatalf("large progressive catalogue did not reach complete coverage: files=%d state=%s coverage=%+v", lastCount, source.State, source.Coverage)
+	}
+	t.Logf("progressively indexed %d flat files in %s", lastCount, time.Since(started).Round(time.Millisecond))
+}
+
 func TestKnowledgeProgressiveCancelledCandidateDoesNotAdvance(t *testing.T) {
 	a := testApp(t)
 	previous := newKnowledgeScanCache(nil)

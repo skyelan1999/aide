@@ -380,6 +380,17 @@ function cosmicData(key){
   // it drives Beer–Lambert extinction as well as the nebula's scattered light.
   zone.opticalDepth=Math.min(.85,.08+Math.log1p(zone.count)*.11+zone.illumination*.16);
  }
+ // Precompute inter-region illumination once per cached scene. Only sources
+ // behind the dust contribute; the source-to-dust vector and camera direction
+ // set the Henyey–Greenstein scattering angle. Scene distances remain proxies.
+ const physics=window.AideCosmicPhysics,observerDirection={x:0,y:0,z:-1},backgroundSources=[...gas.values()].filter(source=>source.luminosity>0).sort((a,b)=>b.luminosity-a.luminosity||a.key.localeCompare(b.key)).slice(0,64);
+ for(const zone of gas.values()){let incident=0,angleMoment=0;
+  for(const source of backgroundSources){if(source===zone||source.z<=zone.z||!source.luminosity)continue;
+   const distance=Math.hypot(zone.x-source.x,zone.y-source.y,zone.z-source.z),flux=physics?.inverseSquareFlux(source.luminosity,distance)||0;
+   if(!flux)continue;incident+=flux;angleMoment+=flux*(physics?.scatteringCosine({x:source.x,y:source.y,z:source.z},{x:zone.x,y:zone.y,z:zone.z},observerDirection)||0);
+  }
+  zone.incidentRadiance=incident;zone.scatteringCosine=incident?angleMoment/incident:0;
+ }
  const gravity=window.AideStarGravity?.analyze(graph.nodes,graph.edges,records.map(record=>record.group));
  const recordByGroup=new Map(records.map(record=>[record.group.key,record]));
  const blackHoles=(gravity?.blackHoles||[]).map(hole=>({...hole,record:recordByGroup.get(hole.groupKey),phase:seeded(hole.groupKey+'black-hole-phase')})).filter(hole=>hole.record);
@@ -424,7 +435,7 @@ function cosmicPick(x,y){let nearest=null,score=Infinity;for(const r of cosmicRe
 function cosmicStarPick(x,y){let nearest=null,distance=11;for(const hit of cosmicLensHits){const d=Math.hypot(hit.x-x,hit.y-y);if(d<hit.radius&&d<distance){distance=d;nearest=hit.star;}}for(const star of cosmicLocalHits){const d=Math.hypot(star.p.x-x,star.p.y-y);if(d<distance){distance=d;nearest=star;}}for(const star of cosmicStars){if(!star.p.onScreen||cosmicLensedStarIDs.has(star.n.id))continue;const d=Math.hypot(star.p.x-x,star.p.y-y);if(d<distance){distance=d;nearest=star;}}return nearest;}
 function cosmicGatePick(x,y){let nearest=null,distance=13;for(const gate of cosmicGates){if(!gate.p?.onScreen)continue;const d=Math.hypot(gate.p.x-x,gate.p.y-y);if(d<distance){distance=d;nearest=gate;}}return nearest;}
 function drawBlackHole(hole,now,fade=1){
- const p=hole.record.p;if(!p.onScreen)return;const r=hole.radius;
+ const p=hole.record.p;if(!p.onScreen)return;
  // The image scale is graph-derived, but disk color and sector brightness use
  // Schwarzschild redshift, local orbital velocity and relativistic beaming.
  const physics=window.AideCosmicPhysics,view=physics?.diskView(pitch)||.28,tilt=physics?.diskPositionAngle(yaw)||0,shadowR=Math.max(.55,cosmicProjectedShadowRadius(hole)),rs=shadowR/(1.5*Math.sqrt(3));
@@ -438,10 +449,14 @@ function drawBlackHole(hole,now,fade=1){
    const opacity=(.035+(physics?.displayRadiance(emission.intensity,7.2)||0)*.86)*(1-Math.abs(Math.cos(a))*.16);ctx.globalAlpha=fade*opacity;ctx.strokeStyle=physics?.temperatureColor(emission.observedTemperature)||(los>0?'#cde8ff':'#e38b61');ctx.lineWidth=Math.max(.5,thickness);ctx.beginPath();ctx.arc(0,0,pixelRadius,a-.035,a+.035);ctx.stroke();
   }
  }
- // Photon sphere and event-horizon shadow are distinct scales. The broken rim
- // is an optical cue; background stars and relationships receive the lens pass below.
- ctx.globalCompositeOperation='source-over';ctx.globalAlpha=fade*.98;ctx.fillStyle='#020305';ctx.beginPath();ctx.arc(0,0,shadowR,0,tau);ctx.fill();
- ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*.28;ctx.strokeStyle='#d9e9fa';ctx.lineWidth=Math.max(.45,r*.012);ctx.beginPath();ctx.arc(0,0,shadowR,-2.72,-.63);ctx.stroke();ctx.globalAlpha=fade*.2;ctx.strokeStyle='#f4b87f';ctx.beginPath();ctx.arc(0,0,shadowR,.18,1.05);ctx.stroke();
+ // The disk is flattened by inclination; a Schwarzschild shadow is not.
+ // Draw the optical shadow/ring in a fresh circular screen-space transform.
+ ctx.restore();ctx.save();ctx.translate(p.x,p.y);ctx.rotate(tilt);
+ ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*.42;
+ const photonGlow=ctx.createRadialGradient(0,0,Math.max(.1,shadowR*.94),0,0,shadowR*1.16);
+ photonGlow.addColorStop(0,'#00000000');photonGlow.addColorStop(.46,mapPalette.light?'#c9e4ff35':'#eaf4ff4a');photonGlow.addColorStop(.72,mapPalette.light?'#f4c98e80':'#ffd7a980');photonGlow.addColorStop(1,'#ffffff00');
+ ctx.fillStyle=photonGlow;ctx.beginPath();ctx.arc(0,0,shadowR*1.16,0,tau);ctx.fill();
+ ctx.globalCompositeOperation='source-over';ctx.globalAlpha=fade*.995;ctx.fillStyle='#010205';ctx.beginPath();ctx.arc(0,0,shadowR,0,tau);ctx.fill();
  ctx.restore();ctx.globalCompositeOperation='source-over';
 }
 function drawBlackHoleLensOverlay(hole,stars,edges,fade=1){
@@ -508,7 +523,17 @@ function drawCosmicPlanet(node,x,y,r,hostPower,orbitDistance,lightX,lightY,fade=
  const air=Math.max(6,r*2.4),aura=ctx.createRadialGradient(x,y,r*.72,x,y,air);aura.addColorStop(0,color+'00');aura.addColorStop(.72,color+(illumination.equilibriumProxy>.7?'25':'13'));aura.addColorStop(1,color+'00');ctx.globalCompositeOperation='screen';ctx.globalAlpha=fade*Math.min(.3,.08+Math.sqrt(Math.max(0,illumination.incidentFlux))*.08);ctx.fillStyle=aura;ctx.beginPath();ctx.arc(x,y,air,0,tau);ctx.fill();ctx.globalCompositeOperation='source-over';ctx.globalAlpha=fade*(.16+display*.2);ctx.strokeStyle=color;ctx.lineWidth=Math.max(.35,r*.075);ctx.beginPath();ctx.arc(x,y,r*.94,-Math.PI*.78,Math.PI*.78);ctx.stroke();ctx.restore();
 }
 function cosmicLensDistance(point,a,b){const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy,t=den?clamp(((point.x-a.x)*dx+(point.y-a.y)*dy)/den,0,1):0;return Math.hypot(a.x+dx*t-point.x,a.y+dy*t-point.y);}
-function cosmicLensMassLength(hole){return Math.log1p(Math.max(0,hole?.massDensity||0))*.0008;}
+function cosmicLensMassLength(hole){
+ const physics=window.AideCosmicPhysics,dl=hole?.record?.z,pixels=Math.min(width,height)*zoom;
+ const graphMass=Math.log1p(Math.max(0,hole?.massDensity||0))*.0008;
+ if(!physics||!Number.isFinite(dl)||dl<=0)return graphMass;
+ // The catalogue has graph density, not solar masses or measured distances.
+ // Calibrate that proxy to the already-visible density-scaled black-hole mark
+ // so its Schwarzschild shadow, photon ring, disk and lens share one scale.
+ const visibleShadowRadius=clamp((hole.radius||0)*.22,1.6,7.5);
+ const renderMass=physics.massLengthForProjectedShadowRadius(visibleShadowRadius,dl,pixels);
+ return Math.max(graphMass,renderMass);
+}
 function cosmicProjectedShadowRadius(hole){
  const physics=window.AideCosmicPhysics,dl=hole.record?.z;if(!physics||!Number.isFinite(dl)||dl<=0)return 0;
  return physics.projectedBlackHoleShadowRadius(cosmicLensMassLength(hole),dl,Math.min(width,height)*zoom);
@@ -582,7 +607,7 @@ function drawCosmos(now,t){
  // behind their screen. The dust texture is a visualization of this transfer,
  // not a NASA survey image or an independently luminous decorative layer.
  for(const zone of data?.gas||[]){const x=cx+(zone.x+cosmicAimX+yaw*.22+drift)*width*zoom/zone.z,y=cy+(zone.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/zone.z,size=Math.max(90,zone.spread*width*3.1*zoom/zone.z);if(x+size/2<0||x-size/2>width||y-size*.4<0||y-size*.4>height)continue;
-  const physics=window.AideCosmicPhysics,lightDistance=Math.max(.4,Math.hypot(zone.x+cosmicAimX,zone.y+cosmicAimY)*2+1),incident=physics?.inverseSquareFlux(zone.luminosity||zone.illumination,lightDistance)||.02,transfer=physics?.dustTransfer(incident,zone.opticalDepth,.58,.35,.68),scattered=transfer?transfer.scatteredRadiance*transfer.phase*4*Math.PI:incident*.12,visible=physics?.displayRadiance(scattered,3.8)||0;
+  const physics=window.AideCosmicPhysics,incident=zone.incidentRadiance||0,transfer=physics?.dustTransfer(incident,zone.opticalDepth,.58,zone.scatteringCosine||0,.68),scattered=transfer?transfer.scatteredRadiance*transfer.phase*4*Math.PI:0,intrinsicEmission=Math.max(0,zone.luminosity||0)*.025+Math.max(0,zone.illumination||0)*.12,visible=physics?.displayRadiance(scattered+intrinsicEmission,3.8)||0;
   ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=fade*Math.min(.28,.025+visible*.22);ctx.translate(x,y);ctx.rotate(-.32);ctx.drawImage(zone.texture,-size/2,-size*.36,size,size*.72);ctx.restore();}
  for(const r of cosmicRecords){const p=r.p;p.x=cx+(r.x+cosmicAimX+yaw*.22+drift)*width*zoom/r.z;p.y=cy+(r.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/r.z;p.onScreen=p.x>-100&&p.x<width+100&&p.y>-100&&p.y<height+100;r.radius=r.group.nodeID?10:Math.max(25,r.spread*width*zoom/r.z*.65);if(r.texture&&p.onScreen){const size=Math.max(110,r.spread*width*3.6*zoom/r.z);ctx.save();ctx.globalAlpha=fade*.13;ctx.translate(p.x,p.y);ctx.rotate(-.32+r.phase*.13);ctx.drawImage(r.texture,-size/2,-size/2,size,size);ctx.restore();}}
  for(const star of cosmicStars){const p=star.p;p.x=cx+(star.x+cosmicAimX+yaw*.22+drift)*width*zoom/star.z;p.y=cy+(star.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/star.z;p.onScreen=p.x>-30&&p.x<width+30&&p.y>-30&&p.y<height+30;if(star.owner.group.nodeID){star.owner.p.x=p.x;star.owner.p.y=p.y;star.owner.p.onScreen=p.onScreen;}}
@@ -997,7 +1022,7 @@ async function searchDocuments(continuing=false){
   documentBatch={key,cursor:d.nextCursor||'',hits:hits.filter(h=>!seen.has(h.id)&&seen.add(h.id))};
   renderDocumentResults({hits:documentBatch.hits});
   $('document-progress').hidden=false;
-  $('document-coverage').textContent=`已检查 ${d.scanned} / ${d.total} 份已索引文档${d.nextCursor?' · 可继续检索':' · 当前范围检查完毕'}`;
+  $('document-coverage').textContent=globalThis.aideI18n?.t('已检查 {0} / {1} 份已索引文档{2}{3}',d.scanned,d.total,d.matchOffset?globalThis.aideI18n.t(' · 已返回 {0} 条命中',d.matchOffset):'',d.nextCursor?globalThis.aideI18n.t(' · 可继续检索'):globalThis.aideI18n.t(' · 当前范围检查完毕'))||`已检查 ${d.scanned} / ${d.total} 份已索引文档${d.matchOffset?` · 已返回 ${d.matchOffset} 条命中`:''}${d.nextCursor?' · 可继续检索':' · 当前范围检查完毕'}`;
   $('document-next').hidden=!d.nextCursor;
   $('warnings').textContent=[...d.warnings,...(d.truncated?['索引／提取／结果达到限制，不能据此声称全文无匹配。']:[])].join('\n');
   say(`${d.files} 份文档 · ${d.chunks} 个片段 · 累计 ${documentBatch.hits.length} 条结果 · ${mode==='original'?'逐字原文':d.engine?.startsWith('weighted-rrf')?'关键词 + 向量 RAG':'本地关键词 RAG'}`);

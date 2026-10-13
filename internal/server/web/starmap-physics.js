@@ -61,6 +61,18 @@ window.AideCosmicPhysics = Object.freeze({
   const denominator = Math.max(1e-9, 1 + g * g - 2 * g * cosine);
   return (1 - g * g) / (4 * Math.PI * Math.pow(denominator, 1.5));
  },
+ scatteringCosine(source, scatterer, observerDirection = { x: 0, y: 0, z: -1 }) {
+  // Vectors are normalized graph-scene coordinates. The incoming direction
+  // points from the source to the scatterer; the outgoing one points toward
+  // the observer. This exposes the forward/back-scattering geometry without
+  // implying that the indexed graph contains measured 3D astronomy.
+  const finiteVector = value => value && ['x', 'y', 'z'].every(axis => Number.isFinite(value[axis]));
+  if (!finiteVector(source) || !finiteVector(scatterer) || !finiteVector(observerDirection)) return 0;
+  const incoming = { x: scatterer.x - source.x, y: scatterer.y - source.y, z: scatterer.z - source.z };
+  const incomingLength = Math.hypot(incoming.x, incoming.y, incoming.z), observerLength = Math.hypot(observerDirection.x, observerDirection.y, observerDirection.z);
+  if (incomingLength < 1e-9 || observerLength < 1e-9) return 0;
+  return Math.max(-1, Math.min(1, (incoming.x * observerDirection.x + incoming.y * observerDirection.y + incoming.z * observerDirection.z) / (incomingLength * observerLength)));
+ },
  dustTransfer(incidentRadiance, opticalDepth, singleScatteringAlbedo = .55, cosScatteringAngle = 0, anisotropy = .65) {
   // Single-scattering radiative transfer through a homogeneous screen.
   // The graph supplies dimensionless radiance and optical-depth proxies.
@@ -101,6 +113,15 @@ window.AideCosmicPhysics = Object.freeze({
   if (!dl || !pixels) return 0;
   // Critical impact parameter for a Schwarzschild photon orbit: 3√3 M.
   return 1.5 * Math.sqrt(3) * this.schwarzschildRadius(massLength) / dl * pixels;
+ },
+ massLengthForProjectedShadowRadius(projectedRadius, observerLensDistance, scenePixelsPerRadian) {
+  const radius = Number.isFinite(projectedRadius) ? Math.max(0, projectedRadius) : 0;
+  const dl = Number.isFinite(observerLensDistance) ? Math.max(0, observerLensDistance) : 0;
+  const pixels = Number.isFinite(scenePixelsPerRadian) ? Math.max(0, scenePixelsPerRadian) : 0;
+  if (!dl || !pixels) return 0;
+  // Invert the Schwarzschild critical impact parameter b = 3√3 GM/c².
+  // The returned mass is a normalized visualization proxy, not a measurement.
+  return radius * dl / (3 * Math.sqrt(3) * pixels);
  },
  lambertPhase(phaseAngle) {
   const phase = Math.max(0, Math.min(Math.PI, Number.isFinite(phaseAngle) ? phaseAngle : Math.PI / 2));

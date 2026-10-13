@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"mime/multipart"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -67,6 +68,7 @@ func TestPluginBundleInstallsAndRunsPythonTool(t *testing.T) {
 
 func TestPluginBundleRejectsTraversalWithoutPartialInstall(t *testing.T) {
 	a := testApp(t)
+	registeredBefore := append([]PluginManifest(nil), a.pluginRegistry.Plugins...)
 	manifest, _ := json.Marshal(PluginManifest{ID: "bad-bundle", Name: "Bad bundle", Main: "index.js"})
 	w := pluginBundleRequest(t, a, map[string]string{
 		"pkg/manifest.json": string(manifest),
@@ -74,7 +76,8 @@ func TestPluginBundleRejectsTraversalWithoutPartialInstall(t *testing.T) {
 		"pkg/../escape.py":  "print('no')",
 	})
 	requireStatus(t, w, 400)
-	if len(a.pluginRegistry.Plugins) != 0 {
+	registeredAfter := append([]PluginManifest(nil), a.pluginRegistry.Plugins...)
+	if !reflect.DeepEqual(registeredAfter, registeredBefore) {
 		t.Fatalf("rejected bundle was registered: %+v", a.pluginRegistry.Plugins)
 	}
 	if strings.Contains(w.Body.String(), "escape.py") {

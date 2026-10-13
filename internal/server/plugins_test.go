@@ -113,7 +113,14 @@ module.exports = { name: 'broken', apply() { throw new Error('boom'); } };
 		} `json:"plugins"`
 	}
 	_ = json.Unmarshal(w.Body.Bytes(), &surface)
-	if len(surface.Plugins) != 2 {
-		t.Fatalf("want 2 surface entries, got %d", len(surface.Plugins))
+	entries := make(map[string]string, len(surface.Plugins))
+	for _, plugin := range surface.Plugins {
+		entries[plugin.ID] = plugin.Error
+	}
+	if entries["broken"] == "" {
+		t.Fatalf("broken plugin error missing from surface: %+v", surface.Plugins)
+	}
+	if _, ok := entries["ok"]; !ok || entries["ok"] != "" {
+		t.Fatalf("valid plugin was blocked by the failing plugin: %+v", surface.Plugins)
 	}
 }

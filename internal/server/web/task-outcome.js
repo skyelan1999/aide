@@ -92,6 +92,7 @@
    const valid=()=>gen===generation&&content.isConnected&&!blocked?.();
    const base='/sessions/'+encodeURIComponent(sessionId)+'/runs/'+encodeURIComponent(runId)+'/outcome';
   let data,files=[],executions=[],writeTargets=[],stale=false,hasLoadedMore=false,polling=false;
+  let journalEvents=[],journalNext=0,journalHasMore=false,journalWarning='',journalLoaded=false,journalLoading=false,journalError='';
    async function reloadRecords(){
     try{const next=await api(base);if(!valid())return;data=next;files=next.files;executions=next.executions;writeTargets=next.writeTargets||[];stale=false;hasLoadedMore=false;render();syncPolling();}
     catch(e){if(valid())error?.(e.message);}
@@ -115,9 +116,26 @@
       if(hasLoadedMore){stale=true;render();syncPolling();return;}
       data=next;files=next.files||[];executions=next.executions||[];writeTargets=next.writeTargets||[];render();
      } else if(next.status!==data.status){data={...data,status:next.status};render();}
+     // A terminal outcome refresh may contain the final tool result too; drain
+     // the journal once before polling stops, even if this poll marks it done.
+     if(journalLoaded)await loadJournal(false);
      syncPolling();
     }catch{/* Keep the last readable snapshot and retry on the next interval. */}
     finally{polling=false;}
+   }
+   async function loadJournal(reset=true){
+    if(!valid()||journalLoading||!data?.journal?.url)return;
+    journalLoading=true;journalError='';
+    if(reset){journalEvents=[];journalNext=0;journalHasMore=false;journalWarning='';}
+    render();
+    try{
+     const path=base+'/journal?limit=100'+(reset?'':'&after='+encodeURIComponent(journalNext));
+     const page=await api(path);if(!valid())return;
+     const seen=new Set(journalEvents.map(event=>event.sequence));
+     journalEvents.push(...(page.events||[]).filter(event=>!seen.has(event.sequence)));
+     journalNext=Number(page.next)||journalNext;journalHasMore=!!page.hasMore;journalWarning=page.warning||'';journalLoaded=true;
+    }catch(e){if(valid())journalError=e.message||t('执行时间线读取失败');}
+    finally{journalLoading=false;if(valid())render();}
    }
    function render(){
     const scrollTop=content.scrollTop||0,opened=[...(content.querySelectorAll?.('details')||[])].map((item,index)=>item.open?index:-1).filter(index=>index>=0);
@@ -133,6 +151,30 @@
     const metrics=node('div','outcome-metrics');for(const [key,label]of [['files','文件提案'],['writeTargets','写入目标线索'],['applicationRecords','应用记录'],['executions','执行返回'],['verificationReports','验证报告'],['unknownOutcomes','未知结果']]){const cell=node('div');cell.append(node('strong','',data.summary[key]??0),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
     content.append(node('p','outcome-boundary',t('任务状态、模型计划与验证报告不是独立验收证明；展开证据查看原始返回。')));
     if(data.plan?.items?.length){const s=section('目标与计划');for(const item of data.plan.items)s.append(node('p','',item.step+' · '+item.status+(item.evidence?.length?' · '+item.evidence.map(i=>'E'+String(i).padStart(4,'0')).join(', '):'')));}
+    if(data.journal?.url){
+     const timeline=section('执行时间线');
+     const details=node('details','outcome-journal');details.open=journalLoaded;
+     const summary=node('summary','',t('持久化事件 · {0}',journalLoaded?journalEvents.length:(data.journal.sequence||0)));
+     details.append(summary);
+     details.ontoggle=()=>{if(details.open&&!journalLoaded)loadJournal(true);};
+     if(!journalLoaded)details.append(node('p','muted',t('按需读取独立执行日志；事件记录时间、阶段和摘要指纹，不包含工具正文。')));
+     if(journalLoading)details.append(node('p','muted',t('正在读取执行时间线…')));
+     if(journalError){const message=node('p','outcome-io-error',journalError);message.setAttribute('role','status');details.append(message);}
+     if(journalWarning){const warning=node('p','outcome-boundary',journalWarning);warning.setAttribute('role','status');details.append(warning);}
+     const labels={model_request:'模型请求已记录',model_retry:'模型重试已记录',model_continuation:'模型续接已记录',tool_dispatch:'工具已派发',tool_result:'工具返回已记录'};
+     for(const event of journalEvents){
+      const item=node('article','outcome-journal-event');
+      const heading=node('div','outcome-journal-head');heading.append(node('time','',event.at||''),node('span','outcome-journal-kind',t(labels[event.kind]||event.kind||'未知事件')),node('code','',String(event.sequence??'')));item.append(heading);
+      item.append(node('p','',t('阶段')+' · '+(event.step||'—')+(event.tool?' · '+event.tool:'')));
+      if(event.callId)item.append(node('p','muted',t('调用编号')+' · '+event.callId));
+      if(event.digest)item.append(node('code','outcome-digest',t('摘要指纹')+' · '+event.digest));
+      details.append(item);
+     }
+     if(journalLoaded&&!journalEvents.length&&!journalWarning)details.append(node('p','muted',t('尚无持久化执行事件')));
+     if(journalLoaded&&journalHasMore){const more=node('button','quiet',t('加载更多执行事件'));more.type='button';more.onclick=()=>loadJournal(false);more.disabled=journalLoading;details.append(more);}
+     if(journalError){const retry=node('button','quiet',t('重试读取'));retry.type='button';retry.onclick=()=>loadJournal(!journalEvents.length);details.append(retry);}
+     timeline.append(details);
+    }
     const fs=section('文件变更');if(!files.length)fs.append(node('p','muted',t('没有文件提案记录')));for(const f of files){const row=node('div','outcome-file');row.append(node('code','',f.path),node('span','muted',t(f.state==='proposed'?'提案未应用':'应用已有记录，当前文件未复核')),node('small','outcome-digest',(f.beforeHash||'—')+' → '+f.proposedHash),node('small','muted',f.proposedBytes+' bytes'));fs.append(row);}
     if(writeTargets.length){const hints=section('命令写入目标线索');hints.append(node('p','muted',data.writeTargetNote||t('命令目标线索不证明写入或当前文件内容')));for(const target of writeTargets){const row=node('div','outcome-file');row.append(node('code','',target.path),node('span','muted',target.execution+' · '+t('命令重定向目标，未回读验证')),node('small','outcome-digest',target.digest||'—'));const execution=executions.find(item=>item.id===target.execution);if(execution){const inspect=node('button','quiet',t('查看原始证据'));inspect.type='button';inspect.onclick=()=>evidence(execution);row.append(inspect);}hints.append(row);}}
     const es=section('执行与证据');if(!executions.length)es.append(node('p','muted',t('没有工具返回记录')));for(const record of executions){const row=node('details','outcome-execution'),summary=node('summary');summary.append(node('code','',record.id),node('span','',record.tool),node('small','muted',t(record.state==='no_result'?'没有返回记录':'已记录返回')));row.append(summary,node('pre','',record.preview||'—'));if(record.truncated)row.append(node('p','muted',t('预览已截断，可展开原始证据')));const b=node('button','quiet',t('查看原始证据'));b.onclick=()=>evidence(record);row.append(b,node('small','outcome-digest',record.digest));es.append(row);}

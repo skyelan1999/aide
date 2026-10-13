@@ -380,6 +380,10 @@
       ],
       [
         "node",
+        "scripts/session-render-cache.test.cjs"
+      ],
+      [
+        "node",
         "scripts/recovery-transfer.test.cjs"
       ]
     ],

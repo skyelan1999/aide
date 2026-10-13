@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   function bind({editor,button,manual,getContext,save,onSaved,readLatest,onConflict,blocked,t,error}) {
-    let activeKey='', generation=0, baseline=editor.value, timer=0, inFlight=null, suspended=false, composing=false,recoveryTimer=0,recoveryBanner=null,activeDialog=null,viewChanges=0;
+    let activeKey='', generation=0, baseline=editor.value, timer=0, inFlight=null, suspended=false, composing=false,recoveryTimer=0,recoveryBanner=null,activeDialog=null,viewChanges=0,emergencyDraftTimer=0,emergencyViewTimer=0,emergencyDraftFailure='',emergencyViewFailure='';
     const label=document.createElement('span'); label.textContent=t('自动保存');
     const rail=document.createElement('span');rail.className='file-autosave-rail';rail.setAttribute('aria-hidden','true');rail.append(document.createElement('i'));
     const status=document.createElement('span');status.className='file-autosave-status';status.setAttribute('role','status');status.setAttribute('aria-live','polite');
@@ -14,10 +14,24 @@
     const scope=c=>c?.recoveryScope||c?.wsId||'';
     const current=(gen,key)=>gen===generation&&key===activeKey&&key===identity(getContext());
     const writable=()=>identity(getContext())===activeKey && !!getContext()?.path && !editor.readOnly && !manual.disabled && !manual.classList.contains('hidden');
+    function cacheEmergencyDraft(){
+      const c={...getContext()},gen=generation,key=identity(c),valid=()=>current(gen,key)&&!blocked?.();
+      if(!valid()||!c.path||!writable()||!window.AideContinuity?.enabled()||!scope(c)||editor.value===baseline)return;
+      try{window.AideContinuity.cacheTab(scope(c),'file',key,{text:editor.value,hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft},{active:valid});emergencyDraftFailure='';}
+      catch(e){if(valid()){status.textContent=t('本地草稿保存失败');const message=String(e.message||e);if(message!==emergencyDraftFailure){emergencyDraftFailure=message;error?.(message);}}}
+    }
+    function cacheEmergencyView(){
+      const c={...getContext()},gen=generation,key=identity(c),valid=()=>current(gen,key)&&!blocked?.();
+      if(!valid()||!c.path||!window.AideContinuity?.enabled()||!scope(c))return;
+      try{window.AideContinuity.cacheTab(scope(c),'file-view',key,{hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft},{active:valid});emergencyViewFailure='';}
+      catch(e){if(valid()){status.textContent=t('本地恢复暂不可用');const message=String(e.message||e);if(message!==emergencyViewFailure){emergencyViewFailure=message;error?.(message);}}}
+    }
+    function scheduleEmergencyDraft(){clearTimeout(emergencyDraftTimer);emergencyDraftTimer=setTimeout(()=>{emergencyDraftTimer=0;cacheEmergencyDraft();},120);}
+    function scheduleEmergencyView(){clearTimeout(emergencyViewTimer);emergencyViewTimer=setTimeout(()=>{emergencyViewTimer=0;cacheEmergencyView();},120);}
     function paint() {button.setAttribute('aria-checked',String(enabled()));button.disabled=!writable() || getContext()?.autoEligible === false;button.classList.toggle('hidden',manual.classList.contains('hidden') || getContext()?.autoEligible === false);status.hidden=button.classList.contains('hidden');retry.hidden=button.classList.contains('hidden')||!retryMode||!writable();retry.classList.toggle('hidden',retry.hidden);}
     function setRetry(mode,context=null,draft=null){retryMode=mode;retryContext=context;retryDraft=draft;retry.textContent=t(mode==='latest'?'重试读取服务器版本':'重试保存');paint();}
     function storeRecovery(){
-      clearTimeout(recoveryTimer);const c={...getContext()},gen=generation,key=identity(c);
+      clearTimeout(recoveryTimer);clearTimeout(emergencyDraftTimer);clearTimeout(emergencyViewTimer);emergencyDraftTimer=emergencyViewTimer=0;const c={...getContext()},gen=generation,key=identity(c);
       if(identity(c)!==activeKey||!c.path||blocked?.()||!window.AideContinuity?.enabled()||!scope(c))return;
       const valid=()=>current(gen,key)&&!blocked?.();
       AideContinuity.writeTab(scope(c),'file-view',identity(c),{hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft},{active:valid}).catch(e=>{if(valid())error?.(e.message);});
@@ -112,11 +126,11 @@
       const pending=inFlight;
       try{await pending;}finally{if(inFlight===pending)inFlight=null;if(current(gen,key))schedule();}
     }
-    function activate(){activeDialog?.close();generation++;activeKey=identity(getContext());clearTimeout(timer);clearTimeout(recoveryTimer);recoveryBanner?.remove();recoveryBanner=null;baseline=editor.value;suspended=false;composing=false;status.textContent='';setRetry('');button.classList.remove('saving');paint();offerRecovery(generation);}
+    function activate(){activeDialog?.close();generation++;activeKey=identity(getContext());clearTimeout(timer);clearTimeout(recoveryTimer);clearTimeout(emergencyDraftTimer);clearTimeout(emergencyViewTimer);emergencyDraftTimer=emergencyViewTimer=0;recoveryBanner?.remove();recoveryBanner=null;baseline=editor.value;suspended=false;composing=false;emergencyDraftFailure=emergencyViewFailure='';status.textContent='';setRetry('');button.classList.remove('saving');paint();offerRecovery(generation);}
     button.onclick=()=>{window.aideUI?.set('editorAutoSave',!enabled());suspended=false;paint();schedule();};
     manual.onclick=()=>flush(true);
     retry.onclick=async()=>{if(!retryMode||!writable()||blocked?.())return;const mode=retryMode,context=retryContext,draft=retryDraft,gen=generation,key=identity(context);if(!current(gen,key))return;retry.disabled=true;try{if(mode==='latest'){const latest=await readLatest?.(context);if(!latest)throw new Error(t('服务器未返回当前版本'));if(!current(gen,key)||blocked?.())return;setRetry('');status.textContent=t('服务器版本已读取，请比较后选择');compareRecovery(draft,gen,latest);}else{setRetry('');await flush(true);}}catch(e){if(current(gen,key)){status.textContent=t(mode==='latest'?'读取服务器版本失败，可重试':'保存重试失败，可再次重试');setRetry(mode,context,draft);error?.(e.message||String(e));}}finally{retry.disabled=false;paint();}};
-    editor.addEventListener('input',()=>{recoveryBanner?.remove();recoveryBanner=null;schedule();});for(const event of ['input','scroll','select','keyup','click','blur'])editor.addEventListener(event,()=>{viewChanges++;queueRecovery();},{passive:true});document.addEventListener('selectionchange',()=>{if(document.activeElement===editor){viewChanges++;queueRecovery();}});window.addEventListener('pagehide',storeRecovery);
+    editor.addEventListener('input',()=>{recoveryBanner?.remove();recoveryBanner=null;scheduleEmergencyDraft();schedule();});for(const event of ['input','scroll','select','keyup','click','blur'])editor.addEventListener(event,()=>{viewChanges++;scheduleEmergencyView();queueRecovery();},{passive:true});document.addEventListener('selectionchange',()=>{if(document.activeElement===editor){viewChanges++;scheduleEmergencyView();queueRecovery();}});window.addEventListener('pagehide',storeRecovery);
     editor.addEventListener('compositionstart',()=>{composing=true;clearTimeout(timer);});
     editor.addEventListener('compositionend',()=>{composing=false;schedule();});
     window.aideUI?.subscribe(()=>{paint();schedule();});

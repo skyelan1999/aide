@@ -40,7 +40,15 @@ function persistChatDraft(strict=false){
  ]);
 }
 function restoreChatSelection(draft){const prompt=$('prompt');if(!draft)return;const start=Math.min(prompt.value.length,Math.max(0,Number(draft.start)||0)),end=Math.min(prompt.value.length,Math.max(start,Number(draft.end)||start));prompt.setSelectionRange(start,end);prompt.scrollTop=Math.max(0,Number(draft.scroll)||0);}
-function scheduleChatRecovery(){clearTimeout(recoveryTimer);recoveryTimer=setTimeout(persistChatDraft,180);}
+function cacheEmergencyChatDraft(){
+ if(!recoveryReady||lockScreen.locked)return;
+ const scope=recoveryScope(),id=state.session?.id||'';
+ if(!scope||!window.AideContinuity?.enabled())return;
+ const draft={text:$('prompt').value,attachments:state.attachments.map(a=>({...a})),start:$('prompt').selectionStart,end:$('prompt').selectionEnd,scroll:$('prompt').scrollTop};
+ try{window.AideContinuity.cacheTab(scope,'chat',id,draft,{active:()=>!lockScreen.locked&&scope===recoveryScope()&&id===(state.session?.id||'')});sessionDrafts.set(chatDraftKey(id),draft);}
+ catch(error){recoveryFailure(error);}
+}
+function scheduleChatRecovery(cacheImmediately=true){if(cacheImmediately)cacheEmergencyChatDraft();clearTimeout(recoveryTimer);recoveryTimer=setTimeout(persistChatDraft,180);}
 let chatRecoverySeq=0;
 const chatContent=d=>JSON.stringify([d?.text||'',d?.attachments||[]]);
 async function refreshChatDraftChoices(){
@@ -768,11 +776,87 @@ const SESSION_HISTORY_PAGE = 30;
 function sessionRevision(s) {
   const runs = s.runs || [], messages = s.messages || [];
   const lastRun = runs[runs.length - 1];
+  // Approval/review details can change while a run remains in the same waiting
+  // state. Keep those small control fields in the polling snapshot so a stale
+  // card is not kept merely because the last answer text did not move.
+  const runStates = runs.map(run => [
+    run?.id, run?.mode, run?.model, run?.status, run?.applied, run?.error,
+    run?.pauseRequested, run?.canResume, run?.approvalState, run?.autoReview,
+    sessionTextRevision(JSON.stringify(run?.approvalReviews || [])),
+    sessionTextRevision(typeof run?.pendingQuestion === 'string' ? run.pendingQuestion : JSON.stringify(run?.pendingQuestion || null)),
+  ].join(':')).join(';');
   return [s.id, s.updated, s.runsTotal ?? runs.length, s.messagesTotal ?? messages.length, state.historyLimit,
-    runs.length, messages.length, lastRun?.id, lastRun?.status, lastRun?.pauseRequested, lastRun?.canResume,
-    lastRun?.steps?.map(step => step.name + ':' + step.status + ':' + (step.content || '').length).join(',')].join('|');
+    runs.length, messages.length, runStates, lastRun?.id, lastRun?.status, lastRun?.pauseRequested, lastRun?.canResume,
+    lastRun?.steps?.map(step => step.name + ':' + step.status + ':' + sessionTextRevision(step.content) + ':' + sessionTextRevision(step.reasoning)).join(',')].join('|');
+}
+function sessionTextRevision(value) {
+  const text = typeof value === 'string' ? value : '';
+  let a = 0x811c9dc5, b = 0x9e3779b9;
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    a = Math.imul(a ^ code, 0x01000193);
+    b = Math.imul(b ^ code, 0x85ebca6b);
+  }
+  return `${text.length}:${a >>> 0}:${b >>> 0}`;
 }
 function getSessionWindow(id) { return api('/sessions/' + id + '?limit=' + state.historyLimit); }
+// Polling can update one active run while the conversation contains many
+// completed Markdown answers. Fingerprint only fields rendered by a run card,
+// then keep an unchanged card (and its parsed Markdown/details state) intact.
+function sessionRunRenderSignature(run, view = {}) {
+  const rendered = [
+    run.mode, run.model, run.prompt, run.status, run.created, run.error, run.applied,
+    run.strategy, run.profile, run.autoReview, run.approvalState, run.approvalReviews,
+    run.pendingQuestion, run.canResume, run.pauseRequested, run.attachments, run.steers,
+    run.steps?.map(step => [step.name, step.status, step.content, step.reasoning]),
+    run.files?.map(file => [file.path, file.before, file.content, file.applied]),
+    run.commands, run.toolUses, view.language, view.ignoredProposal,
+  ];
+  return sessionValueFingerprint(rendered);
+}
+function sessionValueFingerprint(value) {
+  let a = 0x811c9dc5, b = 0x9e3779b9;
+  let length = 0;
+  const push = code => {
+    a = Math.imul(a ^ code, 0x01000193);
+    b = Math.imul(b ^ code, 0x85ebca6b);
+    length++;
+  };
+  const text = source => {
+    const value = String(source);
+    push(0x1f); push(value.length);
+    for (let i = 0; i < value.length; i++) push(value.charCodeAt(i));
+  };
+  const ancestors = new WeakSet();
+  const visit = item => {
+    if (item === null) { push(0x00); return; }
+    if (item === undefined) { push(0x01); return; }
+    if (typeof item === 'string') { push(0x02); text(item); return; }
+    if (typeof item === 'number') { push(0x03); text(Number.isFinite(item) ? item : String(item)); return; }
+    if (typeof item === 'boolean') { push(item ? 0x05 : 0x04); return; }
+    if (typeof item !== 'object') { push(0x06); text(typeof item); return; }
+    if (ancestors.has(item)) { push(0x07); return; }
+    ancestors.add(item);
+    if (Array.isArray(item)) {
+      push(0x08); text(item.length);
+      for (const entry of item) visit(entry);
+    } else {
+      push(0x09);
+      const keys = Object.keys(item).sort(); text(keys.length);
+      for (const key of keys) { text(key); visit(item[key]); }
+    }
+    ancestors.delete(item);
+    push(0x0a);
+  };
+  visit(value);
+  return `${length}:${a >>> 0}:${b >>> 0}`;
+}
+function appendCachedSessionRun(run, signature, previous, timeline) {
+  const cached = previous.get(run.id);
+  if (!cached || cached.signature !== signature) return false;
+  timeline.append(cached.node);
+  return true;
+}
 function paintSessionSelection(id, loading) {
   const items = [...document.querySelectorAll('.session-item[data-session-id]'), $('assistant-entry')].filter(Boolean);
   for (const item of items) {
@@ -1817,6 +1901,8 @@ function renderSession() {
   const preserveHistoryScroll = state.historyScroll;
   state.historyScroll = false;
   const nearBottom = conversation.scrollHeight - previousScroll - conversation.clientHeight < 100;
+  const previousRuns = new Map([...$('timeline').querySelectorAll('article.run[data-run]')]
+    .map(box => [box.dataset.run, { node: box, signature: box.dataset.renderSignature }]));
   const openDetails = new Set([...$('timeline').querySelectorAll('details[open][data-key]')].map(d => d.dataset.key));
   const isAssistantSess = state.session?.kind === 'assistant';
   document.body.classList.toggle('assistant-mode', !!isAssistantSess);
@@ -1873,7 +1959,13 @@ function renderSession() {
   for (const run of state.session?.runs || []) {
     if (run.status === 'resumed') continue;
     if (run.status === 'running') state.busy = true;
+    const renderSignature = sessionRunRenderSignature(run, {
+      language: window.aideI18n?.language() || '',
+      ignoredProposal: ignoredProposals.has(run.id),
+    });
+    if (appendCachedSessionRun(run, renderSignature, previousRuns, $('timeline'))) continue;
     const box = el('article', 'run'); box.dataset.run = run.id; box.append(el('div', 'user-message', run.prompt));
+    box.dataset.renderSignature = renderSignature;
     // 运行中插话（steered）的消息渲染进时间线；排队中的消息由队列条展示
     for (const st of run.steers || []) {
       if (st.queued) continue;
@@ -3296,8 +3388,8 @@ function scheduleContextPreview() {
   state.previewTimer = setTimeout(() => action(refreshContextPreview).call(null), 300);
 }
 $('prompt').addEventListener('input', scheduleContextPreview);
-$('prompt').addEventListener('input',scheduleChatRecovery);
-$('prompt').addEventListener('select',scheduleChatRecovery);$('prompt').addEventListener('scroll',scheduleChatRecovery);
+$('prompt').addEventListener('input',()=>scheduleChatRecovery(true));
+$('prompt').addEventListener('select',()=>scheduleChatRecovery(false));$('prompt').addEventListener('scroll',()=>scheduleChatRecovery(false));
 window.addEventListener('pagehide',persistChatDraft);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)persistChatDraft();});
 $('cp-toggle').onclick = () => {

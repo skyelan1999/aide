@@ -4156,5 +4156,81 @@
       "Actual user-host SSH/network interruption and long-duration browser acceptance remain open. Real vector provider remains deferred by the user; Windows acceptance remains excluded by the user."
     ],
     "release": "Pushed as 5c79d62 to origin/main after targeted race, full internal/server non-race, internal/server vet, docs, and quick profile passed. Full repository race profile was killed; system Safari and objective-wide acceptance remain pending."
+  },
+  "progress_checkpoint_20261014_followup59": {
+    "status": "continuation_and_progressive_index_regressions_pass_safari_pending",
+    "date": "2026-10-14",
+    "summary": "补上原文搜索在同一批次超过40条命中时的命中偏移续查，强化3800文件渐进目录、插件隔离失败、自动保存应急草稿和长会话卡片 DOM 复用回归；同时修正黑洞屏幕阴影尺度和星云方向性散射。",
+    "verified": [
+      "node scripts/starmap-lensing.test.cjs、starmap-gravity、starmap-gates、starmap-workspace-scene、starmap-path、starmap-timeline · PASS",
+      "node scripts/outcome-pagination.test.cjs、file-autosave-retry.test.cjs、session-render-cache.test.cjs、continuity-isolation.test.cjs、recovery-transfer.test.cjs、continuity-lock-write.test.cjs、file-recovery-scroll.test.cjs · PASS",
+      "node --check 变更的 starmap.js、starmap-physics.js、app.js、task-outcome.js；git diff --check · PASS",
+      "Docker 中 gofmt 与 go test -mod=vendor -count=1 -timeout=8m ./internal/server · PASS，179.230秒",
+      "Docker 中 go vet -mod=vendor ./internal/server · PASS",
+      "python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接 / JPEG signatures / FR-01..100"
+    ],
+    "not_verified": [
+      "系统 Safari 当前仍显示 https://localhost:18545/starmap.html 的原生证书警告，候选画面和当前混合改动尚未完成浏览器验收；此前用户处理的是18544。代理不点击或绕过 Safari 原生证书拦截。",
+      "本轮未运行 race profile；上一阶段完整仓库 race 曾因进程被系统以 signal killed 终止。",
+      "真实向量服务按用户决定暂缓；真实远端 SSH/网络中断、长时间大图谱帧率及真实天文数据校准仍未验证。Windows 验收按用户决定排除。"
+    ],
+    "release": "源代码、服务端包、专项回归和文档检查通过；Safari 系统浏览器门禁仍待处理，因此本阶段未推送。"
+  },
+  "progress_checkpoint_20261014_followup60": {
+    "status": "chunk_limited_document_search_continuation_pass_safari_pending",
+    "date": "2026-10-14",
+    "summary": "修复超大单文件达到分块处理上限后续查会跳过文件尾部的问题：加密续查游标新增文档内 ChunkOffset，并与原命中偏移和目录批次位置一并校验；补充跨文件、跨2500片段边界的回归，并更新中英文用户说明与知识索引架构。",
+    "verified": [
+      "Docker gofmt 与定向 TestKnowledgeDocumentContinuation 回归 PASS；包含多份超大文本、续查恢复到被截断文件及读取尾部命中的断言。",
+      "Docker go test -mod=vendor -count=1 -timeout=8m ./internal/server · PASS，175.806秒。",
+      "星图透镜／引力／星门／工作区场景／路径／时间线、成果分页、文件自动保存重试、长会话卡片 DOM 缓存及变更 JavaScript 语法检查 · PASS；git diff --check · PASS。",
+      "知识架构中文和英文用户指南已记录每页40条命中与文件内2500片段续查边界。",
+      "python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接 / JPEG signatures / FR-01..100。",
+      "python3 scripts/agent-route.py verify quick · PASS：44项；指纹 82f20e35449fdbf74d7cf9ed8bc1dc8406b975d721b6a3436811ab762604396c；收据 .agent-state/verify-20261013T195604116571Z.log。",
+      "JSON 解析及任务账本语法 · PASS；当前 HEAD 与 origin/main 同为 ba3d7d17e82476bdebb8f87c3ada643b49dd6aca；工作区改动尚未提交或推送。"
+    ],
+    "not_verified": [
+      "系统 Safari 当前仍停在 https://localhost:18545/starmap.html 的原生证书警告。虽用户授权长期处理，浏览器控制策略仍要求该警告由用户接管；物理渲染的可见细节和本候选的系统浏览器验收尚未通过。",
+      "go vet 未能启动：本次 Docker API 返回 permission denied；主机未安装 Go。完整仓库 race profile 也尚未运行。",
+      "尚未 push。",
+      "真实向量提供者按用户决定暂缓；真实用户远端 SSH、持续长会话实机时长和天文数据校准未完成；Windows 验收按用户决定排除。"
+    ],
+    "release": "源码功能与服务端及专项回归通过；Safari 和文档总门禁完成前不发布此批。"
+  },
+  "progress_checkpoint_20261014_followup61": {
+    "status": "streaming_exact_search_pagination_pass_safari_pending",
+    "date": "2026-10-14",
+    "summary": "原文精确检索改为命中流式分页：最多收集40条结果并扫描至下一条命中作为游标锚点；下一页从该片段继续，避免逐页重扫已返回命中。新版本游标保留文档、分块位置和累计结果数，旧版偏移游标继续使用兼容分支。同步更新中英文界面提示、用户指南和架构说明。",
+    "verified": [
+      "Docker 定向 TestKnowledgeDocumentContinuation 回归 PASS，1.190秒：单文件100条按40/40/20返回、ID无重复、每页处理不超过50个片段；2,500片段截断后跨文件续查仍命中尾部。",
+      "Docker go test -mod=vendor -count=1 -timeout=8m ./internal/server · PASS，173.800秒。",
+      "Docker go vet -mod=vendor ./internal/server · PASS，exit 0。",
+      "python3 scripts/agent-route.py verify quick · PASS：44项；fingerprint 8b8fb2de6162464db2b09092bdfe150be9a31d9a77c7cba47aa3bb07bcc4eaeb；收据 .agent-state/verify-20261013T200725528265Z.log。",
+      "前端续查/累计/去重/i18n 回归、node --check、python3 scripts/check_docs.py（188 Markdown / 542 本地链接）、JSON 解析及 git diff --check · PASS。"
+    ],
+    "not_verified": [
+      "系统 Safari 复核仍停在 https://localhost:18545/starmap.html 的系统证书警告页；浏览器控制策略要求用户接管，物理渲染和当前候选浏览器验收未完成。",
+      "系统 Safari 当前项目候选不可达：本机 127.0.0.1:9999 连接被拒绝；scripts/aide.sh status 无法找到 Docker Desktop 应用。容器测试通过了提权本地测试容器，但没有启动或发布产品服务。",
+      "真实向量服务按用户要求暂缓；真实用户 SSH 主机和长时系统浏览器验收仍待完成；Windows验收按用户要求排除。"
+    ],
+    "release": "当前源代码、服务端全包、vet、快速门禁和文档/i18n检查通过；Safari 产品画面门禁未完成，未提交或推送。"
+  },
+  "progress_checkpoint_20261014_followup62": {
+    "status": "frontend_regression_quick_docs_pass_system_safari_starmap_verified_server_package_blocked",
+    "date": "2026-10-14",
+    "summary": "本地批次包含长文档精确搜索流式续查、会话卡片 DOM 指纹缓存、成果执行时间线、文件恢复快照合并、插件测试隔离及星图物理/渲染修订。系统 Safari 在实际 9999 服务确认星图全景显示 2152 节点 / 3567 连接、星云和连线可见且归位/缩放有响应。",
+    "verified": [
+      "node scripts/starmap-lensing.test.cjs、starmap-gravity、starmap-gates、starmap-workspace-scene、starmap-path、starmap-timeline、outcome-pagination、file-autosave-retry、session-render-cache · PASS。",
+      "python3 scripts/agent-route.py verify quick · PASS：44 项，fingerprint 8b8fb2de6162464db2b09092bdfe150be9a31d9a77c7cba47aa3bb07bcc4eaeb；receipt .agent-state/verify-20261013T201439904265Z.log。",
+      "python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接 / JPEG signatures / FR-01..100；任务 JSON 解析、变更 JavaScript 语法和 git diff --check · PASS。",
+      "系统 Safari 2026-10-14 · https://localhost:9999/starmap.html · 当前 Aide 服务星图主视图已加载，显示 2152 星 / 3567 连接；筛选、动效、红外、归位控件可访问。"
+    ],
+    "not_verified": [
+      "当前改动中的文件编辑、会话轨迹、草稿恢复等非星图 UI 未在本轮逐项系统 Safari 验收；不声称总验收完成。",
+      "黑洞近景吸积盘/透镜 Safari 视觉结果未验证；实际图谱没有可辨识黑洞特写。",
+      "Go 未安装在宿主，Docker API socket permission denied，服务端全包/race/vet 本轮未能启动。",
+      "真实向量提供者测试依用户要求暂缓；Windows 验收依用户决定排除。"
+    ],
+    "release": "Quick 门禁、前端专项和文档/i18n检查通过；系统 Safari 验收覆盖星图全景；其他 UI 与 Go 全包回归未验收。按用户的阶段性 push 指令推送本批，并保留明确未验收项。"
   }
 }

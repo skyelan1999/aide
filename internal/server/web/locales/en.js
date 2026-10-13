@@ -2261,6 +2261,22 @@ window.aideEnglish = {
   "提案未应用": "Proposal not applied",
   "应用已有记录，当前文件未复核": "Application recorded; current file not rechecked",
   "执行与证据": "Execution and evidence",
+  "执行时间线": "Execution timeline",
+  "持久化事件 · {0}": "Persisted events · {0}",
+  "按需读取独立执行日志；事件记录时间、阶段和摘要指纹，不包含工具正文。": "Loads the independent execution journal on demand. Events record time, phase and digest without tool payloads.",
+  "执行时间线读取失败": "Could not read the execution timeline",
+  "正在读取执行时间线…": "Loading execution timeline…",
+  "尚无持久化执行事件": "No persisted execution events",
+  "加载更多执行事件": "Load more events",
+  "重试读取": "Retry",
+  "阶段": "Phase",
+  "调用编号": "Call ID",
+  "摘要指纹": "Digest",
+  "模型请求已记录": "Model request recorded",
+  "模型重试已记录": "Model retry recorded",
+  "模型续接已记录": "Model continuation recorded",
+  "工具已派发": "Tool dispatched",
+  "工具返回已记录": "Tool result recorded",
   "没有工具返回记录": "No tool result records",
   "已记录返回": "Result recorded",
   "查看原始证据": "Inspect original evidence",
@@ -2422,4 +2438,10 @@ Object.assign(window.aideEnglish, {
  '发布记录超过64 KiB':'Release record exceeds 64 KiB',
  '此记录由操作者提供，导入不代表远端发布或生产部署已核验。':'This record is supplied by an operator. Importing it does not verify remote publication or production deployment.',
  '确认导入发布记录':'Confirm release record import'
+});
+
+Object.assign(window.aideEnglish, {
+ '已检查 {0} / {1} 份已索引文档{2}{3}':'Checked {0} of {1} indexed documents{2}{3}',
+ ' · 已返回 {0} 条命中':' · {0} matches returned',
+ ' · 可继续检索':' · More results available',' · 当前范围检查完毕':' · Current scope checked'
 });

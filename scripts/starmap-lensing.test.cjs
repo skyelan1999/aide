@@ -6,10 +6,23 @@ const vm = require('node:vm');
 const context = { window: {} };
 vm.runInNewContext(fs.readFileSync('internal/server/web/starmap-physics.js', 'utf8'), context);
 const physics = context.window.AideCosmicPhysics;
+const starmap = fs.readFileSync('internal/server/web/starmap.js', 'utf8');
+const blackHoleRenderer = starmap.match(/function drawBlackHole\(hole,now,fade=1\)\{[\s\S]*?\n\}/)?.[0] || '';
+assert.ok(blackHoleRenderer, 'black-hole renderer exists');
+assert.match(blackHoleRenderer, /ctx\.scale\(1,view\)[\s\S]*?ctx\.restore\(\);ctx\.save\(\);ctx\.translate\(p\.x,p\.y\)/,
+ 'only the accretion disk is inclination-flattened; shadow and photon glow use circular screen space');
+assert.match(blackHoleRenderer, /createRadialGradient\(0,0,Math\.max\(\.1,shadowR\*\.94\),0,0,shadowR\*1\.16\)/,
+ 'photon glow is a continuous radial optical layer around the computed shadow');
+assert.doesNotMatch(blackHoleRenderer, /arc\(0,0,shadowR,-2\.72|arc\(0,0,shadowR,\.18/,
+ 'black-hole appearance has no arbitrary broken highlight arcs');
 assert.ok(Math.abs(physics.inverseSquareFlux(12, 2) * 4 - physics.inverseSquareFlux(12, 1)) < 1e-12);
 assert.ok(physics.displayRadiance(2, 1) > physics.displayRadiance(1, 1));
 assert.ok(Math.abs(physics.beerLambert(2) - Math.exp(-2)) < 1e-12);
 assert.ok(physics.henyeyGreenstein(1, .65) > physics.henyeyGreenstein(-1, .65), 'dust scatters forward more strongly');
+assert.equal(physics.scatteringCosine({ x: 0, y: 0, z: 2 }, { x: 0, y: 0, z: 1 }), 1, 'a foreground dust screen scatters source light forward toward the observer');
+assert.equal(physics.scatteringCosine({ x: 0, y: 0, z: 0 }, { x: 0, y: 0, z: 1 }), -1, 'reverse source geometry is back-scattering');
+assert.equal(physics.scatteringCosine({ x: 1, y: 1, z: 1 }, { x: 1, y: 1, z: 1 }), 0, 'coincident source and dust have no defined angle');
+assert.equal(physics.scatteringCosine({ x: NaN, y: 0, z: 1 }, { x: 0, y: 0, z: 1 }), 0, 'invalid scene vectors fail closed');
 const dust = physics.dustTransfer(3, .7, .58, .2, .68);
 assert.ok(dust.directRadiance < 3 && dust.scatteredRadiance > 0 && dust.absorbedRadiance > 0);
 assert.ok(Math.abs(dust.energyResidual) < 1e-12, 'single-scattering transfer conserves energy');
@@ -29,6 +42,12 @@ assert.ok(physics.projectedEinsteinRadius(2, 4, 8, 100) > physics.projectedEinst
 assert.equal(physics.projectedEinsteinRadius(2, 4, 3, 100), 0);
 assert.ok(Math.abs(physics.projectedBlackHoleShadowRadius(2, 4, 100) - 1.5 * Math.sqrt(3) * 100) < 1e-12);
 assert.equal(physics.projectedBlackHoleShadowRadius(2, 0, 100), 0);
+for (const [radius, distance, pixels] of [[1.6, 1.25, 720], [4.2, 3.5, 1440], [7.5, 9, 2400]]) {
+ const normalizedMass = physics.massLengthForProjectedShadowRadius(radius, distance, pixels);
+ const projected = physics.projectedBlackHoleShadowRadius(normalizedMass, distance, pixels);
+ assert.ok(Math.abs(projected - radius) < 1e-12, 'shadow calibration must round-trip through one normalized Schwarzschild mass');
+}
+assert.equal(physics.massLengthForProjectedShadowRadius(4, 0, 100), 0);
 assert.ok(physics.diskView(1) > physics.diskView(0));
 assert.ok(physics.diskPositionAngle(.5) > physics.diskPositionAngle(-.5));
 assert.equal(physics.accretionEmission(2, 5, 0).intensity, 0);
