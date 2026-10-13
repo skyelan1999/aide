@@ -41,7 +41,7 @@
     if(active&&!active())return false;
     const serialized=JSON.stringify(value);
     if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
-    sessionStorage.setItem(tabKey(scope,'file',id),serialized);
+    writeTabCache(tabKey(scope,'file',id),serialized);
     return fileTransaction(scope,id,(store,branches)=>{
       const next=branches.filter(b=>b.branch!==fileBranch);
       if(!next.some(b=>b.text===value.text&&b.hash===value.hash))next.push({...value,branch:fileBranch,updated:Date.now()});
@@ -93,7 +93,7 @@
     if(active&&!active())return false;
     const serialized=JSON.stringify(value);
     if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
-    sessionStorage.setItem(tabKey(scope,'chat',id),serialized);
+    writeTabCache(tabKey(scope,'chat',id),serialized);
     return chatTransaction(scope,id,(store,branches)=>{
       const chatBranch=chatBranchFor(scope,id),next=branches.filter(b=>b.branch!==chatBranch);
       // Restoring identical content must not transfer another document's
@@ -106,12 +106,13 @@
     },active);
   }
   async function adoptChatDraft(scope,id,draft){
-    const k=key(scope,'chat',id),prior=chatBranches.get(k),cacheKey=tabKey(scope,'chat',id),priorCache=sessionStorage.getItem(cacheKey),adopted=JSON.stringify(draft);
+    const k=key(scope,'chat',id),prior=chatBranches.get(k),cacheKey=tabKey(scope,'chat',id),priorCache=readTabCache(cacheKey),adopted=JSON.stringify(draft);
     chatBranches.set(k,crypto.randomUUID());
     try{return await writeChatDraft(scope,id,draft);}catch(e){
       if(prior)chatBranches.set(k,prior);else chatBranches.delete(k);
       // Roll back only our attempted cache write; retain later user edits.
-      if(sessionStorage.getItem(cacheKey)===adopted){if(priorCache===null)sessionStorage.removeItem(cacheKey);else sessionStorage.setItem(cacheKey,priorCache);}
+      const currentCache=readTabCache(cacheKey);
+      if(currentCache.available&&currentCache.value===adopted){if(priorCache.available&&priorCache.value!==null)writeTabCache(cacheKey,priorCache.value);else{try{sessionStorage.removeItem(cacheKey);}catch(_ignored){}}}
       throw e;
     }
   }
@@ -128,8 +129,8 @@
       const request=store.get(key(scope,'chat',id));
       request.onsuccess=()=>{if(sameChat(request.result?.value,draft))store.delete(key(scope,'chat',id));};
     });
-    const cached=sessionStorage.getItem(tabKey(scope,'chat',id));
-    if(cached!==null&&sameChat(JSON.parse(cached),draft))sessionStorage.setItem(tabKey(scope,'chat',id),'null');
+    const cacheKey=tabKey(scope,'chat',id),cached=readTabCache(cacheKey),parsed=cached.available&&cached.value!==null?parseTabSnapshot(cached.value):null;
+    if(parsed?.ok&&sameChat(parsed.value,draft))writeTabCache(cacheKey,'null');
     return true;
   }
   async function dismissChatDraft(scope,id,draft){
@@ -139,8 +140,8 @@
       const request=store.get(key(scope,'chat',id));
       request.onsuccess=()=>{if(sameChat(request.result?.value,draft))store.delete(key(scope,'chat',id));};
     });
-    const cached=sessionStorage.getItem(tabKey(scope,'chat',id));
-    if(cached!==null&&sameChat(JSON.parse(cached),draft))sessionStorage.setItem(tabKey(scope,'chat',id),'null');
+    const cacheKey=tabKey(scope,'chat',id),cached=readTabCache(cacheKey),parsed=cached.available&&cached.value!==null?parseTabSnapshot(cached.value):null;
+    if(parsed?.ok&&sameChat(parsed.value,draft))writeTabCache(cacheKey,'null');
     return true;
   }
   async function read(scope,kind,id){if(!enabled()||!scope)return null;const record=await run('readonly',store=>store.get(key(scope,kind,id)));return record?.value||null;}
@@ -154,18 +155,41 @@
   // copy becomes independent on the first edit. IndexedDB remains the shared
   // fallback for a newly opened tab; it must not overwrite a live tab on reload.
   const tabKey=(scope,kind,id)=>'aide-recovery-tab:'+key(scope,kind,id);
+  function readTabCache(cacheKey){try{return {available:true,value:sessionStorage.getItem(cacheKey)};}catch(error){return {available:false,value:null,error};}}
+  function writeTabCache(cacheKey,serialized,{required=false}={}){try{sessionStorage.setItem(cacheKey,serialized);return true;}catch(error){if(required)throw error;return false;}}
+  // Keep the newest editable text and view position in the tab-local
+  // synchronous store. IndexedDB still owns durable, shared branches; this
+  // fast path closes the debounce window if a tab is killed before its
+  // transaction runs.
+  function cacheTab(scope,kind,id,value,{active}={}){
+    if(!enabled()||!scope||!['chat','file','file-view'].includes(kind))return false;
+    if(active&&!active())return false;
+    const serialized=JSON.stringify(value);
+    if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
+    writeTabCache(tabKey(scope,kind,id),serialized,{required:true});
+    return true;
+  }
+  function parseTabSnapshot(raw){
+    try{return {ok:true,value:JSON.parse(raw)};}catch(error){return {ok:false,error};}
+  }
   async function readTab(scope,kind,id){
     if(!enabled()||!scope)return null;
-    const cached=sessionStorage.getItem(tabKey(scope,kind,id));
-    if(cached!==null)return JSON.parse(cached);
+    const cacheKey=tabKey(scope,kind,id),initial=readTabCache(cacheKey),cached=initial.available?initial.value:null;
+    let corruptCache=false;
+    if(cached!==null){const parsed=parseTabSnapshot(cached);if(parsed.ok)return parsed.value;corruptCache=true;}
     const value=await read(scope,kind,id);
     // An edit or another restoration may finish while IndexedDB is loading.
     // Never replace that newer tab snapshot with the shared fallback.
-    const latest=sessionStorage.getItem(tabKey(scope,kind,id));
-    if(latest!==null)return JSON.parse(latest);
+    const latest=readTabCache(cacheKey);
+    if(latest.available&&latest.value!==null){const parsed=parseTabSnapshot(latest.value);if(parsed.ok)return parsed.value;corruptCache=true;}
+    // A malformed synchronous snapshot must not hide a still-valid IndexedDB
+    // record. Heal it from the durable value when available; if there is no
+    // durable value, keep the corrupt bytes for inspection instead of
+    // pretending the local record was cleanly initialized.
+    if(corruptCache){if(value!==null)writeTabCache(cacheKey,JSON.stringify(value));return value;}
     // Cache null as well: another tab creating a draft later must not change
     // this tab's initial empty scene or composer.
-    sessionStorage.setItem(tabKey(scope,kind,id),JSON.stringify(value));
+    writeTabCache(cacheKey,JSON.stringify(value));
     return value;
   }
   async function writeTab(scope,kind,id,value,{active}={}){
@@ -176,7 +200,7 @@
     if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
     // The synchronous tab snapshot survives pagehide even if its IndexedDB
     // transaction has not completed when the browser unloads the document.
-    sessionStorage.setItem(tabKey(scope,kind,id),serialized);
+    writeTabCache(tabKey(scope,kind,id),serialized);
     return write(scope,kind,id,value,active);
   }
   async function remove(scope,kind,id){if(scope)await run('readwrite',store=>store.delete(key(scope,kind,id)));}
@@ -190,9 +214,8 @@
   async function removeMatchingTab(scope,kind,id,text){
     // Clear only this browsing context's matching draft. A different tab's
     // shared fallback must survive when its content differs from the save.
-    const cached=sessionStorage.getItem(tabKey(scope,kind,id));
-    if(cached!==null&&JSON.parse(cached)?.text===text)
-      sessionStorage.setItem(tabKey(scope,kind,id),'null');
+    const cacheKey=tabKey(scope,kind,id),cached=readTabCache(cacheKey),parsed=cached.available&&cached.value!==null?parseTabSnapshot(cached.value):null;
+    if(parsed?.ok&&parsed.value?.text===text)writeTabCache(cacheKey,'null');
     await removeMatching(scope,kind,id,text);
   }
   // Management reads remain available when recovery is disabled. A read-only
@@ -230,7 +253,7 @@
     if(new Blob([JSON.stringify(backup)]).size>64*1024*1024)throw Error('恢复备份超过 64 MiB，请保留现有记录并分批处理');
     return backup;
   }
-  window.AideContinuity={...window.AideRecoveryTransfer?.create({open}),inventory,exportRecovery,enabled,read,write,readTab,writeTab,writeChatDraft,adoptChatDraft,listChatDrafts,dismissChatDraft,sentChatDraft,remove,removeMatching,removeMatchingTab,writeFileDraft,listFileDrafts,dismissFileDraft,savedFileDraft,abortPendingWrites};
+  window.AideContinuity={...window.AideRecoveryTransfer?.create({open}),inventory,exportRecovery,enabled,read,write,readTab,writeTab,cacheTab,writeChatDraft,adoptChatDraft,listChatDrafts,dismissChatDraft,sentChatDraft,remove,removeMatching,removeMatchingTab,writeFileDraft,listFileDrafts,dismissFileDraft,savedFileDraft,abortPendingWrites};
   // Default retention is disabled. Only maintain confirmed undo-backup policy;
   // hidden or locked pages do not purge, and live tab snapshots are untouched.
   if(typeof window.setInterval==='function')window.setInterval(()=>{

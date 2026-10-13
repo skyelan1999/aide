@@ -19,15 +19,40 @@ for(const kind of ['chat','scene','file','file-view']){
  assert.equal((await api.read(scopes[1],kind,'same-id')).text,'workspace B');
 }
 assert.equal(await api.read('', 'file','same-id'),null);
-function tab(storage=new Map(),on=true){
+function tab(storage=new Map(),on=true,storageThrows=false){
  const ctx={...context,window:{aideUI:{get:()=>on}},sessionStorage:{
-  getItem:key=>storage.has(key)?storage.get(key):null,
-  setItem:(key,value)=>storage.set(key,String(value))
+  getItem:key=>{if(storageThrows)throw new Error('session storage blocked');return storage.has(key)?storage.get(key):null;},
+  setItem:(key,value)=>{if(storageThrows)throw new Error('session storage quota');storage.set(key,String(value));}
  }};
  vm.runInNewContext(fs.readFileSync('internal/server/web/continuity.js','utf8'),ctx);
  return {api:ctx.window.AideContinuity,storage};
 }
 const a=tab(),b=tab(),scope='tab-workspace';
+const emergency=tab();
+assert.equal(emergency.api.cacheTab(scope,'chat','last-keystroke',{text:'kept synchronously',attachments:[{path:'handoff.md'}],start:7,end:7}),true);
+assert.equal(await api.read(scope,'chat','last-keystroke'),null,'emergency snapshot must not pretend the durable IndexedDB write completed');
+assert.equal((await tab(emergency.storage).api.readTab(scope,'chat','last-keystroke')).text,'kept synchronously','new browsing context recovers the synchronous pre-debounce snapshot');
+assert.equal(emergency.api.cacheTab(scope,'file-view','last-position',{hash:'v1',start:811,end:817,scrollTop:2048,scrollLeft:31}),true);
+assert.deepEqual(await tab(emergency.storage).api.readTab(scope,'file-view','last-position'),{hash:'v1',start:811,end:817,scrollTop:2048,scrollLeft:31},'cursor and scroll snapshots are immediately available to restoration');
+const damagedSnapshot=tab();
+const durableDraft={text:'durable recovery branch',hash:'saved-hash',start:12,end:18,scrollTop:420};
+await damagedSnapshot.api.writeTab(scope,'file','damaged-cache',durableDraft);
+const damagedKey='aide-recovery-tab:'+JSON.stringify([scope,'file','damaged-cache']);
+damagedSnapshot.storage.set(damagedKey,'{truncated');
+assert.deepEqual(await damagedSnapshot.api.readTab(scope,'file','damaged-cache'),durableDraft,'a damaged tab snapshot falls back to the intact IndexedDB record');
+assert.deepEqual(JSON.parse(damagedSnapshot.storage.get(damagedKey)),durableDraft,'the tab cache is healed from durable recovery data');
+assert.equal(emergency.api.cacheTab(scope,'scene','not-editable',{text:'ignored'}),false,'only editable drafts use the immediate snapshot path');
+assert.equal(tab(new Map(),false).api.cacheTab(scope,'chat','disabled',{text:'ignored'}),false,'disabled recovery does not create emergency snapshots');
+const sessionBlocked=tab(new Map(),true,true);
+assert.equal(await sessionBlocked.api.writeChatDraft(scope,'session-blocked-chat',{text:'durable despite blocked tab cache',attachments:[]}),true,'a sessionStorage failure must not prevent the IndexedDB chat branch write');
+assert.equal((await sessionBlocked.api.readTab(scope,'chat','session-blocked-chat')).text,'durable despite blocked tab cache','chat drafts restore from IndexedDB when sessionStorage is unavailable');
+assert.equal(await sessionBlocked.api.writeFileDraft(scope,'session-blocked-file',{text:'durable file draft',hash:'base',start:2}),true,'a sessionStorage quota failure must not prevent the IndexedDB file branch write');
+assert.equal((await sessionBlocked.api.readTab(scope,'file','session-blocked-file')).text,'durable file draft','file drafts restore from IndexedDB when sessionStorage is unavailable');
+assert.equal(await sessionBlocked.api.writeTab(scope,'scene','session-blocked-scene',{dir:'src'}),true,'scene persistence must continue when its synchronous tab cache is unavailable');
+assert.equal((await sessionBlocked.api.readTab(scope,'scene','session-blocked-scene')).dir,'src');
+await sessionBlocked.api.writeChatDraft(scope,'session-blocked-send',{text:'sent',attachments:[]});
+await assert.doesNotReject(sessionBlocked.api.sentChatDraft(scope,'session-blocked-send',{text:'sent',attachments:[]}),'sending remains successful when tab storage is blocked');
+assert.equal((await tab().api.listChatDrafts(scope,'session-blocked-send')).length,0);
 const draftA={text:'A unsent',attachments:[{path:'a.md'}],start:3,scrollTop:18};
 await a.api.writeTab(scope,'scene','workbench',{session:'A',dir:'alpha'});
 await a.api.writeTab(scope,'chat','A',draftA);
@@ -98,6 +123,17 @@ await tab(sentA.storage).api.sentChatDraft(scope,'sent-chat',ca);
 assert.equal((await tab().api.listChatDrafts(scope,'sent-chat')).length,1);
 assert.equal((await sentB.api.readTab(scope,'chat','sent-chat')).attachments[0].path,'b.md');
 assert.equal(await tab(sentA.storage).api.readTab(scope,'chat','sent-chat'),null);
+const damagedSent=tab(),damagedSentDraft={text:'already sent branch',attachments:[{path:'result.md'}]};
+await damagedSent.api.writeChatDraft(scope,'damaged-sent',damagedSentDraft);
+damagedSent.storage.set('aide-recovery-tab:'+JSON.stringify([scope,'chat','damaged-sent']),'{broken');
+await assert.doesNotReject(damagedSent.api.sentChatDraft(scope,'damaged-sent',damagedSentDraft),'sending a draft must not fail because its tab cache is corrupt');
+assert.equal((await tab().api.listChatDrafts(scope,'damaged-sent')).length,0,'sent branch is removed even if the synchronous cache is malformed');
+const damagedDismiss=tab(),damagedDismissDraft={text:'dismiss this branch',attachments:[]};
+await damagedDismiss.api.writeChatDraft(scope,'damaged-dismiss',damagedDismissDraft);
+const damagedDismissChoice=(await damagedDismiss.api.listChatDrafts(scope,'damaged-dismiss'))[0];
+damagedDismiss.storage.set('aide-recovery-tab:'+JSON.stringify([scope,'chat','damaged-dismiss']),'{broken');
+await assert.doesNotReject(damagedDismiss.api.dismissChatDraft(scope,'damaged-dismiss',damagedDismissChoice),'dismissing a draft must tolerate a malformed tab cache');
+assert.equal((await tab().api.listChatDrafts(scope,'damaged-dismiss')).length,0,'dismissed branch is removed even if the synchronous cache is malformed');
 console.log('Closed-chat branches, attachment identity, positions, scope and non-evicting capacity PASS');
 // Same-file drafts and positions remain independent on reload. Saving or
 // discarding A must not delete B's newer shared fallback or tab-local draft.
@@ -117,7 +153,7 @@ assert.equal((await b.api.readTab(scope,'file','same-file')).text,'file B unsave
 assert.equal((await api.read(scope,'file','same-file')).text,'file B unsaved');
 assert.equal((await tab().api.readTab(scope,'file','same-file')).text,'file B unsaved');
 const auto=fs.readFileSync('internal/server/web/file-autosave.js','utf8');
-assert.ok(auto.includes('AideContinuity.writeTab(')&&auto.includes('AideContinuity.readTab(')&&auto.includes('AideContinuity.savedFileDraft(')&&auto.includes('AideContinuity.writeFileDraft(')&&auto.includes('AideContinuity.listFileDrafts('));
+assert.ok(auto.includes('AideContinuity.writeTab(')&&auto.includes('AideContinuity.cacheTab(')&&auto.includes('AideContinuity.readTab(')&&auto.includes('AideContinuity.savedFileDraft(')&&auto.includes('AideContinuity.writeFileDraft(')&&auto.includes('AideContinuity.listFileDrafts('));
 assert.ok(!/AideContinuity\.(write|read|removeMatching)\(/.test(auto));
 // A new document restoring identical text must not take over the old owner.
 const fileOwner=tab(),fileRestorer=tab();
