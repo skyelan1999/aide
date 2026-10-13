@@ -95,7 +95,22 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
  }
  // Recompute connections over variable-length retained paths. Every edge goes
  // to the visible direct children of its lowest common ancestor, without twins.
- const connectionMaps=new Map();
+ const connectionMaps=new Map(),systemByNode=new Map(),gatesBySystem=new Map();
+ // A star gate is only proposed when an indexed edge truly crosses between
+ // two established stellar systems. These are navigational affordances, not
+ // a claim that the indexed relationship is a physical wormhole.
+ for(const [id,path] of paths){const system=path.find(group=>group.depth===6);if(system)systemByNode.set(id,system);}
+ for(const edge of validEdges){if(['contains','defines'].includes(edge.kind))continue;const from=systemByNode.get(edge.from),to=systemByNode.get(edge.to);if(!from||!to||from.key===to.key)continue;
+  for(const [owner,target,nodeID] of [[from,to,edge.from],[to,from,edge.to]]){
+   if(!gatesBySystem.has(owner.key))gatesBySystem.set(owner.key,new Map());const gates=gatesBySystem.get(owner.key),old=gates.get(target.key);
+   if(old){old.count++;old.nodes.add(nodeID);old.kinds.add(edge.kind||'relation');}
+   else gates.set(target.key,{targetKey:target.key,targetLabel:target.label,count:1,nodes:new Set([nodeID]),kinds:new Set([edge.kind||'relation'])});
+  }
+ }
+ for(const gates of gatesBySystem.values())for(const gate of gates.values()){
+  gate.anchorNodeID=[...gate.nodes].sort((a,b)=>(byID.get(b)?.connectionCount||0)-(byID.get(a)?.connectionCount||0)||a.localeCompare(b))[0];
+  gate.nodes=undefined;gate.kinds=[...gate.kinds].sort();
+ }
  for(const edge of validEdges){const from=paths.get(edge.from),to=paths.get(edge.to);let common=0;
   while(common<from.length&&common<to.length&&from[common]===to[common])common++;
   if(common===0||common===from.length||common===to.length)continue;
@@ -107,6 +122,6 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
  rawByKey.clear();
  function find(key){return byKey.get(key)||null;}
  function pathFor(id){return paths.get(id)||[];}
- function scene(key){const group=find(key)||root;return {group,children:group.children,depth:group.depth,members:group.members,connections:group.connections,scaleCounts:group.directScaleCounts,nextThreshold:group.nextThreshold};}
+ function scene(key){const group=find(key)||root;return {group,children:group.children,depth:group.depth,members:group.members,connections:group.connections,scaleCounts:group.directScaleCounts,nextThreshold:group.nextThreshold,gates:[...(gatesBySystem.get(group.key)?.values()||[])]};}
  return Object.freeze({root,byKey,paths,scene,pathFor,find,levels,thresholds,scaleCounts:Object.freeze(scaleCounts)});
 }});
