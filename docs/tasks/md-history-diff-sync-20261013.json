@@ -64,9 +64,12 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "等待提交并推送本阶段实现。",
-      "evidence": []
+      "status": "pass",
+      "summary": "实现和文档已提交并推送到 origin/main。",
+      "evidence": [
+        "commit 422f9687611649d55e5414c69eb9bd866f5df694",
+        "git push origin main：003713e..422f968 main -> main"
+      ]
     }
   },
   "release_authorization": "沿用用户此前“阶段性测完的内容就 push 上去”的持续指示；本阶段 quick 验证通过后可提交推送。",
