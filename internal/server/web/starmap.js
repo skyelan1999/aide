@@ -420,37 +420,54 @@ function cosmicStarPick(x,y){let nearest=null,distance=11;for(const star of cosm
 function cosmicGatePick(x,y){let nearest=null,distance=13;for(const gate of cosmicGates){if(!gate.p?.onScreen)continue;const d=Math.hypot(gate.p.x-x,gate.p.y-y);if(d<distance){distance=d;nearest=gate;}}return nearest;}
 function drawBlackHole(hole,now){
  const p=hole.record.p;if(!p.onScreen)return;const r=hole.radius;
- // A compact, nearly edge-on illustrative view: rear-disk light is lensed
- // above/below the shadow; the foreground disk is Doppler-asymmetric. This is
- // not ray tracing and the graph score below is not a physical BH mass.
- const view=.18+((hole.phase||0)%1)*.16, tilt=(view-.26)*.7, shadowR=r*.37, diskX=r*1.34, diskY=r*(.13+view*.2);
+ // Compact observation-inspired silhouette. Keep the disk as a crescent, not
+ // a complete ellipse: at overview scale a full bright ellipse reads as a ringed planet.
+ // The arcs suggest lensing and Doppler asymmetry; this is not ray tracing or a physical mass.
+ const view=.18+((hole.phase||0)%1)*.16, tilt=(view-.26)*.7, shadowR=r*.39, diskX=r*.88;
  const drift=motionEnabled()?Math.sin(now/5600+(hole.phase||0)*tau):0;
  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(tilt);
- // Diffuse hot plasma glow around the disk, kept soft so it does not read as
- // a hard decorative ring.
- ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.16;const haze=ctx.createRadialGradient(0,0,shadowR*.8,0,0,r*1.85);haze.addColorStop(0,'#ff9b55');haze.addColorStop(.24,'#ff7440a8');haze.addColorStop(.58,mapPalette.nebula+'45');haze.addColorStop(1,mapPalette.nebula+'00');ctx.fillStyle=haze;ctx.fillRect(-r*1.9,-r*.8,r*3.8,r*1.6);
- // Far-side disk images: two lensed humps, intentionally separated rather
- // than a complete ellipse. Their faint repeated arcs evoke higher-order
- // images without claiming a numerical geodesic solution.
- ctx.globalAlpha=.46;ctx.lineCap='round';ctx.lineWidth=Math.max(.8,r*.045);ctx.strokeStyle='#ffc17a';
- ctx.beginPath();ctx.ellipse(0,0,diskX,diskY,-.02,Math.PI*1.08,Math.PI*1.92);ctx.stroke();
- ctx.globalAlpha=.2;ctx.lineWidth=Math.max(.55,r*.022);ctx.beginPath();ctx.ellipse(0,0,diskX*1.09,diskY*1.26,-.02,Math.PI*1.12,Math.PI*1.88);ctx.stroke();
- ctx.beginPath();ctx.ellipse(0,0,diskX,diskY,-.02,Math.PI*.08,Math.PI*.42);ctx.stroke();ctx.beginPath();ctx.ellipse(0,0,diskX,diskY,-.02,Math.PI*.58,Math.PI*.92);ctx.stroke();
- // The apparent shadow is larger than the event horizon; draw it as a deep
- // opaque silhouette so the foreground plasma visibly crosses in front.
- ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;const shadow=ctx.createRadialGradient(-shadowR*.24,-shadowR*.32,shadowR*.06,0,0,shadowR*1.17);shadow.addColorStop(0,'#000');shadow.addColorStop(.78,'#010204');shadow.addColorStop(.94,'#05070a');shadow.addColorStop(1,'#111923');ctx.fillStyle=shadow;ctx.beginPath();ctx.arc(0,0,shadowR*1.08,0,tau);ctx.fill();
- // Thin photon ring hugs the shadow. The fainter secondary ring sits outside.
- ctx.globalAlpha=.92;ctx.shadowColor='#ffd39a';ctx.shadowBlur=Math.max(3,r*.22);ctx.strokeStyle='#ffe0b0';ctx.lineWidth=Math.max(.65,r*.035);ctx.beginPath();ctx.arc(0,0,shadowR*1.1,0,tau);ctx.stroke();ctx.shadowBlur=0;
- ctx.globalAlpha=.24;ctx.strokeStyle='#f5ae69';ctx.lineWidth=Math.max(.45,r*.018);ctx.beginPath();ctx.arc(0,0,shadowR*1.25,0,tau);ctx.stroke();
- // Near-side accretion flow: one approaching (blue-white, brighter) region
- // and one receding (red-orange, dimmer) region, with tapered arc extents.
- ctx.globalCompositeOperation='lighter';const disk=ctx.createLinearGradient(-diskX,0,diskX,0);disk.addColorStop(0,'#ff684755');disk.addColorStop(.18,'#ff9b58cc');disk.addColorStop(.43,'#ffd18cff');disk.addColorStop(.64,'#bce8ffff');disk.addColorStop(.82,'#79cfffff');disk.addColorStop(1,'#70aaff30');
- ctx.globalAlpha=.82;ctx.shadowColor='#ffad68';ctx.shadowBlur=4+r*.15;ctx.strokeStyle=disk;ctx.lineWidth=Math.max(1,r*.095);ctx.beginPath();ctx.ellipse(0,0,diskX,diskY,.02,Math.PI*.03,Math.PI*.97);ctx.stroke();
- ctx.globalAlpha=.58;ctx.shadowColor='#a6dcff';ctx.shadowBlur=3+r*.1;ctx.strokeStyle='#b7e9ff';ctx.lineWidth=Math.max(.65,r*.04);ctx.beginPath();ctx.ellipse(0,0,diskX*.94,diskY*.78,.02,Math.PI*.65,Math.PI*.96);ctx.stroke();
- // A single slow-moving hot spot suggests orbiting flow. Reduced motion makes
- // the illustration entirely static.
- if(drift){const a=Math.PI*.08+drift*.22,x=Math.cos(a)*diskX*.77,y=Math.sin(a)*diskY*.77;ctx.globalAlpha=.58;ctx.shadowColor='#d8f4ff';ctx.shadowBlur=5;ctx.fillStyle='#e5f7ff';ctx.beginPath();ctx.arc(x,y,Math.max(.7,r*.045),0,tau);ctx.fill();}
+ // Soft, compact plasma haze avoids the broad capsule glow of the earlier disk.
+ ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.16;const haze=ctx.createRadialGradient(0,0,shadowR*.72,0,0,r*1.2);haze.addColorStop(0,'#ff9c62');haze.addColorStop(.26,'#e76d48a0');haze.addColorStop(.62,mapPalette.nebula+'32');haze.addColorStop(1,mapPalette.nebula+'00');ctx.fillStyle=haze;ctx.fillRect(-r*1.22,-r*1.22,r*2.44,r*2.44);
+ ctx.lineCap='round';ctx.lineJoin='round';
+ // The central shadow is deliberately simple and unlit. Lensing and the
+ // photon-ring cue are drawn later as a separate optical overlay layer.
+ ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle='#020305';ctx.beginPath();ctx.arc(0,0,shadowR,0,tau);ctx.fill();
+ // The foreground flow is one low crescent. Its warm receding side is dimmer;
+ // a restrained pale blue highlight marks the approaching side.
+ const flow=ctx.createLinearGradient(-diskX,0,diskX,0);flow.addColorStop(0,'#a84d3c45');flow.addColorStop(.24,'#df8058a0');flow.addColorStop(.55,'#ffd1a0e8');flow.addColorStop(.8,'#d7eaffdd');flow.addColorStop(1,'#91bce733');
+ ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.7;ctx.shadowColor='#f2a875';ctx.shadowBlur=Math.max(.8,r*.05);ctx.strokeStyle=flow;ctx.lineWidth=Math.max(.65,r*.04);ctx.beginPath();ctx.moveTo(-diskX,-shadowR*.06);ctx.bezierCurveTo(-r*.55,r*.08,-r*.38,r*.53,r*.12,r*.56);ctx.bezierCurveTo(r*.5,r*.58,r*.63,r*.23,r*.76,r*.06);ctx.stroke();
+ ctx.globalAlpha=.36;ctx.shadowColor='#e8f2ff';ctx.shadowBlur=Math.max(.6,r*.028);ctx.strokeStyle='#dceaff';ctx.lineWidth=Math.max(.4,r*.014);ctx.beginPath();ctx.moveTo(r*.23,r*.53);ctx.quadraticCurveTo(r*.55,r*.5,r*.73,r*.14);ctx.stroke();ctx.shadowBlur=0;
+ // A subtle orbiting hotspot remains tied to the animation preference.
+ if(drift){const x=r*.18+Math.cos(drift*.45)*r*.32,y=r*.46+Math.sin(drift*.45)*r*.07;ctx.globalAlpha=.36;ctx.shadowColor='#fff0d8';ctx.shadowBlur=Math.max(.8,r*.045);ctx.fillStyle='#fff0dc';ctx.beginPath();ctx.arc(x,y,Math.max(.45,r*.018),0,tau);ctx.fill();}
  ctx.restore();ctx.globalCompositeOperation='source-over';
+}
+function drawBlackHoleLensOverlay(hole,stars,edges){
+ const p=hole.record.p,lensing=window.AideStarLensing;if(!p.onScreen||!lensing)return;const r=hole.radius,shadowR=r*.39,thetaE=shadowR*1.52,maxBeta=thetaE*2.7;
+ // Separate optical compositing pass: the thin-lens point-mass equation maps
+ // source positions to primary/secondary images. Graph coordinates and picking
+ // remain untouched; only faint duplicate photons/paths are drawn here.
+ ctx.save();ctx.globalCompositeOperation='screen';
+ const lens=ctx.createRadialGradient(p.x,p.y,shadowR*.94,p.x,p.y,maxBeta*1.42);lens.addColorStop(0,'#d9eaff00');lens.addColorStop(.18,'#b8d9ff0b');lens.addColorStop(.42,'#f3c99b19');lens.addColorStop(.68,'#95c8ff0b');lens.addColorStop(1,'#95c8ff00');ctx.globalAlpha=.78;ctx.fillStyle=lens;ctx.beginPath();ctx.arc(p.x,p.y,maxBeta*1.42,0,tau);ctx.fill();
+ // Warp only connections whose projected segment passes through the lensing
+ // field. The dim image is an optical overlay, never a new indexed relation.
+ const closestOnSegment=(a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy,t=den?clamp(((p.x-a.x)*dx+(p.y-a.y)*dy)/den,0,1):0;return Math.hypot(a.x+dx*t-p.x,a.y+dy*t-p.y);};
+ ctx.lineCap='round';ctx.lineJoin='round';
+ for(const edge of edges||[]){const a=edge.a,b=edge.b;if(!a?.onScreen||!b?.onScreen||closestOnSegment(a,b)>maxBeta)continue;
+  for(const branch of ['primary','secondary']){let started=false,steps=16;ctx.beginPath();for(let i=0;i<=steps;i++){const t=i/steps,betaX=a.x+(b.x-a.x)*t-p.x,betaY=a.y+(b.y-a.y)*t-p.y,beta=Math.hypot(betaX,betaY),images=lensing.pointMassImages(betaX,betaY,thetaE),image=images.find(item=>item.branch===branch);if(!image||Math.hypot(image.x,image.y)<shadowR*1.08||Math.hypot(image.x,image.y)>maxBeta*1.55){started=false;continue;}const x=p.x+image.x,y=p.y+image.y;if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);}
+   ctx.globalAlpha=branch==='primary'?.2:.12;ctx.strokeStyle=mapPalette.light?'#638aaa':'#c5ddf2';ctx.lineWidth=Math.max(.45,r*.012);ctx.stroke();
+  }
+ }
+ // Nearby real stars produce faint calculated images. Their original stars
+ // remain the sole selectable objects, so optical duplicates cannot mislead
+ // search, counts, relationships, or click targets.
+ for(const star of stars||[]){const q=star.p;if(!q?.onScreen)continue;const betaX=q.x-p.x,betaY=q.y-p.y,beta=Math.hypot(betaX,betaY);if(beta>maxBeta)continue;const fade=1-beta/maxBeta;
+  for(const image of lensing.pointMassImages(betaX,betaY,thetaE)){const imageR=Math.hypot(image.x,image.y);if(imageR<shadowR*1.08||imageR>maxBeta*1.55)continue;ctx.globalAlpha=(image.branch==='primary'?.18:.11)*fade;ctx.fillStyle=star.n.starColor||mapPalette.star;ctx.beginPath();ctx.arc(p.x+image.x,p.y+image.y,Math.max(.55,Math.min(1.7,Math.sqrt(star.n.connectionCount||1)*.22)),0,tau);ctx.fill();}
+ }
+ // A narrow, incomplete photon-ring highlight closes the optical cue without
+ // drawing a planet-like disk or a full ornamental halo.
+ ctx.lineCap='round';ctx.globalAlpha=.38;ctx.shadowColor='#dce8f4';ctx.shadowBlur=Math.max(.6,r*.025);ctx.strokeStyle='#dce8f4';ctx.lineWidth=Math.max(.4,r*.012);ctx.beginPath();ctx.arc(p.x,p.y,shadowR*1.1,-2.82,-1.05);ctx.stroke();
+ ctx.globalAlpha=.46;ctx.shadowColor='#f5c99e';ctx.shadowBlur=Math.max(.8,r*.035);ctx.strokeStyle='#f0c49a';ctx.lineWidth=Math.max(.45,r*.014);ctx.beginPath();ctx.arc(p.x,p.y,shadowR*1.1,.22,1.18);ctx.stroke();
+ ctx.shadowBlur=0;ctx.restore();ctx.globalCompositeOperation='source-over';
 }
 function drawCosmicGate(gate,cx,cy,zoom,fade=1,orbitScale=1){
  // The indexed endpoint vector sets the gate bearing. The aperture is turned
@@ -515,18 +532,19 @@ function drawCosmos(now,t){
   const anchor=cosmicStars.find(star=>star.n.id===gate.anchorNodeID);if(!anchor?.p.onScreen)continue;
   drawCosmicGate(gate,anchor.p.x,anchor.p.y,zoom,fade);
  }
- for(const star of cosmicStars){const {n,p}=star;if(!p.onScreen)continue;const participating=!!calls?.levels.has(n.id),depth=participating?cosmicCallState?.levels.get(n.id):null,known=Number.isFinite(depth),incoming=!!cosmicCallState?.incoming.has(n.id),chosen=selected?.id===n.id;
+ for(const star of cosmicStars){const {n,p}=star;if(!p.onScreen)continue;const participating=!!calls?.levels.has(n.id),depth=participating?cosmicCallState?.levels.get(n.id):null,known=Number.isFinite(depth),incoming=!!cosmicCallState?.incoming.has(n.id),chosen=selected?.id===n.id,opticalIntensity=window.AideStarOptics?.apparentIntensity(n.connectionCount,star.z)||1;
   const visual=stellarVisual(n,known?depth:null,chosen,incoming),magnification=1+Math.max(0,zoom-1)*.72,color=visual.highlight&&!mapPalette.highContrast?(mapPalette.light?'#356f9e':'#d8edff'):n.starColor,radius=visual.radius*magnification,halo=visual.halo*Math.sqrt(magnification),match=n.match,alpha=searchQuery&&!match&&!chosen?.18:visual.alpha;
   const birth=birthAlpha(n,now),bloomStrength=Math.min(1,n.stellarStrength||0),bloomAlpha=chosen?.9:visual.highlight?.78:.12+bloomStrength*.38;
   // Additive, multi-scale haze is reserved for connected/high-energy stars;
   // it blooms beyond the stellar core without creating an outline ring.
-  ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*alpha*birth*bloomAlpha;ctx.drawImage(glowSprite(color),p.x-halo/2,p.y-halo/2,halo,halo);
-  if(bloomStrength>.55||visual.highlight||chosen){const bloomSize=halo*(chosen?2.15:visual.highlight?1.9:1.7),wideAlpha=chosen?.42:visual.highlight?.34:.16;ctx.globalAlpha=fade*alpha*birth*wideAlpha;ctx.drawImage(glowSprite(color),p.x-bloomSize/2,p.y-bloomSize/2,bloomSize,bloomSize);}
-  ctx.restore();ctx.globalAlpha=fade*alpha*birth;ctx.fillStyle=color;ctx.beginPath();ctx.arc(p.x,p.y,radius*(.4+.6*birth),0,tau);ctx.fill();ctx.globalAlpha=fade;
+  ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*alpha*birth*bloomAlpha*opticalIntensity;ctx.drawImage(glowSprite(color),p.x-halo/2,p.y-halo/2,halo,halo);
+  if(bloomStrength>.55||visual.highlight||chosen){const bloomSize=halo*(chosen?2.15:visual.highlight?1.9:1.7),wideAlpha=chosen?.42:visual.highlight?.34:.16;ctx.globalAlpha=fade*alpha*birth*wideAlpha*opticalIntensity;ctx.drawImage(glowSprite(color),p.x-bloomSize/2,p.y-bloomSize/2,bloomSize,bloomSize);}
+  ctx.restore();ctx.globalAlpha=fade*alpha*birth*(.72+.28*opticalIntensity);ctx.fillStyle=color;ctx.beginPath();ctx.arc(p.x,p.y,radius*(.4+.6*birth),0,tau);ctx.fill();ctx.globalAlpha=fade;
   if((chosen||match)&&birth>.5){ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=chosen?skyText():skyMuted();ctx.fillText(n.drawLabel||n.name,p.x+9,p.y+4);}
   if(visual.highlight||chosen){const pulse=chosen&&motionEnabled()?1+Math.sin(t/1000)*.08:1,flareSize=halo*(chosen?2.35:1.9)*pulse;ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*alpha*birth*(chosen?.34:.24);ctx.drawImage(glowSprite(color),p.x-flareSize/2,p.y-flareSize/2,flareSize,flareSize);ctx.restore();ctx.globalAlpha=fade;}
  }
  if(cosmicScene.depth===7&&zoom>=1.18)drawCosmicLocalSystem(now,fade);
+ for(const hole of data?.blackHoles||[])drawBlackHoleLensOverlay(hole,cosmicStars,cosmicStarEdges);
  for(const r of cosmicRecords){if(!r.p.onScreen||r.group.nodeID||r.group.key!==cosmicHover&&r.group.key!==cosmicSelected)continue;ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText(r.label,r.p.x+15,r.p.y-15);ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText(r.group.members.length+' 个真实节点',r.p.x+15,r.p.y);}
  if(!cosmicScene.members.length){ctx.font='13px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText('当前范围尚无已索引节点',cx-90,cy);}
  ctx.restore();projection=data?.projection||[];drawLiveGhosts(now,drift);

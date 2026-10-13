@@ -304,6 +304,10 @@
       ],
       [
         "node",
+        "scripts/starmap-lensing.test.cjs"
+      ],
+      [
+        "node",
         "scripts/starmap-path.test.cjs"
       ],
       [
