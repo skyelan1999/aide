@@ -33,9 +33,10 @@ type markdownRevision struct {
 	Assets      []markdownAsset `json:"assets"`
 }
 type markdownHistoryIndex struct {
-	LastRevision int                `json:"lastRevision,omitempty"`
-	Path         string             `json:"path"`
-	Versions     []markdownRevision `json:"versions"`
+	LastRevision     int                `json:"lastRevision,omitempty"`
+	ObservedRevision string             `json:"observedRevision,omitempty"`
+	Path             string             `json:"path"`
+	Versions         []markdownRevision `json:"versions"`
 }
 
 func (a *App) markdownHistoryConfig() (bool, bool) {
@@ -211,6 +212,31 @@ func (a *App) captureMarkdown(dir, p string, b []byte, embedded bool, read func(
 	index = retainMarkdown(index, policy, time.Now().UTC())
 	return atomicJSON(historyIndexPath(dir, p), index)
 }
+
+func changedMarkdownAssets(before, after []markdownAsset) []string {
+	previous := make(map[string]markdownAsset, len(before))
+	current := make(map[string]markdownAsset, len(after))
+	for _, asset := range before {
+		previous[asset.Path] = asset
+	}
+	for _, asset := range after {
+		current[asset.Path] = asset
+	}
+	changed := make([]string, 0)
+	for p, asset := range previous {
+		if next, ok := current[p]; !ok || next.Digest != asset.Digest || next.Status != asset.Status {
+			changed = append(changed, p)
+		}
+	}
+	for p := range current {
+		if _, ok := previous[p]; !ok {
+			changed = append(changed, p)
+		}
+	}
+	sort.Strings(changed)
+	return changed
+}
+
 func (a *App) withMarkdownHistory(identity, p string, b []byte, read func(string) ([]byte, error), write func() error) error {
 	enabled, embedded := a.markdownHistoryConfig()
 	if !enabled {
@@ -352,6 +378,7 @@ func (a *App) markdownHistoryData(source, p, revision, asset string) (map[string
 	// must remain usable when the live file is unavailable.
 	observation := "disabled"
 	var observationError string
+	var observationChange map[string]any
 	if enabled && revision == "" && (strings.EqualFold(path.Ext(p), ".md") || strings.EqualFold(path.Ext(p), ".markdown")) {
 		observation = "checked"
 		current, readErr := read(p)
@@ -361,6 +388,50 @@ func (a *App) markdownHistoryData(source, p, revision, asset string) (map[string
 		if readErr != nil {
 			observation = "unavailable"
 			observationError = readErr.Error()
+		} else {
+			index, indexErr := loadMarkdownIndex(dir, p)
+			if indexErr != nil {
+				return nil, indexErr
+			}
+			if n := len(index.Versions); n > 0 {
+				latest := index.Versions[n-1]
+				observed := -1
+				for i := range index.Versions {
+					if index.Versions[i].ID == index.ObservedRevision {
+						observed = i
+						break
+					}
+				}
+				if index.ObservedRevision == "" {
+					// Older indexes have no observation watermark. Treat the current
+					// latest revision as the initial baseline during migration.
+					index.ObservedRevision = latest.ID
+					if err := atomicJSON(historyIndexPath(dir, p), index); err != nil {
+						return nil, err
+					}
+				} else if latest.ID != index.ObservedRevision {
+					var previous *markdownRevision
+					if observed >= 0 {
+						copy := index.Versions[observed]
+						previous = &copy
+					}
+					changedAssets := []string{}
+					bodyChanged := false
+					if previous != nil {
+						bodyChanged = previous.Content != latest.Content
+						changedAssets = changedMarkdownAssets(previous.Assets, latest.Assets)
+					}
+					observationChange = map[string]any{
+						"version":       latest.ID,
+						"bodyChanged":   bodyChanged,
+						"assetsChanged": changedAssets,
+					}
+					index.ObservedRevision = latest.ID
+					if err := atomicJSON(historyIndexPath(dir, p), index); err != nil {
+						return nil, err
+					}
+				}
+			}
 		}
 	}
 	index, err := loadMarkdownIndex(dir, p)
@@ -371,7 +442,7 @@ func (a *App) markdownHistoryData(source, p, revision, asset string) (map[string
 	if len(visible) > 200 {
 		visible = visible[len(visible)-200:]
 	}
-	result := map[string]any{"enabled": enabled, "trackEmbedded": embedded, "path": p, "versions": visible, "total": len(index.Versions), "observation": observation, "observationError": observationError}
+	result := map[string]any{"enabled": enabled, "trackEmbedded": embedded, "path": p, "versions": visible, "total": len(index.Versions), "observation": observation, "observationError": observationError, "observationChange": observationChange}
 	if revision != "" {
 		for _, v := range index.Versions {
 			if v.ID == revision {

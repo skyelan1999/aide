@@ -30,6 +30,18 @@ func TestMarkdownHistoryObservedAssetsAndDedup(t *testing.T) {
 	}
 	put("page.md", "# Page\n![image](image.svg)")
 	put("image.svg", "<svg>first</svg>")
+	identity, read, err := a.historyTarget("", "page.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	captureBeforeListing := func() {
+		t.Helper()
+		a.historyMu.Lock()
+		defer a.historyMu.Unlock()
+		if err := a.captureMarkdown(a.markdownHistoryDir(identity), "page.md", []byte("# Page\n![image](image.svg)"), true, read); err != nil {
+			t.Fatal(err)
+		}
+	}
 	list := func() map[string]any {
 		t.Helper()
 		w := request(a, "GET", "/api/file/history?path=page.md", nil)
@@ -43,12 +55,31 @@ func TestMarkdownHistoryObservedAssetsAndDedup(t *testing.T) {
 	if got := list(); got["total"] != float64(1) || got["observation"] != "checked" {
 		t.Fatalf("first observation: %v", got)
 	}
-	if got := list(); got["total"] != float64(1) {
+	if got := list(); got["total"] != float64(1) || got["observationChange"] != nil {
 		t.Fatalf("unchanged duplicated: %v", got)
 	}
 	put("image.svg", "<svg>external</svg>")
+	// Another sync path can capture a change before the user opens history.
+	// The observation watermark must keep that change visible until listing.
+	captureBeforeListing()
 	if got := list(); got["total"] != float64(2) {
 		t.Fatalf("resource change missing: %v", got)
+	} else {
+		change, ok := got["observationChange"].(map[string]any)
+		assets, assetsOK := change["assetsChanged"].([]any)
+		if !ok || change["version"] != "000002" || change["bodyChanged"] != false || !assetsOK || len(assets) != 1 || assets[0] != "image.svg" {
+			t.Fatalf("resource change summary: %#v", got["observationChange"])
+		}
+	}
+	if got := list(); got["observationChange"] != nil {
+		t.Fatalf("already observed resource change repeated: %v", got)
+	}
+	put("page.md", "# Page revised\n![image](image.svg)")
+	captureBeforeListing()
+	if got := list(); got["total"] != float64(3) {
+		t.Fatalf("body change missing: %v", got)
+	} else if change, ok := got["observationChange"].(map[string]any); !ok || change["version"] != "000003" || change["bodyChanged"] != true || len(change["assetsChanged"].([]any)) != 0 {
+		t.Fatalf("body change summary: %#v", got["observationChange"])
 	}
 	w := request(a, "GET", "/api/file/history?path=page.md&revision=000001&asset=image.svg", nil)
 	requireStatus(t, w, 200)
@@ -58,7 +89,7 @@ func TestMarkdownHistoryObservedAssetsAndDedup(t *testing.T) {
 	if err := os.Remove(filepath.Join(a.workPath, "page.md")); err != nil {
 		t.Fatal(err)
 	}
-	if got := list(); got["observation"] != "unavailable" || got["total"] != float64(2) {
+	if got := list(); got["observation"] != "unavailable" || got["total"] != float64(3) {
 		t.Fatalf("unavailable must preserve history: %v", got)
 	}
 	requireStatus(t, request(a, "GET", "/api/file/history?path=page.md&revision=000001", nil), 200)

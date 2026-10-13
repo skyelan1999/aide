@@ -38,10 +38,11 @@
     const head=document.createElement('header'),title=document.createElement('h2'),close=document.createElement('button');title.textContent=t('历史版本')+' · '+spec.path;close.type='button';close.className='icon-button';close.textContent='×';close.setAttribute('aria-label',t('关闭'));close.onclick=()=>dialog.close();head.append(title,close);
     const status=document.createElement('p');status.className='muted';status.textContent=t(data.enabled?'已启用：只记录实际变更，直接修改原文件。':'追踪未启用；已有历史仍可查看。');
     if(data.observation==='checked')status.textContent+=' '+t('已检查当前正文与引用资源的外部变更。');
+    if(data.observationChange){const change=data.observationChange,parts=[];if(change.bodyChanged)parts.push(t('正文有变化'));if(change.assetsChanged?.length)parts.push(t('资源有变化')+' '+change.assetsChanged.join('、'));if(!parts.length)parts.push(t('版本指纹有变化'));status.textContent+=' '+t('本次检查发现新版本')+' '+change.version+'：'+parts.join('；')+'。';}
     if(data.observationError)status.textContent+=' '+t('当前文件检查失败：')+data.observationError;
     const layout=document.createElement('div');layout.className='md-history-layout';const list=document.createElement('nav'),detail=document.createElement('section');layout.append(list,detail);
-    let selection=0;
-    for(const v of [...data.versions].reverse()) {const item=document.createElement('button');item.type='button';item.className='quiet';item.textContent=v.id+' · '+new Date(v.created).toLocaleString();item.onclick=async()=>{
+    let selection=0,observedItem=null;
+    for(const v of [...data.versions].reverse()) {const item=document.createElement('button');item.type='button';item.className='quiet';item.textContent=v.id+' · '+new Date(v.created).toLocaleString();if(data.observationChange?.version===v.id)observedItem=item;item.onclick=async()=>{
      const pick=++selection;try{const q=query(spec);q.set('revision',v.id||v.ID);const revision=await api('/file/history?'+q);if(blocked()||pick!==selection||!dialog.open)return;
       detail.replaceChildren();const summary=document.createElement('p');summary.textContent=revision.content===currentText?t('正文相同；请查看引用资源指纹。'):t('正文与当前编辑内容不同。');detail.append(summary);
       const grids=document.createElement('div');grids.className='md-history-comparison';const diff=lineDiff(revision.content,currentText),panes=[];
@@ -82,7 +83,7 @@
     download.onclick=async()=>{download.disabled=true;try{const result=await backupRequest(true);if(!result)return;describe(result);const raw=Uint8Array.from(atob(result.base64),c=>c.charCodeAt(0)),url=URL.createObjectURL(new Blob([raw],{type:'application/zip'}));const link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);storageInfo.textContent+=' · '+t('已验证归档对象摘要');}catch(e){error(e);}finally{download.disabled=false;}};
     backupArea.append(storage,download,storageInfo);
     if(window.AideMarkdownHistoryManager)backupArea.append(window.AideMarkdownHistoryManager.render({spec,api,t,error,isActive:()=>!blocked()&&dialog.open&&request===epoch&&!['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')),onChanged:()=>dialog.close()}));
-    dialog.append(head,status,backupArea,layout);dialog.addEventListener('close',()=>{selection++;if(activeDialog===dialog)activeDialog=null;dialog.remove();},{once:true});document.body.append(dialog);dialog.showModal();close.focus();
+    dialog.append(head,status,backupArea,layout);dialog.addEventListener('close',()=>{selection++;if(activeDialog===dialog)activeDialog=null;dialog.remove();},{once:true});document.body.append(dialog);dialog.showModal();if(observedItem)observedItem.click();close.focus();
    }catch(e){error(e);}finally{button.disabled=false;}
   };
   return {refresh};

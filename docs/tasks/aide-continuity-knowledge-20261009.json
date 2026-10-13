@@ -3517,5 +3517,35 @@
     ],
     "release": "not_run",
     "push": "pending"
+  },
+  "progress_checkpoint_20261013_followup31": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "Markdown history now persists an observed-revision watermark so external edits remain detectable even when another sync path indexed the latest revision before the user opens history.",
+      "The history response reports the newly observed revision, whether Markdown body text changed, and changed embedded asset paths; the dialog displays a concise notice and automatically selects that revision for comparison.",
+      "Added Go regression coverage for body and embedded-asset changes already captured before the history-list request, including one-time notification behavior.",
+      "Native Safari on the running localhost:9999 service opened a disposable Markdown file, established revision 000001, then detected an external body edit as revision 000002. The history panel visibly stated that revision 000002 had a body change, selected it, and rendered the old/new text difference with automatic synchronized scrolling enabled.",
+      "Removed the temporary Safari acceptance Markdown file after verification."
+    ],
+    "remaining": [
+      "Commit and push this checkpoint after checks pass."
+    ],
+    "verification": {
+      "system_browser": "PASS: native Safari, localhost:9999; disposable doc/codex-history-observation-20261013b.md; external edit was detected as 000002 and selected with visible body diff.",
+      "targeted_go": "PASS: docker golang:1.26 gofmt and go test -mod=vendor ./internal/server -run TestMarkdownHistoryObservedAssetsAndDedup -count=1.",
+      "temporary_file_cleanup": "PASS: deleted the uniquely named temporary file from /local/Users/skyelan/debug/doc after Safari verification.",
+      "quick_profile": "PASS: python3 scripts/agent-route.py verify quick; 42 configured checks, fingerprint b7547bbac645b2a4ab6f7ed1a49b179064f714205382076067086c2c4c4cd12f, receipt .agent-state/verify-20261013T125712747981Z.log.",
+      "documentation_and_i18n": "PASS: python3 scripts/check_docs.py (188 Markdown files, 542 local links) and node scripts/test_i18n.cjs.",
+      "syntax_and_diff": "PASS: node --check markdown-history.js; node --check locales/en.js; git diff --check."
+    },
+    "deferred_by_user": [
+      "Real embedding/vector provider acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reports successful testing"
+    ],
+    "release": "not_run",
+    "push": "pending"
   }
 }
