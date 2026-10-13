@@ -46,7 +46,7 @@
   intro.append(node('h3','',t('当前会话 · 输入与输出')),node('p','muted','#'+(session.number||'?')+' · '+session.title),node('p','muted',t('已展示 {0} / {1} 轮任务',runs.length,session.runsTotal??runs.length)));content.append(intro);
   const replyFor=run=>finalOutput(run.steps,run.mode);
   const runTargets=new Map(runs.map(run=>[run.id,shellWriteTargets(run.toolUses)]));
-  const totals={inputs:runs.length,outputs:runs.filter(r=>replyFor(r)||r.error).length,files:runs.reduce((n,r)=>n+(r.files||[]).length,0),writeTargets:[...runTargets.values()].reduce((n,items)=>n+items.length,0)};
+  const totals={inputs:runs.length,outputs:runs.filter(r=>replyFor(r)).length,files:runs.reduce((n,r)=>n+(r.files||[]).length,0),writeTargets:[...runTargets.values()].reduce((n,items)=>n+items.length,0)};
   const metrics=node('div','outcome-metrics outcome-io-metrics');for(const [key,label]of [['inputs','输入轮次'],['outputs','助手回复'],['files','文件成果'],['writeTargets','写入目标线索']]){const cell=node('div');cell.append(node('strong','',totals[key]),node('span','',t(label)));metrics.append(cell);}content.append(metrics);
   const text=(host,value,markdown=false)=>{const body=node(markdown?'div':'pre',markdown?'outcome-io-answer md-body':'outcome-io-text');const source=String(value||'');if(markdown&&renderMarkdown)body.innerHTML=renderMarkdown(source);else body.textContent=source;host.append(body);};
   const phaseName=name=>({chat:t('助手回复'),agent:t('自主执行'),review:t('审查'),propose:t('方案'),plan:t('规划')})[name]||name||t('处理阶段');

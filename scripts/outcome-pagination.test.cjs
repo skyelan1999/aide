@@ -52,6 +52,20 @@ function overviewScenario(){
  all.find(e=>e.textContent==='查看本轮详情、审批与证据').onclick();assert.equal(chosen,'round');
  all.find(e=>e.textContent==='加载更早的输入与输出').onclick();assert.equal(older,1);
 }
+function overviewReplyCountScenario(){
+ const content=new Element('div'),context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)}};
+ vm.runInNewContext(fs.readFileSync('internal/server/web/task-outcome.js','utf8'),context);
+ const session={number:10,title:'Reply count fixture',runsTotal:2,runs:[
+  {id:'failed',mode:'chat',prompt:'Request that fails',status:'failed',error:'provider unavailable',steps:[],files:[],toolUses:[]},
+  {id:'answered',mode:'chat',prompt:'Request answered',status:'completed',steps:[{name:'chat',status:'completed',content:'Actual answer'}],files:[],toolUses:[]}
+ ]};
+ context.window.AideTaskOutcome.sessionOverview(content,{session,t:x=>x,selectRun(){},loadOlder(){}});
+ const metrics=descendants(content).find(e=>String(e.className||'').includes('outcome-io-metrics'));
+ const values=metrics.children.map(cell=>cell.children[0]?.textContent);
+ assert.deepEqual(values,['2','1','0','0'],'failed rounds must not be counted as assistant replies');
+ const failed=descendants(content).find(e=>String(e.className||'').includes('outcome-io-error'));
+ assert.ok(failed&&failed.textContent.includes('provider unavailable'),'the failure remains visible on its own turn');
+}
 async function overviewRefreshScenario(){
  const content=new Element('div'),timers=[],cleared=[];let updated,calls=0;
  const context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)},setInterval(fn,ms){timers.push({fn,ms});return timers.length;},clearInterval(id){cleared.push(id);}};
@@ -63,4 +77,4 @@ async function overviewRefreshScenario(){
  await timers[0].fn();assert.equal(calls,1);assert.equal(updated.runs[0].status,'completed');assert.equal(updated.runs[0].steps[0].content,'The final answer');
  mounted.close();assert.ok(cleared.includes(1),'overview polling stops when the view closes');
 }
-(async()=>{overviewScenario();await overviewRefreshScenario();for(const kind of ['stable','409','mismatch'])await scenario(kind);await runningRefreshScenario();console.log('PASS outcome overview live refresh, polling cleanup, pagination snapshot, stale export guard, explicit reload and running refresh');})().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{overviewScenario();overviewReplyCountScenario();await overviewRefreshScenario();for(const kind of ['stable','409','mismatch'])await scenario(kind);await runningRefreshScenario();console.log('PASS outcome overview reply counts, live refresh, polling cleanup, pagination snapshot, stale export guard, explicit reload and running refresh');})().catch(e=>{console.error(e);process.exitCode=1;});

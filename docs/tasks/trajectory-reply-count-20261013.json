@@ -1,0 +1,22 @@
+{
+  "id": "trajectory-reply-count-20261013",
+  "request": "Correct the session overview so failed runs without a recorded assistant body are not counted as assistant replies.",
+  "status": "implemented_pending_browser_acceptance",
+  "date": "2026-10-13",
+  "completed": [
+    "Changed the overview reply metric to count only runs with a recorded final response body.",
+    "Kept failed runs visible in their own turn with the error message.",
+    "Updated the continuity roadmap and user guide."
+  ],
+  "verification": {
+    "focused_regression": "PASS: node scripts/outcome-pagination.test.cjs; covers one completed response and one failed run without a body.",
+    "syntax_and_diff": "PASS: node --check internal/server/web/task-outcome.js; node --check scripts/outcome-pagination.test.cjs; git diff --check.",
+    "system_safari": "PENDING: localhost:9999 still holds synthetic long-running sessions and its UI bundle predates recent source changes; the service was not restarted to preserve those sessions.",
+    "release": "not_run"
+  },
+  "remaining": [
+    "Verify the corrected count in system Safari on a current-source candidate after the active synthetic sessions have ended.",
+    "Continue the larger continuity, remote-source, large-library, and release-gate acceptance."
+  ],
+  "push": "pending"
+}
