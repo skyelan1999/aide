@@ -3573,6 +3573,6 @@
       "Windows validation; user reports successful testing"
     ],
     "release": "Safari evidence recorded; sent historical chat replay remains a conditional/unverified criterion.",
-    "push": "PASS: implementation e6da2ee and Safari evidence checkpoint 78d80f3 are committed locally; push in progress."
+    "push": "PASS: implementation e6da2ee and Safari evidence checkpoint are on origin/main."
   }
 }
