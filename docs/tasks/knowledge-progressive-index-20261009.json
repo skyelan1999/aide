@@ -351,8 +351,24 @@
       "Real FTP/FTPS network acceptance",
       "Single-resource HTTP/SMB and MCP scope semantics",
       "Large-library performance",
-      "System Safari and Windows acceptance",
+      "System Safari acceptance",
       "Real provider integration"
+    ]
+  },
+  "busy_update_fallback_checkpoint_20261014": {
+    "status": "partial",
+    "implementation": "GET /api/knowledge-map/updates immediately serves an immutable, last-complete view while another scan owns the gate; response carries stale=true and an explicit warning. Fallback is scoped by workspace, epoch and index policy; searches and forced snapshots do not use it.",
+    "verification": {
+      "focused_go": "PASS: TestKnowledgeUpdatesServePublishedGraphWhileScanIsBusy and TestKnowledgeProgressiveUpdateAPI, 1.489s",
+      "safety": "The regression holds the scan gate, checks the cached revision and stale marker, then changes workspace epoch and verifies the old view is not returned.",
+      "frontend": "node --check internal/server/web/starmap.js PASS; git diff --check PASS",
+      "system_safari": "PASS: authenticated Safari on isolated candidate https://localhost:18542/starmap.html rendered 1711 stars / 3121 connections and source coverage labels after final start.command rebuild. A forced busy scan was not induced in Safari, so visible stale-status interaction remains unverified.",
+      "candidate": "start.command rebuilt only aide-physics-optics-20261013 on port 18542; no production port was restarted."
+    },
+    "remaining": [
+      "Force a concurrent slow scan in system Safari and observe the stale-status notice followed by automatic catch-up",
+      "Large-library performance",
+      "Independent user remote-provider acceptance"
     ]
   }
 }

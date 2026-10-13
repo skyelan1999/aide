@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -118,6 +119,46 @@ func TestKnowledgeProgressiveUpdateAPI(t *testing.T) {
 	if progressiveFileCount(a.knowledgeUpdates.views[0].graph) < 850 {
 		t.Fatal("API kept first batch only")
 	}
+}
+
+func TestKnowledgeUpdatesServePublishedGraphWhileScanIsBusy(t *testing.T) {
+	a := testApp(t)
+	for i := 0; i < 8; i++ {
+		if e := os.WriteFile(filepath.Join(a.workPath, fmt.Sprintf("cached-%d.txt", i)), []byte("cached"), 0600); e != nil {
+			t.Fatal(e)
+		}
+	}
+	first := request(a, "GET", "/api/knowledge-map/updates", nil)
+	requireStatus(t, first, 200)
+	var baseline knowledgeUpdateResponse
+	if err := json.Unmarshal(first.Body.Bytes(), &baseline); err != nil {
+		t.Fatal(err)
+	}
+	if baseline.Revision == "" || !baseline.Reset || len(baseline.Nodes) == 0 {
+		t.Fatalf("initial snapshot was incomplete: %+v", baseline)
+	}
+
+	state := &a.knowledgeUpdates
+	state.gate <- struct{}{} // Simulate another request owning a long scan.
+	busy := request(a, "GET", "/api/knowledge-map/updates?cursor="+baseline.Revision, nil)
+	<-state.gate
+	requireStatus(t, busy, 200)
+	var stale knowledgeUpdateResponse
+	if err := json.Unmarshal(busy.Body.Bytes(), &stale); err != nil {
+		t.Fatal(err)
+	}
+	if !stale.Stale || stale.Revision != baseline.Revision || len(stale.Nodes) != 0 || len(stale.Warnings) == 0 {
+		t.Fatalf("busy scan did not return a clearly marked cached delta: %+v", stale)
+	}
+
+	// A workspace epoch change must invalidate the fallback immediately.
+	a.mu.Lock()
+	a.wsRevision++
+	a.mu.Unlock()
+	state.gate <- struct{}{}
+	changed := request(a, "GET", "/api/knowledge-map/updates?cursor="+baseline.Revision, nil)
+	<-state.gate
+	requireStatus(t, changed, 503)
 }
 
 func TestKnowledgeProgressiveRejectsReplacedAncestor(t *testing.T) {

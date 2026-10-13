@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -24,10 +25,20 @@ type knowledgeUpdateState struct {
 	epoch      uint64
 	policy     string
 	views      [2]*knowledgeUpdateView
+	published  [2]atomic.Pointer[knowledgePublishedView]
 	remoteMu   sync.Mutex
 	remote     map[string]*knowledgeRemoteMemo
 	originOnce sync.Once
 	originSeed []byte
+}
+
+// Published views are immutable. They let the lightweight updates endpoint
+// answer from the last complete graph while a newer scan owns the gate.
+type knowledgePublishedView struct {
+	workspace string
+	epoch     uint64
+	policy    string
+	view      knowledgeUpdateView
 }
 
 type knowledgeUpdateView struct {
@@ -58,6 +69,7 @@ type knowledgeUpdateResponse struct {
 	Truncated    bool                  `json:"truncated"`
 	Code         *knowledgeCodeSummary `json:"code,omitempty"`
 	Sources      []knowledgeSource     `json:"sources"`
+	Stale        bool                  `json:"stale,omitempty"`
 }
 
 type knowledgeFileStamp struct {
@@ -247,7 +259,7 @@ func knowledgeGraphRevision(g *knowledgeGraph) knowledgeRevision {
 
 func knowledgeDelta(view *knowledgeUpdateView, cursor string) knowledgeUpdateResponse {
 	g := view.graph
-	out := knowledgeUpdateResponse{Workspace: g.Workspace, Revision: view.revision, Nodes: []knowledgeNode{}, RemovedNodes: []string{}, Edges: []knowledgeEdge{}, RemovedEdges: []knowledgeEdge{}, Warnings: g.Warnings, Truncated: g.Truncated, Code: g.Code, Sources: g.Sources}
+	out := knowledgeUpdateResponse{Workspace: g.Workspace, Revision: view.revision, Nodes: []knowledgeNode{}, RemovedNodes: []string{}, Edges: []knowledgeEdge{}, RemovedEdges: []knowledgeEdge{}, Warnings: append([]string(nil), g.Warnings...), Truncated: g.Truncated, Code: g.Code, Sources: g.Sources}
 	var baseline *knowledgeRevision
 	for i := range view.history {
 		if cursor != "" && view.history[i].id == cursor {
@@ -330,15 +342,23 @@ func (a *App) knowledgeAcquireView(ctx context.Context, includeCode, force bool)
 		return nil, nil, knowledgeSyncFailure{503, "资料更新扫描繁忙；保留当前星图，稍后重试"}
 	}
 	release := func() { <-state.gate }
-	success := false
-	defer func() {
-		if !success {
-			release()
-		}
-	}()
+	view, err := a.knowledgeAcquireViewLocked(ctx, includeCode, force)
+	if err != nil {
+		release()
+		return nil, nil, err
+	}
+	return view, release, nil
+}
+
+// knowledgeAcquireViewLocked runs after the caller has acquired state.gate.
+func (a *App) knowledgeAcquireViewLocked(ctx context.Context, includeCode, force bool) (*knowledgeUpdateView, error) {
+	state := &a.knowledgeUpdates
 	workspace, epoch, policy := a.knowledgeUpdatesIdentity()
 	if state.workspace != workspace || state.epoch != epoch || state.policy != policy {
 		state.workspace, state.epoch, state.policy, state.views = workspace, epoch, policy, [2]*knowledgeUpdateView{}
+		for i := range state.published {
+			state.published[i].Store(nil)
+		}
 	}
 	mode := 0
 	if includeCode {
@@ -355,12 +375,15 @@ func (a *App) knowledgeAcquireView(ctx context.Context, includeCode, force bool)
 		view.checked = time.Now() // Also throttle failed/cancelled attempts.
 		if ctx.Err() != nil || cache.err != nil {
 			view.failed = true
-			return nil, nil, knowledgeSyncFailure{503, "资料更新扫描未完成；保留当前星图，稍后自动重试"}
+			return nil, knowledgeSyncFailure{503, "资料更新扫描未完成；保留当前星图，稍后自动重试"}
 		}
 		currentWorkspace, currentEpoch, currentPolicy := a.knowledgeUpdatesIdentity()
 		if workspace != g.Workspace || currentWorkspace != workspace || currentEpoch != epoch || currentPolicy != policy {
 			state.workspace, state.views = "", [2]*knowledgeUpdateView{}
-			return nil, nil, knowledgeSyncFailure{409, "工作区已切换，请重新同步星图"}
+			for i := range state.published {
+				state.published[i].Store(nil)
+			}
+			return nil, knowledgeSyncFailure{409, "工作区已切换，请重新同步星图"}
 		}
 		if err := a.knowledgeLocalCommit(ctx, cache, epoch); err != nil {
 			g.Warnings = append(g.Warnings, "本地索引检查点未保存："+err.Error())
@@ -379,14 +402,44 @@ func (a *App) knowledgeAcquireView(ctx context.Context, includeCode, force bool)
 		view.graph, view.revision, view.cache, view.failed = g, revision.id, cache, false
 	}
 	if view.failed || view.revision == "" {
-		return nil, nil, knowledgeSyncFailure{503, "资料更新扫描未完成；保留当前星图，稍后自动重试"}
+		return nil, knowledgeSyncFailure{503, "资料更新扫描未完成；保留当前星图，稍后自动重试"}
 	}
 	currentWorkspace, currentEpoch, currentPolicy := a.knowledgeUpdatesIdentity()
 	if ctx.Err() != nil || currentWorkspace != workspace || currentEpoch != epoch || currentPolicy != policy {
-		return nil, nil, knowledgeSyncFailure{409, "工作区已切换或请求已取消，请重新同步星图"}
+		return nil, knowledgeSyncFailure{409, "工作区已切换或请求已取消，请重新同步星图"}
 	}
-	success = true
-	return view, release, nil
+	publishedView := *view
+	publishedView.history = append([]knowledgeRevision(nil), view.history...)
+	state.published[mode].Store(&knowledgePublishedView{workspace: workspace, epoch: epoch, policy: policy, view: publishedView})
+	return view, nil
+}
+
+// knowledgeAcquireUpdatesView avoids making the UI wait behind a potentially
+// expensive scan. Only this delta endpoint may use the last complete graph.
+func (a *App) knowledgeAcquireUpdatesView(ctx context.Context, includeCode bool) (*knowledgeUpdateView, func(), bool, error) {
+	state := &a.knowledgeUpdates
+	state.once.Do(func() { state.gate = make(chan struct{}, 1) })
+	mode := 0
+	if includeCode {
+		mode = 1
+	}
+	select {
+	case state.gate <- struct{}{}:
+		view, err := a.knowledgeAcquireViewLocked(ctx, includeCode, false)
+		if err != nil {
+			<-state.gate
+			return nil, nil, false, err
+		}
+		return view, func() { <-state.gate }, false, nil
+	default:
+		workspace, epoch, policy := a.knowledgeUpdatesIdentity()
+		published := state.published[mode].Load()
+		if published != nil && published.workspace == workspace && published.epoch == epoch && published.policy == policy {
+			view := published.view
+			return &view, func() {}, true, nil
+		}
+		return nil, nil, false, knowledgeSyncFailure{503, "资料更新扫描繁忙；尚无可用的完整快照，请稍后重试"}
+	}
 }
 func (a *App) knowledgeCurrentGraph(ctx context.Context, includeCode bool) (knowledgeGraph, error) {
 	view, release, err := a.knowledgeAcquireView(ctx, includeCode, true)
@@ -405,13 +458,18 @@ func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
-	view, release, err := a.knowledgeAcquireView(ctx, r.URL.Query().Get("code") == "1", false)
+	view, release, stale, err := a.knowledgeAcquireUpdatesView(ctx, r.URL.Query().Get("code") == "1")
 	if err != nil {
 		knowledgeSyncFail(w, err)
 		return
 	}
 	defer release()
-	jsonOut(w, http.StatusOK, knowledgeDelta(view, cursor))
+	response := knowledgeDelta(view, cursor)
+	response.Stale = stale
+	if stale {
+		response.Warnings = append(response.Warnings, "当前展示上次完整索引；新扫描进行中，完成后会自动追平")
+	}
+	jsonOut(w, http.StatusOK, response)
 }
 
 // knowledgeMapIdentity lets a client select a workspace- and policy-specific

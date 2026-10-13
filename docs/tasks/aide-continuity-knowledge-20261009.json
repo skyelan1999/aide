@@ -3620,5 +3620,22 @@
       "Continue remaining objective-wide end-to-end acceptance; vector provider remains deferred by the user and Windows remains out of agent scope."
     ],
     "release": "No code changed; this checkpoint documents verification only. No service was restarted and no release state changed."
+  },
+  "progress_checkpoint_20261014_followup35": {
+    "status": "partial",
+    "date": "2026-10-14",
+    "summary": "Improved Knowledge Map update responsiveness during a concurrent progressive scan by serving an explicitly marked, immutable last-complete view, scoped to matching workspace/epoch/policy. The broader continuity and release objective remains active.",
+    "verification": {
+      "focused_go": "PASS: TestKnowledgeUpdatesServePublishedGraphWhileScanIsBusy and TestKnowledgeProgressiveUpdateAPI, 1.489s.",
+      "candidate_build": "start.command rebuilt isolated aide-physics-optics-20261013 on port 18542; build includes go vet and go build. Production 9999 was not restarted.",
+      "system_safari": "PASS: authenticated native Safari loaded https://localhost:18542/starmap.html after rebuild and displayed 1711 stars, 3121 connections and progressive source-coverage labels. Browser was not forced into a busy scan, so stale-status rendering/catch-up remains unverified.",
+      "static": "node --check internal/server/web/starmap.js and git diff --check PASS."
+    },
+    "remaining": [
+      "Safari interaction with a deliberately concurrent slow scan and its automatic catch-up",
+      "Objective-wide pending SSH/browser workflows and large-library performance",
+      "Real vector-provider acceptance remains deferred by user; Windows validation is out of scope per user report"
+    ],
+    "release": "No production release or deployment; objective remains active."
   }
 }
