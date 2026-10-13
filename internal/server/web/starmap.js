@@ -373,8 +373,8 @@ function cosmicData(key){
   if(!batches.has(key))batches.set(key,{kind:e.kind,dashed:e.dashed,hierarchy:e.hierarchy,energyBand,edges:[]});batches.get(key).edges.push(e);
  }
  // Faint source gas preserves region recognition; it is not counted as a unit.
- const gas=new Map();for(const star of stars){const key=star.n.cluster?.key||star.n.region||'source';if(!gas.has(key))gas.set(key,{x:0,y:0,count:0,key,texture:cloudTexture(key,mapPalette.nebula)});const zone=gas.get(key);zone.x+=star.x;zone.y+=star.y;zone.count++;}
- for(const zone of gas.values()){zone.x/=zone.count;zone.y/=zone.count;zone.spread=Math.min(.28,.05+Math.sqrt(zone.count)*.012);}
+ const gas=new Map();for(const star of stars){const key=star.n.cluster?.key||star.n.region||'source';if(!gas.has(key))gas.set(key,{x:0,y:0,count:0,energy:0,key,texture:cloudTexture(key,mapPalette.nebula)});const zone=gas.get(key);zone.x+=star.x;zone.y+=star.y;zone.count++;zone.energy+=window.AideCosmicPhysics?.powerProxy(star.n.connectionCount)||0;}
+ for(const zone of gas.values()){zone.x/=zone.count;zone.y/=zone.count;zone.spread=Math.min(.28,.05+Math.sqrt(zone.count)*.012);zone.illumination=zone.count?Math.min(1,Math.log1p(zone.energy/zone.count)/3):0;}
  const gravity=window.AideStarGravity?.analyze(graph.nodes,graph.edges,records.map(record=>record.group));
  const recordByGroup=new Map(records.map(record=>[record.group.key,record]));
  const blackHoles=(gravity?.blackHoles||[]).map(hole=>({...hole,record:recordByGroup.get(hole.groupKey),phase:seeded(hole.groupKey+'black-hole-phase')})).filter(hole=>hole.record);
@@ -420,25 +420,25 @@ function cosmicStarPick(x,y){let nearest=null,distance=11;for(const star of cosm
 function cosmicGatePick(x,y){let nearest=null,distance=13;for(const gate of cosmicGates){if(!gate.p?.onScreen)continue;const d=Math.hypot(gate.p.x-x,gate.p.y-y);if(d<distance){distance=d;nearest=gate;}}return nearest;}
 function drawBlackHole(hole,now){
  const p=hole.record.p;if(!p.onScreen)return;const r=hole.radius;
- // Compact observation-inspired silhouette. Keep the disk as a crescent, not
- // a complete ellipse: at overview scale a full bright ellipse reads as a ringed planet.
- // The arcs suggest lensing and Doppler asymmetry; this is not ray tracing or a physical mass.
- const view=.18+((hole.phase||0)%1)*.16, tilt=(view-.26)*.7, shadowR=r*.39, diskX=r*.88;
+ // The image scale is graph-derived, but disk color and sector brightness use
+ // Schwarzschild redshift, local orbital velocity and relativistic beaming.
+ const physics=window.AideCosmicPhysics,view=physics?.diskView(pitch)||.28,tilt=physics?.diskPositionAngle(yaw)||0,shadowR=r*.39,rs=shadowR/(1.5*Math.sqrt(3));
  const drift=motionEnabled()?Math.sin(now/5600+(hole.phase||0)*tau):0;
  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(tilt);
- // Soft, compact plasma haze avoids the broad capsule glow of the earlier disk.
- ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.16;const haze=ctx.createRadialGradient(0,0,shadowR*.72,0,0,r*1.2);haze.addColorStop(0,'#ff9c62');haze.addColorStop(.26,'#e76d48a0');haze.addColorStop(.62,mapPalette.nebula+'32');haze.addColorStop(1,mapPalette.nebula+'00');ctx.fillStyle=haze;ctx.fillRect(-r*1.22,-r*1.22,r*2.44,r*2.44);
- ctx.lineCap='round';ctx.lineJoin='round';
- // The central shadow is deliberately simple and unlit. Lensing and the
- // photon-ring cue are drawn later as a separate optical overlay layer.
- ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.fillStyle='#020305';ctx.beginPath();ctx.arc(0,0,shadowR,0,tau);ctx.fill();
- // The foreground flow is one low crescent. Its warm receding side is dimmer;
- // a restrained pale blue highlight marks the approaching side.
- const flow=ctx.createLinearGradient(-diskX,0,diskX,0);flow.addColorStop(0,'#a84d3c45');flow.addColorStop(.24,'#df8058a0');flow.addColorStop(.55,'#ffd1a0e8');flow.addColorStop(.8,'#d7eaffdd');flow.addColorStop(1,'#91bce733');
- ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.7;ctx.shadowColor='#f2a875';ctx.shadowBlur=Math.max(.8,r*.05);ctx.strokeStyle=flow;ctx.lineWidth=Math.max(.65,r*.04);ctx.beginPath();ctx.moveTo(-diskX,-shadowR*.06);ctx.bezierCurveTo(-r*.55,r*.08,-r*.38,r*.53,r*.12,r*.56);ctx.bezierCurveTo(r*.5,r*.58,r*.63,r*.23,r*.76,r*.06);ctx.stroke();
- ctx.globalAlpha=.36;ctx.shadowColor='#e8f2ff';ctx.shadowBlur=Math.max(.6,r*.028);ctx.strokeStyle='#dceaff';ctx.lineWidth=Math.max(.4,r*.014);ctx.beginPath();ctx.moveTo(r*.23,r*.53);ctx.quadraticCurveTo(r*.55,r*.5,r*.73,r*.14);ctx.stroke();ctx.shadowBlur=0;
- // A subtle orbiting hotspot remains tied to the animation preference.
- if(drift){const x=r*.18+Math.cos(drift*.45)*r*.32,y=r*.46+Math.sin(drift*.45)*r*.07;ctx.globalAlpha=.36;ctx.shadowColor='#fff0d8';ctx.shadowBlur=Math.max(.8,r*.045);ctx.fillStyle='#fff0dc';ctx.beginPath();ctx.arc(x,y,Math.max(.45,r*.018),0,tau);ctx.fill();}
+ ctx.scale(1,view);ctx.lineCap='round';ctx.lineJoin='round';ctx.globalCompositeOperation='lighter';
+ // Multiple optically thin disk bands; each azimuth uses its own line-of-sight
+ // Doppler factor. The near side is brighter and bluer, the receding side dimmer.
+ const bands=[[3.15,3.7],[3.85,4.8],[5.0,6.5],[6.8,9.0]];
+ for(const [inner,outer] of bands){const radius=rs*(inner+outer)*.5,pixelRadius=radius,thickness=rs*(outer-inner)*.82;
+  for(let i=0;i<72;i++){const a=tau*(i+.5)/72,los=Math.sin(a)*Math.sqrt(1-view*view),emission=physics?.accretionEmission(rs,radius,los)||{shift:.8+Math.max(0,los)*.45,intensity:.35};
+   const opacity=Math.min(.92,.12+emission.intensity*2.3)*(1-Math.abs(Math.cos(a))*.16);ctx.globalAlpha=opacity;ctx.strokeStyle=physics?.temperatureColor(emission.shift)||(los>0?'#cde8ff':'#e38b61');ctx.lineWidth=Math.max(.5,thickness);ctx.beginPath();ctx.arc(0,0,pixelRadius,a-.035,a+.035);ctx.stroke();
+  }
+ }
+ // Photon sphere and event-horizon shadow are distinct scales. The broken rim
+ // is an optical cue; background stars and relationships receive the lens pass below.
+ ctx.globalCompositeOperation='source-over';ctx.globalAlpha=.98;ctx.fillStyle='#020305';ctx.beginPath();ctx.arc(0,0,shadowR*.385,0,tau);ctx.fill();
+ ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.28;ctx.strokeStyle='#d9e9fa';ctx.lineWidth=Math.max(.45,r*.012);ctx.beginPath();ctx.arc(0,0,shadowR,-2.72,-.63);ctx.stroke();ctx.globalAlpha=.2;ctx.strokeStyle='#f4b87f';ctx.beginPath();ctx.arc(0,0,shadowR,.18,1.05);ctx.stroke();
+ if(drift){const a=drift*.45,rHot=rs*4.25,x=Math.cos(a)*rHot,y=Math.sin(a)*rHot*view;ctx.globalAlpha=.65;ctx.fillStyle='#fff2d9';ctx.shadowColor='#ffd9a5';ctx.shadowBlur=Math.max(1,r*.04);ctx.beginPath();ctx.arc(x,y,Math.max(.5,r*.018),0,tau);ctx.fill();ctx.shadowBlur=0;}
  ctx.restore();ctx.globalCompositeOperation='source-over';
 }
 function drawBlackHoleLensOverlay(hole,stars,edges){
@@ -485,6 +485,17 @@ function drawCosmicGate(gate,cx,cy,zoom,fade=1,orbitScale=1){
  ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*(.44+brightness*.5);const core=ctx.createRadialGradient(0,0,0,0,0,9+capacity*5);core.addColorStop(0,'#ffffff');core.addColorStop(.18,aperture);core.addColorStop(.54,aperture+'a0');core.addColorStop(1,aperture+'00');ctx.fillStyle=core;ctx.beginPath();ctx.ellipse(0,0,3+capacity*2,6+capacity*4,0,0,tau);ctx.fill();ctx.restore();ctx.globalCompositeOperation='source-over';
  if(zoom>=1.55){ctx.font='10px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText('跃迁门 · '+gate.targetLabel,gx+12,gy-7);ctx.globalAlpha=fade*.76;ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText('稳定 '+Math.round(stability*100)+'% · 通行规模 '+Math.round(capacity*100)+'%',gx+12,gy+7);}
 }
+function drawCosmicPlanet(node,x,y,r,hostPower,orbitRadius,phase,lightX,lightY,fade=1){
+ const physics=window.AideCosmicPhysics,observerAngle=yaw*.6-Math.PI/2,observerX=Math.cos(observerAngle),observerY=Math.sin(observerAngle),phaseAngle=Math.acos(clamp(-Math.cos(phase)*observerX-Math.sin(phase)*observerY,-1,1));
+ const reflected=physics?.reflectedFlux(hostPower,orbitRadius,phaseAngle,.28)||.04,albedoLight=clamp(.24+Math.sqrt(reflected)*1.9,.26,.88),color=node.starColor||mapPalette.star,dx=lightX-x,dy=lightY-y;
+ ctx.save();ctx.globalAlpha=fade*.18;ctx.strokeStyle=color;ctx.lineWidth=.45;ctx.beginPath();ctx.ellipse(lightX,lightY,Math.hypot(dx,dy)*1.02,Math.hypot(dx,dy)*.72,-.2,0,tau);ctx.stroke();
+ ctx.globalAlpha=fade*(.34+albedoLight*.5);ctx.fillStyle='#060a0e';ctx.beginPath();ctx.arc(x,y,r*1.08,0,tau);ctx.fill();ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,tau);ctx.clip();
+ const light=ctx.createRadialGradient(x+dx*.42,y+dy*.42,r*.08,x,y,r*1.4);light.addColorStop(0,'#ffffff');light.addColorStop(.23,color);light.addColorStop(.7,color+'b0');light.addColorStop(1,'#020509');ctx.globalAlpha=fade*(.46+albedoLight*.48);ctx.fillStyle=light;ctx.fillRect(x-r,y-r,r*2,r*2);
+ const night=ctx.createLinearGradient(x+dx*.25-dy*.2,y+dy*.25+dx*.2,x-dx*.25+dy*.2,y-dy*.25-dx*.2);night.addColorStop(0,'#00000000');night.addColorStop(.52,'#02050918');night.addColorStop(1,'#020509d0');ctx.globalAlpha=fade*.78;ctx.fillStyle=night;ctx.fillRect(x-r,y-r,r*2,r*2);ctx.restore();ctx.globalAlpha=fade*(.2+albedoLight*.3);ctx.strokeStyle=color;ctx.lineWidth=Math.max(.35,r*.09);ctx.beginPath();ctx.arc(x,y,r*.9,-Math.PI*.78,Math.PI*.78);ctx.stroke();ctx.restore();
+}
+function cosmicLensDistance(point,a,b){const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy,t=den?clamp(((point.x-a.x)*dx+(point.y-a.y)*dy)/den,0,1):0;return Math.hypot(a.x+dx*t-point.x,a.y+dy*t-point.y);}
+function cosmicLensAffectsStar(star,holes){return holes.some(hole=>hole.record.p.onScreen&&Math.hypot(star.p.x-hole.record.p.x,star.p.y-hole.record.p.y)<hole.radius*.39*2.7);}
+function cosmicLensAffectsEdge(edge,holes){return holes.some(hole=>hole.record.p.onScreen&&cosmicLensDistance(hole.record.p,edge.a,edge.b)<hole.radius*.39*2.7);}
 function drawCosmicLocalSystem(now,fade=1){
  cosmicLocalHits=[];const focus=cosmicStars.find(star=>star.n.id===cosmicFocusID);if(!focus?.p.onScreen)return;
  const center=focus.p,edges=(edgeAdjacency.get(focus.n.id)||[]).filter(edge=>!['contains','defines'].includes(edge.kind)),byID=new Map();
@@ -496,11 +507,11 @@ function drawCosmicLocalSystem(now,fade=1){
  const gateAnchors=[...cosmicGates].sort((a,b)=>b.count-a.count||a.targetLabel.localeCompare(b.targetLabel)).slice(0,8);
  for(const gate of gateAnchors){const node=nodeByID.get(gate.anchorNodeID);if(node&&!byID.has(node.id)){byID.set(node.id,{node,edge:null,gateAnchor:true});neighbors.push({node,edge:null,gateAnchor:true});}}
  const localScale=1+Math.max(0,zoom-1)*.48,positions=new Map([[focus.n.id,center]]);
- if(neighbors.length){ctx.save();ctx.globalAlpha=fade*.24;ctx.strokeStyle=mapPalette.star;ctx.lineWidth=.7;ctx.setLineDash([2,5]);ctx.beginPath();ctx.ellipse(center.x,center.y,76*localScale,54*localScale,-.28,0,tau);ctx.stroke();ctx.setLineDash([]);
-  neighbors.forEach(({node,edge},index)=>{const angle=-Math.PI*.5+tau*index/neighbors.length,radius=(66+Math.min(24,Math.log2((node.connectionCount||0)+1)*5))*localScale,x=center.x+Math.cos(angle)*radius,y=center.y+Math.sin(angle)*radius*.72,visual=stellarVisual(node,null,false,false),mag=Math.sqrt(zoom),r=Math.max(1.25,Math.min(3.4,visual.radius*.56))*mag;
+ if(neighbors.length){ctx.save();ctx.globalAlpha=fade*.2;ctx.strokeStyle=mapPalette.star;ctx.lineWidth=.7;ctx.setLineDash([2,5]);ctx.beginPath();ctx.ellipse(center.x,center.y,76*localScale,54*localScale,-.28,0,tau);ctx.stroke();ctx.setLineDash([]);const hostPower=window.AideCosmicPhysics?.powerProxy(focus.n.connectionCount)||.1,observer=Math.atan2(.11,-.18);
+  neighbors.forEach(({node,edge},index)=>{const phase=seeded(node.id+'orbit-phase')*tau+(motionEnabled()?now/50000:0),orbitRadius=1+index*.22,radius=(58+index*9)*localScale,x=center.x+Math.cos(phase)*radius,y=center.y+Math.sin(phase)*radius*.72,mag=Math.sqrt(zoom),r=Math.max(1.35,Math.min(4.2,.85+Math.log2((node.connectionCount||0)+1)*.42))*mag;
    positions.set(node.id,{x,y});const hit={n:node,p:{x,y,onScreen:true},owner:{group:focus.owner.group},local:true};cosmicLocalHits.push(hit);
    if(edge){ctx.globalAlpha=fade*.36;ctx.strokeStyle=mapPalette.star;ctx.lineWidth=.7;ctx.setLineDash(edge.dashed?[3,4]:[]);ctx.beginPath();ctx.moveTo(center.x,center.y);ctx.lineTo(x,y);ctx.stroke();ctx.setLineDash([]);}
-   ctx.globalAlpha=fade*.82;ctx.fillStyle=node.starColor||mapPalette.star;ctx.beginPath();ctx.arc(x,y,r,0,tau);ctx.fill();ctx.globalAlpha=fade*.38;ctx.drawImage(glowSprite(node.starColor||mapPalette.star),x-visual.halo*.25*mag,y-visual.halo*.25*mag,visual.halo*.5*mag,visual.halo*.5*mag);
+   drawCosmicPlanet(node,x,y,r,hostPower,orbitRadius,(phase-observer+Math.PI+tau)%tau,center.x,center.y,fade);const halo=Math.max(7,Math.log2((node.connectionCount||0)+1)*5)*mag;ctx.globalAlpha=fade*.32;ctx.drawImage(glowSprite(node.starColor||mapPalette.star),x-halo/2,y-halo/2,halo,halo);
    if(zoom>=1.7){ctx.globalAlpha=fade*.92;ctx.font='10px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText(node.drawLabel||node.name||node.id,x+7,y-5);ctx.globalAlpha=fade*.68;ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText((node.connectionCount||0)+' 条连接',x+7,y+8);}
   });ctx.restore();
  }
@@ -517,14 +528,14 @@ function drawCosmos(now,t){
  const cx=width*(.57+skyFloat.x),cy=height*(.5+skyFloat.y),drift=0;
  ctx.save();ctx.globalAlpha=fade;ctx.translate(cx,cy);ctx.scale(scale,scale);ctx.translate(-cx,-cy);
  // Nebula gas is atmosphere only; foreground stars and node-worlds always map to real IDs.
- for(const zone of data?.gas||[]){const x=cx+(zone.x+cosmicAimX+yaw*.22+drift)*width*zoom,y=cy+(zone.y+cosmicAimY+(pitch-.1)*.18)*height*zoom,size=Math.max(90,zone.spread*width*3.1*zoom);if(x+size/2<0||x-size/2>width||y+size*.4<0||y-size*.4>height)continue;ctx.save();ctx.globalAlpha=fade*.12;ctx.translate(x,y);ctx.rotate(-.32);ctx.drawImage(zone.texture,-size/2,-size*.36,size,size*.72);ctx.restore();}
+ for(const zone of data?.gas||[]){const x=cx+(zone.x+cosmicAimX+yaw*.22+drift)*width*zoom,y=cy+(zone.y+cosmicAimY+(pitch-.1)*.18)*height*zoom,size=Math.max(90,zone.spread*width*3.1*zoom);if(x+size/2<0||x-size/2>width||y+size*.4<0||y-size*.4>height)continue;const flux=window.AideCosmicPhysics?.inverseSquareFlux(zone.illumination+.06,Math.max(.4,Math.hypot(zone.x,zone.y)*2+1))||.02;ctx.save();ctx.globalAlpha=fade*(.035+Math.min(.12,Math.sqrt(flux)*.23));ctx.translate(x,y);ctx.rotate(-.32);ctx.drawImage(zone.texture,-size/2,-size*.36,size,size*.72);ctx.restore();}
  for(const r of cosmicRecords){const p=r.p;p.x=cx+(r.x+cosmicAimX+yaw*.22+drift)*width*zoom/r.z;p.y=cy+(r.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/r.z;p.onScreen=p.x>-100&&p.x<width+100&&p.y>-100&&p.y<height+100;r.radius=r.group.nodeID?10:Math.max(25,r.spread*width*zoom/r.z*.65);if(r.texture&&p.onScreen){const size=Math.max(110,r.spread*width*3.6*zoom/r.z);ctx.save();ctx.globalAlpha=fade*.13;ctx.translate(p.x,p.y);ctx.rotate(-.32+r.phase*.13);ctx.drawImage(r.texture,-size/2,-size/2,size,size);ctx.restore();}}
  for(const star of cosmicStars){const p=star.p;p.x=cx+(star.x+cosmicAimX+yaw*.22+drift)*width*zoom/star.z;p.y=cy+(star.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/star.z;p.onScreen=p.x>-30&&p.x<width+30&&p.y>-30&&p.y<height+30;if(star.owner.group.nodeID){star.owner.p.x=p.x;star.owner.p.y=p.y;star.owner.p.onScreen=p.onScreen;}}
+ const lensHoles=(data?.blackHoles||[]).filter(hole=>hole.record.p.onScreen);
  infrared.draw(ctx,cosmicStars.map(star=>({x:star.p.x,y:star.p.y,degree:star.n.connectionCount||0,distance:star.z,scale:zoom/star.z,birth:birthAlpha(star.n,now)})),width,height,now);
  const calls=structure?.entry('calls');cosmicCallState=selected&&calls?.levels.has(selected.id)?structure.describe(selected.id,'calls'):calls;
- for(const batch of data?.batches||[]){if(cosmicStars.length>140&&batch.hierarchy)continue;const band=batch.energyBand||0;ctx.setLineDash(batch.dashed?[3,7]:[]);ctx.beginPath();for(const e of batch.edges){if(!edgeInView(e)||selected&&(e.from===selected.id||e.to===selected.id))continue;if(birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}if(band>=2&&!batch.hierarchy){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=(mapPalette.light?'#6b98b8':'#a3d5ff')+(band===2?'1a':band===3?'2a':'38');ctx.lineWidth=.8+band*.34;ctx.shadowColor=mapPalette.light?'#6b98b8':'#81c7ff';ctx.shadowBlur=2+band*1.7;ctx.stroke();ctx.restore();ctx.setLineDash(batch.dashed?[3,7]:[]);}ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'12':(12+band*9).toString(16).padStart(2,'0'));ctx.lineWidth=.32+band*.17;ctx.stroke();}ctx.setLineDash([]);
- let particles=0;for(const e of cosmicStarEdges){if(!edgeInView(e))continue;const birth=Math.min(birthAlpha(nodeByID.get(e.from)||{},now),birthAlpha(nodeByID.get(e.to)||{},now));if(birth<.97)continue;const active=selected&&(e.from===selected.id||e.to===selected.id);if(active){ctx.strokeStyle=mapPalette.star+'90';ctx.lineWidth=1;ctx.setLineDash(e.dashed?[3,6]:[]);ctx.beginPath();ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);ctx.stroke();ctx.setLineDash([]);}if(active&&animate&&particles++<24){const q=(t/6500+e.phase)%1;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(e.a.x+(e.b.x-e.a.x)*q,e.a.y+(e.b.y-e.a.y)*q,1,0,tau);ctx.fill();}}
- for(const hole of data?.blackHoles||[])drawBlackHole(hole,now);
+ for(const batch of data?.batches||[]){if(cosmicStars.length>140&&batch.hierarchy)continue;const band=batch.energyBand||0;ctx.setLineDash(batch.dashed?[3,7]:[]);ctx.beginPath();for(const e of batch.edges){if(!edgeInView(e)||cosmicLensAffectsEdge(e,lensHoles)||selected&&(e.from===selected.id||e.to===selected.id))continue;if(birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}if(band>=2&&!batch.hierarchy){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=(mapPalette.light?'#6b98b8':'#a3d5ff')+(band===2?'1a':band===3?'2a':'38');ctx.lineWidth=.8+band*.34;ctx.shadowColor=mapPalette.light?'#6b98b8':'#81c7ff';ctx.shadowBlur=2+band*1.7;ctx.stroke();ctx.restore();ctx.setLineDash(batch.dashed?[3,7]:[]);}ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'12':(12+band*9).toString(16).padStart(2,'0'));ctx.lineWidth=.32+band*.17;ctx.stroke();}ctx.setLineDash([]);
+ let particles=0;for(const e of cosmicStarEdges){if(!edgeInView(e)||cosmicLensAffectsEdge(e,lensHoles))continue;const birth=Math.min(birthAlpha(nodeByID.get(e.from)||{},now),birthAlpha(nodeByID.get(e.to)||{},now));if(birth<.97)continue;const active=selected&&(e.from===selected.id||e.to===selected.id);if(active){ctx.strokeStyle=mapPalette.star+'90';ctx.lineWidth=1;ctx.setLineDash(e.dashed?[3,6]:[]);ctx.beginPath();ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);ctx.stroke();ctx.setLineDash([]);}if(active&&animate&&particles++<24){const q=(t/6500+e.phase)%1;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(e.a.x+(e.b.x-e.a.x)*q,e.a.y+(e.b.y-e.a.y)*q,1,0,tau);ctx.fill();}}
  // Gate icons use only indexed edges that cross established stellar systems.
  cosmicGates=cosmicScene.gates||[];
  for(const gate of cosmicGates)if(gate.p)gate.p.onScreen=false;
@@ -532,19 +543,21 @@ function drawCosmos(now,t){
   const anchor=cosmicStars.find(star=>star.n.id===gate.anchorNodeID);if(!anchor?.p.onScreen)continue;
   drawCosmicGate(gate,anchor.p.x,anchor.p.y,zoom,fade);
  }
- for(const star of cosmicStars){const {n,p}=star;if(!p.onScreen)continue;const participating=!!calls?.levels.has(n.id),depth=participating?cosmicCallState?.levels.get(n.id):null,known=Number.isFinite(depth),incoming=!!cosmicCallState?.incoming.has(n.id),chosen=selected?.id===n.id,opticalIntensity=window.AideStarOptics?.apparentIntensity(n.connectionCount,star.z)||1;
+ for(const star of cosmicStars){const {n,p}=star;if(!p.onScreen||cosmicLensAffectsStar(star,lensHoles))continue;const participating=!!calls?.levels.has(n.id),depth=participating?cosmicCallState?.levels.get(n.id):null,known=Number.isFinite(depth),incoming=!!cosmicCallState?.incoming.has(n.id),chosen=selected?.id===n.id,opticalIntensity=window.AideStarOptics?.apparentIntensity(n.connectionCount,star.z)||1;
   const visual=stellarVisual(n,known?depth:null,chosen,incoming),magnification=1+Math.max(0,zoom-1)*.72,color=visual.highlight&&!mapPalette.highContrast?(mapPalette.light?'#356f9e':'#d8edff'):n.starColor,radius=visual.radius*magnification,halo=visual.halo*Math.sqrt(magnification),match=n.match,alpha=searchQuery&&!match&&!chosen?.18:visual.alpha;
-  const birth=birthAlpha(n,now),bloomStrength=Math.min(1,n.stellarStrength||0),bloomAlpha=chosen?.9:visual.highlight?.78:.12+bloomStrength*.38;
-  // Additive, multi-scale haze is reserved for connected/high-energy stars;
-  // it blooms beyond the stellar core without creating an outline ring.
-  ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*alpha*birth*bloomAlpha*opticalIntensity;ctx.drawImage(glowSprite(color),p.x-halo/2,p.y-halo/2,halo,halo);
-  if(bloomStrength>.55||visual.highlight||chosen){const bloomSize=halo*(chosen?2.15:visual.highlight?1.9:1.7),wideAlpha=chosen?.42:visual.highlight?.34:.16;ctx.globalAlpha=fade*alpha*birth*wideAlpha*opticalIntensity;ctx.drawImage(glowSprite(color),p.x-bloomSize/2,p.y-bloomSize/2,bloomSize,bloomSize);}
+  const birth=birthAlpha(n,now),bloomStrength=Math.min(1,n.stellarStrength||0),bloomAlpha=chosen?.42:visual.highlight?.32:.045+bloomStrength*.22;
+  // Screen blending gives overlapping sources a bounded display response:
+  // physical flux still adds in the model, while the 8-bit canvas avoids
+  // clipping a dense cluster into one featureless white patch.
+  ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=fade*alpha*birth*bloomAlpha*opticalIntensity;ctx.drawImage(glowSprite(color),p.x-halo/2,p.y-halo/2,halo,halo);
+  if(bloomStrength>.55||visual.highlight||chosen){const bloomSize=halo*(chosen?2.15:visual.highlight?1.9:1.7),wideAlpha=chosen?.2:visual.highlight?.16:.075;ctx.globalAlpha=fade*alpha*birth*wideAlpha*opticalIntensity;ctx.drawImage(glowSprite(color),p.x-bloomSize/2,p.y-bloomSize/2,bloomSize,bloomSize);}
   ctx.restore();ctx.globalAlpha=fade*alpha*birth*(.72+.28*opticalIntensity);ctx.fillStyle=color;ctx.beginPath();ctx.arc(p.x,p.y,radius*(.4+.6*birth),0,tau);ctx.fill();ctx.globalAlpha=fade;
   if((chosen||match)&&birth>.5){ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=chosen?skyText():skyMuted();ctx.fillText(n.drawLabel||n.name,p.x+9,p.y+4);}
-  if(visual.highlight||chosen){const pulse=chosen&&motionEnabled()?1+Math.sin(t/1000)*.08:1,flareSize=halo*(chosen?2.35:1.9)*pulse;ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*alpha*birth*(chosen?.34:.24);ctx.drawImage(glowSprite(color),p.x-flareSize/2,p.y-flareSize/2,flareSize,flareSize);ctx.restore();ctx.globalAlpha=fade;}
+  if(visual.highlight||chosen){const pulse=chosen&&motionEnabled()?1+Math.sin(t/1000)*.08:1,flareSize=halo*(chosen?2.35:1.9)*pulse;ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=fade*alpha*birth*(chosen?.2:.14);ctx.drawImage(glowSprite(color),p.x-flareSize/2,p.y-flareSize/2,flareSize,flareSize);ctx.restore();ctx.globalAlpha=fade;}
  }
+ for(const hole of lensHoles)drawBlackHole(hole,now);
  if(cosmicScene.depth===7&&zoom>=1.18)drawCosmicLocalSystem(now,fade);
- for(const hole of data?.blackHoles||[])drawBlackHoleLensOverlay(hole,cosmicStars,cosmicStarEdges);
+ for(const hole of lensHoles)drawBlackHoleLensOverlay(hole,cosmicStars,cosmicStarEdges);
  for(const r of cosmicRecords){if(!r.p.onScreen||r.group.nodeID||r.group.key!==cosmicHover&&r.group.key!==cosmicSelected)continue;ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText(r.label,r.p.x+15,r.p.y-15);ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText(r.group.members.length+' 个真实节点',r.p.x+15,r.p.y);}
  if(!cosmicScene.members.length){ctx.font='13px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText('当前范围尚无已索引节点',cx-90,cy);}
  ctx.restore();projection=data?.projection||[];drawLiveGhosts(now,drift);

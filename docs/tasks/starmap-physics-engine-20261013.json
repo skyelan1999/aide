@@ -1,0 +1,63 @@
+{
+  "id": "starmap-physics-engine-20261013",
+  "request": "其他的也是，把物理引擎打开，做到极致",
+  "baseline": "ad05f4f",
+  "acceptance": [
+    "一套统一的场景光学函数服务恒星、星云、行星、黑洞吸积盘与透镜图层。",
+    "各项输入只引用真实图谱节点与关系；无真实天文参数时明确标注为归一化代理。",
+    "透镜区只显示计算后的背景源像，不保留重叠的未弯折副本；节点选择仍指向真实知识节点。",
+    "专项物理公式检查通过，系统 Safari 实际查看更新后的星图。",
+    "同步中文与英文说明并及时推送已验证阶段。"
+  ],
+  "scope": [
+    "internal/server/web/starmap-physics.js",
+    "internal/server/web/starmap-optics.js",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "scripts/starmap-lensing.test.cjs",
+    "docs/architecture/knowledge-map.md",
+    "docs/en/user-guide.md"
+  ],
+  "stages": {
+    "design": {
+      "status": "pass",
+      "summary": "统一使用逆平方通量、Lambert相位反射、Schwarzschild盘面引力红移、圆轨道速度、Doppler因子和Iν/ν³不变量。真实索引缺少质量/光谱/距离/轨道根数时使用明示的归一化图谱参数。",
+      "evidence": ["internal/server/web/starmap-physics.js"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "恒星视亮度接入通量模型；星云按簇内平均关系资源和场景距离衰减；近景真实邻接节点绘制反射相位行星表面；吸积盘扇区计算红移与相对论Doppler色彩/强度；透镜场内抑制原始点线并显示计算像。",
+      "evidence": ["internal/server/web/starmap-physics.js", "internal/server/web/starmap.js"]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "物理公式专项脚本、JavaScript语法、JSON及diff检查通过。已用独立镜像在系统Safari验收更新后的星图：索引显示32颗星/164条连接，工作区筛选29颗；高密度连接簇在压低画布泛光后仍可分辨单颗恒星与连线，继续放大可进入真实节点详情。当前合成样例没有经校准的黑洞近景或真实天文观测参数，因此黑洞近景、行星近景的画面和完整物理真实性不记为通过。",
+      "evidence": [
+        "node --check internal/server/web/starmap.js && node --check internal/server/web/starmap-physics.js",
+        "node --check internal/server/web/starmap-optics.js",
+        "node scripts/starmap-lensing.test.cjs",
+        "node scripts/starmap-gravity.test.cjs",
+        "node scripts/starmap-gates.test.cjs",
+        "node scripts/starmap-workspace-scene.test.cjs",
+        "git diff --check",
+        "Safari https://localhost:18540/starmap.html?channel=e1044d19-833a-42da-8b65-a6aaf6dc3ff5 · isolated candidate · 32 stars / 164 connections; workspace filter 29 stars · direct node detail verified"
+      ],
+      "not_verified": [
+        "黑洞吸积盘、透镜与行星近景的实际Safari视觉验收",
+        "真实天体质量、距离、光谱与观测数据校准",
+        "大图谱长时间动画帧率与持续更新负载"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新中文星图架构与英文用户指南，记录公式、归一化输入及不声称完整辐射输运/测地线光线追踪的边界。",
+      "evidence": ["docs/architecture/knowledge-map.md", "docs/en/user-guide.md"]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "系统Safari已查看最新隔离候选；密集星团过曝已修正。需提交并推送本阶段变更；黑洞/行星近景与真实天文数据仍是后续验收项。"
+    }
+  },
+  "rollback": "revert the isolated starmap physics engine commit",
+  "handoff": ""
+}
