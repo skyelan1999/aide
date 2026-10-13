@@ -70,7 +70,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "当前源码中审批范围、过期与撤销规则的 Go 定向回归通过；浏览器跨会话即时同步、重启保持与 UI 授权流程须对当前候选复验后才能关闭。",
+      "summary": "当前源码中审批范围、过期与撤销、跨会话全局模式、精确命令拒绝、规则管理与暂停状态竞态的定向 race 回归通过；Safari 中运行态应答/拒绝和切换后的另一个会话即时表现仍须对当前候选复验后才能关闭。",
       "evidence": [
         "Docker aide:local CGO_ENABLED=0 go build -buildvcs=false -mod=vendor ./cmd/aide",
         "node --check internal/server/web/app.js",
@@ -78,7 +78,7 @@
         "git diff --check",
         "python3 scripts/check_docs.py",
         "2026-10-13 current worktree in healthy container aide-aide-1: go test -mod=vendor -p=1 ./internal/server -run \"Test(ApprovalRememberExpiryFromAnswer|ApprovalRuleManagement|ConcurrentApprovalExpiryAndRevocationUseRevisionGuard|GlobalApprovalModeManualStopsReviewAcrossSessions|RememberedApprovalDoesNotCrossSSHRoot|GlobalApprovalModeAssistedDoesNotMarkPausedTasksReviewing|ApprovalPolicyBroadcastSurvivesFullGlobalEventQueue)$\" -count=1 -timeout=180s: PASS 4.097s. This run was not race-enabled.",
-        "2026-10-13 same targeted set with -race was terminated by the container (signal: killed); no test assertion result was produced. Race verification remains pending.",
+        "2026-10-13 current HEAD 74ad5e5, healthy container aide-aide-1: go test -mod=vendor -race -p=1 ./internal/server -run '^(TestApprovalRememberExpiryFromAnswer|TestApprovalRuleManagement|TestConcurrentApprovalExpiryAndRevocationUseRevisionGuard|TestRememberedApprovalReceiptAndOutcome|TestAssistedApprovalNewFiles|TestGlobalApprovalModeManualStopsReviewAcrossSessions|TestRememberedApprovalDoesNotCrossSSHRoot|TestGlobalApprovalModeAssistedDoesNotMarkPausedTasksReviewing|TestApprovalPolicyBroadcastSurvivesFullGlobalEventQueue|TestWorkflowApprovalConflictAndPersistence|TestRunShellRequiresExactConfirmationForWrites)$' -count=1 -timeout=180s PASS 15.314s. Covers current-source scoped expiry/revocation, policy propagation, SSH-root isolation, queued pause state, receipts, and exact command rejection. This test does not prove current Safari end-to-end or model latency.",
         "Current-source system Safari acceptance of global mode propagation and remembered-rule UI is still pending; do not infer it from Go tests."
       ]
     },

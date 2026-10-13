@@ -51,15 +51,15 @@
       ]
     },
     "verification": {
-      "status": "not_run",
-      "summary": "node --check internal/server/web/app.js 与 locales/en.js 通过；git diff --check 通过。Go 定向审批回归未运行：本机没有 go 命令；Docker 不可连接，无法使用仓库容器环境。系统 Safari 当前留在旧服务页面但 localhost:9999 服务不可达，无法加载候选源码进行交互验收。辅助审批的模型推理耗时未做端到端基准。",
+      "status": "partial",
+      "summary": "定向审批竞态回归已在当前健康容器中运行并通过；原生 Safari 只读打开专用暂停验收会话时，长输出已处于 completed 终态，因此本次不能观察运行态暂停按钮，也未点击、重发任务或更改配置。真实 pending approval 的拒绝后界面反馈、窄屏和辅助审批模型推理耗时基准仍未验收。",
       "evidence": [
         "node --check internal/server/web/app.js：exit 0",
         "node --check internal/server/web/locales/en.js：exit 0",
         "git diff --check：exit 0",
         "go test ./internal/server -run ^TestRunShellRequiresExactConfirmationForWrites$ -count=1：NOT_RUN（go: command not found）",
-        "docker ps：失败（Docker API permission denied）",
-        "curl https://127.0.0.1:9999/healthz：连接失败"
+        "2026-10-13：经授权只读 Docker 通道确认容器 aide-aide-1 healthy、源码挂载 HEAD 74ad5e5；定向执行 go test -mod=vendor -race -p=1 ./internal/server -run '^(TestApprovalRememberExpiryFromAnswer|TestApprovalRuleManagement|TestConcurrentApprovalExpiryAndRevocationUseRevisionGuard|TestRememberedApprovalReceiptAndOutcome|TestAssistedApprovalNewFiles|TestGlobalApprovalModeManualStopsReviewAcrossSessions|TestRememberedApprovalDoesNotCrossSSHRoot|TestGlobalApprovalModeAssistedDoesNotMarkPausedTasksReviewing|TestApprovalPolicyBroadcastSurvivesFullGlobalEventQueue|TestWorkflowApprovalConflictAndPersistence|TestRunShellRequiresExactConfirmationForWrites)$' -count=1 -timeout=180s：PASS，15.314s。覆盖：授权期限/撤销、规则管理、全局跨会话模式同步、SSH根隔离、幽灵审核暂停状态、精确命令拒绝与执行记录；不证明模型推理耗时或 Safari 审批交互。",
+        "2026-10-13：系统 Safari localhost:9999 只读检查 session #48“暂停按钮验证”；输出与思考过程均已 completed，无活动中的运行态可观察，故不据此判定暂停按钮。未点暂停、未发送任务、未改会话配置。"
       ]
     },
     "documentation": {
@@ -87,5 +87,5 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "尚未提交或推送。候选验收受环境阻塞：宿主无 Go，Docker API 权限拒绝且 9999 健康端点不可达；Safari 中虽有旧工作台页面但无法连接服务。提交/推送前应在服务可用时运行定向 Go 审批测试并在系统 Safari 实际验证拒绝按钮、拒绝后命令不运行及异步状态收敛。辅助审批中独立模型审核调用仍可能接近 60 秒上限；此次改善主要缩短人工应答后的前端等待。"
+  "handoff": "源码与文档实现已在此前检查点进入主线；当前 HEAD 定向审批 race 回归已通过。仍需在系统 Safari 中捕获真实 pending shell approval 并确认拒绝/异步状态收敛，窄屏UI与模型推理时延基准未测。辅助审批中的独立模型审核调用仍可能接近 60 秒上限；本实现缩短的是人工应答后的前端等待。"
 }
