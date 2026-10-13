@@ -61,8 +61,8 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "实现与中英文文档已提交到本地 main（c96cae5），隔离候选构建成功且 Safari 根场景可见。git push origin main 因 github.com DNS 不可解析失败；近景视觉验收也未完成。"
+      "status": "pass",
+      "summary": "实现与中英文文档已提交并推送到 origin/main（d0a332e）。隔离候选构建成功且 Safari 根场景可见；近景视觉、真实天文数据校准与长时间性能继续列为待验收项。"
     }
   },
   "rollback": "revert the isolated starmap physics engine commit",
