@@ -322,3 +322,5 @@ Runtime process SHA-256 verified: 561e80964a7429c82a4b7f4e73ef1b5180695808ca551c
 源码 `e3f5ac6` 已推送到 `origin/main`：成果面板打开期间每 2.5 秒刷新首页，结束或关闭时停止；已展开后续分页时，新快照会标为过期，避免混合快照。定向成果分页/运行刷新和 Markdown 模板回归、JS 语法、i18n、文档链接检查均通过。隔离候选由该提交构建；健康接口正常，用户处理本机 Safari 证书交接后，原生 Safari 成功载入工作台。没有向候选配置模型或发送凭据。
 
 因候选无模型配置，未能从 Safari 产生正在运行的任务，因此“生成中刷新、完成后停止轮询”仍未完成浏览器端验收；定向测试不替代该项。Docker 全量 `go test -race ./...` 与 `go vet ./...` 仍在运行，结果待记。真实向量检索按用户要求暂缓，Windows 按用户反馈移出范围；全局目标和 release gate 保持未完成。
+
+全量 race/vet 最终结果：PASS。隔离 `aide:local` 容器中执行 `go test -race -count=1 -timeout=15m ./... && go vet ./...`，整体 exit 0；`internal/server` 691.463 秒，`internal/server/tts` 1.520 秒。该门禁绑定候选源码 `e3f5ac6`，随后仅提交了本审计/账本文档。Safari 实时运行中任务的刷新验收仍待真实运行态任务；本次全量回归不替代该浏览器验收。

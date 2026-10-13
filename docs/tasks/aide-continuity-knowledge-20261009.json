@@ -3051,7 +3051,6 @@
     ],
     "remaining": [
       "A true in-progress task could not be produced in the isolated browser candidate because it has no model configuration; live polling, text growth during execution, and terminal-stop behavior remain unverified in Safari.",
-      "Full Go race and vet command is still running; do not count as passed until it exits successfully.",
       "Continue outstanding workflow-specific Safari/remote-host/large-library/long-duration checks and requirement-by-requirement release/rollback audit."
     ],
     "deferred_by_user": [
@@ -3064,9 +3063,9 @@
       "focused": "PASS: node scripts/outcome-pagination.test.cjs; node scripts/markdown-template-icons.test.cjs; node --check; node scripts/test_i18n.cjs; python3 scripts/check_docs.py; git diff --check.",
       "candidate": "PASS: isolated build from e3f5ac6, /healthz reports service ok, native Safari route renders the Aide workbench. No model or credentials were configured or transmitted.",
       "live_outcome_browser": "NOT_RUN: candidate had no active model and no running task; static/unit test coverage does not replace live Safari task polling.",
-      "full": "RUNNING: dockerized go test -race ./... followed by go vet ./...; started in this turn, no terminal result yet."
+      "full": "PASS: dockerized go test -race -count=1 -timeout=15m ./... (internal/server 691.463s) followed by go vet ./...; combined command exited 0."
     },
     "release": "not_run",
-    "push": "Product source e3f5ac6 already pushed to origin/main. This checkpoint is documentation-only and remains to be pushed after the full regression result is recorded."
+    "push": "Product source e3f5ac6 and documentation checkpoint bba6719 are pushed to origin/main. This result update is documentation-only; no release or deployment."
   }
 }
