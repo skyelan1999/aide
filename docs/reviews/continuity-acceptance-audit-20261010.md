@@ -360,3 +360,9 @@ Markdown/TXT/代码文件保存失败后现在显示“重试保存”，重试�
 在当前工作树提交 `cfa9989` 上运行 `AIDE_SSH_REPEAT=1 ./scripts/test-ssh-workspace.sh`。双 OpenSSH/SFTP fixture 的 `TestSSHLiveWorkspaceAndIndependentSource` 启用 Go race 后通过：测试 14.33 秒，包 15.447 秒。覆盖工作区 SFTP 中文/空格路径、独立引用服务器 B、断开主连接后的恢复、连续性与 Markdown 历史、远端知识检索/时间线、渐进覆盖从进程检查点续扫以及取消后远程进程组停止。测试脚本确认源文件前后快照未变化；临时容器和内部网络在退出时清理，Docker 筛选复核为空。日志 `.agent-state/ssh-storage-audit/live/aide-ssh-test-20261013222406-53364.log`，SHA-256 `4d9ff1494e978de034f7f5b0d1d20ae38d60a52850754fae7ce30b8b959b65b5`。
 
 同一时段系统 Safari 只读打开当前 `localhost:9999`，确认工作台与轨迹界面可用；本次没有把 Safari 接到 fixture SSH 主机。以上证明当前源码与隔离 OpenSSH 服务的后端联调，不证明用户自己的 SSH 主机、Safari SSH 文件浏览/保存/恢复、WAN 故障或全目标完成。向量真实服务仍按用户要求暂缓，Windows 按用户说明不在本代理验收范围。
+
+## 2026-10-14 后续：系统 Safari 本地 Markdown 草稿恢复
+
+在隔离候选 `https://localhost:18544/` 的临时工作区文件 `continuity-check/restore.md` 上完成原生 Safari 验收。先写入已保存基线 `BASE-20261014`，再在编辑器加入未保存草稿与末尾光标标记并刷新页面。Safari 显示“发现未保存的本地草稿”；选择“恢复草稿”后，编辑器恢复完整正文。未移动光标直接输入探针，探针紧接此前的末尾标记，确认该路径恢复了光标位置。独立读取候选挂载目录中的文件，正文仍只有已保存基线和固定说明，没有未保存内容；任务未发送。验收后删除临时文件。
+
+此证据只覆盖隔离候选中的本地 Markdown 刷新恢复、正文、光标及未写盘边界。跨标签分支、不同来源同名文件隔离、滚动位置、配额/崩溃、SSH 文件和工作区切换仍需分别验收；不代表总体目标完成。详细记录见 `progress_checkpoint_20261014_followup36`。

@@ -3637,5 +3637,26 @@
       "Real vector-provider acceptance remains deferred by user; Windows validation is out of scope per user report"
     ],
     "release": "No production release or deployment; objective remains active."
+  },
+  "progress_checkpoint_20261014_followup36": {
+    "status": "partial",
+    "date": "2026-10-14",
+    "summary": "System Safari acceptance of local Markdown draft recovery after a worksite file refresh in isolated candidate 18544.",
+    "completed": [
+      "Created a temporary Markdown fixture only in the isolated candidate workspace with persisted marker BASE-20261014; confirmed Safari opened the same file in edit mode.",
+      "Entered an unsaved draft marker and caret-end marker, refreshed Safari, and observed the explicit “发现未保存的本地草稿” recovery prompt while the rendered server file still showed only its persisted baseline.",
+      "Selected “恢复草稿”; Safari editor displayed the full unsaved text. Typed a probe without repositioning the caret and observed it appended immediately after the saved caret-end marker.",
+      "Read the mounted workspace file after restoration; it still contained only the persisted baseline and no unsaved-draft markers. No task was submitted.",
+      "Removed the temporary fixture after verification."
+    ],
+    "remaining": [
+      "This verifies only local Markdown reload recovery in candidate 18544. Cross-tab branches, same-name/different-source isolation, scroll restoration, quota/crash behavior, SSH file recovery, and workspace switching still need separate evidence."
+    ],
+    "verification": {
+      "system_browser": "PASS: native Safari on https://localhost:18544/ detected draft after refresh, restored exact content, retained the caret at its prior end position, and did not persist the draft to disk.",
+      "disk_readback": "PASS: /private/tmp/aide-starmap-physics-20261014/workspace/continuity-check/restore.md contained only the saved BASE-20261014 baseline before cleanup.",
+      "scope": "Isolated Docker candidate 18544; temporary workspace fixture only; no model call, no session submission, no production data."
+    },
+    "release": "No production release or deployment; objective remains active."
   }
 }
