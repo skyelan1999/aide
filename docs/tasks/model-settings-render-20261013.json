@@ -38,12 +38,12 @@
       ]
     },
     "verification": {
-      "status": "partial",
-      "summary": "Safari localhost:9999 的无障碍树确认实际模型设置弹窗及全部当前字段可见；截图采集与活动页面不一致，故不作为视觉通过证据。未点击保存，未修改配置。窄屏布局未验收。",
+      "status": "in_progress",
+      "summary": "系统 Safari 的 9999 页面在修改前观察到窄视口断点的能力核验元数据布局错误：来源输入框被 flex 拉伸、日期框横向撑满。已修正窄屏 CSS。修改后验收尚未运行：start.command 因 Docker 应用不可用退出，9999 当前无监听服务；不得以修改前截图声称修复通过。",
       "evidence": [
-        "系统 Safari AX state：模型列表、上下文预设、六项能力、核验依据、API Key、保存设置均存在。",
-        "系统 Safari AX state：真实页面地址 localhost:9999，模型设置对话框已打开。",
-        "窄屏：NOT_RUN；真实视觉截图：INCONCLUSIVE；保存交互：未执行。"
+        "修改前系统 Safari：模型设置卡片在窄视口截图中显示能力核验来源输入框异常纵向拉伸，日期输入框占满卡片宽度；未更改或保存模型设置。",
+        "修改后：git diff --check 通过；尚无修改后浏览器证据。",
+        "./start.command：exit 1，输出 Unable to find application named Docker；curl https://127.0.0.1:9999/healthz：连接失败；修改后桌面/窄屏及保存交互均 NOT_RUN。"
       ]
     },
     "documentation": {
@@ -66,7 +66,7 @@
       "evidence": []
     }
   },
-  "release_authorization": "No commit/push/release authorized in this request.",
+  "release_authorization": "User explicitly requested on 2026-10-13 to push all unpushed changes in this directory; this partial CSS fix and its pending-verification record are included. Product Safari acceptance remains pending.",
   "rollback": "Revert the model-settings block appended to internal/server/web/style.css.",
-  "handoff": "Desktop UI structure observed in Safari; confirm visual alignment from the live rendered page and verify the <=620px breakpoint before marking full UI acceptance."
+  "handoff": "Docker Desktop 在当前主机不可用，9999 没有监听。恢复 Docker 后运行 ./start.command，在系统 Safari 验证 <=620px 元数据来源/日期输入均为正常单行控件，再复核桌面布局和保存行为（不更改凭据）。"
 }
