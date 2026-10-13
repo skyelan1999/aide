@@ -3487,6 +3487,33 @@
       "Windows validation; user reports successful testing"
     ],
     "release": "not_run",
-    "push": "pending documentation checkpoint"
+    "push": "PASS: 92ebcab docs: record model settings Safari restart check is at origin/main"
+  },
+  "progress_checkpoint_20261013_followup30": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "File autosave failures now expose an explicit Retry save action; retries use the existing serialized save path and current editor contents.",
+      "If a 409 conflict cannot read the latest server version, the editor exposes Retry loading server version. Retrying only reads and opens the compare/merge dialog; it never writes or replaces content automatically.",
+      "Added focused source-level regression assertions for both retry paths, context guards, and explicit conflict comparison.",
+      "Restarted the authorized local Aide service with start.command after Safari showed acceptance sessions #45–#48 completed; the running Safari workbench is unlocked and loaded again."
+    ],
+    "remaining": [
+      "Native Safari has not yet induced a save failure or 409 read failure on a disposable file, so visibility and interaction of each retry control remain unverified in the system browser.",
+      "Full repository regression was not rerun for this small frontend recovery patch."
+    ],
+    "verification": {
+      "source": "node --check internal/server/web/file-autosave.js PASS; node scripts/file-recovery-scroll.test.cjs PASS; node scripts/continuity-isolation.test.cjs PASS; git diff --check PASS.",
+      "system_browser": "Safari localhost:9999 is unlocked after start.command restart. The file editor was not modified to induce a synthetic save failure; retry-control end-to-end behavior remains NOT_RUN.",
+      "restart": "PASS: start.command rebuilt the image from the current worktree and reported https://127.0.0.1:9999 ready; native Safari loaded the workbench."
+    },
+    "deferred_by_user": [
+      "Real embedding/vector provider acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reports successful testing"
+    ],
+    "release": "not_run",
+    "push": "pending"
   }
 }

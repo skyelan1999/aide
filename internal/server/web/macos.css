@@ -693,7 +693,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .file-autosave[aria-checked="true"] .file-autosave-rail{background:var(--accent)}
 .file-autosave[aria-checked="true"] .file-autosave-rail i{transform:translateX(12px);background:var(--on-brand,#fff)}
 .file-autosave-status{font-size:11px;color:var(--muted);max-width:160px}
+.file-autosave-retry{min-height:28px;padding:4px 9px;border:1px solid var(--line-accent);border-radius:8px;background:color-mix(in srgb,var(--accent) 8%,var(--surface));color:var(--brand-text);font-size:11px;white-space:nowrap}
+.file-autosave-retry:hover{background:color-mix(in srgb,var(--accent) 15%,var(--surface))}
+.file-autosave-retry:disabled{opacity:.55;cursor:wait}
 .file-autosave:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.file-autosave-retry:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .file-autosave:disabled{opacity:.45;cursor:not-allowed}
 .file-view-head-actions{gap:7px}
 .file-view-head-actions .icon-action{width:38px;min-width:38px;height:38px;padding:0;border-radius:11px;display:inline-grid;place-items:center;color:var(--text-dim);border:1px solid var(--line-soft);background:color-mix(in srgb,var(--surface) 76%,transparent);text-decoration:none;transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease}
