@@ -3350,5 +3350,29 @@
     },
     "release": "not_run",
     "push": "Documentation checkpoint pending; no product source changes in this checkpoint."
+  },
+  "progress_checkpoint_20261013_followup24": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "Safari 对同一会话 #46 的新快照显示压缩仍为 map 1/1、4 条早期消息、当前约 13.3K，计时已到 32 分 18 秒；活动合成回复显示 32 分 22 秒及停止/继续等待/重试控件。仍未触碰这些控件。",
+      "容器只读采样显示 aide 进程 CPU 约 0.5%、内存约 625 MiB/2 GiB，近 40 分钟容器日志无输出；运行服务呈低 CPU 等待状态，但无法仅凭该数据定位上游请求或前端问题。",
+      "当前仓库实现 completeStream 的有效 SSE 数据空闲超时为 3 分钟、总请求超时为 2 小时；该现场 32 分钟观测不能由当前源码对应的空闲流请求正常解释。容器源码挂载哈希匹配仓库，但镜像标签/运行二进制提交仍未匹配确认。"
+    ],
+    "remaining": [
+      "压缩批次、折叠保存及终态仍无现场证据；超长回复运行版本也未确认。",
+      "GET /api/config 的只读运行版本字段需要认证，本次返回 HTTP 401；没有读取、导出或重用浏览器凭据。仍需通过已认证 Safari 页面只读查看构建提交，或等当前合成运行终止后依既有授权重建候选并验收。",
+      "本次未对活动合成会话执行停止、继续等待、重试、会话切换或服务重启，避免丢失其当前状态。"
+    ],
+    "verification": {
+      "system_browser": "Safari native app, https://localhost:9999/; synthetic session #46; second read-only accessibility snapshot at approximately 2026-10-13 19:23 Asia/Shanghai.",
+      "live_observation": "Context meter 22.7K/64K; current activity estimate 31,425/65,536; upstream conversation usage 538,764 prompt / 72,453 completion. Compression remains 摘要处理中 · 分段整理 1/1 · 4 条早期消息 · 当前约 13.3K · 已用时 32 分 18 秒. A separate synthetic assistant output remains active at 32:22 with stop/wait/retry controls.",
+      "runtime_resources": "docker stats: CPU 0.05%, memory 624.5 MiB/2 GiB. ps: PID 7 Sl, 53:39 elapsed, 00:00:17 CPU time, 0.5% CPU. docker logs --since=40m returned no lines.",
+      "source_timeout": "provider.go defines providerStreamIdleTimeout=3m and providerStreamTimeout=2h. completeStreamWithIdleTimeout resets idle only after a parseable SSE data payload; workflow_timeout_test.go asserts these configured constants. This establishes current source behavior, not the behavior of the unidentified running binary.",
+      "runtime_version_endpoint": "GET https://127.0.0.1:8080/api/config returned HTTP 401 from inside the container. No Safari cookie or access token was read or reused; no configuration values were printed.",
+      "release": "No source change or runtime restart in this checkpoint."
+    },
+    "release": "not_run",
+    "push": "Documentation checkpoint pending; no product source changes in this checkpoint."
   }
 }
