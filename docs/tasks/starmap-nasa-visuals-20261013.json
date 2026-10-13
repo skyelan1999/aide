@@ -1,0 +1,84 @@
+{
+  "id": "starmap-nasa-visuals-20261013",
+  "request": "额外的，这个星图你要想想怎么样才能看起来像nasa拍的那些似的，连线也是，连接数越多，星星的资源就越多，星门就越稳固，星门通道的亮度也就越强，可以通过的体积也就越大，当然这个是有双方决定的",
+  "baseline": "520eb16f2454607f3ea27d365ed70bb5467b88b1",
+  "initial_status": "M Dockerfile\n M docs/architecture.md\n M docs/en/user-guide.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M docs/user-guide.md\n M internal/server/archive_test.go\n M internal/server/command.go\n M internal/server/command_input_test.go\n M internal/server/files.go\n M internal/server/plugins.go\n M internal/server/plugins_builtin_test.go\n M internal/server/source_file_actions.go\n M internal/server/web/app.js\n M internal/server/web/locales/en.js\n M internal/server/web/style.css\n M internal/server/workflow.go\n M plugins/registry.json\n M scripts/test_context_compaction_ui.cjs\n?? docs/tasks/archive-operations-20261013.json\n?? docs/tasks/ssh-command-panel-interactive-20261013.json\n?? internal/server/archive_formats.go\n?? plugins/archive-tools/",
+  "acceptance": [
+    "背景呈现接近深空巡天摄影的多尺度星云、发射云与尘埃遮蔽层次；明确这是程序生成的视觉，不冒称NASA实拍数据。",
+    "真实索引连线的亮度和线宽随两端恒星有效关联能量变化，强调关系密度而不制造索引关系。",
+    "星系系统资源来自真实成员节点的有效关联数；每条星门的稳定度、亮度和可通行规模同时受两端资源与跨系统真实关系数约束，较弱一端限制规模。",
+    "星门随所代表关系方向布置，近景造型与发光有空间深度；保持高对比、减少动效和亮暗主题可读。",
+    "运行星门模型与前端语法专项验证，在系统 Safari 实际星图中检查底图、连线、星门与控制面板。"
+  ],
+  "scope": [
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap-cosmos.js",
+    "docs/architecture/knowledge-map.md",
+    "scripts/starmap-gates.test.cjs",
+    "docs/tasks/starmap-nasa-visuals-20261013.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "延续已实现的双边资源模型，增强NASA深空巡天影像启发的静态星云质感、关系能量线和门体空间体积；真实图谱边仍作为数据唯一来源。",
+      "evidence": [
+        "用户明确要求星体资源随有效关系数增加，星门双方共同决定稳定度、亮度和通行体积。",
+        "当前实现已有双方资源的稳定度/容量公式；待增加单元断言与更有层次的绘制。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "使用本地确定性多尺度噪声生成星云/尘埃像素场，避免远程图像和伪观测声明；高能连线采用少量批量泛光层，星门继续沿关系向量并受双方资源约束。",
+      "evidence": [
+        "静态星云纹理仅在初始化/画布变更时生成，避免每帧做噪声计算。",
+        "星门取双方资源几何稳定度、弱侧容量上限和路径关联数；已由现有 starmap-cosmos.js 公式实现。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "增加确定性多尺度星云和尘埃遮蔽纹理；真实高能索引关系使用细线核心与柔和辉光；选中星体移除几何准星，改由星光泛光、尺度和标签表达。保留双边资源/容量公式与真实关系连线。",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap-cosmos.js:121-128"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "相关星图源代码检查、图模型/引力/路径/时间线/场景/覆盖专项脚本和 git diff --check 全部通过。系统 Safari 刷新实际图谱确认 2881 STARS / 3991 CONNECTIONS；可见程序生成星云、索引关系线及黑洞密集区，页面控件正常。",
+      "evidence": [
+        "node scripts/starmap-gates.test.cjs",
+        "node scripts/starmap-gravity.test.cjs",
+        "node scripts/starmap-path.test.cjs",
+        "node scripts/starmap-timeline.test.cjs",
+        "node scripts/starmap-workspace-scene.test.cjs",
+        "node scripts/starmap-coverage-state.test.cjs",
+        "node --check internal/server/web/starmap.js",
+        "node --check internal/server/web/starmap-cosmos.js",
+        "git diff --check",
+        "Safari https://localhost:9999/starmap.html · 2881 stars / 3991 connections"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新知识星图架构文档，说明程序纹理并非NASA照片或实测天文数据，记录关系能量及双端星门通行规则。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "改动范围核对完成；提交时仅暂存星图代码、模型断言、架构文档和本任务记录，保留工作区其他并行改动。",
+      "evidence": [
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "等待将本阶段限定文件提交并推送到 origin/main。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

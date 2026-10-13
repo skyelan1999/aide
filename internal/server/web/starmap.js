@@ -263,6 +263,26 @@ function openAI(){revealPanel($('ai-body'),true);$('ai-toggle').setAttribute('ar
 function say(s){$('status').textContent=s;}
 async function api(p,options={}){const r=await fetch('/api/knowledge-map'+p,{...options,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}});const d=await r.json();if(!r.ok)throw Error(d.error||'读取失败，请回到工作台登录');return d;}
 function seeded(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}h ^= h >>> 16; h = Math.imul(h, 0x7feb352d); h ^= h >>> 15; h = Math.imul(h, 0x846ca68b); h ^= h >>> 16; return (h>>>0)/4294967296;}
+function skyHash(x,y){let h=Math.imul(x|0,0x45d9f3b)^Math.imul(y|0,0x119de1f3);h=Math.imul(h^(h>>>16),0x45d9f3b);return ((h^(h>>>16))>>>0)/4294967296;}
+function skyNoise(x,y,columns,rows){const px=x*columns,py=y*rows,x0=Math.floor(px),y0=Math.floor(py),fx=px-x0,fy=py-y0,sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy),a=skyHash(x0,y0),b=skyHash(x0+1,y0),c=skyHash(x0,y0+1),d=skyHash(x0+1,y0+1);return (a+(b-a)*sx)+((c+(d-c)*sx)-(a+(b-a)*sx))*sy;}
+function nebulaField(){
+ // A deterministic, one-time fractal field adds survey-like dust structure;
+ // it is deliberately a visual texture, never an astronomical observation.
+ const c=document.createElement('canvas');c.width=512;c.height=256;const g=c.getContext('2d'),image=g.createImageData(c.width,c.height);
+ const clamp01=value=>Math.max(0,Math.min(1,value)),mix=(a,b,t)=>Math.round(a+(b-a)*t);
+ for(let y=0;y<c.height;y++)for(let x=0;x<c.width;x++){
+  const u=x/(c.width-1),v=y/(c.height-1),broad=skyNoise(u,v,6,4),middle=skyNoise(u,v,15,9),fine=skyNoise(u,v,34,19),detail=skyNoise(u,v,72,40),fbm=broad*.43+middle*.29+fine*.19+detail*.09;
+  const spine=.54-(u-.5)*.24+(middle-.5)*.09+Math.sin(u*10+middle*3)*.018,distance=Math.abs(v-spine),envelope=clamp01(1-distance/.43),filament=clamp01((fbm-.34)*2.35),warm=skyNoise(u+.31,v-.13,9,7),dust=distance<.045&&skyNoise(u,v,23,13)>.43;
+  const i=(y*c.width+x)*4;
+  if(dust){image.data[i]=2;image.data[i+1]=5;image.data[i+2]=10;image.data[i+3]=Math.round(108*envelope);continue;}
+  const glow=envelope*filament*(.20+Math.max(0,detail-.48)*.72);if(glow<.012)continue;
+  const warmMix=clamp01((warm-.57)*2.6),cool=[30,83,125],amber=[132,91,52],purple=[72,66,119];
+  let r=mix(cool[0],amber[0],warmMix),gg=mix(cool[1],amber[1],warmMix),bb=mix(cool[2],amber[2],warmMix);
+  const violet=clamp01((broad-.63)*1.7);r=mix(r,purple[0],violet);gg=mix(gg,purple[1],violet);bb=mix(bb,purple[2],violet);
+  const lightScale=mapPalette.light?.52:1;image.data[i]=Math.round(r*lightScale);image.data[i+1]=Math.round(gg*lightScale);image.data[i+2]=Math.round(bb*lightScale);image.data[i+3]=Math.round(Math.min(mapPalette.light?38:82,glow*(mapPalette.light?92:184)));
+ }
+ g.putImageData(image,0,0);return c;
+}
 const colors=n=>mapPalette.highContrast?mapPalette.star:n.kind==='symbol'||n.region==='sessions'?mapPalette.session:n.region==='workspace'?mapPalette.file:mapPalette.reference;
 // Static sky, nebula textures and stellar glows are rasterized once. Interaction
 // frames only project cached graph records; they never rebuild gradients or hashes.
@@ -284,6 +304,7 @@ function makeSky(){
  // symbolic backdrop; only plotted stars and links are indexed records.
  const haze=g.createRadialGradient(width*.68,height*.42,0,width*.68,height*.42,width*.58);
  haze.addColorStop(0,mapPalette.nebula+'20');haze.addColorStop(.38,mapPalette.nebula+'0d');haze.addColorStop(1,mapPalette.nebula+'00');g.fillStyle=haze;g.fillRect(0,0,width,height);
+ if(!mapPalette.highContrast){const field=nebulaField();g.save();g.globalCompositeOperation='screen';g.translate(width*.53,height*.53);g.rotate(-.25);g.globalAlpha=mapPalette.light?.72:1;g.drawImage(field,-width*.88,-height*.84,width*1.76,height*1.68);g.restore();}
  const emission=(x,y,r,color,alpha)=>{const f=g.createRadialGradient(x,y,0,x,y,r);f.addColorStop(0,color+alpha);f.addColorStop(.24,color+(mapPalette.light?'12':'22'));f.addColorStop(.7,color+'06');f.addColorStop(1,color+'00');g.fillStyle=f;g.fillRect(x-r,y-r,r*2,r*2);};
  emission(width*.30,height*.59,width*.35,'#4d8db8',mapPalette.light?'10':'25');
  emission(width*.73,height*.34,width*.26,'#d39b5e',mapPalette.light?'09':'1b');
@@ -454,7 +475,7 @@ function drawCosmos(now,t){
  for(const star of cosmicStars){const p=star.p;p.x=cx+(star.x+cosmicAimX+yaw*.22+drift)*width*zoom/star.z;p.y=cy+(star.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/star.z;p.onScreen=p.x>-30&&p.x<width+30&&p.y>-30&&p.y<height+30;if(star.owner.group.nodeID){star.owner.p.x=p.x;star.owner.p.y=p.y;star.owner.p.onScreen=p.onScreen;}}
  infrared.draw(ctx,cosmicStars.map(star=>({x:star.p.x,y:star.p.y,degree:star.n.connectionCount||0,distance:star.z,scale:zoom/star.z,birth:birthAlpha(star.n,now)})),width,height,now);
  const calls=structure?.entry('calls');cosmicCallState=selected&&calls?.levels.has(selected.id)?structure.describe(selected.id,'calls'):calls;
- for(const batch of data?.batches||[]){if(cosmicStars.length>140&&batch.hierarchy)continue;const band=batch.energyBand||0;ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'12':(14+band*10).toString(16).padStart(2,'0'));ctx.lineWidth=.35+band*.16;ctx.setLineDash(batch.dashed?[3,7]:[]);ctx.beginPath();for(const e of batch.edges){if(!edgeInView(e)||selected&&(e.from===selected.id||e.to===selected.id))continue;if(birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}ctx.stroke();}ctx.setLineDash([]);
+ for(const batch of data?.batches||[]){if(cosmicStars.length>140&&batch.hierarchy)continue;const band=batch.energyBand||0;ctx.setLineDash(batch.dashed?[3,7]:[]);ctx.beginPath();for(const e of batch.edges){if(!edgeInView(e)||selected&&(e.from===selected.id||e.to===selected.id))continue;if(birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}if(band>=2&&!batch.hierarchy){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=(mapPalette.light?'#6b98b8':'#a3d5ff')+(band===2?'1a':band===3?'2a':'38');ctx.lineWidth=.8+band*.34;ctx.shadowColor=mapPalette.light?'#6b98b8':'#81c7ff';ctx.shadowBlur=2+band*1.7;ctx.stroke();ctx.restore();ctx.setLineDash(batch.dashed?[3,7]:[]);}ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'12':(12+band*9).toString(16).padStart(2,'0'));ctx.lineWidth=.32+band*.17;ctx.stroke();}ctx.setLineDash([]);
  let particles=0;for(const e of cosmicStarEdges){if(!edgeInView(e))continue;const birth=Math.min(birthAlpha(nodeByID.get(e.from)||{},now),birthAlpha(nodeByID.get(e.to)||{},now));if(birth<.97)continue;const active=selected&&(e.from===selected.id||e.to===selected.id);if(active){ctx.strokeStyle=mapPalette.star+'90';ctx.lineWidth=1;ctx.setLineDash(e.dashed?[3,6]:[]);ctx.beginPath();ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);ctx.stroke();ctx.setLineDash([]);}if(active&&animate&&particles++<24){const q=(t/6500+e.phase)%1;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(e.a.x+(e.b.x-e.a.x)*q,e.a.y+(e.b.y-e.a.y)*q,1,0,tau);ctx.fill();}}
  for(const hole of data?.blackHoles||[])drawBlackHole(hole,now);
  // Gate icons use only indexed edges that cross established stellar systems.
@@ -599,8 +620,10 @@ function draw(now=performance.now()){
  for(const n of renderNodes){const {x,y,onScreen}=n.projected;if(!onScreen)continue;const chosen=n.chosen,match=n.match,r=n.apparentRadius+(chosen?1.5:0),g=n.glowSize;
   ctx.globalAlpha=n.drawAlpha*birthAlpha(n,now);ctx.drawImage(n.glow,x-g/2,y-g/2,g,g);ctx.fillStyle=n.starColor;ctx.beginPath();ctx.arc(x,y,r*(.4+.6*birthAlpha(n,now)),0,tau);ctx.fill();ctx.globalAlpha=1;
   if(birthAlpha(n,now)>.5&&(chosen||match||renderNodes.length<120&&n.kind==='directory'&&n.path==='.')){ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=chosen?mapPalette.text:mapPalette.muted;ctx.fillText(n.drawLabel,x+10,y+4);}
-  if(chosen){ctx.strokeStyle=mapPalette.star+'80';ctx.beginPath();ctx.arc(x,y,15+Math.sin(t/650)*1.4,0,tau);ctx.stroke();
-   ctx.strokeStyle=mapPalette.star+'45';ctx.lineWidth=.8;ctx.beginPath();ctx.moveTo(x-10,y);ctx.lineTo(x+10,y);ctx.moveTo(x,y-10);ctx.lineTo(x,y+10);ctx.stroke();}}
+  // Selection is conveyed by the star's bloom, scale and label. Avoid a
+  // geometric reticle here: it reads as a UI crosshair over an astronomical
+  // object and breaks the photographic treatment.
+ }
  drawEvidencePath();
  ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=mapPalette.muted+'66';for(let i=0;i<9;i++){const x=width*(i+1)/10;ctx.fillRect(x,height*.82,1,5);ctx.fillText(String(i*30).padStart(3,'0')+'°',x-8,height*.82+19);}
  if(graphFade){const u=clamp((now-graphFade.start)/graphFade.duration,0,1);ctx.save();ctx.globalAlpha=1-easing(u);ctx.drawImage(graphFade.canvas,0,0,width,height);ctx.restore();if(u===1)graphFade=null;}

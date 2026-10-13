@@ -13,6 +13,16 @@ assert(systemGroup,'a local call component should establish a stellar system');
 assert.equal(scene.gates.length,2,'only cross-system semantic links create gates');
 assert.equal(JSON.stringify(Array.from(scene.gates,g=>g.targetLabel).sort()),JSON.stringify(['Beta 0 · 调用单元','Gamma 0 · 调用单元'].sort()));
 assert(scene.gates.every(g=>g.anchorNodeID&&g.count===1));
+for(const gate of scene.gates){
+ const reverse=model.scene(gate.targetKey).gates.find(g=>g.targetKey===systemGroup.key);
+ const routeStrength=Math.min(1,Math.log2(gate.count+1)/4),expectedCapacity=Math.min(gate.ownerResource,gate.targetResource)*routeStrength;
+ assert(gate.ownerResource>0&&gate.targetResource>0,'both endpoints contribute indexed stellar resources');
+ assert(gate.capacity<=gate.ownerResource&&gate.capacity<=gate.targetResource,'the weaker stellar system caps passage size');
+ assert(Math.abs(gate.capacity-expectedCapacity)<1e-12,'passage capacity combines the weaker endpoint and route strength');
+ assert(Math.abs(gate.stability-Math.cbrt(gate.ownerResource*gate.targetResource*routeStrength))<1e-12,'stability combines both endpoint resources and indexed cross-system links');
+ assert(Math.abs(gate.brightness-Math.sqrt(gate.stability*gate.capacity))<1e-12,'brightness follows stability and passage capacity');
+ assert(reverse&&Math.abs(reverse.capacity-gate.capacity)<1e-12&&Math.abs(reverse.stability-gate.stability)<1e-12,'the same route has symmetric gate strength at both ends');
+}
 const nodeScene=model.scene(path.at(-1).key);assert.equal(nodeScene.depth,7);assert.equal(nodeScene.gates.length,scene.gates.length,'node-world close-up should inherit its stellar system navigation gates');
 const root=model.scene(model.root.key);assert.equal(root.gates.length,0,'universe view should not expose close-view gates');
 console.log('starmap gate model: PASS');
