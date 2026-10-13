@@ -3437,5 +3437,30 @@
     },
     "release": "not_run",
     "push": "pending documentation checkpoint"
+  },
+  "progress_checkpoint_20261013_followup28": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "Native Safari read-only selection of synthetic long-context session #46 now shows a compressed-history summary (264 tokens) and current activity estimate 23,752/65,536; upstream cumulative usage is 538,764 input and 72,453 output. The earlier visible map-progress card is absent in this snapshot, so this is post-compaction evidence only and does not establish the animation lifecycle.",
+      "Reconfirmed the live localhost:9999 model settings page is the legacy single-endpoint layout, while current pushed source includes provider cards and up to 12 local encrypted keys per provider."
+    ],
+    "remaining": [
+      "A start.command rebuild/restart was blocked by automatic approval review because restarting now could interrupt active compaction/acceptance sessions. Do not bypass that rejection; wait until the sessions are confirmed terminal or obtain approval for that timing.",
+      "After a safe restart/current candidate is available, verify the provider cards, multiple-key editing, compact layout, and narrow-screen behavior in native Safari. Real API requests and secret persistence remain unverified."
+    ],
+    "verification": {
+      "system_browser": "Native Safari, localhost:9999. Read-only AX snapshot after selecting synthetic session #46; compressed summary visible, active context estimate 23,752/65,536, cumulative upstream input/output 538,764/72,453.",
+      "model_settings": "Previously inspected read-only on same live page: one Base URL, flat model list, one API key replacement control. Current source references internal/server/web/app.js renderModelList() and provider-specific key handling; no settings changed.",
+      "restart": "NOT_RUN: escalation for AIDE_OPEN_BROWSER=0 ./start.command was rejected by automatic approval review due possible interruption of active synthetic compaction/acceptance sessions. No workaround attempted."
+    },
+    "deferred_by_user": [
+      "Real embedding/vector provider acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reports successful testing"
+    ],
+    "release": "not_run",
+    "push": "pending documentation checkpoint"
   }
 }
