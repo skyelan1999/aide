@@ -24,6 +24,63 @@ func testApp(t *testing.T) *App {
 	t.Cleanup(a.Close)
 	return a
 }
+
+func TestAppCloseWaitsForTrackedBackgroundWork(t *testing.T) {
+	a := testApp(t)
+	started, release, workerDone := make(chan struct{}), make(chan struct{}), make(chan struct{})
+	a.background(func() {
+		close(started)
+		<-release
+		close(workerDone)
+	})
+	select {
+	case <-started:
+	case <-time.After(2 * time.Second):
+		t.Fatal("background worker did not start")
+	}
+
+	closed := make(chan struct{})
+	go func() { a.Close(); close(closed) }()
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		a.bgMu.Lock()
+		closing := a.bgClosing
+		a.bgMu.Unlock()
+		if closing {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("App.Close did not enter its closing state")
+		}
+		time.Sleep(time.Millisecond)
+	}
+	select {
+	case <-closed:
+		t.Fatal("App.Close returned before tracked background work finished")
+	default:
+	}
+	close(release)
+	select {
+	case <-workerDone:
+	case <-time.After(2 * time.Second):
+		t.Fatal("background worker did not finish")
+	}
+	select {
+	case <-closed:
+	case <-time.After(2 * time.Second):
+		t.Fatal("App.Close did not return after tracked background work finished")
+	}
+
+	startedAfterClose := make(chan struct{}, 1)
+	a.background(func() { startedAfterClose <- struct{}{} })
+	select {
+	case <-startedAfterClose:
+		t.Fatal("background worker started after App.Close")
+	default:
+	}
+	a.Close() // Shutdown remains safe when more than one owner calls it.
+}
+
 func request(a *App, method, path string, body any) *httptest.ResponseRecorder {
 	var b bytes.Buffer
 	if body != nil {

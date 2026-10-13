@@ -521,7 +521,10 @@ type App struct {
 	personalityState          personalityStateFile // 性格演化触发计数/回滚历史（#34，持久化 config/personality-state.json）
 	bgCtx                     context.Context
 	bgCancel                  context.CancelFunc
-	bgWg                      sync.WaitGroup   // fire-and-forget 后台 goroutine（标题总结等）追踪，Close 时等待
+	bgWg                      sync.WaitGroup // fire-and-forget 后台 goroutine（标题总结等）追踪，Close 时等待
+	bgMu                      sync.Mutex     // 串行化后台 goroutine 注册与 Close 的 Wait
+	bgClosing                 bool
+	closeOnce                 sync.Once
 	webAuthn                  *webAuthnManager // Touch ID / WebAuthn 解锁管理器
 	colloqCache               *colloquialCache // 口语化朗读稿 LRU 缓存
 	// ── 外部 AI 诊断接口（/api/debug）──
@@ -620,14 +623,12 @@ func (a *App) probeEdgeAsync() {
 	if strings.ToLower(strings.TrimSpace(provider)) == "webspeech" {
 		return // 用户明确选浏览器合成，不探测 edge
 	}
-	a.bgWg.Add(1)
-	go func() {
-		defer a.bgWg.Done()
+	a.background(func() {
 		ctx, cancel := context.WithTimeout(a.bgCtx, 15*time.Second)
 		defer cancel()
 		err := tts.ProbeEdge(ctx, cfg)
 		a.updateEdgeHealth(err == nil, err)
-	}()
+	})
 }
 
 // Pricing 单模型费率（R08）：0 为合法值；历史费用按调用时刻快照，改价只影响后续调用。
@@ -842,7 +843,7 @@ func New(work, reference, data string) (*App, error) {
 	// 完整性：首次生成程序基线（已存在则跳过），启动校验并自愈，结果供 healthz 上报；后台周期巡检。
 	_ = BuildBaseline(data)
 	a.setIntegrity(SelfHeal(data, VerifyIntegrity(data)))
-	go RunPeriodicIntegrity(a.bgCtx.Done(), data, 5*time.Minute, a.setIntegrity)
+	a.background(func() { RunPeriodicIntegrity(a.bgCtx.Done(), data, 5*time.Minute, a.setIntegrity) })
 	b, err := os.ReadFile(AccessTokenPath(data))
 	if errors.Is(err, os.ErrNotExist) {
 		b = []byte(newID() + newID())
@@ -1079,29 +1080,49 @@ func New(work, reference, data string) (*App, error) {
 	return a, nil
 }
 func (a *App) Close() {
-	if a.bgCancel != nil {
-		a.bgCancel() // 通知后台 goroutine 停止（中断其 HTTP 请求）
-	}
-	a.bgWg.Wait() // 等后台写盘结束，避免与临时目录清理竞争
-	if a.webAuthn != nil {
-		a.webAuthn.Close()
-	}
-	if a.daemons != nil {
-		a.daemons.StopAll() // 协议 v1.2：终止常驻插件子进程并释放端口
-	}
-	a.workspace.Close()
-	a.reference.Close()
-	if a.localRoot != nil {
-		a.localRoot.Close()
-	}
-	for _, r := range a.retiredRoots {
-		r.Close()
-	}
+	a.closeOnce.Do(func() {
+		a.bgMu.Lock()
+		a.bgClosing = true
+		if a.bgCancel != nil {
+			a.bgCancel() // 通知后台 goroutine 停止（中断其 HTTP 请求）
+		}
+		a.bgMu.Unlock()
+
+		// Stop active executions before waiting so App.Close also forms a reliable
+		// lifecycle boundary for tests and service shutdown.
+		a.mu.Lock()
+		for _, cancel := range a.cancels {
+			cancel()
+		}
+		a.mu.Unlock()
+		a.bgWg.Wait()
+
+		if a.webAuthn != nil {
+			a.webAuthn.Close()
+		}
+		if a.daemons != nil {
+			a.daemons.StopAll() // 协议 v1.2：终止常驻守护插件子进程并释放端口
+		}
+		a.workspace.Close()
+		a.reference.Close()
+		if a.localRoot != nil {
+			a.localRoot.Close()
+		}
+		for _, r := range a.retiredRoots {
+			r.Close()
+		}
+	})
 }
 
 // background 启动可追踪的 fire-and-forget 后台 goroutine；Close 会先取消 bgCtx 再等待其结束。
 func (a *App) background(fn func()) {
+	a.bgMu.Lock()
+	if a.bgClosing {
+		a.bgMu.Unlock()
+		return
+	}
 	a.bgWg.Add(1)
+	a.bgMu.Unlock()
 	go func() { defer a.bgWg.Done(); fn() }()
 }
 

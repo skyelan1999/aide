@@ -106,7 +106,7 @@ flowchart LR
 
 - **基线**：`BuildBaseline` 首次启动对运行二进制算 SHA-256，写入 `.integrity/baseline.json`（含 version/commit）。
 - **启动校验**：`VerifyIntegrity` 输出 `IntegrityReport{status, checks[], quarantined[], healed[], errors[]}`。
-- **运行巡检**：`RunPeriodicIntegrity` 后台 goroutine 每 5 分钟复查，结果回写 healthz。
+- **运行巡检**：`RunPeriodicIntegrity` 每 5 分钟复查，结果回写 healthz。巡检与其他由 `App` 启动的后台任务统一登记；关闭服务时先拒绝新后台任务、取消可取消工作并等待已登记任务退出，再关闭目录句柄。关闭操作可重复调用。
 - 所有写盘沿用 `atomicJSON`（temp+rename），杜绝写一半损坏。
 
 ## 四、自愈策略

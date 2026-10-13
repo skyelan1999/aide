@@ -105,7 +105,7 @@ flowchart LR
 
 - **Baseline**: `BuildBaseline` hashes the running binary on first boot and writes `.integrity/baseline.json` (with version/commit).
 - **Boot check**: `VerifyIntegrity` returns `IntegrityReport{status, checks[], quarantined[], healed[], errors[]}`.
-- **Runtime patrol**: `RunPeriodicIntegrity` goroutine re-checks every 5 minutes and refreshes healthz.
+- **Runtime patrol**: `RunPeriodicIntegrity` re-checks every 5 minutes and refreshes healthz. The patrol and other `App`-owned background work use one lifecycle registry; shutdown rejects new work, cancels cancellable tasks, waits for registered tasks to exit, and only then closes directory handles. Shutdown is safe to call more than once.
 - All writes use `atomicJSON` (temp + rename) to avoid half-written corruption.
 
 ## 4. Self-healing policy

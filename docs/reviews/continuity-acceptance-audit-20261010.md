@@ -1,5 +1,18 @@
 # 连续工作与知识能力：验收审计 · 2026-10-12
 
+### 2026-10-14 后台关闭竞态与当前工作树回归
+
+- race 检查首次捕获助手消息测试在 `App.Close()` 等待期间，`execute()` 仍注册标题总结后台任务：`WaitGroup.Add` 与 `Wait` 竞争，导致 race report、`WaitGroup` panic，并留下临时会话目录清理失败。
+- 关闭流程现通过生命周期互斥门拒绝新后台任务，取消登记中的任务，并等待已跟踪的执行与后台 goroutine；任务重试、恢复、子代理和新会话启动都纳入跟踪。`TestAssistantMessageGateLockedUnlockedClear` 与分页/插件用例共5项定向 `-race -parallel=1` PASS 8.647秒；完整 `internal/server` 非 race 回归 PASS 195.109秒。
+- 插件测试改为检查拒绝归档不改变已有完整注册表，以及一个插件失败不阻断另一个插件，不依赖部署包中内置插件的固定数量。星图原文分页在单文件100条命中时按40/40/20续取。
+- 完整 `internal/server -race` 在当前容器2 GiB cgroup内两次因 `signal: killed` 失败，`memory.events` 记录 OOM kill；本批完整 race 不记通过。当前 quick 门禁、英文文案、前端定向回归和文档检查结果以任务账本及本次门禁收据为准。
+- 原生 Safari 当前停留在 `https://localhost:18545/starmap.html` 的本机证书警告。即使用户授权代理长期代点，电脑控制安全规则要求证书警告由用户接管；本批未访问页面、未完成系统浏览器验收，也未推送。
+- 2026-10-14 继续用 `GOGC=20 GOMAXPROCS=1 -race -parallel=1` 尝试压低完整服务端 race 峰值，仍在9.4秒后收到 `signal: killed`；低 GC 目标没有绕过当前容器资源上限，不重试相同全包命令。星图近景验收仍需用户在 Safari 当前警告页接管后进行。
+- 2026-10-14 双 SSH/SFTP 隔离服务器真实联调非 race 版本通过，覆盖工作区、独立引用服务器、嵌入资源历史/冲突、远端记忆、搜索、时间线、分批续传及命令取消；测试前后源码指纹一致，临时 Docker 容器和网络已清理。race 版本在 `remote_progressive_coverage` 尾段被 2 GiB 容器 `signal: killed`，不计为测试通过。
+- 同日重跑星图透镜、引力、星门和场景专项回归均通过。Safari 当前切到新候选 `https://localhost:18545/starmap.html` 后仍显示原生证书告警；按浏览器安全策略需用户亲自在该页面处理，长期授权不能替代警告页的手动接管。详见星图任务账本与总任务 followup43。
+- `TestPluginBundleRejectsTraversalWithoutPartialInstall` 的路径拒绝检查原本因 `nil` 注册表与空注册表做 `reflect.DeepEqual` 产生误报；规范化 before/after 切片后仍确认拒绝路径且无部分注册。匹配运行时 Go+Node+Python+Office 依赖的隔离容器中，定向续查/插件测试 PASS 3.666秒，完整 `internal/server` 非 race PASS 177.637秒；只读挂载当前源码。
+- 当前工作树仓库 quick 门禁再次通过，指纹 `efba1ace90f47ead254f74707111f7655abe4b8dec579d8e324270a5c87753c1`，HEAD `72eba539eafc82aec62e77fb8f245914f7209025`。完整服务端 race 仍受2 GiB容器限制而未通过；Safari 18545证书拦截未由代理绕过，因此浏览器门禁与推送仍待办。
+
 ## 当前交接索引：按总目标核对源码
 
 本节于 2026-10-12 按当前工作树及其未提交差异复核；以下源码入口存在且接入，不等于完整行为已验收。用户已将验收从 Luna 改为由 Codex 继续；旧 Luna 交接仅作历史记录。真实向量验收按用户要求暂缓，Windows 暂无环境。此前 18214 证书与 Docker 不可用是用户处理及后续启动前的历史阻塞，当前证据见 [续验记录](continuity-acceptance-resumed-20261011.md#续验更新--2026-10-12)。
@@ -380,3 +393,9 @@ Markdown/TXT/代码文件保存失败后现在显示“重试保存”，重试�
 来源继续显示 188 个待处理目录，但达到候选当前的 800 条目录容量，并将覆盖状态标记为“范围受限”；再轮询后来源仍停在该容量边界，而其他来源周期计数继续变化。因此可确认本次星图画布本身不受 1,000 点限制；本次实际截断来自该候选的索引目录预算。此实例在代码视图首轮没有已发布完整快照，所以它没有验证“并发慢扫描时复用旧代码图”。另尝试连接同一 OpenHands 来源的 `vercel.json` 与 `README.md`，当前部分索引未找到路径，界面明确提示“索引不完整，不代表没有真实联系”；不能据此判断二者无关。
 
 详细状态和未验收边界见 `progress_checkpoint_20261014_followup37`。真实用户 SSH 来源、大库绘图性能、强制并发慢扫描下的代码图旧快照回退，以及完整索引后的成功证据路径仍待验证。
+
+## 2026-10-14 后续：后台任务关闭生命周期
+
+将 `RunPeriodicIntegrity` 巡检纳入 App 后台任务登记。`App.Close()` 现在以一次性关闭门阻止新任务、取消当前任务上下文、取消执行任务并等待已登记后台任务退出，然后关闭工作区与引用目录句柄。新增 `TestAppCloseWaitsForTrackedBackgroundWork` 验证关闭等待、关闭后拒绝新任务和重复关闭。
+
+隔离 `aide:local` 定向 race 用例 PASS（2.778 秒）；`go test -mod=vendor -count=1 -timeout=8m ./internal/server` PASS（171.878 秒），`go vet -mod=vendor ./internal/server` PASS；仓库 quick 44 项 PASS，指纹 `9db222391b93e60e2dc76065301b483f21c35285fdc1324369d8e2f4f6dd42d5`，日志 `.agent-state/verify-20261013T193600180741Z.log`；文档检查 PASS（188 Markdown、542 本地链接、JPEG 签名、FR-01..100）。仓库全量 `bash scripts/aide.sh test` 的 race 包在 `internal/server` 运行 182.112 秒后被容器 `signal: killed`，因此全量 race/vet profile 未通过；后续独立 server vet 已通过。系统 Safari 仍处于 `https://localhost:18545/starmap.html` 的原生证书告警页，星图候选视觉验收尚缺。此项只证明源码与服务端包，不能替代系统浏览器或长时运行验收。

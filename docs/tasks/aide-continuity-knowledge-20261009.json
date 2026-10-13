@@ -4132,5 +4132,29 @@
       "SSH 真实浏览器工作流、完整真实模型流程和整体发布门禁仍开放。向量提供方测试按用户决定暂缓，Windows 验收按用户决定排除。"
     ],
     "release": "定向回归、文档检查与 quick profile 通过；Safari 和 full profile 未完成，本阶段未推送。"
+  },
+  "progress_checkpoint_20261014_followup58": {
+    "status": "background_shutdown_lifecycle_server_package_pass_full_race_killed_safari_pending",
+    "date": "2026-10-14",
+    "summary": "将周期完整性巡检纳入 App 后台任务生命周期登记。关闭时标记停止接收新任务、取消当前执行、等待登记任务退出后关闭目录句柄，并使重复关闭安全。",
+    "completed": [
+      "internal/server/server.go：RunPeriodicIntegrity 改由 App.background 登记；Close 使用一次性关闭门、协调注册与 Wait、取消当前执行并等待后台工作退出。",
+      "internal/server/server_test.go：新增 TestAppCloseWaitsForTrackedBackgroundWork，覆盖等待、停止接收新任务及重复关闭。",
+      "docs/architecture/data-layout.md 与 docs/en/architecture/data-layout.md、docs/reviews/continuity-acceptance-audit-20261010.md：更新中英文架构和验收记录。"
+    ],
+    "verification": {
+      "targeted_race": "PASS: go test -race -count=1 ./internal/server -run ^TestAppCloseWaitsForTrackedBackgroundWork$; 2.778s",
+      "server_package": "PASS: go test -mod=vendor -count=1 -timeout=8m ./internal/server; 171.878s",
+      "server_vet": "PASS: go vet -mod=vendor ./internal/server",
+      "full": "NOT_PASS: bash scripts/aide.sh test; internal/server race process terminated by signal: killed after 182.112s. This is a resource termination, not a passing or functional failure result.",
+      "quick": "PASS: 44 checks; fingerprint 9db222391b93e60e2dc76065301b483f21c35285fdc1324369d8e2f4f6dd42d5; HEAD 2d0759e0106960d5fb1b619dab6a246e5aa2ebe5; receipt .agent-state/verify-20261013T193600180741Z.log",
+      "docs": "PASS: python3 scripts/check_docs.py; 188 Markdown files, 542 local links, JPEG signatures, FR-01..100; git diff --check PASS"
+    },
+    "remaining": [
+      "Current system Safari remains on the localhost:18545 certificate interstitial; system browser acceptance for star-map close-up and this overall current candidate is pending. Browser security policy requires user handoff for the interstitial, despite standing authorization.",
+      "Full race/vet repository profile was terminated by signal: killed; targeted race, full server non-race and server vet passed.",
+      "Actual user-host SSH/network interruption and long-duration browser acceptance remain open. Real vector provider remains deferred by the user; Windows acceptance remains excluded by the user."
+    ],
+    "release": "Server implementation, server package, server vet and quick checks verified; current source/UI candidate still awaits system Safari and full repository race gate. No push in this checkpoint."
   }
 }
