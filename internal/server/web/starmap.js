@@ -373,9 +373,13 @@ function cosmicData(key){
   if(!batches.has(key))batches.set(key,{kind:e.kind,dashed:e.dashed,hierarchy:e.hierarchy,energyBand,edges:[]});batches.get(key).edges.push(e);
  }
  // Faint source gas preserves region recognition; it is not counted as a unit.
- const gas=new Map();for(const star of stars){const key=star.n.cluster?.key||star.n.region||'source';if(!gas.has(key))gas.set(key,{x:0,y:0,count:0,energy:0,key,texture:cloudTexture(key,mapPalette.nebula)});const zone=gas.get(key);zone.x+=star.x;zone.y+=star.y;zone.count++;zone.energy+=window.AideCosmicPhysics?.powerProxy(star.n.connectionCount)||0;}
+ const gas=new Map();for(const star of stars){const key=star.n.cluster?.key||star.n.region||'source';if(!gas.has(key))gas.set(key,{x:0,y:0,z:0,count:0,energy:0,key,texture:cloudTexture(key,mapPalette.nebula)});const zone=gas.get(key);zone.x+=star.x;zone.y+=star.y;zone.z+=star.z;zone.count++;zone.energy+=window.AideCosmicPhysics?.powerProxy(star.n.connectionCount)||0;}
  const maxGasEnergy=Math.max(1,...[...gas.values()].map(zone=>zone.energy));
- for(const zone of gas.values()){zone.x/=zone.count;zone.y/=zone.count;zone.spread=Math.min(.28,.05+Math.sqrt(zone.count)*.012);zone.luminosity=zone.energy;zone.illumination=zone.count?Math.log1p(zone.energy)/Math.log1p(maxGasEnergy):0;}
+ for(const zone of gas.values()){zone.x/=zone.count;zone.y/=zone.count;zone.z/=zone.count;zone.spread=Math.min(.28,.05+Math.sqrt(zone.count)*.012);zone.luminosity=zone.energy;zone.illumination=zone.count?Math.log1p(zone.energy)/Math.log1p(maxGasEnergy):0;
+  // Gas column density is a normalized visualization proxy from real members;
+  // it drives Beer–Lambert extinction as well as the nebula's scattered light.
+  zone.opticalDepth=Math.min(.85,.08+Math.log1p(zone.count)*.11+zone.illumination*.16);
+ }
  const gravity=window.AideStarGravity?.analyze(graph.nodes,graph.edges,records.map(record=>record.group));
  const recordByGroup=new Map(records.map(record=>[record.group.key,record]));
  const blackHoles=(gravity?.blackHoles||[]).map(hole=>({...hole,record:recordByGroup.get(hole.groupKey),phase:seeded(hole.groupKey+'black-hole-phase')})).filter(hole=>hole.record);
@@ -432,7 +436,7 @@ function drawBlackHole(hole,now,fade=1){
  const bands=[[3.15,3.7],[3.85,4.8],[5.0,6.5],[6.8,9.0]];
  for(const [inner,outer] of bands){const radius=rs*(inner+outer)*.5,pixelRadius=radius,thickness=rs*(outer-inner)*.82;
   for(let i=0;i<72;i++){const a=tau*(i+.5)/72,los=Math.sin(a)*Math.sqrt(1-view*view),emission=physics?.accretionEmission(rs,radius,los)||{shift:.8+Math.max(0,los)*.45,intensity:.35};
-   const opacity=Math.min(.92,.12+emission.intensity*2.3)*(1-Math.abs(Math.cos(a))*.16);ctx.globalAlpha=fade*opacity;ctx.strokeStyle=physics?.temperatureColor(emission.shift)||(los>0?'#cde8ff':'#e38b61');ctx.lineWidth=Math.max(.5,thickness);ctx.beginPath();ctx.arc(0,0,pixelRadius,a-.035,a+.035);ctx.stroke();
+   const opacity=(.12+(physics?.displayRadiance(emission.intensity,2.6)||0)*.8)*(1-Math.abs(Math.cos(a))*.16);ctx.globalAlpha=fade*opacity;ctx.strokeStyle=physics?.temperatureColor(emission.shift)||(los>0?'#cde8ff':'#e38b61');ctx.lineWidth=Math.max(.5,thickness);ctx.beginPath();ctx.arc(0,0,pixelRadius,a-.035,a+.035);ctx.stroke();
   }
  }
  // Photon sphere and event-horizon shadow are distinct scales. The broken rim
@@ -473,14 +477,14 @@ function drawCosmicGate(gate,cx,cy,zoom,fade=1,orbitScale=1){
  const bearing=Math.atan2((gate.directionY||0)*height,(gate.directionX||1)*width);
  const orbit=(20+(gate.clearanceRing||0)*15)*orbitScale,gx=cx+Math.cos(bearing)*orbit,gy=cy+Math.sin(bearing)*orbit;
  gate.p={x:gx,y:gy,onScreen:gx>-110&&gx<width+110&&gy>-24&&gy<height+24};if(!gate.p.onScreen)return;
- const capacity=clamp(gate.capacity||0,0,1),stability=clamp(gate.stability||0,0,1),brightness=clamp(gate.brightness||0,0,1),scale=.68+capacity*.92,aperture=mapPalette.light?'#8dbbd8':'#b6e7ff';
+ const capacity=clamp(gate.capacity||0,0,1),stability=clamp(gate.stability||0,0,1),brightness=clamp(gate.brightness||0,0,1),emission=window.AideCosmicPhysics?.displayRadiance(brightness,3.8)||0,scale=.68+capacity*.92,aperture=mapPalette.light?'#8dbbd8':'#b6e7ff';
  ctx.save();ctx.translate(gx,gy);ctx.rotate(bearing+Math.PI/2);ctx.scale(scale,scale);
  // An active throat floats inside separated, curved superconducting rails.
  // Glow, frame heft, and aperture size all follow bilateral gate capacity.
- ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*(.12+brightness*.34);const haze=ctx.createRadialGradient(0,0,1,0,0,32);haze.addColorStop(0,'#ffffff');haze.addColorStop(.12,aperture+'e0');haze.addColorStop(.42,aperture+'42');haze.addColorStop(1,aperture+'00');ctx.fillStyle=haze;ctx.fillRect(-32,-32,64,64);
+ ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*(.08+emission*.42);const haze=ctx.createRadialGradient(0,0,1,0,0,32);haze.addColorStop(0,'#ffffff');haze.addColorStop(.12,aperture+'e0');haze.addColorStop(.42,aperture+'42');haze.addColorStop(1,aperture+'00');ctx.fillStyle=haze;ctx.fillRect(-32,-32,64,64);
  ctx.globalCompositeOperation='source-over';ctx.globalAlpha=fade*(.38+stability*.55);ctx.lineWidth=.85+stability*1.35;ctx.strokeStyle=aperture;ctx.beginPath();ctx.ellipse(0,0,8+capacity*3,15+capacity*5,-.08,Math.PI*.12,Math.PI*.88);ctx.stroke();ctx.beginPath();ctx.ellipse(0,0,8+capacity*3,15+capacity*5,.08,Math.PI*1.12,Math.PI*1.88);ctx.stroke();
  ctx.lineWidth=.65+stability*.7;ctx.globalAlpha=fade*(.3+stability*.5);ctx.strokeStyle=skyText();for(const side of [-1,1]){ctx.beginPath();ctx.moveTo(side*12,-13);ctx.quadraticCurveTo(side*(7+capacity*3),0,side*12,13);ctx.stroke();ctx.beginPath();ctx.moveTo(side*12,-13);ctx.lineTo(side*5,-17);ctx.moveTo(side*12,13);ctx.lineTo(side*5,17);ctx.stroke();}
- ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*(.44+brightness*.5);const core=ctx.createRadialGradient(0,0,0,0,0,9+capacity*5);core.addColorStop(0,'#ffffff');core.addColorStop(.18,aperture);core.addColorStop(.54,aperture+'a0');core.addColorStop(1,aperture+'00');ctx.fillStyle=core;ctx.beginPath();ctx.ellipse(0,0,3+capacity*2,6+capacity*4,0,0,tau);ctx.fill();ctx.restore();ctx.globalCompositeOperation='source-over';
+ ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*(.24+emission*.72);const core=ctx.createRadialGradient(0,0,0,0,0,9+capacity*5);core.addColorStop(0,'#ffffff');core.addColorStop(.18,aperture);core.addColorStop(.54,aperture+'a0');core.addColorStop(1,aperture+'00');ctx.fillStyle=core;ctx.beginPath();ctx.ellipse(0,0,3+capacity*2,6+capacity*4,0,0,tau);ctx.fill();ctx.restore();ctx.globalCompositeOperation='source-over';
  if(zoom>=1.55){ctx.font='10px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText('跃迁门 · '+gate.targetLabel,gx+12,gy-7);ctx.globalAlpha=fade*.76;ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText('稳定 '+Math.round(stability*100)+'% · 通行规模 '+Math.round(capacity*100)+'%',gx+12,gy+7);}
 }
 function drawKeplerOrbit(cx,cy,semiMajor,eccentricity,argument,inclination,color,fade){
@@ -520,6 +524,18 @@ function cosmicEinsteinRadius(hole,sourceDepth){
 }
 function cosmicLensAffectsStar(star,holes){return holes.some(hole=>{if(!hole.record.p.onScreen)return false;const einstein=cosmicEinsteinRadius(hole,star.z);return einstein>0&&Math.hypot(star.p.x-hole.record.p.x,star.p.y-hole.record.p.y)<einstein*3.2;});}
 function cosmicLensAffectsEdge(edge,holes){return holes.some(hole=>{if(!hole.record.p.onScreen||Math.min(edge.a?.depth||0,edge.b?.depth||0)<=hole.record.z)return false;const depth=((edge.a?.depth||0)+(edge.b?.depth||0))*.5,einstein=cosmicEinsteinRadius(hole,depth);return einstein>0&&cosmicLensDistance(hole.record.p,edge.a,edge.b)<einstein*3.2;});}
+function buildCosmicDustIndex(zones,cx,cy){
+ const cellSize=128,cells=new Map(),add=(zone,x,y)=>{const key=x+':'+y;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(zone);};
+ for(const zone of zones||[]){if(!Number.isFinite(zone.z)||zone.z<=0)continue;const x=cx+(zone.x+cosmicAimX+yaw*.22)*width*zoom/zone.z,y=cy+(zone.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/zone.z,sx=Math.max(22,zone.spread*width*3.1*zoom/zone.z*.25),sy=Math.max(16,sx*.54),field={x,y,sx,sy,z:zone.z,opticalDepth:zone.opticalDepth};
+  for(let gx=Math.floor((x-3*sx)/cellSize);gx<=Math.floor((x+3*sx)/cellSize);gx++)for(let gy=Math.floor((y-3*sy)/cellSize);gy<=Math.floor((y+3*sy)/cellSize);gy++)add(field,gx,gy);
+ }
+ return {cellSize,cells};
+}
+function cosmicDustTransmission(x,y,sourceDepth,index){
+ const physics=window.AideCosmicPhysics;if(!physics||!index)return 1;let tau=0;const cell=index.cellSize,zones=index.cells.get(Math.floor(x/cell)+':'+Math.floor(y/cell))||[];
+ for(const zone of zones){if(sourceDepth<=zone.z+.008)continue;const dx=(x-zone.x)/zone.sx,dy=(y-zone.y)/zone.sy,r2=dx*dx+dy*dy;if(r2<9)tau+=zone.opticalDepth*Math.exp(-.5*r2);}
+ return physics.beerLambert(tau);
+}
 function drawCosmicLocalSystem(now,fade=1){
  cosmicLocalHits=[];const focus=cosmicStars.find(star=>star.n.id===cosmicFocusID);if(!focus?.p.onScreen)return;
  const center=focus.p,edges=(edgeAdjacency.get(focus.n.id)||[]).filter(edge=>!['contains','defines'].includes(edge.kind)),byID=new Map();
@@ -552,15 +568,21 @@ function drawCosmos(now,t){
  if(!cosmicScene)return;const data=cosmicSceneCache.get(cosmicKey),flight=cosmicFlight,u=flight?clamp((now-flight.start)/flight.duration,0,1):1,k=easing(u),fade=flight?k:1,scale=flight?(flight.direction>0?.83+.17*k:1.17-.17*k):1;
  const cx=width*(.57+skyFloat.x),cy=height*(.5+skyFloat.y),drift=0;
  ctx.save();ctx.globalAlpha=fade;ctx.translate(cx,cy);ctx.scale(scale,scale);ctx.translate(-cx,-cy);
- // Nebula gas is atmosphere only; foreground stars and node-worlds always map to real IDs.
- for(const zone of data?.gas||[]){const x=cx+(zone.x+cosmicAimX+yaw*.22+drift)*width*zoom,y=cy+(zone.y+cosmicAimY+(pitch-.1)*.18)*height*zoom,size=Math.max(90,zone.spread*width*3.1*zoom);if(x+size/2<0||x-size/2>width||y-size*.4<0||y-size*.4>height)continue;const flux=window.AideCosmicPhysics?.inverseSquareFlux(zone.luminosity||zone.illumination,Math.max(.4,Math.hypot(zone.x+cosmicAimX,zone.y+cosmicAimY)*2+1))||.02,displayFlux=flux/(flux+.22);ctx.save();ctx.globalAlpha=fade*(.025+Math.min(.105,Math.sqrt(displayFlux)*.12));ctx.translate(x,y);ctx.rotate(-.32);ctx.drawImage(zone.texture,-size/2,-size*.36,size,size*.72);ctx.restore();}
+ // Nebulae both scatter incident starlight into the view and absorb sources
+ // behind their screen. The dust texture is a visualization of this transfer,
+ // not a NASA survey image or an independently luminous decorative layer.
+ for(const zone of data?.gas||[]){const x=cx+(zone.x+cosmicAimX+yaw*.22+drift)*width*zoom/zone.z,y=cy+(zone.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/zone.z,size=Math.max(90,zone.spread*width*3.1*zoom/zone.z);if(x+size/2<0||x-size/2>width||y-size*.4<0||y-size*.4>height)continue;
+  const physics=window.AideCosmicPhysics,lightDistance=Math.max(.4,Math.hypot(zone.x+cosmicAimX,zone.y+cosmicAimY)*2+1),incident=physics?.inverseSquareFlux(zone.luminosity||zone.illumination,lightDistance)||.02,transfer=physics?.dustTransfer(incident,zone.opticalDepth,.58,.35,.68),scattered=transfer?transfer.scatteredRadiance*transfer.phase*4*Math.PI:incident*.12,visible=physics?.displayRadiance(scattered,3.8)||0;
+  ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=fade*Math.min(.28,.025+visible*.22);ctx.translate(x,y);ctx.rotate(-.32);ctx.drawImage(zone.texture,-size/2,-size*.36,size,size*.72);ctx.restore();}
  for(const r of cosmicRecords){const p=r.p;p.x=cx+(r.x+cosmicAimX+yaw*.22+drift)*width*zoom/r.z;p.y=cy+(r.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/r.z;p.onScreen=p.x>-100&&p.x<width+100&&p.y>-100&&p.y<height+100;r.radius=r.group.nodeID?10:Math.max(25,r.spread*width*zoom/r.z*.65);if(r.texture&&p.onScreen){const size=Math.max(110,r.spread*width*3.6*zoom/r.z);ctx.save();ctx.globalAlpha=fade*.13;ctx.translate(p.x,p.y);ctx.rotate(-.32+r.phase*.13);ctx.drawImage(r.texture,-size/2,-size/2,size,size);ctx.restore();}}
  for(const star of cosmicStars){const p=star.p;p.x=cx+(star.x+cosmicAimX+yaw*.22+drift)*width*zoom/star.z;p.y=cy+(star.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/star.z;p.onScreen=p.x>-30&&p.x<width+30&&p.y>-30&&p.y<height+30;if(star.owner.group.nodeID){star.owner.p.x=p.x;star.owner.p.y=p.y;star.owner.p.onScreen=p.onScreen;}}
- const lensHoles=(data?.blackHoles||[]).filter(hole=>hole.record.p.onScreen);cosmicLensHits=[];cosmicLensedStarIDs=new Set();
+ const lensHoles=(data?.blackHoles||[]).filter(hole=>hole.record.p.onScreen),dustIndex=buildCosmicDustIndex(data?.gas,cx,cy);cosmicLensHits=[];cosmicLensedStarIDs=new Set();
  infrared.draw(ctx,cosmicStars.map(star=>({x:star.p.x,y:star.p.y,degree:star.n.connectionCount||0,distance:star.z,scale:zoom/star.z,birth:birthAlpha(star.n,now)})),width,height,now);
  const calls=structure?.entry('calls');cosmicCallState=selected&&calls?.levels.has(selected.id)?structure.describe(selected.id,'calls'):calls;
- for(const batch of data?.batches||[]){if(cosmicStars.length>140&&batch.hierarchy)continue;const band=batch.energyBand||0;ctx.setLineDash(batch.dashed?[3,7]:[]);ctx.beginPath();for(const e of batch.edges){if(!edgeInView(e)||cosmicLensAffectsEdge(e,lensHoles)||selected&&(e.from===selected.id||e.to===selected.id))continue;if(birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}if(band>=2&&!batch.hierarchy){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=(mapPalette.light?'#6b98b8':'#a3d5ff')+(band===2?'1a':band===3?'2a':'38');ctx.lineWidth=.8+band*.34;ctx.shadowColor=mapPalette.light?'#6b98b8':'#81c7ff';ctx.shadowBlur=2+band*1.7;ctx.stroke();ctx.restore();ctx.setLineDash(batch.dashed?[3,7]:[]);}ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'12':(12+band*9).toString(16).padStart(2,'0'));ctx.lineWidth=.32+band*.17;ctx.stroke();}ctx.setLineDash([]);
- let particles=0;for(const e of cosmicStarEdges){if(!edgeInView(e)||cosmicLensAffectsEdge(e,lensHoles))continue;const birth=Math.min(birthAlpha(nodeByID.get(e.from)||{},now),birthAlpha(nodeByID.get(e.to)||{},now));if(birth<.97)continue;const active=selected&&(e.from===selected.id||e.to===selected.id);if(active){ctx.strokeStyle=mapPalette.star+'90';ctx.lineWidth=1;ctx.setLineDash(e.dashed?[3,6]:[]);ctx.beginPath();ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);ctx.stroke();ctx.setLineDash([]);}if(active&&animate&&particles++<24){const q=(t/6500+e.phase)%1;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(e.a.x+(e.b.x-e.a.x)*q,e.a.y+(e.b.y-e.a.y)*q,1,0,tau);ctx.fill();}}
+ for(const batch of data?.batches||[]){if(cosmicStars.length>140&&batch.hierarchy)continue;const band=batch.energyBand||0,edgeBins=Array.from({length:5},()=>({edges:[],transmission:0}));for(const e of batch.edges){if(!edgeInView(e)||cosmicLensAffectsEdge(e,lensHoles)||selected&&(e.from===selected.id||e.to===selected.id))continue;if(birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;const depth=((e.a.depth||0)+(e.b.depth||0))*.5,transmission=cosmicDustTransmission((e.a.x+e.b.x)*.5,(e.a.y+e.b.y)*.5,depth,dustIndex),bin=Math.max(0,Math.min(4,Math.floor(transmission*5))),bucket=edgeBins[bin];bucket.edges.push(e);bucket.transmission+=transmission;}
+  for(const bucket of edgeBins){const edges=bucket.edges;if(!edges.length)continue;const transmission=bucket.transmission/edges.length;ctx.setLineDash(batch.dashed?[3,7]:[]);ctx.beginPath();for(const e of edges){ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);}if(band>=2&&!batch.hierarchy){ctx.save();ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*transmission;ctx.strokeStyle=(mapPalette.light?'#6b98b8':'#a3d5ff')+(band===2?'1a':band===3?'2a':'38');ctx.lineWidth=.8+band*.34;ctx.shadowColor=mapPalette.light?'#6b98b8':'#81c7ff';ctx.shadowBlur=2+band*1.7;ctx.stroke();ctx.restore();}ctx.globalAlpha=fade*transmission;ctx.strokeStyle=mapPalette.star+(batch.hierarchy?'12':(12+band*9).toString(16).padStart(2,'0'));ctx.lineWidth=.32+band*.17;ctx.stroke();ctx.globalAlpha=fade;
+  }}ctx.setLineDash([]);
+ let particles=0;for(const e of cosmicStarEdges){if(!edgeInView(e)||cosmicLensAffectsEdge(e,lensHoles))continue;const birth=Math.min(birthAlpha(nodeByID.get(e.from)||{},now),birthAlpha(nodeByID.get(e.to)||{},now));if(birth<.97)continue;const active=selected&&(e.from===selected.id||e.to===selected.id),depth=((e.a.depth||0)+(e.b.depth||0))*.5,transmission=cosmicDustTransmission((e.a.x+e.b.x)*.5,(e.a.y+e.b.y)*.5,depth,dustIndex);if(active){ctx.globalAlpha=fade*transmission;ctx.strokeStyle=mapPalette.star+'90';ctx.lineWidth=1;ctx.setLineDash(e.dashed?[3,6]:[]);ctx.beginPath();ctx.moveTo(e.a.x,e.a.y);ctx.lineTo(e.b.x,e.b.y);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=fade;}if(active&&animate&&particles++<24){const q=(t/6500+e.phase)%1;ctx.globalAlpha=fade*transmission;ctx.fillStyle=mapPalette.star;ctx.beginPath();ctx.arc(e.a.x+(e.b.x-e.a.x)*q,e.a.y+(e.b.y-e.a.y)*q,1,0,tau);ctx.fill();ctx.globalAlpha=fade;}}
  // Gate icons use only indexed edges that cross established stellar systems.
  cosmicGates=cosmicScene.gates||[];
  for(const gate of cosmicGates)if(gate.p)gate.p.onScreen=false;
@@ -568,7 +590,7 @@ function drawCosmos(now,t){
   const anchor=cosmicStars.find(star=>star.n.id===gate.anchorNodeID);if(!anchor?.p.onScreen)continue;
   drawCosmicGate(gate,anchor.p.x,anchor.p.y,zoom,fade);
  }
- for(const star of cosmicStars){const {n,p}=star;if(!p.onScreen||cosmicLensAffectsStar(star,lensHoles))continue;const participating=!!calls?.levels.has(n.id),depth=participating?cosmicCallState?.levels.get(n.id):null,known=Number.isFinite(depth),incoming=!!cosmicCallState?.incoming.has(n.id),chosen=selected?.id===n.id,opticalIntensity=window.AideStarOptics?.apparentIntensity(n.connectionCount,star.z)||1;
+ for(const star of cosmicStars){const {n,p}=star;if(!p.onScreen||cosmicLensAffectsStar(star,lensHoles))continue;const participating=!!calls?.levels.has(n.id),depth=participating?cosmicCallState?.levels.get(n.id):null,known=Number.isFinite(depth),incoming=!!cosmicCallState?.incoming.has(n.id),chosen=selected?.id===n.id,dustTransmission=cosmicDustTransmission(p.x,p.y,star.z,dustIndex),opticalIntensity=(window.AideStarOptics?.apparentIntensity(n.connectionCount,star.z)||1)*dustTransmission;
   const visual=stellarVisual(n,known?depth:null,chosen,incoming),magnification=1+Math.max(0,zoom-1)*.72,color=visual.highlight&&!mapPalette.highContrast?(mapPalette.light?'#356f9e':'#d8edff'):n.starColor,radius=visual.radius*magnification,halo=visual.halo*Math.sqrt(magnification),match=n.match,alpha=searchQuery&&!match&&!chosen?.18:visual.alpha;
   const birth=birthAlpha(n,now),bloomStrength=Math.min(1,n.stellarStrength||0),bloomAlpha=chosen?.42:visual.highlight?.32:.045+bloomStrength*.22;
   // Screen blending gives overlapping sources a bounded display response:

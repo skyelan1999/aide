@@ -41,6 +41,38 @@ window.AideCosmicPhysics = Object.freeze({
   const d = Number.isFinite(distance) ? Math.max(.25, distance) : 1;
   return p / (4 * Math.PI * d * d);
  },
+ displayRadiance(radiance, exposure = 1) {
+  // Camera/display response is deliberately kept outside the conserved scene
+  // radiance calculations. This bounded exposure curve behaves like a simple
+  // photographic tone mapper without changing energy in the scene model.
+  const value = Number.isFinite(radiance) ? Math.max(0, radiance) : 0;
+  const gain = Number.isFinite(exposure) ? Math.max(0, exposure) : 1;
+  return 1 - Math.exp(-value * gain);
+ },
+ beerLambert(opticalDepth) {
+  const tau = Number.isFinite(opticalDepth) ? Math.max(0, opticalDepth) : 0;
+  return Math.exp(-Math.min(50, tau));
+ },
+ henyeyGreenstein(cosScatteringAngle, anisotropy = .65) {
+  // Normalized phase function (integral over 4π is one). Positive g models
+  // the forward scattering typical of interstellar dust grains.
+  const cosine = Math.max(-1, Math.min(1, Number.isFinite(cosScatteringAngle) ? cosScatteringAngle : 0));
+  const g = Math.max(-.95, Math.min(.95, Number.isFinite(anisotropy) ? anisotropy : 0));
+  const denominator = Math.max(1e-9, 1 + g * g - 2 * g * cosine);
+  return (1 - g * g) / (4 * Math.PI * Math.pow(denominator, 1.5));
+ },
+ dustTransfer(incidentRadiance, opticalDepth, singleScatteringAlbedo = .55, cosScatteringAngle = 0, anisotropy = .65) {
+  // Single-scattering radiative transfer through a homogeneous screen.
+  // The graph supplies dimensionless radiance and optical-depth proxies.
+  const incident = Number.isFinite(incidentRadiance) ? Math.max(0, incidentRadiance) : 0;
+  const tau = Number.isFinite(opticalDepth) ? Math.max(0, opticalDepth) : 0;
+  const albedo = Math.max(0, Math.min(1, Number.isFinite(singleScatteringAlbedo) ? singleScatteringAlbedo : .55));
+  const transmission = this.beerLambert(tau), removed = incident * (1 - transmission);
+  const scattered = removed * albedo, absorbed = removed - scattered;
+  return { transmission, directRadiance: incident * transmission, scatteredRadiance: scattered,
+   absorbedRadiance: absorbed, phase: this.henyeyGreenstein(cosScatteringAngle, anisotropy),
+   energyResidual: incident - (incident * transmission + scattered + absorbed) };
+ },
  schwarzschildRadius(massLength) {
   // In geometric units (G = c = 1), r_s = 2M. The caller supplies a
   // normalized graph proxy, never a measured stellar mass.
@@ -84,14 +116,13 @@ window.AideCosmicPhysics = Object.freeze({
   const reflected = incident * this.lambertPhase(phaseAngle) * Math.max(0, Math.min(1, Number.isFinite(albedo) ? albedo : .3));
   // Filmic display mapping preserves a visible night side while retaining
   // monotonic response to incident and reflected radiance.
-  const display = value => value <= 0 ? 0 : value / (value + .16);
-  return { incidentFlux: incident, reflectedFlux: reflected, displayIllumination: display(reflected), equilibriumProxy: Math.pow(incident, .25) };
+  return { incidentFlux: incident, reflectedFlux: reflected, displayIllumination: this.displayRadiance(reflected, 4.8), equilibriumProxy: Math.pow(incident, .25) };
  },
  planetSurfaceRadiance(hostPower, orbitRadius, albedo, normalDotLight) {
   const reflectivity = Math.max(0, Math.min(1, Number.isFinite(albedo) ? albedo : .3));
   const diffuse = Math.max(0, Math.min(1, Number.isFinite(normalDotLight) ? normalDotLight : 0));
   const irradiance = this.inverseSquareFlux(hostPower, orbitRadius) * reflectivity * diffuse;
-  return irradiance <= 0 ? 0 : irradiance / (irradiance + .16);
+  return this.displayRadiance(irradiance, 4.8);
  },
  schwarzschildRedshift(rs, radius) {
   if (!Number.isFinite(rs) || !Number.isFinite(radius) || rs <= 0 || radius <= rs) return 0;
