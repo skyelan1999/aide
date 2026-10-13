@@ -3027,13 +3027,46 @@
       "Capture one healthy real automatic-compaction lifecycle in Safari, including batch changes and final persisted estimate.",
       "Continue current-candidate UI/provider/remote-source/large-library acceptance and release/rollback audit."
     ],
-    "deferred_by_user": ["Real embedding/vector model acceptance"],
-    "out_of_scope_by_user": ["Windows validation; user reported successful testing"],
+    "deferred_by_user": [
+      "Real embedding/vector model acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reported successful testing"
+    ],
     "verification": {
       "go": "PASS: targeted internal/server tests via isolated aide:local Docker; 0.076s.",
       "docs": "PASS: JSON validation, python3 scripts/check_docs.py (188 Markdown files, 540 local links), git diff --check.",
       "browser": "Pending; Safari native passkey prompt prevents reading the Aide page until authenticated."
     },
     "release": "pushed to origin/main as e23d6b8; no product release/deployment."
+  },
+  "progress_checkpoint_20261013_followup11": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "baseline": "e3f5ac6 (origin/main)",
+    "completed": [
+      "Running task outcome first-page refresh is committed and pushed; it polls every 2.5 seconds while the outcome panel is open, stops on terminal/close, and preserves loaded-pagination snapshot boundaries.",
+      "Focused outcome pagination and Markdown template regressions passed; JavaScript syntax, i18n, docs links, and diff checks passed.",
+      "Built an isolated disposable candidate from e3f5ac6 and confirmed the service health endpoint and application route in native Safari after the user processed the local certificate handoff."
+    ],
+    "remaining": [
+      "A true in-progress task could not be produced in the isolated browser candidate because it has no model configuration; live polling, text growth during execution, and terminal-stop behavior remain unverified in Safari.",
+      "Full Go race and vet command is still running; do not count as passed until it exits successfully.",
+      "Continue outstanding workflow-specific Safari/remote-host/large-library/long-duration checks and requirement-by-requirement release/rollback audit."
+    ],
+    "deferred_by_user": [
+      "Real embedding/vector provider acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reported successful testing"
+    ],
+    "verification": {
+      "focused": "PASS: node scripts/outcome-pagination.test.cjs; node scripts/markdown-template-icons.test.cjs; node --check; node scripts/test_i18n.cjs; python3 scripts/check_docs.py; git diff --check.",
+      "candidate": "PASS: isolated build from e3f5ac6, /healthz reports service ok, native Safari route renders the Aide workbench. No model or credentials were configured or transmitted.",
+      "live_outcome_browser": "NOT_RUN: candidate had no active model and no running task; static/unit test coverage does not replace live Safari task polling.",
+      "full": "RUNNING: dockerized go test -race ./... followed by go vet ./...; started in this turn, no terminal result yet."
+    },
+    "release": "not_run",
+    "push": "Product source e3f5ac6 already pushed to origin/main. This checkpoint is documentation-only and remains to be pushed after the full regression result is recorded."
   }
 }
