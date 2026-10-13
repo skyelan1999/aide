@@ -3462,5 +3462,31 @@
     ],
     "release": "not_run",
     "push": "pending documentation checkpoint"
+  },
+  "progress_checkpoint_20261013_followup29": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "After Safari showed acceptance sessions #45–#48 completed, ran AIDE_OPEN_BROWSER=0 ./start.command as requested and reloaded localhost:9999 in native Safari.",
+      "Safari now renders the current provider-first model settings UI. Expanded DeepSeek / custom provider shows API endpoint, locally encrypted key controls (1/12), model list with active selection, and per-model advanced settings. No model settings or secret values were changed."
+    ],
+    "remaining": [
+      "Verify adding another provider and key using a disposable configuration or isolated candidate; avoid modifying the user's active model settings.",
+      "Verify narrow-screen layout in native Safari.",
+      "Real model API requests and persistence of newly added encrypted keys remain unverified."
+    ],
+    "verification": {
+      "system_browser": "Native Safari at https://localhost:9999/. After restart, provider-first model settings loaded; expanded provider UI visibly showed API endpoint, encrypted key section, three model entries, current-model selection, and advanced settings disclosures.",
+      "restart": "PASS: start.command returned; Safari reload rendered the current source UI. Acceptance sessions #45–#48 were terminal before restart.",
+      "model_settings": "Read-only inspection. Existing DeepSeek/custom provider has three models and one encrypted key. No save, API request, key edit, or provider addition performed."
+    },
+    "deferred_by_user": [
+      "Real embedding/vector provider acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reports successful testing"
+    ],
+    "release": "not_run",
+    "push": "pending documentation checkpoint"
   }
 }
