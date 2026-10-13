@@ -372,6 +372,18 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	}
 	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...) // 去掉末条指令（execute 首轮再加）
 	firstInput := preview.Messages
+	// Persist the initial resumable checkpoint with the run itself. The run is
+	// returned to the browser as soon as startTask responds, so initializing this
+	// in execute left a window where an immediate pause was rejected.
+	task.CheckpointMessages = append([]Message(nil), firstInput...)
+	if task.Mode == "chat" {
+		task.CheckpointStep = "chat"
+	} else if modelLedWorkflow(task) {
+		task.CheckpointStep = "agent"
+	} else {
+		task.CheckpointStep = "plan"
+	}
+	task.CanResume = true
 	s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt})
 	s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 	s.Runs = append(s.Runs, task)

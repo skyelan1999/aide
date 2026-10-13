@@ -758,7 +758,8 @@ function sessionRevision(s) {
   const runs = s.runs || [], messages = s.messages || [];
   const lastRun = runs[runs.length - 1];
   return [s.id, s.updated, s.runsTotal ?? runs.length, s.messagesTotal ?? messages.length, state.historyLimit,
-    runs.length, messages.length, lastRun?.id, lastRun?.status, lastRun?.steps?.map(step => step.name + ':' + step.status + ':' + (step.content || '').length).join(',')].join('|');
+    runs.length, messages.length, lastRun?.id, lastRun?.status, lastRun?.pauseRequested, lastRun?.canResume,
+    lastRun?.steps?.map(step => step.name + ':' + step.status + ':' + (step.content || '').length).join(',')].join('|');
 }
 function getSessionWindow(id) { return api('/sessions/' + id + '?limit=' + state.historyLimit); }
 function paintSessionSelection(id, loading) {
@@ -2002,7 +2003,7 @@ function renderSession() {
   for (const run of state.session?.runs || []) {
     if (run.status === 'running' && state.live[run.id]) scheduleLiveRender(run.id);
   }
-  // 运行中：发送箭头原位切换为停止图标（插话/排队仍可用 Enter 或「排队」+Enter 提交）
+  // 运行中：发送键保持停止能力，旁边显示独立暂停键；插话/排队仍可用 Enter 或「排队」+Enter 提交。
   setSendMode(state.busy);
   const c = $('conversation');
   const expandedHistoryDelta = Math.max(0, c.scrollHeight - previousHeight);
@@ -3225,6 +3226,13 @@ $('cp-toggle').onclick = () => {
 function setSendMode(running) {
   const btn = $('send');
   if (!btn) return;
+  const pause = $('pause-current-run');
+  if (pause) {
+    pause.hidden = !running;
+    pause.classList.toggle('hidden', !running);
+    pause.title = t('暂停当前任务');
+    pause.setAttribute('aria-label', t('暂停当前任务'));
+  }
   if (running) {
     btn.textContent = '■';
     btn.classList.add('stop-mode');
@@ -3248,6 +3256,10 @@ $('send').addEventListener('click', event => {
     }
   })();
 });
+$('pause-current-run')?.addEventListener('click', action(() => {
+  const run = [...(state.session?.runs || [])].reverse().find(item => item.status === 'running' && !item.pauseRequested);
+  if (run) pauseRunById(run.id);
+}));
 function renderApiKeyStatus() {
   const cfg = state.config || {};
   const status = $('apikey-status'); const edit = $('apikey-edit');

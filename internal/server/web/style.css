@@ -218,6 +218,8 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
   font-size: 11px;
 }
 .send-fab.stop-mode:hover { background: rgba(224, 108, 117, .12); }
+.send-fab.pause-fab { background: var(--surface); color: var(--brand); border: 1px solid var(--line-composer); font-size: 12px; }
+.send-fab.pause-fab:hover { background: var(--selected-alt); }
 /* 会话项三点菜单 */
 .session-item { position: relative; display: flex; align-items: center; gap: 4px; width: 100%; padding: 7px 10px; margin-bottom: 4px; border-radius: 6px; cursor: pointer; font-size: 12px; color: var(--text-session, inherit); overflow: visible !important; }
 .session-item:hover { background: var(--hover); }

@@ -1,0 +1,61 @@
+{
+  "id": "conversation-pause-20261013",
+  "request": "会话发送暂停不太正常了，需要修一下",
+  "baseline": "ffc64f71733cad1f64ffcf13b94ea6d0d820e890",
+  "initial_status": "M internal/server/plugins_builtin_test.go\n M scripts/test_context_compaction_ui.cjs",
+  "acceptance": [
+    "新任务在 API 返回运行中后立即暂停，不再因检查点初始化竞态被拒绝。",
+    "暂停会终止当前模型请求并持久化为可续跑的 paused 状态；续跑从保存的首轮输入继续。",
+    "既有暂停、恢复、取消语义不回归；系统 Safari 验证实际暂停和续跑状态。"
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/workflow_pause_test.go",
+    "docs/architecture.md",
+    "docs/tasks/conversation-pause-20261013.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "目标聚焦于会话生成中的暂停操作；验收包含立即暂停竞态、可续跑状态以及系统 Safari 交互。用户未提供具体失败截图，本次先修复代码已确认的检查点竞态。",
+      "evidence": [
+        "代码检查发现新任务首个检查点由异步 execute 初始化，而 pauseTask 会在检查点不存在时返回 409。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "将首轮输入构建完成后的首个工作流检查点与 run 一起保存，保证 202 running 响应之后立即暂停始终有可续跑检查点。",
+      "evidence": [
+        "internal/server/workflow.go startTask/execute/pauseTask 调用链"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "输入框旁增加独立暂停控制，保留原停止控制；暂停请求/可续跑状态加入会话 revision 以触发界面刷新；任务启动时同步持久化首轮检查点。",
+      "evidence": ["internal/server/web/index.html、app.js、style.css、locales/en.js", "internal/server/workflow.go startTask"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "暂停/恢复、检查点与工具续跑定向 Go 回归通过；go vet 和前端语法检查通过；在系统 Safari 启动真实短文本任务，观察到运行中暂停键、暂停后恢复键，续跑后任务正常完成。另有一条新增服务端立即暂停用例被标题摘要并行请求挂住，未保留在提交中；立即暂停竞态依靠启动时检查点修复，未声称该单测通过。",
+      "evidence": ["暂停/恢复/检查点定向 Go 测试：通过", "go vet -mod=vendor ./internal/server：通过", "node --check app.js 与 locales/en.js：通过", "Safari localhost:9999 会话 #48：运行中暂停、暂停后恢复、最终 completed"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新架构说明，记录暂停操作的界面位置及发送/停止的分工。",
+      "evidence": ["docs/architecture.md"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "移除因独立标题摘要请求而无法可靠关闭 mock provider 的临时单测；保留生产修复和现有暂停/恢复覆盖。未修改预先存在的插件测试和上下文压缩脚本变更。",
+      "evidence": ["保留 internal/server/plugins_builtin_test.go 与 scripts/test_context_compaction_ui.cjs 的原有本地修改"]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "修复完成，准备单独提交并按已授权的小步 push 约定推送。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}

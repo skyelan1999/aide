@@ -1444,6 +1444,7 @@ window.aideEnglish = {
   "结果": "Result",
   "继续": "Continue",
   "暂停任务": "Pause task",
+  "暂停当前任务": "Pause current task",
   "恢复任务": "Resume task",
   "已暂停": "Paused",
   "已续跑": "Resumed",
