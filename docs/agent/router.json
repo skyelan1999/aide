@@ -352,6 +352,10 @@
       ],
       [
         "node",
+        "scripts/file-autosave-retry.test.cjs"
+      ],
+      [
+        "node",
         "scripts/continuity-isolation.test.cjs"
       ],
       [
