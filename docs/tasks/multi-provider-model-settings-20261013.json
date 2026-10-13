@@ -90,9 +90,11 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "功能与文档变更已完成，正在提交并推送到 origin/main。",
-      "evidence": []
+      "status": "pass",
+      "summary": "功能、文档和任务记录均已提交并推送到 origin/main。",
+      "evidence": [
+        "功能与文档提交：06ecdf2 feat: compact multi-provider model settings；已推送至 origin/main。"
+      ]
     }
   },
   "release_authorization": "",
