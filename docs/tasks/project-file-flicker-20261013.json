@@ -59,12 +59,14 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "准备按用户此前“阶段性测完及时 push”的授权提交并推送本修复。",
-      "evidence": []
+      "status": "pass",
+      "summary": "已提交并推送至 origin/main，代码 92a5253；本机 9999 服务已重建运行。",
+      "evidence": [
+        "git push origin main：80307c9..92a5253 main -> main"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "已部署至本机 Aide 9999；Safari 手动验证通过。等待本修复提交并推送后供用户跨设备复测。"
+  "handoff": "已部署至本机 Aide 9999；Safari 手动验证通过；修复提交 92a5253 已推送至 origin/main。其他原有工作区改动保持未提交。"
 }
