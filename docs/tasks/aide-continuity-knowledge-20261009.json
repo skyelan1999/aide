@@ -4265,5 +4265,19 @@
       "真实向量提供者测试依用户决定暂缓；Windows 验收依用户决定排除。"
     ],
     "release": "该验收只增加任务账本证据，不提交或推送当前尚未完成验收的源代码批次。"
+  },
+  "progress_checkpoint_20261014_followup65": {
+    "status": "task_execution_budget_pause_regressions_pass_real_model_long_run_pending",
+    "date": "2026-10-14",
+    "summary": "补上任务执行预算的独立回归测试，并复核旧有六分钟限制的实际行为。默认聊天预算为两小时，既存任务策略中的360秒仍保留；人工澄清/审批等待会暂停执行预算，模型无数据空闲超时仍为三分钟。",
+    "verified": [
+      "仓库 Go 1.26.0 容器：go test ./internal/server -run 'TestTaskRunBudget' -count=1 · PASS，0.727秒。新增覆盖审批等待不耗预算、嵌套等待需全部解除才恢复以及父级取消在等待期间有效。",
+      "既有 workflow_timeout_test.go 确认默认聊天任务预算2小时、旧快照360秒策略保留；internal/server/provider.go 声明流连接上限2小时、无数据空闲上限3分钟。"
+    ],
+    "not_verified": [
+      "真实模型持续生成超过六分钟、容器/服务进程重启后从持久检查点续跑、超时前后真实任务状态转换与真实人工审批等待。",
+      "本轮未运行整个 internal/server 全包或 race；Docker 镜像调用使用 Go 1.26.0，未改变产品运行服务。"
+    ],
+    "release": "代码测试和架构说明更新在本地；包含此前本地任务账本提交的远端推送被审批审查拒绝，未重试。"
   }
 }
