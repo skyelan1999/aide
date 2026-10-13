@@ -77,9 +77,11 @@
       ]
     },
     "release": {
-      "status": "not_run",
+      "status": "pass",
       "summary": "阶段实现和定向验证完成；按用户持续有效的指令提交并推送。实际 Aide 页面验收仍待服务可启动。",
-      "evidence": []
+      "evidence": [
+        "Commit 15e07b8 was pushed to origin/main; local HEAD and origin/main matched after push."
+      ]
     }
   },
   "release_authorization": "",
