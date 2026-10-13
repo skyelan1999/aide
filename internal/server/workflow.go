@@ -4543,7 +4543,8 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "started", BeforeTokens: beforeTokens, Folded: split, Preflight: true, BatchStage: stage, Batch: batch, Batches: batches})
 	})
 	if err != nil {
-		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "摘要请求未完成，原会话内容已保留", Preflight: true})
+		phase, message := compactionErrorPhase(ctx, "摘要请求未完成，原会话内容已保留")
+		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: phase, BeforeTokens: beforeTokens, Folded: split, Text: message, Preflight: true})
 		return err
 	}
 	a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "folding", BeforeTokens: beforeTokens, Folded: split, Preflight: true})
@@ -4705,7 +4706,8 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "started", BeforeTokens: beforeTokens, Folded: split, BatchStage: stage, Batch: batch, Batches: batches})
 	})
 	if err != nil {
-		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "摘要请求未完成，原会话内容已保留"})
+		phase, message := compactionErrorPhase(ctx, "摘要请求未完成，原会话内容已保留")
+		a.setContextCompactionProgress(sessionID, streamEvent{Event: "compaction", Phase: phase, BeforeTokens: beforeTokens, Folded: split, Text: message})
 		fail(w, 400, err)
 		return
 	}
@@ -4896,6 +4898,9 @@ func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg 
 	if len(folded) == 0 {
 		return "", errors.New("没有可压缩的历史消息")
 	}
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	bounded := make([]Message, 0, len(folded)+1)
 	if prevCompact != "" {
 		prior := []rune(prevCompact)
@@ -4914,6 +4919,9 @@ func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg 
 	groups := compactBatches(bounded, compactSummaryInputBudget)
 	partials := make([]string, 0, len(groups))
 	for index, group := range groups {
+		if err := ctx.Err(); err != nil {
+			return "", err
+		}
 		if len(progress) > 0 && progress[0] != nil {
 			progress[0]("map", index+1, len(groups))
 		}
@@ -4925,6 +4933,9 @@ func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg 
 	}
 	reduceRound := 0
 	for len(partials) > 1 {
+		if err := ctx.Err(); err != nil {
+			return "", err
+		}
 		reduceRound++
 		messages := make([]Message, 0, len(partials))
 		for _, partial := range partials {
@@ -4933,6 +4944,9 @@ func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg 
 		next := make([]string, 0, len(messages))
 		reduceGroups := compactBatches(messages, compactSummaryInputBudget)
 		for index, group := range reduceGroups {
+			if err := ctx.Err(); err != nil {
+				return "", err
+			}
 			if len(progress) > 0 && progress[0] != nil {
 				progress[0](fmt.Sprintf("reduce-%d", reduceRound), index+1, len(reduceGroups))
 			}
@@ -4947,7 +4961,17 @@ func (a *App) buildCompactionSummary(ctx context.Context, folded []Message, cfg 
 		}
 		partials = next
 	}
+	if err := ctx.Err(); err != nil {
+		return "", err
+	}
 	return partials[0], nil
+}
+
+func compactionErrorPhase(ctx context.Context, fallback string) (string, string) {
+	if errors.Is(ctx.Err(), context.Canceled) {
+		return "cancelled", "压缩已取消，原会话内容已保留"
+	}
+	return "failed", fallback
 }
 
 func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, taskID string) {
@@ -5010,7 +5034,8 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, ta
 		publishProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "started", BeforeTokens: beforeTokens, Folded: split, BatchStage: stage, Batch: batch, Batches: batches})
 	})
 	if err != nil {
-		publishProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "failed", BeforeTokens: beforeTokens, Folded: split, Text: "摘要生成失败，原会话内容已保留"})
+		phase, message := compactionErrorPhase(ctx, "摘要生成失败，原会话内容已保留")
+		publishProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: phase, BeforeTokens: beforeTokens, Folded: split, Text: message})
 		return
 	}
 	publishProgress(streamEvent{Event: "compaction", SessionID: s.ID, Phase: "folding", BeforeTokens: beforeTokens, Folded: split, Text: fmt.Sprintf("摘要已生成，正在折叠这 %d 条早期消息并保存", split)})

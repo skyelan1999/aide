@@ -31,7 +31,10 @@
     "docs/system-overview.md",
     "docs/PRD.md",
     "scripts/stable-markdown-cache.test.cjs",
-    "docs/agent/router.json"
+    "docs/agent/router.json",
+    "internal/server/web/style.css",
+    "scripts/test_context_compaction_ui.cjs",
+    "docs/tasks/context-compaction-observability-20261012.json"
   ],
   "stages": {
     "requirements": {
@@ -53,7 +56,7 @@
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "超长流式回答按新增文本增量扫描；摘要以 3000 DSH 估算预算分批 map/reduce，结构错误即中止；压缩使用完整工具调用快照比对并在原子持久化成功后提交内存态；加入记忆并发一致性回归。 2026-10-12 后续：发送前上下文超限压缩截止值从 6 分钟调至 2 小时，保留请求取消及原子提交保护；待 Go 回归。 同步压缩新增会话级进度 API 与工作台轮询，在左侧卡片显示摘要整理、折叠保存、完成/失败、折叠条数和前后估算值；状态不含会话正文。 摘要整理阶段进一步提供逐批进度，显示实际 map/reduce 当前批次及总批数。 可见时间线全量重建时，新增完成态、无路径依赖 Markdown 的2 MiB LRU HTML缓存，避免流式刷新重复解析既有正文；实时内容和相对路径资源渲染不缓存，语言切换清空缓存。",
+      "summary": "超长流式回答按新增文本增量扫描；摘要以 3000 DSH 估算预算分批 map/reduce，结构错误即中止；压缩使用完整工具调用快照比对并在原子持久化成功后提交内存态；加入记忆并发一致性回归。 2026-10-12 后续：发送前上下文超限压缩截止值从 6 分钟调至 2 小时，保留请求取消及原子提交保护；待 Go 回归。 同步压缩新增会话级进度 API 与工作台轮询，在左侧卡片显示摘要整理、折叠保存、完成/失败、折叠条数和前后估算值；状态不含会话正文。 摘要整理阶段进一步提供逐批进度，显示实际 map/reduce 当前批次及总批数。 可见时间线全量重建时，新增完成态、无路径依赖 Markdown 的2 MiB LRU HTML缓存，避免流式刷新重复解析既有正文；实时内容和相对路径资源渲染不缓存，语言切换清空缓存。 2026-10-13：压缩请求支持显式取消终态，遍历批次间响应取消并保留原会话。",
       "evidence": [
         "internal/server/web/app.js：增量 live boundary scanner；超长活动段落纯文本回退逻辑沿用现有工作区实现。",
         "internal/server/workflow.go：摘要连续归并、结构化验证、快照校验与候选会话原子提交。",
@@ -62,12 +65,13 @@
         "internal/server/server.go 注册 GET /api/sessions/{id}/compaction-progress；internal/server/workflow.go 记录带过期清理的阶段/计数状态；internal/server/web/app.js 在发送等待期轮询并复用上下文压缩卡，英文界面键在 locales/en.js。",
         "internal/server/workflow.go：buildCompactionSummary 提供逐批 map/reduce 回调；internal/server/remediation_test.go 补充回调阶段、批次范围和每次 provider 请求一一对应的断言（待 Go 环境运行）。",
         "internal/server/web/app.js：上下文无关完成态 Markdown 使用估算上限2 MiB的 LRU 缓存；live、相对路径及查看器资源上下文绕过缓存；语言切换清空缓存。",
-        "2026-10-13：DaemonManager 新增按插件生命周期互斥锁，串行化 Start/Stop；并发 Start 等待并复用同一 supervisor 与 readiness 生命周期。"
+        "2026-10-13：DaemonManager 新增按插件生命周期互斥锁，串行化 Start/Stop；并发 Start 等待并复用同一 supervisor 与 readiness 生命周期。",
+        "internal/server/workflow.go/remediation_test.go：真实 provider HTTP 请求取消回归与自动压缩取消/原历史保护回归。"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "当前全仓 race/vet 在 HEAD cdc7d7d 通过（internal/server 454.113s、tts 3.374s）；当前 HEAD 99831dc 相对 cdc7d7d 仅有两个任务账本文档变化，源码未变。HEAD 99831dc 快速门禁 40 项 PASS（fingerprint e4ba964673b37e86c85114e7ec041e83147da71347cd7b550e851c255c9a31d4）。全profile包装器因找不到名为 Docker 的应用而失败；直接执行等价容器 race/vet 命令已通过。真实长流压缩动画、长时运行及其他端到端验收仍未完成；向量测试按用户要求暂缓。",
+      "summary": "当前全仓 race/vet 在 HEAD cdc7d7d 通过（internal/server 454.113s、tts 3.374s）；当前 HEAD 99831dc 相对 cdc7d7d 仅有两个任务账本文档变化，源码未变。HEAD 99831dc 快速门禁 40 项 PASS（fingerprint e4ba964673b37e86c85114e7ec041e83147da71347cd7b550e851c255c9a31d4）。全profile包装器因找不到名为 Docker 的应用而失败；直接执行等价容器 race/vet 命令已通过。真实长流压缩动画、长时运行及其他端到端验收仍未完成；向量测试按用户要求暂缓。 2026-10-13 当前新增的两个 Go race 定向取消测试通过；全量 quick/full 和 Safari 修复版压缩动画仍待本阶段复验。",
       "evidence": [
         "离线 Docker Go 1.26 扩展回归：覆盖 TestMemoryTokensLegacyAndExternalEdit、容量/损坏投影测试、24 写并发一致性、连续摘要请求预算、畸形摘要、工具参数快照变化、超限/新任务/自动/并发压缩；`go test -mod=vendor ./internal/server -run 'Test(MemoryTokens.*|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall|RemediationAutoCompactNotBlockedByHeldMutex|RemediationConcurrentCompactionNoPanicNoDeadlock)$' -count=1`：PASS（6.920s）。",
         "离线 Docker Go 1.26：`go test -mod=vendor ./internal/server -run 'Test(CompactionSummaryUsesBoundedRequestsAndCarriesPriorSummary|MalformedCompactionSummaryAbortsWithoutChangingSource|CompactionSnapshotDetectsToolCallChanges|ConcurrentProjectMemoryWritesRemainReadableAndConsistent|MemoryTokens|ContextOverflowCompactsHistoryBeforeRetry|StartTaskCompactsOverBudgetHistoryBeforeProviderCall)$' -count=1`：PASS（3.828s）。",
@@ -106,7 +110,8 @@
         "2026-10-13：阶段提交 `7f29621` 已推送 `origin/main`（main 从 f9b6caa 前进）；Safari 接受本机候选 18220 证书后到达工作台登录页，本轮后端改动未做认证 UI 验收。",
         "2026-10-13 current HEAD 0bd4c41: `bash scripts/aide.sh test` (authorized Docker runtime) PASS, includes `go test -race -count=1 -timeout=15m ./...` (aide/internal/server 430.890s, aide/internal/server/tts 3.056s) and `go vet ./...` exit 0; source fingerprint 2f86bc89bb035045035dc6e1c4aae6a95f24047765db60ad930157899517d5e2. Separate agent-route full wrapper invocation initially exited at Docker socket permission denial; this direct invocation ran the configured race/vet command in the authorized disposable Docker container.",
         "2026-10-13 HEAD cdc7d7d：直接全仓 race 与 go vet 通过（internal/server 454.113s、tts 3.374s），Docker 启动包装器故障已区分记录；真实超长流Safari验收仍待完成。收据 .agent-state/verify-20261012T234114395870Z.log。",
-        "2026-10-13 current-state reconciliation: quick profile PASS at HEAD 99831dc, fingerprint e4ba964673b37e86c85114e7ec041e83147da71347cd7b550e851c255c9a31d4, receipt .agent-state/verify-20261012T235619457228Z.log. `git diff --name-only cdc7d7d..HEAD` lists only docs/tasks/aide-continuity-knowledge-20261009.json and docs/tasks/aide-long-conversation-industrial-20261012.json, so the successful cdc7d7d race/vet source remains unchanged at current HEAD. Current code defaults new chat tasks to 7200s (2h); 360s exists only in older per-task snapshots. Clarification/approval waits are excluded from active budget, and resume refreshes that task mode budget. Current Safari inspection did not interact with the existing unsaved file draft. Remaining: real long-stream compaction animation and long-duration session, user-host SSH/browser workflow, live plugin/model end-to-end, large-library browser performance, and release/rollback audit. Vector acceptance remains deferred by user; Windows is user-tested and out of agent scope."
+        "2026-10-13 current-state reconciliation: quick profile PASS at HEAD 99831dc, fingerprint e4ba964673b37e86c85114e7ec041e83147da71347cd7b550e851c255c9a31d4, receipt .agent-state/verify-20261012T235619457228Z.log. `git diff --name-only cdc7d7d..HEAD` lists only docs/tasks/aide-continuity-knowledge-20261009.json and docs/tasks/aide-long-conversation-industrial-20261012.json, so the successful cdc7d7d race/vet source remains unchanged at current HEAD. Current code defaults new chat tasks to 7200s (2h); 360s exists only in older per-task snapshots. Clarification/approval waits are excluded from active budget, and resume refreshes that task mode budget. Current Safari inspection did not interact with the existing unsaved file draft. Remaining: real long-stream compaction animation and long-duration session, user-host SSH/browser workflow, live plugin/model end-to-end, large-library browser performance, and release/rollback audit. Vector acceptance remains deferred by user; Windows is user-tested and out of agent scope.",
+        "隔离 Go 容器 `go test -race -count=1 -timeout=35s ./internal/server -run 'TestProviderCompleteHonorsRequestCancellation|TestAutoCompactionCancellationPublishesTerminalAndPreservesHistory' -v`：PASS（4.262s）。"
       ],
       "full_profile": {
         "status": "PASS",

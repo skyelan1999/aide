@@ -1534,6 +1534,7 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 .context-compaction-status strong{grid-column:2;font-size:9px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
 .context-compaction-status.running{background:color-mix(in srgb,var(--brand-text) 13%,var(--surface))}
 .context-compaction-status.failed{color:var(--warn,#b7791f)}
+.context-compaction-status.cancelled{color:var(--muted,#64748b)}
 .context-compaction-orbit,.context-compaction-check{display:grid;place-items:center;font-size:13px;font-weight:700}
 .context-compaction-orbit{animation:context-orbit .9s linear infinite}
 @keyframes context-card-breathe{50%{box-shadow:0 0 0 2px color-mix(in srgb,var(--brand-text) 22%,transparent),0 0 24px color-mix(in srgb,var(--brand-text) 22%,transparent)}}

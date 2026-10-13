@@ -38,6 +38,7 @@ window.aideEnglish = {
   "当前约 {0}": "About {0} active",
   "已压缩 {0} 条 · 活动上下文估算": "Compacted {0} messages · estimated active context",
   "压缩未完成，原会话内容已保留": "Compaction did not finish; the original conversation was preserved.",
+  "压缩已取消，原会话内容已保留": "Compaction cancelled; the original conversation was preserved.",
   "插件设置必须是 JSON 对象": "Plugin settings must be a JSON object",
   "—": "—",
   "文件夹": "Folder",

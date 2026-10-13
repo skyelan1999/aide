@@ -5556,7 +5556,7 @@ function startContextCompactionWatch(sessionID) {
       try {
         const data = await api(`/sessions/${sessionID}/compaction-progress`);
         if (data?.event?.phase) {
-          const terminal = data.event.phase === 'completed' || data.event.phase === 'failed';
+          const terminal = data.event.phase === 'completed' || data.event.phase === 'failed' || data.event.phase === 'cancelled';
           if (!terminal || Number(data.updatedAt || 0) >= watchStartedAt) showContextCompaction(data.event);
         }
       } catch (_) { /* Status polling must never block or fail task submission. */ }
@@ -5590,7 +5590,7 @@ function showContextCompaction(event) {
     clearInterval(contextCompactionElapsedTimers.get(targetSession));
     contextCompactionElapsedTimers.delete(targetSession);
   }
-  if (event.phase === 'completed' || event.phase === 'failed') {
+  if (event.phase === 'completed' || event.phase === 'failed' || event.phase === 'cancelled') {
     const stamp = record.at;
     const timer = setTimeout(() => {
       if (state.contextCompactions.get(targetSession)?.at !== stamp) return;

@@ -82,4 +82,10 @@ context.renderContextCompactionState(detail);
 assert.equal(detail.children.at(-1).children[2].textContent.includes('13,600 tokens → 5,400 tokens'), true, 'completion readback retains the correct session totals');
 assert.equal(card.classList.contains('was-compacted'), true, 'completed animation is visible when returning');
 
-console.log('PASS: compaction progress is retained per session and never leaks across session switches');
+context.showContextCompaction({ sessionId: sessionB, phase: 'cancelled', text: '压缩已取消，原会话内容已保留' });
+context.renderContextCompactionState(detail);
+assert.equal(detail.children.at(-1).className.includes('cancelled'), true, 'cancelled compaction receives a terminal status row');
+assert.equal(detail.children.at(-1).children[1].textContent.includes('原会话内容已保留'), true, 'cancelled status explains that history was preserved');
+assert.equal(card.classList.contains('is-compacting'), false, 'cancelled progress stops its animation');
+
+console.log('PASS: compaction progress is session-scoped and completion/cancellation render terminal states');

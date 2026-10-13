@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -186,6 +187,118 @@ func TestAutoCompactionPublishesObservableLifecycle(t *testing.T) {
 	}
 	if got := sessionContextTokens(s); got != events[len(events)-1].AfterTokens {
 		t.Fatalf("completed estimate differs from persisted session state: event=%d session=%d", events[len(events)-1].AfterTokens, got)
+	}
+}
+
+func TestAutoCompactionCancellationPublishesTerminalAndPreservesHistory(t *testing.T) {
+	a := testApp(t)
+	s := createSession(t, a)
+	requestStarted := make(chan struct{}, 1)
+	providerCancelled := make(chan struct{}, 1)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		requestStarted <- struct{}{}
+		<-r.Context().Done()
+		providerCancelled <- struct{}{}
+	}))
+	defer provider.Close()
+	cfg := Settings{BaseURL: provider.URL, Model: "test", Models: []ModelRef{{ID: "test", ContextWindow: 16000}}}
+	a.mu.Lock()
+	s = a.sessions[s.ID]
+	for i := 0; i < 12; i++ {
+		s.Messages = append(s.Messages,
+			Message{Role: "user", Content: strings.Repeat("user context ", 900)},
+			Message{Role: "assistant", Content: strings.Repeat("assistant context ", 900)},
+		)
+	}
+	if err := a.save(s); err != nil {
+		a.mu.Unlock()
+		t.Fatal(err)
+	}
+	a.settings = cfg
+	original := cloneCompactMessages(s.Messages)
+	a.mu.Unlock()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ch, stop := a.subscribeStream("compaction-cancel-test")
+	defer stop()
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		a.maybeAutoCompact(ctx, s, cfg, "compaction-cancel-test")
+	}()
+	select {
+	case <-requestStarted:
+	case <-time.After(5 * time.Second):
+		t.Fatal("automatic compaction did not start its summary request")
+	}
+	cancel()
+	select {
+	case <-providerCancelled:
+	case <-time.After(5 * time.Second):
+		t.Fatal("cancelling the task did not cancel the in-flight provider request")
+	}
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("automatic compaction did not leave its running state after cancellation")
+	}
+
+	var phases []string
+	for len(ch) > 0 {
+		event := <-ch
+		if event.Event == "compaction" {
+			phases = append(phases, event.Phase)
+			if event.Phase == "cancelled" && !strings.Contains(event.Text, "原会话内容已保留") {
+				t.Fatalf("cancellation should explain history preservation: %+v", event)
+			}
+		}
+	}
+	if len(phases) < 2 || phases[0] != "started" || phases[len(phases)-1] != "cancelled" {
+		t.Fatalf("expected progress followed by an explicit cancelled terminal state, got %v", phases)
+	}
+	a.mu.Lock()
+	got := cloneCompactMessages(a.sessions[s.ID].Messages)
+	_, stillCompacting := a.compactingSessions[s.ID]
+	a.mu.Unlock()
+	if !compactSnapshotMatches(got, original) || stillCompacting {
+		t.Fatalf("cancellation must preserve source history and release session lock: messages=%d/%d compacting=%t", len(got), len(original), stillCompacting)
+	}
+}
+
+func TestProviderCompleteHonorsRequestCancellation(t *testing.T) {
+	started := make(chan struct{}, 1)
+	cancelled := make(chan struct{}, 1)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.Copy(io.Discard, r.Body)
+		started <- struct{}{}
+		<-r.Context().Done()
+		close(cancelled)
+	}))
+	defer provider.Close()
+	cfg := Settings{BaseURL: provider.URL, Model: "test"}
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_, _, _, _ = complete(ctx, cfg, []Message{{Role: "user", Content: "summarize"}}, ProfileParams{}, nil, nil)
+	}()
+	select {
+	case <-started:
+	case <-time.After(3 * time.Second):
+		t.Fatal("provider request did not start")
+	}
+	cancel()
+	select {
+	case <-cancelled:
+	case <-time.After(3 * time.Second):
+		t.Fatal("provider request context was not cancelled")
+	}
+	select {
+	case <-done:
+	case <-time.After(3 * time.Second):
+		t.Fatal("complete did not return after cancellation")
 	}
 }
 
