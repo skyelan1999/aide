@@ -4281,5 +4281,21 @@
       "整个 internal/server race 全包未运行；测试只证明该预算机制和当前非 race 服务端回归。Docker 测试未启动或改变产品运行服务。"
     ],
     "release": "代码测试和架构说明更新在本地；包含此前本地任务账本提交的远端推送被审批审查拒绝，未重试。"
+  },
+  "progress_checkpoint_20261014_followup66": {
+    "status": "await_user_answer_budget_resume_integration_and_server_package_pass",
+    "date": "2026-10-14",
+    "summary": "将执行预算验证推进到真实澄清/HTTP 回答链路：人工等待超出短预算仍不取消，回答后恢复原运行并在剩余预算耗尽时返回 deadline；更新后的服务端包完整通过。",
+    "verified": [
+      "Aide 组合临时容器：go test -mod=vendor ./internal/server -run 'TestTaskRunBudget|TestAwaitUserAnswerPausesTaskRunBudget' -count=1 · PASS，1.580秒。",
+      "Aide 组合临时容器：go test -race -mod=vendor ./internal/server -run 'TestTaskRunBudget|TestAwaitUserAnswerPausesTaskRunBudget' -count=1 · PASS，3.522秒。",
+      "Aide 组合临时容器并配置 AIDE_OFFICE_SCRIPTS=/src/scripts/office：go test -mod=vendor ./internal/server -count=1 -timeout=8m · PASS，184.356秒；测试源树包含新的澄清应答预算集成用例。",
+      "python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接 / JPEG signatures / FR-01..100；任务 JSON 解析与 git diff --check · PASS。"
+    ],
+    "not_verified": [
+      "真实模型连续生成超过旧360秒墙钟、持续真实人工审批/澄清、服务或容器重启后恢复运行及真实用户部署状态。",
+      "整个服务端 race、真实向量服务按用户要求暂缓；Windows 由用户表示无需验收。"
+    ],
+    "release": "预算机制测试及文档已提交本地分支；当前分支含任务账本的本机验收细节，推送仍待用户对明确 GitHub 仓库与内容范围授权。"
   }
 }

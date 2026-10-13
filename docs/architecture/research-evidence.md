@@ -34,6 +34,8 @@ Aide 按当前任务调查来源、保存参数依据，再决定是否具备近
 
 2026-10-14 补充：`workflow_timeout_test.go` 确认默认聊天任务预算为 2 小时；旧任务已保存的 360 秒策略仍保留，显式恢复时才按当前策略刷新对应模式预算。新增 `task_run_budget_test.go`，用短时定时器验证人工等待不会消耗剩余执行预算、嵌套等待须全部结束才恢复计时，以及父级取消在等待期间仍立即生效。使用仓库声明的 Go 1.26.0 运行 `go test ./internal/server -run 'TestTaskRunBudget' -count=1` 与 `go test -race ./internal/server -run 'TestTaskRunBudget' -count=1` 均通过（分别 0.727 秒、1.745 秒）；之后在带有 Aide Node/Python 运行时、Go 1.26.0 和 `AIDE_OFFICE_SCRIPTS=/src/scripts/office` 的一次性组合容器中运行 `go test -mod=vendor ./internal/server -count=1 -timeout=8m`，全包通过（184.694 秒）。先前仅使用 Go 基础镜像的整包尝试因缺少 Node 和 Office 脚本路径失败，不作为产品回归结果。这验证预算计时器语义及当前服务端包回归，不代表真实模型连续运行超过六分钟、服务进程重启后续跑或整套任务检查点恢复已验收；模型流仍有两小时总连接上限与三分钟无数据空闲上限。
 
+进一步把真实 `App.awaitUserAnswer` 与 HTTP 回答端点纳入预算回归：澄清状态持续超过短预算后，任务上下文仍有效；提交回答会继续原运行，剩余预算随后正常耗尽。该链路普通/race 定向测试通过（1.580 秒/3.522 秒），更新后的整个服务端包再次通过（184.356 秒）。这仍是本地测试，不代替真实模型长运行或容器重启后的任务恢复验收。
+
 ## Codex 执行循环参考（2026-10-07）
 
 参考公开说明，不声称与 Codex 内部实现或模型能力等价：
