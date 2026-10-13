@@ -52,4 +52,15 @@ function overviewScenario(){
  all.find(e=>e.textContent==='查看本轮详情、审批与证据').onclick();assert.equal(chosen,'round');
  all.find(e=>e.textContent==='加载更早的输入与输出').onclick();assert.equal(older,1);
 }
-(async()=>{overviewScenario();for(const kind of ['stable','409','mismatch'])await scenario(kind);await runningRefreshScenario();console.log('PASS outcome pagination snapshot, stale export guard, explicit reload and running refresh');})().catch(e=>{console.error(e);process.exitCode=1;});
+async function overviewRefreshScenario(){
+ const content=new Element('div'),timers=[],cleared=[];let updated,calls=0;
+ const context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)},setInterval(fn,ms){timers.push({fn,ms});return timers.length;},clearInterval(id){cleared.push(id);}};
+ vm.runInNewContext(fs.readFileSync('internal/server/web/task-outcome.js','utf8'),context);
+ const session={id:'s',number:9,title:'live overview',runsTotal:1,runs:[{id:'r',mode:'chat',prompt:'Question',status:'running',steps:[{name:'chat',status:'running',content:''}]}]};
+ const complete={...session,updated:'later',runs:[{...session.runs[0],status:'completed',steps:[{name:'chat',status:'completed',content:'The final answer'}]}]};
+ const mounted=context.window.AideTaskOutcome.sessionOverview(content,{session,t:x=>x,selectRun(){},loadOlder(){},api:async()=>{calls++;return complete;},revision:s=>s.updated||'initial',blocked:()=>false,onSession:s=>{updated=s;}});
+ assert.equal(timers.length,1);assert.equal(timers[0].ms,2500);assert.ok(descendants(content).some(e=>e.textContent==='正在生成回复…'));
+ await timers[0].fn();assert.equal(calls,1);assert.equal(updated.runs[0].status,'completed');assert.equal(updated.runs[0].steps[0].content,'The final answer');
+ mounted.close();assert.ok(cleared.includes(1),'overview polling stops when the view closes');
+}
+(async()=>{overviewScenario();await overviewRefreshScenario();for(const kind of ['stable','409','mismatch'])await scenario(kind);await runningRefreshScenario();console.log('PASS outcome overview live refresh, polling cleanup, pagination snapshot, stale export guard, explicit reload and running refresh');})().catch(e=>{console.error(e);process.exitCode=1;});

@@ -3096,5 +3096,35 @@
     },
     "release": "not_run",
     "push": "Documentation-only checkpoint to be pushed after JSON/docs validation."
+  },
+  "progress_checkpoint_20261013_followup13": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "baseline": "ba8d40c (origin/main)",
+    "completed": [
+      "Fixed the current-session input/output overview so it polls the selected session every 2.5 seconds while open, refreshes changed run/reply state, and stops polling when the view closes or becomes invalid (lock, session/view change, missing token, login dialog, or page teardown).",
+      "Added focused regression coverage for a running-to-completed overview update and timer cleanup; targeted outcome regression passed.",
+      "Rebuilt and restarted actual localhost:9999 through start.command. In native Safari, the same open trajectory overview changed from running to awaiting_clarification across a refresh interval without closing/reopening. The model generated a request to inspect workspace evidence; no workspace inspection was approved or performed."
+    ],
+    "remaining": [
+      "Safari live evidence confirms status synchronization only. The model request did not yield a normal completed answer, so live final-reply rendering and streaming text growth remain unverified.",
+      "Continue healthy automatic-compaction lifecycle, cross-tab long-session recovery, user-host remote workflows, representative large-library rendering, requirement-by-requirement audit and release/rollback gates."
+    ],
+    "deferred_by_user": [
+      "Real embedding/vector provider acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reports successful testing"
+    ],
+    "verification": {
+      "focused": "PASS: node scripts/outcome-pagination.test.cjs, including overview live refresh and cleanup; node --check for task-outcome.js and app.js; git diff --check.",
+      "quick": "PASS: python3 scripts/agent-route.py verify quick; all listed checks passed before this documentation update.",
+      "docs": "Pending after ledger update.",
+      "service": "PASS: actual localhost:9999 rebuilt/restarted via start.command; no model configuration or credentials changed.",
+      "native_safari_live_outcome": "PARTIAL: the same open panel observed running then awaiting_clarification after a refresh interval. Final answer content was not produced; no workspace read was approved.",
+      "release": "No formal release or version bump."
+    },
+    "release": "not_run",
+    "push": "Product source and this progress checkpoint will be pushed after documentation validation."
   }
 }

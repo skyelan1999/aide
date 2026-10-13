@@ -8469,7 +8469,10 @@ function renderTrajectoryOutcome(host, session) {
   select.onchange = () => { trajOutcomeRun = {sessionId:session.id, runId:select.value}; renderTrajectory(); };
   bar.append(label, select);
   const content = el('div', 'outcome-content traj-outcome-content'); host.append(bar, content);
-  if(!selected){window.AideTaskOutcome?.sessionOverview(content,{session,t,renderMarkdown,selectRun:id=>{trajOutcomeRun={sessionId:session.id,runId:id};renderTrajectory();},loadOlder:action(async()=>{if(state.session?.id!==session.id)return;state.historyLimit=Math.min(2000,state.historyLimit+SESSION_HISTORY_PAGE);await selectSession(session.id);if(state.session?.id===session.id)renderTrajectory();})});return;}
+  if(!selected){window.AideTaskOutcome?.sessionOverview(content,{session,t,renderMarkdown,api:()=>getSessionWindow(session.id),revision:sessionRevision,
+    blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id!==session.id || trajView!=='outcome' || !host.isConnected,
+    onSession:next=>{if(state.session?.id!==session.id||trajView!=='outcome')return;state.session=next;state.sessionJSON=sessionRevision(next);renderTrajectory();},
+    selectRun:id=>{trajOutcomeRun={sessionId:session.id,runId:id};renderTrajectory();},loadOlder:action(async()=>{if(state.session?.id!==session.id)return;state.historyLimit=Math.min(2000,state.historyLimit+SESSION_HISTORY_PAGE);await selectSession(session.id);if(state.session?.id===session.id)renderTrajectory();})});return;}
   window.AideTaskOutcome?.mount(content, {sessionId:session.id, runId:selected.id, api, t, error:toast, renderMarkdown,
     blocked:()=>lockScreen.locked || !state.token || $('login-dialog').open || state.session?.id !== session.id || trajView !== 'outcome'});
 }

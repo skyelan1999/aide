@@ -37,8 +37,11 @@
  function close(){generation++;active?.close();}
  window.LockCluster?.on('effective',value=>{if(value)close();});
  window.addEventListener('pagehide',close);
- function sessionOverview(content,{session,t,selectRun,loadOlder,renderMarkdown}){
-  close();content.replaceChildren();
+ function sessionOverview(content,{session,t,selectRun,loadOlder,renderMarkdown,api,revision,blocked,onSession}){
+  close();const gen=++generation;let current=session,pollTimer=null,polling=false;
+  const valid=()=>gen===generation&&content.isConnected&&!blocked?.();
+  const stop=()=>{if(pollTimer!==null)clearInterval(pollTimer);pollTimer=null;if(active?.close===stop)active=null;};active={close:stop};
+  function draw(){session=current;content.replaceChildren();
   const runs=session.runs||[],intro=node('div','outcome-intro');
   intro.append(node('h3','',t('当前会话 · 输入与输出')),node('p','muted','#'+(session.number||'?')+' · '+session.title),node('p','muted',t('已展示 {0} / {1} 轮任务',runs.length,session.runsTotal??runs.length)));content.append(intro);
   const replyFor=run=>finalOutput(run.steps,run.mode);
@@ -73,6 +76,15 @@
   }
   if(session.hasOlder){const more=node('button','quiet',t('加载更早的输入与输出'));more.type='button';more.onclick=loadOlder;content.append(more);}
   content.append(node('p','outcome-boundary',t('这里展示已提交的输入和已记录的输出；未发送草稿不计入。已应用记录不代表当前文件已复核。')));
+  }
+  draw();
+  if(api){
+   const initialRevision=revision?revision(current):JSON.stringify(current);
+   let lastRevision=initialRevision;
+   const poll=async()=>{if(!valid()||polling)return;polling=true;try{const next=await api();if(!valid())return;const nextRevision=revision?revision(next):JSON.stringify(next);if(nextRevision!==lastRevision){lastRevision=nextRevision;if(onSession)onSession(next);else{current=next;draw();}}}catch{/* Preserve the last readable overview and retry on the next interval. */}finally{polling=false;}};
+   pollTimer=setInterval(poll,2500);
+  }
+  return {close:stop};
  }
  async function mount(content,{sessionId,runId,api,blocked,t,error,renderMarkdown}){
    close();const gen=++generation;let pollTimer=null;const stop=()=>{if(pollTimer!==null)clearInterval(pollTimer);pollTimer=null;if(active?.close===stop)active=null;};active={close:stop};
