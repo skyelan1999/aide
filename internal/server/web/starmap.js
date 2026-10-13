@@ -428,22 +428,20 @@ function drawBlackHole(hole,now,fade=1){
  // The image scale is graph-derived, but disk color and sector brightness use
  // Schwarzschild redshift, local orbital velocity and relativistic beaming.
  const physics=window.AideCosmicPhysics,view=physics?.diskView(pitch)||.28,tilt=physics?.diskPositionAngle(yaw)||0,shadowR=Math.max(.55,cosmicProjectedShadowRadius(hole)),rs=shadowR/(1.5*Math.sqrt(3));
- const drift=motionEnabled()?Math.sin(now/5600+(hole.phase||0)*tau):0;
  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(tilt);
  ctx.scale(1,view);ctx.lineCap='round';ctx.lineJoin='round';ctx.globalCompositeOperation='lighter';
  // Multiple optically thin disk bands; each azimuth uses its own line-of-sight
  // Doppler factor. The near side is brighter and bluer, the receding side dimmer.
  const bands=[[3.15,3.7],[3.85,4.8],[5.0,6.5],[6.8,9.0]];
  for(const [inner,outer] of bands){const radius=rs*(inner+outer)*.5,pixelRadius=radius,thickness=rs*(outer-inner)*.82;
-  for(let i=0;i<72;i++){const a=tau*(i+.5)/72,los=Math.sin(a)*Math.sqrt(1-view*view),emission=physics?.accretionEmission(rs,radius,los)||{shift:.8+Math.max(0,los)*.45,intensity:.35};
-   const opacity=(.12+(physics?.displayRadiance(emission.intensity,2.6)||0)*.8)*(1-Math.abs(Math.cos(a))*.16);ctx.globalAlpha=fade*opacity;ctx.strokeStyle=physics?.temperatureColor(emission.shift)||(los>0?'#cde8ff':'#e38b61');ctx.lineWidth=Math.max(.5,thickness);ctx.beginPath();ctx.arc(0,0,pixelRadius,a-.035,a+.035);ctx.stroke();
+  for(let i=0;i<72;i++){const a=tau*(i+.5)/72,los=Math.sin(a)*Math.sqrt(1-view*view),emission=physics?.accretionEmission(rs,radius,los)||{shift:.8+Math.max(0,los)*.45,intensity:.35,observedTemperature:.5};
+   const opacity=(.035+(physics?.displayRadiance(emission.intensity,7.2)||0)*.86)*(1-Math.abs(Math.cos(a))*.16);ctx.globalAlpha=fade*opacity;ctx.strokeStyle=physics?.temperatureColor(emission.observedTemperature)||(los>0?'#cde8ff':'#e38b61');ctx.lineWidth=Math.max(.5,thickness);ctx.beginPath();ctx.arc(0,0,pixelRadius,a-.035,a+.035);ctx.stroke();
   }
  }
  // Photon sphere and event-horizon shadow are distinct scales. The broken rim
  // is an optical cue; background stars and relationships receive the lens pass below.
  ctx.globalCompositeOperation='source-over';ctx.globalAlpha=fade*.98;ctx.fillStyle='#020305';ctx.beginPath();ctx.arc(0,0,shadowR,0,tau);ctx.fill();
  ctx.globalCompositeOperation='lighter';ctx.globalAlpha=fade*.28;ctx.strokeStyle='#d9e9fa';ctx.lineWidth=Math.max(.45,r*.012);ctx.beginPath();ctx.arc(0,0,shadowR,-2.72,-.63);ctx.stroke();ctx.globalAlpha=fade*.2;ctx.strokeStyle='#f4b87f';ctx.beginPath();ctx.arc(0,0,shadowR,.18,1.05);ctx.stroke();
- if(drift){const a=drift*.45,rHot=rs*4.25,x=Math.cos(a)*rHot,y=Math.sin(a)*rHot*view;ctx.globalAlpha=fade*.65;ctx.fillStyle='#fff2d9';ctx.shadowColor='#ffd9a5';ctx.shadowBlur=Math.max(1,r*.04);ctx.beginPath();ctx.arc(x,y,Math.max(.5,r*.018),0,tau);ctx.fill();ctx.shadowBlur=0;}
  ctx.restore();ctx.globalCompositeOperation='source-over';
 }
 function drawBlackHoleLensOverlay(hole,stars,edges,fade=1){

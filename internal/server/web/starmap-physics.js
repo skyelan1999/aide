@@ -151,23 +151,33 @@ window.AideCosmicPhysics = Object.freeze({
  },
  accretionEmission(rs, radius, lineOfSightCosine) {
   if (!Number.isFinite(rs) || rs <= 0 || !Number.isFinite(radius) || radius < 3 * rs) {
-   return { shift: 0, intensity: 0, beta: 0 };
+   return { shift: 0, intensity: 0, beta: 0, temperature: 0 };
   }
   // Circular-orbit speed measured by a local static observer in Schwarzschild
   // spacetime. The thin disk starts at the innermost stable circular orbit.
   const beta = this.orbitalBeta(rs, radius);
   const shift = this.schwarzschildRedshift(rs, radius) * this.dopplerFactor(beta, lineOfSightCosine);
-  // Liouville's theorem preserves I_nu / nu^3 along a vacuum ray.
-  const radialEmissivity = Math.pow(radius / (3 * rs), -3);
-  return { shift, intensity: radialEmissivity * Math.pow(shift, 3), beta };
+  // Shakura-Sunyaev/Novikov-Thorne thin-disk boundary shape in normalized
+  // units: T_eff^4 is proportional to r^-3 (1 - sqrt(r_in/r)). The zero
+  // torque inner edge is the Schwarzschild ISCO at r_in = 3 r_s. Temperature
+  // and power are proxies because this graph has no measured accretion rate.
+  const innerRadius = 3 * rs, ratio = radius / innerRadius;
+  const temperature = Math.pow(Math.pow(ratio, -3) * (1 - Math.sqrt(1 / ratio)), .25);
+  const observedTemperature = temperature * shift;
+  // Bolometric intensity transforms as g^4; I_nu / nu^3 is the corresponding
+  // monochromatic invariant. Use bolometric proxy here, then tone-map only at
+  // the display boundary.
+  const intensity = Math.pow(temperature, 4) * Math.pow(shift, 4);
+  return { shift, intensity, beta, temperature, observedTemperature };
  },
- temperatureColor(shift) {
-  const g = Math.max(.45, Math.min(1.8, Number.isFinite(shift) ? shift : 1));
+ temperatureColor(observedTemperature) {
+  // A normalized color-temperature mapping for the graph's dimensionless
+  // disk temperature. It is not a Kelvin calibration.
+  const t = Math.max(0, Math.min(1, Number.isFinite(observedTemperature) ? observedTemperature : 0));
   const mix = (a, b, t) => Math.round(a + (b - a) * Math.max(0, Math.min(1, t)));
-  const lerp = (a, b, t) => [mix(a[0], b[0], t), mix(a[1], b[1], t), mix(a[2], b[2], t)];
-  const color = g < .9 ? lerp([181, 73, 46], [255, 176, 111], (g - .45) / .45)
-   : g < 1.15 ? lerp([255, 176, 111], [241, 246, 255], (g - .9) / .25)
-    : lerp([241, 246, 255], [130, 190, 255], (g - 1.15) / .65);
+  const lerp = (a, b, amount) => [mix(a[0], b[0], amount), mix(a[1], b[1], amount), mix(a[2], b[2], amount)];
+  const color = t < .5 ? lerp([190, 57, 32], [255, 224, 177], t / .5)
+   : lerp([255, 224, 177], [158, 205, 255], (t - .5) / .5);
   return '#' + color.map(value => value.toString(16).padStart(2, '0')).join('');
  }
 });

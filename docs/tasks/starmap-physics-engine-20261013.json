@@ -39,7 +39,7 @@
     },
     "verification": {
       "status": "partial",
-      "summary": "新增透镜可见像裁剪与重叠透镜所有权逻辑，避免没有幸存像的背景星被隐藏，并避免同一背景星被多个黑洞重复成像。Node 透镜公式与视场裁剪专项检查、starmap.js 语法检查、diff 格式检查通过。start.command 重建隔离候选 aide-physics-optics-20261013；Safari 系统浏览器重新加载 https://localhost:18542/starmap.html，验证更新后 1711 节点 / 3121 连接星图可交互渲染，并切换到 800 节点引用星域查看。当前数据和相机视角下未能取得可辨识黑洞/透镜成像的视觉特写，因此不宣称近景透镜表现通过。真实天体标定与长时间帧率仍未验证。",
+      "summary": "新增透镜可见像裁剪与重叠透镜所有权逻辑，避免没有幸存像的背景星被隐藏，并避免同一背景星被多个黑洞重复成像。Node 透镜公式与视场裁剪专项检查、starmap.js 语法检查、diff 格式检查通过。start.command 重建隔离候选 aide-physics-optics-20261013；Safari 系统浏览器重新加载 https://localhost:18542/starmap.html，验证更新后 1711 节点 / 3121 连接星图可交互渲染，并切换到 800 节点引用星域查看。2026-10-14薄盘内边界温度/频移渲染专项回归通过；隔离 Safari 候选 18544 页面已由用户处理证书提示并成功加载，19 星 / 19 连接测试图可见，缩放及真实节点选择有响应。但该候选没有有效高密度关系，未生成黑洞，因此吸积盘与透镜近景仍待具备真实密集关联的图谱复验。真实天体标定与大图谱长时间帧率仍未验证。",
       "evidence": [
         "node --check internal/server/web/starmap.js && node --check internal/server/web/starmap-physics.js",
         "node scripts/starmap-lensing.test.cjs",
@@ -56,14 +56,17 @@
         "node scripts/starmap-lensing.test.cjs · 可见像视场裁剪与单支路遮挡通过",
         "node --check internal/server/web/starmap.js && git diff --check",
         "start.command · 隔离 Compose 项目 aide-physics-optics-20261013 · rebuilt at https://127.0.0.1:18542",
-        "Safari system browser · https://localhost:18542/starmap.html · updated script loaded; rendered 1711 nodes / 3121 connections; reference scope showed 800 nodes"
+        "Safari system browser · https://localhost:18542/starmap.html · updated script loaded; rendered 1711 nodes / 3121 connections; reference scope showed 800 nodes",
+        "node scripts/starmap-lensing.test.cjs · 薄盘内边界、温度峰值与 Doppler 联动断言通过",
+        "Safari 2026-10-14 · https://localhost:18544/starmap.html · 页面成功加载并显示 19 星 / 19 连接；缩放交互后选中 plugins 真实节点，详情显示 7 条连接、0 个有效关联；此隔离图谱不含可绘制黑洞候选，因此未验证黑洞近景"
       ],
       "not_verified": [
         "Safari 近景相机缩放交互及行星椭圆轨道/逐像素 Lambert 着色视觉结果",
         "隔离候选的实时最新快照同步（当前 /updates 返回扫描繁忙 503）",
         "真实天体质量、距离、光谱与观测数据校准",
         "大图谱长时间动画帧率与持续更新负载",
-        "当前星域中黑洞吸积盘及多个透镜重叠的可视近景效果；当前数据与相机视角未给出可辨识黑洞特写"
+        "当前星域中黑洞吸积盘及多个透镜重叠的可视近景效果；当前数据与相机视角未给出可辨识黑洞特写",
+        "2026-10-14 薄盘与透镜新渲染在具有高密度有效关联的真实图谱中的 Safari 近景效果；18544 隔离图谱不具备黑洞候选"
       ]
     },
     "documentation": {
@@ -77,6 +80,22 @@
     "release": {
       "status": "partial",
       "summary": "基础物理引擎 b1091df 及本轮辐射传递/绘制修复 df94544 已推送 origin/main。Safari 已核实更新代码渲染缓存星图；最新快照同步在扫描繁忙 503 时保留缓存。近景透镜/行星/星门的浏览器验收仍未完成。 本轮透镜裁剪修复已通过专项检查并在隔离 Safari 候选加载；由于可视黑洞近景未取得，本阶段先记录为部分验收。"
+    },
+    "thin_disk_profile_20261014": {
+      "status": "browser_map_verified_black_hole_closeup_pending",
+      "summary": "将黑洞吸积盘径向温度从纯 r^-3 发射率升级为带零内边界的标准薄盘剖面 T_eff^4∝r^-3(1-√(r_in/r))，r_in=3rs；观测温度按引力与 Doppler 总频移缩放，归一化总辐射强度按 g^4 变换。移除没有模型依据的绕盘移动热点。当前温度、吸积率仍是图谱代理。",
+      "evidence": [
+        "scripts/starmap-lensing.test.cjs · ISCO 零通量、49/36 内边界温度峰值、外盘冷却、迎面侧 Doppler 亮度与色温专项断言通过",
+        "node --check internal/server/web/starmap.js && node --check internal/server/web/starmap-physics.js · PASS",
+        "git diff --check · PASS",
+        "start.command · 独立 Compose 项目 aide-starmap-physics-20261014 · https://localhost:18544 · 独立 aide-data/aide-home 卷、临时空 workspace/context/local bind、AI_API_KEY 为空",
+        "系统 Safari 2026-10-14 · https://localhost:18544/starmap.html 成功加载；19 星 / 19 连接，缩放响应，选择 plugins 节点显示 7 条连接 / 0 个有效关联。"
+      ],
+      "not_verified": [
+        "系统 Safari 黑洞候选近景绘制、薄盘温度色带与星图整体融合效果；隔离图谱未产生黑洞候选",
+        "背景像与索引光路透镜叠加的近景观感",
+        "真实天文数据标定、长时帧率与低端设备表现"
+      ]
     }
   },
   "rollback": "revert the isolated starmap physics engine commit",
