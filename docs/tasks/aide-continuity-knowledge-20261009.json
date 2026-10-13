@@ -3545,5 +3545,34 @@
     ],
     "release": "not_run",
     "push": "PASS: implementation commit 62d5b35 is at origin/main."
+  },
+  "progress_checkpoint_20261013_followup32": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "After the user handled Safari's certificate warning, ran start.command only for the isolated 18532 attachment-source candidate and authenticated through its local flow. The main service was not used for candidate test data.",
+      "Created two disposable local reference roots with the same shared.txt path and verified in native Safari that the unsent task composer labeled them Attachment Source A and Attachment Source B, with matching distinct accessible remove-button names.",
+      "Reloaded Safari and verified both reference labels and the unsent task text restored. Removed source A in the disposable candidate, reloaded, and verified its attachment label fell back to stable source ID s-vr95ov while source B retained its source name.",
+      "Attached a disposable workspace-only.txt file and verified it retained the compact workspace label before and after reload.",
+      "Removed the isolated candidate container, its dedicated Docker volumes/network, and temporary test fixtures after browser verification. No task was sent and no model call occurred."
+    ],
+    "remaining": [
+      "A sent historical conversation with recovered attachments was not replayed in Safari: this candidate had no configured model or existing chat history. The observed end-to-end evidence is for unsent composer draft and attachment recovery after reload; automated regression checks cover implementation-level rendering.",
+      "Real embedding/vector provider acceptance remains deferred by the user."
+    ],
+    "verification": {
+      "system_browser": "PASS for isolated native Safari 18532: same-path reference source labels and accessibility labels differ; unsent task draft and source identity survive reload; removed-source ID fallback survives reload; workspace attachment keeps compact label. Historical sent-message replay not run.",
+      "candidate_cleanup": "PASS: project aide-attachment-source-candidate removed with its own volumes/network; /private/tmp/aide-attachment-source-candidate removed.",
+      "implementation": "Already pushed as e6da2ee Show reference identity on recovered chat attachments.",
+      "secret_handling": "No credentials or model secrets were displayed, copied, or sent."
+    },
+    "deferred_by_user": [
+      "Real embedding/vector provider acceptance"
+    ],
+    "out_of_scope_by_user": [
+      "Windows validation; user reports successful testing"
+    ],
+    "release": "Safari evidence recorded; sent historical chat replay remains a conditional/unverified criterion.",
+    "push": "PASS: implementation e6da2ee and Safari evidence checkpoint 78d80f3 are committed locally; push in progress."
   }
 }

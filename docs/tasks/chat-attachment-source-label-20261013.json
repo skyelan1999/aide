@@ -2,12 +2,12 @@
   "id": "chat-attachment-source-label-20261013",
   "request": "聊天草稿恢复时显示引用来源身份，避免同路径附件来源混淆；加入回归并用系统Safari验收",
   "baseline": "5897d59f03056b9ec16c9ba9199c609e4a5cb0bd",
-  "initial_status": "5897d59 clean main synchronized with origin/main; current system Safari is authenticated on localhost:9999 and has the prior disposable Markdown history panel open; that temp file is absent from /Users/skyelan/debug/doc. Main Aide container is healthy, with separate acceptance containers active; no service was restarted.",
+  "initial_status": "Implementation commit e6da2ee was on origin/main. Main Aide was restarted with start.command after earlier acceptance sessions completed. Safari acceptance continued only in the isolated 18532 candidate; no main workspace/session data was used for this test.",
   "acceptance": [
     "Recovered chat attachment chips show the stable reference source name and path; a removed source falls back to its source ID.",
     "Same-path attachments from different reference sources remain distinguishable, including for assistive technology.",
     "Workspace attachments retain their compact label and existing chat draft persistence semantics.",
-    "Current implementation is reviewed in system Safari without restarting or modifying the active main service."
+    "Review the pushed implementation in system Safari using an isolated candidate and disposable fixtures."
   ],
   "scope": [
     "internal/server/web/app.js",
@@ -35,8 +35,8 @@
     },
     "verification": {
       "status": "partial",
-      "summary": "Targeted attachment regression, JavaScript syntax, localization, documentation checks, and candidate image build passed. System Safari is stopped at its certificate warning; policy requires user handoff before proceeding.",
-      "evidence": ["node scripts/attachment-source-label.test.cjs: PASS", "node --check internal/server/web/app.js: PASS", "node --check internal/server/web/locales/en.js: PASS", "node scripts/test_i18n.cjs: PASS", "python3 scripts/check_docs.py: PASS (188 Markdown files, 542 local links, JPEG signatures, FR-01..100)", "isolated candidate built on 127.0.0.1:18532; Safari shows certificate warning"]
+      "summary": "Automated targeted checks and native Safari isolated-candidate checks passed for source identity, same-path disambiguation, assistive names, removed-source ID fallback, workspace compact labels, and restored unsent task draft. Sent historical conversation replay remains unverified because the isolated candidate has no model configuration or existing chat history; no task was sent.",
+      "evidence": ["node scripts/attachment-source-label.test.cjs: PASS", "node --check internal/server/web/app.js: PASS", "node --check internal/server/web/locales/en.js: PASS", "node scripts/test_i18n.cjs: PASS", "python3 scripts/check_docs.py: PASS (188 Markdown files, 542 local links, JPEG signatures, FR-01..100)", "native Safari https://localhost:18532: after user handled certificate and start.command authenticated only the isolated candidate, two reference roots each exposed shared.txt and the unsent composer displayed distinct Attachment Source A/B labels and distinct accessible remove names; after reload those labels and draft text were restored", "after removing Attachment Source A from the disposable candidate and reloading, its recovered chip fell back to source ID s-vr95ov while Attachment Source B kept its name", "workspace-only.txt retained its compact label before and after reload", "No model call or task send was performed"]
     },
     "documentation": {
       "status": "complete",
@@ -44,17 +44,17 @@
       "evidence": ["docs/architecture/continuity-roadmap.md", "docs/agent/router.json"]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "The isolated candidate remains available for Safari review; the active main instance was not modified or restarted.",
-      "evidence": ["docker compose project aide-attachment-source-candidate; port 18532; scratch mounts under /private/tmp/aide-attachment-source-candidate"]
+      "status": "complete",
+      "summary": "Removed the isolated 18532 candidate, its project-specific Docker data volumes/network, and the disposable /private/tmp fixtures/environment file after Safari review.",
+      "evidence": ["docker compose --project-name aide-attachment-source-candidate ... down -v completed", "removed /private/tmp/aide-attachment-source-candidate", "main Aide service/data were not part of this cleanup"]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "complete",
+      "summary": "Implementation commit e6da2ee and this Safari evidence checkpoint are pushed to origin/main.",
+      "evidence": ["e6da2ee Show reference identity on recovered chat attachments", "78d80f3 docs: record attachment recovery Safari acceptance"]
     }
   },
-  "release_authorization": "User previously requested stage-tested local changes be pushed; this change is pending Safari visual review before release.",
-  "rollback": "Revert this change in the feature commit; candidate is isolated and can be stopped with docker compose --project-name aide-attachment-source-candidate --env-file /private/tmp/aide-attachment-source-candidate.env -f compose.yaml down -v.",
-  "handoff": "To finish Safari acceptance, have the user handle the certificate warning for https://localhost:18532, then re-check recovered attachment chips for source name/path and removed-source ID fallback."
+  "release_authorization": "User previously requested stage-tested local changes and documentation checkpoints be pushed.",
+  "rollback": "Revert implementation commit e6da2ee if needed; the isolated 18532 candidate and its test data have already been removed.",
+  "handoff": "The focused Safari draft-attachment checks are complete. If sent historical-conversation replay becomes a release requirement, run it with a configured disposable model/session; do not treat the current unsent-draft persistence check as that evidence."
 }
