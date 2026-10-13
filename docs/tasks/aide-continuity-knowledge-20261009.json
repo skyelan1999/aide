@@ -3496,6 +3496,7 @@
       "File autosave failures now expose an explicit Retry save action; retries use the existing serialized save path and current editor contents.",
       "If a 409 conflict cannot read the latest server version, the editor exposes Retry loading server version. Retrying only reads and opens the compare/merge dialog; it never writes or replaces content automatically.",
       "Added focused source-level regression assertions for both retry paths, context guards, and explicit conflict comparison.",
+      "Added and passed a VM DOM interaction regression that invokes AideFileAutoSave.bind(), proves a failed write is retried and the affordance clears on success, and proves a 409 reread does not write or apply a merge until explicit acceptance.",
       "Restarted the authorized local Aide service with start.command after Safari showed acceptance sessions #45–#48 completed; the running Safari workbench is unlocked and loaded again."
     ],
     "remaining": [
@@ -3503,7 +3504,7 @@
       "Full repository regression was not rerun for this small frontend recovery patch."
     ],
     "verification": {
-      "source": "node --check internal/server/web/file-autosave.js PASS; node scripts/file-recovery-scroll.test.cjs PASS; node scripts/continuity-isolation.test.cjs PASS; git diff --check PASS.",
+      "source": "node --check internal/server/web/file-autosave.js PASS; node scripts/file-autosave-retry.test.cjs PASS; node scripts/file-recovery-scroll.test.cjs PASS; node scripts/continuity-isolation.test.cjs PASS; git diff --check PASS.",
       "system_browser": "Safari localhost:9999 is unlocked after start.command restart. The file editor was not modified to induce a synthetic save failure; retry-control end-to-end behavior remains NOT_RUN.",
       "restart": "PASS: start.command rebuilt the image from the current worktree and reported https://127.0.0.1:9999 ready; native Safari loaded the workbench."
     },
