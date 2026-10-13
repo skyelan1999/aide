@@ -3528,9 +3528,7 @@
       "Native Safari on the running localhost:9999 service opened a disposable Markdown file, established revision 000001, then detected an external body edit as revision 000002. The history panel visibly stated that revision 000002 had a body change, selected it, and rendered the old/new text difference with automatic synchronized scrolling enabled.",
       "Removed the temporary Safari acceptance Markdown file after verification."
     ],
-    "remaining": [
-      "Commit and push this checkpoint after checks pass."
-    ],
+    "remaining": [],
     "verification": {
       "system_browser": "PASS: native Safari, localhost:9999; disposable doc/codex-history-observation-20261013b.md; external edit was detected as 000002 and selected with visible body diff.",
       "targeted_go": "PASS: docker golang:1.26 gofmt and go test -mod=vendor ./internal/server -run TestMarkdownHistoryObservedAssetsAndDedup -count=1.",
@@ -3546,6 +3544,6 @@
       "Windows validation; user reports successful testing"
     ],
     "release": "not_run",
-    "push": "pending"
+    "push": "PASS: implementation commit 62d5b35 is at origin/main."
   }
 }
