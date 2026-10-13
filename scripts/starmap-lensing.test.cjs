@@ -13,6 +13,14 @@ assert.ok(physics.schwarzschildRedshift(2, 8) > physics.schwarzschildRedshift(2,
 assert.ok(physics.dopplerFactor(.4, 1) > physics.dopplerFactor(.4, -1));
 assert.ok(Math.abs(physics.orbitalBeta(2, 6) - .5) < 1e-12);
 assert.equal(physics.orbitalBeta(2, 5.99), 0);
+assert.equal(physics.schwarzschildRadius(2), 4);
+assert.equal(physics.einsteinImpactParameter(2, 4, 4), 0, 'a source on the lens plane has no lensing distance');
+assert.equal(physics.einsteinImpactParameter(2, 4, 3), 0, 'foreground sources are not lensed');
+assert.ok(Math.abs(physics.einsteinImpactParameter(2, 4, 8) - Math.sqrt(8)) < 1e-12);
+assert.ok(physics.projectedEinsteinRadius(2, 4, 8, 100) > physics.projectedEinsteinRadius(2, 4, 6, 100));
+assert.equal(physics.projectedEinsteinRadius(2, 4, 3, 100), 0);
+assert.ok(Math.abs(physics.projectedBlackHoleShadowRadius(2, 4, 100) - 1.5 * Math.sqrt(3) * 100) < 1e-12);
+assert.equal(physics.projectedBlackHoleShadowRadius(2, 0, 100), 0);
 assert.ok(physics.diskView(1) > physics.diskView(0));
 assert.ok(physics.diskPositionAngle(.5) > physics.diskPositionAngle(-.5));
 assert.equal(physics.accretionEmission(2, 5, 0).intensity, 0);

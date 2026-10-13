@@ -41,6 +41,35 @@ window.AideCosmicPhysics = Object.freeze({
   const d = Number.isFinite(distance) ? Math.max(.25, distance) : 1;
   return p / (4 * Math.PI * d * d);
  },
+ schwarzschildRadius(massLength) {
+  // In geometric units (G = c = 1), r_s = 2M. The caller supplies a
+  // normalized graph proxy, never a measured stellar mass.
+  return Number.isFinite(massLength) ? Math.max(0, 2 * massLength) : 0;
+ },
+ einsteinImpactParameter(schwarzschildRadius, observerLensDistance, observerSourceDistance) {
+  // Weak-field point lens: b_E² = 2 r_s D_l D_ls / D_s. Distances and
+  // mass-length must share the same normalized scene unit. Sources in front
+  // of the lens have no Einstein ring.
+  const rs = Number.isFinite(schwarzschildRadius) ? Math.max(0, schwarzschildRadius) : 0;
+  const dl = Number.isFinite(observerLensDistance) ? Math.max(0, observerLensDistance) : 0;
+  const ds = Number.isFinite(observerSourceDistance) ? Math.max(0, observerSourceDistance) : 0;
+  if (!rs || !dl || ds <= dl) return 0;
+  return Math.sqrt(2 * rs * dl * (ds - dl) / ds);
+ },
+ projectedEinsteinRadius(massLength, observerLensDistance, observerSourceDistance, scenePixelsPerRadian) {
+  const dl = Number.isFinite(observerLensDistance) ? Math.max(0, observerLensDistance) : 0;
+  const pixels = Number.isFinite(scenePixelsPerRadian) ? Math.max(0, scenePixelsPerRadian) : 0;
+  if (!dl || !pixels) return 0;
+  const impact = this.einsteinImpactParameter(this.schwarzschildRadius(massLength), dl, observerSourceDistance);
+  return impact / dl * pixels;
+ },
+ projectedBlackHoleShadowRadius(massLength, observerLensDistance, scenePixelsPerRadian) {
+  const dl = Number.isFinite(observerLensDistance) ? Math.max(0, observerLensDistance) : 0;
+  const pixels = Number.isFinite(scenePixelsPerRadian) ? Math.max(0, scenePixelsPerRadian) : 0;
+  if (!dl || !pixels) return 0;
+  // Critical impact parameter for a Schwarzschild photon orbit: 3√3 M.
+  return 1.5 * Math.sqrt(3) * this.schwarzschildRadius(massLength) / dl * pixels;
+ },
  lambertPhase(phaseAngle) {
   const phase = Math.max(0, Math.min(Math.PI, Number.isFinite(phaseAngle) ? phaseAngle : Math.PI / 2));
   return (Math.sin(phase) + (Math.PI - phase) * Math.cos(phase)) / Math.PI;
