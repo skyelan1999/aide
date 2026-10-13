@@ -3307,5 +3307,26 @@
     "documentation": "Detailed receipt added to docs/tasks/context-compaction-observability-20261012.json.",
     "release": "not_run",
     "push": "pending documentation checkpoint"
+  },
+  "progress_checkpoint_20261013_followup22": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "系统 Safari 在 localhost:9999 的合成长会话 #46 中观察到自动压缩状态持续递增计时；一次读取显示阶段为 map 1/1、4 条早期消息、上下文估算 22.7K/64K、已用时 13 分 34 秒。",
+      "合成助手长输出任务同时仍显示运行中和长时间无响应提示；验收只读观察，没有点击停止/重试、切换会话或修改历史。",
+      "模型设置多厂商/多密钥功能和中英文文档已由 06ecdf2 提交并推送；当前任务记录的桌面 Safari 布局检查为通过，真实供应商请求、密钥保存端到端和窄屏 Safari 仍未验收。"
+    ],
+    "remaining": [
+      "长会话 Safari 现场未观察到 map/reduce 阶段推进、fold/save 和 completed/failed 终态；完整自动压缩生命周期仍未通过验收。",
+      "运行容器 aide.srcsha 与当前源码计算指纹不同；该差异不单独证明功能代码过期，需在当前合成任务结束后重新建立并核验当前候选，再做完整 Safari 验收。"
+    ],
+    "verification": {
+      "source": "系统 Safari https://localhost:9999/；合成验收会话 #46。",
+      "live_observation": "上下文卡显示“摘要处理中 · 分段整理 1/1 · 4 条早期消息 · 当前约 13.3K · 已用时 13 分 34 秒”；活动上下文估算 22.7K/64K；同页助手任务显示长时间无响应。",
+      "scope": "仅观察合成内容；未执行真实用户数据修改、模型设置保存或控制按钮操作。",
+      "build_provenance": "容器标签 aide.srcsha=3f8e365f85c5b3b9b4e7aecc290b7d8e8b1c2f4af02d026c5685f2eca3feea0a；当前工作树计算值 ec3280f85b1dae9738dd6a258eaa56d4b34f32f63340143ee06d24bce1f0bd64。指纹不同，二进制与当前构建输入集合的对应关系未确认；未重启，以保留进行中的合成会话。"
+    },
+    "release": "not_run",
+    "push": "Documentation checkpoint pending; no product source changes in this checkpoint."
   }
 }
