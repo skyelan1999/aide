@@ -3415,6 +3415,6 @@
       "scope": "Read-only Safari snapshot; no buttons, session controls, settings, data files, or processes were changed."
     },
     "release": "not_run",
-    "push": "pending focused regression checkpoint"
+    "push": "PASS: focused regression and current Safari receipt 49c6fb9 pushed to origin/main."
   }
 }
