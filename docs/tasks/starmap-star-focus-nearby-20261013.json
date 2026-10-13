@@ -1,0 +1,77 @@
+{
+  "id": "starmap-star-focus-nearby-20261013",
+  "request": "点击星星持续放大就应该显示点击的该星星，然后恒星附近的星星和星门的渲染还需要做一下",
+  "baseline": "1a4c13c",
+  "initial_status": "",
+  "acceptance": [
+    "点击恒星后持续放大始终追踪所选节点，跃迁层级时所选星仍在视野中心。",
+    "节点行星近景显示真实直接关联节点的邻星表示，不虚构知识节点。",
+    "节点近景继承所属恒星系统中基于真实跨系统边建立的星门；星门可点击跃迁。",
+    "高倍缩放时恒星表观尺寸与光晕增长，控制面板不受影响。",
+    "用系统 Safari 在索引完成的知识星图中验证选星、连续缩放、近景邻星和跃迁门。"
+  ],
+  "scope": [
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap-cosmos.js",
+    "internal/server/web/starmap.html",
+    "scripts/starmap-gates.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "当前选星只显示详情，镜头不跟随所选星；连续缩放切层可能重置焦点。恒星系统门在节点近景没有继承，单节点视图也没有显示邻近真实关系节点。",
+      "evidence": [
+        "用户报告：放大应持续呈现被点击的星；需完善恒星附近星体与星门。",
+        "源码：canvas 点击星点调用 select(n,false)，镜头保持旧位置；enterCosmic 重置 yaw/pitch/zoom。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "加入选星锚点，进入子层时重新对齐同一真实节点；深层展示最多10个真实直接关系节点的近星轨道，以及所属系统真实跃迁门。",
+      "evidence": [
+        "门仍只由实际跨恒星系统的已索引边生成；渲染近星限用现存有效关联节点。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "选中节点锚定镜头并跨层级保留；节点近景绘制真实直接关联邻星和所属系统真实星门。高亮星从十字改为低对比度细环。",
+      "evidence": [
+        "starmap.js: focusCosmicStar 记录所选星锚点，滚轮跨层级时保留焦点；drawCosmicLocalSystem 绘制真实邻星和所属系统星门。",
+        "starmap.js: 高亮星改用弱透明细环，不再绘制横竖十字。",
+        "starmap-cosmos.js: 节点近景继承所属系统的真实星门锚点。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "本地检查和 Safari 实星图复核通过；当前选中 README.ru.md 并连续放大进入单节点近景，所选星保持画面中央，周边真实关联节点可见，高亮呈细环。当前节点附近未观察到可显示的真实跨系统星门，因此星门现场点击跃迁仍以模型测试和代码路径为证。",
+      "evidence": [
+        "Safari localhost:9999 实际索引视图显示 2151 stars / 3567 connections。",
+        "Safari 双击并连续滚轮放大 README.ru.md 后，视图标题切为该节点、显示 1 个真实节点，中心星保持居中，近景呈现真实邻星和连接。",
+        "Safari 截图复核高亮采用低对比度圆环，无突兀大十字。",
+        "node --check 两个星图 JavaScript 文件、starmap-gates.test.cjs、starmap-workspace-scene.test.cjs、starmap-path.test.cjs 与 git diff --check 均通过。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "星图页面已有星际日志记录能量包层、真实星门与节点行星映射；本任务通过任务记录更新验收证据和剩余边界。",
+      "evidence": [
+        "starmap.html 星图说明保留真实关联数、真实跨系统边和可视化隐喻的边界说明。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "确认本次发布范围仅包含星图实现、门模型回归和星图任务记录；工作区内其他 SSH 命令面板改动保持未暂存。",
+      "evidence": [
+        "提交前按路径限定 stage，保留 docs/user-guide.md、docs/en/user-guide.md、internal/server/command.go、internal/server/command_input_test.go、internal/server/web/app.js、internal/server/web/index.html、internal/server/web/locales/en.js 与 SSH 任务文件的独立未提交改动。"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "待创建本任务独立提交并推送 origin/main。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "推送沿用用户持续指示：阶段性验证后及时 push。",
+  "rollback": "单独 revert 本任务提交。",
+  "handoff": "系统 Safari 实际图谱验收已完成；选中星附近星门的现场点击跃迁未在本次选中的星系观察到，真实星门模型已有自动化回归覆盖。"
+}

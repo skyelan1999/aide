@@ -13,5 +13,6 @@ assert(systemGroup,'a local call component should establish a stellar system');
 assert.equal(scene.gates.length,2,'only cross-system semantic links create gates');
 assert.equal(JSON.stringify(Array.from(scene.gates,g=>g.targetLabel).sort()),JSON.stringify(['Beta 0 · 调用单元','Gamma 0 · 调用单元'].sort()));
 assert(scene.gates.every(g=>g.anchorNodeID&&g.count===1));
+const nodeScene=model.scene(path.at(-1).key);assert.equal(nodeScene.depth,7);assert.equal(nodeScene.gates.length,scene.gates.length,'node-world close-up should inherit its stellar system navigation gates');
 const root=model.scene(model.root.key);assert.equal(root.gates.length,0,'universe view should not expose close-view gates');
 console.log('starmap gate model: PASS');

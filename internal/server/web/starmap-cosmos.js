@@ -122,6 +122,6 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
  rawByKey.clear();
  function find(key){return byKey.get(key)||null;}
  function pathFor(id){return paths.get(id)||[];}
- function scene(key){const group=find(key)||root;return {group,children:group.children,depth:group.depth,members:group.members,connections:group.connections,scaleCounts:group.directScaleCounts,nextThreshold:group.nextThreshold,gates:[...(gatesBySystem.get(group.key)?.values()||[])]};}
+ function scene(key){const group=find(key)||root,system=group.depth===7?group.parent:group;return {group,children:group.children,depth:group.depth,members:group.members,connections:group.connections,scaleCounts:group.directScaleCounts,nextThreshold:group.nextThreshold,gates:[...(gatesBySystem.get(system?.key)?.values()||[])]};}
  return Object.freeze({root,byKey,paths,scene,pathFor,find,levels,thresholds,scaleCounts:Object.freeze(scaleCounts)});
 }});
