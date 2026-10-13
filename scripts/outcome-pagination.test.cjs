@@ -10,7 +10,7 @@ const page=(snapshot,offset=0)=>({snapshot,taskId:'test',goal:'Fixture',mode:'ch
 async function scenario(kind){
  let calls=[],blob,phase=0;
  const content=new Element('div');
- const context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)},Blob:class{constructor(parts){blob=JSON.parse(parts[0]);}},URL:{createObjectURL:()=>'',revokeObjectURL(){}},setTimeout(){},encodeURIComponent,matchMedia:()=>({matches:true})};
+ const context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)},Blob:class{constructor(parts){blob=JSON.parse(parts[0]);}},URL:{createObjectURL:()=>'',revokeObjectURL(){}},setTimeout(){},setInterval(){return 1;},clearInterval(){},encodeURIComponent,matchMedia:()=>({matches:true})};
  vm.runInNewContext(fs.readFileSync('internal/server/web/task-outcome.js','utf8'),context);
  const api=async path=>{calls.push(path);if(calls.length===1)return page('old');if(path.includes('snapshot=')){assert.match(path,/snapshot=old/);if(kind==='409'){const e=new Error('changed');e.status=409;throw e;}if(kind==='mismatch')return page('new',1);return page('old',1);}phase++;return page('new');};
  await context.window.AideTaskOutcome.mount(content,{sessionId:'s',runId:'r',api,t:x=>x,blocked:()=>false,error:e=>{throw new Error(e);}});
@@ -26,6 +26,18 @@ async function scenario(kind){
   button('导出成果 JSON').onclick();assert.equal(blob.exportScope.snapshot,'new');assert.equal(blob.executions.length,1);assert.equal(blob.exportScope.allPagesLoaded,false);
  }
 }
+async function runningRefreshScenario(){
+ const content=new Element('div'),timers=[],cleared=[];let calls=0;
+ const context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)},setTimeout(){},setInterval(fn,ms){timers.push({fn,ms});return timers.length;},clearInterval(id){cleared.push(id);},encodeURIComponent,matchMedia:()=>({matches:true})};
+ vm.runInNewContext(fs.readFileSync('internal/server/web/task-outcome.js','utf8'),context);
+ const running={...page('first'),status:'running',outputs:[{name:'chat',status:'running',content:'首段生成中'}]};
+ const complete={...page('second'),status:'completed',outputs:[{name:'chat',status:'completed',content:'完整回复已生成'}]};
+ await context.window.AideTaskOutcome.mount(content,{sessionId:'s',runId:'r',api:async()=>++calls===1?running:complete,t:x=>x,blocked:()=>false});
+ assert.equal(timers.length,1);assert.equal(timers[0].ms,2500);
+ await timers[0].fn();
+ assert.ok(descendants(content).some(e=>e.textContent==='完整回复已生成'),'running outcome refreshes the first page as the model produces output');
+ assert.ok(cleared.includes(1),'polling stops once the run is terminal');
+}
 function overviewScenario(){
  const content=new Element('div'),context={window:{addEventListener(){}},document:{createElement:tag=>new Element(tag)}};
  vm.runInNewContext(fs.readFileSync('internal/server/web/task-outcome.js','utf8'),context);
@@ -40,4 +52,4 @@ function overviewScenario(){
  all.find(e=>e.textContent==='查看本轮详情、审批与证据').onclick();assert.equal(chosen,'round');
  all.find(e=>e.textContent==='加载更早的输入与输出').onclick();assert.equal(older,1);
 }
-(async()=>{overviewScenario();for(const kind of ['stable','409','mismatch'])await scenario(kind);console.log('PASS outcome pagination snapshot, stale export guard and explicit reload');})().catch(e=>{console.error(e);process.exitCode=1;});
+(async()=>{overviewScenario();for(const kind of ['stable','409','mismatch'])await scenario(kind);await runningRefreshScenario();console.log('PASS outcome pagination snapshot, stale export guard, explicit reload and running refresh');})().catch(e=>{console.error(e);process.exitCode=1;});
