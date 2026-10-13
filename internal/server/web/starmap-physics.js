@@ -8,6 +8,34 @@ window.AideCosmicPhysics = Object.freeze({
   const links = Number.isFinite(degree) ? Math.max(0, degree) : 0;
   return Math.log1p(links);
  },
+ massProxy(degree) {
+  // A bounded dynamical proxy derived from graph energy. It is deliberately
+  // separate from luminosity: more relations increase both, but not linearly.
+  const energy = this.powerProxy(degree);
+  return Math.max(.25, Math.min(3.5, .35 + Math.sqrt(energy) * .72));
+ },
+ keplerMeanMotion(mass, semiMajorAxis) {
+  const m = Number.isFinite(mass) ? Math.max(.01, mass) : 1;
+  const a = Number.isFinite(semiMajorAxis) ? Math.max(.25, semiMajorAxis) : 1;
+  return Math.sqrt(m / (a * a * a));
+ },
+ keplerOrbit(meanAnomaly, eccentricity, mass, semiMajorAxis) {
+  const e = Math.max(0, Math.min(.72, Number.isFinite(eccentricity) ? eccentricity : 0));
+  const a = Number.isFinite(semiMajorAxis) ? Math.max(.25, semiMajorAxis) : 1;
+  const mean = Number.isFinite(meanAnomaly) ? meanAnomaly : 0;
+  // Newton iteration solves M = E - e sin(E); bounded fixed work keeps the
+  // animation deterministic and inexpensive at every frame.
+  let eccentric = mean;
+  for (let i = 0; i < 6; i++) eccentric -= (eccentric - e * Math.sin(eccentric) - mean) / (1 - e * Math.cos(eccentric));
+  const x = a * (Math.cos(eccentric) - e);
+  const y = a * Math.sqrt(1 - e * e) * Math.sin(eccentric);
+  const radius = Math.hypot(x, y);
+  const mu = Number.isFinite(mass) ? Math.max(.01, mass) : 1;
+  // Vis-viva equation: v² = μ(2/r - 1/a). This preserves the correct
+  // periapsis/apoapsis speed change for the solved Kepler ellipse.
+  const speed = Math.sqrt(Math.max(0, mu * (2 / Math.max(.01, radius) - 1 / a)));
+  return { x, y, radius, eccentricAnomaly: eccentric, meanMotion: this.keplerMeanMotion(mass, a), orbitalSpeed: speed };
+ },
  inverseSquareFlux(power, distance) {
   const p = Number.isFinite(power) ? Math.max(0, power) : 0;
   const d = Number.isFinite(distance) ? Math.max(.25, distance) : 1;
@@ -21,6 +49,20 @@ window.AideCosmicPhysics = Object.freeze({
   const radius = Math.max(.1, Number.isFinite(orbitRadius) ? orbitRadius : 1);
   const reflectivity = Math.max(0, Math.min(1, Number.isFinite(albedo) ? albedo : .3));
   return this.inverseSquareFlux(hostPower, radius) * this.lambertPhase(phaseAngle) * reflectivity;
+ },
+ planetIllumination(hostPower, orbitRadius, phaseAngle, albedo = .3) {
+  const incident = this.inverseSquareFlux(hostPower, orbitRadius);
+  const reflected = incident * this.lambertPhase(phaseAngle) * Math.max(0, Math.min(1, Number.isFinite(albedo) ? albedo : .3));
+  // Filmic display mapping preserves a visible night side while retaining
+  // monotonic response to incident and reflected radiance.
+  const display = value => value <= 0 ? 0 : value / (value + .16);
+  return { incidentFlux: incident, reflectedFlux: reflected, displayIllumination: display(reflected), equilibriumProxy: Math.pow(incident, .25) };
+ },
+ planetSurfaceRadiance(hostPower, orbitRadius, albedo, normalDotLight) {
+  const reflectivity = Math.max(0, Math.min(1, Number.isFinite(albedo) ? albedo : .3));
+  const diffuse = Math.max(0, Math.min(1, Number.isFinite(normalDotLight) ? normalDotLight : 0));
+  const irradiance = this.inverseSquareFlux(hostPower, orbitRadius) * reflectivity * diffuse;
+  return irradiance <= 0 ? 0 : irradiance / (irradiance + .16);
  },
  schwarzschildRedshift(rs, radius) {
   if (!Number.isFinite(rs) || !Number.isFinite(radius) || rs <= 0 || radius <= rs) return 0;
