@@ -3417,5 +3417,25 @@
     },
     "release": "not_run",
     "push": "PASS: focused regression and current Safari receipt 49c6fb9 pushed to origin/main."
+  },
+  "progress_checkpoint_20261013_followup27": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "按用户确认检查临时验收文件 /Users/skyelan/debug/doc/aide-continuity-acceptance-20261013.md；该路径当前不存在，达到用户要求的永久删除后状态。",
+      "系统 Safari 只读查看 localhost:9999 模型设置；当前实际页面仍呈现单一 API Base URL、旧式平铺模型列表和单一 API Key 替换入口，与当前源码已实现的多个提供商卡片/每提供商多密钥界面不一致。没有保存或更改模型设置。",
+      "对照仓库：多提供商和密钥管理前后端已在 06ecdf2 实现，布局微调在 481ab5d；工作树 clean 且 main 与 origin/main 对齐。"
+    ],
+    "remaining": [
+      "localhost:9999 当前页面未呈现多提供商/多密钥表单；由于该浏览器页面和会话可能仍在使用旧资源，尚不能区分运行实例版本落后、页面缓存或服务构建来源差异。不得把当前 Safari 观察记作新版 UI 验收。",
+      "待不影响运行中长会话/压缩验收的情况下重建或选择当前候选，在系统 Safari 验证新版提供商折叠卡、多密钥控件、桌面与窄屏排版；向真实 API 发送请求、保存密钥仍未验收。"
+    ],
+    "verification": {
+      "system_browser": "Native Safari, https://localhost:9999/; settings modal inspected read-only. Current visible form: one Base URL, three flat model entries, one API Key configured/replacement control. No form values submitted.",
+      "source": "internal/server/web/app.js renderModelList() creates provider cards, endpoint fields, up to 12 named keys per provider, provider-specific model lists, and API calls carrying providerId; internal/server/server.go stores ModelProviders and resolves provider-specific vault keys.",
+      "release": "No source change. Documentation checkpoint only."
+    },
+    "release": "not_run",
+    "push": "pending documentation checkpoint"
   }
 }
