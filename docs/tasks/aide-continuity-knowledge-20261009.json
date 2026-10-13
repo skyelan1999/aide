@@ -3595,5 +3595,30 @@
     ],
     "release": "Safari evidence recorded; sent historical chat replay remains a conditional/unverified criterion.",
     "push": "PASS: implementation e6da2ee and Safari evidence checkpoint are on origin/main."
+  },
+  "progress_checkpoint_20261013_followup34": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "summary": "Revalidated the current workspace against two disposable real OpenSSH/SFTP servers. This strengthens backend integration evidence for continuity, Markdown history, independent references, progressive remote coverage and cancellation; it does not verify the user's own SSH host or Safari SSH flows.",
+    "verification": {
+      "source_commit": "cfa9989",
+      "command": "AIDE_SSH_REPEAT=1 ./scripts/test-ssh-workspace.sh",
+      "result": "PASS: go test -race for TestSSHLiveWorkspaceAndIndependentSource; 14.33s test / 15.447s package. Covers real SFTP listing/read/write, stale master/source recovery, independent SFTP server B, continuity and Markdown history, remote search/timeline, progressive coverage resume, and remote process-group cancellation.",
+      "evidence_log": ".agent-state/ssh-storage-audit/live/aide-ssh-test-20261013222406-53364.log",
+      "evidence_sha256": "4d9ff1494e978de034f7f5b0d1d20ae38d60a52850754fae7ce30b8b959b65b5",
+      "test_input_snapshot": "unchanged before/after; the acceptance script verified this before returning exit 0.",
+      "isolation": "Two disposable OpenSSH fixture containers on an internal-only Docker network, no published ports or user data; automatic cleanup confirmed by empty Docker container/network filters.",
+      "safari": "Native Safari on actual localhost:9999 showed the authenticated workspace and trajectory UI. It was not connected to the disposable test SSH hosts, so no SSH UI interaction is claimed.",
+      "not_verified": [
+        "User-configured SSH host and its real directories",
+        "Safari SSH browse/save/restore flow",
+        "WAN and physical network failure behavior"
+      ]
+    },
+    "remaining": [
+      "Complete real Safari SSH browsing/save/history flow against an explicitly available user SSH host or a safe isolated SSH-backed Aide candidate.",
+      "Continue remaining objective-wide end-to-end acceptance; vector provider remains deferred by the user and Windows remains out of agent scope."
+    ],
+    "release": "No code changed; this checkpoint documents verification only. No service was restarted and no release state changed."
   }
 }

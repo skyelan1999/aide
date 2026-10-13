@@ -354,3 +354,9 @@ Markdown/TXT/代码文件保存失败后现在显示“重试保存”，重试�
 历史列表请求现在会检查磁盘上的当前 Markdown 与引用资源，并记录已向用户提示到哪个版本。若同步路径先行归档了外部改动，列表仍会发现尚未提示的新版本；面板会显示版本号及正文/资源变化，并自动选中该版本以查看差异。旧索引首次升级时以当前最新版本建立观察基线，避免把既有历史误报为外部新改动。
 
 针对性 Go 测试覆盖引用资源与正文变更已由其他同步路径先行捕获的情况，以及提示只出现一次。Docker 内 `gofmt` 与 `go test -mod=vendor ./internal/server -run TestMarkdownHistoryObservedAssetsAndDedup -count=1` 通过。系统 Safari 在 `localhost:9999` 用一次性 Markdown 文件建立 `000001` 基线，再从容器外写入正文变化；面板显示“本次检查发现新版本 000002：正文有变化”，自动选中 `000002`，并呈现正文差异及自动同步滚动提示。验收临时文件已删除。仓库 `quick` 门禁 42/42 通过，文档检查为 188 个 Markdown 文件及 542 个本地链接，英语国际化检查通过。具体收据见任务账本 `progress_checkpoint_20261013_followup31`。
+
+## 2026-10-13 后续：当前源码双服务器 SSH/SFTP 联调复验
+
+在当前工作树提交 `cfa9989` 上运行 `AIDE_SSH_REPEAT=1 ./scripts/test-ssh-workspace.sh`。双 OpenSSH/SFTP fixture 的 `TestSSHLiveWorkspaceAndIndependentSource` 启用 Go race 后通过：测试 14.33 秒，包 15.447 秒。覆盖工作区 SFTP 中文/空格路径、独立引用服务器 B、断开主连接后的恢复、连续性与 Markdown 历史、远端知识检索/时间线、渐进覆盖从进程检查点续扫以及取消后远程进程组停止。测试脚本确认源文件前后快照未变化；临时容器和内部网络在退出时清理，Docker 筛选复核为空。日志 `.agent-state/ssh-storage-audit/live/aide-ssh-test-20261013222406-53364.log`，SHA-256 `4d9ff1494e978de034f7f5b0d1d20ae38d60a52850754fae7ce30b8b959b65b5`。
+
+同一时段系统 Safari 只读打开当前 `localhost:9999`，确认工作台与轨迹界面可用；本次没有把 Safari 接到 fixture SSH 主机。以上证明当前源码与隔离 OpenSSH 服务的后端联调，不证明用户自己的 SSH 主机、Safari SSH 文件浏览/保存/恢复、WAN 故障或全目标完成。向量真实服务仍按用户要求暂缓，Windows 按用户说明不在本代理验收范围。
