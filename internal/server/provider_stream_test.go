@@ -148,3 +148,39 @@ func TestCompleteStreamHTTPError(t *testing.T) {
 		t.Fatalf("err = %v", err)
 	}
 }
+
+func TestCompleteStreamStopsAfterIdleTimeout(t *testing.T) {
+	closed := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		fl := w.(http.Flusher)
+		ticker := time.NewTicker(10 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-r.Context().Done():
+				close(closed)
+				return
+			case <-ticker.C:
+				_, _ = w.Write([]byte(": keepalive\n\n"))
+				fl.Flush()
+			}
+		}
+	}))
+	defer srv.Close()
+
+	started := time.Now()
+	_, _, _, _, err := completeStreamWithIdleTimeout(context.Background(), Settings{BaseURL: srv.URL, Model: "test-model"}, []Message{{Role: "user", Content: "hi"}}, ProfileParams{}, nil, nil, func(string) {}, nil, 40*time.Millisecond)
+	if err == nil || !strings.Contains(err.Error(), "没有数据") {
+		t.Fatalf("expected idle timeout error, got %v", err)
+	}
+	if elapsed := time.Since(started); elapsed > time.Second {
+		t.Fatalf("idle stream took too long to stop: %s", elapsed)
+	}
+	select {
+	case <-closed:
+	case <-time.After(time.Second):
+		t.Fatal("provider request was not cancelled after idle timeout")
+	}
+}

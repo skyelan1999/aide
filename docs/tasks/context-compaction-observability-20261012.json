@@ -114,5 +114,20 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "Safari 系统浏览器 localhost:9999 当前源码启动后可见长会话 #46：活动估算 14.0K/64K、历史摘要 298 tokens、累计输入 329,423/输出 61,416。压缩后展示有证据；尚未在一次真实压缩进行时记录开始、批次、耗时、完成动画的完整屏幕过程，因此该需求保持 active。用户已授权后续本机证书提示由助手直接处理。"
+  "handoff": "Safari 系统浏览器 localhost:9999 当前源码启动后可见长会话 #46：活动估算 14.0K/64K、历史摘要 298 tokens、累计输入 329,423/输出 61,416。压缩后展示有证据；尚未在一次真实压缩进行时记录开始、批次、耗时、完成动画的完整屏幕过程，因此该需求保持 active。Safari 当前弹出本机 aide-local 通行密钥登录；修复版 UI 复验待登录后继续。",
+  "latest_followup_20261013": {
+    "status": "partial",
+    "completed": [
+      "provider SSE valid-data idle timeout is 3 minutes; SSE comment keepalives do not reset it. Existing per-request total cap remains 2 hours.",
+      "Focused Go regression simulating a heartbeat-only stalled provider stream verifies timeout error and upstream request cancellation.",
+      "Execution budget review: new-chat default is 2 hours; explicit 360-second settings or older task snapshots can still impose six minutes, and resuming refreshes the budget for the resumed task mode.",
+      "start.command rebuilt the local 9999 service from the current source."
+    ],
+    "remaining": [
+      "System Safari UI verification is pending: Safari currently presents a native aide-local passkey sign-in prompt.",
+      "Observe healthy automatic compaction from start through map/reduce batches, fold/save, and completion.",
+      "Update overall continuity ledger and push the verified source/docs checkpoint."
+    ],
+    "verification": "Focused Docker Go tests passed for idle cancellation and existing SSE behavior. Documentation updated in architecture.md and industrial-long-conversation-support.md."
+  }
 }

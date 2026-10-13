@@ -17,6 +17,58 @@ import (
 )
 
 const providerStreamTimeout = 2 * time.Hour
+const providerStreamIdleTimeout = 3 * time.Minute
+
+type streamIdleWatch struct {
+	activityCh chan struct{}
+	stopCh     chan struct{}
+	doneCh     chan struct{}
+	expiredAt  atomic.Bool
+}
+
+func startStreamIdleWatch(ctx context.Context, cancel context.CancelFunc, timeout time.Duration) *streamIdleWatch {
+	w := &streamIdleWatch{activityCh: make(chan struct{}, 1), stopCh: make(chan struct{}), doneCh: make(chan struct{})}
+	go func() {
+		defer close(w.doneCh)
+		timer := time.NewTimer(timeout)
+		defer timer.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-w.stopCh:
+				return
+			case <-w.activityCh:
+				if !timer.Stop() {
+					select {
+					case <-timer.C:
+					default:
+					}
+				}
+				timer.Reset(timeout)
+			case <-timer.C:
+				w.expiredAt.Store(true)
+				cancel()
+				return
+			}
+		}
+	}()
+	return w
+}
+
+func (w *streamIdleWatch) activity() {
+	select {
+	case w.activityCh <- struct{}{}:
+	default:
+	}
+}
+
+func (w *streamIdleWatch) expired() bool { return w.expiredAt.Load() }
+
+func (w *streamIdleWatch) stop() {
+	close(w.stopCh)
+	<-w.doneCh
+}
 
 // TokenUsage 一次模型调用的用量（FR-90）；Estimated 表示上游未返回 usage 时的估算值。
 type TokenUsage struct {
@@ -279,13 +331,19 @@ type streamChunk struct {
 // 后者可能意味着工具调用 arguments 还没写完——需要续写补全而不是执行半成品。
 // 部分兼容网关会拒绝 stream_options（OpenAI 可选扩展）：HTTP 400 时去掉该字段重试一次，仍失败则按错误返回。
 func completeStream(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte), onDelta func(textDelta string), onReasoning func(reasoningDelta string)) (string, []ToolCall, TokenUsage, string, error) {
+	return completeStreamWithIdleTimeout(ctx, cfg, messages, params, tools, rec, onDelta, onReasoning, providerStreamIdleTimeout)
+}
+
+func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages []Message, params ProfileParams, tools []any, rec func(body []byte), onDelta func(textDelta string), onReasoning func(reasoningDelta string), idleTimeout time.Duration) (string, []ToolCall, TokenUsage, string, error) {
 	if cfg.BaseURL == "" || cfg.Model == "" {
 		return "", nil, TokenUsage{}, "", errors.New("请先在模型设置中配置 API 地址和模型")
 	}
 	body := buildChatBody(cfg, messages, params, tools, true)
+	streamCtx, cancelStream := context.WithCancel(ctx)
+	defer cancelStream()
 	promptEstimate := estimateProviderPromptTokens(messages, tools)
 	send := func(bodyBytes []byte) (*http.Response, error) {
-		req, err := http.NewRequestWithContext(ctx, "POST", strings.TrimRight(cfg.BaseURL, "/")+"/chat/completions", bytes.NewReader(bodyBytes))
+		req, err := http.NewRequestWithContext(streamCtx, "POST", strings.TrimRight(cfg.BaseURL, "/")+"/chat/completions", bytes.NewReader(bodyBytes))
 		if err != nil {
 			return nil, err
 		}
@@ -373,13 +431,18 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 	toolCallsByIndex := map[int]*ToolCall{}
 	var finishReason string
 	var usage *providerUsage
+	idleWatch := startStreamIdleWatch(streamCtx, cancelStream, idleTimeout)
+	defer idleWatch.stop()
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 64<<10), 1<<20) // 单个 chunk 上限 1 MiB
 	for scanner.Scan() {
 		select {
-		case <-ctx.Done():
+		case <-streamCtx.Done():
 			// 用户主动停止：保留已流式输出的部分内容
-			return content.String(), nil, TokenUsage{}, "", ctx.Err()
+			if idleWatch.expired() {
+				return content.String(), nil, TokenUsage{}, "", fmt.Errorf("模型流式响应连续 %s 没有数据，已停止等待；可重试当前任务", idleTimeout)
+			}
+			return content.String(), nil, TokenUsage{}, "", streamCtx.Err()
 		default:
 		}
 		line := scanner.Text()
@@ -397,6 +460,7 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		if err := json.Unmarshal([]byte(payload), &chunk); err != nil {
 			continue // 忽略无法解析的 keepalive 行
 		}
+		idleWatch.activity()
 		if chunk.Usage != nil {
 			usage = chunk.Usage
 		}
@@ -438,8 +502,11 @@ func completeStream(ctx context.Context, cfg Settings, messages []Message, param
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		if ctx.Err() != nil {
-			return "", nil, TokenUsage{}, "", ctx.Err()
+		if idleWatch.expired() {
+			return content.String(), nil, TokenUsage{}, "", fmt.Errorf("模型流式响应连续 %s 没有数据，已停止等待；可重试当前任务", idleTimeout)
+		}
+		if streamCtx.Err() != nil {
+			return "", nil, TokenUsage{}, "", streamCtx.Err()
 		}
 		return "", nil, TokenUsage{}, "", fmt.Errorf("读取模型流式响应失败: %w", err)
 	}

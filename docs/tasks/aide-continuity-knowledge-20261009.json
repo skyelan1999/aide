@@ -3012,5 +3012,28 @@
       "scope": "System Safari live automatic-compaction observation; observed no batch advance or terminal result after 9:02. One Stop click produced only a request toast; cancellation completion is unknown."
     },
     "release": "not_run"
+  },
+  "progress_checkpoint_20261013_followup10": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "Added a 3-minute idle timeout for provider SSE streams with no valid JSON data events; transport comment heartbeats do not mask a stalled model response. The 2-hour request wall limit remains.",
+      "Confirmed source budget behavior: new chat default is 2 hours; explicit 360-second settings and existing task snapshots can still impose six minutes. Resume refreshes the resumed mode budget.",
+      "Focused Go regressions passed for stalled heartbeat cancellation, ordinary streaming, fallback/error handling, and task budget/resume behavior.",
+      "Updated architecture and long-conversation support docs and recorded the scope/verification in the compaction task ledger."
+    ],
+    "remaining": [
+      "Safari currently shows the native aide-local passkey sign-in prompt; current-server UI verification remains pending.",
+      "Capture one healthy real automatic-compaction lifecycle in Safari, including batch changes and final persisted estimate.",
+      "Continue current-candidate UI/provider/remote-source/large-library acceptance and release/rollback audit."
+    ],
+    "deferred_by_user": ["Real embedding/vector model acceptance"],
+    "out_of_scope_by_user": ["Windows validation; user reported successful testing"],
+    "verification": {
+      "go": "PASS: targeted internal/server tests via isolated aide:local Docker; 0.076s.",
+      "docs": "PASS: JSON validation, python3 scripts/check_docs.py (188 Markdown files, 540 local links), git diff --check.",
+      "browser": "Pending; Safari native passkey prompt prevents reading the Aide page until authenticated."
+    },
+    "release": "pending push of this checkpoint; no product release/deployment."
   }
 }
