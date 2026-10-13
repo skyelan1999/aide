@@ -3199,5 +3199,26 @@
     },
     "release": "not_run",
     "push": "PASS: commit 6d26623 Improve SSH command panel interactivity pushed to origin/main; unrelated plugin_builtin_test.go and test_context_compaction_ui.cjs changes remain unstaged."
+  },
+  "progress_checkpoint_20261013_followup17": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "复核当前工作树：连续性与知识目标台账显示工作现场恢复、保存冲突、Markdown资源版本、成果舱、授权仪表、渐进索引、路径及时光等多项仍未完成整体验收。",
+      "重跑本地恢复定向回归：会话草稿与附件分支、文件草稿分支、工作区隔离、同文件多标签页、光标和滚动、关闭会话/文件恢复管理均通过。",
+      "星图状态回归通过：标签页相机/滚轮目标/动效相位/面板滚动恢复、工作区场景恢复、首次失败后的重试，以及持久缓存的工作区/策略/视图隔离。",
+      "恢复管理回归通过：归档预览及确认、加锁防护、导入/导出、并发变更、配额回滚、冲突处理均通过。"
+    ],
+    "remaining": [
+      "上述本地脚本使用 VM UI 和内存 IndexedDB fixture，不替代 Safari 实际重启、跨真实标签页关闭/重开、磁盘配额或长时间恢复验收。",
+      "真实用户 SSH 主机的文件草稿/光标/滚动恢复和自动保存冲突仍待 Safari 端到端联调；现有隔离 SSH 集成不证明用户主机接受。",
+      "继续成果舱运行中流式回执、完整压缩生命周期、真实授权管理交互、渐进大库性能、向量检索（用户暂缓）及逐项发布门禁审计。"
+    ],
+    "verification": {
+      "focused": "PASS: node scripts/continuity-isolation.test.cjs; node scripts/file-recovery-scroll.test.cjs; node scripts/workspace-scene-transition.test.cjs; node scripts/starmap-workspace-scene.test.cjs; node scripts/starmap-cache.test.cjs; node scripts/recovery-transfer.test.cjs.",
+      "browser": "NOT_RUN this checkpoint; prior scoped Safari evidence remains as recorded in safari_acceptance_20261013_markdown_toolbar_and_draft_recovery_18222 and safari_acceptance_20261012_file_recovery_and_approval_sync.",
+      "remote": "NOT_RUN against the user's live SSH host this checkpoint.",
+      "release": "No product source change or release in this checkpoint."
+    }
   }
 }
