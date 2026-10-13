@@ -1,6 +1,29 @@
 /* Revision inspection is separate from explicit, hash-guarded restoration. */
 (() => {
  'use strict';
+ function lineDiff(before,after) {
+  const a=before.split('\n'),b=after.split('\n'),n=a.length,m=b.length;
+  // Keep the matrix bounded for very large Markdown files. Preserve matching
+  // edges and mark only the unmatched middle as a replacement in that case.
+  let prefix=0;while(prefix<n&&prefix<m&&a[prefix]===b[prefix])prefix++;
+  let suffix=0;while(suffix<n-prefix&&suffix<m-prefix&&a[n-1-suffix]===b[m-1-suffix])suffix++;
+  const middleA=n-prefix-suffix,middleB=m-prefix-suffix;
+  let ops=Array.from({length:prefix},(_,i)=>({kind:'equal',before:a[i],after:b[i]}));
+  if(middleA*middleB<=250000) {
+   const width=middleB+1,dp=Array.from({length:middleA+1},()=>new Uint32Array(width));
+   for(let i=middleA-1;i>=0;i--)for(let j=middleB-1;j>=0;j--)dp[i][j]=a[prefix+i]===b[prefix+j]?dp[i+1][j+1]+1:Math.max(dp[i+1][j],dp[i][j+1]);
+   let i=0,j=0,mid=[];while(i<middleA||j<middleB){if(i<middleA&&j<middleB&&a[prefix+i]===b[prefix+j]){mid.push({kind:'equal',before:a[prefix+i++],after:b[prefix+j++]});}else if(j<middleB&&(i===middleA||dp[i][j+1]>=dp[i+1][j]))mid.push({kind:'added',before:'',after:b[prefix+j++]});else mid.push({kind:'removed',before:a[prefix+i++],after:''});}
+   // Align replacements as a single row even when the LCS tie-break puts an
+   // insertion before a deletion. This keeps both panes at the same line.
+   for(let k=0;k<mid.length;){if(mid[k].kind==='equal'){ops.push(mid[k++]);continue;}let end=k;while(end<mid.length&&mid[end].kind!=='equal')end++;const removed=mid.slice(k,end).filter(x=>x.kind==='removed'),added=mid.slice(k,end).filter(x=>x.kind==='added'),paired=Math.min(removed.length,added.length);for(let p=0;p<paired;p++)ops.push({kind:'changed',before:removed[p].before,after:added[p].after});for(let p=paired;p<removed.length;p++)ops.push(removed[p]);for(let p=paired;p<added.length;p++)ops.push(added[p]);k=end;}
+  } else {
+   for(let i=0;i<middleA||i<middleB;i++)ops.push({kind:i<middleA&&i<middleB?'changed':i<middleA?'removed':'added',before:a[prefix+i]||'',after:b[prefix+i]||''});
+  }
+  for(let i=suffix;i>0;i--)ops.push({kind:'equal',before:a[n-i],after:b[m-i]});
+  return ops;
+ }
+ function renderDiff(pre,ops,side){for(const op of ops){const line=document.createElement('span'),text=side==='before'?op.before:op.after;line.className='md-history-line'+(op.kind==='equal'?'':' md-history-line-'+(op.kind==='changed'?'changed':side==='before'?'removed':'added'));line.textContent=text||'\u00a0';pre.append(line);}}
+ function syncComparison(left,right){let syncing=false;const sync=(source,target)=>{if(syncing)return;syncing=true;const from=source.scrollHeight-source.clientHeight,to=target.scrollHeight-target.clientHeight;target.scrollTop=from>0?source.scrollTop/from*Math.max(0,to):0;requestAnimationFrame(()=>{syncing=false;});};left.addEventListener('scroll',()=>sync(left,right),{passive:true});right.addEventListener('scroll',()=>sync(right,left),{passive:true});}
  function bind({button,editor,getContext,api,t,error,isDirty=()=>false,onRestored=()=>{}}) {
   let epoch=0,activeDialog=null;
   const blocked=()=>{const state=window.LockCluster?.snapshot();return !!state&&(!state.settled||state.locked);};
@@ -21,8 +44,9 @@
     for(const v of [...data.versions].reverse()) {const item=document.createElement('button');item.type='button';item.className='quiet';item.textContent=v.id+' · '+new Date(v.created).toLocaleString();item.onclick=async()=>{
      const pick=++selection;try{const q=query(spec);q.set('revision',v.id||v.ID);const revision=await api('/file/history?'+q);if(blocked()||pick!==selection||!dialog.open)return;
       detail.replaceChildren();const summary=document.createElement('p');summary.textContent=revision.content===currentText?t('正文相同；请查看引用资源指纹。'):t('正文与当前编辑内容不同。');detail.append(summary);
-      const grids=document.createElement('div');grids.className='md-history-comparison';
-      for(const [label,text] of [[t('历史正文'),revision.content],[t('当前正文'),currentText]]) {const column=document.createElement('div'),heading=document.createElement('strong'),pre=document.createElement('pre');heading.textContent=label;pre.textContent=text;column.append(heading,pre);grids.append(column);}detail.append(grids);
+      const grids=document.createElement('div');grids.className='md-history-comparison';const diff=lineDiff(revision.content,currentText),panes=[];
+      if(revision.content!==currentText){const counts=diff.reduce((n,row)=>{if(row.kind==='removed')n.removed++;if(row.kind==='added')n.added++;if(row.kind==='changed'){n.removed++;n.added++;}return n;},{removed:0,added:0});summary.textContent+=' · −'+counts.removed+' / +'+counts.added+' · '+t('红色为删除，绿色为新增，琥珀色为修改；两侧自动同步滚动。');}
+      for(const [label,side] of [[t('历史正文'),'before'],[t('当前正文'),'after']]) {const column=document.createElement('div'),heading=document.createElement('strong'),pre=document.createElement('pre');heading.textContent=label;pre.setAttribute('aria-label',label+' · '+t('自动同步滚动'));renderDiff(pre,diff,side);column.append(heading,pre);grids.append(column);panes.push(pre);}detail.append(grids);syncComparison(...panes);
       const assets=document.createElement('div');assets.className='md-history-assets';for(const asset of revision.revision.assets||[]){const row=document.createElement('p');row.textContent=asset.path+' · '+asset.status+' · '+(asset.digest?.slice(0,16)||'—');if(asset.status==='stored'){const download=document.createElement('button');download.type='button';download.className='quiet quiet-sm';download.textContent=t('下载资源快照');download.onclick=async()=>{download.disabled=true;try{const q=query(spec);q.set('revision',v.id);q.set('asset',asset.path);const snapshot=await api('/file/history?'+q);if(blocked()||!dialog.open)return;const raw=Uint8Array.from(atob(snapshot.base64),c=>c.charCodeAt(0));const url=URL.createObjectURL(new Blob([raw],{type:'application/octet-stream'}));const a=document.createElement('a');a.href=url;a.download=asset.path.split('/').pop();a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(e){error(e);}finally{download.disabled=false;}};row.append(download);}assets.append(row);}detail.append(assets);
       if(data.enabled && !spec.readOnly && spec.editable!==false && (spec.source || spec.root!=='context')) {
        const restoreArea=document.createElement('section');restoreArea.className='md-restore-area';

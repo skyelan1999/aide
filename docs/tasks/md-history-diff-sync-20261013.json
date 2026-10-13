@@ -1,0 +1,75 @@
+{
+  "id": "md-history-diff-sync-20261013",
+  "request": "md的历史要高亮差异和同步滚动，自动同步滚动",
+  "baseline": "003713e4b912d87f3e85e0046f2c34a9784a9b62",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/markdown-history.js",
+  "acceptance": [
+    "Markdown 历史版本对比逐行标记删除、新增和修改，并显示变更计数。",
+    "历史正文与当前正文自动同步滚动。",
+    "中文和英文界面说明与缓存版本同步更新。",
+    "系统 Safari 打开历史对比；若当前真实历史没有差异，明确记录视觉差异验证限制。"
+  ],
+  "scope": [
+    "internal/server/web/markdown-history.js",
+    "internal/server/web/macos.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/index.html",
+    "scripts/markdown-template-icons.test.cjs",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "确认目标为历史正文逐行差异高亮与双栏自动同步滚动。",
+      "evidence": [
+        "用户请求：md的历史要高亮差异和同步滚动，自动同步滚动。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "采用保留公共前后缀的有界 LCS；替换行并排对齐；超大差异范围降级为逐行替换标记；滚动按可滚动区域比例双向联动。",
+      "evidence": [
+        "历史面板保留两个并排正文窗格，差异行用红/绿/琥珀标记。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成差异计算、行标记、变更计数、自动滚动、无障碍说明、缓存更新与中英文用户指南。",
+      "evidence": [
+        "node --check internal/server/web/markdown-history.js 通过。",
+        "scripts/markdown-template-icons.test.cjs 通过。"
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "quick 验证通过。Safari 真实打开历史对比并确认双栏及自动同步滚动标识；当前样本文档仅有一个正文相同的历史版本，未能在真实浏览器目视验证有差异时的色块及滚动联动。",
+      "evidence": [
+        "python3 scripts/agent-route.py verify quick：pass，fingerprint 6e1f3f8596feab36d21697371bd8ca445403b0478792e24b2b55b6021fd408bb。",
+        "Safari https://localhost:9999 历史版本面板：旧版/当前正文窗格均显示“自动同步滚动”；样本版本提示正文相同。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已更新中英文用户指南，说明差异颜色、计数、滚动同步和恢复能力。",
+      "evidence": [
+        "python3 scripts/check_docs.py 在 quick 验证中通过。"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未创建或修改验收样例，未触碰当前文档草稿。",
+      "evidence": [
+        "Safari 中保持原用户文档与草稿状态不变。"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "等待提交并推送本阶段实现。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户此前“阶段性测完的内容就 push 上去”的持续指示；本阶段 quick 验证通过后可提交推送。",
+  "rollback": "单阶段 Git revert；资源缓存号可回退随源文件恢复。",
+  "handoff": "Safari 真实历史只有正文相同的一版，差异着色与滚动同步的变化场景需后续使用真实有差异历史进行复验。"
+}
