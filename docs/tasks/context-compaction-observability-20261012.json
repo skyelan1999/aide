@@ -83,7 +83,8 @@
         "2026-10-13 Safari 系统浏览器 localhost:9999，在 ./start.command 重建并启动当前源码后查看长会话 #46：侧栏显示活动上下文估算 14.0K/64K、历史摘要 298 tokens、会话累计输入 329,423/输出 61,416。该读数证明选中会话当前呈现压缩后的估算与摘要分项；本次只观察到静态完成态，没有捕获折叠/生成期间的实时动效，因此动画验收仍为 partial。",
         "2026-10-13 native Safari localhost:9999 dedicated fictional session #46: live AX observation captured an actual automatic compaction indicator at “分段整理 1/1 · 7 条早期消息 · 当前约 12.4K”; elapsed advanced from 2:38 to 9:02 while batch/phase remained unchanged. The same synthetic-only assistant request was marked long-unresponsive. Clicking its Stop control returned “已请求停止”, but the UI still showed generation in progress on the next observation; terminal cancellation and automatic-compaction completion were not verified. This is NOT a pass for the start→batch→fold→complete flow; preserve the original session history and treat the live request outcome as unresolved. No real user data or files were used.",
         "隔离 Go 容器 `go test -race -count=1 -timeout=35s ./internal/server -run 'TestProviderCompleteHonorsRequestCancellation|TestAutoCompactionCancellationPublishesTerminalAndPreservesHistory' -v`：PASS；provider 取消传播、started/progress→cancelled、原消息快照不变、锁释放。测试 HTTP handler 先完整读取 request body，避免把上传时序误判为取消缺陷。",
-        "本轮真实 Safari 长会话完整自动压缩过程尚未捕获；已完成的定向取消回归不替代产品界面完整流程验收。"
+        "本轮真实 Safari 长会话完整自动压缩过程尚未捕获；已完成的定向取消回归不替代产品界面完整流程验收。",
+        "2026-10-13：`./start.command` 重建候选源码哈希 c798272da3964c28e725986bb49073deb53da0772493107bd2b2953e0d30f72b；构建阶段 `go vet ./...`/Go build 完成，9999 容器 ready。系统 Safari `https://localhost:9999/` 在重建后成功加载已认证工作台；本次仅确认服务和页面加载，没有触发真实压缩，完整过程验收仍 partial。"
       ],
       "full_profile": "FAIL",
       "full_fingerprint": "201f7edc6882dda7951db579c81ac9906beac935f506610950233c75d77e5504"
