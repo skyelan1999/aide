@@ -1887,7 +1887,9 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	// 旧式单模型请求兼容：model 字段 → 模型列表 + 当前模型（FR-67 / D1）
 	if len(in.Models) == 0 && in.Model != "" {
-		in.Models = []ModelRef{{ID: in.Model, Name: in.Model, ContextWindow: defaultContextWindow}}
+		// This model is served by the implicit single-provider configuration above.
+		// The provider defaulting loop runs before this legacy model is synthesized.
+		in.Models = []ModelRef{{ID: in.Model, Name: in.Model, ProviderID: "default", ContextWindow: defaultContextWindow}}
 		if in.ActiveModel == "" {
 			in.ActiveModel = in.Model
 		}

@@ -102,6 +102,32 @@ func TestSettingsMigrationFromSingleModel(t *testing.T) {
 	}
 }
 
+func TestLegacySingleModelSettingsWriteUsesDefaultProvider(t *testing.T) {
+	a := testApp(t)
+	w := request(a, "PUT", "/api/settings", map[string]any{
+		"baseURL": "https://api.example.com/v1",
+		"model":   "legacy-chat",
+	})
+	requireStatus(t, w, 200)
+
+	w = request(a, "GET", "/api/config", nil)
+	requireStatus(t, w, 200)
+	var cfg struct {
+		ActiveModel    string          `json:"activeModel"`
+		Models         []ModelRef      `json:"models"`
+		ModelProviders []ModelProvider `json:"modelProviders"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &cfg); err != nil {
+		t.Fatal(err)
+	}
+	if cfg.ActiveModel != "legacy-chat" || len(cfg.Models) != 1 || cfg.Models[0].ProviderID != "default" {
+		t.Fatalf("legacy model was not attached to the default provider: %+v", cfg)
+	}
+	if len(cfg.ModelProviders) != 1 || cfg.ModelProviders[0].ID != "default" || cfg.ModelProviders[0].BaseURL != "https://api.example.com/v1" {
+		t.Fatalf("legacy provider configuration was not preserved: %+v", cfg.ModelProviders)
+	}
+}
+
 func TestModelListProxy(t *testing.T) {
 	a := testApp(t)
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
