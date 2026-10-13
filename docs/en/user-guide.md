@@ -149,11 +149,15 @@ stateDiagram-v2
 
 ## 3. Configure models and strategies
 
-Open **Model settings**. Enter the provider's Chat Completions-compatible Base URL, add model IDs, choose the active model, and save. Cloud providers normally require a key; compatible local services may not. A blank key preserves the existing secret; explicitly select the clear option to remove it.
+Open **Model settings**. Providers appear as compact rows; expand one to edit its name, API endpoint, credentials, and models. Context and capability fields stay collapsed until needed. Add a DeepSeek, OpenAI, Qwen, Moonshot/Kimi, Zhipu, SiliconFlow, Ollama, or custom provider. Requests currently use the OpenAI Chat Completions-compatible protocol; native Anthropic and Gemini protocols are outside this editor's supported scope.
+
+Each provider can keep multiple named API keys and select one active key. Keys are encrypted in the local SecretVault. Settings and read APIs expose only whether a key is present. When calling that provider, the key is sent only as an authentication header and is not included in chat content. Fetch models from the expanded provider's endpoint or add IDs manually. Up to 20 models can coexist; model IDs must be globally unique and each model belongs to one provider. Selecting a model makes new tasks use its provider endpoint and active key. The separate 小秘 model settings are unaffected.
+
+Older single-endpoint settings migrate to the default provider and keep using the existing encrypted vault entry. Cloud providers normally require a key; compatible local services may not.
 
 **API key encryption (since 0.1.11.0-RC2)**: the model API key is no longer written to `settings.json` in plaintext — it is sealed with AES-256-GCM into the unified secret vault at `/data/secrets/vault.enc`. The UI only shows whether a key is configured (`hasApiKey`) and **never echoes it**. On a machine with an account password, the vault stays locked after a restart; before the first model call you are prompted to unlock (account password, or Touch ID on supported Macs — see Touch ID below). Without a password, a machine-bound random master key at `/data/secrets/master-key.bin` (0600) unlocks the vault automatically. On upgrade, any legacy plaintext key in `settings.json` migrates into the vault on first unlock and the old file is securely shredded. See [Security: Unified Secret Vault](security/secret-vault.md).
 
-**Fetch models** queries the provider's `/models` endpoint. A configured status confirms fields, not successful connectivity. Model IDs and context windows must match the provider.
+**Fetch models** queries the expanded provider's `/models` endpoint. A configured status confirms fields, not successful connectivity. Model IDs and context windows must match the provider.
 
 Use **Strategy** near the task input to select automatic routing or a manual parameter profile, model, and reasoning effort. System profiles are read-only; custom names are user data and are not translated. Routing rules live in `routing-policy.json`.
 

@@ -552,19 +552,53 @@ func (a *App) listModels(w http.ResponseWriter, r *http.Request) {
 	a.mu.Unlock()
 	if r.Method == http.MethodPost {
 		var in struct {
-			BaseURL  string `json:"baseURL"`
-			APIKey   string `json:"apiKey"`
-			ClearKey bool   `json:"clearKey"`
+			BaseURL    string `json:"baseURL"`
+			APIKey     string `json:"apiKey"`
+			ClearKey   bool   `json:"clearKey"`
+			ProviderID string `json:"providerId"`
 		}
 		if err := decode(w, r, &in); err != nil {
 			fail(w, 400, err)
 			return
 		}
 		requested := strings.TrimRight(strings.TrimSpace(in.BaseURL), "/")
-		if requested != strings.TrimRight(baseURL, "/") || in.ClearKey {
+		if in.ProviderID != "" {
+			a.mu.Lock()
+			providerFound := false
+			key = "" // Never reuse another provider's credential for an unsaved provider ID.
+			var keyErr error
+			for _, provider := range a.settings.ModelProviders {
+				if provider.ID != in.ProviderID {
+					continue
+				}
+				providerFound = true
+				if requested == "" {
+					requested = provider.BaseURL
+				}
+				if provider.ActiveKeyID != "" {
+					key, keyErr = a.vaultKeyByIDLocked(modelProviderVaultID(provider.ID, provider.ActiveKeyID))
+				}
+				break
+			}
+			a.mu.Unlock()
+			if !providerFound && requested == "" {
+				fail(w, 400, errors.New("模型提供商不存在或 API 地址为空"))
+				return
+			}
+			if keyErr != nil {
+				fail(w, 423, keyErr)
+				return
+			}
+			baseURL = requested
+		} else {
+			if requested != strings.TrimRight(baseURL, "/") || in.ClearKey {
+				key = ""
+			}
+			baseURL = requested
+		}
+		if in.ClearKey {
 			key = ""
 		}
-		baseURL = requested
 		if !in.ClearKey && strings.TrimSpace(in.APIKey) != "" {
 			key = strings.TrimSpace(in.APIKey)
 		}

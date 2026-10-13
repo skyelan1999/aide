@@ -170,8 +170,8 @@ aide = **AI + IDE**，面向**可信单用户**的本地 AI 开发工作台。�
 
 | 编号 | 功能点 | 业务规则 | 验收标准 | 优先级 | 状态 |
 | --- | --- | --- | --- | --- | --- |
-| MD-01 | 多模型管理 | `Models[]`（id/name/contextWindow），最多 20；id 唯一、name ≤32 字符；窗口 1024–2,097,152 | 增删模型即时生效；超限被拒 | P0 | 已实现 |
-| MD-02 | API 连接配置 | Base URL（默认 `https://api.deepseek.com`）、API Key；**密钥不回传前端**，可一键清除；可接本机 `host.docker.internal:11434` | 保存后无 Key 回显；清空保留已有 | P0 | 已实现 |
+| MD-01 | 多模型管理 | `Models[]`（id/name/contextWindow/providerId），最多 20；id 全局唯一、name ≤32 字符；窗口 1024–2,097,152；可跨多个兼容提供商共存 | 增删模型即时生效；超限或无效提供商绑定被拒 | P0 | 多提供商实现中 |
+| MD-02 | API 连接配置 | 多提供商 Base URL 与 OpenAI Chat Completions 兼容协议；每家可登记多把命名 API Key，密钥只写入本机 SecretVault；支持 DeepSeek、OpenAI、通义、Moonshot、智谱、硅基流动、Ollama 预设和自定义地址 | 配置读取不回显密钥；模型调用仅对选中提供商发送认证头；旧单提供商设置迁移 | P0 | 多提供商实现中 |
 | MD-03 | 自动获取模型 | 调 `{BaseURL}/models` 拉取模型名填充 | 网络可达时列出可用模型 | P2 | 已实现 |
 | MD-04 | 上下文窗口预设 | 32K/64K/128K/200K/256K/1M 一键选 + 自定义输入；缺省 65536 | 选预设后窗口值正确 | P1 | 已实现 |
 | MD-05 | 参数 Profile | `temperature/top_p/max_tokens` 配置为命名 Profile；策略弹层选择 | 选 Profile 后本次任务按其采样参数 | P1 | 已实现 |

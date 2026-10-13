@@ -1,0 +1,101 @@
+{
+  "id": "multi-provider-model-settings-20261013",
+  "request": "模型设置有点不好看。布局做紧凑，参考 DSH 的布局和渲染，支持多个密钥和不同厂家的模型。完成后系统浏览器验收并更新文档。",
+  "baseline": "af4a0a96b3390c7d154d255f6e6a078a8da5535a",
+  "initial_status": "clean worktree at baseline af4a0a96b3390c7d154d255f6e6a078a8da5535a",
+  "acceptance": [
+    "模型设置按 DSH 的分层编辑思路压缩：提供商摘要行紧凑，展开后编辑地址、密钥和模型；模型高级能力按需展开。",
+    "可配置多个 OpenAI Chat Completions 兼容厂商/自定义端点；内置 DeepSeek、OpenAI、通义千问、Moonshot、智谱、硅基流动、Ollama 预设。",
+    "每个提供商可保存多个有名称的密钥并选择活动密钥；密钥只存在本机加密 vault，配置/API/日志不返回或持久化明文。",
+    "不同厂商的模型可共存并切换；自动获取模型列表对当前编辑中的提供商端点和密钥生效。",
+    "旧版单 Base URL、单 API Key 和模型配置无损迁移/兼容；小秘独立模型配置不受影响。",
+    "系统 Safari 实际验收桌面与窄屏布局、增删提供商/密钥、模型切换和保存；记录未能实际运行的验收项。",
+    "中英文界面和模型配置文档同步更新。"
+  ],
+  "scope": [
+    "internal/server/server.go",
+    "internal/server/provider.go",
+    "internal/server/apikey_vault.go",
+    "internal/server/web/index.html",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
+    "internal/server/*相关测试",
+    "docs/PRD.md",
+    "docs/prd/2026-09-21-multi-model-context.md",
+    "docs/architecture/2026-09-21-multi-model-context.md",
+    "docs/en/user-guide.md",
+    "docs/user-guide.md",
+    "docs/tasks/multi-provider-model-settings-20261013.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确要求紧凑模型配置、参考 DSH、支持多个 API 密钥和不同厂商模型。以厂商/端点卡片管理模型与多个本地凭证，兼容旧单端点配置。",
+      "evidence": [
+        "需求原文：模型设置紧凑、参考 DSH、多密钥、多厂商。",
+        "仓库路由识别到后端、前端与安全边界；项目流程不要求另开代理。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "读取 DSH DeepSeekModelsEditor：紧凑模型行、模型高级字段折叠、按需展开；Aide 延伸为紧凑提供商列表，凭证只传输写入动作并放入现有 SecretVault。厂商适配面先明确为 OpenAI Chat Completions 兼容端点和常用预设，避免宣称原生 Anthropic/Gemini 协议已支持。",
+      "evidence": [
+        "../Harness/deepseek-ai--deepseek-harness/packages/client/ui-settings-models/src/client/DeepSeekModelsEditor.tsx",
+        "../Harness/deepseek-ai--deepseek-harness/packages/client/ui-settings-models/src/client/ModelsSection.module.css",
+        "Aide internal/server/provider.go 当前发送 /chat/completions 并使用 Bearer 认证。",
+        "当前全局 model-api-key 存入 SecretVault；GET config 只返回密钥存在状态。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已实现多提供商、多密钥加密保存、按提供商的模型发现与当前模型切换；保留旧单端点客户端兼容，并修复其 Base URL 变更路径。界面采用默认收起的提供商摘要行、紧凑模型行和折叠高级字段。",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/provider.go",
+        "internal/server/apikey_vault.go",
+        "internal/server/web/app.js",
+        "internal/server/web/style.css"
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "Safari 桌面端实际检查默认收起、展开编辑、OpenAI 预设新增草稿和保存按钮对比度；Go 定向测试、Docker build/vet、JS 语法和 i18n 检查通过。未向真实提供商发送请求，也未在用户现有配置中保存多厂商密钥；窄屏设备未做系统 Safari 实测。",
+      "evidence": [
+        "Safari https://localhost:9999/ 实际页面",
+        "go test -mod=vendor ./internal/server -run \"TestMultiModelSettings|TestSettingsMigrationFromSingleModel|TestModelListProxy|TestModelDiscoveryDraft|TestMultipleModelProvidersUseTheirOwnVaultKeys\" -count=1",
+        "./start.command build: go vet + go build",
+        "node --check internal/server/web/app.js",
+        "node --check internal/server/web/locales/en.js",
+        "node scripts/test_i18n.cjs",
+        "git diff --check"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "同步中文与英文用户指南、PRD、架构文档，注明协议边界、凭证落地方式、旧配置迁移和多提供商设置。",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/PRD.md",
+        "docs/prd/2026-09-21-multi-model-context.md",
+        "docs/architecture/2026-09-21-multi-model-context.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "放弃 Safari 中新增 OpenAI 的未保存草稿；未改动现有设置和密钥。",
+      "evidence": [
+        "Safari 设置弹窗已关闭后重新打开，仅显示原有 DeepSeek 配置。"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "功能与文档变更已完成，正在提交并推送到 origin/main。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert the task-scoped provider configuration, key vault and model settings UI commits; preserve existing legacy model:api-key vault entry and settings before rollback.",
+  "handoff": "实现和文档完成。OpenAI Chat Completions 兼容服务、多密钥和多提供商逻辑已落地；不包含原生 Anthropic/Gemini 协议。桌面 Safari 布局已检查；真实模型 API、密钥持久化端到端以及窄屏 Safari 实测尚未完成。"
+}

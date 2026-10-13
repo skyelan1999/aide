@@ -136,6 +136,66 @@ func TestModelListProxy(t *testing.T) {
 	}
 }
 
+func TestMultipleModelProvidersUseTheirOwnVaultKeys(t *testing.T) {
+	keyA, keyB := "provider-a-secret", "provider-b-secret"
+	providerA := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/models" {
+			t.Errorf("provider A unexpected path %s", r.URL.Path)
+		}
+		if got := r.Header.Get("Authorization"); got != "Bearer "+keyA {
+			t.Errorf("provider A received authorization %q", got)
+		}
+		jsonOut(w, 200, map[string]any{"data": []any{map[string]any{"id": "model-a"}}})
+	}))
+	defer providerA.Close()
+	providerB := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/models" {
+			t.Errorf("provider B unexpected path %s", r.URL.Path)
+		}
+		if got := r.Header.Get("Authorization"); got != "Bearer "+keyB {
+			t.Errorf("provider B received authorization %q", got)
+		}
+		jsonOut(w, 200, map[string]any{"data": []any{map[string]any{"id": "model-b"}}})
+	}))
+	defer providerB.Close()
+
+	a := testApp(t)
+	w := request(a, "PUT", "/api/settings", map[string]any{
+		"baseURL": providerA.URL,
+		"modelProviders": []any{
+			map[string]any{"id": "default", "name": "Provider A", "baseURL": providerA.URL, "protocol": "openai-compatible", "keys": []any{map[string]any{"id": "legacy", "label": "Primary"}}, "activeKeyId": "legacy"},
+			map[string]any{"id": "provider-b", "name": "Provider B", "baseURL": providerB.URL, "protocol": "openai-compatible", "keys": []any{map[string]any{"id": "primary", "label": "Primary"}}, "activeKeyId": "primary"},
+		},
+		"providerKeyWrites": []any{
+			map[string]any{"providerId": "default", "keyId": "legacy", "apiKey": keyA},
+			map[string]any{"providerId": "provider-b", "keyId": "primary", "apiKey": keyB},
+		},
+		"models":      []any{map[string]any{"id": "model-a", "providerId": "default"}, map[string]any{"id": "model-b", "providerId": "provider-b"}},
+		"activeModel": "model-b",
+	})
+	requireStatus(t, w, 200)
+	w = request(a, "GET", "/api/config", nil)
+	requireStatus(t, w, 200)
+	if strings.Contains(w.Body.String(), keyA) || strings.Contains(w.Body.String(), keyB) {
+		t.Fatal("provider credentials leaked through /api/config")
+	}
+	if !strings.Contains(w.Body.String(), `"providerId":"provider-b"`) || !strings.Contains(w.Body.String(), `"hasKey":true`) {
+		t.Fatalf("provider/model metadata missing from /api/config: %s", w.Body.String())
+	}
+	w = request(a, "GET", "/api/models", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), "model-b") {
+		t.Fatalf("active provider model discovery failed: %s", w.Body.String())
+	}
+	w = request(a, "PUT", "/api/settings", map[string]any{"activeModel": "model-a"})
+	requireStatus(t, w, 200)
+	w = request(a, "GET", "/api/models", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), "model-a") {
+		t.Fatalf("switched provider model discovery failed: %s", w.Body.String())
+	}
+}
+
 func TestTaskRecordsModel(t *testing.T) {
 	a := testApp(t)
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

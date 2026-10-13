@@ -1618,4 +1618,70 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 #settings-form>.primary{position:static;align-self:flex-end;width:max-content;min-width:160px;min-height:42px;margin:4px 0 0 auto;padding:10px 18px;border-radius:10px;background:var(--brand);color:var(--on-brand);font-size:12px;font-weight:650;box-shadow:none}
 #settings-form>.primary:hover{filter:brightness(1.06)}
 @media(max-width:620px){#settings-dialog{width:calc(100vw - 20px);max-height:92vh;border-radius:14px}#settings-form{gap:11px;padding:18px 14px 16px}#settings-form>.dialog-heading{top:-18px;margin:-18px -14px 0;padding:16px 14px 12px}#settings-form>.dialog-heading h2{font-size:18px}#settings-form .models-section{padding:12px}#settings-form .model-row{padding:11px}#settings-form .model-capabilities{grid-template-columns:repeat(2,minmax(0,1fr))}#settings-form .model-capability{flex-wrap:wrap}#settings-form .model-capability select{width:100%;max-width:none}#settings-form .model-capability-meta{display:grid;grid-template-columns:minmax(0,1fr);gap:7px}#settings-form .model-capability-source,#settings-form .model-capability-date{box-sizing:border-box;flex:none;width:100%;min-height:36px!important}#settings-form .model-window-input{width:78px}#settings-form>.primary{width:100%;margin-left:0}}
+/* Compact provider-first editor, following DSH's concise row and on-demand detail pattern. */
+#settings-dialog{width:min(820px,calc(100vw - 32px));max-width:820px}
+#settings-form{gap:10px;padding-top:20px;padding-bottom:18px}
+#settings-form>.dialog-heading{top:-20px;margin-top:-20px;padding-top:18px;padding-bottom:12px}
+#settings-form>.dialog-heading h2{font-size:19px}
+#settings-form>.model-settings-intro{font-size:11px;line-height:1.5}
+#settings-form .model-provider-list{display:flex;flex-direction:column;gap:7px}
+#settings-form .model-provider-card{min-width:0;border:1px solid var(--line-soft);border-radius:11px;background:var(--surface-alt);overflow:hidden}
+#settings-form .model-provider-summary{display:flex;align-items:center;gap:8px;min-height:48px;padding:6px 10px}
+#settings-form .model-provider-expand,#settings-form .model-key-select,#settings-form .model-icon-action{display:grid;place-items:center;flex:none;width:27px;height:27px;padding:0;border:1px solid var(--line-faint);border-radius:8px;background:var(--panel);color:var(--text-dim);font-size:15px;line-height:1;cursor:pointer}
+#settings-form .model-provider-name{flex:1;font-weight:650!important}
+#settings-form .model-provider-meta{min-width:0;color:var(--text-dim);font-size:10px;white-space:nowrap}
+#settings-form .model-provider-body{display:flex;flex-direction:column;gap:9px;padding:0 11px 11px;border-top:1px solid var(--line-faint)}
+#settings-form .model-provider-field{display:grid;grid-template-columns:148px minmax(0,1fr);align-items:center;gap:8px;min-width:0;margin-top:9px;color:var(--text-dim);font-size:10px}
+#settings-form .model-provider-field input,#settings-form .model-provider-summary input,#settings-form .model-key-row input,#settings-form .model-row-compact input{box-sizing:border-box;width:100%;min-height:32px!important;padding:6px 9px!important;border-radius:7px!important;font-size:11px!important}
+#settings-form .model-subsection-head{display:flex;align-items:center;gap:8px;min-height:28px;color:var(--text);font-size:11px}
+#settings-form .model-subsection-head>span:nth-child(2){margin-left:auto}
+#settings-form .model-compact-button{display:grid;place-items:center;flex:none;width:29px;height:28px;padding:0;border:1px solid var(--line-soft);border-radius:7px;background:var(--panel);color:var(--text-dim);font-size:15px}
+#settings-form .model-key-section{display:flex;flex-direction:column;gap:5px;padding:7px 9px;border:1px solid var(--line-faint);border-radius:9px;background:var(--panel)}
+#settings-form .model-key-row{display:grid;grid-template-columns:27px minmax(78px,.55fr) minmax(120px,1.2fr) auto 27px;align-items:center;gap:6px}
+#settings-form .model-key-select.active{border-color:var(--brand);background:var(--selected);color:var(--brand-text)}
+#settings-form .model-key-name{max-width:170px}
+#settings-form .model-key-status{color:var(--muted);font-size:9px;white-space:nowrap}
+#settings-form .model-key-status.saved{color:var(--brand-text)}
+#settings-form .model-icon-action.danger{color:var(--danger)}
+#settings-form .model-icon-action:disabled{opacity:.35;cursor:not-allowed}
+#settings-form .model-empty-note{margin:2px 0;color:var(--text-dim);font-size:10px}
+#settings-form .model-models-heading{margin-top:1px}
+#settings-form .model-add-row{display:flex;align-items:center;gap:6px;margin:0}
+#settings-form .model-add-row input{flex:1}
+#settings-form .model-row-compact{display:grid;grid-template-columns:27px minmax(110px,1fr) minmax(110px,.75fr) minmax(110px,auto) 27px;align-items:center;gap:6px;padding:6px;border:1px solid var(--line-faint);border-radius:8px;background:var(--panel)}
+#settings-form .model-row-compact.active{border-color:color-mix(in srgb,var(--brand) 55%,var(--line-soft));background:color-mix(in srgb,var(--selected) 38%,var(--panel))}
+#settings-form .model-advanced{min-width:0}
+#settings-form .model-advanced summary{cursor:pointer;color:var(--text-dim);font-size:10px;white-space:nowrap}
+#settings-form .model-advanced[open]{grid-column:2/5;grid-row:2;display:grid;grid-template-columns:170px minmax(0,1fr);gap:7px;padding:5px 2px}
+#settings-form .model-advanced .model-provider-field{display:flex;flex-direction:column;align-items:stretch;gap:4px;margin:0}
+#settings-form .model-context-input{max-width:150px}
+#settings-form .model-capabilities{grid-column:1/-1;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:0}
+#settings-form .model-capability{min-height:30px;padding:4px 6px;font-size:9px}
+#settings-form .model-capability select{width:78px;min-height:27px;padding:3px 4px;font-size:9px}
+#settings-form .model-provider-add{display:flex;justify-content:flex-end;gap:7px}
+#settings-form .model-provider-add select{min-width:230px;max-width:65%;min-height:34px;padding:6px 9px;border:1px solid var(--line-soft);border-radius:8px;background:var(--bg-sub);color:var(--text);font:inherit;font-size:11px}
+#settings-form .model-provider-add .quiet{padding:6px 10px;border:1px solid var(--line-soft);border-radius:8px;background:var(--panel);color:var(--text-dim);font-size:11px}
+#settings-form .model-protocol-note{font-size:10px;line-height:1.5}
+#settings-form>.primary{min-height:38px;padding:8px 16px}
+#settings-form>.primary{position:sticky;bottom:8px;z-index:4;align-self:flex-end;width:auto;min-width:148px;margin:6px 0 0;padding:10px 18px;border:1px solid color-mix(in srgb,var(--brand) 35%,transparent);border-radius:10px;background:var(--brand-hi);color:var(--on-brand);text-align:center;box-shadow:0 8px 22px color-mix(in srgb,var(--shadow-1) 70%,transparent)}
+@media(max-width:620px){
+ #settings-dialog{width:calc(100vw - 16px);max-height:94vh}
+ #settings-form{gap:8px;padding:15px 10px 12px}
+ #settings-form>.dialog-heading{top:-15px;margin:-15px -10px 0;padding:14px 10px 10px}
+ #settings-form .model-provider-summary{min-height:43px;padding:5px 7px;gap:5px}
+ #settings-form .model-provider-meta{max-width:100px;overflow:hidden;text-overflow:ellipsis}
+ #settings-form .model-provider-body{padding:0 7px 8px}
+ #settings-form .model-provider-field{grid-template-columns:1fr;gap:4px}
+ #settings-form .model-key-row{grid-template-columns:25px minmax(70px,.6fr) minmax(85px,1fr) 25px;gap:4px}
+ #settings-form .model-key-status{display:none}
+ #settings-form .model-row-compact{grid-template-columns:25px minmax(90px,1fr) minmax(80px,.8fr) 25px;gap:4px}
+ #settings-form .model-advanced{grid-column:2/4;grid-row:2;padding:3px 2px}
+ #settings-form .model-advanced[open]{grid-template-columns:1fr}
+ #settings-form .model-capabilities{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #settings-form .model-capability{flex-wrap:nowrap}
+ #settings-form .model-capability select{width:68px}
+ #settings-form .model-provider-add select{min-width:0;max-width:none;flex:1}
+ #settings-form .model-provider-add .quiet{white-space:nowrap}
+ #settings-form>.primary{width:100%;margin:6px 0 0;padding:10px;border-radius:10px}
+}
 @media(prefers-reduced-motion:reduce){#settings-form input:not([type=checkbox]):not([type=radio]){transition:none}}

@@ -42,6 +42,7 @@ var assets embed.FS
 type ModelRef struct {
 	ID            string `json:"id"`
 	Name          string `json:"name,omitempty"`
+	ProviderID    string `json:"providerId,omitempty"`
 	ContextWindow int    `json:"contextWindow,omitempty"`
 	Vision        bool   `json:"vision,omitempty"` // #63 扩展：是否支持图片多模态输入
 	// Capabilities records provider/model features as supported, unsupported, or unknown.
@@ -50,6 +51,28 @@ type ModelRef struct {
 	CapabilitiesSource  string            `json:"capabilitiesSource,omitempty"`
 	CapabilitiesChecked string            `json:"capabilitiesChecked,omitempty"`
 }
+
+// ModelProvider stores non-secret connection metadata. API keys live only in SecretVault.
+type ModelProvider struct {
+	ID          string             `json:"id"`
+	Name        string             `json:"name"`
+	BaseURL     string             `json:"baseURL"`
+	Protocol    string             `json:"protocol,omitempty"`
+	Keys        []ModelProviderKey `json:"keys,omitempty"`
+	ActiveKeyID string             `json:"activeKeyId,omitempty"`
+}
+
+type ModelProviderKey struct {
+	ID    string `json:"id"`
+	Label string `json:"label"`
+}
+
+type providerKeyWrite struct {
+	ProviderID string `json:"providerId"`
+	KeyID      string `json:"keyId"`
+	APIKey     string `json:"apiKey"`
+}
+
 type Settings struct {
 	BaseURL                string                 `json:"baseURL"`
 	XiaomiModelSource      string                 `json:"xiaomiModelSource,omitempty"` // inherit | custom
@@ -58,6 +81,7 @@ type Settings struct {
 	Model                  string                 `json:"model"`
 	APIKey                 string                 `json:"apiKey,omitempty"`
 	Models                 []ModelRef             `json:"models,omitempty"`
+	ModelProviders         []ModelProvider        `json:"modelProviders,omitempty"`
 	ActiveModel            string                 `json:"activeModel,omitempty"`
 	SandboxMode            string                 `json:"sandboxMode,omitempty"`   // read-only | workspace-write | danger-full-access
 	ToolMaxRounds          int                    `json:"toolMaxRounds,omitempty"` // 工具循环最大轮次，默认 60
@@ -108,6 +132,8 @@ type Settings struct {
 const (
 	defaultContextWindow = 65536
 	maxModels            = 20
+	maxModelProviders    = 12
+	maxProviderKeys      = 12
 )
 
 // normalizeModels 校验并补全模型列表（LIM-25）；返回错误时列表不被采纳。
@@ -126,6 +152,7 @@ func normalizeModels(models []ModelRef) ([]ModelRef, error) {
 			return nil, fmt.Errorf("模型 id %s 重复", m.ID)
 		}
 		seen[m.ID] = true
+		m.ProviderID = strings.TrimSpace(m.ProviderID)
 		m.Name = strings.TrimSpace(m.Name)
 		if m.Name == "" {
 			m.Name = m.ID
@@ -170,6 +197,59 @@ func normalizeModels(models []ModelRef) ([]ModelRef, error) {
 			return nil, fmt.Errorf("模型 %s 的能力核验时间无效", m.ID)
 		}
 		out = append(out, m)
+	}
+	return out, nil
+}
+
+func normalizeModelProviders(providers []ModelProvider) ([]ModelProvider, error) {
+	if len(providers) == 0 || len(providers) > maxModelProviders {
+		return nil, fmt.Errorf("提供商数量须在 1–%d 个之间", maxModelProviders)
+	}
+	seenProviders := map[string]bool{}
+	out := make([]ModelProvider, 0, len(providers))
+	for _, p := range providers {
+		p.ID = strings.TrimSpace(p.ID)
+		if !regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{0,47}$`).MatchString(p.ID) || seenProviders[p.ID] {
+			return nil, errors.New("提供商标识无效或重复")
+		}
+		seenProviders[p.ID] = true
+		p.Name = strings.TrimSpace(p.Name)
+		if p.Name == "" || len([]rune(p.Name)) > 48 {
+			return nil, errors.New("提供商名称不能为空且最长 48 个字符")
+		}
+		p.BaseURL = strings.TrimRight(strings.TrimSpace(p.BaseURL), "/")
+		u, err := url.Parse(p.BaseURL)
+		if err != nil || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") || u.User != nil || u.RawQuery != "" || u.Fragment != "" {
+			return nil, fmt.Errorf("提供商 %s 的 API 地址无效", p.Name)
+		}
+		if p.Protocol == "" {
+			p.Protocol = "openai-compatible"
+		}
+		if p.Protocol != "openai-compatible" {
+			return nil, fmt.Errorf("提供商 %s 使用了不支持的 API 协议", p.Name)
+		}
+		if len(p.Keys) > maxProviderKeys {
+			return nil, fmt.Errorf("提供商 %s 最多保存 %d 个密钥", p.Name, maxProviderKeys)
+		}
+		seenKeys := map[string]bool{}
+		for i := range p.Keys {
+			p.Keys[i].ID = strings.TrimSpace(p.Keys[i].ID)
+			p.Keys[i].Label = strings.TrimSpace(p.Keys[i].Label)
+			if !regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_-]{0,47}$`).MatchString(p.Keys[i].ID) || seenKeys[p.Keys[i].ID] {
+				return nil, fmt.Errorf("提供商 %s 的密钥标识无效或重复", p.Name)
+			}
+			if p.Keys[i].Label == "" || len([]rune(p.Keys[i].Label)) > 48 {
+				return nil, fmt.Errorf("提供商 %s 的密钥名称不能为空且最长 48 个字符", p.Name)
+			}
+			seenKeys[p.Keys[i].ID] = true
+		}
+		if p.ActiveKeyID != "" && !seenKeys[p.ActiveKeyID] {
+			return nil, fmt.Errorf("提供商 %s 的当前密钥不存在", p.Name)
+		}
+		if p.ActiveKeyID == "" && len(p.Keys) > 0 {
+			p.ActiveKeyID = p.Keys[0].ID
+		}
+		out = append(out, p)
 	}
 	return out, nil
 }
@@ -239,6 +319,15 @@ func normalizeLoadedSettings(s *Settings) error {
 	if s.ActiveModel == "" {
 		s.ActiveModel = s.Model
 	}
+	// Old single-endpoint installations become the built-in default provider.
+	if len(s.ModelProviders) == 0 {
+		s.ModelProviders = []ModelProvider{{ID: "default", Name: "DeepSeek / 自定义", BaseURL: s.BaseURL, Protocol: "openai-compatible", Keys: []ModelProviderKey{{ID: "legacy", Label: "API Key"}}, ActiveKeyID: "legacy"}}
+	}
+	for i := range s.Models {
+		if s.Models[i].ProviderID == "" {
+			s.Models[i].ProviderID = "default"
+		}
+	}
 	if s.VoiceAssistantName == "" {
 		s.VoiceAssistantName = "小秘"
 	}
@@ -259,9 +348,26 @@ func normalizeLoadedSettings(s *Settings) error {
 		}
 		s.Models = normalized
 	}
+	if len(s.ModelProviders) > 0 {
+		providers, err := normalizeModelProviders(s.ModelProviders)
+		if err != nil {
+			return err
+		}
+		s.ModelProviders = providers
+	}
 	if s.ActiveModel == "" && len(s.Models) > 0 {
 		s.ActiveModel = s.Models[0].ID
 		s.Model = s.ActiveModel
+	}
+	for _, model := range s.Models {
+		if model.ID != s.ActiveModel {
+			continue
+		}
+		for _, provider := range s.ModelProviders {
+			if provider.ID == model.ProviderID {
+				s.BaseURL = provider.BaseURL
+			}
+		}
 	}
 	return nil
 }
@@ -1500,7 +1606,7 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	if accessibilityPort == 0 {
 		accessibilityPort = 8097
 	}
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 
 // Virtual avatar preferences live in the data volume so changing the browser
@@ -1556,11 +1662,12 @@ func (a *App) putVirtualAvatarSettings(w http.ResponseWriter, r *http.Request) {
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Settings
-		ClearKey              bool   `json:"clearKey"`
-		VoiceReplyEnabled     *bool  `json:"voiceReplyEnabled,omitempty"`
-		AccessibilityAutoRead *bool  `json:"accessibilityAutoRead,omitempty"`
-		AccessibilityHostPort *int   `json:"accessibilityHostPort,omitempty"`
-		VoiceReplyGender      string `json:"voiceReplyGender,omitempty"`
+		ProviderKeyWrites     []providerKeyWrite `json:"providerKeyWrites,omitempty"`
+		ClearKey              bool               `json:"clearKey"`
+		VoiceReplyEnabled     *bool              `json:"voiceReplyEnabled,omitempty"`
+		AccessibilityAutoRead *bool              `json:"accessibilityAutoRead,omitempty"`
+		AccessibilityHostPort *int               `json:"accessibilityHostPort,omitempty"`
+		VoiceReplyGender      string             `json:"voiceReplyGender,omitempty"`
 		// 账户：外层同名字段覆盖内嵌 Settings（与 VoiceReplyEnabled 同模式），以便区分"未传"与"传空/0"
 		UserName         string  `json:"userName,omitempty"`
 		LockTimeoutSec   *int    `json:"lockTimeoutSec,omitempty"`
@@ -1581,6 +1688,32 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if in.BaseURL == "" {
 		in.BaseURL = a.settings.BaseURL
 	}
+	legacyBaseURLChanged := in.BaseURL != "" && in.BaseURL != a.settings.BaseURL
+	oldProviders := append([]ModelProvider(nil), a.settings.ModelProviders...)
+	if in.ModelProviders == nil {
+		in.ModelProviders = append([]ModelProvider(nil), a.settings.ModelProviders...)
+		// Older clients only send baseURL. Keep that API compatible by applying
+		// an explicit endpoint change to the default provider they implicitly use.
+		if legacyBaseURLChanged {
+			for i := range in.ModelProviders {
+				if in.ModelProviders[i].ID == "default" {
+					in.ModelProviders[i].BaseURL = in.BaseURL
+					break
+				}
+			}
+		}
+	}
+	if len(in.ModelProviders) == 0 {
+		in.ModelProviders = []ModelProvider{{ID: "default", Name: "DeepSeek / 自定义", BaseURL: in.BaseURL, Protocol: "openai-compatible", Keys: []ModelProviderKey{{ID: "legacy", Label: "API Key"}}, ActiveKeyID: "legacy"}}
+	}
+	if len(in.Models) == 0 && len(a.settings.Models) > 0 {
+		in.Models = append([]ModelRef(nil), a.settings.Models...)
+	}
+	for i := range in.Models {
+		if in.Models[i].ProviderID == "" {
+			in.Models[i].ProviderID = "default"
+		}
+	}
 	// 模型 API Key 不再明文落 settings.json：非空→加密入 vault；空+clearKey→删 vault；空未 clear→保持现状。
 	switch {
 	case strings.TrimSpace(in.APIKey) != "":
@@ -1596,6 +1729,12 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if in.Models == nil {
 		in.Models = a.settings.Models
 	}
+	providers, providerErr := normalizeModelProviders(in.ModelProviders)
+	if providerErr != nil {
+		fail(w, 400, providerErr)
+		return
+	}
+	in.ModelProviders = providers
 	if in.DisabledTools == nil {
 		in.DisabledTools = a.settings.DisabledTools
 	}
@@ -1759,6 +1898,16 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	in.Models = models
+	providerIDs := make(map[string]bool, len(providers))
+	for _, provider := range providers {
+		providerIDs[provider.ID] = true
+	}
+	for _, model := range models {
+		if model.ProviderID == "" || !providerIDs[model.ProviderID] {
+			fail(w, 400, fmt.Errorf("模型 %s 所属的提供商不存在", model.ID))
+			return
+		}
+	}
 	if in.ActiveModel == "" && len(in.Models) > 0 {
 		in.ActiveModel = in.Models[0].ID
 	}
@@ -1773,8 +1922,61 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("当前模型不在模型列表中"))
 		return
 	}
+	for _, model := range models {
+		if model.ID != in.ActiveModel {
+			continue
+		}
+		for _, provider := range providers {
+			if provider.ID == model.ProviderID {
+				in.BaseURL = provider.BaseURL
+			}
+		}
+	}
 	in.Model = in.ActiveModel // Model 保留为当前生效模型 id（Provider 与旧逻辑零改动）
 	in.BaseURL = strings.TrimRight(in.BaseURL, "/")
+	// New provider keys travel only in this write-only request field and are encrypted directly into SecretVault.
+	if len(in.ProviderKeyWrites) > 0 {
+		if !a.vaultIsUnlocked() {
+			fail(w, 400, errVaultLocked)
+			return
+		}
+		for _, write := range in.ProviderKeyWrites {
+			write.ProviderID = strings.TrimSpace(write.ProviderID)
+			write.KeyID = strings.TrimSpace(write.KeyID)
+			value := strings.TrimSpace(write.APIKey)
+			if value == "" || len(value) > 8192 {
+				fail(w, 400, errors.New("API 密钥不能为空且不能超过 8192 字符"))
+				return
+			}
+			providerFound := false
+			keyFound := false
+			for _, provider := range providers {
+				if provider.ID != write.ProviderID {
+					continue
+				}
+				providerFound = true
+				for _, key := range provider.Keys {
+					if key.ID == write.KeyID {
+						keyFound = true
+						break
+					}
+				}
+			}
+			if !providerFound || !keyFound {
+				fail(w, 400, errors.New("密钥写入目标不存在"))
+				return
+			}
+			vaultID := modelProviderVaultID(write.ProviderID, write.KeyID)
+			if err := a.vault.Put(vaultID, VaultTypeModelAPIKey, "模型 API Key · "+write.ProviderID+" · "+write.KeyID, []byte(value), ""); err != nil {
+				fail(w, 500, err)
+				return
+			}
+		}
+		if err := a.vault.Save(); err != nil {
+			fail(w, 500, err)
+			return
+		}
+	}
 	// 密码变更：账户密码即小秘历史加密密钥。旧密码已设置时必须验证；新密码同步重加密小秘历史。
 	if in.NewPassword != "" {
 		hasPw := a.settings.UserPasswordHash != ""
@@ -1821,6 +2023,27 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	if err := atomicJSON(SettingsPath(a.dataPath), in.Settings); err != nil {
 		fail(w, 500, err)
 		return
+	}
+	retainedProviderKeys := make(map[string]bool)
+	for _, provider := range in.Settings.ModelProviders {
+		for _, key := range provider.Keys {
+			retainedProviderKeys[modelProviderVaultID(provider.ID, key.ID)] = true
+		}
+	}
+	removedProviderKey := false
+	for _, provider := range oldProviders {
+		for _, key := range provider.Keys {
+			vaultID := modelProviderVaultID(provider.ID, key.ID)
+			if !retainedProviderKeys[vaultID] && a.vault != nil && a.vault.Has(vaultID) {
+				a.vault.Delete(vaultID)
+				removedProviderKey = true
+			}
+		}
+	}
+	if removedProviderKey && a.vault != nil {
+		if err := a.vault.Save(); err != nil {
+			log.Printf("settings saved but removed model credential cleanup failed: %v", err)
+		}
 	}
 	if in.Settings.AccessibilityHostPort > 0 {
 		portFile := filepath.Join(filepath.Dir(SettingsPath(a.dataPath)), "host-port")

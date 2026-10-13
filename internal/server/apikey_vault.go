@@ -34,6 +34,13 @@ const (
 	VaultIDXiaomiModelAPIKey = "model:xiaomi-api-key"
 )
 
+func modelProviderVaultID(providerID, keyID string) string {
+	if providerID == "default" && keyID == "legacy" {
+		return VaultIDModelAPIKey
+	}
+	return "model:provider:" + providerID + ":key:" + keyID
+}
+
 // errVaultLocked 未解锁且确有 key 时，模型调用应返回的明确错误（不静默失败）。
 var errVaultLocked = errors.New("请先解锁以使用模型")
 
@@ -108,7 +115,36 @@ func (a *App) vaultIsUnlocked() bool { return a.vault != nil && a.vault.Unlocked
 
 // hasModelAPIKey 报告是否已配置模型 API Key（vault 中是否存在该条目；不解密）。
 // 调用方持有 a.mu。
-func (a *App) hasModelAPIKey() bool { return a.vault != nil && a.vault.Has(VaultIDModelAPIKey) }
+func (a *App) activeModelProviderLocked() (ModelProvider, bool) {
+	modelID := a.settings.Model
+	if modelID == "" {
+		modelID = a.settings.ActiveModel
+	}
+	providerID := "default"
+	for _, model := range a.settings.Models {
+		if model.ID == modelID && model.ProviderID != "" {
+			providerID = model.ProviderID
+			break
+		}
+	}
+	for _, provider := range a.settings.ModelProviders {
+		if provider.ID == providerID {
+			return provider, true
+		}
+	}
+	return ModelProvider{}, false
+}
+
+func (a *App) hasProviderKeyLocked(provider ModelProvider) bool {
+	return provider.ActiveKeyID != "" && a.vault != nil && a.vault.Has(modelProviderVaultID(provider.ID, provider.ActiveKeyID))
+}
+
+func (a *App) hasModelAPIKey() bool {
+	if provider, ok := a.activeModelProviderLocked(); ok {
+		return a.hasProviderKeyLocked(provider)
+	}
+	return a.vault != nil && a.vault.Has(VaultIDModelAPIKey)
+}
 
 // modelAPIKeyLocked 从 vault 取出解密后的模型 API Key。
 //   - 未配置 key（本地模型）：返回 ("", nil)，按原逻辑不带 Authorization。
@@ -116,17 +152,63 @@ func (a *App) hasModelAPIKey() bool { return a.vault != nil && a.vault.Has(Vault
 //
 // 调用方持有 a.mu。用完不应长期驻留；这里返回字符串（value copy）由调用方随 cfg 传用。
 func (a *App) modelAPIKeyLocked() (string, error) {
-	if !a.hasModelAPIKey() {
+	provider, providerOK := a.activeModelProviderLocked()
+	vaultID := VaultIDModelAPIKey
+	if providerOK {
+		vaultID = modelProviderVaultID(provider.ID, provider.ActiveKeyID)
+	}
+	if a.vault == nil || !a.vault.Has(vaultID) {
 		return "", nil
 	}
 	if !a.vaultIsUnlocked() {
 		return "", errVaultLocked
 	}
-	pt, err := a.vault.Get(VaultIDModelAPIKey)
+	pt, err := a.vault.Get(vaultID)
 	if err != nil {
 		return "", err
 	}
 	return string(pt), nil
+}
+
+func (a *App) vaultKeyByIDLocked(vaultID string) (string, error) {
+	if a.vault == nil || !a.vault.Has(vaultID) {
+		return "", nil
+	}
+	if !a.vaultIsUnlocked() {
+		return "", errVaultLocked
+	}
+	pt, err := a.vault.Get(vaultID)
+	if err != nil {
+		return "", err
+	}
+	return string(pt), nil
+}
+
+type modelProviderOut struct {
+	ID          string                `json:"id"`
+	Name        string                `json:"name"`
+	BaseURL     string                `json:"baseURL"`
+	Protocol    string                `json:"protocol"`
+	ActiveKeyID string                `json:"activeKeyId,omitempty"`
+	Keys        []modelProviderKeyOut `json:"keys"`
+}
+
+type modelProviderKeyOut struct {
+	ID     string `json:"id"`
+	Label  string `json:"label"`
+	HasKey bool   `json:"hasKey"`
+}
+
+func (a *App) modelProvidersOut() []modelProviderOut {
+	out := make([]modelProviderOut, 0, len(a.settings.ModelProviders))
+	for _, provider := range a.settings.ModelProviders {
+		item := modelProviderOut{ID: provider.ID, Name: provider.Name, BaseURL: provider.BaseURL, Protocol: provider.Protocol, ActiveKeyID: provider.ActiveKeyID, Keys: make([]modelProviderKeyOut, 0, len(provider.Keys))}
+		for _, key := range provider.Keys {
+			item.Keys = append(item.Keys, modelProviderKeyOut{ID: key.ID, Label: key.Label, HasKey: a.vault != nil && a.vault.Has(modelProviderVaultID(provider.ID, key.ID))})
+		}
+		out = append(out, item)
+	}
+	return out
 }
 
 // modelSettingsWithAPIKey returns a model settings snapshot with the key loaded
@@ -226,6 +308,7 @@ func shredFile(path string) {
 type modelConfigItem struct {
 	ID                  string            `json:"id"`
 	Name                string            `json:"name,omitempty"`
+	ProviderID          string            `json:"providerId,omitempty"`
 	ContextWindow       int               `json:"contextWindow,omitempty"`
 	HasAPIKey           bool              `json:"hasApiKey"`
 	Vision              bool              `json:"vision"` // #63 扩展：该模型是否支持图片输入
@@ -237,10 +320,16 @@ type modelConfigItem struct {
 // modelConfigOut 把 a.settings.Models 转成带 hasApiKey 标记的输出列表。调用方持有 a.mu。
 func (a *App) modelConfigOut() []modelConfigItem {
 	out := make([]modelConfigItem, 0, len(a.settings.Models))
-	has := a.hasModelAPIKey()
 	for _, m := range a.settings.Models {
+		has := false
+		for _, provider := range a.settings.ModelProviders {
+			if provider.ID == m.ProviderID {
+				has = a.hasProviderKeyLocked(provider)
+				break
+			}
+		}
 		out = append(out, modelConfigItem{
-			ID: m.ID, Name: m.Name, ContextWindow: m.ContextWindow, HasAPIKey: has, Vision: m.Vision,
+			ID: m.ID, Name: m.Name, ProviderID: m.ProviderID, ContextWindow: m.ContextWindow, HasAPIKey: has, Vision: m.Vision,
 			Capabilities: m.Capabilities, CapabilitiesSource: m.CapabilitiesSource, CapabilitiesChecked: m.CapabilitiesChecked,
 		})
 	}

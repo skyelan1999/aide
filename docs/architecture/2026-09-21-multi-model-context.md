@@ -7,6 +7,8 @@
 > - **`/api/models` 同时注册 GET 与 POST**（`server.go:525-526`）；前端「自动获取」实际用 **POST**，请求体携带 `{baseURL, apiKey, clearKey}` 以在保存前试连候选配置。
 > - **模型选择入口已从独立侧栏选择器并入策略浮层右列**（`refreshStrategyUI`），「⚙ 管理模型…」仍打开模型设置弹窗；上下文预算另有服务端 `POST /api/context-preview`（`context.go`，与真实请求共用构建器）与 `GET /api/token-stats`。
 
+> **2026-10-13 多提供商增量**：模型设置采用紧凑提供商卡片，展开编辑端点、密钥、模型，高级能力折叠。`ModelRef.ProviderID` 将模型绑定到 `ModelProvider{BaseURL, Protocol, Keys, ActiveKeyID}`。每个提供商最多 12 个命名密钥，密钥只经 `providerKeyWrites` 写入本机 SecretVault，GET `/api/config` 仅返回 `hasKey` 标志。激活模型时同步其提供商 Base URL；旧模型缺省绑定 `default` 并沿用原 `model:api-key` vault ID。首版仅支持 OpenAI Chat Completions 兼容协议，不表示原生 Anthropic/Gemini API 兼容。系统 Safari 完整验收另记在任务记录中。
+
 | 项 | 值 |
 | --- | --- |
 | 文档类型 | 系统设计（System Design） |

@@ -3317,41 +3317,71 @@ $('pause-current-run')?.addEventListener('click', action(() => {
   const run = [...(state.session?.runs || [])].reverse().find(item => item.status === 'running' && !item.pauseRequested);
   if (run) pauseRunById(run.id);
 }));
-function renderApiKeyStatus() {
-  const cfg = state.config || {};
-  const status = $('apikey-status'); const edit = $('apikey-edit');
-  if (!status || !edit) return;
-  $('api-key').value = ''; $('clear-key').checked = false;
-  status.replaceChildren();
-  const hasKey = !!cfg.hasKey; const unlocked = !!cfg.vaultUnlocked; const hasPw = !!cfg.hasPassword;
-  if (!hasKey) {
-    status.append(el('span', 'ak-badge ak-none', t('未配置')));
-    edit.classList.remove('hidden');
-    return;
-  }
-  if (!unlocked && hasPw) {
-    status.append(el('span', 'ak-badge ak-locked', t('需解锁')));
-    const un = el('button', 'quiet ak-unlock', t('解锁')); un.type = 'button';
-    un.onclick = action(async () => {
-      const res = await requestMasterAuth({ reason: t('解锁模型 API 密钥') });
-      if (res === 'cancel') return;
-      if (res !== 'success') { toast(t('验证失败')); return; }
-      // 后端 /api/auth/verify 通过后已解锁 vault
-      await refreshConfig(); renderApiKeyStatus(); toast(t('保险库已解锁'));
-    });
-    status.append(un);
-    edit.classList.add('hidden');
-    return;
-  }
-  status.append(el('span', 'ak-badge ak-ok', t('已配置')));
-  const chg = el('button', 'quiet ak-change', t('更换')); chg.type = 'button';
-  chg.onclick = () => { edit.classList.toggle('hidden'); if (!edit.classList.contains('hidden')) $('api-key').focus(); };
-  status.append(chg);
-  edit.classList.add('hidden');
+const MODEL_PROVIDER_PRESETS = [
+  { id: 'deepseek', name: 'DeepSeek', baseURL: 'https://api.deepseek.com' },
+  { id: 'openai', name: 'OpenAI', baseURL: 'https://api.openai.com/v1' },
+  { id: 'qwen', name: '通义千问 / DashScope', baseURL: 'https://dashscope.aliyuncs.com/compatible-mode/v1' },
+  { id: 'moonshot', name: 'Moonshot / Kimi', baseURL: 'https://api.moonshot.cn/v1' },
+  { id: 'zhipu', name: '智谱 GLM', baseURL: 'https://open.bigmodel.cn/api/paas/v4' },
+  { id: 'siliconflow', name: '硅基流动', baseURL: 'https://api.siliconflow.cn/v1' },
+  { id: 'ollama', name: 'Ollama（本机）', baseURL: 'http://host.docker.internal:11434/v1' },
+  { id: 'custom', name: '自定义 OpenAI 兼容服务', baseURL: '' },
+];
+function makeModelProviderID(base) {
+  const clean = String(base || 'provider').toLowerCase().replace(/[^a-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32) || 'provider';
+  let id = clean, suffix = 2;
+  while (state.modelDraft.providers.some(provider => provider.id === id)) id = `${clean}-${suffix++}`;
+  return id;
 }
-function openSettings() { $('base-url').value = state.config?.baseURL || 'https://api.deepseek.com'; state.modelDraft = { models: JSON.parse(JSON.stringify(state.config?.models || [])), activeModel: state.config?.activeModel || '' }; renderModelList(); renderApiKeyStatus(); $('settings-dialog').showModal(); }
+function openSettings() {
+  const config = state.config || {};
+  const models = JSON.parse(JSON.stringify(config.models || []));
+  let providers = JSON.parse(JSON.stringify(config.modelProviders || []));
+  if (!providers.length) providers = [{ id: 'default', name: 'DeepSeek / 自定义', baseURL: config.baseURL || 'https://api.deepseek.com', protocol: 'openai-compatible', activeKeyId: 'legacy', keys: [{ id: 'legacy', label: 'API Key', hasKey: !!config.hasKey }] }];
+  models.forEach(model => { if (!model.providerId) model.providerId = 'default'; });
+  state.modelDraft = { providers, models, activeModel: config.activeModel || config.model || models[0]?.id || '', expandedProviders: new Set(), providerSecrets: new Map() };
+  const select = $('provider-preset'); select.replaceChildren();
+  for (const preset of MODEL_PROVIDER_PRESETS) select.add(new Option(preset.name, preset.id));
+  renderModelList();
+  $('settings-dialog').showModal();
+}
 $('settings-button').onclick = openSettings;
-$('settings-form').onsubmit = action(async event => { event.preventDefault(); if (!state.modelDraft.models.length) { toast(t("请至少添加一个模型")); return; } await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked, models: state.modelDraft.models, activeModel: state.modelDraft.activeModel }) }); $('api-key').value = ''; $('settings-dialog').close(); await refreshConfig(); toast(t("模型设置已保存，发送任务时会调用当前模型")); if (typeof scheduleContextPreview === 'function') scheduleContextPreview(); });
+$('add-model-provider').onclick = () => {
+  const preset = MODEL_PROVIDER_PRESETS.find(item => item.id === $('provider-preset').value) || MODEL_PROVIDER_PRESETS.at(-1);
+  const id = makeModelProviderID(preset.id);
+  state.modelDraft.providers.push({ id, name: preset.name, baseURL: preset.baseURL, protocol: 'openai-compatible', keys: [], activeKeyId: '' });
+  state.modelDraft.expandedProviders.add(id);
+  renderModelList();
+};
+$('settings-form').onsubmit = action(async event => {
+  event.preventDefault();
+  const draft = state.modelDraft;
+  if (!draft.models.length) { toast(t('请至少添加一个模型')); return; }
+  if (!draft.providers.length) { toast(t('请至少保留一个提供商')); return; }
+  const duplicate = new Set();
+  for (const model of draft.models) {
+    if (duplicate.has(model.id)) { toast(t('模型 ID 重复：{0}', model.id)); return; }
+    duplicate.add(model.id);
+  }
+  const providerKeyWrites = [];
+  const modelProviders = draft.providers.map(provider => {
+    for (const key of provider.keys || []) {
+      const apiKey = draft.providerSecrets.get(`${provider.id}:${key.id}`) || '';
+      if (apiKey) providerKeyWrites.push({ providerId: provider.id, keyId: key.id, apiKey });
+    }
+    return { id: provider.id, name: provider.name, baseURL: provider.baseURL.trim(), protocol: 'openai-compatible', activeKeyId: provider.activeKeyId || '', keys: (provider.keys || []).map(({ id, label }) => ({ id, label })) };
+  });
+  const active = draft.models.find(model => model.id === draft.activeModel) || draft.models[0];
+  try {
+    await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: draft.providers.find(provider => provider.id === active.providerId)?.baseURL || state.config?.baseURL || '', models: draft.models, modelProviders, providerKeyWrites, activeModel: active.id }) });
+    $('settings-dialog').close();
+    await refreshConfig();
+    toast(t('模型设置已保存，当前模型为 {0}', active.name || active.id));
+    if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
+  } catch (error) {
+    toast(t('模型设置保存失败：{0}', error.message));
+  }
+});
 // 虚拟形象：aide 与小秘共用一个形象；任务事件决定场景，模型只能选择场景内的动作。
 (() => {
   const key = 'aide.virtual-avatars.v2',legacyKey='aide.virtual-avatars.v1';
@@ -4730,6 +4760,9 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && !d
 async function loadProfiles() { state.profiles = await api('/profiles'); refreshStrategyUI(); }
 function profileName(id) { const p = state.profiles?.profiles.find(p => p.id === id); return p?.system ? t(p.name) : (p?.name || id); }
 function activeModel() { return state.config?.models?.find(m => m.id === state.config.activeModel); }
+function modelProviderName(providerId) {
+  return state.config?.modelProviders?.find(provider => provider.id === providerId)?.name || '';
+}
 function profilesPayloadFrom(source) {
   return {
     strategy: source?.strategy || 'auto',
@@ -4860,7 +4893,8 @@ function refreshStrategyUI() {
   if (!p) return;
   const xiaomiOwnsModel = document.body.classList.contains('assistant-mode') && state.xiaomiModelSettings?.source === 'custom';
   const xiaomiModelName = String(state.xiaomiModelSettings?.model || '').trim();
-  const modelName = xiaomiOwnsModel ? (xiaomiModelName || t('小秘独立模型')) : (state.config?.models?.find(m => m.id === state.config.activeModel)?.name || state.config?.model || '');
+  const selectedModel = state.config?.models?.find(m => m.id === state.config.activeModel);
+  const modelName = xiaomiOwnsModel ? (xiaomiModelName || t('小秘独立模型')) : [selectedModel?.name || state.config?.model || '', modelProviderName(selectedModel?.providerId)].filter(Boolean).join(' · ');
   const assistantMode = document.body.classList.contains('assistant-mode');
   const label = (p.strategy === 'auto' ? t("策略 · 自动") : t("策略 · {0}", profileName(p.activeProfile))) + (modelName ? ' · ' + modelName : '') + (assistantMode ? '' : ' · ' + t(composerAutoReview() ? '辅助审批' : '手动审批'));
   $('strategy-label').textContent = label;
@@ -4886,7 +4920,7 @@ function refreshStrategyUI() {
     : (state.config?.models || []);
   for (const m of modelOptions) {
     const selected = xiaomiOwnsModel || state.config.activeModel === m.id;
-    const description = xiaomiOwnsModel ? t('由小秘模型设置管理') : t("{0} · {1}K 上下文", m.id, (m.contextWindow || 65536) / 1024);
+    const description = xiaomiOwnsModel ? t('由小秘模型设置管理') : [modelProviderName(m.providerId), t("{0} · {1}K 上下文", m.id, (m.contextWindow || 65536) / 1024)].filter(Boolean).join(' · ');
     right.append(strategyMenuOption('model', m.id, m.name, description, selected, xiaomiOwnsModel));
   }
   const manageModels = el('button', 'model-picker-manage', t("⚙ 管理模型…"));
@@ -5404,151 +5438,151 @@ function renderTokenStats(control) {
 function renderModelList() {
   const host = $('model-list');
   host.replaceChildren();
-  for (const m of state.modelDraft?.models || []) {
-    const isActive = m.id === state.modelDraft.activeModel;
-    const row = el('div', 'model-row' + (isActive ? ' active-model' : ''));
-    const radio = el('button', 'model-active' + (isActive ? ' active' : ''));
-    radio.type = 'button';
-    radio.title = t("设为当前模型");
-    radio.setAttribute('aria-pressed', String(isActive));
-    radio.textContent = isActive ? '●' : '○';
-    radio.onclick = () => { state.modelDraft.activeModel = m.id; renderModelList(); };
-    const nameInput = el('input', 'model-name-input');
-    nameInput.value = m.name || m.id;
-    nameInput.maxLength = 32;
-    nameInput.setAttribute('aria-label', t("模型名称"));
-    nameInput.addEventListener('input', () => { m.name = nameInput.value.trim() || m.id; });
-    const idText = el('span', 'model-id-text', m.id);
-    const windowLabel = el('span', 'model-window-label', t("上下文窗口"));
-    const presets = [
-      {k: 32768, label: '32K'},
-      {k: 65536, label: '64K'},
-      {k: 128000, label: '128K'},
-      {k: 200000, label: '200K'},
-      {k: 256000, label: '256K'},
-      {k: 1000000, label: '1M'},
-    ];
-    const presetRow = el('span', 'win-preset-row');
-    presets.forEach(p => {
-      const btn = el('button', 'win-preset', p.label);
-      btn.type = 'button';
-      btn.dataset.k = p.k;
-      btn.title = t("{0} 上下文", p.label);
-      if (m.contextWindow === p.k) btn.classList.add('active');
-      btn.onclick = () => {
-        m.contextWindow = p.k;
-        windowInput.value = p.k;
-        presetRow.querySelectorAll('.win-preset').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-      };
-      presetRow.append(btn);
-    });
-    const windowInput = el('input', 'model-window-input');
-    windowInput.type = 'number';
-    windowInput.min = 1024;
-    windowInput.max = 2097152;
-    // Preset values like 1,000,000 are valid integer windows but are not
-    // multiples of 1024; a 1024 step makes the browser block form submission.
-    windowInput.step = 1;
-    windowInput.value = m.contextWindow || 65536;
-    windowInput.setAttribute('aria-label', t("上下文窗口"));
-    windowInput.addEventListener('input', () => {
-      const v = parseInt(windowInput.value, 10);
-      if (!Number.isNaN(v)) {
-        m.contextWindow = v;
-        // 高亮匹配的预设
-        presetRow.querySelectorAll('.win-preset').forEach(b => {
-          b.classList.toggle('active', parseInt(b.dataset.k, 10) === v);
-        });
-      }
-    });
-    const del = el('button', 'model-delete', '－');
-    del.type = 'button';
-    del.title = t("删除模型");
-    del.onclick = () => {
-      const index = state.modelDraft.models.indexOf(m);
-      if (index >= 0) state.modelDraft.models.splice(index, 1);
-      if (state.modelDraft.activeModel === m.id) state.modelDraft.activeModel = state.modelDraft.models[0]?.id || '';
+  const draft = state.modelDraft;
+  if (!draft) return;
+  const presets = [32768, 65536, 128000, 200000, 256000, 1000000];
+  for (const provider of draft.providers) {
+    const card = el('section', 'model-provider-card');
+    const summary = el('div', 'model-provider-summary');
+    const expand = el('button', 'model-provider-expand');
+    expand.type = 'button';
+    expand.setAttribute('aria-expanded', String(draft.expandedProviders.has(provider.id)));
+    expand.textContent = draft.expandedProviders.has(provider.id) ? '⌄' : '›';
+    expand.title = t('展开提供商设置');
+    expand.onclick = () => { draft.expandedProviders.has(provider.id) ? draft.expandedProviders.delete(provider.id) : draft.expandedProviders.add(provider.id); renderModelList(); };
+    const providerName = el('input', 'model-provider-name');
+    providerName.value = provider.name;
+    providerName.maxLength = 48;
+    providerName.setAttribute('aria-label', t('提供商名称'));
+    providerName.addEventListener('input', () => { provider.name = providerName.value; });
+    const providerModels = draft.models.filter(model => model.providerId === provider.id);
+    const activeProvider = providerModels.some(model => model.id === draft.activeModel);
+    const meta = el('span', 'model-provider-meta', t('模型 {0} · 密钥 {1}{2}', providerModels.length, (provider.keys || []).length, activeProvider ? ` · ${t('当前')}` : ''));
+    const removeProvider = el('button', 'model-icon-action danger', '×');
+    removeProvider.type = 'button';
+    removeProvider.title = t('删除提供商和其模型');
+    removeProvider.setAttribute('aria-label', t('删除提供商和其模型'));
+    removeProvider.disabled = draft.providers.length <= 1;
+    removeProvider.onclick = () => {
+      draft.providers = draft.providers.filter(item => item !== provider);
+      draft.models = draft.models.filter(model => model.providerId !== provider.id);
+      for (const key of provider.keys || []) draft.providerSecrets.delete(`${provider.id}:${key.id}`);
+      if (draft.activeModel && !draft.models.some(model => model.id === draft.activeModel)) draft.activeModel = draft.models[0]?.id || '';
       renderModelList();
     };
-    const rowHead = el('div', 'model-row-head');
-    rowHead.append(radio, nameInput, idText, del);
-    const rowWin = el('div', 'model-row-window');
-    rowWin.append(windowLabel, presetRow, windowInput);
-    row.append(rowHead, rowWin);
-    const capabilityLabels = [
-      ['tool_calls', t('工具调用')],
-      ['vision', t('图片输入')],
-      ['structured_output', t('结构化输出')],
-      ['reasoning', t('推理参数')],
-      ['audio_input', t('音频输入')],
-      ['audio_output', t('音频输出')],
-    ];
-    m.capabilities ||= {};
-    if (m.vision && !m.capabilities.vision) m.capabilities.vision = 'supported';
-    const capRow = el('div', 'model-capabilities');
-    capabilityLabels.forEach(([key, label]) => {
-      const field = el('label', 'model-capability');
-      field.append(el('span', '', label));
-      const select = el('select');
-      select.setAttribute('aria-label', `${m.id}: ${label}`);
-      [['unknown', t('未知')], ['supported', t('支持')], ['unsupported', t('不支持')]].forEach(([value, text]) => {
-        const option = new Option(text, value);
-        select.add(option);
+    summary.append(expand, providerName, meta, removeProvider);
+    card.append(summary);
+    if (draft.expandedProviders.has(provider.id)) {
+      const body = el('div', 'model-provider-body');
+      const endpointLabel = el('label', 'model-provider-field', t('API 地址'));
+      const endpoint = el('input'); endpoint.type = 'url'; endpoint.required = true; endpoint.value = provider.baseURL || ''; endpoint.placeholder = 'https://api.example.com/v1';
+      endpoint.setAttribute('aria-label', `${provider.name} ${t('API 地址')}`);
+      endpoint.addEventListener('input', () => { provider.baseURL = endpoint.value; });
+      endpointLabel.append(endpoint); body.append(endpointLabel);
+
+      const keySection = el('div', 'model-key-section');
+      const keyHeader = el('div', 'model-subsection-head');
+      keyHeader.append(el('strong', '', t('API 密钥')), el('span', 'model-provider-meta', t('本机加密保存 · {0}/{1}', (provider.keys || []).length, 12)));
+      const addKey = el('button', 'quiet model-compact-button', '+'); addKey.type = 'button'; addKey.title = t('添加密钥'); addKey.setAttribute('aria-label', t('添加密钥'));
+      addKey.onclick = () => {
+        const keyID = `key-${(window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 42)}`;
+        const newKey = { id: keyID, label: t('密钥 {0}', (provider.keys || []).length + 1), hasKey: false };
+        provider.keys ||= []; provider.keys.push(newKey); provider.activeKeyId = keyID; renderModelList();
+      };
+      addKey.disabled = (provider.keys || []).length >= 12;
+      keyHeader.append(addKey); keySection.append(keyHeader);
+      if (!(provider.keys || []).length) keySection.append(el('p', 'model-empty-note', t('本机服务可不填；云服务请添加密钥。')));
+      for (const key of provider.keys || []) {
+        const keyRow = el('div', 'model-key-row');
+        const keySelect = el('button', 'model-key-select' + (provider.activeKeyId === key.id ? ' active' : ''), provider.activeKeyId === key.id ? '●' : '○');
+        keySelect.type = 'button'; keySelect.title = t('设为当前密钥'); keySelect.setAttribute('aria-pressed', String(provider.activeKeyId === key.id));
+        keySelect.onclick = () => { provider.activeKeyId = key.id; renderModelList(); };
+        const keyName = el('input', 'model-key-name'); keyName.value = key.label; keyName.maxLength = 48; keyName.setAttribute('aria-label', t('密钥名称'));
+        keyName.addEventListener('input', () => { key.label = keyName.value; });
+        const secret = el('input', 'model-key-secret'); secret.type = 'password'; secret.autocomplete = 'new-password'; secret.spellcheck = false;
+        secret.placeholder = key.hasKey ? t('已加密保存；留空保持不变') : t('粘贴 API 密钥'); secret.value = draft.providerSecrets.get(`${provider.id}:${key.id}`) || '';
+        secret.setAttribute('aria-label', `${provider.name} · ${key.label} · ${t('API 密钥')}`);
+        secret.addEventListener('input', () => draft.providerSecrets.set(`${provider.id}:${key.id}`, secret.value));
+        const keyStatus = el('span', 'model-key-status' + (key.hasKey ? ' saved' : ''), key.hasKey ? t('已保存') : t('未保存'));
+        const deleteKey = el('button', 'model-icon-action danger', '×'); deleteKey.type = 'button'; deleteKey.title = t('删除密钥'); deleteKey.setAttribute('aria-label', t('删除密钥'));
+        deleteKey.onclick = () => { provider.keys = provider.keys.filter(item => item !== key); draft.providerSecrets.delete(`${provider.id}:${key.id}`); if (provider.activeKeyId === key.id) provider.activeKeyId = provider.keys[0]?.id || ''; renderModelList(); };
+        keyRow.append(keySelect, keyName, secret, keyStatus, deleteKey); keySection.append(keyRow);
+      }
+      body.append(keySection);
+
+      const modelsHead = el('div', 'model-subsection-head model-models-heading');
+      modelsHead.append(el('strong', '', t('模型')), el('span', 'model-provider-meta', t('切换当前模型后立即生效')));
+      const fetch = el('button', 'quiet model-compact-button', '⟳'); fetch.type = 'button'; fetch.title = t('自动获取模型'); fetch.setAttribute('aria-label', t('自动获取模型'));
+      fetch.onclick = action(async () => {
+        fetch.disabled = true;
+        try {
+          const data = await api('/models', { method: 'POST', body: JSON.stringify({ providerId: provider.id, baseURL: provider.baseURL, apiKey: draft.providerSecrets.get(`${provider.id}:${provider.activeKeyId}`) || '' }) });
+          let added = 0;
+          for (const id of data.models || []) {
+            if (draft.models.some(model => model.id === id)) continue;
+            draft.models.push({ id, name: id, providerId: provider.id, contextWindow: 65536 }); added++;
+            if (!draft.activeModel) draft.activeModel = id;
+          }
+          renderModelList(); toast(t('获取到 {0} 个模型，新增 {1} 个', (data.models || []).length, added));
+        } finally { fetch.disabled = false; }
       });
-      select.value = m.capabilities[key] || 'unknown';
-      select.addEventListener('change', () => {
-        if (select.value === 'unknown') delete m.capabilities[key];
-        else m.capabilities[key] = select.value;
-        if (key === 'vision') m.vision = select.value === 'supported';
-      });
-      field.append(select);
-      capRow.append(field);
-    });
-    const capNote = el('small', 'model-capability-note', t('模型 ID 列表不代表能力已验证；未知状态按兼容默认行为处理。'));
-    const capSource = el('input', 'model-capability-source');
-    capSource.type = 'text';
-    capSource.maxLength = 120;
-    capSource.placeholder = t('能力核验来源或依据（可选）');
-    capSource.value = m.capabilitiesSource || '';
-    capSource.setAttribute('aria-label', t('能力核验来源或依据（可选）'));
-    capSource.addEventListener('input', () => { m.capabilitiesSource = capSource.value.trim(); });
-    const capChecked = el('input', 'model-capability-date');
-    capChecked.type = 'date';
-    capChecked.value = (m.capabilitiesChecked || '').slice(0, 10);
-    capChecked.setAttribute('aria-label', t('能力核验日期'));
-    capChecked.addEventListener('change', () => { m.capabilitiesChecked = capChecked.value; });
-    const capMeta = el('div', 'model-capability-meta');
-    capMeta.append(capSource, capChecked);
-    row.append(capRow, capNote, capMeta);
-    host.append(row);
+      modelsHead.append(fetch); body.append(modelsHead);
+      const addRow = el('div', 'model-add-row');
+      const modelID = el('input'); modelID.type = 'text'; modelID.placeholder = t('模型 ID，例如 deepseek-chat'); modelID.setAttribute('aria-label', t('模型 ID'));
+      const addModel = el('button', 'quiet model-compact-button', '+'); addModel.type = 'button'; addModel.title = t('添加模型'); addModel.setAttribute('aria-label', t('添加模型'));
+      addModel.onclick = () => {
+        const id = modelID.value.trim();
+        if (!id) { toast(t('请输入模型 ID')); modelID.focus(); return; }
+        if (draft.models.length >= 20) { toast(t('模型最多 20 个')); return; }
+        if (draft.models.some(model => model.id === id)) { toast(t('模型 ID 重复：{0}', id)); return; }
+        draft.models.push({ id, name: id, providerId: provider.id, contextWindow: 65536 });
+        if (!draft.activeModel) draft.activeModel = id;
+        renderModelList();
+      };
+      modelID.addEventListener('keydown', event => { if (event.key === 'Enter') { event.preventDefault(); addModel.click(); } });
+      addRow.append(modelID, addModel); body.append(addRow);
+
+      for (const model of providerModels) {
+        const modelRow = el('div', 'model-row-compact' + (model.id === draft.activeModel ? ' active' : ''));
+        const active = el('button', 'model-key-select' + (model.id === draft.activeModel ? ' active' : ''), model.id === draft.activeModel ? '●' : '○');
+        active.type = 'button'; active.title = t('设为当前模型'); active.setAttribute('aria-pressed', String(model.id === draft.activeModel));
+        active.onclick = () => { draft.activeModel = model.id; renderModelList(); };
+        const modelInput = el('input', 'model-id-input'); modelInput.value = model.id; modelInput.maxLength = 64; modelInput.setAttribute('aria-label', t('模型 ID'));
+        modelInput.addEventListener('change', () => {
+          const id = modelInput.value.trim();
+          if (!id) { modelInput.value = model.id; return; }
+          if (draft.models.some(other => other !== model && other.id === id)) { toast(t('模型 ID 重复：{0}', id)); modelInput.value = model.id; return; }
+          const oldID = model.id; model.id = id; if (draft.activeModel === oldID) draft.activeModel = id;
+        });
+        const displayName = el('input', 'model-name-input'); displayName.value = model.name || model.id; displayName.maxLength = 32; displayName.placeholder = t('显示名称'); displayName.setAttribute('aria-label', t('模型显示名称'));
+        displayName.addEventListener('input', () => { model.name = displayName.value; });
+        const advanced = el('details', 'model-advanced');
+        const summary = el('summary', '', t('高级参数与能力'));
+        advanced.append(summary);
+        const context = el('input', 'model-context-input'); context.type = 'number'; context.min = 1024; context.max = 2097152; context.step = 1; context.value = model.contextWindow || 65536; context.setAttribute('aria-label', t('上下文窗口'));
+        context.addEventListener('input', () => { const value = parseInt(context.value, 10); if (Number.isInteger(value)) model.contextWindow = value; });
+        const contextLabel = el('label', 'model-provider-field', t('上下文窗口（tokens）')); contextLabel.append(context); advanced.append(contextLabel);
+        model.capabilities ||= {};
+        if (model.vision && !model.capabilities.vision) model.capabilities.vision = 'supported';
+        const capabilities = el('div', 'model-capabilities');
+        for (const [key, label] of [['tool_calls', t('工具调用')], ['vision', t('图片输入')], ['structured_output', t('结构化输出')], ['reasoning', t('推理参数')], ['audio_input', t('音频输入')], ['audio_output', t('音频输出')]]) {
+          const field = el('label', 'model-capability'); field.append(el('span', '', label));
+          const select = el('select'); select.setAttribute('aria-label', `${model.id}: ${label}`);
+          for (const [value, text] of [['unknown', t('未知')], ['supported', t('支持')], ['unsupported', t('不支持')]]) select.add(new Option(text, value));
+          select.value = model.capabilities[key] || 'unknown';
+          select.addEventListener('change', () => { if (select.value === 'unknown') delete model.capabilities[key]; else model.capabilities[key] = select.value; if (key === 'vision') model.vision = select.value === 'supported'; });
+          field.append(select); capabilities.append(field);
+        }
+        advanced.append(capabilities);
+        const del = el('button', 'model-icon-action danger', '×'); del.type = 'button'; del.title = t('删除模型'); del.setAttribute('aria-label', t('删除模型'));
+        del.onclick = () => { draft.models = draft.models.filter(item => item !== model); if (draft.activeModel === model.id) draft.activeModel = draft.models[0]?.id || ''; renderModelList(); };
+        modelRow.append(active, modelInput, displayName, advanced, del); body.append(modelRow);
+      }
+      card.append(body);
+    }
+    host.append(card);
   }
-  if (!(state.modelDraft?.models || []).length) host.append(el('p', 'muted', t("尚未添加模型。可输入模型 ID 添加，或用「自动获取」从 API 拉取候选。")));
 }
-$('add-model').onclick = () => {
-  const id = $('new-model-id').value.trim();
-  if (!id) { toast(t("请输入模型 ID")); return; }
-  if (state.modelDraft.models.some(m => m.id === id)) { toast(t("该模型已存在")); return; }
-  state.modelDraft.models.push({ id, name: id, contextWindow: 65536 });
-  if (!state.modelDraft.activeModel) state.modelDraft.activeModel = id;
-  $('new-model-id').value = '';
-  renderModelList();
-};
-$('fetch-models').onclick = action(async () => {
-  const button = $('fetch-models');
-  button.disabled = true;
-  button.textContent = t("⟳ 获取中…");
-  try {
-    const data = await api('/models', { method: 'POST', body: JSON.stringify({ baseURL: $('base-url').value.trim(), apiKey: $('api-key').value.trim(), clearKey: $('clear-key').checked }) });
-    const list = $('model-datalist');
-    list.replaceChildren();
-    (data.models || []).forEach(id => list.append(new Option(id, id)));
-    toast(t("已获取 {0} 个可用模型，在输入框中选择即可", (data.models || []).length));
-  } finally {
-    button.disabled = false;
-    button.textContent = t("⟳ 自动获取");
-  }
-});
 /* ── 上下文统计：与 /context-preview 共用服务端请求构造，避免浏览器自行猜测。 ── */
 function fmtTokens(n) { return n < 1000 ? String(n) : (n / 1024).toFixed(1) + 'K'; }
 state.contextMeterSeq = state.contextMeterSeq || { value: 0 };
