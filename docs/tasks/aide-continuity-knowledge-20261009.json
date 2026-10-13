@@ -4155,6 +4155,6 @@
       "Full race/vet repository profile was terminated by signal: killed; targeted race, full server non-race and server vet passed.",
       "Actual user-host SSH/network interruption and long-duration browser acceptance remain open. Real vector provider remains deferred by the user; Windows acceptance remains excluded by the user."
     ],
-    "release": "Server implementation, server package, server vet and quick checks verified; current source/UI candidate still awaits system Safari and full repository race gate. No push in this checkpoint."
+    "release": "Pushed as 5c79d62 to origin/main after targeted race, full internal/server non-race, internal/server vet, docs, and quick profile passed. Full repository race profile was killed; system Safari and objective-wide acceptance remain pending."
   }
 }
