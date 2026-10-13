@@ -84,9 +84,11 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "放弃 Safari 中新增 OpenAI 的未保存草稿；未改动现有设置和密钥。",
+      "summary": "放弃 Safari 中新增 OpenAI 与第二个空密钥的未保存草稿；关闭并重开设置后仍为原有 DeepSeek、3 个模型和 1 个已保存密钥。未改动现有设置和密钥。",
       "evidence": [
-        "Safari 设置弹窗已关闭后重新打开，仅显示原有 DeepSeek 配置。"
+        "Safari 设置弹窗已关闭后重新打开，仅显示原有 DeepSeek 配置。",
+        "Safari 实际 UI 新增空白第二密钥，显示未保存；关闭窗口而不保存后重新打开，密钥数恢复为 1。",
+        "Safari 实际 UI 选择 OpenAI 预设并新增端点草稿，显示 https://api.openai.com/v1；关闭窗口而不保存后重新打开，OpenAI 草稿不存在。"
       ]
     },
     "release": {
