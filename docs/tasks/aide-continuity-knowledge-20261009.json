@@ -3658,5 +3658,30 @@
       "scope": "Isolated Docker candidate 18544; temporary workspace fixture only; no model call, no session submission, no production data."
     },
     "release": "No production release or deployment; objective remains active."
+  },
+  "progress_checkpoint_20261014_followup37": {
+    "status": "partial",
+    "date": "2026-10-14",
+    "summary": "Authenticated system Safari acceptance of incremental Knowledge Map polling, code-hierarchy loading, source coverage disclosure, and an incomplete-catalog path-search result on isolated candidate 18542.",
+    "completed": [
+      "Opened the existing isolated candidate in native Safari. The baseline graph displayed 1,711 stars / 3,121 connections; the map rendered beyond 1,000 nodes.",
+      "Switched to code hierarchy. The first request reported a busy scan with no complete snapshot; after several seconds Safari loaded 1,867 stars / 3,960 connections and code metadata for 80 source files, 730 declarations, and 734 call candidates.",
+      "Observed subsequent polling update the graph to 2,441 stars / 3,991 connections while context coverage advanced from 480 files / 33 directories to 760 files / 40 directories.",
+      "At 760 files plus 40 directories, the source reported its 800-entry catalog limit, 188 pending directories, and explicit partial/range-limited coverage. After additional polling the source remained at that boundary while other source cycle counters advanced.",
+      "Searched a real path between two indexed OpenHands reference nodes with directory-ownership relations enabled. The UI reported no path in the current incomplete index and explicitly warned that this does not mean no real relationship exists."
+    ],
+    "remaining": [
+      "This was not a deliberately synchronized slow-scan concurrency test. The first code-view load had no previously published code snapshot, so its busy response does not prove stale code-graph fallback.",
+      "The observed 800-entry boundary is the candidate’s configured per-source catalog limit under its current multi-source budget split; this is an indexing/coverage boundary, not a canvas renderer limit. Increase the saved index budget or change catalog progression before claiming complete large-source discovery.",
+      "A successful evidence path between nodes was not observed; the selected source catalog was partial.",
+      "Actual user-hosted SSH/source performance and broader large-library UI performance remain unverified."
+    ],
+    "verification": {
+      "system_browser": "PASS for bounded incremental update and partial-coverage disclosure in authenticated native Safari on isolated https://localhost:18542/starmap.html.",
+      "system_browser_limit": "NOT_RUN for deliberately concurrent slow-scan stale-view behavior; fresh code hierarchy initially had no published snapshot and later loaded.",
+      "system_browser_path": "Partial result: two same-repository reference nodes yielded no path; UI correctly disclosed incomplete indexing, so this is not a no-relationship finding.",
+      "scope": "Isolated candidate 18542; no files, source configs, model settings, or production data changed."
+    },
+    "release": "No production release or deployment; objective remains active."
   }
 }
