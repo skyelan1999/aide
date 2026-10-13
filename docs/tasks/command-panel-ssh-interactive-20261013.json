@@ -73,9 +73,12 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "等待提交并推送。真实 SSH 浏览器验收仍需有 SSH 工作区后补测。",
-      "evidence": []
+      "status": "pass",
+      "summary": "已提交并推送至 origin/main；真实 SSH PTY 浏览器验收缺口已记录在 verification/handoff。",
+      "evidence": [
+        "commit 1a4c13c Fix SSH command panel interactive input",
+        "origin/main 已更新。"
+      ]
     }
   },
   "release_authorization": "当前仅修复与本地 Safari 验证；推送沿用用户持续指示：阶段性测完即 push。",
