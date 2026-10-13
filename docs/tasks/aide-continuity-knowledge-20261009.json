@@ -3286,6 +3286,6 @@
       "user_data": "No content was edited or saved in the user's open Markdown file during this checkpoint."
     },
     "release": "not_run",
-    "push": "not_run pending system Safari verification of the rebuilt candidate."
+    "push": "PASS: commit 29a1041 Restore file editor caret and scroll pushed to origin/main; system Safari verification of the rebuilt candidate remains pending."
   }
 }
