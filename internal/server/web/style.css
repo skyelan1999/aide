@@ -1557,12 +1557,16 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 .context-card.is-compacting{border-color:color-mix(in srgb,var(--brand-text) 62%,var(--line-soft));box-shadow:0 0 0 1px color-mix(in srgb,var(--brand-text) 18%,transparent),0 0 18px color-mix(in srgb,var(--brand-text) 17%,transparent);animation:context-card-breathe 1.8s ease-in-out infinite}
 .context-card.was-compacted{border-color:color-mix(in srgb,var(--brand-text) 48%,var(--line-soft));transition:border-color .25s,box-shadow .25s}
 .context-card.is-compacting .context-bar::after{content:"";position:absolute;z-index:2;inset:0 auto 0 0;width:42%;pointer-events:none;background:linear-gradient(100deg,transparent,color-mix(in srgb,var(--brand-text) 62%,white),transparent);mix-blend-mode:screen;animation:context-fold-sweep 1.05s ease-in-out infinite alternate}
+.context-card.is-compaction-stalled{border-color:color-mix(in srgb,var(--warn,#b7791f) 62%,var(--line-soft));box-shadow:0 0 0 1px color-mix(in srgb,var(--warn,#b7791f) 16%,transparent)}
+.context-card.is-compaction-stalled .context-bar::after{display:none}
 .context-compaction-status{display:grid;grid-template-columns:14px minmax(0,1fr);align-items:center;gap:4px 6px;margin-top:6px;padding:6px 7px;border-radius:6px;background:color-mix(in srgb,var(--brand-text) 9%,var(--surface));font-size:9px;line-height:1.4;color:var(--brand-text)}
 .context-compaction-status strong{grid-column:2;font-size:9px;font-weight:650;font-variant-numeric:tabular-nums;white-space:nowrap}
 .context-compaction-status.running{background:color-mix(in srgb,var(--brand-text) 13%,var(--surface))}
+.context-compaction-status.stalled{color:var(--warn,#b7791f);background:color-mix(in srgb,var(--warn,#b7791f) 10%,var(--surface))}
 .context-compaction-status.failed{color:var(--warn,#b7791f)}
 .context-compaction-status.cancelled{color:var(--muted,#64748b)}
 .context-compaction-orbit,.context-compaction-check{display:grid;place-items:center;font-size:13px;font-weight:700}
+.context-compaction-stall-icon{display:grid;place-items:center;font-size:12px;font-weight:800}
 .context-compaction-orbit{animation:context-orbit .9s linear infinite}
 @keyframes context-card-breathe{50%{box-shadow:0 0 0 2px color-mix(in srgb,var(--brand-text) 22%,transparent),0 0 24px color-mix(in srgb,var(--brand-text) 22%,transparent)}}
 @keyframes context-fold-sweep{to{transform:translateX(145%)}}

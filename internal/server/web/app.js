@@ -5710,7 +5710,9 @@ function startContextCompactionWatch(sessionID) {
         const data = await api(`/sessions/${sessionID}/compaction-progress`);
         if (data?.event?.phase) {
           const terminal = isTerminalContextCompaction(data.event.phase);
-          if (!terminal || Number(data.updatedAt || 0) >= watchStartedAt) showContextCompaction(data.event);
+          if (!terminal || Number(data.updatedAt || 0) >= watchStartedAt) {
+            showContextCompaction({ ...data.event, updatedAt: Number(data.updatedAt || 0) });
+          }
         }
       } catch (_) { /* Status polling must never block or fail task submission. */ }
     })();
@@ -5730,7 +5732,13 @@ function showContextCompaction(event) {
   if (!targetSession) return;
   const previous = state.contextCompactions.get(targetSession);
   const startedAt = event.startedAt || previous?.startedAt || ((event.phase === 'started' || event.phase === 'folding') ? Date.now() : 0);
-  const record = { ...event, startedAt, at: Date.now(), sessionId: targetSession };
+  const record = {
+    ...event,
+    startedAt,
+    updatedAt: Number(event.updatedAt) || Date.now(),
+    at: Date.now(),
+    sessionId: targetSession,
+  };
   state.contextCompactions.set(targetSession, record);
   clearTimeout(contextCompactionTimers.get(targetSession));
   const running = event.phase === 'started' || event.phase === 'folding';
@@ -5752,7 +5760,7 @@ function showContextCompaction(event) {
       clearInterval(contextCompactionElapsedTimers.get(targetSession));
       contextCompactionElapsedTimers.delete(targetSession);
       if (state.session?.id !== targetSession) return;
-      $('context-card')?.classList.remove('was-compacted', 'is-compacting');
+      $('context-card')?.classList.remove('was-compacted', 'is-compacting', 'is-compaction-stalled');
       renderContextCompactionState($('context-card-detail'));
       if (state.contextMeter && !state.contextMeterDraft) renderContextMeter(state.contextMeter, false);
     }, 10000);
@@ -5770,16 +5778,20 @@ function renderContextCompactionState(detail) {
   const sessionID = state.session?.id || '';
   const event = state.contextCompactions.get(sessionID);
   const card = $('context-card');
-  const running = event?.phase === 'started' || event?.phase === 'folding';
+  const inProgress = event?.phase === 'started' || event?.phase === 'folding';
+  const stalledForMs = inProgress ? Math.max(0, Date.now() - (event.updatedAt || event.startedAt || Date.now())) : 0;
+  const stalled = inProgress && stalledForMs >= 180_000;
+  const running = inProgress && !stalled;
   card?.classList.toggle('is-compacting', !!running);
+  card?.classList.toggle('is-compaction-stalled', !!stalled);
   card?.classList.toggle('was-compacted', event?.phase === 'completed');
   detail.querySelectorAll('.context-compaction-status').forEach(row => row.remove());
   if (!event) return;
-  const row = el('div', 'context-compaction-status ' + (running ? 'running' : event.phase));
+  const row = el('div', 'context-compaction-status ' + (stalled ? 'stalled' : (running ? 'running' : event.phase)));
   row.setAttribute('role', 'status');
   row.setAttribute('aria-live', 'polite');
-  if (running) {
-    row.append(el('span', 'context-compaction-orbit', '◌'));
+  if (inProgress) {
+    row.append(el('span', stalled ? 'context-compaction-stall-icon' : 'context-compaction-orbit', stalled ? 'Ⅱ' : '◌'));
     const progressText = event.preflight
       ? (event.phase === 'folding'
         ? t('摘要已生成，正在折叠这 {0} 条早期消息并保存', event.folded || 0)
@@ -5791,7 +5803,9 @@ function renderContextCompactionState(detail) {
         : (event.batch > 0
           ? t('摘要处理中 · {0} {1}/{2}', event.batchStage === 'map' ? t('分段整理') : t('连续归并'), event.batch, event.batches)
           : (event.text || t('正在整理早期消息并生成摘要'))));
-    row.append(el('span', '', progressText));
+    row.append(el('span', '', stalled
+      ? t('进度已停滞 · 最近 {0} 分钟无更新，仍在等待模型返回', Math.floor(stalledForMs / 60_000))
+      : progressText));
     const detailText = event.folded > 0
       ? t('{0} 条早期消息 · 当前约 {1}', event.folded, fmtTokens(event.beforeTokens || 0))
       : (event.beforeTokens > 0 ? t('当前约 {0}', fmtTokens(event.beforeTokens)) : '');

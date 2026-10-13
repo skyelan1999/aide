@@ -3374,5 +3374,27 @@
     },
     "release": "not_run",
     "push": "Documentation checkpoint pending; no product source changes in this checkpoint."
+  },
+  "progress_checkpoint_20261013_followup25": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "修正压缩进度轮询：前端保留服务端 updatedAt，不再把每次 650ms 轮询误当成新进展。",
+      "压缩超过 3 分钟没有阶段更新时，侧栏状态显示停滞时长与等待模型返回提示，停止呼吸/扫光动画，但继续显示阶段和累计耗时；新增英文界面文案。",
+      "前端 JavaScript 语法检查与 git diff --check 通过。"
+    ],
+    "remaining": [
+      "系统 Safari 需要用当前候选复验活动动画、3 分钟停滞提示及服务端进度恢复；当前 localhost:9999 合成会话 #46 仍在运行，暂不重启避免中断会话。",
+      "合成会话 #46 的自动压缩生命周期及超长回复终态仍未取得完整证据；真实向量检索按用户要求暂缓。"
+    ],
+    "verification": {
+      "source": "internal/server/web/app.js, internal/server/web/style.css, internal/server/web/locales/en.js",
+      "focused_checks": "PASS: node --check internal/server/web/app.js; node --check internal/server/web/locales/en.js; git diff --check.",
+      "system_browser": "PENDING: changed bundle not rebuilt or served in Safari because the active synthetic long-running conversation #46 must be preserved until it ends.",
+      "behavior": "Active progress uses server UpdatedAt. A stale active phase remains visible and timed, switches to an amber stalled state after 180 seconds, and stops the active animation. This is an observability signal, not a claim that the provider request was cancelled or failed.",
+      "user_data": "No session controls, files, model settings, or running services were changed."
+    },
+    "release": "not_run",
+    "push": "pending source checkpoint"
   }
 }
