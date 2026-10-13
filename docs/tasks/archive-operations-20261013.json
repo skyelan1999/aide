@@ -74,9 +74,11 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "已按阶段发布归档功能与文档；提交仅含本任务 scope，推送到 origin/main。验收容器临时数据清理仍单独待办。",
+      "evidence": [
+        "2026-10-13：提交 dd02ada Add archive operations to project files and tools，推送 origin/main 成功（80de669..dd02ada）。"
+      ]
     }
   },
   "release_authorization": "沿用用户此前阶段性验证完成后及时 push 的明确指示；本次浏览器验收完成后，针对本任务文件范围提交并推送，不纳入同一工作区的 SSH 命令面板改动。",
