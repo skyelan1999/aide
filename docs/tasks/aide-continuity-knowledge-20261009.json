@@ -3220,5 +3220,28 @@
       "remote": "NOT_RUN against the user's live SSH host this checkpoint.",
       "release": "No product source change or release in this checkpoint."
     }
+  },
+  "progress_checkpoint_20261013_followup18": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "系统 Safari 在实际 localhost:9999 中刷新后，工作台和会话恢复；原文件页未自动恢复。",
+      "对同一临时 Markdown 路径重新打开后，“恢复草稿”成功还原标题、正文和草稿标记内容；文件保存后界面显示“服务器已保存”。",
+      "验证证明本地草稿内容可在页面刷新后按路径手动恢复，并可随后写入服务器。"
+    ],
+    "remaining": [
+      "本轮没有证明文件页自动恢复；需用户手动重新打开相同路径。",
+      "未确认光标位置/选区精确恢复、浏览器崩溃后恢复、跨真实标签页关闭重开、长时间恢复、配额/冲突/资源恢复。",
+      "临时验收文件 doc/aide-continuity-acceptance-20261013.md 尚在用户工作区；Aide 删除对话框说明该操作永久且不可撤销，已取消并等待用户在动作时确认。"
+    ],
+    "verification": {
+      "source": "实际系统 Safari，https://localhost:9999/，工作区 /Users/skyelan/debug；通过 Aide 文件 UI 创建/恢复/保存，未直接写入用户文件。",
+      "draft_restore": "PASS for body recovery after page refresh when the user reopens the exact path and selects 恢复草稿.",
+      "server_save": "PASS: Aide displayed 服务器已保存 / 已保存 after explicit save.",
+      "automatic_scene_and_caret": "NOT_VERIFIED: file view required manual reopen and precise caret position was not established.",
+      "temporary_fixture_cleanup": "PENDING user confirmation because the UI warns permanent, irreversible deletion."
+    },
+    "release": "not_run",
+    "push": "Documentation-only acceptance checkpoint; push after validation."
   }
 }
