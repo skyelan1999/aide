@@ -73,9 +73,12 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "等待将本阶段限定文件提交并推送到 origin/main。",
-      "evidence": []
+      "status": "pass",
+      "summary": "已提交并推送到 origin/main。",
+      "evidence": [
+        "53264e1 Enhance knowledge map deep-sky visuals",
+        "origin/main advanced from 520eb16 to 53264e1"
+      ]
     }
   },
   "release_authorization": "",
