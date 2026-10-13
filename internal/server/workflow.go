@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -11,6 +12,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"os"
 	"os/exec"
@@ -3898,6 +3900,29 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 			return "Office 插件未启用，无法生成文件"
 		}
 		return a.officeCreateTool(wsRoot, mode, remotePath, str("path"), str("format"), args["content"])
+	case "archive_compress", "archive_extract":
+		if a.pluginOwnerOf(call.Function.Name) != "archive-tools" {
+			return "压缩工具插件未启用"
+		}
+		if task.WorkspaceID != "" && task.WorkspaceID != a.wsID() {
+			return "工作区已切换，归档操作未执行"
+		}
+		body := map[string]string{"root": "workspace", "path": str("path")}
+		if call.Function.Name == "archive_compress" {
+			body["format"] = str("format")
+		}
+		payload, _ := json.Marshal(body)
+		req := httptest.NewRequest(http.MethodPost, "/api/file/archive", bytes.NewReader(payload))
+		w := httptest.NewRecorder()
+		if call.Function.Name == "archive_compress" {
+			a.createWorkspaceArchive(w, req)
+		} else {
+			a.extractArchive(w, req)
+		}
+		if w.Code < 200 || w.Code >= 300 {
+			return strings.TrimSpace(w.Body.String())
+		}
+		return strings.TrimSpace(w.Body.String())
 	case "office_comments":
 		if a.pluginOwnerOf("office_comments") != "office" {
 			return "Office 插件未启用"

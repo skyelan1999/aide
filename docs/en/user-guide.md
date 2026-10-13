@@ -2,7 +2,7 @@
 
 [简体中文](../user-guide.md) · **English**
 
-The latest source tag is `v0.1.16.0-RC1`. This guide also describes candidate source changes after RC1: the separate Approval column, knowledge map, and later UI updates are not included merely by running the published RC1 image. Check [task records](../tasks/) and the [verification log](../verification.md) for acceptance status. See [Installation](installation.md) for setup.
+This guide follows the current `0.1.17.0 RC2` source workline. Published images may not include every candidate change described here; check [task records](../tasks/) and the [verification log](../verification.md) for acceptance status. See [Installation](installation.md) for setup.
 
 ## 1. Find your way around
 
@@ -232,7 +232,7 @@ In the prompt box, Enter inserts a new line; Shift+Enter sends the message.
 
 Built-in read tools and `run_shell` execute directly: shell commands run in a separate non-interactive sandbox shell with a time limit, output/exit-code reporting, and cancellation (a read-only sandbox allows only read-only commands; dangerous commands are blocked in workspace-write mode). `write_file` creates a proposal for approval. In AI workflow mode, suggested test commands are not executed automatically—insert them into the panel, inspect, then run. The manual command panel supports an optional SSH interactive terminal (PTY); `run_shell` remains non-interactive.
 
-In an SSH workspace, enable “Interactive terminal” to run commands that require a TTY, such as `sudo -v` or `sudo su`. Enter the password at the prompt in the command input field and press Enter. Tab sends a completion key, Ctrl+C interrupts the foreground command, Ctrl+D sends EOF, and Up/Down send remote shell history keys when the input is empty. Interactive input is not added to command history. This only works when the remote account is already authorized to use sudo; stopping the command terminates its remote process group.
+In an SSH workspace, “Interactive terminal” is enabled by default and runs one persistent login shell. The first submitted command is sent to that shell, and later commands continue in the same session. For commands such as `sudo -v` or `sudo su`, enter the password at the prompt in the command input field and press Enter. Tab completes in the remote shell; Ctrl+C interrupts its foreground command; Ctrl+D closes the shell; Up/Down send remote history keys when the input is empty. Interactive input is not added to command history. Sudo works only when the remote account is authorized. The Stop button terminates the remote process group; turn off “Interactive terminal” to return to one-shot command mode.
 
 Plugins are trusted Node code and do not gain an independent security sandbox from this proposal workflow.
 
@@ -244,7 +244,7 @@ Open **Trajectory** for tasks, steps, tools, proposals, suggested commands, erro
 
 Compaction summarizes older history into structured context for later requests. It runs automatically as history approaches the model budget, and an over-budget request attempts compaction before rejection. It may also be triggered manually. It is not ZIP compression and does not guarantee less disk usage or lossless recall. Reopen source files and task history for precise facts.
 
-**ZIP file actions**: In the workspace file menu, choose **Compress to ZIP** to create a sibling archive named after the selected file or folder (for example, `reports/` creates `reports.zip`). An existing destination is reported as a conflict and is never overwritten. Choose **Extract to new folder** on a workspace `.zip` to extract beside it into a folder named after the archive; extraction is rejected if that folder already exists. References are read-only, so use **Download** to export them; downloading a folder creates a ZIP.
+**Archive actions**: The project file menu can create sibling ZIP, TAR, TAR.GZ, TAR.BZ2, or TAR.XZ archives; an existing destination is never overwritten. ZIP, TAR, TAR.GZ/TGZ, TAR.BZ2/TBZ2, TAR.XZ/TXZ, and standalone GZ/BZ2/XZ streams can be extracted to a sibling folder, with a numbered name chosen when needed. Extraction is limited to 1,000 archive entries and 64 MiB of expanded data and rejects absolute/traversal paths, links, and special files. Writable references support the same actions; read-only references cannot be modified. The built-in **Archive Tools** plugin exposes the same bounded workspace compression and extraction to the assistant.
 
 Project memory, helper scripts, and intermediate artifacts live under the workspace's `.cache/aide/`, isolated per project. Requested deliverables still go to their specified locations. At most 4,000 characters of project memory are injected into context.
 

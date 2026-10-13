@@ -150,6 +150,7 @@ COPY scripts/office /opt/aide/office-scripts
 COPY plugins/browser-control /opt/aide/builtin-plugins/browser-control
 COPY plugins/computer-control /opt/aide/builtin-plugins/computer-control
 COPY plugins/markdown-history /opt/aide/builtin-plugins/markdown-history
+COPY plugins/archive-tools /opt/aide/builtin-plugins/archive-tools
 ENV AIDE_BUILTIN_PLUGINS=/opt/aide/builtin-plugins
 
 # 3) 业务二进制（随每次代码/前端改动变化）——最易失效的层放在最后

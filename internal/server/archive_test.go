@@ -1,10 +1,14 @@
 package server
 
 import (
+	"archive/tar"
 	"archive/zip"
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"io"
 	"net/url"
+	"path"
 	"strings"
 	"testing"
 )
@@ -146,5 +150,60 @@ func TestReadArchiveFilesDeduplicatesNormalizedPaths(t *testing.T) {
 	data := makeZIP(t, map[string]string{"folder/file.txt": "one", `folder\file.txt`: "two"})
 	if _, err := readArchiveFiles(data); err == nil || !strings.Contains(err.Error(), "重复路径") {
 		t.Fatalf("canonical duplicate paths: got %v, want duplicate-path error", err)
+	}
+}
+
+func TestWorkspaceArchiveFormatsRoundTrip(t *testing.T) {
+	a := testApp(t)
+	for i, format := range []string{"zip", "tar", "tar.gz", "tar.bz2", "tar.xz"} {
+		source := fmt.Sprintf("format-%d.txt", i)
+		if err := a.workspace.WriteFile(source, []byte("archive round trip: "+format), 0644); err != nil {
+			t.Fatal(err)
+		}
+		w := request(a, "POST", "/api/file/archive", map[string]string{"root": "workspace", "path": source, "format": format})
+		requireStatus(t, w, 200)
+		var created map[string]string
+		if err := json.Unmarshal(w.Body.Bytes(), &created); err != nil {
+			t.Fatal(err)
+		}
+		w = request(a, "POST", "/api/file/extract", map[string]string{"root": "workspace", "path": created["path"]})
+		requireStatus(t, w, 200)
+		var extracted map[string]string
+		if err := json.Unmarshal(w.Body.Bytes(), &extracted); err != nil {
+			t.Fatal(err)
+		}
+		got, err := a.workspace.ReadFile(path.Join(extracted["path"], source))
+		if err != nil || string(got) != "archive round trip: "+format {
+			t.Fatalf("%s round trip = %q, %v", format, got, err)
+		}
+	}
+}
+
+func TestTarExtractionRejectsTraversalAndLinks(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		typ  byte
+	}{
+		{name: "../escape.txt", typ: tar.TypeReg},
+		{name: "link", typ: tar.TypeSymlink},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var raw bytes.Buffer
+			tw := tar.NewWriter(&raw)
+			h := &tar.Header{Name: tc.name, Typeflag: tc.typ, Mode: 0644, Size: 3, Linkname: "../outside"}
+			if err := tw.WriteHeader(h); err != nil {
+				t.Fatal(err)
+			}
+			if tc.typ == tar.TypeReg {
+				_, _ = tw.Write([]byte("bad"))
+			}
+			if err := tw.Close(); err != nil {
+				t.Fatal(err)
+			}
+			files, err := readTarArchive(bytes.NewReader(raw.Bytes()))
+			if err == nil || files != nil {
+				t.Fatalf("unsafe TAR accepted: files=%#v err=%v", files, err)
+			}
+		})
 	}
 }

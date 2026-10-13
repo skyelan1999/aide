@@ -118,7 +118,7 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 | POST | `/api/command` | 命令执行，NDJSON 输出 |
 | POST | `/api/config/export`、`/api/config/import` | 配置备份导出/导入（信封 `aide-config-backup`，可选含密钥/语音历史） |
 | POST | `/api/sessions/{id}/runs/{run}/retry`、`/answer`、`/queue/{index}` | 重试/回答澄清问题/排队项改删升级 |
-| GET / POST | `/api/file/raw`、`/api/file/download`、`/api/file/archive`、`/api/file/extract`、`/api/file/rename` | 原始文件查看、文件/目录下载与 ZIP 导出、在工作目录或可写引用原路径旁创建 ZIP、安全解压到 ZIP 同级新目录、重命名；归档创建拒绝覆盖同名文件；download/raw 允许 `access_token` 供浏览器资源请求使用 |
+| GET / POST | `/api/file/raw`、`/api/file/download`、`/api/file/archive`、`/api/file/extract`、`/api/file/rename` | 原始文件查看、文件/目录下载与 ZIP 导出、创建 ZIP/TAR/TAR.GZ/TAR.BZ2/TAR.XZ、解压受支持归档到同级新目录、重命名；归档创建拒绝覆盖同名文件，解压限 1,000 条与 64 MiB 并拒绝危险路径、链接和特殊文件；download/raw 允许 `access_token` 供浏览器资源请求使用 |
 | PATCH / DELETE | `/api/sessions/{id}`、`/api/sessions/archived/all` | 改 pinned/archived/删除/清空归档 |
 | POST | `/api/persona/*`（unlock/save/reset/GET）、`/api/personas/*`（GET/active）、`/api/personality/*`（GET/PUT/reset/evolve） | 性格加解密、多人格切换、性格演化 |
 | POST | `/api/voice-filter`、`/api/voice-narrate` | 小秘研判 send/ignore/standby、双向朗读 |

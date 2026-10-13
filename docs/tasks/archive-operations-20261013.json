@@ -1,0 +1,85 @@
+{
+  "id": "archive-operations-20261013",
+  "request": "需要在插件中和项目文件中支持各类压缩文件的解压和压缩",
+  "baseline": "3af5e3b61032c54e151e9bea721cdd1cf5d1481f",
+  "initial_status": "M docs/en/user-guide.md\n M docs/user-guide.md\n M internal/server/command.go\n M internal/server/command_input_test.go\n M internal/server/web/app.js\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n?? docs/tasks/ssh-command-panel-interactive-20261013.json",
+  "acceptance": [
+    "项目文件面板可把工作区和可读写引用中的文件/文件夹压缩为 ZIP、TAR、TAR.GZ/TGZ、TAR.BZ2/TBZ2、TAR.XZ/TXZ；同名目标不覆盖。",
+    "项目文件面板可安全解压 ZIP、TAR 及上述 gzip/bzip2/xz tar 变体，并可解开独立 GZ/BZ2/XZ 文件流；目标目录自动避让重名。",
+    "内置压缩工具插件向 AI 提供压缩和解压工具，复用服务器文件路径、来源权限、大小/条目限制与路径穿越防护。",
+    "Safari 系统浏览器中验证格式选择、解压操作与结果刷新；Go 相关回归验证正常归档与危险条目拒绝。"
+  ],
+  "scope": [
+    "internal/server/files.go 与归档专用实现/测试",
+    "internal/server/source_file_actions.go",
+    "internal/server/plugins.go 与 workflow.go",
+    "Dockerfile",
+    "plugins/archive-tools/**",
+    "internal/server/web/app.js、index.html、style.css、locales/en.js",
+    "docs/user-guide.md、docs/en/user-guide.md、docs/architecture.md、docs/tasks/archive-operations-20261013.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "范围明确为工作区及可读写引用的文件面板操作，以及面向 AI 的内置压缩工具；支持常见 ZIP、TAR 与 gzip/bzip2/xz TAR 变体，并解开独立 GZ/BZ2/XZ 流。",
+      "evidence": [
+        "用户原始需求：需要在插件中和项目文件中支持各类压缩文件的解压和压缩。",
+        "acceptance 与 scope 明确格式、同名避让、权限、安全边界和系统 Safari 验收目标。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用文件面板的来源权限和有界归档处理；格式由界面选择、解压按扩展名识别；插件通过受控服务端执行器处理，不拼接 shell 命令。归档成员拒绝穿越路径、链接及特殊文件，并对展开字节数、条目数和处理时间设限。无持久化 schema 变更。",
+      "evidence": [
+        "代码链路复核：internal/server/files.go、internal/server/source_file_actions.go、internal/server/plugins.go、internal/server/workflow.go、internal/server/archive_formats.go。",
+        "回滚方式：撤销本任务提交并重建 Aide 镜像；本功能不迁移既有数据。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "项目文件和可读写引用共用 ZIP/TAR/TAR.GZ/TAR.BZ2/TAR.XZ 压缩入口及 ZIP/TAR 家族、独立 GZ/BZ2/XZ 解压；增加内置压缩文件 AI 插件，强制限定当前工作区与现有文件/解压安全边界。",
+      "evidence": [
+        "内置 archive-tools 插件随 Docker 镜像注册，暴露 archive_compress/archive_extract 两项原生工具。",
+        "运行时 Go 标准库处理 ZIP、TAR、GZIP、BZIP2；隔离 Python 标准库处理 XZ 编解码。"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Go 定向安全/格式回归、隔离 API 格式往返与独立压缩流解压均通过；用户在 Safari 处理候选证书提示后，已在系统 Safari 完成文件面板压缩、重名安全、解压与内容读回。",
+      "evidence": [
+        "golang:1.26-bookworm 容器 gofmt 完成；镜像构建中的 go vet ./... 与 CGO_ENABLED=0 go build ./cmd/aide 成功。",
+        "go test ./internal/server -run 'TestWorkspaceArchiveFormatsRoundTrip|TestTarExtractionRejectsTraversalAndLinks|Test.*Archive' -count=1：通过。",
+        "隔离候选 /api/plugins 返回 archive-tools enabled=true；TAR.GZ 创建后解到 archive-check.txt (2)，内容读回一致。",
+        "隔离候选 API 解压独立 .gz/.bz2/.xz 三个文件流，生成内容读回一致。",
+        "2026-10-13：在系统 Safari 登录隔离候选 http://127.0.0.1:18531；项目文件右键菜单显示 ZIP、TAR、TAR.GZ、TAR.BZ2、TAR.XZ 五种压缩格式，且不支持格式时解压入口禁用。",
+        "2026-10-13：将隔离验收目录 archive-check.txt (2) 压缩为 archive-check.txt (2).zip，文件列表自动出现新归档；将其解压为 archive-check.txt (2) (2)，自动避让已存在目标；逐层打开后读回 archive acceptance fixture。",
+        "2026-10-13：在 golang:1.26-bookworm 容器重跑 TestWorkspaceDownloadAndArchive、TestWorkspaceArchiveFormatsRoundTrip、TestReadArchiveFilesRejectsPortablePathTraversal、TestReadArchiveFilesDeduplicatesNormalizedPaths、TestCommandInputForwardsExactBytesToActivePTY、TestSSHInteractiveSessionStartsLoginShellAndFeedsFirstCommand，均通过。",
+        "Safari 的该候选此前显示‘此连接非私人连接’；用户按提示自行处理后，登录页正常加载。认证令牌只通过本机系统剪贴板输入，没有写入聊天。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英文用户指南、架构插件/API 索引已更新，并明确支持的格式、安全限制和插件能力。",
+      "evidence": [
+        "docs/user-guide.md 和 docs/en/user-guide.md 列出 ZIP/TAR 家族与独立 GZ/BZ2/XZ 解压。",
+        "docs/architecture.md 登记 archive-tools 插件。"
+      ]
+    },
+    "cleanup": {
+      "status": "blocked",
+      "summary": "临时验收目录含本任务生成的归档夹具；本轮确认专用候选仍在运行，按既定安全门槛暂不删除其数据。待候选停止后再清理 /private/tmp/aide-archive-acceptance。",
+      "evidence": [
+        "2026-10-13：docker ps --filter name=aide-archive-acceptance-aide-1 显示候选仍为 Up (healthy)；临时工作区 /private/tmp/aide-archive-acceptance 仍存在。",
+        "未接触 Safari 中 localhost:9999 的现有会话与草稿。"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户此前阶段性验证完成后及时 push 的明确指示；本次浏览器验收完成后，针对本任务文件范围提交并推送，不纳入同一工作区的 SSH 命令面板改动。",
+  "rollback": "本功能无持久化 schema 变更。撤销归档功能代码提交后重建 Aide 镜像即可回滚；不需要迁移用户数据。清理验收容器前先确认专用容器已停止，再删除 /private/tmp/aide-archive-acceptance 测试目录。",
+  "handoff": "Safari 与 Go/API 验收已通过。本阶段变更按用户指示单独推送；随后继续其他任务。归档验收临时夹具仍在运行中的专用候选中，候选停止后再删除 /private/tmp/aide-archive-acceptance；不要清理运行中容器仍使用的数据。"
+}

@@ -478,13 +478,14 @@ func (a *App) createWorkspaceArchive(w http.ResponseWriter, r *http.Request) {
 		Root   string `json:"root"`
 		Source string `json:"source"`
 		Path   string `json:"path"`
+		Format string `json:"format"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		fail(w, 400, errors.New("请求格式错误"))
 		return
 	}
 	if body.Source != "" {
-		a.sourceFileAction(w, body.Root, body.Source, body.Path, "archive", "")
+		a.sourceFileActionFormat(w, body.Root, body.Source, body.Path, "archive", "", body.Format)
 		return
 	}
 	if body.Root != "workspace" || validArchivePath(body.Path) != nil {
@@ -504,12 +505,17 @@ func (a *App) createWorkspaceArchive(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	data, err := encodeArchive(items)
+	format, err := normalizeArchiveFormat(body.Format)
+	if err != nil {
+		fail(w, 400, err)
+		return
+	}
+	data, err := encodeArchiveFormat(items, format)
 	if err != nil {
 		fail(w, 500, err)
 		return
 	}
-	dest := body.Path + ".zip"
+	dest := archiveNameForFormat(body.Path, format)
 	if a.workspaceMode() == "ssh" {
 		remote := a.workspaceRemotePath(dest)
 		if a.sftpExists(remote) {
@@ -670,8 +676,8 @@ func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
 		a.sourceFileAction(w, body.Root, body.Source, body.Path, "extract", "")
 		return
 	}
-	if body.Root != "workspace" || validArchivePath(body.Path) != nil || !strings.HasSuffix(strings.ToLower(body.Path), ".zip") {
-		fail(w, 400, errors.New("需要工作目录中的 ZIP 文件"))
+	if body.Root != "workspace" || validArchivePath(body.Path) != nil || archiveExtension(body.Path) == "" {
+		fail(w, 400, errors.New("需要工作目录中的受支持归档文件"))
 		return
 	}
 	b, err := a.downloadRaw(body.Path, Source{}, false)
@@ -679,12 +685,12 @@ func (a *App) extractArchive(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	files, err := readArchiveFiles(b)
+	files, err := readArchiveFilesForPath(b, body.Path)
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
-	destBase := path.Join(path.Dir(body.Path), strings.TrimSuffix(path.Base(body.Path), path.Ext(body.Path)))
+	destBase := path.Join(path.Dir(body.Path), archiveDestinationName(body.Path))
 	if err := validArchivePath(destBase); err != nil {
 		fail(w, 400, err)
 		return
@@ -1395,7 +1401,7 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 		".json": "application/json", ".txt": "text/plain; charset=utf-8",
 		".csv": "text/csv; charset=utf-8", ".tsv": "text/tab-separated-values; charset=utf-8",
 		".md": "text/markdown; charset=utf-8", ".drawio": "application/xml; charset=utf-8",
-		".stl": "model/stl",
+		".stl":  "model/stl",
 		".step": "application/step", ".stp": "application/step",
 	}[ext]
 	if ct == "" {

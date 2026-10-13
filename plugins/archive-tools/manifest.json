@@ -1,0 +1,19 @@
+{
+  "id": "archive-tools",
+  "name": "压缩文件",
+  "description": "在当前工作区创建和安全解压 ZIP、TAR、TAR.GZ、TAR.BZ2、TAR.XZ 归档。",
+  "version": "1.0.0",
+  "author": "aide",
+  "main": "index.js",
+  "enabled": true,
+  "tools": [
+    {"name": "archive_compress", "kind": "write", "readonlyDefault": false},
+    {"name": "archive_extract", "kind": "write", "readonlyDefault": false}
+  ],
+  "settingsSchema": {
+    "type": "object",
+    "title": "压缩文件工具参数",
+    "properties": {},
+    "additionalProperties": true
+  }
+}

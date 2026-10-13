@@ -36,14 +36,14 @@ const (
 var pluginIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-]{1,64}$`)
 
 type PluginManifest struct {
-	ID          string         `json:"id"`
-	Name        string         `json:"name"`
-	Description string         `json:"description,omitempty"`
-	Version     string         `json:"version,omitempty"`
-	Author      string         `json:"author,omitempty"`
-	Main        string         `json:"main"`
-	Enabled     bool           `json:"enabled"`
-	Daemon      bool           `json:"daemon,omitempty"` // 协议 v1.2：常驻守护插件
+	ID             string         `json:"id"`
+	Name           string         `json:"name"`
+	Description    string         `json:"description,omitempty"`
+	Version        string         `json:"version,omitempty"`
+	Author         string         `json:"author,omitempty"`
+	Main           string         `json:"main"`
+	Enabled        bool           `json:"enabled"`
+	Daemon         bool           `json:"daemon,omitempty"` // 协议 v1.2：常驻守护插件
 	Settings       map[string]any `json:"settings,omitempty"`
 	SettingsSchema map[string]any `json:"settingsSchema,omitempty"`
 	InstalledAt    string         `json:"installedAt"`
@@ -77,7 +77,7 @@ func (a *App) installBundledControlPlugins(bundlePath string) error {
 	if bundlePath == "" {
 		return nil
 	}
-	for _, id := range []string{"browser-control", "computer-control", "markdown-history"} {
+	for _, id := range []string{"browser-control", "computer-control", "markdown-history", "archive-tools"} {
 		found := false
 		for _, removed := range a.pluginRegistry.RemovedBuiltins {
 			if removed == id {
@@ -129,7 +129,7 @@ func (a *App) installBundledControlPlugins(bundlePath string) error {
 			if statErr != nil || !entry.Mode().IsRegular() {
 				return fmt.Errorf("control plugin entry is not a regular file: %s", id)
 			}
-			manifest.Enabled = id == "markdown-history"
+			manifest.Enabled = id == "markdown-history" || id == "archive-tools"
 			a.pluginRegistry.Plugins = append(a.pluginRegistry.Plugins, manifest)
 			if err := a.savePluginRegistry(); err != nil {
 				a.pluginRegistry.Plugins = a.pluginRegistry.Plugins[:len(a.pluginRegistry.Plugins)-1]
@@ -143,7 +143,7 @@ func (a *App) installBundledControlPlugins(bundlePath string) error {
 		if err != nil {
 			return err
 		}
-		manifest.Enabled = id == "markdown-history"
+		manifest.Enabled = id == "markdown-history" || id == "archive-tools"
 		manifest.InstalledAt = time.Now().UTC().Format(time.RFC3339Nano)
 		err = os.WriteFile(filepath.Join(stage, "index.js"), code, 0644)
 		if err == nil {
@@ -749,7 +749,7 @@ func (a *App) deletePlugin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pluginsPath := a.pluginsPath
-	if id == "browser-control" || id == "computer-control" || id == "markdown-history" {
+	if id == "browser-control" || id == "computer-control" || id == "markdown-history" || id == "archive-tools" {
 		a.pluginRegistry.RemovedBuiltins = append(a.pluginRegistry.RemovedBuiltins, id)
 	}
 	if err := a.savePluginRegistry(); err != nil {

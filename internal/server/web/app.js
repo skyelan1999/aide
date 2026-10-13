@@ -946,7 +946,7 @@ function openStream(run) {
     if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (_) { return; }
     showContextCompaction(d);
-    if (d.phase === 'completed' || d.phase === 'failed') refreshSessionSoon();
+    if (isTerminalContextCompaction(d.phase)) refreshSessionSoon();
   });
   es.addEventListener('clarification', () => { if (state.stream !== es) return; const ph = ensureRunPhase(run.id); const waitingRun = state.session?.runs?.find(r => r.id === run.id); if (waitingRun) waitingRun.status = 'awaiting_clarification'; ph.status = 'awaiting_clarification'; ph.stalled = false; renderRunStatus(run.id); avatarRunFeedback(run.id, 'awaiting_clarification'); refreshSessionSoon(); });
   es.addEventListener('clarification-resolved', () => {
@@ -2407,29 +2407,40 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   const copyTo = el('button', 'file-ctx-item', t('复制到…') + (multiple ? ' (' + selectedPaths.length + ')' : ''));
   const moveTo = el('button', 'file-ctx-item', t('移动到…') + (multiple ? ' (' + selectedPaths.length + ')' : ''));
   const download = el('button', 'file-ctx-item', t('下载'));
-  const compress = el('button', 'file-ctx-item', t('压缩为 ZIP'));
+  const compressButtons = [
+    ['zip', '压缩为 ZIP'], ['tar', '压缩为 TAR'], ['tar.gz', '压缩为 TAR.GZ'],
+    ['tar.bz2', '压缩为 TAR.BZ2'], ['tar.xz', '压缩为 TAR.XZ'],
+  ].map(([format, label]) => {
+    const button = el('button', 'file-ctx-item', t(label));
+    button.onclick = async (e) => {
+      e.stopPropagation(); closeFileContextMenu();
+      try {
+        const out = await api('/file/archive', { method: 'POST', body: JSON.stringify({ ...target, path: file.path, format }) });
+        toast(t('已压缩到：') + out.path); await loadFiles();
+      } catch (err) { toast(err.message || String(err)); }
+    };
+    return button;
+  });
   const extract = el('button', 'file-ctx-item', t('解压到新文件夹'));
   const ren = el('button', 'file-ctx-item', t('重命名'));
   const props = el('button', 'file-ctx-item', t('属性'));
   const del = el('button', 'file-ctx-item danger-item', t('删除'));
   if (!currentFileTarget().writable) { moveTo.disabled = true; moveTo.title = t('只读引用不能移动'); }
-  if (multiple) [download, compress, extract, ren, props, del].forEach(x => { x.disabled = true; x.title = t('此操作仅支持单个文件'); });
-  if (!writable) [compress, ren, del, extract].forEach(x => { x.classList.add('disabled'); x.disabled = true; x.title = t('引用为只读'); });
-  if (!file.dir && isZipPath(file.path)) { compress.classList.add('disabled'); compress.disabled = true; compress.title = t('不能重复压缩 ZIP 文件'); }
-  if (!isZipPath(file.path) || file.dir) { extract.classList.add('disabled'); extract.disabled = true; extract.title = t('仅支持 ZIP 文件'); }
+  if (multiple) [download, ...compressButtons, extract, ren, props, del].forEach(x => { x.disabled = true; x.title = t('此操作仅支持单个文件'); });
+  if (!writable) [...compressButtons, ren, del, extract].forEach(x => { x.classList.add('disabled'); x.disabled = true; x.title = t('引用为只读'); });
+  if (!isSupportedArchivePath(file.path) || file.dir) { extract.classList.add('disabled'); extract.disabled = true; extract.title = t('不支持此归档格式'); }
   download.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); downloadFileEntry(file, !!file.dir, target); };
   copyTo.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); openFileTransferPicker('copy', selectedPaths, target); };
   moveTo.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); openFileTransferPicker('move', selectedPaths, target); };
-  compress.onclick = async (e) => { e.stopPropagation(); closeFileContextMenu(); try { const out = await api('/file/archive', { method: 'POST', body: JSON.stringify({ ...target, path: file.path }) }); toast(t('已压缩到：') + out.path); await loadFiles(); } catch (err) { toast(err.message || String(err)); } };
   extract.onclick = async (e) => { e.stopPropagation(); closeFileContextMenu(); try { const out = await api('/file/extract', { method: 'POST', body: JSON.stringify({ ...target, path: file.path }) }); toast(t('已解压到：') + out.path); loadFiles(); } catch (err) { toast(err.message || String(err)); } };
   ren.onclick = (e) => { e.stopPropagation(); closeFileContextMenu(); selectFileRow(rowBtn, file.path, state.fileEntries.indexOf(file)); beginInlineRename(rowBtn, nameSpan, file, target); };
   props.onclick = action(async (e) => { e.stopPropagation(); closeFileContextMenu(); await showFileProperties(file, target); });
   del.onclick = action(async (e) => { e.stopPropagation(); closeFileContextMenu(); await deleteFileEntry(file, target); });
-  m.append(attach, copyTo, moveTo, download, compress, extract, ren, props, del);
+  m.append(attach, copyTo, moveTo, download, ...compressButtons, extract, ren, props, del);
   document.body.append(m);
   fileCtxMenuEl = m;
   m.style.left = Math.max(8, Math.min(ev.clientX, innerWidth - 198)) + 'px';
-  m.style.top = Math.max(8, Math.min(ev.clientY, innerHeight - 340)) + 'px';
+  m.style.top = Math.max(8, Math.min(ev.clientY, innerHeight - Math.min(m.offsetHeight, innerHeight - 16) - 8)) + 'px';
   setTimeout(() => { document.addEventListener('click', closeFileContextMenu); document.addEventListener('keydown', onFileCtxKey); }, 0);
 }
 
@@ -2455,6 +2466,7 @@ function isStlPath(path) { return /\.stl$/i.test(effectiveFileTypePath(path)); }
 function isStepPath(path) { return /\.(step|stp)$/i.test(effectiveFileTypePath(path)); }
 function isPdfPath(path) { return /\.pdf$/i.test(effectiveFileTypePath(path)); }
 function isZipPath(path) { return /\.zip$/i.test(effectiveFileTypePath(path)); }
+function isSupportedArchivePath(path) { return /\.(zip|tar|tgz|tbz|tbz2|txz|gz|bz2|xz)$/i.test(effectiveFileTypePath(path)) || /\.tar\.(gz|bz2|xz)$/i.test(effectiveFileTypePath(path)); }
 function isDelimitedPath(path) { return /\.(csv|tsv)$/i.test(effectiveFileTypePath(path)); }
 function isXlsxPath(path) { return /\.xlsx$/i.test(effectiveFileTypePath(path)); }
 function isSqlitePath(path) { return /\.(db|sqlite|sqlite3)$/i.test(effectiveFileTypePath(path)); }
@@ -5565,6 +5577,9 @@ function renderContextMeter(data, isDraft) {
 }
 const contextCompactionTimers = new Map();
 const contextCompactionElapsedTimers = new Map();
+function isTerminalContextCompaction(phase) {
+  return phase === 'completed' || phase === 'failed' || phase === 'cancelled';
+}
 function startContextCompactionWatch(sessionID) {
   let stopped = false;
   let inFlight = null;
@@ -5576,7 +5591,7 @@ function startContextCompactionWatch(sessionID) {
       try {
         const data = await api(`/sessions/${sessionID}/compaction-progress`);
         if (data?.event?.phase) {
-          const terminal = data.event.phase === 'completed' || data.event.phase === 'failed' || data.event.phase === 'cancelled';
+          const terminal = isTerminalContextCompaction(data.event.phase);
           if (!terminal || Number(data.updatedAt || 0) >= watchStartedAt) showContextCompaction(data.event);
         }
       } catch (_) { /* Status polling must never block or fail task submission. */ }
@@ -5610,7 +5625,7 @@ function showContextCompaction(event) {
     clearInterval(contextCompactionElapsedTimers.get(targetSession));
     contextCompactionElapsedTimers.delete(targetSession);
   }
-  if (event.phase === 'completed' || event.phase === 'failed' || event.phase === 'cancelled') {
+  if (isTerminalContextCompaction(event.phase)) {
     const stamp = record.at;
     const timer = setTimeout(() => {
       if (state.contextCompactions.get(targetSession)?.at !== stamp) return;
@@ -5967,9 +5982,13 @@ const wsState = { config: null, browse: { field: '', root: 'workspace', dir: '.'
 async function loadWorkspaceConfig() { wsState.config = await api('/workspace-config'); renderWorkspaceSummary(); }
 function renderWorkspaceSummary() {
   const w = wsState.config?.workspace || {};
+  const sshMode = w.mode === 'ssh';
   $('workspace-summary').textContent = w.mode === 'ssh' ? (w.host || t("远程")) + ' · SSH/SFTP' : t("{0} · 本地", state.config?.workspaceDisplay || '/workspace');
   $('command-mode').textContent = w.mode === 'ssh' ? 'SSH · ' + (w.host || t("未配置主机")) : t("本地");
-  $('command-interactive').disabled = w.mode !== 'ssh';
+  const interactive = $('command-interactive');
+  interactive.disabled = !sshMode;
+  if (wsState.commandMode !== (sshMode ? 'ssh' : 'local')) interactive.checked = sshMode;
+  wsState.commandMode = sshMode ? 'ssh' : 'local';
 }
 function setWsMode(mode) {
   document.querySelectorAll('.ws-seg:not(.ws-auth) [data-mode]').forEach(b => { const on = b.dataset.mode === mode; b.classList.toggle('active', on); b.setAttribute('aria-pressed', String(on)); });

@@ -13,6 +13,10 @@ import (
 // Source actions use the same bounded adapters as file transfers. A source ID
 // never silently falls back to the workspace, and read-only metadata is allowed.
 func (a *App) sourceFileAction(w http.ResponseWriter, root, id, p, operation, newName string) {
+	a.sourceFileActionFormat(w, root, id, p, operation, newName, "")
+}
+
+func (a *App) sourceFileActionFormat(w http.ResponseWriter, root, id, p, operation, newName, format string) {
 	if root != "" && root != "context" || id == "workspace" || validTransferPath(p) != nil {
 		fail(w, 400, errors.New("引用来源或路径无效"))
 		return
@@ -80,7 +84,12 @@ func (a *App) sourceFileAction(w http.ResponseWriter, root, id, p, operation, ne
 			return
 		}
 	case "archive":
-		dest = p + ".zip"
+		format, e := normalizeArchiveFormat(format)
+		if e != nil {
+			fail(w, 400, e)
+			return
+		}
+		dest = archiveNameForFormat(p, format)
 		if _, e := a.transferEntry(loc, dest); e == nil {
 			fail(w, 409, errors.New("压缩目标已存在"))
 			return
@@ -93,7 +102,7 @@ func (a *App) sourceFileAction(w http.ResponseWriter, root, id, p, operation, ne
 			fail(w, 400, e)
 			return
 		}
-		data, e := encodeArchive(items)
+		data, e := encodeArchiveFormat(items, format)
 		if e != nil {
 			fail(w, 500, e)
 			return
@@ -108,8 +117,8 @@ func (a *App) sourceFileAction(w http.ResponseWriter, root, id, p, operation, ne
 			return
 		}
 	case "extract":
-		if !strings.HasSuffix(strings.ToLower(p), ".zip") || entry["dir"] == true {
-			fail(w, 400, errors.New("仅支持 ZIP 文件"))
+		if archiveExtension(p) == "" || entry["dir"] == true {
+			fail(w, 400, errors.New("不支持此归档格式"))
 			return
 		}
 		data, e := a.downloadRaw(p, loc.source, true)
@@ -117,12 +126,12 @@ func (a *App) sourceFileAction(w http.ResponseWriter, root, id, p, operation, ne
 			fail(w, 400, e)
 			return
 		}
-		files, e := readArchiveFiles(data)
+		files, e := readArchiveFilesForPath(data, p)
 		if e != nil {
 			fail(w, 400, e)
 			return
 		}
-		base := strings.TrimSuffix(p, path.Ext(p))
+		base := archiveBaseForPath(p)
 		// Fail on a listing/connection error instead of treating it as absence.
 		for n := 0; n < 1000; n++ {
 			candidate := base
