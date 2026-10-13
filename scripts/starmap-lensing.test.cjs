@@ -47,6 +47,9 @@ for (const image of images) {
  assert.ok(Math.abs(signedTheta - 9 / signedTheta - 2) < 1e-10);
  assert.ok(Number.isFinite(image.magnification) && image.magnification >= 0);
 }
+assert.equal(lens.visiblePointMassImages(2, 0, 3, 100, 120).length, 0, 'a source must not be suppressed if every optical image is outside the visible lens field');
+assert.equal(lens.visiblePointMassImages(2, 0, 3, 0, 100).length, 2);
+assert.equal(lens.visiblePointMassImages(2, 0, 3, 4, 100).length, 1, 'the event horizon can occult one image branch while leaving the other visible');
 const deflection = lens.deflection(4, 0, 3);
 assert.ok(Math.abs(deflection.x - 2.25) < 1e-12);
 assert.equal(deflection.y, 0);

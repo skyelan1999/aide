@@ -39,7 +39,7 @@
     },
     "verification": {
       "status": "partial",
-      "summary": "本轮扩展的语法检查、辐射传递/引力/星门/路径/场景/覆盖专项检查与 diff 格式检查通过；修复 Safari 首次验收发现的星点绘制 chosen 未定义错误。start.command 在隔离 Compose 项目 aide-physics-optics-20261013 重建 18542 候选成功（默认 AIDE_RUN_TESTS=0，仅 go vet+build）。系统 Safari 加载新版脚本后，控制台不再出现星图绘制异常，缓存的 1711 节点 / 2417 连接星域中恒星、关系与星云图层可见。完整刷新期间 /updates 返回 503（扫描繁忙），页面保留本地缓存图谱；因此实时最新快照同步尚未通过。近景相机缩放、透镜、行星表面和星门近景尚未取得可视证据。",
+      "summary": "新增透镜可见像裁剪与重叠透镜所有权逻辑，避免没有幸存像的背景星被隐藏，并避免同一背景星被多个黑洞重复成像。Node 透镜公式与视场裁剪专项检查、starmap.js 语法检查、diff 格式检查通过。start.command 重建隔离候选 aide-physics-optics-20261013；Safari 系统浏览器重新加载 https://localhost:18542/starmap.html，验证更新后 1711 节点 / 3121 连接星图可交互渲染，并切换到 800 节点引用星域查看。当前数据和相机视角下未能取得可辨识黑洞/透镜成像的视觉特写，因此不宣称近景透镜表现通过。真实天体标定与长时间帧率仍未验证。",
       "evidence": [
         "node --check internal/server/web/starmap.js && node --check internal/server/web/starmap-physics.js",
         "node scripts/starmap-lensing.test.cjs",
@@ -51,14 +51,19 @@
         "node scripts/starmap-coverage-state.test.cjs",
         "git diff --check",
         "start.command · isolated Compose project aide-physics-optics-20261013 · rebuilt at https://127.0.0.1:18542 · AIDE_RUN_TESTS=0",
-        "Safari system browser · https://localhost:18542/starmap.html · latest starmap.js loaded; no drawCosmos/chosen ReferenceError; cached graph visibly rendered at 1711 stars / 2417 connections",
-        "Safari Web Inspector · /api/knowledge-map/updates returned HTTP 503 while scan gate was busy; cache preserved; live refresh not yet verified"
+        "Safari system browser · https://localhost:18542/starmap.html · latest starmap.js loaded; no drawCosmos/chosen ReferenceError; cached graph visibly rendered at 1711 stars / 3121 connections",
+        "Safari Web Inspector · /api/knowledge-map/updates returned HTTP 503 while scan gate was busy; cache preserved; live refresh not yet verified",
+        "node scripts/starmap-lensing.test.cjs · 可见像视场裁剪与单支路遮挡通过",
+        "node --check internal/server/web/starmap.js && git diff --check",
+        "start.command · 隔离 Compose 项目 aide-physics-optics-20261013 · rebuilt at https://127.0.0.1:18542",
+        "Safari system browser · https://localhost:18542/starmap.html · updated script loaded; rendered 1711 nodes / 3121 connections; reference scope showed 800 nodes"
       ],
       "not_verified": [
-      "Safari 近景相机缩放交互及行星椭圆轨道/逐像素 Lambert 着色视觉结果",
-      "隔离候选的实时最新快照同步（当前 /updates 返回扫描繁忙 503）",
+        "Safari 近景相机缩放交互及行星椭圆轨道/逐像素 Lambert 着色视觉结果",
+        "隔离候选的实时最新快照同步（当前 /updates 返回扫描繁忙 503）",
         "真实天体质量、距离、光谱与观测数据校准",
-        "大图谱长时间动画帧率与持续更新负载"
+        "大图谱长时间动画帧率与持续更新负载",
+        "当前星域中黑洞吸积盘及多个透镜重叠的可视近景效果；当前数据与相机视角未给出可辨识黑洞特写"
       ]
     },
     "documentation": {
@@ -70,8 +75,8 @@
       ]
     },
     "release": {
-      "status": "pass",
-      "summary": "基础物理引擎 b1091df 及本轮辐射传递/绘制修复 df94544 已推送 origin/main。Safari 已核实更新代码渲染缓存星图；最新快照同步在扫描繁忙 503 时保留缓存。近景透镜/行星/星门的浏览器验收仍未完成。"
+      "status": "partial",
+      "summary": "基础物理引擎 b1091df 及本轮辐射传递/绘制修复 df94544 已推送 origin/main。Safari 已核实更新代码渲染缓存星图；最新快照同步在扫描繁忙 503 时保留缓存。近景透镜/行星/星门的浏览器验收仍未完成。 本轮透镜裁剪修复已通过专项检查并在隔离 Safari 候选加载；由于可视黑洞近景未取得，本阶段先记录为部分验收。"
     }
   },
   "rollback": "revert the isolated starmap physics engine commit",

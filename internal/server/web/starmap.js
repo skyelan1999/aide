@@ -177,7 +177,7 @@ let structure=null,layerState=null,nodeByID=new Map(),edgeAdjacency=new Map(),re
 let searchQuery='',resultIDs=new Set(),callDepth='all',skyCache=null;
 const glowCache=new Map(),cloudCache=new Map(),tau=Math.PI*2;
 let cosmos=null,cosmicEnabled=true,cosmicScene=null,cosmicKey='',cosmicRecords=[],cosmicLinks=[],cosmicSelected='',cosmicHover='',cosmicFlight=null;
-let cosmicWheel=0,cosmicWheelLast=0,cosmicGate=0,cosmicScopeKey='',cosmicStars=[],cosmicStarEdges=[],cosmicCallState=null,cosmicGates=[],cosmicFocusID='',cosmicAimX=0,cosmicAimY=0,cosmicLocalHits=[],cosmicLensHits=[],cosmicLensedStarIDs=new Set();
+let cosmicWheel=0,cosmicWheelLast=0,cosmicGate=0,cosmicScopeKey='',cosmicStars=[],cosmicStarEdges=[],cosmicCallState=null,cosmicGates=[],cosmicFocusID='',cosmicAimX=0,cosmicAimY=0,cosmicLocalHits=[],cosmicLensHits=[],cosmicLensedStarIDs=new Set(),cosmicLensOwnerByStar=new Map();
 const cosmicTextureCache=new Map(),cosmicSceneCache=new Map();
 const panelAnimations=new Map(),motionMedia=matchMedia('(prefers-reduced-motion: reduce)');
 // Read the same appearance contract as the workbench, once per change. Canvas
@@ -466,8 +466,8 @@ function drawBlackHoleLensOverlay(hole,stars,edges,fade=1){
  // Nearby real stars produce faint calculated images. Their original stars
  // remain the sole selectable objects, so optical duplicates cannot mislead
  // search, counts, relationships, or click targets.
- for(const star of stars||[]){const q=star.p;if(!q?.onScreen||star.z<=hole.record.z)continue;const thetaE=cosmicEinsteinRadius(hole,star.z),maxBeta=thetaE*3.2,betaX=q.x-p.x,betaY=q.y-p.y,beta=Math.hypot(betaX,betaY);if(!thetaE||beta>maxBeta)continue;const fade=1-beta/maxBeta;
-  cosmicLensedStarIDs.add(star.n.id);for(const image of lensing.pointMassImages(betaX,betaY,thetaE)){const imageR=Math.hypot(image.x,image.y);if(imageR<shadowR*1.08||imageR>fieldRadius*1.25)continue;const magnification=Math.min(12,image.magnification),alpha=clamp(1-Math.exp(-.16*magnification),.08,.72),baseRadius=Math.max(.55,Math.min(1.7,Math.sqrt(star.n.connectionCount||1)*.22)),imageRadius=Math.min(4.2,baseRadius*Math.sqrt(magnification)),x=p.x+image.x,y=p.y+image.y;ctx.globalAlpha=fade*alpha;ctx.fillStyle=star.n.starColor||mapPalette.star;ctx.beginPath();ctx.arc(x,y,imageRadius,0,tau);ctx.fill();cosmicLensHits.push({star,x,y,radius:Math.max(6,imageRadius+3)});}
+ for(const star of stars||[]){const q=star.p;if(!q?.onScreen||star.z<=hole.record.z||cosmicLensOwnerByStar.get(star.n.id)!==hole)continue;const thetaE=cosmicEinsteinRadius(hole,star.z),maxBeta=thetaE*3.2,betaX=q.x-p.x,betaY=q.y-p.y,beta=Math.hypot(betaX,betaY);if(!thetaE||beta>maxBeta)continue;const fade=1-beta/maxBeta;
+  const images=lensing.visiblePointMassImages(betaX,betaY,thetaE,shadowR*1.08,fieldRadius*1.25);if(!images.length)continue;cosmicLensedStarIDs.add(star.n.id);for(const image of images){const magnification=Math.min(12,image.magnification),alpha=clamp(1-Math.exp(-.16*magnification),.08,.72),baseRadius=Math.max(.55,Math.min(1.7,Math.sqrt(star.n.connectionCount||1)*.22)),imageRadius=Math.min(4.2,baseRadius*Math.sqrt(magnification)),x=p.x+image.x,y=p.y+image.y;ctx.globalAlpha=fade*alpha;ctx.fillStyle=star.n.starColor||mapPalette.star;ctx.beginPath();ctx.arc(x,y,imageRadius,0,tau);ctx.fill();cosmicLensHits.push({star,x,y,radius:Math.max(6,imageRadius+3)});}
  }
  ctx.restore();ctx.globalCompositeOperation='source-over';
 }
@@ -522,7 +522,19 @@ function cosmicEinsteinRadius(hole,sourceDepth){
  // projection distance. The scale factor tunes this fictional scene only.
  return physics.projectedEinsteinRadius(cosmicLensMassLength(hole),dl,ds,Math.min(width,height)*zoom);
 }
-function cosmicLensAffectsStar(star,holes){return holes.some(hole=>{if(!hole.record.p.onScreen)return false;const einstein=cosmicEinsteinRadius(hole,star.z);return einstein>0&&Math.hypot(star.p.x-hole.record.p.x,star.p.y-hole.record.p.y)<einstein*3.2;});}
+function cosmicLensAffectsStar(star){return cosmicLensOwnerByStar.has(star.n.id);}
+function assignCosmicLensOwners(holes,stars){
+ cosmicLensOwnerByStar=new Map();const lensing=window.AideStarLensing,physics=window.AideCosmicPhysics;if(!lensing||!physics)return;
+ for(const star of stars||[]){if(!star.p?.onScreen)continue;let owner=null,bestScore=0;
+  for(const hole of holes||[]){const p=hole.record?.p;if(!p?.onScreen||star.z<=hole.record.z)continue;const thetaE=cosmicEinsteinRadius(hole,star.z),betaX=star.p.x-p.x,betaY=star.p.y-p.y,beta=Math.hypot(betaX,betaY);if(!thetaE||beta>thetaE*3.2)continue;
+   const field=cosmicEinsteinRadius(hole,hole.record.z+.25)*3.2,shadow=Math.max(.55,cosmicProjectedShadowRadius(hole)),images=lensing.visiblePointMassImages(betaX,betaY,thetaE,shadow*1.08,field*1.25);if(!images.length)continue;
+   // Overlapping lenses are resolved by the strongest visible total
+   // magnification. A source is suppressed only when an optical image survives.
+   const score=images.reduce((sum,image)=>sum+image.magnification,0);if(score>bestScore){bestScore=score;owner=hole;}
+  }
+  if(owner)cosmicLensOwnerByStar.set(star.n.id,owner);
+ }
+}
 function cosmicLensAffectsEdge(edge,holes){return holes.some(hole=>{if(!hole.record.p.onScreen||Math.min(edge.a?.depth||0,edge.b?.depth||0)<=hole.record.z)return false;const depth=((edge.a?.depth||0)+(edge.b?.depth||0))*.5,einstein=cosmicEinsteinRadius(hole,depth);return einstein>0&&cosmicLensDistance(hole.record.p,edge.a,edge.b)<einstein*3.2;});}
 function buildCosmicDustIndex(zones,cx,cy){
  const cellSize=128,cells=new Map(),add=(zone,x,y)=>{const key=x+':'+y;if(!cells.has(key))cells.set(key,[]);cells.get(key).push(zone);};
@@ -576,7 +588,7 @@ function drawCosmos(now,t){
   ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=fade*Math.min(.28,.025+visible*.22);ctx.translate(x,y);ctx.rotate(-.32);ctx.drawImage(zone.texture,-size/2,-size*.36,size,size*.72);ctx.restore();}
  for(const r of cosmicRecords){const p=r.p;p.x=cx+(r.x+cosmicAimX+yaw*.22+drift)*width*zoom/r.z;p.y=cy+(r.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/r.z;p.onScreen=p.x>-100&&p.x<width+100&&p.y>-100&&p.y<height+100;r.radius=r.group.nodeID?10:Math.max(25,r.spread*width*zoom/r.z*.65);if(r.texture&&p.onScreen){const size=Math.max(110,r.spread*width*3.6*zoom/r.z);ctx.save();ctx.globalAlpha=fade*.13;ctx.translate(p.x,p.y);ctx.rotate(-.32+r.phase*.13);ctx.drawImage(r.texture,-size/2,-size/2,size,size);ctx.restore();}}
  for(const star of cosmicStars){const p=star.p;p.x=cx+(star.x+cosmicAimX+yaw*.22+drift)*width*zoom/star.z;p.y=cy+(star.y+cosmicAimY+(pitch-.1)*.18)*height*zoom/star.z;p.onScreen=p.x>-30&&p.x<width+30&&p.y>-30&&p.y<height+30;if(star.owner.group.nodeID){star.owner.p.x=p.x;star.owner.p.y=p.y;star.owner.p.onScreen=p.onScreen;}}
- const lensHoles=(data?.blackHoles||[]).filter(hole=>hole.record.p.onScreen),dustIndex=buildCosmicDustIndex(data?.gas,cx,cy);cosmicLensHits=[];cosmicLensedStarIDs=new Set();
+ const lensHoles=(data?.blackHoles||[]).filter(hole=>hole.record.p.onScreen),dustIndex=buildCosmicDustIndex(data?.gas,cx,cy);cosmicLensHits=[];cosmicLensedStarIDs=new Set();assignCosmicLensOwners(lensHoles,cosmicStars);
  infrared.draw(ctx,cosmicStars.map(star=>({x:star.p.x,y:star.p.y,degree:star.n.connectionCount||0,distance:star.z,scale:zoom/star.z,birth:birthAlpha(star.n,now)})),width,height,now);
  const calls=structure?.entry('calls');cosmicCallState=selected&&calls?.levels.has(selected.id)?structure.describe(selected.id,'calls'):calls;
  for(const batch of data?.batches||[]){if(cosmicStars.length>140&&batch.hierarchy)continue;const band=batch.energyBand||0,edgeBins=Array.from({length:5},()=>({edges:[],transmission:0}));for(const e of batch.edges){if(!edgeInView(e)||cosmicLensAffectsEdge(e,lensHoles)||selected&&(e.from===selected.id||e.to===selected.id))continue;if(birthAlpha(nodeByID.get(e.from)||{},now)<.97||birthAlpha(nodeByID.get(e.to)||{},now)<.97)continue;const depth=((e.a.depth||0)+(e.b.depth||0))*.5,transmission=cosmicDustTransmission((e.a.x+e.b.x)*.5,(e.a.y+e.b.y)*.5,depth,dustIndex),bin=Math.max(0,Math.min(4,Math.floor(transmission*5))),bucket=edgeBins[bin];bucket.edges.push(e);bucket.transmission+=transmission;}
@@ -590,7 +602,7 @@ function drawCosmos(now,t){
   const anchor=cosmicStars.find(star=>star.n.id===gate.anchorNodeID);if(!anchor?.p.onScreen)continue;
   drawCosmicGate(gate,anchor.p.x,anchor.p.y,zoom,fade);
  }
- for(const star of cosmicStars){const {n,p}=star;if(!p.onScreen||cosmicLensAffectsStar(star,lensHoles))continue;const participating=!!calls?.levels.has(n.id),depth=participating?cosmicCallState?.levels.get(n.id):null,known=Number.isFinite(depth),incoming=!!cosmicCallState?.incoming.has(n.id),chosen=selected?.id===n.id,dustTransmission=cosmicDustTransmission(p.x,p.y,star.z,dustIndex),opticalIntensity=(window.AideStarOptics?.apparentIntensity(n.connectionCount,star.z)||1)*dustTransmission;
+ for(const star of cosmicStars){const {n,p}=star;if(!p.onScreen||cosmicLensAffectsStar(star))continue;const participating=!!calls?.levels.has(n.id),depth=participating?cosmicCallState?.levels.get(n.id):null,known=Number.isFinite(depth),incoming=!!cosmicCallState?.incoming.has(n.id),chosen=selected?.id===n.id,dustTransmission=cosmicDustTransmission(p.x,p.y,star.z,dustIndex),opticalIntensity=(window.AideStarOptics?.apparentIntensity(n.connectionCount,star.z)||1)*dustTransmission;
   const visual=stellarVisual(n,known?depth:null,chosen,incoming),magnification=1+Math.max(0,zoom-1)*.72,color=visual.highlight&&!mapPalette.highContrast?(mapPalette.light?'#356f9e':'#d8edff'):n.starColor,radius=visual.radius*magnification,halo=visual.halo*Math.sqrt(magnification),match=n.match,alpha=searchQuery&&!match&&!chosen?.18:visual.alpha;
   const birth=birthAlpha(n,now),bloomStrength=Math.min(1,n.stellarStrength||0),bloomAlpha=chosen?.42:visual.highlight?.32:.045+bloomStrength*.22;
   // Screen blending gives overlapping sources a bounded display response:
