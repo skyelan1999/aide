@@ -100,6 +100,15 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
  // two established stellar systems. These are navigational affordances, not
  // a claim that the indexed relationship is a physical wormhole.
  for(const [id,path] of paths){const system=path.find(group=>group.depth===6);if(system)systemByNode.set(id,system);}
+ // In the story model, each system's available stellar energy follows the
+ // distinct indexed relationships of its real member stars. Log scaling keeps
+ // a single high-degree node from overwhelming a whole system.
+ const systemResourceRaw=new Map();for(const system of new Set(systemByNode.values())){
+  let total=0;for(const id of system.members){const node=byID.get(id);total+=Math.log2(1+(node?.connectionCount||0));}
+  systemResourceRaw.set(system.key,total);
+ }
+ let maxSystemResource=1;for(const value of systemResourceRaw.values())maxSystemResource=Math.max(maxSystemResource,value);
+ for(const system of new Set(systemByNode.values()))system.resourceStrength=Math.sqrt((systemResourceRaw.get(system.key)||0)/maxSystemResource);
  for(const edge of validEdges){if(['contains','defines'].includes(edge.kind))continue;const from=systemByNode.get(edge.from),to=systemByNode.get(edge.to);if(!from||!to||from.key===to.key)continue;
   const a=byID.get(edge.from),b=byID.get(edge.to),dx=(b?.x||0)-(a?.x||0),dy=(b?.y||0)-(a?.y||0),length=Math.hypot(dx,dy)||1;
   for(const [owner,target,nodeID,vx,vy] of [[from,to,edge.from,dx/length,dy/length],[to,from,edge.to,-dx/length,-dy/length]]){
@@ -109,6 +118,14 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
   }
  }
  for(const [ownerKey,gates] of gatesBySystem)for(const gate of gates.values()){
+  const ownerResource=byKey.get(ownerKey)?.resourceStrength||0,targetResource=byKey.get(gate.targetKey)?.resourceStrength||0;
+  const routeStrength=Math.min(1,Math.log2(gate.count+1)/4);
+  // Both systems must contribute. The weaker endpoint caps usable capacity;
+  // a geometric blend models route stability without implying real physics.
+  gate.ownerResource=ownerResource;gate.targetResource=targetResource;
+  gate.stability=Math.cbrt(ownerResource*targetResource*routeStrength);
+  gate.capacity=Math.min(ownerResource,targetResource)*routeStrength;
+  gate.brightness=Math.sqrt(gate.stability*gate.capacity);
   let directionLength=Math.hypot(gate.directionX,gate.directionY);
   if(directionLength<1e-6){const center=key=>{const members=byKey.get(key)?.members||[];let x=0,y=0,count=0;for(const id of members){const n=byID.get(id);if(Number.isFinite(n?.x)&&Number.isFinite(n?.y)){x+=n.x;y+=n.y;count++;}}return count?{x:x/count,y:y/count}:null;},a=center(ownerKey),b=center(gate.targetKey);
    if(a&&b){gate.directionX=b.x-a.x;gate.directionY=b.y-a.y;directionLength=Math.hypot(gate.directionX,gate.directionY);}}

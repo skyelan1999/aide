@@ -324,6 +324,17 @@ body:has(#ai-toggle[aria-expanded=true]) .ai-panel { top:54vh; }
 .cosmic-eyebrow { color:var(--map-quiet);font-size:8px;letter-spacing:2.4px;opacity:.75; }
 #cosmic-title { margin:8px 0 5px;font-size:13px;line-height:1.5;font-weight:460;letter-spacing:1px;color:var(--map-muted); }
 #cosmic-meta { display:block;color:var(--map-quiet);font-size:10px;line-height:1.7; }
+/* The observatory canvas is intentionally deep black in every normal theme;
+   keep its floating labels luminous and legible above the nebula. */
+.intro h1 { color:#edf3f8;text-shadow:0 2px 18px #03070dcc; }
+.intro p { color:#b7c5d2;text-shadow:0 1px 12px #03070dcc; }
+.intro .eyebrow { color:#9ec3dc;text-shadow:0 1px 10px #03070dcc; }
+#cosmic-title { color:#e5edf5;text-shadow:0 1px 12px #03070dcc; }
+#cosmic-meta { color:#aebdca;text-shadow:0 1px 10px #03070dcc; }
+.cosmic-eyebrow { color:#93b8d1;text-shadow:0 1px 10px #03070dcc;opacity:1; }
+footer,#status { color:#bdc9d4;text-shadow:0 1px 12px #03070dcc; }
+footer>span { color:#bdc9d4; }
+footer .rule { background:#91a9bb; }
 @media(max-width:1100px) and (min-width:721px) {
  #cosmic-nav { left:calc(var(--map-gutter) + var(--map-dock) + 20px);right:var(--map-gutter); }
  body:has(#detail:not([hidden])) #cosmic-nav { opacity:0; }
@@ -363,6 +374,7 @@ html[data-motion=reduced] #cosmic-nav { transition:none; }
 @media(forced-colors:active) {
  :root { --map-canvas-bg:Canvas;--map-canvas-text:CanvasText;--map-canvas-star:CanvasText;--map-canvas-nebula:CanvasText; }
  #cosmic-title,#cosmic-meta,.cosmic-eyebrow { color:CanvasText; }
+ .intro h1,.intro p,.intro .eyebrow,footer,#status { color:CanvasText;text-shadow:none; }
 }
 
 /* Header logbook: the index evidence belongs to this sky's observing tools. */
