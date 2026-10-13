@@ -19,12 +19,13 @@
     function storeRecovery(){
       clearTimeout(recoveryTimer);const c={...getContext()},gen=generation,key=identity(c);
       if(identity(c)!==activeKey||!c.path||blocked?.()||!window.AideContinuity?.enabled()||!scope(c))return;
-      AideContinuity.writeTab(scope(c),'file-view',identity(c),{hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft}).catch(e=>{if(current(gen,key))error?.(e.message);});
+      const valid=()=>current(gen,key)&&!blocked?.();
+      AideContinuity.writeTab(scope(c),'file-view',identity(c),{hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft},{active:valid}).catch(e=>{if(valid())error?.(e.message);});
       if(!writable())return;
       const dirty=editor.value!==baseline;
       if(!dirty)return;
-      const operation=AideContinuity.writeFileDraft(scope(c),identity(c),{text:editor.value,hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft});
-      operation.catch(e=>{if(!current(gen,key))return;status.textContent=t('本地草稿保存失败');error?.(e.message);});
+      const operation=AideContinuity.writeFileDraft(scope(c),identity(c),{text:editor.value,hash:c.hash,start:editor.selectionStart,end:editor.selectionEnd,scrollTop:editor.scrollTop,scrollLeft:editor.scrollLeft},valid);
+      operation.catch(e=>{if(!valid())return;status.textContent=t('本地草稿保存失败');error?.(e.message);});
     }
     async function restoreView(){
       const c={...getContext()},gen=generation,key=identity(c);

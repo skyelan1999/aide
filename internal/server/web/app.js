@@ -13,26 +13,30 @@ function updateFavicon() {
 updateFavicon();
 if (window.aideUI?.subscribe) window.aideUI.subscribe(updateFavicon);
 const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, thinkingOpen: new Set(), streamRetryAt: 0, queueMode: false, approvalPolicy: null, approvalModeBusy: false, autoScroll: true, jumpAnimating: false, contextCompactions: new Map() };
-let recoveryReady=false,recoveryTimer=0,recoveryNotice=false;
+let recoveryReady=false,recoveryTimer=0,recoveryNotice=false,chatRecoveryEpoch=0;
 let workspaceSceneRestoring=false;
 const recoveryScope=()=>state.config?.workspaceId||'';
 const chatDraftKey=(id,scope=recoveryScope())=>JSON.stringify([scope,id]);
 function recoveryFailure(error){if(!recoveryNotice){recoveryNotice=true;toast(t('本地草稿保存失败')+' · '+error.message);}}
+function cancelPendingRecoveryWrites(){chatRecoveryEpoch++;clearTimeout(recoveryTimer);window.AideContinuity?.abortPendingWrites?.();}
 function persistWorkspaceScene(overrides={}){
  if(!recoveryReady||lockScreen.locked||workspaceSceneRestoring)return;
+ const scope=recoveryScope(),epoch=chatRecoveryEpoch,active=()=>epoch===chatRecoveryEpoch&&!lockScreen.locked&&scope===recoveryScope();
  const scene={session:state.session?.id||'',root:state.root,source:state.source,dir:state.dir,fileDirs:state.fileDirs,
   openFile:$('editor-dialog')?.open&&state.file?{root:state.file.root,source:state.file.source||'',path:state.file.path}:null,...overrides};
- return window.AideContinuity?.writeTab(recoveryScope(),'scene','workbench',scene).catch(recoveryFailure);
+ return window.AideContinuity?.writeTab(scope,'scene','workbench',scene,{active}).catch(recoveryFailure);
 }
 function persistChatDraft(strict=false){
  if(!recoveryReady||lockScreen.locked)return;
  const scope=recoveryScope(),id=state.session?.id||'';
+ const epoch=chatRecoveryEpoch,active=()=>epoch===chatRecoveryEpoch&&!lockScreen.locked&&scope===recoveryScope()&&id===(state.session?.id||'');
+ if(!active())return;
  const failed=e=>{recoveryFailure(e);if(strict===true)throw e;};
  const draft={text:$('prompt').value,attachments:state.attachments.map(a=>({...a})),start:$('prompt').selectionStart,end:$('prompt').selectionEnd,scroll:$('prompt').scrollTop};
  sessionDrafts.set(chatDraftKey(id),draft);
  return Promise.all([
-  window.AideContinuity?.writeTab(scope,'chat',id,draft).catch(failed),
-  window.AideContinuity?.writeTab(scope,'scene','workbench',{session:id,root:state.root,source:state.source,dir:state.dir,fileDirs:state.fileDirs,openFile:$('editor-dialog')?.open&&state.file?{root:state.file.root,source:state.file.source||'',path:state.file.path}:null}).catch(failed)
+  window.AideContinuity?.writeTab(scope,'chat',id,draft,{active}).catch(failed),
+  window.AideContinuity?.writeTab(scope,'scene','workbench',{session:id,root:state.root,source:state.source,dir:state.dir,fileDirs:state.fileDirs,openFile:$('editor-dialog')?.open&&state.file?{root:state.file.root,source:state.file.source||'',path:state.file.path}:null},{active}).catch(failed)
  ]);
 }
 function restoreChatSelection(draft){const prompt=$('prompt');if(!draft)return;const start=Math.min(prompt.value.length,Math.max(0,Number(draft.start)||0)),end=Math.min(prompt.value.length,Math.max(start,Number(draft.end)||start));prompt.setSelectionRange(start,end);prompt.scrollTop=Math.max(0,Number(draft.scroll)||0);}
@@ -10870,6 +10874,7 @@ function applyLockVisual() {
   if (!state.config || !state.config.hasPassword) return;
   const veil = $('lock-screen');
   if (lockScreen.locked) { refreshLockStatus(); return; }
+  cancelPendingRecoveryWrites();
   lockScreen.locked = true;
   clearAssistantGate();
   syncVoiceAssistantDisplayName();
@@ -10907,6 +10912,7 @@ function showJoiningVeil() {
 /* 升锁入口：立即遮盖，串行持久化并通知其他页面。 */
 function lockScreenNow() {
   if (!state.config || !state.config.hasPassword) return;
+  cancelPendingRecoveryWrites();
   clearAssistantGate(); // #30：锁屏后小秘会话需重新验证密码
   if (typeof LockCluster !== 'undefined') LockCluster.requestLock('manual').catch(e => { $('lock-error').textContent=e.message; });
   else applyLockVisual();

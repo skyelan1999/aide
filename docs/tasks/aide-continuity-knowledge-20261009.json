@@ -3546,6 +3546,27 @@
     "release": "not_run",
     "push": "PASS: implementation commit 62d5b35 is at origin/main."
   },
+  "progress_checkpoint_20261013_followup33": {
+    "status": "implemented_source_verified_browser_pending",
+    "date": "2026-10-13",
+    "completed": [
+      "聊天草稿、文件正文与位置、工作台目录场景、星图镜头/筛选恢复写入均支持有效期/代际校验；锁屏中止本标签尚未提交的 IndexedDB 恢复事务，同标签页同步快照仍保留。",
+      "新增 scripts/continuity-lock-write.test.cjs，覆盖事务中途锁定取消、快照保留、锁后陈旧调用和工作台/星图场景写入守卫；既有星图场景恢复回归同步更新函数提取签名。",
+      "测试已加入 quick profile；更新连续性路线图与验证工作流文档。"
+    ],
+    "remaining": [
+      "需在系统 Safari 实际交互验证主实例锁定、解锁、刷新，以及会话/文件/目录/星图现场恢复；本轮 Safari 9999 当前显示已运行的星图页面，但未操作锁控件，不将其算作本次锁屏修复的浏览器通过证据。",
+      "未重启主服务，避免中断用户现场；向量混合检索实模验收按用户要求暂缓，Windows 验收按用户说明不再列为待办。"
+    ],
+    "verification": [
+      "node --check internal/server/web/app.js、starmap.js、continuity.js、file-autosave.js: PASS",
+      "node scripts/continuity-lock-write.test.cjs: PASS",
+      "node scripts/starmap-workspace-scene.test.cjs: PASS（含相机快照、恢复及重试回归）",
+      "python3 scripts/agent-route.py verify quick: PASS, 44 configured checks, fingerprint d02e66a825491f3958fcb95059b73ce4811828541b4f1ed14a8835075e4f5076, receipt .agent-state/verify-20261013T140048837876Z.log",
+      "git diff --check: PASS"
+    ],
+    "push": "pending checkpoint commit and push; system Safari lock/unlock acceptance remains pending"
+  },
   "progress_checkpoint_20261013_followup32": {
     "status": "partial",
     "date": "2026-10-13",

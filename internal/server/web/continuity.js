@@ -9,24 +9,36 @@
     request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
     request.onblocked=()=>reject(new Error('恢复存储暂不可用'));
   }).catch(error=>{database=null;throw error;}));
-  async function run(mode,operation){const db=await open();return new Promise((resolve,reject)=>{
-    const tx=db.transaction('records',mode),request=operation(tx.objectStore('records'));
-    tx.oncomplete=()=>resolve(request.result);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||new Error('恢复存储事务中断'));
+  const guardedWrites=new Set();
+  function trackGuardedWrite(tx){guardedWrites.add(tx);const done=()=>guardedWrites.delete(tx);tx.addEventListener?.('complete',done,{once:true});tx.addEventListener?.('abort',done,{once:true});}
+  function abortPendingWrites(){for(const tx of guardedWrites){try{tx.abort();}catch(_e){}}guardedWrites.clear();}
+  async function run(mode,operation,active){const db=await open();return new Promise((resolve,reject)=>{
+    if(active&&!active()){reject(new Error('恢复写入已取消'));return;}
+    const tx=db.transaction('records',mode);if(mode==='readwrite')trackGuardedWrite(tx);let request;
+    try{if(active&&!active()){tx.abort();reject(new Error('恢复写入已取消'));return;}request=operation(tx.objectStore('records'));}
+    catch(error){try{tx.abort();}catch(_e){}reject(error);return;}
+    tx.oncomplete=()=>{guardedWrites.delete(tx);if(active&&!active())reject(new Error('恢复写入已取消'));else resolve(request.result);};
+    tx.onerror=()=>{guardedWrites.delete(tx);reject(tx.error);};
+    tx.onabort=()=>{guardedWrites.delete(tx);reject(tx.error||new Error('恢复存储事务中断'));};
   });}
   const key=(scope,kind,id)=>JSON.stringify([scope,kind,id]);
   // Each loaded document owns a branch. Identical restoration keeps the
   // original owner so the next edit cannot overwrite another draft.
   const fileBranch=crypto.randomUUID();
-  async function fileTransaction(scope,id,change){
+  async function fileTransaction(scope,id,change,active){
     const db=await open();return new Promise((resolve,reject)=>{
+      if(active&&!active()){reject(new Error('恢复写入已取消'));return;}
       const tx=db.transaction('records','readwrite'),store=tx.objectStore('records');
+      trackGuardedWrite(tx);
       const request=store.get(key(scope,'file-branches',id));let failure;
-      request.onsuccess=()=>{try{change(store,request.result?.value||[]);}catch(e){failure=e;tx.abort();}};
-      tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(failure||tx.error);tx.onabort=()=>reject(failure||tx.error);
+      request.onsuccess=()=>{if(active&&!active()){failure=new Error('恢复写入已取消');tx.abort();return;}try{change(store,request.result?.value||[]);}catch(e){failure=e;tx.abort();}};
+      tx.oncomplete=()=>{guardedWrites.delete(tx);if(active&&!active())reject(new Error('恢复写入已取消'));else resolve(true);};
+      tx.onerror=()=>{guardedWrites.delete(tx);reject(failure||tx.error);};tx.onabort=()=>{guardedWrites.delete(tx);reject(failure||tx.error||new Error('恢复存储事务中断'));};
     });
   }
-  async function writeFileDraft(scope,id,value){
+  async function writeFileDraft(scope,id,value,active){
     if(!enabled()||!scope)return false;
+    if(active&&!active())return false;
     const serialized=JSON.stringify(value);
     if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
     sessionStorage.setItem(tabKey(scope,'file',id),serialized);
@@ -37,7 +49,7 @@
         throw new Error('此文件恢复草稿已达上限；请保存或逐项忽略旧草稿，当前编辑仅保留在本标签页');
       store.put({key:key(scope,'file-branches',id),value:next,updated:Date.now()});
       store.put({key:key(scope,'file',id),value,updated:Date.now()});
-    });
+    },active);
   }
   async function listFileDrafts(scope,id){
     if(!enabled()||!scope)return [];
@@ -65,16 +77,20 @@
   const chatBranches=new Map();
   const chatBranchFor=(scope,id)=>{const k=key(scope,'chat',id);if(!chatBranches.has(k))chatBranches.set(k,crypto.randomUUID());return chatBranches.get(k);};
   const sameChat=(a,b)=>a?.text===b?.text&&JSON.stringify(a?.attachments||[])===JSON.stringify(b?.attachments||[]);
-  async function chatTransaction(scope,id,change){
+  async function chatTransaction(scope,id,change,active){
     const db=await open();return new Promise((resolve,reject)=>{
-      const tx=db.transaction('records','readwrite'),store=tx.objectStore('records');
+      if(active&&!active()){reject(new Error('恢复写入已取消'));return;}
+      const tx=db.transaction('records','readwrite'),store=tx.objectStore('records');trackGuardedWrite(tx);
       const request=store.get(key(scope,'chat-branches',id));let failure;
-      request.onsuccess=()=>{try{change(store,request.result?.value||[]);}catch(e){failure=e;tx.abort();}};
-      tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(failure||tx.error);tx.onabort=()=>reject(failure||tx.error);
+      request.onsuccess=()=>{if(active&&!active()){failure=new Error('恢复写入已取消');tx.abort();return;}try{change(store,request.result?.value||[]);}catch(e){failure=e;tx.abort();}};
+      tx.oncomplete=()=>{guardedWrites.delete(tx);if(active&&!active())reject(new Error('恢复写入已取消'));else resolve(true);};
+      tx.onerror=()=>{guardedWrites.delete(tx);reject(failure||tx.error);};
+      tx.onabort=()=>{guardedWrites.delete(tx);reject(failure||tx.error||new Error('恢复存储事务中断'));};
     });
   }
-  async function writeChatDraft(scope,id,value){
+  async function writeChatDraft(scope,id,value,active){
     if(!enabled()||!scope)return false;
+    if(active&&!active())return false;
     const serialized=JSON.stringify(value);
     if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
     sessionStorage.setItem(tabKey(scope,'chat',id),serialized);
@@ -87,7 +103,7 @@
         throw new Error('此会话恢复草稿已达上限；当前编辑仅保留在本标签页');
       store.put({key:key(scope,'chat-branches',id),value:next,updated:Date.now()});
       store.put({key:key(scope,'chat',id),value,updated:Date.now()});
-    });
+    },active);
   }
   async function adoptChatDraft(scope,id,draft){
     const k=key(scope,'chat',id),prior=chatBranches.get(k),cacheKey=tabKey(scope,'chat',id),priorCache=sessionStorage.getItem(cacheKey),adopted=JSON.stringify(draft);
@@ -128,10 +144,11 @@
     return true;
   }
   async function read(scope,kind,id){if(!enabled()||!scope)return null;const record=await run('readonly',store=>store.get(key(scope,kind,id)));return record?.value||null;}
-  async function write(scope,kind,id,value){
+  async function write(scope,kind,id,value,active){
     if(!enabled()||!scope)return false;
+    if(active&&!active())return false;
     if(new Blob([JSON.stringify(value)]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
-    await run('readwrite',store=>store.put({key:key(scope,kind,id),value,updated:Date.now()}));return true;
+    await run('readwrite',store=>store.put({key:key(scope,kind,id),value,updated:Date.now()}),active);return true;
   }
   // sessionStorage belongs to a browsing context: even an opener's initial
   // copy becomes independent on the first edit. IndexedDB remains the shared
@@ -151,15 +168,16 @@
     sessionStorage.setItem(tabKey(scope,kind,id),JSON.stringify(value));
     return value;
   }
-  async function writeTab(scope,kind,id,value){
-    if(kind==='chat')return writeChatDraft(scope,id,value);
+  async function writeTab(scope,kind,id,value,{active}={}){
+    if(active&&!active())return false;
+    if(kind==='chat')return writeChatDraft(scope,id,value,active);
     if(!enabled()||!scope)return false;
     const serialized=JSON.stringify(value);
     if(new Blob([serialized]).size>2*1024*1024)throw new Error('本地恢复内容超过 2 MiB，尚未保存草稿');
     // The synchronous tab snapshot survives pagehide even if its IndexedDB
     // transaction has not completed when the browser unloads the document.
     sessionStorage.setItem(tabKey(scope,kind,id),serialized);
-    return write(scope,kind,id,value);
+    return write(scope,kind,id,value,active);
   }
   async function remove(scope,kind,id){if(scope)await run('readwrite',store=>store.delete(key(scope,kind,id)));}
   async function removeMatching(scope,kind,id,text){
@@ -212,7 +230,7 @@
     if(new Blob([JSON.stringify(backup)]).size>64*1024*1024)throw Error('恢复备份超过 64 MiB，请保留现有记录并分批处理');
     return backup;
   }
-  window.AideContinuity={...window.AideRecoveryTransfer?.create({open}),inventory,exportRecovery,enabled,read,write,readTab,writeTab,writeChatDraft,adoptChatDraft,listChatDrafts,dismissChatDraft,sentChatDraft,remove,removeMatching,removeMatchingTab,writeFileDraft,listFileDrafts,dismissFileDraft,savedFileDraft};
+  window.AideContinuity={...window.AideRecoveryTransfer?.create({open}),inventory,exportRecovery,enabled,read,write,readTab,writeTab,writeChatDraft,adoptChatDraft,listChatDrafts,dismissChatDraft,sentChatDraft,remove,removeMatching,removeMatchingTab,writeFileDraft,listFileDrafts,dismissFileDraft,savedFileDraft,abortPendingWrites};
   // Default retention is disabled. Only maintain confirmed undo-backup policy;
   // hidden or locked pages do not purge, and live tab snapshots are untouched.
   if(typeof window.setInterval==='function')window.setInterval(()=>{

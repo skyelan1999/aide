@@ -364,6 +364,10 @@
       ],
       [
         "node",
+        "scripts/continuity-lock-write.test.cjs"
+      ],
+      [
+        "node",
         "scripts/workspace-scene-transition.test.cjs"
       ],
       [

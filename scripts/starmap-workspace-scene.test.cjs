@@ -28,7 +28,7 @@ const sky=vm.createContext({clearTimeout,locked:false,loading:false,recoveryLoad
  currentSources:()=>[{region:'workspace'}],search(){},nodeByID:new Map(),invalidateView(){},refreshView(){},ensureCosmicView(){},
  cosmos:{find:k=>k==='root'||k==='deep'},enterCosmic(k){sky.entered=k},interruptCamera(){sky.cameraTween=null;sky.wheelZoom=null},
  clamp:(v,a,b)=>Math.max(a,Math.min(b,v)),skyFloat:{x:0,y:0},motionReduced:()=>false,syncMotion(){},syncCodeView(){},syncGraphChrome(){},syncCosmicNav(){},redraw(){}});
-vm.runInContext(source.slice(source.indexOf('function persistSkyView(){'),source.indexOf('function scheduleSkyRecovery()')),sky);
+vm.runInContext(source.slice(source.indexOf('function persistSkyView(active=()=>!locked){'),source.indexOf('function scheduleSkyRecovery()')),sky);
 vm.runInContext(source.slice(source.indexOf('function restoreSkyView(value){'),source.indexOf("addEventListener('scroll'")),sky);
 vm.runInContext('persistSkyView()',sky);
 assert.deepEqual(snapshot.camera,{yaw:1.2,pitch:-.25,zoom:2.1});
