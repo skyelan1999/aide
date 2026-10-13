@@ -5,8 +5,17 @@ cd "$(dirname "$0")/.."
 ssh_test_root="$PWD"
 ssh_test_docker="${DOCKER_BIN:-docker}"
 ssh_test_fixture_image="${AIDE_SSH_FIXTURE_IMAGE:-aide-source-fixtures:test}"
-ssh_test_runtime_image="${AIDE_SSH_RUNTIME_IMAGE:-aide:local}"
+ssh_test_runtime_image="${AIDE_SSH_RUNTIME_IMAGE:-golang:1.26-bookworm}"
 ssh_test_repeat="${AIDE_SSH_REPEAT:-2}"
+ssh_test_gomaxprocs="${AIDE_SSH_GOMAXPROCS:-2}"
+ssh_test_goflags="${AIDE_SSH_GOFLAGS:--buildvcs=false -p=1}"
+ssh_test_race="${AIDE_SSH_RACE:-1}"
+if [[ "$ssh_test_race" != 0 && "$ssh_test_race" != 1 ]]; then
+  printf '%s\n' 'AIDE_SSH_RACE must be 0 or 1' >&2
+  exit 2
+fi
+ssh_test_race_flag=""
+if [[ "$ssh_test_race" == 1 ]]; then ssh_test_race_flag="-race"; fi
 if [[ ! "$ssh_test_repeat" =~ ^[1-9][0-9]*$ ]] || (( ssh_test_repeat > 10 )); then
   printf '%s\n' 'AIDE_SSH_REPEAT must be an integer between 1 and 10' >&2
   exit 2
@@ -72,13 +81,13 @@ done
   "$ssh_test_docker" image inspect "$ssh_test_runtime_image" --format '{{.Id}}'
   printf 'source SHA-256:\n'
   cat "$ssh_test_inputs"
-  printf 'real dual-server SSH test; race enabled; repeat=%s; no external network or user data\n' "$ssh_test_repeat"
+  printf 'real dual-server SSH test; race=%s; repeat=%s; no external network or user data\n' "$ssh_test_race" "$ssh_test_repeat"
   "$ssh_test_docker" run --pull=never --rm --name "$ssh_test_client" --user 0:0 --read-only \
     --network "$ssh_test_network" --cap-drop ALL --security-opt no-new-privileges:true \
     --tmpfs /tmp:rw,exec,size=1g --tmpfs /home/aide:rw,size=64m \
     -e AIDE_SSH_FIXTURE_A=ssh-fixture-a -e AIDE_SSH_FIXTURE_B=ssh-fixture-b \
-    -e AIDE_SSH_TEST_ISOLATED=1 -e GOFLAGS=-buildvcs=false -e GOCACHE=/go-cache \
+    -e AIDE_SSH_TEST_ISOLATED=1 -e "GOMAXPROCS=$ssh_test_gomaxprocs" -e "GOFLAGS=$ssh_test_goflags" -e GOCACHE=/go-cache \
     -v aide-ssh-workspace-go-cache:/go-cache -v "$ssh_test_root:/src:ro" -w /src \
     --entrypoint bash "$ssh_test_runtime_image" -c \
-    'mkdir -p /home/aide/.ssh; go test -mod=vendor -race -v ./internal/server -run "^TestSSHLiveWorkspaceAndIndependentSource$" -count="$1" -timeout=8m' fixture "$ssh_test_repeat"
+    'mkdir -p /home/aide/.ssh; go test -mod=vendor $2 -v ./internal/server -run "^TestSSHLiveWorkspaceAndIndependentSource$" -count="$1" -timeout=8m' fixture "$ssh_test_repeat" "$ssh_test_race_flag"
 } 2>&1 | tee "$ssh_test_log"
