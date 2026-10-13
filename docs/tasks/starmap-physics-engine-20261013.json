@@ -63,8 +63,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "本次物理光学修正已在 18542 隔离候选成功重建，并通过 Safari 根场景查看；待将代码与双语文档作为阶段提交推送。黑洞近景视觉与数据校准仍待验收。"
+      "status": "pass",
+      "summary": "代码与双语文档已推送至 origin/main，阶段提交 b1091df。18542 隔离候选构建成功且 Safari 根场景可见；黑洞近景视觉、真实天文数据校准与长时间性能仍待验收。"
     }
   },
   "rollback": "revert the isolated starmap physics engine commit",
