@@ -43,7 +43,7 @@ Go 标准库 HTTP 单体；模型步骤在 goroutine 中执行，文本 token �
 | `knowledge_code.go` / `code_analysis/` | Go／JavaScript／Python AST与静态调用候选 |
 | `knowledge_documents.go` / `document_analysis/` | 文档原文提取、本地TF-IDF RAG与原文指纹回填 |
 | `web/starmap*` | 独立知识星图、自然尺度、代码探索和自动增量绘制；直接进入，无入场过场 |
-| `command.go` | 非交互 shell、NDJSON 输出、超时与取消 |
+| `command.go` | 本地/SSH 命令、NDJSON 输出、超时与取消；SSH 交互 PTY 输入透传原始按键字节 |
 | `persona.go` / `settings_persona_persist` | 性格系统：多人格（activePersona）、AES-256-GCM 密文（personaCiphers）、可演化 personalities、解锁/保存/重置 |
 | `config_backup.go` | 配置备份信封 `aide-config-backup`：导出/导入设置快照、来源与工作区密钥、小秘历史 |
 | `voice_agent.go` | 语音小秘：send/ignore/standby 研判、VoiceHistoryEntry 记录、AES-256-GCM 历史加解密、双向朗读 |

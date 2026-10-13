@@ -3566,8 +3566,28 @@ $('terminal-toggle').onclick = () => {
   else { window.aideExperience?.reopen(terminal); terminal.classList.remove('hidden'); }
   $('terminal-state').textContent = closing ? t("展开 ＋") : t("收起 −");
 };
+async function sendInteractiveTerminalBytes(input) {
+  const sessionID = state.commandSessionID;
+  if (!sessionID) return;
+  const response = await fetch('/api/command/' + encodeURIComponent(sessionID) + '/input', { method: 'POST', headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ input }) });
+  if (!response.ok) throw new Error((await response.json()).error || t('交互终端输入失败'));
+}
 $('command').addEventListener('keydown', event => {
-  if (event.key === 'Enter' && state.commandSessionID) { event.preventDefault(); $('command-form').requestSubmit(); return; }
+  if (state.commandSessionID) {
+    if (event.key === 'Enter') { event.preventDefault(); $('command-form').requestSubmit(); return; }
+    const commandInput = $('command');
+    if (event.key === 'Tab') {
+      event.preventDefault(); const bytes = commandInput.value + '\t'; commandInput.value = '';
+      sendInteractiveTerminalBytes(bytes).catch(error => toast(error.message)); return;
+    }
+    if (event.ctrlKey && ['c','d','z','l'].includes(event.key.toLowerCase())) {
+      event.preventDefault(); const control = { c: '\x03', d: '\x04', z: '\x1a', l: '\x0c' }[event.key.toLowerCase()];
+      commandInput.value = ''; sendInteractiveTerminalBytes(control).catch(error => toast(error.message)); return;
+    }
+    if (!commandInput.value && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+      event.preventDefault(); sendInteractiveTerminalBytes(event.key === 'ArrowUp' ? '\x1b[A' : '\x1b[B').catch(error => toast(error.message)); return;
+    }
+  }
   if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown' || !state.commandHistory.length) return;
   event.preventDefault();
   if (event.key === 'ArrowUp') {
@@ -3583,9 +3603,9 @@ $('command').addEventListener('keydown', event => {
 $('command-form').onsubmit = action(async event => {
   event.preventDefault();
   if (state.commandAbort && state.commandSessionID) {
-    const input = $('command').value; if (!input) return;
+    const input = $('command').value;
     $('command').value = '';
-    await fetch('/api/command/' + encodeURIComponent(state.commandSessionID) + '/input', { method: 'POST', headers: { Authorization: 'Bearer ' + state.token, 'Content-Type': 'application/json' }, body: JSON.stringify({ input }) });
+    await sendInteractiveTerminalBytes(input + '\r');
     return;
   }
   if (state.commandAbort) return; const command = $('command').value.trim(); if (!command) return;
@@ -3605,7 +3625,7 @@ $('command-form').onsubmit = action(async event => {
       let index; while ((index = pending.indexOf('\n')) >= 0) {
         const line = pending.slice(0, index); pending = pending.slice(index + 1); if (!line) continue; const item = JSON.parse(line);
         if (item.type === 'session') state.commandSessionID = item.id;
-        $('terminal-output').textContent += item.type === 'output' ? item.text : item.type === 'session' ? t("\n[交互终端已就绪；输入后按 Enter 发送]\n") : t("\n[退出码 {0} · {1} ms] {2}\n", item.code, item.elapsedMS, item.error || '');
+        $('terminal-output').textContent += item.type === 'output' ? item.text : item.type === 'session' ? t("\n[交互终端已就绪；Enter 发送，Tab 补全，Ctrl+C 中断]\n") : t("\n[退出码 {0} · {1} ms] {2}\n", item.code, item.elapsedMS, item.error || '');
         if ($('terminal-output').textContent.length > 180000) $('terminal-output').textContent = $('terminal-output').textContent.slice(-160000);
         $('terminal-output').scrollTop = $('terminal-output').scrollHeight;
       }

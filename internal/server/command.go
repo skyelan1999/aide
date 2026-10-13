@@ -225,7 +225,9 @@ func (a *App) commandInput(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("交互终端已结束"))
 		return
 	}
-	if _, err := io.WriteString(writer, in.Input+"\n"); err != nil {
+	// The client sends exact terminal bytes: printable text plus CR on Enter,
+	// and control sequences such as Tab or Ctrl+C without an implicit newline.
+	if _, err := io.WriteString(writer, in.Input); err != nil {
 		fail(w, 410, errors.New("交互终端已关闭"))
 		return
 	}

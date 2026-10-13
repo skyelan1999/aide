@@ -232,7 +232,7 @@ In the prompt box, Enter inserts a new line; Shift+Enter sends the message.
 
 Built-in read tools and `run_shell` execute directly: shell commands run in a separate non-interactive sandbox shell with a time limit, output/exit-code reporting, and cancellation (a read-only sandbox allows only read-only commands; dangerous commands are blocked in workspace-write mode). `write_file` creates a proposal for approval. In AI workflow mode, suggested test commands are not executed automatically—insert them into the panel, inspect, then run. The manual command panel supports an optional SSH interactive terminal (PTY); `run_shell` remains non-interactive.
 
-In an SSH workspace, enable “Interactive terminal” to run commands that require a TTY, such as `sudo -v` or `sudo su`. Enter the password at the prompt in the command input field and press Enter. Interactive input is not added to command history. This only works when the remote account is already authorized to use sudo; stopping the command terminates its remote process group.
+In an SSH workspace, enable “Interactive terminal” to run commands that require a TTY, such as `sudo -v` or `sudo su`. Enter the password at the prompt in the command input field and press Enter. Tab sends a completion key, Ctrl+C interrupts the foreground command, Ctrl+D sends EOF, and Up/Down send remote shell history keys when the input is empty. Interactive input is not added to command history. This only works when the remote account is already authorized to use sudo; stopping the command terminates its remote process group.
 
 Plugins are trusted Node code and do not gain an independent security sandbox from this proposal workflow.
 

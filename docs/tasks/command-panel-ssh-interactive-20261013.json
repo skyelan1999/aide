@@ -1,0 +1,84 @@
+{
+  "id": "command-panel-ssh-interactive-20261013",
+  "request": "下面的命令面板按不了sudo su也按不了tab补全在ssh连接下",
+  "baseline": "eafa526361e686715f065bf3a9e451b669d92e40",
+  "initial_status": "",
+  "acceptance": [
+    "SSH 交互 PTY 通过命令面板支持 sudo 提示交互；普通行输入以 Enter 结束。",
+    "交互模式下 Tab 将当前行与补全键发给远端；不隐式提交新行。",
+    "Ctrl+C、Ctrl+D 等常用终端控制键和空输入时的上下方向键可转发。",
+    "输入安全性维持：仅活动 PTY 接收，输入不进入命令历史；停止与超时仍可关闭会话。",
+    "中英文帮助文字准确，源码和服务端输入透传有验证证据，系统 Safari 验证实际交互。"
+  ],
+  "scope": [
+    "internal/server/command.go",
+    "internal/server/command_input_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/index.html",
+    "docs/architecture.md",
+    "docs/user-guide.md",
+    "docs/en/user-guide.md",
+    "scripts/markdown-template-icons.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "复现路径：SSH 命令面板交互模式可启动 PTY，但 Enter-only 表单不转发 Tab/控制键，服务端还强制追加换行，无法正确驱动 shell 行编辑。",
+      "evidence": [
+        "用户报告：SSH 连接下命令面板不能运行 sudo su，也不能使用 Tab 补全。",
+        "交互终端在界面中要求 Enter 提交，commandInput 在服务端始终追加 LF。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "保留原有输入框：Enter 显式发 CR；Tab 将当前缓冲文字与 HT 作为原始字节送入 PTY 并清空本地输入；支持 Ctrl+C/D/Z/L 与空行方向键；服务端精确透传不加工。",
+      "evidence": [
+        "SSH PTY 使用 io.Pipe 作为 ssh stdin；交互命令前端通过 /api/command/{id}/input 输入。"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "前端转发 Enter/Tab/Ctrl+C-D-Z-L 与空行上下方向键；后端不再改写 PTY 输入字节；英文和中英文用户文档同步，缓存版本已递增。",
+      "evidence": [
+        "internal/server/web/app.js：活动交互 PTY 输入事件处理与原始字节发送。",
+        "internal/server/command.go：commandInput 按请求正文精确写入 PTY。",
+        "internal/server/web/index.html：app.js 与 en.js 缓存版本更新。"
+      ]
+    },
+    "verification": {
+      "status": "partial",
+      "summary": "单元级 PTY 字节透传、Docker 构建与仓库 quick profile 通过；Safari 已打开新版工作台并展开命令面板。当前 Safari 为本地工作区，交互终端复选框禁用，故真实 SSH 的 sudo/Tab 行为尚无浏览器端到端证据。",
+      "evidence": [
+        "Docker: go test -mod=vendor ./internal/server -run 'TestCommandInput' -count=1 => PASS。",
+        "./start.command: aide:local 镜像构建成功并启动本地服务 https://127.0.0.1:9999。",
+        "python3 scripts/agent-route.py verify quick => PASS；fingerprint f74e5c298dcefe5adaa65d0aeee43ccdf93c52e329630f9f6b3d9ca2576360e0。",
+        "Safari localhost:9999：命令面板展开；当前工作区为本地，交互终端复选框 disabled。"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英文用户指南说明交互 PTY 的 Enter、Tab、控制键与远端历史键行为；架构文档补充原始字节透传。",
+      "evidence": [
+        "docs/user-guide.md",
+        "docs/en/user-guide.md",
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "工作树差异仅包含本功能实现、文档、缓存断言及任务记录；git diff --check 通过。",
+      "evidence": [
+        "python3 scripts/agent-route.py verify quick: PASS"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "等待提交并推送。真实 SSH 浏览器验收仍需有 SSH 工作区后补测。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "当前仅修复与本地 Safari 验证；推送沿用用户持续指示：阶段性测完即 push。",
+  "rollback": "单独 revert 本任务提交；后端回退服务端追加 LF 与前端 Enter-only 交互。",
+  "handoff": "待真实 SSH PTY 会话完成 sudo/Tab 交互验收；不使用 SSH 凭据做测试。当前 Safari 是本地工作区，未对用户主机执行 sudo su。"
+}
