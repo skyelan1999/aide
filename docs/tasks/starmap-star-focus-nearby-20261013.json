@@ -66,9 +66,11 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "待创建本任务独立提交并推送 origin/main。",
-      "evidence": []
+      "status": "pass",
+      "summary": "星图功能与验收记录已提交并推送到 origin/main。",
+      "evidence": [
+        "commit e1ac200 已推送：30033f0..e1ac200 main -> main。"
+      ]
     }
   },
   "release_authorization": "推送沿用用户持续指示：阶段性验证后及时 push。",
