@@ -3197,6 +3197,6 @@
       "release": "No formal release or version bump."
     },
     "release": "not_run",
-    "push": "Push the SSH command-panel implementation and its partial acceptance record as a focused checkpoint."
+    "push": "PASS: commit 6d26623 Improve SSH command panel interactivity pushed to origin/main; unrelated plugin_builtin_test.go and test_context_compaction_ui.cjs changes remain unstaged."
   }
 }

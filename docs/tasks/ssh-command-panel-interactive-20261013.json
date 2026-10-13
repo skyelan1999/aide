@@ -18,12 +18,16 @@
     "requirements": {
       "status": "pass",
       "summary": "SSH 面板原先默认单次命令，PTY 可选；首条输入时 Tab 尚无远端 PTY 会话，sudo 密码和后续 Shell 状态也无法顺畅连续交互。",
-      "evidence": ["internal/server/web/app.js 根据显式复选框才请求 interactive PTY；internal/server/command.go 将复选框输入直接作为单次远端命令执行。"]
+      "evidence": [
+        "internal/server/web/app.js 根据显式复选框才请求 interactive PTY；internal/server/command.go 将复选框输入直接作为单次远端命令执行。"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "SSH 模式切换时默认打开交互终端；PTY 启动远端登录 Shell，把第一次提交的命令作为 stdin 首行写入；后续命令和控制键继续复用活动 PTY。",
-      "evidence": ["单次模式请求与本地模式逻辑维持原路径。"]
+      "evidence": [
+        "单次模式请求与本地模式逻辑维持原路径。"
+      ]
     },
     "implementation": {
       "status": "pass",
@@ -51,10 +55,26 @@
         "docs/en/user-guide.md：对应英文说明同样覆盖持续 Shell、sudo、Tab、Ctrl+C/D、历史与停止行为。"
       ]
     },
-    "cleanup": {"status": "pass", "summary": "本轮只使用临时 Docker 测试容器；未配置 SSH 主机，未连接或更改用户远端数据。", "evidence": ["测试容器退出后自动移除；本地工具链镜像保留供后续 Go 回归复用。"]},
-    "release": {"status": "pending", "summary": "", "evidence": []}
+    "cleanup": {
+      "status": "pass",
+      "summary": "本轮只使用临时 Docker 测试容器；未配置 SSH 主机，未连接或更改用户远端数据。",
+      "evidence": [
+        "测试容器退出后自动移除；本地工具链镜像保留供后续 Go 回归复用。"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
   },
   "release_authorization": "用户持续要求阶段性测试后及时推送；仅推送本任务相关文件。",
   "rollback": "单独 revert 本任务提交。",
-  "handoff": "需在 Safari 配置且连通 SSH 工作区后，实际验证 sudo 密码提示、Tab 补全、连续命令、Ctrl+C/Ctrl+D 与退出行为；再补充该主机的浏览器证据。"
+  "handoff": "需在 Safari 配置且连通 SSH 工作区后，实际验证 sudo 密码提示、Tab 补全、连续命令、Ctrl+C/Ctrl+D 与退出行为；再补充该主机的浏览器证据。",
+  "push": {
+    "status": "pass",
+    "commit": "6d26623",
+    "remote": "origin/main",
+    "summary": "已推送实现、定向测试及部分 Safari 验收记录；真实 SSH 主机交互仍待用户环境复测。"
+  }
 }
