@@ -320,6 +320,10 @@
       ],
       [
         "node",
+        "scripts/attachment-source-label.test.cjs"
+      ],
+      [
+        "node",
         "scripts/markdown-history-writable.test.cjs"
       ],
       [

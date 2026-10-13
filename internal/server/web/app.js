@@ -2097,7 +2097,18 @@ function renderAttachments() {
   scheduleChatRecovery();
   $('attachment-chips').replaceChildren();
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
-  state.attachments.forEach((a, index) => { const chip = el('span', 'chip', (a.directory ? '▱ ' : '') + (a.root === 'context' || a.root === 'source' ? t("参考 · {0}", a.path) : a.path)); const b = el('button', '', '×'); b.setAttribute('aria-label', t("移除附件 {0}", a.path)); b.onclick = () => { state.attachments.splice(index, 1); renderAttachments(); }; chip.append(b); $('attachment-chips').append(chip); });
+  state.attachments.forEach((a, index) => {
+    const sourceName = a.source ? (state.sources.find(source => source.id === a.source)?.name || a.source) : '';
+    const label = sourceName
+      ? t('引用源 · {0} · {1}', sourceName, a.path)
+      : (a.root === 'context' || a.root === 'source' ? t('参考 · {0}', a.path) : a.path);
+    const chip = el('span', 'chip', (a.directory ? '▱ ' : '') + label);
+    chip.title = label;
+    const b = el('button', '', '×');
+    b.setAttribute('aria-label', t("移除附件 {0}", label));
+    b.onclick = () => { state.attachments.splice(index, 1); renderAttachments(); };
+    chip.append(b); $('attachment-chips').append(chip);
+  });
 }
 async function loadFiles(auto) {
   const scope=recoveryScope(),locationKey=fileLocationKey()+':'+state.dir,searchKey=state.fileSearch;

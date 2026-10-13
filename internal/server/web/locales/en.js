@@ -1782,6 +1782,7 @@ window.aideEnglish = {
   "删除来源 {0}": "Remove source {0}",
   "历史消息 {0} 条": "{0} history messages",
   "参考 · {0}": "Reference · {0}",
+  "引用源 · {0} · {1}": "Source · {0} · {1}",
   "工具定义 {0} 个": "{0} tool definitions",
   "已切换为手动策略 · {0}": "Switched to manual strategy · {0}",
   "已压缩 {0} 条历史消息": "Compacted {0} history messages",
