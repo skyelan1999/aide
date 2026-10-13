@@ -3322,8 +3322,9 @@
     ],
     "verification": {
       "source": "系统 Safari https://localhost:9999/；合成验收会话 #46。",
-      "live_observation": "上下文卡显示“摘要处理中 · 分段整理 1/1 · 4 条早期消息 · 当前约 13.3K · 已用时 13 分 34 秒”；活动上下文估算 22.7K/64K；同页助手任务显示长时间无响应。",
+      "live_observation": "初次只读快照显示上下文卡“摘要处理中 · 分段整理 1/1 · 4 条早期消息 · 当前约 13.3K · 已用时 13 分 34 秒”；后续复核显示同一会话仍处 map 1/1，计时已达 21 分 52 秒。活动上下文估算 22.7K/64K；同页合成助手任务显示长时间无响应并提供停止/继续等待/重试按钮，未操作。",
       "scope": "仅观察合成内容；未执行真实用户数据修改、模型设置保存或控制按钮操作。",
+      "source_trace": "当前源码 maybeAutoCompact 在任务结束后生成摘要；summarizeCompactionBatch 调用 complete，provider.go 为该非流式请求设置 http.Client.Timeout=120s；进度事件仅在每个批次开始前发布。Safari 的 21 分钟 map 1/1 状态与当前源码的单请求超时不一致，但运行容器二进制来源未确认，不能据此断言源码缺陷或线上卡点。",
       "build_provenance": "容器标签 aide.srcsha=3f8e365f85c5b3b9b4e7aecc290b7d8e8b1c2f4af02d026c5685f2eca3feea0a；当前工作树计算值 ec3280f85b1dae9738dd6a258eaa56d4b34f32f63340143ee06d24bce1f0bd64。指纹不同，二进制与当前构建输入集合的对应关系未确认；未重启，以保留进行中的合成会话。"
     },
     "release": "not_run",
