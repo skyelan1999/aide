@@ -4272,11 +4272,13 @@
     "summary": "补上任务执行预算的独立回归测试，并复核旧有六分钟限制的实际行为。默认聊天预算为两小时，既存任务策略中的360秒仍保留；人工澄清/审批等待会暂停执行预算，模型无数据空闲超时仍为三分钟。",
     "verified": [
       "仓库 Go 1.26.0 容器：go test ./internal/server -run 'TestTaskRunBudget' -count=1 · PASS，0.727秒。新增覆盖审批等待不耗预算、嵌套等待需全部解除才恢复以及父级取消在等待期间有效。",
-      "既有 workflow_timeout_test.go 确认默认聊天任务预算2小时、旧快照360秒策略保留；internal/server/provider.go 声明流连接上限2小时、无数据空闲上限3分钟。"
+      "Go 1.26.0 一次性测试镜像：go test -race ./internal/server -run 'TestTaskRunBudget' -count=1 · PASS，1.745秒。",
+      "由 Aide 运行镜像的 Node/Python 层、Go 1.26.0 和 AIDE_OFFICE_SCRIPTS=/src/scripts/office 组成的一次性测试镜像：go test -mod=vendor ./internal/server -count=1 -timeout=8m · PASS，184.694秒。",
+      "既有 workflow_timeout_test.go 确认默认聊天任务预算2小时、旧快照360秒策略保留；internal/server/provider.go 声明流连接上限2小时、无数据空闲上限3分钟。初次纯 Go 镜像全包失败因未含 Node 且缺少 Office 脚本变量，按环境误配处理，未计作产品回归。"
     ],
     "not_verified": [
       "真实模型持续生成超过六分钟、容器/服务进程重启后从持久检查点续跑、超时前后真实任务状态转换与真实人工审批等待。",
-      "本轮未运行整个 internal/server 全包或 race；Docker 镜像调用使用 Go 1.26.0，未改变产品运行服务。"
+      "整个 internal/server race 全包未运行；测试只证明该预算机制和当前非 race 服务端回归。Docker 测试未启动或改变产品运行服务。"
     ],
     "release": "代码测试和架构说明更新在本地；包含此前本地任务账本提交的远端推送被审批审查拒绝，未重试。"
   }
