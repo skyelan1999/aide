@@ -109,18 +109,34 @@ func TestKnowledgeLocalRestartAPI(t *testing.T) {
 			t.Fatal("cancelled checkpoint changed")
 		}
 	}
-	// Index policy changes start a new catalogue instead of reviving old scope.
+	// A larger budget must load the small-budget checkpoint in a fresh process,
+	// preserve its queue, and continue into files that were not previously read.
 	p := defaultKnowledgeIndexPolicy()
-	p.FileBudget = 50
-	p.ScopePaths = map[string][]string{"workspace": {"restart-119.txt"}}
-	restarted.mu.Lock()
+	p.FileBudget = 200
 	policyFile := restarted.knowledgeIndexPolicyPath()
-	restarted.mu.Unlock()
 	if err := atomicJSON(policyFile, p); err != nil {
 		t.Fatal(err)
 	}
-	restarted.knowledgeUpdates.views = [2]*knowledgeUpdateView{}
-	if count := localUpdateCount(t, restarted); count != 1 {
+	expanded, err := New(a.workPath, a.refPath, a.dataPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer expanded.Close()
+	expandedCount := localUpdateCount(t, expanded)
+	if expandedCount <= after || expandedCount > 120 {
+		t.Fatalf("budget increase did not resume the persisted catalogue: %d -> %d", after, expandedCount)
+	}
+
+	// Semantic policy changes such as narrowing the scope must still start a
+	// fresh catalogue instead of reviving paths outside the new scope.
+	p = defaultKnowledgeIndexPolicy()
+	p.FileBudget = 50
+	p.ScopePaths = map[string][]string{"workspace": {"restart-119.txt"}}
+	if err := atomicJSON(policyFile, p); err != nil {
+		t.Fatal(err)
+	}
+	expanded.knowledgeUpdates.views = [2]*knowledgeUpdateView{}
+	if count := localUpdateCount(t, expanded); count != 1 {
 		t.Fatalf("old policy leaked: %d", count)
 	}
 }
