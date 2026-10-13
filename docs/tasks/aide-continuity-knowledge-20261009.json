@@ -3384,17 +3384,37 @@
       "前端 JavaScript 语法检查与 git diff --check 通过。"
     ],
     "remaining": [
-      "系统 Safari 需要用当前候选复验活动动画、3 分钟停滞提示及服务端进度恢复；当前 localhost:9999 合成会话 #46 仍在运行，暂不重启避免中断会话。",
+      "系统 Safari 需要用当前候选复验活动动画、3 分钟停滞提示及服务端进度恢复；旧候选仍承载合成会话 #46/#48，暂不重启避免中断会话。",
       "合成会话 #46 的自动压缩生命周期及超长回复终态仍未取得完整证据；真实向量检索按用户要求暂缓。"
     ],
     "verification": {
       "source": "internal/server/web/app.js, internal/server/web/style.css, internal/server/web/locales/en.js",
       "focused_checks": "PASS: node --check internal/server/web/app.js; node --check internal/server/web/locales/en.js; git diff --check.",
-      "system_browser": "PENDING: changed bundle not rebuilt or served in Safari because the active synthetic long-running conversation #46 must be preserved until it ends.",
+      "system_browser": "PENDING: native Safari on localhost:9999 still serves the pre-patch UI. Fresh read-only snapshot shows #46 context card at map 1/1 and 40:09 elapsed, with no stalled label; #48 synthetic long output remains active at 40:13. No controls were operated; do not restart while these runs remain active.",
       "behavior": "Active progress uses server UpdatedAt. A stale active phase remains visible and timed, switches to an amber stalled state after 180 seconds, and stops the active animation. This is an observability signal, not a claim that the provider request was cancelled or failed.",
       "user_data": "No session controls, files, model settings, or running services were changed."
     },
     "release": "not_run",
     "push": "PASS: source and status checkpoint 10e22bc pushed to origin/main."
+  },
+  "progress_checkpoint_20261013_followup26": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "扩展压缩 UI 定向回归：模拟服务端更新时间在 181 秒前且被轮询重复返回，确认最近更新时间不被轮询刷新、活动动画停止、琥珀停滞行显示、累计耗时继续且计时器保留。",
+      "当前系统 Safari 只读复核 localhost:9999：#46 压缩卡仍显示 map 1/1 且耗时约 40 分钟，没有停滞标签；#48 合成长输出仍在运行约 40 分钟。该观察证实浏览器仍服务旧版本，不是新修复验收。未操作停止/重试/会话切换。"
+    ],
+    "remaining": [
+      "需等 #46/#48 合成任务结束后通过 start.command 构建并重启候选，再在系统 Safari 验证活动、停滞和恢复状态。",
+      "超长合成任务终态和完整 compaction 运行生命周期仍未验证；真实向量测试按用户要求暂缓。"
+    ],
+    "verification": {
+      "focused_regression": "PASS: node scripts/test_context_compaction_ui.cjs; verifies session scoping, active elapsed time, stale server timestamp across polls, stopped animation, visible stalled interval, continued elapsed timer, and terminal cleanup.",
+      "syntax": "PASS: node --check internal/server/web/app.js; node --check scripts/test_context_compaction_ui.cjs; git diff --check.",
+      "system_browser": "NOT_VERIFIED for the new code: Safari serves the prior localhost:9999 bundle and active synthetic sessions are still running.",
+      "scope": "Read-only Safari snapshot; no buttons, session controls, settings, data files, or processes were changed."
+    },
+    "release": "not_run",
+    "push": "pending focused regression checkpoint"
   }
 }

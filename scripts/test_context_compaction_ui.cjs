@@ -36,6 +36,7 @@ const card = element('context-card');
 const detail = element('context-card-detail');
 const sessionA = 'session-a';
 const sessionB = 'session-b';
+const sessionC = 'session-c';
 const context = {
   state: { session: { id: sessionA }, contextCompactions: new Map() },
   $: id => ({ 'context-card': card, 'context-card-detail': detail })[id],
@@ -82,6 +83,27 @@ context.renderContextCompactionState(detail);
 assert.equal(card.classList.contains('is-compacting'), false, 'switching away clears the other session animation');
 assert.equal(detail.querySelectorAll('.context-compaction-status').length, 0, 'status does not leak between sessions');
 
+const staleUpdatedAt = Date.now() - 181000;
+context.showContextCompaction({
+  sessionId: sessionC, phase: 'folding', folded: 8, beforeTokens: 13600,
+  startedAt: Date.now() - 240000, updatedAt: staleUpdatedAt,
+});
+// Repeated server polls must retain the server timestamp instead of making stale work look fresh.
+context.showContextCompaction({
+  sessionId: sessionC, phase: 'folding', folded: 8, beforeTokens: 13600,
+  startedAt: Date.now() - 240000, updatedAt: staleUpdatedAt,
+});
+assert.equal(context.state.contextCompactions.get(sessionC).updatedAt, staleUpdatedAt, 'polling preserves the last server progress time');
+context.state.session = { id: sessionC };
+context.renderContextCompactionState(detail);
+assert.equal(card.classList.contains('is-compacting'), false, 'stale progress stops the active animation');
+assert.equal(card.classList.contains('is-compaction-stalled'), true, 'stale progress gets a distinct card state');
+assert.equal(detail.children.at(-1).className.includes('stalled'), true, 'stale progress gets a warning status row');
+assert.equal(detail.children.at(-1).children[1].textContent.includes('最近 3 分钟无更新'), true, 'stale status shows its quiet interval');
+assert.equal(detail.children.at(-1).children.at(-1).textContent.includes('已用时 4 分 0 秒'), true, 'elapsed time continues while stale');
+assert.equal(vm.runInContext(`contextCompactionElapsedTimers.has('${sessionC}')`, context), true, 'elapsed timer remains active while stalled');
+context.showContextCompaction({ sessionId: sessionC, phase: 'cancelled', text: '压缩已取消，原会话内容已保留' });
+
 context.showContextCompaction({ sessionId: sessionB, phase: 'completed', folded: 8, beforeTokens: 13600, afterTokens: 5400 });
 context.state.session = { id: sessionB };
 context.renderContextCompactionState(detail);
@@ -94,4 +116,4 @@ assert.equal(detail.children.at(-1).className.includes('cancelled'), true, 'canc
 assert.equal(detail.children.at(-1).children[1].textContent.includes('原会话内容已保留'), true, 'cancelled status explains that history was preserved');
 assert.equal(card.classList.contains('is-compacting'), false, 'cancelled progress stops its animation');
 
-console.log('PASS: compaction progress is session-scoped and completion/cancellation render terminal states');
+console.log('PASS: compaction progress session scope, active timing, stalled timing, and terminal states');
