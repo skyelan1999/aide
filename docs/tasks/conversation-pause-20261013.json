@@ -10,7 +10,10 @@
   ],
   "scope": [
     "internal/server/workflow.go",
-    "internal/server/workflow_pause_test.go",
+    "internal/server/web/index.html",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/locales/en.js",
     "docs/architecture.md",
     "docs/tasks/conversation-pause-20261013.json"
   ],
@@ -37,7 +40,7 @@
     "verification": {
       "status": "pass",
       "summary": "暂停/恢复、检查点与工具续跑定向 Go 回归通过；go vet 和前端语法检查通过；在系统 Safari 启动真实短文本任务，观察到运行中暂停键、暂停后恢复键，续跑后任务正常完成。另有一条新增服务端立即暂停用例被标题摘要并行请求挂住，未保留在提交中；立即暂停竞态依靠启动时检查点修复，未声称该单测通过。",
-      "evidence": ["暂停/恢复/检查点定向 Go 测试：通过", "go vet -mod=vendor ./internal/server：通过", "node --check app.js 与 locales/en.js：通过", "Safari localhost:9999 会话 #48：运行中暂停、暂停后恢复、最终 completed"]
+      "evidence": ["go test -mod=vendor ./internal/server -run 'Test(PauseEndpointCancelsRunAndPersistsRequest|ResumeEndpointContinuesSavedMessages|InterruptedTaskWithCheckpointIsResumableAfterRestart|ToolLoopCheckpointResumesAfterCompletedTool)$' -count=1 -timeout=3m：通过", "go vet -mod=vendor ./internal/server：通过", "node --check internal/server/web/app.js 与 locales/en.js：通过", "Safari localhost:9999 会话 #48：运行中暂停、暂停后恢复、最终 completed"]
     },
     "documentation": {
       "status": "pass",
@@ -50,9 +53,9 @@
       "evidence": ["保留 internal/server/plugins_builtin_test.go 与 scripts/test_context_compaction_ui.cjs 的原有本地修改"]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "修复完成，准备单独提交并按已授权的小步 push 约定推送。",
-      "evidence": []
+      "status": "pass",
+      "summary": "修复已单独提交并推送到 origin/main。",
+      "evidence": ["commit 8e4742f pushed to origin/main"]
     }
   },
   "release_authorization": "",
