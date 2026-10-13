@@ -4248,5 +4248,22 @@
       "会话附件/输入光标、完整恢复主流程及最新构建提交身份的单独验收。"
     ],
     "release": "没有源代码改动；本项为隔离候选产品验收证据。临时文件仍留在18544隔离工作区；应用将删除判定为不可撤销，已取消操作，待用户确认后清理。"
+  },
+  "progress_checkpoint_20261014_followup64": {
+    "status": "unsent_composer_refresh_recovery_verified_system_safari",
+    "date": "2026-10-14",
+    "summary": "在本机 vdev 工作台通过系统 Safari 验证新会话未发送草稿在页面刷新后恢复，并清理临时输入。证据仅覆盖该候选、工作区和刷新路径，不代表浏览器进程重启或正式构建验收。",
+    "verified": [
+      "系统 Safari 位于 https://localhost:18540/，工作区显示 /workspace，服务标识 vdev；界面显示未配置模型。未在本项发送任务或调用模型。",
+      "新建会话并输入唯一临时标记 AIDE_CONTINUITY_SMOKE_20261014_DO_NOT_SEND，执行 Safari 页面刷新；刷新后工作台输入框仍恢复该标记。",
+      "通过工作台输入框全选并删除临时标记；随后无障碍状态确认输入框为空。没有发送草稿。",
+      "当前源树的 node scripts/continuity-isolation.test.cjs、node scripts/continuity-lock-write.test.cjs、node scripts/outcome-pagination.test.cjs 均 PASS；这些测试不绑定 Safari 候选的构建身份。"
+    ],
+    "not_verified": [
+      "Safari 浏览器进程退出后重启、系统崩溃恢复、附件/文件/编辑器滚动光标及 SSH 草稿恢复。",
+      "Safari vdev 候选与当前源树提交的精确构建关联；当前源树还有其他未提交工作，不能据此声称整批改动已验收。",
+      "真实向量提供者测试依用户决定暂缓；Windows 验收依用户决定排除。"
+    ],
+    "release": "该验收只增加任务账本证据，不提交或推送当前尚未完成验收的源代码批次。"
   }
 }
