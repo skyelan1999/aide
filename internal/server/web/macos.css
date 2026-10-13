@@ -697,6 +697,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .file-autosave:disabled{opacity:.45;cursor:not-allowed}
 .file-view-head-actions{gap:7px}
 .file-view-head-actions .icon-action{width:38px;min-width:38px;height:38px;padding:0;border-radius:11px;display:inline-grid;place-items:center;color:var(--text-dim);border:1px solid var(--line-soft);background:color-mix(in srgb,var(--surface) 76%,transparent);text-decoration:none;transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease}
+.editor-dialog .dialog-actions .icon-action{width:36px;min-width:36px;height:36px;padding:0;border-radius:10px;display:inline-grid;place-items:center;color:var(--text-dim);border:1px solid var(--line-soft);background:color-mix(in srgb,var(--surface) 76%,transparent);text-decoration:none;transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease}
+.editor-dialog .dialog-actions .icon-action:hover{color:var(--text);background:var(--selected);border-color:var(--line-accent);transform:translateY(-1px)}
+.editor-dialog .dialog-actions .icon-action:active{transform:scale(.96)}
+.editor-dialog .dialog-actions .icon-action .ui-icon{width:17px;height:17px}
+.editor-dialog .dialog-actions .editor-mode-switch .icon-action{width:32px;min-width:32px;height:30px;border:0;background:transparent;box-shadow:none}
+.editor-dialog .dialog-actions .editor-mode-switch .icon-action.active{background:var(--selected);color:var(--brand-text);box-shadow:0 1px 3px var(--shadow-1)}
+.editor-dialog .dialog-actions #save-file.icon-action{color:var(--on-brand);background:var(--brand-hi);border-color:transparent;box-shadow:0 3px 10px color-mix(in srgb,var(--brand) 18%,transparent)}
+.editor-dialog .dialog-actions #save-file.icon-action:hover{background:color-mix(in srgb,var(--brand-hi) 88%,black)}
 .file-view-head-actions .icon-action:hover{color:var(--text);background:var(--selected);border-color:var(--line-accent);transform:translateY(-1px)}
 .file-view-head-actions .icon-action:active{transform:scale(.96)}
 .file-view-head-actions .icon-action .ui-icon{width:17px;height:17px}
@@ -820,5 +828,74 @@ html[data-motion="reduced"] .file-autosave,html[data-motion="reduced"] .file-aut
 @keyframes md-outline-reveal { from { opacity: 0; transform: translate( -6px, -50%); } to { opacity: 1; transform: translate(0, -50%); } }
 @media(max-width:720px) { .md-split > .md-outline-dock { grid-column: 1; grid-row: 3; align-self: start; } .md-outline-dock nav { top: 0; transform: none; width: min(260px, 72vw); animation: none; } }
 @media(prefers-reduced-motion:reduce) { .md-outline-dock nav { animation: none; } .md-outline-dock > summary { transition: none; } }
+
+/* Shared control alignment: keep each component's chosen size, but align its
+   label and icon to the same center line and remove font-baseline drift. */
+button,
+[role="button"] {
+  box-sizing: border-box;
+  line-height: 1.2;
+}
+button > svg,
+button .ui-icon,
+[role="button"] > svg,
+[role="button"] .ui-icon {
+  display: block;
+  flex: 0 0 auto;
+  align-self: center;
+  vertical-align: middle;
+}
+button:has(> svg),
+button:has(> .ui-icon),
+button:has(> .icon) {
+  align-items: center;
+}
+.icon-button,
+.icon-action,
+.traj-icon-action,
+.md-tool-icon {
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  line-height: 1;
+}
+.icon-button { width: 36px; min-width: 36px; height: 36px; }
+.icon-action { width: 36px; min-width: 36px; height: 36px; }
+.md-tool-icon { width: 36px; min-width: 36px; height: 36px; }
+.traj-icon-action { width: 36px; height: 36px; }
+.sheet-head .icon-button { width: 36px; height: 36px; }
+#file-panel .file-tools > .quiet,
+#file-panel .file-tools .icon-button { width: 36px; height: 36px; min-height: 36px; padding: 0; }
+.file-view-head-actions .icon-action { width: 36px; min-width: 36px; height: 36px; }
+.file-view-head-actions .icon-action .ui-icon { width: 17px; height: 17px; }
+.editor-dialog .dialog-actions .icon-action { width: 36px; min-width: 36px; height: 36px; }
+.editor-dialog .dialog-actions .icon-action .ui-icon { width: 17px; height: 17px; }
+.traj-icon-action svg { width: 16px; height: 16px; }
+
+/* Keep icon-only controls on one 36px grid, including controls whose older
+   component rules set a smaller size. Text buttons keep their natural width. */
+.file-panel-heading .icon-button,
+.editor-dialog .dialog-actions .editor-mode-switch .icon-action,
+.file-view-head-actions .editor-mode-switch .icon-action,
+.md-media-toolbar .md-tool-icon {
+  box-sizing: border-box;
+  width: 36px;
+  min-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  line-height: 1;
+}
+.file-panel-heading .icon-button svg,
+.editor-mode-switch .icon-action svg,
+.md-media-toolbar .md-tool-icon svg {
+  display: block;
+  align-self: center;
+  justify-self: center;
+  flex: 0 0 auto;
+  margin: 0;
+}
 
 .outcome-io-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}.outcome-io-round{padding:22px 0;border-top:1px solid var(--border)}.outcome-io-round>h3{font-size:16px;margin:0 0 8px}.outcome-io-block{padding:12px 0}.outcome-io-block h4{font-size:13px;color:var(--brand);margin:0 0 10px}.outcome-io-text{white-space:pre-wrap;overflow-wrap:anywhere;max-height:340px;overflow:auto;padding:14px;background:var(--surface-alt,var(--bg));border-radius:10px;font:inherit;line-height:1.75}.outcome-io-resource{overflow-wrap:anywhere;font-size:12px;line-height:1.7}.outcome-io-reply summary{cursor:pointer;padding:8px 0}.outcome-io-round .quiet{margin-top:8px}@media(max-width:600px){.outcome-io-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.outcome-io-metrics div{padding:4px 8px}.outcome-io-text{padding:10px}}
