@@ -14,9 +14,16 @@ updateFavicon();
 if (window.aideUI?.subscribe) window.aideUI.subscribe(updateFavicon);
 const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, thinkingOpen: new Set(), streamRetryAt: 0, queueMode: false, approvalPolicy: null, approvalModeBusy: false, autoScroll: true, jumpAnimating: false, contextCompactions: new Map() };
 let recoveryReady=false,recoveryTimer=0,recoveryNotice=false;
+let workspaceSceneRestoring=false;
 const recoveryScope=()=>state.config?.workspaceId||'';
 const chatDraftKey=(id,scope=recoveryScope())=>JSON.stringify([scope,id]);
 function recoveryFailure(error){if(!recoveryNotice){recoveryNotice=true;toast(t('本地草稿保存失败')+' · '+error.message);}}
+function persistWorkspaceScene(overrides={}){
+ if(!recoveryReady||lockScreen.locked||workspaceSceneRestoring)return;
+ const scene={session:state.session?.id||'',root:state.root,source:state.source,dir:state.dir,fileDirs:state.fileDirs,
+  openFile:$('editor-dialog')?.open&&state.file?{root:state.file.root,source:state.file.source||'',path:state.file.path}:null,...overrides};
+ return window.AideContinuity?.writeTab(recoveryScope(),'scene','workbench',scene).catch(recoveryFailure);
+}
 function persistChatDraft(strict=false){
  if(!recoveryReady||lockScreen.locked)return;
  const scope=recoveryScope(),id=state.session?.id||'';
@@ -25,7 +32,7 @@ function persistChatDraft(strict=false){
  sessionDrafts.set(chatDraftKey(id),draft);
  return Promise.all([
   window.AideContinuity?.writeTab(scope,'chat',id,draft).catch(failed),
-  window.AideContinuity?.writeTab(scope,'scene','workbench',{session:id,root:state.root,source:state.source,dir:state.dir,fileDirs:state.fileDirs}).catch(failed)
+  window.AideContinuity?.writeTab(scope,'scene','workbench',{session:id,root:state.root,source:state.source,dir:state.dir,fileDirs:state.fileDirs,openFile:$('editor-dialog')?.open&&state.file?{root:state.file.root,source:state.file.source||'',path:state.file.path}:null}).catch(failed)
  ]);
 }
 function restoreChatSelection(draft){const prompt=$('prompt');if(!draft)return;const start=Math.min(prompt.value.length,Math.max(0,Number(draft.start)||0)),end=Math.min(prompt.value.length,Math.max(start,Number(draft.end)||start));prompt.setSelectionRange(start,end);prompt.scrollTop=Math.max(0,Number(draft.scroll)||0);}
@@ -2510,10 +2517,12 @@ async function openFile(path) {
   if (isImagePath(path) || isStlPath(path) || isStepPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path) || isXlsxPath(path) || isSqlitePath(path) || isZipPath(path)) {
     state.file = { path, root: state.root, source: state.root === 'context' ? state.source : '', content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
     showEditor();
+    await persistWorkspaceScene({openFile:{root:state.file.root,source:state.file.source||'',path:state.file.path}});
     return;
   }
   const query = state.root === 'context' && state.source ? '/file?source=' + encodeURIComponent(state.source) + '&path=' : '/file?root=' + state.root + '&path=';
   const data = await api(query + encodeURIComponent(path)); state.file = { ...data, path, root: state.root, source: state.root === 'context' ? state.source : '', wsId: data.workspaceId || data.wsId || '', fresh: false }; showEditor();
+  await persistWorkspaceScene({openFile:{root:state.file.root,source:state.file.source||'',path:state.file.path}});
 }
 function sourceIsRW() {
   if (state.file.root !== 'context' || !state.file.source) return false;
@@ -2701,6 +2710,8 @@ document.querySelectorAll('.starter').forEach(b => b.onclick = () => {
     $('prompt').focus();
   });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
+$('editor-dialog').addEventListener('close',()=>{persistWorkspaceScene({openFile:null});});
+window.addEventListener('pagehide',()=>persistWorkspaceScene());
 function applyReferenceTerminology() {
   const setText = (selector, key) => document.querySelectorAll(selector).forEach(node => { node.dataset.i18n = key; node.textContent = t(key); });
   setText('[data-root="context"] i18n-text', '引用');
@@ -6241,8 +6252,9 @@ function collectWsConfig() {
   };
 }
 async function restoreWorkspaceScene() {
-  recoveryReady=false;clearTimeout(recoveryTimer);++sessionSeq.value;
+  recoveryReady=false;workspaceSceneRestoring=true;clearTimeout(recoveryTimer);++sessionSeq.value;
   clearTimeout(state.poll);closeStream();cancelContextPreview();ttsCancel();
+  if($('editor-dialog')?.open)$('editor-dialog').close();
   state.pendingSessionId='';state.session=null;state.sessionJSON='';
   state.live={};state.liveStable={};state.liveRound={};state.liveTool={};state.liveReasoning={};state.runPhase={};
   state.attachments=[];state.file=null;state.root='workspace';state.source='';state.dir='.';state.fileDirs={};
@@ -6267,7 +6279,12 @@ async function restoreWorkspaceScene() {
       if(scope!==recoveryScope())return;
       if(draft){$('prompt').value=draft.text||'';state.attachments=draft.attachments||[];renderAttachments();restoreChatSelection(draft);}
     }
-  } finally {if(scope===recoveryScope()){recoveryReady=true;refreshChatDraftChoices();}}
+    if(scene?.openFile?.path&&(scene.openFile.root==='workspace'||scene.openFile.root==='context'&&state.sources.some(s=>s.id===scene.openFile.source&&s.enabled))){
+      state.root=scene.openFile.root;state.source=scene.openFile.source||'';
+      document.querySelectorAll('[data-root]').forEach(b=>b.classList.toggle('active',b.dataset.root===state.root));renderSourceChips();
+      try{await openFile(scene.openFile.path);}catch(e){toast(t('上次打开的文件暂不可用：{0}',e.message));}
+    }
+  } finally {workspaceSceneRestoring=false;if(scope===recoveryScope()){recoveryReady=true;refreshChatDraftChoices();}}
 }
 async function saveWorkspaceConfig() {
   await persistChatDraft();
@@ -8987,6 +9004,11 @@ async function initialize() {
   if(recovered?.session){try{await selectSession(recovered.session);}catch(e){toast(t('上次会话暂不可用'));}}
   else if(window.AideContinuity){const draft=await AideContinuity.readTab(recoveryScope(),'chat','').catch(()=>null);if(draft){$('prompt').value=draft.text||'';state.attachments=draft.attachments||[];renderAttachments();restoreChatSelection(draft);}}
   recoveryReady=true;
+  if(recovered?.openFile?.path&&(recovered.openFile.root==='workspace'||recovered.openFile.root==='context'&&state.sources.some(s=>s.id===recovered.openFile.source&&s.enabled))){
+    state.root=recovered.openFile.root;state.source=recovered.openFile.source||'';
+    document.querySelectorAll('[data-root]').forEach(b=>b.classList.toggle('active',b.dataset.root===state.root));renderSourceChips();
+    await openFile(recovered.openFile.path).catch(e=>toast(t('上次打开的文件暂不可用：{0}',e.message)));
+  }
   refreshChatDraftChoices();
   setupGlobalEvents(); // #60
 }

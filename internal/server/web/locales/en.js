@@ -163,6 +163,7 @@ window.aideEnglish = {
 "本地草稿保存失败":"Local draft could not be saved",
 "服务器已保存":"Saved to server",
 "上次会话暂不可用":"Previous chat is unavailable",
+"上次打开的文件暂不可用：{0}":"The previously open file is unavailable: {0}",
 "保存冲突对比":"Compare save conflict",
 "服务器当前正文":"Current server text",
 "本地恢复草稿":"Local recovery draft",

@@ -3243,5 +3243,27 @@
     },
     "release": "not_run",
     "push": "Checkpoint 3b2151f pushed to origin/main; cleanup confirmation recorded in the next documentation commit."
+  },
+  "progress_checkpoint_20261013_followup19": {
+    "status": "partial",
+    "date": "2026-10-13",
+    "completed": [
+      "工作台场景现在记录当前打开文件的根目录、引用来源和相对路径；关闭文件时清除该位置，页面离开时刷新场景快照。",
+      "刷新初始化和工作空间场景切换会重新从服务器打开先前文件；本地正文仍交由独立草稿恢复流程呈现，不自动发送或静默覆盖。",
+      "工作台场景 VM 回归加入打开文件自动恢复路径。"
+    ],
+    "remaining": [
+      "需要确认保存过的编辑光标/选区和滚动位置与文件视图恢复记录配合正确。",
+      "崩溃恢复和真实 SSH 文件重开仍未验收。"
+    ],
+    "verification": {
+      "source": "workspace-scene-transition VM fixture; agent-route verify quick (all steps passed; includes docs checker); system Safari on localhost:9999.",
+      "workspace_scene_test": "PASS: node scripts/workspace-scene-transition.test.cjs now asserts saved open file is reopened during scene restoration.",
+      "system_browser": "PASS: rebuilt/restarted actual localhost:9999 using start.command; Safari opened existing doc/ROS2编译工程创建步骤_kunlun_ws.md, refreshed the workbench, and the same file editor and Markdown preview were visible immediately after initialization.",
+      "vector_search": "DEFERRED by user.",
+      "windows": "OUT_OF_SCOPE for agent acceptance per user; user reports testing it."
+    },
+    "release": "not_run",
+    "push": "pending checkpoint commit"
   }
 }
