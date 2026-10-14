@@ -479,6 +479,8 @@ type App struct {
 	wsConfigPath              string
 	wsSecretsPath             string
 	wsConfig                  WorkspaceConfig
+	wsStartupConfig           *WorkspaceConfig
+	wsStartupWarning          string
 	wsSecrets                 workspaceSecrets
 	vault                     *SecretVault // 统一加密凭证保险库（#38）
 	knowledgeVectors          *knowledgeVectorCache

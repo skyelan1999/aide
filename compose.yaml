@@ -8,7 +8,10 @@ services:
     init: true
     build:
       context: .
+      dockerfile: ${AIDE_DOCKERFILE:-Dockerfile}
+      network: ${AIDE_BUILD_NETWORK:-default}
       args:
+        AIDE_DEPENDENCY_IMAGE: ${AIDE_DEPENDENCY_IMAGE:-aide:dependencies-v1}
         AIDE_VERSION: ${AIDE_VERSION:-dev}
         AIDE_COMMIT: ${AIDE_COMMIT:-unknown}
         # #43：默认 start 不跑全量 go test（仅 vet+build，层缓存秒级）；

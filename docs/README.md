@@ -87,3 +87,5 @@ docs/
 - [任务发布记录：操作与验收边界](reviews/release-receipts-20261010.md)
 
 - [停止 AIDE 与清理 Docker 构建缓存](docker-maintenance.md)
+
+- [本地依赖镜像与启动恢复](local-dependency-image.md)

@@ -9,7 +9,19 @@ source_sha() {
   (
     find cmd internal plugins vendor scripts/office docker/wheels docker/sherpa -type f ! -path 'plugins/surface.json' -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh
+    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh; do
+      if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
+    done
   ) | sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
+}
+record_archive_sum() {
+  local archive_name checksum temporary
+  archive_name="$(basename "$1")"
+  checksum="$(shasum -a 256 "$1" | awk '{print $1}')"
+  temporary="$(mktemp docker-images/checksums.XXXXXX)"
+  if [[ -f docker-images/SHA256SUMS ]]; then awk -v name="$archive_name" '$2 != name' docker-images/SHA256SUMS > "$temporary"; fi
+  printf '%s  %s\n' "$checksum" "$archive_name" >> "$temporary"
+  mv "$temporary" docker-images/SHA256SUMS
 }
 if [[ "$MODE" == source-sha ]]; then source_sha; exit; fi
 if [[ "$MODE" == stop || "$MODE" == clean-cache ]]; then
@@ -226,12 +238,24 @@ case "$MODE" in
       if "$DOCKER_BIN" image inspect "$IMG" >/dev/null 2>&1; then
         cur_label="$("$DOCKER_BIN" image inspect "$IMG" --format '{{ index .Config.Labels "aide.srcsha" }}' 2>/dev/null || true)"
       fi
-      if [[ -n "$SRCSHA" && "$cur_label" == "$SRCSHA" ]]; then
+      if [[ -n "$SRCSHA" && "$cur_label" == "$SRCSHA" && "${AIDE_FORCE_REBUILD:-0}" != 1 ]]; then
         echo "== 源码哈希未变（${SRCSHA}）→ 快捷路径：跳过构建，直接启动 =="
         "$DOCKER_BIN" compose up -d --no-build --pull never
       else
         echo "== 源码哈希变化（image=${cur_label:-<无>} → worktree=${SRCSHA}）→ 重新构建（默认不跑全量 test，仅 vet+build）=="
         export AIDE_SRC_SHA="$SRCSHA"
+        if [[ "${AIDE_LOCAL_DEPENDENCIES:-1}" != 0 ]]; then
+          base_status=0
+          LOCAL_BASE="$(bash scripts/prepare-local-base.sh "$IMG")" || base_status=$?
+          if (( base_status == 0 )); then
+            export AIDE_DOCKERFILE=Dockerfile.local AIDE_BUILD_NETWORK=none AIDE_DEPENDENCY_IMAGE="$LOCAL_BASE"
+            echo "== 使用完整本地依赖镜像，应用构建禁止联网 =="
+          elif (( base_status != 3 )); then
+            echo "本地依赖镜像准备失败；停止，不转为联网构建。" >&2; exit "$base_status"
+          else
+            echo "== 首次缺少完整本地镜像；执行原始构建，完成后可固化本地依赖 =="
+          fi
+        fi
         "$DOCKER_BIN" compose up -d --build --pull never
       fi
     fi
@@ -241,7 +265,11 @@ case "$MODE" in
       bash scripts/headless-browser-control.sh start || echo "无头浏览器未启动；可先运行 bash scripts/headless-browser-control.sh install。"
     fi
     for attempt in {1..60}; do if "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null 2>&1; then break; fi; sleep 1; done
-    "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null
+    if ! "$DOCKER_BIN" compose exec -T aide curl -fsSk https://127.0.0.1:8080/healthz >/dev/null; then
+      echo "AIDE 未就绪，下面是启动错误；浏览器尚未打开。" >&2
+      "$DOCKER_BIN" compose logs --tail=30 aide >&2
+      exit 1
+    fi
     ADDRESS="$("$DOCKER_BIN" compose port aide 8080)"
     HOSTPORT="${ADDRESS##*:}"
     (nohup bash scripts/watch-port.sh >/dev/null 2>&1 </dev/null &)
@@ -267,7 +295,7 @@ case "$MODE" in
     trap 'rm -f "$ARCHIVE.partial"' EXIT
     "$DOCKER_BIN" image save aide:local | gzip -1 > "$ARCHIVE.partial"
     mv "$ARCHIVE.partial" "$ARCHIVE"
-    (cd docker-images && shasum -a 256 aide-local.tar.gz > SHA256SUMS)
+    record_archive_sum "$ARCHIVE"
     echo "镜像已导出：$ARCHIVE"
     ;;
   export-bundle)
@@ -289,9 +317,13 @@ case "$MODE" in
     trap 'rm -rf "$STAGING"; rm -f "$ARCHIVE.partial"' EXIT
     BUNDLE="$STAGING/aide-offline"
     mkdir -p "$BUNDLE/scripts" "$BUNDLE/docker-images" "$BUNDLE/workspace" "$BUNDLE/context"
-    cp start.command stop.command stop.sh stop.bat stop.ps1 clean-docker-cache.command clean-docker-cache.sh clean-docker-cache.bat clean-docker-cache.ps1 "$BUNDLE/"
+    cp start.command start.sh start.bat start.ps1 stop.command stop.sh stop.bat stop.ps1 clean-docker-cache.command clean-docker-cache.sh clean-docker-cache.bat clean-docker-cache.ps1 "$BUNDLE/"
     cp scripts/aide-maintenance.sh scripts/aide-maintenance.ps1 "$BUNDLE/scripts/"
-    cp scripts/aide.sh "$BUNDLE/scripts/"
+    cp scripts/aide.sh scripts/watch-port.sh scripts/watch-port.ps1 scripts/update-agent.sh scripts/update-agent.ps1 "$BUNDLE/scripts/"
+    cp scripts/safari-bridge-control.sh scripts/safari-bridge.js scripts/computer-bridge-control.sh scripts/computer-bridge.js \
+      scripts/build-native-computer-bridge.sh scripts/native-computer-bridge.swift scripts/headless-browser-control.sh scripts/headless-browser-bridge.js "$BUNDLE/scripts/"
+    mkdir -p "$BUNDLE/scripts/browser-runtime"
+    cp scripts/browser-runtime/package.json scripts/browser-runtime/package-lock.json "$BUNDLE/scripts/browser-runtime/"
     cp docker/compose.offline.yaml "$BUNDLE/compose.yaml"
     cp docker/offline.env.example "$BUNDLE/.env.example"
     cp docker/OFFLINE.md "$BUNDLE/README.md"
@@ -300,11 +332,17 @@ case "$MODE" in
     printf 'version=%s\nimage=%s\nplatform=%s\nsrcsha=%s\n' "$VERSION" "$IMAGE_ID" "$PLATFORM" \
       "$("$DOCKER_BIN" image inspect "$IMG" --format '{{index .Config.Labels "aide.srcsha"}}')" > "$BUNDLE/BUILD.txt"
     "$DOCKER_BIN" image tag "$IMAGE_ID" "$BUNDLE_TAG"
-    "$DOCKER_BIN" image save -o "$BUNDLE/docker-images/aide-local.tar" "$BUNDLE_TAG"
+    BUNDLE_IMAGES=("$BUNDLE_TAG")
+    if [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v1 --format '{{index .Config.Labels "aide.local-base"}}' 2>/dev/null || true)" == v1 ]] && \
+       [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v1 --format '{{.Os}}/{{.Architecture}}')" == "$PLATFORM" ]]; then
+      BUNDLE_IMAGES+=(aide:dependencies-v1)
+      printf 'dependencyImage=%s\n' "$("$DOCKER_BIN" image inspect aide:dependencies-v1 --format '{{.Id}}')" >> "$BUNDLE/BUILD.txt"
+    fi
+    "$DOCKER_BIN" image save -o "$BUNDLE/docker-images/aide-local.tar" "${BUNDLE_IMAGES[@]}"
     (cd "$BUNDLE/docker-images" && shasum -a 256 aide-local.tar > SHA256SUMS)
     COPYFILE_DISABLE=1 tar -czf "$ARCHIVE.partial" -C "$STAGING" aide-offline
     mv "$ARCHIVE.partial" "$ARCHIVE"
-    (cd docker-images && shasum -a 256 "$(basename "$ARCHIVE")" > SHA256SUMS)
+    record_archive_sum "$ARCHIVE"
     echo "离线启动包已导出：$ARCHIVE"
     ;;
   load) "$DOCKER_BIN" image load -i "$PROJECT_DIR/docker-images/aide-local.tar.gz" ;;

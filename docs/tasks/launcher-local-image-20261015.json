@@ -1,0 +1,98 @@
+{
+  "id": "launcher-local-image-20261015",
+  "request": "后续测试统一从aide/start.command打开观测，修本机不弹窗，清Docker缓存后仍拉依赖，补齐本地镜像供直接启动",
+  "baseline": "e68aef571aa71bbab92b9ee3455aad8800530a32",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Use the exact user-specified aide/start.command for runtime/browser acceptance",
+    "Missing saved local workspace cannot keep the whole service in a restart loop; preserve original config bytes and provide visible repair state",
+    "Complete local dependency image survives build-cache cleanup; application build uses local FROM and RUN network none",
+    "Checksum-verified local dependency archive can be imported without downloading",
+    "Actual startup opens browser and reaches healthy authenticated app; settings, volume mounts and existing data retained",
+    "Update documentation, focused tests, quick gate, push and offline package identities; do not claim full Release or Windows native acceptance"
+  ],
+  "scope": [
+    "Dockerfile.local",
+    "docker/Dockerfile.local-base",
+    "compose.yaml",
+    "scripts/aide.sh",
+    "scripts/prepare-local-base.sh",
+    "scripts/test_local_dependency_image.py",
+    "start.ps1",
+    "internal/server/server.go",
+    "internal/server/workspace_config.go",
+    "internal/server/workspace_startup_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/style.css",
+    "docs",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requires all runtime observations through canonical start.command, fixes the missing browser window and asks for complete reusable local images after cache cleanup.",
+      "evidence": [
+        "start.command",
+        "docker logs: saved /Users/skyelan/debug missing"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Preserve saved workspace config while using an explicit temporary mounted workspace; retain complete tool/dependency layers as an image and checksum archive, and compile application assets in a network-disabled local-only Dockerfile.",
+      "evidence": [
+        "Dockerfile.local",
+        "docker/Dockerfile.local-base",
+        "internal/server/workspace_config.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Startup-only local workspace fallback preserves original config and form values, resets only active workspace/cache, and exposes warning; launcher logs private output and original error status. Complete dependency image retained/importable, local-only app build, shared source fingerprint and bundle integration implemented.",
+      "evidence": [
+        "internal/server/workspace_startup_test.go",
+        "Dockerfile.local",
+        "scripts/prepare-local-base.sh",
+        "scripts/aide.sh",
+        "start.command"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Go race startup/context tests PASS 4.251s; offline-start and local dependency tests PASS, source fingerprint and i18n PASS. Finder opened exact start.command and Safari launched; app healthy at configured 9999, mounts/config bytes retained. After actual 4.903GB builder-cache cleanup, same entry rebuilt with local base and RUN network none, no dependency installation/download steps. Safari certificate prompt needs user handling; final candidate/package verification pending.",
+      "evidence": [
+        ".agent-state/launcher-workspace-test-final.log",
+        ".agent-state/launcher-start/first-launch.json",
+        ".agent-state/launcher-start/cache-clean.log",
+        ".agent-state/launcher-start/after-cache-start.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Local-image import, cache boundaries, startup recovery, exact user entry, platform and certificate limits documented.",
+      "evidence": [
+        "docs/local-dependency-image.md",
+        "docs/workspace-paths.md",
+        "docs/verification.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Preserved inherited vendor deletions and runtime config. Backup before start, original workspace-config hash checked, mounts retained. Cache cleanup targeted only unused builder cache.",
+      "evidence": [
+        ".agent-state/launcher-start/before.json",
+        ".agent-state/launcher-start/first-launch.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Local base exported with checksum; implementation ready for incremental push, then final launcher update and offline bundle export. No formal main/tag release.",
+      "evidence": [
+        ".agent-state/local-base-export.log"
+      ]
+    }
+  },
+  "release_authorization": "User explicitly requests local launcher tests and complete local Docker images; existing incremental push/offline-package authorization. No formal main/tag release.",
+  "rollback": "",
+  "handoff": "Current canonical launcher uses port 9999, not the prior compatibility 8097 instance. Browser opened but certificate interstitial remains pending user interaction. Keep original twelve-workstream goal and pending reference-scene framing fix."
+}

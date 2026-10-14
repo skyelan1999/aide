@@ -6440,6 +6440,9 @@ const wsState = { config: null, browse: { field: '', root: 'workspace', dir: '.'
 async function loadWorkspaceConfig() { wsState.config = await api('/workspace-config'); renderWorkspaceSummary(); }
 function renderWorkspaceSummary() {
   const w = wsState.config?.workspace || {};
+  const startupWarning = $('workspace-startup-warning');
+  startupWarning.textContent = wsState.config?.startupWarning || '';
+  startupWarning.hidden = !startupWarning.textContent;
   const sshMode = w.mode === 'ssh';
   $('workspace-summary').textContent = w.mode === 'ssh' ? (w.host || t("远程")) + ' · SSH/SFTP' : t("{0} · 本地", state.config?.workspaceDisplay || '/workspace');
   $('command-mode').textContent = w.mode === 'ssh' ? 'SSH · ' + (w.host || t("未配置主机")) : t("本地");

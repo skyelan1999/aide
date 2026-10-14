@@ -1,0 +1,16 @@
+ARG AIDE_SEED_IMAGE=aide:local
+FROM ${AIDE_SEED_IMAGE}
+USER root
+# This seed is an already-installed AIDE runtime, never a container export.
+# Retain complete tool/dependency layers, remove application assets for clean copies.
+RUN go version | grep 'go1.26.' && node --version | grep '^v24\.' \
+    && python3 -c "import sys,docx,openpyxl,pptx,ezdxf,pypdf,cryptography; assert sys.version_info[:2]==(3,12); assert (docx.__version__,openpyxl.__version__,pptx.__version__,ezdxf.__version__,pypdf.__version__)==('1.2.0','3.1.5','1.0.2','1.4.4','6.19.0')" \
+    && test -x /usr/local/bin/sherpa-onnx-offline-tts \
+    && git --version && ssh -V && curl --version >/dev/null \
+    && rm -rf /opt/aide /usr/local/bin/aide
+LABEL aide.local-base="v1"
+ENV AIDE_BUILTIN_PLUGINS=""
+HEALTHCHECK NONE
+WORKDIR /src
+ENTRYPOINT []
+CMD ["sh"]

@@ -109,11 +109,29 @@ func (a *App) loadWorkspaceConfig() error {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	return a.applyWorkspaceConfig()
+	err := a.applyWorkspaceConfig()
+	if err == nil || a.wsConfig.Workspace.Mode != "local" || a.wsConfig.Workspace.Path == "" {
+		return err
+	}
+	// A synchronized configuration can refer to a path only present on another
+	// device. Keep the file intact and expose the saved target in the repair form.
+	saved := a.wsConfig
+	a.wsConfig.Workspace = defaultWorkspaceConfig().Workspace
+	a.wsConfig.Cache = defaultWorkspaceConfig().Cache
+	if fallbackErr := a.applyWorkspaceConfig(); fallbackErr != nil {
+		return fallbackErr
+	}
+	a.wsStartupConfig = &saved
+	a.wsStartupWarning = fmt.Sprintf("上次工作区无法打开：%s。当前临时使用 /workspace，原配置已保留，请点击工作空间重新选择目录。", saved.Workspace.Path)
+	return nil
 }
 
 func (a *App) saveWorkspaceConfig() error {
-	return atomicJSON(a.wsConfigPath, a.wsConfig)
+	if err := atomicJSON(a.wsConfigPath, a.wsConfig); err != nil {
+		return err
+	}
+	a.wsStartupConfig, a.wsStartupWarning = nil, ""
+	return nil
 }
 
 // migrateLegacyWorkspaceSecrets 在 vault 解锁后调用：把旧明文凭证迁入加密 vault，
@@ -360,26 +378,31 @@ func (a *App) applyWorkspaceConfig() error {
 }
 
 func (a *App) workspaceConfigOut() map[string]any {
+	configured := a.wsConfig
+	if a.wsStartupConfig != nil {
+		configured = *a.wsStartupConfig
+	}
 	out := map[string]any{
+		"startupWarning": a.wsStartupWarning,
 		"workspace": map[string]any{
-			"mode": a.wsConfig.Workspace.Mode, "path": a.wsConfig.Workspace.Path,
-			"host": a.wsConfig.Workspace.Host, "port": a.wsConfig.Workspace.Port,
-			"username": a.wsConfig.Workspace.Username, "auth": a.wsConfig.Workspace.Auth,
-			"keyMode":        a.wsConfig.Workspace.KeyMode,
-			"keyRefPath":     a.wsConfig.Workspace.KeyRefPath,
-			"keyFingerprint": a.wsConfig.Workspace.KeyFingerprint,
+			"mode": configured.Workspace.Mode, "path": configured.Workspace.Path,
+			"host": configured.Workspace.Host, "port": configured.Workspace.Port,
+			"username": configured.Workspace.Username, "auth": configured.Workspace.Auth,
+			"keyMode":        configured.Workspace.KeyMode,
+			"keyRefPath":     configured.Workspace.KeyRefPath,
+			"keyFingerprint": configured.Workspace.KeyFingerprint,
 		},
-		"docs":   map[string]any{"path": a.wsConfig.Docs.Path, "location": a.wsConfig.Docs.Location},
-		"cache":  map[string]any{"path": a.wsConfig.Cache.Path, "location": a.wsConfig.Cache.Location},
-		"recent": a.wsConfig.Recent,
+		"docs":   map[string]any{"path": configured.Docs.Path, "location": configured.Docs.Location},
+		"cache":  map[string]any{"path": configured.Cache.Path, "location": configured.Cache.Location},
+		"recent": configured.Recent,
 	}
 	// vault 元数据（绝不返回明文/密文）
 	hasPassword, hasKey := false, false
-	fp := a.wsConfig.Workspace.KeyFingerprint
+	fp := configured.Workspace.KeyFingerprint
 	vaultLocked := a.vault == nil || !a.vault.Unlocked()
 	if a.vault != nil {
 		hasPassword = a.vault.Has(VaultIDWSPassword)
-		hasKey = a.vault.Has(VaultIDWSKey) || a.wsConfig.Workspace.KeyMode == "ref"
+		hasKey = a.vault.Has(VaultIDWSKey) || configured.Workspace.KeyMode == "ref"
 	}
 	out["hasPassword"] = hasPassword
 	out["hasKey"] = hasKey

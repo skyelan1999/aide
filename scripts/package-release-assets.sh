@@ -17,14 +17,8 @@ OUT="$(cd "$OUT" && pwd)"
 IMAGE_ID="$("$DOCKER_BIN" image inspect "$IMAGE" --format '{{.Id}}')"
 PLATFORM="$("$DOCKER_BIN" image inspect "$IMAGE" --format '{{.Os}}/{{.Architecture}}')"
 [[ "$PLATFORM" == linux/arm64 || "$PLATFORM" == linux/amd64 ]] || { echo "Unsupported release platform: $PLATFORM" >&2; exit 1; }
-source_sha() {
-  (
-    find cmd internal plugins vendor scripts/office docker/wheels docker/sherpa -type f -print0
-    printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md
-  ) | sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
-}
 IMAGE_SRC_SHA="$("$DOCKER_BIN" image inspect "$IMAGE" --format '{{index .Config.Labels "aide.srcsha"}}')"
-EXPECTED_SRC_SHA="$(source_sha)"
+EXPECTED_SRC_SHA="$(bash scripts/aide.sh source-sha)"
 [[ "$IMAGE_SRC_SHA" == "$EXPECTED_SRC_SHA" ]] || { echo "Image source label mismatch: $IMAGE_SRC_SHA != $EXPECTED_SRC_SHA. Build from this exact tag first." >&2; exit 1; }
 SHORT_ID="${IMAGE_ID#sha256:}"
 SHORT_ID="${SHORT_ID:0:12}"

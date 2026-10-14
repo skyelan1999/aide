@@ -466,6 +466,10 @@
       [
         "python3",
         "scripts/test_maintenance.py"
+      ],
+      [
+        "python3",
+        "scripts/test_local_dependency_image.py"
       ]
     ],
     "full": [

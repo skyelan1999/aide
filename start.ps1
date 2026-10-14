@@ -249,6 +249,17 @@ if (-not (Test-Docker)) {
 
 Remove-Item -LiteralPath '.cache/aide-manual-stop' -ErrorAction SilentlyContinue
 Write-Host "构建并启动 aide…"
+# A retained dependency image survives BuildKit cache cleanup. Source builds
+# using it run with networking disabled; offline bundles already have an app image.
+if (-not $offlineBundle -and $env:AIDE_LOCAL_DEPENDENCIES -ne '0') {
+    $localBase = Invoke-Native -File $dockerExe -Arguments @('image','inspect','aide:dependencies-v1','--format','{{index .Config.Labels "aide.local-base"}}') -Capture
+    if ($localBase.Code -eq 0 -and $localBase.Text -eq 'v1') {
+        $env:AIDE_DOCKERFILE = 'Dockerfile.local'
+        $env:AIDE_BUILD_NETWORK = 'none'
+        $env:AIDE_DEPENDENCY_IMAGE = 'aide:dependencies-v1'
+        Write-Host 'Using complete local dependency image; source build networking disabled.'
+    }
+}
 $startArguments = if ($offlineBundle) { @('up', '-d', '--no-build', '--pull', 'never') } else { @('up', '-d', '--build', '--pull', 'never') }
 if ($offlineBundle) {
     $enginePlatform = (Invoke-Native $dockerExe @('info', '--format', '{{.OSType}}/{{.Architecture}}') -Capture).Text -replace '/aarch64$', '/arm64' -replace '/x86_64$', '/amd64'
