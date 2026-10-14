@@ -744,7 +744,11 @@ func parseSFTPListLimit(out, relativePath string, limit int) []map[string]any {
 			continue
 		}
 		size, _ := strconv.ParseInt(fields[4], 10, 64)
-		items = append(items, map[string]any{"name": name, "path": path.Join(relativePath, name), "dir": dir, "symlink": symlink, "size": size, "modified": strings.Join(fields[5:8], " ")})
+		item := map[string]any{"name": name, "path": path.Join(relativePath, name), "dir": dir, "symlink": symlink, "size": size, "modified": strings.Join(fields[5:8], " ")}
+		if metadata := reportedFileUnixMetadata(fields[0], fields[2], fields[3]); metadata != nil {
+			item["unix"] = metadata
+		}
+		items = append(items, item)
 		if limit > 0 && len(items) >= limit {
 			break
 		}

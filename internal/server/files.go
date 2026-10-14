@@ -1432,6 +1432,7 @@ func listDockerDesktopLocalRoot() ([]map[string]any, error) {
 // localDirItems 将目录项转换为前端可用、安全的列表。
 func localDirItems(entries []os.DirEntry, p string) []map[string]any {
 	items := []map[string]any{}
+	readUnix := newFileUnixReader()
 	for _, e := range entries {
 		ep := path.Join(p, e.Name())
 		if safePath(ep) != nil || strings.HasPrefix(e.Name(), ".DS_Store") {
@@ -1440,7 +1441,11 @@ func localDirItems(entries []os.DirEntry, p string) []map[string]any {
 		if e.Type()&os.ModeSymlink != 0 {
 			continue
 		}
-		items = append(items, map[string]any{"name": e.Name(), "path": ep, "dir": e.IsDir()})
+		item := map[string]any{"name": e.Name(), "path": ep, "dir": e.IsDir()}
+		if metadata := readUnix(e); metadata != nil {
+			item["unix"] = metadata
+		}
+		items = append(items, item)
 	}
 	sort.Slice(items, func(i, j int) bool {
 		if items[i]["dir"] != items[j]["dir"] {

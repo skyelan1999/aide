@@ -1,0 +1,75 @@
+{
+  "id": "linux-file-metadata-20261014",
+  "request": "工作区的文件名下如果是linux环境可以用很小的字显示所有人组和权限",
+  "baseline": "74905ca39325369191a899689f3a92efb526dbe8",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Linux文件列表返回实际所有者、组、rwx权限；非Linux本地不伪造",
+    "文件名下方小号单行显示owner:group和权限，未知或缺失元数据不显示空白行",
+    "远程SFTP使用实际POSIX长列表字段，不额外执行命令；保留特殊权限位",
+    "选择、重命名、打开和拖动仍针对文件本身，完整内容可通过title/ARIA阅读",
+    "按分块测试/文档/提交push交付，实际8097部署独立标记"
+  ],
+  "scope": [
+    "internal/server/files.go",
+    "internal/server/ssh_session.go",
+    "internal/server/file_unix_metadata*.go",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/file-unix-metadata.test.cjs",
+    "scripts/fixtures/file-unix-metadata.html",
+    "docs/architecture.md",
+    "docs/agent/router.json",
+    "docs/tasks/linux-file-metadata-20261014.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求Linux文件名下用小字显示所有者、所属组和权限；延续分块测试/push与同步文档要求。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Linux本地用stat UID/GID和权限位，名称查询每目录响应复用，失败保留数字；非Linux不合成。SFTP保留已报告的POSIX元数据；前端两行文件标签但重命名仍只操作nameSpan。Docker仅表达容器可见身份，权限位不等同于ACL最终访问判定。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "第一块后端元数据完成，前端待接入。",
+      "evidence": [
+        "internal/server/file_unix_metadata.go",
+        "internal/server/files.go",
+        "internal/server/ssh_session.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "后端定向race及SFTP列表回归通过，前端待验证。",
+      "evidence": [
+        ".agent-state/linux-file-metadata/backend.log"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "已补字段、支持范围、Docker身份及权限位边界中英文说明。",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "延续用户：做一部分，push一部分，测一部分；注意文档的更新和编写。仅分块push，不代表部署或release。",
+  "rollback": "",
+  "handoff": ""
+}

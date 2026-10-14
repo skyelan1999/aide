@@ -292,3 +292,14 @@ stateDiagram-v2
 ### 记忆神经
 
 记忆神经视图已撤下，代码作为[备用提案](proposals/memory-neural-20261010/README.md)归档。普通项目记忆读写与既有 token 存储兼容保留。
+
+
+## Linux 文件列表身份与权限
+
+2026-10-14 第一块：目录条目可包含可选的 `unix` 对象：`owner`、`group`、`permissions`，Linux 本地还返回十进制字符串 `uid`／`gid`。本地读取目录项实际 stat，不跟随被排除的符号链接；权限以 `-rw-r--r--`／`drwxr-xr-x` 形式展示，包括 setuid／setgid／sticky 的 s/S/t/T。每次目录响应按 UID/GID 复用名称查询；运行环境无法解析名称时使用数字。stat 失败省略该条元数据，不阻断文件列表。非 Linux 本地不合成该对象。
+
+SSH/SFTP 长列表若报告完整 POSIX 权限、所有者和组，则保留原字段（包括 ACL 标记后缀），不调用本机用户库替换远端身份，也不增加逐文件远程命令。兼容降级目录列表、非 Unix 格式和不报告属主的来源不显示猜测值。Docker bind mount 的身份与模式是容器看到的结果，不保证映射宿主机同名账号；权限位不包括完整 ACL、SELinux、capabilities 或最终可访问性判断。本次只展示，不修改权限、属主或组。
+
+Directory entries may include optional `unix` metadata: owner, group and symbolic permissions, plus numeric UID/GID for local Linux entries. Names resolve once per directory response, falling back to numeric IDs. Non-Linux local listings omit this Linux metadata. SFTP preserves explicitly reported POSIX identities and modes without extra remote commands or local-name substitution. Container-visible ownership is not a promise about host accounts, and permission bits do not describe complete ACL/access policy. This is read-only display.
+
+第一块定向验收：隔离 Linux Docker 内 `go test -race -mod=vendor ./internal/server -run '^(TestFileUnix|TestSFTPList)' -count=1 -timeout=3m` 通过。覆盖实际列表身份、普通／目录／特殊位格式、远端原值和不完整字段拒绝；前端与实际8097验收独立记录于 [任务账本](tasks/linux-file-metadata-20261014.json)。
