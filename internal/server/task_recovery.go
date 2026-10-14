@@ -262,7 +262,8 @@ func (a *App) taskRecoveryPreviewAPI(w http.ResponseWriter, r *http.Request) {
 			fail(w, 409, errors.New("no resumable checkpoint"))
 			return
 		}
-		if task.WorkspaceID != "" && task.WorkspaceID != a.wsID() {
+		review := a.taskRecoveryReviewLocked(s.ID, task)
+		if (review.Required || len(task.PluginPlans) > 0 || task.RecoveryContinuation != nil) && task.WorkspaceID != "" && task.WorkspaceID != a.wsID() {
 			fail(w, 409, errors.New("return to the original workspace before recovery"))
 			return
 		}
@@ -270,7 +271,7 @@ func (a *App) taskRecoveryPreviewAPI(w http.ResponseWriter, r *http.Request) {
 			fail(w, 409, errors.New("task is still stopping"))
 			return
 		}
-		jsonOut(w, 200, a.taskRecoveryReviewLocked(s.ID, task))
+		jsonOut(w, 200, review)
 		return
 	}
 	fail(w, 404, errors.New("task not found"))

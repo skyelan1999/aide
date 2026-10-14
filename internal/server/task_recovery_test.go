@@ -115,6 +115,19 @@ func TestTaskRecoveryPreviewAndGuardedResume(t *testing.T) {
 	}
 }
 
+func TestTaskRecoveryOrdinaryCheckpointKeepsLegacyWorkspaceBehavior(t *testing.T) {
+	a := testApp(t)
+	task := &Task{ID: "ordinary", Status: "paused", CanResume: true, WorkspaceID: "old-root", CheckpointMessages: []Message{{Role: "user", Content: "ordinary checkpoint"}}}
+	a.sessions["ordinary-owner"] = &Session{ID: "ordinary-owner", Runs: []*Task{task}}
+	w := request(a, "GET", "/api/sessions/ordinary-owner/runs/ordinary/recovery", nil)
+	requireStatus(t, w, 200)
+	var review taskRecoveryReview
+	_ = json.Unmarshal(w.Body.Bytes(), &review)
+	if review.Required {
+		t.Fatal("ordinary checkpoint acquired unrelated review", review)
+	}
+}
+
 func TestTaskRecoveryContinuesNewGraphNeverReplaysOld(t *testing.T) {
 	a, task, old := recoveryFixture(t)
 	planInstall(t, a, "recovery-fixture", `const fs=require('fs'),path=require('path');module.exports={apply(ctx){ctx.tool({name:'recovery_probe',handler:args=>{fs.appendFileSync(path.join(__dirname,args.marker+'.marker'),'called\n');return 'new work returned';}})}};`)

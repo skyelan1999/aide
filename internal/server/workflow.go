@@ -994,11 +994,11 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("任务仍在停止，请稍后重试"))
 		return
 	}
-	if orig.WorkspaceID != "" && orig.WorkspaceID != a.wsID() {
+	review := a.taskRecoveryReviewLocked(s.ID, orig)
+	if (review.Required || len(orig.PluginPlans) > 0 || orig.RecoveryContinuation != nil) && orig.WorkspaceID != "" && orig.WorkspaceID != a.wsID() {
 		fail(w, 409, errors.New("请切回原工作区后恢复任务"))
 		return
 	}
-	review := a.taskRecoveryReviewLocked(s.ID, orig)
 	if review.Required && (recoveryDecision == nil || !review.Ready || recoveryDecision.Snapshot != review.Snapshot) {
 		jsonOut(w, 409, map[string]any{"error": "恢复记录需要核查并明确确认；请重新加载恢复预览", "recovery": review})
 		return
