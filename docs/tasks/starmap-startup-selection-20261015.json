@@ -76,8 +76,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Final canonical local image healthy; app/dependency archive tags, exact launchers, hashes, running platform manifest, actual docker load and both local copies PASS. Final quick69 PASS; branch push pending; no formal main/tag release or receiving-device claim.",
+      "status": "pass",
+      "summary": "Final canonical local image healthy; app/dependency archive tags, exact launchers, hashes, running platform manifest, actual docker load and both local copies PASS. Final quick69 PASS; branch pushf293fda PASS; no formal main/tag release or receiving-device claim.",
       "evidence": [
         ".agent-state/starmap-startup-selection/package.json",
         ".agent-state/starmap-startup-selection/runtime.json"
@@ -86,7 +86,7 @@
   },
   "release_authorization": "Existing incremental source push/testing/local image and offline package authorization; no formal release.",
   "rollback": "Revert load ordering/initial-mode changes; preserve recovery records, cached graph, source registry and user history.",
-  "handoff": "Final sourceee39d65 deployed via canonical9999 imageb687ad3e; deterministic old/intermediate negative proof and final VM race/guard cases PASS. Native old reset reproduced; final filter/query held through updates and normal reload. App/dependency bundle imported/verified/copied; final quick69 PASS; branch push pending. Original goal remains active.",
+  "handoff": "Final sourceee39d65 deployed via canonical9999 imageb687ad3e; deterministic old/intermediate negative proof and final VM race/guard cases PASS. Native old reset reproduced; final filter/query held through updates and normal reload. App/dependency bundle imported/verified/copied; final quick69 PASS; branch pushf293fda PASS. Original goal remains active.",
   "runtime": {
     "runningImage": "sha256:b687ad3e321d141bf8a483152b848e041fcefe421bd83d1755949edebc3c21c1",
     "image": "sha256:b687ad3e321d141bf8a483152b848e041fcefe421bd83d1755949edebc3c21c1",
@@ -149,5 +149,11 @@
     "time": "20261014T212416735977Z",
     "log": ".agent-state/verify-20261014T212416735977Z.log",
     "commands": 69
+  },
+  "source_push": {
+    "branch": "fix/starmap-startup-selection",
+    "pushedCommit": "f293fda",
+    "status": "pass",
+    "scope": "Incremental branch source/tests/docs push only; no main/tag/formal release or image registry publication"
   }
 }

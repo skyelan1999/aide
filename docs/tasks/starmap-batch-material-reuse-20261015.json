@@ -83,7 +83,7 @@
   },
   "release_authorization": "Existing incremental source push/local tests/build/offline package authorization; no formal main/tag release.",
   "rollback": "Revert candidate material reuse; preserve source registry, stable IDs, checkpoints, user data and previous image archive.",
-  "handoff": "Sourcea3824e5, scoped all Knowledge/local-root race79.549s+vet and old-material negative proof PASS. Canonical9999 Safari source progress and additive error states observed; app/dependency package verified/imported/copied. Final quick69 PASS; branch pushe0d16f4 PASS. Next: cached startup selection reset; original goal remains active. Followup starmap-startup-selection-20261015 sourceee39d65 fixes cached startup selection restoration and retries, with final native filter/query and reload evidence; use its newer image receipt.",
+  "handoff": "Sourcea3824e5, scoped all Knowledge/local-root race79.549s+vet and old-material negative proof PASS. Canonical9999 Safari source progress and additive error states observed; app/dependency package verified/imported/copied. Final quick69 PASS; branch pushe0d16f4 PASS. Startup selection followup completed below; original goal remains active. Followup starmap-startup-selection-20261015 sourceee39d65 fixes cached startup selection restoration and retries, with final native filter/query and reload evidence; use its newer image receipt.",
   "negative_proof": {
     "baseline": "Original0b69d42 material function, current test reader injection only; no new reuse logic",
     "result": "Expected FAIL: same four-alias fixture good.md4, unavailable.md4; code-upgrade body reader4",

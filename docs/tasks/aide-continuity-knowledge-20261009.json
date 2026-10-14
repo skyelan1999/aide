@@ -153,7 +153,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 current: fix/starmap-startup-selection, final sourceee39d65, canonical aide/start.command healthy Safari9999 imageb687ad3e321d. Initial interaction boundary now spans identity/network failures and retries; same-workspace cache/full updates preserve live view, own generation changes do not invalidate sync. Old7f source and intermediatecc81531 negative proofs retained; native old reset reproduced. Final source VM guard/race cases and retry quick69 PASS; native context/query retained6787 to7542 and restored after normal reload. App/dependency offline bundle hash/import/launchers/platform/two local copies verified;5 config/auth hashes, mounts/workspace config preserved. See followup122; final metadata quick69 PASS; branch push pending. Original12 streams active: large-source latency/body/cloud/host I/O and live plugin approvals/manual reconciliation remain. Windows by user, vectors deferred, receiving-device import unobserved.",
+  "handoff": "2026-10-15 current: fix/starmap-startup-selection, final sourceee39d65, canonical aide/start.command healthy Safari9999 imageb687ad3e321d. Initial interaction boundary now spans identity/network failures and retries; same-workspace cache/full updates preserve live view, own generation changes do not invalidate sync. Old7f source and intermediatecc81531 negative proofs retained; native old reset reproduced. Final source VM guard/race cases and retry quick69 PASS; native context/query retained6787 to7542 and restored after normal reload. App/dependency offline bundle hash/import/launchers/platform/two local copies verified;5 config/auth hashes, mounts/workspace config preserved. See followup122; final metadata quick69 PASS; branch pushf293fda PASS. Original12 streams active: large-source latency/body/cloud/host I/O and live plugin approvals/manual reconciliation remain. Windows by user, vectors deferred, receiving-device import unobserved.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6039,7 +6039,7 @@
     }
   },
   "progress_checkpoint_20261015_followup122": {
-    "status": "in_progress",
+    "status": "pass",
     "task": "docs/tasks/starmap-startup-selection-20261015.json",
     "sourceCommits": [
       "cc81531",
@@ -6083,7 +6083,7 @@
       "hostLaunchersMatch": true,
       "copiedBothTrees": true
     },
-    "remaining": "Final quick69 PASS; branch push pending. Large-source latency/cloud body gaps, host I/O, original12 streams and live plugin manual reconciliation remain. Native forced error/lock/crash, narrow/other themes not claimed; Windows by user, vectors deferred, receiving-device import pending.",
+    "remaining": "Final quick69 PASS; branch pushf293fda PASS. Large-source latency/cloud body gaps, host I/O, original12 streams and live plugin manual reconciliation remain. Native forced error/lock/crash, narrow/other themes not claimed; Windows by user, vectors deferred, receiving-device import pending.",
     "quick_receipt": {
       "status": "pass",
       "head": "ee39d65d43fc1742e28bdcb9df4e364271ea105a",
@@ -6091,6 +6091,12 @@
       "time": "20261014T212416735977Z",
       "log": ".agent-state/verify-20261014T212416735977Z.log",
       "commands": 69
+    },
+    "source_push": {
+      "branch": "fix/starmap-startup-selection",
+      "pushedCommit": "f293fda",
+      "status": "pass",
+      "scope": "Incremental branch source/tests/docs push only; no main/tag/formal release or image registry publication"
     }
   }
 }
