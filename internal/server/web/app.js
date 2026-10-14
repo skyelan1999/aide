@@ -786,7 +786,7 @@ function sessionRevision(s) {
     sessionTextRevision(typeof run?.pendingQuestion === 'string' ? run.pendingQuestion : JSON.stringify(run?.pendingQuestion || null)),
   ].join(':')).join(';');
   return [s.id, s.updated, s.runsTotal ?? runs.length, s.messagesTotal ?? messages.length, state.historyLimit,
-    runs.length, messages.length, runStates, lastRun?.id, lastRun?.status, lastRun?.pauseRequested, lastRun?.canResume,
+    runs.length, messages.length, JSON.stringify(runs.map(run => [run.id, run.steers || []])), runStates, lastRun?.id, lastRun?.status, lastRun?.pauseRequested, lastRun?.canResume,
     lastRun?.steps?.map(step => step.name + ':' + step.status + ':' + sessionTextRevision(step.content) + ':' + sessionTextRevision(step.reasoning)).join(',')].join('|');
 }
 function sessionTextRevision(value) {
@@ -1897,6 +1897,15 @@ function renderClarification(run, box) {
   disable(clarificationSubmissions.has(key));
   box.append(card);
 }
+// Accepted interjections belong at the visible tail of their run, using the
+// same user bubble as the original prompt. Queued items stay in the queue UI.
+function renderSteerMessages(run, box) {
+  for (const steer of run.steers || []) {
+    if (steer.queued) continue;
+    const bubble = el('div', 'user-message steer-message', steer.content);
+    box.append(bubble);
+  }
+}
 function renderSession() {
   const conversation = $('conversation');
   const previousScroll = conversation.scrollTop;
@@ -1969,13 +1978,6 @@ function renderSession() {
     if (appendCachedSessionRun(run, renderSignature, previousRuns, $('timeline'))) continue;
     const box = el('article', 'run'); box.dataset.run = run.id; box.append(el('div', 'user-message', run.prompt));
     box.dataset.renderSignature = renderSignature;
-    // 运行中插话（steered）的消息渲染进时间线；排队中的消息由队列条展示
-    for (const st of run.steers || []) {
-      if (st.queued) continue;
-      const msg = el('div', 'steer-msg');
-      msg.append(el('span', 'steer-tag', t("插话")), document.createTextNode(st.content));
-      box.append(msg);
-    }
     const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? t(run.steps?.some(step => step.name === 'agent') ? "◈ AIDE WORKFLOW · 自主执行" : "◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
     if (run.status === 'running' && !run.pauseRequested) {
       const pause = el('button', 'quiet', t('暂停任务')); pause.type = 'button'; pause.onclick = () => pauseRunById(run.id); meta.append(pause);
@@ -2128,7 +2130,9 @@ function renderSession() {
     if (run.toolUses?.length) {
       box.append(buildToolUses(run));
     }
-    if (run.error) box.append(el('p', 'task-error', run.error)); $('timeline').append(box);
+    if (run.error) box.append(el('p', 'task-error', run.error));
+    renderSteerMessages(run, box);
+    $('timeline').append(box);
   }
   for (const run of state.session?.runs || []) {
     if (run.status === 'running' && state.live[run.id]) scheduleLiveRender(run.id);

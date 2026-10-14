@@ -1,0 +1,81 @@
+{
+  "id": "steer-user-bubbles-20261014",
+  "request": "插嘴式输入应该显示为正常气泡输入，但是目前好像看不到",
+  "baseline": "ed0b729f4de919bdb9d16c844e7039513e698541",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "已接收的非排队插话按原发送顺序显示为正常用户气泡，位于任务输出后方，长回复不再将其留在任务顶部",
+    "排队消息仍只显示队列，提升成插话后显示一次气泡；同文重复发送不误去重",
+    "轮询/会话刷新/完成状态保留气泡；插话内容、排队标志变化即使updated不变也触发刷新",
+    "浏览器用实际渲染器和合成运行状态验收；8097运行验收单独标记"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/index.html",
+    "scripts/steer-user-bubbles.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/tasks/steer-user-bubbles-20261014.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求插嘴输入显示为正常聊天气泡；当前为开头小字，长内容时不可见。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用user-message样式，插话按保存顺序放在任务输出末端；队列语义不变。会话快照显式包含插话字段，保留已有流式渲染与滚动规则。服务端仍保存单条任务累计答复，不虚构中途逐段时间顺序。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "插话改为任务末端user-message气泡，去除旧的小字标签样式；会话指纹显式加入所有run的steers；保留两仓各自既有渲染缓存差异。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/style.css",
+        "internal/server/web/index.html"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "两仓quick全部通过；实际renderSession回归覆盖长答复、重复内容、排队提升、同长度编辑、刷新、完成、workflow、流式恢复及跨会话隔离。Safari本地实际渲染器夹具：长答复后发送气泡、排队隐藏/提升出现、刷新与完成保留两气泡、明暗主题观察通过。实际8097和真实模型NOT_RUN。",
+      "evidence": [
+        "scripts/steer-user-bubbles.test.cjs",
+        ".agent-state/steer-user-bubbles/quick.log",
+        "Safari preview.html：两条user-message分别显示在长回答之后，完成/刷新不消失"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录气泡位置、队列语义、刷新机制与单条累计答复边界。",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "审查diff并保留已有变更；浏览器夹具与日志位于.agent-state；本任务不修改服务端任务或用户数据。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "8097旧容器卡住，Docker Desktop重启影响其他服务，仍等待前序用户确认。未推送、未部署到运行实例。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "仅回退本次前端/文档路径，无数据迁移。",
+  "handoff": "分支fix/steer-user-bubbles。实际8097恢复后，运行中发送插话、排队提升和会话刷新仍需端到端验收。",
+  "runtime_image": {
+    "tag": "aide:local",
+    "id": "sha256:34037cbb949f27c35ebf5fea407b9dbcce1d47c953febb847f1ddfc7b0c79f57",
+    "build": "pass",
+    "source": "aideMacMini/aide working tree, includes earlier fixes",
+    "evidence": ".agent-state/steer-user-bubbles/build.log",
+    "running_acceptance": "not_run"
+  }
+}

@@ -125,8 +125,6 @@ button.workspace-label{padding:11px 10px;text-align:left;width:100%}.ws-label-te
 }
 .jump-bottom:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.16); }
 .jump-bottom.hidden { display: none; }
-.steer-msg { opacity: .85; margin: 6px 0 0 6%; font-size: 12px; color: var(--text-answer, var(--text)); }
-.steer-tag { display: inline-block; font-size: 9px; background: color-mix(in srgb, var(--brand) 14%, transparent); color: var(--brand-text); border-radius: 4px; padding: 1px 6px; margin-right: 8px; vertical-align: middle; }
 
 /* 队列条（Codex pending_input_preview 风格：弱化、紧凑、↳ 条目 + 提示行） */
 .queue-bar {
@@ -1691,3 +1689,6 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
  #settings-form>.primary{width:100%;margin:6px 0 0;padding:10px;border-radius:10px}
 }
 @media(prefers-reduced-motion:reduce){#settings-form input:not([type=checkbox]):not([type=radio]){transition:none}}
+
+/* Interjections share the ordinary user bubble and remain below run output. */
+.user-message.steer-message{margin-top:18px}

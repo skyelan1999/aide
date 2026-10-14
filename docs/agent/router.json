@@ -407,6 +407,10 @@
       [
         "node",
         "scripts/starmap-logbook.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/steer-user-bubbles.test.cjs"
       ]
     ],
     "full": [

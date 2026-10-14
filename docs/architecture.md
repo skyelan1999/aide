@@ -77,6 +77,11 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 
 The context card scopes its cache to the workspace and session and commits cache keys only after successful responses. Switching clears stale values; late responses cannot overwrite the current session. Pending requests are deduplicated and failures can retry. Draft budgets are invalidated before returning to the session baseline.
 
+
+运行中插话使用与初始输入一致的用户气泡，按保存顺序显示在该任务输出、工具记录和错误信息之后，避免长回复将插话留在任务顶部。仍在排队的输入只出现在队列条，提升为插话后才显示气泡；重复文字按独立输入保留。会话刷新指纹显式包含所有可见任务的插话内容与排队状态，不依赖 updated 或消息数量改变。服务端任务仍保存累计答复，本次不将答复重写成虚构的逐段对话时间线。
+
+Accepted in-run interjections use the same user bubble as the original prompt and appear at the tail of their run's rendered output. Queued items remain in the queue until promoted. Repeated text remains separate input. Session snapshots include interjection content and queue flags so promotion or edits trigger rendering even without timestamp/count changes. The server's accumulated answer and execution semantics are unchanged; the UI does not invent per-segment response chronology.
+
 ## 多来源知识与独立产品主页
 
 知识星图、原文检索、本地TF-IDF RAG及编号查看共用有界只读来源适配层；本地／Skill、SSH工作区、自动系统文档、独立SFTP、HTTP／HTTPS、FTP／FTPS、SMB按来源分区，MCP只索引已发现的工具说明。节点、检索结果和回填保留来源编号、名称、类型及当前身份；改配、停用和移除后拒绝旧引用。远端来源约30秒缓存、最多3个并发扫描，默认800文件／200目录预算按启用区域分配；截断、不可用及未核实状态与真实节点数量分开。HTTP／SMB单资源，不递归爬取；格式、读取、查看和插件的详细边界见[知识星图架构](architecture/knowledge-map.md)。
