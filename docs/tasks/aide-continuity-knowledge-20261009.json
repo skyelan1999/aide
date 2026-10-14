@@ -4297,5 +4297,16 @@
       "整个服务端 race、真实向量服务按用户要求暂缓；Windows 由用户表示无需验收。"
     ],
     "release": "预算机制测试及文档已提交本地分支；当前分支含任务账本的本机验收细节，推送仍待用户对明确 GitHub 仓库与内容范围授权。"
+  },
+  "progress_checkpoint_20261014_followup90": {
+    "date": "2026-10-14",
+    "status": "authenticated_aide_file_view_pdf_export_pass_remaining_visual_tail_and_memory_checks",
+    "summary": "系统 Safari 在已鉴权 Aide 文件页通过真实“导出 → PDF”入口导出 doc/ROS2编译工程创建步骤_kunlun_ws.md。Safari 下载列表显示新文件 ROS2编译工程创建步骤_kunlun_ws-4.pdf（3 MB）；pdfinfo 确认 29 页 A4、2966702 字节、Creator aide。",
+    "evidence": [
+      "Safari URL https://localhost:9999/#file=workspace/doc/ROS2编译工程创建步骤_kunlun_ws.md; visible Export menu offered PDF and clicking it produced the new download",
+      "Safari Downloads list showed ROS2编译工程创建步骤_kunlun_ws-4.pdf at 3 MB",
+      "pdfinfo /Users/skyelan/Downloads/ROS2编译工程创建步骤_kunlun_ws-4.pdf: Pages 29; A4; 2966702 bytes; Creator aide"
+    ],
+    "remaining": "此项补足已鉴权 Aide 文件页入口与下载验证，不等同于在 Aide 内运行 1000 节/154 页压力文档。PDF 最后一页视觉检查、压力文档内存测量以及总目标中的其它连续性/星图验收继续未完成。"
   }
 }
