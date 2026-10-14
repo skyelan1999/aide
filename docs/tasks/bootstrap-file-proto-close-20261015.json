@@ -45,7 +45,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Focused TLS/concurrent Close race1.181s+vet PASS. New bootstrap tests and workspace scene tests PASS. First quick failed legacy VM missing helper; VM now executes actual new helper with original assertions intact; retry quick70 PASS. Canonical start.command native Safari unavailable source switch and reload retain workbench with file error/retry; valid source lists files. Five protected config/auth hashes and mounts/workspace config preserved. Full72 pending.",
+      "summary": "Focused TLS/concurrent Close race1.181s+vet PASS. New bootstrap tests and workspace scene tests PASS. First quick failed legacy VM missing helper; VM now executes actual new helper with original assertions intact; retry quick70 PASS. Canonical start.command native Safari unavailable source switch and reload retain workbench with file error/retry; valid source lists files. Five protected config/auth hashes and mounts/workspace config preserved. Full72 pending. Frozen full72: quick70 and network-none runtime assets PASS; Go snapshot runner live, terminal receipt pending.",
       "evidence": [
         ".agent-state/bootstrap-file-proto-close/scoped-race.log",
         ".agent-state/verify-20261014T231651406681Z.log",
@@ -80,7 +80,7 @@
   },
   "release_authorization": "Existing incremental testing/build/source push/offline package authorization; no formal main/tag release.",
   "rollback": "Previous local image preserves volume; returns to prior source bootstrap failure and concurrent-close risk. No user workspace or credentials changed.",
-  "handoff": "Source334237a pushed, exact canonical image0d67b0b6bbfc healthy9999; complete package verified/imported/copied. Protected config/auth and mounts/workspace preserved, native UI/history scoped acceptance PASS. Metadata frozen before full72; final full receipt pending.",
+  "handoff": "Source334237a and package/docsea914da pushed. Current full72 active exec6348/container aide-verify-fc318b666188; quick70/runtime assets PASS, wait same owner. Never use prior full71 failure as current pass. Canonical9999 and full offline package0d67b0b6bbfc verified. Original12 streams and external gates remain.",
   "runtime": {
     "runningImage": "sha256:0d67b0b6bbfc1907d92b419508182da098ab8d19c60995b24454e72b15d894aa",
     "image": "sha256:0d67b0b6bbfc1907d92b419508182da098ab8d19c60995b24454e72b15d894aa",
@@ -124,5 +124,14 @@
     "branch": "fix/bootstrap-file-and-listener-close",
     "pushedCommit": "334237a",
     "status": "pass"
+  },
+  "active_full": {
+    "status": "running",
+    "execSessionId": 6348,
+    "container": "aide-verify-fc318b666188",
+    "log": ".agent-state/verify-20261014T232304599902Z.log",
+    "expectedFingerprint": "2ef032db75c42f010a5593f51317cadc1f265bed52c800c33ef40fff4179778a",
+    "head": "ea914da0bd7a1d6f84110d091182d07a90c34559",
+    "lastVerified": "Full72 quick70 and runtime-assets passed; docker ps/top confirms active Go snapshot runner. Revalidate existing owner before polling; do not start a duplicate."
   }
 }

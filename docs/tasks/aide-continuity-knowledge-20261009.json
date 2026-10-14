@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 followup126 source334237a pushed on fix/bootstrap-file-and-listener-close; canonical image0d67b0b6bbfc healthy9999 through exact start.command, complete offline app/dependency package actual import/hash/copies PASS. Prior full71 listener panic fixed; scoped race/vet and native file bootstrap/history import-preview acceptance PASS. Protected hashes/config/mounts preserved. Frozen full72 pending. Original12 streams remain active; Windows user-owned, vectors deferred, receiving-side import unobserved.",
+  "handoff": "2026-10-15 followup126 source334237a pushed on fix/bootstrap-file-and-listener-close; canonical image0d67b0b6bbfc healthy9999 through exact start.command, complete offline app/dependency package actual import/hash/copies PASS. Prior full71 listener panic fixed; scoped race/vet and native file bootstrap/history import-preview acceptance PASS. Protected hashes/config/mounts preserved. Frozen full72 live exec6348/container aide-verify-fc318b666188; quick70/runtime assets PASS, terminal Go receipt pending. Original12 streams remain active; Windows user-owned, vectors deferred, receiving-side import unobserved.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6286,7 +6286,7 @@
     "changes": "Concurrent listener close fixed with sync.Once; unavailable recovered source errors scoped to file panel rather than false login. Startup/workspace recovery continues, 401 preserved, stale failures isolated.",
     "verification": "Scoped TLS/concurrent close race1.181s+vet, bootstrap/workspace VM, quick70 PASS; canonical start.command native source failure/reload/valid source switch PASS. Full72 pending.",
     "historyAcceptance": "docs/tasks/markdown-history-storage-ui-20261015.json: native ZIP merge/current byte preservation/dedup/external asset followup, retention+GC preview/cancel PASS; irreversible apply NOT_RUN. Exact source registry/protected config and mounts restored.",
-    "remaining": "Source334237a pushed, complete package verify/import/two copies PASS. README/SHA frozen before full72; final receipt pending. Original12 streams/external gates remain.",
+    "remaining": "Frozen full72 live exec6348/container aide-verify-fc318b666188; quick70 and runtime assets PASS, Go race/vet final receipt pending. Source334237a/docs+package metadataea914da pushed. Original12 streams/external gates remain.",
     "runtime": {
       "runningImage": "sha256:0d67b0b6bbfc1907d92b419508182da098ab8d19c60995b24454e72b15d894aa",
       "image": "sha256:0d67b0b6bbfc1907d92b419508182da098ab8d19c60995b24454e72b15d894aa",
@@ -6323,6 +6323,15 @@
       "hostLaunchersMatch": true,
       "copiedBothTrees": true
     },
-    "sourceCommit": "334237a"
+    "sourceCommit": "334237a",
+    "active_full": {
+      "status": "running",
+      "execSessionId": 6348,
+      "container": "aide-verify-fc318b666188",
+      "log": ".agent-state/verify-20261014T232304599902Z.log",
+      "expectedFingerprint": "2ef032db75c42f010a5593f51317cadc1f265bed52c800c33ef40fff4179778a",
+      "head": "ea914da0bd7a1d6f84110d091182d07a90c34559",
+      "lastVerified": "Full72 quick70 and runtime-assets passed; docker ps/top confirms active Go snapshot runner. Revalidate existing owner before polling; do not start a duplicate."
+    }
   }
 }
