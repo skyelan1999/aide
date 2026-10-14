@@ -69,8 +69,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Canonical local complete-dependency rebuild deployed healthy9999; historical mounts/workspace config and1 token hash preserved;5 config/auth hashes stable since post-build snapshot (not a pre-rebuild baseline). App/dependency export complete; app/dependency tags, inner/outer hashes, exact launchers, actual docker load and both local copies PASS. Final quick69 PASS; incremental push pending. No formal release.",
+      "status": "pass",
+      "summary": "Canonical local complete-dependency rebuild deployed healthy9999; historical mounts/workspace config and1 token hash preserved;5 config/auth hashes stable since post-build snapshot (not a pre-rebuild baseline). App/dependency export complete; app/dependency tags, inner/outer hashes, exact launchers, actual docker load and both local copies PASS. Final quick69 PASS; incremental branch push06c8dc0 PASS. No formal release.",
       "evidence": [
         ".agent-state/chat-draft-navigation/runtime.json",
         ".agent-state/chat-draft-navigation/fixed-entry.log"
@@ -79,7 +79,7 @@
   },
   "release_authorization": "Existing incremental push, local build/test and offline package authorization; no formal release.",
   "rollback": "Revert targeted draft guard/scene changes; do not delete recovery records or user sessions.",
-  "handoff": "Source0cb5e42 and canonical Safari draft acceptance complete; offline app/dependency package imported/checked/copied. Final quick69 PASS, incremental branch push pending. Original goal remains active; no formal release.",
+  "handoff": "Source0cb5e42 and canonical Safari draft acceptance complete; offline app/dependency package imported/checked/copied. Final quick69 PASS, incremental branch push06c8dc0 PASS. Original goal remains active; no formal release.",
   "runtime": {
     "runningImage": "sha256:659d44949a0bc3e6713c7c9cd295fc179eef7e60def96f1a5400f440c1d74eef",
     "image": "sha256:659d44949a0bc3e6713c7c9cd295fc179eef7e60def96f1a5400f440c1d74eef",
@@ -155,5 +155,11 @@
     "time": "20261014T204047440400Z",
     "log": ".agent-state/verify-20261014T204047440400Z.log",
     "commands": 69
+  },
+  "source_push": {
+    "branch": "fix/chat-draft-navigation",
+    "pushedCommit": "06c8dc0",
+    "status": "pass",
+    "scope": "Incremental branch push, no main/tag/formal release or image registry publish"
   }
 }
