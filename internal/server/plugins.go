@@ -787,16 +787,16 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	footprint := a.pluginFootprintLocked(pluginID, toolName, args)
 	a.mu.Unlock()
 	if err := parent.Err(); err != nil {
-		return nil, err
+		return nil, pluginPlanRejected(parent, err)
 	}
 	releaseResources, err := a.pluginResources.acquire(parent, footprint)
 	if err != nil {
-		return nil, err
+		return nil, pluginPlanRejected(parent, err)
 	}
 	defer releaseResources()
 	release, err := a.pluginCalls.acquire(parent, scope+"\x00"+pluginID)
 	if err != nil {
-		return nil, err
+		return nil, pluginPlanRejected(parent, err)
 	}
 	defer release()
 	a.mu.Lock()
@@ -811,15 +811,18 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	denied := toolDeniedIn(a.settings.DisabledTools, toolName)
 	a.mu.Unlock()
 	if changed {
-		return nil, errors.New("工作区或插件资源声明已变化，排队调用未执行")
+		return nil, pluginPlanRejected(parent, errors.New("工作区或插件资源声明已变化，排队调用未执行"))
 	}
 	if !enabled {
-		return nil, errors.New("插件已停用，操作未执行")
+		return nil, pluginPlanRejected(parent, errors.New("插件已停用，操作未执行"))
 	}
 	if denied {
-		return nil, errors.New("插件工具已禁用，操作未执行")
+		return nil, pluginPlanRejected(parent, errors.New("插件工具已禁用，操作未执行"))
 	}
 	if err := parent.Err(); err != nil {
+		return nil, pluginPlanRejected(parent, err)
+	}
+	if err := pluginPlanAdmission(parent); err != nil {
 		return nil, err
 	}
 	if a.daemons != nil && a.isDaemonPlugin(pluginID) {

@@ -30,6 +30,14 @@ def task_path(name):
     return ROOT / 'docs/tasks' / (name + '.json')
 
 
+def check_timeout(command):
+    # The snapshot runner bounds Docker at1250s and its owned-container cleanup
+    # at10s. Do not kill that owner at the ordinary600s command deadline.
+    if command[:2] == ['python3', 'scripts/test_go_snapshot.py']:
+        return 1300
+    return 1200 if command[:3] == ['bash', 'scripts/aide.sh', 'test'] else 600
+
+
 def fingerprint():
     names = subprocess.check_output(['git', 'ls-files', '-z', '--cached', '--others', '--exclude-standard'], cwd=ROOT).split(b'\0')
     digest = hashlib.sha256()
@@ -187,7 +195,7 @@ def main():
                     # The race-enabled server suite takes longer than ten minutes
                     # on the supported Docker runner. Keep other checks bounded,
                     # but allow the full suite to finish and produce a real receipt.
-                    timeout = 1200 if command[:3] == ['bash', 'scripts/aide.sh', 'test'] else 600
+                    timeout = check_timeout(command)
                     code = subprocess.run(resolve_check_command(command), cwd=ROOT, stdout=stream, stderr=subprocess.STDOUT, timeout=timeout).returncode
                 except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
                     stream.write(str(exc) + '\n'); code = 1

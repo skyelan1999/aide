@@ -218,6 +218,22 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 			b, _ := json.Marshal(pair.src)
 			_ = json.Unmarshal(b, pair.dst)
 		}
+		// Outcome needs uncertain identities, not private plan arguments,
+		// dependency text or proposal payloads. Detach only these summaries.
+		for _, plan := range run.PluginPlans {
+			if plan == nil {
+				continue
+			}
+			copy := &PluginExecutionPlan{ID: plan.ID}
+			for _, node := range plan.Nodes {
+				if node.State == "uncertain" {
+					copy.Nodes = append(copy.Nodes, PluginPlanNode{pluginPlanNodeSpec: pluginPlanNodeSpec{ID: node.ID, Tool: node.Tool}, State: node.State})
+				}
+			}
+			if len(copy.Nodes) > 0 {
+				t.PluginPlans = append(t.PluginPlans, copy)
+			}
+		}
 		if run.AgentPlan != nil {
 			b, _ := json.Marshal(run.AgentPlan)
 			_ = json.Unmarshal(b, &t.AgentPlan)
@@ -237,6 +253,24 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 	for _, intent := range task.ToolExecutionIntents {
 		if intent.State != "completed" {
 			unknown = append(unknown, intent)
+		}
+	}
+	// Recovery retires transient dispatch intents, but uncertain graph effects
+	// remain an outcome gap until explicitly reconciled, including resumed runs.
+	knownUnknown := map[string]bool{}
+	for _, intent := range unknown {
+		knownUnknown[intent.CallID] = true
+	}
+	for _, plan := range task.PluginPlans {
+		if plan == nil {
+			continue
+		}
+		for _, node := range plan.Nodes {
+			id := plan.ID + "/" + node.ID
+			if node.State == "uncertain" && !knownUnknown[id] {
+				unknown = append(unknown, ToolExecutionIntent{CallID: id, Tool: node.Tool, State: "dispatched"})
+				knownUnknown[id] = true
+			}
 		}
 	}
 	for _, f := range task.Files {

@@ -133,6 +133,7 @@ func (a *App) checkpointExecution(task *Task, step string, chain []Message, kind
 // Complete the protocol after interruption without inventing a tool result.
 // Legacy checkpoints lack dispatch markers, so unmatched calls are unknown.
 func recoverExecutionCheckpoint(task *Task) {
+	recoverPluginPlans(task)
 	states := map[string]string{}
 	transcriptCalls := map[string]bool{}
 	for _, intent := range task.ToolExecutionIntents {
@@ -167,7 +168,7 @@ func recoverExecutionCheckpoint(task *Task) {
 	for _, intent := range task.ToolExecutionIntents {
 		if !transcriptCalls[intent.CallID] && intent.State != "completed" {
 			task.HookRecoveryRequired = true
-			recovered = append(recovered, Message{Role: "user", Content: "运行时恢复记录：TOOL_OUTCOME_UNKNOWN，后台 Hook 调用 " + intent.CallID + " 没有已持久化结果。先核查其副作用，无法核实的重试需人工确认。"})
+			recovered = append(recovered, Message{Role: "user", Content: "运行时恢复记录：TOOL_OUTCOME_UNKNOWN，后台工具或 Hook 调用 " + intent.CallID + " 没有已持久化结果。先核查其副作用，无法核实的重试需人工确认。"})
 		}
 	}
 	task.CheckpointMessages = recovered

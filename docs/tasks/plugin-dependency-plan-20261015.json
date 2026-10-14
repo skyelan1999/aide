@@ -1,0 +1,83 @@
+{
+  "id": "plugin-dependency-plan-20261015",
+  "request": "Continue authorized5x plugin scheduling with explicit dependency validation, bounded dispatch, serialized approvals, per-node journal and stable result merge; preserve resource and sandbox gates.",
+  "baseline": "206366b73743928bdea977acbaae3a56e60ad704",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Expose executable plugin plan tool with unique IDs, explicit dependencies and bounded1x-5x workers; reject cycles/unknown dependencies/disabled tools before any dispatch.",
+    "Real Node handlers prove independent overlap and dependent execution after success; failures block dependents, independent work continues; static args plus direct dependency text bindings.",
+    "Existing sandbox/task tool restrictions, plugin resource admission, workspace generation checks, control-action confirmations, proposal boundaries and hooks remain in force; questions serialized by scheduler.",
+    "Persist plan and individual intent/result before/after each dispatch, publish identified progress, merge proposals and tool records on controller in plan order; unresolved interrupted calls never auto replay.",
+    "Test cancellation/recovery/budget/nested denial and document honest runtime/model acceptance boundaries."
+  ],
+  "scope": [
+    "internal/server/plugin_plan.go",
+    "internal/server/plugin_plan_test.go",
+    "internal/server/workflow.go",
+    "internal/server/execution_journal.go",
+    "docs/architecture/plugin-task-scheduling.md",
+    "docs/tasks",
+    "internal/server/plugins.go",
+    "internal/server/task_outcome.go",
+    "scripts/agent-route.py",
+    "scripts/test_agent_route.py"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Continues original plugin concurrency, dependency/write order and5x requirement; not completion of overall12 workstreams.",
+      "evidence": [
+        "docs/architecture/plugin-task-scheduling.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Explicit plugin-only DAG with direct dependency text bindings. One controller serializes confirmations/hooks/persistence and stable proposal merge; workers use existing resource gates and recheck plan policy at actual admission. Nested calls charge central budget. Persist per-node state/results and recover unresolved dispatch as uncertain; same persisted graph ID is observational, never replayed. Competing file proposals reject later updates instead of silently overwriting.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added advertised plugin DAG tool, all-node preflight, direct text bindings, selected concurrency, sequential confirmations/hooks and resource admission policy callback. Per-node intent/result persistence and stable merge; duplicate file proposals reject rather than overwrite. Recovery refuses replay, outcome retains only uncertainty identities. Matching unknown-resource hooks explicitly reduce effective concurrency to1. Owner surface snapshots protected during live refresh.",
+      "evidence": [
+        "internal/server/plugin_plan.go",
+        "internal/server/plugin_plan_test.go",
+        "internal/server/workflow.go",
+        "internal/server/execution_journal.go",
+        "internal/server/task_outcome.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Initial core targeted race14.381s/vet PASS; expanded candidate resource/graph/tool-loop/outcome race30.607s/vet PASS, including1x/5x actual handler barriers and5x with hook effective1x. Privacy-only outcome race7.753s/vet PASS. Latest owner-refresh/privacy targeted race7.999s and vet PASS. First model-loop test used stale decoded session fixture, panicked under fixture lock and timed out180s during cleanup; corrected to current server session, then passes. Quick68 ran on previous candidate; final full/runtime/UI acceptance pending.",
+      "evidence": [
+        ".agent-state/plugin-dependency-plan/focused-race.log",
+        ".agent-state/plugin-dependency-plan/integration-race.log",
+        ".agent-state/plugin-dependency-plan/final-candidate-race.log",
+        ".agent-state/plugin-dependency-plan/outcome-privacy-race.log",
+        ".agent-state/plugin-dependency-plan/final-snapshot-race.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented input, budget, effective concurrency, proposal/unknown state boundaries and incomplete UI/reconciliation/real-model acceptance.",
+      "evidence": [
+        "docs/architecture/plugin-task-scheduling.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned test containers removed by bounded snapshot runner; five inherited vendor deletions and runtime config/data preserved.",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental source/test/push/local image authorization; no main/tag release.",
+  "rollback": "Additive tool/task fields; retain previous image and original session data. Revert tool advertisement and dispatcher without deleting persisted plans.",
+  "handoff": "Core implemented with scoped race/vet evidence. Latest owner/privacy scoped test PASS; final full, canonical-entry deployment and offline image update pending. Dedicated graph UI, manual reconciliation of uncertain effects and real model adoption/ROS2 document quality not accepted. Original twelve workstreams and host source I/O remain open. Windows by user; true vectors deferred."
+}

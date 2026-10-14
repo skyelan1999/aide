@@ -1,5 +1,6 @@
 """Regression tests for the route's deletion and release boundaries."""
 import importlib.util
+import ast
 import json
 from pathlib import Path
 import subprocess
@@ -14,6 +15,15 @@ CONFIG = json.loads((route.ROOT / 'docs/agent/router.json').read_text())
 
 
 class RouteTests(unittest.TestCase):
+    def test_snapshot_owner_outlives_its_execution_and_cleanup_deadlines(self):
+        tree = ast.parse((route.ROOT / 'scripts/test_go_snapshot.py').read_text())
+        deadlines = [kw.value.value for node in ast.walk(tree)
+                     if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'run'
+                     for kw in node.keywords if kw.arg == 'timeout' and isinstance(kw.value, ast.Constant)]
+        self.assertGreater(route.check_timeout(['python3', 'scripts/test_go_snapshot.py']), sum(deadlines))
+        self.assertLess(route.check_timeout(['python3', 'scripts/test_go_snapshot.py']), 1800)
+        self.assertEqual(route.check_timeout(['node', 'scripts/example.test.cjs']), 600)
+
     def test_explicit_interpreter_overrides(self):
         with tempfile.TemporaryDirectory() as tmp:
             executable = Path(tmp) / 'bash.exe'
