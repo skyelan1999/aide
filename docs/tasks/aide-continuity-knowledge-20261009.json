@@ -5563,5 +5563,46 @@
     "browser": "User must manually handle Safari self-signed certificate interstitial; no bypass and no full workbench UI PASS claim.",
     "dataBoundary": "Only current mounted data and before-start snapshot checked; no recovery/migration from prior instance/device asserted.",
     "remaining": "Original twelve workstreams and plugin tool DAG remain active; reference-scene framing pending. Windows native by user, real vector tests deferred."
+  },
+  "progress_checkpoint_20261015_followup114": {
+    "status": "in_progress",
+    "task": "docs/tasks/launcher-local-image-20261015.json",
+    "changes": "Normalize only shipped public asset permissions in both application Dockerfiles; full gate adds real nonroot/no-network asset and DOCX roundtrip. Original host/data permissions untouched.",
+    "verification": "Old image reproduces PermissionError; repaired image reads all18 resources and DOCX roundtrip PASS. Exact start.command opened real Safari workbench, warning visible, original form values preserved. Initial full Office failures retained; final full pending.",
+    "runtime": {
+      "runningImage": "sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14",
+      "image": "sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14",
+      "binarySHA256": "d94eb06e3e030a1bde740a281f97ac88740fcb8622da9deb9502012fc8494e82",
+      "runningPlatformManifest": "sha256:261fa02264ded0bb31405a39b0e7379b5be2a98b0f705d8ac54481cf1dc517dd",
+      "sourceSHA256": "5be86528b20af58d36940751e2b56b614ea5de25057c8ad4043cb96c54ab5ca0",
+      "buildCommit": "ba47910cde89898ce309454f5d8a3d2e9e53e4d8-dirty",
+      "port": "9999",
+      "health": "ok",
+      "mountsPreserved": true,
+      "workspaceConfigBytesPreserved": true,
+      "protectedFilesUnchanged": 1,
+      "configuredPath": "/Users/skyelan/debug",
+      "runtimeWorkspace": "/workspace",
+      "startupWarningPresent": true,
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "package": {
+      "image": "sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14",
+      "sourceSHA256": "5be86528b20af58d36940751e2b56b614ea5de25057c8ad4043cb96c54ab5ca0",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-05c7a9ee2663-offline.tar.gz",
+      "bytes": 705587320,
+      "sha256": "ecb62181f5efc32029e509d00ebbd59de335d0eeb2ede7117272e444374379e5",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true
+    },
+    "remaining": "Reference-scene framing prototypes not applied; original twelve workstreams and plugin tool DAG remain active. Other-device import and Windows native acceptance pending; real vector tests deferred."
   }
 }

@@ -14,7 +14,7 @@ shasum -a 256 -c SHA256SUMS
 
 ## 离线 / 空气 Gap 使用要点
 
-- **目标离线机绝不执行 `bash scripts/aide.sh start`**：`start` = `--build`，会触发 `docker build` 拉取基础镜像，在无外网机器上必然失败或挂起。
+- **运行离线包使用包内 `start.command` 或 `start-bundle`**，不执行构建。源码 `start` 仅在完整本地依赖镜像就绪时支持无网络重建；缺少本地镜像的首次构建仍需联网。
 - 离线路径固定为 `bash scripts/aide.sh start-image`（= `--no-build --pull never`），只启动已 `docker load` 的镜像。
 - **双保险防 pull**：Compose 中 aide 服务已设 `pull_policy: never`，叠加 `start-image` 的 `--pull never`。即使裸跑 `docker compose up` 也不会联网拉取；缺镜像会立即报错。
 - 镜像自包含运行工具链，无 CDN/外部字体依赖；离线时模型指向局域网地址，`web_search` 在未配置端点时优雅降级为本地 `search_text`。完整离线流程见 [docs/installation.md §3C](../docs/installation.md)。
@@ -102,6 +102,9 @@ Git push 只同步源码，不包含本目录被忽略的大型镜像归档。�
 2026-10-15 00:03后当前候选包（包含最终并行倍率列表与此前星图/插件修复）：`aide-0.1.17.0-RC2-linux-arm64-6ac93ca10a8d-offline.tar.gz`。镜像 `sha256:6ac93ca10a8d3b90b5d813e0ad89894afc0a6f16307e27da15c73c483c585289`，SHA-256 `1e1171d0590fb1a8dd5b1b8cb3d3d49bccd1bab2f76446bac051f2b9297ef4fd`，561613174 字节。8097原生Safari已验证推理强度与五条倍率同列滚动、选择持久化；包内外校验及实际 `docker image load` 通过，归档复制到两工作树。另一端导入待验；用户新报“引用aide目录无节点”尚未在该实例复现，本包不宣称解决此新问题。详见[布局验收](../docs/tasks/composer-parallel-placement-20261014.json)和[引用排查](../docs/tasks/starmap-reference-empty-20261015.json)。
 
 
-2026-10-15 当前最新启动恢复与完整本地依赖包：`aide-0.1.17.0-RC2-linux-arm64-f154cce63fed-offline.tar.gz`（linux/arm64，705564170 字节），SHA-256 `7c202d09a8148d95c2511df597004933c405111a7e609f137455db172dcd6037`。应用镜像 `sha256:f154cce63fed211234c668eeb550718100ced70ff3df4eccddde20ebe2f6e579`；同一包内 image tar 同时包含 `aide:dependencies-v1`，已验证两个标签及运行平台 manifest、镜像包内外哈希和实际 docker load，并复制至两个工作树。原包保留作回滚。按用户要求从 canonical `start.command` 实测启动及清构建缓存后本地重建；实际端口9999，Safari已自动打开但证书提示仍待用户手动处理，尚未把工作台UI验收记作通过。
+2026-10-15 上一批启动恢复包（已由下述资源权限修正版替代）：`aide-0.1.17.0-RC2-linux-arm64-f154cce63fed-offline.tar.gz`（linux/arm64，705564170 字节），SHA-256 `7c202d09a8148d95c2511df597004933c405111a7e609f137455db172dcd6037`。应用镜像 `sha256:f154cce63fed211234c668eeb550718100ced70ff3df4eccddde20ebe2f6e579`；同一包内 image tar 同时包含 `aide:dependencies-v1`，已验证两个标签及运行平台 manifest、镜像包内外哈希和实际 docker load，并复制至两个工作树。原包保留作回滚。按用户要求从 canonical `start.command` 实测启动及清构建缓存后本地重建；实际端口9999，Safari已自动打开但证书提示仍待用户手动处理，尚未把工作台UI验收记作通过。
 
 仅需补充源码构建依赖时，可使用 `aide-dependencies-v1-linux-arm64.tar.gz`，SHA-256 `520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76`，直接 `docker load -i` 导入。运行离线包不需要再下载此文件或重新构建。首次联网从零构建、Docker缓存与保留镜像的边界见[本地镜像说明](../docs/local-dependency-image.md)及[本批任务](../docs/tasks/launcher-local-image-20261015.json)。
+
+
+2026-10-15 当前资源权限修正版：`aide-0.1.17.0-RC2-linux-arm64-05c7a9ee2663-offline.tar.gz`（linux/arm64，705587320 字节），SHA-256 `ecb62181f5efc32029e509d00ebbd59de335d0eeb2ede7117272e444374379e5`。应用镜像 `sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14`，源码指纹 `5be86528b20af58d36940751e2b56b614ea5de25057c8ad4043cb96c54ab5ca0`。保留同一完整依赖镜像，修复私有源码模式复制后普通运行用户无法读取 Office 和内置插件的问题；工作台实际端口9999，Safari工作台与原配置保留已观测。镜像包内外校验、实际导入和副本状态以[本批任务](../docs/tasks/launcher-local-image-20261015.json)为准。旧包保留追溯，另一设备请优先使用此修正版；接收端导入仍待实际验收。

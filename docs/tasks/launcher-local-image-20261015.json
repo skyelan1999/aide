@@ -26,7 +26,10 @@
     "internal/server/web/index.html",
     "internal/server/web/style.css",
     "docs",
-    "docker-images"
+    "docker-images",
+    "Dockerfile",
+    "scripts/test_runtime_assets.py",
+    "docs/agent/router.json"
   ],
   "stages": {
     "requirements": {
@@ -59,7 +62,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Go race startup/context tests PASS 4.251s; offline-start and local dependency tests PASS, source fingerprint and i18n PASS. Finder opened exact start.command and Safari launched; app healthy at configured 9999, mounts/config bytes retained. After actual 4.903GB builder-cache cleanup, same entry rebuilt with local base and RUN network none, no dependency installation/download steps. Safari certificate prompt needs user handling; final candidate/package verification pending. Final exact-entry restart healthy; local-base tag removed and same start.command force rebuild reimported the verified local archive. App binary and platform manifest match the exported artifact. Current mounted data snapshot comparison covers one preexisting protected file; no older-instance recovery claim. Browser still at certificate interstitial. Final quick profile PASS (66 commands, 20261014T171353867546Z).",
+      "summary": "Exact canonical start.command rebuilt locally and opened Safari workbench at configured 9999. Warning visible; workspace form retains original workspace/docs/cache values, no save performed. Mounts/config bytes and one preexisting protected file unchanged. Initial full failed six Office/remote Office tests because private host file modes survived COPY. Both Dockerfiles now make only shipped /opt/aide resources readable/traversable. Old image negative reproduction confirmed; new image normal uid1000/no network reads all 18 assets and actual DOCX roundtrip PASS. Final full rerun pending.",
       "evidence": [
         ".agent-state/launcher-workspace-test-final.log",
         ".agent-state/launcher-start/first-launch.json",
@@ -69,7 +72,12 @@
         ".agent-state/launcher-start/local-archive-start.stdout.log",
         ".agent-state/launcher-start/local-archive-start.stderr.log",
         ".agent-state/launcher-start/browser-certificate-pending.png",
-        ".agent-state/verify-20261014T171353867546Z.log"
+        ".agent-state/verify-20261014T171353867546Z.log",
+        ".agent-state/launcher-start/full-before-asset-permissions.json",
+        ".agent-state/launcher-start/old-assets-negative.log",
+        ".agent-state/launcher-start/runtime-assets.log",
+        ".agent-state/launcher-start/workbench-open.png",
+        ".agent-state/launcher-start/workspace-config-preserved.png"
       ]
     },
     "documentation": {
@@ -91,7 +99,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "8bd455a source pushed. Full offline package and standalone dependency archive validated and copied to both worktrees; both image tags and launchers verified, actual docker load PASS. Final quick/full gates tracked separately; no formal main/tag release.",
+      "summary": "Previous source commits pushed; resource permission repair and final full rerun in progress. Updated offline bundle verified inside/outside, actual docker load, both image tags, running platform manifest and both worktree copies PASS. No formal main/tag release.",
       "evidence": [
         ".agent-state/launcher-start/package.json"
       ]
@@ -99,14 +107,14 @@
   },
   "release_authorization": "User explicitly requests local launcher tests and complete local Docker images; existing incremental push/offline-package authorization. No formal main/tag release.",
   "rollback": "",
-  "handoff": "Current canonical launcher uses port 9999, not the prior compatibility 8097 instance. Browser opened but certificate interstitial remains pending user interaction. Keep original twelve-workstream goal and pending reference-scene framing fix.",
+  "handoff": "Canonical launcher uses configured port9999. Safari now shows authenticated workbench, visible repair notice and preserved original config form. Other-device import and Windows native tests remain user acceptance. Original twelve workstreams and reference-scene framing remain pending.",
   "runtime": {
-    "runningImage": "sha256:e91e3a45bf19977668d503d151aef70f067f664f4f185890cb492e144e3bb7e4",
-    "image": "sha256:f154cce63fed211234c668eeb550718100ced70ff3df4eccddde20ebe2f6e579",
-    "binarySHA256": "20069d300bea3a56aebfff0d10b19f64d7e10013a49d2a8775417bac33e797ca",
-    "runningPlatformManifest": "sha256:06e19aa2297d1f783248eddc831849fe225d47c5440b6fe50dd4671b6cf183a8",
-    "sourceSHA256": "1f575e8fd21cc6cddbd67d3a45801a01529c644b48aef17ef24f215ffd3a5d03",
-    "buildCommit": "8bd455a7a1e48820dc6fe27069e9fb5d1e7951bf-dirty",
+    "runningImage": "sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14",
+    "image": "sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14",
+    "binarySHA256": "d94eb06e3e030a1bde740a281f97ac88740fcb8622da9deb9502012fc8494e82",
+    "runningPlatformManifest": "sha256:261fa02264ded0bb31405a39b0e7379b5be2a98b0f705d8ac54481cf1dc517dd",
+    "sourceSHA256": "5be86528b20af58d36940751e2b56b614ea5de25057c8ad4043cb96c54ab5ca0",
+    "buildCommit": "ba47910cde89898ce309454f5d8a3d2e9e53e4d8-dirty",
     "port": "9999",
     "health": "ok",
     "mountsPreserved": true,
@@ -118,11 +126,11 @@
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
   },
   "package": {
-    "image": "sha256:f154cce63fed211234c668eeb550718100ced70ff3df4eccddde20ebe2f6e579",
-    "sourceSHA256": "1f575e8fd21cc6cddbd67d3a45801a01529c644b48aef17ef24f215ffd3a5d03",
-    "archive": "aide-0.1.17.0-RC2-linux-arm64-f154cce63fed-offline.tar.gz",
-    "bytes": 705564170,
-    "sha256": "7c202d09a8148d95c2511df597004933c405111a7e609f137455db172dcd6037",
+    "image": "sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14",
+    "sourceSHA256": "5be86528b20af58d36940751e2b56b614ea5de25057c8ad4043cb96c54ab5ca0",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-05c7a9ee2663-offline.tar.gz",
+    "bytes": 705587320,
+    "sha256": "ecb62181f5efc32029e509d00ebbd59de335d0eeb2ede7117272e444374379e5",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
     "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
@@ -141,5 +149,13 @@
     "fingerprint": "22024bab44256ecff2273fb47e27553b1d2894d854a4cbb5a3d46bcf0407e426",
     "time": "20261014T171353867546Z",
     "log": ".agent-state/verify-20261014T171353867546Z.log"
+  },
+  "browser": {
+    "status": "pass",
+    "scope": "exact-entry workbench startup, visible recovery warning, original workspace/docs/cache form values; no settings saved",
+    "evidence": [
+      ".agent-state/launcher-start/workbench-open.png",
+      ".agent-state/launcher-start/workspace-config-preserved.png"
+    ]
   }
 }
