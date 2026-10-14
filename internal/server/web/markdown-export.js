@@ -83,15 +83,16 @@
     // document and can exhaust Safari's memory on long Markdown files.
     const sourceRoot=body.children[0]||body,sourceBox=sourceRoot.getBoundingClientRect();
     const blocks=[...sourceRoot.children].map(node=>{const r=node.getBoundingClientRect();return{node,top:r.top-sourceBox.top,bottom:r.bottom-sourceBox.top,left:r.left-sourceBox.left,width:r.width,height:r.height};});
-    const measured=new WeakMap();
+    const measured=new WeakMap(),childCursor=new WeakMap();
     for(const block of blocks)if(block.height>PAGE){const pending=[block.node];while(pending.length){const node=pending.pop();if(node.nodeType!==1)continue;measured.set(node,node.getBoundingClientRect());for(const child of node.children)pending.push(child);}}
     const pageRanges=[];
     if(format==='pdf'){
+     const contentHeight=blocks.length?Math.max(1,blocks[blocks.length-1].bottom):Math.max(1,height);
      let y=0,scanBlock=0;
-     while(y<height){while(scanBlock<blocks.length&&blocks[scanBlock].bottom<=y)scanBlock++;let end=Math.min(y+PAGE,height);
+     while(y<contentHeight){while(scanBlock<blocks.length&&blocks[scanBlock].bottom<=y)scanBlock++;let end=Math.min(y+PAGE,contentHeight);
       // Match the render pass: keep nearby short blocks together when possible.
       for(let i=scanBlock;i<blocks.length&&blocks[i].top<end;i++){const b=blocks[i];if(b.top>y+PAGE*.65&&b.top<end&&b.bottom>end&&b.height<PAGE)end=Math.floor(b.top);}
-      end=Math.max(y+1,end);pageRanges.push({y,height:end-y});y=end;
+      end=Math.max(y+1,end);pageRanges.push({y,height:end===contentHeight?Math.max(end-y,PAGE):end-y});y=end;
      }
      clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},Math.min(15*60*1000,120000+pageRanges.length*2000));
     }
@@ -116,18 +117,22 @@
       // giant list, table, quote, or code block), only copy visible descendants.
       if(!children.length||r.height<=PAGE&&top>=y&&bottom<=y+h&&!(node.tagName==='LI'&&node.parentElement?.tagName==='OL'))return node.cloneNode(true);
       const clone=node.tagName==='LI'&&node.parentElement?.tagName==='OL'?renderDoc.createElement('div'):node.cloneNode(false);if(node.tagName==='LI'&&clone.tagName==='DIV')clone.className=node.className;clone.style.position='absolute';clone.style.boxSizing='border-box';clone.style.left=(r.left-sourceBox.left)+'px';clone.style.top=(top-parentTop)+'px';clone.style.width=r.width+'px';clone.style.height=r.height+'px';clone.style.margin='0';
-      let ordinal=0;
-      for(const child of children){
-       if(child.nodeType===1){const childRect=measured.get(child)||child.getBoundingClientRect(),childTop=childRect.top-sourceBox.top,childBottom=childRect.bottom-sourceBox.top;if(childTop>=y+h)break;if(childBottom>y){const copy=sliceNode(child,top);if(copy){
+      let state=childCursor.get(node)||{index:0,ordinal:0},childIndex=state.index,ordinal=state.ordinal;
+      while(childIndex<children.length){const child=children[childIndex];let childRect;
+       if(child.nodeType===1)childRect=measured.get(child)||child.getBoundingClientRect();
+       else if(child.nodeType===3&&child.nodeValue){const range=node.ownerDocument.createRange();range.selectNodeContents(child);childRect=range.getBoundingClientRect();}
+       if(!childRect||!childRect.height){childIndex++;continue;}
+       const childTop=childRect.top-sourceBox.top,childBottom=childRect.bottom-sourceBox.top;if(childTop>=y+h)break;
+       if(childBottom>y){if(child.nodeType===1){const copy=sliceNode(child,top);if(copy){
          if(node.tagName==='OL'&&child.tagName==='LI'){
           const start=Number(node.getAttribute('start')||1),number=start+ordinal;
           const marker=renderDoc.createElement('span');marker.textContent=number+'.';marker.setAttribute('aria-hidden','true');marker.style.cssText='position:absolute;left:0;width:40px;white-space:nowrap;text-align:right';copy.prepend(marker);
          }
          const listContentOffset=node.tagName==='LI'&&node.parentElement?.tagName==='OL'?44:0;copy.style.position='absolute';copy.style.left=(childRect.left-r.left+listContentOffset)+'px';copy.style.top=(childRect.top-r.top)+'px';copy.style.width=Math.max(0,childRect.width-listContentOffset)+'px';copy.style.height=childRect.height+'px';clone.append(copy);
-        }}
-        if(node.tagName==='OL'&&child.tagName==='LI')ordinal++;
-      }else{const copy=sliceNode(child,top);if(copy){if(node.tagName==='LI'&&node.parentElement?.tagName==='OL'){copy.style.left=(Number.parseFloat(copy.style.left)||0)+44+'px';copy.style.width=`calc(100% - 44px)`;}clone.append(copy);}}
+        }}else{const copy=sliceNode(child,top);if(copy){if(node.tagName==='LI'&&node.parentElement?.tagName==='OL'){copy.style.left=(Number.parseFloat(copy.style.left)||0)+44+'px';copy.style.width=`calc(100% - 44px)`;}clone.append(copy);}}}
+       if(childBottom<=y+h){if(node.tagName==='OL'&&child.nodeType===1&&child.tagName==='LI')ordinal++;childIndex++;}else break;
       }
+      childCursor.set(node,{index:childIndex,ordinal});
       return clone;
      };
      for(let i=firstBlock;i<blocks.length&&blocks[i].top<y+h;i++){
