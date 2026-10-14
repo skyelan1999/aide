@@ -420,6 +420,10 @@
       [
         "node",
         "scripts/git-history.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/file-unix-metadata.test.cjs"
       ]
     ],
     "full": [

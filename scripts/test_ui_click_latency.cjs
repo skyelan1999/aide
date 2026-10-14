@@ -48,7 +48,7 @@ async function testSessionSelection() {
       const d = deferred(); gets.set(url, d); return d.promise;
     },
     clearTimeout() {}, closeStream() {}, ttsCancel() {}, cancelContextPreview() {},
-    refreshCompactInfo() {}, schedulePoll() {}, scheduleContextPreview() {},
+    refreshCompactInfo() {}, schedulePoll() {}, scheduleContextPreview() {}, estimateContext() {},
     renderSession() {}, loadSessions() { requests.push(['list','GET']); return Promise.resolve(); },
     t: key => key,
   };

@@ -2475,3 +2475,5 @@ Object.assign(window.aideEnglish, {
   "Git 历史读取失败：": "Failed to read Git history: ",
   "内容较长，显示完整正文，不逐行着色。": "Long content is shown in full without per-line coloring."
 });
+
+Object.assign(window.aideEnglish, { '所有者：{0} · 所属组：{1} · 权限：{2}': 'Owner: {0} · Group: {1} · Permissions: {2}' });

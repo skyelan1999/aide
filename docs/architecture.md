@@ -303,3 +303,9 @@ SSH/SFTP 长列表若报告完整 POSIX 权限、所有者和组，则保留原�
 Directory entries may include optional `unix` metadata: owner, group and symbolic permissions, plus numeric UID/GID for local Linux entries. Names resolve once per directory response, falling back to numeric IDs. Non-Linux local listings omit this Linux metadata. SFTP preserves explicitly reported POSIX identities and modes without extra remote commands or local-name substitution. Container-visible ownership is not a promise about host accounts, and permission bits do not describe complete ACL/access policy. This is read-only display.
 
 第一块定向验收：隔离 Linux Docker 内 `go test -race -mod=vendor ./internal/server -run '^(TestFileUnix|TestSFTPList)' -count=1 -timeout=3m` 通过。覆盖实际列表身份、普通／目录／特殊位格式、远端原值和不完整字段拒绝；前端与实际8097验收独立记录于 [任务账本](tasks/linux-file-metadata-20261014.json)。
+
+文件行使用 9px 等宽小字显示 `owner:group  permissions`，位于文件名下方；文件名和元信息分别省略，完整身份通过 title 和 ARIA 可读。缺失或非法元数据保持单行。名称节点仍单独用于重命名，因此权限不进入输入框；取消重命名后元信息保持。只读取展示字段，不增加 chmod/chown 功能。
+
+The workspace renders a 9px monospace ownership/mode line beneath the original filename node. Both lines truncate within narrow panels; title and ARIA expose full metadata. Missing metadata keeps the original single-line entry, and inline rename only replaces the filename.
+
+Safari 原生组件验收使用实际文件行渲染器、重命名函数和主题 CSS：深色 320px、浅色 240px、长身份省略、数字 UID/GID、缺失元数据，以及重命名／Esc 取消均通过观察。复现：`python3 scripts/fixtures/render-file-unix-metadata.py`，浏览器打开输出的本地 HTML。这是合成数据组件验收，不连接模型或修改真实文件，不代表8097实例部署验收。

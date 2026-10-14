@@ -1702,3 +1702,6 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 
 
 .git-history-panel .md-history-comparison pre{overflow:auto;max-height:50vh;white-space:pre;font:12px/1.7 ui-monospace,SFMono-Regular,monospace}.git-history-panel .md-history-line{display:block;min-height:1.7em}.git-history-panel .md-history-line-added{background:color-mix(in srgb,#22c55e 14%,transparent)}.git-history-panel .md-history-line-removed{background:color-mix(in srgb,#ef4444 14%,transparent)}.git-history-panel .md-history-line-changed{background:color-mix(in srgb,#f59e0b 16%,transparent)}
+
+/* Unix ownership stays a quiet second line; name-only rename is unchanged. */
+.file-item .file-label{display:block;flex:1;min-width:0;overflow:hidden}.file-item .file-label .file-name{display:block;min-width:0}.file-item .file-unix-meta{display:block;margin:2px 0 0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:9px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0;color:var(--muted)}.file-item .file-label .file-rename{width:100%;min-width:0}

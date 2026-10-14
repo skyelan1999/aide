@@ -2352,6 +2352,17 @@ function fileIconMarkup(kind) {
   };
   return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (glyphs[kind] || glyphs.file) + '</svg>';
 }
+// Keep the original name node intact so inline rename only edits the name.
+function fileEntryName(file, nameSpan) {
+  const metadata = file.unix;
+  if (!metadata || typeof metadata.owner !== 'string' || !metadata.owner || typeof metadata.group !== 'string' || !metadata.group || !/^[dlpscb-][r-][w-][xsS-][r-][w-][xsS-][r-][w-][xtT-][+@.]?$/.test(metadata.permissions || '')) return nameSpan;
+  const label = el('span', 'file-label');
+  const meta = el('small', 'file-unix-meta', metadata.owner + ':' + metadata.group + '  ' + metadata.permissions);
+  meta.title = t('所有者：{0} · 所属组：{1} · 权限：{2}', metadata.owner, metadata.group, metadata.permissions);
+  meta.setAttribute('aria-label', meta.title);
+  label.append(nameSpan, meta);
+  return label;
+}
 function renderFileEntries() {
   const files = state.fileEntries;
   $('files').replaceChildren();
@@ -2368,7 +2379,7 @@ function renderFileEntries() {
     const icon = el('span', 'file-icon file-icon-' + iconKind);
     icon.setAttribute('aria-hidden', 'true');
     icon.innerHTML = fileIconMarkup(iconKind);
-    b.append(icon, nameSpan);
+    b.append(icon, fileEntryName(file, nameSpan));
     if (file.dir) b.append(el('small', '', '›'));
     b.title = file.path;
     b._last = 0;

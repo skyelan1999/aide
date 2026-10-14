@@ -19,10 +19,13 @@
     "internal/server/web/index.html",
     "internal/server/web/locales/en.js",
     "scripts/file-unix-metadata.test.cjs",
-    "scripts/fixtures/file-unix-metadata.html",
+    "scripts/fixtures/render-file-unix-metadata.py",
     "docs/architecture.md",
     "docs/agent/router.json",
-    "docs/tasks/linux-file-metadata-20261014.json"
+    "docs/tasks/linux-file-metadata-20261014.json",
+    "scripts/test_ui_click_latency.cjs",
+    "scripts/starmap-workspace-scene.test.cjs",
+    "scripts/markdown-template-icons.test.cjs"
   ],
   "stages": {
     "requirements": {
@@ -36,40 +39,57 @@
       "evidence": []
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "第一块后端元数据完成，前端待接入。",
+      "status": "pass",
+      "summary": "Linux stat/SFTP元数据与9px双行文件标签完成，名称节点独立保持重命名行为。",
       "evidence": [
         "internal/server/file_unix_metadata.go",
-        "internal/server/files.go",
-        "internal/server/ssh_session.go"
+        "internal/server/web/app.js",
+        "internal/server/web/style.css"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "后端定向race及SFTP列表回归通过，前端待验证。",
+      "status": "pass",
+      "summary": "双仓quick全部通过，Linux定向race两仓通过；实际源码镜像构建通过；Safari组件深浅主题/窄面板/重命名验收通过。旧测试夹具补充上下文和日志依赖，缓存版本断言改为最低版本。8097运行验收仍阻塞。",
       "evidence": [
-        ".agent-state/linux-file-metadata/backend.log"
+        ".agent-state/linux-file-metadata/backend.log",
+        ".agent-state/linux-file-metadata/backend-local.log",
+        ".agent-state/linux-file-metadata/final-quick.log",
+        ".agent-state/linux-file-metadata/build.log",
+        "scripts/fixtures/render-file-unix-metadata.py"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "已补字段、支持范围、Docker身份及权限位边界中英文说明。",
+      "status": "pass",
+      "summary": "已同步中英文字段、UI、权限边界及可复现组件验收说明。",
       "evidence": [
         "docs/architecture.md"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "预览HTML仅生成到忽略的.agent-state；保留既有vendor删除和本机仓无关修改。未修改数据卷或重启Docker Desktop。",
+      "evidence": [
+        "scripts/fixtures/render-file-unix-metadata.py"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "blocked",
+      "summary": "后端分块已push；前端分块准备push。本机源码已同步并构建镜像，8097旧容器仍阻塞，未部署/未实际实例验收。Docker Desktop重启会影响Docmost等服务，仍待用户确认。",
+      "evidence": [
+        ".agent-state/linux-file-metadata/build.log"
+      ]
     }
   },
   "release_authorization": "延续用户：做一部分，push一部分，测一部分；注意文档的更新和编写。仅分块push，不代表部署或release。",
-  "rollback": "",
-  "handoff": ""
+  "rollback": "按本任务提交范围revert源码后重建；本次没有替换运行容器，不宣称存在可用旧镜像/数据备份。",
+  "handoff": "8097运行更新仍受旧容器退出事件故障阻塞；代码push与构建不等同于部署。远程SFTP仅解析器测试，未连接真实SSH。",
+  "milestones": [
+    {
+      "commit": "366f7fc",
+      "scope": "后端元数据、测试及文档",
+      "push": "pass",
+      "branch": "feat/linux-file-metadata"
+    }
+  ],
+  "image": "sha256:eca4e627e67f6bf9a1d9c62b23d89396c7fc94800233f11b08a50ab15e0877a1"
 }
