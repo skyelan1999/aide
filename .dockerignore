@@ -12,3 +12,6 @@ docker-images
 .idea
 .cache
 .DS_Store
+
+# Rebuilt by plugin hosting; not an application build input.
+plugins/surface.json

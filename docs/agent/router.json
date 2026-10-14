@@ -454,6 +454,10 @@
       [
         "node",
         "scripts/reasoning-settings.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_source_fingerprint.py"
       ]
     ],
     "full": [

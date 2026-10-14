@@ -3,6 +3,15 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_DIR"
 MODE="${1:-start}"
+# source_sha：覆盖应用与构建资源；排除启动时重写的插件能力快照。
+# 哈希写进镜像 label aide.srcsha，供 start 二次启动时比对，命中即跳过构建。
+source_sha() {
+  (
+    find cmd internal plugins vendor scripts/office docker/wheels docker/sherpa -type f ! -path 'plugins/surface.json' -print0
+    printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh
+  ) | sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
+}
+if [[ "$MODE" == source-sha ]]; then source_sha; exit; fi
 if [[ "$MODE" == test && "${AIDE_VERIFY_IN_CONTAINER:-0}" == 1 ]]; then
   # The caller already launched an isolated aide:local verification container.
   export AIDE_BUILTIN_PLUGINS=
@@ -30,14 +39,7 @@ if [[ -f .aide-image ]]; then
   fi
 fi
 
-# source_sha：覆盖应用源码和 Dockerfile COPY 的 Office、wheel、语音资源。
-# 哈希写进镜像 label aide.srcsha，供 start 二次启动时比对，命中即跳过构建。
-source_sha() {
-  (
-    find cmd internal plugins vendor scripts/office docker/wheels docker/sherpa -type f -print0
-    printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md
-  ) | sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
-}
+
 
 if [[ -f .aide-image ]]; then
   read -r BUNDLE_IMAGE BUNDLE_ID BUNDLE_PLATFORM BUNDLE_RELEASE_TAG < .aide-image
@@ -307,5 +309,5 @@ case "$MODE" in
     echo "离线启动包已导出：$ARCHIVE"
     ;;
   load) "$DOCKER_BIN" image load -i "$PROJECT_DIR/docker-images/aide-local.tar.gz" ;;
-  *) echo "用法：scripts/aide.sh {start|start-image|start-bundle|stop|status|logs|test|export|export-bundle|load}" >&2; exit 1 ;;
+  *) echo "用法：scripts/aide.sh {start|start-image|start-bundle|stop|status|logs|test|export|export-bundle|load|source-sha}" >&2; exit 1 ;;
 esac
