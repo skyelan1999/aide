@@ -19,7 +19,7 @@
     ]
   },
   "release": {
-    "status": "pending",
-    "evidence": ["Safari 实际界面验收通过；待提交并推送本阶段。"]
+    "status": "pass",
+    "evidence": ["提交 408be41 Tighten workspace card height 已推送：c570dc9..408be41 main -> main。", "本次推送仅含工作空间卡片 CSS 与本验收记录；其他工作树修改未纳入。"]
   }
 }
