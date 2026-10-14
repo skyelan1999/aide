@@ -48,7 +48,7 @@ async function testSessionSelection() {
       const d = deferred(); gets.set(url, d); return d.promise;
     },
     clearTimeout() {}, closeStream() {}, ttsCancel() {}, cancelContextPreview() {},
-    refreshCompactInfo() {}, schedulePoll() {}, scheduleContextPreview() {}, estimateContext() {},
+    refreshCompactInfo() {}, refreshStrategyUI() {}, schedulePoll() {}, scheduleContextPreview() {}, estimateContext() {},
     renderSession() {}, loadSessions() { requests.push(['list','GET']); return Promise.resolve(); },
     t: key => key,
   };
@@ -130,6 +130,7 @@ async function testSendSubmission() {
     selectSession() { return Promise.resolve(); },
   };
   vm.createContext(context);
+  vm.runInContext(excerpt('function sessionModelPreferences(', 'function activeModel('), context);
   vm.runInContext(excerpt("$('task-form').onsubmit =", "$('queue-toggle')?.addEventListener"), context);
   const event = {preventDefault() {}};
   const first = nodes['task-form'].onsubmit;

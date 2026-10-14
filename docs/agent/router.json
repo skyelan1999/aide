@@ -433,6 +433,15 @@
       [
         "node",
         "scripts/parallel-chat.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/session-model-selection.js"
+      ],
+      [
+        "node",
+        "scripts/session-model-selection.test.cjs"
       ]
     ],
     "full": [

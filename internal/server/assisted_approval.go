@@ -106,12 +106,13 @@ func (a *App) reviewPendingCommand(task *Task) {
 	task.ApprovalState = "reviewing"
 	ctx, cancel := context.WithTimeout(task.approvalCtx, 60*time.Second)
 	task.approvalCancel = cancel
-	cfg := a.settings
-	if task.Model != "" {
-		cfg.Model = task.Model
+	cfg, keyErr := settingsForSelectedModel(a.settings, task.Model)
+	if task.ModelSelection != nil {
+		cfg.ReasoningEffort = task.ModelSelection.ReasoningEffort
 	}
-	key, keyErr := a.modelAPIKeyLocked()
-	cfg.APIKey = key
+	if keyErr == nil {
+		cfg.APIKey, keyErr = a.modelAPIKeyForConfigLocked(cfg)
+	}
 	s := a.approvalSessionLocked(task)
 	prompt, authorizationOK := a.approvalAuthorizationLocked(task)
 	cwd := task.AgentRoot.ContainerAbs

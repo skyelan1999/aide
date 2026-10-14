@@ -242,29 +242,6 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
-	choice := a.sessionModelSelectionLocked(s)
-	if in.ModelSelection != nil {
-		choice = *in.ModelSelection
-	}
-	if in.Strategy != "" {
-		choice.Strategy = in.Strategy
-	}
-	if in.Profile != "" {
-		choice.Profile = in.Profile
-	}
-	cfg, selectionErr := a.selectionSettingsLocked(choice)
-	if selectionErr != nil {
-		fail(w, 400, selectionErr)
-		return
-	}
-	if cfg.Model == "" {
-		fail(w, 400, errors.New("请先打开模型设置，配置 API 和模型"))
-		return
-	}
-	if err := visionGateForConfig(cfg, images); err != nil {
-		fail(w, 400, err)
-		return
-	}
 	// 澄清门禁：run 正在等待用户回答时，本次输入直接作为应答，不开新 run
 	for _, existing := range s.Runs {
 		if existing.Status == "awaiting_clarification" && existing.AnswerCh != nil {
@@ -312,6 +289,30 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			jsonOut(w, 202, map[string]any{"steered": !in.Queued, "queued": in.Queued, "runId": existing.ID})
 			return
 		}
+	}
+	choice := a.sessionModelSelectionLocked(s)
+	if in.ModelSelection != nil {
+		choice = *in.ModelSelection
+	}
+	if in.Strategy != "" {
+		choice.Strategy = in.Strategy
+	}
+	if in.Profile != "" {
+		choice.Profile = in.Profile
+	}
+	cfg, selectionErr := a.selectionSettingsLocked(choice)
+	if selectionErr != nil {
+		fail(w, 400, selectionErr)
+		return
+	}
+	choice.Model = cfg.Model
+	if cfg.Model == "" {
+		fail(w, 400, errors.New("请先打开模型设置，配置 API 和模型"))
+		return
+	}
+	if err := visionGateForConfig(cfg, images); err != nil {
+		fail(w, 400, err)
+		return
 	}
 	if len(a.cancels) >= 4 {
 		fail(w, 429, errors.New("运行中的任务过多"))
@@ -418,8 +419,9 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	task.CanResume = true
 	s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt})
 	s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
-	oldSelection := s.ModelSelection
-	if s.ModelSelection == nil {
+	oldSelection, oldSelectionRevision := s.ModelSelection, s.ModelSelectionRevision
+	if s.ModelSelection == nil || s.ModelSelection.Model == "" {
+		s.ModelSelectionRevision++
 		s.ModelSelection = cloneModelSelection(&choice)
 	}
 	s.Runs = append(s.Runs, task)
@@ -427,6 +429,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	s.PendingPrompt = ""
 	if err := a.save(s); err != nil {
 		s.ModelSelection = oldSelection
+		s.ModelSelectionRevision = oldSelectionRevision
 		s.Messages = s.Messages[:len(s.Messages)-1]
 		s.Runs = s.Runs[:len(s.Runs)-1]
 		s.Title = oldTitle

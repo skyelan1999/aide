@@ -34,12 +34,13 @@ func (a *App) reviewPendingFiles(parent context.Context, task *Task) {
 	task.approvalCancel = cancel
 	files := append([]Change(nil), task.Files...)
 	prompt, authorized := a.approvalAuthorizationLocked(task)
-	cfg := a.settings
-	if task.Model != "" {
-		cfg.Model = task.Model
+	cfg, keyErr := settingsForSelectedModel(a.settings, task.Model)
+	if task.ModelSelection != nil {
+		cfg.ReasoningEffort = task.ModelSelection.ReasoningEffort
 	}
-	key, keyErr := a.modelAPIKeyLocked()
-	cfg.APIKey = key
+	if keyErr == nil {
+		cfg.APIKey, keyErr = a.modelAPIKeyForConfigLocked(cfg)
+	}
 	cwd := task.AgentRoot.ContainerAbs
 	if cwd == "" {
 		cwd = a.containerAbs

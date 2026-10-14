@@ -17,7 +17,7 @@ function setup() {
   const state = {config:{configured:true,workspaceId:'one',model:'model'},session:{id:'A',messages:[]},contextMeterSeq:{value:0},previewSeq:{value:0}};
   const sandbox = {state, $, window:{}, AbortController, clearTimeout, setTimeout, fmtTokens:String,activeModel:()=>null, t:s=>s, contextParts:()=>[], ensureContextMeterControls(){}, renderContextCompactionState(){},hideCtxTooltip(){},updateSendEnabled(){},api:(path, options)=>new Promise((resolve,reject)=>requests.push({resolve,reject,body:JSON.parse(options.body),signal:options.signal}))};
   vm.createContext(sandbox);
-  for(const name of ['contextMeterKey','renderContextMeter','cancelContextPreview','hideContextPreview','contextMeterScope','contextMeterTransitioning','clearContextMeterDisplay','resetContextMeter','refreshContextMeter','estimateContext','refreshContextPreview','scheduleContextPreview']) vm.runInContext(fn(name),sandbox);
+  for(const name of ['sessionModelPreferences','contextMeterKey','renderContextMeter','cancelContextPreview','hideContextPreview','contextMeterScope','contextMeterTransitioning','clearContextMeterDisplay','resetContextMeter','refreshContextMeter','estimateContext','refreshContextPreview','scheduleContextPreview']) vm.runInContext(fn(name),sandbox);
   return {sandbox,state,requests,$};
 }
 const data = inputEstimate => ({breakdown:{}, inputEstimate, contextWindow:10000});

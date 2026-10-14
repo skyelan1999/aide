@@ -345,14 +345,18 @@ Chat supports a persisted 1x–5x analysis limit. The same model plans independe
 
 ## 会话级策略、模型与推理强度 / Per-session model selection
 
-普通会话和AI工作流独立保存 `modelSelection={strategy,profile,model,reasoningEffort}` 及 `modelSelectionRevision`。底部策略菜单只修改当前会话，不再写全局 `/settings` 或 `/profiles`；模型/提供商/参数模板目录仍共享，审批模式也保留原有全局语义。新会话保存创建时的默认选择；旧会话缺少此字段时从最近任务推导模型和策略，历史没有记录的推理强度使用默认值，不虚构历史值。GET返回有效选择的副本，首次成功发送时才持久化旧会话选择。小秘独立模型来源继续使用其原有设置。
+普通会话和AI工作流独立保存 `modelSelection={strategy,profile,model,reasoningEffort}` 及 `modelSelectionRevision`。底部策略菜单只修改当前会话，不再写全局 `/settings` 或 `/profiles`；模型/提供商/参数模板目录仍共享，审批模式也保留原有全局语义。新会话保存创建时的默认选择；创建时尚未配置模型的会话，在首次成功发送时固定实际解析的模型；旧会话缺少此字段时从最近任务推导模型和策略，历史没有记录的推理强度使用默认值，不虚构历史值。GET返回有效选择的副本，首次成功发送时才持久化旧会话选择。小秘独立模型来源继续使用其原有设置。
 
-`PUT /api/sessions/{id}/model-selection` 接收非秘密选择字段和可选 `revision`，返回 `{modelSelection,revision}`。版本过期返回409；非法策略、已删除参数模板、不可用模型或非法推理强度返回400，不写入。保存按会话串行化，成功回执和后续GET按版本比较，切换到另一会话后旧回执不能覆盖界面；跨窗口冲突会取消同批过期排队修改，须用户重新选择。未创建会话的草稿按工作区保留选择；创建/发送过程中切换界面仍使用原草稿快照。
+`PUT /api/sessions/{id}/model-selection` 接收非秘密选择字段和可选 `revision`，返回 `{modelSelection,revision}`。版本过期返回409；非法策略、已删除的手动参数模板、不可用模型或非法推理强度返回400，不写入。保存按会话串行化，成功回执和后续GET按版本比较，切换到另一会话后旧回执不能覆盖界面；跨窗口冲突会取消同批过期排队修改，须用户重新选择。未创建会话的草稿按工作区保留选择；创建/发送过程中切换界面仍使用原草稿快照。
 
 开始任务时保存不可变选择到Task，并按所选模型解析提供商地址、凭据、能力和上下文窗口；不修改全局活跃模型。手动发送、语音发送和 `/api/context-preview` 携带同一选择快照；API旧客户端省略时读取该会话设置，已有strategy/profile参数保留兼容。运行期间改菜单只影响之后的发送，重试/恢复保留原任务选择。并行分析沿用主任务配置，子代理继承模型/推理强度，并保留角色配置覆盖；模型移除时明确要求重新选择，不静默路由到另一模型。`/api/config.models[].supportsVision` 返回每模型的有效图片能力，附件前端门禁与服务端所选模型一致。
+
+正在运行的任务接收插话或澄清回答时继续沿用其原有配置，即使菜单中为下次发送选择的模型后来不可用，也不阻断当前任务的输入。辅助审批调用跟随原任务的模型端点、凭据和推理强度；审批模式仍保留既有语义。参数模板的内容与自动路由规则仍共享，本次独立保存的是每个会话所选的策略和模板。
 
 模型列表和凭据配置仍是现有产品能力：规范仓支持多提供商，定向测试验证不同会话发往不同HTTP端点并携带各自测试凭据；本机8097开发仓目前是单提供商版本，本次保留其共享端点/凭据结构，只隔离模型ID、策略与推理选择。其兼容helper和对应测试没有假装支持多提供商，也没有覆盖本机其他开发改动。两份源码分开测试与构建，不能据此声称镜像来自规范仓的干净提交。
 
 Ordinary chats/workflows own independent strategy/profile/model/reasoning choices. Catalogs and credentials stay shared. Versioned session saves reject stale edits and cannot repaint another chat; draft selections are scoped by workspace. Every task captures its choice; previews, provider routing, vision gating, retry/resume and parallel analysis use that choice. Existing assistant-specific model settings and global approval behavior remain intact. Canonical source supports provider-aware routing; the older local8097 checkout preserves its single-provider compatibility path.
 
 验证使用模拟HTTP模型，不调用真实模型。定向race覆盖会话隔离、磁盘持久化、旧会话、版本冲突、删除/非法配置、模型窗口、视觉能力、实际请求路由/凭据/推理参数、运行中改配置、重试与恢复，并回归并行分析和既有读文件工具。前端VM覆盖串行保存、旧GET、切换会话、远端新版本、冲突后的排队修改和草稿快照；Safari离线夹具使用实际菜单及选择模块，验证A/B会话模型与推理各自保存/恢复、全局默认不变，以及明暗主题。复现 `python3 scripts/fixtures/render-session-model-selection.py`。实际8097浏览器仍需要用户手动处理本机证书提示，不能将组件验收等同于真实模型使用验收。见[任务账本](tasks/session-model-selection-20261014.json)。
+
+本轮规范仓与本机兼容仓的最终定向race、扩展回归及quick均通过。扩展回归使用带Node的本地运行镜像并清空其继承的内置插件目录环境变量，避免将不同仓库的插件安装路径当成测试输入。本机8097已更新并通过鉴权API与静态资源一致性检查，见[会话配置更新回执](reviews/2026-10-14-session-model-selection-rollout.md)；真实浏览器交互和模型调用仍保留上述验收边界。

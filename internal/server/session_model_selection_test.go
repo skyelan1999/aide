@@ -197,3 +197,56 @@ func TestSessionModelSelectionLegacyAndVision(t *testing.T) {
 		t.Fatal("removed model silently substituted")
 	}
 }
+
+func TestSessionModelSelectionLateConfiguration(t *testing.T) {
+	a := testApp(t)
+	s := createSession(t, a)
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { parallelReply(w, "A concise explanation.") }))
+	defer provider.Close()
+	a.mu.Lock()
+	a.settings.Model = "first-model"
+	a.settings.ActiveModel = "first-model"
+	a.settings.BaseURL = provider.URL
+	a.mu.Unlock()
+	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "chat", "prompt": "Explain a short concept."}), 202)
+	waitSelectionTask(t, a, s.ID)
+	saved := getSelectionSession(t, a, s.ID)
+	if saved.ModelSelection.Model != "first-model" || saved.Runs[0].ModelSelection.Model != "first-model" || saved.ModelSelectionRevision != 1 {
+		t.Fatal("first usable model was not frozen")
+	}
+	a.mu.Lock()
+	a.settings.Model = "second-model"
+	original := &Task{Model: "first-model", ModelSelection: &SessionModelSelection{Strategy: "auto", Profile: "default", Model: "", ReasoningEffort: "high"}}
+	choice := a.taskModelSelectionLocked(original)
+	a.mu.Unlock()
+	if choice.Model != "first-model" || choice.ReasoningEffort != "high" {
+		t.Fatal("legacy empty model changed an existing task")
+	}
+	if getSelectionSession(t, a, s.ID).ModelSelection.Model != "first-model" {
+		t.Fatal("global edit changed existing session choice")
+	}
+}
+
+func TestSessionModelSelectionLegacyProviderRoute(t *testing.T) {
+	cfg := Settings{Model: "active", BaseURL: "http://other.invalid", Models: []ModelRef{{ID: "legacy"}}, ModelProviders: []ModelProvider{{ID: "default", BaseURL: "http://legacy.invalid"}}}
+	selected, err := settingsForSelectedModel(cfg, "legacy")
+	if err != nil || selected.BaseURL != "http://legacy.invalid" {
+		t.Fatal("legacy default-provider route used another endpoint", err)
+	}
+}
+
+func TestSessionModelSelectionSteerKeepsOriginalTask(t *testing.T) {
+	a := testApp(t)
+	original := &Task{ID: "running-a", Model: "a", Status: "running", Steer: make(chan string, 1), ModelSelection: &SessionModelSelection{Model: "a", Strategy: "auto", Profile: "default", ReasoningEffort: "high"}}
+	a.mu.Lock()
+	a.settings.Model = "a"
+	a.settings.Models = []ModelRef{{ID: "a"}}
+	a.sessions["steer-session"] = &Session{ID: "steer-session", ModelSelection: &SessionModelSelection{Model: "removed-b", Strategy: "auto", Profile: "default", ReasoningEffort: "off"}, Runs: []*Task{original}}
+	a.mu.Unlock()
+	requireStatus(t, request(a, "POST", "/api/sessions/steer-session/runs", map[string]any{"mode": "chat", "prompt": "Add a detail to the current task."}), 202)
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if original.Model != "a" || original.ModelSelection.ReasoningEffort != "high" || len(original.Steers) != 1 || len(a.sessions["steer-session"].Runs) != 1 {
+		t.Fatal("new composer choice changed an in-flight interjection")
+	}
+}

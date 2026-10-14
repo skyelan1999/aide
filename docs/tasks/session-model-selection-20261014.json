@@ -27,7 +27,10 @@
     "docs/tasks/session-model-selection-20261014.json",
     "internal/server/apikey_vault.go",
     "scripts/test_ui_click_latency.cjs",
-    "scripts/context-meter.test.cjs"
+    "scripts/context-meter.test.cjs",
+    "internal/server/assisted_approval.go",
+    "internal/server/assisted_approval_files.go",
+    "docs/reviews/2026-10-14-session-model-selection-rollout.md"
   ],
   "stages": {
     "requirements": {
@@ -51,20 +54,22 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "Backend session/task selection and per-model routing implemented; frontend complete and component observed. Final checks/build pending.",
+      "status": "pass",
+      "summary": "Session/task snapshots, provider-compatible routing, frontend per-session choices/CAS/drafts, late model configuration and in-flight interjection preservation implemented.",
       "evidence": [
         "internal/server/session_model_selection.go",
         "internal/server/web/session-model-selection.js"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Both focused Go race profiles passed and both quick profiles passed. Native Safari actual menu/module synthetic saves: A/B choices differ and restore, reasoning low/high isolated, globals unchanged; dark/light observed. No real model calls.",
+      "status": "pass",
+      "summary": "Both final focused Go race runs, expanded regression and quick profiles passed. Native Safari dark/light offline production-menu fixture verified isolated A/B choices. Local8097 health/auth API/static bytes pass; no ordinary real session or real model call tested.",
       "evidence": [
-        ".agent-state/session-model-selection/backend.log",
+        ".agent-state/session-model-selection/backend-final.log",
+        ".agent-state/session-model-selection/regression.log",
         ".agent-state/session-model-selection/quick.log",
-        "scripts/fixtures/render-session-model-selection.py"
+        "scripts/fixtures/render-session-model-selection.py",
+        "docs/reviews/2026-10-14-session-model-selection-rollout.md"
       ]
     },
     "documentation": {
@@ -80,9 +85,11 @@
       "evidence": []
     },
     "release": {
-      "status": "pending",
-      "summary": "Incremental backend push prepared; frontend and local8097 candidate pending final receipt.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Backend chunk 6d8a3d3 pushed; final frontend/followup chunk and receipt committed incrementally. Local8097 development instance updated with verified backup and previous image retained. Actual Safari certificate/model acceptance remains pending; no Release/main merge.",
+      "evidence": [
+        "docs/reviews/2026-10-14-session-model-selection-rollout.md"
+      ]
     }
   },
   "release_authorization": "Prior user: incremental tests/push and documentation; update local8097 AIDE only, preserve other services/data. No release tag/main merge.",

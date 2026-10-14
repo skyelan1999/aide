@@ -64,7 +64,11 @@ func (a *App) sessionModelSelectionLocked(s *Session) SessionModelSelection {
 }
 func (a *App) taskModelSelectionLocked(task *Task) SessionModelSelection {
 	if task.ModelSelection != nil {
-		return *task.ModelSelection
+		choice := *task.ModelSelection
+		if task.Model != "" {
+			choice.Model = task.Model
+		}
+		return choice
 	}
 	choice := a.defaultModelSelectionLocked()
 	if task.Model != "" {
@@ -94,10 +98,14 @@ func settingsForSelectedModel(cfg Settings, modelID string) (Settings, error) {
 	if selected == nil && len(cfg.Models) > 0 && modelID != "" {
 		return cfg, fmt.Errorf("会话选择的模型 %q 已不可用，请重新选择", modelID)
 	}
-	if selected != nil && selected.ProviderID != "" {
+	if selected != nil && (selected.ProviderID != "" || len(cfg.ModelProviders) > 0) {
+		providerID := selected.ProviderID
+		if providerID == "" {
+			providerID = "default"
+		}
 		found := false
 		for _, provider := range cfg.ModelProviders {
-			if provider.ID == selected.ProviderID {
+			if provider.ID == providerID {
 				cfg.BaseURL = provider.BaseURL
 				found = true
 				break

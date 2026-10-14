@@ -787,7 +787,7 @@ function sessionRevision(s) {
     sessionTextRevision(JSON.stringify(run?.approvalReviews || [])),
     sessionTextRevision(typeof run?.pendingQuestion === 'string' ? run.pendingQuestion : JSON.stringify(run?.pendingQuestion || null)),
   ].join(':')).join(';');
-  return [s.id, s.updated, s.runsTotal ?? runs.length, s.messagesTotal ?? messages.length, state.historyLimit,
+  return [s.id, JSON.stringify(s.modelSelection || null), s.modelSelectionRevision, s.updated, s.runsTotal ?? runs.length, s.messagesTotal ?? messages.length, state.historyLimit,
     runs.length, messages.length, JSON.stringify(runs.map(run => [run.id, run.steers || []])), runStates, lastRun?.id, lastRun?.status, lastRun?.pauseRequested, lastRun?.canResume,
     lastRun?.steps?.map(step => step.name + ':' + step.status + ':' + sessionTextRevision(step.content) + ':' + sessionTextRevision(step.reasoning)).join(',')].join('|');
 }
@@ -1910,6 +1910,11 @@ function renderSteerMessages(run, box) {
   }
 }
 function renderSession() {
+  const selectionKey = JSON.stringify([state.session?.id, state.session?.modelSelection, state.session?.modelSelectionRevision]);
+  if (selectionKey !== state.composerSelectionKey) {
+    state.composerSelectionKey = selectionKey;
+    if (typeof refreshStrategyUI === 'function') refreshStrategyUI();
+  }
   const conversation = $('conversation');
   const previousScroll = conversation.scrollTop;
   const previousHeight = conversation.scrollHeight;
@@ -3207,6 +3212,7 @@ $('task-form').onsubmit = action(async event => {
   cancelContextPreview(); // 输入防抖请求不再和正式发送争用服务端会话锁
   const autoReview = composerAutoReview();
   const draftSession = state.session; // R07：捕获发送时对象，后续等待不得覆盖新选择
+  const submittedSelection = sessionModelPreferences(draftSession);
   const submittedScope=recoveryScope(),submittedDraft={text:$('prompt').value,attachments:state.attachments.map(a=>({...a}))};
   const clearSubmittedDraft=async()=>{
     await window.AideContinuity?.sentChatDraft(submittedScope,draftSession?.id||'',submittedDraft).catch(recoveryFailure);
@@ -3216,11 +3222,14 @@ $('task-form').onsubmit = action(async event => {
   let created = null;
   let stopContextCompactionWatch = null;
   try {
+    const selectionSave = window.AideSessionModelSelection?.flush(draftSession);
+    if (selectionSave) await selectionSave;
     if (!draftSession) {
       created = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: t("新会话") }) });
       if (!state.session) state.session = created; // 仅当用户仍停留在空白页时接管；点击已切走的会话不被空壳抢占
     }
     const target = draftSession || created;
+    if (created) await window.AideSessionModelSelection?.applyDraft(created, submittedSelection);
     // 小秘会话键盘输入走 assistant-message，由后端按直接文字消息处理，不经过语音环境过滤。
     if (target.kind === 'assistant') {
       try {
@@ -3257,12 +3266,12 @@ $('task-form').onsubmit = action(async event => {
         return;
       } catch (err) { window.aideAvatarFeedback?.('error'); toast(err.message); return; }
     }
-    const strategy = state.profiles?.strategy || 'auto';
+    const strategy = submittedSelection.strategy;
     // #41：小秘语音经 typeIntoPrompt 提交时，用 analyze 判定的 mode 一次性覆盖手动排队开关
     let queued = state.queueMode;
     if (voice.queuedOverride != null) { queued = voice.queuedOverride; voice.queuedOverride = null; }
     stopContextCompactionWatch = startContextCompactionWatch(target.id);
-    const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, autoReview, parallelism: window.AideParallelChat?.value(state.mode, target.kind === 'assistant') || 1, mode: state.mode, attachments: submittedDraft.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+    const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, autoReview, modelSelection: submittedSelection, parallelism: window.AideParallelChat?.value(state.mode, target.kind === 'assistant') || 1, mode: state.mode, attachments: submittedDraft.attachments, strategy, profile: strategy === 'auto' ? '' : submittedSelection.profile, queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
     await stopContextCompactionWatch();
     stopContextCompactionWatch = null;
     await clearSubmittedDraft();
@@ -3451,9 +3460,9 @@ async function refreshContextPreview() {
   $('context-preview').classList.remove('hidden');
   $('cp-summary').textContent = t("上下文预算计算中…（估算）");
   try {
-    const strategy = state.profiles?.strategy || 'manual';
-    const profile = strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default');
-    const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ sessionId: state.session?.id || '', prompt, mode: state.mode, attachments: state.attachments, strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+    const strategy = sessionModelPreferences().strategy;
+    const profile = strategy === 'auto' ? '' : sessionModelPreferences().profile;
+    const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ modelSelection: sessionModelPreferences(), sessionId: state.session?.id || '', prompt, mode: state.mode, attachments: state.attachments, strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
     if (seq !== state.previewSeq.value || scope !== contextMeterScope() || contextMeterTransitioning()) return; // 过期响应不得覆盖新预览（R08-04 草稿失效）
     renderContextPreview(data);
   } catch (error) {
@@ -3851,7 +3860,7 @@ function attachFileEntry(file, target = {root:file.root,source:file.source || ''
   const att = {root:target.source ? 'source' : target.root,path:file.path};
   if (target.source) att.source = target.source;
   if (file.dir) att.directory = true;
-  if (!file.dir && isImagePath(file.path) && !state.config?.vision) {
+  if (!file.dir && isImagePath(file.path) && !(activeModel()?.supportsVision ?? (sessionModelPreferences().model === state.config?.model ? state.config?.vision : activeModel()?.vision))) {
     toast(t('当前模型不支持图片输入，请切换到支持视觉的模型')); return false;
   }
   if (!state.attachments.some(a => a.root === att.root && a.path === att.path && (a.source || '') === (att.source || ''))) {
@@ -4972,7 +4981,10 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && !d
    持久化于工程目录 profiles.json；聊天栏策略按钮可选 auto 或手动 profile。 ── */
 async function loadProfiles() { state.profiles = await api('/profiles'); refreshStrategyUI(); }
 function profileName(id) { const p = state.profiles?.profiles.find(p => p.id === id); return p?.system ? t(p.name) : (p?.name || id); }
-function activeModel() { return state.config?.models?.find(m => m.id === state.config.activeModel); }
+function sessionModelPreferences(session = state.session) {
+  return window.AideSessionModelSelection?.current(session) || {strategy:state.profiles?.strategy || 'auto', profile:state.profiles?.activeProfile || 'default', model:state.config?.activeModel || state.config?.model || '', reasoningEffort:state.config?.reasoningEffort || 'auto'};
+}
+function activeModel() { return state.config?.models?.find(m => m.id === sessionModelPreferences().model); }
 function modelProviderName(providerId) {
   return state.config?.modelProviders?.find(provider => provider.id === providerId)?.name || '';
 }
@@ -5102,16 +5114,18 @@ function renderProfilesManager(control) {
 }
 /* 聊天栏策略按钮（FR-63） */
 function refreshStrategyUI() {
-  const p = state.profiles;
+  const choice = sessionModelPreferences();
+  const p = state.profiles && {...state.profiles, strategy:choice.strategy, activeProfile:choice.profile};
   if (!p) return;
   const xiaomiOwnsModel = document.body.classList.contains('assistant-mode') && state.xiaomiModelSettings?.source === 'custom';
   const xiaomiModelName = String(state.xiaomiModelSettings?.model || '').trim();
-  const selectedModel = state.config?.models?.find(m => m.id === state.config.activeModel);
-  const modelName = xiaomiOwnsModel ? (xiaomiModelName || t('小秘独立模型')) : [selectedModel?.name || state.config?.model || '', modelProviderName(selectedModel?.providerId)].filter(Boolean).join(' · ');
+  const selectedModel = state.config?.models?.find(m => m.id === choice.model);
+  const modelName = xiaomiOwnsModel ? (xiaomiModelName || t('小秘独立模型')) : [selectedModel?.name || choice.model || '', modelProviderName(selectedModel?.providerId)].filter(Boolean).join(' · ');
   const assistantMode = document.body.classList.contains('assistant-mode');
   const label = (p.strategy === 'auto' ? t("策略 · 自动") : t("策略 · {0}", profileName(p.activeProfile))) + (modelName ? ' · ' + modelName : '') + (assistantMode ? '' : ' · ' + t(composerAutoReview() ? '辅助审批' : '手动审批'));
+  if (!assistantMode && state.config?.configured) $('model-name').textContent = t('{0} · API 已配置', choice.model);
   $('strategy-label').textContent = label;
-  $('strategy-label').title = label;
+  $('strategy-label').title = label + ' · ' + t('当前会话独立配置') + ' · ' + t('推理强度') + ': ' + choice.reasoningEffort;
   const menu = $('strategy-menu');
   menu.replaceChildren();
   // 左栏：策略；右栏：模型（各自独立滚动，互不挤压）
@@ -5132,7 +5146,7 @@ function refreshStrategyUI() {
     ? [{ id: xiaomiModelName, name: xiaomiModelName || t('小秘独立模型') }]
     : (state.config?.models || []);
   for (const m of modelOptions) {
-    const selected = xiaomiOwnsModel || state.config.activeModel === m.id;
+    const selected = xiaomiOwnsModel || choice.model === m.id;
     const description = xiaomiOwnsModel ? t('由小秘模型设置管理') : [modelProviderName(m.providerId), t("{0} · {1}K 上下文", m.id, (m.contextWindow || 65536) / 1024)].filter(Boolean).join(' · ');
     right.append(strategyMenuOption('model', m.id, m.name, description, selected, xiaomiOwnsModel));
   }
@@ -5144,7 +5158,7 @@ function refreshStrategyUI() {
   right.append(manageModels);
   const reasoningCol = el('div', 'strategy-menu-col');
   reasoningCol.append(el('div', 'strategy-menu-sep', t("推理强度")));
-  const curEffort = state.config?.reasoningEffort || 'auto';
+  const curEffort = choice.reasoningEffort || 'auto';
   for (const [val, name, desc] of [['auto', t("自动"), t("按任务自动选择")], ['off', t("关闭"), t("不启用推理")], ['low', t("低"), t("快速响应")], ['medium', t("中"), t("均衡")], ['high', t("高"), t("深度推理")]]) {
     reasoningCol.append(strategyMenuOption('reasoning', val, name, desc, curEffort === val));
   }
@@ -5222,6 +5236,15 @@ function strategyMenuOption(kind, value, name, desc, selected, disabled = false)
     if (kind === 'approval') {
       await setComposerAutoReview(value === 'assisted');
       closeStrategyMenu();
+      return;
+    }
+    if (state.session?.kind !== 'assistant' && window.AideSessionModelSelection) {
+      const owner = state.session?.id || '', scope = recoveryScope();
+      const patch = kind === 'model' ? {model:value} : kind === 'reasoning' ? {reasoningEffort:value} : kind === 'auto' ? {strategy:'auto'} : {strategy:'manual', profile:value};
+      await window.AideSessionModelSelection.change(patch);
+      if ((state.session?.id || '') !== owner || recoveryScope() !== scope) return;
+      closeStrategyMenu();
+      toast(t('已保存当前会话配置'));
       return;
     }
     await profilesManager.flush();
@@ -5821,8 +5844,7 @@ function contextMeterKey() {
   return [state.config?.workspaceId || '', session?.id || 'new', session?.messagesTotal ?? messages.length, session?.compactedMessages || 0,
     session?.compactedAt || '', (session?.compact || '').length, anchor?.headerFingerprint || '',
     anchor?.usage?.prompt || 0, anchor?.usage?.completion || 0, anchor?.promptEstimate || 0,
-    state.config?.model || '', state.mode || 'chat', state.workflowPhase || '', state.profiles?.strategy || 'auto',
-    state.profiles?.activeProfile || 'default', !!window.aideAvatarEnabled?.(), signature].join('~');
+    JSON.stringify(sessionModelPreferences()), state.mode || 'chat', state.workflowPhase || '', !!window.aideAvatarEnabled?.(), signature].join('~');
 }
 function renderContextMeter(data, isDraft) {
   if (!data || !data.breakdown) return;
@@ -6078,10 +6100,10 @@ async function refreshContextMeter() {
   state.contextMeterPendingKey = key;
   clearContextMeterDisplay();
   const seq = ++state.contextMeterSeq.value;
-  const strategy = state.profiles?.strategy || 'auto';
-  const profile = strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default');
+  const strategy = sessionModelPreferences().strategy;
+  const profile = strategy === 'auto' ? '' : sessionModelPreferences().profile;
   try {
-    const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ sessionId: state.session?.id || '', prompt: '', mode: state.mode || 'chat', strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.(), baseline: true }) });
+    const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ modelSelection: sessionModelPreferences(), sessionId: state.session?.id || '', prompt: '', mode: state.mode || 'chat', strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.(), baseline: true }) });
     if (seq !== state.contextMeterSeq.value || contextMeterKey() !== key || state.contextMeterDraft || contextMeterTransitioning() || !state.config?.configured) return;
     if (!data?.breakdown) return;
     state.contextMeterKey = key; // 只缓存属于当前会话的成功响应。
@@ -9288,6 +9310,13 @@ document.addEventListener('keydown', event => {
   }
 });
 
+window.AideSessionModelSelection?.install({state, api, t, changed: () => {
+  refreshStrategyUI();
+  if (typeof resetContextMeter === 'function') resetContextMeter();
+  if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
+  estimateContext();
+}});
+
 window.AideParallelChat?.install({select: $('chat-parallelism'), mode: () => state.mode, assistant: () => state.session?.kind === 'assistant', t});
 
 window.addEventListener('aide:language', () => {
@@ -9430,15 +9459,19 @@ async function voiceSend(text, queued) {
   if (!state.config?.configured) throw new Error(t('请先配置模型'));
   const autoReview = composerAutoReview();
   let target = state.session, created = null;
+  const voiceSelection = sessionModelPreferences(target);
+  const selectionSave = window.AideSessionModelSelection?.flush(target);
+  if (selectionSave) await selectionSave;
   if (!target) {
     created = await api('/sessions', { method: 'POST', body: JSON.stringify({ title: t('新会话') }) });
     if (!state.session) state.session = created;
     target = created;
+    await window.AideSessionModelSelection?.applyDraft(created, voiceSelection);
   }
-  const strategy = state.profiles?.strategy || 'auto';
+  const strategy = voiceSelection.strategy;
   // #41：小秘 analyze 判定的 mode 优先；未给出时回退手动排队开关
   const q = (queued != null) ? queued : state.queueMode;
-  const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt: text, autoReview, mode: state.mode, attachments: [], strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued: q, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+  const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt: text, autoReview, modelSelection: voiceSelection, mode: state.mode, attachments: [], strategy, profile: strategy === 'auto' ? '' : voiceSelection.profile, queued: q, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
   if (state.session?.id === target.id) { await selectSession(target.id); reconcileAvatarRun(submitted.id || submitted.runId); }
 }
 // 提取主会话近期对话（供小秘对话/讲解感知 aide 内容）
