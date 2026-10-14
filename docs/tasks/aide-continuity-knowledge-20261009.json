@@ -4817,5 +4817,22 @@
     },
     "remaining": "完整目标继续 active；相机保持与长时 UI 性能、用户 SSH 端到端、完整全仓 race 资源测试仍未完成；向量模型验收按用户要求暂缓。",
     "release": "本阶段 Safari 渐进增长/自动扩容验收通过，可单独提交并推送；不代表总目标完成。"
+  },
+  "progress_checkpoint_20261014_followup92": {
+    "date": "2026-10-14",
+    "status": "frontend_full_regression_pass_starmap_live_safari_loaded_batch_pushed",
+    "summary": "在主线提交并推送本批恢复/星图改进。用户请求代码回归后，所有 28 个脚本回归通过；系统 Safari 真实 9999 星图的首次快照出现空占位，随后持续同步并显示 20,178 星、20,134 条连接和 450 颗新星，确认延迟索引完成；未触碰 Markdown 草稿。",
+    "evidence": [
+      "node --test scripts/*.test.cjs · 28/28 PASS。",
+      "python3 scripts/check_docs.py · PASS：188 Markdown、542 个本地链接；所有 docs/tasks/*.json 可解析。",
+      "continuity-isolation、continuity-lock-write、file-recovery-scroll、starmap-lensing 定向回归 · PASS；相关 JS 语法检查与 git diff --check · PASS。",
+      "系统 Safari · https://localhost:9999/starmap.html · 首次辅助快照显示索引连接中/0 节点；页面自行续扫后显示 20,178 星、20,134 connections、会话41、工作区109、引用目录与引用各10013，状态“已同步 · 450 颗新星”。",
+      "commit 149552ff1820c5714231f7d78fe36e0f9e8c62d2 · `Improve continuity dismissal and relativistic star lenses` · `git push origin main` PASS；本地 HEAD 与 origin/main 相同，工作区干净。"
+    ],
+    "not_verified": [
+      "透镜/黑洞近景缺少真实黑洞候选数据，吸积盘、阴影、相对论绕行像的最终 Safari 视觉效果未验收。",
+      "用户 SSH 主机完整交互和高并发长时会话、完整全仓 race 资源表现尚未闭环；向量模型实测按用户要求暂缓。"
+    ],
+    "remaining": "继续总目标验收：优先真实 Safari 星图近景/镜头保持与长时性能、SSH 工作区端到端及长会话资源边界；向量检索测试保持暂缓。"
   }
 }

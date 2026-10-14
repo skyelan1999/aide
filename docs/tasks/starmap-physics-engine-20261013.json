@@ -388,5 +388,22 @@
       "真实天体质量/距离数据标定、大星域长时动画帧率、多个透镜重叠压力。"
     ],
     "release": "完整 server 回归、go vet、物理星图专项和文档检查通过；按用户的系统浏览器验收要求，黑洞候选近景未在本轮 Safari 观察前暂不推送。"
+  },
+  "postpush_frontend_regression_20261014": {
+    "status": "source_regression_and_live_safari_sync_pass_pushed_closeup_pending",
+    "date": "2026-10-14",
+    "summary": "相对论强场星图与草稿跨视图精确清理修复，在完整前端回归及本机系统 Safari 数据同步确认后，随主线提交 149552f 推送。Safari 页面首次渲染为空占位，随后恢复 20,178 节点并同步450颗新星；这验证大图索引启动后的持续恢复，不代表黑洞近景视觉通过。",
+    "evidence": [
+      "node --test scripts/*.test.cjs · 28/28 PASS；node scripts/starmap-lensing.test.cjs 单独 PASS。",
+      "python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接；JSON 格式、JavaScript 语法、git diff --check PASS。",
+      "系统 Safari https://localhost:9999/starmap.html · 20,178 STARS / 20,134 CONNECTIONS；页面显示“已同步 · 450 颗新星”。",
+      "149552ff1820c5714231f7d78fe36e0f9e8c62d2 推送到 origin/main；远程与本地 SHA 一致。"
+    ],
+    "not_verified": [
+      "黑洞近景视觉、吸积盘/阴影/相对论像组合效果仍无真实高密度黑洞候选可验收。",
+      "系统 Safari Canvas 合成帧率、长时间全图动画以及多透镜重叠压力。",
+      "真实天体质量、距离和温度数据校准。"
+    ],
+    "release": "本批实现与源码回归已推送；产品视觉总验收仍未完成。"
   }
 }
