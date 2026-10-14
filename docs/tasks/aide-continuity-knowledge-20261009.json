@@ -4852,5 +4852,23 @@
       "完整 goal 的大库长时浏览器性能、长输出上下文压缩端到端和向量检索；向量按用户要求暂缓。"
     ],
     "remaining": "隔离 SSH/SFTP 协议端到端在当前代码上已有双次成功；继续补全真实用户主机工作流需要实际可用的主机与凭据授权，race 需在资源足够环境复验。"
+  },
+  "progress_checkpoint_20261014_followup94": {
+    "date": "2026-10-14",
+    "status": "code_regression_quick_pass_go_nonrace_and_vet_pass_race_resource_killed",
+    "summary": "本轮代码回归中发现 PDF 分页测试 fixture 的文档高度短于最后一个段落块，导致断言把场景误报为少一页；将模拟长文档和块边界改为一致并确保触发孤行保护。修正后 quick 全通过；容器内 Go 全量非 race 测试及 go vet 单并发通过。官方 full 门禁中的 race 包再次被资源限制 signal:killed，未见测试断言失败。",
+    "evidence": [
+      "`node scripts/markdown-download-export.test.js` · PASS：直接下载、资源路径与排除代码段、取消与超长分页渲染覆盖通过。",
+      "`python3 scripts/agent-route.py verify quick` · PASS，45 项全部通过，fingerprint `f52d1da13c9d87721d9ccd3dc8c5e7a8b25d3c938105f4d66444310a0de383f7`，HEAD `857457d4d432650924895e62af749f2634f8aebf`，日志 `.agent-state/verify-20261014T054740054258Z.log`。",
+      "`docker run --rm -e AIDE_BUILTIN_PLUGINS= -e GOMAXPROCS=1 -v \"$PWD:/src\" -w /src --entrypoint bash aide:local -c 'GOMAXPROCS=1 go test -p 1 -count=1 -timeout=15m ./... && GOMAXPROCS=1 go vet -p 1 ./...'` · PASS；Go server 319.075s，tts 1.700s，vet exit 0。",
+      "`python3 scripts/agent-route.py verify full` · quick 全通过，Go race 子步骤 `internal/server` 被 `signal: killed` 终止（10.162s，无断言失败）；日志 `.agent-state/verify-20261014T054926301478Z.log`。此前受限沙箱下首次全门禁未能访问 Docker daemon；随后通过本机 Docker CLI 授权路径运行上述隔离 Go 检查。",
+      "`python3 scripts/check_docs.py` · PASS：188 Markdown files、542 local links、JPEG signatures、FR-01..100。",
+      "仅修订 PDF 分页单元测试 fixture，没有运行时或可见 UI 改动；因此本 checkpoint 不需要视觉 Safari 验收。"
+    ],
+    "not_verified": [
+      "Race detector 仍因当前容器资源限制被系统终止，需要更大内存或更低开销环境重跑。",
+      "本 checkpoint 不等于完整目标验收；向量检索按用户要求继续暂缓，真实用户 SSH 主机与其他产品端到端项状态沿用各自验收记录。"
+    ],
+    "remaining": "当前可运行的快速回归、Go 非 race 全量与 vet 均通过；只保留 race detector 环境资源重跑及总任务中原有的端到端验收缺口。"
   }
 }
