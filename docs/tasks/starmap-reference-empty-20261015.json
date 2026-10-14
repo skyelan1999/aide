@@ -1,0 +1,70 @@
+{
+  "id": "starmap-reference-empty-20261015",
+  "request": "引用加载aide目录后星图始终刷不出来，显示当前内容尚无索引节点",
+  "baseline": "71e7db461e5064b371b75b27414eab8115319133",
+  "initial_status": "M docker-images/SHA256SUMS\n M docs/architecture.md\n D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "引用aide规模目录可分批显示已发现节点，不长期停留于笼统空态",
+    "区分来源不存在、不可读、扫描中及视图筛选为空；保留来源身份边界",
+    "真实8097与隔离引用目录回归分别记录；更新文档、push及离线镜像包"
+  ],
+  "scope": [
+    "internal/server/knowledge*.go",
+    "internal/server/web/starmap*",
+    "scripts/starmap*.cjs",
+    "docs/tasks",
+    "docs/architecture/knowledge-map.md",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "in_progress",
+      "summary": "用户报告引用aide后无节点。当前8097 API与Safari只有空的内置引用，工作区1561节点可见；尚未观察到用户新增来源，实例位置待答复，同时进行真实仓库引用隔离扫描。",
+      "evidence": [
+        "GET /api/sources",
+        "GET /api/workspace-config",
+        "GET /api/knowledge-map/updates",
+        "Safari localhost:8097 引用面板及星图"
+      ]
+    },
+    "design": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "新增引用适配层分批累计回归，尚未根据根因修改产品扫描逻辑。",
+      "evidence": [
+        "internal/server/knowledge_reference_progressive_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "8097实际Safari显示1563节点、引用面板空目录；隔离真实aide引用扫描6批文件数200/400/600/800/938/1138，总3706节点，31.40秒PASS；300文件夹具race两批200/300，4.203秒PASS。未复现用户实例，不能声称修复。",
+      "evidence": [
+        ".agent-state/reference-repository-probe.log",
+        ".agent-state/reference-fixture-race.log",
+        "internal/server/knowledge_reference_progressive_test.go"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用分批测试/push及离线镜像包交付；不正式Release。",
+  "rollback": "",
+  "handoff": "待用户确认新增aide引用的是8097还是另一设备9999，并检查该实例的sources、docs.path、所选region、扫描错误。8097目前无新增aide引用，不擅自修改用户引用配置或重建其索引。"
+}

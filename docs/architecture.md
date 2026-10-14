@@ -329,19 +329,19 @@ Restored the original brand-square left tilt by removing a later transform reset
 
 ## 会话并行分析 / Parallel conversation analysis
 
-普通对话输入区左下角提供 `1x`–`5x` 的“并行”选择，默认 `1x` 沿用原调用链；浏览器保存该选择，应用于下一次发送，不改变已经运行的任务。工作流与小秘模式禁用此项，保持既有调度。`POST /api/sessions/{id}/runs` 接受整数 `parallelism`，旧客户端省略/0按1处理，负值、超过5或工作流大于1返回400。任务保存并行度，重试沿用它；恢复沿用已有检查点。
+普通对话底部的策略菜单内，在推理强度下方以“并行倍率”为标题，提供 `1X 标准速度`、`2X 两路并行`至`5X 五路并行`五条选项；两组共用同一垂直滚动列，桌面列高最多250px，默认 `1x` 沿用原调用链；浏览器保存该选择，应用于下一次发送，不改变已经运行的任务。工作流与小秘模式禁用此项，保持既有调度。`POST /api/sessions/{id}/runs` 接受整数 `parallelism`，旧客户端省略/0按1处理，负值、超过5或工作流大于1返回400。任务保存并行度，重试沿用它；恢复沿用已有检查点。
 
-2x–5x 使用当前模型与任务上下文先规划2至所选上限的独立分析子题。只有基于已有对话/附件可独立完成的分析才拆分；需要其他部分结果、先取得外部证据、简单或不可拆分的需求返回空计划并交回主任务。规划JSON无效、请求失败或上下文不足也回退常规执行，不伪装并行成功。各子题同时调用模型，不携带工具；不能读写文件、执行命令或声称实际读取外部资料。最终由原主任务工具循环核验工作笔记、解决矛盾与缺口、执行必要工具，并产生一份最终答复。这里的倍数是分析请求的并发上限，不是速度保证；规划与汇总有顺序开销，更多请求增加Token消耗，背景主题总结等既有辅助调用不计入分析路数。
+2x–5x 使用当前模型与任务上下文先规划2至所选上限的独立分析子题。基于已有对话/附件或通用技术知识可独立起草的部分均可拆分；例如ROS2文档按独立章节规划。需要最新来源的事实标记后由主任务核验，不因没有附件而直接拒绝起草。简单或确实无法独立拆分的需求返回空计划并交回主任务。规划JSON无效、请求失败或上下文不足也回退常规执行，不伪装并行成功。各子题同时调用模型，不携带工具；不能读写文件、执行命令或声称实际读取外部资料。最终由原主任务工具循环核验工作笔记、解决矛盾与缺口、执行必要工具，并产生一份最终答复。这里的倍数是分析请求的并发上限，不是速度保证；规划与汇总有顺序开销，更多请求增加Token消耗，背景主题总结等既有辅助调用不计入分析路数。
 
 规划最长35秒，子分析使用既有单次请求120秒上限，继承主任务取消上下文。停止/暂停取消全部分析请求；失败路由主任务补足，全部失败则回退。已完成分析的结果和状态持久化，阶段包含 planning/running/merging/completed/fallback/interrupted，界面可展开查看子题状态。分析阶段暂停后恢复可能重新规划/调用；准备好的汇总检查点不重复规划。子分析正文不混入最终回答的SSE文本流，只发阶段进度与心跳，最终主任务保持原有插话/排队语义；分析过程收到的插话由主任务工具循环接续处理。
 
-每个辅助调用计入原任务Usage与既有全局Token统计，记录模型请求快照（沿用12条上限）。规划最多768输出tokens，子分析最多2048；存档结果至多12000字符，汇总每路只带4000字符摘录并标记截断。辅助请求在发送前检查上下文，汇总还预留正常执行工具和输出预算，放不下则保留原始输入。没有跨子任务文件并写，也不将模型分析当成已执行证据。
+每个辅助调用计入原任务Usage与既有全局Token统计，记录模型请求快照（沿用12条上限）。规划最多2048输出tokens，子分析最多2048；存档结果至多12000字符，汇总每路只带4000字符摘录并标记截断。辅助请求在发送前检查上下文，汇总还预留正常执行工具和输出预算，放不下则保留原始输入。没有跨子任务文件并写，也不将模型分析当成已执行证据。
 
-Chat supports a persisted 1x–5x analysis limit. The same model plans independent subtasks, performs bounded tool-free requests concurrently, then the existing main executor reconciles working notes and returns one answer. Dependency-heavy or invalid plans fall back to the ordinary task. Cancellation propagates to every request; partial failures stay explicit. Usage and bounded request snapshots belong to the original task. Retry preserves the limit; resume reuses a prepared merge checkpoint, while interrupted analysis may be recomputed. This is a concurrency limit, not a proportional speed promise. Workflow/assistant modes retain their existing scheduling.
+Chat supports a persisted 1x–5x analysis limit, selected from five rows below the reasoning options in the same vertically scrolling strategy-menu column. The same model plans independent subtasks, performs bounded tool-free requests concurrently, then the existing main executor reconciles working notes and returns one answer. Dependency-heavy or invalid plans fall back to the ordinary task. Cancellation propagates to every request; partial failures stay explicit. Usage and bounded request snapshots belong to the original task. Retry preserves the limit; resume reuses a prepared merge checkpoint, while interrupted analysis may be recomputed. This is a concurrency limit, not a proportional speed promise. Workflow/assistant modes retain their existing scheduling.
 
-定向验收在隔离Linux Docker中使用模拟模型HTTP接口，`go test -race -mod=vendor ./internal/server -run '^(TestConversationParallel|TestToolLoopReadFile)' -count=1 -timeout=3m` 两份源码通过。测试覆盖5路真实重叠、上限、计划拒绝、取消、上下文拦截、请求/用量记录、一路失败后的端到端汇总与重试。没有调用用户真实模型或衡量真实加速比例。Safari组件夹具复现：`python3 scripts/fixtures/render-parallel-chat.py`，检查实际选择器和进度渲染器；1x/5x、工作流禁用与恢复、明暗/390px容器和单份最终答复显示已观察。实际8097仍受既有容器故障阻塞，组件与模拟接口通过不等于部署完成。见[任务账本](tasks/conversation-parallel-20261014.json)。
+定向验收在隔离Linux Docker中使用模拟模型HTTP接口，`go test -race -mod=vendor ./internal/server -run '^(TestConversationParallel|TestToolLoopReadFile)' -count=1 -timeout=3m` 两份源码通过。测试覆盖5路真实重叠、上限、计划拒绝、取消、上下文拦截、请求/用量记录、一路失败后的端到端汇总与重试。没有调用用户真实模型或衡量真实加速比例。Safari组件夹具复现：`python3 scripts/fixtures/render-parallel-chat.py`，检查实际选择器和进度渲染器；1x/5x、工作流禁用与恢复、明暗/390px容器和单份最终答复显示已观察。上述为首轮组件证据，不能替代生产页面验收；当前8097已完成后续候选更新，见下一段。见[任务账本](tasks/conversation-parallel-20261014.json)。
 
-2026-10-14 runtime update: local8097 now runs the new development image and passes authenticated read-only API/static-asset smoke checks. Earlier deployment-blocked statements above describe prior attempts; actual Safari interaction remains pending manual certificate handling. See [local rollout receipt](reviews/2026-10-14-local8097-parallel-rollout.md).
+2026-10-15 00:03后：本机8097原生Safari已验证最终五条列表：推理强度与并行倍率共享滚动列，向下滚动后显示全部倍率，面板高度不再随选项数量增加；切换3X后重开确认，恢复用户当前5X并刷新确认保留。运行候选6ac93ca10a8d，源码71e7db4已push，设置/挂载/加密历史保留。此前独立滚轮方案已被本列表替代。本机未配置真实模型，布局验收不能证明真实模型加速或完整插件DAG。详见[倍率布局任务](tasks/composer-parallel-placement-20261014.json)。
 
 ## 会话级策略、模型与推理强度 / Per-session model selection
 

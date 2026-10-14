@@ -45,36 +45,50 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "列表版本parallel-chat与i18n回归PASS，实际8097需更新后重新验收；此前独立滚轮截图仅属前版，不能代替最终列表布局。",
+      "status": "pass",
+      "summary": "实际8097原生Safari确认紧凑菜单中两组共用垂直滚动列，3X选择重开确认，恢复用户当前5X并刷新确认；parallel-chat/i18n回归已通过。 最终quick全部通过（verify-20261014T160835248298Z.log）；当前full未完成，不将quick视为正式Release门禁。",
       "evidence": [
+        ".agent-state/composer-rate-list-final/shared-scroll-5x.png",
         "node scripts/parallel-chat.test.cjs",
-        "node scripts/test_i18n.cjs"
+        "node scripts/test_i18n.cjs",
+        ".agent-state/composer-rate-list-final/quick.log"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "架构入口位置、滚轮操作、实际Safari证据及原规划预算/文档草稿口径同步更新。",
+      "summary": "架构说明改为最终五条列表及共享滚动，记录真实Safari观察与模型验证边界。",
       "evidence": [
         "docs/architecture.md"
       ]
     },
     "cleanup": {
       "status": "pass",
-      "summary": "只改布局/控件及关联回归，保留五个继承删除；Safari恢复测试前1x，无模型调用或测试会话。",
+      "summary": "保留五个继承删除；测试倍率恢复用户最新5X，未调用模型或建立测试会话。",
       "evidence": [
         "git diff --check"
       ]
     },
     "release": {
       "status": "in_progress",
-      "summary": "61b8780已push，8097候选5884034b8198健康，设置/挂载/加密历史保留；离线包正在导出校验。未正式main/tag发布。",
+      "summary": "71e7db4已push，8097候选6ac93ca10a8d健康且Safari验收通过；最终离线包内外哈希及docker load通过，复制到两工作树。另一端导入待验，未正式main/tag发布。",
       "evidence": [
-        "aideMacMini/aide/.agent-state/composer-wheel/deployment.json"
+        "aideMacMini/aide/.agent-state/composer-rate-list-final/deployment.json",
+        ".agent-state/composer-rate-list-package.json"
       ]
     }
   },
   "release_authorization": "沿用用户分批实现/测试/push和更新离线镜像包的授权，仅8097兼容候选，不正式Release。",
-  "rollback": "现运行9fa963d2209b，保留镜像与部署前数据备份。",
-  "handoff": "下一步提交并部署兼容候选，在真实Safari验收1x-5x位于推理强度下方并保留选择，之后更新离线包。"
+  "rollback": "保留此前472255f27659镜像及data-before-deploy-20261015T000310.tar数据备份。",
+  "handoff": "最终列表UI已完成实际验收、push及镜像包交付；继续引用目录星图空白排查，其他原目标保持未完成。",
+  "runtime": {
+    "image": "sha256:6ac93ca10a8d3b90b5d813e0ad89894afc0a6f16307e27da15c73c483c585289",
+    "srcsha": "900c8d34572da7738aced964e2608dfa3e1a83dc57946dd953d16063db2dd405",
+    "name": "aide-0.1.17.0-RC2-linux-arm64-6ac93ca10a8d-offline.tar.gz",
+    "sha256": "1e1171d0590fb1a8dd5b1b8cb3d3d49bccd1bab2f76446bac051f2b9297ef4fd",
+    "bytes": 561613174,
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "dockerLoadVerified": true,
+    "copiedCanonical": true
+  }
 }

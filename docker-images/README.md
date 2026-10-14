@@ -97,3 +97,6 @@ Git push 只同步源码，不包含本目录被忽略的大型镜像归档。�
 上一批包（2026-10-14 23:13，增加星图首屏缓存/扫描失败回退修复）：`aide-0.1.17.0-RC2-linux-arm64-05ba9e1b9c84-offline.tar.gz`。镜像 `sha256:05ba9e1b9c84cf7cac389e9dd65fb34c8c7c1a4b8ddceef4056f5a670387ca04`，SHA-256 `59b191e5e8e301854e3bbd5e561534099ea14b31fa9270f73dd1ecf56e1e9a06`；内外哈希、实际docker load和两工作树副本校验通过。本机8097原生Safari两次刷新在约1.16秒/0.91秒观察点均可见1563节点。本段保留作回滚；另一设备导入和冷启动尚未验证。
 
 当前最新包（2026-10-14 23:36，增加插件声明资源预约与取消进程组收尾，包含此前星图首屏修复）：`aide-0.1.17.0-RC2-linux-arm64-9fa963d2209b-offline.tar.gz`。镜像 `sha256:9fa963d2209b59bd72c5a69c4108c7a99f209ca3be6305e3ba1600259ed811dc`，SHA-256 `bf5094ebd911301b5021dad9d71b382ea101a95c4c3943d465923a27df871f29`；内外哈希、实际docker load及两工作树副本校验通过。8097健康，设置/挂载/原加密历史保留。该包尚未实现5x插件工具完整依赖图；另一端优先导入本包，另一设备导入待用户实际验证。
+
+
+2026-10-15 00:03后当前候选包（包含最终并行倍率列表与此前星图/插件修复）：`aide-0.1.17.0-RC2-linux-arm64-6ac93ca10a8d-offline.tar.gz`。镜像 `sha256:6ac93ca10a8d3b90b5d813e0ad89894afc0a6f16307e27da15c73c483c585289`，SHA-256 `1e1171d0590fb1a8dd5b1b8cb3d3d49bccd1bab2f76446bac051f2b9297ef4fd`，561613174 字节。8097原生Safari已验证推理强度与五条倍率同列滚动、选择持久化；包内外校验及实际 `docker image load` 通过，归档复制到两工作树。另一端导入待验；用户新报“引用aide目录无节点”尚未在该实例复现，本包不宣称解决此新问题。详见[布局验收](../docs/tasks/composer-parallel-placement-20261014.json)和[引用排查](../docs/tasks/starmap-reference-empty-20261015.json)。
