@@ -76,6 +76,20 @@ function context(saved,workspace='B'){
  await vm.runInContext('load()',c);assert.equal(c.restored,undefined,'identity retry must keep the first input boundary');
  assert.equal(el('search').value,'typed before identity was known');
 
+ for(const transition of ['lock','mode','generation']){
+  c=context({version:1,region:'workspace'},'B');c.graph={workspace:'B',nodes:[],edges:[]};c.recoveryScopeLoaded='';
+  c.window.AideStarmapCache.read=async()=>({workspace:'B',revision:'cached',graph:{nodes:[{id:'cached-node'}],edges:[],sources:[]}});
+  c.api=async path=>path.startsWith('/identity')?{workspace:'B',epoch:'1',policy:'p'}:new Promise(resolve=>{finishNetwork=resolve});
+  live=vm.runInContext('load()',c);await new Promise(resolve=>setImmediate(resolve));
+  if(transition==='lock'){c.locked=true;c.recoveryAttempt=null;}
+  if(transition==='mode')c.codeView=true;
+  if(transition==='generation'){c.graphGeneration++;c.load=()=>{c.reloaded=true};}
+  finishNetwork({workspace:'B',revision:'obsolete',nodes:[{id:'must-not-appear'}],edges:[],sources:[],warnings:[],reset:true});await live;
+  assert.equal(c.graph.revision,'cached',`${transition} must reject the obsolete network reply`);
+  assert.equal(c.restored,undefined,`${transition} must not restore obsolete scene data`);
+  if(transition==='generation')assert.equal(c.reloaded,true,'new generation must get its own load');
+ }
+
  // Interaction with the old workspace does not authorize carrying that
  // workspace's scene into the identity returned by the server.
  c=context(null,'B');c.region='private-A';c.api=async path=>{c.recoveryInput++;return path.startsWith('/identity')?{workspace:'B',epoch:'1',policy:'p'}:{workspace:'B',revision:'new',nodes:[],edges:[],sources:[],warnings:[],reset:true};};

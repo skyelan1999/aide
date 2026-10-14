@@ -42,34 +42,112 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Actual load-source async regression fails baseline saved-scene overwrite, combined fix passes. Cases cover network wait after cache paint, delayed cache generation ownership, no-cache full response and different workspace clearing; existing camera/panel/retry tests pass. Native pre-fix canonical Safari again reproduced context on then later workspace on/context off before cleanup action. Initial quick69 PASS; post-fix canonical build/browser still pending. Intermediatecc81531 one-attempt fix intentionally fails new retry test; final targeted source VM and retry quick69 PASS, including user typing before identity failure. Final canonical build/native verification pending.",
+      "status": "pass",
+      "summary": "Original source baseline fails late saved-view override regression; native pre-fix canonical Safari context on later becomes workspace on before cleanup. Intermediatecc81531 fails explicit failure/retry regression. Final source VM PASS for identity/cache/network/recovery input races, network/identity retries, cache generation adoption, same-workspace retention, old workspace clearing and stale lock/mode/generation replies. Retry quick69 PASS; final package metadata quick69 PASS, Markdown199/local links591 PASS; no new full71 run. Final canonical Safari user source/query persisted through6787 to7542 nodes, normal reload restored same source/query after recovery. No forced native503, lock, crash, other-theme or narrow-screen claim; camera fields covered in VM, not native coordinates.",
       "evidence": [
         ".agent-state/starmap-startup-selection/baseline.log",
         ".agent-state/starmap-startup-selection/before-choice.png",
         ".agent-state/starmap-startup-selection/before-reset-observation.json",
         ".agent-state/verify-20261014T211215953939Z.log",
         ".agent-state/starmap-startup-selection/intermediate-expected-fail.log",
-        ".agent-state/verify-20261014T211631194440Z.log"
+        ".agent-state/verify-20261014T211631194440Z.log",
+        ".agent-state/starmap-startup-selection/focused-final.log",
+        ".agent-state/starmap-startup-selection/after-choice.png",
+        ".agent-state/starmap-startup-selection/after-network.png",
+        ".agent-state/starmap-startup-selection/after-reload.png",
+        ".agent-state/verify-20261014T212416735977Z.log",
+        ".agent-state/starmap-startup-selection/check-docs.log"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Knowledge architecture documents first-input ownership across retries, same-workspace reconciliation, generation ownership and retained lock/workspace/mode boundaries. Main122, previous material task and latest image README updated with exact limitations.",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docker-images/README.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "No app fixture sessions or source changes; only owned star tabs used/closed. Test query cleared and workspace filter restored. Original vendor deletions untouched; mounts/workspace config and5 config/auth hashes match pre-selection-build baseline. Private proof files retained under ignored .agent-state.",
+      "evidence": [
+        ".agent-state/starmap-startup-selection/runtime.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final canonical local image healthy; app/dependency archive tags, exact launchers, hashes, running platform manifest, actual docker load and both local copies PASS. Final quick69 PASS; branch push pending; no formal main/tag release or receiving-device claim.",
+      "evidence": [
+        ".agent-state/starmap-startup-selection/package.json",
+        ".agent-state/starmap-startup-selection/runtime.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental source push/testing/local image and offline package authorization; no formal release.",
   "rollback": "Revert load ordering/initial-mode changes; preserve recovery records, cached graph, source registry and user history.",
-  "handoff": "Source implementation and deterministic negative proof complete; native pre-fix reset reproduced. Initial quick, canonical fixed build/actual early selection/query retention and delivery pending. Original goal active."
+  "handoff": "Final sourceee39d65 deployed via canonical9999 imageb687ad3e; deterministic old/intermediate negative proof and final VM race/guard cases PASS. Native old reset reproduced; final filter/query held through updates and normal reload. App/dependency bundle imported/verified/copied; final quick69 PASS; branch push pending. Original goal remains active.",
+  "runtime": {
+    "runningImage": "sha256:b687ad3e321d141bf8a483152b848e041fcefe421bd83d1755949edebc3c21c1",
+    "image": "sha256:b687ad3e321d141bf8a483152b848e041fcefe421bd83d1755949edebc3c21c1",
+    "binarySHA256": "0092daab328527eeb569b8cf14c8494c809c9bfcaa394edd10bcc6e7942ac9c9",
+    "runningPlatformManifest": "sha256:72c2f758f92cb0fc1133814d5aae3fab396ec57c47917161ac8af50b72f99dcb",
+    "sourceSHA256": "6951b241b32aed7f497fb7932db4314a18124d545aba361fd80c760432aa505e",
+    "buildCommit": "ee39d65d43fc1742e28bdcb9df4e364271ea105a-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 5,
+    "historicalProtectedFilesUnchanged": 1,
+    "snapshotTiming": "Five config/auth hashes captured before startup-selection builds; baseline image1e34815b, historical mounts/workspace config/token checked separately",
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:b687ad3e321d141bf8a483152b848e041fcefe421bd83d1755949edebc3c21c1",
+    "sourceSHA256": "6951b241b32aed7f497fb7932db4314a18124d545aba361fd80c760432aa505e",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-b687ad3e321d-offline.tar.gz",
+    "bytes": 705620605,
+    "sha256": "9035e2265ac5e2b3691a3fd9c80761298d5de65167908fd3c71ecca3c7ed129d",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  },
+  "implementation_commits": [
+    "cc81531",
+    "ee39d65"
+  ],
+  "browser_acceptance": {
+    "entry": "aide/start.command",
+    "port": 9999,
+    "client": "Safari",
+    "before": "Pre-fix1e34815b: context chip on after cached paint, later workspace on/context off before cleanup; original query initially empty.",
+    "after": "Finalb687ad3e: choose context and type Harness query on initial cached view; context remained on as6787 grew7542, same query still focused/present. Reload then recovery restored context and query.",
+    "scope": "Native real mounted source, current dark desktop; no synthetic model/plugin calls, no forced native network failure/lock/crash/other themes/narrow test. Timing-specific retries and camera numbers covered by source VM.",
+    "cleanup": "Cleared test query, selected workspace and closed only owned star tab; returned welcome workbench. No source registry or model settings edits."
+  },
+  "remaining": [
+    "Large-source scanning latency and cloud placeholder body availability remain; no bulk hydration or all-files claim",
+    "No native forced network-failure/lock/browser-crash or fresh narrow/theme coverage in this batch",
+    "Original twelve continuity workstreams and live plugin graph approvals/manual uncertain-effect reconciliation remain open",
+    "Windows by user, true vectors deferred, receiving-device import not observed"
+  ],
+  "quick_receipt": {
+    "status": "pass",
+    "head": "ee39d65d43fc1742e28bdcb9df4e364271ea105a",
+    "fingerprint": "6d2b8a5298ec7d72b65d7018046c8d9981ae9793888f9bc0502a7480f693fd47",
+    "time": "20261014T212416735977Z",
+    "log": ".agent-state/verify-20261014T212416735977Z.log",
+    "commands": 69
+  }
 }
