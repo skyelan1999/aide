@@ -1,0 +1,228 @@
+{
+  "task": "aide-continuity-knowledge-20261009",
+  "date": "2026-10-14",
+  "status": "in_progress",
+  "baseline": "a2a21a3e5d6cf1b97148ee4e6bce86a006b06497",
+  "observations": [
+    "9999 has no listener on this device.",
+    "Running aide-aide-1 serves 8097 from aideMacMini/aide, with an older embedded model settings UI lacking default reasoning effort. This does not reproduce the current source behavior.",
+    "Finder showed aide not downloaded; requested folder download. Working-tree git status timed out and Docker source reads returned I/O errors. No clean-tree claim.",
+    "Extracted committed HEAD to /tmp/aide-resume-a2a21a3 and cloned Git locally to /tmp/aide-resume-git-20261014; results below belong to that committed snapshot."
+  ],
+  "checks": [
+    {
+      "name": "agent-route verify quick",
+      "status": "PASS",
+      "fingerprint": "00d8c329a6cd3a648e6c315661a90d0faf4c369baf23657154fff6c65d17e682",
+      "receipt": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/device-resume-20261014/verify-20261014T073408077172Z.log"
+    },
+    {
+      "name": "Go TestReasoningEffortCanBeUpdatedFromSettings|TestMultiModelSettings|TestLegacySingleModelSettingsWriteUsesDefaultProvider",
+      "status": "PASS",
+      "duration_seconds": 1.66,
+      "environment": "aide:local, source snapshot read-only, network none, AIDE_BUILTIN_PLUGINS empty"
+    },
+    {
+      "name": "Go targeted race",
+      "status": "PASS",
+      "duration_seconds": 8.84
+    },
+    {
+      "name": "Safari current-source settings write/reload",
+      "status": "NOT_RUN",
+      "reason": "Safari certificate warning at localhost:18549; user handoff requested, no bypass attempted."
+    },
+    {
+      "name": "canonical bash scripts/aide.sh test (full race and vet)",
+      "status": "PASS",
+      "source": "/tmp/aide-resume-git-20261014",
+      "log": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/device-resume-20261014/resume-full-20261014.log",
+      "exit_code": 0,
+      "server_race_seconds": 673.413,
+      "tts_race_seconds": 4.409
+    },
+    {
+      "name": "isolated live HTTPS settings API low/medium/high/off/auto and config readback",
+      "status": "PASS",
+      "note": "Disposable acceptance-no-network model; no provider requests; no existing user configuration touched."
+    },
+    {
+      "name": "isolated server restart and config readback",
+      "status": "PASS",
+      "note": "auto reasoning effort and fixture activeModel retained after docker restart."
+    },
+    {
+      "name": "large-library discovery benchmark",
+      "status": "NOT_RUN",
+      "reason": "Container did not start; removed this generated test container without obtaining benchmark results."
+    },
+    {
+      "name": "large-library directory discovery benchmark via existing candidate container",
+      "status": "PASS",
+      "iterations": 1,
+      "environment": "Linux arm64, GOMAXPROCS=2, container-local synthetic files, a2a21a3 snapshot",
+      "progressive_results": [
+        {
+          "files": 1000,
+          "steps": 4,
+          "milliseconds": 1.302083,
+          "allocated_bytes": 907072
+        },
+        {
+          "files": 10000,
+          "steps": 40,
+          "milliseconds": 39.096458,
+          "allocated_bytes": 15873552
+        },
+        {
+          "files": 19000,
+          "steps": 75,
+          "milliseconds": 138.722458,
+          "allocated_bytes": 47571976
+        }
+      ],
+      "limit": "Single iteration, directory discovery only; excludes graph layout/rendering, full-text extraction, external user SSH and browser memory.",
+      "log": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/device-resume-20261014/resume-discovery-benchmark.log"
+    },
+    {
+      "name": "5000-file live progressive index via authenticated candidate API",
+      "status": "PASS",
+      "first_ready_poll": 28,
+      "first_ready_elapsed_seconds": 67.703,
+      "retained_file_nodes": 5000,
+      "max_observed_request_ms": 805.12,
+      "first_harness_exit": "FAILED because it incorrectly required totalKnown=true; corrected evaluation follows documented local coverage semantics and raw ready-state evidence, not that assertion.",
+      "limit": "Synthetic finite files, actual 2.1s polling, no browser layout or external SSH; local totalKnown remains false.",
+      "log": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/device-resume-20261014/resume-live-index-5000.jsonl"
+    },
+    {
+      "name": "5000-file live add/change/remove, delta merge and knowledge timeline comparison",
+      "status": "PASS",
+      "result": {
+        "result": "PASS",
+        "elapsed_s": 70.931,
+        "files": 5000,
+        "timeline_added": [
+          "acceptance-replacement.md"
+        ],
+        "timeline_removed": [
+          "acceptance-00001.md"
+        ],
+        "timeline_changed": [
+          ".",
+          "acceptance-00000.md"
+        ],
+        "before": "Hd8bedff80500c780f89f25f1",
+        "after": "H2afdd6660662ef87a26524de",
+        "totalKnown": false
+      },
+      "log": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/device-resume-20261014/resume-live-index-mutations.jsonl"
+    },
+    {
+      "name": "fresh dual-server SSH/SFTP race acceptance",
+      "status": "NOT_RUN",
+      "reason": "Built missing fixture image; first disposable server stayed Created with Docker Desktop informational alert; cancelled this attempt and removed test container/network. No SSH assertions executed.",
+      "fixture_log": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/device-resume-20261014/resume-ssh-fixture-build.log"
+    },
+    {
+      "name": "release-check on detached local clone snapshot",
+      "status": "BLOCKED",
+      "reason": "Missing rollback and incomplete design/implementation/verification/documentation/cleanup; formal full-profile receipt absent; clone is detached, not main. Passing canonical race/vet does not satisfy the release workflow by itself.",
+      "log": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/device-resume-20261014/resume-release-check.log"
+    },
+    {
+      "name": "updated bilingual architecture docs local-link verification",
+      "status": "PASS",
+      "markdown_files": 188,
+      "local_links": 544,
+      "scope": "Updated committed-snapshot docs with the reviewed architecture appendix and review record."
+    },
+    {
+      "name": "5000-file first graph response and timeline after isolated service restart",
+      "status": "PASS",
+      "result": {
+        "result": "PASS",
+        "retained_file_nodes": 5000,
+        "correct_add_change_remove_after_restart": true,
+        "timeline_entries_retained": 4,
+        "source": {
+          "id": "workspace",
+          "name": "工作区",
+          "type": "local",
+          "region": "workspace",
+          "state": "partial",
+          "message": "分批索引中，未扫描区域保持上一周期快照",
+          "nodeCount": 5001,
+          "coverage": {
+            "progressive": true,
+            "pending": 1,
+            "cycle": 3,
+            "catalogLimit": 8000,
+            "files": 5000,
+            "directories": 1,
+            "fileBudget": 200,
+            "directoryBudget": 50,
+            "depthBudget": 7,
+            "textBytesPerFile": 8192,
+            "totalKnown": false,
+            "reasons": null
+          }
+        },
+        "graph_and_timeline_readback_ms": 865.996
+      },
+      "log": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/device-resume-20261014/resume-live-index-restart.json"
+    },
+    {
+      "name": "original iCloud working-tree quick profile after pin/download",
+      "status": "PASS",
+      "fingerprint": "72a113e5ac0332f0b845e9c6e8210d91b625cce4d7ade63966fffcd2b67b06ff",
+      "receipt": ".agent-state/verify-20261014T080721261328Z.log",
+      "limit": "Includes local vendor deletions; not the same input fingerprint as the full-race tested committed snapshot."
+    }
+  ],
+  "candidate": {
+    "container": "aide-resume-safari-20261014",
+    "url": "https://localhost:18549/",
+    "source": "/tmp/aide-resume-a2a21a3",
+    "data": "container /tmp/aide-acceptance-data",
+    "workspace": "container /tmp/aide-acceptance",
+    "health": "healthy",
+    "production_replaced": false
+  },
+  "remaining": [
+    "Complete iCloud hydration and review original working tree.",
+    "User handles Safari certificate warning, then authenticate candidate and verify settings selection/save/reload.",
+    "Continue original 12 workstreams; vector deferred, Windows user-owned.",
+    "Full race/vet is now PASS for committed a2a21a3 snapshot; do not transfer this receipt to any unreviewed working-tree change."
+  ],
+  "release": {
+    "code_changed": false,
+    "commit": false,
+    "push": false,
+    "published": false,
+    "commit_scope": "Earlier false commit status refers to the previous acceptance rounds; this documentation-only checkpoint is being prepared separately."
+  },
+  "working_tree_review": {
+    "status": "readable_with_unattributed_vendor_deletions",
+    "branch": "chore/continuity-acceptance-20261014",
+    "unattributed_deleted_files": [
+      "internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js",
+      "internal/server/web/vendor/drawio/js/onedrive/OneDrive.js",
+      "internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js",
+      "internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js",
+      "internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js"
+    ],
+    "preservation": "Left untouched; excluded from this documentation checkpoint. No claim that the original working tree equals the tested committed snapshot.",
+    "icloud_download": "Keep Downloaded enabled; last observed 7.10GB/7.65GB."
+  },
+  "documentation_checkpoint": {
+    "branch": "chore/continuity-acceptance-20261014",
+    "scope": [
+      "docs/architecture/knowledge-map.md",
+      "docs/tasks/aide-continuity-knowledge-20261009.json",
+      "docs/reviews/2026-10-14-device-resume.json"
+    ],
+    "state": "prepared",
+    "excluded": "Five unattributed vendor asset deletions"
+  }
+}

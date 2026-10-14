@@ -174,6 +174,9 @@
       },
       "evidence_20261013": [
         "Fresh isolated SSH integration run verified remote continuity primitives and cleanup; real user-host/Safari tab+cursor recovery remains pending."
+      ],
+      "evidence_20261014_device_resume": [
+        "a2a21a3隔离5000文件星图/增改删/时间线在进程重启后首个响应保留；不替代Safari草稿、光标、镜头或真实SSH恢复验收。"
       ]
     },
     {
@@ -291,6 +294,9 @@
       },
       "evidence_20261013": [
         "Fresh-process SSH progressive scan resumed coverage 10→20 files in latest integration run; large-library performance and remote provider acceptance remain pending."
+      ],
+      "evidence_20261014_device_resume": [
+        "a2a21a3隔离真实HTTPS API：5000个Markdown文件渐进索引在第28次请求(67.703s)达到ready/5000节点/无截断；越过1000容量后扩容。增改删各一文档后第26次请求收敛，时间线比较准确报告新增/修改/移除，70.931s。totalKnown按本地语义仍为false。"
       ]
     },
     {
@@ -357,6 +363,9 @@
       },
       "evidence_20261013": [
         "Latest SSH integration run passed remote knowledge timeline and source update handling on isolated fixtures; user-host browser and capacity/failure injection remain pending."
+      ],
+      "evidence_20261014_device_resume": [
+        "a2a21a3隔离真实HTTPS API：5000个Markdown文件渐进索引在第28次请求(67.703s)达到ready/5000节点/无截断；越过1000容量后扩容。增改删各一文档后第26次请求收敛，时间线比较准确报告新增/修改/移除，70.931s。totalKnown按本地语义仍为false。"
       ]
     }
   ],
@@ -4992,5 +5001,122 @@
       "git diff --check PASS"
     ],
     "result": "源码组件回归通过，Safari 确认当前实例已解锁且历史验收页面可渲染；本次不涵盖运行中跨页刷新、真实模型实时输出或发布成果卡，因此“运行中跨页快照及发布成果卡”仍 in_progress。没有调用模型或重启服务。"
+  },
+  "progress_checkpoint_20261014_followup100": {
+    "date": "2026-10-14",
+    "status": "resumed_snapshot_race_vet_pass_safari_certificate_handoff",
+    "summary": "用户要求继续对应目标与任务；已恢复持续目标。跨设备原工作树尚未完整下载；原9999未监听，8097来自aideMacMini/aide且UI旧版。已触发下载，以a2a21a3提交的本机完整快照隔离验收。",
+    "baseline": "a2a21a3e5d6cf1b97148ee4e6bce86a006b06497",
+    "checks": [
+      {
+        "name": "agent-route verify quick",
+        "status": "PASS",
+        "fingerprint": "00d8c329a6cd3a648e6c315661a90d0faf4c369baf23657154fff6c65d17e682",
+        "receipt": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/device-resume-20261014/verify-20261014T073408077172Z.log"
+      },
+      {
+        "name": "Go TestReasoningEffortCanBeUpdatedFromSettings|TestMultiModelSettings|TestLegacySingleModelSettingsWriteUsesDefaultProvider",
+        "status": "PASS",
+        "duration_seconds": 1.66,
+        "environment": "aide:local, source snapshot read-only, network none, AIDE_BUILTIN_PLUGINS empty"
+      },
+      {
+        "name": "Go targeted race",
+        "status": "PASS",
+        "duration_seconds": 8.84
+      },
+      {
+        "name": "Safari current-source settings write/reload",
+        "status": "NOT_RUN",
+        "reason": "Safari certificate warning at localhost:18549; user handoff requested, no bypass attempted."
+      },
+      {
+        "name": "canonical bash scripts/aide.sh test (full race and vet)",
+        "status": "PASS",
+        "source": "/tmp/aide-resume-git-20261014",
+        "log": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/device-resume-20261014/resume-full-20261014.log",
+        "exit_code": 0,
+        "server_race_seconds": 673.413,
+        "tts_race_seconds": 4.409
+      },
+      {
+        "name": "isolated live HTTPS settings API low/medium/high/off/auto and config readback",
+        "status": "PASS",
+        "note": "Disposable acceptance-no-network model; no provider requests; no existing user configuration touched."
+      },
+      {
+        "name": "isolated server restart and config readback",
+        "status": "PASS",
+        "note": "auto reasoning effort and fixture activeModel retained after docker restart."
+      }
+    ],
+    "evidence": [
+      "docs/reviews/2026-10-14-device-resume.json"
+    ],
+    "candidate": {
+      "container": "aide-resume-safari-20261014",
+      "url": "https://localhost:18549/",
+      "source": "/tmp/aide-resume-a2a21a3",
+      "data": "container /tmp/aide-acceptance-data",
+      "workspace": "container /tmp/aide-acceptance",
+      "health": "healthy",
+      "production_replaced": false
+    },
+    "remaining": [
+      "Complete iCloud hydration and review original working tree.",
+      "User handles Safari certificate warning, then authenticate candidate and verify settings selection/save/reload.",
+      "Continue original 12 workstreams; vector deferred, Windows user-owned.",
+      "Full race/vet is now PASS for committed a2a21a3 snapshot; do not transfer this receipt to any unreviewed working-tree change."
+    ],
+    "release": {
+      "code_changed": false,
+      "commit": false,
+      "push": false,
+      "published": false
+    }
+  },
+  "progress_checkpoint_20261014_followup101": {
+    "date": "2026-10-14",
+    "status": "local_large_fixture_api_and_timeline_pass_browser_ssh_pending",
+    "summary": "a2a21a3隔离真实HTTPS API：5000个Markdown文件渐进索引在第28次请求(67.703s)达到ready/5000节点/无截断；越过1000容量后扩容。增改删各一文档后第26次请求收敛，时间线比较准确报告新增/修改/移除，70.931s。totalKnown按本地语义仍为false。",
+    "additional_evidence": [
+      "19,000文件目录发现基准单次渐进75批/138.722ms，47,571,976 B分配；不代表全文/图布局/浏览器内存。",
+      "本机缺SSH夹具镜像已按仓库配方构建；第一测试服务停Created，未执行SSH断言，已取消并清理临时容器/网络。",
+      "Safari仍停18549证书警告；release-check未通过，缺回滚与阶段闭环，clone处于detached且无正式full-profile收据。",
+      "隔离服务再次重启后，首个星图响应即包含5000个文件节点，先前增改删和时间线保留；见resume-live-index-restart.json。"
+    ],
+    "evidence": [
+      "docs/reviews/2026-10-14-device-resume.json"
+    ],
+    "remaining": [
+      "系统Safari验收与证书用户接手",
+      "iCloud工作树同步和审阅",
+      "真实SSH及浏览器/长会话/性能与发布门禁其余缺口；向量暂缓、Windows由用户负责"
+    ]
+  },
+  "progress_checkpoint_20261014_followup102": {
+    "date": "2026-10-14",
+    "status": "working_tree_readable_unattributed_vendor_deletions_preserved",
+    "summary": "复核Safari仍为18549证书警告，Docker目录共享说明仍在，原Git状态再次超时。Finder显示aide仍尚未下载；已启用保留下载并通过cmdUnpin状态确认，本机实际开始下载1145项目/7.10GB，后续观测601.9MB/7.10GB。",
+    "goal_turn_classification": "progress: changed file availability policy and verified active download; not release or UI acceptance.",
+    "remaining": [
+      "五个原工作树依赖文件缺失需确认，原树不能等同已测试提交快照",
+      "系统Safari证书需用户本人处理",
+      "Docker测试启动说明/Created问题待解除；未执行SSH断言"
+    ],
+    "followup": "原git status随后成功，main与origin/main对应；本轮三份文档外有五个draw.io Dropbox/OneDrive依赖文件缺失。无法确认来源，保持现场；创建独立chore/continuity-acceptance-20261014分支，仅准备文档检查点。",
+    "unattributed_deleted_files": [
+      "internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js",
+      "internal/server/web/vendor/drawio/js/onedrive/OneDrive.js",
+      "internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js",
+      "internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js",
+      "internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js"
+    ],
+    "original_tree_quick": {
+      "status": "PASS",
+      "fingerprint": "72a113e5ac0332f0b845e9c6e8210d91b625cce4d7ade63966fffcd2b67b06ff",
+      "receipt": ".agent-state/verify-20261014T080721261328Z.log",
+      "limit": "不同于a2a21a3完整提交快照，存在五个未归属的vendor缺失"
+    }
   }
 }

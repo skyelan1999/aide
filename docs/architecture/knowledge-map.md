@@ -452,3 +452,16 @@ Safari 解锁后补验：142 节点星图的原文检索返回 31 条结果（�
 Native Safari on isolated 18211 rendered a finite 1105-file local fixture progressively: 806 total nodes with partial coverage, then 1111 total nodes including 1106 workspace entries, without reload. The test policy used a global file batch budget of 2400 and directory budget of 200, shared across six active areas; actual local quotas were 400 files and 33 directories, and per-area catalogue capacity was 1732. The actual API returned `ready`, 1105 files and one directory, with no limiting reasons. `totalKnown` remained false: this is a finite fixture verification, not a claim about a user library total.
 
 The frontend has no fixed 1000-star ceiling. Backend catalogue capacity, per-batch scan budgets, depth and time limits still bound coverage. The log distinguishes accumulated entries from per-batch work. A subsequent partial scan cycle retains the previously discovered entries; partial is not a disappearance of nodes. Settings and test files were restored/removed after acceptance. Frame rate, large-library input latency and remote thousand-node performance remain unmeasured. Earlier dated checkpoints above describe earlier states; current local and remote cursor persistence and shared retrieval are documented in their later checkpoint sections.
+
+
+### 跨设备本地大目录 API 验收（2026-10-14）
+
+提交 `a2a21a3` 的隔离候选实例使用 5,000 份虚构 Markdown 文档，通过实际鉴权 HTTPS API 和 2.1 秒轮询进行验收：第 28 次请求、约 67.703 秒达到工作区来源 `ready`、5,000 个文件节点、无截断，增量合并得到完整文件集合；目录容量从 1,000 自动扩容。随后新增、修改、删除各一文档，约 70.931 秒后收敛，知识时间线比较正确列出三类变化。扫描未完成时保留既有节点，移除在该周期完成后发布。`totalKnown` 按本地来源语义仍为 `false`；最初脚本错误地要求它为 `true`，该脚本超时不是产品失败，验收依据是实际 `ready` 状态、文件集合与变更比较。
+
+目录发现层的单次基准另测 1,000 / 10,000 / 19,000 文件；19,000 文件渐进扫描为 75 批、约 138.722 毫秒、47,571,976 字节分配。这不含文本提取、图布局、Safari 渲染或远程网络。上述结果只属于该提交的本机完整快照，不能替代仍未完成的 iCloud 工作树审阅、用户库、Safari 长时性能和真实用户 SSH 验收。详见[跨设备验收记录](../reviews/2026-10-14-device-resume.json)。
+
+### Cross-device local large-directory API acceptance (2026-10-14)
+
+An isolated candidate at commit `a2a21a3` indexed 5,000 synthetic Markdown files through authenticated HTTPS requests with actual 2.1-second polling. At request 28 (about 67.703 seconds), the workspace source was `ready`, all 5,000 file nodes were retained after merging deltas, and truncation was false. Catalogue capacity expanded beyond 1,000. Adding, changing and deleting one document each converged after about 70.931 seconds; timeline comparison identified all three changes. Existing nodes survived incomplete scans, and removal was published at cycle completion. Local coverage intentionally kept `totalKnown=false`; the first harness incorrectly required `true`, so its timeout does not establish a product failure.
+
+A separate single-iteration directory-discovery benchmark measured 19,000 files in 75 progressive batches, about 138.722 ms and 47,571,976 allocated bytes. It excludes text extraction, graph layout, Safari rendering and remote network costs. These results belong to the committed local snapshot; iCloud working-tree review, user libraries, sustained Safari performance and real user-host SSH acceptance remain open. See the [device acceptance record](../reviews/2026-10-14-device-resume.json).
