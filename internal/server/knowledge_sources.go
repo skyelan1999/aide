@@ -915,7 +915,7 @@ func (a *App) knowledgeAreaRead(ctx context.Context, ar knowledgeArea, p string,
 	var err error
 	switch ar.kind {
 	case "local", "skill":
-		root, openErr := os.OpenRoot(ar.location)
+		root, openErr := a.openLocalSourceRoot(ctx, ar.location)
 		if openErr != nil {
 			return nil, openErr
 		}

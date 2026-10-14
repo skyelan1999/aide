@@ -483,6 +483,7 @@ type App struct {
 	wsStartupConfig           *WorkspaceConfig
 	wsStartupWarning          string
 	wsStartupUnavailableRoot  atomic.Pointer[string]
+	localRootOpens            localRootOpenState
 	wsSecrets                 workspaceSecrets
 	vault                     *SecretVault // 统一加密凭证保险库（#38）
 	knowledgeVectors          *knowledgeVectorCache

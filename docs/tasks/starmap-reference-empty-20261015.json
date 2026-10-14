@@ -20,7 +20,9 @@
     "internal/server/sources.go",
     "internal/server/web/index.html",
     "internal/server/web/locales/en.js",
-    "docs/agent/router.json"
+    "docs/agent/router.json",
+    "internal/server/source_root_open.go",
+    "internal/server/source_root_open_test.go"
   ],
   "stages": {
     "requirements": {
@@ -35,21 +37,21 @@
     },
     "design": {
       "status": "pass",
-      "summary": "Startup recovery atomically records the known unavailable resolved root. Related local sources keep their original binding but reject filesystem opens until explicit workspace repair; independent sources continue. Frontend uses a stable scene-local origin across live batches, resets it on filter changes, and distinguishes empty/scanning/unavailable/disabled/missing-source states.",
+      "summary": "Startup recovery atomically records the known unavailable resolved root. Related local sources keep their original binding but reject filesystem opens until explicit workspace repair; independent sources continue. Frontend uses a stable scene-local origin across live batches, resets it on filter changes, and distinguishes empty/scanning/unavailable/disabled/missing-source states. General local root opens wait at most350ms, deduplicate pending paths, cap24 operations per App, close late roots and cancel callers on shutdown; operating-system calls may remain bounded pending until host access resolves.",
       "evidence": [
         "internal/server/web/starmap.js: cosmicData/layout"
       ]
     },
     "implementation": {
       "status": "pass",
-      "summary": "Backend unavailable-source guard in shared local source opener and knowledge area snapshots/readers; no retarget to/context or config rewrite. Local frame, live-scope guard, bounded empty labels and metadata-only repaint implemented; focused FIFO/source boundary and actual Cosmos VM regressions added.",
+      "summary": "Backend unavailable-source guard in shared local source opener and knowledge area snapshots/readers; no retarget to/context or config rewrite. Local frame, live-scope guard, bounded empty labels and metadata-only repaint implemented; focused FIFO/source boundary and actual Cosmos VM regressions added. General root-open isolation also covers local source browsing/read paths; repeated pending opens return immediately, concurrent fast readers receive separate handles.",
       "evidence": [
         "internal/server/knowledge_reference_progressive_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Runtime SIGQUIT stack proves os.OpenRoot at knowledge_map.go:237 held first publication for11minutes. The30-character resolved root matches configured old workspace child /local/Users/skyelan/debug/doc; both host paths do not exist. New targeted source/startup/reference race PASS6.155s and vet; true FIFO fixture ensures blocked descendant cannot prevent first graph. Cosmos VM reference viewport30/30, progressive empty/one/many stability and filter reconciliation PASS; empty-state, bounded320/390/1324 labels and metadata repaint PASS. Actual canonical entry/browser verification pending.",
+      "summary": "First focused startup/reference race6.155s and vet PASS; first source guard alone did not restore current star map. Registry inspection exposed independent Downloads source; root-open isolation now under focused race/FIFO/concurrency/late-handle/shutdown checks. Frontend frame/empty VM checks PASS. Current real instance requires new rebuild/acceptance; no completed star fix claim. General root-open/FIFO/startup/reference focused race PASS8.101s and vet; actual second candidate browser verification pending.",
       "evidence": [
         ".agent-state/reference-repository-probe.log",
         ".agent-state/reference-fixture-race.log",
@@ -59,7 +61,8 @@
         "internal/server/knowledge_startup_fifo_test.go",
         "internal/server/knowledge_startup_recovery_test.go",
         "scripts/starmap-local-frame.test.cjs",
-        "scripts/starmap-empty-state.test.cjs"
+        "scripts/starmap-empty-state.test.cjs",
+        ".agent-state/starmap-recenter/root-open-race.log"
       ]
     },
     "documentation": {
@@ -95,5 +98,6 @@
     ],
     "prototype": "Framing/empty-state SourceVM candidates only, not applied. Full source suite currently frozen on c072f4e for startup/asset batch.",
     "after_recovery": "Same exact-entry workbench restored and file listing visible; star map still zero/connecting after engine recovery, even while Go tests use container-local files. Not resolved by this startup/image batch."
-  }
+  },
+  "diagnosis_correction": "Runtime stack proves a root-open syscall blocking first publication; initial attribution to old docs based on length was premature. Actual registry also includes enabled Downloads before old docs and both resolved paths are30 characters. Keep known-startup guard but add general root-open timeout/dedup/admission isolation; do not disable or retarget user source."
 }

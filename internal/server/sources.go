@@ -182,7 +182,7 @@ func (a *App) ensureBuiltinSources() {
 // localSourceRoot 本地类来源根：空路径回落参考根（/context）。
 func (a *App) localSourceRoot(src Source) (*os.Root, error) {
 	if strings.TrimSpace(src.Config.Path) == "" {
-		return os.OpenRoot(a.reference.Name())
+		return a.openLocalSourceRoot(context.Background(), a.reference.Name())
 	}
 	cp, _, err := a.resolveHostPath(src.Config.Path)
 	if err != nil {
@@ -191,7 +191,7 @@ func (a *App) localSourceRoot(src Source) (*os.Root, error) {
 	if a.startupUnavailableLocalPath(cp) {
 		return nil, errors.New(startupUnavailableSourceMessage)
 	}
-	return os.OpenRoot(cp)
+	return a.openLocalSourceRoot(context.Background(), cp)
 }
 func (a *App) saveSources() error {
 	if err := os.MkdirAll(filepath.Dir(a.sourcesPath()), 0755); err != nil {

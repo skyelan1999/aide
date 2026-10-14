@@ -237,10 +237,10 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 			g.Truncated = true
 			break
 		}
-		root, err := os.OpenRoot(ar.location)
+		root, err := a.openLocalSourceRoot(ctx, ar.location)
 		if err != nil {
 			g.Warnings = append(g.Warnings, ar.name+"：不可读取")
-			knowledgeSetSource(&g, ar, "unavailable", "本地目录不可读取", 0)
+			knowledgeSetSource(&g, ar, "unavailable", localRootUnavailableMessage(err), 0)
 			continue
 		}
 		module := ""

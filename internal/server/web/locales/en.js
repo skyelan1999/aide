@@ -1,6 +1,10 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "本机目录访问仍在等待，请检查目录或本机访问权限": "Local directory access is still pending. Check the directory or host permissions.",
+  "本机目录访问超时，请检查目录或本机访问权限": "Local directory access timed out. Check the directory or host permissions.",
+  "等待访问的本机目录过多，请先处理不可用来源": "Too many local directories are awaiting access. Resolve unavailable sources first.",
+
   "此来源已停用，请在引用配置中启用": "This source is disabled. Enable it in reference settings.",
   "当前索引未报告此来源，请选择其他星域": "The current index does not report this source. Select another region.",
   "来源暂不可用，请在星际日志查看原因": "This source is unavailable. Check the stellar logbook for details.",
