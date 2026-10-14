@@ -478,9 +478,8 @@
         "scripts/test_runtime_assets.py"
       ],
       [
-        "bash",
-        "scripts/aide.sh",
-        "test"
+        "python3",
+        "scripts/test_go_snapshot.py"
       ]
     ]
   },

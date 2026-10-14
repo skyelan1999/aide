@@ -137,3 +137,7 @@ go vet ./...
 - 生产验证：`aide-aide-1` healthy；`/api/config` `version=0.1.5.0-RC5`、`revision=buildCommit=905d261…`；`/healthz` 200；容器内 `verify_runtime.py --check` PASS（令牌/会话/工作区文件跨重启完好）。
 - 卷备份：`~/aide-backups/20260923-195334/{aide-data.tgz,aide-home.tgz}`（sha256 已记录于备份目录内输出）。
 - 整改验收证据：`docs/reviews/2026-09-23/`（11 套独立验收全 PASS + 真实 Chromium 浏览器 12/12 + race/vet/gofmt 干净）。
+
+### Docker Desktop 共享目录阻塞
+
+`verify full` 的 Go race/vet 将当前 Git 列出的实际文件（保留工作树删除）通过标准输入复制到一次性容器的 `/tmp`，在 Linux 本地文件系统编译测试，不挂载源码、设置或用户数据卷，网络设为 `none`。源码快照是临时私有文件，执行后清理；整体容器命令包含 20 分钟上限，Go 包测试仍有 15 分钟上限。此方式避开共享目录的不可取消文件调用，不表示产品星图扫描的共享文件系统问题已修复。旧 `bash scripts/aide.sh test` 仍是直接挂载的开发便捷命令。

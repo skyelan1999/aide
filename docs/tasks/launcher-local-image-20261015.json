@@ -29,7 +29,9 @@
     "docker-images",
     "Dockerfile",
     "scripts/test_runtime_assets.py",
-    "docs/agent/router.json"
+    "docs/agent/router.json",
+    "scripts/test_go_snapshot.py",
+    "scripts/test_runtime_assets.py"
   ],
   "stages": {
     "requirements": {
@@ -156,6 +158,18 @@
     "evidence": [
       ".agent-state/launcher-start/workbench-open.png",
       ".agent-state/launcher-start/workspace-config-preserved.png"
+    ]
+  },
+  "verification_environment_recovery": {
+    "initialAttempt": "Six Office permission failures fixed; old-image negative and repaired-image actual DOCX roundtrip PASS.",
+    "sharedMountAttempt": "Compiler stuck in shared-mount openat/request_wait_answer; scoped docker stop could not receive exit event. Interrupted, never PASS. New container starts also stalled while workbench had blocked shared filesystem calls.",
+    "recovery": "Docker Desktop ordinary restart stalled; built-in force stop/start preserved images/data. Exact canonical start.command reopened healthy workbench with same app image, no build/download, mounts/config/protected file check PASS (exec diagnostics use /tmp). Further clean-engine comparison with workbench manually stopped: runtime assets+DOCX test PASS immediately.",
+    "newFull": "Transfer Git-listed current files via stdin into container-local /tmp, no mounts/network, compile+tests outer20m timeout. Begin isolated full before restoring shared-mount workbench.",
+    "evidence": [
+      ".agent-state/launcher-start/full-shared-filesystem-interrupted.json",
+      ".agent-state/launcher-start/docker-force-stop.log",
+      ".agent-state/launcher-start/after-engine-recovery.log",
+      ".agent-state/launcher-start/assets-clean-engine.log"
     ]
   }
 }

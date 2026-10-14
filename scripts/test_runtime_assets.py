@@ -2,6 +2,7 @@
 """Exercise shipped assets as the image's normal non-root user, without network."""
 import subprocess
 import sys
+import uuid
 
 PROGRAM = r'''
 import json, os, subprocess, tempfile
@@ -36,5 +37,14 @@ print(json.dumps({'status': 'pass', 'uid': os.geteuid(), 'readableFiles': len(fi
 
 if __name__ == '__main__':
     image = sys.argv[1] if len(sys.argv) > 1 else 'aide:local'
-    subprocess.run(['docker', 'run', '--rm', '--network', 'none', '--entrypoint',
-                    'python3', image, '-c', PROGRAM], check=True)
+    container = 'aide-assets-' + uuid.uuid4().hex[:12]
+    try:
+        subprocess.run(['docker', 'run', '--rm', '--name', container, '--network', 'none',
+                        '--workdir', '/tmp', '--entrypoint', 'python3', image, '-c', PROGRAM],
+                       check=True, timeout=90)
+    finally:
+        try:
+            subprocess.run(['docker', 'rm', '-f', container], stdout=subprocess.DEVNULL,
+                           stderr=subprocess.DEVNULL, timeout=10, check=False)
+        except (OSError, subprocess.TimeoutExpired):
+            print(f'Cleanup pending for own asset test container: {container}', flush=True)

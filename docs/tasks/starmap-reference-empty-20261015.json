@@ -68,5 +68,18 @@
   },
   "release_authorization": "沿用分批测试/push及离线镜像包交付；不正式Release。",
   "rollback": "",
-  "handoff": "User prioritized maintenance scripts. Previous 8097 fixture source s-gk9pkr accumulated 1644 nodes, but scene remained offscreen to the right. Docker state and runtime image subsequently changed; current 8097 restarts because /local/Users/skyelan/debug is unavailable. Did not change user configuration or remove source. Previous full failed with unexpected EOF. Revalidate instance, fix scene framing and clean up own fixture source."
+  "handoff": "User prioritized maintenance scripts. Previous 8097 fixture source s-gk9pkr accumulated 1644 nodes, but scene remained offscreen to the right. Docker state and runtime image subsequently changed; current 8097 restarts because /local/Users/skyelan/debug is unavailable. Did not change user configuration or remove source. Previous full failed with unexpected EOF. Revalidate instance, fix scene framing and clean up own fixture source.",
+  "canonical_observation_20261015": {
+    "entry": "aide/start.command",
+    "port": 9999,
+    "image": "sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14",
+    "browser": "Safari same launcher workbench -> knowledge star map",
+    "observation": "Workbench healthy with startup workspace fallback; star map remains connecting with zero nodes, refresh repeats initial loading. No fix claimed.",
+    "api": "Authenticated identity returns200 in0.030s; updates returns503 in0.003s, busy/no complete snapshot.",
+    "process": "App low CPU, extra open descriptor /workspace, a Go thread observed waiting request_wait_answer; may be filesystem IO but no definitive stack or file identified.",
+    "evidence": [
+      ".agent-state/starmap-recenter/canonical-connecting.png"
+    ],
+    "prototype": "Framing/empty-state SourceVM candidates only, not applied. Full source suite currently frozen on c072f4e for startup/asset batch."
+  }
 }
