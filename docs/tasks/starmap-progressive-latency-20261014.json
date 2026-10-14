@@ -40,11 +40,14 @@
       "evidence": []
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "canonical Go race17.895s / compatibility Go race11.687s PASS；Node cadence/coverage/workspace/cache/logbook PASS；浏览器和镜像待完成",
+      "status": "pass",
+      "summary": "两份Go race、前端quick PASS；Safari实际8097节点224→1003→1560，工作区筛选保留，目录周期完成后pending0；兼容树缺失扩容已补齐并race2.609s；包内外SHA与docker load PASS。",
       "evidence": [
         ".agent-state/progressive-cadence-tests.log",
-        ".agent-state/progressive-cadence-runtime-tests.log"
+        ".agent-state/progressive-cadence-runtime-tests.log",
+        ".agent-state/progressive-runtime-growth.log",
+        ".agent-state/progressive-latency/safari-1560.png",
+        ".agent-state/progressive-package.json"
       ]
     },
     "documentation": {
@@ -53,17 +56,34 @@
       "evidence": []
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
+      "status": "pass",
+      "summary": "只提交范围内文件；保留五个继承vendor删除、用户数据与回滚备份；提取验包tar已删除",
       "evidence": []
     },
     "release": {
-      "status": "pending",
-      "summary": "",
+      "status": "in_progress",
+      "summary": "c4cf8dd已push，本机8097更新且healthy，离线包已交付目录；正式main发布仍受主目标未闭环门禁限制",
       "evidence": []
     }
   },
   "release_authorization": "用户：还是一样，做一部分，push一部分，测一部分；docker记得更新镜像；沿用镜像包，另一端直接导入",
   "rollback": "保留当前运行镜像 f34edc6d8afd 与完整数据备份；只替换8097 AIDE服务",
-  "handoff": ""
+  "handoff": "",
+  "runtime": {
+    "image": "sha256:ab75ecc66e3dc9eff663fd757d3b72e869111ef6087efe6a6ee1af8b6bfb207d",
+    "srcsha": "ef25acd6e50ec7736edf004d6446de08b5c90bc81758d42b503b537796c38d44",
+    "name": "aide-0.1.17.0-RC2-linux-arm64-ab75ecc66e3d-offline.tar.gz",
+    "sha256": "68c110e614b2cccca0047c689858b52bd77e904a53c39b5b848dda84fad7a3be",
+    "bytes": 561603166,
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "dockerLoadVerified": true,
+    "copiedCanonical": true,
+    "buildCommit": "c4cf8dd-compat-growth",
+    "mountsAndSettingsRetained": true,
+    "rollbackTag": "aide:starmap-previous-20261014",
+    "backup": "../aideMacMini/aide/.agent-state/progressive-latency/data-before-deploy-20261014T222006.tar",
+    "browserStartup": "首次启动遇到一次503，自动重试恢复，未清空数据",
+    "compatibilityNote": "8097旧树补入canonical已存在的目录容量几何扩容与20000上限；原始挂载路径比较含Docker Desktop /host_mnt前缀差异，归一化后二次部署一致"
+  }
 }

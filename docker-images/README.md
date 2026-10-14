@@ -84,3 +84,6 @@ Git push 只同步源码，不包含本目录被忽略的大型镜像归档。�
 
 
 `plugins/surface.json` 是插件宿主启动时重写的能力快照（含生成时间），已从源码指纹及Docker构建上下文排除；插件真实源码仍计入。这样重启不会仅因快照时间变化就误判镜像过期。可用只读命令 `bash scripts/aide.sh source-sha` 检查当前构建指纹，该命令不启动Docker；离线包导出继续严格核对镜像label与当前指纹，不绕过一致性门禁。
+
+
+2026-10-14 星图分批更新包：`aide-0.1.17.0-RC2-linux-arm64-ab75ecc66e3d-offline.tar.gz`。镜像 `sha256:ab75ecc66e3dc9eff663fd757d3b72e869111ef6087efe6a6ee1af8b6bfb207d`，SHA-256 `68c110e614b2cccca0047c689858b52bd77e904a53c39b5b848dda84fad7a3be`。本机8097已部署，包内镜像校验与 `docker image load` 已验证；另一端仍需导入验收。详见[批次验收](../docs/tasks/starmap-progressive-latency-20261014.json)。

@@ -5339,5 +5339,22 @@
     },
     "new_request": "星图分批呈现及动态扫描节奏，见 knowledge-progressive-index-20261009",
     "release": "still blocked on incomplete main workstreams, main and clean tree; no overall completion claim"
+  },
+  "progress_checkpoint_20261014_followup105": {
+    "status": "in_progress",
+    "starmap": "分批扫描新改动已push并部署8097，Safari224→1003→1560，扫描周期完成且筛选保留。兼容树补齐既有容量扩展，未变更canonical实现。",
+    "package": {
+      "image": "sha256:ab75ecc66e3dc9eff663fd757d3b72e869111ef6087efe6a6ee1af8b6bfb207d",
+      "srcsha": "ef25acd6e50ec7736edf004d6446de08b5c90bc81758d42b503b537796c38d44",
+      "name": "aide-0.1.17.0-RC2-linux-arm64-ab75ecc66e3d-offline.tar.gz",
+      "sha256": "68c110e614b2cccca0047c689858b52bd77e904a53c39b5b848dda84fad7a3be",
+      "bytes": 561603166,
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "dockerLoadVerified": true,
+      "copiedCanonical": true
+    },
+    "new_user_request": "5x写ROS2文档没有明显规划；重新复测并检查插件并发、写入顺序与调度，继续conversation-parallel任务。",
+    "all_workstreams": "仍全部in_progress，不用单项验收替代目标闭环"
   }
 }

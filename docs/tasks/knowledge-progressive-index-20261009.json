@@ -377,18 +377,16 @@
     ]
   },
   "adaptive_batch_checkpoint_20261014": {
-    "status": "in_progress",
+    "status": "pass",
     "request": "星图扫描加载的好慢，能不能一部分一部分的加载，扫一部分加载一部分，动态调整",
     "implementation": "350ms软批次、本地和远端游标让出；未完成远端350ms续扫缓存；前端350–1500ms自适应、完成与失败退避、增量布局和进度状态。",
     "tests": [
       "canonical focused Go race PASS 17.895s",
       "Node progressive cadence and coverage state PASS"
     ],
-    "pending": [
-      "runtime compatibility Go race",
-      "8097 browser acceptance",
-      "updated offline image bundle"
-    ],
-    "limits": "软预算只在IO之间检查，多来源聚合与代码分析可能继续增加请求耗时。"
+    "pending": [],
+    "limits": "仅当前本机知识模式；用户SSH大库、其他设备和代码模式延迟仍需继续验收。",
+    "runtime": "sha256:ab75ecc66e3dc9eff663fd757d3b72e869111ef6087efe6a6ee1af8b6bfb207d",
+    "browser": "Safari本机8097，224→1003→1560节点，工作区1557节点，pending最终0，保留工作区筛选"
   }
 }
