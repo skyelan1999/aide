@@ -296,6 +296,7 @@ stateDiagram-v2
 
 ## Linux 文件列表身份与权限
 
+
 2026-10-14 第一块：目录条目可包含可选的 `unix` 对象：`owner`、`group`、`permissions`，Linux 本地还返回十进制字符串 `uid`／`gid`。本地读取目录项实际 stat，不跟随被排除的符号链接；权限以 `-rw-r--r--`／`drwxr-xr-x` 形式展示，包括 setuid／setgid／sticky 的 s/S/t/T。每次目录响应按 UID/GID 复用名称查询；运行环境无法解析名称时使用数字。stat 失败省略该条元数据，不阻断文件列表。非 Linux 本地不合成该对象。
 
 SSH/SFTP 长列表若报告完整 POSIX 权限、所有者和组，则保留原字段（包括 ACL 标记后缀），不调用本机用户库替换远端身份，也不增加逐文件远程命令。兼容降级目录列表、非 Unix 格式和不报告属主的来源不显示猜测值。Docker bind mount 的身份与模式是容器看到的结果，不保证映射宿主机同名账号；权限位不包括完整 ACL、SELinux、capabilities 或最终可访问性判断。本次只展示，不修改权限、属主或组。
@@ -309,3 +310,13 @@ Directory entries may include optional `unix` metadata: owner, group and symboli
 The workspace renders a 9px monospace ownership/mode line beneath the original filename node. Both lines truncate within narrow panels; title and ARIA expose full metadata. Missing metadata keeps the original single-line entry, and inline rename only replaces the filename.
 
 Safari 原生组件验收使用实际文件行渲染器、重命名函数和主题 CSS：深色 320px、浅色 240px、长身份省略、数字 UID/GID、缺失元数据，以及重命名／Esc 取消均通过观察。复现：`python3 scripts/fixtures/render-file-unix-metadata.py`，浏览器打开输出的本地 HTML。这是合成数据组件验收，不连接模型或修改真实文件，不代表8097实例部署验收。
+
+## 会话输出布局 / Conversation output layout
+
+`web/conversation.css` 在共享主题之后加载，只约束 `#timeline` 内的回答和用户气泡。回答使用统一的宽度、边框、圆角、内边距和正文行距；流式稳定区与活动区以 `display:contents` 共享完成态的块排版，光标绝对定位，不额外占一行。超过流式 Markdown 预算的纯文本尾部单独恢复 `pre-wrap`，保留换行。
+
+代码、表格和媒体限定在回答框内；代码保持原始空白并独立横向滚动。复制代码按钮、错误警告、空回答和原有 Markdown 渲染链保留。仅统一会话阅读表面，不更改模型输出、消息持久化、会话选择或文件预览样式。Markdown 标记尚未闭合时仍可能改变排版；本次不承诺所有内容在逐字生成期间高度不变。
+
+`conversation.css` loads after shared themes and scopes its rules to the conversation timeline. Streaming partitions and persisted Markdown share one block layout; the cursor does not contribute a line. Code and tables stay within the answer frame. This normalizes presentation without changing message data, the renderer, or file previews; incomplete Markdown can still reflow when its syntax closes.
+
+复现组件验收：`python3 scripts/fixtures/render-conversation-output.py`，Safari 打开输出路径。夹具提取当前实际 Markdown、流式渲染、边界扫描和清洗函数，使用本地解析器、复制组件和完整主题样式，不连接8097或模型。内置几何检查比较同一内容的流式/完成态宽高及段落位置，检查框内溢出；包含长路径、列表、长代码、表格和引用。Safari 观察：840px 回答宽度的深色专业主题、364px 回答宽度的浅色专业主题及经典/舒适明暗状态均通过；逐段流式观察通过。这是组件验收，实际8097运行仍受既有容器退出故障阻塞。详见[任务账本](tasks/conversation-output-stability-20261014.json)。

@@ -1,0 +1,112 @@
+{
+  "id": "conversation-output-stability-20261014",
+  "request": "回话输出的框看起来不太稳定，你看着修的稍微统一化一点",
+  "baseline": "2e568a1eb9ceed7c80e79121efabaf5738dd4517",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "流式与完成态回答外框宽度、边框、内边距一致，光标不占额外行",
+    "代码和表格在回答框内横向滚动，长文本不撑宽会话",
+    "统一正文与用户气泡圆角、段落节奏；错误/空回答仍可辨识",
+    "Safari明暗/窄宽组件验收；文档与分块push同步，8097部署单独标记"
+  ],
+  "scope": [
+    "internal/server/web/conversation.css",
+    "internal/server/web/index.html",
+    "scripts/fixtures/render-conversation-output.py",
+    "docs/architecture.md",
+    "docs/tasks/conversation-output-stability-20261014.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Scoped conversation layout normalization; preserve message data and existing streaming rendering.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/macos.css"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Scoped conversation layout normalization; preserve message data and existing streaming rendering.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/macos.css"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Scoped conversation.css loaded after themes; original renderer and message data preserved.",
+      "evidence": [
+        "internal/server/web/conversation.css",
+        "docs/architecture.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Both quick profiles passed; Docker compose image build passed. Native Safari synthetic fixture: professional/classic/comfort theme states, live/final geometry equality at desktop and narrow container widths, long code and table containment, streaming observation. Actual8097 runtime remains unverified/blocked.",
+      "evidence": [
+        ".agent-state/conversation-output-stability/quick.log",
+        ".agent-state/conversation-output-stability/build.log",
+        "scripts/fixtures/render-conversation-output.py"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Bilingual layout contract, limits and offline Safari fixture reproduction documented.",
+      "evidence": [
+        "internal/server/web/conversation.css",
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Generated HTML stays in ignored .agent-state. Existing vendor deletions and local unrelated edits preserved. No new server, model call, data-volume changes or Docker restart.",
+      "evidence": []
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Task branch push pending. Existing 8097 container exit-event fault still blocks runtime replacement; engine restart affects other services and remains pending human confirmation.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "延续用户：做一部分，push一部分，测一部分；注意文档更新。仅push任务分支，不合并/发行。",
+  "rollback": "Revert task CSS and index link, then rebuild. Running container was not replaced; no verified rollback image/data backup is asserted.",
+  "handoff": "Runtime8097 remains blocked; CSS normalizes layout but cannot prevent all reflow from incomplete Markdown syntax or late media loads.",
+  "browser_observations": {
+    "professional_dark_desktop": {
+      "width": 840,
+      "live_height": 710.21875,
+      "final_height": 710.21875,
+      "same_block_positions": true,
+      "overflow": false
+    },
+    "narrow_palettes": [
+      "blue/light",
+      "green/light",
+      "green/dark",
+      "comfort/dark",
+      "comfort/light"
+    ],
+    "narrow_answer_width": 364,
+    "narrow_live_height": 1135.421875,
+    "narrow_final_height": 1135.421875,
+    "narrow_same_block_positions": true,
+    "narrow_overflow": false,
+    "scope": "Offline synthetic fixture using production functions; native Safari AX and screenshots. Not live8097 acceptance."
+  },
+  "quick_receipts": {
+    "source": {
+      "status": "pass",
+      "count": 55,
+      "fingerprint": "3306e35f881e6e9a766480ac95575715132588566c0337495ea9071cb4a1ada2",
+      "log": ".agent-state/verify-20261014T093816777490Z.log"
+    },
+    "local8097": {
+      "status": "pass",
+      "count": 46,
+      "fingerprint": "41bae69f280ef20fcfb72329e7ffcc40b30ebf95bf8808fc8f7fa18de362bdd0",
+      "log": ".agent-state/verify-20261014T093816911610Z.log"
+    }
+  },
+  "image": "sha256:702c6d92a4f5d0188e3756e96f350b8faf6df05ece4c2dce22de3d7759812e57"
+}
