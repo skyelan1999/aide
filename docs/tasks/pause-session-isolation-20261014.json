@@ -57,9 +57,12 @@
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Recording behavior, evidence boundaries and AIDE-only rollout.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Bilingual architecture and scoped rollout/rollback receipt record implemented behavior, tests and unconfirmed root cause.",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/reviews/2026-10-14-pause-session-isolation-rollout.md"
+      ]
     },
     "cleanup": {
       "status": "pass",
@@ -67,9 +70,11 @@
       "evidence": []
     },
     "release": {
-      "status": "in_progress",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "6067595 backend and 1fba0d5 frontend pushed. Local8097 updated with verified backup, retained previous image and health/auth API/static-byte smoke. Browser certificate/real-model acceptance still not run; no Release or main merge.",
+      "evidence": [
+        "docs/reviews/2026-10-14-pause-session-isolation-rollout.md"
+      ]
     }
   },
   "release_authorization": "Prior user authorized incremental tests/push/docs and local8097 AIDE-only update; no main merge or Release.",
