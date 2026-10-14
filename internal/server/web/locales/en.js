@@ -1,6 +1,8 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "无效语音发送模式": "Invalid voice dispatch mode",
+  "无效语音插队敏感度": "Invalid voice interruption sensitivity",
   "文件列表暂不可用：{0}": "File list temporarily unavailable: {0}",
   "重试加载文件": "Retry loading files",
   "任务已启动，刷新会话失败：{0}": "The task started, but the conversation could not refresh: {0}",

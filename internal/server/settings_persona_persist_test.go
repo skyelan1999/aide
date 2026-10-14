@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"os"
 	"testing"
 )
 
@@ -72,4 +73,58 @@ func TestSettingsPartialPutPreservesFields(t *testing.T) {
 	if dev3 != "" {
 		t.Fatalf("device should stay empty after another partial PUT, got %q", dev3)
 	}
+}
+
+func TestSettingsPartialPutPreservesVoiceDispatch(t *testing.T) {
+	a := testApp(t)
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{
+		"baseURL": "https://api.example.com", "model": "fixture",
+		"voiceDefaultSendMode": "insert", "voiceInsertSensitivity": "aggressive",
+	}), 200)
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{"reasoningEffort": "high"}), 200)
+	a.mu.Lock()
+	mode, sensitivity := a.settings.VoiceDefaultSendMode, a.settings.VoiceInsertSensitivity
+	a.mu.Unlock()
+	if mode != "insert" || sensitivity != "aggressive" {
+		t.Fatalf("independent reasoning save reset voice dispatch: mode=%q sensitivity=%q", mode, sensitivity)
+	}
+	check := func(app *App, wantMode, wantSensitivity string) {
+		t.Helper()
+		w := request(app, "GET", "/api/config", nil)
+		requireStatus(t, w, 200)
+		var out map[string]any
+		if err := json.Unmarshal(w.Body.Bytes(), &out); err != nil {
+			t.Fatal(err)
+		}
+		if out["voiceDefaultSendMode"] != wantMode || out["voiceInsertSensitivity"] != wantSensitivity {
+			t.Fatalf("voice dispatch readback differs: mode=%v sensitivity=%v", out["voiceDefaultSendMode"], out["voiceInsertSensitivity"])
+		}
+	}
+	check(a, "insert", "aggressive")
+	for _, patch := range []map[string]any{{"voiceDefaultSendMode": "queue"}, {"voiceInsertSensitivity": "normal"}} {
+		requireStatus(t, request(a, "PUT", "/api/settings", patch), 200)
+	}
+	check(a, "queue", "normal")
+	before, err := os.ReadFile(SettingsPath(a.dataPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, patch := range []map[string]any{{"voiceDefaultSendMode": "other"}, {"voiceInsertSensitivity": "other"}} {
+		requireStatus(t, request(a, "PUT", "/api/settings", patch), 400)
+		after, err := os.ReadFile(SettingsPath(a.dataPath))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if string(before) != string(after) {
+			t.Fatal("invalid voice dispatch preference mutated settings")
+		}
+	}
+	work, reference, data := a.workPath, a.reference.Name(), a.dataPath
+	a.Close()
+	restarted, err := New(work, reference, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restarted.Close()
+	check(restarted, "queue", "normal")
 }

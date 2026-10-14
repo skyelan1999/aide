@@ -8,19 +8,22 @@
     "Delete a numbered session then restart without settings PUT: new session number strictly increases; startup duplicate repair is durable across a second process.",
     "Current canonical reasoning independent save stays usable with no models, preserves all stored session bytes; restore intended preferences without rolling back known monotonic counters.",
     "Focused old-source negative and fixed-source race/vet, canonical start.command runtime/API/browser observations; incremental source/docs and matching offline image, scoped full gates recorded.",
-    "Upgrade preserves a higher legacy nextSessionSeq without adopting stale legacy preferences; keep all race tests and bounded nested test/vet deadlines."
+    "Upgrade preserves a higher legacy nextSessionSeq without adopting stale legacy preferences; keep all race tests and bounded nested test/vet deadlines.",
+    "Independent settings save retains custom voice send mode/sensitivity; GET exposes actual stored values, explicit valid changes persist/restart, invalid values reject without writes."
   ],
   "scope": [
     "internal/server/server.go",
     "internal/server/session_number_test.go",
     "docs",
     "docker-images",
-    "scripts/test_go_snapshot.py"
+    "scripts/test_go_snapshot.py",
+    "internal/server/settings_persona_persist_test.go",
+    "internal/server/web/locales/en.js"
   ],
   "stages": {
     "requirements": {
       "status": "pass",
-      "summary": "Native current-source reasoning independent auto/high/reload/auto PASS. Config API and stored session bytes restore; canonical settings differs only nextSessionSeq2->3 after owned fixture allocation. Static source points to legacy writer and isolated old-source test fails allocated2/persistedNext2.",
+      "summary": "Native current-source reasoning independent auto/high/reload/auto PASS. Config API and stored session bytes restore; canonical settings differs only nextSessionSeq2->3 after owned fixture allocation. Static source points to legacy writer and isolated old-source test fails allocated2/persistedNext2. Runtime cleanup found missing voice defaults materialized by normalization; separate old-source TestSettingsPartialPutPreservesVoiceDispatch FAIL1.933s proves custom insert/aggressive reset by reasoning-only PUT. Restore omitted-field preservation and config readback.",
       "evidence": [
         ".agent-state/bootstrap-file-proto-close/reasoning-ui-proof.json",
         ".agent-state/session-counter-canonical/negative.log"
@@ -37,7 +40,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Task branch fix/session-counter-canonical: canonical counter paths, upgrade sequence preservation, allocation/deleted-restart/durable repair and legacy preference isolation regressions; Go package budget18m retains race/count/outer bounds. Focused verification pending.",
+      "summary": "Task branch fix/session-counter-canonical: canonical counter paths, upgrade sequence preservation, allocation/deleted-restart/durable repair and legacy preference isolation regressions; Go package budget18m retains race/count/outer bounds. Focused verification pending. Voice dispatch enums now preserved on omitted patches, validated before mutation and exposed through config GET. No model/key draft submission added.",
       "evidence": [
         "internal/server/server.go",
         "internal/server/session_number_test.go",
@@ -46,12 +49,18 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old-source injected canonical persistence regression FAIL2.536s allocated2/persistedNext2 (negative.log). Current source scoped allocation/deleted-restart/durable startup repair/legacy sequence only migration, assistant/config/settings/reasoning tests race31.341s + vet PASS. Quick70 and route nested deadline tests5 PASS. Canonical runtime/new package/full72 pending; prior full72 terminal FAIL whole-package15m deadline, not input drift or per-test hang.",
+      "summary": "Old-source injected canonical persistence regression FAIL2.536s allocated2/persistedNext2 (negative.log). Current source scoped allocation/deleted-restart/durable startup repair/legacy sequence only migration, assistant/config/settings/reasoning tests race31.341s + vet PASS. Quick70 and route nested deadline tests5 PASS. Canonical runtime/new package/full72 pending; prior full72 terminal FAIL whole-package15m deadline, not input drift or per-test hang. Runtime source d6dbf55 exact entry: native3/delete/restart/native4, canonical next5, old root absent, original1 session bytes identical. Guard initially found two omitted voice defaults materialized on persistence; normalization-only semantic equivalence established, did not silently pass exact bytes. Separate voice custom reset negative1.933s; final combined canonical/settings race30.827s+vet and quick70 PASS. Final native custom voice/readback/runtime and image pending.",
       "evidence": [
         ".agent-state/session-counter-canonical/negative.log",
         ".agent-state/session-counter-canonical/scoped-race.log",
         ".agent-state/verify-20261014T234033990145Z.log",
-        ".agent-state/bootstrap-file-proto-close/full-frozen.json"
+        ".agent-state/bootstrap-file-proto-close/full-frozen.json",
+        ".agent-state/session-counter-canonical/voice-negative.log",
+        ".agent-state/session-counter-canonical/runtime-sequence-proof.json",
+        ".agent-state/session-counter-canonical/number-first.txt",
+        ".agent-state/session-counter-canonical/number-second.txt",
+        ".agent-state/session-counter-canonical/settings-final-race.log",
+        ".agent-state/session-counter-canonical/quick-final.log"
       ]
     },
     "documentation": {
@@ -64,10 +73,12 @@
     },
     "cleanup": {
       "status": "in_progress",
-      "summary": "No real user sessions modified. Original stored session bytes retained, reasoning restoredauto. Prior fixture caused sequence2->3, intentionally retained; all other4 protected hashes unchanged. New baseline records exact allowed delta before canonical rebuild. Inherited5 vendor deletions untouched.",
+      "summary": "No real user sessions modified. Original stored session bytes retained, reasoning restoredauto. Prior fixture caused sequence2->3, intentionally retained; all other4 protected hashes unchanged. New baseline records exact allowed delta before canonical rebuild. Inherited5 vendor deletions untouched. Number3/4 owned fixtures both removed; original1 session bytes unchanged. Monotonic counter3->5 retained, omitted voice defaults queue/conservative materialized (same effective defaults). Removed only own undelivered intermediate70402 archive+checksum after newer settings bug discovery; previously delivered archives untouched.",
       "evidence": [
         ".agent-state/bootstrap-file-proto-close/reasoning-ui-proof.json",
-        ".agent-state/session-counter-canonical/before.json"
+        ".agent-state/session-counter-canonical/before.json",
+        ".agent-state/session-counter-canonical/runtime-sequence-proof.json",
+        ".agent-state/session-counter-canonical/discarded-intermediate-package.json"
       ]
     },
     "release": {
