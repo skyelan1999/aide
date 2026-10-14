@@ -4869,6 +4869,17 @@
       "Race detector 仍因当前容器资源限制被系统终止，需要更大内存或更低开销环境重跑。",
       "本 checkpoint 不等于完整目标验收；向量检索按用户要求继续暂缓，真实用户 SSH 主机与其他产品端到端项状态沿用各自验收记录。"
     ],
-    "remaining": "当前可运行的快速回归、Go 非 race 全量与 vet 均通过；只保留 race detector 环境资源重跑及总任务中原有的端到端验收缺口。"
+    "remaining": "当前可运行的快速回归、Go 非 race 全量与 vet 均通过；只保留 race detector 环境资源重跑及总任务中原有的端到端验收缺口。",
+    "overall_progress": {
+      "estimated_complete_percent": 80,
+      "estimated_remaining_percent": 20,
+      "estimate_kind": "粗略工程进度估值；非验收通过率；承接账本中最近一次总体估值（2026-10-10），本轮代码回归主要修正测试 fixture，不构成大幅进度变化。",
+      "acceptance_state": "12/12 工作流仍标记 in_progress，表示每条仍有明确的端到端验收缺口，不表示核心功能未实现。",
+      "not_counted_as_agent_remaining": [
+        "Windows：用户表示已自行测试，免除 Agent 验收。",
+        "真实向量/embedding：用户要求暂缓，保留为延后项，不阻塞当前代码回归。"
+      ],
+      "remaining_summary": "当前候选系统 Safari 逐项验收、超长会话/上下文压缩长时验证、长文档与大库性能、真实用户 SSH 主机边界、race detector 在资源充足环境重跑，以及总任务发布/回滚门禁。"
+    }
   }
 }
