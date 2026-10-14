@@ -81,5 +81,11 @@
     "commit": "1ad0fd9",
     "branch": "fix/brand-hover-restore",
     "push": "pass"
+  },
+  "later_runtime_update_20261014": {
+    "deployment": "pass",
+    "image": "sha256:1657ad320d9648ac9b3e249d09a9f5ac7090e1dbffebb02ebe057041bc9f917e",
+    "scope": "AIDE-only8097 update; healthy/read-only API/static checks pass. Live browser interaction still requires manual certificate handling; no real model acceptance. Earlier blocked states are historical.",
+    "receipt": "docs/reviews/2026-10-14-local8097-parallel-rollout.md"
   }
 }

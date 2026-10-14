@@ -97,5 +97,11 @@
       "branch": "feat/linux-file-metadata"
     }
   ],
-  "image": "sha256:eca4e627e67f6bf9a1d9c62b23d89396c7fc94800233f11b08a50ab15e0877a1"
+  "image": "sha256:eca4e627e67f6bf9a1d9c62b23d89396c7fc94800233f11b08a50ab15e0877a1",
+  "later_runtime_update_20261014": {
+    "deployment": "pass",
+    "image": "sha256:1657ad320d9648ac9b3e249d09a9f5ac7090e1dbffebb02ebe057041bc9f917e",
+    "scope": "AIDE-only8097 update; healthy/read-only API/static checks pass. Live browser interaction still requires manual certificate handling; no real model acceptance. Earlier blocked states are historical.",
+    "receipt": "docs/reviews/2026-10-14-local8097-parallel-rollout.md"
+  }
 }

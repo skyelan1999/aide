@@ -78,18 +78,26 @@
       ]
     },
     "release": {
-      "status": "blocked",
-      "summary": "Backend22fb899 pushed; frontend push prepared. Old runtime container now observed exited137 and8097 unreachable; preparing isolated AIDE-only restart using existing mounts after verified backup, no Docker Desktop restart.",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Backend and frontend pushed; AIDE-only local8097 replacement succeeded after old container was observed exited. Verified data backup, healthy container, authenticated read-only APIs and source-identical served assets. Actual Safari stopped at certificate warning; user must handle it. No real model/speed acceptance, release tag or main merge.",
+      "evidence": [
+        "docs/reviews/2026-10-14-local8097-parallel-rollout.md",
+        ".agent-state/conversation-parallel/runtime-smoke.json"
+      ]
     }
   },
   "release_authorization": "Prior user authorization: incremental scoped tests, commits/push and documentation. No model paid acceptance, merge/release or engine restart.",
-  "rollback": "Revert task commits and rebuild. Missing parallelism defaults to1; old tasks remain readable. Running8097 not replaced.",
-  "handoff": "Actual model quality/speed and live8097 acceptance unverified. Worker analysis is tool-free; final executor performs actual tool actions. Pending Docker engine restart affects unrelated services and remains unapproved.",
+  "rollback": "Old container image is unavailable; verified data tar retained privately. Revert scoped task source and rebuild for application rollback; no automatic data restore.",
+  "handoff": "Local8097 deployed and healthy. User manual browser certificate handling is pending; live UI/model behavior and speed remain unverified. Tool-free workers feed normal main executor. No Docker Desktop restart needed/performed.",
   "milestones": [
     {
       "commit": "22fb899",
       "scope": "backend and docs",
+      "push": "pass"
+    },
+    {
+      "commit": "0ab2d34",
+      "scope": "frontend and scoped checks",
       "push": "pass"
     }
   ],
@@ -104,5 +112,6 @@
       "fingerprint": "64c3be52fa6d6744fd34c5681ade8d351ec84f3807f36c5d9a72e3b612f9c5a7",
       "log": ".agent-state/verify-20261014T095555683455Z.log"
     }
-  }
+  },
+  "image": "sha256:1657ad320d9648ac9b3e249d09a9f5ac7090e1dbffebb02ebe057041bc9f917e"
 }
