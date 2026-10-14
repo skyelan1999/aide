@@ -125,5 +125,11 @@
       "bytes": 6112155,
       "nodes": 1563
     }
-  ]
+  ],
+  "admission_order_followup": {
+    "task": "docs/tasks/plugin-resource-order-20261015.json",
+    "commit": "648fa40",
+    "summary": "Fixed writer hidden behind plugin FIFO and later cross-plugin read overtaking. Real Node negative then positive regression; resource/call race repeated2 PASS18.198s and vet; quick68 PASS. Complete footprint now enters shared queue first.",
+    "remaining": "Explicit tool DAG, approvals, node persistence/recovery remain pending."
+  }
 }

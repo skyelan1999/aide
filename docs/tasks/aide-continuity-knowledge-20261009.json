@@ -5659,5 +5659,56 @@
       "log": ".agent-state/verify-20261014T190551632882Z.log",
       "commands": 70
     }
+  },
+  "progress_checkpoint_20261015_followup116": {
+    "status": "pass",
+    "task": "docs/tasks/plugin-resource-order-20261015.json",
+    "sourceCommit": "648fa40",
+    "finding": "Real Node regression proves cross-plugin reader overtook a writer hidden behind same-plugin FIFO. Shared-resource admission now precedes FIFO; footprint plugin-state reservation prevents inversion.",
+    "verification": "Prior implementation fails actual handler ordering; fixed resource/call tests repeated2 under race18.198s plus vet and quick68 PASS. Current full70 is historical prior-source evidence, not this patch.",
+    "runtime": {
+      "runningImage": "sha256:ab31e79ca6c3258d82174fa32273b8f7a43ea9efac532c8af3d068c80aeba184",
+      "image": "sha256:ab31e79ca6c3258d82174fa32273b8f7a43ea9efac532c8af3d068c80aeba184",
+      "binarySHA256": "fa4f8f036627fec35867cfbeb593a954ff63cb5ade8d45fd5131d2b678896341",
+      "runningPlatformManifest": "sha256:9dd2b2739fb051b5c5771346bf7e3311fa10eb49d46782dcad90785e82cadbbe",
+      "sourceSHA256": "b6554a9bf06d160cccbabd53ead6c6ff9060939a2ecfb63866373d9e650124e8",
+      "buildCommit": "648fa4057b5f92102e2af669223b936dec7768ec-dirty",
+      "port": "9999",
+      "health": "ok",
+      "mountsPreserved": true,
+      "workspaceConfigBytesPreserved": true,
+      "protectedFilesUnchanged": 1,
+      "configuredPath": "/Users/skyelan/debug",
+      "runtimeWorkspace": "/workspace",
+      "startupWarningPresent": true,
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "remaining": "Complete5x explicit tool DAG, serialized approval preflight, persistent per-node execution/recovery still pending. Original12 workstreams remain active. No real model configured in current canonical runtime; vector tests deferred and Windows by user.",
+    "package": {
+      "image": "sha256:ab31e79ca6c3258d82174fa32273b8f7a43ea9efac532c8af3d068c80aeba184",
+      "sourceSHA256": "b6554a9bf06d160cccbabd53ead6c6ff9060939a2ecfb63866373d9e650124e8",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-ab31e79ca6c3-offline.tar.gz",
+      "bytes": 705581306,
+      "sha256": "b49180ef4ce23a6d0ca73d51d248e71d62907f90b9ac38d17be864abbe877683",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true
+    },
+    "delivery": "648fa40 pushed, canonical exact entry opened Safari9999, runtime/config/mounts checked; archive actually imported and copied to both local trees. Development snapshot only.",
+    "quick_receipt": {
+      "status": "pass",
+      "head": "648fa4057b5f92102e2af669223b936dec7768ec",
+      "fingerprint": "8491756d29885eb3375fce308694775801553b76d1ef824f5837a4e71b9d52c1",
+      "time": "20261014T192358168400Z",
+      "log": ".agent-state/verify-20261014T192358168400Z.log",
+      "commands": 68
+    }
   }
 }

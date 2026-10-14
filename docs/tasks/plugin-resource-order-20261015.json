@@ -44,7 +44,9 @@
       "evidence": [
         ".agent-state/plugin-resource-order/baseline-negative.log",
         ".agent-state/plugin-resource-order/focused-race-final.log",
-        ".agent-state/verify-20261014T192106274509Z.log"
+        ".agent-state/verify-20261014T192106274509Z.log",
+        ".agent-state/plugin-resource-order/runtime-check.log",
+        ".agent-state/plugin-resource-order/workbench.png"
       ]
     },
     "documentation": {
@@ -62,12 +64,58 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source ready for incremental push; canonical-entry rebuild and offline artifact pending. No formal release.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Incremental development snapshot648fa40 pushed on fix/plugin-resource-admission-order. Canonical start.command rebuilt locally without network and opened healthy Safari9999; config/mounts/protected-file hashes retained. Offline app+dependency archive hashes/tags/actual docker load/local peer copies verified. Scoped race/vet/quick, not a new full70 or formal main/tag release; no receiving-device or real-model acceptance.",
+      "evidence": [
+        ".agent-state/plugin-resource-order/start-entry.log",
+        ".agent-state/plugin-resource-order/package.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental source push/test authorization; no formal main/tag release.",
   "rollback": "Revert this isolated admission-order change; no data or schema migration.",
-  "handoff": ""
+  "handoff": "This ordering fix is implemented, focused-race/vet verified, pushed and locally deployed/packaged. Explicit5x tool DAG, approval preflight, per-node intent/results/recovery and actual ROS2 model acceptance remain open. Current canonical runtime has no model configured. Source-map host I/O and original twelve workstreams remain active. No inherited vendor deletions staged.",
+  "runtime": {
+    "runningImage": "sha256:ab31e79ca6c3258d82174fa32273b8f7a43ea9efac532c8af3d068c80aeba184",
+    "image": "sha256:ab31e79ca6c3258d82174fa32273b8f7a43ea9efac532c8af3d068c80aeba184",
+    "binarySHA256": "fa4f8f036627fec35867cfbeb593a954ff63cb5ade8d45fd5131d2b678896341",
+    "runningPlatformManifest": "sha256:9dd2b2739fb051b5c5771346bf7e3311fa10eb49d46782dcad90785e82cadbbe",
+    "sourceSHA256": "b6554a9bf06d160cccbabd53ead6c6ff9060939a2ecfb63866373d9e650124e8",
+    "buildCommit": "648fa4057b5f92102e2af669223b936dec7768ec-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 1,
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:ab31e79ca6c3258d82174fa32273b8f7a43ea9efac532c8af3d068c80aeba184",
+    "sourceSHA256": "b6554a9bf06d160cccbabd53ead6c6ff9060939a2ecfb63866373d9e650124e8",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-ab31e79ca6c3-offline.tar.gz",
+    "bytes": 705581306,
+    "sha256": "b49180ef4ce23a6d0ca73d51d248e71d62907f90b9ac38d17be864abbe877683",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  },
+  "implementation_commit": "648fa40",
+  "quick_receipt": {
+    "status": "pass",
+    "head": "648fa4057b5f92102e2af669223b936dec7768ec",
+    "fingerprint": "8491756d29885eb3375fce308694775801553b76d1ef824f5837a4e71b9d52c1",
+    "time": "20261014T192358168400Z",
+    "log": ".agent-state/verify-20261014T192358168400Z.log",
+    "commands": 68
+  }
 }
