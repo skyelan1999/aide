@@ -1,0 +1,83 @@
+{
+  "id": "ssh-git-history-20261014",
+  "request": "Ssh工作区也要支持显示git比较",
+  "baseline": "137c3e6c6922a8196f24d0ced5bd658abe689a3a",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "SSH工作区的文本文件历史窗口可读取远端提交、HEAD、index和worktree并比较",
+    "不使用本机缓存替代远端；缺Git、无仓库和连接异常有明确状态",
+    "连接代次/工作区切换不能串读；拒绝路径越界、符号链接、非法ref、二进制和超限",
+    "保持只读，测试index和磁盘不变；本地Git比较回归通过",
+    "分批推送、文档和8097更新，真实SSH验收与未验证项分开记录",
+    "同步更新Docker镜像并沿用离线包交付，另一端无需重拉依赖或编译；镜像仓库推送未配置需区分"
+  ],
+  "scope": [
+    "internal/server/file_git_history.go",
+    "internal/server/file_git_history_ssh.go 与测试",
+    "internal/server/ssh_live_test.go 的隔离验收挂接",
+    "scripts/test-ssh-workspace.sh 如需扩展Git fixture",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/tasks 与 docs/reviews",
+    "本机8097镜像构建、备份更新与现有export-bundle分发流程"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确要求SSH工作区Git比较。复用已有文件历史窗口，独立SFTP来源不扩展。",
+      "evidence": [
+        "file_git_history.go 当前SSH分支直接返回不可用"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Git读取抽象为本地或固定SSH命令；捕获目标/连接代次，每次命令前后复核并串行化master生命周期。远端发现工作区内最近仓库，固定只读Git参数。远端正文有界读取，补丁在本机临时快照生成。",
+      "evidence": [
+        "ssh_session.go lifecycle/ensureSSHSession",
+        "file_git_history.go command/side/compare/API"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "固定远端SSH脚本和参数逐项单引号转义；远端读取Git/索引/正文，本机隔离快照生成补丁。保留当前窗口、草稿目标及本地API行为。",
+      "evidence": [
+        "internal/server/file_git_history_ssh.go",
+        "internal/server/file_git_history.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "规范仓/运行仓Git race9.036s/9.873s，隔离真实SSH race2.377s通过；两仓quick通过。无用户服务器和正式浏览器SSH会话验收。离线包外层和内层校验/导入另记录。",
+      "evidence": [
+        "docs/reviews/2026-10-14-ssh-git-history-rollout.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Git中英接口边界、Docker分批镜像交付、备份、回滚及归档更新。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md",
+        "docker-images/README.md",
+        "docs/reviews/2026-10-14-ssh-git-history-rollout.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "两次SSH临时网络/容器已清理；保留原vendor删除和运行仓其他改动；镜像归档不入Git，旧SHA256SUMS条目保留。",
+      "evidence": [
+        "git status --short",
+        "docker ps"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "d8d21b5源码已推送；8097新镜像健康且偏好保留；ARM64离线包在两仓生成，外层/内层哈希和实际docker load身份验证通过。无registry配置，未registry push、main合并或正式Release。",
+      "evidence": [
+        "docs/reviews/2026-10-14-ssh-git-history-rollout.md",
+        "docker-images/SHA256SUMS"
+      ]
+    }
+  },
+  "release_authorization": "用户要求做一部分push一部分测一部分，保持文档；明确要求Docker更新镜像。沿用本机8097替换和现有离线包，不合并main或创建Release。",
+  "rollback": "aide:ssh-git-previous-20261014 回切仅AIDE镜像；卷备份位于运行仓.agent-state/ssh-git-history，用户数据不自动恢复覆盖。",
+  "handoff": "独立SFTP来源不支持。用户真实SSH服务器/正式浏览器验收及另一设备导入未验。ARM64离线包已生成；无镜像registry目标，源码push不代表归档已远传。"
+}

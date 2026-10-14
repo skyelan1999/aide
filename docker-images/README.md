@@ -74,3 +74,10 @@ bash scripts/aide.sh start-image
 这是当前构建快照的离线交付，不会自动打 Git 标签、推送或发布 GitHub Release。详见 [包内说明模板](../docker/OFFLINE.md)。
 
 大型归档保留在 aide/docker-images，上传到 Release 附件，不进入 Git 或 Docker 构建上下文（`docker-images/*.tar*`、`*.sha256` 已 gitignore）。镜像不包含宿主工作文件、辅助目录、API 密钥、访问令牌或会话数据。数据卷另行备份；加载镜像不会恢复数据卷。升级/回滚前阅读 [交接手册](../HANDOVER.md)。
+
+
+## 开发分批交付与镜像更新
+
+Git push 只同步源码，不包含本目录被忽略的大型镜像归档。开发分支每批功能通过验证后应同步构建镜像，再使用现有 `bash scripts/aide.sh export-bundle` 生成带镜像身份的离线启动包。另一端解压后运行包内 `start.command`（或 `bash scripts/aide.sh start-bundle`），首次只导入自带镜像，后续按镜像 ID 复用；不拉基础镜像、不装依赖、不编译源码。不同 CPU 架构需要对应镜像包，不可把 ARM64 包当作 AMD64 交付。
+
+保留原有 `SHA256SUMS` 条目，新增归档校验行；不要让一次开发导出丢掉历史包的校验记录。源码分支 push、镜像本机构建、离线包生成、外部镜像仓库 push 是独立状态；没有配置仓库和目标标签时不能宣称已经推送镜像。当前仓库未配置镜像 registry 发布工作流。稳定依赖层位于应用二进制层之前，普通代码变更应复用现有构建缓存；离线更新路径始终避免在接收端重新构建。

@@ -94,13 +94,13 @@ Completed code blocks prefer a supported declared language, then use bounded loc
 
 ## Git 文件历史比较 / Git file history comparison
 
-2026-10-14 第一部分：新增只读 `GET /api/file/git-history`。参数 `path` 为工作区相对路径；`workspaceId` 固定当前工作区，`source` 可指向已启用的本地目录／Skill 来源。`root` 省略或为 `workspace` 时使用主工作区。仅检测工作区／来源根目录内的最近 Git 仓库，支持嵌套仓库与 `.git` 文件形式的 linked worktree；不向根目录外的父仓库扩展。SSH／SFTP、其他网络来源和非工作区根不会拿本地缓存替代，返回 `available:false` 及原因。未安装 Git／无仓库也返回明确不可用状态。
+2026-10-14 第一部分：新增只读 `GET /api/file/git-history`。参数 `path` 为工作区相对路径；`workspaceId` 固定当前工作区，`source` 可指向已启用的本地目录／Skill 来源。`root` 省略或为 `workspace` 时使用主工作区。仅检测工作区／来源根目录内的最近 Git 仓库，支持嵌套仓库与 `.git` 文件形式的 linked worktree；不向根目录外的父仓库扩展。SSH 主工作区已扩展为读取远端 Git，详见下方补充；独立 SFTP、其他网络来源和非工作区根仍返回 `available:false` 及原因，均不使用本机缓存替代。未安装 Git／无仓库也返回明确不可用状态。
 
 不带 `from`／`to` 时返回 HEAD、当前路径最近 50 次提交的完整编号、短编号、作者时间、标题以及 `truncated`；不追踪重命名前路径。新仓库没有 HEAD 时仍返回 `available:true`、空 HEAD 和提交列表。比较参数接受 `HEAD`、完整 40／64 位小写提交编号、`index`（暂存区）、`worktree`（磁盘正文）。省略一侧默认 HEAD → worktree；无 HEAD 时应显式选择 index。响应含 `before/after` 的 `ref`、`exists`、正文 SHA-256、`content` 和标准 unified `diff`。缺失条目按不存在的空侧比较，可查看未跟踪文件新增和磁盘删除；不等同于 Git 状态提交／恢复。
 
-每侧正文限 2 MiB，仅接受 UTF-8 无 NUL 的普通文件；拒绝符号链接路径、子模块条目、冲突暂存区、非法路径与任意 revision 表达式。Git 请求有 12 秒总截止时间和有界输出，不经 shell；禁用 hooks、fsmonitor、external diff、textconv、继承的 Git 环境路由和网络协议。补丁使用临时正文快照生成并清除临时路径，不修改工作树、index、提交或远端。第一部分提交 `d1eb320` 交付接口；第二部分交付下述界面。后端验证不等同于浏览器或8097上线验收。
+每侧正文限 2 MiB，仅接受 UTF-8 无 NUL 的普通文件；拒绝符号链接路径、子模块条目、冲突暂存区、非法路径与任意 revision 表达式。Git 请求有 12 秒总截止时间和有界输出，本地执行不经 shell；禁用 hooks、fsmonitor、external diff、textconv、继承的 Git 环境路由和网络协议。补丁使用临时正文快照生成并清除临时路径，不修改工作树、index、提交或远端。第一部分提交 `d1eb320` 交付接口；第二部分交付下述界面。后端验证不等同于浏览器或8097上线验收。
 
-Stage 1 adds a read-only API scoped to the selected file within a local workspace/source repository, including nested and linked worktrees. It lists at most 50 commits affecting the current path and compares HEAD, full commit IDs, the index and disk content. It does not follow rename history. Missing sides support additions/deletions; untracked files are not silently omitted. Each text side is limited to 2 MiB, with bounded subprocess output and a 12-second deadline. Shells, hooks, external filters, fsmonitor, optional index writes and network protocols are disabled. Remote workspace caches are never presented as remote Git repositories. UI integration and running-instance acceptance are tracked separately.
+Stage 1 adds a read-only API scoped to the selected file within a local workspace/source repository, including nested and linked worktrees. It lists at most 50 commits affecting the current path and compares HEAD, full commit IDs, the index and disk content. It does not follow rename history. Missing sides support additions/deletions; untracked files are not silently omitted. Each text side is limited to 2 MiB, with bounded subprocess output and a 12-second deadline. For local reads no shell is used; hooks, external filters, fsmonitor, optional index writes and Git network protocols are disabled. Remote workspace caches are never presented as remote Git repositories. UI integration and running-instance acceptance are tracked separately.
 
 验证：`go test -mod=vendor ./internal/server -run '^TestFileGitHistory' -count=1 -timeout=3m` 与对应 `-race` 均通过（隔离 golang:1.26-bookworm、本机网络关闭）。覆盖提交间、HEAD／index／磁盘、未跟踪、删除、嵌套／linked worktree、字面路径、越界、符号链接、非法 ref、二进制／超限与 SSH 缓存隔离；检查 index／磁盘正文未变化、恶意 fsmonitor／external diff 未执行。日志见 `.agent-state/file-history-git-compare/backend*.log`。
 
@@ -127,3 +127,14 @@ The history entry remains available for Markdown snapshots and appears for other
 复现浏览器夹具：在隔离 Docker 中，仅将 `18618` 发布到 `127.0.0.1`，设置 `AIDE_GIT_HISTORY_BROWSER_FIXTURE=1` 并运行 `go test -mod=vendor ./internal/server -run '^TestFileGitHistoryBrowserFixture$' -v -count=1 -timeout=20m`。默认测试会跳过此人工夹具；`scripts/fixtures/git-history.html` 与 opt-in test 中的数据均为合成。浏览器夹具直接提供仅限测试的只读 handler，不能用于生产；生产路由仍通过原 Handler 的 Bearer/Origin 校验。
 
 验收后已停止隔离18618夹具；无需保留测试服务。新本机镜像 `aide:local` 已构建，镜像身份和运行验收缺口见 [任务账本](../tasks/file-history-git-compare-20261014.json)。
+
+
+### SSH 工作区 Git 比较（2026-10-14）
+
+SSH 主工作区复用同一历史窗口，HEAD、完整提交编号、暂存区和磁盘正文均来自远端实际仓库；编辑器正文仍是点击比较时的本地缓冲。远端支持工作区根内的嵌套仓库、未跟踪与删除文件、新仓库无 HEAD；不追踪重命名前路径，也不搜索根目录外的父仓库。独立 SFTP 来源尚未扩展。
+
+读取复用当前 SSH master，每条命令固定目标、工作区身份和连接代次，前后复核并与 master 关闭串行化。SSH 传输必须经远端 shell，使用固定脚本和单引号逐项转义参数；`env -i` 清理继承环境，禁用 Git 全局/系统配置、hooks、fsmonitor、lazy fetch、replace objects及网络协议。路径逐组件检查符号链接，远端只读 Git 对象和至多 2 MiB 正文，补丁在本机临时正文快照生成；不用本机缓存伪装远端 Git。依赖远端 POSIX shell、Git、`head -c` 及本机 Git；当前验证环境为 Linux/OpenSSH。
+
+远端缺 Git／无仓库返回明确不可用原因，连接失败、权限、超限、二进制、非法 ref、工作区切换返回错误。请求总截止时间12秒，包含 SSH 建连；只读检查不替代远端服务器权限或完整 OS 沙箱。远端路径检查和打开不是原子的，其他进程同时替换目录/符号链接仍存在竞态，不宣称具有本地 `os.Root` 等价的内核路径隔离。
+
+SSH workspaces use the same comparison dialog with commit, index and disk contents read from the actual remote repository. Drafts stay local. Fixed scripts and individually shell-quoted arguments run over the existing SSH master, scoped to the captured connection generation; results are checked before and after each command. Git configuration/external execution and network fetching are restricted. Comparison never writes the repository or index. Independent SFTP sources remain unsupported. Current live validation covers isolated Linux/OpenSSH fixtures, not a user's SSH host; remote path checks are not atomic against concurrent replacement.
