@@ -1,0 +1,81 @@
+{
+  "id": "staged-conclusions-20261014",
+  "request": "会话做分段式结论，不需要等全做完在覆盖",
+  "baseline": "25fa73b0cc9b2497e062f6d984a0d0a9df02a537",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "主会话每轮正文结束即保存并推送，下一轮和最终回答不覆盖已有段落",
+    "刷新、切换返回及暂停恢复保留已保存段落，旧会话事件不能写入当前会话",
+    "复制和朗读包含完整可见正文且最终段不重复，旧数据兼容",
+    "模拟提供方和浏览器组件验证；本机 8097 更新与文档记录实际边界"
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/staged_output.go 与相关测试",
+    "internal/server/context.go",
+    "internal/server/web/app.js、staged-output.js、conversation.css、index.html 与 locales/en.js",
+    "scripts/staged-output.test.cjs",
+    "docs/architecture.md、docs/tasks 与 docs/reviews",
+    "docs/agent/router.json",
+    "scripts/steer-user-bubbles.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求分段式结论；实现为主会话逐轮持久化并追加正文，不生成额外总结调用。",
+      "evidence": [
+        "当前 toolLoop 只返回最终 out，delta 换轮清空 live。"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Step 增加可选 outputSegments；保存成功后推送 segment SSE。旧 content 保留；前端合并已存段落并去掉最终重复正文。仅主聊天步骤，排除推理/并行内部分析/结构化提案。",
+      "evidence": [
+        "workflow.go Step/toolLoop；app.js openStream/renderSession/adoptSessionIfChanged"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "df2e2d9 后端先提交推送；前端追加展示、最终去重、旧快照合并、旧流保护与完整复制已实现。8097 旧版按局部适配保留来源/认证等差异。",
+      "evidence": [
+        "internal/server/staged_output.go",
+        "internal/server/web/staged-output.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "两仓quick、规范仓定向25.522s/扩展57.485s及运行仓扩展50.421s Go race通过；Safari真实生产组件追加/终态/快照恢复和明暗宽窄通过。正式浏览器与付费模型完整会话未验。",
+      "evidence": [
+        "docs/reviews/2026-10-14-staged-conclusions-rollout.md",
+        "scripts/staged-output.test.cjs",
+        "internal/server/staged_output_test.go"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构和中英说明更新；验收、兼容差异、沙箱反馈、备份回滚和未验证项写入收据。",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/reviews/2026-10-14-staged-conclusions-rollout.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅提交本次文件；保留5个继承vendor删除及运行仓所有其他改动；私有日志/备份留在.agent-state。",
+      "evidence": [
+        "git diff --check",
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "df2e2d9/fb5ce6a已推送，8097局部兼容构建已替换且API/静态指纹/偏好/健康验证通过；不属于main正式发版。",
+      "evidence": [
+        "docs/reviews/2026-10-14-staged-conclusions-rollout.md"
+      ]
+    }
+  },
+  "release_authorization": "用户此前授权做一部分、push一部分、测一部分；本机8097更新，保留卷与其他服务；不合并main或创建Release。",
+  "rollback": "新增可选JSON字段，无破坏性迁移。更新前保存旧镜像和一致数据卷快照；必要时仅回切AIDE镜像。",
+  "handoff": "普通聊天新轮次采用阶段输出；旧丢失正文无法补回。正式8097浏览器受证书警告阻挡，未绕过；真实模型未调用。沙箱回复12都有已记录，当前shell内核限制复查通过，但原始两类操作仍待具体复现。"
+}
