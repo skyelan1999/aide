@@ -514,7 +514,28 @@ func TestSSHLiveWorkspaceAndIndependentSource(t *testing.T) {
 		config(t, workspace, "workspace", docsAbs, "workspace", cacheAbs)
 		runSSHContinuity(t, a, workspace, docsAbs, cacheAbs, "live-server-b-"+run, remote)
 	})
+	t.Run("restricted_shell_reports_unsupported", func(t *testing.T) {
+		a.mu.Lock()
+		original := a.settings.SandboxMode
+		a.settings.SandboxMode = "workspace-write"
+		a.mu.Unlock()
+		defer func() { a.mu.Lock(); a.settings.SandboxMode = original; a.mu.Unlock() }()
+		marker := path.Join(workspace, "sandbox-must-not-execute")
+		w := request(a, "POST", "/api/command", map[string]any{"command": "touch " + shellQuote(marker)})
+		requireStatus(t, w, 403)
+		if !strings.Contains(w.Body.String(), "远程SSH尚未接入内核沙箱") {
+			t.Fatal(w.Body.String())
+		}
+		// Preparation/readback helpers talk only to the disposable fixture, not the
+		// product command endpoint, and independently verify that nothing ran.
+		remote(t, "test ! -e "+shellQuote(marker))
+	})
 	t.Run("command_exit_status", func(t *testing.T) {
+		a.mu.Lock()
+		original := a.settings.SandboxMode
+		a.settings.SandboxMode = "danger-full-access"
+		a.mu.Unlock()
+		defer func() { a.mu.Lock(); a.settings.SandboxMode = original; a.mu.Unlock() }()
 		for _, test := range []struct {
 			command string
 			want    int
