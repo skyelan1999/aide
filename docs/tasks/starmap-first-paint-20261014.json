@@ -1,0 +1,75 @@
+{
+  "id": "starmap-first-paint-20261014",
+  "request": "星图打开后空白或等待很久；复现8097首屏503，修复首屏和本地缓存，不把扫描吞吐当首屏验收",
+  "baseline": "975b4eaf1fc93a22b3a453aed6358309f628abcb",
+  "initial_status": "M internal/server/knowledge_updates.go\n M internal/server/web/starmap.js\n D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "本机8097刷新时优先显示身份匹配的已缓存星图；索引后台更新，不因扫描失败清空已知节点",
+    "缓存仅保存可序列化数据；实际约6MB图及循环渲染引用可保存，24Mi字符上限有效",
+    "IndexedDB读取失联250ms后继续请求网络；资料到达后先绘图再等待视图恢复",
+    "取消扫描后重试保留未访问的已发布资料；工作区身份变化立即隔离旧图",
+    "真实Safari刷新验收并交付更新镜像包，分别记录源码、测试、部署和导出状态"
+  ],
+  "scope": [
+    "knowledge_updates.go缓存继承和失败回退",
+    "starmap.js首屏顺序及starmap-cache.js序列化/超时",
+    "8097旧分支最小兼容移植、定向回归、文档和离线镜像包"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认打开后空白或等待很久；Safari实际刷新复现0节点与扫描未完成重试，目标为首屏可见性。",
+      "evidence": [
+        "Safari localhost:8097/starmap.html，刷新约1007ms截屏0节点",
+        "8097 identity接口404，updates约6.1MB"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "先校验workspace/epoch/policy，再读有时限的本地快照。保存协议字段排除渲染循环引用；数据到达先绘图。扫描取消重试继承未访问资料，成功后释放previous缓存。旧运行分支补齐身份接口和已发布图回退。",
+      "evidence": [
+        "internal/server/web/starmap-cache.js",
+        "internal/server/knowledge_updates.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "修复取消重试缓存继承、循环渲染图缓存序列化/大小估计、250ms读取超时和先绘图后恢复；8097分支补齐身份接口和发布回退。",
+      "evidence": [
+        "internal/server/knowledge_updates.go",
+        "internal/server/web/starmap-cache.js",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "定向race源码21.537秒、8097兼容分支13.592秒均PASS；缓存与workspace scene VM PASS。真实Safari更新后验收待执行，不复用旧full结论。",
+      "evidence": [
+        ".agent-state/starmap-first-paint-tests.log",
+        "aideMacMini/aide/.agent-state/starmap-first-paint/tests.log",
+        "node scripts/starmap-cache.test.cjs",
+        "node scripts/starmap-workspace-scene.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构说明和首屏任务记录已更新。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户要求分段实现、push、测试，更新Docker离线镜像包供另一端直接导入；本任务沿用RC2兼容镜像，不执行main/tag/正式Release。",
+  "rollback": "部署前停止8097并备份data卷；保留当前7f0281ea4ceb镜像，挂载和设置逐项比对。",
+  "handoff": "源码与兼容分支定向测试通过；接下来更新8097并实测首屏，随后导出离线镜像包。资源DAG和总目标12工作流继续保留待完成。"
+}

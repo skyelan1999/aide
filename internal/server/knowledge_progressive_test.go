@@ -463,3 +463,68 @@ func TestKnowledgeProgressiveRejectsReplacedAncestor(t *testing.T) {
 		}
 	}
 }
+
+func TestKnowledgeCancelledRefreshRetainsUnvisitedMaterial(t *testing.T) {
+	a := testApp(t)
+	for i := 0; i < 40; i++ {
+		if err := os.WriteFile(filepath.Join(a.workPath, fmt.Sprintf("retained-%03d.txt", i)), []byte("published evidence"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	policy := defaultKnowledgeIndexPolicy()
+	policy.FileBudget = 50
+	policy.DirectoryBudget = 20
+	if err := os.MkdirAll(filepath.Dir(a.knowledgeIndexPolicyPath()), 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := atomicJSON(a.knowledgeIndexPolicyPath(), policy); err != nil {
+		t.Fatal(err)
+	}
+	complete := false
+	for i := 0; i < 30; i++ {
+		view, release, err := a.knowledgeAcquireView(context.Background(), false, true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, s := range view.graph.Sources {
+			if s.Region == "workspace" && s.Coverage != nil && s.Coverage.Pending == 0 {
+				complete = true
+			}
+		}
+		release()
+		if complete {
+			break
+		}
+	}
+	if !complete {
+		t.Fatal("fixture never completed initial published cycle")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	// Enter the locked helper deterministically; the public gate may choose a
+	// ready channel even when ctx is cancelled and is not relevant to this case.
+	state := &a.knowledgeUpdates
+	state.gate <- struct{}{}
+	_, err := a.knowledgeAcquireViewLocked(ctx, false, true)
+	<-state.gate
+	if err == nil {
+		t.Fatal("cancelled refresh succeeded")
+	}
+	view, release, err := a.knowledgeAcquireView(context.Background(), false, true)
+	if err != nil {
+		t.Fatalf("one cancelled attempt lost unvisited published text and forced a full rescan: %v", err)
+	}
+	defer release()
+	files := 0
+	for _, n := range view.graph.Nodes {
+		if strings.HasPrefix(n.Name, "retained-") {
+			files++
+			if n.Text != "published evidence" {
+				t.Fatal("published material lost")
+			}
+		}
+	}
+	if files != 40 {
+		t.Fatalf("published files disappeared: %d", files)
+	}
+}

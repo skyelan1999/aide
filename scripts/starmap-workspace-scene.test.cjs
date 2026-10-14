@@ -12,6 +12,15 @@ function context(saved,workspace='B'){
  c=context({version:1,query:'B saved',codeView:false});await vm.runInContext('load()',c);assert.equal(c.restored.query,'B saved');
  c=context(null,'A');await vm.runInContext('load()',c);assert.equal(c.restored,undefined,'same workspace must retain live edits');
  c=context(null);c.api=async()=>{c.recoveryInput++;return {workspace:'B'}};c.window.AideContinuity.readTab=async()=>{c.recoveryInput++;return null};await vm.runInContext('load()',c);assert.equal(c.restored,undefined,'late recovery must not overwrite user input');
+ c=context(null);let finishRecovery;c.window.AideContinuity.readTab=()=>new Promise(resolve=>{finishRecovery=resolve});
+ const pending=vm.runInContext('load()',c);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(c.graph.workspace,'B','received graph must paint before continuity recovery finishes');
+ assert.equal(c.graph.revision,'R');finishRecovery(null);await pending;
+ c=context(null);let finishNetwork;c.window.AideStarmapCache.read=async()=>({workspace:'B',revision:'cached',graph:{nodes:[{id:'cached-node'}],edges:[],sources:[]}});
+ c.api=async path=>path.startsWith('/identity')?{workspace:'B',epoch:'1',policy:'p'}:new Promise(resolve=>{finishNetwork=resolve});
+ const syncing=vm.runInContext('load()',c);await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(c.graph.nodes[0].id,'cached-node','cached nodes must paint while the scan request is pending');
+ finishNetwork({workspace:'B',revision:'R',nodes:[],edges:[],sources:[],warnings:[],reset:true});await syncing;
  console.log('Star map workspace defaults, saved scene, same scope and input race PASS (source VM)');
 })().catch(e=>{console.error(e);process.exitCode=1});
 

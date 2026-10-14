@@ -918,7 +918,7 @@ function applyLiveUpdate(update,initial=false){
 }
 async function load(){
  clearEvidencePath('正在同步星图，请同步完成后查询。',true);
- if(loading||locked)return;stopLive(true);clearTimeout(cacheWriteTimer);cacheIdentity=null;loading=true;stellarLogbook.connecting();const generation=++graphGeneration,mode=codeView;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
+ if(loading||locked)return;stopLive(true);clearTimeout(cacheWriteTimer);cacheIdentity=null;loading=true;stellarLogbook.connecting();let generation=++graphGeneration;const mode=codeView;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
  try{
   const identity=await api('/identity?code='+(mode?'1':'0'),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
   cacheIdentity={workspace:identity.workspace,epoch:identity.epoch,policy:identity.policy};const identityChanged=!!graph.workspace&&graph.workspace!==identity.workspace;
@@ -927,6 +927,9 @@ async function load(){
   if(cached?.graph&&cached.revision){applyLiveUpdate({...cached.graph,workspace:cached.workspace,revision:cached.revision,reset:true,removedNodes:[],removedEdges:[]},true);liveCursor=cached.revision;say('已载入本地星图 · 正在同步最新变化…');}
   const update=await api('/updates?code='+(mode?'1':'0')+(liveCursor?'&cursor='+encodeURIComponent(liveCursor):''),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
   if(update.workspace!==identity.workspace){cacheIdentity=null;graph={nodes:[],edges:[],sources:[],warnings:[]};liveCursor='';return;}
+  if(cached?.revision===liveCursor){applyLiveUpdate(update);}
+  else{beginGraphTransition();applyLiveUpdate(update,true);}
+  generation=graphGeneration; // Own delta application must not invalidate this load.
   const input=recoveryInput;
   if(recoveryScopeLoaded!==update.workspace){
    recoveryLoading=true;
@@ -938,8 +941,6 @@ async function load(){
    if(changedWorkspace){aiAbort?.abort();aiAbort=null;$('answer').textContent='';$('question').value='';$('usage').textContent='';$('ai-found').replaceChildren();resetDocumentBatch();}
    if(pendingRecoveredView?.version===1&&!params.has('code')&&typeof pendingRecoveredView.codeView==='boolean'&&pendingRecoveredView.codeView!==codeView){codeView=pendingRecoveredView.codeView;graphGeneration++;return;}
   }
-  if(cached?.revision===liveCursor){applyLiveUpdate(update);}
-  else{beginGraphTransition();applyLiveUpdate(update,true);}
   if(pendingRecoveredView){restoreSkyView(pendingRecoveredView);pendingRecoveredView=null;}liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;scheduleGraphCache();if(update.stale)say('正在建立最新索引 · 当前显示上次完整星图');
  }catch(e){if(!locked&&e.name!=='AbortError'){liveFailures++;stellarLogbook.interrupted();say(e.message);}}
  finally{loading=false;syncCodeView();redraw();if(!locked&&generation!==graphGeneration)load();else scheduleLive(progressiveDelay(graph));}

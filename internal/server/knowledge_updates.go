@@ -123,7 +123,16 @@ type knowledgeScanCache struct {
 func newKnowledgeScanCache(previous *knowledgeScanCache) *knowledgeScanCache {
 	c := &knowledgeScanCache{files: make(map[string]knowledgeFileMemo), discovery: make(map[string]*knowledgeDiscoveryView)}
 	if previous != nil {
-		c.previous, c.code = previous.files, previous.code
+		c.previous = make(map[string]knowledgeFileMemo, len(previous.previous)+len(previous.files))
+		// Failed/cancelled attempts may only have materialized a prefix. Keep
+		// the last published material for still-unvisited paths on retry.
+		for k, v := range previous.previous {
+			c.previous[k] = v
+		}
+		for k, v := range previous.files {
+			c.previous[k] = v
+		}
+		c.code = previous.code
 		for k, v := range previous.discovery {
 			c.discovery[k] = v.clone()
 		}
@@ -469,6 +478,7 @@ func (a *App) knowledgeAcquireViewLocked(ctx context.Context, includeCode, force
 				view.history = append([]knowledgeRevision(nil), view.history[len(view.history)-knowledgeRevisionLimit:]...)
 			}
 		}
+		cache.previous = nil // Successful graphs materialized every published path.
 		view.graph, view.revision, view.cache, view.failed = g, revision.id, cache, false
 	}
 	if view.failed || view.revision == "" {
