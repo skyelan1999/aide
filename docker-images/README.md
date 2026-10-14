@@ -116,3 +116,6 @@ The canonical `aide/start.command` rebuilt the current local candidate using `ai
 
 
 Latest plugin admission-order development snapshot: `aide-0.1.17.0-RC2-linux-arm64-ab31e79ca6c3-offline.tar.gz` (linux/arm64, 705581306 bytes), SHA256 `b49180ef4ce23a6d0ca73d51d248e71d62907f90b9ac38d17be864abbe877683`. Source648fa40 fixes cross-plugin readers overtaking writers hidden behind plugin FIFO. Resource/call race twice and vet PASS; quick68 PASS. Canonical start.command opened healthy Safari9999. Both application/dependency tags, actual docker load and both local copies verified. The prior full70 is historical evidence; no new full/formal release/real-model or receiving-device acceptance claimed.
+
+
+Plugin dependency-plan development candidate: `aide-0.1.17.0-RC2-linux-arm64-2b4c7e19c77a-offline.tar.gz` (linux/arm64, 705608875 bytes), SHA256 `2aeebb09e34b6d0115512eff7ef9db6a97bc1e7efc61cef5ea57d805ec67ee93`. Source d8f7059 adds explicit plugin DAG dispatch, selected concurrency, serialized confirmations, durable node receipts and conservative recovery. Scoped race/vet and native model-protocol fixture pass; final full gate pending. Canonical start.command opens Safari9999. App/dependency tags, archive hashes and actual local import/copies verified. Dedicated graph UI, uncertain-effect reconciliation and real model/receiving-device acceptance remain open.

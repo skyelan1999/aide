@@ -48,13 +48,19 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Initial core targeted race14.381s/vet PASS; expanded candidate resource/graph/tool-loop/outcome race30.607s/vet PASS, including1x/5x actual handler barriers and5x with hook effective1x. Privacy-only outcome race7.753s/vet PASS. Latest owner-refresh/privacy targeted race7.999s and vet PASS. First model-loop test used stale decoded session fixture, panicked under fixture lock and timed out180s during cleanup; corrected to current server session, then passes. Quick68 ran on previous candidate; final full/runtime/UI acceptance pending.",
+      "summary": "Initial core targeted race14.381s/vet PASS; expanded candidate resource/graph/tool-loop/outcome race30.607s/vet PASS, including1x/5x actual handler barriers and5x with hook effective1x. Privacy-only outcome race7.753s/vet PASS. Latest owner-refresh/privacy targeted race7.999s and vet PASS. First model-loop test used stale decoded session fixture, panicked under fixture lock and timed out180s during cleanup; corrected to current server session, then passes. Quick68 ran on previous candidate; full/backend/runtime acceptance recorded below; dedicated graph UI and real-model adoption pending. Canonical start.command rebuilt with local dependencies/network none and opened real Safari9999. Runtime image/source/config/mounts checked; actual offline bundle load and both local copies PASS. Full70 PASS against frozen source/package metadata (server535.693s race and vet). Current Safari reasoning default auto to high saved, reload high retained, restored auto, complete config API response equal before/after; no models added or calls made.",
       "evidence": [
         ".agent-state/plugin-dependency-plan/focused-race.log",
         ".agent-state/plugin-dependency-plan/integration-race.log",
         ".agent-state/plugin-dependency-plan/final-candidate-race.log",
         ".agent-state/plugin-dependency-plan/outcome-privacy-race.log",
-        ".agent-state/plugin-dependency-plan/final-snapshot-race.log"
+        ".agent-state/plugin-dependency-plan/final-snapshot-race.log",
+        ".agent-state/plugin-dependency-plan/start-entry.log",
+        ".agent-state/plugin-dependency-plan/runtime-check.log",
+        ".agent-state/plugin-dependency-plan/reasoning-ui-proof.json",
+        ".agent-state/plugin-dependency-plan/reasoning-high-reloaded.png",
+        ".agent-state/plugin-dependency-plan/package.json",
+        ".agent-state/verify-20261014T195002409163Z.log"
       ]
     },
     "documentation": {
@@ -73,11 +79,82 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "",
-      "evidence": []
+      "summary": "Incremental source d8f7059 pushed and local candidate2b4c7e19c77a deployed through exact entry; archive hashes/tags/docker load/local copies PASS, current full70 PASS. Full feature acceptance still requires graph UI, manual uncertainty reconciliation and real-model adoption. No formal main/tag release or receiving-device import claim. Export README recorded pending gate before completion; this receipt records final backend gate.",
+      "evidence": [
+        ".agent-state/plugin-dependency-plan/package.json",
+        ".agent-state/verify-20261014T195002409163Z.log"
+      ]
     }
   },
   "release_authorization": "Existing incremental source/test/push/local image authorization; no main/tag release.",
   "rollback": "Additive tool/task fields; retain previous image and original session data. Revert tool advertisement and dispatcher without deleting persisted plans.",
-  "handoff": "Core implemented with scoped race/vet evidence. Latest owner/privacy scoped test PASS; final full, canonical-entry deployment and offline image update pending. Dedicated graph UI, manual reconciliation of uncertain effects and real model adoption/ROS2 document quality not accepted. Original twelve workstreams and host source I/O remain open. Windows by user; true vectors deferred."
+  "handoff": "Source d8f7059 pushed and canonical9999 deployed image2b4c7e19c77a; offline app+dependency bundle verified/imported/copied. Scoped source tests PASS, full70 PASS. Current canonical Safari default-reasoning independent save/reload/restore PASS, original API config restored. Dedicated graph UI, manual reconciliation of uncertain effects and real model adoption/ROS2 quality remain unverified. Original12 workstreams, host source I/O and other-device import remain open.",
+  "runtime": {
+    "runningImage": "sha256:2b4c7e19c77af7dfcb4c730eedd90e5dd170b27554d85d2c9a2a82bd89d9e88e",
+    "image": "sha256:2b4c7e19c77af7dfcb4c730eedd90e5dd170b27554d85d2c9a2a82bd89d9e88e",
+    "binarySHA256": "1494e06fa04480f54a9a9cffeff8242d1b0e03031bb6b5327860a37ace8e8171",
+    "runningPlatformManifest": "sha256:bffcde02c29e3c34cf881be242865cf926b934cb313a19214ce1b5bd50a55eb9",
+    "sourceSHA256": "c361d4557d42b61b058bb7a5f1577bfb74cb164f86751e9546504024366a0d69",
+    "buildCommit": "d8f70593e69786e2665eeb3244f0fed46b58cf45-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 1,
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:2b4c7e19c77af7dfcb4c730eedd90e5dd170b27554d85d2c9a2a82bd89d9e88e",
+    "sourceSHA256": "c361d4557d42b61b058bb7a5f1577bfb74cb164f86751e9546504024366a0d69",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-2b4c7e19c77a-offline.tar.gz",
+    "bytes": 705608875,
+    "sha256": "2aeebb09e34b6d0115512eff7ef9db6a97bc1e7efc61cef5ea57d805ec67ee93",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  },
+  "implementation_commit": "d8f7059",
+  "reasoning_current_browser": {
+    "entry": "aide/start.command",
+    "port": 9999,
+    "browser": "Safari",
+    "before": "auto",
+    "saved": "high",
+    "reloadRetained": true,
+    "restored": "auto",
+    "configExactlyRestored": true,
+    "modelCount": 0,
+    "providerCount": 1
+  },
+  "full_receipt": {
+    "status": "pass",
+    "head": "d8f70593e69786e2665eeb3244f0fed46b58cf45",
+    "fingerprint": "6937bbe87a75a630fb1c466f03a9c7ac9e417615f2c682da63fd1763f5c168d3",
+    "time": "20261014T195002409163Z",
+    "log": ".agent-state/verify-20261014T195002409163Z.log",
+    "commands": 70
+  },
+  "backend_gate": {
+    "status": "pass",
+    "summary": "Full70 PASS on d8f7059: server race535.693s, tts1.583s, vet, quick68 and18 runtime asset reads/actual DOCX roundtrip. Scope includes native model-protocol fixture and actual Node graph1x/5x/hook serialization, not real provider/browser graph UI.",
+    "evidence": [
+      ".agent-state/verify-20261014T195002409163Z.log"
+    ]
+  },
+  "remaining": [
+    "Dedicated graph progress display and browser multi-node approval workflow",
+    "Manual, evidence-attributed reconciliation of uncertain effects; no automatic replay",
+    "Real model chooses graph for ROS2 writing; document/source/quality and sustained performance acceptance",
+    "Original twelve workstreams and star-map host I/O; Windows by user, true vectors deferred, receiving-device import pending"
+  ]
 }

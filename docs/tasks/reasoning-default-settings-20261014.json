@@ -78,5 +78,26 @@
   },
   "release_authorization": "用户既有分块push/测试/文档授权，明确沿用镜像包导入；8097限定AIDE替换。主目标Release授权仍以12条工作流及门禁闭环为条件。",
   "rollback": "aide:reasoning-previous-20261014，只替换AIDE；卷备份及哈希见收据，禁止自动覆盖最新用户数据。",
-  "handoff": "推理优先项真实Safari已通过并恢复auto；页面随后自动锁屏，需用户手动解锁后继续其他UI验收。Windows用户负责、真实向量暂缓。主目标仍active，最终full正在运行。"
+  "handoff": "推理优先项真实Safari已通过并恢复auto；页面随后自动锁屏，需用户手动解锁后继续其他UI验收。Windows用户负责、真实向量暂缓。主目标仍active，最终full正在运行。",
+  "canonical_browser_20261015": {
+    "proof": {
+      "entry": "aide/start.command",
+      "port": 9999,
+      "browser": "Safari",
+      "before": "auto",
+      "saved": "high",
+      "reloadRetained": true,
+      "restored": "auto",
+      "configExactlyRestored": true,
+      "modelCount": 0,
+      "providerCount": 1
+    },
+    "sourceCommit": "d8f7059",
+    "evidence": [
+      ".agent-state/plugin-dependency-plan/reasoning-high-saved.png",
+      ".agent-state/plugin-dependency-plan/reasoning-high-reloaded.png",
+      ".agent-state/plugin-dependency-plan/reasoning-auto-restored.png"
+    ],
+    "boundary": "Independent default-reasoning setting with0 configured models; no provider/model/credential edits or paid calls. This does not prove per-session real-model output behavior."
+  }
 }
