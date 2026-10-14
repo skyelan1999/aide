@@ -41,21 +41,23 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "Backend implemented and both focused race profiles passed; UI implemented and native Safari component observed. Final quick/build pending.",
+      "status": "pass",
+      "summary": "Backend and frontend complete; 1x-5x selector, safe progress rendering and explicit polling revision fields wired.",
       "evidence": [
-        "internal/server/conversation_parallel.go",
-        "internal/server/workflow.go",
-        "internal/server/web/parallel-chat.js"
+        ".agent-state/conversation-parallel/backend.log",
+        ".agent-state/conversation-parallel/quick.log",
+        ".agent-state/conversation-parallel/build.log",
+        "scripts/fixtures/render-parallel-chat.py"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Both isolated Linux focused race suites passed, including real 5-request overlap, cancel, invalid plans, budgets, accounting, partial-failure end-to-end merge and retry. Safari synthetic component selection/stages and narrow light layout observed. No real model calls or8097 deployment.",
+      "status": "pass",
+      "summary": "Both focused Go race suites and both quick profiles pass. Safari actual selector/progress module observed in dark/wide and light/390px container; single mocked final answer, mode gate and restore passed. Local image build passed. Live8097 update now preparing after old container observed exited.",
       "evidence": [
         ".agent-state/conversation-parallel/backend.log",
-        "scripts/fixtures/render-parallel-chat.py",
-        "scripts/parallel-chat.test.cjs"
+        ".agent-state/conversation-parallel/quick.log",
+        ".agent-state/conversation-parallel/build.log",
+        "scripts/fixtures/render-parallel-chat.py"
       ]
     },
     "documentation": {
@@ -67,16 +69,40 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Preserved inherited vendor deletions and unrelated local edits; generated fixture in ignored .agent-state, no extra runtime server or data mutation.",
-      "evidence": []
+      "summary": "Exact task files reviewed; inherited vendor deletions and unrelated local changes preserved; no extra server or real model call.",
+      "evidence": [
+        ".agent-state/conversation-parallel/backend.log",
+        ".agent-state/conversation-parallel/quick.log",
+        ".agent-state/conversation-parallel/build.log",
+        "scripts/fixtures/render-parallel-chat.py"
+      ]
     },
     "release": {
       "status": "blocked",
-      "summary": "Incremental task-branch push prepared; actual8097 deployment remains blocked by container exit-event fault. No engine restart/merge/version release.",
+      "summary": "Backend22fb899 pushed; frontend push prepared. Old runtime container now observed exited137 and8097 unreachable; preparing isolated AIDE-only restart using existing mounts after verified backup, no Docker Desktop restart.",
       "evidence": []
     }
   },
   "release_authorization": "Prior user authorization: incremental scoped tests, commits/push and documentation. No model paid acceptance, merge/release or engine restart.",
   "rollback": "Revert task commits and rebuild. Missing parallelism defaults to1; old tasks remain readable. Running8097 not replaced.",
-  "handoff": "Actual model quality/speed and live8097 acceptance unverified. Worker analysis is tool-free; final executor performs actual tool actions. Pending Docker engine restart affects unrelated services and remains unapproved."
+  "handoff": "Actual model quality/speed and live8097 acceptance unverified. Worker analysis is tool-free; final executor performs actual tool actions. Pending Docker engine restart affects unrelated services and remains unapproved.",
+  "milestones": [
+    {
+      "commit": "22fb899",
+      "scope": "backend and docs",
+      "push": "pass"
+    }
+  ],
+  "quick_receipts": {
+    "source": {
+      "count": 57,
+      "fingerprint": "5ecd04d74e31626a7803c6da8da0cec451f92665f8fbb5b3f68f32d42eadd4f0",
+      "log": ".agent-state/verify-20261014T095555135366Z.log"
+    },
+    "local8097": {
+      "count": 48,
+      "fingerprint": "64c3be52fa6d6744fd34c5681ade8d351ec84f3807f36c5d9a72e3b612f9c5a7",
+      "log": ".agent-state/verify-20261014T095555683455Z.log"
+    }
+  }
 }

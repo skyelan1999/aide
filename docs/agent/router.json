@@ -424,6 +424,15 @@
       [
         "node",
         "scripts/file-unix-metadata.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/parallel-chat.js"
+      ],
+      [
+        "node",
+        "scripts/parallel-chat.test.cjs"
       ]
     ],
     "full": [

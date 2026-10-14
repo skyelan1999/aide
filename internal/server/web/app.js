@@ -364,11 +364,13 @@ function setMode(mode) {
       setTimeout(() => { if (state.mode !== 'workflow') phaseBar.classList.add('hidden'); }, 400);
     }
   }
+  window.AideParallelChat?.sync();
   updateAutoModeUI();
   if (typeof updatePhaseHint === 'function') updatePhaseHint();
   if (typeof scheduleContextPreview === 'function') scheduleContextPreview();
 }
 function syncAssistantModeControls(isAssistantSess) {
+  window.AideParallelChat?.sync();
   if (isAssistantSess) {
     if (state.mode !== 'chat') setMode('chat');
     state.workflowPhase = '';
@@ -780,7 +782,7 @@ function sessionRevision(s) {
   // state. Keep those small control fields in the polling snapshot so a stale
   // card is not kept merely because the last answer text did not move.
   const runStates = runs.map(run => [
-    run?.id, run?.mode, run?.model, run?.status, run?.applied, run?.error,
+    run?.parallelism, JSON.stringify([run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])]), run?.id, run?.mode, run?.model, run?.status, run?.applied, run?.error,
     run?.pauseRequested, run?.canResume, run?.approvalState, run?.autoReview,
     sessionTextRevision(JSON.stringify(run?.approvalReviews || [])),
     sessionTextRevision(typeof run?.pendingQuestion === 'string' ? run.pendingQuestion : JSON.stringify(run?.pendingQuestion || null)),
@@ -805,6 +807,7 @@ function getSessionWindow(id) { return api('/sessions/' + id + '?limit=' + state
 // then keep an unchanged card (and its parsed Markdown/details state) intact.
 function sessionRunRenderSignature(run, view = {}) {
   const rendered = [
+    run.parallelism, [run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])],
     run.mode, run.model, run.prompt, run.status, run.created, run.error, run.applied,
     run.strategy, run.profile, run.autoReview, run.approvalState, run.approvalReviews,
     run.pendingQuestion, run.canResume, run.pauseRequested, run.attachments, run.steers,
@@ -1991,6 +1994,8 @@ function renderSession() {
     if (run.status === 'running' && state.runPhase[run.id]) renderRunStatusInto(box, run.id);
     if (run.attachments?.length) box.append(el('p', 'muted', t("已附加：") + run.attachments.map(a => a.root + '/' + a.path).join('、')));
     renderClarification(run, box);
+    const parallelPanel = window.AideParallelChat?.render(run, {el, t, open: openDetails});
+    if (parallelPanel) box.append(parallelPanel);
     if (!run.steps.length) box.append(el('p', 'muted', t("正在准备模型请求…")));
     run.steps.forEach((step, index) => {
       if (run.mode === 'chat') {
@@ -3257,7 +3262,7 @@ $('task-form').onsubmit = action(async event => {
     let queued = state.queueMode;
     if (voice.queuedOverride != null) { queued = voice.queuedOverride; voice.queuedOverride = null; }
     stopContextCompactionWatch = startContextCompactionWatch(target.id);
-    const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, autoReview, mode: state.mode, attachments: submittedDraft.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
+    const submitted = await api(`/sessions/${target.id}/runs`, { method: 'POST', body: JSON.stringify({ prompt, autoReview, parallelism: window.AideParallelChat?.value(state.mode, target.kind === 'assistant') || 1, mode: state.mode, attachments: submittedDraft.attachments, strategy, profile: strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default'), queued, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
     await stopContextCompactionWatch();
     stopContextCompactionWatch = null;
     await clearSubmittedDraft();
@@ -9283,7 +9288,10 @@ document.addEventListener('keydown', event => {
   }
 });
 
+window.AideParallelChat?.install({select: $('chat-parallelism'), mode: () => state.mode, assistant: () => state.session?.kind === 'assistant', t});
+
 window.addEventListener('aide:language', () => {
+  window.AideParallelChat?.sync();
   clearStableMarkdownCache();
   const languageFocused = document.activeElement?.hasAttribute('data-language-button');
   if (settingsPanel.schema) renderSettingsSheet();

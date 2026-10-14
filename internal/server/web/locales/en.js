@@ -2477,3 +2477,5 @@ Object.assign(window.aideEnglish, {
 });
 
 Object.assign(window.aideEnglish, { '所有者：{0} · 所属组：{1} · 权限：{2}': 'Owner: {0} · Group: {1} · Permissions: {2}' });
+
+Object.assign(window.aideEnglish, {"并行": "Parallel", "会话并行分析上限": "Chat parallel analysis limit", "并行分析仅用于普通对话": "Parallel analysis is available for ordinary chats", "并行分析上限；规划后汇总为一个回答，更多请求会增加 Token 用量，不保证等比例提速": "Maximum parallel analyses; planned results merge into one answer. More requests use more tokens and do not guarantee proportional speed.", "并行 {0}x · {1}": "Parallel {0}x · {1}", "规划拆分": "Planning subtasks", "并行分析": "Parallel analysis", "汇总回答": "Merging answer", "已汇总": "Merged", "主任务处理": "Main task handling", "已中断": "Interrupted", "分析中": "Analyzing", "已完成": "Completed", "未完成": "Incomplete", "已取消": "Cancelled", "等待": "Waiting"});
