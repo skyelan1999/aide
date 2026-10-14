@@ -153,7 +153,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 current: fix/starmap-file-read-isolation, sourcec4f9295, canonical aide/start.command healthy Safari9999 imagea187ed7d3c6a. Actual unchanged Harness reference body EIO identified; two samples confirmed dataless and hydrated by normal host reads. Per-file failures now publish explicit metadata-only nodes and continue peers. All Knowledge/local-root race73.040s+vet and mounted four-batch probe PASS. Safari reference grew2 to3875 nodes, unavailable detail and readable README observed. Mounts/workspace config and5 auth/config hashes preserved; archive app/dependency tags/hashes/import/two local copies verified. See followup120; final quick69 PASS; branch push pending. Full body coverage, host syscall waits, duplicate context alias scan cost and original12 streams remain open. Prior reasoning save and draft fix receipts retained; live plugin approvals/manual reconciliation pending. Windows by user, true vectors deferred, receiving-device import unobserved.",
+  "handoff": "2026-10-15 current: fix/starmap-file-read-isolation, sourcec4f9295, canonical aide/start.command healthy Safari9999 imagea187ed7d3c6a. Actual unchanged Harness reference body EIO identified; two samples confirmed dataless and hydrated by normal host reads. Per-file failures now publish explicit metadata-only nodes and continue peers. All Knowledge/local-root race73.040s+vet and mounted four-batch probe PASS. Safari reference grew2 to3875 nodes, unavailable detail and readable README observed. Mounts/workspace config and5 auth/config hashes preserved; archive app/dependency tags/hashes/import/two local copies verified. See followup120; final quick69 PASS; branch push9cc0509 PASS. Full body coverage, host syscall waits, duplicate context alias scan cost and original12 streams remain open. Prior reasoning save and draft fix receipts retained; live plugin approvals/manual reconciliation pending. Windows by user, true vectors deferred, receiving-device import unobserved.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -5923,7 +5923,7 @@
     }
   },
   "progress_checkpoint_20261015_followup120": {
-    "status": "in_progress",
+    "status": "pass",
     "task": "docs/tasks/starmap-file-read-isolation-20261015.json",
     "sourceCommit": "c4f9295",
     "changes": "Continue progressive materialization past file body failures with explicit metadata-only readState, readErrors and source partial message; invalidate stale body/code and retry repair. Client cache/deltas/detail preserve failure state. EIO guidance includes conditional cloud placeholder download hint.",
@@ -5964,7 +5964,7 @@
       "hostLaunchersMatch": true,
       "copiedBothTrees": true
     },
-    "remaining": "Final quick69 PASS; incremental branch push pending. Incomplete cloud body coverage, host syscall stalls and duplicate aliases; narrow/other themes NOT_RUN. Original12 streams, live plugin approvals/reconciliation and receiving-device import remain.",
+    "remaining": "Final quick69 PASS; incremental branch push9cc0509 PASS. Incomplete cloud body coverage, host syscall stalls and duplicate aliases; narrow/other themes NOT_RUN. Original12 streams, live plugin approvals/reconciliation and receiving-device import remain.",
     "quick_receipt": {
       "status": "pass",
       "head": "c4f92957c989f2a68581369046c2fc7de7248a07",
@@ -5972,6 +5972,12 @@
       "time": "20261014T205524100234Z",
       "log": ".agent-state/verify-20261014T205524100234Z.log",
       "commands": 69
+    },
+    "source_push": {
+      "branch": "fix/starmap-file-read-isolation",
+      "pushedCommit": "9cc0509",
+      "status": "pass",
+      "scope": "Incremental source/docs branch push only; no main/tag/formal release or image registry push."
     }
   }
 }

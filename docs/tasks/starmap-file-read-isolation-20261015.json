@@ -83,8 +83,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Canonical local image deployed and healthy. App/dependency archive outer/inner hashes, tags, exact launchers, running platform manifest, actual docker load and copies in both local trees verified. Final quick69 PASS; incremental branch push pending; no formal release/receiving-device claim.",
+      "status": "pass",
+      "summary": "Canonical local image deployed and healthy. App/dependency archive outer/inner hashes, tags, exact launchers, running platform manifest, actual docker load and copies in both local trees verified. Final quick69 PASS; incremental branch push9cc0509 PASS; no formal release/receiving-device claim.",
       "evidence": [
         ".agent-state/starmap-io/package.json",
         ".agent-state/starmap-io/runtime.json"
@@ -93,7 +93,7 @@
   },
   "release_authorization": "Existing incremental source push/test/local image/offline package authorization; no main/tag release.",
   "rollback": "Revert targeted isolation and additive metadata labels; retain source registry, stored user data and earlier image archive.",
-  "handoff": "Sourcec4f9295 deployed, all Knowledge/local-root race73.040s+vet and actual mounted probe PASS; canonical Safari progressive/body-state acceptance done at desktop/current-dark. Offline bundle imported/verified/copied. Final quick69 PASS; branch push pending. Original goal remains active.",
+  "handoff": "Sourcec4f9295 deployed, all Knowledge/local-root race73.040s+vet and actual mounted probe PASS; canonical Safari progressive/body-state acceptance done at desktop/current-dark. Offline bundle imported/verified/copied. Final quick69 PASS; branch push9cc0509 PASS. Original goal remains active.",
   "diagnosis": {
     "canonicalPort": 9999,
     "source": "Current unchanged /context mount is Harness; no new aide source in saved registry. No retarget or disable performed.",
@@ -174,5 +174,11 @@
     "time": "20261014T205524100234Z",
     "log": ".agent-state/verify-20261014T205524100234Z.log",
     "commands": 69
+  },
+  "source_push": {
+    "branch": "fix/starmap-file-read-isolation",
+    "pushedCommit": "9cc0509",
+    "status": "pass",
+    "scope": "Incremental source/docs branch push only; no main/tag/formal release or image registry push."
   }
 }
