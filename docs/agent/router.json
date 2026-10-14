@@ -482,6 +482,10 @@
       [
         "node",
         "scripts/plugin-plans.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/bootstrap-file-recovery.test.cjs"
       ]
     ],
     "full": [

@@ -1,0 +1,100 @@
+{
+  "id": "bootstrap-file-proto-close-20261015",
+  "request": "修复完整门禁发现的监听器并发关闭 panic，以及不可用引用目录导致工作台误回登录框",
+  "baseline": "ec7251bf18d7cdd2f9bf8d44672239bfec83f42e",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js\n?? docs/tasks/markdown-history-storage-ui-20261015.json",
+  "acceptance": [
+    "Concurrent Close is idempotent and releases blocked Accept; existing TLS classification retained.",
+    "Unavailable recovered source stays selected and displays retry in file panel; session recovery/global events continue, 401 still requires login, stale failures cannot erase a new location.",
+    "Focused race/vet and UI tests, canonical start.command Safari acceptance; incremental docs/push/offline image."
+  ],
+  "scope": [
+    "internal/server/server.go",
+    "internal/server/tls_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "scripts/bootstrap-file-recovery.test.cjs",
+    "docs",
+    "docker-images",
+    "scripts/workspace-scene-transition.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Actual full-gate panic and canonical Safari bootstrap failure captured.",
+      "evidence": [
+        ".agent-state/verify-20261014T225553611954Z.log",
+        ".agent-state/history-storage-ui/bootstrap-failure.txt"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "sync.Once for listener lifetime; local file-list error boundary with scoped stale-response guard, preserving source and auth behavior.",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "protoListener sync.Once close; file-panel scoped error state/retry and initialization boundary used at startup and workspace scene restoration. Source identity retained, valid auth not discarded.",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused TLS/concurrent Close race1.181s+vet PASS. New bootstrap tests and workspace scene tests PASS. First quick failed legacy VM missing helper; VM now executes actual new helper with original assertions intact; retry quick70 PASS. Canonical start.command native Safari unavailable source switch and reload retain workbench with file error/retry; valid source lists files. Five protected config/auth hashes and mounts/workspace config preserved. Full72 pending.",
+      "evidence": [
+        ".agent-state/bootstrap-file-proto-close/scoped-race.log",
+        ".agent-state/verify-20261014T231651406681Z.log",
+        ".agent-state/verify-20261014T231846897989Z.log",
+        ".agent-state/bootstrap-file-proto-close/ui-reloaded.txt",
+        ".agent-state/bootstrap-file-proto-close/runtime.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Error recovery, concurrent-close regression and scoped history storage acceptance documented; original failure remains recorded.",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/plugins/markdown-history.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Only owned history sources removed after semantic checks and exact registry restore; archived fixture files before removal. Private history evidence retained. Inherited five vendor deletions untouched.",
+      "evidence": [
+        ".agent-state/history-storage-ui/cleanup.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Incremental development source, canonical local candidate and offline package only; fresh full72 gate pending. No formal main/tag release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental testing/build/source push/offline package authorization; no formal main/tag release.",
+  "rollback": "Previous local image preserves volume; returns to prior source bootstrap failure and concurrent-close risk. No user workspace or credentials changed.",
+  "handoff": "Focused tests and native UI PASS; quick70 PASS after VM helper update. Full72 and updated complete offline package pending.",
+  "runtime": {
+    "runningImage": "sha256:59b7b7c46da19212dc834467085c4788c6a736010e1a961049e7c1996a7be31d",
+    "image": "sha256:59b7b7c46da19212dc834467085c4788c6a736010e1a961049e7c1996a7be31d",
+    "binarySHA256": "f2b10e28638796eee07cca311cef2362d3fedc32625cf6b0c250ff1759ba9ae0",
+    "runningPlatformManifest": "sha256:ff6c355c335d3ed6467e9d8f4a1883a3db6ae0fab6ed5f09495f5a59b509ee42",
+    "sourceSHA256": "0759c1e5cc41c0a9c91a7b5cc0b96a031e72f449407239af08e28c16f03105a7",
+    "buildCommit": "ec7251bf18d7cdd2f9bf8d44672239bfec83f42e-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 5,
+    "historicalProtectedFilesUnchanged": 1,
+    "snapshotTiming": "Five config/auth hashes captured before recovery-continuation build; baseline image e5998ca4b4ef, historical mounts/workspace config/token checked separately",
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  }
+}

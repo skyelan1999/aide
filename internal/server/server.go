@@ -2919,9 +2919,10 @@ func httpsRedirectHandler() http.Handler {
 
 // protoListener 协议分流后某一协议的 net.Listener：Accept 从 channel 取已分流连接。
 type protoListener struct {
-	addr  net.Addr
-	conns chan net.Conn
-	done  chan struct{}
+	addr      net.Addr
+	conns     chan net.Conn
+	done      chan struct{}
+	closeOnce sync.Once
 }
 
 func (l *protoListener) Accept() (net.Conn, error) {
@@ -2934,11 +2935,7 @@ func (l *protoListener) Accept() (net.Conn, error) {
 }
 
 func (l *protoListener) Close() error {
-	select {
-	case <-l.done:
-	default:
-		close(l.done)
-	}
+	l.closeOnce.Do(func() { close(l.done) })
 	return nil
 }
 

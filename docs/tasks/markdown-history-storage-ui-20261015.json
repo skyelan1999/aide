@@ -1,0 +1,82 @@
+{
+  "id": "markdown-history-storage-ui-20261015",
+  "request": "继续历史闭环产品验收：独立测试来源的备份导入、保留与对象管理，不触碰原文档",
+  "baseline": "ec7251bf18d7cdd2f9bf8d44672239bfec83f42e",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Canonical start.command actual Safari history backup/ZIP import preview and merge for two isolated local sources with identical document-relative path; no original documents touched.",
+    "Imported history preserves current document/asset bytes and current capture tail; unchanged observation does not add duplicate, later asset update is observed.",
+    "Native retention and GC previews show concrete scope and can cancel without changes; irreversible UI actions require applicable action-time confirmation before applying.",
+    "Restore exact original sources configuration after ownership/semantic checks, preserve original sources/credentials and fixture evidence; record scoped results and remaining broad goal gates."
+  ],
+  "scope": [
+    "docs/tasks/markdown-history-storage-ui-20261015.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/plugins/markdown-history.md",
+    "docs/reviews",
+    "runtime-owned history/source fixtures under .agent-state"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Original history workstream still lacks storage management native UI evidence. Use isolated sources and own data; full code inputs frozen while Go gate runs.",
+      "evidence": [
+        "docs/plugins/markdown-history.md",
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Two short-lived independent local source identities and same page.md path; export historical A into B, compare byte hashes and baseline counts. Capture sources.json bytes before/after; preserve all original source specs and secrets. GC scope is whole source identity, so fixtures isolate it; destructive confirmations remain separate from previews.",
+      "evidence": [
+        "internal/server/markdown_manage.go",
+        "internal/server/web/markdown-history-manager.js",
+        "internal/server/sources.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "No product code changes; acceptance of existing implementation only. No branch switch or input mutation during active frozen full gate.",
+      "evidence": [
+        "internal/server/markdown_manage.go",
+        "internal/server/web/markdown-history-manager.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Canonical start.command actual Safari standalone file page: import preview2, explicit merge to3; host document/asset hashes unchanged, repeated observation stays3, owned external asset change yields4. Native retention keepLatest1 preview removes3/retains1 then canceled; GC preview0 objects/0MiB then canceled. API/source ZIP4 objects hashes verified. Irreversible retention/GC apply NOT_RUN; no global history completion claim.",
+      "evidence": [
+        ".agent-state/history-storage-ui/imported.txt",
+        ".agent-state/history-storage-ui/import-receipt.json",
+        ".agent-state/history-storage-ui/asset-followup.json",
+        ".agent-state/history-storage-ui/retention-preview.txt",
+        ".agent-state/history-storage-ui/gc-preview.txt"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Current canonical scoped acceptance appended, historical NOT_RUN evidence remains time-scoped.",
+      "evidence": [
+        "docs/plugins/markdown-history.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Original source specs/API unchanged; PUT serializes generated context builtin absent from original stored registry. Excluding only that verified generated empty builtin yields original semantic object; restored exact original sources bytes using current-hash guard. All five protected config/auth hashes, mounts/workspace config PASS. Owned physical fixture files archived privately and removed, isolated history evidence retained.",
+      "evidence": [
+        ".agent-state/history-storage-ui/cleanup.json",
+        ".agent-state/bootstrap-file-proto-close/runtime.json"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Existing implementation acceptance only; no version/tag/release.",
+      "evidence": [
+        "docs/plugins/markdown-history.md"
+      ]
+    }
+  },
+  "release_authorization": "Existing incremental testing/docs push authorization. No product code or image change planned; formal release still gated.",
+  "rollback": "Remove only owned source registrations and files after ownership checks; restore original sources.json bytes only if live registry still matches owned test state and preserves original entries. No user history or shared source GC.",
+  "handoff": "Scoped import and preview/cancel acceptance PASS; irreversible retention/GC apply and real SSH history migration remain unverified. Fixture source configuration and protected hashes restored."
+}

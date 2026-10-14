@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sync"
 	"testing"
 	"time"
 )
@@ -232,6 +233,49 @@ func TestHSTSNotOnLocalhost(t *testing.T) {
 	rHTTP := httptest.NewRequest(http.MethodGet, "http://aide.example.com/healthz", nil)
 	if v := strictTransportSecurity(rHTTP); v != "" {
 		t.Fatalf("明文 HTTP 不应有 HSTS，got %q", v)
+	}
+}
+
+func TestProtoListenerConcurrentClose(t *testing.T) {
+	for attempt := 0; attempt < 256; attempt++ {
+		l := &protoListener{conns: make(chan net.Conn), done: make(chan struct{})}
+		accepted := make(chan error, 1)
+		go func() { _, err := l.Accept(); accepted <- err }()
+		start := make(chan struct{})
+		failures := make(chan any, 32)
+		var workers sync.WaitGroup
+		for i := 0; i < 32; i++ {
+			workers.Add(1)
+			go func() {
+				defer workers.Done()
+				defer func() {
+					if p := recover(); p != nil {
+						failures <- p
+					}
+				}()
+				<-start
+				if err := l.Close(); err != nil {
+					failures <- err
+				}
+			}()
+		}
+		close(start)
+		workers.Wait()
+		close(failures)
+		for failure := range failures {
+			t.Fatalf("concurrent Close: %v", failure)
+		}
+		select {
+		case err := <-accepted:
+			if err != net.ErrClosed {
+				t.Fatalf("Accept after Close: %v", err)
+			}
+		case <-time.After(time.Second):
+			t.Fatal("Close did not unblock Accept")
+		}
+		if err := l.Close(); err != nil {
+			t.Fatal(err)
+		}
 	}
 }
 

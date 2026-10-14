@@ -1,6 +1,8 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "文件列表暂不可用：{0}": "File list temporarily unavailable: {0}",
+  "重试加载文件": "Retry loading files",
   "任务已启动，刷新会话失败：{0}": "The task started, but the conversation could not refresh: {0}",
   "核查后继续任务": "Continue task after review",
   "不会自动重放旧调用或补跑旧依赖。后续新操作仍须遵循当前审批、沙箱与任务 Hook。": "Previous calls and dependencies are not resumed automatically. New operations remain subject to current approvals, sandbox policy and task hooks.",

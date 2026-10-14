@@ -2319,17 +2319,56 @@ function renderAttachments() {
     chip.append(b); $('attachment-chips').append(chip);
   });
 }
+function fileListRequestKey() {
+  return JSON.stringify([recoveryScope(), fileLocationKey(), state.dir, state.fileSearch, state.fileSearchScope, state.fileSearchMatch]);
+}
+function updateFilePathLabel() {
+  const label = state.root === 'context' && state.source ? 'sources/' + (state.sources.find(x => x.id === state.source)?.name || state.source) : state.root;
+  $('file-path').textContent = '/' + label + (state.dir === '.' ? '' : '/' + state.dir);
+  $('file-path').title = $('file-path').textContent;
+}
+function renderFileListFailure(error) {
+  state.fileListError = true;
+  state.fileEntries = [];
+  state.fileSelection.clear();
+  state.fileSelectionAnchor = -1;
+  updateFilePathLabel();
+  $('new-file').disabled = true;
+  const notice = el('div', 'empty');
+  notice.setAttribute('role', 'status');
+  notice.append(el('p', '', t('文件列表暂不可用：{0}', error.message || t('请求失败'))));
+  const retry = el('button', '', t('重试加载文件'));
+  retry.onclick = action(() => loadFiles());
+  notice.append(retry);
+  $('files').replaceChildren(notice);
+}
+async function loadInitialFilePanel() {
+  const key = fileListRequestKey();
+  try { await loadFiles(); }
+  catch (error) {
+    if (error.status === 401) throw error;
+    if (key !== fileListRequestKey() || state.dir === '.') return;
+    state.dir = '.';
+    try { await loadFiles(); }
+    catch (retryError) { if (retryError.status === 401) throw retryError; }
+  }
+}
 async function loadFiles(auto) {
-  const scope=recoveryScope(),locationKey=fileLocationKey()+':'+state.dir,searchKey=state.fileSearch;
+  const requestKey = fileListRequestKey();
   if (auto) { const _r = document.querySelector('#files input.file-rename'); if (_r && document.activeElement === _r) return; } // 自动刷新且正在重命名 → 跳过，不打断
+  try {
   const query = state.root === 'context' && state.source ? '/files?source=' + encodeURIComponent(state.source) + '&path=' : '/files?root=' + state.root + '&path=';
   const search = state.fileSearch.trim();
   const searchParams = search ? '&search=' + encodeURIComponent(search) + '&scope=' + encodeURIComponent(state.fileSearchScope) + '&match=' + encodeURIComponent(state.fileSearchMatch) : '';
   // 直接 fetch 以便读取搜索截断响应头（api() 只返回 body）。
   const filesResp = await fetch('/api' + query + encodeURIComponent(state.dir) + searchParams, { headers: { 'Authorization': 'Bearer ' + state.token } });
   const files = await filesResp.json();
-  if(scope!==recoveryScope()||locationKey!==fileLocationKey()+':'+state.dir||searchKey!==state.fileSearch)return;
-  if (!filesResp.ok) { if (filesResp.status === 401 && !$('login-dialog').open) $('login-dialog').showModal(); throw new Error(t(files && files.error) || t("请求失败")); }
+  if (requestKey !== fileListRequestKey()) return;
+  if (!filesResp.ok) {
+    const error = new Error(t(files && files.error) || t('请求失败'));
+    error.status = filesResp.status;
+    throw error;
+  }
   state.fileSearchTruncated = filesResp.headers.get('X-Search-Truncated') === '1';
   state.fileSearchDirLimit = filesResp.headers.get('X-Search-Dir-Limit') || '200';
   state.fileSearchResultLimit = filesResp.headers.get('X-Search-Result-Limit') || '500';
@@ -2338,16 +2377,23 @@ async function loadFiles(auto) {
   const visible = new Set(files.map(f => f.path));
   for (const p of state.fileSelection) if (!visible.has(p)) state.fileSelection.delete(p);
   state.fileDirs[fileLocationKey()] = state.dir;
-  const label = state.root === 'context' && state.source ? 'sources/' + (state.sources.find(x => x.id === state.source)?.name || state.source) : state.root;
-  $('file-path').textContent = '/' + label + (state.dir === '.' ? '' : '/' + state.dir); $('file-path').title = $('file-path').textContent;
+  updateFilePathLabel();
   const writable = currentFileTarget().writable;
   $('new-file').disabled = !writable;
-  const unchanged = state.fileEntries.length === files.length &&
+  const unchanged = !state.fileListError && state.fileEntries.length === files.length &&
     state.fileEntries.every((entry, index) => JSON.stringify(entry) === JSON.stringify(files[index]));
   state.fileEntries = files;
+  state.fileListError = false;
   if (unchanged) syncFileSelection();
   else renderFileEntries();
   rememberFileLocation();scheduleChatRecovery();
+  } catch (error) {
+    if (requestKey !== fileListRequestKey()) return;
+    if (error.status === 401) {
+      if (!$('login-dialog').open) $('login-dialog').showModal();
+    } else renderFileListFailure(error);
+    throw error;
+  }
 }
 function fileLocationKey() { return state.root === 'context' ? 'context:' + (state.source || '') : 'workspace'; }
 function rememberFileLocation() { state.fileDirs[fileLocationKey()] = state.dir; }
@@ -6660,7 +6706,7 @@ async function restoreWorkspaceScene() {
       }
     }
     document.querySelectorAll('[data-root]').forEach(b=>b.classList.toggle('active',b.dataset.root===state.root));renderSourceChips();
-    await loadFiles().catch(async()=>{state.dir='.';await loadFiles();});
+    await loadInitialFilePanel();
     if(scene?.session){try{await selectSession(scene.session);}catch(e){toast(t('上次会话暂不可用'));}}
     else {
       const draft=await window.AideContinuity?.readTab(scope,'chat','').catch(()=>null);
@@ -9364,7 +9410,7 @@ async function initialize() {
       document.querySelectorAll('[data-root]').forEach(b=>b.classList.toggle('active',b.dataset.root===state.root));renderSourceChips();
     }
   }
-  await loadFiles().catch(async()=>{state.dir='.';await loadFiles();});
+  await loadInitialFilePanel();
   if(recovered?.session){try{await selectSession(recovered.session);}catch(e){toast(t('上次会话暂不可用'));}}
   else if(window.AideContinuity){const draft=await AideContinuity.readTab(recoveryScope(),'chat','').catch(()=>null);if(draft){$('prompt').value=draft.text||'';state.attachments=draft.attachments||[];renderAttachments();restoreChatSelection(draft);}}
   recoveryReady=true;
