@@ -69,12 +69,17 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "Task branch push prepared; actual8097 replacement still blocked by existing Docker container exit fault. No engine restart, merge or release.",
+      "summary": "Source commit 1ad0fd9 pushed; actual8097 deployment remains blocked. Motion manual acceptance remains pending.",
       "evidence": []
     }
   },
   "release_authorization": "User previously authorized incremental tests, commits/push and documentation. No main merge, version release or engine-wide restart.",
   "rollback": "Revert task CSS/index change; running8097 was not replaced.",
   "handoff": "",
-  "manual_motion_acceptance": "not_run"
+  "manual_motion_acceptance": "not_run",
+  "delivery": {
+    "commit": "1ad0fd9",
+    "branch": "fix/brand-hover-restore",
+    "push": "pass"
+  }
 }
