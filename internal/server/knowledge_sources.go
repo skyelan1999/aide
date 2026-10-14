@@ -61,6 +61,7 @@ type knowledgeSource struct {
 type knowledgeArea struct {
 	root, source, name, kind, location, scope, origin string
 	enabled                                           bool
+	unavailableReason                                 string
 	src                                               Source
 	ws                                                WorkspaceConfig
 	epoch, generation                                 uint64
@@ -126,6 +127,9 @@ func (a *App) knowledgeAreasLocked(scope, workspaceName, referenceName string) [
 	}
 	for i := range areas {
 		ar := &areas[i]
+		if ar.local() && a.startupUnavailableLocalPath(ar.location) {
+			ar.unavailableReason = startupUnavailableSourceMessage
+		}
 		ar.scope, ar.ws, ar.epoch = scope, ws, a.wsRevision
 		switch ar.kind {
 		case "ssh", "workspace-sftp":
@@ -710,6 +714,9 @@ func knowledgeRemoteBase(ar knowledgeArea) string {
 }
 
 func (a *App) knowledgeAreaList(ctx context.Context, ar knowledgeArea, p string) ([]map[string]any, error) {
+	if ar.unavailableReason != "" {
+		return nil, fmt.Errorf("%s", ar.unavailableReason)
+	}
 	if !knowledgeSafePath(p) || !a.knowledgeAreaCurrent(ar) {
 		return nil, fmt.Errorf("来源路径或配置已变化")
 	}
@@ -898,6 +905,9 @@ func (a *App) knowledgeCurl(ctx context.Context, ar knowledgeArea, p string, lis
 }
 
 func (a *App) knowledgeAreaRead(ctx context.Context, ar knowledgeArea, p string, maxBytes int64) ([]byte, error) {
+	if ar.unavailableReason != "" {
+		return nil, fmt.Errorf("%s", ar.unavailableReason)
+	}
 	if !knowledgeSafePath(p) || !a.knowledgeAreaCurrent(ar) {
 		return nil, fmt.Errorf("引用来源已变化或路径无效")
 	}

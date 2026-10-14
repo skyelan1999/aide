@@ -1,6 +1,15 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "此来源已停用，请在引用配置中启用": "This source is disabled. Enable it in reference settings.",
+  "当前索引未报告此来源，请选择其他星域": "The current index does not report this source. Select another region.",
+  "来源暂不可用，请在星际日志查看原因": "This source is unavailable. Check the stellar logbook for details.",
+  "正在分批扫描，节点将陆续显示": "Scanning in batches. Nodes will appear progressively.",
+  "当前视图没有匹配节点，请调整聚焦或返回上层": "No matching nodes in this view. Adjust focus or return to the parent scene.",
+  "当前来源暂无节点，请检查目录或索引范围": "This source has no nodes. Check its directory or indexing scope.",
+  "尚未发现节点，请添加引用或检查工作区": "No nodes found. Add a reference or check the workspace.",
+  "来源位于上次不可用工作区，请先修复工作空间配置": "This source belongs to the unavailable previous workspace. Repair the workspace configuration first.",
+
   "保存默认推理强度": "Save default reasoning effort",
   "默认推理强度已保存": "Default reasoning effort saved",
   "无效推理强度": "Invalid reasoning effort",

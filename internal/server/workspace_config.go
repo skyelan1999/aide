@@ -122,8 +122,25 @@ func (a *App) loadWorkspaceConfig() error {
 		return fallbackErr
 	}
 	a.wsStartupConfig = &saved
+	if unavailable, _, resolveErr := a.resolveHostPath(saved.Workspace.Path); resolveErr == nil && unavailable != "" {
+		a.wsStartupUnavailableRoot.Store(&unavailable)
+	}
 	a.wsStartupWarning = fmt.Sprintf("上次工作区无法打开：%s。当前临时使用 /workspace，原配置已保留，请点击工作空间重新选择目录。", saved.Workspace.Path)
 	return nil
+}
+
+const startupUnavailableSourceMessage = "来源位于上次不可用工作区，请先修复工作空间配置"
+
+// No filesystem probe: a descendant of the failed startup root is not safe to
+// reopen through a host share. Preserve its binding and require explicit repair.
+// Source reads also call this outside a.mu, so publish the immutable root atomically.
+func (a *App) startupUnavailableLocalPath(candidate string) bool {
+	unavailable := a.wsStartupUnavailableRoot.Load()
+	if unavailable == nil || candidate == "" {
+		return false
+	}
+	rel, err := filepath.Rel(*unavailable, candidate)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
 func (a *App) saveWorkspaceConfig() error {
@@ -131,6 +148,7 @@ func (a *App) saveWorkspaceConfig() error {
 		return err
 	}
 	a.wsStartupConfig, a.wsStartupWarning = nil, ""
+	a.wsStartupUnavailableRoot.Store(nil)
 	return nil
 }
 

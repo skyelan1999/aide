@@ -470,6 +470,14 @@
       [
         "python3",
         "scripts/test_local_dependency_image.py"
+      ],
+      [
+        "node",
+        "scripts/starmap-local-frame.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/starmap-empty-state.test.cjs"
       ]
     ],
     "full": [

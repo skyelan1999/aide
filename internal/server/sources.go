@@ -188,6 +188,9 @@ func (a *App) localSourceRoot(src Source) (*os.Root, error) {
 	if err != nil {
 		return nil, err
 	}
+	if a.startupUnavailableLocalPath(cp) {
+		return nil, errors.New(startupUnavailableSourceMessage)
+	}
 	return os.OpenRoot(cp)
 }
 func (a *App) saveSources() error {

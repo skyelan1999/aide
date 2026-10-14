@@ -359,22 +359,40 @@ function cosmicTexture(depth,variant=0){
  cosmicTextureCache.set(key,c);while(cosmicTextureCache.size>12)cosmicTextureCache.delete(cosmicTextureCache.keys().next().value);return c;
 }
 function cosmicLabel(depth){return cosmos?.levels?.[depth]||['知识宇宙','超星系团','星系团','星系群','银河','旋臂','恒星系统','节点'][depth];}
+function cosmicEmptyMessage(){
+ const text=value=>globalThis.aideI18n?.t(value)||value;
+ const source=region?sourceByRegion.get(region):null;
+ if(source?.state==='disabled')return text('此来源已停用，请在引用配置中启用');
+ if(source?.detached)return text('当前索引未报告此来源，请选择其他星域');
+ if(source?.state==='unavailable')return text('来源暂不可用，请在星际日志查看原因');
+ const sources=source?[source]:sourceCatalog;
+ if(loading||sources.some(s=>s.coverage?.pending>0||s.coverage?.refreshProgress))return text('正在分批扫描，节点将陆续显示');
+ if(graph.nodes.some(n=>!region||n.region===region))return text('当前视图没有匹配节点，请调整聚焦或返回上层');
+ return text(source?'当前来源暂无节点，请检查目录或索引范围':'尚未发现节点，请添加引用或检查工作区');
+}
 function cosmicData(key){
  if(cosmicSceneCache.has(key))return cosmicSceneCache.get(key);const scene=cosmos?.scene(key);if(!scene)return null;
  const stable=liveStableScenes.get(key),stableRecords=new Map((stable?.records||[]).map(r=>[r.group.key,r])),stableStars=new Map((stable?.stars||[]).map(r=>[r.n.id,r]));
  const children=scene.children.length?scene.children:scene.group.nodeID?[scene.group]:[],ordered=[...children].sort((a,b)=>a.key.localeCompare(b.key)),records=[],owner=new Map();
+ // Retain one local frame across live batches; an empty scene cannot anchor it.
+ let frame=stable?.frame;
+ if(!frame?.count){
+  frame={x:0,y:0,count:0};
+  for(const id of scene.members){const n=nodeByID.get(id);if(n){frame.x+=n.x||0;frame.y+=n.y||0;frame.count++;}}
+  frame.x=frame.x/Math.max(1,frame.count)*.72;frame.y=frame.y/Math.max(1,frame.count)*.66;
+ }
  for(let i=0;i<ordered.length;i++){
   const group=ordered[i],leaf=!!group.nodeID,n=leaf?nodeByID.get(group.nodeID):null;
   // Retain familiar source/path constellations when no higher unit qualifies.
   const members=group.members.map(id=>nodeByID.get(id)).filter(Boolean),centroid=members.reduce((a,n)=>({x:a.x+(n.x||0),y:a.y+(n.y||0)}),{x:0,y:0});
   const x=members.length?centroid.x/members.length*.72:0,y=members.length?centroid.y/members.length*.66:0;
-  const spread=leaf?0:Math.min(.24,.055+Math.sqrt(members.length)*.012),record={group,x:ordered.length===1?0:x,y:ordered.length===1?0:y,z:.96+seeded(group.key+'z')*.09,spread,phase:seeded(group.key+'phase'),p:{x:0,y:0,onScreen:false},radius:12,texture:leaf?null:cosmicTexture(group.depth,Math.floor(seeded(group.key)*2))};
+  const spread=leaf?0:Math.min(.24,.055+Math.sqrt(members.length)*.012),record={group,x:x-frame.x,y:y-frame.y,z:.96+seeded(group.key+'z')*.09,spread,phase:seeded(group.key+'phase'),p:{x:0,y:0,onScreen:false},radius:12,texture:leaf?null:cosmicTexture(group.depth,Math.floor(seeded(group.key)*2))};
   const previous=stableRecords.get(group.key);if(previous){for(const prop of ['x','y','z','spread','radius'])record[prop]=previous[prop];record.p=previous.p;}
   record.label=group.label.length>30?group.label.slice(0,29)+'…':group.label;records.push(record);for(const id of group.members)owner.set(id,record);
  }
  const stars=[];
  for(const id of scene.members){const n=nodeByID.get(id);if(!n)continue;const r=owner.get(id);if(!r)continue;let x,y;
-  if(r.group.nodeID){x=ordered.length===1?0:(n.x||0)*.72;y=ordered.length===1?0:(n.y||0)*.66;r.x=x;r.y=y;}
+  if(r.group.nodeID){x=(n.x||0)*.72-frame.x;y=(n.y||0)*.66-frame.y;r.x=x;r.y=y;}
   else{const a=seeded(id+'cosmic-a')*tau,rr=Math.sqrt(seeded(id+'cosmic-r'))*r.spread,disc=r.group.depth===4||r.group.depth===5;x=r.x+Math.cos(a)*rr;y=r.y+Math.sin(a)*rr*(disc?.30:.68)+(disc?Math.sin(a*2)*rr*.08:0);}
   const star={n,x,y,z:(r.z+(seeded(id+'cosmic-z')-.5)*.07)*(1+Math.min(n.globalVisualDepth??5,12)*.035),p:{n,x:0,y:0,depth:0,onScreen:false},owner:r};const previous=stableStars.get(id);if(previous){star.x=previous.x;star.y=previous.y;star.z=previous.z;star.p=previous.p;star.p.n=n;}star.p.depth=star.z;stars.push(star);
  }
@@ -405,7 +423,7 @@ function cosmicData(key){
  const gravity=window.AideStarGravity?.analyze(graph.nodes,graph.edges,records.map(record=>record.group));
  const recordByGroup=new Map(records.map(record=>[record.group.key,record]));
  const blackHoles=(gravity?.blackHoles||[]).map(hole=>({...hole,record:recordByGroup.get(hole.groupKey),phase:seeded(hole.groupKey+'black-hole-phase')})).filter(hole=>hole.record);
- const data={scene,records,stars,edges,batches:[...batches.values()],gas:[...gas.values()],blackHoles,projection:stars.map(star=>star.p)};cosmicSceneCache.set(key,data);while(cosmicSceneCache.size>4)cosmicSceneCache.delete(cosmicSceneCache.keys().next().value);return data;
+ const data={scene,frame,records,stars,edges,batches:[...batches.values()],gas:[...gas.values()],blackHoles,projection:stars.map(star=>star.p)};cosmicSceneCache.set(key,data);while(cosmicSceneCache.size>4)cosmicSceneCache.delete(cosmicSceneCache.keys().next().value);return data;
 }
 function cosmicPath(group){const path=[];for(let g=group;g;g=g.parent)path.unshift(g);return path;}
 function cosmicPreferred(){return cosmicRecords.find(r=>r.group.key===cosmicSelected)?.group||cosmicRecords.find(r=>r.group.key===cosmicHover)?.group||cosmicScene?.children.reduce((best,g)=>!best||g.members.length>best.members.length?g:best,null);}
@@ -428,7 +446,8 @@ function enterCosmic(key,animateFlight=true,keepSelection=false){
 function ensureCosmicView(){
  if(!cosmicEnabled||locked||!window.AideStarCosmos)return;
  const key=[graphGeneration,region,codeView,edgeMode,focusCode,focusCode?selected?.id||'':'',focusCode?callDepth:''].join('|');if(key===cosmicScopeKey)return;
- const keep=liveReconcile;liveReconcile=false;
+ const previousScope=cosmicScopeKey.slice(cosmicScopeKey.indexOf('|')+1),nextScope=key.slice(key.indexOf('|')+1);
+ const keep=liveReconcile&&previousScope===nextScope;liveReconcile=false;
  const oldPath=cosmicScene?cosmicPath(cosmicScene.group).map(g=>g.key):[],transition=graphFade;
  if(keep){liveStableScenes=new Map(cosmicSceneCache);}
  const visibleIDs=new Set(renderNodes.map(n=>n.id)),modelEdges=graph.edges.filter(e=>visibleIDs.has(e.from)&&visibleIDs.has(e.to));
@@ -663,7 +682,7 @@ function drawCosmos(now,t){
  if(cosmicScene.depth===7&&zoom>=1.18)drawCosmicLocalSystem(now,fade);
  for(const hole of lensHoles)drawBlackHoleLensOverlay(hole,cosmicStars,cosmicStarEdges,fade);
  for(const r of cosmicRecords){if(!r.p.onScreen||r.group.nodeID||r.group.key!==cosmicHover&&r.group.key!==cosmicSelected)continue;ctx.font='11px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText(r.label,r.p.x+15,r.p.y-15);ctx.font='9px -apple-system,sans-serif';ctx.fillStyle=skyMuted();ctx.fillText(r.group.members.length+' 个真实节点',r.p.x+15,r.p.y);}
- if(!cosmicScene.members.length){ctx.font='13px -apple-system,sans-serif';ctx.fillStyle=skyText();ctx.fillText('当前范围尚无已索引节点',cx-90,cy);}
+ if(!cosmicScene.members.length){ctx.font='13px -apple-system,sans-serif';ctx.fillStyle=skyText();const maxWidth=Math.max(1,Math.min(520,width-32)),labelX=Math.min(Math.max(cx,16+maxWidth/2),width-16-maxWidth/2);ctx.textAlign='center';ctx.fillText(cosmicEmptyMessage(),labelX,cy,maxWidth);}
  ctx.restore();projection=data?.projection||[];drawLiveGhosts(now,drift);
  if(flight){ctx.save();ctx.globalAlpha=1-k;const s=flight.direction>0?1+.60*k:1-.22*k;ctx.translate(flight.anchor.x,flight.anchor.y);ctx.scale(s,s);ctx.translate(-flight.anchor.x,-flight.anchor.y);ctx.drawImage(flight.canvas,0,0,width,height);ctx.restore();if(u===1)cosmicFlight=null;}
 }
@@ -899,7 +918,7 @@ function applyLiveUpdate(update,initial=false){
  const edgesChanged=oldEdges.size!==nextEdges.size||[...nextEdges.keys()].some(k=>!oldEdges.has(k));
  if(Array.isArray(update.sources))graph.sources=update.sources;
  graph.warnings=update.warnings||[];graph.truncated=!!update.truncated;graph.code=update.code;syncGraphChrome();
- if(!changed.length&&!removed.size&&!edgesChanged){if(update.stale)say('正在建立最新索引 · 当前显示上次完整星图');return;}
+ if(!changed.length&&!removed.size&&!edgesChanged){if(update.stale)say('正在建立最新索引 · 当前显示上次完整星图');if(!cosmicScene?.members.length)redraw();return;}
  const now=performance.now(),motion=motionEnabled(),selectionID=selected?.id,selectionChanged=changed.some(n=>n.id===selectionID),citation=selected?.documentCitation;
  if(motion)for(const star of cosmicStars){if(removed.has(star.n.id)&&star.p.onScreen)liveGhosts.push({cosmic:true,x:star.x,y:star.y,z:star.z,color:mapPalette.star,radius:1.3,start:now});}
  if(liveGhosts.length>512)liveGhosts=liveGhosts.slice(-512);

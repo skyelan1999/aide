@@ -32,6 +32,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 )
@@ -481,6 +482,7 @@ type App struct {
 	wsConfig                  WorkspaceConfig
 	wsStartupConfig           *WorkspaceConfig
 	wsStartupWarning          string
+	wsStartupUnavailableRoot  atomic.Pointer[string]
 	wsSecrets                 workspaceSecrets
 	vault                     *SecretVault // 统一加密凭证保险库（#38）
 	knowledgeVectors          *knowledgeVectorCache

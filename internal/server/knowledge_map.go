@@ -203,6 +203,9 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 		message := "等待本轮索引"
 		if !ar.enabled {
 			state, message = "disabled", "来源已停用"
+		} else if ar.unavailableReason != "" {
+			state, message = "unavailable", ar.unavailableReason
+			g.Warnings = append(g.Warnings, ar.name+"："+message)
 		}
 		g.Sources = append(g.Sources, knowledgeSource{ID: ar.id(), Name: ar.name, Type: ar.kind, Region: ar.region(), State: state, Message: message})
 	}
@@ -223,7 +226,7 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 	codeBytes := 0
 	codeSkipped := 0
 	for _, ar := range areas {
-		if !ar.enabled || !ar.local() {
+		if !ar.enabled || !ar.local() || ar.unavailableReason != "" {
 			continue
 		}
 		dirs, files := 0, 0
