@@ -324,6 +324,66 @@ func TestKnowledgeUpdatesServePublishedGraphWhileScanIsBusy(t *testing.T) {
 	requireStatus(t, changed, 503)
 }
 
+func TestKnowledgeUpdatesKeepPublishedGraphWhenRefreshFailsAndResumeCache(t *testing.T) {
+	a := testApp(t)
+	if err := os.WriteFile(filepath.Join(a.workPath, "before.txt"), []byte("before"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	first := request(a, "GET", "/api/knowledge-map/updates", nil)
+	requireStatus(t, first, 200)
+	var baseline knowledgeUpdateResponse
+	if err := json.Unmarshal(first.Body.Bytes(), &baseline); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(a.workPath, "after.txt"), []byte("after"), 0600); err != nil {
+		t.Fatal(err)
+	}
+
+	state := &a.knowledgeUpdates
+	state.gate <- struct{}{}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	_, err := a.knowledgeAcquireViewLocked(ctx, false, false)
+	<-state.gate
+	if err == nil {
+		t.Fatal("cancelled refresh unexpectedly succeeded")
+	}
+	if state.views[0] == nil || state.views[0].cache == nil {
+		t.Fatal("failed refresh did not retain its resumable scan cache")
+	}
+
+	state.views[0].checked = time.Now().Add(-knowledgeUpdateInterval)
+	fallbackCtx, cancelFallback := context.WithCancel(context.Background())
+	cancelFallback()
+	view, release, stale, err := a.knowledgeAcquireUpdatesView(fallbackCtx, false)
+	if err != nil {
+		t.Fatalf("failed refresh hid the last complete graph: %v", err)
+	}
+	defer release()
+	if !stale || view.revision != baseline.Revision {
+		t.Fatalf("failed refresh should serve the last complete graph as stale: stale=%v revision=%s baseline=%s", stale, view.revision, baseline.Revision)
+	}
+
+	// A later successful request resumes the retained cursor and publishes the
+	// new file instead of scanning forever from the old snapshot.
+	state.views[0].checked = time.Now().Add(-knowledgeUpdateInterval)
+	updated := request(a, "GET", "/api/knowledge-map/updates?cursor="+baseline.Revision, nil)
+	requireStatus(t, updated, 200)
+	var delta knowledgeUpdateResponse
+	if err := json.Unmarshal(updated.Body.Bytes(), &delta); err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, node := range delta.Nodes {
+		if node.Path == "after.txt" {
+			found = true
+		}
+	}
+	if !found || delta.Revision == baseline.Revision {
+		t.Fatalf("resumed refresh did not publish the changed graph: found=%v revision=%q baseline=%q", found, delta.Revision, baseline.Revision)
+	}
+}
+
 func TestKnowledgeProgressiveRejectsReplacedAncestor(t *testing.T) {
 	a := testApp(t)
 	visible := filepath.Join(a.workPath, "visible")

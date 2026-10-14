@@ -4897,5 +4897,33 @@
       "星图冷启动无完整快照时的 503 与大库长扫描表现仍需进一步采集和验证；本轮源码层面发现繁忙时可用已发布快照回退，但无首份快照的路径返回 503。"
     ],
     "remaining": "请在工作台解锁 Aide 后继续 Safari 星图验证；同时审查并改进大库冷启动渐进同步，让无完整快照时也能清楚报告扫描进度并最终收敛。"
+  },
+  "progress_checkpoint_20261014_followup96": {
+    "date": "2026-10-14",
+    "status": "knowledge_cold_start_recovery_fixed_tests_pass_safari_loaded_incremental_index",
+    "summary": "修复知识星图冷启动扫描被取消/失败时不保留已发现的扫描缓存、且当前请求不回退同工作区最近完整快照的问题。start.command 重建并启动本机 9999 后，系统 Safari 实际打开星图；冷启动约 15 秒后加载 22,902 个节点和 22,858 条连接，引用目录继续渐进扫描。",
+    "evidence": [
+      "internal/server/knowledge_updates.go：失败/取消时保留 resumable scan cache；当前扫描失败时仅在 workspace、epoch、policy 一致的条件下回退最近已发布的完整图。",
+      "internal/server/knowledge_progressive_test.go：新增 TestKnowledgeUpdatesKeepPublishedGraphWhenRefreshFailsAndResumeCache，覆盖失败缓存保留、完整快照 stale 回退及后续增量恢复。",
+      "Docker 容器内专项 Go 回归 · PASS：TestKnowledgeUpdatesKeepPublishedGraphWhenRefreshFailsAndResumeCache、TestKnowledgeUpdatesServePublishedGraphWhileScanIsBusy。",
+      "./start.command · PASS：源码哈希变化后重建 aide:local，go vet 与 build 通过，容器就绪于 https://127.0.0.1:9999。",
+      "系统 Safari 原生端口星图验收：冷启动显示 22,902 个节点 / 22,858 条连接；工作区 109 节点、自动系统文档 2 节点；引用来源 11,375 节点，扫描标为分批进行且尚有 1,417 个目录任务，页面提示‘正在建立最新索引 · 当前显示上次完整星图’。"
+    ],
+    "not_verified": [
+      "大库引用来源剩余 1,417 个目录任务的完整收敛耗时和长期性能尚未测完；本次确认渐进快照已加载，不等同于全量索引完成。",
+      "当前 Go 专项为非 race 回归；race detector 全量仍受此前容器资源限制影响，未在本 checkpoint 重跑。",
+      "其余连续性目标继续按各验收记录跟踪；真实向量/embedding 按用户要求暂缓，Windows 验收已由用户自行完成。"
+    ],
+    "remaining": "提交并推送本次冷启动恢复修复；继续观测引用大库渐进扫描收敛与性能，并推进总任务中 Safari 端到端、超长会话、真实 SSH 主机、race 环境和发布/回滚门禁等缺口。",
+    "overall_progress": {
+      "estimated_complete_percent": 80,
+      "estimated_remaining_percent": 20,
+      "estimate_kind": "粗略工程估值，非验收通过率；与前一检查点一致。此修复闭合一个星图冷启动/同步风险，但 12 条整体工作流仍有其他端到端证据缺口。",
+      "acceptance_state": "12/12 工作流仍标记 in_progress；星图冷启动同步专项已在系统 Safari 观察到已加载节点并继续渐进扫描。",
+      "not_counted_as_agent_remaining": [
+        "Windows：用户表示已自行测试，免除 Agent 验收。",
+        "真实向量/embedding：用户要求暂缓，不阻塞当前进度。"
+      ]
+    }
   }
 }

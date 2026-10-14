@@ -374,6 +374,10 @@ func (a *App) knowledgeAcquireViewLocked(ctx context.Context, includeCode, force
 		g := a.knowledgeSnapshotModeCached(ctx, mode == 1, cache)
 		view.checked = time.Now() // Also throttle failed/cancelled attempts.
 		if ctx.Err() != nil || cache.err != nil {
+			// Keep the discovery cursor/cache produced before cancellation. A
+			// subsequent request resumes from this batch instead of repeatedly
+			// rescanning the same prefix of a large workspace.
+			view.cache = cache
 			view.failed = true
 			return nil, knowledgeSyncFailure{503, "资料更新扫描未完成；保留当前星图，稍后自动重试"}
 		}
@@ -427,7 +431,13 @@ func (a *App) knowledgeAcquireUpdatesView(ctx context.Context, includeCode bool)
 	case state.gate <- struct{}{}:
 		view, err := a.knowledgeAcquireViewLocked(ctx, includeCode, false)
 		if err != nil {
+			workspace, epoch, policy := a.knowledgeUpdatesIdentity()
+			published := state.published[mode].Load()
 			<-state.gate
+			if published != nil && published.workspace == workspace && published.epoch == epoch && published.policy == policy {
+				fallback := published.view
+				return &fallback, func() {}, true, nil
+			}
 			return nil, nil, false, err
 		}
 		return view, func() { <-state.gate }, false, nil
