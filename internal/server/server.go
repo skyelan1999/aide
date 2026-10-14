@@ -1709,6 +1709,12 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	switch in.ReasoningEffort {
+	case "", "auto", "off", "low", "medium", "high":
+	default:
+		fail(w, 400, errors.New("无效推理强度"))
+		return
+	}
 	switch in.Settings.SandboxMode {
 	case "", "read-only", "workspace-write", "danger-full-access":
 	default:

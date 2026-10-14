@@ -450,6 +450,10 @@
       [
         "node",
         "scripts/staged-output.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/reasoning-settings.test.cjs"
       ]
     ],
     "full": [

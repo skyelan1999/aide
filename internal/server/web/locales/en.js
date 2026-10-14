@@ -1,6 +1,12 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "保存默认推理强度": "Save default reasoning effort",
+  "默认推理强度已保存": "Default reasoning effort saved",
+  "无效推理强度": "Invalid reasoning effort",
+  "推理强度保存后读回不一致，请重试": "Saved reasoning effort did not match the readback. Try again.",
+  "推理强度保存失败：{0}": "Failed to save reasoning effort: {0}",
+
   "阶段输出 {0}": "Stage output {0}",
   "正在加载…": "Loading…",
   "本地目录": "Local directory",

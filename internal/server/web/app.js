@@ -3594,6 +3594,7 @@ function makeModelProviderID(base) {
   while (state.modelDraft.providers.some(provider => provider.id === id)) id = `${clean}-${suffix++}`;
   return id;
 }
+const defaultReasoningSettings = window.AideReasoningSettings.install({select:$('model-reasoning-effort'),button:$('save-default-reasoning'),api,refresh:refreshConfig,config:()=>state.config,t,toast});
 function openSettings() {
   const config = state.config || {};
   const models = JSON.parse(JSON.stringify(config.models || []));
@@ -3601,9 +3602,7 @@ function openSettings() {
   if (!providers.length) providers = [{ id: 'default', name: 'DeepSeek / 自定义', baseURL: config.baseURL || 'https://api.deepseek.com', protocol: 'openai-compatible', activeKeyId: 'legacy', keys: [{ id: 'legacy', label: 'API Key', hasKey: !!config.hasKey }] }];
   models.forEach(model => { if (!model.providerId) model.providerId = 'default'; });
   state.modelDraft = { providers, models, activeModel: config.activeModel || config.model || models[0]?.id || '', expandedProviders: new Set(), providerSecrets: new Map() };
-  const effort = $('model-reasoning-effort');
-  effort.replaceChildren(...[['auto', t('自动')], ['off', t('关闭')], ['low', t('低')], ['medium', t('中')], ['high', t('高')]].map(([value, label]) => new Option(label, value)));
-  effort.value = ['auto', 'off', 'low', 'medium', 'high'].includes(config.reasoningEffort) ? config.reasoningEffort : 'auto';
+  defaultReasoningSettings.sync();
   const select = $('provider-preset'); select.replaceChildren();
   for (const preset of MODEL_PROVIDER_PRESETS) select.add(new Option(preset.name, preset.id));
   renderModelList();
