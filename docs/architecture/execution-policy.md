@@ -75,3 +75,15 @@ PUT 替换整个策略文档，字段必须齐全，拒绝未知字段、null、
 审批记录区分人工确认、模型独立审核和授权规则匹配，带当时范围、载荷指纹；规则匹配另带规则编号及期限。记住的命令／文件提案在放行前保存记录，保存失败不放行。成果舱展示审批依据，最多保留最近50条；旧记录缺失来源时不补造。批准记录不证明执行成功，文件写入仍受路径和版本检查。长期审计归档及只读免审批依据尚未接入。
 
 相关 Docker Go race 和模拟接口组件浏览器检查已通过；完整工作台、真实模型、跨窗口同步及锁屏联调仍未完成。详见[本次检查点](../reviews/approval-checkpoint-20261009.md)。生产9999未替换，发行基线仍为0.1.17.0 RC2。
+
+## 基础命令与审核恢复（2026-10-14）
+
+只读判断先解析有限的字面命令语法，接受带引号的路径/搜索模式，以及每一段都已证明只读的管道、`&&` 组合。例：`cat "file with spaces.txt"`、`rg 'TODO|FIXME' .`、`find . -name '*.go'`、`sed -n '1,120p' README.md`、`cat README.md | head -n 5`、`pwd && ls`。`cd 'some folder' && ls` 只改变该命令进程的工作目录，不持久改变会话根。现有路径/保护区检查仍在执行阶段生效。
+
+这是保守的字面语法子集，不是通用Shell解析器：不证明只读的语法仍走原审批链。未引用的通配符、变量/命令替换、重定向、后台、任意内联脚本不走只读路径；任何一段为写操作都需要审批。`find -exec/-delete/-fprint`、`rg --pre`、`file -C/--compile` 和 Git 输出文件/外部diff/textconv等选项继续排除。`sed`仅支持数字行范围的`-n ...p`读取，不开放`-i`或任意sed程序。手动模式和read-only沙箱复用同一只读判断，不因辅助审批开关而把写命令当成读取。
+
+具体命令的独立审核仍使用任务选定模型、提供商/凭据和推理强度，不改全局审批模式。首轮输出预算512 tokens；仅空正文或无效审批JSON在同一个60秒期限内补一次2048 tokens请求。明确manual决定（即使缺少理由/风险字段）不重试成批准；网络/HTTP失败、工具调用、取消、两次无效响应均转人工，不自动放行。回退记录区分授权链缺失、配置/凭据不可用、长度超限、请求失败、空决定和格式错误。重试用量计入原任务；成功HTTP返回空正文时也保留实际/估算用量，避免少计。
+
+这不是写操作白名单：`mkdir`、重定向、运行代码等仍由独立模型结合真实用户任务逐项审核，审批通过后仍走沙箱和路径约束。文件提案审核保持原流程；本轮恢复逻辑只接入Shell命令审核。没有调用真实模型测量放行率，测试使用隔离模拟HTTP和临时工作区。
+
+Literal quoted reads and compositions of proven read-only commands avoid unnecessary approval requests. Unknown shell syntax and write/helper options remain on the ordinary approval path. The command reviewer retries only empty/malformed decisions once under the original deadline, never retries an explicit manual verdict into approval, and preserves all authorization, generation, persistence and sandbox checks. Empty successful responses now retain token usage. This does not enable assisted mode or broaden writing permissions automatically.

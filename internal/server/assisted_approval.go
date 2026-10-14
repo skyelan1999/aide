@@ -136,22 +136,18 @@ func (a *App) reviewPendingCommand(task *Task) {
 	reason := "审核失败或超时，请手动确认"
 	approved := false
 	var usage TokenUsage
-	if authorizationOK && keyErr == nil && len(prompt) <= 16000 && len(q.Command) <= 16000 {
+	switch {
+	case !authorizationOK:
+		reason = "无法关联真实用户任务授权，请手动确认"
+	case keyErr != nil:
+		reason = "审核模型配置或凭据不可用，请检查模型设置后重试或手动确认"
+	case len(prompt) > 16000 || len(q.Command) > 16000:
+		reason = "任务授权或命令超过审核长度上限，请拆分后重试或手动确认"
+	default:
 		payload, _ := json.Marshal(map[string]string{"userRequest": prompt, "command": q.Command, "scope": "仅限本任务工作区内的可逆操作；未提供文件内容、备份或符号链接证明", "delegatedTask": task.Prompt, "workspaceId": task.WorkspaceID, "workingDirectory": cwd})
-		out, _, u, err := complete(ctx, cfg, []Message{{Role: "system", Content: assistedApprovalPolicy}, {Role: "user", Content: string(payload)}}, ProfileParams{MaxTokens: 512, Temperature: fp(0)}, nil, nil)
-		usage = u
-		var v struct {
-			Decision        string `json:"decision"`
-			Risk            string `json:"risk"`
-			WithinWorkspace bool   `json:"withinWorkspace"`
-			Authorized      bool   `json:"authorized"`
-			Reason          string `json:"reason"`
-		}
-		if err == nil && json.Unmarshal(approvalDecisionJSON(out), &v) == nil && strings.TrimSpace(v.Reason) != "" {
-			reason = v.Reason
-			approved = v.Decision == "approve" && (v.Risk == "low" || v.Risk == "medium") && v.WithinWorkspace && v.Authorized
-		}
+		approved, reason, usage = reviewApproval(ctx, cfg, []Message{{Role: "system", Content: assistedApprovalPolicy}, {Role: "user", Content: string(payload)}})
 	}
+
 	// Even an approving model cannot override deterministic protected-operation checks.
 	if reasonBlocked, bad := shellBlocked(q.Command); bad {
 		approved = false

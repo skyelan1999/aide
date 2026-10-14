@@ -285,9 +285,6 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 		return "", nil, TokenUsage{}, errors.New("模型没有返回内容")
 	}
 	msg := out.Choices[0].Message
-	if strings.TrimSpace(msg.Content) == "" && len(msg.ToolCalls) == 0 {
-		return "", nil, TokenUsage{}, &emptyCompletionError{finish: out.Choices[0].FinishReason}
-	}
 	usage := TokenUsage{Prompt: out.Usage.PromptTokens, Completion: out.Usage.CompletionTokens, Total: out.Usage.TotalTokens, Model: cfg.Model, Provider: cfg.BaseURL}
 	applyPromptCacheUsage(&usage, out.Usage)
 	if usage.Total == 0 {
@@ -299,6 +296,9 @@ func complete(ctx context.Context, cfg Settings, messages []Message, params Prof
 	}
 	if rec := tokenUsageRecorder.Load(); rec != nil {
 		rec.(func(TokenUsage))(usage)
+	}
+	if strings.TrimSpace(msg.Content) == "" && len(msg.ToolCalls) == 0 {
+		return "", nil, usage, &emptyCompletionError{finish: out.Choices[0].FinishReason}
 	}
 	return msg.Content, msg.ToolCalls, usage, nil
 }
