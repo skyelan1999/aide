@@ -1,0 +1,84 @@
+{
+  "id": "sandbox-enforcement-20261014",
+  "request": "沙箱配置好像基本上没用",
+  "baseline": "c3bcedb0384c0d2eb44cb13c16818b6af98cf4cf",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Apply sandbox policy consistently to model shell, command panel and proposal application.",
+    "Linux child-process filesystem rules deny restricted-mode outside writes, scripts and symlink escapes; read-only denies workspace writes. Unsupported enforcement fails closed.",
+    "Full access remains distinct from approvals; invalid settings rejected, current sandbox mode persists and is reported with enforcement scope.",
+    "Cancellation/timeouts and other sessions remain independent; both checkouts tested and local8097 updated with backup/rollback."
+  ],
+  "scope": [
+    "internal/execsandbox",
+    "internal/server/sandbox_policy.go",
+    "internal/server/sandbox_policy_test.go",
+    "internal/server/workflow.go",
+    "internal/server/command.go",
+    "internal/server/server.go",
+    "internal/server/harness_runtime.go",
+    "internal/server/remote_shell_cancel_test.go",
+    "docs/tasks/sandbox-enforcement-20261014.json",
+    "docs/architecture/execution-policy.md",
+    "docs/reviews/2026-10-14-sandbox-enforcement-rollout.md",
+    "internal/server/harness_integration_test.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports ineffective sandbox configuration. Confirmed command panel bypass and workspace-write relying on text/path heuristics; local Linux Landlock ABI8 available.",
+      "evidence": [
+        "internal/server/command.go",
+        "internal/server/workflow.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Fresh child-process Linux Landlock filesystem rules with scope isolation; no sandbox applied to the server. Shared entry policy, read-only proposal gate, explicit unsupported SSH/native behavior and config status. Network, trusted plugins and file metadata limitations documented.",
+      "evidence": [
+        "internal/server/command.go",
+        "internal/server/workflow.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Fresh Linux Landlock child, shared panel/model/Hook policy, read-only proposal/tool gates, strict settings enum and reported enforcement scope implemented.",
+      "evidence": [
+        "internal/execsandbox",
+        "internal/server/sandbox_policy.go",
+        "internal/server/workflow.go",
+        "internal/server/command.go",
+        "internal/server/server.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Both expanded race regressions and quick passed; final configuration persistence/next-command and process cleanup checks running.",
+      "evidence": [
+        ".agent-state/sandbox-enforcement/regression.log",
+        ".agent-state/sandbox-enforcement/quick.log",
+        ".agent-state/sandbox-enforcement/final.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Bilingual execution-policy documentation records kernel/entry behavior, independent approval, scratch/cache change, Linux/SSH/native/plugin/network/metadata limits and launch-time semantics.",
+      "evidence": [
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Unrelated source and vendor deletions preserved; no model calls or changes to real sandbox preference.",
+      "evidence": []
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior user: incremental tests/push/docs and local8097 AIDE-only update; preserve mounts and other services.",
+  "rollback": "Retain previous image and consistent backup before AIDE-only replacement; no destructive data migration.",
+  "handoff": "Specific user-reported mode not answered yet. Actual8097 Linux ABI8 confirmed. Restricted SSH/native unsupported explicitly fails closed. No claim of full VM, network or metadata isolation. Existing commands keep launch policy."
+}
