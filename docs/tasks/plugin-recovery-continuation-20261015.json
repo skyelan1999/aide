@@ -1,0 +1,87 @@
+{
+  "id": "plugin-recovery-continuation-20261015",
+  "request": "补齐插件核查后的显式恢复决策，旧调用不重放，新操作遵循当前策略",
+  "baseline": "cdecdc2532bc7135831e82324b9cae511cde7183",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Recovery preview covers unresolved graph nodes, unfinished plans, other in-flight/unknown protocol calls and legacy hook warning, without private args/evidence. Every uncertain graph node has an operator check before continuation.",
+    "Resume requires explicit snapshot-bound continue_without_replay decision and note when review required; rejects changed checks, wrong owner, active original, duplicates and save failure without starting workers. Original state remains intact on failure.",
+    "Resumed run stores durable attributed decision. Old graph IDs never replay, old dependencies remain skipped; reviewed immutable old graphs no longer permanently block new unique graphs. Existing sandbox/approval/workspace/hooks apply to future operations.",
+    "Scoped Go race/vet with live Node/provider fixtures and restart/refusal paths; JS owner/conflict tests plus canonical start.command Safari fixture verification. Docs, incremental push and matching complete offline image."
+  ],
+  "scope": [
+    "internal/server/task_recovery.go",
+    "internal/server/task_recovery_test.go",
+    "internal/server/workflow.go",
+    "internal/server/plugin_plan.go",
+    "internal/server/server.go",
+    "internal/server/task_outcome.go",
+    "internal/server/web/plugin-plans.js",
+    "internal/server/web/app.js",
+    "internal/server/web/task-outcome.js",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/index.html",
+    "scripts/plugin-plans.test.cjs",
+    "docs",
+    "docker-images",
+    "internal/server/web/macos.css",
+    "scripts/pause-session-isolation.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Operator check records exist, but every uncertain/incomplete prior plan still blocks future plans and HookRecoveryRequired remains broad. Add explicit continuation, without treating observations as execution proof.",
+      "evidence": [
+        "docs/tasks/plugin-effect-checks-20261015.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Preview opaque whole-task snapshot, check coverage and summaries. Normal resume remains for no-risk checkpoints; risk requires guarded explicit decision, atomic receipt+resumed task save. Keep old graph IDs/results untouched; approve immutable prior plan stamps for new-work admission only. Clear broad recovered-call barrier only for reviewed successor, keep current policy and hooks.",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/execution_journal.go",
+        "internal/server/plugin_plan.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Opaque workspace/epoch-bound review and strict explicit resume decision; durable operator receipt, old graph IDs cached only, two admission gates accept unchanged reviewed old graph stamps for new work. Exact unresolved operation fingerprints reject changed IDs across graph/direct tool paths before hooks; built-in readonly observations remain available. Current sandbox/approval and saved task-hook policies retained. Notes/evidence excluded from provider context, cached graph results and outcome summaries.",
+      "evidence": [
+        "internal/server/task_recovery.go",
+        "internal/server/plugin_plan.go",
+        "internal/server/workflow.go",
+        "internal/server/web/plugin-plans.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "First real Node/model integration exposed second graph admission gate still blocking continuation; fixed both. Intermediate graph/effect/outcome/harness/resume race53.151s+vet PASS; subsequent extended exact-operation guard race51.841s+vet PASS. Final workspace epoch/current-source run still active. JS recovery form/ack/duplicate/conflict/owner tests PASS. Initial quick fails legacy VM slice boundary after resume function became async; boundary adjusted, original pause assertions PASS. Canonical runtime/browser/package pending. Final current-source scoped race51.556s+vet PASS (workspace revision/wrong-root rejection, save rollback, concurrent decisions, actual Node old/new execution, provider privacy and exact-operation changed-ID refusal).",
+      "evidence": [
+        ".agent-state/plugin-recovery-continuation/first-negative.log",
+        ".agent-state/plugin-recovery-continuation/diagnostic.log",
+        ".agent-state/plugin-recovery-continuation/intermediate-pass.log",
+        "scripts/plugin-plans.test.cjs",
+        "scripts/pause-session-isolation.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental local testing/build/source push/offline image authorization. No formal main/tag release.",
+  "rollback": "Use previous image and preserve volume; additive recovery consent fields are ignored by older code, which conservatively blocks uncertain old graphs again. No data restoration performed.",
+  "handoff": ""
+}

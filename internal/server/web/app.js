@@ -1553,11 +1553,21 @@ function pauseRunById(runId, sessionId = state.session?.id) {
     .catch(error => { if (stillVisible()) toast(error.message); })
     .finally(() => { state.pauseRequests.delete(key); if (stillVisible()) syncPauseControl(); });
 }
-function resumeRunById(runId) {
-  const sessionId = state.session.id;
-  api(`/sessions/${sessionId}/runs/${runId}/resume`, { method: 'POST', body: JSON.stringify({avatarFeedback: !!window.aideAvatarEnabled?.()}) })
-    .then(async run => { if(state.session?.id === sessionId) { await selectSession(sessionId); reconcileAvatarRun(run.id); } })
-    .catch(e => toast(e.message));
+const resumeRequests = new Set();
+async function resumeRunById(runId) {
+  const sessionId=state.session?.id,scope=recoveryScope(),sequence=sessionSeq.value;
+  const active=()=>!lockScreen.locked&&state.session?.id===sessionId&&recoveryScope()===scope&&sessionSeq.value===sequence;
+  const key=JSON.stringify([sessionId,runId]);if(!sessionId||!active()||resumeRequests.has(key))return;
+  resumeRequests.add(key);
+  const base='/sessions/'+encodeURIComponent(sessionId)+'/runs/'+encodeURIComponent(runId);
+  try {
+    const review=await api(base+'/recovery');if(!active())return;
+    const submit=recovery=>{if(!active())throw Error(t('目标会话已变化，请重新打开'));return api(base+'/resume',{method:'POST',body:JSON.stringify({avatarFeedback:!!window.aideAvatarEnabled?.(),...(recovery?{recovery}:{})})});};
+    const saved=async run=>{if(active()){try{await selectSession(sessionId);if(!lockScreen.locked&&state.session?.id===sessionId)reconcileAvatarRun(run.id);}catch(e){if(!lockScreen.locked&&state.session?.id===sessionId)toast(t('任务已启动，刷新会话失败：{0}',e.message));}}};
+    if(review.required)window.AidePluginPlans.openRecovery({el,t,review,active,submit,saved});
+    else await saved(await submit());
+  } catch(e){if(active())toast(e.message);}
+  finally{resumeRequests.delete(key);}
 }
 function retryRunById(runId) {
   const sessionId = state.session.id;

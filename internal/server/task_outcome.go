@@ -204,6 +204,11 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 		// checkpoint prompts, live approval channels, or model credentials.
 		t := &Task{ID: run.ID, Mode: run.Mode, Prompt: run.Prompt, Status: run.Status, Created: run.Created, WorkspaceID: run.WorkspaceID, Error: run.Error, Applied: run.Applied, ExecutionSequence: run.ExecutionSequence}
 		t.Files = append([]Change(nil), run.Files...)
+		if run.RecoveryContinuation != nil {
+			b, _ := json.Marshal(run.RecoveryContinuation)
+			_ = json.Unmarshal(b, &t.RecoveryContinuation)
+			t.RecoveryContinuation.Note = ""
+		}
 		t.Attachments = append([]Attachment(nil), run.Attachments...)
 		t.Steers = append([]SteerMsg(nil), run.Steers...)
 		t.Commands = append([]string(nil), run.Commands...)
@@ -248,6 +253,12 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 	return nil, 0, "", errors.New("任务不存在")
 }
 func taskOutcomeProjection(task *Task, sessionID string, number int, title string, fileOffset, executionOffset, limit int) map[string]any {
+	var continuation *TaskRecoveryContinuation
+	if task.RecoveryContinuation != nil {
+		b, _ := json.Marshal(task.RecoveryContinuation)
+		_ = json.Unmarshal(b, &continuation)
+		continuation.Note = ""
+	}
 	files := []outcomeFile{}
 	uses := []outcomeExecution{}
 	reports := []outcomeReport{}
@@ -266,6 +277,14 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 	knownUnknown := map[string]bool{}
 	for _, intent := range unknown {
 		knownUnknown[intent.CallID] = true
+	}
+	if task.RecoveryContinuation != nil {
+		for _, call := range task.RecoveryContinuation.Calls {
+			if !knownUnknown[call.ID] {
+				unknown = append(unknown, ToolExecutionIntent{CallID: call.ID, Tool: call.Tool, State: "dispatched"})
+				knownUnknown[call.ID] = true
+			}
+		}
 	}
 	for _, plan := range task.PluginPlans {
 		if plan == nil {
@@ -341,6 +360,9 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 	if len(unknown) > 0 {
 		gaps = append(gaps, "存在未取得持久化结果的调用；不得自动重放有副作用操作")
 	}
+	if continuation != nil && continuation.HookWarning {
+		gaps = append(gaps, "已按操作者决定继续后续工作；早期后台调用或 Hook 效果仍未确认")
+	}
 	if len(allWriteTargets) > 0 {
 		gaps = append(gaps, "命令中存在 shell 输出重定向目标线索；未据此确认文件存在或内容已保存，需单独读回复核")
 	}
@@ -363,10 +385,11 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		"systemReceipts": receipts, "systemReceiptNote": "系统应用回执记录应用后的检查及其限制，不等于当前文件复核或完整产品验收；completed也可能记录待人工审批或远程未读回，请查看原文",
 		"files": files, "writeTargets": writeTargets, "writeTargetNote": "来自已记录 run_shell 参数中的显式 > 或 >> 重定向；只是命令目标线索，不证明写入或当前文件内容。", "executions": uses, "verification": reports, "findings": task.ResearchFindings, "suggestedCommands": task.Commands, "unknownCalls": unknown, "gaps": gaps,
 		"approvals": task.ApprovalReviews, "approvalNote": "审批记录仅证明当时的决策及匹配依据，不证明执行成功；最多保留最近50条，旧记录可能缺少来源字段",
-		"release":        taskReleaseProjection(task.ReleaseReceipts),
-		"operatorChecks": operatorChecks,
-		"page":           map[string]any{"fileNext": fEnd, "filesMore": fEnd < len(task.Files), "executionNext": eEnd, "executionsMore": eEnd < len(task.ToolUses), "limit": limit},
-		"journal":        map[string]any{"sequence": task.ExecutionSequence, "url": "/api/sessions/" + url.PathEscape(sessionID) + "/runs/" + url.PathEscape(task.ID) + "/journal", "note": "执行日志为独立记录；工具结果可由证据编号读取原文与摘要"},
+		"release":              taskReleaseProjection(task.ReleaseReceipts),
+		"operatorChecks":       operatorChecks,
+		"recoveryContinuation": continuation,
+		"page":                 map[string]any{"fileNext": fEnd, "filesMore": fEnd < len(task.Files), "executionNext": eEnd, "executionsMore": eEnd < len(task.ToolUses), "limit": limit},
+		"journal":              map[string]any{"sequence": task.ExecutionSequence, "url": "/api/sessions/" + url.PathEscape(sessionID) + "/runs/" + url.PathEscape(task.ID) + "/journal", "note": "执行日志为独立记录；工具结果可由证据编号读取原文与摘要"},
 	}
 }
 

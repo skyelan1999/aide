@@ -937,3 +937,6 @@ button:has(> .icon) {
 .plugin-effect-dialog label {display:grid;gap:8px;margin:16px 0;}
 .plugin-effect-dialog textarea {width:100%;resize:vertical;min-height:100px;}
 .plugin-node-checks {margin:10px 0;}
+
+.plugin-effect-dialog .plugin-recovery-ack {display:flex;align-items:flex-start;}
+.plugin-recovery-ack input {width:auto;}

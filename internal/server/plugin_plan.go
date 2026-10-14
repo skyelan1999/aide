@@ -54,6 +54,19 @@ type PluginExecutionPlan struct {
 	Nodes     []PluginPlanNode `json:"nodes"`
 }
 
+func pluginPlanModelResult(p *PluginExecutionPlan) string {
+	copy := *p
+	copy.Nodes = append([]PluginPlanNode(nil), p.Nodes...)
+	for i := range copy.Nodes {
+		copy.Nodes[i].EffectChecks = append([]PluginEffectCheck(nil), p.Nodes[i].EffectChecks...)
+		for j := range copy.Nodes[i].EffectChecks {
+			copy.Nodes[i].EffectChecks[j].Evidence = ""
+		}
+	}
+	b, _ := json.Marshal(copy)
+	return string(b)
+}
+
 func pluginPlanID(id string) bool {
 	if len(id) == 0 || len(id) > 64 {
 		return false
@@ -232,7 +245,7 @@ func (a *App) executePluginPlan(parent context.Context, outer ToolCall, task *Ta
 	sum := sha256.Sum256([]byte(outer.Function.Arguments))
 	digest := hex.EncodeToString(sum[:])
 	a.mu.Lock()
-	encode := func(p *PluginExecutionPlan) string { b, _ := json.Marshal(p); return string(b) }
+	encode := pluginPlanModelResult
 	for _, prior := range task.PluginPlans {
 		if prior == nil {
 			continue
@@ -246,13 +259,14 @@ func (a *App) executePluginPlan(parent context.Context, outer ToolCall, task *Ta
 			a.mu.Unlock()
 			return out // Never replay a persisted plan.
 		}
+		continued := pluginPlanContinued(task, prior)
 		for _, n := range prior.Nodes {
-			if n.State == "dispatched" || n.State == "uncertain" {
+			if (n.State == "dispatched" || n.State == "uncertain") && !continued {
 				a.mu.Unlock()
 				return "错误：前一插件任务图结果待核实，不自动重放或派发新图"
 			}
 		}
-		if prior.State != "completed" {
+		if prior.State != "completed" && !continued {
 			a.mu.Unlock()
 			return "错误：已有未完成插件任务图"
 		}
@@ -323,12 +337,13 @@ func (a *App) executePluginPlan(parent context.Context, outer ToolCall, task *Ta
 			a.mu.Unlock()
 			return out
 		}
-		if prior.State != "completed" {
+		continued := pluginPlanContinued(task, prior)
+		if prior.State != "completed" && !continued {
 			a.mu.Unlock()
 			return "错误：已有未完成插件任务图"
 		}
 		for _, n := range prior.Nodes {
-			if n.State == "uncertain" {
+			if (n.State == "uncertain" || n.State == "dispatched") && !continued {
 				a.mu.Unlock()
 				return "错误：前一插件任务图结果待核实"
 			}
@@ -472,6 +487,11 @@ func (a *App) executePluginPlan(parent context.Context, outer ToolCall, task *Ta
 				terminal++
 				continue
 			}
+			if err := a.recoveryOperationError(task, spec.Tool, args, plan); err != nil {
+				set(i, "skipped", err.Error())
+				terminal++
+				continue
+			}
 			if err := a.pluginPlanPolicy(task, spec.Tool, owners[i], scope, workspace, epoch); err != nil {
 				set(i, "skipped", err.Error())
 				terminal++
@@ -516,7 +536,12 @@ func (a *App) executePluginPlan(parent context.Context, outer ToolCall, task *Ta
 			a.publishStream(task.ID, streamEvent{Event: "intent", Tool: spec.Tool, CallID: call.ID, Args: summarizeToolArgs(call.Function.Arguments)})
 			active++
 			go func(i int, args map[string]any) {
-				admitted := context.WithValue(ctx, pluginPlanAdmissionKey{}, func() error { return a.pluginPlanPolicy(task, nodes[i].Tool, owners[i], scope, workspace, epoch) })
+				admitted := context.WithValue(ctx, pluginPlanAdmissionKey{}, func() error {
+					if err := a.pluginPlanPolicy(task, nodes[i].Tool, owners[i], scope, workspace, epoch); err != nil {
+						return err
+					}
+					return a.recoveryOperationError(task, nodes[i].Tool, args, plan)
+				})
 				raw, err := a.callPluginToolContext(admitted, owners[i], nodes[i].Tool, args)
 				results <- response{i, raw, err}
 			}(i, args)

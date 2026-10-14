@@ -8,7 +8,7 @@ const a={id:'a',runs:[{id:'run-a',status:'running',canResume:true}]},b={id:'b',r
 const state={session:a,config:{workspaceId:'one'}};
 let reply,fail,requests=[],toasts=[],polls=0;
 const ctx={state,Promise,Set,encodeURIComponent,$:()=>button,recoveryScope:()=>state.config.workspaceId,t:s=>s,toast:s=>toasts.push(s),schedulePoll:()=>polls++,api:(url)=>{requests.push(url);return new Promise((resolve,reject)=>{reply=resolve;fail=reject;});}};
-vm.createContext(ctx);vm.runInContext(extract('function currentPauseRun(', 'function resumeRunById('),ctx);
+vm.createContext(ctx);vm.runInContext(extract('function currentPauseRun(', 'async function resumeRunById('),ctx);
 (async()=>{
  ctx.syncPauseControl();assert.equal(button.hidden,false);assert.equal(button.disabled,false);
  let pending=ctx.pauseRunById('run-a');assert.equal(button.disabled,true);

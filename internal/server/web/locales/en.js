@@ -1,6 +1,19 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "任务已启动，刷新会话失败：{0}": "The task started, but the conversation could not refresh: {0}",
+  "核查后继续任务": "Continue task after review",
+  "不会自动重放旧调用或补跑旧依赖。后续新操作仍须遵循当前审批、沙箱与任务 Hook。": "Previous calls and dependencies are not resumed automatically. New operations remain subject to current approvals, sandbox policy and task hooks.",
+  "此未完成任务图将保留原记录，后续另建新图。": "This unfinished plan will remain in history. Future work uses a new plan.",
+  "尚无有效人工核查记录": "No valid operator check yet",
+  "未确认调用": "Unconfirmed call",
+  "后台调用或 Hook 曾缺少回执，外部效果仍未确认。": "A background call or hook lacked a receipt. Its external effects remain unconfirmed.",
+  "请先为每个不确定节点记录人工核查，再重新打开恢复预览。": "Record an operator check for each uncertain node, then open recovery again.",
+  "继续依据": "Reason for continuing",
+  "我已查看上述缺口，同意仅继续后续新工作。": "I have reviewed these gaps and agree to continue with new work only.",
+  "确认继续后续任务": "Confirm and continue new work",
+  "请填写继续依据并确认已查看缺口": "Provide a reason and confirm that you reviewed the gaps",
+  "后续工作继续决策": "Decision to continue new work",
   "人工核查记录": "Operator checks",
   "人工核查记录 {0}": "Operator checks {0}",
   "记录人工核查": "Record operator check",

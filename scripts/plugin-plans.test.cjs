@@ -1,7 +1,7 @@
 'use strict';
 const assert=require('node:assert/strict'), fs=require('node:fs'), vm=require('node:vm');
 class Element {
- constructor(tag,cls='',text=''){this.tag=tag;this.className=cls;this.textContent=String(text);this.children=[];this.dataset={};this.listeners={};this.open=false;}
+ constructor(tag,cls='',text=''){this.tag=tag;this.className=cls;this.textContent=String(text);this.children=[];this.dataset={};this.listeners={};this.open=false;this.value='';}
  append(...nodes){for(const n of nodes){n.parent=this;this.children.push(n);}}
  setAttribute(key,value){this[key]=value;}
  showModal(){this.open=true;}
@@ -95,4 +95,18 @@ console.log('plugin plans: truthful states, safe/lazy excerpts, collapse/focus, 
  const failedForm=walk(failed),input=failedForm.find(n=>n.tag==='textarea');input.value='Preserve evidence on request failure';await failedForm.find(n=>n.textContent==='保存核查记录').onclick();assert.equal(input.value,'Preserve evidence on request failure');assert.ok(walk(failed).some(n=>n.textContent==='409 record changed'));
  active=false;interval();assert.equal(input.value,'');assert.equal(c.document.body.children.length,0,'session/workspace boundary closes and clears dialog');
  console.log('plugin effect checks: operator history, cache refresh, scoped dialog, double-submit, failure retention and owner invalidation PASS');
+ active=true;let resumed=0,resolveResume;
+ const review={ready:false,snapshot:'s'.repeat(64),plans:[{id:'old',nodes:[{id:'n',tool:'external',state:'uncertain'}]}],calls:[],hookWarning:true};
+ const blocked=api.openRecovery({el,t,review,active:()=>active,submit:async()=>{throw Error('must not dispatch');}});
+ assert.equal(walk(blocked).find(n=>n.textContent==='确认继续后续任务').disabled,true);assert.match(walk(blocked).map(n=>n.textContent).join('\n'),/尚无有效人工核查/);api.closeCheck();
+ review.ready=true;review.plans[0].nodes[0].check='c';review.plans[0].nodes[0].conclusion='inconclusive';
+ const recovery=api.openRecovery({el,t,review,active:()=>active,submit:async body=>{assert.equal(body.snapshot,'s'.repeat(64));assert.equal(body.decision,'continue_without_replay');assert.equal(body.note,'Only new work');await new Promise(r=>{resolveResume=r;});return{id:'next'};},saved:async()=>{resumed++;}});
+ const fields=walk(recovery),note=fields.find(n=>n.tag==='textarea'),ack=fields.find(n=>n.type==='checkbox'),confirm=fields.find(n=>n.textContent==='确认继续后续任务');
+ await confirm.onclick();assert.equal(resumed,0);assert.ok(walk(recovery).some(n=>n.textContent==='请填写继续依据并确认已查看缺口'));
+ note.value='Only new work';ack.checked=true;const continuing=confirm.onclick();assert.equal(confirm.disabled,true);await confirm.onclick();resolveResume();await continuing;assert.equal(resumed,1);assert.equal(note.value,'');
+ const conflict=api.openRecovery({el,t,review,active:()=>active,submit:async()=>{throw Error('snapshot changed');}});const inputs=walk(conflict);inputs.find(n=>n.tag==='textarea').value='Keep my decision draft';inputs.find(n=>n.type==='checkbox').checked=true;await inputs.find(n=>n.textContent==='确认继续后续任务').onclick();assert.equal(inputs.find(n=>n.tag==='textarea').value,'Keep my decision draft');active=false;interval();assert.equal(c.document.body.children.length,0);
+ const pending=[];let resolvePreview,selects=0;
+ const nav={state:{session:{id:'owner'}},sessionSeq:{value:1},recoveryScope:()=> 'ws',lockScreen:{locked:false},resumeRequests:new Set(),window:{},t,toast(){throw Error('unexpected toast');},api:async(path,options)=>{pending.push([path,options]);if(!options)return await new Promise(r=>{resolvePreview=r;});return{id:'next'};},selectSession:async()=>{selects++;},reconcileAvatarRun(){}};vm.createContext(nav);vm.runInContext(app.match(/async function resumeRunById\([^]*?\n\}/)[0],nav);
+ const navigating=nav.resumeRunById('run');await nav.resumeRunById('run');assert.equal(pending.length,1,'duplicate preview deduplicated');nav.state.session.id='other';resolvePreview({required:false});await navigating;assert.equal(pending.length,1,'late preview cannot resume another owner');assert.equal(selects,0);
+ console.log('recovery continuation: required checks/ack, duplicate submit, conflict draft, owner/lock invalidation and stale preview PASS');
 })().catch(e=>{console.error(e);process.exitCode=1;});

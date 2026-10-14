@@ -140,5 +140,35 @@
     timer = setInterval(() => { if (!active()) close(); }, 250);
     return dialog;
   }
-  window.AidePluginPlans = {render, restoreFocus, openCheck, closeCheck};
+  function openRecovery({el,t,review,active,submit,saved}) {
+    closeCheck(); if (!active()) return;
+    const dialog=el('dialog','plugin-effect-dialog');
+    const heading=el('h2','',t('核查后继续任务'));heading.id='plugin-recovery-heading';dialog.setAttribute('aria-labelledby',heading.id);
+    dialog.append(heading,el('p','plugin-plan-note',t('不会自动重放旧调用或补跑旧依赖。后续新操作仍须遵循当前审批、沙箱与任务 Hook。')));
+    for(const plan of review.plans||[]) {
+      dialog.append(el('h3','',text(plan.id).slice(0,256)));
+      if(!plan.nodes?.length) dialog.append(el('p','',t('此未完成任务图将保留原记录，后续另建新图。')));
+      for(const n of plan.nodes||[]) dialog.append(el('p','',text(n.id).slice(0,256)+' · '+text(n.tool).slice(0,256)+' · '+(n.check?t(Object.hasOwn(checks,n.conclusion)?checks[n.conclusion]:'未知状态'):t('尚无有效人工核查记录'))));
+    }
+    for(const call of review.calls||[]) dialog.append(el('p','',t('未确认调用')+' · '+text(call.id).slice(0,256)+' · '+text(call.tool).slice(0,256)));
+    if(review.hookWarning) dialog.append(el('p','plugin-node-error',t('后台调用或 Hook 曾缺少回执，外部效果仍未确认。')));
+    if(!review.ready) dialog.append(el('p','plugin-node-error',t('请先为每个不确定节点记录人工核查，再重新打开恢复预览。')));
+    const note=el('textarea');note.rows=5;note.maxLength=4096;const field=el('label','',t('继续依据'));field.append(note);
+    const acknowledge=el('input');acknowledge.type='checkbox';const ack=el('label','plugin-recovery-ack');ack.append(acknowledge,el('span','',t('我已查看上述缺口，同意仅继续后续新工作。')));
+    const error=el('p','plugin-node-error');error.setAttribute('role','status');
+    const cancel=el('button','quiet',t('取消'));cancel.type='button';const save=el('button','primary',t('确认继续后续任务'));save.type='button';save.disabled=!review.ready;
+    const footer=el('div','editor-footer');footer.append(cancel,save);dialog.append(field,ack,error,footer);
+    let closed=false,timer;const close=()=>{if(closed)return;closed=true;clearInterval(timer);note.value='';dialog.close();dialog.remove();if(checkDialog===close)checkDialog=null;};checkDialog=close;
+    cancel.onclick=close;dialog.addEventListener('cancel',close);
+    save.onclick=async()=>{
+      if(closed||save.disabled)return;if(!active()){close();return;}
+      if(!acknowledge.checked||!note.value.trim()){error.textContent=t('请填写继续依据并确认已查看缺口');return;}
+      save.disabled=true;error.textContent='';
+      try{const run=await submit({snapshot:review.snapshot,decision:'continue_without_replay',note:note.value});if(!closed&&active()){close();await saved?.(run);}}
+      catch(e){if(!closed&&active()){error.textContent=e.message;save.disabled=false;}}
+      if(!active())close();
+    };
+    document.body.append(dialog);dialog.showModal();note.focus();timer=setInterval(()=>{if(!active())close();},250);return dialog;
+  }
+  window.AidePluginPlans = {render, restoreFocus, openCheck, closeCheck, openRecovery};
 })();

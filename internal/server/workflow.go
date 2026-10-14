@@ -71,21 +71,22 @@ type AgentRoot struct {
 }
 
 type Task struct {
-	ModelSelection           *SessionModelSelection `json:"modelSelection,omitempty"`
-	ReleaseReceipts          []taskReleaseReceipt   `json:"releaseReceipts,omitempty"`
-	HookRecoveryRequired     bool                   `json:"hookRecoveryRequired,omitempty"`
-	HarnessConfig            *HarnessConfig         `json:"harnessConfig,omitempty"`
-	AgentName                string                 `json:"agentName,omitempty"`
-	AgentDepth               int                    `json:"agentDepth,omitempty"`
-	AgentTools               []string               `json:"agentTools,omitempty"`
-	AgentToolsSet            bool                   `json:"agentToolsSet,omitempty"`
-	ExecutionSequence        uint64                 `json:"executionSequence,omitempty"`
-	ToolExecutionIntents     []ToolExecutionIntent  `json:"toolExecutionIntents,omitempty"`
-	PluginPlans              []*PluginExecutionPlan `json:"pluginPlans,omitempty"`
-	ExecutionPolicy          *ExecutionPolicy       `json:"executionPolicy,omitempty"`
-	AutoReview               bool                   `json:"autoReview,omitempty"`
-	ApprovalState            string                 `json:"approvalState,omitempty"`
-	ApprovalReviews          []ApprovalReview       `json:"approvalReviews,omitempty"`
+	ModelSelection           *SessionModelSelection    `json:"modelSelection,omitempty"`
+	ReleaseReceipts          []taskReleaseReceipt      `json:"releaseReceipts,omitempty"`
+	HookRecoveryRequired     bool                      `json:"hookRecoveryRequired,omitempty"`
+	HarnessConfig            *HarnessConfig            `json:"harnessConfig,omitempty"`
+	AgentName                string                    `json:"agentName,omitempty"`
+	AgentDepth               int                       `json:"agentDepth,omitempty"`
+	AgentTools               []string                  `json:"agentTools,omitempty"`
+	AgentToolsSet            bool                      `json:"agentToolsSet,omitempty"`
+	ExecutionSequence        uint64                    `json:"executionSequence,omitempty"`
+	ToolExecutionIntents     []ToolExecutionIntent     `json:"toolExecutionIntents,omitempty"`
+	PluginPlans              []*PluginExecutionPlan    `json:"pluginPlans,omitempty"`
+	RecoveryContinuation     *TaskRecoveryContinuation `json:"recoveryContinuation,omitempty"`
+	ExecutionPolicy          *ExecutionPolicy          `json:"executionPolicy,omitempty"`
+	AutoReview               bool                      `json:"autoReview,omitempty"`
+	ApprovalState            string                    `json:"approvalState,omitempty"`
+	ApprovalReviews          []ApprovalReview          `json:"approvalReviews,omitempty"`
 	approvalCtx              context.Context
 	approvalCancel           context.CancelFunc
 	approvalGeneration       uint64
@@ -818,6 +819,10 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("任务运行中，无法重试"))
 		return
 	}
+	if taskRecoveryPreview(orig).Required || recoveryRetryUnknown(orig) {
+		fail(w, 409, errors.New("存在未确认效果；请核查后使用恢复任务，不能直接重试整轮"))
+		return
+	}
 	choice := a.taskModelSelectionLocked(orig)
 	cfg, selectionErr := a.selectionSettingsLocked(choice)
 	if selectionErr != nil {
@@ -958,7 +963,7 @@ func (a *App) pauseTask(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
-	avatarOverride, err := readAvatarFeedbackOverride(w, r)
+	avatarOverride, recoveryDecision, err := readTaskResumeRequest(w, r)
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -966,7 +971,7 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	s := a.sessions[r.PathValue("id")]
-	if s == nil {
+	if s == nil || s.Deleted {
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
@@ -983,6 +988,23 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 	}
 	if (orig.Status != "paused" && orig.Status != "interrupted") || !orig.CanResume || len(orig.CheckpointMessages) == 0 {
 		fail(w, 409, errors.New("该任务没有可恢复的检查点"))
+		return
+	}
+	if _, active := a.cancels[orig.ID]; active {
+		fail(w, 409, errors.New("任务仍在停止，请稍后重试"))
+		return
+	}
+	if orig.WorkspaceID != "" && orig.WorkspaceID != a.wsID() {
+		fail(w, 409, errors.New("请切回原工作区后恢复任务"))
+		return
+	}
+	review := a.taskRecoveryReviewLocked(orig)
+	if review.Required && (recoveryDecision == nil || !review.Ready || recoveryDecision.Snapshot != review.Snapshot) {
+		jsonOut(w, 409, map[string]any{"error": "恢复记录需要核查并明确确认；请重新加载恢复预览", "recovery": review})
+		return
+	}
+	if !review.Required && recoveryDecision != nil {
+		fail(w, 409, errors.New("恢复快照已变化，请重新加载"))
 		return
 	}
 	choice := a.taskModelSelectionLocked(orig)
@@ -1027,6 +1049,9 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	recoverExecutionCheckpoint(&resumed)
+	if recoveryDecision != nil {
+		applyRecoveryContinuation(&resumed, orig.ID, review, recoveryDecision)
+	}
 	currentPolicy, err := a.loadExecutionPolicy()
 	if err != nil {
 		fail(w, 400, err)
@@ -1065,12 +1090,13 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 	if orig.Model != "" {
 		resumed.Model = orig.Model
 	}
+	originalStatus := orig.Status
 	orig.Status = "resumed"
 	orig.CanResume = false
 	s.Runs = append(s.Runs, &resumed)
 	if err := a.save(s); err != nil {
 		s.Runs = s.Runs[:len(s.Runs)-1]
-		orig.Status = "paused"
+		orig.Status = originalStatus
 		orig.CanResume = true
 		fail(w, 500, err)
 		return
@@ -2020,6 +2046,14 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		}
 		for callIndex, call := range calls {
 			toolCallsUsed += pluginPlanDispatchCost(call)
+			if call.Function.Name != "run_plugin_plan" {
+				var args map[string]any
+				if json.Unmarshal([]byte(call.Function.Arguments), &args) == nil {
+					if err := a.recoveryOperationError(task, call.Function.Name, args, nil); err != nil {
+						return "", input, err
+					}
+				}
+			}
 			if err := a.runHarnessHooks(ctx, task, stepName, input, "before_tool", call.Function.Name); err != nil {
 				return "", input, err
 			}
@@ -3833,6 +3867,11 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	if a.toolDenied(call.Function.Name) || taskToolDenied(task, call.Function.Name) {
 		return "工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用"
 	}
+	if call.Function.Name != "run_plugin_plan" {
+		if err := a.recoveryOperationError(task, call.Function.Name, args, nil); err != nil {
+			return "错误：" + err.Error()
+		}
+	}
 	if strings.HasPrefix(call.Function.Name, "reminder_") {
 		return a.executeReminderTool(a.reminderActorForTask(task.ID), call)
 	}
@@ -4269,6 +4308,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 				return "用户未批准控制操作；操作未执行。"
 			}
 			args["approved"] = true
+		}
+		if err := a.recoveryOperationError(task, call.Function.Name, args, nil); err != nil {
+			return "错误：" + err.Error()
 		}
 		raw, err := a.callPluginToolContext(ctx, pluginID, call.Function.Name, args)
 		if err != nil {

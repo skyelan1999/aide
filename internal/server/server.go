@@ -1515,6 +1515,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/events", a.runEvents)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/journal", a.executionJournal)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/outcome", a.taskOutcomeAPI)
+	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/recovery", a.taskRecoveryPreviewAPI)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/plugin-plans/{plan}/nodes/{node}/checks", a.pluginEffectCheckAPI)
 	mux.HandleFunc("POST /api/sessions/{id}/runs/{run}/outcome/releases", a.taskReleaseReceiptAPI)
 	mux.HandleFunc("GET /api/sessions/{id}/runs/{run}/outcome/evidence/{evidence}", a.taskOutcomeEvidenceAPI)
