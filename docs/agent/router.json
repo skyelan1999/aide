@@ -478,6 +478,10 @@
       [
         "node",
         "scripts/starmap-empty-state.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/plugin-plans.test.cjs"
       ]
     ],
     "full": [

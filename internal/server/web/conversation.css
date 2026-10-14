@@ -49,6 +49,29 @@
 .parallel-part{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-top:1px solid var(--line-faint);margin-top:7px;padding-top:7px}
 .parallel-part>span{min-width:0;overflow-wrap:anywhere}.parallel-part>small{flex:0 0 auto}
 .parallel-reason{margin:8px 0 0;line-height:1.7}
+.plugin-plans{min-width:0;max-width:100%;margin:8px 0 12px}
+.plugin-plan{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--surface-alt);font-size:12px;color:var(--text);min-width:0}
+.plugin-plan-uncertain{border-color:var(--warn)}
+.plugin-plan-summary{cursor:pointer;line-height:1.8;overflow-wrap:anywhere}
+.plugin-plan-summary>span{margin-inline-start:10px;color:var(--muted)}
+.plugin-plan-summary>.plugin-plan-alert{color:var(--warn)}
+.plugin-plan-policy{font-size:11px;color:var(--muted);margin:8px 0 4px}
+.plugin-plan-note,.plugin-plan-reason{color:var(--muted);line-height:1.6;overflow-wrap:anywhere;margin:5px 0}
+.plugin-plan-warning{color:var(--warn);line-height:1.6;margin:8px 0}
+.plugin-plan-nodes{list-style:none;padding:0;margin:8px 0;display:grid;gap:0;min-width:0}
+.plugin-plan-node{border-top:1px solid var(--line-faint);padding:10px 0;min-width:0}
+.plugin-node-top{display:flex;align-items:flex-start;flex-wrap:wrap;gap:6px 12px;min-width:0}
+.plugin-node-identity{display:flex;flex-direction:column;gap:4px;flex:1 1 170px;min-width:0;overflow-wrap:anywhere}
+.plugin-node-identity>code,.plugin-node-deps>code{font-size:11px;color:var(--muted);white-space:normal;overflow-wrap:anywhere}
+.plugin-node-state{font-size:11px;line-height:1.6;max-width:100%;overflow-wrap:anywhere;color:var(--muted)}
+.plugin-plan-node[data-state="uncertain"] .plugin-node-state,.plugin-node-error{color:var(--warn)}
+.plugin-plan-node[data-state="succeeded"] .plugin-node-state{color:var(--success)}
+.plugin-node-deps{display:flex;flex-wrap:wrap;gap:5px 8px;color:var(--muted);font-size:11px;margin-top:6px;min-width:0}
+.plugin-node-merge,.plugin-node-error{font-size:11px;line-height:1.7;margin:5px 0;overflow-wrap:anywhere}
+.plugin-node-result-detail{font-size:11px;margin-top:7px;min-width:0}
+.plugin-node-result-detail>summary{cursor:pointer;line-height:1.7}
+.plugin-node-result{white-space:pre-wrap;overflow-wrap:anywhere;overflow:auto;max-height:180px;max-width:100%;box-sizing:border-box;background:var(--code-bg);border-radius:6px;padding:9px;line-height:1.6}
+.plugin-plan-evidence{margin-top:2px;font-size:11px}
 .composer-toolbar{flex-wrap:wrap}
 
 #timeline .chat-answer[hidden]{display:none}

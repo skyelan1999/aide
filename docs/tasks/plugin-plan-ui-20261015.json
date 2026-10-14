@@ -1,0 +1,77 @@
+{
+  "id": "plugin-plan-ui-20261015",
+  "request": "Continue plugin task graph: show nodes/dependencies/requested-effective concurrency, distinguish dispatch/proposals/unknown effects, keep live repaint and evidence navigation, verify real canonical UI.",
+  "baseline": "8efec56af33b18df299672e07f5a3126e6bd6184",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Current conversation shows dependency nodes, requested/effective concurrency and truthful status/merge distinctions; no inference that dispatched means handler running or proposed means applied.",
+    "Node metadata changes repaint even with identical task timestamps/status and unchanged answer; untouched cards remain cached; user collapse, result expansion and keyboard focus retained.",
+    "Titles, dependency IDs, reasons and results remain literal text, excerpts bounded and private args/proposal payloads excluded from display fingerprints.",
+    "Unknown results open the correct current-run evidence view; no pretend reconciliation/replay button.",
+    "Canonical start.command real Safari desktop/narrow/theme/keyboard fixture acceptance, clearly distinguished from live model execution; documents/source push/offline image refreshed."
+  ],
+  "scope": [
+    "internal/server/web/plugin-plans.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/conversation.css",
+    "internal/server/web/locales/en.js",
+    "scripts/plugin-plans.test.cjs",
+    "scripts/session-render-cache.test.cjs",
+    "scripts/steer-user-bubbles.test.cjs",
+    "docs/agent/router.json",
+    "docs/tasks",
+    "docs/architecture/plugin-task-scheduling.md",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Continue original5x plugin planning visibility; backend exists, current UI has no node panel.",
+      "evidence": [
+        "docs/tasks/plugin-dependency-plan-20261015.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Dedicated readonly per-plan details with safe literal labels, bounded lazy result excerpts, evidence navigation, compact metadata cache projection, preserved detail/focus keys. Generic stream intent refresh plus existing poll fallback updates state. Synthetic current-instance session for visual acceptance, no model/provider changes.",
+      "evidence": [
+        "internal/server/web/app.js:renderSession"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Readonly node panels, exact state/merge labels, dependencies, selected/effective limit, bounded lazy literal result text and current-run evidence navigation. Structured keys preserve collapse/focus without ID collisions; graph metadata included in session/card cache and intent-triggered refresh.",
+      "evidence": [
+        "internal/server/web/plugin-plans.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Quick69 PASS including actual renderer VM semantics, private field exclusion, equal-length graph changes, non-latest run invalidation, lazy excerpt, collapse/focus, i18n, stale-stream/session isolation. Current-instance visual fixture prepared with explicit no-execution label; canonical rebuild/browser acceptance pending.",
+      "evidence": [
+        ".agent-state/verify-20261014T201153185155Z.log",
+        ".agent-state/plugin-plan-ui/fixture-record.json"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental source push/testing/local image authorization; no formal main/tag release.",
+  "rollback": "Revert module/UI hook and cache query changes; backend plan data preserved. Remove only owned synthetic UI fixture.",
+  "handoff": "Frontend source ready; pending canonical start.command rebuild and real Safari visual/evidence-navigation checks. Constructed fixture is display-only, no plugins/models executed; does not close live model/stream acceptance or manual effect reconciliation. Original goal remains active."
+}

@@ -10,10 +10,12 @@ const textRevision = source.match(/function sessionTextRevision\(value\) \{[\s\S
 const sessionRevision = source.match(/function sessionRevision\(s\) \{[\s\S]*?\n\}/)?.[0];
 const valueFingerprint = source.match(/function sessionValueFingerprint\(value\) \{[\s\S]*?\n\}/)?.[0];
 assert.ok(signature && reuse && textRevision && sessionRevision, 'session and run-card fingerprints and reuse helpers are present');
+const planView = source.match(/function sessionPluginPlanView\(run\) \{[\s\S]*?\n\}/)?.[0];
+assert.ok(planView);
 const context = {Math, state:{historyLimit:30}};
 vm.createContext(context);
 assert.ok(valueFingerprint, 'large run-card content uses a streaming value fingerprint');
-vm.runInContext(`${textRevision}; ${sessionRevision}; ${valueFingerprint}; ${signature}; ${reuse}; this.textRevision=sessionTextRevision; this.sessionRevision=sessionRevision; this.valueFingerprint=sessionValueFingerprint; this.signature=sessionRunRenderSignature; this.reuse=appendCachedSessionRun;`, context);
+vm.runInContext(`${planView}; ${textRevision}; ${sessionRevision}; ${valueFingerprint}; ${signature}; ${reuse}; this.textRevision=sessionTextRevision; this.sessionRevision=sessionRevision; this.valueFingerprint=sessionValueFingerprint; this.signature=sessionRunRenderSignature; this.reuse=appendCachedSessionRun;`, context);
 
 const base = {
   id: 'run-1', mode: 'chat', prompt: 'summarize', status: 'completed', created: '2026-10-14T00:00:00Z',

@@ -784,6 +784,7 @@ function sessionRevision(s) {
   const runStates = runs.map(run => [
     run?.parallelism, JSON.stringify([run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])]), run?.id, run?.mode, run?.model, run?.status, run?.applied, run?.error,
     run?.pauseRequested, run?.canResume, run?.approvalState, run?.autoReview,
+    sessionTextRevision(JSON.stringify(sessionPluginPlanView(run))),
     sessionTextRevision(JSON.stringify(run?.steps?.map(s => s.outputSegments) || [])),
     sessionTextRevision(JSON.stringify(run?.approvalReviews || [])),
     sessionTextRevision(typeof run?.pendingQuestion === 'string' ? run.pendingQuestion : JSON.stringify(run?.pendingQuestion || null)),
@@ -802,12 +803,22 @@ function sessionTextRevision(value) {
   }
   return `${text.length}:${a >>> 0}:${b >>> 0}`;
 }
+function sessionPluginPlanView(run) {
+  return (Array.isArray(run?.pluginPlans) ? run.pluginPlans : []).filter(p => p && typeof p === 'object').map(p => [
+    p.id, p.state, p.requested, p.limit, p.reason,
+    (Array.isArray(p.nodes) ? p.nodes : []).filter(n => n && typeof n === 'object').map(n => [
+      n.id, n.title, n.tool, n.dependsOn, n.state, n.error, n.mergeState,
+      typeof n.result === 'string' ? [n.result.slice(0,4096), n.result.length] : null,
+    ]),
+  ]);
+}
 function getSessionWindow(id) { return api('/sessions/' + id + '?limit=' + state.historyLimit); }
 // Polling can update one active run while the conversation contains many
 // completed Markdown answers. Fingerprint only fields rendered by a run card,
 // then keep an unchanged card (and its parsed Markdown/details state) intact.
 function sessionRunRenderSignature(run, view = {}) {
   const rendered = [
+    sessionPluginPlanView(run),
     run.parallelism, [run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])],
     run.mode, run.model, run.prompt, run.status, run.created, run.error, run.applied,
     run.strategy, run.profile, run.autoReview, run.approvalState, run.approvalReviews,
@@ -1019,6 +1030,7 @@ function openStream(run) {
       ph.phase = 'tool'; ph.toolName = d.tool;
       touchRunActivity(run.id); renderRunStatus(run.id);
     }
+    refreshSessionSoon();
   });
   es.addEventListener('reasoning', e => {
     if (state.stream !== es) return;
@@ -1957,6 +1969,8 @@ function renderSteerMessages(run, box) {
   }
 }
 function renderSession() {
+  const pluginPlanFocus = document.activeElement?.dataset?.pluginPlanFocus;
+  const pluginPlanSessionId = state.session?.id;
   const selectionKey = JSON.stringify([state.session?.id, state.session?.modelSelection, state.session?.modelSelectionRevision]);
   if (selectionKey !== state.composerSelectionKey) {
     state.composerSelectionKey = selectionKey;
@@ -2046,6 +2060,9 @@ function renderSession() {
     renderClarification(run, box);
     const parallelPanel = window.AideParallelChat?.render(run, {el, t, open: openDetails, initial: !previousRuns.get(run.id)?.node.querySelector('.parallel-progress')});
     if (parallelPanel) box.append(parallelPanel);
+    const previousPlanKeys = new Set([...(previousRuns.get(run.id)?.node.querySelectorAll('.plugin-plan') || [])].map(node => node.dataset.key));
+    const pluginPlans = window.AidePluginPlans?.render(run, {el, t, open:openDetails, seen:previousPlanKeys, onEvidence:() => openRunOutcome(run.id, pluginPlanSessionId)});
+    if (pluginPlans) box.append(pluginPlans);
     if (!run.steps.length) box.append(el('p', 'muted', t("正在准备模型请求…")));
     run.steps.forEach((step, index) => {
       if (run.mode === 'chat') {
@@ -2204,6 +2221,7 @@ function renderSession() {
   estimateContext();
   renderQueueBar();
   updateJumpBtn();
+  window.AidePluginPlans?.restoreFocus($('timeline'), pluginPlanFocus);
 }
 function renderQueueBar() {
   const bar = $('queue-bar');
@@ -9120,6 +9138,14 @@ function openTrajectory() {
   renderTrajectory();
   $('trajectory-sheet').classList.add('open');
   $('settings-backdrop').classList.add('open');
+}
+function openRunOutcome(runId, sessionId) {
+  if (state.session?.id !== sessionId || !state.session.runs?.some(run => run.id === runId)) return false;
+  trajView = 'outcome'; trajOutcomeRun = {sessionId, runId};
+  document.querySelectorAll('.traj-main-seg .traj-seg-btn').forEach(button => {
+    const selected = button.dataset.view === 'outcome'; button.classList.toggle('active', selected); button.setAttribute('aria-pressed', String(selected));
+  });
+  openTrajectory(); return true;
 }
 function closeTrajectory() {
   ++trajectoryGeneration;
