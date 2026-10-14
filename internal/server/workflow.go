@@ -35,10 +35,11 @@ type Attachment struct {
 	Directory bool   `json:"directory,omitempty"`
 }
 type Step struct {
-	Name      string `json:"name"`
-	Status    string `json:"status"`
-	Content   string `json:"content"`
-	Reasoning string `json:"reasoning,omitempty"` // 模型思考链（折叠回看，不并入正文）
+	OutputSegments []OutputSegment `json:"outputSegments,omitempty"`
+	Name           string          `json:"name"`
+	Status         string          `json:"status"`
+	Content        string          `json:"content"`
+	Reasoning      string          `json:"reasoning,omitempty"` // 模型思考链（折叠回看，不并入正文）
 }
 type Change struct {
 	Path     string `json:"path"`
@@ -1580,33 +1581,34 @@ func summarizeToolArgs(raw string) string {
 	return out
 }
 
-// streamEvent 推送给 SSE 订阅者的事件；event 取值：step | delta | tool | status | done。
+// streamEvent 推送给 SSE 订阅者的事件；event 包括 step | delta | segment | tool | status | done。
 // SSE 是实时增强层，最终任务状态仍由 GET /sessions/{id} 持久化兜底。
 type streamEvent struct {
-	Event        string     `json:"event"`
-	SessionID    string     `json:"sessionId,omitempty"`
-	AvatarCue    *AvatarCue `json:"avatarCue,omitempty"`
-	Step         string     `json:"step,omitempty"`
-	Status       string     `json:"status,omitempty"`
-	Text         string     `json:"text,omitempty"`
-	Tool         string     `json:"tool,omitempty"`
-	Preview      string     `json:"preview,omitempty"`
-	Error        string     `json:"error,omitempty"`
-	Round        int        `json:"round,omitempty"`     // toolLoop 轮次：前端按轮次重置 live 文本，避免跨轮拼接
-	Question     string     `json:"question,omitempty"`  // 澄清问题（awaiting_clarification 时下发）
-	Reasoning    string     `json:"reasoning,omitempty"` // reasoning 事件：模型思考链增量
-	Args         string     `json:"args,omitempty"`      // intent 事件：工具参数摘要（命令/路径）
-	CallID       string     `json:"callId,omitempty"`    // 关联 intent↔tool 事件，定位第几个工具
-	OK           bool       `json:"ok,omitempty"`        // tool 事件：是否执行成功
-	Phase        string     `json:"phase,omitempty"`     // compaction阶段：started | folding | completed | failed
-	StartedAt    int64      `json:"startedAt,omitempty"` // compaction开始时间（Unix毫秒），用于持续显示耗时
-	Preflight    bool       `json:"preflight,omitempty"` // 是否为发送任务前的同步压缩
-	BatchStage   string     `json:"batchStage,omitempty"`
-	Batch        int        `json:"batch,omitempty"`
-	Batches      int        `json:"batches,omitempty"`
-	BeforeTokens int        `json:"beforeTokens,omitempty"`
-	AfterTokens  int        `json:"afterTokens,omitempty"`
-	Folded       int        `json:"folded,omitempty"`
+	Segment      *OutputSegment `json:"segment,omitempty"`
+	Event        string         `json:"event"`
+	SessionID    string         `json:"sessionId,omitempty"`
+	AvatarCue    *AvatarCue     `json:"avatarCue,omitempty"`
+	Step         string         `json:"step,omitempty"`
+	Status       string         `json:"status,omitempty"`
+	Text         string         `json:"text,omitempty"`
+	Tool         string         `json:"tool,omitempty"`
+	Preview      string         `json:"preview,omitempty"`
+	Error        string         `json:"error,omitempty"`
+	Round        int            `json:"round,omitempty"`     // toolLoop 轮次：前端按轮次重置 live 文本，避免跨轮拼接
+	Question     string         `json:"question,omitempty"`  // 澄清问题（awaiting_clarification 时下发）
+	Reasoning    string         `json:"reasoning,omitempty"` // reasoning 事件：模型思考链增量
+	Args         string         `json:"args,omitempty"`      // intent 事件：工具参数摘要（命令/路径）
+	CallID       string         `json:"callId,omitempty"`    // 关联 intent↔tool 事件，定位第几个工具
+	OK           bool           `json:"ok,omitempty"`        // tool 事件：是否执行成功
+	Phase        string         `json:"phase,omitempty"`     // compaction阶段：started | folding | completed | failed
+	StartedAt    int64          `json:"startedAt,omitempty"` // compaction开始时间（Unix毫秒），用于持续显示耗时
+	Preflight    bool           `json:"preflight,omitempty"` // 是否为发送任务前的同步压缩
+	BatchStage   string         `json:"batchStage,omitempty"`
+	Batch        int            `json:"batch,omitempty"`
+	Batches      int            `json:"batches,omitempty"`
+	BeforeTokens int            `json:"beforeTokens,omitempty"`
+	AfterTokens  int            `json:"afterTokens,omitempty"`
+	Folded       int            `json:"folded,omitempty"`
 }
 
 // subscribeStream 订阅某任务的实时事件；返回 channel 与取消函数。
@@ -1854,6 +1856,9 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		}
 		lastOut = out
 		a.mu.Unlock()
+		if err := a.saveOutputSegment(task, stepIndex, round, out); err != nil {
+			return out, input, err
+		}
 		// ── finish_reason=length 续接（DXF 长脚本被单次输出上限截断的根因）──
 		// 先判断最后一次 assistant 输出是否含“未闭合的 tool_call”（arguments JSON 不完整）：
 		//   是 → 自动续写补全 arguments，闭合解析后再执行；绝不执行半成品工具调用。
