@@ -42,7 +42,8 @@
 .parallel-picker[hidden]{display:none!important}
 .strategy-parallel-title{margin-top:6px;border-top:1px solid var(--line-faint)}
 .strategy-reasoning-col{overscroll-behavior:contain}
-@media(min-width:601px){.strategy-menu .strategy-menu-col{max-height:min(250px,calc(100dvh - 180px))}}
+@media(min-width:601px){.strategy-menu .strategy-menu-col,.strategy-menu.with-approval .strategy-menu-col{max-height:min(250px,calc(100dvh - 180px));overflow-y:auto;overflow-x:hidden}}
+.strategy-reasoning-col>*{flex-shrink:0}
 .parallel-progress{margin:8px 0 12px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-alt);font-size:12px;color:var(--muted)}
 .parallel-progress summary{cursor:pointer;color:var(--text);line-height:1.6}
 .parallel-part{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-top:1px solid var(--line-faint);margin-top:7px;padding-top:7px}
