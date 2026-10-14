@@ -42,13 +42,13 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "定向race源码21.537秒、8097兼容分支13.592秒均PASS；缓存与workspace scene VM PASS。真实Safari更新后验收待执行，不复用旧full结论。",
+      "status": "pass",
+      "summary": "定向race源码21.537秒、8097兼容13.592秒PASS；缓存/scene VM PASS；原生Safari真实刷新1164ms和905ms观察均1563节点可见，视角/筛选保留。新full已另行启动尚未完成。",
       "evidence": [
-        ".agent-state/starmap-first-paint-tests.log",
-        "aideMacMini/aide/.agent-state/starmap-first-paint/tests.log",
-        "node scripts/starmap-cache.test.cjs",
-        "node scripts/starmap-workspace-scene.test.cjs"
+        ".agent-state/starmap-first-paint/after-first.png",
+        ".agent-state/starmap-first-paint/after-repeat.png",
+        ".agent-state/starmap-first-paint/api.json",
+        ".agent-state/starmap-first-paint-tests.log"
       ]
     },
     "documentation": {
@@ -59,17 +59,83 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "范围文件逐项暂存，保留五个继承vendor删除和实际工作树既有修改；仅清理导包临时提取文件。",
+      "evidence": [
+        "git diff --check"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "开发分支7ede155已push，8097兼容候选部署健康、设置/挂载/加密历史保留；离线包内外哈希与docker load通过且复制两工作树。未执行main/tag/正式Release。",
+      "evidence": [
+        "aideMacMini/aide/.agent-state/starmap-first-paint/deployment.json",
+        ".agent-state/starmap-first-paint-package.json"
+      ]
     }
   },
   "release_authorization": "用户要求分段实现、push、测试，更新Docker离线镜像包供另一端直接导入；本任务沿用RC2兼容镜像，不执行main/tag/正式Release。",
   "rollback": "部署前停止8097并备份data卷；保留当前7f0281ea4ceb镜像，挂载和设置逐项比对。",
-  "handoff": "源码与兼容分支定向测试通过；接下来更新8097并实测首屏，随后导出离线镜像包。资源DAG和总目标12工作流继续保留待完成。"
+  "handoff": "本批首屏修复已部署8097并实测两次刷新可见，离线包已导出校验复制。当前新full仍运行；继续原目标十二工作流、资源DAG和真实模型待验。",
+  "runtime": {
+    "image": "sha256:05ba9e1b9c84cf7cac389e9dd65fb34c8c7c1a4b8ddceef4056f5a670387ca04",
+    "srcsha": "d0b9300a04ceb20c1582a2b4223559e5ac5626472ba10c7c755574f7597cb4e7",
+    "name": "aide-0.1.17.0-RC2-linux-arm64-05ba9e1b9c84-offline.tar.gz",
+    "sha256": "59b191e5e8e301854e3bbd5e561534099ea14b31fa9270f73dd1ecf56e1e9a06",
+    "bytes": 561607234,
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "dockerLoadVerified": true,
+    "copiedCanonical": true
+  },
+  "browser_acceptance": {
+    "client": "native Safari / HTTPS localhost:8097",
+    "observations": [
+      {
+        "elapsedMs": 1164,
+        "nodes": 1563,
+        "workspaceNodes": 1560,
+        "graphVisible": true
+      },
+      {
+        "elapsedMs": 905,
+        "nodes": 1563,
+        "workspaceNodes": 1560,
+        "graphVisible": true,
+        "staleMessageVisible": true
+      }
+    ],
+    "boundary": "刷新至工具完成观察的耗时，非浏览器Performance API首绘指标；仅当前本地库，两次观察，不代表所有设备/远端/无缓存冷启动。",
+    "evidence": [
+      ".agent-state/starmap-first-paint/after-first.png",
+      ".agent-state/starmap-first-paint/after-repeat.png",
+      ".agent-state/starmap-first-paint/api.json"
+    ]
+  },
+  "api_acceptance": [
+    {
+      "path": "/api/knowledge-map/identity",
+      "status": 200,
+      "seconds": 0.035,
+      "bytes": 131,
+      "nodes": 0,
+      "stale": false
+    },
+    {
+      "path": "/api/knowledge-map/updates",
+      "status": 200,
+      "seconds": 0.145,
+      "bytes": 6112249,
+      "nodes": 1563,
+      "stale": true
+    },
+    {
+      "path": "/api/knowledge-map/updates?code=1",
+      "status": 200,
+      "seconds": 0.664,
+      "bytes": 3234356,
+      "nodes": 1630,
+      "stale": false
+    }
+  ]
 }
