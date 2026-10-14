@@ -2650,18 +2650,63 @@ function isSqlitePath(path) { return /\.(db|sqlite|sqlite3)$/i.test(effectiveFil
 const splitScrollLock = { editor: false, fileView: false };
 const splitScrollExpected = new WeakMap();
 const splitScrollLast = { editor: 'editor', fileView: 'file-view-editor' };
+function markdownSourceAnchors(source, host) {
+  if (!window.marked?.lexer || !host) return [];
+  const root = host.querySelector('.md-reader-content') || host;
+  const blocks = [...root.children];
+  let offset = 0, blockIndex = 0;
+  const anchors = [];
+  for (const token of window.marked.lexer(String(source || ''), {gfm:true})) {
+    const raw = typeof token.raw === 'string' ? token.raw : '';
+    const line = String(source || '').slice(0, offset).split('\n').length;
+    // Marked emits one top-level token per rendered block; skip tokens that
+    // intentionally have no rendered block (blank lines/definitions).
+    if (raw.trim() && blockIndex < blocks.length) {
+      const node = blocks[blockIndex++];
+      node.dataset.sourceLine = String(line);
+      anchors.push({line, node});
+    }
+    offset += raw.length;
+  }
+  return anchors;
+}
 function syncSplitScroll(source, target, key) {
   if (!splitScrollLock[key] || !source || !target) return;
   const expected = splitScrollExpected.get(source);
   if (expected != null && Math.abs(source.scrollTop - expected) < 2) { splitScrollExpected.delete(source); return; }
   splitScrollExpected.delete(source);
-  const sourceRange = Math.max(0, source.scrollHeight - source.clientHeight);
-  const targetRange = Math.max(0, target.scrollHeight - target.clientHeight);
-  if (!sourceRange || !targetRange) return;
-  const next = Math.round(source.scrollTop / sourceRange * targetRange);
+  let next;
+  const editor = $(key === 'editor' ? 'editor' : 'file-view-editor');
+  const preview = $(key === 'editor' ? 'editor-preview' : 'file-view-preview');
+  const anchors = preview?._markdownSourceAnchors || [];
+  if (source === editor && anchors.length) {
+    const style = getComputedStyle(editor);
+    const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
+    const firstVisibleLine = Math.max(1, Math.floor(editor.scrollTop / lineHeight) + 1);
+    let anchor = anchors[0];
+    for (const candidate of anchors) { if (candidate.line > firstVisibleLine) break; anchor = candidate; }
+    const hostRect = preview.getBoundingClientRect(), nodeRect = anchor.node.getBoundingClientRect();
+    const pad = parseFloat(getComputedStyle(preview).paddingTop) || 0;
+    next = Math.max(0, preview.scrollTop + nodeRect.top - hostRect.top - preview.clientTop - pad);
+  } else if (source === preview && anchors.length) {
+    const pad = parseFloat(getComputedStyle(preview).paddingTop) || 0;
+    const top = preview.getBoundingClientRect().top + preview.clientTop + pad;
+    const visible = anchors.find(anchor => anchor.node.getBoundingClientRect().bottom >= top) || anchors[anchors.length - 1];
+    const style = getComputedStyle(editor);
+    const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
+    next = Math.max(0, (visible.line - 1) * lineHeight);
+  } else {
+    const sourceRange = Math.max(0, source.scrollHeight - source.clientHeight);
+    const targetRange = Math.max(0, target.scrollHeight - target.clientHeight);
+    if (!sourceRange || !targetRange) return;
+    next = Math.round(source.scrollTop / sourceRange * targetRange);
+  }
   if (Math.abs(target.scrollTop - next) < 2) return;
   splitScrollExpected.set(target, next);
   target.scrollTop = next;
+  // Browsers clamp scrollTop to the current range. Record the actual value so
+  // the corresponding scroll event is recognized as synchronization feedback.
+  splitScrollExpected.set(target, target.scrollTop);
 }
 function setSplitScrollLock(key, enabled) {
   splitScrollLock[key] = !!enabled;
@@ -8386,6 +8431,7 @@ function setupMarkdownMedia(editor, spec, currentSpec, edit) {
 }
 function setupMarkdownPreview(host, text, path, spec) {
   host.innerHTML = renderMarkdown(text, false, path, spec);
+  host._markdownSourceAnchors = markdownSourceAnchors(text, host);
   if (fileRenderEnabled('fileMarkdownOutline')) window.AideMarkdownOutline?.mount(host, { title: t('标题目录') });
   const captured = {...spec};
   host.querySelectorAll('a[href^="#"]').forEach(link=>{link.addEventListener('click',event=>{
