@@ -5170,6 +5170,7 @@ function refreshStrategyUI() {
   $('strategy-label').title = label + ' · ' + t('当前会话独立配置') + ' · ' + t('推理强度') + ': ' + choice.reasoningEffort;
   const menu = $('strategy-menu');
   const parallelPicker = $('chat-parallelism')?.closest('.parallel-picker');
+  const reasoningScroll = menu.querySelector('.strategy-reasoning-col')?.scrollTop || 0;
   menu.replaceChildren();
   // 左栏：策略；右栏：模型（各自独立滚动，互不挤压）
   const left = el('div', 'strategy-menu-col');
@@ -5199,13 +5200,18 @@ function refreshStrategyUI() {
   if (xiaomiOwnsModel) manageModels.title = t('小秘使用独立模型来源，模型由小秘设置管理');
   manageModels.onclick = () => { closeStrategyMenu(); openSettings(); };
   right.append(manageModels);
-  const reasoningCol = el('div', 'strategy-menu-col');
+  const reasoningCol = el('div', 'strategy-menu-col strategy-reasoning-col');
   reasoningCol.append(el('div', 'strategy-menu-sep', t("推理强度")));
   const curEffort = choice.reasoningEffort || 'auto';
   for (const [val, name, desc] of [['auto', t("自动"), t("按任务自动选择")], ['off', t("关闭"), t("不启用推理")], ['low', t("低"), t("快速响应")], ['medium', t("中"), t("均衡")], ['high', t("高"), t("深度推理")]]) {
     reasoningCol.append(strategyMenuOption('reasoning', val, name, desc, curEffort === val));
   }
-  if (parallelPicker) reasoningCol.append(parallelPicker);
+  reasoningCol.append(el('div', 'strategy-menu-sep strategy-parallel-title', t('并行倍率')));
+  const parallelValue = window.AideParallelChat?.value('chat', false) || 1;
+  for (const [value, description] of [[1, '标准速度'], [2, '两路并行'], [3, '三路并行'], [4, '四路并行'], [5, '五路并行']]) {
+    reasoningCol.append(strategyMenuOption('parallel', String(value), value + 'X', t(description), parallelValue === value, state.mode !== 'chat' || assistantMode));
+  }
+  if (parallelPicker) { parallelPicker.hidden = true; reasoningCol.append(parallelPicker); }
   menu.append(left, right, reasoningCol);
   menu.classList.toggle('with-approval', !assistantMode);
   if (!assistantMode) {
@@ -5231,6 +5237,7 @@ function refreshStrategyUI() {
     menu.append(approvalCol);
   }
   window.AideParallelChat?.sync();
+  reasoningCol.scrollTop = reasoningScroll;
 }
 let approvalRulesDialog=null;
 window.LockCluster?.on('effective',locked=>{if(locked)approvalRulesDialog?.close();});
@@ -5273,11 +5280,12 @@ function strategyMenuOption(kind, value, name, desc, selected, disabled = false)
   const b = el('button', 'strategy-option' + (selected ? ' selected' : ''));
   b.type = 'button';
   b.disabled = disabled;
-  if (disabled && kind !== 'approval') b.title = t('小秘使用独立模型来源，模型由小秘设置管理');
+  if (disabled && kind !== 'approval') b.title = kind === 'parallel' ? t('并行分析仅用于普通对话') : t('小秘使用独立模型来源，模型由小秘设置管理');
   b.setAttribute('role', 'menuitemradio');
   b.setAttribute('aria-checked', String(selected));
   b.append(el('span', 'strategy-option-check', selected ? '✓' : ''), el('span', '', name), el('small', '', desc));
   b.onclick = action(async () => {
+    if (kind === 'parallel') { window.AideParallelChat?.set(value); refreshStrategyUI(); return; }
     if (kind === 'approval') {
       await setComposerAutoReview(value === 'assisted');
       closeStrategyMenu();

@@ -1,13 +1,14 @@
 {
   "id": "composer-parallel-placement-20261014",
-  "request": "把1x到5x的选择放到思考强度下面去可选，不要所有的配置都在外面挤着；用户追加：我要那种滚动的1x 2x 3x 4x 5x",
+  "request": "把1x到5x的选择放到思考强度下面去可选，不要所有的配置都在外面挤着；用户追加：我要那种滚动的1x 2x 3x 4x 5x；用户最终明确：标题并行倍率，1X标准速度、2X等五条选项，与思考强度共用上下滚动区域，面板不能过高",
   "baseline": "66ceeb0d38f4d63cd4299ee40aed78c5a6b9a0d1",
   "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
   "acceptance": [
-    "1x-5x为上下滚动的倍数滚轮，位于推理强度下方，当前项居中高亮；输入框外栏不再显示该控件",
+    "策略面板第三列包含推理强度和并行倍率两个标题；并行倍率为1X标准速度、2X两路并行至5X五路并行五个列表项；两组共享垂直滚动区域",
     "原选择值、选择事件与持久化保留；重建菜单或切换会话后控件仍可用",
     "普通对话可选1x-5x，工作流/小秘保持原禁用规则",
-    "实际8097浏览器验证布局和选择；源码push与离线镜像包更新分别记录"
+    "实际8097浏览器验证布局和选择；源码push与离线镜像包更新分别记录",
+    "桌面配置列高度不超过250px，整面板不因新增选项继续向上撑高"
   ],
   "scope": [
     "internal/server/web/index.html",
@@ -16,7 +17,9 @@
     "docs/tasks",
     "docker-images",
     "internal/server/web/parallel-chat.js",
-    "scripts/parallel-chat.test.cjs"
+    "scripts/parallel-chat.test.cjs",
+    "docs/architecture.md",
+    "internal/server/web/locales/en.js"
   ],
   "stages": {
     "requirements": {
@@ -26,7 +29,7 @@
     },
     "design": {
       "status": "pass",
-      "summary": "保留现有select作为内部状态接口，使用可滚动并逐项吸附的listbox呈现1x-5x；滚动/键盘更新原持久值。隐藏菜单不读取零布局覆盖选择，打开和重建菜单后恢复滚动位置。",
+      "summary": "复用策略菜单行，推理强度与并行倍率同列共用滚动条，桌面每列最高250px；选择倍率时保持列scrollTop，不关闭菜单，沿用原偏好持久值与任务提交。",
       "evidence": [
         "internal/server/web/parallel-chat.js",
         "internal/server/web/app.js"
@@ -34,7 +37,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "倍数移入推理强度下方并改为滚轮；当前项居中高亮，支持滚动、点击与键盘。原select隐藏但保持内部值，保留模式禁用。",
+      "summary": "五条1X至5X菜单选项与双标题同列，内部原select隐藏仅保留兼容接口；删除独立滚轮，新增倍率set API并保持模式限制。",
       "evidence": [
         "internal/server/web/index.html",
         "internal/server/web/app.js",
@@ -43,26 +46,32 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "滚轮JS语法与parallel-chat交互回归PASS，覆盖滚动、键盘、边界钳制、隐藏菜单保持及模式禁用；session model回归PASS。前一版原生下拉在真实8097已验证位置与刷新保留，追加滚轮需更新后重新实测。",
+      "summary": "列表版本parallel-chat与i18n回归PASS，实际8097需更新后重新验收；此前独立滚轮截图仅属前版，不能代替最终列表布局。",
       "evidence": [
         "node scripts/parallel-chat.test.cjs",
-        "node scripts/session-model-selection.test.cjs"
+        "node scripts/test_i18n.cjs"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "架构入口位置、滚轮操作、实际Safari证据及原规划预算/文档草稿口径同步更新。",
+      "evidence": [
+        "docs/architecture.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "只改布局/控件及关联回归，保留五个继承删除；Safari恢复测试前1x，无模型调用或测试会话。",
+      "evidence": [
+        "git diff --check"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "61b8780已push，8097候选5884034b8198健康，设置/挂载/加密历史保留；离线包正在导出校验。未正式main/tag发布。",
+      "evidence": [
+        "aideMacMini/aide/.agent-state/composer-wheel/deployment.json"
+      ]
     }
   },
   "release_authorization": "沿用用户分批实现/测试/push和更新离线镜像包的授权，仅8097兼容候选，不正式Release。",

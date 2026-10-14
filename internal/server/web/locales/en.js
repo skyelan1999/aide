@@ -2491,3 +2491,5 @@ Object.assign(window.aideEnglish, {"并行": "Parallel", "会话并行分析上�
 Object.assign(window.aideEnglish, {"当前会话独立配置": "Independent settings for this chat", "已保存当前会话配置": "Saved settings for this chat"});
 
 Object.assign(window.aideEnglish, {"会话配置已变化，请重新选择":"Chat settings changed; please select again"});
+
+Object.assign(window.aideEnglish, {"并行倍率":"Parallelism", "标准速度":"Standard speed", "两路并行":"2 parallel analyses", "三路并行":"3 parallel analyses", "四路并行":"4 parallel analyses", "五路并行":"5 parallel analyses"});
