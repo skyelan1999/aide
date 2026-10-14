@@ -22,9 +22,9 @@
       const summary = el('summary', 'plugin-plan-summary');
       summary.dataset.pluginPlanFocus = key;
       summary.append(el('strong', '', t('插件任务图 {0}', index + 1)),
-        el('span', '', t(Object.hasOwn(phases, plan.state) ? phases[plan.state] : '未知状态')),
-        el('span', '', t('已结束 {0}/{1}', ended, nodes.length)));
-      if (uncertain) summary.append(el('span', 'plugin-plan-alert', t('待核实 {0}', uncertain)));
+        el('span', '', ' · ' + t(Object.hasOwn(phases, plan.state) ? phases[plan.state] : '未知状态')),
+        el('span', '', ' · ' + t('已结束 {0}/{1}', ended, nodes.length)));
+      if (uncertain) summary.append(el('span', 'plugin-plan-alert', ' · ' + t('待核实 {0}', uncertain)));
       panel.append(summary);
       const multiplier = value => Number.isInteger(Number(value)) && Number(value) >= 1 && Number(value) <= 5 ? Number(value) : null;
       const requested = multiplier(plan.requested) ?? multiplier(plan.limit) ?? '—';
