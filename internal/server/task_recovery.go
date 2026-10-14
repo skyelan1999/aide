@@ -240,9 +240,9 @@ func taskRecoveryPreview(task *Task) taskRecoveryReview {
 	return r
 }
 
-func (a *App) taskRecoveryReviewLocked(task *Task) taskRecoveryReview {
+func (a *App) taskRecoveryReviewLocked(sessionID string, task *Task) taskRecoveryReview {
 	r := taskRecoveryPreview(task)
-	r.Snapshot = recoveryHash([]any{r.Snapshot, a.wsID(), a.wsRevision})
+	r.Snapshot = recoveryHash([]any{sessionID, r.Snapshot, a.wsID(), a.wsRevision})
 	return r
 }
 
@@ -270,7 +270,7 @@ func (a *App) taskRecoveryPreviewAPI(w http.ResponseWriter, r *http.Request) {
 			fail(w, 409, errors.New("task is still stopping"))
 			return
 		}
-		jsonOut(w, 200, a.taskRecoveryReviewLocked(task))
+		jsonOut(w, 200, a.taskRecoveryReviewLocked(s.ID, task))
 		return
 	}
 	fail(w, 404, errors.New("task not found"))

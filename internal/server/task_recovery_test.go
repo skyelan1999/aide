@@ -77,17 +77,23 @@ func TestTaskRecoveryPreviewAndGuardedResume(t *testing.T) {
 	requireStatus(t, request(a, "POST", recoveryURL+"/resume", nil), 409)
 	requireStatus(t, request(a, "POST", recoveryURL+"/resume", recoveryRequest(review)), 409)
 	recoveryCheck(t, a, task)
-	ready := a.taskRecoveryReviewLocked(task)
+	ready := a.taskRecoveryReviewLocked("effect-session", task)
 	if !ready.Ready {
 		t.Fatal(ready)
 	}
 	requireStatus(t, request(a, "POST", recoveryURL+"/resume", recoveryRequest(review)), 409)
 	recoveryCheck(t, a, task)
 	requireStatus(t, request(a, "POST", recoveryURL+"/resume", recoveryRequest(ready)), 409)
-	latest := a.taskRecoveryReviewLocked(task)
+	latest := a.taskRecoveryReviewLocked("effect-session", task)
 	a.wsRevision++
 	requireStatus(t, request(a, "POST", recoveryURL+"/resume", recoveryRequest(latest)), 409)
-	latest = a.taskRecoveryReviewLocked(task)
+	latest = a.taskRecoveryReviewLocked("effect-session", task)
+	cloned, _ := json.Marshal(task)
+	var other Task
+	_ = json.Unmarshal(cloned, &other)
+	a.sessions["other-owner"] = &Session{ID: "other-owner", Runs: []*Task{&other}}
+	requireStatus(t, request(a, "POST", strings.Replace(recoveryURL, "effect-session", "other-owner", 1)+"/resume", recoveryRequest(latest)), 409)
+	delete(a.sessions, "other-owner")
 	task.WorkspaceID = "different-workspace"
 	requireStatus(t, request(a, "GET", recoveryURL+"/recovery", nil), 409)
 	requireStatus(t, request(a, "POST", recoveryURL+"/resume", recoveryRequest(latest)), 409)
@@ -113,7 +119,7 @@ func TestTaskRecoveryContinuesNewGraphNeverReplaysOld(t *testing.T) {
 	a, task, old := recoveryFixture(t)
 	planInstall(t, a, "recovery-fixture", `const fs=require('fs'),path=require('path');module.exports={apply(ctx){ctx.tool({name:'recovery_probe',handler:args=>{fs.appendFileSync(path.join(__dirname,args.marker+'.marker'),'called\n');return 'new work returned';}})}};`)
 	recoveryCheck(t, a, task)
-	review := a.taskRecoveryReviewLocked(task)
+	review := a.taskRecoveryReviewLocked("effect-session", task)
 	newCall := planCall(t, "new-plan", []pluginPlanNodeSpec{{ID: "fresh", Tool: "recovery_probe", Arguments: map[string]any{"marker": "new"}}})
 	provider := newToolProvider(t, []func() (string, []ToolCall){func() (string, []ToolCall) { return "", []ToolCall{old} }, func() (string, []ToolCall) { return "", []ToolCall{newCall} }, func() (string, []ToolCall) { return "New work complete; old effects remain unverified.", nil }})
 	defer provider.Close()
@@ -214,7 +220,7 @@ func TestTaskRecoveryGenericCallsAndCurrentPolicy(t *testing.T) {
 func TestTaskRecoveryNewIDsCannotRepeatUncertainEffects(t *testing.T) {
 	a, task, _ := recoveryFixture(t)
 	recoveryCheck(t, a, task)
-	review := a.taskRecoveryReviewLocked(task)
+	review := a.taskRecoveryReviewLocked("effect-session", task)
 	recoverExecutionCheckpoint(task)
 	applyRecoveryContinuation(task, task.ID, review, &taskRecoveryDecision{Snapshot: review.Snapshot, Decision: "continue_without_replay", Note: "new work only"})
 	planInstall(t, a, "recovery-no-repeat", `const fs=require('fs'),path=require('path');module.exports={apply(ctx){ctx.tool({name:'recovery_probe',handler:()=>{fs.writeFileSync(path.join(__dirname,'bad'),'1');return 'bad';}})}};`)
@@ -238,7 +244,7 @@ func TestTaskRecoverySaveFailureAndConcurrentDecision(t *testing.T) {
 		t.Run(map[bool]string{true: "save failure", false: "concurrent"}[saveFailure], func(t *testing.T) {
 			a, task, _ := recoveryFixture(t)
 			recoveryCheck(t, a, task)
-			review := a.taskRecoveryReviewLocked(task)
+			review := a.taskRecoveryReviewLocked("effect-session", task)
 			provider := newToolProvider(t, []func() (string, []ToolCall){func() (string, []ToolCall) { return "continued", nil }})
 			defer provider.Close()
 			a.settings = Settings{BaseURL: provider.URL, Model: "test"}
