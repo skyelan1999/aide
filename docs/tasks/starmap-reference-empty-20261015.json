@@ -44,14 +44,14 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Backend unavailable-source guard in shared local source opener and knowledge area snapshots/readers; no retarget to/context or config rewrite. Local frame, live-scope guard, bounded empty labels and metadata-only repaint implemented; focused FIFO/source boundary and actual Cosmos VM regressions added. General root-open isolation also covers local source browsing/read paths; repeated pending opens return immediately, concurrent fast readers receive separate handles.",
+      "summary": "Backend unavailable-source guard in shared local source opener and knowledge area snapshots/readers; no retarget to/context or config rewrite. Local frame, live-scope guard, bounded empty labels and metadata-only repaint implemented; focused FIFO/source boundary and actual Cosmos VM regressions added. General root-open isolation also covers local source browsing/read paths; repeated pending opens return immediately, concurrent fast readers receive separate handles. Local read failures preserve verified prefix and bounded prior same-origin observations without stale changed-content edges; caller/App cancellation still discards candidates.",
       "evidence": [
         "internal/server/knowledge_reference_progressive_test.go"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "First focused startup/reference race6.155s and vet PASS; first source guard alone did not restore current star map. Registry inspection exposed independent Downloads source; root-open isolation now under focused race/FIFO/concurrency/late-handle/shutdown checks. Frontend frame/empty VM checks PASS. Current real instance requires new rebuild/acceptance; no completed star fix claim. General root-open/FIFO/startup/reference focused race PASS8.101s and vet; actual second candidate browser verification pending.",
+      "summary": "Focused root/startup/reference race8.101s and vet PASS. All knowledge/root/startup race62.857s and vet PASS. Correct composite-host-mount reference probe progressively read160 to1075 files in7 batches, race16.433s and vet PASS; fallback cap test PASS. Earlier probe omitted /local/Users submount and is invalid. Quick68 PASS. Canonical start.command rebuilt with local dependencies/network none and opened Safari9999. Actual171 nodes/225 edges appeared; workspace169 nodes visibly rendered after source filter. Persistent host directory waits still restrict ongoing coverage; not a complete star-map/performance acceptance. Final full70 PASS: Go race server543.786s, tts1.533s, vet and nonroot actual DOCX roundtrip. Updated bundle verified and imported. Persistent host opens and complete ongoing source coverage remain unresolved; verification stage intentionally in_progress.",
       "evidence": [
         ".agent-state/reference-repository-probe.log",
         ".agent-state/reference-fixture-race.log",
@@ -62,28 +62,42 @@
         "internal/server/knowledge_startup_recovery_test.go",
         "scripts/starmap-local-frame.test.cjs",
         "scripts/starmap-empty-state.test.cjs",
-        ".agent-state/starmap-recenter/root-open-race.log"
+        ".agent-state/starmap-recenter/root-open-race.log",
+        ".agent-state/starmap-recenter/knowledge-partial-race.log",
+        ".agent-state/starmap-recenter/actual-composite-reference-race.log",
+        ".agent-state/starmap-recenter/final-quick.log",
+        ".agent-state/starmap-recenter/partial-source-launch.log",
+        ".agent-state/starmap-recenter/partial-source-workspace-visible.png",
+        ".agent-state/verify-20261014T190551632882Z.log",
+        ".agent-state/starmap-recenter/final-restored-entry.log",
+        ".agent-state/starmap-recenter/final-restored-workbench.png"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Documented partial-source observation retention, identity boundaries, source I/O uncertainty and invalid probe correction.",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Preserved inherited vendor deletions, source registry, workspace configuration and Docker volumes. Private probes remain ignored. No OS permissions changed.",
+      "evidence": [
+        ".agent-state/starmap-recenter/mount-diagnosis.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Incremental source824eb8e pushed; app+dependency bundle verified/imported/copied to both local trees, full70 PASS. Acceptance of complete ongoing star-map source coverage remains pending; no formal release or receiving-device claim.",
+      "evidence": [
+        ".agent-state/starmap-recenter/delivery/package.json"
+      ]
     }
   },
   "release_authorization": "沿用分批测试/push及离线镜像包交付；不正式Release。",
-  "rollback": "",
-  "handoff": "Current new source awaits canonical start.command rebuild/browser acceptance. Docker engine recovered, focused tests use local snapshots. Keep initial workspace-config bytes and source bindings. Original goal active; no claim real model/vector or full plugin DAG. Old8097 UI evidence is historical; current configured entry9999 is acceptance target.",
+  "rollback": "Retain previous offline bundles and dependency archive. Load a prior compatible image with matching launcher; do not remove data volumes or overwrite saved workspace/source configuration.",
+  "handoff": "Incremental batch tested full70 and delivered locally; app29c59cea57b5 plus complete dependency image archived/imported. Exact canonical start.command restored healthy Safari9999 without rebuild/download; original config/mounts/protected token unchanged. Workspace stars visibly rendered earlier. Host directory opens still wait, partial observations retained; full ongoing coverage remains open. Downloads source still enabled pending user decision. Original goal/plugin DAG active; Windows/receiving-device acceptance pending, real vectors deferred.",
   "canonical_observation_20261015": {
     "entry": "aide/start.command",
     "port": 9999,
@@ -99,5 +113,56 @@
     "prototype": "Framing/empty-state SourceVM candidates only, not applied. Full source suite currently frozen on c072f4e for startup/asset batch.",
     "after_recovery": "Same exact-entry workbench restored and file listing visible; star map still zero/connecting after engine recovery, even while Go tests use container-local files. Not resolved by this startup/image batch."
   },
-  "diagnosis_correction": "Runtime stack proves a root-open syscall blocking first publication; initial attribution to old docs based on length was premature. Actual registry also includes enabled Downloads before old docs and both resolved paths are30 characters. Keep known-startup guard but add general root-open timeout/dedup/admission isolation; do not disable or retarget user source."
+  "diagnosis_correction": "Runtime stack proves a root-open syscall blocking first publication; initial attribution to old docs based on length was premature. Actual registry also includes enabled Downloads before old docs and both resolved paths are30 characters. Keep known-startup guard but add general root-open timeout/dedup/admission isolation; do not disable or retarget user source. /local is intentional composite root; submounts /Users,/Volumes,/private must be included in diagnostic probes. Complete composite probe passed. No proof of macOS permission root cause.",
+  "runtime": {
+    "runningImage": "sha256:29c59cea57b5545894067b4267543eaa105479757e74d4328819691c37c85411",
+    "image": "sha256:29c59cea57b5545894067b4267543eaa105479757e74d4328819691c37c85411",
+    "binarySHA256": "17f9d7c9ad84f4dd4ea6c1a422ef6e28789e06c342317e9ae65f11981268559e",
+    "runningPlatformManifest": "sha256:ef38f951031384bdbdbd4c7b69e69f68af9d985e64c735a00ffe5ca3ebe25084",
+    "sourceSHA256": "936db5b99a168e6654d58e19256029df916106ca2e29a29caf82e4e4ecccf707",
+    "buildCommit": "ab7f656ef1f879906496d465b365531863423bf0-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 1,
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:29c59cea57b5545894067b4267543eaa105479757e74d4328819691c37c85411",
+    "sourceSHA256": "936db5b99a168e6654d58e19256029df916106ca2e29a29caf82e4e4ecccf707",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-29c59cea57b5-offline.tar.gz",
+    "bytes": 705584920,
+    "sha256": "558e240194c2fdf8cad80b1a8b7e5a88e737010b7d70d86aa5316cb8a0b01370",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  },
+  "full_environment_attempt": {
+    "status": "blocked",
+    "detail": "First current full attempt: quick68 completed; asset-test container create stalled and timed out90s. Subsequent Go snapshot create also waited; interrupted, never PASS. Docker Desktop force stop/start preserved images/data. Only own workbench/test containers observed. Workbench stopped successfully after recovery; current full runs from container-local snapshot with workbench stopped. Restore exact canonical start.command after completion. Isolated rerun completed full70 PASS. Workbench restored through canonical entry without rebuild/download; matching runtime/config/mounts rechecked.",
+    "evidence": [
+      ".agent-state/starmap-recenter/final-full.log",
+      ".agent-state/starmap-recenter/full-recovery-stop.log",
+      ".agent-state/starmap-recenter/full-recovery-start.log"
+    ]
+  },
+  "full_receipt": {
+    "status": "pass",
+    "head": "824eb8e7188b44691b34c1d0b0051406dbe8e757",
+    "fingerprint": "6f0f6d74ae34294a63da563b7e9265ac129dfa278d1883a2e906bc222a76f003",
+    "time": "20261014T190551632882Z",
+    "log": ".agent-state/verify-20261014T190551632882Z.log",
+    "commands": 70
+  }
 }

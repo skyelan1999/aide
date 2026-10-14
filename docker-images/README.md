@@ -108,3 +108,8 @@ Git push 只同步源码，不包含本目录被忽略的大型镜像归档。�
 
 
 2026-10-15 当前资源权限修正版：`aide-0.1.17.0-RC2-linux-arm64-05c7a9ee2663-offline.tar.gz`（linux/arm64，705587320 字节），SHA-256 `ecb62181f5efc32029e509d00ebbd59de335d0eeb2ede7117272e444374379e5`。应用镜像 `sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14`，源码指纹 `5be86528b20af58d36940751e2b56b614ea5de25057c8ad4043cb96c54ab5ca0`。保留同一完整依赖镜像，修复私有源码模式复制后普通运行用户无法读取 Office 和内置插件的问题；工作台实际端口9999，Safari工作台与原配置保留已观测。镜像包内外校验、实际导入和副本状态以[本批任务](../docs/tasks/launcher-local-image-20261015.json)为准。旧包保留追溯，另一设备请优先使用此修正版；接收端导入仍待实际验收。
+
+
+## 2026-10-15 incremental local snapshot
+
+The canonical `aide/start.command` rebuilt the current local candidate using `aide:dependencies-v1` with build networking disabled and opened Safari on configured port9999. Latest offline bundle: `aide-0.1.17.0-RC2-linux-arm64-29c59cea57b5-offline.tar.gz`; use the adjacent SHA256SUMS. It includes both application and complete dependency image tags for one local import. Runtime/source startup and cache-only cleanup were verified in the launcher task. The current map additionally retains verified observations on source failures, but some host directory opens still wait; complete map coverage is not accepted. This is a development snapshot, not a formal release. Other-device import and Windows native acceptance remain external.

@@ -188,5 +188,52 @@
     "8bd455a",
     "c072f4e",
     "0daa73b"
-  ]
+  ],
+  "compatible_followup_20261015": {
+    "task": "docs/tasks/starmap-reference-empty-20261015.json",
+    "sourceCommit": "824eb8e",
+    "runtime": {
+      "runningImage": "sha256:29c59cea57b5545894067b4267543eaa105479757e74d4328819691c37c85411",
+      "image": "sha256:29c59cea57b5545894067b4267543eaa105479757e74d4328819691c37c85411",
+      "binarySHA256": "17f9d7c9ad84f4dd4ea6c1a422ef6e28789e06c342317e9ae65f11981268559e",
+      "runningPlatformManifest": "sha256:ef38f951031384bdbdbd4c7b69e69f68af9d985e64c735a00ffe5ca3ebe25084",
+      "sourceSHA256": "936db5b99a168e6654d58e19256029df916106ca2e29a29caf82e4e4ecccf707",
+      "buildCommit": "ab7f656ef1f879906496d465b365531863423bf0-dirty",
+      "port": "9999",
+      "health": "ok",
+      "mountsPreserved": true,
+      "workspaceConfigBytesPreserved": true,
+      "protectedFilesUnchanged": 1,
+      "configuredPath": "/Users/skyelan/debug",
+      "runtimeWorkspace": "/workspace",
+      "startupWarningPresent": true,
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "package": {
+      "image": "sha256:29c59cea57b5545894067b4267543eaa105479757e74d4328819691c37c85411",
+      "sourceSHA256": "936db5b99a168e6654d58e19256029df916106ca2e29a29caf82e4e4ecccf707",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-29c59cea57b5-offline.tar.gz",
+      "bytes": 705584920,
+      "sha256": "558e240194c2fdf8cad80b1a8b7e5a88e737010b7d70d86aa5316cb8a0b01370",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true
+    },
+    "scope": "Exact start.command reopened Safari workbench9999 and real workspace stars rendered. Original startup/cache tests above remain historical evidence. Followup full70 PASS, server race543.786s and vet; exact-entry restore again opened Safari with no build/download; persistent host directory waits still restrict map coverage. Receiving-device import not observed.",
+    "full_receipt": {
+      "status": "pass",
+      "head": "824eb8e7188b44691b34c1d0b0051406dbe8e757",
+      "fingerprint": "6f0f6d74ae34294a63da563b7e9265ac129dfa278d1883a2e906bc222a76f003",
+      "time": "20261014T190551632882Z",
+      "log": ".agent-state/verify-20261014T190551632882Z.log",
+      "commands": 70
+    }
+  }
 }

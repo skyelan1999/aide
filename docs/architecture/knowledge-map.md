@@ -499,3 +499,10 @@ A separate single-iteration directory-discovery benchmark measured 19,000 files 
 
 
 本地来源根打开使用独立的有界操作：调用方最多等待350毫秒，同一路径同时只保留一个未完成打开，整个App最多24个。重复访问已超时的路径立即返回等待状态，不逐请求新增工作；快速并发读取等待前一个打开完成后取得自己的独立根句柄。超时来源显示明确的目录／权限诊断，其他来源继续索引。操作系统调用本身可能无法取消，迟到的句柄由原工作者关闭；App关闭取消调用方但不等待不可取消的系统调用，不宣称解除内核或宿主权限阻塞。
+
+
+### Retain observations when a local source fails (2026-10-15)
+
+A single local read failure preserves the current verified prefix and other sources. Prior nodes are restored only within the same workspace, source, region, root and origin; the source is explicitly partial/unavailable. Retention is bounded to21,200 nodes, restoring edges only up to6,500 total. Retry material is retained only for admitted files. Fresh files never inherit old symbols or relationships proved by old content; old edges require unchanged endpoint observations. Request cancellation, App shutdown and workspace identity changes still reject candidates.
+
+The corrected host probe included all composite /local submounts and read1,075 aide files in7 batches. The earlier probe omitted /local/Users and is invalid. Actual Safari launched through the exact start.command displayed171 nodes/225 relationships, with169 workspace nodes visibly rendered after filtering. Host directory opens still wait; retained observations and source diagnostics remain visible. This is not full ongoing source coverage or a fixed first-paint guarantee. No OS permission, source binding or saved workspace configuration was changed.
