@@ -64,7 +64,8 @@
       "status": "pass",
       "summary": "Bilingual execution-policy documentation records kernel/entry behavior, independent approval, scratch/cache change, Linux/SSH/native/plugin/network/metadata limits and launch-time semantics.",
       "evidence": [
-        "docs/architecture/execution-policy.md"
+        "docs/architecture/execution-policy.md",
+        "docs/reviews/2026-10-14-sandbox-enforcement-rollout.md"
       ]
     },
     "cleanup": {
@@ -73,9 +74,11 @@
       "evidence": []
     },
     "release": {
-      "status": "in_progress",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "d99cfb5 and 39c6602 pushed. Local8097 updated with backup and previous image retained; compiled candidate and deployed command endpoint verified kernel denial of outside Python writes. Preferences preserved. No Release/main merge.",
+      "evidence": [
+        "docs/reviews/2026-10-14-sandbox-enforcement-rollout.md"
+      ]
     }
   },
   "release_authorization": "Prior user: incremental tests/push/docs and local8097 AIDE-only update; preserve mounts and other services.",
