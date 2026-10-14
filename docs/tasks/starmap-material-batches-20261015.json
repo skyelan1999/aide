@@ -86,8 +86,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Matching local development image and complete offline app/dependency bundle exported, hashes/tags/launchers/platform verified and actually docker loaded; copied to both local trees. Incremental branch push pending; no main/tag/formal release.",
+      "status": "pass",
+      "summary": "Matching local development image and complete offline app/dependency bundle exported, hashes/tags/launchers/platform verified and actually docker loaded; copied to both local trees. Incremental source/tests/docs branch push43867e8 PASS; no main/tag/formal release.",
       "evidence": [
         ".agent-state/starmap-material-batches/package.json"
       ]
@@ -95,7 +95,7 @@
   },
   "release_authorization": "Existing incremental source push/local testing/build/offline package authorization; no formal release.",
   "rollback": "Revert bounded material changes and use earlier image; older decoder rejects new payload version and safely rescans (no cursor/data deletion). v1 remains readable.",
-  "handoff": "Scoped backend race/vet, quick69, canonical Safari progressive/pending and matching offline package verification PASS. Incremental branch push pending. Original goal active; no full release/full-source or other-device acceptance.",
+  "handoff": "Scoped backend race/vet, quick69, canonical Safari progressive/pending and matching offline package verification PASS. Incremental branch push43867e8 PASS. Original goal active; no full release/full-source or other-device acceptance.",
   "runtime": {
     "runningImage": "sha256:abca7611229b2bdf89c77b4ae0357f822ba4f075dcdc01aa65f413d8a0a07f8a",
     "image": "sha256:abca7611229b2bdf89c77b4ae0357f822ba4f075dcdc01aa65f413d8a0a07f8a",
@@ -139,5 +139,11 @@
     "time": "20261014T215908990857Z",
     "log": ".agent-state/verify-20261014T215908990857Z.log",
     "commands": 69
+  },
+  "source_push": {
+    "branch": "perf/starmap-material-batches",
+    "pushedCommit": "43867e8",
+    "status": "pass",
+    "scope": "Incremental branch source/tests/docs push; no main/tag/formal release or image registry publication"
   }
 }

@@ -153,7 +153,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 current: perf/starmap-material-batches source5ffaaa3, canonical aide/start.command healthy Safari9999 imageabca7611229b. Bounded material queues, durable progress and explicit pending/unavailable details implemented. Scoped Knowledge/local-root race99.729s+vet, quick69 and frozen actual prefix PASS; native reference10744->13156 visible with selection retained, body gaps remain. Complete app/dependency offline image hashes/import/platform/launchers/two local copies verified; config/auth/mount/workspace preserved. See followup123; final metadata quick69 PASS; push pending. Original12 streams active; Windows by user, real vectors deferred, receiving-device import unobserved.",
+  "handoff": "2026-10-15 current: perf/starmap-material-batches source5ffaaa3, canonical aide/start.command healthy Safari9999 imageabca7611229b. Bounded material queues, durable progress and explicit pending/unavailable details implemented. Scoped Knowledge/local-root race99.729s+vet, quick69 and frozen actual prefix PASS; native reference10744->13156 visible with selection retained, body gaps remain. Complete app/dependency offline image hashes/import/platform/launchers/two local copies verified; config/auth/mount/workspace preserved. See followup123; final metadata quick69 PASS; branch push43867e8 PASS. Original12 streams active; Windows by user, real vectors deferred, receiving-device import unobserved.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6100,7 +6100,7 @@
     }
   },
   "progress_checkpoint_20261015_followup123": {
-    "status": "in_progress",
+    "status": "pass",
     "task": "docs/tasks/starmap-material-batches-20261015.json",
     "sourceCommits": [
       "5ffaaa3"
@@ -6143,7 +6143,7 @@
       "hostLaunchersMatch": true,
       "copiedBothTrees": true
     },
-    "remaining": "Final metadata quick69 PASS; branch push pending. Original12 streams active; body gaps, host OS-call waits, full-source latency, live plugin scheduling/manual reconciliation remain. Windows by user, vectors deferred, receiving-device import unobserved.",
+    "remaining": "Final metadata quick69 PASS; branch push43867e8 PASS. Original12 streams active; body gaps, host OS-call waits, full-source latency, live plugin scheduling/manual reconciliation remain. Windows by user, vectors deferred, receiving-device import unobserved.",
     "quick_receipt": {
       "status": "pass",
       "head": "5ffaaa3be15b53cf175e69aeed5b3a717f65da22",
@@ -6151,6 +6151,12 @@
       "time": "20261014T215908990857Z",
       "log": ".agent-state/verify-20261014T215908990857Z.log",
       "commands": 69
+    },
+    "source_push": {
+      "branch": "perf/starmap-material-batches",
+      "pushedCommit": "43867e8",
+      "status": "pass",
+      "scope": "Incremental branch source/tests/docs push; no main/tag/formal release or image registry publication"
     }
   }
 }
