@@ -1,0 +1,80 @@
+{
+  "id": "context-usage-display-20261014",
+  "request": "切换会话后上下文消耗数值不对",
+  "baseline": "1a283ac5b6923c119c6cf68bd688dc42ac5b8803",
+  "initial_status": "M docs/agent/router.json\n M docs/architecture/markdown-editing-export.md\n M internal/server/web/app.js\n M internal/server/web/index.html\n D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js\n?? docs/tasks/markdown-copy-auto-highlight-20261014.json\n?? internal/server/web/markdown-code.js\n?? scripts/markdown-code.test.cjs",
+  "acceptance": [
+    "切换会话立即清除旧统计，延迟响应不能覆盖当前会话",
+    "请求成功后才缓存；失败允许重试；同一请求不重复提交",
+    "清除草稿后恢复会话基线，工作区及会话隔离"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/context-meter.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/tasks/context-usage-display-20261014.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户确认本机8097，异常发生在切换会话后。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "仅修复前端缓存提交时机、草稿隔离及异步响应归属；保持服务端估算口径。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "修复成功缓存提交、会话/工作区重置、草稿隔离、延迟响应与预览防抖竞态。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "scripts/context-meter.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "quick 全部通过；Safari 本地组件使用实际函数验证 B=2048 不被迟到的 A=6144 覆盖。真实8097验收 NOT_RUN（健康接口仍超时）。",
+      "evidence": [
+        ".agent-state/context-usage-display/quick.log",
+        "Safari 本地 preview.html：PASS，B 2.0K / 8.0K"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "已补中英上下文缓存行为及任务验收边界。",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已检查 diff；保留原有改动，测试夹具与日志归入 .agent-state。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "8097旧容器无法终止且健康检查超时；Docker Desktop 重启影响 Docmost/Postgres/Redis，等待用户确认。组件验收不等于运行实例验收。",
+      "evidence": [
+        "前序 rebuild.log: tried to kill container, but did not receive an exit event",
+        "2026-10-14 curl https://localhost:8097/api/health timeout"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "仅回退本次前端改动并重建镜像，保留数据卷及原有用户改动；原运行镜像无法确认可回退。",
+  "handoff": "新镜像已构建。等待用户确认重启Docker Desktop；恢复后替换8097并做真实会话切换及复制粘贴验收。未推送。",
+  "runtime_image": {
+    "tag": "aide:local",
+    "id": "sha256:edd165c676217a2b1f8db9733c2d32eac88289931416eacaa6c0de5800fd7b20",
+    "build": "pass",
+    "source": "aideMacMini/aide working tree",
+    "evidence": ".agent-state/context-usage-display/build.log",
+    "running_acceptance": "not_run"
+  }
+}

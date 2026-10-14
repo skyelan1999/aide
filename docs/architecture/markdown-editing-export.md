@@ -77,3 +77,16 @@ Node VM 验证关闭、复用、重建与计时器；候选构建通过。隔离
 ### 服务中断后的草稿恢复验收（2026-10-10）
 
 系统 Safari 在 18211 隔离实例打开工作区 Markdown 后，短暂停止该实例；手动保存提示失败，本地输入和预览保留，服务器文件仍是原文。使用 `start.command` 重启后，重新打开同一路径提示未保存草稿；点击恢复后预览立即更新，手动重试保存显示服务器已保存，磁盘正文核对一致。本次覆盖服务中断和手动重试，不等同物理断网、SSH 自动保存或 Windows 实机验收。用户确认暂时无 Windows 环境，该项保留未验证。
+
+
+## Markdown 输出复制与代码特征高亮（2026-10-14）
+
+代码块快速复制使用文档事件委托，聊天、文件预览以及重新插入的 Markdown HTML 都可响应。复制取代码原始文本，保留缩进、换行、中文和特殊符号；整条回答的复制也使用同一个兼容函数。优先调用剪贴板 API，缺失或拒绝时回退到当前模态框内的临时文本选择，随后恢复焦点和选择。只有实际复制成功才显示成功；两种方式都失败时显示失败。
+
+非流式代码块优先按围栏的有效语言渲染；没有语言或语言未注册时，使用本地 highlight.js 根据内容自动识别，结构合法的 JSON 可直接识别。自动识别仅使用常见代码语言，低相关性保持原样；`text`、`plaintext`、`none` 等明确纯文本标记不自动着色。超过 65,536 字符的块和流式活动块跳过高亮，保留原文及复制能力；完成态重新渲染时补齐有界高亮。识别结果是语法猜测，不保证所有短片段或混合语言都能准确识别。
+
+定向回归覆盖动态按钮、原文复制、剪贴板拒绝及缺失、模态焦点选择恢复、失败反馈、真实语法库识别和内容转义。系统 Safari 离线验收页运行实际 `renderMarkdown` 与本地模块，完成 Markdown、重新渲染后 Python、模态 JSON 的真实复制粘贴；模拟剪贴板 API 拒绝后，模态 Markdown 回退复制也通过。完整已鉴权 Aide 工作台仍受本机候选证书警告阻挡，尚未验证运行中实例，也未替换 8097 服务。
+
+Code-block copying uses document-level delegation so serialized and reinserted Markdown remains interactive. The shared helper preserves original text and falls back from rejected or unavailable Clipboard API calls to a selection inside the active modal, restoring focus and selection afterward. Successful feedback follows a successful operation only. Whole-answer copying uses the same helper.
+
+Completed code blocks prefer a supported declared language, then use bounded local syntax inference for unlabeled or unsupported languages. Valid JSON is recognized structurally; explicit plaintext, low-confidence input, blocks over 65,536 characters and active streaming blocks retain plain text. Native Safari offline acceptance using the actual renderer passed real copy/paste, rerender and modal checks, including a deliberately rejected Clipboard API. This is component acceptance, not acceptance or deployment of the authenticated running workbench.

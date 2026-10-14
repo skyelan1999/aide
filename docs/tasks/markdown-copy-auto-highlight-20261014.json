@@ -1,0 +1,107 @@
+{
+  "id": "markdown-copy-auto-highlight-20261014",
+  "request": "输出md快速复制不好使，复制不出来；代码颜色渲染需要根据代码特征识别",
+  "baseline": "1a283ac5b6923c119c6cf68bd688dc42ac5b8803",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "聊天及Markdown预览的代码块复制按钮在HTML字符串插入、重新渲染和流式稳定块后均响应，复制原文并区分成功/失败",
+    "剪贴板API缺失或拒绝时使用兼容回退，模态对话框内复制有效且保留原焦点/选择",
+    "显式有效语言优先；未声明或不支持语言时按代码特征自动识别，纯文本和低置信度保持原样",
+    "超长代码块有高亮预算，流式活动块不重复自动识别；原始代码内容不变",
+    "实际系统Safari复制粘贴与颜色显示检查，未验证的完整工作台入口如实记录"
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/markdown-code.js",
+    "scripts/markdown-code.test.cjs",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/tasks/markdown-copy-auto-highlight-20261014.json",
+    "docs/agent/router.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户报告输出md无法快速复制，并要求按代码特征渲染颜色；验收覆盖代码块入口和重新插入后的事件。",
+      "evidence": [
+        "用户本轮请求"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "抽离代码块装饰器，序列化仅保留标记；文档级事件委托处理动态DOM。复用本地highlight.js进行有界自动识别，复制保留原始textContent。",
+      "evidence": [
+        "renderMarkdown返回body.innerHTML导致onclick丢失",
+        "当前只高亮带language类的代码块"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "修复序列化丢失onclick；加入共享委托复制与模态回退，整条回答复用；本地语法自动识别与显式纯文本/64KiB边界。",
+      "evidence": [
+        "internal/server/web/markdown-code.js",
+        "internal/server/web/app.js",
+        "internal/server/web/index.html"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "定向回归、两目录quick与系统Safari离线实际复制粘贴通过；8097镜像vet/build成功，但Docker替换容器失败，实际工作台复验待恢复。",
+      "evidence": [
+        "node scripts/markdown-code.test.cjs",
+        "系统Safari离线实际renderMarkdown：Markdown/Python/JSON复制粘贴",
+        "强制Clipboard API拒绝后，模态Markdown复制粘贴成功"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "中英同步说明自动识别、复制回退、性能预算与实际验收边界。",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "继承源码改动和vendor缺失保留；临时验收文件/源文件备份在忽略目录，未改动个人资料。",
+      "evidence": [
+        ".agent-state/markdown-copy-auto-highlight/"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "本地8097开发实例更新已由用户确认；镜像构建成功，Docker容器替换卡住。系统Docker重启会影响Docmost等其他服务，已请求明确确认，尚未执行。无正式Release或push。",
+      "evidence": [
+        "实际仓库.agent-state/markdown-copy-auto-highlight/rebuild.log"
+      ]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "恢复本分支提交前的app.js/index.html/router.json并移除新增markdown-code.js；不操作五个继承的vendor缺失或用户数据。",
+  "handoff": "用户确认目标为本机8097。修复已应用两处源码，quick和Safari组件实际复制通过，8097修复镜像已构建；Docker容器无法停止且8097握手超时，Docmost9000健康。重启Docker会中断其他服务，已提出确认，尚未获批/执行。原运行容器image ID在Docker中不可检索，已记录源码回滚副本；不宣称个人资料备份校验完成。",
+  "runtime_target": "本机8097工作台，用户已在当前会话明确确认",
+  "runtime_update": {
+    "status": "blocked_docker_missing_exit_event",
+    "candidate_image": "sha256:f5c66052e68145260ea6fa9abe5461b6d45be07fca289b56488eccb44c80c985",
+    "error": "cannot stop container: tried to kill container, but did not receive an exit event",
+    "observed_health": "8097 TLS handshake timeout; Docmost9000 HTTP200",
+    "approval_pending": "Restart Docker Desktop affects Docmost/PostgreSQL/Redis as well as Aide; awaiting user approval",
+    "rollback_note": "Existing container image ID no longer inspectable; source backups retained in actual runtime repository, named volumes preserved."
+  },
+  "quick_receipt": {
+    "status": "PASS",
+    "fingerprint": "4d28232d527199775be21b98a4d5fe1e3314075aefcb6752bd07fc21c8ebd850",
+    "checks": 48,
+    "log": ".agent-state/verify-20261014T081901870201Z.log"
+  },
+  "browser_component_acceptance": {
+    "client": "System Safari, offline file fixture using actual renderer and local module",
+    "status": "PASS",
+    "observations": [
+      "Markdown原文实际复制粘贴成功，包含中文、换行和<tag> &符号",
+      "重新渲染后Python代码复制并粘贴成功，缩进保留",
+      "模态JSON复制并粘贴成功；截图观察Python/JSON着色，text代码保持纯色",
+      "强制模拟Clipboard API拒绝后，模态Markdown回退复制粘贴成功"
+    ],
+    "limit": "完整8097工作台复验等待Docker恢复；不冒充运行实例验收"
+  }
+}

@@ -385,6 +385,19 @@
       [
         "node",
         "scripts/recovery-transfer.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/markdown-code.js"
+      ],
+      [
+        "node",
+        "scripts/markdown-code.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/context-meter.test.cjs"
       ]
     ],
     "full": [

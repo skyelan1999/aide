@@ -881,6 +881,7 @@ async function selectSession(id) {
   if (!sameSession) { state.historyLimit = SESSION_HISTORY_PAGE; state.historyScroll = false; }
   if (typeof cancelContextPreview === 'function') cancelContextPreview();
   state.pendingSessionId = id;
+  if (!sameSession && typeof resetContextMeter === 'function') resetContextMeter();
   paintSessionSelection(id, true); // 首帧反馈不等待 GET 或「已读」磁盘写入
   if (!sameSession && typeof stopXiaomiDictation === 'function') stopXiaomiDictation();
   // 离开小秘会话时收起聆听面板并硬停止识别，避免麦克风继续监听或把后续语音送到新会话。
@@ -926,6 +927,8 @@ async function selectSession(id) {
       if (state.session?.id !== id) {
         $('session-title').textContent = state.session?.title || t('开始新的探索');
         if (state.session?.id) schedulePoll(); // GET 失败时恢复原会话轮询
+        estimateContext();
+        scheduleContextPreview();
       }
     }
   }
@@ -2040,7 +2043,10 @@ function renderSession() {
             return b;
           };
           if (text) {
-            actions.append(mk(t("复制"), () => { navigator.clipboard.writeText(text).then(() => toast(t("已复制"))).catch(() => toast(t("复制失败"))); }));
+            actions.append(mk(t("复制"), async event => {
+              try { await window.AideMarkdownCode.copyText(text, event.currentTarget); toast(t("已复制")); }
+              catch (_) { toast(t("复制失败")); }
+            }));
             const rb = mk(t("朗读"), () => toggleMechanicalRead(rb, text));
             rb.classList.add('msg-btn-mech');
             actions.append(rb);
@@ -3295,6 +3301,7 @@ function updateSendEnabled() {
   }
 }
 function hideContextPreview() {
+  state.contextPreview = null;
   state.previewOverLimit = false;
   state.previewFingerprint = '';
   $('context-preview').classList.add('hidden');
@@ -3417,6 +3424,8 @@ async function refreshContextPreview() {
   state.previewController?.abort();
   const controller = new AbortController();
   state.previewController = controller;
+  const scope = contextMeterScope();
+  if (contextMeterTransitioning()) return;
   const prompt = $('prompt').value.trim();
   if (!prompt || !state.config?.configured) { hideContextPreview(); return; }
   $('context-preview').classList.remove('hidden');
@@ -3425,10 +3434,10 @@ async function refreshContextPreview() {
     const strategy = state.profiles?.strategy || 'manual';
     const profile = strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default');
     const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ sessionId: state.session?.id || '', prompt, mode: state.mode, attachments: state.attachments, strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.() }) });
-    if (seq !== state.previewSeq.value) return; // 过期响应不得覆盖新预览（R08-04 草稿失效）
+    if (seq !== state.previewSeq.value || scope !== contextMeterScope() || contextMeterTransitioning()) return; // 过期响应不得覆盖新预览（R08-04 草稿失效）
     renderContextPreview(data);
   } catch (error) {
-    if (seq !== state.previewSeq.value) return;
+    if (seq !== state.previewSeq.value || scope !== contextMeterScope() || contextMeterTransitioning()) return;
     if (error?.name === 'AbortError') return;
     if (error && String(error.message).includes(t("上下文预算超限"))) {
       const m = String(error.message);
@@ -3445,8 +3454,7 @@ async function refreshContextPreview() {
   }
 }
 function scheduleContextPreview() {
-  clearTimeout(state.previewTimer);
-  state.previewController?.abort();
+  cancelContextPreview();
   state.previewFingerprint = '';
   state.previewTimer = setTimeout(() => action(refreshContextPreview).call(null), 300);
 }
@@ -5790,7 +5798,7 @@ function contextMeterKey() {
   const session = state.session;
   const lastRun = session?.runs?.at(-1);
   const anchor = lastRun?.contextAnchor;
-  return [session?.id || 'new', session?.messagesTotal ?? messages.length, session?.compactedMessages || 0,
+  return [state.config?.workspaceId || '', session?.id || 'new', session?.messagesTotal ?? messages.length, session?.compactedMessages || 0,
     session?.compactedAt || '', (session?.compact || '').length, anchor?.headerFingerprint || '',
     anchor?.usage?.prompt || 0, anchor?.usage?.completion || 0, anchor?.promptEstimate || 0,
     state.config?.model || '', state.mode || 'chat', state.workflowPhase || '', state.profiles?.strategy || 'auto',
@@ -5801,6 +5809,12 @@ function renderContextMeter(data, isDraft) {
   ensureContextMeterControls();
   state.contextMeter = data;
   state.contextMeterDraft = !!isDraft;
+  if (isDraft) {
+    state.contextMeterKey = ''; // 草稿不能作为已成功缓存的会话基线。
+    ++state.contextMeterSeq.value;
+    state.contextMeterController?.abort();
+    state.contextMeterPendingKey = '';
+  }
   const limit = data.contextWindow || activeModel()?.contextWindow || 65536;
   const pressure = data.totalEstimate || data.inputEstimate || 0;
   const pct = Math.min(100, Math.round((pressure / limit) * 100));
@@ -5999,31 +6013,74 @@ function renderContextCompactionState(detail) {
   }
   detail.append(row);
 }
+function contextMeterScope() {
+  return JSON.stringify([state.config?.workspaceId || '', state.session?.id || '']);
+}
+function contextMeterTransitioning() {
+  return !!state.pendingSessionId && state.pendingSessionId !== state.session?.id;
+}
+function clearContextMeterDisplay() {
+  $('context-stat').textContent = '—';
+  const bar = $('context-bar');
+  bar.replaceChildren();
+  bar.removeAttribute('aria-label');
+  bar.classList.remove('warn');
+  $('context-card-detail')?.replaceChildren();
+  if ($('context-card-detail')) $('context-card-detail').title = '';
+  hideCtxTooltip();
+}
+function resetContextMeter() {
+  cancelContextPreview();
+  ++state.contextMeterSeq.value;
+  state.contextMeterController?.abort();
+  state.contextMeterController = null;
+  state.contextMeterPendingKey = '';
+  state.contextMeterKey = '';
+  state.contextMeter = null;
+  state.contextMeterDraft = false;
+  state.contextPreview = null;
+  state.previewOverLimit = false;
+  state.previewFingerprint = '';
+  state.contextMeterScope = contextMeterScope();
+  $('context-preview').classList.add('hidden');
+  $('context-preview').classList.remove('over');
+  clearContextMeterDisplay();
+  updateSendEnabled();
+}
 async function refreshContextMeter() {
-  if (!state.config?.configured || state.contextMeterDraft) return;
+  if (!state.config?.configured || state.contextMeterDraft || contextMeterTransitioning()) return;
   const key = contextMeterKey();
   if (key === state.contextMeterKey && state.contextMeter) { renderContextMeter(state.contextMeter, false); return; }
-  state.contextMeterKey = key;
+  if (key === state.contextMeterPendingKey) return;
+  state.contextMeterController?.abort();
+  const controller = new AbortController();
+  state.contextMeterController = controller;
+  state.contextMeterPendingKey = key;
+  clearContextMeterDisplay();
   const seq = ++state.contextMeterSeq.value;
   const strategy = state.profiles?.strategy || 'auto';
   const profile = strategy === 'auto' ? '' : (state.profiles?.activeProfile || 'default');
   try {
-    const data = await api('/context-preview', { method: 'POST', body: JSON.stringify({ sessionId: state.session?.id || '', prompt: '', mode: state.mode || 'chat', strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.(), baseline: true }) });
-    if (seq !== state.contextMeterSeq.value || state.contextMeterKey !== key || state.contextMeterDraft) return;
+    const data = await api('/context-preview', { method: 'POST', signal: controller.signal, body: JSON.stringify({ sessionId: state.session?.id || '', prompt: '', mode: state.mode || 'chat', strategy, profile, workflowPhase: state.workflowPhase || '', avatarFeedback: !!window.aideAvatarEnabled?.(), baseline: true }) });
+    if (seq !== state.contextMeterSeq.value || contextMeterKey() !== key || state.contextMeterDraft || contextMeterTransitioning() || !state.config?.configured) return;
+    if (!data?.breakdown) return;
+    state.contextMeterKey = key; // 只缓存属于当前会话的成功响应。
     renderContextMeter(data, false);
   } catch (_) {
-    // 统计失败不影响正常对话；不要用旧的浏览器猜测值冒充服务端口径。
+    // 保持未知状态；失败不提交缓存键，下次刷新可以重试。
+  } finally {
+    if (state.contextMeterController === controller) {
+      state.contextMeterController = null;
+      state.contextMeterPendingKey = '';
+    }
   }
 }
 function estimateContext() {
-  if (!state.config?.configured) {
-    $('context-stat').textContent = '—';
-    $('context-bar').replaceChildren();
-    $('context-card-detail')?.replaceChildren();
-    return;
-  }
+  if (state.contextMeterScope !== contextMeterScope() || !state.config?.configured) resetContextMeter();
+  if (!state.config?.configured) return;
   refreshContextMeter();
 }
+
 /* ── 插件系统（FR-72~75，协议 docs/plugin-protocol.md）：右侧面板 + 上传/搜索/启停/删除/surface ── */
 async function loadPluginsPanel() {
   const data = await api('/plugins');
@@ -8393,6 +8450,7 @@ async function setupDocxPreview(container, filePath, root, source, viewerSpec) {
 }
 
 
+window.AideMarkdownCode?.install({t, onError: () => toast(t('复制失败'))});
 /* fixCjkEmphasis：修复 CommonMark 强调 flanking 规则在中文场景的痛点。
    当加粗/斜体内容以全角标点（如 ）。！？】》）结尾、闭合标记 ** / * 后又直接跟
    字母或汉字时，marked 会依据 flanking 规则判定该标记“不能闭合”，导致星号裸露
@@ -8497,42 +8555,7 @@ function renderMarkdown(src, live, basePath, viewerSpec) {
       const div = el('div', 'mermaid', codeEl.textContent);
       pre.replaceWith(div);
     });
-    // live（流式渲染）跳过代码高亮：每帧全量高亮代价高，完成态由 renderSession 补全
-    if (!live) body.querySelectorAll('pre > code[class*="language-"]').forEach(codeEl => {
-      const lang = (codeEl.className.match(/language-([\w+-]+)/) || [])[1] || '';
-      if (!lang || !window.hljs || typeof window.hljs.getLanguage !== 'function') return;
-      // highlight.js 未单独提供 clojurescript 语法，回退到 clojure（语法超集）
-      const langAlias = { clojurescript: 'clojure' };
-      let hlLang = window.hljs.getLanguage(lang) ? lang : (langAlias[lang] && window.hljs.getLanguage(langAlias[lang]) ? langAlias[lang] : '');
-      if (!hlLang) return; // 未注册语言保持原样，避免错误着色
-      try { codeEl.innerHTML = window.hljs.highlight(codeEl.textContent, { language: hlLang, ignoreIllegals: true }).value; }
-      catch (_) {}
-    });
-    body.querySelectorAll('pre').forEach(pre => {
-      if (pre.parentElement?.classList.contains('md-code-copy-wrap')) return;
-      const wrap = el('div', 'md-code-copy-wrap');
-      pre.replaceWith(wrap); wrap.append(pre);
-      const copy = el('button', 'md-code-copy', '');
-      copy.type = 'button'; copy.title = t('复制代码'); copy.setAttribute('aria-label', t('复制代码'));
-      const icon = copied => copied
-        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>'
-        : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>';
-      copy.innerHTML = icon(false);
-      copy.onclick = async () => {
-        const text = pre.querySelector('code')?.textContent ?? pre.textContent ?? '';
-        try {
-          if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(text);
-          else {
-            const field = document.createElement('textarea'); field.value = text; field.setAttribute('readonly', '');
-            field.style.cssText = 'position:fixed;left:-9999px;top:0'; document.body.append(field); field.select();
-            const copied = document.execCommand('copy'); field.remove(); if (!copied) throw new Error('copy failed');
-          }
-          copy.classList.add('copied'); copy.title = t('已复制代码'); copy.setAttribute('aria-label', t('已复制代码')); copy.innerHTML = icon(true);
-          window.setTimeout(() => { if (!copy.isConnected) return; copy.classList.remove('copied'); copy.title = t('复制代码'); copy.setAttribute('aria-label', t('复制代码')); copy.innerHTML = icon(false); }, 1400);
-        } catch (_) { toast(t('复制失败')); }
-      };
-      wrap.append(copy);
-    });
+    window.AideMarkdownCode?.decorate(body, {live, t});
     // 标记相对路径链接（事件委托在 timeline 上统一处理）
     body.querySelectorAll('a[href]').forEach(a => {
       const href = a.getAttribute('href') || '';
