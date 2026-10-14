@@ -337,7 +337,7 @@ func (a *App) knowledgeLocalResume(cache *knowledgeScanCache, ar knowledgeArea, 
 func (a *App) knowledgeLocalCommit(ctx context.Context, cache *knowledgeScanCache, epoch uint64) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if ctx.Err() != nil || cache.err != nil || epoch != a.wsRevision || a.settings.UserPasswordHash != "" && a.loadLockStateLocked().Locked {
+	if a.knowledgeContextErr(ctx) != nil || cache.err != nil || epoch != a.wsRevision || a.settings.UserPasswordHash != "" && a.loadLockStateLocked().Locked {
 		return fmt.Errorf("local cursor candidate cancelled, changed or locked")
 	}
 	for _, c := range cache.localCheckpoints {

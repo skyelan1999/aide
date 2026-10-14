@@ -140,5 +140,8 @@ func localRootUnavailableMessage(err error) string {
 			return known.Error()
 		}
 	}
+	if errors.Is(err, os.ErrPermission) {
+		return "本地目录读取被拒绝，请检查目录权限"
+	}
 	return "本地目录不可读取"
 }

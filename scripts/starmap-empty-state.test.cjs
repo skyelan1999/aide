@@ -14,3 +14,5 @@ console.log('PASS source empty/failure/scanning states, bounded labels and empty
 
 const catalog=vm.createContext({window:{}});vm.runInContext(fs.readFileSync('internal/server/web/locales/en.js','utf8'),catalog);
 c.graph.nodes=[];c.aideI18n={t:key=>catalog.window.aideEnglish[key]||key};assert.equal(c.cosmicEmptyMessage(),'No nodes found. Add a reference or check the workspace.');
+
+c.aideI18n=null;c.sourceCatalog=[{state:'unavailable'}];assert.match(c.cosmicEmptyMessage(),/来源暂不可用/);

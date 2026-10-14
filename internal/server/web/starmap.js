@@ -368,6 +368,7 @@ function cosmicEmptyMessage(){
  const sources=source?[source]:sourceCatalog;
  if(loading||sources.some(s=>s.coverage?.pending>0||s.coverage?.refreshProgress))return text('正在分批扫描，节点将陆续显示');
  if(graph.nodes.some(n=>!region||n.region===region))return text('当前视图没有匹配节点，请调整聚焦或返回上层');
+ if(!source&&sources.some(s=>s.state==='unavailable'))return text('部分来源暂不可用，请在星际日志查看原因');
  return text(source?'当前来源暂无节点，请检查目录或索引范围':'尚未发现节点，请添加引用或检查工作区');
 }
 function cosmicData(key){

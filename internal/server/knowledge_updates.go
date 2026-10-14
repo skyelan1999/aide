@@ -112,6 +112,7 @@ type knowledgeCodeMemo struct {
 }
 
 type knowledgeScanCache struct {
+	priorGraph       *knowledgeGraph // One immutable view, scoped to this candidate scan only.
 	localCheckpoints []knowledgeLocalCheckpoint
 	discovery        map[string]*knowledgeDiscoveryView
 	previous         map[string]knowledgeFileMemo
@@ -190,9 +191,12 @@ func overlayKnowledgeRefreshProgress(view *knowledgeUpdateView, cache *knowledge
 	}
 }
 
-func (c *knowledgeScanCache) fail() {
+func (c *knowledgeScanCache) fail(cause ...error) {
 	if c != nil && c.err == nil {
 		c.err = fmt.Errorf("资料扫描期间发生读取变化；保留当前星图，稍后自动重试")
+		if len(cause) > 0 && cause[0] != nil {
+			c.err = fmt.Errorf("%v: %w", c.err, cause[0])
+		}
 	}
 }
 
@@ -212,7 +216,7 @@ func (c *knowledgeScanCache) material(root *os.Root, location, p string, info os
 	stamp := knowledgeStamp(info)
 	current, err := root.Lstat(p)
 	if err != nil || !current.Mode().IsRegular() || knowledgeStamp(current) != stamp {
-		c.fail()
+		c.fail(err)
 		return "", "", c.err
 	}
 	if old, ok := c.previous[key]; ok && old.stamp == stamp && (!wantCode || old.codeReady) {
@@ -229,12 +233,12 @@ func (c *knowledgeScanCache) material(root *os.Root, location, p string, info os
 		memo.codeReady = err == nil
 	}
 	if err != nil {
-		c.fail()
+		c.fail(err)
 		return "", "", err
 	}
 	current, err = root.Lstat(p)
 	if err != nil || !current.Mode().IsRegular() || knowledgeStamp(current) != stamp {
-		c.fail()
+		c.fail(err)
 		return "", "", c.err
 	}
 	c.files[key] = memo
@@ -401,9 +405,22 @@ func knowledgeSyncFail(w http.ResponseWriter, err error) {
 	fail(w, status, err)
 }
 
+func (a *App) knowledgeContextErr(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if a.bgCtx != nil {
+		return a.bgCtx.Err()
+	}
+	return nil
+}
+
 // All public snapshots and searches share the update catalogue and scan gate.
 // A returned view remains protected until release; published graphs are immutable.
 func (a *App) knowledgeAcquireView(ctx context.Context, includeCode, force bool) (*knowledgeUpdateView, func(), error) {
+	if a.bgCtx != nil && a.bgCtx.Err() != nil {
+		return nil, nil, knowledgeSyncFailure{503, "工作台正在关闭，请稍后重新打开星图"}
+	}
 	state := &a.knowledgeUpdates
 	state.once.Do(func() { state.gate = make(chan struct{}, 1) })
 	select {
@@ -446,9 +463,11 @@ func (a *App) knowledgeAcquireViewLocked(ctx context.Context, includeCode, force
 	}
 	if force || view.checked.IsZero() || time.Since(view.checked) >= interval {
 		cache := newKnowledgeScanCache(view.cache)
+		prior := view.graph
+		cache.priorGraph = &prior
 		g := a.knowledgeSnapshotModeCached(ctx, mode == 1, cache)
 		view.checked = time.Now() // Also throttle failed/cancelled attempts.
-		if ctx.Err() != nil || cache.err != nil {
+		if a.knowledgeContextErr(ctx) != nil || cache.err != nil {
 			// Keep the discovery cursor/cache produced before cancellation. A
 			// subsequent request resumes from this batch instead of repeatedly
 			// rescanning the same prefix of a large workspace.
@@ -478,14 +497,15 @@ func (a *App) knowledgeAcquireViewLocked(ctx context.Context, includeCode, force
 				view.history = append([]knowledgeRevision(nil), view.history[len(view.history)-knowledgeRevisionLimit:]...)
 			}
 		}
-		cache.previous = nil // Successful graphs materialized every published path.
+		cache.previous = nil // Retained material is merged into files below for failed sources.
+		cache.priorGraph = nil
 		view.graph, view.revision, view.cache, view.failed = g, revision.id, cache, false
 	}
 	if view.failed || view.revision == "" {
 		return nil, knowledgeSyncFailure{503, "资料更新扫描未完成；保留当前星图，稍后自动重试"}
 	}
 	currentWorkspace, currentEpoch, currentPolicy := a.knowledgeUpdatesIdentity()
-	if ctx.Err() != nil || currentWorkspace != workspace || currentEpoch != epoch || currentPolicy != policy {
+	if a.knowledgeContextErr(ctx) != nil || currentWorkspace != workspace || currentEpoch != epoch || currentPolicy != policy {
 		return nil, knowledgeSyncFailure{409, "工作区已切换或请求已取消，请重新同步星图"}
 	}
 	publishedView := *view
@@ -497,6 +517,9 @@ func (a *App) knowledgeAcquireViewLocked(ctx context.Context, includeCode, force
 // knowledgeAcquireUpdatesView avoids making the UI wait behind a potentially
 // expensive scan. Only this delta endpoint may use the last complete graph.
 func (a *App) knowledgeAcquireUpdatesView(ctx context.Context, includeCode bool) (*knowledgeUpdateView, func(), bool, error) {
+	if a.bgCtx != nil && a.bgCtx.Err() != nil {
+		return nil, nil, false, knowledgeSyncFailure{503, "工作台正在关闭，请稍后重新打开星图"}
+	}
 	state := &a.knowledgeUpdates
 	state.once.Do(func() { state.gate = make(chan struct{}, 1) })
 	mode := 0

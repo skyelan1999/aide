@@ -1,6 +1,12 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "部分来源暂不可用，请在星际日志查看原因": "Some sources are unavailable. Check the stellar logbook for details.",
+  "本地目录读取被拒绝，请检查目录权限": "Local directory access was denied. Check its permissions.",
+  "本地来源读取被拒绝，请检查目录权限": "Local source access was denied. Check its permissions.",
+  "本地来源目录或文件已变化，等待重新扫描": "The local source directory or file changed. Waiting to rescan.",
+  "本地来源本轮读取未完成，请检查目录和索引范围": "The local source could not be fully read. Check the directory and indexing scope.",
+
   "本机目录访问仍在等待，请检查目录或本机访问权限": "Local directory access is still pending. Check the directory or host permissions.",
   "本机目录访问超时，请检查目录或本机访问权限": "Local directory access timed out. Check the directory or host permissions.",
   "等待访问的本机目录过多，请先处理不可用来源": "Too many local directories are awaiting access. Resolve unavailable sources first.",

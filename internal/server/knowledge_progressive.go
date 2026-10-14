@@ -69,15 +69,24 @@ func (c *knowledgeScanCache) discover(ctx context.Context, root *os.Root, ar kno
 	return v, b, nil
 }
 func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, cache *knowledgeScanCache, root *os.Root, ar knowledgeArea, scope, module string, p knowledgeIndexPolicy, fileQuota, dirQuota int, includeCode bool, codeFiles *[]knowledgeCodeFile, codeBytes, codeSkipped *int) {
+	originalError := cache.err
+	var coverage *knowledgeCoverage
+	defer func() {
+		if originalError == nil && cache.err != nil && a.knowledgeContextErr(ctx) == nil {
+			cause := cache.err
+			cache.err = nil
+			cache.localSourceFailure(g, ar, localReadUnavailableMessage(cause), coverage)
+		}
+	}()
 	if err := a.knowledgeLocalResume(cache, ar, p, includeCode, fileQuota, dirQuota); err != nil {
 		g.Warnings = append(g.Warnings, ar.name+"：本地索引检查点未恢复，重新扫描")
 	}
 	v, b, err := cache.discover(ctx, root, ar, p, fileQuota, dirQuota)
 	if err != nil {
-		cache.fail()
+		cache.fail(err)
 		return
 	}
-	coverage := &knowledgeCoverage{FileBudget: fileQuota, DirectoryBudget: dirQuota, DepthBudget: p.DepthBudget, TextBytesPerFile: 8192, Reasons: b.Reasons, ScopePaths: append([]string(nil), p.ScopePaths[ar.id()]...), Progressive: true, Pending: b.Pending, Cycle: v.Cycle, CatalogLimit: v.Cursor.MaxEntries}
+	coverage = &knowledgeCoverage{FileBudget: fileQuota, DirectoryBudget: dirQuota, DepthBudget: p.DepthBudget, TextBytesPerFile: 8192, Reasons: b.Reasons, ScopePaths: append([]string(nil), p.ScopePaths[ar.id()]...), Progressive: true, Pending: b.Pending, Cycle: v.Cycle, CatalogLimit: v.Cursor.MaxEntries}
 	paths := make([]string, 0, len(v.Published))
 	for k := range v.Published {
 		paths = append(paths, k)
@@ -114,7 +123,7 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 				continue
 			}
 			if statErr != nil {
-				cache.fail()
+				cache.fail(statErr)
 				return
 			}
 			node.Kind = "directory"
@@ -134,7 +143,7 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 					continue
 				}
 				if statErr != nil {
-					cache.fail()
+					cache.fail(statErr)
 					return
 				}
 				info = current
@@ -162,7 +171,7 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 				return
 			}
 			if err != nil {
-				cache.fail()
+				cache.fail(err)
 				return
 			}
 			node.Text = text

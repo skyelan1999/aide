@@ -239,8 +239,13 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 		}
 		root, err := a.openLocalSourceRoot(ctx, ar.location)
 		if err != nil {
+			if a.knowledgeContextErr(ctx) != nil {
+				cache.fail(err)
+				g.Truncated = true
+				return g
+			}
 			g.Warnings = append(g.Warnings, ar.name+"：不可读取")
-			knowledgeSetSource(&g, ar, "unavailable", localRootUnavailableMessage(err), 0)
+			cache.localSourceFailure(&g, ar, localRootUnavailableMessage(err), nil)
 			continue
 		}
 		module := ""
