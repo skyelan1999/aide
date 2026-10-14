@@ -153,7 +153,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 current: continue on feat/plugin-dependency-plan, source d8f7059. Canonical aide/start.command opens healthy Safari9999, running app2b4c7e19c77a plus complete local dependencies; app/dependency offline bundle imported and copied locally. Current default reasoning independent save high/reload/restore auto PASS; entire config API response restored. Explicit plugin DAG core, serialized confirmations, node intent/results, selected concurrency and stable proposal merge have scoped real-Node/model-protocol race evidence; full70 PASS from frozen container-local source (server race535.693s and vet). See followup117 and plugin-dependency-plan-20261015. Dedicated graph UI, uncertain-effect reconciliation and real model adoption remain open; current runtime has0 models. Star-map host directory waits and original12 workstreams remain in_progress. Preserve original vendor deletions, saved workspace/source config and user data. Windows by user, true vectors deferred; receiving-device import unobserved. Historical handoff retained in historical_handoff_before_plugin_plan_20261015.",
+  "handoff": "2026-10-15 current: feat/plugin-plan-status-ui, implementation e54f390. Canonical aide/start.command opens healthy Safari9999 using local complete dependencies. Readonly per-node graph status, dependency/limit display, metadata repaint and exact outcome navigation have scoped synthetic Safari desktop/narrow/current-dark/keyboard evidence; no live model/plugin execution claimed. Own fixture removed, preexisting session retained. App/dependency offline bundle verified/imported/copied locally. See followup118. Original12 workstreams remain in_progress, including host star-map I/O, live graph/approval acceptance, uncertain-effect reconciliation and draft navigation cancellation notice. Prior backend full70 is historical; final UI quick69 PASS. Preserve saved config, user data and inherited vendor deletions. Windows by user, true vectors deferred, receiving-device import unobserved.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -5775,5 +5775,77 @@
       "commands": 70
     }
   },
-  "historical_handoff_before_plugin_plan_20261015": "2026-10-10 continuation: closed-file draft branches previously pushed in 4403146; new outcome paging version guards and explicit reload implemented, native Safari actual one-page export plus simulated changing paginated API passed, final full 37 checks PASS (025532050610Z). Earlier parallel full returned signal: killed and remains FAIL evidence. Actual 9999 started using start.command, healthy source 49147a1c8f6d5b58dd90a9094235b9793c5ebda14f9e0852b9c4d567661ad61d. Goal remains active; production live multi-page, scale, structured release evidence and broader outstanding acceptance remain pending; Windows unavailable, embedding not configured. This batch is a source push, not formal release. 2026-10-11：审批暂停任务误标reviewing已修复；38项full通过，9999由start.command重建，Safari全局模式往返、#43无幽灵审核及第二标签读取均通过。见 docs/tasks/approval-paused-ghost-state-20261011.json。 2026-10-11：锁屏启动修复与38/38全量门禁已推送，收据docs/tasks/lock-bootstrap-state-20261011.json；星图刷新恢复仅部分Safari验收，剩余隔离及重启验收见docs/tasks/starmap-scene-safari-20261011.json。整体目标仍未关闭。 2026-10-12: Documentation/i18n refresh completed and static checks pass; active goal remains open. Current Safari has an unresolved certificate warning at localhost:18214; do not bypass it. Docker socket is inaccessible and host Go is unavailable. Next work should continue code/acceptance from the 12-item audit while pursuing user-handled Safari access; vector testing remains intentionally paused and Windows environment is unavailable. 2026-10-12：当前源码双服务器 SSH/SFTP -race repeat=2 已 PASS（receipt: .agent-state/ssh-continuity-20261012/aide-ssh-test-20261012134037-15856.log）；用户 SSH 主机与完整浏览器操作仍未验收，Safari 18217 当前到达隔离实例登录页但未认证验收；向量按用户要求暂缓。2026-10-12：当前 full verify 前37项PASS，Go race 全包在15分钟上限失败；TestQueueEnqueuedDispatch 单测隔离 -race 3.640s PASS，说明超时由 server 包累计耗时导致，vet未执行。 2026-10-12：知识路径显式文档提及新增源行列与匹配token证据；Go UTF-8定位测试、星图路径源链接组件测试、文档链接检查通过。localhost:18217 Safari 未认证，本次不记浏览器验收；详见 docs/tasks/knowledge-path-exploration-20261009.json。 阶段检查点 966eb62（知识路径提及边源位置）已推送 origin/main；实现/Go/组件/文档检查通过，Safari 登录与其他验收缺口仍保留。 2026-10-14：星图原文检索 40 条分页漏项已修复；游标增加批内命中偏移，同一文档批次先完整续取命中再前进；100 条命中 Go 回归按 40/40/20 且无重复通过，quick 42 项通过（fingerprint 75c2696898e71962d39495894c605f5a685f0edbd028f73cf973b14f0879535b）。Safari 当前停在本机 TLS 证书警告，未绕过，故更新候选 UI 验收及完整门禁仍待办。 2026-10-14 full server package follow-up：`go test -mod=vendor ./internal/server -count=1 -timeout=8m` FAIL 171.009s；独立复跑确认 `TestPluginBundleRejectsTraversalWithoutPartialInstall` 与 `TestPluginApplyErrorIsolated` 仍失败（测试断言预期空/2项注册表，实际当前安装列出 bundled plugins/4项）；`TestAssistantMessageGateLockedUnlockedClear` 仅全包清理时失败、独立复跑通过。均不在本轮修改文件，完整 server 回归不记通过。 2026-10-14 续验更正：先前全包失败的插件用例是测试对预装bundle数量的过时假设，已改为断言拒绝包不改变完整注册表、失败插件显示错误且不阻断正常插件；清理用例隔离通过。修正后 server 全包 `go test -mod=vendor ./internal/server -count=1 -timeout=8m` PASS 179.525s，5项定向 PASS 2.041s。初次失败记录保留作历史证据。 2026-10-14 生命周期补充：定向race首次暴露 `App.Close` 的后台 `WaitGroup.Add/Wait` 竞争和测试临时目录残留；新增生命周期门、执行任务跟踪、关闭时取消和等待。定向5项race PASS 8.647s，internal/server完整非race PASS 195.109s；全包race及单并发重试都在2GiB容器内被OOM kill（memory.events有OOM记录），不记通过。continuity-acceptance-audit-20261010.md已补记。Safari 18545证书警告需用户在当前页接管处理；本轮未浏览器验收或push。 2026-10-14 followup99：Safari localhost:9999 当前已解锁；#47/#46/#48历史验收会话均显示已完成，已恢复选择原 #47。成果舱分页/运行状态客户端测试PASS，但无运行中会话可验证真实跨页快照刷新；未发起模型请求、未重启服务器。完整目标仍约80%工程进度（估算而非验收率），12个工作流均有不同程度尾项；向量验收继续按用户要求暂缓，Windows按用户要求移除，release仍BLOCKED。"
+  "historical_handoff_before_plugin_plan_20261015": "2026-10-10 continuation: closed-file draft branches previously pushed in 4403146; new outcome paging version guards and explicit reload implemented, native Safari actual one-page export plus simulated changing paginated API passed, final full 37 checks PASS (025532050610Z). Earlier parallel full returned signal: killed and remains FAIL evidence. Actual 9999 started using start.command, healthy source 49147a1c8f6d5b58dd90a9094235b9793c5ebda14f9e0852b9c4d567661ad61d. Goal remains active; production live multi-page, scale, structured release evidence and broader outstanding acceptance remain pending; Windows unavailable, embedding not configured. This batch is a source push, not formal release. 2026-10-11：审批暂停任务误标reviewing已修复；38项full通过，9999由start.command重建，Safari全局模式往返、#43无幽灵审核及第二标签读取均通过。见 docs/tasks/approval-paused-ghost-state-20261011.json。 2026-10-11：锁屏启动修复与38/38全量门禁已推送，收据docs/tasks/lock-bootstrap-state-20261011.json；星图刷新恢复仅部分Safari验收，剩余隔离及重启验收见docs/tasks/starmap-scene-safari-20261011.json。整体目标仍未关闭。 2026-10-12: Documentation/i18n refresh completed and static checks pass; active goal remains open. Current Safari has an unresolved certificate warning at localhost:18214; do not bypass it. Docker socket is inaccessible and host Go is unavailable. Next work should continue code/acceptance from the 12-item audit while pursuing user-handled Safari access; vector testing remains intentionally paused and Windows environment is unavailable. 2026-10-12：当前源码双服务器 SSH/SFTP -race repeat=2 已 PASS（receipt: .agent-state/ssh-continuity-20261012/aide-ssh-test-20261012134037-15856.log）；用户 SSH 主机与完整浏览器操作仍未验收，Safari 18217 当前到达隔离实例登录页但未认证验收；向量按用户要求暂缓。2026-10-12：当前 full verify 前37项PASS，Go race 全包在15分钟上限失败；TestQueueEnqueuedDispatch 单测隔离 -race 3.640s PASS，说明超时由 server 包累计耗时导致，vet未执行。 2026-10-12：知识路径显式文档提及新增源行列与匹配token证据；Go UTF-8定位测试、星图路径源链接组件测试、文档链接检查通过。localhost:18217 Safari 未认证，本次不记浏览器验收；详见 docs/tasks/knowledge-path-exploration-20261009.json。 阶段检查点 966eb62（知识路径提及边源位置）已推送 origin/main；实现/Go/组件/文档检查通过，Safari 登录与其他验收缺口仍保留。 2026-10-14：星图原文检索 40 条分页漏项已修复；游标增加批内命中偏移，同一文档批次先完整续取命中再前进；100 条命中 Go 回归按 40/40/20 且无重复通过，quick 42 项通过（fingerprint 75c2696898e71962d39495894c605f5a685f0edbd028f73cf973b14f0879535b）。Safari 当前停在本机 TLS 证书警告，未绕过，故更新候选 UI 验收及完整门禁仍待办。 2026-10-14 full server package follow-up：`go test -mod=vendor ./internal/server -count=1 -timeout=8m` FAIL 171.009s；独立复跑确认 `TestPluginBundleRejectsTraversalWithoutPartialInstall` 与 `TestPluginApplyErrorIsolated` 仍失败（测试断言预期空/2项注册表，实际当前安装列出 bundled plugins/4项）；`TestAssistantMessageGateLockedUnlockedClear` 仅全包清理时失败、独立复跑通过。均不在本轮修改文件，完整 server 回归不记通过。 2026-10-14 续验更正：先前全包失败的插件用例是测试对预装bundle数量的过时假设，已改为断言拒绝包不改变完整注册表、失败插件显示错误且不阻断正常插件；清理用例隔离通过。修正后 server 全包 `go test -mod=vendor ./internal/server -count=1 -timeout=8m` PASS 179.525s，5项定向 PASS 2.041s。初次失败记录保留作历史证据。 2026-10-14 生命周期补充：定向race首次暴露 `App.Close` 的后台 `WaitGroup.Add/Wait` 竞争和测试临时目录残留；新增生命周期门、执行任务跟踪、关闭时取消和等待。定向5项race PASS 8.647s，internal/server完整非race PASS 195.109s；全包race及单并发重试都在2GiB容器内被OOM kill（memory.events有OOM记录），不记通过。continuity-acceptance-audit-20261010.md已补记。Safari 18545证书警告需用户在当前页接管处理；本轮未浏览器验收或push。 2026-10-14 followup99：Safari localhost:9999 当前已解锁；#47/#46/#48历史验收会话均显示已完成，已恢复选择原 #47。成果舱分页/运行状态客户端测试PASS，但无运行中会话可验证真实跨页快照刷新；未发起模型请求、未重启服务器。完整目标仍约80%工程进度（估算而非验收率），12个工作流均有不同程度尾项；向量验收继续按用户要求暂缓，Windows按用户要求移除，release仍BLOCKED。",
+  "progress_checkpoint_20261015_followup118": {
+    "status": "in_progress",
+    "task": "docs/tasks/plugin-plan-ui-20261015.json",
+    "sourceCommits": [
+      "bd22ea3",
+      "e54f390"
+    ],
+    "changes": "Readonly per-run graph panels, truthful node/merge labels and requested/effective concurrency, literal bounded lazy result text, structured collapse/focus keys, graph metadata cache invalidation and intent refresh, correct session/run evidence navigation.",
+    "runtime": {
+      "runningImage": "sha256:045bdfce262f61bfc5d3f25752d3fac2d9be639e32aa1ceb6509d2510d863768",
+      "image": "sha256:045bdfce262f61bfc5d3f25752d3fac2d9be639e32aa1ceb6509d2510d863768",
+      "binarySHA256": "a0884079199784b1b5c70538fb4d3b3dde76f285d054b17e74c86dcee0e8ec2e",
+      "runningPlatformManifest": "sha256:79fb85beb0d73fcb02540882b1ed4aeb8416392246d5f79077f606e1cdeb28d0",
+      "sourceSHA256": "20bee7342e4fa2aaadc17199cb18ad44c00435f3a02beaa3d1bbbd6527a5e3c5",
+      "buildCommit": "e54f390973a330ea04a2198893913eaf04c9116b-dirty",
+      "port": "9999",
+      "health": "ok",
+      "mountsPreserved": true,
+      "workspaceConfigBytesPreserved": true,
+      "protectedFilesUnchanged": 1,
+      "configuredPath": "/Users/skyelan/debug",
+      "runtimeWorkspace": "/workspace",
+      "startupWarningPresent": true,
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "package": {
+      "image": "sha256:045bdfce262f61bfc5d3f25752d3fac2d9be639e32aa1ceb6509d2510d863768",
+      "sourceSHA256": "20bee7342e4fa2aaadc17199cb18ad44c00435f3a02beaa3d1bbbd6527a5e3c5",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-045bdfce262f-offline.tar.gz",
+      "bytes": 705616235,
+      "sha256": "b046c9a2772d13d0e097460e2e48bc8ffe44626d702a9278d0d01f04bbaa4f69",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true
+    },
+    "browser": {
+      "fixtureOnly": true,
+      "entry": "aide/start.command",
+      "port": 9999,
+      "client": "Safari",
+      "desktop": true,
+      "narrow581x971": true,
+      "currentDark": true,
+      "keyboard": true,
+      "correctOutcome": true,
+      "otherThemesAnd390px": "not_run"
+    },
+    "cleanup": {
+      "ownedFixtureRemoved": true,
+      "preExistingSessionIdsPreserved": true,
+      "beforeCount": 1,
+      "afterCount": 1,
+      "sessionSequenceNotReset": true,
+      "privateFixtureBackupRetained": true
+    },
+    "remaining": "Final quick69 PASS; branch push pending. Live model/graph approvals, uncertain-effect reconciliation, star-map host I/O and original12 streams remain. Recovery-write cancelled notice on session switch requires controlled typed-draft reproduction; data loss unproven.",
+    "quick_receipt": {
+      "status": "pass",
+      "head": "e54f390973a330ea04a2198893913eaf04c9116b",
+      "fingerprint": "8bb2e91cc6a940968303ef146b6a15cd055a8bbed230ebde0ece96303026dd96",
+      "time": "20261014T203218364676Z",
+      "log": ".agent-state/verify-20261014T203218364676Z.log",
+      "commands": 69
+    }
+  }
 }

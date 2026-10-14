@@ -48,30 +48,119 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Quick69 PASS including actual renderer VM semantics, private field exclusion, equal-length graph changes, non-latest run invalidation, lazy excerpt, collapse/focus, i18n, stale-stream/session isolation. Current-instance visual fixture prepared with explicit no-execution label; canonical rebuild/browser acceptance pending.",
+      "status": "pass",
+      "summary": "Initial quick69 PASS. Canonical start.command rebuilt e54f390 with local dependencies and no build network; real Safari9999 checked current dark presentation at desktop and actual581x971, keyboard result toggling, bounded literal snippets and exact non-latest-run outcome navigation. Synthetic display-only fixture; no model/plugin execution. Light/other themes and390px not tested. Final quick69 PASS on frozen e54f390 code/process/image metadata; Markdown199/local links583 PASS. No new full71 run.",
       "evidence": [
-        ".agent-state/verify-20261014T201153185155Z.log",
-        ".agent-state/plugin-plan-ui/fixture-record.json"
+        ".agent-state/plugin-plan-ui/desktop-final.png",
+        ".agent-state/plugin-plan-ui/narrow-final.png",
+        ".agent-state/plugin-plan-ui/final-keyboard.png",
+        ".agent-state/plugin-plan-ui/correct-run-evidence.png",
+        ".agent-state/plugin-plan-ui/final-entry.log",
+        ".agent-state/verify-20261014T203218364676Z.log",
+        ".agent-state/plugin-plan-ui/check-docs.log"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Architecture, image README and continuity118 record current readonly UI and scoped evidence; live graph approvals/model adoption and manual uncertainty reconciliation remain open.",
+      "evidence": [
+        "docs/architecture/plugin-task-scheduling.md",
+        "docker-images/README.md",
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Removed only owned display fixture after verifying its identity/content; preexisting session IDs retained (1 before/1 after). Monotonic sequence not reset. Private local evidence retained; original vendor deletions untouched. Restored Safari window approximately1325x940; no theme/model settings changed.",
+      "evidence": [
+        ".agent-state/plugin-plan-ui/cleanup.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Local image healthy; app and complete dependency tags, inner/outer hashes, actual docker load, launcher bytes and copies in both local trees verified. Final quick69 PASS; incremental branch push pending. No main/tag/formal release; receiving device unobserved.",
+      "evidence": [
+        ".agent-state/plugin-plan-ui/package.json",
+        ".agent-state/plugin-plan-ui/runtime.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental source push/testing/local image authorization; no formal main/tag release.",
   "rollback": "Revert module/UI hook and cache query changes; backend plan data preserved. Remove only owned synthetic UI fixture.",
-  "handoff": "Frontend source ready; pending canonical start.command rebuild and real Safari visual/evidence-navigation checks. Constructed fixture is display-only, no plugins/models executed; does not close live model/stream acceptance or manual effect reconciliation. Original goal remains active."
+  "handoff": "UI source e54f390 deployed via canonical9999; synthetic native Safari visual acceptance complete, owned fixture removed. Final quick69 PASS; branch push pending; goal remains active.",
+  "runtime": {
+    "runningImage": "sha256:045bdfce262f61bfc5d3f25752d3fac2d9be639e32aa1ceb6509d2510d863768",
+    "image": "sha256:045bdfce262f61bfc5d3f25752d3fac2d9be639e32aa1ceb6509d2510d863768",
+    "binarySHA256": "a0884079199784b1b5c70538fb4d3b3dde76f285d054b17e74c86dcee0e8ec2e",
+    "runningPlatformManifest": "sha256:79fb85beb0d73fcb02540882b1ed4aeb8416392246d5f79077f606e1cdeb28d0",
+    "sourceSHA256": "20bee7342e4fa2aaadc17199cb18ad44c00435f3a02beaa3d1bbbd6527a5e3c5",
+    "buildCommit": "e54f390973a330ea04a2198893913eaf04c9116b-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 1,
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:045bdfce262f61bfc5d3f25752d3fac2d9be639e32aa1ceb6509d2510d863768",
+    "sourceSHA256": "20bee7342e4fa2aaadc17199cb18ad44c00435f3a02beaa3d1bbbd6527a5e3c5",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-045bdfce262f-offline.tar.gz",
+    "bytes": 705616235,
+    "sha256": "b046c9a2772d13d0e097460e2e48bc8ffe44626d702a9278d0d01f04bbaa4f69",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  },
+  "cleanup": {
+    "ownedFixtureRemoved": true,
+    "preExistingSessionIdsPreserved": true,
+    "beforeCount": 1,
+    "afterCount": 1,
+    "sessionSequenceNotReset": true,
+    "privateFixtureBackupRetained": true
+  },
+  "implementation_commits": [
+    "bd22ea3",
+    "e54f390"
+  ],
+  "browser_acceptance": {
+    "entry": "aide/start.command",
+    "port": 9999,
+    "client": "Safari",
+    "fixtureOnly": true,
+    "modelsOrPluginsExecuted": false,
+    "desktop": "1324x940 initial; approx1325x940 restored",
+    "narrow": "581x971 actual screenshot",
+    "theme": "current dark only",
+    "keyboard": "space toggles result summary",
+    "literalPayloads": true,
+    "privateArgumentAndProposalMarkersAbsent": true,
+    "correctNonLatestRunOutcome": true,
+    "limits": "No390px, other-theme, live model/stream/approval or external-device claim."
+  },
+  "remaining": [
+    "Real graph stream and multi-node approval browser workflow; real model adoption/ROS2 quality",
+    "Manual evidence-attributed reconciliation of uncertain effects, no automatic replay",
+    "Session selection showed recovery-write cancelled notice; typed draft switching/reload reproduction needed before claiming data loss",
+    "Original twelve workstreams, star-map host I/O and receiving-device import; Windows by user, true vectors deferred"
+  ],
+  "quick_receipt": {
+    "status": "pass",
+    "head": "e54f390973a330ea04a2198893913eaf04c9116b",
+    "fingerprint": "8bb2e91cc6a940968303ef146b6a15cd055a8bbed230ebde0ece96303026dd96",
+    "time": "20261014T203218364676Z",
+    "log": ".agent-state/verify-20261014T203218364676Z.log",
+    "commands": 69
+  }
 }

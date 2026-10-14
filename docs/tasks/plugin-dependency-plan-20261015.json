@@ -88,7 +88,7 @@
   },
   "release_authorization": "Existing incremental source/test/push/local image authorization; no main/tag release.",
   "rollback": "Additive tool/task fields; retain previous image and original session data. Revert tool advertisement and dispatcher without deleting persisted plans.",
-  "handoff": "Source d8f7059 pushed and canonical9999 deployed image2b4c7e19c77a; offline app+dependency bundle verified/imported/copied. Scoped source tests PASS, full70 PASS. Current canonical Safari default-reasoning independent save/reload/restore PASS, original API config restored. Dedicated graph UI, manual reconciliation of uncertain effects and real model adoption/ROS2 quality remain unverified. Original12 workstreams, host source I/O and other-device import remain open.",
+  "handoff": "Source d8f7059 pushed and canonical9999 deployed image2b4c7e19c77a; offline app+dependency bundle verified/imported/copied. Scoped source tests PASS, full70 PASS. Current canonical Safari default-reasoning independent save/reload/restore PASS, original API config restored. Dedicated graph UI, manual reconciliation of uncertain effects and real model adoption/ROS2 quality remain unverified. Original12 workstreams, host source I/O and other-device import remain open. Readonly graph UI source e54f390 now has canonical Safari display-only fixture acceptance; see plugin-plan-ui-20261015 for current image/package and exact limits.",
   "runtime": {
     "runningImage": "sha256:2b4c7e19c77af7dfcb4c730eedd90e5dd170b27554d85d2c9a2a82bd89d9e88e",
     "image": "sha256:2b4c7e19c77af7dfcb4c730eedd90e5dd170b27554d85d2c9a2a82bd89d9e88e",
@@ -152,7 +152,7 @@
     ]
   },
   "remaining": [
-    "Dedicated graph progress display and browser multi-node approval workflow",
+    "Readonly graph panel delivered in plugin-plan-ui-20261015 with canonical Safari display fixture; real graph stream and multi-node approval browser workflow remain.",
     "Manual, evidence-attributed reconciliation of uncertain effects; no automatic replay",
     "Real model chooses graph for ROS2 writing; document/source/quality and sustained performance acceptance",
     "Original twelve workstreams and star-map host I/O; Windows by user, true vectors deferred, receiving-device import pending"
