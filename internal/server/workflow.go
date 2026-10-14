@@ -370,7 +370,11 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...) // 去掉末条指令（execute 首轮再加）
+	historyMessages := preview.Messages
+	if in.Mode != "chat" && len(historyMessages) > 0 {
+		historyMessages = historyMessages[:len(historyMessages)-1] // workflow 指令在 execute 首轮再加
+	}
+	history := append([]Message{}, historyMessages...)
 	firstInput := preview.Messages
 	// Persist the initial resumable checkpoint with the run itself. The run is
 	// returned to the browser as soon as startTask responds, so initializing this
