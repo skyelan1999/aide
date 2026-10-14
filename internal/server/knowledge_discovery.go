@@ -10,6 +10,14 @@ import (
 	"strings"
 )
 
+// Keep metadata catalogues bounded even when progressive indexing discovers
+// very large trees. The local checkpoint codec enforces the same ceiling.
+const knowledgeDiscoveryMaxEntries = 20000
+
+// Read-ahead names are persisted in the encrypted cursor so small progressive
+// steps do not have to reopen a large directory and replay its processed prefix.
+const knowledgeDiscoveryReadAheadNames = 2048
+
 // Discovery retains relative cursors and bounded metadata, never open directory
 // handles or source text. The caller pins one workspace/source and owns the
 // instance; Clone permits speculative scans without mutating the published view.
@@ -20,6 +28,9 @@ type knowledgeDiscoveryEntry struct {
 type knowledgeDiscoveryCursor struct {
 	Path         string
 	Offset       int
+	ReadOffset   int
+	PendingNames []string
+	ReadDone     bool
 	Stamp        knowledgeFileStamp
 	Started      bool
 	Depth        int
@@ -123,6 +134,9 @@ func (d *knowledgeDiscovery) Clone() *knowledgeDiscovery {
 	c := *d
 	c.ScopePaths = append([]string(nil), d.ScopePaths...)
 	c.Queue = append([]knowledgeDiscoveryCursor(nil), d.Queue...)
+	for i := range c.Queue {
+		c.Queue[i].PendingNames = append([]string(nil), d.Queue[i].PendingNames...)
+	}
 	c.Entries = make(map[string]knowledgeDiscoveryEntry, len(d.Entries))
 	for k, v := range d.Entries {
 		c.Entries[k] = v
@@ -145,6 +159,52 @@ func (d *knowledgeDiscovery) result(b knowledgeDiscoveryBatch) knowledgeDiscover
 	}
 	sort.Strings(b.Reasons)
 	return b
+}
+
+func (d *knowledgeDiscovery) inspectName(root *os.Root, parent, name string, depth int, files *int, children *[]knowledgeDiscoveryCursor) (consume, limitReached bool, err error) {
+	consume = true
+	if knowledgeSkip(name) {
+		return
+	}
+	rel := path.Join(parent, name)
+	if !knowledgeSafePath(rel) {
+		return
+	}
+	current, statErr := root.Lstat(rel)
+	if os.IsNotExist(statErr) {
+		return
+	}
+	if statErr != nil {
+		return false, false, statErr
+	}
+	if !knowledgeInScope(rel, d.ScopePaths, current.IsDir()) || current.Mode()&os.ModeSymlink != 0 {
+		return
+	}
+	if current.IsDir() {
+		if !d.Visited[rel] {
+			d.Visited[rel] = true
+			queued := false
+			for _, pending := range d.Queue {
+				if pending.Path == rel {
+					queued = true
+					break
+				}
+			}
+			if !queued {
+				*children = append(*children, knowledgeDiscoveryCursor{Path: rel, Depth: depth + 1})
+			}
+		}
+		return
+	}
+	if !current.Mode().IsRegular() {
+		return
+	}
+	if _, exists := d.Entries[rel]; !exists && len(d.Entries) >= d.MaxEntries {
+		return false, true, nil
+	}
+	d.Entries[rel] = knowledgeDiscoveryEntry{rel, current}
+	*files++
+	return
 }
 
 // Step bounds admitted files, newly entered directories AND inspected entries,
@@ -243,6 +303,9 @@ func (d *knowledgeDiscovery) Step(ctx context.Context, root *os.Root, fileBudget
 			// directory, removing stale children; stable IDs will be deduplicated.
 			d.removeTree(cursor.Path)
 			cursor.Offset = 0
+			cursor.ReadOffset = 0
+			cursor.PendingNames = nil
+			cursor.ReadDone = false
 			cursor.Started = false
 		}
 		if !cursor.Started {
@@ -259,131 +322,142 @@ func (d *knowledgeDiscovery) Step(ctx context.Context, root *os.Root, fileBudget
 			d.Entries[cursor.Path] = knowledgeDiscoveryEntry{cursor.Path, info}
 			d.Visited[cursor.Path] = true
 		}
-		dir, err := root.Open(cursor.Path)
-		if err != nil {
-			return d.result(b), err
+		// Older checkpoints only stored the number of inspected names. Treat that
+		// count as the enumeration offset once, then use the persisted read-ahead.
+		if cursor.ReadOffset == 0 && cursor.Offset > 0 && len(cursor.PendingNames) == 0 {
+			cursor.ReadOffset = cursor.Offset
 		}
-		// Reopen at each step. No handle survives request cancellation or switching.
-		skipped := 0
-		for skipped < cursor.Offset {
-			if err = ctx.Err(); err != nil {
-				dir.Close()
-				d.Reasons["time"] = true
-				return d.result(b), err
-			}
-			count := cursor.Offset - skipped
-			if count > 256 {
-				count = 256
-			}
-			var entries []os.DirEntry
-			entries, err = dir.ReadDir(count)
-			skipped += len(entries)
-			if err != nil && err != io.EOF {
-				break
-			}
-			if len(entries) == 0 {
-				break
-			}
-		}
-		if err != nil && err != io.EOF {
-			dir.Close()
-			return d.result(b), err
-		}
-		if skipped < cursor.Offset {
-			dir.Close()
-			cursor.Offset = 0
-			cursor.Started = false
-			continue
-		}
-		// Read bounded batches to reduce directory calls; only advance the saved
-		// offset for entries actually inspected so a later step can safely replay
-		// any entries buffered past a per-step budget.
 		done := false
 		limitReached := false
 		children := []knowledgeDiscoveryCursor{}
+		var readEntries []os.DirEntry
+		readEntryIndex := 0
 		for b.Files < fileBudget && b.Inspected < entryBudget {
 			if err = ctx.Err(); err != nil {
+				d.Reasons["time"] = true
 				break
 			}
-			readCount := entryBudget - b.Inspected
-			if readCount > 128 {
-				readCount = 128
-			}
-			var entries []os.DirEntry
-			entries, readErr := dir.ReadDir(readCount)
-			if len(entries) == 0 {
-				done = readErr == io.EOF
-				err = readErr
-				break
-			}
-			for _, e := range entries {
-				if b.Files >= fileBudget || b.Inspected >= entryBudget {
+			if len(cursor.PendingNames) == 0 && readEntryIndex >= len(readEntries) {
+				if cursor.ReadDone {
+					done = true
 					break
 				}
-				if err = ctx.Err(); err != nil {
-					break
+				dir, openErr := root.Open(cursor.Path)
+				if openErr != nil {
+					return d.result(b), openErr
 				}
-				cursor.Offset++
-				b.Inspected++
-				if knowledgeSkip(e.Name()) || e.Type()&os.ModeSymlink != 0 {
-					continue
-				}
-				rel := path.Join(cursor.Path, e.Name())
-				if !knowledgeSafePath(rel) {
-					continue
-				}
-				current, statErr := root.Lstat(rel)
-				if os.IsNotExist(statErr) {
-					continue
-				}
-				if statErr != nil {
-					err = statErr
-					break
-				}
-				if !knowledgeInScope(rel, d.ScopePaths, current.IsDir()) {
-					continue
-				}
-				if current.Mode()&os.ModeSymlink != 0 {
-					continue
-				}
-				if current.IsDir() {
-					if !d.Visited[rel] {
-						d.Visited[rel] = true
-						queued := false
-						for _, pending := range d.Queue {
-							if pending.Path == rel {
-								queued = true
-								break
-							}
-						}
-						if !queued {
-							children = append(children, knowledgeDiscoveryCursor{Path: rel, Depth: cursor.Depth + 1})
-						}
+				// No directory handle survives Step. Resume enumeration at the last
+				// read-ahead boundary, not at the last inspected entry.
+				skipped := 0
+				for skipped < cursor.ReadOffset {
+					if err = ctx.Err(); err != nil {
+						break
 					}
+					count := cursor.ReadOffset - skipped
+					if count > 256 {
+						count = 256
+					}
+					var entries []os.DirEntry
+					entries, err = dir.ReadDir(count)
+					skipped += len(entries)
+					if err != nil && err != io.EOF {
+						break
+					}
+					if len(entries) == 0 {
+						break
+					}
+				}
+				if err != nil && err != io.EOF {
+					dir.Close()
+					if ctx.Err() != nil {
+						d.Reasons["time"] = true
+					}
+					return d.result(b), err
+				}
+				if skipped < cursor.ReadOffset {
+					dir.Close()
+					d.removeTree(cursor.Path)
+					cursor.Offset = 0
+					cursor.ReadOffset = 0
+					cursor.PendingNames = nil
+					cursor.ReadDone = false
+					cursor.Started = false
 					continue
 				}
-				if !current.Mode().IsRegular() {
-					continue
+				err = nil
+				// Persisted pending names must stay within the checkpoint validator's
+				// bound even when this scan step has a much larger entry budget.
+				readAhead := knowledgeDiscoveryReadAheadNames
+				entries, readErr := dir.ReadDir(readAhead)
+				if readErr != nil && readErr != io.EOF {
+					dir.Close()
+					return d.result(b), readErr
 				}
-				if _, exists := d.Entries[rel]; !exists && len(d.Entries) >= d.MaxEntries {
-					// Keep this entry pending for an explicit higher catalog limit.
-					cursor.Offset--
-					d.Reasons["catalog_limit"] = true
-					limitReached = true
+				cursor.ReadOffset += len(entries)
+				readEntries = entries
+				readEntryIndex = 0
+				// File.ReadDir may report EOF only on a subsequent empty read. A
+				// short successful batch proves that this directory was exhausted.
+				cursor.ReadDone = readErr == io.EOF || len(entries) < readAhead
+				dir.Close()
+				if len(readEntries) == 0 && cursor.ReadDone {
+					done = true
 					break
 				}
-				d.Entries[rel] = knowledgeDiscoveryEntry{rel, current}
-				b.Files++
 			}
-			if err != nil {
-				break
+			fromPending := len(cursor.PendingNames) > 0
+			name := ""
+			if fromPending {
+				name = cursor.PendingNames[0]
+			} else {
+				name = readEntries[readEntryIndex].Name()
 			}
-			if readErr != nil && readErr != io.EOF {
-				err = readErr
+			b.Inspected++
+			consume, reachedLimit, inspectErr := d.inspectName(root, cursor.Path, name, cursor.Depth, &b.Files, &children)
+			if inspectErr != nil {
+				err = inspectErr
+				consume = false
+			}
+			if reachedLimit {
+				limitReached = true
+			}
+			if consume {
+				cursor.Offset++
+				if fromPending {
+					cursor.PendingNames = cursor.PendingNames[1:]
+				} else {
+					readEntryIndex++
+				}
+			}
+			if err != nil || limitReached {
 				break
 			}
 		}
-		dir.Close()
+		for readEntryIndex < len(readEntries) {
+			cursor.PendingNames = append(cursor.PendingNames, readEntries[readEntryIndex].Name())
+			readEntryIndex++
+		}
+		if len(cursor.PendingNames) > 0 {
+			cursor.PendingNames = append([]string(nil), cursor.PendingNames...)
+		} else {
+			cursor.PendingNames = nil
+		}
+		if cursor.ReadDone && len(cursor.PendingNames) == 0 {
+			done = true
+		}
+		if limitReached {
+			d.Reasons["catalog_limit"] = true
+		}
+		if err != nil {
+			return d.result(b), err
+		}
+		if ctx.Err() != nil {
+			d.Reasons["time"] = true
+			return d.result(b), ctx.Err()
+		}
+		if limitReached {
+			return d.result(b), nil
+		}
 		sort.SliceStable(children, func(i, j int) bool {
 			a, b := knowledgePriorityRank(children[i].Path, priorities), knowledgePriorityRank(children[j].Path, priorities)
 			if a != b {

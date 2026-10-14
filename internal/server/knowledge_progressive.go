@@ -37,6 +37,15 @@ func (c *knowledgeScanCache) discover(ctx context.Context, root *os.Root, ar kno
 		v = &knowledgeDiscoveryView{Cursor: newKnowledgeDiscovery(4 * (files + dirs)), Published: map[string]knowledgeDiscoveryEntry{}, Cycle: 1}
 		c.discovery[key] = v
 	}
+	// A directory that outgrows its first catalogue should keep indexing on
+	// subsequent snapshots. Grow the retained catalogue geometrically, bounded
+	// by the same hard limit enforced by the durable local checkpoint format.
+	// This keeps the first view responsive without making the first batch's
+	// capacity look like a permanent source-size limit.
+	if v.Cursor.Reasons["catalog_limit"] && v.Cursor.MaxEntries < knowledgeDiscoveryMaxEntries {
+		next := max(v.Cursor.MaxEntries*2, v.Cursor.MaxEntries+4*(files+dirs))
+		v.Cursor.MaxEntries = min(knowledgeDiscoveryMaxEntries, next)
+	}
 	// A budget increase should extend the catalog in place. Replacing the
 	// cursor here would discard its directory offsets and rescan from the root.
 	if limit := 4 * (files + dirs); limit > v.Cursor.MaxEntries {

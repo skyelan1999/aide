@@ -206,6 +206,52 @@ func TestKnowledgeDiscoveryBudgetIncreaseKeepsCursor(t *testing.T) {
 	}
 }
 
+func TestKnowledgeProgressiveCatalogExpandsWhenInitialCapacityIsReached(t *testing.T) {
+	a := testApp(t)
+	for i := 0; i < 40; i++ {
+		if err := os.WriteFile(filepath.Join(a.workPath, fmt.Sprintf("catalog-%03d.txt", i)), []byte("entry"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	root, err := os.OpenRoot(a.workPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	area := knowledgeArea{scope: knowledgeID("scope", "", "", ""), root: "workspace", source: "workspace", kind: "local", location: a.workPath, enabled: true}
+	cache := newKnowledgeScanCache(nil)
+	maxSeen := 0
+	for cycle := 0; cycle < 80; cycle++ {
+		view, batch, err := cache.discover(context.Background(), root, area, defaultKnowledgeIndexPolicy(), 1, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if view.Cursor.MaxEntries < maxSeen {
+			t.Fatalf("catalogue shrank during continuation: %d -> %d", maxSeen, view.Cursor.MaxEntries)
+		}
+		maxSeen = view.Cursor.MaxEntries
+		if view.Cursor.Complete {
+			// testApp pre-populates its workspace with Aide-managed directories,
+			// so assert the fixture files are present instead of assuming the
+			// workspace contains only this test's root plus 40 files.
+			for i := 0; i < 40; i++ {
+				rel := fmt.Sprintf("catalog-%03d.txt", i)
+				if _, ok := view.Cursor.Entries[rel]; !ok {
+					t.Fatalf("catalogue completed without fixture entry %q (%d total entries)", rel, len(view.Cursor.Entries))
+				}
+			}
+			if maxSeen <= 8 {
+				t.Fatalf("catalogue did not grow beyond its initial cap: %d", maxSeen)
+			}
+			return
+		}
+		if batch.Pending == 0 {
+			t.Fatalf("incomplete catalogue has no continuation work: %+v", batch)
+		}
+	}
+	t.Fatalf("catalogue did not complete after progressive growth; final cap=%d", maxSeen)
+}
+
 func TestKnowledgeLocalDiscoveryRevisionIgnoresOnlyBudgets(t *testing.T) {
 	base := defaultKnowledgeIndexPolicy()
 	changedBudget := base

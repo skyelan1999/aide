@@ -205,6 +205,15 @@ func TestKnowledgeLocalInvalidCheckpoint(t *testing.T) {
 	if validateKnowledgeLocalCursor(&d) == nil {
 		t.Fatal("unsafe path accepted")
 	}
+	d.Queue = []knowledgeLocalQueue{{Path: ".", Started: true, Offset: 2, ReadOffset: 4, PendingNames: []string{"one"}}}
+	if validateKnowledgeLocalCursor(&d) == nil {
+		t.Fatal("inconsistent local read-ahead accepted")
+	}
+	d.Queue[0].ReadOffset = 3
+	d.Queue[0].PendingNames[0] = "../escape"
+	if validateKnowledgeLocalCursor(&d) == nil {
+		t.Fatal("unsafe pending directory name accepted")
+	}
 	target := filepath.Join(t.TempDir(), "target")
 	os.WriteFile(target, []byte("keep"), 0600)
 	link := filepath.Join(t.TempDir(), "link")
@@ -219,6 +228,73 @@ func TestKnowledgeLocalInvalidCheckpoint(t *testing.T) {
 	}
 	if b, _ := os.ReadFile(target); string(b) != "keep" {
 		t.Fatal("target changed")
+	}
+}
+
+func TestKnowledgeLocalCursorCompressedLargeMaterialsAndLegacyRead(t *testing.T) {
+	const count = 2200
+	identity := "large-local-cursor"
+	text := strings.Repeat("x", 8192)
+	d := knowledgeLocalPayload{
+		Version: 1, Identity: identity, Cycle: 1, Entries: map[string]knowledgeLocalInfo{},
+		Published: map[string]knowledgeLocalInfo{}, Visited: map[string]bool{}, Reasons: map[string]bool{},
+		Complete: true, MaxEntries: count + 1, Materials: map[string]knowledgeLocalMaterial{},
+	}
+	for i := 0; i < count; i++ {
+		rel := fmt.Sprintf("docs/file-%04d.md", i)
+		info := knowledgeLocalInfo{Rel: rel, Stamp: knowledgeLocalStamp{Size: int64(len(text)), Mode: 0600}}
+		d.Entries[rel] = info
+		d.Published[rel] = info
+		d.Materials[rel] = knowledgeLocalMaterial{Stamp: info.Stamp, Text: text}
+	}
+	key := knowledgeTimeKey("local-test-large")
+	file := filepath.Join(t.TempDir(), "compressed.json")
+	if err := saveKnowledgeLocalCursor(file, d, key); err != nil {
+		t.Fatal(err)
+	}
+	encoded, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var env knowledgeVectorEnvelope
+	if err := json.Unmarshal(encoded, &env); err != nil || env.Version != 2 {
+		t.Fatalf("expected compressed local cursor envelope v2: version=%d err=%v", env.Version, err)
+	}
+	if len(encoded) >= 16<<20 {
+		t.Fatalf("compressed local cursor unexpectedly exceeds legacy 16 MiB budget: %d", len(encoded))
+	}
+	loaded, err := loadKnowledgeLocalCursor(file, identity, key)
+	if err != nil || len(loaded.Materials) != count || loaded.Materials["docs/file-0000.md"].Text != text {
+		t.Fatalf("compressed local checkpoint did not round trip: loaded=%v err=%v", loaded != nil, err)
+	}
+
+	// Existing encrypted v1 checkpoints remain readable after the format change.
+	legacyD := knowledgeLocalPayload{
+		Version: 1, Identity: identity, Cycle: 1, Entries: map[string]knowledgeLocalInfo{},
+		Published: map[string]knowledgeLocalInfo{}, Visited: map[string]bool{}, Reasons: map[string]bool{},
+		Complete: true, MaxEntries: 2, Materials: map[string]knowledgeLocalMaterial{},
+	}
+	legacyInfo := knowledgeLocalInfo{Rel: "legacy.md", Stamp: knowledgeLocalStamp{Size: 6, Mode: 0600}}
+	legacyD.Entries[legacyInfo.Rel] = legacyInfo
+	legacyD.Published[legacyInfo.Rel] = legacyInfo
+	legacyD.Materials[legacyInfo.Rel] = knowledgeLocalMaterial{Stamp: legacyInfo.Stamp, Text: "legacy"}
+	legacyPlain, err := json.Marshal(legacyD)
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacyCipher, nonce, err := sealWithKey(key, legacyPlain)
+	zeroBytes(legacyPlain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	legacyFile := filepath.Join(t.TempDir(), "legacy.json")
+	if err := atomicJSON(legacyFile, knowledgeVectorEnvelope{1, legacyCipher, nonce}); err != nil {
+		t.Fatal(err)
+	}
+	zeroBytes(legacyCipher)
+	legacy, err := loadKnowledgeLocalCursor(legacyFile, identity, key)
+	if err != nil || len(legacy.Materials) != 1 {
+		t.Fatalf("legacy local checkpoint is not readable: loaded=%v err=%v", legacy != nil, err)
 	}
 }
 

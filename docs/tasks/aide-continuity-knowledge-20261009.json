@@ -4308,5 +4308,25 @@
       "pdfinfo /Users/skyelan/Downloads/ROS2编译工程创建步骤_kunlun_ws-4.pdf: Pages 29; A4; 2966702 bytes; Creator aide"
     ],
     "remaining": "此项补足已鉴权 Aide 文件页入口与下载验证，不等同于在 Aide 内运行 1000 节/154 页压力文档。PDF 最后一页视觉检查、压力文档内存测量以及总目标中的其它连续性/星图验收继续未完成。"
+  },
+  "progress_checkpoint_20261014_followup91": {
+    "date": "2026-10-14",
+    "status": "progressive_local_index_growth_capacity_expansion_safari_pass_camera_retention_pending",
+    "summary": "在系统 Safari 的真实引用目录中，渐进索引持续增长并自动几何扩容：容量从 2,000 增到 4,000，命中限制后继续扩大到 8,000；可见索引由 1,225 增至 4,463，且继续显示分批扫描和待处理目录。未发生锁死；视角保持与长时压力仍需独立验收。",
+    "evidence": [
+      "GOMAXPROCS=1 go test -race -p=1 -parallel=1 ./internal/server -run ^(TestKnowledgeDiscoveryReadAheadCloneAndResume|TestKnowledgeLocalRestartAPI|TestKnowledgeProgressiveCatalogExpandsWhenInitialCapacityIsReached)$ -count=1 -timeout=5m（aide:local, --network=none, 源只读）：PASS 6.562s",
+      "GOMAXPROCS=1 go test -p=1 -parallel=1 ./internal/server -run ^(TestKnowledgeDiscoveryReadAheadCloneAndResume|TestKnowledgeLocalRestartAPI|TestKnowledgeProgressiveCatalogAccumulatesBeyondOneLargeDirectory|TestKnowledgeProgressiveCatalogExpandsWhenInitialCapacityIsReached)$ -count=1 -timeout=8m（aide:local, --network=none, 源只读）：PASS 3.116s",
+      "python3 scripts/agent-route.py verify quick：PASS；fingerprint 567e28eff45173dd09ca99d953e191f14c3b6a8f879dcc6b1e395186a7f10cda；receipt .agent-state/verify-20261014T043155190069Z.log",
+      "Safari 已鉴权页面 https://localhost:9999/starmap.html?channel=e43f4a6e-f382-4554-b0d0-384ff94733b5；引用目录起始观测 1,145 文件/80 目录、目录容量上限 2,000、1,225 颗星。",
+      "同一浏览器会话连续观察：1,345 文件/123 目录、1,468 颗星；1,811 文件/189 目录时达到 2,000 容量并显示“范围受限/索引目录容量上限”及 628 待扫描目录；随后自动扩至 4,000，索引继续至 3,911 颗星并展示持续增加的新节点。",
+      "命中 4,000 后后续轮次自动扩至 8,000；最终观察 3,944 文件/519 目录、4,463 颗星、1,008 待扫描目录，状态为“分批扫描中”，页面状态持续更新，非固定 1,000/2,000 计数。",
+      "Safari 画面目视确认星图页面持续可交互和索引状态可见；本轮未量化相机变换，故镜头保持与长时浏览器性能仍待验收。"
+    ],
+    "browser": {
+      "status": "progressive_growth_and_capacity_expansion_pass",
+      "reason": "系统 Safari 真实引用目录从 1,225 增长到 4,463 颗星；目录容量 2,000→4,000→8,000 自动扩张；达到上限后仍显示范围受限和待扫目录，随后继续增长。摄像机保持与长时性能未量化。"
+    },
+    "remaining": "完整目标继续 active；相机保持与长时 UI 性能、用户 SSH 端到端、完整全仓 race 资源测试仍未完成；向量模型验收按用户要求暂缓。",
+    "release": "本阶段 Safari 渐进增长/自动扩容验收通过，可单独提交并推送；不代表总目标完成。"
   }
 }

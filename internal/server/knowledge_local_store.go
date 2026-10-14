@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -10,6 +12,11 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+)
+
+const (
+	knowledgeLocalCursorMaxBytes     = 192 << 20
+	knowledgeLocalCursorFileMaxBytes = 260 << 20
 )
 
 // No OS handles survive restart. The DTO retains the bounded observations and
@@ -40,7 +47,9 @@ func (s knowledgeLocalInfo) Sys() any           { return nil }
 
 type knowledgeLocalQueue struct {
 	Path                 string
-	Offset               int
+	Offset, ReadOffset   int
+	PendingNames         []string
+	ReadDone             bool
 	Stamp                knowledgeLocalStamp
 	Started              bool
 	Depth                int
@@ -82,7 +91,12 @@ func localPayload(identity string, v *knowledgeDiscoveryView, materials map[stri
 	d := v.Cursor
 	out := knowledgeLocalPayload{Version: 1, Identity: identity, Cycle: v.Cycle, Entries: map[string]knowledgeLocalInfo{}, Published: map[string]knowledgeLocalInfo{}, Visited: d.Visited, Reasons: d.Reasons, Complete: d.Complete, MaxEntries: d.MaxEntries, ScopePaths: d.ScopePaths, Seeded: d.Seeded, Materials: map[string]knowledgeLocalMaterial{}}
 	for _, q := range d.Queue {
-		out.Queue = append(out.Queue, knowledgeLocalQueue{q.Path, q.Offset, localStamp(q.Stamp), q.Started, q.Depth, q.MetadataOnly, q.Direct})
+		out.Queue = append(out.Queue, knowledgeLocalQueue{
+			Path: q.Path, Offset: q.Offset, ReadOffset: q.ReadOffset,
+			PendingNames: append([]string(nil), q.PendingNames...), ReadDone: q.ReadDone,
+			Stamp: localStamp(q.Stamp), Started: q.Started, Depth: q.Depth,
+			MetadataOnly: q.MetadataOnly, Direct: q.Direct,
+		})
 	}
 	for p, e := range d.Entries {
 		out.Entries[p] = knowledgeLocalInfo{p, localStamp(knowledgeStamp(e.Info))}
@@ -100,7 +114,7 @@ func localPayload(identity string, v *knowledgeDiscoveryView, materials map[stri
 	return out
 }
 func validateKnowledgeLocalCursor(d *knowledgeLocalPayload) error {
-	if d.Version != 1 || d.Cycle < 1 || d.MaxEntries < 1 || d.MaxEntries > 20000 || d.Entries == nil || d.Published == nil || d.Visited == nil || d.Reasons == nil || d.Materials == nil || len(d.Queue) > 50000 || len(d.Visited) > 50000 || len(d.Entries) > d.MaxEntries || len(d.Published) > 2*d.MaxEntries || len(d.Materials) > 2*d.MaxEntries || len(d.Reasons) > 16 || len(d.ScopePaths) > 32 || d.Complete != (len(d.Queue) == 0) {
+	if d.Version != 1 || d.Cycle < 1 || d.MaxEntries < 1 || d.MaxEntries > knowledgeDiscoveryMaxEntries || d.Entries == nil || d.Published == nil || d.Visited == nil || d.Reasons == nil || d.Materials == nil || len(d.Queue) > 50000 || len(d.Visited) > 50000 || len(d.Entries) > d.MaxEntries || len(d.Published) > 2*d.MaxEntries || len(d.Materials) > 2*d.MaxEntries || len(d.Reasons) > 16 || len(d.ScopePaths) > 32 || d.Complete != (len(d.Queue) == 0) {
 		return fmt.Errorf("invalid local cursor bounds")
 	}
 	safe := func(p string) bool {
@@ -115,8 +129,16 @@ func validateKnowledgeLocalCursor(d *knowledgeLocalPayload) error {
 		return true
 	}
 	for _, q := range d.Queue {
-		if !safe(q.Path) || q.Offset < 0 || q.Depth < 0 || q.Depth > 64 {
+		if !safe(q.Path) || q.Offset < 0 || q.ReadOffset < 0 || q.Depth < 0 || q.Depth > 64 || len(q.PendingNames) > knowledgeDiscoveryReadAheadNames {
 			return fmt.Errorf("invalid local queue")
+		}
+		if q.ReadOffset > 0 && (q.ReadOffset < q.Offset || q.ReadOffset-q.Offset != len(q.PendingNames)) {
+			return fmt.Errorf("invalid local queue read-ahead")
+		}
+		for _, name := range q.PendingNames {
+			if name == "" || len(name) > 4096 || name == "." || name == ".." || strings.ContainsAny(name, "/\\\x00") {
+				return fmt.Errorf("invalid local pending name")
+			}
 		}
 	}
 	for p := range d.Visited {
@@ -168,7 +190,12 @@ func (d knowledgeLocalPayload) restore(location string) (*knowledgeDiscoveryView
 	c.ScopePaths = d.ScopePaths
 	c.Seeded = d.Seeded
 	for _, q := range d.Queue {
-		c.Queue = append(c.Queue, knowledgeDiscoveryCursor{q.Path, q.Offset, q.Stamp.stamp(), q.Started, q.Depth, q.MetadataOnly, q.Direct})
+		c.Queue = append(c.Queue, knowledgeDiscoveryCursor{
+			Path: q.Path, Offset: q.Offset, ReadOffset: q.ReadOffset,
+			PendingNames: append([]string(nil), q.PendingNames...), ReadDone: q.ReadDone,
+			Stamp: q.Stamp.stamp(), Started: q.Started, Depth: q.Depth,
+			MetadataOnly: q.MetadataOnly, Direct: q.Direct,
+		})
 	}
 	for p, e := range d.Entries {
 		c.Entries[p] = knowledgeDiscoveryEntry{p, e}
@@ -188,7 +215,7 @@ func loadKnowledgeLocalCursor(file, identity string, key []byte) (*knowledgeLoca
 	if os.IsNotExist(err) {
 		return nil, nil
 	}
-	if err != nil || !info.Mode().IsRegular() || info.Size() > 24<<20 {
+	if err != nil || !info.Mode().IsRegular() || info.Size() > knowledgeLocalCursorFileMaxBytes {
 		return nil, fmt.Errorf("invalid local cursor file")
 	}
 	f, err := os.Open(file)
@@ -196,21 +223,35 @@ func loadKnowledgeLocalCursor(file, identity string, key []byte) (*knowledgeLoca
 		return nil, err
 	}
 	defer f.Close()
-	b, err := io.ReadAll(io.LimitReader(f, (24<<20)+1))
-	if err != nil || len(b) > 24<<20 {
+	b, err := io.ReadAll(io.LimitReader(f, knowledgeLocalCursorFileMaxBytes+1))
+	if err != nil || len(b) > knowledgeLocalCursorFileMaxBytes {
 		return nil, fmt.Errorf("local cursor exceeds capacity")
 	}
 	var env knowledgeVectorEnvelope
-	if json.Unmarshal(b, &env) != nil || env.Version != 1 {
+	if json.Unmarshal(b, &env) != nil || (env.Version != 1 && env.Version != 2) {
 		return nil, fmt.Errorf("invalid local cursor envelope")
 	}
-	plain, err := openWithKey(key, env.Ciphertext, env.Nonce)
+	encoded, err := openWithKey(key, env.Ciphertext, env.Nonce)
 	if err != nil {
 		return nil, fmt.Errorf("local cursor decrypt failed")
 	}
-	defer zeroBytes(plain)
+	defer zeroBytes(encoded)
+	plain := encoded
+	if env.Version == 2 {
+		reader, openErr := gzip.NewReader(bytes.NewReader(encoded))
+		if openErr != nil {
+			return nil, fmt.Errorf("invalid local cursor compression")
+		}
+		plain, err = io.ReadAll(io.LimitReader(reader, knowledgeLocalCursorMaxBytes+1))
+		closeErr := reader.Close()
+		if err != nil || closeErr != nil || len(plain) > knowledgeLocalCursorMaxBytes {
+			zeroBytes(plain)
+			return nil, fmt.Errorf("local cursor exceeds capacity")
+		}
+		defer zeroBytes(plain)
+	}
 	var d knowledgeLocalPayload
-	if len(plain) > knowledgeCursorBytes || json.Unmarshal(plain, &d) != nil {
+	if len(plain) > knowledgeLocalCursorMaxBytes || json.Unmarshal(plain, &d) != nil {
 		return nil, fmt.Errorf("invalid local cursor payload")
 	}
 	if d.Identity != identity {
@@ -230,10 +271,24 @@ func saveKnowledgeLocalCursor(file string, d knowledgeLocalPayload, key []byte) 
 		return err
 	}
 	defer zeroBytes(plain)
-	if len(plain) > knowledgeCursorBytes {
+	if len(plain) > knowledgeLocalCursorMaxBytes {
 		return fmt.Errorf("local cursor exceeds capacity")
 	}
-	ct, nonce, err := sealWithKey(key, plain)
+	var packed bytes.Buffer
+	writer, err := gzip.NewWriterLevel(&packed, gzip.BestSpeed)
+	if err != nil {
+		return err
+	}
+	if _, err = writer.Write(plain); err != nil {
+		writer.Close()
+		return err
+	}
+	if err = writer.Close(); err != nil {
+		return err
+	}
+	compressed := packed.Bytes()
+	defer zeroBytes(compressed)
+	ct, nonce, err := sealWithKey(key, compressed)
 	if err != nil {
 		return err
 	}
@@ -247,7 +302,7 @@ func saveKnowledgeLocalCursor(file string, d knowledgeLocalPayload, key []byte) 
 	if info, err := os.Lstat(file); err == nil && !info.Mode().IsRegular() {
 		return fmt.Errorf("invalid local cursor destination")
 	}
-	return atomicJSON(file, knowledgeVectorEnvelope{1, ct, nonce})
+	return atomicJSON(file, knowledgeVectorEnvelope{2, ct, nonce})
 }
 func (a *App) knowledgeLocalResume(cache *knowledgeScanCache, ar knowledgeArea, p knowledgeIndexPolicy, code bool, files, dirs int) error {
 	key := knowledgeDiscoveryKey(ar)

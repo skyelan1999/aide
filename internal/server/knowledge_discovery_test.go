@@ -49,7 +49,7 @@ func TestKnowledgeDiscoveryResumesLargeDirectory(t *testing.T) {
 }
 
 func BenchmarkKnowledgeDiscoveryLargeLibrary(b *testing.B) {
-	for _, fileCount := range []int{1_000, 10_000} {
+	for _, fileCount := range []int{1_000, 10_000, 19_000} {
 		b.Run(fmt.Sprintf("%d_files", fileCount), func(b *testing.B) {
 			workspace := b.TempDir()
 			for i := 0; i < fileCount; i++ {
@@ -64,18 +64,43 @@ func BenchmarkKnowledgeDiscoveryLargeLibrary(b *testing.B) {
 			}
 			defer root.Close()
 
-			b.ReportAllocs()
-			b.ResetTimer()
-			for i := 0; i < b.N; i++ {
-				discovery := newKnowledgeDiscovery(fileCount + 1)
-				batch, err := discovery.Step(context.Background(), root, fileCount+1, 1, 0, fileCount+2, nil)
-				if err != nil {
-					b.Fatal(err)
+			b.Run("single_batch", func(b *testing.B) {
+				b.ReportAllocs()
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					discovery := newKnowledgeDiscovery(fileCount + 1)
+					batch, err := discovery.Step(context.Background(), root, fileCount+1, 1, 1, fileCount+2, nil)
+					if err != nil {
+						b.Fatal(err)
+					}
+					if !batch.Complete || batch.Files != fileCount {
+						b.Fatalf("incomplete single batch: files=%d complete=%v pending=%d", batch.Files, batch.Complete, batch.Pending)
+					}
 				}
-				if !batch.Complete || batch.Files != fileCount {
-					b.Fatalf("incomplete scan: files=%d complete=%v pending=%d", batch.Files, batch.Complete, batch.Pending)
+			})
+
+			b.Run("progressive_256_files_512_entries", func(b *testing.B) {
+				b.ReportAllocs()
+				steps := 0
+				b.ResetTimer()
+				for i := 0; i < b.N; i++ {
+					discovery := newKnowledgeDiscovery(fileCount + 1)
+					for !discovery.Complete {
+						batch, err := discovery.Step(context.Background(), root, 256, 16, 1, 512, nil)
+						if err != nil {
+							b.Fatal(err)
+						}
+						if batch.Inspected == 0 && !batch.Complete {
+							b.Fatalf("progressive scan stalled: pending=%d reasons=%v", batch.Pending, batch.Reasons)
+						}
+						steps++
+					}
+					if len(discovery.Entries) != fileCount+1 {
+						b.Fatalf("incomplete progressive catalogue: entries=%d want=%d", len(discovery.Entries), fileCount+1)
+					}
 				}
-			}
+				b.ReportMetric(float64(steps)/float64(b.N), "steps/op")
+			})
 		})
 	}
 }
@@ -111,6 +136,59 @@ func TestKnowledgeDiscoveryExcludedAndCancel(t *testing.T) {
 		t.Fatal(d.Entries)
 	}
 }
+
+func TestKnowledgeDiscoveryReadAheadCloneAndResume(t *testing.T) {
+	root, p := discoveryRoot(t)
+	for i := 0; i < 2200; i++ {
+		if err := os.WriteFile(filepath.Join(p, fmt.Sprintf("read-ahead-%03d.txt", i)), []byte("text"), 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	d := newKnowledgeDiscovery(3000)
+	if _, err := d.Step(context.Background(), root, 1, 2, 7, 5000, nil); err != nil {
+		t.Fatal(err)
+	}
+	if len(d.Queue) != 1 || len(d.Queue[0].PendingNames) == 0 || d.Queue[0].ReadOffset <= d.Queue[0].Offset {
+		t.Fatalf("expected bounded persisted read-ahead: %+v", d.Queue)
+	}
+	if got := len(d.Queue[0].PendingNames); got > knowledgeDiscoveryReadAheadNames {
+		t.Fatalf("pending names exceed durable checkpoint bound: %d > %d", got, knowledgeDiscoveryReadAheadNames)
+	}
+	q := d.Queue[0]
+	payload := knowledgeLocalPayload{
+		Version: 1, Identity: "read-ahead-bound", Cycle: 1,
+		Entries: map[string]knowledgeLocalInfo{}, Published: map[string]knowledgeLocalInfo{},
+		Visited: map[string]bool{}, Reasons: map[string]bool{}, Materials: map[string]knowledgeLocalMaterial{},
+		Complete: false, MaxEntries: 3000,
+		Queue: []knowledgeLocalQueue{{Path: q.Path, Offset: q.Offset, ReadOffset: q.ReadOffset, PendingNames: append([]string(nil), q.PendingNames...), ReadDone: q.ReadDone, Started: q.Started}},
+	}
+	if err := validateKnowledgeLocalCursor(&payload); err != nil {
+		t.Fatalf("large-budget cursor cannot be persisted: %v", err)
+	}
+	cursorFile := filepath.Join(t.TempDir(), "cursor.json")
+	key := knowledgeTimeKey("read-ahead-bound")
+	if err := saveKnowledgeLocalCursor(cursorFile, payload, key); err != nil {
+		t.Fatalf("save large-budget cursor: %v", err)
+	}
+	loaded, err := loadKnowledgeLocalCursor(cursorFile, payload.Identity, key)
+	if err != nil || loaded == nil || len(loaded.Queue) != 1 || loaded.Queue[0].ReadOffset != q.ReadOffset || len(loaded.Queue[0].PendingNames) != len(q.PendingNames) {
+		t.Fatalf("read-ahead cursor did not survive encrypted persistence: loaded=%+v err=%v", loaded, err)
+	}
+	clone := d.Clone()
+	clone.Queue[0].PendingNames[0] = "mutated-by-speculative-clone"
+	if d.Queue[0].PendingNames[0] == clone.Queue[0].PendingNames[0] {
+		t.Fatal("clone shares pending names with published cursor")
+	}
+	for !d.Complete {
+		if _, err := d.Step(context.Background(), root, 1000, 2, 7, 5000, nil); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(d.Entries) != 2201 {
+		t.Fatalf("read-ahead resume lost entries: got %d want 2201", len(d.Entries))
+	}
+}
+
 func TestKnowledgeDiscoveryCloneAndDirectoryMutation(t *testing.T) {
 	root, p := discoveryRoot(t)
 	os.WriteFile(filepath.Join(p, "old.txt"), []byte("old"), 0600)
