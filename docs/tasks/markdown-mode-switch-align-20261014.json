@@ -1,0 +1,54 @@
+{
+  "id": "markdown-mode-switch-align-20261014",
+  "request": "这个编辑和预览的图标按钮没有和底框对齐。仅修复 Markdown 编辑器与文件查看器模式切换控件的视觉对齐，保持 36px 工具栏网格；使用系统 Safari 实际验收。",
+  "baseline": "0e8568d8b9f4975a58e95dacba711e24464d9325",
+  "initial_status": "M docs/architecture/continuity-roadmap.md\n M docs/architecture/knowledge-map.md\n M docs/en/user-guide.md\n M docs/tasks/aide-continuity-knowledge-20261009.json\n M docs/tasks/knowledge-language-service-20261009.json\n M docs/tasks/starmap-physics-engine-20261013.json\n M internal/server/knowledge_discovery.go\n M internal/server/knowledge_local_store.go\n M internal/server/knowledge_local_store_test.go\n M internal/server/knowledge_progressive.go\n M internal/server/knowledge_progressive_test.go\n M internal/server/web/continuity.js\n M internal/server/web/index.html\n M internal/server/web/macos.css\n M internal/server/web/starmap-lensing.js\n M internal/server/web/starmap.html\n M internal/server/web/starmap.js\n M scripts/continuity-isolation.test.cjs\n M scripts/starmap-lensing.test.cjs",
+  "acceptance": [
+    "编辑器对话框与独立文件查看器中的编辑/预览分段按钮和外框共享同一 36px 高度网格，不发生上下溢出。",
+    "聚焦按钮的可见焦点提示保持在分段外框内；Safari 实际浏览器复核外观。"
+  ],
+  "scope": [
+    "internal/server/web/macos.css：仅调整两个编辑/预览分段控件的盒模型、内按钮尺寸及焦点描边。",
+    "docs/tasks/markdown-mode-switch-align-20261014.json：记录本需求阶段与验收证据。"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "按截图修复编辑器与文件查看器中的编辑/预览图标分段控件外框对齐。",
+      "evidence": ["用户截图 2026-10-14；具体目标为编辑与预览图标按钮和底框对齐。"]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "分段控件外层固定为含边框和内距的 36px border-box；内按钮按 30px 内容区居中，焦点描边内收。",
+      "evidence": ["internal/server/web/style.css 定义外层 36px 盒高并拉伸旧式按钮；internal/server/web/macos.css 较后的通用 36px 按钮规则覆盖旧尺寸，是溢出来源。"]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "已修正编辑器与独立文件查看器两个控件的盒模型、高度及内部焦点提示；模式按钮悬停时不再上移，视觉上保持与同排控件和底框齐平。",
+      "evidence": ["internal/server/web/macos.css：模式外框 box-sizing:border-box、height:36px、padding:2px；按钮 30px；focus-visible outline-offset:-2px。", "internal/server/web/macos.css：编辑/预览按钮 hover 与 focus-visible 时清除 transform，避免悬停抬升造成视觉错位。"]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "使用 start.command 重建并启动当前源码后，在系统 Safari 中检查了 Markdown 编辑器对话框和独立文件查看器；编辑/预览分段外框与相邻操作保持同高同基线，焦点提示收在按钮边界内；独立查看器的编辑/预览切换可正常进入编辑态。",
+      "evidence": ["系统 Safari 原生截图：Markdown 编辑器对话框中编辑/预览模式控件外框及聚焦态不再向外溢出；同排保存、导出、历史版本、自动保存控件垂直对齐。", "系统 Safari 原生页面：从文件查看器切换到编辑态后，模式控件与同排 36px 高度操作按钮对齐，主体进入文本编辑器。", "验收地址为本机 https://localhost:9999；由 start.command 重建当前 Aide 服务后直接打开，无证书拦截或令牌登录页。"]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "CSS-only 修复无需用户文档或英文界面变更；验收限制记录在本任务单。",
+      "evidence": ["仅修改 UI 样式；本任务验收状态记录于本任务 JSON。"]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "修复 diff 经检查，仅涉及目标 CSS 与本任务记录，没有触碰现存无关工作区变更。",
+      "evidence": ["git diff --check -- internal/server/web/macos.css：通过。", "git status --short：保留原有多文件修改；本任务新增仅 docs/tasks/markdown-mode-switch-align-20261014.json。"]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "本任务已单独提交；推送因当前环境无法解析 github.com 而失败，网络恢复后需重试。",
+      "evidence": ["提交 9729584 Align markdown editor mode controls 仅包含本任务 CSS 与验收记录。", "git push origin main 返回 ssh: Could not resolve hostname github.com: -65563；未推送成功。", "其他工作树修改未纳入本次提交。"]
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": "本阶段已在系统 Safari 完成 Markdown 编辑器对话框及独立文件查看器验收。后续若编辑模式切换样式有变化，继续用 start.command 启动当前源码并在 Safari 两种入口复核。"
+}
