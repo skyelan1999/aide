@@ -2,6 +2,8 @@ package server
 
 import (
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -365,5 +367,129 @@ func TestCrossSessionToolsOnlyAssistant(t *testing.T) {
 		if !seen {
 			t.Fatalf("缺少工具 %q", name)
 		}
+	}
+}
+
+func TestSessionNumberCanonicalPersistence(t *testing.T) {
+	a := testApp(t)
+	// Establish canonical config before allocation so a legacy file cannot hide
+	// missing updates through the initial migration path.
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{"reasoningEffort": "auto"}), 200)
+	first := mustPostSession(t, a, "owned numbered session")
+	raw, err := os.ReadFile(SettingsPath(a.dataPath))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var saved Settings
+	if err = json.Unmarshal(raw, &saved); err != nil {
+		t.Fatal(err)
+	}
+	if saved.NextSessionSeq <= first.Number {
+		t.Fatalf("canonical counter not advanced: allocated=%d persisted next=%d", first.Number, saved.NextSessionSeq)
+	}
+	if _, err = os.Stat(filepath.Join(a.dataPath, "settings.json")); !os.IsNotExist(err) {
+		t.Fatalf("allocation recreated legacy settings path: %v", err)
+	}
+	requireStatus(t, request(a, "DELETE", "/api/sessions/"+first.ID, nil), 200)
+	work, reference, data := a.workPath, a.reference.Name(), a.dataPath
+	a.Close()
+	restarted, err := New(work, reference, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restarted.Close()
+	next := mustPostSession(t, restarted, "after restart")
+	if next.Number <= first.Number {
+		t.Fatalf("deleted number reused across restart: old=%d next=%d", first.Number, next.Number)
+	}
+}
+
+func TestSessionNumberCanonicalRepairPersistence(t *testing.T) {
+	a := testApp(t)
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{"reasoningEffort": "auto"}), 200)
+	first := mustPostSession(t, a, "repair candidate")
+	a.mu.Lock()
+	a.sessions[first.ID].Number = 0
+	if err := a.save(a.sessions[first.ID]); err != nil {
+		a.mu.Unlock()
+		t.Fatal(err)
+	}
+	a.settings.NextSessionSeq = 1
+	if err := atomicJSON(SettingsPath(a.dataPath), a.settings); err != nil {
+		a.mu.Unlock()
+		t.Fatal(err)
+	}
+	a.mu.Unlock()
+	work, reference, data := a.workPath, a.reference.Name(), a.dataPath
+	a.Close()
+	restarted, err := New(work, reference, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restarted.Close()
+	repaired := restarted.sessions[first.ID].Number
+	raw, err := os.ReadFile(SettingsPath(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var saved Settings
+	if err = json.Unmarshal(raw, &saved); err != nil {
+		t.Fatal(err)
+	}
+	if saved.NextSessionSeq <= repaired {
+		t.Fatalf("repair did not persist canonical counter: repaired=%d next=%d", repaired, saved.NextSessionSeq)
+	}
+	if _, err = os.Stat(filepath.Join(data, "settings.json")); !os.IsNotExist(err) {
+		t.Fatalf("repair recreated legacy settings path: %v", err)
+	}
+	restarted.Close()
+	again, err := New(work, reference, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer again.Close()
+	next := mustPostSession(t, again, "after durable repair")
+	if next.Number <= repaired {
+		t.Fatalf("repaired counter regressed across process: repaired=%d new=%d", repaired, next.Number)
+	}
+}
+
+func TestSessionNumberLegacyCounterPreservesCanonicalSettings(t *testing.T) {
+	a := testApp(t)
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{"reasoningEffort": "high", "userName": "canonical user"}), 200)
+	a.mu.Lock()
+	legacy := a.settings
+	legacy.NextSessionSeq = 50
+	legacy.ReasoningEffort = "off"
+	legacy.UserName = "stale legacy user"
+	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), legacy); err != nil {
+		a.mu.Unlock()
+		t.Fatal(err)
+	}
+	a.mu.Unlock()
+	work, reference, data := a.workPath, a.reference.Name(), a.dataPath
+	a.Close()
+	restarted, err := New(work, reference, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restarted.Close()
+	if restarted.settings.ReasoningEffort != "high" || restarted.settings.UserName != "canonical user" {
+		t.Fatal("legacy counter migration overwrote canonical preferences")
+	}
+	raw, err := os.ReadFile(SettingsPath(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var saved Settings
+	if err = json.Unmarshal(raw, &saved); err != nil {
+		t.Fatal(err)
+	}
+	if saved.NextSessionSeq < 50 {
+		t.Fatalf("higher legacy counter lost during upgrade: next=%d", saved.NextSessionSeq)
+	}
+	next := mustPostSession(t, restarted, "after migration")
+	if next.Number < 50 {
+		t.Fatalf("legacy number reused: got=%d", next.Number)
 	}
 }

@@ -45,7 +45,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Focused TLS/concurrent Close race1.181s+vet PASS. New bootstrap tests and workspace scene tests PASS. First quick failed legacy VM missing helper; VM now executes actual new helper with original assertions intact; retry quick70 PASS. Canonical start.command native Safari unavailable source switch and reload retain workbench with file error/retry; valid source lists files. Five protected config/auth hashes and mounts/workspace config preserved. Full72 pending. Frozen full72: quick70 and network-none runtime assets PASS; Go snapshot runner live, terminal receipt pending.",
+      "summary": "Focused TLS/concurrent Close race1.181s+vet PASS. New bootstrap tests and workspace scene tests PASS. First quick failed legacy VM missing helper; VM now executes actual new helper with original assertions intact; retry quick70 PASS. Canonical start.command native Safari unavailable source switch and reload retain workbench with file error/retry; valid source lists files. Five protected config/auth hashes and mounts/workspace config preserved. Full72 pending. Frozen full72: quick70 and network-none runtime assets PASS; Go snapshot runner live, terminal receipt pending. Final full72 FAIL: whole server package15m deadline at TestCwdPromptLine(1s), CPU active; server901.124s, vet NOT_RUN. TLS Close panic absent; fixed-source focused proof remains scoped. No full-pass claim.",
       "evidence": [
         ".agent-state/bootstrap-file-proto-close/scoped-race.log",
         ".agent-state/verify-20261014T231651406681Z.log",
@@ -80,7 +80,7 @@
   },
   "release_authorization": "Existing incremental testing/build/source push/offline package authorization; no formal main/tag release.",
   "rollback": "Previous local image preserves volume; returns to prior source bootstrap failure and concurrent-close risk. No user workspace or credentials changed.",
-  "handoff": "Source334237a and package/docsea914da pushed. Current full72 active exec6348/container aide-verify-fc318b666188; quick70/runtime assets PASS, wait same owner. Never use prior full71 failure as current pass. Canonical9999 and full offline package0d67b0b6bbfc verified. Original12 streams and external gates remain.",
+  "handoff": "Full72 terminal FAIL due package timeout, not input drift; old Close panic absent. Canonical/source/package0d67 remain verified within scoped evidence. New work session-counter-canonical-20261015 addresses reproduced old-path counter and bounded verification runtime.",
   "runtime": {
     "runningImage": "sha256:0d67b0b6bbfc1907d92b419508182da098ab8d19c60995b24454e72b15d894aa",
     "image": "sha256:0d67b0b6bbfc1907d92b419508182da098ab8d19c60995b24454e72b15d894aa",
@@ -126,12 +126,12 @@
     "status": "pass"
   },
   "active_full": {
-    "status": "running",
+    "status": "fail",
     "execSessionId": 6348,
     "container": "aide-verify-fc318b666188",
     "log": ".agent-state/verify-20261014T232304599902Z.log",
     "expectedFingerprint": "2ef032db75c42f010a5593f51317cadc1f265bed52c800c33ef40fff4179778a",
     "head": "ea914da0bd7a1d6f84110d091182d07a90c34559",
-    "lastVerified": "Full72 quick70 and runtime-assets passed; docker ps/top confirms active Go snapshot runner. Revalidate existing owner before polling; do not start a duplicate."
+    "lastVerified": "Terminal exec6348 exit1, container gone. Go server901.124s failed package15m timeout while TestCwdPromptLine had run1s; goroutine reading270MB test binary SHA in New, no close panic. Vet NOT_RUN."
   }
 }

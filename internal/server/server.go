@@ -821,6 +821,7 @@ func New(work, reference, data string) (*App, error) {
 	if err := EnsureDirs(data); err != nil {
 		return nil, err
 	}
+	legacySessionSequence := readLegacySessionSequence(data)
 	if err := MigrateFlatToLayered(data); err != nil {
 		return nil, fmt.Errorf("数据分层迁移失败: %w", err)
 	}
@@ -1079,6 +1080,15 @@ func New(work, reference, data string) (*App, error) {
 			return nil, err
 		}
 	}
+	// Preserve only a higher sequence left by the former flat-path counter
+	// writer. Canonical preferences and credentials retain migration priority.
+	if legacySessionSequence > a.settings.NextSessionSeq {
+		a.settings.NextSessionSeq = legacySessionSequence
+		if err := atomicJSON(SettingsPath(data), a.settings); err != nil {
+			a.Close()
+			return nil, fmt.Errorf("persist legacy session sequence: %w", err)
+		}
+	}
 	if err := a.repairSessionNumbers(); err != nil {
 		a.Close()
 		return nil, fmt.Errorf("修复会话编号失败: %w", err)
@@ -1186,6 +1196,19 @@ func (a *App) removeSessionFiles(id string) {
 	}
 }
 
+// readLegacySessionSequence captures the counter before layout migration
+// discards a stale flat settings file in favor of canonical preferences.
+func readLegacySessionSequence(data string) int {
+	var legacy struct {
+		NextSessionSeq int `json:"nextSessionSeq"`
+	}
+	b, err := os.ReadFile(filepath.Join(data, SettingsFileName))
+	if err != nil || json.Unmarshal(b, &legacy) != nil {
+		return 0
+	}
+	return legacy.NextSessionSeq
+}
+
 // assignSessionNumber 给会话分配下一个编号 #N：单调递增、删除不复用，分配后立即持久化 settings。
 // 调用方必须已持有 a.mu（与 createSession / 子会话创建 / 启动幂等同一把锁）。
 func (a *App) assignSessionNumber(s *Session) {
@@ -1205,7 +1228,7 @@ func (a *App) assignSessionNumber(s *Session) {
 	}
 	s.Number = next
 	a.settings.NextSessionSeq = next + 1
-	if err := atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings); err != nil {
+	if err := atomicJSON(SettingsPath(a.dataPath), a.settings); err != nil {
 		log.Printf("持久化 nextSessionSeq 失败: %v", err)
 	}
 }
@@ -1249,7 +1272,7 @@ func (a *App) repairSessionNumbers() error {
 				return err
 			}
 		}
-		return atomicJSON(filepath.Join(a.dataPath, "settings.json"), a.settings)
+		return atomicJSON(SettingsPath(a.dataPath), a.settings)
 	}
 	for _, s := range changed {
 		if err := a.save(s); err != nil {

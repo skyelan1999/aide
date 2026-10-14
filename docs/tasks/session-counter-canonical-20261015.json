@@ -7,13 +7,15 @@
     "Session allocation and startup repair persist NextSessionSeq to canonical SettingsPath, do not recreate legacy root settings.json.",
     "Delete a numbered session then restart without settings PUT: new session number strictly increases; startup duplicate repair is durable across a second process.",
     "Current canonical reasoning independent save stays usable with no models, preserves all stored session bytes; restore intended preferences without rolling back known monotonic counters.",
-    "Focused old-source negative and fixed-source race/vet, canonical start.command runtime/API/browser observations; incremental source/docs and matching offline image, scoped full gates recorded."
+    "Focused old-source negative and fixed-source race/vet, canonical start.command runtime/API/browser observations; incremental source/docs and matching offline image, scoped full gates recorded.",
+    "Upgrade preserves a higher legacy nextSessionSeq without adopting stale legacy preferences; keep all race tests and bounded nested test/vet deadlines."
   ],
   "scope": [
     "internal/server/server.go",
     "internal/server/session_number_test.go",
     "docs",
-    "docker-images"
+    "docker-images",
+    "scripts/test_go_snapshot.py"
   ],
   "stages": {
     "requirements": {
@@ -21,12 +23,12 @@
       "summary": "Native current-source reasoning independent auto/high/reload/auto PASS. Config API and stored session bytes restore; canonical settings differs only nextSessionSeq2->3 after owned fixture allocation. Static source points to legacy writer and isolated old-source test fails allocated2/persistedNext2.",
       "evidence": [
         ".agent-state/bootstrap-file-proto-close/reasoning-ui-proof.json",
-        ".agent-state/session-counter-canonical/scoped-race.log"
+        ".agent-state/session-counter-canonical/negative.log"
       ]
     },
     "design": {
       "status": "pass",
-      "summary": "Use existing SettingsPath in both counter writers, preserve migration priority and all other settings. Add canonical path assertion plus deleted-session restart and durable startup repair tests. Do not revert counter or restore full production volume. Wait existing full72 terminal before editing frozen inputs.",
+      "summary": "Use existing SettingsPath in both counter writers, preserve migration priority and all other settings. Add canonical path assertion plus deleted-session restart and durable startup repair tests. Do not revert counter or restore full production volume. Wait existing full72 terminal before editing frozen inputs. Capture a higher legacy sequence before layout migration and persist only that field after normal canonical config/vault loading. Full72 timeout was whole-package15m with current test1s, CPU active; allow18m inside existing20m/1250s bounds, no test filters/skip/integrity weakening.",
       "evidence": [
         "internal/server/paths.go",
         "internal/server/server.go",
@@ -34,34 +36,47 @@
       ]
     },
     "implementation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Task branch fix/session-counter-canonical: canonical counter paths, upgrade sequence preservation, allocation/deleted-restart/durable repair and legacy preference isolation regressions; Go package budget18m retains race/count/outer bounds. Focused verification pending.",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/session_number_test.go",
+        "scripts/test_go_snapshot.py"
+      ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Private extra Go regression injected into disposable network-none current-source snapshot, no tracked input mutation: TestSessionNumberCanonicalPersistence FAIL2.536s, allocated2/persistedNext2. Existing full72 still live and separate; fixed-source run pending.",
+      "summary": "Old-source injected canonical persistence regression FAIL2.536s allocated2/persistedNext2 (negative.log). Current source scoped allocation/deleted-restart/durable startup repair/legacy sequence only migration, assistant/config/settings/reasoning tests race31.341s + vet PASS. Quick70 and route nested deadline tests5 PASS. Canonical runtime/new package/full72 pending; prior full72 terminal FAIL whole-package15m deadline, not input drift or per-test hang.",
       "evidence": [
-        ".agent-state/session-counter-canonical/scoped-race.log"
+        ".agent-state/session-counter-canonical/negative.log",
+        ".agent-state/session-counter-canonical/scoped-race.log",
+        ".agent-state/verify-20261014T234033990145Z.log",
+        ".agent-state/bootstrap-file-proto-close/full-frozen.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Canonical path and legacy sequence-only upgrade, current reasoning save proof and original timeout recorded. No full-pass claim.",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "No real user sessions modified. Original stored session bytes retained, reasoning restoredauto. Prior fixture caused sequence2->3, intentionally retained; all other4 protected hashes unchanged. New baseline records exact allowed delta before canonical rebuild. Inherited5 vendor deletions untouched.",
+      "evidence": [
+        ".agent-state/bootstrap-file-proto-close/reasoning-ui-proof.json",
+        ".agent-state/session-counter-canonical/before.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
+      "status": "in_progress",
+      "summary": "Incremental source/docs push and matching local candidate/offline package pending; no formal main/tag release.",
       "evidence": []
     }
   },
   "release_authorization": "Existing incremental source push/local testing/build/offline image authorization; no formal release.",
   "rollback": "No source change yet. Preserve original stored session bytes and all settings except legitimate monotonic sequence advancement; never roll the sequence back.",
-  "handoff": "Old-source canonical counter failure reproduced. Product code remains frozen while full72 exec6348/container aide-verify-fc318b666188 runs. Next: fresh task branch, SettingsPath fix, current-source restart/race/vet, canonical rebuild and updated package."
+  "handoff": "Source fixed, scoped race31.341s+vet and quick70 PASS. Need exact canonical start.command rebuild, actual allocation/deletion/restart observation with owned fixture, final package and fresh full72 under bounded18m package budget. Prior full72 terminalFAIL preserved."
 }

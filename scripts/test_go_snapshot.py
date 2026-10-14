@@ -14,10 +14,13 @@ import tempfile
 import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
+# A cold ARM64 race suite reached its former15m package deadline while the
+# current test was only1s old. Keep every test and reserve2m for vet inside
+# the existing20m process limit and1250s Docker owner deadline.
 COMMAND = ('set -euo pipefail; snapshot=$(mktemp -d /tmp/aide-verify.XXXXXX); '
            'tar --no-same-owner -xf - -C "$snapshot"; cd "$snapshot"; '
            'timeout --signal=TERM --kill-after=10s 20m bash -c '
-           "'go test -mod=vendor -race -count=1 -timeout=15m ./... && go vet -mod=vendor ./...'")
+           "'go test -mod=vendor -race -count=1 -timeout=18m ./... && go vet -mod=vendor ./...'")
 
 
 def main():
