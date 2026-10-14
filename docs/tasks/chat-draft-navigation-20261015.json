@@ -42,30 +42,118 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Actual pre-fix Safari9999 reproduces cancelled-write toast; entered text does not return to composer after switching and reload, but remains offered as another recovery branch (not total data loss). Regression fails baseline cache ownership and ordering-only cancellation, passes combined fix. Existing actual continuity transaction lock test and JS syntax PASS. Canonical rebuilt browser check pending.",
+      "status": "pass",
+      "summary": "Pre-fix native Safari reproduced notice and default composer recovery failure (branch retained). Baseline regression fails ownership; ordering-only fails pending-save guard. Combined focused JS/actual-continuity lock test and initial quick69 PASS. Canonical rebuilt Safari9999 A/B switch, reload, independent markers and new-session reload PASS; no failure notice. Final metadata quick69 PASS; Markdown199/local links585 PASS. No new full71 run.",
       "evidence": [
         ".agent-state/chat-draft-navigation/regression-proof.json",
-        "scripts/continuity-lock-write.test.cjs"
+        "scripts/continuity-lock-write.test.cjs",
+        ".agent-state/chat-draft-navigation/fixed-A.png",
+        ".agent-state/chat-draft-navigation/fixed-B-after-reload.png",
+        ".agent-state/chat-draft-navigation/new-session-reload.png",
+        ".agent-state/verify-20261014T204047440400Z.log",
+        ".agent-state/chat-draft-navigation/check-docs.log"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Continuity roadmap describes captured outgoing snapshot/target ownership, retained lock/workspace guards and limits. Continuity119 and image README updated with exact final receipts before push.",
+      "evidence": [
+        "docs/architecture/continuity-roadmap.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Deleted only two owned empty fixture sessions after verifying exact identities/titles and no runs/messages; preexisting IDs retained (1 before/1 after), monotonic sequence not reset. Private fixture backups and labelled browser-only synthetic recovery branches retained, no broad browser storage cleanup. Inherited vendor deletions preserved.",
+      "evidence": [
+        ".agent-state/chat-draft-navigation/cleanup.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Canonical local complete-dependency rebuild deployed healthy9999; historical mounts/workspace config and1 token hash preserved;5 config/auth hashes stable since post-build snapshot (not a pre-rebuild baseline). App/dependency export complete; app/dependency tags, inner/outer hashes, exact launchers, actual docker load and both local copies PASS. Final quick69 PASS; incremental push pending. No formal release.",
+      "evidence": [
+        ".agent-state/chat-draft-navigation/runtime.json",
+        ".agent-state/chat-draft-navigation/fixed-entry.log"
+      ]
     }
   },
   "release_authorization": "Existing incremental push, local build/test and offline package authorization; no formal release.",
   "rollback": "Revert targeted draft guard/scene changes; do not delete recovery records or user sessions.",
-  "handoff": "Source fixed and focused regression passes; canonical build and actual Safari post-fix checks pending. Preserve owned fixture A/B until acceptance; no model/plugin execution."
+  "handoff": "Source0cb5e42 and canonical Safari draft acceptance complete; offline app/dependency package imported/checked/copied. Final quick69 PASS, incremental branch push pending. Original goal remains active; no formal release.",
+  "runtime": {
+    "runningImage": "sha256:659d44949a0bc3e6713c7c9cd295fc179eef7e60def96f1a5400f440c1d74eef",
+    "image": "sha256:659d44949a0bc3e6713c7c9cd295fc179eef7e60def96f1a5400f440c1d74eef",
+    "binarySHA256": "b23ea8f6c3ad4510c6199a6e08267d2af3193c0b8d8c59e07d2f893864011d1a",
+    "runningPlatformManifest": "sha256:6c94075dcf3c0cc8f8896123aa06b260b042f80d9a52c52eee606d08a6344dcd",
+    "sourceSHA256": "0ef9f4c86bdba95da541c5cbec0968467d55eb13fbe173d7b5a2d7d828d9ded0",
+    "buildCommit": "0cb5e4266e9ed8dce996d70e265940cb219b7189-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchangedSincePostBuildSnapshot": 5,
+    "historicalProtectedFilesUnchanged": 1,
+    "snapshotTiming": "Five config/auth hashes captured after canonical rebuild; historical baseline proves mounts, workspace config and one access-token only",
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "cleanup": {
+    "ownedFixturesRemoved": 2,
+    "preExistingIdsPreserved": true,
+    "beforeCount": 1,
+    "afterCount": 1,
+    "sessionSequenceNotReset": true,
+    "privateFixtureBackupsRetained": true,
+    "browserSyntheticRecoveryBranches": "Retained for evidence; labelled fixture session IDs. No broad browser storage cleanup."
+  },
+  "browser_acceptance": {
+    "entry": "aide/start.command",
+    "port": 9999,
+    "client": "Safari",
+    "modelsOrPluginsExecuted": false,
+    "fixtureSessions": 2,
+    "beforeFix": "Cancelled write toast reproduced; typed A failed to restore in composer after switch/reload but remained in other recovery branch. No total data-loss claim.",
+    "afterFix": [
+      "Confirmed A typed marker before navigation",
+      "Typed independent B marker; switching back restored A exactly",
+      "Reload A retained A marker in composer",
+      "Selecting B after reload restored distinct B marker",
+      "New-session then reload stayed at empty welcome with no old draft",
+      "No cancelled-write failure notice during post-fix navigation"
+    ],
+    "evidence": [
+      ".agent-state/chat-draft-navigation/fixed-A.png",
+      ".agent-state/chat-draft-navigation/fixed-B-after-reload.png",
+      ".agent-state/chat-draft-navigation/new-session-reload.png"
+    ],
+    "limits": "No browser-process kill/crash, quota exhaustion, real-model execution, native Windows or complete remote workspace test. Lock/workspace/epoch guards covered by VM; actual continuity transaction lock regression retained."
+  },
+  "implementation_commit": "0cb5e42",
+  "package": {
+    "image": "sha256:659d44949a0bc3e6713c7c9cd295fc179eef7e60def96f1a5400f440c1d74eef",
+    "sourceSHA256": "0ef9f4c86bdba95da541c5cbec0968467d55eb13fbe173d7b5a2d7d828d9ded0",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-659d44949a0b-offline.tar.gz",
+    "bytes": 705613537,
+    "sha256": "c193bf748ce6b40d93f42c0eefd31d29f06d256c8493f6d637255b73957111fe",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  },
+  "quick_receipt": {
+    "status": "pass",
+    "head": "0cb5e4266e9ed8dce996d70e265940cb219b7189",
+    "fingerprint": "251f1e0c4d1efa12dd40016414c995ea778010d7221ead092b36f46fc18f95a6",
+    "time": "20261014T204047440400Z",
+    "log": ".agent-state/verify-20261014T204047440400Z.log",
+    "commands": 69
+  }
 }

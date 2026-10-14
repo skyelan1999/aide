@@ -153,7 +153,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 current: feat/plugin-plan-status-ui, implementation e54f390. Canonical aide/start.command opens healthy Safari9999 using local complete dependencies. Readonly per-node graph status, dependency/limit display, metadata repaint and exact outcome navigation have scoped synthetic Safari desktop/narrow/current-dark/keyboard evidence; no live model/plugin execution claimed. Own fixture removed, preexisting session retained. App/dependency offline bundle verified/imported/copied locally. See followup118. Original12 workstreams remain in_progress, including host star-map I/O, live graph/approval acceptance, uncertain-effect reconciliation and draft navigation cancellation notice. Prior backend full70 is historical; final UI quick69 PASS. Preserve saved config, user data and inherited vendor deletions. Windows by user, true vectors deferred, receiving-device import unobserved.",
+  "handoff": "2026-10-15 current: fix/chat-draft-navigation, implementation0cb5e42, canonical aide/start.command healthy Safari9999 image659d44949a0b. Fixed outgoing draft cancellation and target composer cached under previous session during attachment render. Native Safari typed A/B switch/reload and new-session reload PASS; no model/plugin execution. Own two empty fixtures removed, preexisting session retained. Historical mounts/workspace config and1 token hash unchanged;5 config/auth hashes stable since post-build snapshot only. App/dependency offline bundle hash/import/copy verified. See followup119; final quick69 PASS, branch push pending. Prior UI task source e54f390 passed synthetic display checks; live graph/approval, uncertainty reconciliation and host star-map I/O remain open. All original12 workstreams in_progress; Windows by user, true vectors deferred, receiving-device import unobserved. Preserve inherited vendor deletions and user data.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -5853,6 +5853,67 @@
       "remote": "origin",
       "status": "pass",
       "scope": "Incremental branch source/docs push only; no main/tag/formal release or image registry push."
+    }
+  },
+  "progress_checkpoint_20261015_followup119": {
+    "status": "in_progress",
+    "task": "docs/tasks/chat-draft-navigation-20261015.json",
+    "sourceCommit": "0cb5e42",
+    "changes": "Outgoing immutable chat snapshots continue to captured session after navigation; destination state assigned before attachment rendering immediately caches target composer; new-session persists empty scene immediately. Epoch/lock/workspace guards and real-error reporting remain.",
+    "verification": "Baseline new regression fails wrong-owner cache; ordering-only fix fails cancellation. Combined focused test and actual continuity transaction lock regression PASS. Canonical Safari typed A/B switch/reload, distinct drafts and blank new-session reload PASS; no cancellation toast. Final metadata quick69 PASS; no new full71.",
+    "runtime": {
+      "runningImage": "sha256:659d44949a0bc3e6713c7c9cd295fc179eef7e60def96f1a5400f440c1d74eef",
+      "image": "sha256:659d44949a0bc3e6713c7c9cd295fc179eef7e60def96f1a5400f440c1d74eef",
+      "binarySHA256": "b23ea8f6c3ad4510c6199a6e08267d2af3193c0b8d8c59e07d2f893864011d1a",
+      "runningPlatformManifest": "sha256:6c94075dcf3c0cc8f8896123aa06b260b042f80d9a52c52eee606d08a6344dcd",
+      "sourceSHA256": "0ef9f4c86bdba95da541c5cbec0968467d55eb13fbe173d7b5a2d7d828d9ded0",
+      "buildCommit": "0cb5e4266e9ed8dce996d70e265940cb219b7189-dirty",
+      "port": "9999",
+      "health": "ok",
+      "mountsPreserved": true,
+      "workspaceConfigBytesPreserved": true,
+      "protectedFilesUnchangedSincePostBuildSnapshot": 5,
+      "historicalProtectedFilesUnchanged": 1,
+      "snapshotTiming": "Five config/auth hashes captured after canonical rebuild; historical baseline proves mounts, workspace config and one access-token only",
+      "configuredPath": "/Users/skyelan/debug",
+      "runtimeWorkspace": "/workspace",
+      "startupWarningPresent": true,
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "package": {
+      "image": "sha256:659d44949a0bc3e6713c7c9cd295fc179eef7e60def96f1a5400f440c1d74eef",
+      "sourceSHA256": "0ef9f4c86bdba95da541c5cbec0968467d55eb13fbe173d7b5a2d7d828d9ded0",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-659d44949a0b-offline.tar.gz",
+      "bytes": 705613537,
+      "sha256": "c193bf748ce6b40d93f42c0eefd31d29f06d256c8493f6d637255b73957111fe",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true
+    },
+    "cleanup": {
+      "ownedFixturesRemoved": 2,
+      "preExistingIdsPreserved": true,
+      "beforeCount": 1,
+      "afterCount": 1,
+      "sessionSequenceNotReset": true,
+      "privateFixtureBackupsRetained": true,
+      "browserSyntheticRecoveryBranches": "Retained for evidence; labelled fixture session IDs. No broad browser storage cleanup."
+    },
+    "remaining": "Final quick69 PASS; incremental branch push pending. Original12 streams remain; live graph/model approval browser acceptance, uncertainty reconciliation, star-map host I/O, other-device import; crash/quota draft tests not claimed.",
+    "quick_receipt": {
+      "status": "pass",
+      "head": "0cb5e4266e9ed8dce996d70e265940cb219b7189",
+      "fingerprint": "251f1e0c4d1efa12dd40016414c995ea778010d7221ead092b36f46fc18f95a6",
+      "time": "20261014T204047440400Z",
+      "log": ".agent-state/verify-20261014T204047440400Z.log",
+      "commands": 69
     }
   }
 }
