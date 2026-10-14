@@ -1,6 +1,7 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "阶段输出 {0}": "Stage output {0}",
   "正在加载…": "Loading…",
   "本地目录": "Local directory",
   "工作空间 (SFTP)": "Workspace (SFTP)",

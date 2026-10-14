@@ -784,12 +784,13 @@ function sessionRevision(s) {
   const runStates = runs.map(run => [
     run?.parallelism, JSON.stringify([run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])]), run?.id, run?.mode, run?.model, run?.status, run?.applied, run?.error,
     run?.pauseRequested, run?.canResume, run?.approvalState, run?.autoReview,
+    sessionTextRevision(JSON.stringify(run?.steps?.map(s => s.outputSegments) || [])),
     sessionTextRevision(JSON.stringify(run?.approvalReviews || [])),
     sessionTextRevision(typeof run?.pendingQuestion === 'string' ? run.pendingQuestion : JSON.stringify(run?.pendingQuestion || null)),
   ].join(':')).join(';');
   return [s.id, JSON.stringify(s.modelSelection || null), s.modelSelectionRevision, s.updated, s.runsTotal ?? runs.length, s.messagesTotal ?? messages.length, state.historyLimit,
     runs.length, messages.length, JSON.stringify(runs.map(run => [run.id, run.steers || []])), runStates, lastRun?.id, lastRun?.status, lastRun?.pauseRequested, lastRun?.canResume,
-    lastRun?.steps?.map(step => step.name + ':' + step.status + ':' + sessionTextRevision(step.content) + ':' + sessionTextRevision(step.reasoning)).join(',')].join('|');
+    lastRun?.steps?.map(step => step.name + ':' + step.status + ':' + sessionTextRevision(step.content) + ':' + sessionTextRevision(step.reasoning) + ':' + sessionTextRevision(JSON.stringify(step.outputSegments || []))).join(',')].join('|');
 }
 function sessionTextRevision(value) {
   const text = typeof value === 'string' ? value : '';
@@ -811,7 +812,7 @@ function sessionRunRenderSignature(run, view = {}) {
     run.mode, run.model, run.prompt, run.status, run.created, run.error, run.applied,
     run.strategy, run.profile, run.autoReview, run.approvalState, run.approvalReviews,
     run.pendingQuestion, run.canResume, run.pauseRequested, run.attachments, run.steers,
-    run.steps?.map(step => [step.name, step.status, step.content, step.reasoning]),
+    run.steps?.map(step => [step.name, step.status, step.content, step.reasoning, step.outputSegments]),
     run.files?.map(file => [file.path, file.before, file.content, file.applied]),
     run.commands, run.toolUses, view.language, view.ignoredProposal,
   ];
@@ -983,6 +984,18 @@ function openStream(run) {
     refreshSessionSoon();
   });
   es.addEventListener('step', () => { if (state.stream !== es) return; touchRunActivity(run.id); refreshSessionSoon(); });
+  es.addEventListener('segment', e => {
+    if (state.stream !== es) return;
+    let d; try { d = JSON.parse(e.data); } catch (_) { return; }
+    const target = state.session?.runs?.find(r => r.id === run.id);
+    const step = target?.steps?.find(s => s.name === d.step);
+    if (!step) { refreshSessionSoon(); return; }
+    if (!window.AideStagedOutput.append(step, d.segment)) return;
+    if (state.liveRound[run.id] === d.round) {
+      delete state.live[run.id]; delete state.liveStable[run.id];
+    }
+    touchRunActivity(run.id); renderSession(); refreshSessionSoon();
+  });
   es.addEventListener('tool', e => {
     if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
@@ -1198,14 +1211,14 @@ function updatePlainLiveTail(activeEl, full, start) {
 }
 function renderLiveAnswer(runId) {
   const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
-  const all = document.querySelectorAll('#timeline .chat-answer');
-  const ans = box?.querySelector('.chat-answer') || (all.length ? all[all.length - 1] : null);
+  const ans = box?.querySelector('.chat-answer');
   if (!ans) return;
   // 运行中的 chat 步骤以 live 文本为准（step.content 可能还是“工具调用中”或尚未提交）
   const run = state.session?.runs?.find(r => r.id === runId);
   const step = run?.steps?.[run.steps.length - 1];
   const live = state.live[runId] || '';
-  const full = live || (step?.content || '');
+  const full = window.AideStagedOutput.pending(step, live || (step?.content || ''));
+  ans.hidden = !full && window.AideStagedOutput.segments(step).length > 0;
   if (!full) { ans.innerHTML = ''; return; }
   let cache = state.liveStable[runId];
   if (!cache) cache = state.liveStable[runId] = { length: 0, element: null, scan: newLiveBoundaryState() };
@@ -1278,6 +1291,7 @@ $('jump-bottom')?.addEventListener('click', () => {
 });
 // 会话快照未变化时跳过整页重渲染（流式期间 step.content/usage 未变，轮询只做轻量校验）
 function adoptSessionIfChanged(s) {
+  window.AideStagedOutput?.merge(state.session, s);
   const next = sessionRevision(s);
   if (next === state.sessionJSON) return false;
   state.sessionJSON = next;
@@ -2049,18 +2063,22 @@ function renderSession() {
           });
           box.append(rd);
         }
+        const stages = window.AideStagedOutput.render(step, {el, t, renderMarkdown});
+        if (stages) box.append(stages);
         const ans = el('div', 'chat-answer md-body');
         const running = run.status === 'running';
         const liveText = state.live[run.id] || '';
         // 运行中优先显示实时增量（step.content 尚未提交，可能还是“工具调用中”），
         // 结束后只用持久化内容，避免 live 与 content 重复拼接
-        const text = running && liveText ? liveText : (step.content || '');
-        if (running && liveText) {
+        const tail = window.AideStagedOutput.pending(step, running && liveText ? liveText : (step.content || ''));
+        const text = window.AideStagedOutput.text(step, running && liveText ? liveText : (step.content || ''));
+        ans.hidden = !tail && !!stages && !run.error;
+        if (running && liveText && tail) {
           // Rebuilding the timeline must not force a full Markdown parse of a
           // growing answer. The RAF renderer restores cached stable blocks.
           ans.append(el('div', 'live-stable'), el('div', 'live-active'));
-        } else if (text) {
-          ans.innerHTML = renderMarkdown(text) + (running ? '<span class="stream-cursor" aria-hidden="true">▍</span>' : '');
+        } else if (tail) {
+          ans.innerHTML = renderMarkdown(tail) + (running ? '<span class="stream-cursor" aria-hidden="true">▍</span>' : '');
         } else if (running) {
           // DSH/Codex 风格：首 token 前显示呼吸的思考点
           ans.textContent = t("正在思考");

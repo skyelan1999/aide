@@ -446,6 +446,10 @@
       [
         "node",
         "scripts/pause-session-isolation.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/staged-output.test.cjs"
       ]
     ],
     "full": [

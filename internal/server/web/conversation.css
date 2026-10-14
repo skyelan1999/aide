@@ -1,6 +1,6 @@
 /* One reading surface for streaming and persisted conversation answers. */
 #timeline .run{width:100%;min-width:0}
-#timeline .chat-answer{
+#timeline :is(.chat-answer,.stage-answer){
   display:flow-root;position:relative;box-sizing:border-box;width:100%;min-width:0;
   max-width:100%;min-height:3.8em;padding:16px 18px;border:1px solid var(--line);
   border-radius:12px;background:var(--surface);color:var(--text);
@@ -8,30 +8,30 @@
   overflow-wrap:anywhere;transition:none;
 }
 /* Transparent partitions share the same block formatting as the final answer. */
-#timeline .chat-answer .live-stable,#timeline .chat-answer .live-active{display:contents}
-#timeline .chat-answer .live-active[data-mode="plain"]{display:block;white-space:pre-wrap}
-#timeline .chat-answer :where(p,ul,ol,blockquote,table,pre,.code-block,.md-code-copy-wrap){margin-block:0 12px}
-#timeline .chat-answer :where(h1,h2,h3,h4,h5,h6){margin-block:18px 10px;line-height:1.5}
-#timeline .chat-answer>:first-child,
-#timeline .chat-answer>.live-stable>:first-child,
-#timeline .chat-answer>.live-stable:empty+.live-active>:first-child{margin-top:0}
-#timeline .chat-answer p{line-height:inherit}
-#timeline .chat-answer li>p{margin-block:4px}
-#timeline .chat-answer :where(pre,.code-block,.md-code-copy-wrap,table){min-width:0;max-width:100%}
-#timeline .chat-answer .md-code-copy-wrap>pre,#timeline .chat-answer .code-block>pre{margin:0;border:0;border-radius:0}
-#timeline .chat-answer pre{white-space:pre;overflow:auto;overflow-wrap:normal}
-#timeline .chat-answer table{width:max-content;max-width:100%;overflow-x:auto}
-#timeline .chat-answer :where(img,video,svg,canvas){max-width:100%}
+#timeline :is(.chat-answer,.stage-answer) .live-stable,#timeline :is(.chat-answer,.stage-answer) .live-active{display:contents}
+#timeline :is(.chat-answer,.stage-answer) .live-active[data-mode="plain"]{display:block;white-space:pre-wrap}
+#timeline :is(.chat-answer,.stage-answer) :where(p,ul,ol,blockquote,table,pre,.code-block,.md-code-copy-wrap){margin-block:0 12px}
+#timeline :is(.chat-answer,.stage-answer) :where(h1,h2,h3,h4,h5,h6){margin-block:18px 10px;line-height:1.5}
+#timeline :is(.chat-answer,.stage-answer)>:first-child,
+#timeline :is(.chat-answer,.stage-answer)>.live-stable>:first-child,
+#timeline :is(.chat-answer,.stage-answer)>.live-stable:empty+.live-active>:first-child{margin-top:0}
+#timeline :is(.chat-answer,.stage-answer) p{line-height:inherit}
+#timeline :is(.chat-answer,.stage-answer) li>p{margin-block:4px}
+#timeline :is(.chat-answer,.stage-answer) :where(pre,.code-block,.md-code-copy-wrap,table){min-width:0;max-width:100%}
+#timeline :is(.chat-answer,.stage-answer) .md-code-copy-wrap>pre,#timeline :is(.chat-answer,.stage-answer) .code-block>pre{margin:0;border:0;border-radius:0}
+#timeline :is(.chat-answer,.stage-answer) pre{white-space:pre;overflow:auto;overflow-wrap:normal}
+#timeline :is(.chat-answer,.stage-answer) table{width:max-content;max-width:100%;overflow-x:auto}
+#timeline :is(.chat-answer,.stage-answer) :where(img,video,svg,canvas){max-width:100%}
 /* A streaming marker must not add a line or change width when it blinks. */
-#timeline .chat-answer .stream-cursor{position:absolute;right:8px;bottom:5px;line-height:1;width:8px;font-size:12px;pointer-events:none;user-select:none}
-#timeline .chat-answer.chat-answer-empty{color:var(--muted);font-style:normal}
-#timeline .chat-answer.chat-answer-error{color:var(--warn);border-left:3px solid var(--warn);white-space:pre-wrap}
+#timeline :is(.chat-answer,.stage-answer) .stream-cursor{position:absolute;right:8px;bottom:5px;line-height:1;width:8px;font-size:12px;pointer-events:none;user-select:none}
+#timeline :is(.chat-answer,.stage-answer).chat-answer-empty{color:var(--muted);font-style:normal}
+#timeline :is(.chat-answer,.stage-answer).chat-answer-error{color:var(--warn);border-left:3px solid var(--warn);white-space:pre-wrap}
 #timeline .user-message{min-width:0;max-width:100%;border:1px solid var(--line);border-radius:12px;padding:14px 18px;line-height:1.85}
 #timeline .msg-actions{min-width:0;gap:6px;margin:8px 0 0;flex-wrap:wrap}
 @media(max-width:600px){
-  #timeline .chat-answer{padding:13px 14px;border-radius:10px}
+  #timeline :is(.chat-answer,.stage-answer){padding:13px 14px;border-radius:10px}
   #timeline .user-message{padding:12px 14px;border-radius:10px}
-  #timeline .chat-answer :where(th,td){padding:8px 10px}
+  #timeline :is(.chat-answer,.stage-answer) :where(th,td){padding:8px 10px}
 }
 /* The selected limit applies to the next ordinary chat task. */
 .parallel-picker{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto;font-size:11px;color:var(--muted)}
@@ -43,3 +43,7 @@
 .parallel-part>span{min-width:0;overflow-wrap:anywhere}.parallel-part>small{flex:0 0 auto}
 .parallel-reason{margin:8px 0 0;line-height:1.7}
 .composer-toolbar{flex-wrap:wrap}
+
+#timeline .chat-answer[hidden]{display:none}
+.stage-outputs{display:grid;gap:12px;margin:12px 0}
+.stage-label{font-size:11px;color:var(--muted);margin:0 0 5px}

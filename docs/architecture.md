@@ -78,9 +78,9 @@ Compose 将工作区可写挂载 `/workspace`，参考资料只读挂载 `/conte
 The context card scopes its cache to the workspace and session and commits cache keys only after successful responses. Switching clears stale values; late responses cannot overwrite the current session. Pending requests are deduplicated and failures can retry. Draft budgets are invalidated before returning to the session baseline.
 
 
-运行中插话使用与初始输入一致的用户气泡，按保存顺序显示在该任务输出、工具记录和错误信息之后，避免长回复将插话留在任务顶部。仍在排队的输入只出现在队列条，提升为插话后才显示气泡；重复文字按独立输入保留。会话刷新指纹显式包含所有可见任务的插话内容与排队状态，不依赖 updated 或消息数量改变。服务端任务仍保存累计答复，本次不将答复重写成虚构的逐段对话时间线。
+运行中插话使用与初始输入一致的用户气泡，按保存顺序显示在该任务输出、工具记录和错误信息之后，避免长回复将插话留在任务顶部。仍在排队的输入只出现在队列条，提升为插话后才显示气泡；重复文字按独立输入保留。会话刷新指纹显式包含所有可见任务的插话内容与排队状态，不依赖 updated 或消息数量改变。用户插话仍按原始保存顺序展示，正文阶段不推断插话的精确相对位置。
 
-Accepted in-run interjections use the same user bubble as the original prompt and appear at the tail of their run's rendered output. Queued items remain in the queue until promoted. Repeated text remains separate input. Session snapshots include interjection content and queue flags so promotion or edits trigger rendering even without timestamp/count changes. The server's accumulated answer and execution semantics are unchanged; the UI does not invent per-segment response chronology.
+Accepted in-run interjections use the same user bubble as the original prompt and appear at the tail of their run's rendered output. Queued items remain in the queue until promoted. Repeated text remains separate input. Session snapshots include interjection content and queue flags so promotion or edits trigger rendering even without timestamp/count changes. Interjections keep their saved order; response segments do not invent exact interjection timing.
 
 Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown-editing-export.md#git-文件历史比较--git-file-history-comparison)。本地仓库按所选文件读取提交／暂存／磁盘版本，不修改仓库；历史窗口可切换快照与Git比较，草稿／磁盘口径明确区分；实际8097部署验收仍独立记录。
 
@@ -370,3 +370,12 @@ Ordinary chats/workflows own independent strategy/profile/model/reasoning choice
 Pause lives beside stop in the composer, with pending/checkpoint gating and captured chat/workspace identity. The API persists the request before cancelling, releases the shared mutex before cancellation unwinds, and treats repeated pending requests idempotently. Other chats keep their contexts and API access. The reply header retains checkpoint recovery for the relevant historical task.
 
 隔离race覆盖模拟模型中A暂停而B继续完成，以及取消过程故意阻塞时B的会话API仍返回200、跨会话任务ID拒绝、重复点击和持久化顺序。前端VM覆盖切换会话/工作区的晚回执、防重复、失败重试与检查点状态；Safari离线夹具复现 `python3 scripts/fixtures/render-pause-controls.py`。本次没有观察到实际服务panic/restart，也没有复现用户报告的全部会话崩溃，不能把修复的锁耦合风险宣称为已确认的唯一根因。实际8097证书提示及真实模型验收边界单独记录在任务账本。
+
+
+### 会话分段输出 / Staged chat output
+
+普通会话主执行器每轮模型正文完成后保存到 `Step.outputSegments`（稳定 ID、轮次、原始正文），保存成功才发布 `segment` SSE。下一轮正文继续流式显示，已保存段落保留；断流、刷新、切回会话从 GET 快照恢复。暂停时已完成段落保留，当前未完成正文仍由原来的 `content` 结束态保存逻辑处理。保存失败终止执行并报告错误，不能把未落盘段落宣称为已保存。
+
+`Step.content` 继续保留最终回答，兼容旧会话和模型历史。页面按段追加，末段与最终正文完全相同时只显示一次；复制、朗读及反馈使用完整可见正文。合并过期 GET 时按相同会话、任务和步骤的段落 ID 对账，不删除 SSE 已确认段落；关闭的流不能写入新会话。JSON 会话导出自然包含新增字段。展示数据不再注入模型历史，不重复计量上下文，也不为分段增加模型请求。只有模型实际生成的主会话正文才成为段落，不把推理、并行辅助分析或工作流结构化提案当结论。普通聊天提示要求阶段交付，但不保证每轮一定有正文；纯工具调用没有虚构阶段结论。
+
+The main chat executor persists each completed model response before announcing it through SSE. Saved segments survive later rounds and session reloads; the final answer remains in the legacy content field and is displayed once. Copy/readback include all visible segments. Internal reasoning, parallel analysis and structured workflow proposals are excluded. This presentation projection neither adds model calls nor duplicates history or context accounting.
