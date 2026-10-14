@@ -5367,6 +5367,20 @@
       ".agent-state/conversation-parallel/active-planning.png"
     ],
     "boundary": "provider为隔离模拟接口；8097仍未配置模型/密钥。插件执行仍在主任务，跨插件共写资源DAG未实现，未声称5x插件分支执行。",
-    "next": "兼容树回归、push与8097增量镜像；继续账本其余工作流"
+    "next": "当前新full与主账本剩余项；真实模型未配置及跨插件共写依赖仍待完成",
+    "runtime": {
+      "image": "sha256:ff1553153a558f1002ffc0df84a8aa03e25921a2025c312b650f7db59c6eea39",
+      "srcsha": "0dbf6d968d15ba0531a3b2f494de78f2817a5920cce7b47cc0949039442485d0",
+      "name": "aide-0.1.17.0-RC2-linux-arm64-ff1553153a55-offline.tar.gz",
+      "sha256": "9af6d3c0115241669dfe1a8def3558732b0e8da75bce896082ea09f600765ca5",
+      "bytes": 561598573,
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "dockerLoadVerified": true,
+      "copiedCanonical": true
+    },
+    "runtime_tests": "compatibility final race14.849s PASS",
+    "cleanup": "IAB fixture tab and HTTP listener stopped",
+    "full_regression": "current new full not yet complete; prior full 4cbb20d pass applies only old inputs"
   }
 }

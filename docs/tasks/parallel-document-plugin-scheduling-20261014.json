@@ -41,11 +41,13 @@
       "evidence": []
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "隔离ROS2请求五路重叠并单次汇总；真实Node同插件三次文件递增无丢更新、不同插件双端屏障证明重叠；canonical race14.203s PASS；最新兼容树回归中。IAB真实组件5x规划/运行首次自动展开已观察。",
+      "status": "pass",
+      "summary": "隔离ROS2请求五路实际重叠并一次汇总；真实Node同插件三次递增无丢更新、不同插件双端屏障重叠；canonical race14.203s / compatibility race14.849s PASS；quick PASS；IAB实际组件自动展开PASS；8097鉴权/静态资源/设置保留与健康PASS；离线包内外SHA/docker load PASS。",
       "evidence": [
         ".agent-state/parallel-plugin-final-tests.log",
-        ".agent-state/conversation-parallel/active-planning.png"
+        ".agent-state/conversation-parallel/active-planning.png",
+        ".agent-state/parallel-plugin-runtime-final-tests.log",
+        ".agent-state/parallel-package.json"
       ]
     },
     "documentation": {
@@ -54,23 +56,40 @@
       "evidence": []
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
+      "status": "pass",
+      "summary": "临时IAB页与回环夹具服务已关闭；保留用户数据和5个继承删除；只提交范围文件。",
       "evidence": []
     },
     "release": {
-      "status": "pending",
-      "summary": "",
+      "status": "in_progress",
+      "summary": "07e7f2a已push，8097已更新ff1553153a55；离线汇总包已导入校验并复制canonical目录；正式main发布仍受主账本门禁约束。",
       "evidence": []
     }
   },
   "release_authorization": "用户按部分测试和push，更新镜像包供另一端导入",
   "rollback": "8097镜像ab75ecc66e3d和完整数据备份；只替换8097服务",
-  "handoff": "",
+  "handoff": "当前轮完成文档规划/进度可见性/同插件排队与并发审计；真实模型验收和跨插件共写资源DAG继续作为未完成项，不能把模拟provider当作真实模型验收。",
   "limits": [
     "本机8097未配置模型或密钥；测试用隔离HTTP provider，并非真实模型理解ROS2质量验收",
     "5x是最多五路分析/草稿；插件工具仍由主任务依序执行",
     "不同插件写同一外部文件尚无跨插件资源依赖DAG；本次保证同插件内部的跨会话写入串行",
     "排队等待可取消；已运行daemon仍按现有RPC超时/退出机制结束，未声称远端副作用撤回"
-  ]
+  ],
+  "runtime": {
+    "image": "sha256:ff1553153a558f1002ffc0df84a8aa03e25921a2025c312b650f7db59c6eea39",
+    "srcsha": "0dbf6d968d15ba0531a3b2f494de78f2817a5920cce7b47cc0949039442485d0",
+    "name": "aide-0.1.17.0-RC2-linux-arm64-ff1553153a55-offline.tar.gz",
+    "sha256": "9af6d3c0115241669dfe1a8def3558732b0e8da75bce896082ea09f600765ca5",
+    "bytes": 561598573,
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "dockerLoadVerified": true,
+    "copiedCanonical": true,
+    "commit": "07e7f2a-compat",
+    "backup": "../aideMacMini/aide/.agent-state/parallel-plugin-rollout/data-before-deploy-20261014T223158.tar",
+    "rollback": "aide:parallel-previous-20261014 (ab75ecc66e3d)",
+    "settingsPreserved": true,
+    "mountsPreserved": true,
+    "encryptedVoicePreserved": true
+  }
 }

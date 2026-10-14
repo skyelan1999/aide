@@ -87,3 +87,6 @@ Git push 只同步源码，不包含本目录被忽略的大型镜像归档。�
 
 
 2026-10-14 星图分批更新包：`aide-0.1.17.0-RC2-linux-arm64-ab75ecc66e3d-offline.tar.gz`。镜像 `sha256:ab75ecc66e3dc9eff663fd757d3b72e869111ef6087efe6a6ee1af8b6bfb207d`，SHA-256 `68c110e614b2cccca0047c689858b52bd77e904a53c39b5b848dda84fad7a3be`。本机8097已部署，包内镜像校验与 `docker image load` 已验证；另一端仍需导入验收。详见[批次验收](../docs/tasks/starmap-progressive-latency-20261014.json)。
+
+
+2026-10-14 最新汇总包（星图分批 + 5x 文档规划 + 插件写入队列）：`aide-0.1.17.0-RC2-linux-arm64-ff1553153a55-offline.tar.gz`。镜像 `sha256:ff1553153a558f1002ffc0df84a8aa03e25921a2025c312b650f7db59c6eea39`，SHA-256 `9af6d3c0115241669dfe1a8def3558732b0e8da75bce896082ea09f600765ca5`。本机8097健康，包内外校验与实际 `docker image load` 通过；另一端请使用此包导入。含前述星图修复。详见[ROS2与插件队列复测](../docs/tasks/parallel-document-plugin-scheduling-20261014.json)。

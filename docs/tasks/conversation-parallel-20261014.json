@@ -125,8 +125,10 @@
     ],
     "remaining": [
       "真实模型复测",
-      "跨插件共享文件资源依赖DAG",
-      "8097更新和离线包"
-    ]
+      "跨插件共享文件资源依赖DAG"
+    ],
+    "runtimeImage": "sha256:ff1553153a558f1002ffc0df84a8aa03e25921a2025c312b650f7db59c6eea39",
+    "offlineArchive": "aide-0.1.17.0-RC2-linux-arm64-ff1553153a55-offline.tar.gz",
+    "verification": "isolated provider ROS2 fanout and real Node plugin concurrency/serialization PASS; production assets/health and offline import PASS"
   }
 }
