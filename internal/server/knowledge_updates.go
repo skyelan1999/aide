@@ -14,6 +14,18 @@ import (
 )
 
 const knowledgeUpdateInterval = 2 * time.Second
+const knowledgeProgressiveInterval = 350 * time.Millisecond
+const knowledgeBatchDuration = 350 * time.Millisecond
+
+func knowledgeGraphScanning(g knowledgeGraph) bool {
+	for _, source := range g.Sources {
+		if source.State != "unavailable" && source.Coverage != nil && source.Coverage.Progressive && source.Coverage.Pending > 0 {
+			return true
+		}
+	}
+	return false
+}
+
 const knowledgeRevisionLimit = 8
 
 // The zero value is ready to use. One cancellable gate serializes scans for an
@@ -419,7 +431,11 @@ func (a *App) knowledgeAcquireViewLocked(ctx context.Context, includeCode, force
 		view = &knowledgeUpdateView{}
 		state.views[mode] = view
 	}
-	if force || view.checked.IsZero() || time.Since(view.checked) >= knowledgeUpdateInterval {
+	interval := knowledgeUpdateInterval
+	if knowledgeGraphScanning(view.graph) {
+		interval = knowledgeProgressiveInterval
+	}
+	if force || view.checked.IsZero() || time.Since(view.checked) >= interval {
 		cache := newKnowledgeScanCache(view.cache)
 		g := a.knowledgeSnapshotModeCached(ctx, mode == 1, cache)
 		view.checked = time.Now() // Also throttle failed/cancelled attempts.

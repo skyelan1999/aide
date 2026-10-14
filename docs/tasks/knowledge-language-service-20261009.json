@@ -151,5 +151,18 @@
       "TypeScript、Python 等其他语言的类型服务。"
     ],
     "release": "本轮只完成源码竞态回归复核，不推送；当前工作树浏览器验收仍待系统 Safari 实际打开候选。"
+  },
+  "real_ssh_checkpoint_20261014": {
+    "status": "pass",
+    "sourceCommit": "4cbb20d",
+    "evidence": ".agent-state/ssh-knowledge-types/result.json",
+    "checks": [
+      "two receiver methods of same name bind to distinct types",
+      "3 typed edges across 2 packages",
+      "dynamic interface dispatch remains unresolved",
+      "typed path includes source line",
+      "missing external dependency fails closed and retains AST candidate"
+    ],
+    "scope": "isolated current-source Linux/OpenSSH API fixture; browser SSH and other languages remain pending"
   }
 }

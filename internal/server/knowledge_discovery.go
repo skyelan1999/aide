@@ -8,6 +8,7 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"time"
 )
 
 // Keep metadata catalogues bounded even when progressive indexing discovers
@@ -212,6 +213,8 @@ func (d *knowledgeDiscovery) inspectName(root *os.Root, parent, name string, dep
 // scope limit, not a claim that the entire source is covered. No retries write.
 func (d *knowledgeDiscovery) Step(ctx context.Context, root *os.Root, fileBudget, dirBudget, depthBudget, entryBudget int, priorities []string) (knowledgeDiscoveryBatch, error) {
 	b := knowledgeDiscoveryBatch{}
+	started := time.Now()
+	budgetAvailable := func() bool { return b.Inspected == 0 || time.Since(started) < knowledgeBatchDuration }
 	if fileBudget < 1 || dirBudget < 1 || depthBudget < 0 || entryBudget < 1 {
 		return b, fmt.Errorf("invalid discovery budget")
 	}
@@ -221,7 +224,7 @@ func (d *knowledgeDiscovery) Step(ctx context.Context, root *os.Root, fileBudget
 	d.seed(priorities)
 	delete(d.Reasons, "time")
 	delete(d.Reasons, "catalog_limit")
-	for len(d.Queue) > 0 && b.Files < fileBudget && b.Inspected < entryBudget {
+	for len(d.Queue) > 0 && b.Files < fileBudget && b.Inspected < entryBudget && budgetAvailable() {
 		if err := ctx.Err(); err != nil {
 			d.Reasons["time"] = true
 			return d.result(b), err
@@ -332,7 +335,7 @@ func (d *knowledgeDiscovery) Step(ctx context.Context, root *os.Root, fileBudget
 		children := []knowledgeDiscoveryCursor{}
 		var readEntries []os.DirEntry
 		readEntryIndex := 0
-		for b.Files < fileBudget && b.Inspected < entryBudget {
+		for b.Files < fileBudget && b.Inspected < entryBudget && budgetAvailable() {
 			if err = ctx.Err(); err != nil {
 				d.Reasons["time"] = true
 				break

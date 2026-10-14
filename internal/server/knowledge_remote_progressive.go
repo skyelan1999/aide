@@ -8,6 +8,7 @@ import (
 	"path"
 	"sort"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -81,6 +82,10 @@ func (d *knowledgeRemoteDiscovery) step(ctx context.Context, ar knowledgeArea, p
 	dirQuota = max(1, dirQuota)
 	capEntries := min(50000, max(1000, 4*(policy.FileBudget+policy.DirectoryBudget)))
 	files, dirs, bytesRead := 0, 0, 0
+	started := time.Now()
+	// Yield between remote operations, preserving the cursor and publishing this batch.
+	// The first operation still observes the existing source deadline.
+	budgetAvailable := func() bool { return files == 0 && dirs == 0 || time.Since(started) < knowledgeBatchDuration }
 	codeBytes := 0
 	for _, f := range d.CurrentCode {
 		codeBytes += len(f.Text)
@@ -94,7 +99,7 @@ func (d *knowledgeRemoteDiscovery) step(ctx context.Context, ar knowledgeArea, p
 		}
 		return len(priorities)
 	}
-	for len(d.Queue) > 0 && files < fileQuota && dirs < dirQuota {
+	for len(d.Queue) > 0 && files < fileQuota && dirs < dirQuota && budgetAvailable() {
 		if err := ctx.Err(); err != nil {
 			return knowledgeRemoteResult{}, err
 		}
@@ -138,7 +143,7 @@ func (d *knowledgeRemoteDiscovery) step(ctx context.Context, ar knowledgeArea, p
 		}
 		d.Current[cursor.Path] = ar.node(knowledgeNode{ID: id, Name: name, Path: cursor.Path, Kind: "directory", Region: ar.region(), Root: ar.root, Source: ar.source})
 		d.Visited[cursor.Path] = true
-		for cursor.Offset < len(entries) && files < fileQuota {
+		for cursor.Offset < len(entries) && files < fileQuota && (files == 0 || budgetAvailable()) {
 			if err := ctx.Err(); err != nil {
 				return knowledgeRemoteResult{}, err
 			}

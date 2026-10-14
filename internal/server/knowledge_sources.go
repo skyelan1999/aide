@@ -220,7 +220,11 @@ func (a *App) knowledgeRemoteCached(ctx context.Context, ar knowledgeArea, code 
 					return knowledgeRemoteResult{state: "unavailable", message: "来源扫描等待超时，稍后自动重试", truncated: true}
 				}
 			}
-			if time.Since(memo.checked) < knowledgeRemoteInterval {
+			interval := knowledgeRemoteInterval
+			if progressive && memo.result.state != "unavailable" && memo.result.coverage != nil && memo.result.coverage.Pending > 0 {
+				interval = knowledgeProgressiveInterval
+			}
+			if time.Since(memo.checked) < interval {
 				result := memo.result
 				state.remoteMu.Unlock()
 				return result

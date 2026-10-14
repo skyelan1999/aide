@@ -8,7 +8,8 @@
     "Cancellation, source switching and failed speculative scans cannot corrupt published state",
     "Exclude secrets/dependencies/symlinks; revalidate directory enumeration after external changes",
     "Integrate progressive graph synchronization, scoped coverage and settings without claiming whole-source coverage",
-    "Verify local and SSH integrations and large-library performance"
+    "Verify local and SSH integrations and large-library performance",
+    "用户2026-10-14：星图边扫描边显示，按扫描速度动态调整批次与刷新；真实页面验收及离线镜像交付。"
   ],
   "scope": [
     "internal/server/knowledge_discovery.go",
@@ -25,7 +26,10 @@
     "internal/server/ssh_live_test.go",
     "internal/server/knowledge_cursor_store.go",
     "internal/server/knowledge_cursor_store_test.go",
-    "internal/server/knowledge_cursor_process_test.go"
+    "internal/server/knowledge_cursor_process_test.go",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "scripts/starmap-progressive-cadence.test.cjs"
   ],
   "stages": {
     "requirements": {
@@ -371,5 +375,20 @@
       "Large-library performance",
       "Independent user remote-provider acceptance"
     ]
+  },
+  "adaptive_batch_checkpoint_20261014": {
+    "status": "in_progress",
+    "request": "星图扫描加载的好慢，能不能一部分一部分的加载，扫一部分加载一部分，动态调整",
+    "implementation": "350ms软批次、本地和远端游标让出；未完成远端350ms续扫缓存；前端350–1500ms自适应、完成与失败退避、增量布局和进度状态。",
+    "tests": [
+      "canonical focused Go race PASS 17.895s",
+      "Node progressive cadence and coverage state PASS"
+    ],
+    "pending": [
+      "runtime compatibility Go race",
+      "8097 browser acceptance",
+      "updated offline image bundle"
+    ],
+    "limits": "软预算只在IO之间检查，多来源聚合与代码分析可能继续增加请求耗时。"
   }
 }

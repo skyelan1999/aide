@@ -5308,5 +5308,36 @@
       "真实向量提供方测试按用户要求暂缓"
     ],
     "release_gate_policy": "新full-profile即使通过，也不能代替上述逐项验收，不自动合并或发Release。"
+  },
+  "progress_checkpoint_20261014_followup104": {
+    "status": "in_progress",
+    "previous_full": {
+      "status": "pass",
+      "head": "4cbb20d9e30e5b38c66f6f26e4da3b8f0eb2f76b",
+      "fingerprint": "bf63c33dcd04a906e3488699a5d398c5b672385978ba1d75e4b9d3dfd656a58a",
+      "log": ".agent-state/verify-20261014T135642229916Z.log",
+      "scope": "prior source inputs; new scan changes require fresh receipt"
+    },
+    "ssh_knowledge": {
+      "status": "pass",
+      "source": "4cbb20d",
+      "typedEdges": 3,
+      "packages": 2,
+      "dynamicDispatchUnresolved": true,
+      "pathSourceLine": true,
+      "externalDependencyFailClosed": true,
+      "astCandidateRetained": true,
+      "evidence": ".agent-state/ssh-knowledge-types/acceptance-complete.log",
+      "limits": "isolated Linux/OpenSSH API fixture, not user SSH browser acceptance"
+    },
+    "account_reset": {
+      "status": "pass",
+      "target": "local 8097 only",
+      "method": "stopped AIDE, consistent data-volume archive, replace only account Argon2id hash, restart, API verify and Safari unlock",
+      "backup": ".agent-state/password-reset/data-before-reset-20261014T221203.tar",
+      "encrypted_history": "preserved unchanged, remains old-password encrypted; no plaintext recovery claim"
+    },
+    "new_request": "星图分批呈现及动态扫描节奏，见 knowledge-progressive-index-20261009",
+    "release": "still blocked on incomplete main workstreams, main and clean tree; no overall completion claim"
   }
 }

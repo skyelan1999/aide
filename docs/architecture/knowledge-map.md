@@ -474,3 +474,10 @@ The frontend has no fixed 1000-star ceiling. Backend catalogue capacity, per-bat
 An isolated candidate at commit `a2a21a3` indexed 5,000 synthetic Markdown files through authenticated HTTPS requests with actual 2.1-second polling. At request 28 (about 67.703 seconds), the workspace source was `ready`, all 5,000 file nodes were retained after merging deltas, and truncation was false. Catalogue capacity expanded beyond 1,000. Adding, changing and deleting one document each converged after about 70.931 seconds; timeline comparison identified all three changes. Existing nodes survived incomplete scans, and removal was published at cycle completion. Local coverage intentionally kept `totalKnown=false`; the first harness incorrectly required `true`, so its timeout does not establish a product failure.
 
 A separate single-iteration directory-discovery benchmark measured 19,000 files in 75 progressive batches, about 138.722 ms and 47,571,976 allocated bytes. It excludes text extraction, graph layout, Safari rendering and remote network costs. These results belong to the committed local snapshot; iCloud working-tree review, user libraries, sustained Safari performance and real user-host SSH acceptance remain open. See the [device acceptance record](../reviews/2026-10-14-device-resume.json).
+
+
+### 2026-10-14 分批扫描响应节奏
+
+本地目录与 SSH/SFTP/FTP 游标在文件、目录预算之外增加约 350ms 的批次软预算；在两个文件操作之间让出，保存游标并发布当前批次，随后继续扫描。单次远端列目录或读取仍受原来源超时约束，350ms 不是整个 HTTP 请求的硬时限。删除仍需完成目录周期才确认；失败与取消不发布候选。
+
+未完成且可用的远端目录不再套用已完成来源的 30 秒缓存等待，续扫缓存间隔为 350ms；完成来源保持原间隔。星图根据 pending 与上次请求耗时，在 350–1500ms 间安排下一批，失败时退避，后台、锁屏或交互中仍暂停轮询。新增节点沿用增量布局与淡入，保留视角、筛选与选中节点；状态显示当前节点数和待扫目录任务，不能视为全库总数。多来源聚合与 AST/类型分析仍可能增加首批耗时，尚不宣称固定首屏延迟。

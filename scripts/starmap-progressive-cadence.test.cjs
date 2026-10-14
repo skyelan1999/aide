@@ -1,0 +1,13 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
+const c=vm.createContext({});
+vm.runInContext(source.slice(source.indexOf('function progressiveSummary('),source.indexOf('function scheduleLive(')),c);
+const pending={sources:[{state:'partial',coverage:{progressive:true,pending:5}}]};
+assert.equal(c.progressiveSummary({...pending,nodes:[{},{}]}),'分批扫描中 · 已载入 2 个节点 · 待扫 5 个目录任务');
+assert.equal(c.progressiveDelay(pending,100),350);
+assert.equal(c.progressiveDelay(pending,2000),1000);
+assert.equal(c.progressiveDelay(pending,9000),1500);
+assert.equal(c.progressiveDelay({sources:[{state:'unavailable',coverage:{progressive:true,pending:5}}]},10),2000);
+assert.equal(c.progressiveDelay({sources:[]},10),2000);
+assert.match(source,/else scheduleLive\(progressiveDelay\(graph\)\)/);
+console.log('PASS progressive scan pacing, slow-source backpressure and completion cadence');

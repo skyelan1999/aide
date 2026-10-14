@@ -458,6 +458,10 @@
       [
         "python3",
         "scripts/test_source_fingerprint.py"
+      ],
+      [
+        "node",
+        "scripts/starmap-progressive-cadence.test.cjs"
       ]
     ],
     "full": [

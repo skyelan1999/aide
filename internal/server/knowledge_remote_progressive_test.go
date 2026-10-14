@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestKnowledgeRemoteProgressiveCursor(t *testing.T) {
@@ -235,5 +236,40 @@ func TestKnowledgeRemoteProgressiveLimits(t *testing.T) {
 				t.Fatal("unbounded catalogue or file batch")
 			}
 		})
+	}
+}
+
+// Slow sources must publish useful work before consuming the complete file quota.
+func TestKnowledgeRemoteProgressiveYieldsAndResumes(t *testing.T) {
+	ar := knowledgeArea{root: "source", source: "slow", name: "slow", kind: "sftp", scope: "w", origin: "o"}
+	p := defaultKnowledgeIndexPolicy()
+	entries := []map[string]any{}
+	for i := 0; i < 6; i++ {
+		entries = append(entries, map[string]any{"name": fmt.Sprintf("%d.md", i), "size": int64(1)})
+	}
+	d := newKnowledgeRemoteDiscovery()
+	list := func(string) ([]map[string]any, error) { return entries, nil }
+	read := func(string, int64) ([]byte, error) { time.Sleep(knowledgeBatchDuration); return []byte("x"), nil }
+	r, err := d.step(context.Background(), ar, p, false, 32, 10, list, read)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.coverage.Files != 1 || d.Complete || r.coverage.Pending == 0 {
+		t.Fatalf("no useful partial batch: %+v", r.coverage)
+	}
+	first := r.nodes
+	for !d.Complete {
+		r, err = d.step(context.Background(), ar, p, false, 32, 10, list, func(string, int64) ([]byte, error) { return []byte("x"), nil })
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if r.coverage.Files != 6 {
+		t.Fatalf("lost continuation: %+v", r.coverage)
+	}
+	for _, n := range first {
+		if _, ok := d.Published[n.Path]; !ok {
+			t.Fatalf("lost published node %s", n.Path)
+		}
 	}
 }

@@ -4,6 +4,7 @@ const elements=new Map(),el=id=>{if(!elements.has(id))elements.set(id,{textConte
 function context(saved,workspace='B'){
  const c=vm.createContext({$:el,params:new URLSearchParams(),motionReduced:()=>false,clearEvidencePath(){},clearTimeout,cacheWriteTimer:0,cacheIdentity:null,stellarLogbook:{connecting(){},interrupted(){}},locked:false,loading:false,stopLive(){},graphGeneration:0,codeView:false,AbortController,syncCodeView(){},say(){},api:async path=>path.startsWith('/identity')?({workspace,epoch:'1',policy:'p'}):({workspace,revision:'R',nodes:[],edges:[],sources:[],warnings:[],reset:true}),recoveryInput:0,recoveryScopeLoaded:'A',pendingRecoveredView:null,recoveryLoading:false,window:{AideStarmapCache:{read:async()=>null},AideContinuity:{readTab:async()=>saved}},graph:{workspace:'A'},aiAbort:{abort(){c.aborted=true}},resetDocumentBatch(){c.reset=true},beginGraphTransition(){},applyLiveUpdate(update){c.graph=update},restoreSkyView(value){c.restored=value},liveCursor:'',knowledgeTimeline:{sync(){}},liveFailures:0,redraw(){},scheduleLive(){}});
  vm.runInContext(source.slice(source.indexOf('function defaultSkyView()'),source.indexOf('function restoreSkyView(')),c);
+ vm.runInContext(source.slice(source.indexOf('function progressiveSummary('),source.indexOf('function scheduleLive(')),c);
  vm.runInContext(source.slice(source.indexOf('async function load(){'),source.indexOf('function syncMotion()')),c);return c;
 }
 (async()=>{
