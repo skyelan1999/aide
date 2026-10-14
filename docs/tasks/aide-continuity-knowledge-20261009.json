@@ -4881,5 +4881,21 @@
       ],
       "remaining_summary": "当前候选系统 Safari 逐项验收、超长会话/上下文压缩长时验证、长文档与大库性能、真实用户 SSH 主机边界、race detector 在资源充足环境重跑，以及总任务发布/回滚门禁。"
     }
+  },
+  "progress_checkpoint_20261014_followup95": {
+    "date": "2026-10-14",
+    "status": "continuity_optional_retention_error_fixed_and_runtime_rebuilt_browser_acceptance_blocked_by_app_lock",
+    "summary": "修复知识星图独立页面每分钟调用缺失恢复清理 API 导致的前端 TypeError，并更新脚本缓存版本。启动当前工作树版本成功；本机 Safari 星图标签显示 Aide 应用层锁屏，工作台返回后仍无法在星图完成验收，故 UI 行为未标通过。",
+    "evidence": [
+      "新增 `scripts/continuity-retention.test.cjs`：验证没有 recovery-transfer 模块时定时器无异常；模块存在时清理仍被调用 · PASS。",
+      "`node scripts/continuity-isolation.test.cjs` · PASS：恢复分支隔离、草稿与视图位置、归档确认、容量保护与锁屏写入取消等既有回归通过。",
+      "`start.command` · PASS：按源码哈希变化重建 `aide:local` 并重启 `aide-aide-1`；服务报告 `https://127.0.0.1:9999` 已就绪。",
+      "系统 Safari 已回到 `127.0.0.1:9999/starmap.html`；Aide 页面当前显示“知识星图已锁定，请回到工作台解锁”，故本轮不能确认星图脚本运行和更新 API 响应。"
+    ],
+    "not_verified": [
+      "系统 Safari 中星图解锁后的控制台错误、`/api/knowledge-map/updates` 响应与同步收敛行为尚未复验。",
+      "星图冷启动无完整快照时的 503 与大库长扫描表现仍需进一步采集和验证；本轮源码层面发现繁忙时可用已发布快照回退，但无首份快照的路径返回 503。"
+    ],
+    "remaining": "请在工作台解锁 Aide 后继续 Safari 星图验证；同时审查并改进大库冷启动渐进同步，让无完整快照时也能清楚报告扫描进度并最终收敛。"
   }
 }

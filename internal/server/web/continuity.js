@@ -267,6 +267,8 @@
   // hidden or locked pages do not purge, and live tab snapshots are untouched.
   if(typeof window.setInterval==='function')window.setInterval(()=>{
     const active=()=>document.visibilityState!=='hidden'&&window.LockCluster?.snapshot()?.settled&&!window.LockCluster.snapshot().locked;
-    if(active())window.AideContinuity.pruneExpiredRecoveryOperations({active}).then(()=>{window.aideRecoveryMaintenanceError='';}).catch(e=>{window.aideRecoveryMaintenanceError=String(e.message||e);});
+    // The starmap loads continuity without the optional recovery-transfer
+    // module. Do not throw every minute on pages that have no retention API.
+    if(active()&&typeof window.AideContinuity?.pruneExpiredRecoveryOperations==='function')window.AideContinuity.pruneExpiredRecoveryOperations({active}).then(()=>{window.aideRecoveryMaintenanceError='';}).catch(e=>{window.aideRecoveryMaintenanceError=String(e.message||e);});
   },60000);
 })();
