@@ -49,7 +49,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Final all Knowledge/local-root scoped race73.040s and vet PASS; actual mounted readonly reference probe grows169/343/513/677 nodes across4 batches with2 readable bodies and126/246/401/545 explicitly unreadable bodies. Initial failed probe retained as failed evidence; cloud hydration of two samples separately recorded. Quick69 and focused JS cache/coverage/syntax PASS. Canonical rebuilt Safari still pending. Canonical rebuilt Safari9999 confirmed reference nodes grow to3875, visible stars, unavailable metadata-only detail and readable hydrated README. Actual1325x940/current-dark only; native resize attempts ineffective, narrow/other themes NOT_RUN. Final package-metadata quick69 PASS; Markdown199/local links587 PASS. No new full71 run.",
+      "summary": "Final all Knowledge/local-root scoped race73.040s and vet PASS; actual mounted readonly reference probe grows169/343/513/677 nodes across4 batches with2 readable bodies and126/246/401/545 explicitly unreadable bodies. Initial failed probe retained as failed evidence; cloud hydration of two samples separately recorded. Quick69 and focused JS cache/coverage/syntax PASS. Canonical rebuilt Safari9999 confirmed reference nodes grow to3875, visible stars, unavailable metadata-only detail and readable hydrated README. Actual1325x940/current-dark only; native resize attempts ineffective, narrow/other themes NOT_RUN. Final package-metadata quick69 PASS; Markdown199/local links587 PASS. No new full71 run.",
       "evidence": [
         ".agent-state/starmap-io/scoped-initial-failed.log",
         ".agent-state/starmap-io/probe.log",
@@ -93,7 +93,7 @@
   },
   "release_authorization": "Existing incremental source push/test/local image/offline package authorization; no main/tag release.",
   "rollback": "Revert targeted isolation and additive metadata labels; retain source registry, stored user data and earlier image archive.",
-  "handoff": "Sourcec4f9295 deployed, all Knowledge/local-root race73.040s+vet and actual mounted probe PASS; canonical Safari progressive/body-state acceptance done at desktop/current-dark. Offline bundle imported/verified/copied. Final quick69 PASS; branch push9cc0509 PASS. Original goal remains active.",
+  "handoff": "Sourcec4f9295 deployed, all Knowledge/local-root race73.040s+vet and actual mounted probe PASS; canonical Safari progressive/body-state acceptance done at desktop/current-dark. Offline bundle imported/verified/copied. Final quick69 PASS; branch push9cc0509 PASS. Original goal remains active. Followup starmap-batch-material-reuse-20261015 sourcea3824e5 now avoids repeated body-reader calls within a candidate while preserving source identity and next-batch repair; does not deduplicate directory discovery.",
   "diagnosis": {
     "canonicalPort": 9999,
     "source": "Current unchanged /context mount is Harness; no new aide source in saved registry. No retarget or disable performed.",

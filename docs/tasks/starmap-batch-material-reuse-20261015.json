@@ -40,39 +40,123 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "All Knowledge/local-root scoped race79.549s+vet PASS; targeted race4.642s+vet PASS. Actual reference3 batches169/343/513 nodes retain readable+unavailable bodies; reader calls160/286/406 equal unique paths for each candidate across aliases. Instrumented original material algorithm fails new regression: four fixture aliases read good.md and unavailable.md4 times each; new implementation1 each. Code upgrade baseline re-reads4 times, fixed1. Same-metadata next-batch healing, distinct source IDs/origins, stamp/location invalidation and code-only failure isolation PASS. Initial quick69 PASS; final canonical deployment/browser/package checks pending.",
+      "status": "pass",
+      "summary": "All Knowledge/local-root scoped race79.549s+vet PASS; targeted race4.642s+vet PASS. Actual reference3 batches169/343/513 nodes retain readable+unavailable bodies; reader calls160/286/406 equal unique paths for each candidate across aliases. Instrumented original material algorithm fails new regression: four fixture aliases read good.md and unavailable.md4 times each; new implementation1 each. Code upgrade baseline re-reads4 times, fixed1. Same-metadata next-batch healing, distinct source IDs/origins, stamp/location invalidation and code-only failure isolation PASS. Initial quick69 PASS; final canonical deployment/browser/package checks pending. Canonical final start.command deployed sourcea3824e5; native Safari observed both independent reference counters progress beyond5800 with body gaps. Early selection reset observed; later selection retained through updates, cause unproven. Final package-metadata quick69 PASS; Markdown199/local links589 PASS; no full71 this batch.",
       "evidence": [
         ".agent-state/starmap-material-reuse/targeted-race.log",
         ".agent-state/starmap-material-reuse/targeted-owner.log",
         ".agent-state/starmap-material-reuse/scoped-race.log",
         ".agent-state/starmap-material-reuse/scoped-owner.log",
-        ".agent-state/starmap-material-reuse/baseline-expected-fail.log"
+        ".agent-state/starmap-material-reuse/baseline-expected-fail.log",
+        ".agent-state/starmap-material-reuse/reference-live.png",
+        ".agent-state/starmap-material-reuse/reference-updated.png",
+        ".agent-state/starmap-material-reuse/reference-steady-selection.png",
+        ".agent-state/starmap-material-reuse/live-api.json",
+        ".agent-state/verify-20261014T210750004826Z.log",
+        ".agent-state/starmap-material-reuse/check-docs.log"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Architecture describes batch-only success/error reuse, code-only separation and next-batch healing; explicit remaining duplicate directory discovery and no wall-clock acceleration claim. Main121 and current image README record exact evidence and startup selection followup.",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docker-images/README.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Only isolated temporary probe containers/snapshots used; own containers removed by runner. No user source/session changes, bulk hydration or broad cleanup. Restored workspace filter/closed own map tab. Original vendor deletions retained.5 config/auth hashes unchanged from initial-build baseline to final entry; historical mounts/workspace config/token separately checked.",
+      "evidence": [
+        ".agent-state/starmap-material-reuse/runtime.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final canonical image healthy. App/dependency bundle tags, exact launchers, inner/outer hashes, running platform manifest, actual docker load and both local copies PASS. Final quick69 PASS; incremental branch push pending. No main/tag/formal release or receiving-device acceptance.",
+      "evidence": [
+        ".agent-state/starmap-material-reuse/package.json",
+        ".agent-state/starmap-material-reuse/runtime.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental source push/local tests/build/offline package authorization; no formal main/tag release.",
   "rollback": "Revert candidate material reuse; preserve source registry, stable IDs, checkpoints, user data and previous image archive.",
-  "handoff": "Targeted actual adapter invocation counts PASS. Full scoped indexing regression and old-material negative proof running; final canonical deployment and offline delivery pending. Directory discovery remains per-source and cloud body availability/syscall waits remain open.",
+  "handoff": "Sourcea3824e5, scoped all Knowledge/local-root race79.549s+vet and old-material negative proof PASS. Canonical9999 Safari source progress and additive error states observed; app/dependency package verified/imported/copied. Final quick69 PASS; branch push pending. Next: cached startup selection reset; original goal remains active.",
   "negative_proof": {
     "baseline": "Original0b69d42 material function, current test reader injection only; no new reuse logic",
     "result": "Expected FAIL: same four-alias fixture good.md4, unavailable.md4; code-upgrade body reader4",
     "fixed": "Each body1 across aliases; failed bodies retried on next candidate",
     "scope": "Reader invocation counts, not total syscalls or wall-clock acceleration"
+  },
+  "runtime": {
+    "runningImage": "sha256:1e34815bcb87c249cfe096ff4cdb489511fea1e871a812f30172c776cbfa7478",
+    "image": "sha256:1e34815bcb87c249cfe096ff4cdb489511fea1e871a812f30172c776cbfa7478",
+    "binarySHA256": "12effaa05e6d61a46b1fe4eb4e81e924f271d8fbc2a5e9753c6ed1151b7a85e9",
+    "runningPlatformManifest": "sha256:eb7343d45cf8f1176fe85b3128864c74b512ca7430be6c0de3bb2f8e4e0649f4",
+    "sourceSHA256": "8c8814bd540e66c38c7c820bd406807cc5ebe837a6539b32f3488316e855e99f",
+    "buildCommit": "a3824e5bab6fec0de86a0273e8ef5b776877b4da-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 5,
+    "historicalProtectedFilesUnchanged": 1,
+    "snapshotTiming": "Five config/auth hashes captured after initial local build image65c5e38f and before final canonical entry; historical baseline separately checks mounts/workspace config/token",
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:1e34815bcb87c249cfe096ff4cdb489511fea1e871a812f30172c776cbfa7478",
+    "sourceSHA256": "8c8814bd540e66c38c7c820bd406807cc5ebe837a6539b32f3488316e855e99f",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-1e34815bcb87-offline.tar.gz",
+    "bytes": 705617146,
+    "sha256": "dec8cb657ed51b5309cfc34d860cb9f8990cc95107dd11c3265a585ffd17552a",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  },
+  "implementation_commit": "a3824e5",
+  "browser_acceptance": {
+    "entry": "aide/start.command",
+    "port": 9999,
+    "client": "Safari",
+    "sourceConfig": "Actual unchanged Harness mount; context and source:context remain separate",
+    "observations": "Cached4042 per reference; fresh API4522/4597 with stale response; native updates4882/4953 then5616/5804 and5886. Counts are separate observation points, not exhaustive unique file totals.",
+    "api": "0.194s response was stale published view, not scan latency benchmark",
+    "bodyState": "Both source chips retain explicit body-gap messages, independent counters and identities",
+    "selectionIssue": "One early context selection became workspace after initial cached display/updates. Cause unproven; reselecting after initialization stayed on context while5616 grew5804. Needs dedicated startup-selection reproduction.",
+    "themeWindow": "Unchanged dark desktop; no frontend source change. No new narrow/other-theme claim.",
+    "cleanup": "Restored workspace filter and closed only owned star-map tab; no fixture sessions, model/plugin execution or bulk cloud hydration.",
+    "evidence": [
+      ".agent-state/starmap-material-reuse/reference-live.png",
+      ".agent-state/starmap-material-reuse/reference-updated.png",
+      ".agent-state/starmap-material-reuse/reference-steady-selection.png",
+      ".agent-state/starmap-material-reuse/live-api.json"
+    ]
+  },
+  "remaining": [
+    "Startup selection reset after cached first paint needs reproduction; steady-state selection was retained",
+    "Directory discovery/stat still execute per source; failed bodies retry next candidate, so many cloud placeholders still cost I/O and remain unavailable",
+    "Host syscall waits/full latency/complete body coverage and alias-independent cursor alignment not closed",
+    "Original twelve workstreams, live plugin approvals/reconciliation and receiving-device import; Windows by user, real vectors deferred"
+  ],
+  "quick_receipt": {
+    "status": "pass",
+    "head": "a3824e5bab6fec0de86a0273e8ef5b776877b4da",
+    "fingerprint": "6f43136f8809a87b932e73af056b3229a270c013cd95f0a5657b240a4ccd5d98",
+    "time": "20261014T210750004826Z",
+    "log": ".agent-state/verify-20261014T210750004826Z.log",
+    "commands": 69
   }
 }
