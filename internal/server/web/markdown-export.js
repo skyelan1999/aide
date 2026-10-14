@@ -5,7 +5,7 @@
  let active=null, menu=null;
  const css=`*{box-sizing:border-box}body{margin:0;width:794px;padding:48px 60px;color:#202630;background:white;font:15px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif}main{overflow-wrap:anywhere}h1,h2,h3,h4{line-height:1.3}h1{font-size:32px}h2{font-size:25px}h3{font-size:20px}img,svg{max-width:100%;height:auto}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.5 ui-monospace,Consolas,monospace;padding:14px;background:#f3f5f7;border:1px solid #dde2e8;border-radius:6px}table{border-collapse:collapse;width:100%;font-size:14px}th,td{border:1px solid #cdd4dd;padding:8px;text-align:left;overflow-wrap:anywhere}blockquote{margin:16px 0;padding-left:16px;border-left:3px solid #8295ab;color:#46505e}a{color:#355f86;text-decoration:none}hr{border:0;border-top:1px solid #cdd4dd}button,nav,.md-outline{display:none!important}`;
  function closeMenu(){if(!menu)return;const {host,button,dispose}=menu;menu=null;dispose();host.remove();button.setAttribute('aria-expanded','false');button.focus();}
- function close(){closeMenu();active?.controller.abort();active?.frame?.remove();active=null;}
+ function close(){closeMenu();active?.controller.abort();active?.frame?.remove();active?.renderFrame?.remove();active=null;}
  window.LockCluster?.on('effective',value=>{if(value)close();});window.addEventListener('pagehide',close);
  function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.hidden=true;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
  function nameOf(title){return String(title||'document.md').split('/').pop().replace(/[\\:*?"<>|\x00-\x1f]/g,'_')||'document.md';}
@@ -58,7 +58,7 @@
   for(const img of body.querySelectorAll('img'))if(img.naturalWidth*img.naturalHeight>24000000)throw Error('图片像素过大，请缩小后导出');
   return doc.body;
  }
- async function run(format,o){
+ async function run(format,o,progress=()=>{}){
   close();if(!o.valid())return;const job={controller:new AbortController()};job.wait=p=>new Promise((resolve,reject)=>{const signal=job.controller.signal,cancel=()=>{signal.removeEventListener('abort',cancel);reject(new DOMException('Cancelled','AbortError'));};signal.addEventListener('abort',cancel,{once:true});if(signal.aborted)cancel();Promise.resolve(p).then(v=>{signal.removeEventListener('abort',cancel);resolve(v);},e=>{signal.removeEventListener('abort',cancel);reject(e);});});active=job;const alive=()=>active===job&&!job.controller.signal.aborted&&o.valid();
   // Abort stale/locked documents; bound network operations independently of page lifetime.
   const guard=setInterval(()=>{if(!alive())job.controller.abort();},250);let timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},120000);
@@ -68,32 +68,64 @@
    if(format==='md'){blob=new Blob([o.markdown],{type:'text/markdown;charset=utf-8'});extension='md';}
    else if(format==='zip'){blob=await exportZIP(o,job);extension='zip';}
    else{
+    if(format==='pdf'){
+     const estimatedPages=Math.max(1,Math.ceil(String(o.markdown||'').length/2500));
+     clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},Math.min(15*60*1000,120000+estimatedPages*2000));
+    }
     await job.wait(o.load('/vendor/markdown-export/html2canvas.min.js',()=>!!window.html2canvas));
     if(format==='pdf')await job.wait(o.load('/vendor/markdown-export/jspdf.umd.min.js',()=>!!window.jspdf?.jsPDF));
     const body=await snapshot(o,job),height=Math.ceil(body.scrollHeight);
     // Long PDFs are rendered a page at a time. Give them a proportional
     // deadline instead of rejecting at an arbitrary document-height limit.
+    if(format!=='pdf'&&height>60000)throw Error('文档过长，请拆分后导出');
+    // Rasterize only the blocks visible on this page. Passing the full document
+    // to html2canvas for every page makes its cloned DOM grow with the entire
+    // document and can exhaust Safari's memory on long Markdown files.
+    const sourceRoot=body.children[0]||body,sourceBox=sourceRoot.getBoundingClientRect();
+    const blocks=[...sourceRoot.children].map(node=>{const r=node.getBoundingClientRect();return{node,top:r.top-sourceBox.top,bottom:r.bottom-sourceBox.top,left:r.left-sourceBox.left,width:r.width,height:r.height};});
+    const pageRanges=[];
     if(format==='pdf'){
-     clearTimeout(timeout);
-     const pages=Math.max(1,Math.ceil(height/PAGE));
-     timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},Math.min(15*60*1000,120000+pages*2000));
-    }else if(height>60000)throw Error('文档过长，请拆分后导出');
-    const render=async(y,h)=>{if(!alive())throw new DOMException('Cancelled','AbortError');return window.html2canvas(body,{backgroundColor:'#fff',scale:1.5,width:WIDTH,height:h,y,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000});};
+     let y=0,scanBlock=0;
+     while(y<height){while(scanBlock<blocks.length&&blocks[scanBlock].bottom<=y)scanBlock++;let end=Math.min(y+PAGE,height);
+      // Match the render pass: keep nearby short blocks together when possible.
+      for(let i=scanBlock;i<blocks.length&&blocks[i].top<end;i++){const b=blocks[i];if(b.top>y+PAGE*.65&&b.top<end&&b.bottom>end&&b.height<PAGE)end=Math.floor(b.top);}
+      end=Math.max(y+1,end);pageRanges.push({y,height:end-y});y=end;
+     }
+     clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},Math.min(15*60*1000,120000+pageRanges.length*2000));
+    }
+    let firstBlock=0;
+    const renderFrame=document.createElement('iframe');renderFrame.className='markdown-print-frame';renderFrame.setAttribute('aria-hidden','true');renderFrame.tabIndex=-1;document.body.append(renderFrame);job.renderFrame=renderFrame;
+    const renderDoc=renderFrame.contentDocument;renderDoc.open();renderDoc.write('<!doctype html><html><head><meta charset="utf-8"></head><body></body></html>');renderDoc.close();const renderStyle=renderDoc.createElement('style');renderStyle.textContent=css+'html,body{margin:0!important;padding:0!important;width:'+WIDTH+'px!important;min-height:0!important}';renderDoc.head.append(renderStyle);
+    const pageSlice=(y,h)=>{
+     while(firstBlock<blocks.length&&blocks[firstBlock].bottom<=y)firstBlock++;
+     const page=renderDoc.createElement('main');page.className='markdown-export-page';page.style.cssText=`position:relative;box-sizing:border-box;width:${WIDTH}px;height:${h}px;overflow:hidden;background:#fff;margin:0;padding:0`;
+     for(let i=firstBlock;i<blocks.length&&blocks[i].top<y+h;i++){
+      const b=blocks[i];if(b.bottom<=y)continue;const clone=b.node.cloneNode(true);
+      clone.style.position='absolute';clone.style.boxSizing='border-box';clone.style.left=b.left+'px';clone.style.top=(b.top-y)+'px';clone.style.width=b.width+'px';clone.style.margin='0';
+      page.append(clone);
+     }
+     renderDoc.body.replaceChildren(page);return page;
+    };
+    const render=async(page,h)=>{if(!alive())throw new DOMException('Cancelled','AbortError');return window.html2canvas(page,{backgroundColor:'#fff',scale:1.5,width:WIDTH,height:h,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000});};
     if(format==='png'){
-     if(height>10000)throw Error('长图超过 10000 像素，请选择分页 PDF');const canvas=await render(0,height);blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('图片生成失败')),'image/png'));canvas.width=canvas.height=0;extension='png';
+     if(height>10000)throw Error('长图超过 10000 像素，请选择分页 PDF');if(!alive())throw new DOMException('Cancelled','AbortError');const canvas=await window.html2canvas(body,{backgroundColor:'#fff',scale:1.5,width:WIDTH,height,y:0,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000});blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('图片生成失败')),'image/png'));canvas.width=canvas.height=0;extension='png';
     }else{
      const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',compress:true});pdf.setProperties({title:stem,creator:'aide'});
-     let y=0,page=0;
-     while(y<height){let end=Math.min(y+PAGE,height);
-      // Move a cut before a nearby block, avoiding short headings/rows/images split across pages.
-      for(const block of body.querySelectorAll('h1,h2,h3,h4,p,li,tr,pre,img,svg')){const r=block.getBoundingClientRect(),top=r.top+body.ownerDocument.defaultView.scrollY,next=/^H[1-4]$/.test(block.tagName)?block.nextElementSibling?.getBoundingClientRect():null,bottom=next&&next.height<PAGE/3?Math.max(top+r.height,next.bottom+body.ownerDocument.defaultView.scrollY):top+r.height;if(top>y+PAGE*.65&&top<end&&bottom>end&&r.height<PAGE){end=Math.floor(top);}}
-      const h=Math.max(1,end-y),canvas=await render(y,h);if(page++)pdf.addPage();pdf.addImage(canvas,'JPEG',12,12,186,h/WIDTH*186,undefined,'FAST');canvas.width=canvas.height=0;y=end;
+     let pageNo=0;
+     for(const range of pageRanges){const {y,height:h}=range,slice=pageSlice(y,h);
+      progress(pageNo+1,pageRanges.length);
+      // Let the progress state paint before starting another expensive canvas render.
+      await new Promise(resolve=>requestAnimationFrame(()=>resolve()));
+      // html2canvas has no AbortSignal support. Race its promise against the
+      // export job so timeout, lock, or editor close can settle the UI even
+      // when a large page render itself stalls.
+      const canvas=await job.wait(render(slice,h));slice.remove();if(pageNo++)pdf.addPage();pdf.addImage(canvas,'JPEG',12,12,186,h/WIDTH*186,undefined,'FAST');canvas.width=canvas.height=0;
      }
      blob=pdf.output('blob');extension='pdf';
     }
    }
    if(alive())download(blob,format==='md'?name:stem+'.'+extension);
-  }catch(e){if(job.timedOut)throw Error('导出超时，请检查资源连接或拆分文档');throw e;}finally{clearInterval(guard);clearTimeout(timeout);job.frame?.remove();if(active===job)active=null;}
+  }catch(e){if(job.timedOut)throw Error('导出超时，请检查资源连接或拆分文档');throw e;}finally{clearInterval(guard);clearTimeout(timeout);job.frame?.remove();job.renderFrame?.remove();if(active===job)active=null;}
  }
  function bind({button,options,t=s=>s,error=()=>{}}){
   button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-expanded','false');
@@ -102,7 +134,7 @@
    const host=document.createElement('div');host.className='markdown-export-menu';host.setAttribute('role','menu');host.setAttribute('aria-label',t('导出'));button.parentNode.append(host);
    const formats=[['pdf','PDF','直接下载 · 分页文档'],['md','Markdown','下载原文 · .md'],['zip','Markdown + 资源','图片与附件 · .zip'],['png','PNG 图片','渲染为一张长图']];
    for(const [format,label,description] of formats){const item=document.createElement('button');item.type='button';item.setAttribute('role','menuitem');const badge=document.createElement('span');badge.className='markdown-export-format';badge.textContent=format.toUpperCase();const text=document.createElement('span'),strong=document.createElement('strong'),small=document.createElement('small');strong.textContent=t(label);small.textContent=t(description);text.append(strong,small);item.append(badge,text);host.append(item);
-    item.onclick=async()=>{const o=options();closeMenu();if(!o)return;button.disabled=true;button.setAttribute('aria-busy','true');const label=button.textContent;button.textContent=t('正在导出…');try{await run(format,o);}catch(e){if(e.name!=='AbortError')error(e);}finally{button.disabled=false;button.removeAttribute('aria-busy');button.textContent=label;}};
+    item.onclick=async()=>{const o=options();closeMenu();if(!o)return;button.disabled=true;button.setAttribute('aria-busy','true');const progress=document.createElement('span');progress.className='markdown-export-status';progress.setAttribute('role','status');progress.setAttribute('aria-live','polite');progress.textContent=t('准备导出…');button.insertAdjacentElement('afterend',progress);try{await run(format,o,(current,total)=>{progress.textContent=t('正在渲染第 {current}/{total} 页').replace('{current}',String(current)).replace('{total}',String(total));button.setAttribute('aria-valuetext',progress.textContent);});}catch(e){if(e.name!=='AbortError')error(e);}finally{button.disabled=false;button.removeAttribute('aria-busy');button.removeAttribute('aria-valuetext');progress.remove();}};
    }
    const outside=e=>{if(!host.contains(e.target)&&e.target!==button)closeMenu();};const key=e=>{if(e.key==='Escape'){e.preventDefault();closeMenu();}else if(['ArrowDown','ArrowUp'].includes(e.key)){e.preventDefault();const items=[...host.children],i=items.indexOf(document.activeElement);items[(i+(e.key==='ArrowDown'?1:items.length-1)+items.length)%items.length].focus();}else if(e.key==='Tab')closeMenu();};
    const blur=()=>closeMenu();document.addEventListener('pointerdown',outside);host.addEventListener('keydown',key);window.addEventListener('resize',blur);

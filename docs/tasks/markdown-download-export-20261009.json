@@ -66,5 +66,16 @@
   },
   "release_authorization": "",
   "rollback": "还原本任务导出模块、工具栏绑定/样式/依赖版本；无需数据迁移。不得覆盖继承的索引策略改动。",
-  "handoff": "导出需求完成源码和组件验收，生产未更新；完整鉴权工作台、SSH、Windows 仍需端到端验收。整体连续性目标继续 active。"
+  "handoff": "导出需求完成源码和组件验收，生产未更新；完整鉴权工作台、SSH、Windows 仍需端到端验收。整体连续性目标继续 active。",
+  "long_markdown_pdf_fix_20261014": {
+    "status": "implementation_component_and_154_page_system_safari_renderer_stress_pass_aide_entry_acceptance_pending",
+    "summary": "PDF renders long Markdown page by page, cloning blocks intersecting the current page. Page ranges are planned before rendering so progress totals include keep-together early breaks accurately. Progress is live; timeout scales with actual planned page count and caps at 15 minutes. A stalled html2canvas page now races job cancellation so lock, editor close, file switch, and timeout settle the export. PNG remains a single long image with a 10,000 CSS-pixel cap.",
+    "evidence": [
+      "node --check internal/server/web/markdown-export.js",
+      "node scripts/markdown-download-export.test.js (includes a four-page keep-together fixture and a stalled-render cancellation case)",
+      "git diff --check"
+    ],
+    "browser": "Native system Safari loaded the current markdown-export.js?v=3 plus the actual bundled html2canvas 1.4.1 and jsPDF 4.2.1 from a loopback-only minimal static test site. It rendered and triggered a download for a generated 1,000-section Markdown document; progress reached 154 pages, and Safari Downloads showed long-markdown-1000-sections.pdf at 120.2 MB. pdfinfo independently confirmed 154 A4 pages, 120194279 bytes, Creator jsPDF 4.2.1. First-page layout was visually checked. This is actual system-browser renderer/download evidence, but it does not exercise the authenticated Aide editor's export-menu integration, inspect the last page visually, or measure peak memory. Earlier 243-line production download remains separate evidence whose source revision is unknown.",
+    "release": "not_run; authenticated Aide editor integration, last-page visual inspection and peak-memory behavior remain pending before push/release."
+  }
 }
