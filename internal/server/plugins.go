@@ -776,24 +776,16 @@ func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (an
 
 func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName string, args map[string]any) (any, error) {
 
-	// Calls sharing plugin state remain FIFO. Cross-plugin resource claims are
-	// admitted atomically below; neither wait owns a handler process.
+	// Reserve the whole footprint first: a writer waiting for its own plugin
+	// must already block later conflicting readers from other plugins. Every
+	// nonexclusive footprint includes this plugin's exclusive state root, so
+	// taking its FIFO after resource admission cannot invert the lock order.
+	// Neither wait owns a handler process.
 	a.mu.Lock()
 	scope := a.pluginsPath
 	epoch, workspace := a.wsRevision, a.workPath
-	a.mu.Unlock()
-	release, err := a.pluginCalls.acquire(parent, scope+"\x00"+pluginID)
-	if err != nil {
-		return nil, err
-	}
-	defer release()
-	a.mu.Lock()
-	changed := a.pluginsPath != scope || a.wsRevision != epoch || a.workPath != workspace
 	footprint := a.pluginFootprintLocked(pluginID, toolName, args)
 	a.mu.Unlock()
-	if changed {
-		return nil, errors.New("工作区已切换，排队插件调用未执行")
-	}
 	if err := parent.Err(); err != nil {
 		return nil, err
 	}
@@ -802,8 +794,13 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 		return nil, err
 	}
 	defer releaseResources()
+	release, err := a.pluginCalls.acquire(parent, scope+"\x00"+pluginID)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
 	a.mu.Lock()
-	changed = a.pluginsPath != scope || a.wsRevision != epoch || a.workPath != workspace || !reflect.DeepEqual(footprint, a.pluginFootprintLocked(pluginID, toolName, args))
+	changed := a.pluginsPath != scope || a.wsRevision != epoch || a.workPath != workspace || !reflect.DeepEqual(footprint, a.pluginFootprintLocked(pluginID, toolName, args))
 	enabled := false
 	for _, p := range a.pluginRegistry.Plugins {
 		if p.ID == pluginID {

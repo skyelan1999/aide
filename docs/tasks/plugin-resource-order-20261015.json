@@ -1,0 +1,73 @@
+{
+  "id": "plugin-resource-order-20261015",
+  "request": "Continue authorized plugin scheduling: prevent cross-plugin readers from overtaking a writer queued behind its own plugin; preserve independent concurrency, cancellation and workspace identity.",
+  "baseline": "ea382419bd9eba596678b1fc205c60186bb4965c",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "A writer queued behind its own active plugin is visible to the cross-plugin resource queue before later conflicting readers; real Node handler markers prove ordering.",
+    "An unrelated plugin/resource continues while the writer waits; later reader observes the actual completed write.",
+    "Same-plugin FIFO, resource cancellation, epoch/contract revalidation and existing approval/sandbox gates remain intact.",
+    "Focused race and quick gate recorded; overall 5x graph/approval preflight/node recovery remain open."
+  ],
+  "scope": [
+    "internal/server/plugins.go",
+    "internal/server/plugin_resource_order_test.go",
+    "docs/architecture/plugin-task-scheduling.md",
+    "docs/architecture.md",
+    "docs/tasks"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Derived from existing authorized plugin concurrency/write-order requirement; fixes fairness before full DAG integration.",
+      "evidence": [
+        "docs/tasks/plugin-resource-scheduling-20261014.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reserve complete resource footprint before acquiring per-plugin FIFO. The footprint already includes an exclusive plugin-state root or is globally exclusive, so no other same-plugin holder can own FIFO while waiting for these resources. Revalidate workspace/contract after both gates.",
+      "evidence": [
+        "internal/server/plugin_resources.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Complete footprint admitted before same-plugin FIFO; preserved post-wait epoch/contract/enabled/deny checks. No new tool permissions or model dispatch capability.",
+      "evidence": [
+        "internal/server/plugins.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Real Node regression fails on prior source: later reader overtook queued writer. Repaired source passes plugin resource/call tests twice under race18.198s and vet. Independent file handler enters while writer waits; later reader sees written value. Quick68 PASS. First focused runner had invalid nested shell quoting and is not product evidence; corrected runner exit0. Previous full70 belongs to prior source, not this patch.",
+      "evidence": [
+        ".agent-state/plugin-resource-order/baseline-negative.log",
+        ".agent-state/plugin-resource-order/focused-race-final.log",
+        ".agent-state/verify-20261014T192106274509Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented admission ordering, Node handler evidence and outstanding full DAG scope.",
+      "evidence": [
+        "docs/architecture/plugin-task-scheduling.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Inherited vendor deletions preserved; no runtime config or user data changes. Test containers automatically removed.",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Source ready for incremental push; canonical-entry rebuild and offline artifact pending. No formal release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental source push/test authorization; no formal main/tag release.",
+  "rollback": "Revert this isolated admission-order change; no data or schema migration.",
+  "handoff": ""
+}
