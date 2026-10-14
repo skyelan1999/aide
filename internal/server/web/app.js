@@ -29,7 +29,9 @@ function persistWorkspaceScene(overrides={}){
 function persistChatDraft(strict=false){
  if(!recoveryReady||lockScreen.locked)return;
  const scope=recoveryScope(),id=state.session?.id||'';
- const epoch=chatRecoveryEpoch,active=()=>epoch===chatRecoveryEpoch&&!lockScreen.locked&&scope===recoveryScope()&&id===(state.session?.id||'');
+ // The immutable snapshot belongs to the captured session even after navigation.
+ // Lock/workspace generations still invalidate pending writes.
+ const epoch=chatRecoveryEpoch,active=()=>epoch===chatRecoveryEpoch&&!lockScreen.locked&&scope===recoveryScope();
  if(!active())return;
  const failed=e=>{recoveryFailure(e);if(strict===true)throw e;};
  const draft={text:$('prompt').value,attachments:state.attachments.map(a=>({...a})),start:$('prompt').selectionStart,end:$('prompt').selectionEnd,scroll:$('prompt').scrollTop};
@@ -914,16 +916,21 @@ async function selectSession(id) {
     if (seq !== sessionSeq.value) return; // 已有更新的选择，丢弃本次过期响应
     const json = sessionRevision(loaded);
     const changed = json !== state.sessionJSON;
+    let draft;
     if (!sameSession) {
       persistChatDraft();
       sessionDrafts.set(chatDraftKey(state.session?.id || ''), {text:$('prompt').value, attachments:state.attachments.map(a=>({...a})),start:$('prompt').selectionStart,end:$('prompt').selectionEnd,scroll:$('prompt').scrollTop});
-      const draft = sessionDrafts.get(chatDraftKey(id)) || savedDraft;
+      draft = sessionDrafts.get(chatDraftKey(id)) || savedDraft;
+    }
+    // Attachment rendering immediately caches the composer: its owner must
+    // already be the destination, or its draft overwrites the departing one.
+    state.session = loaded;
+    state.sessionJSON = json;
+    if (!sameSession) {
       $('prompt').value = draft ? draft.text : loaded.pendingPrompt || '';
       state.attachments = draft?.attachments?.map(a=>({...a})) || [];
       renderAttachments();restoreChatSelection(draft);
     }
-    state.session = loaded;
-    state.sessionJSON = json;
     if(!sameSession)refreshChatDraftChoices();
     scheduleChatRecovery();
     if (loaded.pendingPrompt && !$('prompt').value.trim()) $('prompt').value = loaded.pendingPrompt;
@@ -1754,6 +1761,7 @@ async function newSession() {
   cancelContextPreview();
   paintSessionSelection('', false);
   clearTimeout(state.poll); closeStream(); state.live = {}; state.liveStable = {}; state.liveRound = {}; state.liveTool = {}; state.liveReasoning = {}; state.runPhase = {}; state.streamRetryAt = 0; state.sessionJSON = ''; state.session = null; state.attachments = []; renderAttachments(); renderSession(); $('prompt').focus(); if (typeof hideContextPreview === 'function') hideContextPreview();
+  persistWorkspaceScene();
   refreshChatDraftChoices();
   loadSessions().catch(() => {});
 }

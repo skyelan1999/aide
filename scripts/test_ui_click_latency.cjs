@@ -108,6 +108,88 @@ async function testSessionSelection() {
   assert.equal(requests.filter(([,method]) => method === 'POST').length, priorPosts, 'recovery never submits a task');
 }
 
+async function testNavigationDraftPersistence() {
+  const cache = new Map(), durable = new Map(), failures = [], writes = [];
+  let scope = 'workspace-A', gate = deferred(), storageError;
+  const prompt = node(); prompt.value = 'outgoing A';
+  prompt.selectionStart = 3; prompt.selectionEnd = 6; prompt.scrollTop = 12;
+  const nodes = {prompt, conversation:node(), 'session-title':node(), 'editor-dialog':{}, 'voice-panel':node()};
+  const state = {session:{id:'A'}, sessionJSON:'', attachments:[{root:'context',source:'ref-A',path:'note.md'}],
+    root:'workspace', source:'', dir:'.', fileDirs:{}, live:{}, liveStable:{}, liveRound:{},
+    liveTool:{}, liveReasoning:{}, runPhase:{}};
+  const key = (s,k,id) => JSON.stringify([s,k,id]);
+  const recovery = {
+    enabled:()=>true,
+    cacheTab(s,k,id,value,{active}={}) { if(!active||active())cache.set(key(s,k,id),structuredClone(value)); },
+    readTab:async(s,k,id)=>cache.get(key(s,k,id))||durable.get(key(s,k,id))||null,
+    writeTab(s,k,id,value,{active}={}) {
+      const snapshot=structuredClone(value), wait=gate.promise;
+      if(!active||active())cache.set(key(s,k,id),snapshot);
+      const pending=(async()=>{await wait;if(active&&!active())throw Error('cancelled recovery write');
+        if(storageError)throw storageError;durable.set(key(s,k,id),snapshot);return true;})();
+      writes.push(pending);return pending;
+    },
+  };
+  const context = {state, $:id=>nodes[id], recoveryScope:()=>scope, recoveryReady:true,
+    chatRecoveryEpoch:0, lockScreen:{locked:false}, workspaceSceneRestoring:false,
+    window:{AideContinuity:recovery}, AideContinuity:recovery,
+    recoveryFailure:e=>failures.push(e.message), document:{querySelectorAll:()=>[]},
+    clearTimeout(){}, closeStream(){}, ttsCancel(){}, cancelContextPreview(){},
+    renderAttachments(){context.scheduleChatRecovery();}, restoreChatSelection(){},
+    scheduleChatRecovery(){context.cacheEmergencyChatDraft();}, refreshChatDraftChoices(){},
+    refreshCompactInfo(){}, refreshStrategyUI(){}, schedulePoll(){}, scheduleContextPreview(){},
+    renderSession(){}, loadSessions:async()=>{}, hideContextPreview(){}, estimateContext(){},
+    api:async(url,options)=>options?.method==='PATCH'?{}:{id:url.split('/')[2].split('?')[0],runs:[]},
+    t:k=>k, Promise};
+  vm.createContext(context);
+  vm.runInContext(excerpt('const chatDraftKey=','function recoveryFailure('),context);
+  vm.runInContext(excerpt('function persistWorkspaceScene(', 'function restoreChatSelection('),context);
+  vm.runInContext(excerpt('function cacheEmergencyChatDraft(', 'function scheduleChatRecovery('),context);
+  vm.runInContext(excerpt('const sessionSeq =','function closeStream()'),context);
+  vm.runInContext(excerpt('async function newSession()','const labels ='),context);
+
+  await context.selectSession('B');
+  assert.equal(state.session.id,'B');
+  assert.equal(prompt.value,'');
+  assert.equal(cache.get(key(scope,'chat','A')).text,'outgoing A',
+    'attachment rendering must not cache destination content under outgoing session');
+  assert.equal(cache.get(key(scope,'chat','B')).text,'');
+  gate.resolve(); await Promise.allSettled(writes); await Promise.resolve();
+  assert.deepEqual(failures,[],'navigation must not cancel captured outgoing writes');
+  assert.equal(durable.get(key(scope,'chat','A')).text,'outgoing A');
+  assert.equal(durable.get(key(scope,'chat','A')).attachments[0].source,'ref-A');
+
+  // A reload discards the memory map. The destination must recover its own
+  // synchronous/durable snapshot, not the last other conversation's content.
+  vm.runInContext('sessionDrafts.clear()',context);
+  await context.selectSession('A');
+  assert.equal(prompt.value,'outgoing A');
+  assert.equal(state.attachments[0].source,'ref-A');
+  prompt.value='new A before new-session';
+  await context.newSession();
+  assert.equal(state.session,null); assert.equal(prompt.value,'');
+  assert.equal(cache.get(key(scope,'chat','A')).text,'new A before new-session');
+  assert.equal(cache.get(key(scope,'scene','workbench')).session,'',
+    'new-session records the destination scene before its debounce');
+  await Promise.allSettled(writes); await Promise.resolve();
+  assert.equal(durable.get(key(scope,'scene','workbench')).session,'');
+  assert.deepEqual(failures,[]);
+
+  // Navigation may continue a captured snapshot, but a lock, workspace change
+  // or recovery generation change must still stop writes awaiting storage.
+  for(const invalidate of [()=>{context.lockScreen.locked=true;},()=>{scope='workspace-B';},()=>{context.chatRecoveryEpoch++;}]) {
+    scope='workspace-A';context.lockScreen.locked=false;gate=deferred();
+    state.session={id:'guarded'};prompt.value='must not persist';
+    durable.delete(key(scope,'chat','guarded'));
+    const pending=context.persistChatDraft();invalidate();gate.resolve();await pending;
+    assert.equal(durable.has(key('workspace-A','chat','guarded')),false);
+  }
+  context.lockScreen.locked=false;scope='workspace-A';gate=deferred();storageError=Error('quota fixture');
+  const failed=context.persistChatDraft(true);gate.resolve();
+  await assert.rejects(failed,/quota fixture/);
+  assert.ok(failures.includes('quota fixture'),'real storage errors must remain visible');
+}
+
 async function testSendSubmission() {
   const send = node(), hint = node(), prompt = node(); prompt.value = 'test request';
   const conversation = node(); conversation.scrollHeight = 100; conversation.scrollTo = () => {};
@@ -195,6 +277,7 @@ async function testChatRecoveryChoices(){
 
 (async () => {
   await testSessionSelection();
+  await testNavigationDraftPersistence();
   await testSendSubmission();
   await testChatRecoveryChoices();
   console.log('ui click latency PASS');

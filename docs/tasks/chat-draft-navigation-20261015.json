@@ -1,0 +1,71 @@
+{
+  "id": "chat-draft-navigation-20261015",
+  "request": "Fix and verify recovery-write cancellation on conversation navigation without losing drafts or weakening lock/workspace guards",
+  "baseline": "84c743588a6b746b2204b3b8f1c965e320e40e60",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Leaving a conversation durably saves its captured draft to the original workspace/session, without a navigation cancellation failure notice; switching back/reload restores exact text.",
+    "New-session navigation preserves outgoing draft and records the empty scene without reopening the prior conversation on reload.",
+    "Lock, recovery epoch and workspace changes still prevent stale writes; genuine storage failures remain visible; no cross-session draft overwrite.",
+    "Canonical start.command actual Safari input/switch/reload checks, focused JS and quick regression, docs/source push and current offline package."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/test_ui_click_latency.cjs",
+    "scripts/continuity-lock-write.test.cjs",
+    "docs/tasks",
+    "docs/architecture/continuity-roadmap.md",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Continue continuity goal after real navigation cancellation notice in plugin UI acceptance; exact typed draft loss not yet proven.",
+      "evidence": [
+        "docs/tasks/plugin-plan-ui-20261015.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Captured outgoing draft uses lock/epoch/workspace guard rather than current session identity; switch ownership before attachment rendering can synchronously cache destination draft. New-session records destination scene immediately. No await added to navigation; real errors still surfaced.",
+      "evidence": [
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented immutable captured-session save guard, destination owner before rendering/cache, immediate empty scene persistence, app cache147. Regression uses actual application functions with delayed storage, separate per-session snapshots and lock/workspace/epoch invalidation.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "scripts/test_ui_click_latency.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Actual pre-fix Safari9999 reproduces cancelled-write toast; entered text does not return to composer after switching and reload, but remains offered as another recovery branch (not total data loss). Regression fails baseline cache ownership and ordering-only cancellation, passes combined fix. Existing actual continuity transaction lock test and JS syntax PASS. Canonical rebuilt browser check pending.",
+      "evidence": [
+        ".agent-state/chat-draft-navigation/regression-proof.json",
+        "scripts/continuity-lock-write.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental push, local build/test and offline package authorization; no formal release.",
+  "rollback": "Revert targeted draft guard/scene changes; do not delete recovery records or user sessions.",
+  "handoff": "Source fixed and focused regression passes; canonical build and actual Safari post-fix checks pending. Preserve owned fixture A/B until acceptance; no model/plugin execution."
+}
