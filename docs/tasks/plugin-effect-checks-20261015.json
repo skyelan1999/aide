@@ -4,7 +4,7 @@
   "baseline": "76fe81bf89ccc365d052c6d7332347d7f00bb478",
   "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
   "acceptance": [
-    "Only authenticated operator HTTP requests can append bounded evidence-attributed checks to uncertain nodes of stopped plans; exact plan digest/revision guards reject stale/concurrent/wrong owner updates.",
+    "Authenticated HTTP requests append bounded operator-attributed observations to uncertain nodes of stopped plans; exact plan digest/revision guards reject stale/concurrent/wrong owner updates. Shared-token attribution is not proof of a natural person.",
     "Append-only checks persist atomically with rollback on save failure and survive restart; never alter execution status/results, replay calls, resume dependents or clear recovery barriers.",
     "Current-run UI exposes checks and explicit operator provenance with scoped draft/refresh ownership; outcome summary reports checks without disclosing private evidence or claiming verified tool success.",
     "Go race/vet plus rejection/persistence/concurrency tests, JS state/privacy tests, canonical start.command real Safari checks; docs and incremental push/matching offline package."
@@ -24,7 +24,8 @@
     "docs",
     "docker-images",
     "internal/server/plugin_plan_test.go",
-    "internal/server/web/task-outcome.js"
+    "internal/server/web/task-outcome.js",
+    "scripts/continuity-lock-write.test.cjs"
   ],
   "stages": {
     "requirements": {
@@ -52,30 +53,119 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "New Go persistence/attribution/ownership/concurrency/failure/limit cases PASS in first scoped run; existing control approval test hit bundled browser plugin ID collision in complete snapshot. Test now replaces only disposable bundled fixture before installing approval handler; all original approval assertions retained. Rerun underway. JS dialog/history/owner/failure/double-submit tests PASS.",
+      "status": "pass",
+      "summary": "Scoped graph/effect/outcome race38.884s+vet PASS. Complete-source initial control test failed built-in browser plugin collision; fixture replacement retains all control approval assertions and rerun PASS. Initial quick/full wrapper hit legacy exact-function-body lock assertion; changed to behavioral epoch/timer/abort/dialog checks, final quick69 PASS. Full wrapper FAIL (old UI assertion and input metadata drift), but its network-none container-local whole-repository Go race743.173s(server)/1.290s(sandbox)/1.563s(tts) and vet exit0 PASS on frozen Go inputs. Native canonical Safari fixture blank-evidence rejection, save1, concurrent append2/stale-dialog409 retaining draft, reload and actual stop/start restore2 PASS; original uncertain/recovery flag preserved, outcome unknown1/checks2 with detailed evidence excluded. No real model/plugin effect executed; dark desktop only, no forced lock/other-theme/narrow acceptance. Complete offline package hash/import/tag/launcher/platform/two copies PASS. Final metadata quick69 PASS on frozen README/SHA256SUMS; Markdown199 files598 links PASS.",
       "evidence": [
         ".agent-state/plugin-effect-checks/scoped-first-fixture-collision.log",
-        "scripts/plugin-plans.test.cjs"
+        "scripts/plugin-plans.test.cjs",
+        ".agent-state/plugin-effect-checks/scoped-race.log",
+        ".agent-state/plugin-effect-checks/probe-owner.log",
+        ".agent-state/plugin-effect-checks/ui-saved.txt",
+        ".agent-state/plugin-effect-checks/ui-expanded.jpg",
+        ".agent-state/plugin-effect-checks/ui-conflict.txt",
+        ".agent-state/plugin-effect-checks/ui-outcome.txt",
+        ".agent-state/plugin-effect-checks/browser-api-receipt.json",
+        ".agent-state/plugin-effect-checks/restart-receipt.json",
+        ".agent-state/plugin-effect-checks/persistence-entry.log",
+        ".agent-state/plugin-effect-checks/package.json",
+        ".agent-state/plugin-effect-checks/quick-first-failed.json",
+        ".agent-state/plugin-effect-checks/full-original.json",
+        ".agent-state/verify-20261014T220620478765Z.log",
+        ".agent-state/plugin-effect-checks/quick-final.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Operator provenance, strict API limits, append-only revision/save semantics, session privacy and preserved dispatch/recovery barriers described. This check annotation is not full recovery-authorisation management.",
+      "evidence": [
+        "docs/architecture/plugin-task-scheduling.md",
+        "docs/architecture/continuity-roadmap.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Only owned fixture session deleted after private backup; pre-existing session ID set preserved, blank workbench scene restored. Kept inherited5 vendor deletions and runtime config/auth hashes/mounts; temporary image unpack removed.",
+      "evidence": [
+        ".agent-state/plugin-effect-checks/cleanup.json",
+        ".agent-state/plugin-effect-checks/runtime.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Source060088e and behavioral test1008675 pushed; local canonical candidatee5998ca4b4ef and complete app+dependency bundle verified/imported/copied. Final metadata quick69 PASS; documentation/checksum push pending. No passing full release gate or main/tag/formal release claimed.",
+      "evidence": [
+        ".agent-state/plugin-effect-checks/package.json"
+      ]
     }
   },
   "release_authorization": "Existing user incremental code push/local testing/build/offline image authorization; no formal main/tag release.",
   "rollback": "Revert source and use prior image; effectChecks are additive session JSON fields, older code ignores them. Keep data volume; older image does not display checks and is not a migration proof.",
-  "handoff": ""
+  "handoff": "Operator checks/source and tests pushed1008675; native fixture save/conflict/reload/service-restart and private outcome summary PASS, owned fixture cleaned. Scoped race38.884s+vet and whole Go race743.173s+vet PASS; full wrapper FAIL old UI assertion/input drift, corrected quick69 PASS. Final metadata quick69 PASS; docs push pending. Human recovery authorisation/new graph decisions/live model/plugin effects and original12 streams remain open.",
+  "runtime": {
+    "runningImage": "sha256:e5998ca4b4ef8f2e6e622809b78d8db57996a873700e2fc483de34ca82f6f9d3",
+    "image": "sha256:e5998ca4b4ef8f2e6e622809b78d8db57996a873700e2fc483de34ca82f6f9d3",
+    "binarySHA256": "7edc4543c9a1c1c1034ab0773705c77d4377aae6637b82d48a8a4f6b8cf8d462",
+    "runningPlatformManifest": "sha256:d35ee853ceaa16057747448a4ae669896f38c4408d2152ebd59a7eb10844b077",
+    "sourceSHA256": "8612f4ee3d683ee15d2480c4763de3d0f999d9eab5d1c3959abd90db6d541a10",
+    "buildCommit": "060088ef8f78d089db0b7df27eb6ba0292985a9f-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 5,
+    "historicalProtectedFilesUnchanged": 1,
+    "snapshotTiming": "Five config/auth hashes captured before effect-check build; baseline image abca7611229b, historical mounts/workspace config/token checked separately",
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:e5998ca4b4ef8f2e6e622809b78d8db57996a873700e2fc483de34ca82f6f9d3",
+    "sourceSHA256": "8612f4ee3d683ee15d2480c4763de3d0f999d9eab5d1c3959abd90db6d541a10",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-e5998ca4b4ef-offline.tar.gz",
+    "bytes": 705643413,
+    "sha256": "19f23a2b501c749ac19b3f3779b1610b1ffa1cd20f419f40a5ed51d6b738053a",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  },
+  "full_receipt": {
+    "status": "fail",
+    "head": "100867537fca92dcf87e047df3984a41c1ffd818",
+    "fingerprint": "ef6b8cc9839f35ec2ba60bb84db451c77a6ddc53f37e704b362f92f18fe23018",
+    "time": "20261014T220620478765Z",
+    "log": ".agent-state/verify-20261014T220620478765Z.log",
+    "commands": 71,
+    "failedCommands": [
+      [
+        "node",
+        "scripts/continuity-lock-write.test.cjs"
+      ]
+    ],
+    "backendGoSnapshotExit": 0,
+    "backendSourceSHA256": "8612f4ee3d683ee15d2480c4763de3d0f999d9eab5d1c3959abd90db6d541a10",
+    "backendInputScope": "Frozen Go/runtime source unchanged since060088e; later1008675 only repairs a frontend regression test. Full wrapper retains its FAIL status."
+  },
+  "source_push": {
+    "branch": "feat/plugin-effect-checks",
+    "pushedCommit": "1008675",
+    "status": "pass",
+    "scope": "Incremental source and test push; no main/tag/formal release"
+  },
+  "quick_receipt": {
+    "status": "pass",
+    "head": "100867537fca92dcf87e047df3984a41c1ffd818",
+    "fingerprint": "7782499b861ac18bfc5c86f86fd7c7330ee3c33aa2922a895a7628dbcf12f702",
+    "time": "20261014T222031062781Z",
+    "log": ".agent-state/verify-20261014T222031062781Z.log",
+    "commands": 69
+  }
 }

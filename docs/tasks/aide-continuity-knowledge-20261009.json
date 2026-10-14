@@ -143,17 +143,18 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "release-check 仍因缺回滚步骤及 design、implementation、verification、documentation、cleanup 未整体闭环而 BLOCKED；38项候选代码门禁通过，但多个真实环境工作流仍在验收中。未发布、未部署。",
+      "summary": "Current release-check after plugin-effect-checks development returns BLOCKED: design/implementation/verification/documentation/cleanup not complete for original12 streams; no passing current full fingerprint; requires main and clean tree. Historical release observations below are not current completion. No formal release this batch.",
       "evidence": [
         "release-check on committed clean tree: Missing rollback; Incomplete stage: design, implementation, verification, documentation, cleanup",
         "git push origin main exit0: f6c3ea5..c536dca main -> main",
-        "post-push git ls-remote unavailable: local DNS could not resolve github.com"
+        "post-push git ls-remote unavailable: local DNS could not resolve github.com",
+        ".agent-state/plugin-effect-checks/main-release-check.log"
       ]
     }
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 current: perf/starmap-material-batches source5ffaaa3, canonical aide/start.command healthy Safari9999 imageabca7611229b. Bounded material queues, durable progress and explicit pending/unavailable details implemented. Scoped Knowledge/local-root race99.729s+vet, quick69 and frozen actual prefix PASS; native reference10744->13156 visible with selection retained, body gaps remain. Complete app/dependency offline image hashes/import/platform/launchers/two local copies verified; config/auth/mount/workspace preserved. See followup123; final metadata quick69 PASS; branch push43867e8 PASS. Original12 streams active; Windows by user, real vectors deferred, receiving-device import unobserved.",
+  "handoff": "2026-10-15 current: feat/plugin-effect-checks source060088e/tests1008675 pushed, canonical start.command healthy9999 imagee5998ca4b4ef. Append-only operator observations/API/UI and outcome privacy implemented; scoped race38.884s+vet, full Go race743.173s+vet PASS; full wrapper FAIL old lock assertion/input drift, repaired quick69 PASS. Native fixture save/conflict/reload/service restart2 checks PASS; owned fixture cleaned, previous sessions/config/mounts retained. Complete offline app/base hashes/import/platform/launchers/two local copies PASS. Final metadata quick69 PASS; docs push pending. Goal active: recovery authorisation, live provider/plugin use and original12 streams remain; Windows by user, real vectors deferred, receiving-device import unobserved.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6157,6 +6158,54 @@
       "pushedCommit": "43867e8",
       "status": "pass",
       "scope": "Incremental branch source/tests/docs push; no main/tag/formal release or image registry publication"
+    }
+  },
+  "progress_checkpoint_20261015_followup124": {
+    "status": "in_progress",
+    "task": "docs/tasks/plugin-effect-checks-20261015.json",
+    "sourceCommits": [
+      "060088e",
+      "1008675"
+    ],
+    "changes": "Append-only operator checks on stopped uncertain plugin nodes with evidence/provenance, digest+revision guards and atomic save rollback; scoped dialog and safe outcome summary. Keeps uncertain execution state and all replay/recovery barriers.",
+    "verification": "Scoped race38.884s+vet PASS; whole Go race743.173s+vet exit0 PASS. Full71 wrapper FAIL old exact-body lock assertion and metadata drift; test repaired and quick69 PASS. Native canonical fixture save/blank validation/concurrent409/draft retention/reload/actual service restart2 checks and outcome unknown1/private evidence exclusion PASS. No provider/plugin execution.",
+    "remaining": "Final metadata quick69 PASS; docs push pending. Recording operator observations does not authorise recovery or verify external effects. Original12 streams/live provider/plugin acceptance and cloud/OS-call/source coverage gaps remain.",
+    "source_push": {
+      "branch": "feat/plugin-effect-checks",
+      "pushedCommit": "1008675",
+      "status": "pass"
+    },
+    "package": {
+      "image": "sha256:e5998ca4b4ef8f2e6e622809b78d8db57996a873700e2fc483de34ca82f6f9d3",
+      "sourceSHA256": "8612f4ee3d683ee15d2480c4763de3d0f999d9eab5d1c3959abd90db6d541a10",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-e5998ca4b4ef-offline.tar.gz",
+      "bytes": 705643413,
+      "sha256": "19f23a2b501c749ac19b3f3779b1610b1ffa1cd20f419f40a5ed51d6b738053a",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true
+    },
+    "full_receipt": {
+      "status": "fail",
+      "head": "100867537fca92dcf87e047df3984a41c1ffd818",
+      "fingerprint": "ef6b8cc9839f35ec2ba60bb84db451c77a6ddc53f37e704b362f92f18fe23018",
+      "time": "20261014T220620478765Z",
+      "log": ".agent-state/verify-20261014T220620478765Z.log"
+    },
+    "quick_receipt": {
+      "status": "pass",
+      "head": "100867537fca92dcf87e047df3984a41c1ffd818",
+      "fingerprint": "7782499b861ac18bfc5c86f86fd7c7330ee3c33aa2922a895a7628dbcf12f702",
+      "time": "20261014T222031062781Z",
+      "log": ".agent-state/verify-20261014T222031062781Z.log",
+      "commands": 69
     }
   }
 }
