@@ -97,6 +97,8 @@ stdout **只能**输出 JSON-RPC 行（每行一个 JSON 对象，`\n` 分隔）
 
 > 工具调用是**异步乱序**的：handler 可能并发在途，响应靠 `id` 配对，不保证顺序与请求一致。
 
+协议本身允许多个在途请求。2026-10-14 起，AIDE 的统一工具入口对同一工作区/插件增加 FIFO 调用队列，以防不同会话同时修改插件数据；不同插件仍可独立执行。直接向 daemon IPC 发消息与经过 AIDE 工具入口的调度不是同一保证。排队可以取消，已运行 RPC 仍按现有超时/退出处理；资源依赖图仍处于[设计阶段](../architecture/plugin-task-scheduling.md)。
+
 ## 5. 事件上报（traffic / event / log）
 
 插件通过 `ctx.emit(type, fields)` 上报事件，宿主包装为 `{"method":"event","params":{...}}`：

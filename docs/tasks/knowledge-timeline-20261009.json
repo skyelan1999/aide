@@ -107,5 +107,23 @@
       "Comparison can include directory metadata changes; no inferred semantic conclusion or runtime trajectory",
       "No measured synchronization latency/frame rate; full receipt source fingerprint unchanged"
     ]
+  },
+  "real_ssh_api_checkpoint_20261014": {
+    "image": "ff1553153a55",
+    "realSSH": true,
+    "stableScansDeduplicated": true,
+    "addedFileObserved": true,
+    "removedFileObserved": true,
+    "historicalOriginalRetained": true,
+    "currentRevisedRetained": true,
+    "elapsedUntilRefresh": 29.967,
+    "historyCount": 2,
+    "passed": true,
+    "evidence": [
+      ".agent-state/ssh-knowledge-timeline/run.log",
+      ".agent-state/ssh-knowledge-timeline/compare.json"
+    ],
+    "scope": "real OpenSSH and published ff1553153a55 runtime in private temporary Docker network; no user mounts or host ports; temporary containers/network cleaned",
+    "limits": "API acceptance, not browser SSH/theme/narrow/fault or process-restart acceptance; no semantic conclusion evolution inference"
   }
 }

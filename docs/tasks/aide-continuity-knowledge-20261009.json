@@ -5271,7 +5271,7 @@
         "name": "渐进索引",
         "requirement": "项目/目录范围、索引覆盖和预算状态、重点优先、不虚报全库",
         "status": "in_progress",
-        "remaining_from_ledger": "本地进程重启续扫及Safari超过1000节点增量加载已验证；大库性能、远程大目录及真实FTP/FTPS/HTTP/SMB/MCP来源语义仍需验收。",
+        "remaining_from_ledger": "本机Safari224→1003→1560节点与隔离真实SSH100文件10批/约7.8秒续扫通过；其他设备大库性能、独立FTP/FTPS/HTTP/SMB/MCP来源语义仍需验收。",
         "evidence_scope": "历史检查点仅作定位；本轮未重新验收该工作流全部要求。"
       },
       {
@@ -5285,7 +5285,7 @@
         "name": "代码关系可信度",
         "requirement": "确定引用/候选调用/未解析显式区分，可选语言服务",
         "status": "in_progress",
-        "remaining_from_ledger": "Safari两包Go样例类型绑定/动态未解析/L12跳转及诊断修复通过；当前35项full PASS。第三方依赖、SSH及其他语言仍缺证据。",
+        "remaining_from_ledger": "Safari本地两包Go已验证；隔离真实SSH API已验证3条类型绑定、动态接口未解析、源行路径和缺失外部依赖回退；用户SSH浏览器与其他语言仍缺证据。",
         "evidence_scope": "历史检查点仅作定位；本轮未重新验收该工作流全部要求。"
       },
       {
@@ -5299,7 +5299,7 @@
         "name": "知识时光",
         "requirement": "按时间比较真实节点增改移除、历史依据与结论演变",
         "status": "in_progress",
-        "remaining_from_ledger": "系统Safari本地增改移除及前后原文、32条保留与淘汰显示已验证；SSH浏览器、主题/窄屏、存储故障与性能仍未完整覆盖。不推断语义结论演变。",
+        "remaining_from_ledger": "系统Safari本地增改移除及前后原文、32条保留与淘汰显示已验证；本轮隔离真实SSH API追加/修改/移除、前后原文和扫描去重通过。SSH浏览器、主题/窄屏、存储故障与性能仍未完整覆盖，不推断语义结论演变。",
         "evidence_scope": "历史检查点仅作定位；本轮未重新验收该工作流全部要求。"
       }
     ],
@@ -5382,5 +5382,39 @@
     "runtime_tests": "compatibility final race14.849s PASS",
     "cleanup": "IAB fixture tab and HTTP listener stopped",
     "full_regression": "current new full not yet complete; prior full 4cbb20d pass applies only old inputs"
+  },
+  "progress_checkpoint_20261014_followup107": {
+    "status": "in_progress",
+    "real_ssh_progressive": {
+      "image": "ff1553153a55",
+      "realSSH": true,
+      "files": 100,
+      "firstBatchFiles": 5,
+      "firstGrowthSeconds": 1.355,
+      "elapsedSeconds": 7.799,
+      "maxRequestSeconds": 0.493,
+      "requests": 10,
+      "completed": true
+    },
+    "plugin_scheduler_design": "docs/architecture/plugin-task-scheduling.md; design only, no unverified runtime claim",
+    "full_regression": {
+      "status": "running",
+      "session": 33134,
+      "log": ".agent-state/parallel-plugin-full-current.log",
+      "head": "2f8628f"
+    },
+    "scope": "原目标十二工作流继续保留；Windows由用户验收，真实向量测试暂缓",
+    "real_ssh_timeline": {
+      "image": "ff1553153a55",
+      "realSSH": true,
+      "stableScansDeduplicated": true,
+      "addedFileObserved": true,
+      "removedFileObserved": true,
+      "historicalOriginalRetained": true,
+      "currentRevisedRetained": true,
+      "elapsedUntilRefresh": 29.967,
+      "historyCount": 2,
+      "passed": true
+    }
   }
 }

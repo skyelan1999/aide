@@ -387,6 +387,17 @@
     "pending": [],
     "limits": "仅当前本机知识模式；用户SSH大库、其他设备和代码模式延迟仍需继续验收。",
     "runtime": "sha256:ab75ecc66e3dc9eff663fd757d3b72e869111ef6087efe6a6ee1af8b6bfb207d",
-    "browser": "Safari本机8097，224→1003→1560节点，工作区1557节点，pending最终0，保留工作区筛选"
+    "browser": "Safari本机8097，224→1003→1560节点，工作区1557节点，pending最终0，保留工作区筛选",
+    "real_ssh": {
+      "image": "ff1553153a55",
+      "realSSH": true,
+      "files": 100,
+      "firstBatchFiles": 5,
+      "firstGrowthSeconds": 1.355,
+      "elapsedSeconds": 7.799,
+      "maxRequestSeconds": 0.493,
+      "requests": 10,
+      "completed": true
+    }
   }
 }

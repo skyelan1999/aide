@@ -85,5 +85,19 @@
     "backup": "../aideMacMini/aide/.agent-state/progressive-latency/data-before-deploy-20261014T222006.tar",
     "browserStartup": "首次启动遇到一次503，自动重试恢复，未清空数据",
     "compatibilityNote": "8097旧树补入canonical已存在的目录容量几何扩容与20000上限；原始挂载路径比较含Docker Desktop /host_mnt前缀差异，归一化后二次部署一致"
+  },
+  "real_ssh_progressive_acceptance_20261014": {
+    "image": "ff1553153a55",
+    "realSSH": true,
+    "files": 100,
+    "firstBatchFiles": 5,
+    "firstGrowthSeconds": 1.355,
+    "elapsedSeconds": 7.799,
+    "maxRequestSeconds": 0.493,
+    "requests": 10,
+    "completed": true,
+    "evidence": ".agent-state/ssh-progressive-latency/verified.log",
+    "scope": "isolated internal Docker network with actual OpenSSH; no user mounts or published port; fixture containers/network cleaned",
+    "limits": "100 small Markdown files, local Docker SSH; not other-device or large-library latency"
   }
 }

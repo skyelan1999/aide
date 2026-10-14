@@ -91,5 +91,17 @@
     "settingsPreserved": true,
     "mountsPreserved": true,
     "encryptedVoicePreserved": true
+  },
+  "dependency_scheduler_design": {
+    "status": "design_only",
+    "document": "docs/architecture/plugin-task-scheduling.md",
+    "required_integrations": [
+      "per-node intent/results",
+      "serialized visible approvals",
+      "resource identity and atomic lock acquisition",
+      "stable proposal and versions merge",
+      "unknown daemon/write result reconciliation"
+    ],
+    "not_implemented": "tool graph dispatch and shared resource read/write scheduling"
   }
 }
