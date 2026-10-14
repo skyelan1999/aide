@@ -5398,10 +5398,11 @@
     },
     "plugin_scheduler_design": "docs/architecture/plugin-task-scheduling.md; design only, no unverified runtime claim",
     "full_regression": {
-      "status": "running",
-      "session": 33134,
-      "log": ".agent-state/parallel-plugin-full-current.log",
-      "head": "2f8628f"
+      "status": "pass",
+      "head": "56f48e51bea355feb2ac7cf6552543beaf8b036b",
+      "fingerprint": "d605b081eeca886baeeadce386ee983fc7ad42fbb0328230c74d6d2ee5f4915b",
+      "time": "20261014T143356701686Z",
+      "log": ".agent-state/verify-20261014T143356701686Z.log"
     },
     "scope": "原目标十二工作流继续保留；Windows由用户验收，真实向量测试暂缓",
     "real_ssh_timeline": {
@@ -5416,5 +5417,20 @@
       "historyCount": 2,
       "passed": true
     }
+  },
+  "progress_checkpoint_20261014_followup108": {
+    "status": "in_progress",
+    "full_result": {
+      "status": "pass",
+      "head": "56f48e51bea355feb2ac7cf6552543beaf8b036b",
+      "fingerprint": "d605b081eeca886baeeadce386ee983fc7ad42fbb0328230c74d6d2ee5f4915b",
+      "time": "20261014T143356701686Z",
+      "log": ".agent-state/verify-20261014T143356701686Z.log"
+    },
+    "checks": 65,
+    "scope": "full covers prior 56f48e5 inputs before daemon timeout patch; no failures",
+    "release_check": ".agent-state/release-check-after-parallel-full.log: incomplete five stages, requires main and clean tree",
+    "new_fix": "daemon timeout must stop admitted instance before releasing plugin FIFO; result remains uncertain, no automatic replay",
+    "verification": "canonical daemon/queue race14.110s / compatibility15.284s PASS；兼容树补齐lifecycle互斥与原有12并发Start测试；首次编译失败已闭环。"
   }
 }

@@ -605,6 +605,10 @@ func (m *DaemonManager) Call(id, tool string, args map[string]any) (any, error) 
 }
 
 func (p *daemonProc) call(tool string, args map[string]any) (any, error) {
+	return p.callWithTimeout(tool, args, daemonCallTimeout)
+}
+
+func (p *daemonProc) callWithTimeout(tool string, args map[string]any, timeout time.Duration) (any, error) {
 	id := atomic.AddInt64(&p.nextID, 1)
 	ch := make(chan rpcResp, 1)
 	p.mu.Lock()
@@ -624,14 +628,35 @@ func (p *daemonProc) call(tool string, args map[string]any) (any, error) {
 			}
 		}
 		return v, nil
-	case <-time.After(daemonCallTimeout):
+	case <-time.After(timeout):
 		p.mu.Lock()
 		delete(p.pending, id)
 		p.mu.Unlock()
-		return nil, errors.New("daemon 工具调用超时")
+		// A deadline is not evidence that the handler stopped writing. Stop the
+		// admitted process generation before releasing the caller's plugin queue.
+		if p.stopTimedOutGeneration(doneCh) {
+			return nil, errors.New("daemon 工具调用超时，插件已停止；执行结果待核实，请检查后再重启")
+		}
+		return nil, errors.New("daemon 工具调用超时，原执行实例已结束；执行结果待核实，未重放调用")
 	case <-doneCh:
 		return nil, errors.New("daemon 进程已退出")
 	}
+}
+
+// lifecycleMu prevents a timeout from stopping a replacement started by an
+// operator. A stopped generation cannot continue overlapping the next call.
+func (p *daemonProc) stopTimedOutGeneration(generation chan struct{}) bool {
+	p.lifecycleMu.Lock()
+	defer p.lifecycleMu.Unlock()
+	p.mu.Lock()
+	current := p.doneCh == generation
+	p.mu.Unlock()
+	if !current {
+		return false
+	}
+	p.stop()
+	p.appendEvent(daemonEvent{Type: "log", Level: "error", Message: "工具调用超时，已停止对应执行实例；副作用结果待核实，不自动重放"})
+	return true
 }
 
 // daemonStatusInfo 对外暴露的 daemon 状态行。

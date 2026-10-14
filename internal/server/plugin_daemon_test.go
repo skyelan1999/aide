@@ -455,3 +455,69 @@ func TestDaemonConcurrentStartsShareSupervisor(t *testing.T) {
 		t.Fatalf("active daemon generations after Stop = %d; want 0", got)
 	}
 }
+
+func TestDaemonTimeoutStopsHandlerBeforeReturning(t *testing.T) {
+	a := testApp(t)
+	installMockDaemon(t, a, "slow-writer", true)
+	installMockDaemon(t, a, "unrelated", true)
+	code := `const fs=require('fs'),path=require('path');module.exports={apply(ctx){ctx.tool({name:'late-write',handler:async()=>{fs.writeFileSync(path.join(__dirname,'entered'),'1');await new Promise(r=>setTimeout(r,600));fs.writeFileSync(path.join(__dirname,'late-write'),'unexpected');return {ok:true}}})},stop(){}};`
+	if err := os.WriteFile(filepath.Join(a.pluginsPath, "slow-writer", "index.js"), []byte(code), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.daemons.Start("slow-writer"); err != nil {
+		t.Fatal(err)
+	}
+	if err := a.daemons.Start("unrelated"); err != nil {
+		t.Fatal(err)
+	}
+	a.daemons.mu.Lock()
+	p := a.daemons.procs["slow-writer"]
+	a.daemons.mu.Unlock()
+	p.mu.Lock()
+	generation := p.doneCh
+	p.mu.Unlock()
+	_, err := p.callWithTimeout("late-write", nil, 150*time.Millisecond)
+	if err == nil || !strings.Contains(err.Error(), "执行结果待核实") {
+		t.Fatalf("missing uncertain outcome: %v", err)
+	}
+	select {
+	case <-generation:
+	default:
+		t.Fatal("timed-out handler still alive when queue could be released")
+	}
+	if p.statusSnapshot() != dsStopped {
+		t.Fatal("timed-out plugin automatically restarted")
+	}
+	if _, err := a.daemons.Call("slow-writer", "late-write", nil); err == nil {
+		t.Fatal("next write dispatched without restart")
+	}
+	if _, err := a.daemons.Call("unrelated", "echo", map[string]any{"msg": "still running"}); err != nil {
+		t.Fatalf("unrelated plugin affected: %v", err)
+	}
+	time.Sleep(650 * time.Millisecond)
+	if _, err := os.Stat(filepath.Join(a.pluginsPath, "slow-writer", "late-write")); !os.IsNotExist(err) {
+		t.Fatalf("timed-out handler wrote after return: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(a.pluginsPath, "slow-writer", "entered")); err != nil {
+		t.Fatalf("fixture handler never entered: %v", err)
+	}
+}
+
+func TestDaemonTimeoutDoesNotStopReplacementGeneration(t *testing.T) {
+	oldGeneration := make(chan struct{})
+	current := make(chan struct{})
+	stop := make(chan struct{})
+	p := &daemonProc{doneCh: current, stopCh: stop}
+	p.setStatus(dsRunning)
+	if p.stopTimedOutGeneration(oldGeneration) {
+		t.Fatal("stopped replacement generation")
+	}
+	select {
+	case <-stop:
+		t.Fatal("replacement received stop")
+	default:
+	}
+	if p.statusSnapshot() != dsRunning {
+		t.Fatal("replacement status changed")
+	}
+}
