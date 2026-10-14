@@ -48,8 +48,8 @@
       ]
     },
     "verification": {
-      "status": "pass",
-      "summary": "Initial quick69 PASS. Canonical start.command rebuilt e54f390 with local dependencies and no build network; real Safari9999 checked current dark presentation at desktop and actual581x971, keyboard result toggling, bounded literal snippets and exact non-latest-run outcome navigation. Synthetic display-only fixture; no model/plugin execution. Light/other themes and390px not tested. Final quick69 PASS on frozen e54f390 code/process/image metadata; Markdown199/local links583 PASS. No new full71 run.",
+      "status": "in_progress",
+      "summary": "Initial quick69 PASS. Canonical start.command rebuilt e54f390 with local dependencies and no build network; real Safari9999 checked current dark presentation at desktop and actual581x971, keyboard result toggling, bounded literal snippets and exact non-latest-run outcome navigation. Synthetic display-only fixture; no model/plugin execution. Light/other themes and390px not tested. Final quick69 PASS on frozen e54f390 code/process/image metadata; Markdown199/local links583 PASS. No new full71 run. Acceptance audit: original dark/581px evidence is scoped, not all-theme completion. Followup plugin-plan-theme-acceptance-20261015 adds current light desktop1325x940/minimum574x940, keyboard/result wrapping and exact older-run outcome navigation PASS. Other palettes/dark selection pending confirmation;390px not achieved.",
       "evidence": [
         ".agent-state/plugin-plan-ui/desktop-final.png",
         ".agent-state/plugin-plan-ui/narrow-final.png",
@@ -87,7 +87,7 @@
   },
   "release_authorization": "Existing incremental source push/testing/local image authorization; no formal main/tag release.",
   "rollback": "Revert module/UI hook and cache query changes; backend plan data preserved. Remove only owned synthetic UI fixture.",
-  "handoff": "UI source e54f390 deployed via canonical9999; synthetic native Safari visual acceptance complete, owned fixture removed. Final quick69 PASS; branch push32e02c3 PASS; goal remains active.",
+  "handoff": "Source UI deployed/packaged; original dark581px and current light574px native fixtures PASS within scope. All-theme/390px and live model/plugin adoption acceptance remain incomplete. Followup plugin-plan-theme-acceptance-20261015; owned fixtures removed.",
   "runtime": {
     "runningImage": "sha256:045bdfce262f61bfc5d3f25752d3fac2d9be639e32aa1ceb6509d2510d863768",
     "image": "sha256:045bdfce262f61bfc5d3f25752d3fac2d9be639e32aa1ceb6509d2510d863768",

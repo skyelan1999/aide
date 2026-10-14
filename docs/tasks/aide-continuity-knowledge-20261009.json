@@ -6333,5 +6333,13 @@
       "head": "ea914da0bd7a1d6f84110d091182d07a90c34559",
       "lastVerified": "Full72 quick70 and runtime-assets passed; docker ps/top confirms active Go snapshot runner. Revalidate existing owner before polling; do not start a duplicate."
     }
+  },
+  "progress_checkpoint_20261015_followup127": {
+    "status": "in_progress",
+    "task": "docs/tasks/plugin-plan-theme-acceptance-20261015.json",
+    "changes": "No product code changes. Audited native plugin-plan theme acceptance without weakening original acceptance.",
+    "verification": "Current system light1325x940 and native574x940: keyboard expand/collapse, literal bounded long-result wrapping, truthful requested/effective and dispatch/proposal distinctions, exact non-latest-run evidence navigation PASS. Constructed display-only fixture, no model/plugin execution.",
+    "cleanup": "Owned fixture removed, original1 session retained, window restored; protected hashes/config/mounts verified. No theme setting changed.",
+    "remaining": "Other palettes/dark selection await requested UI preference-change confirmation;390px NOT_RUN native minimum. Existing full72 runner remains separate and active, original12 workstreams open."
   }
 }
