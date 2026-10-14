@@ -349,6 +349,12 @@ func TestPluginPlanCancellationRecoveryAndNoReplay(t *testing.T) {
 func TestPluginPlanControlApprovalsAreSerialized(t *testing.T) {
 	a := testApp(t)
 	task := planTask(a, 5)
+	// A complete source snapshot may install the bundled browser plugin in
+	// this disposable App. Replace only that fixture, retaining the real
+	// control-tool identity used by the approval gate.
+	if w := request(a, "DELETE", "/api/plugins/browser-control", nil); w.Code != 200 && w.Code != 404 {
+		t.Fatalf("remove bundled test plugin: %s", w.Body.String())
+	}
 	planInstall(t, a, "browser-control", `const fs=require('fs'),path=require('path');module.exports={apply(ctx){ctx.tool({name:'browser_click',handler:(args)=>{if(args.approved!==true)throw Error('unapproved');fs.writeFileSync(path.join(__dirname,args.selector),'1');return 'clicked';}})}};`)
 	call := planCall(t, "controls", []pluginPlanNodeSpec{{ID: "first", Tool: "browser_click", Arguments: map[string]any{"selector": "first"}}, {ID: "second", Tool: "browser_click", Arguments: map[string]any{"selector": "second"}}})
 	ctx, cancel := context.WithCancel(context.Background())

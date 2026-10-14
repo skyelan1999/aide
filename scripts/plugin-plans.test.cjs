@@ -2,7 +2,11 @@
 const assert=require('node:assert/strict'), fs=require('node:fs'), vm=require('node:vm');
 class Element {
  constructor(tag,cls='',text=''){this.tag=tag;this.className=cls;this.textContent=String(text);this.children=[];this.dataset={};this.listeners={};this.open=false;}
- append(...nodes){this.children.push(...nodes);}
+ append(...nodes){for(const n of nodes){n.parent=this;this.children.push(n);}}
+ setAttribute(key,value){this[key]=value;}
+ showModal(){this.open=true;}
+ close(){this.open=false;}
+ remove(){if(this.parent)this.parent.children=this.parent.children.filter(n=>n!==this);}
  addEventListener(type,handler){this.listeners[type]=handler;}
  querySelectorAll(selector){return walk(this).filter(n=>selector==='[data-plugin-plan-focus]'?n.dataset.pluginPlanFocus:selector==='details'?n.tag==='details':n.className.split(' ').includes(selector.slice(1)));}
  focus(options){this.focused=options;}
@@ -70,3 +74,25 @@ vm.runInContext('let trajView="history",trajOutcomeRun=null;'+app.match(/functio
 assert.equal(outcome.openRunOutcome('run','stale'),false);assert.equal(outcome.openRunOutcome('run','owner'),true);assert.equal(outcome.selection().runId,'run');assert.equal(openCount,1);
 outcome.state.session={id:'other',runs:[{id:'run'}]};assert.equal(outcome.openRunOutcome('run','owner'),false,'evidence navigation is session-bound');
 console.log('plugin plans: truthful states, safe/lazy excerpts, collapse/focus, cache privacy, live intents, i18n and scoped evidence navigation PASS');
+
+(async()=>{
+ const stopped=structuredClone(run);stopped.status='interrupted';stopped.pluginPlans[0].state='interrupted';stopped.pluginPlans[0].digest='a'.repeat(64);
+ const n=stopped.pluginPlans[0].nodes[2];n.effectChecks=[{conclusion:'inconclusive',evidence:'<img src=x> operator evidence',recordedAt:'2026-10-15T00:00:00Z',source:'operator_observation',digest:'check1'}];
+ let target;
+ const checked=api.render(stopped,{el,t,onCheck:(p,node)=>{target=[p,node];}});
+ const checkButton=walk(checked).find(n=>n.textContent==='记录人工核查');assert.ok(checkButton);checkButton.onclick();assert.equal(target[1].id,'c');
+ assert.match(walk(checked).map(n=>n.textContent).join('\n'),/人工核查记录 1/);
+ assert.ok(walk(checked).every(n=>!Object.hasOwn(n,'innerHTML')));
+ const live=structuredClone(stopped);live.status='running';assert.ok(!walk(api.render(live,{el,t,onCheck(){}})).some(n=>n.textContent==='记录人工核查'));
+ const checkSession={id:'s',runs:[stopped],messages:[]};const oldSig=c.sessionRunRenderSignature(stopped);n.effectChecks[0].digest='check2';assert.notEqual(c.sessionRunRenderSignature(stopped),oldSig,'operator-only updates invalidate run cache');
+ let active=true,interval,cleared=0,submissions=0,finish,saved=0;
+ c.document={body:el('body')};c.setInterval=fn=>(interval=fn,11);c.clearInterval=()=>{cleared++;};
+ const dialog=api.openCheck({el,t,plan:stopped.pluginPlans[0],node:n,active:()=>active,submit:async payload=>{submissions++;assert.equal(payload.expected,1);assert.equal(payload.planDigest,'a'.repeat(64));assert.equal(payload.conclusion,'inconclusive');await new Promise(r=>{finish=r;});},saved:()=>{saved++;}});
+ const form=walk(dialog),evidence=form.find(n=>n.tag==='textarea'),save=form.find(n=>n.textContent==='保存核查记录');
+ evidence.value='';await save.onclick();assert.equal(submissions,0,'empty check cannot dispatch');
+ evidence.value='Operator readback evidence';const sending=save.onclick();await save.onclick();assert.equal(submissions,1,'double click cannot append twice');finish();await sending;assert.equal(saved,1);assert.equal(evidence.value,'');assert.ok(cleared>0);
+ const failed=api.openCheck({el,t,plan:stopped.pluginPlans[0],node:n,active:()=>active,submit:async()=>{throw Error('409 record changed');}});
+ const failedForm=walk(failed),input=failedForm.find(n=>n.tag==='textarea');input.value='Preserve evidence on request failure';await failedForm.find(n=>n.textContent==='保存核查记录').onclick();assert.equal(input.value,'Preserve evidence on request failure');assert.ok(walk(failed).some(n=>n.textContent==='409 record changed'));
+ active=false;interval();assert.equal(input.value,'');assert.equal(c.document.body.children.length,0,'session/workspace boundary closes and clears dialog');
+ console.log('plugin effect checks: operator history, cache refresh, scoped dialog, double-submit, failure retention and owner invalidation PASS');
+})().catch(e=>{console.error(e);process.exitCode=1;});

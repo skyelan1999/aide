@@ -18,7 +18,7 @@ let workspaceSceneRestoring=false;
 const recoveryScope=()=>state.config?.workspaceId||'';
 const chatDraftKey=(id,scope=recoveryScope())=>JSON.stringify([scope,id]);
 function recoveryFailure(error){if(!recoveryNotice){recoveryNotice=true;toast(t('本地草稿保存失败')+' · '+error.message);}}
-function cancelPendingRecoveryWrites(){chatRecoveryEpoch++;clearTimeout(recoveryTimer);window.AideContinuity?.abortPendingWrites?.();}
+function cancelPendingRecoveryWrites(){chatRecoveryEpoch++;clearTimeout(recoveryTimer);window.AideContinuity?.abortPendingWrites?.();window.AidePluginPlans?.closeCheck?.();}
 function persistWorkspaceScene(overrides={}){
  if(!recoveryReady||lockScreen.locked||workspaceSceneRestoring)return;
  const scope=recoveryScope(),epoch=chatRecoveryEpoch,active=()=>epoch===chatRecoveryEpoch&&!lockScreen.locked&&scope===recoveryScope();
@@ -809,7 +809,7 @@ function sessionPluginPlanView(run) {
   return (Array.isArray(run?.pluginPlans) ? run.pluginPlans : []).filter(p => p && typeof p === 'object').map(p => [
     p.id, p.state, p.requested, p.limit, p.reason,
     (Array.isArray(p.nodes) ? p.nodes : []).filter(n => n && typeof n === 'object').map(n => [
-      n.id, n.title, n.tool, n.dependsOn, n.state, n.error, n.mergeState,
+      n.id, n.title, n.tool, n.dependsOn, n.state, n.error, n.mergeState, n.effectChecks,
       typeof n.result === 'string' ? [n.result.slice(0,4096), n.result.length] : null,
     ]),
   ]);
@@ -2069,7 +2069,15 @@ function renderSession() {
     const parallelPanel = window.AideParallelChat?.render(run, {el, t, open: openDetails, initial: !previousRuns.get(run.id)?.node.querySelector('.parallel-progress')});
     if (parallelPanel) box.append(parallelPanel);
     const previousPlanKeys = new Set([...(previousRuns.get(run.id)?.node.querySelectorAll('.plugin-plan') || [])].map(node => node.dataset.key));
-    const pluginPlans = window.AidePluginPlans?.render(run, {el, t, open:openDetails, seen:previousPlanKeys, onEvidence:() => openRunOutcome(run.id, pluginPlanSessionId)});
+    const pluginPlans = window.AidePluginPlans?.render(run, {el, t, open:openDetails, seen:previousPlanKeys, onEvidence:() => openRunOutcome(run.id, pluginPlanSessionId), onCheck:(plan,node) => {
+      const sequence = sessionSeq.value, scope = recoveryScope();
+      const active = () => !lockScreen.locked && state.session?.id === pluginPlanSessionId && sessionSeq.value === sequence && recoveryScope() === scope;
+      const base = '/sessions/' + encodeURIComponent(pluginPlanSessionId) + '/runs/' + encodeURIComponent(run.id) + '/plugin-plans/' + encodeURIComponent(plan.id) + '/nodes/' + encodeURIComponent(node.id) + '/checks';
+      window.AidePluginPlans.openCheck({el,t,plan,node,active,submit:body => {
+        if (!active()) throw Error(t('目标会话已变化，请重新打开'));
+        return api(base,{method:'POST',body:JSON.stringify(body)});
+      },saved:() => { if (active()) refreshSessionSoon(); }});
+    }});
     if (pluginPlans) box.append(pluginPlans);
     if (!run.steps.length) box.append(el('p', 'muted', t("正在准备模型请求…")));
     run.steps.forEach((step, index) => {

@@ -227,7 +227,12 @@ func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, 
 			copy := &PluginExecutionPlan{ID: plan.ID}
 			for _, node := range plan.Nodes {
 				if node.State == "uncertain" {
-					copy.Nodes = append(copy.Nodes, PluginPlanNode{pluginPlanNodeSpec: pluginPlanNodeSpec{ID: node.ID, Tool: node.Tool}, State: node.State})
+					n := PluginPlanNode{pluginPlanNodeSpec: pluginPlanNodeSpec{ID: node.ID, Tool: node.Tool}, State: node.State}
+					for _, check := range node.EffectChecks {
+						check.Evidence = "" // Evidence stays in its owning session, not outcome exports.
+						n.EffectChecks = append(n.EffectChecks, check)
+					}
+					copy.Nodes = append(copy.Nodes, n)
 				}
 			}
 			if len(copy.Nodes) > 0 {
@@ -250,6 +255,7 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 	gaps := []string{}
 	applied := 0
 	unknown := []ToolExecutionIntent{}
+	operatorChecks := []map[string]any{}
 	for _, intent := range task.ToolExecutionIntents {
 		if intent.State != "completed" {
 			unknown = append(unknown, intent)
@@ -267,6 +273,9 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		}
 		for _, node := range plan.Nodes {
 			id := plan.ID + "/" + node.ID
+			for _, check := range node.EffectChecks {
+				operatorChecks = append(operatorChecks, map[string]any{"callId": id, "conclusion": check.Conclusion, "recordedAt": check.RecordedAt, "source": check.Source, "digest": check.Digest})
+			}
 			if node.State == "uncertain" && !knownUnknown[id] {
 				unknown = append(unknown, ToolExecutionIntent{CallID: id, Tool: node.Tool, State: "dispatched"})
 				knownUnknown[id] = true
@@ -354,9 +363,10 @@ func taskOutcomeProjection(task *Task, sessionID string, number int, title strin
 		"systemReceipts": receipts, "systemReceiptNote": "系统应用回执记录应用后的检查及其限制，不等于当前文件复核或完整产品验收；completed也可能记录待人工审批或远程未读回，请查看原文",
 		"files": files, "writeTargets": writeTargets, "writeTargetNote": "来自已记录 run_shell 参数中的显式 > 或 >> 重定向；只是命令目标线索，不证明写入或当前文件内容。", "executions": uses, "verification": reports, "findings": task.ResearchFindings, "suggestedCommands": task.Commands, "unknownCalls": unknown, "gaps": gaps,
 		"approvals": task.ApprovalReviews, "approvalNote": "审批记录仅证明当时的决策及匹配依据，不证明执行成功；最多保留最近50条，旧记录可能缺少来源字段",
-		"release": taskReleaseProjection(task.ReleaseReceipts),
-		"page":    map[string]any{"fileNext": fEnd, "filesMore": fEnd < len(task.Files), "executionNext": eEnd, "executionsMore": eEnd < len(task.ToolUses), "limit": limit},
-		"journal": map[string]any{"sequence": task.ExecutionSequence, "url": "/api/sessions/" + url.PathEscape(sessionID) + "/runs/" + url.PathEscape(task.ID) + "/journal", "note": "执行日志为独立记录；工具结果可由证据编号读取原文与摘要"},
+		"release":        taskReleaseProjection(task.ReleaseReceipts),
+		"operatorChecks": operatorChecks,
+		"page":           map[string]any{"fileNext": fEnd, "filesMore": fEnd < len(task.Files), "executionNext": eEnd, "executionsMore": eEnd < len(task.ToolUses), "limit": limit},
+		"journal":        map[string]any{"sequence": task.ExecutionSequence, "url": "/api/sessions/" + url.PathEscape(sessionID) + "/runs/" + url.PathEscape(task.ID) + "/journal", "note": "执行日志为独立记录；工具结果可由证据编号读取原文与摘要"},
 	}
 }
 

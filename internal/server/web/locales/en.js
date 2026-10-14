@@ -1,6 +1,18 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "人工核查记录": "Operator checks",
+  "人工核查记录 {0}": "Operator checks {0}",
+  "记录人工核查": "Record operator check",
+  "观察到效果": "Effect observed",
+  "未观察到效果": "No effect observed",
+  "仍无法判断": "Inconclusive",
+  "核查结论": "Conclusion",
+  "核查依据": "Evidence",
+  "保存核查记录": "Save operator check",
+  "请填写核查依据": "Provide evidence for the check",
+  "目标会话已变化，请重新打开": "The target conversation changed. Open the check again.",
+  "操作者观察不替代执行回执；不会重放调用或恢复依赖。": "Operator observations do not replace execution receipts. Calls and dependencies will not resume automatically.",
   "插件任务图 {0}": "Plugin plan {0}",
   "等待依赖或名额": "Waiting for dependencies or capacity",
   "已派发": "Dispatched",

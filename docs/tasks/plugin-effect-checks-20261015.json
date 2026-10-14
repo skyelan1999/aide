@@ -1,0 +1,81 @@
+{
+  "id": "plugin-effect-checks-20261015",
+  "request": "补齐插件不确定副作用的人工核查记录、证据归属及并发冲突保护，不自动重放",
+  "baseline": "76fe81bf89ccc365d052c6d7332347d7f00bb478",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Only authenticated operator HTTP requests can append bounded evidence-attributed checks to uncertain nodes of stopped plans; exact plan digest/revision guards reject stale/concurrent/wrong owner updates.",
+    "Append-only checks persist atomically with rollback on save failure and survive restart; never alter execution status/results, replay calls, resume dependents or clear recovery barriers.",
+    "Current-run UI exposes checks and explicit operator provenance with scoped draft/refresh ownership; outcome summary reports checks without disclosing private evidence or claiming verified tool success.",
+    "Go race/vet plus rejection/persistence/concurrency tests, JS state/privacy tests, canonical start.command real Safari checks; docs and incremental push/matching offline package."
+  ],
+  "scope": [
+    "internal/server/plugin_plan.go",
+    "internal/server/plugin_effect_checks.go",
+    "internal/server/plugin_effect_checks_test.go",
+    "internal/server/task_outcome.go",
+    "internal/server/server.go",
+    "internal/server/web/plugin-plans.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/macos.css",
+    "scripts/plugin-plans.test.cjs",
+    "docs",
+    "docker-images",
+    "internal/server/plugin_plan_test.go",
+    "internal/server/web/task-outcome.js"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Goal/plugin scheduler uncertainty reconciliation is still missing per current task ledger. Add operator evidence records separate from execution truth, no replay.",
+      "evidence": [
+        "docs/tasks/plugin-plan-ui-20261015.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Append-only per-node checks, bounded20 entries, strict payloads, plan digest+expected count guards under app mutex, server-owned provenance and persistence rollback; all runtime execution barriers retained. UI dialog captures owner and uses existing authenticated API.",
+      "evidence": [
+        "internal/server/plugin_plan.go",
+        "internal/server/task_release_receipts.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Strict authenticated append-only checks on stopped uncertain nodes, server timestamp/source/digest, guarded revision and rollback. Dialog with scoped owner/lock lifetime and retained evidence on failures, safe text/history, session render invalidation; outcome only carries nonprivate summaries and keeps unknown result gap. Does not unblock original graph/recovery; dispatch recovery authorization remains separate.",
+      "evidence": [
+        "internal/server/plugin_effect_checks.go",
+        "internal/server/web/plugin-plans.js",
+        "internal/server/task_outcome.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "New Go persistence/attribution/ownership/concurrency/failure/limit cases PASS in first scoped run; existing control approval test hit bundled browser plugin ID collision in complete snapshot. Test now replaces only disposable bundled fixture before installing approval handler; all original approval assertions retained. Rerun underway. JS dialog/history/owner/failure/double-submit tests PASS.",
+      "evidence": [
+        ".agent-state/plugin-effect-checks/scoped-first-fixture-collision.log",
+        "scripts/plugin-plans.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user incremental code push/local testing/build/offline image authorization; no formal main/tag release.",
+  "rollback": "Revert source and use prior image; effectChecks are additive session JSON fields, older code ignores them. Keep data volume; older image does not display checks and is not a migration proof.",
+  "handoff": ""
+}

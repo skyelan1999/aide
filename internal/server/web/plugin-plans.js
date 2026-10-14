@@ -5,8 +5,9 @@
   const merges = {pending:'等待归并', queued:'提案待审批', withheld:'提案未归并', rejected:'提案被拒绝', partial:'部分提案被拒绝'};
   const phases = {running:'调度中', completed:'调度结束', interrupted:'已中断'};
   const text = value => typeof value === 'string' ? value : '';
+  const checks = {effect_observed:'观察到效果', no_effect_observed:'未观察到效果', inconclusive:'仍无法判断'};
   const excerptLimit = 4096;
-  function render(run, {el, t, open = new Set(), seen = new Set(), onEvidence}) {
+  function render(run, {el, t, open = new Set(), seen = new Set(), onEvidence, onCheck}) {
     const plans = Array.isArray(run?.pluginPlans) ? run.pluginPlans.filter(p => p && typeof p === 'object') : [];
     if (!plans.length) return null;
     const host = el('section', 'plugin-plans');
@@ -52,6 +53,22 @@
         if (node.mergeState) row.append(el('p', 'plugin-node-merge', t(Object.hasOwn(merges, node.mergeState) ? merges[node.mergeState] : '未知提案状态')));
         if (node.error) row.append(el('p', 'plugin-node-error', text(node.error).slice(0,1200)));
         if (state === 'uncertain') row.append(el('p', 'plugin-node-error', t('此节点可能已产生外部副作用，请先核实。')));
+        const history = Array.isArray(node.effectChecks) ? node.effectChecks : [];
+        if (history.length) {
+          const detail = el('details', 'plugin-node-checks');
+          detail.dataset.key = JSON.stringify([...identityKey, 'node', node.id, 'checks']);
+          detail.open = open.has(detail.dataset.key);
+          detail.append(el('summary', '', t('人工核查记录 {0}', history.length)), el('p', 'plugin-plan-note', t('操作者观察不替代执行回执；不会重放调用或恢复依赖。')));
+          for (const check of history.slice(-20)) {
+            detail.append(el('p', '', t(Object.hasOwn(checks,check.conclusion) ? checks[check.conclusion] : '未知状态') + ' · ' + text(check.recordedAt)), el('pre', 'plugin-node-result', text(check.evidence).slice(0,4096)));
+          }
+          row.append(detail);
+        }
+        if (state === 'uncertain' && plan.state !== 'running' && ['paused','interrupted','completed','failed','cancelled'].includes(run.status) && typeof onCheck === 'function') {
+          const button = el('button', 'quiet', t('记录人工核查')); button.type = 'button';
+          button.dataset.pluginPlanFocus = JSON.stringify([...identityKey, 'node', node.id, 'check']);
+          button.onclick = () => onCheck(plan, node); row.append(button);
+        }
         const result = text(node.result);
         if (result) {
           const resultKey = JSON.stringify([...identityKey, 'node', node.id, 'result']);
@@ -84,5 +101,44 @@
     if (!target) return false;
     target.focus({preventScroll:true}); return true;
   }
-  window.AidePluginPlans = {render, restoreFocus};
+  let checkDialog = null;
+  function closeCheck() { checkDialog?.(); }
+  function openCheck({el, t, plan, node, active, submit, saved}) {
+    closeCheck();
+    if (!active()) return;
+    const dialog = el('dialog', 'plugin-effect-dialog');
+    const heading = el('h2', '', t('记录人工核查'));
+    heading.id = 'plugin-effect-heading'; dialog.setAttribute('aria-labelledby', heading.id);
+    const verdict = el('select');
+    for (const [value, label] of Object.entries(checks)) { const option = el('option', '', t(label)); option.value = value; verdict.append(option); }
+    verdict.value = 'inconclusive';
+    const choice = el('label', '', t('核查结论')); choice.append(verdict);
+    const evidence = el('textarea'); evidence.rows = 6; evidence.maxLength = 4096;
+    const field = el('label', '', t('核查依据')); field.append(evidence);
+    const error = el('p', 'plugin-node-error'); error.setAttribute('role', 'status');
+    const cancel = el('button', 'quiet', t('取消')); cancel.type = 'button';
+    const save = el('button', 'primary', t('保存核查记录')); save.type = 'button';
+    const footer = el('div', 'editor-footer'); footer.append(cancel, save);
+    dialog.append(heading, el('code', '', text(node.tool)), el('p', 'plugin-plan-note', t('操作者观察不替代执行回执；不会重放调用或恢复依赖。')), choice, field, error, footer);
+    let closed = false, timer;
+    const close = () => { if (closed) return; closed = true; clearInterval(timer); evidence.value = ''; dialog.close(); dialog.remove(); if (checkDialog === close) checkDialog = null; };
+    checkDialog = close;
+    cancel.onclick = close; dialog.addEventListener('cancel', close);
+    const expected = Array.isArray(node.effectChecks) ? node.effectChecks.length : 0;
+    save.onclick = async () => {
+      if (closed || save.disabled) return;
+      if (!active()) { close(); return; }
+      if (!evidence.value.trim()) { error.textContent = t('请填写核查依据'); evidence.focus(); return; }
+      save.disabled = true; error.textContent = '';
+      try {
+        await submit({planDigest:plan.digest, expected, conclusion:verdict.value, evidence:evidence.value});
+        if (!closed && active()) { close(); saved?.(); }
+      } catch (e) { if (!closed && active()) { error.textContent = e.message; save.disabled = false; } }
+      if (!active()) close();
+    };
+    document.body.append(dialog); dialog.showModal(); evidence.focus();
+    timer = setInterval(() => { if (!active()) close(); }, 250);
+    return dialog;
+  }
+  window.AidePluginPlans = {render, restoreFocus, openCheck, closeCheck};
 })();

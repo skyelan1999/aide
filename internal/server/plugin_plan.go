@@ -36,11 +36,12 @@ type pluginPlanNodeSpec struct {
 
 type PluginPlanNode struct {
 	pluginPlanNodeSpec
-	State      string           `json:"state"`
-	Result     string           `json:"result,omitempty"`
-	Error      string           `json:"error,omitempty"`
-	Proposals  []map[string]any `json:"proposals,omitempty"`
-	MergeState string           `json:"mergeState,omitempty"`
+	State        string              `json:"state"`
+	Result       string              `json:"result,omitempty"`
+	Error        string              `json:"error,omitempty"`
+	Proposals    []map[string]any    `json:"proposals,omitempty"`
+	MergeState   string              `json:"mergeState,omitempty"`
+	EffectChecks []PluginEffectCheck `json:"effectChecks,omitempty"`
 }
 
 type PluginExecutionPlan struct {
