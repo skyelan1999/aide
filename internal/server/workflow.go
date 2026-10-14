@@ -907,9 +907,9 @@ func (a *App) cancelTask(w http.ResponseWriter, r *http.Request) {
 
 func (a *App) pauseTask(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
-	defer a.mu.Unlock()
 	s := a.sessions[r.PathValue("id")]
 	if s == nil {
+		a.mu.Unlock()
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
@@ -918,24 +918,38 @@ func (a *App) pauseTask(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		if task.Status != "running" {
+			a.mu.Unlock()
 			fail(w, 409, errors.New("只有运行中的任务可以暂停"))
+			return
+		}
+		if task.PauseRequested {
+			a.mu.Unlock()
+			jsonOut(w, 202, map[string]any{"ok": true, "status": "pausing"})
 			return
 		}
 		cancel := a.cancels[task.ID]
 		if cancel == nil || !task.CanResume || len(task.CheckpointMessages) == 0 {
+			a.mu.Unlock()
 			fail(w, 409, errors.New("任务检查点尚未准备好，请稍后再试"))
 			return
 		}
 		task.PauseRequested = true
 		if err := a.save(s); err != nil {
 			task.PauseRequested = false
+			a.mu.Unlock()
 			fail(w, 500, err)
 			return
 		}
+		// Cancellation may synchronously unwind child contexts. Never let that
+		// work hold the shared session mutex and stall unrelated chats/APIs.
+		sessionID := s.ID
+		a.mu.Unlock()
 		cancel()
+		a.broadcastSessionsChanged(sessionID)
 		jsonOut(w, 202, map[string]any{"ok": true, "status": "pausing"})
 		return
 	}
+	a.mu.Unlock()
 	fail(w, 404, errors.New("任务不存在"))
 }
 

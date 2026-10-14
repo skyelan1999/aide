@@ -1,0 +1,78 @@
+{
+  "id": "pause-session-isolation-20261014",
+  "request": "点击回复位置右上角的暂停任务会导致所有回话崩溃，按理来说，这个按钮不应该放在这",
+  "baseline": "8c2dbf2312fb4fc9f8b0f3caa618d01efc4d03e0",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Pausing A never cancels or blocks B, and session APIs remain responsive while cancellation unwinds.",
+    "Pause persistence precedes cancellation; repeated pause is idempotent and invalid targets cannot affect other runs.",
+    "No pause action in reply metadata; composer control captures session/run/workspace and ignores stale responses after navigation.",
+    "Scoped tests, native Safari component observation, docs, incremental push and local8097 backup/update/smoke."
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/workflow_pause_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/pause-session-isolation.test.cjs",
+    "scripts/fixtures/render-pause-controls.py",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/tasks/pause-session-isolation-20261014.json",
+    "docs/reviews/2026-10-14-pause-session-isolation-rollout.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports all chats collapse after pausing from reply header. Runtime has no observed restart/panic; reproduce and distinguish backend lock coupling from UI failure.",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Persist under mutex, cancel outside it; scope UI request/ack to captured session/run/workspace, remove reply pause and reuse composer control.",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Pause persists under lock and cancels after unlock; repeat requests idempotent. Removed reply pause, reused composer pause with captured session/workspace and pending state.",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Both Go race regressions and quick passed. Mock HTTP A pauses while B completes; deliberately slow cancellation does not block B API. Native Safari offline production-controls fixture observed dark/light, narrow, disabled pending and stale acknowledgement after switching. Actual runtime browser behind certificate warning.",
+      "evidence": [
+        ".agent-state/pause-session-isolation/backend-final.log",
+        ".agent-state/pause-session-isolation/quick.log",
+        "scripts/fixtures/render-pause-controls.py"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Recording behavior, evidence boundaries and AIDE-only rollout.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Existing vendor deletions and unrelated local checkout changes preserved; no test requests to real model.",
+      "evidence": []
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior user authorized incremental tests/push/docs and local8097 AIDE-only update; no main merge or Release.",
+  "rollback": "Retain prior local image and consistent data backup before AIDE-only replacement; preserve unrelated work and all mounts.",
+  "handoff": "No observed runtime restart/panic; exact user-reported full collapse not reproduced. Verified shared-lock cancellation hazard and session-scoped UI fixes. Local compatibility checkout lacked composer pause markup/style; added only those pieces without copying whole frontend."
+}

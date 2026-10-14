@@ -236,3 +236,183 @@ func TestPauseEndpointCancelsRunAndPersistsRequest(t *testing.T) {
 		t.Fatalf("pause request was not persisted: %+v", persisted.Runs[0])
 	}
 }
+
+// A slow cancellation must not monopolize the mutex used by every chat/API.
+func TestPauseEndpointDoesNotBlockOtherSessions(t *testing.T) {
+	a := testApp(t)
+	ctxA, cancelA := context.WithCancel(context.Background())
+	defer cancelA()
+	ctxB, cancelB := context.WithCancel(context.Background())
+	defer cancelB()
+	taskA := &Task{ID: "pause-isolated-a", Status: "running", CanResume: true, CheckpointMessages: []Message{{Role: "user", Content: "A"}}}
+	taskB := &Task{ID: "pause-isolated-b", Status: "running", CanResume: true, CheckpointMessages: []Message{{Role: "user", Content: "B"}}}
+	one, two := &Session{ID: newID(), Runs: []*Task{taskA}}, &Session{ID: newID(), Runs: []*Task{taskB}}
+	entered, release := make(chan struct{}), make(chan struct{})
+	var releaseOnce sync.Once
+	unblock := func() { releaseOnce.Do(func() { close(release) }) }
+	defer unblock()
+	var cancellations atomic.Int32
+	a.mu.Lock()
+	a.sessions[one.ID], a.sessions[two.ID] = one, two
+	a.cancels[taskA.ID] = func() {
+		if cancellations.Add(1) == 1 {
+			close(entered)
+		}
+		<-release
+		cancelA()
+	}
+	a.cancels[taskB.ID] = cancelB
+	a.mu.Unlock()
+	done := make(chan *httptest.ResponseRecorder, 1)
+	go func() {
+		done <- request(a, "POST", "/api/sessions/"+one.ID+"/runs/"+taskA.ID+"/pause", map[string]any{})
+	}()
+	select {
+	case <-entered:
+	case <-time.After(2 * time.Second):
+		t.Fatal("pause did not reach cancellation")
+	}
+	probe := make(chan *httptest.ResponseRecorder, 1)
+	go func() { probe <- request(a, "GET", "/api/sessions/"+two.ID, nil) }()
+	select {
+	case w := <-probe:
+		requireStatus(t, w, 200)
+	case <-time.After(time.Second):
+		t.Fatal("pausing A blocked B's session API")
+	}
+	// Duplicate clicks/another window do not invoke the same cancellation again.
+	requireStatus(t, request(a, "POST", "/api/sessions/"+one.ID+"/runs/"+taskA.ID+"/pause", map[string]any{}), 202)
+	requireStatus(t, request(a, "POST", "/api/sessions/"+two.ID+"/runs/"+taskA.ID+"/pause", map[string]any{}), 404)
+	select {
+	case <-ctxB.Done():
+		t.Fatal("pausing A cancelled B")
+	default:
+	}
+	a.mu.Lock()
+	if taskB.PauseRequested || taskB.Status != "running" {
+		t.Error("B state changed")
+	}
+	stored, err := os.ReadFile(SessionPath(a.dataPath, one.ID, sessionBucketFor(one)))
+	a.mu.Unlock()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var persisted Session
+	if json.Unmarshal(stored, &persisted) != nil || !persisted.Runs[0].PauseRequested {
+		t.Fatal("pause was not durable before cancellation")
+	}
+	unblock()
+	select {
+	case w := <-done:
+		requireStatus(t, w, 202)
+	case <-time.After(time.Second):
+		t.Fatal("pause did not finish")
+	}
+	if ctxA.Err() != context.Canceled || cancellations.Load() != 1 {
+		t.Fatal("target cancellation was not isolated/idempotent")
+	}
+}
+
+func TestPauseSessionIsolationLiveRuns(t *testing.T) {
+	a := testApp(t)
+	enteredA, enteredB := make(chan struct{}), make(chan struct{})
+	release := make(chan struct{})
+	var once sync.Once
+	unblock := func() { once.Do(func() { close(release) }) }
+	defer unblock()
+	var seenA, seenB atomic.Bool
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+		}
+		if json.NewDecoder(r.Body).Decode(&body) != nil {
+			http.Error(w, "bad body", 400)
+			return
+		}
+		if len(body.Messages) > 0 && strings.Contains(body.Messages[0].Content, "唯一主题") {
+			jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "test topic"}}}})
+			return
+		}
+		isA := false
+		for _, m := range body.Messages {
+			if m.Role == "user" && strings.Contains(m.Content, "hold-A") {
+				isA = true
+			}
+		}
+		if isA {
+			if seenA.CompareAndSwap(false, true) {
+				close(enteredA)
+			}
+		} else {
+			if seenB.CompareAndSwap(false, true) {
+				close(enteredB)
+			}
+		}
+		select {
+		case <-r.Context().Done():
+			return
+		case <-release:
+		}
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: "finished B"}}}})
+	}))
+	defer provider.Close()
+	defer unblock()
+	a.settings = Settings{BaseURL: provider.URL, Model: "test"}
+	one, two := createSession(t, a), createSession(t, a)
+	start := func(id, prompt string) Task {
+		w := request(a, "POST", "/api/sessions/"+id+"/runs", map[string]any{"prompt": prompt, "mode": "chat"})
+		requireStatus(t, w, 202)
+		var run Task
+		if err := json.Unmarshal(w.Body.Bytes(), &run); err != nil {
+			t.Fatal(err)
+		}
+		return run
+	}
+	first, second := start(one.ID, "hold-A"), start(two.ID, "hold-B")
+	for _, ch := range []chan struct{}{enteredA, enteredB} {
+		select {
+		case <-ch:
+		case <-time.After(3 * time.Second):
+			unblock()
+			t.Fatal("both runs did not reach provider")
+		}
+	}
+	requireStatus(t, request(a, "POST", "/api/sessions/"+one.ID+"/runs/"+first.ID+"/pause", map[string]any{}), 202)
+	deadline := time.Now().Add(3 * time.Second)
+	paused := false
+	for time.Now().Before(deadline) {
+		a.mu.Lock()
+		paused = a.sessions[one.ID].Runs[0].Status == "paused"
+		other := a.sessions[two.ID].Runs[0]
+		running := other.Status == "running" && !other.PauseRequested
+		a.mu.Unlock()
+		if !running {
+			unblock()
+			t.Fatal("pausing A changed B")
+		}
+		if paused {
+			break
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !paused {
+		unblock()
+		t.Fatal("A did not pause")
+	}
+	requireStatus(t, request(a, "GET", "/api/sessions/"+two.ID, nil), 200)
+	unblock()
+	deadline = time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		a.mu.Lock()
+		status := a.sessions[two.ID].Runs[0].Status
+		a.mu.Unlock()
+		if status == "completed" {
+			return
+		}
+		if status != "running" {
+			t.Fatalf("B ended in %s (%s)", status, second.ID)
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatal("B did not finish independently")
+}
