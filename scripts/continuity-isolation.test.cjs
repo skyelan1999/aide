@@ -175,6 +175,32 @@ await fresh.api.savedFileDraft(scope,'branch-file','closed A');
 assert.deepEqual((await fresh.api.listFileDrafts(scope,'branch-file')).map(d=>d.text),['closed B']);
 await fresh.api.dismissFileDraft(scope,'branch-file',(await fresh.api.listFileDrafts(scope,'branch-file'))[0]);
 assert.equal((await tab().api.listFileDrafts(scope,'branch-file')).length,0);
+// Dismissing the shared last-writer fallback must not resurrect the same
+// branch as a legacy draft in a newly opened browsing context.
+const dismissedInTab=tab();
+await dismissedInTab.api.writeFileDraft(scope,'dismissed-fallback',{text:'discarded branch',hash:'base-a',start:4});
+const discarded=(await dismissedInTab.api.listFileDrafts(scope,'dismissed-fallback'))[0];
+await dismissedInTab.api.dismissFileDraft(scope,'dismissed-fallback',discarded);
+assert.equal((await tab().api.listFileDrafts(scope,'dismissed-fallback')).length,0,'a dismissed branch is removed from both branch list and shared fallback');
+// Matching text alone is insufficient: dismissing another baseline must keep
+// this tab's divergent recovery snapshot with the same text.
+const sameTextOwner=tab(),sameTextDiscarder=tab();
+await sameTextOwner.api.writeFileDraft(scope,'same-text-hash',{text:'identical text',hash:'keep-hash',start:9});
+await sameTextDiscarder.api.writeFileDraft(scope,'same-text-hash',{text:'identical text',hash:'discard-hash',start:2});
+await sameTextOwner.api.writeFileDraft(scope,'same-text-hash',{text:'identical text',hash:'keep-hash',start:9});
+const discardHash=(await sameTextDiscarder.api.listFileDrafts(scope,'same-text-hash')).find(d=>d.hash==='discard-hash');
+await sameTextDiscarder.api.dismissFileDraft(scope,'same-text-hash',discardHash);
+assert.deepEqual(await sameTextOwner.api.readTab(scope,'file','same-text-hash'),{text:'identical text',hash:'keep-hash',start:9},'same-text tab snapshot with a different base hash remains intact');
+assert.deepEqual((await tab().api.listFileDrafts(scope,'same-text-hash')).map(d=>d.hash),['keep-hash']);
+// Matching content and base hash still does not make view state interchangeable.
+const sameContentOwner=tab(),sameContentWriter=tab();
+await sameContentOwner.api.writeFileDraft(scope,'same-content-position',{text:'same content',hash:'same-base',start:9,end:9,scrollTop:900,scrollLeft:0});
+await sameContentWriter.api.writeFileDraft(scope,'same-content-position',{text:'same content',hash:'same-base',start:2,end:4,scrollTop:120,scrollLeft:18});
+const ownerBranch=(await sameContentOwner.api.listFileDrafts(scope,'same-content-position'))[0];
+await sameContentOwner.api.dismissFileDraft(scope,'same-content-position',ownerBranch);
+assert.deepEqual(await sameContentWriter.api.readTab(scope,'file','same-content-position'),{text:'same content',hash:'same-base',start:2,end:4,scrollTop:120,scrollLeft:18},'dismissing an older branch preserves a newer identical-text cursor and scroll snapshot');
+const reopenedSameContent=tab();
+assert.deepEqual((await reopenedSameContent.api.listFileDrafts(scope,'same-content-position')).map(d=>({text:d.text,start:d.start,end:d.end,scrollTop:d.scrollTop,scrollLeft:d.scrollLeft})),[{text:'same content',start:2,end:4,scrollTop:120,scrollLeft:18}],'new tabs recover the surviving view snapshot');
 for(let i=0;i<32;i++)await tab().api.writeFileDraft(scope,'capacity',{text:'branch '+i,hash:'base'});
 await assert.rejects(tab().api.writeFileDraft(scope,'capacity',{text:'overflow',hash:'base'}),/上限/);
 assert.equal((await tab().api.listFileDrafts(scope,'capacity')).length,32);

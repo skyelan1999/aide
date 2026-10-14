@@ -14,6 +14,7 @@
     "internal/server/web/starmap-optics.js",
     "internal/server/web/starmap.js",
     "internal/server/web/starmap.html",
+    "internal/server/web/starmap-lensing.js",
     "scripts/starmap-lensing.test.cjs",
     "docs/architecture/knowledge-map.md",
     "docs/en/user-guide.md"
@@ -96,6 +97,27 @@
         "背景像与索引光路透镜叠加的近景观感",
         "真实天文数据标定、长时帧率与低端设备表现"
       ]
+    },
+    "strong_field_lensing_20261014": {
+      "status": "candidate_built_system_safari_interstitial",
+      "summary": "背景星像和关系线由 Schwarzschild 零测地线转向点积分计算偏折角，查表插值控制渲染成本，再由几何薄透镜方程投影；捕获边界、强偏折及远场弱场连续性均有回归。该映射不是逐像素的完整有限距离时空光线追踪。",
+      "evidence": [
+        "internal/server/web/starmap-lensing.js · 新增无量纲 b/rs 偏折查找表、临界捕获边界和强偏折薄透镜两像求解；缓存单次生成以控制逐帧成本",
+        "internal/server/web/starmap.js · 背景星像与连线改用 Schwarzschild 偏折像；独立 Canvas 光学层保留原图谱节点、关系与点击目标",
+        "scripts/starmap-lensing.test.cjs · 临界附近强偏折、远场弱场极限、尺度不变、像位置方程、放大率、阴影/视场裁剪及点透镜连续性 · PASS",
+        "node --check internal/server/web/starmap-lensing.js && node --check internal/server/web/starmap.js · PASS",
+        "星图相关六组专项脚本：lensing、gravity、gates、workspace-scene、path、timeline · PASS",
+        "python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接",
+        "git diff --check · PASS",
+        "主文档已说明解析近似/场景代理边界；增补 APS Schwarzschild 精确透镜方程来源",
+        "隔离 Compose 项目 aide-starmap-shadow-20261014 · 新镜像 aide:schwarzschild-candidate-20261014（sha256:85d31012c6df3e35fc2ec4477a6c1533ad9207b97fa3663ee690e71651be736e）构建并运行 · 18545 · production aide:local/9999 仍运行且未替换",
+        "Safari 系统浏览器已导航至 https://localhost:18545/starmap.html；原生证书警告阻止页面加载，按浏览器策略停止在警告页"
+      ],
+      "not_verified": [
+        "系统 Safari 实际查看本次强场渲染；18545 当前停在原生 TLS 证书警告，需要用户接管后继续",
+        "真实天体质量/距离/温度数据校准、全量大星域持续动画帧率与光线重叠压力"
+      ],
+      "release": "源码、专项回归、中英文文档和隔离候选构建已完成；Safari 视觉验收被本机 TLS 安全页阻断，当前阶段未推送。"
     }
   },
   "rollback": "revert the isolated starmap physics engine commit",
@@ -232,5 +254,139 @@
       "真实天文质量/距离标定、大星域长时间帧率、多个黑洞叠加"
     ],
     "release": "针对性源码回归通过；黑洞近景 Safari 视觉验收未完成。"
+  },
+  "followup_20261014_lens_render_duplicate_solve": {
+    "status": "source_regression_pass_browser_and_runtime_pending",
+    "date": "2026-10-14",
+    "summary": "透镜区图谱连线每个采样点只求一次 Schwarzschild 图像映射，并在同一结果上绘制主像和次像；每帧、每黑洞的质量尺度、观察距离和像素标尺复用，移除原先按分支重复求解。",
+    "evidence": [
+      "internal/server/web/starmap.js · drawBlackHoleLensOverlay 连线从每采样点两次几何求解改为一次并复用双像结果",
+      "docs/architecture/knowledge-map.md · 更新为 Schwarzschild 偏折积分、投影薄透镜和每采样点共享解的准确边界",
+      "node --check internal/server/web/starmap.js · PASS",
+      "node scripts/starmap-lensing.test.cjs · PASS",
+      "node scripts/starmap-gravity.test.cjs · PASS",
+      "node scripts/starmap-gates.test.cjs · PASS",
+      "python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接",
+      "git diff --check · PASS"
+    ],
+    "not_verified": [
+      "系统 Safari 近景仍未验收；18545 仍停在原生 TLS 安全页",
+      "当前候选运行状态未知：Docker API socket 拒绝访问，18545 与实际 9999 均无法连接",
+      "大星域长时帧率、真实天文参数校准及多透镜重叠压力"
+    ],
+    "release": "本地源码专项回归与文档通过；构建／浏览器验收未能进行，本阶段未提交未推送。"
+  },
+  "followup_20261014_safari_graph_closeup_observation": {
+    "status": "system_safari_interaction_verified_black_hole_unverified",
+    "date": "2026-10-14",
+    "summary": "在系统 Safari 的 9999 星图中切换到引用来源并放大实际聚簇，页面保持可交互，选中的真实节点 sea 留在近景。详情确认该节点只有 3 条原始连接、0 个有效关联；因此截图中的亮团不能作为黑洞或透镜候选证据。星域筛选、知识视图和全景已恢复。",
+    "evidence": [
+      "系统 Safari · https://localhost:9999/starmap.html · 引用来源显示 1000 个节点；单击可选中节点，滚轮放大后节点仍处于可见近景。",
+      "系统 Safari 节点详情 · F848b8038890f / google-gemini--gemini-cli/sea · 3 条连接 · 0 个有效关联 · 孤立灰星；未读取正文。",
+      "系统 Safari 截图 · 可见真实节点聚簇、星云背景与关系线；没有可辨识的吸积盘、圆形阴影或透镜背景像，故不视为黑洞画面通过。",
+      "系统 Safari · 已关闭节点详情，恢复知识视图、全部星域及星图初始视角。"
+    ],
+    "not_verified": [
+      "具有高密度有效关系且实际生成黑洞候选的图谱中的吸积盘、圆形阴影、光子环与薄透镜叠层近景。",
+      "大星域持续动画帧率、多个透镜重叠压力与真实天文观测数据校准。"
+    ],
+    "release": "本次系统 Safari 只确认真实索引星域和放大交互；黑洞近景没有验收证据，本阶段不宣称完成黑洞视觉验收。"
+  },
+  "followup_20261014_latest_candidate_browser_handoff": {
+    "status": "candidate_built_safari_certificate_handoff_required",
+    "date": "2026-10-14",
+    "summary": "为当前工作树构建隔离候选 18546，健康检查通过。系统 Safari 已导航到候选地址，但停在浏览器原生证书拦截页，因此当前工作树尚未在候选 UI 中验收。上一候选 18544 的图谱只有21个节点/21条关系，没有可绘制黑洞实体，不能据此验收吸积盘或透镜近景。",
+    "evidence": [
+      "隔离 Compose 项目 aide-accept-physics-20261014 · 独立 aide-data/aide-home 卷；workspace、context、local 均指向 /private/tmp 空目录。",
+      "隔离候选镜像 sha256:0d815c23de3d333147ad31c85723d5f1f63ffa2f055b9a4093143e09bd66f5f1；容器运行于 127.0.0.1:18546。",
+      "curl -kfsS https://127.0.0.1:18546/healthz · integrity=ok、status=ok。",
+      "系统 Safari 2026-10-14 · https://localhost:18546/ · 显示原生“此连接非私人连接”页；根据浏览器 hand-off 规则未尝试绕过。",
+      "node scripts/starmap-lensing.test.cjs、scripts/starmap-gravity.test.cjs、scripts/starmap-gates.test.cjs、scripts/starmap-workspace-scene.test.cjs · PASS。"
+    ],
+    "not_verified": [
+      "当前工作树版本在系统 Safari 的实际渲染与交互。",
+      "具有真实图谱黑洞实体的近景吸积盘、强场透镜叠层及多黑洞所有权视觉验收。",
+      "真实天文数据校准与大星域长时间帧率。"
+    ],
+    "release": "待 Safari 完成本机证书 hand-off 并实际检查页面；完成前不推送本阶段。"
+  },
+  "followup_20261014_candidate_recheck": {
+    "status": "source_regressions_pass_candidate_healthy_safari_handoff_required",
+    "date": "2026-10-14",
+    "summary": "复核当前工作树的星图物理专项回归、语法与差异格式检查，全部通过。Safari 仍停在18546原生证书拦截页。普通沙箱网络/Docker socket权限不足造成此前健康查询失败；提升权限后的只读 docker ps 和 healthz 确认隔离候选正在运行且健康。未执行证书绕过或生产实例重启。当前工作树视觉验收、黑洞近景验收与本阶段推送仍未完成。",
+    "evidence": [
+      "node scripts/starmap-lensing.test.cjs · PASS：Schwarzschild 临界偏折、弱场连续性、透镜像位置与裁剪。",
+      "node scripts/starmap-gravity.test.cjs、starmap-gates.test.cjs、starmap-workspace-scene.test.cjs、starmap-path.test.cjs、starmap-timeline.test.cjs · PASS。",
+      "node --check internal/server/web/starmap.js、starmap-physics.js、starmap-lensing.js · PASS；git diff --check · PASS。",
+      "系统 Safari 当前地址 https://localhost:18546 · 原生“此连接非私人连接”拦截页；没有尝试程序化绕过。",
+      "普通沙箱 curl 失败与 Docker socket 拒绝访问仅表示权限不足，不能作为服务停止的证据。",
+      "提升权限只读 docker ps · aide-accept-physics-20261014-aide-1 Up/healthy · 127.0.0.1:18546->8080/tcp。",
+      "提升权限只读 curl -kfsS https://127.0.0.1:18546/healthz · integrity=ok、service=aide、status=ok。",
+      "系统 Safari 当前地址 https://localhost:18546 · 原生“此连接非私人连接”拦截页；未点击继续。"
+    ],
+    "not_verified": [
+      "当前工作树在系统 Safari 的实际渲染与交互。",
+      "具备黑洞候选区域的星域中，吸积盘、光子环、强场透镜图层的真实近景效果。",
+      "候选恢复后重跑大星域长时性能与多透镜重叠压力。"
+    ],
+    "release": "隔离候选健康且运行；系统 Safari 画面验收仍需完成 TLS 安全交接后再进行。保留未推送修改。"
+  },
+  "lensing_solver_perf_20261014": {
+    "status": "source_regression_pass_system_safari_pending",
+    "date": "2026-10-14",
+    "summary": "Strong-field image solving now seeds from weak-field image locations, uses a bracketed Newton iteration with a derivative interpolated from the Schwarzschild deflection table, and falls back to bisection. The same derivative computes magnification. This retains bounded roots and precise geodesic-lens residuals while reducing per-image evaluations.",
+    "evidence": [
+      "scripts/starmap-lensing.test.cjs · existing strong-field and weak-field continuity assertions plus three deterministic mass/distance/camera-scale source-equation residual cases · PASS",
+      "node scripts/starmap-lensing.test.cjs; starmap-gravity, gates, workspace-scene, path, timeline and coverage-state suites · PASS",
+      "node --check internal/server/web/starmap-lensing.js && node --check internal/server/web/starmap.js · PASS",
+      "python3 scripts/check_docs.py · PASS 188 Markdown / 542 links; git diff --check · PASS",
+      "Warmed Node 24/V8 synthetic solver benchmark: 100 sources median 1.40 ms / P95 1.77 ms; 1,000 sources 13.39 / 13.86 ms; 5,000 sources 65.31 / 68.67 ms. Algorithm-only; excludes canvas drawing, path sampling, Safari scheduling and frame rate.",
+      "1,000 randomized mass/distance/camera cases · 2,000 images · maximum thin-lens source-plane residual 9.92e-11 px."
+    ],
+    "not_verified": [
+      "Current source in system Safari at the isolated 18546 candidate; native TLS interstitial remains.",
+      "Actual Safari frame time including canvas compositing, relationship sampling and browser scheduling.",
+      "Visual black-hole close-up on a graph that contains a rendered black-hole candidate."
+    ],
+    "release": "Source and deterministic regression evidence pass. Per the system-browser acceptance requirement, this change remains local and is not pushed until Safari visual verification."
+  },
+  "relativistic_images_20261014": {
+    "status": "system_safari_map_loaded_black_hole_closeup_pending",
+    "date": "2026-10-14",
+    "summary": "加入第一阶 Schwarzschild 绕行相对论像：用精确偏折积分表与 α−2πn 投影薄透镜方程在光子临界环两侧计算微弱像；采用强场渐近位置作初值并用有界 Newton/二分修正。偏折查表改为按距临界曲线的对数偏移采样，避免近临界插值失真。图像求解按需启用：常规直达像筛选及关系线保持 n=0，只有通过直达像筛选的背景源才生成 n=1 像。",
+    "evidence": [
+      "scripts/starmap-lensing.test.cjs · PASS：临界点捕获、ε=0.001 偏折角、绕行像 α−2πn 源面方程、两侧临界环位置、直达像轻量默认。",
+      "node --check internal/server/web/starmap-lensing.js && node --check internal/server/web/starmap.js · PASS；git diff --check · PASS。",
+      "python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接。",
+      "Node 24/V8 VM warmed synthetic solver · 1,000 direct-image sources median 35.11 ms / P95 40.65 ms; with first relativistic image pair 86.38 / 93.66 ms. Excludes Canvas, path sampling and browser scheduling.",
+      "docs/architecture/knowledge-map.md 与 docs/en/user-guide.md 已同步说明第一阶像、未求高阶像边界及性能数据。",
+      "重启当前源码后，系统 Safari 已信任的 https://localhost:9999/starmap.html 加载真实图谱并完成索引同步；搜索结果/星点详情可交互，选中节点 README.bs.md 有44条原始连接、22个有效关联。",
+      "系统 Safari 当前画面没有可辨识的黑洞吸积盘、阴影或绕行光像；真实图谱候选不足以完成近景验收，未把普通亮星团计作通过。"
+    ],
+    "not_verified": [
+      "当前源码重启后在系统 Safari 的黑洞候选近景图像。",
+      "真实图谱上存在符合密集关系候选门槛的黑洞区域；当前 9999 页面中的孤立节点不能充当此证据。",
+      "Safari 实际动画帧率、多个透镜重叠和实测天体数据校准。"
+    ],
+    "release": "源码专项回归、文档和合成性能记录通过；系统 Safari 确认当前版本的真实星图加载与节点交互，黑洞近景仍待验收，本阶段暂不推送。"
+  },
+  "full_server_regression_20261014": {
+    "status": "source_regression_pass_system_safari_closeup_pending",
+    "date": "2026-10-14",
+    "summary": "在与 Aide Dockerfile 一致的 dev 工具链中完成 server 全包回归。修正知识目录扩容测试对 Aide 预置 workspace 条目数量的错误假设；物理星图专项仍通过，系统 Safari 的本轮黑洞近景未完成 TLS 安全交接。",
+    "evidence": [
+      "Docker dev image aide:local-test-20261014 · go test -mod=vendor ./internal/server -count=1 · PASS（197.092s）。",
+      "Docker dev image aide:local-test-20261014 · go vet -mod=vendor ./internal/server · PASS。",
+      "TestKnowledgeProgressiveCatalogExpandsWhenInitialCapacityIsReached · PASS；现验证40个测试文件 fixture 全部发现，并允许 Aide 初始化的其他 workspace 条目。",
+      "node --test scripts/starmap-*.test.cjs · PASS：10个套件，覆盖缓存、覆盖状态、续扫、星门、引力、红外、透镜、路径、时间线和视角恢复。",
+      "node --check internal/server/web/starmap.js && node --check internal/server/web/starmap-lensing.js && node --check internal/server/web/starmap-physics.js · PASS。",
+      "python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接；git diff --check 和任务 JSON 格式检查 · PASS。"
+    ],
+    "not_verified": [
+      "Safari 系统浏览器当前在 9999；本轮隔离候选 18546 的原生 TLS 安全页尚未完成浏览器侧交接，因此未查看当前工作树画面。",
+      "候选工作区是否含有能触发黑洞的高密度有效关联图谱；无此图谱无法验收盘、阴影、光子环和透镜画面融合。",
+      "真实天体质量/距离数据标定、大星域长时动画帧率、多个透镜重叠压力。"
+    ],
+    "release": "完整 server 回归、go vet、物理星图专项和文档检查通过；按用户的系统浏览器验收要求，黑洞候选近景未在本轮 Safari 观察前暂不推送。"
   }
 }

@@ -88,6 +88,49 @@ const zeroDeflection = lens.deflection(0, 0, 3);
 assert.equal(zeroDeflection.x, 0);
 assert.equal(zeroDeflection.y, 0);
 assert.equal(lens.pointMassImages(1, 1, 0).length, 0);
+const criticalImpact = 1.5 * Math.sqrt(3);
+assert.equal(lens.schwarzschildDeflection(1, criticalImpact), Infinity, 'the critical impact parameter asymptotically approaches the photon sphere');
+assert.ok(lens.schwarzschildDeflection(1, criticalImpact * (1 + 2e-5)) > 8, 'near-critical escaping rays accumulate a strong-field deflection');
+assert.ok(Math.abs(lens.schwarzschildDeflection(1, criticalImpact * 1.001) - 6.51) < .03,
+ 'logarithmic sampling in distance from the critical curve resolves the Schwarzschild strong-deflection regime');
+assert.ok(Math.abs(lens.schwarzschildDeflection(1, 100) - .0202945) < 2e-6, 'the exact geodesic curve approaches the expected weak-field limit');
+assert.ok(Math.abs(lens.schwarzschildDeflection(3, 300) - lens.schwarzschildDeflection(1, 100)) < 1e-12, 'Schwarzschild bending is scale invariant in impact parameter / rs');
+assert.deepEqual(Array.from(lens.schwarzschildImages(2, 0, .1, 1000, 2000, 1000), image => image.branch), ['primary', 'secondary'],
+ 'direct-image solving stays lightweight unless a caller explicitly requests photon-winding images');
+const strongImages = lens.schwarzschildImages(2, 0, .1, 1000, 2000, 1000, 1);
+assert.deepEqual(Array.from(strongImages, image => image.branch), ['primary', 'secondary', 'relativistic-primary-1', 'relativistic-secondary-1']);
+for (const image of strongImages) {
+ const signedRadius = Math.sign(image.x) * Math.hypot(image.x, image.y), impact = 1000 * Math.tan(Math.abs(signedRadius) / 1000);
+ const deflection = lens.schwarzschildDeflection(.1, impact), effectiveDeflection = deflection - image.windingOrder * 2 * Math.PI;
+ const predictedSource = signedRadius - Math.sign(signedRadius) * 1000 * .5 * effectiveDeflection;
+ assert.ok(Math.abs(predictedSource - 2) < 1e-8, 'the image position solves the geodesic-deflection thin-lens equation');
+ assert.ok(Number.isFinite(image.magnification) && image.magnification > 0);
+ if (image.windingOrder) assert.ok(Math.abs(deflection - 2 * Math.PI) < .08,
+  'first relativistic images follow escaping rays that complete one loop near the photon sphere');
+}
+assert.ok(Math.abs(Math.hypot(strongImages[2].x, strongImages[2].y) - Math.hypot(strongImages[3].x, strongImages[3].y)) < .1,
+ 'the first relativistic image pair approaches the apparent photon-ring radius from opposite sides');
+for (const [betaX, betaY, rs, observerDistance, sourceDistance, pixels] of [
+ [.7, -1.2, .04, 1200, 3500, 900],
+ [12, 9, .6, 800, 2600, 1700],
+ [26, -4, .2, 1700, 4000, 1300]
+]) {
+ const sourceRadius = Math.hypot(betaX, betaY), distanceRatio = (sourceDistance - observerDistance) / sourceDistance;
+ for (const image of lens.schwarzschildImages(betaX, betaY, rs, observerDistance, sourceDistance, pixels)) {
+  const sign = image.branch.includes('primary') ? 1 : -1, signedRadius = sign * Math.hypot(image.x, image.y);
+  const impact = observerDistance * Math.tan(Math.abs(signedRadius) / pixels);
+  const effectiveDeflection = lens.schwarzschildDeflection(rs, impact) - image.windingOrder * 2 * Math.PI;
+  const predictedSource = signedRadius - sign * distanceRatio * pixels * effectiveDeflection;
+  assert.ok(Math.abs(predictedSource - sourceRadius) < 2e-6, 'bracketed Newton roots remain accurate across scene mass, distance, and camera scales');
+  assert.ok(Number.isFinite(image.magnification) && image.magnification >= 0);
+ }
+}
+const weakScale = Math.sqrt(2 * .1 * 1000 * 1000 / 2000) / 1000 * 1000;
+const weakImages = lens.pointMassImages(2, 0, weakScale);
+assert.ok(Math.abs(strongImages[0].x - weakImages[0].x) < .1 && Math.abs(strongImages[1].x - weakImages[1].x) < .1,
+ 'geodesic images converge continuously to the familiar point-mass result in the weak-field regime');
+assert.equal(lens.visibleSchwarzschildImages(2, 0, .1, 1000, 2000, 1000, 100, 120).length, 0,
+ 'the exact optical image is clipped by the shadow and lens-field boundaries');
 vm.runInNewContext(fs.readFileSync('internal/server/web/starmap-optics.js', 'utf8'), context);
 const optics = context.window.AideStarOptics;
 const nearBright = optics.apparentIntensity(16, 1);
@@ -96,4 +139,4 @@ assert.ok(nearBright > farBright);
 assert.ok(optics.apparentIntensity(32, 1) > optics.apparentIntensity(1, 1));
 assert.ok(optics.apparentIntensity(0, 1) > 0);
 assert.ok(Number.isFinite(optics.apparentIntensity(8, 0)));
-console.log('PASS starmap optics: inverse-square scene falloff, relation-driven source proxy, point-mass lens equation, deflection, singularity handling');
+console.log('PASS starmap optics: inverse-square scene falloff, relation-driven source proxy, Schwarzschild null-geodesic deflection, projected images, weak-field continuity, singularity handling');

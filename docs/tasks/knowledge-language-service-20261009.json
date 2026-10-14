@@ -135,5 +135,21 @@
       "goRaceSeconds": 424.352,
       "head": "78bbf406ce2403e9c6093f74fe5182f10c3d08c0"
     }
+  },
+  "followup_20261014_focused_race_recheck": {
+    "status": "focused_race_pass_existing_browser_evidence_retained",
+    "date": "2026-10-14",
+    "summary": "在当前工作树重新运行 Go 已索引快照类型绑定相关竞态回归，覆盖同名接收者方法、跨包绑定、动态接口/函数变量保留未解析、列位置精确诊断移除、失败关闭、输入输出上限、子进程取消和环境隔离。",
+    "evidence": [
+      "docker run --rm -v $PWD:/src -w /src golang:1.26-bookworm go test -buildvcs=false -race ./internal/server -run 'TestKnowledgeGo(Type|Types)' -count=1 -timeout=180s · PASS · aide/internal/server · 1.179s",
+      "当前 Safari 位于隔离候选 18546 的原生 TLS 证书警告页；本轮未加载候选 UI，也未记为当前变更的浏览器验收。",
+      "既有 system_safari_20261010 记录覆盖先前 18211 样例，不代表当前工作树版本或第三方依赖/大型工程行为已通过。"
+    ],
+    "not_verified": [
+      "当前候选在系统 Safari 的图谱外观和点击跳转。",
+      "第三方模块/build tags/大型项目以及真实 SSH Go 类型绑定。",
+      "TypeScript、Python 等其他语言的类型服务。"
+    ],
+    "release": "本轮只完成源码竞态回归复核，不推送；当前工作树浏览器验收仍待系统 Safari 实际打开候选。"
   }
 }

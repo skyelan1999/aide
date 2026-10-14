@@ -67,6 +67,8 @@ SSH连接/目录/权限、解析器、插件工具可用性、模型连接及实
 
 会话重开按当前服务器配置的 workspaceId 隔离，文件恢复提示不会直接覆盖服务器。文件保存冲突暂停自动保存，读取服务器最新正文，提供当前正文、本地正文及合并编辑区；只有采用合并内容后更新保存hash。取消不放宽保存校验。保存成功仅清理正文相同的恢复记录，事务内检查，避免误删其他标签页的新草稿。同一文件在多个标签页中的不同草稿按分支独立保存；恢复相同正文时保留原分支所有者，后续编辑不会清掉另一个标签页的草稿。每个文件最多保存32个分支、合计8 MiB，超限时拒绝新记录并保留现有分支；标签页内光标和滚动快照仍各自独立。
 
+忽略一个文件恢复分支时，共享的 last-writer 回退记录和当前标签页快照都按正文、读取hash、选区与水平/垂直滚动位置匹配。这样忽略旧视图不会清掉另一标签页后来写入的相同正文/基线快照。隔离回归覆盖同正文同基线但不同光标与滚动位置的两个标签页，并验证新标签仍能恢复幸存视图；该测试使用 VM/IndexedDB fixture，尚未替代 Safari 真实 IndexedDB 验收。
+
 聊天草稿分支身份比较包含附件的根目录、引用来源、路径和目录标记。恢复后的附件标签同时显示引用来源名称与路径；来源配置已移除时回退显示稳定来源 ID，避免同路径的不同引用被误认成同一附件。该显示仅帮助辨认已保存的附件引用，不验证来源当前可访问性；发送时仍由服务端按现有来源和 AI 可见性规则校验。
 
 编辑器正文与光标/选区/滚动状态的标签页应急快照采用 120ms 合并写入，减少长文档下每个键击都同步序列化全文造成的主线程开销；共享 IndexedDB 分支继续按 180ms 防抖更新。页面离开时取消待执行计时器，并立即把最新状态交给恢复层继续持久化。附件变化同样经过恢复调度更新快照。浏览器在强制终止前未能触发页面离开事件时，最多可能缺少最后一个 120ms 窗口的变更；浏览器存储故障或操作系统断电不构成持久性保证。该路径受恢复开关与 2 MiB 单条上限约束；超限会明确报错，既有 IndexedDB 草稿不被清除。定向回归验证 20 次滚动加一次输入合并为单份正文和视图快照，并验证 pagehide 使用最新正文。完整系统 Safari、崩溃恢复和长时间大文档性能验收仍待完成。
@@ -344,3 +346,11 @@ A directed restore-then-edit fixture reproduced the same ownership loss in file 
 单任务成果详情新增折叠式执行时间线，首次打开时才读取独立 journal API；每页最多100条，使用最后事件序号继续分页。任务仍在运行且时间线已展开时，复用成果轮询节奏增量拉取新事件；首次收到终态时仍读取最后批次，之后才停止轮询。读取失败提供显式重试。每条只显示持久化时间、序号、阶段、事件类型、工具名、调用编号及摘要指纹，不复制参数/结果正文，也不把 `tool_dispatch` 解释为成功。无效或截断日志警告由 API 原样显示。关闭面板后沿用现有 generation guard，迟到响应不会更新已关闭的 UI。
 
 定向回归覆盖按需请求、派发/结果语义、摘要指纹显示、序号分页、终态最后一条结果排空、读取失败重试与损坏尾记录警告；`scripts/outcome-pagination.test.cjs` 通过，国际化和文档检查通过。系统 Safari 尚未检查窄屏、展开期间的实时增长和长时间日志滚动；本次不宣称浏览器验收或推送完成。
+
+### 真实 SSH/SFTP 联调运行器（2026-10-14）
+
+双服务器验收默认使用缓存的 Go 1.26 容器作为客户端，避免 `aide:local` 镜像缺少 Go 编译器导致测试没有启动。`AIDE_SSH_GOMAXPROCS` 与 `AIDE_SSH_GOFLAGS` 可调整资源并发；`AIDE_SSH_RACE=0` 可在受限机器内存下进行真实协议联调，默认仍开启 race。2026-10-14 当前源码在 internal-only 临时网络、只读源码挂载和自动清理下完成一次完整非 race SSH/SFTP 联调（11.031s，记录于任务台账）。race 模式运行至远程渐进覆盖时被系统 `SIGKILL`，因此只记为资源受限、未通过验收；完整 race 与真实用户主机 Safari 交互仍待验证。
+
+### Real SSH/SFTP acceptance runner (2026-10-14)
+
+The two-server acceptance runner now defaults to the cached Go 1.26 client image so it does not start without a compiler in `aide:local`. `AIDE_SSH_GOMAXPROCS` and `AIDE_SSH_GOFLAGS` control build concurrency; `AIDE_SSH_RACE=0` permits protocol acceptance on memory-limited hosts while race detection remains enabled by default. One full non-race run against disposable internal-only SSH/SFTP servers passed on the current source tree (11.031s; see the task ledger). The race run was terminated by `SIGKILL` during remote progressive coverage and is not counted as a pass. Full race acceptance and Safari interaction with a user-configured SSH host remain open.

@@ -467,26 +467,31 @@ function drawBlackHole(hole,now,fade=1){
 }
 function drawBlackHoleLensOverlay(hole,stars,edges,fade=1){
  const p=hole.record.p,lensing=window.AideStarLensing;if(!p.onScreen||!lensing)return;const r=hole.radius,shadowR=Math.max(.55,cosmicProjectedShadowRadius(hole));
- // Separate optical compositing pass: the thin-lens point-mass equation maps
- // source positions to primary/secondary images. Graph coordinates and picking
- // remain untouched; only faint duplicate photons/paths are drawn here.
+ // Separate optical compositing pass: background stars use the Schwarzschild
+ // null-geodesic deflection curve with a projected thin-lens mapping. Graph
+ // coordinates and picking remain untouched; only optical images are drawn.
  ctx.save();ctx.globalCompositeOperation='screen';
- const referenceDepth=hole.record.z+.25,referenceEinstein=cosmicEinsteinRadius(hole,referenceDepth),fieldRadius=referenceEinstein*3.2;
+ const referenceDepth=hole.record.z+.25,referenceEinstein=cosmicEinsteinRadius(hole,referenceDepth),fieldRadius=referenceEinstein*3.2,lensPhysics=window.AideCosmicPhysics,lensRs=lensPhysics?.schwarzschildRadius(cosmicLensMassLength(hole))||0,observerDistance=hole.record.z,pixelsPerRadian=Math.min(width,height)*zoom;
  if(!fieldRadius){ctx.restore();ctx.globalCompositeOperation='source-over';return;}
  // Warp only connections whose projected segment passes through the lensing
  // field. The dim image is an optical overlay, never a new indexed relation.
  const closestOnSegment=(a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,den=dx*dx+dy*dy,t=den?clamp(((p.x-a.x)*dx+(p.y-a.y)*dy)/den,0,1):0;return Math.hypot(a.x+dx*t-p.x,a.y+dy*t-p.y);};
  ctx.lineCap='round';ctx.lineJoin='round';
  for(const edge of edges||[]){const a=edge.a,b=edge.b;if(!a?.onScreen||!b?.onScreen||Math.min(a.depth||0,b.depth||0)<=hole.record.z||closestOnSegment(a,b)>fieldRadius)continue;
-  for(const branch of ['primary','secondary']){let started=false,steps=16;ctx.beginPath();for(let i=0;i<=steps;i++){const t=i/steps,sourceDepth=(a.depth||0)+((b.depth||0)-(a.depth||0))*t,thetaE=cosmicEinsteinRadius(hole,sourceDepth),maxBeta=thetaE*3.2,betaX=a.x+(b.x-a.x)*t-p.x,betaY=a.y+(b.y-a.y)*t-p.y,beta=Math.hypot(betaX,betaY),images=lensing.pointMassImages(betaX,betaY,thetaE),image=images.find(item=>item.branch===branch);if(!image||beta>maxBeta||Math.hypot(image.x,image.y)<shadowR*1.08||Math.hypot(image.x,image.y)>fieldRadius*1.25){started=false;continue;}const x=p.x+image.x,y=p.y+image.y;if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);}
-   ctx.globalAlpha=fade*(branch==='primary'?.2:.12);ctx.strokeStyle=mapPalette.light?'#638aaa':'#c5ddf2';ctx.lineWidth=Math.max(.45,r*.012);ctx.stroke();
+  const steps=16,branches=new Map();
+  for(let i=0;i<=steps;i++){
+   const t=i/steps,sourceDepth=(a.depth||0)+((b.depth||0)-(a.depth||0))*t,thetaE=cosmicEinsteinRadius(hole,sourceDepth),maxBeta=thetaE*3.2,betaX=a.x+(b.x-a.x)*t-p.x,betaY=a.y+(b.y-a.y)*t-p.y,beta=Math.hypot(betaX,betaY);
+   const images=beta<=maxBeta?(lensing.schwarzschildImages?.(betaX,betaY,lensRs,observerDistance,sourceDepth,pixelsPerRadian,0)||lensing.pointMassImages(betaX,betaY,thetaE)):[];
+   const present=new Set();for(const image of images){const branch=image.branch,radius=Math.hypot(image.x,image.y);if(!branches.has(branch))branches.set(branch,Array(i).fill(null));branches.get(branch).push(radius>=shadowR*1.0005&&radius<=fieldRadius*1.25?{x:p.x+image.x,y:p.y+image.y}:null);present.add(branch);}
+   for(const [branch,points]of branches)if(!present.has(branch))points.push(null);
   }
+  for(const [branch,points]of branches){let started=false;ctx.beginPath();for(const point of points){if(!point){started=false;continue;}if(!started){ctx.moveTo(point.x,point.y);started=true;}else ctx.lineTo(point.x,point.y);}const relativistic=branch.startsWith('relativistic-');ctx.globalAlpha=fade*(relativistic?.07:branch==='primary'?.2:.12);ctx.strokeStyle=mapPalette.light?'#638aaa':'#c5ddf2';ctx.lineWidth=Math.max(.4,r*(relativistic?.007:.012));ctx.stroke();}
  }
  // Nearby real stars produce faint calculated images. Their original stars
  // remain the sole selectable objects, so optical duplicates cannot mislead
  // search, counts, relationships, or click targets.
  for(const star of stars||[]){const q=star.p;if(!q?.onScreen||star.z<=hole.record.z||cosmicLensOwnerByStar.get(star.n.id)!==hole)continue;const thetaE=cosmicEinsteinRadius(hole,star.z),maxBeta=thetaE*3.2,betaX=q.x-p.x,betaY=q.y-p.y,beta=Math.hypot(betaX,betaY);if(!thetaE||beta>maxBeta)continue;const fade=1-beta/maxBeta;
-  const images=lensing.visiblePointMassImages(betaX,betaY,thetaE,shadowR*1.08,fieldRadius*1.25);if(!images.length)continue;cosmicLensedStarIDs.add(star.n.id);for(const image of images){const magnification=Math.min(12,image.magnification),alpha=clamp(1-Math.exp(-.16*magnification),.08,.72),baseRadius=Math.max(.55,Math.min(1.7,Math.sqrt(star.n.connectionCount||1)*.22)),imageRadius=Math.min(4.2,baseRadius*Math.sqrt(magnification)),x=p.x+image.x,y=p.y+image.y;ctx.globalAlpha=fade*alpha;ctx.fillStyle=star.n.starColor||mapPalette.star;ctx.beginPath();ctx.arc(x,y,imageRadius,0,tau);ctx.fill();cosmicLensHits.push({star,x,y,radius:Math.max(6,imageRadius+3)});}
+  const images=lensing.visibleSchwarzschildImages?.(betaX,betaY,lensRs,observerDistance,star.z,pixelsPerRadian,shadowR*1.0005,fieldRadius*1.25,1)||lensing.visiblePointMassImages(betaX,betaY,thetaE,shadowR*1.08,fieldRadius*1.25);if(!images.length)continue;cosmicLensedStarIDs.add(star.n.id);for(const image of images){const magnification=Math.min(12,image.magnification),relativistic=Boolean(image.windingOrder),alpha=(relativistic?.16:1)*clamp(1-Math.exp(-.16*magnification),.08,.72),baseRadius=Math.max(.55,Math.min(1.7,Math.sqrt(star.n.connectionCount||1)*.22)),imageRadius=Math.min(4.2,baseRadius*Math.sqrt(magnification)),x=p.x+image.x,y=p.y+image.y;ctx.globalAlpha=fade*alpha;ctx.fillStyle=star.n.starColor||mapPalette.star;ctx.beginPath();ctx.arc(x,y,imageRadius,0,tau);ctx.fill();cosmicLensHits.push({star,x,y,radius:Math.max(6,imageRadius+3)});}
  }
  ctx.restore();ctx.globalCompositeOperation='source-over';
 }
@@ -556,7 +561,7 @@ function assignCosmicLensOwners(holes,stars){
  cosmicLensOwnerByStar=new Map();const lensing=window.AideStarLensing,physics=window.AideCosmicPhysics;if(!lensing||!physics)return;
  for(const star of stars||[]){if(!star.p?.onScreen)continue;let owner=null,bestScore=0;
   for(const hole of holes||[]){const p=hole.record?.p;if(!p?.onScreen||star.z<=hole.record.z)continue;const thetaE=cosmicEinsteinRadius(hole,star.z),betaX=star.p.x-p.x,betaY=star.p.y-p.y,beta=Math.hypot(betaX,betaY);if(!thetaE||beta>thetaE*3.2)continue;
-   const field=cosmicEinsteinRadius(hole,hole.record.z+.25)*3.2,shadow=Math.max(.55,cosmicProjectedShadowRadius(hole)),images=lensing.visiblePointMassImages(betaX,betaY,thetaE,shadow*1.08,field*1.25);if(!images.length)continue;
+   const field=cosmicEinsteinRadius(hole,hole.record.z+.25)*3.2,shadow=Math.max(.55,cosmicProjectedShadowRadius(hole)),images=lensing.visibleSchwarzschildImages?.(betaX,betaY,physics.schwarzschildRadius(cosmicLensMassLength(hole)),hole.record.z,star.z,Math.min(width,height)*zoom,shadow*1.0005,field*1.25,0)||lensing.visiblePointMassImages(betaX,betaY,thetaE,shadow*1.08,field*1.25);if(!images.length)continue;
    // Overlapping lenses are resolved by the strongest visible total
    // magnification. A source is suppressed only when an optical image survives.
    const score=images.reduce((sum,image)=>sum+image.magnification,0);if(score>bestScore){bestScore=score;owner=hole;}

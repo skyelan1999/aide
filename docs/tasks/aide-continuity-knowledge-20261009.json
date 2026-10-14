@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "历史输入 verify full exit0、38项 PASS 仅代表当时检查，不代表当前源码本轮全量通过。真实系统Safari的18217隔离页停在登录页，尚未完成工作台验收；真实向量按用户指示暂缓；Windows已由用户实测且无需后续验收；SSH用户主机/真实模型等完整产品验收仍未闭环。新增2026-10-11审批状态修复与锁屏启动/Safari部分结果分别见 docs/tasks/approval-paused-ghost-state-20261011.json、docs/tasks/starmap-scene-safari-20261011.json。2026-10-12主线双disposable SSH/SFTP服务器internal-only Docker network，`TestSSHLiveWorkspaceAndIndependentSource` race repeat=2 PASS（25.32s/27.12s），涵盖Unicode/空格路径、独立来源、会话文件恢复、token记忆往返、远程搜索/时间线、渐进覆盖及取消清理；源码输入哈希前后一致。2026-10-12 current verify quick PASS（静态/UI/文档/i18n等检查）；full profile 其余37项PASS，Go race阶段 `aide/internal/server` 总超时15分钟（panic时刚进入TestQueueEnqueuedDispatch，不证明该单测自身挂起）；单测隔离重跑 -race PASS 3.640s；Go vet未运行。收据 .agent-state/verify-20261012T054453623127Z.log；当前Safari产品验收、向量(按用户暂缓)及全量release仍未闭环；Windows已由用户自行实测并从当前待办移除。 2026-10-13：本地索引跨进程恢复与真实双服务器 SSH/SFTP 续扫在当前源码复验通过；浏览器全流程、用户外部服务器和大库性能仍待完成。 2026-10-13：当前提交0bd4c41授权运行 `bash scripts/aide.sh test` PASS；`go test -race -count=1 -timeout=15m ./...` 与 `go vet ./...` 均通过（internal/server 430.890s、tts 3.056s），指纹2f86bc89bb035045035dc6e1c4aae6a95f24047765db60ad930157899517d5e2。agent-route full 包装器在受限沙箱内因 Docker socket 权限失败；直接授权测试命令已完成。该源码门禁不替代 Safari/SSH/模型等产品验收。  2026-10-13 HEAD cdc7d7d：agent-route quick 的40项PASS；full 包装器于 `bash scripts/aide.sh test` 失败，日志为 `Unable to find application named 'Docker'`，因此 full 收据状态FAIL，不代表race运行结果。通过本机 `aide:local` 容器直接运行等价命令 `go test -race -count=1 -timeout=15m ./... && go vet ./...`，exit 0；internal/server 454.113s，tts 3.374s。HEAD cdc7d7d；快速门禁指纹 e4ba964673b37e86c85114e7ec041e83147da71347cd7b550e851c255c9a31d4；收据 `.agent-state/verify-20261012T234114395870Z.log`。这仅闭合源码全仓 race/vet，不替代仍未完成的 Safari/真实用户SSH/真实模型/大库产品验收。",
+      "summary": "历史输入 verify full exit0、38项 PASS 仅代表当时检查，不代表当前源码本轮全量通过。真实系统Safari的18217隔离页停在登录页，尚未完成工作台验收；真实向量按用户指示暂缓；Windows已由用户实测且无需后续验收；SSH用户主机/真实模型等完整产品验收仍未闭环。新增2026-10-11审批状态修复与锁屏启动/Safari部分结果分别见 docs/tasks/approval-paused-ghost-state-20261011.json、docs/tasks/starmap-scene-safari-20261011.json。2026-10-12主线双disposable SSH/SFTP服务器internal-only Docker network，`TestSSHLiveWorkspaceAndIndependentSource` race repeat=2 PASS（25.32s/27.12s），涵盖Unicode/空格路径、独立来源、会话文件恢复、token记忆往返、远程搜索/时间线、渐进覆盖及取消清理；源码输入哈希前后一致。2026-10-12 current verify quick PASS（静态/UI/文档/i18n等检查）；full profile 其余37项PASS，Go race阶段 `aide/internal/server` 总超时15分钟（panic时刚进入TestQueueEnqueuedDispatch，不证明该单测自身挂起）；单测隔离重跑 -race PASS 3.640s；Go vet未运行。收据 .agent-state/verify-20261012T054453623127Z.log；当前Safari产品验收、向量(按用户暂缓)及全量release仍未闭环；Windows已由用户自行实测并从当前待办移除。 2026-10-13：本地索引跨进程恢复与真实双服务器 SSH/SFTP 续扫在当前源码复验通过；浏览器全流程、用户外部服务器和大库性能仍待完成。 2026-10-13：当前提交0bd4c41授权运行 `bash scripts/aide.sh test` PASS；`go test -race -count=1 -timeout=15m ./...` 与 `go vet ./...` 均通过（internal/server 430.890s、tts 3.056s），指纹2f86bc89bb035045035dc6e1c4aae6a95f24047765db60ad930157899517d5e2。agent-route full 包装器在受限沙箱内因 Docker socket 权限失败；直接授权测试命令已完成。该源码门禁不替代 Safari/SSH/模型等产品验收。  2026-10-13 HEAD cdc7d7d：agent-route quick 的40项PASS；full 包装器于 `bash scripts/aide.sh test` 失败，日志为 `Unable to find application named 'Docker'`，因此 full 收据状态FAIL，不代表race运行结果。通过本机 `aide:local` 容器直接运行等价命令 `go test -race -count=1 -timeout=15m ./... && go vet ./...`，exit 0；internal/server 454.113s，tts 3.374s。HEAD cdc7d7d；快速门禁指纹 e4ba964673b37e86c85114e7ec041e83147da71347cd7b550e851c255c9a31d4；收据 `.agent-state/verify-20261012T234114395870Z.log`。这仅闭合源码全仓 race/vet，不替代仍未完成的 Safari/真实用户SSH/真实模型/大库产品验收。 2026-10-14 最新工作树 quick 门禁 PASS（指纹111066b3322b969ca2f2c2f8d82c64d46b19ea9c87412929d094ac0f6b56c071，收据 `.agent-state/verify-20261014T004417319145Z.log`）；当前索引检查点/渐进目录容量 Go 专项 PASS 1.886s；星图透镜与恢复隔离 Node 专项 2套 PASS。以上均不代替系统Safari、大库性能、全仓race/vet与真实用户 SSH 验收。 2026-10-14 standard `aide:local` image/current-source full non-race `go test ./...` PASS (internal/server 173.717s; tts 1.530s), `go vet ./...` PASS; canonical race entrypoint was terminated by `signal: killed` in internal/server after 1.917s and remains unverified. Receipt `.agent-state/verify-current/20261014-go-full.md`.  最新串行低并发 race 复验：知识索引检查点/渐进扫描6个选定测试 PASS 14.160s；全仓 race 与审批/Markdown/成果/缓存聚焦组合均收到 signal:killed，未产生断言失败。Docker 观察到 Go runner OomKilled=true，且多项 Aide 验收服务同时运行，现象符合资源压力但具体内核限制未证明。记录 `.agent-state/verify-current/20261014-go-full.md`。 Safari native app recheck 2026-10-14: certificate interstitial is gone; `https://localhost:18547/` shows the Aide local-token login gate. Isolated container healthy, but no token entered and no editor screenshot acceptance yet; details followup82. ",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -4297,6 +4297,495 @@
       "整个服务端 race、真实向量服务按用户要求暂缓；Windows 由用户表示无需验收。"
     ],
     "release": "预算机制测试及文档已提交本地分支；当前分支含任务账本的本机验收细节，推送仍待用户对明确 GitHub 仓库与内容范围授权。"
+  },
+  "progress_checkpoint_20261014_followup67": {
+    "status": "starmap_strong_field_geodesic_source_pass_safari_pending",
+    "date": "2026-10-14",
+    "summary": "星图黑洞背景光学从弱场解析点透镜升级为 Schwarzschild 零测地线偏折积分，并以几何薄透镜方程求背景星像；仍明确标注 2D 投影与图谱参数代理，不把它说成完整时空光线追踪。",
+    "verified": [
+      "背景星点与关系线沿独立 Canvas 光学层绘制，光学像仍命中原真实索引节点；原始源点只在存在可见计算像时隐藏。",
+      "新增查表覆盖 Schwarzschild 临界捕获边界、临界附近对数增强的偏折和远场弱场连续极限；按无量纲冲量参数 b/rs 插值复用。",
+      "扩充 scripts/starmap-lensing.test.cjs：强场/远场偏折、尺度不变、像位置方程、放大率、暗影裁剪及旧弱场模型连续性通过。",
+      "星图相关六组专项 Node 回归、修改文件语法检查通过；文档检查 188 Markdown / 542 本地链接通过；git diff --check 通过。",
+      "同步 docs/architecture/knowledge-map.md、docs/en/user-guide.md 与星图内说明；新增 APS Schwarzschild 透镜方程来源。"
+    ],
+    "not_verified": [
+      "系统 Safari 实际近景验收仍未完成：当前 Safari 可见的是 18540 vdev；18545 新候选仍停在证书拦截，且 Docker socket permission denied 阻止把本次新增代码构建到候选。此前用户已授权证书长期协助，但浏览器控制规则仍要求用户接管原生证书拦截。",
+      "真实天文参数拟合、大星图持续帧率/内存压力；Windows 依用户指示排除，向量服务验收仍暂缓。"
+    ],
+    "release": "源码和文档处于本地未提交状态；系统 Safari 视觉门禁与当前构建身份未通过，本阶段未 push。此前含任务账本的远端推送被审批审查拒绝，尚待用户明确是否授权该账本内容上送。"
+  },
+  "progress_checkpoint_20261014_followup68": {
+    "status": "starmap_schwarzschild_candidate_built_safari_handoff_pending",
+    "date": "2026-10-14",
+    "summary": "Schwarzschild 强场透镜源码与专项回归完成，并已构建到独立 18545 候选；当前系统 Safari 到达该候选的原生 TLS 警告，尚未打开星图画面。",
+    "verified": [
+      "六组星图专项脚本、前端语法、文档链接和 git diff --check 通过（188 Markdown / 542 本地链接）。",
+      "隔离镜像 aide:schwarzschild-candidate-20261014，sha256:85d31012c6df3e35fc2ec4477a6c1533ad9207b97fa3663ee690e71651be736e，18545 容器运行且 0 次重启。",
+      "生产容器仍使用 aide:local 且运行；没有用候选镜像替换生产。",
+      "Safari 系统浏览器已打开精确候选 URL 并显示原生“此连接非私人连接”安全页；没有绕过。"
+    ],
+    "not_verified": [
+      "18545 星图强场近景的系统 Safari 视觉验收，等待用户接管原生证书安全页后继续。",
+      "真实天文参数拟合和大星图长时帧率/内存压力。Windows 依用户指示排除；向量验收继续暂缓。"
+    ],
+    "release": "当前改动未提交、未推送；前序含任务账本的推送曾被自动审批审查拒绝，后续保持待审状态。"
+  },
+  "progress_checkpoint_20261014_followup69": {
+    "status": "starmap_lens_duplicate_solver_removed_source_pass_runtime_and_safari_pending",
+    "date": "2026-10-14",
+    "summary": "消除 Schwarzschild 透镜连线按主像/次像重复求根的开销：每个路径采样点求解一次并复用两支像；每帧复用透镜物理尺度与屏幕标尺。更新中文架构说明并通过聚焦星图回归与文档链接检查。",
+    "verified": [
+      "node --check internal/server/web/starmap.js · PASS",
+      "node scripts/starmap-lensing.test.cjs · PASS",
+      "node scripts/starmap-gravity.test.cjs · PASS",
+      "node scripts/starmap-gates.test.cjs · PASS",
+      "python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接 / JPEG signatures / FR-01..100",
+      "git diff --check · PASS"
+    ],
+    "not_verified": [
+      "系统 Safari 当前仍显示 https://localhost:18545 的原生 TLS 安全页；浏览器验收规则仍要求用户接手，尚未看到页面本身。",
+      "Docker API socket 拒绝访问；18545 候选和实际 localhost:9999 均无法连接，不能确认最新代码构建或生产状态。",
+      "真实星域中的黑洞近景融合、大星图持续帧率、天文数据标定和多透镜压力。"
+    ],
+    "release": "本地源码及文档回归通过；本次没有提交或推送。"
+  },
+  "progress_checkpoint_20261014_followup70": {
+    "status": "system_safari_incremental_coverage_boundary_observed",
+    "date": "2026-10-14",
+    "summary": "在实际系统 Safari 的 9999 星图观察渐进同步与来源覆盖。全图同步轮次从 188 增至 194/201/202，星图保持 2152 节点、3567 关系。单独开启引用目录过滤后显示 1000 个节点；原始覆盖仍为945个文件、55个目录、333个待扫描目录任务，且明确标注“范围受限／目录容量上限”，没有误报完整。随后恢复全部星域。",
+    "verified": [
+      "Safari 当前页：https://localhost:9999/starmap.html；所有状态均由系统 Safari 可访问性树直接读取。",
+      "引用目录过滤开启时星数为1000且过滤开关为on；恢复全部星域后星数回到2152且开关为on。",
+      "连续读取间隔期间 workspace/system-docs 轮次推进，context 覆盖轮次仍为1且计数不变，说明引用来源停在条目容量边界，而不是全图轮询停止。"
+    ],
+    "not_verified": [
+      "本轮未改变实际工作区索引策略；提高条目预算后的引用目录续扫和新的覆盖轮次尚未验证。",
+      "超大引用库的长期内存/帧率，以及用户 SSH 来源端到端验收仍未完成。"
+    ],
+    "next": "检查索引设置中容量预算与优先路径在当前工作区的真实保存、冲突保护和续扫效果；修改用户实际配置前先明确容量代价与作用范围。"
+  },
+  "progress_checkpoint_20261014_followup71": {
+    "status": "source_regression_pass_candidate_healthy_safari_handoff_required",
+    "date": "2026-10-14",
+    "summary": "修复文件恢复草稿的跨标签页误复活：显式关闭恢复条目时，在同一 IndexedDB 事务中清理匹配的共享 last-writer 回退记录，并按正文与 base hash 匹配，避免同正文但不同基线的另一标签页草稿被误删。新增新浏览上下文和分叉基线专项回归。为系统浏览器验收构建隔离候选 18546；Safari 到达原生“此连接非私人连接”拦截页，页面代码尚未加载。后续通过提升权限的只读 Docker 复查确认候选一直运行且健康；此前普通沙箱的网络/Docker socket探测失败仅表示权限受限，不表示服务停止。",
+    "verified": [
+      "node scripts/continuity-isolation.test.cjs · PASS：关闭的恢复草稿不会在新浏览上下文重现；同正文、不同 base hash 的另一标签页仍保留。",
+      "node scripts/file-autosave-retry.test.cjs · PASS：自动保存重试、冲突重读与显式合并。",
+      "node scripts/file-recovery-scroll.test.cjs · PASS：恢复选择与滚动顺序。",
+      "node --check internal/server/web/continuity.js && git diff --check · PASS。",
+      "隔离 Compose 候选 aide-accept-physics-20261014 · https://localhost:18546 · 使用独立数据卷和 /private/tmp 空目录挂载；/healthz 返回 integrity=ok、status=ok。",
+      "系统 Safari 2026-10-14 · https://localhost:18546/ · 原生 TLS 安全拦截页；候选 UI 尚未打开，未记为浏览器验收通过。",
+      "提升权限的只读 docker ps：aide-accept-physics-20261014-aide-1 Up/healthy；只读 curl https://127.0.0.1:18546/healthz 返回 integrity=ok、service=aide、status=ok。"
+    ],
+    "not_verified": [
+      "Safari 手动完成本机 TLS 安全页后，候选中新打开标签页的恢复草稿跨上下文复验。",
+      "Aide 真正浏览器环境下的 IndexedDB 持久化与冲突恢复。"
+    ],
+    "next": "按浏览器安全交接规则，Safari 原生 TLS 拦截需要用户在浏览器完成后继续候选交互验收。"
+  },
+  "progress_checkpoint_20261014_followup72": {
+    "status": "partial_focused_regression_pass_browser_acceptance_pending",
+    "date": "2026-10-14",
+    "summary": "复核可选 Go 类型关系服务后，进一步修复文件恢复分支忽略时可能清掉另一标签页相同正文/基线但不同光标与滚动位置的快照：清理共享回退和当前标签页缓存时改为比对完整视图状态，新增两标签页与新标签恢复回归。Safari 仍停在 18546 本机原生 TLS 安全页，因此本轮候选 UI 与星图物理近景没有新的浏览器验收；向量检索测试继续按用户要求暂缓，Windows不纳入本轮验收。",
+    "verified": [
+      "docker run --rm -v $PWD:/src -w /src golang:1.26-bookworm go test -buildvcs=false -race ./internal/server -run 'TestKnowledgeGo(Type|Types)' -count=1 -timeout=180s · PASS · aide/internal/server · 1.179s。",
+      "node scripts/continuity-isolation.test.cjs · PASS：同正文/基线但不同选区、scrollTop/scrollLeft 的标签页快照不会因忽略旧分支而被清理，新标签恢复幸存视图。",
+      "node scripts/file-autosave-retry.test.cjs、scripts/file-recovery-scroll.test.cjs · PASS。",
+      "internal/server/web/index.html · continuity.js?v=11，确保浏览器加载本轮恢复逻辑。",
+      "docs/architecture/continuity-roadmap.md · 补充完整视图匹配规则与 VM fixture 验收边界。",
+      "node scripts/continuity-isolation.test.cjs、scripts/file-autosave-retry.test.cjs、scripts/file-recovery-scroll.test.cjs · PASS：文件恢复关闭/分支隔离、自动保存冲突与恢复滚动。",
+      "node scripts/starmap-lensing.test.cjs、scripts/starmap-gravity.test.cjs、scripts/starmap-gates.test.cjs、scripts/starmap-workspace-scene.test.cjs、scripts/starmap-path.test.cjs、scripts/starmap-timeline.test.cjs · PASS：物理透镜、图关系亮度、星门、场景恢复、路径及时间线专项回归。",
+      "node --check internal/server/web/continuity.js && node --check internal/server/web/starmap.js && node --check internal/server/web/starmap-lensing.js · PASS。",
+      "python3 scripts/check_docs.py · PASS：188 Markdown / 542 local links；两个任务 JSON 均可解析；git diff --check · PASS。",
+      "docs/tasks/knowledge-language-service-20261009.json · 记录本轮精确回归与未覆盖范围。",
+      "当前工作树状态及上一检查点的隔离候选健康回执已区分；Safari证书页不作为页面渲染证据。"
+    ],
+    "not_verified": [
+      "系统 Safari 对当前工作树在 18546 的实际渲染、操作和黑洞近景视觉验收。",
+      "当前恢复草稿修复在候选真实 IndexedDB 浏览器上下文中的跨标签页复验。",
+      "可选类型服务在第三方依赖、大型工程与 SSH 源上的实时行为。",
+      "向量混合检索真实模型测试（按用户要求暂缓）。"
+    ],
+    "next": "需要 Safari 原生安全页通过允许的本机手动交接后，加载当前隔离候选并完成星图与恢复闭环验收；随后按阶段复核文档、推送与总目标其余未关闭工作流。"
+  },
+  "progress_checkpoint_20261014_ssh_live_runner": {
+    "status": "isolated_live_ssh_pass_without_race_race_resource_limited",
+    "date": "2026-10-14",
+    "summary": "修复真实双服务器 SSH/SFTP 验收脚本默认客户端镜像缺少 Go 的问题，并加入受控 Go 并发和可选 race 开关。当前工作树在两个隔离 OpenSSH/SFTP 容器、internal-only Docker 网络和只读源码挂载中完成一次完整真实联调，覆盖远端文件/来源、Markdown 历史与嵌入资源、token 记忆、来源动作、远程搜索/时间线、渐进覆盖与进程重启游标。race 构建在远程渐进覆盖步骤被 SIGKILL；关闭 race 后完整运行 PASS。",
+    "verified": [
+      "scripts/test-ssh-workspace.sh · 默认客户端改用缓存 Go 1.26 镜像；默认 GOMAXPROCS=2、GOFLAGS=-buildvcs=false -p=1；AIDE_SSH_GOMAXPROCS/AIDE_SSH_GOFLAGS 可覆盖；AIDE_SSH_RACE=0|1 明确选择 race 模式。",
+      "bash -n scripts/test-ssh-workspace.sh · PASS。",
+      "AIDE_SSH_RACE=0 AIDE_SSH_REPEAT=1 bash scripts/test-ssh-workspace.sh · PASS；internal/server TestSSHLiveWorkspaceAndIndependentSource · 11.031s；来源 SHA-256 前后匹配，临时容器与 internal-only network 自动清理；收据 .agent-state/ssh-storage-audit/live/aide-ssh-test-20261014070556-11876.log，SHA-256 见同名 .sha256。",
+      "验收覆盖：工作区Unicode/空格路径、远端读写、SSH断线恢复/超时/权限、独立 SFTP server B、系统文档与缓存路由、Markdown 正文及嵌入资源历史/恢复、token记忆远端往返、来源文件操作、远端关键词搜索和时间线、渐进覆盖、失败扫描不覆盖检查点、全新进程恢复游标。",
+      "默认 aide:local 缺 Go 导致首次脚本在测试前退出127；切换缓存 Go 镜像后 race 运行在 remote_progressive_coverage 子项 SIGKILL；降低并发与 repeat 后 race 再现 SIGKILL。非 race 完整运行通过，故不把 SIGKILL 记成产品断言失败，也不声称当前源码 race 通过。"
+    ],
+    "not_verified": [
+      "当前环境下完整 SSH/SFTP race 测试；需降低其他容器资源占用或提高可用内存后重跑。",
+      "真实用户 SSH 主机配置的系统 Safari 端到端操作。"
+    ],
+    "next": "继续逐项闭合真实浏览器恢复/冲突验收及其他工作流；当前 macOS 浏览器证书原生拦截需按电脑控制交接规则由用户在 Safari 接手。"
+  },
+  "progress_checkpoint_20261014_followup73": {
+    "status": "starmap_lensing_solver_source_pass_system_safari_pending",
+    "date": "2026-10-14",
+    "summary": "将强场 Schwarzschild 两像求解从固定 40 次二分改为弱场位置种子、查表导数的区间保护 Newton，并保留二分回退；放大率复用同一导数。确定性多场景及星图专项回归通过，Node V8 合成求根成本显著下降；系统 Safari 视觉和整帧耗时尚未验收。",
+    "verified": [
+      "scripts/starmap-lensing.test.cjs · 新增多质量、观察/源距离及相机尺度下的位置方程残差回归。",
+      "七组星图专项脚本、两个文件 node --check、check_docs.py、git diff --check · PASS。",
+      "Node 24/V8 热表合成基准：1,000源求根中位数13.39ms/P95 13.86ms；5,000源65.31/68.67ms。此为求根耗时，不是 Safari FPS。",
+      "随机数值复核：1000组参数、2000个图像，最大源平面方程残差9.92e-11 px。"
+    ],
+    "not_verified": [
+      "18546 系统 Safari 当前仍为原生 TLS 安全拦截，工作树页面未加载。",
+      "Canvas 合成、连线采样及 Safari 真实整帧性能。",
+      "有黑洞候选图谱的近景画面与多透镜视觉表现。"
+    ],
+    "release": "代码与中英文架构/用户文档、任务证据已在工作树更新；受“后续改动用系统浏览器验证”门禁约束，Safari 核验前不推送本阶段。"
+  },
+  "progress_checkpoint_20261014_followup74": {
+    "status": "cross_tab_recovery_and_outcome_journal_regressions_pass_system_browser_blocked_by_aide_lock",
+    "date": "2026-10-14",
+    "summary": "复核跨标签文件草稿忽略后的共享回退清理：正文、基线、光标和滚动位置都匹配时才删除，避免另一标签页相同正文但位置不同的恢复现场被误清。恢复隔离与成果执行时间线分页/终态排空专项回归均通过。系统 Safari 返回 9999 工作台后，Aide 自身显示“已锁屏”，本轮不能继续操作成果舱或恢复 UI。",
+    "verified": [
+      "node scripts/continuity-isolation.test.cjs · PASS：关闭分支、跨标签共享回退、同正文不同基线保护、同正文同基线不同光标/滚动保护及新标签恢复。",
+      "node scripts/outcome-pagination.test.cjs · PASS：输入输出概览、轮次分页快照、运行中刷新、执行日志按需分页、终态最后事件排空、失败重试及过期导出保护。",
+      "node scripts/starmap-lensing.test.cjs · PASS：Schwarzschild 偏折、投影像、弱场连续性和奇点处理。",
+      "python3 -m json.tool docs/tasks/aide-continuity-knowledge-20261009.json · PASS；python3 scripts/check_docs.py · PASS：188 Markdown / 542 本地链接；git diff --check · PASS。",
+      "系统 Safari 只读状态显示 localhost:9999 工作台已加载；进入主页后工作区遮罩为“已锁屏”，成果舱和恢复 UI 的后续浏览器交互未执行。"
+    ],
+    "not_verified": [
+      "跨标签草稿修复与成果执行时间线的最新工作树 UI 行为；需要解锁 Aide 后在系统 Safari 继续验收。",
+      "完整 Go race 仍受先前 2 GiB 容器 SIGKILL 限制；真实向量模型按用户要求暂缓。"
+    ],
+    "release": "回归证据已补入台账；系统 Safari 工作台锁屏导致本阶段 UI 验收未完成，因此保留未推送修改。"
+  },
+  "progress_checkpoint_20261014_followup75": {
+    "status": "source_and_full_server_regression_pass_system_browser_pending",
+    "date": "2026-10-14",
+    "summary": "修复本地知识星图来源在首轮目录容量耗尽后长期停在部分覆盖的问题，并压缩加密本地检查点以承载更大的已索引材料集。遇到 catalog_limit 时保留原游标并在后续快照按几何级数扩大目录，最高20,000项；每批读取预算保持不变，触顶仍显示部分覆盖和待扫任务。新检查点格式 gzip 后 AES-GCM 加密，兼容读取旧格式；远端50,000项规则和格式不受影响。",
+    "verified": [
+      "internal/server/knowledge_progressive.go · 仅在前一轮明确记录 catalog_limit 后扩大 MaxEntries，不重置目录枚举位置；扩容上限复用本地检查点格式的20,000项硬界限。",
+      "internal/server/knowledge_discovery.go / knowledge_local_store.go · 共享命名硬上限，检查点继续验证条目数并拒绝超过容量的持久化数据。",
+      "TestKnowledgeProgressiveCatalogExpandsWhenInitialCapacityIsReached · PASS：40文件夹具从8项初始容量自动扩容、游标不回退，并验证40个测试 fixture 全部出现在完整目录中；允许 Aide 预置目录一并计入。",
+      "TestKnowledgeLocalCursorCompressedLargeMaterialsAndLegacyRead · PASS：约18 MiB JSON 材料写入压缩 v2 后低于16 MiB，完整读回；旧版 v1 加密检查点仍可读取。",
+      "Docker golang:1.26 · 定向 knowledge progressive/local store 回归 PASS；包含检查点重启、策略隔离和大目录累计。",
+      "Docker golang:1.26 race · 精确列举的 knowledge progressive/local 回归 PASS（22.211s）；包含新增长目录和压缩格式兼容、检查点损坏保护、跨周期续扫。组合跑法中旧 TestKnowledgeLocalRestartAPI 子进程被容器 signal: killed；从 race 选择中排除后剩余目标全部通过；该中断不记为通过或源码失败。",
+      "python3 scripts/agent-route.py verify quick · PASS，44项，指纹 b0d5cfd16bde8e2e8e48677b583919390a6a564fef24a71eeaddd94d3836bd23；覆盖星图透镜/路径/时间线、连续性/文件恢复、国际化与文档检查，不替代系统 Safari。",
+      "TestKnowledgeProgressiveGraphAccumulatesAndRemoves 与 TestKnowledgeProgressiveCatalogAccumulatesBeyondOneLargeDirectory · PASS。",
+      "docs/architecture/knowledge-map.md 与 docs/en/user-guide.md 已说明本地自动扩容上限、单批预算保持不变、压缩加密检查点大小界限和旧格式兼容、远端上限独立。",
+      "git diff --check · PASS。",
+      "Docker dev image aide:local-test-20261014 · go test -mod=vendor ./internal/server -count=1 · PASS（197.092s）；运行环境包含 Node 与 pinned Office Python 依赖。",
+      "Docker dev image aide:local-test-20261014 · go vet -mod=vendor ./internal/server · PASS。"
+    ],
+    "not_verified": [
+      "Safari 系统浏览器尚未加载本轮工作树候选页面，证书拦截必须由浏览器用户处理；因此未观察真实引用目录是否从1,000项继续增长。",
+      "本地实际最大材料集接近192 MiB时的运行时内存峰值与设备磁盘压力；测试覆盖约18 MiB明文材料集和压缩后读取，不代表上限压力测试。",
+      "硬上限触顶后的真实浏览器呈现与大星域长时帧率；这些仍属于整体验收范围。"
+    ],
+    "release": "新增扩容/压缩检查点代码、完整 internal/server 回归、go vet、专项 race、quick 门禁和文档检查均通过；Safari 对真实引用目录增长和本轮候选 UI 的验收仍待浏览器安全交接，因此本阶段未推送。"
+  },
+  "progress_checkpoint_20261014_followup76": {
+    "status": "markdown_mode_switch_css_candidate_built_system_safari_tls_handoff_pending",
+    "date": "2026-10-14",
+    "summary": "修复 Markdown 编辑器和独立文件查看器的编辑/预览分段按钮与底框高度错位。当前工作树通过快速源码门禁，并构建/启动了临时隔离候选 18547，工作区和数据卷均与用户数据隔离；系统 Safari 导航后显示 localhost 原生证书安全页，未绕过，UI 目视验收和及时 push 待用户完成浏览器安全交接后继续。",
+    "verified": [
+      "internal/server/web/macos.css：36px 外框采用 border-box，按钮在 30px 内区居中，焦点环内收；同时覆盖编辑器对话框和文件查看器。",
+      "python3 scripts/agent-route.py verify quick · PASS；包含 git diff --check、UI/JS/文档/i18n及星图/连续性专项回归。",
+      "Docker 镜像 aide:mode-align-20261014 构建成功，Go vet/build 阶段通过。",
+      "候选 18547 健康；候选服务的 macos.css 与工作树 SHA-256 完全一致：12f8c6d45537ee0f52ba73021775e318c2e43a7bc02f385308ff76931b218ad5。",
+      "Safari 已导航到 https://localhost:18547/ 并观察到原生‘此连接非私人连接’拦截。"
+    ],
+    "not_verified": [
+      "系统 Safari 对新候选的编辑器和文件查看器控件实际视觉/焦点态验收；TLS 安全页由浏览器交接规则要求用户亲自处理。",
+      "Markdown 模式切换修复尚未提交或推送，待 Safari 实际检查通过后按用户阶段性 push 指令执行。"
+    ],
+    "release": "本轮未提交、未推送、未部署至 9999；隔离候选仍运行以供继续验收。"
+  },
+  "progress_checkpoint_20261014_followup77": {
+    "date": "2026-10-14",
+    "summary": "在独立本地 Docker internal-only 双服务器环境复验 SSH/SFTP 工作区连续性。",
+    "status": "pass",
+    "scope": "AIDE_SSH_RACE=0 AIDE_SSH_REPEAT=1；非 race 模式，不代表 race 验收。",
+    "result": "scripts/test-ssh-workspace.sh 通过；TestSSHLiveWorkspaceAndIndependentSource PASS。覆盖 Unicode/空格路径、远程目录读写、权限/超时/断连恢复、独立 SFTP 来源、工作区/系统文档/缓存路由、Markdown 历史与资源、token 记忆往返、搜索/时间线、渐进索引以及取消清理。",
+    "evidence": ".agent-state/ssh-storage-audit/live/aide-ssh-test-20261014084110-43400.log",
+    "log_sha256": "7574f72882f64efde23788d9b94a22c9be2b11e1ed7dcd4bea961b8496ba35d7",
+    "input_manifest_sha256_before": "cfa11d5ca42d5dfd679f5bad98835e7ead6a77d334b8305f864b0f002ca02e34",
+    "input_manifest_sha256_after": "cfa11d5ca42d5dfd679f5bad98835e7ead6a77d334b8305f864b0f002ca02e34",
+    "remaining": "真实用户 SSH 主机、Safari 完整工作台和大库性能验收仍未完成；真实向量验收继续按用户要求暂缓。"
+  },
+  "progress_checkpoint_20261014_followup78": {
+    "date": "2026-10-14",
+    "status": "focused_regression_pass_quick_gate_pass_browser_visual_acceptance_pending",
+    "summary": "为本地索引检查点容量与目录预算扩展、星图透镜和恢复隔离补充本轮回归证据。",
+    "results": [
+      {
+        "command": "docker exec -w /src aide-budget-20261012 go test ./internal/server -run 'TestKnowledge(LocalCursorCompressedLargeMaterialsAndLegacyRead|ProgressiveCatalogExpandsWhenInitialCapacityIsReached|ProgressiveCatalogAccumulatesBeyondOneLargeDirectory|ProgressiveUpdateAPI)$' -count=1",
+        "status": "pass",
+        "duration": "1.886s",
+        "scope": "当前只读挂载工作树的 Go 专项测试；不等于全仓 race/vet。"
+      },
+      {
+        "command": "node --test scripts/starmap-lensing.test.cjs scripts/continuity-isolation.test.cjs",
+        "status": "pass",
+        "result": "2 suites passed, 0 failed; checks include optical lens solver and cross-tab recovery isolation."
+      },
+      {
+        "command": "python3 scripts/agent-route.py verify quick",
+        "status": "pass",
+        "fingerprint": "111066b3322b969ca2f2c2f8d82c64d46b19ea9c87412929d094ac0f6b56c071",
+        "head": "0e8568d8b9f4975a58e95dacba711e24464d9325",
+        "receipt": ".agent-state/verify-20261014T004417319145Z.log"
+      }
+    ],
+    "remaining": "系统 Safari 对齐视觉验收仍需处理 18547 本机证书安全页；全仓 race/vet、Safari 完整工作台/星图画面、大库性能、真实用户 SSH 和真实向量验收仍未完成；向量按用户要求暂缓。"
+  },
+  "progress_checkpoint_20261014_followup79": {
+    "date": "2026-10-14",
+    "status": "full_nonrace_go_tests_and_vet_pass_race_resource_terminated",
+    "summary": "使用仓库标准 Aide 镜像在当前只读挂载工作树上运行完整 Go 测试与 vet；非 race 全仓通过、go vet 通过，race 被系统 signal: killed 终止。",
+    "evidence": ".agent-state/verify-current/20261014-go-full.md",
+    "results": [
+      {
+        "command": "docker run --rm -e AIDE_BUILTIN_PLUGINS= -v \"$PWD:/src\" -w /src --entrypoint bash aide:local -c 'go test -count=1 -timeout=15m ./...'",
+        "status": "pass",
+        "internal_server": "173.717s",
+        "tts": "1.530s"
+      },
+      {
+        "command": "docker run --rm -e AIDE_BUILTIN_PLUGINS= -v \"$PWD:/src\" -w /src --entrypoint bash aide:local -c 'go vet ./...'",
+        "status": "pass"
+      },
+      {
+        "command": "bash scripts/aide.sh test",
+        "status": "terminated",
+        "detail": "internal/server received signal: killed after 1.917s; tts passed. Not a pass; likely resource termination, no individual failing test established."
+      }
+    ],
+    "remaining": "Race suite needs a host/resource profile where internal/server is not killed; Safari candidate visual acceptance, real user SSH, large-library performance remain open; vector model testing remains deferred by user."
+  },
+  "progress_checkpoint_20261014_followup80": {
+    "date": "2026-10-14",
+    "status": "full_nonrace_and_vet_pass_knowledge_race_subset_pass_full_race_resource_killed",
+    "summary": "追查 race 终止原因并降低并发。索引检查点与渐进扫描选定用例在 -race 下通过；全仓和其他聚焦组合仍被 signal: killed 终止。",
+    "evidence": ".agent-state/verify-current/20261014-go-full.md",
+    "results": [
+      {
+        "scope": "Docker `aide:local` 标准入口，全仓非 race `go test ./...`",
+        "status": "pass",
+        "internal_server": "173.717s",
+        "tts": "1.530s"
+      },
+      {
+        "scope": "Docker `aide:local` 标准镜像 `go vet ./...`",
+        "status": "pass"
+      },
+      {
+        "scope": "知识索引本地检查点/渐进扫描 6 个选定 Go 测试，GOMAXPROCS=1、-p=1、-parallel=1、-race",
+        "status": "pass",
+        "duration": "14.160s"
+      },
+      {
+        "scope": "仓库标准全仓 race 入口",
+        "status": "terminated",
+        "detail": "internal/server signal: killed；未得到测试断言结果。"
+      },
+      {
+        "scope": "低并发全仓 race",
+        "status": "terminated",
+        "detail": "internal/server signal: killed after 2.041s。"
+      },
+      {
+        "scope": "低并发审批规则、Markdown历史/恢复、成果证据与向量缓存组合 race",
+        "status": "terminated",
+        "detail": "signal: killed after 5.986s before test output; not a code assertion failure."
+      },
+      {
+        "scope": "Docker资源观察",
+        "status": "observed",
+        "detail": "persistent Go test container reported OomKilled=true; contemporaneous Docker stats showed many Aide acceptance/runtime containers active. Consistent with resource pressure, exact cgroup kill source not proven."
+      }
+    ],
+    "remaining": "当前系统整体 race 未通过验收，等待可用 Docker/主机内存后重跑；Safari 18547 视觉交接、真实用户 SSH、大库性能仍未闭环。真实向量模型测试按用户要求暂缓。"
+  },
+  "progress_checkpoint_20261014_followup81": {
+    "date": "2026-10-14",
+    "status": "individual_race_cases_pass_package_and_full_suite_unverified_resource_terminated",
+    "summary": "在持久 Go runner 中使用 GOMAXPROCS=1、-p=1、-parallel=1，将 race 用例拆分独立进程；审批、Markdown历史/恢复、成果舱分页/证据、向量缓存及知识索引专项分别通过。组合用例与整套 race 仍遭 signal:killed。",
+    "evidence": ".agent-state/verify-current/20261014-go-full.md",
+    "passed_cases": [
+      {
+        "name": "TestApprovalRememberExpiryFromAnswer",
+        "duration": "2.190s"
+      },
+      {
+        "name": "TestConcurrentApprovalExpiryAndRevocationUseRevisionGuard",
+        "duration": "2.085s"
+      },
+      {
+        "name": "TestMarkdownRestoreBundleAndConflict",
+        "duration": "2.174s"
+      },
+      {
+        "name": "TestMarkdownHistoryObservedAssetsAndDedup",
+        "duration": "2.073s"
+      },
+      {
+        "name": "TestTaskOutcomeEvidenceDigestAndOwnership",
+        "duration": "2.453s"
+      },
+      {
+        "name": "TestTaskOutcomePaginationSnapshot",
+        "duration": "2.009s"
+      },
+      {
+        "name": "TestKnowledgeVectorCacheConcurrent",
+        "duration": "1.105s"
+      },
+      {
+        "name": "Knowledge local cursor/progressive scan focused six cases",
+        "duration": "14.160s"
+      }
+    ],
+    "remaining": "这些单测通过不代表 internal/server 或全仓 race 通过；仍需在资源可用时完成全量race。Safari视觉验收、真实用户SSH、大库性能未闭环，真实向量模型按用户要求暂缓。"
+  },
+  "progress_checkpoint_20261014_followup82": {
+    "date": "2026-10-14",
+    "status": "individual_race_cases_pass_safari_tls_cleared_authentication_gate_pending",
+    "summary": "继续将 race 用例逐项隔离；新增审批规则过期/并发撤销、Markdown资源变化检测与整版恢复、成果证据/分页、向量缓存并发等独立测试通过。系统 Safari 已越过之前的原生证书页，现在停在 Aide 本地访问令牌登录门。",
+    "race_evidence": ".agent-state/verify-current/20261014-go-full.md",
+    "new_individual_passes": [
+      {
+        "name": "TestConcurrentApprovalExpiryAndRevocationUseRevisionGuard",
+        "duration": "2.085s"
+      },
+      {
+        "name": "TestMarkdownRestoreBundleAndConflict",
+        "duration": "2.174s"
+      },
+      {
+        "name": "TestMarkdownHistoryObservedAssetsAndDedup",
+        "duration": "2.073s"
+      },
+      {
+        "name": "TestTaskOutcomePaginationSnapshot",
+        "duration": "2.009s"
+      },
+      {
+        "name": "TestKnowledgeVectorCacheConcurrent",
+        "duration": "1.105s"
+      }
+    ],
+    "browser": {
+      "candidate": "https://localhost:18547/",
+      "container": "aide-mode-align-20261014-aide-1",
+      "health": "healthy",
+      "safari": "native Aide local token login gate; prior TLS interstitial absent",
+      "visual_mode_alignment": "pending; page not authenticated"
+    },
+    "remaining": "Full internal/server and repository race remain unverified due signal:killed/resource pressure. Safari candidate authentication and visual review pending. Real user SSH and large-library performance remain open; live vector model acceptance deferred by user."
+  },
+  "progress_checkpoint_20261014_followup83": {
+    "date": "2026-10-14",
+    "status": "long_markdown_pdf_fix_component_verified_browser_pending",
+    "summary": "修复超长 Markdown PDF 导出：逐页只克隆当前页内容、显示页进度、超时随页数延展（最多15分钟）；PNG仍保留10000 CSS像素限制。回归脚本通过。",
+    "evidence": [
+      "docs/tasks/markdown-download-export-20261009.json#long_markdown_pdf_fix_20261014",
+      "node scripts/markdown-download-export.test.js",
+      "scripts/agent-route.py verify quick: .agent-state/verify-20261014T030055940135Z.log"
+    ],
+    "browser": {
+      "status": "not_run",
+      "reason": "系统 Safari 安全策略拒绝打开本地 file:// 长文夹具；localhost:9999 当前不可达，Docker socket 访问被拒。"
+    },
+    "remaining": "需要在系统 Safari 对已鉴权 Aide 实例实际导出超长 PDF 并检查下载与分页；整体目标继续进行。"
+  },
+  "progress_checkpoint_20261014_followup84": {
+    "date": "2026-10-14",
+    "status": "long_markdown_pdf_component_pass_system_browser_and_runtime_unavailable",
+    "summary": "重新核对超长 Markdown PDF 修复后的验收环境。系统 Safari 当前是 scroll-lock 本地夹具页；9999、18217、18547、18301 均无 HTTP 响应；当前执行环境无法访问 Docker socket。快速门禁仍全通过。",
+    "evidence": [
+      ".agent-state/verify-20261014T030344642016Z.log",
+      "node scripts/markdown-download-export.test.js"
+    ],
+    "browser": {
+      "status": "not_run",
+      "reason": "Safari 没有打开已鉴权 Aide 实例；本地候选端口无 HTTP 响应，不能实际导出。"
+    },
+    "docker": "permission_denied_unix:///Users/skyelan/.docker/run/docker.sock",
+    "remaining": "超长 PDF 仍需系统 Safari 实际下载验收；按仓库工作流要求，在 UI 验收之前不发布/推送本次 UI 改动。持续推进其余可独立验证的目标条目。"
+  },
+  "progress_checkpoint_20261014_followup85": {
+    "date": "2026-10-14",
+    "status": "long_markdown_pdf_pagination_and_progress_component_verified_browser_pending",
+    "summary": "继续完善超长 PDF：提前规划全部页界，确保遇到短段落整段保留而增加页数时，进度总页数仍准确。四页边界 fixture 覆盖实际页数多于按高度估算的情况，组件回归通过。中英文文档与任务记录同步更新。",
+    "evidence": [
+      "node --check internal/server/web/markdown-export.js",
+      "node scripts/markdown-download-export.test.js",
+      "git diff --check",
+      "docs/tasks/markdown-download-export-20261009.json#long_markdown_pdf_fix_20261014"
+    ],
+    "browser": {
+      "status": "not_run",
+      "reason": "系统 Safari 当前停留在滚动锁本地夹具，Aide 候选服务端口无响应；Docker socket 权限拒绝。"
+    },
+    "remaining": "系统 Safari 实际下载、长文内存/分页效果仍需验收；整体目标继续进行。"
+  },
+  "progress_checkpoint_20261014_followup86": {
+    "date": "2026-10-14",
+    "status": "local_progressive_index_checkpoint_read_ahead_bound_fixed_focused_race_pass",
+    "summary": "发现单步索引预算大于2048且文件预算先耗尽时，读前游标可能留下超过检查点验证器上限的名称，导致持久化失败。将目录预读长度限制到2048，与加密游标校验上限一致；扩大回归覆盖2200个文件、大入口预算、小文件预算、检查点结构校验及续扫读全。",
+    "evidence": [
+      "docker run --rm --network=none -v \"$PWD:/src:ro\" -w /src --entrypoint go aide:local test ./internal/server -run ^TestKnowledgeDiscoveryReadAheadCloneAndResume$ -count=1 -timeout=5m (PASS 0.085s)",
+      "docker run --rm --network=none -v \"$PWD:/src:ro\" -w /src -e GOMAXPROCS=1 --entrypoint go aide:local test -race -p=1 -parallel=1 ./internal/server -run ^TestKnowledgeDiscoveryReadAheadCloneAndResume$ -count=1 -timeout=5m (PASS 1.112s)",
+      "Combined focused discovery plus local restart/large checkpoint race selection was killed by signal: killed after 7.788s; no assertion failure was reported. The restart-integration composition remains unverified in that run."
+    ],
+    "documentation": [
+      "docs/architecture/knowledge-map.md",
+      "docs/en/user-guide.md"
+    ],
+    "remaining": "真实大目录浏览器增长和用户 SSH 性能仍待系统 Safari/外部主机联调；全仓 race 仍有资源限制。"
+  },
+  "progress_checkpoint_20261014_followup87": {
+    "date": "2026-10-14",
+    "status": "progressive_index_checkpoint_encrypted_roundtrip_race_pass",
+    "summary": "将渐进索引预读上限回归从内存结构验证增强为 AES-GCM 加密检查点真实写入/读回，再续扫 2200 个文件；针对该测试的 Go race 通过。",
+    "evidence": [
+      "docker run --rm --network=none -v \"$PWD:/src:ro\" -w /src -e GOMAXPROCS=1 --entrypoint sh aide:local -c test -z \"$(gofmt -d internal/server/knowledge_discovery.go internal/server/knowledge_discovery_test.go)\" && go test -race -p=1 -parallel=1 ./internal/server -run ^TestKnowledgeDiscoveryReadAheadCloneAndResume$ -count=1 -timeout=5m; PASS 1.168s",
+      "python3 scripts/agent-route.py verify quick: PASS; fingerprint d67236a6d3f99c024ffb8721333a2dfd4cecd52b98cc0e876e1a33cb6cce492f; receipt .agent-state/verify-20261014T032432508452Z.log"
+    ],
+    "browser": {
+      "status": "pending",
+      "reason": "系统 Safari 当前停留在本地滚动锁夹具，未对星图大目录增长完成 UI 验收。"
+    },
+    "remaining": "系统 Safari 的实际渐进增长、保持镜头与长时性能验收仍需完成；完整总目标保持 active。"
+  },
+  "progress_checkpoint_20261014_followup88": {
+    "date": "2026-10-14",
+    "status": "markdown_pdf_stalled_render_cancellation_component_pass_restart_gate_rejected",
+    "summary": "超长 Markdown PDF 新增逐页 html2canvas 挂起时的取消竞速，覆盖编辑器关闭后任务即刻 settle；更新 markdown-export.js?v=3 避免浏览器复用旧 bundle。组件回归、JS 语法、文档与 JSON 检查通过。Safari 已在现有服务下载243行 PDF，但无法证明服务脚本对应当前源码，不能作为修复浏览器验收。",
+    "evidence": [
+      "node scripts/markdown-download-export.test.js (PASS: four-page keep-together fixture and stalled-render cancellation)",
+      "node --check internal/server/web/markdown-export.js && node --check scripts/markdown-download-export.test.js && git diff --check (PASS)",
+      "python3 scripts/check_docs.py (PASS: 188 Markdown files, 542 local links)",
+      "python3 -m json.tool docs/tasks/markdown-download-export-20261009.json (PASS)",
+      "Safari downloads list: ROS2编译工程创建步骤_kunlun_ws-3.pdf (2.9 MB); 243 lines, not a long-document stress case"
+    ],
+    "restart": "start.command was rejected by auto-review because it may interrupt an active Aide acceptance session; the earlier instruction was to restart only after that session ends. Awaiting explicit confirmation that the session is over and restart is allowed.",
+    "release": "not_run; latest source has not been verified in system Safari and is not pushed."
+  },
+  "progress_checkpoint_20261014_followup89": {
+    "date": "2026-10-14",
+    "status": "long_markdown_pdf_154_page_native_safari_renderer_and_download_pass_integrated_editor_acceptance_pending",
+    "summary": "避免重启活跃 Aide 的验收风险，改用仅服务验收页与实际导出代码/依赖的 127.0.0.1 临时静态站点，在系统 Safari 中验证真实 HTML 渲染及文件下载。1,000 节文档显示 154 页并成功下载，pdfinfo 确认 154 页 A4、120194279 字节；首屏已目视检查。已停止服务并关闭临时标签，PDF 留在 Downloads 作为可复核产物。",
+    "evidence": [
+      "docs/tasks/markdown-download-export-20261009.json#long_markdown_pdf_fix_20261014",
+      "Safari Downloads: long-markdown-1000-sections.pdf, 120.2 MB",
+      "pdfinfo /Users/skyelan/Downloads/long-markdown-1000-sections.pdf: Pages 154; A4; 120194279 bytes; Creator jsPDF 4.2.1",
+      "Safari screenshot: first-page layout and 120.2 MB downloaded file",
+      "python http.server 127.0.0.1:18700 shutdown confirmed"
+    ],
+    "remaining": "当前导出渲染器的真实系统 Safari 长文下载已通过；已鉴权 Aide 编辑器菜单入口、PDF 末页视觉检查和峰值内存尚未验证。9999 服务当前不可达；不得把此候选渲染器验收扩大成完整工作台端到端验收。"
   },
   "progress_checkpoint_20261014_followup90": {
     "date": "2026-10-14",

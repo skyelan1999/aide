@@ -22,6 +22,10 @@
     tx.onabort=()=>{guardedWrites.delete(tx);reject(tx.error||new Error('恢复存储事务中断'));};
   });}
   const key=(scope,kind,id)=>JSON.stringify([scope,kind,id]);
+  // Draft text and its base identify content; the cursor and scroll identify
+  // the view that must be recovered. Keep both when pruning shared snapshots
+  // so dismissing an older view cannot erase a newer same-text snapshot.
+  const sameFileDraft=(a,b)=>a?.text===b?.text&&a?.hash===b?.hash&&a?.start===b?.start&&a?.end===b?.end&&a?.scrollTop===b?.scrollTop&&a?.scrollLeft===b?.scrollLeft;
   // Each loaded document owns a branch. Identical restoration keeps the
   // original owner so the next edit cannot overwrite another draft.
   const fileBranch=crypto.randomUUID();
@@ -63,8 +67,13 @@
   async function dismissFileDraft(scope,id,draft){
     await fileTransaction(scope,id,(store,branches)=>{
       store.put({key:key(scope,'file-branches',id),value:branches.filter(b=>b.branch!==draft.branch),updated:Date.now()});
+      // The shared last-writer fallback is also consulted by newly opened
+      // tabs. Remove it in the same transaction when it is this exact draft,
+      // or a dismissed branch can reappear after a reload in another tab.
+      const request=store.get(key(scope,'file',id));
+      request.onsuccess=()=>{const saved=request.result?.value;if(sameFileDraft(saved,draft))store.delete(key(scope,'file',id));};
     });
-    await removeMatchingTab(scope,'file',id,draft.text);
+    await removeMatchingTab(scope,'file',id,draft.text,{draft});
   }
   async function savedFileDraft(scope,id,text){
     await fileTransaction(scope,id,(store,branches)=>{
@@ -204,19 +213,19 @@
     return write(scope,kind,id,value,active);
   }
   async function remove(scope,kind,id){if(scope)await run('readwrite',store=>store.delete(key(scope,kind,id)));}
-  async function removeMatching(scope,kind,id,text){
+  async function removeMatching(scope,kind,id,text,expected={}){
     const db=await open();return new Promise((resolve,reject)=>{
       const tx=db.transaction('records','readwrite'),store=tx.objectStore('records'),request=store.get(key(scope,kind,id));
-      request.onsuccess=()=>{if(request.result?.value?.text===text)store.delete(key(scope,kind,id));};
+      request.onsuccess=()=>{const value=request.result?.value;if(value?.text===text&&(Object.hasOwn(expected,'draft')?sameFileDraft(value,expected.draft):!Object.hasOwn(expected,'hash')||value?.hash===expected.hash))store.delete(key(scope,kind,id));};
       tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
     });
   }
-  async function removeMatchingTab(scope,kind,id,text){
+  async function removeMatchingTab(scope,kind,id,text,expected={}){
     // Clear only this browsing context's matching draft. A different tab's
     // shared fallback must survive when its content differs from the save.
     const cacheKey=tabKey(scope,kind,id),cached=readTabCache(cacheKey),parsed=cached.available&&cached.value!==null?parseTabSnapshot(cached.value):null;
-    if(parsed?.ok&&parsed.value?.text===text)writeTabCache(cacheKey,'null');
-    await removeMatching(scope,kind,id,text);
+    if(parsed?.ok&&parsed.value?.text===text&&(Object.hasOwn(expected,'draft')?sameFileDraft(parsed.value,expected.draft):!Object.hasOwn(expected,'hash')||parsed.value?.hash===expected.hash))writeTabCache(cacheKey,'null');
+    await removeMatching(scope,kind,id,text,expected);
   }
   // Management reads remain available when recovery is disabled. A read-only
   // cursor takes one transaction snapshot; no draft is evicted or rewritten.
