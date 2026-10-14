@@ -351,7 +351,6 @@ func TestKnowledgeUpdatesKeepPublishedGraphWhenRefreshFailsAndResumeCache(t *tes
 	if state.views[0] == nil || state.views[0].cache == nil {
 		t.Fatal("failed refresh did not retain its resumable scan cache")
 	}
-
 	state.views[0].checked = time.Now().Add(-knowledgeUpdateInterval)
 	fallbackCtx, cancelFallback := context.WithCancel(context.Background())
 	cancelFallback()
@@ -363,7 +362,6 @@ func TestKnowledgeUpdatesKeepPublishedGraphWhenRefreshFailsAndResumeCache(t *tes
 	if !stale || view.revision != baseline.Revision {
 		t.Fatalf("failed refresh should serve the last complete graph as stale: stale=%v revision=%s baseline=%s", stale, view.revision, baseline.Revision)
 	}
-
 	// A later successful request resumes the retained cursor and publishes the
 	// new file instead of scanning forever from the old snapshot.
 	state.views[0].checked = time.Now().Add(-knowledgeUpdateInterval)
@@ -381,6 +379,42 @@ func TestKnowledgeUpdatesKeepPublishedGraphWhenRefreshFailsAndResumeCache(t *tes
 	}
 	if !found || delta.Revision == baseline.Revision {
 		t.Fatalf("resumed refresh did not publish the changed graph: found=%v revision=%q baseline=%q", found, delta.Revision, baseline.Revision)
+	}
+}
+
+func TestKnowledgeRefreshProgressOverlayKeepsPublishedGraphImmutable(t *testing.T) {
+	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "note.txt"), []byte("note"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	rootInfo, err := os.Stat(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fileInfo, err := os.Stat(filepath.Join(root, "note.txt"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	published := knowledgeUpdateView{graph: knowledgeGraph{Sources: []knowledgeSource{{Region: "workspace", Coverage: &knowledgeCoverage{Files: 10, Directories: 4}}}}}
+	cache := newKnowledgeScanCache(nil)
+	cache.discovery["workspace\x00"+root+"\x00origin"] = &knowledgeDiscoveryView{
+		Cycle: 3,
+		Cursor: &knowledgeDiscovery{Queue: []knowledgeDiscoveryCursor{{Path: "pending"}}, Entries: map[string]knowledgeDiscoveryEntry{
+			".":        {Path: ".", Info: rootInfo},
+			"note.txt": {Path: "note.txt", Info: fileInfo},
+		}, Visited: map[string]bool{}, Reasons: map[string]bool{}},
+	}
+	fallback := published
+	overlayKnowledgeRefreshProgress(&fallback, cache)
+	coverage := fallback.graph.Sources[0].Coverage
+	if !coverage.RefreshProgress || coverage.RefreshFiles != 1 || coverage.RefreshDirectories != 1 || coverage.Pending != 1 || coverage.Cycle != 3 {
+		t.Fatalf("stale view lacks discovery progress: %+v", *coverage)
+	}
+	if coverage.Files != 10 || coverage.Directories != 4 {
+		t.Fatalf("displayed snapshot counts were changed by candidate discovery: %+v", *coverage)
+	}
+	if published.graph.Sources[0].Coverage.RefreshProgress || published.graph.Sources[0].Coverage.RefreshFiles != 0 {
+		t.Fatal("progress overlay mutated the immutable published snapshot")
 	}
 }
 

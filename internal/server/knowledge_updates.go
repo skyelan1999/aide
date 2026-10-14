@@ -119,6 +119,56 @@ func newKnowledgeScanCache(previous *knowledgeScanCache) *knowledgeScanCache {
 	return c
 }
 
+// overlayKnowledgeRefreshProgress adds counters from an incomplete candidate
+// scan to a private stale-view copy. Published graph nodes stay immutable while
+// users can observe whether the new discovery cursor is advancing.
+func overlayKnowledgeRefreshProgress(view *knowledgeUpdateView, cache *knowledgeScanCache) {
+	if view == nil || cache == nil || len(cache.discovery) == 0 {
+		return
+	}
+	type progress struct {
+		files, directories, pending, cycle int
+		refreshing                         bool
+	}
+	byRegion := make(map[string]progress)
+	for key, discovery := range cache.discovery {
+		if discovery == nil || discovery.Cursor == nil {
+			continue
+		}
+		region := strings.SplitN(key, "\x00", 2)[0]
+		p := byRegion[region]
+		p.pending += len(discovery.Cursor.Queue)
+		p.cycle = max(p.cycle, discovery.Cycle)
+		p.refreshing = p.refreshing || !discovery.Cursor.Complete
+		for _, entry := range discovery.Cursor.Entries {
+			if entry.Info != nil && entry.Info.IsDir() {
+				p.directories++
+			} else {
+				p.files++
+			}
+		}
+		byRegion[region] = p
+	}
+	if len(byRegion) == 0 {
+		return
+	}
+	view.graph.Sources = append([]knowledgeSource(nil), view.graph.Sources...)
+	for i := range view.graph.Sources {
+		source := &view.graph.Sources[i]
+		p, ok := byRegion[source.Region]
+		if !ok || source.Coverage == nil {
+			continue
+		}
+		coverage := *source.Coverage
+		coverage.RefreshProgress = p.refreshing
+		coverage.RefreshFiles = p.files
+		coverage.RefreshDirectories = p.directories
+		coverage.Pending = p.pending
+		coverage.Cycle = p.cycle
+		source.Coverage = &coverage
+	}
+}
+
 func (c *knowledgeScanCache) fail() {
 	if c != nil && c.err == nil {
 		c.err = fmt.Errorf("资料扫描期间发生读取变化；保留当前星图，稍后自动重试")
@@ -433,11 +483,14 @@ func (a *App) knowledgeAcquireUpdatesView(ctx context.Context, includeCode bool)
 		if err != nil {
 			workspace, epoch, policy := a.knowledgeUpdatesIdentity()
 			published := state.published[mode].Load()
-			<-state.gate
+			refresh := state.views[mode]
 			if published != nil && published.workspace == workspace && published.epoch == epoch && published.policy == policy {
 				fallback := published.view
+				overlayKnowledgeRefreshProgress(&fallback, refresh.cache)
+				<-state.gate
 				return &fallback, func() {}, true, nil
 			}
+			<-state.gate
 			return nil, nil, false, err
 		}
 		return view, func() { <-state.gate }, false, nil

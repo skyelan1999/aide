@@ -4925,5 +4925,34 @@
         "真实向量/embedding：用户要求暂缓，不阻塞当前进度。"
       ]
     }
+  },
+  "progress_checkpoint_20261014_followup97": {
+    "date": "2026-10-14",
+    "status": "knowledge_stale_scan_progress_ui_implemented_backend_pass_safari_blocked_by_locked_workbench",
+    "summary": "在星图继续展示上次完整快照时，增加当前刷新游标的文件/目录发现量、轮次和待扫描目录数提示；保留完整快照节点不变。通过 start.command 重建重启，Safari 原生端口当前停在 Aide 锁定/连接状态，UI 端到端验收未通过也未确认。",
+    "evidence": [
+      "internal/server/knowledge_updates.go：仅对 stale 快照副本叠加当前发现游标统计；在扫描 gate 持有期间读取缓存，避免并发读取游标。",
+      "internal/server/knowledge_sources.go 与 internal/server/web/starmap.js：加入 refreshProgress、已发现文件/目录、轮次与待扫描量，并在来源状态/说明中明确当前显示上次完整星图。",
+      "internal/server/knowledge_progressive_test.go：新增 TestKnowledgeRefreshProgressOverlayKeepsPublishedGraphImmutable，验证进度统计与发布图不可变。",
+      "Docker 普通定向回归：TestKnowledgeRefreshProgressOverlayKeepsPublishedGraphImmutable、TestKnowledgeUpdatesKeepPublishedGraphWhenRefreshFailsAndResumeCache、TestKnowledgeUpdatesServePublishedGraphWhileScanIsBusy · PASS。",
+      "Docker 单项 race detector：TestKnowledgeRefreshProgressOverlayKeepsPublishedGraphImmutable · PASS；三项合并 race 批次曾被容器 signal: killed 中止，不作为通过证据。",
+      "./start.command · PASS：重新构建 aide:local，go vet/build 成功，容器服务就绪于 https://127.0.0.1:9999。",
+      "Safari 系统浏览器：访问 localhost:9999/starmap.html 后页面显示 0 个节点和“正在连接本地星图”；Aide 页面要求连接工作台，未完成认证连接，故本次星图交互/UI验收未通过。"
+    ],
+    "not_verified": [
+      "Safari 中 Aide 解锁/连接后的星图节点加载、progress 标签变化与扫描收敛未验证。",
+      "资源受限环境中的组合 race detector 重跑未完成。"
+    ],
+    "remaining": "推送本次通过普通定向回归与构建的进度可观测性改动；后续先在系统 Safari 解锁/连接 Aide，再验证大库刷新中发现量、待扫描队列变化与完成状态。总目标其余端到端验收缺口延续前一 checkpoint。",
+    "overall_progress": {
+      "estimated_complete_percent": 80,
+      "estimated_remaining_percent": 20,
+      "estimate_kind": "粗略工程估值，非验收通过率；本轮完成一个进度可观测性改进，但星图浏览器验收受 Aide 锁定/连接状态阻挡。",
+      "acceptance_state": "12/12 工作流仍标记 in_progress；本轮后端与构建通过，Safari UI 验收未完成。",
+      "not_counted_as_agent_remaining": [
+        "Windows：用户已自行测试，免除 Agent 验收。",
+        "真实向量/embedding：用户要求暂缓，不阻塞当前进度。"
+      ]
+    }
   }
 }
