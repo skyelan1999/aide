@@ -33,7 +33,7 @@
 
 本机曾观察到引用文件在宿主带 iCloud `dataless` 占位标记，容器读取返回 EIO；正常宿主读取两个样本后，占位标记消失且容器可读。EIO 提示因此补充“云盘占位文件请先下载到本机”，不自动下载整个来源，也不把所有 I/O 失败都归因于云盘。实际正文是否可用与元数据节点能否展示分别验收，见[逐文件读取隔离任务](../tasks/starmap-file-read-isolation-20261015.json)。
 
-一个候选批次内，相同解析目录／相对路径的正文成功结果及读取错误可以供其他本地引用入口复用，命中前仍检查文件大小、纳秒修改时间和权限。来源节点的 ID、origin、路径与缺口计数各自保留，不合并来源或放宽权限。正文已有而后续入口需要代码时，仅补读代码材料；代码读取失败不阻止只需正文的入口。错误只在当前候选中复用，不写检查点，也不带到下一批，因此云盘文件在大小、时间和权限不变的情况下变为可读，下一批仍可恢复。目录发现与元数据复核仍按来源执行；这不等于整次扫描只读一次目录，也不承诺固定加速倍数。见[批内正文复用验收](../tasks/starmap-batch-material-reuse-20261015.json)。
+一个候选批次内，相同解析目录／相对路径的正文成功结果及读取错误可以供其他本地引用入口复用，命中前仍检查文件大小、纳秒修改时间和权限。来源节点的 ID、origin、路径与缺口计数各自保留，不合并来源或放宽权限。正文已有而后续入口需要代码时，仅补读代码材料；代码读取失败不阻止只需正文的入口。读取错误对象只在当前候选中复用，不作为永久失败缓存。后续有界材料队列会保存上次不可读观察及轮转位置，在该文件下次轮到时重新物理读取；即使大小、时间和权限不变，也能恢复。目录发现与元数据复核仍按来源执行；这不等于整次扫描只读一次目录，也不承诺固定加速倍数。见[批内正文复用验收](../tasks/starmap-batch-material-reuse-20261015.json)。
 
 远端索引每个知识／代码视图约30秒复用一次来源快照；同时最多3个扫描，每个来源最长4秒，远端批次最长6秒且受请求总期限限制。800文件／200目录的全图预算均分给已启用区域；来源越多，单来源配额越小，空来源的闲置配额暂不重新分配。远端单次列表输出最多256KiB／2000项，单来源图谱正文最多1MiB，代码最多16份且共用全图代码预算。来源配置、凭据、工作区切换或停用使旧来源缓存失效。连接暂不可用时可保留上次节点并标为不可用、截断，不能将缓存摘录当成刚读取的原文。部分扫描合并后丢弃超预算的孤立子节点。文件、目录不足配额不代表整库无资料。页面仍按稳定编号增量合并，不重新加载星空。
 
@@ -514,3 +514,13 @@ A separate single-iteration directory-discovery benchmark measured 19,000 files 
 A single local read failure preserves the current verified prefix and other sources. Prior nodes are restored only within the same workspace, source, region, root and origin; the source is explicitly partial/unavailable. Retention is bounded to21,200 nodes, restoring edges only up to6,500 total. Retry material is retained only for admitted files. Fresh files never inherit old symbols or relationships proved by old content; old edges require unchanged endpoint observations. Request cancellation, App shutdown and workspace identity changes still reject candidates.
 
 The corrected host probe included all composite /local submounts and read1,075 aide files in7 batches. The earlier probe omitted /local/Users and is invalid. Actual Safari launched through the exact start.command displayed171 nodes/225 relationships, with169 workspace nodes visibly rendered after filtering. Host directory opens still wait; retained observations and source diagnostics remain visible. This is not full ongoing source coverage or a fixed first-paint guarantee. No OS permission, source binding or saved workspace configuration was changed.
+
+### 2026-10-15 正文与目录分批复核
+
+本地发现目录之后，材料队列独立轮转文件与目录，按来源文件／目录配额及约 350ms 软预算推进；软预算在文件或独立目录单元之间检查，至少处理一个单元。文件单元还需检查其祖先目录，单个系统调用仍可能阻塞，不能将该预算视为请求硬超时。图重建仅使用内存观察，不再为每个已发布节点重新访问文件系统。
+
+`coverage.pending` 是待发现目录任务，`materialPending` 是待复核文件及目录条目，`readPending` 是等待取得当前材料的文件数；三者不能互换。发现周期结束后须等待材料复核排空，才开始下一周期。已确认元数据未变的材料可作为上次观察保留；这并非刚刚重新读取磁盘的保证。新文件或已变更文件没有当前材料时显示 `readState=pending`，详情不展示旧正文或代码；不支持提取正文的格式可只显示文件信息。上次读取失败显示 `unavailable`，后续公平轮转重试，不让持续失败文件阻塞队尾。
+
+材料进度、校验戳、轮转位置和受限错误类别写入加密检查点 payload v2；gzip/AES-GCM 外层格式仍为 v2，与 payload 版本分别校验。新代码可读旧 payload v1；旧镜像遇到新 payload 会拒绝并重新扫描，不删除原数据。路径、数量、类别及缺失材料一致性均需校验。
+
+[本批验收](../tasks/starmap-material-batches-20261015.json)包括 Knowledge/local-root race 与 vet、慢读配额及重启续读、真实只读引用目录冻结前缀，以及指定 `start.command` 启动后的 Safari 页面。945 节点冻结前缀的单批观察不代表完整目录或端到端延迟；真实页面仍有正文不可读缺口，不宣称全库完成。

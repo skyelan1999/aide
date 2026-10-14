@@ -53,33 +53,91 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Targeted material/reuse race7.698s+vet PASS. All Knowledge/local-root scoped race99.729s+vet PASS, including restart/cancellation strict text-retention after explicit material completion. Initial new-test compile pointer mismatch and fixture plugin contamination fixed; two old tests now wait for body validation rather than metadata-only completion, with text assertions retained. Instrumented old progressive area expected FAIL10 delayed reads vs slice and14 reads vs budget7. Frozen readonly actual945-node prefix:40 reader calls each, pending895->845->795, awaiting content860->820->780, elapsed22.85/21.95/22.77ms; prefix observation, not full source latency guarantee. Canonical build/browser and quick pending.",
+      "status": "pass",
+      "summary": "Targeted material/reuse race7.698s+vet PASS. All Knowledge/local-root scoped race99.729s+vet PASS, including restart/cancellation strict text-retention after explicit material completion. Initial new-test compile pointer mismatch and fixture plugin contamination fixed; two old tests now wait for body validation rather than metadata-only completion, with text assertions retained. Instrumented old progressive area expected FAIL10 delayed reads vs slice and14 reads vs budget7. Frozen readonly actual945-node prefix:40 reader calls each, pending895->845->795, awaiting content860->820->780, elapsed22.85/21.95/22.77ms; prefix observation, not full source latency guarantee. Canonical build/browser and quick pending. Final source quick69 PASS. Canonical exact start.command built imageabca7611229b; runtime healthy9999, source/image labels match, five config/auth files plus mounts/workspace config unchanged. Native Safari dark desktop reference10744->11141->11459->13156, selected pending README explicit metadata-only and selection retained. Restored workspace filter and closed owned star tab. No native cold-first-paint timing, material-ready transition, narrow/other-theme, forced errors or complete source acceptance claimed. Final metadata quick69 PASS; Markdown check PASS199 files593 local links.",
       "evidence": [
         ".agent-state/starmap-material-batches/targeted-race.log",
         ".agent-state/starmap-material-batches/scoped-race.log",
         ".agent-state/starmap-material-batches/frozen-race.log",
         ".agent-state/starmap-material-batches/baseline-expected-fail.log",
-        ".agent-state/starmap-material-batches/metadata-completion-assumption-failed.log"
+        ".agent-state/starmap-material-batches/metadata-completion-assumption-failed.log",
+        ".agent-state/starmap-material-batches/quick-final-source.log",
+        ".agent-state/starmap-material-batches/runtime.json",
+        ".agent-state/starmap-material-batches/ui-first.txt",
+        ".agent-state/starmap-material-batches/ui-selected.txt",
+        ".agent-state/starmap-material-batches/ui-later.jpg",
+        ".agent-state/starmap-material-batches/quick-final.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Architecture distinguishes discovery/material/body pending, soft unit budget, prior observations, fair failure retries and payload rollback; matching offline package documented.",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docker-images/README.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Only explicit owned source/docs/package metadata staged; five inherited vendor deletions preserved. Disposable verification containers removed by owners and temporary unpacked image removed; runtime config/mount/protected hashes unchanged.",
+      "evidence": [
+        ".agent-state/starmap-material-batches/runtime.json",
+        ".agent-state/starmap-material-batches/package.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Matching local development image and complete offline app/dependency bundle exported, hashes/tags/launchers/platform verified and actually docker loaded; copied to both local trees. Incremental branch push pending; no main/tag/formal release.",
+      "evidence": [
+        ".agent-state/starmap-material-batches/package.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental source push/local testing/build/offline package authorization; no formal release.",
   "rollback": "Revert bounded material changes and use earlier image; older decoder rejects new payload version and safely rescans (no cursor/data deletion). v1 remains readable.",
-  "handoff": "Implementation and scoped race/vet plus actual bounded prefix probe PASS; new cursor v2/legacy and pending UI ready. Canonical deployment/browser, docs and offline delivery pending. Original goal active; no complete source/body/OS-call timeout claim."
+  "handoff": "Scoped backend race/vet, quick69, canonical Safari progressive/pending and matching offline package verification PASS. Incremental branch push pending. Original goal active; no full release/full-source or other-device acceptance.",
+  "runtime": {
+    "runningImage": "sha256:abca7611229b2bdf89c77b4ae0357f822ba4f075dcdc01aa65f413d8a0a07f8a",
+    "image": "sha256:abca7611229b2bdf89c77b4ae0357f822ba4f075dcdc01aa65f413d8a0a07f8a",
+    "binarySHA256": "64a0a61f1a6e04292513dbead220c384fad99ed9921ce353682d652a1a9ca34e",
+    "runningPlatformManifest": "sha256:2706fa5c24478cf8575817587aa67d4ed314d3259e0f8b0c01a2219f7b63c589",
+    "sourceSHA256": "c279d10eb2020982d8287cf240199e8ef071b0054a164178928b24d72f7c741b",
+    "buildCommit": "5ffaaa3be15b53cf175e69aeed5b3a717f65da22-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 5,
+    "historicalProtectedFilesUnchanged": 1,
+    "snapshotTiming": "Five config/auth hashes captured before material-batch build; baseline image b687ad3e321d, historical mounts/workspace config/token checked separately",
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:abca7611229b2bdf89c77b4ae0357f822ba4f075dcdc01aa65f413d8a0a07f8a",
+    "sourceSHA256": "c279d10eb2020982d8287cf240199e8ef071b0054a164178928b24d72f7c741b",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-abca7611229b-offline.tar.gz",
+    "bytes": 705638919,
+    "sha256": "131ce82df4f86e6f8244cc56759a0bf6050f6728a5b47bea0ab83aef5b4b3e9b",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  },
+  "quick_receipt": {
+    "status": "pass",
+    "head": "5ffaaa3be15b53cf175e69aeed5b3a717f65da22",
+    "fingerprint": "8d6f884b0a18890eea208849203ac98f22a1d0923efe8e37bff90f7f6acc27a8",
+    "time": "20261014T215908990857Z",
+    "log": ".agent-state/verify-20261014T215908990857Z.log",
+    "commands": 69
+  }
 }

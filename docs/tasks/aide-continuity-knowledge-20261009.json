@@ -153,7 +153,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 current: fix/starmap-startup-selection, final sourceee39d65, canonical aide/start.command healthy Safari9999 imageb687ad3e321d. Initial interaction boundary now spans identity/network failures and retries; same-workspace cache/full updates preserve live view, own generation changes do not invalidate sync. Old7f source and intermediatecc81531 negative proofs retained; native old reset reproduced. Final source VM guard/race cases and retry quick69 PASS; native context/query retained6787 to7542 and restored after normal reload. App/dependency offline bundle hash/import/launchers/platform/two local copies verified;5 config/auth hashes, mounts/workspace config preserved. See followup122; final metadata quick69 PASS; branch pushf293fda PASS. Original12 streams active: large-source latency/body/cloud/host I/O and live plugin approvals/manual reconciliation remain. Windows by user, vectors deferred, receiving-device import unobserved.",
+  "handoff": "2026-10-15 current: perf/starmap-material-batches source5ffaaa3, canonical aide/start.command healthy Safari9999 imageabca7611229b. Bounded material queues, durable progress and explicit pending/unavailable details implemented. Scoped Knowledge/local-root race99.729s+vet, quick69 and frozen actual prefix PASS; native reference10744->13156 visible with selection retained, body gaps remain. Complete app/dependency offline image hashes/import/platform/launchers/two local copies verified; config/auth/mount/workspace preserved. See followup123; final metadata quick69 PASS; push pending. Original12 streams active; Windows by user, real vectors deferred, receiving-device import unobserved.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6097,6 +6097,60 @@
       "pushedCommit": "f293fda",
       "status": "pass",
       "scope": "Incremental branch source/tests/docs push only; no main/tag/formal release or image registry publication"
+    }
+  },
+  "progress_checkpoint_20261015_followup123": {
+    "status": "in_progress",
+    "task": "docs/tasks/starmap-material-batches-20261015.json",
+    "sourceCommits": [
+      "5ffaaa3"
+    ],
+    "changes": "Fair quota/time-sliced material validation with durable file/directory anchors, pending body metadata, retained observations and failure retries; discovery waits for material completion, graph reconstruction performs no per-node filesystem I/O.",
+    "verification": "Targeted material/reuse race7.698s+vet PASS. All Knowledge/local-root scoped race99.729s+vet PASS, including restart/cancellation strict text-retention after explicit material completion. Initial new-test compile pointer mismatch and fixture plugin contamination fixed; two old tests now wait for body validation rather than metadata-only completion, with text assertions retained. Instrumented old progressive area expected FAIL10 delayed reads vs slice and14 reads vs budget7. Frozen readonly actual945-node prefix:40 reader calls each, pending895->845->795, awaiting content860->820->780, elapsed22.85/21.95/22.77ms; prefix observation, not full source latency guarantee. Canonical build/browser and quick pending. Final source quick69 PASS. Canonical exact start.command built imageabca7611229b; runtime healthy9999, source/image labels match, five config/auth files plus mounts/workspace config unchanged. Native Safari dark desktop reference10744->11141->11459->13156, selected pending README explicit metadata-only and selection retained. Restored workspace filter and closed owned star tab. No native cold-first-paint timing, material-ready transition, narrow/other-theme, forced errors or complete source acceptance claimed.",
+    "runtime": {
+      "runningImage": "sha256:abca7611229b2bdf89c77b4ae0357f822ba4f075dcdc01aa65f413d8a0a07f8a",
+      "image": "sha256:abca7611229b2bdf89c77b4ae0357f822ba4f075dcdc01aa65f413d8a0a07f8a",
+      "binarySHA256": "64a0a61f1a6e04292513dbead220c384fad99ed9921ce353682d652a1a9ca34e",
+      "runningPlatformManifest": "sha256:2706fa5c24478cf8575817587aa67d4ed314d3259e0f8b0c01a2219f7b63c589",
+      "sourceSHA256": "c279d10eb2020982d8287cf240199e8ef071b0054a164178928b24d72f7c741b",
+      "buildCommit": "5ffaaa3be15b53cf175e69aeed5b3a717f65da22-dirty",
+      "port": "9999",
+      "health": "ok",
+      "mountsPreserved": true,
+      "workspaceConfigBytesPreserved": true,
+      "protectedFilesUnchanged": 5,
+      "historicalProtectedFilesUnchanged": 1,
+      "snapshotTiming": "Five config/auth hashes captured before material-batch build; baseline image b687ad3e321d, historical mounts/workspace config/token checked separately",
+      "configuredPath": "/Users/skyelan/debug",
+      "runtimeWorkspace": "/workspace",
+      "startupWarningPresent": true,
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "package": {
+      "image": "sha256:abca7611229b2bdf89c77b4ae0357f822ba4f075dcdc01aa65f413d8a0a07f8a",
+      "sourceSHA256": "c279d10eb2020982d8287cf240199e8ef071b0054a164178928b24d72f7c741b",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-abca7611229b-offline.tar.gz",
+      "bytes": 705638919,
+      "sha256": "131ce82df4f86e6f8244cc56759a0bf6050f6728a5b47bea0ab83aef5b4b3e9b",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true
+    },
+    "remaining": "Final metadata quick69 PASS; branch push pending. Original12 streams active; body gaps, host OS-call waits, full-source latency, live plugin scheduling/manual reconciliation remain. Windows by user, vectors deferred, receiving-device import unobserved.",
+    "quick_receipt": {
+      "status": "pass",
+      "head": "5ffaaa3be15b53cf175e69aeed5b3a717f65da22",
+      "fingerprint": "8d6f884b0a18890eea208849203ac98f22a1d0923efe8e37bff90f7f6acc27a8",
+      "time": "20261014T215908990857Z",
+      "log": ".agent-state/verify-20261014T215908990857Z.log",
+      "commands": 69
     }
   }
 }
