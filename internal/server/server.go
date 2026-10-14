@@ -390,26 +390,28 @@ type Message struct {
 	ToolCallID string         `json:"tool_call_id,omitempty"`
 }
 type Session struct {
-	ID                  string    `json:"id"`
-	Title               string    `json:"title"`
-	Created             string    `json:"created"`
-	Messages            []Message `json:"messages"`
-	Runs                []*Task   `json:"runs"`
-	PendingPrompt       string    `json:"pendingPrompt,omitempty"`     // 会话任务未能自动启动时保留的待发送草稿
-	Compact             string    `json:"compact,omitempty"`           // 压缩摘要（compaction）
-	CompactedMessages   int       `json:"compactedMessages,omitempty"` // 已折叠消息数
-	CompactedAt         string    `json:"compactedAt,omitempty"`
-	Pinned              bool      `json:"pinned,omitempty"`              // 置顶：列表排序优先（活动排序不会把置顶顶下去）
-	Archived            bool      `json:"archived,omitempty"`            // 归档：默认列表隐藏
-	Deleted             bool      `json:"deleted,omitempty"`             // 删除墓碑：save/加载跳过，防写盘复活
-	Updated             string    `json:"updated,omitempty"`             // 最近活动时间：完成/跟进按时间置顶
-	Checked             bool      `json:"checked,omitempty"`             // 已完成高亮（蓝点+加粗）是否已被用户查看；新完成时复位
-	ParentID            string    `json:"parentId,omitempty"`            // 子会话：指向主会话 ID
-	AutoArchived        bool      `json:"autoArchived,omitempty"`        // 子会话完成后自动归档
-	Number              int       `json:"number,omitempty"`              // 会话编号 #N：单调递增、删除不复用
-	Kind                string    `json:"kind,omitempty"`                // 空=普通会话；"assistant"=小秘系统会话（永久置顶、密码进入）
-	FollowedByAssistant bool      `json:"followedByAssistant,omitempty"` // 小秘已标记跟进：该会话有更新时提醒
-	FollowNote          string    `json:"followNote,omitempty"`          // 小秘跟进备注
+	ModelSelectionRevision uint64                 `json:"modelSelectionRevision,omitempty"`
+	ModelSelection         *SessionModelSelection `json:"modelSelection,omitempty"`
+	ID                     string                 `json:"id"`
+	Title                  string                 `json:"title"`
+	Created                string                 `json:"created"`
+	Messages               []Message              `json:"messages"`
+	Runs                   []*Task                `json:"runs"`
+	PendingPrompt          string                 `json:"pendingPrompt,omitempty"`     // 会话任务未能自动启动时保留的待发送草稿
+	Compact                string                 `json:"compact,omitempty"`           // 压缩摘要（compaction）
+	CompactedMessages      int                    `json:"compactedMessages,omitempty"` // 已折叠消息数
+	CompactedAt            string                 `json:"compactedAt,omitempty"`
+	Pinned                 bool                   `json:"pinned,omitempty"`              // 置顶：列表排序优先（活动排序不会把置顶顶下去）
+	Archived               bool                   `json:"archived,omitempty"`            // 归档：默认列表隐藏
+	Deleted                bool                   `json:"deleted,omitempty"`             // 删除墓碑：save/加载跳过，防写盘复活
+	Updated                string                 `json:"updated,omitempty"`             // 最近活动时间：完成/跟进按时间置顶
+	Checked                bool                   `json:"checked,omitempty"`             // 已完成高亮（蓝点+加粗）是否已被用户查看；新完成时复位
+	ParentID               string                 `json:"parentId,omitempty"`            // 子会话：指向主会话 ID
+	AutoArchived           bool                   `json:"autoArchived,omitempty"`        // 子会话完成后自动归档
+	Number                 int                    `json:"number,omitempty"`              // 会话编号 #N：单调递增、删除不复用
+	Kind                   string                 `json:"kind,omitempty"`                // 空=普通会话；"assistant"=小秘系统会话（永久置顶、密码进入）
+	FollowedByAssistant    bool                   `json:"followedByAssistant,omitempty"` // 小秘已标记跟进：该会话有更新时提醒
+	FollowNote             string                 `json:"followNote,omitempty"`          // 小秘跟进备注
 }
 
 // sessionHistoryView adds pagination metadata to the regular Session JSON shape.
@@ -1476,6 +1478,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("DELETE /api/sessions/{id}", a.deleteSession)
 	mux.HandleFunc("DELETE /api/sessions/archived/all", a.deleteAllArchived)
 	mux.HandleFunc("PATCH /api/sessions/{id}", a.patchSession)
+	mux.HandleFunc("PUT /api/sessions/{id}/model-selection", a.sessionModelSelectionHandler)
 	mux.HandleFunc("POST /api/sessions/{id}/runs", a.startTask)
 	mux.HandleFunc("POST /api/sessions/{id}/unlock-assistant", a.unlockAssistantSession)   // #30 小秘会话密码门
 	mux.HandleFunc("POST /api/sessions/{id}/assistant-message", a.assistantMessageHandler) // 小秘键盘消息，不经过语音环境过滤
@@ -2620,6 +2623,8 @@ func (a *App) createSession(w http.ResponseWriter, r *http.Request) {
 	s := &Session{ID: newID(), Title: in.Title, Created: now, Updated: now, Messages: []Message{}, Runs: []*Task{}}
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	choice := a.defaultModelSelectionLocked()
+	s.ModelSelection = &choice
 	a.assignSessionNumber(s) // #30：普通会话分配递增编号
 	if err := a.save(s); err != nil {
 		fail(w, 500, err)
@@ -2757,6 +2762,12 @@ func (a *App) getSession(w http.ResponseWriter, r *http.Request) {
 	if s == nil {
 		fail(w, 404, errors.New("会话不存在"))
 		return
+	}
+	if s.Kind != assistantSessionKind && s.ModelSelection == nil {
+		view := *s
+		choice := a.sessionModelSelectionLocked(s)
+		view.ModelSelection = &choice
+		s = &view
 	}
 	if s.Kind == assistantSessionKind {
 		// #30 密码门：与 voiceFilter / assistant-message 一致，GET 也必须校验解锁态。

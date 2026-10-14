@@ -1,0 +1,92 @@
+{
+  "id": "session-model-selection-20261014",
+  "request": "策略 模型 推理强度，不同回话之间是可以不同的",
+  "baseline": "14e20aaf8bca15e2809168a02793ba73fddb9cbc",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Persist strategy/profile/model/reasoning choices per ordinary session; switching sessions must restore choices without changing global defaults.",
+    "Provider URL, vault key, model capabilities and context preview follow selected session model; running tasks use immutable selection snapshots.",
+    "Retry/resume retain original task choices; parallel analysis and subagents inherit the proper task model/reasoning.",
+    "Draft choice survives new-session submission; stale save/preview responses cannot repaint a different session.",
+    "Race/API routing tests, UI component checks, docs and incremental push; scoped local8097 update with backup and smoke tests."
+  ],
+  "scope": [
+    "internal/server/session_model_selection.go",
+    "internal/server/session_model_selection_test.go",
+    "internal/server/server.go",
+    "internal/server/workflow.go",
+    "internal/server/context.go",
+    "internal/server/web/session-model-selection.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "scripts/session-model-selection.test.cjs",
+    "scripts/fixtures/render-session-model-selection.py",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/tasks/session-model-selection-20261014.json",
+    "internal/server/apikey_vault.go",
+    "scripts/test_ui_click_latency.cjs",
+    "scripts/context-meter.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Per-session selection of strategy/model/reasoning, per user; model/provider catalogs stay shared.",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/workflow.go",
+        "internal/server/context.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Persist non-secret selection on Session and snapshot on Task; resolve per-model provider/key without mutating global settings, wire previews and retry/resume. Draft UI state is separate from existing session state.",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/workflow.go",
+        "internal/server/context.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Backend session/task selection and per-model routing implemented; frontend complete and component observed. Final checks/build pending.",
+      "evidence": [
+        "internal/server/session_model_selection.go",
+        "internal/server/web/session-model-selection.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Both focused Go race profiles passed and both quick profiles passed. Native Safari actual menu/module synthetic saves: A/B choices differ and restore, reasoning low/high isolated, globals unchanged; dark/light observed. No real model calls.",
+      "evidence": [
+        ".agent-state/session-model-selection/backend.log",
+        ".agent-state/session-model-selection/quick.log",
+        "scripts/fixtures/render-session-model-selection.py"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Bilingual ownership, API/CAS, task snapshots, routing/vision, legacy behavior and local single-provider compatibility recorded.",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Preserved existing vendor deletions and unrelated local work. Fixture output ignored; no extra server or real model call.",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "Incremental backend push prepared; frontend and local8097 candidate pending final receipt.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior user: incremental tests/push and documentation; update local8097 AIDE only, preserve other services/data. No release tag/main merge.",
+  "rollback": "Revert scoped task commits and rebuild. Additive session fields do not require destructive migration; original data volume remains mounted. Backup before runtime replacement.",
+  "handoff": "No real model calls. Native Safari actual8097 interaction remains behind manual certificate handling. Canonical and local checkout have different provider architectures and are verified separately.",
+  "local_compatibility": "Local8097 checkout lacks canonical ModelProviders/ProviderID/vault routing. Its helper preserves shared legacy endpoint/key; tests validate both model IDs and effort on the shared mock endpoint. Canonical tests additionally validate distinct provider endpoints/keys. Existing local changes preserved."
+}

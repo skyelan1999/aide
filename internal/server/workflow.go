@@ -69,19 +69,20 @@ type AgentRoot struct {
 }
 
 type Task struct {
-	ReleaseReceipts          []taskReleaseReceipt  `json:"releaseReceipts,omitempty"`
-	HookRecoveryRequired     bool                  `json:"hookRecoveryRequired,omitempty"`
-	HarnessConfig            *HarnessConfig        `json:"harnessConfig,omitempty"`
-	AgentName                string                `json:"agentName,omitempty"`
-	AgentDepth               int                   `json:"agentDepth,omitempty"`
-	AgentTools               []string              `json:"agentTools,omitempty"`
-	AgentToolsSet            bool                  `json:"agentToolsSet,omitempty"`
-	ExecutionSequence        uint64                `json:"executionSequence,omitempty"`
-	ToolExecutionIntents     []ToolExecutionIntent `json:"toolExecutionIntents,omitempty"`
-	ExecutionPolicy          *ExecutionPolicy      `json:"executionPolicy,omitempty"`
-	AutoReview               bool                  `json:"autoReview,omitempty"`
-	ApprovalState            string                `json:"approvalState,omitempty"`
-	ApprovalReviews          []ApprovalReview      `json:"approvalReviews,omitempty"`
+	ModelSelection           *SessionModelSelection `json:"modelSelection,omitempty"`
+	ReleaseReceipts          []taskReleaseReceipt   `json:"releaseReceipts,omitempty"`
+	HookRecoveryRequired     bool                   `json:"hookRecoveryRequired,omitempty"`
+	HarnessConfig            *HarnessConfig         `json:"harnessConfig,omitempty"`
+	AgentName                string                 `json:"agentName,omitempty"`
+	AgentDepth               int                    `json:"agentDepth,omitempty"`
+	AgentTools               []string               `json:"agentTools,omitempty"`
+	AgentToolsSet            bool                   `json:"agentToolsSet,omitempty"`
+	ExecutionSequence        uint64                 `json:"executionSequence,omitempty"`
+	ToolExecutionIntents     []ToolExecutionIntent  `json:"toolExecutionIntents,omitempty"`
+	ExecutionPolicy          *ExecutionPolicy       `json:"executionPolicy,omitempty"`
+	AutoReview               bool                   `json:"autoReview,omitempty"`
+	ApprovalState            string                 `json:"approvalState,omitempty"`
+	ApprovalReviews          []ApprovalReview       `json:"approvalReviews,omitempty"`
 	approvalCtx              context.Context
 	approvalCancel           context.CancelFunc
 	approvalGeneration       uint64
@@ -189,16 +190,17 @@ var builtinTools = []any{
 
 func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Prompt         string       `json:"prompt"`
-		Parallelism    int          `json:"parallelism"`
-		AvatarFeedback bool         `json:"avatarFeedback,omitempty"`
-		AutoReview     bool         `json:"autoReview,omitempty"`
-		Mode           string       `json:"mode"`
-		Attachments    []Attachment `json:"attachments"`
-		Strategy       string       `json:"strategy"`
-		Profile        string       `json:"profile"`
-		Queued         bool         `json:"queued"`
-		WorkflowPhase  string       `json:"workflowPhase,omitempty"`
+		ModelSelection *SessionModelSelection `json:"modelSelection,omitempty"`
+		Prompt         string                 `json:"prompt"`
+		Parallelism    int                    `json:"parallelism"`
+		AvatarFeedback bool                   `json:"avatarFeedback,omitempty"`
+		AutoReview     bool                   `json:"autoReview,omitempty"`
+		Mode           string                 `json:"mode"`
+		Attachments    []Attachment           `json:"attachments"`
+		Strategy       string                 `json:"strategy"`
+		Profile        string                 `json:"profile"`
+		Queued         bool                   `json:"queued"`
+		WorkflowPhase  string                 `json:"workflowPhase,omitempty"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -240,11 +242,26 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 404, errors.New("会话不存在"))
 		return
 	}
-	if a.settings.Model == "" {
+	choice := a.sessionModelSelectionLocked(s)
+	if in.ModelSelection != nil {
+		choice = *in.ModelSelection
+	}
+	if in.Strategy != "" {
+		choice.Strategy = in.Strategy
+	}
+	if in.Profile != "" {
+		choice.Profile = in.Profile
+	}
+	cfg, selectionErr := a.selectionSettingsLocked(choice)
+	if selectionErr != nil {
+		fail(w, 400, selectionErr)
+		return
+	}
+	if cfg.Model == "" {
 		fail(w, 400, errors.New("请先打开模型设置，配置 API 和模型"))
 		return
 	}
-	if err := a.visionGateLocked(images); err != nil {
+	if err := visionGateForConfig(cfg, images); err != nil {
 		fail(w, 400, err)
 		return
 	}
@@ -300,7 +317,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 429, errors.New("运行中的任务过多"))
 		return
 	}
-	strategy := in.Strategy
+	strategy := choice.Strategy
 	if strategy == "" {
 		strategy = "manual"
 	}
@@ -308,12 +325,12 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("策略只支持 manual 或 auto"))
 		return
 	}
-	profileID, params, err := a.resolveProfile(strategy, in.Profile, in.Prompt, in.Mode)
+	profileID, params, err := a.resolveProfile(strategy, choice.Profile, in.Prompt, in.Mode)
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{Parallelism: in.Parallelism, ID: newID(), AutoReview: a.approvalPolicy.Enabled, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{ModelSelection: cloneModelSelection(&choice), Parallelism: in.Parallelism, ID: newID(), AutoReview: a.approvalPolicy.Enabled, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	policy, policyErr := a.loadExecutionPolicy()
 	if policyErr != nil {
 		fail(w, 400, fmt.Errorf("invalid execution policy: %w", policyErr))
@@ -337,19 +354,19 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		s.Title = string(title)
 	}
 	// R08-04：与 /api/context-preview 共用同一构建器；超限在此可解释拦截（Provider 不会收到该调用）
-	preview := a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true, policy, harness, task, in.AvatarFeedback)
+	preview := a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, cfg, params, true, policy, harness, task, in.AvatarFeedback)
 	// 阶段/自动编排提示会追加到同一首条 system 消息，必须先计入再检查窗口。
 	a.applyWorkflowContextWithPolicy(preview, in.Mode, in.WorkflowPhase, policy)
 	if preview.OverLimit {
-		compactCfg := a.settings
-		if modelKey, keyErr := a.modelAPIKeyLocked(); keyErr != nil {
+		compactCfg := cfg
+		if modelKey, keyErr := a.modelAPIKeyForConfigLocked(compactCfg); keyErr != nil {
 			fail(w, 400, keyErr)
 			return
 		} else {
 			compactCfg.APIKey = modelKey
 		}
 		sessionID := s.ID
-		modelBeforeCompact := compactCfg.Model
+		selectionBeforeCompact := a.sessionModelSelectionLocked(s)
 		a.mu.Unlock()
 		compactCtx, cancel := context.WithTimeout(r.Context(), contextCompactionTimeout)
 		compactErr := a.compactSessionForContext(compactCtx, sessionID, compactCfg, params.MaxTokens)
@@ -364,7 +381,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 			fail(w, 404, errors.New("会话在压缩期间已被删除"))
 			return
 		}
-		if a.settings.Model != modelBeforeCompact {
+		if a.sessionModelSelectionLocked(s) != selectionBeforeCompact {
 			fail(w, 409, errors.New("压缩期间模型设置已变化，请重试本次请求"))
 			return
 		}
@@ -374,7 +391,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		}
-		preview = a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, a.settings, params, true, policy, harness, task, in.AvatarFeedback)
+		preview = a.buildContextPreviewWithTask(s, in.Prompt, in.Mode, contextText, images, cfg, params, true, policy, harness, task, in.AvatarFeedback)
 		a.applyWorkflowContextWithPolicy(preview, in.Mode, in.WorkflowPhase, policy)
 		if preview.OverLimit {
 			fail(w, 400, fmt.Errorf("自动压缩后仍超出上下文预算：输入估算 %d tokens + 输出预留 %d tokens = %d，模型窗口 %d；请减少附件/提示内容或新建会话", preview.InputEstimate, preview.OutputReserve, preview.TotalEstimate, preview.ContextWindow))
@@ -401,10 +418,15 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	task.CanResume = true
 	s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt})
 	s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
+	oldSelection := s.ModelSelection
+	if s.ModelSelection == nil {
+		s.ModelSelection = cloneModelSelection(&choice)
+	}
 	s.Runs = append(s.Runs, task)
 	// 发送成功即消费待发送草稿；用户可以先编辑草稿再启动。
 	s.PendingPrompt = ""
 	if err := a.save(s); err != nil {
+		s.ModelSelection = oldSelection
 		s.Messages = s.Messages[:len(s.Messages)-1]
 		s.Runs = s.Runs[:len(s.Runs)-1]
 		s.Title = oldTitle
@@ -421,7 +443,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	runTimeout := taskExecutionTimeout(task)
 	ctx, cancel := withTaskRunBudget(context.Background(), runTimeout)
 	a.cancels[task.ID] = cancel
-	a.background(func() { a.execute(ctx, s, task, a.settings, history, firstInput, versions, params) })
+	a.background(func() { a.execute(ctx, s, task, cfg, history, firstInput, versions, params) })
 	a.broadcastSessionsChanged(s.ID) // #60：run 启动，会话状态变更
 	jsonOut(w, 202, task)
 }
@@ -442,7 +464,15 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		task.CanResume = true
 		_ = a.save(s)
 	}
-	modelKey, keyErr := a.modelAPIKeyLocked()
+	var keyErr error
+	cfg, keyErr = settingsForSelectedModel(cfg, task.Model)
+	if task.ModelSelection != nil {
+		cfg.ReasoningEffort = task.ModelSelection.ReasoningEffort
+	}
+	var modelKey string
+	if keyErr == nil {
+		modelKey, keyErr = a.modelAPIKeyForConfigLocked(cfg)
+	}
 	a.mu.Unlock()
 	cfg.APIKey = modelKey
 	if keyErr != nil {
@@ -781,7 +811,13 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("任务运行中，无法重试"))
 		return
 	}
-	if a.settings.Model == "" {
+	choice := a.taskModelSelectionLocked(orig)
+	cfg, selectionErr := a.selectionSettingsLocked(choice)
+	if selectionErr != nil {
+		fail(w, 400, selectionErr)
+		return
+	}
+	if cfg.Model == "" {
 		fail(w, 400, errors.New("请先配置模型"))
 		return
 	}
@@ -803,7 +839,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	if err := a.visionGateLocked(images); err != nil {
+	if err := visionGateForConfig(cfg, images); err != nil {
 		fail(w, 400, err)
 		return
 	}
@@ -811,7 +847,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	if avatarOverride != nil {
 		avatarEnabled = *avatarOverride
 	}
-	task := &Task{Parallelism: orig.Parallelism, ID: newID(), AutoReview: a.approvalPolicy.Enabled, WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{ModelSelection: cloneModelSelection(&choice), Parallelism: orig.Parallelism, ID: newID(), AutoReview: a.approvalPolicy.Enabled, WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: cfg.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	policy, policyErr := a.loadExecutionPolicy()
 	if policyErr != nil {
 		fail(w, 400, fmt.Errorf("invalid execution policy: %w", policyErr))
@@ -825,7 +861,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	task.HarnessConfig = &harness
-	preview := a.buildContextPreviewWithTask(s, orig.Prompt, orig.Mode, contextText, images, a.settings, params, true, policy, harness, task, avatarEnabled)
+	preview := a.buildContextPreviewWithTask(s, orig.Prompt, orig.Mode, contextText, images, cfg, params, true, policy, harness, task, avatarEnabled)
 	a.applyWorkflowContextWithPolicy(preview, orig.Mode, orig.WorkflowPhase, policy)
 	if preview.OverLimit {
 		fail(w, 400, errors.New("上下文预算超限，重试失败"))
@@ -843,7 +879,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	runTimeout := taskExecutionTimeout(task)
 	ctx, cancel := withTaskRunBudget(context.Background(), runTimeout)
 	a.cancels[task.ID] = cancel
-	a.background(func() { a.execute(ctx, s, task, a.settings, history, firstInput, versions, params) })
+	a.background(func() { a.execute(ctx, s, task, cfg, history, firstInput, versions, params) })
 	a.broadcastSessionsChanged(s.ID) // #60：run 启动，会话状态变更
 	jsonOut(w, 202, task)
 }
@@ -928,7 +964,13 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("该任务没有可恢复的检查点"))
 		return
 	}
-	if a.settings.Model == "" {
+	choice := a.taskModelSelectionLocked(orig)
+	cfg, selectionErr := a.selectionSettingsLocked(choice)
+	if selectionErr != nil {
+		fail(w, 400, selectionErr)
+		return
+	}
+	if cfg.Model == "" {
 		fail(w, 400, errors.New("请先配置模型"))
 		return
 	}
@@ -950,7 +992,7 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	if err := a.visionGateLocked(images); err != nil {
+	if err := visionGateForConfig(cfg, images); err != nil {
 		fail(w, 400, err)
 		return
 	}
@@ -1012,7 +1054,6 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 500, err)
 		return
 	}
-	cfg := a.settings
 	if resumed.Model != "" {
 		cfg.Model = resumed.Model
 	}
@@ -2312,8 +2353,9 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt, profileID string, agent
 		}
 	}
 	subTask := &Task{
-		AutoReview: a.approvalPolicy.Enabled,
-		ID:         newID(), Mode: "chat", Prompt: subPrompt, Status: "running",
+		ModelSelection: cloneModelSelection(parentTask.ModelSelection),
+		AutoReview:     a.approvalPolicy.Enabled,
+		ID:             newID(), Mode: "chat", Prompt: subPrompt, Status: "running",
 		Steer: make(chan string, 4), Created: now,
 		Steps: []Step{}, Files: []Change{}, Commands: []string{},
 		Strategy: "manual", Model: a.settings.Model,
@@ -2333,6 +2375,9 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt, profileID string, agent
 		ChildNumber:     subSess.Number,
 		ChildTitle:      subSess.Title,
 	}
+	if parentTask.Model != "" {
+		subTask.Model = parentTask.Model
+	}
 	if selected != nil {
 		subTask.AgentName = selected.Name
 		if selected.Model != "" {
@@ -2348,11 +2393,28 @@ func (a *App) spawnSubagent(parentTask *Task, subPrompt, profileID string, agent
 			}
 		}
 	}
+	childChoice := a.taskModelSelectionLocked(parentTask)
+	childChoice.Model = subTask.Model
+	childChoice.Strategy = "manual"
+	childChoice.Profile = profileID
+	if childChoice.Profile == "" {
+		childChoice.Profile = "default"
+	}
+	subTask.ModelSelection = cloneModelSelection(&childChoice)
+	subTask.Profile = childChoice.Profile
+	subSess.ModelSelection = cloneModelSelection(&childChoice)
 	subSess.Runs = append(subSess.Runs, subTask)
 	subSess.Messages = append(subSess.Messages, Message{Role: "user", Content: subPrompt})
 	// 构建上下文必须在锁内：contextTools() 读 a.settings.DisabledTools 要求调用方持锁
-	cfg := a.settings
-	cfg.Model = subTask.Model
+	cfg, modelErr := settingsForSelectedModel(a.settings, subTask.Model)
+	if modelErr != nil {
+		delete(a.sessions, subID)
+		a.mu.Unlock()
+		return "", "", modelErr
+	}
+	if subTask.ModelSelection != nil {
+		cfg.ReasoningEffort = subTask.ModelSelection.ReasoningEffort
+	}
 	preview := a.buildContextPreviewWithTask(subSess, subPrompt, "chat", "", nil, cfg, params, true, taskExecutionPolicy(subTask), harness, subTask)
 	if preview.OverLimit {
 		delete(a.sessions, subID)

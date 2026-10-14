@@ -702,15 +702,16 @@ func validWorkflowPhase(phase string) bool {
 // contextPreviewHandler POST /api/context-preview：按草稿构造预览（不产生副作用）。
 func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		SessionID      string       `json:"sessionId"`
-		Prompt         string       `json:"prompt"`
-		Mode           string       `json:"mode"`
-		Strategy       string       `json:"strategy,omitempty"`
-		Profile        string       `json:"profile,omitempty"`
-		WorkflowPhase  string       `json:"workflowPhase,omitempty"`
-		Baseline       bool         `json:"baseline,omitempty"`
-		AvatarFeedback bool         `json:"avatarFeedback,omitempty"`
-		Attachments    []Attachment `json:"attachments"`
+		ModelSelection *SessionModelSelection `json:"modelSelection,omitempty"`
+		SessionID      string                 `json:"sessionId"`
+		Prompt         string                 `json:"prompt"`
+		Mode           string                 `json:"mode"`
+		Strategy       string                 `json:"strategy,omitempty"`
+		Profile        string                 `json:"profile,omitempty"`
+		WorkflowPhase  string                 `json:"workflowPhase,omitempty"`
+		Baseline       bool                   `json:"baseline,omitempty"`
+		AvatarFeedback bool                   `json:"avatarFeedback,omitempty"`
+		Attachments    []Attachment           `json:"attachments"`
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
@@ -740,14 +741,6 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if a.settings.Model == "" {
-		fail(w, 400, errors.New("请先打开模型设置，配置 API 和模型"))
-		return
-	}
-	if err := a.visionGateLocked(images); err != nil {
-		fail(w, 400, err)
-		return
-	}
 	var s *Session
 	if in.SessionID != "" {
 		s = a.sessions[in.SessionID]
@@ -756,7 +749,30 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	strategy := in.Strategy
+	choice := a.sessionModelSelectionLocked(s)
+	if in.ModelSelection != nil {
+		choice = *in.ModelSelection
+	}
+	if in.Strategy != "" {
+		choice.Strategy = in.Strategy
+	}
+	if in.Profile != "" {
+		choice.Profile = in.Profile
+	}
+	cfg, selectionErr := a.selectionSettingsLocked(choice)
+	if selectionErr != nil {
+		fail(w, 400, selectionErr)
+		return
+	}
+	if cfg.Model == "" {
+		fail(w, 400, errors.New("请先配置会话模型"))
+		return
+	}
+	if err := visionGateForConfig(cfg, images); err != nil {
+		fail(w, 400, err)
+		return
+	}
+	strategy := choice.Strategy
 	if strategy == "" {
 		strategy = "manual"
 	}
@@ -764,13 +780,13 @@ func (a *App) contextPreviewHandler(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("策略只支持 manual 或 auto"))
 		return
 	}
-	profileID, params, err := a.resolveProfile(strategy, in.Profile, in.Prompt, in.Mode)
+	profileID, params, err := a.resolveProfile(strategy, choice.Profile, in.Prompt, in.Mode)
 	if err != nil {
 		fail(w, 400, err)
 		return
 	}
 	_ = profileID
-	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, a.settings, params, !in.Baseline, in.AvatarFeedback)
+	preview := a.buildContextPreview(s, in.Prompt, in.Mode, contextText, images, cfg, params, !in.Baseline, in.AvatarFeedback)
 	a.applyWorkflowContext(preview, in.Mode, in.WorkflowPhase)
 	jsonOut(w, 200, preview)
 }
