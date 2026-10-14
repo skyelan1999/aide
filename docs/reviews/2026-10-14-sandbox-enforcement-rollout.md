@@ -14,7 +14,7 @@
 
 两仓quick通过。隔离Linux Docker内的扩展Go race：execsandbox规范仓1.744s / 本机1.374s，server规范仓53.251s / 本机52.145s。覆盖Sandbox、只读识别、审批、Harness、命令面板、Shell取消、远端取消、暂停、会话模型和并行分析。
 
-最终补充配置持久化、设置/模型/密码兼容和子进程清理后重跑：execsandbox规范仓2.040s / 本机2.036s，server规范仓52.599s / 本机86.118s，均通过。
+最终补充配置持久化、设置/模型/密码兼容和子进程清理后重跑：execsandbox规范仓2.040s / 本机2.036s，server规范仓52.599s / 本机74.821s，均通过。
 
 ```sh
 go test -race -mod=vendor ./internal/execsandbox ./internal/server -run '^(TestSandbox|TestExecShell|TestRemoteShell|TestHarnessIndependentReviewer|TestBasicReadOnly|TestAssistedBasicCommand|TestModel|TestSettings|Test.*Password)' -count=1 -timeout=3m
