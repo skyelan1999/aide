@@ -119,9 +119,11 @@ The history entry remains available for Markdown snapshots and appears for other
 ### 分块交付与验收 / Incremental delivery and validation
 
 - 第一块：`d1eb320` 后端及中英接口文档已 push 到 `feat/file-history-git-compare`。
-- 第二块：前端组件、文本入口检测、双栏比较、中英词条、探测快路径和浏览器夹具随代码一起提交；记录精确推送结果于任务账本。
+- 第二块：`4cb9017` 前端组件、文本入口检测、双栏比较、中英词条、探测快路径和浏览器夹具已随文档一起 push。两部分均位于 `origin/feat/file-history-git-compare`；未合并 main、未发布 release、未替换8097。
 - 后端定向 race：`go test -race -mod=vendor ./internal/server -run '^(TestFileGitHistory|TestMarkdownHistory)' -count=1 -timeout=3m`，最终日志 `.agent-state/file-history-git-compare/final-backend.log`。新增本地来源、新仓库无 HEAD、继承 GIT_DIR 与缺少 Git 的边界用例；不使用全仓测试冒充真实部署。
 - 前端定向：`node scripts/git-history.test.cjs` 与 `node scripts/markdown-history-writable.test.cjs`；快速门禁包含新组件语法和回归。
 - Safari 实接口：隔离的 `http://localhost:18618/fixture`，实际 Go handler + 实际历史组件 + 临时合成仓库。观察 HEAD 与未保存正文、HEAD 与真实暂存区、两个提交选项、Markdown 快照／Git 标签切换、非 Git 文本隐藏入口、深色桌面与浅色 390px iframe 布局。此夹具不接真实用户目录、8097或模型；未进行真实 SSH、所有平台、真实8097部署验收。
 
 复现浏览器夹具：在隔离 Docker 中，仅将 `18618` 发布到 `127.0.0.1`，设置 `AIDE_GIT_HISTORY_BROWSER_FIXTURE=1` 并运行 `go test -mod=vendor ./internal/server -run '^TestFileGitHistoryBrowserFixture$' -v -count=1 -timeout=20m`。默认测试会跳过此人工夹具；`scripts/fixtures/git-history.html` 与 opt-in test 中的数据均为合成。浏览器夹具直接提供仅限测试的只读 handler，不能用于生产；生产路由仍通过原 Handler 的 Bearer/Origin 校验。
+
+验收后已停止隔离18618夹具；无需保留测试服务。新本机镜像 `aide:local` 已构建，镜像身份和运行验收缺口见 [任务账本](../tasks/file-history-git-compare-20261014.json)。

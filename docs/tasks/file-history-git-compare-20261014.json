@@ -74,14 +74,17 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "d1eb320已push；第二块待定向最终检查后push。实际8097旧容器故障未解除，部署仍等待前序Docker重启确认。",
-      "evidence": []
+      "status": "blocked",
+      "summary": "d1eb320与4cb9017均已push至origin/feat/file-history-git-compare。新镜像已构建；实际8097旧容器故障未解除，部署仍等待前序Docker重启确认，未创建release。",
+      "evidence": [
+        "git push: 7b18dc2..d1eb320",
+        "git push: d1eb320..4cb9017"
+      ]
     }
   },
   "release_authorization": "用户：还是一样，做一部分，push一部分，测一部分；注意文档的更新和编写。授权分块提交与push，不等于运行部署或release。",
   "rollback": "回退本任务前端、路由和Git历史新增文件并重建；无数据迁移，不影响用户Git提交、index或工作树。",
-  "handoff": "代码/文档/定向测试已完成；第二部分待push回执。支持本地工作区/本地目录/Skill，SSH明确不可用；不追踪重命名前路径。实际8097仍待Docker恢复后验收。",
+  "handoff": "两部分代码与文档已分别测试、提交并push。合成18618浏览器夹具验收后已停止，复现方式见文档。支持本地工作区/本地目录/Skill；SSH暂不支持，不追踪重命名前路径。实际8097仍待Docker恢复后端到端验收。",
   "milestones": [
     {
       "part": "backend + documentation",
@@ -91,7 +94,9 @@
     },
     {
       "part": "frontend + documentation + validation",
-      "push": "pending"
+      "push": "pass",
+      "commit": "4cb9017",
+      "tests": "targeted Go race / frontend / snapshot restore / Safari actual handler / quick pass"
     }
   ],
   "runtime_image": {
