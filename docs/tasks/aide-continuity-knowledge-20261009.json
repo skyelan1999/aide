@@ -5431,6 +5431,18 @@
     "scope": "full covers prior 56f48e5 inputs before daemon timeout patch; no failures",
     "release_check": ".agent-state/release-check-after-parallel-full.log: incomplete five stages, requires main and clean tree",
     "new_fix": "daemon timeout must stop admitted instance before releasing plugin FIFO; result remains uncertain, no automatic replay",
-    "verification": "canonical daemon/queue race14.110s / compatibility15.284s PASS；兼容树补齐lifecycle互斥与原有12并发Start测试；首次编译失败已闭环。"
+    "verification": "canonical daemon/queue race14.110s / compatibility15.284s PASS；兼容树补齐lifecycle互斥与原有12并发Start测试；首次编译失败已闭环。 8097健康与鉴权API、原设置/挂载/旧加密历史保留、包内外校验与docker load通过。",
+    "runtime": {
+      "image": "sha256:7f0281ea4ceb3076170f46edfc3a13c3b0f00d9c52cc7095db9b7441c1c376f0",
+      "srcsha": "ade6b5d75c33af3b48a7e45bc4e068c28d356c4659fb7c50dbbff264736c9bca",
+      "name": "aide-0.1.17.0-RC2-linux-arm64-7f0281ea4ceb-offline.tar.gz",
+      "sha256": "8e47db108507525c8964a745ce1e13963dc73f5604b9b6494096322f859af611",
+      "bytes": 561593817,
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "dockerLoadVerified": true,
+      "copiedCanonical": true
+    },
+    "next": "完整资源依赖调度、真实模型验收及十二工作流剩余项；新增daemon补丁只有定向race，旧65项full不能冒充新补丁的当前full。"
   }
 }

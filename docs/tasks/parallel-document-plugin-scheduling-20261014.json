@@ -67,7 +67,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "07e7f2a已push，8097已更新ff1553153a55；离线汇总包已导入校验并复制canonical目录；正式main发布仍受主账本门禁约束。",
+      "summary": "6152bcc已push，8097更新7f0281ea4ceb且healthy；最新离线包内外校验/docker load通过，已复制canonical。正式main发布仍受主账本门禁约束。",
       "evidence": []
     }
   },
@@ -81,21 +81,21 @@
     "daemon超时会先停止对应处理器进程；已发生的外部副作用仍待核实，停止不构成撤回。"
   ],
   "runtime": {
-    "image": "sha256:ff1553153a558f1002ffc0df84a8aa03e25921a2025c312b650f7db59c6eea39",
-    "srcsha": "0dbf6d968d15ba0531a3b2f494de78f2817a5920cce7b47cc0949039442485d0",
-    "name": "aide-0.1.17.0-RC2-linux-arm64-ff1553153a55-offline.tar.gz",
-    "sha256": "9af6d3c0115241669dfe1a8def3558732b0e8da75bce896082ea09f600765ca5",
-    "bytes": 561598573,
+    "image": "sha256:7f0281ea4ceb3076170f46edfc3a13c3b0f00d9c52cc7095db9b7441c1c376f0",
+    "srcsha": "ade6b5d75c33af3b48a7e45bc4e068c28d356c4659fb7c50dbbff264736c9bca",
+    "name": "aide-0.1.17.0-RC2-linux-arm64-7f0281ea4ceb-offline.tar.gz",
+    "sha256": "8e47db108507525c8964a745ce1e13963dc73f5604b9b6494096322f859af611",
+    "bytes": 561593817,
     "outerHashVerified": true,
     "innerHashVerified": true,
     "dockerLoadVerified": true,
     "copiedCanonical": true,
-    "commit": "07e7f2a-compat",
-    "backup": "../aideMacMini/aide/.agent-state/parallel-plugin-rollout/data-before-deploy-20261014T223158.tar",
-    "rollback": "aide:parallel-previous-20261014 (ab75ecc66e3d)",
-    "settingsPreserved": true,
-    "mountsPreserved": true,
-    "encryptedVoicePreserved": true
+    "commit": "6152bcc-compat",
+    "backup": "../aideMacMini/aide/.agent-state/plugin-daemon-timeout/data-before-deploy-20261014T225042.tar",
+    "rollback": "aide:daemon-previous-20261014 (ff1553153a55)",
+    "settingsAndMountsPreserved": true,
+    "encryptedVoicePreserved": true,
+    "authenticatedSmoke": true
   },
   "dependency_scheduler_design": {
     "status": "design_only",
@@ -117,7 +117,7 @@
     }
   },
   "daemon_timeout_fix": {
-    "status": "implemented",
+    "status": "deployed_local",
     "behavior": "stop admitted daemon instance before timeout returns and plugin FIFO can release; leave external result uncertain, no automatic replay",
     "tests": [
       "canonical real Node daemon/race14.110s PASS",
@@ -126,6 +126,23 @@
     ],
     "productionTimeoutSeconds": 310,
     "scope": "in-process daemon handler lifetime; not external side-effect rollback or full dependency scheduler",
-    "compatibility": "Older 8097 tree lacked lifecycleMu; ported canonical Start/Stop serialization and existing concurrent-start test before acceptance."
+    "compatibility": "Older 8097 tree lacked lifecycleMu; ported canonical Start/Stop serialization and existing concurrent-start test before acceptance.",
+    "runtime": {
+      "image": "sha256:7f0281ea4ceb3076170f46edfc3a13c3b0f00d9c52cc7095db9b7441c1c376f0",
+      "srcsha": "ade6b5d75c33af3b48a7e45bc4e068c28d356c4659fb7c50dbbff264736c9bca",
+      "name": "aide-0.1.17.0-RC2-linux-arm64-7f0281ea4ceb-offline.tar.gz",
+      "sha256": "8e47db108507525c8964a745ce1e13963dc73f5604b9b6494096322f859af611",
+      "bytes": 561593817,
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "dockerLoadVerified": true,
+      "copiedCanonical": true,
+      "commit": "6152bcc-compat",
+      "backup": "../aideMacMini/aide/.agent-state/plugin-daemon-timeout/data-before-deploy-20261014T225042.tar",
+      "rollback": "aide:daemon-previous-20261014 (ff1553153a55)",
+      "settingsAndMountsPreserved": true,
+      "encryptedVoicePreserved": true,
+      "authenticatedSmoke": true
+    }
   }
 }
