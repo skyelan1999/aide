@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 current: feat/plugin-recovery-continuation source3248686 (with e446ea9/4994835), exact start.command healthy9999 imageb5c31b79e1a7. Guarded explicit continue-after-review implemented; old calls/effects remain unknown, new work current policy+task hooks. Scoped race/vet, native local-model review/409/continue/outcome privacy and settings restore PASS; final guards16.065s PASS. Full71/package/source push pending. Original12 streams active; real provider/plugin ROS2/concurrency/effects, source/cloud/OS-call latency and remote acceptance remain. Windows by user; real vectors deferred; receiving-side import unobserved.",
+  "handoff": "2026-10-15 current: feat/plugin-recovery-continuation source3248686 (with e446ea9/4994835), exact start.command healthy9999 imageb5c31b79e1a7. Guarded explicit continue-after-review implemented; old calls/effects remain unknown, new work current policy+task hooks. Scoped race/vet, native local-model review/409/continue/outcome privacy and settings restore PASS; final guards16.065s PASS. Package verify/import and branch source/docs75a58a2 PASS; frozen quick69 PASS; full71 runner live exec59985/container aide-verify-dbc7e1dddb69 (see followup125). Original12 streams active; real provider/plugin ROS2/concurrency/effects, source/cloud/OS-call latency and remote acceptance remain. Windows by user; real vectors deferred; receiving-side import unobserved.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6237,7 +6237,7 @@
       "startupWarningPresent": true,
       "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
     },
-    "remaining": "Frozen full71 gate, package verification and branch push pending. Not real provider/ROS2/plugin adoption or external effect verification; original12 streams continue, Windows user-owned, vectors deferred, receiving-device import unobserved.",
+    "remaining": "Frozen quick69 and package verification/import PASS; branch source/docs75a58a2 pushed. Full71 live exec59985/container aide-verify-dbc7e1dddb69; await same owner receipt, revalidate liveness first. Real provider/ROS2/plugin effects and original12 acceptance remain; Windows user-owned, real vectors deferred, receiving-device import unobserved.",
     "package": {
       "image": "sha256:b5c31b79e1a746d169a0934d06423017ce98e6afa66ccae7e26407fc07afcec7",
       "sourceSHA256": "68d335bd58c896d9caa72489d86a01d586bbec9a889cb4841681a9ded1b2ccb5",
@@ -6254,6 +6254,27 @@
       "dockerLoadVerified": true,
       "hostLaunchersMatch": true,
       "copiedBothTrees": true
+    },
+    "quick_receipt": {
+      "status": "pass",
+      "head": "75a58a2f324120879b293391ab7ca4c8bc4a0e42",
+      "fingerprint": "b0498de97843f51c93aab4defe7046c4c258af8db2ada3a3ee245d5f7c4c5b32",
+      "time": "20261014T225750772775Z",
+      "log": ".agent-state/verify-20261014T225750772775Z.log",
+      "commands": 69
+    },
+    "source_push": {
+      "branch": "feat/plugin-recovery-continuation",
+      "pushedCommit": "75a58a2",
+      "status": "pass"
+    },
+    "active_full": {
+      "execSessionId": 59985,
+      "container": "aide-verify-dbc7e1dddb69",
+      "log": ".agent-state/verify-20261014T225553611954Z.log",
+      "expectedFingerprint": "b0498de97843f51c93aab4defe7046c4c258af8db2ada3a3ee245d5f7c4c5b32",
+      "status": "running",
+      "lastVerified": "Docker top showed live timeout/bash/go/server.test at elapsed03:03; revalidate handle/container before waiting, file alone is not liveness evidence"
     }
   }
 }
