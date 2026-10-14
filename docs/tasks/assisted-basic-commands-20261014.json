@@ -62,7 +62,8 @@
       "status": "pass",
       "summary": "Execution-policy docs describe examples, syntax subset, retry limits, audit/usage behavior and fail-closed boundaries.",
       "evidence": [
-        "docs/architecture/execution-policy.md"
+        "docs/architecture/execution-policy.md",
+        "docs/reviews/2026-10-14-assisted-basic-commands-rollout.md"
       ]
     },
     "cleanup": {
@@ -71,9 +72,11 @@
       "evidence": []
     },
     "release": {
-      "status": "in_progress",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "a2d7cbf and 635a082 pushed; local8097 updated with verified backup, prior image retained, health/auth APIs/static-byte smoke passed. Approval mode preserved as disabled; no Release/main merge or real model calls.",
+      "evidence": [
+        "docs/reviews/2026-10-14-assisted-basic-commands-rollout.md"
+      ]
     }
   },
   "release_authorization": "Prior user authorized incremental push/tests/docs and local8097 AIDE-only update; no Release/main merge.",
