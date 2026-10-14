@@ -5169,6 +5169,7 @@ function refreshStrategyUI() {
   $('strategy-label').textContent = label;
   $('strategy-label').title = label + ' · ' + t('当前会话独立配置') + ' · ' + t('推理强度') + ': ' + choice.reasoningEffort;
   const menu = $('strategy-menu');
+  const parallelPicker = $('chat-parallelism')?.closest('.parallel-picker');
   menu.replaceChildren();
   // 左栏：策略；右栏：模型（各自独立滚动，互不挤压）
   const left = el('div', 'strategy-menu-col');
@@ -5204,6 +5205,7 @@ function refreshStrategyUI() {
   for (const [val, name, desc] of [['auto', t("自动"), t("按任务自动选择")], ['off', t("关闭"), t("不启用推理")], ['low', t("低"), t("快速响应")], ['medium', t("中"), t("均衡")], ['high', t("高"), t("深度推理")]]) {
     reasoningCol.append(strategyMenuOption('reasoning', val, name, desc, curEffort === val));
   }
+  if (parallelPicker) reasoningCol.append(parallelPicker);
   menu.append(left, right, reasoningCol);
   menu.classList.toggle('with-approval', !assistantMode);
   if (!assistantMode) {

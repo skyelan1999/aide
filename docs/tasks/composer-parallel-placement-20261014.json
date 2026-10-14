@@ -1,0 +1,69 @@
+{
+  "id": "composer-parallel-placement-20261014",
+  "request": "把1x到5x的选择放到思考强度下面去可选，不要所有的配置都在外面挤着",
+  "baseline": "66ceeb0d38f4d63cd4299ee40aed78c5a6b9a0d1",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "1x-5x选择位于会话策略面板的推理强度选项下方，输入框外栏不再显示该控件",
+    "原选择值、选择事件与持久化保留；重建菜单或切换会话后控件仍可用",
+    "普通对话可选1x-5x，工作流/小秘保持原禁用规则",
+    "实际8097浏览器验证布局和选择；源码push与离线镜像包更新分别记录"
+  ],
+  "scope": [
+    "internal/server/web/index.html",
+    "internal/server/web/app.js",
+    "internal/server/web/conversation.css",
+    "docs/tasks",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确要求倍数收进思考强度下方，不继续挤在外栏。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "复用现有select节点及监听，将静态控件移入策略菜单；每次菜单重建前保留节点引用，追加到推理强度列下方，不改变倍数存储或提交。",
+      "evidence": [
+        "internal/server/web/parallel-chat.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "1x-5x静态控件移入策略菜单；重建菜单前保存原节点，再置于推理强度选项后，保留监听/选择/存储。增加菜单内简洁对齐样式和资源缓存版本。",
+      "evidence": [
+        "internal/server/web/index.html",
+        "internal/server/web/app.js",
+        "internal/server/web/conversation.css"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "JS语法、parallel-chat及session-model-selection回归、diff检查通过；实际8097浏览器待候选更新后验收。正在运行的全量验证因用户新增UI需求更改输入，已停止该一次性验证容器，未停止生产或其他服务。",
+      "evidence": [
+        "node scripts/parallel-chat.test.cjs",
+        "node scripts/session-model-selection.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户分批实现/测试/push和更新离线镜像包的授权，仅8097兼容候选，不正式Release。",
+  "rollback": "现运行9fa963d2209b，保留镜像与部署前数据备份。",
+  "handoff": "下一步提交并部署兼容候选，在真实Safari验收1x-5x位于推理强度下方并保留选择，之后更新离线包。"
+}
