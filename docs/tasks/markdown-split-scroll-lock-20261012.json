@@ -75,7 +75,23 @@
       "evidence": []
     }
   },
+  "followup_20261014_source_line_alignment": {
+    "status": "source_and_system_safari_bidirectional_pass",
+    "date": "2026-10-14",
+    "summary": "Follow-up for a later-reported alignment issue: synchronization maps source line positions to rendered Markdown blocks and preserves proportional progress within a multi-line block in both directions. System Safari confirmed both directions on the saved ROS 2 Markdown document without editing its content.",
+    "evidence": [
+      "scripts/markdown-scroll-sync.test.cjs · PASS: token-to-block line anchors, bidirectional within-block progress, and reflowed preview geometry.",
+      "scripts/markdown-live-preview.test.cjs · PASS.",
+      "node --check internal/server/web/app.js · PASS; git diff --check · PASS.",
+      "node --test scripts/starmap-*.test.cjs · 10 suites PASS; python3 scripts/check_docs.py · 188 Markdown / 542 links PASS.",
+      "start.command rebuilt and restarted aide:local; system Safari opened the authenticated workbench, entered two-column Markdown editing, and confirmed the source pane and preview followed each other in both directions on doc/ROS2编译工程创建步骤_kunlun_ws.md."
+    ],
+    "not_verified": [
+      "Interactive Safari retest of synchronization after a live edit triggers preview reflow; reflow geometry is covered by the source regression."
+    ],
+    "release": "Source regression and Safari bidirectional verification pass; reflow-after-edit remains an automated geometry regression rather than a manually exercised scenario."
+  },
   "release_authorization": "",
   "rollback": "仅回退本任务在 internal/server/web/app.js、index.html、style.css、locales/en.js 和本任务账本中的变更；不要整体恢复工作树。",
-  "handoff": "实现和验收完成。系统 Safari 已在当前工作树启动的本机候选中验证按钮状态、双向同步与解锁后的独立滚动。未提交、未推送。"
+  "handoff": "基础滚动锁与 2026-10-14 源行/块内阅读进度对齐均已通过专项源码回归；系统 Safari 已在真实工作区 Markdown 文档上复核编辑器与预览双向跟随，正文未改动。预览因编辑重排后的 Safari 场景尚未手动触发。"
 }

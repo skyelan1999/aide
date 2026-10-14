@@ -2652,21 +2652,24 @@ const splitScrollExpected = new WeakMap();
 const splitScrollLast = { editor: 'editor', fileView: 'file-view-editor' };
 function markdownSourceAnchors(source, host) {
   if (!window.marked?.lexer || !host) return [];
+  source = String(source || '');
   const root = host.querySelector('.md-reader-content') || host;
   const blocks = [...root.children];
-  let offset = 0, blockIndex = 0;
+  let lineCursor = 0, blockIndex = 0;
   const anchors = [];
-  for (const token of window.marked.lexer(String(source || ''), {gfm:true})) {
+  for (const token of window.marked.lexer(source, {gfm:true})) {
     const raw = typeof token.raw === 'string' ? token.raw : '';
-    const line = String(source || '').slice(0, offset).split('\n').length;
+    const lineCount = (raw.match(/\n/g) || []).length;
+    const startLine = lineCursor;
+    const endLine = Math.max(startLine + 1, startLine + lineCount);
     // Marked emits one top-level token per rendered block; skip tokens that
     // intentionally have no rendered block (blank lines/definitions).
     if (raw.trim() && blockIndex < blocks.length) {
       const node = blocks[blockIndex++];
-      node.dataset.sourceLine = String(line);
-      anchors.push({line, node});
+      node.dataset.sourceLine = String(startLine + 1);
+      anchors.push({startLine, endLine, node});
     }
-    offset += raw.length;
+    lineCursor += lineCount;
   }
   return anchors;
 }
@@ -2682,19 +2685,34 @@ function syncSplitScroll(source, target, key) {
   if (source === editor && anchors.length) {
     const style = getComputedStyle(editor);
     const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
-    const firstVisibleLine = Math.max(1, Math.floor(editor.scrollTop / lineHeight) + 1);
+    const sourceLine = Math.max(0, editor.scrollTop / lineHeight);
     let anchor = anchors[0];
-    for (const candidate of anchors) { if (candidate.line > firstVisibleLine) break; anchor = candidate; }
+    for (const candidate of anchors) {
+      if (candidate.startLine > sourceLine) break;
+      anchor = candidate;
+    }
+    const sourceSpan = Math.max(1, anchor.endLine - anchor.startLine);
+    const progress = Math.max(0, Math.min(1, (sourceLine - anchor.startLine) / sourceSpan));
     const hostRect = preview.getBoundingClientRect(), nodeRect = anchor.node.getBoundingClientRect();
     const pad = parseFloat(getComputedStyle(preview).paddingTop) || 0;
-    next = Math.max(0, preview.scrollTop + nodeRect.top - hostRect.top - preview.clientTop - pad);
+    const nodeTop = preview.scrollTop + nodeRect.top - hostRect.top - preview.clientTop;
+    next = Math.max(0, nodeTop + progress * nodeRect.height - pad);
   } else if (source === preview && anchors.length) {
     const pad = parseFloat(getComputedStyle(preview).paddingTop) || 0;
-    const top = preview.getBoundingClientRect().top + preview.clientTop + pad;
-    const visible = anchors.find(anchor => anchor.node.getBoundingClientRect().bottom >= top) || anchors[anchors.length - 1];
+    const viewportTop = preview.scrollTop + pad;
+    const hostRect = preview.getBoundingClientRect();
+    const visible = anchors.find(anchor => {
+      const rect = anchor.node.getBoundingClientRect();
+      const nodeTop = preview.scrollTop + rect.top - hostRect.top - preview.clientTop;
+      return nodeTop + rect.height >= viewportTop;
+    }) || anchors[anchors.length - 1];
+    const rect = visible.node.getBoundingClientRect();
+    const nodeTop = preview.scrollTop + rect.top - hostRect.top - preview.clientTop;
+    const progress = rect.height > 0 ? Math.max(0, Math.min(1, (viewportTop - nodeTop) / rect.height)) : 0;
+    const sourceLine = visible.startLine + progress * Math.max(1, visible.endLine - visible.startLine);
     const style = getComputedStyle(editor);
     const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.5;
-    next = Math.max(0, (visible.line - 1) * lineHeight);
+    next = Math.max(0, sourceLine * lineHeight);
   } else {
     const sourceRange = Math.max(0, source.scrollHeight - source.clientHeight);
     const targetRange = Math.max(0, target.scrollHeight - target.clientHeight);
