@@ -1,0 +1,76 @@
+{
+  "id": "reasoning-default-settings-20261014",
+  "request": "继续主任务优先复验修复推理强度不可写：本机8097缺默认控件，增加独立保存并验证持久化和会话配置隔离",
+  "baseline": "4d085f8f13954e23abf189705652e5639bf914b9",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "8097模型设置显示可选的默认推理强度，支持单独保存且不要求已配置模型",
+    "high/medium/low/off/auto保存、GET读回、进程重新载入后保留；非法值拒绝",
+    "独立保存不提交或覆盖未保存模型/密钥草稿；既有会话选择保持",
+    "真实Safari组件与定向Go/Node回归；主账本同步真实验收状态和未完成项",
+    "分批push并同步更新本机Docker和离线镜像包",
+    "启动重写plugins/surface.json后源码指纹仍匹配镜像，离线导出成功；插件真实代码变化必须改变指纹"
+  ],
+  "scope": [
+    "internal/server/web/reasoning-settings.js、app.js、index.html、locales/en.js",
+    "internal/server/server.go 与 models_test.go",
+    "scripts/reasoning-settings.test.cjs 与 docs/agent/router.json",
+    "docs/tasks、docs/reviews、主账本与docker-images校验清单",
+    "scripts/aide.sh、.dockerignore、scripts/test_source_fingerprint.py",
+    "internal/server/ssh_live_test.go 的沙箱策略夹具对齐"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "优先主目标推理强度写入复验：实际8097缺默认控件，源码全模型保存要求model。附件旧结论不代替当前验收。",
+      "evidence": [
+        "实际运行仓app.js openSettings/settings-form；模型设置HTML无model-reasoning-effort"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "添加独立保存按钮，PUT仅reasoningEffort并读回；总模型保存保留原逻辑。普通会话独立选择不被改写。共享小组件适配实际旧版模型表单，不替换其认证/来源流程。",
+      "evidence": [
+        "settings handler和session-model-selection当前链路"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "643d73c独立保存组件/控件、非法值拒绝；运行仓补齐省略Model/ActiveModel字段保留。单独保存不提交模型或密钥草稿。",
+      "evidence": [
+        "643d73c",
+        "internal/server/web/reasoning-settings.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "规范仓race13.231s、运行仓17.379s、Node与真实Safari8097默认推理保存/重启刷新/恢复auto通过；新SSH17.639s通过，完整门禁运行中。",
+      "evidence": [
+        ".agent-state/reasoning-default-settings/go-final.log",
+        "scripts/reasoning-settings.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "真实Safari复现/修复/原值恢复、镜像指纹根因、SSH夹具及主目标12工作流边界已记录。",
+      "evidence": [
+        "docs/reviews/2026-10-14-reasoning-default-settings-rollout.md",
+        "docs/architecture.md",
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户既有分块push/测试/文档授权，明确沿用镜像包导入；8097限定AIDE替换。主目标Release授权仍以12条工作流及门禁闭环为条件。",
+  "rollback": "aide:reasoning-previous-20261014，只替换AIDE；卷备份及哈希见收据，禁止自动覆盖最新用户数据。",
+  "handoff": "推理优先项真实Safari已通过并恢复auto；页面随后自动锁屏，需用户手动解锁后继续其他UI验收。Windows用户负责、真实向量暂缓。主目标仍active，最终full正在运行。"
+}

@@ -379,3 +379,8 @@ Pause lives beside stop in the composer, with pending/checkpoint gating and capt
 `Step.content` 继续保留最终回答，兼容旧会话和模型历史。页面按段追加，末段与最终正文完全相同时只显示一次；复制、朗读及反馈使用完整可见正文。合并过期 GET 时按相同会话、任务和步骤的段落 ID 对账，不删除 SSE 已确认段落；关闭的流不能写入新会话。JSON 会话导出自然包含新增字段。展示数据不再注入模型历史，不重复计量上下文，也不为分段增加模型请求。只有模型实际生成的主会话正文才成为段落，不把推理、并行辅助分析或工作流结构化提案当结论。普通聊天提示要求阶段交付，但不保证每轮一定有正文；纯工具调用没有虚构阶段结论。
 
 The main chat executor persists each completed model response before announcing it through SSE. Saved segments survive later rounds and session reloads; the final answer remains in the legacy content field and is displayed once. Copy/readback include all visible segments. Internal reasoning, parallel analysis and structured workflow proposals are excluded. This presentation projection neither adds model calls nor duplicates history or context accounting.
+
+
+### 默认推理强度的独立保存
+
+模型设置中的默认推理强度支持自动、关闭、低、中、高，提供独立保存按钮。该按钮只向settings写入reasoningEffort，不提交当前模型目录/提供商/密钥草稿，也不要求先配置模型；保存后重新读取config校验。错误和重试保留当前选值，重复点击只发一次；请求期间新选的未保存值不被旧回执覆盖。完整模型设置保存仍按模型目录校验。普通会话已保存的独立配置保持原值，新默认不重写它们。接口拒绝不支持的推理档位；配置模型时的部分设置补丁必须保留省略的Model和ActiveModel。

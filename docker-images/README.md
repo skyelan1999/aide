@@ -81,3 +81,6 @@ bash scripts/aide.sh start-image
 Git push 只同步源码，不包含本目录被忽略的大型镜像归档。开发分支每批功能通过验证后应同步构建镜像，再使用现有 `bash scripts/aide.sh export-bundle` 生成带镜像身份的离线启动包。另一端解压后运行包内 `start.command`（或 `bash scripts/aide.sh start-bundle`），首次只导入自带镜像，后续按镜像 ID 复用；不拉基础镜像、不装依赖、不编译源码。不同 CPU 架构需要对应镜像包，不可把 ARM64 包当作 AMD64 交付。
 
 保留原有 `SHA256SUMS` 条目，新增归档校验行；不要让一次开发导出丢掉历史包的校验记录。源码分支 push、镜像本机构建、离线包生成、外部镜像仓库 push 是独立状态；没有配置仓库和目标标签时不能宣称已经推送镜像。当前仓库未配置镜像 registry 发布工作流。稳定依赖层位于应用二进制层之前，普通代码变更应复用现有构建缓存；离线更新路径始终避免在接收端重新构建。
+
+
+`plugins/surface.json` 是插件宿主启动时重写的能力快照（含生成时间），已从源码指纹及Docker构建上下文排除；插件真实源码仍计入。这样重启不会仅因快照时间变化就误判镜像过期。可用只读命令 `bash scripts/aide.sh source-sha` 检查当前构建指纹，该命令不启动Docker；离线包导出继续严格核对镜像label与当前指纹，不绕过一致性门禁。
