@@ -360,3 +360,13 @@ Ordinary chats/workflows own independent strategy/profile/model/reasoning choice
 验证使用模拟HTTP模型，不调用真实模型。定向race覆盖会话隔离、磁盘持久化、旧会话、版本冲突、删除/非法配置、模型窗口、视觉能力、实际请求路由/凭据/推理参数、运行中改配置、重试与恢复，并回归并行分析和既有读文件工具。前端VM覆盖串行保存、旧GET、切换会话、远端新版本、冲突后的排队修改和草稿快照；Safari离线夹具使用实际菜单及选择模块，验证A/B会话模型与推理各自保存/恢复、全局默认不变，以及明暗主题。复现 `python3 scripts/fixtures/render-session-model-selection.py`。实际8097浏览器仍需要用户手动处理本机证书提示，不能将组件验收等同于真实模型使用验收。见[任务账本](tasks/session-model-selection-20261014.json)。
 
 本轮规范仓与本机兼容仓的最终定向race、扩展回归及quick均通过。扩展回归使用带Node的本地运行镜像并清空其继承的内置插件目录环境变量，避免将不同仓库的插件安装路径当成测试输入。本机8097已更新并通过鉴权API与静态资源一致性检查，见[会话配置更新回执](reviews/2026-10-14-session-model-selection-rollout.md)；真实浏览器交互和模型调用仍保留上述验收边界。
+
+## 暂停任务与会话隔离 / Task pause isolation
+
+暂停入口统一放在输入区、停止按钮旁，回复头部只保留任务状态及可恢复任务的恢复入口。运行任务尚无检查点时暂停按钮禁用；请求中和已请求暂停时显示“正在暂停任务…”并禁止重复点击。发送停止仍保持原有语义。
+
+前端在点击时捕获会话ID、任务ID和工作区；切换会话或工作区后，旧请求成功/失败不能改变当前会话的按钮、轮询或提示。暂停不清空其他会话、输出或流连接。后端先在会话锁内验证归属并保存暂停意图，再释放锁后取消该任务上下文，避免取消过程占用所有会话共享的互斥锁。重复暂停同一运行任务返回202且不重复调用取消函数；检查点和恢复接口保留。
+
+Pause lives beside stop in the composer, with pending/checkpoint gating and captured chat/workspace identity. The API persists the request before cancelling, releases the shared mutex before cancellation unwinds, and treats repeated pending requests idempotently. Other chats keep their contexts and API access. The reply header retains checkpoint recovery for the relevant historical task.
+
+隔离race覆盖模拟模型中A暂停而B继续完成，以及取消过程故意阻塞时B的会话API仍返回200、跨会话任务ID拒绝、重复点击和持久化顺序。前端VM覆盖切换会话/工作区的晚回执、防重复、失败重试与检查点状态；Safari离线夹具复现 `python3 scripts/fixtures/render-pause-controls.py`。本次没有观察到实际服务panic/restart，也没有复现用户报告的全部会话崩溃，不能把修复的锁耦合风险宣称为已确认的唯一根因。实际8097证书提示及真实模型验收边界单独记录在任务账本。

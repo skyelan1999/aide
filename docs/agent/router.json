@@ -442,6 +442,10 @@
       [
         "node",
         "scripts/session-model-selection.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/pause-session-isolation.test.cjs"
       ]
     ],
     "full": [

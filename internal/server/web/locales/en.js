@@ -1491,6 +1491,7 @@ window.aideEnglish = {
   "继续": "Continue",
   "暂停任务": "Pause task",
   "暂停当前任务": "Pause current task",
+  "正在准备任务检查点…": "Preparing task checkpoint…",
   "恢复任务": "Resume task",
   "已暂停": "Paused",
   "已续跑": "Resumed",

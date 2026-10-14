@@ -1482,10 +1482,42 @@ function stopRunById(runId) {
   setInterval(() => { refreshBadge(); checkDuePopups(); }, 30000);
   window.addEventListener('focus', checkDuePopups);
 })();
-function pauseRunById(runId) {
-  api(`/sessions/${state.session.id}/runs/${runId}/pause`, { method: 'POST', body: '{}' })
-    .then(() => { toast(t('正在暂停任务…')); schedulePoll(); })
-    .catch(e => toast(e.message));
+function currentPauseRun() {
+  if (state.pendingSessionId || state.session?.kind === 'assistant') return null;
+  return [...(state.session?.runs || [])].reverse().find(run => run.status === 'running') || null;
+}
+function syncPauseControl() {
+  const button = $('pause-current-run');
+  if (!button) return;
+  const run = currentPauseRun();
+  const pending = !!run && (run.pauseRequested || state.pauseRequests?.has(recoveryScope() + ':' + state.session.id + ':' + run.id));
+  button.hidden = !run;
+  button.classList.toggle('hidden', !run);
+  button.disabled = !run || pending || !run.canResume;
+  const label = pending ? t('正在暂停任务…') : run && !run.canResume ? t('正在准备任务检查点…') : t('暂停当前任务');
+  button.title = label;
+  button.setAttribute('aria-label', label);
+  button.setAttribute('aria-busy', String(!!pending));
+}
+function pauseRunById(runId, sessionId = state.session?.id) {
+  const session = state.session, scope = recoveryScope();
+  if (!sessionId || session?.id !== sessionId || state.pendingSessionId) return Promise.resolve();
+  const run = session.runs?.find(item => item.id === runId);
+  if (!run || run.status !== 'running' || run.pauseRequested || !run.canResume) return Promise.resolve();
+  const key = scope + ':' + sessionId + ':' + runId;
+  state.pauseRequests ||= new Set();
+  if (state.pauseRequests.has(key)) return Promise.resolve();
+  state.pauseRequests.add(key); syncPauseControl();
+  const stillVisible = () => recoveryScope() === scope && state.session?.id === sessionId && !state.pendingSessionId;
+  return api(`/sessions/${encodeURIComponent(sessionId)}/runs/${encodeURIComponent(runId)}/pause`, { method: 'POST', body: '{}' })
+    .then(() => {
+      if (!stillVisible()) return;
+      const current = state.session.runs?.find(item => item.id === runId);
+      if (current?.status === 'running') current.pauseRequested = true;
+      toast(t('正在暂停任务…')); schedulePoll();
+    })
+    .catch(error => { if (stillVisible()) toast(error.message); })
+    .finally(() => { state.pauseRequests.delete(key); if (stillVisible()) syncPauseControl(); });
 }
 function resumeRunById(runId) {
   const sessionId = state.session.id;
@@ -1987,9 +2019,7 @@ function renderSession() {
     const box = el('article', 'run'); box.dataset.run = run.id; box.append(el('div', 'user-message', run.prompt));
     box.dataset.renderSignature = renderSignature;
     const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? t(run.steps?.some(step => step.name === 'agent') ? "◈ AIDE WORKFLOW · 自主执行" : "◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
-    if (run.status === 'running' && !run.pauseRequested) {
-      const pause = el('button', 'quiet', t('暂停任务')); pause.type = 'button'; pause.onclick = () => pauseRunById(run.id); meta.append(pause);
-    } else if ((run.status === 'paused' || run.status === 'interrupted') && run.canResume) {
+    if ((run.status === 'paused' || run.status === 'interrupted') && run.canResume) {
       const resume = el('button', 'quiet', t('恢复任务')); resume.type = 'button'; resume.onclick = () => resumeRunById(run.id); meta.append(resume);
     } else if (run.status === 'running' && run.pauseRequested) {
       meta.append(el('span', 'run-status', t('正在暂停任务…')));
@@ -3502,13 +3532,7 @@ $('cp-toggle').onclick = () => {
 function setSendMode(running) {
   const btn = $('send');
   if (!btn) return;
-  const pause = $('pause-current-run');
-  if (pause) {
-    pause.hidden = !running;
-    pause.classList.toggle('hidden', !running);
-    pause.title = t('暂停当前任务');
-    pause.setAttribute('aria-label', t('暂停当前任务'));
-  }
+  syncPauseControl();
   if (running) {
     btn.textContent = '■';
     btn.classList.add('stop-mode');
@@ -3533,8 +3557,8 @@ $('send').addEventListener('click', event => {
   })();
 });
 $('pause-current-run')?.addEventListener('click', action(() => {
-  const run = [...(state.session?.runs || [])].reverse().find(item => item.status === 'running' && !item.pauseRequested);
-  if (run) pauseRunById(run.id);
+  const run = currentPauseRun(), sessionId = state.session?.id;
+  if (run) return pauseRunById(run.id, sessionId);
 }));
 const MODEL_PROVIDER_PRESETS = [
   { id: 'deepseek', name: 'DeepSeek', baseURL: 'https://api.deepseek.com' },

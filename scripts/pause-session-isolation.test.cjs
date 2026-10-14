@@ -1,0 +1,30 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const src = fs.readFileSync('internal/server/web/app.js','utf8');
+function extract(start,end){return src.slice(src.indexOf(start),src.indexOf(end,src.indexOf(start)));}
+const button={hidden:true,disabled:false,classList:{toggle(){}},attrs:{},setAttribute(k,v){this.attrs[k]=v;}};
+const a={id:'a',runs:[{id:'run-a',status:'running',canResume:true}]},b={id:'b',runs:[{id:'run-b',status:'running',canResume:true}]};
+const state={session:a,config:{workspaceId:'one'}};
+let reply,fail,requests=[],toasts=[],polls=0;
+const ctx={state,Promise,Set,encodeURIComponent,$:()=>button,recoveryScope:()=>state.config.workspaceId,t:s=>s,toast:s=>toasts.push(s),schedulePoll:()=>polls++,api:(url)=>{requests.push(url);return new Promise((resolve,reject)=>{reply=resolve;fail=reject;});}};
+vm.createContext(ctx);vm.runInContext(extract('function currentPauseRun(', 'function resumeRunById('),ctx);
+(async()=>{
+ ctx.syncPauseControl();assert.equal(button.hidden,false);assert.equal(button.disabled,false);
+ let pending=ctx.pauseRunById('run-a');assert.equal(button.disabled,true);
+ await ctx.pauseRunById('run-a');assert.equal(requests.length,1,'double click must not send twice');
+ state.session=b;ctx.syncPauseControl();assert.equal(button.disabled,false);
+ reply({});await pending;assert.equal(b.runs[0].pauseRequested,undefined);assert.equal(polls,0);assert.equal(toasts.length,0,'old success must not change another chat');
+ state.session=a;ctx.syncPauseControl();pending=ctx.pauseRunById('run-a');reply({});await pending;
+ assert.equal(a.runs[0].pauseRequested,true);assert.equal(button.disabled,true);assert.equal(polls,1);
+ a.runs[0].pauseRequested=false;pending=ctx.pauseRunById('run-a');state.config.workspaceId='two';fail(Error('stale failure'));await pending;assert.equal(toasts.length,1,'old workspace errors stay scoped');
+ state.config.workspaceId='one';pending=ctx.pauseRunById('run-a');fail(Error('offline'));await pending;assert.equal(button.disabled,false,'failed save permits retry');assert.equal(toasts.at(-1),'offline');
+ state.pendingSessionId='b';ctx.syncPauseControl();assert.equal(button.hidden,true);const count=requests.length;await ctx.pauseRunById('run-a');assert.equal(requests.length,count);
+ state.pendingSessionId='';state.session={id:'c',runs:[{id:'early',status:'running',canResume:false}]};ctx.syncPauseControl();assert.equal(button.disabled,true);assert.match(button.attrs['aria-label'],/检查点/);
+ state.session={id:'assistant',kind:'assistant',runs:a.runs};ctx.syncPauseControl();assert.equal(button.hidden,true);
+ state.session={id:'done',runs:[{id:'done',status:'paused',canResume:true}]};ctx.syncPauseControl();assert.equal(button.hidden,true);
+ const render=extract('function renderSession()', 'function renderAttachments(');
+ assert(!render.includes("t('暂停任务')"),'reply metadata must not contain pause action');
+ const html=fs.readFileSync('internal/server/web/index.html','utf8');assert.match(html, /class="input-actions">[\s\S]*?id="pause-current-run"/);
+ console.log('PASS pause controls: target isolation, navigation/workspace race, duplicate clicks, failure retry and checkpoint states');
+})().catch(e=>{console.error(e);process.exitCode=1;});
