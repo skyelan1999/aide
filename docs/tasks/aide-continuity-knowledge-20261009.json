@@ -5517,5 +5517,51 @@
     "evidence": "9 maintenance + 6 offline + 4 Windows source tests and isolated real Docker stop scope PASS; final quick PASS. Production stop/cache prune not executed.",
     "full": "Previous full failed with Docker unexpected EOF; no current full PASS claim.",
     "remaining": "Reference-scene recentering not implemented; original twelve workstreams and tool DAG remain active. Windows by user; real vector tests deferred."
+  },
+  "progress_checkpoint_20261015_followup113": {
+    "status": "in_progress",
+    "task": "docs/tasks/launcher-local-image-20261015.json",
+    "implementationCommit": "8bd455a",
+    "request": "All desktop observations through the exact canonical aide/start.command; fix missing browser window and avoid online dependency reinstalls after Docker cache cleanup.",
+    "rootCause": "Saved /Users/skyelan/debug workspace unavailable on this machine; server exited before health/browser step.",
+    "changes": "Startup-only temporary /workspace with original config preserved and repair warning; retained complete dependencies image; local app build with RUN network none; checksum archive auto-import; launcher logs; runtime+base tags included in one offline payload.",
+    "verification": "Startup/context race 4.251s PASS; 7 dependency image and 6 offline bootstrap checks PASS; i18n/fingerprint PASS. Finder exact entry opened Safari, runtime healthy at configured 9999, mounts/config bytes retained. Real 4.903GB build-cache prune followed by forced same-entry local rebuild PASS; missing base tag auto-reimport from local archive PASS.",
+    "runtime": {
+      "runningImage": "sha256:e91e3a45bf19977668d503d151aef70f067f664f4f185890cb492e144e3bb7e4",
+      "image": "sha256:f154cce63fed211234c668eeb550718100ced70ff3df4eccddde20ebe2f6e579",
+      "binarySHA256": "20069d300bea3a56aebfff0d10b19f64d7e10013a49d2a8775417bac33e797ca",
+      "runningPlatformManifest": "sha256:06e19aa2297d1f783248eddc831849fe225d47c5440b6fe50dd4671b6cf183a8",
+      "sourceSHA256": "1f575e8fd21cc6cddbd67d3a45801a01529c644b48aef17ef24f215ffd3a5d03",
+      "buildCommit": "8bd455a7a1e48820dc6fe27069e9fb5d1e7951bf-dirty",
+      "port": "9999",
+      "health": "ok",
+      "mountsPreserved": true,
+      "workspaceConfigBytesPreserved": true,
+      "protectedFilesUnchanged": 1,
+      "configuredPath": "/Users/skyelan/debug",
+      "runtimeWorkspace": "/workspace",
+      "startupWarningPresent": true,
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "package": {
+      "image": "sha256:f154cce63fed211234c668eeb550718100ced70ff3df4eccddde20ebe2f6e579",
+      "sourceSHA256": "1f575e8fd21cc6cddbd67d3a45801a01529c644b48aef17ef24f215ffd3a5d03",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-f154cce63fed-offline.tar.gz",
+      "bytes": 705564170,
+      "sha256": "7c202d09a8148d95c2511df597004933c405111a7e609f137455db172dcd6037",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true
+    },
+    "browser": "User must manually handle Safari self-signed certificate interstitial; no bypass and no full workbench UI PASS claim.",
+    "dataBoundary": "Only current mounted data and before-start snapshot checked; no recovery/migration from prior instance/device asserted.",
+    "remaining": "Original twelve workstreams and plugin tool DAG remain active; reference-scene framing pending. Windows native by user, real vector tests deferred."
   }
 }

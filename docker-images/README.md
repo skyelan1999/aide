@@ -100,3 +100,8 @@ Git push 只同步源码，不包含本目录被忽略的大型镜像归档。�
 
 
 2026-10-15 00:03后当前候选包（包含最终并行倍率列表与此前星图/插件修复）：`aide-0.1.17.0-RC2-linux-arm64-6ac93ca10a8d-offline.tar.gz`。镜像 `sha256:6ac93ca10a8d3b90b5d813e0ad89894afc0a6f16307e27da15c73c483c585289`，SHA-256 `1e1171d0590fb1a8dd5b1b8cb3d3d49bccd1bab2f76446bac051f2b9297ef4fd`，561613174 字节。8097原生Safari已验证推理强度与五条倍率同列滚动、选择持久化；包内外校验及实际 `docker image load` 通过，归档复制到两工作树。另一端导入待验；用户新报“引用aide目录无节点”尚未在该实例复现，本包不宣称解决此新问题。详见[布局验收](../docs/tasks/composer-parallel-placement-20261014.json)和[引用排查](../docs/tasks/starmap-reference-empty-20261015.json)。
+
+
+2026-10-15 当前最新启动恢复与完整本地依赖包：`aide-0.1.17.0-RC2-linux-arm64-f154cce63fed-offline.tar.gz`（linux/arm64，705564170 字节），SHA-256 `7c202d09a8148d95c2511df597004933c405111a7e609f137455db172dcd6037`。应用镜像 `sha256:f154cce63fed211234c668eeb550718100ced70ff3df4eccddde20ebe2f6e579`；同一包内 image tar 同时包含 `aide:dependencies-v1`，已验证两个标签及运行平台 manifest、镜像包内外哈希和实际 docker load，并复制至两个工作树。原包保留作回滚。按用户要求从 canonical `start.command` 实测启动及清构建缓存后本地重建；实际端口9999，Safari已自动打开但证书提示仍待用户手动处理，尚未把工作台UI验收记作通过。
+
+仅需补充源码构建依赖时，可使用 `aide-dependencies-v1-linux-arm64.tar.gz`，SHA-256 `520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76`，直接 `docker load -i` 导入。运行离线包不需要再下载此文件或重新构建。首次联网从零构建、Docker缓存与保留镜像的边界见[本地镜像说明](../docs/local-dependency-image.md)及[本批任务](../docs/tasks/launcher-local-image-20261015.json)。
