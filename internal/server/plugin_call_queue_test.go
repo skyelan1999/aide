@@ -108,7 +108,10 @@ func TestPluginCallsSerializeSharedFileWrites(t *testing.T) {
 
 func TestPluginCallsDifferentPluginsOverlap(t *testing.T) {
 	a := testApp(t)
-	code := `const fs=require('fs'),path=require('path');module.exports={apply(ctx){ctx.tool({name:'TOOL',handler:async()=>{fs.writeFileSync(path.join(__dirname,'entered'),'1');for(let i=0;i<500;i++){if(fs.existsSync(path.join(__dirname,'release')))return {ok:true};await new Promise(r=>setTimeout(r,10));}throw Error('barrier timed out');}})}};`
+	if err := os.WriteFile(filepath.Join(a.workPath, "shared-readonly.txt"), []byte("shared evidence"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	code := `const fs=require('fs'),path=require('path');module.exports={apply(ctx){ctx.tool({name:'TOOL',scheduling:{resources:[{root:'workspace',path:'shared-readonly.txt',access:'read'}]},handler:async()=>{fs.readFileSync(path.join(__dirname,'..','..','shared-readonly.txt'),'utf8');fs.writeFileSync(path.join(__dirname,'entered'),'1');for(let i=0;i<500;i++){if(fs.existsSync(path.join(__dirname,'release')))return {ok:true};await new Promise(r=>setTimeout(r,10));}throw Error('barrier timed out');}})}};`
 	for _, id := range []string{"left", "right"} {
 		requireStatus(t, request(a, "POST", "/api/plugins", map[string]any{"id": id, "name": id, "code": strings.ReplaceAll(code, "TOOL", id+"_barrier")}), 201)
 	}

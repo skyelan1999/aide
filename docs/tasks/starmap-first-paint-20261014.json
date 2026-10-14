@@ -137,5 +137,11 @@
       "nodes": 1630,
       "stale": false
     }
-  ]
+  ],
+  "full_followup": {
+    "status": "fail",
+    "reason": "65条命令均返回0（server race591.497s），但验证期间镜像文档/清单及后续插件源码发生变化，内容指纹不一致。此收据不能用于当前发布门禁。",
+    "receipt": ".agent-state/full-starmap-commands-20261014.json",
+    "next": "插件资源批次与镜像文档稳定后重新执行full。"
+  }
 }

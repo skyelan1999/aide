@@ -74,6 +74,34 @@ Python 与插件运行在同一 aide 容器用户下。插件仍是受信代码�
 
 v1.2 中 `effect/on` 只做**兼容登记**（保证使用它们的插件能通过加载），不执行副作用；`tool/slot` 声明会被收集进插件 surface，供界面展示；带 handler 与参数声明的工具可进入模型工具循环。除上表 API 外，插件访问任何其他 ctx 属性将得到 `undefined`（不注入、不伪造）。设置由插件面板的每插件「设置」页编辑，作为 JSON 对象保存，单个对象上限 32 KiB；支持「渲染」与「文本」两种编辑方式：渲染方式读取 manifest 的 `settingsSchema` 生成参数控件，文本方式允许完整 JSON 编辑；未在 schema 中声明的字段保留在扩展参数区。非 daemon 插件下次加载或工具调用时读取新值，daemon 插件保存后由宿主重启以应用新值。设置保存在 `plugins/registry.json`，是工作区明文数据，不能填写 API Key、密码或私钥。
 
+### 3.1 工具读写资源调度（2026-10-14，兼容 v1.2）
+
+工具可以在注册定义中增加 `scheduling.resources`，声明模块加载、apply/清理和handler的完整作用范围。声明来自插件宿主发布的 surface；模型参数中的 `readOnly`、`scheduling` 等自报字段不能改变它。
+
+```js
+ctx.tool({
+  name: 'prepare_draft',
+  parameters: {type: 'object', properties: {path: {type: 'string'}}, required: ['path']},
+  scheduling: {resources: [
+    {root: 'workspace', argument: 'path', access: 'read'},
+    {root: 'workspace', path: 'draft.md', access: 'write'},
+  ]},
+  handler(args, api) {
+    return api.proposeWrite('draft.md', api.readFile(args.path));
+  },
+});
+```
+
+每项 `root` 为 `workspace` 或 `plugin`，`access` 为 `read` 或 `write`；`path` 固定相对路径与 `argument` 顶层字符串参数名二选一，最多32项。目录声明覆盖后代；不支持通配符。相对路径不能越界；出现符号链接、硬链接别名、无法确认的根或无效参数时，回退整个插件执行域独占。`resources: []` 明确声明除自身插件目录状态外没有其他读写或外部变更；自身插件目录始终隐式独占，同插件FIFO仍保留。
+
+统一入口一次申请全部资源。不同插件的读读及不冲突资源可重叠；读写/写写互斥，等待中的冲突写者不会被后来的读者插队。缺少/无效声明、使用跨插件服务的消费者、SSH工作区以及浏览器/电脑控制插件保守独占整个插件执行域。等待可取消，不启动宿主进程；取得资源后再次检查工作区代际、声明、启用及禁用状态。有明确且无服务依赖的契约调用只加载目标插件，避免其他模块初始化代码超出预约范围。当前 helper 操作容器本地目录，不能用本声明冒充SSH路径锁。
+
+声明只读的工具返回写提案、写提案超出声明路径、或受限文件声明返回命令提案时，调用报告契约不一致，提案不进入任务审批队列。正确的写提案仍走原审批与哈希检查；资源预约期间没有因此自动应用文件。后续实际应用和外部服务不是本次资源锁的事务范围。插件是受信代码，声明不是OS沙箱，不能限制插件绕过helper直接访问容器或外部资源；作者必须完整声明实际效果。
+
+短命宿主取消、daemon超时或取消时，终止对应进程组后再释放资源。普通继承进程组的Python/Node子进程随之终止；主动脱离进程组的进程和已发生的外部副作用不属于撤回保证。daemon调用的登记和派发绑定同一进程代际，不会在重启空隙把旧调用发送到替代实例。中断后结果待核实，不自动重放。
+
+资源锁仅协调已经派发的调用。5x工具节点依赖、并行审批预检、节点日志和恢复归并仍按[调度设计](architecture/plugin-task-scheduling.md)继续实现，不能据此宣称完整DAG已运行。
+
 ## 4. 清单（manifest）
 
 上传单文件 JS 时生成 `plugins/<id>/manifest.json`；ZIP 工具包在校验后采用包内清单：

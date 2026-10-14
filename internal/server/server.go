@@ -473,6 +473,7 @@ type App struct {
 	pluginsPath               string
 	pluginRegistry            pluginRegistry
 	pluginCalls               pluginCallQueues
+	pluginResources           pluginResourceQueue
 	pluginSurface             []byte
 	daemons                   *DaemonManager // 协议 v1.2：常驻守护插件管理器
 	wsConfigPath              string

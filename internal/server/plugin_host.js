@@ -70,6 +70,13 @@ function makeCtx(surface, registry, settings, services = new Map(), required = [
       if (registry && registry.has(name)) throw new Error('工具重复注册: ' + name);
       const toolEntry = { name, description: String(d.description || '').slice(0, 512), executable: typeof d.handler === 'function' };
       if (d.parameters && typeof d.parameters === 'object') toolEntry.parameters = d.parameters;
+      if (d.scheduling && typeof d.scheduling === 'object') {
+        // Retain only the declarative contract. Handlers and model arguments
+        // cannot inject executable data into the scheduling metadata.
+        toolEntry.scheduling = { resources: Array.isArray(d.scheduling.resources)
+          ? d.scheduling.resources.slice(0, 33).map(r => r && typeof r === 'object'
+            ? {root:r.root, path:r.path, argument:r.argument, access:r.access} : {}) : null };
+      }
       surface.tools.push(toolEntry);
       if (typeof d.handler === 'function' && registry) {
         registry.set(name, { handler: d.handler, plugin: surface.__pluginId || surface.id || '' });

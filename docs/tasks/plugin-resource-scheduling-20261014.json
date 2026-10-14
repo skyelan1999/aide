@@ -1,0 +1,93 @@
+{
+  "id": "plugin-resource-scheduling-20261014",
+  "request": "插件并发需要协调跨插件共写资源；独立调用并行，写入依资源顺序执行；沿用1x-5x调度完整目标",
+  "baseline": "649029a6525d4858bb6b860993f469dcb3e9b3cc",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "真实Node不同插件独立资源可重叠；相同文件读写/写写互斥，无丢更新",
+    "多个资源同时申请，冲突按入队顺序，等待可取消且不占宿主进程",
+    "未声明/无效/SSH未适配声明按整个插件执行域独占，不从名称猜测只读",
+    "等待期间切换工作区代际则拒绝调用；声明不改变既有审批或权限",
+    "元数据来自宿主工具定义，模型参数不能自报只读；读声明返回写提案拒绝自动入库",
+    "记录后续5x工具派发、显式依赖、节点日志、暂停恢复仍须完成，不能把资源锁当完整DAG"
+  ],
+  "scope": [
+    "internal/server/plugin_resources.go",
+    "internal/server/plugin_resources_test.go",
+    "internal/server/plugin_host.js",
+    "internal/server/plugins.go",
+    "internal/server/server.go",
+    "internal/server/plugin_call_queue_test.go",
+    "internal/server/workflow.go",
+    "docs/plugin-protocol.md",
+    "docs/architecture/plugin-task-scheduling.md",
+    "docs/tasks",
+    "docker-images",
+    "internal/server/plugin_process.go",
+    "internal/server/plugin_daemon.go",
+    "docs/plugins/daemon-protocol.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求检查插件并发与先后写入；现有跨插件共写没有协调，新增资源锁作为完整调度的必要基础。",
+      "evidence": [
+        "docs/architecture/plugin-task-scheduling.md",
+        "internal/server/plugin_call_queue.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "工具注册声明完整读写范围；一次申请全部资源，前序冲突优先且独立资源可旁路。原插件FIFO保留；默认整个执行域独占。仅本地受控路径支持声明，SSH回退独占。显式依赖/5x工作流接入仍未完成。",
+      "evidence": [
+        "docs/architecture/plugin-task-scheduling.md",
+        "internal/server/plugin_call_queue.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "统一插件入口原子预约跨插件资源，冲突公平等待，保留同插件FIFO；声明来自宿主，未知/SSH回退独占；越界提案拒绝入库并正确报告错误。取消/超时终止同组子进程，daemon上下文取消及同代际派发已接入。 有契约且无服务依赖的调用只装配目标模块，服务消费者回退独占。",
+      "evidence": [
+        "internal/server/plugin_resources.go",
+        "internal/server/plugin_process.go",
+        "internal/server/plugins.go",
+        "internal/server/plugin_daemon.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "最终canonical定向race35.561秒、8097兼容36.097秒PASS，跨插件服务装配回归6.342秒PASS；真实Node读读屏障、三插件共写3无丢更新、工作区变化拒绝、契约提案拒绝、短命/daemon取消子写入消失、目标调用不加载无关模块均通过。之前quick PASS。旧full65命令返回0但内容指纹变化，不是当前full。",
+      "evidence": [
+        ".agent-state/plugin-resource-complete-tests.log",
+        ".agent-state/plugin-resource-services-test.log",
+        "aideMacMini/aide/.agent-state/plugin-resource/final-tests.log",
+        ".agent-state/plugin-resource-quick.log",
+        ".agent-state/full-starmap-commands-20261014.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新资源契约协议、daemon中断语义、调度已实现与未实现边界。",
+      "evidence": [
+        "docs/plugin-protocol.md",
+        "docs/plugins/daemon-protocol.md",
+        "docs/architecture/plugin-task-scheduling.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "保留五个继承删除与运行数据；8097只移植逐段比对后的相关函数和新文件，不覆盖旧分支其他功能。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "定向测试完成；提交push、8097候选更新和镜像包待继续，不执行正式main/tag发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户要求做一部分push/测一部分并更新离线镜像；沿用已有开发分支与RC2候选，不正式main/tag发布。",
+  "rollback": "本批未部署；现运行05ba9e1b9c84，备份和回滚镜像保留。",
+  "handoff": "资源预约入口已实现，真实处理器/兼容回归通过；仍须完成5x工具批次派发与显式依赖、审批预检、节点持久日志和恢复归并，真实模型8097未配置。本批将提交并更新兼容镜像。"
+}

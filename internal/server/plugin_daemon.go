@@ -15,6 +15,7 @@ package server
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -349,6 +350,7 @@ func (p *daemonProc) spawn() {
 		return
 	}
 	cmd := exec.Command("node", "-e", pluginHostJS, "daemon", p.pluginPath)
+	configurePluginProcess(cmd, false)
 	settingsJSON := p.settingsJSON
 	// 与 v1.1 短命进程同一受限环境；AIDE_DAEMON_BIND 告知协议插件仅绑回环。
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "AIDE_DAEMON=1", "AIDE_DAEMON_BIND=127.0.0.1", "AIDE_PLUGIN_SETTINGS=" + settingsJSON}
@@ -385,17 +387,20 @@ func (p *daemonProc) spawn() {
 		close(doneCh)
 		return
 	}
+	p.mu.Lock()
 	p.cmd = cmd
+	p.mu.Unlock()
 	p.startedAt = time.Now()
 	p.setStatus(dsRunning)
-	go p.readLoop(stdout, doneCh)
+	go p.readLoop(stdout, doneCh, cmd)
 	go p.heartbeat(doneCh)
 	go func() { _ = cmd.Wait() }() // 回收进程；stdout EOF 由 readLoop 处理
 }
 
 // readLoop 逐行解析子进程 stdout：响应路由到 pending，事件入缓存，pong 更新心跳。
-func (p *daemonProc) readLoop(stdout io.ReadCloser, doneCh chan struct{}) {
+func (p *daemonProc) readLoop(stdout io.ReadCloser, doneCh chan struct{}, cmd *exec.Cmd) {
 	defer close(doneCh)
+	defer func() { _ = killPluginProcess(cmd) }()
 	sc := bufio.NewScanner(stdout)
 	sc.Buffer(make([]byte, 1<<20), 4<<20)
 	for sc.Scan() {
@@ -467,7 +472,7 @@ func (p *daemonProc) heartbeat(doneCh chan struct{}) {
 		case <-ch:
 		case <-time.After(daemonPingTimeout):
 			log.Printf("[daemon] %s 心跳超时，判定崩溃", p.id)
-			p.kill()
+			p.killGeneration(doneCh)
 			return
 		case <-doneCh:
 			return
@@ -476,12 +481,18 @@ func (p *daemonProc) heartbeat(doneCh chan struct{}) {
 }
 
 func (p *daemonProc) kill() {
+	p.killGeneration(nil)
+}
+
+func (p *daemonProc) killGeneration(generation chan struct{}) {
 	p.mu.Lock()
+	if generation != nil && p.doneCh != generation {
+		p.mu.Unlock()
+		return
+	}
 	cmd := p.cmd
 	p.mu.Unlock()
-	if cmd != nil && cmd.Process != nil {
-		_ = cmd.Process.Kill()
-	}
+	_ = killPluginProcess(cmd)
 }
 
 func (p *daemonProc) send(obj any) {
@@ -542,12 +553,11 @@ func (p *daemonProc) stop() {
 		select {
 		case <-done:
 		case <-time.After(daemonGraceStop):
-			if cmd != nil && cmd.Process != nil {
-				_ = cmd.Process.Kill()
-			}
+			_ = killPluginProcess(cmd)
 			<-done
 		}
 	}
+	_ = killPluginProcess(cmd)
 	p.setStatus(dsStopped)
 }
 
@@ -592,6 +602,10 @@ func (m *DaemonManager) StopAll() {
 
 // Call 经 IPC 转发一次工具调用，等待结果。
 func (m *DaemonManager) Call(id, tool string, args map[string]any) (any, error) {
+	return m.CallContext(context.Background(), id, tool, args)
+}
+
+func (m *DaemonManager) CallContext(ctx context.Context, id, tool string, args map[string]any) (any, error) {
 	m.mu.Lock()
 	p := m.procs[id]
 	m.mu.Unlock()
@@ -601,7 +615,7 @@ func (m *DaemonManager) Call(id, tool string, args map[string]any) (any, error) 
 	if st := p.statusSnapshot(); st != dsRunning {
 		return nil, fmt.Errorf("daemon %s 未运行（状态 %s）", id, st)
 	}
-	return p.call(tool, args)
+	return p.callContext(ctx, tool, args, daemonCallTimeout)
 }
 
 func (p *daemonProc) call(tool string, args map[string]any) (any, error) {
@@ -609,13 +623,39 @@ func (p *daemonProc) call(tool string, args map[string]any) (any, error) {
 }
 
 func (p *daemonProc) callWithTimeout(tool string, args map[string]any, timeout time.Duration) (any, error) {
+	return p.callContext(context.Background(), tool, args, timeout)
+}
+
+func (p *daemonProc) callContext(ctx context.Context, tool string, args map[string]any, timeout time.Duration) (any, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	id := atomic.AddInt64(&p.nextID, 1)
 	ch := make(chan rpcResp, 1)
+	// Bind registration AND send to one process generation. A restart between
+	// these operations must not send the old call into its replacement.
+	p.lifecycleMu.Lock()
+	if err := ctx.Err(); err != nil {
+		p.lifecycleMu.Unlock()
+		return nil, err
+	}
+	if p.statusSnapshot() != dsRunning {
+		p.lifecycleMu.Unlock()
+		return nil, errors.New("daemon 未运行，调用未执行")
+	}
 	p.mu.Lock()
 	p.pending[id] = ch
 	doneCh := p.doneCh
 	p.mu.Unlock()
 	p.send(map[string]any{"jsonrpc": "2.0", "id": id, "method": "tool.call", "params": map[string]any{"tool": tool, "args": args}})
+	p.lifecycleMu.Unlock()
+	timer := time.NewTimer(timeout)
+	defer timer.Stop()
+	defer func() {
+		p.mu.Lock()
+		delete(p.pending, id)
+		p.mu.Unlock()
+	}()
 	select {
 	case resp := <-ch:
 		if resp.err != nil {
@@ -628,10 +668,10 @@ func (p *daemonProc) callWithTimeout(tool string, args map[string]any, timeout t
 			}
 		}
 		return v, nil
-	case <-time.After(timeout):
-		p.mu.Lock()
-		delete(p.pending, id)
-		p.mu.Unlock()
+	case <-ctx.Done():
+		p.stopTimedOutGeneration(doneCh)
+		return nil, fmt.Errorf("daemon 调用已取消，执行实例已结束；执行结果待核实，未重放调用: %w", ctx.Err())
+	case <-timer.C:
 		// A deadline is not evidence that the handler stopped writing. Stop the
 		// admitted process generation before releasing the caller's plugin queue.
 		if p.stopTimedOutGeneration(doneCh) {
@@ -655,7 +695,7 @@ func (p *daemonProc) stopTimedOutGeneration(generation chan struct{}) bool {
 		return false
 	}
 	p.stop()
-	p.appendEvent(daemonEvent{Type: "log", Level: "error", Message: "工具调用超时，已停止对应执行实例；副作用结果待核实，不自动重放"})
+	p.appendEvent(daemonEvent{Type: "log", Level: "error", Message: "工具调用超时或取消，已停止对应执行实例；副作用结果待核实，不自动重放"})
 	return true
 }
 

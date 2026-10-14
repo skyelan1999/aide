@@ -4264,7 +4264,7 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 		}
 		raw, err := a.callPluginToolContext(ctx, pluginID, call.Function.Name, args)
 		if err != nil {
-			return "插件工具失败: " + err.Error()
+			return "错误：插件工具失败: " + err.Error()
 		}
 		text, proposals := normalizePluginResult(raw)
 		for _, prop := range proposals {

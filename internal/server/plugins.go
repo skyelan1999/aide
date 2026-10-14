@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	pathpkg "path"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -775,10 +776,11 @@ func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (an
 
 func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName string, args map[string]any) (any, error) {
 
-	// Calls sharing a plugin's mutable state execute in arrival order. Different
-	// plugins can run concurrently; waiting is cancellable and owns no host process.
+	// Calls sharing plugin state remain FIFO. Cross-plugin resource claims are
+	// admitted atomically below; neither wait owns a handler process.
 	a.mu.Lock()
 	scope := a.pluginsPath
+	epoch, workspace := a.wsRevision, a.workPath
 	a.mu.Unlock()
 	release, err := a.pluginCalls.acquire(parent, scope+"\x00"+pluginID)
 	if err != nil {
@@ -786,7 +788,8 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	}
 	defer release()
 	a.mu.Lock()
-	changed := a.pluginsPath != scope
+	changed := a.pluginsPath != scope || a.wsRevision != epoch || a.workPath != workspace
+	footprint := a.pluginFootprintLocked(pluginID, toolName, args)
 	a.mu.Unlock()
 	if changed {
 		return nil, errors.New("工作区已切换，排队插件调用未执行")
@@ -794,7 +797,13 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	if err := parent.Err(); err != nil {
 		return nil, err
 	}
+	releaseResources, err := a.pluginResources.acquire(parent, footprint)
+	if err != nil {
+		return nil, err
+	}
+	defer releaseResources()
 	a.mu.Lock()
+	changed = a.pluginsPath != scope || a.wsRevision != epoch || a.workPath != workspace || !reflect.DeepEqual(footprint, a.pluginFootprintLocked(pluginID, toolName, args))
 	enabled := false
 	for _, p := range a.pluginRegistry.Plugins {
 		if p.ID == pluginID {
@@ -804,20 +813,27 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	}
 	denied := toolDeniedIn(a.settings.DisabledTools, toolName)
 	a.mu.Unlock()
+	if changed {
+		return nil, errors.New("工作区或插件资源声明已变化，排队调用未执行")
+	}
 	if !enabled {
 		return nil, errors.New("插件已停用，操作未执行")
 	}
 	if denied {
 		return nil, errors.New("插件工具已禁用，操作未执行")
 	}
+	if err := parent.Err(); err != nil {
+		return nil, err
+	}
 	if a.daemons != nil && a.isDaemonPlugin(pluginID) {
-		return a.daemons.Call(pluginID, toolName, args)
+		raw, err := a.daemons.CallContext(parent, pluginID, toolName, args)
+		return pluginResourceResult(footprint, workspace, raw, err)
 	}
 	a.mu.Lock()
 	settings := map[string]any{}
 	enabledPlugins := []map[string]any{}
 	for _, p := range a.pluginRegistry.Plugins {
-		if p.Enabled {
+		if p.Enabled && (footprint.exclusive || p.ID == pluginID) {
 			enabledPlugins = append(enabledPlugins, map[string]any{"id": p.ID, "name": p.Name, "main": p.Main, "settings": p.Settings})
 		}
 		if p.ID == pluginID {
@@ -834,6 +850,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	ctx, cancel := context.WithTimeout(parent, 310*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, "node", "-e", pluginHostJS, "call", scope, string(req), outFile)
+	configurePluginProcess(cmd, true)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	if bridgeToken := os.Getenv("AIDE_BROWSER_BRIDGE_TOKEN"); pluginID == "browser-control" && len(bridgeToken) >= 32 {
 		cmd.Env = append(cmd.Env, "AIDE_BROWSER_BRIDGE_TOKEN="+bridgeToken)
@@ -847,6 +864,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	cmd.Stdout = pluginStdout
 	cmd.Stderr = pluginStderr
 	runErr := cmd.Run()
+	_ = killPluginProcess(cmd)
 	if ctx.Err() != nil && runErr != nil {
 		if parent.Err() != nil {
 			return nil, parent.Err()
@@ -874,7 +892,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	if !result.OK {
 		return nil, errors.New(result.Error)
 	}
-	return result.Result, nil
+	return pluginResourceResult(footprint, workspace, result.Result, nil)
 }
 
 // normalizePluginResult 归一化插件工具结果：文本摘要 + 提案列表。
