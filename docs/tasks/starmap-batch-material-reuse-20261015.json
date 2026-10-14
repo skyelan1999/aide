@@ -1,0 +1,78 @@
+{
+  "id": "starmap-batch-material-reuse-20261015",
+  "request": "Reuse local file body success and failure within one star map batch across aliases; preserve independent source identities, stamp revalidation and next-batch recovery",
+  "baseline": "0b69d42708672852cdb903a458852fc04fc7daf1",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Same resolved file and unchanged stamp across local aliases invokes the body reader once in one candidate, including EIO; each alias retains independent ID/origin/body-gap coverage.",
+    "Failure is not persisted/copied into the next candidate, so same-metadata cloud hydration can recover; stamp/location changes revalidate rather than reusing stale text.",
+    "Code upgrade reuses verified text; text-only aliases do not receive code or get denied by a code-only failure. Existing cancellation, source policy and checkpoint gates retain behavior.",
+    "Current mounted reference probe counts real reader invocations; focused/race/vet/quick and canonical start.command actual progressive map observation; docs, incremental source push and matching offline package."
+  ],
+  "scope": [
+    "internal/server/knowledge_updates.go",
+    "internal/server/knowledge_material_reuse_test.go",
+    "docs/tasks",
+    "docs/architecture/knowledge-map.md",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Previous batch observed separate context/source:context on same unchanged /context mount; materialization only checked previous batch, causing duplicate current-body reads and repeated EIO per alias. Source identity must remain distinct.",
+      "evidence": [
+        "docs/tasks/starmap-file-read-isolation-20261015.json",
+        "internal/server/knowledge_updates.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Consult stamp-validated fresh success material and candidate-local failure memo; never copy/persist failures. Upgrade missing code without re-reading valid text; distinguish code-only failure. Narrow reader injection counts actual adapter use in tests. Directory discovery remains separate.",
+      "evidence": [
+        "internal/server/knowledge_updates.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Stamp-checked current-candidate success and body/code-specific error memo reuse implemented. Reusing text can add code without another8KiB read; text-only return does not drop current successful code memo or inherit code-only errors. Failure maps/read hooks are never copied/persisted.",
+      "evidence": [
+        "internal/server/knowledge_material_reuse_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "All Knowledge/local-root scoped race79.549s+vet PASS; targeted race4.642s+vet PASS. Actual reference3 batches169/343/513 nodes retain readable+unavailable bodies; reader calls160/286/406 equal unique paths for each candidate across aliases. Instrumented original material algorithm fails new regression: four fixture aliases read good.md and unavailable.md4 times each; new implementation1 each. Code upgrade baseline re-reads4 times, fixed1. Same-metadata next-batch healing, distinct source IDs/origins, stamp/location invalidation and code-only failure isolation PASS. Initial quick69 PASS; final canonical deployment/browser/package checks pending.",
+      "evidence": [
+        ".agent-state/starmap-material-reuse/targeted-race.log",
+        ".agent-state/starmap-material-reuse/targeted-owner.log",
+        ".agent-state/starmap-material-reuse/scoped-race.log",
+        ".agent-state/starmap-material-reuse/scoped-owner.log",
+        ".agent-state/starmap-material-reuse/baseline-expected-fail.log"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental source push/local tests/build/offline package authorization; no formal main/tag release.",
+  "rollback": "Revert candidate material reuse; preserve source registry, stable IDs, checkpoints, user data and previous image archive.",
+  "handoff": "Targeted actual adapter invocation counts PASS. Full scoped indexing regression and old-material negative proof running; final canonical deployment and offline delivery pending. Directory discovery remains per-source and cloud body availability/syscall waits remain open.",
+  "negative_proof": {
+    "baseline": "Original0b69d42 material function, current test reader injection only; no new reuse logic",
+    "result": "Expected FAIL: same four-alias fixture good.md4, unavailable.md4; code-upgrade body reader4",
+    "fixed": "Each body1 across aliases; failed bodies retried on next candidate",
+    "scope": "Reader invocation counts, not total syscalls or wall-clock acceleration"
+  }
+}

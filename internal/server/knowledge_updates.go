@@ -101,6 +101,12 @@ type knowledgeFileMemo struct {
 	codeReady bool
 }
 
+type knowledgeMaterialFailure struct {
+	stamp    knowledgeFileStamp
+	err      error
+	codeOnly bool
+}
+
 type knowledgeCodeMemo struct {
 	key       string
 	nodes     []knowledgeNode
@@ -117,6 +123,8 @@ type knowledgeScanCache struct {
 	discovery        map[string]*knowledgeDiscoveryView
 	previous         map[string]knowledgeFileMemo
 	files            map[string]knowledgeFileMemo
+	failedMaterial   map[string]knowledgeMaterialFailure    // Current candidate only; never persisted or copied to the next batch.
+	readText         func(*os.Root, string) (string, error) // Optional per-candidate test reader.
 	code             *knowledgeCodeMemo
 	err              error
 }
@@ -219,6 +227,16 @@ func (c *knowledgeScanCache) material(root *os.Root, location, p string, info os
 		c.fail(err)
 		return "", "", c.err
 	}
+	if failed, ok := c.failedMaterial[key]; ok && failed.stamp == stamp && (!failed.codeOnly || wantCode) {
+		c.fail(failed.err)
+		return "", "", failed.err
+	}
+	if fresh, ok := c.files[key]; ok && fresh.stamp == stamp && (!wantCode || fresh.codeReady) {
+		if !wantCode {
+			return fresh.text, "", nil
+		}
+		return fresh.text, fresh.code, nil
+	}
 	if old, ok := c.previous[key]; ok && old.stamp == stamp && (!wantCode || old.codeReady) {
 		if !wantCode {
 			old.code, old.codeReady = "", false
@@ -227,12 +245,30 @@ func (c *knowledgeScanCache) material(root *os.Root, location, p string, info os
 		return old.text, old.code, nil
 	}
 	memo := knowledgeFileMemo{stamp: stamp}
-	memo.text, err = knowledgeReadText(root, p)
+	// A later alias may need code after an earlier alias only needed text.
+	// Reuse its verified text while adding the missing code material.
+	if fresh, ok := c.files[key]; ok && fresh.stamp == stamp {
+		memo.text = fresh.text
+	} else if old, ok := c.previous[key]; ok && old.stamp == stamp {
+		memo.text = old.text
+	} else {
+		reader := c.readText
+		if reader == nil {
+			reader = knowledgeReadText
+		}
+		memo.text, err = reader(root, p)
+	}
+	codeFailure := false
 	if err == nil && wantCode {
 		memo.code, err = codeText(root, p)
 		memo.codeReady = err == nil
+		codeFailure = err != nil
 	}
 	if err != nil {
+		if c.failedMaterial == nil {
+			c.failedMaterial = make(map[string]knowledgeMaterialFailure)
+		}
+		c.failedMaterial[key] = knowledgeMaterialFailure{stamp: stamp, err: err, codeOnly: codeFailure}
 		c.fail(err)
 		return "", "", err
 	}
