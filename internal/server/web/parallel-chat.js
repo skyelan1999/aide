@@ -23,7 +23,7 @@
     sync();
   }
   function value(mode, assistant) { return mode === 'chat' && !assistant ? selected : 1; }
-  function render(run, {el, t, open}) {
+  function render(run, {el, t, open, initial = false}) {
     const progress = run.parallel;
     if (!progress || !(run.parallelism > 1)) return null;
     const phases = {planning:'规划拆分', running:'并行分析', merging:'汇总回答', completed:'已汇总', fallback:'主任务处理', interrupted:'已中断'};
@@ -31,7 +31,7 @@
     const parts = progress.parts || [];
     const finished = parts.filter(part => part.status !== 'running').length;
     const panel = el('details', 'parallel-progress');
-    panel.dataset.key = run.id + ':parallel'; panel.open = !!open?.has(panel.dataset.key);
+    panel.dataset.key = run.id + ':parallel'; panel.open = !!open?.has(panel.dataset.key) || (initial && ['planning', 'running', 'merging'].includes(progress.phase));
     const label = t('并行 {0}x · {1}', run.parallelism, t(phases[progress.phase] || '并行分析'));
     panel.append(el('summary', '', label + (parts.length ? ' · ' + finished + '/' + parts.length : '')));
     if (progress.reason) panel.append(el('p', 'parallel-reason', progress.reason));

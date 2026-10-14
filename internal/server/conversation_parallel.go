@@ -113,14 +113,18 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	}
 	update := func(phase, reason string) error {
 		a.mu.Lock()
-		defer a.mu.Unlock()
 		if task.Parallel == nil {
 			task.Parallel = &ParallelProgress{Requested: limit}
 		}
 		task.Parallel.Phase = phase
 		task.Parallel.Reason = reason
 		s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
-		return a.save(s)
+		err := a.save(s)
+		a.mu.Unlock()
+		if err == nil {
+			a.publishStream(task.ID, streamEvent{Event: "parallel", Text: phase})
+		}
+		return err
 	}
 	fallback := func(reason string) ([]Message, error) {
 		a.mu.Lock()
@@ -133,9 +137,9 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		return input, err
 	}
 	a.publishStream(task.ID, streamEvent{Event: "note", Text: fmt.Sprintf("正在规划最多 %d 路并行分析…", limit)})
-	planning := append(append([]Message(nil), input...), Message{Role: "user", Content: fmt.Sprintf("[parallel planner]\nDecompose the original request into 2 to %d genuinely independent analysis subtasks that can be solved using ONLY the supplied conversation and attachments. Return only JSON {\"tasks\":[\"...\"]}. Do not execute tools, invent evidence or repeat the whole request. Dependencies, requests requiring fresh external evidence, simple questions or indivisible actions should return {\"tasks\":[]}; the main executor will handle them. Subtasks must not rely on each other's outputs.", limit)})
+	planning := append(append([]Message(nil), input...), Message{Role: "user", Content: fmt.Sprintf("[parallel planner]\nDecompose the original request into 2 to %d independent analysis or drafting subtasks. General technical knowledge MAY be used to draft documents; lack of attachments is not a reason to reject a writing request. For a multi-section technical document (for example ROS2), prefer distinct sections up to the requested limit: concepts/architecture, setup/workspace, communication, implementation examples, testing/deployment. Return only JSON {\"tasks\":[\"...\"]}. Mark version-sensitive details and facts requiring fresh sources for the main executor to verify. External lookup, plugin execution and file writes belong to the main executor AFTER the parallel notes are reconciled; their existence does not prevent independent research outlines or drafts. Never claim to have executed them. Return {\"tasks\":[]} only for simple or genuinely indivisible requests. Do not pad duplicate subtasks; each must not rely on another subtask output.", limit)})
 	small := params
-	small.MaxTokens = 768
+	small.MaxTokens = 2048
 	small.ResponseFormat = ""
 	small.Stop = nil
 	planCtx, cancel := context.WithTimeout(ctx, 35*time.Second)
@@ -146,7 +150,10 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		return input, ctx.Err()
 	}
 	if err != nil {
-		return fallback("规划未完成，继续常规处理")
+		if errors.Is(err, context.DeadlineExceeded) {
+			return fallback("规划请求超过35秒，由主任务继续处理")
+		}
+		return fallback("规划请求失败或返回空内容，由主任务继续处理")
 	}
 	titles, err := parseParallelPlan(text, limit)
 	if err != nil {
@@ -180,7 +187,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	defer stopWorkers()
 	for i, title := range titles {
 		go func(index int, title string) {
-			messages := append(append([]Message(nil), input...), Message{Role: "user", Content: "[parallel analysis subtask]\n" + title + "\nAnalyze ONLY this subtask using supplied context. No tools are available: do not claim to read external sources, execute commands or modify files. State evidence, uncertainty and dependencies. Keep output concise for a main executor to reconcile."})
+			messages := append(append([]Message(nil), input...), Message{Role: "user", Content: "[parallel analysis subtask]\n" + title + "\nAnalyze or draft ONLY this subtask using supplied context and general knowledge. Explicitly flag version-sensitive details requiring verification by the main executor. No tools are available: do not claim to read external sources, execute commands or modify files. State evidence, uncertainty and dependencies. Keep output concise for a main executor to reconcile."})
 			out, callErr := a.parallelCall(workersCtx, task, cfg, messages, workerParams, fmt.Sprintf("parallel/part-%d", index+1))
 			results <- result{index, out, callErr}
 		}(i, title)

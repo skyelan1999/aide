@@ -1057,6 +1057,7 @@ function openStream(run) {
     const ph = state.runPhase[run.id];
     if (ph) { ph.note = d.text || ''; touchRunActivity(run.id); renderRunStatus(run.id); }
   }); // 空响应自动续接提示
+  es.addEventListener('parallel', () => { if (state.stream === es) refreshSessionSoon(); });
   es.addEventListener('compaction', e => {
     if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (_) { return; }
@@ -2043,7 +2044,7 @@ function renderSession() {
     if (run.status === 'running' && state.runPhase[run.id]) renderRunStatusInto(box, run.id);
     if (run.attachments?.length) box.append(el('p', 'muted', t("已附加：") + run.attachments.map(a => a.root + '/' + a.path).join('、')));
     renderClarification(run, box);
-    const parallelPanel = window.AideParallelChat?.render(run, {el, t, open: openDetails});
+    const parallelPanel = window.AideParallelChat?.render(run, {el, t, open: openDetails, initial: !previousRuns.get(run.id)?.node.querySelector('.parallel-progress')});
     if (parallelPanel) box.append(parallelPanel);
     if (!run.steps.length) box.append(el('p', 'muted', t("正在准备模型请求…")));
     run.steps.forEach((step, index) => {

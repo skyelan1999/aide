@@ -113,5 +113,20 @@
       "log": ".agent-state/verify-20261014T095555683455Z.log"
     }
   },
-  "image": "sha256:1657ad320d9648ac9b3e249d09a9f5ac7090e1dbffebb02ebe057041bc9f917e"
+  "image": "sha256:1657ad320d9648ac9b3e249d09a9f5ac7090e1dbffebb02ebe057041bc9f917e",
+  "ros2_plugin_followup_20261014": {
+    "status": "in_progress",
+    "request": "5x写ROS2文档未规划；检查插件并发、先后写入调度",
+    "task": "parallel-document-plugin-scheduling-20261014",
+    "changes": [
+      "通用知识文档草稿允许拆分",
+      "parallel SSE + 首次展开",
+      "同插件FIFO，跨插件独立并发"
+    ],
+    "remaining": [
+      "真实模型复测",
+      "跨插件共享文件资源依赖DAG",
+      "8097更新和离线包"
+    ]
+  }
 }

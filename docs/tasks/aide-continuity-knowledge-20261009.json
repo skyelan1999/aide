@@ -5356,5 +5356,17 @@
     },
     "new_user_request": "5x写ROS2文档没有明显规划；重新复测并检查插件并发、写入顺序与调度，继续conversation-parallel任务。",
     "all_workstreams": "仍全部in_progress，不用单项验收替代目标闭环"
+  },
+  "progress_checkpoint_20261014_followup106": {
+    "status": "in_progress",
+    "request": "重新用ROS2文档测试5x，并检查插件并发和写入调度",
+    "changes": "规划允许独立通用知识草稿，专用parallel SSE刷新与首次展开；按工作区/插件FIFO排队，取消等待，宿主路径固定",
+    "evidence": [
+      "canonical ROS2五路真实HTTP重叠与单次汇总、真实Node写入/跨插件重叠 race14.203s PASS",
+      "IAB实际组件5x规划/运行自动展开PASS",
+      ".agent-state/conversation-parallel/active-planning.png"
+    ],
+    "boundary": "provider为隔离模拟接口；8097仍未配置模型/密钥。插件执行仍在主任务，跨插件共写资源DAG未实现，未声称5x插件分支执行。",
+    "next": "兼容树回归、push与8097增量镜像；继续账本其余工作流"
   }
 }

@@ -13,7 +13,7 @@ const phases=['planning','running','merging','completed','fallback','interrupted
 function render(){
  const limit=AideParallelChat.value(mode,false);$('report').textContent='selected='+$('chat-parallelism').value+'x; request parallelism='+limit+'; mode='+mode+'; disabled='+$('chat-parallelism').disabled;
  const run={id:'fixture',parallelism:Number($('chat-parallelism').value),parallel:{phase:phases[phase],parts:phase===0?[]:[{title:'Analyze requirements',status:phase<2?'running':'completed'},{title:'Check independent evidence',status:phase<2?'running':'completed'}]}};
- const panel=AideParallelChat.render(run,{el,t,open:new Set(['fixture:parallel'])});$('timeline').replaceChildren();if(panel)$('timeline').append(panel);
+ const panel=AideParallelChat.render(run,{el,t,open:new Set(),initial:true});$('timeline').replaceChildren();if(panel)$('timeline').append(panel);
  if(phase===3){const answer=el('div','chat-answer md-body');answer.textContent='One coherent final answer, reconciled from the independent analyses.';$('timeline').append(answer);}
 }
 AideParallelChat.install({select:$('chat-parallelism'),mode:()=>mode,assistant:()=>false,t});$('chat-parallelism').addEventListener('change',render);

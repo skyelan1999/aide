@@ -261,3 +261,68 @@ func TestConversationParallelBudgetAndResume(t *testing.T) {
 		t.Fatal("prepared checkpoint replayed model requests")
 	}
 }
+
+func TestConversationParallelROS2Document(t *testing.T) {
+	a := testApp(t)
+	var drafted, merged atomic.Int32
+	started := make(chan struct{}, 5)
+	release := make(chan struct{})
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Messages []Message `json:"messages"`
+			Tools    []any     `json:"tools"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		last := body.Messages[len(body.Messages)-1].Content
+		switch {
+		case strings.HasPrefix(last, "[parallel planner]"):
+			if !strings.Contains(last, "General technical knowledge MAY be used") || !strings.Contains(last, "ROS2") {
+				t.Error("document planning still limited to supplied attachments")
+			}
+			parallelReply(w, `{"tasks":["ROS2 architecture","workspace setup","communication","implementation examples","testing and deployment"]}`)
+		case strings.HasPrefix(last, "[parallel analysis subtask]"):
+			if len(body.Tools) != 0 {
+				t.Error("draft workers execute tools")
+			}
+			started <- struct{}{}
+			select {
+			case <-release:
+			case <-r.Context().Done():
+				return
+			}
+			drafted.Add(1)
+			parallelReply(w, "ROS2 section draft; distribution-specific commands require verification.")
+		case strings.HasPrefix(last, "[parallel analysis results"):
+			merged.Add(1)
+			if drafted.Load() != 5 {
+				t.Error("merged before five drafts finished")
+			}
+			parallelReply(w, "# ROS2 技术文档\n\n架构、工作区、通信、示例、测试与部署。发行版相关命令待核实。")
+		default:
+			parallelReply(w, "ROS2 文档")
+		}
+	}))
+	defer provider.Close()
+	a.settings = Settings{BaseURL: provider.URL, Model: "fixture"}
+	s := createSession(t, a)
+	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "chat", "prompt": "请写一个ROS2的文档", "parallelism": 5}), 202)
+	for i := 0; i < 5; i++ {
+		select {
+		case <-started:
+		case <-time.After(5 * time.Second):
+			close(release)
+			t.Fatal("ROS2 draft did not reach five simultaneous requests")
+		}
+	}
+	close(release)
+	waitTaskDone(t, a, s.ID)
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	task := a.sessions[s.ID].Runs[0]
+	if task.Status != "completed" || task.Parallel.Phase != "completed" || len(task.Parallel.Parts) != 5 || drafted.Load() != 5 || merged.Load() != 1 {
+		t.Fatalf("wrong ROS2 plan/fanout/merge: %+v drafts=%d merges=%d", task.Parallel, drafted.Load(), merged.Load())
+	}
+	if !strings.Contains(task.Steps[0].Content, "ROS2 技术文档") {
+		t.Fatal("missing single final document")
+	}
+}

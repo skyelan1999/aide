@@ -1,0 +1,76 @@
+{
+  "id": "parallel-document-plugin-scheduling-20261014",
+  "request": "5x写ROS2文档没有规划；重新测试，额外检查插件并发和先后写入任务调度",
+  "baseline": "e5fde18e28a96d4046f77932bf0cae09d81b38aa",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "ROS2文档请求在5x下可规划五个独立章节并实际重叠请求，统一汇总一次",
+    "规划状态有独立SSE同步，首次面板自动展开，后续尊重收起",
+    "同一工作区/插件调用FIFO串行，等待可取消，跨插件独立运行；共享插件文件无丢更新",
+    "保留工具审批与主任务工具顺序，不把分析工作者冒充插件执行器；明确尚未实现跨插件共享文件DAG依赖与真实模型验收"
+  ],
+  "scope": [
+    "internal/server/conversation_parallel.go",
+    "internal/server/conversation_parallel_test.go",
+    "internal/server/plugin_call_queue.go",
+    "internal/server/plugin_call_queue_test.go",
+    "internal/server/plugins.go",
+    "internal/server/server.go",
+    "internal/server/web/parallel-chat.js",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/parallel-chat.test.cjs",
+    "scripts/fixtures/render-parallel-chat.py",
+    "docs",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户：5x写ROS2文档未规划，重新测并检查插件并发与先后写入",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "文档允许通用知识草稿+主任务核验；主任务单点工具执行，同插件跨会话FIFO，不同插件独立",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "ROS2提示、规划2048输出预算、专用parallel SSE/首次展开；插件队列与工作区路径固定",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "隔离ROS2请求五路重叠并单次汇总；真实Node同插件三次文件递增无丢更新、不同插件双端屏障证明重叠；canonical race14.203s PASS；最新兼容树回归中。IAB真实组件5x规划/运行首次自动展开已观察。",
+      "evidence": [
+        ".agent-state/parallel-plugin-final-tests.log",
+        ".agent-state/conversation-parallel/active-planning.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录测试证据、真实模型缺失、跨插件共享文件调度边界",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户按部分测试和push，更新镜像包供另一端导入",
+  "rollback": "8097镜像ab75ecc66e3d和完整数据备份；只替换8097服务",
+  "handoff": "",
+  "limits": [
+    "本机8097未配置模型或密钥；测试用隔离HTTP provider，并非真实模型理解ROS2质量验收",
+    "5x是最多五路分析/草稿；插件工具仍由主任务依序执行",
+    "不同插件写同一外部文件尚无跨插件资源依赖DAG；本次保证同插件内部的跨会话写入串行",
+    "排队等待可取消；已运行daemon仍按现有RPC超时/退出机制结束，未声称远端副作用撤回"
+  ]
+}

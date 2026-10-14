@@ -13,3 +13,8 @@ const run={id:'run-one',parallelism:5,parallel:{phase:'merging',parts:[{title:'<
 const panel=api.render(run,{el,t,open:new Set(['run-one:parallel'])});assert.equal(panel.open,true);assert.match(panel.children[0].textContent,/并行 5x · 汇总回答 · 2\/2/);assert.equal(panel.children[1].children[0].textContent,'<img onerror=alert(1)>');assert.equal(panel.children[1].children[0].children.length,0,'untrusted planner titles stay literal');assert.equal(api.render({id:'other',parallelism:1},{el,t}),null);
 const app=fs.readFileSync('internal/server/web/app.js','utf8');const start=app.indexOf('function sessionRevision('),end=app.indexOf('function getSessionWindow(',start);const c={state:{historyLimit:30}};vm.createContext(c);vm.runInContext(app.slice(start,end),c);const sess={id:'session',runs:[run],messages:[]};const before=c.sessionRevision(sess);run.parallel.phase='completed';assert.notEqual(c.sessionRevision(sess),before,'progress must repaint even without new answer text or timestamps');
 console.log('parallel chat PASS: 1-5 selection, persistence denial, mode gates, safe progress, session isolation and progress revision');
+
+const activeRun={id:'active',parallelism:5,parallel:{phase:'planning'}};
+assert.equal(api.render(activeRun,{el,t,initial:true}).open,true,'first plan must be visible');
+assert.equal(api.render(activeRun,{el,t,initial:false}).open,false,'respect user collapse after initial render');
+assert.match(app,/addEventListener\('parallel', \(\) => \{ if \(state.stream === es\) refreshSessionSoon\(\);/);

@@ -774,6 +774,23 @@ func (a *App) callPluginTool(pluginID, toolName string, args map[string]any) (an
 }
 
 func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName string, args map[string]any) (any, error) {
+
+	// Calls sharing a plugin's mutable state execute in arrival order. Different
+	// plugins can run concurrently; waiting is cancellable and owns no host process.
+	a.mu.Lock()
+	scope := a.pluginsPath
+	a.mu.Unlock()
+	release, err := a.pluginCalls.acquire(parent, scope+"\x00"+pluginID)
+	if err != nil {
+		return nil, err
+	}
+	defer release()
+	a.mu.Lock()
+	changed := a.pluginsPath != scope
+	a.mu.Unlock()
+	if changed {
+		return nil, errors.New("工作区已切换，排队插件调用未执行")
+	}
 	if err := parent.Err(); err != nil {
 		return nil, err
 	}
@@ -816,7 +833,7 @@ func (a *App) callPluginToolContext(parent context.Context, pluginID, toolName s
 	defer os.Remove(outFile)
 	ctx, cancel := context.WithTimeout(parent, 310*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "node", "-e", pluginHostJS, "call", a.pluginsPath, string(req), outFile)
+	cmd := exec.CommandContext(ctx, "node", "-e", pluginHostJS, "call", scope, string(req), outFile)
 	cmd.Env = []string{"PATH=/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide"}
 	if bridgeToken := os.Getenv("AIDE_BROWSER_BRIDGE_TOKEN"); pluginID == "browser-control" && len(bridgeToken) >= 32 {
 		cmd.Env = append(cmd.Env, "AIDE_BROWSER_BRIDGE_TOKEN="+bridgeToken)
