@@ -1,0 +1,67 @@
+{
+  "id": "session-counter-canonical-20261015",
+  "request": "推理设置复验发现会话编号仍写旧settings路径；修复规范配置路径持久化并验证删除后重启不复用编号",
+  "baseline": "8b9e5f9bab8388e07bdb242239bf7c06750bbeae",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Session allocation and startup repair persist NextSessionSeq to canonical SettingsPath, do not recreate legacy root settings.json.",
+    "Delete a numbered session then restart without settings PUT: new session number strictly increases; startup duplicate repair is durable across a second process.",
+    "Current canonical reasoning independent save stays usable with no models, preserves all stored session bytes; restore intended preferences without rolling back known monotonic counters.",
+    "Focused old-source negative and fixed-source race/vet, canonical start.command runtime/API/browser observations; incremental source/docs and matching offline image, scoped full gates recorded."
+  ],
+  "scope": [
+    "internal/server/server.go",
+    "internal/server/session_number_test.go",
+    "docs",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Native current-source reasoning independent auto/high/reload/auto PASS. Config API and stored session bytes restore; canonical settings differs only nextSessionSeq2->3 after owned fixture allocation. Static source points to legacy writer and isolated old-source test fails allocated2/persistedNext2.",
+      "evidence": [
+        ".agent-state/bootstrap-file-proto-close/reasoning-ui-proof.json",
+        ".agent-state/session-counter-canonical/scoped-race.log"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use existing SettingsPath in both counter writers, preserve migration priority and all other settings. Add canonical path assertion plus deleted-session restart and durable startup repair tests. Do not revert counter or restore full production volume. Wait existing full72 terminal before editing frozen inputs.",
+      "evidence": [
+        "internal/server/paths.go",
+        "internal/server/server.go",
+        "internal/server/migration.go"
+      ]
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Private extra Go regression injected into disposable network-none current-source snapshot, no tracked input mutation: TestSessionNumberCanonicalPersistence FAIL2.536s, allocated2/persistedNext2. Existing full72 still live and separate; fixed-source run pending.",
+      "evidence": [
+        ".agent-state/session-counter-canonical/scoped-race.log"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental source push/local testing/build/offline image authorization; no formal release.",
+  "rollback": "No source change yet. Preserve original stored session bytes and all settings except legitimate monotonic sequence advancement; never roll the sequence back.",
+  "handoff": "Old-source canonical counter failure reproduced. Product code remains frozen while full72 exec6348/container aide-verify-fc318b666188 runs. Next: fresh task branch, SettingsPath fix, current-source restart/race/vet, canonical rebuild and updated package."
+}

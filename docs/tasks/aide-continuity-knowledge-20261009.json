@@ -6341,5 +6341,16 @@
     "verification": "Current system light1325x940 and native574x940: keyboard expand/collapse, literal bounded long-result wrapping, truthful requested/effective and dispatch/proposal distinctions, exact non-latest-run evidence navigation PASS. Constructed display-only fixture, no model/plugin execution.",
     "cleanup": "Owned fixture removed, original1 session retained, window restored; protected hashes/config/mounts verified. No theme setting changed.",
     "remaining": "Other palettes/dark selection await requested UI preference-change confirmation;390px NOT_RUN native minimum. Existing full72 runner remains separate and active, original12 workstreams open."
+  },
+  "progress_checkpoint_20261015_followup128": {
+    "status": "in_progress",
+    "task": "docs/tasks/session-counter-canonical-20261015.json",
+    "priorityReasoning": "Current canonical native independent auto/high/reload/auto PASS with0 models; full config API and all original stored session content unchanged.",
+    "newFailure": "Canonical settings bytes only differ nextSessionSeq2->3 from legitimate prior fixture allocation. assignSessionNumber/repairSessionNumbers write legacy root settings.json rather than canonical SettingsPath; private current-source Go snapshot test FAIL allocated2/persistedNext2. No current source edits during full72.",
+    "evidence": [
+      ".agent-state/bootstrap-file-proto-close/reasoning-ui-proof.json",
+      ".agent-state/session-counter-canonical/scoped-race.log"
+    ],
+    "remaining": "Existing full72 terminal receipt, then canonical counter fix/restart regression/new matching image. Theme switch awaits confirmation, real provider config absent(hasKey false/model empty); original12 streams continue."
   }
 }
