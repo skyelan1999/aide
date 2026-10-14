@@ -320,3 +320,9 @@ Safari 原生组件验收使用实际文件行渲染器、重命名函数和主�
 `conversation.css` loads after shared themes and scopes its rules to the conversation timeline. Streaming partitions and persisted Markdown share one block layout; the cursor does not contribute a line. Code and tables stay within the answer frame. This normalizes presentation without changing message data, the renderer, or file previews; incomplete Markdown can still reflow when its syntax closes.
 
 复现组件验收：`python3 scripts/fixtures/render-conversation-output.py`，Safari 打开输出路径。夹具提取当前实际 Markdown、流式渲染、边界扫描和清洗函数，使用本地解析器、复制组件和完整主题样式，不连接8097或模型。内置几何检查比较同一内容的流式/完成态宽高及段落位置，检查框内溢出；包含长路径、列表、长代码、表格和引用。Safari 观察：840px 回答宽度的深色专业主题、364px 回答宽度的浅色专业主题及经典/舒适明暗状态均通过；逐段流式观察通过。这是组件验收，实际8097运行仍受既有容器退出故障阻塞。详见[任务账本](tasks/conversation-output-stability-20261014.json)。
+
+## aide 设置入口悬停反馈
+
+恢复原有左上角品牌方块的 `rotate(-12deg) scale(1.16)` 悬停与键盘聚焦反馈，删除 macos.css 后段将它清零的覆盖规则。只对精细指针启用悬停，鼠标移出回到原位；系统减少动态效果和应用显式 `data-motion="reduced"` 均不旋转。入口的设置按钮与点击行为不变。复现夹具：`python3 scripts/fixtures/render-brand-hover.py`，使用完整生产样式链与实际品牌标记。
+
+Restored the original brand-square left tilt by removing a later transform reset. Fine-pointer hover and keyboard focus retain feedback; system/application reduced-motion settings suppress rotation. Native Safari rendered the fixture and accepted its synthetic click action. Automation did not maintain the hover pseudo-state, so real hover/keyboard motion remains a manual acceptance item; no browser security warning was bypassed. See [task record](tasks/brand-hover-restore-20261014.json). Actual8097 deployment remains separately blocked by the existing container fault.

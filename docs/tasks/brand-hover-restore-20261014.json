@@ -1,0 +1,80 @@
+{
+  "id": "brand-hover-restore-20261014",
+  "request": "aide左上角设置方块鼠标拖过去应该往左旋转倾斜，之前有最近没了",
+  "baseline": "e00a41feb63d41f116c6444e9617e90d41645bfd",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Fine-pointer hover and keyboard focus restore original -12deg rotation/1.16 scale; pointer leave restores resting state.",
+    "System and explicit reduced motion keep the icon still.",
+    "Restore only brand icon motion; preserve settings click target and existing unrelated edits.",
+    "Native Safari hover/focus/reduced-motion observations, quick regression, documentation and task-branch push; runtime8097 deployment tracked separately."
+  ],
+  "scope": [
+    "internal/server/web/macos.css",
+    "internal/server/web/index.html",
+    "scripts/fixtures/render-brand-hover.py",
+    "docs/architecture.md",
+    "docs/tasks/brand-hover-restore-20261014.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Restore the former top-left settings brand square hover tilt, per user request.",
+      "evidence": [
+        "internal/server/web/macos.css"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Remove the later calm-surface override that suppresses the existing hover rule. Keep fine-pointer gating, keyboard feedback and both reduced-motion guards.",
+      "evidence": [
+        "internal/server/web/macos.css"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Removed conflicting transform reset and added application reduced-motion guard; cache version bumped.",
+      "evidence": [
+        "internal/server/web/macos.css",
+        "scripts/fixtures/render-brand-hover.py",
+        ".agent-state/brand-hover-restore/quick.log"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Both quick profiles pass. Native Safari fixture rendered and synthetic settings click remained functional. Hover pseudo-state was not maintained by native automation; hover/focus/reduced-motion transition manual acceptance remains NOT_RUN. IAB rejected file protocol; no workaround attempted.",
+      "evidence": [
+        "internal/server/web/macos.css",
+        "scripts/fixtures/render-brand-hover.py",
+        ".agent-state/brand-hover-restore/quick.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Recorded cause, restored behavior, reduced-motion guards and manual acceptance boundary.",
+      "evidence": [
+        "internal/server/web/macos.css",
+        "scripts/fixtures/render-brand-hover.py",
+        ".agent-state/brand-hover-restore/quick.log"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Generated HTML stays ignored; inherited vendor deletions and local unrelated work preserved.",
+      "evidence": [
+        "internal/server/web/macos.css",
+        "scripts/fixtures/render-brand-hover.py",
+        ".agent-state/brand-hover-restore/quick.log"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Task branch push prepared; actual8097 replacement still blocked by existing Docker container exit fault. No engine restart, merge or release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User previously authorized incremental tests, commits/push and documentation. No main merge, version release or engine-wide restart.",
+  "rollback": "Revert task CSS/index change; running8097 was not replaced.",
+  "handoff": "",
+  "manual_motion_acceptance": "not_run"
+}

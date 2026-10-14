@@ -26,6 +26,8 @@ button.primary { border-radius: 9px; font-weight: 600; box-shadow: 0 1px 2px var
   .brand:hover .brand-icon { transform: rotate(-12deg) scale(1.16); box-shadow: 0 5px 12px color-mix(in srgb, var(--brand) 24%, transparent); }
 }
 .brand:focus-visible .brand-icon { transform: rotate(-12deg) scale(1.16); }
+html[data-motion="reduced"] .brand:hover .brand-icon,
+html[data-motion="reduced"] .brand:focus-visible .brand-icon { transform: none; }
 @media (prefers-reduced-motion: reduce) {
   .brand:hover .brand-icon, .brand:focus-visible .brand-icon { transform: none; }
 }
@@ -555,13 +557,7 @@ button.quiet, .quiet {
   .sidebar, .topbar, .file-panel, .plugin-panel, #reminder-center, .composer, .settings-sheet, dialog { background: var(--panel); }
 }
 
-/* Calm work surfaces: quiet hierarchy, readable secondary text, and no reward-like motion. */
-.brand .brand-icon,
-.brand:hover .brand-icon,
-.brand:focus-visible .brand-icon {
-  transform: none;
-  box-shadow: none;
-}
+/* Calm work surfaces retain the brand feedback defined above. */
 .sidebar, .topbar, .file-panel, .plugin-panel, #reminder-center,
 .composer, .strategy-menu, .search-results, .settings-sheet, .settings-sheet.sheet-wide, dialog {
   -webkit-backdrop-filter: saturate(118%) blur(12px);
