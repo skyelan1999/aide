@@ -65,7 +65,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "Task branch push pending. Existing 8097 container exit-event fault still blocks runtime replacement; engine restart affects other services and remains pending human confirmation.",
+      "summary": "Source commit 8d194e2 pushed to origin/fix/conversation-output-stability; actual local checkout mirrored and candidate image built. No merge, version release or running8097 replacement. Existing container exit-event fault still blocks deployment; engine restart affects other services and awaits human confirmation.",
       "evidence": []
     }
   },
@@ -108,5 +108,11 @@
       "log": ".agent-state/verify-20261014T093816911610Z.log"
     }
   },
-  "image": "sha256:702c6d92a4f5d0188e3756e96f350b8faf6df05ece4c2dce22de3d7759812e57"
+  "image": "sha256:702c6d92a4f5d0188e3756e96f350b8faf6df05ece4c2dce22de3d7759812e57",
+  "delivery": {
+    "commit": "8d194e2",
+    "branch": "fix/conversation-output-stability",
+    "push": "pass",
+    "remote": "origin"
+  }
 }
