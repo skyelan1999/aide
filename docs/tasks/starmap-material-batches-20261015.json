@@ -1,0 +1,85 @@
+{
+  "id": "starmap-material-batches-20261015",
+  "request": "Bound progressive local materialization and metadata revalidation per batch with fair durable cursors; retain truthful old/pending/unavailable observations and recover without starvation",
+  "baseline": "5b4003cc9c83b31ee2278e92ec8f294f91b44866",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Physical local body reads and file/directory revalidation are quota/time-sliced with durable fair cursors, not proportional to all published paths; every finite queued path eventually gets a turn.",
+    "Discovery does not restart a completed cycle before material validation drains; pending body metadata and prior usable observations remain explicit, no obsolete changed-body/code evidence.",
+    "Encrypted material progress/gap observations survive restart with v1 cursor compatibility, safe paths, bounds and private clone isolation; scope/ancestor/cancellation guards retained.",
+    "Focused Go race/vet and real readonly reference probes prove per-batch bounds/progress; JS state/cadence tests and canonical start.command real UI; docs/source push/matching offline package."
+  ],
+  "scope": [
+    "internal/server/knowledge_material_queue.go",
+    "internal/server/knowledge_material_queue_test.go",
+    "internal/server/knowledge_progressive.go",
+    "internal/server/knowledge_local_store.go",
+    "internal/server/knowledge_local_failure.go",
+    "internal/server/knowledge_sources.go",
+    "internal/server/knowledge_updates.go",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "scripts/starmap-coverage-state.test.cjs",
+    "scripts/starmap-progressive-cadence.test.cjs",
+    "docs/tasks",
+    "docs/architecture/knowledge-map.md",
+    "docker-images",
+    "internal/server/knowledge_local_store_test.go",
+    "internal/server/knowledge_progressive_test.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Discovery bounded350ms but progressive reconstruction statted/read all published paths per source. Large host/cloud catalogues therefore grow work each batch despite bounded discovery. User requested incremental dynamic loading; original goal remains broad.",
+      "evidence": [
+        "internal/server/knowledge_progressive.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Independent fair file/directory queues, per-cycle validated stamps and last body-gap observations. Count quotas and350ms soft slices are checked between file/independent-directory units, always permit one unit; file ancestor checks add bounded depth work and one OS call can still block. Cached exact-stamp material retained; missing/changed content pending. Encrypted v2 cursor reads v1; older images reject v2 and rescan. Do not start next discovery cycle before material validation drains.",
+      "evidence": [
+        "internal/server/knowledge_material_queue.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Bounded material prepass, no whole-catalogue filesystem I/O during graph reconstruction; fair file/directory anchors, clone isolation and checkpointed validation/gap state. Additive readPending/materialPending, explicit pending detail, selected live-detail updates and fast pending cadence. Ancestor/scope/cancellation checks remain; metadata errors still publish valid prefix and retained observations.",
+      "evidence": [
+        "internal/server/knowledge_material_queue.go",
+        "internal/server/knowledge_progressive.go",
+        "internal/server/knowledge_local_store.go",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Targeted material/reuse race7.698s+vet PASS. All Knowledge/local-root scoped race99.729s+vet PASS, including restart/cancellation strict text-retention after explicit material completion. Initial new-test compile pointer mismatch and fixture plugin contamination fixed; two old tests now wait for body validation rather than metadata-only completion, with text assertions retained. Instrumented old progressive area expected FAIL10 delayed reads vs slice and14 reads vs budget7. Frozen readonly actual945-node prefix:40 reader calls each, pending895->845->795, awaiting content860->820->780, elapsed22.85/21.95/22.77ms; prefix observation, not full source latency guarantee. Canonical build/browser and quick pending.",
+      "evidence": [
+        ".agent-state/starmap-material-batches/targeted-race.log",
+        ".agent-state/starmap-material-batches/scoped-race.log",
+        ".agent-state/starmap-material-batches/frozen-race.log",
+        ".agent-state/starmap-material-batches/baseline-expected-fail.log",
+        ".agent-state/starmap-material-batches/metadata-completion-assumption-failed.log"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental source push/local testing/build/offline package authorization; no formal release.",
+  "rollback": "Revert bounded material changes and use earlier image; older decoder rejects new payload version and safely rescans (no cursor/data deletion). v1 remains readable.",
+  "handoff": "Implementation and scoped race/vet plus actual bounded prefix probe PASS; new cursor v2/legacy and pending UI ready. Canonical deployment/browser, docs and offline delivery pending. Original goal active; no complete source/body/OS-call timeout claim."
+}

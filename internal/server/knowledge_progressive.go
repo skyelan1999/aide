@@ -13,10 +13,12 @@ type knowledgeDiscoveryView struct {
 	Cursor    *knowledgeDiscovery
 	Published map[string]knowledgeDiscoveryEntry
 	Cycle     int
+	Material  knowledgeMaterialProgress
 }
 
 func (v *knowledgeDiscoveryView) clone() *knowledgeDiscoveryView {
 	c := &knowledgeDiscoveryView{Cursor: v.Cursor.Clone(), Published: make(map[string]knowledgeDiscoveryEntry, len(v.Published)), Cycle: v.Cycle}
+	c.Material = v.Material.clone()
 	for p, e := range v.Published {
 		c.Published[p] = e
 	}
@@ -52,9 +54,11 @@ func (c *knowledgeScanCache) discover(ctx context.Context, root *os.Root, ar kno
 	if limit := 4 * (files + dirs); limit > v.Cursor.MaxEntries {
 		v.Cursor.MaxEntries = limit
 	}
-	if v.Cursor.Complete {
+	v.prepareMaterial()
+	if v.Cursor.Complete && v.materialPending() == 0 {
 		v.Cursor = newKnowledgeDiscovery(v.Cursor.MaxEntries)
 		v.Cycle++
+		v.prepareMaterial()
 	}
 	v.Cursor.ScopePaths = append([]string(nil), p.ScopePaths[ar.id()]...)
 	b, err := v.Cursor.Step(ctx, root, files, dirs, p.DepthBudget, 4*(files+dirs), p.PriorityPaths[ar.id()])
@@ -67,6 +71,7 @@ func (c *knowledgeScanCache) discover(ctx context.Context, root *os.Root, ar kno
 	for k, e := range v.Cursor.Entries {
 		v.Published[k] = e
 	}
+	v.pruneMaterial()
 	return v, b, nil
 }
 func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, cache *knowledgeScanCache, root *os.Root, ar knowledgeArea, scope, module string, p knowledgeIndexPolicy, fileQuota, dirQuota int, includeCode bool, codeFiles *[]knowledgeCodeFile, codeBytes, codeSkipped *int) {
@@ -94,40 +99,26 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 		paths = append(paths, k)
 	}
 	sort.Strings(paths)
+	if err := a.knowledgeMaterialStep(ctx, cache, root, ar, v, fileQuota, dirQuota, includeCode, len(*codeFiles), *codeBytes); err != nil {
+		cache.fail(err)
+		if a.knowledgeContextErr(ctx) != nil {
+			return
+		}
+	}
 	first := len(g.Nodes)
-	blocked := map[string]bool{}
 	for _, rel := range paths {
 		if ctx.Err() != nil {
 			cache.fail()
 			return
 		}
-		denied := false
-		for parent := path.Dir(rel); ; parent = path.Dir(parent) {
-			if blocked[parent] {
-				denied = true
-				break
-			}
-			if parent == "." {
-				break
-			}
-		}
-		if denied {
+		e, exists := v.Published[rel]
+		if !exists {
 			continue
 		}
-		e := v.Published[rel]
 		info := e.Info
 		nid := knowledgeID(scope, ar.root, ar.source, rel)
 		node := knowledgeNode{ID: nid, Name: path.Base(rel), Kind: "file", Region: ar.region(), Root: ar.root, Source: ar.source, Path: rel, Size: info.Size(), Modified: info.ModTime().UTC().Format(time.RFC3339Nano)}
 		if info.IsDir() {
-			current, statErr := root.Lstat(rel)
-			if os.IsNotExist(statErr) || statErr == nil && (!current.IsDir() || current.Mode()&os.ModeSymlink != 0) {
-				blocked[rel] = true
-				continue
-			}
-			if statErr != nil {
-				cache.fail(statErr)
-				return
-			}
 			node.Kind = "directory"
 			node.Size = 0
 			coverage.Directories++
@@ -136,64 +127,37 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 			}
 		} else {
 			coverage.Files++
-			if _, seen := v.Cursor.Entries[rel]; seen {
-				current, statErr := root.Lstat(rel)
-				if os.IsNotExist(statErr) || statErr == nil && (!current.Mode().IsRegular() || current.Mode()&os.ModeSymlink != 0) {
-					delete(v.Cursor.Entries, rel)
-					delete(v.Published, rel)
-					coverage.Files--
-					continue
-				}
-				if statErr != nil {
-					cache.fail(statErr)
-					return
-				}
-				info = current
-				node.Size = info.Size()
-				node.Modified = info.ModTime().UTC().Format(time.RFC3339Nano)
-				v.Cursor.Entries[rel] = knowledgeDiscoveryEntry{rel, info}
-				v.Published[rel] = knowledgeDiscoveryEntry{rel, info}
-			}
-			wantCode := includeProgressiveCode(rel, info, len(*codeFiles), *codeBytes, includeCode)
-			// Only observations from this cycle may read source data. Older regions
-			// remain visible until enumeration completes; their memo is a prior snapshot.
 			key := ar.location + "\x00" + rel
-			var text, code string
-			if _, seen := v.Cursor.Entries[rel]; seen {
-				text, code, err = cache.material(root, ar.location, rel, info, wantCode)
-			} else if memo, ok := cache.previous[key]; ok {
-				text, code = memo.text, memo.code
+			memo, ready := cache.files[key]
+			if !ready || memo.stamp != knowledgeStamp(info) {
+				memo, ready = cache.previous[key]
+			}
+			ready = ready && memo.stamp == knowledgeStamp(info)
+			wantCode := includeProgressiveCode(rel, info, len(*codeFiles), *codeBytes, includeCode) && ready && memo.codeReady
+			if gap, failed := v.Material.Unavailable[rel]; failed && gap.Stamp == knowledgeStamp(info) {
+				node.ReadState = "unavailable"
+				coverage.ReadErrors++
+				ready = false
+				wantCode = false
+				if readFailureMessage == "" {
+					readFailureMessage = localReadFailureMessage(gap.Kind)
+				}
+			} else if !ready {
+				node.ReadState = "pending"
+				coverage.ReadPending++
+				delete(v.Material.Validated, rel)
+			}
+			if ready {
+				node.Text = memo.text
 				if !wantCode {
-					memo.code, memo.codeReady = "", false
-					code = ""
+					memo.code = ""
+					memo.codeReady = false
 				}
 				cache.files[key] = memo
-			} else {
-				err = fmt.Errorf("本轮尚未取得文件正文")
 			}
-			if err != nil {
-				if a.knowledgeContextErr(ctx) != nil {
-					cache.fail(err)
-					return
-				}
-				// One unreadable body must not hide the source's later files.
-				// Keep only metadata, remove obsolete material, and retry when
-				// discovery visits this file again. Never expand code from it.
-				cache.err = originalError
-				delete(cache.files, key)
-				delete(cache.previous, key)
-				coverage.ReadErrors++
-				if readFailureMessage == "" {
-					readFailureMessage = localReadUnavailableMessage(err)
-				}
-				node.ReadState = "unavailable"
-				text, code, wantCode = "", "", false
-				err = nil
-			}
-			node.Text = text
 			if wantCode {
-				*codeBytes += len(code)
-				*codeFiles = append(*codeFiles, knowledgeCodeFile{ID: nid, Text: code, Node: ar.node(node), Module: module})
+				*codeBytes += len(memo.code)
+				*codeFiles = append(*codeFiles, knowledgeCodeFile{ID: nid, Text: memo.code, Node: ar.node(node), Module: module})
 			} else if includeCode && codeLanguage(rel) != "" {
 				(*codeSkipped)++
 				g.Truncated = true
@@ -207,9 +171,10 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 			}
 		}
 	}
+	coverage.MaterialPending = v.materialPending()
 	cache.localCheckpoints = append(cache.localCheckpoints, knowledgeLocalCheckpoint{ar, knowledgeLocalDiscoveryRevision(p), includeCode, 0, 0, v})
 	state, message := "ready", ""
-	if !b.Complete || len(b.Reasons) > 0 {
+	if !b.Complete || len(b.Reasons) > 0 || coverage.MaterialPending > 0 {
 		state, message = "partial", "分批索引中，未扫描区域保持上一周期快照"
 		g.Truncated = true
 	}
@@ -219,6 +184,10 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 		coverage.Reasons = append(coverage.Reasons, "file-read-error")
 		g.Truncated = true
 		g.Warnings = append(g.Warnings, ar.name+"："+message)
+	}
+	if coverage.MaterialPending > 0 {
+		coverage.Reasons = append(coverage.Reasons, "material_pending")
+		message += fmt.Sprintf("；%d 个条目等待分批复核，未复核区域保留上次观察", coverage.MaterialPending)
 	}
 	knowledgeSetSource(g, ar, state, message, len(g.Nodes)-first)
 	for i := range g.Sources {

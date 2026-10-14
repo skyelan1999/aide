@@ -60,6 +60,16 @@ type knowledgeLocalMaterial struct {
 	Text, Code string
 	CodeReady  bool
 }
+type knowledgeLocalMaterialGap struct {
+	Stamp knowledgeLocalStamp
+	Kind  string
+}
+type knowledgeLocalMaterialProgress struct {
+	Cycle               int
+	FileAfter, DirAfter string
+	Validated           map[string]knowledgeLocalStamp
+	Unavailable         map[string]knowledgeLocalMaterialGap
+}
 type knowledgeLocalPayload struct {
 	Version            int
 	Identity           string
@@ -72,6 +82,7 @@ type knowledgeLocalPayload struct {
 	ScopePaths         []string
 	Seeded             bool
 	Materials          map[string]knowledgeLocalMaterial
+	MaterialState      knowledgeLocalMaterialProgress
 }
 type knowledgeLocalCheckpoint struct {
 	Area        knowledgeArea
@@ -88,8 +99,17 @@ func knowledgeLocalCursorFile(data string, ar knowledgeArea, code bool) string {
 	return filepath.Join(filepath.Dir(knowledgeCursorFile(data, ar, code)), "local-"+filepath.Base(knowledgeCursorFile(data, ar, code)))
 }
 func localPayload(identity string, v *knowledgeDiscoveryView, materials map[string]knowledgeFileMemo, location string) knowledgeLocalPayload {
+	v.prepareMaterial()
+	v.pruneMaterial()
 	d := v.Cursor
-	out := knowledgeLocalPayload{Version: 1, Identity: identity, Cycle: v.Cycle, Entries: map[string]knowledgeLocalInfo{}, Published: map[string]knowledgeLocalInfo{}, Visited: d.Visited, Reasons: d.Reasons, Complete: d.Complete, MaxEntries: d.MaxEntries, ScopePaths: d.ScopePaths, Seeded: d.Seeded, Materials: map[string]knowledgeLocalMaterial{}}
+	out := knowledgeLocalPayload{Version: 2, Identity: identity, Cycle: v.Cycle, Entries: map[string]knowledgeLocalInfo{}, Published: map[string]knowledgeLocalInfo{}, Visited: d.Visited, Reasons: d.Reasons, Complete: d.Complete, MaxEntries: d.MaxEntries, ScopePaths: d.ScopePaths, Seeded: d.Seeded, Materials: map[string]knowledgeLocalMaterial{}}
+	out.MaterialState = knowledgeLocalMaterialProgress{Cycle: v.Material.Cycle, FileAfter: v.Material.FileAfter, DirAfter: v.Material.DirAfter, Validated: map[string]knowledgeLocalStamp{}, Unavailable: map[string]knowledgeLocalMaterialGap{}}
+	for p, s := range v.Material.Validated {
+		out.MaterialState.Validated[p] = localStamp(s)
+	}
+	for p, gap := range v.Material.Unavailable {
+		out.MaterialState.Unavailable[p] = knowledgeLocalMaterialGap{localStamp(gap.Stamp), gap.Kind}
+	}
 	for _, q := range d.Queue {
 		out.Queue = append(out.Queue, knowledgeLocalQueue{
 			Path: q.Path, Offset: q.Offset, ReadOffset: q.ReadOffset,
@@ -104,17 +124,16 @@ func localPayload(identity string, v *knowledgeDiscoveryView, materials map[stri
 	for p, e := range v.Published {
 		if !e.Info.IsDir() {
 			m, ok := materials[location+"\x00"+p]
-			if !ok {
-				continue
-			} // Removed/blocked descendants were not published by this scan.
-			out.Materials[p] = knowledgeLocalMaterial{localStamp(m.stamp), m.text, m.code, m.codeReady}
+			if ok && m.stamp == knowledgeStamp(e.Info) {
+				out.Materials[p] = knowledgeLocalMaterial{localStamp(m.stamp), m.text, m.code, m.codeReady}
+			}
 		}
 		out.Published[p] = knowledgeLocalInfo{p, localStamp(knowledgeStamp(e.Info))}
 	}
 	return out
 }
 func validateKnowledgeLocalCursor(d *knowledgeLocalPayload) error {
-	if d.Version != 1 || d.Cycle < 1 || d.MaxEntries < 1 || d.MaxEntries > knowledgeDiscoveryMaxEntries || d.Entries == nil || d.Published == nil || d.Visited == nil || d.Reasons == nil || d.Materials == nil || len(d.Queue) > 50000 || len(d.Visited) > 50000 || len(d.Entries) > d.MaxEntries || len(d.Published) > 2*d.MaxEntries || len(d.Materials) > 2*d.MaxEntries || len(d.Reasons) > 16 || len(d.ScopePaths) > 32 || d.Complete != (len(d.Queue) == 0) {
+	if (d.Version != 1 && d.Version != 2) || d.Cycle < 1 || d.MaxEntries < 1 || d.MaxEntries > knowledgeDiscoveryMaxEntries || d.Entries == nil || d.Published == nil || d.Visited == nil || d.Reasons == nil || d.Materials == nil || len(d.Queue) > 50000 || len(d.Visited) > 50000 || len(d.Entries) > d.MaxEntries || len(d.Published) > 2*d.MaxEntries || len(d.Materials) > 2*d.MaxEntries || len(d.Reasons) > 16 || len(d.ScopePaths) > 32 || d.Complete != (len(d.Queue) == 0) {
 		return fmt.Errorf("invalid local cursor bounds")
 	}
 	safe := func(p string) bool {
@@ -175,9 +194,36 @@ func validateKnowledgeLocalCursor(d *knowledgeLocalPayload) error {
 	for p, e := range d.Published {
 		if !e.IsDir() {
 			if _, ok := d.Materials[p]; !ok {
-				return fmt.Errorf("missing local material")
+				if d.Version == 1 {
+					return fmt.Errorf("missing local material")
+				}
+				if validated, ok := d.MaterialState.Validated[p]; ok && validated == e.Stamp {
+					gap, failed := d.MaterialState.Unavailable[p]
+					if !failed || gap.Stamp != e.Stamp {
+						return fmt.Errorf("validated local material missing")
+					}
+				}
 			}
 		}
+	}
+	if d.Version == 2 {
+		m := d.MaterialState
+		if m.Cycle != d.Cycle || m.Validated == nil || m.Unavailable == nil || len(m.Validated) > len(d.Published) || len(m.Unavailable) > len(d.Published) || m.FileAfter != "" && !safe(m.FileAfter) || m.DirAfter != "" && !safe(m.DirAfter) {
+			return fmt.Errorf("invalid material queue bounds")
+		}
+		for p, s := range m.Validated {
+			if _, ok := d.Published[p]; !ok || !safe(p) || s.Size < 0 || s.Mode&os.ModeSymlink != 0 || !(s.Mode.IsRegular() || s.Mode.IsDir()) {
+				return fmt.Errorf("invalid material validation")
+			}
+		}
+		for p, gap := range m.Unavailable {
+			e, ok := d.Published[p]
+			if !ok || e.IsDir() || !safe(p) || gap.Stamp.Size < 0 || !gap.Stamp.Mode.IsRegular() || (gap.Kind != "io" && gap.Kind != "permission" && gap.Kind != "changed" && gap.Kind != "read") {
+				return fmt.Errorf("invalid material gap")
+			}
+		}
+	} else if d.MaterialState.Cycle != 0 || d.MaterialState.FileAfter != "" || d.MaterialState.DirAfter != "" || len(d.MaterialState.Validated) != 0 || len(d.MaterialState.Unavailable) != 0 {
+		return fmt.Errorf("legacy cursor contains material queue state")
 	}
 	return nil
 }
@@ -208,6 +254,14 @@ func (d knowledgeLocalPayload) restore(location string) (*knowledgeDiscoveryView
 	for p, m := range d.Materials {
 		materials[location+"\x00"+p] = knowledgeFileMemo{m.Stamp.stamp(), m.Text, m.Code, m.CodeReady}
 	}
+	v.Material = knowledgeMaterialProgress{Cycle: d.MaterialState.Cycle, FileAfter: d.MaterialState.FileAfter, DirAfter: d.MaterialState.DirAfter, Validated: map[string]knowledgeFileStamp{}, Unavailable: map[string]knowledgeMaterialGap{}}
+	for p, s := range d.MaterialState.Validated {
+		v.Material.Validated[p] = s.stamp()
+	}
+	for p, gap := range d.MaterialState.Unavailable {
+		v.Material.Unavailable[p] = knowledgeMaterialGap{gap.Stamp.stamp(), gap.Kind}
+	}
+	v.prepareMaterial()
 	return v, materials
 }
 func loadKnowledgeLocalCursor(file, identity string, key []byte) (*knowledgeLocalPayload, error) {

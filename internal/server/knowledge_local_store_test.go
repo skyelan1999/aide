@@ -302,17 +302,23 @@ func TestKnowledgeLocalRestartAcrossCycles(t *testing.T) {
 	a := testApp(t)
 	seedKnowledgeLocalRestart(t, a)
 	count := 0
-	for i := 0; i < 12; i++ {
+	materialComplete := false
+	for i := 0; i < 40; i++ {
 		if a.knowledgeUpdates.views[0] != nil {
 			a.knowledgeUpdates.views[0].checked = a.knowledgeUpdates.views[0].checked.Add(-knowledgeUpdateInterval)
 		}
 		count = localUpdateCount(t, a)
-		if count >= 120 {
+		for _, s := range a.knowledgeUpdates.views[0].graph.Sources {
+			if s.Region == "workspace" && s.Coverage != nil {
+				materialComplete = s.Coverage.Pending == 0 && s.Coverage.MaterialPending == 0 && s.Coverage.ReadPending == 0
+			}
+		}
+		if count >= 120 && materialComplete {
 			break
 		}
 	}
-	if count != 120 {
-		t.Fatalf("incomplete catalogue: %d", count)
+	if count != 120 || !materialComplete {
+		t.Fatalf("incomplete catalogue/material validation: count=%d complete=%v", count, materialComplete)
 	}
 	a.knowledgeUpdates.views[0].checked = a.knowledgeUpdates.views[0].checked.Add(-knowledgeUpdateInterval)
 	if count := localUpdateCount(t, a); count != 120 {

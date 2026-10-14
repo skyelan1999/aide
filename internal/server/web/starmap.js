@@ -126,18 +126,19 @@ function sourceCoverageState(source){
  if(source.state!=='ready'&&source.state!=='partial')return sourceStateLabel(source.state);
  if(!c)return sourceStateLabel(source.state);
  if(c.refreshProgress)return '更新扫描中 · 保留上次完整星图';
- if(c.readErrors>0)return c.progressive&&c.pending>0?'分批扫描中 · 正文读取异常':'部分正文不可读';
+ if(c.readErrors>0)return c.progressive&&(c.pending>0||c.materialPending>0)?'分批扫描中 · 正文读取异常':'部分正文不可读';
+ if(c.materialPending>0)return '正文与目录分批复核中';
  if(c.reasons?.length)return '范围受限';
  if(c.progressive&&c.pending>0)return '分批扫描中';
  return source.state==='partial'?'部分索引':'限定范围已扫描';
 }
 function sourceCoverageLabel(source){
  const c=source.coverage;if(!c)return '';
- const reasons={files:'文件预算',directories:'目录预算',depth:'目录深度',time:'扫描时限',directory_entries:'单目录条目预算',read_error:'读取失败','file-read-error':'部分文件正文读取失败',catalog_limit:'索引目录容量上限',scope_missing:'配置范围不存在'};
+ const reasons={files:'文件预算',directories:'目录预算',depth:'目录深度',time:'扫描时限',directory_entries:'单目录条目预算',read_error:'读取失败',material_pending:'正文与目录等待复核','file-read-error':'部分文件正文读取失败',catalog_limit:'索引目录容量上限',scope_missing:'配置范围不存在'};
  const progress=c.refreshProgress?`更新扫描第 ${c.cycle||1} 轮，已发现 ${c.refreshFiles||0} 个文件 / ${c.refreshDirectories||0} 个目录，待扫描 ${c.pending||0} 个目录任务；当前展示上次完整星图`:(c.progressive?`累计索引 ${c.files} 个文件 / ${c.directories} 个目录；单批预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层；第 ${c.cycle||1} 轮；待扫描 ${c.pending||0} 个目录任务；容量上限 ${c.catalogLimit||0} 条`:`已扫描 ${c.files} 个文件 / ${c.directories} 个目录；预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层`);
  const limits=c.reasons?.length?'；受限：'+c.reasons.map(r=>reasons[r]||r).join('、'):'';
- const status=c.refreshProgress?'':c.progressive?(c.pending?'；分批扫描中，保留上一轮已知节点':c.reasons?.length?'；本轮队列已结束，仍有未覆盖范围':'；本轮限定范围扫描完成'):c.reasons?.length?'':'；限定目录范围内扫描完成';
- return progress+(c.readErrors>0?`；${c.readErrors} 个文件正文暂不可读`:'')+(c.scopePaths?.length?'；索引范围：'+c.scopePaths.join('、'):'')+`；文本仅前 ${c.textBytesPerFile/1024} KiB；全库总数未统计`+limits+status;
+ const status=c.refreshProgress?'':c.progressive?((c.pending||c.materialPending)?'；分批扫描与复核中，保留上一轮已知节点':c.reasons?.length?'；本轮队列已结束，仍有未覆盖范围':'；本轮限定范围扫描完成'):c.reasons?.length?'':'；限定目录范围内扫描完成';
+ return progress+(c.materialPending>0?`；${c.materialPending} 个条目等待复核`:'')+(c.readPending>0?`；${c.readPending} 个文件等待内容复核`:'')+(c.readErrors>0?`；${c.readErrors} 个文件正文暂不可读`:'')+(c.scopePaths?.length?'；索引范围：'+c.scopePaths.join('、'):'')+`；文本仅前 ${c.textBytesPerFile/1024} KiB；全库总数未统计`+limits+status;
 }
 
 function nodeSource(n){const s=sourceByRegion.get(n.region);return {id:s?.id||n.source||n.region,name:s?.name||n.sourceName||fallbackSourceName(n.region),type:s?.type||n.sourceType||(n.region==='sessions'?'session':''),state:s?.state||'',message:s?.message||''};}
@@ -153,11 +154,11 @@ function liveReady(){return !locked&&!document.hidden&&!pageLeaving&&!loading&&!
 function stopLive(clearCursor=false){clearTimeout(liveTimer);liveTimer=0;liveEpoch++;liveAbort?.abort();liveAbort=null;if(clearCursor)liveCursor='';}
 // Continue unfinished catalogues promptly; completed/failed sources retain their normal cadence.
 function progressiveSummary(g){
- const sources=(g.sources||[]).filter(s=>s.state!=='unavailable'&&s.coverage?.progressive&&s.coverage.pending>0);
- return sources.length?'分批扫描中 · 已载入 '+g.nodes.length+' 个节点 · 待扫 '+sources.reduce((sum,s)=>sum+s.coverage.pending,0)+' 个目录任务':'';
+ const sources=(g.sources||[]).filter(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0||s.coverage.materialPending>0));
+ return sources.length?'分批扫描中 · 已载入 '+g.nodes.length+' 个节点 · 待扫 '+sources.reduce((sum,s)=>sum+(s.coverage.pending||0),0)+' 个目录任务 · 待复核 '+sources.reduce((sum,s)=>sum+(s.coverage.materialPending||0),0)+' 个条目':'';
 }
 function progressiveDelay(g,duration=0){
- const scanning=(g.sources||[]).some(s=>s.state!=='unavailable'&&s.coverage?.progressive&&s.coverage.pending>0);
+ const scanning=(g.sources||[]).some(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0||s.coverage.materialPending>0));
  return scanning?Math.max(350,Math.min(1500,Math.round(duration*.5))):2000;
 }
 function scheduleLive(delay=2000){clearTimeout(liveTimer);liveTimer=0;if(locked||document.hidden||pageLeaving)return;liveTimer=setTimeout(pollLive,delay);}
@@ -835,7 +836,8 @@ function nodeResults(announce=true){
 }
 function search(){resetDocumentBatch();searchQuery=$('search').value.trim().toLowerCase();if(retrievalMode()!=='nodes'){documentGeneration++;selected=null;revealPanel($('detail'),false);documentAbort?.abort();$('results').replaceChildren();results=[];resultIDs.clear();invalidateView();say('输入问题后点击探索，检索文档正文。');redraw();return;}nodeResults();}
 
-function select(n,focus=true){if(selected?.id!==n.id)beginGraphTransition();$('document-insight').hidden=true;selected=nodeByID.get(n.id)||n;revealPanel($('detail'),true);if(cosmicEnabled&&focus)cosmicLocate(selected);else if(!cosmicEnabled&&focus&&Number.isFinite(selected.x))moveCamera({yaw:-selected.x,pitch:-selected.y,zoom:Math.max(zoom,1.08)},650);$('detail-name').textContent=n.name;$('detail-region').textContent=n.kind==='symbol'?'CODE / '+n.language:n.region==='sessions'?'CONVERSATION / 会话':n.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('detail-id').textContent=n.id;$('detail-path').textContent=(n.path||'会话 #'+n.number)+(n.line?' : '+n.line+'–'+n.endLine:'');$('detail-text').textContent=n.readState==='unavailable'?'正文暂不可读取；当前仅显示文件信息，其他文件继续索引。':n.text||'此节点仅索引名称，尚未读取正文。';const edges=edgeAdjacency.get(n.id)||[];$('neighbors').textContent=`${edges.length} 条连接 · ${n.kind==='symbol'?'声明附近片段':(n.size||0)+' 字节'}`;$('insert').disabled=n.kind==='directory';$('understand').disabled=n.kind==='directory';syncNodeSourceChrome();renderCodeInsight(n);redraw();}
+function nodeDetailText(n){if(n.readState==='unavailable')return '正文暂不可读取；当前仅显示文件信息，其他文件继续索引。';if(n.readState==='pending')return '当前内容等待分批复核；仅显示文件信息。';return n.text||'此节点仅索引名称，尚未读取正文。';}
+function select(n,focus=true){if(selected?.id!==n.id)beginGraphTransition();$('document-insight').hidden=true;selected=nodeByID.get(n.id)||n;revealPanel($('detail'),true);if(cosmicEnabled&&focus)cosmicLocate(selected);else if(!cosmicEnabled&&focus&&Number.isFinite(selected.x))moveCamera({yaw:-selected.x,pitch:-selected.y,zoom:Math.max(zoom,1.08)},650);$('detail-name').textContent=n.name;$('detail-region').textContent=n.kind==='symbol'?'CODE / '+n.language:n.region==='sessions'?'CONVERSATION / 会话':n.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('detail-id').textContent=n.id;$('detail-path').textContent=(n.path||'会话 #'+n.number)+(n.line?' : '+n.line+'–'+n.endLine:'');$('detail-text').textContent=nodeDetailText(n);const edges=edgeAdjacency.get(n.id)||[];$('neighbors').textContent=`${edges.length} 条连接 · ${n.kind==='symbol'?'声明附近片段':(n.size||0)+' 字节'}`;$('insert').disabled=n.kind==='directory';$('understand').disabled=n.kind==='directory';syncNodeSourceChrome();renderCodeInsight(n);redraw();}
 function renderCodeInsight(n){
  const on=codeView||n.kind==='symbol';$('code-insight').hidden=!on;if(!on)return;
  $('code-signature').textContent=n.signature||'';$('code-location').textContent=n.kind==='symbol'?`${n.language} · ${n.symbolKind} · L${n.line}–L${n.endLine} · ${n.id}`+(n.contentHash?' · SHA '+n.contentHash.slice(0,10):''):'文件 / 模块视角';
@@ -933,7 +935,7 @@ function applyLiveUpdate(update,initial=false){
  else if(selectionID)selected=!selectionChanged&&citation?{...oldNodes.get(selectionID),documentCitation:citation}:oldNodes.get(selectionID);
  layout(true);if(selected&&citation&&!selectionChanged)selected={...nodeByID.get(selectionID),documentCitation:citation};if(retrievalMode()==='nodes')nodeResults(false);else{invalidateView();if(selectionChanged)$('document-note').textContent='当前原文已更新；保留检索结果，重新探索可核对最新摘录。';}
  refreshView();ensureCosmicView();syncGraphChrome();
- if(selected){$('detail-name').textContent=selected.name;$('detail-path').textContent=(selected.path||'会话 #'+selected.number)+(selected.line?' : '+selected.line+'–'+selected.endLine:'');$('detail-region').textContent=selected.kind==='symbol'?'CODE / '+selected.language:selected.region==='sessions'?'CONVERSATION / 会话':selected.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('insert').disabled=selected.kind==='directory';$('understand').disabled=selected.kind==='directory';$('neighbors').textContent=`${(edgeAdjacency.get(selected.id)||[]).length} 条连接`;if(selectionChanged){$('detail-text').textContent=selected.text||'此节点仅索引名称。';$('document-insight').hidden=true;delete selected.documentCitation;}renderCodeInsight(selected);}
+ if(selected){$('detail-name').textContent=selected.name;$('detail-path').textContent=(selected.path||'会话 #'+selected.number)+(selected.line?' : '+selected.line+'–'+selected.endLine:'');$('detail-region').textContent=selected.kind==='symbol'?'CODE / '+selected.language:selected.region==='sessions'?'CONVERSATION / 会话':selected.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('insert').disabled=selected.kind==='directory';$('understand').disabled=selected.kind==='directory';$('neighbors').textContent=`${(edgeAdjacency.get(selected.id)||[]).length} 条连接`;if(selectionChanged){$('detail-text').textContent=nodeDetailText(selected);$('document-insight').hidden=true;delete selected.documentCitation;}renderCodeInsight(selected);}
  liveAnimationUntil=motion?now+(added.length?Math.min(added.length-1,20)*32+680:380):0;
  say(progressiveSummary(graph)||(update.stale?'正在建立最新索引 · 当前显示上次完整星图':'已同步')+(added.length?' · '+added.length+' 颗新星':'')+(removed.size?' · '+removed.size+' 个节点移出':'')+(changed.length>added.length?' · '+(changed.length-added.length)+' 个节点更新':''));redraw();
 }

@@ -9,6 +9,31 @@ import (
 const knowledgeLocalFallbackMaxNodes = knowledgeDiscoveryMaxEntries + 1200
 const knowledgeLocalFallbackMaxEdges = 6500
 
+func localReadFailureKind(err error) string {
+	if errors.Is(err, syscall.EIO) {
+		return "io"
+	}
+	if errors.Is(err, os.ErrPermission) {
+		return "permission"
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		return "changed"
+	}
+	return "read"
+}
+func localReadFailureMessage(kind string) string {
+	switch kind {
+	case "io":
+		return localReadUnavailableMessage(syscall.EIO)
+	case "permission":
+		return localReadUnavailableMessage(os.ErrPermission)
+	case "changed":
+		return localReadUnavailableMessage(os.ErrNotExist)
+	default:
+		return localReadUnavailableMessage(nil)
+	}
+}
+
 func localReadUnavailableMessage(err error) string {
 	if errors.Is(err, syscall.EIO) {
 		return "本机文件正文读取发生 I/O 错误；云盘占位文件请先下载到本机"

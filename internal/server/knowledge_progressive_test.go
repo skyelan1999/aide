@@ -487,7 +487,7 @@ func TestKnowledgeCancelledRefreshRetainsUnvisitedMaterial(t *testing.T) {
 			t.Fatal(err)
 		}
 		for _, s := range view.graph.Sources {
-			if s.Region == "workspace" && s.Coverage != nil && s.Coverage.Pending == 0 {
+			if s.Region == "workspace" && s.Coverage != nil && s.Coverage.Pending == 0 && s.Coverage.MaterialPending == 0 && s.Coverage.ReadPending == 0 {
 				complete = true
 			}
 		}

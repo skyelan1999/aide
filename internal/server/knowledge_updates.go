@@ -19,7 +19,7 @@ const knowledgeBatchDuration = 350 * time.Millisecond
 
 func knowledgeGraphScanning(g knowledgeGraph) bool {
 	for _, source := range g.Sources {
-		if source.State != "unavailable" && source.Coverage != nil && source.Coverage.Progressive && source.Coverage.Pending > 0 {
+		if source.State != "unavailable" && source.Coverage != nil && source.Coverage.Progressive && (source.Coverage.Pending > 0 || source.Coverage.MaterialPending > 0) {
 			return true
 		}
 	}
