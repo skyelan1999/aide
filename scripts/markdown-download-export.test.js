@@ -22,20 +22,20 @@ function fakeDocument(isSnapshot=false){
 }
 function within(promise,label){let timer;return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(label+' timed out')),5000);})]).finally(()=>clearTimeout(timer));}
 async function verifyPagedPdf(){
- const renderDocs=[],rendered=[],progress=[];let downloaded='',downloadedBlob=null,frameNumber=0;
+ const renderDocs=[],rendered=[],progress=[],pdfInstances=[];let downloaded='',downloadedBlob=null,frameNumber=0;
  const hostDocument=fakeDocument();const testWindow={addEventListener(){}};
- class FakePDF{constructor(){this.pages=1;this.images=0;}setProperties(){}addPage(){this.pages++;}addImage(){this.images++;}output(){return new Blob(['%PDF-fake']);}}
+ class FakePDF{constructor(){this.pages=1;this.images=0;this.imageArgs=[];pdfInstances.push(this);}setProperties(){}addPage(){this.pages++;}addImage(...args){this.images++;this.imageArgs.push(args);}output(){return new Blob(['%PDF-fake']);}}
  const testContext={window:testWindow,document:hostDocument,URL:{createObjectURL:blob=>{downloadedBlob=blob;return 'blob:fixture';},revokeObjectURL(){}},Blob,AbortController,DOMException,setTimeout:()=>1,clearTimeout(){},setInterval:()=>1,clearInterval(){},requestAnimationFrame:cb=>queueMicrotask(cb)};
  vm.createContext(testContext);vm.runInContext(source,testContext);
  let hangRender=false,startedResolve;const renderStarted=new Promise(resolve=>{startedResolve=resolve;});
- const render=async(page)=>{rendered.push(page);if(hangRender){startedResolve();return new Promise(()=>{});}return{width:1191,height:Math.ceil(page.style.height||0)};};
+ const render=async(page)=>{rendered.push(page);if(hangRender){startedResolve();return new Promise(()=>{});}return{width:1191,height:Math.ceil(page.style.height||0),toDataURL:(type,quality)=>`data:${type};quality=${quality}`};};
  testWindow.html2canvas=render;
  testWindow.jspdf={jsPDF:FakePDF};
  hostDocument.createElement=tag=>{if(tag==='iframe'){const frame=fakeElement(tag,hostDocument);frame.contentDocument=fakeDocument(frameNumber++%2===0);renderDocs.push(frame.contentDocument);return frame;}const e=fakeElement(tag,hostDocument);if(tag==='a')e.click=()=>{downloaded=e.download;};return e;};
  const result=await testWindow.AideMarkdownExport.run('pdf',{markdown:'long fixture',html:'fixture',title:'long.md',valid:()=>true,load:async(_src,ready)=>{if(!ready())throw Error('renderer missing');},resolve:()=>null,fetchResource:()=>Promise.reject(Error('unused'))},(page,total)=>progress.push([page,total]));
  assert.equal(downloaded,'long.pdf');assert.equal(rendered.length,4);assert.equal(renderDocs.length,2,'one source frame and one bounded page-render frame');
  assert.deepEqual(Array.from(rendered,n=>n.children.length),[1,1,1,1],'each canvas contains only blocks intersecting its page');
- assert.deepEqual(Array.from(progress,p=>p[0]),[1,2,3,4]);assert.deepEqual(Array.from(progress,p=>p[1]),[4,4,4,4],'page total includes keep-together breaks instead of undercounting pages');assert(downloadedBlob instanceof Blob);
+ assert.deepEqual(Array.from(progress,p=>p[0]),[1,2,3,4]);assert.deepEqual(Array.from(progress,p=>p[1]),[4,4,4,4],'page total includes keep-together breaks instead of undercounting pages');assert(downloadedBlob instanceof Blob);assert.equal(pdfInstances[0].images,4);assert(pdfInstances[0].imageArgs.every(args=>args[0]==='data:image/jpeg;quality=0.82'&&args[1]==='JPEG'),'PDF pages are encoded as compressed JPEG data');
  hangRender=true;const stalled=testWindow.AideMarkdownExport.run('pdf',{markdown:'long fixture',html:'fixture',title:'stalled.md',valid:()=>true,load:async(_src,ready)=>{if(!ready())throw Error('renderer missing');}},()=>{});try{await within(renderStarted,'page render start');testWindow.AideMarkdownExport.close();await within(assert.rejects(stalled,e=>e.name==='AbortError','closing the export must settle a stalled html2canvas render'),'cancelled render');}finally{testWindow.AideMarkdownExport.close();}
 }
 (async()=>{const pending=context.window.AideMarkdownExport.run('pdf',{valid:()=>true,title:'a.md',load:()=>new Promise(()=>{})});context.window.AideMarkdownExport.close();await assert.rejects(pending,e=>e.name==='AbortError');await verifyPagedPdf();console.log('PASS: direct downloads, resource offsets/code exclusion, stale editor guard, cancellation during library loading and stalled page rendering, and page-bounded long-PDF rendering');})().catch(e=>{console.error(e);process.exitCode=1;});

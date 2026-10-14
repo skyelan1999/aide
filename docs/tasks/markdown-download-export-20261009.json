@@ -76,6 +76,17 @@
       "git diff --check"
     ],
     "browser": "Native system Safari loaded the current markdown-export.js and bundled html2canvas 1.4.1/jsPDF 4.2.1 on a loopback-only stress page. A 4,000-item single ordered-list fixture downloaded as long-list-9.pdf; Safari Downloads showed 41.7 MB and pdfinfo confirmed 104 A4 pages, 41,731,707 bytes, Creator aide, Producer jsPDF 4.2.1. The last page was rendered and visually checked: items 3,988–4,000 appear with continuous numbering and no overlap. After an explicitly authorized start.command restart, the authenticated Aide file view's real Export → PDF control downloaded ROS2编译工程创建步骤_kunlun_ws-5.pdf; pdfinfo confirmed 74 A4 pages, 1,256,174 bytes, Creator aide. The Aide restart/build also completed go vet and image build. Peak memory and arbitrary-size behavior remain unmeasured.",
-    "release": "implementation, 4,000-item single-block Safari stress case (including final-page numbering/content), Aide restart/build, and authenticated Safari file-view export passed. Changes remain local until focused commit and push. Peak-memory measurement and arbitrary-size limits are not established."
+    "release": "Implementation and documentation were pushed in ace6c94 after the 4,000-item Safari stress case and authenticated Aide file-view export passed. Peak-memory measurement and arbitrary-size limits are not established."
+  },
+  "post_commit_quick_gate_20261014": {
+    "status": "test_fixture_updated_quick_pass",
+    "summary": "The post-push quick gate initially exposed that the PDF exporter fixture did not implement canvas.toDataURL after production pages switched to JPEG encoding. Updated the fake canvas and asserted JPEG data/quality; this was a stale test double, not a browser export failure.",
+    "evidence": [
+      "Initial quick receipt .agent-state/verify-20261014T043102613432Z.log: all other configured checks passed; markdown-download-export.test.js failed with TypeError canvas.toDataURL is not a function.",
+      "node scripts/markdown-download-export.test.js: PASS after updating the fake canvas and checking JPEG encoding arguments.",
+      "python3 scripts/agent-route.py verify quick: PASS, fingerprint 567e28eff45173dd09ca99d953e191f14c3b6a8f879dcc6b1e395186a7f10cda; receipt .agent-state/verify-20261014T043155190069Z.log.",
+      "System Safari long-list and authenticated Aide export evidence remains in long_markdown_pdf_fix_20261014."
+    ],
+    "release": "Test-harness and task-ledger follow-up is ready for a focused commit and push; this does not close arbitrary-size/peak-memory or broader continuity goal requirements."
   }
 }
