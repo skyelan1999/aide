@@ -79,7 +79,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Supplementary ZIP entries verified; scripts copied to both worktrees. Source push pending; no old image bundle update claim.",
+      "summary": "af851f1 source push confirmed. Supplementary ZIP entries verified and scripts copied to both worktrees. Future export/release packages include launchers; existing image bundles are unchanged. Windows native acceptance and formal Release remain pending.",
       "evidence": [
         ".agent-state/maintenance/package.json"
       ]
@@ -94,5 +94,6 @@
     "bytes": 21117,
     "entriesVerified": true,
     "copiedRuntime": true
-  }
+  },
+  "implementation_commit": "af851f1"
 }
