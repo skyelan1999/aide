@@ -43,9 +43,9 @@
       "evidence": ["git diff --check -- internal/server/web/macos.css：通过。", "git status --short：保留原有多文件修改；本任务新增仅 docs/tasks/markdown-mode-switch-align-20261014.json。"]
     },
     "release": {
-      "status": "pending",
-      "summary": "本任务已单独提交；推送因当前环境无法解析 github.com 而失败，网络恢复后需重试。",
-      "evidence": ["提交 9729584 Align markdown editor mode controls 仅包含本任务 CSS 与验收记录。", "git push origin main 返回 ssh: Could not resolve hostname github.com: -65563；未推送成功。", "其他工作树修改未纳入本次提交。"]
+      "status": "pass",
+      "summary": "本任务已单独提交并推送到 origin/main。",
+      "evidence": ["提交 413430a Align markdown editor mode controls 仅包含本任务 CSS 与验收记录。", "git push origin main 成功：0e8568d..413430a main -> main。", "其他工作树修改未纳入本次提交。"]
     }
   },
   "release_authorization": "",
