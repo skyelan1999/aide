@@ -61,7 +61,7 @@
  async function run(format,o){
   close();if(!o.valid())return;const job={controller:new AbortController()};job.wait=p=>new Promise((resolve,reject)=>{const signal=job.controller.signal,cancel=()=>{signal.removeEventListener('abort',cancel);reject(new DOMException('Cancelled','AbortError'));};signal.addEventListener('abort',cancel,{once:true});if(signal.aborted)cancel();Promise.resolve(p).then(v=>{signal.removeEventListener('abort',cancel);resolve(v);},e=>{signal.removeEventListener('abort',cancel);reject(e);});});active=job;const alive=()=>active===job&&!job.controller.signal.aborted&&o.valid();
   // Abort stale/locked documents; bound network operations independently of page lifetime.
-  const guard=setInterval(()=>{if(!alive())job.controller.abort();},250),timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},120000);
+  const guard=setInterval(()=>{if(!alive())job.controller.abort();},250);let timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},120000);
   const name=nameOf(o.title),stem=name.replace(/\.(md|markdown)$/i,'');
   try{
    let blob,extension;
@@ -71,7 +71,13 @@
     await job.wait(o.load('/vendor/markdown-export/html2canvas.min.js',()=>!!window.html2canvas));
     if(format==='pdf')await job.wait(o.load('/vendor/markdown-export/jspdf.umd.min.js',()=>!!window.jspdf?.jsPDF));
     const body=await snapshot(o,job),height=Math.ceil(body.scrollHeight);
-    if(height>60000)throw Error('文档过长，请拆分后导出');
+    // Long PDFs are rendered a page at a time. Give them a proportional
+    // deadline instead of rejecting at an arbitrary document-height limit.
+    if(format==='pdf'){
+     clearTimeout(timeout);
+     const pages=Math.max(1,Math.ceil(height/PAGE));
+     timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},Math.min(15*60*1000,120000+pages*2000));
+    }else if(height>60000)throw Error('文档过长，请拆分后导出');
     const render=async(y,h)=>{if(!alive())throw new DOMException('Cancelled','AbortError');return window.html2canvas(body,{backgroundColor:'#fff',scale:1.5,width:WIDTH,height:h,y,windowWidth:WIDTH,windowHeight:1123,logging:false,imageTimeout:15000});};
     if(format==='png'){
      if(height>10000)throw Error('长图超过 10000 像素，请选择分页 PDF');const canvas=await render(0,height);blob=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('图片生成失败')),'image/png'));canvas.width=canvas.height=0;extension='png';
