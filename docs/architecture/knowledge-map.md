@@ -184,6 +184,15 @@ MCP插件继续通过 `list_sources`／已发现只读 `mcp_call` 使用；工�
 
 索引范围与证据收纳于星图页眉右上角的“星际日志”图标。原生 details/summary 控制展开，浮层保留读取预算、提取限制及来源索引状态；内容独立滚动。点击图标或外部区域可收起，Escape 收起并将焦点返回图标，优先于星域返回快捷键。锁屏时收起日志。配色沿用星图语义变量；系统或应用减少动效偏好关闭展开动画。
 
+
+2026-10-14：日志采用深空观测站航行档案的呈现方式。首页显示实际索引驱动的当前航区、节点／关系／登记来源计数、观测摘要和本页航迹；选择来源后，节点与关系只统计选定来源内部。登记来源数不等于已完整扫描来源数，缺少来源目录时显示未知。状态区区分等待、连接、分批扫描、范围受限和连接中断，不生成虚构航行时间、覆盖百分比或星体。
+
+“跃迁纪元 · 航行者手册”将文档、代码、会话与索引未知区域分别写成档案世界、铸码工坊、回声港和暗潮边界；这是明确的科幻叙事。历史比较保留于“航迹回放”，诊断保留于“异常信号”，详细星色／工程／光学说明保留于“观测守则”，原有说明及链接不删除。界面沿用语义配色，以轨道纹样、档案编号和分章排版建立氛围，没有额外持续动效。
+
+本页航迹仅在内存保留最多 8 条观测摘要，不代替服务端历史。相同数据轮询合并；工作区切换和锁屏立即清空，来源名称以 textContent 写入。时间明确标为本机记录时间；OBS 序列是本页记录编号，不是星历或服务端观察快照编号。
+
+The stellar log is presented as an observatory's navigation folio, with index-backed sector counts, an observing dispatch and a bounded in-memory journal. Regional counts include only nodes and internal edges in the selected source. Missing catalogs remain unknown. Workspace changes and locking clear the journal; repeated polling does not invent entries. Fictional archive worlds, code foundries, echo harbors and uncharted reaches provide narrative context while historical comparisons, diagnostics and technical evidence remain available in their original controls. OBS numbers and local timestamps describe page records, not astronomical measurements or server snapshots.
+
 ### 2026-10-08：按有效关联数显示星色与光晕
 
 恒星视觉借用温度色序（暖红、金色、白、蓝白、蓝），不代表真实天体温度、超新星分类或文件大小。固定阈值为 0 / 1–2 / 3–7 / 8–15 / 16–31 / 32+ 个有效关联，0 为微弱灰星，32+ 为蓝色强光星。有效关联为双向去重邻居，排除 `contains`、`defines` 与自环；跨文件符号关系还汇总到所属文件，目录容量不会自动增加连接数。星体半径、光晕和透明度按对数强度有界增长；代码视图叠加静态调用距离衰减，节点详情提供数字与色阶名称。颜色在主题切换和增量图更新时重新准备，光晕纹理缓存复用，动画帧不重算度数或生成渐变。高对比模式保留系统星色并通过大小及文字表达区别。

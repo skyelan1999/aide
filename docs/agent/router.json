@@ -398,6 +398,15 @@
       [
         "node",
         "scripts/context-meter.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/starmap-logbook.js"
+      ],
+      [
+        "node",
+        "scripts/starmap-logbook.test.cjs"
       ]
     ],
     "full": [

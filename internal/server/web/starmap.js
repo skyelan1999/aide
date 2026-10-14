@@ -1,6 +1,7 @@
 'use strict';
 const $=id=>document.getElementById(id), canvas=$('sky'), ctx=canvas.getContext('2d');
 const logbook=$('limits'),logbookToggle=$('logbook-toggle');
+const stellarLogbook=window.AideStellarLogbook.create();
 const knowledgeTimeline=window.AideKnowledgeTimeline.create({request:(path,options)=>api(path,options)});
 addEventListener('pointerdown',e=>{if(logbook.open&&!logbook.contains(e.target))logbook.open=false;});
 addEventListener('keydown',e=>{if(e.key==='Escape'&&logbook.open){e.preventDefault();e.stopImmediatePropagation();logbook.open=false;logbookToggle.focus();}},true);
@@ -165,7 +166,7 @@ async function pollLive(){
   if(epoch!==liveEpoch||mode!==codeView||!liveReady())return;
   if(graph.workspace&&update.workspace!==graph.workspace){persistSkyView();load();return;}
   applyLiveUpdate(update);liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;scheduleGraphCache();
- }catch(e){if(epoch===liveEpoch&&!locked&&!document.hidden){liveFailures++;if(liveFailures===1)say('自动同步暂不可用，保留当前星图并稍后重试。');}}
+ }catch(e){if(epoch===liveEpoch&&!locked&&!document.hidden){liveFailures++;stellarLogbook.interrupted();if(liveFailures===1)say('自动同步暂不可用，保留当前星图并稍后重试。');}}
  finally{clearTimeout(timeout);if(liveAbort===controller)liveAbort=null;if(epoch===liveEpoch)scheduleLive(Math.min(30000,2000*Math.pow(2,liveFailures)));}
 }
 
@@ -830,6 +831,7 @@ if($('call-depth')){callDepth=$('call-depth').value;$('call-depth').onchange=()=
 $('edge-mode').onchange=()=>{beginGraphTransition();relationshipOverview();edgeMode=$('edge-mode').value;redraw()};$('focus-code').onclick=()=>{beginGraphTransition();relationshipOverview();focusCode=!focusCode;$('focus-code').setAttribute('aria-pressed',String(focusCode));if(focusCode&&!selected)say('先选中一个文件或函数，再查看指定深度的关系。');redraw()};syncCodeView();
 
 function syncGraphChrome(){
+ stellarLogbook.observe(graph,{code:codeView,region});
  $('counts').textContent=`${graph.nodes.length} STARS / ${graph.edges.length} CONNECTIONS`;
  $('code-summary').textContent=graph.code?`${graph.code.files} 份源码 · ${graph.code.symbols} 个声明 · ${graph.code.calls} 条调用候选 · ${graph.code.typedCalls||0} 条类型绑定 · ${graph.code.unresolved} 个未解析调用 · ${graph.code.unresolvedImports||0} 个未解析导入`:'';
  $('warnings').textContent=[...(graph.warnings||[]),...(graph.code?.diagnostics||[]),...(graph.truncated?['索引达到数量、深度或时间上限；未覆盖全部文件。']:[])].join('\n');
@@ -907,7 +909,7 @@ function applyLiveUpdate(update,initial=false){
 }
 async function load(){
  clearEvidencePath('正在同步星图，请同步完成后查询。',true);
- if(loading||locked)return;stopLive(true);clearTimeout(cacheWriteTimer);cacheIdentity=null;loading=true;const generation=++graphGeneration,mode=codeView;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
+ if(loading||locked)return;stopLive(true);clearTimeout(cacheWriteTimer);cacheIdentity=null;loading=true;stellarLogbook.connecting();const generation=++graphGeneration,mode=codeView;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
  try{
   const identity=await api('/identity?code='+(mode?'1':'0'),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
   cacheIdentity={workspace:identity.workspace,epoch:identity.epoch,policy:identity.policy};const identityChanged=!!graph.workspace&&graph.workspace!==identity.workspace;
@@ -930,7 +932,7 @@ async function load(){
   if(cached?.revision===liveCursor){applyLiveUpdate(update);}
   else{beginGraphTransition();applyLiveUpdate(update,true);}
   if(pendingRecoveredView){restoreSkyView(pendingRecoveredView);pendingRecoveredView=null;}liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;scheduleGraphCache();if(update.stale)say('正在建立最新索引 · 当前显示上次完整星图');
- }catch(e){if(!locked&&e.name!=='AbortError'){liveFailures++;say(e.message);}}
+ }catch(e){if(!locked&&e.name!=='AbortError'){liveFailures++;stellarLogbook.interrupted();say(e.message);}}
  finally{loading=false;syncCodeView();redraw();if(!locked&&generation!==graphGeneration)load();else scheduleLive();}
 }
 function syncMotion(){ $('motion').textContent=animate?'动效 · 开':'动效 · 关';$('motion').setAttribute('aria-pressed',String(animate)); }
@@ -1004,7 +1006,7 @@ function setLocked(value){
  // should clear or reload the graph; the first notification still initializes it.
  if(lockStateKnown&&locked===value)return;
  if(value&&!locked)persistSkyView();
- lockStateKnown=true;locked=value;if(value)AideContinuity.abortPendingWrites?.();knowledgeTimeline.lock(value);if(value)clearEvidencePath('星图已锁定。',true);if(value){clearTimeout(recoveryTimer);clearTimeout(cacheWriteTimer);cacheIdentity=null;recoveryScopeLoaded='';pendingRecoveredView=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){resetDocumentBatch();documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
+ lockStateKnown=true;locked=value;if(value)AideContinuity.abortPendingWrites?.();knowledgeTimeline.lock(value);if(value)stellarLogbook.lock();if(value)clearEvidencePath('星图已锁定。',true);if(value){clearTimeout(recoveryTimer);clearTimeout(cacheWriteTimer);cacheIdentity=null;recoveryScopeLoaded='';pendingRecoveredView=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){resetDocumentBatch();documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
 if(window.LockCluster){LockCluster.on('effective',setLocked);LockCluster.onReady().then(setLocked);}else setLocked(false);
 for(const event of ['pointerdown','pointermove','keydown','wheel'])addEventListener(event,()=>{if(!locked)window.LockCluster?.noteActivity();},{passive:true});
 redraw();

@@ -1,0 +1,89 @@
+{
+  "id": "stellar-log-immersion-20261014",
+  "request": "星际日志的设定沉浸感再强一点",
+  "baseline": "dc919993ebe86e1f8c5e9cf05131dc2a668b411d",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "星际日志呈现统一观测站设定、实时航图摘要、本页航迹与分章档案",
+    "原时间线、来源状态及完整证据说明可展开阅读；Escape回焦点和点击外部关闭保持",
+    "数据来自实际索引；锁屏与跨工作区清空航迹；重复轮询不制造日志",
+    "Safari检查桌面与窄屏、明暗主题、减少动效；运行8097验收单独标记"
+  ],
+  "scope": [
+    "internal/server/web/starmap.html",
+    "internal/server/web/starmap.css",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap-logbook.js",
+    "scripts/starmap-logbook.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks/stellar-log-immersion-20261014.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户希望星际日志设定更有沉浸感；范围为日志浮层。",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "观测站航行档案：当前航区/星体/连接、本次观测航迹、航迹回放、异常信号、观测守则。真实状态驱动，保留证据边界。",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "完成观测站档案排版、航区摘要、状态、本页航迹和四类世界设定；保留历史比较、诊断、来源及原有技术设定。",
+      "evidence": [
+        "internal/server/web/starmap-logbook.js",
+        "internal/server/web/starmap.html",
+        "internal/server/web/starmap.css",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "quick通过。Safari隔离18617使用实际主仓页面及脚本、6节点/5关系合成API：深色桌面、390px浅色iframe、减少动效；展开设定、独立滚动、Escape回焦点、外部点击收起、历史入口与无快照禁用按钮通过。8097实机NOT_RUN。",
+      "evidence": [
+        "scripts/starmap-logbook.test.cjs",
+        ".agent-state/stellar-log-immersion/quick.log",
+        "Safari AX: 6星体/5连接/1来源；航行者手册四类章节；timeline 0次观察，回放按钮disabled"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "补充中英文呈现方式、计数/覆盖边界、本页航迹生命周期和浏览器验收范围。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "仅暂存本任务路径；保留原有删除与其他任务改动。合成预览为localhost18617，与8097数据及提供方隔离。",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "本机8097旧容器卡住；Docker Desktop重启会影响Docmost/Postgres/Redis，尚未获用户确认。本任务未推送或部署。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "回退本任务前端及文档路径；无数据迁移。本页航迹不持久化。",
+  "handoff": "分支 feat/stellar-log-immersion；源码已在主仓和本机运行仓分别实现，保留两者已有星图差异。运行实例待恢复后验收。",
+  "runtime_image": {
+    "tag": "aide:local",
+    "id": "sha256:c1191a7810e07a14e114f06a27a6910538a4f395a9b1e1cba6596c8c954d85ee",
+    "build": "pass",
+    "source": "aideMacMini/aide working tree, including earlier copy/highlight/context fixes",
+    "evidence": ".agent-state/stellar-log-immersion/build.log",
+    "running_acceptance": "not_run"
+  },
+  "preview": {
+    "url": "http://localhost:18617/starmap.html",
+    "binding": "127.0.0.1 only",
+    "scope": "primary source assets, synthetic API, no real user data or model calls",
+    "narrow": "http://localhost:18617/narrow"
+  }
+}

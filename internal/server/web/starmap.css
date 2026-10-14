@@ -523,3 +523,45 @@ html[data-motion=reduced] #ai-toggle::after { transition:none; }
 #document-progress{padding:12px 2px 4px;border-top:1px solid var(--line,rgba(150,174,199,.16));margin-top:12px}
 #document-coverage{font-size:12px;line-height:1.6;color:var(--map-muted);margin:0 0 8px}
 #document-next{width:100%;min-height:38px;text-align:center}
+
+/* Stellar log: a ship's observing folio, grounded in the current index. */
+.logbook-panel{width:min(480px,calc(100vw - 32px));padding:0;overscroll-behavior:contain;scrollbar-gutter:stable;background:var(--panel)}
+.logbook-masthead{position:relative;padding:26px 26px 21px;overflow:hidden;background:radial-gradient(ellipse at 100% 0,color-mix(in srgb,var(--map-gold) 12%,transparent),transparent 68%);border-bottom:1px solid var(--map-line)}
+.logbook-masthead::after{content:"";position:absolute;width:155px;height:155px;border:1px solid color-mix(in srgb,var(--map-gold) 24%,transparent);border-radius:50%;right:-34px;top:30px;box-shadow:0 0 0 22px color-mix(in srgb,var(--map-gold) 4%,transparent),0 0 0 44px color-mix(in srgb,var(--map-gold) 3%,transparent);pointer-events:none}
+.logbook-registry{display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative;z-index:1;font:9px/1.6 ui-monospace,SFMono-Regular,monospace;letter-spacing:1.6px;color:var(--map-quiet)}
+.logbook-registry span:first-child{color:var(--map-gold)}
+.logbook-panel .logbook-masthead h2{font-size:28px;font-weight:450;letter-spacing:4px;margin:18px 0 3px;position:relative;z-index:1}
+.logbook-panel .logbook-caption{margin:0;font-size:10px;letter-spacing:2px;color:var(--map-muted)}
+.logbook-state{display:flex;align-items:center;gap:7px;margin-top:20px;font-size:11px;color:var(--map-muted)}
+.logbook-state::before{content:"";width:5px;height:5px;flex:none;border-radius:50%;background:var(--map-quiet)}
+.logbook-state[data-state="ready"]::before{background:var(--map-source-reference);box-shadow:0 0 8px var(--map-source-reference)}
+.logbook-state[data-state="caution"]::before{background:var(--map-gold)}
+.logbook-state[data-state="scanning"]::before{background:var(--brand-text)}
+.logbook-body{padding:22px 26px 26px}
+.logbook-section-label{display:flex;gap:10px;align-items:center;font-size:10px;letter-spacing:1.5px;color:var(--map-gold);margin:0 0 12px}
+.logbook-section-label::after{content:"";height:1px;flex:1;background:var(--map-line)}
+#logbook-sector{font-size:13px;color:var(--map-text);margin:0 0 13px;overflow-wrap:anywhere}
+.logbook-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:0 0 18px}
+.logbook-metrics>div{border-left:1px solid var(--map-line);padding-left:12px}
+.logbook-metrics>div:first-child{border-left:0;padding-left:0}
+.logbook-metrics dt{font-size:10px;color:var(--map-quiet)}
+.logbook-metrics dd{font:24px/1.6 ui-monospace,SFMono-Regular,monospace;color:var(--map-text);margin:4px 0 0;overflow-wrap:anywhere}
+#logbook-dispatch{font-size:12px;line-height:2;color:var(--map-muted);margin:16px 0}
+.logbook-reception{font:9px/1.8 ui-monospace,SFMono-Regular,monospace;color:var(--map-quiet);margin:0 0 24px}
+.logbook-watch{margin:0 0 22px}
+#logbook-entries{list-style:none;padding:0;margin:0;border-left:1px solid var(--map-line)}
+#logbook-entries li{position:relative;padding:0 0 15px 17px;margin-left:-1px;font-size:11px;line-height:1.8;overflow-wrap:anywhere}
+#logbook-entries li::before{content:"";position:absolute;left:-2px;top:6px;width:5px;height:5px;border-radius:50%;background:var(--map-gold)}
+#logbook-entries time{display:block;color:var(--map-quiet);font:9px/1.8 ui-monospace,SFMono-Regular,monospace;margin-bottom:3px}
+#logbook-entries:empty::after{content:"等待首条观测记录。";display:block;padding-left:16px;color:var(--map-quiet);font-size:11px}
+.logbook-watch>p{font-size:10px;color:var(--map-quiet);margin:0 0 12px}
+.logbook-body>details{padding:15px 0;border-top:1px solid var(--map-line)}
+.logbook-body>details>summary{color:var(--map-text);font-size:12px;letter-spacing:.5px;min-height:24px}
+.logbook-body>details>summary .logbook-chapter{display:inline-block;font:9px ui-monospace,SFMono-Regular,monospace;color:var(--map-gold);margin-right:9px}
+.logbook-body #knowledge-timeline{margin:0;border-bottom:0}
+.logbook-body #source-catalog-section h3{font-size:12px;color:var(--map-text)}
+.logbook-body .logbook-footnote{border-top:1px solid var(--map-line);padding-top:16px;font-size:10px;color:var(--map-quiet);letter-spacing:.3px;margin-bottom:0}
+.logbook-diagnostics #warnings:empty::after{content:"当前没有额外的索引诊断。来源覆盖范围见下方星域名录。";color:var(--map-quiet)}
+@media(max-width:480px){.logbook-masthead{padding:22px 20px 18px}.logbook-body{padding:20px}.logbook-metrics{gap:8px}.logbook-metrics dd{font-size:21px}.logbook-registry{font-size:8px;letter-spacing:1px}}
+
+.logbook-lore h4{font-size:10px;letter-spacing:1px;color:var(--map-gold);font-weight:500;margin:22px 0 7px}.logbook-lore p{font-size:12px;line-height:2}.logbook-lore .lore-opening{font-family:ui-serif,"Songti SC",serif;color:var(--map-text);font-size:15px;line-height:1.9;margin:22px 0}.logbook-lore .lore-oath{border-left:2px solid var(--map-gold);padding-left:13px;margin:22px 0 5px;color:var(--map-text)}
