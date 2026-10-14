@@ -48,35 +48,52 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Final all Knowledge/local-root scoped race73.040s and vet PASS; actual mounted readonly reference probe grows169/343/513/677 nodes across4 batches with2 readable bodies and126/246/401/545 explicitly unreadable bodies. Initial failed probe retained as failed evidence; cloud hydration of two samples separately recorded. Quick69 and focused JS cache/coverage/syntax PASS. Canonical rebuilt Safari still pending.",
+      "status": "pass",
+      "summary": "Final all Knowledge/local-root scoped race73.040s and vet PASS; actual mounted readonly reference probe grows169/343/513/677 nodes across4 batches with2 readable bodies and126/246/401/545 explicitly unreadable bodies. Initial failed probe retained as failed evidence; cloud hydration of two samples separately recorded. Quick69 and focused JS cache/coverage/syntax PASS. Canonical rebuilt Safari still pending. Canonical rebuilt Safari9999 confirmed reference nodes grow to3875, visible stars, unavailable metadata-only detail and readable hydrated README. Actual1325x940/current-dark only; native resize attempts ineffective, narrow/other themes NOT_RUN. Final package-metadata quick69 PASS; Markdown199/local links587 PASS. No new full71 run.",
       "evidence": [
         ".agent-state/starmap-io/scoped-initial-failed.log",
         ".agent-state/starmap-io/probe.log",
         ".agent-state/starmap-io/scoped-race.log",
         ".agent-state/starmap-io/scoped-owner-final.log",
-        ".agent-state/verify-20261014T205044748595Z.log"
+        ".agent-state/verify-20261014T205044748595Z.log",
+        ".agent-state/starmap-io/before-map.png",
+        ".agent-state/starmap-io/after-reference-map.png",
+        ".agent-state/starmap-io/unreadable-detail.png",
+        ".agent-state/starmap-io/desktop-detail-late.png",
+        ".agent-state/starmap-io/readable-detail.png",
+        ".agent-state/verify-20261014T205524100234Z.log",
+        ".agent-state/starmap-io/check-docs.log"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Knowledge architecture documents additive read state/count, per-body isolation, cloud placeholder evidence, root/syscall/cancellation limits. Parent task/main120 and current image README updated with exact scoped evidence.",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docker-images/README.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "No fixture sessions or source registry changes. Preserved inherited vendor deletions,5 config/auth hashes, mounts and workspace config. Readonly probe containers exited and removed. Two sampled cloud files hydrated by normal reads; not discarded. Restored workspace filter/empty search and closed only owned star tab. Native resize attempts left actual window1325x940; private evidence retained.",
+      "evidence": [
+        ".agent-state/starmap-io/runtime.json",
+        ".agent-state/starmap-io/cloud-placeholder.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Canonical local image deployed and healthy. App/dependency archive outer/inner hashes, tags, exact launchers, running platform manifest, actual docker load and copies in both local trees verified. Final quick69 PASS; incremental branch push pending; no formal release/receiving-device claim.",
+      "evidence": [
+        ".agent-state/starmap-io/package.json",
+        ".agent-state/starmap-io/runtime.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental source push/test/local image/offline package authorization; no main/tag release.",
   "rollback": "Revert targeted isolation and additive metadata labels; retain source registry, stored user data and earlier image archive.",
-  "handoff": "Scoped race/vet and actual adapter progress PASS; canonical deployment/browser acceptance and offline delivery pending. Original goal active; no complete body coverage or syscall timeout claim.",
+  "handoff": "Sourcec4f9295 deployed, all Knowledge/local-root race73.040s+vet and actual mounted probe PASS; canonical Safari progressive/body-state acceptance done at desktop/current-dark. Offline bundle imported/verified/copied. Final quick69 PASS; branch push pending. Original goal remains active.",
   "diagnosis": {
     "canonicalPort": 9999,
     "source": "Current unchanged /context mount is Harness; no new aide source in saved registry. No retarget or disable performed.",
@@ -84,5 +101,78 @@
     "initialPatchedProbe": "169 metadata nodes,128 unreadable bodies,0 readable text; initial probe failed its readable-peer assertion, while new fixture regression passed both code modes. Do not count this first scoped run as pass.",
     "hostEvidence": "Two exact sample files had Darwin dataless bit0x40000000; reading32 bytes on host cleared that flag and allowed container32-byte reads. Contents not modified; no bulk hydration.",
     "inference": "At least these two body failures were cloud-placeholder related; this does not prove every failure or kernel wait has the same cause."
+  },
+  "runtime": {
+    "runningImage": "sha256:a187ed7d3c6ad5fc5bff16790c529d7fa34a45481b481817613d0cc69509c6e8",
+    "image": "sha256:a187ed7d3c6ad5fc5bff16790c529d7fa34a45481b481817613d0cc69509c6e8",
+    "binarySHA256": "888db1d07c6e8e660a35af4c8bc78b54b9a567302a227c9b30dac201a8a02536",
+    "runningPlatformManifest": "sha256:932a3c5ce330ca78df20a435ace9c4725aa437c549d3444e6525c086a4aa0579",
+    "sourceSHA256": "19efd3975fb81ed9f3f2f0b23061f2e9404c1bcd66fbfd0f21eedc8b4b7a1a82",
+    "buildCommit": "c4f92957c989f2a68581369046c2fc7de7248a07-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 5,
+    "historicalProtectedFilesUnchanged": 1,
+    "snapshotTiming": "Five config/auth hashes captured before canonical rebuild; previous runtime image659d44949a0b retained as baseline",
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:a187ed7d3c6ad5fc5bff16790c529d7fa34a45481b481817613d0cc69509c6e8",
+    "sourceSHA256": "19efd3975fb81ed9f3f2f0b23061f2e9404c1bcd66fbfd0f21eedc8b4b7a1a82",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-a187ed7d3c6a-offline.tar.gz",
+    "bytes": 705619992,
+    "sha256": "72aa6fa24cf4e2dd27e0b362ae036e8de1f5dc8ff0a009caa93fded2306e60bb",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  },
+  "implementation_commit": "c4f9295",
+  "browser_acceptance": {
+    "entry": "aide/start.command",
+    "port": 9999,
+    "client": "Safari",
+    "sourceConfigUnchanged": true,
+    "source": "Actual Harness mount under context and source:context, no registry retarget",
+    "before": "Context aliases2 nodes after host hydration of two samples; prior initial API1 each.",
+    "after": "Native Safari observed677 then1155/1763/1961/2542/3010/3709/3875 nodes in context during progressive updates; counts are observations at separate points, not exhaustive file totals.",
+    "unreadableDetail": "Selected known unavailable Markdown: explicit metadata-only body message, no obsolete text.",
+    "readableDetail": "Selected hydrated README and observed actual body text.",
+    "theme": "current dark only",
+    "window": "1325x940 actual. Two resize attempts ineffective; narrow/other-theme acceptance NOT_RUN. Misnamed temporary narrow image renamed desktop-detail-late.png.",
+    "restore": "Cleared test query, restored workspace filter, closed only owned star-map tab; returned welcome workbench. No model or plugin executed.",
+    "evidence": [
+      ".agent-state/starmap-io/before-map.png",
+      ".agent-state/starmap-io/after-reference-map.png",
+      ".agent-state/starmap-io/unreadable-detail.png",
+      ".agent-state/starmap-io/desktop-detail-late.png",
+      ".agent-state/starmap-io/readable-detail.png"
+    ]
+  },
+  "remaining": [
+    "Cloud placeholder bodies beyond two samples remain unavailable; no automatic bulk download or full source coverage claim",
+    "Source root/discovery/stat/OS blocking operations remain a separate boundary; actual post-fix API observation3.19s, no complete latency/performance acceptance",
+    "Current default context and builtin context source are separate aliases scanning the same mount; duplicate scan cost remains to investigate",
+    "Narrow and other themes not accepted this batch; Windows by user, real vectors deferred and receiving-device import pending",
+    "Original twelve continuity workstreams and live plugin graph approvals/manual effect reconciliation remain active"
+  ],
+  "quick_receipt": {
+    "status": "pass",
+    "head": "c4f92957c989f2a68581369046c2fc7de7248a07",
+    "fingerprint": "db38677de5e7bc5efbdd458dd2a1926e42d72beedeb818047d8268877d97c3d6",
+    "time": "20261014T205524100234Z",
+    "log": ".agent-state/verify-20261014T205524100234Z.log",
+    "commands": 69
   }
 }

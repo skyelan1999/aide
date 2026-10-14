@@ -153,7 +153,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 current: fix/chat-draft-navigation, implementation0cb5e42, canonical aide/start.command healthy Safari9999 image659d44949a0b. Fixed outgoing draft cancellation and target composer cached under previous session during attachment render. Native Safari typed A/B switch/reload and new-session reload PASS; no model/plugin execution. Own two empty fixtures removed, preexisting session retained. Historical mounts/workspace config and1 token hash unchanged;5 config/auth hashes stable since post-build snapshot only. App/dependency offline bundle hash/import/copy verified. See followup119; final quick69 PASS, branch push06c8dc0 PASS. Prior UI task source e54f390 passed synthetic display checks; live graph/approval, uncertainty reconciliation and host star-map I/O remain open. All original12 workstreams in_progress; Windows by user, true vectors deferred, receiving-device import unobserved. Preserve inherited vendor deletions and user data.",
+  "handoff": "2026-10-15 current: fix/starmap-file-read-isolation, sourcec4f9295, canonical aide/start.command healthy Safari9999 imagea187ed7d3c6a. Actual unchanged Harness reference body EIO identified; two samples confirmed dataless and hydrated by normal host reads. Per-file failures now publish explicit metadata-only nodes and continue peers. All Knowledge/local-root race73.040s+vet and mounted four-batch probe PASS. Safari reference grew2 to3875 nodes, unavailable detail and readable README observed. Mounts/workspace config and5 auth/config hashes preserved; archive app/dependency tags/hashes/import/two local copies verified. See followup120; final quick69 PASS; branch push pending. Full body coverage, host syscall waits, duplicate context alias scan cost and original12 streams remain open. Prior reasoning save and draft fix receipts retained; live plugin approvals/manual reconciliation pending. Windows by user, true vectors deferred, receiving-device import unobserved.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -5920,6 +5920,58 @@
       "pushedCommit": "06c8dc0",
       "status": "pass",
       "scope": "Incremental branch push, no main/tag/formal release or image registry publish"
+    }
+  },
+  "progress_checkpoint_20261015_followup120": {
+    "status": "in_progress",
+    "task": "docs/tasks/starmap-file-read-isolation-20261015.json",
+    "sourceCommit": "c4f9295",
+    "changes": "Continue progressive materialization past file body failures with explicit metadata-only readState, readErrors and source partial message; invalidate stale body/code and retry repair. Client cache/deltas/detail preserve failure state. EIO guidance includes conditional cloud placeholder download hint.",
+    "verification": "Initial all128 supported bodies unreadable caused probe assertion failure retained. Two sampled dataless files hydrated by normal host reads; unchanged probe then passes169/343/513/677 nodes,2 readable bodies and explicit gaps. Final scoped all Knowledge/local-root race73.040s+vet PASS. Canonical Safari actual2 to3875 context nodes and body states observed. Final quick69 PASS; no full71 run.",
+    "runtime": {
+      "runningImage": "sha256:a187ed7d3c6ad5fc5bff16790c529d7fa34a45481b481817613d0cc69509c6e8",
+      "image": "sha256:a187ed7d3c6ad5fc5bff16790c529d7fa34a45481b481817613d0cc69509c6e8",
+      "binarySHA256": "888db1d07c6e8e660a35af4c8bc78b54b9a567302a227c9b30dac201a8a02536",
+      "runningPlatformManifest": "sha256:932a3c5ce330ca78df20a435ace9c4725aa437c549d3444e6525c086a4aa0579",
+      "sourceSHA256": "19efd3975fb81ed9f3f2f0b23061f2e9404c1bcd66fbfd0f21eedc8b4b7a1a82",
+      "buildCommit": "c4f92957c989f2a68581369046c2fc7de7248a07-dirty",
+      "port": "9999",
+      "health": "ok",
+      "mountsPreserved": true,
+      "workspaceConfigBytesPreserved": true,
+      "protectedFilesUnchanged": 5,
+      "historicalProtectedFilesUnchanged": 1,
+      "snapshotTiming": "Five config/auth hashes captured before canonical rebuild; previous runtime image659d44949a0b retained as baseline",
+      "configuredPath": "/Users/skyelan/debug",
+      "runtimeWorkspace": "/workspace",
+      "startupWarningPresent": true,
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "package": {
+      "image": "sha256:a187ed7d3c6ad5fc5bff16790c529d7fa34a45481b481817613d0cc69509c6e8",
+      "sourceSHA256": "19efd3975fb81ed9f3f2f0b23061f2e9404c1bcd66fbfd0f21eedc8b4b7a1a82",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-a187ed7d3c6a-offline.tar.gz",
+      "bytes": 705619992,
+      "sha256": "72aa6fa24cf4e2dd27e0b362ae036e8de1f5dc8ff0a009caa93fded2306e60bb",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true
+    },
+    "remaining": "Final quick69 PASS; incremental branch push pending. Incomplete cloud body coverage, host syscall stalls and duplicate aliases; narrow/other themes NOT_RUN. Original12 streams, live plugin approvals/reconciliation and receiving-device import remain.",
+    "quick_receipt": {
+      "status": "pass",
+      "head": "c4f92957c989f2a68581369046c2fc7de7248a07",
+      "fingerprint": "db38677de5e7bc5efbdd458dd2a1926e42d72beedeb818047d8268877d97c3d6",
+      "time": "20261014T205524100234Z",
+      "log": ".agent-state/verify-20261014T205524100234Z.log",
+      "commands": 69
     }
   }
 }
