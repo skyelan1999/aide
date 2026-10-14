@@ -30,8 +30,7 @@
     "Dockerfile",
     "scripts/test_runtime_assets.py",
     "docs/agent/router.json",
-    "scripts/test_go_snapshot.py",
-    "scripts/test_runtime_assets.py"
+    "scripts/test_go_snapshot.py"
   ],
   "stages": {
     "requirements": {
@@ -63,8 +62,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Exact canonical start.command rebuilt locally and opened Safari workbench at configured 9999. Warning visible; workspace form retains original workspace/docs/cache values, no save performed. Mounts/config bytes and one preexisting protected file unchanged. Initial full failed six Office/remote Office tests because private host file modes survived COPY. Both Dockerfiles now make only shipped /opt/aide resources readable/traversable. Old image negative reproduction confirmed; new image normal uid1000/no network reads all 18 assets and actual DOCX roundtrip PASS. Final full rerun pending.",
+      "status": "pass",
+      "summary": "Final full PASS:68 checks on0daa73b with matching content fingerprint; Go race server523.593s and vet PASS in container-local source snapshot, network none. Normal uid1000 reads18 shipped assets and actual DOCX roundtrip PASS. Exact canonical start.command opens real Safari workbench at configured9999; recovery warning visible and original workspace/docs/cache form retained. Real4.903GB builder prune then local-only rebuild, missing base tag local-archive reimport and bundle actual docker load verified. Initial permission failures and shared-filesystem interrupted attempt remain failed evidence. Docker recovery followed by exact entry reuses same image without build/download. Windows native and receiving-device import remain external acceptance; star-map scan issue is separate and not fixed.",
       "evidence": [
         ".agent-state/launcher-workspace-test-final.log",
         ".agent-state/launcher-start/first-launch.json",
@@ -79,7 +78,12 @@
         ".agent-state/launcher-start/old-assets-negative.log",
         ".agent-state/launcher-start/runtime-assets.log",
         ".agent-state/launcher-start/workbench-open.png",
-        ".agent-state/launcher-start/workspace-config-preserved.png"
+        ".agent-state/launcher-start/workspace-config-preserved.png",
+        ".agent-state/verify-20261014T174804990440Z.log",
+        ".agent-state/launcher-start/full-final.json",
+        ".agent-state/launcher-start/assets-clean-engine.log",
+        ".agent-state/launcher-start/restored-during-snapshot-tests.log",
+        ".agent-state/launcher-start/recovered-workbench.png"
       ]
     },
     "documentation": {
@@ -93,23 +97,23 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Preserved inherited vendor deletions and runtime config. Backup before start, original workspace-config hash checked, mounts retained. Cache cleanup targeted only unused builder cache.",
+      "summary": "Preserved inherited vendor deletions and runtime config. Backup before start, original workspace-config hash checked, mounts retained. Cache cleanup targeted only unused builder cache. Final owned test container removed automatically; reproducible303MB temporary source archive removed; no user data or inherited vendor deletions staged.",
       "evidence": [
         ".agent-state/launcher-start/before.json",
         ".agent-state/launcher-start/first-launch.json"
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Previous source commits pushed; resource permission repair and final full rerun in progress. Updated offline bundle verified inside/outside, actual docker load, both image tags, running platform manifest and both worktree copies PASS. No formal main/tag release.",
+      "status": "pass",
+      "summary": "Local development batch delivered: source commits8bd455a,c072f4e,0daa73b pushed; current full gate PASS and offline app+dependency archive verified/imported/copied to both local worktrees. This is a development snapshot, not a formal main/tag/GitHub Release. Other-device import not observed.",
       "evidence": [
         ".agent-state/launcher-start/package.json"
       ]
     }
   },
   "release_authorization": "User explicitly requests local launcher tests and complete local Docker images; existing incremental push/offline-package authorization. No formal main/tag release.",
-  "rollback": "",
-  "handoff": "Canonical launcher uses configured port9999. Safari now shows authenticated workbench, visible repair notice and preserved original config form. Other-device import and Windows native tests remain user acceptance. Original twelve workstreams and reference-scene framing remain pending.",
+  "rollback": "Preserve existing data/config backups and previous archives. Load a retained compatible prior image and use its matching launcher; old startup packages before05c7a9ee2663 lack the public-asset permission repair. Do not delete volumes or overwrite original workspace config.",
+  "handoff": "Latest startup/local-image batch verified and pushed; canonical entry uses configured9999 and opens real Safari workbench. Full68 PASS, current artifact05c7a9ee2663 and dependency65f65f retained. Original invalid workspace config bytes preserved and UI exposes repair state. Star map remains connecting on this same instance after engine recovery, with shared-filesystem scanning investigation and framing SourceVM prototypes still pending. Original twelve workstreams and plugin tool DAG remain active; Windows native/other-device import user acceptance, real vector tests deferred.",
   "runtime": {
     "runningImage": "sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14",
     "image": "sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14",
@@ -164,12 +168,25 @@
     "initialAttempt": "Six Office permission failures fixed; old-image negative and repaired-image actual DOCX roundtrip PASS.",
     "sharedMountAttempt": "Compiler stuck in shared-mount openat/request_wait_answer; scoped docker stop could not receive exit event. Interrupted, never PASS. New container starts also stalled while workbench had blocked shared filesystem calls.",
     "recovery": "Docker Desktop ordinary restart stalled; built-in force stop/start preserved images/data. Exact canonical start.command reopened healthy workbench with same app image, no build/download, mounts/config/protected file check PASS (exec diagnostics use /tmp). Further clean-engine comparison with workbench manually stopped: runtime assets+DOCX test PASS immediately.",
-    "newFull": "Transfer Git-listed current files via stdin into container-local /tmp, no mounts/network, compile+tests outer20m timeout. Begin isolated full before restoring shared-mount workbench.",
+    "newFull": "PASS:68 checks, container-local5674-file source snapshot, Go race server523.593s and vet; no user-data mounts/network. Workbench restored via exact entry while isolated tests ran.",
     "evidence": [
       ".agent-state/launcher-start/full-shared-filesystem-interrupted.json",
       ".agent-state/launcher-start/docker-force-stop.log",
       ".agent-state/launcher-start/after-engine-recovery.log",
       ".agent-state/launcher-start/assets-clean-engine.log"
     ]
-  }
+  },
+  "full_receipt": {
+    "status": "pass",
+    "head": "0daa73bc754ba7bd4941de8bd9fab40def2e22a0",
+    "fingerprint": "d840f80f1b0e41c9065a0be094e0fc8807506efbaa750b1040f1aa1df97653e2",
+    "time": "20261014T174804990440Z",
+    "log": ".agent-state/verify-20261014T174804990440Z.log",
+    "commands": 68
+  },
+  "source_commits": [
+    "8bd455a",
+    "c072f4e",
+    "0daa73b"
+  ]
 }

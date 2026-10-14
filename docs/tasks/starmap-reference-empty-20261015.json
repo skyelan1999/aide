@@ -68,7 +68,7 @@
   },
   "release_authorization": "沿用分批测试/push及离线镜像包交付；不正式Release。",
   "rollback": "",
-  "handoff": "User prioritized maintenance scripts. Previous 8097 fixture source s-gk9pkr accumulated 1644 nodes, but scene remained offscreen to the right. Docker state and runtime image subsequently changed; current 8097 restarts because /local/Users/skyelan/debug is unavailable. Did not change user configuration or remove source. Previous full failed with unexpected EOF. Revalidate instance, fix scene framing and clean up own fixture source.",
+  "handoff": "Use canonical aide/start.command for all runtime observations (configured9999). Latest launcher/local-image batch full68 PASS, healthy workbench and current05c7a9ee2663 package. Star map still connecting; isolate real shared-filesystem scan stall before UI recentering. Framing/empty-state candidates only in ignored.agent-state, not deployed; do not close on prototype or indexed count alone.",
   "canonical_observation_20261015": {
     "entry": "aide/start.command",
     "port": 9999,
@@ -78,8 +78,10 @@
     "api": "Authenticated identity returns200 in0.030s; updates returns503 in0.003s, busy/no complete snapshot.",
     "process": "App low CPU, extra open descriptor /workspace, a Go thread observed waiting request_wait_answer; may be filesystem IO but no definitive stack or file identified.",
     "evidence": [
-      ".agent-state/starmap-recenter/canonical-connecting.png"
+      ".agent-state/starmap-recenter/canonical-connecting.png",
+      ".agent-state/starmap-recenter/after-engine-recovery-connecting.png"
     ],
-    "prototype": "Framing/empty-state SourceVM candidates only, not applied. Full source suite currently frozen on c072f4e for startup/asset batch."
+    "prototype": "Framing/empty-state SourceVM candidates only, not applied. Full source suite currently frozen on c072f4e for startup/asset batch.",
+    "after_recovery": "Same exact-entry workbench restored and file listing visible; star map still zero/connecting after engine recovery, even while Go tests use container-local files. Not resolved by this startup/image batch."
   }
 }

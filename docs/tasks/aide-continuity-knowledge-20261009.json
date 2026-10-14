@@ -5565,10 +5565,10 @@
     "remaining": "Original twelve workstreams and plugin tool DAG remain active; reference-scene framing pending. Windows native by user, real vector tests deferred."
   },
   "progress_checkpoint_20261015_followup114": {
-    "status": "in_progress",
+    "status": "pass",
     "task": "docs/tasks/launcher-local-image-20261015.json",
     "changes": "Normalize only shipped public asset permissions in both application Dockerfiles; full gate adds real nonroot/no-network asset and DOCX roundtrip. Original host/data permissions untouched.",
-    "verification": "Old image reproduces PermissionError; repaired image reads all18 resources and DOCX roundtrip PASS. Exact start.command opened real Safari workbench, warning visible, original form values preserved. Initial full Office failures retained; final full pending.",
+    "verification": "Latest startup/asset/local-image batch full PASS:68 checks, head0daa73b, fingerprintd840f80f1b0e41c9065a0be094e0fc8807506efbaa750b1040f1aa1df97653e2. Go race server523.593s and vet PASS from container-local source snapshot. Safari exact-entry workbench and original configuration form observed; offline bundle actual load and both local copies verified. Overall twelve workstreams remain active.",
     "runtime": {
       "runningImage": "sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14",
       "image": "sha256:05c7a9ee2663aa94e49752a67d221babe69deca51c7d97c4da39305ee983ac14",
@@ -5603,6 +5603,12 @@
       "hostLaunchersMatch": true,
       "copiedBothTrees": true
     },
-    "remaining": "Reference-scene framing prototypes not applied; original twelve workstreams and plugin tool DAG remain active. Other-device import and Windows native acceptance pending; real vector tests deferred."
+    "remaining": "Reference star map still connects indefinitely on recovered canonical9999; shared-filesystem diagnosis and local-frame prototypes pending. Original twelve workstreams/plugin tool DAG active. Other-device import and Windows native acceptance pending; real vector tests deferred.",
+    "full_receipt": {
+      "head": "0daa73bc754ba7bd4941de8bd9fab40def2e22a0",
+      "fingerprint": "d840f80f1b0e41c9065a0be094e0fc8807506efbaa750b1040f1aa1df97653e2",
+      "time": "20261014T174804990440Z",
+      "log": ".agent-state/verify-20261014T174804990440Z.log"
+    }
   }
 }
