@@ -71,20 +71,23 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Incremental development source, canonical local candidate and offline package only; fresh full72 gate pending. No formal main/tag release.",
-      "evidence": []
+      "summary": "Development source334237a pushed; exact canonical candidate0d67b0b6bbfc healthy9999, complete app/dependency package actual import+hash/tags/platform/launchers/two copies PASS. Freeze README/SHA metadata before full72; no formal main/tag release.",
+      "evidence": [
+        ".agent-state/bootstrap-file-proto-close/package.json",
+        ".agent-state/bootstrap-file-proto-close/runtime.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental testing/build/source push/offline package authorization; no formal main/tag release.",
   "rollback": "Previous local image preserves volume; returns to prior source bootstrap failure and concurrent-close risk. No user workspace or credentials changed.",
-  "handoff": "Focused tests and native UI PASS; quick70 PASS after VM helper update. Full72 and updated complete offline package pending.",
+  "handoff": "Source334237a pushed, exact canonical image0d67b0b6bbfc healthy9999; complete package verified/imported/copied. Protected config/auth and mounts/workspace preserved, native UI/history scoped acceptance PASS. Metadata frozen before full72; final full receipt pending.",
   "runtime": {
-    "runningImage": "sha256:59b7b7c46da19212dc834467085c4788c6a736010e1a961049e7c1996a7be31d",
-    "image": "sha256:59b7b7c46da19212dc834467085c4788c6a736010e1a961049e7c1996a7be31d",
-    "binarySHA256": "f2b10e28638796eee07cca311cef2362d3fedc32625cf6b0c250ff1759ba9ae0",
-    "runningPlatformManifest": "sha256:ff6c355c335d3ed6467e9d8f4a1883a3db6ae0fab6ed5f09495f5a59b509ee42",
+    "runningImage": "sha256:0d67b0b6bbfc1907d92b419508182da098ab8d19c60995b24454e72b15d894aa",
+    "image": "sha256:0d67b0b6bbfc1907d92b419508182da098ab8d19c60995b24454e72b15d894aa",
+    "binarySHA256": "aff741d05bda7ed2064048af05186fc4b68ba05692da17dee903964bf6e2e491",
+    "runningPlatformManifest": "sha256:76d3d996e52b4af733de18a15e0b16c06e645091bcd901283d954ef618886007",
     "sourceSHA256": "0759c1e5cc41c0a9c91a7b5cc0b96a031e72f449407239af08e28c16f03105a7",
-    "buildCommit": "ec7251bf18d7cdd2f9bf8d44672239bfec83f42e-dirty",
+    "buildCommit": "334237a23b80526f0e3101399b34d053734b18f9-dirty",
     "port": "9999",
     "health": "ok",
     "mountsPreserved": true,
@@ -96,5 +99,30 @@
     "runtimeWorkspace": "/workspace",
     "startupWarningPresent": true,
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:0d67b0b6bbfc1907d92b419508182da098ab8d19c60995b24454e72b15d894aa",
+    "sourceSHA256": "0759c1e5cc41c0a9c91a7b5cc0b96a031e72f449407239af08e28c16f03105a7",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-0d67b0b6bbfc-offline.tar.gz",
+    "bytes": 705658152,
+    "sha256": "e18e8f3b54e603eb531547ebd219fc59ef3f074ddb72f0fafd67e4676c3eb0fe",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  },
+  "sourceCommits": [
+    "334237a"
+  ],
+  "source_push": {
+    "branch": "fix/bootstrap-file-and-listener-close",
+    "pushedCommit": "334237a",
+    "status": "pass"
   }
 }
