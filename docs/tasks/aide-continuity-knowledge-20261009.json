@@ -4834,5 +4834,23 @@
       "用户 SSH 主机完整交互和高并发长时会话、完整全仓 race 资源表现尚未闭环；向量模型实测按用户要求暂缓。"
     ],
     "remaining": "继续总目标验收：优先真实 Safari 星图近景/镜头保持与长时性能、SSH 工作区端到端及长会话资源边界；向量检索测试保持暂缓。"
+  },
+  "progress_checkpoint_20261014_followup93": {
+    "date": "2026-10-14",
+    "status": "dual_server_ssh_sftp_live_integration_repeat2_pass_norace_race_resource_killed_user_host_pending",
+    "summary": "复跑当前代码的隔离双服务器真实 SSH/SFTP 集成。两次非 race 端到端运行均通过，含恢复、跨来源隔离、续扫、历史与记忆路径。默认 race 模式被容器以 signal:killed 终止，未见断言失败，不能算通过；将并发限制到 GOMAXPROCS=1 并禁用 race 后两次通过。真实用户主机仍未连接。",
+    "evidence": [
+      "`bash scripts/test-ssh-workspace.sh` 默认 race=1、repeat=2 · 被杀：`signal: killed`，3.264s，测试刚开始，无断言失败；日志 `.agent-state/ssh-storage-audit/live/aide-ssh-test-20261014134113-38036.log`，SHA-256 `6658151d2c459ba777a6323c8385306969f1aaaf1e2dfec665754cb41d1d136e`。",
+      "`AIDE_SSH_RACE=0 AIDE_SSH_GOMAXPROCS=1 bash scripts/test-ssh-workspace.sh` · 双次 PASS，23.83s 与 28.72s，合计 52.610s；日志 `.agent-state/ssh-storage-audit/live/aide-ssh-test-20261014134230-38453.log`，SHA-256 `936eb4d3510090518d6940c5eb7ae791843f059f4a535ae662c2e1c0583f195f`。",
+      "子测试通过：空工作区、Unicode/空格路径读写、并发首连、master/socket 恢复、私钥、deadline、权限错误、独立 SFTP 来源 B、system-docs 相对/绝对路径、缓存推拉、本地镜像、历史、远程知识检索/时间线、渐进覆盖与远程取消进程组清理。",
+      "脚本记录测试前后源码输入清单相同；inputs.sha256 与 inputs.sha256.after 完全相同，清单摘要 `f3427942e10668bbf18fa64a5e7cc65b61e86cefd806851275f225f4a65c2f5b`；临时内网服务器和客户端由脚本 trap 清理。",
+      "测试工作区源只读挂载，未接触用户 SSH 凭据、用户目录或外部网络；这是隔离真实 OpenSSH/SFTP 服务验收，不是用户自有 SSH 主机工作流验收。"
+    ],
+    "not_verified": [
+      "Race detector 覆盖由于容器资源不足未通过；需要更大内存或更低开销环境再重跑。",
+      "用户配置的实际 SSH 主机、凭据解锁/重连以及真实工作区文件变更仍没有可用服务端凭据/主机进行联调。",
+      "完整 goal 的大库长时浏览器性能、长输出上下文压缩端到端和向量检索；向量按用户要求暂缓。"
+    ],
+    "remaining": "隔离 SSH/SFTP 协议端到端在当前代码上已有双次成功；继续补全真实用户主机工作流需要实际可用的主机与凭据授权，race 需在资源足够环境复验。"
   }
 }
