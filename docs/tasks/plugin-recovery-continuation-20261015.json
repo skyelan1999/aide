@@ -56,32 +56,93 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "First real Node/model integration exposed second graph admission gate still blocking continuation; fixed both. Intermediate graph/effect/outcome/harness/resume race53.151s+vet PASS; subsequent extended exact-operation guard race51.841s+vet PASS. Final workspace epoch/current-source run still active. JS recovery form/ack/duplicate/conflict/owner tests PASS. Initial quick fails legacy VM slice boundary after resume function became async; boundary adjusted, original pause assertions PASS. Canonical runtime/browser/package pending. Final current-source scoped race51.556s+vet PASS (workspace revision/wrong-root rejection, save rollback, concurrent decisions, actual Node old/new execution, provider privacy and exact-operation changed-ID refusal).",
+      "summary": "First real Node/model integration exposed second graph admission gate still blocking continuation; fixed both. Intermediate graph/effect/outcome/harness/resume race53.151s+vet PASS; subsequent extended exact-operation guard race51.841s+vet PASS. Final workspace epoch/current-source run still active. JS recovery form/ack/duplicate/conflict/owner tests PASS. Initial quick fails legacy VM slice boundary after resume function became async; boundary adjusted, original pause assertions PASS. Canonical runtime/browser/package pending. Final current-source scoped race51.556s+vet PASS (workspace revision/wrong-root rejection, save rollback, concurrent decisions, actual Node old/new execution, provider privacy and exact-operation changed-ID refusal). Session-owner scoped race/vet PASS. Native canonical Safari e446ea9: missing check disabled, note/ack required, concurrent check rejected stale review409 with note retained; fresh explicit review created completed successor through Docker-internal simulated model. One request, no private evidence/note/credentials, no plugin action. Original unknown node/hook flag retained; successor decision and unknown outcome shown. Original model settings bytes and five config/auth hashes, mounts/workspace config restored; owned fixture/provider removed. Backend-only session binding and ordinary checkpoint compatibility await final focused/full verification. Final owner-binding scoped race/vet PASS; final ordinary checkpoint/same-session review guards race16.065s+vet PASS. Current canonical final source3248686 rebuilt and healthy9999 imageb5c31b79e1a7, config/auth hashes and mounts/workspace config preserved. Complete package verification and frozen full71 gate pending. Package verification/import PASS; current metadata frozen for full71.",
       "evidence": [
         ".agent-state/plugin-recovery-continuation/first-negative.log",
         ".agent-state/plugin-recovery-continuation/diagnostic.log",
         ".agent-state/plugin-recovery-continuation/intermediate-pass.log",
         "scripts/plugin-plans.test.cjs",
-        "scripts/pause-session-isolation.test.cjs"
+        "scripts/pause-session-isolation.test.cjs",
+        ".agent-state/plugin-recovery-continuation/final-owner.log",
+        ".agent-state/plugin-recovery-continuation/browser-receipt.json",
+        ".agent-state/plugin-recovery-continuation/ui-blocked.txt",
+        ".agent-state/plugin-recovery-continuation/ui-stale.jpg",
+        ".agent-state/plugin-recovery-continuation/ui-continued.txt",
+        ".agent-state/plugin-recovery-continuation/ui-outcome.jpg",
+        ".agent-state/plugin-recovery-continuation/cleanup.json",
+        ".agent-state/plugin-recovery-continuation/last-guard-race.log",
+        ".agent-state/plugin-recovery-continuation/last-guard-owner.log",
+        ".agent-state/plugin-recovery-continuation/runtime-final.log"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Preview/decision contract, attribution, exact-match limits, ordinary checkpoint compatibility and task-hook/current global policy boundary documented.",
+      "evidence": [
+        "docs/architecture/plugin-task-scheduling.md",
+        "docker-images/README.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Restored exact original model settings, five config/auth hashes and original mounts/workspace config. Removed only owned fixture/provider after private backup and strict content ownership check. Effective model projection alone changed after restore; inherited5 vendor deletions untouched.",
+      "evidence": [
+        ".agent-state/plugin-recovery-continuation/cleanup.json",
+        ".agent-state/plugin-recovery-continuation/restart-session-diff.json",
+        ".agent-state/plugin-recovery-continuation/runtime-check.log"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Source3248686 and exact canonical local candidateb5c31b79e1a7 built; complete app+dependency offline bundle hash/tag/launcher/platform/import/two local copies PASS. Artifact README/SHA metadata frozen before new full71 run; branch push pending, no formal main/tag release.",
+      "evidence": [
+        ".agent-state/plugin-recovery-continuation/runtime.json",
+        ".agent-state/plugin-recovery-continuation/package.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental local testing/build/source push/offline image authorization. No formal main/tag release.",
-  "rollback": "Use previous image and preserve volume; additive recovery consent fields are ignored by older code, which conservatively blocks uncertain old graphs again. No data restoration performed.",
-  "handoff": ""
+  "rollback": "Previous image preserves volume and conservatively blocks unknown old graphs. It ignores additive consent fields and lacks this batch cached-result evidence redaction/continuation controls; annotated task resume is not a validated rollback path. No production data restoration/rollback drill.",
+  "handoff": "Sources e446ea9/4994835/3248686; canonical9999 imageb5c31b79e1a7, original settings and protected config/mounts restored. Scoped graph/harness/effect/outcome/resume race/vet and final guard16.065s PASS. Native e446 local simulated-provider save/review/conflict/continue/outcome privacy PASS; later backend-only owner/workspace hardening has API race proof. Frozen full71, package verify and branch push pending. Original12 streams, real provider/plugin concurrency/effects and receiving-device acceptance remain.",
+  "runtime": {
+    "runningImage": "sha256:b5c31b79e1a746d169a0934d06423017ce98e6afa66ccae7e26407fc07afcec7",
+    "image": "sha256:b5c31b79e1a746d169a0934d06423017ce98e6afa66ccae7e26407fc07afcec7",
+    "binarySHA256": "ea17235b6363ebed11c7b45f6f2212a5ad5d73fa186735e63e3362124cac381f",
+    "runningPlatformManifest": "sha256:67fe07e6ce8341116ca11136a91c4972759d7c77cced2bf41070907d85f73954",
+    "sourceSHA256": "68d335bd58c896d9caa72489d86a01d586bbec9a889cb4841681a9ded1b2ccb5",
+    "buildCommit": "3248686f90d262e770255fbaea8b4946b2faba1b-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 5,
+    "historicalProtectedFilesUnchanged": 1,
+    "snapshotTiming": "Five config/auth hashes captured before recovery-continuation build; baseline image e5998ca4b4ef, historical mounts/workspace config/token checked separately",
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "sourceCommits": [
+    "e446ea9",
+    "4994835",
+    "3248686"
+  ],
+  "package": {
+    "image": "sha256:b5c31b79e1a746d169a0934d06423017ce98e6afa66ccae7e26407fc07afcec7",
+    "sourceSHA256": "68d335bd58c896d9caa72489d86a01d586bbec9a889cb4841681a9ded1b2ccb5",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-b5c31b79e1a7-offline.tar.gz",
+    "bytes": 705655682,
+    "sha256": "2a216d336b1e929bd66d385c88881159f9f641e748d97a811bd976f4fdec8d28",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true
+  }
 }
