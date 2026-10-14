@@ -1,6 +1,7 @@
 package server
 
 import (
+	"aide/internal/execsandbox"
 	"context"
 	"encoding/json"
 	"errors"
@@ -61,6 +62,14 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	}
 	if strings.TrimSpace(in.Command) == "" || len(in.Command) > 16000 {
 		fail(w, 400, errors.New("命令为空或过长"))
+		return
+	}
+	a.mu.Lock()
+	mode := sandboxMode(a.settings.SandboxMode)
+	remoteMode := a.workspaceMode() == "ssh"
+	a.mu.Unlock()
+	if err := shellSandboxPolicy(mode, in.Command, remoteMode, in.Interactive); err != nil {
+		fail(w, 403, err)
 		return
 	}
 	if in.Cwd == "" {
@@ -170,7 +179,12 @@ func (a *App) command(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 60*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "bash", "--noprofile", "--norc", "-c", in.Command)
+	cmd, cleanup, err := execsandbox.Command(ctx, mode, dir, in.Command)
+	if err != nil {
+		fail(w, 403, err)
+		return
+	}
+	defer cleanup()
 	cmd.Dir = dir
 	cacheEnv := a.cacheContainer
 	cmd.Env = []string{"PATH=/usr/local/go/bin:/usr/local/bin:/usr/bin:/bin", "HOME=/home/aide", "LANG=C.UTF-8", "TERM=dumb", "GOCACHE=" + cacheEnv, "GOPATH=/home/aide/go", "AIDE_CACHE=" + cacheEnv}

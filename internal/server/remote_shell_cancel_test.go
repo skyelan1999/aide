@@ -12,6 +12,7 @@ import (
 // 执行替换为 exec sleep，确保取消 run context 时本地 SSH 客户端不会无限等待。
 func TestRemoteShellCommandCancellable(t *testing.T) {
 	a := testApp(t)
+	a.settings.SandboxMode = "danger-full-access" // This fixture tests remote cancellation, not a local-only kernel sandbox.
 	stub := filepath.Join(t.TempDir(), "ssh-stub")
 	if err := os.WriteFile(stub, []byte(`#!/bin/sh
 for arg in "$@"; do

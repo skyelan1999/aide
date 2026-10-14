@@ -115,6 +115,13 @@ func (a *App) approvedShell(ctx context.Context, task *Task, command string, tim
 	if a.toolDenied("run_shell") || taskToolDenied(task, "run_shell") {
 		return "工具 run_shell 已禁用", false
 	}
+	a.mu.Lock()
+	mode := a.settings.SandboxMode
+	remote := a.workspaceMode() == "ssh"
+	a.mu.Unlock()
+	if err := shellSandboxPolicy(mode, command, remote, false); err != nil {
+		return err.Error(), false
+	}
 	remembered := false
 	if !readOnlyAllowed(command) {
 		var err error

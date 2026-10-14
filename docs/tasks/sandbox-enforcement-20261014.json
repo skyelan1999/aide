@@ -52,8 +52,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Both expanded race regressions and quick passed; final configuration persistence/next-command and process cleanup checks running.",
+      "status": "pass",
+      "summary": "Both expanded race regressions, final kernel/config/model/password checks and quick passed. Linux content writes, scripts, symlink escape, panel modes, read-only tool/proposal gates, persistence with empty activeModel and settings validation covered.",
       "evidence": [
         ".agent-state/sandbox-enforcement/regression.log",
         ".agent-state/sandbox-enforcement/quick.log",

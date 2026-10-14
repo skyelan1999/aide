@@ -395,7 +395,11 @@ func TestHarnessIndependentReviewerReleaseAndSandbox(t *testing.T) {
 			if mode == "orphan" {
 				status = "aborted"
 			}
-			if calls.Load() != 1 || len(task.ApprovalReviews) != 1 || task.ApprovalReviews[0].Status != status {
+			if mode == "read-only" {
+				if calls.Load() != 0 || len(task.ApprovalReviews) != 0 {
+					t.Fatal("read-only write must be rejected before asking the reviewer")
+				}
+			} else if calls.Load() != 1 || len(task.ApprovalReviews) != 1 || task.ApprovalReviews[0].Status != status {
 				t.Fatalf("review did not release exact command: %s %+v", result, task.ApprovalReviews)
 			}
 			_, err := os.Stat(filepath.Join(a.workPath, "approved.txt"))

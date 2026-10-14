@@ -1,6 +1,7 @@
 package server
 
 import (
+	"aide/internal/execsandbox"
 	"bytes"
 	"context"
 	"crypto/sha256"
@@ -1233,6 +1234,10 @@ func (a *App) applyTaskGuarded(w http.ResponseWriter, r *http.Request, guard fun
 	}
 	if task == nil {
 		fail(w, 404, errors.New("任务不存在"))
+		return
+	}
+	if sandboxMode(a.settings.SandboxMode) == "read-only" {
+		fail(w, 403, errors.New("沙箱模式 read-only：不能应用文件写入提案"))
 		return
 	}
 	if task.Status != "awaiting_approval" {
@@ -3580,26 +3585,10 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 	if timeoutSec > 300 {
 		timeoutSec = 300
 	}
-	switch mode {
-	case "read-only":
-		if !readOnlyAllowed(command) {
-			return "", -1, errors.New("沙箱模式 read-only：只允许只读命令（ls/cat/grep/git status 等），写操作请切换到 workspace-write 模式")
-		}
-	case "workspace-write":
-		if reason, bad := shellBlocked(command); bad {
-			return "", -1, errors.New("权限策略拦截：" + reason + "。建议：该命令需要你手动在终端运行，或切换到 danger-full-access 模式")
-		}
-	case "danger-full-access":
-		// 不拦截
-	default:
-		if reason, bad := shellBlocked(command); bad {
-			return "", -1, errors.New("权限策略拦截：" + reason + "。建议：该命令需要你手动在终端运行，或切换到 danger-full-access 模式")
-		}
+	if err := shellSandboxPolicy(mode, command, a.workspaceMode() == "ssh", false); err != nil {
+		return "", -1, err
 	}
-	// #35：无论沙箱模式（含 danger-full-access），aide 命令一律不得触碰小秘私有记忆/历史区。
-	if reason, bad := shellTouchesAssistantZone(command); bad {
-		return "", -1, errors.New("权限策略拦截：" + reason)
-	}
+
 	if a.workspaceMode() == "ssh" {
 		// SSH 工作区与命令面板共用同一 ControlMaster。让 agent 在同一远程
 		// 工作目录执行命令，避免“已连接但 run_shell 不可用”的能力断层。
@@ -3664,7 +3653,11 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 	// 命令 ctx 派生自 run ctx：用户点停止时立即取消；ShellTimeout 作为单条命令上限。
 	ctx, cancel := context.WithTimeout(parent, time.Duration(timeoutSec)*time.Second)
 	defer cancel()
-	cmd := exec.CommandContext(ctx, "bash", "--noprofile", "--norc", "-c", wrapped)
+	cmd, cleanup, err := execsandbox.Command(ctx, sandboxMode(mode), dir, wrapped)
+	if err != nil {
+		return "", -1, err
+	}
+	defer cleanup()
 	cmd.Dir = dir
 	// 独立进程组，取消时杀掉整个进程组（含 find 等 bash 子进程），避免孤儿继续运行。
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
@@ -3686,6 +3679,9 @@ func (a *App) execShellCommand(parent context.Context, task *Task, command strin
 	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = &stderrBuf
 	err = cmd.Run()
+	if cmd.Process != nil {
+		_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)
+	}
 	stdout := stdoutBuf.String()
 	stderr := stderrBuf.String()
 	if len(stdout) > 64<<10 {
@@ -3820,6 +3816,9 @@ func (a *App) executeToolCall(ctx context.Context, call ToolCall, task *Task, ve
 	}
 	// The schema filter is only a hint to the model. Enforce deny again here
 	// because callers can submit tool calls that were not advertised.
+	if err := a.sandboxToolError(call.Function.Name); err != nil {
+		return err.Error()
+	}
 	if a.toolDenied(call.Function.Name) || taskToolDenied(task, call.Function.Name) {
 		return "工具 " + call.Function.Name + " 已被管理员禁用，请在设置中启用后使用"
 	}

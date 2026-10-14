@@ -87,3 +87,19 @@ PUT 替换整个策略文档，字段必须齐全，拒绝未知字段、null、
 这不是写操作白名单：`mkdir`、重定向、运行代码等仍由独立模型结合真实用户任务逐项审核，审批通过后仍走沙箱和路径约束。文件提案审核保持原流程；本轮恢复逻辑只接入Shell命令审核。没有调用真实模型测量放行率，测试使用隔离模拟HTTP和临时工作区。
 
 Literal quoted reads and compositions of proven read-only commands avoid unnecessary approval requests. Unknown shell syntax and write/helper options remain on the ordinary approval path. The command reviewer retries only empty/malformed decisions once under the original deadline, never retries an explicit manual verdict into approval, and preserves all authorization, generation, persistence and sandbox checks. Empty successful responses now retain token usage. This does not enable assisted mode or broaden writing permissions automatically.
+
+## 沙箱执行接入与内核文件规则（2026-10-14）
+
+此前聊天Shell有字符串/路径检查，命令面板未接入，`workspace-write`并非操作系统隔离。本轮把命令面板、模型`run_shell`和Hooks接入同一模式检查；只读模式的写命令在询问审批前拒绝，文件提案的最终应用也拒绝。AI直接生成图纸、工程文档、Office批注/文件和归档的内置写工具增加只读入口检查，无法声明只读边界的第三方插件在只读模式不调用。用户主动使用文件管理器/编辑器的操作不属于AI沙箱，服务自己的会话/审批记录、记忆和配置持久化不被冻结。
+
+Linux本地命令使用独立子进程在`exec`Shell前应用Landlock（最低ABI6）；服务本身不收紧权限。新子进程锁定OS线程，设置`no_new_privs`并加载规则后直接exec，限制继承到Python、Node和后续子进程。只读允许读取工作区和运行环境；工作区可写额外允许当前任务目录中的文件内容/目录项写入、创建、删除、移动，符号链接不会授予目标目录权限。可读运行路径为`/usr`、`/bin`、`/sbin`、`/lib`、`/lib64`、`/etc`、`/dev`、`/proc/self`、`/context`及工作区；`/data`、其他工作区和宿主目录不因读取`/`而全盘放行。
+
+每条受限命令有单独临时目录、HOME、TMPDIR和Go缓存，读写临时区不等于授予项目写权限；命令结束清理。原全局HOME/缓存不传给受限Shell，避免该目录成为越界通道，因此这些命令的缓存不跨调用复用。标准输入输出管道和`/dev/null`用于正常I/O；没有把已有应用数据FD传给子进程。禁止创建设备，限制向域外进程发信号和连接域外抽象Unix套接字。命令结束或取消时回收其进程组，超时逻辑保留。
+
+能力不足时不静默降为仅靠文本匹配：Linux ABI不足、内核调用被禁用、原生非Linux进程或SSH未接入远端helper时，受限命令明确失败且不执行。SSH和原生非Linux的完全访问仍沿用原执行路径。配置非法枚举返回400，省略值保留旧值。尚未配置模型时也允许独立保存沙箱偏好，兼容设置控件携带的空activeModel字段，不要求先填写模型API。`/api/config.sandbox`报告模式、backend、ABI、available及执行范围；它是本机可用能力与当前模式说明，不是每个插件的运行回执。全局沙箱值在每次命令调度时读取并固定为该命令策略；切换不追溯解除或追加已启动进程的限制。
+
+必须区分三层：沙箱决定允许的访问范围；审批决定具体操作是否得到授权；工具权限决定工具是否可用。完全访问不会自动批准写命令或启用被禁用工具，小秘私有区等既有产品保护保留。
+
+**范围限制：** 本次是本地Shell文件内容/目录项隔离，不是完整VM或容器。没有隔离网络；Landlock不完整限制chmod/chown、时间戳和扩展属性等文件元数据，不能据此宣称工作区外所有状态均不可改变。可信Node插件宿主及其他服务端原生能力不由这层进程规则隔离，workspace-write下仍遵循其原有权限和路径实现；它们不能被宣传成同等内核沙箱。详见[Linux内核Landlock文档](https://docs.kernel.org/userspace-api/landlock.html)。
+
+Local model/Hook shell calls and the command panel now share policy enforcement. A fresh Linux child applies Landlock before exec; restricted modes fail closed when enforcement is unavailable. Read-only blocks write approval/application and built-in AI workspace mutators. Full access remains independent of approval and tool authorization. Private scratch directories are disposable. This is local shell file-content/directory-entry confinement, with explicit network, metadata, trusted-plugin, native-platform and SSH limits; already-running commands retain their launch policy.

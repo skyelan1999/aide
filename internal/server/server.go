@@ -1631,7 +1631,7 @@ func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	if accessibilityPort == 0 {
 		accessibilityPort = 8097
 	}
-	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
+	jsonOut(w, 200, map[string]any{"name": "aide", "version": a.version, "buildVersion": a.buildVersion, "buildCommit": a.buildCommit, "revision": a.buildCommit, "baseURL": a.settings.BaseURL, "model": a.settings.Model, "configured": a.settings.Model != "" && a.settings.BaseURL != "", "hasKey": a.hasModelAPIKey(), "vision": modelSupportsVision(a.settings.Model, a.settings.Models), "visionRecommend": recommendedVisionModels(), "models": a.modelConfigOut(), "modelProviders": a.modelProvidersOut(), "activeModel": a.settings.ActiveModel, "workspace": a.statusWorkspaceLabelLocked(), "context": "/context", "hostLocal": a.hostLocal, "workspaceDisplay": a.workspaceDisplay, "workspaceId": a.wsID(), "runtime": "Go · Python · Node.js · Git", "disabledTools": a.settings.DisabledTools, "reasoningEffort": a.settings.ReasoningEffort, "voiceAssistantName": a.settings.VoiceAssistantName, "voiceReplyEnabled": a.settings.VoiceReplyEnabled, "voiceReplyGender": voiceReplyGender(a.settings.VoiceReplyGender), "voiceReplyVerbosity": a.settings.VoiceReplyVerbosity, "voiceInputDevice": a.settings.VoiceInputDevice, "accessibilityAutoRead": a.settings.AccessibilityAutoRead, "accessibilityHostPort": accessibilityPort, "debugAccessEnabled": a.settings.DebugAccessEnabled, "hasDebugToken": a.settings.DebugTokenHash != "", "debugAllowOrigins": a.settings.DebugAllowOrigins, "ttsProvider": ttsProviderName(a.settings.TTSProvider), "ttsVoice": a.settings.TTSVoice, "ttsRate": ttsRateVal(a.settings.TTSRate), "ttsExpressiveness": a.settings.TTSExpressiveness, "hasTTSKey": a.settings.TTSAPIKey != "", "ttsVoices": tts.ChineseVoices(), "edgeAvailable": edgeAvail, "edgeLastError": edgeErr, "azureConfigured": a.settings.TTSAzureKey != "", "cloneConfigured": a.settings.CloneTTSBaseURL != "", "cloneBaseURL": a.settings.CloneTTSBaseURL, "cloneVoiceID": a.settings.CloneVoiceID, "cloneBackend": cloneBackendName(a.settings.CloneTTSBackend), "hasCloneKey": a.settings.CloneTTSAPIKey != "", "sherpaAvailable": sherpaInstalled, "sherpaBinOK": sherpaBinOK, "sherpaVoices": sherpaVoices, "currentTTSEngine": a.ttsEngineSnapshot(), "userName": a.settings.UserName, "lockTimeoutSec": a.settings.LockTimeoutSec, "toolMaxRounds": a.settings.ToolMaxRounds, "shellTimeout": a.settings.ShellTimeout, "sandboxMode": a.settings.SandboxMode, "sandbox": a.sandboxStatusLocked(), "hasPassword": a.settings.UserPasswordHash != "", "vaultUnlocked": a.vaultIsUnlocked(), "webAuthnReady": a.webAuthn.enabled(), "hasPlatformCredential": a.webAuthn.hasPlatformCredential(), "activePersona": a.activePersonaID(), "personas": a.personaListOut(), "workflow": []string{"plan", "propose", "review"}})
 }
 
 // Virtual avatar preferences live in the data volume so changing the browser
@@ -1707,6 +1707,12 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
+		return
+	}
+	switch in.Settings.SandboxMode {
+	case "", "read-only", "workspace-write", "danger-full-access":
+	default:
+		fail(w, 400, errors.New("无效沙箱模式"))
 		return
 	}
 	modelsOmitted := in.Models == nil
@@ -1921,7 +1927,9 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, errors.New("请输入有效的 HTTP(S) API Base URL"))
 		return
 	}
-	if in.Model == "" && in.ActiveModel == "" {
+	// Sandbox preferences must also save before the first model is configured.
+	sandboxWithoutModel := in.Settings.SandboxMode != "" && a.settings.Model == "" && len(a.settings.Models) == 0 && modelsOmitted && (in.ModelInput == nil || *in.ModelInput == "") && (in.ActiveModelInput == nil || *in.ActiveModelInput == "")
+	if in.Model == "" && in.ActiveModel == "" && !sandboxWithoutModel {
 		fail(w, 400, errors.New("请至少配置一个模型"))
 		return
 	}
@@ -1960,7 +1968,7 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 	}
-	if !activeFound {
+	if !activeFound && !sandboxWithoutModel {
 		fail(w, 400, errors.New("当前模型不在模型列表中"))
 		return
 	}

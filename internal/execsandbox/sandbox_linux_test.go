@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -80,6 +81,14 @@ func TestSandboxSymlinkAndScriptContainment(t *testing.T) {
 	}
 	if out, err := runFixture(t, "workspace-write", workspace, `mkdir docs && echo valid > docs/ok.txt && cat docs/ok.txt`); err != nil || !strings.Contains(out, "valid") {
 		t.Fatalf("ordinary workspace command failed: %s %v", out, err)
+	}
+	if _, err := exec.LookPath("node"); err == nil {
+		if out, err := runFixture(t, "workspace-write", workspace, `node -e 'require("fs").writeFileSync("node-ok.txt","valid")'`); err != nil {
+			t.Fatalf("Node cannot write inside allowed workspace: %s %v", out, err)
+		}
+	}
+	if out, err := runFixture(t, "workspace-write", workspace, `python3 -c 'open("python-ok.txt","w").write("valid")'`); err != nil {
+		t.Fatalf("Python cannot write inside allowed workspace: %s %v", out, err)
 	}
 	if _, err := runFixture(t, "workspace-write", workspace, fmt.Sprintf("cat %q", target)); err == nil {
 		t.Fatal("ungranted outside content readable")
