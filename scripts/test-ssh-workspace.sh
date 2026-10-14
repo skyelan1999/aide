@@ -10,6 +10,7 @@ ssh_test_repeat="${AIDE_SSH_REPEAT:-2}"
 ssh_test_gomaxprocs="${AIDE_SSH_GOMAXPROCS:-2}"
 ssh_test_goflags="${AIDE_SSH_GOFLAGS:--buildvcs=false -p=1}"
 ssh_test_race="${AIDE_SSH_RACE:-1}"
+ssh_test_filter="${AIDE_SSH_TEST_FILTER:-^TestSSHLive(WorkspaceAndIndependentSource|GitHistory)$}"
 if [[ "$ssh_test_race" != 0 && "$ssh_test_race" != 1 ]]; then
   printf '%s\n' 'AIDE_SSH_RACE must be 0 or 1' >&2
   exit 2
@@ -89,5 +90,5 @@ done
     -e AIDE_SSH_TEST_ISOLATED=1 -e "GOMAXPROCS=$ssh_test_gomaxprocs" -e "GOFLAGS=$ssh_test_goflags" -e GOCACHE=/go-cache \
     -v aide-ssh-workspace-go-cache:/go-cache -v "$ssh_test_root:/src:ro" -w /src \
     --entrypoint bash "$ssh_test_runtime_image" -c \
-    'mkdir -p /home/aide/.ssh; go test -mod=vendor $2 -v ./internal/server -run "^TestSSHLiveWorkspaceAndIndependentSource$" -count="$1" -timeout=8m' fixture "$ssh_test_repeat" "$ssh_test_race_flag"
+    'mkdir -p /home/aide/.ssh; go test -mod=vendor $2 -v ./internal/server -run "$3" -count="$1" -timeout=8m' fixture "$ssh_test_repeat" "$ssh_test_race_flag" "$ssh_test_filter"
 } 2>&1 | tee "$ssh_test_log"

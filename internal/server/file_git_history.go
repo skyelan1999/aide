@@ -32,11 +32,18 @@ type gitHistorySide struct {
 	Hash    string `json:"hash"`
 	Content string `json:"content"`
 }
-type gitHistoryRepo struct{ bin, base, dir, path string }
+type gitHistoryRepo struct {
+	bin, base, dir, path string
+	remoteCommand        func(context.Context, int64, ...string) ([]byte, error)
+	remoteRead           func(context.Context) ([]byte, error)
+}
 
 // Only fixed read operations are used. No shell, hooks, textconv, external diff,
 // inherited Git routing variables, optional index writes, or lazy network fetch.
 func (g gitHistoryRepo) command(ctx context.Context, limit int64, args ...string) ([]byte, error) {
+	if g.remoteCommand != nil {
+		return g.remoteCommand(ctx, limit, args...)
+	}
 	fixed := []string{"--no-pager", "--literal-pathspecs", "-c", "safe.directory=" + g.dir, "-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-C", g.dir}
 	cmd := exec.CommandContext(ctx, g.bin, append(fixed, args...)...)
 	for _, value := range os.Environ() {
@@ -143,9 +150,9 @@ func (g gitHistoryRepo) resolve(ctx context.Context, ref string) (string, error)
 	if ref != "HEAD" && !gitHistoryObject.MatchString(ref) {
 		return "", errors.New("请选择 HEAD 或完整提交编号")
 	}
-	raw, err := g.command(ctx, 256, "rev-parse", "--verify", ref+"^{commit}")
+	raw, err := g.command(ctx, 256, "rev-parse", "--verify", "--quiet", ref+"^{commit}")
 	if err != nil {
-		return "", errors.New("Git 提交不存在或不可读取")
+		return "", fmt.Errorf("Git 提交不存在或不可读取: %w", err)
 	}
 	oid := strings.TrimSpace(string(raw))
 	if !gitHistoryObject.MatchString(oid) {
@@ -157,7 +164,12 @@ func (g gitHistoryRepo) side(ctx context.Context, root *os.Root, p, ref string) 
 	result := gitHistorySide{Ref: ref}
 	var raw []byte
 	var err error
-	if ref == "worktree" {
+	if ref == "worktree" && g.remoteRead != nil {
+		raw, err = g.remoteRead(ctx)
+		if errors.Is(err, os.ErrNotExist) {
+			return result, nil
+		}
+	} else if ref == "worktree" {
 		file, openErr := root.Open(p)
 		if errors.Is(openErr, os.ErrNotExist) {
 			return result, nil
@@ -253,6 +265,8 @@ func (g gitHistoryRepo) compare(ctx context.Context, before, after gitHistorySid
 	// Run outside the project so repository attributes cannot affect the patch.
 	isolated := g
 	isolated.dir = dir
+	isolated.remoteCommand = nil
+	isolated.remoteRead = nil
 	patch, err := isolated.command(ctx, 8<<20, "diff", "--no-index", "--no-ext-diff", "--no-textconv", "--no-color", "--unified=3", "--", left, right)
 	if err != nil {
 		var exit *exec.ExitError
@@ -295,19 +309,24 @@ func (a *App) fileGitHistoryAPI(w http.ResponseWriter, r *http.Request) {
 		fail(w, 409, errors.New("工作区已切换"))
 		return
 	}
-	root, reason, err := a.gitHistoryRoot(source, q.Get("root"))
-	if err != nil {
-		fail(w, 400, err)
-		return
-	}
-	if root == nil {
-		jsonOut(w, 200, map[string]any{"available": false, "reason": reason})
-		return
-	}
-	defer root.Close()
 	ctx, cancel := context.WithTimeout(r.Context(), 12*time.Second)
 	defer cancel()
-	repo, reason, err := findGitHistoryRepo(ctx, root, p)
+	var repo *gitHistoryRepo
+	var root *os.Root
+	var reason string
+	var err error
+	a.mu.Lock()
+	remote := source == "" && (q.Get("root") == "" || q.Get("root") == "workspace") && a.wsConfig.Workspace.Mode == "ssh"
+	a.mu.Unlock()
+	if remote {
+		repo, reason, err = a.findSSHGitHistoryRepo(ctx, p)
+	} else {
+		root, reason, err = a.gitHistoryRoot(source, q.Get("root"))
+		if err == nil && root != nil {
+			defer root.Close()
+			repo, reason, err = findGitHistoryRepo(ctx, root, p)
+		}
+	}
 	if err != nil {
 		fail(w, 400, err)
 		return
@@ -320,7 +339,14 @@ func (a *App) fileGitHistoryAPI(w http.ResponseWriter, r *http.Request) {
 		jsonOut(w, 200, map[string]any{"available": true})
 		return
 	}
-	head, _ := repo.resolve(ctx, "HEAD")
+	head, headErr := repo.resolve(ctx, "HEAD")
+	if remote && headErr != nil {
+		var exit *exec.ExitError
+		if !errors.As(headErr, &exit) || exit.ExitCode() != 1 {
+			fail(w, 400, headErr)
+			return
+		}
+	}
 	result := map[string]any{"available": true, "path": p, "head": head, "versions": []gitHistoryVersion{}, "limit": gitHistoryLimit, "truncated": false}
 	if q.Get("from") != "" || q.Get("to") != "" {
 		from, to := q.Get("from"), q.Get("to")
