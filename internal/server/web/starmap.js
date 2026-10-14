@@ -939,19 +939,18 @@ function applyLiveUpdate(update,initial=false){
 }
 async function load(){
  clearEvidencePath('正在同步星图，请同步完成后查询。',true);
- if(loading||locked)return;stopLive(true);clearTimeout(cacheWriteTimer);cacheIdentity=null;loading=true;stellarLogbook.connecting();let generation=++graphGeneration;const mode=codeView;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
+ if(loading||locked)return;stopLive(true);clearTimeout(cacheWriteTimer);cacheIdentity=null;loading=true;stellarLogbook.connecting();let generation=++graphGeneration;const mode=codeView,input=recoveryInput;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
  try{
   const identity=await api('/identity?code='+(mode?'1':'0'),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
   cacheIdentity={workspace:identity.workspace,epoch:identity.epoch,policy:identity.policy};const identityChanged=!!graph.workspace&&graph.workspace!==identity.workspace;
   if(identityChanged){applyLiveUpdate({workspace:identity.workspace,revision:'pending',reset:true,nodes:[],edges:[],sources:[],warnings:[]},true);liveCursor='';}
   const cached=await window.AideStarmapCache?.read(mode?'code':'knowledge',cacheIdentity).catch(()=>null);if(locked||generation!==graphGeneration||mode!==codeView)return;
-  if(cached?.graph&&cached.revision){applyLiveUpdate({...cached.graph,workspace:cached.workspace,revision:cached.revision,reset:true,removedNodes:[],removedEdges:[]},true);liveCursor=cached.revision;say('已载入本地星图 · 正在同步最新变化…');}
+  if(cached?.graph&&cached.revision){applyLiveUpdate({...cached.graph,workspace:cached.workspace,revision:cached.revision,reset:true,removedNodes:[],removedEdges:[]},input===recoveryInput||graph.workspace!==cached.workspace);generation=graphGeneration;liveCursor=cached.revision;say('已载入本地星图 · 正在同步最新变化…');}
   const update=await api('/updates?code='+(mode?'1':'0')+(liveCursor?'&cursor='+encodeURIComponent(liveCursor):''),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
   if(update.workspace!==identity.workspace){cacheIdentity=null;graph={nodes:[],edges:[],sources:[],warnings:[]};liveCursor='';return;}
   if(cached?.revision===liveCursor){applyLiveUpdate(update);}
-  else{beginGraphTransition();applyLiveUpdate(update,true);}
+  else{beginGraphTransition();applyLiveUpdate(update,input===recoveryInput||graph.workspace!==update.workspace);}
   generation=graphGeneration; // Own delta application must not invalidate this load.
-  const input=recoveryInput;
   if(recoveryScopeLoaded!==update.workspace){
    recoveryLoading=true;
    const saved=await window.AideContinuity?.readTab('knowledge:'+update.workspace,'scene','starmap').catch(()=>null);

@@ -1,0 +1,73 @@
+{
+  "id": "starmap-startup-selection-20261015",
+  "request": "Preserve current star-map filter/query/camera edits made while cached startup catches up; do not restore stale saved scene or overwrite same-workspace edits, keep workspace/lock/mode isolation",
+  "baseline": "7f136b73c84833e2e5a1a348d2172985d2eac15b",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "User filter/query/camera edits while startup identity/cache/network/recovery awaits must beat saved scene restoration; cached nodes remain visible while updating.",
+    "Same-workspace delayed cached/full graph replacements preserve edits made after load starts; own graph reconciliation must not invalidate the remaining load.",
+    "Workspace identity changes still clear old workspace view; lock/generation/mode guards discard stale responses; no auto query, model or document execution.",
+    "Focused asynchronous actual-load-source regression fails baseline and passes fix; quick profile and canonical start.command actual Safari interaction; docs, incremental source push and matching offline bundle."
+  ],
+  "scope": [
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "scripts/starmap-workspace-scene.test.cjs",
+    "docs/tasks",
+    "docs/architecture/knowledge-map.md",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Previous canonical Safari initial context selection became workspace once; steady-state reselect held. Load captures recoveryInput after network instead of before initial awaits, admitting stale saved restoration. Initial/full replacements also reset region unconditionally.",
+      "evidence": [
+        "docs/tasks/starmap-batch-material-reuse-20261015.json",
+        "internal/server/web/starmap.js:load"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Capture input epoch at load entry; do not restore saved scenes after any startup interaction. Reconcile delayed same-workspace cache/full data without initial reset when input changed; update own generation after cache reconciliation. Different workspace initialization remains reset.",
+      "evidence": [
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Capture interaction epoch before initial awaits; choose delta reconciliation for same-workspace edited cache/full responses, adopt own cache graph generation, retain original workspace/mode/lock guards. Incremented starmap cache query.",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "scripts/starmap-workspace-scene.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Actual load-source async regression fails baseline saved-scene overwrite, combined fix passes. Cases cover network wait after cache paint, delayed cache generation ownership, no-cache full response and different workspace clearing; existing camera/panel/retry tests pass. Native pre-fix canonical Safari again reproduced context on then later workspace on/context off before cleanup action. Initial quick69 PASS; post-fix canonical build/browser still pending.",
+      "evidence": [
+        ".agent-state/starmap-startup-selection/baseline.log",
+        ".agent-state/starmap-startup-selection/before-choice.png",
+        ".agent-state/starmap-startup-selection/before-reset-observation.json",
+        ".agent-state/verify-20261014T211215953939Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental source push/testing/local image and offline package authorization; no formal release.",
+  "rollback": "Revert load ordering/initial-mode changes; preserve recovery records, cached graph, source registry and user history.",
+  "handoff": "Source implementation and deterministic negative proof complete; native pre-fix reset reproduced. Initial quick, canonical fixed build/actual early selection/query retention and delivery pending. Original goal active."
+}
