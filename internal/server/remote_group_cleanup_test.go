@@ -31,6 +31,8 @@ func writeSSHCleanupStub(t *testing.T, logPath string) string {
 
 func sshCleanupTestApp(t *testing.T) *App {
 	a := testApp(t)
+	// These fixtures exercise transport process-group cleanup, not restricted SSH execution.
+	a.settings.SandboxMode = "danger-full-access"
 	requireStatus(t, request(a, "PUT", "/api/workspace-config", map[string]any{
 		"workspace": map[string]any{"mode": "ssh", "path": "/srv/app", "host": "remote.example", "port": 22, "username": "deploy", "auth": "none"},
 	}), 200)

@@ -240,6 +240,16 @@ exit 0
 	if b, _ := os.ReadFile(sftpLog); !strings.Contains(string(b), "/srv/app/generated.docx.aide-tmp") {
 		t.Fatalf("remote Office file was not uploaded: %s", string(b))
 	}
+	// Restricted SSH must fail before dispatch; this fixture's transport checks
+	// then explicitly select full access instead of bypassing that policy.
+	if _, _, err := a.execShellCommand(context.Background(), &Task{WorkspaceMode: "ssh", WorkspaceRemotePath: "/srv/app"}, "echo rejected"); err == nil || !strings.Contains(err.Error(), "远程SSH尚未接入内核沙箱") {
+		t.Fatal("restricted remote shell dispatched", err)
+	}
+	a.mu.Lock()
+	originalSandbox := a.settings.SandboxMode
+	a.settings.SandboxMode = "danger-full-access"
+	a.mu.Unlock()
+	defer func() { a.mu.Lock(); a.settings.SandboxMode = originalSandbox; a.mu.Unlock() }()
 	// Agent run_shell now shares the same remote SSH session and starts in the
 	// task's remote workspace, matching the command panel behavior.
 	out, code, err := a.execShellCommand(context.Background(), &Task{WorkspaceMode: "ssh", WorkspaceRemotePath: "/srv/app"}, "echo agent-remote")

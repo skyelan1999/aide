@@ -206,7 +206,7 @@ func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 	requireStatus(t, w, 201)
 	var s Session
 	_ = json.Unmarshal(w.Body.Bytes(), &s)
-	w = request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "workflow", "prompt": "update hello", "attachments": []Attachment{{Root: "workspace", Path: "hello.txt"}}})
+	w = request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "workflow", "strategy": "manual", "profile": "default", "prompt": "update hello", "attachments": []Attachment{{Root: "workspace", Path: "hello.txt"}}})
 	requireStatus(t, w, 202)
 	var task Task
 	_ = json.Unmarshal(w.Body.Bytes(), &task)
@@ -222,6 +222,9 @@ func TestWorkflowApprovalConflictAndPersistence(t *testing.T) {
 	}
 	if task.Status != "awaiting_approval" {
 		t.Fatalf("task: %+v", task)
+	}
+	if task.Strategy != "manual" || len(task.Steps) != 3 || task.Steps[1].Name != "propose" {
+		t.Fatal("fixture did not exercise explicit fixed workflow")
 	}
 	// propose 步骤必须强制 JSON 输出（FR-23 可靠性）；plan 不强制
 	if f, _ := formats.Load("propose"); f != "json_object" {
