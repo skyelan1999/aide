@@ -2591,11 +2591,13 @@
       "remaining": "归位视觉构图不确定；同工作区多标签、跨工作区隔离、服务重启镜头相位尚未实测。"
     }
   },
-  "latest_source_revision": "643d73c",
+  "latest_source_revision": "ba62184",
   "release_gate": {
     "status": "blocked",
     "command": "python3 scripts/agent-route.py release-check aide-continuity-knowledge-20261009",
-    "result": "BLOCKED: overall 12 workstreams remain in progress; release/rollback gate not closed. Latest source full profile passed 38/38 at 0c37766, but that alone does not close product-specific acceptance; vector retrieval deferred by user; Windows has been tested by the user with no further agent acceptance requested."
+    "result": "当前预检仍被未完成阶段/非main/继承vendor删除阻止；首个完成full因5处旧夹具失败，ba62184修正后相关race12.369s通过，新full重跑中。不能标记完整验证或全目标完成。",
+    "evidence": ".agent-state/reasoning-default-settings/release-precheck.log",
+    "boundary": "本轮不跳过全目标验收、不合并main或正式Release。"
   },
   "acceptance_followup_20261012": {
     "status": "in_progress",
@@ -5187,6 +5189,28 @@
       ],
       "evidence": ".agent-state/reasoning-default-settings/ssh-final.log",
       "boundary": "真实OpenSSH但为一次性服务器/internal网络；覆盖历史/恢复/记忆/搜索/时间线/渐进索引以及受限拒绝、显式完全访问退出码和取消清理；不代表用户主机、Safari SSH或物理断网验收。"
+    },
+    "full_regression": {
+      "status": "rerunning_after_fixture_repairs",
+      "first_complete_attempt": {
+        "status": "fail",
+        "server_seconds": 567.736,
+        "failures": [
+          "TestRemoteCommandWrappedInOwnPG",
+          "TestRemoteCancelKillsRemoteGroup",
+          "TestRemoteTimeoutKillsRemoteGroup",
+          "TestWorkflowApprovalConflictAndPersistence",
+          "TestRemoteWorkspaceDispatch"
+        ],
+        "evidence": ".agent-state/verify-20261014T134326959051Z.log"
+      },
+      "repair": "ba62184: SSH进程组/分派夹具明确完全访问并保留受限拒绝；固定阶段审批冲突用例明确manual/default并验证propose分支。原断言保留，未放宽生产策略。",
+      "targeted_race_seconds": 12.369,
+      "targeted_evidence": ".agent-state/reasoning-default-settings/gate-regression.log",
+      "current_log": ".agent-state/reasoning-default-settings/full-gate-current.log",
+      "unified_exec_session_id": 40551,
+      "resume_rule": "先轮询该已确认存活session或对应Docker验证进程；观察超时不表示终止，不重复启动。",
+      "boundary": "实际567.736s完整检查失败不计PASS，新full尚未完成。测试专用修复不改变现有生产镜像代码。"
     }
   },
   "current_requirement_audit_20261014": {

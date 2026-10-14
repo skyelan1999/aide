@@ -17,7 +17,8 @@
     "scripts/reasoning-settings.test.cjs 与 docs/agent/router.json",
     "docs/tasks、docs/reviews、主账本与docker-images校验清单",
     "scripts/aide.sh、.dockerignore、scripts/test_source_fingerprint.py",
-    "internal/server/ssh_live_test.go 的沙箱策略夹具对齐"
+    "internal/server/ssh_live_test.go 的沙箱策略夹具对齐",
+    "internal/server/remote_group_cleanup_test.go、workspace_test.go、server_test.go 旧场景选择对齐"
   ],
   "stages": {
     "requirements": {
@@ -44,10 +45,10 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "规范仓race13.231s、运行仓17.379s、Node与真实Safari8097默认推理保存/重启刷新/恢复auto通过；新SSH17.639s通过，完整门禁运行中。",
+      "summary": "推理定向race13.231s/运行仓17.379s、Node、真实Safari保存/重启/恢复auto、SSH17.639s及指纹/镜像导入通过；完整检查567.736s因5旧夹具失败，ba62184修正后定向12.369s通过，新full重跑，尚无PASS。",
       "evidence": [
-        ".agent-state/reasoning-default-settings/go-final.log",
-        "scripts/reasoning-settings.test.cjs"
+        "docs/reviews/2026-10-14-reasoning-default-settings-rollout.md",
+        ".agent-state/reasoning-default-settings/full-gate-current.log"
       ]
     },
     "documentation": {
@@ -60,14 +61,19 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "保留继承vendor删除及其他运行仓改动；隔离SSH容器网络已清理；归档、日志、备份不入Git，历史校验行保留。",
+      "evidence": [
+        "git status --short",
+        "docker ps"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "代码文档push与8097/ARM64离线包已完成；主任务正式发布门禁仍拒绝，最终full等待结果；不合并main或发Release。",
+      "evidence": [
+        "docs/reviews/2026-10-14-reasoning-default-settings-rollout.md"
+      ]
     }
   },
   "release_authorization": "用户既有分块push/测试/文档授权，明确沿用镜像包导入；8097限定AIDE替换。主目标Release授权仍以12条工作流及门禁闭环为条件。",

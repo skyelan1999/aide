@@ -34,3 +34,10 @@ healthz、鉴权config/sessions/approval-policy均200；reasoning-settings.js/ap
 主账本新增followup103和12工作流逐项剩余矩阵，链接近期会话模型、沙箱、分段输出、SSH Git批次。记录已有证据及适用范围，未将12条任意一条整体改为pass。当前回滚位置/镜像/备份已落实，正式Release仍需完整范围验收与发布基线。全量测试、普通浏览器锁定、用户真实SSH、长时/大容量/成果舱及其他剩余场景分别跟踪；无“源码push=镜像发布”或“单项PASS=全目标完成”的推断。
 
 证据：两仓`.agent-state/reasoning-default-settings/`的go-final/go-runtime-final/browser-result/restart-check/smoke/build-stable/export记录；规范仓ssh-final和full-final日志。临时日志、卷备份和私有会话数据不推送。
+
+
+### 完整门禁追加（未计通过）
+
+完成的full中服务端执行567.736s后失败，5项为RemoteCommandWrappedInOwnPG、RemoteCancelKillsRemoteGroup、RemoteTimeoutKillsRemoteGroup、WorkflowApprovalConflictAndPersistence、RemoteWorkspaceDispatch。前四个远端场景中的Shell断言仍假设受限SSH可执行，另一个固定阶段审批用例没有明确manual。`ba62184`只对齐测试选择：传输/进程组用例明确测试完全访问；分派用例先断言受限拒绝，再测完全访问分派；审批冲突用例显式manual/default并验证三个固定阶段。既有业务断言保留，生产沙箱和自动工作流没有修改。五失败项及相关边界定向race12.369s通过。
+
+当前完整检查已重新启动，日志`.agent-state/reasoning-default-settings/full-gate-current.log`，尚未完成。继续时先轮询已存在的exec session40551，不因观察超时重复启动。当前新包的生产代码与这次测试专用修复无差异，不为仅改夹具重复导出同一生产镜像。正式发布预检仍拒绝未闭环阶段、非main、继承vendor缺失及尚无当前full PASS；回滚缺失项已补齐。
