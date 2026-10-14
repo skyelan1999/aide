@@ -2446,3 +2446,32 @@ Object.assign(window.aideEnglish, {
  ' · 已返回 {0} 条命中':' · {0} matches returned',
  ' · 可继续检索':' · More results available',' · 当前范围检查完毕':' · Current scope checked'
 });
+
+Object.assign(window.aideEnglish, {
+  "Aide 快照": "Aide snapshots",
+  "Git 比较": "Git comparison",
+  "历史来源": "History source",
+  "正在读取 Git 文件历史…": "Reading Git file history…",
+  "当前目录没有可比较的 Git 历史。": "No comparable Git history in this directory.",
+  "比较版本": "Compare versions",
+  "暂存区": "Index",
+  "磁盘正文": "Disk content",
+  "编辑器正文（含未保存）": "Editor content (including unsaved changes)",
+  "比较基准": "Base version",
+  "目标版本": "Target version",
+  "只读比较，不修改工作区或暂存区。": "Read-only comparison. The working tree and index remain unchanged.",
+  "提交列表按当前文件路径读取，不追踪重命名前路径。": "Commits are listed for the current path; rename history is not followed.",
+  "仅显示最近 {0} 次提交。": "Showing only the latest {0} commits.",
+  "版本选择已变化，请重新比较。": "Version selection changed. Compare again.",
+  "Git 比较仅支持不超过 2 MiB 的文本版本": "Git comparison supports text versions up to 2 MiB.",
+  "正在比较版本…": "Comparing versions…",
+  "Git 仓库已不可用。": "The Git repository is no longer available.",
+  "两侧正文相同。": "The contents are identical.",
+  "两侧正文有差异。": "The contents differ.",
+  "右侧是点击比较时的编辑器正文，包含未保存修改。": "The right pane contains editor content captured at comparison time, including unsaved changes.",
+  "基准版本不存在此文件。": "The file does not exist in the base version.",
+  "目标版本不存在此文件。": "The file does not exist in the target version.",
+  "无正文差异。": "No content differences.",
+  "Git 历史读取失败：": "Failed to read Git history: ",
+  "内容较长，显示完整正文，不逐行着色。": "Long content is shown in full without per-line coloring."
+});

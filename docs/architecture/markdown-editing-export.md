@@ -1,4 +1,4 @@
-# Markdown 编辑布局与导出
+# Markdown 编辑布局、导出与文件历史
 
 Markdown 编辑工具栏使用单行紧凑布局。图片、文件、链接、draw.io 和每种常用 Markdown 模板都以同一层级的图标按钮呈现，不再放进下拉菜单；窄屏时可在整行工具栏横向滚动。模板包括段落、H1–H6、粗体、斜体、删除线、行内代码、代码块、Mermaid 流程图、表格、Markdown 链接与图片语法、引用、有序/无序/任务列表、分隔线、脚注、提示块、折叠块、数学公式和 YAML 文档元数据。悬停或键盘聚焦时，工具提示给出名称与用途；按钮也提供完整的屏幕阅读器标签。插入后选中示例占位文字，直接键入即可替换。脚注、GitHub 风格提示块、HTML 折叠块、数学公式与 YAML 前置信息属于扩展或发布工具语法，是否渲染取决于 Markdown 渲染器。
 
@@ -98,8 +98,30 @@ Completed code blocks prefer a supported declared language, then use bounded loc
 
 不带 `from`／`to` 时返回 HEAD、当前路径最近 50 次提交的完整编号、短编号、作者时间、标题以及 `truncated`；不追踪重命名前路径。新仓库没有 HEAD 时仍返回 `available:true`、空 HEAD 和提交列表。比较参数接受 `HEAD`、完整 40／64 位小写提交编号、`index`（暂存区）、`worktree`（磁盘正文）。省略一侧默认 HEAD → worktree；无 HEAD 时应显式选择 index。响应含 `before/after` 的 `ref`、`exists`、正文 SHA-256、`content` 和标准 unified `diff`。缺失条目按不存在的空侧比较，可查看未跟踪文件新增和磁盘删除；不等同于 Git 状态提交／恢复。
 
-每侧正文限 2 MiB，仅接受 UTF-8 无 NUL 的普通文件；拒绝符号链接路径、子模块条目、冲突暂存区、非法路径与任意 revision 表达式。Git 请求有 12 秒总截止时间和有界输出，不经 shell；禁用 hooks、fsmonitor、external diff、textconv、继承的 Git 环境路由和网络协议。补丁使用临时正文快照生成并清除临时路径，不修改工作树、index、提交或远端。此时第一部分仅为接口，界面接入在第二部分；不要把后端验证视作浏览器或8097上线验收。
+每侧正文限 2 MiB，仅接受 UTF-8 无 NUL 的普通文件；拒绝符号链接路径、子模块条目、冲突暂存区、非法路径与任意 revision 表达式。Git 请求有 12 秒总截止时间和有界输出，不经 shell；禁用 hooks、fsmonitor、external diff、textconv、继承的 Git 环境路由和网络协议。补丁使用临时正文快照生成并清除临时路径，不修改工作树、index、提交或远端。第一部分提交 `d1eb320` 交付接口；第二部分交付下述界面。后端验证不等同于浏览器或8097上线验收。
 
 Stage 1 adds a read-only API scoped to the selected file within a local workspace/source repository, including nested and linked worktrees. It lists at most 50 commits affecting the current path and compares HEAD, full commit IDs, the index and disk content. It does not follow rename history. Missing sides support additions/deletions; untracked files are not silently omitted. Each text side is limited to 2 MiB, with bounded subprocess output and a 12-second deadline. Shells, hooks, external filters, fsmonitor, optional index writes and network protocols are disabled. Remote workspace caches are never presented as remote Git repositories. UI integration and running-instance acceptance are tracked separately.
 
 验证：`go test -mod=vendor ./internal/server -run '^TestFileGitHistory' -count=1 -timeout=3m` 与对应 `-race` 均通过（隔离 golang:1.26-bookworm、本机网络关闭）。覆盖提交间、HEAD／index／磁盘、未跟踪、删除、嵌套／linked worktree、字面路径、越界、符号链接、非法 ref、二进制／超限与 SSH 缓存隔离；检查 index／磁盘正文未变化、恶意 fsmonitor／external diff 未执行。日志见 `.agent-state/file-history-git-compare/backend*.log`。
+
+
+### 使用方式与比较口径 / UI and comparison semantics
+
+1. 打开工作区文本文件。Markdown 保留原有“历史版本”入口；其他文本文件只有在所属目录检测到 Git 仓库后才显示此入口。检测响应绑定文件、来源、工作区与 root，切换后旧响应不再影响入口。
+2. 在历史窗口切换“Aide 快照”和“Git 比较”。Markdown 快照的引用资源、恢复范围、哈希保护和备份管理保持原有语义；Git 比较不提供恢复、checkout、reset、add 或提交操作。
+3. 选择基准及目标版本。支持 HEAD、提交列表中的完整提交、暂存区与磁盘正文；目标还可选择“编辑器正文（含未保存）”。窗口中的 HEAD 固定为读取列表时的提交编号，避免比较时分支移动而标题仍显示旧编号。没有提交的新仓库默认比较暂存区与编辑器正文。
+4. 点击“比较版本”。双栏用红／绿／琥珀标记删除／新增／修改，正文滚动联动；窄屏上下排列。编辑器目标使用点击时的正文快照，明确标记可能未保存；不上传草稿，不把 Git 返回的磁盘补丁冒充草稿补丁。选择非草稿目标时可展开 unified diff。
+
+每侧超过约 6000 行时显示完整正文而不展开逐行着色节点，避免超长文本造成 DOM 爆炸；正文仍受 2 MiB 限制。切换版本／来源标签会清除过期比较并中止请求，返回 Git 标签后可重新比较。关闭窗口、锁屏、切换文件或工作区会阻止旧响应展示。`probe=1` 只检测仓库，不读取提交列表。
+
+The history entry remains available for Markdown snapshots and appears for other text files only after a scoped Git probe. The existing snapshot restore/backup workflow stays separate from Git's read-only comparison. The editor target uses the buffer captured when Compare was clicked, including unsaved edits, without uploading it. HEAD is pinned to the commit shown in the selector. Disk/index/commit comparisons can show a unified patch; draft comparisons never reuse a disk patch. Large line counts fall back to full plain text, and stale/closed/locked contexts cannot repaint the dialog.
+
+### 分块交付与验收 / Incremental delivery and validation
+
+- 第一块：`d1eb320` 后端及中英接口文档已 push 到 `feat/file-history-git-compare`。
+- 第二块：前端组件、文本入口检测、双栏比较、中英词条、探测快路径和浏览器夹具随代码一起提交；记录精确推送结果于任务账本。
+- 后端定向 race：`go test -race -mod=vendor ./internal/server -run '^(TestFileGitHistory|TestMarkdownHistory)' -count=1 -timeout=3m`，最终日志 `.agent-state/file-history-git-compare/final-backend.log`。新增本地来源、新仓库无 HEAD、继承 GIT_DIR 与缺少 Git 的边界用例；不使用全仓测试冒充真实部署。
+- 前端定向：`node scripts/git-history.test.cjs` 与 `node scripts/markdown-history-writable.test.cjs`；快速门禁包含新组件语法和回归。
+- Safari 实接口：隔离的 `http://localhost:18618/fixture`，实际 Go handler + 实际历史组件 + 临时合成仓库。观察 HEAD 与未保存正文、HEAD 与真实暂存区、两个提交选项、Markdown 快照／Git 标签切换、非 Git 文本隐藏入口、深色桌面与浅色 390px iframe 布局。此夹具不接真实用户目录、8097或模型；未进行真实 SSH、所有平台、真实8097部署验收。
+
+复现浏览器夹具：在隔离 Docker 中，仅将 `18618` 发布到 `127.0.0.1`，设置 `AIDE_GIT_HISTORY_BROWSER_FIXTURE=1` 并运行 `go test -mod=vendor ./internal/server -run '^TestFileGitHistoryBrowserFixture$' -v -count=1 -timeout=20m`。默认测试会跳过此人工夹具；`scripts/fixtures/git-history.html` 与 opt-in test 中的数据均为合成。浏览器夹具直接提供仅限测试的只读 handler，不能用于生产；生产路由仍通过原 Handler 的 Bearer/Origin 校验。

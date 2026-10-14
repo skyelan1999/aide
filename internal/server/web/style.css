@@ -1692,3 +1692,13 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 
 /* Interjections share the ordinary user bubble and remain below run output. */
 .user-message.steer-message{margin-top:18px}
+
+/* Git and Aide history share a dialog, but never share restore actions. */
+.git-history-tabs{display:flex;gap:8px;margin:12px 0}.git-history-tabs button[aria-pressed="true"]{background:var(--selected);color:var(--text);border-color:var(--line-accent)}
+.git-history-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:12px;align-items:end;margin:16px 0}.git-history-controls label{display:grid;gap:7px;margin:0;font-size:12px;color:var(--muted)}.git-history-controls select{width:100%;min-width:0;min-height:36px;padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--field);color:var(--text)}
+.git-history-panel[hidden],.md-history-dialog section[hidden]{display:none}.git-history-status{font-size:12px;color:var(--muted);line-height:1.8}.git-history-patch{white-space:pre;overflow:auto;max-height:40vh;font:12px/1.7 ui-monospace,SFMono-Regular,monospace}.git-history-result .md-history-comparison{min-width:0}
+@media(max-width:650px){.git-history-controls{grid-template-columns:1fr}.git-history-controls button{justify-self:start}}
+
+
+
+.git-history-panel .md-history-comparison pre{overflow:auto;max-height:50vh;white-space:pre;font:12px/1.7 ui-monospace,SFMono-Regular,monospace}.git-history-panel .md-history-line{display:block;min-height:1.7em}.git-history-panel .md-history-line-added{background:color-mix(in srgb,#22c55e 14%,transparent)}.git-history-panel .md-history-line-removed{background:color-mix(in srgb,#ef4444 14%,transparent)}.git-history-panel .md-history-line-changed{background:color-mix(in srgb,#f59e0b 16%,transparent)}

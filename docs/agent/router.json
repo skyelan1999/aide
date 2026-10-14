@@ -411,6 +411,15 @@
       [
         "node",
         "scripts/steer-user-bubbles.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/git-history.js"
+      ],
+      [
+        "node",
+        "scripts/git-history.test.cjs"
       ]
     ],
     "full": [

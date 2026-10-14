@@ -22,7 +22,9 @@
     "docs/architecture/markdown-editing-export.md",
     "docs/architecture.md",
     "docs/agent/router.json",
-    "docs/tasks/file-history-git-compare-20261014.json"
+    "docs/tasks/file-history-git-compare-20261014.json",
+    "internal/server/file_git_browser_fixture_test.go",
+    "scripts/fixtures/git-history.html"
   ],
   "stages": {
     "requirements": {
@@ -36,41 +38,67 @@
       "evidence": []
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "第一块后端完成；前端比较界面待接入。",
+      "status": "pass",
+      "summary": "Git只读API及历史窗口接入完成；保留Markdown快照，其他文本通过probe显示入口；HEAD固定元数据提交，草稿不上传；超长行数降级纯文本。",
       "evidence": [
         "internal/server/file_git_history.go",
-        "internal/server/file_git_history_test.go"
+        "internal/server/web/git-history.js",
+        "internal/server/web/markdown-history.js"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "后端定向普通与race测试通过；浏览器及8097未运行。",
+      "status": "pass",
+      "summary": "最终两仓quick通过；Go定向race通过，旧Markdown历史回归通过；Safari真实Go handler合成仓库验证HEAD/草稿、HEAD/index、提交选项、Markdown双历史入口、非Git隐藏、深色桌面/390px浅色。镜像构建通过，8097部署NOT_RUN。",
       "evidence": [
-        ".agent-state/file-history-git-compare/backend.log",
-        ".agent-state/file-history-git-compare/backend-race.log"
+        ".agent-state/file-history-git-compare/final-backend.log",
+        ".agent-state/file-history-git-compare/final-quick.log",
+        ".agent-state/file-history-git-compare/browser.log",
+        ".agent-state/file-history-git-compare/build.log",
+        "scripts/git-history.test.cjs",
+        "scripts/markdown-history-writable.test.cjs"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "第一块接口参数、支持范围、限制、测试与未完成边界已中英同步。",
+      "status": "pass",
+      "summary": "接口、使用步骤、比较口径、支持范围、性能限制、复现夹具、实际验收和未完成项已同步更新中英文。",
       "evidence": [
         "docs/architecture/markdown-editing-export.md",
         "docs/architecture.md"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "已检查diff；仅提交本任务路径，保留既有五项vendor删除及本机运行仓其他未提交改动。合成浏览器夹具未使用用户数据。",
+      "evidence": [
+        "git diff --check"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
+      "status": "in_progress",
+      "summary": "d1eb320已push；第二块待定向最终检查后push。实际8097旧容器故障未解除，部署仍等待前序Docker重启确认。",
       "evidence": []
     }
   },
   "release_authorization": "用户：还是一样，做一部分，push一部分，测一部分；注意文档的更新和编写。授权分块提交与push，不等于运行部署或release。",
-  "rollback": "",
-  "handoff": "先推后端与文档，再接入文件历史界面；8097仍受Docker旧容器故障影响。"
+  "rollback": "回退本任务前端、路由和Git历史新增文件并重建；无数据迁移，不影响用户Git提交、index或工作树。",
+  "handoff": "代码/文档/定向测试已完成；第二部分待push回执。支持本地工作区/本地目录/Skill，SSH明确不可用；不追踪重命名前路径。实际8097仍待Docker恢复后验收。",
+  "milestones": [
+    {
+      "part": "backend + documentation",
+      "commit": "d1eb320",
+      "push": "pass",
+      "tests": "targeted normal/race pass"
+    },
+    {
+      "part": "frontend + documentation + validation",
+      "push": "pending"
+    }
+  ],
+  "runtime_image": {
+    "tag": "aide:local",
+    "id": "sha256:0bfdef10384c184142f9c026ad6afed73a7ff29e414820848d5bb678e23c8e96",
+    "build": "pass",
+    "source": "aideMacMini/aide working tree, includes prior fixes",
+    "running_acceptance": "not_run"
+  }
 }

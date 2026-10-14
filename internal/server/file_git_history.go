@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/exec"
@@ -157,10 +158,22 @@ func (g gitHistoryRepo) side(ctx context.Context, root *os.Root, p, ref string) 
 	var raw []byte
 	var err error
 	if ref == "worktree" {
-		raw, err = readText(root, p)
-		if errors.Is(err, os.ErrNotExist) {
+		file, openErr := root.Open(p)
+		if errors.Is(openErr, os.ErrNotExist) {
 			return result, nil
 		}
+		if openErr != nil {
+			return result, openErr
+		}
+		defer file.Close()
+		info, statErr := file.Stat()
+		if statErr != nil {
+			return result, statErr
+		}
+		if !info.Mode().IsRegular() {
+			return result, errors.New("只支持普通文本文件")
+		}
+		raw, err = io.ReadAll(io.LimitReader(file, gitHistoryTextLimit+1))
 	} else {
 		var entry []byte
 		if ref == "index" {
@@ -301,6 +314,10 @@ func (a *App) fileGitHistoryAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	if repo == nil {
 		jsonOut(w, 200, map[string]any{"available": false, "reason": reason})
+		return
+	}
+	if q.Get("probe") == "1" {
+		jsonOut(w, 200, map[string]any{"available": true})
 		return
 	}
 	head, _ := repo.resolve(ctx, "HEAD")

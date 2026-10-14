@@ -29,11 +29,14 @@
   const blocked=()=>{const state=window.LockCluster?.snapshot();return !!state&&(!state.settled||state.locked);};
   window.LockCluster?.on('effective',value=>{if(value){epoch++;activeDialog?.close();}});
   const query=spec=>{const q=new URLSearchParams({path:spec.path});if(spec.source)q.set('source',spec.source);else if(spec.wsId)q.set('workspaceId',spec.wsId);return q;};
-  function refresh(){epoch++;activeDialog?.close();button.hidden=!/\.(md|markdown)$/i.test(getContext()?.path||'');}
+  function refresh(){
+   const request=++epoch;activeDialog?.close();const spec={...getContext()},markdown=/\.(md|markdown)$/i.test(spec.path||'');button.hidden=!markdown;
+   if(!markdown&&spec.path&&window.AideGitHistory&&!blocked())window.AideGitHistory.detect({spec,api}).then(data=>{if(request===epoch&&!blocked()&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))button.hidden=!data.available;}).catch(()=>{});
+  }
   button.onclick=async()=>{
    const spec={...getContext()},currentText=editor.value;if(!spec.path||blocked())return;activeDialog?.close();const request=++epoch;button.disabled=true;
    try {
-    const data=await api('/file/history?'+query(spec));if(blocked()||request!==epoch||['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return;
+    const markdown=/\.(md|markdown)$/i.test(spec.path);const data=markdown?await api('/file/history?'+query(spec)):{enabled:false,versions:[]};if(blocked()||request!==epoch||['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return;
     const dialog=document.createElement('dialog');activeDialog=dialog;dialog.className='md-history-dialog';
     const head=document.createElement('header'),title=document.createElement('h2'),close=document.createElement('button');title.textContent=t('历史版本')+' · '+spec.path;close.type='button';close.className='icon-button';close.textContent='×';close.setAttribute('aria-label',t('关闭'));close.onclick=()=>dialog.close();head.append(title,close);
     const status=document.createElement('p');status.className='muted';status.textContent=t(data.enabled?'已启用：只记录实际变更，直接修改原文件。':'追踪未启用；已有历史仍可查看。');
@@ -62,11 +65,11 @@
         for(const f of plan.files){const row=document.createElement('p');row.textContent=f.path+' · '+(f.before===f.after?t('内容不变'):t('将恢复'))+' · '+f.before.slice(0,12)+' → '+f.after.slice(0,12);changes.append(row);}
         const confirm=document.createElement('button');confirm.type='button';confirm.className='primary';confirm.textContent=t('确认恢复此版本');changes.append(confirm);
         confirm.onclick=async()=>{confirm.disabled=true;checkbox.disabled=true;const wasReadOnly=editor.readOnly;let restoring=false;try{
-         if(blocked()||isDirty()||editor.value!==currentText||['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))throw Error(t('编辑状态已变化，请重新对比。'));
+         if(blocked()||isDirty()||editor.value!==currentText||['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))throw Error(t('编辑状态已变化，请重新对比。'));
          editor.readOnly=true;restoring=true;const result=await api('/file/history/restore',{method:'POST',body:JSON.stringify({path:spec.path,source:spec.source||'',workspaceId:spec.wsId||'',revision:v.id,identity:plan.identity,assets:restoreAssets,expected:Object.fromEntries(plan.files.map(f=>[f.path,f.before]))})});
-         if(blocked()||!dialog.open||['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return;
+         if(blocked()||!dialog.open||['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return;
          editor.readOnly=wasReadOnly;onRestored(result);dialog.close();
-        }catch(e){if(e.data?.journal){const receipt=document.createElement('p');receipt.textContent=t('恢复未完成，操作记录：')+e.data.journal+' · '+(e.data.files||[]).filter(f=>f.applied).map(f=>f.path).join(', ');changes.append(receipt);}error(e);}finally{if(restoring&&!['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))editor.readOnly=wasReadOnly;confirm.disabled=false;checkbox.disabled=false;}};
+        }catch(e){if(e.data?.journal){const receipt=document.createElement('p');receipt.textContent=t('恢复未完成，操作记录：')+e.data.journal+' · '+(e.data.files||[]).filter(f=>f.applied).map(f=>f.path).join(', ');changes.append(receipt);}error(e);}finally{if(restoring&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))editor.readOnly=wasReadOnly;confirm.disabled=false;checkbox.disabled=false;}};
        }catch(e){error(e);}finally{preview.disabled=false;}};
        checkbox.onchange=()=>changes.replaceChildren();restoreArea.append(label,preview,changes);detail.append(restoreArea);
       }
@@ -77,13 +80,14 @@
     const backupArea=document.createElement('section');backupArea.className='md-history-backup';
     const storage=document.createElement('button'),download=document.createElement('button'),storageInfo=document.createElement('p');
     storage.type=download.type='button';storage.className=download.className='quiet';storage.textContent=t('历史存储统计');download.textContent=t('下载完整历史备份');storageInfo.className='muted';
-    const backupRequest=async(archive)=>{const q=query(spec);if(archive)q.set('archive','1');const result=await api('/file/history/backup?'+q);if(blocked()||!dialog.open||request!==epoch||['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return null;return result;};
+    const backupRequest=async(archive)=>{const q=query(spec);if(archive)q.set('archive','1');const result=await api('/file/history/backup?'+q);if(blocked()||!dialog.open||request!==epoch||['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')))return null;return result;};
     const describe=result=>{storageInfo.textContent=t('已归档版本')+': '+result.versions+' · '+t('去重对象')+': '+result.objects+' · '+(result.objectBytes/1024/1024).toFixed(2)+' MiB';if(result.unavailableAssets)storageInfo.textContent+=' · '+t('未归档资源记录')+': '+result.unavailableAssets;};
     storage.onclick=async()=>{storage.disabled=true;try{const result=await backupRequest(false);if(result)describe(result);}catch(e){error(e);}finally{storage.disabled=false;}};
     download.onclick=async()=>{download.disabled=true;try{const result=await backupRequest(true);if(!result)return;describe(result);const raw=Uint8Array.from(atob(result.base64),c=>c.charCodeAt(0)),url=URL.createObjectURL(new Blob([raw],{type:'application/zip'}));const link=document.createElement('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);storageInfo.textContent+=' · '+t('已验证归档对象摘要');}catch(e){error(e);}finally{download.disabled=false;}};
     backupArea.append(storage,download,storageInfo);
-    if(window.AideMarkdownHistoryManager)backupArea.append(window.AideMarkdownHistoryManager.render({spec,api,t,error,isActive:()=>!blocked()&&dialog.open&&request===epoch&&!['path','source','wsId'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')),onChanged:()=>dialog.close()}));
-    dialog.append(head,status,backupArea,layout);dialog.addEventListener('close',()=>{selection++;if(activeDialog===dialog)activeDialog=null;dialog.remove();},{once:true});document.body.append(dialog);dialog.showModal();if(observedItem)observedItem.click();close.focus();
+    if(/\.(md|markdown)$/i.test(spec.path)&&window.AideMarkdownHistoryManager)backupArea.append(window.AideMarkdownHistoryManager.render({spec,api,t,error,isActive:()=>!blocked()&&dialog.open&&request===epoch&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')),onChanged:()=>dialog.close()}));
+    dialog.append(head);const snapshotPanel=document.createElement('section');snapshotPanel.append(status,backupArea,layout);
+    if(window.AideGitHistory)window.AideGitHistory.mount({dialog,snapshotPanel,hasSnapshots:markdown,spec,editor,api,t,lineDiff,renderDiff,syncComparison,isActive:()=>!blocked()&&request===epoch&&!['path','source','wsId','root'].some(k=>(spec[k]||'')!==(getContext()?.[k]||'')),onTabChange:()=>selection++});else dialog.append(snapshotPanel);dialog.addEventListener('close',()=>{selection++;if(activeDialog===dialog)activeDialog=null;dialog.remove();},{once:true});document.body.append(dialog);dialog.showModal();if(observedItem)observedItem.click();close.focus();
    }catch(e){error(e);}finally{button.disabled=false;}
   };
   return {refresh};

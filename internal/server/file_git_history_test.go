@@ -173,3 +173,45 @@ func TestFileGitHistoryWorktree(t *testing.T) {
 		t.Fatal(got)
 	}
 }
+
+func TestFileGitHistorySourceAndUnborn(t *testing.T) {
+	a := testApp(t)
+	dir := a.workspace.Name()
+	gitHistoryTestRun(t, dir, "init", "-q")
+	if err := os.WriteFile(filepath.Join(dir, "new.txt"), []byte("not committed\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	list := gitHistoryTestRequest(t, a, "new.txt", "", "")
+	if list["available"] != true || list["head"] != "" {
+		t.Fatal(list)
+	}
+	got := gitHistoryTestRequest(t, a, "new.txt", "index", "worktree")
+	if got["before"].(map[string]any)["exists"] != false || !strings.Contains(got["diff"].(string), "+not committed") {
+		t.Fatal(got)
+	}
+	reference := a.reference.Name()
+	gitHistoryTestRun(t, reference, "init", "-q")
+	if err := os.WriteFile(filepath.Join(reference, "note.txt"), []byte("reference version\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	gitHistoryTestRun(t, reference, "add", ".")
+	gitHistoryTestRun(t, reference, "commit", "-qm", "reference")
+	a.mu.Lock()
+	a.sourceRegistry.Sources = append(a.sourceRegistry.Sources, Source{ID: "git-fixture", Type: "local", Enabled: true, Config: SourceConfig{Path: "/context"}})
+	a.mu.Unlock()
+	w := request(a, "GET", "/api/file/git-history?source=git-fixture&path=note.txt&from=HEAD&to=worktree", nil)
+	requireStatus(t, w, 200)
+	if !strings.Contains(w.Body.String(), "reference version") {
+		t.Fatal(w.Body.String())
+	}
+	// An inherited Git directory must not redirect the selected workspace.
+	t.Setenv("GIT_DIR", filepath.Join(reference, ".git"))
+	got = gitHistoryTestRequest(t, a, "new.txt", "index", "worktree")
+	if got["after"].(map[string]any)["content"] != "not committed\n" {
+		t.Fatal(got)
+	}
+	t.Setenv("PATH", t.TempDir())
+	if gitHistoryTestRequest(t, a, "new.txt", "", "")["available"] != false {
+		t.Fatal("missing Git reported available")
+	}
+}

@@ -82,7 +82,7 @@ The context card scopes its cache to the workspace and session and commits cache
 
 Accepted in-run interjections use the same user bubble as the original prompt and appear at the tail of their run's rendered output. Queued items remain in the queue until promoted. Repeated text remains separate input. Session snapshots include interjection content and queue flags so promotion or edits trigger rendering even without timestamp/count changes. The server's accumulated answer and execution semantics are unchanged; the UI does not invent per-segment response chronology.
 
-Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown-editing-export.md#git-文件历史比较--git-file-history-comparison)。本地仓库按所选文件读取提交／暂存／磁盘版本，不修改仓库；界面与运行验收按任务分阶段记录。
+Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown-editing-export.md#git-文件历史比较--git-file-history-comparison)。本地仓库按所选文件读取提交／暂存／磁盘版本，不修改仓库；历史窗口可切换快照与Git比较，草稿／磁盘口径明确区分；实际8097部署验收仍独立记录。
 
 ## 多来源知识与独立产品主页
 
@@ -112,6 +112,7 @@ Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown
 | PUT | `/api/sources/ai-visibility` | 按工作区保存来源 AI 可见性；保留手动浏览，不替代操作系统权限 |
 | POST | `/api/sources/{id}/test` | 初始化 stdio MCP 并发现工具（仅保存安全摘要） |
 | GET | `/api/files`、`/api/file` | 目录/文本读取 |
+| GET | `/api/file/git-history` | 本地文件 Git 探测／最近提交／HEAD、提交、暂存区和磁盘的只读比较；参见[文件历史](architecture/markdown-editing-export.md#git-文件历史比较--git-file-history-comparison) |
 | PUT | `/api/file` | 保存；包含路径、正文、哈希和工作区身份 |
 | GET / POST | `/api/sessions` | 会话列表/创建 |
 | GET | `/api/sessions/{id}` | 会话、消息与任务 |

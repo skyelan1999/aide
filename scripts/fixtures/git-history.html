@@ -1,0 +1,13 @@
+<!doctype html><html data-theme="dark"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Git 文件历史验收</title><link rel="stylesheet" href="/themes/dark/tokens.css"><link rel="stylesheet" href="/themes/light/tokens.css"><link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/macos.css"><script src="/fixture-config.js"></script><script src="/git-history.js" defer></script><script src="/markdown-history.js" defer></script><style>body{display:block;overflow:auto;padding:30px;max-width:1000px;margin:auto}h1{font-size:25px}textarea{display:block;width:100%;height:300px;margin:20px 0;padding:18px;color:var(--text);background:var(--field);border:1px solid var(--line);font:14px/1.8 monospace}button,select{padding:9px;border:1px solid var(--line);border-radius:8px;background:var(--field);color:var(--text)}.fixture-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center}#status{color:var(--muted)}[hidden]{display:none!important}</style><h1>工作区文件历史 · Git 比较</h1><p>隔离的合成 Git 仓库，使用实际 Go 接口与前端组件；不连接8097、真实文件或模型。</p><div class="fixture-controls"><select id="file" aria-label="验收文件"><option value="repo/note.txt">Git 文本文件</option><option value="repo/page.md">Git Markdown 文件</option><option value="standalone.txt">非 Git 文本文件</option></select><button id="history">历史版本</button><button id="theme">切换明暗</button></div><textarea id="editor" aria-label="当前编辑器正文">title
+unsaved editor line
+unchanged tail
+</textarea><p id="status">编辑器有未保存修改。Git 中另外保存了两个提交、暂存内容与磁盘内容。</p><script>
+addEventListener('DOMContentLoaded',()=>{
+ const parameters=new URLSearchParams(location.search);if(parameters.has('narrow')&&self===top){const frame=document.createElement('iframe');frame.title='390px Git history';frame.src='/fixture?theme=light';frame.style='width:390px;height:760px;border:0';document.body.replaceChildren(frame);return;}document.documentElement.dataset.theme=parameters.get('theme')||'dark';
+ const $=id=>document.getElementById(id);let spec={path:$('file').value,root:'workspace',wsId:window.fixtureWorkspace};
+ const api=async(path,options={})=>{const response=await fetch('/api'+path,options);const data=await response.json();if(!response.ok)throw Error(data.error||response.statusText);return data;};
+ const t=(s,...args)=>s.replace(/\{(\d+)\}/g,(_,n)=>args[n]);
+ const history=window.AideMarkdownHistory.bind({button:$('history'),editor:$('editor'),getContext:()=>spec,api,t,error:e=>{$('status').textContent=e.message;},isDirty:()=>true});
+ $('file').onchange=()=>{spec={...spec,path:$('file').value};history.refresh();};
+ $('theme').onclick=()=>{document.documentElement.dataset.theme=document.documentElement.dataset.theme==='dark'?'light':'dark';};history.refresh();
+});</script></html>
