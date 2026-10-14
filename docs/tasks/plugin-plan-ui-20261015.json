@@ -77,8 +77,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Local image healthy; app and complete dependency tags, inner/outer hashes, actual docker load, launcher bytes and copies in both local trees verified. Final quick69 PASS; incremental branch push pending. No main/tag/formal release; receiving device unobserved.",
+      "status": "pass",
+      "summary": "Local image healthy; app and complete dependency tags, inner/outer hashes, actual docker load, launcher bytes and copies in both local trees verified. Final quick69 PASS; incremental source/docs branch push32e02c3 PASS. No main/tag/formal release; receiving device unobserved.",
       "evidence": [
         ".agent-state/plugin-plan-ui/package.json",
         ".agent-state/plugin-plan-ui/runtime.json"
@@ -87,7 +87,7 @@
   },
   "release_authorization": "Existing incremental source push/testing/local image authorization; no formal main/tag release.",
   "rollback": "Revert module/UI hook and cache query changes; backend plan data preserved. Remove only owned synthetic UI fixture.",
-  "handoff": "UI source e54f390 deployed via canonical9999; synthetic native Safari visual acceptance complete, owned fixture removed. Final quick69 PASS; branch push pending; goal remains active.",
+  "handoff": "UI source e54f390 deployed via canonical9999; synthetic native Safari visual acceptance complete, owned fixture removed. Final quick69 PASS; branch push32e02c3 PASS; goal remains active.",
   "runtime": {
     "runningImage": "sha256:045bdfce262f61bfc5d3f25752d3fac2d9be639e32aa1ceb6509d2510d863768",
     "image": "sha256:045bdfce262f61bfc5d3f25752d3fac2d9be639e32aa1ceb6509d2510d863768",
@@ -162,5 +162,12 @@
     "time": "20261014T203218364676Z",
     "log": ".agent-state/verify-20261014T203218364676Z.log",
     "commands": 69
+  },
+  "source_push": {
+    "branch": "feat/plugin-plan-status-ui",
+    "pushedCommit": "32e02c3",
+    "remote": "origin",
+    "status": "pass",
+    "scope": "Incremental branch source/docs push only; no main/tag/formal release or image registry push."
   }
 }

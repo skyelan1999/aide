@@ -5777,7 +5777,7 @@
   },
   "historical_handoff_before_plugin_plan_20261015": "2026-10-10 continuation: closed-file draft branches previously pushed in 4403146; new outcome paging version guards and explicit reload implemented, native Safari actual one-page export plus simulated changing paginated API passed, final full 37 checks PASS (025532050610Z). Earlier parallel full returned signal: killed and remains FAIL evidence. Actual 9999 started using start.command, healthy source 49147a1c8f6d5b58dd90a9094235b9793c5ebda14f9e0852b9c4d567661ad61d. Goal remains active; production live multi-page, scale, structured release evidence and broader outstanding acceptance remain pending; Windows unavailable, embedding not configured. This batch is a source push, not formal release. 2026-10-11：审批暂停任务误标reviewing已修复；38项full通过，9999由start.command重建，Safari全局模式往返、#43无幽灵审核及第二标签读取均通过。见 docs/tasks/approval-paused-ghost-state-20261011.json。 2026-10-11：锁屏启动修复与38/38全量门禁已推送，收据docs/tasks/lock-bootstrap-state-20261011.json；星图刷新恢复仅部分Safari验收，剩余隔离及重启验收见docs/tasks/starmap-scene-safari-20261011.json。整体目标仍未关闭。 2026-10-12: Documentation/i18n refresh completed and static checks pass; active goal remains open. Current Safari has an unresolved certificate warning at localhost:18214; do not bypass it. Docker socket is inaccessible and host Go is unavailable. Next work should continue code/acceptance from the 12-item audit while pursuing user-handled Safari access; vector testing remains intentionally paused and Windows environment is unavailable. 2026-10-12：当前源码双服务器 SSH/SFTP -race repeat=2 已 PASS（receipt: .agent-state/ssh-continuity-20261012/aide-ssh-test-20261012134037-15856.log）；用户 SSH 主机与完整浏览器操作仍未验收，Safari 18217 当前到达隔离实例登录页但未认证验收；向量按用户要求暂缓。2026-10-12：当前 full verify 前37项PASS，Go race 全包在15分钟上限失败；TestQueueEnqueuedDispatch 单测隔离 -race 3.640s PASS，说明超时由 server 包累计耗时导致，vet未执行。 2026-10-12：知识路径显式文档提及新增源行列与匹配token证据；Go UTF-8定位测试、星图路径源链接组件测试、文档链接检查通过。localhost:18217 Safari 未认证，本次不记浏览器验收；详见 docs/tasks/knowledge-path-exploration-20261009.json。 阶段检查点 966eb62（知识路径提及边源位置）已推送 origin/main；实现/Go/组件/文档检查通过，Safari 登录与其他验收缺口仍保留。 2026-10-14：星图原文检索 40 条分页漏项已修复；游标增加批内命中偏移，同一文档批次先完整续取命中再前进；100 条命中 Go 回归按 40/40/20 且无重复通过，quick 42 项通过（fingerprint 75c2696898e71962d39495894c605f5a685f0edbd028f73cf973b14f0879535b）。Safari 当前停在本机 TLS 证书警告，未绕过，故更新候选 UI 验收及完整门禁仍待办。 2026-10-14 full server package follow-up：`go test -mod=vendor ./internal/server -count=1 -timeout=8m` FAIL 171.009s；独立复跑确认 `TestPluginBundleRejectsTraversalWithoutPartialInstall` 与 `TestPluginApplyErrorIsolated` 仍失败（测试断言预期空/2项注册表，实际当前安装列出 bundled plugins/4项）；`TestAssistantMessageGateLockedUnlockedClear` 仅全包清理时失败、独立复跑通过。均不在本轮修改文件，完整 server 回归不记通过。 2026-10-14 续验更正：先前全包失败的插件用例是测试对预装bundle数量的过时假设，已改为断言拒绝包不改变完整注册表、失败插件显示错误且不阻断正常插件；清理用例隔离通过。修正后 server 全包 `go test -mod=vendor ./internal/server -count=1 -timeout=8m` PASS 179.525s，5项定向 PASS 2.041s。初次失败记录保留作历史证据。 2026-10-14 生命周期补充：定向race首次暴露 `App.Close` 的后台 `WaitGroup.Add/Wait` 竞争和测试临时目录残留；新增生命周期门、执行任务跟踪、关闭时取消和等待。定向5项race PASS 8.647s，internal/server完整非race PASS 195.109s；全包race及单并发重试都在2GiB容器内被OOM kill（memory.events有OOM记录），不记通过。continuity-acceptance-audit-20261010.md已补记。Safari 18545证书警告需用户在当前页接管处理；本轮未浏览器验收或push。 2026-10-14 followup99：Safari localhost:9999 当前已解锁；#47/#46/#48历史验收会话均显示已完成，已恢复选择原 #47。成果舱分页/运行状态客户端测试PASS，但无运行中会话可验证真实跨页快照刷新；未发起模型请求、未重启服务器。完整目标仍约80%工程进度（估算而非验收率），12个工作流均有不同程度尾项；向量验收继续按用户要求暂缓，Windows按用户要求移除，release仍BLOCKED。",
   "progress_checkpoint_20261015_followup118": {
-    "status": "in_progress",
+    "status": "pass",
     "task": "docs/tasks/plugin-plan-ui-20261015.json",
     "sourceCommits": [
       "bd22ea3",
@@ -5838,7 +5838,7 @@
       "sessionSequenceNotReset": true,
       "privateFixtureBackupRetained": true
     },
-    "remaining": "Final quick69 PASS; branch push pending. Live model/graph approvals, uncertain-effect reconciliation, star-map host I/O and original12 streams remain. Recovery-write cancelled notice on session switch requires controlled typed-draft reproduction; data loss unproven.",
+    "remaining": "Final quick69 PASS; incremental source/docs branch push32e02c3 PASS. Live model/graph approvals, uncertain-effect reconciliation, star-map host I/O and original12 streams remain. Recovery-write cancelled notice on session switch requires controlled typed-draft reproduction; data loss unproven.",
     "quick_receipt": {
       "status": "pass",
       "head": "e54f390973a330ea04a2198893913eaf04c9116b",
@@ -5846,6 +5846,13 @@
       "time": "20261014T203218364676Z",
       "log": ".agent-state/verify-20261014T203218364676Z.log",
       "commands": 69
+    },
+    "source_push": {
+      "branch": "feat/plugin-plan-status-ui",
+      "pushedCommit": "32e02c3",
+      "remote": "origin",
+      "status": "pass",
+      "scope": "Incremental branch source/docs push only; no main/tag/formal release or image registry push."
     }
   }
 }
