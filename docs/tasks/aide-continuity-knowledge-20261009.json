@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 current: feat/plugin-effect-checks source060088e/tests1008675 pushed, canonical start.command healthy9999 imagee5998ca4b4ef. Append-only operator observations/API/UI and outcome privacy implemented; scoped race38.884s+vet, full Go race743.173s+vet PASS; full wrapper FAIL old lock assertion/input drift, repaired quick69 PASS. Native fixture save/conflict/reload/service restart2 checks PASS; owned fixture cleaned, previous sessions/config/mounts retained. Complete offline app/base hashes/import/platform/launchers/two local copies PASS. Final metadata quick69 PASS; docs push pending. Goal active: recovery authorisation, live provider/plugin use and original12 streams remain; Windows by user, real vectors deferred, receiving-device import unobserved.",
+  "handoff": "2026-10-15 current: feat/plugin-effect-checks source060088e/tests1008675 pushed, canonical start.command healthy9999 imagee5998ca4b4ef. Append-only operator observations/API/UI and outcome privacy implemented; scoped race38.884s+vet, full Go race743.173s+vet PASS; full wrapper FAIL old lock assertion/input drift, repaired quick69 PASS. Native fixture save/conflict/reload/service restart2 checks PASS; owned fixture cleaned, previous sessions/config/mounts retained. Complete offline app/base hashes/import/platform/launchers/two local copies PASS. Final metadata quick69 PASS; docs push9ce1f76 PASS. Goal active: recovery authorisation, live provider/plugin use and original12 streams remain; Windows by user, real vectors deferred, receiving-device import unobserved.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6161,7 +6161,7 @@
     }
   },
   "progress_checkpoint_20261015_followup124": {
-    "status": "in_progress",
+    "status": "pass",
     "task": "docs/tasks/plugin-effect-checks-20261015.json",
     "sourceCommits": [
       "060088e",
@@ -6169,10 +6169,10 @@
     ],
     "changes": "Append-only operator checks on stopped uncertain plugin nodes with evidence/provenance, digest+revision guards and atomic save rollback; scoped dialog and safe outcome summary. Keeps uncertain execution state and all replay/recovery barriers.",
     "verification": "Scoped race38.884s+vet PASS; whole Go race743.173s+vet exit0 PASS. Full71 wrapper FAIL old exact-body lock assertion and metadata drift; test repaired and quick69 PASS. Native canonical fixture save/blank validation/concurrent409/draft retention/reload/actual service restart2 checks and outcome unknown1/private evidence exclusion PASS. No provider/plugin execution.",
-    "remaining": "Final metadata quick69 PASS; docs push pending. Recording operator observations does not authorise recovery or verify external effects. Original12 streams/live provider/plugin acceptance and cloud/OS-call/source coverage gaps remain.",
+    "remaining": "Final metadata quick69 PASS; docs push9ce1f76 PASS. Recording operator observations does not authorise recovery or verify external effects. Original12 streams/live provider/plugin acceptance and cloud/OS-call/source coverage gaps remain.",
     "source_push": {
       "branch": "feat/plugin-effect-checks",
-      "pushedCommit": "1008675",
+      "pushedCommit": "9ce1f76",
       "status": "pass"
     },
     "package": {
