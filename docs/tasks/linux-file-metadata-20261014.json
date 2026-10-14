@@ -74,7 +74,7 @@
     },
     "release": {
       "status": "blocked",
-      "summary": "后端分块已push；前端分块准备push。本机源码已同步并构建镜像，8097旧容器仍阻塞，未部署/未实际实例验收。Docker Desktop重启会影响Docmost等服务，仍待用户确认。",
+      "summary": "366f7fc后端与eab28ba前端分块均已push origin/feat/linux-file-metadata。本机源码已同步并构建镜像，8097旧容器仍阻塞，未部署/未实际实例验收。Docker Desktop重启会影响Docmost等服务，仍待用户确认。",
       "evidence": [
         ".agent-state/linux-file-metadata/build.log"
       ]
@@ -87,6 +87,12 @@
     {
       "commit": "366f7fc",
       "scope": "后端元数据、测试及文档",
+      "push": "pass",
+      "branch": "feat/linux-file-metadata"
+    },
+    {
+      "commit": "eab28ba",
+      "scope": "前端、组件验收、测试夹具回归及文档",
       "push": "pass",
       "branch": "feat/linux-file-metadata"
     }
