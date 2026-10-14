@@ -32,6 +32,7 @@ type knowledgeNode struct {
 	Session     string `json:"session,omitempty"`
 	Number      int    `json:"number,omitempty"`
 	Text        string `json:"text,omitempty"`
+	ReadState   string `json:"readState,omitempty"`
 	Size        int64  `json:"size,omitempty"`
 	Modified    string `json:"modified,omitempty"`
 	Language    string `json:"language,omitempty"`

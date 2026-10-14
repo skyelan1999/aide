@@ -7,8 +7,17 @@ import (
 	"path/filepath"
 	"reflect"
 	"strings"
+	"syscall"
 	"testing"
 )
+
+func TestKnowledgeCloudPlaceholderReadMessage(t *testing.T) {
+	err := &os.PathError{Op: "read", Path: "/private-source/file.md", Err: syscall.EIO}
+	message := localReadUnavailableMessage(err)
+	if !strings.Contains(message, "I/O") || !strings.Contains(message, "云盘占位") || strings.Contains(message, err.Path) {
+		t.Fatal("I/O diagnosis missing actionable hint or exposed absolute path", message)
+	}
+}
 
 func TestKnowledgeLocalReadFailurePublishesPrefixAndOtherSources(t *testing.T) {
 	if os.Geteuid() == 0 {
@@ -67,6 +76,80 @@ func TestKnowledgeLocalReadFailurePublishesPrefixAndOtherSources(t *testing.T) {
 	}
 	if !found {
 		t.Fatal("later permission repair did not recover source")
+	}
+}
+
+func TestKnowledgeUnreadableBodyDoesNotHideLaterFiles(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("requires normal runtime user permissions")
+	}
+	for _, code := range []bool{false, true} {
+		t.Run(fmt.Sprint("code=", code), func(t *testing.T) {
+			a := testApp(t)
+			for name, body := range map[string]string{
+				"a-broken.go":   "package fixture\nfunc ObsoleteEvidence() {}\n",
+				"m-readable.go": "package fixture\nfunc StillReadable() {}\n",
+				"z-tail.md":     "later readable evidence",
+			} {
+				if err := os.WriteFile(filepath.Join(a.workPath, name), []byte(body), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if _, err := a.knowledgeCurrentGraph(context.Background(), code); err != nil {
+				t.Fatal(err)
+			}
+			blocked := filepath.Join(a.workPath, "a-broken.go")
+			if err := os.Chmod(blocked, 0); err != nil {
+				t.Fatal(err)
+			}
+			defer os.Chmod(blocked, 0600)
+			g, err := a.knowledgeCurrentGraph(context.Background(), code)
+			if err != nil {
+				t.Fatal(err)
+			}
+			unavailable, tail, readableCode, marked := false, false, false, false
+			brokenID := ""
+			for _, n := range g.Nodes {
+				if n.Region != "workspace" {
+					continue
+				}
+				if n.Path == "a-broken.go" && n.Kind == "file" {
+					brokenID = n.ID
+					unavailable = n.ReadState == "unavailable" && n.Text == "" && n.ContentHash == ""
+				}
+				tail = tail || n.Path == "z-tail.md" && n.Text == "later readable evidence"
+				readableCode = readableCode || n.Path == "m-readable.go" && strings.Contains(n.Text, "StillReadable")
+			}
+			for _, n := range g.Nodes {
+				if brokenID != "" && n.ParentFile == brokenID {
+					t.Fatal("unreadable body retained obsolete symbol evidence", n)
+				}
+			}
+			for _, s := range g.Sources {
+				if s.Region == "workspace" && s.Coverage != nil {
+					marked = s.State == "partial" && s.Coverage.ReadErrors == 1 && strings.Contains(strings.Join(s.Coverage.Reasons, ","), "file-read-error")
+				}
+			}
+			if !unavailable || !tail || !readableCode || !marked || !g.Truncated {
+				t.Fatalf("one body error blocked later files or hid coverage: unavailable=%v tail=%v code=%v marked=%v", unavailable, tail, readableCode, marked)
+			}
+			if err := os.Chmod(blocked, 0600); err != nil {
+				t.Fatal(err)
+			}
+			recovered, err := a.knowledgeCurrentGraph(context.Background(), code)
+			if err != nil {
+				t.Fatal(err)
+			}
+			found := false
+			for _, n := range recovered.Nodes {
+				if n.Path == "a-broken.go" && n.Kind == "file" {
+					found = n.ReadState == "" && strings.Contains(n.Text, "ObsoleteEvidence")
+				}
+			}
+			if !found {
+				t.Fatal("repaired body was not retried")
+			}
+		})
 	}
 }
 

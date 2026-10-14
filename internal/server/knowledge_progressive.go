@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path"
 	"sort"
@@ -70,6 +71,7 @@ func (c *knowledgeScanCache) discover(ctx context.Context, root *os.Root, ar kno
 }
 func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, cache *knowledgeScanCache, root *os.Root, ar knowledgeArea, scope, module string, p knowledgeIndexPolicy, fileQuota, dirQuota int, includeCode bool, codeFiles *[]knowledgeCodeFile, codeBytes, codeSkipped *int) {
 	originalError := cache.err
+	readFailureMessage := ""
 	var coverage *knowledgeCoverage
 	defer func() {
 		if originalError == nil && cache.err != nil && a.knowledgeContextErr(ctx) == nil {
@@ -167,12 +169,26 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 				}
 				cache.files[key] = memo
 			} else {
-				cache.fail()
-				return
+				err = fmt.Errorf("本轮尚未取得文件正文")
 			}
 			if err != nil {
-				cache.fail(err)
-				return
+				if a.knowledgeContextErr(ctx) != nil {
+					cache.fail(err)
+					return
+				}
+				// One unreadable body must not hide the source's later files.
+				// Keep only metadata, remove obsolete material, and retry when
+				// discovery visits this file again. Never expand code from it.
+				cache.err = originalError
+				delete(cache.files, key)
+				delete(cache.previous, key)
+				coverage.ReadErrors++
+				if readFailureMessage == "" {
+					readFailureMessage = localReadUnavailableMessage(err)
+				}
+				node.ReadState = "unavailable"
+				text, code, wantCode = "", "", false
+				err = nil
 			}
 			node.Text = text
 			if wantCode {
@@ -196,6 +212,13 @@ func (a *App) knowledgeProgressiveArea(ctx context.Context, g *knowledgeGraph, c
 	if !b.Complete || len(b.Reasons) > 0 {
 		state, message = "partial", "分批索引中，未扫描区域保持上一周期快照"
 		g.Truncated = true
+	}
+	if coverage.ReadErrors > 0 {
+		state = "partial"
+		message = fmt.Sprintf("%d 个文件正文暂不可读取，已继续索引其他文件；%s", coverage.ReadErrors, readFailureMessage)
+		coverage.Reasons = append(coverage.Reasons, "file-read-error")
+		g.Truncated = true
+		g.Warnings = append(g.Warnings, ar.name+"："+message)
 	}
 	knowledgeSetSource(g, ar, state, message, len(g.Nodes)-first)
 	for i := range g.Sources {

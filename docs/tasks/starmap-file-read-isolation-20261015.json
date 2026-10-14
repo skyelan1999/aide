@@ -1,0 +1,88 @@
+{
+  "id": "starmap-file-read-isolation-20261015",
+  "request": "Continue progressive star map when one local file body returns I/O error; expose unreadable metadata and retain truthful coverage without stale content evidence",
+  "baseline": "5e14ec5d2f92d20020782e960a95fc6ba472b1dd",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "A local body read error does not stop readable later files from appearing; failed body is explicitly metadata-only with readState unavailable and coverage readErrors/file-read-error.",
+    "No obsolete text, code symbols or stale body evidence from the failed file; repair is retried and clears the failure state. Lock/workspace/context cancellation still cancels candidate publication.",
+    "Current mounted reference repository I/O error is reproduced with a readonly actual adapter probe; post-fix probe and canonical Safari show progressive peers plus truthful body-failure labels.",
+    "Focused Go race/vet, JS coverage/cache tests, quick regression, docs, incremental source push and matching offline app/dependency package."
+  ],
+  "scope": [
+    "internal/server/knowledge_map.go",
+    "internal/server/knowledge_sources.go",
+    "internal/server/knowledge_progressive.go",
+    "internal/server/knowledge_local_failure_test.go",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap-cache.js",
+    "internal/server/web/starmap.html",
+    "scripts/starmap-coverage-state.test.cjs",
+    "scripts/starmap-cache.test.cjs",
+    "docs/tasks",
+    "docs/architecture/knowledge-map.md",
+    "docker-images",
+    "internal/server/knowledge_local_failure.go"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Current canonical9999 updates return partial nodes fast but both context aliases remain at1 node. Readonly production adapter probe proves first sorted Markdown body returns input/output error; source permissions/path not changed.",
+      "evidence": [
+        ".agent-state/starmap-io/updates.json",
+        ".agent-state/starmap-io/probe.log"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Handle body errors per-file inside progressive materialization; invalidate only that material, publish metadata-only readState, continue peers and mark source partial with error count. Preserve root/discovery and cancellation guards. Carry state through live deltas/cache and explicit detail text.",
+      "evidence": [
+        "internal/server/knowledge_progressive.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Per-file body isolation with metadata-only readState, coverage errors and explicit EIO/cloud hint; no private absolute path in error message. Live delta and first-paint cache retain/clear read state; existing source failure fallback remains. Code/non-code readable-peer, obsolete-symbol and repair regression passes.",
+      "evidence": [
+        "internal/server/knowledge_local_failure_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Final all Knowledge/local-root scoped race73.040s and vet PASS; actual mounted readonly reference probe grows169/343/513/677 nodes across4 batches with2 readable bodies and126/246/401/545 explicitly unreadable bodies. Initial failed probe retained as failed evidence; cloud hydration of two samples separately recorded. Quick69 and focused JS cache/coverage/syntax PASS. Canonical rebuilt Safari still pending.",
+      "evidence": [
+        ".agent-state/starmap-io/scoped-initial-failed.log",
+        ".agent-state/starmap-io/probe.log",
+        ".agent-state/starmap-io/scoped-race.log",
+        ".agent-state/starmap-io/scoped-owner-final.log",
+        ".agent-state/verify-20261014T205044748595Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental source push/test/local image/offline package authorization; no main/tag release.",
+  "rollback": "Revert targeted isolation and additive metadata labels; retain source registry, stored user data and earlier image archive.",
+  "handoff": "Scoped race/vet and actual adapter progress PASS; canonical deployment/browser acceptance and offline delivery pending. Original goal active; no complete body coverage or syscall timeout claim.",
+  "diagnosis": {
+    "canonicalPort": 9999,
+    "source": "Current unchanged /context mount is Harness; no new aide source in saved registry. No retarget or disable performed.",
+    "firstError": "Readonly adapter probe first sorted Markdown body returned EIO; both context aliases previously published1 node.",
+    "initialPatchedProbe": "169 metadata nodes,128 unreadable bodies,0 readable text; initial probe failed its readable-peer assertion, while new fixture regression passed both code modes. Do not count this first scoped run as pass.",
+    "hostEvidence": "Two exact sample files had Darwin dataless bit0x40000000; reading32 bytes on host cleared that flag and allowed container32-byte reads. Contents not modified; no bulk hydration.",
+    "inference": "At least these two body failures were cloud-placeholder related; this does not prove every failure or kernel wait has the same cause."
+  }
+}

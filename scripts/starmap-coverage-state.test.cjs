@@ -7,6 +7,8 @@ for(const [input,expected] of [
  [{state:'partial',coverage:{progressive:true,pending:0,reasons:['catalog_limit']}},'范围受限'],
  [{state:'ready',coverage:{progressive:true,pending:0}},'限定范围已扫描'],
  [{state:'partial'},'部分索引'],
+ [{state:'partial',coverage:{progressive:true,pending:3,readErrors:1,reasons:['file-read-error']}},'分批扫描中 · 正文读取异常'],
+ [{state:'partial',coverage:{progressive:true,pending:0,readErrors:1,reasons:['file-read-error']}},'部分正文不可读'],
  [{state:'unavailable',coverage:{pending:2}},'暂不可用']
 ])assert.equal(context.sourceCoverageState(input),expected);
 assert.match(fs.readFileSync('internal/server/web/starmap.css','utf8'),/\.chips \.source-chip-meta \{ display:block/);

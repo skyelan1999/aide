@@ -38,6 +38,7 @@ type knowledgeCoverage struct {
 	Cycle              int      `json:"cycle,omitempty"`
 	CatalogLimit       int      `json:"catalogLimit,omitempty"`
 	Files              int      `json:"files"`
+	ReadErrors         int      `json:"readErrors,omitempty"`
 	Directories        int      `json:"directories"`
 	FileBudget         int      `json:"fileBudget"`
 	DirectoryBudget    int      `json:"directoryBudget"`

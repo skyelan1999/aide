@@ -3,12 +3,16 @@ package server
 import (
 	"errors"
 	"os"
+	"syscall"
 )
 
 const knowledgeLocalFallbackMaxNodes = knowledgeDiscoveryMaxEntries + 1200
 const knowledgeLocalFallbackMaxEdges = 6500
 
 func localReadUnavailableMessage(err error) string {
+	if errors.Is(err, syscall.EIO) {
+		return "本机文件正文读取发生 I/O 错误；云盘占位文件请先下载到本机"
+	}
 	if errors.Is(err, os.ErrPermission) {
 		return "本地来源读取被拒绝，请检查目录权限"
 	}

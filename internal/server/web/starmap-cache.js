@@ -21,7 +21,7 @@
   try{return await Promise.race([pending,deadline]);}finally{clearTimeout(timer);}
  }
 
- const nodeKeys=['id','name','kind','region','path','root','source','sourceName','sourceType','origin','format','session','number','text','size','modified','language','symbolKind','line','endLine','parentFile','signature','contentHash'];
+ const nodeKeys=['id','name','kind','region','path','root','source','sourceName','sourceType','origin','format','session','number','text','readState','size','modified','language','symbolKind','line','endLine','parentFile','signature','contentHash'];
  const edgeKeys=['from','to','kind','line','column','evidence','confidence'];
  const wire=(value,keys)=>Object.fromEntries(keys.filter(k=>value[k]!==undefined).map(k=>[k,value[k]]));
  async function write(mode,identity,graph,revision){
