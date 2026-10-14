@@ -82,6 +82,8 @@ The context card scopes its cache to the workspace and session and commits cache
 
 Accepted in-run interjections use the same user bubble as the original prompt and appear at the tail of their run's rendered output. Queued items remain in the queue until promoted. Repeated text remains separate input. Session snapshots include interjection content and queue flags so promotion or edits trigger rendering even without timestamp/count changes. The server's accumulated answer and execution semantics are unchanged; the UI does not invent per-segment response chronology.
 
+Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown-editing-export.md#git-文件历史比较--git-file-history-comparison)。本地仓库按所选文件读取提交／暂存／磁盘版本，不修改仓库；界面与运行验收按任务分阶段记录。
+
 ## 多来源知识与独立产品主页
 
 知识星图、原文检索、本地TF-IDF RAG及编号查看共用有界只读来源适配层；本地／Skill、SSH工作区、自动系统文档、独立SFTP、HTTP／HTTPS、FTP／FTPS、SMB按来源分区，MCP只索引已发现的工具说明。节点、检索结果和回填保留来源编号、名称、类型及当前身份；改配、停用和移除后拒绝旧引用。远端来源约30秒缓存、最多3个并发扫描，默认800文件／200目录预算按启用区域分配；截断、不可用及未核实状态与真实节点数量分开。HTTP／SMB单资源，不递归爬取；格式、读取、查看和插件的详细边界见[知识星图架构](architecture/knowledge-map.md)。

@@ -90,3 +90,16 @@ Node VM 验证关闭、复用、重建与计时器；候选构建通过。隔离
 Code-block copying uses document-level delegation so serialized and reinserted Markdown remains interactive. The shared helper preserves original text and falls back from rejected or unavailable Clipboard API calls to a selection inside the active modal, restoring focus and selection afterward. Successful feedback follows a successful operation only. Whole-answer copying uses the same helper.
 
 Completed code blocks prefer a supported declared language, then use bounded local syntax inference for unlabeled or unsupported languages. Valid JSON is recognized structurally; explicit plaintext, low-confidence input, blocks over 65,536 characters and active streaming blocks retain plain text. Native Safari offline acceptance using the actual renderer passed real copy/paste, rerender and modal checks, including a deliberately rejected Clipboard API. This is component acceptance, not acceptance or deployment of the authenticated running workbench.
+
+
+## Git 文件历史比较 / Git file history comparison
+
+2026-10-14 第一部分：新增只读 `GET /api/file/git-history`。参数 `path` 为工作区相对路径；`workspaceId` 固定当前工作区，`source` 可指向已启用的本地目录／Skill 来源。`root` 省略或为 `workspace` 时使用主工作区。仅检测工作区／来源根目录内的最近 Git 仓库，支持嵌套仓库与 `.git` 文件形式的 linked worktree；不向根目录外的父仓库扩展。SSH／SFTP、其他网络来源和非工作区根不会拿本地缓存替代，返回 `available:false` 及原因。未安装 Git／无仓库也返回明确不可用状态。
+
+不带 `from`／`to` 时返回 HEAD、当前路径最近 50 次提交的完整编号、短编号、作者时间、标题以及 `truncated`；不追踪重命名前路径。新仓库没有 HEAD 时仍返回 `available:true`、空 HEAD 和提交列表。比较参数接受 `HEAD`、完整 40／64 位小写提交编号、`index`（暂存区）、`worktree`（磁盘正文）。省略一侧默认 HEAD → worktree；无 HEAD 时应显式选择 index。响应含 `before/after` 的 `ref`、`exists`、正文 SHA-256、`content` 和标准 unified `diff`。缺失条目按不存在的空侧比较，可查看未跟踪文件新增和磁盘删除；不等同于 Git 状态提交／恢复。
+
+每侧正文限 2 MiB，仅接受 UTF-8 无 NUL 的普通文件；拒绝符号链接路径、子模块条目、冲突暂存区、非法路径与任意 revision 表达式。Git 请求有 12 秒总截止时间和有界输出，不经 shell；禁用 hooks、fsmonitor、external diff、textconv、继承的 Git 环境路由和网络协议。补丁使用临时正文快照生成并清除临时路径，不修改工作树、index、提交或远端。此时第一部分仅为接口，界面接入在第二部分；不要把后端验证视作浏览器或8097上线验收。
+
+Stage 1 adds a read-only API scoped to the selected file within a local workspace/source repository, including nested and linked worktrees. It lists at most 50 commits affecting the current path and compares HEAD, full commit IDs, the index and disk content. It does not follow rename history. Missing sides support additions/deletions; untracked files are not silently omitted. Each text side is limited to 2 MiB, with bounded subprocess output and a 12-second deadline. Shells, hooks, external filters, fsmonitor, optional index writes and network protocols are disabled. Remote workspace caches are never presented as remote Git repositories. UI integration and running-instance acceptance are tracked separately.
+
+验证：`go test -mod=vendor ./internal/server -run '^TestFileGitHistory' -count=1 -timeout=3m` 与对应 `-race` 均通过（隔离 golang:1.26-bookworm、本机网络关闭）。覆盖提交间、HEAD／index／磁盘、未跟踪、删除、嵌套／linked worktree、字面路径、越界、符号链接、非法 ref、二进制／超限与 SSH 缓存隔离；检查 index／磁盘正文未变化、恶意 fsmonitor／external diff 未执行。日志见 `.agent-state/file-history-git-compare/backend*.log`。
