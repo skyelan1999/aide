@@ -28,14 +28,14 @@
     },
     "design": {
       "status": "pass",
-      "summary": "Capture input epoch at load entry; do not restore saved scenes after any startup interaction. Reconcile delayed same-workspace cache/full data without initial reset when input changed; update own generation after cache reconciliation. Different workspace initialization remains reset.",
+      "summary": "Capture first interaction boundary before identity, retaining it across identity/network failure retries until workspace recovery finishes; same-workspace cache/full graphs reconcile existing view. Adopt own cache generation and preserve different-workspace/lock/mode guards; lock clears attempt state.",
       "evidence": [
         "internal/server/web/starmap.js"
       ]
     },
     "implementation": {
       "status": "pass",
-      "summary": "Capture interaction epoch before initial awaits; choose delta reconciliation for same-workspace edited cache/full responses, adopt own cache graph generation, retain original workspace/mode/lock guards. Incremented starmap cache query.",
+      "summary": "Initial input capture plus workspace-associated recoveryAttempt, same-workspace graph reconciliation and own-generation adoption; reset recoveryAttempt on lock. Final query version increments isolate intermediate assets. Added network/identity failure-retry regressions.",
       "evidence": [
         "internal/server/web/starmap.js",
         "scripts/starmap-workspace-scene.test.cjs"
@@ -43,12 +43,14 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Actual load-source async regression fails baseline saved-scene overwrite, combined fix passes. Cases cover network wait after cache paint, delayed cache generation ownership, no-cache full response and different workspace clearing; existing camera/panel/retry tests pass. Native pre-fix canonical Safari again reproduced context on then later workspace on/context off before cleanup action. Initial quick69 PASS; post-fix canonical build/browser still pending.",
+      "summary": "Actual load-source async regression fails baseline saved-scene overwrite, combined fix passes. Cases cover network wait after cache paint, delayed cache generation ownership, no-cache full response and different workspace clearing; existing camera/panel/retry tests pass. Native pre-fix canonical Safari again reproduced context on then later workspace on/context off before cleanup action. Initial quick69 PASS; post-fix canonical build/browser still pending. Intermediatecc81531 one-attempt fix intentionally fails new retry test; final targeted source VM and retry quick69 PASS, including user typing before identity failure. Final canonical build/native verification pending.",
       "evidence": [
         ".agent-state/starmap-startup-selection/baseline.log",
         ".agent-state/starmap-startup-selection/before-choice.png",
         ".agent-state/starmap-startup-selection/before-reset-observation.json",
-        ".agent-state/verify-20261014T211215953939Z.log"
+        ".agent-state/verify-20261014T211215953939Z.log",
+        ".agent-state/starmap-startup-selection/intermediate-expected-fail.log",
+        ".agent-state/verify-20261014T211631194440Z.log"
       ]
     },
     "documentation": {

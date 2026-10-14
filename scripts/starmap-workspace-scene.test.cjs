@@ -2,7 +2,7 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
 const elements=new Map(),el=id=>{if(!elements.has(id))elements.set(id,{textContent:'A',value:'A',replaceChildren(){this.textContent=''}});return elements.get(id)};
 function context(saved,workspace='B'){
- const c=vm.createContext({$:el,params:new URLSearchParams(),motionReduced:()=>false,clearEvidencePath(){},clearTimeout,cacheWriteTimer:0,cacheIdentity:null,stellarLogbook:{connecting(){},interrupted(){}},locked:false,loading:false,stopLive(){},graphGeneration:0,codeView:false,AbortController,syncCodeView(){},say(){},api:async path=>path.startsWith('/identity')?({workspace,epoch:'1',policy:'p'}):({workspace,revision:'R',nodes:[],edges:[],sources:[],warnings:[],reset:true}),recoveryInput:0,recoveryScopeLoaded:'A',pendingRecoveredView:null,recoveryLoading:false,window:{AideStarmapCache:{read:async()=>null},AideContinuity:{readTab:async()=>saved}},graph:{workspace:'A'},aiAbort:{abort(){c.aborted=true}},resetDocumentBatch(){c.reset=true},beginGraphTransition(){},applyLiveUpdate(update){c.graph=update},restoreSkyView(value){c.restored=value},liveCursor:'',knowledgeTimeline:{sync(){}},liveFailures:0,redraw(){},scheduleLive(){}});
+ const c=vm.createContext({$:el,params:new URLSearchParams(),motionReduced:()=>false,clearEvidencePath(){},clearTimeout,cacheWriteTimer:0,cacheIdentity:null,stellarLogbook:{connecting(){},interrupted(){}},locked:false,loading:false,stopLive(){},graphGeneration:0,codeView:false,AbortController,syncCodeView(){},say(){},api:async path=>path.startsWith('/identity')?({workspace,epoch:'1',policy:'p'}):({workspace,revision:'R',nodes:[],edges:[],sources:[],warnings:[],reset:true}),recoveryInput:0,recoveryAttempt:null,recoveryScopeLoaded:'A',pendingRecoveredView:null,recoveryLoading:false,window:{AideStarmapCache:{read:async()=>null},AideContinuity:{readTab:async()=>saved}},graph:{workspace:'A'},aiAbort:{abort(){c.aborted=true}},resetDocumentBatch(){c.reset=true},beginGraphTransition(){},applyLiveUpdate(update){c.graph=update},restoreSkyView(value){c.restored=value},liveCursor:'',knowledgeTimeline:{sync(){}},liveFailures:0,redraw(){},scheduleLive(){}});
  vm.runInContext(source.slice(source.indexOf('function defaultSkyView()'),source.indexOf('function restoreSkyView(')),c);
  vm.runInContext(source.slice(source.indexOf('function progressiveSummary('),source.indexOf('function scheduleLive(')),c);
  vm.runInContext(source.slice(source.indexOf('async function load(){'),source.indexOf('function syncMotion()')),c);return c;
@@ -53,6 +53,28 @@ function context(saved,workspace='B'){
  live=vm.runInContext('load()',c);await new Promise(resolve=>setImmediate(resolve));c.recoveryInput++;c.region='context';
  finishNetwork({workspace:'B',revision:'new',nodes:[],edges:[],sources:[],warnings:[],reset:true});await live;
  assert.equal(c.region,'context','late full same-workspace response must keep current source edits');
+
+ // A transient startup error must not make the retry treat prior user edits
+ // as permission to restore the old saved scene.
+ c=context({version:1,region:'workspace',query:'old saved query',codeView:false},'B');
+ c.graph={};c.recoveryScopeLoaded='';let failNetwork;
+ c.window.AideStarmapCache.read=async()=>({workspace:'B',revision:'cached',graph:{nodes:[{id:'cached-node'}],edges:[],sources:[]}});
+ c.applyLiveUpdate=(update,initial=false)=>{c.graph=update;if(initial)c.region='';else c.graphGeneration++;};
+ c.api=async path=>path.startsWith('/identity')?{workspace:'B',epoch:'1',policy:'p'}:new Promise((_resolve,reject)=>{failNetwork=reject});
+ live=vm.runInContext('load()',c);await new Promise(resolve=>setImmediate(resolve));
+ c.recoveryInput++;c.region='context';el('search').value='user query survives retry';failNetwork(new Error('first request unavailable'));await live;
+ c.api=async path=>path.startsWith('/identity')?{workspace:'B',epoch:'1',policy:'p'}:{workspace:'B',revision:'new',nodes:[],edges:[],sources:[],warnings:[],reset:true};
+ await vm.runInContext('load()',c);
+ assert.equal(c.restored,undefined,'retry must retain the original interaction boundary');
+ assert.equal(c.region,'context','retry cache replacement must keep current source');
+ assert.equal(el('search').value,'user query survives retry');assert.equal(c.liveCursor,'new');
+
+ c=context({version:1,region:'workspace',query:'old saved query',codeView:false},'B');c.graph={};c.recoveryScopeLoaded='';
+ let failIdentity;c.api=()=>new Promise((_resolve,reject)=>{failIdentity=reject});
+ live=vm.runInContext('load()',c);c.recoveryInput++;el('search').value='typed before identity was known';failIdentity(new Error('identity unavailable'));await live;
+ c.api=async path=>path.startsWith('/identity')?{workspace:'B',epoch:'1',policy:'p'}:{workspace:'B',revision:'new',nodes:[],edges:[],sources:[],warnings:[],reset:true};
+ await vm.runInContext('load()',c);assert.equal(c.restored,undefined,'identity retry must keep the first input boundary');
+ assert.equal(el('search').value,'typed before identity was known');
 
  // Interaction with the old workspace does not authorize carrying that
  // workspace's scene into the identity returned by the server.

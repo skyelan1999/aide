@@ -66,7 +66,7 @@ function drawEvidencePath(){
 
 
 // Store navigation metadata only: no document excerpts, model answers or tokens.
-let recoveryTimer=0,recoveryLoading=false,recoveryScopeLoaded='',pendingRecoveredView=null,recoveryInput=0,recoveryWarning=false;
+let recoveryTimer=0,recoveryLoading=false,recoveryScopeLoaded='',pendingRecoveredView=null,recoveryInput=0,recoveryWarning=false,recoveryAttempt=null;
 function persistSkyView(active=()=>!locked){
  clearTimeout(recoveryTimer);
  if(locked||loading||recoveryLoading||!graph.workspace||!window.AideContinuity?.enabled())return;
@@ -940,16 +940,19 @@ function applyLiveUpdate(update,initial=false){
 async function load(){
  clearEvidencePath('正在同步星图，请同步完成后查询。',true);
  if(loading||locked)return;stopLive(true);clearTimeout(cacheWriteTimer);cacheIdentity=null;loading=true;stellarLogbook.connecting();let generation=++graphGeneration;const mode=codeView,input=recoveryInput;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
+ if(!recoveryAttempt)recoveryAttempt={workspace:graph.workspace||'',input};
  try{
   const identity=await api('/identity?code='+(mode?'1':'0'),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
   cacheIdentity={workspace:identity.workspace,epoch:identity.epoch,policy:identity.policy};const identityChanged=!!graph.workspace&&graph.workspace!==identity.workspace;
+  // Keep the first interaction boundary across failed startup requests too.
+  if(recoveryScopeLoaded!==identity.workspace&&recoveryAttempt.workspace!==identity.workspace)recoveryAttempt={workspace:identity.workspace,input:recoveryAttempt.workspace?input:recoveryAttempt.input};
   if(identityChanged){applyLiveUpdate({workspace:identity.workspace,revision:'pending',reset:true,nodes:[],edges:[],sources:[],warnings:[]},true);liveCursor='';}
   const cached=await window.AideStarmapCache?.read(mode?'code':'knowledge',cacheIdentity).catch(()=>null);if(locked||generation!==graphGeneration||mode!==codeView)return;
-  if(cached?.graph&&cached.revision){applyLiveUpdate({...cached.graph,workspace:cached.workspace,revision:cached.revision,reset:true,removedNodes:[],removedEdges:[]},input===recoveryInput||graph.workspace!==cached.workspace);generation=graphGeneration;liveCursor=cached.revision;say('已载入本地星图 · 正在同步最新变化…');}
+  if(cached?.graph&&cached.revision){applyLiveUpdate({...cached.graph,workspace:cached.workspace,revision:cached.revision,reset:true,removedNodes:[],removedEdges:[]},graph.workspace!==cached.workspace);generation=graphGeneration;liveCursor=cached.revision;say('已载入本地星图 · 正在同步最新变化…');}
   const update=await api('/updates?code='+(mode?'1':'0')+(liveCursor?'&cursor='+encodeURIComponent(liveCursor):''),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
   if(update.workspace!==identity.workspace){cacheIdentity=null;graph={nodes:[],edges:[],sources:[],warnings:[]};liveCursor='';return;}
   if(cached?.revision===liveCursor){applyLiveUpdate(update);}
-  else{beginGraphTransition();applyLiveUpdate(update,input===recoveryInput||graph.workspace!==update.workspace);}
+  else{beginGraphTransition();applyLiveUpdate(update,graph.workspace!==update.workspace);}
   generation=graphGeneration; // Own delta application must not invalidate this load.
   if(recoveryScopeLoaded!==update.workspace){
    recoveryLoading=true;
@@ -957,7 +960,7 @@ async function load(){
    recoveryLoading=false;
    if(locked||generation!==graphGeneration||mode!==codeView)return;
    const changedWorkspace=identityChanged||!!graph.workspace&&graph.workspace!==update.workspace;
-   recoveryScopeLoaded=update.workspace;pendingRecoveredView=input===recoveryInput?(saved?.version===1?saved:changedWorkspace?defaultSkyView():null):null;
+   recoveryScopeLoaded=update.workspace;pendingRecoveredView=recoveryAttempt?.workspace===update.workspace&&recoveryAttempt.input===recoveryInput?(saved?.version===1?saved:changedWorkspace?defaultSkyView():null):null;
    if(changedWorkspace){aiAbort?.abort();aiAbort=null;$('answer').textContent='';$('question').value='';$('usage').textContent='';$('ai-found').replaceChildren();resetDocumentBatch();}
    if(pendingRecoveredView?.version===1&&!params.has('code')&&typeof pendingRecoveredView.codeView==='boolean'&&pendingRecoveredView.codeView!==codeView){codeView=pendingRecoveredView.codeView;graphGeneration++;return;}
   }
@@ -1036,7 +1039,7 @@ function setLocked(value){
  // should clear or reload the graph; the first notification still initializes it.
  if(lockStateKnown&&locked===value)return;
  if(value&&!locked)persistSkyView();
- lockStateKnown=true;locked=value;if(value)AideContinuity.abortPendingWrites?.();knowledgeTimeline.lock(value);if(value)stellarLogbook.lock();if(value)clearEvidencePath('星图已锁定。',true);if(value){clearTimeout(recoveryTimer);clearTimeout(cacheWriteTimer);cacheIdentity=null;recoveryScopeLoaded='';pendingRecoveredView=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){resetDocumentBatch();documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
+ lockStateKnown=true;locked=value;if(value)AideContinuity.abortPendingWrites?.();knowledgeTimeline.lock(value);if(value)stellarLogbook.lock();if(value)clearEvidencePath('星图已锁定。',true);if(value){clearTimeout(recoveryTimer);clearTimeout(cacheWriteTimer);cacheIdentity=null;recoveryScopeLoaded='';pendingRecoveredView=null;recoveryAttempt=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){resetDocumentBatch();documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
 if(window.LockCluster){LockCluster.on('effective',setLocked);LockCluster.onReady().then(setLocked);}else setLocked(false);
 for(const event of ['pointerdown','pointermove','keydown','wheel'])addEventListener(event,()=>{if(!locked)window.LockCluster?.noteActivity();},{passive:true});
 redraw();
