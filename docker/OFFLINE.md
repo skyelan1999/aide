@@ -14,6 +14,6 @@ RC2 当前 Release 仅提供 `linux/arm64` 镜像：适用于 Apple Silicon、Ub
 
 包不包含原电脑的会话、API 密钥、浏览器令牌、宿主项目文件或数据卷。首次启动为空环境；会话与配置以后保存在目标机的 Docker 数据卷中。
 
-停止应用：`bash scripts/aide.sh stop`。不要用 `down -v`，它会删除会话与配置。迁移已有会话需要另行备份和恢复数据卷，镜像包只负责程序运行环境。
+停止应用：macOS 双击 `stop.command`，Windows 双击 `stop.bat`，Linux 执行 `bash stop.sh`；也可运行 `bash scripts/aide.sh stop`。清理未使用构建缓存使用对应平台的 `clean-docker-cache` 入口，缓存为当前引擎默认构建器的共享缓存，不删除镜像或数据卷。不要用 `down -v`，它会删除会话与配置。迁移已有会话需要另行备份和恢复数据卷，镜像包只负责程序运行环境。
 
 BUILD.txt 记录版本、镜像 ID、平台和构建输入指纹；docker-images/SHA256SUMS 校验包内镜像。外层归档的校验文件随交付提供。此包为当前工作树构建快照，正式版本发布状态以仓库发布记录为准。

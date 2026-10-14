@@ -85,3 +85,5 @@ docs/
 - [Luna 连续工作与知识能力验收交接](reviews/luna-acceptance-handoff-20261010.md)：本批开发、验收步骤、运行服务与发布边界。
 
 - [任务发布记录：操作与验收边界](reviews/release-receipts-20261010.md)
+
+- [停止 AIDE 与清理 Docker 构建缓存](docker-maintenance.md)

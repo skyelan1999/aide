@@ -1,0 +1,98 @@
+{
+  "id": "docker-maintenance-20261015",
+  "request": "两套aide脚本，一套stop，一套清除docker缓存",
+  "baseline": "cdf9d15f9864c692dfddee0f980ff8cbacefbb48",
+  "initial_status": "M docs/tasks/aide-continuity-knowledge-20261009.json\n M docs/tasks/knowledge-path-exploration-20261009.json\n M docs/tasks/starmap-reference-empty-20261015.json\n D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Stop and build-cache cleanup launchers for macOS, Linux and Windows",
+    "Stop only the aide service with the exact installation-directory label; retain other copies and services",
+    "Cleanup only unused default-builder cache, explicitly shared across projects; retain images, containers, volumes and files",
+    "Dry run, idempotent stop, failure exit codes and no automatic Docker startup",
+    "Stop marker prevents port watcher restart; normal start clears it; future offline and Release packages include launchers",
+    "Focused tests and isolated Docker scope proof; Windows native acceptance remains user-owned; scripts and docs pushed"
+  ],
+  "scope": [
+    "stop.*",
+    "clean-docker-cache.*",
+    "scripts/aide-maintenance.*",
+    "scripts/aide.sh",
+    "scripts/watch-port.*",
+    "start.ps1",
+    "scripts/package-release-assets.sh",
+    "scripts/test_maintenance.py",
+    "scripts/test_offline_bundle.py",
+    "docs/agent/router.json",
+    "docs/docker-maintenance.md",
+    "docker/OFFLINE.md",
+    "docs/README.md",
+    "docs/tasks"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Two user-requested maintenance actions; cleanup means rebuildable unused build cache.",
+      "evidence": [
+        "docs/docker-maintenance.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Exact working-directory/service labels, macOS logical and physical aliases, default-builder prune, no engine startup.",
+      "evidence": [
+        "scripts/aide-maintenance.sh",
+        "scripts/aide-maintenance.ps1"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Platform launchers, existing CLI dispatch, stop marker/start reset, package integration and copies to both worktrees.",
+      "evidence": [
+        "stop.command",
+        "clean-docker-cache.command",
+        "scripts/package-release-assets.sh"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "9 maintenance tests, 6 offline-start tests, 4 Windows port-source tests and isolated real Docker stop scope PASS. Final quick PASS. No production stop or actual cache prune executed. No pwsh available; Windows native checks remain with user.",
+      "evidence": [
+        ".agent-state/maintenance/focused.log",
+        ".agent-state/maintenance/live-stop.json",
+        ".agent-state/maintenance/quick-final.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Usage, retained data, shared cache scope, dry run, supplementary ZIP and Windows limits documented.",
+      "evidence": [
+        "docs/docker-maintenance.md",
+        "docker/OFFLINE.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Removed only the two disposable no-volume containers created by this test; inherited deletions and user data retained.",
+      "evidence": [
+        ".agent-state/maintenance/live-stop.json",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Supplementary ZIP entries verified; scripts copied to both worktrees. Source push pending; no old image bundle update claim.",
+      "evidence": [
+        ".agent-state/maintenance/package.json"
+      ]
+    }
+  },
+  "release_authorization": "User requested maintenance scripts first; existing incremental test/docs/push authorization. No production stop, actual prune or formal Release.",
+  "rollback": "Host scripts only. Revert scripts if needed; restart stopped containers with original start entry. Deleted build cache is rebuilt on demand.",
+  "handoff": "Windows native checks by user. Continue reference starmap visibility and original twelve workstreams.",
+  "package": {
+    "archive": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/maintenance/aide-maintenance-scripts-20261015.zip",
+    "sha256": "f8ceae8405e46ab3c9e075f85e11446eb3f5e17c3c0d71e50d29ec3fcb5228df",
+    "bytes": 21117,
+    "entriesVerified": true,
+    "copiedRuntime": true
+  }
+}

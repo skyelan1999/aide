@@ -247,6 +247,7 @@ if (-not (Test-Docker)) {
     if (-not (Test-Docker)) { Write-Error "Docker 引擎未能启动，请手动启动 Docker Desktop 后重试。" }
 }
 
+Remove-Item -LiteralPath '.cache/aide-manual-stop' -ErrorAction SilentlyContinue
 Write-Host "构建并启动 aide…"
 $startArguments = if ($offlineBundle) { @('up', '-d', '--no-build', '--pull', 'never') } else { @('up', '-d', '--build', '--pull', 'never') }
 if ($offlineBundle) {

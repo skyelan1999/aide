@@ -462,6 +462,10 @@
       [
         "node",
         "scripts/starmap-progressive-cadence.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_maintenance.py"
       ]
     ],
     "full": [

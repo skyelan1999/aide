@@ -1,4 +1,4 @@
-# Windows host-side monitor for the offline launcher. Applies settings-page port
+﻿# Windows host-side monitor for the offline launcher. Applies settings-page port
 # changes by updating the host mapping and recreating only the container; /data
 # and workspace mounts remain managed by the existing Compose project.
 $ErrorActionPreference = 'Stop'
@@ -39,6 +39,7 @@ function Set-EnvHostPort([string]$Value) {
 
 try {
     while ($true) {
+        if (Test-Path -LiteralPath '.cache/aide-manual-stop') { break }
         $services = Get-ComposeText @('compose', '-f', 'compose.yaml', 'ps', '--status', 'running', '--services')
         if ($services.Code -ne 0 -or ($services.Text -split '\r?\n') -notcontains 'aide') { break }
 
@@ -53,11 +54,13 @@ try {
                 try {
                     Set-EnvHostPort $desired
                     $env:AIDE_PORT = $desired
+                    if (Test-Path -LiteralPath '.cache/aide-manual-stop') { break }
                     $restart = Get-ComposeText @('compose', '-f', 'compose.yaml', 'up', '-d', '--no-build', '--pull', 'never')
                     if ($restart.Code -ne 0) { throw 'Compose did not accept the requested port mapping.' }
                 } catch {
                     [System.IO.File]::WriteAllText($envPath, $oldText, (New-Object System.Text.UTF8Encoding $false))
                     if ($null -eq $oldProcessPort) { Remove-Item Env:AIDE_PORT -ErrorAction SilentlyContinue } else { $env:AIDE_PORT = $oldProcessPort }
+                    if (Test-Path -LiteralPath '.cache/aide-manual-stop') { break }
                     Get-ComposeText @('compose', '-f', 'compose.yaml', 'up', '-d', '--no-build', '--pull', 'never') | Out-Null
                 }
             }

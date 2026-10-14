@@ -58,13 +58,14 @@ STAGING="$(mktemp -d "$ROOT/.agent-state/release-package.XXXXXX")"
 trap 'rm -rf "$STAGING"' EXIT
 for TARGET in macos-arm64 windows-arm64 ubuntu-arm64; do
   case "$TARGET" in
-    macos-arm64) LAUNCHERS=(start.command);;
-    windows-arm64) LAUNCHERS=(start.bat start.ps1);;
-    ubuntu-arm64) LAUNCHERS=(start.sh);;
+    macos-arm64) LAUNCHERS=(start.command stop.command clean-docker-cache.command);;
+    windows-arm64) LAUNCHERS=(start.bat start.ps1 stop.bat stop.ps1 clean-docker-cache.bat clean-docker-cache.ps1);;
+    ubuntu-arm64) LAUNCHERS=(start.sh stop.sh clean-docker-cache.sh);;
   esac
   PACKAGE="$STAGING/aide-$TAG-$TARGET"
   mkdir -p "$PACKAGE/scripts" "$PACKAGE/docker-images" "$PACKAGE/workspace" "$PACKAGE/context"
   for launcher in "${LAUNCHERS[@]}"; do cp "$ROOT/$launcher" "$PACKAGE/"; done
+  cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/aide-maintenance.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/aide.sh" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/watch-port.sh" "$PACKAGE/scripts/"
   if [[ "$TARGET" == windows-arm64 ]]; then cp "$ROOT/scripts/watch-port.ps1" "$PACKAGE/scripts/"; fi
@@ -101,6 +102,8 @@ done
 FULL_TARGET="aide-$TAG-full-linux-${PLATFORM#linux/}"
 FULL_PACKAGE="$STAGING/$FULL_TARGET"
 mkdir -p "$FULL_PACKAGE/scripts" "$FULL_PACKAGE/docker-images" "$FULL_PACKAGE/workspace" "$FULL_PACKAGE/context"
+cp "$ROOT"/stop.{command,sh,ps1,bat} "$ROOT"/clean-docker-cache.{command,sh,ps1,bat} "$FULL_PACKAGE/"
+cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/aide-maintenance.ps1" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/start.command" "$ROOT/start.sh" "$ROOT/start.ps1" "$ROOT/start.bat" "$FULL_PACKAGE/"
 cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/watch-port.ps1" "$ROOT/scripts/update-agent.sh" "$ROOT/scripts/update-agent.ps1" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/docker/compose.offline.yaml" "$FULL_PACKAGE/compose.yaml"

@@ -5485,5 +5485,37 @@
     },
     "full": "旧full65命令均返回0，server race591.497s，但验证期间指纹变化，门禁fail。当前输入稳定后重新full，不把命令通过写作当前门禁通过。",
     "remaining": "原十二工作流仍全部in_progress；5x完整工具DAG/审批预检/节点日志与恢复、真实模型和原账本其他验收继续。"
+  },
+  "progress_checkpoint_20261015_followup111": {
+    "status": "in_progress",
+    "layout": {
+      "commit": "71e7db4",
+      "handoffCommit": "cdf9d15",
+      "task": "docs/tasks/composer-parallel-placement-20261014.json",
+      "verification": "真实8097 Safari五条倍率与推理同列滚动、3X/5X持久化通过；quick通过。",
+      "runtime": {
+        "image": "sha256:6ac93ca10a8d3b90b5d813e0ad89894afc0a6f16307e27da15c73c483c585289",
+        "srcsha": "900c8d34572da7738aced964e2608dfa3e1a83dc57946dd953d16063db2dd405",
+        "name": "aide-0.1.17.0-RC2-linux-arm64-6ac93ca10a8d-offline.tar.gz",
+        "sha256": "1e1171d0590fb1a8dd5b1b8cb3d3d49bccd1bab2f76446bac051f2b9297ef4fd",
+        "bytes": 561613174,
+        "outerHashVerified": true,
+        "innerHashVerified": true,
+        "dockerLoadVerified": true,
+        "copiedCanonical": true
+      }
+    },
+    "reference_bug": "用户已确认8097。新增临时aide引用后API和Safari累计超过1176节点，但选定来源星点偏到右侧且归位不居中，正在修复；不把此前隔离扫描通过视为用户故障闭环。 用户随后要求优先补stop与清缓存脚本，星域居中源码尚未修改。",
+    "path_browser": "8097真实HANDOVER.md→docs/tasks/homepage-20261008.json一跳显式引用，L55:45；点击源位置后只读文件页高亮第55行，保存/自动保存禁用。首次查询遭后台更新取消，重试通过，记录待改进。",
+    "full": "full于Docker等待容器unexpected EOF失败，未完成server race/vet，收据verify-20261014T160928891380Z.log；当前引擎可用但运行镜像已变成a14266a3120e，8097因/local/Users/skyelan/debug不可用而重启。未推断原因，未擅自改运行配置。",
+    "remaining": "全部十二工作流仍in_progress；5x工具DAG/审批预检/节点日志与恢复、其他真实环境验收继续；Windows用户负责，真实向量暂缓。"
+  },
+  "progress_checkpoint_20261015_followup112": {
+    "status": "in_progress",
+    "task": "docs/tasks/docker-maintenance-20261015.json",
+    "changes": "Two maintenance launcher sets, exact installation/service stop, unused default-builder cache cleanup, dry run, stop marker and future offline package integration.",
+    "evidence": "9 maintenance + 6 offline + 4 Windows source tests and isolated real Docker stop scope PASS; final quick PASS. Production stop/cache prune not executed.",
+    "full": "Previous full failed with Docker unexpected EOF; no current full PASS claim.",
+    "remaining": "Reference-scene recentering not implemented; original twelve workstreams and tool DAG remain active. Windows by user; real vector tests deferred."
   }
 }

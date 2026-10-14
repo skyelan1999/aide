@@ -18,8 +18,8 @@
   ],
   "stages": {
     "requirements": {
-      "status": "in_progress",
-      "summary": "用户报告引用aide后无节点。当前8097 API与Safari只有空的内置引用，工作区1561节点可见；尚未观察到用户新增来源，实例位置待答复，同时进行真实仓库引用隔离扫描。",
+      "status": "pass",
+      "summary": "用户确认本机8097。在真实Safari新增明确标记的aide星图复现只读来源，目录可读、索引持续增长；筛选该来源后主体星点偏出窗口右侧，归位仍未居中。用户原有空节点提示尚不能完全由此证明。",
       "evidence": [
         "GET /api/sources",
         "GET /api/workspace-config",
@@ -28,9 +28,11 @@
       ]
     },
     "design": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "每个宇宙场景以自身节点为局部坐标原点；增量更新沿用场景原点和既有坐标，避免新增来源继承全局位置后偏出视口。",
+      "evidence": [
+        "internal/server/web/starmap.js: cosmicData/layout"
+      ]
     },
     "implementation": {
       "status": "in_progress",
@@ -66,5 +68,5 @@
   },
   "release_authorization": "沿用分批测试/push及离线镜像包交付；不正式Release。",
   "rollback": "",
-  "handoff": "待用户确认新增aide引用的是8097还是另一设备9999，并检查该实例的sources、docs.path、所选region、扫描错误。8097目前无新增aide引用，不擅自修改用户引用配置或重建其索引。"
+  "handoff": "User prioritized maintenance scripts. Previous 8097 fixture source s-gk9pkr accumulated 1644 nodes, but scene remained offscreen to the right. Docker state and runtime image subsequently changed; current 8097 restarts because /local/Users/skyelan/debug is unavailable. Did not change user configuration or remove source. Previous full failed with unexpected EOF. Revalidate instance, fix scene framing and clean up own fixture source."
 }

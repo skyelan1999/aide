@@ -12,6 +12,9 @@ source_sha() {
   ) | sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
 }
 if [[ "$MODE" == source-sha ]]; then source_sha; exit; fi
+if [[ "$MODE" == stop || "$MODE" == clean-cache ]]; then
+  exec bash scripts/aide-maintenance.sh "$@"
+fi
 if [[ "$MODE" == test && "${AIDE_VERIFY_IN_CONTAINER:-0}" == 1 ]]; then
   # The caller already launched an isolated aide:local verification container.
   export AIDE_BUILTIN_PLUGINS=
@@ -180,6 +183,7 @@ fi
 
 case "$MODE" in
   start|start-image)
+    rm -f .cache/aide-manual-stop
     # Per-install authentication for the macOS Safari relay. .env is parsed as
     # data by Compose and is never executed as shell code.
     if [[ ! -f .env ]]; then cp .env.example .env; fi
@@ -254,12 +258,6 @@ case "$MODE" in
     elif command -v xdg-open >/dev/null; then xdg-open "$LOGIN_URL";
     else echo "在浏览器打开 $LOGIN_URL ；令牌位于容器 /data/auth/access-token，自签证书浏览器会告警，选择继续。"; fi
     ;;
-  stop)
-    "$DOCKER_BIN" compose stop
-    if [[ "$(uname -s)" == Darwin ]]; then bash scripts/safari-bridge-control.sh stop || true; fi
-    if [[ "$(uname -s)" == Darwin ]]; then bash scripts/computer-bridge-control.sh stop || true; fi
-    if [[ "$(uname -s)" == Darwin ]]; then bash scripts/headless-browser-control.sh stop || true; fi
-    ;;
   status) "$DOCKER_BIN" compose ps ;;
   logs) "$DOCKER_BIN" compose logs --tail=100 aide ;;
   test) "$DOCKER_BIN" run --rm -e AIDE_BUILTIN_PLUGINS= -v "$PROJECT_DIR:/src" -w /src --entrypoint bash aide:local -c 'go test -race -count=1 -timeout=15m ./... && go vet ./...' ;;
@@ -291,7 +289,8 @@ case "$MODE" in
     trap 'rm -rf "$STAGING"; rm -f "$ARCHIVE.partial"' EXIT
     BUNDLE="$STAGING/aide-offline"
     mkdir -p "$BUNDLE/scripts" "$BUNDLE/docker-images" "$BUNDLE/workspace" "$BUNDLE/context"
-    cp start.command "$BUNDLE/"
+    cp start.command stop.command stop.sh stop.bat stop.ps1 clean-docker-cache.command clean-docker-cache.sh clean-docker-cache.bat clean-docker-cache.ps1 "$BUNDLE/"
+    cp scripts/aide-maintenance.sh scripts/aide-maintenance.ps1 "$BUNDLE/scripts/"
     cp scripts/aide.sh "$BUNDLE/scripts/"
     cp docker/compose.offline.yaml "$BUNDLE/compose.yaml"
     cp docker/offline.env.example "$BUNDLE/.env.example"
@@ -309,5 +308,5 @@ case "$MODE" in
     echo "离线启动包已导出：$ARCHIVE"
     ;;
   load) "$DOCKER_BIN" image load -i "$PROJECT_DIR/docker-images/aide-local.tar.gz" ;;
-  *) echo "用法：scripts/aide.sh {start|start-image|start-bundle|stop|status|logs|test|export|export-bundle|load|source-sha}" >&2; exit 1 ;;
+  *) echo "用法：scripts/aide.sh {start|start-image|start-bundle|stop|clean-cache|status|logs|test|export|export-bundle|load|source-sha}" >&2; exit 1 ;;
 esac

@@ -69,11 +69,15 @@ else: sys.exit('Unexpected docker operation: '+repr(a))
 
     def test_repeat_start_keeps_configuration_and_skips_load(self):
         (self.root / 'image-id').write_text(IMAGE_ID)
-        (self.root / '.env').write_text('AIDE_PORT=19097\n')
+        saved = 'AIDE_PORT=19097\nAIDE_BROWSER_BRIDGE_TOKEN=' + 'b'*32 + '\nAIDE_COMPUTER_BRIDGE_TOKEN=' + 'c'*32 + '\n'
+        (self.root / '.env').write_text(saved)
+        (self.root / '.cache').mkdir()
+        (self.root / '.cache/aide-manual-stop').touch()
         result = self.run_start()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn('"image", "load"', self.calls())
-        self.assertEqual((self.root / '.env').read_text(), 'AIDE_PORT=19097\n')
+        self.assertEqual((self.root / '.env').read_text(), saved)
+        self.assertFalse((self.root / '.cache/aide-manual-stop').exists())
 
     def test_architecture_mismatch_stops_before_loading(self):
         self.env['ENGINE_PLATFORM'] = 'linux/x86_64'

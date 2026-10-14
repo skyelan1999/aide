@@ -7,7 +7,7 @@ LOCK=.aide-port-watcher.lock
 mkdir "$LOCK" 2>/dev/null || exit 0
 trap 'rmdir "$LOCK" 2>/dev/null || true' EXIT INT TERM
 
-while "$DOCKER_BIN" compose ps --status running --services 2>/dev/null | grep -qx aide; do
+while [[ ! -f .cache/aide-manual-stop ]] && "$DOCKER_BIN" compose ps --status running --services 2>/dev/null | grep -qx aide; do
   desired="$("$DOCKER_BIN" compose exec -T aide sh -c 'cat /data/config/host-port 2>/dev/null || true' 2>/dev/null | tr -d '\r\n')"
   if [[ "$desired" =~ ^[0-9]{1,5}$ ]] && (( desired >= 1 && desired <= 65535 )); then
     current="$(awk -F= '$1 == "AIDE_PORT" { gsub(/[[:space:]]/, "", $2); print $2; exit }' .env 2>/dev/null || true)"
@@ -24,6 +24,7 @@ while "$DOCKER_BIN" compose ps --status running --services 2>/dev/null | grep -q
         else
           printf '\nAIDE_PORT=%s\n' "$desired" >> .env
         fi
+        [[ ! -f .cache/aide-manual-stop ]] || break
         "$DOCKER_BIN" compose up -d --no-build --pull never
         # The settings page polls the requested listener and replaces its own
         # URL when the service is ready, keeping one browser tab and its token.
