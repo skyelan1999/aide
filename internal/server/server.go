@@ -1683,6 +1683,8 @@ func (a *App) putVirtualAvatarSettings(w http.ResponseWriter, r *http.Request) {
 func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Settings
+		ModelInput            *string            `json:"model,omitempty"`
+		ActiveModelInput      *string            `json:"activeModel,omitempty"`
 		ProviderKeyWrites     []providerKeyWrite `json:"providerKeyWrites,omitempty"`
 		ClearKey              bool               `json:"clearKey"`
 		VoiceReplyEnabled     *bool              `json:"voiceReplyEnabled,omitempty"`
@@ -1703,11 +1705,24 @@ func (a *App) updateSettings(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
+	modelsOmitted := in.Models == nil
 	// 前端部分更新（如仅切换 activeModel）时，用已存值补全后再校验
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if in.BaseURL == "" {
 		in.BaseURL = a.settings.BaseURL
+	}
+	if in.ModelInput != nil {
+		in.Settings.Model = *in.ModelInput
+	}
+	if in.ActiveModelInput != nil {
+		in.Settings.ActiveModel = *in.ActiveModelInput
+	}
+	if modelsOmitted && in.ModelInput == nil && in.ActiveModelInput == nil {
+		// A settings patch unrelated to model selection (for example only
+		// reasoningEffort) must retain the active model as well as its list.
+		in.Settings.Model = a.settings.Model
+		in.Settings.ActiveModel = a.settings.ActiveModel
 	}
 	legacyBaseURLChanged := in.BaseURL != "" && in.BaseURL != a.settings.BaseURL
 	oldProviders := append([]ModelProvider(nil), a.settings.ModelProviders...)

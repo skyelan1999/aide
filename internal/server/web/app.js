@@ -3522,6 +3522,9 @@ function openSettings() {
   if (!providers.length) providers = [{ id: 'default', name: 'DeepSeek / 自定义', baseURL: config.baseURL || 'https://api.deepseek.com', protocol: 'openai-compatible', activeKeyId: 'legacy', keys: [{ id: 'legacy', label: 'API Key', hasKey: !!config.hasKey }] }];
   models.forEach(model => { if (!model.providerId) model.providerId = 'default'; });
   state.modelDraft = { providers, models, activeModel: config.activeModel || config.model || models[0]?.id || '', expandedProviders: new Set(), providerSecrets: new Map() };
+  const effort = $('model-reasoning-effort');
+  effort.replaceChildren(...[['auto', t('自动')], ['off', t('关闭')], ['low', t('低')], ['medium', t('中')], ['high', t('高')]].map(([value, label]) => new Option(label, value)));
+  effort.value = ['auto', 'off', 'low', 'medium', 'high'].includes(config.reasoningEffort) ? config.reasoningEffort : 'auto';
   const select = $('provider-preset'); select.replaceChildren();
   for (const preset of MODEL_PROVIDER_PRESETS) select.add(new Option(preset.name, preset.id));
   renderModelList();
@@ -3555,7 +3558,7 @@ $('settings-form').onsubmit = action(async event => {
   });
   const active = draft.models.find(model => model.id === draft.activeModel) || draft.models[0];
   try {
-    await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: draft.providers.find(provider => provider.id === active.providerId)?.baseURL || state.config?.baseURL || '', models: draft.models, modelProviders, providerKeyWrites, activeModel: active.id }) });
+    await api('/settings', { method: 'PUT', body: JSON.stringify({ baseURL: draft.providers.find(provider => provider.id === active.providerId)?.baseURL || state.config?.baseURL || '', models: draft.models, modelProviders, providerKeyWrites, activeModel: active.id, reasoningEffort: $('model-reasoning-effort').value }) });
     $('settings-dialog').close();
     await refreshConfig();
     toast(t('模型设置已保存，当前模型为 {0}', active.name || active.id));

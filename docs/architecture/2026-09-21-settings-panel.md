@@ -7,6 +7,7 @@
 > - `localStorage['aide.ui']` 文档现为 `{"version":1,"theme":"system","palette":"blue","language":...}`：在本文 `{version,theme}` 基础上**新增 `palette`（blue=专业 / green=经典，默认 blue）与 `language`**；`<html>` 上除 `data-theme`/`data-theme-pref` 外另写 `data-palette`。
 > - 服务端持久化的设置（模型列表、沙箱、人格、语音、账户、无障碍、工具开关、推理强度等）经 `PUT /api/settings` 落库，**不在** localStorage；localStorage 只承载外观/语言等纯界面偏好。
 > - 配置备份分区走 `POST /api/config/export`、`POST /api/config/import`。
+> - 模型设置弹窗提供全局默认推理强度（自动/关闭/低/中/高）；策略浮层仍可为单个会话覆盖该值。该设置与模型列表一起通过 `PUT /api/settings` 保存。
 
 | 项 | 值 |
 | --- | --- |

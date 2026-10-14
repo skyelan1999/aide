@@ -75,6 +75,26 @@ func TestMultiModelSettings(t *testing.T) {
 	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{"baseURL": "https://api.example.com", "models": []any{}, "activeModel": ""}), 400)
 }
 
+func TestReasoningEffortCanBeUpdatedFromSettings(t *testing.T) {
+	a := testApp(t)
+	requireStatus(t, request(a, "PUT", "/api/settings", map[string]any{
+		"baseURL": "https://api.example.com", "models": []any{map[string]any{"id": "reasoning-test"}}, "activeModel": "reasoning-test",
+	}), http.StatusOK)
+	for _, effort := range []string{"high", "medium", "off", "auto"} {
+		w := request(a, "PUT", "/api/settings", map[string]any{"reasoningEffort": effort})
+		requireStatus(t, w, http.StatusOK)
+		w = request(a, "GET", "/api/config", nil)
+		requireStatus(t, w, http.StatusOK)
+		var cfg map[string]any
+		if err := json.Unmarshal(w.Body.Bytes(), &cfg); err != nil {
+			t.Fatal(err)
+		}
+		if cfg["reasoningEffort"] != effort {
+			t.Fatalf("reasoning effort did not persist: want %q, config=%v", effort, cfg["reasoningEffort"])
+		}
+	}
+}
+
 func TestSettingsMigrationFromSingleModel(t *testing.T) {
 	root := t.TempDir()
 	data := filepath.Join(root, "data")

@@ -1628,6 +1628,8 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 #settings-form>.dialog-heading{top:-18px;margin-top:-18px;padding-top:16px;padding-bottom:10px}
 #settings-form>.dialog-heading h2{font-size:19px}
 #settings-form>.model-settings-intro{font-size:11px;line-height:1.5}
+#settings-form>.model-reasoning-setting{margin:0 0 10px;padding:9px 11px;border:1px solid var(--line-soft);border-radius:9px;background:var(--bg-sub)}
+#settings-form>.model-reasoning-setting select{min-height:32px;padding:5px 8px;border:1px solid var(--line-soft);border-radius:7px;background:var(--panel);color:var(--text);font:inherit}
 #settings-form .model-provider-list{display:flex;flex-direction:column;gap:7px}
 #settings-form .model-provider-card{min-width:0;border:1px solid var(--line-soft);border-radius:11px;background:var(--surface-alt);overflow:hidden}
 #settings-form .model-provider-summary{display:flex;align-items:center;gap:7px;min-height:44px;padding:5px 9px}

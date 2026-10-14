@@ -4954,5 +4954,31 @@
         "真实向量/embedding：用户要求暂缓，不阻塞当前进度。"
       ]
     }
+  },
+  "progress_checkpoint_20261014_followup98": {
+    "date": "2026-10-14",
+    "status": "reasoning_effort_writable_and_persisted",
+    "summary": "修复仅更新 reasoningEffort 时 /api/settings 因缺少模型字段而误触发模型配置校验的问题；模型设置新增默认推理强度控件，保存时与模型配置一起持久化，策略浮层仍可逐会话覆盖。",
+    "evidence": [
+      "internal/server/server.go：settings partial update 保留已保存的 Model/ActiveModel，支持显式模型字段的零值更新。",
+      "internal/server/models_test.go：新增推理强度各档位写入与 /api/config 读回测试；summary 记录的 Docker 定向回归与多模型兼容测试均通过。",
+      "internal/server/web/app.js、index.html、style.css：模型设置中加入默认推理强度选择并随保存提交；en.js 增加英文翻译。",
+      "系统 Safari localhost:9999：打开模型设置，选择高并保存，观察到“模型设置已保存”；恢复自动并再次保存，保留用户原设置。"
+    ],
+    "not_verified": [
+      "本轮重新尝试 Docker 测试时 Docker socket 拒绝连接，主机未安装 Go，无法再次运行定向测试；先前同一代码测试证据由前序执行摘要提供。",
+      "跨会话/并发修改冲突不属于本次单字段持久化验收范围。"
+    ],
+    "remaining": "推送本次通过系统 Safari 实际保存验证的推理强度修复；总目标进度仍约 80%，其余端到端验收缺口沿用前序 checkpoint。",
+    "overall_progress": {
+      "estimated_complete_percent": 80,
+      "estimated_remaining_percent": 20,
+      "estimate_kind": "粗略工程估值，非验收通过率；本轮修复一个设置不可写问题，没有改变整体目标估值。",
+      "acceptance_state": "本修复已在系统 Safari 实际写入和恢复；总体验收仍按前序记录未闭合。",
+      "not_counted_as_agent_remaining": [
+        "Windows：用户表示已自行测试，免除 Agent 验收。",
+        "真实向量/embedding：用户要求暂缓，不阻塞当前进度。"
+      ]
+    }
   }
 }

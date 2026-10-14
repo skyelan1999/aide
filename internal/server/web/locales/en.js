@@ -1395,6 +1395,7 @@ window.aideEnglish = {
   "按任务自动选择": "Auto by task",
   "排队消息 · 当前回答结束后按顺序处理": "Queued messages · processed in order after the current reply",
   "推理强度": "Reasoning effort",
+  "默认推理强度": "Default reasoning effort",
   "提示：点「插话」提升到下一轮立即处理；修改 / 删除即时生效": "Tip: click \"Insert\" to promote a message to the next turn; edits and deletions take effect immediately.",
   "插话": "Insert",
   "搜索": "Search",

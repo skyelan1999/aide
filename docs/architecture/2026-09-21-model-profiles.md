@@ -6,6 +6,7 @@
 > - **策略浮层已扩为三列**：原设计「左栏单选 auto／手动 profile」保留（左列＝策略），但浮层另加了**中列＝模型选择**（`models[]`/`activeModel`，详见多模型文档）与**右列＝推理强度**（`reasoningEffort` auto/off/low/medium/high）。模型切换走 `PUT /api/settings {activeModel}`，推理强度走 `PUT /api/settings {reasoningEffort}`，均不经 `/api/profiles`。
 > - **settings-schema 实际嵌套**：本节落在 `sections[]` 中 `id:"model"`（标题「模型参数」）之下的 `children[]`，子项 `id:"model-profiles"`、`type:"profiles-manager"`、标题「参数配置」（不是与「模型参数」同名的平级分组）。
 > - 聊天栏策略按钮仍为 composer 旁 `#strategy-label` + `#strategy-menu`；选中 profile/auto 仍经 `PUT /api/profiles` 防抖保存。
+> - 默认推理强度另可在「模型设置」中持久化，随模型配置表单保存；策略浮层仍可按当前会话覆盖。`PUT /api/settings` 的推理强度局部更新会保留既有模型选择，避免被模型完整性校验误拒。
 
 | 项 | 值 |
 | --- | --- |
