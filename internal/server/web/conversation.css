@@ -38,7 +38,15 @@
 .parallel-picker select{min-height:30px;padding:4px 6px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer}
 .parallel-picker select:disabled{opacity:.5;cursor:default}
 .strategy-menu .parallel-picker{display:flex;justify-content:space-between;margin:6px 2px 2px;padding:10px 8px 6px;border-top:1px solid var(--line-faint)}
-.strategy-menu .parallel-picker select{min-width:64px}
+ .strategy-menu .parallel-picker select{min-width:64px}
+.parallel-wheel{position:relative;display:block;flex:0 0 64px;width:64px;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--panel)}
+.parallel-wheel::before{content:'';position:absolute;left:3px;right:3px;top:28px;height:28px;border-radius:5px;background:var(--selected);pointer-events:none}
+.parallel-wheel-options{position:relative;display:block;box-sizing:border-box;height:84px;padding:28px 0;overflow-y:auto;scroll-snap-type:y mandatory;overscroll-behavior:contain;scrollbar-width:none;mask-image:linear-gradient(transparent,#000 28%,#000 72%,transparent);outline:none}
+.parallel-wheel-options::-webkit-scrollbar{display:none}
+.parallel-wheel-options:focus-visible{outline:2px solid var(--brand);outline-offset:-2px;border-radius:8px}
+.parallel-wheel-option{display:flex;align-items:center;justify-content:center;box-sizing:border-box;height:28px;margin:0;scroll-snap-align:center;scroll-snap-stop:always;color:var(--muted);font-size:12px;cursor:pointer;user-select:none}
+.parallel-wheel-option.selected{color:var(--brand-text);font-weight:600}
+.parallel-wheel.disabled{opacity:.5}.parallel-wheel.disabled .parallel-wheel-options{overflow-y:hidden}.parallel-wheel.disabled .parallel-wheel-option{cursor:default}
 .parallel-progress{margin:8px 0 12px;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface-alt);font-size:12px;color:var(--muted)}
 .parallel-progress summary{cursor:pointer;color:var(--text);line-height:1.6}
 .parallel-part{display:flex;align-items:baseline;justify-content:space-between;gap:12px;border-top:1px solid var(--line-faint);margin-top:7px;padding-top:7px}

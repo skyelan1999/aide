@@ -18,3 +18,18 @@ const activeRun={id:'active',parallelism:5,parallel:{phase:'planning'}};
 assert.equal(api.render(activeRun,{el,t,initial:true}).open,true,'first plan must be visible');
 assert.equal(api.render(activeRun,{el,t,initial:false}).open,false,'respect user collapse after initial render');
 assert.match(app,/addEventListener\('parallel', \(\) => \{ if \(state.stream === es\) refreshSessionSoon\(\);/);
+
+// The wheel uses the existing selected value across hidden menu geometry,
+// keyboard navigation, scrolling, and mode changes.
+function wheelNode(){return {children:[],attrs:{},listeners:{},classList:{toggle(){}},offsetHeight:28,clientHeight:84,scrollTop:0,append(child){this.children.push(child)},setAttribute(k,v){this.attrs[k]=v},addEventListener(k,fn){this.listeners[k]=fn},focus(){this.focused=true}}}
+const wheelBoot=boot('4'),control=wheelNode();control.id='speed';control.ownerDocument={createElement:wheelNode};control.after=node=>{control.wheel=node};let wheelMode='chat';
+wheelBoot.api.install({select:control,mode:()=>wheelMode,assistant:()=>false,t});
+const list=control.wheel.children[0],press=key=>list.listeners.keydown({key,preventDefault(){}});
+assert.equal(control.hidden,true);assert.equal(list.scrollTop,84);assert.equal(list.attrs['aria-activedescendant'],'speed-option-4');
+press('End');assert.equal(control.value,'5');press('ArrowDown');assert.equal(control.value,'5');press('Home');assert.equal(control.value,'1');press('ArrowDown');assert.equal(control.value,'2');
+list.scrollTop=56;list.listeners.scroll();assert.equal(control.value,'3');assert.equal(wheelBoot.writes.at(-1)[1],'3');
+list.scrollTop=200;list.listeners.scroll();assert.equal(control.value,'5','bottom overscroll must clamp, never wrap back to 1x');
+list.clientHeight=0;list.scrollTop=0;list.listeners.scroll();wheelBoot.api.sync();assert.equal(control.value,'5','closing/hidden menus must not overwrite the choice with zero geometry');
+list.clientHeight=84;wheelBoot.api.sync();assert.equal(list.scrollTop,112,'opening a rebuilt menu restores the selected wheel position');
+wheelMode='workflow';wheelBoot.api.sync();press('Home');assert.equal(control.value,'5');assert.equal(list.attrs['aria-disabled'],'true');assert.equal(list.tabIndex,-1);
+console.log('parallel wheel PASS: scroll, keyboard, end clamps, hidden menu preservation and disabled modes');

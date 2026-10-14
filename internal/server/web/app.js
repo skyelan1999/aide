@@ -5230,6 +5230,7 @@ function refreshStrategyUI() {
     }
     menu.append(approvalCol);
   }
+  window.AideParallelChat?.sync();
 }
 let approvalRulesDialog=null;
 window.LockCluster?.on('effective',locked=>{if(locked)approvalRulesDialog?.close();});
@@ -5320,6 +5321,7 @@ function strategyMenuOption(kind, value, name, desc, selected, disabled = false)
 function openStrategyMenu() {
   window.aideExperience?.reopen($('strategy-menu'));
   $('strategy-menu').classList.remove('hidden');
+  window.AideParallelChat?.sync();
   $('strategy-button').setAttribute('aria-expanded', 'true');
 }
 function closeStrategyMenu() {
