@@ -108,6 +108,9 @@ type Task struct {
 	Failures                 int                 `json:"failures,omitempty"` // 工具失败累计次数（失败反馈循环）
 	Applied                  bool                `json:"applied"`
 	Attachments              []Attachment        `json:"attachments"`
+	Parallelism              int                 `json:"parallelism,omitempty"`
+	ParallelPrepared         bool                `json:"parallelPrepared,omitempty"`
+	Parallel                 *ParallelProgress   `json:"parallel,omitempty"`
 	Strategy                 string              `json:"strategy,omitempty"` // manual | auto（FR-63）
 	ResearchFindings         []ResearchFinding   `json:"researchFindings,omitempty"`
 	ToolUses                 []ToolUse           `json:"toolUses,omitempty"`      // 工具调用记录（FR-81）
@@ -187,6 +190,7 @@ var builtinTools = []any{
 func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Prompt         string       `json:"prompt"`
+		Parallelism    int          `json:"parallelism"`
 		AvatarFeedback bool         `json:"avatarFeedback,omitempty"`
 		AutoReview     bool         `json:"autoReview,omitempty"`
 		Mode           string       `json:"mode"`
@@ -199,6 +203,13 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	if err := decode(w, r, &in); err != nil {
 		fail(w, 400, err)
 		return
+	}
+	if in.Parallelism < 0 || in.Parallelism > 5 || (in.Mode != "chat" && in.Parallelism > 1) {
+		fail(w, 400, errors.New("parallelism must be 1-5 and is available in chat mode"))
+		return
+	}
+	if in.Parallelism == 0 {
+		in.Parallelism = 1
 	}
 	in.Prompt = strings.TrimSpace(in.Prompt)
 	if in.Prompt == "" || len(in.Prompt) > 20000 {
@@ -302,7 +313,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	task := &Task{ID: newID(), AutoReview: a.approvalPolicy.Enabled, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{Parallelism: in.Parallelism, ID: newID(), AutoReview: a.approvalPolicy.Enabled, WorkflowPhase: in.WorkflowPhase, AvatarFeedback: in.AvatarFeedback, Mode: in.Mode, Prompt: in.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: in.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	policy, policyErr := a.loadExecutionPolicy()
 	if policyErr != nil {
 		fail(w, 400, fmt.Errorf("invalid execution policy: %w", policyErr))
@@ -520,8 +531,17 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 			// 偶发返回非 JSON 导致整个任务失败；propose 不带工具，约束不冲突。
 			stepParams.ResponseFormat = "json_object"
 		}
+		var parallelErr error
+		if name == "chat" && task.Parallelism > 1 {
+			input, parallelErr = a.prepareParallel(ctx, s, task, cfg, input, stepParams)
+		}
 		checkpoint(name, input)
-		out, chain, err := a.toolLoop(ctx, cfg, input, stepParams, tools, task, versions, index, checkpoint)
+		var out string
+		var chain []Message
+		err = parallelErr
+		if err == nil {
+			out, chain, err = a.toolLoop(ctx, cfg, input, stepParams, tools, task, versions, index, checkpoint)
+		}
 		a.mu.Lock()
 		task.Steps[index].Content = out
 		if err != nil {
@@ -615,6 +635,13 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 			}
 		}
 		s.Messages = append(s.Messages, Message{Role: "assistant", Content: answer})
+	}
+	if task.Parallel != nil && task.Parallel.Phase == "merging" {
+		if err == nil {
+			task.Parallel.Phase = "completed"
+		} else {
+			task.Parallel.Phase = "interrupted"
+		}
 	}
 	s.Updated = time.Now().UTC().Format(time.RFC3339Nano) // 完成时刻：列表按完成先后置顶
 	s.Checked = false                                     // 新完成重新点亮“蓝点+加粗”高亮
@@ -784,7 +811,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	if avatarOverride != nil {
 		avatarEnabled = *avatarOverride
 	}
-	task := &Task{ID: newID(), AutoReview: a.approvalPolicy.Enabled, WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
+	task := &Task{Parallelism: orig.Parallelism, ID: newID(), AutoReview: a.approvalPolicy.Enabled, WorkflowPhase: orig.WorkflowPhase, AvatarFeedback: avatarEnabled, Mode: orig.Mode, Prompt: orig.Prompt, Status: "running", Steer: make(chan string, 4), Created: time.Now().UTC().Format(time.RFC3339Nano), Steps: []Step{}, Files: []Change{}, Commands: []string{}, Attachments: orig.Attachments, Strategy: strategy, Profile: profileID, Model: a.settings.Model, WorkspaceID: a.wsID(), WorkspaceRev: a.wsRevision, WorkspaceMode: a.workspaceMode(), WorkspaceRemotePath: a.wsConfig.Workspace.Path, AgentRoot: a.snapshotAgentRootLocked()}
 	policy, policyErr := a.loadExecutionPolicy()
 	if policyErr != nil {
 		fail(w, 400, fmt.Errorf("invalid execution policy: %w", policyErr))

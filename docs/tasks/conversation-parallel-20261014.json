@@ -1,0 +1,82 @@
+{
+  "id": "conversation-parallel-20261014",
+  "request": "会话需求分割，多请求并行后汇总成最终答复；左下角1x到5x配置",
+  "baseline": "43123439c0dc112960d56534fcd68cadd98665ba",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Composer 1x-5x persists preference; defaults 1x. Backend validates 1..5, chat only.",
+    "One request is split only into independent analysis tasks, bounded fanout then one normal executor merges. Dependencies/invalid plans fall back to normal execution.",
+    "Cancellation reaches all analysis requests; failures are explicit and final executor fills missing parts. No worker tool side effects.",
+    "Persist progress/usage/request evidence; retry/resume maintain selected setting; context budgets checked before auxiliary and merge requests.",
+    "Focused race tests prove actual overlap, cap, cancellation, fallback and accounting; browser UI and docs/push independent from8097 deployment."
+  ],
+  "scope": [
+    "internal/server/conversation_parallel.go",
+    "internal/server/conversation_parallel_test.go",
+    "internal/server/workflow.go",
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/parallel-chat.js",
+    "internal/server/web/conversation.css",
+    "internal/server/web/locales/en.js",
+    "scripts/parallel-chat.test.cjs",
+    "scripts/fixtures/render-parallel-chat.py",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/tasks/conversation-parallel-20261014.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User clarified one request split into parallel independent analyses then one final answer; not multiple variants or simultaneous user turns.",
+      "evidence": [
+        "internal/server/conversation_parallel.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Plan with same model; 2..selected limit tool-free analysis requests; existing executor reconciles and performs tools serially. Inseparable tasks fall back, bounded context and cancellation preserved.",
+      "evidence": [
+        "internal/server/conversation_parallel.go"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Backend implemented and both focused race profiles passed; UI implemented and native Safari component observed. Final quick/build pending.",
+      "evidence": [
+        "internal/server/conversation_parallel.go",
+        "internal/server/workflow.go",
+        "internal/server/web/parallel-chat.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Both isolated Linux focused race suites passed, including real 5-request overlap, cancel, invalid plans, budgets, accounting, partial-failure end-to-end merge and retry. Safari synthetic component selection/stages and narrow light layout observed. No real model calls or8097 deployment.",
+      "evidence": [
+        ".agent-state/conversation-parallel/backend.log",
+        "scripts/fixtures/render-parallel-chat.py",
+        "scripts/parallel-chat.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Bilingual API, pipeline, cancellation/resume, read-only analysis, token/context bounds and acceptance limits documented.",
+      "evidence": [
+        "docs/architecture.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Preserved inherited vendor deletions and unrelated local edits; generated fixture in ignored .agent-state, no extra runtime server or data mutation.",
+      "evidence": []
+    },
+    "release": {
+      "status": "blocked",
+      "summary": "Incremental task-branch push prepared; actual8097 deployment remains blocked by container exit-event fault. No engine restart/merge/version release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior user authorization: incremental scoped tests, commits/push and documentation. No model paid acceptance, merge/release or engine restart.",
+  "rollback": "Revert task commits and rebuild. Missing parallelism defaults to1; old tasks remain readable. Running8097 not replaced.",
+  "handoff": "Actual model quality/speed and live8097 acceptance unverified. Worker analysis is tool-free; final executor performs actual tool actions. Pending Docker engine restart affects unrelated services and remains unapproved."
+}
