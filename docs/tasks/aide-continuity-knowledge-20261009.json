@@ -5465,5 +5465,25 @@
     },
     "full": "当前新full已启动尚未完成；旧65项结果不冒充新改动全量验收。",
     "remaining": "全部十二工作流继续in_progress；资源DAG、真实模型调用及原账本其余验收待完成。"
+  },
+  "progress_checkpoint_20261014_followup110": {
+    "status": "in_progress",
+    "implementationCommit": "a1f32b3",
+    "task": "docs/tasks/plugin-resource-scheduling-20261014.json",
+    "changes": "统一插件入口增加声明资源原子预约和公平等待、未知作用独占、只读/越界提案拒绝。无服务依赖调用只加载目标模块。短命与daemon取消终止同组子进程；daemon登记/派发绑定代际，避免误发替代实例。",
+    "verification": "canonical race35.561s、8097兼容36.097s、服务装配6.342s PASS。实际Node屏障/共写/取消/提案拒绝通过。8097健康与鉴权星图API通过，原设置/挂载/加密历史保持。",
+    "runtime": {
+      "image": "sha256:9fa963d2209b59bd72c5a69c4108c7a99f209ca3be6305e3ba1600259ed811dc",
+      "srcsha": "bbbff37c5016a4c21074f5f7d280070a858971b8361d5809283ecbea087ffac8",
+      "name": "aide-0.1.17.0-RC2-linux-arm64-9fa963d2209b-offline.tar.gz",
+      "sha256": "bf5094ebd911301b5021dad9d71b382ea101a95c4c3943d465923a27df871f29",
+      "bytes": 561621269,
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "dockerLoadVerified": true,
+      "copiedCanonical": true
+    },
+    "full": "旧full65命令均返回0，server race591.497s，但验证期间指纹变化，门禁fail。当前输入稳定后重新full，不把命令通过写作当前门禁通过。",
+    "remaining": "原十二工作流仍全部in_progress；5x完整工具DAG/审批预检/节点日志与恢复、真实模型和原账本其他验收继续。"
   }
 }
