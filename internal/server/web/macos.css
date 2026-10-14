@@ -483,8 +483,10 @@ main, .conversation, .file-panel, .plugin-panel { min-width: 0; }
 .starter strong { font-size: 14px; }
 .starter small { font-size: 12px; }
 .section-label { font-size: 12px; }
-.workspace-label strong { font-size: 14px; }
-.workspace-label small { font-size: 12px; }
+.sidebar .workspace-label { min-height: 56px; padding: 6px 9px; gap: 8px; }
+.sidebar .workspace-label strong { font-size: 13px; line-height: 1.3; }
+.sidebar .workspace-label small { font-size: 11px; line-height: 1.3; margin-top: 1px; }
+.sidebar .workspace-label .folder-icon .ui-icon { width: 20px; height: 20px; }
 .session-item { font-size: 14px; }
 .file-panel-heading strong, .plugin-panel-heading strong { font-size: 14px; }
 .run-meta { font-size: 11px; }

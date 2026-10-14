@@ -1,0 +1,25 @@
+{
+  "id": "workspace-card-height-20261014",
+  "request": "缩短左侧工作空间卡片高度，让工作空间、会话列表与底部环境卡片的纵向节奏更协调。",
+  "acceptance": [
+    "工作空间卡片在侧栏中更紧凑，名称、路径和状态仍清晰可读。",
+    "使用系统 Safari 查看当前源码构建后的实际界面。"
+  ],
+  "implementation": {
+    "status": "pass",
+    "evidence": [
+      "internal/server/web/macos.css：工作空间卡片最小高度调整为 56px，收紧内边距、文字行高、标题间距和文件夹图标。"
+    ]
+  },
+  "verification": {
+    "status": "pass",
+    "evidence": [
+      "通过 start.command 重建并启动当前源码。",
+      "系统 Safari 新标签打开 https://localhost:9999/，确认工作空间名称、路径、连接状态、小秘入口及会话列表正常显示，卡片纵向占用更紧凑。"
+    ]
+  },
+  "release": {
+    "status": "pending",
+    "evidence": ["Safari 实际界面验收通过；待提交并推送本阶段。"]
+  }
+}
