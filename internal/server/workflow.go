@@ -3506,9 +3506,9 @@ func (a *App) feedbackHandler(w http.ResponseWriter, r *http.Request) {
 // execShellCommand 在容器沙箱内实际执行一条 shell 命令（run_shell 工具）。
 // 复用 /api/command 的沙箱约束：bash --norc、60s 超时、受限 env、工作目录锁定在 workspace 内。
 // 返回收集到的 stdout+stderr（截断）和退出码；SSH 工作区复用已认证会话远程执行。
-// readOnlyAllowed 在 read-only 沙箱模式下允许的只读命令。
+// legacyReadOnlyAllowed 保留既有只读子命令集，由 literalShellCommands 先验证字面语法。
 // 用精确命令前缀匹配，避免 "go build" 被当成 "go" 放行。
-func readOnlyAllowed(command string) bool {
+func legacyReadOnlyAllowed(command string) bool {
 	low := strings.TrimSpace(strings.ToLower(command))
 	// 任何可触发 shell 求值、链式执行、重定向、模式展开或后台运行的语法，
 	// 都不能靠命令名前缀证明只读（例如 cat $(touch x)）。保守地转入逐条确认。

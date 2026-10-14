@@ -1,0 +1,82 @@
+{
+  "id": "assisted-basic-commands-20261014",
+  "request": "一些很基本的命令辅助审批根本就不管用，还是兜不住",
+  "baseline": "76fd3de46ec76f5a8769d2ed3cc5a50e4d19837b",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Quoted literal reads, bounded sed selections and compositions of proven read-only commands run without model approval.",
+    "Shell expansion, redirection, helper execution and writing options never enter the read-only path.",
+    "Empty/malformed reviewer response receives at most one bounded retry; explicit manual decision is final; no fail-open.",
+    "Preserve authorization, sandbox, cancellation/generation, durable approval receipt and token accounting; distinguish fallback reasons.",
+    "Both checkouts tested; incremental push/docs and scoped local8097 backup/update/smoke."
+  ],
+  "scope": [
+    "internal/server/shell_readonly.go",
+    "internal/server/shell_readonly_test.go",
+    "internal/server/workflow.go",
+    "internal/server/assisted_approval.go",
+    "internal/server/approval_reviewer.go",
+    "internal/server/approval_reviewer_test.go",
+    "internal/server/provider.go",
+    "docs/tasks/assisted-basic-commands-20261014.json",
+    "docs/architecture/execution-policy.md",
+    "docs/reviews/2026-10-14-assisted-basic-commands-rollout.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports basic commands fall back to manual. No local persisted approval receipts available; specific examples requested asynchronously.",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/assisted_approval.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Strict literal shell subset for routine reads; bounded reviewer recovery for empty/malformed responses, explicit fail-closed reasons, unchanged per-operation authorization and sandbox.",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/assisted_approval.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Literal quoted read/composition classifier and bounded command-review recovery implemented; explicit reasons and empty-response usage retained. No UI or global approval-mode changes.",
+      "evidence": [
+        "internal/server/shell_readonly.go",
+        "internal/server/approval_reviewer.go",
+        "internal/server/assisted_approval.go",
+        "internal/server/provider.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Both final targeted race checks, broad race regressions and quick passed. Literal reads execute without review; unsafe syntax/options rejected; mock mkdir recovers after empty verdict; explicit manual verdicts never retried; usage retained.",
+      "evidence": [
+        ".agent-state/assisted-basic-commands/backend-final.log",
+        ".agent-state/assisted-basic-commands/regression.log",
+        ".agent-state/assisted-basic-commands/quick.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Execution-policy docs describe examples, syntax subset, retry limits, audit/usage behavior and fail-closed boundaries.",
+      "evidence": [
+        "docs/architecture/execution-policy.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Preserved inherited vendor deletions and unrelated local changes; no real model calls or live approval-mode mutation.",
+      "evidence": []
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior user authorized incremental push/tests/docs and local8097 AIDE-only update; no Release/main merge.",
+  "rollback": "Preserve previous local image and data backup before only replacing AIDE; additive code changes, no data migration.",
+  "handoff": "Current8097 read-only API reports enabled=false, revision=0, rememberedRules=0; no persisted approval receipts found. Asked user for concrete commands and whether UI shows assisted mode; no answer yet. Do not claim actual observed failure root cause or model approval rate verified."
+}
