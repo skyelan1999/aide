@@ -44,8 +44,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Old scheduler regression FAIL before source edit; changed actual scheduler and cache/scene/source-VM tests PASS. Canonical rebuilt browser and final quick/full/package still pending. No end-to-end cold-first-render speedup claim. Current6bdcb41 quick70 PASS. Exact start.command rebuilt matching320315 image; native Safari shows41715 total nodes, selected reference20000 real nodes and explicit pending/body-gap counts. CUA click+AX/screenshot call48.6s is slow observation, not isolated render measurement. No general first-open or interaction speedup claim; large-scene layout/per-frame cost remains to inspect. Streamed package hashes/tags/platform/launchers/load and both local copies PASS. Fresh full72 pending. Fresh full72 terminal FAIL: host disk exhausted, Docker API500/unable-to-start and9999 refused; raw Docker stream unexpected EOF/exit125 before server race/vet completed. Failure receipt retained, not a product assertion or passing gate. Engine stop/start recovery and canonical entry restored healthy same image; five protected hashes/mounts/workspace-config match. Current task still in progress. Reversible archival complete:30 generated before-binaries, host free~8.1GiB; same-input full72 rerun next, failed receipt retained.",
+      "status": "pass",
+      "summary": "Old scheduler regression FAIL before source edit; changed actual scheduler and cache/scene/source-VM tests PASS. Canonical rebuilt browser and final quick/full/package still pending. No end-to-end cold-first-render speedup claim. Current6bdcb41 quick70 PASS. Exact start.command rebuilt matching320315 image; native Safari shows41715 total nodes, selected reference20000 real nodes and explicit pending/body-gap counts. CUA click+AX/screenshot call48.6s is slow observation, not isolated render measurement. No general first-open or interaction speedup claim; large-scene layout/per-frame cost remains to inspect. Streamed package hashes/tags/platform/launchers/load and both local copies PASS. Fresh full72 pending. Fresh full72 terminal FAIL: host disk exhausted, Docker API500/unable-to-start and9999 refused; raw Docker stream unexpected EOF/exit125 before server race/vet completed. Failure receipt retained, not a product assertion or passing gate. Engine stop/start recovery and canonical entry restored healthy same image; five protected hashes/mounts/workspace-config match. Current task still in progress. Reversible archival complete:30 generated before-binaries, host free~8.1GiB; same-input full72 rerun next, failed receipt retained. Recovered same-fingerprint full72 PASS: server race702.418s, sandbox1.256s, tts1.533s and whole-repository vet. Old disk/EOF failure retained. This proves cache-fix batch gate only; general large-scene interaction remains unfinished and moves to explicit metadata-layout followup.",
       "evidence": [
         ".agent-state/starmap-current-latency/cache-negative.log",
         ".agent-state/starmap-current-latency/fixed-reference.txt",
@@ -77,7 +77,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Source6bdcb41 and documentationd59856f pushed (remote ref fetch repaired after disk-full local update_ref failure). Local320315 package hashes/import/two copies PASS. Current full72 FAIL infrastructure; no formal release or fresh-full pass. Receiving device import still pending.",
+      "summary": "Source6bdcb41/cache fix and local320315 offline candidate have current full72 PASS after resource recovery. Branch delivery only, no main/tag release or receiving-device acceptance. Continue large-scene performance work separately.",
       "evidence": [
         ".agent-state/starmap-current-latency/package.json"
       ]
@@ -85,7 +85,7 @@
   },
   "release_authorization": "Existing incremental source/docs push and local build/offline image authorization; no main/tag formal release.",
   "rollback": "Revert6bdcb41 or use prior00c601 image, preserving all user data volumes/config; no cache/index reset required.",
-  "handoff": "Current same320315 image healthy after disk exhaustion stopped Docker; protected config/auth/mounts preserved. Source/cache regression and quick70/native display/package PASS; current full72 terminal infrastructure FAIL before server/vet, must rerun with sufficient host space after next product changes. Original12 workstreams active. Next isolate metadata-only graph updates forcing large cosmos rebuild; real module35k-node model~1.18s, native interaction remains slow. No broad loading speedup, real model/provider or receiving-device claim. Recovered fresh full currently session45136, .agent-state/starmap-current-latency/full-recovered-owner.json. Previous4544 terminalFAIL; poll only45136 and inspect new log. Inputs remain frozen, no new product edits until terminal.",
+  "handoff": "Cache starvation fix6bdcb41/current320315 image: quick70, native reference display20k, local complete offline import/copies and recovered frozen full72 PASS (race702.418s+vet). Disk-failed full receipt preserved; old generated checkpoints gzip/SHA archived with restore manifest. Overall star-map latency remains active: next starmap-metadata-layout-20261015 reproduces metadata-only updates rebuilding large models; prototype tests pass, not yet production. Original12 workstreams remain active.",
   "runtime": {
     "runningImage": "sha256:320315d7e14bff41f575db81083a43021fd17dd906e28734263c78775de2374c",
     "image": "sha256:320315d7e14bff41f575db81083a43021fd17dd906e28734263c78775de2374c",
@@ -159,7 +159,7 @@
   },
   "recovered_full_owner": {
     "profile": "full",
-    "status": "running",
+    "status": "pass",
     "sessionId": 45136,
     "head": "8cb53868824c1b2670ec0ab29e2f31575a3311d0",
     "fingerprint": "70c3dde34081dd0bee8a1eb59d27da73c72a94ae7bd764243e241543f3d936ce",
@@ -167,6 +167,22 @@
     "ownerLog": ".agent-state/starmap-current-latency/full-recovered-run.log",
     "log": ".agent-state/verify-20261015T003709946842Z.log",
     "previousTerminalFailure": ".agent-state/starmap-current-latency/full-failed-infrastructure.json",
-    "reason": "Fresh same-input run after authoritative old failure, Docker/runtime recovery and verified reversible archival regained9GiB; never restarted for observation timeout."
+    "reason": "Fresh same-input run after authoritative old failure, Docker/runtime recovery and verified reversible archival regained9GiB; never restarted for observation timeout.",
+    "container": "aide-verify-4c2336ec8178",
+    "lastVerifiedLive": "docker ps: Up21seconds; owner session45136 still running; runtime healthy; host free7.2GiB",
+    "receipt": ".agent-state/starmap-current-latency/full-recovered-frozen.json",
+    "serverRaceSeconds": 702.418,
+    "vet": "pass",
+    "commands": 72
+  },
+  "full_gate": {
+    "status": "pass",
+    "receipt": ".agent-state/starmap-current-latency/full-recovered-frozen.json",
+    "fingerprint": "70c3dde34081dd0bee8a1eb59d27da73c72a94ae7bd764243e241543f3d936ce",
+    "head": "8cb53868824c1b2670ec0ab29e2f31575a3311d0",
+    "serverRaceSeconds": 702.418,
+    "vet": "pass",
+    "commands": 72,
+    "log": ".agent-state/verify-20261015T003709946842Z.log"
   }
 }
