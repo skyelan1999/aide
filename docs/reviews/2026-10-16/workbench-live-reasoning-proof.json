@@ -240,6 +240,12 @@
     "originalReceiptTime": "20261015T225651747905Z",
     "newFullRun": false
   },
-  "release": "pending independent clean-main gate and push",
+  "release": {
+    "independentCleanMainGate": "pass",
+    "push": "pass",
+    "remoteExactMatch": true,
+    "commit": "3714593ff6435b2e3e72c509e3a66a5acdc5dee1",
+    "subsequentDocumentationReceipt": "same product input fingerprint"
+  },
   "originalTwelve": "in_progress; remaining actual file/history/authorization/outcome/map and SSH flows not proved by this priority acceptance"
 }
