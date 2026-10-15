@@ -15,7 +15,13 @@
     "internal/server/conversation_parallel_test.go",
     "scripts/parallel-chat.test.cjs",
     "scripts/fixtures",
-    "docs"
+    "docs",
+    "internal/server/plugin_plan.go",
+    "internal/server/plugin_plan_test.go",
+    "scripts/aide.sh",
+    "scripts/test_source_fingerprint.py",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
   ],
   "stages": {
     "requirements": {
@@ -25,32 +31,39 @@
     },
     "design": {
       "status": "pass",
-      "summary": "Shared immutable frontend choices; Go shared allowed-set validation, existing parallel planner/fanout/merge/cancel; no expanded tool executor concurrency.",
+      "summary": "Shared six frontend choices and Go allowed-set validation across chat/planner/plugin DAG; original dependency/resource-conflict/hook/approval constraints retained. Explicit original requested deliverable after notes; Finder metadata excluded from runtime source identity consistently with Dockerignore.",
       "evidence": []
     },
     "implementation": {
       "status": "pass",
-      "summary": "Shared six choices and canonical normalization; hidden picker10, API/retry/worker limit10; existing serial tool executor retained.",
+      "summary": "Six labels/10 persistence/API/fanout and plugin DAG limit10. Merge repeats original user request and requires substantive content. Source hash ignores .DS_Store. Existing permission and hook serialization retained.",
       "evidence": []
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Node persistence/labels/mode regression PASS; targeted Go race14.740s PASS before additional cancellation-state assertion; IAB production-menu component dark/light/390px, scroll/select/reload10 PASS. Actual runtime/model, final race/full/main pending.",
-      "evidence": []
+      "summary": "Final32.892s targeted race, real Qwen10 analyses +1023-character ten-section substantive single answer/no tools, runtime and offline integrity/load PASS; production-menu component observed dark/light390px/scroll/reload10. Clean full/main pending.",
+      "evidence": [
+        "docs/reviews/2026-10-15/parallel-10x-levels.md",
+        "docs/reviews/2026-10-15/parallel-10x-levels-proof.json"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Architecture/review/phase boundaries/runtime/offline identities updated.",
+      "evidence": [
+        "docs/reviews/2026-10-15/parallel-10x-levels.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Own model sessions cancelled/completed and removed, original13 preserved; owned IAB page closed/viewport reset; only superseded owned e5 package removed; canonical rollback retained. Full runner pending cleanup.",
+      "evidence": [
+        "docs/reviews/2026-10-15/parallel-10x-levels-proof.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
+      "status": "in_progress",
+      "summary": "Final offline package verified; clean full/main gate/exact remote pending, no tag/version bump.",
       "evidence": []
     }
   },

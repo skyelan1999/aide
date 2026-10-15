@@ -1,0 +1,103 @@
+{
+  "status": "verification_in_progress",
+  "runtime": {
+    "image": "sha256:282c91ba5ce46b6770ec51d9b11fe7950f52fba104bff22e223ac948df00863e",
+    "runningImage": "sha256:282c91ba5ce46b6770ec51d9b11fe7950f52fba104bff22e223ac948df00863e",
+    "sourceSHA256": "89866018353ad506aac8c375848bfec3d39fb653b15371bd78a17885a2fa98ce",
+    "runningPlatformManifest": "sha256:065f4996406a8fdd56edb8de59dbf16bb32a60bf9fd52f9223e6f1513a2e7267",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "realModelFinal": {
+    "status": "pass",
+    "model": "qwen3.8-flash",
+    "requested": 10,
+    "planned": 10,
+    "completedParts": 10,
+    "usage": {
+      "prompt": 69891,
+      "completion": 1734,
+      "total": 71625,
+      "model": "qwen3.8-flash"
+    },
+    "tools": 0,
+    "commands": 0,
+    "samples": 62,
+    "requestPurposes": [
+      "parallel/plan",
+      "parallel/part-10",
+      "parallel/part-5",
+      "parallel/part-1",
+      "parallel/part-2",
+      "parallel/part-3",
+      "parallel/part-4",
+      "parallel/part-7",
+      "parallel/part-6",
+      "parallel/part-8",
+      "parallel/part-9",
+      "chat#0"
+    ],
+    "terminalStatus": "completed",
+    "protectedOriginalSessions": 13,
+    "cleanup": "owned session removed; original sessions/settings/auth/sources/workspace unchanged except monotonic sequence",
+    "sequence": [
+      28,
+      29
+    ],
+    "finalAnswerCharacters": 1023,
+    "finalAnswerContainsAllTenRequestedSections": true,
+    "singleMainAnswerRequest": true,
+    "scope": "actual configured authorized Qwen API in current9999; protocol fixtures separately prove overlap/cancel; token usage task-reported, not a bill; auxiliary title requests excluded"
+  },
+  "firstAttempt": {
+    "status": "partial",
+    "tenAnalysesCompleted": true,
+    "finalDeliverable": "only completion acknowledgement; not accepted"
+  },
+  "secondAttempt": {
+    "status": "not_pass",
+    "reason": "invalid planner JSON -> fallback; attempted plugin plan hit old5 limit; owned task cancelled and session removed"
+  },
+  "targetedRaceSeconds": 32.892,
+  "ui": {
+    "scope": "IAB offline production menu/module with mock config saves; not authenticated Safari",
+    "labels": "1X标准速度/2X轻度/3X中度/4X高/5X极高/10X极致",
+    "themes": [
+      "dark",
+      "light"
+    ],
+    "viewport390": true,
+    "scrollSelectAndReload10": true,
+    "tabsClosed": true
+  },
+  "offline": {
+    "image": "sha256:282c91ba5ce46b6770ec51d9b11fe7950f52fba104bff22e223ac948df00863e",
+    "sourceSHA256": "89866018353ad506aac8c375848bfec3d39fb653b15371bd78a17885a2fa98ce",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-282c91ba5ce4-offline.tar.gz",
+    "bytes": 705745867,
+    "sha256": "861f476432d3eac72d02d3673f99cc75bd6e08ef2a096af5c7eeb5c0a1cc0e09",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "activeExternalWorkspaceOnly": true,
+    "verificationStorage": "streamed hashes/metadata/load in active external workspace; no duplicate outputs recreated in original directory"
+  },
+  "full": "pending",
+  "main": "pending",
+  "boundaries": [
+    "actual receiving-device import pending",
+    "authenticated Safari deferred by human",
+    "Windows user-owned",
+    "real vectors deferred",
+    "original12 workstreams remain open"
+  ]
+}
