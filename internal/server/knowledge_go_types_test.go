@@ -72,6 +72,31 @@ func entry(a A,b B,i I,f func()){a.Same();b.Same();i.Same();f();lib.Target();fun
 	}
 }
 
+func TestKnowledgeGoTypesSingleMethodInterface(t *testing.T) {
+	files := []goTypeFile{{ID: "F", Path: "main.go", Root: "workspace", Text: `package p
+type Worker struct{}
+func (Worker) Same(){}
+type I interface{Same()}
+func entry(w Worker, i I){w.Same();i.Same()}
+`}}
+	result, err := checkGoTypes(files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	file := knowledgeCodeFile{ID: "F", Node: knowledgeNode{ID: "F", Kind: "file", Root: "workspace", Path: "main.go"}, Text: files[0].Text}
+	graph := knowledgeGraph{Nodes: []knowledgeNode{file.Node}}
+	expandKnowledgeCode(context.Background(), &graph, []knowledgeCodeFile{file})
+	applyKnowledgeGoTypes(&graph, result)
+	for _, edge := range graph.Edges {
+		if edge.Kind == "call_candidate" {
+			t.Fatalf("interface dispatched to concrete method: %+v", edge)
+		}
+	}
+	if graph.Code.TypedCalls != 1 || graph.Code.Unresolved != 1 || len(graph.Code.UnresolvedRelations) != 1 || graph.Code.UnresolvedRelations[0].Name != "i.Same" || graph.Code.UnresolvedRelations[0].Reason != "dynamic_binding" {
+		t.Fatalf("incorrect call classification: %+v", graph.Code)
+	}
+}
+
 func TestKnowledgeGoTypesResolvedDiagnosticsByColumn(t *testing.T) {
 	resolved := knowledgeUnresolvedRelation{From: "caller", File: "file", Line: 9, Column: 12, Name: "value.Compute", Kind: "call"}
 	dynamic := resolved

@@ -44,8 +44,16 @@ type goTypeResult struct {
 	Packages    int             `json:"packages"`
 	Checked     int             `json:"checked"`
 	Bindings    []goTypeBinding `json:"bindings"`
+	Dynamic     []goTypeDynamic `json:"dynamic,omitempty"`
 	Diagnostics []string        `json:"diagnostics"`
 	Truncated   bool            `json:"truncated"`
+}
+type goTypeDynamic struct {
+	File   string `json:"file"`
+	Caller string `json:"caller"`
+	Line   int    `json:"line"`
+	Column int    `json:"column"`
+	Name   string `json:"name"`
 }
 type goTypePackage struct {
 	scope      string
@@ -233,6 +241,16 @@ func checkGoTypes(files []goTypeFile) (goTypeResult, error) {
 					identifier = fun.Sel
 					if selection := p.info.Selections[fun]; selection != nil {
 						if _, dynamic := selection.Recv().Underlying().(*types.Interface); dynamic {
+							pos := fs.Position(call.Pos())
+							name := "<expression>." + fun.Sel.Name
+							if receiver, ok := fun.X.(*ast.Ident); ok {
+								name = receiver.Name + "." + fun.Sel.Name
+							}
+							if len(result.Dynamic) < 6500 {
+								result.Dynamic = append(result.Dynamic, goTypeDynamic{pos.Filename, caller, pos.Line, pos.Column, name})
+							} else {
+								result.Truncated = true
+							}
 							return true
 						}
 					}
@@ -359,7 +377,7 @@ func runGoTypeProcess(ctx context.Context, binary string, files []goTypeFile) (g
 	if err = json.Unmarshal(out.Bytes(), &result); err != nil {
 		return result, errors.New("Go类型服务响应无效")
 	}
-	if result.Engine != "go/types-indexed-snapshot-v1" || result.Packages < 0 || result.Packages > 80 || result.Checked < 0 || result.Checked > result.Packages || len(result.Bindings) > 6500 || len(result.Diagnostics) > 100 {
+	if result.Engine != "go/types-indexed-snapshot-v1" || result.Packages < 0 || result.Packages > 80 || result.Checked < 0 || result.Checked > result.Packages || len(result.Bindings) > 6500 || len(result.Dynamic) > 6500 || len(result.Diagnostics) > 100 {
 		return goTypeResult{}, errors.New("Go类型服务响应无效")
 	}
 	return result, nil
@@ -401,6 +419,14 @@ func applyKnowledgeGoTypes(g *knowledgeGraph, result goTypeResult) {
 	}
 	position := func(from string, line, column int) string { return fmt.Sprintf("%s\x00%d:%d", from, line, column) }
 	replacements := map[string]knowledgeEdge{}
+	dynamicCalls := map[string]knowledgeUnresolvedRelation{}
+	for _, call := range result.Dynamic {
+		from, ok := symbols[call.File+"\x00"+call.Caller]
+		if !ok || call.Line < 1 || call.Column < 1 {
+			continue
+		}
+		dynamicCalls[position(from.ID, call.Line, call.Column)] = knowledgeUnresolvedRelation{From: from.ID, File: call.File, Line: call.Line, Column: call.Column, Name: call.Name, Kind: "call", Reason: "dynamic_binding"}
+	}
 	for _, b := range result.Bindings {
 		from, ok := symbols[b.File+"\x00"+b.Caller]
 		if !ok {
@@ -411,12 +437,18 @@ func applyKnowledgeGoTypes(g *knowledgeGraph, result goTypeResult) {
 			continue
 		}
 		key := position(from.ID, b.Line, b.Column)
+		if _, dynamic := dynamicCalls[key]; dynamic {
+			continue
+		}
 		replacements[key] = knowledgeEdge{From: from.ID, To: target.ID, Kind: "call_typed", Line: b.Line, Column: b.Column, Confidence: "type_binding", Evidence: "go/types binding in successfully checked indexed package; not runtime or full project build proof"}
 	}
 	edges := g.Edges[:0]
 	for _, edge := range g.Edges {
 		if edge.Kind == "call_candidate" {
-			if _, ok := replacements[position(edge.From, edge.Line, edge.Column)]; ok {
+			key := position(edge.From, edge.Line, edge.Column)
+			_, bound := replacements[key]
+			_, dynamic := dynamicCalls[key]
+			if bound || dynamic {
 				g.Code.Calls--
 				continue
 			}
@@ -447,6 +479,26 @@ func applyKnowledgeGoTypes(g *knowledgeGraph, result goTypeResult) {
 			filePaths[n.ID] = n.Path
 		}
 	}
+	existingCalls := map[string]bool{}
+	for _, relation := range g.Code.UnresolvedRelations {
+		if relation.Kind == "call" {
+			existingCalls[position(relation.From, relation.Line, relation.Column)] = true
+		}
+	}
+	dynamicKeys := []string{}
+	for key := range dynamicCalls {
+		dynamicKeys = append(dynamicKeys, key)
+	}
+	sort.Strings(dynamicKeys)
+	for _, key := range dynamicKeys {
+		if existingCalls[key] {
+			continue
+		}
+		relation := dynamicCalls[key]
+		g.Code.UnresolvedRelations = append(g.Code.UnresolvedRelations, relation)
+		g.Code.Unresolved++
+		g.Code.Diagnostics = append(g.Code.Diagnostics, knowledgeUnresolvedCallDiagnostic(filePaths[relation.File], relation))
+	}
 	for _, r := range g.Code.UnresolvedRelations {
 		if r.Kind == "call" && accepted[position(r.From, r.Line, r.Column)] {
 			g.Code.Unresolved--
@@ -469,6 +521,7 @@ func applyKnowledgeGoTypes(g *knowledgeGraph, result goTypeResult) {
 		}
 	}
 	result.Bindings = nil // Graph carries bound edges; avoid duplicating large raw data.
+	result.Dynamic = nil
 	g.Code.LanguageService = &result
 	g.Warnings = append(g.Warnings, "可选Go类型服务只检查已索引快照。未加载项目构建标签、第三方模块或运行时代码；接口分派与函数变量仍未确认。")
 }

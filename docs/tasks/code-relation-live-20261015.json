@@ -11,6 +11,8 @@
   "scope": [
     "internal/server/knowledge_code.go",
     "internal/server/knowledge_code_test.go",
+    "internal/server/knowledge_go_types.go",
+    "internal/server/knowledge_go_types_test.go",
     "internal/server/code_analysis/javascript.cjs",
     "internal/server/code_analysis/python.py",
     "internal/server/knowledge_code_shadow_test.go",
@@ -35,7 +37,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "JS/Python lexical bindings, Go scoped resolver and explicit JS input token; focused regression coverage.",
+      "summary": "JS/Python scoped lexical candidates; Go type-confirmed interface dispatch invalidates AST same-name concrete candidate by exact call position. Focused race PASS 3.275s.",
       "evidence": [
         "docs/reviews/2026-10-15/code-relation-live.md"
       ]
