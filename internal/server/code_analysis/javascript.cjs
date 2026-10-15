@@ -64,7 +64,10 @@ for (const file of files) {
           const name = target.computed ? target.property?.value : target.property?.name;
           globalMutations.add(typeof name === 'string' ? name : '*');
         }
-        if (target?.type === 'MemberExpression' && target.object?.name === 'document') globalMutations.add('document');
+        if (target?.type === 'MemberExpression' && target.object?.name === 'document') {
+          const name=target.computed?target.property?.value:target.property?.name;
+          if(typeof name!=='string'||['getElementById','querySelector'].includes(name))globalMutations.add('document');
+        }
       }
       if (['ForInStatement', 'ForOfStatement'].includes(n.type) && n.left.type !== 'VariableDeclaration') for (const name of names(n.left)) writes.push([here, name]);
       children(n, c => build(c, here, functionEnv, n));
@@ -90,9 +93,76 @@ for (const file of files) {
       if (n?.type === 'TemplateLiteral' && !n.expressions.length) return n.quasis[0].value.cooked;
       return null;
     }
+    function parameter(fn, index) {
+      const p=fn.params[index];
+      if(p?.type==='Identifier')return p.name;
+      if(p?.type==='AssignmentPattern'&&p.left.type==='Identifier'&&p.right.type==='ObjectExpression'&&!p.right.properties.length)return p.left.name;
+      return null;
+    }
+    function methodOf(options) {
+      let method='GET';
+      if(options&&!(options.type==='Literal'&&options.value===null)) {
+        if(options.type!=='ObjectExpression'||options.properties.some(p=>p.type!=='Property'||p.computed||p.kind!=='init'))return null;
+        for(const p of options.properties)if((p.key.name||p.key.value)==='method') {
+          const value=literal(p.value);if(!value||!/^[A-Za-z]+$/.test(value))return null;method=value.toUpperCase();
+        }
+      }
+      return method;
+    }
+    const wrapperCache=new WeakMap();
+    function httpWrapper(fn) {
+      if(wrapperCache.has(fn))return wrapperCache.get(fn);
+      wrapperCache.set(fn,null);
+      const pathName=parameter(fn,0),optionsName=parameter(fn,1);
+      if(!pathName||fn.params.length>2||fn.params.length===2&&!optionsName)return null;
+      const pathBinding=lookup(environments.get(fn),pathName),optionsBinding=optionsName&&lookup(environments.get(fn),optionsName);
+      if(writes.some(([env,name])=>(name===pathName&&lookup(env,name)===pathBinding)||(name===optionsName&&lookup(env,name)===optionsBinding)))return null;
+      const calls=[];let unsafe=false;
+      function scan(n) {
+        if(n!==fn&&isFunction(n))return;
+        if(n.type==='WithStatement'||n.type==='Identifier'&&n.name==='arguments')unsafe=true;
+        if(n.type==='AssignmentExpression'||n.type==='UpdateExpression') {
+          let target=n.left||n.argument;while(target?.type==='MemberExpression')target=target.object;
+          if(target?.type==='Identifier'&&[pathName,optionsName].includes(target.name))unsafe=true;
+        }
+        if(n.type==='VariableDeclarator'&&n.init?.type==='Identifier'&&n.init.name===optionsName)unsafe=true;
+        if(n.type==='CallExpression') {
+          let owner=n.callee.type==='MemberExpression'?n.callee.object:null;
+          while(owner?.type==='MemberExpression')owner=owner.object;
+          if(n.callee.type==='Identifier'&&n.callee.name==='eval'||owner?.type==='Identifier'&&owner.name===optionsName)unsafe=true;
+          if(n.callee.type==='Identifier'&&n.callee.name==='fetch'&&globalAvailable('fetch',n))calls.push(n);
+          else if(n.arguments.some(a=>a.type==='Identifier'&&a.name===optionsName))unsafe=true;
+        }
+        children(n,scan);
+      }
+      scan(fn);
+      if(unsafe||calls.length!==1)return null;
+      const call=calls[0],target=call.arguments[0];
+      if(target?.type!=='BinaryExpression'||target.operator!=='+'||literal(target.left)===null||target.right.type!=='Identifier'||target.right.name!==pathName||lookup(environments.get(target.right),pathName)!==pathBinding)return null;
+      const options=call.arguments[1];let method=null,forward=false;
+      if(options?.type==='ObjectExpression'&&options.properties.some(p=>p.type==='SpreadElement')) {
+        const spreads=options.properties.filter(p=>p.type==='SpreadElement');
+        if(!optionsName||spreads.length!==1||spreads[0].argument.type!=='Identifier'||spreads[0].argument.name!==optionsName||options.properties.some(p=>p.type!=='SpreadElement'&&(p.type!=='Property'||p.computed||p.kind!=='init'||(p.key.name||p.key.value)==='method')))return null;
+        forward=true;
+      } else {method=methodOf(options);if(!method)return null;}
+      const result={prefix:literal(target.left),forward,method,line:fn.loc.start.line};wrapperCache.set(fn,result);return result;
+    }
+    function domHelper(fn) {
+      if(fn.params.length!==1||fn.params[0].type!=='Identifier')return null;
+      const expression=fn.body.type==='BlockStatement'&&fn.body.body.length===1&&fn.body.body[0].type==='ReturnStatement'?fn.body.body[0].argument:fn.body;
+      if(expression?.type!=='CallExpression'||expression.arguments.length!==1||expression.arguments[0].type!=='Identifier'||expression.arguments[0].name!==fn.params[0].name)return null;
+      const c=expression.callee;
+      if(c.type==='MemberExpression'&&!c.computed&&c.object?.name==='document'&&globalAvailable('document',expression)&&c.property.name==='getElementById')return 'id';
+      return null;
+    }
     function domTarget(n) {
       if (n?.type !== 'CallExpression' || n.arguments.length !== 1) return null;
       const c = n.callee;
+      if(c.type==='Identifier') {
+        const binding=lookup(environments.get(n),c.name),value=literal(n.arguments[0]);
+        if(binding?.kind==='callable'&&isFunction(binding.node)&&domHelper(binding.node)&&value&&value.length<=256)return value;
+        return null;
+      }
       if (c.type !== 'MemberExpression' || c.computed || c.object?.name !== 'document' || !globalAvailable('document', n)) return null;
       const value = literal(n.arguments[0]);
       if (!value || value.length > 256) return null;
@@ -116,6 +186,16 @@ for (const file of files) {
       const c = n.callee;
       if (c.type === 'MemberExpression' && !c.computed && c.property.name === 'addEventListener') {
         event(n, domTarget(c.object), literal(n.arguments[0]), n.arguments[1], scope);
+      }
+      if(c.type==='Identifier'&&c.name!=='fetch') {
+        const binding=lookup(environments.get(n),c.name);
+        const wrapper=binding?.kind==='callable'&&isFunction(binding.node)&&httpWrapper(binding.node);
+        if(wrapper) {
+          const value=literal(n.arguments[0]),method=wrapper.forward?methodOf(n.arguments[1]):wrapper.method;
+          if(value!==null&&method&&(wrapper.prefix+value).length<=2048)webRecord(u.requests,{caller:scope,url:wrapper.prefix+value,method,line:n.loc.start.line,column:n.loc.start.column+1,wrapper:c.name,wrapperLine:wrapper.line});
+          else unresolved(n,'http','dynamic_wrapper_arguments');
+        }
+        return;
       }
       if (c.type !== 'Identifier' || c.name !== 'fetch') return;
       if (!globalAvailable('fetch', n)) { unresolved(n, 'http', 'shadowed_or_reassigned_fetch'); return; }

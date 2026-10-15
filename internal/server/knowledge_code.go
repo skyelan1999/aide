@@ -73,11 +73,13 @@ type codeDOMEvent struct {
 	Column   int    `json:"column"`
 }
 type codeHTTPRequest struct {
-	Caller string `json:"caller"`
-	URL    string `json:"url"`
-	Method string `json:"method"`
-	Line   int    `json:"line"`
-	Column int    `json:"column"`
+	Caller      string `json:"caller"`
+	URL         string `json:"url"`
+	Method      string `json:"method"`
+	Line        int    `json:"line"`
+	Column      int    `json:"column"`
+	Wrapper     string `json:"wrapper,omitempty"`
+	WrapperLine int    `json:"wrapperLine,omitempty"`
 }
 type codeWebUnresolved struct {
 	Kind   string `json:"kind"`

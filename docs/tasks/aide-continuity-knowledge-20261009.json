@@ -7630,7 +7630,7 @@
     "task": "docs/tasks/knowledge-http-evidence-20261016.json",
     "status": "in_progress",
     "classification": "progress",
-    "summary": "HTML/JS/Go源证据和初版六段静态链已接入，实际临时文件索引/路径HTTP接口与隔离race、Knowledge race/vet及quick85通过；新增关系界面、辅助函数样式及完整发行待继续，原12项仍在进行。",
+    "summary": "六段静态链、DOM/请求辅助函数和根相对脚本唯一候选、图/路径分类与等级已接入；实际临时索引API、当前Knowledge race/vet、quick85和IAB组件明暗/390通过。待full87/运行镜像/独立main门禁及交付；原12项仍进行。",
     "evidence": [
       "docs/reviews/2026-10-16/knowledge-http-evidence.md",
       "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"

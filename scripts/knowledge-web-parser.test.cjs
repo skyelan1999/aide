@@ -59,6 +59,29 @@ assert.equal(bounded.webReferencesTruncated, true);
 const boundedEvents = parse(Array.from({length:300}, (_,i)=>`document.getElementById('b${i}').onclick=()=>{};`).join('\n'));
 assert.equal(boundedEvents.events.length, 256);
 assert.equal(boundedEvents.webReferencesTruncated, true);
+const wrapped = parse(`const $=id=>document.getElementById(id);
+async function api(path,options={}){const headers={...options.headers};const response=await fetch('/api'+path,{...options,headers});return response.json();}
+async function save(){return api('/save',{method:'POST'});}
+$('save').onclick=save;`);
+assert.equal(wrapped.events[0].target,'save');
+assert.equal(wrapped.events[0].callback,'save');
+assert.deepEqual(wrapped.requests.map(r=>[r.caller,r.url,r.method,r.wrapper,r.wrapperLine]),[['save','/api/save','POST','api',2]]);
+for(const text of [
+  `function api(path,options={}){options.method='DELETE';return fetch('/api'+path,{...options});}api('/save',{method:'POST'});`,
+  `function api(path,options={}){const alias=options;alias.method='DELETE';return fetch('/api'+path,{...options});}api('/save');`,
+  `function api(path,options={}){mutate(options);return fetch('/api'+path,{...options});}api('/save');`,
+  `function api(path,options={}){return fetch('/api'+path,{...options,method:'DELETE'});}api('/save');`,
+  `function api(path,options={}){return fetch('/api'+path,{...options});}function run(api){api('/fake');}`,
+  `function api(path,options={}){eval("path='/fake'");return fetch('/api'+path,{...options});}api('/save');`,
+  `function api(path,options={}){arguments[0]='/fake';return fetch('/api'+path,{...options});}api('/save');`,
+  `function api(path,options={}){options.mutate();return fetch('/api'+path,{...options});}api('/save');`,
+])assert.equal(parse(text).requests.length,0,'unsafe or shadowed wrapper invented a request');
+const isolated = parse(`function api(path,options={}){return fetch('/api'+path,{...options});} function one(){api('/one');}function two(){api('/two',{method:'POST'});}`);
+assert.deepEqual(isolated.requests.map(r=>[r.caller,r.url]),[['one','/api/one'],['two','/api/two']]);
+assert.equal(parse("const $=id=>document.getElementById(id);document.title='new';$('save').onclick=()=>{};").events.length,1);
+const actualStarMap=parse(fs.readFileSync(path.join(root,'internal/server/web/starmap.js'),'utf8'));
+assert.ok(actualStarMap.events.length>0,'actual star-map DOM helper not recognized');
+assert.ok(actualStarMap.requests.some(r=>r.wrapper==='api'&&r.url==='/api/knowledge-map/paths'),'actual star-map API wrapper not recognized');
 function parseHTML(text) {
   const source = fs.readFileSync(path.join(root, 'internal/server/code_analysis/html.py'), 'utf8');
   return JSON.parse(execFileSync('python3', ['-I', '-c', source], {input:JSON.stringify([{id:'H',text}]),encoding:'utf8',timeout:3000,maxBuffer:2<<20}))[0];

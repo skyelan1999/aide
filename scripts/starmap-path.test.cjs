@@ -8,12 +8,23 @@ const target={id:'b',name:'报告来源',path:'report.md',root:'workspace',origi
 let answer,resolve;
 const c=vm.createContext({$:el,document:{createElement:()=>({dataset:{},children:[],append(...nodes){this.children.push(...nodes)}})},locked:false,loading:false,liveCursor:'r',graph:{workspace:'w'},codeView:true,selected:node,nodeByID:new Map([['a',node]]),redraw(){},select(){},api:async()=>answer,AbortController,setTimeout,clearTimeout,console});
 vm.runInContext(block,c);
+const layerContext={window:{}};vm.runInNewContext(fs.readFileSync('internal/server/web/starmap-structure.js','utf8'),layerContext);
+const chainKinds=['dom_event','event_callback','http_request','http_route','route_handler','call_candidate'];
+const chainNodes=Array.from({length:7},(_,i)=>({id:'b'+i}));
+const chainEdges=chainKinds.map((kind,i)=>({kind,from:'b'+i,to:'b'+(i+1)}));
+const layer=layerContext.window.AideStarStructure.build(chainNodes,chainEdges).describe('b0','calls');
+assert.equal(layer.levels.get('b6'),6,'call/request view dropped part of the HTTP evidence chain');
 (async()=>{
  el('path-set-from').onclick();assert.equal(el('path-from').value,'a');assert.equal(el('path-explorer').open,true);
  el('path-to').value='a';answer={workspace:'w',revision:'r',found:true,nodes:[node],steps:[]};await vm.runInContext('queryEvidencePath()',c);assert.match(el('path-status').textContent,/0 步/);assert.equal(el('path-steps').children.length,1);assert.equal(el('path-run').disabled,false);
  c.nodeByID.set('b',target);vm.runInContext(`renderEvidencePath(${JSON.stringify({workspace:'w',revision:'r',found:true,nodes:[node,target],steps:[{edge:{from:'a',to:'b',kind:'mention',line:2,column:4,evidence:'显式引用：report.md'},reversed:false}]})})`,c);
  const sourceLink=el('path-steps').children[0].children.find(child=>child.textContent==='查看关系源位置 ↗');assert.ok(sourceLink,'mention edges should expose a source-position link');
  const sourceSpec=JSON.parse(decodeURIComponent(sourceLink.href.split('=')[1]));assert.equal(sourceSpec.path,'main.go');assert.equal(sourceSpec.line,2);assert.equal(sourceSpec.endLine,2);assert.equal(sourceSpec.codeHash,'hash');
+ for(const [kind,confidence,label]of [['dom_event','dom_selector_candidate','DOM选择器候选'],['event_callback','source_binding','词法绑定'],['http_request','source_template','静态URL模板'],['http_route','http_route_candidate','方法与路径候选'],['route_handler','name_candidate','静态名称候选']]){
+  vm.runInContext(`renderEvidencePath(${JSON.stringify({found:true,nodes:[node,target],steps:[{edge:{from:'a',to:'b',kind,confidence,line:2,column:4,evidence:'source evidence'}}]})})`,c);
+  const row=el('path-steps').children[0];assert.ok(row.children.some(child=>child.textContent?.includes(label)),kind+' confidence missing');
+  const href=row.children.find(child=>child.textContent==='查看关系源位置 ↗').href;assert.equal(JSON.parse(decodeURIComponent(href.split('=')[1])).codeHash,'hash');
+ }
  vm.runInContext(`renderEvidencePath(${JSON.stringify(answer)})`,c);
  c.api=async()=>answer;const reconcile=source.slice(source.indexOf(' if(initial||update.workspace!==graph.workspace)'),source.indexOf(' const differentWorkspace=!!graph.workspace'));
  c.initial=false;c.liveWireNodes=new Map([['a',JSON.stringify(node)]]);c.edgeKey=e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.column||0,e.evidence||'',e.confidence||'']);

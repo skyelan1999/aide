@@ -18,7 +18,7 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
  for(const node of byID.values()){const file=node.kind==='symbol'&&byID.has(node.parentFile)?byID.get(node.parentFile):node;scopeByID.set(node.id,JSON.stringify([file.id,declarationFor(node)]));}
  function representative(id){let root=id;while(union.get(root)!==root)root=union.get(root);while(id!==root){const next=union.get(id);union.set(id,root);id=next;}return root;}
  function join(a,b){a=representative(a);b=representative(b);if(a===b)return;if(rank.get(a)<rank.get(b))[a,b]=[b,a];union.set(b,a);minimum.set(a,minimum.get(a)<minimum.get(b)?minimum.get(a):minimum.get(b));if(rank.get(a)===rank.get(b))rank.set(a,rank.get(a)+1);}
- for(const edge of validEdges){if(!['call_candidate','call_typed'].includes(edge.kind))continue;
+ for(const edge of validEdges){if(!['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(edge.kind))continue;
   if(!out.has(edge.from)){out.set(edge.from,new Set());back.set(edge.from,new Set());}
   if(!out.has(edge.to)){out.set(edge.to,new Set());back.set(edge.to,new Set());}
   out.get(edge.from).add(edge.to);back.get(edge.to).add(edge.from);
@@ -37,7 +37,7 @@ window.AideStarCosmos = Object.freeze({build(nodes, edges) {
  }
  const callGroups=new Map();
  for(const id of localIncident){const key=minimum.get(representative(id));if(!callGroups.has(key))callGroups.set(key,{key,members:[],edges:0});callGroups.get(key).members.push(id);}
- for(const edge of validEdges)if(['call_candidate','call_typed'].includes(edge.kind)&&scopeByID.get(edge.from)===scopeByID.get(edge.to))callGroups.get(minimum.get(representative(edge.from))).edges++;
+ for(const edge of validEdges)if(['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(edge.kind)&&scopeByID.get(edge.from)===scopeByID.get(edge.to))callGroups.get(minimum.get(representative(edge.from))).edges++;
  const normalized=value=>String(value||'').replace(/\\/g,'/').split('/').filter(part=>part&&part!=='.').join('/');
  const dirname=value=>{const parts=value.split('/');parts.pop();return parts.join('/')||'.';};
  const base=value=>value.split('/').filter(Boolean).pop()||value;

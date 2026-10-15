@@ -27,15 +27,16 @@
       ]
     },
     "design": {
-      "status": "in_progress",
-      "summary": "产品拥有的AST/HTML源解析，显式脚本引用和同来源唯一路由连接；静态候选等级与预算；先实现解析证据，图和呈现接续。",
+      "status": "pass",
+      "summary": "AST/HTML声明、同来源候选和标准库路由匹配；纯辅助函数与请求模板按调用位置展开，保留静态等级/预算和缺口。",
       "evidence": [
-        "docs/prd/2026-10-16-knowledge-http-evidence.md"
+        "docs/reviews/2026-10-16/knowledge-http-evidence.md",
+        "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "HTML/Go路由源解析及初版同来源六段链已实现；界面新关系、辅助函数/请求封装与根相对脚本等真实工作台样式继续。",
+      "status": "pass",
+      "summary": "HTML/Go路由/JS直接及辅助函数六段链和路径/图筛选、等级、源链接接入；复杂动态场景诊断，不扩张原预算。",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-http-evidence.md",
         "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
@@ -43,24 +44,27 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Knowledge race/vet、最终Web实际文件索引/HTTP六段链及隔离race/vet、quick85通过；尚未浏览器/full/发行。",
+      "summary": "Knowledge race/vet、quick85、实际索引API、真实辅助函数源解析和IAB明暗/窄屏组件通过；待最终full87/运行发行。",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-http-evidence.md",
         "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "完整目标PRD及开发检查点已记录；图构建/界面实现后补最终行为和交付。",
+      "status": "pass",
+      "summary": "PRD和最终行为、UI组件/源解析/索引API证据及未验边界同步。",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-http-evidence.md",
         "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "自建组件页关闭、视口复位、预览服务停止；材料归属任务目录，未改旧目录或生产会话。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-http-evidence.md",
+        "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -70,5 +74,5 @@
   },
   "release_authorization": "沿用用户分批测试/push/合main、本机启动及离线镜像包交付授权；无升版/tag/正式Release。",
   "rollback": "当前47cd运行镜像与完整离线包保留；本批尚未变更数据格式或部署。",
-  "handoff": "后端构图检查点；继续新关系的路径/图分类、可信度与定位界面，根相对脚本和DOM/请求辅助函数样式；完整浏览器/full/main/镜像交付仍待完成。当前生产47cd未变。"
+  "handoff": "源候选就绪；继续start.command镜像/离线校验、冻结main full87与独立门禁/推送。完整Safari与全aide索引覆盖不冒称完成，原12项保持进行。"
 }

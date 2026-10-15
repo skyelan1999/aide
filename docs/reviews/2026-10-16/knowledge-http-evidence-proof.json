@@ -1,6 +1,6 @@
 {
   "task": "knowledge-http-evidence-20261016",
-  "status": "backend_graph_development_checkpoint",
+  "status": "source_candidate",
   "baseline": "584aa9b9182dd091a3265b0f62f5a22e510d6a9a",
   "oldParser": "DOM event evidence is missing: expected regression failure",
   "node": "pass: callback/request provenance, lexical shadow/reassignment, global mutations, dynamic diagnostics and256 bounds",
@@ -14,13 +14,13 @@
   "quick": {
     "status": "pass",
     "count": 85,
-    "fingerprint": "80ff3a616b927573b137d5aba8f3ed393bc02f2d20974232e515764a540a50a9"
+    "fingerprint": "b97f8cecfbe9cf56f871d29a39865b6a8a8db2d939e668ed8fe579da6e564846"
   },
   "notComplete": [
-    "path UI new relation filters/labels/confidence/location presentation",
-    "root-relative script mapping, DOM helper and request-wrapper styles including actual workbench",
-    "actual browser interaction",
-    "full/main gate/runtime/offline release"
+    "clean-main full87",
+    "independent main gate and remote push",
+    "runtime candidate and offline package",
+    "full authenticated Safari deferred; actual whole-aide index not proven"
   ],
   "production": "unchanged47cd; no model calls, no production session/config changes",
   "html": "pass: source button/script positions, inactive markup, duplicate IDs/attributes, base URL diagnostics and bounds",
@@ -37,5 +37,39 @@
     "vet": "all packages pass",
     "serverSeconds": 2.891,
     "scope": "final source including actual temporary files -> production index -> registered HTTP path API,6 steps, hashes/locations and409 revision/workspace/view isolation; no production data"
-  }
+  },
+  "helpers": {
+    "status": "pass",
+    "actualStarMapSource": "DOM helper and api fixed-prefix request recognized without executing source",
+    "scope": "lexical immutable forwarding only, per-call-site requests",
+    "rootScript": "unique page-directory/source-root candidate only; ambiguous and external reject",
+    "isolation": "save button cannot reach other button service through shared wrapper"
+  },
+  "latestKnowledge": {
+    "selector": "^TestKnowledge",
+    "race": "pass",
+    "vet": "all packages pass",
+    "serverSeconds": 69.527
+  },
+  "browser": {
+    "status": "pass_scoped",
+    "client": "IAB single component tab",
+    "scope": "production path markup/CSS/render/query/clear functions with synthetic seven-node six-step data",
+    "sizesThemes": [
+      "1440x960 dark",
+      "390x844 light"
+    ],
+    "horizontalOverflow": false,
+    "clearRows": 0,
+    "queryRows": 7,
+    "querySteps": 6,
+    "readOnlyHashAndLineLinksVisible": true,
+    "cleanup": "own tab closed, viewport reset, own preview server stopped",
+    "notProven": "full authenticated Safari / actual source file opening / whole project coverage",
+    "screenshots": [
+      "knowledge-http-evidence/path-dark.png",
+      "knowledge-http-evidence/path-light-390.png"
+    ]
+  },
+  "previousQuickFailure": "new structure regression swapped describe arguments; corrected single test and final quick85 pass"
 }

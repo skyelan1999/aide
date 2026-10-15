@@ -11,6 +11,36 @@ import (
 
 func knowledgeWebArea(n knowledgeNode) string { return n.Root + "\x00" + n.Source + "\x00" + n.Region }
 
+// Static source candidates only: root-relative browser paths may correspond
+// to the page directory or the selected source root. Ambiguity rejects both.
+func knowledgeWebScriptFile(page knowledgeCodeFile, src string, files map[string]knowledgeCodeFile) string {
+	u, err := url.Parse(src)
+	if err != nil || u.IsAbs() || u.Host != "" || strings.HasPrefix(src, "//") {
+		return ""
+	}
+	candidates := map[string]bool{}
+	if strings.HasPrefix(src, "/") {
+		rel := knowledgeLocalReference(strings.TrimPrefix(src, "/"))
+		if rel == "" {
+			return ""
+		}
+		candidates[path.Clean(rel)] = true
+		candidates[path.Clean(path.Join(path.Dir(page.Node.Path), rel))] = true
+	} else if rel := knowledgeLocalReference(src); rel != "" {
+		candidates[path.Clean(path.Join(path.Dir(page.Node.Path), rel))] = true
+	}
+	matches := []string{}
+	for id, f := range files {
+		if knowledgeWebArea(f.Node) == knowledgeWebArea(page.Node) && codeLanguage(f.Node.Path) == "JavaScript" && candidates[f.Node.Path] {
+			matches = append(matches, id)
+		}
+	}
+	if len(matches) == 1 {
+		return matches[0]
+	}
+	return ""
+}
+
 // Only compile source patterns into the standard library matcher. The handler
 // is product-owned and never invoked; no workspace code is executed.
 func knowledgeWebMux(pattern string) (mux *http.ServeMux) {
@@ -164,7 +194,7 @@ func appendKnowledgeWeb(ctx context.Context, g *knowledgeGraph, files map[string
 				}
 				loaded := false
 				for _, script := range page.Scripts {
-					if rel := knowledgeLocalReference(script.Path); rel != "" && path.Clean(path.Join(path.Dir(h.Node.Path), rel)) == f.Node.Path {
+					if knowledgeWebScriptFile(h, script.Path, files) == f.ID {
 						loaded = true
 					}
 				}
@@ -189,7 +219,12 @@ func appendKnowledgeWeb(ctx context.Context, g *knowledgeGraph, files map[string
 				caller = lookup(f.ID, r.Caller)
 			}
 			n := newNode(f, fmt.Sprintf("request@%d:%d", r.Line, r.Column), r.Method+" "+r.URL, "http request", r.Line)
-			link(caller, n, "http_request", "source_declaration", r.Line, r.Column, "JS AST fetch literal; not a network observation")
+			confidence, evidence := "source_declaration", "JS AST fetch literal; not a network observation"
+			if r.Wrapper != "" {
+				confidence = "source_template"
+				evidence = fmt.Sprintf("JS lexical wrapper %s at %s:%d; fixed-prefix URL and method substituted at this call site; not a network observation", r.Wrapper, f.Node.Path, r.WrapperLine)
+			}
+			link(caller, n, "http_request", confidence, r.Line, r.Column, evidence)
 			parsed, err := url.Parse(r.URL)
 			if err != nil || parsed.IsAbs() || parsed.Host != "" || !strings.HasPrefix(r.URL, "/") || strings.HasPrefix(r.URL, "//") || parsed.RawPath != "" {
 				diagnostic(f, r.Line, r.Column, "http", "nonlocal_or_dynamic_request_origin")

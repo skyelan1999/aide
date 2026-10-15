@@ -17,6 +17,7 @@ function resetDocumentBatch(){documentBatch=null;$('document-progress').hidden=t
 let liveCursor='',liveTimer=0,liveAbort=null,liveEpoch=0,liveFailures=0,liveAnimationUntil=0,cacheIdentity=null,cacheWriteTimer=0;
 let liveReconcile=false,liveWireNodes=new Map(),liveStableScenes=new Map(),liveGhosts=[];
 let pathAbort=null,pathGeneration=0,pathResult=null;
+function evidenceConfidenceLabel(value){return ({type_binding:'快照类型绑定',name_candidate:'静态名称候选',dom_selector_candidate:'DOM选择器候选',source_binding:'词法绑定',source_template:'静态URL模板',http_route_candidate:'方法与路径候选',source_declaration:'源声明',source_path:'路径匹配',explicit_reference:'显式引用'})[value]||'';}
 function clearEvidencePath(message='路径基于当前索引，不等于运行轨迹。',clearInputs=false){
  pathGeneration++;pathAbort?.abort();pathAbort=null;pathResult=null;$('path-run').disabled=false;$('path-steps').replaceChildren();$('path-status').textContent=message;
  if(clearInputs){$('path-from').value='';$('path-to').value='';}redraw();
@@ -31,11 +32,11 @@ function pathSourceLink(n,line){
 function renderEvidencePath(result){
  $('path-steps').replaceChildren();
  $('path-status').textContent=result.found?`${result.steps.length} 步 · 当前索引证据路径${result.truncated?' · 索引仍有缺口':''}`:`当前索引及规则下未找到路径${result.limited?' · 搜索达到32步或16000节点限制':''}${result.truncated?' · 索引不完整':''}。不代表没有真实联系。`;
- const labels={call_typed:'快照类型绑定',call_candidate:'静态名称候选',defines:'源码声明',imports:'导入路径',mention:'文本提及',attachment:'会话附件',contains:'目录归属'};
+ const labels={call_typed:'快照类型绑定',call_candidate:'静态名称候选',dom_event:'按钮事件候选',event_callback:'事件回调绑定',http_request:'HTTP请求声明',http_route:'HTTP路由候选',route_handler:'路由处理函数候选',defines:'源码声明',imports:'导入路径',mention:'文本提及',attachment:'会话附件',contains:'目录归属'};
  for(const [i,n] of result.nodes.entries()){
   const row=document.createElement('li'),button=document.createElement('button');button.type='button';button.className='code-relation';button.textContent=n.name+' · '+n.id;button.onclick=()=>{const current=nodeByID.get(n.id);if(current)select(current);};row.append(button);
   const link=pathSourceLink(n);if(link){const a=document.createElement('a');a.dataset.filePreview='';a.href=link;a.target='_blank';a.rel='noopener';a.textContent='打开原文件 ↗';row.append(a);}
-  const step=result.steps[i];if(step){const e=step.edge,p=document.createElement('p');p.textContent=`${step.reversed?'逆向探索 ←':'沿关系 →'} ${labels[e.kind]||e.kind}${e.line?' · L'+e.line+(e.column?':'+e.column:''):''}`+(e.evidence?' · '+e.evidence:' · 此关系未提供源位置证据');row.append(p);
+  const step=result.steps[i];if(step){const e=step.edge,p=document.createElement('p');p.textContent=`${step.reversed?'逆向探索 ←':'沿关系 →'} ${labels[e.kind]||e.kind}${e.confidence&&evidenceConfidenceLabel(e.confidence)!==labels[e.kind]?' · '+(evidenceConfidenceLabel(e.confidence)||'静态证据'):''}${e.line?' · L'+e.line+(e.column?':'+e.column:''):''}`+(e.evidence?' · '+e.evidence:' · 此关系未提供源位置证据');row.append(p);
    const origin=nodeByID.get(e.from),href=e.line&&pathSourceLink(origin,e.line);if(href){const a=document.createElement('a');a.dataset.filePreview='';a.href=href;a.target='_blank';a.rel='noopener';a.textContent='查看关系源位置 ↗';row.append(a);}}
   $('path-steps').append(row);
  }
@@ -60,7 +61,7 @@ function drawEvidencePath(){
  if(!pathResult?.found||locked)return;
  const visible=cosmicEnabled?new Map(cosmicStars.map(s=>[s.n.id,s.p])):new Map(renderNodes.map(n=>[n.id,n.projected]));
  ctx.save();ctx.strokeStyle=mapPalette.star;ctx.lineWidth=1.5;ctx.globalAlpha=.8;
- for(const step of pathResult.steps){const a=visible.get(step.edge.from),b=visible.get(step.edge.to);if(!a?.onScreen||!b?.onScreen)continue;ctx.setLineDash(step.edge.kind==='call_candidate'||step.edge.kind==='mention'?[3,6]:[]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+ for(const step of pathResult.steps){const a=visible.get(step.edge.from),b=visible.get(step.edge.to);if(!a?.onScreen||!b?.onScreen)continue;ctx.setLineDash(['call_candidate','mention','dom_event','event_callback','http_request','http_route','route_handler'].includes(step.edge.kind)?[3,6]:[]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
  ctx.setLineDash([]);for(const n of pathResult.nodes){const p=visible.get(n.id);if(!p?.onScreen)continue;ctx.beginPath();ctx.arc(p.x,p.y,10,0,Math.PI*2);ctx.stroke();}ctx.restore();
 }
 
@@ -751,14 +752,14 @@ function layout(preserve=false){
    c.nodes.forEach(n=>{const angle=seeded(n.id+'a')*tau,r=Math.sqrt(seeded(n.id+'r'))*spread;n.x=c.x+Math.cos(angle)*r;n.y=c.y+Math.sin(angle)*r*.68;n.depth=c.depth+(seeded(n.id+'z')-.5)*.08;if(oldPositions.has(n.id))Object.assign(n,oldPositions.get(n.id));n.cluster=c;
     applyStellarColor(n);n.drawLabel=n.name.length>27?n.name.slice(0,27)+'…':n.name;n.projected=preserve&&n.projected?n.projected:{n,x:0,y:0,onScreen:false};});});}
  for(const n of graph.nodes){if(n.kind!=='symbol'||preserve&&oldPositions.has(n.id))continue;const p=nodeByID.get(n.parentFile);if(!p)continue;const a=seeded(n.id+'orbit')*tau,r=.016+seeded(n.id+'span')*.038;n.x=p.x+Math.cos(a)*r;n.y=p.y+Math.sin(a)*r;n.depth=p.depth-.01;}
- for(const e of graph.edges){e.a=nodeByID.get(e.from)?.projected;e.b=nodeByID.get(e.to)?.projected;e.phase=seeded(e.from+e.to);e.hierarchy=['contains','defines'].includes(e.kind);e.dashed=['mention','call_candidate'].includes(e.kind);e.directed=['call_candidate','call_typed','imports'].includes(e.kind);
+ for(const e of graph.edges){e.a=nodeByID.get(e.from)?.projected;e.b=nodeByID.get(e.to)?.projected;e.phase=seeded(e.from+e.to);e.hierarchy=['contains','defines'].includes(e.kind);e.dashed=['mention','call_candidate','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind);e.directed=['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler','imports'].includes(e.kind);
   for(const id of [e.from,e.to]){if(!edgeAdjacency.has(id))edgeAdjacency.set(id,[]);edgeAdjacency.get(id).push(e);}}
  if(!preserve){cosmos=window.AideStarCosmos?.build(graph.nodes,graph.edges)||null;cosmicSceneCache.clear();cosmicDustFrameCache=null;cosmicTextureCache.clear();cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicFlight=null;cosmicScopeKey='';liveStableScenes.clear();
   if(cosmos)enterCosmic(cosmos.root.key,false);else{cosmicEnabled=false;syncCosmicNav();}
  }else liveReconcile=true;
  invalidateView();
 }
-function eligibleEdge(e){return !codeView||edgeMode==='all'||edgeMode==='calls'&&['call_candidate','call_typed'].includes(e.kind)||edgeMode==='imports'&&e.kind==='imports'||edgeMode==='hierarchy'&&e.hierarchy;}
+function eligibleEdge(e){return !codeView||edgeMode==='all'||edgeMode==='calls'&&['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind)||edgeMode==='imports'&&e.kind==='imports'||edgeMode==='hierarchy'&&e.hierarchy;}
 function focusIDs(){
  if(!codeView||!focusCode||!selected)return null;
  const key=selected.id+'|'+edgeMode+'|'+callDepth+'|'+renderRevision;if(focusKey===key&&focusCache)return focusCache;
@@ -885,17 +886,17 @@ function renderCodeInsight(n){
  $('code-signature').textContent=n.signature||'';$('code-location').textContent=n.kind==='symbol'?`${n.language} · ${n.symbolKind} · L${n.line}–L${n.endLine} · ${n.id}`+(n.contentHash?' · SHA '+n.contentHash.slice(0,10):''):'文件 / 模块视角';
  $('code-open').hidden=!n.path||n.kind==='directory';const spec={root:n.root,path:n.path,readOnly:true,origin:n.origin||'',knowledgeWorkspace:graph.workspace};if(n.line){spec.line=n.line;spec.endLine=n.endLine;spec.codeHash=n.contentHash;}if(n.source)spec.source=n.source;if(n.format)spec.format=n.format;$('code-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));
  const byID=nodeByID,edges=graph.edges;
- function list(id,title,items){const box=$(id);box.replaceChildren();const h=document.createElement('h3');h.textContent=title+' · '+items.length;box.append(h);for(const {node,edge,label}of items.slice(0,24)){const b=document.createElement('button');b.type='button';b.className='code-relation';b.textContent=(label||'')+node.name+(edge?.line?' · L'+edge.line:'');const confidence={source_declaration:'声明证据',source_path:'路径匹配',name_candidate:'名称候选',type_binding:'类型绑定'}[edge?.confidence]||'';if(confidence){const tag=document.createElement('small');tag.textContent=confidence;b.append(tag);}b.title=(node.path||'')+' / '+node.id+(edge?.evidence?' / '+edge.evidence:'');b.onclick=()=>select(node);box.append(b);}if(items.length>24){const p=document.createElement('p');p.textContent='仅显示前24项，可用函数名继续搜索。';box.append(p);}if(!items.length){const p=document.createElement('p');p.textContent='当前索引内未发现；不代表项目中不存在。';box.append(p);}}
+ function list(id,title,items){const box=$(id);box.replaceChildren();const h=document.createElement('h3');h.textContent=title+' · '+items.length;box.append(h);for(const {node,edge,label}of items.slice(0,24)){const b=document.createElement('button');b.type='button';b.className='code-relation';b.textContent=(label||'')+node.name+(edge?.line?' · L'+edge.line:'');const confidence=evidenceConfidenceLabel(edge?.confidence);if(confidence){const tag=document.createElement('small');tag.textContent=confidence;b.append(tag);}b.title=(node.path||'')+' / '+node.id+(edge?.evidence?' / '+edge.evidence:'');b.onclick=()=>select(node);box.append(b);}if(items.length>24){const p=document.createElement('p');p.textContent='仅显示前24项，可用函数名继续搜索。';box.append(p);}if(!items.length){const p=document.createElement('p');p.textContent='当前索引内未发现；不代表项目中不存在。';box.append(p);}}
  const mapped=(es,dir)=>es.map(e=>({node:byID.get(e[dir]),edge:e})).filter(x=>x.node);
  const hierarchy=[...mapped(edges.filter(e=>['defines','contains'].includes(e.kind)&&e.to===n.id),'from').map(x=>({...x,label:'上级 / '})),...mapped(edges.filter(e=>['defines','contains'].includes(e.kind)&&e.from===n.id),'to').map(x=>({...x,label:'声明 / '}))];
- list('code-hierarchy','代码层级',hierarchy);list('code-callers','调用关系 ←',mapped(edges.filter(e=>['call_candidate','call_typed'].includes(e.kind)&&e.to===n.id),'from'));list('code-callees','调用关系 →',mapped(edges.filter(e=>['call_candidate','call_typed'].includes(e.kind)&&e.from===n.id),'to'));
+ list('code-hierarchy','代码层级',hierarchy);list('code-callers','调用关系 ←',mapped(edges.filter(e=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind)&&e.to===n.id),'from'));list('code-callees','调用关系 →',mapped(edges.filter(e=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind)&&e.from===n.id),'to'));
  list('code-imports','导入路径证据',mapped(edges.filter(e=>e.kind==='imports'&&(e.from===n.id||e.from===n.parentFile)),'to'));
  const unresolved=(graph.code?.unresolvedRelations||[]).filter(r=>r.from===n.id||r.file===n.id),unresolvedBox=$('code-unresolved');unresolvedBox.replaceChildren();
  const unresolvedTitle=document.createElement('h3');unresolvedTitle.textContent='未解析关系 · '+unresolved.length+(graph.code?.relationsTruncated?'（记录达到上限）':'');unresolvedBox.append(unresolvedTitle);
  const reasons={dynamic_binding:'动态绑定',ambiguous_name:'名称歧义',outside_index_or_unknown_binding:'索引外或绑定未知',outside_index_or_unresolved_path:'索引外或路径未解析'};
  for(const r of unresolved.slice(0,24)){const file=byID.get(r.file),row=document.createElement(file?.path?'a':'p');row.className='code-relation';row.textContent=(r.kind==='import'?'导入 / ':'调用 / ')+r.name+(r.line?' · L'+r.line:'');const reason=document.createElement('small');reason.textContent=reasons[r.reason]||'未解析';row.append(reason);if(file?.path){const link={root:file.root,path:file.path,origin:file.origin||'',readOnly:true,knowledgeWorkspace:graph.workspace,codeHash:file.contentHash};if(file.source)link.source=file.source;if(r.line)link.line=r.line;row.dataset.filePreview='';row.href='/#file='+encodeURIComponent(JSON.stringify(link));row.target='_blank';row.rel='noopener';row.title='查看源位置 · '+file.path;}unresolvedBox.append(row);}
  if(unresolved.length>24||!unresolved.length){const p=document.createElement('p');p.className='code-caveat';p.textContent=unresolved.length>24?'仅显示前24项；更多记录可在索引证据中检查。':'当前记录未发现；不代表没有未解析关系。';unresolvedBox.append(p);}
- const adj=new Map();for(const e of edges.filter(e=>['call_candidate','call_typed'].includes(e.kind))){if(!adj.has(e.from))adj.set(e.from,[]);adj.get(e.from).push(e.to)}
+ const adj=new Map();for(const e of edges.filter(e=>['call_candidate','call_typed','dom_event','event_callback','http_request','http_route','route_handler'].includes(e.kind))){if(!adj.has(e.from))adj.set(e.from,[]);adj.get(e.from).push(e.to)}
  let cycle=null,visited=0;const pending=[[n.id]];while(pending.length&&visited++<600){const route=pending.shift();if(route.length>12)continue;for(const to of adj.get(route.at(-1))||[]){if(to===n.id){cycle=[...route,to];break;}if(!route.includes(to)&&pending.length<600)pending.push([...route,to]);}if(cycle)break;}
  $('code-recursion').textContent=cycle?'静态候选闭环：'+cycle.map(id=>byID.get(id)?.name||id).join(' → '):'未发现12层 / 600步范围内的候选闭环；不构成无递归证明。';
 }
