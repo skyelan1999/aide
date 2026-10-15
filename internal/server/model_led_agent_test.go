@@ -85,12 +85,15 @@ func TestModelLedLoopPlansReceiptsAndSingleReview(t *testing.T) {
 			if last.Role != "tool" || !strings.Contains(last.Content, "observed") {
 				t.Errorf("missing actual read result: %+v", last)
 			}
-		case 4:
+			msg.Content = ""
+			msg.ToolCalls = []ToolCall{readCall("update_plan", `{"plan":[{"step":"整理目标","status":"completed","evidence":[2]}]}`)}
+		case 4: // final answer after completing the plan
+		case 5:
 			last := body.Messages[len(body.Messages)-1]
 			if !strings.Contains(last.Content, "任务收尾自检") || !strings.Contains(last.Content, "当前计划") {
 				t.Errorf("missing review: %+v", last)
 			}
-		case 5: // resume final response
+		case 6: // resume final response
 		default:
 			t.Errorf("unexpected request %d", n)
 		}
@@ -107,7 +110,7 @@ func TestModelLedLoopPlansReceiptsAndSingleReview(t *testing.T) {
 	if err != nil || out != "已完成" {
 		t.Fatalf("%q %v", out, err)
 	}
-	if count.Load() != 4 || !task.AgentReviewDone || task.AgentPlan == nil || len(task.ToolUses) != 2 {
+	if count.Load() != 5 || !task.AgentReviewDone || task.AgentPlan == nil || len(task.ToolUses) != 3 {
 		t.Fatalf("unexpected state: calls=%d task=%+v", count.Load(), task)
 	}
 	// A resumed chain retains review state and does not add another review.
@@ -116,7 +119,7 @@ func TestModelLedLoopPlansReceiptsAndSingleReview(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if count.Load() != 5 {
+	if count.Load() != 6 {
 		t.Fatalf("repeat review: %d", count.Load())
 	}
 }

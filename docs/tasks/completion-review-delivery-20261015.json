@@ -1,0 +1,76 @@
+{
+  "id": "completion-review-delivery-20261015",
+  "request": "继续目标：修复真实千问自动收尾重复读取和长文提前结束，保留分段交付",
+  "baseline": "513606f96021300651fa6f6fac827e2e1738678c",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Unfinished pending/in_progress plans trigger bounded completion checks even without execution tools",
+    "Review preserves original user delivery and reuses existing read results; no internal audit report as final answer",
+    "Completed/blocked plans, simple answers, review budgets and actual execution evidence remain distinct",
+    "Deterministic regressions and real Qwen fixture/ROS2 document tests; runtime and offline package receipts"
+  ],
+  "scope": [
+    "internal/server/model_led_agent.go",
+    "internal/server/model_led_agent_test.go",
+    "internal/server/completion_delivery_test.go",
+    "docs/architecture/continuity-roadmap.md",
+    "docs/tasks",
+    "docker-images metadata"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Actual read_file repeated with identical arguments; 40-section document remained in_progress but returned124 characters and completed. No upstream termination evidence; do not attribute to network.",
+      "evidence": [
+        "docs/reviews/2026-10-15/provider-output-interruption.md",
+        ".agent-state/provider-output-interruption/body-cancel-task.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Include unfinished plans in bounded review eligibility, retain execution counting/review budgets; carry original goal and delivery constraints, no tool-history deduplication.",
+      "evidence": [
+        "internal/server/model_led_agent.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Unfinished plan now triggers bounded reviews without fabricated tool use; review carries original goal, asks reuse of successful reads and direct user delivery. Existing fixture now completes its plan honestly.",
+      "evidence": [
+        "internal/server/model_led_agent.go",
+        "internal/server/model_led_agent_test.go",
+        "internal/server/completion_delivery_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Old-code negative regressions reproduced. Updated eligibility, two-part writing delivery, plan completion, resume/pause/session isolation race tests and server vet PASS (9.485s); quick79 PASS. Real provider rerun pending.",
+      "evidence": [
+        ".agent-state/completion-review-delivery/negative.log",
+        ".agent-state/completion-review-delivery/targeted-with-pause.log",
+        ".agent-state/completion-review-delivery/targeted-fingerprint.json",
+        ".agent-state/completion-review-delivery/quick-frozen.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Documented new unfinished-plan trigger, bounded checks and provider verification boundary.",
+      "evidence": [
+        "docs/architecture/continuity-roadmap.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User authorized incremental changes/tests/push and offline bundles; supplied Qwen endpoint is authorized for ongoing tests.",
+  "rollback": "Revert review eligibility and prompt additions; no migration or authorization changes.",
+  "handoff": ""
+}

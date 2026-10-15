@@ -362,3 +362,7 @@ A directed restore-then-edit fixture reproduced the same ownership loss in file 
 ### Real SSH/SFTP acceptance runner (2026-10-14)
 
 The two-server acceptance runner now defaults to the cached Go 1.26 client image so it does not start without a compiler in `aide:local`. `AIDE_SSH_GOMAXPROCS` and `AIDE_SSH_GOFLAGS` control build concurrency; `AIDE_SSH_RACE=0` permits protocol acceptance on memory-limited hosts while race detection remains enabled by default. One full non-race run against disposable internal-only SSH/SFTP servers passed on the current source tree (11.031s; see the task ledger). The race run was terminated by `SIGKILL` during remote progressive coverage and is not counted as a pass. Full race acceptance and Safari interaction with a user-configured SSH host remain open.
+
+### 正文交付与收尾检查
+
+收尾检查保留实际执行计数，同时将计划中的pending/in_progress项视为需要核对的未交付工作；即使只调用过update_plan，正文任务也不会直接绕过检查。检查总数仍受任务执行策略约束，completed/blocked计划和无计划简单问答不额外触发。收尾提示带回原始目标，要求复用已有成功读取、追加未交付正文、直接面向用户回答，避免把内部自检当成新的任务。重复工具记录仍如实保留；提示约束不等于保证模型永不重复调用，真实提供商验收另记。
