@@ -1,5 +1,5 @@
 {
-  "status": "in_progress",
+  "status": "verification_pass_main_pending",
   "realModel": {
     "image": "sha256:183c45c914422b5aea778cfc7f203c49d5e519e520403a47ef2f81ed5653d456",
     "sourceCommit": "8196baf",
@@ -39,7 +39,7 @@
     "diskReadbackMatches": true
   },
   "targetedRaceSeconds": 19.335,
-  "finalRuntimeOfflineFullMain": "Final runtime, isolated import and complete offline package passed; final clean full/main pending.",
+  "finalRuntimeOfflineFullMain": "Actual runtime/import/offline and clean main full84 PASS; main gate/push pending.",
   "runtime": {
     "image": "sha256:a082bd336de11ec5537bf991637637399a2f6dadc653e70b5a2807a35ea18d54",
     "runningImage": "sha256:a082bd336de11ec5537bf991637637399a2f6dadc653e70b5a2807a35ea18d54",
@@ -68,5 +68,12 @@
     "hostLaunchersMatch": true,
     "activeExternalWorkspaceOnly": true,
     "verificationStorage": "streamed hashes/metadata/load in active external workspace; no duplicate outputs recreated in original directory"
+  },
+  "full": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "6377b6a8a4c3022a234e06f76c9efec1d5d6a4397aec811090c9c3fd7999f3fe",
+    "serverRaceSeconds": 567.894,
+    "sourceCommit": "76554ab38038f86419c07dd1c9dd319f966157ff"
   }
 }
