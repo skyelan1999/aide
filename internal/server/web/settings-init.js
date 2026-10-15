@@ -69,6 +69,9 @@
   function normalizeTheme(value) {
     return isTheme(value) ? value : DEFAULT_PREF;
   }
+  function normalizeBackgroundStrength(value) {
+    return typeof value === 'number' && Number.isFinite(value) ? Math.round(Math.min(50, Math.max(10, value))) : 22;
+  }
 
   /* ── 读取：旧键迁移 → JSON 解析 → 字段校验 → 回写规范化文档 ── */
   function readDoc() {
@@ -96,6 +99,7 @@
     doc.motion = ['system', 'full', 'reduced'].indexOf(parsed.motion) >= 0 ? parsed.motion : 'system';
     doc.startupAnimation = parsed.startupAnimation === 'off' ? 'off' : 'on';
     doc.background = ['off', 'aurora', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'off';
+    doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
     doc.theme = parsed.theme === 'classic' ? 'light' : theme;
     doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
     var normalized = JSON.stringify(doc);
@@ -190,6 +194,7 @@
     doc.motion = ['system', 'full', 'reduced'].indexOf(parsed.motion) >= 0 ? parsed.motion : 'system';
     doc.startupAnimation = parsed.startupAnimation === 'off' ? 'off' : 'on';
     doc.background = ['off', 'aurora', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'off';
+    doc.backgroundStrength = normalizeBackgroundStrength(parsed.backgroundStrength);
       doc.theme = parsed.theme === 'classic' ? 'light' : theme;
     doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
       applyTheme();
@@ -220,6 +225,7 @@
       notifyAll();
     },
     set: function (name, value) {
+      if (name === 'backgroundStrength') value = normalizeBackgroundStrength(value);
       doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? (['system','full','reduced'].indexOf(value)>=0 ? value : 'system') : name === 'background' ? (['off','aurora','local'].indexOf(value)>=0 ? value : 'off') : name === 'startupAnimation' ? (value==='off' ? 'off' : 'on') : value;
       persist();
       if (name === 'theme' || name === 'language' || name === 'motion') applyTheme();

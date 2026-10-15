@@ -148,6 +148,8 @@ Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown
 
 ## 界面设置
 
+共享布局补充规则在700px及以下统一单列与92px双行顶栏，避免被旧601～950px侧栏网格覆盖。背景强度偏好 `backgroundStrength` 为10～50的整数，默认22；仅改变装饰层遮罩，播放器与素材URL不重建。参见[协调性补充需求](prd/2026-10-16-workbench-harmony.md)与[组件验收](reviews/2026-10-16/workbench-harmony.md)。
+
 ```json
 {"version":1,"theme":"system","palette":"blue"}
 ```

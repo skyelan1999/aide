@@ -61,9 +61,9 @@ html[data-background]:not([data-background=off]) body{isolation:isolate;backgrou
 html[data-background]:not([data-background=off]) :is(.sidebar,.file-panel){background:color-mix(in srgb,var(--panel) 95%,transparent)}
 html[data-background]:not([data-background=off]) :is(.topbar,.composer-wrap){background:color-mix(in srgb,var(--bg) 90%,transparent)}
 .workbench-background{background:var(--bg)}
-.workbench-background::before{content:'';position:absolute;inset:0;z-index:1;background:color-mix(in srgb,var(--bg) 78%,transparent)}
+.workbench-background::before{content:'';position:absolute;inset:0;z-index:1;background:var(--bg);opacity:calc(1 - var(--wb-background-strength,.22))}
 html[data-background=aurora] .workbench-background::after{content:'';position:absolute;inset:-12%;background:radial-gradient(ellipse at 18% 28%,color-mix(in srgb,var(--brand) 26%,transparent),transparent 55%),radial-gradient(ellipse at 76% 74%,color-mix(in srgb,var(--accent) 22%,transparent),transparent 55%);animation:workbench-drift 28s ease-in-out infinite alternate}
-.workbench-background :is(video,img){width:100%;height:100%;object-fit:cover;opacity:.7}
+.workbench-background :is(video,img){width:100%;height:100%;object-fit:cover}
 html[data-background-paused] .workbench-background::after{animation-play-state:paused}
 html[data-background-paused] .workbench-background video,html[data-background-paused][data-background-media=animated] .workbench-background img{visibility:hidden}
 @keyframes workbench-drift{from{transform:translate3d(-2%,0,0) scale(1)}to{transform:translate3d(2%,3%,0) scale(1.06)}}
@@ -74,3 +74,36 @@ html[data-background-paused] .workbench-background video,html[data-background-pa
 
 @media(max-width:760px){.settings-body{flex-direction:column;gap:0}.settings-nav{width:100%;flex:0 0 auto;flex-direction:row;overflow-x:auto;padding:8px;gap:4px}.settings-nav button{flex:0 0 auto;white-space:nowrap;padding:8px 10px}.settings-content{padding:14px;flex:1;min-height:0}}
 .new-session>.ui-icon,.settings-button>.ui-icon,.terminal-heading .ui-icon{width:17px;height:17px;flex:0 0 17px}
+
+/* Stable shell rhythm. These rules follow the older palette-specific sizing. */
+main,.conversation,.composer-wrap,.top-actions{min-width:0}
+.topbar,.file-panel-heading,.plugin-panel-heading{flex-shrink:0}
+.top-actions :is(button,label){flex-shrink:0}
+.panel-switch{gap:4px}
+.panel-switch :is(button,label){min-height:var(--wb-control);border-radius:8px}
+.icon-button>svg,.file-tools button>svg,.input-actions button>svg{width:18px;height:18px;flex-shrink:0}
+.settings-content .settings-control+.settings-control{padding-top:16px;border-top:1px solid var(--line-faint)}
+.settings-content .control-label{font-size:12px;font-weight:500;color:var(--text)}
+.settings-content .segmented button{font-size:12px}
+.sheet-head{align-items:center;min-height:44px;padding-bottom:12px}
+.sheet-head .icon-button{margin-top:0}
+.background-intensity{display:grid;grid-template-columns:auto minmax(64px,1fr) 4ch;align-items:center;gap:12px;margin-top:16px;font-size:12px;color:var(--text)}
+.background-intensity input{width:100%;min-width:0;margin:0;accent-color:var(--brand-hi);min-height:32px;padding:0;box-shadow:none}
+.background-intensity output{text-align:right;font-variant-numeric:tabular-nums;color:var(--muted)}
+.background-intensity:has(input:disabled){opacity:.55}
+#timeline :is(.chat-answer,.stage-answer)>:first-child{margin-top:0}
+#timeline :is(.chat-answer,.stage-answer)>:last-child{margin-bottom:0}
+#timeline :is(.chat-answer,.stage-answer) :is(h2,h3,h4){line-height:1.45;margin-block:1.35em .6em}
+#timeline :is(.chat-answer,.stage-answer) :is(p,ul,ol){margin-block:.75em}
+#timeline :is(.chat-answer,.stage-answer) table{display:block;overflow-x:auto;border-collapse:collapse;margin-block:16px;font-size:13px}
+#timeline :is(.chat-answer,.stage-answer) :is(th,td){padding:9px 12px;line-height:1.65;vertical-align:top;border:1px solid var(--line)}
+#timeline :is(.chat-answer,.stage-answer) th{background:var(--panel-alt);font-weight:600}
+#timeline :is(.chat-answer,.stage-answer) pre{border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow-x:auto}
+@media(max-width:700px){
+  body,body.files-hidden{grid-template-columns:minmax(0,1fr)}
+  .topbar{height:92px;min-height:92px}
+  .global-search input{width:100%}
+  .top-actions{gap:4px}
+  .file-panel,.plugin-panel{top:92px}
+}
+@media(pointer:coarse){.background-intensity input{min-height:40px}}

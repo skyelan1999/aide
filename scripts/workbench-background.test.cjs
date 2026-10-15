@@ -13,6 +13,8 @@ class Node {
 }
 function setup(initial='off'){
  const root=new Node(),body=new Node(),listeners={},subscriptions=[],urls=[],revoked=[],events={};
+ root.style={setProperty:(key,value)=>root.attrs[key]=value};
+ let strength=22;
  let mode=initial,asset,fail=false,locked=false;
  const mediaQuery={matches:false,addEventListener(){}};
  const document={documentElement:root,body,hidden:false,createElement:t=>new Node(t),querySelector:()=>locked?{}:null,querySelectorAll:()=>[],addEventListener:(k,f)=>listeners[k]=f};
@@ -22,7 +24,7 @@ function setup(initial='off'){
   delete(){const q={};queueMicrotask(()=>{asset=undefined;tx.oncomplete();});return q;}
  };}};return tx;},close(){}};
  const indexedDB={open(){const request={};queueMicrotask(()=>{request.result=database;request.onsuccess();});return request;}};
- const window={indexedDB,matchMedia:()=>mediaQuery,addEventListener:(k,f)=>events[k]=f,aideUI:{get:()=>mode,set:(key,value)=>{mode=value;subscriptions.forEach(f=>f());},subscribe:f=>subscriptions.push(f)}};
+ const window={indexedDB,matchMedia:()=>mediaQuery,addEventListener:(k,f)=>events[k]=f,aideUI:{get:key=>key==='backgroundStrength'?strength:mode,set:(key,value)=>{if(key==='backgroundStrength')strength=value;else mode=value;subscriptions.forEach(f=>f());},subscribe:f=>subscriptions.push(f)}};
  const sandbox={window,document,indexedDB,URL:{createObjectURL:b=>{const u='blob:'+urls.length;urls.push(u);return u;},revokeObjectURL:u=>revoked.push(u)},MutationObserver:class{constructor(f){this.callback=f;}observe(){}},console};
  vm.runInNewContext(source,sandbox);
  return {root,body,window,document,events,listeners,urls,revoked,mediaQuery,set asset(v){asset=v;},get asset(){return asset;},set fail(v){fail=v;},set locked(v){locked=v;},setMode:v=>window.aideUI.set('background',v),layer:()=>body.children[0],render:()=>window.AideBackground.renderSettings(),update:()=>subscriptions.forEach(f=>f())};
@@ -31,6 +33,8 @@ function setup(initial='off'){
  let h=setup();assert.equal(h.root.dataset.background,'off');assert.equal(h.urls.length,0);assert.equal(h.body.children.length,1);
  h.setMode('aurora');assert.equal(h.root.dataset.background,'aurora');assert.equal(h.urls.length,0);
  h.asset={blob:{},name:'clip.webm',type:'video/webm'};h.setMode('local');await flush();let video=h.layer().children[0];assert.equal(video.tagName,'VIDEO');assert.equal(video.muted,true);assert.ok(video.src);assert.ok(video.plays>0);
+ const strengthPanel=h.render(),range=strengthPanel.children[6].children[1];
+ range.value='40';range.oninput();await flush();assert.equal(h.root.attrs['--wb-background-strength'],'0.4');assert.equal(h.layer().children[0],video);assert.equal(h.urls.length,1);assert.equal(strengthPanel.children[6].children[2].textContent,'40%');
  h.document.hidden=true;h.listeners.visibilitychange();assert.ok(video.pauses>0);assert.ok(h.root.hasAttribute('data-background-paused'));
  h.document.hidden=false;h.locked=true;h.update();assert.ok(h.root.hasAttribute('data-background-paused'));
  h.locked=false;h.root.dataset.motion='reduced';h.events['aide:motion']();assert.ok(h.root.hasAttribute('data-background-paused'));
@@ -57,6 +61,8 @@ function setup(initial='off'){
  const attrs={},store={'aide.ui':JSON.stringify({background:'aurora',theme:'light'})},ws={localStorage:{getItem:k=>store[k]??null,setItem:(k,v)=>store[k]=v,removeItem:k=>delete store[k]},navigator:{language:'en'},matchMedia:()=>({matches:false,addEventListener(){}}),dispatchEvent(){},addEventListener:(k,f)=>ws[k]=f};
  vm.runInNewContext(settings,{window:ws,document:{documentElement:{setAttribute:(k,v)=>attrs[k]=v}},Event:class{}});
  assert.equal(ws.aideUI.get('background'),'aurora');ws.aideUI.set('background','nonsense');assert.equal(ws.aideUI.get('background'),'off');
+ assert.equal(ws.aideUI.get('backgroundStrength'),22);ws.aideUI.set('backgroundStrength',90);assert.equal(ws.aideUI.get('backgroundStrength'),50);ws.aideUI.set('backgroundStrength',NaN);assert.equal(ws.aideUI.get('backgroundStrength'),22);ws.aideUI.set('backgroundStrength',-1);assert.equal(ws.aideUI.get('backgroundStrength'),10);
+ ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'local',backgroundStrength:36})});assert.equal(ws.aideUI.get('backgroundStrength'),36);
  ws.storage({key:'aide.ui',newValue:JSON.stringify({background:'local'})});assert.equal(ws.aideUI.get('background'),'local');ws.storage({key:'aide.ui',newValue:'{}'});assert.equal(ws.aideUI.get('background'),'off');
  console.log('PASS background lifecycle, stale reads, local save/rollback, validation, release, motion, lock and preference persistence');
 })().catch(e=>{console.error(e);process.exitCode=1;});

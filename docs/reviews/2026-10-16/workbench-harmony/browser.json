@@ -1,0 +1,107 @@
+{
+  "scope": "Production markup/styles/background module with synthetic fixture content; not authenticated Safari or deployed workbench.",
+  "themes": [
+    {
+      "main": 916,
+      "overflow": false,
+      "palette": "blue",
+      "settingsOverflow": false,
+      "theme": "light"
+    },
+    {
+      "main": 916,
+      "overflow": false,
+      "palette": "blue",
+      "settingsOverflow": false,
+      "theme": "dark"
+    },
+    {
+      "main": 916,
+      "overflow": false,
+      "palette": "comfort",
+      "settingsOverflow": false,
+      "theme": "light"
+    },
+    {
+      "main": 916,
+      "overflow": false,
+      "palette": "comfort",
+      "settingsOverflow": false,
+      "theme": "dark"
+    },
+    {
+      "main": 916,
+      "overflow": false,
+      "palette": "green",
+      "settingsOverflow": false,
+      "theme": "light"
+    },
+    {
+      "main": 916,
+      "overflow": false,
+      "palette": "green",
+      "settingsOverflow": false,
+      "theme": "dark"
+    }
+  ],
+  "breakpoints": [
+    {
+      "main": 390,
+      "pageOverflow": false,
+      "sidebar": "none",
+      "topbar": 92,
+      "width": 390
+    },
+    {
+      "main": 614,
+      "pageOverflow": false,
+      "sidebar": "none",
+      "topbar": 92,
+      "width": 614
+    },
+    {
+      "main": 700,
+      "pageOverflow": false,
+      "sidebar": "none",
+      "topbar": 92,
+      "width": 700
+    },
+    {
+      "main": 511,
+      "pageOverflow": false,
+      "sidebar": "flex",
+      "topbar": 64,
+      "width": 701
+    },
+    {
+      "main": 760,
+      "pageOverflow": false,
+      "sidebar": "flex",
+      "topbar": 64,
+      "width": 950
+    },
+    {
+      "main": 583,
+      "pageOverflow": false,
+      "sidebar": "flex",
+      "topbar": 64,
+      "width": 1024
+    },
+    {
+      "main": 916,
+      "pageOverflow": false,
+      "sidebar": "flex",
+      "topbar": 64,
+      "width": 1440
+    }
+  ],
+  "localMP4": {
+    "readyState": 4,
+    "width": 160,
+    "muted": true,
+    "playing": true,
+    "intensityPreservesSource": true,
+    "reloadRestoresIntensity": 40,
+    "reducedMotionPausesAndHides": true
+  }
+}
