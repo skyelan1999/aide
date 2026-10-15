@@ -1059,7 +1059,7 @@ async function askAI(find=false){
  try {
   const d=await api('/assist',{method:'POST',signal:job.controller.signal,body:JSON.stringify({query:spec.query,ids:spec.ids,workspace,code:mode,retrievalMode:retrieval!=='nodes'?'rag':'nodes',region:source})});
   if(!current())return;
-  const references=d.retrieval?d.retrieval.hits.map(hit=>({id:hit.id,name:hit.file.name,node:hit.file,hit})):(d.references||[]).map(n=>({...n,node:n}));
+  const references=d.retrieval?(d.retrieval.hits||[]).map(hit=>({id:hit.id,name:hit.file.name,node:hit.file,hit})):(d.references||[]).map(n=>({...n,node:n}));
   window.AideStarmapAssist.render($('answer'),d.answer,references,ref=>{
    if(locked||workspace!==graph.workspace||mode!==codeView||source!==region||retrieval!==retrievalMode())return;
    const node=nodeByID.get(ref.node.id);
@@ -1097,7 +1097,7 @@ if(channel){channel.onmessage=e=>{
  }
 };}
 
-addEventListener('resize',redraw);addEventListener('pagehide',()=>{persistSkyView();pageLeaving=true;stopLive();cancelAnimationFrame(frame);frame=0;settlePanels();channel?.close();});let locked=true,lockStateKnown=false;
+addEventListener('resize',redraw);addEventListener('pagehide',()=>{persistSkyView();pageLeaving=true;aiExplorer.cancel();stopLive();cancelAnimationFrame(frame);frame=0;settlePanels();channel?.close();});let locked=true,lockStateKnown=false;
 addEventListener('pageshow',()=>{pageLeaving=false;scheduleLive(0);redraw();});
 function setLocked(value){
  // Presence heartbeats may repeat the same effective state. Only a transition

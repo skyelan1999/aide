@@ -43,5 +43,6 @@ vm.runInContext(source.slice(source.indexOf('const aiExplorer='),source.indexOf(
  c.locked=false;const switched=vm.runInContext('askAI()',c);c.graph.workspace='other';pending[4].resolve({answer:'wrong workspace'});await switched;assert.equal(rendered.length,1);
  let deadline;c.setTimeout=fn=>{deadline=fn;return 1};c.clearTimeout=()=>{};
  const timed=vm.runInContext('askAI()',c);deadline();assert.equal(el('ask').disabled,false);assert.match(el('answer').textContent,/超时/);pending[5].resolve({answer:'late after timeout'});await timed;assert.equal(rendered.length,1);assert.match(el('answer').textContent,/超时/);
+ c.mode='rag';const empty=vm.runInContext('askAI()',c);pending[6].resolve({answer:'No matching document excerpts.',retrieval:{hits:null,warnings:null},references:[]});await empty;assert.equal(rendered.at(-1),'No matching document excerpts.');assert.equal(el('ask').disabled,false);
  console.log('PASS: progressive snapshots, immediate stop, stale success/error/finally ownership, lock/workspace isolation, explicit scope and inert answer citations');
 })().catch(e=>{console.error(e);process.exitCode=1;});
