@@ -32,16 +32,19 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "已准备干净main工作树，待快进并验证",
+      "status": "pass",
+      "summary": "main从a2a21a3快进至a0022a1，原126项提交及本次授权记录均保留，无冲突；未提交vendor删除不在此树",
       "evidence": [
-        "git worktree add /tmp/aide-main-integration-20261015 main"
+        "git merge --ff-only perf/starmap-frame-work",
+        "git status --porcelain clean before task documentation"
       ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "准备干净main full74；本次主线门禁将覆盖5个完整vendor文件的实际主线内容",
+      "evidence": [
+        ".agent-state/main-integration/full-run.log"
+      ]
     },
     "documentation": {
       "status": "pending",
