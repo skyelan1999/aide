@@ -7672,7 +7672,7 @@
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
     "nextIndependentFocus": "Fix proven duplicate built-in context scanning with canonical-source/preview regression, then rebuild offline image/runtime through designated start.command and direct map interaction acceptance. Original12 retained.",
-    "deliveredMain": "3714593ff6435b2e3e72c509e3a66a5acdc5dee1",
+    "deliveredMain": "8dec691676c68db95b5c446a6daff203b976f60b",
     "mainGate": "Docs-only actual Safari reasoning evidence; exact-input full88 reuse, independent clean-main gate and remote3714593 match pass.",
     "currentCheckpointGate": "Locale fix full88 PASS, independent main gate and exact push20b5a56 verified. Actual Safari local DOCX preview and owned-tab cleanup pass; duplicate built-in context scan proven. All original12 remain in_progress."
   },
@@ -7763,6 +7763,7 @@
     "localDocxPreview": "pass",
     "task": "docs/tasks/starmap-live-preview-20261016.json",
     "report": "docs/reviews/2026-10-16/starmap-live-preview.md",
-    "remaining": "Duplicate builtin context scanning proven, needs regression/fix. Large-map latency, SSH and other explicit workflows still pending."
+    "remaining": "Duplicate builtin context scanning proven, needs regression/fix. Large-map latency, SSH and other explicit workflows still pending.",
+    "delivery": "Docs evidence pushed8dec691; exact full88 reuse and independent main gate passed. Duplicate scan fix still pending."
   }
 }
