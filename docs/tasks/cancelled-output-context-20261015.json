@@ -92,17 +92,19 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "干净full81 PASS。首次在feature验收树调用release-check按规则被拦下（要求main且task文档有未提交修改）；不绕过门禁，按既有用户授权准备干净main快进合入并重新核对同一输入指纹。9999/完整离线包已验证，main推送待执行，不升版/tag。",
+      "status": "pass",
+      "summary": "按既有用户授权，干净main快进纳入本批及此前flowchart/收尾修复，674b06a已push且ls-remote一致。full81内容指纹一致，main release-check PASS；本提交仅补普通文档收据，不升版/tag/正式Release。运行9999仍为已验证d9e90810dea4开发镜像，不冒充main干净镜像重建/生产部署。接收端/完整UI属后续范围。",
       "evidence": [
-        ".agent-state/cancelled-output-context/final.json",
-        ".agent-state/cancelled-output-context/package.json"
+        ".agent-state/cancelled-output-context/full-frozen.json",
+        "python3 scripts/agent-route.py release-check cancelled-output-context-20261015 PASS on clean main",
+        "git push origin main exit0",
+        "git ls-remote origin refs/heads/main == 674b06a"
       ]
     }
   },
   "release_authorization": "沿用用户原话“做完这个把所有内容和到main上”，授权本轮及此前功能修改在检查后合入并push main；同时沿用分部分测试、指定启动器和完整离线包。未授权升版/tag/正式Release。",
   "rollback": "回退上下文/正文持久化/流式中断变更，无批量会话迁移。新增可选归属字段由旧版本忽略；既有会话、卷与离线镜像保留。",
-  "handoff": "中断正文上下文、旧历史补回、暂停尾段与压缩修复已完成定向/完整回归及真实千问/实际重启API验收。独立会话推理强度high/low写回隔离并恢复原值。功能分支/9999和完整离线包已交付，不等于原12目标及main/正式发布全部完成。",
+  "handoff": "本批及此前flowchart/收尾修复已合main并推送，干净full81与main门禁通过。停止正文/旧历史补回/重启恢复和独立会话推理写回有直接证据。9999及离线包仍为已验收开发候选d9，不混称main干净构建。原12目标、完整UI/接收端/长文篇幅和逐字准确性继续，Windows用户负责、向量暂缓。",
   "runtime": {
     "image": "sha256:d9e90810dea4069d21f80b817bfbdc074c45ea454767b0ae1f2b002680b8b5de",
     "runningImage": "sha256:d9e90810dea4069d21f80b817bfbdc074c45ea454767b0ae1f2b002680b8b5de",
@@ -140,5 +142,16 @@
     "head": "b3c75fea92f51e4cc6cb59134d7fce4840770e54",
     "time": "20261015T075331832735Z",
     "commands": 81
+  },
+  "main_integration": {
+    "previousMain": "7c8ec2b",
+    "verifiedPushedMain": "674b06a",
+    "fullFingerprint": "ea9780d725d5f0f700ad5f0567b6543913e2763c6871e8f667d5d1fa09f69cfe",
+    "includedTasks": [
+      "flowchart-theme-contrast-20261015",
+      "completion-review-delivery-20261015",
+      "cancelled-output-context-20261015"
+    ],
+    "scope": "source integration; no version bump/tag/Release; current local candidate retained"
   }
 }

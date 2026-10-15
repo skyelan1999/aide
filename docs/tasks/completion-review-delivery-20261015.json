@@ -73,7 +73,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "源码f5baec6及之前修复已push；指定start.command更新9999/d18d953b69da，配置/认证/挂载保留、资源一致。完整离线包内外哈希/平台/标签/启动器/实际docker load/两本地副本通过。未运行新full81、未合main/tag、未验收接收设备和完整浏览器；长文与取消后历史仍有缺口。",
+      "summary": "本功能已随cancelled-output-context批次合入并push main674b06a，干净full81及main门禁通过。原runtime/package保留交付时身份；当前9999/d9包含本修复。未升版/tag，接收端与本任务未完成的真实UI/模型交付验收仍保留。",
       "evidence": [
         ".agent-state/completion-review-delivery/final.json",
         ".agent-state/completion-review-delivery/package.json"
@@ -82,7 +82,7 @@
   },
   "release_authorization": "User authorized incremental changes/tests/push and offline bundles; supplied Qwen endpoint is authorized for ongoing tests.",
   "rollback": "Revert review eligibility and prompt additions; no migration or authorization changes.",
-  "handoff": "已修复未完成写作计划绕过检查及无计划短承诺直接结束；检查有界并保留旧规划兼容。真实读样本由两次降为一次；40节样本经两run补齐编号，不宣称篇幅/自动完成/恢复全通过。下一步补取消后正文进入后续模型上下文。原12项目标继续。",
+  "handoff": "收尾/短承诺修复已随本批合入main；取消正文上下文缺口已由cancelled-output-context任务补齐并实测。长文篇幅、同run自然完成及逐字引用精度仍未验收通过。",
   "live_first_candidate": {
     "source": "da43326",
     "read": "PASS: one read_file, correct marker, no internal review framing",
@@ -124,6 +124,15 @@
   "next_priority": {
     "issue": "取消后的部分助手正文未进入下一请求的会话消息历史",
     "evidence": ".agent-state/completion-review-delivery/cancelled-context-gap.json",
-    "source": "internal/server/workflow.go execute final err/success branches"
+    "source": "internal/server/workflow.go execute final err/success branches",
+    "status": "addressed_in_subsequent_task",
+    "resolved_by": "cancelled-output-context-20261015"
+  },
+  "integrated_main": {
+    "verifiedPushedMain": "674b06a",
+    "fullReceipt": ".agent-state/cancelled-output-context/full-frozen.json",
+    "fullCommands": 81,
+    "runtimeContainingFix": "d9e90810dea4",
+    "boundary": "Original runtime/package fields remain the delivery-time snapshot; full UI/PDF/long-document model compliance is not implied by main integration."
   }
 }

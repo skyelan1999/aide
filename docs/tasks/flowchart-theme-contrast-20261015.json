@@ -80,7 +80,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "源码846b7f7功能分支已推送，本机9999更新9031bd56acb0；完整应用+依赖离线包内外哈希、标签/平台、启动器、实际docker load及两本地副本校验通过。当前main仍为7c8ec2b；新full81/main合入、完整页面/PDF及接收设备导入未执行。",
+      "summary": "本功能已随cancelled-output-context批次合入并push main674b06a，干净full81及main门禁通过。原runtime/package保留交付时身份；当前9999/d9包含本修复。未升版/tag，接收端与本任务未完成的真实UI/模型交付验收仍保留。",
       "evidence": [
         ".agent-state/flowchart-theme-contrast/package.json",
         ".agent-state/flowchart-theme-contrast/start.log"
@@ -89,7 +89,7 @@
   },
   "release_authorization": "用户持续授权分部分push、测试、更新离线镜像；本次先功能分支交付。",
   "rollback": "回退共享图表渲染器、调用接线与资源版本，无数据迁移。",
-  "handoff": "明暗自适应与蓝/青绿/暖金节点配色完成，主题切换保留源码并阻止旧回执覆盖，导出固定浅色并共享串行队列。quick79和真实vendor组件六主题组合通过。完整工作台/PDF和full81未验收，功能分支交付不代表main或正式发行。",
+  "handoff": "配色及串行渲染修复已随本批合入main，clean full81覆盖代码；三套主题明暗组件证据保留，完整工作台/PDF和接收端仍未验收。",
   "runtime": {
     "image": "sha256:9031bd56acb06b8cb68832e3d5ae35fd7b37688d5a02e41011333feb8d917e7d",
     "runningImage": "sha256:9031bd56acb06b8cb68832e3d5ae35fd7b37688d5a02e41011333feb8d917e7d",
@@ -118,5 +118,12 @@
     "hostLaunchersMatch": true,
     "copiedBothTrees": true,
     "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "integrated_main": {
+    "verifiedPushedMain": "674b06a",
+    "fullReceipt": ".agent-state/cancelled-output-context/full-frozen.json",
+    "fullCommands": 81,
+    "runtimeContainingFix": "d9e90810dea4",
+    "boundary": "Original runtime/package fields remain the delivery-time snapshot; full UI/PDF/long-document model compliance is not implied by main integration."
   }
 }

@@ -6654,7 +6654,7 @@
   "followup146": {
     "task": "cancelled-output-context-20261015",
     "classification": "progress",
-    "summary": "中断正文上下文、旧历史补回、暂停尾段与压缩修复已完成定向/完整回归及真实千问/实际重启API验收。独立会话推理强度high/low写回隔离并恢复原值。功能分支/9999和完整离线包已交付，不等于原12目标及main/正式发布全部完成。",
+    "summary": "本批及此前flowchart/收尾修复已合main并推送，干净full81与main门禁通过。停止正文/旧历史补回/重启恢复和独立会话推理写回有直接证据。9999及离线包仍为已验收开发候选d9，不混称main干净构建。原12目标、完整UI/接收端/长文篇幅和逐字准确性继续，Windows用户负责、向量暂缓。",
     "verification": {
       "status": "pass",
       "summary": "干净源码full81 PASS，覆盖全仓库Go race/vet；定向race28.473秒/vet及quick79通过。真实旧正文预览/实际输入、新停止后续接、同镜像实际重启恢复、high/low会话独立写回与恢复原值通过。标题逐字引用仍省略括号，不外推模型正确性；完整浏览器与原12目标不由本任务代替。",
@@ -6706,7 +6706,6 @@
     },
     "remaining": [
       "full browser and receiving-device import",
-      "main/tag for current feature branches",
       "40-section length/one-run completion acceptance; verbatim quotation precision",
       "original12 workstreams remain active; Windows user-owned; real vector deferred"
     ],
@@ -6840,6 +6839,23 @@
       "Windows用户负责",
       "真实向量提供方测试按用户要求暂缓"
     ],
-    "release_gate_policy": "干净源码full81 PASS（08f0027源码+b3c75fe文档树），仅覆盖代码检查和模拟/隔离回归；本轮真实接口范围另列。原12项未全部验收，不宣告目标完成；本分支尚未合main/tag。"
+    "release_gate_policy": "干净full81和main release-check PASS，main已快进推送674b06a，随后仅补普通文档收据；未升版/tag/正式Release。原12完整要求仍未全部验收，不宣告目标完成。"
+  },
+  "followup147": {
+    "task": "cancelled-output-context-20261015",
+    "classification": "progress",
+    "summary": "按用户此前全部合main授权，三批功能快进合入main，674b06a已push核对；clean full81/server race511.038秒/vet及main release-check通过。仅补普通文档后继续核对最终SHA；无升版/tag/Release。",
+    "integration": {
+      "previousMain": "7c8ec2b",
+      "verifiedPushedMain": "674b06a",
+      "fullFingerprint": "ea9780d725d5f0f700ad5f0567b6543913e2763c6871e8f667d5d1fa09f69cfe",
+      "includedTasks": [
+        "flowchart-theme-contrast-20261015",
+        "completion-review-delivery-20261015",
+        "cancelled-output-context-20261015"
+      ],
+      "scope": "source integration; no version bump/tag/Release; current local candidate retained"
+    },
+    "remaining": "原12工作流仍in_progress；完整UI、接收设备导入、长文单run/篇幅/逐字引用等不由主线门禁替代。"
   }
 }
