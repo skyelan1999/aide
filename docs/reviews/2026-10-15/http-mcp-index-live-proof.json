@@ -32,5 +32,12 @@
       }
     }
   ],
-  "privateProbeSHA256": "6ef19ab66830ed25193715a49b25d7bd89522914cbcb0b5410ff83c0369e7e76"
+  "privateProbeSHA256": "6ef19ab66830ed25193715a49b25d7bd89522914cbcb0b5410ff83c0369e7e76",
+  "release": {
+    "status": "pass",
+    "verifiedMain": "0b69dccfad7c458adee65c4a8dd1ca1d63b1e356",
+    "releaseCheck": true,
+    "sameFullInputFingerprint": "b38daba67a0367402712624686c75f7cb3e263a93a0a50573b8dc9e5c7442b13",
+    "remoteExactMatch": true
+  }
 }

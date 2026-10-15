@@ -58,8 +58,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Ordinary-document changes only; same-input full84 receipt gate and main push pending.",
+      "status": "pass",
+      "summary": "Clean main release-check PASS with unchanged full84 input fingerprint; main pushed and exact remote0b69dcc verified. Ordinary-document final receipt only, no rerun/build/version/tag/formal Release.",
       "evidence": [
         "docs/reviews/2026-10-15/http-mcp-index-live.md"
       ]
@@ -67,5 +67,6 @@
   },
   "release_authorization": "Standing incremental test/docs/main push; isolated fixture APIs only, no paid model or user source/settings changes.",
   "rollback": "Documentation-only revert; disposable container removed, production image/runtime unchanged.",
-  "handoff": "HTTP single-resource and MCP discovered descriptions proven within isolated fixture scope. SMB real service, HTTP variants, actual plugin/model use and authenticated browser remain unverified. Windows user acceptance and real vectors deferred; original12 open."
+  "handoff": "HTTP single-resource and MCP discovered descriptions proven within isolated fixture scope. SMB real service, HTTP variants, actual plugin/model use and authenticated browser remain unverified. Windows user acceptance and real vectors deferred; original12 open.",
+  "deliveredMain": "0b69dccfad7c458adee65c4a8dd1ca1d63b1e356"
 }
