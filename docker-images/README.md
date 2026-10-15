@@ -1,5 +1,12 @@
 # Docker 镜像交付
 
+## 2026-10-15 SSH 授权联调候选（构建时记录）
+
+- 源码 `1541514` 仅增加真实双 OpenSSH 授权生命周期集成验收，没有修改产品行为。测试文件进入现有构建指纹，因此通过指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新本机 9999 为 `b5a8b5cba520`；健康及三项实际网页资源匹配，鉴权／配置／挂载保持。五项继承 vendor 删除未提交，候选不混称干净 main 镜像。
+- 应用 `sha256:b5a8b5cba520097f24e62293dea51cdb4d266ade275ef419b7085be473b567e3`，source SHA `5def7d746bfafe0519a8ed3696692cbdee1ad98dbd12acf459ca0e85b72ffa40`。
+- 完整离线包 `aide-0.1.17.0-RC2-linux-arm64-b5a8b5cba520-offline.tar.gz`，705679530 字节，SHA-256 `e896596e7b71e0c2f0ec9377c03a013b6322dd2041dfbf29aa787f5732f6d669`。应用／依赖镜像、内外摘要、平台、启动器、实际 docker load 及两本地目录副本通过，接收设备实际导入未验收。保留上一 `bf701a670f6a` 包回滚。
+- 此记录写入时 quick82 和真实双 SSH 整套 race19.349 秒通过；新的干净 full84／main 门禁及推送状态以[任务账本](../docs/tasks/ssh-approval-lifecycle-20261015.json)后续收据为准，旧 full 不覆盖新测试输入。UI／用户主机仍有缺口，不升版、tag 或创建正式 Release。验收专用 SSH 镜像单独本地恢复，不声称该测试镜像已随应用包在另一端可用。
+
 ## 2026-10-15 Markdown 混排 PDF 最终候选（构建时记录）
 
 - 源码 `2b0ea2c` 加超高表格行修复 `a0ee2ab`，导出资源 v5。相同指定启动器已更新 9999 为 `bf701a670f6a`；三项实际资源、健康及鉴权／配置／挂载保持通过。完整 19 页混排夹具含左右各 90 行的跨页单行表格，经浏览器导出和 Poppler 检查，左右列均到 89。原用户文档及峰值内存未测，五项继承 vendor 删除保留，仍为开发候选。

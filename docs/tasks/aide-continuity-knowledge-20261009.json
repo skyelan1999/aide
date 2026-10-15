@@ -277,12 +277,15 @@
           "approval_management_browser",
           "approval_cross_session_real_20261010"
         ],
-        "remaining": "Safari实际9999精确命令的永久记忆匹配/拒绝旁路已验收；全局辅助审批→手动→辅助、普通暂停会话无幽灵reviewing及第二标签策略读回已验收（2026-10-11）。后端已验证 SSH AgentRoot 隔离、有效期及并发更新/撤销 revision 冲突；剩余真实 SSH 授权工作流、Safari 并发撤销/过期管理交互及逆向模式即时同步验收。"
+        "remaining": "Real isolated SSH server authorization lifecycle supplemented on20261015; remaining actual user SSH host and Safari concurrent expiry/revocation controls, inverse-mode immediate synchronization."
       },
       "evidence_20261014_current_fixture": [
         "当前源码隔离真实SSH回归17.639s通过；详见followup103。限测试覆盖的服务器端路径，不提升该工作流整体状态。"
       ],
-      "plugin_graph_checkpoint_20261015": "Backend real-Node graph test serialized two control confirmations, approved first only, rejected second; current source admission rechecks sandbox/task/global tool policy. Dedicated live-browser graph approval workflow and remaining authorization acceptance still pending."
+      "plugin_graph_checkpoint_20261015": "Backend real-Node graph test serialized two control confirmations, approved first only, rejected second; current source admission rechecks sandbox/task/global tool policy. Dedicated live-browser graph approval workflow and remaining authorization acceptance still pending.",
+      "evidence_20261015_ssh_authorization": [
+        "docs/reviews/2026-10-15/ssh-approval-lifecycle.md"
+      ]
     },
     {
       "name": "连接能力仪表",
@@ -6790,7 +6793,10 @@
         "requirement": "解释自动通过和人工原因，作用范围、有效期、撤销和全局同步",
         "status": "in_progress",
         "historical_remaining_20261014": "Safari实际9999精确命令的永久记忆匹配/拒绝旁路已验收；全局辅助审批→手动→辅助、普通暂停会话无幽灵reviewing及第二标签策略读回已验收（2026-10-11）。后端已验证 SSH AgentRoot 隔离、有效期及并发更新/撤销 revision 冲突；剩余真实 SSH 授权工作流、Safari 并发撤销/过期管理交互及逆向模式即时同步验收。",
-        "current_verified_scope": "本轮未重新验收该工作流全部要求。"
+        "current_verified_scope": "New current-source real dual OpenSSH integration: human answer via Handler, remembered receipt/execution, identical path across hosts and different roots, sandbox refusal, actual-clock expiry, revision409 and revocation after policy reload; race19.349s. No browser/operator UI or user SSH host.",
+        "evidence": [
+          "docs/reviews/2026-10-15/ssh-approval-lifecycle.md"
+        ]
       },
       {
         "name": "连接能力仪表",
@@ -7012,12 +7018,15 @@
       "actual dual OpenSSH entire suite race19.349s; source hashes stable",
       "same-path different host and same-host different-root authorization isolation",
       "human grant and remembered outcome receipt, sandbox refusal, real-clock expiry, revision409 and persisted revocation",
-      "quick82; test containers/network removed"
+      "quick82; test containers/network removed",
+      "start.command exact entry, assets/health and config/auth/mounts preserved; complete offline load/hash/platform/launchers/two local copies"
     ],
     "remaining": [
-      "current-source clean full84/runtime/package/main gate",
+      "new clean full84 and main gate/push",
       "Safari certificate handoff and full user-host/browser acceptance"
     ],
-    "original12RemainOpen": true
+    "original12RemainOpen": true,
+    "sourceCommit": "1541514",
+    "runtimeImage": "b5a8b5cba520"
   }
 }

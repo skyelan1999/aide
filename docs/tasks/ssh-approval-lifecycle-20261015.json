@@ -70,7 +70,7 @@
   },
   "release_authorization": "Standing user instruction: completed work push/merge main, keep documents and complete offline image package updated. No version/tag/formal Release.",
   "rollback": "Revert scoped integration tests/docs; no product or data migration. Existing9999 and prior complete offline image retained.",
-  "handoff": "",
+  "handoff": "Actual dual SSH authorization suite race passed, quick82 passed; current9999 b5a8b5cba520 and complete offline package verified. New clean full84/main gate pending; UI and user SSH host remain unverified, original12 stay open.",
   "sshEvidence": {
     "status": "pass",
     "environment": "two real disposable OpenSSH servers/internal-only Docker network; current source test Handler and approvedShell; no model/user-host/UI",
@@ -90,5 +90,35 @@
     "rawLog": ".agent-state/ssh-approval-lifecycle/live/aide-ssh-test-20261015183641-52824.log",
     "logSHA256": "09fd40d24b2ac40efa4ea1f5506e6b1a0ceccb7e374664bef54e8b4bb12ff6c8",
     "fixtureImage": "sha256:f11b5bcd3d715674df79df4edac3258835615047185ab0c85087d6a02c55dbf9"
-  }
+  },
+  "runtime": {
+    "image": "sha256:b5a8b5cba520097f24e62293dea51cdb4d266ade275ef419b7085be473b567e3",
+    "runningImage": "sha256:b5a8b5cba520097f24e62293dea51cdb4d266ade275ef419b7085be473b567e3",
+    "sourceSHA256": "5def7d746bfafe0519a8ed3696692cbdee1ad98dbd12acf459ca0e85b72ffa40",
+    "runningPlatformManifest": "sha256:a68513d46ce820ebc215bbbe023c42f268bf9718b5601cd35970b28b55a814a3",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:b5a8b5cba520097f24e62293dea51cdb4d266ade275ef419b7085be473b567e3",
+    "sourceSHA256": "5def7d746bfafe0519a8ed3696692cbdee1ad98dbd12acf459ca0e85b72ffa40",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-b5a8b5cba520-offline.tar.gz",
+    "bytes": 705679530,
+    "sha256": "e896596e7b71e0c2f0ec9377c03a013b6322dd2041dfbf29aa787f5732f6d669",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "sourceCommit": "1541514"
 }
