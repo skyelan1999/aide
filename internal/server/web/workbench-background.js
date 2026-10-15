@@ -65,6 +65,8 @@
   }
   async function apply(force = false) {
     const next = window.aideUI?.get('background') || 'off';
+    const strength = window.aideUI?.get('backgroundStrength');
+    root.style?.setProperty('--wb-background-strength', String(typeof strength === 'number' && Number.isFinite(strength) ? Math.min(50, Math.max(10, strength)) / 100 : .22));
     if (next === mode && !force) { lifecycle(); refreshPanels(); return; }
     const ticket = ++generation;
     mode = next; release(); message = '';
@@ -105,9 +107,19 @@
     const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'quiet'; remove.textContent = t('删除本地素材');
     const status = document.createElement('p'); status.className = 'background-status'; status.setAttribute('role', 'status');
     const note = document.createElement('p'); note.className = 'muted'; note.textContent = t('支持 MP4、WebM、GIF、PNG、JPEG、WebP，最多 30 MiB；仅保存在当前浏览器，不上传。后台、锁屏及减少动态效果时暂停。');
+    const intensity = document.createElement('label'); intensity.className = 'background-intensity';
+    const intensityText = document.createElement('span'); intensityText.textContent = t('背景强度');
+    const range = document.createElement('input'); range.type = 'range'; range.min = '10'; range.max = '50'; range.step = '1'; range.setAttribute('aria-label', t('背景强度'));
+    const value = document.createElement('output');
+    intensity.append(intensityText, range, value);
+    range.oninput = () => window.aideUI?.set('backgroundStrength', Number(range.value));
     const panel = {node, update() {
       buttons.forEach(button => { button.setAttribute('aria-pressed', String(mode === button.dataset.value)); button.disabled = saving; });
       input.disabled = remove.disabled = saving;
+      range.disabled = mode === 'off';
+      range.value = String(window.aideUI?.get('backgroundStrength') ?? 22);
+      value.textContent = range.value + '%';
+      range.setAttribute('aria-valuetext', value.textContent);
       status.textContent = saving ? t('正在保存背景…') : message ? t(message) : record?.name || t('选择本地素材后自动启用');
     }};
     input.onchange = async () => {
@@ -127,7 +139,7 @@
       catch (_) { message = '本地背景存储不可用'; }
       finally { saving = false; refreshPanels(); }
     };
-    picker.append(text, input); node.append(label, choices, picker, remove, status, note);
+    picker.append(text, input); node.append(label, choices, picker, remove, status, note, intensity);
     panels.add(panel); panel.update(); return node;
   }
   const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('aide.background') : null;

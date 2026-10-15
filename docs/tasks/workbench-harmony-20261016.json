@@ -1,0 +1,79 @@
+{
+  "id": "workbench-harmony-20261016",
+  "request": "整体工作台界面还需要再全面打磨，使整体更协调，图标、框框、高度宽度以及渲染等都需要微调，支持加载动态背景",
+  "baseline": "ed954042351c40535282e3feda08d1f7546af489",
+  "initial_status": "M internal/server/knowledge_conclusion_comparison.go\n M internal/server/knowledge_map.go\n M internal/server/knowledge_timeline.go\n?? internal/server/knowledge_conclusion_ai.go\n?? internal/server/knowledge_conclusion_ai_compare.go\n?? internal/server/knowledge_conclusion_ai_test.go\n?? internal/server/knowledge_conclusion_migration.go\n?? internal/server/knowledge_session_text.go",
+  "acceptance": [
+    "Desktop and 390/614/700/701/950/1024px layouts keep the main column usable without horizontal page/settings overflow.",
+    "Six appearance combinations retain readable shared geometry; toolbar icons use shared SVG sizing.",
+    "Local dynamic media remains supported; background intensity changes immediately and survives reload without recreating active media.",
+    "Focused tests, actual browser evidence and documentation distinguish component verification from deployed production."
+  ],
+  "scope": [
+    "internal/server/web/workbench.css, workbench-background.js, settings-init.js, index.html, locales/en.js",
+    "scripts/workbench-background.test.cjs",
+    "docs/prd/2026-10-16-workbench-harmony.md and task/review evidence"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Reuse existing background module and shared geometry; repair confirmed responsive breakpoint conflict and add bounded browser-local intensity.",
+      "evidence": [
+        "docs/prd/2026-10-16-workbench-harmony.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse existing background module and shared geometry; repair confirmed responsive breakpoint conflict and add bounded browser-local intensity.",
+      "evidence": [
+        "docs/prd/2026-10-16-workbench-harmony.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Shared SVG, settings/prose geometry and responsive shell fixed; bounded local background intensity implemented.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-harmony.md",
+        "docs/reviews/2026-10-16/workbench-harmony/browser.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual IAB component: seven viewport widths, six appearance combinations, local MP4/reload/reduced motion; focused JS and quick85 PASS. Full authenticated workbench NOT_RUN.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-harmony.md",
+        "docs/reviews/2026-10-16/workbench-harmony/browser.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "PRD, architecture, scoped review and browser evidence updated.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-harmony.md",
+        "docs/reviews/2026-10-16/workbench-harmony/browser.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned preview tab closed, viewport reset, synthetic local video removed, preview server stopped; unrelated backend edits preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-harmony.md",
+        "docs/reviews/2026-10-16/workbench-harmony/browser.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "UI checkpoint only; no push/main/runtime/offline image update. Unfinished knowledge backend remains outside this commit.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user incremental push/main/local runtime/offline image authorization; no version bump or tag.",
+  "rollback": "UI-only changes; background can be disabled. No server data migration. Preserve unrelated unfinished knowledge backend changes.",
+  "handoff": "UI source/component acceptance complete; production and Safari acceptance not claimed. Continue unfinished knowledge task on feat/knowledge-conclusion-evolution-20261016; inherited edits are retained in this checkout.",
+  "quick_receipt": {
+    "status": "pass",
+    "fingerprint": "907e3405ed39f05c17f6c16fe9d984ea0a999022fa4ab4ee2d29bdff098499db",
+    "head": "ed954042351c40535282e3feda08d1f7546af489",
+    "time": "20261015T195744528339Z"
+  }
+}

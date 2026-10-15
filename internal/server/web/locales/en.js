@@ -3,6 +3,7 @@
 window.aideEnglish = {
   "上一级目录": "Parent directory",
   "工作台背景": "Workbench background",
+  "背景强度": "Background intensity",
   "流光": "Aurora",
   "本地素材": "Local media",
   "加载本地背景": "Load local background",
