@@ -1,10 +1,10 @@
 {
   "status": "verification_in_progress",
   "runtime": {
-    "image": "sha256:282c91ba5ce46b6770ec51d9b11fe7950f52fba104bff22e223ac948df00863e",
-    "runningImage": "sha256:282c91ba5ce46b6770ec51d9b11fe7950f52fba104bff22e223ac948df00863e",
-    "sourceSHA256": "89866018353ad506aac8c375848bfec3d39fb653b15371bd78a17885a2fa98ce",
-    "runningPlatformManifest": "sha256:065f4996406a8fdd56edb8de59dbf16bb32a60bf9fd52f9223e6f1513a2e7267",
+    "image": "sha256:dbf35a8d653444c87ed1169ab2aee3110bc292ada46d2b2fdbcf68d13d7ca5f4",
+    "runningImage": "sha256:dbf35a8d653444c87ed1169ab2aee3110bc292ada46d2b2fdbcf68d13d7ca5f4",
+    "sourceSHA256": "b3287a97fdd44e937143c506e52d122d6e4b08b9e85552a0ff053cb089ec29fe",
+    "runningPlatformManifest": "sha256:8968d2fdbda3396192cd6299bbf2009a9affed382e8bec042ae010e1832e69ec",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "health": "ok",
     "port": "9999",
@@ -18,39 +18,39 @@
     "planned": 10,
     "completedParts": 10,
     "usage": {
-      "prompt": 69891,
-      "completion": 1734,
-      "total": 71625,
+      "prompt": 69794,
+      "completion": 1580,
+      "total": 71374,
       "model": "qwen3.8-flash"
     },
     "tools": 0,
     "commands": 0,
-    "samples": 62,
+    "samples": 44,
     "requestPurposes": [
       "parallel/plan",
-      "parallel/part-10",
       "parallel/part-5",
-      "parallel/part-1",
-      "parallel/part-2",
-      "parallel/part-3",
-      "parallel/part-4",
-      "parallel/part-7",
-      "parallel/part-6",
       "parallel/part-8",
       "parallel/part-9",
+      "parallel/part-1",
+      "parallel/part-3",
+      "parallel/part-4",
+      "parallel/part-2",
+      "parallel/part-10",
+      "parallel/part-6",
+      "parallel/part-7",
       "chat#0"
     ],
     "terminalStatus": "completed",
     "protectedOriginalSessions": 13,
     "cleanup": "owned session removed; original sessions/settings/auth/sources/workspace unchanged except monotonic sequence",
     "sequence": [
-      28,
-      29
+      29,
+      30
     ],
-    "finalAnswerCharacters": 1023,
+    "finalAnswerCharacters": 816,
     "finalAnswerContainsAllTenRequestedSections": true,
     "singleMainAnswerRequest": true,
-    "scope": "actual configured authorized Qwen API in current9999; protocol fixtures separately prove overlap/cancel; token usage task-reported, not a bill; auxiliary title requests excluded"
+    "scope": "actual authorized Qwen API in current9999; task-reported tokens not bill; auxiliary title calls excluded"
   },
   "firstAttempt": {
     "status": "partial",
@@ -74,11 +74,11 @@
     "tabsClosed": true
   },
   "offline": {
-    "image": "sha256:282c91ba5ce46b6770ec51d9b11fe7950f52fba104bff22e223ac948df00863e",
-    "sourceSHA256": "89866018353ad506aac8c375848bfec3d39fb653b15371bd78a17885a2fa98ce",
-    "archive": "aide-0.1.17.0-RC2-linux-arm64-282c91ba5ce4-offline.tar.gz",
-    "bytes": 705745867,
-    "sha256": "861f476432d3eac72d02d3673f99cc75bd6e08ef2a096af5c7eeb5c0a1cc0e09",
+    "image": "sha256:dbf35a8d653444c87ed1169ab2aee3110bc292ada46d2b2fdbcf68d13d7ca5f4",
+    "sourceSHA256": "b3287a97fdd44e937143c506e52d122d6e4b08b9e85552a0ff053cb089ec29fe",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-dbf35a8d6534-offline.tar.gz",
+    "bytes": 705748439,
+    "sha256": "0203eefabbac576472f73f105ab2bc598b8e37006be836b80c20a38d845521e7",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
     "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
@@ -99,5 +99,6 @@
     "Windows user-owned",
     "real vectors deferred",
     "original12 workstreams remain open"
-  ]
+  ],
+  "schemaAudit": "Model-facing plugin description updated1x-5x or10x; finaldbf actual Qwen ten-section816-character answer passed; prior incomplete full deliberately stopped before fresh final full."
 }

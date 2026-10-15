@@ -41,7 +41,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Final32.892s targeted race, real Qwen10 analyses +1023-character ten-section substantive single answer/no tools, runtime and offline integrity/load PASS; production-menu component observed dark/light390px/scroll/reload10. Clean full/main pending.",
+      "summary": "Final32.892s targeted race, real Qwen10 analyses +816-character ten-section substantive single answer/no tools, runtime and offline integrity/load PASS; production-menu component observed dark/light390px/scroll/reload10. Clean full/main pending.",
       "evidence": [
         "docs/reviews/2026-10-15/parallel-10x-levels.md",
         "docs/reviews/2026-10-15/parallel-10x-levels-proof.json"
