@@ -1975,7 +1975,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				return webReadNotCompleted, input, nil
 			}
 			a.mu.Lock()
-			needsReview := (stepName == "chat" || stepName == "agent") && agentReviewNeeded(task) && round+1 < maxRounds
+			needsReview := (stepName == "chat" || stepName == "agent") && agentReviewNeededForOutput(task, out) && round+1 < maxRounds
 			if needsReview {
 				// Persist the reviewed progress with the checkpoint. A review that
 				// discovers more work is not the final review of that later work.
@@ -2021,6 +2021,9 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				input = append(input, Message{Role: "assistant", Content: out}, Message{Role: "user", Content: "【来源覆盖纠正】回复的全篇/查尽结论超出真实工具覆盖。根据以下真实账本补读相关缺页或缩小结论，不需为无关章节凑全篇：" + a.researchStatus(task)})
 				saveCheckpoint()
 				continue
+			}
+			if deliveryPromisedOnly(task.Prompt, out) {
+				return "本轮尚未完成用户要求的产出：模型只返回执行承诺，已达到自动收尾检查或工具轮数上限。已有阶段结果保留在上方；本轮未交付的内容不能算完成。", input, nil
 			}
 			return out, input, nil
 		}

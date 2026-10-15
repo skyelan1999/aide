@@ -15,7 +15,8 @@
     "internal/server/completion_delivery_test.go",
     "docs/architecture/continuity-roadmap.md",
     "docs/tasks",
-    "docker-images metadata"
+    "docker-images metadata",
+    "internal/server/workflow.go"
   ],
   "stages": {
     "requirements": {
@@ -35,7 +36,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Unfinished plan now triggers bounded reviews without fabricated tool use; review carries original goal, asks reuse of successful reads and direct user delivery. Existing fixture now completes its plan honestly.",
+      "summary": "Unfinished plan now triggers bounded reviews without fabricated tool use; review carries original goal, asks reuse of successful reads and direct user delivery. Existing fixture now completes its plan honestly. Real-provider counterexample also requires a bounded short standalone delivery-promise guard without a plan; limit exhaustion reports incomplete delivery.",
       "evidence": [
         "internal/server/model_led_agent.go",
         "internal/server/model_led_agent_test.go",
@@ -44,7 +45,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old-code negative regressions reproduced. Updated eligibility, two-part writing delivery, plan completion, resume/pause/session isolation race tests and server vet PASS (9.485s); quick79 PASS. Real provider rerun pending.",
+      "summary": "Old-code negative regressions reproduced. Updated eligibility, two-part writing delivery, plan completion, resume/pause/session isolation race tests and server vet PASS (9.485s); quick79 PASS. Real provider rerun pending. First real candidate: read PASS, writing FAIL (standalone promise without plan). New promise guard/race regression in progress; no claim of long-document success. Expanded delivery-promise, exhaustion, writing, resume/pause/session-isolation race tests PASS10.048s and server vet PASS; quick79 PASS on second candidate. Actual final-provider rerun pending.",
       "evidence": [
         ".agent-state/completion-review-delivery/negative.log",
         ".agent-state/completion-review-delivery/targeted-with-pause.log",
@@ -72,5 +73,14 @@
   },
   "release_authorization": "User authorized incremental changes/tests/push and offline bundles; supplied Qwen endpoint is authorized for ongoing tests.",
   "rollback": "Revert review eligibility and prompt additions; no migration or authorization changes.",
-  "handoff": ""
+  "handoff": "",
+  "live_first_candidate": {
+    "source": "da43326",
+    "read": "PASS: one read_file, correct marker, no internal review framing",
+    "writing": "FAIL: completed with81-character standalone English promise, no plan/tools, zero document sections",
+    "evidence": [
+      ".agent-state/completion-review-delivery/first-read-proof.json",
+      ".agent-state/completion-review-delivery/first-writing-proof.json"
+    ]
+  }
 }

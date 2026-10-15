@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -121,6 +122,28 @@ func agentReviewNeeded(task *Task) bool {
 		}
 	}
 	return reviews < taskExecutionPolicy(task).CompletionReviews && (unfinishedPlan || (count > 0 && (!task.AgentReviewDone || count > task.AgentReviewToolCount)))
+}
+
+var deliveryRequestStart = regexp.MustCompile(`(?i)^\s*(?:(?:请|你|帮我|给我|直接|麻烦|现在|please|can you|could you)\s*)*(?:写|撰写|编写|生成|制作|创建|输出|整理|write\b|draft\b|create\b|generate\b|compose\b)`)
+var deliveryPromiseStart = regexp.MustCompile(`(?i)^\s*(?:i['’]ll|i will|我(?:会|将|先|来|现在|这就|接下来))[\s\S]{0,90}(?:write\b|draft\b|create\b|generate\b|deliver\b|写|撰写|生成|制作|创建|交付|整理)`)
+
+// A short, standalone promise is not the requested artifact. Keep this narrow:
+// quotations, capability questions and actual multi-line deliverables are not
+// completion failures merely because they mention future work.
+func deliveryPromisedOnly(prompt, out string) bool {
+	text := strings.TrimSpace(out)
+	return len([]rune(text)) <= 600 && !strings.Contains(text, "\n") && deliveryRequestStart.MatchString(prompt) && deliveryPromiseStart.MatchString(text)
+}
+
+func agentReviewNeededForOutput(task *Task, out string) bool {
+	if agentReviewNeeded(task) {
+		return true
+	}
+	reviews := task.AgentReviewCount
+	if task.AgentReviewDone && reviews == 0 {
+		reviews = 1
+	}
+	return reviews < taskExecutionPolicy(task).CompletionReviews && deliveryPromisedOnly(task.Prompt, out)
 }
 
 // Compact factual ledger for a bounded model-owned completion decision. It does

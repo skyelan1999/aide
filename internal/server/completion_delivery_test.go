@@ -94,3 +94,41 @@ func TestUnfinishedWritingPlanContinuesThroughReview(t *testing.T) {
 		t.Fatal("earlier partial delivery disappeared from conversation")
 	}
 }
+
+func TestDeliveryPromiseWithoutPlan(t *testing.T) {
+	prompt := "直接写一份ROS2入门文档，分40节。"
+	out := "I'll write the document in chunks, starting with the skeleton plus sections 1–10."
+	task := &Task{Prompt: prompt}
+	if !agentReviewNeededForOutput(task, out) {
+		t.Fatal("standalone delivery promise bypassed completion check")
+	}
+	for _, text := range []string{"下面是文档正文。", "\"I'll write the document\" 的意思是我将写文档。", "I'll write a sample:\n```python\nprint(1)\n```"} {
+		if deliveryPromisedOnly(prompt, text) {
+			t.Fatalf("actual content or quotation flagged: %s", text)
+		}
+	}
+	if deliveryPromisedOnly("你会做什么？", out) {
+		t.Fatal("capability question flagged")
+	}
+	task.AgentReviewCount = taskExecutionPolicy(task).CompletionReviews
+	if agentReviewNeededForOutput(task, out) {
+		t.Fatal("promise repair exceeded review budget")
+	}
+}
+
+func TestDeliveryPromiseLoopBounded(t *testing.T) {
+	a := testApp(t)
+	count := 0
+	out := "I'll write the requested document in chunks."
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		count++
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: out}}}})
+	}))
+	defer provider.Close()
+	task := &Task{ID: newID(), Prompt: "Write a document", Mode: "chat", Steps: []Step{{Name: "chat"}}, Steer: make(chan string, 1)}
+	registerHarnessFixtureTask(t, a, task)
+	result, _, err := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "test"}, []Message{{Role: "user", Content: task.Prompt}}, ProfileParams{}, nil, task, nil, 0)
+	if err != nil || count != 4 || !strings.Contains(result, "尚未完成") {
+		t.Fatalf("result=%q calls=%d err=%v", result, count, err)
+	}
+}
