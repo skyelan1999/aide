@@ -1,0 +1,75 @@
+{
+  "id": "file-open-request-ownership-20261015",
+  "request": "继续工作现场恢复，修复文件读取异步响应跨工作区来源及乱序覆盖新编辑器",
+  "baseline": "d5ba4c088d2d049feb8135390de16f7b13ce0e45",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "快速连续打开时只允许最后一次选择更新编辑器和恢复现场",
+    "读取期间来源、工作区、锁定代次或新建文件变化时丢弃旧响应",
+    "正常文件/二进制查看器仍可打开，当前请求错误可见，过期错误不干扰新页面",
+    "低负载定向回归和单页浏览器组件验收，测试后关闭全部自建页和服务"
+  ],
+  "scope": [
+    "internal/server/web/app.js openFile",
+    "internal/server/web/index.html app cache version",
+    "scripts/file-open-request-ownership.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture/continuity-roadmap.md",
+    "docs/tasks"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "旧源码确定性乱序响应把new.md覆盖为old.md，影响工作现场归属。",
+      "evidence": [
+        ".agent-state/file-open-request-ownership/negative.log"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "捕获来源/根目录/恢复作用域/锁定代次/token/当前文件引用，加读取序号拒绝过期成功和错误，保持现有保存与API合同。",
+      "evidence": [
+        "internal/server/web/app.js openFile"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "捕获不可变位置与恢复/认证代次，序号和原文件引用限定最新编辑器归属，关闭失效；保留登录提交时的现场恢复。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "14项确定性场景、quick75和最终IAB单页组件通过；完整工作台/Safari/真实SSH及full77仍NOT_RUN。",
+      "evidence": [
+        ".agent-state/file-open-request-ownership/negative.log",
+        ".agent-state/file-open-request-ownership/quick-frozen.json",
+        ".agent-state/file-open-request-ownership/browser-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "更新恢复架构及任务账本，区分源码、组件与实际部署。",
+      "evidence": [
+        "docs/architecture/continuity-roadmap.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "全部自建页和两个顺序测试服务已关闭，无并行构建，无用户数据变更；原5项vendor删除保留。",
+      "evidence": [
+        ".agent-state/file-open-request-ownership/browser-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "仅提交推送功能分支；当前9999未监听，未用旧镜像冒充新代码，不合并main或发布。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户持续授权分部分修改、测试和push；本轮不自动合并main或发行。",
+  "rollback": "回退本次app.js请求归属与缓存版本，无持久数据迁移。",
+  "handoff": "完成14项VM/quick75及最终IAB函数组件；下一步在恢复资源允许时通过指定start.command更新实际工作台、单页复验文件快速切换与真实来源；新full77/Docker包仍待执行。"
+}

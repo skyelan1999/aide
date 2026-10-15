@@ -2789,16 +2789,24 @@ function openFileContextMenu(ev, rowBtn, nameSpan, file) {
   setTimeout(() => { document.addEventListener('click', closeFileContextMenu); document.addEventListener('keydown', onFileCtxKey); }, 0);
 }
 
+let fileOpenRequest=0;
 async function openFile(path) {
+  const request=++fileOpenRequest,root=state.root,source=root==='context'?state.source:'',scope=recoveryScope(),epoch=chatRecoveryEpoch,token=state.token,previous=state.file,loginOpen=$('login-dialog').open;
+  const current=()=>request===fileOpenRequest&&scope===recoveryScope()&&epoch===chatRecoveryEpoch&&token===state.token&&!lockScreen.locked&&loginOpen===$('login-dialog').open&&root===state.root&&source===(state.root==='context'?state.source:'')&&state.file===previous;
+  if(!current())return;
   // 图片 / STL / PDF 走独立 raw 端点的可视化查看器，不经过只支持文本、会拒绝二进制的 /api/file
   if (isImagePath(path) || isStlPath(path) || isStepPath(path) || isPdfPath(path) || isDxfPath(path) || isDocxPath(path) || isXlsxPath(path) || isSqlitePath(path) || isZipPath(path)) {
-    state.file = { path, root: state.root, source: state.root === 'context' ? state.source : '', content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
+    state.file = { path, root, source, content: '', editable: false, fresh: false, wsId: state.workspaceId || '' };
     showEditor();
     await persistWorkspaceScene({openFile:{root:state.file.root,source:state.file.source||'',path:state.file.path}});
     return;
   }
-  const query = state.root === 'context' && state.source ? '/file?source=' + encodeURIComponent(state.source) + '&path=' : '/file?root=' + state.root + '&path=';
-  const data = await api(query + encodeURIComponent(path)); state.file = { ...data, path, root: state.root, source: state.root === 'context' ? state.source : '', wsId: data.workspaceId || data.wsId || '', fresh: false }; showEditor();
+  const query = root === 'context' && source ? '/file?source=' + encodeURIComponent(source) + '&path=' : '/file?root=' + root + '&path=';
+  let data;
+  try { data = await api(query + encodeURIComponent(path)); }
+  catch(e) { if(!current())return;throw e; }
+  if(!current())return;
+  state.file = { ...data, path, root, source, wsId: data.workspaceId || data.wsId || '', fresh: false }; showEditor();
   await persistWorkspaceScene({openFile:{root:state.file.root,source:state.file.source||'',path:state.file.path}});
 }
 function sourceIsRW() {
@@ -3051,7 +3059,7 @@ document.querySelectorAll('.starter').forEach(b => b.onclick = () => {
     $('prompt').focus();
   });
 document.querySelectorAll('[data-close]').forEach(b => b.onclick = () => $(b.dataset.close).close());
-$('editor-dialog').addEventListener('close',()=>{persistWorkspaceScene({openFile:null});});
+$('editor-dialog').addEventListener('close',()=>{++fileOpenRequest;persistWorkspaceScene({openFile:null});});
 window.addEventListener('pagehide',()=>persistWorkspaceScene());
 function applyReferenceTerminology() {
   const setText = (selector, key) => document.querySelectorAll(selector).forEach(node => { node.dataset.i18n = key; node.textContent = t(key); });

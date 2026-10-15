@@ -364,6 +364,10 @@
       ],
       [
         "node",
+        "scripts/file-open-request-ownership.test.cjs"
+      ],
+      [
+        "node",
         "scripts/continuity-isolation.test.cjs"
       ],
       [
