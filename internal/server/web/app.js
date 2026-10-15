@@ -12,7 +12,7 @@ function updateFavicon() {
 }
 updateFavicon();
 if (window.aideUI?.subscribe) window.aideUI.subscribe(updateFavicon);
-const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, thinkingOpen: new Set(), streamRetryAt: 0, queueMode: false, approvalPolicy: null, approvalModeBusy: false, autoScroll: true, jumpAnimating: false, contextCompactions: new Map() };
+const state = { token: localStorage.getItem('aide-token') || '', session: null, sessionJSON: '', historyLimit: 30, historyScroll: false, pendingSessionId: '', submitting: false, mode: 'chat', root: 'workspace', dir: '.', fileDirs: {}, fileEntries: [], fileSelection: new Set(), fileSelectionLocation: '', fileSelectionAnchor: -1, fileSearch: '', fileSearchScope: 'folder', fileSearchMatch: 'fuzzy', commandHistory: [], commandHistoryIndex: 0, commandHistoryDraft: '', attachments: [], file: null, busy: false, poll: null, config: null, xiaomiModelSettings: null, commandAbort: null, profiles: null, modelDraft: null, plugins: [], panel: 'files', sources: [], source: '', stream: null, live: {}, liveStable: {}, liveTool: {}, liveReasoning: {}, runPhase: {}, thinkingOpen: new Set(), streamRetryAt: 0, queueMode: true, approvalPolicy: null, approvalModeBusy: false, autoScroll: true, jumpAnimating: false, contextCompactions: new Map() };
 let recoveryReady=false,recoveryTimer=0,recoveryNotice=false,chatRecoveryEpoch=0;
 let workspaceSceneRestoring=false;
 const recoveryScope=()=>state.config?.workspaceId||'';
@@ -378,8 +378,6 @@ function syncAssistantModeControls(isAssistantSess) {
     state.workflowPhase = '';
     document.querySelectorAll('#workflow-phases .phase-btn').forEach(b => b.classList.remove('selected'));
     $('workflow-phases')?.classList.add('hidden');
-    state.queueMode = false;
-    $('queue-toggle')?.classList.remove('active');
   }
   // The trajectory view also renders assistant-session message history. Keep it
   // available in 小秘; only workbench execution controls are incompatible there.
@@ -3734,10 +3732,11 @@ function setSendMode(running) {
   }
   const queue = $('queue-toggle');
   if (queue) {
+    queue.classList.toggle('active', !!state.queueMode);
     queue.textContent = t(state.queueMode ? '排队' : '插话');
     queue.title = t(state.queueMode ? '排队：当前回答完成后处理' : '插话：调整当前任务');
     queue.setAttribute('aria-pressed', String(state.queueMode));
-    queue.disabled = run?.status === 'awaiting_clarification' || finishing;
+    queue.disabled = state.session?.kind === 'assistant' || run?.status === 'awaiting_clarification' || finishing;
   }
 }
 $('send').addEventListener('click', event => {

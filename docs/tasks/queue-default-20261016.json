@@ -1,0 +1,74 @@
+{
+  "id": "queue-default-20261016",
+  "request": "默认的会话中发送的内容应该是排队，所以默认排队追加应该是打开的",
+  "baseline": "6eddffa9d10dc7f50e13a6cac94bad55bad56fc5",
+  "initial_status": "",
+  "acceptance": [
+    "Fresh page defaults to queued addition with active pressed toggle; draft button sends queued by default.",
+    "Manual steer remains available; assistant navigation does not reset the ordinary conversation preference; assistant toggle stays disabled.",
+    "Focused regressions, browser component, runtime assets and full main gate with updated docs/offline bundle; preserve user data."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "scripts/session-run-controls.test.cjs",
+    "scripts/fixtures/render-session-run-controls.py",
+    "docs",
+    "docker-images metadata"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests queued addition enabled by default.",
+      "evidence": [
+        "docs/reviews/2026-10-16/queue-default.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Initialize queue true, render consistent active/pressed state, remove assistant reset while preserving its disabled control. Explicit manual steering remains possible.",
+      "evidence": [
+        "docs/reviews/2026-10-16/queue-default.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Queue default true, initial HTML active, renderer sync; preserve choice through assistant roundtrip and assistant disabled state.",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "scripts/session-run-controls.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Production function regressions and IAB fresh/manual/reload/390px queued send pass; final full/runtime/package pending.",
+      "evidence": [
+        "docs/reviews/2026-10-16/queue-default.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Updated interaction PRD and scoped acceptance record with no new provider execution semantics.",
+      "evidence": [
+        "docs/reviews/2026-10-16/queue-default.md",
+        "docs/prd/2026-10-15-session-run-interaction.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "One owned browser tab and8786 fixture server closed; viewport restored, no user sessions/settings mutated.",
+      "evidence": [
+        "docs/reviews/2026-10-16/queue-default.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior human incremental test/docs/main push and offline image update requests continue; no version bump/tag/GitHub Release.",
+  "rollback": "Revert scoped default/UI changes; preserve4b1 offline image as rollback; no data migration.",
+  "handoff": ""
+}

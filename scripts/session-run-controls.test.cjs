@@ -3,12 +3,12 @@ const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/st
 const source=fs.readFileSync('internal/server/web/app.js','utf8');
 function fn(name){const start=source.search(new RegExp('^function '+name+'\\(','m'));assert(start>=0,name);const eol=source.indexOf('\n',start);return source.slice(start,source[eol-1]==='}'?eol:source.indexOf('\n}',start)+2);}
 const nodes=new Map();function $(id){if(!nodes.has(id))nodes.set(id,{value:'',hidden:false,dataset:{},attrs:{},classList:{toggle(){}},setAttribute(k,v){this.attrs[k]=v}});return nodes.get(id)}
-const run={id:'r',status:'running',canResume:true};const state={session:{id:'s',runs:[run]},attachments:[],busy:true};
+const run={id:'r',status:'running',canResume:true};const state={session:{id:'s',runs:[run]},attachments:[],busy:true,queueMode:source.match(/queueMode: (true|false)/)[1]==='true'};
 const ctx={state,$,stopRequests:new Set(),recoveryScope:()=> 'workspace',t:s=>s};vm.createContext(ctx);
 vm.runInContext(['currentPauseRun','syncPauseControl','composerControlRun','composerHasDraft','setSendMode'].map(fn).join('\n'),ctx);
 function sync(){ctx.setSendMode(state.busy)}
-sync();assert.equal($('send').dataset.action,'stop');assert($('stop-active-run').hidden);assert(!$('run-controls').hidden);
-$('prompt').value='Change direction';sync();assert.equal($('send').dataset.action,'send');assert.equal($('send').attrs['aria-label'],'发送插话');assert(!$('stop-active-run').hidden,'a draft must not remove stop capability');
+sync();assert.equal(state.queueMode,true,'fresh page defaults to queued addition');assert.equal($('queue-toggle').attrs['aria-pressed'],'true');assert.equal($('send').dataset.action,'stop');assert($('stop-active-run').hidden);assert(!$('run-controls').hidden);
+$('prompt').value='Change direction';sync();assert.equal($('send').dataset.action,'send');assert.equal($('send').attrs['aria-label'],'排队发送');state.queueMode=false;sync();assert.equal($('send').attrs['aria-label'],'发送插话');assert(!$('stop-active-run').hidden,'a draft must not remove stop capability');
 state.queueMode=true;sync();assert.equal($('send').attrs['aria-label'],'排队发送');assert.equal($('queue-toggle').textContent,'排队');
 state.previewOverLimit=true;sync();assert($('send').disabled);assert(!$('stop-active-run').disabled,'over-budget input cannot disable stopping');
 $('prompt').value='';sync();assert(!$('send').disabled,'over-budget input cannot disable the primary stop');
@@ -18,6 +18,9 @@ run.pauseRequested=false;ctx.stopRequests.add(JSON.stringify(['workspace','s','r
 run.status='paused';sync();assert.equal($('send').dataset.action,'send');assert(!$('resume-active-run').hidden);
 state.session={id:'b',runs:[]};sync();assert($('run-controls').hidden);assert.equal($('send').dataset.action,'send');
 state.session={id:'s',runs:[run]};run.status='running';state.runPhase={r:{done:true}};sync();assert($('send').disabled);assert.equal($('run-control-status').textContent,'正在同步结果…');state.runPhase={};state.pendingSessionId='b';sync();assert($('run-controls').hidden);assert.equal($('send').dataset.action,'send');
+
+const assistant={state,window:{},document:{querySelectorAll:()=>[]},$:(id)=>({classList:{add(){}},setAttribute(){}})};vm.createContext(assistant);vm.runInContext(fn('syncAssistantModeControls'),assistant);state.mode='chat';state.queueMode=true;assistant.syncAssistantModeControls(true);assistant.syncAssistantModeControls(false);assert.equal(state.queueMode,true,'assistant round trip must preserve queued addition');state.queueMode=false;assistant.syncAssistantModeControls(true);assistant.syncAssistantModeControls(false);assert.equal(state.queueMode,false,'assistant round trip must preserve explicit steering');state.queueMode=true;
+state.session.kind='assistant';sync();assert($('queue-toggle').disabled,'composer must not re-enable assistant execution controls');delete state.session.kind;
 
 // A terminal SSE event must keep polling persistence without reopening a stream
 // that immediately emits done again. A slow/failed GET cannot create a hot loop.
