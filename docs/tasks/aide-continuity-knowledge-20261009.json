@@ -7019,14 +7019,25 @@
       "same-path different host and same-host different-root authorization isolation",
       "human grant and remembered outcome receipt, sandbox refusal, real-clock expiry, revision409 and persisted revocation",
       "quick82; test containers/network removed",
-      "start.command exact entry, assets/health and config/auth/mounts preserved; complete offline load/hash/platform/launchers/two local copies"
+      "start.command exact entry, assets/health and config/auth/mounts preserved; complete offline load/hash/platform/launchers/two local copies",
+      "Seven real source protocols PASS race10.417s: local/skill/http/ftp/ftps/sftp/smb; tool return uses deterministic model fixture, no browser or whole-index claim",
+      "Clean main full84 PASS, server race530.379s plus vet; fingerprint 2176a299197ee3b8bee85383d4bd5f2a1ad2f5002c487ebd1ee165efb3734edf"
     ],
     "remaining": [
-      "new clean full84 and main gate/push",
+      "main gate/push",
       "Safari certificate handoff and full user-host/browser acceptance"
     ],
     "original12RemainOpen": true,
     "sourceCommit": "1541514",
-    "runtimeImage": "b5a8b5cba520"
+    "runtimeImage": "b5a8b5cba520",
+    "fullVerification": {
+      "status": "pass",
+      "count": 84,
+      "fingerprint": "2176a299197ee3b8bee85383d4bd5f2a1ad2f5002c487ebd1ee165efb3734edf",
+      "serverRaceSeconds": 530.379,
+      "sourceCommit": "529d951f7a52edb29ce6278b846a88bc11c8dd7d",
+      "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/ssh-approval-lifecycle/verify-20261015T104255796363Z.log",
+      "worktree": "/private/tmp/aide-ssh-approval-full-20261015"
+    }
   }
 }

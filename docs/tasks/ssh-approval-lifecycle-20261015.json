@@ -41,11 +41,11 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Final entire dual-SSH suite race repeat1 passed19.349s, stable inputs. Initial targeted and broad runs also passed; final case isolates host by holding path identical. quick/full/runtime/package/main pending.",
+      "status": "pass",
+      "summary": "Clean main full84 PASS; server race530.379s and vet; quick82, real dual-SSH race19.349s and seven real protocols race10.417s. Runtime/package evidence recorded separately; browser/user-host remain outside this scoped integration task.",
       "evidence": [
-        ".agent-state/ssh-approval-lifecycle/ssh-proof.json",
-        ".agent-state/ssh-approval-lifecycle/ssh-final.log"
+        ".agent-state/ssh-approval-lifecycle/full-proof.json",
+        "docs/reviews/2026-10-15/ssh-approval-lifecycle.md"
       ]
     },
     "documentation": {
@@ -63,14 +63,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Clean full84 passed; main prerequisite gate and remote push next. No version/tag/formal Release.",
+      "evidence": [
+        ".agent-state/ssh-approval-lifecycle/full-proof.json"
+      ]
     }
   },
   "release_authorization": "Standing user instruction: completed work push/merge main, keep documents and complete offline image package updated. No version/tag/formal Release.",
   "rollback": "Revert scoped integration tests/docs; no product or data migration. Existing9999 and prior complete offline image retained.",
-  "handoff": "Actual dual SSH authorization suite race passed, quick82 passed; current9999 b5a8b5cba520 and complete offline package verified. New clean full84/main gate pending; UI and user SSH host remain unverified, original12 stay open.",
+  "handoff": "Scoped real SSH lifecycle and source protocol evidence passed; clean full84 passed. Runtime/offline candidate verified. Main gate/push next; original12, browser and user-host acceptance remain open.",
   "sshEvidence": {
     "status": "pass",
     "environment": "two real disposable OpenSSH servers/internal-only Docker network; current source test Handler and approvedShell; no model/user-host/UI",
@@ -120,5 +122,33 @@
     "copiedBothTrees": true,
     "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
   },
-  "sourceCommit": "1541514"
+  "sourceCommit": "1541514",
+  "protocolEvidence": {
+    "status": "pass",
+    "exit": 0,
+    "inputSHA256": "4d10cc3165d20d339bb040b859ace4e3ed8a3cbf797be7ef5b4bebdcba9e2f66",
+    "inputsStable": true,
+    "protocols": [
+      "local",
+      "skill",
+      "link/http",
+      "ftp",
+      "ftps",
+      "sftp",
+      "smb"
+    ],
+    "scope": "real protocol services/current source authenticated Handler; model tool-return roundtrip uses deterministic provider fixture, no paid calls or browser/index-policy claim",
+    "race": true,
+    "logSHA256": "5de7881abe02dd653196f017fdeb74ad2088e5363d222bac0be24516aad72679",
+    "packageSeconds": 10.417
+  },
+  "fullVerification": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "2176a299197ee3b8bee85383d4bd5f2a1ad2f5002c487ebd1ee165efb3734edf",
+    "serverRaceSeconds": 530.379,
+    "sourceCommit": "529d951f7a52edb29ce6278b846a88bc11c8dd7d",
+    "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/ssh-approval-lifecycle/verify-20261015T104255796363Z.log",
+    "worktree": "/private/tmp/aide-ssh-approval-full-20261015"
+  }
 }
