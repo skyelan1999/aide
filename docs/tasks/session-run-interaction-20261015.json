@@ -42,15 +42,21 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Quick83 pass; first SSE reconnect fixture blocked before header flush, now server flushes after subscription; final race pending. UI component observed, full Safari human-deferred.",
+      "summary": "Focused20.179s, quick83, IAB production component and actual1xQwen stop/isolation/retained-context/pause/resume pass; final full pending. Safari human-deferred.",
       "evidence": [
-        "docs/reviews/2026-10-15/session-run-interaction.md"
+        "docs/reviews/2026-10-15/session-run-interaction.md",
+        "docs/reviews/2026-10-15/session-run-interaction-proof.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "PRD/architecture/review/proof and offline metadata describe actual behavior and test boundaries.",
+      "evidence": [
+        "docs/prd/2026-10-15-session-run-interaction.md",
+        "docs/architecture.md",
+        "docs/reviews/2026-10-15/session-run-interaction.md",
+        "docker-images/README.md"
+      ]
     },
     "cleanup": {
       "status": "pending",
