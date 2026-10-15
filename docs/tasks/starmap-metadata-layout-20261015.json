@@ -44,20 +44,11 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Current actual metadata/layout/cosmos tests PASS with selected/unrelated citations, original search, no-op/reset, workspace and structural changes. Quick71 PASS. Old baseline actual-source negative layout1 vs0 retained. Canonical native controlled-body update/image/full73 pending. Canonical98d6599/newfbbb image Safari: own ignored tmp MD indexed, exact same-length BEFORE→AFTER_ body automatically refreshed selected details without page reload and query retained. API update observed6.982s (bounded polling, not renderer timing). Exact owned file/directory deletion then2.810s API removal; native selection/details disappeared with query preserved. Desktop1326x940 and actual576x940 observed, original desktop/query/home/workspace restored. HTTP starmap.js bytes match source; original session content and5 protected config/auth hashes/mounts preserved. Complete new offline package streamed hash/tags/platform/launchers/load and two local copies PASS. Current full73 pending. Large reference20000 visible, CUA click+AX26.407s; drawing/tool-wait latency remains unresolved, no overall speedup or FPS claim.",
+      "status": "pass",
+      "summary": "quick71 + runtime assets + complete Go race/vet: full73 PASS; frozen fingerprint matches current source",
       "evidence": [
-        "scripts/starmap-live-metadata.test.cjs",
-        ".agent-state/starmap-metadata-layout/negative.log",
-        ".agent-state/verify-20261015T005115890634Z.log",
-        ".agent-state/starmap-metadata-layout/ui-before.txt",
-        ".agent-state/starmap-metadata-layout/ui-after.txt",
-        ".agent-state/starmap-metadata-layout/ui-removed.json",
-        ".agent-state/starmap-metadata-layout/ui-narrow.jpg",
-        ".agent-state/starmap-metadata-layout/dimensions.json",
-        ".agent-state/starmap-metadata-layout/preservation.json",
-        ".agent-state/starmap-metadata-layout/large-native-timing.json",
-        ".agent-state/starmap-metadata-layout/package.json"
+        ".agent-state/starmap-metadata-layout/full-frozen.json",
+        ".agent-state/verify-20261015T010352009727Z.log"
       ]
     },
     "documentation": {
@@ -162,7 +153,7 @@
   },
   "full_owner": {
     "profile": "full",
-    "status": "running",
+    "status": "pass",
     "commandsExpected": 73,
     "sessionId": 2886,
     "head": "578bb9834ce0a9503a0d8e5b247d973978c80997",
@@ -171,6 +162,10 @@
     "ownerLog": ".agent-state/starmap-metadata-layout/full-run.log",
     "log": ".agent-state/verify-20261015T010352009727Z.log",
     "sourceCommit": "98d6599",
-    "priorFull72Scope": "6bdcb41 cache writer, terminalPASS, not reused for new layout source"
+    "priorFull72Scope": "6bdcb41 cache writer, terminalPASS, not reused for new layout source",
+    "container": "aide-verify-95d30dcbc547",
+    "lastVerifiedLive": "terminal exit0; full73 pass",
+    "receipt": ".agent-state/starmap-metadata-layout/full-frozen.json",
+    "serverRaceSeconds": 746.239
   }
 }
