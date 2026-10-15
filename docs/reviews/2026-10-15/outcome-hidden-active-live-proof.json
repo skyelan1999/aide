@@ -1,0 +1,35 @@
+{
+  "status": "in_progress",
+  "realModel": {
+    "image": "sha256:183c45c914422b5aea778cfc7f203c49d5e519e520403a47ef2f81ed5653d456",
+    "sourceCommit": "8196baf",
+    "allThreeCompleted": true,
+    "noToolsOrCommands": true,
+    "hiddenActiveMetadata": true,
+    "hiddenWhileVisibleTerminal": true,
+    "finalRunningCount": 0,
+    "reportedTaskUsage": {
+      "prompt": 42848,
+      "completion": 3459,
+      "total": 46307
+    },
+    "scope": "actual authorized Qwen current9999/API; not browser, no billing claim, excludes initial cancelled batch and auxiliary title requests",
+    "taggedReplayCodeSHA256": "b5497a7950b637335b09cf7b19c4e53b7543b42cf2179587179fc9a6ded48263",
+    "taggedReplayBranchUnchangedByFollowup": true
+  },
+  "realModelCleanup": {
+    "ownSessionsRemoved": true,
+    "otherSessionHashesUnchanged": true,
+    "globalSettingsExceptLegitimateCounterUnchanged": true,
+    "authSourcesAndWorkspaceConfigUnchanged": true,
+    "counterBefore": 24,
+    "counterAfter": 26
+  },
+  "releaseImport": {
+    "status": "pending",
+    "oldBinaryFreshSnapshot409Reproduced": true,
+    "oldGoRegression409Reproduced": true
+  },
+  "targetedRaceSeconds": 19.335,
+  "finalRuntimeOfflineFullMain": "pending"
+}

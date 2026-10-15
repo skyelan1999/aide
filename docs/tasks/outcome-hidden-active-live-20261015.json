@@ -15,7 +15,10 @@
     "internal/server/retry_context.go",
     "internal/server/retry_context_test.go",
     "docker-images/README.md",
-    "docker-images/SHA256SUMS"
+    "docker-images/SHA256SUMS",
+    "internal/server/task_outcome.go",
+    "internal/server/task_release_receipts.go",
+    "internal/server/task_release_receipts_test.go"
   ],
   "stages": {
     "requirements": {
@@ -34,16 +37,17 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Retry context bounded by original tagged/unambiguous legacy input or recorded request, fresh current policy reconstruction, explicit409 for missing boundary; existing session unchanged.",
+      "summary": "Retry context bounded by original tagged/unambiguous legacy input or recorded request, fresh current policy reconstruction, explicit409 for missing boundary; existing session unchanged. Shared locked outcome snapshot for import token comparison, plus snapshot-history partial-output dedupe.",
       "evidence": [
         "docs/reviews/2026-10-15/outcome-hidden-active-live.md"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Real limited-page hidden active count observed (2 live, 1 visible); probe stopped after unexpected retry tools, both owned tasks cancelled and owned sessions removed. Other sessions/auth/settings unchanged except legitimate sequence22->24. No overall PASS yet. Old-code final regression fails on later conversation/replaced answer; fixed targeted race14.339s PASS. Real-model rerun, release import, runtime/offline/full/main pending. quick82 PASS; source commit/runtime follow.",
+      "summary": "Initial model batch cancelled after unexpected retry tools, data protected22->24. Retry source8196baf real Qwen three completed/no tools/hidden terminal-page count thenzero, protected24->26. Combined probe stopped at fresh receipt409. Independent old binary and Go reproduce409; fixed final targeted race19.335s PASS. Updated binary import/runtime/offline/full/main pending.",
       "evidence": [
-        "docs/reviews/2026-10-15/outcome-hidden-active-live.md"
+        "docs/reviews/2026-10-15/outcome-hidden-active-live.md",
+        "docs/reviews/2026-10-15/outcome-hidden-active-live-proof.json"
       ]
     },
     "documentation": {

@@ -88,16 +88,21 @@ func TestRetryConversationLegacyOccurrences(t *testing.T) {
 }
 
 func TestRetryConversationCompactedOriginalSnapshot(t *testing.T) {
+	prior := &Task{ID: "prior", Prompt: "preceding input", Status: "cancelled", Steps: []Step{{Name: "chat", Content: "preceding answer"}}}
+	recovered, _ := interruptedOutputMessage(prior)
 	target := &Task{ID: "target", Prompt: "original request", RequestSnapshots: []RequestSnapshot{{Messages: []Message{
 		{Role: "system", Content: "OLD-SYSTEM-HEADER"},
 		{Role: "system", Content: "历史摘要（已压缩 3 条消息）:\nORIGINAL-SUMMARY"},
-		{Role: "user", Content: "preceding input"}, {Role: "assistant", Content: "preceding answer"},
+		{Role: "user", Content: "preceding input"}, {Role: "assistant", Content: recovered.Content},
 		{Role: "user", Content: "original request\n\n## 本轮普通对话要求\nold guidance"},
 	}}}}
-	s := &Session{Compact: "FUTURE-SUMMARY", CompactedMessages: 99, Runs: []*Task{target}, Messages: []Message{{Role: "user", Content: "later input"}}}
+	s := &Session{Compact: "FUTURE-SUMMARY", CompactedMessages: 99, Runs: []*Task{prior, target}, Messages: []Message{{Role: "user", Content: "later input"}}}
 	view, err := retryConversation(s, target)
 	if err != nil || view.Compact != "ORIGINAL-SUMMARY" || view.CompactedMessages != 3 || len(view.Messages) != 2 {
 		t.Fatalf("snapshot fallback lost original prefix: %#v %v", view, err)
+	}
+	if history := conversationHistory(view); len(history) != 2 || history[1].Content != recovered.Content {
+		t.Fatal("snapshot replay duplicated previously recovered partial output")
 	}
 	b, _ := json.Marshal(view)
 	for _, forbidden := range []string{"OLD-SYSTEM-HEADER", "FUTURE-SUMMARY", "old guidance", "later input"} {

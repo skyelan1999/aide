@@ -105,7 +105,12 @@ func (a *App) taskReleaseReceiptAPI(w http.ResponseWriter, r *http.Request) {
 		if task == nil || task.ID != r.PathValue("run") {
 			continue
 		}
-		if req.Snapshot != outcomeSnapshotDigest(task, session.ID, session.Number, session.Title) {
+		view, number, title, err := a.outcomeTaskSnapshotLocked(session.ID, task.ID)
+		if err != nil {
+			fail(w, 404, err)
+			return
+		}
+		if req.Snapshot != outcomeSnapshotDigest(view, session.ID, number, title) {
 			fail(w, 409, errors.New("任务记录已更新，请重新加载后导入"))
 			return
 		}

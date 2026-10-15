@@ -192,6 +192,11 @@ func outcomeOffset(r *http.Request, key string) (int, error) {
 func (a *App) outcomeTaskSnapshot(sessionID, runID string) (*Task, int, string, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	return a.outcomeTaskSnapshotLocked(sessionID, runID)
+}
+
+// Callers already holding a.mu must use the same detached projection as reads.
+func (a *App) outcomeTaskSnapshotLocked(sessionID, runID string) (*Task, int, string, error) {
 	s := a.sessions[sessionID]
 	if s == nil || s.Deleted {
 		return nil, 0, "", errors.New("任务不存在")

@@ -69,6 +69,9 @@ func retryConversation(s *Session, original *Task) (*Session, error) {
 				continue
 			}
 			view.Messages = nil
+			// Recorded provider messages already contain recovered partial output.
+			// Do not synthesize it a second time from live prior-run objects.
+			view.Runs = nil
 			view.Compact, view.CompactedMessages = "", 0
 			for _, message := range input[:i] {
 				if message.Role != "system" {
