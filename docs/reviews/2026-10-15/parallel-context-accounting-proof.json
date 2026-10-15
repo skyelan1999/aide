@@ -1,5 +1,5 @@
 {
-  "status": "verification_in_progress",
+  "status": "verification_pass_main_pending",
   "runtime": {
     "image": "sha256:234beda3a50b0fd6bc2b6c844762e8cbbe3a3ddf730999f3eb20a2797fdcf112",
     "runningImage": "sha256:234beda3a50b0fd6bc2b6c844762e8cbbe3a3ddf730999f3eb20a2797fdcf112",
@@ -177,7 +177,13 @@
     "activeExternalWorkspaceOnly": true,
     "verificationStorage": "streamed hashes/metadata/load in active external workspace; no duplicate outputs recreated in original directory"
   },
-  "full": "pending",
+  "full": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "8e36a90ae4c6140d95880ac8751063406ecb4eb220df3086a60c5d7d03b50a80",
+    "serverRaceSeconds": 537.26,
+    "sourceCommit": "0b48b4d6e7b0c173a9eb4828c780706884dc325c"
+  },
   "main": "pending",
   "boundaries": [
     "full authenticated Safari human-deferred",
@@ -185,5 +191,37 @@
     "Windows user-owned",
     "real vectors deferred",
     "original12 remain open"
-  ]
+  ],
+  "actualRequestIsolation": {
+    "scope": "compare actual captured Qwen request messages; no extra provider call",
+    "workerCount": 3,
+    "sameBaseHistorySnapshot": true,
+    "differentOwnSubtasks": true,
+    "workersHaveNoTools": true,
+    "mainHasIndependentToolDefinitions": true,
+    "mainIncludesAllWorkerNotes": true,
+    "commonMessageCount": 2,
+    "commonMessagesSHA256": "dea95aa087062fe731d2104a16764bc4f68843cd138e02a56d597ed74a786d1b"
+  },
+  "startupReuse": {
+    "status": "pass",
+    "sameContainer": true,
+    "sameImage": true,
+    "noNewBrowser": true
+  },
+  "settledDataProtection": {
+    "status": "pass",
+    "originalSessionCount": 13,
+    "allOriginalSessionHashesUnchanged": true,
+    "settingsExceptCounterUnchanged": true,
+    "counterAfter": 33,
+    "scope": "after async title completion, fixture close, packaging and startup reuse; no owned session disk resurrection"
+  },
+  "cleanup": {
+    "ownedSessionsTabAndServerRemoved": true,
+    "superseded876ArchiveAndImageRemoved": true,
+    "initial2728ImageAlreadyAbsent": true,
+    "final234AndRollbackDbfRetained": true,
+    "fullFixtureRemoved": true
+  }
 }

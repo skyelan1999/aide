@@ -37,7 +37,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Per-request estimates/windows/reserves/usage for planner, workers and main; transient merge anchor excluded including legacy; UI baseline/cumulative/independent rows and old unknown labels.",
+      "summary": "Independent planner/worker/latest-main/title request context estimates/windows/reserves/usage; transient merge anchors excluded including legacy; UI next baseline/reserve vs cumulative/branch actual/unknown, session isolation.",
       "evidence": [
         "internal/server/context.go",
         "internal/server/conversation_parallel.go",
@@ -45,8 +45,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Final targeted16.145s PASS; Node regressions, actual Qwen3 branches/six calls usage reconciliation/baseline calibration0, runtime, offline/load, observed card synthetic+real data dark/light390px/session switch PASS. Clean full/main pending.",
+      "status": "pass",
+      "summary": "Final clean main full84 PASS, server race537.260s, fingerprint 8e36a90ae4c6140d95880ac8751063406ecb4eb220df3086a60c5d7d03b50a80. Focused16.145s/Node, actual Qwen3 independent workers +6-call usage reconciliation/baseline calibration0, runtime/offline/load and observed component dark/light390px/session switch pass. Authenticated Safari/receiving import pending per human scope.",
       "evidence": [
         "docs/reviews/2026-10-15/parallel-context-accounting-proof.json"
       ]
@@ -60,14 +60,14 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Owned sessions/cancelled run/tab/server removed; original13 preserved except monotonic counter; own876 intermediate package removed, dbf rollback retained; future full fixture runner-owned.",
+      "summary": "Own three sessions/run/tab/HTTP server removed, original13 hashes/settings intact after async titles settle; owned876 archive/image removed (initial2728 image absent), active234 and rollbackdbf retained; final full fixture removed by runner.",
       "evidence": [
         "docs/reviews/2026-10-15/parallel-context-accounting-proof.json"
       ]
     },
     "release": {
       "status": "in_progress",
-      "summary": "Final runtime/offline pass; clean full and main gate/push pending.",
+      "summary": "Final clean main full84 and runtime/offline passed; independent gate/exact remote push pending. No version bump/tag/formal Release.",
       "evidence": [
         "docs/reviews/2026-10-15/parallel-context-accounting-proof.json"
       ]

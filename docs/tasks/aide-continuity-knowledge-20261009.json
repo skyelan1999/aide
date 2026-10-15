@@ -7439,7 +7439,7 @@
     "task": "docs/tasks/parallel-context-accounting-20261015.json",
     "classification": "progress",
     "status": "in_progress",
-    "summary": "Parallel independent request contexts vs cumulative usage; transient merge calibration fixed, title helper disclosed, actual3-way six-request usage reconciliation and UI/runtime/offline passed; full/main pending. Original12 remain open.",
+    "summary": "Independent per-request context vs cumulative; transient calibration/title disclosure; actual Qwen3-way six-call reconciliation, focused16.145s, clean main full84/serverrace537.260s, component/runtime/offline/startup reuse passed. Gate/main pending; original12 remain open.",
     "original12RemainOpen": true,
     "evidence": [
       "docs/reviews/2026-10-15/parallel-context-accounting.md"
