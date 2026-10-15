@@ -41,33 +41,45 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "待独立干净main目录完整80项检查；旧quick78仅代表开发候选。",
+      "status": "pass",
+      "summary": "干净main full80 PASS，server race486.963秒及全仓库vet通过；收据绑定当前产品输入。完整星图页面和其他已知待办不因合并自动完成。",
       "evidence": [
-        "docs/tasks/starmap-degree-level-scale-20261015.json"
+        ".agent-state/main-integration-stellar/full-frozen.json"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "维护当前合入任务，完成后补总账和跨设备交接。",
+      "status": "pass",
+      "summary": "合并任务与总账记录完整回归、范围和限制；跨设备交接在推送核对后更新。",
       "evidence": [
-        "docs/tasks/main-integration-stellar-20261015.json"
+        "docs/tasks/main-integration-stellar-20261015.json",
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "保留5项继承删除、已有离线包和用户数据；待清理自有临时工作树。",
+      "status": "pass",
+      "summary": "干净main目录无继承删除；原目录5项vendor删除保留。无浏览器新增、数据变更或服务重启，临时工作树待推送核对后移除。",
       "evidence": [
-        "git status --short"
+        "git status --porcelain",
+        "git worktree list"
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "完整门禁已通过，待release-check及main推送核对；不升版/tag/Release。",
+      "evidence": [
+        ".agent-state/main-integration-stellar/full-frozen.json"
+      ]
     }
   },
   "release_authorization": "用户直接授权：做完这个把所有内容和到main上。",
   "rollback": "保留原main 7f68a3c及feature分支；需要撤回时经新授权以revert提交回退，不force push。运行9999镜像和用户数据本轮不替换。",
-  "handoff": ""
+  "handoff": "",
+  "verification_receipt": {
+    "profile": "full",
+    "status": "pass",
+    "fingerprint": "64d1dbd8eb685542ce7022a77203cdb95f37398e7683672f09a85a44a506aff9",
+    "head": "e0ecd101cdc2fbdf36a754e42abf3167a8227739",
+    "time": "20261015T064002313690Z",
+    "commands": 80
+  }
 }

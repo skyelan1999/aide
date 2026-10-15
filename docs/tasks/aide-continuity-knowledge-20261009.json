@@ -6545,5 +6545,24 @@
       "automatic completion repeats tool reads; long documents finish early",
       "original 12 workstreams remain in_progress; vector deferred; Windows user-owned"
     ]
+  },
+  "followup143": {
+    "task": "main-integration-stellar-20261015",
+    "authorization": "用户要求做完后把所有内容合到main。",
+    "summary": "独立干净main已快进纳入16项功能/文档提交及合并任务；full80 PASS，server race486.963秒+vet。待门禁和远端推送核对；保留原目录5项vendor删除，不升版/tag/Release。",
+    "receipt": {
+      "profile": "full",
+      "status": "pass",
+      "fingerprint": "64d1dbd8eb685542ce7022a77203cdb95f37398e7683672f09a85a44a506aff9",
+      "head": "e0ecd101cdc2fbdf36a754e42abf3167a8227739",
+      "time": "20261015T064002313690Z",
+      "commands": 80
+    },
+    "remaining": [
+      "complete workbench starmap UI acceptance",
+      "Qwen completion review repeats tool reads and long document early finish",
+      "receiving-device offline import",
+      "original 12 workstreams remain active; vector deferred; Windows user-owned"
+    ]
   }
 }
