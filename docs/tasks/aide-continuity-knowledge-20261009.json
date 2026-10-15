@@ -6949,7 +6949,8 @@
       "actual bundled browser exporter: reproduced old page5 list/heading overlap, fixed17 A4 pages with mixed styled paragraphs, nested list, table, code, SVG, Mermaid and PNG",
       "Poppler page inspection; page DOM max779 nodes/source1999; no peak-memory claim",
       "export iframes and own browser tab closed, fixture server stopped",
-      "start.command9999, exact assets/config/auth/mounts; complete offline hashes/platform/launchers/docker load/two local copies"
+      "start.command9999, exact assets/config/auth/mounts; complete offline hashes/platform/launchers/docker load/two local copies",
+      "tall-row failure reproduced then fixed; final19-page PDF all sheets reviewed, L/R0-89 complete; final runtime/package refreshed"
     ],
     "remaining": [
       "clean main full84 and release gate/push",
@@ -6957,6 +6958,7 @@
       "receiving-device import"
     ],
     "original12RemainOpen": true,
-    "runtimeImage": "297695c9a046"
+    "runtimeImage": "bf701a670f6a",
+    "additionalSourceCommit": "a0ee2ab"
   }
 }

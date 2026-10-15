@@ -1,5 +1,12 @@
 # Docker 镜像交付
 
+## 2026-10-15 Markdown 混排 PDF 最终候选（构建时记录）
+
+- 源码 `2b0ea2c` 加超高表格行修复 `a0ee2ab`，导出资源 v5。相同指定启动器已更新 9999 为 `bf701a670f6a`；三项实际资源、健康及鉴权／配置／挂载保持通过。完整 19 页混排夹具含左右各 90 行的跨页单行表格，经浏览器导出和 Poppler 检查，左右列均到 89。原用户文档及峰值内存未测，五项继承 vendor 删除保留，仍为开发候选。
+- 应用 `sha256:bf701a670f6a1e10ea69f445aa582a2a4fca1e9a89b821b1e83f2d52ce1a2e89`，source SHA `fddfe85c0d980cb29dd742e08ed9b851ac6a8a3a3f8054a82b98528b30d0a67e`。
+- 完整包 `aide-0.1.17.0-RC2-linux-arm64-bf701a670f6a-offline.tar.gz`，705678942 字节，SHA-256 `fd7caad98e73a1d74cd2dae5b23a508b0aacf551487fbcf5421a184fbe43224f`。应用／依赖镜像、内外摘要、平台、启动器、实际 docker load 和两本地副本通过，接收端导入待验收。保留 `997eda4026b5` 及本批中间包回滚。
+- 初始 `cd588b3` full84 PASS（server race 538.971 秒及 vet）只覆盖中间版；最终 quick82 已通过，最终 full84／main 门禁以[任务账本](../docs/tasks/markdown-pdf-mixed-layout-20261015.json)后续收据为准，不复用旧输入收据。不升版、tag 或创建正式 Release。
+
 ## 2026-10-15 Markdown 混排 PDF 候选（构建时记录）
 
 - 源码 `2b0ea2c`：修复长列表后标题／正文叠加、跨页行内片段重排及表格列宽变化；统一原坐标定位并避开文字行、短列表项／表格行及图像分页。指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新本机 9999，健康及导出／图表／首页三项资源匹配，鉴权／配置／挂载保持。五项继承 vendor 删除保留，镜像为开发候选，不混称干净 main 镜像。

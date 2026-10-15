@@ -47,7 +47,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Initial quick82 passed. Added tall-row regression failed before fix (one instead of two cells), then focused tests passed. Final actual browser synthetic19-page PDF includes 90 lines in both tall cells; Poppler pages17-19 preserve both columns through89. Final quick/full/runtime update pending.",
+      "summary": "Final quick82 and focused tall-row continuation passed; actual19-page mixed browser export and all Poppler page sheets reviewed. Final runtime/offline verified; initial full84 only covers cd588b3, final clean full/main pending.",
       "evidence": [
         ".agent-state/markdown-pdf-mixed-layout/quick.log",
         ".agent-state/markdown-pdf-mixed-layout/proof.json",
@@ -77,7 +77,7 @@
   },
   "release_authorization": "Standing user instruction: push completed changes and merge all into main; update start.command runtime and complete offline image package; no version/tag/formal Release.",
   "rollback": "Revert scoped frontend/test changes and restore previous complete image 997eda4026b5; no data migration.",
-  "handoff": "Scoped PDF fix, synthetic browser/Poppler and quick82 passed. Local9999 candidate and complete offline package verified. Clean full84/main gate/push pending; original problem document/authenticated browser and receiving-device import not verified.",
+  "handoff": "Final local9999 bf701a670f6a and complete offline package verified. Final source a0ee2ab quick82/browser19/Poppler passed; final clean full84/main pending. Original problem document/authenticated browser, peak memory and receiving-device import not verified.",
   "browserEvidence": {
     "pages": 19,
     "renders": [
@@ -207,10 +207,10 @@
     "tallTableBothColumns": "L/R0-89 across pages17-19; Poppler visual check"
   },
   "runtime": {
-    "image": "sha256:297695c9a0468ecc87b8a33b7db2cdce864a789da7c213948848afb1bcb76589",
-    "runningImage": "sha256:297695c9a0468ecc87b8a33b7db2cdce864a789da7c213948848afb1bcb76589",
-    "sourceSHA256": "5d643c2cab640e5ed2fb95642832e9b0cf94928e4cdc498cf2ddee39e18bd5f0",
-    "runningPlatformManifest": "sha256:5ea538f64a1980326ee8962f55ad5a35d145c302432217ba59693fa30cc81c0b",
+    "image": "sha256:bf701a670f6a1e10ea69f445aa582a2a4fca1e9a89b821b1e83f2d52ce1a2e89",
+    "runningImage": "sha256:bf701a670f6a1e10ea69f445aa582a2a4fca1e9a89b821b1e83f2d52ce1a2e89",
+    "sourceSHA256": "fddfe85c0d980cb29dd742e08ed9b851ac6a8a3a3f8054a82b98528b30d0a67e",
+    "runningPlatformManifest": "sha256:c7e897dfe2886142dc10579ff90426520d50a40c4e95289f96487522dfc9fb79",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "health": "ok",
     "port": "9999",
@@ -218,11 +218,11 @@
     "servedAssetsMatch": true
   },
   "package": {
-    "image": "sha256:297695c9a0468ecc87b8a33b7db2cdce864a789da7c213948848afb1bcb76589",
-    "sourceSHA256": "5d643c2cab640e5ed2fb95642832e9b0cf94928e4cdc498cf2ddee39e18bd5f0",
-    "archive": "aide-0.1.17.0-RC2-linux-arm64-297695c9a046-offline.tar.gz",
-    "bytes": 705678359,
-    "sha256": "d17ad91615bd7064e8dab9d38cdc4a70c0107f61162e6b56051761f31740ec9f",
+    "image": "sha256:bf701a670f6a1e10ea69f445aa582a2a4fca1e9a89b821b1e83f2d52ce1a2e89",
+    "sourceSHA256": "fddfe85c0d980cb29dd742e08ed9b851ac6a8a3a3f8054a82b98528b30d0a67e",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-bf701a670f6a-offline.tar.gz",
+    "bytes": 705678942,
+    "sha256": "fd7caad98e73a1d74cd2dae5b23a508b0aacf551487fbcf5421a184fbe43224f",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
     "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
@@ -235,5 +235,16 @@
     "copiedBothTrees": true,
     "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
   },
-  "sourceCommit": "2b0ea2c"
+  "sourceCommit": "a0ee2ab",
+  "initialSourceCommit": "2b0ea2c",
+  "initialFullVerification": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "28111bf84e03c5cf5a7bfd1ddfbc433f299b1e6c901e356f10221fa4c1171813",
+    "serverRaceSeconds": 538.971,
+    "sourceCommit": "cd588b38bd748588b59d9fb3bdba37d059936784",
+    "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/markdown-pdf-mixed-layout/verify-20261015T095247258384Z.log",
+    "worktree": "/private/tmp/aide-pdf-layout-full-20261015",
+    "scope": "Initial cd588b3 only; superseded by tall-row follow-up; not a final source receipt"
+  }
 }
