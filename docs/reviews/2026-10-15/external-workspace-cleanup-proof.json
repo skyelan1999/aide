@@ -52,5 +52,10 @@
   },
   "vendorChangesPreserved": "separate original/external stashes and /Volumes/MY PASSPORT/aide_ws/.migration-state/*-vendor-deletions.patch",
   "rebasedHistoricalFixtureLinks": 6,
-  "release": "pending"
+  "release": {
+    "status": "pass",
+    "verifiedMain": "1a48d081aae453630a000b4d25d4eab2bc1665f8",
+    "releaseCheck": true,
+    "remoteExactMatch": true
+  }
 }

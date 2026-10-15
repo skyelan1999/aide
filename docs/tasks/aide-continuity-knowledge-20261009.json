@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Current source history-object-integrity f6ca3e1 / runtime9999 9bc517eba16f: corrupt body/asset and symlink backups block overwrite, trusted restore retry and process restart verified; complete offline package ready. Clean full84 passed; main delivery verified f8e2cd2cd383491ffc02d26baf7b600453bd404e. Human authorized external APFS aide_ws/aide as new development root; latest source/evidence/package synced, vendor changes stashed reversibly, original retained. Original12 open; full authenticated Safari deferred by human, Windows user acceptance, real vectors deferred. All subsequent development uses /Volumes/MY PASSPORT/aide_ws/aide; runtime now b11bb97fed59 external mount, cleanup followup159.",
+  "handoff": "All subsequent development uses /Volumes/MY PASSPORT/aide_ws/aide. Clean main migration/cleanup delivery verified1a48d081aae453630a000b4d25d4eab2bc1665f8; runtime9999 b11bb97fed59 built from clean external source, data/home/config/auth/13 sessions preserved, original Harness context retained. Historical full84 and fresh quick82 inputs match. 89.20GiB logical unused/duplicate build and cache removed, original source/user records retained, inherited vendor deletions stashed with external patches. Canonical offline packages retained externally; prior9bc package differs from new b11 runtime image and is not claimed as its export. Original12 workstreams remain in_progress, authenticated Safari deferred by human, Windows user acceptance, real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -7361,11 +7361,12 @@
     "task": "docs/tasks/external-workspace-cleanup-20261015.json",
     "classification": "progress",
     "previousGoalTurn": "History fix actual binary/runtime/offline and clean full84 completed; user directed external workspace migration and cleanup.",
-    "status": "in_progress",
-    "summary": "External source/runtime active, inherited vendor changes preserved in stashes/patches, 89.20GiB logical build/cache cleanup; quick82 and identical full input verified. Final main gate/push pending.",
+    "status": "pass",
+    "summary": "External aide_ws/aide development and runtime9999 active, inherited changes retained in stashes/patches, 89.20GiB logical artifact/cache cleanup, quick82 and same-input full84 receipt verified; clean main gate and exact remote delivery PASS. Original12 remain open.",
     "original12RemainOpen": true,
     "evidence": [
       "docs/reviews/2026-10-15/external-workspace-cleanup.md"
-    ]
+    ],
+    "deliveredMain": "1a48d081aae453630a000b4d25d4eab2bc1665f8"
   }
 }

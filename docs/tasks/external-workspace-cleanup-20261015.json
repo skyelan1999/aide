@@ -62,14 +62,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Documentation-only final main gate/push pending; no version/tag/formal release.",
+      "status": "pass",
+      "summary": "Clean main release-check PASS; main pushed and exact remote1a48d081aae453630a000b4d25d4eab2bc1665f8 verified. Ordinary-document completion receipt retains same full input; no version/tag/formal Release.",
       "evidence": [
-        "docs/reviews/2026-10-15/external-workspace-cleanup.md"
+        "docs/reviews/2026-10-15/external-workspace-cleanup.md",
+        "docs/reviews/2026-10-15/external-workspace-cleanup-proof.json"
       ]
     }
   },
   "release_authorization": "Human: new directory for all further development, release old compiled outputs/useless caches, clean branch; standing incremental main push. No broad Docker prune or data/source removal.",
   "rollback": "Inherited five vendor deletions retained in independent stashes and migration-state patches; original source and canonical offline packages retained. Rebuild disposable binaries/cache if needed; runtime may use prior image and original mounts.",
-  "handoff": "Use /Volumes/MY PASSPORT/aide_ws/aide for every subsequent development command. Runtime9999 now external source; Harness and Docker data/home remain original locations. Canonical offline packages external; local rebuild b11 is distinct from prior exported9bc. Original12 remain open; Safari deferred, Windows user acceptance, real vectors deferred."
+  "handoff": "Use /Volumes/MY PASSPORT/aide_ws/aide for every subsequent development command. Runtime9999 now external source; Harness and Docker data/home remain original locations. Canonical offline packages external; local rebuild b11 is distinct from prior exported9bc. Original12 remain open; Safari deferred, Windows user acceptance, real vectors deferred.",
+  "deliveredMain": "1a48d081aae453630a000b4d25d4eab2bc1665f8"
 }
