@@ -49,13 +49,13 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "行为回归及实际浏览器隔离页、千问单样本已通过；最终quick/full与部署资产核对待补。",
+      "status": "pass",
+      "summary": "Clean-main full82 passed: quick80, runtime assets, all Go race/vet; server515.069s. Also targeted20 race/vet, actual bundled browser light/dark/narrow/empty-RAG and real Qwen node-assist sample. Live authenticated browser and broad search quality remain unverified, not implied by these checks.",
       "evidence": [
-        "scripts/starmap-ai-exploration.test.cjs",
+        ".agent-state/starmap-ai-exploration/full-frozen.json",
+        ".agent-state/starmap-ai-exploration/target-race.log",
         ".agent-state/starmap-ai-exploration/live-proof.json",
-        ".agent-state/starmap-ai-exploration/dark.png",
-        ".agent-state/starmap-ai-exploration/narrow-dark.png"
+        "docs/reviews/2026-10-15/starmap-ai-exploration.md"
       ]
     },
     "documentation": {
@@ -77,14 +77,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final inputs passed full82 on clean main. Preparing read-only release gate and authorized main push; no tag/version/Release.",
+      "evidence": [
+        ".agent-state/starmap-ai-exploration/full-frozen.json"
+      ]
     }
   },
   "release_authorization": "沿用用户原话“做完这个把所有内容和到main上”，分部分测试和推送、指定start.command启动及完整离线镜像包交付；不升版/tag/正式Release。",
   "rollback": "回退本批前端与回归提交；旧镜像包保留。没有用户数据迁移，不覆盖五个继承的vendor删除。",
-  "handoff": "修复和验收进行中；完整9999浏览器仍受此前证书阻挡，组件验收不冒称真实端到端；原12项连续目标保持未完成。",
+  "handoff": "Scoped exploration fixes verified and running on9999 as f86461692f67; complete offline bundle verified. Clean-main full82 passed. Gate/main push pending. Live workbench browser, broad search quality, receiving-device import and original12 remain open.",
   "runtime": {
     "image": "sha256:f86461692f6776a36288b5dc2336cb8147c950a008dca02eeee47c2c932dd941",
     "runningImage": "sha256:f86461692f6776a36288b5dc2336cb8147c950a008dca02eeee47c2c932dd941",
@@ -161,5 +163,13 @@
     "targetedRaceSeconds": 17.945,
     "vet": "pass",
     "evidence": ".agent-state/starmap-ai-exploration/target-race.log"
+  },
+  "fullVerification": {
+    "status": "pass",
+    "count": 82,
+    "fingerprint": "0877c60c51530bbee089ab3adc9c25c69b316640811d8a7c56abe022716ddb3a",
+    "serverRaceSeconds": 515.069,
+    "sourceCommit": "d05337082604e6def7c7e216072feafc9d46fbe9",
+    "receipt": ".agent-state/starmap-ai-exploration/full-frozen.json"
   }
 }

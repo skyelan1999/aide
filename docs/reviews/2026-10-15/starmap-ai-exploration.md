@@ -16,11 +16,13 @@
 
 最终检查另修复了文档零命中时 `hits=null` 造成前端 `.map` 异常的问题，自动回归及真实浏览器隔离页都确认正常显示无命中提示并恢复按钮，截图 `empty-rag.png`。离开页面也会取消自身探索请求。首轮完整测试由操作者主动停止，其容器已移除，日志归档为 `full-superseded.log`，不记通过；最终源码重新运行完整门禁。
 
-随后一次完整运行未通过：旧测试 `TestLocalWorkspacePathAIReadFix` 中两个模拟请求回调同时累加 `captured`，race 报告位于 `workspace_test.go:105`，server 套件耗时 522.102 秒。失败日志及收据保留为 `full-race-failed.log/json`，不记通过。提交 `0e1eaeb` 仅给测试收集器写入加互斥锁，并在断言前取受保护的快照；没有修改产品逻辑或关闭检测。定向 `go test -race -count=20 -run=^TestLocalWorkspacePathAIReadFix$ ./internal/server` 耗时 17.945 秒通过，随后 `go vet` 通过；完整门禁重跑。更新后的镜像也包含此测试修正，防止交付源码与验收来源脱节。
+随后一次完整运行未通过：旧测试 `TestLocalWorkspacePathAIReadFix` 中两个模拟请求回调同时累加 `captured`，race 报告位于 `workspace_test.go:105`，server 套件耗时 522.102 秒。失败日志及收据保留为 `full-race-failed.log/json`，不记通过。提交 `0e1eaeb` 仅给测试收集器写入加互斥锁，并在断言前取受保护的快照；没有修改产品逻辑或关闭检测。定向 `go test -race -count=20 -run=^TestLocalWorkspacePathAIReadFix$ ./internal/server` 耗时 17.945 秒通过，随后 `go vet` 通过；完整门禁重跑。镜像已按含此测试修正的源码重新构建并标记来源；该测试修正本身不改变产品执行逻辑。
 
 指定启动器已更新 9999 开发候选 `f86461692f67`（源码追加 `0a2e928`），四项星图资源与源码逐字匹配，健康通过，鉴权／配置／挂载未变；完整离线包内外哈希、平台、启动器、docker load、两本地目录副本均通过。详见任务账本及 [Docker 构建时记录](../../../docker-images/README.md)。该镜像包含原工作树继承的五个 vendor 删除，不冒充干净 main 构建。真实千问单样本调用在重建前的同一 9999 服务执行，本次没有修改后端处理或模型协议。
 
 完整 main 门禁结果在任务账本继续补充。完整真实工作台浏览器此前受自签名证书阻挡；不能把隔离页面或 API 验收写成该端到端通过。目录检索质量、长回答准确率及真实向量能力没有在本批证明。
+
+最终干净 main 检出 `d05337082604e6def7c7e216072feafc9d46fbe9` 的完整 82 项检查通过（80 quick、运行资源和 Go snapshot），server race 515.069 秒，全部 vet 通过。内容指纹 `0877c60c51530bbee089ab3adc9c25c69b316640811d8a7c56abe022716ddb3a`；冻结收据 `.agent-state/starmap-ai-exploration/full-frozen.json`，原始日志 `verify-20261015T085007813677Z.log`。测试容器已由 runner 清理。后续只补普通文档收据，不改动已验证的产品、测试或构建输入；先前失败记录仍保留。
 
 ## 回滚与保留
 

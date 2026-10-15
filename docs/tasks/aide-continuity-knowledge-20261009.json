@@ -6877,13 +6877,20 @@
       "empty RAG null hits: automatic regression and actual bundled browser fixture"
     ],
     "remaining": [
-      "clean main full/release gate and push",
+      "read-only main release gate and push",
       "live authenticated browser end-to-end and broad directory-search quality",
       "receiving-device import"
     ],
     "originalWorkstreamsRemainOpen": true,
     "additionalSourceCommit": "0a2e928",
     "runtimeImage": "f86461692f67",
-    "gateFixtureRepair": "0e1eaeb: synchronized mock request capture; 20 race repetitions and vet passed; full rerun pending"
+    "gateFixtureRepair": "0e1eaeb: synchronized mock request capture; 20 race repetitions and vet passed; clean full82 now passed",
+    "fullVerification": {
+      "status": "pass",
+      "count": 82,
+      "fingerprint": "0877c60c51530bbee089ab3adc9c25c69b316640811d8a7c56abe022716ddb3a",
+      "serverRaceSeconds": 515.069,
+      "sourceCommit": "d05337082604e6def7c7e216072feafc9d46fbe9"
+    }
   }
 }
