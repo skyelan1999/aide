@@ -45,28 +45,82 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old scheduler regression FAIL before source edit; changed actual scheduler and cache/scene/source-VM tests PASS. Canonical rebuilt browser and final quick/full/package still pending. No end-to-end cold-first-render speedup claim.",
+      "summary": "Old scheduler regression FAIL before source edit; changed actual scheduler and cache/scene/source-VM tests PASS. Canonical rebuilt browser and final quick/full/package still pending. No end-to-end cold-first-render speedup claim. Current6bdcb41 quick70 PASS. Exact start.command rebuilt matching320315 image; native Safari shows41715 total nodes, selected reference20000 real nodes and explicit pending/body-gap counts. CUA click+AX/screenshot call48.6s is slow observation, not isolated render measurement. No general first-open or interaction speedup claim; large-scene layout/per-frame cost remains to inspect. Streamed package hashes/tags/platform/launchers/load and both local copies PASS. Fresh full72 pending.",
       "evidence": [
-        ".agent-state/starmap-current-latency/cache-negative.log"
+        ".agent-state/starmap-current-latency/cache-negative.log",
+        ".agent-state/starmap-current-latency/fixed-reference.txt",
+        ".agent-state/starmap-current-latency/fixed-reference.jpg",
+        ".agent-state/starmap-current-latency/package.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Cache starvation diagnosis and scoped timer fix documented with actual API/native measurements, no end-to-end latency claim. Large-scene followup explicit.",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docker-images/README.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "No fixture/config/session/source edits; inherited5 vendor deletions preserved. Mounts, canonical settings/sources/auth and workspace-config bytes unchanged. No prune or volume reset. Private probes retained.",
+      "evidence": [
+        ".agent-state/starmap-current-latency/runtime-check.log"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Incremental6bdcb41 source push and320315 complete local offline image verified. Fresh full72 pending; no main/tag or receiving-device import.",
+      "evidence": [
+        ".agent-state/starmap-current-latency/package.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental source/docs push and local build/offline image authorization; no main/tag formal release.",
-  "rollback": "",
-  "handoff": ""
+  "rollback": "Revert6bdcb41 or use prior00c601 image, preserving all user data volumes/config; no cache/index reset required.",
+  "handoff": "Source6bdcb41 current local image320315, quick70 and native20k-node reference display PASS. Timer regression proves bounded cached-prefix progress under350ms updates, no end-to-end latency improvement claim. Freeze metadata for fresh full72. Large-scene slow interaction/layout and cloud body gaps remain open; original12 goals active.",
+  "runtime": {
+    "runningImage": "sha256:320315d7e14bff41f575db81083a43021fd17dd906e28734263c78775de2374c",
+    "image": "sha256:320315d7e14bff41f575db81083a43021fd17dd906e28734263c78775de2374c",
+    "binarySHA256": "d022ecab790d166dd3840c70eb40ed993fbabf582e93f843a8f03230490fd4a8",
+    "runningPlatformManifest": "sha256:831b16b02f0a34c1c4a25580c8b487fe8c93d710eae6d837e0812060fa40ef66",
+    "sourceSHA256": "0220874f51107c9361102fecfbf9112859f12b6b2617b5c15dc562cc59958cd1",
+    "buildCommit": "6bdcb41551b34fd473f1c7f7bfaf2f63f3d45ac3-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 5,
+    "historicalProtectedFilesUnchanged": 1,
+    "snapshotTiming": "Current baseline: canonical settings sequence6 from owned fixtures, voice defaults queue/conservative; no new config/session mutations in this task. Existing sources, workspace-config, auth and mounts preserved.",
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:320315d7e14bff41f575db81083a43021fd17dd906e28734263c78775de2374c",
+    "sourceSHA256": "0220874f51107c9361102fecfbf9112859f12b6b2617b5c15dc562cc59958cd1",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-320315d7e14b-offline.tar.gz",
+    "bytes": 705662934,
+    "sha256": "aafddf23a1d2212b60313af6bd625f7d488c3dd1b2875dd72b9dc42ce0db3c1b",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "quick_receipt": {
+    "status": "pass",
+    "fingerprint": "8ac87726b52fed4565e3bc08104ad5c0e62e64febcc15cac5af5245a61b59cf7",
+    "head": "864924c217309d3bb8aff24bdbba10a6ae46bbcf",
+    "time": "20261015T002437470028Z",
+    "log": ".agent-state/verify-20261015T002437470028Z.log"
+  }
 }

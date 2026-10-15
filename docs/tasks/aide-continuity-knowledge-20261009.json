@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 followup129: source57e1579 and documentationeef916c pushed on fix/session-counter-canonical. Canonical sequence/legacy upgrade and partial voice settings fixes have scoped race/vet, quick70, native numbering restart and voice readback/restoration proof. Current image00c601 complete offline bundle verified/imported/copied locally. Approved six-theme desktop/narrow575–576px display acceptance complete, professional/system restored, owned fixture removed; original assistant only checked read marker changed. Fresh frozen full72 PASS (server race716.110s+vet, unchanged ebd8556a fingerprint), receipt .agent-state/session-counter-canonical/full-frozen.json. No formal release. Original12 workstreams remain active; real provider unavailable, vectors deferred, Windows user-owned, receiving-device import unobserved.",
+  "handoff": "Current Safari41715 total/20000 reference nodes; reset API35336 nodes20.2MB/0.3622s. Reproduced350ms updates starving1200ms debounce cache; source6bdcb41 fixes bounded coalescing and old idle owner rejection. Quick70 and actual current image320315/native/package local import PASS. Fresh full72 pending, old72 pass historical only for prior inputs. Large-scene interaction observation slow; further layout/per-frame diagnosis remains. Original12 workstreams remain active; real vectors deferred, Windows user-owned, real-provider and receiving-device acceptance pending.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6373,5 +6373,9 @@
       "receipt": ".agent-state/session-counter-canonical/full-frozen.json",
       "scope": "Frozen current tracked/untracked inputs including inherited vendor deletions; no formal release or external device/provider acceptance."
     }
+  },
+  "followup130": {
+    "task": "docs/tasks/starmap-current-latency-20261015.json",
+    "summary": "Current Safari41715 total/20000 reference nodes; reset API35336 nodes20.2MB/0.3622s. Reproduced350ms updates starving1200ms debounce cache; source6bdcb41 fixes bounded coalescing and old idle owner rejection. Quick70 and actual current image320315/native/package local import PASS. Fresh full72 pending, old72 pass historical only for prior inputs. Large-scene interaction observation slow; further layout/per-frame diagnosis remains."
   }
 }

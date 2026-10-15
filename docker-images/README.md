@@ -156,3 +156,10 @@ Latest reviewed-recovery continuation development snapshot (2026-10-15): `aide-0
 当前本机 ARM64 包：`aide-0.1.17.0-RC2-linux-arm64-00c6011ad9f4-offline.tar.gz`，705659485 字节，SHA-256 `fb39935fe3d0be3e09fb8181629a5d9c6db3d69a737ca10f1bad948da47d7ab2`。源码提交 `57e1579`（含 `d6dbf55`），源内容指纹 `eb8d7f89e3ca583c3aa2bc52d4729cceb21bd823967653f36a62f75611066cf6`。应用及完整本地依赖镜像均在包内；内外哈希、启动脚本、运行平台、实际流式 docker load 和两个本地工作树副本校验通过。沿用包内 `start.command` 直接导入；接收设备尚未验收。
 
 规范路径持久化编号、旧配置仅提升编号、独立设置保存保留语音派发偏好已修复。定向 race/vet、quick70、系统 Safari 编号重启与语音读回通过；完整72项门禁单独记录于[任务账本](../docs/tasks/session-counter-canonical-20261015.json)，当前不声明全量通过。六主题桌面及574像素窗口显示检查通过，390像素与真实模型执行仍未验收。开发分支交付，不代表main/tag正式发布。
+
+
+## 2026-10-15 星图持续扫描快照候选
+
+`aide-0.1.17.0-RC2-linux-arm64-320315d7e14b-offline.tar.gz`，705662934字节，SHA-256 `aafddf23a1d2212b60313af6bd625f7d488c3dd1b2875dd72b9dc42ce0db3c1b`。源码 `6bdcb41`，源指纹 `0220874f51107c9361102fecfbf9112859f12b6b2617b5c15dc562cc59958cd1`。修复持续扫描时缓存写入被不断推迟；quick70、定向计时器回归及系统Safari大引用显示通过。完整应用和本地依赖镜像均包含，流式内外哈希、运行平台、启动器、实际docker load和两个本地副本校验通过。原`start.command`已在本机启动9999；接收设备导入未验收。
+
+新full72结果见[当前任务](../docs/tasks/starmap-current-latency-20261015.json)；前一批全量通过不能代替本批门禁。当前不声明大星域交互或冷启动整体提速，不做main/tag正式发布。
