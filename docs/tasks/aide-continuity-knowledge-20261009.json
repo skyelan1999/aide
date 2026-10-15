@@ -6650,5 +6650,64 @@
       "source": "internal/server/workflow.go execute final err/success branches"
     },
     "boundary": "full81/main/tag and complete UI/receiving-device import pending; Windows user-owned; real vector deferred"
+  },
+  "followup146": {
+    "task": "cancelled-output-context-20261015",
+    "classification": "progress",
+    "summary": "停止/失败/暂停正文及可确认的旧历史已接入模型上下文与压缩，暂停尾段检查点和正常阶段历史保留；真实停止/后续请求及同镜像实际重启恢复通过，标题逐字引用未通过单列。下一步干净full81，不以本任务通过替代原12项完整验收。",
+    "verification": {
+      "status": "in_progress",
+      "summary": "定向race28.473秒/vet及quick79通过；真实旧长文片段预览/实际请求和只读/幂等核对通过，新停止205字完整进入后续请求，暂停205字实际重启后SHA一致并恢复，尾段样本仅各一次。标题逐字引用未通过（省略括号），不外推模型正确性。待干净full81与完整页面。",
+      "evidence": [
+        ".agent-state/cancelled-output-context/negative.log",
+        ".agent-state/cancelled-output-context/provider-negative.log",
+        ".agent-state/cancelled-output-context/targeted-final.log",
+        ".agent-state/cancelled-output-context/targeted-fingerprint.json",
+        ".agent-state/cancelled-output-context/quick-frozen.json",
+        "docs/reviews/2026-10-15/cancelled-output-context.md",
+        ".agent-state/cancelled-output-context/legacy-proof.json",
+        ".agent-state/cancelled-output-context/cancel-followup-proof.json",
+        ".agent-state/cancelled-output-context/resume-proof.json",
+        ".agent-state/cancelled-output-context/restart-proof.json",
+        ".agent-state/cancelled-output-context/settings-counter-proof.json"
+      ]
+    },
+    "runtime": {
+      "image": "sha256:d9e90810dea4069d21f80b817bfbdc074c45ea454767b0ae1f2b002680b8b5de",
+      "runningImage": "sha256:d9e90810dea4069d21f80b817bfbdc074c45ea454767b0ae1f2b002680b8b5de",
+      "sourceSHA256": "97b5cd89f03a15dfef0c40a67e4fa74634ef8f03b872bdf46e75b30c7c0c1ba7",
+      "runningPlatformManifest": "sha256:5772c5d546372bb07f5b2e6494b878d6f3d1884efb6cf400abd66937d6c723a9",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "health": "ok",
+      "port": "9999",
+      "currentConfigAndMountsPreserved": true,
+      "expectedSessionCounterIncrement": 2,
+      "servedAssetsMatch": true
+    },
+    "package": {
+      "image": "sha256:d9e90810dea4069d21f80b817bfbdc074c45ea454767b0ae1f2b002680b8b5de",
+      "sourceSHA256": "97b5cd89f03a15dfef0c40a67e4fa74634ef8f03b872bdf46e75b30c7c0c1ba7",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-d9e90810dea4-offline.tar.gz",
+      "bytes": 705670006,
+      "sha256": "68781730cc5af999ce0a936b9a92370e1c3a79b9bda763f9fbd0310fce50a2f8",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true,
+      "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+    },
+    "remaining": [
+      "clean full81",
+      "full browser and receiving-device import",
+      "main/tag for current feature branches",
+      "40-section length/one-run completion acceptance; verbatim quotation precision",
+      "original12 workstreams remain active; Windows user-owned; real vector deferred"
+    ]
   }
 }

@@ -56,13 +56,19 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "旧数据上下文缺正文负例已观察；替换旧provider的单路径负例复现等待取消时out为空。修复后定向race28.473秒/vet和quick79通过，涵盖真实HTTP停止/暂停恢复请求、阶段合并、旧恢复链、歧义/压缩/删除边界、只读预览和来源字段剥离。待真实提供商与重启验证。",
+      "summary": "定向race28.473秒/vet及quick79通过；真实旧长文片段预览/实际请求和只读/幂等核对通过，新停止205字完整进入后续请求，暂停205字实际重启后SHA一致并恢复，尾段样本仅各一次。标题逐字引用未通过（省略括号），不外推模型正确性。待干净full81与完整页面。",
       "evidence": [
         ".agent-state/cancelled-output-context/negative.log",
         ".agent-state/cancelled-output-context/provider-negative.log",
         ".agent-state/cancelled-output-context/targeted-final.log",
         ".agent-state/cancelled-output-context/targeted-fingerprint.json",
-        ".agent-state/cancelled-output-context/quick-frozen.json"
+        ".agent-state/cancelled-output-context/quick-frozen.json",
+        "docs/reviews/2026-10-15/cancelled-output-context.md",
+        ".agent-state/cancelled-output-context/legacy-proof.json",
+        ".agent-state/cancelled-output-context/cancel-followup-proof.json",
+        ".agent-state/cancelled-output-context/resume-proof.json",
+        ".agent-state/cancelled-output-context/restart-proof.json",
+        ".agent-state/cancelled-output-context/settings-counter-proof.json"
       ]
     },
     "documentation": {
@@ -73,17 +79,52 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "5个真实测试run均终态，无浏览器新增和遗留暂停任务，继承5项vendor删除保留。下一步临时干净验收工作树，完成后移除。",
+      "evidence": [
+        ".agent-state/cancelled-output-context/cleanup-proof.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "源码08f0027已push，指定入口9999镜像d9e90810dea4及完整离线包验证通过；待干净full81，本分支未合main/tag，接收端和完整UI未验收。",
+      "evidence": [
+        ".agent-state/cancelled-output-context/final.json",
+        ".agent-state/cancelled-output-context/package.json"
+      ]
     }
   },
   "release_authorization": "沿用用户持续授权分部分修改、push、测试及更新离线镜像；千问为指定实测端点。",
   "rollback": "回退上下文/正文持久化/流式中断变更，无批量会话迁移。新增可选归属字段由旧版本忽略；既有会话、卷与离线镜像保留。",
-  "handoff": ""
+  "handoff": "停止/失败/暂停正文及可确认的旧历史已接入模型上下文与压缩，暂停尾段检查点和正常阶段历史保留；真实停止/后续请求及同镜像实际重启恢复通过，标题逐字引用未通过单列。下一步干净full81，不以本任务通过替代原12项完整验收。",
+  "runtime": {
+    "image": "sha256:d9e90810dea4069d21f80b817bfbdc074c45ea454767b0ae1f2b002680b8b5de",
+    "runningImage": "sha256:d9e90810dea4069d21f80b817bfbdc074c45ea454767b0ae1f2b002680b8b5de",
+    "sourceSHA256": "97b5cd89f03a15dfef0c40a67e4fa74634ef8f03b872bdf46e75b30c7c0c1ba7",
+    "runningPlatformManifest": "sha256:5772c5d546372bb07f5b2e6494b878d6f3d1884efb6cf400abd66937d6c723a9",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "expectedSessionCounterIncrement": 2,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:d9e90810dea4069d21f80b817bfbdc074c45ea454767b0ae1f2b002680b8b5de",
+    "sourceSHA256": "97b5cd89f03a15dfef0c40a67e4fa74634ef8f03b872bdf46e75b30c7c0c1ba7",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-d9e90810dea4-offline.tar.gz",
+    "bytes": 705670006,
+    "sha256": "68781730cc5af999ce0a936b9a92370e1c3a79b9bda763f9fbd0310fce50a2f8",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  }
 }

@@ -212,3 +212,7 @@ Latest reviewed-recovery continuation development snapshot (2026-10-15): `aide-0
 ## 2026-10-15 正文交付与收尾检查候选
 
 `aide-0.1.17.0-RC2-linux-arm64-d18d953b69da-offline.tar.gz`，705668737 字节，SHA-256 `c71b7a54c903aa7a6ffa6576ba0a2657a0ffa83832d569485138d8b5838b12e7`，源码 `f5baec6`，源指纹 `29295790b0da2f8eacb91ef023a347d89d06f80a3691e1303787b90754c9593e`。未完成计划及明确产出请求的短执行承诺触发有界检查，收尾复用已有读取并回到原用户目标，保留旧规划阶段。quick79、定向Go race/vet及真实Marker只读一次通过。ROS2长文持续输出30节后被验收脚本240秒取消，同会话补齐到40节；篇幅和停止后上下文恢复未通过，不作为完整长文成功。指定start.command更新9999，配置/挂载/资源一致。完整应用及依赖镜像内外哈希/标签/平台/启动器/实际导入/两本地副本通过。前一a51faa64f79b候选保留回滚。新full81/main/tag、完整UI及接收设备导入未验收；见[实测报告](../docs/reviews/2026-10-15/completion-review-delivery.md)。
+
+## 2026-10-15 中断正文上下文候选
+
+`aide-0.1.17.0-RC2-linux-arm64-d9e90810dea4-offline.tar.gz`，705670006 字节，SHA-256 `68781730cc5af999ce0a936b9a92370e1c3a79b9bda763f9fbd0310fce50a2f8`，源码 `08f0027`，源指纹 `97b5cd89f03a15dfef0c40a67e4fa74634ef8f03b872bdf46e75b30c7c0c1ba7`。保留公开阶段/中断尾段、旧历史可确认归属补回、上下文统计/指纹/压缩一致性与暂停尾段续接。本地归属元数据不发送模型。quick79及定向race/vet、真实千问停止后请求和实际重启恢复通过；完整UI、干净full81、main/tag及接收端尚待验收。指定start.command更新9999，配置/挂载一致，仅两个验收会话使编号计数增加2，已逐字节哈希反证其他设置未变。完整应用与依赖镜像内外哈希/标签/平台/启动器/实际导入及两本地副本通过。见[验收记录](../docs/reviews/2026-10-15/cancelled-output-context.md)。
