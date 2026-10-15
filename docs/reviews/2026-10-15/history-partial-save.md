@@ -34,3 +34,5 @@
 ## 最终全量门禁
 
 干净main快照 `0b968636d720a3e36bcab0672fadb3534de051ed` 的full84全部PASS；server race 585.087秒及vet通过，最终指纹 `140302869a390d2291a34208abc32ef53492a226f53608b7ab74995cefae3398`。最终main门禁／推送待回执；原始日志和冻结收据保留，不把完整Safari暂缓写成PASS。
+
+main门禁PASS，已推 `cf79a86c9a9b8083e03404a23048ec6b7f5f07d7` 并用ls-remote精确核对。其后普通文档收据不改变验证输入，原12项、完整Safari／用户SSH／接收设备等继续开放。

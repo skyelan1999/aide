@@ -67,8 +67,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Final clean full84 passed; main gate and exact remote push pending. No version/tag/formal Release.",
+      "status": "pass",
+      "summary": "Clean main full84 and release-check passed; main cf79a86 exact remote SHA verified. Runtime/offline validated separately; full Safari deferred by human. No version/tag/formal Release.",
       "evidence": [
         "docs/reviews/2026-10-15/history-partial-save.md",
         "docker-images/README.md"
@@ -173,5 +173,11 @@
     "sourceCommit": "0b968636d720a3e36bcab0672fadb3534de051ed",
     "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/history-partial-save/verify-20261015T123819776071Z.log",
     "worktree": "/private/tmp/aide-history-partial-full-20261015"
+  },
+  "mainPush": {
+    "status": "pass",
+    "pushedCommit": "cf79a86c9a9b8083e03404a23048ec6b7f5f07d7",
+    "remoteVerifiedCommit": "cf79a86c9a9b8083e03404a23048ec6b7f5f07d7",
+    "formalReleaseCreated": false
   }
 }
