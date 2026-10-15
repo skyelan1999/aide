@@ -321,6 +321,9 @@
       },
       "evidence_20261015_source_capability": [
         "docs/reviews/2026-10-15/source-capability-live.md"
+      ],
+      "evidence_20261015_http_mcp": [
+        "docs/reviews/2026-10-15/http-mcp-index-live.md"
       ]
     },
     {
@@ -339,7 +342,7 @@
           "shared_catalogue_checkpoint",
           "progressive_over1000_browser"
         ],
-        "remaining": "Actual vsftpd FTP/explicit FTPS selected-scope priority, bounded publication, disk App reload and cancellation retention verified on20261015. Remaining large remote catalogues, server variants, physical faults and HTTP/SMB/MCP indexing semantics; full workbench remains separate."
+        "remaining": "Actual FTP/FTPS scope/priority/bounded publication/reload/cancellation previously verified; HTTP single resource and MCP virtual capability index/original retrieval and newPID/old-origin guard now verified in isolated binary. Remaining large remote catalogues, server variants, real SMB service, physical faults and full authenticated workbench. MCP actual tools/model use separate; no remote-document indexing claim."
       },
       "evidence_20261013": [
         "Fresh-process SSH progressive scan resumed coverage 10→20 files in latest integration run; large-library performance and remote provider acceptance remain pending."
@@ -356,6 +359,9 @@
       ],
       "evidence_20261015_ftps_latency": [
         "docs/reviews/2026-10-15/ftps-index-latency.md"
+      ],
+      "evidence_20261015_http_mcp": [
+        "docs/reviews/2026-10-15/http-mcp-index-live.md"
       ]
     },
     {
@@ -377,6 +383,9 @@
       ],
       "evidence_20261015_live_ftp": [
         "docs/reviews/2026-10-15/source-index-live.md"
+      ],
+      "evidence_20261015_http_mcp": [
+        "docs/reviews/2026-10-15/http-mcp-index-live.md"
       ]
     },
     {
@@ -7368,5 +7377,16 @@
       "docs/reviews/2026-10-15/external-workspace-cleanup.md"
     ],
     "deliveredMain": "1a48d081aae453630a000b4d25d4eab2bc1665f8"
+  },
+  "followup160": {
+    "task": "docs/tasks/http-mcp-index-live-20261015.json",
+    "classification": "progress",
+    "previousGoalTurn": "External development/runtime migration, artifact cleanup and clean main delivery completed.",
+    "status": "in_progress",
+    "summary": "Actual binary HTTP single-resource and MCP discovered capability descriptions, literal original hashes/guarded previews, read-only PUT403, no MCP calls and newPID restart/old-origin409 verified. Ordinary docs-only main gate pending.",
+    "original12RemainOpen": true,
+    "evidence": [
+      "docs/reviews/2026-10-15/http-mcp-index-live.md"
+    ]
   }
 }

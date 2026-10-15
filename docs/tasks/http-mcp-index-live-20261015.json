@@ -1,0 +1,71 @@
+{
+  "id": "http-mcp-index-live-20261015",
+  "request": "继续渐进索引和混合检索验收：隔离实际二进制验证HTTP单资源和MCP能力说明索引、原文检索、只读边界及重启；SMB实际服务仍单独待验收",
+  "baseline": "662008e379f3c7b28633468f86301d816cf0bda2",
+  "initial_status": "",
+  "acceptance": [
+    "Actual isolated binary HTTPS API indexes HTTP resource and discovered MCP tool descriptions; original retrieval body hashes and source/path identity match.",
+    "Indexing MCP descriptions does not invoke tools; reference writes rejected. Actual process restart retains usable entries and source origin/version guards are checked within observed scope.",
+    "No user data/model/browser calls; cleanup actual owned container, scoped docs and same-input main release gate/push. SMB service and full browser remain pending."
+  ],
+  "scope": [
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Original12 unchanged; HTTP link single-resource and MCP virtual capability files tested as implemented, not generalized directory indexing.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "One network-none actual image container, Python loopback HTTP and stdio MCP fixture, separate tmp data, no user mounts; compare exact originals and tool-call markers.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Private real binary loopback HTTP/stdio MCP fixture probe prepared; fixture startup naming/schema failures corrected and preserved; no product changes.",
+      "evidence": [
+        "docs/reviews/2026-10-15/http-mcp-index-live.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final actual HTTPS API probe PASS: single-resource/virtual-description indexing, literal original hashes, guarded preview/wrong-origin409, writes403, no tool calls, actual newPID/retrieval and old-origin409.",
+      "evidence": [
+        "docs/reviews/2026-10-15/http-mcp-index-live.md",
+        "docs/reviews/2026-10-15/http-mcp-index-live-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scoped behavior, actual versus fixture boundaries, both harness failures and final proof recorded.",
+      "evidence": [
+        "docs/reviews/2026-10-15/http-mcp-index-live.md",
+        "docs/reviews/2026-10-15/http-mcp-index-live-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned container removed by finally; no host mounts, external network, user settings, models or browser tabs; private evidence retained.",
+      "evidence": [
+        "docs/reviews/2026-10-15/http-mcp-index-live.md",
+        "docs/reviews/2026-10-15/http-mcp-index-live-proof.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Ordinary-document changes only; same-input full84 receipt gate and main push pending.",
+      "evidence": [
+        "docs/reviews/2026-10-15/http-mcp-index-live.md"
+      ]
+    }
+  },
+  "release_authorization": "Standing incremental test/docs/main push; isolated fixture APIs only, no paid model or user source/settings changes.",
+  "rollback": "Documentation-only revert; disposable container removed, production image/runtime unchanged.",
+  "handoff": "HTTP single-resource and MCP discovered descriptions proven within isolated fixture scope. SMB real service, HTTP variants, actual plugin/model use and authenticated browser remain unverified. Windows user acceptance and real vectors deferred; original12 open."
+}

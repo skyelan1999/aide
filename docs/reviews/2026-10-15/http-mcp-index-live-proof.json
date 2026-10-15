@@ -1,0 +1,36 @@
+{
+  "status": "pass",
+  "image": "sha256:b11bb97fed59692804b1177fe3b11dacf1a2f458df7c6f5d4cc1150792ba2d3b",
+  "scope": "isolated actual binary HTTPS API, Python loopback HTTP and stdio MCP fixture; no user data/model/browser or real SMB",
+  "httpFiles": 1,
+  "mcpDescriptionFiles": 2,
+  "actualMCPDiscovery": true,
+  "originalBodyHashesMatch": true,
+  "sourceAndOriginMatch": true,
+  "referenceWrites403": true,
+  "mcpToolsNeverInvoked": true,
+  "newApplicationPid": true,
+  "restartedOriginalHashesMatch": true,
+  "freshOriginsAndOldOrigin409": true,
+  "restartedGraphCounts": {
+    "http-one": 1,
+    "mcp-one": 2
+  },
+  "samples": [
+    {
+      "phase": "initial",
+      "counts": {
+        "http-one": 1,
+        "mcp-one": 2
+      }
+    },
+    {
+      "phase": "restart",
+      "counts": {
+        "http-one": 1,
+        "mcp-one": 2
+      }
+    }
+  ],
+  "privateProbeSHA256": "6ef19ab66830ed25193715a49b25d7bd89522914cbcb0b5410ff83c0369e7e76"
+}
