@@ -30,7 +30,7 @@ type knowledgeTimeStore struct {
 	Dropped          int                     `json:"dropped"`
 	Snapshots        []knowledgeTimeSnapshot `json:"snapshots"`
 	originalEnvelope string
-	upgradeFromV1    bool
+	upgradeTo        int
 }
 type knowledgeTimeChange struct {
 	Before *knowledgeNode `json:"before,omitempty"`
@@ -81,7 +81,7 @@ func loadKnowledgeTime(file, workspace string, code bool, key []byte) (knowledge
 		return out, fmt.Errorf("知识历史解密失败；保留原文件")
 	}
 	defer zeroBytes(plain)
-	if len(plain) > knowledgeTimelineBytes || json.Unmarshal(plain, &out) != nil || (out.Version != 1 && out.Version != 2) || out.Workspace != workspace || out.Code != code || out.Dropped < 0 || len(out.Snapshots) > knowledgeTimelineEntries {
+	if len(plain) > knowledgeTimelineBytes || json.Unmarshal(plain, &out) != nil || (out.Version < 1 || out.Version > 3) || out.Workspace != workspace || out.Code != code || out.Dropped < 0 || len(out.Snapshots) > knowledgeTimelineEntries {
 		return out, fmt.Errorf("知识历史身份或格式无效；保留原文件")
 	}
 	seen := map[string]bool{}
@@ -90,7 +90,7 @@ func loadKnowledgeTime(file, workspace string, code bool, key []byte) (knowledge
 			return out, fmt.Errorf("知识历史快照无效")
 		}
 		seen[s.ID] = true
-		if s.AI != nil && out.Version != 2 {
+		if s.AI != nil && (out.Version < 2 || s.AI.Version == 2 && out.Version < 3) {
 			return out, fmt.Errorf("AI结论历史需要新版格式；保留原文件")
 		}
 		if err := validateKnowledgeAIHistory(s.AI, s.Graph); err != nil {
@@ -131,9 +131,16 @@ func appendKnowledgeTimeAI(store knowledgeTimeStore, g knowledgeGraph, ai *knowl
 	if err := validateKnowledgeAIHistory(ai, g); err != nil {
 		return store, false, err
 	}
-	store.upgradeFromV1 = ai != nil && store.Version == 1
+	version := store.Version
 	if ai != nil {
-		store.Version = 2
+		version = max(version, 2)
+		if ai.Version == 2 {
+			version = 3
+		}
+	}
+	if version > store.Version {
+		store.upgradeTo = version
+		store.Version = version
 	}
 	semantic, _ := json.Marshal(struct {
 		Nodes []knowledgeNode
@@ -187,8 +194,8 @@ func saveKnowledgeTime(file string, store knowledgeTimeStore, key []byte) error 
 	if info, e := os.Lstat(file); e == nil && (!info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0) {
 		return fmt.Errorf("知识历史目标无效")
 	}
-	if store.upgradeFromV1 {
-		if err := backupKnowledgeTimeV1(file, store.originalEnvelope); err != nil {
+	if store.upgradeTo != 0 {
+		if err := backupKnowledgeTimeUpgrade(file, store.originalEnvelope, store.upgradeTo); err != nil {
 			return err
 		}
 	}

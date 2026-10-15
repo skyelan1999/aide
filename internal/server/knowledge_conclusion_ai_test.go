@@ -167,13 +167,13 @@ func TestKnowledgeConclusionAIUpgradePreservesEncryptedV1(t *testing.T) {
 	}
 	ai := captureKnowledgeAIConclusions(g, map[string]*Session{s.ID: s}, "scope")
 	next, changed, err := appendKnowledgeTimeAI(loaded, g, ai, time.Unix(2, 0))
-	if err != nil || !changed || next.Version != 2 {
+	if err != nil || !changed || next.Version != 3 {
 		t.Fatal(changed, err, next.Version)
 	}
 	if err := saveKnowledgeTime(file, next, key); err != nil {
 		t.Fatal(err)
 	}
-	backups, err := filepath.Glob(file + ".before-ai-v2-*.json")
+	backups, err := filepath.Glob(file + ".before-body-v3-*.json")
 	if err != nil || len(backups) != 1 {
 		t.Fatal(backups, err)
 	}
@@ -186,8 +186,8 @@ func TestKnowledgeConclusionAIUpgradePreservesEncryptedV1(t *testing.T) {
 		t.Fatal(legacy.Version, err)
 	}
 	current, err := loadKnowledgeTime(file, g.Workspace, false, key)
-	if err != nil || current.Version != 2 || len(current.Snapshots) != 2 || current.Snapshots[1].AI == nil {
-		t.Fatal("format2 not readable", err)
+	if err != nil || current.Version != 3 || len(current.Snapshots) != 2 || current.Snapshots[1].AI == nil {
+		t.Fatal("format3 not readable", err)
 	}
 	if err := saveKnowledgeTime(file, next, key); err == nil {
 		t.Fatal("stale v1 upgrade replaced newer history")
@@ -212,7 +212,7 @@ func TestKnowledgeConclusionAIBudgetsAndUnboundQuestions(t *testing.T) {
 		s.Messages = append(s.Messages, Message{Role: "user", SourceRunID: id, Content: id}, Message{Role: "assistant", SourceRunID: id, Content: "## 结论\n" + strings.Repeat("证据", 3000)})
 	}
 	ai = captureKnowledgeAIConclusions(g, map[string]*Session{s.ID: s}, "scope")
-	if len(ai.Records) > 4 || !ai.Partial || knowledgeAIHistoryBytes(ai) > 72<<10 {
+	if len(ai.Records) > 4 || !ai.Partial || knowledgeAIHistoryBytes(ai) > knowledgeAIHistoryByteLimit(ai.Version) {
 		t.Fatal("AI capture not bounded", len(ai.Records), knowledgeAIHistoryBytes(ai))
 	}
 	if err := validateKnowledgeAIHistory(ai, g); err != nil {

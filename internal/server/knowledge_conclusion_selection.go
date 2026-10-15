@@ -95,6 +95,30 @@ func knowledgeConclusionCandidates(s knowledgeTimeSnapshot, node string, code ..
 		complete := int64(len(n.Text)) == n.Size && (n.Size > 0 || n.ReadState == "ready")
 		q := knowledgeConclusion{Key: "saved_document_excerpt", Heading: "文档摘录（未标记结论）", HeadingLine: 1, Line: 1, EndLine: strings.Count(text, "\n") + 1, Text: text, TextHash: hash([]byte(text)), SourceHash: hash([]byte(n.Text)), Partial: !complete || len(text) < len(n.Text)}
 		items = append(items, knowledgeConclusionEvidenceItem{node: n, sourceKind: "document_excerpt", conclusion: q})
+		// Preserve the original first-excerpt identity for existing selections.
+		// Additional chunks expose only bytes already present in this snapshot.
+		body := conclusionBytePrefix(n.Text, knowledgeConclusionScanBytes)
+		heading := fmt.Sprintf("文档历史正文（已保存%d字节）", len(body))
+		if !complete || len(body) != len(n.Text) {
+			heading += "（非完整记录）"
+		}
+		for _, chunk := range knowledgeBodyChunks(body, "saved_document_body", heading, complete && len(body) == len(n.Text)) {
+			items = append(items, knowledgeConclusionEvidenceItem{node: n, sourceKind: "document_excerpt", conclusion: chunk})
+		}
+	}
+	if filtered.AI != nil && validateKnowledgeAIHistory(filtered.AI, filtered.Graph) == nil {
+		for _, r := range filtered.AI.Records {
+			if r.Body == nil {
+				continue // Legacy observations never acquire today's text.
+			}
+			heading := fmt.Sprintf("AI历史正文（已保存%d/%d字节）", len(r.Body.Text), r.Body.SourceBytes)
+			if !r.Body.Complete {
+				heading += "（非完整记录）"
+			}
+			for _, chunk := range knowledgeBodyChunks(r.Body.Text, "saved_assistant_body", heading, r.Body.Complete) {
+				items = append(items, knowledgeConclusionEvidenceItem{node: knowledgeNode{ID: r.Node, Kind: "session", Region: "sessions", Session: r.Session}, session: r.Session, sourceKind: "assistant_reply", conclusion: chunk, ai: knowledgeAIProvenance(r)})
+			}
+		}
 	}
 	out := []knowledgeConclusionCandidate{}
 	used := 0

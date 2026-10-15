@@ -34,7 +34,7 @@ func appendKnowledgeAIComparison(out *knowledgeConclusionComparison, before, aft
 		return
 	}
 	valid := func(s *knowledgeAIConclusionSnapshot) bool {
-		return s == nil || s.Version == 1 && s.Workspace == workspace
+		return s == nil || (s.Version == 1 || s.Version == 2) && s.Workspace == workspace
 	}
 	if !valid(before) || !valid(after) {
 		out.AIState = "identity_unavailable"

@@ -6,9 +6,12 @@ import (
 	"os"
 )
 
-// Preserve encrypted v1 bytes before a format2 write. A stale migration cannot
+// Preserve encrypted prior-format bytes before a format2/3 write. A stale migration cannot
 // replace a newer file, and an existing backup is never overwritten.
-func backupKnowledgeTimeV1(file, expected string) error {
+func backupKnowledgeTimeUpgrade(file, expected string, version int) error {
+	if version != 2 && version != 3 {
+		return fmt.Errorf("知识历史升级版本无效")
+	}
 	info, err := os.Lstat(file)
 	if os.IsNotExist(err) {
 		if expected != "" {
@@ -31,7 +34,11 @@ func backupKnowledgeTimeV1(file, expected string) error {
 	if expected == "" || hash(raw) != expected {
 		return fmt.Errorf("知识历史迁移前版本已变化，请重新读取；保留原文件")
 	}
-	backup := file + ".before-ai-v2-" + expected[:12] + ".json"
+	label := "ai-v2"
+	if version == 3 {
+		label = "body-v3"
+	}
+	backup := file + ".before-" + label + "-" + expected[:12] + ".json"
 	if existing, err := os.Lstat(backup); err == nil {
 		if !existing.Mode().IsRegular() || existing.Mode()&os.ModeSymlink != 0 {
 			return fmt.Errorf("知识历史升级备份目标无效")

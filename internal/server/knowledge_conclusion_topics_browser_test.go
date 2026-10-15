@@ -20,7 +20,11 @@ func TestKnowledgeConclusionTopicsLiveBrowser(t *testing.T) {
 	if os.Getenv("AIDE_TOPIC_BROWSER_FIXTURE") != "1" {
 		t.Skip("opt-in local browser fixture")
 	}
-	a, history, workspace := knowledgeTopicFixture(t)
+	fixture := knowledgeTopicFixture
+	if os.Getenv("AIDE_TOPIC_BODY_FIXTURE") == "1" {
+		fixture = knowledgeBodyFixture
+	}
+	a, history, workspace := fixture(t)
 	for _, name := range []string{"topic.md", "basis.txt"} {
 		if err := os.Remove(filepath.Join(a.workspace.Name(), name)); err != nil {
 			t.Fatal(err)
@@ -137,6 +141,27 @@ func TestKnowledgeConclusionTopicsLiveBrowser(t *testing.T) {
 	defer cancel()
 	_ = server.Shutdown(ctx)
 	store, err := loadKnowledgeTopics(knowledgeTopicFile(a.dataPath, workspace, false), workspace, false, knowledgeTopicKey(a.token))
+	if os.Getenv("AIDE_TOPIC_BODY_FIXTURE") == "1" {
+		if err != nil || len(store.Topics) != 1 || store.Revision != 2 || len(store.Topics[0].Members) != 2 {
+			t.Fatal("body browser did not save whole chunk then exact tail", err, store.Revision)
+		}
+		members := store.Topics[0].Members
+		if members[0].Candidate.Quote.Text != "历史尾段甲😀" || members[1].Candidate.Quote.Text != "历史尾段乙😀" {
+			t.Fatal("body browser selections differ from exact tails")
+		}
+		current, err := loadKnowledgeTime(knowledgeTimeFile(a.dataPath, workspace, false), workspace, false, knowledgeTimeKey(a.token))
+		if err != nil || current.Version != 3 || current.Dropped != 0 || len(current.Snapshots) != 2 {
+			t.Fatal("body browser history mismatch", err)
+		}
+		out := compareKnowledgeTime(current.Snapshots[0], current.Snapshots[1]).Conclusions
+		appendKnowledgeManualTopics(&out, current.Snapshots[0], current.Snapshots[1], store)
+		if len(out.Manual) != 1 || out.Manual[0].State != "selected_excerpts_compared" || !out.Manual[0].TextChanged || len(out.Changes) != 0 {
+			t.Fatal("body browser comparison mismatch")
+		}
+		proof, _ := json.Marshal(map[string]any{"revision": store.Revision, "topics": store.Topics, "manual": out.Manual, "liveProvider": false, "temporaryApp": true, "sourceFilesRemovedBeforeUI": true, "historyFormat": current.Version})
+		t.Log("BODY_BROWSER_PROOF=" + string(proof))
+		return
+	}
 	if err != nil || len(store.Topics) < 2 || store.Revision < 4 {
 		t.Fatal("browser did not complete two topics plus disable/reactivate", err, store.Revision)
 	}

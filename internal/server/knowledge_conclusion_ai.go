@@ -22,6 +22,7 @@ type knowledgeAIConclusionRecord struct {
 	ReplyExcerpt    string                 `json:"replyExcerpt,omitempty"`
 	ReplyHash       string                 `json:"replyHash,omitempty"`
 	Conclusions     knowledgeConclusionSet `json:"conclusions"`
+	Body            *knowledgeAIReplyBody  `json:"body,omitempty"`
 }
 type knowledgeAIConclusionSnapshot struct {
 	Version      int                           `json:"version"`
@@ -34,7 +35,7 @@ type knowledgeAIConclusionSnapshot struct {
 // Caller owns the App/session lock. This sidecar is stored only in encrypted
 // history, never attached to graph nodes used for model requests or map caches.
 func captureKnowledgeAIConclusions(g knowledgeGraph, sessions map[string]*Session, scope string) *knowledgeAIConclusionSnapshot {
-	out := &knowledgeAIConclusionSnapshot{Version: 1, Workspace: g.Workspace, Records: []knowledgeAIConclusionRecord{}}
+	out := &knowledgeAIConclusionSnapshot{Version: 2, Workspace: g.Workspace, Records: []knowledgeAIConclusionRecord{}}
 	type source struct {
 		node    knowledgeNode
 		session *Session
@@ -245,12 +246,18 @@ func captureKnowledgeAIConclusions(g knowledgeGraph, sessions map[string]*Sessio
 					record.Conclusions.Partial = true
 				}
 			}
+			// Keep the bounded original independently of the small conclusion
+			// excerpts. This never reads a live file or enters ordinary graph data.
+			record.Body = &knowledgeAIReplyBody{Text: text, Hash: hash([]byte(text)), SourceBytes: len(c.message.Content), Complete: complete}
+			body := record.Body
+			record.Body = nil
 			encoded, _ := json.Marshal(record)
 			if outputBytes+len(encoded) > 64<<10 {
 				out.Partial = true
 				break
 			}
 			outputBytes += len(encoded)
+			record.Body = body
 			out.Records = append(out.Records, record)
 			perSession++
 		}
@@ -273,7 +280,7 @@ func validateKnowledgeAIHistory(ai *knowledgeAIConclusionSnapshot, g knowledgeGr
 		return nil
 	}
 	invalid := func() error { return fmt.Errorf("AI结论历史身份或格式无效；保留原文件") }
-	if ai.Version != 1 || ai.Workspace != g.Workspace || len(ai.Records) > 32 || ai.Unattributed < 0 {
+	if (ai.Version != 1 && ai.Version != 2) || ai.Workspace != g.Workspace || len(ai.Records) > 32 || ai.Unattributed < 0 {
 		return invalid()
 	}
 	nodes := map[string]knowledgeNode{}
@@ -285,6 +292,9 @@ func validateKnowledgeAIHistory(ai *knowledgeAIConclusionSnapshot, g knowledgeGr
 	seen := map[string]bool{}
 	rawBytes := len(ai.Workspace)
 	for _, r := range ai.Records {
+		if !validateKnowledgeAIReplyBody(ai.Version, r) {
+			return invalid()
+		}
 		n := nodes[r.Node]
 		key := knowledgeAIRecordKey(r)
 		if seen[key] || counts[r.Node] != 1 || n.Kind != "session" || n.Session != r.Session || r.Origin != "persisted_assistant" || r.Run == "" || len(r.Run) > 128 || len(r.Status) > 64 || r.Conclusions.Version != 1 || len(r.Conclusions.Items) > 4 || len(r.Conclusions.Warnings) > 16 || len(r.QuestionPreview) > 512 || len(r.Model) > 256 || len(r.ReplyExcerpt) > knowledgeConclusionTextBytes {
@@ -319,8 +329,17 @@ func validateKnowledgeAIHistory(ai *knowledgeAIConclusionSnapshot, g knowledgeGr
 			return invalid()
 		}
 	}
-	if knowledgeAIHistoryBytes(ai) > 72<<10 {
+	if knowledgeAIHistoryBytes(ai) > knowledgeAIHistoryByteLimit(ai.Version) {
 		return invalid()
+	}
+	if ai.Version == 2 {
+		bodyBytes := 0
+		for _, r := range ai.Records {
+			bodyBytes += len(r.Body.Text)
+		}
+		if bodyBytes > 256<<10 {
+			return invalid()
+		}
 	}
 	return nil
 }

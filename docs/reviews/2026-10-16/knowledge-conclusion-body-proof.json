@@ -1,0 +1,327 @@
+{
+  "task": "knowledge-conclusion-evolution-20261016",
+  "status": "bounded_historical_body_development_checkpoint",
+  "baseline": "b24144754cdbc30a669b77dcf5bb7dfc2f4d5ba0",
+  "go": {
+    "selector": "^TestKnowledge",
+    "race": "pass",
+    "serverSeconds": 81.362,
+    "vet": "all packages pass",
+    "terminalExit": 0
+  },
+  "browser": {
+    "serverSeconds": 52.206,
+    "race": "pass",
+    "vet": "all packages pass",
+    "terminalExit": 0,
+    "scope": "actual temporary App and production timeline components; synthetic data; no production auth/models",
+    "exactSelectionRestored": [
+      "历史尾段甲😀",
+      "历史尾段乙😀"
+    ],
+    "utf16": [
+      1188,
+      1195
+    ],
+    "line": 305,
+    "viewportWidths": [
+      1280,
+      390
+    ],
+    "narrowScrollWidth": 390,
+    "observations": {
+      "historyFormat": 3,
+      "liveProvider": false,
+      "manual": [
+        {
+          "id": "1d92117c9ea9b3ba95da5d50e4bea7e5",
+          "label": "AI附录历史正文",
+          "alignment": "explicit_user",
+          "state": "selected_excerpts_compared",
+          "textChanged": true,
+          "headingChanged": false,
+          "positionChanged": false,
+          "sourceChanged": false,
+          "before": {
+            "pick": {
+              "snapshot": "H251efdd8363445b0c2ac3d2d",
+              "node": "S1",
+              "candidate": "32e525b56380eba5548db4bce2c7fc149bccbe27eabcbb59a49d255e6bdaaf9e",
+              "start": 1188,
+              "end": 1195
+            },
+            "candidate": {
+              "code": false,
+              "token": "32e525b56380eba5548db4bce2c7fc149bccbe27eabcbb59a49d255e6bdaaf9e",
+              "node": "S1",
+              "region": "sessions",
+              "session": "s",
+              "sourceKind": "assistant_reply",
+              "ai": {
+                "run": "r1",
+                "questionHash": "66dd72a4e9050888dc13a5eeb37c7fe634bda527979990bf7fb74cf472b330ea",
+                "questionBound": true,
+                "questionPreview": "同一问题",
+                "status": "completed",
+                "model": "fixture-model"
+              },
+              "quote": {
+                "key": "saved_assistant_body:12208",
+                "heading": "AI历史正文（已保存15680/15680字节） · 第4段",
+                "headingPath": null,
+                "headingLine": 239,
+                "line": 305,
+                "endLine": 305,
+                "text": "历史尾段甲😀",
+                "textHash": "a9b6203b528fd891c98a824121d20744ea81790fbb3313e35dbf9dd526ef01e6",
+                "sourceExcerptHash": "b5b018cd7e0b2ebb5586609542c553b807d21fdfc05ae2fb83c55d727ed4eef1",
+                "partial": true
+              }
+            },
+            "sourceTextHash": "a81b2e56a29d90a071ad94808f1c9a272722e3d67f8b91c9568dec0e8bc239db",
+            "recorded": "2026-10-15T21:22:55.249484718Z"
+          },
+          "after": {
+            "pick": {
+              "snapshot": "He310707fc8b89d488de17142",
+              "node": "S1",
+              "candidate": "49b1ca7008fcc37c2ccfa280da4e767324a300be715dd91062e64f53498abe01",
+              "start": 1188,
+              "end": 1195
+            },
+            "candidate": {
+              "code": false,
+              "token": "49b1ca7008fcc37c2ccfa280da4e767324a300be715dd91062e64f53498abe01",
+              "node": "S1",
+              "region": "sessions",
+              "session": "s",
+              "sourceKind": "assistant_reply",
+              "ai": {
+                "run": "r1",
+                "questionHash": "66dd72a4e9050888dc13a5eeb37c7fe634bda527979990bf7fb74cf472b330ea",
+                "questionBound": true,
+                "questionPreview": "同一问题",
+                "status": "completed",
+                "model": "fixture-model"
+              },
+              "quote": {
+                "key": "saved_assistant_body:12208",
+                "heading": "AI历史正文（已保存15680/15680字节） · 第4段",
+                "headingPath": null,
+                "headingLine": 239,
+                "line": 305,
+                "endLine": 305,
+                "text": "历史尾段乙😀",
+                "textHash": "4363f1b1cf76a530c119a478f3fc27655153ba45d566a10a26c7a608546d899f",
+                "sourceExcerptHash": "3ebb0743b28d0fb4c1295d7bf31eb5911941ecdd788d622d9eaea848a0ca5198",
+                "partial": true
+              }
+            },
+            "sourceTextHash": "febaaa512c7f712b97eb6b1745e4680c218b1b755a1b22115fe0e9e48011a5e2",
+            "recorded": "2026-10-15T21:22:55.249484718Z"
+          },
+          "evidence": [
+            {
+              "node": "S1",
+              "session": "s",
+              "sourceKind": "assistant_reply",
+              "conclusionKey": "saved_assistant_body:12208",
+              "heading": "AI历史正文（已保存15680/15680字节） · 第4段",
+              "kind": "unknown",
+              "referencesChanged": false,
+              "contentChanged": false,
+              "availabilityChanged": false,
+              "unknown": true,
+              "beforeQuote": {
+                "key": "saved_assistant_body:12208",
+                "heading": "AI历史正文（已保存15680/15680字节） · 第4段",
+                "headingPath": null,
+                "headingLine": 239,
+                "line": 305,
+                "endLine": 305,
+                "text": "历史尾段甲😀",
+                "textHash": "a9b6203b528fd891c98a824121d20744ea81790fbb3313e35dbf9dd526ef01e6",
+                "sourceExcerptHash": "b5b018cd7e0b2ebb5586609542c553b807d21fdfc05ae2fb83c55d727ed4eef1",
+                "partial": true
+              },
+              "afterQuote": {
+                "key": "saved_assistant_body:12208",
+                "heading": "AI历史正文（已保存15680/15680字节） · 第4段",
+                "headingPath": null,
+                "headingLine": 239,
+                "line": 305,
+                "endLine": 305,
+                "text": "历史尾段乙😀",
+                "textHash": "4363f1b1cf76a530c119a478f3fc27655153ba45d566a10a26c7a608546d899f",
+                "sourceExcerptHash": "3ebb0743b28d0fb4c1295d7bf31eb5911941ecdd788d622d9eaea848a0ca5198",
+                "partial": true
+              },
+              "beforeAI": {
+                "run": "r1",
+                "questionHash": "66dd72a4e9050888dc13a5eeb37c7fe634bda527979990bf7fb74cf472b330ea",
+                "questionBound": true,
+                "questionPreview": "同一问题",
+                "status": "completed",
+                "model": "fixture-model"
+              },
+              "afterAI": {
+                "run": "r1",
+                "questionHash": "66dd72a4e9050888dc13a5eeb37c7fe634bda527979990bf7fb74cf472b330ea",
+                "questionBound": true,
+                "questionPreview": "同一问题",
+                "status": "completed",
+                "model": "fixture-model"
+              },
+              "before": {
+                "snapshot": "H251efdd8363445b0c2ac3d2d",
+                "historical": true,
+                "confidence": "explicit_text_reference",
+                "modelUse": "not_proven",
+                "references": [],
+                "partial": true
+              },
+              "after": {
+                "snapshot": "He310707fc8b89d488de17142",
+                "historical": true,
+                "confidence": "explicit_text_reference",
+                "modelUse": "not_proven",
+                "references": [],
+                "partial": true
+              }
+            }
+          ]
+        }
+      ],
+      "revision": 2,
+      "sourceFilesRemovedBeforeUI": true,
+      "temporaryApp": true,
+      "topics": [
+        {
+          "id": "1d92117c9ea9b3ba95da5d50e4bea7e5",
+          "label": "AI附录历史正文",
+          "members": [
+            {
+              "pick": {
+                "snapshot": "H251efdd8363445b0c2ac3d2d",
+                "node": "S1",
+                "candidate": "32e525b56380eba5548db4bce2c7fc149bccbe27eabcbb59a49d255e6bdaaf9e",
+                "start": 1188,
+                "end": 1195
+              },
+              "candidate": {
+                "code": false,
+                "token": "32e525b56380eba5548db4bce2c7fc149bccbe27eabcbb59a49d255e6bdaaf9e",
+                "node": "S1",
+                "region": "sessions",
+                "session": "s",
+                "sourceKind": "assistant_reply",
+                "ai": {
+                  "run": "r1",
+                  "questionHash": "66dd72a4e9050888dc13a5eeb37c7fe634bda527979990bf7fb74cf472b330ea",
+                  "questionBound": true,
+                  "questionPreview": "同一问题",
+                  "status": "completed",
+                  "model": "fixture-model"
+                },
+                "quote": {
+                  "key": "saved_assistant_body:12208",
+                  "heading": "AI历史正文（已保存15680/15680字节） · 第4段",
+                  "headingPath": null,
+                  "headingLine": 239,
+                  "line": 305,
+                  "endLine": 305,
+                  "text": "历史尾段甲😀",
+                  "textHash": "a9b6203b528fd891c98a824121d20744ea81790fbb3313e35dbf9dd526ef01e6",
+                  "sourceExcerptHash": "b5b018cd7e0b2ebb5586609542c553b807d21fdfc05ae2fb83c55d727ed4eef1",
+                  "partial": true
+                }
+              },
+              "sourceTextHash": "a81b2e56a29d90a071ad94808f1c9a272722e3d67f8b91c9568dec0e8bc239db",
+              "recorded": "2026-10-15T21:22:55.249484718Z"
+            },
+            {
+              "pick": {
+                "snapshot": "He310707fc8b89d488de17142",
+                "node": "S1",
+                "candidate": "49b1ca7008fcc37c2ccfa280da4e767324a300be715dd91062e64f53498abe01",
+                "start": 1188,
+                "end": 1195
+              },
+              "candidate": {
+                "code": false,
+                "token": "49b1ca7008fcc37c2ccfa280da4e767324a300be715dd91062e64f53498abe01",
+                "node": "S1",
+                "region": "sessions",
+                "session": "s",
+                "sourceKind": "assistant_reply",
+                "ai": {
+                  "run": "r1",
+                  "questionHash": "66dd72a4e9050888dc13a5eeb37c7fe634bda527979990bf7fb74cf472b330ea",
+                  "questionBound": true,
+                  "questionPreview": "同一问题",
+                  "status": "completed",
+                  "model": "fixture-model"
+                },
+                "quote": {
+                  "key": "saved_assistant_body:12208",
+                  "heading": "AI历史正文（已保存15680/15680字节） · 第4段",
+                  "headingPath": null,
+                  "headingLine": 239,
+                  "line": 305,
+                  "endLine": 305,
+                  "text": "历史尾段乙😀",
+                  "textHash": "4363f1b1cf76a530c119a478f3fc27655153ba45d566a10a26c7a608546d899f",
+                  "sourceExcerptHash": "3ebb0743b28d0fb4c1295d7bf31eb5911941ecdd788d622d9eaea848a0ca5198",
+                  "partial": true
+                }
+              },
+              "sourceTextHash": "febaaa512c7f712b97eb6b1745e4680c218b1b755a1b22115fe0e9e48011a5e2",
+              "recorded": "2026-10-15T21:22:55.249484718Z"
+            }
+          ],
+          "disabled": false
+        }
+      ]
+    }
+  },
+  "quick": {
+    "count": 86,
+    "status": "pass",
+    "fingerprint": "ebcf6a07c0d20ad9725db3d8460dc2451d15d8aff8d1c41f179667ef30ec1a59"
+  },
+  "firstBrowserAttempt": {
+    "terminalExit": 1,
+    "reason": "old two-topic/retention postcondition did not match body scenario; separate postcondition added; whole scenario rerun"
+  },
+  "history": {
+    "payload": 3,
+    "aiSidecar": 2,
+    "maxBodyPerRecord": 65536,
+    "sharedInputBudget": 262144,
+    "maxEncodedSidecar": 2097152,
+    "wholeHistoryBytes": 8388608,
+    "maxObservations": 32,
+    "legacyBackfill": false,
+    "beforeUpgradeBackup": "byte-exact encrypted prior envelope,0600"
+  },
+  "production": {
+    "image": "sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba",
+    "health": "healthy",
+    "changed": false
+  },
+  "cleanup": {
+    "ownedTabsClosed": true,
+    "viewportReset": true,
+    "temporaryAppsEnded": true,
+    "ownedTestContainersRemaining": 0
+  },
+  "notComplete": [
+    "reference definitions outside selected excerpts and independent basis evolution",
+    "document bytes absent from earlier indexing cannot be reconstructed",
+    "larger candidate catalog pagination",
+    "full profile and independent main release gate",
+    "authenticated workbench and user-host SSH acceptance",
+    "runtime and offline image delivery"
+  ],
+  "originalTwelve": "all in_progress; Windows user-owned; real vectors deferred"
+}
