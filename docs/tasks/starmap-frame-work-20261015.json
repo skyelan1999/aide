@@ -45,7 +45,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "quick72初次PASS；定向实际绘制及光学全区积分、镜头/漂移/场景/红外/选中粒子通过；加强用例后将跑冻结full74",
+      "summary": "定向实际绘制与光学等价、原生Safari渐进/红外/选中/镜头通过；full74已启动，owner36197/容器0a455a635b39仍运行；保持指纹冻结，终态未出不记PASS。",
       "evidence": [
         ".agent-state/starmap-frame-work/negative.log",
         ".agent-state/starmap-frame-work/before-trace.json",
@@ -170,5 +170,21 @@
       ".agent-state/starmap-frame-work/restored.jpg"
     ],
     "limits": "No controlled native before/after FPS; narrow/theme matrix not repeated for this computation-only change; headless browser launcher failed but actual native Safari testing succeeded."
+  },
+  "full_owner": {
+    "profile": "full",
+    "status": "running",
+    "commandsExpected": 74,
+    "sessionId": 36197,
+    "head": "54f97b63a68816999541af7401a4a21aa181ceb0",
+    "fingerprint": "dbe1eeb5a6110be2db876bfc8a5177b0ba3763fa59c16d82a0f04e86c3091bf1",
+    "observedUTC": "2026-10-15T01:30:05.441238+00:00",
+    "ownerLog": ".agent-state/starmap-frame-work/full-run.log",
+    "log": ".agent-state/verify-20261015T012941486582Z.log",
+    "sourceCommit": "39ff208",
+    "evidenceCommit": "54f97b6",
+    "priorFullScope": "full73 PASS for metadata layout98d; not reused for current source",
+    "container": "aide-verify-0a455a635b39",
+    "lastLiveObservation": "Owner36197 running; container confirmed Up; host free21GiB; Go snapshot started"
   }
 }

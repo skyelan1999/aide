@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Current branch perf/starmap-frame-work/source39ff208; local9999 image7d3baf350986 via exact start.command. UI dedup62e3c1d remains included. Pending full74 new fingerprint; prior full73 only98d layout. User current Downloads config preserved. Continue large renderer and original12stream audit; native vector deferred, Windows user-owned.",
+  "handoff": "Full74 owner36197/container aide-verify-0a455a635b39 confirmed live for fingerprint dbe1eeb5a6110be2db876bfc8a5177b0ba3763fa59c16d82a0f04e86c3091bf1. Poll same owner, no source/process/build/delivery-metadata changes until terminal. Current branch perf/starmap-frame-work/source39ff208, evidence54f97b6, local9999 image7d3baf350986. UI dedup62e3c1d included. Prior full73 only98d. User current Downloads config preserved. Continue renderer and original12stream audit; native vector deferred, Windows user-owned.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6429,6 +6429,22 @@
   },
   "followup133": {
     "task": "docs/tasks/starmap-frame-work-20261015.json",
-    "summary": "39ff208 exact dust reuse / unused IR and inactive edge work skipped; actual draw regressions and rounded trace equivalence PASS, repeated VM timing about half in stable frames (not native FPS). Native current workspace progressive265→18167, IR/selection/camera/home observed; cloud body I/O errors retained. Complete local image7d3baf350986 and both local offline copies verified. Full74 pending; preserve original goal scope."
+    "summary": "39ff208 exact dust reuse / unused IR and inactive edge work skipped; actual draw regressions and rounded trace equivalence PASS, repeated VM timing about half in stable frames (not native FPS). Native current workspace progressive265→18167, IR/selection/camera/home observed; cloud body I/O errors retained. Complete local image7d3baf350986 and both local offline copies verified. Full74 pending; preserve original goal scope.",
+    "full_owner": {
+      "profile": "full",
+      "status": "running",
+      "commandsExpected": 74,
+      "sessionId": 36197,
+      "head": "54f97b63a68816999541af7401a4a21aa181ceb0",
+      "fingerprint": "dbe1eeb5a6110be2db876bfc8a5177b0ba3763fa59c16d82a0f04e86c3091bf1",
+      "observedUTC": "2026-10-15T01:30:05.441238+00:00",
+      "ownerLog": ".agent-state/starmap-frame-work/full-run.log",
+      "log": ".agent-state/verify-20261015T012941486582Z.log",
+      "sourceCommit": "39ff208",
+      "evidenceCommit": "54f97b6",
+      "priorFullScope": "full73 PASS for metadata layout98d; not reused for current source",
+      "container": "aide-verify-0a455a635b39",
+      "lastLiveObservation": "Owner36197 running; container confirmed Up; host free21GiB; Go snapshot started"
+    }
   }
 }
