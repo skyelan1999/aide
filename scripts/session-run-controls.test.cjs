@@ -35,6 +35,8 @@ class ES{constructor(){this.events={}}addEventListener(k,v){this.events[k]=v}emi
  es.emit('intent',{callId:'one',tool:'read_file'});es.emit('intent',{callId:'one',tool:'read_file'});assert.equal(st.runPhase.live.tools.length,1,'same intent has one card');
  es.emit('tool',{callId:'unknown',ok:true});assert.equal(st.runPhase.live.tools[0].status,'running','a mismatched result cannot complete another call');
  es.emit('tool',{callId:'one',ok:true});es.emit('intent',{callId:'one',tool:'read_file'});assert.equal(st.runPhase.live.tools[0].status,'done');assert.equal(st.runPhase.live.tools.length,1);
+ es.emit('intent',{callId:'one',round:1,tool:'read_file'});assert.equal(st.runPhase.live.tools.length,2,'same provider ID in a later model round is a new invocation');es.emit('tool',{callId:'one',ok:true});assert.equal(st.runPhase.live.tools[1].status,'done','result settles the latest matching invocation');
+ es.emit('step',{step:'review',status:'running'});es.emit('intent',{callId:'one',tool:'read_file'});es.emit('intent',{callId:'one',tool:'read_file'});assert.equal(st.runPhase.live.tools.length,3,'same ID in another workflow step is new, while duplicate events remain idempotent');es.emit('tool',{callId:'one',ok:true});assert.equal(st.runPhase.live.tools[2].status,'done');
  es.emit('delta',{round:0,text:'Visible partial output'});es.emit('done',{status:'cancelled'});
  assert.equal(st.live.live,'Visible partial output','done must not blank the answer before the snapshot');assert.equal(st.runPhase.live.done,true);assert(polls>0);
  resolveSnapshot({id:'s',runs:[{...liveRun,status:'cancelled',steps:[{name:'chat',content:'Visible partial output'}]}]});await stream.pending;

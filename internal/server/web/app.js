@@ -1007,7 +1007,13 @@ function openStream(run) {
     avatarRunFeedback(run.id, d.status);
     refreshSessionSoon();
   });
-  es.addEventListener('step', () => { if (state.stream !== es) return; touchRunActivity(run.id); refreshSessionSoon(); });
+  es.addEventListener('step', e => {
+    if (state.stream !== es) return;
+    let d; try { d = JSON.parse(e.data); } catch (_) { return; }
+    const ph = state.runPhase[run.id];
+    if (ph && d.status === 'running') ph.step = d.step || '';
+    touchRunActivity(run.id); refreshSessionSoon();
+  });
   es.addEventListener('segment', e => {
     if (state.stream !== es) return;
     let d; try { d = JSON.parse(e.data); } catch (_) { return; }
@@ -1027,7 +1033,7 @@ function openStream(run) {
     if (!d.ok) window.aideAvatarFeedback?.('error', {runId:run.id});
     const ph = state.runPhase[run.id];
     if (ph) {
-      const row = ph.tools.find(x => x.callId === d.callId) || (!d.callId ? ph.tools[ph.tools.length - 1] : null);
+      const row = [...ph.tools].reverse().find(x => x.callId === d.callId) || (!d.callId ? ph.tools[ph.tools.length - 1] : null);
       if (row) { row.endedAt = Date.now(); row.ok = !!d.ok; row.status = d.ok ? 'done' : 'err'; }
       ph.phase = 'reasoning'; ph.toolName = '';
       touchRunActivity(run.id); renderRunStatus(run.id);
@@ -1039,8 +1045,8 @@ function openStream(run) {
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
     const ph = state.runPhase[run.id];
     if (ph) {
-      if (d.callId && ph.tools.some(tool => tool.callId === d.callId)) { refreshSessionSoon(); return; }
-      ph.tools.push({ callId: d.callId || ('c'+Date.now()+Math.random()), tool: d.tool, args: d.args || '', startedAt: Date.now(), status: 'running' });
+      if (d.callId && ph.tools.some(tool => tool.callId === d.callId && tool.round === (d.round ?? 0) && tool.step === (ph.step || ''))) { refreshSessionSoon(); return; }
+      ph.tools.push({ callId: d.callId || ('c'+Date.now()+Math.random()), round: d.round ?? 0, step: ph.step || '', tool: d.tool, args: d.args || '', startedAt: Date.now(), status: 'running' });
       ph.phase = 'tool'; ph.toolName = d.tool;
       touchRunActivity(run.id); renderRunStatus(run.id);
     }
@@ -1072,7 +1078,7 @@ function openStream(run) {
     const ph = state.runPhase[run.id];
     if (!ph) return;
     ph.lastHeartbeat = Date.now();
-    const row = ph.tools.find(x => x.callId === d.callId) || (!d.callId ? ph.tools[ph.tools.length - 1] : null);
+    const row = [...ph.tools].reverse().find(x => x.callId === d.callId) || (!d.callId ? ph.tools[ph.tools.length - 1] : null);
     if (row) row.lastHeartbeat = ph.lastHeartbeat;
     touchRunActivity(run.id);
     renderRunStatus(run.id);
