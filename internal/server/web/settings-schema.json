@@ -67,6 +67,11 @@
           ]
         },
         {
+          "id": "background",
+          "type": "workbench-background",
+          "label": "工作台背景"
+        },
+        {
           "id": "motion",
           "type": "segmented",
           "label": "动效强度",

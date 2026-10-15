@@ -95,6 +95,7 @@
     doc.language = normalizeLanguage(parsed.language);
     doc.motion = ['system', 'full', 'reduced'].indexOf(parsed.motion) >= 0 ? parsed.motion : 'system';
     doc.startupAnimation = parsed.startupAnimation === 'off' ? 'off' : 'on';
+    doc.background = ['off', 'aurora', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'off';
     doc.theme = parsed.theme === 'classic' ? 'light' : theme;
     doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
     var normalized = JSON.stringify(doc);
@@ -188,6 +189,7 @@
     doc.language = normalizeLanguage(parsed.language);
     doc.motion = ['system', 'full', 'reduced'].indexOf(parsed.motion) >= 0 ? parsed.motion : 'system';
     doc.startupAnimation = parsed.startupAnimation === 'off' ? 'off' : 'on';
+    doc.background = ['off', 'aurora', 'local'].indexOf(parsed.background) >= 0 ? parsed.background : 'off';
       doc.theme = parsed.theme === 'classic' ? 'light' : theme;
     doc.palette = parsed.theme === 'classic' || parsed.palette === 'green' ? 'green' : parsed.palette === 'comfort' ? 'comfort' : 'blue';
       applyTheme();
@@ -218,7 +220,7 @@
       notifyAll();
     },
     set: function (name, value) {
-      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? (['system','full','reduced'].indexOf(value)>=0 ? value : 'system') : name === 'startupAnimation' ? (value==='off' ? 'off' : 'on') : value;
+      doc[name] = name === 'fileMarkdownEditing' ? (value==='text'?'text':'split') : name === 'theme' ? normalizeTheme(value) : name === 'language' ? normalizeLanguage(value) : name === 'motion' ? (['system','full','reduced'].indexOf(value)>=0 ? value : 'system') : name === 'background' ? (['off','aurora','local'].indexOf(value)>=0 ? value : 'off') : name === 'startupAnimation' ? (value==='off' ? 'off' : 'on') : value;
       persist();
       if (name === 'theme' || name === 'language' || name === 'motion') applyTheme();
       notifyAll();

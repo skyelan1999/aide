@@ -538,6 +538,10 @@
       [
         "node",
         "scripts/starmap-file-preview.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/workbench-background.test.cjs"
       ]
     ],
     "full": [

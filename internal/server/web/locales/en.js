@@ -1,6 +1,22 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "上一级目录": "Parent directory",
+  "工作台背景": "Workbench background",
+  "流光": "Aurora",
+  "本地素材": "Local media",
+  "加载本地背景": "Load local background",
+  "删除本地素材": "Delete local media",
+  "本地背景存储不可用": "Local background storage is unavailable",
+  "请先选择本地背景素材": "Choose local background media first",
+  "背景素材无法播放，请更换文件": "Unable to play this background. Choose another file.",
+  "选择本地素材后自动启用": "Enabled automatically after choosing local media",
+  "正在保存背景…": "Saving background\u2026",
+  "请选择支持的素材格式，大小不超过 30 MiB": "Choose a supported file up to 30 MiB",
+  "背景保存失败，原素材已保留": "Could not save background. Previous media was kept.",
+  "本地背景素材已删除": "Local background media deleted",
+  "支持 MP4、WebM、GIF、PNG、JPEG、WebP，最多 30 MiB；仅保存在当前浏览器，不上传。后台、锁屏及减少动态效果时暂停。": "MP4, WebM, GIF, PNG, JPEG, WebP, up to 30 MiB. Stored only in this browser; never uploaded. Paused in background tabs, on lock, or with reduced motion.",
+
   "正在同步结果…": "Syncing results…",
   "发送回答": "Send answer",
   "排队：当前回答完成后处理": "Queue: handle after the current answer",

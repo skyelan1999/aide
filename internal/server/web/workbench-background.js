@@ -1,0 +1,145 @@
+/* Browser-local decoration. No network, model calls, or per-frame JavaScript. */
+'use strict';
+(function () {
+  const root = document.documentElement;
+  const layer = document.createElement('div');
+  layer.className = 'workbench-background';
+  layer.setAttribute('aria-hidden', 'true');
+  layer.inert = true;
+  document.body.prepend(layer);
+  const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  const accepted = new Set(['video/mp4', 'video/webm', 'image/gif', 'image/png', 'image/jpeg', 'image/webp']);
+  let mode = '', generation = 0, media = null, url = '', record = null, message = '', saving = false;
+  const panels = new Set();
+  let database;
+  function db() {
+    if (!database) database = new Promise((resolve, reject) => {
+      if (!window.indexedDB) return reject(new Error('本地背景存储不可用'));
+      const request = indexedDB.open('aide.workbench-background', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('assets');
+      request.onsuccess = () => { request.result.onversionchange = () => { request.result.close(); database = null; }; resolve(request.result); };
+      request.onerror = () => reject(request.error);
+      request.onblocked = () => reject(new Error('本地背景存储不可用'));
+    }).catch(error => { database = null; throw error; });
+    return database;
+  }
+  async function stored(operation, value) {
+    const connection = await db();
+    return new Promise((resolve, reject) => {
+      const transaction = connection.transaction('assets', operation === 'get' ? 'readonly' : 'readwrite');
+      const store = transaction.objectStore('assets');
+      const request = operation === 'get' ? store.get('current') : operation === 'put' ? store.put(value, 'current') : store.delete('current');
+      transaction.oncomplete = () => resolve(request.result);
+      transaction.onerror = transaction.onabort = () => reject(transaction.error || new Error('本地背景存储不可用'));
+    });
+  }
+  function blocked() {
+    return document.hidden || root.dataset.motion === 'reduced' || reduced?.matches ||
+      !!document.querySelector('#login-dialog[open],#lock-screen:not([hidden])');
+  }
+  function lifecycle() {
+    const paused = blocked();
+    root.toggleAttribute('data-background-paused', paused);
+    if (!media) return;
+    if (media.tagName === 'VIDEO') {
+      if (paused) media.pause();
+      else { const play = media.play(); play?.catch(() => {}); }
+    } else if (record?.type === 'image/gif' || record?.type === 'image/webp') {
+      // GIF/WebP can animate without a playback API. Unload while paused.
+      if (paused) media.removeAttribute('src');
+      else if (!media.hasAttribute('src')) media.src = url;
+    }
+  }
+  function release() {
+    if (media?.tagName === 'VIDEO') { media.pause(); media.removeAttribute('src'); media.load(); }
+    media?.remove(); media = null;
+    if (url) URL.revokeObjectURL(url);
+    url = ''; layer.replaceChildren(); record = null;
+    root.removeAttribute('data-background-media');
+  }
+  function refreshPanels() {
+    for (const panel of panels) {
+      if (!panel.node.isConnected) { panels.delete(panel); continue; }
+      panel.update();
+    }
+  }
+  async function apply(force = false) {
+    const next = window.aideUI?.get('background') || 'off';
+    if (next === mode && !force) { lifecycle(); refreshPanels(); return; }
+    const ticket = ++generation;
+    mode = next; release(); message = '';
+    root.dataset.background = mode;
+    lifecycle(); refreshPanels();
+    if (mode !== 'local') return;
+    try {
+      const asset = await stored('get');
+      if (ticket !== generation) return;
+      if (!asset?.blob || !accepted.has(asset.type)) { message = '请先选择本地背景素材'; refreshPanels(); return; }
+      record = asset;
+      url = URL.createObjectURL(asset.blob);
+      const video = asset.type.startsWith('video/');
+      media = document.createElement(video ? 'video' : 'img');
+      if (video) { media.muted = true; media.defaultMuted = true; media.loop = true; media.playsInline = true; media.preload = 'metadata'; }
+      else media.alt = '';
+      media.onerror = () => { if (ticket === generation) { release(); message = '背景素材无法播放，请更换文件'; refreshPanels(); } };
+      root.dataset.backgroundMedia = video ? 'video' : (asset.type === 'image/gif' || asset.type === 'image/webp') ? 'animated' : 'image';
+      layer.append(media);
+      if (video || !blocked() || root.dataset.backgroundMedia === 'image') media.src = url;
+      lifecycle(); refreshPanels();
+    } catch (_) {
+      if (ticket === generation) { message = '本地背景存储不可用'; refreshPanels(); }
+    }
+  }
+  function renderSettings({t = text => text} = {}) {
+    refreshPanels(); // Retire detached settings nodes on every visit, even without a preference change.
+    const node = document.createElement('div'); node.className = 'settings-control background-control';
+    const label = document.createElement('div'); label.className = 'control-label'; label.textContent = t('工作台背景');
+    const choices = document.createElement('div'); choices.className = 'background-options'; choices.setAttribute('role', 'group'); choices.setAttribute('aria-label', t('工作台背景'));
+    const buttons = [['off', '关闭'], ['aurora', '流光'], ['local', '本地素材']].map(([value, text]) => {
+      const button = document.createElement('button'); button.type = 'button'; button.dataset.value = value; button.textContent = t(text);
+      button.onclick = () => window.aideUI?.set('background', value); choices.append(button); return button;
+    });
+    const picker = document.createElement('label'); picker.className = 'background-picker';
+    const text = document.createElement('span'); text.textContent = t('加载本地背景');
+    const input = document.createElement('input'); input.type = 'file'; input.accept = [...accepted].join(','); input.setAttribute('aria-label', t('加载本地背景'));
+    const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'quiet'; remove.textContent = t('删除本地素材');
+    const status = document.createElement('p'); status.className = 'background-status'; status.setAttribute('role', 'status');
+    const note = document.createElement('p'); note.className = 'muted'; note.textContent = t('支持 MP4、WebM、GIF、PNG、JPEG、WebP，最多 30 MiB；仅保存在当前浏览器，不上传。后台、锁屏及减少动态效果时暂停。');
+    const panel = {node, update() {
+      buttons.forEach(button => { button.setAttribute('aria-pressed', String(mode === button.dataset.value)); button.disabled = saving; });
+      input.disabled = remove.disabled = saving;
+      status.textContent = saving ? t('正在保存背景…') : message ? t(message) : record?.name || t('选择本地素材后自动启用');
+    }};
+    input.onchange = async () => {
+      const file = input.files?.[0]; input.value = ''; if (!file || saving) return;
+      if (!accepted.has(file.type) || file.size > 30 * 1024 * 1024 || file.size === 0) { message = '请选择支持的素材格式，大小不超过 30 MiB'; refreshPanels(); return; }
+      saving = true; refreshPanels();
+      try {
+        await stored('put', {blob:file, name:file.name, type:file.type});
+        window.aideUI?.set('background', 'local'); await apply(true);
+        channel?.postMessage('changed');
+      } catch (_) { message = '背景保存失败，原素材已保留'; }
+      finally { saving = false; refreshPanels(); }
+    };
+    remove.onclick = async () => {
+      if (saving) return; saving = true; refreshPanels();
+      try { await stored('delete'); window.aideUI?.set('background', 'off'); channel?.postMessage('changed'); message = '本地背景素材已删除'; }
+      catch (_) { message = '本地背景存储不可用'; }
+      finally { saving = false; refreshPanels(); }
+    };
+    picker.append(text, input); node.append(label, choices, picker, remove, status, note);
+    panels.add(panel); panel.update(); return node;
+  }
+  const channel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('aide.background') : null;
+  if (channel) channel.onmessage = () => { if (mode === 'local') apply(true); };
+  document.addEventListener('visibilitychange', lifecycle);
+  window.addEventListener('aide:motion', lifecycle);
+  reduced?.addEventListener?.('change', lifecycle);
+  const observer = new MutationObserver(lifecycle);
+  for (const node of document.querySelectorAll('#login-dialog,#lock-screen')) observer.observe(node, {attributes:true, attributeFilter:['hidden','open','class']});
+  window.addEventListener('pagehide', () => { ++generation; release(); });
+  window.addEventListener('pageshow', () => apply(true));
+  window.aideUI?.subscribe(() => apply());
+  window.AideBackground = {renderSettings};
+  apply();
+})();

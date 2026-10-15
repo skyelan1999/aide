@@ -7468,5 +7468,11 @@
       "docs/reviews/2026-10-16/queue-default.md"
     ],
     "deliveredMain": "97f4d34a2cc1e2a84235230fef26a791daac47b0"
+  },
+  "followup167": {
+    "status": "in_progress",
+    "request": "整体工作台协调与动态图背景",
+    "task": "docs/tasks/workbench-polish-20261016.json",
+    "summary": "共享几何样式与本地背景已实现；生产组件浏览器/针对性回归/本机9999验证通过，离线包和完整main门禁进行中；原12项继续保留。"
   }
 }

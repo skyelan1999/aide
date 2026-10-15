@@ -1,0 +1,75 @@
+{
+  "id": "workbench-polish-20261016",
+  "request": "整体工作台界面还需要在全面的打磨一下使整体更协调，图标，框框，高度宽度以及渲染等都需要再坐下微调，支持加载动态背景",
+  "baseline": "0f691833766d3fa71640f0501132dafd07bbe803",
+  "initial_status": "",
+  "acceptance": [
+    "导航、工具栏、会话正文、输入框、文件面板和设置面板统一尺寸、间距、边框与图标比例；桌面与390px不发生页面横向溢出。",
+    "专业/舒适/经典明暗外观保持可读，键盘焦点和触摸点击区域清晰。",
+    "外观设置支持关闭、内置流光和本地动态背景；选择即时生效并在刷新后恢复，本地素材不上传。",
+    "后台标签、锁屏和减少动态效果时暂停或隐藏背景动画；更换/关闭释放视频与对象URL。",
+    "完成实际浏览器组件验收、相关回归、文档和镜像交付；完整Safari及另一设备导入单列边界。"
+  ],
+  "scope": [
+    "internal/server/web：共用界面样式、背景模块、外观设置、翻译与资源版本",
+    "scripts：针对背景生命周期的回归及生产组件预览",
+    "docs：需求、任务与验收记录；docker-images：沿用离线镜像交付",
+    "internal/server/server.go 与媒体资源策略回归：仅本地 Blob 图片/视频许可"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户原话为整体协调与动态背景；按现有布局微调，默认关闭背景，支持本地视频/GIF/图片。",
+      "evidence": [
+        "docs/prd/2026-10-16-workbench-polish.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "独立workbench.css收敛共享界面；背景使用单个隔离装饰层、CSS流光或单视频/图片。偏好走aideUI，本地素材存IndexedDB，切换释放资源，锁屏/隐藏/减少动态时停用动态素材。",
+      "evidence": [
+        "docs/prd/2026-10-16-workbench-polish.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "统一共享界面几何与SVG，加入本地背景设置/IndexedDB/生命周期及限定Blob媒体策略。",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-polish.md",
+        "docs/reviews/2026-10-16/workbench-polish-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "84 quick、背景生命周期与实际IAB/本机9999通过；最终main full待执行。",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-polish.md",
+        "docs/reviews/2026-10-16/workbench-polish-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "需求、架构、验收与总体账本已更新，限制单列。",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-polish.md",
+        "docs/reviews/2026-10-16/workbench-polish-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "已关闭自建标签、复位视口并停止组件预览服务器；原目录和用户数据未删除。",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-polish.md",
+        "docs/reviews/2026-10-16/workbench-polish-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户此前“做一部分，push一部分，测一部分”及合到main、更新本机和离线镜像包授权，无升版或tag。",
+  "rollback": "保留60f986a3919f镜像与对应离线包；本地背景可选关闭，不迁移服务端数据。",
+  "handoff": ""
+}

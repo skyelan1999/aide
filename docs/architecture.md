@@ -152,9 +152,11 @@ Git 文件比较接口见 [Markdown 编辑与文件历史](architecture/markdown
 {"version":1,"theme":"system","palette":"blue"}
 ```
 
-`theme` 为 light/dark/system，`palette` 为 blue/green。页面 `data-theme` 是解析后的明暗，`data-theme-pref` 是用户选择，`data-palette` 是风格。专业与经典各一排三项，通过 `aideUI.setAppearance()` 一次保存组合。旧 `aide.theme` 和中间版本 classic 偏好迁移；`settings-schema.json` 侧边分区为：消耗统计(stats)/外观(appearance)/语言(language)/模型(model)/会话数据(sessions-data)/权限(permissions)/账户(account)/性格(persona)/语音(voice)/无障碍(accessibility)/备份(backup)/关于(about)。
+`theme` 为 light/dark/system，`palette` 为 blue/comfort/green。页面 `data-theme` 是解析后的明暗，`data-theme-pref` 是用户选择，`data-palette` 是风格。专业与经典各一排三项，通过 `aideUI.setAppearance()` 一次保存组合。旧 `aide.theme` 和中间版本 classic 偏好迁移；`settings-schema.json` 侧边分区为：消耗统计(stats)/外观(appearance)/语言(language)/模型(model)/会话数据(sessions-data)/权限(permissions)/账户(account)/性格(persona)/语音(voice)/无障碍(accessibility)/备份(backup)/关于(about)。
 
 文件侧栏顶部采用紧凑间距：标题栏 42px、根目录切换按钮最小 28px，路径与搜索行收紧内边距；触摸设备标题栏 46px、主要按钮 34px。规则统一在 `style.css` 的 `#file-panel` 范围内，适用于经典与专业外观，不改变文件列表行样式。
+
+工作台共用几何样式由 `workbench.css` 统一图标、按钮、正文宽度与设置导航；窄屏设置导航横向滚动，正文单独纵向滚动。外观设置新增 `background: off | aurora | local`，默认 off。背景模块 `workbench-background.js` 只装饰页面，不参与会话或模型请求；本地素材存在浏览器 IndexedDB，最多30 MiB。图片/视频使用 Blob URL，关闭、更换或离开页面时释放。后台、锁屏和减少动态效果时暂停视频与流光、卸载 GIF/WebP。CSP 仅向图片与媒体开放 blob，脚本和连接仍为同源。操作与验收见[工作台打磨需求](prd/2026-10-16-workbench-polish.md)。
 
 ## 本任务自动命令审批
 
