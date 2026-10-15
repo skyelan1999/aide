@@ -7278,14 +7278,19 @@
   },
   "followup156": {
     "task": "docs/tasks/storage-fault-live-20261015.json",
-    "status": "in_progress",
+    "status": "pass",
     "classification": "progress",
     "previousGoalTurn": "Lexical/interface false edges fixed and code relationship real evidence/full/main72d2322 delivered.",
-    "summary": "Actual bounded tmpfs ENOSPC and permission-fault HTTPS save/history/partial-restore/timeline/process-restart acceptance passed; docs-only main gate/push pending.",
+    "summary": "Real ENOSPC and permission-fault save/history/partial restore/timeline/restart acceptance passed; documentation-only main gate and exact remote push verified. Original twelve tracks remain open.",
     "original12RemainOpen": true,
     "evidence": [
       "docs/reviews/2026-10-15/storage-fault-live.md",
       "docs/reviews/2026-10-15/storage-fault-live-proof.json"
-    ]
+    ],
+    "mainPush": {
+      "pushedCommit": "a7625cd2c33583ce3d10f1496fddd52e81eb0d65",
+      "remoteVerifiedCommit": "a7625cd2c33583ce3d10f1496fddd52e81eb0d65",
+      "formalReleaseCreated": false
+    }
   }
 }

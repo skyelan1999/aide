@@ -62,8 +62,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Documentation-only main gate and push pending; no source/image/package/version changes.",
+      "status": "pass",
+      "summary": "Documentation-only clean main release gate PASS using unchanged full84 fingerprint; pushed a7625cd, exact ls-remote SHA verified. Runtime/offline candidate unchanged; no new full/build/tag/Release claim.",
       "evidence": [
         "docs/reviews/2026-10-15/storage-fault-live.md"
       ]
@@ -126,5 +126,11 @@
     "checks": 84,
     "serverRaceSeconds": 539.86,
     "task": "docs/tasks/code-relation-live-20261015.json"
+  },
+  "mainPush": {
+    "status": "pass",
+    "pushedCommit": "a7625cd2c33583ce3d10f1496fddd52e81eb0d65",
+    "remoteVerifiedCommit": "a7625cd2c33583ce3d10f1496fddd52e81eb0d65",
+    "formalReleaseCreated": false
   }
 }
