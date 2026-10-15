@@ -8,7 +8,8 @@
     "等待下个流式数据块时停止保留已输出正文；暂停恢复携带半段文本并继续，保留阶段而不重放工具",
     "旧会话可确认归属的中断正文在预览和实际请求中一致，预算/统计/指纹更新；尊重压缩和会话隔离",
     "正常完成时阶段正文同样进入历史；不混入思考/内部提案/辅助worker输出",
-    "真实千问中断后续接/旧会话上下文快照/重启持久化验收，更新文档和完整离线包"
+    "真实千问中断后续接/旧会话上下文快照/重启持久化验收，更新文档和完整离线包",
+    "按用户既有授权，将本批及之前待合入提交快进到干净main，输入指纹仍与full81一致，release-check通过后推送并核对远端"
   ],
   "scope": [
     "internal/server/workflow.go",
@@ -21,7 +22,8 @@
     "docs/tasks",
     "docs/architecture/continuity-roadmap.md",
     "docs/reviews",
-    "docker-images metadata"
+    "docker-images metadata",
+    "clean main fast-forward integration and push"
   ],
   "stages": {
     "requirements": {
@@ -55,8 +57,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "定向race28.473秒/vet及quick79通过；真实旧长文片段预览/实际请求和只读/幂等核对通过，新停止205字完整进入后续请求，暂停205字实际重启后SHA一致并恢复，尾段样本仅各一次。标题逐字引用未通过（省略括号），不外推模型正确性。待干净full81与完整页面。",
+      "status": "pass",
+      "summary": "干净源码full81 PASS，覆盖全仓库Go race/vet；定向race28.473秒/vet及quick79通过。真实旧正文预览/实际输入、新停止后续接、同镜像实际重启恢复、high/low会话独立写回与恢复原值通过。标题逐字引用仍省略括号，不外推模型正确性；完整浏览器与原12目标不由本任务代替。",
       "evidence": [
         ".agent-state/cancelled-output-context/negative.log",
         ".agent-state/cancelled-output-context/provider-negative.log",
@@ -68,7 +70,9 @@
         ".agent-state/cancelled-output-context/cancel-followup-proof.json",
         ".agent-state/cancelled-output-context/resume-proof.json",
         ".agent-state/cancelled-output-context/restart-proof.json",
-        ".agent-state/cancelled-output-context/settings-counter-proof.json"
+        ".agent-state/cancelled-output-context/settings-counter-proof.json",
+        ".agent-state/cancelled-output-context/full-frozen.json",
+        ".agent-state/cancelled-output-context/reasoning-isolation-proof.json"
       ]
     },
     "documentation": {
@@ -79,24 +83,26 @@
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "5个真实测试run均终态，无浏览器新增和遗留暂停任务，继承5项vendor删除保留。下一步临时干净验收工作树，完成后移除。",
+      "status": "pass",
+      "summary": "5个真实模型run均终态，无浏览器新增和暂停遗留；测试容器自动移除，干净验收树无产品改动，收据已复制回原目录，完成本地门禁后移除该自有临时树。继承5项vendor删除保留。",
       "evidence": [
-        ".agent-state/cancelled-output-context/cleanup-proof.json"
+        ".agent-state/cancelled-output-context/cleanup-proof.json",
+        ".agent-state/cancelled-output-context/full-owner.json",
+        "git status --porcelain in clean verification tree"
       ]
     },
     "release": {
       "status": "in_progress",
-      "summary": "源码08f0027已push，指定入口9999镜像d9e90810dea4及完整离线包验证通过；待干净full81，本分支未合main/tag，接收端和完整UI未验收。",
+      "summary": "干净full81 PASS。首次在feature验收树调用release-check按规则被拦下（要求main且task文档有未提交修改）；不绕过门禁，按既有用户授权准备干净main快进合入并重新核对同一输入指纹。9999/完整离线包已验证，main推送待执行，不升版/tag。",
       "evidence": [
         ".agent-state/cancelled-output-context/final.json",
         ".agent-state/cancelled-output-context/package.json"
       ]
     }
   },
-  "release_authorization": "沿用用户持续授权分部分修改、push、测试及更新离线镜像；千问为指定实测端点。",
+  "release_authorization": "沿用用户原话“做完这个把所有内容和到main上”，授权本轮及此前功能修改在检查后合入并push main；同时沿用分部分测试、指定启动器和完整离线包。未授权升版/tag/正式Release。",
   "rollback": "回退上下文/正文持久化/流式中断变更，无批量会话迁移。新增可选归属字段由旧版本忽略；既有会话、卷与离线镜像保留。",
-  "handoff": "停止/失败/暂停正文及可确认的旧历史已接入模型上下文与压缩，暂停尾段检查点和正常阶段历史保留；真实停止/后续请求及同镜像实际重启恢复通过，标题逐字引用未通过单列。下一步干净full81，不以本任务通过替代原12项完整验收。",
+  "handoff": "中断正文上下文、旧历史补回、暂停尾段与压缩修复已完成定向/完整回归及真实千问/实际重启API验收。独立会话推理强度high/low写回隔离并恢复原值。功能分支/9999和完整离线包已交付，不等于原12目标及main/正式发布全部完成。",
   "runtime": {
     "image": "sha256:d9e90810dea4069d21f80b817bfbdc074c45ea454767b0ae1f2b002680b8b5de",
     "runningImage": "sha256:d9e90810dea4069d21f80b817bfbdc074c45ea454767b0ae1f2b002680b8b5de",
@@ -126,5 +132,13 @@
     "hostLaunchersMatch": true,
     "copiedBothTrees": true,
     "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "full_receipt": {
+    "profile": "full",
+    "status": "pass",
+    "fingerprint": "ea9780d725d5f0f700ad5f0567b6543913e2763c6871e8f667d5d1fa09f69cfe",
+    "head": "b3c75fea92f51e4cc6cb59134d7fce4840770e54",
+    "time": "20261015T075331832735Z",
+    "commands": 81
   }
 }
