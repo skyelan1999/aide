@@ -207,6 +207,9 @@
       ],
       "evidence_20261015_partial_save": [
         "docs/reviews/2026-10-15/history-partial-save.md"
+      ],
+      "evidence_20261015_object_integrity": [
+        "docs/reviews/2026-10-15/history-object-integrity.md"
       ]
     },
     {
@@ -238,6 +241,9 @@
       ],
       "evidence_20261015_partial_save": [
         "docs/reviews/2026-10-15/history-partial-save.md"
+      ],
+      "evidence_20261015_object_integrity": [
+        "docs/reviews/2026-10-15/history-object-integrity.md"
       ]
     },
     {
@@ -7334,7 +7340,7 @@
     "classification": "progress",
     "previousGoalTurn": "Human requested APFS external copy completed with full file SHA256, symlinks and permission/Git readback; source not deleted or runtime switched. Resume original history goal with verified backup unchanged.",
     "status": "in_progress",
-    "summary": "Actual binary reproduced corrupt backup still allowing overwrite; immutable object reuse/read guard and focused race11.264s passed, new binary/full/delivery pending.",
+    "summary": "History immutable-object validation source f6ca3e1; targeted race11.264s, quick82 and actual binary HTTPS corruption/symlink/restoration/process restart PASS4.322s. Runtime9999 9bc517eba16f with protected state unchanged. Full/offline/main pending.",
     "original12RemainOpen": true,
     "evidence": [
       "docs/reviews/2026-10-15/history-object-integrity.md"

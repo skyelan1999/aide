@@ -40,23 +40,26 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Baseline actual binary false200 reproduced; five old reuse tests fail. Final focused history race PASS11.264s; quick PASS82. New binary, full and delivery pending.",
+      "summary": "Focused race11.264s and quick82 PASS; new actual binary HTTPS body/asset corruption and symlink guards, trusted restoration retry, old body/asset and process restart PASS4.322s. Runtime9999 updated with 13 sessions/config/auth/mounts and served assets preserved. Full/offline/main pending. Offline outer/inner hashes, both tags, platform/launchers, actual docker load and local peer copy PASS; receiving device NOT_RUN.",
       "evidence": [
-        "docs/reviews/2026-10-15/history-object-integrity.md"
+        "docs/reviews/2026-10-15/history-object-integrity.md",
+        "docs/reviews/2026-10-15/history-object-integrity-proof.json"
       ]
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "Plugin contract and scoped review updated; final runtime/full/main receipts pending.",
+      "summary": "Plugin contract, review, sanitized binary/runtime/offline receipts and Docker package documentation updated; full/main receipts pending.",
       "evidence": [
         "docs/reviews/2026-10-15/history-object-integrity.md",
         "docs/plugins/markdown-history.md"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Own corruption probe container removed; no browser/model calls; five inherited vendor deletions remain unstaged; external verified copy unchanged. Full runner cleanup remains owned by its runner.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-object-integrity.md"
+      ]
     },
     "release": {
       "status": "pending",

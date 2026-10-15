@@ -1,0 +1,79 @@
+{
+  "binary": {
+    "status": "pass",
+    "applicationImage": "sha256:9bc517eba16fa5c713a05ef552ec24d53b4080e4f26e32971e3cf3edb12134cd",
+    "scenarios": [
+      {
+        "case": "body-corrupt",
+        "writeStatus": 400,
+        "bodyUnchanged": true,
+        "historyReadError": "历史对象完整性校验失败",
+        "errorSavedFlag": null,
+        "storageRestoredRetry200": true,
+        "oldBodyAndAssetReadback": true,
+        "versions": 2
+      },
+      {
+        "case": "asset-corrupt",
+        "writeStatus": 400,
+        "bodyUnchanged": true,
+        "historyReadError": "历史对象完整性校验失败",
+        "errorSavedFlag": null,
+        "storageRestoredRetry200": true,
+        "oldBodyAndAssetReadback": true,
+        "versions": 2
+      },
+      {
+        "case": "body-symlink",
+        "writeStatus": 400,
+        "bodyUnchanged": true,
+        "historyReadError": "历史对象不是普通文件",
+        "errorSavedFlag": null,
+        "storageRestoredRetry200": true,
+        "oldBodyAndAssetReadback": true,
+        "versions": 2
+      }
+    ],
+    "actualProcessRestart": true,
+    "newPid": true,
+    "oldAndNewHistoryReadback": true,
+    "sourceExecution": false,
+    "modelCalls": false,
+    "elapsedSeconds": 4.322,
+    "scope": "isolated actual default-user binary HTTPS API; prepared body/asset corruption and symlink, not physical disk or authenticated browser"
+  },
+  "runtime": {
+    "image": "sha256:9bc517eba16fa5c713a05ef552ec24d53b4080e4f26e32971e3cf3edb12134cd",
+    "runningImage": "sha256:9bc517eba16fa5c713a05ef552ec24d53b4080e4f26e32971e3cf3edb12134cd",
+    "sourceSHA256": "6766b920c58364fcce05f1297aac432ee135126f6ee59f3fc4aa23b22c1289ca",
+    "runningPlatformManifest": "sha256:5f054866470d7c02b5229bf422d0e5eafa989bed996fb9444eb4dcc4fee883f5",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "sourceCommit": "f6ca3e12ea4db65a32492fd401273099fd0062ac",
+  "focusedRaceSeconds": 11.264,
+  "quickChecks": 82,
+  "full": "pending",
+  "release": "pending",
+  "package": {
+    "image": "sha256:9bc517eba16fa5c713a05ef552ec24d53b4080e4f26e32971e3cf3edb12134cd",
+    "sourceSHA256": "6766b920c58364fcce05f1297aac432ee135126f6ee59f3fc4aa23b22c1289ca",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-9bc517eba16f-offline.tar.gz",
+    "bytes": 705683435,
+    "sha256": "d9cc4b6642b44ca3409a30e180bb170ae92735116d7d32712bcf38124020ee62",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  }
+}
