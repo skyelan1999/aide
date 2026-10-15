@@ -61,14 +61,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Tests/docs only; final full and independent clean-main gate must pass before push. No product rebuild or new offline package.",
+      "status": "pass",
+      "summary": "Current-input full88 and independent clean-main release-check pass; pushed main960b0d0 and exact remote SHA verified. Tests/docs only, no production restart/image rebuild/version/tag.",
       "evidence": [
-        "docs/reviews/2026-10-16/capability-plugin-lifecycle.md"
+        "docs/reviews/2026-10-16/capability-plugin-lifecycle.md",
+        "docs/reviews/2026-10-16/capability-plugin-lifecycle-proof.json"
       ]
     }
   },
   "release_authorization": "Existing incremental testing/push/main authorization; tests and documentation only; no version/tag or production restart required.",
   "rollback": "Test/docs-only commit can be reverted; no product implementation or data format changes.",
-  "handoff": ""
+  "handoff": "Real plugin lifecycle/API acceptance and final full delivered; full authenticated UI/user SSH and other original12 gaps remain. Windows user-owned, vectors deferred."
 }

@@ -44,6 +44,12 @@
   "network": "none",
   "browser": "not_run; no UI implementation change; complete authenticated browser remains deferred",
   "production": "prior verified8d636fd; no rebuild/restart for test/docs-only update",
-  "release": "independent clean-main gate and push pending",
+  "release": {
+    "independentCleanMainGate": "pass",
+    "push": "pass",
+    "remoteExactMatch": true,
+    "commit": "960b0d0e04eba673fc429b052711649973e167cd",
+    "subsequentDocumentationReceipt": "same product fingerprint; no new runtime build"
+  },
   "originalTwelve": "all in_progress; Windows user acceptance; real vectors deferred"
 }
