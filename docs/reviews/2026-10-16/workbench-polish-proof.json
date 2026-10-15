@@ -57,7 +57,11 @@
     }
   },
   "release": {
-    "status": "pending"
+    "status": "pass",
+    "independentGate": true,
+    "main": "7f0e876802905b9327c666b4c76510909ad5e035",
+    "remoteExactVerified": true,
+    "finalReceiptFollows": true
   },
   "offline": {
     "image": "sha256:4cc2308dbb4be83159ddb92cb664b0f1d78095630858e3f87927ab139db6abfe",

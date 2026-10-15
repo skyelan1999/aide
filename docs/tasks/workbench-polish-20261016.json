@@ -64,8 +64,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Final full pass, independent gate and remote push next.",
+      "status": "pass",
+      "summary": "Independent main gate and no-force push 7f0e876802905b9327c666b4c76510909ad5e035 exactly verified remotely; final receipt follows. Local9999/offline verified. No version/tag/Release.",
       "evidence": [
         "docs/reviews/2026-10-16/workbench-polish.md",
         "docs/reviews/2026-10-16/workbench-polish-proof.json"
@@ -74,5 +74,5 @@
   },
   "release_authorization": "沿用用户此前“做一部分，push一部分，测一部分”及合到main、更新本机和离线镜像包授权，无升版或tag。",
   "rollback": "保留60f986a3919f镜像与对应离线包；本地背景可选关闭，不迁移服务端数据。",
-  "handoff": ""
+  "handoff": "External main delivered 7f0e876802905b9327c666b4c76510909ad5e035, final receipt follows. Local9999 sha256:4cc2308dbb4be83159ddb92cb664b0f1d78095630858e3f87927ab139db6abfe healthy; offline aide-0.1.17.0-RC2-linux-arm64-4cc2308dbb4b-offline.tar.gz; retain60f rollback. Safari, receiving-device import and other codecs remain separately scoped. Original12 remain open."
 }
