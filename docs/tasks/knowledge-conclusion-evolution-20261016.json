@@ -79,8 +79,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "功能main15936db已精确推送；本机运行8d636fd与离线包本机导入完成，最终许可证/清单输入full已通过，继续独立main门禁和推送。",
+      "status": "pass",
+      "summary": "Final input full88 and independent clean-main gate pass; remote main512b9c55 exact match. Local9999 image8d636fd healthy, protected data preserved; ARM64 offline archive checksums and local Docker import pass. Authenticated browser and receiving device import NOT_RUN; no version bump/tag/Release.",
       "evidence": [
         "docs/reviews/2026-10-16/workbench-runtime-delivery.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-coverage-proof.json"
@@ -89,5 +89,5 @@
   },
   "release_authorization": "沿用分批测试/push/合main、指定start.command与离线镜像交付授权；不升版/tag/正式Release。",
   "rollback": "原1601033镜像及更新前加密历史备份保留。新正文载荷3回滚旧二进制前须停机另存新历史并恢复对应before-body-v3加密原件；人工主题及原密钥材料保留在持久数据区。",
-  "handoff": "结论/依据功能、非Markdown人工选择与大目录可达性已完成分范围验收和最终full88；本机9999及离线包本机导入完成，最终main门禁推送继续。原12项仍进行；完整Safari人类暂缓/IAB证书拦截，Windows用户验收，真实向量暂缓，另一设备导入未执行。"
+  "handoff": "Main512b9c55 source/build/archive metadata delivered, runtime9999 and offline local import verified. Full88 current fingerprint pass. Complete authenticated browser remains human-deferred/certificate blocked; receiving-device import NOT_RUN, Windows user acceptance and real vectors deferred. Original12 remain in progress."
 }

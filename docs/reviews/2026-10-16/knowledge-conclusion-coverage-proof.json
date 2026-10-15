@@ -1,6 +1,6 @@
 {
   "task": "knowledge-conclusion-evolution-20261016",
-  "status": "final_inputs_verified_runtime_and_local_offline_delivered_main_gate_pending",
+  "status": "main_runtime_and_local_offline_delivered_scoped_acceptance",
   "baseline": "0201b82",
   "full": {
     "profile": "full",
@@ -201,9 +201,11 @@
     "ownedFullContainerEnded": true
   },
   "sourceDelivery": {
-    "mainGate": "pass",
-    "push": "verified",
-    "commit": "15936db4b24581a42aa4c2c15775a4880db62cd0"
+    "independentMainGate": "pass",
+    "push": "pass",
+    "remoteExactMatch": true,
+    "commit": "512b9c55cd5297d9b62a39b217d8ea4f76d62ee2",
+    "scope": "final source, build, checksum and delivery evidence; subsequent documentation receipt has identical product fingerprint"
   },
   "runtimeDelivery": {
     "image": "sha256:8d636fd54678f2b23385248a10c4a1b60d42e4cdb76d6865d60a03a11a672313",
@@ -283,5 +285,10 @@
   "productionBrowser": {
     "status": "not_run",
     "reason": "Safari human-deferred; IAB certificate authority invalid; no warning bypass"
+  },
+  "initialSourceDelivery": {
+    "mainGate": "pass",
+    "push": "verified",
+    "commit": "15936db4b24581a42aa4c2c15775a4880db62cd0"
   }
 }

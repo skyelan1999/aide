@@ -36,3 +36,7 @@
 ## 最终运行交付补记
 
 此前发布待办为各阶段当时状态。现已通过指定start.command更新本机9999，离线包本机校验与导入完成；详见[实际运行交付](workbench-runtime-delivery.md)。最终打包输入full88通过，server race 568.873秒及全包vet通过，非root资源19项；内容指纹 `2d59b18f9d3bb3f54760fc1f90e849fe84324ba8f0c7a09e86d8567915c598c3`。最终main门禁与推送收据继续记录，完整认证浏览器仍未验收。
+
+## 主分支交付收据
+
+最终输入full88通过后，干净main独立release-check实际通过，推送退出0；远端main精确核对为 `512b9c55cd5297d9b62a39b217d8ea4f76d62ee2`。后续仅补本文档收据，产品输入指纹不变。版本未变，无tag或GitHub Release；完整认证浏览器与另一设备导入仍未验收，原12项继续进行。
