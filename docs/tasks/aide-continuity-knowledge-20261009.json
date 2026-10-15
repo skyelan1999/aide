@@ -6846,9 +6846,9 @@
       "scope": "Scoped UX fixes merged/pushed after clean full82/main gate; actual bundled browser fixture and real Qwen single-node sample. Whole-graph search quality and live workbench browser remain unverified; all original12 retained."
     },
     "file_preview": {
-      "status": "in_progress",
+      "status": "pass",
       "task": "docs/tasks/starmap-file-preview-20261015.json",
-      "scope": "Scoped preview routing and actual frontend fixture passed; local API provenance verified. No claim for real SSH, full authenticated workbench browser or all original12."
+      "scope": "Scoped file preview delivered with clean full83/main gate and push; actual bundled viewer fixture and local9999 API passed. Real SSH/live authenticated browser, binary retest and receiving-device import remain unverified; original12 remain open."
     }
   },
   "followup147": {
@@ -6906,7 +6906,7 @@
   "followup149": {
     "task": "docs/tasks/starmap-file-preview-20261015.json",
     "request": "Restore quick file preview from knowledge-map references",
-    "status": "in_progress",
+    "status": "pass",
     "sourceCommit": "743d0ec",
     "runtimeImage": "997eda4026b5",
     "verified": [
@@ -6919,7 +6919,6 @@
       "clean main snapshot full83; server race517.89 seconds and vet"
     ],
     "remaining": [
-      "main release gate and push",
       "real SSH/live authenticated workbench browser; other binary formats not retested",
       "receiving-device import"
     ],
@@ -6932,6 +6931,12 @@
       "sourceCommit": "405df62e2b7a2ab82853e5893cd642da3afec6c7",
       "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/starmap-file-preview/verify-20261015T093010971948Z.log",
       "worktree": "/private/tmp/aide-preview-full-20261015"
+    },
+    "mainIntegration": {
+      "status": "pass",
+      "pushedMain": "05ba4d20db9b93f6836618c4a85163ca24ce6b95",
+      "releaseCheck": "pass",
+      "remoteHeadVerified": true
     }
   }
 }

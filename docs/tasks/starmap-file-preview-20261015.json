@@ -70,7 +70,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Both sequential browser pairs closed, viewport restored, fixture service stopped; owned local test file removed after hash check. Private evidence under agent-state. Five inherited vendor deletions preserved. Temporary clean verification tree will be removed after gate.",
+      "summary": "Own browser tabs closed, viewport restored, fixture service and owned local file cleaned. Five inherited vendor deletions preserved. Temporary verification worktree removed after final doc push; evidence retained privately.",
       "evidence": [
         ".agent-state/starmap-file-preview/browser-proof.json",
         ".agent-state/starmap-file-preview/live-proof.json",
@@ -78,16 +78,18 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Full83 passed on clean main snapshot. Main release-check and push pending.",
+      "status": "pass",
+      "summary": "Clean main release-check passed; main pushed and remote HEAD matched 05ba4d20db9b93f6836618c4a85163ca24ce6b95. This receipt adds ordinary docs only; no version/tag/formal Release.",
       "evidence": [
-        ".agent-state/starmap-file-preview/full-proof.json"
+        ".agent-state/starmap-file-preview/full-proof.json",
+        ".agent-state/starmap-file-preview/release-check.log",
+        "git ls-remote origin refs/heads/main"
       ]
     }
   },
   "release_authorization": "Standing user instruction: merge and push all completed changes to main; test/push in increments, use start.command and deliver complete offline image package. No version bump/tag/formal Release.",
   "rollback": "Revert scoped preview module/bindings/style commit and restore previous complete image. No data migration. Preserve five inherited vendor deletions.",
-  "handoff": "Scoped source/browser/API/runtime/package/full83 accepted. Main gate and push pending; original12, real SSH, live authenticated browser and receiving-device import remain open.",
+  "handoff": "Scoped preview work complete and pushed to main; local9999 and offline package updated. Runtime is a development candidate with inherited vendor deletions. Real SSH/live authenticated browser, binary format retest and receiving-device import remain unverified; original12 remain open.",
   "runtime": {
     "image": "sha256:997eda4026b5a0552547ca9a72e231a0119274f1d21a56423f0c59fe2ce67f43",
     "runningImage": "sha256:997eda4026b5a0552547ca9a72e231a0119274f1d21a56423f0c59fe2ce67f43",
@@ -175,5 +177,11 @@
     "sourceCommit": "405df62e2b7a2ab82853e5893cd642da3afec6c7",
     "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/starmap-file-preview/verify-20261015T093010971948Z.log",
     "worktree": "/private/tmp/aide-preview-full-20261015"
+  },
+  "mainIntegration": {
+    "status": "pass",
+    "pushedMain": "05ba4d20db9b93f6836618c4a85163ca24ce6b95",
+    "releaseCheck": "pass",
+    "remoteHeadVerified": true
   }
 }
