@@ -21,3 +21,5 @@
 ## Final clean verification
 
 Final snapshot `026e16440ab2683d3a12e1990ca11d34c8294ec0` passed all84 checks, including server race 520.569 seconds and vet. Fingerprint `d8a0e04baebe96014f5387165c39b807083ef3236376a814d28899c41e2ab505`. This is the final input receipt, replacing the initial cd588b3 acceptance. Main delivery is recorded separately in the task ledger.
+
+Main release-check passed; pushed main `ac74412a896518c56aa971ceace1c20229e7a125` matched the remote. Final receipt changes ordinary docs only; no product/build input changes, version bump, tag or formal Release. Final runtime candidate `bf701a670f6a` retains the documented inherited vendor deletion scope.

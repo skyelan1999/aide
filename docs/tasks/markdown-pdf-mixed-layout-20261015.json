@@ -72,16 +72,18 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Final clean full84 passed; main release-check and push next.",
+      "status": "pass",
+      "summary": "Final clean main release-check passed; pushed main ac74412a896518c56aa971ceace1c20229e7a125 and remote head verified. Final receipt changes ordinary docs only. No version/tag/formal Release.",
       "evidence": [
-        ".agent-state/markdown-pdf-mixed-layout/full-proof.json"
+        ".agent-state/markdown-pdf-mixed-layout/full-proof.json",
+        ".agent-state/markdown-pdf-mixed-layout/release-check.log",
+        "git ls-remote origin refs/heads/main"
       ]
     }
   },
   "release_authorization": "Standing user instruction: push completed changes and merge all into main; update start.command runtime and complete offline image package; no version/tag/formal Release.",
   "rollback": "Revert scoped frontend/test changes and restore previous complete image 997eda4026b5; no data migration.",
-  "handoff": "Final scoped PDF fix verified with clean full84 and local9999 bf701a670f6a/offline package; main gate and push next. Original problem document/authenticated browser, peak memory and receiving-device import remain unverified; original12 remain open.",
+  "handoff": "Scoped mixed PDF fix complete, main pushed; final full84/quick82, synthetic19-page browser and Poppler passed. Local9999 bf701a670f6a and complete offline package updated. Original user document/authenticated browser, peak memory and receiving-device import remain unverified; original12 stay open.",
   "browserEvidence": {
     "pages": 19,
     "renders": [
@@ -259,5 +261,11 @@
     "sourceCommit": "026e16440ab2683d3a12e1990ca11d34c8294ec0",
     "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/markdown-pdf-mixed-layout/verify-20261015T100617306791Z.log",
     "worktree": "/private/tmp/aide-pdf-layout-full-20261015"
+  },
+  "mainIntegration": {
+    "status": "pass",
+    "pushedMain": "ac74412a896518c56aa971ceace1c20229e7a125",
+    "releaseCheck": "pass",
+    "remoteHeadVerified": true
   }
 }

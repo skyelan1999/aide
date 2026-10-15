@@ -6942,7 +6942,7 @@
   "followup150": {
     "task": "docs/tasks/markdown-pdf-mixed-layout-20261015.json",
     "request": "Long mixed Markdown PDF content overlap",
-    "status": "in_progress",
+    "status": "pass",
     "sourceCommit": "2b0ea2c",
     "verified": [
       "quick82",
@@ -6954,7 +6954,6 @@
       "final clean main full84 with race/vet"
     ],
     "remaining": [
-      "main release gate and push",
       "original user problem document and complete authenticated workbench browser not tested",
       "receiving-device import"
     ],
@@ -6969,6 +6968,12 @@
       "sourceCommit": "026e16440ab2683d3a12e1990ca11d34c8294ec0",
       "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/markdown-pdf-mixed-layout/verify-20261015T100617306791Z.log",
       "worktree": "/private/tmp/aide-pdf-layout-full-20261015"
+    },
+    "mainIntegration": {
+      "status": "pass",
+      "pushedMain": "ac74412a896518c56aa971ceace1c20229e7a125",
+      "releaseCheck": "pass",
+      "remoteHeadVerified": true
     }
   }
 }
