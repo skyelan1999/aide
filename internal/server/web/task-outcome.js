@@ -97,9 +97,9 @@
   let journalEvents=[],journalNext=0,journalHasMore=false,journalWarning='',journalLoaded=false,journalLoading=false,journalError='';
    async function reloadRecords(){
     const owner=++recordGeneration;pollOwner=null;pageRequest=null;evidenceRequest=null;reloading=true;syncPolling();
-    try{const next=await api(base);if(!ownsRecords(owner))return;data=next;files=next.files||[];executions=next.executions||[];writeTargets=next.writeTargets||[];stale=false;hasLoadedMore=false;render();}
+    try{const next=await api(base);if(!ownsRecords(owner))return;data=next;files=next.files||[];executions=next.executions||[];writeTargets=next.writeTargets||[];stale=false;hasLoadedMore=false;}
     catch(e){if(ownsRecords(owner))error?.(e.message);}
-    finally{if(ownsRecords(owner)){reloading=false;syncPolling();}}
+    finally{if(ownsRecords(owner)){reloading=false;render();syncPolling();}}
    }
    async function loadMore(){
     if(!valid()||stale||reloading||pageRequest)return;

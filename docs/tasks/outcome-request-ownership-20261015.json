@@ -66,5 +66,12 @@
   },
   "release_authorization": "用户授权按目标持续开发、分部分push和测试；本轮新增修改仅功能分支，不推未来新修改到main/tag。",
   "rollback": "回退本任务代码并通过原start.command重建，无持久化迁移或用户数据变更。",
-  "handoff": ""
+  "handoff": "",
+  "first_native_finding": {
+    "source": "7a4e7c3",
+    "observation": "C快照重载后分页控件仍被reloading状态禁用；修正为finally释放标记后一次渲染",
+    "negative": ".agent-state/outcome-request-ownership/reload-control-negative.log",
+    "ui": ".agent-state/outcome-request-ownership/ui-reloaded-C.txt",
+    "candidate": ".agent-state/outcome-request-ownership/first-candidate-runtime.json"
+  }
 }
