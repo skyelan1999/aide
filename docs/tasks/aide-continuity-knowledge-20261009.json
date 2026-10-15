@@ -204,6 +204,9 @@
       ],
       "evidence_20261015_storage_fault": [
         "docs/reviews/2026-10-15/storage-fault-live.md"
+      ],
+      "evidence_20261015_partial_save": [
+        "docs/reviews/2026-10-15/history-partial-save.md"
       ]
     },
     {
@@ -232,6 +235,9 @@
       ],
       "evidence_20261015_storage_fault": [
         "docs/reviews/2026-10-15/storage-fault-live.md"
+      ],
+      "evidence_20261015_partial_save": [
+        "docs/reviews/2026-10-15/history-partial-save.md"
       ]
     },
     {
@@ -7298,12 +7304,21 @@
     "classification": "progress",
     "previousGoalTurn": "Actual ENOSPC/permission save-history-timeline/restart acceptance and main779a1d1 delivered.",
     "status": "in_progress",
-    "summary": "Partial-save stale hash and false failure state fixed; focused JS/Go/actual component, new binary ENOSPC/restoration/timeline/restart, runtime/offline receipts PASS; final clean full/main pending. Human deferred full Safari.",
+    "summary": "Partial-save stale hash and misleading state fixed; actual browser component, Go/JS, new binary ENOSPC and runtime/offline plus final clean full84 passed; main gate/push pending. Full Safari deferred by human.",
     "original12RemainOpen": true,
     "evidence": [
       "docs/reviews/2026-10-15/history-partial-save.md"
     ],
-    "runtimeImage": "sha256:b8769857af357d1aa03342e9d1da3e440b180d113f6018edb345d8585d068201"
+    "runtimeImage": "sha256:b8769857af357d1aa03342e9d1da3e440b180d113f6018edb345d8585d068201",
+    "full": {
+      "status": "pass",
+      "count": 84,
+      "fingerprint": "140302869a390d2291a34208abc32ef53492a226f53608b7ab74995cefae3398",
+      "serverRaceSeconds": 585.087,
+      "sourceCommit": "0b968636d720a3e36bcab0672fadb3534de051ed",
+      "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/history-partial-save/verify-20261015T123819776071Z.log",
+      "worktree": "/private/tmp/aide-history-partial-full-20261015"
+    }
   },
   "human_safari_deferral_20261015": {
     "reply": "现在不方便",

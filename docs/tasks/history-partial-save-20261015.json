@@ -43,10 +43,11 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Focused race10.132s, quick82/JS/lock, real browser component and new actual binary ENOSPC metadata/restoration/timeline/restart PASS11.173s; final clean main full pending. Full Safari explicitly deferred by human.",
+      "status": "pass",
+      "summary": "Scoped Go/JS/lock regressions, actual browser component with fixture API, actual binary ENOSPC metadata/full-history/timeline/restart, runtime/offline and clean main full84 passed. Complete Safari explicitly deferred by human, not claimed.",
       "evidence": [
-        "docs/reviews/2026-10-15/history-partial-save.md"
+        "docs/reviews/2026-10-15/history-partial-save.md",
+        "docs/reviews/2026-10-15/history-partial-save-proof.json"
       ]
     },
     "documentation": {
@@ -66,14 +67,17 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final clean full84 passed; main gate and exact remote push pending. No version/tag/formal Release.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-partial-save.md",
+        "docker-images/README.md"
+      ]
     }
   },
   "release_authorization": "Standing incremental fix/test/docs/main push/offline package authorization. No version/tag/formal Release.",
   "rollback": "Revert scoped changes and restore previous runtime/offline candidate; preserve user configuration, sessions and five inherited vendor deletions.",
-  "handoff": "",
+  "handoff": "Original twelve remain open. Full authenticated Safari deferred by human unavailable now; user SSH, receiving-device import and physical durability remain unverified. Windows user acceptance; real vectors deferred.",
   "runtime": {
     "image": "sha256:b8769857af357d1aa03342e9d1da3e440b180d113f6018edb345d8585d068201",
     "runningImage": "sha256:b8769857af357d1aa03342e9d1da3e440b180d113f6018edb345d8585d068201",
@@ -160,5 +164,14 @@
       "fullAuthenticatedWorkbench": "deferred by human: unavailable now"
     },
     "fileAutoSaveSHA256": "d8470d246e9760161299a28fbffd1ff48c22493c216444193b51ac5609ea9327"
+  },
+  "full": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "140302869a390d2291a34208abc32ef53492a226f53608b7ab74995cefae3398",
+    "serverRaceSeconds": 585.087,
+    "sourceCommit": "0b968636d720a3e36bcab0672fadb3534de051ed",
+    "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/history-partial-save/verify-20261015T123819776071Z.log",
+    "worktree": "/private/tmp/aide-history-partial-full-20261015"
   }
 }

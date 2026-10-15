@@ -30,3 +30,7 @@
 新版真实默认用户HTTPS／8MiB tmpfs组合探针PASS，11.173秒：归档前失败不带saved，新正文已写入的归档失败返回saved:true／historySaved:false及准确哈希；原有ENOSPC保护、旧版读取、409、整版恢复权限中断／journal／重试／4版中间历史、知识时光与新PID重启回读继续通过。脱敏收据见[history-partial-save-proof.json](history-partial-save-proof.json)。
 
 完整离线包 `aide-0.1.17.0-RC2-linux-arm64-b8769857af35-offline.tar.gz`，705686931字节，SHA-256 `66e4a78f6587aebc781f858bbb7c6bdd21efd90b37bd26e89468e36009eb9056`。应用与依赖镜像、内外摘要、平台、启动器、实际docker load及两个本地副本通过，接收端导入未验收。完整full/main门禁另记；没有用组件夹具结果提升完整Safari工作台状态。
+
+## 最终全量门禁
+
+干净main快照 `0b968636d720a3e36bcab0672fadb3534de051ed` 的full84全部PASS；server race 585.087秒及vet通过，最终指纹 `140302869a390d2291a34208abc32ef53492a226f53608b7ab74995cefae3398`。最终main门禁／推送待回执；原始日志和冻结收据保留，不把完整Safari暂缓写成PASS。
