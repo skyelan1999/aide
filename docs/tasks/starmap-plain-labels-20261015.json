@@ -1,0 +1,72 @@
+{
+  "id": "starmap-plain-labels-20261015",
+  "request": "知识星图 跃迁纪元 星图编年改下有点出戏，还有不要说eve",
+  "baseline": "ac72065961957a504ac43cc91f98a5e72ea6b89e",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "保留知识星图与日志的整体氛围，替换用户指出的两个出戏标题",
+    "当前产品界面不显示EVE名称或其外部设定链接",
+    "更新现行设计说明，指定启动入口更新实际服务资源；保留5项继承删除"
+  ],
+  "scope": [
+    "internal/server/web/starmap.html copy only",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks",
+    "docker-images metadata"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求改两个标题并不再提游戏名称，不改变星图行为。",
+      "evidence": [
+        "user message 2026-10-15 starmap labels"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "标题采用观测站手册、星域档案；保留既有叙事、真实来源及物理边界，移除游戏名称和设定链接。",
+      "evidence": [
+        "user message 2026-10-15 starmap labels"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "两个标题改为观测站手册、星域档案，移除产品游戏名称与设定链接，保持其他叙事和交互。",
+      "evidence": [
+        "internal/server/web/starmap.html",
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "旧标题/游戏名称与链接定向扫描零残留；docs和现有i18n检查通过。实际资源待启动后读回；浏览器先受证书阻断，未假称实际验收。",
+      "evidence": [
+        "python3 scripts/check_docs.py: PASS 202 Markdown /623 local links",
+        "node scripts/test_i18n.cjs: PASS",
+        "git diff --check: PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "同步当前知识星图设计说明。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未创建浏览器页、临时测试文件或修改用户数据，原5项vendor删除保留。",
+      "evidence": [
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "准备功能分支push并通过指定start.command更新本机候选与离线包；不合并main/tag。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "只回退文案和设计说明，无数据迁移。",
+  "handoff": "待本机候选启动后核对实际starmap.html；不新增证书错误页，后续浏览器验收先盘点旧页。"
+}
