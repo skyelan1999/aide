@@ -41,7 +41,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "84 quick、背景生命周期与实际IAB/本机9999通过；最终main full待执行。",
+      "summary": "First full failed in newly added CSP test setup, fixed to Handler(); focused retest and final full pending. Browser/runtime/component scope preserved.",
       "evidence": [
         "docs/reviews/2026-10-16/workbench-polish.md",
         "docs/reviews/2026-10-16/workbench-polish-proof.json"

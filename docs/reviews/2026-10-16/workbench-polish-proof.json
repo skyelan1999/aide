@@ -44,7 +44,13 @@
     "no new paid model requests"
   ],
   "full": {
-    "status": "pending"
+    "status": "pending",
+    "previousAttempt": {
+      "status": "fail",
+      "passedCommands": 85,
+      "failedCommand": "Go snapshot race",
+      "cause": "new test used uninitialized handler; corrected to Handler() before targeted retest"
+    }
   },
   "release": {
     "status": "pending"

@@ -10,7 +10,7 @@ func TestWorkbenchBackgroundAssetPolicy(t *testing.T) {
 	a := testApp(t)
 	for _, path := range []string{"/", "/workbench-background.js", "/workbench.css"} {
 		rec := httptest.NewRecorder()
-		a.handler.ServeHTTP(rec, httptest.NewRequest("GET", path, nil))
+		a.Handler().ServeHTTP(rec, httptest.NewRequest("GET", path, nil))
 		if rec.Code != 200 {
 			t.Fatalf("%s: status %d", path, rec.Code)
 		}

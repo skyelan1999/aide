@@ -22,3 +22,7 @@
 上述是实际浏览器中的生产组件验收，含真实 IndexedDB 和 MP4 播放；不等同于完整认证 Safari 实例操作。Safari 验收沿用用户此前暂缓决定；WebM 的实际编解码兼容、各浏览器/移动设备和另一端离线导入尚待验证。锁屏与后台生命周期有回归覆盖，未新增线上锁屏/多标签压力测试。未新增付费模型请求。全量检查、独立main门禁和远端SHA随后补实际结果，不预记PASS。
 
 Final runtime sha256:4cf57ac959708c9c41f60caddae63c9913901497fb138c5dd10c30c0e046c432, source a90c65e66ac6c4205ffe9df784ec31c382bf43c696d748a212b01b7329f6eca6. Offline aide-0.1.17.0-RC2-linux-arm64-4cf57ac95970-offline.tar.gz, 705765015 bytes, SHA256 c24e21ef14f128a66b37ea1ad91cd837a9331d02d86771d821a0b8c4ee60b3d3. Outer/inner hashes, app/dependency tags, platform, launchers and actual docker load PASS. Own b7ba intermediate archive/image removed;60f rollback preserved.
+
+首次 main full 的前85项通过，最后 Go race 在新增 TestWorkbenchBackgroundAssetPolicy 中因直接访问尚未初始化的 a.handler 而 panic（535.394秒）。这是本轮测试装配错误；已改为标准 a.Handler() 入口。未推送远端；先单独执行该策略测试及vet，再重跑完整full并以新收据为准。
+
+修正后，单独的 TestWorkbenchBackgroundAssetPolicy race 与 go vet 全包均已通过；原错误不是工作台运行时崩溃。最终full仍须重跑。
