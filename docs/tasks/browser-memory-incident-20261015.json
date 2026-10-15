@@ -1,0 +1,79 @@
+{
+  "id": "browser-memory-incident-20261015",
+  "request": "每次重新打开浏览器要把之前的网页关闭，不然会挤爆内存，刚刚发生了重大的内存事故，同时排查问题原因",
+  "baseline": "241066a125849d0dcd7df9d832d329534d12ba02",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "提取系统内存事故的时间、进程归属和终止原因，区分直接证据与推断",
+    "确认当前浏览器标签状态，不为诊断新增页面或重启浏览器",
+    "把测试页复用、关闭与超时不重复打开规则写入工作流，保留用户草稿",
+    "保留原5项vendor删除，不改系统限制或清空数据"
+  ],
+  "scope": [
+    "docs/agent/WORKFLOW.md",
+    "docs/reviews/2026-10-15/browser-memory-incident.md",
+    "docs/tasks/browser-memory-incident-20261015.json",
+    "docs/tasks/outcome-request-ownership-20261015.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求清理旧测试页面并排查内存事故；以系统诊断和标签盘点为验收。",
+      "evidence": [
+        ".agent-state/browser-memory-incident/evidence.json",
+        "docs/reviews/2026-10-15/browser-memory-incident.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "先只读取证；清理范围仅自建测试页，不强退或重开Safari，不触碰用户草稿。",
+      "evidence": [
+        ".agent-state/browser-memory-incident/evidence.json",
+        "docs/reviews/2026-10-15/browser-memory-incident.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "补充浏览器生命周期和内存压力下的验收规则；不改产品逻辑或系统内存限制。",
+      "evidence": [
+        ".agent-state/browser-memory-incident/evidence.json",
+        "docs/reviews/2026-10-15/browser-memory-incident.md"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "10:16 Jetsam报告low-swap312条；Safari同组56个WebContent，虚拟机约8.02GiB；当前Safari未运行、IAB0页，无需再关闭。",
+      "evidence": [
+        ".agent-state/browser-memory-incident/evidence.json",
+        "docs/reviews/2026-10-15/browser-memory-incident.md",
+        "python3 scripts/check_docs.py: PASS 200 Markdown /621 local links",
+        "git diff --check: PASS"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "事故报告记录事实、推断、未证实单页泄漏及后续低负载验证步骤。",
+      "evidence": [
+        ".agent-state/browser-memory-incident/evidence.json",
+        "docs/reviews/2026-10-15/browser-memory-incident.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "未新增浏览器页、构建或服务，5项原vendor删除保留；前任务过期UI句柄状态已核销。",
+      "evidence": [
+        ".agent-state/browser-memory-incident/evidence.json",
+        "docs/reviews/2026-10-15/browser-memory-incident.md"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "本次为诊断和验收流程修订，无产品镜像重建、main合并、tag或发行；未来代码门禁需新收据。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "仅文档改动，可逐文件回退；无用户数据或配置迁移。",
+  "handoff": "后续每轮先盘点、复用或关闭自建测试页；不自动重开Safari恢复全部历史标签。单页内存是否持续增长尚待一次单页轻负载测量。"
+}

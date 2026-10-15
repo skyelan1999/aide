@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Current branch fix/outcome-request-ownership/source8221669; local9999 imagead3d1e2c81ba via exact start.command, configuration/mounts/assets preserved. First handle pending UI-open functions cell1424 (same handle, no duplicate open); final Safari getApp/AX/screenshot -1712, IAB create timed out/reset, inventory no browser. Owned fixture2022 localhost62179 kept for pending UI request/final native page test. Final quick74 passes; new full76/main gate not run. Main stays7f68a3c clean74 historical. 12streams still incomplete, true model/SSH acceptance pending, vector deferred, Windows user-owned.",
+  "handoff": "Current branch fix/browser-memory-incident: memory-incident diagnosis and browser acceptance rules. Safari stopped and IAB0 tabs; never reopen bulk historical tabs. Previous source8221669 on9999/ad3d candidate, final native/full76 still NOT_RUN. Main7f68a3c historical;12 streams remain incomplete. Stale cell1424 absent, fixture62179 stopped.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6482,6 +6482,11 @@
   },
   "followup136": {
     "task": "docs/tasks/outcome-request-ownership-20261015.json",
-    "summary": "Reproduced/fixed old poll rolling explicit C reload back to B, obsolete pages/409/evidence crossing snapshots, duplicate page admission and old close handle closing newer view. Native first candidate confirmed epoch guard and exposed reload pagination disabled; corrected with negative test. Final8221669 quick74/ten deterministic cases PASS, latest ad3d complete offline package/import/copies verified. Final native acceptance pending Safari -1712 and IAB/app-browser IPC timeout. UI-open functions cell1424 is pending, fixture session2022 on62179 retained. No new full/main release gate."
+    "summary": "Reproduced/fixed old poll rolling explicit C reload back to B, obsolete pages/409/evidence crossing snapshots, duplicate page admission and old close handle closing newer view. Native first candidate confirmed epoch guard and exposed reload pagination disabled; corrected with negative test. Final8221669 quick74/ten deterministic cases PASS, latest ad3d complete offline package/import/copies verified. Final native acceptance pending Safari -1712 and IAB/app-browser IPC timeout. After interruption cell1424 is absent and62179 has no listener; current Safari stopped and IAB has no tabs. No new full/main release gate."
+  },
+  "followup137": {
+    "task": "browser-memory-incident-20261015",
+    "summary": "User reported memory emergency; 10:16 system Jetsam confirms low-swap312 records, Safari coalition56 WebContents and VM8.02GiB accounting. Added reuse/close-owned-tabs and no duplicate-open-on-timeout rules. Single-page leak not established; no new browser/build launched.",
+    "report": "docs/reviews/2026-10-15/browser-memory-incident.md"
   }
 }

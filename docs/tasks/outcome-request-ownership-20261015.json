@@ -59,8 +59,8 @@
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "清理授权构建缓存9.978GB，运行镜像/依赖/数据与离线包保留；首轮自建Safari fixture页已关闭，最终UI打开RPC与自有回环fixture服务待收尾；5项vendor删除保留。",
+      "status": "pass",
+      "summary": "当前Safari未运行、IAB无标签，旧UI请求句柄已失效、62179无监听；未重开浏览器。原5项vendor删除保留。",
       "evidence": [
         ".agent-state/outcome-request-ownership/clean-build-cache.log",
         ".agent-state/outcome-request-ownership/final.json"
@@ -76,7 +76,7 @@
   },
   "release_authorization": "用户授权按目标持续开发、分部分push和测试；本轮新增修改仅功能分支，不推未来新修改到main/tag。",
   "rollback": "回退本任务代码并通过原start.command重建，无持久化迁移或用户数据变更。",
-  "handoff": "当前source8221669候选ad3d1e2c81ba已通过原start.command更新9999并核对资源/配置/挂载；quick74及十项确定性并发回归通过。先查UI-open owner functions cell1424，再处理Safari连接超时，最终按A两页→409→reloadC→oldB→C继续分页复验。不要强退用户Safari或处理原未保存模型设置。循环fixture2022/127.0.0.1:62179待UI请求终态后关闭或保留复验。原12条目标/真实模型/SSH等仍未完成。",
+  "handoff": "当前source8221669、9999候选ad3d；最终原生复验仍NOT_RUN。旧cell1424已不存在，旧fixture62179无监听。用户报告内存事故后先完成browser-memory-incident诊断，恢复验收时只使用一个自建工作台页，组件页结束即关闭，不恢复批量标签。",
   "first_native_finding": {
     "source": "7a4e7c3",
     "observation": "C快照重载后分页控件仍被reloading状态禁用；修正为finally释放标记后一次渲染",
@@ -161,13 +161,13 @@
       "tool": "functions.exec/wait",
       "cell_id": "1424",
       "target": "http://127.0.0.1:62179/",
-      "status": "running as of latest wait; do not submit duplicate open request"
+      "status": "After interruption, cell1424 not found; current CUA IAB inventory zero tabs. No duplicate open submitted."
     },
     "fixtureOwner": {
       "sessionId": 2022,
       "port": 62179,
       "listen": "127.0.0.1",
-      "scope": "only owned synthetic fixture and module copy, kept while pending UI-open RPC"
+      "scope": "No listener on62179 after interruption; stale owner2022, fixture is stopped. Restart only for authorized final single-tab acceptance."
     }
   }
 }
