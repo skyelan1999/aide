@@ -42,8 +42,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Production control/assistant/steer regressions and IAB default/manual/reload/390px pass;60f runtime/offline verified with original data/mounts preserved. Full pending. Extra legacy voice mock fails identically on baseline, not counted as pass; no voice implementation changes.",
+      "status": "pass",
+      "summary": "Clean-main full85 pass; server race 557.157s; production control/assistant/steer regressions, IAB default/manual/reload/390px and60f runtime/offline pass. Extra voice mock baseline failure separately documented, no voice change or new model call.",
       "evidence": [
         "docs/reviews/2026-10-16/queue-default.md",
         "docs/reviews/2026-10-16/queue-default-proof.json"
@@ -65,9 +65,11 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Full85 passed; independent gate and authorized no-force main push next. Keep4b1 rollback.",
+      "evidence": [
+        "docs/reviews/2026-10-16/queue-default.md"
+      ]
     }
   },
   "release_authorization": "Prior human incremental test/docs/main push and offline image update requests continue; no version bump/tag/GitHub Release.",

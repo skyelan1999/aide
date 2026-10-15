@@ -13,3 +13,5 @@ IAB实际组件观察通过：首次载入开关勾选且active/aria-pressed=tru
 离线包 aide-0.1.17.0-RC2-linux-arm64-60f986a3919f-offline.tar.gz，705756565字节，SHA-256 4a237c67f170a90c648c664a352c8663eab0e85f635dd2e5ca0fa28f4a25052b，内外摘要、平台/标签/启动器及实际docker load通过；保留4b1回滚。
 
 补充的小秘控制回归已更新为保留偏好并通过；额外旧语音mock在6eddffa基线上也因相同路由断言失败，语音发送代码未改，未把它记为通过或扩大本轮范围。完整full及main门禁待收据。结构证据见[验证摘要](queue-default-proof.json)。
+
+完整main收据：验证提交 90901eca89fcf985ff833470871af928f051c509，85项全部exit0，Go server race 557.157秒，fingerprint 9425e785c322e88164ab50cdd6ed71dee62bbc941571d2c6942f818a8a4e0f7b。语音旧mock基线问题单独保留，未包含在这85项标准检查中。发布门禁及推送随后单独核对。

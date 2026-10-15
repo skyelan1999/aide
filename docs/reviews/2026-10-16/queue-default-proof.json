@@ -45,7 +45,11 @@
     "ownedTabsClosed": true
   },
   "full": {
-    "status": "pending"
+    "status": "pass",
+    "count": 85,
+    "fingerprint": "9425e785c322e88164ab50cdd6ed71dee62bbc941571d2c6942f818a8a4e0f7b",
+    "sourceCommit": "90901eca89fcf985ff833470871af928f051c509",
+    "serverRaceSeconds": 557.157
   },
   "limitations": [
     "full Safari human-deferred",
