@@ -6564,5 +6564,38 @@
       "receiving-device offline import",
       "original 12 workstreams remain active; vector deferred; Windows user-owned"
     ]
+  },
+  "followup144": {
+    "task": "flowchart-theme-contrast-20261015",
+    "summary": "用户反馈flowchart看不清。源码846b7f7统一明暗自适应色板及导出队列，主题切换保存源码，蓝色步骤/青绿起止/暖金判断。quick79 PASS，真实vendor组件六主题组合/白纸配色通过。指定start.command更新9999/9031bd56acb0，资源/配置/挂载核对通过，完整离线包实际导入及两本地树副本通过。所有测试标签关闭。新full81/main、完整页面/PDF、接收端未验收。",
+    "runtime": {
+      "image": "sha256:9031bd56acb06b8cb68832e3d5ae35fd7b37688d5a02e41011333feb8d917e7d",
+      "runningImage": "sha256:9031bd56acb06b8cb68832e3d5ae35fd7b37688d5a02e41011333feb8d917e7d",
+      "sourceSHA256": "060487f69d53d5e197445523f1d21eb67df4ab6cf2c81c912a24fb7456b23f0d",
+      "runningPlatformManifest": "sha256:dea436b601b60ace005612492c3ed22d6d1a6143fcee436871859fc48e39eabd",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "health": "ok",
+      "port": "9999",
+      "currentConfigAndMountsPreserved": true,
+      "servedAssetsMatch": true
+    },
+    "package": {
+      "image": "sha256:9031bd56acb06b8cb68832e3d5ae35fd7b37688d5a02e41011333feb8d917e7d",
+      "sourceSHA256": "060487f69d53d5e197445523f1d21eb67df4ab6cf2c81c912a24fb7456b23f0d",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-9031bd56acb0-offline.tar.gz",
+      "bytes": 705664078,
+      "sha256": "0952114b54e69f6c2c3be9492a9e10f6145236870c004d8c6c57f113709298f8",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true,
+      "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+    }
   }
 }

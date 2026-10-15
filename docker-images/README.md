@@ -204,3 +204,7 @@ Latest reviewed-recovery continuation development snapshot (2026-10-15): `aide-0
 ## 2026-10-15 累计星级与尺寸候选
 
 `aide-0.1.17.0-RC2-linux-arm64-2b60f35f4633-offline.tar.gz`，705659543 字节，SHA-256 `4b96ba335062c5aca18897e18977ae0354d0f2383731f722a56c01a41a43bd3e`，源码 `f5845d5`，源指纹 `41c53604214ff062eb2d89f0b404bfd1d511080ea21b26d4ecd032e720e83e00`。每级新增关联成本1/2/4/8…，累计门槛1/3/7/15/31/63…；基础体积正比有效关联数、半径立方根增长，选中与近景保持差异。quick78、实际绘制回归及浏览器函数组件预览通过，指定start.command更新9999，配置/挂载保留，提供资源与源码一致。完整应用与依赖镜像均包含，流式内外哈希、标签/平台、启动器、实际docker load及两本地树副本校验通过。完整星图交互、full80、接收设备导入和正式main/tag发布未验收。见[任务](../docs/tasks/starmap-degree-level-scale-20261015.json)。
+
+## 2026-10-15 流程图明暗配色候选
+
+`aide-0.1.17.0-RC2-linux-arm64-9031bd56acb0-offline.tar.gz`，705664078 字节，SHA-256 `0952114b54e69f6c2c3be9492a9e10f6145236870c004d8c6c57f113709298f8`，源码 `846b7f7`，源指纹 `060487f69d53d5e197445523f1d21eb67df4ab6cf2c81c912a24fb7456b23f0d`。统一页面/导出渲染队列，明暗主题自适应，蓝色步骤、青绿起止和暖金判断节点；保留作者显式样式。quick79与真实vendor组件三套主题明暗组合及白纸配色通过。指定start.command更新9999，配置/挂载保留，资源一致。完整应用与依赖镜像均包含，内外哈希/标签/平台/启动器/实际docker load及两本地树副本通过。完整工作台/PDF、新full81/main和接收设备导入未验收。见[任务](../docs/tasks/flowchart-theme-contrast-20261015.json)。

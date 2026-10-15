@@ -49,13 +49,15 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "对比度/源码保留/快速主题切换竞态/导出隔离/失败重试定向测试通过。真实vendor浏览器组件三套主题明暗及白纸配色均通过，文字实际CSS颜色已读回。quick79 PASS；待实际资源部署；完整工作台和最终PDF未验收。",
+      "summary": "quick79 PASS，对比度/源码保留/快速主题切换竞态/导出隔离/失败重试通过。真实vendor浏览器组件三套主题明暗及白纸配色通过，文字/节点实际CSS颜色已读回。指定start.command更新9999且资源逐字节匹配，配置/挂载保留。完整工作台和最终PDF未验收。",
       "evidence": [
         "scripts/markdown-diagrams.test.cjs",
         ".agent-state/flowchart-theme-contrast/light.png",
         ".agent-state/flowchart-theme-contrast/dark.png",
         ".agent-state/flowchart-theme-contrast/export-light.png",
-        ".agent-state/flowchart-theme-contrast/quick-frozen.json"
+        ".agent-state/flowchart-theme-contrast/quick-frozen.json",
+        ".agent-state/flowchart-theme-contrast/browser-proof.json",
+        ".agent-state/flowchart-theme-contrast/final.json"
       ]
     },
     "documentation": {
@@ -77,12 +79,44 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "源码846b7f7功能分支已推送，本机9999更新9031bd56acb0；完整应用+依赖离线包内外哈希、标签/平台、启动器、实际docker load及两本地副本校验通过。当前main仍为7c8ec2b；新full81/main合入、完整页面/PDF及接收设备导入未执行。",
+      "evidence": [
+        ".agent-state/flowchart-theme-contrast/package.json",
+        ".agent-state/flowchart-theme-contrast/start.log"
+      ]
     }
   },
   "release_authorization": "用户持续授权分部分push、测试、更新离线镜像；本次先功能分支交付。",
   "rollback": "回退共享图表渲染器、调用接线与资源版本，无数据迁移。",
-  "handoff": ""
+  "handoff": "明暗自适应与蓝/青绿/暖金节点配色完成，主题切换保留源码并阻止旧回执覆盖，导出固定浅色并共享串行队列。quick79和真实vendor组件六主题组合通过。完整工作台/PDF和full81未验收，功能分支交付不代表main或正式发行。",
+  "runtime": {
+    "image": "sha256:9031bd56acb06b8cb68832e3d5ae35fd7b37688d5a02e41011333feb8d917e7d",
+    "runningImage": "sha256:9031bd56acb06b8cb68832e3d5ae35fd7b37688d5a02e41011333feb8d917e7d",
+    "sourceSHA256": "060487f69d53d5e197445523f1d21eb67df4ab6cf2c81c912a24fb7456b23f0d",
+    "runningPlatformManifest": "sha256:dea436b601b60ace005612492c3ed22d6d1a6143fcee436871859fc48e39eabd",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:9031bd56acb06b8cb68832e3d5ae35fd7b37688d5a02e41011333feb8d917e7d",
+    "sourceSHA256": "060487f69d53d5e197445523f1d21eb67df4ab6cf2c81c912a24fb7456b23f0d",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-9031bd56acb0-offline.tar.gz",
+    "bytes": 705664078,
+    "sha256": "0952114b54e69f6c2c3be9492a9e10f6145236870c004d8c6c57f113709298f8",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  }
 }
