@@ -7625,5 +7625,15 @@
       "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
     ],
     "deliveredMain": "3d1f000bcf0af85f6f8db1ac42fa243e543753ea"
+  },
+  "followup170": {
+    "task": "docs/tasks/knowledge-http-evidence-20261016.json",
+    "status": "in_progress",
+    "classification": "progress",
+    "summary": "按钮到服务缺口已定位；JS直接事件/字面请求和Go传输实现，Node/定向race/vet/quick85通过。完整HTML→事件→请求→路由→服务链尚未完成，原12项保持进行中。",
+    "evidence": [
+      "docs/reviews/2026-10-16/knowledge-http-evidence.md",
+      "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
+    ]
   }
 }

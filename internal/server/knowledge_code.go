@@ -60,14 +60,42 @@ type codeImport struct {
 	Path  string `json:"path"`
 	Name  string `json:"name"`
 }
+
+// Source observations only; graph matching must still establish page/script
+// membership, source identity and an unambiguous registered route.
+type codeDOMEvent struct {
+	Target   string `json:"target"`
+	Event    string `json:"event"`
+	Caller   string `json:"caller"`
+	Callback string `json:"callback"`
+	Line     int    `json:"line"`
+	Column   int    `json:"column"`
+}
+type codeHTTPRequest struct {
+	Caller string `json:"caller"`
+	URL    string `json:"url"`
+	Method string `json:"method"`
+	Line   int    `json:"line"`
+	Column int    `json:"column"`
+}
+type codeWebUnresolved struct {
+	Kind   string `json:"kind"`
+	Reason string `json:"reason"`
+	Line   int    `json:"line"`
+	Column int    `json:"column"`
+}
 type codeUnit struct {
-	File        string       `json:"file"`
-	Language    string       `json:"language"`
-	Package     string       `json:"package"`
-	Symbols     []codeSymbol `json:"symbols"`
-	Calls       []codeCall   `json:"calls"`
-	Imports     []codeImport `json:"imports"`
-	Diagnostics []string     `json:"diagnostics"`
+	File                   string              `json:"file"`
+	Language               string              `json:"language"`
+	Package                string              `json:"package"`
+	Symbols                []codeSymbol        `json:"symbols"`
+	Calls                  []codeCall          `json:"calls"`
+	Imports                []codeImport        `json:"imports"`
+	Diagnostics            []string            `json:"diagnostics"`
+	Events                 []codeDOMEvent      `json:"events,omitempty"`
+	Requests               []codeHTTPRequest   `json:"requests,omitempty"`
+	UnresolvedWeb          []codeWebUnresolved `json:"unresolvedWeb,omitempty"`
+	WebReferencesTruncated bool                `json:"webReferencesTruncated,omitempty"`
 }
 type knowledgeCodeSummary struct {
 	LanguageService     *goTypeResult                 `json:"languageService,omitempty"`

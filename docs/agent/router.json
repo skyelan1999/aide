@@ -542,6 +542,10 @@
       [
         "node",
         "scripts/workbench-background.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/knowledge-web-parser.test.cjs"
       ]
     ],
     "full": [

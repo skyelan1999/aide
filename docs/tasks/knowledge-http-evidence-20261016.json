@@ -1,0 +1,74 @@
+{
+  "id": "knowledge-http-evidence-20261016",
+  "request": "继续原12项目标中按钮到服务的完整多段证据链，基于真实索引及解析，保持静态候选/确定/未解析边界、命名空间、行列、内容指纹和取消预算；不得以单跳或运行时推断替代",
+  "baseline": "584aa9b9182dd091a3265b0f62f5a22e510d6a9a",
+  "initial_status": "",
+  "acceptance": [
+    "实际HTML按钮经已加载脚本事件绑定、回调、字面HTTP请求、唯一Go路由到处理函数及现有调用形成多段路径。",
+    "逐边保留源位置/指纹与静态证据等级，不将候选关系当执行记录；页面可定位原文。",
+    "遮蔽/重赋值/动态URL与选项/回调歧义/重复路由/跨来源/未加载脚本不产生伪关系，诊断有界。",
+    "代码视图、取消、文件/符号/关系预算和工作区/版本隔离保持；真实索引/HTTP及页面验收分别记录。",
+    "定向/全量、文档、清理、独立main门禁、运行镜像和离线交付分别有实际证据；完整Safari暂缓不冒充通过。"
+  ],
+  "scope": [
+    "internal/server/code_analysis: JS/HTML源解析器",
+    "internal/server/knowledge_code*.go及新增web关系构建/测试",
+    "internal/server/knowledge_map.go代码视图材料",
+    "internal/server/web/starmap路径/可信度呈现",
+    "scripts/knowledge-web-parser.test.cjs与验证路由",
+    "docs/prd、architecture、tasks、reviews及docker-images发行元数据"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "承接原按钮到服务要求；完整多段链、定位、隔离、证据等级及发行验收，不缩减为解析器通过。",
+      "evidence": [
+        "docs/prd/2026-10-16-knowledge-http-evidence.md"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "产品拥有的AST/HTML源解析，显式脚本引用和同来源唯一路由连接；静态候选等级与预算；先实现解析证据，图和呈现接续。",
+      "evidence": [
+        "docs/prd/2026-10-16-knowledge-http-evidence.md"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "JS事件/请求提取、静态边界与Go传输已实现；HTML/Go路由/图/页面完整链继续开发。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-http-evidence.md",
+        "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "旧逻辑回归失败已复现；最终Node、Go解析传输race/vet及quick85通过。尚未验证完整多段链或执行full/发行。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-http-evidence.md",
+        "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "完整目标PRD及开发检查点已记录；图构建/界面实现后补最终行为和交付。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-http-evidence.md",
+        "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户分批测试/push/合main、本机启动及离线镜像包交付授权；无升版/tag/正式Release。",
+  "rollback": "当前47cd运行镜像与完整离线包保留；本批尚未变更数据格式或部署。",
+  "handoff": "解析证据检查点；继续HTML按钮/脚本归属、Go路由、同来源多段图、路径界面和实际验收。未合main/部署，本批发行待完整链就绪。"
+}

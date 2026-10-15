@@ -1,0 +1,28 @@
+{
+  "task": "knowledge-http-evidence-20261016",
+  "status": "development_checkpoint",
+  "baseline": "584aa9b9182dd091a3265b0f62f5a22e510d6a9a",
+  "oldParser": "DOM event evidence is missing: expected regression failure",
+  "node": "pass: callback/request provenance, lexical shadow/reassignment, global mutations, dynamic diagnostics and256 bounds",
+  "go": {
+    "selector": "^TestKnowledgeWebParserTransport",
+    "race": "pass",
+    "seconds": 1.041,
+    "vet": "all packages pass",
+    "scope": "production parser subprocess and JSON transport, source not executed"
+  },
+  "quick": {
+    "status": "pass",
+    "count": 85,
+    "fingerprint": "536476fa1674a323a2b12119110fa3f4b44d5ba02230744f4ff8ff221a5fa75d"
+  },
+  "notComplete": [
+    "HTML/script ownership",
+    "Go route extraction and unique resolution",
+    "source-isolated multi-stage graph",
+    "path UI provenance",
+    "actual full-chain index/HTTP/browser acceptance",
+    "full/main gate/runtime/offline release"
+  ],
+  "production": "unchanged47cd; no model calls, no production session/config changes"
+}
