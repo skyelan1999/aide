@@ -318,7 +318,14 @@ func (a *App) knowledgeTimeline(w http.ResponseWriter, r *http.Request) {
 			fail(w, 404, fmt.Errorf("历史快照不存在或已超出保留范围"))
 			return
 		}
-		jsonOut(w, 200, compareKnowledgeTime(*before, *after))
+		comparison := compareKnowledgeTime(*before, *after)
+		topics, e := loadKnowledgeTopics(knowledgeTopicFile(a.dataPath, workspace, code), workspace, code, knowledgeTopicKey(a.token))
+		if e != nil {
+			comparison.Conclusions.ManualState = "unavailable"
+		} else {
+			appendKnowledgeManualTopics(&comparison.Conclusions, *before, *after, topics)
+		}
+		jsonOut(w, 200, comparison)
 		return
 	}
 	entries := []map[string]any{}

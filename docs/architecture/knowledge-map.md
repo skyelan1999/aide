@@ -415,6 +415,10 @@ Go 服务使用产品二进制 `--knowledge-go-types` 独立模式。输入是�
 
 AI侧录只进入加密历史，不进入普通星图／模型资料节点。原星图会话正文只采用能归属当前工作区的消息，不使用混合压缩摘要。新增AI历史载荷为版本2，首次写入前保留 `.before-ai-v2-<加密原件指纹前12位>.json`；旧版本1只读时不升级。旧二进制拒绝版本2，二进制回滚应在停机并另存新历史后恢复对应版本1备份；原件变化、备份失败不覆盖。生产尚未升级，具体回归与交付状态见任务账本。
 
+人工主题独立存于 `<dataPath>/knowledge/topics/`，通过 `KnowledgeTopicsDir` 统一定位，按需创建0700目录／0600加密信封文件；不修改历史载荷版本2，不归入可再生cache。`GET /api/knowledge-map/timeline/topics?workspace=…&before=H…&after=H…&code=1` 返回当前主题及双边候选；可选 `beforeNode`／`afterNode` 按节点编号限定。候选令牌绑定观察、摘要、工作区和视图。`PUT` 使用 `{expected,id?,action:"upsert",label,before:{snapshot,node,candidate,start,end},after:{…}}` 显式保存，`start/end` 为原文UTF-16范围；服务端从历史重建原话并验证emoji边界。客户端映射textarea的CRLF规范化，不改写原文。`action:"disable"` 保留标记，重新upsert可恢复。每主题每观察一个当前选择、最多32观察／32主题，文件明文序列化上限2 MiB。
+
+接口共用Bearer鉴权，读（包括HEAD）及写均检查锁态与工作区，写检查修订和取消；符号链接／错误身份／损坏／超限保持原文件。比较接口增加 `conclusions.manualState/manual`，人工关联独立呈现文字、标题／位置／来源变化并复用有界历史依据比较。人工标记读取失败时自动比较仍可返回，明确 `manualState=unavailable`；不伪称没有标记。历史淘汰保留选定原话，在旧标记区标明不可重新核验；未标记新的观察不推断撤回。普通配置导出不包含主题原话，备份应包含持久数据卷和原有密钥材料。实现及边界见[人工主题验收](../reviews/2026-10-16/knowledge-conclusion-topics.md)。
+
 ## 真实 SFTP 证据链验收（2026-10-09）
 
 在隔离双服务器环境，独立 SFTP 来源文件进入星图，原文搜索返回来源 ID、相对路径、定位和内容指纹。通过外部 SFTP 修改原文后，旧引用请求返回 409；重新扫描与检索返回新原文和新指纹，持久时间线保留前后文本。此项包含实际网络 I/O 与鉴权 Handler；测试将内部轮询时间戳置为过期以触发扫描，不证明浏览器实际轮询时延。向量提供商和远端渐进全库索引未由此覆盖。最终双服务器 race 回归两轮 19.962 秒 PASS。见 [SSH 验收记录](../tasks/ssh-continuity-integration-20261009.json)。

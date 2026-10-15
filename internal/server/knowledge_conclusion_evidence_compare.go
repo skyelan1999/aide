@@ -10,6 +10,7 @@ type knowledgeConclusionEvidenceItem struct {
 	conclusion knowledgeConclusion
 	bound      bool
 	ai         *knowledgeAIConclusionProvenance
+	manual     bool
 }
 
 // Collection is independent of quote deltas: unchanged words can cite changed
@@ -94,6 +95,9 @@ func appendKnowledgeConclusionEvidence(out *knowledgeConclusionComparison, befor
 		out.EvidenceState = "partial_saved_snapshot_references"
 	}
 	oldIndex, nextIndex := newKnowledgeConclusionReferenceIndex(before.Graph), newKnowledgeConclusionReferenceIndex(after.Graph)
+	compareKnowledgeEvidenceItems(out, before, after, old, next, oldIndex, nextIndex)
+}
+func compareKnowledgeEvidenceItems(out *knowledgeConclusionComparison, before, after knowledgeTimeSnapshot, old, next []knowledgeConclusionEvidenceItem, oldIndex, nextIndex *knowledgeConclusionReferenceIndex) {
 	previous := map[string]knowledgeConclusionEvidenceItem{}
 	for _, item := range old {
 		previous[item.identity] = item
@@ -137,7 +141,7 @@ func appendKnowledgeConclusionEvidence(out *knowledgeConclusionComparison, befor
 			out.EvidenceState = "partial_saved_snapshot_references"
 			return
 		}
-		aligned := oldItem != nil && item.bound && oldItem.bound && knowledgeConclusionArea(item.node) == knowledgeConclusionArea(oldItem.node) && item.node.Path == oldItem.node.Path
+		aligned := oldItem != nil && item.bound && oldItem.bound && (item.manual && oldItem.manual || knowledgeConclusionArea(item.node) == knowledgeConclusionArea(oldItem.node) && item.node.Path == oldItem.node.Path)
 		if a == nil || b == nil || !aligned {
 			r.Unknown = true
 			r.Kind = "unknown"

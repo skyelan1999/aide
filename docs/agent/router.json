@@ -320,6 +320,10 @@
       ],
       [
         "node",
+        "scripts/starmap-topics.test.cjs"
+      ],
+      [
+        "node",
         "scripts/markdown-live-preview.test.cjs"
       ],
       [

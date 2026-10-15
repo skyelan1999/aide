@@ -11,9 +11,9 @@
     "真实文件/会话索引、HTTP、历史磁盘重读、页面及相关回归分别留证；完成文档、清理、full和独立main门禁、运行及离线交付。"
   ],
   "scope": [
-    "internal/server/knowledge_conclusions*.go：有界捕获、对齐、依据与比较",
+    "internal/server/knowledge_conclusion*.go：有界捕获、对齐、依据与比较；paths.go仅持久标记目录",
     "internal/server/knowledge_map.go、knowledge_timeline.go及来源/会话投影",
-    "internal/server/web/starmap-timeline.*及相关测试",
+    "internal/server/web/starmap-timeline.*、starmap-topics.*及相关测试；server.go仅历史主题路由，docs/agent/router.json新增专项回归",
     "docs/prd、architecture、reviews、tasks与发行元数据"
   ],
   "stages": {
@@ -26,40 +26,41 @@
     },
     "design": {
       "status": "in_progress",
-      "summary": "AI私有侧录、精确提问对齐、历史引用独立比较和版本2原件备份已接入；人工主题与章节改名等仍在设计范围。",
+      "summary": "人工主题、精确局部选择和持久加密标记已接入；AI／文档来源、历史、修订和淘汰边界保留。片段外依据与完整正文仍待。",
       "evidence": [
-        "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
+        "docs/reviews/2026-10-16/knowledge-conclusion-topics.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
       ]
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "文档/AI原话、任务和问题归属、无标题答复、工作区正文隔离、历史依据引用/内容/可用性及生产时间线组件已接入；仍为partial_conclusion_evidence_phase。",
+      "summary": "支持章节改名／不同问题显式关联、无标题局部拖选、32次主题观察、停用保留、过期原话与人工比较；仅服务端重建选定原文。未把局部功能缩作整个目标。",
       "evidence": [
-        "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
+        "docs/reviews/2026-10-16/knowledge-conclusion-topics.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
       ]
     },
     "verification": {
       "status": "in_progress",
-      "summary": "最终Conclusion专项race 4.921s及全包vet通过；较广Knowledge race 72.926s/vet后补末尾Markdown解析护栏，由最终专项覆盖；quick85通过。真实临时索引/会话/加密磁盘/HTTP与实际IAB组件分别有证。未执行完整full或生产验收。",
+      "summary": "最终专项race 8.393s/全包vet、较广Knowledge race 74.165s/vet（末尾HEAD/持久目录护栏由最终专项覆盖）、quick86通过；真实临时App浏览器双主题保存／重读／停用恢复／历史淘汰通过。完整full/工作台/发行未完成。",
       "evidence": [
-        "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
+        "docs/reviews/2026-10-16/knowledge-conclusion-topics.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
       ]
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "PRD/架构/阶段验收/proof与总账本已更新，保留文档基础历史；整体最终行为及后续交付仍待完成。",
+      "summary": "PRD、架构、用户指南、人工主题报告、proof与总账本已更新；最终完整历史捕获与发行说明待继续。",
       "evidence": [
-        "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
+        "docs/reviews/2026-10-16/knowledge-conclusion-topics.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
       ]
     },
     "cleanup": {
       "status": "pass",
-      "summary": "本检查点临时容器退出、自建页面关闭、视口复位、预览停止；仅保留任务证据，无修改原目录或生产数据。",
+      "summary": "本阶段自建页面关闭、视口复位，临时App/容器退出，仅保留任务证据；未清理用户数据或旧目录。",
       "evidence": [
+        "docs/reviews/2026-10-16/knowledge-conclusion-topics.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
       ]
     },
@@ -71,5 +72,5 @@
   },
   "release_authorization": "沿用分批测试/push/合main、指定start.command与离线镜像交付授权；不升版/tag/正式Release。",
   "rollback": "生产仍保留1601033，未升级。新历史载荷2须停机另存后恢复对应before-ai-v2加密原件才能回滚旧二进制；不让旧版静默丢字段。",
-  "handoff": "当前AI/依据/UI组件开发检查点；继续人工主题、章节改名、选择片段及片段外引用/完整历史正文，随后full/main门禁/生产/离线交付。未推送、合main或部署；原12项未收尾。"
+  "handoff": "人工主题／章节改名／无标题选择阶段已提交前检查点。继续片段外引用、完整历史正文，再full/main门禁/指定启动与离线交付。未推送、合main或部署；原12项继续。"
 }

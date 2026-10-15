@@ -18,15 +18,17 @@ type knowledgeNodeConclusionChange struct {
 	Change     knowledgeConclusionChange        `json:"change"`
 }
 type knowledgeConclusionComparison struct {
-	Version        int                                 `json:"version"`
-	State          string                              `json:"state"`
-	Changes        []knowledgeNodeConclusionChange     `json:"changes"`
-	Sources        int                                 `json:"sources"`
-	UnknownSources int                                 `json:"unknownSources"`
-	Truncated      bool                                `json:"truncated"`
-	AIState        string                              `json:"aiState"`
-	EvidenceState  string                              `json:"evidenceState"`
-	Evidence       []knowledgeConclusionEvidenceChange `json:"evidence"`
+	Version        int                                   `json:"version"`
+	State          string                                `json:"state"`
+	Changes        []knowledgeNodeConclusionChange       `json:"changes"`
+	Sources        int                                   `json:"sources"`
+	UnknownSources int                                   `json:"unknownSources"`
+	Truncated      bool                                  `json:"truncated"`
+	AIState        string                                `json:"aiState"`
+	EvidenceState  string                                `json:"evidenceState"`
+	Evidence       []knowledgeConclusionEvidenceChange   `json:"evidence"`
+	ManualState    string                                `json:"manualState"`
+	Manual         []knowledgeManualConclusionComparison `json:"manual"`
 }
 
 func knowledgeConclusionDocument(n knowledgeNode) bool {

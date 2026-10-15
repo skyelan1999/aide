@@ -1,6 +1,6 @@
 {
   "task": "knowledge-conclusion-evolution-20261016",
-  "status": "ai_evidence_timeline_component_development_checkpoint",
+  "status": "manual_topics_and_selected_excerpt_development_checkpoint",
   "baseline": "dc0cf72fe9e48eee0a102dead00f9bc2f09c4a3c",
   "previousDocumentFoundation": {
     "task": "knowledge-conclusion-evolution-20261016",
@@ -40,24 +40,24 @@
     "production": "unchanged1601033; no user data, model calls or browser pages"
   },
   "finalFocused": {
-    "selector": "^TestKnowledgeConclusion",
-    "raceSeconds": 4.921,
+    "selector": "^(TestKnowledgeConclusion|TestPaths|TestEnsureDirs)",
+    "raceSeconds": 8.393,
     "vet": "all packages pass",
     "terminalExit": 0,
-    "log": ".agent-state/knowledge-conclusion-evolution/evidence-final-guards.log"
+    "scope": "Includes HEAD and durable-directory/cache-cleanup guards after browser run."
   },
   "broadKnowledge": {
     "selector": "^TestKnowledge",
-    "raceSeconds": 72.926,
+    "raceSeconds": 74.165,
     "vet": "all packages pass",
     "terminalExit": 0,
-    "scope": "Before final incomplete/nested Markdown destination guards; final focused includes those guards."
+    "scope": "Before final HEAD/durable-directory guards; final focused covers those."
   },
   "quick": {
     "status": "pass",
-    "count": 85,
-    "fingerprint": "07f4d972bc818cdb88c38fc4ab09282a935c9b600f099bc0f61a54d271dfd57a",
-    "head": "ed954042351c40535282e3feda08d1f7546af489"
+    "count": 86,
+    "fingerprint": "e7901c0af75bb49958e9981342455d24d21c7d99b6916d31b48ea577780546dd",
+    "head": "6478e86878627e505525a290ee27bd93872c566c"
   },
   "integration": "Temporary real Session/Task/messages and Markdown/basis files -> production graph -> encrypted history -> disk load -> current files removed -> registered HTTP compare: one document quote delta, two independent basis deltas, including unchanged AI quote.",
   "ai": {
@@ -120,16 +120,122 @@
     ]
   },
   "notComplete": [
-    "manual topic alignment",
-    "heading-path/retitle alignment",
-    "user-selected unheaded fragments",
-    "reference definitions outside saved quote and plain text paths",
-    "more complete historical body capture",
-    "full authenticated Safari/SSH/live provider",
-    "full87 and independent main gate",
+    "references defined outside selected excerpt and more reference forms",
+    "more complete historical bodies/formats and larger-source picker coverage",
+    "complete authenticated workbench/SSH/live provider acceptance",
+    "full88 and independent main gate",
     "push/main/runtime/offline delivery"
   ],
-  "production": "sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba healthy d5cb1d9c65e8c15abbd00a41dd3d06261cd6d5318c09e29f14150e017a985eb2",
+  "production": "sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba healthy",
   "productionChanged": false,
-  "originalTwelve": "all in_progress; Windows user-owned and real vectors deferred"
+  "originalTwelve": "all in_progress; Windows user-owned and real vectors deferred",
+  "priorAICheckpoint": {
+    "commit": "6478e86878627e505525a290ee27bd93872c566c",
+    "focused": {
+      "selector": "^TestKnowledgeConclusion",
+      "raceSeconds": 4.921,
+      "vet": "all packages pass",
+      "terminalExit": 0,
+      "log": ".agent-state/knowledge-conclusion-evolution/evidence-final-guards.log"
+    },
+    "broad": {
+      "selector": "^TestKnowledge",
+      "raceSeconds": 72.926,
+      "vet": "all packages pass",
+      "terminalExit": 0,
+      "scope": "Before final incomplete/nested Markdown destination guards; final focused includes those guards."
+    },
+    "quick": {
+      "status": "pass",
+      "count": 85,
+      "fingerprint": "07f4d972bc818cdb88c38fc4ab09282a935c9b600f099bc0f61a54d271dfd57a",
+      "head": "ed954042351c40535282e3feda08d1f7546af489"
+    }
+  },
+  "manualTopics": {
+    "sourceBaseline": "6478e86",
+    "report": "docs/reviews/2026-10-16/knowledge-conclusion-topics.md",
+    "storage": {
+      "path": "<dataPath>/knowledge/topics/",
+      "version": 1,
+      "encrypted": true,
+      "fileMode": "0600",
+      "outsideRebuildableCache": true,
+      "historyFormatChanged": false,
+      "topics": 32,
+      "observationsPerTopic": 32,
+      "plaintextBytes": 2097152
+    },
+    "selection": {
+      "boundTo": [
+        "workspace",
+        "knowledge/code view",
+        "snapshot and digest",
+        "source identity",
+        "original text"
+      ],
+      "onlyServerReconstructedText": true,
+      "utf16EmojiBoundaries": true,
+      "crlfMapping": true,
+      "candidateLimit": 128,
+      "candidateBytesPerObservation": 262144,
+      "excerptBytes": 4096
+    },
+    "apiGuards": [
+      "bearer401",
+      "locked423",
+      "workspace409",
+      "missingView404",
+      "forgedCandidateRejection",
+      "HEADreadonly",
+      "revisionConflict409",
+      "concurrentExactlyOneWinner",
+      "cancelBeforeWrite",
+      "symlinkRefusal",
+      "encryptedDiskReload",
+      "corruptNotesRetained",
+      "capacityRejectsWithoutOverwrite",
+      "cacheDeletionPreservesNotes"
+    ],
+    "actualBrowser": {
+      "environment": "Single IAB page with production component and real temporary Go App history API; no production mounts/models",
+      "serverRaceSecondsIncludingBrowserWait": 186.255,
+      "terminalExit": 0,
+      "revision": 4,
+      "topics": 2,
+      "actions": [
+        "drag-select exact unheaded AI prefix with emoji",
+        "align renamed document section",
+        "save two topics",
+        "disable and reactivate",
+        "reload exact selections",
+        "compare literal quotes/question/run identities",
+        "simulate retention and inspect archived chosen quote",
+        "new observation remains not_aligned_for_pair"
+      ],
+      "widths": [
+        "default desktop1280",
+        390
+      ],
+      "pageAndPanelOverflow": false,
+      "originalFilesRemovedBeforeUI": true,
+      "expiredPerTopic": [
+        1,
+        1
+      ],
+      "cleanup": "browser page closed, viewport reset, server completed and own container removed",
+      "laterGuards": "HEAD and durable storage path covered by final Go; later source-identity wording checked by JS, not relabelled as browser acceptance"
+    },
+    "screenshots": [
+      "knowledge-topics/desktop.png",
+      "knowledge-topics/narrow.png",
+      "knowledge-topics/expired.png"
+    ],
+    "initialFailures": "Two fixture expectation errors corrected:404 versus409 for absent view; actual lock-state write missing.",
+    "notRun": [
+      "keyboard fine-grained selection",
+      "all themes/full authenticated Safari/real provider/SSH",
+      "full88/main gate/runtime/offline delivery"
+    ]
+  }
 }

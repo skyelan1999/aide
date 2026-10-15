@@ -1393,6 +1393,8 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/knowledge-map/paths", a.knowledgePaths)
 	mux.HandleFunc("GET /api/knowledge-map/timeline", a.knowledgeTimeline)
 	mux.HandleFunc("POST /api/knowledge-map/timeline/compare", a.knowledgeTimeline)
+	mux.HandleFunc("GET /api/knowledge-map/timeline/topics", a.knowledgeTopicsAPI)
+	mux.HandleFunc("PUT /api/knowledge-map/timeline/topics", a.knowledgeTopicsAPI)
 	mux.HandleFunc("POST /api/knowledge-map/assist", a.knowledgeAssist)
 	mux.HandleFunc("POST /api/knowledge-map/documents/search", a.knowledgeDocumentSearch)
 	mux.HandleFunc("POST /api/knowledge-map/documents/reference", a.knowledgeDocumentReference)

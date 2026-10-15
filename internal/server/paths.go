@@ -28,6 +28,7 @@ package server
 //     settings.json           全局设置（原子写）
 //     profiles.json           模型自定义配置
 //     backups/                配置导入导出与历史副本
+//   knowledge/topics/         人工主题与选定原话（加密、持久；不是索引缓存）
 //   stats/                    统计（可再生）
 //     token-stats.json
 //     token-pricing.json
@@ -118,17 +119,18 @@ func MemoryCacheDir(data string) string { return filepath.Join(data, memoryDirNa
 func MemoryFeedbackDir(data string) string {
 	return filepath.Join(data, memoryDirName, feedbackDirName)
 }
-func ConfigDir(data string) string        { return filepath.Join(data, configDirName) }
-func ConfigBackupsDir(data string) string { return filepath.Join(data, configDirName, backupsDirName) }
-func StatsDir(data string) string         { return filepath.Join(data, statsDirName) }
-func AuditDir(data string) string         { return filepath.Join(data, auditDirName) }
-func CommentsDir(data string) string      { return filepath.Join(data, commentsDirName) } // #63 侧车批注根目录
-func RemindersDir(data string) string     { return filepath.Join(data, remindersDirName) }
-func RemindersPath(data string) string    { return filepath.Join(RemindersDir(data), "reminders.json") }
-func SecretsDir(data string) string       { return filepath.Join(data, secretsDirName) }
-func CertsDir(data string) string         { return filepath.Join(data, certsDirName) }
-func IntegrityDir(data string) string     { return filepath.Join(data, integrityDirName) }
-func QuarantineDir(data string) string    { return filepath.Join(data, quarantineDirName) }
+func ConfigDir(data string) string          { return filepath.Join(data, configDirName) }
+func ConfigBackupsDir(data string) string   { return filepath.Join(data, configDirName, backupsDirName) }
+func StatsDir(data string) string           { return filepath.Join(data, statsDirName) }
+func AuditDir(data string) string           { return filepath.Join(data, auditDirName) }
+func CommentsDir(data string) string        { return filepath.Join(data, commentsDirName) }       // #63 侧车批注根目录
+func KnowledgeTopicsDir(data string) string { return filepath.Join(data, "knowledge", "topics") } // 按需创建；不归入可再生 cache
+func RemindersDir(data string) string       { return filepath.Join(data, remindersDirName) }
+func RemindersPath(data string) string      { return filepath.Join(RemindersDir(data), "reminders.json") }
+func SecretsDir(data string) string         { return filepath.Join(data, secretsDirName) }
+func CertsDir(data string) string           { return filepath.Join(data, certsDirName) }
+func IntegrityDir(data string) string       { return filepath.Join(data, integrityDirName) }
+func QuarantineDir(data string) string      { return filepath.Join(data, quarantineDirName) }
 
 // ── 文件解析（绝对路径，纯函数）───────────────────────────────────────────────
 
