@@ -1,0 +1,76 @@
+{
+  "id": "outcome-overview-polling-20261015",
+  "request": "继续成果舱运行中刷新验收，发现会话总览完成后仍轮询及分页外运行态缺少元数据",
+  "baseline": "7f68a3c6f7742ec40af8a14c089577e682f880a5",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "完成/空会话打开总览不轮询，运行终态后停止并保留最后输出",
+    "历史分页外有运行任务时继续刷新，服务端以不落盘的runningRuns元数据表示",
+    "切走/关闭/锁屏或失效容器后清除定时器，拒绝旧请求回执；临时错误可重试",
+    "现有成果分页快照/导出/执行日志回归保留；原生Safari组件验收注明与真实模型验收的区别"
+  ],
+  "scope": [
+    "internal/server/server.go sessionHistoryView",
+    "internal/server/session_running_history_test.go",
+    "internal/server/web/task-outcome.js",
+    "internal/server/web/app.js sessionRevision",
+    "internal/server/web/index.html cache versions",
+    "scripts/outcome-overview-lifecycle.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/tasks"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "由连续成果舱验收发现完成总览仍轮询；分页外运行任务不能丢失",
+      "evidence": [
+        ".agent-state/outcome-overview-polling/negative.log",
+        "docs/tasks/trajectory-outcome-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "GET分页视图增加全会话runningRuns(含显式零)，不写持久化；前端以可见运行记录/全量计数决定轮询，旧分页响应保守回退",
+      "evidence": [
+        "internal/server/server.go makeSessionHistoryView",
+        "internal/server/web/task-outcome.js sessionOverview"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "总览完成后停止；停止/关闭拒绝排队回调及在途回执，隐藏运行元数据进入会话版本键",
+      "evidence": [
+        "internal/server/web/task-outcome.js",
+        "internal/server/web/app.js",
+        "internal/server/server.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "负向复现FAIL；生命周期及既有成果分页客户端回归PASS；Go与原生验收待完成",
+      "evidence": [
+        "scripts/outcome-overview-lifecycle.test.cjs",
+        "scripts/outcome-pagination.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户增量修改/测试/push授权；本轮先功能分支，不自动把未来新修改合入main或正式发布。",
+  "rollback": "回退本任务代码提交并从原start.command重建；新增runningRuns仅响应元数据，无数据迁移。",
+  "handoff": ""
+}

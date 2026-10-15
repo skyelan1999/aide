@@ -420,6 +420,7 @@ type Session struct {
 type sessionHistoryView struct {
 	*Session
 	RunsTotal     int        `json:"runsTotal"`
+	RunningRuns   int        `json:"runningRuns"`
 	MessagesTotal int        `json:"messagesTotal"`
 	HasOlder      bool       `json:"hasOlder"`
 	SessionUsage  TokenUsage `json:"sessionUsage"`
@@ -429,9 +430,13 @@ func makeSessionHistoryView(s *Session, limit int) sessionHistoryView {
 	view := *s
 	runsTotal, messagesTotal := len(view.Runs), len(view.Messages)
 	var sessionUsage TokenUsage
+	runningRuns := 0
 	for _, run := range s.Runs {
 		if run == nil {
 			continue
+		}
+		if run.Status == "running" {
+			runningRuns++
 		}
 		sessionUsage.Prompt += run.Usage.Prompt
 		sessionUsage.Completion += run.Usage.Completion
@@ -446,7 +451,7 @@ func makeSessionHistoryView(s *Session, limit int) sessionHistoryView {
 			view.Messages = append([]Message(nil), view.Messages[messagesTotal-limit:]...)
 		}
 	}
-	return sessionHistoryView{Session: &view, RunsTotal: runsTotal, MessagesTotal: messagesTotal, HasOlder: runsTotal > len(view.Runs) || messagesTotal > len(view.Messages), SessionUsage: sessionUsage}
+	return sessionHistoryView{Session: &view, RunsTotal: runsTotal, RunningRuns: runningRuns, MessagesTotal: messagesTotal, HasOlder: runsTotal > len(view.Runs) || messagesTotal > len(view.Messages), SessionUsage: sessionUsage}
 }
 
 // assistantSessionKind 小秘系统会话的 Kind 标记。全应用恰好一个，永久置顶、不可归档/删除。

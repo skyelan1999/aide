@@ -380,6 +380,10 @@
       ],
       [
         "node",
+        "scripts/outcome-overview-lifecycle.test.cjs"
+      ],
+      [
+        "node",
         "scripts/session-render-cache.test.cjs"
       ],
       [

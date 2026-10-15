@@ -791,7 +791,7 @@ function sessionRevision(s) {
     sessionTextRevision(JSON.stringify(run?.approvalReviews || [])),
     sessionTextRevision(typeof run?.pendingQuestion === 'string' ? run.pendingQuestion : JSON.stringify(run?.pendingQuestion || null)),
   ].join(':')).join(';');
-  return [s.id, JSON.stringify(s.modelSelection || null), s.modelSelectionRevision, s.updated, s.runsTotal ?? runs.length, s.messagesTotal ?? messages.length, state.historyLimit,
+  return [s.id, JSON.stringify(s.modelSelection || null), s.modelSelectionRevision, s.updated, s.runsTotal ?? runs.length, s.runningRuns, s.messagesTotal ?? messages.length, state.historyLimit,
     runs.length, messages.length, JSON.stringify(runs.map(run => [run.id, run.steers || []])), runStates, lastRun?.id, lastRun?.status, lastRun?.pauseRequested, lastRun?.canResume,
     lastRun?.steps?.map(step => step.name + ':' + step.status + ':' + sessionTextRevision(step.content) + ':' + sessionTextRevision(step.reasoning) + ':' + sessionTextRevision(JSON.stringify(step.outputSegments || []))).join(',')].join('|');
 }
