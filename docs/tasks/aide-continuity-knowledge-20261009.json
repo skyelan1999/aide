@@ -6915,13 +6915,23 @@
       "light/dark and390x844; selected code remains visible",
       "actual9999 owned-local-file read and stale origin409; zero model calls",
       "start.command, seven served assets, config/auth/mount preservation",
-      "complete offline package hashes/platform/launchers/load and two local copies"
+      "complete offline package hashes/platform/launchers/load and two local copies",
+      "clean main snapshot full83; server race517.89 seconds and vet"
     ],
     "remaining": [
-      "clean main full83 and release gate/push",
+      "main release gate and push",
       "real SSH/live authenticated workbench browser; other binary formats not retested",
       "receiving-device import"
     ],
-    "original12RemainOpen": true
+    "original12RemainOpen": true,
+    "fullVerification": {
+      "status": "pass",
+      "count": 83,
+      "fingerprint": "d1b82c1c933f3456a601c41e8692a1d202c259de070a40c57ff97dbe6bde6603",
+      "serverRaceSeconds": 517.89,
+      "sourceCommit": "405df62e2b7a2ab82853e5893cd642da3afec6c7",
+      "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/starmap-file-preview/verify-20261015T093010971948Z.log",
+      "worktree": "/private/tmp/aide-preview-full-20261015"
+    }
   }
 }

@@ -22,3 +22,7 @@
 ## 回滚
 
 回退本任务提交可撤销预览模块、入口绑定及选区样式；没有数据迁移。原有文件查看器和引用插入逻辑保留，五个继承的 vendor 删除不属于本任务，不暂存或恢复。镜像与完整离线包保留上一版用于回滚；本批不升版、tag 或创建正式 Release。
+
+## Clean main verification
+
+Snapshot `405df62` passed all 83 checks, including server race (517.89 seconds) and vet. Fingerprint: `d1b82c1c933f3456a601c41e8692a1d202c259de070a40c57ff97dbe6bde6603`. Main gate/push receipts are recorded in the task ledger; this does not expand the browser, SSH or receiving-device acceptance scope.

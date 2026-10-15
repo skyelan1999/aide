@@ -49,12 +49,14 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "quick81 and actual bundled viewer light/dark/narrow, window reuse and close, read-only/Markdown/code lines passed. Actual9999 local API origin guard passed; real SSH/live authenticated browser and other binary formats not retested. Clean full/main gate pending.",
+      "status": "pass",
+      "summary": "Clean main snapshot full83 passed, including server race517.89s and vet; quick81 and scoped browser/local API proofs retained. Real SSH, live authenticated browser and binary formats remain outside this acceptance.",
       "evidence": [
         "scripts/starmap-file-preview.test.cjs",
         ".agent-state/starmap-file-preview/browser-proof.json",
-        ".agent-state/starmap-file-preview/live-proof.json"
+        ".agent-state/starmap-file-preview/live-proof.json",
+        ".agent-state/starmap-file-preview/full-frozen.json",
+        ".agent-state/starmap-file-preview/full-proof.json"
       ]
     },
     "documentation": {
@@ -76,14 +78,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Full83 passed on clean main snapshot. Main release-check and push pending.",
+      "evidence": [
+        ".agent-state/starmap-file-preview/full-proof.json"
+      ]
     }
   },
   "release_authorization": "Standing user instruction: merge and push all completed changes to main; test/push in increments, use start.command and deliver complete offline image package. No version bump/tag/formal Release.",
   "rollback": "Revert scoped preview module/bindings/style commit and restore previous complete image. No data migration. Preserve five inherited vendor deletions.",
-  "handoff": "Source/browser/API accepted within stated scope. Runtime/full/main integration pending. Original12 stay open; real SSH and authenticated workbench browser unverified.",
+  "handoff": "Scoped source/browser/API/runtime/package/full83 accepted. Main gate and push pending; original12, real SSH, live authenticated browser and receiving-device import remain open.",
   "runtime": {
     "image": "sha256:997eda4026b5a0552547ca9a72e231a0119274f1d21a56423f0c59fe2ce67f43",
     "runningImage": "sha256:997eda4026b5a0552547ca9a72e231a0119274f1d21a56423f0c59fe2ce67f43",
@@ -162,5 +166,14 @@
     "changedOriginRejected": 409,
     "modelCalls": 0,
     "scope": "owned local file only; actual SSH not tested"
+  },
+  "fullVerification": {
+    "status": "pass",
+    "count": 83,
+    "fingerprint": "d1b82c1c933f3456a601c41e8692a1d202c259de070a40c57ff97dbe6bde6603",
+    "serverRaceSeconds": 517.89,
+    "sourceCommit": "405df62e2b7a2ab82853e5893cd642da3afec6c7",
+    "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/starmap-file-preview/verify-20261015T093010971948Z.log",
+    "worktree": "/private/tmp/aide-preview-full-20261015"
   }
 }
