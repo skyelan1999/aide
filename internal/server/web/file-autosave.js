@@ -42,14 +42,13 @@
       operation.catch(e=>{if(!valid())return;status.textContent=t('本地草稿保存失败');error?.(e.message);});
     }
     async function restoreView(){
-      const c={...getContext()},gen=generation,key=identity(c);
+      const c={...getContext()},gen=generation,key=identity(c),stamp=viewChanges;
       if(!window.AideContinuity||!scope(c)||!c.path||key!==activeKey)return;
       try{
         const view=await AideContinuity.readTab(scope(c),'file-view',key);
-        if(!view||blocked?.()||gen!==generation||key!==identity(getContext())||view.hash!==c.hash)return;
-        const stamp=viewChanges;
+        if(!view||blocked?.()||gen!==generation||key!==identity(getContext())||view.hash!==c.hash||getContext()?.hash!==c.hash||stamp!==viewChanges)return;
         const apply=()=>{
-          if(blocked?.()||gen!==generation||key!==identity(getContext())||stamp!==viewChanges||editor.classList.contains('hidden')||editor.parentElement?.classList.contains('hidden'))return;
+          if(blocked?.()||gen!==generation||key!==identity(getContext())||getContext()?.hash!==c.hash||stamp!==viewChanges||editor.classList.contains('hidden')||editor.parentElement?.classList.contains('hidden'))return;
           const number=(v,max)=>Number.isFinite(v)?Math.max(0,Math.min(max,v)):0;
           const start=number(view.start,editor.value.length),end=Math.max(start,number(view.end,editor.value.length));
           editor.focus({preventScroll:true});editor.setSelectionRange(start,end);editor.scrollTop=number(view.scrollTop,10000000);editor.scrollLeft=number(view.scrollLeft,10000000);
@@ -110,7 +109,7 @@
       inFlight=(async()=>{
         try {
           const result=await save(context,content);
-          if(!current(gen,key))return;
+          if(!current(gen,key)||blocked?.())return;
           baseline=content;suspended=false;historyPending=false;setRetry('');onSaved?.(context,content,result,manualRequest);
           status.textContent=t(editor.value===content?'服务器已保存':'上一版已保存，当前修改未保存');
           if(window.AideContinuity?.enabled()&&scope(context))await AideContinuity.savedFileDraft(scope(context),identity(context),content).catch(e=>{if(current(gen,key))error?.(e.message);});
@@ -130,7 +129,7 @@
           if(e.status===409){const draft={text:editor.value,start:editor.selectionStart,end:editor.selectionEnd};setRetry('');const latest=await Promise.resolve().then(()=>readLatest?.(context)).catch(()=>null);if(latest&&current(gen,key)){setRetry('');compareRecovery(draft,gen,latest);}else if(current(gen,key)){status.textContent=t('读取服务器版本失败，可重试');setRetry('latest',context,draft);}}
           else setRetry('save',context,{text:editor.value});
           if(current(gen,key))error?.(e.message || String(e));
-        } finally {button.classList.remove('saving');}
+        } finally {if(current(gen,key)&&blocked?.())status.textContent=t('保存结果待核对');button.classList.remove('saving');}
       })();
       const pending=inFlight;
       try{await pending;}finally{if(inFlight===pending)inFlight=null;if(current(gen,key))schedule();}

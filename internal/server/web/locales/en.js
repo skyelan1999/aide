@@ -2349,6 +2349,7 @@ window.aideEnglish = {
   '重试历史归档': 'Retry history archive',
   '上一版已保存，当前修改未保存；历史归档失败': 'Previous text saved; current edits unsaved. History archive failed',
   '上一版已保存，当前修改未保存': 'Previous text saved; current edits unsaved',
+  '保存结果待核对': 'Save result needs checking',
   '正文已保存，历史归档失败；自动保存已暂停': 'Body saved; history archive failed. Auto-save paused',
   '重试读取服务器版本': 'Retry loading server version',
   '读取服务器版本失败，可重试': 'Could not load the server version. You can retry.',

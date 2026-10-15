@@ -16,17 +16,17 @@ class Element {
 
 function fixture({save,readLatest=async()=>({content:'server current'}),onConflict=()=>{},onSaved=()=>{},blocked=()=>false,recovery=false}) {
   const body=new Element('body'),document={body,activeElement:null,createElement:(tag)=>new Element(tag),addEventListener(){}};
-  const windowListeners={},timers=new Map(),snapshots=[];let timer=0;
+  const windowListeners={},timers=new Map(),snapshots=[],frames=[];let timer=0;
   const window={aideUI:{get:()=>true,subscribe(){}},LockCluster:{on(){}},addEventListener(k,fn){(windowListeners[k] ||= []).push(fn);}};
-  if(recovery)window.AideContinuity={enabled:()=>true,cacheTab:(scope,kind,id,value)=>{snapshots.push({method:'cacheTab',scope,kind,id,value});return true;},writeTab:(scope,kind,id,value)=>{snapshots.push({method:'writeTab',scope,kind,id,value});return Promise.resolve(true);},writeFileDraft:(scope,id,value)=>{snapshots.push({method:'writeFileDraft',scope,id,value});return Promise.resolve(true);},listFileDrafts:async()=>[],readTab:async()=>null};
+  if(recovery)window.AideContinuity={enabled:()=>true,cacheTab:(scope,kind,id,value)=>{snapshots.push({method:'cacheTab',scope,kind,id,value});return true;},writeTab:(scope,kind,id,value)=>{snapshots.push({method:'writeTab',scope,kind,id,value});return Promise.resolve(true);},writeFileDraft:(scope,id,value)=>{snapshots.push({method:'writeFileDraft',scope,id,value});return Promise.resolve(true);},savedFileDraft:async()=>{snapshots.push({method:'savedFileDraft'});},listFileDrafts:async()=>[],readTab:async()=>null};
   const editor=new Element('textarea');Object.assign(editor,{value:'base',readOnly:false,selectionStart:0,selectionEnd:0,scrollTop:0,scrollLeft:0,focus(){document.activeElement=this;},setSelectionRange(a,b){this.selectionStart=a;this.selectionEnd=b;}});
   const button=new Element('button'),manual=new Element('button'),context={root:'workspace',source:'',path:'retry-fixture.md',wsId:'test'};
   const errors=[];
-  vm.runInNewContext(fs.readFileSync('internal/server/web/file-autosave.js','utf8'),{window,document,AideContinuity:window.AideContinuity,Event:class{constructor(type){this.type=type;}},setTimeout:(fn,ms)=>{const id=++timer;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id)});
+  vm.runInNewContext(fs.readFileSync('internal/server/web/file-autosave.js','utf8'),{window,document,AideContinuity:window.AideContinuity,Event:class{constructor(type){this.type=type;}},requestAnimationFrame:fn=>frames.push(fn),setTimeout:(fn,ms)=>{const id=++timer;timers.set(id,{fn,ms});return id;},clearTimeout:id=>timers.delete(id)});
   const controller=window.AideFileAutoSave.bind({editor,button,manual,getContext:()=>context,save,onSaved,readLatest,onConflict,blocked,t:(s)=>s,error:(e)=>errors.push(e)});
   controller.activate();
   const runTimers=ms=>{for(const [id,scheduled]of [...timers])if(scheduled.ms===ms){timers.delete(id);scheduled.fn();}};
-  return {body,editor,button,manual,context,errors,controller,retry:()=>button.next.next,runTimers,timers,snapshots,windowListeners};
+  return {body,editor,button,manual,context,errors,controller,retry:()=>button.next.next,runTimers,timers,snapshots,windowListeners,continuity:window.AideContinuity,runFrames:()=>{while(frames.length)frames.shift()();}};
 }
 
 (async()=>{
@@ -97,5 +97,38 @@ function fixture({save,readLatest=async()=>({content:'server current'}),onConfli
   for(const fn of recovery.windowListeners.pagehide||[])fn();
   assert.ok(recovery.snapshots.some(item=>item.method==='writeFileDraft'&&item.value.text==='latest text before pagehide'),'pagehide synchronously hands the newest dirty text to tab recovery before async persistence');
   console.log('File recovery snapshots coalesce typing/scroll bursts and flush the latest state on pagehide PASS');
+  for(const phase of ['read','animation']){
+    const view=fixture({recovery:true,save:async()=>({hash:'saved'})});
+    view.context.hash='same-content';
+    let resolveView;
+    view.continuity.readTab=()=>new Promise(resolve=>{resolveView=resolve;});
+    const restoring=view.controller.restoreView();
+    if(phase==='animation'){resolveView({hash:'same-content',start:0,end:0,scrollTop:999});await restoring;}
+    view.editor.setSelectionRange(2,2);view.editor.scrollTop=44;view.editor.dispatchEvent({type:'select'});
+    if(phase==='read'){resolveView({hash:'same-content',start:0,end:0,scrollTop:999});await restoring;}
+    view.runFrames();
+    assert.equal(view.editor.selectionStart,2,'new cursor must win during '+phase);
+    assert.equal(view.editor.scrollTop,44,'new scroll must win during '+phase);
+  }
+  for(const phase of ['read','animation','unchanged']){
+    const view=fixture({recovery:true,save:async()=>({hash:'saved'})});
+    view.context.hash='old-content';let resolveView;
+    view.continuity.readTab=()=>new Promise(resolve=>{resolveView=resolve;});
+    const restoring=view.controller.restoreView();
+    if(phase==='read')view.context.hash='new-content';
+    resolveView({hash:'old-content',start:1,end:3,scrollTop:55});await restoring;
+    if(phase==='animation')view.context.hash='new-content';
+    view.runFrames();
+    assert.equal(view.editor.scrollTop,phase==='unchanged'?55:0,'position must match the still-current content during '+phase);
+    if(phase==='unchanged')assert.equal(view.editor.selectionStart,1,'unchanged current content must restore normally');
+  }
+  let resolveLocked,successLocked=false,successAcknowledgements=0;
+  const lockedSuccess=fixture({recovery:true,blocked:()=>successLocked,save:()=>new Promise(resolve=>{resolveLocked=resolve;}),onSaved:()=>successAcknowledgements++});
+  lockedSuccess.editor.value='unsaved draft';const successfulSave=lockedSuccess.manual.onclick();successLocked=true;resolveLocked({hash:'saved'});await successfulSave;
+  assert.equal(successAcknowledgements,0,'locked successful response cannot acknowledge editor state');
+  assert.equal(lockedSuccess.controller.dirty(),true,'locked successful response must retain the recovery draft');
+  assert.equal(lockedSuccess.button.next.textContent,'保存结果待核对','completed locked response cannot leave a saving indicator');
+  assert.equal(lockedSuccess.snapshots.filter(x=>x.method==='savedFileDraft').length,0,'locked response cannot clear draft persistence');
+  console.log('Async position ownership, content revision and locked success acknowledgement PASS');
   console.log('File autosave retry, conflict reread and explicit merge acceptance PASS');
 })().catch(e=>{console.error(e);process.exitCode=1;});

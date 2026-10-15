@@ -1,0 +1,73 @@
+{
+  "id": "file-recovery-async-ownership-20261016",
+  "request": "继续连续工作现场恢复和保存状态目标，复现并修复异步历史位置覆盖新光标、锁屏后成功保存回执仍更新编辑器的边界",
+  "baseline": "93d3314f2ed3c3e7d94100b2146aa09c3c2d8c33",
+  "initial_status": "",
+  "acceptance": [
+    "Pending saved-position read cannot override newer cursor/scroll input or a changed current content hash; unchanged content still restores.",
+    "Successful save response after lock cannot acknowledge baseline or clear recovery drafts; show pending verification rather than an endless saving state.",
+    "Focused failure-before/fix-after regression, actual component browser, full exact-input gate and authorized main/runtime/offline delivery with protected data."
+  ],
+  "scope": [
+    "internal/server/web/file-autosave.js",
+    "internal/server/web/index.html cache versions",
+    "internal/server/web/locales/en.js one status translation",
+    "scripts/file-autosave-retry.test.cjs",
+    "docs/tasks, docs/reviews/2026-10-16 and docs/workspace-paths.md",
+    "docker-images/SHA256SUMS final package checksum"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Confirmed two async races, repaired shared module with user-action/content-hash ownership and lock acknowledgement guard; focused tests and actual component pass. Owned component tab/server closed, no user data mutation.",
+      "evidence": [
+        "docs/reviews/2026-10-16/file-recovery-async.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Confirmed two async races, repaired shared module with user-action/content-hash ownership and lock acknowledgement guard; focused tests and actual component pass. Owned component tab/server closed, no user data mutation.",
+      "evidence": [
+        "docs/reviews/2026-10-16/file-recovery-async.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Confirmed two async races, repaired shared module with user-action/content-hash ownership and lock acknowledgement guard; focused tests and actual component pass. Owned component tab/server closed, no user data mutation.",
+      "evidence": [
+        "docs/reviews/2026-10-16/file-recovery-async.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused regressions/i18n/syntax and actual IAB component pass; full final source/archive input pending.",
+      "evidence": [
+        "docs/reviews/2026-10-16/file-recovery-async.md"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Confirmed two async races, repaired shared module with user-action/content-hash ownership and lock acknowledgement guard; focused tests and actual component pass. Owned component tab/server closed, no user data mutation.",
+      "evidence": [
+        "docs/reviews/2026-10-16/file-recovery-async.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Confirmed two async races, repaired shared module with user-action/content-hash ownership and lock acknowledgement guard; focused tests and actual component pass. Owned component tab/server closed, no user data mutation.",
+      "evidence": [
+        "docs/reviews/2026-10-16/file-recovery-async.md"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Prepare local candidate without changing running service, then archive/full/main gate/start.command delivery.",
+      "evidence": [
+        "docs/reviews/2026-10-16/file-recovery-async.md"
+      ]
+    }
+  },
+  "release_authorization": "Existing incremental test/push/main/start.command/offline-package authorization; no version/tag/Release.",
+  "rollback": "Keep8d636fd prior image/offline archive; frontend-only fix, no data migration. Original iCloud directory and all user files retained.",
+  "handoff": ""
+}
