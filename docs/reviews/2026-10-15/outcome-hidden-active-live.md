@@ -26,7 +26,7 @@ HTTP/provider回归最终在旧代码上明确失败“retry sent later conversa
 
 ## 首轮修复的真实模型复验与新发现
 
-源码8196baf经指定start.command更新为镜像183c45c91442；13份原会话／配置／鉴权／来源／挂载与网页资源／健康检查保持。真实千问复验中三条任务全部completed，没有工具或命令；只显示最新completed任务时，隐藏旧任务仍running且runningRuns=1，最终归零。短任务重试实际请求只有系统头和原请求，没有后来ROS2输入。任务报告prompt42848、completion3459、total46307；不是账单，未包含初轮取消批次及辅助标题请求。两个自建会话已删除，原记录不变，仅编号24→26递增。
+源码8196baf经指定start.command更新为镜像183c45c91442；13份原会话／配置／鉴权／来源／挂载与网页资源／健康检查保持。真实千问复验中三条任务全部completed，没有工具或命令；只显示最新completed任务时，隐藏旧任务仍running且runningRuns=1，最终归零。短任务重试实际请求只有系统头和原请求，没有后来ROS2输入。任务报告prompt42848、completion3459、total46307；不是账单，包含标题辅助调用，不包含初轮取消批次。两个自建会话已删除，原记录不变，仅编号24→26递增。
 
 组合探针随后在发布导入的第一条正常POST返回409，故整个组合不记PASS。[脱敏收据](outcome-hidden-active-live-proof.json)按不同阶段记录已证明和未完成范围。真实模型证据来自183镜像；后续变动为压缩快照去重与发布快照归一化，标记输入边界分支保持相同源码，不能说新镜像又跑了一遍相同模型任务。
 
@@ -45,3 +45,5 @@ HTTP/provider回归最终在旧代码上明确失败“retry sent later conversa
 干净main源码76554ab运行full：84项通过，server race 567.894秒，指纹 `6377b6a8a4c3022a234e06f76c9efec1d5d6a4397aec811090c9c3fd7999f3fe`。本节更新前文“full待收据”的历史状态。main门禁／推送仍待确认；完整Safari按人类安排暂缓，原十二项继续开放。
 
 main门禁PASS，6505615已推送并用ls-remote确认远端精确一致；本段替代上文main待确认状态。不升版／tag／正式Release，原十二项保持开放。
+
+口径更正（并行上下文复核）：此前将任务累计usage称为“不含辅助标题”不准确；summarizeTopic成功后会把其usage计入task.Usage。本记录保留原始报告数值，仅修正包含范围，详见[上下文对账](parallel-context-accounting.md)。

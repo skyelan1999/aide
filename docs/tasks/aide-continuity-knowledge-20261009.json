@@ -7434,5 +7434,15 @@
       "docs/reviews/2026-10-15/parallel-10x-levels-proof.json"
     ],
     "deliveredMain": "574826df935b208c645618203ae91d9faa00fb25"
+  },
+  "followup164": {
+    "task": "docs/tasks/parallel-context-accounting-20261015.json",
+    "classification": "progress",
+    "status": "in_progress",
+    "summary": "Parallel independent request contexts vs cumulative usage; transient merge calibration fixed, title helper disclosed, actual3-way six-request usage reconciliation and UI/runtime/offline passed; full/main pending. Original12 remain open.",
+    "original12RemainOpen": true,
+    "evidence": [
+      "docs/reviews/2026-10-15/parallel-context-accounting.md"
+    ]
   }
 }

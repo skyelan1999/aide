@@ -434,3 +434,9 @@ Mermaid 由 `markdown-diagrams.js` 统一维护明暗配色与串行渲染队列
 真实模型调试发现十章分析完成后，主回答可能仅给完成声明。汇总提示因此在工作笔记后重申原始用户请求，并要求实际交付正文；最终验收必须核对正文内容，不能仅凭completed或十个子题完成判断成功。模型规划无效仍明确回退，不承诺每轮一定拆满十路或等比例加速。测试范围与最终状态见[10X任务账本](tasks/parallel-10x-levels-20261015.json)。
 
 启动源码指纹忽略Finder的.DS_Store，与Docker构建上下文保持一致，避免浏览目录造成镜像误失配；插件代码变化仍改变指纹。
+
+### 并行上下文与累计用量（2026-10-15）
+
+上下文窗口按请求独立计算；规划/各分析共享同一输入快照的副本，分析结果只在主请求统一汇总时加入。累计usage会相加，包含标题等辅助请求，不能作为窗口占用。卡片展示下次基线估算/输出预留，并列标题、规划、子分析单路范围与最近主汇总的独立窗口/输入数据；旧任务未知不反推。
+
+Task.topicContext和ParallelProgress.plannerContext/mainContext及各part.context保存inputEstimate/outputReserve/contextWindow/usage。ContextAnchor.scope=parallel_merge标记临时笔记，后续基线不复用其差额校准；旧并行任务保守识别，普通和fallback仍校准。主汇总多轮时只保留最近一次上下文，不把该字段当所有轮次账本。详情见[并行上下文验收](reviews/2026-10-15/parallel-context-accounting.md)。

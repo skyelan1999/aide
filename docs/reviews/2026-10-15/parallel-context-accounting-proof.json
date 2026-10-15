@@ -1,0 +1,189 @@
+{
+  "status": "verification_in_progress",
+  "runtime": {
+    "image": "sha256:234beda3a50b0fd6bc2b6c844762e8cbbe3a3ddf730999f3eb20a2797fdcf112",
+    "runningImage": "sha256:234beda3a50b0fd6bc2b6c844762e8cbbe3a3ddf730999f3eb20a2797fdcf112",
+    "sourceSHA256": "a33a52eb06585253296f624f99f91ad301a5c0d45c15c9e281d76283160eecf7",
+    "runningPlatformManifest": "sha256:660fa52ec3d5590e3949c6c0a1e41c07c90a40d3bc26ca7c6c0e08264e0a6708",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "realModel": {
+    "status": "pass",
+    "model": "qwen3.8-flash",
+    "requested": 3,
+    "planned": 3,
+    "completedParts": 3,
+    "usage": {
+      "prompt": 34961,
+      "completion": 1198,
+      "total": 36159,
+      "model": "qwen3.8-flash"
+    },
+    "tools": 0,
+    "commands": 0,
+    "samples": 44,
+    "requestPurposes": [
+      "parallel/plan",
+      "parallel/part-3",
+      "parallel/part-1",
+      "parallel/part-2",
+      "chat#0"
+    ],
+    "terminalStatus": "completed",
+    "protectedOriginalSessions": 13,
+    "cleanup": "owned session removed; original sessions/settings/auth/sources/workspace unchanged except monotonic sequence",
+    "sequence": [
+      32,
+      33
+    ],
+    "answerCharacters": 613,
+    "taskUsageIncludesTitleHelper": true,
+    "perRequestContextsSumToTaskUsage": true
+  },
+  "perRequest": {
+    "topic": {
+      "inputEstimate": 49,
+      "outputReserve": 64,
+      "contextWindow": 131072,
+      "usage": {
+        "prompt": 111,
+        "cacheMiss": 111,
+        "cacheKnown": true,
+        "completion": 4,
+        "total": 115,
+        "model": "qwen3.8-flash"
+      }
+    },
+    "planner": {
+      "inputEstimate": 3309,
+      "outputReserve": 2048,
+      "contextWindow": 131072,
+      "usage": {
+        "prompt": 4941,
+        "cacheHit": 2048,
+        "cacheMiss": 2893,
+        "cacheKnown": true,
+        "completion": 156,
+        "total": 5097,
+        "model": "qwen3.8-flash"
+      }
+    },
+    "workers": [
+      {
+        "inputEstimate": 3190,
+        "outputReserve": 2048,
+        "contextWindow": 131072,
+        "usage": {
+          "prompt": 4883,
+          "cacheHit": 4096,
+          "cacheMiss": 787,
+          "cacheKnown": true,
+          "completion": 476,
+          "total": 5359,
+          "model": "qwen3.8-flash"
+        }
+      },
+      {
+        "inputEstimate": 3192,
+        "outputReserve": 2048,
+        "contextWindow": 131072,
+        "usage": {
+          "prompt": 4885,
+          "cacheHit": 4096,
+          "cacheMiss": 789,
+          "cacheKnown": true,
+          "completion": 164,
+          "total": 5049,
+          "model": "qwen3.8-flash"
+        }
+      },
+      {
+        "inputEstimate": 3190,
+        "outputReserve": 2048,
+        "contextWindow": 131072,
+        "usage": {
+          "prompt": 4884,
+          "cacheHit": 4096,
+          "cacheMiss": 788,
+          "cacheKnown": true,
+          "completion": 35,
+          "total": 4919,
+          "model": "qwen3.8-flash"
+        }
+      }
+    ],
+    "main": {
+      "inputEstimate": 10848,
+      "outputReserve": 8192,
+      "contextWindow": 131072,
+      "usage": {
+        "prompt": 15257,
+        "cacheHit": 12288,
+        "cacheMiss": 2969,
+        "cacheKnown": true,
+        "completion": 363,
+        "total": 15620,
+        "model": "qwen3.8-flash"
+      }
+    },
+    "nextBaselineInputEstimate": 10417,
+    "nextBaselineOutputReserve": 8192,
+    "nextBaselineWindow": 131072,
+    "nextBaselineCalibration": 0,
+    "sumRequestUsageMatchesTask": true
+  },
+  "targetedRaceSeconds": 16.145,
+  "ui": {
+    "scope": "production card renderer in offline IAB fixture, first synthetic and then sanitized actual Qwen task/preview; not authenticated Safari",
+    "themes": [
+      "dark",
+      "light"
+    ],
+    "viewport390": true,
+    "nextBaselineSeparateFromCumulative": true,
+    "perRequestRowsObserved": true,
+    "legacyUnknownAndSessionSwitchChecked": true,
+    "tabClosedAndViewportRestored": true
+  },
+  "previousAttempts": [
+    {
+      "status": "partial",
+      "details": "10 actual workers plus single main completed; initial reconciliation probe omitted title helper and failed equality. Difference explained, original trace retained."
+    },
+    {
+      "status": "not_pass",
+      "details": "invalid planner fallback attempted plugin tools; own run cancelled/session removed, original session/config protection passed."
+    }
+  ],
+  "offline": {
+    "image": "sha256:234beda3a50b0fd6bc2b6c844762e8cbbe3a3ddf730999f3eb20a2797fdcf112",
+    "sourceSHA256": "a33a52eb06585253296f624f99f91ad301a5c0d45c15c9e281d76283160eecf7",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-234beda3a50b-offline.tar.gz",
+    "bytes": 705755482,
+    "sha256": "4d762041c88ac49455373350c52ff23aaa5750de95bded355e0f1c255b6a2585",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "activeExternalWorkspaceOnly": true,
+    "verificationStorage": "streamed hashes/metadata/load in active external workspace; no duplicate outputs recreated in original directory"
+  },
+  "full": "pending",
+  "main": "pending",
+  "boundaries": [
+    "full authenticated Safari human-deferred",
+    "receiving-device image import pending",
+    "Windows user-owned",
+    "real vectors deferred",
+    "original12 remain open"
+  ]
+}

@@ -50,7 +50,7 @@
     "finalAnswerCharacters": 816,
     "finalAnswerContainsAllTenRequestedSections": true,
     "singleMainAnswerRequest": true,
-    "scope": "actual authorized Qwen API in current9999; task-reported tokens not bill; auxiliary title calls excluded"
+    "scope": "actual authorized Qwen API in current9999; task-reported tokens include title helper, not a bill or other acceptance rounds. Corrected in parallel-context-accounting follow-up."
   },
   "firstAttempt": {
     "status": "partial",

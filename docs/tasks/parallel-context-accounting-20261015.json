@@ -24,14 +24,15 @@
       "status": "pass",
       "summary": "Current human request and independent-vs-pooled context confusion.",
       "evidence": [
-        "docs/tasks/parallel-context-accounting-20261015.json"
+        "docs/reviews/2026-10-15/parallel-context-accounting.md"
       ]
     },
     "design": {
       "status": "pass",
       "summary": "Per-request metrics; transient merge anchor excludes later baseline calibration; descriptive UI with legacy unknown.",
       "evidence": [
-        "docs/tasks/parallel-context-accounting-20261015.json"
+        "docs/architecture.md",
+        "docs/reviews/2026-10-15/parallel-context-accounting.md"
       ]
     },
     "implementation": {
@@ -45,27 +46,31 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Focused Context+ConversationParallel Go race15.440s PASS and frontend cache/session/mixed metrics regression PASS; actual UI/runtime/model/full pending.",
+      "summary": "Final targeted16.145s PASS; Node regressions, actual Qwen3 branches/six calls usage reconciliation/baseline calibration0, runtime, offline/load, observed card synthetic+real data dark/light390px/session switch PASS. Clean full/main pending.",
       "evidence": [
-        "scripts/context-meter.test.cjs",
-        "internal/server/context_breakdown_test.go",
-        "internal/server/conversation_parallel_test.go"
+        "docs/reviews/2026-10-15/parallel-context-accounting-proof.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Architecture/review/actual vs failed scopes; prior cumulative title exclusion wording corrected.",
+      "evidence": [
+        "docs/reviews/2026-10-15/parallel-context-accounting.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Owned sessions/cancelled run/tab/server removed; original13 preserved except monotonic counter; own876 intermediate package removed, dbf rollback retained; future full fixture runner-owned.",
+      "evidence": [
+        "docs/reviews/2026-10-15/parallel-context-accounting-proof.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final runtime/offline pass; clean full and main gate/push pending.",
+      "evidence": [
+        "docs/reviews/2026-10-15/parallel-context-accounting-proof.json"
+      ]
     }
   },
   "release_authorization": "Prior human incremental tests/docs/main push, configured Qwen debugging and offline image delivery authorization; no tag/version bump.",
