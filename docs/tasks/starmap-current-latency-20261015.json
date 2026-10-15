@@ -1,0 +1,72 @@
+{
+  "id": "starmap-current-latency-20261015",
+  "request": "继续知识星图大目录实际加载性能验收，观测当前引用目录首帧与渐进扫描，必要时修复并更新文档",
+  "baseline": "864924c217309d3bb8aff24bdbba10a6ae46bbcf",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Measure actual canonical start.command Safari initial usable graph and mounted aide reference progress, distinguish tool observation time from true rendering latency.",
+    "Preserve last usable/partial graph while scanning; keep selected scope/query and report material pending honestly.",
+    "Fix only reproduced bottlenecks; scoped negative/fixed tests and native browser check for product changes.",
+    "Preserve saved invalid workspace config, user sources/preferences/data and inherited5 deletions; record exact image/source/full gate scope."
+  ],
+  "scope": [
+    "internal/server/knowledge*",
+    "internal/server/web/starmap*",
+    "scripts/starmap*",
+    "docs/tasks",
+    "docs/architecture.md",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Canonical Safari first observation1.668s still connecting; by20.372s32393 nodes visible (interval observation, not actual first-render latency). Warm reload4.004s shows36393 nodes. API full reset35336 nodes/20,191,402bytes in0.3622s; identity0.1726s. Actual source debounce1200ms versus scan350–1500ms can starve cached prefix writes. Old-source actual scheduler regression fails under350ms continuous updates.",
+      "evidence": [
+        ".agent-state/starmap-current-latency/api-timing.json",
+        ".agent-state/starmap-current-latency/cache-negative.log",
+        ".agent-state/starmap-current-latency/later.txt"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Keep1200ms coalescing deadline from first update through idle callback, save latest graph/cursor at execution. Bind task to identity object, mode, live epoch and timer handle; load/lock cancellation clears handle, late callbacks cannot clear newer task. Keep complete wire graph and24MiB existing cache budget; no removed nodes/content/search capability or API protocol changes.",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap-cache.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Bounded-progress scheduler and load/lock reset; meaningful VM clock regression covers continuous350ms scan, latest revision coalescing, delayed old-owner idle callback and lock refusal.",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "scripts/starmap-cache.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Old scheduler regression FAIL before source edit; changed actual scheduler and cache/scene/source-VM tests PASS. Canonical rebuilt browser and final quick/full/package still pending. No end-to-end cold-first-render speedup claim.",
+      "evidence": [
+        ".agent-state/starmap-current-latency/cache-negative.log"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental source/docs push and local build/offline image authorization; no main/tag formal release.",
+  "rollback": "",
+  "handoff": ""
+}

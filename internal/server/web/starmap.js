@@ -162,10 +162,20 @@ function progressiveDelay(g,duration=0){
  return scanning?Math.max(350,Math.min(1500,Math.round(duration*.5))):2000;
 }
 function scheduleLive(delay=2000){clearTimeout(liveTimer);liveTimer=0;if(locked||document.hidden||pageLeaving)return;liveTimer=setTimeout(pollLive,delay);}
-function scheduleGraphCache(){clearTimeout(cacheWriteTimer);if(locked||!cacheIdentity||!liveCursor||!window.AideStarmapCache)return;cacheWriteTimer=setTimeout(()=>{
- const save=()=>{if(locked||!cacheIdentity||!liveCursor||!graph.workspace)return;window.AideStarmapCache.write(codeView?'code':'knowledge',cacheIdentity,graph,liveCursor).catch(()=>{});};
- if('requestIdleCallback'in window)requestIdleCallback(save,{timeout:1800});else setTimeout(save,0);
-},1200);}
+function scheduleGraphCache(){
+ // Coalesce to the latest graph at a bounded deadline. Debouncing each live
+ // update starves persistence while a progressive scan keeps adding nodes.
+ if(cacheWriteTimer||locked||!cacheIdentity||!liveCursor||!window.AideStarmapCache)return;
+ const identity=cacheIdentity,mode=codeView,epoch=liveEpoch;
+ const timer=setTimeout(()=>{
+  const save=()=>{
+   if(cacheWriteTimer!==timer)return;cacheWriteTimer=0;
+   if(locked||cacheIdentity!==identity||codeView!==mode||liveEpoch!==epoch||graph.workspace!==identity.workspace||!liveCursor)return;
+   window.AideStarmapCache.write(mode?'code':'knowledge',identity,graph,liveCursor).catch(()=>{});
+  };
+  if('requestIdleCallback'in window)requestIdleCallback(save,{timeout:1800});else setTimeout(save,0);
+ },1200);cacheWriteTimer=timer;
+}
 async function pollLive(){
  liveTimer=0;if(!liveReady()){scheduleLive(650);return;}if(liveAbort)return;
  // Initial/transient load failures must retry the restoration path, not seed
@@ -941,7 +951,7 @@ function applyLiveUpdate(update,initial=false){
 }
 async function load(){
  clearEvidencePath('正在同步星图，请同步完成后查询。',true);
- if(loading||locked)return;stopLive(true);clearTimeout(cacheWriteTimer);cacheIdentity=null;loading=true;stellarLogbook.connecting();let generation=++graphGeneration;const mode=codeView,input=recoveryInput;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
+ if(loading||locked)return;stopLive(true);clearTimeout(cacheWriteTimer);cacheWriteTimer=0;cacheIdentity=null;loading=true;stellarLogbook.connecting();let generation=++graphGeneration;const mode=codeView,input=recoveryInput;loadAbort=new AbortController();syncCodeView();say('正在连接本地星图…');
  if(!recoveryAttempt)recoveryAttempt={workspace:graph.workspace||'',input};
  try{
   const identity=await api('/identity?code='+(mode?'1':'0'),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
@@ -1041,7 +1051,7 @@ function setLocked(value){
  // should clear or reload the graph; the first notification still initializes it.
  if(lockStateKnown&&locked===value)return;
  if(value&&!locked)persistSkyView();
- lockStateKnown=true;locked=value;if(value)AideContinuity.abortPendingWrites?.();knowledgeTimeline.lock(value);if(value)stellarLogbook.lock();if(value)clearEvidencePath('星图已锁定。',true);if(value){clearTimeout(recoveryTimer);clearTimeout(cacheWriteTimer);cacheIdentity=null;recoveryScopeLoaded='';pendingRecoveredView=null;recoveryAttempt=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){resetDocumentBatch();documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
+ lockStateKnown=true;locked=value;if(value)AideContinuity.abortPendingWrites?.();knowledgeTimeline.lock(value);if(value)stellarLogbook.lock();if(value)clearEvidencePath('星图已锁定。',true);if(value){clearTimeout(recoveryTimer);clearTimeout(cacheWriteTimer);cacheWriteTimer=0;cacheIdentity=null;recoveryScopeLoaded='';pendingRecoveredView=null;recoveryAttempt=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){resetDocumentBatch();documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
 if(window.LockCluster){LockCluster.on('effective',setLocked);LockCluster.onReady().then(setLocked);}else setLocked(false);
 for(const event of ['pointerdown','pointermove','keydown','wheel'])addEventListener(event,()=>{if(!locked)window.LockCluster?.noteActivity();},{passive:true});
 redraw();

@@ -23,3 +23,34 @@ vm.runInContext(fs.readFileSync('internal/server/web/starmap-cache.js','utf8'),c
  const started=Date.now();assert.equal(await hungWindow.AideStarmapCache.read('knowledge',identity),null);assert.ok(Date.now()-started<1000,'blocked cache must yield to network');
  console.log('PASS: persistent star map cache write/read and workspace/policy/view isolation');
 })().catch(e=>{console.error(e);process.exitCode=1;});
+
+// Exercise the actual scheduler under continuous scan and delayed idle callbacks.
+{
+'use strict';
+const source=fs.readFileSync('internal/server/web/starmap.js','utf8');
+function harness(idleDelay=0){
+ let now=0,next=0;const timers=new Map(),writes=[];
+ const setTimeout=(fn,delay=0)=>{const id=++next;timers.set(id,{at:now+delay,fn});return id;};
+ const clearTimeout=id=>timers.delete(id);
+ const identity={workspace:'A',epoch:'1',policy:'p'};
+ const c=vm.createContext({cacheWriteTimer:0,locked:false,cacheIdentity:identity,liveCursor:'R0',graph:{workspace:'A',nodes:[]},codeView:false,liveEpoch:1,setTimeout,clearTimeout,window:{AideStarmapCache:{write(mode,identity,graph,revision){writes.push({mode,workspace:identity.workspace,revision,at:now});return Promise.resolve(true);}},requestIdleCallback:true},requestIdleCallback:fn=>setTimeout(fn,idleDelay)});
+ vm.runInContext(source.slice(source.indexOf('function scheduleGraphCache('),source.indexOf('async function pollLive(')),c);
+ function advance(end){while(true){const row=[...timers].filter(([,t])=>t.at<=end).sort((a,b)=>a[1].at-b[1].at)[0];if(!row)break;now=row[1].at;timers.delete(row[0]);row[1].fn();}now=end;}
+ return {c,writes,advance,clearTimeout};
+}
+{
+ const h=harness();for(let i=0;i<12;i++){h.advance(i*350);h.c.liveCursor='R'+i;h.c.scheduleGraphCache();}
+ assert.ok(h.writes.length>=2,'continuous350ms updates must persist usable snapshots before scanning stops');
+ assert.equal(h.writes[0].revision,'R3','first write coalesces latest revision without postponing its deadline');
+}
+{
+ const h=harness(1800);h.c.scheduleGraphCache();h.advance(1200);
+ h.clearTimeout(h.c.cacheWriteTimer);h.c.cacheWriteTimer=0;h.c.cacheIdentity={workspace:'B',epoch:'2',policy:'q'};h.c.graph={workspace:'B',nodes:[]};h.c.liveEpoch++;h.c.liveCursor='B1';h.c.scheduleGraphCache();
+ const newer=h.c.cacheWriteTimer;h.advance(3000);assert.equal(h.writes.length,0,'cancelled idle callback cannot write another workspace');assert.equal(h.c.cacheWriteTimer,newer,'cancelled callback cannot clear newer task');h.advance(4200);assert.equal(h.writes.length,1);assert.equal(h.writes[0].workspace,'B');
+}
+{
+ const h=harness(100);h.c.scheduleGraphCache();h.advance(1200);h.c.locked=true;h.advance(1300);assert.equal(h.writes.length,0,'locked view must not persist a pending idle snapshot');
+}
+console.log('PASS star-map cache makes bounded progress during fast scans and rejects cancelled/locked owner callbacks');
+
+}
