@@ -1,0 +1,131 @@
+{
+  "id": "outcome-live-reasoning-audit-20261015",
+  "request": "继续总目标：当前实例推理强度可写、独立持久化及真实模型运行期成果舱分页同步验收",
+  "baseline": "c21957adba202d8d7bf6151710a2d6ea8a4afee7",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Current9999 two owned sessions persist independent reasoning selections; stale revision rejected; original sessions/settings preserved",
+    "Actual configured Qwen model produces recorded reads from owned fixture files; outcome snapshots/pages/evidence reflect running and terminal state",
+    "Document exact limits, cleanup own fixtures, record source/runtime identity and existing release evidence without claiming all original12 complete"
+  ],
+  "scope": [
+    "docs/tasks/outcome-live-reasoning-audit-20261015.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-15/outcome-live-reasoning-audit.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Resume full original12; reasoning remains first priority, then add missing actual-model outcome API evidence. Browser/SSH/Windows/vector scope not replaced by API probes.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use current9999 real APIs and user-authorized configured Qwen. Create two own sessions and a chained read-only fixture under current Downloads; no global selection change, no user-session model calls, no SSH or browser workaround.",
+      "evidence": [
+        "internal/server/session_model_selection.go",
+        "internal/server/task_outcome.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Acceptance probes completed; initial harness disk filename error retained and fixed in a narrower no-model probe. No production source change.",
+      "evidence": [
+        ".agent-state/outcome-live-reasoning-audit/probe.py",
+        ".agent-state/outcome-live-reasoning-audit/disk-only.py"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Current9999 reasoning API/disk isolation and stale revisions passed. Real Qwen task:79 samples, live same-snapshot pages,3 read evidence digests and markers, completed running count zero; prior disk harness failure is not counted as a whole-probe PASS. UI/hidden-active/SSH/release import/restart not covered.",
+      "evidence": [
+        ".agent-state/outcome-live-reasoning-audit/reasoning-proof.json",
+        ".agent-state/outcome-live-reasoning-audit/outcome-proof.json",
+        ".agent-state/outcome-live-reasoning-audit/probe.log",
+        ".agent-state/outcome-live-reasoning-audit/running-page.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Review and master task updated with direct new evidence, harness failure boundary and remaining full-objective gaps.",
+      "evidence": [
+        "docs/reviews/2026-10-15/outcome-live-reasoning-audit.md",
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Four own sessions and three own files removed; all original session hashes and global settings except monotonic numbering unchanged. No browser/service added; private proof retained.",
+      "evidence": [
+        ".agent-state/outcome-live-reasoning-audit/cleanup.json",
+        ".agent-state/outcome-live-reasoning-audit/disk-cleanup.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Ordinary docs only; prior full84 receipt will be reused only after clean-main input fingerprint equality and release-check. Runtime/package unchanged.",
+      "evidence": [
+        ".agent-state/markdown-pdf-mixed-layout/full-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Standing user authorization to push completed work to main. This batch initially changes ordinary documentation only; no version/tag/Release or runtime replacement planned.",
+  "rollback": "No production change planned. Keep private evidence and clean only newly owned sessions/files.",
+  "handoff": "",
+  "actualEvidence": {
+    "reasoning": {
+      "status": "pass",
+      "independentHighLow": true,
+      "apiMatchesDurableSessionFiles": true,
+      "staleRevisionRejected409": true,
+      "modelCalls": 0,
+      "scope": "current9999 API and stored session JSON; no browser or process restart"
+    },
+    "outcome": {
+      "status": "pass",
+      "scope": "actual current9999 Qwen model/outcome API with own synthetic local files; no authenticated workbench UI, hidden active run, real SSH, restart or release import acceptance",
+      "liveSamples": 79,
+      "liveExecutionCounts": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "sameSnapshotLivePages": true,
+      "executionCount": 3,
+      "exactMarkerOutput": true,
+      "providerMatchesUserEndpoint": true,
+      "staleSnapshot409AndWrongSession404": "validated before line91 harness filename assertion; preserved failed probe log/control flow",
+      "completedRunningRunsZero": true,
+      "model": "qwen3.8-flash",
+      "usage": {
+        "prompt": 73436,
+        "completion": 1214,
+        "total": 74650,
+        "model": "qwen3.8-flash"
+      },
+      "harnessFailure": "Initial disk glob omitted session- prefix; narrowed disk-only rerun passed, no repeated model calls",
+      "runtimeImage": "sha256:bf701a670f6a1e10ea69f445aa582a2a4fca1e9a89b821b1e83f2d52ce1a2e89",
+      "baselineCommit": "c21957adba202d8d7bf6151710a2d6ea8a4afee7"
+    },
+    "cleanup": [
+      {
+        "ownSessionsRemoved": true,
+        "ownFilesRemoved": true,
+        "otherSessionHashesUnchanged": true,
+        "globalSettingsExceptLegitimateCounterUnchanged": true,
+        "counterBefore": 18,
+        "counterAfter": 20
+      },
+      {
+        "ownSessionsRemoved": true,
+        "otherSessionHashesUnchanged": true,
+        "settingsExceptLegitimateCounterUnchanged": true,
+        "counterBefore": 20,
+        "counterAfter": 22
+      }
+    ]
+  }
+}

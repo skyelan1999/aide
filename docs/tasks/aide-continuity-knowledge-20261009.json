@@ -260,9 +260,12 @@
           "node scripts/outcome-pagination.test.cjs 2026-10-14 PASS",
           "Safari localhost:9999 2026-10-14：#47/#46/#48均已完成，当前实例未锁定；不构成live refresh验收"
         ],
-        "remaining": "真实模型运行中跨页快照刷新、真实模型运行期成果舱同步与发布成果卡仍待验收；本次 Safari 只读观察到的 #47/#46/#48 全部已完成，不能代替运行中流程。"
+        "remaining": "Current real model/outcome APIs supplemented on20261015; remaining live authenticated browser across pages, hidden-active pagination case and release-card/import verification."
       },
-      "plugin_graph_checkpoint_20261015": "Recovered uncertain graph nodes retained in outcome gaps, identity-deduplicated and detached from private arguments/results/proposals. Scoped race evidence; live model/outcome synchronisation remains pending."
+      "plugin_graph_checkpoint_20261015": "Recovered uncertain graph nodes retained in outcome gaps, identity-deduplicated and detached from private arguments/results/proposals. Scoped race evidence; live model/outcome synchronisation remains pending.",
+      "evidence_20261015_live_outcome": [
+        "docs/reviews/2026-10-15/outcome-live-reasoning-audit.md"
+      ]
     },
     {
       "name": "审批与授权管理",
@@ -6731,9 +6734,10 @@
     "scope": "保留原12项要求；本轮只对有新增直接证据的项目补验，不把旧定位笔记当成本轮全项通过。",
     "priority_reasoning": {
       "status": "pass",
-      "scope": "本机当前实际API，两个自建会话high/low独立写入读回，另一会话和全局值不变，已恢复原选择；不外推浏览器交互和上游实际推理量。",
+      "scope": "Current9999 bf701a670f6a: two independent API choices high/low and stale revision409, separate no-model canonical disk readback passed; original sessions/settings preserved except legitimate numbering. No browser/upstream intensity/restart claim.",
       "evidence": [
-        ".agent-state/cancelled-output-context/reasoning-isolation-proof.json"
+        ".agent-state/cancelled-output-context/reasoning-isolation-proof.json",
+        "docs/reviews/2026-10-15/outcome-live-reasoning-audit.md"
       ]
     },
     "workstreams": [
@@ -6774,10 +6778,11 @@
         "requirement": "目标、文件变化、执行、验证、证据、缺口、发布状态统一成果卡",
         "status": "in_progress",
         "historical_remaining_20261014": "真实模型运行中跨页快照刷新、真实模型运行期成果舱同步与发布成果卡仍待验收；本次 Safari 只读观察到的 #47/#46/#48 全部已完成，不能代替运行中流程。",
-        "current_verified_scope": "成果页轮询/快照归属源码和真实模块组件已有独立验收；真实模型运行期成果舱完整页面联动/跨页和发布成果卡仍未覆盖。",
+        "current_verified_scope": "Current real Qwen/API:79 live samples,3 read calls, two live pages sharing a snapshot, digest/raw marker checks, completed running count0 and no inferred verification/release. Full authenticated browser, hidden-active pagination and release card/import remain open.",
         "evidence": [
           "docs/tasks/outcome-overview-polling-20261015.json",
-          "docs/tasks/outcome-request-ownership-20261015.json"
+          "docs/tasks/outcome-request-ownership-20261015.json",
+          "docs/reviews/2026-10-15/outcome-live-reasoning-audit.md"
         ]
       },
       {
@@ -6975,5 +6980,22 @@
       "releaseCheck": "pass",
       "remoteHeadVerified": true
     }
+  },
+  "followup151": {
+    "task": "docs/tasks/outcome-live-reasoning-audit-20261015.json",
+    "classification": "progress",
+    "previousGoalTurn": "Product PDF fixes delivered and pushed; subsequent push confirmation only revalidated remote state. This turn adds current actual reasoning/disk and real-model outcome evidence.",
+    "status": "in_progress",
+    "runtimeImage": "bf701a670f6a",
+    "verified": [
+      "two-session high/low API/durable disk isolation and stale revision409",
+      "actual Qwen model3 read calls,79 samples, same-snapshot live execution pages, digest/raw markers and terminal running count0",
+      "owned cleanup; original session hashes/config except monotonic counter unchanged"
+    ],
+    "remaining": [
+      "docs gate/main push",
+      "authenticated workbench browser, hidden active task page and release import; original12 remain open"
+    ],
+    "original12RemainOpen": true
   }
 }
