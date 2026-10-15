@@ -73,12 +73,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "First local gate rejected missing evidence links for requirements/design/implementation despite pass status; shell command did not fail-fast and authorized main fbde2b0 was pushed before gate passed. Evidence arrays now populated; corrected gate/push still pending. Full84 and runtime/offline scopes unchanged.",
-      "evidence": []
+      "status": "pass",
+      "summary": "Corrected clean main gate PASS after filling actual evidence; corrective574826d pushed and exact remote verified. Full84 fingerprint unchanged; runtime finaldbf/offline/load passed. Initial gate failure/premature fbde push retained transparently in review. No version bump/tag/formal Release.",
+      "evidence": [
+        "docs/reviews/2026-10-15/parallel-10x-levels-proof.json",
+        "docs/reviews/2026-10-15/parallel-10x-levels.md"
+      ]
     }
   },
   "release_authorization": "Prior human incremental tests/docs/main push and offline image update authorization; no tag/version bump/formal release.",
   "rollback": "Revert scoped commits, preserve existing selected1-5 and task data; 10 unsupported by old binary falls back or rejects explicitly.",
-  "handoff": ""
+  "handoff": "10X request delivered to main574826d, final receipt commit follows. Active development remains /Volumes/MY PASSPORT/aide_ws/aide; finaldbf9999 and offline package ready; receiving import/authenticated Safari pending, Windows user-owned/vector deferred; original12 continue."
 }
