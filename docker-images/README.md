@@ -1,5 +1,12 @@
 # Docker 镜像交付
 
+## 2026-10-15 AI 辅助探索候选（构建时记录）
+
+- 源码提交 `2457aa8`，本机仍有五个继承的 drawio vendor 删除；镜像为开发候选，不混称干净 main 构建。通过指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新 9999，健康、实际提供的星图四项资源与当前源码一致，鉴权、配置、挂载未变。
+- 应用镜像 `sha256:96caed8f11cddaa5b2e0dc8f9ef907be0d85d32eb73084173de9152790a6da3c`；source SHA `f4acf3fa92c450a053045fda91ccfdc5972956e415ed570d50fa3c9b89e391c0`。
+- 完整离线包 `aide-0.1.17.0-RC2-linux-arm64-96caed8f11cd-offline.tar.gz`，705675728 字节；SHA-256 `18ffb54eda1ec20603bc07485123f437594a91fc2f522ec5f6e8c8b41e05688b`。含应用与依赖镜像，内外摘要、平台及启动器匹配、实际 docker load 通过；已校验复制到 aideMacMini 对应目录，接收端导入仍待对端验收。
+- 本记录写入时：行为回归、明暗／窄屏隔离页面及真实千问节点理解通过，完整 full 与 main 门禁尚未完成；后续状态以[任务账本](../docs/tasks/starmap-ai-exploration-20261015.json)为准。保留旧包回滚，不升级版本或发正式 Release。
+
 发行镜像提供 aide（AI + IDE 专业工作台）的完整运行环境：内置 Go、Python、Node.js、Git 与已编译应用。场景定制使用源码和 [Agent 工作流](../docs/customization.md)，完成后重建自己的镜像。
 
 ## 统一校验清单 SHA256SUMS
