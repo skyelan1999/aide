@@ -384,6 +384,10 @@
       ],
       [
         "node",
+        "scripts/outcome-request-ownership.test.cjs"
+      ],
+      [
+        "node",
         "scripts/session-render-cache.test.cjs"
       ],
       [

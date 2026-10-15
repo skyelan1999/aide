@@ -88,31 +88,46 @@
   return {close:stop};
  }
  async function mount(content,{sessionId,runId,api,blocked,t,error,renderMarkdown}){
-   close();const gen=++generation;let pollTimer=null;const stop=()=>{if(pollTimer!==null)clearInterval(pollTimer);pollTimer=null;if(active?.close===stop)active=null;};active={close:stop};
+   close();const gen=++generation;let pollTimer=null,closed=false,recordGeneration=0;const stop=()=>{closed=true;recordGeneration++;if(pollTimer!==null)clearInterval(pollTimer);pollTimer=null;if(active?.close===stop)active=null;};active={close:stop};
    content.replaceChildren(node('p','muted',t('正在读取任务记录…')));
-   const valid=()=>gen===generation&&content.isConnected&&!blocked?.();
+   const valid=()=>!closed&&gen===generation&&content.isConnected&&!blocked?.();
+   const ownsRecords=owner=>valid()&&owner===recordGeneration;
    const base='/sessions/'+encodeURIComponent(sessionId)+'/runs/'+encodeURIComponent(runId)+'/outcome';
-  let data,files=[],executions=[],writeTargets=[],stale=false,hasLoadedMore=false,polling=false;
+  let data,files=[],executions=[],writeTargets=[],stale=false,hasLoadedMore=false,pollOwner=null,pageRequest=null,reloading=false,evidenceRequest=null;
   let journalEvents=[],journalNext=0,journalHasMore=false,journalWarning='',journalLoaded=false,journalLoading=false,journalError='';
    async function reloadRecords(){
-    try{const next=await api(base);if(!valid())return;data=next;files=next.files;executions=next.executions;writeTargets=next.writeTargets||[];stale=false;hasLoadedMore=false;render();syncPolling();}
-    catch(e){if(valid())error?.(e.message);}
+    const owner=++recordGeneration;pollOwner=null;pageRequest=null;evidenceRequest=null;reloading=true;syncPolling();
+    try{const next=await api(base);if(!ownsRecords(owner))return;data=next;files=next.files||[];executions=next.executions||[];writeTargets=next.writeTargets||[];stale=false;hasLoadedMore=false;render();}
+    catch(e){if(ownsRecords(owner))error?.(e.message);}
+    finally{if(ownsRecords(owner)){reloading=false;syncPolling();}}
+   }
+   async function loadMore(){
+    if(!valid()||stale||reloading||pageRequest)return;
+    const owner=recordGeneration,snapshot=data.snapshot,request={};pageRequest=request;
+    const path=base+'?fileOffset='+data.page.fileNext+'&executionOffset='+data.page.executionNext+'&snapshot='+encodeURIComponent(snapshot||'');render();
+    try{const next=await api(path);if(!ownsRecords(owner)||data.snapshot!==snapshot)return;
+     if(!snapshot||next.snapshot!==snapshot){stale=true;syncPolling();return;}
+     files.push(...next.files);executions.push(...next.executions);writeTargets.push(...(next.writeTargets||[]));data={...next,files,executions,writeTargets};hasLoadedMore=true;syncPolling();
+    }catch(e){if(ownsRecords(owner)&&data.snapshot===snapshot){if(e.status===409){stale=true;syncPolling();}else error?.(e.message);}}
+    finally{if(pageRequest===request){pageRequest=null;if(ownsRecords(owner))render();}}
    }
    const section=(title)=>{const s=node('section','outcome-section');s.append(node('h3','',t(title)));content.append(s);return s;};
    async function evidence(record){
     if(!valid())return;
-    try{const raw=await api(base+'/evidence/'+encodeURIComponent(record.id)+'?digest='+encodeURIComponent(record.digest));if(!valid())return;
+    const owner=recordGeneration,snapshot=data.snapshot,request={};evidenceRequest=request;
+    try{const raw=await api(base+'/evidence/'+encodeURIComponent(record.id)+'?digest='+encodeURIComponent(record.digest));if(!ownsRecords(owner)||data.snapshot!==snapshot||evidenceRequest!==request)return;
      const details=node('details','outcome-evidence');details.open=true;details.append(node('summary','',record.id+' · '+raw.tool),node('h4','',t(raw.source==='system'?'系统记录来源':'原始参数')),node('pre','',raw.source==='system'?'Aide · '+raw.tool:raw.args||'—'),node('h4','',t('原始返回')),node('pre','',raw.result||t('没有返回记录')),node('code','outcome-digest',raw.digest));
      const previous=content.querySelector('.outcome-evidence');previous?.remove();content.append(details);details.scrollIntoView({block:'nearest',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
-    }catch(e){if(valid())error?.(e.message);}
+    }catch(e){if(ownsRecords(owner)&&data.snapshot===snapshot&&evidenceRequest===request)error?.(e.message);}
    }
    function syncPolling(){
-    if(data?.status==='running'&&!stale){if(pollTimer===null)pollTimer=setInterval(poll,2500);}
+    if(!valid()){stop();return;}
+    if(data?.status==='running'&&!stale&&!reloading){if(pollTimer===null)pollTimer=setInterval(poll,2500);}
     else if(pollTimer!==null){clearInterval(pollTimer);pollTimer=null;}
    }
    async function poll(){
-    if(!valid()||polling||stale)return;polling=true;
-    try{const next=await api(base);if(!valid())return;
+    if(!valid()){stop();return;}if(pollOwner||stale||reloading)return;const owner=recordGeneration,request={};pollOwner=request;
+    try{const next=await api(base);if(!ownsRecords(owner))return;
      if(next.snapshot!==data.snapshot){
       if(hasLoadedMore){stale=true;render();syncPolling();return;}
       data=next;files=next.files||[];executions=next.executions||[];writeTargets=next.writeTargets||[];render();
@@ -122,7 +137,7 @@
      if(journalLoaded)await loadJournal(false);
      syncPolling();
     }catch{/* Keep the last readable snapshot and retry on the next interval. */}
-    finally{polling=false;}
+    finally{if(pollOwner===request)pollOwner=null;}
    }
    async function loadJournal(reset=true){
     if(!valid()||journalLoading||!data?.journal?.url)return;
@@ -179,7 +194,7 @@
     const fs=section('文件变更');if(!files.length)fs.append(node('p','muted',t('没有文件提案记录')));for(const f of files){const row=node('div','outcome-file');row.append(node('code','',f.path),node('span','muted',t(f.state==='proposed'?'提案未应用':'应用已有记录，当前文件未复核')),node('small','outcome-digest',(f.beforeHash||'—')+' → '+f.proposedHash),node('small','muted',f.proposedBytes+' bytes'));fs.append(row);}
     if(writeTargets.length){const hints=section('命令写入目标线索');hints.append(node('p','muted',data.writeTargetNote||t('命令目标线索不证明写入或当前文件内容')));for(const target of writeTargets){const row=node('div','outcome-file');row.append(node('code','',target.path),node('span','muted',target.execution+' · '+t('命令重定向目标，未回读验证')),node('small','outcome-digest',target.digest||'—'));const execution=executions.find(item=>item.id===target.execution);if(execution){const inspect=node('button','quiet',t('查看原始证据'));inspect.type='button';inspect.onclick=()=>evidence(execution);row.append(inspect);}hints.append(row);}}
     const es=section('执行与证据');if(!executions.length)es.append(node('p','muted',t('没有工具返回记录')));for(const record of executions){const row=node('details','outcome-execution'),summary=node('summary');summary.append(node('code','',record.id),node('span','',record.tool),node('small','muted',t(record.state==='no_result'?'没有返回记录':'已记录返回')));row.append(summary,node('pre','',record.preview||'—'));if(record.truncated)row.append(node('p','muted',t('预览已截断，可展开原始证据')));const b=node('button','quiet',t('查看原始证据'));b.onclick=()=>evidence(record);row.append(b,node('small','outcome-digest',record.digest));es.append(row);}
-    if(stale){const notice=node('p','outcome-boundary',t('成果记录已更新，请重新加载；旧页与新页不能混合'));notice.setAttribute('role','status');const reload=node('button','quiet',t('重新加载成果记录'));reload.onclick=async()=>{reload.disabled=true;await reloadRecords();if(valid()&&reload.isConnected)reload.disabled=false;};es.append(notice,reload);}else if(data.page.filesMore||data.page.executionsMore){const more=node('button','quiet',t('加载更多成果记录'));more.onclick=async()=>{more.disabled=true;try{const next=await api(base+'?fileOffset='+data.page.fileNext+'&executionOffset='+data.page.executionNext+'&snapshot='+encodeURIComponent(data.snapshot||''));if(!valid())return;if(!data.snapshot||next.snapshot!==data.snapshot){stale=true;render();syncPolling();return;}files.push(...next.files);executions.push(...next.executions);writeTargets.push(...(next.writeTargets||[]));data={...next,files,executions,writeTargets};hasLoadedMore=true;render();syncPolling();}catch(e){if(valid()){if(e.status===409){stale=true;render();syncPolling();}else{error?.(e.message);more.disabled=false;}}}};es.append(more);}
+    if(stale){const notice=node('p','outcome-boundary',t('成果记录已更新，请重新加载；旧页与新页不能混合'));notice.setAttribute('role','status');const reload=node('button','quiet',t('重新加载成果记录'));reload.onclick=async()=>{reload.disabled=true;await reloadRecords();if(valid()&&reload.isConnected)reload.disabled=false;};es.append(notice,reload);}else if(data.page.filesMore||data.page.executionsMore){const more=node('button','quiet',t('加载更多成果记录'));more.disabled=!!pageRequest||reloading;more.onclick=loadMore;es.append(more);}
     const receipts=data.systemReceipts||[];
     if(receipts.length){const rs=section('系统应用回执');rs.append(node('p','muted',data.systemReceiptNote||t('历史系统记录，不代表当前文件或完整验收。')));for(const receipt of receipts){const d=node('details','outcome-execution');d.append(node('summary','',receipt.id+' · '+t(receipt.state==='failed'?'回执检查失败':'系统记录')),node('pre','',receipt.content||'—'));const b=node('button','quiet',t('查看原始证据'));b.onclick=()=>evidence(receipt);d.append(b,node('small','outcome-digest',receipt.digest));if(receipt.truncated)d.append(node('p','muted',t('预览已截断，可展开原始证据')));rs.append(d);}}
     const approvals=section('审批依据');approvals.append(node('p','muted',data.approvalNote||t('历史记录可能缺少审批来源')));for(const review of data.approvals||[]){const entry=node('details'),source={model:'模型独立审核',human:'人工确认',remembered:'授权规则匹配'};entry.append(node('summary','',t(source[review.source]||'历史来源未记录')+' · '+t(({approved:'已自动放行',confirmed:'人工已确认',declined:'人工未批准',reviewing:'审核中',manual:'需手动确认',aborted:'未自动放行'})[review.status]||'历史状态未记录')),node('p','',review.reason),node('pre','',review.command),node('p','muted',(review.at||'')+' · '+(review.workspace||'—')+' · '+(review.root?.displayHost||review.root?.containerAbs||'—')),node('code','outcome-digest',review.fingerprint||'—'));if(review.ruleId)entry.append(node('p','muted',review.ruleId+' · '+(review.expiresAt||t('永久'))));approvals.append(entry);}
@@ -205,7 +220,7 @@
     [...(content.querySelectorAll?.('details')||[])].forEach((item,index)=>{if(opened.includes(index))item.open=true;});content.scrollTop=scrollTop;
    }
    try{data=await api(base);if(!valid())return;files=data.files;executions=data.executions;writeTargets=data.writeTargets||[];render();syncPolling();}catch(e){if(valid()){content.replaceChildren(node('p','task-error',e.message));}}
-   return {close};
+   return {close:stop};
  }
  window.AideTaskOutcome={mount,sessionOverview,close};
 })();

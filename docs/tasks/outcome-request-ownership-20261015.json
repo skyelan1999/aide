@@ -1,0 +1,70 @@
+{
+  "id": "outcome-request-ownership-20261015",
+  "request": "继续成果舱分页和运行刷新验收，修复显式重载之后旧分页/轮询/证据回执跨快照写入",
+  "baseline": "a0d9f126b259242947416c5d5d70003b6bd9adbe",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "显式重载后旧轮询/分页/错误/证据响应不覆盖、不误标新快照",
+    "首页自动更新时丢弃旧快照在途页，单次仅一页请求，完成后可继续分页",
+    "旧视图close句柄只关闭所属视图；失效DOM/锁屏后不泄漏定时器或应用在途响应",
+    "既有快照分页、导出、末次日志排空、总览生命周期回归保留；原生组件按真实数据来源标明"
+  ],
+  "scope": [
+    "internal/server/web/task-outcome.js",
+    "internal/server/web/index.html cache version",
+    "scripts/outcome-request-ownership.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture.md",
+    "docs/tasks",
+    "docker-images metadata"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "真实旧代码并发重现：旧poll B在显式重载C之后把界面倒退B",
+      "evidence": [
+        ".agent-state/outcome-request-ownership/negative.log"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "读取记录代次、分页/轮询请求身份、证据快照身份；独立追加执行日志不绑定可变成果快照；close作用域归属当前挂载",
+      "evidence": [
+        "internal/server/web/task-outcome.js mount/poll/reloadRecords"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "记录重载推进代次，分页与证据绑定请求快照；分页互斥，旧poll finally仅释放自己的请求；挂载close作用域独立",
+      "evidence": [
+        "internal/server/web/task-outcome.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "旧代码8项负向断言失败，新9项确定性并发回归及既有成果/总览回归PASS；74项quick及原生组件验收待完成",
+      "evidence": [
+        "scripts/outcome-request-ownership.test.cjs",
+        ".agent-state/outcome-request-ownership/negative-oldPollAfterReload.log"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户授权按目标持续开发、分部分push和测试；本轮新增修改仅功能分支，不推未来新修改到main/tag。",
+  "rollback": "回退本任务代码并通过原start.command重建，无持久化迁移或用户数据变更。",
+  "handoff": ""
+}
