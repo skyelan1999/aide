@@ -1120,6 +1120,7 @@ function openStream(run) {
     avatarRunFeedback(run.id, terminal.status);
     if (state.runPhase[run.id]) state.runPhase[run.id].done = terminal.status !== 'awaiting_clarification';
     closeStream(); state.streamRetryAt = 0;
+    if (typeof setSendMode === 'function') setSendMode(state.busy);
     schedulePoll(); // Reconcile even when the immediate GET fails.
     action(async () => {
       const id = state.session?.id; if (!id) return;
