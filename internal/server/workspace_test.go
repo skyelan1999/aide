@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -98,7 +99,10 @@ func TestLocalWorkspacePathAIReadFix(t *testing.T) {
 	}
 	// AI 附件读取（mock provider 收到附件内容）
 	var captured string
+	var capturedMu sync.Mutex
 	provider := newMockProvider(t, func(body map[string]any) string {
+		capturedMu.Lock()
+		defer capturedMu.Unlock()
 		msgs, _ := body["messages"].([]any)
 		for _, m := range msgs {
 			if mm, ok := m.(map[string]any); ok {
@@ -116,12 +120,15 @@ func TestLocalWorkspacePathAIReadFix(t *testing.T) {
 	})
 	requireStatus(t, w, 202)
 	waitTaskDone(t, a, s.ID)
-	if !strings.Contains(captured, "configured-root-content") {
-		t.Fatalf("AI 未读到配置根内容（FR-79 回归）: %s", captured)
+	capturedMu.Lock()
+	snapshot := captured
+	capturedMu.Unlock()
+	if !strings.Contains(snapshot, "configured-root-content") {
+		t.Fatalf("AI 未读到配置根内容（FR-79 回归）: %s", snapshot)
 	}
 	// 系统提示必须注入工作目录快照（路径 + 目录清单）
-	if !strings.Contains(captured, "当前工作目录") || !strings.Contains(captured, "hello.txt") {
-		t.Fatalf("AI 系统提示缺工作目录快照: %s", captured)
+	if !strings.Contains(snapshot, "当前工作目录") || !strings.Contains(snapshot, "hello.txt") {
+		t.Fatalf("AI 系统提示缺工作目录快照: %s", snapshot)
 	}
 	// 恢复默认根，避免影响其他用例
 	requireStatus(t, request(a, "PUT", "/api/workspace-config", map[string]any{
