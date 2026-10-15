@@ -298,7 +298,7 @@ func (a *App) executePluginPlan(parent context.Context, outer ToolCall, task *Ta
 		step = "plugin-plan"
 	}
 	a.mu.Unlock()
-	if limit < 1 || limit > 5 {
+	if !validParallelism(limit) {
 		return "错误：无效并行倍率"
 	}
 	reason := ""

@@ -85,9 +85,13 @@ func TestPluginPlanValidationAndBudget(t *testing.T) {
 }
 
 func TestPluginPlanROS2ParallelAndStableProposalMerge(t *testing.T) {
-	for _, selected := range []int{1, 5, -5} {
+	for _, selected := range []int{1, 5, 10, -10} {
 		t.Run(fmt.Sprint(selected), func(t *testing.T) {
 			a := testApp(t)
+			count := 5
+			if selected == 10 || selected == -10 {
+				count = 10
+			}
 			limit, requested := selected, selected
 			if selected < 0 {
 				limit, requested = 1, -selected
@@ -99,7 +103,7 @@ func TestPluginPlanROS2ParallelAndStableProposalMerge(t *testing.T) {
 			parts := []pluginPlanNodeSpec{}
 			deps := []string{}
 			bindings := map[string]string{}
-			for i := 0; i < 5; i++ {
+			for i := 0; i < count; i++ {
 				id := fmt.Sprintf("part%d", i)
 				filename := id + ".txt"
 				content := fmt.Sprintf("ROS2 chapter%d", i)
@@ -114,7 +118,7 @@ func TestPluginPlanROS2ParallelAndStableProposalMerge(t *testing.T) {
 				deps = append(deps, id)
 				bindings[id] = id
 			}
-			planInstall(t, a, "joiner", `module.exports={apply(ctx){ctx.tool({name:'join_ros2',scheduling:{resources:[{root:'workspace',path:'ros2.md',access:'write'}]},handler:(args,api)=>api.proposeWrite('ros2.md',[args.part0,args.part1,args.part2,args.part3,args.part4].join('\n'))})}};`)
+			planInstall(t, a, "joiner", `module.exports={apply(ctx){ctx.tool({name:'join_ros2',scheduling:{resources:[{root:'workspace',path:'ros2.md',access:'write'}]},handler:(args,api)=>api.proposeWrite('ros2.md',Object.keys(args).sort((a,b)=>Number(a.slice(4))-Number(b.slice(4))).map(k=>args[k]).join('\n'))})}};`)
 			nodes := append([]pluginPlanNodeSpec{{ID: "join", Tool: "join_ros2", Arguments: map[string]any{}, DependsOn: deps, Bindings: bindings}}, parts...)
 			call := planCall(t, "ros2", nodes)
 			task.CheckpointMessages = []Message{{Role: "assistant", ToolCalls: []ToolCall{call}}}
@@ -126,29 +130,29 @@ func TestPluginPlanROS2ParallelAndStableProposalMerge(t *testing.T) {
 				return filepath.Join(a.pluginsPath, fmt.Sprintf("part%d", i), suffix)
 			}
 			defer func() {
-				for i := 0; i < 5; i++ {
+				for i := 0; i < count; i++ {
 					_ = os.WriteFile(marker(i, "release"), []byte("1"), 0600)
 				}
 			}()
-			if limit == 5 {
-				planAwait(t, "all five actual handlers", func() bool {
-					for i := 0; i < 5; i++ {
+			if limit > 1 {
+				planAwait(t, "all selected actual handlers", func() bool {
+					for i := 0; i < count; i++ {
 						if !planExists(marker(i, "entered")) {
 							return false
 						}
 					}
 					return true
 				})
-				for i := 0; i < 5; i++ {
+				for i := 0; i < count; i++ {
 					if err := os.WriteFile(marker(i, "release"), []byte("1"), 0600); err != nil {
 						t.Fatal(err)
 					}
 				}
 			} else {
-				for i := 0; i < 5; i++ {
+				for i := 0; i < count; i++ {
 					current := i
 					planAwait(t, "sequential handler", func() bool { return planExists(marker(current, "entered")) })
-					for j := i + 1; j < 5; j++ {
+					for j := i + 1; j < count; j++ {
 						if planExists(marker(j, "entered")) {
 							t.Fatal("1x dispatched overlapping handlers")
 						}
@@ -168,16 +172,20 @@ func TestPluginPlanROS2ParallelAndStableProposalMerge(t *testing.T) {
 			if p.Requested != requested || selected < 0 && p.Reason == "" {
 				t.Fatal("effective hook concurrency hidden", p)
 			}
-			if p.State != "completed" || p.Limit != limit || len(p.Nodes) != 6 || p.Nodes[0].State != "proposed" || p.Nodes[0].MergeState != "queued" {
+			if p.State != "completed" || p.Limit != limit || len(p.Nodes) != count+1 || p.Nodes[0].State != "proposed" || p.Nodes[0].MergeState != "queued" {
 				t.Fatalf("plan: %+v", p)
 			}
-			if len(task.Files) != 1 || task.Files[0].Path != "ros2.md" || task.Files[0].Content != "ROS2 chapter0\nROS2 chapter1\nROS2 chapter2\nROS2 chapter3\nROS2 chapter4" {
+			expectedChapters := make([]string, count)
+			for i := range expectedChapters {
+				expectedChapters[i] = fmt.Sprintf("ROS2 chapter%d", i)
+			}
+			if len(task.Files) != 1 || task.Files[0].Path != "ros2.md" || task.Files[0].Content != strings.Join(expectedChapters, "\n") {
 				t.Fatalf("proposal merge: %+v", task.Files)
 			}
 			if planExists(filepath.Join(a.workPath, "ros2.md")) {
 				t.Fatal("proposal applied without approval")
 			}
-			if len(task.ToolUses) != 6 || task.ToolUses[0].Tool != "join_ros2" || task.ToolUses[5].Tool != "part4_read" {
+			if len(task.ToolUses) != count+1 || task.ToolUses[0].Tool != "join_ros2" || task.ToolUses[count].Tool != fmt.Sprintf("part%d_read", count-1) {
 				t.Fatal("tool records were not merged in input order")
 			}
 			journal, err := os.ReadFile(filepath.Join(a.dataPath, "execution-events", task.ID+".jsonl"))
@@ -194,7 +202,7 @@ func TestPluginPlanROS2ParallelAndStableProposalMerge(t *testing.T) {
 			}
 			// The same persisted call ID is read back, never executed again.
 			_ = a.executeToolCall(ctx, call, task, map[string]Change{})
-			if len(task.ToolUses) != 6 || len(task.Files) != 1 {
+			if len(task.ToolUses) != count+1 || len(task.Files) != 1 {
 				t.Fatal("persisted graph replayed")
 			}
 			nodes[0].Title = "changed parameters"

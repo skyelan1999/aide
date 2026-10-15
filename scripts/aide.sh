@@ -7,7 +7,7 @@ MODE="${1:-start}"
 # 哈希写进镜像 label aide.srcsha，供 start 二次启动时比对，命中即跳过构建。
 source_sha() {
   (
-    find cmd internal plugins vendor scripts/office docker/wheels docker/sherpa -type f ! -path 'plugins/surface.json' -print0
+    find cmd internal plugins vendor scripts/office docker/wheels docker/sherpa -type f ! -name '.DS_Store' ! -path 'plugins/surface.json' -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh
     for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi

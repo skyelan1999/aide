@@ -25,6 +25,10 @@ class SourceFingerprintTests(unittest.TestCase):
                 self.assertRegex(result.stdout, r'^[0-9a-f]{64}\n$')
                 return result.stdout
             first = fingerprint()
+            (root/'internal/.DS_Store').write_bytes(b'Finder view state')
+            self.assertEqual(first, fingerprint())
+            (root/'internal/.DS_Store').write_bytes(b'Finder changed during build')
+            self.assertEqual(first, fingerprint())
             (root/'plugins/surface.json').write_text('{"generatedAt":"before"}')
             self.assertEqual(first, fingerprint())
             (root/'plugins/surface.json').write_text('{"generatedAt":"after", "plugins":[]}')

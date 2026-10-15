@@ -321,7 +321,7 @@ func TestConversationParallelROS2Document(t *testing.T) {
 			drafted.Add(1)
 			parallelReply(w, "ROS2 section draft; distribution-specific commands require verification.")
 		case strings.HasPrefix(last, "[parallel analysis results"):
-			if !strings.Contains(last, "[original user request]\nCompare independent sections in supplied text.") || !strings.Contains(last, "a completion acknowledgement") {
+			if !strings.Contains(last, "[original user request]\n请写一个ROS2的文档") || !strings.Contains(last, "a completion acknowledgement") {
 				t.Error("merge lost original deliverable instruction")
 			}
 			merged.Add(1)
