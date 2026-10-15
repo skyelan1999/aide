@@ -45,12 +45,15 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old scheduler regression FAIL before source edit; changed actual scheduler and cache/scene/source-VM tests PASS. Canonical rebuilt browser and final quick/full/package still pending. No end-to-end cold-first-render speedup claim. Current6bdcb41 quick70 PASS. Exact start.command rebuilt matching320315 image; native Safari shows41715 total nodes, selected reference20000 real nodes and explicit pending/body-gap counts. CUA click+AX/screenshot call48.6s is slow observation, not isolated render measurement. No general first-open or interaction speedup claim; large-scene layout/per-frame cost remains to inspect. Streamed package hashes/tags/platform/launchers/load and both local copies PASS. Fresh full72 pending.",
+      "summary": "Old scheduler regression FAIL before source edit; changed actual scheduler and cache/scene/source-VM tests PASS. Canonical rebuilt browser and final quick/full/package still pending. No end-to-end cold-first-render speedup claim. Current6bdcb41 quick70 PASS. Exact start.command rebuilt matching320315 image; native Safari shows41715 total nodes, selected reference20000 real nodes and explicit pending/body-gap counts. CUA click+AX/screenshot call48.6s is slow observation, not isolated render measurement. No general first-open or interaction speedup claim; large-scene layout/per-frame cost remains to inspect. Streamed package hashes/tags/platform/launchers/load and both local copies PASS. Fresh full72 pending. Fresh full72 terminal FAIL: host disk exhausted, Docker API500/unable-to-start and9999 refused; raw Docker stream unexpected EOF/exit125 before server race/vet completed. Failure receipt retained, not a product assertion or passing gate. Engine stop/start recovery and canonical entry restored healthy same image; five protected hashes/mounts/workspace-config match. Current task still in progress. Reversible archival complete:30 generated before-binaries, host free~8.1GiB; same-input full72 rerun next, failed receipt retained.",
       "evidence": [
         ".agent-state/starmap-current-latency/cache-negative.log",
         ".agent-state/starmap-current-latency/fixed-reference.txt",
         ".agent-state/starmap-current-latency/fixed-reference.jpg",
-        ".agent-state/starmap-current-latency/package.json"
+        ".agent-state/starmap-current-latency/package.json",
+        ".agent-state/starmap-current-latency/full-failed-infrastructure.json",
+        ".agent-state/starmap-current-latency/post-recovery-runtime.log",
+        ".agent-state/starmap-current-latency/recovery-native.txt"
       ]
     },
     "documentation": {
@@ -63,14 +66,18 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "No fixture/config/session/source edits; inherited5 vendor deletions preserved. Mounts, canonical settings/sources/auth and workspace-config bytes unchanged. No prune or volume reset. Private probes retained.",
+      "summary": "No fixture/config/session/source edits; inherited5 vendor deletions preserved. Mounts, canonical settings/sources/auth and workspace-config bytes unchanged. No prune or volume reset. Private probes retained. Disk recovery compressed own20.2MB API probe to4.0MB with round-trip hash; removed only old private Go compiler cache406208616bytes; unreferenced generated Linux before-binaries archived with verified gzip SHA, per-path restore manifest/helper, no user data/archive package deletion. Only two exact-channel star tabs created in this task closed after restoring workspace filter.",
       "evidence": [
-        ".agent-state/starmap-current-latency/runtime-check.log"
+        ".agent-state/starmap-current-latency/runtime-check.log",
+        ".agent-state/starmap-current-latency/regenerable-go-cache-cleanup.json",
+        ".agent-state/starmap-current-latency/archived-build-backups.json",
+        ".agent-state/starmap-current-latency/restore-build-backups.py",
+        ".agent-state/starmap-current-latency/disk-recovery-final.json"
       ]
     },
     "release": {
       "status": "in_progress",
-      "summary": "Incremental6bdcb41 source push and320315 complete local offline image verified. Fresh full72 pending; no main/tag or receiving-device import.",
+      "summary": "Source6bdcb41 and documentationd59856f pushed (remote ref fetch repaired after disk-full local update_ref failure). Local320315 package hashes/import/two copies PASS. Current full72 FAIL infrastructure; no formal release or fresh-full pass. Receiving device import still pending.",
       "evidence": [
         ".agent-state/starmap-current-latency/package.json"
       ]
@@ -78,7 +85,7 @@
   },
   "release_authorization": "Existing incremental source/docs push and local build/offline image authorization; no main/tag formal release.",
   "rollback": "Revert6bdcb41 or use prior00c601 image, preserving all user data volumes/config; no cache/index reset required.",
-  "handoff": "Source6bdcb41 current local image320315, quick70 and native20k-node reference display PASS. Timer regression proves bounded cached-prefix progress under350ms updates, no end-to-end latency improvement claim. Freeze metadata for fresh full72. Large-scene slow interaction/layout and cloud body gaps remain open; original12 goals active.",
+  "handoff": "Current same320315 image healthy after disk exhaustion stopped Docker; protected config/auth/mounts preserved. Source/cache regression and quick70/native display/package PASS; current full72 terminal infrastructure FAIL before server/vet, must rerun with sufficient host space after next product changes. Original12 workstreams active. Next isolate metadata-only graph updates forcing large cosmos rebuild; real module35k-node model~1.18s, native interaction remains slow. No broad loading speedup, real model/provider or receiving-device claim.",
   "runtime": {
     "runningImage": "sha256:320315d7e14bff41f575db81083a43021fd17dd906e28734263c78775de2374c",
     "image": "sha256:320315d7e14bff41f575db81083a43021fd17dd906e28734263c78775de2374c",
@@ -130,10 +137,24 @@
     "next_action": "After current full owner terminal, add regression for metadata-only update preserving cosmos/layout while updating text/readState/search/detail/citations; preserve rebuild on names/path/regions/relationships/source identity changes. Inspect frame paint separately, no unsupported speedup claim."
   },
   "full_owner": {
-    "status": "running",
+    "profile": "full",
+    "status": "fail",
     "sessionId": 4544,
     "container": "aide-verify-2ce546d82286",
-    "record": ".agent-state/starmap-current-latency/full-owner.json",
-    "log": ".agent-state/verify-20261015T002825911727Z.log"
+    "head": "19e402314f1815e9d3f262ba647805cdf3a8514d",
+    "fingerprint": "70c3dde34081dd0bee8a1eb59d27da73c72a94ae7bd764243e241543f3d936ce",
+    "startedObservedUTC": "2026-10-15T00:29:17.194198+00:00",
+    "ownerLog": ".agent-state/starmap-current-latency/full-run.log",
+    "log": ".agent-state/verify-20261015T002825911727Z.log",
+    "reason": "Host disk exhaustion; Docker daemon API500 then unable to start, desktop stopped and health connection refused; own Docker client terminated for recovery. Server race/vet did not complete.",
+    "receipt": ".agent-state/starmap-current-latency/full-failed-infrastructure.json"
+  },
+  "disk_recovery": {
+    "count": 30,
+    "originalBytes": 7658690254,
+    "uniqueCompressedBytes": 4285791032,
+    "hostFreeBytes": 9718304768,
+    "allArchivesVerifiedBeforeRemovingGeneratedOriginal": true,
+    "activeBareBinaryDataPackagesUnchanged": true
   }
 }

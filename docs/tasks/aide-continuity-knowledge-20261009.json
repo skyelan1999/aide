@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Current Safari41715 total/20000 reference nodes; reset API35336 nodes20.2MB/0.3622s. Reproduced350ms updates starving1200ms debounce cache; source6bdcb41 fixes bounded coalescing and old idle owner rejection. Quick70 and actual current image320315/native/package local import PASS. Fresh full72 pending, old72 pass historical only for prior inputs. Large-scene interaction observation slow; further layout/per-frame diagnosis remains. Original12 workstreams remain active; real vectors deferred, Windows user-owned, real-provider and receiving-device acceptance pending.",
+  "handoff": "Terminal FAIL infrastructure: disk exhaustion stopped Docker; streamEOF/exit125, server race/vet incomplete. Same image restored healthy via exact entry and protected hashes/mounts match. Verified reversible old generated-binary compression and private compiler cache cleanup; original data/delivered packages preserved. Next: Full owner4544 is terminalFAIL, receipt .agent-state/starmap-current-latency/full-failed-infrastructure.json. Do not poll/restart stale owner. Finish resource recovery, then diagnose metadata-only layout rebuild and perform current-input full gate. Original12 workstreams active; vectors deferred, Windows user-owned.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6377,6 +6377,7 @@
   "followup130": {
     "task": "docs/tasks/starmap-current-latency-20261015.json",
     "summary": "Current Safari41715 total/20000 reference nodes; reset API35336 nodes20.2MB/0.3622s. Reproduced350ms updates starving1200ms debounce cache; source6bdcb41 fixes bounded coalescing and old idle owner rejection. Quick70 and actual current image320315/native/package local import PASS. Fresh full72 pending, old72 pass historical only for prior inputs. Large-scene interaction observation slow; further layout/per-frame diagnosis remains.",
-    "next_action": "Current full owner live4544/aide-verify-2ce546d82286; freeze inputs until terminal. Readonly real-model profiling shows35k-node cosmos1.18s; metadata-only live updates currently rebuild layout. Next investigate safe metadata/topology distinction and native paint cost."
+    "next_action": "Full owner4544 is terminalFAIL, receipt .agent-state/starmap-current-latency/full-failed-infrastructure.json. Do not poll/restart stale owner. Finish resource recovery, then diagnose metadata-only layout rebuild and perform current-input full gate.",
+    "full_result": "Terminal FAIL infrastructure: disk exhaustion stopped Docker; streamEOF/exit125, server race/vet incomplete. Same image restored healthy via exact entry and protected hashes/mounts match. Verified reversible old generated-binary compression and private compiler cache cleanup; original data/delivered packages preserved."
   }
 }
