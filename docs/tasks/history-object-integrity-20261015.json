@@ -62,8 +62,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Final clean full84 passed; main gate and exact remote push pending. No version/tag/formal Release.",
+      "status": "pass",
+      "summary": "Clean main release-check passed; pushed main and exact ls-remote verified f8e2cd2. This ordinary-document receipt does not change full inputs. No version/tag/formal Release.",
       "evidence": [
         "docs/reviews/2026-10-15/history-object-integrity.md",
         "docker-images/README.md"
@@ -81,5 +81,6 @@
     "sourceCommit": "55381ed6afeba189be27cf078ff79a11e8f1dada",
     "rawLog": "/Volumes/MY PASSPORT/aide_ws/aide/.agent-state/history-object-integrity/verify-20261015T132710770540Z.log",
     "worktree": "/private/tmp/aide-history-integrity-full-20261015"
-  }
+  },
+  "deliveredMain": "f8e2cd2cd383491ffc02d26baf7b600453bd404e"
 }

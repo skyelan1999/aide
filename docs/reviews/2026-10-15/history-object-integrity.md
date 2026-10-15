@@ -40,3 +40,5 @@ go test -mod=vendor -race ./internal/server \
 ## 开发目录切换
 
 用户随后明确要求在移动硬盘新目录开发。最新提交、私有验收记录及本轮完整镜像包已同步至 `/Volumes/MY PASSPORT/aide_ws/aide`；本节及后续收据均在新目录编写。原先五项vendor删除已分别保存为stash和仓库外补丁，当前工作树干净，未丢弃。原目录保留，缓存／产物清理另行记录。此前副本校验收据证明复制时点，不再将现在的副本称为冻结备份。
+
+最终main门禁通过，推送后 `git ls-remote origin refs/heads/main` 精确核对 `f8e2cd2cd383491ffc02d26baf7b600453bd404e`。本条普通文档补收据不改变full输入；未升版、tag或正式Release。

@@ -65,7 +65,12 @@
     "rawLog": "/Volumes/MY PASSPORT/aide_ws/aide/.agent-state/history-object-integrity/verify-20261015T132710770540Z.log",
     "worktree": "/private/tmp/aide-history-integrity-full-20261015"
   },
-  "release": "pending",
+  "release": {
+    "status": "pass",
+    "verifiedMain": "f8e2cd2cd383491ffc02d26baf7b600453bd404e",
+    "releaseCheck": true,
+    "remoteExactMatch": true
+  },
   "package": {
     "image": "sha256:9bc517eba16fa5c713a05ef552ec24d53b4080e4f26e32971e3cf3edb12134cd",
     "sourceSHA256": "6766b920c58364fcce05f1297aac432ee135126f6ee59f3fc4aa23b22c1289ca",

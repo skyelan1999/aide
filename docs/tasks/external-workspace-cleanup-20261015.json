@@ -1,0 +1,60 @@
+{
+  "id": "external-workspace-cleanup-20261015",
+  "request": "用户要求在 /Volumes/MY PASSPORT/aide_ws/aide 完成后续开发，释放旧编译产物和无用缓存，保持分支干净；原目录源码和用户数据保留",
+  "baseline": "f8e2cd2cd383491ffc02d26baf7b600453bd404e",
+  "initial_status": "",
+  "acceptance": [
+    "Develop in external aide_ws/aide with latest committed history fix/evidence and clean branch; inherited changes preserved reversibly.",
+    "Free confirmed reproducible old binaries/caches and original duplicate build packages only after verifying external byte-identical copy; preserve source/user data/logs/canonical rollback artifacts.",
+    "Use specified start.command from new directory, verify health and preserved session/config/auth/data volumes, record intended workspace mount change; source original not deleted."
+  ],
+  "scope": [
+    "docs",
+    "ignored build outputs under original/external .agent-state, .cache and original docker-images",
+    "external .env local paths"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Explicit migration/cleanup instruction replaces earlier frozen-copy-only treatment; original source and user data retained.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-object-integrity.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Sync latest commits/evidence; stash inherited changes; byte-verify external mirrors before duplicate removal, select executable signatures and known build locations. Preserve Docker data/dependency caches; use existing launch path with original Harness context.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-object-integrity.md"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Source/evidence/offline package synced to external root; inherited changes stashed. Build/cache cleanup and external runtime observation pending.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Human: new directory for all further development, release old compiled outputs/useless caches, clean branch; standing incremental main push. No broad Docker prune or data/source removal.",
+  "rollback": "Inherited five vendor deletions retained in independent stashes and migration-state patches; original source and canonical offline packages retained. Rebuild disposable binaries/cache if needed; runtime may use prior image and original mounts.",
+  "handoff": ""
+}
