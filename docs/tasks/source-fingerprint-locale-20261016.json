@@ -1,0 +1,68 @@
+{
+  "id": "source-fingerprint-locale-20261016",
+  "request": "继续原目标：修复已复现的启动源码摘要受区域设置影响，避免无谓重建和离线导出误判，保留全部原目标",
+  "baseline": "b76e04c5416c9ef157e0775f7dcb3970b7d2fb3e",
+  "initial_status": "",
+  "acceptance": [
+    "Source identity is identical under available C and UTF-8 collations that demonstrably order paths differently.",
+    "Generated catalogue/Finder metadata remain excluded; real plugin edits still change identity.",
+    "Focused tests and full gate pass before main push; no runtime rebuild or offline package claim without direct evidence."
+  ],
+  "scope": [
+    "scripts/aide.sh",
+    "scripts/test_source_fingerprint.py",
+    "docker-images/README.md",
+    "docs/tasks/source-fingerprint-locale-20261016.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-16/source-fingerprint-locale.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Locale-dependent startup identity reproduced in previous direct host checks; preserve original goal scope.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-live-reasoning.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Pin only path sorting to portable C collation; retain all existing source selection and hash checks.",
+      "evidence": [
+        "scripts/aide.sh"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Pin path sorting only to C; real host collation regression fails before and passes after.",
+      "evidence": [
+        "scripts/aide.sh",
+        "scripts/test_source_fingerprint.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused tests 2 pass without skips, actual full-tree C/en_US hashes equal; full pending.",
+      "evidence": [
+        "docs/reviews/2026-10-16/source-fingerprint-locale.md"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User authorized incremental tests, push/main, designated start.command and offline package updates; no new version/tag/Release.",
+  "rollback": "Revert scoped commit; preserve existing image and packages. No user data migration.",
+  "handoff": "Fix and focused regression complete. Full verification is live in exec session20653, owner log .agent-state/source-fingerprint-locale-full.log, verify log .agent-state/verify-20261015T234038459468Z.log, owned container aide-verify-759dbb9004a2. Re-poll this handle; do not restart on timeout. Main push requires full success and independent clean-main release-check. Production6d212fa and old offline package unchanged; original12 continue."
+}

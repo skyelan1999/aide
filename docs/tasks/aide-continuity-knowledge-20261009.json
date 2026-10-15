@@ -7751,5 +7751,11 @@
       "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
     ],
     "deliveredMain": "3714593ff6435b2e3e72c509e3a66a5acdc5dee1"
+  },
+  "source_fingerprint_locale_20261016": {
+    "status": "in_progress",
+    "task": "docs/tasks/source-fingerprint-locale-20261016.json",
+    "report": "docs/reviews/2026-10-16/source-fingerprint-locale.md",
+    "evidence": "Real differing host collations reproduce failure before fix; focused tests pass after C path-sort normalization; runtime/package unchanged, full pending."
   }
 }

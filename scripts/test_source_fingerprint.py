@@ -9,6 +9,35 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 
 class SourceFingerprintTests(unittest.TestCase):
+    def test_caller_collation_does_not_change_source_identity(self):
+        # Require a real differing host collation, rather than a locale name
+        # silently falling back to C on machines without locale data.
+        sample = 'internal/A.go\ninternal/a.go\n'
+        def sorted_paths(locale):
+            return subprocess.check_output(['sort'], input=sample, text=True,
+                                           env={**os.environ, 'LC_ALL': locale})
+        baseline_order = sorted_paths('C')
+        locales = subprocess.check_output(['locale', '-a'], text=True).splitlines()
+        alternate = next((name for name in locales
+                          if 'utf' in name.lower() and sorted_paths(name) != baseline_order), None)
+        if alternate is None:
+            self.skipTest('Host has no UTF-8 locale with different path collation')
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            for name in ['cmd', 'internal', 'plugins', 'vendor', 'scripts/office', 'docker/wheels', 'docker/sherpa']:
+                (root/name).mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
+            for name in ['go.mod', 'go.sum', 'Dockerfile', 'compose.yaml', '.dockerignore', 'version.md',
+                         'internal/A.go', 'internal/a.go']:
+                (root/name).write_text(name)
+            def fingerprint(locale):
+                return subprocess.check_output(['bash', 'scripts/aide.sh', 'source-sha'], cwd=root,
+                                               text=True, env={**os.environ, 'LC_ALL': locale}, timeout=10)
+            self.assertEqual(fingerprint('C'), fingerprint(alternate), alternate)
+            first = fingerprint(alternate)
+            (root/'internal/a.go').write_text('changed source')
+            self.assertNotEqual(first, fingerprint('C'))
+
     def test_generated_surface_is_excluded_but_plugin_code_is_included(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

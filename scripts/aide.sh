@@ -12,7 +12,7 @@ source_sha() {
     for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
-  ) | sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
+  ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
 }
 record_archive_sum() {
   local archive_name checksum temporary
