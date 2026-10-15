@@ -1,0 +1,56 @@
+{
+  "status": "pass",
+  "developmentRoot": "/Volumes/MY PASSPORT/aide_ws/aide",
+  "runtime": {
+    "status": "pass",
+    "developmentRoot": "/Volumes/MY PASSPORT/aide_ws/aide",
+    "port": "9999",
+    "image": "sha256:b11bb97fed59692804b1177fe3b11dacf1a2f458df7c6f5d4cc1150792ba2d3b",
+    "sourceSHA256": "4f32f3fc9aeb01a59b159be9e4e82d78ac1fcfd39b33aaef843c3cda70c5bb00",
+    "health": "ok",
+    "protectedSessionConfigAuthHashesPreserved": true,
+    "protectedEntries": 17,
+    "dataHomeVolumesAndContextPreserved": true,
+    "workspaceMount": "/Volumes/MY PASSPORT/aide_ws/aide",
+    "hostRootMount": "/Volumes/MY PASSPORT/aide_ws/aide/.agent-state/host-root",
+    "servedAssetsMatch": true,
+    "imageBuiltFromCleanExternalSource": true
+  },
+  "cleanup": {
+    "recordCount": 253,
+    "logicalBytesRemoved": 95774616849,
+    "logicalBytesByRoot": {
+      "original": 81995029867,
+      "external": 13779586982
+    },
+    "actions": {
+      "remove verified duplicate original build archive": 117,
+      "remove unused generated test executable": 74,
+      "remove regenerable Swift module cache": 2,
+      "remove compressed obsolete AIDE executable backup": 60
+    },
+    "freeAfter": {
+      "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide": 83491688448,
+      "/Volumes/MY PASSPORT/aide_ws/aide": 424614658048
+    },
+    "privateManifestSHA256": "7865433c99b31b7aded6c5987f7ec92360ee6a66e856a04f91a314fd6a8d7f8f",
+    "sourceCodeAndUserDataPreserved": true,
+    "canonicalOfflineArchivesRetainedExternally": true,
+    "dockerPruneUsed": false
+  },
+  "quick": {
+    "status": "pass",
+    "checks": 82,
+    "fingerprint": "b38daba67a0367402712624686c75f7cb3e263a93a0a50573b8dc9e5c7442b13"
+  },
+  "fullReused": {
+    "status": "pass",
+    "checks": 84,
+    "fingerprint": "b38daba67a0367402712624686c75f7cb3e263a93a0a50573b8dc9e5c7442b13",
+    "sourceCommit": "55381ed6afeba189be27cf078ff79a11e8f1dada",
+    "scope": "same controlled input fingerprint; ordinary documentation/local migration only, not a second full run"
+  },
+  "vendorChangesPreserved": "separate original/external stashes and /Volumes/MY PASSPORT/aide_ws/.migration-state/*-vendor-deletions.patch",
+  "rebasedHistoricalFixtureLinks": 6,
+  "release": "pending"
+}

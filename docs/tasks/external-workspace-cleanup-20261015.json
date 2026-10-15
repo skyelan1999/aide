@@ -11,7 +11,8 @@
   "scope": [
     "docs",
     "ignored build outputs under original/external .agent-state, .cache and original docker-images",
-    "external .env local paths"
+    "external .env local paths",
+    "docs/reviews/2026-10-15/external-workspace-cleanup-proof.json"
   ],
   "stages": {
     "requirements": {
@@ -29,32 +30,46 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "Source/evidence/offline package synced to external root; inherited changes stashed. Build/cache cleanup and external runtime observation pending.",
-      "evidence": []
+      "status": "pass",
+      "summary": "External development root synced; inherited changes stashed reversibly, six fixture links rebased, runtime moved with original Harness/data volumes retained; unused artifacts/cache removed with per-file evidence.",
+      "evidence": [
+        "docs/reviews/2026-10-15/external-workspace-cleanup.md",
+        "docs/reviews/2026-10-15/external-workspace-cleanup-proof.json"
+      ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "External quick82 PASS; exact same input fingerprint as clean full84 verified, receipt reused without claiming new full. Health/assets, protected17 hashes and intended mounts verified; no full-browser/model claim.",
+      "evidence": [
+        "docs/reviews/2026-10-15/external-workspace-cleanup.md",
+        "docs/reviews/2026-10-15/external-workspace-cleanup-proof.json"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Repository review and sanitized proof record exact paths, cleanup categories, retained artifacts, rollback and runtime/offline distinction.",
+      "evidence": [
+        "docs/reviews/2026-10-15/external-workspace-cleanup.md",
+        "docs/reviews/2026-10-15/external-workspace-cleanup-proof.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "253 classified artifact/cache entries removed, 89.20GiB logical; original source/user data retained and canonical archives external; no broad Docker prune. Own full worktree/container removed, original/external tracked trees otherwise clean.",
+      "evidence": [
+        "docs/reviews/2026-10-15/external-workspace-cleanup.md",
+        "docs/reviews/2026-10-15/external-workspace-cleanup-proof.json"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Documentation-only final main gate/push pending; no version/tag/formal release.",
+      "evidence": [
+        "docs/reviews/2026-10-15/external-workspace-cleanup.md"
+      ]
     }
   },
   "release_authorization": "Human: new directory for all further development, release old compiled outputs/useless caches, clean branch; standing incremental main push. No broad Docker prune or data/source removal.",
   "rollback": "Inherited five vendor deletions retained in independent stashes and migration-state patches; original source and canonical offline packages retained. Rebuild disposable binaries/cache if needed; runtime may use prior image and original mounts.",
-  "handoff": ""
+  "handoff": "Use /Volumes/MY PASSPORT/aide_ws/aide for every subsequent development command. Runtime9999 now external source; Harness and Docker data/home remain original locations. Canonical offline packages external; local rebuild b11 is distinct from prior exported9bc. Original12 remain open; Safari deferred, Windows user acceptance, real vectors deferred."
 }
