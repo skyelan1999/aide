@@ -422,7 +422,7 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		task.CheckpointStep = "plan"
 	}
 	task.CanResume = true
-	s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt})
+	s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt, SourceRunID: task.ID})
 	s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 	oldSelection, oldSelectionRevision := s.ModelSelection, s.ModelSelectionRevision
 	if s.ModelSelection == nil || s.ModelSelection.Model == "" {
@@ -583,6 +583,9 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		a.mu.Lock()
 		task.Steps[index].Content = out
 		if err != nil {
+			if (task.PauseRequested || errors.Is(ctx.Err(), context.DeadlineExceeded)) && strings.TrimSpace(out) != "" && len(chain) > 0 {
+				task.CheckpointMessages = append(append([]Message(nil), chain...), Message{Role: "assistant", Content: out}, Message{Role: "user", Content: "上一段正文在暂停时被中断。请接着未完成的位置继续，不要重复已经输出的正文；已完成工具仍以此前结果为准。"})
+			}
 			if task.PauseRequested && errors.Is(ctx.Err(), context.Canceled) {
 				task.Steps[index].Status = "paused"
 			} else {
@@ -672,8 +675,8 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 				task.ApprovalState = "reviewing"
 			}
 		}
-		s.Messages = append(s.Messages, Message{Role: "assistant", Content: answer})
 	}
+	a.rememberTaskOutputLocked(s, task, answer)
 	if task.Parallel != nil && task.Parallel.Phase == "merging" {
 		if err == nil {
 			task.Parallel.Phase = "completed"
@@ -881,7 +884,7 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 	}
 	history := append([]Message{}, preview.Messages[:len(preview.Messages)-1]...)
 	firstInput := preview.Messages
-	s.Messages = append(s.Messages, Message{Role: "user", Content: orig.Prompt})
+	s.Messages = append(s.Messages, Message{Role: "user", Content: orig.Prompt, SourceRunID: task.ID})
 	s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 	s.Runs = append(s.Runs, task)
 	if err := a.save(s); err != nil {
@@ -1795,6 +1798,12 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 	clarificationCorrections := 0 // Bound prose-question repair to one extra model round.
 	coverageCorrections := 0
 	researchContinuations := 0 // Repair immediate read commitments at most twice.
+	partialResult := func(round int, out string, chain []Message, err error) (string, []Message, error) {
+		if saveErr := a.saveOutputSegment(task, stepIndex, round, out); saveErr != nil {
+			err = errors.Join(err, saveErr)
+		}
+		return out, chain, err
+	}
 	for round := 0; round < maxRounds; round++ {
 		if err := a.checkpointExecution(task, stepName, input, "model_request", nil, ""); err != nil {
 			return "", input, err
@@ -1837,7 +1846,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		if err != nil {
 			// (a) 用户主动停止：保留已流式输出的部分内容与完整对话链
 			if ctx.Err() != nil {
-				return out, input, ctx.Err()
+				return partialResult(round, out, input, ctx.Err())
 			}
 			// (d) 空响应：上游正常结束但既无正文也无工具调用（长工具链后模型“直接闭嘴”）。
 			// 盲重试只会原样重放空结果；改为注入明确提示后让模型再收尾，最多自动兜底 2 次。
@@ -1857,6 +1866,10 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				msg := fmt.Sprintf("⚠️ 模型连续 %d 次没有生成正文（%s）。已完成 %d 次工具调用，结果见上方记录。请点击「继续」，我会基于这些工具结果直接给出最终结论；如方向有误，也可在输入框补充要求。", emptyFallback-1, strings.TrimSpace(reason), nTools)
 				return msg, input, nil
 			}
+			if strings.TrimSpace(out) != "" {
+				// A visible response is evidence, not a request to replay it blindly.
+				return partialResult(round, out, input, err)
+			}
 			// (c) 真·上游/网络错误（HTTP 5xx、断连、超时）：盲重试一次应对抖动，
 			// 仍失败则把真实错误连同对话链返回，前端显示具体原因而非笼统“未返回回答”。
 			if checkpointErr := a.checkpointExecution(task, stepName, input, "model_retry", nil, ""); checkpointErr != nil {
@@ -1865,9 +1878,9 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 			out, calls, usage, finish, err = completeStream(ctx, cfg, input, params, tools, rec, onDelta, onReasoning)
 			if err != nil {
 				if ctx.Err() != nil {
-					return "", input, ctx.Err()
+					return partialResult(round, out, input, ctx.Err())
 				}
-				return "", input, err
+				return partialResult(round, out, input, err)
 			}
 		}
 		emptyFallback = 0 // 成功拿到正文或工具调用，重置空响应计数
@@ -4719,6 +4732,10 @@ func (a *App) compactSessionForContext(ctx context.Context, sessionID string, cf
 		a.mu.Unlock()
 		return errors.New("该会话正在压缩，请稍后重试")
 	}
+	if err := a.materializeConversationLocked(sess); err != nil {
+		a.mu.Unlock()
+		return err
+	}
 	a.compactingSessions[sessionID] = true
 	// Leave headroom for the new prompt, system/tool schemas, compacted summary,
 	// and estimation error. A 4096-token allowance was too tight for a 16k
@@ -4843,7 +4860,7 @@ func compactSnapshotMatches(current, snapshot []Message) bool {
 	}
 	for i := range snapshot {
 		if current[i].Role != snapshot[i].Role || current[i].Content != snapshot[i].Content ||
-			current[i].Type != snapshot[i].Type || current[i].ReminderID != snapshot[i].ReminderID ||
+			current[i].Type != snapshot[i].Type || current[i].ReminderID != snapshot[i].ReminderID || current[i].SourceRunID != snapshot[i].SourceRunID ||
 			current[i].ToolCallID != snapshot[i].ToolCallID || !reflect.DeepEqual(current[i].ToolCalls, snapshot[i].ToolCalls) {
 			return false
 		}
@@ -4878,6 +4895,11 @@ func (a *App) compactSession(w http.ResponseWriter, r *http.Request) {
 	if a.compactingSessions[sessionID] {
 		a.mu.Unlock()
 		fail(w, 409, errors.New("该会话正在压缩，请稍后重试"))
+		return
+	}
+	if err := a.materializeConversationLocked(sess); err != nil {
+		a.mu.Unlock()
+		fail(w, 500, err)
 		return
 	}
 	snap, split := a.snapshotForCompact(sess)
@@ -5189,6 +5211,10 @@ func (a *App) maybeAutoCompact(ctx context.Context, s *Session, cfg Settings, ta
 	}
 	// 自动压缩按 DSH 口径估算的消息 token 量和当前模型窗口阈值触发。
 	a.mu.Lock()
+	if err := a.materializeConversationLocked(s); err != nil {
+		a.mu.Unlock()
+		return
+	}
 	total := 0
 	if s.Compact != "" {
 		total += contextMessageTokens(Message{Role: "system", Content: "历史摘要（已压缩 " + fmt.Sprint(s.CompactedMessages) + " 条消息）:\n" + s.Compact})

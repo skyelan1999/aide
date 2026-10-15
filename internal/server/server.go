@@ -382,13 +382,14 @@ type ToolCall struct {
 	} `json:"function"`
 }
 type Message struct {
-	Role       string         `json:"role"`
-	Content    string         `json:"content"`
-	Type       string         `json:"type,omitempty"` // #62：消息类型区分；空=普通聊天。voice-in=语音听到；voice-note=小蜜决策/转交说明；voice-ask=小蜜追问
-	ReminderID string         `json:"reminderId,omitempty"`
-	Images     []MessageImage `json:"-"` // #63 扩展：多模态图片，仅 outgoing 首轮用户消息附带，不持久化/不进 UI
-	ToolCalls  []ToolCall     `json:"tool_calls,omitempty"`
-	ToolCallID string         `json:"tool_call_id,omitempty"`
+	SourceRunID string         `json:"sourceRunId,omitempty"` // Local conversation provenance; stripped at provider boundary.
+	Role        string         `json:"role"`
+	Content     string         `json:"content"`
+	Type        string         `json:"type,omitempty"` // #62：消息类型区分；空=普通聊天。voice-in=语音听到；voice-note=小蜜决策/转交说明；voice-ask=小蜜追问
+	ReminderID  string         `json:"reminderId,omitempty"`
+	Images      []MessageImage `json:"-"` // #63 扩展：多模态图片，仅 outgoing 首轮用户消息附带，不持久化/不进 UI
+	ToolCalls   []ToolCall     `json:"tool_calls,omitempty"`
+	ToolCallID  string         `json:"tool_call_id,omitempty"`
 }
 type Session struct {
 	ModelSelectionRevision uint64                 `json:"modelSelectionRevision,omitempty"`

@@ -230,7 +230,9 @@ func outgoingMessages(msgs []Message) []any {
 	for i := range msgs {
 		m := &msgs[i]
 		if len(m.Images) == 0 {
-			out[i] = *m
+			copy := *m
+			copy.SourceRunID = ""
+			out[i] = copy
 			continue
 		}
 		parts := []any{map[string]any{"type": "text", "text": m.Content}}

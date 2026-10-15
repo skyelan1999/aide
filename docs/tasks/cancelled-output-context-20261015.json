@@ -1,0 +1,89 @@
+{
+  "id": "cancelled-output-context-20261015",
+  "request": "修复停止前已输出正文未进入后续模型上下文，并核对阶段输出、暂停恢复与会话隔离",
+  "baseline": "acbc017dc62e66ab3b1728e86c796d79f1b3717c",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "停止/失败前已生成的阶段和正文在后续模型上下文中可读，且明确未完成，不能当执行成功或授权",
+    "等待下个流式数据块时停止保留已输出正文；暂停恢复携带半段文本并继续，保留阶段而不重放工具",
+    "旧会话可确认归属的中断正文在预览和实际请求中一致，预算/统计/指纹更新；尊重压缩和会话隔离",
+    "正常完成时阶段正文同样进入历史；不混入思考/内部提案/辅助worker输出",
+    "真实千问中断后续接/旧会话上下文快照/重启持久化验收，更新文档和完整离线包"
+  ],
+  "scope": [
+    "internal/server/workflow.go",
+    "internal/server/context.go",
+    "internal/server/server.go",
+    "internal/server/attachments.go",
+    "internal/server/provider.go",
+    "internal/server/interrupted_output.go",
+    "internal/server/cancelled_output_context_test.go",
+    "docs/tasks",
+    "docs/architecture/continuity-roadmap.md",
+    "docs/reviews",
+    "docker-images metadata"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "真实取消后新请求缺正文已确认，执行成功分支才追加assistant消息；流式等待取消路径也丢正文，暂停检查点缺当前部分。",
+      "evidence": [
+        ".agent-state/completion-review-delivery/cancelled-context-gap.json",
+        "internal/server/workflow.go",
+        "internal/server/provider.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "以任务归属保存可见正文，旧数据只补可确认的保留历史；预览只读，历史预算/压缩不绕过。暂停保存当前正文与续接提示，停止不变成自动恢复授权。",
+      "evidence": [
+        "internal/server/context.go",
+        "internal/server/staged_output.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "保存公开阶段/中断尾段与本地run归属，旧历史按保留轮次投影并计入统计/指纹；压缩前原子保存补回正文。流式等待取消保留内容，暂停检查点追加尾段续写提示；模型请求不携带本地归属字段。",
+      "evidence": [
+        "internal/server/interrupted_output.go",
+        "internal/server/cancelled_output_context_test.go",
+        "internal/server/workflow.go",
+        "internal/server/context.go",
+        "internal/server/provider.go",
+        "internal/server/attachments.go",
+        "internal/server/server.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "旧数据上下文缺正文负例已观察；替换旧provider的单路径负例复现等待取消时out为空。修复后定向race28.473秒/vet和quick79通过，涵盖真实HTTP停止/暂停恢复请求、阶段合并、旧恢复链、歧义/压缩/删除边界、只读预览和来源字段剥离。待真实提供商与重启验证。",
+      "evidence": [
+        ".agent-state/cancelled-output-context/negative.log",
+        ".agent-state/cancelled-output-context/provider-negative.log",
+        ".agent-state/cancelled-output-context/targeted-final.log",
+        ".agent-state/cancelled-output-context/targeted-fingerprint.json",
+        ".agent-state/cancelled-output-context/quick-frozen.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "补正文历史、预算/压缩边界、失败保存与取消/暂停差异。",
+      "evidence": [
+        "docs/architecture/continuity-roadmap.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户持续授权分部分修改、push、测试及更新离线镜像；千问为指定实测端点。",
+  "rollback": "回退上下文/正文持久化/流式中断变更，无批量会话迁移。新增可选归属字段由旧版本忽略；既有会话、卷与离线镜像保留。",
+  "handoff": ""
+}

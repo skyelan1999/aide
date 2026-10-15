@@ -506,9 +506,9 @@ func completeStreamWithIdleTimeout(ctx context.Context, cfg Settings, messages [
 			return content.String(), nil, TokenUsage{}, "", fmt.Errorf("模型流式响应连续 %s 没有数据，已停止等待；可重试当前任务", idleTimeout)
 		}
 		if streamCtx.Err() != nil {
-			return "", nil, TokenUsage{}, "", streamCtx.Err()
+			return content.String(), nil, TokenUsage{}, "", streamCtx.Err()
 		}
-		return "", nil, TokenUsage{}, "", fmt.Errorf("读取模型流式响应失败: %w", err)
+		return content.String(), nil, TokenUsage{}, "", fmt.Errorf("读取模型流式响应失败: %w", err)
 	}
 	// 按 index 顺序还原 tool_calls
 	callIndexes := make([]int, 0, len(toolCallsByIndex))

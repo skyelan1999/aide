@@ -413,13 +413,17 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 	historyStart := len(history)
 	historyCount := 0
 	if s != nil {
-		start, total := len(s.Messages), 0
-		for start > 0 && total+contextMessageTokens(s.Messages[start-1]) < contextHistoryMaxTokens {
-			start--
-			total += contextMessageTokens(s.Messages[start])
+		conversation := conversationHistory(s)
+		for i := range conversation {
+			conversation[i].SourceRunID = ""
 		}
-		history = append(history, s.Messages[start:]...)
-		historyCount = len(s.Messages) - start
+		start, total := len(conversation), 0
+		for start > 0 && total+contextMessageTokens(conversation[start-1]) < contextHistoryMaxTokens {
+			start--
+			total += contextMessageTokens(conversation[start])
+		}
+		history = append(history, conversation[start:]...)
+		historyCount = len(conversation) - start
 	}
 	history = append(history, Message{Role: "user", Content: prompt + contextText, Images: images})
 	instruction := chatInstruction
@@ -517,6 +521,10 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 		if len(s.Messages) > 0 {
 			fp.Write([]byte(s.Messages[len(s.Messages)-1].Content))
 		}
+	}
+	for _, message := range history[historyStart : len(history)-1] {
+		fmt.Fprintf(fp, "%s:%d:", message.Role, len(message.Content))
+		fp.Write([]byte(message.Content))
 	}
 	paramsJSON, _ := json.Marshal(params)
 	fp.Write(paramsJSON)
