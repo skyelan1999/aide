@@ -163,7 +163,7 @@
       if(inline){clone.style.font=style.font;clone.style.color=style.color;clone.style.lineHeight=style.lineHeight;clone.style.textDecoration=style.textDecoration;}
       // Absolute offsets refer to the padding box, not the source border box.
       const origin={left:r.left+(parseFloat(style.borderLeftWidth)||0),top:r.top+(parseFloat(style.borderTopWidth)||0)};
-      let state=childCursor.get(node)||{index:0,ordinal:0},childIndex=state.index,ordinal=state.ordinal;
+      let state=childCursor.get(node)||{index:0,ordinal:0},childIndex=state.index,ordinal=state.ordinal,resume=null;
       while(childIndex<children.length){const child=children[childIndex];let childRect;
        if(child.nodeType===1)childRect=measured.get(child)||child.getBoundingClientRect();
        else if(child.nodeType===3&&child.nodeValue){const range=node.ownerDocument.createRange();range.selectNodeContents(child);childRect=range.getBoundingClientRect();}
@@ -173,9 +173,12 @@
         if(node.tagName==='OL'&&child.nodeType===1&&child.tagName==='LI')copy.setAttribute('value',child.getAttribute('value')||Number(node.getAttribute('start')||1)+ordinal);
         clone.append(copy);
        }}
-       if(childBottom<=y+h){if(node.tagName==='OL'&&child.nodeType===1&&child.tagName==='LI')ordinal++;childIndex++;}else break;
+       // Parallel table cells may all cross the page bottom. Keep scanning
+       // visible siblings, but resume at the first unfinished child next page.
+       if(childBottom>y+h&&!resume)resume={index:childIndex,ordinal};
+       if(node.tagName==='OL'&&child.nodeType===1&&child.tagName==='LI')ordinal++;childIndex++;
       }
-      childCursor.set(node,{index:childIndex,ordinal});return clone;
+      childCursor.set(node,resume||{index:childIndex,ordinal});return clone;
      };
      for(let i=firstBlock;i<blocks.length&&blocks[i].top<y+h;i++){
       const b=blocks[i];if(b.bottom<=y)continue;const clone=sliceNode(b.node,{left:sourceBox.left,top:sourceBox.top+y});if(clone)page.append(clone);

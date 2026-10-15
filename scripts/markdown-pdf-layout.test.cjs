@@ -21,4 +21,15 @@ context.y=125;context.h=14;vm.runInContext('result=sliceText(node,parent);',cont
 // Preserve source whitespace rules while keeping code indentation exact.
 node.nodeValue='a  bEFGHijkl';style.whiteSpace='normal';context.y=100;context.h=14;vm.runInContext('result=sliceText(node,parent);',context);assert.equal(context.result.children[0].textContent,'a b');
 style.whiteSpace='pre-wrap';vm.runInContext('result=sliceText(node,parent);',context);assert.equal(context.result.children[0].textContent,'a  b');
-console.log('PASS: PDF mixed-inline measured line positions, page clipping, typography and code whitespace');
+// An oversized table row has parallel cells. A tall first cell must not stop
+// the traversal before other cells intersecting the same page are copied.
+const box=(tag,left,width,height,children=[])=>({nodeType:1,tagName:tag,children,childNodes:children,ownerDocument:{defaultView:{getComputedStyle:()=>({display:'block',borderLeftWidth:'0',borderTopWidth:'0'})}},getBoundingClientRect:()=>rect(left,100,width,height),cloneNode(deep){return {tagName:tag,style:{},children:deep?children:[],append(child){this.children.push(child);},querySelectorAll(){return[];}};},querySelectorAll:()=>[],getAttribute:()=>null});
+const row=box('TR',60,674,1800,[box('TD',60,337,1800,[box('P',69,319,24)]),box('TD',397,337,1800,[box('P',406,319,24)])]);
+Object.assign(context,{PAGE:987,measured:new WeakMap(),childCursor:new WeakMap(),sourceBox:{top:100,left:60},y:0,h:987,row});
+vm.runInContext(source.slice(source.indexOf('     const sliceNode='),source.indexOf('     for(let i=firstBlock;'))+'\nresult=sliceNode(row,{left:60,top:100});',context);
+assert.equal(context.result.children.length,2,'all visible cells of a tall row must be retained on each page');
+const late=box('P',69,319,24);late.getBoundingClientRect=()=>rect(69,1100,319,24);row.children[0].children.push(late);
+const lateRight=box('P',406,319,24);lateRight.getBoundingClientRect=()=>rect(406,1100,319,24);row.children[1].children.push(lateRight);
+context.y=987;vm.runInContext('result=sliceNode(row,{left:60,top:1087});',context);
+assert.equal(context.result.children.length,2,'both cells continue on the next page');assert(context.result.children.every(cell=>cell.children.length===1),'earlier cell content is pruned and later content retained');
+console.log('PASS: PDF mixed-inline measured lines, clipping, typography, code whitespace and parallel tall-cell continuation');

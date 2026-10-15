@@ -38,7 +38,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Implemented source-position clones and inline text line fragments, safe breaks and source cell widths; export asset v4 and focused regressions.",
+      "summary": "Implemented source-position clones and inline text line fragments, safe breaks and source cell widths; export asset v4 and focused regressions. Follow-up: oversized row traversal retains all visible parallel cells and resumes the first unfinished child; assetv5.",
       "evidence": [
         "internal/server/web/markdown-export.js",
         "scripts/markdown-pdf-layout.test.cjs",
@@ -47,10 +47,11 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "quick82 passed. Actual browser synthetic mixed content exported17 A4 pages; old16-page fixture reproduced overlap. Poppler pages reviewed; full/main pending. Not original user document or authenticated workbench browser; peak memory unmeasured.",
+      "summary": "Initial quick82 passed. Added tall-row regression failed before fix (one instead of two cells), then focused tests passed. Final actual browser synthetic19-page PDF includes 90 lines in both tall cells; Poppler pages17-19 preserve both columns through89. Final quick/full/runtime update pending.",
       "evidence": [
         ".agent-state/markdown-pdf-mixed-layout/quick.log",
-        ".agent-state/markdown-pdf-mixed-layout/proof.json"
+        ".agent-state/markdown-pdf-mixed-layout/proof.json",
+        ".agent-state/markdown-pdf-mixed-layout/tall-row-before.log"
       ]
     },
     "documentation": {
@@ -78,119 +79,132 @@
   "rollback": "Revert scoped frontend/test changes and restore previous complete image 997eda4026b5; no data migration.",
   "handoff": "Scoped PDF fix, synthetic browser/Poppler and quick82 passed. Local9999 candidate and complete offline package verified. Clean full84/main gate/push pending; original problem document/authenticated browser and receiving-device import not verified.",
   "browserEvidence": {
-    "pages": 17,
+    "pages": 19,
     "renders": [
       {
         "height": 932.53125,
         "canvasWidth": 794,
         "nodes": 64,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 924,
         "canvasWidth": 794,
         "nodes": 73,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 924,
         "canvasWidth": 794,
         "nodes": 73,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 924,
         "canvasWidth": 794,
         "nodes": 73,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 924,
         "canvasWidth": 794,
         "nodes": 73,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 987,
         "canvasWidth": 794,
         "nodes": 538,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 987,
         "canvasWidth": 794,
         "nodes": 749,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 987,
         "canvasWidth": 794,
         "nodes": 665,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 987,
         "canvasWidth": 794,
         "nodes": 779,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 954.46875,
         "canvasWidth": 794,
         "nodes": 738,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 962.0625,
         "canvasWidth": 794,
         "nodes": 134,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 949.828125,
         "canvasWidth": 794,
         "nodes": 140,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 949.828125,
         "canvasWidth": 794,
         "nodes": 140,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 987,
         "canvasWidth": 794,
         "nodes": 66,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 974.390625,
         "canvasWidth": 794,
         "nodes": 56,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
       },
       {
         "height": 975.890625,
         "canvasWidth": 794,
         "nodes": 99,
-        "sourceNodes": 1999
+        "sourceNodes": 2188
+      },
+      {
+        "height": 985.125,
+        "canvasWidth": 794,
+        "nodes": 129,
+        "sourceNodes": 2188
+      },
+      {
+        "height": 975.671875,
+        "canvasWidth": 794,
+        "nodes": 169,
+        "sourceNodes": 2188
       },
       {
         "height": 987,
         "canvasWidth": 794,
-        "nodes": 3,
-        "sourceNodes": 1999
+        "nodes": 84,
+        "sourceNodes": 2188
       }
     ],
     "remainingFrames": 0,
     "scope": "real bundled export/render libraries; synthetic content; no authenticated workbench browser",
     "maxPageNodes": 779,
-    "sourceNodes": 1999,
+    "sourceNodes": 2188,
     "allOwnTabsClosed": true,
     "fixtureServerStopped": true,
-    "pdfSHA256": "92ba069134571fc415e009224beb0f9285ad6db8e7d54d024f7f0e6b773d773b",
-    "pdfBytes": 2932453
+    "pdfSHA256": "0b9837f7769b3db570aae0fb01d3d325ffaa34348d4ce55a1a0bb3cb0dd7ba1c",
+    "pdfBytes": 3268404,
+    "tallTableBothColumns": "L/R0-89 across pages17-19; Poppler visual check"
   },
   "runtime": {
     "image": "sha256:297695c9a0468ecc87b8a33b7db2cdce864a789da7c213948848afb1bcb76589",
