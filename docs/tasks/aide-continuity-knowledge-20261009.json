@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Continue session-only-reasoning-20261015 UI candidate verification/push and starmap renderer profiling. Prior owner2886 terminalPASS, do not poll/reuse its fingerprint for new source. Current local9999 d16b809f97e0; configs reflect Downloads, preserve current selections.",
+  "handoff": "Current branch perf/starmap-frame-work/source39ff208; local9999 image7d3baf350986 via exact start.command. UI dedup62e3c1d remains included. Pending full74 new fingerprint; prior full73 only98d layout. User current Downloads config preserved. Continue large renderer and original12stream audit; native vector deferred, Windows user-owned.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6426,5 +6426,9 @@
   "followup132": {
     "task": "docs/tasks/session-only-reasoning-20261015.json",
     "summary": "62e3c1d removes duplicate model-settings default reasoning control and write. Session choices retained. Native9999 desktop/menu PASS; quick71 and complete local offline candidate d16b809f97e0 verified; full for new UI source not yet run. Original user draft tab preserved. Workspace/config sources differ from prior star baseline; current Downloads not reset. Renderer profiling remains next."
+  },
+  "followup133": {
+    "task": "docs/tasks/starmap-frame-work-20261015.json",
+    "summary": "39ff208 exact dust reuse / unused IR and inactive edge work skipped; actual draw regressions and rounded trace equivalence PASS, repeated VM timing about half in stable frames (not native FPS). Native current workspace progressive265→18167, IR/selection/camera/home observed; cloud body I/O errors retained. Complete local image7d3baf350986 and both local offline copies verified. Full74 pending; preserve original goal scope."
   }
 }

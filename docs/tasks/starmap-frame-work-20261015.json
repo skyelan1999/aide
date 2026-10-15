@@ -36,32 +36,139 @@
       ]
     },
     "implementation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "相对中心尘埃索引与同场景/相机弱映射采样；场景/锁屏/主题清空，红外按启用/过渡生成，选中关系提前过滤；不减少节点/边",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "scripts/starmap-frame-work.test.cjs"
+      ]
     },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "quick72初次PASS；定向实际绘制及光学全区积分、镜头/漂移/场景/红外/选中粒子通过；加强用例后将跑冻结full74",
+      "evidence": [
+        ".agent-state/starmap-frame-work/negative.log",
+        ".agent-state/starmap-frame-work/before-trace.json",
+        ".agent-state/starmap-frame-work/after-trace.json",
+        ".agent-state/starmap-frame-work/selected.txt",
+        ".agent-state/starmap-frame-work/camera.txt"
+      ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "记录计算测量范围、浏览器交互与后续大场景不足",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "默认缓存仅保留当前场景；锁屏/场景重建清空；5项继承vendor删除不stage；证据在忽略目录",
+      "evidence": [
+        "git diff --check"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "本机候选与完整离线包已实际导入核验，本批full74待跑；未做main/tag正式发布或接收端导入",
+      "evidence": [
+        ".agent-state/starmap-frame-work/package.json"
+      ]
     }
   },
-  "release_authorization": "",
-  "rollback": "",
-  "handoff": ""
+  "release_authorization": "用户要求 做一部分，push一部分，测一部分，并沿用完整镜像包直接导入；无main/tag正式发布授权。",
+  "rollback": "回退39ff208对应源码并由原start.command重建；保留此前d16b809f97e0完整离线包。",
+  "handoff": "保持全目标进行中；确认full74终态和指纹后再修改源输入；后续继续布局/绘制与原12项验收，不将模块提速当浏览器FPS。",
+  "sourceCommit": "39ff208",
+  "branch": "perf/starmap-frame-work",
+  "runtime": {
+    "image": "sha256:7d3baf35098613d620aa78b9c3c1e69b12a0d5827b645df6d52f4552935df98e",
+    "runningImage": "sha256:7d3baf35098613d620aa78b9c3c1e69b12a0d5827b645df6d52f4552935df98e",
+    "sourceSHA256": "bdb56cb32f93ce76d8e1dcbcc27b8cf399d9f01f78af7b10b96712f1f79d11b7",
+    "runningPlatformManifest": "sha256:5e0995e92f73dc6518232455d211377fa218ac87ed069a2603dbce48c651ec29",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:7d3baf35098613d620aa78b9c3c1e69b12a0d5827b645df6d52f4552935df98e",
+    "sourceSHA256": "bdb56cb32f93ce76d8e1dcbcc27b8cf399d9f01f78af7b10b96712f1f79d11b7",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-7d3baf350986-offline.tar.gz",
+    "bytes": 705663018,
+    "sha256": "eb96d3d0142e6abb1cc1f758653223fa13cc80dcfca6b9e8e59aebd13c835cb1",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "profile": {
+    "before": [
+      [
+        184.911,
+        170.647,
+        173.592
+      ],
+      [
+        191.86,
+        180.95,
+        173.245
+      ],
+      [
+        187.308,
+        172.191,
+        191.357
+      ]
+    ],
+    "after": [
+      [
+        134.242,
+        80.257,
+        81.581
+      ],
+      [
+        172.374,
+        100.323,
+        98.963
+      ],
+      [
+        136.789,
+        86.285,
+        84.648
+      ]
+    ],
+    "nodes": 17060,
+    "edges": 17059,
+    "gasZones": 75,
+    "dustCallsThreeFrames": {
+      "before": 102357,
+      "after": 17060
+    },
+    "scope": "Node VM actual renderer/model/layout/physics, canvas calls counted without GPU; not Safari latency/FPS",
+    "drawTrace": "Three-frame canvas call/property traces match after rounding floats to1e-8; SHA256 586b0a2676be88723d02049c78cad347a13923d807eb8c9ac52cd37f84a5cea8"
+  },
+  "native": {
+    "client": "Safari localhost9999, exact start.command",
+    "observed": "265→3763→12360→14937→18167 nodes during progressive scan; IR on/off visible, selected BUILD.bazel details retained, drag/zoom visible and home restored",
+    "sourceLimit": "Many source bodies report local I/O errors; filenames/index remain. No claim of completed cloud content extraction.",
+    "restoration": "IR off, home, details closed; owned star tab closed. Original user model drafts untouched.",
+    "evidence": [
+      ".agent-state/starmap-frame-work/ui-open.txt",
+      ".agent-state/starmap-frame-work/infrared-on.jpg",
+      ".agent-state/starmap-frame-work/infrared-off.txt",
+      ".agent-state/starmap-frame-work/selected.txt",
+      ".agent-state/starmap-frame-work/selected.jpg",
+      ".agent-state/starmap-frame-work/camera.jpg",
+      ".agent-state/starmap-frame-work/restored.jpg"
+    ],
+    "limits": "No controlled native before/after FPS; narrow/theme matrix not repeated for this computation-only change; headless browser launcher failed but actual native Safari testing succeeded."
+  }
 }

@@ -38,7 +38,15 @@ for(const key of ['width','height','zoom','yaw','pitch','cosmicAimX','cosmicAimY
 frame(10300);const prior=c.cosmicDustFrame(data),beforeDrift=metrics.dustCalls;c.skyFloat.x=.03;c.skyFloat.y=-.04;frame(10334);assert.strictEqual(c.cosmicDustFrame(data),prior,'common sky drift preserves index');assert.equal(metrics.dustCalls,beforeDrift,'common drift preserves samples');
 for(const star of c.cosmicStars){const cx=c.width*(.57+c.skyFloat.x),cy=c.height*(.5+c.skyFloat.y);assert.ok(Math.abs(c.cosmicDustSample(prior,star,star.p.x,star.p.y,star.z,cx,cy)-transmission(star.p.x,star.p.y,star.z,cx,cy))<1e-11,'drift matches direct physics');}
 assert.notStrictEqual(c.cosmicDustFrame({...data}),prior,'new scene identity invalidates');const priorGas=c.cosmicDustFrame(data);data.gas=[...data.gas];assert.notStrictEqual(c.cosmicDustFrame(data),priorGas,'rebuilt gas invalidates');
-c.selected=c.cosmicStars[0].n;const beforeActive=metrics.dustCalls;frame(10400);assert.ok(metrics.dustCalls>beforeActive,'active incident relation gets its own transmission');assert.ok(metrics.fill>graph.nodes.length,'stars and active particles draw');const afterActive=metrics.dustCalls;frame(10434);assert.equal(metrics.dustCalls,afterActive,'selected edge samples reuse');
+// Isolate the selected-edge pass: hierarchy batches are intentionally absent
+// in large scenes, so inactive edges must not populate the dust cache.
+data.batches=[];c.cosmicDustFrameCache=null;c.selected=null;frame(10380);
+const visibleStars=c.cosmicStars.filter(star=>star.p.onScreen).length;
+assert.equal(c.cosmicDustFrame(data).samples.has(c.cosmicStarEdges[0]),false,'inactive edge pass does not sample relations');
+const relation=c.cosmicStarEdges.find(edge=>c.edgeInView(edge));assert.ok(relation);c.selected=c.nodeByID.get(relation.from);
+const beforeActive=metrics.dustCalls,beforeParticles=metrics.arc;frame(10400);
+assert.ok(metrics.dustCalls>beforeActive,'active incident relation gets its own transmission');assert.ok(metrics.arc-beforeParticles>visibleStars,'selected particles draw in addition to every visible star');
+const afterActive=metrics.dustCalls;frame(10434);assert.equal(metrics.dustCalls,afterActive,'selected edge samples reuse');
 assert.equal(c.cosmicStars.length,graph.nodes.length);assert.equal(c.cosmicStarEdges.length,graph.edges.length);
 assert.ok(source.match(/cosmicSceneCache\.clear\(\);cosmicDustFrameCache=null;/g).length>=6,'scene clear paths, including lock, drop samples');
 console.log('starmap frame work PASS: actual draw; all sources/edges, idle reuse, camera/scene/gas invalidation, optical equivalence, drift, active particles and infrared fade');
