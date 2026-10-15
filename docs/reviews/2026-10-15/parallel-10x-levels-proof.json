@@ -1,5 +1,5 @@
 {
-  "status": "verification_in_progress",
+  "status": "verification_pass_main_pending",
   "runtime": {
     "image": "sha256:dbf35a8d653444c87ed1169ab2aee3110bc292ada46d2b2fdbcf68d13d7ca5f4",
     "runningImage": "sha256:dbf35a8d653444c87ed1169ab2aee3110bc292ada46d2b2fdbcf68d13d7ca5f4",
@@ -91,7 +91,13 @@
     "activeExternalWorkspaceOnly": true,
     "verificationStorage": "streamed hashes/metadata/load in active external workspace; no duplicate outputs recreated in original directory"
   },
-  "full": "pending",
+  "full": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "3aea5e757be8335f04029696a0857e83fa9c0858747c6fc5848ae39c730ccbbc",
+    "serverRaceSeconds": 551.99,
+    "sourceCommit": "169179ecc73f9dbf8ec66519ccaa6ac86fc27556"
+  },
   "main": "pending",
   "boundaries": [
     "actual receiving-device import pending",
@@ -100,5 +106,35 @@
     "real vectors deferred",
     "original12 workstreams remain open"
   ],
-  "schemaAudit": "Model-facing plugin description updated1x-5x or10x; finaldbf actual Qwen ten-section816-character answer passed; prior incomplete full deliberately stopped before fresh final full."
+  "schemaAudit": "Model-facing plugin description updated1x-5x or10x; finaldbf actual Qwen ten-section816-character answer passed; prior incomplete full deliberately stopped before fresh final full.",
+  "startupReuse": {
+    "status": "pass",
+    "sameContainer": true,
+    "sameImage": true,
+    "sourceSHA256": "b3287a97fdd44e937143c506e52d122d6e4b08b9e85552a0ff053cb089ec29fe",
+    "openedBrowser": false,
+    "scope": "actual specified start.command reused final image after source/packaging/docs checks; no new browser tab"
+  },
+  "progressUI": {
+    "scope": "offline current production parallel renderer; final actual task ten titles/statuses, synthetic final answer; not authenticated live workbench",
+    "observed": {
+      "panels": 1,
+      "parts": 10,
+      "answers": 1
+    },
+    "themes": [
+      "dark",
+      "light"
+    ],
+    "narrowColumn390": true,
+    "testTabClosed": true,
+    "fixtureServerStopped": true
+  },
+  "cleanup": {
+    "supersededOwnedImagesRemoved": true,
+    "ownIntermediatePackagesRemoved": true,
+    "rollbackA082Preserved": true,
+    "ownTestTabsAndServersClosed": true,
+    "finalFullFixtureRemoved": true
+  }
 }
