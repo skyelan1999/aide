@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "当前主线7f68a3c的干净full74（server race711.620秒+vet）与合入门禁通过。最新功能分支ab89e85完成总览生命周期73项quick、定向Go race6.449秒/vet及Safari真实模块本地数据验收；它不是新full/main门禁或真实模型验收。历史门禁与设备故障详见各followup和任务记录/Git历史。完整12条工作流仍存在真实模型运行/跨页、用户SSH、部分远端来源/故障、历史管理及大库性能缺口；真实向量按用户暂缓，Windows由用户验收。",
+      "summary": "Latest clean main candidate6abac38 full84 PASS (server race537.169s plus vet), source-index-live real protocol suite race17.935s and isolated actual HTTPS process restart of FTP/FTPS80-file catalogues/literal hashes verified. Main gate/push next. Prior reasoning write/current disk and real Qwen outcome API evidence remain scoped to their task records. Original12 stay in progress: authenticated browser, user-host/fault, large-scale/other-transport and remaining workflow gaps persist; real vectors deferred and Windows user-owned.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -318,7 +318,7 @@
           "shared_catalogue_checkpoint",
           "progressive_over1000_browser"
         ],
-        "remaining": "本地进程重启续扫及Safari超过1000节点增量加载已验证；大库性能、远程大目录及真实FTP/FTPS/HTTP/SMB/MCP来源语义仍需验收。"
+        "remaining": "Actual vsftpd FTP/explicit FTPS selected-scope priority, bounded publication, disk App reload and cancellation retention verified on20261015. Remaining large remote catalogues, server variants, physical faults and HTTP/SMB/MCP indexing semantics; full workbench remains separate."
       },
       "evidence_20261013": [
         "Fresh-process SSH progressive scan resumed coverage 10→20 files in latest integration run; large-library performance and remote provider acceptance remain pending."
@@ -328,6 +328,10 @@
       ],
       "evidence_20261014_current_fixture": [
         "当前源码隔离真实SSH回归17.639s通过；详见followup103。限测试覆盖的服务器端路径，不提升该工作流整体状态。"
+      ],
+      "evidence_20261015_live_ftp": [
+        "docs/reviews/2026-10-15/source-index-live.md",
+        "Actual5c8f109dd119 isolated binary process restart/API: FTP/FTPS selected80-file catalogues resume and complete; new origins/readback; no browser/user host or large-scale performance claim."
       ]
     },
     {
@@ -342,10 +346,13 @@
           "document_continuation_checkpoint",
           "knowledge-hybrid-retrieval-20261009"
         ],
-        "remaining": "Safari原文和关键词RAG续查通过；向量真实提供商及远程全文检索未完整验证。"
+        "remaining": "Actual FTP/FTPS literal retrieval source/path/locator/prepared-body hashes supplemented on20261015; remaining user-host/other remote transports and authenticated browser. Real vector provider remains deferred by user."
       },
       "evidence_20261014_current_fixture": [
         "当前源码隔离真实SSH回归17.639s通过；详见followup103。限测试覆盖的服务器端路径，不提升该工作流整体状态。"
+      ],
+      "evidence_20261015_live_ftp": [
+        "docs/reviews/2026-10-15/source-index-live.md"
       ]
     },
     {
@@ -7055,13 +7062,50 @@
       "Real source suite race17.935s; final Go inputs stable",
       "FTP/explicit FTPS selected scope and priority, bounded partial publication, disk App reload resumes checkpoint, cancellation retains published nodes, catalogue7 completes",
       "Literal production engine returns6 distinct remote files with source/path/locator and exact prepared-body hashes; no model call in new subcase",
-      "Specified start.command updated9999; config/auth/mounts preserved, assets match; complete offline package hash/platform/launchers/docker load/two local copies PASS"
+      "Specified start.command updated9999; config/auth/mounts preserved, assets match; complete offline package hash/platform/launchers/docker load/two local copies PASS",
+      "Isolated actual binary HTTPS API real process restart: initial {'ftp': 8, 'ftps': 1} -> FTP80/FTPS80, retained nodes, new origins, final totalKnown and literal HTTP retrieval hashes PASS",
+      "Fresh clean main full84 PASS, server race537.169s and vet; input fingerprint b24a28a57c8c9209d17c32438c512001f739259342d96b0a05449aaa56110486"
     ],
     "remaining": [
-      "fresh clean full84 and main gate",
-      "full authenticated browser, user-host, physical network failure, large-library and OS-process restart coverage"
+      "main gate and authorized push",
+      "full authenticated browser, user-host, physical network failure, large-library and other-transport OS-process restart coverage"
     ],
     "original12RemainOpen": true,
-    "runtimeImage": "5c8f109dd119"
+    "runtimeImage": "5c8f109dd119",
+    "processRestartEvidence": {
+      "status": "pass",
+      "applicationImage": "sha256:5c8f109dd119762763e4c3ec4fbb1dfcaa503f9c5510d3c43e471792df8cbb2c",
+      "realProcessRestart": true,
+      "newPid": true,
+      "initialPartialCounts": {
+        "ftp": 8,
+        "ftps": 1
+      },
+      "finalCounts": {
+        "ftp": 80,
+        "ftps": 80
+      },
+      "freshOrigins": true,
+      "literalHTTPRetrievalAfterRestart": true,
+      "protocols": [
+        "ftp",
+        "ftps"
+      ],
+      "totalKnownBoth": true,
+      "scope": "isolated real binary HTTPS API and vsftpd, no user data/model/browser; selected80 files per source",
+      "sampleCount": 80,
+      "logSHA256": "5db65026b48a9ca1b951384bf8f6c550a98a9c048b0979bab2e3a1c4beeb4f1f",
+      "probeSHA256": "7b324b48918465e413af8391b77faea92049c875a8951214223be0c3d5cf3311",
+      "cleanupVerified": true
+    },
+    "fullVerification": {
+      "status": "pass",
+      "count": 84,
+      "fingerprint": "b24a28a57c8c9209d17c32438c512001f739259342d96b0a05449aaa56110486",
+      "serverRaceSeconds": 537.169,
+      "sourceCommit": "6abac38c2fbe9fe41c41a6d2c6b0a6398d99967f",
+      "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/source-index-live/verify-20261015T110125275433Z.log",
+      "worktree": "/private/tmp/aide-source-index-full-20261015"
+    }
   }
 }

@@ -7,7 +7,8 @@
     "Actual disposable FTP/FTPS services: bounded batches publish partial nodes, selected scope excludes root files, requested priority appears first",
     "Reload isolated App from encrypted disk checkpoint; subsequent source observations accumulate to complete known selected catalogue",
     "Cancellation preserves published nodes and does not claim full coverage; literal original-text retrieval returns source/path/locator/hash from real remote bytes",
-    "No user sources/settings/model calls; scoped evidence, cleanup and full/main gate kept separate from UI/user-host proof"
+    "No user sources/settings/model calls; scoped evidence, cleanup and full/main gate kept separate from UI/user-host proof",
+    "Supplement: actual isolated binary HTTPS API resumes both FTP/FTPS80-file catalogues across real container process restart; retained nodes, fresh origins and post-restart literal HTTP retrieval hashes verified"
   ],
   "scope": [
     "internal/server/sources_live_test.go",
@@ -40,10 +41,11 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Final entire actual protocol suite race PASS17.935s, new FTP/FTPS index cases8.51s; input hashes stable. Earlier quick82 passed before final hash assertion; fresh clean full84 pending.",
+      "status": "pass",
+      "summary": "Clean main full84 PASS, server race537.169s plus vet. Actual protocol suite race17.935s and isolated binary HTTPS process restart/FTP+FTPS80 files/literal hashes PASS; limits recorded.",
       "evidence": [
-        ".agent-state/source-index-live/protocol-proof.json"
+        "docs/reviews/2026-10-15/source-index-live.md",
+        ".agent-state/source-index-live/full-proof.json"
       ]
     },
     "documentation": {
@@ -61,14 +63,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Full84 complete; clean main gate and authorized push next; no version/tag/formal Release.",
+      "evidence": [
+        ".agent-state/source-index-live/full-proof.json"
+      ]
     }
   },
   "release_authorization": "Standing user authorization: incremental test/docs/push main and offline delivery; no new version/tag/formal Release.",
   "rollback": "Revert scoped test/docs only; disposable source fixture and isolated App storage, no product/data migration.",
-  "handoff": "Real source suite and updated runtime/offline package passed; clean full84/main next. Browser/user-host/OS process restart outside current scoped proof; original12 stay open.",
+  "handoff": "Scoped real FTP/FTPS index/checkpoint/literal and actual process restart/API verified; clean full84 passed; runtime/offline package passed. Main gate next. Original12 and browser/user-host/performance gaps remain.",
   "protocolEvidence": {
     "status": "pass",
     "exit": 0,
@@ -112,5 +116,40 @@
     "copiedBothTrees": true,
     "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
   },
-  "sourceCommit": "e17e867"
+  "sourceCommit": "e17e867",
+  "processRestartEvidence": {
+    "status": "pass",
+    "applicationImage": "sha256:5c8f109dd119762763e4c3ec4fbb1dfcaa503f9c5510d3c43e471792df8cbb2c",
+    "realProcessRestart": true,
+    "newPid": true,
+    "initialPartialCounts": {
+      "ftp": 8,
+      "ftps": 1
+    },
+    "finalCounts": {
+      "ftp": 80,
+      "ftps": 80
+    },
+    "freshOrigins": true,
+    "literalHTTPRetrievalAfterRestart": true,
+    "protocols": [
+      "ftp",
+      "ftps"
+    ],
+    "totalKnownBoth": true,
+    "scope": "isolated real binary HTTPS API and vsftpd, no user data/model/browser; selected80 files per source",
+    "sampleCount": 80,
+    "logSHA256": "5db65026b48a9ca1b951384bf8f6c550a98a9c048b0979bab2e3a1c4beeb4f1f",
+    "probeSHA256": "7b324b48918465e413af8391b77faea92049c875a8951214223be0c3d5cf3311",
+    "cleanupVerified": true
+  },
+  "fullVerification": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "b24a28a57c8c9209d17c32438c512001f739259342d96b0a05449aaa56110486",
+    "serverRaceSeconds": 537.169,
+    "sourceCommit": "6abac38c2fbe9fe41c41a6d2c6b0a6398d99967f",
+    "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/source-index-live/verify-20261015T110125275433Z.log",
+    "worktree": "/private/tmp/aide-source-index-full-20261015"
+  }
 }
