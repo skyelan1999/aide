@@ -28,7 +28,7 @@ func TestConversationParallelPlan(t *testing.T) {
 func parallelFixture(t *testing.T, limit int) (*App, *Session, *Task) {
 	t.Helper()
 	a := testApp(t)
-	task := &Task{ID: "parallel-fixture", Mode: "chat", Parallelism: limit, Status: "running", Steps: []Step{{Name: "chat", Status: "running"}}}
+	task := &Task{ID: "parallel-fixture", Mode: "chat", Parallelism: limit, Prompt: "Analyze independent sections.", Status: "running", Steps: []Step{{Name: "chat", Status: "running"}}}
 	s := &Session{ID: "parallel-session", Runs: []*Task{task}}
 	a.sessions[s.ID] = s
 	return a, s, task
@@ -236,6 +236,9 @@ func parallelEndToEnd(t *testing.T, limit int) {
 			}
 			parallelReply(w, "candidate "+strings.Split(last, "\n")[1])
 		case strings.HasPrefix(last, "[parallel analysis results"):
+			if !strings.Contains(last, "[original user request]\nCompare independent sections in supplied text.") || !strings.Contains(last, "a completion acknowledgement") {
+				t.Error("merge lost original deliverable instruction")
+			}
 			merged.Add(1)
 			if !strings.Contains(last, "candidate section-a") || !strings.Contains(last, "Status: failed") {
 				t.Error("missing partial failure evidence")
@@ -318,6 +321,9 @@ func TestConversationParallelROS2Document(t *testing.T) {
 			drafted.Add(1)
 			parallelReply(w, "ROS2 section draft; distribution-specific commands require verification.")
 		case strings.HasPrefix(last, "[parallel analysis results"):
+			if !strings.Contains(last, "[original user request]\nCompare independent sections in supplied text.") || !strings.Contains(last, "a completion acknowledgement") {
+				t.Error("merge lost original deliverable instruction")
+			}
 			merged.Add(1)
 			if drafted.Load() != 5 {
 				t.Error("merged before five drafts finished")

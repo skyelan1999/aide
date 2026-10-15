@@ -245,6 +245,10 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		}
 		fmt.Fprintf(&briefing, "\nPart %d: %s\nStatus: %s\n%s\n", i+1, part.Title, part.Status, parallelClip(part.Content, 4000))
 	}
+	// Keep the original deliverable explicit after the working notes. In long
+	// contexts the model can otherwise acknowledge the analysis instead of
+	// producing the document or answer the user actually requested.
+	fmt.Fprintf(&briefing, "\n[original user request]\n%s\n[end original user request]\nNow deliver the actual answer or document requested above, using the notes as supporting material. Include its substantive content in your reply; a completion acknowledgement, status report, or claim that drafting is done is not a deliverable. Preserve the original scope and tool restrictions.\n", task.Prompt)
 	if successes == 0 {
 		return fallback("所有子分析未完成，由主任务继续处理")
 	}
