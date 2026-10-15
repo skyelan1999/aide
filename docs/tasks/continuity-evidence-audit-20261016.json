@@ -1,0 +1,79 @@
+{
+  "id": "continuity-evidence-audit-20261016",
+  "request": "继续总目标，复核当前推理强度写回，按最新实际证据对齐12条工作流的已验收与剩余项；Windows用户验收，真实向量暂缓",
+  "baseline": "f2c7e226100a609b14fd402db72a22b3169afc3a",
+  "initial_status": "",
+  "acceptance": [
+    "当前9999两个自建会话验证五档推理强度，API与磁盘一致，过期revision和非法值拒绝，不调用模型。",
+    "清理全部自建会话，原会话和全局设置除合法递增计数外保持。",
+    "原12项逐条对照最新证据，纠正旧待验描述，缺证据仍未完成；Windows用户负责，真实向量暂缓。",
+    "普通文档同输入复用full86，独立main门禁后推送并核对远端。"
+  ],
+  "scope": [
+    "docs/tasks/continuity-evidence-audit-20261016.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-16/continuity-current-audit.md",
+    "docs/reviews/2026-10-16/continuity-current-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "保留原12项完整目标，优先当前推理写回，盘点证据缺口。",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docs/tasks/continuity-evidence-audit-20261016.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "两个独占验收会话，无模型调用；API与磁盘比对、负路径、原会话哈希和清理。",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docs/tasks/continuity-evidence-audit-20261016.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "No product change required by current reasoning reproduction. Twelve-row authoritative evidence matrix and latest ledger view added; historical records retained.",
+      "evidence": [
+        "docs/reviews/2026-10-16/continuity-current-audit.md",
+        "docs/reviews/2026-10-16/continuity-current-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual9999 two-session five-level API/disk and rejection paths pass; original data/cleanup verified. Code fingerprint exactly matches prior full86; no new full run claimed.",
+      "evidence": [
+        "docs/reviews/2026-10-16/continuity-current-audit.md",
+        "docs/reviews/2026-10-16/continuity-current-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Requirements retained verbatim in master ledger; twelve current evidence/gap records and superseded global-entry requirement clarified.",
+      "evidence": [
+        "docs/reviews/2026-10-16/continuity-current-audit.md",
+        "docs/reviews/2026-10-16/continuity-current-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Two owned sessions deleted and404 verified, original sessions/config/auth/sources preserved; monotonic37->39 counter retained. No browser/container/worktree created.",
+      "evidence": [
+        "docs/reviews/2026-10-16/continuity-current-audit.md",
+        "docs/reviews/2026-10-16/continuity-current-proof.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Same-input full86 reuse confirmed; clean-main independent gate and push pending.",
+      "evidence": [
+        "docs/reviews/2026-10-16/continuity-current-audit.md",
+        "docs/reviews/2026-10-16/continuity-current-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "沿用用户分批push、合main及维护文档的授权。本次不重建或重复导出同一镜像。",
+  "rollback": "仅回退本批普通文档；自建会话清理，合法会话编号不回退。",
+  "handoff": "Keep original12 active. Next focus: multi-stage evidence paths/conclusion evolution plus SSH/browser workflow gaps. Windows user-owned, vectors deferred. No runtime/image rebuild."
+}

@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Latest clean main candidate efafb6d full84 PASS (server race531.739s plus vet). FTPS pacing fix has actual protocol race/timings, new binary HTTPS process restart and Docker-network recovery/literal hash evidence; independent SFTP capability/default-user/parser APIs supplemented. Clean main gate passed; cea9eb6 pushed and independent remote SHA verified. Prior reasoning write/disk and real Qwen outcome evidence stay scoped to their tasks. Original12 remain in progress: full authenticated browser, user-host/physical faults, IPv6/large-library/other transport and remaining workflow requirements; vectors deferred, Windows user-owned.",
+      "summary": "Current code baseline f2c7e22 reuses exact-input full86 (source cc114734, server race552.597s/vet). Current9999 reasoning all5 values across2 owned sessions/10 writes, API/disk,409/400 and cleanup pass. Original12 re-audited against latest evidence, all remain in_progress; complete authenticated UI/user-host boundaries remain scoped. Windows user-owned, vectors deferred.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -117,7 +117,8 @@
         "2026-10-13 当前工作树 HEAD 3af5e3b：`python3 scripts/agent-route.py verify quick` 40项 PASS，fingerprint 55a65bb8b25e235dacf93e1bd71c5ffd96bc6cabde585cd46e9fd4fe363148b2，收据 `.agent-state/verify-20261013T040326065962Z.log`。本 profile 不覆盖 SSH PTY Go 行为、真实 Safari 交互、真实模型或用户主机联调。",
         "2026-10-13 continuation, current HEAD 74ad5e5 in healthy aide-aide-1: 11 approval tests passed under `go test -mod=vendor -race -p=1 ./internal/server -run '^(TestApprovalRememberExpiryFromAnswer|TestApprovalRuleManagement|TestConcurrentApprovalExpiryAndRevocationUseRevisionGuard|TestRememberedApprovalReceiptAndOutcome|TestAssistedApprovalNewFiles|TestGlobalApprovalModeManualStopsReviewAcrossSessions|TestRememberedApprovalDoesNotCrossSSHRoot|TestGlobalApprovalModeAssistedDoesNotMarkPausedTasksReviewing|TestApprovalPolicyBroadcastSurvivesFullGlobalEventQueue|TestWorkflowApprovalConflictAndPersistence|TestRunShellRequiresExactConfirmationForWrites)$' -count=1 -timeout=180s` (15.314s). Safari localhost:9999 read-only inspection of dedicated session #48 found the long response already completed; it did not expose a running pause control, so no pause UI conclusion is drawn. This evidence does not close the full goal, real user-host SSH, or UI/live-provider acceptance.",
         "2026-10-13 系统 Safari 现场反证：9999 的独立长上下文会话 #46 压缩显示“摘要处理中 · 分段整理 1/1”，早期消息 4 条、估算约 13.3K；只读复查时 elapsed 已到 57 分 38 秒仍未显示“进度已停滞”。同时该会话的合成长回答显示运行约 57 分 42 秒。未点击停止/重试、未发送新消息、未重启服务。当前源码 `node scripts/test_context_compaction_ui.cjs` PASS，覆盖 3 分钟无更新后的 stalled UI；`node --check internal/server/web/app.js` 与 `git diff --check` PASS。源码单测与系统 Safari 现场不一致，说明 9999 加载的前端/进度 API运行时状态仍需查明；未把压缩端到端验收标为通过。",
-        "docs/tasks/outcome-overview-polling-20261015.json"
+        "docs/tasks/outcome-overview-polling-20261015.json",
+        "docs/reviews/2026-10-16/continuity-current-audit.md"
       ]
     },
     "documentation": {
@@ -182,7 +183,16 @@
       ],
       "evidence_20261014_current_fixture": [
         "当前源码隔离真实SSH回归17.639s通过；详见followup103。限测试覆盖的服务器端路径，不提升该工作流整体状态。"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "草稿导航、文件位置和星图镜头恢复有先前页面/组件证据；当前full覆盖恢复代际与会话/工作区隔离回归。",
+        "evidence": [
+          "docs/tasks/chat-draft-navigation-20261015.json",
+          "docs/architecture/continuity-roadmap.md"
+        ],
+        "remaining": "当前完整工作台的刷新/重开、SSH文件光标与目录现场、多标签恢复分支和容量边界仍需直接验收。"
+      }
     },
     {
       "name": "保存状态与冲突",
@@ -210,7 +220,16 @@
       ],
       "evidence_20261015_object_integrity": [
         "docs/reviews/2026-10-15/history-object-integrity.md"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "已补真实ENOSPC/权限故障、部分成功返回、准确正文哈希、409和重试；UI部分保存状态也已有修复与组件证据。",
+        "evidence": [
+          "docs/reviews/2026-10-15/storage-fault-live.md",
+          "docs/reviews/2026-10-15/history-partial-save.md"
+        ],
+        "remaining": "当前认证工作台中的SSH历史恢复/自动保存联动、保存状态与冲突对比交互仍需复核。物理网络中断属于尚未测到的边界，不用ENOSPC替代。"
+      }
     },
     {
       "name": "Markdown 历史闭环",
@@ -244,7 +263,17 @@
       ],
       "evidence_20261015_object_integrity": [
         "docs/reviews/2026-10-15/history-object-integrity.md"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "已有正文/直接资源恢复、外部变化去重、ZIP导出与导入预览/合并、管理预览证据；另已修复损坏历史对象被复用并补实际二进制验收。",
+        "evidence": [
+          "docs/tasks/markdown-history-storage-ui-20261015.json",
+          "docs/reviews/2026-10-15/history-object-integrity.md",
+          "docs/reviews/2026-10-15/history-partial-save.md"
+        ],
+        "remaining": "完整工作台的嵌入内容展示、恢复后状态与管理操作尚未形成全流程证据；不可逆清理/保留策略实际执行仍按原审批边界处理。"
+      }
     },
     {
       "name": "真实环境验收",
@@ -263,7 +292,16 @@
       },
       "evidence_20261014_current_fixture": [
         "当前源码隔离真实SSH回归17.639s通过；详见followup103。限测试覆盖的服务器端路径，不提升该工作流整体状态。"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "本地及隔离真实SSH协议链、跨会话审批与旧Safari锁态已有分范围证据；当前9999健康、配置/会话保全也已核对。",
+        "evidence": [
+          "docs/reviews/2026-10-15/ssh-approval-lifecycle.md",
+          "docs/reviews/2026-10-16/workbench-polish.md"
+        ],
+        "remaining": "当前完整工作台的创建/修改/保存/重开/恢复、锁屏与长期打开联测仍缺；用户SSH主机未代验。Windows继续由用户验收。"
+      }
     },
     {
       "name": "任务成果舱",
@@ -283,7 +321,16 @@
       "plugin_graph_checkpoint_20261015": "Recovered uncertain graph nodes retained in outcome gaps, identity-deduplicated and detached from private arguments/results/proposals. Scoped race evidence; live model/outcome synchronisation remains pending.",
       "evidence_20261015_live_outcome": [
         "docs/reviews/2026-10-15/outcome-live-reasoning-audit.md"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "真实Qwen隐藏活动及runningRuns归零、旧任务retry输入边界已验证；当前快照发布记录导入、去重、伪造来源/旧快照/错误会话拒绝也已验证。",
+        "evidence": [
+          "docs/reviews/2026-10-15/outcome-hidden-active-live.md",
+          "docs/reviews/2026-10-15/outcome-live-reasoning-audit.md"
+        ],
+        "remaining": "完整已认证工作台跨页、隐藏活动的可见呈现及发布记录卡/导入控件仍待验。操作者记录不是远端部署成功；不能把API隐藏活动继续列成完全未验。"
+      }
     },
     {
       "name": "审批与授权管理",
@@ -303,7 +350,16 @@
       "plugin_graph_checkpoint_20261015": "Backend real-Node graph test serialized two control confirmations, approved first only, rejected second; current source admission rechecks sandbox/task/global tool policy. Dedicated live-browser graph approval workflow and remaining authorization acceptance still pending.",
       "evidence_20261015_ssh_authorization": [
         "docs/reviews/2026-10-15/ssh-approval-lifecycle.md"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "真实隔离SSH授权的期限、撤销、精确身份和模式切换已有协议/API证据；会话停止与暂停隔离又补了真实模型复核。",
+        "evidence": [
+          "docs/reviews/2026-10-15/ssh-approval-lifecycle.md",
+          "docs/tasks/session-run-interaction-20261015.json"
+        ],
+        "remaining": "当前Safari并发撤销/过期控件、跨会话逆向模式即时同步和用户SSH主机行为仍待直接验收。"
+      }
     },
     {
       "name": "连接能力仪表",
@@ -327,7 +383,17 @@
       ],
       "evidence_20261015_smb": [
         "docs/reviews/2026-10-15/smb-index-live.md"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "独立SFTP读写/失败恢复、四个解析器导入已有证据；真实模型读取、图像理解和并行调度也有独立任务记录。",
+        "evidence": [
+          "docs/reviews/2026-10-15/source-capability-live.md",
+          "docs/tasks/provider-output-interruption-20261015.json",
+          "docs/tasks/parallel-10x-levels-20261015.json"
+        ],
+        "remaining": "完整认证仪表的状态/错误展示、用户SSH目录权限、插件实际工具结果与仪表的一致性仍缺完整工作流证据。解析器能导入不等于任意文档处理通过。"
+      }
     },
     {
       "name": "渐进索引",
@@ -368,7 +434,18 @@
       ],
       "evidence_20261015_smb": [
         "docs/reviews/2026-10-15/smb-index-live.md"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "本地5000文件和FTP/FTPS选定目录续扫/重启已有证据；HTTP单资源、MCP能力说明、SMB单资源也已补真实服务链。",
+        "evidence": [
+          "docs/reviews/2026-10-15/source-index-live.md",
+          "docs/reviews/2026-10-15/ftps-index-latency.md",
+          "docs/reviews/2026-10-15/http-mcp-index-live.md",
+          "docs/reviews/2026-10-15/smb-index-live.md"
+        ],
+        "remaining": "当前完整星图对真实目录的首屏、逐批可见、优先范围/预算/覆盖提示仍需联测。单资源HTTP/MCP/SMB证据不能证明其远端目录扫描；大远程库与服务变体属于单列边界。"
+      }
     },
     {
       "name": "混合检索",
@@ -395,7 +472,17 @@
       ],
       "evidence_20261015_smb": [
         "docs/reviews/2026-10-15/smb-index-live.md"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "FTP/FTPS、HTTP/MCP说明和SMB的字面检索、原文指纹/身份及重启后定位已有实际协议证据。",
+        "evidence": [
+          "docs/reviews/2026-10-15/source-index-live.md",
+          "docs/reviews/2026-10-15/http-mcp-index-live.md",
+          "docs/reviews/2026-10-15/smb-index-live.md"
+        ],
+        "remaining": "当前认证浏览器中查询到原文/位置的完整链仍需验证；用户主机/协议变体另列。真实向量提供商按用户要求暂缓，不擅自调用。"
+      }
     },
     {
       "name": "代码关系可信度",
@@ -415,7 +502,16 @@
       "evidence_20261015_code_relation_live": [
         "docs/reviews/2026-10-15/code-relation-live.md",
         "docs/reviews/2026-10-15/code-relation-live-proof.json"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "JS/Python词法遮蔽与Go接口误连已修复，真实SFTP保持候选/确定/未解析边界及调用位置；不是只停留在旧的两包样例。",
+        "evidence": [
+          "docs/reviews/2026-10-15/code-relation-live.md",
+          "docs/tasks/knowledge-language-service-20261009.json"
+        ],
+        "remaining": "当前完整浏览器的可信度标识和诊断联动仍需验收；完整依赖项目及其他语言未证明。已有外部调用保持未解析，不能将其描述为已完成跨依赖类型绑定。"
+      }
     },
     {
       "name": "星图路径探索",
@@ -434,7 +530,17 @@
       "evidence_20261015_code_relation_live": [
         "docs/reviews/2026-10-15/code-relation-live.md",
         "docs/reviews/2026-10-15/code-relation-live-proof.json"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "真实SFTP路径API、确定调用行列、旧revision409与原文哈希已验证；引用文件快速预览另有组件与接口证据。",
+        "evidence": [
+          "docs/reviews/2026-10-15/code-relation-live.md",
+          "docs/tasks/starmap-file-preview-20261015.json",
+          "docs/tasks/knowledge-path-exploration-20261009.json"
+        ],
+        "remaining": "按钮到服务的完整多段链、报告到来源的可证明路径及浏览器行号/段落跳转，仍未形成端到端证据；主题/窄屏/SSH交互不能由路径API代验。"
+      }
     },
     {
       "name": "知识时光",
@@ -463,7 +569,16 @@
       ],
       "evidence_20261015_storage_fault": [
         "docs/reviews/2026-10-15/storage-fault-live.md"
-      ]
+      ],
+      "current_audit_20261016": {
+        "status": "in_progress",
+        "latestScopedEvidence": "本地/隔离SSH节点增改移除、前后原文、容量和留存已有证据；真实存储故障与新PID回读又补了后端边界。",
+        "evidence": [
+          "docs/tasks/knowledge-timeline-20261009.json",
+          "docs/reviews/2026-10-15/storage-fault-live.md"
+        ],
+        "remaining": "当前SSH浏览器时间比较、历史依据的完整定位和结论演变仍需直接证据；不从文件增改自动推断语义结论演变。"
+      }
     }
   ],
   "index_policy_progress": {
@@ -7475,5 +7590,20 @@
     "task": "docs/tasks/workbench-polish-20261016.json",
     "summary": "Shared workbench geometry/icons and browser-local backgrounds delivered; full86, browser MP4/GIF/reload/six themes/narrow, runtime/offline and independent main gate/remote SHA pass. Original12 stay open.",
     "deliveredMain": "7f0e876802905b9327c666b4c76510909ad5e035"
+  },
+  "latest_evidence_audit": {
+    "date": "2026-10-16",
+    "task": "docs/tasks/continuity-evidence-audit-20261016.json",
+    "report": "docs/reviews/2026-10-16/continuity-current-audit.md",
+    "workstreams": 12,
+    "goalComplete": false,
+    "priorityReasoning": "Current9999 API/disk all5 values,2 sessions/10 writes,409/400,cleanup pass; full authenticated UI still deferred. Global duplicate control was removed by later user request.",
+    "nextIndependentFocus": "Complete multi-stage star-map evidence paths and conclusion-evolution requirements; keep SSH/UI recovery and authorization gaps."
+  },
+  "followup168": {
+    "task": "docs/tasks/continuity-evidence-audit-20261016.json",
+    "status": "in_progress",
+    "classification": "progress",
+    "summary": "Current reasoning5 levels/2 sessions/API+disk/409/400 and cleanup verified, no model calls. All12 reconciled with newer scoped evidence; old missing hidden-active/import/SFTP/fault claims corrected without marking full workstreams complete. Same-input full86 verified; independent main gate/push next."
   }
 }
