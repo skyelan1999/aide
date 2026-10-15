@@ -522,6 +522,10 @@
       [
         "node",
         "scripts/markdown-diagrams.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/starmap-ai-exploration.test.cjs"
       ]
     ],
     "full": [

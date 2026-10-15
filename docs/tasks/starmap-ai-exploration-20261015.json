@@ -1,0 +1,79 @@
+{
+  "id": "starmap-ai-exploration-20261015",
+  "request": "知识星图里ai辅助探索不好用",
+  "baseline": "bd11bcc15c15de33d9e9d00c5ad778239b82fa8f",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "同工作区渐进扫描不打断AI理解，回答标明资料更新与请求范围",
+    "停止立即释放按钮；迟到成功、错误及finally不得覆盖新请求、锁屏或新工作区",
+    "无选中和结果时提示选择或搜索，不隐式理解全库前8项；空问题有合理默认",
+    "回答安全排版，引用只指向本次真实返回的节点或文档片段",
+    "相关自动回归、浏览器组件验收与文档记录真实结果"
+  ],
+  "scope": [
+    "internal/server/web/starmap*",
+    "scripts/starmap-ai-exploration.test.cjs",
+    "scripts/starmap-live-metadata.test.cjs",
+    "docs/agent/router.json",
+    "docs/tasks",
+    "docs/architecture/knowledge-map.md",
+    "docs/reviews/2026-10-15"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户未细化体验问题；先修已确认的扫描中断、无取消、范围不明与纯文本可读性。",
+      "evidence": [
+        "internal/server/web/starmap.js:askAI/applyLiveUpdate"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "独立请求所有权，后台更新保留本次资料快照提示；范围明确与安全DOM排版。保持无工具、45秒后端边界，前端55秒兜底。",
+      "evidence": [
+        "internal/server/web/starmap-assist.js",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "独立取消/迟到响应保护、一键理解、范围校验、可点击真实引用与可滚动面板。",
+      "evidence": [
+        "internal/server/web/starmap-assist.js",
+        "internal/server/web/starmap.css",
+        "internal/server/web/starmap.html"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "行为回归及实际浏览器隔离页、千问单样本已通过；最终quick/full与部署资产核对待补。",
+      "evidence": [
+        "scripts/starmap-ai-exploration.test.cjs",
+        ".agent-state/starmap-ai-exploration/live-proof.json",
+        ".agent-state/starmap-ai-exploration/dark.png",
+        ".agent-state/starmap-ai-exploration/narrow-dark.png"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "架构与修复记录已更新，最终镜像/门禁/交接收据待补。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docs/reviews/2026-10-15/starmap-ai-exploration.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户原话“做完这个把所有内容和到main上”，分部分测试和推送、指定start.command启动及完整离线镜像包交付；不升版/tag/正式Release。",
+  "rollback": "回退本批前端与回归提交；旧镜像包保留。没有用户数据迁移，不覆盖五个继承的vendor删除。",
+  "handoff": "修复和验收进行中；完整9999浏览器仍受此前证书阻挡，组件验收不冒称真实端到端；原12项连续目标保持未完成。"
+}

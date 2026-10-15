@@ -878,7 +878,7 @@ function nodeResults(announce=true){
 function search(){resetDocumentBatch();searchQuery=$('search').value.trim().toLowerCase();if(retrievalMode()!=='nodes'){documentGeneration++;selected=null;revealPanel($('detail'),false);documentAbort?.abort();$('results').replaceChildren();results=[];resultIDs.clear();invalidateView();say('输入问题后点击探索，检索文档正文。');redraw();return;}nodeResults();}
 
 function nodeDetailText(n){if(n.readState==='unavailable')return '正文暂不可读取；当前仅显示文件信息，其他文件继续索引。';if(n.readState==='pending')return '当前内容等待分批复核；仅显示文件信息。';return n.text||'此节点仅索引名称，尚未读取正文。';}
-function select(n,focus=true){if(selected?.id!==n.id)beginGraphTransition();$('document-insight').hidden=true;selected=nodeByID.get(n.id)||n;revealPanel($('detail'),true);if(cosmicEnabled&&focus)cosmicLocate(selected);else if(!cosmicEnabled&&focus&&Number.isFinite(selected.x))moveCamera({yaw:-selected.x,pitch:-selected.y,zoom:Math.max(zoom,1.08)},650);$('detail-name').textContent=n.name;$('detail-region').textContent=n.kind==='symbol'?'CODE / '+n.language:n.region==='sessions'?'CONVERSATION / 会话':n.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('detail-id').textContent=n.id;$('detail-path').textContent=(n.path||'会话 #'+n.number)+(n.line?' : '+n.line+'–'+n.endLine:'');$('detail-text').textContent=nodeDetailText(n);const edges=edgeAdjacency.get(n.id)||[];$('neighbors').textContent=`${edges.length} 条连接 · ${n.kind==='symbol'?'声明附近片段':(n.size||0)+' 字节'}`;$('insert').disabled=n.kind==='directory';$('understand').disabled=n.kind==='directory';syncNodeSourceChrome();renderCodeInsight(n);redraw();}
+function select(n,focus=true){if(selected?.id!==n.id){beginGraphTransition();$('detail').scrollTop=0;}$('document-insight').hidden=true;selected=nodeByID.get(n.id)||n;revealPanel($('detail'),true);if(cosmicEnabled&&focus)cosmicLocate(selected);else if(!cosmicEnabled&&focus&&Number.isFinite(selected.x))moveCamera({yaw:-selected.x,pitch:-selected.y,zoom:Math.max(zoom,1.08)},650);$('detail-name').textContent=n.name;$('detail-region').textContent=n.kind==='symbol'?'CODE / '+n.language:n.region==='sessions'?'CONVERSATION / 会话':n.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('detail-id').textContent=n.id;$('detail-path').textContent=(n.path||'会话 #'+n.number)+(n.line?' : '+n.line+'–'+n.endLine:'');$('detail-text').textContent=nodeDetailText(n);const edges=edgeAdjacency.get(n.id)||[];$('neighbors').textContent=`${edges.length} 条连接 · ${n.kind==='symbol'?'声明附近片段':(n.size||0)+' 字节'}`;$('insert').disabled=n.kind==='directory';$('understand').disabled=n.kind==='directory';syncNodeSourceChrome();renderCodeInsight(n);redraw();}
 function renderCodeInsight(n){
  const on=codeView||n.kind==='symbol';$('code-insight').hidden=!on;if(!on)return;
  $('code-signature').textContent=n.signature||'';$('code-location').textContent=n.kind==='symbol'?`${n.language} · ${n.symbolKind} · L${n.line}–L${n.endLine} · ${n.id}`+(n.contentHash?' · SHA '+n.contentHash.slice(0,10):''):'文件 / 模块视角';
@@ -899,7 +899,7 @@ function renderCodeInsight(n){
  $('code-recursion').textContent=cycle?'静态候选闭环：'+cycle.map(id=>byID.get(id)?.name||id).join(' → '):'未发现12层 / 600步范围内的候选闭环；不构成无递归证明。';
 }
 function syncCodeView(){for(const [id,on]of [['view-code',codeView],['view-knowledge',!codeView]]){$(id).setAttribute('aria-pressed',String(on));$(id).disabled=loading;}$('code-tools').hidden=!codeView;$('retrieval-mode').disabled=codeView;document.body.classList.toggle('code-view',codeView);}
-$('view-code').onclick=()=>{if(loading||codeView)return;codeView=true;syncCodeView();load()};$('view-knowledge').onclick=()=>{if(loading||!codeView)return;codeView=false;syncCodeView();load()};
+$('view-code').onclick=()=>{if(loading||codeView)return;aiExplorer.cancel();$('answer').textContent='';$('usage').textContent='';$('ai-found').replaceChildren();codeView=true;syncCodeView();load()};$('view-knowledge').onclick=()=>{if(loading||!codeView)return;aiExplorer.cancel();$('answer').textContent='';$('usage').textContent='';$('ai-found').replaceChildren();codeView=false;syncCodeView();load()};
 if($('call-depth')){callDepth=$('call-depth').value;$('call-depth').onchange=()=>{beginGraphTransition();relationshipOverview();callDepth=$('call-depth').value;if(selected){focusCode=true;$('focus-code').setAttribute('aria-pressed','true');}else say('先选中节点，深度将用于向外聚焦。');invalidateView();redraw();};}
 $('edge-mode').onchange=()=>{beginGraphTransition();relationshipOverview();edgeMode=$('edge-mode').value;redraw()};$('focus-code').onclick=()=>{beginGraphTransition();relationshipOverview();focusCode=!focusCode;$('focus-code').setAttribute('aria-pressed',String(focusCode));if(focusCode&&!selected)say('先选中一个文件或函数，再查看指定深度的关系。');redraw()};syncCodeView();
 
@@ -915,7 +915,7 @@ function syncGraphChrome(){
  if(region&&!sourceCatalog.some(s=>s.region===region)){const old=previous.get(region)?.sourceDescriptor;sourceCatalog.push({id:old?.id||region,name:old?.name||fallbackSourceName(region),type:old?.type||'',region,state:'unavailable',nodeCount:graph.nodes.filter(n=>n.region===region).length,detached:true,message:'当前索引不再报告此来源，已保留筛选。请选择其他星域以继续。'});}
  sourceByRegion=new Map(sourceCatalog.map(s=>[s.region,s]));
  for(const [i,s]of [{region:'',name:'全部星域'},...sourceCatalog].entries()){
-  const r=s.region;let button=previous.get(r);if(!button){button=document.createElement('button');button.type='button';button.dataset.region=r;button.append(document.createElement('span'),document.createElement('small'));button.firstChild.className='source-chip-name';button.lastChild.className='source-chip-meta';button.onclick=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiAbort?.abort();$('ai-found').replaceChildren();$('answer').textContent='';selected=null;revealPanel($('detail'),false);region=button.dataset.region;cosmicSceneCache.clear();cosmicDustFrameCache=null;cosmicKey='';if(cosmos)enterCosmic(cosmos.root.key,true);syncGraphChrome();search();};}
+  const r=s.region;let button=previous.get(r);if(!button){button=document.createElement('button');button.type='button';button.dataset.region=r;button.append(document.createElement('span'),document.createElement('small'));button.firstChild.className='source-chip-name';button.lastChild.className='source-chip-meta';button.onclick=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiExplorer.cancel();$('ai-found').replaceChildren();$('answer').textContent='';$('usage').textContent='';selected=null;revealPanel($('detail'),false);region=button.dataset.region;cosmicSceneCache.clear();cosmicDustFrameCache=null;cosmicKey='';if(cosmos)enterCosmic(cosmos.root.key,true);syncGraphChrome();search();};}
   button.sourceDescriptor=s;button.classList.toggle('source-chip',!!r);button.dataset.state=s.state||'';button.firstChild.textContent=s.name;
   const state=s.detached?'已移除':sourceCoverageState(s),type=sourceTypeLabel(s.type),meta=r?`${type} · ${state} · ${s.nodeCount} 颗星`:'';
   button.dataset.count=r?String(s.nodeCount):String(graph.nodes.length);button.lastChild.textContent=r?state:'已索引节点，非文件总数';button.lastChild.hidden=false;button.title=r?[s.name,meta,'来源 #'+s.id,sourceCoverageLabel(s),s.message].filter(Boolean).join(' · '):'查看全部已索引来源';button.setAttribute('aria-label',r?s.name+'，'+meta+'，来源 '+s.id:s.name);button.setAttribute('aria-pressed',String(region===r));keep.add(button);if(box.children[i]!==button)box.insertBefore(button,box.children[i]||null);
@@ -948,7 +948,7 @@ function applyLiveUpdate(update,initial=false){
  const differentWorkspace=!!graph.workspace&&graph.workspace!==update.workspace;
  if(initial||differentWorkspace||!graph.workspace){
   if(!initial)graphGeneration++;
-  if(aiAbort&&!aiAbort.signal.aborted&&$('ask').disabled)$('answer').textContent='工作区资料已更新，当前理解已中止；请重新探索。';aiAbort?.abort();
+  if(aiAbort&&!aiAbort.signal.aborted&&$('ask').disabled)$('answer').textContent='工作区资料已更新，当前理解已中止；请重新探索。';aiExplorer.cancel();
   liveGhosts=[];liveAnimationUntil=0;liveStableScenes.clear();liveReconcile=false;liveWireNodes=new Map(update.nodes.map(n=>[n.id,JSON.stringify(n)]));
   graph={workspace:update.workspace,nodes:update.nodes,edges:update.edges,sources:Array.isArray(update.sources)?update.sources:null,warnings:update.warnings||[],truncated:!!update.truncated,code:update.code};
   documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;selected=null;revealPanel($('detail'),false);region='';layout();syncGraphChrome();search();const progress=progressiveSummary(graph);if(progress)say(progress);return;
@@ -972,7 +972,7 @@ function applyLiveUpdate(update,initial=false){
  for(const raw of changed){let node=oldNodes.get(raw.id);if(!node){node={};oldNodes.set(raw.id,node);}for(const field of nodeFields)if(!(field in raw))delete node[field];Object.assign(node,raw);liveWireNodes.set(raw.id,JSON.stringify(raw));}
  if(motion)for(const [i,raw]of added.entries())oldNodes.get(raw.id).bornAt=now+Math.min(i,20)*32;
  graph.nodes=[...oldNodes.values()];graph.edges=[...nextEdges.values()];graphGeneration++;documentGeneration++;documentAbort?.abort();
- if(aiAbort&&!aiAbort.signal.aborted&&$('ask').disabled)$('answer').textContent='资料有更新，当前理解已中止；请重新理解最新资料。';aiAbort?.abort();
+ aiExplorer.updated();
  if(selectionID&&!oldNodes.has(selectionID)){selected=null;$('insert').disabled=true;$('understand').disabled=true;revealPanel($('detail'),false);}
  else if(selectionID)selected=!selectionChanged&&citation?{...oldNodes.get(selectionID),documentCitation:citation}:oldNodes.get(selectionID);
  if(layoutChanged)layout(true);else invalidateView();if(selected&&citation&&!selectionChanged)selected={...nodeByID.get(selectionID),documentCitation:citation};if(retrievalMode()==='nodes')nodeResults(false);else{invalidateView();if(selectionChanged)$('document-note').textContent='当前原文已更新；保留检索结果，重新探索可核对最新摘录。';}
@@ -1005,7 +1005,7 @@ async function load(){
    if(locked||generation!==graphGeneration||mode!==codeView)return;
    const changedWorkspace=identityChanged||!!graph.workspace&&graph.workspace!==update.workspace;
    recoveryScopeLoaded=update.workspace;pendingRecoveredView=recoveryAttempt?.workspace===update.workspace&&recoveryAttempt.input===recoveryInput?(saved?.version===1?saved:changedWorkspace?defaultSkyView():null):null;
-   if(changedWorkspace){aiAbort?.abort();aiAbort=null;$('answer').textContent='';$('question').value='';$('usage').textContent='';$('ai-found').replaceChildren();resetDocumentBatch();}
+   if(changedWorkspace){aiExplorer.cancel();aiAbort=null;$('answer').textContent='';$('usage').textContent='';$('question').value='';$('ai-found').replaceChildren();resetDocumentBatch();}
    if(pendingRecoveredView?.version===1&&!params.has('code')&&typeof pendingRecoveredView.codeView==='boolean'&&pendingRecoveredView.codeView!==codeView){codeView=pendingRecoveredView.codeView;graphGeneration++;return;}
   }
   if(pendingRecoveredView){restoreSkyView(pendingRecoveredView);pendingRecoveredView=null;}liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;scheduleGraphCache();if(update.stale)say('正在建立最新索引 · 当前显示上次完整星图');
@@ -1039,19 +1039,40 @@ canvas.addEventListener('wheel',e=>{
  if(!motionEnabled()){zoom=target;wheelZoom=null;}else{wheelZoom={target,last:now};}
  redraw();
 },{passive:false});
-$('ai-toggle').onclick=()=>{const shown=$('ai-toggle').getAttribute('aria-expanded')!=='true';revealPanel($('ai-body'),shown);$('ai-toggle').setAttribute('aria-expanded',String(shown))};$('understand').onclick=()=>{openAI();$('question').value=selected?.documentCitation?'请依据原文关键词 '+$('search').value+' 解释这份文档的相关内容，引用片段编号及定位，并列出缺口。':codeView?'请依据源码和行号解释此节点的代码层级、输入输出、分支、副作用、调用链与未解析调用。区分声明证据和调用候选，不假定已经运行。':'请解释这个节点的内容、相关文件与证据缺口。';$('question').focus()};
+$('ai-toggle').onclick=()=>{const shown=$('ai-toggle').getAttribute('aria-expanded')!=='true';revealPanel($('ai-body'),shown);$('ai-toggle').setAttribute('aria-expanded',String(shown))};$('understand').onclick=()=>{openAI();$('question').value=selected?.documentCitation?'请依据原文关键词 '+$('search').value+' 解释这份文档的相关内容，引用片段编号及定位，并列出缺口。':codeView?'请依据源码和行号解释此节点的代码层级、输入输出、分支、副作用、调用链与未解析调用。区分声明证据和调用候选，不假定已经运行。':'请解释这个节点的内容、相关文件与证据缺口。';$('question').focus();askAI(false)};
+const aiExplorer=window.AideStarmapAssist.create({
+ busy(value){$('ask').disabled=value;$('find-ai').disabled=value;$('ai-stop').hidden=!value;$('answer').setAttribute('aria-busy',String(value));},
+ scope(value){$('ai-scope').textContent=value;}
+});
+$('ai-stop').onclick=()=>{if(aiExplorer.cancel())$('answer').textContent='已停止本次探索，可以修改问题后重试。';};
 async function askAI(find=false){
  if(locked)return;
- const generation=graphGeneration,docGeneration=documentGeneration;aiAbort?.abort();aiAbort=new AbortController();
- const docs=retrievalMode()!=='nodes';const ids=find?[]:(selected?[selected]:(docs?[]:results)).filter(n=>n.kind!=='directory').slice(0,8).map(n=>n.id);
- $('ask').disabled=true;$('find-ai').disabled=true;$('answer').textContent=docs?'正在检索文档片段，再生成带引用回答…':find?'正在搜索知识目录，再依据资料理解…':'正在依据选中资料理解…';$('ai-found').replaceChildren();
+ let spec;
+ try{spec=window.AideStarmapAssist.selection({find,docs:retrievalMode()!=='nodes',selected,results,question:$('question').value,search:$('search').value});}
+ catch(e){$('answer').textContent=e.message;$('question').focus();return;}
+ const workspace=graph.workspace,mode=codeView,source=region,retrieval=retrievalMode();
+ const job=aiExplorer.start(spec.label);aiAbort=job.controller;
+ const current=()=>!locked&&aiExplorer.current(job)&&workspace===graph.workspace&&mode===codeView&&source===region&&retrieval===retrievalMode();
+ const timeout=setTimeout(()=>{if(current()){aiExplorer.cancel();$('answer').textContent='探索超时，请缩小资料范围或稍后重试。';}},55000);
+ job.controller.signal.addEventListener('abort',()=>clearTimeout(timeout),{once:true});
+ $('answer').textContent='正在读取资料并生成回答…';$('usage').textContent='';$('ai-found').replaceChildren();
  try {
-  const d=await api('/assist',{method:'POST',signal:aiAbort.signal,body:JSON.stringify({query:$('question').value||$('search').value,ids,workspace:graph.workspace,code:codeView,retrievalMode:docs?'rag':'nodes',region})});
-  if(locked||generation!==graphGeneration||docGeneration!==documentGeneration)return;
-  $('answer').textContent=d.answer;if(d.retrieval){renderDocumentResults(d.retrieval,'ai-found');$('warnings').textContent=d.retrieval.warnings.join('\n');}$('usage').textContent=d.model+' · '+JSON.stringify(d.usage);
-  for(const n of d.retrieval?[]:(d.references||[])){const b=document.createElement('button');b.type='button';b.className='result';const code=document.createElement('code'),label=document.createElement('span');code.textContent=n.id;label.textContent=n.name;appendSourceLabel(label,n);b.append(code,label);b.onclick=()=>select(n);$('ai-found').append(b);}
- }catch(e){if(!locked&&generation===graphGeneration&&docGeneration===documentGeneration&&e.name!=='AbortError')$('answer').textContent=e.message}finally{$('ask').disabled=false;$('find-ai').disabled=false}
+  const d=await api('/assist',{method:'POST',signal:job.controller.signal,body:JSON.stringify({query:spec.query,ids:spec.ids,workspace,code:mode,retrievalMode:retrieval!=='nodes'?'rag':'nodes',region:source})});
+  if(!current())return;
+  const references=d.retrieval?d.retrieval.hits.map(hit=>({id:hit.id,name:hit.file.name,node:hit.file,hit})):(d.references||[]).map(n=>({...n,node:n}));
+  window.AideStarmapAssist.render($('answer'),d.answer,references,ref=>{
+   if(locked||workspace!==graph.workspace||mode!==codeView||source!==region||retrieval!==retrievalMode())return;
+   const node=nodeByID.get(ref.node.id);
+   if(!node||node.origin!==ref.node.origin){say('来源已移出当前索引，请重新探索。');return;}
+   if(ref.hit)selectDocument(ref.hit);else select(node);
+  });
+  if(d.retrieval){renderDocumentResults(d.retrieval,'ai-found');$('warnings').textContent=(d.retrieval.warnings||[]).join('\n');}
+  const u=d.usage||{};$('usage').textContent=[d.model,u.total!=null?'用量 '+u.total+' tokens'+(u.estimated?'（估算）':''):''].filter(Boolean).join(' · ');
+  for(const n of d.retrieval?[]:(d.references||[])){const b=document.createElement('button');b.type='button';b.className='result';const code=document.createElement('code'),label=document.createElement('span');code.textContent=n.id;label.textContent=n.name;appendSourceLabel(label,n);b.append(code,label);b.onclick=()=>{const node=nodeByID.get(n.id);if(node&&node.origin===n.origin)select(node);else say('来源已移出当前索引，请重新探索。');};$('ai-found').append(b);}
+ }catch(e){if(current()&&e.name!=='AbortError')$('answer').textContent=e.message;}
+ finally{clearTimeout(timeout);aiExplorer.finish(job);if(aiAbort===job.controller)aiAbort=null;}
 }
+$('question').addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'&&!$('ask').disabled){e.preventDefault();askAI(false);}});
 $('ask').onclick=()=>askAI(false);$('find-ai').onclick=()=>askAI(true);
 let insertionSessions=[];
 function requestInsertionSessions(){if(channel&&!locked)channel.postMessage({type:'sessions'});}
@@ -1083,7 +1104,7 @@ function setLocked(value){
  // should clear or reload the graph; the first notification still initializes it.
  if(lockStateKnown&&locked===value)return;
  if(value&&!locked)persistSkyView();
- lockStateKnown=true;locked=value;if(value)AideContinuity.abortPendingWrites?.();knowledgeTimeline.lock(value);if(value)stellarLogbook.lock();if(value)clearEvidencePath('星图已锁定。',true);if(value){clearTimeout(recoveryTimer);clearTimeout(cacheWriteTimer);cacheWriteTimer=0;cacheIdentity=null;recoveryScopeLoaded='';pendingRecoveredView=null;recoveryAttempt=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){resetDocumentBatch();documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiAbort?.abort();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicDustFrameCache=null;cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';}else load();redraw();}
+ lockStateKnown=true;locked=value;if(value)AideContinuity.abortPendingWrites?.();knowledgeTimeline.lock(value);if(value)stellarLogbook.lock();if(value)clearEvidencePath('星图已锁定。',true);if(value){clearTimeout(recoveryTimer);clearTimeout(cacheWriteTimer);cacheWriteTimer=0;cacheIdentity=null;recoveryScopeLoaded='';pendingRecoveredView=null;recoveryAttempt=null;recoveryInput++;}if(value){insertionSessions=[];$('insert-sessions').replaceChildren();}else requestInsertionSessions();if(value){logbook.open=false;stopLive(true);liveWireNodes.clear();liveStableScenes.clear();liveGhosts=[];liveAnimationUntil=0;drag=null;settlePanels();cameraTween=null;wheelZoom=null;graphFade=null;}document.body.classList.toggle('map-locked',value);if(value){resetDocumentBatch();documentGeneration++;documentAbort?.abort();$('document-insight').hidden=true;graphGeneration++;loadAbort?.abort();aiExplorer.cancel();graph={nodes:[],edges:[],sources:[],warnings:[]};sourceCatalog=[];sourceByRegion.clear();$('regions').replaceChildren();$('source-catalog').replaceChildren();$('source-catalog-section').hidden=true;$('detail-source').textContent='';$('warnings').textContent='';$('code-summary').textContent='';$('code-insight').hidden=true;projection=[];clusters=[];renderNodes=[];renderEdges=[];edgeBatches=[];structure=null;layerState=null;cosmos=null;cosmicScene=null;cosmicKey='';cosmicRecords=[];cosmicLinks=[];cosmicStars=[];cosmicStarEdges=[];cosmicCallState=null;cosmicScopeKey='';cosmicSelected='';cosmicHover='';cosmicFlight=null;cosmicSceneCache.clear();cosmicDustFrameCache=null;cosmicTextureCache.clear();syncCosmicNav();nodeByID.clear();edgeAdjacency.clear();resultIDs.clear();searchQuery='';invalidateView();$('ai-found').replaceChildren();$('detail').hidden=true;$('results').replaceChildren();$('answer').textContent='';$('usage').textContent='';}else load();redraw();}
 if(window.LockCluster){LockCluster.on('effective',setLocked);LockCluster.onReady().then(setLocked);}else setLocked(false);
 for(const event of ['pointerdown','pointermove','keydown','wheel'])addEventListener(event,()=>{if(!locked)window.LockCluster?.noteActivity();},{passive:true});
 redraw();
@@ -1093,7 +1114,7 @@ addEventListener('aide:motion',respectMotion);motionMedia.addEventListener('chan
 window.aideUI?.subscribe(syncMapPalette);
 matchMedia('(forced-colors: active)').addEventListener('change',syncMapPalette);
 
-$('retrieval-mode').onchange=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiAbort?.abort();$('ai-found').replaceChildren();$('answer').textContent='';selected=null;revealPanel($('detail'),false);search();};
+$('retrieval-mode').onchange=()=>{beginGraphTransition();documentGeneration++;documentAbort?.abort();aiExplorer.cancel();$('ai-found').replaceChildren();$('answer').textContent='';$('usage').textContent='';selected=null;revealPanel($('detail'),false);search();};
 function selectDocument(hit){select(hit.file);const origin=hit.file.origin||selected.origin||'';selected={...selected,format:hit.file.format||selected.format,origin,documentCitation:{locator:hit.locator,offset:hit.offset,hash:hit.hash,origin}};syncNodeSourceChrome();$('detail-text').textContent=hit.text;$('document-insight').hidden=false;$('document-locator').textContent=hit.id+' · '+hit.locator+' · 段内字符偏移 '+hit.offset;$('document-hash').textContent='SHA-256 '+hit.hash;const spec={root:hit.file.root,path:hit.file.path,readOnly:true,origin,knowledgeWorkspace:graph.workspace};if(hit.file.source)spec.source=hit.file.source;if(hit.file.format)spec.format=hit.file.format;$('document-open').href='/#file='+encodeURIComponent(JSON.stringify(spec));}
 function renderDocumentResults(data,id='results'){const box=$(id);box.replaceChildren();for(const hit of data.hits||[]){const b=document.createElement('button');b.type='button';b.className='result document-result';const title=document.createElement('span');title.textContent=hit.file.name+' · '+hit.locator;appendSourceLabel(title,hit.file);const snippet=document.createElement('small');snippet.textContent=hit.text.slice(0,220);title.append(snippet);const code=document.createElement('code');code.textContent=hit.file.id;b.append(code,title);b.onclick=()=>selectDocument(hit);box.append(b);}if(!(data.hits||[]).length){const p=document.createElement('p');p.textContent='未检索到匹配原文；请检查关键词、来源范围与提取诊断。';box.append(p);}}
 async function searchDocuments(continuing=false){
