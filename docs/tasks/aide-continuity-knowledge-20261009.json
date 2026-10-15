@@ -7671,7 +7671,7 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "Fix reproduced locale-dependent startup source-sha identity, then continue accessible Safari file/history/approval/outcome/map and SSH flows. Windows user-owned, vectors deferred.",
+    "nextIndependentFocus": "Deliver locale source fix through main gate, then regression/fix for confirmed duplicate built-in context scanning; actual local DOCX star-map preview passed, native large-map latency remains. Original12 retained.",
     "deliveredMain": "3714593ff6435b2e3e72c509e3a66a5acdc5dee1",
     "mainGate": "Docs-only actual Safari reasoning evidence; exact-input full88 reuse, independent clean-main gate and remote3714593 match pass.",
     "currentCheckpointGate": "Current product fingerprint f264a1110d773cb8bfcdf5c2dd9bbb04a4c7df1f888caaad9bb116272790c89a matches prior passing full88. Actual Safari priority reasoning10 UI writes/reloads/API/disk pass and scoped cleanup verified. Observed running6d212fa/build258afd7;7 frontend assets exact. source-sha varies by localeC/en_US and requires independent fix. Original12 still in_progress."
@@ -7753,9 +7753,9 @@
     "deliveredMain": "3714593ff6435b2e3e72c509e3a66a5acdc5dee1"
   },
   "source_fingerprint_locale_20261016": {
-    "status": "in_progress",
+    "status": "source_verified",
     "task": "docs/tasks/source-fingerprint-locale-20261016.json",
     "report": "docs/reviews/2026-10-16/source-fingerprint-locale.md",
-    "evidence": "Real differing host collations reproduce failure before fix; focused tests pass after C path-sort normalization; runtime/package unchanged, full pending."
+    "evidence": "Source fix focused tests and actual C/en_US identity equality pass; full88 pass, main gate/push pending. Runtime/package unchanged."
   }
 }
