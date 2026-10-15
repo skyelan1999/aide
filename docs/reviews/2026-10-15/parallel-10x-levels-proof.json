@@ -136,5 +136,12 @@
     "rollbackA082Preserved": true,
     "ownTestTabsAndServersClosed": true,
     "finalFullFixtureRemoved": true
+  },
+  "releaseGateInitial": {
+    "status": "fail",
+    "reason": "empty requirements/design/implementation evidence arrays",
+    "prematureMainPush": "fbde2b0",
+    "cause": "shell command did not fail-fast after local gate failure",
+    "correction": "populate existing actual evidence, independently pass gate before corrective push"
   }
 }

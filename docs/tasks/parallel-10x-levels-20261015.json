@@ -27,17 +27,28 @@
     "requirements": {
       "status": "pass",
       "summary": "Exact current user wording, retain1 standard and constrained scroll.",
-      "evidence": []
+      "evidence": [
+        "docs/reviews/2026-10-15/parallel-10x-levels.md"
+      ]
     },
     "design": {
       "status": "pass",
       "summary": "Shared six frontend choices and Go allowed-set validation across chat/planner/plugin DAG; original dependency/resource-conflict/hook/approval constraints retained. Explicit original requested deliverable after notes; Finder metadata excluded from runtime source identity consistently with Dockerignore.",
-      "evidence": []
+      "evidence": [
+        "docs/architecture.md",
+        "docs/reviews/2026-10-15/parallel-10x-levels.md"
+      ]
     },
     "implementation": {
       "status": "pass",
       "summary": "Six labels/10 persistence/API/fanout and plugin DAG limit10. Merge repeats original user request and requires substantive content. Source hash ignores .DS_Store. Existing permission and hook serialization retained.",
-      "evidence": []
+      "evidence": [
+        "internal/server/conversation_parallel.go",
+        "internal/server/plugin_plan.go",
+        "internal/server/web/parallel-chat.js",
+        "internal/server/workflow.go",
+        "scripts/aide.sh"
+      ]
     },
     "verification": {
       "status": "pass",
@@ -63,7 +74,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Final clean main full84 PASS; gate/push pending. Runtime finaldbf and offline integrity/load verified; no version bump/tag/formal Release.",
+      "summary": "First local gate rejected missing evidence links for requirements/design/implementation despite pass status; shell command did not fail-fast and authorized main fbde2b0 was pushed before gate passed. Evidence arrays now populated; corrected gate/push still pending. Full84 and runtime/offline scopes unchanged.",
       "evidence": []
     }
   },
