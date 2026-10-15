@@ -2,9 +2,9 @@
 
 ## 2026-10-15 AI 辅助探索候选（构建时记录）
 
-- 源码提交 `2457aa8` 加空文档／页面退出修复 `0a2e928`，本机仍有五个继承的 drawio vendor 删除；镜像为开发候选，不混称干净 main 构建。通过指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新 9999，健康、实际提供的星图四项资源与当前源码一致，鉴权、配置、挂载未变。
-- 应用镜像 `sha256:5bdd86d0d1b3b6861c44eb4e8221990f5988b7f4f531f372fe1a0c163fcfe6d4`；source SHA `3df624188075306c7ddb9f357398a28cb9f1c6df5e85afa1025c7cd572b08c0a`。
-- 完整离线包 `aide-0.1.17.0-RC2-linux-arm64-5bdd86d0d1b3-offline.tar.gz`，705672821 字节；SHA-256 `acfaaf16ce764e534eda349f7c47825fd541c4068ccea4666853ff95909c17b8`。含应用与依赖镜像，内外摘要、平台及启动器匹配、实际 docker load 通过；已校验复制到 aideMacMini 对应目录，接收端导入仍待对端验收。此前 `96caed8f11cd` 候选包保留回滚。
+- 源码提交 `2457aa8` 加空文档／页面退出修复 `0a2e928` + test-only `0e1eaeb`，本机仍有五个继承的 drawio vendor 删除；镜像为开发候选，不混称干净 main 构建。通过指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新 9999，健康、实际提供的星图四项资源与当前源码一致，鉴权、配置、挂载未变。
+- 应用镜像 `sha256:f86461692f6776a36288b5dc2336cb8147c950a008dca02eeee47c2c932dd941`；source SHA `2ac887793e3a1d77ee891b5482785744bcf7e96bc1ca221daa76238e39e2047f`。
+- 完整离线包 `aide-0.1.17.0-RC2-linux-arm64-f86461692f67-offline.tar.gz`，705674313 字节；SHA-256 `3d90c439ad8c655d9ad37904f69baab2a90a61c1759f71a2b381e8547b1ce30b`。含应用与依赖镜像，内外摘要、平台及启动器匹配、实际 docker load 通过；已校验复制到 aideMacMini 对应目录，接收端导入仍待对端验收。此前 `96caed8f11cd` 候选包保留回滚。
 - 本记录写入时：行为回归、明暗／窄屏隔离页面及真实千问节点理解通过，完整 full 与 main 门禁尚未完成；后续状态以[任务账本](../docs/tasks/starmap-ai-exploration-20261015.json)为准。保留旧包回滚，不升级版本或发正式 Release。
 
 发行镜像提供 aide（AI + IDE 专业工作台）的完整运行环境：内置 Go、Python、Node.js、Git 与已编译应用。场景定制使用源码和 [Agent 工作流](../docs/customization.md)，完成后重建自己的镜像。

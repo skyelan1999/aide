@@ -20,7 +20,8 @@
     "docs/reviews/2026-10-15",
     "scripts/starmap-workspace-scene.test.cjs",
     "docker-images/README.md",
-    "docker-images/SHA256SUMS"
+    "docker-images/SHA256SUMS",
+    "internal/server/workspace_test.go"
   ],
   "stages": {
     "requirements": {
@@ -85,10 +86,10 @@
   "rollback": "回退本批前端与回归提交；旧镜像包保留。没有用户数据迁移，不覆盖五个继承的vendor删除。",
   "handoff": "修复和验收进行中；完整9999浏览器仍受此前证书阻挡，组件验收不冒称真实端到端；原12项连续目标保持未完成。",
   "runtime": {
-    "image": "sha256:5bdd86d0d1b3b6861c44eb4e8221990f5988b7f4f531f372fe1a0c163fcfe6d4",
-    "runningImage": "sha256:5bdd86d0d1b3b6861c44eb4e8221990f5988b7f4f531f372fe1a0c163fcfe6d4",
-    "sourceSHA256": "3df624188075306c7ddb9f357398a28cb9f1c6df5e85afa1025c7cd572b08c0a",
-    "runningPlatformManifest": "sha256:02cd5191dfc1292c11243f293860b2568036f49cdd1588ac8aabe888036f12ad",
+    "image": "sha256:f86461692f6776a36288b5dc2336cb8147c950a008dca02eeee47c2c932dd941",
+    "runningImage": "sha256:f86461692f6776a36288b5dc2336cb8147c950a008dca02eeee47c2c932dd941",
+    "sourceSHA256": "2ac887793e3a1d77ee891b5482785744bcf7e96bc1ca221daa76238e39e2047f",
+    "runningPlatformManifest": "sha256:0a15523aad3e0cf68a0a58261d3e3f68ed725b15a69f66f9727af190116ffc96",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "health": "ok",
     "port": "9999",
@@ -96,11 +97,11 @@
     "servedAssetsMatch": true
   },
   "package": {
-    "image": "sha256:5bdd86d0d1b3b6861c44eb4e8221990f5988b7f4f531f372fe1a0c163fcfe6d4",
-    "sourceSHA256": "3df624188075306c7ddb9f357398a28cb9f1c6df5e85afa1025c7cd572b08c0a",
-    "archive": "aide-0.1.17.0-RC2-linux-arm64-5bdd86d0d1b3-offline.tar.gz",
-    "bytes": 705672821,
-    "sha256": "acfaaf16ce764e534eda349f7c47825fd541c4068ccea4666853ff95909c17b8",
+    "image": "sha256:f86461692f6776a36288b5dc2336cb8147c950a008dca02eeee47c2c932dd941",
+    "sourceSHA256": "2ac887793e3a1d77ee891b5482785744bcf7e96bc1ca221daa76238e39e2047f",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-f86461692f67-offline.tar.gz",
+    "bytes": 705674313,
+    "sha256": "3d90c439ad8c655d9ad37904f69baab2a90a61c1759f71a2b381e8547b1ce30b",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
     "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
@@ -147,6 +148,18 @@
   },
   "sourceCommits": [
     "2457aa8",
-    "0a2e928"
-  ]
+    "0a2e928",
+    "0e1eaeb"
+  ],
+  "gateRaceRepair": {
+    "failedReceipt": ".agent-state/starmap-ai-exploration/full-race-failed.json",
+    "failedLog": ".agent-state/starmap-ai-exploration/full-race-failed.log",
+    "test": "TestLocalWorkspacePathAIReadFix",
+    "cause": "two concurrent mock HTTP callbacks append to captured string without synchronization",
+    "fix": "mutex protected writes and assertion snapshot; test-only",
+    "targetedRaceCount": 20,
+    "targetedRaceSeconds": 17.945,
+    "vet": "pass",
+    "evidence": ".agent-state/starmap-ai-exploration/target-race.log"
+  }
 }

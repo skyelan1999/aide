@@ -6872,7 +6872,7 @@
       "80 quick checks on development inputs",
       "actual bundled star-map fixture: indexing while generation, stop/retry, known citations, light/dark/narrow rendering",
       "Qwen node-assist single owned fixture: marker, order and citation",
-      "start.command 9999 candidate 5bdd86d0d1b3, exact served assets and config/auth/mount preservation",
+      "start.command 9999 candidate f86461692f67, exact served assets and config/auth/mount preservation",
       "complete offline archive hashes, docker load and two local copies",
       "empty RAG null hits: automatic regression and actual bundled browser fixture"
     ],
@@ -6883,6 +6883,7 @@
     ],
     "originalWorkstreamsRemainOpen": true,
     "additionalSourceCommit": "0a2e928",
-    "runtimeImage": "5bdd86d0d1b3"
+    "runtimeImage": "f86461692f67",
+    "gateFixtureRepair": "0e1eaeb: synchronized mock request capture; 20 race repetitions and vet passed; full rerun pending"
   }
 }
