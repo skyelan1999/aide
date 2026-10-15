@@ -1,0 +1,85 @@
+{
+  "id": "source-index-live-20261015",
+  "request": "继续总目标：补验真实FTP/FTPS渐进索引、范围优先与重启续扫，明确原文检索证据边界",
+  "baseline": "ad44210e96ad592978154054a6eaea239c7663b3",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Actual disposable FTP/FTPS services: bounded batches publish partial nodes, selected scope excludes root files, requested priority appears first",
+    "Reload isolated App from encrypted disk checkpoint; subsequent source observations accumulate to complete known selected catalogue",
+    "Cancellation preserves published nodes and does not claim full coverage; literal original-text retrieval returns source/path/locator/hash from real remote bytes",
+    "No user sources/settings/model calls; scoped evidence, cleanup and full/main gate kept separate from UI/user-host proof"
+  ],
+  "scope": [
+    "internal/server/sources_live_test.go",
+    "internal/server/knowledge_ftp_service_live_test.go",
+    "docs/tasks",
+    "docs/reviews/2026-10-15"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Close actual FTP/FTPS progressive adapter evidence gap in original goal without substituting transport-only proof.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Opt-in existing source protocol test calls helper against disposable service; seed remote via actual SFTP API, scope FTP/FTPS to nested, use small quotas and isolated App reload. No production settings or paid models.",
+      "evidence": [
+        "internal/server/knowledge_ftp_progressive_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added real vsftpd FTP/explicit FTPS progressive and literal retrieval helper; existing loopback tests unchanged; no production behavior change.",
+      "evidence": [
+        "docs/reviews/2026-10-15/source-index-live.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Final entire actual protocol suite race PASS17.935s, new FTP/FTPS index cases8.51s; input hashes stable. Earlier quick82 passed before final hash assertion; fresh clean full84 pending.",
+      "evidence": [
+        ".agent-state/source-index-live/protocol-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Review documents real protocol, disk App reload vs process/browser, fixture failures, remote literal hashes and remaining limits.",
+      "evidence": [
+        "docs/reviews/2026-10-15/source-index-live.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own protocol server/client/network removed; fixture image and compile cache retained; thirteen current sessions have no active runs. Five inherited vendor deletions preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-15/source-index-live.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Standing user authorization: incremental test/docs/push main and offline delivery; no new version/tag/formal Release.",
+  "rollback": "Revert scoped test/docs only; disposable source fixture and isolated App storage, no product/data migration.",
+  "handoff": "Real bounded index/reload/cancellation/literal retrieval verified; clean full/main and refreshed runtime/offline package pending; original12 stay open.",
+  "protocolEvidence": {
+    "status": "pass",
+    "exit": 0,
+    "inputSHA256": "a4b874be6ec7e3b426d865ee59f4b3a212dc65b226136189f93595268b8e1868",
+    "inputsStable": true,
+    "protocols": [
+      "ftp",
+      "ftps"
+    ],
+    "scope": "real FTP/FTPS index through live source suite; bounded scope/priority, disk App reload, cancellation and literal retrieval; no browser/model/user host",
+    "race": true,
+    "logSHA256": "31f84b892f451627f4b99b464c997fe94cd3310a2ac216b25796261b7c13c44f",
+    "packageSeconds": 17.935,
+    "newIndexSubcaseSeconds": 8.51
+  }
+}

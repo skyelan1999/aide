@@ -7045,5 +7045,21 @@
       "fullChecks": 84,
       "formalReleaseCreated": false
     }
+  },
+  "followup153": {
+    "task": "docs/tasks/source-index-live-20261015.json",
+    "classification": "progress",
+    "previousGoalTurn": "Main push ad44210 plus full84 and isolated SSH/protocol proof completed. Current turn adds actual vsftpd progressive and original-text retrieval evidence.",
+    "status": "in_progress",
+    "verified": [
+      "Real source suite race17.935s; final Go inputs stable",
+      "FTP/explicit FTPS selected scope and priority, bounded partial publication, disk App reload resumes checkpoint, cancellation retains published nodes, catalogue7 completes",
+      "Literal production engine returns6 distinct remote files with source/path/locator and exact prepared-body hashes; no model call in new subcase"
+    ],
+    "remaining": [
+      "fresh clean full84, runtime/offline package/main gate",
+      "full authenticated browser, user-host, physical network failure, large-library and OS-process restart coverage"
+    ],
+    "original12RemainOpen": true
   }
 }

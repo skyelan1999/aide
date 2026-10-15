@@ -96,4 +96,5 @@ func TestSourcesLiveProtocols(t *testing.T) {
 			t.Log("PASS: registration, real list/read, write policy, AI tool and model roundtrip body")
 		})
 	}
+	t.Run("ftp_progressive_index", func(t *testing.T) { assertKnowledgeFTPLiveProgressive(t, host) })
 }
