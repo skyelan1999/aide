@@ -30,5 +30,12 @@
       "count": 1
     }
   ],
-  "privateProbeSHA256": "37584899af2f23ea5d5123f25cae38b75002f9376b7fbd5692a24ea73f4e6b9f"
+  "privateProbeSHA256": "37584899af2f23ea5d5123f25cae38b75002f9376b7fbd5692a24ea73f4e6b9f",
+  "release": {
+    "status": "pass",
+    "verifiedMain": "f8f8abecef7439df1b59f882e3185d0301bbc269",
+    "releaseCheck": true,
+    "sameFullInputFingerprint": "b38daba67a0367402712624686c75f7cb3e263a93a0a50573b8dc9e5c7442b13",
+    "remoteExactMatch": true
+  }
 }

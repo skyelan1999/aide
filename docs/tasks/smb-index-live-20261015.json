@@ -59,8 +59,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Ordinary-document-only main gate and exact remote push pending; full84 receipt reusable only after fingerprint match.",
+      "status": "pass",
+      "summary": "Clean main release-check passed with same full84 controlled input fingerprint; push and exact remote f8f8abe verified. Ordinary-document final receipt only, no new full/build/version/tag/formal Release.",
       "evidence": [
         "docs/reviews/2026-10-15/smb-index-live.md"
       ]
@@ -68,5 +68,6 @@
   },
   "release_authorization": "Standing incremental test/docs/main push; disposable repo protocol fixtures only. No user settings, paid model, source or data-volume changes.",
   "rollback": "Revert scoped ordinary docs; remove own containers/network, keep main runtime untouched.",
-  "handoff": "Actual isolated SMB1 single-resource fixture proven; does not establish user SMB hosts, SMB2/3/encryption/directory scanning or authenticated browser. Original12 remain open, Windows user acceptance and real vectors deferred."
+  "handoff": "Actual isolated SMB1 single-resource fixture proven; does not establish user SMB hosts, SMB2/3/encryption/directory scanning or authenticated browser. Original12 remain open, Windows user acceptance and real vectors deferred.",
+  "deliveredMain": "f8f8abecef7439df1b59f882e3185d0301bbc269"
 }

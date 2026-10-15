@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "All subsequent development uses /Volumes/MY PASSPORT/aide_ws/aide. Clean main migration/cleanup delivery verified1a48d081aae453630a000b4d25d4eab2bc1665f8; runtime9999 b11bb97fed59 built from clean external source, data/home/config/auth/13 sessions preserved, original Harness context retained. Historical full84 and fresh quick82 inputs match. 89.20GiB logical unused/duplicate build and cache removed, original source/user records retained, inherited vendor deletions stashed with external patches. Canonical offline packages retained externally; prior9bc package differs from new b11 runtime image and is not claimed as its export. Original12 workstreams remain in_progress, authenticated Safari deferred by human, Windows user acceptance, real vectors deferred. HTTP single-resource and MCP capability-description actual binary verification delivered0b69dcc; see followup160. SMB real service, variants and full authenticated browser remain separately unverified.",
+  "handoff": "All subsequent development uses /Volumes/MY PASSPORT/aide_ws/aide. Clean main migration/cleanup delivery verified1a48d081aae453630a000b4d25d4eab2bc1665f8; runtime9999 b11bb97fed59 built from clean external source, data/home/config/auth/13 sessions preserved, original Harness context retained. Historical full84 and fresh quick82 inputs match. 89.20GiB logical unused/duplicate build and cache removed, original source/user records retained, inherited vendor deletions stashed with external patches. Canonical offline packages retained externally; prior9bc package differs from new b11 runtime image and is not claimed as its export. Original12 workstreams remain in_progress, authenticated Safari deferred by human, Windows user acceptance, real vectors deferred. HTTP single-resource and MCP capability-description actual binary verification delivered0b69dcc; see followup160. SMB real service, variants and full authenticated browser remain separately unverified. Actual isolated Samba SMB1 single-resource indexing/original/hash/credential recovery/restart delivery verified f8f8abe; see followup161. User SMB hosts, versions/encryption and full browser remain separately unverified.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -7403,11 +7403,12 @@
     "task": "docs/tasks/smb-index-live-20261015.json",
     "classification": "progress",
     "previousGoalTurn": "HTTP/MCP actual binary original/identity/read-only/restart evidence delivered to clean main.",
-    "status": "in_progress",
-    "summary": "Actual Samba SMB1 single-resource original/hash/identity and read-only403, wrong credential failure/409, restoration and newPID/old-origin409 PASS. Final same-input gate/main push pending.",
+    "status": "pass",
+    "summary": "Actual Samba SMB1 single resource originals/hash/identity, writes403, wrong credential400/409, same-credential restoration and newPID/old-origin409 verified. Clean main same-input full84 gate/push and exact remote verified; original12 open.",
     "original12RemainOpen": true,
     "evidence": [
       "docs/reviews/2026-10-15/smb-index-live.md"
-    ]
+    ],
+    "deliveredMain": "f8f8abecef7439df1b59f882e3185d0301bbc269"
   }
 }
