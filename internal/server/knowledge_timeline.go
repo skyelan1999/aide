@@ -34,13 +34,14 @@ type knowledgeTimeChange struct {
 	After  *knowledgeNode `json:"after,omitempty"`
 }
 type knowledgeTimeComparison struct {
-	Before       knowledgeTimeSnapshot `json:"before"`
-	After        knowledgeTimeSnapshot `json:"after"`
-	Added        []knowledgeNode       `json:"added"`
-	Changed      []knowledgeTimeChange `json:"changed"`
-	Removed      []knowledgeNode       `json:"removed"`
-	AddedEdges   []knowledgeEdge       `json:"addedEdges"`
-	RemovedEdges []knowledgeEdge       `json:"removedEdges"`
+	Before       knowledgeTimeSnapshot         `json:"before"`
+	After        knowledgeTimeSnapshot         `json:"after"`
+	Added        []knowledgeNode               `json:"added"`
+	Changed      []knowledgeTimeChange         `json:"changed"`
+	Removed      []knowledgeNode               `json:"removed"`
+	AddedEdges   []knowledgeEdge               `json:"addedEdges"`
+	RemovedEdges []knowledgeEdge               `json:"removedEdges"`
+	Conclusions  knowledgeConclusionComparison `json:"conclusions"`
 }
 
 func knowledgeTimeKey(token string) []byte {
@@ -190,6 +191,7 @@ func (a *App) recordKnowledgeTime(g knowledgeGraph, code bool, epoch uint64) err
 }
 func compareKnowledgeTime(before, after knowledgeTimeSnapshot) knowledgeTimeComparison {
 	out := knowledgeTimeComparison{Before: before, After: after, Added: []knowledgeNode{}, Changed: []knowledgeTimeChange{}, Removed: []knowledgeNode{}, AddedEdges: []knowledgeEdge{}, RemovedEdges: []knowledgeEdge{}}
+	out.Conclusions = compareKnowledgeConclusions(before.Graph, after.Graph)
 	old := map[string]knowledgeNode{}
 	current := map[string]bool{}
 	for _, n := range before.Graph.Nodes {

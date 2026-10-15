@@ -1,0 +1,72 @@
+{
+  "id": "knowledge-conclusion-evolution-20261016",
+  "request": "继续原12项知识时光中结论与依据演变；同时覆盖AI与文档，不以节点/文件变化代替结论变化。保留原话、源身份、历史版本和证据边界；不能把不同问题或未知历史自动对齐",
+  "baseline": "dc0cf72fe9e48eee0a102dead00f9bc2f09c4a3c",
+  "initial_status": "",
+  "acceptance": [
+    "同时保存AI与文档的结论原话、来源/任务/工作区身份、观察版本、源定位与有界指纹；普通文件变化不冒充结论变化。",
+    "AI按assistant与实际任务归属捕获，用户/工具/压缩摘要不冒充AI；同问题或显式主题对齐才形成演变，支持无标题记录而非仅文档标题。",
+    "结论文字、引用和依据内容变化分别呈现，历史引用不冒充当前来源；未解析/缺失/截断状态明确未知。",
+    "旧快照、重复标题、不同问题/工作区、来源不可用及容量截断不被解释为撤回或新增事实；保持取消/锁屏/加密/容量预算。",
+    "真实文件/会话索引、HTTP、历史磁盘重读、页面及相关回归分别留证；完成文档、清理、full和独立main门禁、运行及离线交付。"
+  ],
+  "scope": [
+    "internal/server/knowledge_conclusions*.go：有界捕获、对齐、依据与比较",
+    "internal/server/knowledge_map.go、knowledge_timeline.go及来源/会话投影",
+    "internal/server/web/starmap-timeline.*及相关测试",
+    "docs/prd、architecture、reviews、tasks与发行元数据"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "承接原结论/依据演变，AI与文档均在整体范围；纯标题提取仅是必要基础，不缩小验收。",
+      "evidence": [
+        "docs/prd/2026-10-16-knowledge-conclusion-evolution.md"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "先实现明确片段的有界捕获与比较，再接角色/任务/主题、引用证据、旧历史及页面；未知保持未知。",
+      "evidence": [
+        "docs/prd/2026-10-16-knowledge-conclusion-evolution.md"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "共用显式片段/范围/指纹和文档历史比较已接入，明确partial_document_phase；AI/主题/依据/界面仍待。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
+        "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "旧接口缺项已复现；最终专项race/vet、当前quick85通过，真实文件索引/加密历史/磁盘/HTTP及409/423通过；未做完整full/浏览器/发行。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
+        "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "完整AI/文档范围PRD及文档基础检查点已记录；后续最终行为/界面/交付待补。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
+        "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用分批测试/push/合main、指定start.command与离线镜像交付授权；不升版/tag/正式Release。",
+  "rollback": "保留1601033运行镜像与完整离线包；本批未部署，历史字段须兼容旧版并保留原文件。",
+  "handoff": "文档基础检查点；继续AI实际角色/任务/问题归属、无标题/主题对齐、引用依据变化和UI；仅文档显式标题提取不等于完整目标。生产1601033未改，未合main/发行。"
+}
