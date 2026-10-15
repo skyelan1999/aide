@@ -118,8 +118,9 @@ type Task struct {
 	Parallel                 *ParallelProgress   `json:"parallel,omitempty"`
 	Strategy                 string              `json:"strategy,omitempty"` // manual | auto（FR-63）
 	ResearchFindings         []ResearchFinding   `json:"researchFindings,omitempty"`
-	ToolUses                 []ToolUse           `json:"toolUses,omitempty"`      // 工具调用记录（FR-81）
-	Usage                    TokenUsage          `json:"usage,omitempty"`         // 本任务累计 token 用量（轨迹）
+	ToolUses                 []ToolUse           `json:"toolUses,omitempty"` // 工具调用记录（FR-81）
+	Usage                    TokenUsage          `json:"usage,omitempty"`    // 本任务累计 token 用量（轨迹）
+	TopicContext             *RequestContext     `json:"topicContext,omitempty"`
 	ContextAnchor            *ContextUsageAnchor `json:"contextAnchor,omitempty"` // 最近一次模型调用的上下文校准锚点
 	WorkspaceID              string              `json:"workspaceId,omitempty"`   // 提案归属的工作区身份（R02）
 	WorkspaceRev             uint64              `json:"workspaceRev,omitempty"`
@@ -722,10 +723,15 @@ func (a *App) summarizeTopic(ctx context.Context, s *Session, task *Task, cfg Se
 		{Role: "system", Content: "你只输出一个不超过 12 个字的主题短语，概括用户当前任务的唯一主题。不要解释、不要标点、不要引号。"},
 		{Role: "user", Content: task.Prompt},
 	}
+	a.mu.Lock()
+	topicContext := requestContext(input, nil, summaryParams.MaxTokens, a.modelWindow(cfg.Model))
+	task.TopicContext = topicContext
+	a.mu.Unlock()
 	topic, _, usage, err := complete(ctx, cfg, input, summaryParams, nil, nil)
 	if err == nil {
 		a.mu.Lock()
 		task.Usage = addUsage(task.Usage, usage)
+		topicContext.Usage = usage
 		a.mu.Unlock()
 	}
 	if err != nil || strings.TrimSpace(topic) == "" {

@@ -33,7 +33,7 @@ task = {'parallelism': 10, 'usage': {'prompt': 180000, 'completion': 3000, 'tota
 if args.task:
     raw = json.loads(args.task.read_text())
     progress = raw.get('parallel', {})
-    task = {'parallelism': raw['parallelism'], 'usage': context({'usage': raw.get('usage', {})})['usage'], 'parallel': {
+    task = {'parallelism': raw['parallelism'], 'topicContext':context(raw.get('topicContext')), 'usage': context({'usage': raw.get('usage', {})})['usage'], 'parallel': {
         'plannerContext': context(progress.get('plannerContext')),
         'mainContext': context(progress.get('mainContext')),
         'parts': [{'context': context(part.get('context'))} for part in progress.get('parts', [])],

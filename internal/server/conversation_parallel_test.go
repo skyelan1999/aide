@@ -274,6 +274,16 @@ func parallelEndToEnd(t *testing.T, limit int) {
 	if task.ContextAnchor == nil || task.ContextAnchor.Scope != "parallel_merge" || task.Parallel.MainContext == nil || task.Parallel.MainContext.Usage.Prompt != task.ContextAnchor.Usage.Prompt || task.Parallel.MainContext.Usage.Total >= task.Usage.Total {
 		t.Fatal("main request context must be separate from cumulative usage")
 	}
+	if task.TopicContext != nil && task.TopicContext.Usage.Prompt > 0 {
+		total := addUsage(task.TopicContext.Usage, task.Parallel.PlannerContext.Usage)
+		for _, part := range task.Parallel.Parts {
+			total = addUsage(total, part.Context.Usage)
+		}
+		total = addUsage(total, task.Parallel.MainContext.Usage)
+		if total.Prompt != task.Usage.Prompt || total.Completion != task.Usage.Completion {
+			t.Fatal("title/plan/workers/main usage did not reconcile")
+		}
+	}
 	// Retry preserves the selected analysis limit, but starts a fresh plan.
 	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs/"+task.ID+"/retry", nil), 202)
 	waitTaskDone(t, a, s.ID)

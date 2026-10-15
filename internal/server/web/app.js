@@ -6015,7 +6015,7 @@ function contextMeterKey() {
 function renderParallelContextDetail(detail) {
   const run = state.session?.runs?.at(-1);
   if (!(run?.parallelism > 1)) return;
-  const note = el('p', 'context-card-actual context-parallel-detail', t('各路独立上下文，分别携带会话副本；主请求再汇总笔记。累计消耗会相加，不共用一个窗口。'));
+  const note = el('p', 'context-card-actual context-parallel-detail', t('各路独立上下文，分别携带会话副本；主请求再汇总笔记。累计含标题等辅助调用，不共用一个窗口。'));
   detail.append(note);
   const progress = run.parallel;
   const row = (label, context) => {
@@ -6024,6 +6024,7 @@ function renderParallelContextDetail(detail) {
     const input = actual ? context.usage.prompt : context.inputEstimate;
     detail.append(el('p', 'context-card-actual context-parallel-detail', t('{0}：输入 {1} / 独立窗口 {2} · {3}', t(label), fmtTokens(input || 0), fmtTokens(context.contextWindow || 0), t(actual ? '上游实际' : '估算'))));
   };
+  row('标题辅助请求', run.topicContext);
   row('规划请求', progress?.plannerContext);
   const contexts = (progress?.parts || []).map(part => part.context).filter(Boolean);
   if (contexts.length) {
@@ -6033,7 +6034,7 @@ function renderParallelContextDetail(detail) {
     detail.append(el('p', 'context-card-actual context-parallel-detail', t(actual ? '子分析 {0} 路：每路实际输入 {1}–{2}，各自窗口 {3}' : '子分析 {0} 路：每路输入估算 {1}–{2}，各自窗口 {3}', contexts.length, fmtTokens(Math.min(...inputs)), fmtTokens(Math.max(...inputs)), windows.map(fmtTokens).join(' / '))));
   }
   row('最近主汇总请求', progress?.mainContext);
-  if (!progress?.plannerContext && !progress?.mainContext && !contexts.length) detail.append(el('p', 'context-card-actual context-parallel-detail', t('此历史任务未记录逐请求上下文，不能从累计用量反推。')));
+  if (!progress?.plannerContext && !progress?.mainContext && !contexts.length) detail.append(el('p', 'context-card-actual context-parallel-detail', t(['running', 'queued'].includes(run.status) ? '正在准备逐请求上下文…' : '此历史任务未记录逐请求上下文，不能从累计用量反推。')));
 }
 function renderContextMeter(data, isDraft) {
   if (!data || !data.breakdown) return;
