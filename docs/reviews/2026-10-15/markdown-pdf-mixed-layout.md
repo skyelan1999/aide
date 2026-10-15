@@ -17,3 +17,7 @@
 补查发现超高表格行的遍历在遇到第一个跨页单元格后提前退出，导致右侧列遗漏。新增回归先得到 1 列而非 2 列的失败，再修复为遍历所有相交单元格、缓存最早未完成位置；回归还检查下一页两列均继续且之前内容已裁剪。最终夹具增加两列各 90 行的单行表格，实际导出 19 页；Poppler 检查第 17–19 页，左右列 0–89 均保留，表格后段落正常。旧版／中间版验收不充当最终输入收据，最终 quick/full 和镜像另行更新。期间始终每次只开一个自建验收页，完成立即关闭。
 
 当前基线 main `f07a4f9`，继承五个 vendor 删除不属于本任务，保持未提交。运行实例、完整离线包、主线合入和最终回归分别记录在任务账本；没有证据的阶段保持待完成。回退本批前端提交并恢复上一完整镜像 `997eda4026b5`，无需数据迁移；不升版、tag 或创建正式 Release。
+
+## Final clean verification
+
+Final snapshot `026e16440ab2683d3a12e1990ca11d34c8294ec0` passed all84 checks, including server race 520.569 seconds and vet. Fingerprint `d8a0e04baebe96014f5387165c39b807083ef3236376a814d28899c41e2ab505`. This is the final input receipt, replacing the initial cd588b3 acceptance. Main delivery is recorded separately in the task ledger.

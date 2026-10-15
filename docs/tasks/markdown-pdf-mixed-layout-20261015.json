@@ -46,12 +46,14 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Final quick82 and focused tall-row continuation passed; actual19-page mixed browser export and all Poppler page sheets reviewed. Final runtime/offline verified; initial full84 only covers cd588b3, final clean full/main pending.",
+      "status": "pass",
+      "summary": "Final clean main full84 passed, including Go race/vet. Final quick82, measured boundary/parallel-cell regression, actual19-page bundled browser export and all Poppler page sheets reviewed. Original user problem document/authenticated browser, peak memory and receiving-device import remain unverified.",
       "evidence": [
         ".agent-state/markdown-pdf-mixed-layout/quick.log",
         ".agent-state/markdown-pdf-mixed-layout/proof.json",
-        ".agent-state/markdown-pdf-mixed-layout/tall-row-before.log"
+        ".agent-state/markdown-pdf-mixed-layout/tall-row-before.log",
+        ".agent-state/markdown-pdf-mixed-layout/full-frozen.json",
+        ".agent-state/markdown-pdf-mixed-layout/page-boundary-proof.json"
       ]
     },
     "documentation": {
@@ -70,14 +72,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final clean full84 passed; main release-check and push next.",
+      "evidence": [
+        ".agent-state/markdown-pdf-mixed-layout/full-proof.json"
+      ]
     }
   },
   "release_authorization": "Standing user instruction: push completed changes and merge all into main; update start.command runtime and complete offline image package; no version/tag/formal Release.",
   "rollback": "Revert scoped frontend/test changes and restore previous complete image 997eda4026b5; no data migration.",
-  "handoff": "Final local9999 bf701a670f6a and complete offline package verified. Final source a0ee2ab quick82/browser19/Poppler passed; final clean full84/main pending. Original problem document/authenticated browser, peak memory and receiving-device import not verified.",
+  "handoff": "Final scoped PDF fix verified with clean full84 and local9999 bf701a670f6a/offline package; main gate and push next. Original problem document/authenticated browser, peak memory and receiving-device import remain unverified; original12 remain open.",
   "browserEvidence": {
     "pages": 19,
     "renders": [
@@ -246,5 +250,14 @@
     "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/markdown-pdf-mixed-layout/verify-20261015T095247258384Z.log",
     "worktree": "/private/tmp/aide-pdf-layout-full-20261015",
     "scope": "Initial cd588b3 only; superseded by tall-row follow-up; not a final source receipt"
+  },
+  "fullVerification": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "d8a0e04baebe96014f5387165c39b807083ef3236376a814d28899c41e2ab505",
+    "serverRaceSeconds": 520.569,
+    "sourceCommit": "026e16440ab2683d3a12e1990ca11d34c8294ec0",
+    "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/markdown-pdf-mixed-layout/verify-20261015T100617306791Z.log",
+    "worktree": "/private/tmp/aide-pdf-layout-full-20261015"
   }
 }
