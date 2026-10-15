@@ -43,3 +43,5 @@ HTTP/provider回归最终在旧代码上明确失败“retry sent later conversa
 ## 最终完整回归收据
 
 干净main源码76554ab运行full：84项通过，server race 567.894秒，指纹 `6377b6a8a4c3022a234e06f76c9efec1d5d6a4397aec811090c9c3fd7999f3fe`。本节更新前文“full待收据”的历史状态。main门禁／推送仍待确认；完整Safari按人类安排暂缓，原十二项继续开放。
+
+main门禁PASS，6505615已推送并用ls-remote确认远端精确一致；本段替代上文main待确认状态。不升版／tag／正式Release，原十二项保持开放。

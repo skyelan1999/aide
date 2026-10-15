@@ -66,12 +66,12 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Clean main full84 passed; main gate/push pending; no version bump/tag/Release.",
+      "status": "pass",
+      "summary": "Clean main gate PASS; main6505615 exact remote verified after push. No version bump/tag/formal Release; receiving import/full Safari/Windows/vector boundaries unchanged.",
       "evidence": []
     }
   },
   "release_authorization": "Prior human Qwen endpoint/model testing and incremental test/docs/main push authorization. Only owned sessions, synthetic unverified receipt; no user file/tool/command/remote publish calls.",
   "rollback": "Remove owned sessions/cancel owned runs; no global provider/model changes; revert scoped docs. Do not rewind session sequence.",
-  "handoff": ""
+  "handoff": "Delivered main6505615; final runtime/import/offline/full receipts scoped in review. New human10X request continues separately; original12 remain open."
 }
