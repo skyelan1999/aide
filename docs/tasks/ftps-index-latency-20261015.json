@@ -71,7 +71,7 @@
   },
   "release_authorization": "Standing user instruction incremental work/test/push main and complete offline package; no version/tag/formal Release.",
   "rollback": "Revert scoped performance change; preserve existing runtime/package as rollback and all user data.",
-  "handoff": "",
+  "handoff": "Measured FTPS connection pacing fix verified in real source race and new actual binary process restart/API; config/auth/mounts and13 session files preserved; complete offline package checked. New clean full84/main next. Original12 remain open.",
   "protocolEvidence": {
     "status": "pass",
     "exit": 0,
@@ -87,5 +87,64 @@
     "packageSeconds": 13.885,
     "indexSubcaseSeconds": 4.31,
     "ftpsSubcaseSeconds": 2.73
+  },
+  "runtime": {
+    "image": "sha256:236ad9bc3e3c69ee9c81ad307b97b3c657d9449759e596e8bbb225d409ab8b6a",
+    "runningImage": "sha256:236ad9bc3e3c69ee9c81ad307b97b3c657d9449759e596e8bbb225d409ab8b6a",
+    "sourceSHA256": "67ec306e04c438f6a4360ccdf823ff268f100992514b97a81b439e93fd6428df",
+    "runningPlatformManifest": "sha256:f3de4661283eaa694ea44b892ac7c4d563734c37c40da77b98de560ef85b2362",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true,
+    "originalSessionFilesUnchanged": 13
+  },
+  "package": {
+    "image": "sha256:236ad9bc3e3c69ee9c81ad307b97b3c657d9449759e596e8bbb225d409ab8b6a",
+    "sourceSHA256": "67ec306e04c438f6a4360ccdf823ff268f100992514b97a81b439e93fd6428df",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-236ad9bc3e3c-offline.tar.gz",
+    "bytes": 705679801,
+    "sha256": "d81ee2547917257909dda79b187ce775b8c41f8a9c23d025afd3b79982369410",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "sourceCommit": "91df81f",
+  "processRestartEvidence": {
+    "status": "pass",
+    "applicationImage": "sha256:236ad9bc3e3c69ee9c81ad307b97b3c657d9449759e596e8bbb225d409ab8b6a",
+    "realProcessRestart": true,
+    "newPid": true,
+    "initialPartialCounts": {
+      "ftp": 8,
+      "ftps": 4
+    },
+    "finalCounts": {
+      "ftp": 80,
+      "ftps": 80
+    },
+    "freshOrigins": true,
+    "literalHTTPRetrievalAfterRestart": true,
+    "protocols": [
+      "ftp",
+      "ftps"
+    ],
+    "totalKnownBoth": true,
+    "elapsedSeconds": 18.396,
+    "scope": "isolated real binary HTTPS API and vsftpd, no user data/model/browser; selected80 files per source",
+    "samples": 18,
+    "priorCandidateSamples": 80,
+    "logSHA256": "bc7e30e98bcda8301f6ceb55151ab294594b04bbf65dc0220e9178c47778b5b2",
+    "probeSHA256": "a4fe76710f2cf1511b091adf17ecc808cc1cda815183c03b91bdb2d8581c5444",
+    "cleanupVerified": true
   }
 }

@@ -7122,13 +7122,43 @@
     "verified": [
       "Internal real vsftpd with curl7.88.1: default FTPS directory/read medians205.02/232.01ms; selected50ms pacing gives52.52/74.88ms, four samples each",
       "FTPS-only production curl option preserves TLS, address families, bounded source reads and source identity",
-      "Actual seven-source suite race13.885s; FTPS index subcase2.73s vs prior6.82s; hostname certificate mismatch refused"
+      "Actual seven-source suite race13.885s; FTPS index subcase2.73s vs prior6.82s; hostname certificate mismatch refused",
+      "New actual binary process restart/HTTPS literal hash proof PASS; selected80 files for both transports, sample count 18 vs prior80, elapsed18.396s for new probe only; no universal throughput claim",
+      "Specified start.command:13 existing session files/config/auth/sources/mounts preserved; complete offline package load/hash/platform/launchers/two local copies passed"
     ],
     "remaining": [
-      "targeted implicit FTPS/progressive and clean full84",
-      "new binary process restart/readback, runtime/offline package and main gate",
+      "new clean full84 and main gate",
       "full authenticated browser, user hosts, IPv6/network variants and large-library scope"
     ],
-    "original12RemainOpen": true
+    "original12RemainOpen": true,
+    "processRestartEvidence": {
+      "status": "pass",
+      "applicationImage": "sha256:236ad9bc3e3c69ee9c81ad307b97b3c657d9449759e596e8bbb225d409ab8b6a",
+      "realProcessRestart": true,
+      "newPid": true,
+      "initialPartialCounts": {
+        "ftp": 8,
+        "ftps": 4
+      },
+      "finalCounts": {
+        "ftp": 80,
+        "ftps": 80
+      },
+      "freshOrigins": true,
+      "literalHTTPRetrievalAfterRestart": true,
+      "protocols": [
+        "ftp",
+        "ftps"
+      ],
+      "totalKnownBoth": true,
+      "elapsedSeconds": 18.396,
+      "scope": "isolated real binary HTTPS API and vsftpd, no user data/model/browser; selected80 files per source",
+      "samples": 18,
+      "priorCandidateSamples": 80,
+      "logSHA256": "bc7e30e98bcda8301f6ceb55151ab294594b04bbf65dc0220e9178c47778b5b2",
+      "probeSHA256": "a4fe76710f2cf1511b091adf17ecc808cc1cda815183c03b91bdb2d8581c5444",
+      "cleanupVerified": true
+    },
+    "runtimeImage": "236ad9bc3e3c"
   }
 }
