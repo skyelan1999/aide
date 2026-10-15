@@ -6376,6 +6376,7 @@
   },
   "followup130": {
     "task": "docs/tasks/starmap-current-latency-20261015.json",
-    "summary": "Current Safari41715 total/20000 reference nodes; reset API35336 nodes20.2MB/0.3622s. Reproduced350ms updates starving1200ms debounce cache; source6bdcb41 fixes bounded coalescing and old idle owner rejection. Quick70 and actual current image320315/native/package local import PASS. Fresh full72 pending, old72 pass historical only for prior inputs. Large-scene interaction observation slow; further layout/per-frame diagnosis remains."
+    "summary": "Current Safari41715 total/20000 reference nodes; reset API35336 nodes20.2MB/0.3622s. Reproduced350ms updates starving1200ms debounce cache; source6bdcb41 fixes bounded coalescing and old idle owner rejection. Quick70 and actual current image320315/native/package local import PASS. Fresh full72 pending, old72 pass historical only for prior inputs. Large-scene interaction observation slow; further layout/per-frame diagnosis remains.",
+    "next_action": "Current full owner live4544/aide-verify-2ce546d82286; freeze inputs until terminal. Readonly real-model profiling shows35k-node cosmos1.18s; metadata-only live updates currently rebuild layout. Next investigate safe metadata/topology distinction and native paint cost."
   }
 }

@@ -122,5 +122,18 @@
     "head": "864924c217309d3bb8aff24bdbba10a6ae46bbcf",
     "time": "20261015T002437470028Z",
     "log": ".agent-state/verify-20261015T002437470028Z.log"
+  },
+  "readonly_profile_followup": {
+    "evidence": ".agent-state/starmap-current-latency/scene-profile.json",
+    "measured": "Node VM executes current real modules against mounted35336-node response: full cosmos build1181.89ms, context17060-node608.33ms, workspace1702-node74.71ms. Not native Safari timing or FPS.",
+    "source_observation": "applyLiveUpdate calls layout(true) and ensureCosmicView after every changed wire node, including text/readState changes; ensureCosmicView key includes graphGeneration, so unchanged graph topology still rebuilds cosmos.",
+    "next_action": "After current full owner terminal, add regression for metadata-only update preserving cosmos/layout while updating text/readState/search/detail/citations; preserve rebuild on names/path/regions/relationships/source identity changes. Inspect frame paint separately, no unsupported speedup claim."
+  },
+  "full_owner": {
+    "status": "running",
+    "sessionId": 4544,
+    "container": "aide-verify-2ce546d82286",
+    "record": ".agent-state/starmap-current-latency/full-owner.json",
+    "log": ".agent-state/verify-20261015T002825911727Z.log"
   }
 }
