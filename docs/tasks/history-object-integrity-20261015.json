@@ -18,7 +18,7 @@
   "stages": {
     "requirements": {
       "status": "pass",
-      "summary": "Follow original save/history integrity goals; verify actual corruption before deciding implementation. Existing APFS external copy remains immutable verified backup, current source remains development workspace.",
+      "summary": "Follow original save/history integrity goals with actual corruption reproduction. Human subsequently authorized external aide_ws/aide as development workspace; latest source/evidence/package synchronized there, original retained.",
       "evidence": [
         "docs/tasks/aide-continuity-knowledge-20261009.json",
         "docs/tasks/storage-fault-live-20261015.json"
@@ -39,35 +39,47 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Focused race11.264s and quick82 PASS; new actual binary HTTPS body/asset corruption and symlink guards, trusted restoration retry, old body/asset and process restart PASS4.322s. Runtime9999 updated with 13 sessions/config/auth/mounts and served assets preserved. Full/offline/main pending. Offline outer/inner hashes, both tags, platform/launchers, actual docker load and local peer copy PASS; receiving device NOT_RUN.",
+      "status": "pass",
+      "summary": "Focused race11.264s, quick82, actual binary corruption/symlink/trusted restore/process restart4.322s, protected runtime and complete offline package, and final clean main full84 passed. Complete authenticated Safari deferred by human; not claimed.",
       "evidence": [
         "docs/reviews/2026-10-15/history-object-integrity.md",
         "docs/reviews/2026-10-15/history-object-integrity-proof.json"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Plugin contract, review, sanitized binary/runtime/offline receipts and Docker package documentation updated; full/main receipts pending.",
+      "status": "pass",
+      "summary": "Focused race11.264s, quick82, actual binary corruption/symlink/trusted restore/process restart4.322s, protected runtime and complete offline package, and final clean main full84 passed. Complete authenticated Safari deferred by human; not claimed.",
       "evidence": [
         "docs/reviews/2026-10-15/history-object-integrity.md",
-        "docs/plugins/markdown-history.md"
+        "docs/reviews/2026-10-15/history-object-integrity-proof.json"
       ]
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Own corruption probe container removed; no browser/model calls; five inherited vendor deletions remain unstaged; external verified copy unchanged. Full runner cleanup remains owned by its runner.",
+      "summary": "Own corruption/full containers terminal and cleaned by runners; no browser/model calls. Inherited five vendor deletions saved in separate original/external stashes and patches outside repository for clean development, not discarded. External workspace now active by explicit human request.",
       "evidence": [
         "docs/reviews/2026-10-15/history-object-integrity.md"
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final clean full84 passed; main gate and exact remote push pending. No version/tag/formal Release.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-object-integrity.md",
+        "docker-images/README.md"
+      ]
     }
   },
   "release_authorization": "Standing incremental fix/test/docs/main push and offline package authorization; no version/tag/formal Release.",
   "rollback": "Revert scoped history validation change and restore prior runtime/offline candidate. No history object repair/deletion or migration. Preserve original five vendor deletions and verified external backup.",
-  "handoff": ""
+  "handoff": "Original twelve remain open. Full authenticated Safari deferred by human; real user SSH, receiving-device import and physical disk durability remain unverified. Windows user acceptance; real vectors deferred. External verified copy unchanged.",
+  "full": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "b38daba67a0367402712624686c75f7cb3e263a93a0a50573b8dc9e5c7442b13",
+    "serverRaceSeconds": 562.526,
+    "sourceCommit": "55381ed6afeba189be27cf078ff79a11e8f1dada",
+    "rawLog": "/Volumes/MY PASSPORT/aide_ws/aide/.agent-state/history-object-integrity/verify-20261015T132710770540Z.log",
+    "worktree": "/private/tmp/aide-history-integrity-full-20261015"
+  }
 }

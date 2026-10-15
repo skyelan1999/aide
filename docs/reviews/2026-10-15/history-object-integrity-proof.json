@@ -56,7 +56,15 @@
   "sourceCommit": "f6ca3e12ea4db65a32492fd401273099fd0062ac",
   "focusedRaceSeconds": 11.264,
   "quickChecks": 82,
-  "full": "pending",
+  "full": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "b38daba67a0367402712624686c75f7cb3e263a93a0a50573b8dc9e5c7442b13",
+    "serverRaceSeconds": 562.526,
+    "sourceCommit": "55381ed6afeba189be27cf078ff79a11e8f1dada",
+    "rawLog": "/Volumes/MY PASSPORT/aide_ws/aide/.agent-state/history-object-integrity/verify-20261015T132710770540Z.log",
+    "worktree": "/private/tmp/aide-history-integrity-full-20261015"
+  },
   "release": "pending",
   "package": {
     "image": "sha256:9bc517eba16fa5c713a05ef552ec24d53b4080e4f26e32971e3cf3edb12134cd",
