@@ -1,0 +1,85 @@
+{
+  "task": "file-recovery-async-ownership-20261016",
+  "baseline": "93d3314f2ed3c3e7d94100b2146aa09c3c2d8c33",
+  "reproductions": {
+    "delayedCaret": {
+      "actual": 0,
+      "expected": 2,
+      "exitBeforeFix": 1
+    },
+    "lockedSuccessAcknowledgements": {
+      "actual": 1,
+      "expected": 0,
+      "exitBeforeFix": 1
+    }
+  },
+  "focusedAfterFix": {
+    "autosaveRetry": "pass",
+    "recoveryScroll": "pass",
+    "lockWriteCancellation": "pass",
+    "i18n": "pass"
+  },
+  "browser": {
+    "status": "pass",
+    "scope": "real shared module/textarea; synthetic delayed position/save and lock flag; no backend or complete workbench acceptance",
+    "retainedCaret": 2,
+    "oldCaretResponse": 0,
+    "lockedAcknowledgements": 0,
+    "lockedDraftClears": 0,
+    "lockedDirty": true,
+    "statusText": "保存结果待核对",
+    "ownedTabsClosed": true,
+    "componentServerStopped": true,
+    "screenshots": [
+      "file-recovery-async/cursor.png",
+      "file-recovery-async/locked.png"
+    ]
+  },
+  "full": {
+    "status": "pass",
+    "checks": 88,
+    "allExitZero": true,
+    "fingerprint": "f264a1110d773cb8bfcdf5c2dd9bbb04a4c7df1f888caaad9bb116272790c89a",
+    "recordedHead": "84b5e612297af3153581f6dd7573015f3a83dcde",
+    "time": "20261015T225651747905Z",
+    "serverRaceSeconds": 566.699,
+    "vet": "all packages pass",
+    "runtimeAssets": {
+      "uid": 1000,
+      "readableFiles": 19,
+      "docxRoundTrip": true
+    }
+  },
+  "candidate": {
+    "image": "sha256:8a351653f22ad030c2bc3bfd9fb7dc39283bdf3d6d4cd336d90906a808fcc1d6",
+    "sourceSHA256": "fb776ce6a45177428701f25f52be1bd5c44176998754c18b778e602127b0ed6d",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "runningBefore": "sha256:8d636fd54678f2b23385248a10c4a1b60d42e4cdb76d6865d60a03a11a672313",
+    "buildCommit": "84b5e612297af3153581f6dd7573015f3a83dcde"
+  },
+  "offline": {
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-8a351653f22a-offline.tar.gz",
+    "bytes": 706071055,
+    "sha256": "546f904dc1dad6e1c66a198b09564608a82c6d2306fbf4d1127926fbdc6355a1",
+    "innerImageTarSHA256": "b5c52dd8b0fbac787941edd8148cd70a93e55ba5f3ccc905ea1c2aa8740184e7",
+    "image": "sha256:8a351653f22ad030c2bc3bfd9fb7dc39283bdf3d6d4cd336d90906a808fcc1d6",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "build": {
+      "version": "0.1.17.0-RC2",
+      "image": "sha256:8a351653f22ad030c2bc3bfd9fb7dc39283bdf3d6d4cd336d90906a808fcc1d6",
+      "platform": "linux/arm64",
+      "srcsha": "fb776ce6a45177428701f25f52be1bd5c44176998754c18b778e602127b0ed6d",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+    },
+    "licenseInBundle": true,
+    "licenseInImage": true,
+    "outerAndInnerChecksums": "pass",
+    "localDockerImport": "pass",
+    "runningImagePreserved": true,
+    "receivingDeviceImport": "not_run"
+  },
+  "runtime": "prior8d636fd unchanged; deployment follows main gate and fresh active-work preflight",
+  "release": "pending independent clean-main gate and push",
+  "modelCalls": 0,
+  "goalComplete": false
+}

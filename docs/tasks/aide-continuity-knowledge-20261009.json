@@ -192,6 +192,15 @@
           "docs/architecture/continuity-roadmap.md"
         ],
         "remaining": "当前完整工作台的刷新/重开、SSH文件光标与目录现场、多标签恢复分支和容量边界仍需直接验收。"
+      },
+      "evidence_20261016_async_file_recovery": {
+        "task": "docs/tasks/file-recovery-async-ownership-20261016.json",
+        "status": "in_progress",
+        "scope": "Confirmed and repaired delayed view restoration overriding newer caret/content and locked successful save acknowledgement clearing recovery state. Failure-before/fix-after regressions and actual IAB component pass; final full88/race566.699s/vet and local offline import pass; main/runtime gate pending. Complete authenticated/SSH workflow not proven.",
+        "evidence": [
+          "docs/reviews/2026-10-16/file-recovery-async.md",
+          "docs/reviews/2026-10-16/file-recovery-async-proof.json"
+        ]
       }
     },
     {
@@ -229,6 +238,15 @@
           "docs/reviews/2026-10-15/history-partial-save.md"
         ],
         "remaining": "当前认证工作台中的SSH历史恢复/自动保存联动、保存状态与冲突对比交互仍需复核。物理网络中断属于尚未测到的边界，不用ENOSPC替代。"
+      },
+      "evidence_20261016_async_file_recovery": {
+        "task": "docs/tasks/file-recovery-async-ownership-20261016.json",
+        "status": "in_progress",
+        "scope": "Confirmed and repaired delayed view restoration overriding newer caret/content and locked successful save acknowledgement clearing recovery state. Failure-before/fix-after regressions and actual IAB component pass; final full88/race566.699s/vet and local offline import pass; main/runtime gate pending. Complete authenticated/SSH workflow not proven.",
+        "evidence": [
+          "docs/reviews/2026-10-16/file-recovery-async.md",
+          "docs/reviews/2026-10-16/file-recovery-async-proof.json"
+        ]
       }
     },
     {
@@ -7642,7 +7660,7 @@
     "nextIndependentFocus": "Direct authenticated-workbench and SSH workflow acceptance gaps remain enumerated; preserve original12 scope, Windows user acceptance and real-vector deferral.",
     "deliveredMain": "960b0d0e04eba673fc429b052711649973e167cd",
     "mainGate": "Independent clean-main gate pass and exact remote960b0d0 verified; test/docs-only delivery.",
-    "currentCheckpointGate": "Test-only plugin lifecycle current inputs full88 pass; fp061e94b5c256889fd797ab492b453c91392cbdfd5914f643e6327811e682310e, race556.471s/vet/nonroot19. Independent main gate/push passed; production implementation unchanged, runtime8d636fd remains."
+    "currentCheckpointGate": "Async file recovery candidate/archive current inputs full88 pass; fpf264a1110d773cb8bfcdf5c2dd9bbb04a4c7df1f888caaad9bb116272790c89a, race566.699s/all vet/nonroot19. Independent main gate and runtime update pending; original12 remain open."
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
@@ -7700,5 +7718,13 @@
       "docs/reviews/2026-10-16/capability-plugin-lifecycle.md"
     ],
     "deliveredMain": "960b0d0e04eba673fc429b052711649973e167cd"
+  },
+  "file_recovery_async_20261016": {
+    "task": "docs/tasks/file-recovery-async-ownership-20261016.json",
+    "status": "in_progress",
+    "classification": "progress",
+    "evidence": [
+      "docs/reviews/2026-10-16/file-recovery-async.md"
+    ]
   }
 }

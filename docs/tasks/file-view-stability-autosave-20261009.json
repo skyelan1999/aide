@@ -60,5 +60,13 @@
   },
   "release_authorization": "",
   "rollback": "",
-  "handoff": "源码完成；长时间自动回退未复现。独立组件仅模拟保存，实际实例回归及部署未进行。"
+  "handoff": "源码完成；长时间自动回退未复现。独立组件仅模拟保存，实际实例回归及部署未进行。",
+  "followup_20261016": {
+    "task": "docs/tasks/file-recovery-async-ownership-20261016.json",
+    "status": "in_progress",
+    "scope": "Two async restoration/lock acknowledgement races reproduced and repaired; focused/actual component pass. Does not prove long-duration crash or whole SSH workflow.",
+    "evidence": [
+      "docs/reviews/2026-10-16/file-recovery-async.md"
+    ]
+  }
 }

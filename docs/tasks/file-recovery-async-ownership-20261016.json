@@ -39,10 +39,11 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Focused regressions/i18n/syntax and actual IAB component pass; full final source/archive input pending.",
+      "status": "pass",
+      "summary": "Both red-before/green-after defects, focused checks and actual IAB component pass; final source/archive input full88/race566.699s/all vet/nonroot19 assets pass. Offline checksums/local import pass; complete browser NOT_RUN.",
       "evidence": [
-        "docs/reviews/2026-10-16/file-recovery-async.md"
+        "docs/reviews/2026-10-16/file-recovery-async.md",
+        "docs/reviews/2026-10-16/file-recovery-async-proof.json"
       ]
     },
     "documentation": {
@@ -61,9 +62,10 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Prepare local candidate without changing running service, then archive/full/main gate/start.command delivery.",
+      "summary": "Candidate8a351653 and offline package verified; final full pass, independent main gate/push and start.command deployment remain.",
       "evidence": [
-        "docs/reviews/2026-10-16/file-recovery-async.md"
+        "docs/reviews/2026-10-16/file-recovery-async.md",
+        "docs/reviews/2026-10-16/file-recovery-async-proof.json"
       ]
     }
   },
