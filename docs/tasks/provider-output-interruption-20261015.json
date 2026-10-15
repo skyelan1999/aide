@@ -63,9 +63,12 @@
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "API密钥导入明文与登录URL临时文件已删除；仅自有测试文件/会话保留作证据。错误页4关闭被URL策略拒绝，应用界面被安全规则拒绝；不再创建新页。",
-      "evidence": []
+      "status": "pass",
+      "summary": "后续星图文案任务初始盘点确认错误页4已消失；其文案验收页也已关闭，最终浏览器0标签。仅保留有归属的专用会话/样本作证据；原5项vendor删除保留。",
+      "evidence": [
+        "docs/tasks/starmap-plain-labels-20261015.json",
+        ".agent-state/starmap-plain-labels/browser-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -78,7 +81,7 @@
   },
   "release_authorization": "用户授权持续开发、分部分测试push、更新本地与离线镜像包；本轮不自动main/tag。",
   "rollback": "保留原提供商和模型，新增独立provider；测试仅独立会话与自有fixture，原2fa/e75cfb候选与此前ad3d离线包可回退。",
-  "handoff": "当前9999运行source4034555/0667141784e8，完整离线包ce62032已验证并复制两个本地树；key加密且配置重启后保留。先盘点临时错误页4；绑定关闭被dataURL策略阻止，Codex应用操作被安全规则拒绝，不能声称已关闭，不重试该绑定以免输出巨大dataURL。后续访问先用裸URL确认页面/证书再认证。用户已确认重复的是思考/工具卡片；源码已修复并quick77通过，实际完整页面尚被证书阻断。收尾重复read_file、长文提前结束与原12流仍待继续，真实向量暂缓。",
+  "handoff": "卡片/停止source4034555包含于当前d946fce/b558566a411c，千问配置保留；旧错误页已消失，当前0标签。实际完整页面仍待用户处理证书后复验，访问先用裸URL。继续收尾重复read_file与长文提前结束调查；原12条目标/full79/main/接收设备导入仍未完成。",
   "sourceCommit": "4034555",
   "runtime": {
     "image": "sha256:0667141784e8966306c9da940b49d990d109356835e173f15ac87fd8907a1d74",

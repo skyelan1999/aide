@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Current fix/provider-output-interruption/source4034555;9999 running0667141784e8, encrypted user-authorized Qwen configured, offline package verified. First inventory temporary certificate-error tab4; do not retry binding dataURL or open additional tabs before cleanup. Real vision/stop APIs and quick77 pass, full79/UI/main and original12 streams incomplete. Next fix evidence-backed completion-review repeat reads/short-answer delivery; real vector deferred, Windows user-owned.",
+  "handoff": "Current fix/starmap-plain-labels/source d946fce/runtime9999 b558566a411c; user-requested names changed and outside game references removed. Complete offline package validated. Current browser0 tabs, old certificate-error page absent. Next continue actual full-page activity-card/stop acceptance after certificate handling, fix repeated completion reads and short long-document output, full79 and original12 streams remain incomplete. Real vector deferred/Windows user-owned.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6502,5 +6502,9 @@
   "followup140": {
     "task": "provider-output-interruption-20261015",
     "summary": "User authorized real compatible endpoint/key and image tests, confirmed duplicate thinking/tool cards. Encrypted provider configured; direct and actual AIDE vision PASS. Real reasoning/body API cancel23/14ms; final source stop helper to actual API272ms including process startup PASS. Reproduced dual thinking cards2vs1 and done tools duplicated between live/history; fixed4034555, quick77 PASS. Runtime9999/0667141784e8 via exact start, config/mounts/assets preserved. Complete offline package ce62032 verified stream/load/both local trees. IAB certificate error4 cleanup blocked by URL policy/native app safety; final UI NOT_RUN. Completion review duplicate reads and short document remain open."
+  },
+  "followup141": {
+    "task": "starmap-plain-labels-20261015",
+    "summary": "User requested more natural lore labels and no outside game references. Current titles now观测站手册/星域档案; game name/link removed from product and current design. Source d946fce, runtime9999/b558566a411c via exactstart; config/mount/assets preserved. Copy-only browser excerpt PASS; all browser tabs0, owned server stopped. Full offline package verified hash/import/both local trees; no formalmain/tag/full gate."
   }
 }

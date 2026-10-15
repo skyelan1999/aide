@@ -38,12 +38,14 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "旧标题/游戏名称与链接定向扫描零残留；docs和现有i18n检查通过。实际资源待启动后读回；浏览器先受证书阻断，未假称实际验收。",
+      "status": "pass",
+      "summary": "定向旧标题/名称/链接零残留；docs/i18n/diff检查通过。原start.command启动9999后实际starmap.html与源码逐字节一致，浏览器文案摘录组件显示两个新标题，非完整星图交互验收。",
       "evidence": [
-        "python3 scripts/check_docs.py: PASS 202 Markdown /623 local links",
-        "node scripts/test_i18n.cjs: PASS",
-        "git diff --check: PASS"
+        ".agent-state/starmap-plain-labels/final.json",
+        ".agent-state/starmap-plain-labels/browser-proof.json",
+        ".agent-state/starmap-plain-labels/browser.png",
+        "python3 scripts/check_docs.py PASS",
+        "node scripts/test_i18n.cjs PASS"
       ]
     },
     "documentation": {
@@ -55,18 +57,51 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "未创建浏览器页、临时测试文件或修改用户数据，原5项vendor删除保留。",
+      "summary": "旧证书错误页已在本轮初始盘点中确认消失；新建唯一文案页已关闭，最终所有浏览器0标签；专用服务80596停止。原5项vendor删除保留。",
       "evidence": [
         "git status --short"
       ]
     },
     "release": {
       "status": "pending",
-      "summary": "准备功能分支push并通过指定start.command更新本机候选与离线包；不合并main/tag。",
-      "evidence": []
+      "summary": "功能分支d946fce已push，指定start.command更新9999/b558566a411c，配置/挂载/资源校验相同；完整离线包内外哈希、实际导入及双本地副本通过。未执行正式main/tag/full发布门禁。",
+      "evidence": [
+        ".agent-state/starmap-plain-labels/package.json",
+        ".agent-state/starmap-plain-labels/final.json"
+      ]
     }
   },
   "release_authorization": "",
   "rollback": "只回退文案和设计说明，无数据迁移。",
-  "handoff": "待本机候选启动后核对实际starmap.html；不新增证书错误页，后续浏览器验收先盘点旧页。"
+  "handoff": "本轮文案在9999/b558566a411c生效，源d946fce已push，完整离线包内外校验/实际导入/双本地副本通过；新建页/服务均关，浏览器0标签。原12条持续目标及卡片完整UI/收尾重复读取/长文提前结束仍未完成。",
+  "sourceCommit": "d946fce",
+  "runtime": {
+    "image": "sha256:b558566a411caf1c99007bfb81038aa9b7bc22a5b64d82b8cdec61eb4c37b06b",
+    "runningImage": "sha256:b558566a411caf1c99007bfb81038aa9b7bc22a5b64d82b8cdec61eb4c37b06b",
+    "sourceSHA256": "c4b775f262b46ee730c56a7c0d9413e6e6b8ce8520752b0fe934df7f2844df94",
+    "runningPlatformManifest": "sha256:f826ee4ad630498380eee9095149472817ec215bac9f0dd7da03ad5e93f4b9d9",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:b558566a411caf1c99007bfb81038aa9b7bc22a5b64d82b8cdec61eb4c37b06b",
+    "sourceSHA256": "c4b775f262b46ee730c56a7c0d9413e6e6b8ce8520752b0fe934df7f2844df94",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-b558566a411c-offline.tar.gz",
+    "bytes": 705662235,
+    "sha256": "6306fa43a3ab951c0e50fbd0bdfbfc68306535bb5ea7637181eb444fcca98a37",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  }
 }
