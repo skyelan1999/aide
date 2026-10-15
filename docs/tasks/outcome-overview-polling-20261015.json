@@ -73,7 +73,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "本机5d候选与完整离线包已实际导入核验两份本地副本，功能分支待push；新输入未跑full75/main/tag门禁，不复用main7f的full74",
+      "summary": "功能分支源码ab89e85与验收c641eb7已push；本机5d完整离线候选已核验。新输入未跑full75/main/tag门禁，未复用main7f的full74。",
       "evidence": [
         ".agent-state/outcome-overview-polling/package.json"
       ]
