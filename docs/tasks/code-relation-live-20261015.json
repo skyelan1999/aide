@@ -67,8 +67,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source/runtime/offline complete; clean main full84 passed, main gate and remote push pending. No version/tag/formal Release.",
+      "status": "pass",
+      "summary": "Clean main full84 and release-check PASS; pushed main ddb04dc and verified exact ls-remote SHA. Runtime/offline candidate validated separately; no version/tag/formal Release.",
       "evidence": [
         "docs/reviews/2026-10-15/code-relation-live.md",
         "docker-images/README.md"
@@ -138,5 +138,12 @@
     "sourceCommit": "889ab4a4c0783fc2a945025e3d10f786c6d3c9ca",
     "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/code-relation-live/verify-20261015T120557689331Z.log",
     "worktree": "/private/tmp/aide-code-relation-full-20261015"
+  },
+  "mainPush": {
+    "status": "pass",
+    "pushedCommit": "ddb04dc294dc64cbac3781ed5a36cd127b1a6a4d",
+    "remoteVerifiedCommit": "ddb04dc294dc64cbac3781ed5a36cd127b1a6a4d",
+    "releaseCheck": "pass",
+    "formalReleaseCreated": false
   }
 }

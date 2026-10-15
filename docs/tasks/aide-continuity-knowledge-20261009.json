@@ -375,7 +375,11 @@
           "go_types_module_system_browser"
         ],
         "remaining": "Safari两包Go样例类型绑定/动态未解析/L12跳转及诊断修复通过；当前35项full PASS。第三方依赖、SSH及其他语言仍缺证据。"
-      }
+      },
+      "evidence_20261015_code_relation_live": [
+        "docs/reviews/2026-10-15/code-relation-live.md",
+        "docs/reviews/2026-10-15/code-relation-live-proof.json"
+      ]
     },
     {
       "name": "星图路径探索",
@@ -390,7 +394,11 @@
           "knowledge-path-exploration-20261009"
         ],
         "remaining": "Safari 单跳代码候选路径已有验收；文档显式提及边已补源行列与 token 证据，Go/组件测试通过，但新改动尚未在已认证系统 Safari 复核。按钮到服务的完整链、SSH、主题/响应式及报告来源浏览器定位仍未全部验收。"
-      }
+      },
+      "evidence_20261015_code_relation_live": [
+        "docs/reviews/2026-10-15/code-relation-live.md",
+        "docs/reviews/2026-10-15/code-relation-live-proof.json"
+      ]
     },
     {
       "name": "知识时光",
@@ -7234,8 +7242,8 @@
     }
   },
   "followup155": {
-    "status": "in_progress",
-    "summary": "Lexical and interface false edges fixed, real SFTP/path/source proof, runtime/offline package and final clean full84 passed; main release gate/push pending.",
+    "status": "pass",
+    "summary": "Lexical and interface false edges fixed; scoped race, real SFTP/path/source readback, runtime/offline, clean full84 and main gate/push verified. Original twelve tracks remain open.",
     "evidence": [
       "docs/tasks/code-relation-live-20261015.json",
       "docs/reviews/2026-10-15/code-relation-live.md"
@@ -7252,6 +7260,11 @@
       "worktree": "/private/tmp/aide-code-relation-full-20261015"
     },
     "classification": "progress",
-    "previousGoalTurn": "Status-only user progress answer; current continuation advances real code correctness and acceptance."
+    "previousGoalTurn": "Status-only user progress answer; current continuation advances real code correctness and acceptance.",
+    "mainPush": {
+      "pushedCommit": "ddb04dc294dc64cbac3781ed5a36cd127b1a6a4d",
+      "remoteVerifiedCommit": "ddb04dc294dc64cbac3781ed5a36cd127b1a6a4d",
+      "formalReleaseCreated": false
+    }
   }
 }
