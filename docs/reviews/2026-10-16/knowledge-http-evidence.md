@@ -25,3 +25,5 @@ Go AST 识别标准 `net/http` 的默认注册、直接 `NewServeMux` 和显式 
 检查命令：`node scripts/knowledge-web-parser.test.cjs`、JS语法检查、Knowledge相关race、Web专项race与全包vet、quick85。解析和构图回归验证六段静态链，实际临时文件索引→路径HTTP接口另测版本／工作区／视图隔离；辅助函数和页面变更后的最终Knowledge race为69.527秒，全包vet和quick85通过。首次新增层级测试误将describe参数顺序写反而失败，修正后单项及quick85通过。完整full应为87项，尚未执行，不复用前一批次full86收据。运行镜像与main门禁随后补实际收据，不预写PASS。
 
 后续从同一任务接续图构建与呈现；完整认证Safari沿用人类暂缓决定，Windows由用户验收，真实向量测试暂缓。总体12项不因本检查点改为完成。
+
+收尾反例：初版37de候选对对象原型提供的HTTP方法会误按GET处理，新增Node反例确实失败；现统一直接/封装请求的方法解析，拒绝原型选项和方法覆盖。Web专项race2.992秒和vet通过；随后JS方法规范化又按原生Request观测修正，custom/patch保留大小写、post规范化为POST，最终Node与当前quick85通过。37de仅中间镜像/包，需以重建候选及最终full87为准。

@@ -51,6 +51,9 @@ for (const text of [
 const methods = parse("fetch(`/api/literal`); fetch('/api/x',{method:'put'}); fetch('/api/x',{...options}); fetch('/api/x',{method:verb});");
 assert.deepEqual(methods.requests.map(r=>r.method), ['GET','PUT']);
 assert.equal(methods.unresolvedWeb.length, 2);
+assert.deepEqual(parse("fetch('/api/x',{method:'custom'});fetch('/api/x',{method:'patch'});fetch('/api/x',{method:'post'});").requests.map(r=>r.method),['custom','patch','POST'],'fetch method normalization changed custom method identity');
+assert.equal(parse("fetch('/api/x',{__proto__:{method:'DELETE'}});").requests.length,0,'prototype-derived method misclassified as GET');
+assert.equal(parse("function api(path,options={}){return fetch('/api'+path,{...options,__proto__:{method:'DELETE'}});}api('/x');").requests.length,0,'wrapper prototype method misclassified');
 const comments = parse(`// document.getElementById('fake').onclick=()=>fetch('/fake');\nconst text="fetch('/string')";`);
 assert.equal(comments.events.length + comments.requests.length, 0);
 const bounded = parse(Array.from({length:300}, (_,i)=>`fetch('/api/${i}');`).join('\n'));

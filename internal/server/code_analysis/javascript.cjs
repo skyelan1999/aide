@@ -102,9 +102,10 @@ for (const file of files) {
     function methodOf(options) {
       let method='GET';
       if(options&&!(options.type==='Literal'&&options.value===null)) {
-        if(options.type!=='ObjectExpression'||options.properties.some(p=>p.type!=='Property'||p.computed||p.kind!=='init'))return null;
+        if(options.type!=='ObjectExpression'||options.properties.some(p=>p.type!=='Property'||p.computed||p.kind!=='init'||(p.key.name||p.key.value)==='__proto__'))return null;
         for(const p of options.properties)if((p.key.name||p.key.value)==='method') {
-          const value=literal(p.value);if(!value||!/^[A-Za-z]+$/.test(value))return null;method=value.toUpperCase();
+          const value=literal(p.value);if(!value||!/^[A-Za-z]+$/.test(value))return null;
+          const upper=value.toUpperCase();method=['DELETE','GET','HEAD','OPTIONS','POST','PUT'].includes(upper)?upper:value;
         }
       }
       return method;
@@ -142,7 +143,7 @@ for (const file of files) {
       const options=call.arguments[1];let method=null,forward=false;
       if(options?.type==='ObjectExpression'&&options.properties.some(p=>p.type==='SpreadElement')) {
         const spreads=options.properties.filter(p=>p.type==='SpreadElement');
-        if(!optionsName||spreads.length!==1||spreads[0].argument.type!=='Identifier'||spreads[0].argument.name!==optionsName||options.properties.some(p=>p.type!=='SpreadElement'&&(p.type!=='Property'||p.computed||p.kind!=='init'||(p.key.name||p.key.value)==='method')))return null;
+        if(!optionsName||spreads.length!==1||spreads[0].argument.type!=='Identifier'||spreads[0].argument.name!==optionsName||options.properties.some(p=>p.type!=='SpreadElement'&&(p.type!=='Property'||p.computed||p.kind!=='init'||['method','__proto__'].includes(p.key.name||p.key.value))))return null;
         forward=true;
       } else {method=methodOf(options);if(!method)return null;}
       const result={prefix:literal(target.left),forward,method,line:fn.loc.start.line};wrapperCache.set(fn,result);return result;
@@ -201,18 +202,8 @@ for (const file of files) {
       if (!globalAvailable('fetch', n)) { unresolved(n, 'http', 'shadowed_or_reassigned_fetch'); return; }
       const url = literal(n.arguments[0]);
       if (!url || url.length > 2048) { unresolved(n, 'http', 'dynamic_url'); return; }
-      let method = 'GET';
-      const options = n.arguments[1];
-      if (options && !(options.type === 'Literal' && options.value === null)) {
-        if (options.type !== 'ObjectExpression' || options.properties.some(p => p.type !== 'Property' || p.computed || p.kind !== 'init')) {
-          unresolved(n, 'http', 'dynamic_options'); return;
-        }
-        for (const p of options.properties) if ((p.key.name || p.key.value) === 'method') {
-          const value = literal(p.value);
-          if (!value || !/^[A-Za-z]+$/.test(value)) { unresolved(n, 'http', 'dynamic_method'); return; }
-          method = value.toUpperCase();
-        }
-      }
+      const method=methodOf(n.arguments[1]);
+      if(!method){unresolved(n,'http','dynamic_options_or_method');return;}
       webRecord(u.requests, {caller:scope, url, method, line:n.loc.start.line, column:n.loc.start.column+1});
     }
     function walk(n, scope = '', parent = null) {

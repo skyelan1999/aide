@@ -14,7 +14,7 @@
   "quick": {
     "status": "pass",
     "count": 85,
-    "fingerprint": "b97f8cecfbe9cf56f871d29a39865b6a8a8db2d939e668ed8fe579da6e564846"
+    "fingerprint": "a10aa8672dea9b6722131e99eed2965c716f1cfe1f275a7141f4d1ddfbed7810"
   },
   "notComplete": [
     "clean-main full87",
@@ -71,5 +71,17 @@
       "knowledge-http-evidence/path-light-390.png"
     ]
   },
-  "previousQuickFailure": "new structure regression swapped describe arguments; corrected single test and final quick85 pass"
+  "previousQuickFailure": "new structure regression swapped describe arguments; corrected single test and final quick85 pass",
+  "methodGuard": {
+    "prototypeReproduction": "new direct-fetch regression failed on initial candidate; shared method parser now rejects prototype-derived options and wrapper overrides",
+    "focusedWebRaceSeconds": 2.992,
+    "vet": "all packages pass",
+    "nativeRequestObservation": [
+      "custom=custom",
+      "patch=patch",
+      "post=POST"
+    ],
+    "finalNode": "pass: prototype rejection and standard/custom normalization",
+    "scope": "last normalization-only JS change covered by native Request/Node and current quick; final full87 still required"
+  }
 }
