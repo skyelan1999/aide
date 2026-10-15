@@ -6839,7 +6839,12 @@
       "Windows用户负责",
       "真实向量提供方测试按用户要求暂缓"
     ],
-    "release_gate_policy": "干净full81和main release-check PASS，main已快进推送674b06a，随后仅补普通文档收据；未升版/tag/正式Release。原12完整要求仍未全部验收，不宣告目标完成。"
+    "release_gate_policy": "干净full81和main release-check PASS，main已快进推送674b06a，随后仅补普通文档收据；未升版/tag/正式Release。原12完整要求仍未全部验收，不宣告目标完成。",
+    "ai_exploration": {
+      "status": "in_progress",
+      "task": "docs/tasks/starmap-ai-exploration-20261015.json",
+      "scope": "Source, browser fixture and one real node-assist sample; no claim for whole-graph search quality or all original requirements."
+    }
   },
   "followup147": {
     "task": "cancelled-output-context-20261015",
@@ -6857,5 +6862,24 @@
       "scope": "source integration; no version bump/tag/Release; current local candidate retained"
     },
     "remaining": "原12工作流仍in_progress；完整UI、接收设备导入、长文单run/篇幅/逐字引用等不由主线门禁替代。"
+  },
+  "followup148": {
+    "request": "Knowledge-map AI exploration usability",
+    "task": "docs/tasks/starmap-ai-exploration-20261015.json",
+    "status": "in_progress",
+    "sourceCommit": "2457aa8",
+    "verified": [
+      "80 quick checks on development inputs",
+      "actual bundled star-map fixture: indexing while generation, stop/retry, known citations, light/dark/narrow rendering",
+      "Qwen node-assist single owned fixture: marker, order and citation",
+      "start.command 9999 candidate 96caed8f11cd, exact served assets and config/auth/mount preservation",
+      "complete offline archive hashes, docker load and two local copies"
+    ],
+    "remaining": [
+      "clean main full/release gate and push",
+      "live authenticated browser end-to-end and broad directory-search quality",
+      "receiving-device import"
+    ],
+    "originalWorkstreamsRemainOpen": true
   }
 }

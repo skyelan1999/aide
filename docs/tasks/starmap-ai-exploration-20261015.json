@@ -6,7 +6,7 @@
   "acceptance": [
     "同工作区渐进扫描不打断AI理解，回答标明资料更新与请求范围",
     "停止立即释放按钮；迟到成功、错误及finally不得覆盖新请求、锁屏或新工作区",
-    "无选中和结果时提示选择或搜索，不隐式理解全库前8项；空问题有合理默认",
+    "Explicit scope: selected node, otherwise up to eight current non-directory results; with neither, prompt selection or AI search. Default question only when node material exists.",
     "回答安全排版，引用只指向本次真实返回的节点或文档片段",
     "相关自动回归、浏览器组件验收与文档记录真实结果"
   ],
@@ -112,5 +112,34 @@
     "hostLaunchersMatch": true,
     "copiedBothTrees": true,
     "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "browser": {
+    "scope": "Actual bundled starmap HTML/CSS/JS with loopback API and lock fixture, not live authenticated workbench",
+    "themes": [
+      "professional-light",
+      "professional-dark"
+    ],
+    "viewport": [
+      390,
+      844
+    ],
+    "noHorizontalPageOverflow": true,
+    "oneClickNodeUnderstanding": true,
+    "progressiveUpdatesRetainAnswer": true,
+    "stopRetry": true,
+    "citationSelection": true,
+    "htmlAndUnknownCitationsInert": true,
+    "screenshots": [
+      ".agent-state/starmap-ai-exploration/light.png",
+      ".agent-state/starmap-ai-exploration/dark.png",
+      ".agent-state/starmap-ai-exploration/narrow-dark.png"
+    ]
+  },
+  "cleanup": {
+    "ownedFixtureRemoved": true,
+    "fixtureCopy": "fixture.md",
+    "browserTab8Closed": true,
+    "viewportReset": true,
+    "fixtureServerStopped": true
   }
 }
