@@ -27,7 +27,7 @@ const single=harness(candidate).update(nodes.slice(0,1));assert.equal(single.sta
 // reuse another source's root-scene frame when the user switches the filter.
 const recon=harness(candidate),workspaceNodes=nodes.map(n=>({...n,id:'W'+n.id,x:n.x-1,region:'workspace',root:'workspace',source:''}));
 const prior=recon.update(workspaceNodes);
-Object.assign(recon.c,{cosmicEnabled:true,locked:false,AideStarCosmos:recon.c.window.AideStarCosmos,graphGeneration:2,region:'source:fixture',codeView:false,edgeMode:'all',focusCode:false,selected:null,callDepth:'all',cosmicScopeKey:'1|workspace|false|all|false||',liveReconcile:true,cosmicScene:prior.scene,graphFade:null,renderNodes:nodes,cosmicFocusID:'',cosmicHover:'',cosmicSelected:'',syncCosmicNav(){}});
+Object.assign(recon.c,{cosmicEnabled:true,locked:false,AideStarCosmos:recon.c.window.AideStarCosmos,graphGeneration:2,layoutGeneration:2,region:'source:fixture',codeView:false,edgeMode:'all',focusCode:false,selected:null,callDepth:'all',cosmicScopeKey:'1|workspace|false|all|false||',liveReconcile:true,cosmicScene:prior.scene,graphFade:null,renderNodes:nodes,cosmicFocusID:'',cosmicHover:'',cosmicSelected:'',syncCosmicNav(){}});
 recon.c.graph.nodes=nodes;recon.c.nodeByID=new Map(nodes.map(n=>[n.id,n]));
 vm.runInContext(candidate.slice(candidate.indexOf('function cosmicPath('),candidate.indexOf('function cosmicPreferred(')),recon.c);
 recon.c.enterCosmic=key=>{recon.c.lastData=recon.c.cosmicData(key)};

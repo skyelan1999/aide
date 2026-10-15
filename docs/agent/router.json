@@ -477,6 +477,10 @@
       ],
       [
         "node",
+        "scripts/starmap-live-metadata.test.cjs"
+      ],
+      [
+        "node",
         "scripts/starmap-empty-state.test.cjs"
       ],
       [

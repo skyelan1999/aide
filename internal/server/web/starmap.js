@@ -10,7 +10,7 @@ const channel=channelName&&/^[a-zA-Z0-9-]{10,100}$/.test(channelName)?new Broadc
 let token=localStorage.getItem('aide-token')||'',graph={nodes:[],edges:[],sources:[],warnings:[]},selected=null,region='',results=[],yaw=0,pitch=.1,zoom=1,drag=null,projection=[],width=0,height=0,pixelRatio=0,loading=false;
 const motionReduced=()=>document.documentElement.dataset.motion==='reduced'||matchMedia('(prefers-reduced-motion: reduce)').matches;
 const infrared=window.AideInfrared.create({button:$('infrared'),note:$('infrared-note'),redraw:()=>redraw(),motionEnabled:()=>motionEnabled(),onChange:enabled=>{scheduleSkyRecovery();say(enabled?'红外伪彩视觉模拟已开启 · 非真实观测数据':'已恢复可见光星图配色');}});
-let codeView=params.get('code')==='1',edgeMode='all',focusCode=false,focusCache=null,focusKey='',graphGeneration=0,loadAbort=null,aiAbort=null;
+let codeView=params.get('code')==='1',edgeMode='all',focusCode=false,focusCache=null,focusKey='',graphGeneration=0,layoutGeneration=0,loadAbort=null,aiAbort=null;
 let documentAbort=null,documentGeneration=0,documentBatch=null;
 function resetDocumentBatch(){documentBatch=null;$('document-progress').hidden=true;$('document-next').hidden=true;}
 // Data revisions and rendering lifetimes are separate: polling never reloads the page.
@@ -110,6 +110,9 @@ for(const event of ['pointerup','pointercancel','wheel','click','input','change'
 
 const nodeFields=['id','name','kind','region','path','root','source','sourceName','sourceType','origin','format','session','number','text','readState','size','modified','language','symbolKind','line','endLine','parentFile','signature','contentHash'];
 let sourceCatalog=[],sourceByRegion=new Map();
+// Keep source identity and grouping fields conservative; body observation changes
+// refresh data/citations without reconstructing unchanged spatial relationships.
+const nodeLayoutFields=nodeFields.filter(field=>!['text','readState','size','modified','contentHash'].includes(field));
 const sourceTypes={session:'会话',local:'本地目录',ssh:'SSH 工作区',skill:'Skill',link:'HTTP 链接',mcp:'MCP 工具目录',sftp:'SSH / SFTP','workspace-sftp':'工作区 SSH / SFTP',ftp:'FTP',ftps:'FTPS',smb:'SMB'};
 const sourceStates={ready:'已索引',partial:'部分索引',unavailable:'暂不可用',disabled:'已停用',catalog:'仅工具目录'};
 const sourceTypeLabel=type=>sourceTypes[type]||type||'未报告类型';
@@ -458,7 +461,7 @@ function enterCosmic(key,animateFlight=true,keepSelection=false){
 }
 function ensureCosmicView(){
  if(!cosmicEnabled||locked||!window.AideStarCosmos)return;
- const key=[graphGeneration,region,codeView,edgeMode,focusCode,focusCode?selected?.id||'':'',focusCode?callDepth:''].join('|');if(key===cosmicScopeKey)return;
+ const key=[layoutGeneration,region,codeView,edgeMode,focusCode,focusCode?selected?.id||'':'',focusCode?callDepth:''].join('|');if(key===cosmicScopeKey)return;
  const previousScope=cosmicScopeKey.slice(cosmicScopeKey.indexOf('|')+1),nextScope=key.slice(key.indexOf('|')+1);
  const keep=liveReconcile&&previousScope===nextScope;liveReconcile=false;
  const oldPath=cosmicScene?cosmicPath(cosmicScene.group).map(g=>g.key):[],transition=graphFade;
@@ -706,6 +709,8 @@ function relationshipOverview(){
 addEventListener('keydown',e=>{if(!cosmicEnabled||locked||e.target.closest?.('input,textarea,select,[contenteditable=true]'))return;if((e.altKey&&e.key==='ArrowLeft')||(e.key==='Escape'&&!selected)){if(cosmicScene?.group.parent){e.preventDefault();enterCosmic(cosmicScene.group.parent.key);}}});
 function invalidateView(){renderRevision++;renderKey='';focusCache=null;focusKey='';}
 function layout(preserve=false){
+ // Data revisions may advance without changing any spatial grouping.
+ layoutGeneration++;
  const oldClusters=new Map(clusters.map(c=>[c.key,c])),oldPositions=new Map(preserve?graph.nodes.filter(n=>Number.isFinite(n.x)).map(n=>[n.id,{x:n.x,y:n.y,depth:n.depth}]):[]);
  const regions=[...new Set(graph.nodes.map(n=>n.region))],buckets=new Map();
  nodeByID=new Map(graph.nodes.map(n=>[n.id,n]));edgeAdjacency=new Map();
@@ -924,12 +929,13 @@ function applyLiveUpdate(update,initial=false){
  }
  const incoming=new Map(update.nodes.map(n=>[n.id,n])),removed=new Set(update.removedNodes||[]),oldNodes=new Map(graph.nodes.map(n=>[n.id,n]));
  if(update.reset)for(const id of oldNodes.keys())if(!incoming.has(id))removed.add(id);
- const changed=[],added=[];
- for(const raw of update.nodes){if(liveWireNodes.get(raw.id)===JSON.stringify(raw))continue;changed.push(raw);if(!oldNodes.has(raw.id))added.push(raw);}
+ const changed=[],added=[];let layoutChanged=removed.size>0;
+ for(const raw of update.nodes){if(liveWireNodes.get(raw.id)===JSON.stringify(raw))continue;changed.push(raw);const old=oldNodes.get(raw.id);if(!old){added.push(raw);layoutChanged=true;}else if(nodeLayoutFields.some(field=>old[field]!==raw[field]))layoutChanged=true;}
  const oldEdges=new Map(graph.edges.map(e=>[edgeKey(e),e])),nextEdges=update.reset?new Map(update.edges.map(e=>[edgeKey(e),oldEdges.get(edgeKey(e))||e])):new Map(oldEdges);
  if(!update.reset){for(const e of update.removedEdges||[])nextEdges.delete(edgeKey(e));for(const e of update.edges)nextEdges.set(edgeKey(e),oldEdges.get(edgeKey(e))||e);}
  for(const [key,e]of nextEdges)if(removed.has(e.from)||removed.has(e.to))nextEdges.delete(key);
  const edgesChanged=oldEdges.size!==nextEdges.size||[...nextEdges.keys()].some(k=>!oldEdges.has(k));
+ layoutChanged=layoutChanged||edgesChanged;
  if(Array.isArray(update.sources))graph.sources=update.sources;
  graph.warnings=update.warnings||[];graph.truncated=!!update.truncated;graph.code=update.code;syncGraphChrome();
  if(!changed.length&&!removed.size&&!edgesChanged){if(update.stale)say('正在建立最新索引 · 当前显示上次完整星图');if(!cosmicScene?.members.length)redraw();return;}
@@ -943,7 +949,7 @@ function applyLiveUpdate(update,initial=false){
  if(aiAbort&&!aiAbort.signal.aborted&&$('ask').disabled)$('answer').textContent='资料有更新，当前理解已中止；请重新理解最新资料。';aiAbort?.abort();
  if(selectionID&&!oldNodes.has(selectionID)){selected=null;$('insert').disabled=true;$('understand').disabled=true;revealPanel($('detail'),false);}
  else if(selectionID)selected=!selectionChanged&&citation?{...oldNodes.get(selectionID),documentCitation:citation}:oldNodes.get(selectionID);
- layout(true);if(selected&&citation&&!selectionChanged)selected={...nodeByID.get(selectionID),documentCitation:citation};if(retrievalMode()==='nodes')nodeResults(false);else{invalidateView();if(selectionChanged)$('document-note').textContent='当前原文已更新；保留检索结果，重新探索可核对最新摘录。';}
+ if(layoutChanged)layout(true);else invalidateView();if(selected&&citation&&!selectionChanged)selected={...nodeByID.get(selectionID),documentCitation:citation};if(retrievalMode()==='nodes')nodeResults(false);else{invalidateView();if(selectionChanged)$('document-note').textContent='当前原文已更新；保留检索结果，重新探索可核对最新摘录。';}
  refreshView();ensureCosmicView();syncGraphChrome();
  if(selected){$('detail-name').textContent=selected.name;$('detail-path').textContent=(selected.path||'会话 #'+selected.number)+(selected.line?' : '+selected.line+'–'+selected.endLine:'');$('detail-region').textContent=selected.kind==='symbol'?'CODE / '+selected.language:selected.region==='sessions'?'CONVERSATION / 会话':selected.region==='workspace'?'WORKSPACE / 工作区':'REFERENCE / 引用';$('insert').disabled=selected.kind==='directory';$('understand').disabled=selected.kind==='directory';$('neighbors').textContent=`${(edgeAdjacency.get(selected.id)||[]).length} 条连接`;if(selectionChanged){$('detail-text').textContent=nodeDetailText(selected);$('document-insight').hidden=true;delete selected.documentCitation;}renderCodeInsight(selected);}
  liveAnimationUntil=motion?now+(added.length?Math.min(added.length-1,20)*32+680:380):0;

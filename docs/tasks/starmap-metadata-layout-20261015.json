@@ -1,0 +1,74 @@
+{
+  "id": "starmap-metadata-layout-20261015",
+  "request": "知识星图持续正文复核时频繁重建全量布局导致大星域交互慢；仅更新元数据时保留布局，同时正确更新搜索、详情和引用失效，结构变更仍重建",
+  "baseline": "e3ecba580104a89d4529e89f3ea7860e08ff32ef",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Metadata-only changes (text/readState/size/modified/contentHash) retain existing layout, cosmic model, node references and camera while applying fresh wire data.",
+    "Selected details/search and content hashes refresh, changed citations and evidence paths invalidate, unrelated selected citations survive; document search does not silently reissue.",
+    "Added/removed nodes and edges, workspace/identity/name/path/type/source/definition changes still rebuild; same-wire polls preserve revision lifetime.",
+    "Old actual-source regression fails, final actual layout/update/model regression passes; canonical start.command browser, scoped quick/full, matching complete offline image and honest latency boundary.",
+    "Keep original sources/settings/auth/mounts/user session content and inherited5 vendor deletions; remove only owned test file after exact ownership checks."
+  ],
+  "scope": [
+    "internal/server/web/starmap.js",
+    "scripts/starmap-live-metadata.test.cjs",
+    "scripts/starmap-local-frame.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Current actual applyLiveUpdate unconditionally calls layout(true) after changed wire nodes. Real module3-batch35336-node profile2503.8ms,3 layouts/models; private prototype35.76ms,0 models with latest bodies applied. DOM/canvas/stellar-decoration stubs; not browser latency/FPS. Old-source meaningful regression fails metadata-only layout1 vs0.",
+      "evidence": [
+        ".agent-state/starmap-metadata-layout/negative.log",
+        ".agent-state/starmap-metadata-layout/profile-before-real-layout.json",
+        ".agent-state/starmap-metadata-layout/profile-prototype-real-layout.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Separate layout generation from data generation. Conservative comparison of known wire fields except five metadata fields chooses rebuild before mutation; metadata updates preserve live node refs/cosmic caches. Always keep data/document generations, AI/document aborts and citation/path invalidation. Scope/filter/mode/selection stay in cosmic key.",
+      "evidence": [
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Production uses separate layout generation, conservative spatial-field comparisons and metadata-only invalidation while retaining data/citation abort semantics. Actual function/model tests registered in quick/full; source VM frame test adapted to actual layout revision.",
+      "evidence": [
+        ".agent-state/starmap-metadata-layout/prototype.log"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Current actual metadata/layout/cosmos tests PASS with selected/unrelated citations, original search, no-op/reset, workspace and structural changes. Quick71 PASS. Old baseline actual-source negative layout1 vs0 retained. Canonical native controlled-body update/image/full73 pending.",
+      "evidence": [
+        "scripts/starmap-live-metadata.test.cjs",
+        ".agent-state/starmap-metadata-layout/negative.log",
+        ".agent-state/verify-20261015T005115890634Z.log"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental source/docs push, local canonical startup/testing and offline image authorization; no main/tag/formal release.",
+  "rollback": "Revert scoped layout changes or use previously verified320315 image; keep volumes and cache schema unchanged.",
+  "handoff": ""
+}
