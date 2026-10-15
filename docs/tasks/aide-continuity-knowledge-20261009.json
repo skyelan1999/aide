@@ -7232,5 +7232,13 @@
       "fullChecks": 84,
       "formalReleaseCreated": false
     }
+  },
+  "followup155": {
+    "status": "in_progress",
+    "summary": "Actual SFTP code snapshot reproduced JS/Python callback shadow false edges; lexical-binding fix and focused race pass, new runtime/path/full/package/main pending. Original twelve tracks remain open.",
+    "evidence": [
+      "docs/tasks/code-relation-live-20261015.json",
+      "docs/reviews/2026-10-15/code-relation-live.md"
+    ]
   }
 }

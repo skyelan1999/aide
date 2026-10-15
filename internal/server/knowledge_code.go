@@ -43,12 +43,17 @@ type codeSymbol struct {
 	Anonymous bool   `json:"anonymous"`
 }
 type codeCall struct {
-	Caller    string `json:"caller"`
-	Name      string `json:"name"`
-	Qualifier string `json:"qualifier"`
-	Line      int    `json:"line"`
-	Column    int    `json:"column,omitempty"`
-	Dynamic   bool   `json:"dynamic"`
+	Caller       string `json:"caller"`
+	Name         string `json:"name"`
+	Qualifier    string `json:"qualifier"`
+	Line         int    `json:"line"`
+	Column       int    `json:"column,omitempty"`
+	Dynamic      bool   `json:"dynamic"`
+	BindingKnown bool   `json:"bindingKnown,omitempty"`
+	Binding      string `json:"binding,omitempty"`
+	BindingLine  int    `json:"bindingLine,omitempty"`
+	ImportPath   string `json:"importPath,omitempty"`
+	ImportName   string `json:"importName,omitempty"`
 }
 type codeImport struct {
 	Alias string `json:"alias"`
@@ -261,7 +266,10 @@ func codeParseBatch(ctx context.Context, lang string, files []knowledgeCodeFile)
 		script, _ := codeAssets.ReadFile("code_analysis/javascript.cjs")
 		prefix := "const acorn=(()=>{const module={exports:{}};const exports=module.exports;\n" + string(parserJS) + "\nreturn module.exports;})();\n"
 		encoded, _ := json.Marshal(string(raw))
-		program := strings.Replace(string(script), "const files=JSON.parse(fs.readFileSync(0,'utf8')), out=[];", "const files=JSON.parse("+string(encoded)+"), out=[];", 1)
+		if strings.Count(string(script), "__AIDE_CODE_INPUT__") != 1 {
+			return nil, fmt.Errorf("JavaScript解析器输入模板无效")
+		}
+		program := strings.Replace(string(script), "__AIDE_CODE_INPUT__", string(encoded), 1)
 		cmd = exec.CommandContext(ctx, "node", "--max-old-space-size=128", "-")
 		cmd.Stdin = strings.NewReader(prefix + program)
 	}
@@ -514,7 +522,30 @@ func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowled
 			}
 			candidates := []decl{}
 			evidence := "AST call; name candidate, not runtime/type proof"
-			if c.Qualifier == "" && !c.Dynamic {
+			if c.BindingKnown {
+				// Product-owned JS/Python parsers report the lexical binding, not
+				// merely a matching name. Unknown/value bindings must not fall
+				// back to a same-name declaration in a different scope.
+				evidence = "AST lexical binding; static candidate, not runtime/type proof"
+				if !c.Dynamic && c.Binding != "" && c.BindingLine > 0 {
+					for _, d := range pool {
+						if d.unit.File == u.File && d.s.Key == c.Binding && d.s.Line == c.BindingLine {
+							candidates = append(candidates, d)
+						}
+					}
+				} else if !c.Dynamic && c.ImportPath != "" {
+					im := codeImport{Path: c.ImportPath, Name: c.ImportName}
+					if other := resolveImport(f, u, im); other != nil && im.Name != "default" {
+						name := im.Name
+						if name == "*" {
+							name = c.Name
+						}
+						if d, ok := declarations[other.ID+"\x00"+name]; ok {
+							candidates = append(candidates, d)
+						}
+					}
+				}
+			} else if c.Qualifier == "" && !c.Dynamic {
 				// Nearest lexical declaration first; duplicates remain unresolved.
 				scope := c.Caller
 				for {

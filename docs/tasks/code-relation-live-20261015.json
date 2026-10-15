@@ -1,0 +1,73 @@
+{
+  "id": "code-relation-live-20261015",
+  "request": "继续总目标：补查代码关系和证据路径在真实SSH及外部依赖/动态调用下的正确分类与原文定位，发现问题即修复",
+  "baseline": "3bb8dcb9d52a2000284ed911e281bdd79052d9d3",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Actual isolated SFTP code snapshot and self-binary go/types helper: indexed local calls vs external dependencies/dynamic calls keep accurate evidence labels and locations",
+    "Known callback/local-variable shadowing must not connect to an unrelated same-name declaration; supported positive local/import call candidates remain",
+    "Actual path API revision guards and source line/hash readback, no source execution or dependency installation; full/docs/runtime/package/main receipts scoped separately"
+  ],
+  "scope": [
+    "internal/server/knowledge_code.go",
+    "internal/server/knowledge_code_test.go",
+    "internal/server/code_analysis/javascript.cjs",
+    "internal/server/code_analysis/python.py",
+    "internal/server/knowledge_code_shadow_test.go",
+    "docs",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Continue original code confidence/path tracks with real isolated SSH/SFTP snapshot and external/dynamic/shadowed calls; no browser/user-host claim.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Two-pass lexical environments and exact declaration/import binding; conservative unresolved mutable calls, no execution or type-proof promotion.",
+      "evidence": [
+        "docs/reviews/2026-10-15/code-relation-live.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "JS/Python lexical bindings, Go scoped resolver and explicit JS input token; focused regression coverage.",
+      "evidence": [
+        "docs/reviews/2026-10-15/code-relation-live.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Baseline actual SFTP reproduced false callback edges; focused race PASS 2.834s. New runtime/full remain pending.",
+      "evidence": [
+        "docs/reviews/2026-10-15/code-relation-live.md"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Architecture and scoped review updated; final runtime/full/delivery receipts pending.",
+      "evidence": [
+        "docs/reviews/2026-10-15/code-relation-live.md"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "Inherited five vendor deletions preserved and excluded; scoped diff reviewed, final staging pending.",
+      "evidence": [
+        "docs/reviews/2026-10-15/code-relation-live.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Standing incremental test/docs/push main and complete offline package authorization; no version/tag/formal Release.",
+  "rollback": "Revert scoped parser/test changes; retain current runtime/offline candidate and all user configuration/data.",
+  "handoff": ""
+}
