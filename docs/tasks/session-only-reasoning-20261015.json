@@ -7,7 +7,7 @@
     "模型设置不再显示默认推理强度或独立保存按钮",
     "保存模型设置不读已移除控件、不写 reasoningEffort，模型/提供商/密钥草稿照常提交",
     "会话策略面板保留五档推理强度及会话隔离保存",
-    "通过 start.command 启动后的实际 Safari 桌面及窄屏验收；不操作用户当前未保存模型草稿"
+    "通过 start.command 启动后的实际 Safari 桌面验收；不操作用户当前未保存模型草稿；窄屏单独记录未验证"
   ],
   "scope": [
     "internal/server/web/index.html",
@@ -44,32 +44,99 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "模型实际提交回归、会话隔离回归已通过；quick及原生UI待完成",
+      "status": "pass",
+      "summary": "实际提交测试、会话隔离、quick71、镜像内vet/build与9999原生Safari桌面通过；窄屏未完成，不能复用前批full73覆盖本批",
       "evidence": [
-        ".agent-state/session-only-reasoning/negative.log"
+        ".agent-state/session-only-reasoning/quick-frozen.json",
+        ".agent-state/session-only-reasoning/desktop.txt",
+        ".agent-state/session-only-reasoning/session-menu.txt",
+        ".agent-state/session-only-reasoning/start.log"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "架构与任务账本说明入口收敛及历史兼容",
+      "evidence": [
+        "docs/architecture.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "移除无调用默认设置模块；5个继承vendor删除保留；截图与日志私有",
+      "evidence": [
+        "git diff --check"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "分支增量候选已运行，完整离线包本机导入和两个本地副本校验通过；main/tag正式发布未做；本批full73待运行",
+      "evidence": [
+        ".agent-state/session-only-reasoning/package.json"
+      ]
     }
   },
   "release_authorization": "用户此前要求 做一部分，push一部分，测一部分；本机增量候选与离线镜像包，未授权main/tag正式发布。",
   "rollback": "恢复本任务代码提交；全局默认与已有会话数据不迁移。",
-  "handoff": "",
+  "handoff": "本机9999运行62e3c1d；原用户模型设置草稿页仍是旧资源，请用户处理草稿后再刷新。星图绘制性能目标继续，既有full73终态PASS仅绑定98d布局修复。",
   "user_request": "这里为什么还要加一个推理强度",
   "interpretation": "用户质疑模型设置中的重复全局默认入口；按此前不同会话独立配置要求收敛到会话策略面板。",
-  "branch": "fix/session-only-reasoning-settings"
+  "branch": "fix/session-only-reasoning-settings",
+  "runtime": {
+    "runningImage": "sha256:d16b809f97e0d6259871192d22e160e10d4070947b54a64d8b12a4938145ffa2",
+    "image": "sha256:d16b809f97e0d6259871192d22e160e10d4070947b54a64d8b12a4938145ffa2",
+    "sourceSHA256": "d1c547d16feb085f5dcdf026406e93fcee20bc9b8d193448a0845bd0601cd086",
+    "port": "9999",
+    "runningPlatformManifest": "sha256:12f33a39388a6e9a96887e3714306de4ae0de0d0b37c7a4a91e383823901365d",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "servedAssetsMatch": true,
+    "workspaceConfigSHA256": "9b7ef53d080417a7527569b3e1d13ce9a3603e1449b79fa0f3b974fca3d6f720",
+    "preservationLimit": "Earlier starmap baseline no longer matches workspace-config.json and config/sources.json; current workspace is Downloads. This batch did not write either; no restoration to obsolete debug path."
+  },
+  "package": {
+    "image": "sha256:d16b809f97e0d6259871192d22e160e10d4070947b54a64d8b12a4938145ffa2",
+    "sourceSHA256": "d1c547d16feb085f5dcdf026406e93fcee20bc9b8d193448a0845bd0601cd086",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-d16b809f97e0-offline.tar.gz",
+    "bytes": 705660059,
+    "sha256": "4781775d42fbc5c4aefb0b7bbcd77fbe5b76562b3561360e1022f74187354363",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "quick": {
+    "status": "pass",
+    "fingerprint": "decafc58e3e3d814f9af2d9e8b5db068d9c43ebeeb474fc074b48ba954a4f2b4",
+    "head": "62e3c1dd0fae61d3389e992f8a30750a157676ea",
+    "time": "20261015T012104999619Z",
+    "log": ".agent-state/verify-20261015T012104999619Z.log",
+    "commands": 71,
+    "receipt": ".agent-state/session-only-reasoning/quick-frozen.json"
+  },
+  "ui": {
+    "status": "pass",
+    "client": "native Safari, exact start.command, localhost:9999",
+    "observed": "模型设置只显示厂商/模型/密钥；策略面板仍有自动/关闭/低/中/高及1X–5X",
+    "evidence": [
+      ".agent-state/session-only-reasoning/desktop.txt",
+      ".agent-state/session-only-reasoning/desktop.jpg",
+      ".agent-state/session-only-reasoning/session-menu.txt",
+      ".agent-state/session-only-reasoning/session-menu.jpg"
+    ],
+    "narrow": "not_run: native window resize attempts did not change dimensions; no responsive layout changes in this patch",
+    "userDraft": "Original user settings tab left untouched; testing in new tab created by start.command",
+    "themes": "Current professional/system appearance; no theme settings written"
+  },
+  "verification_attempts": {
+    "initial": "Two route invocations had no node on PATH; logs retained, not counted as pass. Final invocation uses bundled Node PATH and passes all71.",
+    "full": "Not rerun for this frontend removal; previous metadata-layout full73 scope kept separate.",
+    "narrow": "Window drag attempts did not change dimensions, screenshot attempts renamed; fullscreen toggle reversed. Desktop pass only."
+  }
 }

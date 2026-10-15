@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Metadata/layout source98d6599/localfbbb image: quick71 and native equal-length selected body update/deletion, preserved query, protected config/auth/mounts/session content, complete offline import/copies PASS. Current full73 session2886 running; use .agent-state/starmap-metadata-layout/full-owner.json/log and freeze product inputs until terminal. Prior6bd full72 recoveredPASS historical. Next profile actual per-frame renderer versus CUA wait; large20k view observation26.4s still unresolved. Original12 goals active, Windows user-owned, real vectors deferred, provider/receiving-device external acceptance pending.",
+  "handoff": "Continue session-only-reasoning-20261015 UI candidate verification/push and starmap renderer profiling. Prior owner2886 terminalPASS, do not poll/reuse its fingerprint for new source. Current local9999 d16b809f97e0; configs reflect Downloads, preserve current selections.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6404,10 +6404,10 @@
   },
   "followup131": {
     "task": "docs/tasks/starmap-metadata-layout-20261015.json",
-    "summary": "Source98d6599 separates metadata/data and spatial revisions, preserving fresh details/search/citation semantics. Quick71 + actual-function negative/fixed regressions and canonical native owned equal-length MD update/removal PASS; fbbb complete local offline image/import/copies verified. Cleared38.37GB authorized builder cache without images/data loss, post-clean exact entry reuses local image. Current full73 pending; previous recovered72 passed only6bd. Large20k reference observed26.407s CUA click+AX, overall renderer latency still open.",
+    "summary": "Source98d6599 separates metadata/data and spatial revisions, preserving fresh details/search/citation semantics. Quick71 + actual-function negative/fixed regressions and canonical native owned equal-length MD update/removal PASS; fbbb complete local offline image/import/copies verified. Cleared38.37GB authorized builder cache without images/data loss, post-clean exact entry reuses local image. Current full73 terminalPASS, server race746.239s and vet passed; previous recovered72 passed only6bd. Large20k reference observed26.407s CUA click+AX, overall renderer latency still open.",
     "full_owner": {
       "profile": "full",
-      "status": "running",
+      "status": "pass",
       "commandsExpected": 73,
       "sessionId": 2886,
       "head": "578bb9834ce0a9503a0d8e5b247d973978c80997",
@@ -6416,7 +6416,15 @@
       "ownerLog": ".agent-state/starmap-metadata-layout/full-run.log",
       "log": ".agent-state/verify-20261015T010352009727Z.log",
       "sourceCommit": "98d6599",
-      "priorFull72Scope": "6bdcb41 cache writer, terminalPASS, not reused for new layout source"
+      "priorFull72Scope": "6bdcb41 cache writer, terminalPASS, not reused for new layout source",
+      "container": "aide-verify-95d30dcbc547",
+      "lastVerifiedLive": "terminal exit0; full73 pass",
+      "receipt": ".agent-state/starmap-metadata-layout/full-frozen.json",
+      "serverRaceSeconds": 746.239
     }
+  },
+  "followup132": {
+    "task": "docs/tasks/session-only-reasoning-20261015.json",
+    "summary": "62e3c1d removes duplicate model-settings default reasoning control and write. Session choices retained. Native9999 desktop/menu PASS; quick71 and complete local offline candidate d16b809f97e0 verified; full for new UI source not yet run. Original user draft tab preserved. Workspace/config sources differ from prior star baseline; current Downloads not reset. Renderer profiling remains next."
   }
 }

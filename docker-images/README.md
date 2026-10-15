@@ -170,3 +170,8 @@ Latest reviewed-recovery continuation development snapshot (2026-10-15): `aide-0
 `aide-0.1.17.0-RC2-linux-arm64-fbbbcc0aa4d7-offline.tar.gz`，705661053字节，SHA-256 `dba765290d4f297cf6cb31bcf102bc297d35e60811d9b0ee16ce888307c8d367`。源码`98d6599`，源指纹`e77bddba1abef7056c993ff4aac1c3acfccde32853c9ca9c6df93ec0d6d8bf1c`。仅正文及读取状态等更新时保留空间布局，保持搜索、详情与引用校验更新，结构变化仍重建。quick71和系统Safari自有文件等长改写／删除验收通过，包含完整应用与本地依赖镜像，流式内外哈希／平台／启动器／实际docker load与两个本地副本校验通过。
 
 现有清理脚本实际释放38.37GB默认构建缓存，镜像、卷及本机工作台保留；清理后原`start.command`直接复用本地镜像启动9999。当前full73状态以[任务账本](../docs/tasks/starmap-metadata-layout-20261015.json)为准；不借用前批full72结果。大星域总体交互／接收设备导入和正式main/tag发布未完成。
+
+
+## 2026-10-15 会话推理入口候选
+
+`aide-0.1.17.0-RC2-linux-arm64-d16b809f97e0-offline.tar.gz`，705660059字节，SHA-256 `4781775d42fbc5c4aefb0b7bbcd77fbe5b76562b3561360e1022f74187354363`。源码`62e3c1d`，源指纹`d1c547d16feb085f5dcdf026406e93fcee20bc9b8d193448a0845bd0601cd086`。模型设置去掉重复默认推理入口，保存模型时不写推理强度；会话策略面板保留五档。含完整应用与本地依赖镜像，内外哈希、平台、启动器、实际docker load、两个本地副本校验通过。通过原start.command启动9999，Safari桌面与会话菜单验收通过；窄屏未完成。接收设备导入及main/tag正式发布未做。详见[任务账本](../docs/tasks/session-only-reasoning-20261015.json)。前批星图full73已PASS，不代替本批验证。
