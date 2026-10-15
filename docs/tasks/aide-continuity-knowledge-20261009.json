@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Clean main integration in /tmp/aide-main-integration-20261015 is current priority per user. Prior36197 intentionally superseded and terminal143, do not poll. Run/poll clean main full74; keep sources frozen. Original workspace stays perf/starmap-frame-work with5 inherited vendor deletions; runtime9999 image7d3baf350986 unchanged. Goal still includes12streams beyond merge.",
+  "handoff": "Clean main full74 PASS (receipt .agent-state/main-integration/full-frozen.json). Complete release-check and push main; preserve original5 vendor deletions and current9999 candidate7d3baf350986. Goal12streams not complete; vectors deferred and Windows user-owned.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6451,6 +6451,20 @@
   },
   "followup134": {
     "task": "docs/tasks/main-integration-20261015.json",
-    "summary": "User explicitly authorized pushing and merging current changes to main; clean owned /tmp main worktree fast-forwarded, replaces intentionally stopped branch full74 (143) with clean main full74. Original dirty vendor deletions preserved. No tag/version/Release."
+    "summary": "User authorized main integration; clean main fast-forward and full74 PASS, ready for release-check and remote main push. Original5 uncommitted deletions remain isolated. No tag/version/GitHub Release.",
+    "full": {
+      "status": "pass",
+      "sessionId": 25073,
+      "head": "d2ca99eeb91799707cc50470e1a97328b39b17b4",
+      "fingerprint": "32e616ea4cc88c32087dd22f51a5b7aa522b5905f6e73cbf9ed794663150ca58",
+      "commandsExpected": 74,
+      "rawLog": ".agent-state/verify-20261015T013311527539Z.log",
+      "worktree": "/private/tmp/aide-main-integration-20261015",
+      "observedUTC": "2026-10-15T01:33:32.723972+00:00",
+      "priorOwner": "36197 superseded for clean-main scope, terminal143",
+      "serverRaceSeconds": 711.62,
+      "receipt": ".agent-state/main-integration/full-frozen.json",
+      "verifiedMainClean": true
+    }
   }
 }

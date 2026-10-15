@@ -40,30 +40,53 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "准备干净main full74；本次主线门禁将覆盖5个完整vendor文件的实际主线内容",
+      "status": "pass",
+      "summary": "干净main完整74项PASS，Go race与vet通过；收据与当前内容指纹一致",
       "evidence": [
-        ".agent-state/main-integration/full-run.log"
+        ".agent-state/main-integration/full-frozen.json",
+        ".agent-state/main-integration/full-raw.log"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "任务/总账记录合入范围、用户授权、完整门禁及非正式发布边界",
+      "evidence": [
+        "docs/tasks/main-integration-20261015.json",
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "主线集成树干净；与原目录逐字节对比，仅5项继承删除隔离；验证日志保留，用户数据未改",
+      "evidence": [
+        ".agent-state/main-integration/content-proof.json",
+        "git status --porcelain"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "完整门禁通过，待release-check与远端main推送确认；无版本/tag/Release",
+      "evidence": [
+        ".agent-state/main-integration/full-frozen.json"
+      ]
     }
   },
   "release_authorization": "用户明确要求：把现有的修改推上去，和到main上。授权推送与合入main，不包含版本升级/tag/GitHub Release。",
   "rollback": "保留合入前origin/main SHA，必要时通过反向提交审阅回退，不强制推送、不改写公开历史。",
   "handoff": "原目录/perf/starmap-frame-work的5个vendor删除不stage/reset；main在自有/tmp工作树验证，日志复制回原目录后仅清理自有临时树。",
-  "beforeMain": "a2a21a3e5d6cf1b97148ee4e6bce86a006b06497"
+  "beforeMain": "a2a21a3e5d6cf1b97148ee4e6bce86a006b06497",
+  "full": {
+    "status": "pass",
+    "sessionId": 25073,
+    "head": "d2ca99eeb91799707cc50470e1a97328b39b17b4",
+    "fingerprint": "32e616ea4cc88c32087dd22f51a5b7aa522b5905f6e73cbf9ed794663150ca58",
+    "commandsExpected": 74,
+    "rawLog": ".agent-state/verify-20261015T013311527539Z.log",
+    "worktree": "/private/tmp/aide-main-integration-20261015",
+    "observedUTC": "2026-10-15T01:33:32.723972+00:00",
+    "priorOwner": "36197 superseded for clean-main scope, terminal143",
+    "serverRaceSeconds": 711.62,
+    "receipt": ".agent-state/main-integration/full-frozen.json",
+    "verifiedMainClean": true
+  }
 }

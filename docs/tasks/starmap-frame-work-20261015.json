@@ -44,14 +44,12 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "定向/原生验收已完成；分支full74在用户要求合入main后主动停止（143），由干净main full74替代，不记此收据PASS。",
+      "status": "pass",
+      "summary": "实际绘制/原生交互/光学回归通过；干净main full74覆盖完整主线含5个原vendor文件，不能冒充原dirty候选同指纹收据；原分支143记录保留",
       "evidence": [
+        ".agent-state/main-integration/full-frozen.json",
         ".agent-state/starmap-frame-work/negative.log",
-        ".agent-state/starmap-frame-work/before-trace.json",
-        ".agent-state/starmap-frame-work/after-trace.json",
-        ".agent-state/starmap-frame-work/selected.txt",
-        ".agent-state/starmap-frame-work/camera.txt"
+        ".agent-state/starmap-frame-work/selected.txt"
       ]
     },
     "documentation": {
@@ -188,5 +186,19 @@
     "lastLiveObservation": "Owner36197 running; container confirmed Up; host free21GiB; Go snapshot started",
     "exit": 143,
     "reason": "User requested main integration. Stopped this owned dirty-worktree verifier to run full74 once on clean main, avoiding parallel race memory pressure. Not a passing receipt."
+  },
+  "clean_main_full": {
+    "status": "pass",
+    "sessionId": 25073,
+    "head": "d2ca99eeb91799707cc50470e1a97328b39b17b4",
+    "fingerprint": "32e616ea4cc88c32087dd22f51a5b7aa522b5905f6e73cbf9ed794663150ca58",
+    "commandsExpected": 74,
+    "rawLog": ".agent-state/verify-20261015T013311527539Z.log",
+    "worktree": "/private/tmp/aide-main-integration-20261015",
+    "observedUTC": "2026-10-15T01:33:32.723972+00:00",
+    "priorOwner": "36197 superseded for clean-main scope, terminal143",
+    "serverRaceSeconds": 711.62,
+    "receipt": ".agent-state/main-integration/full-frozen.json",
+    "verifiedMainClean": true
   }
 }
