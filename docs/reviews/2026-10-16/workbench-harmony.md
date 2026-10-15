@@ -22,3 +22,13 @@
 机器可读观察见 [browser.json](workbench-harmony/browser.json)。[桌面预览](workbench-harmony/desktop.png)、[窄屏背景设置](workbench-harmony/narrow.png)。这些证据仅证明组件验收，不能代表完整认证Safari、生产实例、其他浏览器或长时间内存压力测试。
 
 本轮无服务端数据迁移、真实模型调用、生产重启、镜像更新、推送或main合并。原任务中未完成的知识历史后端修改继续保留，不随本轮界面提交发布。
+
+## 当前开发分支集成复核
+
+2026-10-16，界面提交 `81a62ab` 通过合并提交 `11051ec` 接入移动硬盘的 `feat/knowledge-conclusion-evolution-20261016`，原知识历史提交保持完整。此处是开发集成，不代表 main、生产或镜像已更新。
+
+集成后的 `python3 scripts/agent-route.py verify quick` 实际退出0；日志为 `.agent-state/workbench-polish/harmony-integration-quick.log`。本次未执行 full。
+
+复用单一 IAB 组件页，实际检查1280、614、390像素布局；页面没有横向溢出。390像素下主区宽390，设置内容可视宽与滚动宽均368。背景强度由22%调至35%，刷新后控件与装饰层分别恢复35与0.35，再复原22%。[本次窄屏截图](workbench-harmony/integrated-narrow.png)记录背景设置、强度与动效设置的排列。合成正文只能验证布局，不能证明真实会话流式行为；本次没有重复执行本地视频上传或六主题全组合验收，既有证据见上文。
+
+预览标签已关闭，视口覆盖已复位，组件服务器已停止。完整认证 Safari 验收继续保持 NOT_RUN，不改变用户此前暂缓的决定。

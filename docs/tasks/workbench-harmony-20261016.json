@@ -69,11 +69,18 @@
   },
   "release_authorization": "Existing user incremental push/main/local runtime/offline image authorization; no version bump or tag.",
   "rollback": "UI-only changes; background can be disabled. No server data migration. Preserve unrelated unfinished knowledge backend changes.",
-  "handoff": "UI source/component acceptance complete; production and Safari acceptance not claimed. Continue unfinished knowledge task on feat/knowledge-conclusion-evolution-20261016; inherited edits are retained in this checkout.",
+  "handoff": "UI commit 81a62ab integrated into current external development branch by 11051ec; knowledge history commits retained. Integrated quick PASS and IAB geometry/background persistence rechecked. Production, main, offline image and authenticated Safari remain pending.",
   "quick_receipt": {
     "status": "pass",
     "fingerprint": "907e3405ed39f05c17f6c16fe9d984ea0a999022fa4ab4ee2d29bdff098499db",
     "head": "ed954042351c40535282e3feda08d1f7546af489",
     "time": "20261015T195744528339Z"
+  },
+  "integration_check": {
+    "head": "11051ecedf4923cc3fadb535060ecd62f0d0ded6",
+    "profile": "quick",
+    "status": "pass",
+    "fingerprint": "22efba450824f13bda0cca21b3ea2b293a0b2f61f4565746fee18f7f0c2450c3",
+    "evidence": "docs/reviews/2026-10-16/workbench-harmony.md"
   }
 }
