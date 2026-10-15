@@ -533,14 +533,20 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "真实SFTP路径API、确定调用行列、旧revision409与原文哈希已验证；引用文件快速预览另有组件与接口证据。",
+        "latestScopedEvidence": "真实SFTP路径API、确定调用行列、旧revision409与原文哈希已验证；引用文件快速预览另有组件与接口证据。 2026-10-16补真实临时文件索引→路径HTTP接口的报告→中文空格证据文档→源码两段静态链、精确行列和身份/版本隔离。",
         "evidence": [
           "docs/reviews/2026-10-15/code-relation-live.md",
           "docs/tasks/starmap-file-preview-20261015.json",
-          "docs/tasks/knowledge-path-exploration-20261009.json"
+          "docs/tasks/knowledge-path-exploration-20261009.json",
+          "docs/reviews/2026-10-16/knowledge-explicit-references.md",
+          "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
         ],
-        "remaining": "按钮到服务的完整多段链、报告到来源的可证明路径及浏览器行号/段落跳转，仍未形成端到端证据；主题/窄屏/SSH交互不能由路径API代验。"
-      }
+        "remaining": "按钮到服务的完整多段链及浏览器行号/段落跳转仍未形成当前端到端证据；报告到来源已补后端真实索引/API链，不能替代主题/窄屏/SSH交互验收。"
+      },
+      "evidence_20261016_explicit_references": [
+        "docs/reviews/2026-10-16/knowledge-explicit-references.md",
+        "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
+      ]
     },
     {
       "name": "知识时光",
@@ -7611,12 +7617,13 @@
   },
   "followup169": {
     "task": "docs/tasks/knowledge-explicit-references-20261016.json",
-    "status": "in_progress",
+    "status": "pass",
     "classification": "progress",
-    "summary": "报告到来源的空格/编码引用、定位与伪边修复；真实临时文件索引及HTTP两段路径/隔离通过，Knowledge race/vet及quick84通过。未发布，原12项保持进行中。",
+    "summary": "Spaced/encoded report/evidence/source references and exact evidence locations delivered; final Knowledge race/vet, quick84, full86, local9999/offline, independent main gate and exact remote SHA pass. Static indexed path/API scope only; original12 remain open.",
     "evidence": [
       "docs/reviews/2026-10-16/knowledge-explicit-references.md",
       "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
-    ]
+    ],
+    "deliveredMain": "3d1f000bcf0af85f6f8db1ac42fa243e543753ea"
   }
 }

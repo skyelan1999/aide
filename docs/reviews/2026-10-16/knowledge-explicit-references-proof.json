@@ -23,7 +23,13 @@
   },
   "integration": "Real temporary files -> production index builder -> registered HTTP path API; 2 mention steps, Unicode source positions, revision/workspace rejection",
   "boundary": "Static explicit references only; no authenticated Safari or runtime call-chain proof",
-  "release": "pending full verification, independent main gate, runtime rebuild and offline package; production unchanged",
+  "release": {
+    "status": "pass",
+    "independentGate": true,
+    "main": "3d1f000bcf0af85f6f8db1ac42fa243e543753ea",
+    "remoteExactVerified": true,
+    "finalReceiptFollows": true
+  },
   "runtime": {
     "image": "sha256:47cd10e0cf683302d20822b98006cf780f05c3d44fd48bbbddd2a18530250679",
     "runningImage": "sha256:47cd10e0cf683302d20822b98006cf780f05c3d44fd48bbbddd2a18530250679",
