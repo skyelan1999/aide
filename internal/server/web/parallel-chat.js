@@ -1,7 +1,8 @@
 (function () {
   'use strict';
   const key = 'aide.chat.parallelism';
-  const normalize = value => /^[1-5]$/.test(String(value)) ? Number(value) : 1;
+  const choices = Object.freeze([[1, '标准速度'], [2, '轻度'], [3, '中度'], [4, '高'], [5, '极高'], [10, '极致']].map(Object.freeze));
+  const normalize = value => /^(?:[1-5]|10)$/.test(String(value)) ? Number(value) : 1;
   let selected = 1;
   try { selected = normalize(localStorage.getItem(key)); } catch (_) {}
   let config;
@@ -45,5 +46,5 @@
     }
     return panel;
   }
-  window.AideParallelChat = {install, sync, set, value, render, normalize};
+  window.AideParallelChat = {install, sync, set, value, render, normalize, choices};
 })();

@@ -5320,7 +5320,7 @@ function refreshStrategyUI() {
   }
   reasoningCol.append(el('div', 'strategy-menu-sep strategy-parallel-title', t('并行倍率')));
   const parallelValue = window.AideParallelChat?.value('chat', false) || 1;
-  for (const [value, description] of [[1, '标准速度'], [2, '两路并行'], [3, '三路并行'], [4, '四路并行'], [5, '五路并行']]) {
+  for (const [value, description] of window.AideParallelChat.choices) {
     reasoningCol.append(strategyMenuOption('parallel', String(value), value + 'X', t(description), parallelValue === value, state.mode !== 'chat' || assistantMode));
   }
   if (parallelPicker) { parallelPicker.hidden = true; reasoningCol.append(parallelPicker); }

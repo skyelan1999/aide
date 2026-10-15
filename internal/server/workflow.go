@@ -211,8 +211,8 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	if in.Parallelism < 0 || in.Parallelism > 5 || (in.Mode != "chat" && in.Parallelism > 1) {
-		fail(w, 400, errors.New("parallelism must be 1-5 and is available in chat mode"))
+	if (in.Parallelism != 0 && !validParallelism(in.Parallelism)) || (in.Mode != "chat" && in.Parallelism > 1) {
+		fail(w, 400, errors.New("parallelism must be one of 1, 2, 3, 4, 5, 10 and is available in chat mode"))
 		return
 	}
 	if in.Parallelism == 0 {

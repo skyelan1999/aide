@@ -37,8 +37,13 @@ func parallelReply(w http.ResponseWriter, text string) {
 	jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": map[string]any{"role": "assistant", "content": text}, "finish_reason": "stop"}}, "usage": map[string]int{"prompt_tokens": 10, "completion_tokens": 10, "total_tokens": 20}})
 }
 func TestConversationParallelFanout(t *testing.T) {
-	a, s, task := parallelFixture(t, 5)
-	started := make(chan struct{}, 5)
+	for _, limit := range []int{5, 10} {
+		t.Run(fmt.Sprint(limit), func(t *testing.T) { parallelFanout(t, limit) })
+	}
+}
+func parallelFanout(t *testing.T, limit int) {
+	a, s, task := parallelFixture(t, limit)
+	started := make(chan struct{}, limit)
 	release := make(chan struct{})
 	var active, maximum atomic.Int32
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -52,7 +57,12 @@ func TestConversationParallelFanout(t *testing.T) {
 		}
 		last := body.Messages[len(body.Messages)-1].Content
 		if strings.HasPrefix(last, "[parallel planner]") {
-			parallelReply(w, `{"tasks":["one","two","three","four","five"]}`)
+			titles := make([]string, limit)
+			for i := range titles {
+				titles[i] = fmt.Sprintf("section-%d", i+1)
+			}
+			plan, _ := json.Marshal(map[string]any{"tasks": titles})
+			parallelReply(w, string(plan))
 			return
 		}
 		n := active.Add(1)
@@ -73,7 +83,7 @@ func TestConversationParallelFanout(t *testing.T) {
 	}))
 	defer provider.Close()
 	cfg := Settings{BaseURL: provider.URL, Model: "fixture"}
-	input := []Message{{Role: "user", Content: "Analyze five independent sections."}}
+	input := []Message{{Role: "user", Content: "Analyze independent sections."}}
 	done := make(chan error, 1)
 	var merged []Message
 	go func() {
@@ -81,7 +91,7 @@ func TestConversationParallelFanout(t *testing.T) {
 		merged, err = a.prepareParallel(context.Background(), s, task, cfg, input, ProfileParams{MaxTokens: 4096})
 		done <- err
 	}()
-	for i := 0; i < 5; i++ {
+	for i := 0; i < limit; i++ {
 		select {
 		case <-started:
 		case <-time.After(5 * time.Second):
@@ -93,15 +103,15 @@ func TestConversationParallelFanout(t *testing.T) {
 	if err := <-done; err != nil {
 		t.Fatal(err)
 	}
-	if maximum.Load() != 5 {
+	if maximum.Load() != int32(limit) {
 		t.Fatalf("maximum %d", maximum.Load())
 	}
-	if len(merged) != 2 || !strings.Contains(merged[1].Content, "analysis-five") || !strings.Contains(merged[1].Content, "ONE coherent final answer") {
+	if len(merged) != 2 || !strings.Contains(merged[1].Content, fmt.Sprintf("analysis-section-%d", limit)) || !strings.Contains(merged[1].Content, "ONE coherent final answer") {
 		t.Fatalf("bad merge: %+v", merged)
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if task.Usage.Total != 120 || len(task.RequestSnapshots) != 6 || task.Parallel.Phase != "merging" || !task.ParallelPrepared {
+	if task.Usage.Total != (limit+1)*20 || len(task.RequestSnapshots) != limit+1 || task.Parallel.Phase != "merging" || !task.ParallelPrepared {
 		t.Fatalf("missing accounting/progress: %+v", task)
 	}
 	for _, part := range task.Parallel.Parts {
@@ -126,8 +136,8 @@ func TestConversationParallelFallback(t *testing.T) {
 	}
 }
 func TestConversationParallelCancel(t *testing.T) {
-	a, s, task := parallelFixture(t, 2)
-	started := make(chan struct{}, 2)
+	a, s, task := parallelFixture(t, 10)
+	started := make(chan struct{}, 10)
 	var exited atomic.Int32
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
@@ -135,7 +145,7 @@ func TestConversationParallelCancel(t *testing.T) {
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		if strings.Contains(body.Messages[len(body.Messages)-1].Content, "[parallel planner]") {
-			parallelReply(w, `{"tasks":["a","b"]}`)
+			parallelReply(w, `{"tasks":["a","b","c","d","e","f","g","h","i","j"]}`)
 			return
 		}
 		started <- struct{}{}
@@ -153,7 +163,7 @@ func TestConversationParallelCancel(t *testing.T) {
 		_, err := a.prepareParallel(ctx, s, task, Settings{BaseURL: provider.URL, Model: "fixture"}, []Message{{Role: "user", Content: "request"}}, ProfileParams{MaxTokens: 4096})
 		done <- err
 	}()
-	for i := 0; i < 2; i++ {
+	for i := 0; i < 10; i++ {
 		select {
 		case <-started:
 		case <-time.After(4 * time.Second):
@@ -172,12 +182,17 @@ func TestConversationParallelCancel(t *testing.T) {
 	if task.Parallel.Phase != "interrupted" || task.ParallelPrepared {
 		t.Fatalf("incorrect cancellation %+v", task.Parallel)
 	}
+	for _, part := range task.Parallel.Parts {
+		if part.Status != "cancelled" {
+			t.Fatalf("cancel left unfinished worker %+v", part)
+		}
+	}
 	_ = exited.Load()
 }
 func TestConversationParallelValidation(t *testing.T) {
 	a := testApp(t)
 	s := createSession(t, a)
-	for _, value := range []int{-1, 6, 100} {
+	for _, value := range []int{-1, 6, 7, 8, 9, 11, 100} {
 		w := request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "chat", "prompt": "request", "parallelism": value})
 		if w.Code != 400 || !strings.Contains(w.Body.String(), "parallelism") {
 			t.Fatal(fmt.Sprint(w.Code, w.Body.String()))
@@ -188,6 +203,11 @@ func TestConversationParallelValidation(t *testing.T) {
 }
 
 func TestConversationParallelEndToEnd(t *testing.T) {
+	for _, limit := range []int{3, 10} {
+		t.Run(fmt.Sprint(limit), func(t *testing.T) { parallelEndToEnd(t, limit) })
+	}
+}
+func parallelEndToEnd(t *testing.T, limit int) {
 	a := testApp(t)
 	var analyses, merged atomic.Int32
 	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -199,7 +219,12 @@ func TestConversationParallelEndToEnd(t *testing.T) {
 		last := body.Messages[len(body.Messages)-1].Content
 		switch {
 		case strings.HasPrefix(last, "[parallel planner]"):
-			parallelReply(w, `{"tasks":["section-a","section-b","section-c"]}`)
+			titles := []string{"section-a", "section-b", "section-c"}
+			for i := 4; i <= limit; i++ {
+				titles = append(titles, fmt.Sprintf("section-%d", i))
+			}
+			plan, _ := json.Marshal(map[string]any{"tasks": titles})
+			parallelReply(w, string(plan))
 		case strings.HasPrefix(last, "[parallel analysis subtask]"):
 			analyses.Add(1)
 			if len(body.Tools) > 0 {
@@ -223,14 +248,14 @@ func TestConversationParallelEndToEnd(t *testing.T) {
 	defer provider.Close()
 	a.settings = Settings{BaseURL: provider.URL, Model: "fixture"}
 	s := createSession(t, a)
-	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "chat", "prompt": "Compare independent sections in supplied text.", "parallelism": 3}), 202)
+	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs", map[string]any{"mode": "chat", "prompt": "Compare independent sections in supplied text.", "parallelism": limit}), 202)
 	waitTaskDone(t, a, s.ID)
 	response := request(a, "GET", "/api/sessions/"+s.ID, nil)
 	var saved Session
 	if err := json.Unmarshal(response.Body.Bytes(), &saved); err != nil {
 		t.Fatal(err)
 	}
-	if len(saved.Runs) != 1 || analyses.Load() != 3 || merged.Load() != 1 {
+	if len(saved.Runs) != 1 || analyses.Load() != int32(limit) || merged.Load() != 1 {
 		t.Fatalf("unexpected fanout/merge %d/%d %+v", analyses.Load(), merged.Load(), saved)
 	}
 	task := saved.Runs[0]
@@ -242,7 +267,7 @@ func TestConversationParallelEndToEnd(t *testing.T) {
 	waitTaskDone(t, a, s.ID)
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if a.sessions[s.ID].Runs[1].Parallelism != 3 {
+	if a.sessions[s.ID].Runs[1].Parallelism != limit {
 		t.Fatal("retry lost parallel limit")
 	}
 }

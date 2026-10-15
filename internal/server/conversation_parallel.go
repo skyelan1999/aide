@@ -26,6 +26,10 @@ type ParallelProgress struct {
 	Reason    string         `json:"reason,omitempty"`
 }
 
+func validParallelism(value int) bool {
+	return value >= 1 && value <= 5 || value == 10
+}
+
 func parseParallelPlan(text string, limit int) ([]string, error) {
 	text = strings.TrimSpace(text)
 	if strings.HasPrefix(text, "```") {
@@ -108,7 +112,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		a.mu.Unlock()
 		return input, err
 	}
-	if limit > 5 {
+	if !validParallelism(limit) {
 		return input, errors.New("invalid parallelism")
 	}
 	update := func(phase, reason string) error {

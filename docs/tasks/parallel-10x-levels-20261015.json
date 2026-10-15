@@ -1,0 +1,60 @@
+{
+  "id": "parallel-10x-levels-20261015",
+  "request": "倍速2x后面改成轻度 3x后面改成中度4x是高5x是极高再加一个10x，极致，另外还需要你在调试一下",
+  "baseline": "76554ab38038f86419c07dd1c9dd319f966157ff",
+  "initial_status": "",
+  "acceptance": [
+    "Exact labels: 1X 标准速度, 2X 轻度, 3X 中度, 4X 高, 5X 极高, 10X 极致; same constrained scroll column below reasoning.",
+    "10 persists through reload and task/retry; API accepts only 1-5/10 (omitted/0 remains1), rejects6-9/11 and workflow>1.",
+    "Ten workers overlap, tool-free independent analyses reconcile once; partial failures/cancellation/context fallback remain valid; browser component and real model debug scoped separately."
+  ],
+  "scope": [
+    "internal/server/web",
+    "internal/server/workflow.go",
+    "internal/server/conversation_parallel.go",
+    "internal/server/conversation_parallel_test.go",
+    "scripts/parallel-chat.test.cjs",
+    "scripts/fixtures",
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Exact current user wording, retain1 standard and constrained scroll.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Shared immutable frontend choices; Go shared allowed-set validation, existing parallel planner/fanout/merge/cancel; no expanded tool executor concurrency.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Shared six choices and canonical normalization; hidden picker10, API/retry/worker limit10; existing serial tool executor retained.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Node persistence/labels/mode regression PASS; targeted Go race14.740s PASS before additional cancellation-state assertion; IAB production-menu component dark/light/390px, scroll/select/reload10 PASS. Actual runtime/model, final race/full/main pending.",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior human incremental tests/docs/main push and offline image update authorization; no tag/version bump/formal release.",
+  "rollback": "Revert scoped commits, preserve existing selected1-5 and task data; 10 unsupported by old binary falls back or rejects explicitly.",
+  "handoff": ""
+}
