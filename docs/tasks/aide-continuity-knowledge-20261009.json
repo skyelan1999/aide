@@ -7449,12 +7449,13 @@
   "followup165": {
     "task": "docs/tasks/session-run-interaction-20261015.json",
     "classification": "progress",
-    "status": "in_progress",
-    "summary": "Scoped session controls/stream rendering implemented; final full85/serverrace 551.126s, targeted20.179s, Qwen stop while another runs/partial followup/pause/resume, IAB desktop390/six themes/delayed GET, final4b1 runtime/offline verified. Independent main gate/push pending; original12 open.",
+    "status": "pass",
+    "summary": "Scoped session controls/stream rendering implemented; final full85/serverrace 551.126s, targeted20.179s, Qwen stop while another runs/partial followup/pause/resume, IAB desktop390/six themes/delayed GET, final4b1 runtime/offline verified. Independent gate passed, exact remote main verified; original12 remain open.",
     "original12RemainOpen": true,
     "evidence": [
       "docs/reviews/2026-10-15/session-run-interaction.md",
       "docs/reviews/2026-10-15/session-run-interaction-proof.json"
-    ]
+    ],
+    "deliveredMain": "e28e3fb3a3fb2c2f0223dc95d203bf01f7f0ad5f"
   }
 }

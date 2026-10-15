@@ -32,3 +32,7 @@
 ## 最终完整检查收据
 
 干净main验证提交 9ee8e56fb4615e42fcabe9d29ce2f5efedb3a4d1，完整85项全部exit0，Go server race 551.126秒；fingerprint dcde00526eecfce9fbaaf288d22fadb24850d3f882c33ea3b695d76290abbaa3。无生产挂载、network none隔离容器执行。此前两轮中止不计PASS。本次full覆盖最后的步骤/轮次身份和终态防重连补丁。独立发布门禁与远端推送在此收据之后执行。
+
+## 发布与交接
+
+独立main发布门禁通过后，非强制推送 e28e3fb3a3fb2c2f0223dc95d203bf01f7f0ad5f，已核对远端refs/heads/main完全一致。本最终收据提交随后推送，不新增版本、tag或正式GitHub Release。自有完整验收worktree在冻结收据及首轮推送后已移除，活动目录回到外置盘main。保留当前4b1镜像/完整包及234回滚，原目录和用户原13会话保留；完整Safari和接收端导入仍待验。

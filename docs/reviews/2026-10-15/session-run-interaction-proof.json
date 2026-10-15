@@ -121,6 +121,17 @@
     "production": "9999 preserved",
     "originalSessions": 13,
     "additionalRemovedIntermediateArchive": "aide-0.1.17.0-RC2-linux-arm64-3f5ec12103dc-offline.tar.gz",
-    "additionalRemovedIntermediateImage": "sha256:3f5ec12103dca6f0df0a77e9ba7fea03f5ccea19862fa4bff4972f3abb8a159c"
+    "additionalRemovedIntermediateImage": "sha256:3f5ec12103dca6f0df0a77e9ba7fea03f5ccea19862fa4bff4972f3abb8a159c",
+    "ownedFullWorktreeRemoved": true
+  },
+  "release": {
+    "status": "pass",
+    "deliveredMain": "e28e3fb3a3fb2c2f0223dc95d203bf01f7f0ad5f",
+    "independentGate": "pass",
+    "remoteExactVerified": true,
+    "versionBump": false,
+    "tag": false,
+    "githubRelease": false,
+    "receiptCommitFollows": true
   }
 }

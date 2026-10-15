@@ -60,21 +60,22 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Owned sessions/tabs/8786 server removed; two own superseded fixtures stopped;846/3f5 intermediate archives/images removed,234 rollback retained. Owned full worktree retained until final receipt/push then removed. Original13/data/config mounts preserved.",
+      "summary": "Owned model sessions, browser tabs,8786 server and isolated verification containers removed; owned full worktree retired after frozen receipts and first verified push. Own846/3f5 intermediate image packages removed;234 rollback and prior user artifacts preserved. Active external main clean after receipt commit.",
       "evidence": [
         "docs/reviews/2026-10-15/session-run-interaction-proof.json",
         "docs/reviews/2026-10-15/session-run-interaction.md"
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Final4b1 runtime and offline bundle verified; clean-main full85 passed; independent gate and authorized no-force main push next. No version/tag/Release.",
+      "status": "pass",
+      "summary": "Independent clean-main gate passed; authorized no-force main push e28e3fb3a3fb2c2f0223dc95d203bf01f7f0ad5f exactly verified remotely. Final4b1 runtime/offline verified. This final receipt commit follows; no version/tag/GitHub Release.",
       "evidence": [
-        "docs/reviews/2026-10-15/session-run-interaction.md"
+        "docs/reviews/2026-10-15/session-run-interaction.md",
+        "docs/reviews/2026-10-15/session-run-interaction-proof.json"
       ]
     }
   },
   "release_authorization": "沿用用户“还是一样，做一部分，push一部分，测一部分”“做完这个把所有内容和到main上”；不创建新版本/tag/GitHub Release。",
   "rollback": "保留234beda3a50b镜像和完整离线包；回退本任务提交。所有数据挂载保持，stopRequested新增可选字段旧版本忽略。",
-  "handoff": "Final4b1 image on9999 and complete offline package verified; full85 passed. Main gate/push pending receipts. Develop only external root; original12 remain open. Safari/Windows/vectors/receiving import keep prior acceptance boundaries."
+  "handoff": "Delivered main e28e3fb3a3fb2c2f0223dc95d203bf01f7f0ad5f; final receipt commit follows. Develop only /Volumes/MY PASSPORT/aide_ws/aide. Local9999 uses4b1 image; complete offline archive verified. Full85 passed; original12 stay open. Full Safari human-deferred, Windows user-owned, real vectors deferred, receiver import pending."
 }
