@@ -526,6 +526,10 @@
       [
         "node",
         "scripts/starmap-ai-exploration.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/starmap-file-preview.test.cjs"
       ]
     ],
     "full": [

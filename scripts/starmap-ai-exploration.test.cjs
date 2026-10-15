@@ -29,7 +29,7 @@ assert.equal(all(target).filter(x=>['img','script','a'].includes(x.tag)).length,
 // Exercise the actual async integration, with a transport that ignores abort.
 const els=new Map(),el=id=>{if(!els.has(id))els.set(id,{value:'',disabled:false,hidden:false,textContent:'',children:[],focus(){},setAttribute(){},addEventListener(){},replaceChildren(){this.children=[]},append(x){this.children.push(x)}});return els.get(id);};
 const pending=[];let rendered=[];
-Object.assign(c,{$:el,locked:false,graph:{workspace:'W'},codeView:false,region:'workspace',selected:file,results:[file],aiAbort:null,retrievalMode:()=>c.mode||'nodes',api:()=>new Promise((resolve,reject)=>pending.push({resolve,reject})),renderDocumentResults(){},nodeByID:new Map([['F1',file]]),select(){},say(){},document:doc,appendSourceLabel(){}});
+Object.assign(c,{$:el,locked:false,graph:{workspace:'W'},codeView:false,region:'workspace',selected:file,results:[file],aiAbort:null,retrievalMode:()=>c.mode||'nodes',api:()=>new Promise((resolve,reject)=>pending.push({resolve,reject})),renderDocumentResults(){},openNodePreview(){},nodeByID:new Map([['F1',file]]),select(){},say(){},document:doc,appendSourceLabel(){}});
 c.window.AideStarmapAssist={...assist,render:(_el,text)=>rendered.push(text)};
 vm.runInContext(source.slice(source.indexOf('const aiExplorer='),source.indexOf('let insertionSessions=[]')),c);
 (async()=>{

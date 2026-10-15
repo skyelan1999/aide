@@ -1185,6 +1185,7 @@ body.sidebar-resizing,body.sidebar-resizing *{cursor:col-resize!important;user-s
 @media(max-width:600px){.sidebar-resizer-left{display:none}.sidebar-resizer-right{top:54px;left:calc(100vw - var(--aide-right-sidebar-width,min(360px,100vw)))}body .file-panel.mobile-open{width:var(--aide-right-sidebar-width,min(360px,100vw))}body.plugins-mode .plugin-panel{width:var(--aide-right-sidebar-width,min(360px,100vw))}body.reminders-mode #reminder-center{width:var(--aide-right-sidebar-width,min(360px,100vw))}}
 .code-highlight-overlay{position:absolute;pointer-events:none;white-space:pre-wrap;word-break:break-word;margin:0;overflow:auto;background:transparent !important;color:var(--text);z-index:0;display:block;border:0 !important;box-shadow:none !important;border-radius:0 !important}
 .code-editable{position:relative;z-index:1 !important;background:transparent !important;color:transparent !important;-webkit-text-fill-color:transparent !important;caret-color:var(--text) !important;border:0 !important;outline:none !important;box-shadow:none !important;border-radius:0 !important}
+.code-editable::selection{background:color-mix(in srgb,var(--brand-hi) 20%,transparent)}
 .code-highlight-overlay code{font-family:inherit;padding:0;background:transparent}
 /* hljs theme colors - light (muted for editor) */
 .hljs-comment,.hljs-quote{color:var(--muted);font-style:italic}

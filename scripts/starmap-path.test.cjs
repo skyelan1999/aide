@@ -6,7 +6,7 @@ const el=id=>{if(!elements.has(id))elements.set(id,{value:'',checked:false,child
 const node={id:'a',name:'入口',path:'main.go',root:'workspace',line:2,endLine:3,contentHash:'hash',origin:'origin'};
 const target={id:'b',name:'报告来源',path:'report.md',root:'workspace',origin:'origin'};
 let answer,resolve;
-const c=vm.createContext({$:el,document:{createElement:()=>({children:[],append(...nodes){this.children.push(...nodes)}})},locked:false,loading:false,liveCursor:'r',graph:{workspace:'w'},codeView:true,selected:node,nodeByID:new Map([['a',node]]),redraw(){},select(){},api:async()=>answer,AbortController,setTimeout,clearTimeout,console});
+const c=vm.createContext({$:el,document:{createElement:()=>({dataset:{},children:[],append(...nodes){this.children.push(...nodes)}})},locked:false,loading:false,liveCursor:'r',graph:{workspace:'w'},codeView:true,selected:node,nodeByID:new Map([['a',node]]),redraw(){},select(){},api:async()=>answer,AbortController,setTimeout,clearTimeout,console});
 vm.runInContext(block,c);
 (async()=>{
  el('path-set-from').onclick();assert.equal(el('path-from').value,'a');assert.equal(el('path-explorer').open,true);

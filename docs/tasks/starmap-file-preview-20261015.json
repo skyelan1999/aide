@@ -1,0 +1,86 @@
+{
+  "id": "starmap-file-preview-20261015",
+  "request": "知识星图里面要支持快速打开文件，在引用里，点击打开预览",
+  "baseline": "c2facd19705c008307edac2a9463b98f716d6ea4",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "File nodes show a universal read-only preview action outside code/RAG-only panels",
+    "AI file references and document citations open actual existing file viewer on click",
+    "One owned preview window is reused via full navigation, preserving source/workspace/origin/format/line identity",
+    "Lock/workspace switch/page exit close only the owned preview; pop-up errors clear; unrelated user pages preserved",
+    "Relevant regression, actual browser check, docs and delivery states recorded"
+  ],
+  "scope": [
+    "internal/server/web/starmap*",
+    "scripts/starmap*test*",
+    "docs/agent/router.json",
+    "docs/tasks",
+    "docs/reviews/2026-10-15",
+    "docs/architecture/knowledge-map.md",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS",
+    "internal/server/web/style.css",
+    "internal/server/web/index.html"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User explicitly requests quick file preview from star-map references. Reuse existing file-viewer route with provenance, not a second file reader.",
+      "evidence": [
+        "internal/server/web/app.js:openFileViewMode",
+        "internal/server/web/starmap.js:pathSourceLink"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse existing standalone read-only viewer, preserve full source/line identity and current-source guard. One owned window, full document navigation via query nonce; cleanup does not touch user-navigated/editable pages. No CSP/permission changes.",
+      "evidence": [
+        "internal/server/web/starmap-preview.js",
+        "docs/reviews/2026-10-15/starmap-file-preview.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Universal file action, AI citation/list direct preview and legacy links share controller. Close own preview on page exit/lock/workspace. Translucent code selection fixes hidden selected text observed in browser.",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap-preview.js",
+        "internal/server/web/style.css"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "quick81 and actual bundled viewer light/dark/narrow, window reuse and close, read-only/Markdown/code lines passed. Actual9999 local API origin guard passed; real SSH/live authenticated browser and other binary formats not retested. Clean full/main gate pending.",
+      "evidence": [
+        "scripts/starmap-file-preview.test.cjs",
+        ".agent-state/starmap-file-preview/browser-proof.json",
+        ".agent-state/starmap-file-preview/live-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Architecture/review/task updated; final image and release receipts pending.",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docs/reviews/2026-10-15/starmap-file-preview.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Both sequential browser pairs closed, viewport restored, fixture service stopped; owned local test file removed after hash check. Private evidence under agent-state. Five inherited vendor deletions preserved. Temporary clean verification tree will be removed after gate.",
+      "evidence": [
+        ".agent-state/starmap-file-preview/browser-proof.json",
+        ".agent-state/starmap-file-preview/live-proof.json",
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Standing user instruction: merge and push all completed changes to main; test/push in increments, use start.command and deliver complete offline image package. No version bump/tag/formal Release.",
+  "rollback": "Revert scoped preview module/bindings/style commit and restore previous complete image. No data migration. Preserve five inherited vendor deletions.",
+  "handoff": "Source/browser/API accepted within stated scope. Runtime/full/main integration pending. Original12 stay open; real SSH and authenticated workbench browser unverified."
+}
