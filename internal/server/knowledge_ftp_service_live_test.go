@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/url"
 	"strings"
 	"testing"
@@ -134,6 +135,28 @@ func assertKnowledgeFTPLiveProgressive(t *testing.T, host string) {
 					t.Fatalf("source evidence missing: %+v", hit)
 				}
 				seen[hit.File.Path] = true
+			}
+			if kind == "ftps" {
+				addresses, err := net.LookupIP(host)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var ip string
+				for _, address := range addresses {
+					if address.To4() != nil {
+						ip = address.String()
+						break
+					}
+				}
+				if ip == "" {
+					t.Fatal("fixture IPv4 address missing")
+				}
+				// Same real service and credentials, but its certificate only names
+				// the fixture hostname. Faster scheduling must still reject this IP.
+				requireStatus(t, request(reloaded, "PUT", "/api/sources", map[string]any{"sources": []any{sourceBody(id, kind, kind, map[string]any{"url": "ftp://" + ip, "username": "fixture"}, false)}}), 200)
+				if body, err := reloaded.knowledgeAreaRead(context.Background(), area(reloaded), "nested/live-priority.md", 64*1024); err == nil || len(body) != 0 {
+					t.Fatal("FTPS certificate hostname mismatch was accepted")
+				}
 			}
 			t.Logf("PASS real %s: partial priority publication, disk App reload, cancellation retention, scoped catalogue7, literal source hits6", kind)
 		})

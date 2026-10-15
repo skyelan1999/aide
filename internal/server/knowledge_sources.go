@@ -890,7 +890,10 @@ func (a *App) knowledgeCurl(ctx context.Context, ar knowledgeArea, p string, lis
 	}
 	args := []string{"-sS", "--fail", "--max-time", "15", "-L", "--proto", "=http,https,ftp,ftps,smb,smbs", "--proto-redir", "=http,https,ftp,ftps,smb,smbs"}
 	if ar.kind == "ftps" {
-		args = append(args, "--ssl-reqd")
+		// Curl's default 200ms connection pacing can also stall an FTPS data
+		// connection, exhausting most of a progressive batch before one read.
+		// Race the fallback sooner without disabling IPv6, TLS or verification.
+		args = append(args, "--ssl-reqd", "--happy-eyeballs-timeout-ms", "50")
 	}
 	if ar.src.Config.Username != "" {
 		args = append(args, "-u", ar.src.Config.Username+":"+password)

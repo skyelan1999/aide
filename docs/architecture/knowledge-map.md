@@ -27,6 +27,8 @@
 | SMB | 配置URL的单资源，沿用现有curl通道，不宣称共享盘递归浏览 |
 | MCP | 已保存的工具名称与说明目录；不自动发现、启动或调用服务，不索引工具背后的资料 |
 
+星图 FTPS 的目录与正文读取使用 curl 的 50ms Happy Eyeballs 连接尝试间隔，减少已复现的连接调度等待；仍要求 TLS 和证书验证，批次时间、字节及来源身份限制保持。该参数会使后备连接更早参与竞争，不强制地址族。实际协议测量与适用边界见 [FTPS 延迟验收](../reviews/2026-10-15/ftps-index-latency.md)。
+
 图谱及差量响应包含 `sources[]`：`id/name/type/region/state/message/nodeCount`。来源状态为 `ready`、`partial`、`unavailable`、`disabled` 或 `catalog`；空来源和不可用来源仍有独立入口。节点携带 `sourceName/sourceType/origin/format`，详情、节点搜索、原文/RAG命中及回填文字保留出处。`origin` 是不透明身份指纹，不返回连接地址、账号、口令、私钥或MCP启动命令。编号保持旧规则；来源配置或凭据变更另由 `origin` 阻止旧引用回填。
 
 本地分批扫描遇到单个文件正文读取失败时，不再结束整个来源的发布。该节点只展示文件信息，带 `readState=unavailable`，不复用该文件的旧正文或代码符号；来源保持 `partial`，在 `coverage.readErrors` 和 `file-read-error` 中报告缺口，后续文件继续处理。读取恢复后重新取得正文并清除此标记。客户端差量及首屏缓存保留该状态，节点详情明确区分正文不可读与尚未索引。来源根目录或目录枚举失败仍走来源级保留／重试；这项修复不保证中断阻塞在内核中的文件调用。

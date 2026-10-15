@@ -7113,5 +7113,22 @@
       "fullChecks": 84,
       "formalReleaseCreated": false
     }
+  },
+  "followup154": {
+    "task": "docs/tasks/ftps-index-latency-20261015.json",
+    "classification": "progress",
+    "previousGoalTurn": "Real FTP/FTPS progressive and actual HTTPS process restart evidence, full84 and main2607d2f pushed. Current turn applies measured connection pacing improvement.",
+    "status": "in_progress",
+    "verified": [
+      "Internal real vsftpd with curl7.88.1: default FTPS directory/read medians205.02/232.01ms; selected50ms pacing gives52.52/74.88ms, four samples each",
+      "FTPS-only production curl option preserves TLS, address families, bounded source reads and source identity",
+      "Actual seven-source suite race13.885s; FTPS index subcase2.73s vs prior6.82s; hostname certificate mismatch refused"
+    ],
+    "remaining": [
+      "targeted implicit FTPS/progressive and clean full84",
+      "new binary process restart/readback, runtime/offline package and main gate",
+      "full authenticated browser, user hosts, IPv6/network variants and large-library scope"
+    ],
+    "original12RemainOpen": true
   }
 }

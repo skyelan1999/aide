@@ -1,0 +1,91 @@
+{
+  "id": "ftps-index-latency-20261015",
+  "request": "继续总目标：测量FTPS目录和正文延迟，修复有实证的扫描瓶颈，保持分批发布、证书、范围与身份校验",
+  "baseline": "2607d2f1f336d8a859ef481d6b40d04eabdba107",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Measure actual FTP/FTPS list/read latency and protocol events before selecting change",
+    "Only evidence-backed bottleneck changes; preserve bounded progressive publication, exact source identity, cancellation, TLS validation, scope and coverage semantics",
+    "Compare actual protocol evidence before/after, maintain regression and process restart/readback coverage; docs/runtime/package/full/main outcomes separated"
+  ],
+  "scope": [
+    "internal/server/knowledge_sources.go",
+    "internal/server/knowledge_remote_progressive.go",
+    "internal/server/knowledge_ftp_service_live_test.go",
+    "internal/server/knowledge_remote_progressive_test.go",
+    "scripts",
+    "docs",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Prior real binary probe showed FTP80 complete while FTPS advanced about one file per snapshot. Investigate cause with actual protocol timings; original12 remain active.",
+      "evidence": [
+        "docs/reviews/2026-10-15/source-index-live.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Actual traces/timings isolate connection pacing effect; choose50ms FTPS-only fallback spacing. Preserve IPv6, TLS, identity and bounded batches.",
+      "evidence": [
+        "docs/reviews/2026-10-15/ftps-index-latency.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "FTPS-only curl pacing; real certificate hostname refusal added to existing protocol regression.",
+      "evidence": [
+        "internal/server/knowledge_sources.go",
+        "internal/server/knowledge_ftp_service_live_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Quick82 and targeted implicit FTP/FTPS/remote progressive race8.042s PASS; actual whole protocol suite race13.885s PASS including certificate hostname refusal. New runtime/process/full/main pending.",
+      "evidence": [
+        ".agent-state/ftps-index-latency/protocol-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Measurement data, selected interval and network/IPv6 limitations recorded; architecture updated.",
+      "evidence": [
+        "docs/reviews/2026-10-15/ftps-index-latency.md",
+        "docs/reviews/2026-10-15/ftps-index-latency-timings.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own timing and protocol fixture containers/networks removed; caches retained, user data untouched; inherited five vendor deletions preserved.",
+      "evidence": [
+        ".agent-state/ftps-index-latency/protocol-owner.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Standing user instruction incremental work/test/push main and complete offline package; no version/tag/formal Release.",
+  "rollback": "Revert scoped performance change; preserve existing runtime/package as rollback and all user data.",
+  "handoff": "",
+  "protocolEvidence": {
+    "status": "pass",
+    "exit": 0,
+    "inputSHA256": "f9046283bea5a3a0f16a32224d77e0f38bde05f5c33dd4a8bac23862734c8fbb",
+    "inputsStable": true,
+    "protocols": [
+      "ftp",
+      "ftps"
+    ],
+    "scope": "real FTP/FTPS index and certificate hostname refusal without inference; other source subcases use deterministic model fixture; no paid calls/browser/user-host",
+    "race": true,
+    "logSHA256": "d5ffd459e348b68827d486f17be5c4a8b9b4e876e2230bde119827cc51356654",
+    "packageSeconds": 13.885,
+    "indexSubcaseSeconds": 4.31,
+    "ftpsSubcaseSeconds": 2.73
+  }
+}
