@@ -7438,11 +7438,12 @@
   "followup164": {
     "task": "docs/tasks/parallel-context-accounting-20261015.json",
     "classification": "progress",
-    "status": "in_progress",
-    "summary": "Independent per-request context vs cumulative; transient calibration/title disclosure; actual Qwen3-way six-call reconciliation, focused16.145s, clean main full84/serverrace537.260s, component/runtime/offline/startup reuse passed. Gate/main pending; original12 remain open.",
+    "status": "pass",
+    "summary": "Independent per-request context/calibration/title disclosure; actual Qwen3 workers/six-call usage reconciliation, focused16.145s, full84/serverrace537.260s, component/runtime/offline/reuse PASS. Independent gate passed; exact remote7630228 verified. Original12 remain open.",
     "original12RemainOpen": true,
     "evidence": [
       "docs/reviews/2026-10-15/parallel-context-accounting.md"
-    ]
+    ],
+    "deliveredMain": "7630228c1a0d82a7d1026cd4410c83b976bbe508"
   }
 }

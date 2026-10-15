@@ -1,5 +1,5 @@
 {
-  "status": "verification_pass_main_pending",
+  "status": "pass",
   "runtime": {
     "image": "sha256:234beda3a50b0fd6bc2b6c844762e8cbbe3a3ddf730999f3eb20a2797fdcf112",
     "runningImage": "sha256:234beda3a50b0fd6bc2b6c844762e8cbbe3a3ddf730999f3eb20a2797fdcf112",
@@ -184,7 +184,13 @@
     "serverRaceSeconds": 537.26,
     "sourceCommit": "0b48b4d6e7b0c173a9eb4828c780706884dc325c"
   },
-  "main": "pending",
+  "main": {
+    "commit": "7630228c1a0d82a7d1026cd4410c83b976bbe508",
+    "releaseGate": "pass",
+    "exactRemoteVerified": true,
+    "versionBump": false,
+    "tagOrFormalRelease": false
+  },
   "boundaries": [
     "full authenticated Safari human-deferred",
     "receiving-device image import pending",
