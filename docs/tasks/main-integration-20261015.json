@@ -1,0 +1,66 @@
+{
+  "id": "main-integration-20261015",
+  "request": "把现有的修改推上去，和到main上",
+  "baseline": "4121a535d0e6de6cf90a4c89fe0303114a99385d",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "当前已提交126个领先提交完整纳入main，origin/main无并行改动时快进",
+    "干净集成main通过完整74项检查，收据绑定当前内容指纹，执行release-check",
+    "推送main并确认远端SHA和包含关系",
+    "原工作区5项未提交vendor删除保留，不提交或恢复；保持运行服务/用户数据；无版本tag/GitHub Release"
+  ],
+  "scope": [
+    "Git main integration",
+    "docs/tasks",
+    "private owned clean worktree and verification receipts"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确授权现有已提交改动push并合入main，未提交继承删除隔离",
+      "evidence": [
+        "用户当前消息",
+        "git rev-list origin/main...HEAD: 0 126"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "使用独立干净main工作树快进；替代脏树的进行中full，串行执行一套Go race/vet",
+      "evidence": [
+        "git worktree list",
+        "/tmp/aide-main-integration-20261015"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "已准备干净main工作树，待快进并验证",
+      "evidence": [
+        "git worktree add /tmp/aide-main-integration-20261015 main"
+      ]
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户明确要求：把现有的修改推上去，和到main上。授权推送与合入main，不包含版本升级/tag/GitHub Release。",
+  "rollback": "保留合入前origin/main SHA，必要时通过反向提交审阅回退，不强制推送、不改写公开历史。",
+  "handoff": "原目录/perf/starmap-frame-work的5个vendor删除不stage/reset；main在自有/tmp工作树验证，日志复制回原目录后仅清理自有临时树。",
+  "beforeMain": "a2a21a3e5d6cf1b97148ee4e6bce86a006b06497"
+}
