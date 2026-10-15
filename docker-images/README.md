@@ -1,3 +1,9 @@
+## 2026-10-16 按钮到服务静态证据候选（构建时记录）
+
+HTML/事件/回调/请求/Go路由/服务多段候选，纯DOM/API封装按调用位置展开，路径/图显示静态等级。实际临时索引API和IAB明暗/390组件分别通过；完整Safari仍暂缓，预算下的部分索引不等于全aide覆盖。最终full87及main门禁见[任务账本](../docs/tasks/knowledge-http-evidence-20261016.json)。
+
+指定start.command运行 sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba，source SHA d5cb1d9c65e8c15abbd00a41dd3d06261cd6d5318c09e29f14150e017a985eb2。完整包 aide-0.1.17.0-RC2-linux-arm64-1601033df8ea-offline.tar.gz，705779869字节，SHA-256 74d150f1d784e2419fe064aa017b0ae041ed18652ea5617a05db54e3d8c897ef；内外摘要、应用/依赖标签、平台、启动器及实际docker load通过。会话、配置、认证及挂载保持一致；保留47cd回滚包，仅活动移动硬盘保存，接收设备导入待验。不升版/tag/正式Release。
+
 ## 2026-10-16 显式引用与证据定位候选（构建时记录）
 
 报告→中文空格证据文件→源码的两段静态引用、实际目标定位与命名空间边界修复；最终full及main门禁见[任务账本](../docs/tasks/knowledge-explicit-references-20261016.json)。

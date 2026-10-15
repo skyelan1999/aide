@@ -1,6 +1,6 @@
 {
   "task": "knowledge-http-evidence-20261016",
-  "status": "source_candidate",
+  "status": "runtime_candidate_verified",
   "baseline": "584aa9b9182dd091a3265b0f62f5a22e510d6a9a",
   "oldParser": "DOM event evidence is missing: expected regression failure",
   "node": "pass: callback/request provenance, lexical shadow/reassignment, global mutations, dynamic diagnostics and256 bounds",
@@ -19,10 +19,9 @@
   "notComplete": [
     "clean-main full87",
     "independent main gate and remote push",
-    "runtime candidate and offline package",
     "full authenticated Safari deferred; actual whole-aide index not proven"
   ],
-  "production": "unchanged47cd; no model calls, no production session/config changes",
+  "production": "candidate sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba healthy; source/served assets and original data hashes verified",
   "html": "pass: source button/script positions, inactive markup, duplicate IDs/attributes, base URL diagnostics and bounds",
   "knowledgeRegression": {
     "selector": "^TestKnowledge",
@@ -83,5 +82,34 @@
     ],
     "finalNode": "pass: prototype rejection and standard/custom normalization",
     "scope": "last normalization-only JS change covered by native Request/Node and current quick; final full87 still required"
+  },
+  "runtime": {
+    "image": "sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba",
+    "runningImage": "sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba",
+    "sourceSHA256": "d5cb1d9c65e8c15abbd00a41dd3d06261cd6d5318c09e29f14150e017a985eb2",
+    "runningPlatformManifest": "sha256:142addf8fdbbf02818d0cd9666de7d7a25685568840d7fe68eb4c0ea9e1fe1a5",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "offline": {
+    "image": "sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba",
+    "sourceSHA256": "d5cb1d9c65e8c15abbd00a41dd3d06261cd6d5318c09e29f14150e017a985eb2",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-1601033df8ea-offline.tar.gz",
+    "bytes": 705779869,
+    "sha256": "74d150f1d784e2419fe064aa017b0ae041ed18652ea5617a05db54e3d8c897ef",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "activeExternalWorkspaceOnly": true,
+    "verificationStorage": "streamed hashes/metadata/load in active external workspace; no duplicate outputs recreated in original directory"
   }
 }

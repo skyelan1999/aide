@@ -27,3 +27,5 @@ Go AST 识别标准 `net/http` 的默认注册、直接 `NewServeMux` 和显式 
 后续从同一任务接续图构建与呈现；完整认证Safari沿用人类暂缓决定，Windows由用户验收，真实向量测试暂缓。总体12项不因本检查点改为完成。
 
 收尾反例：初版37de候选对对象原型提供的HTTP方法会误按GET处理，新增Node反例确实失败；现统一直接/封装请求的方法解析，拒绝原型选项和方法覆盖。Web专项race2.992秒和vet通过；随后JS方法规范化又按原生Request观测修正，custom/patch保留大小写、post规范化为POST，最终Node与当前quick85通过。37de仅中间镜像/包，需以重建候选及最终full87为准。
+
+本机与离线候选：指定start.command运行 sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba，source SHA d5cb1d9c65e8c15abbd00a41dd3d06261cd6d5318c09e29f14150e017a985eb2。完整包 aide-0.1.17.0-RC2-linux-arm64-1601033df8ea-offline.tar.gz，705779869字节，SHA-256 74d150f1d784e2419fe064aa017b0ae041ed18652ea5617a05db54e3d8c897ef；内外摘要、应用/依赖标签、平台、启动器及实际docker load通过。会话、配置、认证及挂载保持一致；保留47cd回滚包，仅活动移动硬盘保存，接收设备导入待验。不升版/tag/正式Release。 最终full87、独立main门禁和远端推送待实际收据。
