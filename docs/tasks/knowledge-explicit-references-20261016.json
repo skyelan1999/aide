@@ -1,0 +1,79 @@
+{
+  "id": "knowledge-explicit-references-20261016",
+  "request": "继续原12项目标的报告到来源证据链；修复空格路径及引用行列定位，保留命名空间和静态证据边界，验证多段路径",
+  "baseline": "8442dcabd94b783186d669084b9a809721fe591c",
+  "initial_status": "",
+  "acceptance": [
+    "含空格/中文/编码的显式文件引用可以形成报告到证据再到源码的多段路径。",
+    "引用边的行列指向实际匹配目标，不指向更早的同名片段；外部URL与文件名后缀不产生伪边。",
+    "跨来源只接受稳定ID或明确命名空间，同路径不同来源不得混连；保持静态引用置信度、有界提取与边数量。",
+    "目标回归先证明旧行为失败，再跑相关race/vet；实际图索引及路径接口保留版本和身份校验。",
+    "文档、main完整门禁、本机指定启动器及完整离线镜像包分别提供真实收据；完整认证浏览器仍按人类安排暂缓。"
+  ],
+  "scope": [
+    "internal/server/knowledge_map.go",
+    "internal/server/knowledge_references.go",
+    "internal/server/knowledge_references_test.go",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks",
+    "docs/reviews/2026-10-16",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "原12项中报告到来源证据链；本批修正实际缺失/错误引用边，完整按钮到服务仍独立保留。",
+      "evidence": [
+        "docs/tasks/knowledge-explicit-references-20261016.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "提取显式目标时保留字节位置，解码路径/片段后同身份匹配；命名空间字面匹配检查边界；静态引用不提升为运行时证明。",
+      "evidence": [
+        "docs/tasks/knowledge-explicit-references-20261016.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "解析实际目标位置，支持空格/编码并保持命名空间和静态证据边界。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-explicit-references.md",
+        "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "定向引用race、全部Knowledge race及全包vet、quick84通过；full和运行镜像验收待继续。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-explicit-references.md",
+        "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构、回归记录与本批证明已更新，未把静态路径等同于运行时调用。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-explicit-references.md",
+        "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "新增文件均归本批；私有日志留在忽略目录，测试容器已退出，生产数据未变更。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-explicit-references.md",
+        "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户分批验证/push/合main、本机更新和离线镜像包交付授权；不升版、tag或正式Release。",
+  "rollback": "保留4cc运行镜像及其完整离线包，可回退本轮引用解析源码，无数据格式迁移。",
+  "handoff": "开发分支验证检查点；继续本批full/独立main门禁、start.command更新和离线镜像交付。总体12项仍在进行，Safari暂缓、Windows用户验收、真实向量暂缓。"
+}

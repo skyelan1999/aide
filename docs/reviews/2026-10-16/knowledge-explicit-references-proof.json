@@ -1,0 +1,27 @@
+{
+  "task": "knowledge-explicit-references-20261016",
+  "baseline": "8442dcabd94b783186d669084b9a809721fe591c",
+  "oldLogicReproduction": "Three new regression tests failed against extracted old linking logic",
+  "focused": {
+    "status": "pass",
+    "selector": "^TestKnowledgeReference",
+    "race": true,
+    "serverSeconds": 3.832,
+    "vet": "all packages pass"
+  },
+  "knowledge": {
+    "status": "pass",
+    "selector": "^TestKnowledge",
+    "race": true,
+    "log": "Go snapshot: 5834 current files; container-local source; network none\nok  \taide/internal/server\t68.533s",
+    "vet": "all packages pass"
+  },
+  "quick": {
+    "status": "pass",
+    "commands": 84,
+    "fingerprint": "547a7ae246df0e943b18c7807dc07a41ddc93166fb2f0e94fbbad05b730fbd54"
+  },
+  "integration": "Real temporary files -> production index builder -> registered HTTP path API; 2 mention steps, Unicode source positions, revision/workspace rejection",
+  "boundary": "Static explicit references only; no authenticated Safari or runtime call-chain proof",
+  "release": "pending full verification, independent main gate, runtime rebuild and offline package; production unchanged"
+}

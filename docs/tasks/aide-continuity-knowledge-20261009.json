@@ -7608,5 +7608,15 @@
     "classification": "progress",
     "summary": "Current9999 all5 reasoning values/2 sessions/10 writes, canonical disk,409/400 and cleanup pass; no model calls. Original12 current evidence/gaps reconciled; none marked complete. Exact-input full86 reused, independent main gate and exact remote push pass. Runtime/offline4cc unchanged.",
     "deliveredMain": "ea333509a591e5046fcff6b295bb881f09f169c3"
+  },
+  "followup169": {
+    "task": "docs/tasks/knowledge-explicit-references-20261016.json",
+    "status": "in_progress",
+    "classification": "progress",
+    "summary": "报告到来源的空格/编码引用、定位与伪边修复；真实临时文件索引及HTTP两段路径/隔离通过，Knowledge race/vet及quick84通过。未发布，原12项保持进行中。",
+    "evidence": [
+      "docs/reviews/2026-10-16/knowledge-explicit-references.md",
+      "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
+    ]
   }
 }

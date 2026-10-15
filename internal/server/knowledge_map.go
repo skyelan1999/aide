@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -430,72 +429,7 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 			}
 		}
 	}
-	// Link targets are resolved relative to the containing file. Cross-region links require an explicit namespace or stable ID.
-	targets := regexp.MustCompile("[(`\"]([^`\"\\s)]+)[)`\"]")
-	pathCounts := map[string]int{}
-	for _, n := range g.Nodes {
-		if n.Kind == "file" {
-			pathCounts[n.Path]++
-		}
-	}
-	for _, from := range g.Nodes {
-		if from.Text == "" || from.Kind == "symbol" {
-			continue
-		}
-		refs := map[string]string{}
-		for _, match := range targets.FindAllStringSubmatch(from.Text, 200) {
-			rel := strings.Split(match[1], "#")[0]
-			if from.Kind == "file" {
-				rel = path.Clean(path.Join(path.Dir(from.Path), rel))
-			}
-			if _, exists := refs[rel]; !exists {
-				refs[rel] = match[1]
-			}
-		}
-		for _, to := range g.Nodes {
-			if to.Kind != "file" || from.ID == to.ID {
-				continue
-			}
-			token := ""
-			stableID := "[" + to.ID + "]"
-			explicit := strings.Contains(from.Text, stableID)
-			if explicit {
-				token = stableID
-			}
-			if to.Root == "context" {
-				ref := "/context/" + to.Path
-				if strings.Contains(from.Text, ref) {
-					explicit = true
-					if token == "" {
-						token = ref
-					}
-				}
-			}
-			if to.Root == "source" {
-				ref := to.Source + ":" + to.Path
-				if strings.Contains(from.Text, ref) {
-					explicit = true
-					if token == "" {
-						token = ref
-					}
-				}
-			}
-			localRef := refs[to.Path]
-			local := (from.Region == to.Region || from.Kind == "session" && pathCounts[to.Path] == 1) && localRef != ""
-			if token == "" && local {
-				token = localRef
-			}
-			if explicit || local {
-				line, column, evidence := knowledgeMentionLocation(from.Text, token)
-				g.Edges = append(g.Edges, knowledgeEdge{From: from.ID, To: to.ID, Kind: "mention", Line: line, Column: column, Evidence: evidence, Confidence: "explicit_reference"})
-				if len(g.Edges) >= 4000 {
-					g.Truncated = true
-					a.knowledgeRevalidateGraph(&g)
-					return g
-				}
-			}
-		}
-	}
+	appendKnowledgeMentions(&g)
 
 	a.knowledgeRevalidateGraph(&g)
 	return g
