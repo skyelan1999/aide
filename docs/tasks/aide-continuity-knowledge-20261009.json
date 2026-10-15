@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Current branch fix/outcome-overview-polling sourceab89e85, local9999 image5d04cc677fd8 via exact start.command; scoped lifecycle tests/native fixture/offline import verified, full75 not rerun. Main stays7f68a3c with clean74 receipt. Original5 vendor deletions preserved. Integrity degraded due old baselinecdf binary mismatch; running binary matches current image, baseline unchanged. Continue12streams, true model/cross-page/SSH/browser gaps; do not treat component fixture as real provider. No verified-wait process remains except package/fixture owners already terminal.",
+  "handoff": "Current branch fix/outcome-request-ownership/source8221669; local9999 imagead3d1e2c81ba via exact start.command, configuration/mounts/assets preserved. First handle pending UI-open functions cell1424 (same handle, no duplicate open); final Safari getApp/AX/screenshot -1712, IAB create timed out/reset, inventory no browser. Owned fixture2022 localhost62179 kept for pending UI request/final native page test. Final quick74 passes; new full76/main gate not run. Main stays7f68a3c clean74 historical. 12streams still incomplete, true model/SSH acceptance pending, vector deferred, Windows user-owned.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6479,5 +6479,9 @@
   "followup135": {
     "task": "docs/tasks/outcome-overview-polling-20261015.json",
     "summary": "Found and fixed real overview terminal polling leak, including hidden historical running-task metadata. Sourceab89e85, quick73, scoped server race6.449s/vet and native Safari actual module local-data timing PASS: initial0, terminal5→5, hidden13→14→14. Complete image5d04cc677fd8/offline copies verified. Current binary equals image; old baselinecdf mismatch retained without reset. New full/main gate NOT_RUN, true-provider acceptance still pending."
+  },
+  "followup136": {
+    "task": "docs/tasks/outcome-request-ownership-20261015.json",
+    "summary": "Reproduced/fixed old poll rolling explicit C reload back to B, obsolete pages/409/evidence crossing snapshots, duplicate page admission and old close handle closing newer view. Native first candidate confirmed epoch guard and exposed reload pagination disabled; corrected with negative test. Final8221669 quick74/ten deterministic cases PASS, latest ad3d complete offline package/import/copies verified. Final native acceptance pending Safari -1712 and IAB/app-browser IPC timeout. UI-open functions cell1424 is pending, fixture session2022 on62179 retained. No new full/main release gate."
   }
 }

@@ -42,36 +42,132 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "旧代码8项负向断言失败，新9项确定性并发回归及既有成果/总览回归PASS；74项quick及原生组件验收待完成",
+      "summary": "Final8221669十项并发/生命周期、既有成果/总览及quick74 PASS；首轮Safari证实重载C不被旧B回退，同时发现分页按钮禁用并修复。最终原生复验因Safari AppleEvent -1712与IAB/应用浏览器IPC超时未完成，不标PASS。",
       "evidence": [
+        ".agent-state/outcome-request-ownership/quick-frozen.json",
         "scripts/outcome-request-ownership.test.cjs",
-        ".agent-state/outcome-request-ownership/negative-oldPollAfterReload.log"
+        ".agent-state/outcome-request-ownership/ui-first-candidate-after-old-B.txt",
+        ".agent-state/outcome-request-ownership/reload-control-negative.log"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "记录读取代次、分页互斥、证据快照边界以及原生首轮发现与最终待验收状态",
+      "evidence": [
+        "docs/architecture.md",
+        "docs/tasks/outcome-request-ownership-20261015.json"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "清理授权构建缓存9.978GB，运行镜像/依赖/数据与离线包保留；首轮自建Safari fixture页已关闭，最终UI打开RPC与自有回环fixture服务待收尾；5项vendor删除保留。",
+      "evidence": [
+        ".agent-state/outcome-request-ownership/clean-build-cache.log",
+        ".agent-state/outcome-request-ownership/final.json"
+      ]
     },
     "release": {
       "status": "pending",
-      "summary": "",
-      "evidence": []
+      "summary": "最新ad3d完整离线候选导入与两个本地副本校验通过；最终原生验收/清理和full76/main门禁尚未完成；只准备功能分支push。",
+      "evidence": [
+        ".agent-state/outcome-request-ownership/package.json"
+      ]
     }
   },
   "release_authorization": "用户授权按目标持续开发、分部分push和测试；本轮新增修改仅功能分支，不推未来新修改到main/tag。",
   "rollback": "回退本任务代码并通过原start.command重建，无持久化迁移或用户数据变更。",
-  "handoff": "",
+  "handoff": "当前source8221669候选ad3d1e2c81ba已通过原start.command更新9999并核对资源/配置/挂载；quick74及十项确定性并发回归通过。先查UI-open owner functions cell1424，再处理Safari连接超时，最终按A两页→409→reloadC→oldB→C继续分页复验。不要强退用户Safari或处理原未保存模型设置。循环fixture2022/127.0.0.1:62179待UI请求终态后关闭或保留复验。原12条目标/真实模型/SSH等仍未完成。",
   "first_native_finding": {
     "source": "7a4e7c3",
     "observation": "C快照重载后分页控件仍被reloading状态禁用；修正为finally释放标记后一次渲染",
     "negative": ".agent-state/outcome-request-ownership/reload-control-negative.log",
     "ui": ".agent-state/outcome-request-ownership/ui-reloaded-C.txt",
     "candidate": ".agent-state/outcome-request-ownership/first-candidate-runtime.json"
+  },
+  "sourceCommit": "8221669",
+  "priorSource": "7a4e7c3 initial guards; e5a2822 restores pagination controls after native finding",
+  "runtime": {
+    "image": "sha256:ad3d1e2c81bad42f4df4333b958728b48661c114aa732af550955cbede5644e5",
+    "runningImage": "sha256:ad3d1e2c81bad42f4df4333b958728b48661c114aa732af550955cbede5644e5",
+    "sourceSHA256": "19c6421d8c594ae9611f2d10ff5be63eba798ee1e51aba6038bb55bf6570cd98",
+    "runningPlatformManifest": "sha256:df7d056a8b9c9aac1d8a350a338a7fb0e4a4afc0e4903583917f301a7eb658a6",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:ad3d1e2c81bad42f4df4333b958728b48661c114aa732af550955cbede5644e5",
+    "sourceSHA256": "19c6421d8c594ae9611f2d10ff5be63eba798ee1e51aba6038bb55bf6570cd98",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-ad3d1e2c81ba-offline.tar.gz",
+    "bytes": 705661234,
+    "sha256": "383f77a8178a1c1263904255e8411444d3e8925caffbdd9b44ea388bbdbd6117",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "quick": {
+    "status": "pass",
+    "commands": 74,
+    "fingerprint": "2e2083601f1e854e29dee395e9a99eff9c89ae4e74d1874976d468e79f508658",
+    "receipt": ".agent-state/outcome-request-ownership/quick-frozen.json",
+    "scope": "Final code8221669 before delivery README/SHA256SUMS metadata update; not full76/main release receipt"
+  },
+  "negative_cases": [
+    ".agent-state/outcome-request-ownership/negative-oldMoreAfterReload.log",
+    ".agent-state/outcome-request-ownership/negative-evidenceAfterReload.log",
+    ".agent-state/outcome-request-ownership/negative-disconnectedTimer.log",
+    ".agent-state/outcome-request-ownership/negative-duplicatePage.log",
+    ".agent-state/outcome-request-ownership/negative-ownedClose.log",
+    ".agent-state/outcome-request-ownership/negative-oldPage.log",
+    ".agent-state/outcome-request-ownership/negative-old409.log",
+    ".agent-state/outcome-request-ownership/negative-oldPollAfterReload.log",
+    ".agent-state/outcome-request-ownership/reload-control-negative.log",
+    ".agent-state/outcome-request-ownership/closed-reload-negative.log"
+  ],
+  "client_cases": [
+    "old poll after explicit reload",
+    "old page after explicit reload",
+    "old page/409 after first-page poll replaces snapshot",
+    "duplicate page admission",
+    "evidence ownership",
+    "old close handle scope",
+    "disconnected interval cleanup",
+    "old finally cannot release newer poll owner",
+    "reload control restoration",
+    "detached reload cannot fetch"
+  ],
+  "native": {
+    "first_candidate": "7a4e7c3: native Safari A page1→A page2→409/export disabled→reloadC/export enabled→oldB returns/C retained; C pagination button remained disabled, fixed after discovery",
+    "final_candidate": "8221669: not_run for final native verification; Safari isRunning=true but getApp/getAX/getScreenshot fail Launchservices AppleEvent errAETimeout(-1712), cua IAB creation timed out and kernel reset; inventory after reset had no browser tabs",
+    "fixtureSourceSHA256": "aa2964f9eada839ae8763db36d55d02b08c28ef4c1813ee291444044bb825da8",
+    "notRun": [
+      "final Safari pages C1/C2 continuation",
+      "final IAB supplemental component scenario",
+      "real provider/model/API task acceptance",
+      "new full76/main gate"
+    ],
+    "scope": "deterministic local responses + actual frontend module, not a real model task",
+    "pendingUIOpen": {
+      "tool": "functions.exec/wait",
+      "cell_id": "1424",
+      "target": "http://127.0.0.1:62179/",
+      "status": "running as of latest wait; do not submit duplicate open request"
+    },
+    "fixtureOwner": {
+      "sessionId": 2022,
+      "port": 62179,
+      "listen": "127.0.0.1",
+      "scope": "only owned synthetic fixture and module copy, kept while pending UI-open RPC"
+    }
   }
 }

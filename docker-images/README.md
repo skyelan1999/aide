@@ -185,3 +185,8 @@ Latest reviewed-recovery continuation development snapshot (2026-10-15): `aide-0
 ## 2026-10-15 成果总览生命周期候选
 
 `aide-0.1.17.0-RC2-linux-arm64-5d04cc677fd8-offline.tar.gz`，705658916字节，SHA-256 `095bef09de111fd50f20a0a5b0a63dff34c671ca17189c76a1af5dbb8fd94c89`。源码`ab89e85`，源指纹`becbb6325e7b7d8ae0dc2ee685e8f2fc492c4c82f85145919bd06b706ab68038`。总览完成后停止轮询，响应以全会话runningRuns覆盖分页外运行任务；关闭后丢弃旧回执。73项快速检查、Go定向race/vet及原生Safari真实模块本地数据验收通过。包含完整应用与本地依赖镜像，流式内外哈希、平台、启动器、实际docker load及两份本地副本校验通过。原start.command已启动9999；未把确定性数据当真实模型验收，未复用前批main full74作为此候选门禁，未合入main/tag/正式Release。详见[任务](../docs/tasks/outcome-overview-polling-20261015.json)。
+
+
+## 2026-10-15 成果快照请求归属开发候选
+
+`aide-0.1.17.0-RC2-linux-arm64-ad3d1e2c81ba-offline.tar.gz`，705661234字节，SHA-256 `383f77a8178a1c1263904255e8411444d3e8925caffbdd9b44ea388bbdbd6117`。源码`8221669`，源指纹`19c6421d8c594ae9611f2d10ff5be63eba798ee1e51aba6038bb55bf6570cd98`。修复成果重载后的旧响应覆盖/误标、分页互斥、证据归属和关闭句柄；后续修正原生验收发现的重载分页禁用。74项快速检查通过，含十项并发回归；最终Safari/IAB复验仍受UI通道超时阻断，不作为正式可发布验收。完整应用与本地依赖镜像均在包内，流式内外哈希/平台/启动器/实际docker load/两份本地副本校验通过。原start.command更新9999，配置/挂载及提供资源核对通过。此前62915881初次候选存在分页控件问题，已由本候选替代。新full76、main、tag/Release及接收设备导入未完成。详见[任务](../docs/tasks/outcome-request-ownership-20261015.json)。
