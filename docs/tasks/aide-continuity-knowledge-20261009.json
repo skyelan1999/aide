@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Latest clean main candidate6abac38 full84 PASS (server race537.169s plus vet), source-index-live real protocol suite race17.935s and isolated actual HTTPS process restart of FTP/FTPS80-file catalogues/literal hashes verified. Clean main gate passed; pushed d110f53 and independently verified remote head. Prior reasoning write/current disk and real Qwen outcome API evidence remain scoped to their task records. Original12 stay in progress: authenticated browser, user-host/fault, large-scale/other-transport and remaining workflow gaps persist; real vectors deferred and Windows user-owned.",
+      "summary": "Latest clean main candidate efafb6d full84 PASS (server race531.739s plus vet). FTPS pacing fix has actual protocol race/timings, new binary HTTPS process restart and Docker-network recovery/literal hash evidence; independent SFTP capability/default-user/parser APIs supplemented. Main gate/push next. Prior reasoning write/disk and real Qwen outcome evidence stay scoped to their tasks. Original12 remain in progress: full authenticated browser, user-host/physical faults, IPv6/large-library/other transport and remaining workflow requirements; vectors deferred, Windows user-owned.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -299,8 +299,11 @@
           "capabilities_system_docs_read_safari_20261012",
           "capabilities_plugin_entry_read_safari_20261012"
         ],
-        "remaining": "Safari 本机9999已验证工作区与自动系统文档目录只读、技能插件入口读取及 deepseek-flash 模型列表读取；工作区和自动系统文档目录也各自通过一次独占临时写入与清理探针。插件实际工具运行、独立SSH权限诊断、真实模型生成/视觉/工具调用及仪表全项回归仍未闭环。"
-      }
+        "remaining": "Actual independent SFTP read/write/cleanup capability API, credential stale/failure/restore and four installed parser imports supplemented on20261015. Remaining full authenticated dashboard, user-host SSH permissions, plugin actual-tool/model generation/vision and arbitrary document processing workflows; prior UI/model-list observations remain separately scoped."
+      },
+      "evidence_20261015_source_capability": [
+        "docs/reviews/2026-10-15/source-capability-live.md"
+      ]
     },
     {
       "name": "渐进索引",
@@ -332,6 +335,9 @@
       "evidence_20261015_live_ftp": [
         "docs/reviews/2026-10-15/source-index-live.md",
         "Actual5c8f109dd119 isolated binary process restart/API: FTP/FTPS selected80-file catalogues resume and complete; new origins/readback; no browser/user host or large-scale performance claim."
+      ],
+      "evidence_20261015_ftps_latency": [
+        "docs/reviews/2026-10-15/ftps-index-latency.md"
       ]
     },
     {
@@ -7124,10 +7130,13 @@
       "FTPS-only production curl option preserves TLS, address families, bounded source reads and source identity",
       "Actual seven-source suite race13.885s; FTPS index subcase2.73s vs prior6.82s; hostname certificate mismatch refused",
       "New actual binary process restart/HTTPS literal hash proof PASS; selected80 files for both transports, sample count 18 vs prior80, elapsed18.396s for new probe only; no universal throughput claim",
-      "Specified start.command:13 existing session files/config/auth/sources/mounts preserved; complete offline package load/hash/platform/launchers/two local copies passed"
+      "Specified start.command:13 existing session files/config/auth/sources/mounts preserved; complete offline package load/hash/platform/launchers/two local copies passed",
+      "Independent actual Docker-network disconnect/reconnect: offline nodes retained, totalKnown false, reconnect resumes FTP/FTPS80 and literal hashes. Includes existing unavailable-source retry backoff; no physical/user network claim.",
+      "Actual binary capabilities HTTPS API with image default user: real SFTP read/write/cleanup, credential change stale/failure/restore, four parser imports PASS; no UI/plugin/model processing claim",
+      "New clean main full84 PASS, server race531.739s plus vet; fingerprint 6a543abab2fdadcc15e349af369525a3d5c150b6f5aed35a25977eb9611180fe"
     ],
     "remaining": [
-      "new clean full84 and main gate",
+      "main gate and authorized push",
       "full authenticated browser, user hosts, IPv6/network variants and large-library scope"
     ],
     "original12RemainOpen": true,
@@ -7159,6 +7168,63 @@
       "probeSHA256": "a4fe76710f2cf1511b091adf17ecc808cc1cda815183c03b91bdb2d8581c5444",
       "cleanupVerified": true
     },
-    "runtimeImage": "236ad9bc3e3c"
+    "runtimeImage": "236ad9bc3e3c",
+    "networkFaultEvidence": {
+      "status": "pass",
+      "applicationImage": "sha256:236ad9bc3e3c69ee9c81ad307b97b3c657d9449759e596e8bbb225d409ab8b6a",
+      "realProcessRestart": true,
+      "actualDockerNetworkOutageRetainedNodes": true,
+      "reconnectedAndResumed": true,
+      "newPid": true,
+      "initialPartialCounts": {
+        "ftp": 8,
+        "ftps": 4
+      },
+      "finalCounts": {
+        "ftp": 80,
+        "ftps": 80
+      },
+      "freshOrigins": true,
+      "literalHTTPRetrievalAfterRestart": true,
+      "protocols": [
+        "ftp",
+        "ftps"
+      ],
+      "totalKnownBoth": true,
+      "elapsedSeconds": 50.032,
+      "scope": "isolated real binary HTTPS API and vsftpd, no user data/model/browser; selected80 files per source",
+      "sampleCount": 80,
+      "logSHA256": "b80a9d1b4697b7f2c79af4d5a97a6d7a08040a7e37fbe49efe95de98ccb2bbd1"
+    },
+    "sourceCapabilityEvidence": {
+      "status": "pass",
+      "applicationImage": "sha256:236ad9bc3e3c69ee9c81ad307b97b3c657d9449759e596e8bbb225d409ab8b6a",
+      "actualSFTPReadAndWriteProbe": true,
+      "originalFilesUnchanged": true,
+      "temporaryProbeRemoved": true,
+      "credentialChangeMarksBothChecksStale": true,
+      "badCredentialReadFailed": true,
+      "restoredCredentialReadPassed": true,
+      "parserImports": [
+        "pypdf",
+        "docx",
+        "openpyxl",
+        "pptx"
+      ],
+      "noCredentialInCapabilityResponse": true,
+      "scope": "isolated actual binary HTTPS capabilities API, real OpenSSH/SFTP fixture and installed parser modules; no browser/model or arbitrary document processing claim",
+      "logSHA256": "55fc70af02d4453ec0e32598902bc720619c33d9c46da60f960f8b07cec93dd6",
+      "probeSHA256": "9690e09a1993c3d3af0b29b798205038010914dedfb8993440bf9005507f78ed",
+      "cleanupVerified": true
+    },
+    "fullVerification": {
+      "status": "pass",
+      "count": 84,
+      "fingerprint": "6a543abab2fdadcc15e349af369525a3d5c150b6f5aed35a25977eb9611180fe",
+      "serverRaceSeconds": 531.739,
+      "sourceCommit": "efafb6da5fdd90c4ecde0e6e00877da8f44a2def",
+      "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/ftps-index-latency/verify-20261015T112312669923Z.log",
+      "worktree": "/private/tmp/aide-ftps-latency-full-20261015"
+    }
   }
 }

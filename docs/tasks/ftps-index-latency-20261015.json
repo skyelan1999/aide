@@ -42,10 +42,12 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Quick82 and targeted implicit FTP/FTPS/remote progressive race8.042s PASS; actual whole protocol suite race13.885s PASS including certificate hostname refusal. New runtime/process/full/main pending.",
+      "status": "pass",
+      "summary": "Clean main full84 PASS, server race531.739s plus vet; final whole live protocol race13.885s and targeted implicit FTP/FTPS/progressive race8.042s. New binary process restart, real Docker network fault/recovery, literal hashes, default-user SFTP capability and parser checks passed with scopes recorded.",
       "evidence": [
-        ".agent-state/ftps-index-latency/protocol-proof.json"
+        "docs/reviews/2026-10-15/ftps-index-latency.md",
+        "docs/reviews/2026-10-15/source-capability-live.md",
+        ".agent-state/ftps-index-latency/full-proof.json"
       ]
     },
     "documentation": {
@@ -53,7 +55,8 @@
       "summary": "Measurement data, selected interval and network/IPv6 limitations recorded; architecture updated.",
       "evidence": [
         "docs/reviews/2026-10-15/ftps-index-latency.md",
-        "docs/reviews/2026-10-15/ftps-index-latency-timings.json"
+        "docs/reviews/2026-10-15/ftps-index-latency-timings.json",
+        "docs/reviews/2026-10-15/source-capability-live.md"
       ]
     },
     "cleanup": {
@@ -64,14 +67,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Full84 passed; clean main gate and authorized push next; no version/tag/formal Release.",
+      "evidence": [
+        ".agent-state/ftps-index-latency/full-proof.json"
+      ]
     }
   },
   "release_authorization": "Standing user instruction incremental work/test/push main and complete offline package; no version/tag/formal Release.",
   "rollback": "Revert scoped performance change; preserve existing runtime/package as rollback and all user data.",
-  "handoff": "Measured FTPS connection pacing fix verified in real source race and new actual binary process restart/API; config/auth/mounts and13 session files preserved; complete offline package checked. New clean full84/main next. Original12 remain open.",
+  "handoff": "Measured FTPS fix, runtime and13 session files preservation, actual binary restart/network recovery/SFTP capabilities and complete offline package verified; clean full84 passed. Main gate next. Original12 UI/user-host/IPv6/performance and other workflow requirements remain open.",
   "protocolEvidence": {
     "status": "pass",
     "exit": 0,
@@ -146,5 +151,62 @@
     "logSHA256": "bc7e30e98bcda8301f6ceb55151ab294594b04bbf65dc0220e9178c47778b5b2",
     "probeSHA256": "a4fe76710f2cf1511b091adf17ecc808cc1cda815183c03b91bdb2d8581c5444",
     "cleanupVerified": true
+  },
+  "networkFaultEvidence": {
+    "status": "pass",
+    "applicationImage": "sha256:236ad9bc3e3c69ee9c81ad307b97b3c657d9449759e596e8bbb225d409ab8b6a",
+    "realProcessRestart": true,
+    "actualDockerNetworkOutageRetainedNodes": true,
+    "reconnectedAndResumed": true,
+    "newPid": true,
+    "initialPartialCounts": {
+      "ftp": 8,
+      "ftps": 4
+    },
+    "finalCounts": {
+      "ftp": 80,
+      "ftps": 80
+    },
+    "freshOrigins": true,
+    "literalHTTPRetrievalAfterRestart": true,
+    "protocols": [
+      "ftp",
+      "ftps"
+    ],
+    "totalKnownBoth": true,
+    "elapsedSeconds": 50.032,
+    "scope": "isolated real binary HTTPS API and vsftpd, no user data/model/browser; selected80 files per source",
+    "sampleCount": 80,
+    "logSHA256": "b80a9d1b4697b7f2c79af4d5a97a6d7a08040a7e37fbe49efe95de98ccb2bbd1"
+  },
+  "sourceCapabilityEvidence": {
+    "status": "pass",
+    "applicationImage": "sha256:236ad9bc3e3c69ee9c81ad307b97b3c657d9449759e596e8bbb225d409ab8b6a",
+    "actualSFTPReadAndWriteProbe": true,
+    "originalFilesUnchanged": true,
+    "temporaryProbeRemoved": true,
+    "credentialChangeMarksBothChecksStale": true,
+    "badCredentialReadFailed": true,
+    "restoredCredentialReadPassed": true,
+    "parserImports": [
+      "pypdf",
+      "docx",
+      "openpyxl",
+      "pptx"
+    ],
+    "noCredentialInCapabilityResponse": true,
+    "scope": "isolated actual binary HTTPS capabilities API, real OpenSSH/SFTP fixture and installed parser modules; no browser/model or arbitrary document processing claim",
+    "logSHA256": "55fc70af02d4453ec0e32598902bc720619c33d9c46da60f960f8b07cec93dd6",
+    "probeSHA256": "9690e09a1993c3d3af0b29b798205038010914dedfb8993440bf9005507f78ed",
+    "cleanupVerified": true
+  },
+  "fullVerification": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "6a543abab2fdadcc15e349af369525a3d5c150b6f5aed35a25977eb9611180fe",
+    "serverRaceSeconds": 531.739,
+    "sourceCommit": "efafb6da5fdd90c4ecde0e6e00877da8f44a2def",
+    "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/ftps-index-latency/verify-20261015T112312669923Z.log",
+    "worktree": "/private/tmp/aide-ftps-latency-full-20261015"
   }
 }
