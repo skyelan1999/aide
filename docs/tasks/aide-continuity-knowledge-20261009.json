@@ -7598,12 +7598,15 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "Current9999 API/disk all5 values,2 sessions/10 writes,409/400,cleanup pass; full authenticated UI still deferred. Global duplicate control was removed by later user request.",
-    "nextIndependentFocus": "Complete multi-stage star-map evidence paths and conclusion-evolution requirements; keep SSH/UI recovery and authorization gaps."
+    "nextIndependentFocus": "Complete multi-stage star-map evidence paths and conclusion-evolution requirements; keep SSH/UI recovery and authorization gaps.",
+    "deliveredMain": "ea333509a591e5046fcff6b295bb881f09f169c3",
+    "mainGate": "pass with exact-input full86 reuse"
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
-    "status": "in_progress",
+    "status": "pass",
     "classification": "progress",
-    "summary": "Current reasoning5 levels/2 sessions/API+disk/409/400 and cleanup verified, no model calls. All12 reconciled with newer scoped evidence; old missing hidden-active/import/SFTP/fault claims corrected without marking full workstreams complete. Same-input full86 verified; independent main gate/push next."
+    "summary": "Current9999 all5 reasoning values/2 sessions/10 writes, canonical disk,409/400 and cleanup pass; no model calls. Original12 current evidence/gaps reconciled; none marked complete. Exact-input full86 reused, independent main gate and exact remote push pass. Runtime/offline4cc unchanged.",
+    "deliveredMain": "ea333509a591e5046fcff6b295bb881f09f169c3"
   }
 }

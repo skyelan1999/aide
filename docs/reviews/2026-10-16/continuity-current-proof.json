@@ -187,6 +187,12 @@
   "newRuntimeBuild": false,
   "newOfflineExport": false,
   "release": {
-    "status": "pending"
+    "status": "pass",
+    "gatePassed": true,
+    "main": "ea333509a591e5046fcff6b295bb881f09f169c3",
+    "remoteMain": "ea333509a591e5046fcff6b295bb881f09f169c3",
+    "noForce": true,
+    "sameInputFull86Reused": true,
+    "finalReceiptFollows": true
   }
 }

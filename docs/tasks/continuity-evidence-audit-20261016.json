@@ -65,8 +65,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Same-input full86 reuse confirmed; clean-main independent gate and push pending.",
+      "status": "pass",
+      "summary": "Independent main gate passed with exact-input full86 reuse; no-force push ea333509a591e5046fcff6b295bb881f09f169c3 exactly verified remotely. Final ordinary-doc receipt follows; no runtime rebuild/version/tag/Release.",
       "evidence": [
         "docs/reviews/2026-10-16/continuity-current-audit.md",
         "docs/reviews/2026-10-16/continuity-current-proof.json"
@@ -75,5 +75,5 @@
   },
   "release_authorization": "沿用用户分批push、合main及维护文档的授权。本次不重建或重复导出同一镜像。",
   "rollback": "仅回退本批普通文档；自建会话清理，合法会话编号不回退。",
-  "handoff": "Keep original12 active. Next focus: multi-stage evidence paths/conclusion evolution plus SSH/browser workflow gaps. Windows user-owned, vectors deferred. No runtime/image rebuild."
+  "handoff": "Original12 remain active; latest_evidence_audit is the current bounded entry. Reasoning current API/disk five-level isolation/rejections verified, full authenticated UI separately deferred. Main ea333509a591e5046fcff6b295bb881f09f169c3 delivered; final receipt follows. Runtime/offline4cc unchanged; Windows user-owned, real vectors deferred."
 }
