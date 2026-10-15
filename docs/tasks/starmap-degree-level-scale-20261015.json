@@ -46,13 +46,15 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "旧源码反证64/128尺寸相同；累计门槛及大数边界、体积比例/交互状态/计数口径和实际draw回归通过，quick78 PASS；浏览器函数组件普通/选中通过。实际部署及完整星图交互未验收。",
+      "summary": "旧源码反证64/128尺寸相同；累计门槛/大数边界、体积比例/交互状态/计数口径和实际draw回归通过，quick78 PASS；浏览器函数组件普通/选中通过。指定start.command更新9999，运行资源与源码逐字节相同；完整星图交互仍未验收。",
       "evidence": [
         ".agent-state/starmap-degree-level-scale/negative.log",
         ".agent-state/starmap-degree-level-scale/quick-frozen.json",
         ".agent-state/starmap-degree-level-scale/browser-proof.json",
         "scripts/starmap-stellar-scale.test.cjs",
-        "scripts/starmap-frame-work.test.cjs"
+        "scripts/starmap-frame-work.test.cjs",
+        ".agent-state/starmap-degree-level-scale/final.json",
+        ".agent-state/starmap-degree-level-scale/package.json"
       ]
     },
     "documentation": {
@@ -70,12 +72,45 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "待源码push、指定start.command更新9999和完整离线包；不合并main/tag，full80及真实全页未验证。",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "源码f5845d5已push；指定start.command更新9999镜像2b60f35f4633，配置/挂载保留，资源匹配。完整应用+依赖离线包通过流式内外哈希/标签/平台/启动器/实际docker load及两本地树副本核验。正式main/tag、full80、接收设备导入和完整页面交互未验收。",
+      "evidence": [
+        ".agent-state/starmap-degree-level-scale/start.log",
+        ".agent-state/starmap-degree-level-scale/final.json",
+        ".agent-state/starmap-degree-level-scale/package.json"
+      ]
     }
   },
   "release_authorization": "用户授权持续修改测试并分部分push、更新本地镜像和离线包；本轮不做正式main/tag发行。",
   "rollback": "回退本次星级/尺寸及缓存版本，无数据迁移。",
-  "handoff": "按用户纠正采用累计1/3/7/15…门槛，源码及quick78/浏览器函数组件通过；下一步指定启动入口部署与离线包。原12条目标/真实UI、收尾重复读取和长文提前结束仍未完成。"
+  "handoff": "累计1/3/7/15…门槛及体积正比关联数已实现，源码f5845d5已push，quick78/浏览器函数组件通过；指定启动入口更新9999和完整离线包已验证。本轮未更改黑洞群落定义。原12条目标/真实UI、收尾重复读取和长文提前结束仍未完成，未合main/tag或跑full80。",
+  "runtime": {
+    "image": "sha256:2b60f35f4633bcfb2e7ab6fc8dd52f0f2266dbb470af898f6e1839ada43f5cc9",
+    "runningImage": "sha256:2b60f35f4633bcfb2e7ab6fc8dd52f0f2266dbb470af898f6e1839ada43f5cc9",
+    "sourceSHA256": "41c53604214ff062eb2d89f0b404bfd1d511080ea21b26d4ecd032e720e83e00",
+    "runningPlatformManifest": "sha256:8c136be70d16b2f31566868379602b8b4544a5c077a38e5271400ae8cccebca6",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:2b60f35f4633bcfb2e7ab6fc8dd52f0f2266dbb470af898f6e1839ada43f5cc9",
+    "sourceSHA256": "41c53604214ff062eb2d89f0b404bfd1d511080ea21b26d4ecd032e720e83e00",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-2b60f35f4633-offline.tar.gz",
+    "bytes": 705659543,
+    "sha256": "4b96ba335062c5aca18897e18977ae0354d0f2383731f722a56c01a41a43bd3e",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  }
 }

@@ -6506,5 +6506,44 @@
   "followup141": {
     "task": "starmap-plain-labels-20261015",
     "summary": "User requested more natural lore labels and no outside game references. Current titles now观测站手册/星域档案; game name/link removed from product and current design. Source d946fce, runtime9999/b558566a411c via exactstart; config/mount/assets preserved. Copy-only browser excerpt PASS; all browser tabs0, owned server stopped. Full offline package verified hash/import/both local trees; no formalmain/tag/full gate."
+  },
+  "followup142": {
+    "task": "starmap-degree-level-scale-20261015",
+    "summary": "累计1/3/7/15…门槛及体积正比关联数已实现，源码f5845d5已push，quick78/浏览器函数组件通过；指定启动入口更新9999和完整离线包已验证。本轮未更改黑洞群落定义。原12条目标/真实UI、收尾重复读取和长文提前结束仍未完成，未合main/tag或跑full80。",
+    "runtime": {
+      "image": "sha256:2b60f35f4633bcfb2e7ab6fc8dd52f0f2266dbb470af898f6e1839ada43f5cc9",
+      "runningImage": "sha256:2b60f35f4633bcfb2e7ab6fc8dd52f0f2266dbb470af898f6e1839ada43f5cc9",
+      "sourceSHA256": "41c53604214ff062eb2d89f0b404bfd1d511080ea21b26d4ecd032e720e83e00",
+      "runningPlatformManifest": "sha256:8c136be70d16b2f31566868379602b8b4544a5c077a38e5271400ae8cccebca6",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "health": "ok",
+      "port": "9999",
+      "currentConfigAndMountsPreserved": true,
+      "servedAssetsMatch": true
+    },
+    "package": {
+      "image": "sha256:2b60f35f4633bcfb2e7ab6fc8dd52f0f2266dbb470af898f6e1839ada43f5cc9",
+      "sourceSHA256": "41c53604214ff062eb2d89f0b404bfd1d511080ea21b26d4ecd032e720e83e00",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-2b60f35f4633-offline.tar.gz",
+      "bytes": 705659543,
+      "sha256": "4b96ba335062c5aca18897e18977ae0354d0f2383731f722a56c01a41a43bd3e",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true,
+      "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+    },
+    "remaining": [
+      "full80 and complete workbench starmap interaction",
+      "receiving-machine package import",
+      "automatic completion repeats tool reads; long documents finish early",
+      "original 12 workstreams remain in_progress; vector deferred; Windows user-owned"
+    ]
   }
 }
