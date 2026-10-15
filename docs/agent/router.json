@@ -481,6 +481,10 @@
       ],
       [
         "node",
+        "scripts/starmap-frame-work.test.cjs"
+      ],
+      [
+        "node",
         "scripts/starmap-empty-state.test.cjs"
       ],
       [

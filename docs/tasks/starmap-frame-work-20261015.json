@@ -1,0 +1,67 @@
+{
+  "id": "starmap-frame-work-20261015",
+  "request": "星图显示依旧很慢，大引用目录打开等待久；继续定位并优化实际绘制开销",
+  "baseline": "5bf632236eeff11395cad91cb13cd414991ae0f0",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "关闭红外且无过渡时不构造全节点红外输入；开启及淡出照常绘制",
+    "未选中关系不执行仅供选中关系绘制的尘埃计算；选中线条和粒子照常",
+    "同场景同相机复用尘埃空间索引与单点透射率；漂移不改变物理结果，镜头/场景/气体切换正确失效",
+    "保持全部节点与边及最终绘制参数等价，实际绘制函数回归与重复性能测量",
+    "原start.command启动本机验收、文档与离线候选更新；正式发布另走门禁"
+  ],
+  "scope": [
+    "internal/server/web/starmap.js",
+    "scripts/starmap-frame-work.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "继续大目录加载慢，优化实际逐帧计算，保持完整节点和效果",
+      "evidence": [
+        ".agent-state/starmap-render-profile/baseline.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "相对画布中心的尘埃索引；单帧缓存仅由场景身份和相机参数控制；对象WeakMap避免无效保留；活动关系提前过滤；红外仅在开启或淡出时分配",
+      "evidence": [
+        "internal/server/web/starmap.js: drawCosmos/buildCosmicDustIndex",
+        "internal/server/web/starmap-infrared.js: enabled/transitioning"
+      ]
+    },
+    "implementation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "",
+  "handoff": ""
+}
