@@ -1,37 +1,135 @@
 {
   "task": "knowledge-conclusion-evolution-20261016",
-  "status": "document_foundation_development_checkpoint",
+  "status": "ai_evidence_timeline_component_development_checkpoint",
   "baseline": "dc0cf72fe9e48eee0a102dead00f9bc2f09c4a3c",
-  "oldLogic": "registered comparison result lacks conclusions: regression failed",
+  "previousDocumentFoundation": {
+    "task": "knowledge-conclusion-evolution-20261016",
+    "status": "document_foundation_development_checkpoint",
+    "baseline": "dc0cf72fe9e48eee0a102dead00f9bc2f09c4a3c",
+    "oldLogic": "registered comparison result lacks conclusions: regression failed",
+    "finalFocused": {
+      "selector": "^TestKnowledgeConclusion",
+      "race": "pass",
+      "vet": "all packages pass",
+      "serverSeconds": 3.494
+    },
+    "priorKnowledge": {
+      "selector": "^TestKnowledge",
+      "raceSeconds": 69.011,
+      "vet": "pass",
+      "scope": "before final local comment/source-availability guards and actual-index integration addition; final focused covers those"
+    },
+    "quick": {
+      "status": "pass",
+      "count": 85,
+      "fingerprint": "2b4a84307d419c7e8c5218bb92874d34bf6aeca94e6a3268630d6424790335d1"
+    },
+    "integration": "actual temporary Markdown files -> production index -> encrypted history -> disk read -> registered HTTP compare; current file deleted before compare, two exact L3 quotes retained;409/423",
+    "apiState": {
+      "state": "partial_document_phase",
+      "aiState": "not_captured",
+      "evidenceState": "not_captured"
+    },
+    "notComplete": [
+      "AI role/run/workspace/question provenance and unheaded records",
+      "explicit topic alignment and heading-path changes",
+      "citation and evidence-content evolution",
+      "historical capture outside saved excerpts",
+      "UI/browser/full/main gate/runtime/offline delivery"
+    ],
+    "production": "unchanged1601033; no user data, model calls or browser pages"
+  },
   "finalFocused": {
     "selector": "^TestKnowledgeConclusion",
-    "race": "pass",
+    "raceSeconds": 4.921,
     "vet": "all packages pass",
-    "serverSeconds": 3.494
+    "terminalExit": 0,
+    "log": ".agent-state/knowledge-conclusion-evolution/evidence-final-guards.log"
   },
-  "priorKnowledge": {
+  "broadKnowledge": {
     "selector": "^TestKnowledge",
-    "raceSeconds": 69.011,
-    "vet": "pass",
-    "scope": "before final local comment/source-availability guards and actual-index integration addition; final focused covers those"
+    "raceSeconds": 72.926,
+    "vet": "all packages pass",
+    "terminalExit": 0,
+    "scope": "Before final incomplete/nested Markdown destination guards; final focused includes those guards."
   },
   "quick": {
     "status": "pass",
     "count": 85,
-    "fingerprint": "2b4a84307d419c7e8c5218bb92874d34bf6aeca94e6a3268630d6424790335d1"
+    "fingerprint": "07f4d972bc818cdb88c38fc4ab09282a935c9b600f099bc0f61a54d271dfd57a",
+    "head": "ed954042351c40535282e3feda08d1f7546af489"
   },
-  "integration": "actual temporary Markdown files -> production index -> encrypted history -> disk read -> registered HTTP compare; current file deleted before compare, two exact L3 quotes retained;409/423",
-  "apiState": {
-    "state": "partial_document_phase",
-    "aiState": "not_captured",
-    "evidenceState": "not_captured"
+  "integration": "Temporary real Session/Task/messages and Markdown/basis files -> production graph -> encrypted history -> disk load -> current files removed -> registered HTTP compare: one document quote delta, two independent basis deltas, including unchanged AI quote.",
+  "ai": {
+    "origin": "persisted_assistant",
+    "workspaceAndRunScoped": true,
+    "questionAlignment": "exact actual user input sequence only",
+    "unheaded": "preserved and labelled unclassified",
+    "excluded": [
+      "user text",
+      "tool text/calls",
+      "mixed compaction",
+      "foreign workspace",
+      "unattributed legacy assistant"
+    ],
+    "ordinaryGraphSidecar": false
+  },
+  "evidence": {
+    "origin": "saved_snapshot_only",
+    "modelReadProven": false,
+    "currentSourceReads": false,
+    "networkFetches": false,
+    "independent": [
+      "reference target/writing",
+      "saved excerpt/indexed code hash",
+      "availability"
+    ],
+    "referenceLimitPerQuote": 16,
+    "comparisonReferenceLimit": 512,
+    "rowLimit": 128,
+    "encodedOutputBytes": 524288,
+    "hashInputBytesPerSnapshot": 1048576
+  },
+  "history": {
+    "payloadVersion": 2,
+    "readsVersion1": true,
+    "encryptedV1BackupBeforeUpgrade": true,
+    "backupFailureOrStaleOriginalRejectsWrite": true,
+    "productionMigration": false
+  },
+  "browser": {
+    "scope": "Actual IAB production timeline markup/JS/CSS with temporary-App HTTP response, no live provider",
+    "widths": [
+      1100,
+      390
+    ],
+    "overflow": false,
+    "aiUnchangedQuoteBasisChanged": true,
+    "quoteAndBasisExpanded": true,
+    "observationChangeClearsOldText": true,
+    "sameObservationRejected": true,
+    "vmAdditional": [
+      "HTML as literal text",
+      "21-row pagination",
+      "workspace/lock late-response isolation"
+    ],
+    "cleanup": "Owned page closed, viewport reset, preview server stopped",
+    "screenshots": [
+      "knowledge-conclusions/desktop.png",
+      "knowledge-conclusions/narrow.png"
+    ]
   },
   "notComplete": [
-    "AI role/run/workspace/question provenance and unheaded records",
-    "explicit topic alignment and heading-path changes",
-    "citation and evidence-content evolution",
-    "historical capture outside saved excerpts",
-    "UI/browser/full/main gate/runtime/offline delivery"
+    "manual topic alignment",
+    "heading-path/retitle alignment",
+    "user-selected unheaded fragments",
+    "reference definitions outside saved quote and plain text paths",
+    "more complete historical body capture",
+    "full authenticated Safari/SSH/live provider",
+    "full87 and independent main gate",
+    "push/main/runtime/offline delivery"
   ],
-  "production": "unchanged1601033; no user data, model calls or browser pages"
+  "production": "sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba healthy d5cb1d9c65e8c15abbd00a41dd3d06261cd6d5318c09e29f14150e017a985eb2",
+  "productionChanged": false,
+  "originalTwelve": "all in_progress; Windows user-owned and real vectors deferred"
 }

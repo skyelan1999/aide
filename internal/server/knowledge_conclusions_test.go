@@ -146,7 +146,7 @@ func TestKnowledgeConclusionHistoricalAPI(t *testing.T) {
 	if err := json.Unmarshal(w.Body.Bytes(), &result); err != nil {
 		t.Fatal(err)
 	}
-	if len(result.Conclusions.Changes) != 1 || result.Conclusions.Changes[0].Change.Kind != "changed" || result.Conclusions.AIState != "not_captured" || result.Conclusions.EvidenceState != "not_captured" {
+	if len(result.Conclusions.Changes) != 1 || result.Conclusions.Changes[0].Change.Kind != "changed" || result.Conclusions.AIState != "not_captured" || result.Conclusions.EvidenceState != "saved_snapshot_explicit_references" {
 		t.Fatalf("document phase missing/overclaimed: %+v", result.Conclusions)
 	}
 	requireStatus(t, request(a, "POST", "/api/knowledge-map/timeline/compare?workspace=other", map[string]string{"before": loaded.Snapshots[0].ID, "after": loaded.Snapshots[1].ID}), 409)

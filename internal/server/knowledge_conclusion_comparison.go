@@ -6,22 +6,27 @@ import (
 )
 
 type knowledgeNodeConclusionChange struct {
-	Node   string                    `json:"node"`
-	Path   string                    `json:"path,omitempty"`
-	Root   string                    `json:"root,omitempty"`
-	Source string                    `json:"source,omitempty"`
-	Region string                    `json:"region,omitempty"`
-	Change knowledgeConclusionChange `json:"change"`
+	Node       string                           `json:"node"`
+	Path       string                           `json:"path,omitempty"`
+	Root       string                           `json:"root,omitempty"`
+	Source     string                           `json:"source,omitempty"`
+	Region     string                           `json:"region,omitempty"`
+	SourceKind string                           `json:"sourceKind,omitempty"`
+	Session    string                           `json:"session,omitempty"`
+	BeforeAI   *knowledgeAIConclusionProvenance `json:"beforeAI,omitempty"`
+	AfterAI    *knowledgeAIConclusionProvenance `json:"afterAI,omitempty"`
+	Change     knowledgeConclusionChange        `json:"change"`
 }
 type knowledgeConclusionComparison struct {
-	Version        int                             `json:"version"`
-	State          string                          `json:"state"`
-	Changes        []knowledgeNodeConclusionChange `json:"changes"`
-	Sources        int                             `json:"sources"`
-	UnknownSources int                             `json:"unknownSources"`
-	Truncated      bool                            `json:"truncated"`
-	AIState        string                          `json:"aiState"`
-	EvidenceState  string                          `json:"evidenceState"`
+	Version        int                                 `json:"version"`
+	State          string                              `json:"state"`
+	Changes        []knowledgeNodeConclusionChange     `json:"changes"`
+	Sources        int                                 `json:"sources"`
+	UnknownSources int                                 `json:"unknownSources"`
+	Truncated      bool                                `json:"truncated"`
+	AIState        string                              `json:"aiState"`
+	EvidenceState  string                              `json:"evidenceState"`
+	Evidence       []knowledgeConclusionEvidenceChange `json:"evidence"`
 }
 
 func knowledgeConclusionDocument(n knowledgeNode) bool {
@@ -100,7 +105,7 @@ func compareKnowledgeConclusions(before, after knowledgeGraph) knowledgeConclusi
 				out.Truncated = true
 				return
 			}
-			out.Changes = append(out.Changes, knowledgeNodeConclusionChange{Node: n.ID, Path: n.Path, Root: n.Root, Source: n.Source, Region: n.Region, Change: change})
+			out.Changes = append(out.Changes, knowledgeNodeConclusionChange{Node: n.ID, Path: n.Path, Root: n.Root, Source: n.Source, Region: n.Region, SourceKind: "document", Change: change})
 		}
 	}
 	for _, n := range after.Nodes {

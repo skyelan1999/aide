@@ -528,6 +528,7 @@ html[data-motion=reduced] #ai-toggle::after { transition:none; }
 #timeline-results{padding-left:20px}#timeline-results li{margin:14px 0}#timeline-results p,#timeline-evidence p{overflow-wrap:anywhere}
 #timeline-results pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;font:12px/1.7 ui-monospace,monospace;color:var(--map-text)}
 #timeline-results summary{cursor:pointer;overflow-wrap:anywhere;margin-block:8px}
+#knowledge-timeline{font-size:12px;line-height:1.75}#timeline-results>li{padding-block:12px;border-top:1px solid var(--map-line)}#timeline-results>li>strong{font-size:13px}#timeline-results .source-meta{font-size:11px;line-height:1.7}#timeline-results details{padding-left:10px;border-left:2px solid var(--map-line)}
 #timeline-pages:not([hidden]){display:flex;align-items:center;justify-content:space-between;gap:8px}
 
 #document-progress{padding:12px 2px 4px;border-top:1px solid var(--line,rgba(150,174,199,.16));margin-top:12px}

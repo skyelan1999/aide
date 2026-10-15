@@ -26,14 +26,15 @@
     },
     "design": {
       "status": "in_progress",
-      "summary": "先实现明确片段的有界捕获与比较，再接角色/任务/主题、引用证据、旧历史及页面；未知保持未知。",
+      "summary": "AI私有侧录、精确提问对齐、历史引用独立比较和版本2原件备份已接入；人工主题与章节改名等仍在设计范围。",
       "evidence": [
-        "docs/prd/2026-10-16-knowledge-conclusion-evolution.md"
+        "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
+        "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
       ]
     },
     "implementation": {
       "status": "in_progress",
-      "summary": "共用显式片段/范围/指纹和文档历史比较已接入，明确partial_document_phase；AI/主题/依据/界面仍待。",
+      "summary": "文档/AI原话、任务和问题归属、无标题答复、工作区正文隔离、历史依据引用/内容/可用性及生产时间线组件已接入；仍为partial_conclusion_evidence_phase。",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
@@ -41,7 +42,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "旧接口缺项已复现；最终专项race/vet、当前quick85通过，真实文件索引/加密历史/磁盘/HTTP及409/423通过；未做完整full/浏览器/发行。",
+      "summary": "最终Conclusion专项race 4.921s及全包vet通过；较广Knowledge race 72.926s/vet后补末尾Markdown解析护栏，由最终专项覆盖；quick85通过。真实临时索引/会话/加密磁盘/HTTP与实际IAB组件分别有证。未执行完整full或生产验收。",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
@@ -49,16 +50,18 @@
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "完整AI/文档范围PRD及文档基础检查点已记录；后续最终行为/界面/交付待补。",
+      "summary": "PRD/架构/阶段验收/proof与总账本已更新，保留文档基础历史；整体最终行为及后续交付仍待完成。",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "本检查点临时容器退出、自建页面关闭、视口复位、预览停止；仅保留任务证据，无修改原目录或生产数据。",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -67,6 +70,6 @@
     }
   },
   "release_authorization": "沿用分批测试/push/合main、指定start.command与离线镜像交付授权；不升版/tag/正式Release。",
-  "rollback": "保留1601033运行镜像与完整离线包；本批未部署，历史字段须兼容旧版并保留原文件。",
-  "handoff": "文档基础检查点；继续AI实际角色/任务/问题归属、无标题/主题对齐、引用依据变化和UI；仅文档显式标题提取不等于完整目标。生产1601033未改，未合main/发行。"
+  "rollback": "生产仍保留1601033，未升级。新历史载荷2须停机另存后恢复对应before-ai-v2加密原件才能回滚旧二进制；不让旧版静默丢字段。",
+  "handoff": "当前AI/依据/UI组件开发检查点；继续人工主题、章节改名、选择片段及片段外引用/完整历史正文，随后full/main门禁/生产/离线交付。未推送、合main或部署；原12项未收尾。"
 }

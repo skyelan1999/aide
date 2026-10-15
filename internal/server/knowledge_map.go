@@ -149,6 +149,7 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 	areas := a.knowledgeAreasLocked(scope, workspaceName, referenceName)
 	nodes := []knowledgeNode{}
 	sessionsTruncated := false
+	sessionTextPartial := false
 	attachments := map[string][]Attachment{}
 	keys := make([]string, 0, len(a.sessions))
 	for id := range a.sessions {
@@ -157,12 +158,12 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 	sort.Strings(keys)
 	for _, id := range keys {
 		s := a.sessions[id]
-		if s.Deleted || s.Kind == "assistant" {
+		if s == nil || s.Deleted || s.Kind == "assistant" {
 			continue
 		}
 		same := len(s.Runs) == 0
 		for _, run := range s.Runs {
-			if run.WorkspaceID == scope {
+			if run != nil && run.WorkspaceID == scope {
 				same = true
 			}
 		}
@@ -177,17 +178,11 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 		if s.Number == 0 {
 			sid = "S" + knowledgeID(scope, "session", "", id)[1:]
 		}
-		body := knowledgeClip(s.Compact, 2000)
-		start := len(s.Messages) - 6
-		if start < 0 {
-			start = 0
-		}
-		for _, m := range s.Messages[start:] {
-			body += "\n" + knowledgeClip(m.Content, 800)
-		}
+		body, partial := knowledgeScopedSessionText(s, scope)
+		sessionTextPartial = sessionTextPartial || partial
 		nodes = append(nodes, knowledgeNode{ID: sid, Name: s.Title, Kind: "session", Region: "sessions", Session: id, Number: s.Number, Text: knowledgeClip(body, 6000)})
 		for _, run := range s.Runs {
-			if run.WorkspaceID == scope {
+			if run != nil && run.WorkspaceID == scope {
 				attachments[sid] = append(attachments[sid], run.Attachments...)
 			}
 		}
@@ -197,6 +192,10 @@ func (a *App) knowledgeSnapshotModeCached(ctx context.Context, includeCode bool,
 	if sessionsTruncated {
 		g.Sources[0].State = "partial"
 		g.Sources[0].Message = "会话数量达到200条索引预算；总会话数未统计"
+	}
+	if sessionTextPartial {
+		g.Sources[0].State = "partial"
+		g.Sources[0].Message += " 部分旧摘要/消息缺少工作区归属，只纳入可归属当前工作区的正文。"
 	}
 	for _, ar := range areas {
 		state := "partial"

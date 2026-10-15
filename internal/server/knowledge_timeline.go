@@ -17,17 +17,20 @@ const knowledgeTimelineBytes = 8 << 20
 const knowledgeTimelineEntries = 32
 
 type knowledgeTimeSnapshot struct {
-	ID       string         `json:"id"`
-	Observed string         `json:"observed"`
-	Digest   string         `json:"digest"`
-	Graph    knowledgeGraph `json:"graph"`
+	ID       string                         `json:"id"`
+	Observed string                         `json:"observed"`
+	Digest   string                         `json:"digest"`
+	Graph    knowledgeGraph                 `json:"graph"`
+	AI       *knowledgeAIConclusionSnapshot `json:"ai,omitempty"`
 }
 type knowledgeTimeStore struct {
-	Version   int                     `json:"version"`
-	Workspace string                  `json:"workspace"`
-	Code      bool                    `json:"code"`
-	Dropped   int                     `json:"dropped"`
-	Snapshots []knowledgeTimeSnapshot `json:"snapshots"`
+	Version          int                     `json:"version"`
+	Workspace        string                  `json:"workspace"`
+	Code             bool                    `json:"code"`
+	Dropped          int                     `json:"dropped"`
+	Snapshots        []knowledgeTimeSnapshot `json:"snapshots"`
+	originalEnvelope string
+	upgradeFromV1    bool
 }
 type knowledgeTimeChange struct {
 	Before *knowledgeNode `json:"before,omitempty"`
@@ -78,7 +81,7 @@ func loadKnowledgeTime(file, workspace string, code bool, key []byte) (knowledge
 		return out, fmt.Errorf("知识历史解密失败；保留原文件")
 	}
 	defer zeroBytes(plain)
-	if len(plain) > knowledgeTimelineBytes || json.Unmarshal(plain, &out) != nil || out.Version != 1 || out.Workspace != workspace || out.Code != code || out.Dropped < 0 || len(out.Snapshots) > knowledgeTimelineEntries {
+	if len(plain) > knowledgeTimelineBytes || json.Unmarshal(plain, &out) != nil || (out.Version != 1 && out.Version != 2) || out.Workspace != workspace || out.Code != code || out.Dropped < 0 || len(out.Snapshots) > knowledgeTimelineEntries {
 		return out, fmt.Errorf("知识历史身份或格式无效；保留原文件")
 	}
 	seen := map[string]bool{}
@@ -87,7 +90,14 @@ func loadKnowledgeTime(file, workspace string, code bool, key []byte) (knowledge
 			return out, fmt.Errorf("知识历史快照无效")
 		}
 		seen[s.ID] = true
+		if s.AI != nil && out.Version != 2 {
+			return out, fmt.Errorf("AI结论历史需要新版格式；保留原文件")
+		}
+		if err := validateKnowledgeAIHistory(s.AI, s.Graph); err != nil {
+			return out, err
+		}
 	}
+	out.originalEnvelope = hash(b)
 	return out, nil
 }
 
@@ -114,18 +124,29 @@ func knowledgeTimeGraph(g knowledgeGraph) knowledgeGraph {
 	return g
 }
 func appendKnowledgeTime(store knowledgeTimeStore, g knowledgeGraph, now time.Time) (knowledgeTimeStore, bool, error) {
+	return appendKnowledgeTimeAI(store, g, nil, now)
+}
+func appendKnowledgeTimeAI(store knowledgeTimeStore, g knowledgeGraph, ai *knowledgeAIConclusionSnapshot, now time.Time) (knowledgeTimeStore, bool, error) {
 	g = knowledgeTimeGraph(g)
+	if err := validateKnowledgeAIHistory(ai, g); err != nil {
+		return store, false, err
+	}
+	store.upgradeFromV1 = ai != nil && store.Version == 1
+	if ai != nil {
+		store.Version = 2
+	}
 	semantic, _ := json.Marshal(struct {
 		Nodes []knowledgeNode
 		Edges []knowledgeEdge
 		Code  *knowledgeCodeSummary
-	}{g.Nodes, g.Edges, g.Code})
+		AI    *knowledgeAIConclusionSnapshot `json:"AI,omitempty"`
+	}{g.Nodes, g.Edges, g.Code, ai})
 	digest := hash(semantic)
 	if len(store.Snapshots) > 0 && store.Snapshots[len(store.Snapshots)-1].Digest == digest {
 		return store, false, nil
 	}
 	observed := now.UTC().Format(time.RFC3339Nano)
-	snapshot := knowledgeTimeSnapshot{ID: "H" + hash([]byte(digest + observed))[:24], Observed: observed, Digest: digest, Graph: g}
+	snapshot := knowledgeTimeSnapshot{ID: "H" + hash([]byte(digest + observed))[:24], Observed: observed, Digest: digest, Graph: g, AI: ai}
 	// Build a new slice so a failed write cannot mutate the caller's loaded history.
 	store.Snapshots = append(append([]knowledgeTimeSnapshot(nil), store.Snapshots...), snapshot)
 	for {
@@ -166,6 +187,11 @@ func saveKnowledgeTime(file string, store knowledgeTimeStore, key []byte) error 
 	if info, e := os.Lstat(file); e == nil && (!info.Mode().IsRegular() || info.Mode()&os.ModeSymlink != 0) {
 		return fmt.Errorf("知识历史目标无效")
 	}
+	if store.upgradeFromV1 {
+		if err := backupKnowledgeTimeV1(file, store.originalEnvelope); err != nil {
+			return err
+		}
+	}
 	return atomicJSON(file, knowledgeVectorEnvelope{1, ct, nonce})
 }
 func (a *App) recordKnowledgeTime(g knowledgeGraph, code bool, epoch uint64) error {
@@ -183,7 +209,8 @@ func (a *App) recordKnowledgeTime(g knowledgeGraph, code bool, epoch uint64) err
 	if err != nil {
 		return err
 	}
-	store, changed, err := appendKnowledgeTime(store, g, time.Now())
+	ai := captureKnowledgeAIConclusions(g, a.sessions, a.wsID())
+	store, changed, err := appendKnowledgeTimeAI(store, g, ai, time.Now())
 	if err != nil || !changed {
 		return err
 	}
@@ -192,6 +219,8 @@ func (a *App) recordKnowledgeTime(g knowledgeGraph, code bool, epoch uint64) err
 func compareKnowledgeTime(before, after knowledgeTimeSnapshot) knowledgeTimeComparison {
 	out := knowledgeTimeComparison{Before: before, After: after, Added: []knowledgeNode{}, Changed: []knowledgeTimeChange{}, Removed: []knowledgeNode{}, AddedEdges: []knowledgeEdge{}, RemovedEdges: []knowledgeEdge{}}
 	out.Conclusions = compareKnowledgeConclusions(before.Graph, after.Graph)
+	appendKnowledgeAIComparison(&out.Conclusions, before.AI, after.AI, before.Graph.Workspace)
+	appendKnowledgeConclusionEvidence(&out.Conclusions, before, after)
 	old := map[string]knowledgeNode{}
 	current := map[string]bool{}
 	for _, n := range before.Graph.Nodes {
@@ -233,8 +262,10 @@ func compareKnowledgeTime(before, after knowledgeTimeSnapshot) knowledgeTimeComp
 	// Keep historical coverage/code diagnostics but avoid returning two redundant full graphs.
 	out.Before.Graph.Nodes = nil
 	out.Before.Graph.Edges = nil
+	out.Before.AI = nil
 	out.After.Graph.Nodes = nil
 	out.After.Graph.Edges = nil
+	out.After.AI = nil
 	return out
 }
 func (a *App) knowledgeTimeline(w http.ResponseWriter, r *http.Request) {
