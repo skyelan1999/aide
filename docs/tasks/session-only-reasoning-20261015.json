@@ -1,0 +1,75 @@
+{
+  "id": "session-only-reasoning-20261015",
+  "request": "这里为什么还要加一个推理强度：移除模型设置里的重复推理强度入口，保留各会话策略面板设置",
+  "baseline": "ccd28f70b75caafdb68101d06fd36d321bfabe26",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "模型设置不再显示默认推理强度或独立保存按钮",
+    "保存模型设置不读已移除控件、不写 reasoningEffort，模型/提供商/密钥草稿照常提交",
+    "会话策略面板保留五档推理强度及会话隔离保存",
+    "通过 start.command 启动后的实际 Safari 桌面及窄屏验收；不操作用户当前未保存模型草稿"
+  ],
+  "scope": [
+    "internal/server/web/index.html",
+    "internal/server/web/app.js",
+    "internal/server/web/reasoning-settings.js (remove unused module)",
+    "scripts/reasoning-settings.test.cjs",
+    "docs/architecture.md",
+    "docs/tasks"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "移除重复入口；模型目录与会话选择范围明确",
+      "evidence": [
+        "用户截图 localhost:9999 模型设置",
+        "internal/server/web/app.js: openSettings/settings-form/strategyMenuOption"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "删除控件、安装同步和模型提交字段；保留后端默认配置兼容及会话选择链路",
+      "evidence": [
+        "现有模型部分设置服务端保留省略字段",
+        "scripts/session-model-selection.test.cjs"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "移除重复控件、默认保存模块与载入；模型保存省略reasoningEffort，会话入口未改",
+      "evidence": [
+        "internal/server/web/app.js",
+        "internal/server/web/index.html",
+        "scripts/reasoning-settings.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "模型实际提交回归、会话隔离回归已通过；quick及原生UI待完成",
+      "evidence": [
+        ".agent-state/session-only-reasoning/negative.log"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户此前要求 做一部分，push一部分，测一部分；本机增量候选与离线镜像包，未授权main/tag正式发布。",
+  "rollback": "恢复本任务代码提交；全局默认与已有会话数据不迁移。",
+  "handoff": "",
+  "user_request": "这里为什么还要加一个推理强度",
+  "interpretation": "用户质疑模型设置中的重复全局默认入口；按此前不同会话独立配置要求收敛到会话策略面板。",
+  "branch": "fix/session-only-reasoning-settings"
+}

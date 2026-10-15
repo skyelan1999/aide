@@ -381,9 +381,9 @@ Pause lives beside stop in the composer, with pending/checkpoint gating and capt
 The main chat executor persists each completed model response before announcing it through SSE. Saved segments survive later rounds and session reloads; the final answer remains in the legacy content field and is displayed once. Copy/readback include all visible segments. Internal reasoning, parallel analysis and structured workflow proposals are excluded. This presentation projection neither adds model calls nor duplicates history or context accounting.
 
 
-### 默认推理强度的独立保存
+### 推理强度入口
 
-模型设置中的默认推理强度支持自动、关闭、低、中、高，提供独立保存按钮。该按钮只向settings写入reasoningEffort，不提交当前模型目录/提供商/密钥草稿，也不要求先配置模型；保存后重新读取config校验。错误和重试保留当前选值，重复点击只发一次；请求期间新选的未保存值不被旧回执覆盖。完整模型设置保存仍按模型目录校验。普通会话已保存的独立配置保持原值，新默认不重写它们。接口拒绝不支持的推理档位；配置模型时的部分设置补丁必须保留省略的Model和ActiveModel。
+推理强度统一在会话底部的策略面板选择自动、关闭、低、中、高，普通会话和工作流按会话保存。模型设置只维护模型、提供商和密钥，不再显示全局默认推理强度或独立保存按钮；保存模型设置时不提交 `reasoningEffort`，避免覆盖已有默认值。后端保留该默认字段及部分设置兼容能力，既有会话配置不迁移、不重写。此前独立默认保存入口的验收属于历史实现，已由本次入口收敛替代。小秘原有独立设置语义不变。详见[会话推理入口任务](tasks/session-only-reasoning-20261015.json)。
 
 
 2026-10-14 文档并行与插件调度补充：规划允许基于通用技术知识起草独立章节，ROS2 等文档任务不再因没有附件而被提示退回单路。版本相关事实交由主任务核验；最多五路草稿汇总一次，工具执行仍归主任务。规划输出预算2048，35秒超时与无效JSON分别显示退回原因。`parallel` SSE驱动进度刷新，规划面板首次运行自动展开，后续收起状态保留。
