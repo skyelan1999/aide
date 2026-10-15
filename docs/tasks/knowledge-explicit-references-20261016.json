@@ -44,8 +44,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "定向引用race、全部Knowledge race及全包vet、quick84通过；full和运行镜像验收待继续。",
+      "status": "pass",
+      "summary": "Final clean-main full86 pass; source d3d89d1a92fd30c01e292c7241bc51e2e4a19455, fingerprint 2acd078e975ffa86e0186f3e1c6cad4a5d2e1f97ebd00ffacb476bbdfb4c0554. Static reference/runtime/offline scope in review.",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-explicit-references.md",
         "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
@@ -68,9 +68,12 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final full pass, independent gate and remote push next.",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-explicit-references.md",
+        "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
+      ]
     }
   },
   "release_authorization": "沿用用户分批验证/push/合main、本机更新和离线镜像包交付授权；不升版、tag或正式Release。",
