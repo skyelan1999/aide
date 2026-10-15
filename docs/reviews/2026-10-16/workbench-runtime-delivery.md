@@ -1,5 +1,7 @@
 # 工作台与知识历史运行交付
 
+当前实例已由后续[文件恢复异步修复](file-recovery-async.md)更新为8a351653镜像；下列8d636fd记录是上一轮交付的历史收据，旧镜像与离线包仍保留。
+
 ## 当前本机实例
 
 2026-10-16，在移动硬盘开发目录通过 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新本机9999。最终运行镜像为 `sha256:8d636fd54678f2b23385248a10c4a1b60d42e4cdb76d6865d60a03a11a672313`，构建提交 `22b62e5`，源码摘要 `db64c494aecea0fbfb7a203e14bf8c037ffdd91a6b1b2a1aff5a69569b9c7566`，版本保持0.1.17.0-RC2。平台为linux/arm64。

@@ -63,10 +63,11 @@
   "handoff": "源码完成；长时间自动回退未复现。独立组件仅模拟保存，实际实例回归及部署未进行。",
   "followup_20261016": {
     "task": "docs/tasks/file-recovery-async-ownership-20261016.json",
-    "status": "in_progress",
-    "scope": "Two async restoration/lock acknowledgement races reproduced and repaired; focused/actual component pass. Does not prove long-duration crash or whole SSH workflow.",
+    "status": "pass",
+    "scope": "Both async restoration/locked acknowledgement defects fixed; focused, actual component,full88/main/runtime/offline local import pass. Long-duration crash and full SSH workflow remain unproven.",
     "evidence": [
       "docs/reviews/2026-10-16/file-recovery-async.md"
-    ]
+    ],
+    "deliveredMain": "c00855b8ec4ad6222753376624d79261146c9288"
   }
 }

@@ -78,8 +78,44 @@
     "runningImagePreserved": true,
     "receivingDeviceImport": "not_run"
   },
-  "runtime": "prior8d636fd unchanged; deployment follows main gate and fresh active-work preflight",
-  "release": "pending independent clean-main gate and push",
+  "runtime": {
+    "image": "sha256:8a351653f22ad030c2bc3bfd9fb7dc39283bdf3d6d4cd336d90906a808fcc1d6",
+    "imageTag": "sha256:8a351653f22ad030c2bc3bfd9fb7dc39283bdf3d6d4cd336d90906a808fcc1d6",
+    "sourceSHA256": "fb776ce6a45177428701f25f52be1bd5c44176998754c18b778e602127b0ed6d",
+    "platformManifest": "sha256:19015df5cba6e2d8f704cd1a62da6310dc299c2372880d4fd22062b71797a67c",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndMountsPreserved": true,
+    "assetsMatch": [
+      "file-autosave.js",
+      "locales/en.js",
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ]
+  },
+  "release": {
+    "independentCleanMainGate": "pass",
+    "push": "pass",
+    "remoteExactMatch": true,
+    "sourceCommit": "c00855b8ec4ad6222753376624d79261146c9288",
+    "subsequentDocumentationReceipt": "same product input fingerprint"
+  },
   "modelCalls": 0,
-  "goalComplete": false
+  "goalComplete": false,
+  "preflight": {
+    "sessions": 13,
+    "running": 0,
+    "nonterminal": 0,
+    "queued": 0,
+    "historyBackupSHA256": "2b506de8643cda072e4b8fe26532ae2d977998b252bde99d3793da8c14c528f9"
+  }
 }

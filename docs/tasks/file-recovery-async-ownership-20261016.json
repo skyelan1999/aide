@@ -61,8 +61,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Candidate8a351653 and offline package verified; final full pass, independent main gate/push and start.command deployment remain.",
+      "status": "pass",
+      "summary": "Final full88 and independent clean-main gate pass; exact remote mainc00855b verified. start.command updated9999 to8a351653,13 sessions/config/auth/mounts preserved and12 assets match. ARM64 offline checksums/local import pass; complete authenticated UI/receiving-device import NOT_RUN.",
       "evidence": [
         "docs/reviews/2026-10-16/file-recovery-async.md",
         "docs/reviews/2026-10-16/file-recovery-async-proof.json"
@@ -71,5 +71,5 @@
   },
   "release_authorization": "Existing incremental test/push/main/start.command/offline-package authorization; no version/tag/Release.",
   "rollback": "Keep8d636fd prior image/offline archive; frontend-only fix, no data migration. Original iCloud directory and all user files retained.",
-  "handoff": ""
+  "handoff": "Both async defects fixed and component-verified, current full/main/runtime/offline local delivery complete. Original12 still open: full authenticated/SSH workflows, Windows user acceptance and real-vector deferral retain scope."
 }

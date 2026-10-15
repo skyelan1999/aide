@@ -186,17 +186,19 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "草稿导航、文件位置和星图镜头恢复有先前页面/组件证据；当前full覆盖恢复代际与会话/工作区隔离回归。",
+        "latestScopedEvidence": "草稿导航、文件位置和星图镜头恢复有先前页面/组件证据；当前full覆盖恢复代际与会话/工作区隔离回归。 本轮补异步位置/内容hash归属及锁态成功回执保护：负例复现、专项、实际组件、full88及main/9999/离线包本机导入通过；完整认证/SSH工作流仍待。",
         "evidence": [
           "docs/tasks/chat-draft-navigation-20261015.json",
-          "docs/architecture/continuity-roadmap.md"
+          "docs/architecture/continuity-roadmap.md",
+          "docs/reviews/2026-10-16/file-recovery-async.md",
+          "docs/reviews/2026-10-16/file-recovery-async-proof.json"
         ],
         "remaining": "当前完整工作台的刷新/重开、SSH文件光标与目录现场、多标签恢复分支和容量边界仍需直接验收。"
       },
       "evidence_20261016_async_file_recovery": {
         "task": "docs/tasks/file-recovery-async-ownership-20261016.json",
-        "status": "in_progress",
-        "scope": "Confirmed and repaired delayed view restoration overriding newer caret/content and locked successful save acknowledgement clearing recovery state. Failure-before/fix-after regressions and actual IAB component pass; final full88/race566.699s/vet and local offline import pass; main/runtime gate pending. Complete authenticated/SSH workflow not proven.",
+        "status": "pass",
+        "scope": "Confirmed and repaired delayed view restoration overriding newer caret/content and locked successful save acknowledgement clearing recovery state. Failure-before/fix-after regressions and actual IAB component pass; final full88/race566.699s/vet and local offline import pass; independent main gate/push,9999 image8a351653 with data preservation and offline local import delivered. Complete authenticated/SSH workflow not proven.",
         "evidence": [
           "docs/reviews/2026-10-16/file-recovery-async.md",
           "docs/reviews/2026-10-16/file-recovery-async-proof.json"
@@ -232,17 +234,19 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "已补真实ENOSPC/权限故障、部分成功返回、准确正文哈希、409和重试；UI部分保存状态也已有修复与组件证据。",
+        "latestScopedEvidence": "已补真实ENOSPC/权限故障、部分成功返回、准确正文哈希、409和重试；UI部分保存状态也已有修复与组件证据。 本轮补异步位置/内容hash归属及锁态成功回执保护：负例复现、专项、实际组件、full88及main/9999/离线包本机导入通过；完整认证/SSH工作流仍待。",
         "evidence": [
           "docs/reviews/2026-10-15/storage-fault-live.md",
-          "docs/reviews/2026-10-15/history-partial-save.md"
+          "docs/reviews/2026-10-15/history-partial-save.md",
+          "docs/reviews/2026-10-16/file-recovery-async.md",
+          "docs/reviews/2026-10-16/file-recovery-async-proof.json"
         ],
         "remaining": "当前认证工作台中的SSH历史恢复/自动保存联动、保存状态与冲突对比交互仍需复核。物理网络中断属于尚未测到的边界，不用ENOSPC替代。"
       },
       "evidence_20261016_async_file_recovery": {
         "task": "docs/tasks/file-recovery-async-ownership-20261016.json",
-        "status": "in_progress",
-        "scope": "Confirmed and repaired delayed view restoration overriding newer caret/content and locked successful save acknowledgement clearing recovery state. Failure-before/fix-after regressions and actual IAB component pass; final full88/race566.699s/vet and local offline import pass; main/runtime gate pending. Complete authenticated/SSH workflow not proven.",
+        "status": "pass",
+        "scope": "Confirmed and repaired delayed view restoration overriding newer caret/content and locked successful save acknowledgement clearing recovery state. Failure-before/fix-after regressions and actual IAB component pass; final full88/race566.699s/vet and local offline import pass; independent main gate/push,9999 image8a351653 with data preservation and offline local import delivered. Complete authenticated/SSH workflow not proven.",
         "evidence": [
           "docs/reviews/2026-10-16/file-recovery-async.md",
           "docs/reviews/2026-10-16/file-recovery-async-proof.json"
@@ -7658,9 +7662,9 @@
     "goalComplete": false,
     "priorityReasoning": "Current9999 API/disk all5 values,2 sessions/10 writes,409/400,cleanup pass; full authenticated UI still deferred. Global duplicate control was removed by later user request.",
     "nextIndependentFocus": "Direct authenticated-workbench and SSH workflow acceptance gaps remain enumerated; preserve original12 scope, Windows user acceptance and real-vector deferral.",
-    "deliveredMain": "960b0d0e04eba673fc429b052711649973e167cd",
-    "mainGate": "Independent clean-main gate pass and exact remote960b0d0 verified; test/docs-only delivery.",
-    "currentCheckpointGate": "Async file recovery candidate/archive current inputs full88 pass; fpf264a1110d773cb8bfcdf5c2dd9bbb04a4c7df1f888caaad9bb116272790c89a, race566.699s/all vet/nonroot19. Independent main gate and runtime update pending; original12 remain open."
+    "deliveredMain": "c00855b8ec4ad6222753376624d79261146c9288",
+    "mainGate": "Independent clean-main gate pass; exact remotec00855b verified.",
+    "currentCheckpointGate": "Async file recovery final source/archive inputs full88 pass, fpf264a1110d773cb8bfcdf5c2dd9bbb04a4c7df1f888caaad9bb116272790c89a, race566.699s/all vet/nonroot19. Source/main,9999 image8a351653/data preservation and offline local import delivered. Original12 remain in_progress."
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
@@ -7721,10 +7725,11 @@
   },
   "file_recovery_async_20261016": {
     "task": "docs/tasks/file-recovery-async-ownership-20261016.json",
-    "status": "in_progress",
+    "status": "pass",
     "classification": "progress",
     "evidence": [
       "docs/reviews/2026-10-16/file-recovery-async.md"
-    ]
+    ],
+    "deliveredMain": "c00855b8ec4ad6222753376624d79261146c9288"
   }
 }
