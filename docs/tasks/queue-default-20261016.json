@@ -14,7 +14,8 @@
     "scripts/session-run-controls.test.cjs",
     "scripts/fixtures/render-session-run-controls.py",
     "docs",
-    "docker-images metadata"
+    "docker-images metadata",
+    "scripts/test_assistant_mode_controls.cjs"
   ],
   "stages": {
     "requirements": {
@@ -42,9 +43,10 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Production function regressions and IAB fresh/manual/reload/390px queued send pass; final full/runtime/package pending.",
+      "summary": "Production control/assistant/steer regressions and IAB default/manual/reload/390px pass;60f runtime/offline verified with original data/mounts preserved. Full pending. Extra legacy voice mock fails identically on baseline, not counted as pass; no voice implementation changes.",
       "evidence": [
-        "docs/reviews/2026-10-16/queue-default.md"
+        "docs/reviews/2026-10-16/queue-default.md",
+        "docs/reviews/2026-10-16/queue-default-proof.json"
       ]
     },
     "documentation": {

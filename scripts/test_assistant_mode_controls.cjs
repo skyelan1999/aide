@@ -34,7 +34,7 @@ const phaseBar = button();
 const map = {'trajectory-toggle': trajectory, 'queue-toggle': queue, 'workflow-phases': phaseBar};
 const state = {mode: 'workflow', workflowPhase: 'design', queueMode: true};
 const context = {
-  state,
+  state, window: {},
   $: id => map[id],
   document: {querySelectorAll(selector) {
     if (selector === '.mode-switch button') return [chat, workflow];
@@ -49,8 +49,8 @@ vm.runInContext(source.slice(start, end), context);
 context.syncAssistantModeControls(true);
 assert.equal(state.mode, 'chat');
 assert.equal(state.workflowPhase, '');
-assert.equal(state.queueMode, false);
-assert.equal(queue.classList.contains('active'), false);
+assert.equal(state.queueMode, true, 'assistant navigation preserves queued addition');
+assert.equal(queue.classList.contains('active'), true);
 assert.equal(phase.classList.contains('selected'), false);
 assert.equal(phaseBar.classList.contains('hidden'), true);
 assert.equal(trajectory.disabled, false);

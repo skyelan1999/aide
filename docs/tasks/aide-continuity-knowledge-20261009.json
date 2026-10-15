@@ -7457,5 +7457,15 @@
       "docs/reviews/2026-10-15/session-run-interaction-proof.json"
     ],
     "deliveredMain": "e28e3fb3a3fb2c2f0223dc95d203bf01f7f0ad5f"
+  },
+  "followup166": {
+    "task": "docs/tasks/queue-default-20261016.json",
+    "classification": "progress",
+    "status": "in_progress",
+    "summary": "Default queued addition enabled; assistant navigation preserves manual choice; focused/UI/runtime/offline pass, final full/main gate pending.",
+    "original12RemainOpen": true,
+    "evidence": [
+      "docs/reviews/2026-10-16/queue-default.md"
+    ]
   }
 }
