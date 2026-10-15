@@ -1,5 +1,12 @@
 # Docker 镜像交付
 
+## 2026-10-15 代码关系词法绑定与接口分派修复候选（构建时记录）
+
+- 源码 `3ed74f8`、`9b6bda6`：JS／Python 调用先检查作用域与遮蔽；Go 类型服务明确识别的接口分派不再回退连接同名具体方法。最终定向 race3.275秒、quick82及真实 SFTP／HTTPS 代码与路径／原文哈希探针通过。
+- 指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新9999，13份会话及配置／鉴权／来源／挂载保持。应用 `sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f`，source SHA `82e8b68fe0c7970fd79b9b29de89e9a6bf69adc87112ab2ea3d6647a291cb293`。继承五处 vendor 删除仍未提交，属于开发候选，不混称干净 main 镜像。
+- 完整包 `aide-0.1.17.0-RC2-linux-arm64-0e29f3cafa29-offline.tar.gz`，705682258字节，SHA-256 `ae747c663dd56940c98e7ff8ccc80f1b0eb0f4be8ab59feb1c967e72800ef033`。内外摘要、平台、应用／依赖镜像、启动器、实际 docker load 与两个本地目录副本通过；接收设备导入待验收，上一 `236ad9bc3e3c` 包保留回滚。
+- 构建时最终干净 full84／main 门禁待补，以[任务账本](../docs/tasks/code-relation-live-20261015.json)后续收据为准。用户 SSH、浏览器、其他语言及完整工程类型／运行证明仍有缺口；不升版、tag 或正式 Release。
+
 ## 2026-10-15 FTPS 索引连接延迟修复候选（构建时记录）
 
 - 源码 `91df81f`：FTPS 星图读取采用 50ms curl 连接尝试间隔，保留 TLS、证书及分批／来源身份约束；真实协议 race13.885 秒、定向隐式 FTPS／渐进 race8.042 秒通过。实际二进制重启／HTTPS 原文检索探针各完成80文件，样本数由上一候选80次降至18次（本次18.396秒）；仅为隔离夹具观察，不作为普遍性能保证。

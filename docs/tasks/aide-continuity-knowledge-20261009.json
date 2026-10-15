@@ -7235,10 +7235,12 @@
   },
   "followup155": {
     "status": "in_progress",
-    "summary": "Actual SFTP code snapshot reproduced JS/Python callback shadow false edges; lexical-binding fix and focused race pass, new runtime/path/full/package/main pending. Original twelve tracks remain open.",
+    "summary": "JS/Python lexical shadowing and Go interface dispatch false edges fixed; final targeted race3.275s, quick82, real SFTP actual binary/path/source hash and runtime/offline receipts passed. Final clean full/main pending.",
     "evidence": [
       "docs/tasks/code-relation-live-20261015.json",
       "docs/reviews/2026-10-15/code-relation-live.md"
-    ]
+    ],
+    "runtimeImage": "sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f",
+    "original12RemainOpen": true
   }
 }

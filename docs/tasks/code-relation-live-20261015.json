@@ -44,21 +44,23 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Baseline actual SFTP reproduced false callback edges; focused race PASS 2.834s. New runtime/full remain pending.",
+      "summary": "Final targeted race PASS 3.275s, quick82, actual binary/SFTP typed-dynamic classification, path revision409 and source hash/line PASS. Clean main full pending.",
       "evidence": [
         "docs/reviews/2026-10-15/code-relation-live.md"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Architecture and scoped review updated; final runtime/full/delivery receipts pending.",
+      "status": "pass",
+      "summary": "Architecture, scoped review, sanitized actual proof, offline manifest and master updated; full/main receipts pending.",
       "evidence": [
-        "docs/reviews/2026-10-15/code-relation-live.md"
+        "docs/reviews/2026-10-15/code-relation-live.md",
+        "docs/reviews/2026-10-15/code-relation-live-proof.json",
+        "docker-images/README.md"
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "Inherited five vendor deletions preserved and excluded; scoped diff reviewed, final staging pending.",
+      "status": "pass",
+      "summary": "Scoped diff reviewed. Own probe containers/networks removed. Original five vendor deletions excluded. Offline package stream-verified without extracted copies; user data and rollback archives preserved.",
       "evidence": [
         "docs/reviews/2026-10-15/code-relation-live.md"
       ]
@@ -71,5 +73,57 @@
   },
   "release_authorization": "Standing incremental test/docs/push main and complete offline package authorization; no version/tag/formal Release.",
   "rollback": "Revert scoped parser/test changes; retain current runtime/offline candidate and all user configuration/data.",
-  "handoff": ""
+  "handoff": "",
+  "runtime": {
+    "image": "sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f",
+    "runningImage": "sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f",
+    "sourceSHA256": "82e8b68fe0c7970fd79b9b29de89e9a6bf69adc87112ab2ea3d6647a291cb293",
+    "runningPlatformManifest": "sha256:04405cc9f115bca2834b5bc591244f29857eca47d152c6417228baee534324ab",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "offlinePackage": {
+    "image": "sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f",
+    "sourceSHA256": "82e8b68fe0c7970fd79b9b29de89e9a6bf69adc87112ab2ea3d6647a291cb293",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-0e29f3cafa29-offline.tar.gz",
+    "bytes": 705682258,
+    "sha256": "ae747c663dd56940c98e7ff8ccc80f1b0eb0f4be8ab59feb1c967e72800ef033",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "actualCodeProof": {
+    "status": "pass",
+    "applicationImage": "sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f",
+    "actualSFTPCodeSnapshot": true,
+    "typedCalls": 2,
+    "shadowedCallbacksUnresolved": true,
+    "positiveCandidates": [
+      "shadow.js",
+      "shadow.py"
+    ],
+    "externalAndDynamicUnresolved": true,
+    "pathTypedLineColumn": true,
+    "staleRevision409": true,
+    "sourceReadHashAndLine": true,
+    "sourceFilesUnchanged": true,
+    "scope": "isolated actual binary HTTPS API and real SFTP, no browser/model/dependency download or source execution"
+  },
+  "quick": {
+    "status": "pass",
+    "checks": 82,
+    "fingerprint": "20f595da860035f10843b7982668396aa1ff5826b9ffc775c39a324b36064a6e",
+    "scope": "before delivery manifest freeze; full must bind final controlled inputs"
+  }
 }

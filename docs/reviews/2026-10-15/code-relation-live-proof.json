@@ -1,0 +1,20 @@
+{
+  "status": "pass",
+  "applicationImage": "sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f",
+  "actualSFTPCodeSnapshot": true,
+  "typedCalls": 2,
+  "shadowedCallbacksUnresolved": true,
+  "positiveCandidates": [
+    "shadow.js",
+    "shadow.py"
+  ],
+  "externalAndDynamicUnresolved": true,
+  "pathTypedLineColumn": true,
+  "staleRevision409": true,
+  "sourceReadHashAndLine": true,
+  "sourceFilesUnchanged": true,
+  "scope": "isolated actual binary HTTPS API and real SFTP, no browser/model/dependency download or source execution",
+  "probeSHA256": "25056fb9dcbe6c96b6a692d1b0387fbfa0a5691b833166f6d4fef3bdee725d0a",
+  "graphSHA256": "9f3187e2268946e92e81975cf570c4509253ab40ae89403514a433c9a381ea18",
+  "liveLogSHA256": "54f003d1b0f908090b439f7830d5824fb5a9639527e9e912e29e218070249122"
+}
