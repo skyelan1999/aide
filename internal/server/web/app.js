@@ -8993,9 +8993,9 @@ function bindFileAutoSave(editorId, buttonId, manualId, getContext, onSaved) {
 }
 const editorAutoSave=bindFileAutoSave('editor','editor-autosave','save-file',()=>({...state.file,recoveryScope:recoveryScope(),autoEligible:!isDrawioPathForSave(state.file?.path)}), (spec,content,result,manual)=>{
   state.file.hash=result.hash;state.file.content=content;state.file.fresh=false;$('attach-file').disabled=false;
-  if(manual)toast(t('✓ 已保存'));loadFiles().catch(()=>{});
+  if(manual&&result.historySaved!==false)toast(t('✓ 已保存'));loadFiles().catch(()=>{});
 });
-const fileViewAutoSave=bindFileAutoSave('file-view-editor','file-view-autosave','file-view-save',()=>({...fileView.spec,hash:fileView.hash,wsId:fileView.wsId,recoveryScope:recoveryScope(),autoEligible:!isDrawioPathForSave(fileView.spec?.path)}), (spec,content,result,manual)=>{fileView.hash=result.hash;if(manual)toast(t('✓ 已保存'));});
+const fileViewAutoSave=bindFileAutoSave('file-view-editor','file-view-autosave','file-view-save',()=>({...fileView.spec,hash:fileView.hash,wsId:fileView.wsId,recoveryScope:recoveryScope(),autoEligible:!isDrawioPathForSave(fileView.spec?.path)}), (spec,content,result,manual)=>{fileView.hash=result.hash;if(manual&&result.historySaved!==false)toast(t('✓ 已保存'));});
 // Anchor navigation must not replace the standalone file locator.
 window.addEventListener('hashchange',()=>{
   if(fileView.spec && !new URLSearchParams(location.hash.slice(1)).has('file'))window.AideFileRoute?.pin(fileView.spec);

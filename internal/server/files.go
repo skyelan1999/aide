@@ -1592,6 +1592,15 @@ func (a *App) readFile(w http.ResponseWriter, r *http.Request) {
 	}
 	jsonOut(w, 200, map[string]string{"content": string(b), "hash": hash(b)})
 }
+func fileWriteFailure(w http.ResponseWriter, err error, content string) {
+	var archived *markdownPostWriteError
+	if errors.As(err, &archived) {
+		jsonOut(w, 400, map[string]any{"error": err.Error(), "saved": true, "hash": hash([]byte(content)), "historySaved": false})
+		return
+	}
+	fail(w, 400, err)
+}
+
 func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Path        string `json:"path"`
@@ -1655,7 +1664,7 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := a.writeSourceText(src, in.Path, []byte(in.Content)); err != nil {
-			fail(w, 400, err)
+			fileWriteFailure(w, err, in.Content)
 			return
 		}
 		jsonOut(w, 200, map[string]string{"hash": hash([]byte(in.Content))})
@@ -1687,7 +1696,7 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := a.writeWorkspaceText(in.Path, []byte(in.Content)); err != nil {
-			fail(w, 400, err)
+			fileWriteFailure(w, err, in.Content)
 			return
 		}
 		jsonOut(w, 200, map[string]string{"hash": hash([]byte(in.Content))})
@@ -1698,7 +1707,7 @@ func (a *App) writeFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := a.writeWorkspaceText(in.Path, []byte(in.Content)); err != nil {
-		fail(w, 400, err)
+		fileWriteFailure(w, err, in.Content)
 		return
 	}
 	jsonOut(w, 200, map[string]string{"hash": hash([]byte(in.Content))})

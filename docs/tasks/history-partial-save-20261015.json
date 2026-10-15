@@ -1,0 +1,75 @@
+{
+  "id": "history-partial-save-20261015",
+  "request": "延续保存状态与历史目标：实际ENOSPC下正文已保存、归档失败时编辑器仍显示保存失败并保留旧哈希，修复明确部分成功及安全重试",
+  "baseline": "779a1d17ee67c4a3cfdc55b4af6b8937f83cadf8",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Post-write history failure is explicitly distinguishable from pre-write failure: error response retains status/error and carries saved:true, hash, historySaved:false only after successful write.",
+    "Editor accepts confirmed persisted hash/baseline, retains history warning and explicit retry, preserves newer local edits and suppresses generic success toast; no stale context/locked response updates.",
+    "Real ENOSPC actual binary API, focused Go/JS regressions and browser component interaction; complete authenticated Safari deferred by user unavailability; docs, runtime/offline and main gates separately scoped."
+  ],
+  "scope": [
+    "internal/server/markdown_history.go",
+    "internal/server/files.go",
+    "internal/server/markdown_history_test.go",
+    "internal/server/web/file-autosave.js",
+    "internal/server/web/app.js",
+    "internal/server/web/locales/en.js",
+    "scripts/file-autosave-retry.test.cjs",
+    "docs",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Follow actual storage-fault API evidence into editor state; complete Safari unavailable per latest human reply, independent regression proceeds.",
+      "evidence": [
+        "docs/tasks/storage-fault-live-20261015.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Typed post-write history error plus backward-compatible structured API failure; shared editor acknowledges only explicit saved hash and retains archive retry with ownership guards.",
+      "evidence": [
+        "docs/tasks/history-partial-save-20261015.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Typed post-write archive failure and compatible file API metadata; shared editor baseline/hash and explicit retry, newer-draft/ownership guards, toast suppression and translations.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-partial-save.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused Go race10.132s, JS/lock regressions, quick82 and actual isolated browser component interactions PASS. New binary ENOSPC/full/runtime/package pending; full Safari deferred by human.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-partial-save.md"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Scoped review added; final runtime/delivery records pending.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-partial-save.md"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "Component tab and owned loopback server stopped; five inherited vendor deletions preserved and excluded.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-partial-save.md"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Standing incremental fix/test/docs/main push/offline package authorization. No version/tag/formal Release.",
+  "rollback": "Revert scoped changes and restore previous runtime/offline candidate; preserve user configuration, sessions and five inherited vendor deletions.",
+  "handoff": ""
+}

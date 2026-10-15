@@ -2,6 +2,8 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -233,5 +235,67 @@ func TestMarkdownRestoreUnavailableAssetAndReadOnlySource(t *testing.T) {
 	a.mu.Unlock()
 	if _, _, _, err := a.historyRestoreWriter("readonly-history"); err == nil {
 		t.Fatal("read-only source accepted")
+	}
+}
+
+func TestMarkdownHistoryPartialWriteContract(t *testing.T) {
+	for _, phase := range []string{"before", "writer", "after"} {
+		t.Run(phase, func(t *testing.T) {
+			a := testApp(t)
+			enableMarkdownHistory(t, a)
+			target := filepath.Join(a.workPath, "partial.md")
+			if err := os.WriteFile(target, []byte("old"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			identity := "workspace:" + a.wsID()
+			dir := a.markdownHistoryDir(identity)
+			if phase == "before" {
+				if err := os.WriteFile(filepath.Dir(dir), []byte("blocked"), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			called := false
+			err := a.withMarkdownHistory(identity, "partial.md", []byte("new"), func(p string) ([]byte, error) { return os.ReadFile(filepath.Join(a.workPath, p)) }, func() error {
+				called = true
+				if phase == "writer" {
+					return errors.New("destination write refused")
+				}
+				if err := os.WriteFile(target, []byte("new"), 0600); err != nil {
+					return err
+				}
+				if err := os.Rename(dir, dir+".prior"); err != nil {
+					return err
+				}
+				return os.WriteFile(dir, []byte("archive blocked"), 0600)
+			})
+			if err == nil {
+				t.Fatal("archive/write failure accepted")
+			}
+			raw, readErr := os.ReadFile(target)
+			if readErr != nil {
+				t.Fatal(readErr)
+			}
+			var partial *markdownPostWriteError
+			saved := phase == "after"
+			if errors.As(err, &partial) != saved || string(raw) == "new" != saved || called != (phase != "before") {
+				t.Fatalf("phase=%s err=%v body=%q called=%v", phase, err, raw, called)
+			}
+			response := httptest.NewRecorder()
+			fileWriteFailure(response, err, "new")
+			var body map[string]any
+			if json.Unmarshal(response.Body.Bytes(), &body) != nil {
+				t.Fatal(response.Body.String())
+			}
+			if response.Code != 400 {
+				t.Fatal(response.Code)
+			}
+			if saved {
+				if body["saved"] != true || body["historySaved"] != false || body["hash"] != hash([]byte("new")) {
+					t.Fatal(body)
+				}
+			} else if _, ok := body["saved"]; ok {
+				t.Fatal("pre-write failure reported saved", body)
+			}
+		})
 	}
 }

@@ -7292,5 +7292,20 @@
       "remoteVerifiedCommit": "a7625cd2c33583ce3d10f1496fddd52e81eb0d65",
       "formalReleaseCreated": false
     }
+  },
+  "followup157": {
+    "task": "docs/tasks/history-partial-save-20261015.json",
+    "classification": "progress",
+    "previousGoalTurn": "Actual ENOSPC/permission save-history-timeline/restart acceptance and main779a1d1 delivered.",
+    "status": "in_progress",
+    "summary": "Followed real post-save archive failure into shared editor stale hash/false failed state; scoped fix and Go/JS/component browser pass, real new binary/full/delivery pending.",
+    "original12RemainOpen": true,
+    "evidence": [
+      "docs/reviews/2026-10-15/history-partial-save.md"
+    ]
+  },
+  "human_safari_deferral_20261015": {
+    "reply": "现在不方便",
+    "meaning": "Complete authenticated Safari acceptance deferred; no repeated immediate handoff request, continue independent authorized work."
   }
 }

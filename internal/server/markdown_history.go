@@ -237,7 +237,22 @@ func changedMarkdownAssets(before, after []markdownAsset) []string {
 	return changed
 }
 
-func (a *App) withMarkdownHistory(identity, p string, b []byte, read func(string) ([]byte, error), write func() error) error {
+// This error proves the file writer returned success, even though the following
+// archive step failed. Callers must not retry with the old file hash.
+type markdownPostWriteError struct{ err error }
+
+func (e *markdownPostWriteError) Error() string {
+	return "文件已保存，但历史归档失败: " + e.err.Error()
+}
+func (e *markdownPostWriteError) Unwrap() error { return e.err }
+
+func (a *App) withMarkdownHistory(identity, p string, b []byte, read func(string) ([]byte, error), write func() error) (result error) {
+	written := false
+	defer func() {
+		if written && result != nil {
+			result = &markdownPostWriteError{result}
+		}
+	}()
 	enabled, embedded := a.markdownHistoryConfig()
 	if !enabled {
 		return write()
@@ -259,9 +274,10 @@ func (a *App) withMarkdownHistory(identity, p string, b []byte, read func(string
 	if err := write(); err != nil {
 		return err
 	}
+	written = true
 	if md {
 		if err := a.captureMarkdown(dir, p, b, embedded, read); err != nil {
-			return fmt.Errorf("文件已保存，但历史归档失败: %w", err)
+			return err
 		}
 		return nil
 	}
