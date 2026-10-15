@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Latest clean main candidate6abac38 full84 PASS (server race537.169s plus vet), source-index-live real protocol suite race17.935s and isolated actual HTTPS process restart of FTP/FTPS80-file catalogues/literal hashes verified. Main gate/push next. Prior reasoning write/current disk and real Qwen outcome API evidence remain scoped to their task records. Original12 stay in progress: authenticated browser, user-host/fault, large-scale/other-transport and remaining workflow gaps persist; real vectors deferred and Windows user-owned.",
+      "summary": "Latest clean main candidate6abac38 full84 PASS (server race537.169s plus vet), source-index-live real protocol suite race17.935s and isolated actual HTTPS process restart of FTP/FTPS80-file catalogues/literal hashes verified. Clean main gate passed; pushed d110f53 and independently verified remote head. Prior reasoning write/current disk and real Qwen outcome API evidence remain scoped to their task records. Original12 stay in progress: authenticated browser, user-host/fault, large-scale/other-transport and remaining workflow gaps persist; real vectors deferred and Windows user-owned.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -7057,7 +7057,7 @@
     "task": "docs/tasks/source-index-live-20261015.json",
     "classification": "progress",
     "previousGoalTurn": "Main push ad44210 plus full84 and isolated SSH/protocol proof completed. Current turn adds actual vsftpd progressive and original-text retrieval evidence.",
-    "status": "in_progress",
+    "status": "pass",
     "verified": [
       "Real source suite race17.935s; final Go inputs stable",
       "FTP/explicit FTPS selected scope and priority, bounded partial publication, disk App reload resumes checkpoint, cancellation retains published nodes, catalogue7 completes",
@@ -7067,7 +7067,6 @@
       "Fresh clean main full84 PASS, server race537.169s and vet; input fingerprint b24a28a57c8c9209d17c32438c512001f739259342d96b0a05449aaa56110486"
     ],
     "remaining": [
-      "main gate and authorized push",
       "full authenticated browser, user-host, physical network failure, large-library and other-transport OS-process restart coverage"
     ],
     "original12RemainOpen": true,
@@ -7106,6 +7105,13 @@
       "sourceCommit": "6abac38c2fbe9fe41c41a6d2c6b0a6398d99967f",
       "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/source-index-live/verify-20261015T110125275433Z.log",
       "worktree": "/private/tmp/aide-source-index-full-20261015"
+    },
+    "mainIntegration": {
+      "pushedMain": "d110f53860ec712ee82b3af10c701284849ab4da",
+      "remoteHeadVerified": true,
+      "releaseCheck": "pass",
+      "fullChecks": 84,
+      "formalReleaseCreated": false
     }
   }
 }
