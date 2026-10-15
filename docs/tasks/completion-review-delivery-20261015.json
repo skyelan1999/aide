@@ -36,7 +36,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Unfinished plan now triggers bounded reviews without fabricated tool use; review carries original goal, asks reuse of successful reads and direct user delivery. Existing fixture now completes its plan honestly. Real-provider counterexample also requires a bounded short standalone delivery-promise guard without a plan; limit exhaustion reports incomplete delivery.",
+      "summary": "Unfinished plan now triggers bounded reviews without fabricated tool use; review carries original goal, asks reuse of successful reads and direct user delivery. Existing fixture now completes its plan honestly. Real-provider counterexample also requires a bounded short standalone delivery-promise guard without a plan; limit exhaustion reports incomplete delivery. Final promise exhaustion guard is limited to chat/agent delivery; legacy plan steps remain unchanged and have a regression.",
       "evidence": [
         "internal/server/model_led_agent.go",
         "internal/server/model_led_agent_test.go",
@@ -45,12 +45,15 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old-code negative regressions reproduced. Updated eligibility, two-part writing delivery, plan completion, resume/pause/session isolation race tests and server vet PASS (9.485s); quick79 PASS. Real provider rerun pending. First real candidate: read PASS, writing FAIL (standalone promise without plan). New promise guard/race regression in progress; no claim of long-document success. Expanded delivery-promise, exhaustion, writing, resume/pause/session-isolation race tests PASS10.048s and server vet PASS; quick79 PASS on second candidate. Actual final-provider rerun pending.",
+      "summary": "Old-code negative regressions reproduced. Updated eligibility, two-part writing delivery, plan completion, resume/pause/session isolation race tests and server vet PASS (9.485s); quick79 PASS. Real provider rerun pending. First real candidate: read PASS, writing FAIL (standalone promise without plan). New promise guard/race regression in progress; no claim of long-document success. Expanded delivery-promise, exhaustion, writing, resume/pause/session-isolation race tests PASS10.048s and server vet PASS; quick79 PASS on second candidate. Actual final-provider rerun pending. Final boundary regression/race11.073s and server vet PASS; quick79 PASS on final code, real final deployment rerun pending.",
       "evidence": [
         ".agent-state/completion-review-delivery/negative.log",
         ".agent-state/completion-review-delivery/targeted-with-pause.log",
         ".agent-state/completion-review-delivery/targeted-fingerprint.json",
-        ".agent-state/completion-review-delivery/quick-frozen.json"
+        ".agent-state/completion-review-delivery/quick-frozen.json",
+        ".agent-state/completion-review-delivery/targeted-final-boundary.log",
+        ".agent-state/completion-review-delivery/targeted-final-fingerprint.json",
+        ".agent-state/completion-review-delivery/quick-final-frozen.json"
       ]
     },
     "documentation": {

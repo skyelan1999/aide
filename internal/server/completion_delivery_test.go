@@ -132,3 +132,18 @@ func TestDeliveryPromiseLoopBounded(t *testing.T) {
 		t.Fatalf("result=%q calls=%d err=%v", result, count, err)
 	}
 }
+
+func TestDeliveryPromiseDoesNotReplacePlanningStep(t *testing.T) {
+	a := testApp(t)
+	promise := "I'll write the requested document after planning."
+	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		jsonOut(w, 200, map[string]any{"choices": []any{map[string]any{"message": Message{Role: "assistant", Content: promise}}}})
+	}))
+	defer provider.Close()
+	task := &Task{ID: newID(), Prompt: "Write a document", Mode: "workflow", Steps: []Step{{Name: "plan"}}, Steer: make(chan string, 1)}
+	registerHarnessFixtureTask(t, a, task)
+	out, _, err := a.toolLoop(context.Background(), Settings{BaseURL: provider.URL, Model: "test"}, []Message{{Role: "user", Content: task.Prompt}}, ProfileParams{}, nil, task, nil, 0)
+	if err != nil || out != promise {
+		t.Fatalf("planning step was treated as final delivery: %q %v", out, err)
+	}
+}

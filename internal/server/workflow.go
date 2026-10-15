@@ -2022,7 +2022,7 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 				saveCheckpoint()
 				continue
 			}
-			if deliveryPromisedOnly(task.Prompt, out) {
+			if (stepName == "chat" || stepName == "agent") && deliveryPromisedOnly(task.Prompt, out) {
 				return "本轮尚未完成用户要求的产出：模型只返回执行承诺，已达到自动收尾检查或工具轮数上限。已有阶段结果保留在上方；本轮未交付的内容不能算完成。", input, nil
 			}
 			return out, input, nil
