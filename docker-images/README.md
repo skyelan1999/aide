@@ -1,5 +1,12 @@
 # Docker 镜像交付
 
+## 2026-10-15 引用渐进索引联调候选（构建时记录）
+
+- 源码 `e17e867` 新增真实 vsftpd FTP／显式 FTPS 渐进索引、磁盘 App 重载、取消保留和原文检索集成验收，没有修改产品行为。按指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新本机 9999 为 `5c8f109dd119`；健康、三项实际网页资源及鉴权／配置／挂载保持通过。五项继承 vendor 删除未提交，属于开发候选，不混称干净 main 镜像。
+- 应用 `sha256:5c8f109dd119762763e4c3ec4fbb1dfcaa503f9c5510d3c43e471792df8cbb2c`，source SHA `2a0f627ce28c0b6c47fe102e74a79348167d697d676d0c2398788d8fb151f0da`。
+- 完整离线包 `aide-0.1.17.0-RC2-linux-arm64-5c8f109dd119-offline.tar.gz`，705679404 字节，SHA-256 `3ca0f09da5e8c533229193931efb28f48828328ee5af8bfdfce53628a7230b6b`。应用与依赖镜像、内外摘要、平台、启动器、实际 docker load 及两本地副本通过，接收设备导入未验收。上一 `b5a8b5cba520` 包保留回滚。
+- 构建时整套真实协议 race17.935 秒通过；新的干净 full84、main 门禁及推送以[任务账本](../docs/tasks/source-index-live-20261015.json)后续收据为准。不升版／tag／正式 Release，不把目录范围完成等同于全库或浏览器验收。
+
 ## 2026-10-15 SSH 授权联调候选（构建时记录）
 
 - 源码 `1541514` 仅增加真实双 OpenSSH 授权生命周期集成验收，没有修改产品行为。测试文件进入现有构建指纹，因此通过指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新本机 9999 为 `b5a8b5cba520`；健康及三项实际网页资源匹配，鉴权／配置／挂载保持。五项继承 vendor 删除未提交，候选不混称干净 main 镜像。

@@ -7054,12 +7054,14 @@
     "verified": [
       "Real source suite race17.935s; final Go inputs stable",
       "FTP/explicit FTPS selected scope and priority, bounded partial publication, disk App reload resumes checkpoint, cancellation retains published nodes, catalogue7 completes",
-      "Literal production engine returns6 distinct remote files with source/path/locator and exact prepared-body hashes; no model call in new subcase"
+      "Literal production engine returns6 distinct remote files with source/path/locator and exact prepared-body hashes; no model call in new subcase",
+      "Specified start.command updated9999; config/auth/mounts preserved, assets match; complete offline package hash/platform/launchers/docker load/two local copies PASS"
     ],
     "remaining": [
-      "fresh clean full84, runtime/offline package/main gate",
+      "fresh clean full84 and main gate",
       "full authenticated browser, user-host, physical network failure, large-library and OS-process restart coverage"
     ],
-    "original12RemainOpen": true
+    "original12RemainOpen": true,
+    "runtimeImage": "5c8f109dd119"
   }
 }
