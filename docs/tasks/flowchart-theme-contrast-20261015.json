@@ -1,0 +1,88 @@
+{
+  "id": "flowchart-theme-contrast-20261015",
+  "request": "flowchart颜色渲染做得不好，根本看不清，应该赏心悦目",
+  "baseline": "7c8ec2b66198fa5ac20849657c3c630191a5534b",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "明暗主题文字和节点底色对比度达4.5以上，连线/边框可辨",
+    "主题切换保留原始图源码并重绘；预览和白纸导出共用渲染队列",
+    "真实Mermaid浏览器预览普通/分组/分支图并检查明暗主题",
+    "维护文档与分部分推送和离线镜像"
+  ],
+  "scope": [
+    "internal/server/web/markdown-diagrams.js",
+    "internal/server/web/app.js",
+    "internal/server/web/style.css",
+    "internal/server/web/index.html",
+    "scripts/markdown-diagrams.test.cjs",
+    "docs/architecture.md",
+    "docs/tasks",
+    "docker-images metadata"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户要求流程图文字可读、配色赏心悦目，覆盖明暗主题和白纸导出。",
+      "evidence": [
+        "internal/server/web/markdown-diagrams.js",
+        "docs/architecture.md",
+        ".agent-state/flowchart-theme-contrast/"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "共享渲染器使用base自定义明暗色板，按图形区分蓝/青绿/暖金；源码WeakMap及串行队列隔离主题/导出竞态。",
+      "evidence": [
+        "internal/server/web/markdown-diagrams.js",
+        "docs/architecture.md",
+        ".agent-state/flowchart-theme-contrast/"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增markdown-diagrams.js接入页面和导出，监听主题切换，补图框和文字间距，保留显式作者样式及节点形状。",
+      "evidence": [
+        "internal/server/web/markdown-diagrams.js",
+        "docs/architecture.md",
+        ".agent-state/flowchart-theme-contrast/"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "对比度/源码保留/快速主题切换竞态/导出隔离/失败重试定向测试通过。真实vendor浏览器组件三套主题明暗及白纸配色均通过，文字实际CSS颜色已读回。quick79 PASS；待实际资源部署；完整工作台和最终PDF未验收。",
+      "evidence": [
+        "scripts/markdown-diagrams.test.cjs",
+        ".agent-state/flowchart-theme-contrast/light.png",
+        ".agent-state/flowchart-theme-contrast/dark.png",
+        ".agent-state/flowchart-theme-contrast/export-light.png",
+        ".agent-state/flowchart-theme-contrast/quick-frozen.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "架构补颜色/对比度/渲染归属规则和验收边界。",
+      "evidence": [
+        "internal/server/web/markdown-diagrams.js",
+        "docs/architecture.md",
+        ".agent-state/flowchart-theme-contrast/"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "唯一组件页已关闭，浏览器0标签；不修改用户主题偏好，继承5项删除保留。",
+      "evidence": [
+        "internal/server/web/markdown-diagrams.js",
+        "docs/architecture.md",
+        ".agent-state/flowchart-theme-contrast/"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户持续授权分部分push、测试、更新离线镜像；本次先功能分支交付。",
+  "rollback": "回退共享图表渲染器、调用接线与资源版本，无数据迁移。",
+  "handoff": ""
+}

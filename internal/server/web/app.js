@@ -8973,7 +8973,7 @@ for(const [editorId,previewId,panelId,getSpec] of [['editor','editor-preview','e
   const spec=getSpec();if(!spec)return null;
   return {title:spec.path,markdown:$(editorId).value,html:renderMarkdown($(editorId).value,false,spec.path,spec),valid:()=>getSpec()===spec&&(panelId==='editor-dialog'?$(panelId).open:!$(panelId).classList.contains('hidden'))&&!lockScreen.locked&&!!state.token,
    load:ensureVendorScript,resolve:ref=>resolveMarkdownImagePath(spec.path,ref),fetchResource:(path,signal)=>fetch(fileRawUrl(path,spec.root,spec.source,spec),{signal}),
-   renderDiagrams:async host=>{const nodes=[...host.querySelectorAll('.mermaid')];if(!nodes.length)return;await ensureVendorScript('/vendor/mermaid.min.js',()=>!!window.mermaid);window.mermaid.initialize({startOnLoad:false,theme:'neutral',securityLevel:'strict'});for(const node of nodes){const result=await window.mermaid.render('export'+crypto.randomUUID().replaceAll('-',''),node.textContent);node.innerHTML=result.svg;}}
+   renderDiagrams:host=>window.AideMarkdownDiagrams.render(host,{load:ensureVendorScript,dark:false,errorText:t('流程图渲染失败'),strict:true})
   };
  }});
  exportButton.title=t('导出当前内容；包含未保存的修改');
@@ -9511,17 +9511,12 @@ window.addEventListener('aide:language', () => {
   if (state.contextPreview) renderContextPreview(state.contextPreview);
 });
 
-let mermaidTimer=0, mermaidReady=null;
+let mermaidTimer=0;
 function scheduleMermaid(){clearTimeout(mermaidTimer);mermaidTimer=setTimeout(renderMermaid,80);}
 async function renderMermaid(){
- const nodes=[...document.querySelectorAll('div.mermaid:not([data-processed])')];if(!nodes.length)return;
- for(const node of nodes)node.dataset.processed='pending';
- try {
-  if(!mermaidReady)mermaidReady=ensureVendorScript('/vendor/mermaid.min.js',()=>!!window.mermaid).then(()=>{window.mermaid.initialize({startOnLoad:false,theme:'neutral',securityLevel:'strict'});}).catch(e=>{mermaidReady=null;throw e;});
-  await mermaidReady;
-  for(const node of nodes){if(!node.isConnected)continue;try{const result=await window.mermaid.render('m'+crypto.randomUUID().replaceAll('-',''),node.textContent);if(node.isConnected){node.innerHTML=result.svg;node.dataset.processed='1';}}catch{node.textContent=t('流程图渲染失败');node.dataset.processed='1';}}
- } catch {for(const node of nodes){delete node.dataset.processed;node.textContent=t('流程图渲染失败');}}
+ await window.AideMarkdownDiagrams.render(document,{load:ensureVendorScript,errorText:t('流程图渲染失败')});
 }
+new MutationObserver(scheduleMermaid).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme','data-palette']});
 const originalMarkdownRender=renderMarkdown;
 const stableMarkdownCache = new Map();
 let stableMarkdownCacheBytes = 0;

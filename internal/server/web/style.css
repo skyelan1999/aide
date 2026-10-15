@@ -1707,3 +1707,9 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 .file-item .file-label{display:block;flex:1;min-width:0;overflow:hidden}.file-item .file-label .file-name{display:block;min-width:0}.file-item .file-unix-meta{display:block;margin:2px 0 0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:9px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:0;color:var(--muted)}.file-item .file-label .file-rename{width:100%;min-width:0}
 
 .workspace-startup-warning{font-size:11px;line-height:1.5;margin:6px 10px;overflow-wrap:anywhere;color:var(--warning,#d7b26d)}
+
+/* Mermaid owns SVG colors; the frame follows the workspace theme. */
+.mermaid{margin:16px 0;padding:20px 16px;overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#f8fafc;color:#17324d;text-align:center}
+html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
+.mermaid>svg{display:block;margin:auto;max-width:100%;height:auto}
+.md-body .mermaid .nodeLabel p,.md-body .mermaid .edgeLabel p{margin:0;line-height:1.5}

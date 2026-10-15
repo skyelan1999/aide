@@ -518,6 +518,10 @@
       [
         "node",
         "scripts/bootstrap-file-recovery.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/markdown-diagrams.test.cjs"
       ]
     ],
     "full": [
