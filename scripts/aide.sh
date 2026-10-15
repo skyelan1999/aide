@@ -328,6 +328,8 @@ case "$MODE" in
     cp docker/offline.env.example "$BUNDLE/.env.example"
     cp docker/OFFLINE.md "$BUNDLE/README.md"
     cp LICENSE "$BUNDLE/"
+    mkdir -p "$BUNDLE/licenses"
+    cp vendor/github.com/yuin/goldmark/v2/LICENSE "$BUNDLE/licenses/goldmark.txt"
     printf '%s %s %s v%s\n' "$BUNDLE_TAG" "$IMAGE_ID" "$PLATFORM" "$VERSION" > "$BUNDLE/.aide-image"
     printf 'version=%s\nimage=%s\nplatform=%s\nsrcsha=%s\n' "$VERSION" "$IMAGE_ID" "$PLATFORM" \
       "$("$DOCKER_BIN" image inspect "$IMG" --format '{{index .Config.Labels "aide.srcsha"}}')" > "$BUNDLE/BUILD.txt"

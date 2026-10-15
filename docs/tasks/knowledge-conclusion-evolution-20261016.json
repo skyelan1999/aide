@@ -16,7 +16,8 @@
     "internal/server/web/starmap-timeline.*、starmap-topics.*及相关测试；server.go仅历史主题路由，docs/agent/router.json新增专项回归",
     "docs/prd、architecture、reviews、tasks与发行元数据",
     "scripts/fixtures/run-knowledge-topics-browser.py：正文浏览器独立场景；对应Go临时App测试",
-    "go.mod/go.sum/vendor：固定goldmark/v2 v2.1.6及许可证，用于历史Markdown语法与源位置解析，不增加运行时网络依赖"
+    "go.mod/go.sum/vendor：固定goldmark/v2 v2.1.6及许可证，用于历史Markdown语法与源位置解析，不增加运行时网络依赖",
+    "Dockerfile/Dockerfile.local/scripts/aide.sh：仅将新增goldmark许可证随运行镜像和离线包分发；docker-images/SHA256SUMS追加本次产物校验"
   ],
   "stages": {
     "requirements": {
@@ -55,16 +56,16 @@
       ]
     },
     "verification": {
-      "status": "pass",
-      "summary": "最终full88全部退出0、源码指纹一致，server race568.61s/全包vet及非root资源通过，含最后不可用来源守卫；实际TXT/此前AI与Markdown临时App页面已分范围验收。完整认证Safari人类暂缓，Windows用户验收、真实向量暂缓，不冒充生产。",
+      "status": "in_progress",
+      "summary": "15936db功能输入full88已通过并已独立门禁推送；新增许可证分发改变构建输入，离线包清单还待产生，当前交付输入需打包后重新full绑定。",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-conclusion-coverage.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-coverage-proof.json"
       ]
     },
     "documentation": {
-      "status": "pass",
-      "summary": "覆盖矩阵逐项核对，PRD/架构/历史原话/解析与容量/非Markdown边界、full收据及格式3回滚已记录；运行与离线交付由release继续追踪。",
+      "status": "in_progress",
+      "summary": "源码/覆盖full证据保留，实际9999首个更新与离线/许可证最终交付记录继续补齐。",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-conclusion-coverage.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-coverage-proof.json"
@@ -80,7 +81,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "当前full88已通过；待干净main独立门禁/推送，再按指定启动与离线包交付，不升版或tag。",
+      "summary": "已通过独立main门禁并精确推送15936db；9999已更新9d71dad，配置/鉴权/13会话及挂载保全。许可证交付与离线包补齐中；后续发布输入变更将重新full绑定。",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-conclusion-coverage.md",
         "docs/reviews/2026-10-16/knowledge-conclusion-coverage-proof.json"

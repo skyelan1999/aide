@@ -1,6 +1,6 @@
 {
   "task": "knowledge-conclusion-evolution-20261016",
-  "status": "coverage_audited_full_pass_release_pending",
+  "status": "main_source_delivered_runtime_first_package_followup",
   "baseline": "0201b82",
   "full": {
     "profile": "full",
@@ -201,13 +201,33 @@
     "ownedFullContainerEnded": true
   },
   "sourceDelivery": {
-    "mainGate": "pending",
-    "push": "pending"
+    "mainGate": "pass",
+    "push": "verified",
+    "commit": "15936db4b24581a42aa4c2c15775a4880db62cd0"
   },
   "runtimeDelivery": {
-    "updated": false,
-    "retainedImage": "sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba",
-    "offlineImage": "pending"
+    "image": "sha256:9d71dad86195964f55fb325937da85797968ff8e387c227dbc010d205766c12d",
+    "imageTag": "sha256:9d71dad86195964f55fb325937da85797968ff8e387c227dbc010d205766c12d",
+    "sourceSHA256": "3a79c55ff44fbfd59877e35d67e8b4b2da56202bf9d52afbd3aa1d0994307719",
+    "platformManifest": "sha256:f4f229e6d623c9911886e3d9672d668c81dc288339e3e8fbd94e21a80dc18857",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndMountsPreserved": true,
+    "assetsMatch": [
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ],
+    "scope": "first functional runtime update; final license/offline followup pending"
   },
-  "originalTwelve": "all in_progress; authenticated Safari human-deferred; Windows user-owned; real vectors deferred"
+  "originalTwelve": "all in_progress; authenticated Safari human-deferred; Windows user-owned; real vectors deferred",
+  "packageFollowupVerification": "pending new full after license and archive checksum inputs"
 }
