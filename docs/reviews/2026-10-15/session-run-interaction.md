@@ -28,3 +28,7 @@
 ## 待验收与发布边界
 
 完整鉴权Safari沿用用户“现在不方便”，保持NOT_RUN；Windows用户验收、真实向量暂缓、接收设备导入待验。本轮实际模型为1x，不冒称重新验收10x。完整full/独立门禁/远端推送待收据；不升版、tag或正式GitHub Release。原12目标保持open。原始记录仅存.agent-state/session-run-interaction，不公开真实会话或密钥。
+
+## 最终完整检查收据
+
+干净main验证提交 9ee8e56fb4615e42fcabe9d29ce2f5efedb3a4d1，完整85项全部exit0，Go server race 551.126秒；fingerprint dcde00526eecfce9fbaaf288d22fadb24850d3f882c33ea3b695d76290abbaa3。无生产挂载、network none隔离容器执行。此前两轮中止不计PASS。本次full覆盖最后的步骤/轮次身份和终态防重连补丁。独立发布门禁与远端推送在此收据之后执行。

@@ -89,8 +89,11 @@
     "verificationStorage": "streamed hashes/metadata/load in active external workspace; no duplicate outputs recreated in original directory"
   },
   "full": {
-    "status": "pending",
-    "supersededRuns": "two owned isolated runs stopped for final terminal-reconnect and step/round identity fixes; neither counted as pass"
+    "status": "pass",
+    "count": 85,
+    "fingerprint": "dcde00526eecfce9fbaaf288d22fadb24850d3f882c33ea3b695d76290abbaa3",
+    "sourceCommit": "9ee8e56fb4615e42fcabe9d29ce2f5efedb3a4d1",
+    "serverRaceSeconds": 551.126
   },
   "limitations": [
     "Full authenticated Safari human-deferred",
