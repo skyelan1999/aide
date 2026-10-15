@@ -67,16 +67,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Full84 passed; clean main gate and authorized push next; no version/tag/formal Release.",
+      "status": "pass",
+      "summary": "Clean main release-check passed; cea9eb6 pushed and independently verified with ls-remote. Receipt-only ordinary docs keep identical verified inputs; no version/tag/formal Release.",
       "evidence": [
-        ".agent-state/ftps-index-latency/full-proof.json"
+        "docs/reviews/2026-10-15/ftps-index-latency.md"
       ]
     }
   },
   "release_authorization": "Standing user instruction incremental work/test/push main and complete offline package; no version/tag/formal Release.",
   "rollback": "Revert scoped performance change; preserve existing runtime/package as rollback and all user data.",
-  "handoff": "Measured FTPS fix, runtime and13 session files preservation, actual binary restart/network recovery/SFTP capabilities and complete offline package verified; clean full84 passed. Main gate next. Original12 UI/user-host/IPv6/performance and other workflow requirements remain open.",
+  "handoff": "Scoped FTPS latency fix and actual runtime/protocol/fault/capability evidence integrated/pushed main; full84 and gate passed; runtime/offline package verified. Original12 UI/user-host/IPv6/performance and other workflows stay open.",
   "protocolEvidence": {
     "status": "pass",
     "exit": 0,
@@ -208,5 +208,12 @@
     "sourceCommit": "efafb6da5fdd90c4ecde0e6e00877da8f44a2def",
     "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/ftps-index-latency/verify-20261015T112312669923Z.log",
     "worktree": "/private/tmp/aide-ftps-latency-full-20261015"
+  },
+  "mainIntegration": {
+    "pushedMain": "cea9eb6b8b5d2882c03ca7c61338c7addf2e19f1",
+    "remoteHeadVerified": true,
+    "releaseCheck": "pass",
+    "fullChecks": 84,
+    "formalReleaseCreated": false
   }
 }

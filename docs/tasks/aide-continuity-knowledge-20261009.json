@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Latest clean main candidate efafb6d full84 PASS (server race531.739s plus vet). FTPS pacing fix has actual protocol race/timings, new binary HTTPS process restart and Docker-network recovery/literal hash evidence; independent SFTP capability/default-user/parser APIs supplemented. Main gate/push next. Prior reasoning write/disk and real Qwen outcome evidence stay scoped to their tasks. Original12 remain in progress: full authenticated browser, user-host/physical faults, IPv6/large-library/other transport and remaining workflow requirements; vectors deferred, Windows user-owned.",
+      "summary": "Latest clean main candidate efafb6d full84 PASS (server race531.739s plus vet). FTPS pacing fix has actual protocol race/timings, new binary HTTPS process restart and Docker-network recovery/literal hash evidence; independent SFTP capability/default-user/parser APIs supplemented. Clean main gate passed; cea9eb6 pushed and independent remote SHA verified. Prior reasoning write/disk and real Qwen outcome evidence stay scoped to their tasks. Original12 remain in progress: full authenticated browser, user-host/physical faults, IPv6/large-library/other transport and remaining workflow requirements; vectors deferred, Windows user-owned.",
       "evidence": [
         "Docker aide:local go build exit 0",
         ".agent-state/continuity-preview/conflict.png",
@@ -7124,7 +7124,7 @@
     "task": "docs/tasks/ftps-index-latency-20261015.json",
     "classification": "progress",
     "previousGoalTurn": "Real FTP/FTPS progressive and actual HTTPS process restart evidence, full84 and main2607d2f pushed. Current turn applies measured connection pacing improvement.",
-    "status": "in_progress",
+    "status": "pass",
     "verified": [
       "Internal real vsftpd with curl7.88.1: default FTPS directory/read medians205.02/232.01ms; selected50ms pacing gives52.52/74.88ms, four samples each",
       "FTPS-only production curl option preserves TLS, address families, bounded source reads and source identity",
@@ -7136,7 +7136,6 @@
       "New clean main full84 PASS, server race531.739s plus vet; fingerprint 6a543abab2fdadcc15e349af369525a3d5c150b6f5aed35a25977eb9611180fe"
     ],
     "remaining": [
-      "main gate and authorized push",
       "full authenticated browser, user hosts, IPv6/network variants and large-library scope"
     ],
     "original12RemainOpen": true,
@@ -7225,6 +7224,13 @@
       "sourceCommit": "efafb6da5fdd90c4ecde0e6e00877da8f44a2def",
       "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/ftps-index-latency/verify-20261015T112312669923Z.log",
       "worktree": "/private/tmp/aide-ftps-latency-full-20261015"
+    },
+    "mainIntegration": {
+      "pushedMain": "cea9eb6b8b5d2882c03ca7c61338c7addf2e19f1",
+      "remoteHeadVerified": true,
+      "releaseCheck": "pass",
+      "fullChecks": 84,
+      "formalReleaseCreated": false
     }
   }
 }

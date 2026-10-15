@@ -38,3 +38,5 @@ curl 的 [Happy Eyeballs 参数](https://curl.se/docs/manpage.html#--happy-eyeba
 ## 完整回归与交付
 
 干净 main 工作树基于 `efafb6d` 完整84项 PASS，server race531.739秒及vet通过；内容指纹 `6a543abab2fdadcc15e349af369525a3d5c150b6f5aed35a25977eb9611180fe`。最终普通文档补记另经文档链接及diff检查，不改变这些已验证输入。独立SFTP能力仪表补验见[收据](source-capability-live.md)。原12项继续，接收设备导入、完整浏览器及用户主机未据此关闭；无版本／tag／正式Release。
+
+干净main release-check通过，`cea9eb6b8b5d2882c03ca7c61338c7addf2e19f1` 已推送并由独立ls-remote确认。本条普通文档收据复核相同full84内容指纹，不声称重跑full。
