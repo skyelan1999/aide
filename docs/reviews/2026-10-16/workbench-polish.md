@@ -26,3 +26,5 @@ Final runtime sha256:4cf57ac959708c9c41f60caddae63c9913901497fb138c5dd10c30c0e04
 首次 main full 的前85项通过，最后 Go race 在新增 TestWorkbenchBackgroundAssetPolicy 中因直接访问尚未初始化的 a.handler 而 panic（535.394秒）。这是本轮测试装配错误；已改为标准 a.Handler() 入口。未推送远端；先单独执行该策略测试及vet，再重跑完整full并以新收据为准。
 
 修正后，单独的 TestWorkbenchBackgroundAssetPolicy race 与 go vet 全包均已通过；原错误不是工作台运行时崩溃。最终full仍须重跑。
+
+策略测试装配修正后重新从start.command构建，最终候选取代4cf：sha256:4cc2308dbb4be83159ddb92cb664b0f1d78095630858e3f87927ab139db6abfe，source 800a235afe888f8a61ca00da1179fa3bdac3b033456e5596b3d89bc3f960a73f。完整包 aide-0.1.17.0-RC2-linux-arm64-4cc2308dbb4b-offline.tar.gz，705763057字节，SHA256 bcaea979f89c67d596dcbe636b361aaad2e8b3a466b1ce8990ea61165d3b8eb3；完整导入/摘要/平台/依赖/启动器再次通过。4cf本轮中间包与镜像已清理，60f回滚保留。产品界面代码与已验收4cf相同。

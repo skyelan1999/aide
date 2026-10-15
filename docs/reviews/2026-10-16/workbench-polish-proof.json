@@ -1,10 +1,10 @@
 {
   "task": "workbench-polish-20261016",
   "runtime": {
-    "image": "sha256:4cf57ac959708c9c41f60caddae63c9913901497fb138c5dd10c30c0e046c432",
-    "runningImage": "sha256:4cf57ac959708c9c41f60caddae63c9913901497fb138c5dd10c30c0e046c432",
-    "sourceSHA256": "a90c65e66ac6c4205ffe9df784ec31c382bf43c696d748a212b01b7329f6eca6",
-    "runningPlatformManifest": "sha256:32ffe206be23767ee257f642c7d41288b4254aa9ba98b7fa3f1a994cccfcf44b",
+    "image": "sha256:4cc2308dbb4be83159ddb92cb664b0f1d78095630858e3f87927ab139db6abfe",
+    "runningImage": "sha256:4cc2308dbb4be83159ddb92cb664b0f1d78095630858e3f87927ab139db6abfe",
+    "sourceSHA256": "800a235afe888f8a61ca00da1179fa3bdac3b033456e5596b3d89bc3f960a73f",
+    "runningPlatformManifest": "sha256:24fedbbb03cd699e2fb7dbc1a9d207177a981d8f1698a5c575e6a260f093a684",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "health": "ok",
     "port": "9999",
@@ -56,11 +56,11 @@
     "status": "pending"
   },
   "offline": {
-    "image": "sha256:4cf57ac959708c9c41f60caddae63c9913901497fb138c5dd10c30c0e046c432",
-    "sourceSHA256": "a90c65e66ac6c4205ffe9df784ec31c382bf43c696d748a212b01b7329f6eca6",
-    "archive": "aide-0.1.17.0-RC2-linux-arm64-4cf57ac95970-offline.tar.gz",
-    "bytes": 705765015,
-    "sha256": "c24e21ef14f128a66b37ea1ad91cd837a9331d02d86771d821a0b8c4ee60b3d3",
+    "image": "sha256:4cc2308dbb4be83159ddb92cb664b0f1d78095630858e3f87927ab139db6abfe",
+    "sourceSHA256": "800a235afe888f8a61ca00da1179fa3bdac3b033456e5596b3d89bc3f960a73f",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-4cc2308dbb4b-offline.tar.gz",
+    "bytes": 705763057,
+    "sha256": "bcaea979f89c67d596dcbe636b361aaad2e8b3a466b1ce8990ea61165d3b8eb3",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
     "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
@@ -81,6 +81,13 @@
     "intermediateArchiveRemoved": "aide-0.1.17.0-RC2-linux-arm64-b7ba61884e98-offline.tar.gz",
     "intermediateImageRemoved": "sha256:b7ba61884e98341a0b1a72cbcf98d1fc4ba6c52fc1a4b26cd87b32ae36ea4cd2",
     "rollback60fPreserved": true,
-    "originalDirectoryPreserved": true
+    "originalDirectoryPreserved": true,
+    "supersededArchiveRemoved": "aide-0.1.17.0-RC2-linux-arm64-4cf57ac95970-offline.tar.gz",
+    "supersededImageRemoved": "sha256:4cf57ac959708c9c41f60caddae63c9913901497fb138c5dd10c30c0e046c432"
+  },
+  "focusedPolicyRace": {
+    "status": "pass",
+    "seconds": 2.427,
+    "vetAllPackages": "pass"
   }
 }

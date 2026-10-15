@@ -2,7 +2,7 @@
 
 共用按钮/图标/正文/输入区与窄屏设置导航统一，外观支持关闭、流光和本地视频/GIF/图片。真实生产组件六主题/390px与MP4静音播放、减少动态暂停、GIF刷新恢复通过；完整Safari仍暂缓。最终full/main门禁以[任务账本](../docs/tasks/workbench-polish-20261016.json)为准。
 
-start.command运行 sha256:4cf57ac959708c9c41f60caddae63c9913901497fb138c5dd10c30c0e046c432，source SHA a90c65e66ac6c4205ffe9df784ec31c382bf43c696d748a212b01b7329f6eca6。完整包 aide-0.1.17.0-RC2-linux-arm64-4cf57ac95970-offline.tar.gz，705765015字节，SHA-256 c24e21ef14f128a66b37ea1ad91cd837a9331d02d86771d821a0b8c4ee60b3d3；应用/依赖双镜像、内外摘要、平台/标签/启动器及实际docker load通过。清理本轮b7ba中间包和镜像，保留60f回滚；只存活动外置盘，另一端导入待验。不升版/tag/正式Release。
+start.command运行 sha256:4cc2308dbb4be83159ddb92cb664b0f1d78095630858e3f87927ab139db6abfe，source SHA 800a235afe888f8a61ca00da1179fa3bdac3b033456e5596b3d89bc3f960a73f。完整包 aide-0.1.17.0-RC2-linux-arm64-4cc2308dbb4b-offline.tar.gz，705763057字节，SHA-256 bcaea979f89c67d596dcbe636b361aaad2e8b3a466b1ce8990ea61165d3b8eb3；应用/依赖双镜像、内外摘要、平台/标签/启动器及实际docker load通过。清理本轮b7ba与4cf中间包和镜像，保留60f回滚；只存活动外置盘，另一端导入待验。不升版/tag/正式Release。
 
 ## 2026-10-16 默认排队追加候选（构建时记录）
 
