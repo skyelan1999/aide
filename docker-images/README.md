@@ -1,5 +1,12 @@
 # Docker 镜像交付
 
+## 2026-10-15 星图文件预览候选（构建时记录）
+
+- 源码 `743d0ec`：恢复文件节点通用预览入口，AI 文件引用直接打开，预览窗口复用及回收；代码定位选区可读。指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新本机 9999，健康及七项实际网页资源匹配，鉴权／配置／挂载未变。保留五个继承的 vendor 删除，属于开发候选，不冒充干净 main 构建。
+- 应用镜像 `sha256:997eda4026b5a0552547ca9a72e231a0119274f1d21a56423f0c59fe2ce67f43`，source SHA `8cb68327e894f89da832d84a5896438398bbfaffe8df97b195293de53c8beedb`。
+- 完整包 `aide-0.1.17.0-RC2-linux-arm64-997eda4026b5-offline.tar.gz`，705672961 字节，SHA-256 `8d0da15b4b6768ce2da263cf417ef24daca86088d746cf19a61dfbae16495f8e`。含应用／依赖镜像；内外摘要、平台／启动器、实际 docker load 和两本地目录副本通过，接收设备实际导入仍待验收。上一版 `f86461692f67` 保留回滚。
+- 此构建记录写入时 quick81、真实网页代码的 Markdown／代码预览链路和本机文件来源 API 检查通过；完整 full83、main 门禁及推送待补，以[任务账本](../docs/tasks/starmap-file-preview-20261015.json)的后续收据为准。真实 SSH 和完整已鉴权工作台浏览器未在本批验收，不升级版本或发布正式 Release。
+
 ## 2026-10-15 AI 辅助探索候选（构建时记录）
 
 - 源码提交 `2457aa8` 加空文档／页面退出修复 `0a2e928` + test-only `0e1eaeb`，本机仍有五个继承的 drawio vendor 删除；镜像为开发候选，不混称干净 main 构建。通过指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新 9999，健康、实际提供的星图四项资源与当前源码一致，鉴权、配置、挂载未变。

@@ -58,11 +58,12 @@
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Architecture/review/task updated; final image and release receipts pending.",
+      "status": "pass",
+      "summary": "Architecture, review, task ledger and frozen Docker build-time receipt updated. Full/main result will be appended to ordinary docs.",
       "evidence": [
         "docs/architecture/knowledge-map.md",
-        "docs/reviews/2026-10-15/starmap-file-preview.md"
+        "docs/reviews/2026-10-15/starmap-file-preview.md",
+        "docker-images/README.md"
       ]
     },
     "cleanup": {
@@ -82,5 +83,84 @@
   },
   "release_authorization": "Standing user instruction: merge and push all completed changes to main; test/push in increments, use start.command and deliver complete offline image package. No version bump/tag/formal Release.",
   "rollback": "Revert scoped preview module/bindings/style commit and restore previous complete image. No data migration. Preserve five inherited vendor deletions.",
-  "handoff": "Source/browser/API accepted within stated scope. Runtime/full/main integration pending. Original12 stay open; real SSH and authenticated workbench browser unverified."
+  "handoff": "Source/browser/API accepted within stated scope. Runtime/full/main integration pending. Original12 stay open; real SSH and authenticated workbench browser unverified.",
+  "runtime": {
+    "image": "sha256:997eda4026b5a0552547ca9a72e231a0119274f1d21a56423f0c59fe2ce67f43",
+    "runningImage": "sha256:997eda4026b5a0552547ca9a72e231a0119274f1d21a56423f0c59fe2ce67f43",
+    "sourceSHA256": "8cb68327e894f89da832d84a5896438398bbfaffe8df97b195293de53c8beedb",
+    "runningPlatformManifest": "sha256:ba1e1825895679fb9bc47138c126d55bf026e20d9c573c601c4248e2196b60f8",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:997eda4026b5a0552547ca9a72e231a0119274f1d21a56423f0c59fe2ce67f43",
+    "sourceSHA256": "8cb68327e894f89da832d84a5896438398bbfaffe8df97b195293de53c8beedb",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-997eda4026b5-offline.tar.gz",
+    "bytes": 705672961,
+    "sha256": "8d0da15b4b6768ce2da263cf417ef24daca86088d746cf19a61dfbae16495f8e",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "sourceCommit": "743d0ec",
+  "browserEvidence": {
+    "actualAssets": [
+      "starmap.html",
+      "starmap.js",
+      "starmap-preview.js",
+      "index.html",
+      "app.js",
+      "style.css"
+    ],
+    "scope": "actual bundled star map and file viewer; mock API and SSH fixture, not real SSH or authenticated9999 browser",
+    "themes": [
+      "professional-light",
+      "professional-dark"
+    ],
+    "narrow": [
+      390,
+      844
+    ],
+    "noPageHorizontalOverflow": true,
+    "universalFileAction": true,
+    "legacyCodeAction": true,
+    "aiCitationDirectPreview": true,
+    "readonlyEditor": true,
+    "saveDisabled": true,
+    "markdownRendered": true,
+    "codeLineRange": "L3-L5",
+    "selectedCodeVisibleBothThemes": true,
+    "sameViewerReusedAcrossFiles": true,
+    "maximumConcurrentTabs": 2,
+    "parentCloseClosesViewer": true,
+    "allOwnTabsClosed": true,
+    "viewportReset": true,
+    "fixtureServerStopped": true,
+    "requests": [
+      {
+        "path": "src/ready.go",
+        "validIdentity": true,
+        "source": ""
+      }
+    ]
+  },
+  "apiEvidence": {
+    "current9999LocalRead": true,
+    "originPresent": true,
+    "contentHashMatched": true,
+    "changedOriginRejected": 409,
+    "modelCalls": 0,
+    "scope": "owned local file only; actual SSH not tested"
+  }
 }

@@ -6844,6 +6844,11 @@
       "status": "in_progress",
       "task": "docs/tasks/starmap-ai-exploration-20261015.json",
       "scope": "Scoped UX fixes merged/pushed after clean full82/main gate; actual bundled browser fixture and real Qwen single-node sample. Whole-graph search quality and live workbench browser remain unverified; all original12 retained."
+    },
+    "file_preview": {
+      "status": "in_progress",
+      "task": "docs/tasks/starmap-file-preview-20261015.json",
+      "scope": "Scoped preview routing and actual frontend fixture passed; local API provenance verified. No claim for real SSH, full authenticated workbench browser or all original12."
     }
   },
   "followup147": {
@@ -6897,5 +6902,26 @@
       "releaseCheck": "pass",
       "remoteHeadVerified": true
     }
+  },
+  "followup149": {
+    "task": "docs/tasks/starmap-file-preview-20261015.json",
+    "request": "Restore quick file preview from knowledge-map references",
+    "status": "in_progress",
+    "sourceCommit": "743d0ec",
+    "runtimeImage": "997eda4026b5",
+    "verified": [
+      "quick81",
+      "actual bundled star map plus full file viewer: Markdown, source/readonly/line metadata, AI citation click, same-window reuse, close-parent cleanup",
+      "light/dark and390x844; selected code remains visible",
+      "actual9999 owned-local-file read and stale origin409; zero model calls",
+      "start.command, seven served assets, config/auth/mount preservation",
+      "complete offline package hashes/platform/launchers/load and two local copies"
+    ],
+    "remaining": [
+      "clean main full83 and release gate/push",
+      "real SSH/live authenticated workbench browser; other binary formats not retested",
+      "receiving-device import"
+    ],
+    "original12RemainOpen": true
   }
 }
