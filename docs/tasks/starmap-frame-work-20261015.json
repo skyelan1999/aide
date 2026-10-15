@@ -67,10 +67,11 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "本机候选与完整离线包已实际导入核验，本批full74待跑；未做main/tag正式发布或接收端导入",
+      "status": "pass",
+      "summary": "用户本轮明确授权main集成，源码与验证记录已纳入远端main7251775；7d候选镜像/离线包维持已验收身份，不冒充clean-main同指纹镜像；未做正式版本tag/Release",
       "evidence": [
-        ".agent-state/starmap-frame-work/package.json"
+        "docs/tasks/main-integration-20261015.json",
+        ".agent-state/main-integration/push-proof.json"
       ]
     }
   },

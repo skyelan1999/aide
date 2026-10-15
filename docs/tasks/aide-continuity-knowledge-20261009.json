@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Clean main full74 PASS (receipt .agent-state/main-integration/full-frozen.json). Complete release-check and push main; preserve original5 vendor deletions and current9999 candidate7d3baf350986. Goal12streams not complete; vectors deferred and Windows user-owned.",
+  "handoff": "Main integrated and pushed (initial confirmed7251775; this followup adds only receipt documentation). Full74 clean-main receipt .agent-state/main-integration/full-frozen.json, fingerprint32e616ea4cc88c32087dd22f51a5b7aa522b5905f6e73cbf9ed794663150ca58. Preserve original5 uncommitted vendor deletions; dirty-worktree fingerprint differs. Current9999 image7d3baf350986 not redeployed by merge; statusok/integritydegraded observed separately. Continue original12streams/renderer work; goal not complete, vectors deferred, Windows user-owned.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6451,7 +6451,7 @@
   },
   "followup134": {
     "task": "docs/tasks/main-integration-20261015.json",
-    "summary": "User authorized main integration; clean main fast-forward and full74 PASS, ready for release-check and remote main push. Original5 uncommitted deletions remain isolated. No tag/version/GitHub Release.",
+    "summary": "Authorized main integration complete: clean full74 PASS, server race711.620s and vet, release-check PASS, origin/main7251775 verified equal local main and includes feature tip a0022a1. Original5 uncommitted vendor deletions excluded and preserved. No runtime deployment/tag/version/GitHub Release.",
     "full": {
       "status": "pass",
       "sessionId": 25073,
@@ -6465,6 +6465,14 @@
       "serverRaceSeconds": 711.62,
       "receipt": ".agent-state/main-integration/full-frozen.json",
       "verifiedMainClean": true
+    },
+    "push": {
+      "status": "pass",
+      "mainSHA": "7251775032a33c9e983b51c629242b366efcba40",
+      "remoteMainSHA": "7251775032a33c9e983b51c629242b366efcba40",
+      "featureTip": "a0022a1",
+      "featureIncluded": true,
+      "cleanIntegrationTree": true
     }
   }
 }

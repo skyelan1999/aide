@@ -68,10 +68,11 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "分支增量候选已运行，完整离线包本机导入和两个本地副本校验通过；main/tag正式发布未做；本批full73待运行",
+      "status": "pass",
+      "summary": "用户授权后推理入口修复已随主线集成推至origin/main7251775；完整clean-main74项及合入门禁通过；原生/离线候选记录保留，不作正式tag/Release",
       "evidence": [
-        ".agent-state/session-only-reasoning/package.json"
+        "docs/tasks/main-integration-20261015.json",
+        ".agent-state/main-integration/push-proof.json"
       ]
     }
   },
@@ -138,5 +139,11 @@
     "initial": "Two route invocations had no node on PATH; logs retained, not counted as pass. Final invocation uses bundled Node PATH and passes all71.",
     "full": "Not rerun for this frontend removal; previous metadata-layout full73 scope kept separate.",
     "narrow": "Window drag attempts did not change dimensions, screenshot attempts renamed; fullscreen toggle reversed. Desktop pass only."
+  },
+  "clean_main_full": {
+    "status": "pass",
+    "fingerprint": "32e616ea4cc88c32087dd22f51a5b7aa522b5905f6e73cbf9ed794663150ca58",
+    "commands": 74,
+    "receipt": ".agent-state/main-integration/full-frozen.json"
   }
 }

@@ -64,16 +64,17 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "完整门禁通过，待release-check与远端main推送确认；无版本/tag/Release",
+      "status": "pass",
+      "summary": "用户授权的main合入与推送已完成；release-check通过，远端7251775等于已核对本地main且包含feature tip a0022a1；本次仅补充验收记录，不升级版本或创建tag/Release",
       "evidence": [
-        ".agent-state/main-integration/full-frozen.json"
+        ".agent-state/main-integration/push-proof.json",
+        "python3 scripts/agent-route.py release-check main-integration-20261015"
       ]
     }
   },
   "release_authorization": "用户明确要求：把现有的修改推上去，和到main上。授权推送与合入main，不包含版本升级/tag/GitHub Release。",
   "rollback": "保留合入前origin/main SHA，必要时通过反向提交审阅回退，不强制推送、不改写公开历史。",
-  "handoff": "原目录/perf/starmap-frame-work的5个vendor删除不stage/reset；main在自有/tmp工作树验证，日志复制回原目录后仅清理自有临时树。",
+  "handoff": "main已完成本轮完整合入与远端推送；原目录5个vendor删除保留不提交。原目标12项仍未全部验收，不能把主线合入当目标完成；向量暂缓，Windows用户验收。",
   "beforeMain": "a2a21a3e5d6cf1b97148ee4e6bce86a006b06497",
   "full": {
     "status": "pass",
@@ -88,5 +89,18 @@
     "serverRaceSeconds": 711.62,
     "receipt": ".agent-state/main-integration/full-frozen.json",
     "verifiedMainClean": true
+  },
+  "push": {
+    "status": "pass",
+    "mainSHA": "7251775032a33c9e983b51c629242b366efcba40",
+    "remoteMainSHA": "7251775032a33c9e983b51c629242b366efcba40",
+    "featureTip": "a0022a1",
+    "featureIncluded": true,
+    "cleanIntegrationTree": true
+  },
+  "runtimeObservation": {
+    "service": "status ok",
+    "integrity": "degraded",
+    "scope": "Observed existing9999 candidate during merge; no runtime image/container/deployment changed. Integrity report remains a separate investigation item, not a production-ready claim."
   }
 }
