@@ -44,7 +44,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Initial model batch cancelled after unexpected retry tools, data protected22->24. Retry source8196baf real Qwen three completed/no tools/hidden terminal-page count thenzero, protected24->26. Combined probe stopped at fresh receipt409. Independent old binary and Go reproduce409; fixed final targeted race19.335s PASS. Updated binary import/runtime/offline/full/main pending.",
+      "summary": "Initial model batch cancelled after unexpected retry tools, data protected22->24. Retry source8196baf real Qwen three completed/no tools/hidden terminal-page count thenzero, protected24->26. Combined probe stopped at fresh receipt409. Independent old binary and Go reproduce409; fixed final targeted race19.335s PASS. Updated binary import/runtime/offline/full/main pending. Final binary a082 runtime preserved and isolated actual import/provenance/stale/duplicate/wrong-session/disk proof PASS. Package/full/main pending. Final complete offline package hashes/platform/tags/launchers and actual docker load PASS in active external workspace only; final clean full/main pending.",
       "evidence": [
         "docs/reviews/2026-10-15/outcome-hidden-active-live.md",
         "docs/reviews/2026-10-15/outcome-hidden-active-live-proof.json"
@@ -52,15 +52,18 @@
     },
     "documentation": {
       "status": "in_progress",
-      "summary": "Actual failed/cancelled first probe, preserved user data, bounded replay design/targeted results documented; final runtime/model/full/main receipts pending.",
+      "summary": "Review and sanitized combined phase proof updated: Qwen retry/hidden count on183, unchanged tagged replay branch; fresh import on finala082 with protocol fixture. Offline/full/main pending.",
       "evidence": [
         "docs/reviews/2026-10-15/outcome-hidden-active-live.md"
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "All owned Qwen sessions removed, original sessions/auth/sources/settings preserved except legitimate monotonic22->24->26. Both failed/success isolated release containers removed; no browsers; owned intermediate183 package hash-checked and removed after final package verified, canonical rollback kept. Future full fixture cleanup owned by runner.",
+      "evidence": [
+        "docs/reviews/2026-10-15/outcome-hidden-active-live.md",
+        "docs/reviews/2026-10-15/outcome-hidden-active-live-proof.json"
+      ]
     },
     "release": {
       "status": "pending",

@@ -26,10 +26,47 @@
     "counterAfter": 26
   },
   "releaseImport": {
-    "status": "pending",
-    "oldBinaryFreshSnapshot409Reproduced": true,
-    "oldGoRegression409Reproduced": true
+    "status": "pass",
+    "image": "sha256:a082bd336de11ec5537bf991637637399a2f6dadc653e70b5a2807a35ea18d54",
+    "scope": "isolated actual binary HTTPS API with loopback model protocol fixture; no paid/real model/user mounts/network/browser or actual release",
+    "freshSnapshotImport200": true,
+    "operatorRecordedNotVerified": true,
+    "serverProvenance": true,
+    "injectedProvenance400": true,
+    "staleSnapshot409": true,
+    "duplicateIdempotent": true,
+    "wrongSession404": true,
+    "diskReadbackMatches": true
   },
   "targetedRaceSeconds": 19.335,
-  "finalRuntimeOfflineFullMain": "pending"
+  "finalRuntimeOfflineFullMain": "Final runtime, isolated import and complete offline package passed; final clean full/main pending.",
+  "runtime": {
+    "image": "sha256:a082bd336de11ec5537bf991637637399a2f6dadc653e70b5a2807a35ea18d54",
+    "runningImage": "sha256:a082bd336de11ec5537bf991637637399a2f6dadc653e70b5a2807a35ea18d54",
+    "sourceSHA256": "91ccfe6d399d5e707d6397f279404ccc6a162dce111f33acd2fddf247f090083",
+    "runningPlatformManifest": "sha256:b9f05e9ba5449ba221084640e99e793a29e4f4227c9b7ac6e0afdb2ce5c2f892",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:a082bd336de11ec5537bf991637637399a2f6dadc653e70b5a2807a35ea18d54",
+    "sourceSHA256": "91ccfe6d399d5e707d6397f279404ccc6a162dce111f33acd2fddf247f090083",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-a082bd336de1-offline.tar.gz",
+    "bytes": 705745837,
+    "sha256": "430df6013c38dd2d82f113c5648ded4f812fa101cd177f25fb168c2775fbafa0",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "activeExternalWorkspaceOnly": true,
+    "verificationStorage": "streamed hashes/metadata/load in active external workspace; no duplicate outputs recreated in original directory"
+  }
 }
