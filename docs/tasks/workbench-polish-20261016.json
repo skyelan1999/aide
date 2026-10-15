@@ -40,8 +40,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "First full failed in newly added CSP test setup, fixed to Handler(); focused retest and final full pending. Browser/runtime/component scope preserved.",
+      "status": "pass",
+      "summary": "Final clean-main full86 pass; source cc114734a2d03921742ee0b0b2ae0e54dbf69ba0, fingerprint fc3d2b98af58fe9d417bba53765429ad994cc8fff6f3232ea0b1064945f76a6a. Browser/runtime/offline scope in review.",
       "evidence": [
         "docs/reviews/2026-10-16/workbench-polish.md",
         "docs/reviews/2026-10-16/workbench-polish-proof.json"
@@ -64,9 +64,12 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final full pass, independent gate and remote push next.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-polish.md",
+        "docs/reviews/2026-10-16/workbench-polish-proof.json"
+      ]
     }
   },
   "release_authorization": "沿用用户此前“做一部分，push一部分，测一部分”及合到main、更新本机和离线镜像包授权，无升版或tag。",
