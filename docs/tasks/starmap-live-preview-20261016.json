@@ -1,0 +1,78 @@
+{
+  "id": "starmap-live-preview-20261016",
+  "request": "继续原目标：记录实际Safari知识星图文件预览验收、标签清理及发现的重复引用扫描，保留完整12项和既有延期",
+  "baseline": "20b5a56c6c7e741c49e19e0205a4740ea4272a7e",
+  "initial_status": "",
+  "acceptance": [
+    "Actual authenticated Safari star-map node opens local DOCX in read-only preview with rendered body and tables.",
+    "Close only owned preview; restore existing user workbench, original map filter/query/selection.",
+    "Record direct large-map observations and exact duplicate built-in context call chain, without claiming complete performance cause or SSH/all-format acceptance.",
+    "Reuse only identical product-input full receipt, review docs, independent clean-main gate and exact remote push."
+  ],
+  "scope": [
+    "docs/reviews/2026-10-16/starmap-live-preview.md",
+    "docs/reviews/2026-10-16/starmap-live-preview-proof.json",
+    "docs/tasks/starmap-live-preview-20261016.json",
+    "docs/tasks/source-fingerprint-locale-20261016.json",
+    "docs/reviews/2026-10-16/source-fingerprint-locale.md",
+    "docs/tasks/aide-continuity-knowledge-20261009.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Actual Safari local DOCX preview/body/tables/read-only, scoped owned-tab cleanup and scene restore; host-backed duplicate context scan found. No product input change; full88 exact-input reuse, docs/diff review.",
+      "evidence": [
+        "docs/reviews/2026-10-16/starmap-live-preview.md",
+        "docs/reviews/2026-10-16/starmap-live-preview-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Actual Safari local DOCX preview/body/tables/read-only, scoped owned-tab cleanup and scene restore; host-backed duplicate context scan found. No product input change; full88 exact-input reuse, docs/diff review.",
+      "evidence": [
+        "docs/reviews/2026-10-16/starmap-live-preview.md",
+        "docs/reviews/2026-10-16/starmap-live-preview-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Actual Safari local DOCX preview/body/tables/read-only, scoped owned-tab cleanup and scene restore; host-backed duplicate context scan found. No product input change; full88 exact-input reuse, docs/diff review.",
+      "evidence": [
+        "docs/reviews/2026-10-16/starmap-live-preview.md",
+        "docs/reviews/2026-10-16/starmap-live-preview-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual Safari local DOCX preview/body/tables/read-only, scoped owned-tab cleanup and scene restore; host-backed duplicate context scan found. No product input change; full88 exact-input reuse, docs/diff review.",
+      "evidence": [
+        "docs/reviews/2026-10-16/starmap-live-preview.md",
+        "docs/reviews/2026-10-16/starmap-live-preview-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Actual Safari local DOCX preview/body/tables/read-only, scoped owned-tab cleanup and scene restore; host-backed duplicate context scan found. No product input change; full88 exact-input reuse, docs/diff review.",
+      "evidence": [
+        "docs/reviews/2026-10-16/starmap-live-preview.md",
+        "docs/reviews/2026-10-16/starmap-live-preview-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Actual Safari local DOCX preview/body/tables/read-only, scoped owned-tab cleanup and scene restore; host-backed duplicate context scan found. No product input change; full88 exact-input reuse, docs/diff review.",
+      "evidence": [
+        "docs/reviews/2026-10-16/starmap-live-preview.md",
+        "docs/reviews/2026-10-16/starmap-live-preview-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing user incremental test/push/main and documentation authorization; no new version/tag/Release or runtime replacement.",
+  "rollback": "Docs-only revert; temporary preview tab already closed. No original file/source changes by acceptance actions.",
+  "handoff": "Local DOCX preview scoped pass; duplicate built-in context scan needs fix and regression, large-map latency remains. Original12 in_progress; runtime/package unchanged."
+}

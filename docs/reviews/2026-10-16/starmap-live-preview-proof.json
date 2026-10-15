@@ -1,0 +1,48 @@
+{
+  "status": "scoped_pass",
+  "runtime": "sha256:6d212fa78c4363b3b5d129f49d3305ef3dcec55b4ba5039573083de30ddee412",
+  "actualNativeSafari": true,
+  "entry": "Existing user starmap tab, system-docs source filter, DOCX node open preview link",
+  "readOnlyHeader": true,
+  "renderedHeading": "政府采购房屋租赁合同",
+  "renderedBodyAndTables": true,
+  "previewOwnedTabClosed": true,
+  "restored": {
+    "sourceFilter": "all",
+    "search": "",
+    "selectedNode": "F2a2cdd4fa75e",
+    "originalWorkbenchSession": true
+  },
+  "screenshotSHA256": "27d9e642d9927249b1bc68a96faff0cfa79f4db2f8ee46a3a2588c7068af294c",
+  "observations": {
+    "initialNodeCount": 35311,
+    "laterNodeCount": 40052,
+    "cloudReadErrorsExplicit": true,
+    "catalogueLimitExplicit": 20000,
+    "nativeActionAndObservationSeconds": [
+      26.145,
+      32.422,
+      66.52
+    ],
+    "timingLimit": "Tool round-trip and AX observation, not isolated JS execution or first paint; root cause not proven"
+  },
+  "limits": [
+    "Not SSH preview proof",
+    "Not all file formats",
+    "Not first load performance proof",
+    "No model invocation",
+    "No source configuration or original file edits"
+  ],
+  "duplicateScan": {
+    "observed": {
+      "builtinContextEnabled": true,
+      "builtinContextConfigPathEmpty": true,
+      "visibleContextSources": 2,
+      "perSourceCatalogueLimit": 20000,
+      "combinedLaterNodes": 40052
+    },
+    "code": "internal/server/knowledge_sources.go knowledgeAreasLocked: unconditional reference area plus every registry source; empty local path falls back to same referenceName",
+    "conclusion": "Built-in context is scanned twice under separate region identities. This proves redundant scan/catalogue entries, not whole UI latency root cause.",
+    "next": "Add regression preserving canonical context source and enabled/path policies, then fix duplication without deleting user sources or disabling custom aliases."
+  }
+}

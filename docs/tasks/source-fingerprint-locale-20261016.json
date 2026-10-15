@@ -64,14 +64,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Full88 current inputs and independent clean-main release-check passed; push exit0 and exact remote20b5a56c6c7e741c49e19e0205a4740ea4272a7e verified. Source-only delivery; runtime/package unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-16/source-fingerprint-locale.md"
+      ]
     }
   },
   "release_authorization": "User authorized incremental tests, push/main, designated start.command and offline package updates; no new version/tag/Release.",
   "rollback": "Revert scoped commit; preserve existing image and packages. No user data migration.",
-  "handoff": "Source fix and full88 passed. Main gate/push pending. Runtime6d212fa and existing offline packages unchanged; first new startup rebuild remains required. Original12 remain open.",
+  "handoff": "Locale-independent source identity delivered to main20b5a56, full88 and gate/push proven. Runtime/package still prior image; update jointly with next relevant source batch. Original12 retained.",
   "verification_receipt": {
     "time": "20261015T234038459468Z",
     "head": "fc562ea3467ec4d6bdb85eabb013c1584548fadd",

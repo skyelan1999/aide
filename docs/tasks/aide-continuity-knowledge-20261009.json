@@ -7671,10 +7671,10 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "Deliver locale source fix through main gate, then regression/fix for confirmed duplicate built-in context scanning; actual local DOCX star-map preview passed, native large-map latency remains. Original12 retained.",
+    "nextIndependentFocus": "Fix proven duplicate built-in context scanning with canonical-source/preview regression, then rebuild offline image/runtime through designated start.command and direct map interaction acceptance. Original12 retained.",
     "deliveredMain": "3714593ff6435b2e3e72c509e3a66a5acdc5dee1",
     "mainGate": "Docs-only actual Safari reasoning evidence; exact-input full88 reuse, independent clean-main gate and remote3714593 match pass.",
-    "currentCheckpointGate": "Current product fingerprint f264a1110d773cb8bfcdf5c2dd9bbb04a4c7df1f888caaad9bb116272790c89a matches prior passing full88. Actual Safari priority reasoning10 UI writes/reloads/API/disk pass and scoped cleanup verified. Observed running6d212fa/build258afd7;7 frontend assets exact. source-sha varies by localeC/en_US and requires independent fix. Original12 still in_progress."
+    "currentCheckpointGate": "Locale fix full88 PASS, independent main gate and exact push20b5a56 verified. Actual Safari local DOCX preview and owned-tab cleanup pass; duplicate built-in context scan proven. All original12 remain in_progress."
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
@@ -7753,9 +7753,16 @@
     "deliveredMain": "3714593ff6435b2e3e72c509e3a66a5acdc5dee1"
   },
   "source_fingerprint_locale_20261016": {
-    "status": "source_verified",
+    "status": "source_delivered",
     "task": "docs/tasks/source-fingerprint-locale-20261016.json",
     "report": "docs/reviews/2026-10-16/source-fingerprint-locale.md",
-    "evidence": "Source fix focused tests and actual C/en_US identity equality pass; full88 pass, main gate/push pending. Runtime/package unchanged."
+    "evidence": "Full88 pass; clean-main independent gate and push exit0, exact remote20b5a56 verified. Runtime/package unchanged."
+  },
+  "starmap_live_preview_20261016": {
+    "status": "in_progress",
+    "localDocxPreview": "pass",
+    "task": "docs/tasks/starmap-live-preview-20261016.json",
+    "report": "docs/reviews/2026-10-16/starmap-live-preview.md",
+    "remaining": "Duplicate builtin context scanning proven, needs regression/fix. Large-map latency, SSH and other explicit workflows still pending."
   }
 }
