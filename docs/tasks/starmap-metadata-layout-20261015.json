@@ -88,7 +88,7 @@
   },
   "release_authorization": "Existing incremental source/docs push, local canonical startup/testing and offline image authorization; no main/tag/formal release.",
   "rollback": "Revert scoped layout changes or use previously verified320315 image; keep volumes and cache schema unchanged.",
-  "handoff": "Metadata/layout fix98d6599 is pushed; quick71, actual update/layout/cosmos regressions, canonical native equal-length selected-body refresh/query retention and owned-file index/native removal pass. Local fbbb complete offline bundle verified. Current full73 must run after delivery metadata freeze; prior72PASS is historical for6bd snapshot writer only. Still slow20k-view observation; next profile per-frame renderer versus CUA waits, no broad speedup claim. Original12 goal active, Windows user-owned, vectors deferred.",
+  "handoff": "Metadata/layout fix98d6599 is pushed; quick71, actual update/layout/cosmos regressions, canonical native equal-length selected-body refresh/query retention and owned-file index/native removal pass. Local fbbb complete offline bundle verified. Current full73 must run after delivery metadata freeze; prior72PASS is historical for6bd snapshot writer only. Still slow20k-view observation; next profile per-frame renderer versus CUA waits, no broad speedup claim. Original12 goal active, Windows user-owned, vectors deferred. New frozen full73 owner session2886, .agent-state/starmap-metadata-layout/full-owner.json; poll actual live owner and log, keep inputs frozen until terminal.",
   "runtime": {
     "runningImage": "sha256:fbbbcc0aa4d76c3a5e698c36b3fd2666ae8c4f38db0db8935d49b1bb7a7b26a7",
     "image": "sha256:fbbbcc0aa4d76c3a5e698c36b3fd2666ae8c4f38db0db8935d49b1bb7a7b26a7",
@@ -159,5 +159,18 @@
       "scope": "Real applyLiveUpdate/ensureCosmicView/cosmos modules with DOM/canvas/stellar-decoration stubs; real layout function; not browser latency or FPS"
     },
     "limit": "Node VM actual layout/model/update functions, DOM/canvas/stellar-decoration stubs; not native Safari performance"
+  },
+  "full_owner": {
+    "profile": "full",
+    "status": "running",
+    "commandsExpected": 73,
+    "sessionId": 2886,
+    "head": "578bb9834ce0a9503a0d8e5b247d973978c80997",
+    "fingerprint": "112f0434aa0975476a8a307d37926f932786385eb4d9a09f9193002bfd847309",
+    "observedUTC": "2026-10-15T01:04:18.645095+00:00",
+    "ownerLog": ".agent-state/starmap-metadata-layout/full-run.log",
+    "log": ".agent-state/verify-20261015T010352009727Z.log",
+    "sourceCommit": "98d6599",
+    "priorFull72Scope": "6bdcb41 cache writer, terminalPASS, not reused for new layout source"
   }
 }
