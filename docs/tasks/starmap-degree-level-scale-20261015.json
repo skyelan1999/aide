@@ -1,0 +1,81 @@
+{
+  "id": "starmap-degree-level-scale-20261015",
+  "request": "星级阈值按2的0次方、2的1次方、2的2次方递增，星体大小也要与连接数对应；用户补充每级数值应在前一级基础上相加，即累计门槛1/3/7/15/31/63",
+  "baseline": "39c181d532f0b52bc3749be1831cb9051abbe953",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "每级新增成本1/2/4/8…，累计关联数1/3/7/15/31/63…对应第1/2/3/4/5/6…级，零关联0级",
+    "同一连接模型决定颜色等级和基础尺寸，体积正比关联数、半径立方根增长，无旧63条关联尺寸封顶",
+    "选中/高亮/上游及普通/宇宙/近景继续保留基础尺寸差异",
+    "保留真实关系计数口径和索引身份；对重复边、自环、结构边及大数边界做回归",
+    "实际浏览器单页预览等级尺寸；指定start.command更新实际资源并维护完整离线包"
+  ],
+  "scope": [
+    "internal/server/web/starmap.js stellar model/drawing/detail",
+    "internal/server/web/starmap.html legends/copy/cache version",
+    "scripts/starmap-stellar-scale.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks",
+    "docker-images metadata"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户澄清为前一级基础上累加：门槛2^L−1；尺寸采用体积正比累计有效关联数。",
+      "evidence": [
+        "user request 2026-10-15",
+        "internal/server/web/starmap.js prepareStellarConnections/stellarVisual"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "统一stellarScale按累计门槛2^L−1计算等级与下级门槛；基础半径按有效连接数立方根连续增长，交互状态仅作倍率。",
+      "evidence": [
+        "user request 2026-10-15",
+        "internal/server/web/starmap.js prepareStellarConnections/stellarVisual"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "累计门槛2^L−1、等级色阶和立方根半径共享计算；选中/高亮/上游及近景保持大小排序，详情显示下一累计门槛，移除旧尺寸封顶。",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "internal/server/web/starmap.html"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "旧源码反证64/128尺寸相同；累计门槛及大数边界、体积比例/交互状态/计数口径和实际draw回归通过，quick78 PASS；浏览器函数组件普通/选中通过。实际部署及完整星图交互未验收。",
+      "evidence": [
+        ".agent-state/starmap-degree-level-scale/negative.log",
+        ".agent-state/starmap-degree-level-scale/quick-frozen.json",
+        ".agent-state/starmap-degree-level-scale/browser-proof.json",
+        "scripts/starmap-stellar-scale.test.cjs",
+        "scripts/starmap-frame-work.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "同步累计门槛、尺寸映射、颜色与图谱隐喻边界。",
+      "evidence": [
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "唯一测试页与自有回环服务已关，浏览器0标签；未加载大型工作区，5项继承删除保留。",
+      "evidence": [
+        ".agent-state/starmap-degree-level-scale/browser-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "待源码push、指定start.command更新9999和完整离线包；不合并main/tag，full80及真实全页未验证。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户授权持续修改测试并分部分push、更新本地镜像和离线包；本轮不做正式main/tag发行。",
+  "rollback": "回退本次星级/尺寸及缓存版本，无数据迁移。",
+  "handoff": "按用户纠正采用累计1/3/7/15…门槛，源码及quick78/浏览器函数组件通过；下一步指定启动入口部署与离线包。原12条目标/真实UI、收尾重复读取和长文提前结束仍未完成。"
+}

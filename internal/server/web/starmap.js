@@ -219,7 +219,17 @@ function readMapPalette(){
 let mapPalette=readMapPalette();
 const skyText=()=>mapPalette.highContrast?mapPalette.text:'#e3ebf3',skyMuted=()=>mapPalette.highContrast?mapPalette.muted:'#aebdca';
 // Celestial colors are a visual metaphor; degree is unique non-structural neighbors.
-const stellarBands=[{min:0,name:'孤立灰星',dark:'#8e969f',light:'#8b9198'},{min:1,name:'暖红星',dark:'#d8a294',light:'#ad7668'},{min:3,name:'金色星',dark:'#e1c293',light:'#9c8259'},{min:8,name:'白色星',dark:'#e4e2d6',light:'#71808d'},{min:16,name:'蓝白星',dark:'#b4d2eb',light:'#6086a7'},{min:32,name:'蓝色强光星',dark:'#7db9e8',light:'#3b76a6'}];
+const stellarBands=[{min:0,name:'孤立灰星',dark:'#8e969f',light:'#8b9198'},{min:1,name:'暖红星',dark:'#d8a294',light:'#ad7668'},{min:3,name:'金色星',dark:'#e1c293',light:'#9c8259'},{min:7,name:'白色星',dark:'#e4e2d6',light:'#71808d'},{min:15,name:'蓝白星',dark:'#b4d2eb',light:'#6086a7'},{min:31,name:'蓝色星',dark:'#93c4eb',light:'#4b80a8'},{min:63,name:'蓝色强光星',dark:'#7db9e8',light:'#3b76a6'}];
+function stellarScale(value){
+ const count=Number.isFinite(value)?Math.min(Number.MAX_SAFE_INTEGER,Math.max(0,Math.floor(value))):0;
+ // Each rank adds 1, 2, 4, 8... connections: cumulative thresholds 1, 3, 7...
+ // Volume follows the actual degree continuously,
+ // so radius grows by cbrt(2) per rank without a top-rank size plateau.
+ let level=count?Math.floor(Math.log2(count+1)):0;
+ if(level&&count<2**level-1)level--; // log2 rounds just below large powers.
+ return {count,level,min:2**level-1,next:level<53?2**(level+1)-1:null,radius:count?1.4*Math.cbrt(count):.72};
+}
+function stellarRadius(n){return Number.isFinite(n.stellarRadius)?n.stellarRadius:stellarScale(n.connectionCount).radius;}
 function prepareStellarConnections(){
  const neighbors=new Map(graph.nodes.map(n=>[n.id,new Set()]));
  const link=(a,b)=>{if(a===b||!neighbors.has(a)||!neighbors.has(b))return;neighbors.get(a).add(b);neighbors.get(b).add(a);};
@@ -230,14 +240,15 @@ function prepareStellarConnections(){
  highlightedStarIDs=window.AideStarGravity?.analyze(graph.nodes,graph.edges).highlightedIds||new Set();
 }
 function applyStellarColor(n){
- const count=n.connectionCount||0,band=stellarBands.findLast(b=>count>=b.min);n.stellarBand=band.name;
+ const scale=stellarScale(n.connectionCount),count=scale.count,band=stellarBands.findLast(b=>count>=b.min);n.stellarBand=band.name;
+ n.stellarLevel=scale.level;n.stellarRadius=scale.radius;n.nextStellarThreshold=scale.next;
  n.stellarStrength=count?Math.min(1,Math.log2(count+1)/6):0;
  n.starColor=n.spectralColor=mapPalette.highContrast?mapPalette.star:band[mapPalette.light?'light':'dark'];n.glow=glowSprite(n.starColor);
 }
 function stellarVisual(n,depth,chosen=false,incoming=false){
  const strength=n.stellarStrength||0,attenuation=codeView&&Number.isFinite(depth)?Math.max(.22,1/(1+Math.min(depth,16)*.38)):1;
- const highlight=highlightedStarIDs.has(n.id);
- return {highlight,radius:chosen?.9+strength*5.4:incoming?3.1:highlight?4.5:(.72+strength*3.65)*attenuation,halo:chosen?22+strength*92:incoming?34:highlight?54:(n.connectionCount?12+strength*42:6)*attenuation,alpha:chosen||highlight||mapPalette.highContrast?1:incoming?.86:(.38+strength*.54)*attenuation};
+ const highlight=highlightedStarIDs.has(n.id),radius=stellarRadius(n);
+ return {highlight,radius:radius*(chosen?1.65:incoming?1.2:highlight?1.4:attenuation),halo:radius*(chosen?24:incoming?16:highlight?18:10)*attenuation,alpha:chosen||highlight||mapPalette.highContrast?1:incoming?.86:(.38+strength*.54)*attenuation};
 }
 function syncMapPalette(){
  const next=readMapPalette();if(JSON.stringify(next)===JSON.stringify(mapPalette))return;mapPalette=next;
@@ -655,7 +666,7 @@ function drawCosmicLocalSystem(now,fade=1){
  for(const gate of gateAnchors){const node=nodeByID.get(gate.anchorNodeID);if(node&&!byID.has(node.id)){byID.set(node.id,{node,edge:null,gateAnchor:true});neighbors.push({node,edge:null,gateAnchor:true});}}
  const localScale=1+Math.max(0,zoom-1)*.48,positions=new Map([[focus.n.id,center]]);
  if(neighbors.length){const hostPower=window.AideCosmicPhysics?.powerProxy(focus.n.connectionCount)||.1,hostMass=window.AideCosmicPhysics?.massProxy(focus.n.connectionCount)||.35,inclination=.72;
-  neighbors.forEach(({node,edge},index)=>{const physics=window.AideCosmicPhysics,a=1+index*.22,eccentricity=.025+seeded(node.id+'orbit-eccentricity')*.12,argument=seeded(node.id+'orbit-argument')*tau,initial=seeded(node.id+'orbit-phase')*tau,meanMotion=physics?.keplerMeanMotion(hostMass,a)||.5,mean=initial+(motionEnabled()?now/50000*meanMotion:0),state=physics?.keplerOrbit(mean,eccentricity,hostMass,a)||{x:a*Math.cos(mean),y:a*Math.sin(mean),radius:a},scale=58*localScale,x0=state.x*scale,y0=state.y*scale*inclination,x=center.x+Math.cos(argument)*x0-Math.sin(argument)*y0,y=center.y+(Math.sin(argument)*x0+Math.cos(argument)*y0),orbitRadius=state.radius,mag=Math.sqrt(zoom),r=Math.max(1.35,Math.min(4.2,.85+Math.log2((node.connectionCount||0)+1)*.42))*mag;
+  neighbors.forEach(({node,edge},index)=>{const physics=window.AideCosmicPhysics,a=1+index*.22,eccentricity=.025+seeded(node.id+'orbit-eccentricity')*.12,argument=seeded(node.id+'orbit-argument')*tau,initial=seeded(node.id+'orbit-phase')*tau,meanMotion=physics?.keplerMeanMotion(hostMass,a)||.5,mean=initial+(motionEnabled()?now/50000*meanMotion:0),state=physics?.keplerOrbit(mean,eccentricity,hostMass,a)||{x:a*Math.cos(mean),y:a*Math.sin(mean),radius:a},scale=58*localScale,x0=state.x*scale,y0=state.y*scale*inclination,x=center.x+Math.cos(argument)*x0-Math.sin(argument)*y0,y=center.y+(Math.sin(argument)*x0+Math.cos(argument)*y0),orbitRadius=state.radius,mag=Math.sqrt(zoom),r=stellarRadius(node)*.85*mag;
    drawKeplerOrbit(center.x,center.y,a*scale,eccentricity,argument,inclination,node.starColor||mapPalette.star,fade);
    positions.set(node.id,{x,y});const hit={n:node,p:{x,y,onScreen:true},owner:{group:focus.owner.group},local:true};cosmicLocalHits.push(hit);
    if(edge){ctx.globalAlpha=fade*.36;ctx.strokeStyle=mapPalette.star;ctx.lineWidth=.7;ctx.setLineDash(edge.dashed?[3,4]:[]);ctx.beginPath();ctx.moveTo(center.x,center.y);ctx.lineTo(x,y);ctx.stroke();ctx.setLineDash([]);}
@@ -786,7 +797,7 @@ function updateLayerLabels(){
  if($('detail-level')){
   $('detail-level').hidden=!selected;
   const globalDepth=selected?.globalVisualDepth,cycle=selected&&callLayers?.cycles.has(selected.id);
-  $('detail-level').textContent=(selected?`${selected.connectionCount||0} 个有效关联 · ${selected.stellarBand}${highlightedStarIDs.has(selected.id)?' · 高亮星':''} · `:'')+(Number.isFinite(globalDepth)?`调用星等 · 全局静态调用层 ${globalDepth+1}`:'调用关系未知 · 基准星等')+(selected?' · 当前节点（选中增亮）':'')+(cycle?' · 候选闭环':'');
+  $('detail-level').textContent=(selected?`${selected.connectionCount||0} 个有效关联 · ${selected.stellarLevel||0}级恒星 · ${selected.stellarBand} · 下一级 ${selected.nextStellarThreshold??'超出安全计数范围'} 个关联${highlightedStarIDs.has(selected.id)?' · 高亮星':''} · `:'')+(Number.isFinite(globalDepth)?`调用星等 · 全局静态调用层 ${globalDepth+1}`:'调用关系未知 · 基准星等')+(selected?' · 当前节点（选中增亮）':'')+(cycle?' · 候选闭环':'');
 
  }
 }

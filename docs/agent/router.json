@@ -505,6 +505,10 @@
       ],
       [
         "node",
+        "scripts/starmap-stellar-scale.test.cjs"
+      ],
+      [
+        "node",
         "scripts/starmap-empty-state.test.cjs"
       ],
       [
