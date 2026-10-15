@@ -6354,5 +6354,13 @@
     "remaining": "Canonical rebuild/owned allocation-deletion-restart runtime proof, matching offline package/push, fresh full72. Prior full72 terminal FAIL whole-package15m timeout, vet NOT_RUN; package budget18m inside unchanged outer limits. Theme confirmation and external gates remain.",
     "runtimeCounter": "Source d6dbf55 canonical exact entry: native#3 deleted, restart then native#4, next5 persisted, no legacy root file, owned fixtures removed, original1 session bytes unchanged. Guard exposed default field materialization and then proven custom voice reset bug.",
     "voiceFix": "Negative test1.933s: reasoning-only PUT clears insert/aggressive. Omitted preference preservation/config readback/enum validation added; combined focused race30.827s+vet and quick70 PASS. Final runtime/bundle/full pending."
+  },
+  "followup129": {
+    "date": "2026-10-15",
+    "summary": "Canonical session counter and independent voice preferences fixes pushed57e1579; runtime restart numbers3/4 and voice custom readback/restoration PASS. Approved six-theme desktop/574px acceptance completed/restored, fixture5 removed; sequence6 and assistant checked read marker preserved. Current00c601 complete offline archive streamed import/hashes/both local copies PASS. Full72 pending; no formal release.",
+    "evidence": [
+      "docs/tasks/session-counter-canonical-20261015.json",
+      "docs/tasks/plugin-plan-theme-acceptance-20261015.json"
+    ]
   }
 }

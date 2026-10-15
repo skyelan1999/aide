@@ -31,24 +31,33 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Existing product capability acceptance only; full72 inputs remain frozen.",
+      "summary": "Acceptance of existing product; no additional product source changes needed.",
       "evidence": [
         "internal/server/web/plugin-plans.js"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Current professional/system renders light. Actual canonical Safari desktop1325x940 and minimum574x940: selected5/effective1, waiting/dispatched/proposed/uncertain distinctions readable; Space collapses/reopens graph; long literal result wraps; earlier-run evidence navigation exactly matches first run, not newer run. Target390px not achieved due native minimum. Other palettes/dark theme selection awaits requested non-sensitive setting-change confirmation, no theme writes made.",
+      "status": "pass",
+      "summary": "User explicitly authorized temporary palette/mode changes and restoration. Actual canonical Safari9999: professional/comfort/classic light+dark at desktop1325x940 and native minimum574x940 visually inspected. Long literal result wraps, result summary toggles by keyboard, warning/status controls readable. Earlier light test proves selected5/effective1 and correct-run evidence navigation. Native AX truncates long strings: exact excerpt bound relies on module tests, not AX character count.390px NOT_RUN. Display fixtures only; no model/plugin execution.",
       "evidence": [
-        ".agent-state/plugin-plan-theme/light-desktop.jpg",
-        ".agent-state/plugin-plan-theme/light-narrow-keyboard.jpg",
-        ".agent-state/plugin-plan-theme/light-narrow-result.jpg",
-        ".agent-state/plugin-plan-theme/light-narrow-outcome.txt"
+        ".agent-state/plugin-plan-theme-approved/professional-light-desktop.jpg",
+        ".agent-state/plugin-plan-theme-approved/professional-dark-desktop.jpg",
+        ".agent-state/plugin-plan-theme-approved/comfort-light-desktop.jpg",
+        ".agent-state/plugin-plan-theme-approved/comfort-dark-desktop.jpg",
+        ".agent-state/plugin-plan-theme-approved/classic-light-desktop.jpg",
+        ".agent-state/plugin-plan-theme-approved/classic-dark-desktop.jpg",
+        ".agent-state/plugin-plan-theme-approved/professional-light-narrow.jpg",
+        ".agent-state/plugin-plan-theme-approved/professional-dark-narrow.jpg",
+        ".agent-state/plugin-plan-theme-approved/comfort-light-narrow.jpg",
+        ".agent-state/plugin-plan-theme-approved/comfort-dark-narrow.jpg",
+        ".agent-state/plugin-plan-theme-approved/classic-light-narrow.jpg",
+        ".agent-state/plugin-plan-theme-approved/classic-dark-narrow.jpg",
+        ".agent-state/plugin-plan-theme-approved/keyboard-toggle.txt"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "Recorded actual light-only and574px evidence; prior all-theme acceptance remains open.",
+      "summary": "Approved six-theme desktop and574px native acceptance documented;390px remains NOT_RUN.",
       "evidence": [
         "docs/architecture/plugin-task-scheduling.md",
         "docs/tasks/plugin-plan-ui-20261015.json"
@@ -56,22 +65,24 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Removed only owned two-run display fixture after exact title/run ownership checks; original1 session retained; no model/plugin execution/settings changes. Window restored1325x940, exact canonical entry reopened; original config/auth hashes and mounts preserved.",
+      "summary": "Restored professional/system selected state and1325x940 native window; removed only owned fixture5; original assistant retained and selected. Settings onlynext5->6 retained. Selecting assistant writes checked=true read marker; removing that sole line reproduces exact original session SHA. No messages/runs/content changed. All other protected hashes/mounts/config match.",
       "evidence": [
-        ".agent-state/plugin-plan-theme/cleanup.json",
-        ".agent-state/plugin-plan-theme/window-restored.jpg",
-        ".agent-state/plugin-plan-theme/runtime-check.log"
+        ".agent-state/plugin-plan-theme-approved/restored-narrow-selected.txt",
+        ".agent-state/plugin-plan-theme-approved/cleanup.json",
+        ".agent-state/plugin-plan-theme-approved/cleanup-assistant.jpg",
+        ".agent-state/plugin-plan-theme-approved/preservation.json",
+        ".agent-state/plugin-plan-theme-approved/runtime-check.log"
       ]
     },
     "release": {
       "status": "not_run",
-      "summary": "Documentation-only acceptance continuation; current source/image unchanged while full72 runner remains active.",
+      "summary": "Scoped UI acceptance complete; current full72 is a separate pending release gate. No formal release.",
       "evidence": [
-        "docs/tasks/bootstrap-file-proto-close-20261015.json"
+        "docs/tasks/session-counter-canonical-20261015.json"
       ]
     }
   },
   "release_authorization": "Existing documentation push/local acceptance authorization; no release or runtime code changes.",
-  "rollback": "No product code or appearance preference changed; owned fixture removed and private evidence retained.",
-  "handoff": "Light desktop and574px/keyboard/long-result/correct-run evidence navigation PASS. Other palettes/dark changes await UI preference-change confirmation;390px NOT_RUN. Fixture removed, window and configuration preserved. Current full72 pending; do not claim all-theme completion."
+  "rollback": "Original professional/system and window restored; owned fixture removed; monotonic sequence and native checked read marker retained.",
+  "handoff": "Six palettes/modes desktop and574px PASS; original appearance restored and fixture removed.390px NOT_RUN; real-provider/plugin concurrency and receiving-device import remain separate gates."
 }

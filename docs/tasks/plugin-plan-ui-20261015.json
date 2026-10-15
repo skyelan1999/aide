@@ -169,5 +169,10 @@
     "remote": "origin",
     "status": "pass",
     "scope": "Incremental branch source/docs push only; no main/tag/formal release or image registry push."
+  },
+  "approved_theme_followup": {
+    "task": "docs/tasks/plugin-plan-theme-acceptance-20261015.json",
+    "status": "pass",
+    "scope": "Six themes at1325x940/574x940; no390px or real plugin execution claim"
   }
 }

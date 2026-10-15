@@ -40,7 +40,7 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "Task branch fix/session-counter-canonical: canonical counter paths, upgrade sequence preservation, allocation/deleted-restart/durable repair and legacy preference isolation regressions; Go package budget18m retains race/count/outer bounds. Focused verification pending. Voice dispatch enums now preserved on omitted patches, validated before mutation and exposed through config GET. No model/key draft submission added.",
+      "summary": "Task branch fix/session-counter-canonical: canonical counter paths, upgrade sequence preservation, allocation/deleted-restart/durable repair and legacy preference isolation regressions; Go package budget18m retains race/count/outer bounds. Focused verification passed. Voice dispatch enums now preserved on omitted patches, validated before mutation and exposed through config GET. No model/key draft submission added.",
       "evidence": [
         "internal/server/server.go",
         "internal/server/session_number_test.go",
@@ -49,7 +49,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old-source injected canonical persistence regression FAIL2.536s allocated2/persistedNext2 (negative.log). Current source scoped allocation/deleted-restart/durable startup repair/legacy sequence only migration, assistant/config/settings/reasoning tests race31.341s + vet PASS. Quick70 and route nested deadline tests5 PASS. Canonical runtime/new package/full72 pending; prior full72 terminal FAIL whole-package15m deadline, not input drift or per-test hang. Runtime source d6dbf55 exact entry: native3/delete/restart/native4, canonical next5, old root absent, original1 session bytes identical. Guard initially found two omitted voice defaults materialized on persistence; normalization-only semantic equivalence established, did not silently pass exact bytes. Separate voice custom reset negative1.933s; final combined canonical/settings race30.827s+vet and quick70 PASS. Final native custom voice/readback/runtime and image pending.",
+      "summary": "Old-source injected canonical persistence regression FAIL2.536s allocated2/persistedNext2 (negative.log). Current source scoped allocation/deleted-restart/durable startup repair/legacy sequence only migration, assistant/config/settings/reasoning tests race31.341s + vet PASS. Quick70 and route nested deadline tests5 PASS. Canonical runtime/new package/full72 pending; prior full72 terminal FAIL whole-package15m deadline, not input drift or per-test hang. Runtime source d6dbf55 exact entry: native3/delete/restart/native4, canonical next5, old root absent, original1 session bytes identical. Guard initially found two omitted voice defaults materialized on persistence; normalization-only semantic equivalence established, did not silently pass exact bytes. Separate voice custom reset negative1.933s; final combined canonical/settings race30.827s+vet and quick70 PASS. Final native custom voice/readback/runtime and image pending. Final57e native voice settings showed insert/aggressive after reasoning-only save; config and raw settings restored exactly. Approved fixture5 advances next5->6, cleanup preserves original content with checked read marker only. Final runtime/source/image correspondence verified. Streamed offline package hash/import/launcher/platform and both local copies PASS. Previous extraction ran out of host disk; deleted only own incomplete tar and restarted Docker engine, no volume/prune/reset. Fresh full72 pending.",
       "evidence": [
         ".agent-state/session-counter-canonical/negative.log",
         ".agent-state/session-counter-canonical/scoped-race.log",
@@ -60,7 +60,11 @@
         ".agent-state/session-counter-canonical/number-first.txt",
         ".agent-state/session-counter-canonical/number-second.txt",
         ".agent-state/session-counter-canonical/settings-final-race.log",
-        ".agent-state/session-counter-canonical/quick-final.log"
+        ".agent-state/session-counter-canonical/quick-final.log",
+        ".agent-state/session-counter-canonical/voice-custom-readback.txt",
+        ".agent-state/session-counter-canonical/voice-runtime-restored.json",
+        ".agent-state/session-counter-canonical/package.json",
+        ".agent-state/plugin-plan-theme-approved/preservation.json"
       ]
     },
     "documentation": {
@@ -72,8 +76,8 @@
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "No real user sessions modified. Original stored session bytes retained, reasoning restoredauto. Prior fixture caused sequence2->3, intentionally retained; all other4 protected hashes unchanged. New baseline records exact allowed delta before canonical rebuild. Inherited5 vendor deletions untouched. Number3/4 owned fixtures both removed; original1 session bytes unchanged. Monotonic counter3->5 retained, omitted voice defaults queue/conservative materialized (same effective defaults). Removed only own undelivered intermediate70402 archive+checksum after newer settings bug discovery; previously delivered archives untouched.",
+      "status": "pass",
+      "summary": "No real user sessions modified. Original stored session bytes retained, reasoning restoredauto. Prior fixture caused sequence2->3, intentionally retained; all other4 protected hashes unchanged. New baseline records exact allowed delta before canonical rebuild. Inherited5 vendor deletions untouched. Number3/4 owned fixtures both removed; original1 session bytes unchanged. Monotonic counter3->5 retained, omitted voice defaults queue/conservative materialized (same effective defaults). Removed only own undelivered intermediate70402 archive+checksum after newer settings bug discovery; previously delivered archives untouched. Final voice custom preferences restored byte-exact before theme fixture. Approved theme fixture5 removed, next6 retained. Original assistant checked read marker is sole session delta; messages/runs unchanged. Professional/system and original window restored. Protected files/mounts/config verified.",
       "evidence": [
         ".agent-state/bootstrap-file-proto-close/reasoning-ui-proof.json",
         ".agent-state/session-counter-canonical/before.json",
@@ -83,11 +87,13 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Incremental source/docs push and matching local candidate/offline package pending; no formal main/tag release.",
-      "evidence": []
+      "summary": "Sources d6dbf55 and57e1579 pushed to task branch. Matching00c601 offline package verified/copied in both local trees; receiving device import and fresh full72 still pending. No main/tag release.",
+      "evidence": [
+        ".agent-state/session-counter-canonical/package.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental source push/local testing/build/offline image authorization; no formal release.",
-  "rollback": "No source change yet. Preserve original stored session bytes and all settings except legitimate monotonic sequence advancement; never roll the sequence back.",
-  "handoff": "Source fixed, scoped race31.341s+vet and quick70 PASS. Need exact canonical start.command rebuild, actual allocation/deletion/restart observation with owned fixture, final package and fresh full72 under bounded18m package budget. Prior full72 terminalFAIL preserved."
+  "rollback": "Revert task commits if needed, preserving data volumes. Do not roll back monotonic sequence or overwrite unrelated user data.",
+  "handoff": "Scoped final race30.827s+vet, quick70, native voice/reasoning and counter restart proof PASS. Current image00c601 and complete offline bundle verified. Original preferences restored; fixture removed. Freeze delivery metadata and run fresh full72; previous full72 FAIL retained."
 }

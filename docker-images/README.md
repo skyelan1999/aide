@@ -149,3 +149,10 @@ Latest reviewed-recovery continuation development snapshot (2026-10-15): `aide-0
 最新本机 ARM64 包：`aide-0.1.17.0-RC2-linux-arm64-0d67b0b6bbfc-offline.tar.gz`，SHA-256 `e18e8f3b54e603eb531547ebd219fc59ef3f074ddb72f0fafd67e4676c3eb0fe`。镜像 `sha256:0d67b0b6bbfc1907d92b419508182da098ab8d19c60995b24454e72b15d894aa`，构建源码提交 `334237a`，源内容指纹 `0759c1e5cc41c0a9c91a7b5cc0b96a031e72f449407239af08e28c16f03105a7`。包含完整应用及 `aide:dependencies-v1` 依赖镜像；内外哈希、镜像标签、运行平台、实际docker load、启动脚本及两工作树本地副本均校验通过。包内入口沿用 `start.command`，仅导入本地镜像再启动；源码入口可使用依赖镜像在无网络模式重建。
 
 本机仍使用保存的9999配置；原不可用工作区配置保留并明确提示临时工作区。修复不可用引用目录误回登录框及HTTP/TLS监听器并发关闭panic。定向race/vet与系统Safari恢复验收通过；完整72项门禁待最终收据。开发分支推送和本机镜像交付不代表正式main/tag发布或接收设备导入成功。
+
+
+## 2026-10-15 会话编号及独立语音偏好修复候选
+
+当前本机 ARM64 包：`aide-0.1.17.0-RC2-linux-arm64-00c6011ad9f4-offline.tar.gz`，705659485 字节，SHA-256 `fb39935fe3d0be3e09fb8181629a5d9c6db3d69a737ca10f1bad948da47d7ab2`。源码提交 `57e1579`（含 `d6dbf55`），源内容指纹 `eb8d7f89e3ca583c3aa2bc52d4729cceb21bd823967653f36a62f75611066cf6`。应用及完整本地依赖镜像均在包内；内外哈希、启动脚本、运行平台、实际流式 docker load 和两个本地工作树副本校验通过。沿用包内 `start.command` 直接导入；接收设备尚未验收。
+
+规范路径持久化编号、旧配置仅提升编号、独立设置保存保留语音派发偏好已修复。定向 race/vet、quick70、系统 Safari 编号重启与语音读回通过；完整72项门禁单独记录于[任务账本](../docs/tasks/session-counter-canonical-20261015.json)，当前不声明全量通过。六主题桌面及574像素窗口显示检查通过，390像素与真实模型执行仍未验收。开发分支交付，不代表main/tag正式发布。
