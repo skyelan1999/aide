@@ -1,0 +1,73 @@
+{
+  "id": "main-integration-stellar-20261015",
+  "request": "做完这个把所有内容和到main上",
+  "baseline": "1ce003b47468291a14a6e39be5ec30ec0ad03c83",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "核对当前分支完整包含origin/main及全部16项新增提交",
+    "在独立干净main目录执行full80并运行release-check",
+    "推送origin/main并核对远端SHA；保留原目录5项未提交vendor删除",
+    "更新总账与跨设备交接；不升版、打tag或创建Release"
+  ],
+  "scope": [
+    "docs/tasks/main-integration-stellar-20261015.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "main integration and verification",
+    "../AIDE-跨设备交接-2026-10-14.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户授权累计星级修改完成后将全部现有已提交修改合入并推送main。",
+      "evidence": [
+        "user request 2026-10-15",
+        "git log origin/main..1ce003b"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "使用独立干净main工作树快进合并，避免将原目录5项继承vendor删除纳入提交；完整门禁通过再推送。",
+      "evidence": [
+        "user request 2026-10-15",
+        "git log origin/main..1ce003b"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "当前1ce003b相对origin/main有16个提交，涵盖成果页、文件读取归属、卡片停止及星图文案/尺度。",
+      "evidence": [
+        "user request 2026-10-15",
+        "git log origin/main..1ce003b"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "待独立干净main目录完整80项检查；旧quick78仅代表开发候选。",
+      "evidence": [
+        "docs/tasks/starmap-degree-level-scale-20261015.json"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "维护当前合入任务，完成后补总账和跨设备交接。",
+      "evidence": [
+        "docs/tasks/main-integration-stellar-20261015.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "保留5项继承删除、已有离线包和用户数据；待清理自有临时工作树。",
+      "evidence": [
+        "git status --short"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户直接授权：做完这个把所有内容和到main上。",
+  "rollback": "保留原main 7f68a3c及feature分支；需要撤回时经新授权以revert提交回退，不force push。运行9999镜像和用户数据本轮不替换。",
+  "handoff": ""
+}
