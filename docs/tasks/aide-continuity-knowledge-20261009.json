@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "2026-10-15 followup128 fix/session-counter-canonical: old-source counter canonical persistence failure reproduced; fixed canonical writers and sequence-only legacy upgrade. Scoped race31.341s+vet, quick70 PASS; canonical runtime/package/new full pending. Prior full72 terminal FAIL15m package budget, no Close panic, vet NOT_RUN. Reasoning independent native save/reload/restore PASS, all original session content unchanged; legitimate counter advancement not rolled back. Original12 workstreams active; Windows user-owned, real vectors deferred, no usable provider config, receiving-device import unobserved.",
+  "handoff": "2026-10-15 followup129: source57e1579 and documentationeef916c pushed on fix/session-counter-canonical. Canonical sequence/legacy upgrade and partial voice settings fixes have scoped race/vet, quick70, native numbering restart and voice readback/restoration proof. Current image00c601 complete offline bundle verified/imported/copied locally. Approved six-theme desktop/narrow575–576px display acceptance complete, professional/system restored, owned fixture removed; original assistant only checked read marker changed. Fresh frozen full72 PASS (server race716.110s+vet, unchanged ebd8556a fingerprint), receipt .agent-state/session-counter-canonical/full-frozen.json. No formal release. Original12 workstreams remain active; real provider unavailable, vectors deferred, Windows user-owned, receiving-device import unobserved.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6357,10 +6357,21 @@
   },
   "followup129": {
     "date": "2026-10-15",
-    "summary": "Canonical session counter and independent voice preferences fixes pushed57e1579; runtime restart numbers3/4 and voice custom readback/restoration PASS. Approved six-theme desktop/574px acceptance completed/restored, fixture5 removed; sequence6 and assistant checked read marker preserved. Current00c601 complete offline archive streamed import/hashes/both local copies PASS. Full72 pending; no formal release.",
+    "summary": "Canonical session counter and independent voice preferences fixes pushed57e1579; runtime restart numbers3/4 and voice custom readback/restoration PASS. Approved six-theme desktop/574px acceptance completed/restored, fixture5 removed; sequence6 and assistant checked read marker preserved. Current00c601 complete offline archive streamed import/hashes/both local copies PASS. Fresh frozen full72 PASS: server race716.110s and vet; no formal release.",
     "evidence": [
       "docs/tasks/session-counter-canonical-20261015.json",
       "docs/tasks/plugin-plan-theme-acceptance-20261015.json"
-    ]
+    ],
+    "full_gate": {
+      "status": "pass",
+      "commands": 72,
+      "serverRaceSeconds": 716.11,
+      "vet": "pass",
+      "fingerprint": "ebd8556a4e0f78c1299df0523704f86bf3a318d79ee0958bb2f0de7bbd785cc2",
+      "head": "eef916cc05a2c5db32e1b60fe76896087f76d016",
+      "log": ".agent-state/verify-20261015T000716813835Z.log",
+      "receipt": ".agent-state/session-counter-canonical/full-frozen.json",
+      "scope": "Frozen current tracked/untracked inputs including inherited vendor deletions; no formal release or external device/provider acceptance."
+    }
   }
 }

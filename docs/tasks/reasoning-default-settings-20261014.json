@@ -113,5 +113,27 @@
       "docs/tasks/session-counter-canonical-20261015.json"
     ],
     "full": "Current frozen full72 active; old historical full failures remain scoped to their sources."
+  },
+  "canonical_voice_preferences_followup": {
+    "source": "57e1579",
+    "task": "docs/tasks/session-counter-canonical-20261015.json",
+    "result": "Independent reasoning PUT preserves custom insert/aggressive voice dispatch settings. Negative old-source regression fails; final scoped race/vet and native canonical Safari config controls show actual custom values. Original API and raw settings bytes restored before subsequent theme fixture.",
+    "evidence": [
+      ".agent-state/session-counter-canonical/voice-negative.log",
+      ".agent-state/session-counter-canonical/settings-final-race.log",
+      ".agent-state/session-counter-canonical/voice-custom-readback.txt",
+      ".agent-state/session-counter-canonical/voice-runtime-restored.json"
+    ]
+  },
+  "current_frozen_full_followup": {
+    "status": "pass",
+    "commands": 72,
+    "serverRaceSeconds": 716.11,
+    "vet": "pass",
+    "fingerprint": "ebd8556a4e0f78c1299df0523704f86bf3a318d79ee0958bb2f0de7bbd785cc2",
+    "head": "eef916cc05a2c5db32e1b60fe76896087f76d016",
+    "log": ".agent-state/verify-20261015T000716813835Z.log",
+    "receipt": ".agent-state/session-counter-canonical/full-frozen.json",
+    "scope": "Frozen current tracked/untracked inputs including inherited vendor deletions; no formal release or external device/provider acceptance."
   }
 }

@@ -38,7 +38,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "User explicitly authorized temporary palette/mode changes and restoration. Actual canonical Safari9999: professional/comfort/classic light+dark at desktop1325x940 and native minimum574x940 visually inspected. Long literal result wraps, result summary toggles by keyboard, warning/status controls readable. Earlier light test proves selected5/effective1 and correct-run evidence navigation. Native AX truncates long strings: exact excerpt bound relies on module tests, not AX character count.390px NOT_RUN. Display fixtures only; no model/plugin execution.",
+      "summary": "User explicitly authorized temporary palette/mode changes and restoration. Actual canonical Safari9999: professional/comfort/classic light+dark at desktop1325–1326x940 and narrow575–576x940 (JPEG measured; previous light-only fixture574x940) visually inspected. Long literal result wraps, result summary toggles by keyboard, warning/status controls readable. Earlier light test proves selected5/effective1 and correct-run evidence navigation. Native AX truncates long strings: exact excerpt bound relies on module tests, not AX character count.390px NOT_RUN. Display fixtures only; no model/plugin execution.",
       "evidence": [
         ".agent-state/plugin-plan-theme-approved/professional-light-desktop.jpg",
         ".agent-state/plugin-plan-theme-approved/professional-dark-desktop.jpg",
@@ -65,7 +65,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Restored professional/system selected state and1325x940 native window; removed only owned fixture5; original assistant retained and selected. Settings onlynext5->6 retained. Selecting assistant writes checked=true read marker; removing that sole line reproduces exact original session SHA. No messages/runs/content changed. All other protected hashes/mounts/config match.",
+      "summary": "Restored professional/system selected state and approximate original desktop window (final JPEG1326x940 versus initial1325x940); removed only owned fixture5; original assistant retained and selected. Settings onlynext5->6 retained. Selecting assistant writes checked=true read marker; removing that sole line reproduces exact original session SHA. No messages/runs/content changed. All other protected hashes/mounts/config match.",
       "evidence": [
         ".agent-state/plugin-plan-theme-approved/restored-narrow-selected.txt",
         ".agent-state/plugin-plan-theme-approved/cleanup.json",
@@ -76,7 +76,7 @@
     },
     "release": {
       "status": "not_run",
-      "summary": "Scoped UI acceptance complete; current full72 is a separate pending release gate. No formal release.",
+      "summary": "Scoped six-theme UI acceptance and current frozen full72 PASS. Development documentation push only; no formal release.",
       "evidence": [
         "docs/tasks/session-counter-canonical-20261015.json"
       ]
@@ -84,5 +84,34 @@
   },
   "release_authorization": "Existing documentation push/local acceptance authorization; no release or runtime code changes.",
   "rollback": "Original professional/system and window restored; owned fixture removed; monotonic sequence and native checked read marker retained.",
-  "handoff": "Six palettes/modes desktop and574px PASS; original appearance restored and fixture removed.390px NOT_RUN; real-provider/plugin concurrency and receiving-device import remain separate gates."
+  "handoff": "Six palettes/modes desktop and574px PASS; original appearance restored and fixture removed.390px NOT_RUN; real-provider/plugin concurrency and receiving-device import remain separate gates.",
+  "measured_screenshot_dimensions": {
+    "desktop": [
+      1325,
+      1326
+    ],
+    "narrow": [
+      575,
+      576
+    ],
+    "height": 940,
+    "earlierLightOnlyNarrow": 574,
+    "note": "JPEG SOF measured; edge drag rounding varies1-2px. Native390px not achieved. Final restored window measured separately.",
+    "evidence": ".agent-state/plugin-plan-theme-approved/dimensions.json",
+    "finalWindow": [
+      1326,
+      940
+    ]
+  },
+  "current_frozen_full_followup": {
+    "status": "pass",
+    "commands": 72,
+    "serverRaceSeconds": 716.11,
+    "vet": "pass",
+    "fingerprint": "ebd8556a4e0f78c1299df0523704f86bf3a318d79ee0958bb2f0de7bbd785cc2",
+    "head": "eef916cc05a2c5db32e1b60fe76896087f76d016",
+    "log": ".agent-state/verify-20261015T000716813835Z.log",
+    "receipt": ".agent-state/session-counter-canonical/full-frozen.json",
+    "scope": "Frozen current tracked/untracked inputs including inherited vendor deletions; no formal release or external device/provider acceptance."
+  }
 }

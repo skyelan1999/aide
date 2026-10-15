@@ -48,8 +48,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Old-source injected canonical persistence regression FAIL2.536s allocated2/persistedNext2 (negative.log). Current source scoped allocation/deleted-restart/durable startup repair/legacy sequence only migration, assistant/config/settings/reasoning tests race31.341s + vet PASS. Quick70 and route nested deadline tests5 PASS. Canonical runtime/new package/full72 pending; prior full72 terminal FAIL whole-package15m deadline, not input drift or per-test hang. Runtime source d6dbf55 exact entry: native3/delete/restart/native4, canonical next5, old root absent, original1 session bytes identical. Guard initially found two omitted voice defaults materialized on persistence; normalization-only semantic equivalence established, did not silently pass exact bytes. Separate voice custom reset negative1.933s; final combined canonical/settings race30.827s+vet and quick70 PASS. Final native custom voice/readback/runtime and image pending. Final57e native voice settings showed insert/aggressive after reasoning-only save; config and raw settings restored exactly. Approved fixture5 advances next5->6, cleanup preserves original content with checked read marker only. Final runtime/source/image correspondence verified. Streamed offline package hash/import/launcher/platform and both local copies PASS. Previous extraction ran out of host disk; deleted only own incomplete tar and restarted Docker engine, no volume/prune/reset. Fresh full72 pending.",
+      "status": "pass",
+      "summary": "Old-source injected canonical persistence regression FAIL2.536s allocated2/persistedNext2 (negative.log). Current source scoped allocation/deleted-restart/durable startup repair/legacy sequence only migration, assistant/config/settings/reasoning tests race31.341s + vet PASS. Quick70 and route nested deadline tests5 PASS. Canonical runtime/new package/full72 pending; prior full72 terminal FAIL whole-package15m deadline, not input drift or per-test hang. Runtime source d6dbf55 exact entry: native3/delete/restart/native4, canonical next5, old root absent, original1 session bytes identical. Guard initially found two omitted voice defaults materialized on persistence; normalization-only semantic equivalence established, did not silently pass exact bytes. Separate voice custom reset negative1.933s; final combined canonical/settings race30.827s+vet and quick70 PASS. Final native custom voice/readback/runtime and image pending. Final57e native voice settings showed insert/aggressive after reasoning-only save; config and raw settings restored exactly. Approved fixture5 advances next5->6, cleanup preserves original content with checked read marker only. Final runtime/source/image correspondence verified. Streamed offline package hash/import/launcher/platform and both local copies PASS. Previous extraction ran out of host disk; deleted only own incomplete tar and restarted Docker engine, no volume/prune/reset. Fresh full72 pending. Fresh full72 PASS on frozen ebd8556a: server race716.110s, sandbox1.302s, tts1.519s, whole-repository vet PASS. Prior terminal failed runs retained; this receipt is current final evidence.",
       "evidence": [
         ".agent-state/session-counter-canonical/negative.log",
         ".agent-state/session-counter-canonical/scoped-race.log",
@@ -64,7 +64,8 @@
         ".agent-state/session-counter-canonical/voice-custom-readback.txt",
         ".agent-state/session-counter-canonical/voice-runtime-restored.json",
         ".agent-state/session-counter-canonical/package.json",
-        ".agent-state/plugin-plan-theme-approved/preservation.json"
+        ".agent-state/plugin-plan-theme-approved/preservation.json",
+        ".agent-state/session-counter-canonical/full-frozen.json"
       ]
     },
     "documentation": {
@@ -86,8 +87,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Sources d6dbf55 and57e1579 pushed to task branch. Matching00c601 offline package verified/copied in both local trees; receiving device import and fresh full72 still pending. No main/tag release.",
+      "status": "pass",
+      "summary": "Incremental source57e1579 and local00c601 complete offline package delivered and verified; development checkpoint full72 PASS, docs pushed on task branch. No main/tag/formal release. Receiving device import and real provider remain separate original-goal gates.",
       "evidence": [
         ".agent-state/session-counter-canonical/package.json"
       ]
@@ -95,5 +96,16 @@
   },
   "release_authorization": "Existing incremental source push/local testing/build/offline image authorization; no formal release.",
   "rollback": "Revert task commits if needed, preserving data volumes. Do not roll back monotonic sequence or overwrite unrelated user data.",
-  "handoff": "Scoped final race30.827s+vet, quick70, native voice/reasoning and counter restart proof PASS. Current image00c601 and complete offline bundle verified. Original preferences restored; fixture removed. Freeze delivery metadata and run fresh full72; previous full72 FAIL retained."
+  "handoff": "This scoped counter/voice fix batch passes current full72 (race716.110s+vet), native restart numbering3/4, native voice readback/restore and local offline package verification. Approved theme fixture5 removed; sequence6 preserved; professional/system restored. Original assistant onlychecked read marker changed; messages/runs unchanged. Continue original12 workstreams; no formal main/tag release or external-device/model claim.",
+  "full_gate": {
+    "status": "pass",
+    "commands": 72,
+    "serverRaceSeconds": 716.11,
+    "vet": "pass",
+    "fingerprint": "ebd8556a4e0f78c1299df0523704f86bf3a318d79ee0958bb2f0de7bbd785cc2",
+    "head": "eef916cc05a2c5db32e1b60fe76896087f76d016",
+    "log": ".agent-state/verify-20261015T000716813835Z.log",
+    "receipt": ".agent-state/session-counter-canonical/full-frozen.json",
+    "scope": "Frozen current tracked/untracked inputs including inherited vendor deletions; no formal release or external device/provider acceptance."
+  }
 }

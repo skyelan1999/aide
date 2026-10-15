@@ -133,5 +133,16 @@
     "expectedFingerprint": "2ef032db75c42f010a5593f51317cadc1f265bed52c800c33ef40fff4179778a",
     "head": "ea914da0bd7a1d6f84110d091182d07a90c34559",
     "lastVerified": "Terminal exec6348 exit1, container gone. Go server901.124s failed package15m timeout while TestCwdPromptLine had run1s; goroutine reading270MB test binary SHA in New, no close panic. Vet NOT_RUN."
+  },
+  "current_frozen_full_followup": {
+    "status": "pass",
+    "commands": 72,
+    "serverRaceSeconds": 716.11,
+    "vet": "pass",
+    "fingerprint": "ebd8556a4e0f78c1299df0523704f86bf3a318d79ee0958bb2f0de7bbd785cc2",
+    "head": "eef916cc05a2c5db32e1b60fe76896087f76d016",
+    "log": ".agent-state/verify-20261015T000716813835Z.log",
+    "receipt": ".agent-state/session-counter-canonical/full-frozen.json",
+    "scope": "Frozen current tracked/untracked inputs including inherited vendor deletions; no formal release or external device/provider acceptance."
   }
 }
