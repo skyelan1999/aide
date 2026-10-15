@@ -1,0 +1,213 @@
+{
+  "task": "knowledge-conclusion-evolution-20261016",
+  "status": "coverage_audited_full_pass_release_pending",
+  "baseline": "0201b82",
+  "full": {
+    "profile": "full",
+    "status": "pass",
+    "checks": 88,
+    "allExitZero": true,
+    "fingerprint": "7af2485aed8c1919543eea56b7ac6b76972cf59d97528cf443137e437de09a26",
+    "recordedHead": "0201b82d70d1944103843f24e2e41aa2e249a8c6",
+    "time": "20261015T215449354256Z",
+    "serverRaceSeconds": 568.61,
+    "vet": "all packages pass",
+    "runtimeAssets": {
+      "status": "pass",
+      "uid": 1000,
+      "readableFiles": 18,
+      "docxRoundTrip": true,
+      "network": "none"
+    }
+  },
+  "catalog": {
+    "sources": 1000,
+    "individuallyReachable": 1000,
+    "unfilteredCandidateLimit": 128,
+    "lastSourceEncryptedHTTPWriteCompare": "pass",
+    "scope": "synthetic saved graph with production serializer and handlers; not1000-file disk indexing or a scan benchmark"
+  },
+  "formats": {
+    "manualSavedText": [
+      ".txt",
+      ".go",
+      ".pdf",
+      ".docx",
+      "extensionless"
+    ],
+    "automaticNonMarkdownConclusions": false,
+    "markdownCitationInferenceForOtherFormats": false,
+    "pdfDocx": "simulated retained extraction text only; no binary parser/page validation this stage"
+  },
+  "browser": {
+    "race": "pass",
+    "serverSeconds": 106.516,
+    "vet": "all packages pass",
+    "exactSelection": [
+      "纯文本甲😀",
+      "纯文本乙😀"
+    ],
+    "restoredUTF16": [
+      6,
+      12
+    ],
+    "viewports": [
+      1280,
+      390
+    ],
+    "narrowScrollWidth": 390,
+    "scope": "actual temporary App with actual TXT indexing, encrypted disk and product components; before final unavailable-source guard, covered by final full",
+    "proof": {
+      "liveProvider": false,
+      "manual": [
+        {
+          "id": "79771522ce877ecbc6fa58281e573381",
+          "label": "纯文本历史原话",
+          "alignment": "explicit_user",
+          "state": "selected_excerpts_compared",
+          "textChanged": true,
+          "headingChanged": false,
+          "positionChanged": false,
+          "sourceChanged": false,
+          "before": {
+            "pick": {
+              "snapshot": "H2fab677f00a8795a41d1069c",
+              "node": "F770d1a6a2359",
+              "candidate": "04b78feafb13018589e2337dd3ef6ed6bea1f7f76bfcd71ef2bb7c6d6ace1978",
+              "start": 6,
+              "end": 12
+            },
+            "candidate": {
+              "code": false,
+              "token": "04b78feafb13018589e2337dd3ef6ed6bea1f7f76bfcd71ef2bb7c6d6ace1978",
+              "node": "F770d1a6a2359",
+              "path": "note.txt",
+              "root": "workspace",
+              "region": "workspace",
+              "sourceKind": "document_excerpt",
+              "quote": {
+                "key": "saved_document_excerpt",
+                "heading": "已保存文本摘录（非Markdown，行号为保存文本行）",
+                "headingPath": null,
+                "headingLine": 1,
+                "line": 2,
+                "endLine": 2,
+                "text": "纯文本甲😀",
+                "textHash": "5a9389e131be56cddcd4981614cfa8b682e1e9df06449ebaef7d5bd7f8892580",
+                "sourceExcerptHash": "592ce8f93880b319eb8dcc5e91d5b01b5a17c0f04c5f7f5cb0b7ee83dbf76030"
+              }
+            },
+            "sourceTextHash": "592ce8f93880b319eb8dcc5e91d5b01b5a17c0f04c5f7f5cb0b7ee83dbf76030",
+            "recorded": "2026-10-15T21:55:12.044990629Z"
+          },
+          "after": {
+            "pick": {
+              "snapshot": "H96dba37849615979510ebf88",
+              "node": "F770d1a6a2359",
+              "candidate": "1f13d5ae8824aab8af48b343ea2e3390f9dc96fbc28a52ab11a73324a309fc82",
+              "start": 6,
+              "end": 12
+            },
+            "candidate": {
+              "code": false,
+              "token": "1f13d5ae8824aab8af48b343ea2e3390f9dc96fbc28a52ab11a73324a309fc82",
+              "node": "F770d1a6a2359",
+              "path": "note.txt",
+              "root": "workspace",
+              "region": "workspace",
+              "sourceKind": "document_excerpt",
+              "quote": {
+                "key": "saved_document_excerpt",
+                "heading": "已保存文本摘录（非Markdown，行号为保存文本行）",
+                "headingPath": null,
+                "headingLine": 1,
+                "line": 2,
+                "endLine": 2,
+                "text": "纯文本乙😀",
+                "textHash": "872751e9e97998d5c6a94df6b3761126ce6d2effe72562b82e791ef52d86b6c2",
+                "sourceExcerptHash": "2005c66d7c0cda8c52633def49098b490ee69ca7cd2899174cc75e2a4f3f8b6f"
+              }
+            },
+            "sourceTextHash": "2005c66d7c0cda8c52633def49098b490ee69ca7cd2899174cc75e2a4f3f8b6f",
+            "recorded": "2026-10-15T21:55:12.044990629Z"
+          },
+          "evidence": [
+            {
+              "node": "F770d1a6a2359",
+              "path": "note.txt",
+              "sourceKind": "document_excerpt",
+              "conclusionKey": "saved_document_excerpt",
+              "heading": "已保存文本摘录（非Markdown，行号为保存文本行）",
+              "kind": "unknown",
+              "referencesChanged": false,
+              "contentChanged": false,
+              "availabilityChanged": false,
+              "unknown": true,
+              "beforeQuote": {
+                "key": "saved_document_excerpt",
+                "heading": "已保存文本摘录（非Markdown，行号为保存文本行）",
+                "headingPath": null,
+                "headingLine": 1,
+                "line": 2,
+                "endLine": 2,
+                "text": "纯文本甲😀",
+                "textHash": "5a9389e131be56cddcd4981614cfa8b682e1e9df06449ebaef7d5bd7f8892580",
+                "sourceExcerptHash": "592ce8f93880b319eb8dcc5e91d5b01b5a17c0f04c5f7f5cb0b7ee83dbf76030"
+              },
+              "afterQuote": {
+                "key": "saved_document_excerpt",
+                "heading": "已保存文本摘录（非Markdown，行号为保存文本行）",
+                "headingPath": null,
+                "headingLine": 1,
+                "line": 2,
+                "endLine": 2,
+                "text": "纯文本乙😀",
+                "textHash": "872751e9e97998d5c6a94df6b3761126ce6d2effe72562b82e791ef52d86b6c2",
+                "sourceExcerptHash": "2005c66d7c0cda8c52633def49098b490ee69ca7cd2899174cc75e2a4f3f8b6f"
+              },
+              "before": {
+                "snapshot": "H2fab677f00a8795a41d1069c",
+                "historical": true,
+                "confidence": "explicit_text_reference",
+                "modelUse": "not_proven",
+                "references": [],
+                "partial": true,
+                "context": "source_not_markdown",
+                "sourceExcerptHash": "592ce8f93880b319eb8dcc5e91d5b01b5a17c0f04c5f7f5cb0b7ee83dbf76030"
+              },
+              "after": {
+                "snapshot": "H96dba37849615979510ebf88",
+                "historical": true,
+                "confidence": "explicit_text_reference",
+                "modelUse": "not_proven",
+                "references": [],
+                "partial": true,
+                "context": "source_not_markdown",
+                "sourceExcerptHash": "2005c66d7c0cda8c52633def49098b490ee69ca7cd2899174cc75e2a4f3f8b6f"
+              }
+            }
+          ]
+        }
+      ],
+      "revision": 1,
+      "sourceFilesRemovedBeforeUI": true,
+      "temporaryApp": true
+    }
+  },
+  "cleanup": {
+    "ownedTabsClosed": true,
+    "viewportReset": true,
+    "temporaryAppEnded": true,
+    "ownedFullContainerEnded": true
+  },
+  "sourceDelivery": {
+    "mainGate": "pending",
+    "push": "pending"
+  },
+  "runtimeDelivery": {
+    "updated": false,
+    "retainedImage": "sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba",
+    "offlineImage": "pending"
+  },
+  "originalTwelve": "all in_progress; authenticated Safari human-deferred; Windows user-owned; real vectors deferred"
+}

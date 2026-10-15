@@ -74,7 +74,17 @@ func knowledgeConclusionCandidates(s knowledgeTimeSnapshot, node string, code ..
 		counts[n.ID]++
 	}
 	for _, n := range filtered.Graph.Nodes {
-		if !knowledgeConclusionDocument(n) || counts[n.ID] != 1 || n.Text == "" || !utf8.ValidString(n.Text) || n.ReadState != "" && n.ReadState != "ready" {
+		if n.Kind != "file" {
+			continue
+		}
+		if counts[n.ID] != 1 || n.Path == "" || !utf8.ValidString(n.Text) || n.ReadState != "" && n.ReadState != "ready" {
+			partial = true
+			continue
+		}
+		if n.Text == "" {
+			if n.Size != 0 || n.ReadState != "ready" {
+				partial = true
+			}
 			continue
 		}
 		region := n.Region
@@ -85,6 +95,7 @@ func knowledgeConclusionCandidates(s knowledgeTimeSnapshot, node string, code ..
 			}
 		}
 		if blocked[region] {
+			partial = true
 			continue
 		}
 		if len(items) >= 256 {
@@ -93,12 +104,19 @@ func knowledgeConclusionCandidates(s knowledgeTimeSnapshot, node string, code ..
 		}
 		text := conclusionBytePrefix(n.Text, knowledgeConclusionTextBytes)
 		complete := int64(len(n.Text)) == n.Size && (n.Size > 0 || n.ReadState == "ready")
-		q := knowledgeConclusion{Key: "saved_document_excerpt", Heading: "文档摘录（未标记结论）", HeadingLine: 1, Line: 1, EndLine: strings.Count(text, "\n") + 1, Text: text, TextHash: hash([]byte(text)), SourceHash: hash([]byte(n.Text)), Partial: !complete || len(text) < len(n.Text)}
+		heading := "文档摘录（未标记结论）"
+		if !knowledgeConclusionDocument(n) {
+			heading = "已保存文本摘录（非Markdown，行号为保存文本行）"
+		}
+		q := knowledgeConclusion{Key: "saved_document_excerpt", Heading: heading, HeadingLine: 1, Line: 1, EndLine: strings.Count(text, "\n") + 1, Text: text, TextHash: hash([]byte(text)), SourceHash: hash([]byte(n.Text)), Partial: !complete || len(text) < len(n.Text)}
 		items = append(items, knowledgeConclusionEvidenceItem{node: n, sourceKind: "document_excerpt", conclusion: q})
 		// Preserve the original first-excerpt identity for existing selections.
 		// Additional chunks expose only bytes already present in this snapshot.
 		body := conclusionBytePrefix(n.Text, knowledgeConclusionScanBytes)
-		heading := fmt.Sprintf("文档历史正文（已保存%d字节）", len(body))
+		heading = fmt.Sprintf("文档历史正文（已保存%d字节）", len(body))
+		if !knowledgeConclusionDocument(n) {
+			heading = fmt.Sprintf("已保存文本正文（非Markdown，已保存%d字节，文本行号）", len(body))
+		}
 		if !complete || len(body) != len(n.Text) {
 			heading += "（非完整记录）"
 		}

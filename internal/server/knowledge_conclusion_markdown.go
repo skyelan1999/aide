@@ -370,6 +370,22 @@ func parseKnowledgeMarkdownSource(raw string) *knowledgeMarkdownSource {
 
 func knowledgeItemEvidence(item knowledgeConclusionEvidenceItem, snapshot knowledgeTimeSnapshot, x *knowledgeConclusionReferenceIndex) knowledgeConclusionEvidenceSet {
 	source := knowledgeEvidenceSourceFor(snapshot, item)
+	if item.node.Kind == "file" {
+		markdown := knowledgeConclusionDocument(item.node)
+		for _, n := range snapshot.Graph.Nodes {
+			if n.ID == item.node.ID && n.Path == item.node.Path && knowledgeConclusionArea(n) == knowledgeConclusionArea(item.node) {
+				markdown = knowledgeConclusionDocument(n)
+				break
+			}
+		}
+		if !markdown {
+			out := knowledgeConclusionEvidenceSet{Snapshot: snapshot.ID, Historical: true, Confidence: "explicit_text_reference", ModelUse: "not_proven", References: []knowledgeConclusionReference{}, Partial: true, Context: "source_not_markdown"}
+			if source != nil {
+				out.SourceExcerptHash = hash([]byte(source.raw))
+			}
+			return out
+		}
+	}
 	context, baseLine := "saved_source", 0
 	start, end, ok := 0, 0, false
 	if source == nil {

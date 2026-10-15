@@ -27,6 +27,9 @@ func TestKnowledgeConclusionTopicsLiveBrowser(t *testing.T) {
 	if os.Getenv("AIDE_TOPIC_REFERENCE_FIXTURE") == "1" {
 		fixture = knowledgeReferenceFixture
 	}
+	if os.Getenv("AIDE_TOPIC_TEXT_FIXTURE") == "1" {
+		fixture = knowledgeTextFixture
+	}
 	a, history, workspace := fixture(t)
 	for _, name := range []string{"topic.md", "basis.txt"} {
 		if err := os.Remove(filepath.Join(a.workspace.Name(), name)); err != nil {
@@ -144,6 +147,23 @@ func TestKnowledgeConclusionTopicsLiveBrowser(t *testing.T) {
 	defer cancel()
 	_ = server.Shutdown(ctx)
 	store, err := loadKnowledgeTopics(knowledgeTopicFile(a.dataPath, workspace, false), workspace, false, knowledgeTopicKey(a.token))
+	if os.Getenv("AIDE_TOPIC_TEXT_FIXTURE") == "1" {
+		if err != nil || len(store.Topics) != 1 || store.Revision != 1 || len(store.Topics[0].Members) != 2 {
+			t.Fatal("text browser topic missing", err)
+		}
+		members := store.Topics[0].Members
+		if members[0].Candidate.Quote.Text != "纯文本甲😀" || members[1].Candidate.Quote.Text != "纯文本乙😀" {
+			t.Fatal("text browser selection mismatch")
+		}
+		out := compareKnowledgeTime(history.Snapshots[0], history.Snapshots[1]).Conclusions
+		appendKnowledgeManualTopics(&out, history.Snapshots[0], history.Snapshots[1], store)
+		if len(out.Changes) != 0 || len(out.Manual) != 1 || !out.Manual[0].TextChanged || len(out.Manual[0].Evidence) != 1 || out.Manual[0].Evidence[0].Before.Context != "source_not_markdown" {
+			t.Fatal("text browser classification changed", out)
+		}
+		proof, _ := json.Marshal(map[string]any{"revision": store.Revision, "manual": out.Manual, "temporaryApp": true, "sourceFilesRemovedBeforeUI": true, "liveProvider": false})
+		t.Log("TEXT_BROWSER_PROOF=" + string(proof))
+		return
+	}
 	if os.Getenv("AIDE_TOPIC_REFERENCE_FIXTURE") == "1" {
 		if err != nil || len(store.Topics) != 0 {
 			t.Fatal("reference browser unexpectedly wrote topics", err)
