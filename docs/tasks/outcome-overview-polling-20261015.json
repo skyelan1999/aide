@@ -47,30 +47,113 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "负向复现FAIL；生命周期及既有成果分页客户端回归PASS；Go与原生验收待完成",
+      "status": "pass",
+      "summary": "旧代码负向复现FAIL，新73快速检查/定向Go race6.449s+vet/实际DOM本地数据2500ms总览生命周期PASS；真实模型验收仍独立待办",
       "evidence": [
-        "scripts/outcome-overview-lifecycle.test.cjs",
-        "scripts/outcome-pagination.test.cjs"
+        ".agent-state/outcome-overview-polling/negative.log",
+        ".agent-state/outcome-overview-polling/go.log",
+        ".agent-state/outcome-overview-polling/quick-frozen.json",
+        ".agent-state/outcome-overview-polling/ui-hidden-stable.txt"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "明确全会话runningRuns元数据、终态停止及旧分页回退；本轮组件与真实模型验收边界",
+      "evidence": [
+        "docs/architecture.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "只停止自有回环fixture服务/关闭自建页；继承5个vendor删除保留；升级前安全基线未改",
+      "evidence": [
+        ".agent-state/outcome-overview-polling/integrity-observation.json",
+        "git diff --check"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "本机5d候选与完整离线包已实际导入核验两份本地副本，功能分支待push；新输入未跑full75/main/tag门禁，不复用main7f的full74",
+      "evidence": [
+        ".agent-state/outcome-overview-polling/package.json"
+      ]
     }
   },
   "release_authorization": "沿用用户增量修改/测试/push授权；本轮先功能分支，不自动把未来新修改合入main或正式发布。",
   "rollback": "回退本任务代码提交并从原start.command重建；新增runningRuns仅响应元数据，无数据迁移。",
-  "handoff": ""
+  "handoff": "本轮是ab89e85功能分支，修复总览终态无限轮询与隐藏运行状态；下一步按原12工作流推进。真实模型跨页刷新仍待验收；新版本不混用main7f clean74指纹。",
+  "sourceCommit": "ab89e85",
+  "runtime": {
+    "image": "sha256:5d04cc677fd8d1cc4ca67687bcadee2f2afd3f20ecca13845cd9f1ff34ab1098",
+    "runningImage": "sha256:5d04cc677fd8d1cc4ca67687bcadee2f2afd3f20ecca13845cd9f1ff34ab1098",
+    "sourceSHA256": "becbb6325e7b7d8ae0dc2ee685e8f2fc492c4c82f85145919bd06b706ab68038",
+    "runningPlatformManifest": "sha256:fa13f7a4593c49c3dc07407e5c9933c0ef4f2a789fbb56f82c7d2170825c0de1",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:5d04cc677fd8d1cc4ca67687bcadee2f2afd3f20ecca13845cd9f1ff34ab1098",
+    "sourceSHA256": "becbb6325e7b7d8ae0dc2ee685e8f2fc492c4c82f85145919bd06b706ab68038",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-5d04cc677fd8-offline.tar.gz",
+    "bytes": 705658916,
+    "sha256": "095bef09de111fd50f20a0a5b0a63dff34c671ca17189c76a1af5dbb8fd94c89",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "quick": {
+    "status": "pass",
+    "commands": 73,
+    "fingerprint": "16a33ec4f146efc95928da5b19e368fc52611c14675f9df673f219f2f8e70771",
+    "receipt": ".agent-state/outcome-overview-polling/quick-frozen.json",
+    "scope": "source checkpoint before delivery README/SHA256SUMS updates; not a full-release receipt"
+  },
+  "go": {
+    "status": "pass",
+    "serverRaceSeconds": 6.449,
+    "vet": "pass",
+    "command": "isolated network-none container-local Git source snapshot: go test -mod=vendor -race -count=1 -timeout=3m ./internal/server -run Test(SessionHistoryRunningMetadataAcrossPages|SessionHistoryView.*|ContextBreakdown.*)$; go vet -mod=vendor ./internal/server",
+    "evidence": ".agent-state/outcome-overview-polling/go.log"
+  },
+  "native": {
+    "status": "pass",
+    "scope": "Native Safari, real task-outcome.js with local deterministic data and real2500ms timer; not real model/API run. Exact start.command first opened actual9999, then only its owned tab used for fixture.",
+    "completedInitialCalls": 0,
+    "normalRunCallsAfterCompletion": 5,
+    "normalRunCallsStableAfterFurtherInterval": 5,
+    "hiddenRunVisiblePage": "1/31, visible task completed, runningRuns=1",
+    "hiddenRunCallsBeforeCompletion": 13,
+    "hiddenRunCallsAfterCompletionAndStable": 14,
+    "sourceModuleSHA256": "fdeebb94469af82c86352520389c84a4c68a44692ff37e6cc50b72ef08e998bd",
+    "evidence": [
+      ".agent-state/outcome-overview-polling/ui-idle.txt",
+      ".agent-state/outcome-overview-polling/ui-running.txt",
+      ".agent-state/outcome-overview-polling/ui-finished.txt",
+      ".agent-state/outcome-overview-polling/ui-settled.txt",
+      ".agent-state/outcome-overview-polling/ui-hidden-running.txt",
+      ".agent-state/outcome-overview-polling/ui-hidden-done.txt",
+      ".agent-state/outcome-overview-polling/ui-hidden-stable.txt",
+      ".agent-state/outcome-overview-polling/ui-hidden-stable.jpg"
+    ],
+    "cleanup": "Own fixture tab closed and loopback61240 server stopped; original user model settings tabs untouched.",
+    "notRun": "Real-model run, narrow/theme matrix, full75/main gate not rerun for this patch."
+  },
+  "integrity_observation": {
+    "baselineCommit": "cdf9d15f9864c692dfddee0f980ff8cbacefbb48-dirty",
+    "baselineSHA256": "f4da9ce95aed0ed37e1487dd26d2743aac54db51a763f83ef2a6ce3ebad43201",
+    "binarySHA256": "c9b4aca105c5cc2aa2b933292c464dd2f8e075366e23150231fd673d5bd42499",
+    "runningBinaryMatchesLocalImage": true,
+    "baselineChanged": false
+  }
 }

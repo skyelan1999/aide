@@ -180,3 +180,8 @@ Latest reviewed-recovery continuation development snapshot (2026-10-15): `aide-0
 ## 2026-10-15 星图逐帧计算候选
 
 `aide-0.1.17.0-RC2-linux-arm64-7d3baf350986-offline.tar.gz`，705663018字节，SHA-256 `eb96d3d0142e6abb1cc1f758653223fa13cc80dcfca6b9e8e59aebd13c835cb1`。源码`39ff208`，源指纹`bdb56cb32f93ce76d8e1dcbcc27b8cf399d9f01f78af7b10b96712f1f79d11b7`。复用稳定视角的尘埃采样，跳过关闭红外及非活动关系的无效工作，保留全部节点和光学计算语义。含完整应用与本地依赖镜像，流式内外哈希、平台、启动器、实际docker load及两个本地副本校验通过。原start.command在9999启动，配置和挂载保持当前基线；原生Safari渐进显示、红外、选中和镜头交互已观察。本批full74待完成，接收端导入、整体大星域延迟与正式main/tag发布尚未完成。详见[任务账本](../docs/tasks/starmap-frame-work-20261015.json)。
+
+
+## 2026-10-15 成果总览生命周期候选
+
+`aide-0.1.17.0-RC2-linux-arm64-5d04cc677fd8-offline.tar.gz`，705658916字节，SHA-256 `095bef09de111fd50f20a0a5b0a63dff34c671ca17189c76a1af5dbb8fd94c89`。源码`ab89e85`，源指纹`becbb6325e7b7d8ae0dc2ee685e8f2fc492c4c82f85145919bd06b706ab68038`。总览完成后停止轮询，响应以全会话runningRuns覆盖分页外运行任务；关闭后丢弃旧回执。73项快速检查、Go定向race/vet及原生Safari真实模块本地数据验收通过。包含完整应用与本地依赖镜像，流式内外哈希、平台、启动器、实际docker load及两份本地副本校验通过。原start.command已启动9999；未把确定性数据当真实模型验收，未复用前批main full74作为此候选门禁，未合入main/tag/正式Release。详见[任务](../docs/tasks/outcome-overview-polling-20261015.json)。
