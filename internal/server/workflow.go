@@ -876,7 +876,12 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	task.HarnessConfig = &harness
-	preview := a.buildContextPreviewWithTask(s, orig.Prompt, orig.Mode, contextText, images, cfg, params, true, policy, harness, task, avatarEnabled)
+	replay, replayErr := retryConversation(s, orig)
+	if replayErr != nil {
+		fail(w, 409, replayErr)
+		return
+	}
+	preview := a.buildContextPreviewWithTask(replay, orig.Prompt, orig.Mode, contextText, images, cfg, params, true, policy, harness, task, avatarEnabled)
 	a.applyWorkflowContextWithPolicy(preview, orig.Mode, orig.WorkflowPhase, policy)
 	if preview.OverLimit {
 		fail(w, 400, errors.New("上下文预算超限，重试失败"))

@@ -7410,5 +7410,16 @@
       "docs/reviews/2026-10-15/smb-index-live.md"
     ],
     "deliveredMain": "f8f8abecef7439df1b59f882e3185d0301bbc269"
+  },
+  "followup162": {
+    "task": "docs/tasks/outcome-hidden-active-live-20261015.json",
+    "classification": "progress",
+    "previousGoalTurn": "Real Samba protocol/source/original/authentication/restart acceptance delivered to clean main.",
+    "status": "in_progress",
+    "summary": "Current Qwen hidden-active limit1 metadata proven (2 live/1 visible); old retry included later ROS2 request and triggered unwanted plugin tools, owned runs cancelled/no file changes/owned sessions removed. Bounded retry context source and targeted race14.339s pass; actual rerun/release import/full/main pending.",
+    "original12RemainOpen": true,
+    "evidence": [
+      "docs/reviews/2026-10-15/outcome-hidden-active-live.md"
+    ]
   }
 }

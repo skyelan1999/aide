@@ -1,0 +1,70 @@
+{
+  "id": "outcome-hidden-active-live-20261015",
+  "request": "继续任务成果舱真实环境验收：现有已授权千问接口，同会话新旧任务同时运行时核对隐藏运行元数据，发布记录导入/幂等/快照及隔离；清理自建会话保护用户数据",
+  "baseline": "77ec848bff23a3b4889867c185567273ac9ee5aa",
+  "initial_status": "",
+  "acceptance": [
+    "Retrying an older task excludes later user turns and replies from provider context while preserving original preceding conversation, original model choice and current execution/harness policy; missing ambiguous history is explicit, never silently replaced by later topic.",
+    "Current9999 actual authorized Qwen tasks: limited history omits an active run while runningRuns equals full-session live count; both tasks complete and count returns zero without affecting unrelated sessions.",
+    "Import synthetic operator release receipt only in owned task; classify as operator_recorded, server-owned provenance, duplicate idempotency and stale snapshot/wrong-session protections; never claim actual remote release.",
+    "Remove own sessions and preserve other session hashes/global config/auth/sources except legitimate monotonic session counter; docs/same-input main gate and exact remote push."
+  ],
+  "scope": [
+    "docs",
+    "internal/server/workflow.go",
+    "internal/server/retry_context.go",
+    "internal/server/retry_context_test.go",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Advance remaining actual-model hidden active pagination and operator release-card/import API acceptance; full authenticated Safari still deferred, original12 unchanged.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "One owned work session plus one owned isolation session; baseline then longer no-tool Qwen reply and old-run retry; full vs limit1 counts, fixture receipt provenance/guards and canonical disk protection before/after. Actual Qwen trace exposed old-run retry including a later ROS2 turn, followed by unrequested plugin tools. Bound replay to SourceRunID/unambiguous legacy anchor or original request snapshot, with fresh current policies; explicit error if history cannot be established.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Retry context bounded by original tagged/unambiguous legacy input or recorded request, fresh current policy reconstruction, explicit409 for missing boundary; existing session unchanged.",
+      "evidence": [
+        "docs/reviews/2026-10-15/outcome-hidden-active-live.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Real limited-page hidden active count observed (2 live, 1 visible); probe stopped after unexpected retry tools, both owned tasks cancelled and owned sessions removed. Other sessions/auth/settings unchanged except legitimate sequence22->24. No overall PASS yet. Old-code final regression fails on later conversation/replaced answer; fixed targeted race14.339s PASS. Real-model rerun, release import, runtime/offline/full/main pending. quick82 PASS; source commit/runtime follow.",
+      "evidence": [
+        "docs/reviews/2026-10-15/outcome-hidden-active-live.md"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Actual failed/cancelled first probe, preserved user data, bounded replay design/targeted results documented; final runtime/model/full/main receipts pending.",
+      "evidence": [
+        "docs/reviews/2026-10-15/outcome-hidden-active-live.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior human Qwen endpoint/model testing and incremental test/docs/main push authorization. Only owned sessions, synthetic unverified receipt; no user file/tool/command/remote publish calls.",
+  "rollback": "Remove owned sessions/cancel owned runs; no global provider/model changes; revert scoped docs. Do not rewind session sequence.",
+  "handoff": ""
+}
