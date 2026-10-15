@@ -247,5 +247,62 @@
     "commit": "3714593ff6435b2e3e72c509e3a66a5acdc5dee1",
     "subsequentDocumentationReceipt": "same product input fingerprint"
   },
-  "originalTwelve": "in_progress; remaining actual file/history/authorization/outcome/map and SSH flows not proved by this priority acceptance"
+  "originalTwelve": "in_progress; remaining actual file/history/authorization/outcome/map and SSH flows not proved by this priority acceptance",
+  "runtimeObservedAtClose": {
+    "runtimeImage": "sha256:6d212fa78c4363b3b5d129f49d3305ef3dcec55b4ba5039573083de30ddee412",
+    "created": "2026-10-15T23:14:28.600394261Z",
+    "started": "2026-10-15T23:14:28.899187219Z",
+    "sourceLabel": "d88e40f2e1182e3a256e1caadd22a2aca8177883812ae832b1a905aee691dce3",
+    "currentSource": "fb776ce6a45177428701f25f52be1bd5c44176998754c18b778e602127b0ed6d",
+    "sourceMatches": false,
+    "health": "healthy"
+  },
+  "runtimeBuild": {
+    "buildVersion": "0.1.17.0 RC2",
+    "buildCommit": "258afd797fc9941600b46a8b2187b8fa99024d6f",
+    "revision": "258afd797fc9941600b46a8b2187b8fa99024d6f"
+  },
+  "servedAssets": {
+    "app.js": {
+      "servedSHA256": "c4cfa500f40bad2df6a68e8ea6321a618e9539f30c82a0ac30dbbbf411a7bc1f",
+      "checkoutSHA256": "c4cfa500f40bad2df6a68e8ea6321a618e9539f30c82a0ac30dbbbf411a7bc1f",
+      "matches": true
+    },
+    "session-model-selection.js": {
+      "servedSHA256": "3cc5d661bd7e8c812e0c4fb8fc4b7087849571847913525908251afc759950ab",
+      "checkoutSHA256": "3cc5d661bd7e8c812e0c4fb8fc4b7087849571847913525908251afc759950ab",
+      "matches": true
+    },
+    "settings-init.js": {
+      "servedSHA256": "b5c91484d37a4b700090621fa2f82a703b4e9dc0f3e3d0cf872af22f2fea04c3",
+      "checkoutSHA256": "b5c91484d37a4b700090621fa2f82a703b4e9dc0f3e3d0cf872af22f2fea04c3",
+      "matches": true
+    },
+    "parallel-chat.js": {
+      "servedSHA256": "7de4562ff3547967517e6064a1f6ff9064b2b1bcefacc7095bceebe379a8c2dd",
+      "checkoutSHA256": "7de4562ff3547967517e6064a1f6ff9064b2b1bcefacc7095bceebe379a8c2dd",
+      "matches": true
+    },
+    "file-autosave.js": {
+      "servedSHA256": "a32b723c7b962ceb60919eb0c8382a0cde3dd22a7279b6fd4354fc827b0849a7",
+      "checkoutSHA256": "a32b723c7b962ceb60919eb0c8382a0cde3dd22a7279b6fd4354fc827b0849a7",
+      "matches": true
+    },
+    "locales/en.js": {
+      "servedSHA256": "e36813828dc5eb522ea8241f3ac7be67b498e26af5db5acaa13f941bf99754ab",
+      "checkoutSHA256": "e36813828dc5eb522ea8241f3ac7be67b498e26af5db5acaa13f941bf99754ab",
+      "matches": true
+    },
+    "index.html": {
+      "servedSHA256": "ed5ada46fd6c9379be1302bf0464374366137415734b34cf5cb4b06e5d85d7b4",
+      "checkoutSHA256": "ed5ada46fd6c9379be1302bf0464374366137415734b34cf5cb4b06e5d85d7b4",
+      "matches": true
+    }
+  },
+  "localeFingerprintFinding": {
+    "sameCheckoutC": "fb776ce6a45177428701f25f52be1bd5c44176998754c18b778e602127b0ed6d",
+    "sameCheckoutEnUS": "d88e40f2e1182e3a256e1caadd22a2aca8177883812ae832b1a905aee691dce3",
+    "runningLabelMatchesEnUS": true,
+    "status": "reproduced; separate startup determinism fix required"
+  }
 }

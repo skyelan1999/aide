@@ -7671,10 +7671,10 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "Safari is now accessible. Continue actual file scene recovery/conflict/history, approvals/outcomes and knowledge-map/SSH workflows; Windows user-owned and real vectors deferred.",
+    "nextIndependentFocus": "Fix reproduced locale-dependent startup source-sha identity, then continue accessible Safari file/history/approval/outcome/map and SSH flows. Windows user-owned, vectors deferred.",
     "deliveredMain": "3714593ff6435b2e3e72c509e3a66a5acdc5dee1",
     "mainGate": "Docs-only actual Safari reasoning evidence; exact-input full88 reuse, independent clean-main gate and remote3714593 match pass.",
-    "currentCheckpointGate": "Current product fingerprint f264a1110d773cb8bfcdf5c2dd9bbb04a4c7df1f888caaad9bb116272790c89a matches prior passing full88. Actual Safari priority reasoning10 UI writes/reloads/API/disk pass and scoped cleanup verified. Runtime8a351653 unchanged; original12 still in_progress."
+    "currentCheckpointGate": "Current product fingerprint f264a1110d773cb8bfcdf5c2dd9bbb04a4c7df1f888caaad9bb116272790c89a matches prior passing full88. Actual Safari priority reasoning10 UI writes/reloads/API/disk pass and scoped cleanup verified. Observed running6d212fa/build258afd7;7 frontend assets exact. source-sha varies by localeC/en_US and requires independent fix. Original12 still in_progress."
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
