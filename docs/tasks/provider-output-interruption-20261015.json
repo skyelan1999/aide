@@ -1,0 +1,78 @@
+{
+  "id": "provider-output-interruption-20261015",
+  "request": "用户授权指定千问兼容端点与密钥真实验收；复现功能区重复插入、无法打断，并测试图片理解，模型自行选择",
+  "baseline": "2fa96f042a4a28d25363c733ae851e6b766a0583",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "用户指定端点完成真实模型调用，密钥仅入本机加密库且不进入日志/Git",
+    "实际AIDE图片附件被视觉模型正确理解，区分直接提供商与AIDE链路结果",
+    "复现或明确记录功能区重复插入的触发条件，修复有证据的原因",
+    "流式输出和工具阶段的停止/暂停可收敛，其他会话不受影响",
+    "实际浏览器仅一个测试页，结束关闭；证书拦截不自动绕过",
+    "更新任务、文档、部署/离线包和门禁的真实状态"
+  ],
+  "scope": [
+    "internal/server/web/app.js stream/render/stop controls if reproduced",
+    "internal/server streaming/provider/cancellation if reproduced",
+    "scripts focused regressions",
+    "docs/tasks",
+    "docs/reviews",
+    "docker-images candidate metadata when built"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户明确授权端点、密钥、选模、输出异常及图片理解实测。真实向量仍不测。",
+      "evidence": [
+        "user message 2026-10-15 provider endpoint and testing authorization"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "按实际API与旧代码反证区分重复渲染和真实重复执行；思考单一归属，实时工具仅未结束，停止入口隔离目标与错误。",
+      "evidence": [
+        ".agent-state/provider-output-interruption/cards-negative.log",
+        "docs/reviews/2026-10-15/provider-output-interruption.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "修复运行中最后一步思考双卡片及已结束工具双份显示；统一停止请求、错误反馈与状态对账；加密配置真实提供商。",
+      "evidence": [
+        "internal/server/web/app.js",
+        "scripts/run-activity-cards.test.cjs",
+        "scripts/run-stop-ownership.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "真实图片直接/API附件两链路PASS、推理停止23ms/正文停止14ms、会话独立配置和真实工具调用；quick77 PASS。浏览器证书拦截，实际按钮/主题/Safari未验收；真实重复读取与长文提前结束仍待查。",
+      "evidence": [
+        ".agent-state/provider-output-interruption/vision-aide.json",
+        ".agent-state/provider-output-interruption/body2-cancel-proof.json",
+        ".agent-state/provider-output-interruption/quick-frozen.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录实际数据来源、卡片原因、停止结果和剩余问题；不保存任何凭据。",
+      "evidence": [
+        "docs/reviews/2026-10-15/provider-output-interruption.md",
+        "docs/architecture/continuity-roadmap.md"
+      ]
+    },
+    "cleanup": {
+      "status": "in_progress",
+      "summary": "API密钥导入明文与登录URL临时文件已删除；仅自有测试文件/会话保留作证据。错误页4关闭被URL策略拒绝，应用界面被安全规则拒绝；不再创建新页。",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "源码准备功能分支提交，随后经指定start.command更新候选和完整离线包；full79/main/真实UI门禁尚未通过。",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户授权持续开发、分部分测试push、更新本地与离线镜像包；本轮不自动main/tag。",
+  "rollback": "保留原提供商和模型，新增独立provider；测试仅独立会话与自有fixture，原2fa/e75cfb候选与此前ad3d离线包可回退。",
+  "handoff": "当前实际镜像e75cfb对应2fa96f0，新增卡片/停止修复尚待构建。先完成源码push与新候选部署、离线包；下一轮先盘点错误页4，不新开多页。真实UI证书待用户手动处理；自动收尾重复read_file、长文提前结束仍待修复。"
+}

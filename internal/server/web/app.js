@@ -1368,8 +1368,18 @@ function renderToolRow(tool) {
   row.append(el('span', 'rsp-tool-dur', tool.endedAt ? Math.round((tool.endedAt - tool.startedAt) / 1000) + 's' : Math.max(0, Math.round((Date.now() - tool.startedAt) / 1000)) + 's'));
   return row;
 }
-function stopRunById(runId) {
-  api('/sessions/' + state.session.id + '/runs/' + runId + '/cancel', { method: 'POST', body: '{}' }).then(() => toast(t('已请求停止'))).catch(() => {});
+const stopRequests=new Set();
+async function stopRunById(runId) {
+  const sessionId=state.session?.id,scope=recoveryScope(),sequence=sessionSeq.value;
+  const visible=()=>!lockScreen.locked&&!state.pendingSessionId&&state.session?.id===sessionId&&recoveryScope()===scope&&sessionSeq.value===sequence;
+  const run=state.session?.runs?.find(item=>item.id===runId),key=JSON.stringify([scope,sessionId,runId]);
+  if(!sessionId||!visible()||!run||!['running','awaiting_clarification'].includes(run.status)||stopRequests.has(key))return;
+  stopRequests.add(key);
+  try {
+    await api('/sessions/'+encodeURIComponent(sessionId)+'/runs/'+encodeURIComponent(runId)+'/cancel',{method:'POST',body:'{}'});
+    if(visible()){toast(t('已请求停止'));refreshSessionSoon();schedulePoll();}
+  } catch(e) {if(visible())toast(e.message||String(e));}
+  finally{stopRequests.delete(key);}
 }
 
 // ── 全局提醒中心：手动提醒 CRUD、优先级列表、到期弹窗；小秘提醒由服务端持久写入小秘会话 ──
@@ -1620,7 +1630,7 @@ function renderRunStatusInto(box, runId) {
     banner.append(actions);
   } else if (banner) { banner.remove(); }
   // 思考内容默认折叠；折叠时只维护一行预览，展开后才装载正文。
-  const reasoning = state.liveReasoning[runId] || '';
+  const reasoning = runReasoningText(runId);
   let det = panel.querySelector('.rsp-thinking');
   if (reasoning) {
     if (!det) {
@@ -1640,7 +1650,7 @@ function renderRunStatusInto(box, runId) {
       det.addEventListener('toggle', () => {
         if (!det.open) { state.thinkingOpen.delete(runId); body.replaceChildren(); body.dataset.len = '0'; return; }
         state.thinkingOpen.add(runId);
-        body.textContent = state.liveReasoning[runId] || '';
+        body.textContent = runReasoningText(runId);
         body.dataset.len = String(body.textContent.length);
         body.scrollTop = body.scrollHeight;
         follow.classList.toggle('hidden', thinkAtBottom(body) || !!state.runPhase[runId]?.done);
@@ -1661,10 +1671,11 @@ function renderRunStatusInto(box, runId) {
   } else if (det) { det.remove(); }
   // 工具逐项列表
   let list = panel.querySelector('.rsp-tools');
-  if (ph.tools.length) {
+  const pendingTools = ph.tools.filter(tool => tool.status === 'running');
+  if (pendingTools.length) {
     if (!list) { list = el('div', 'rsp-tools'); panel.append(list); }
     list.replaceChildren();
-    ph.tools.forEach(tool => list.append(renderToolRow(tool)));
+    pendingTools.forEach(tool => list.append(renderToolRow(tool)));
   } else if (list) { list.remove(); }
 }
 function updateThinkingSummary(details, reasoning, running) {
@@ -1677,6 +1688,26 @@ function updateThinkingSummary(details, reasoning, running) {
   // Keep collapsed reasoning limited to the visible one-line preview. A title
   // tooltip would expose a large hidden excerpt without the user expanding it.
   summary.removeAttribute('title');
+}
+function runReasoningText(runId) {
+  const live=state.liveReasoning[runId]||'',run=state.session?.runs?.find(item=>item.id===runId);
+  const saved=run?.mode==='chat'?(run.steps?.[run.steps.length-1]?.reasoning||''):'';
+  return saved.length>live.length?saved:live;
+}
+function renderStepThinking(box, run, step, index) {
+  // The active status panel owns this step's thinking, including poll-only
+  // recovery. Older steps and terminal runs keep their persisted evidence.
+  if (!step.reasoning || (run.status==='running' && state.runPhase[run.id] && index===run.steps.length-1)) return;
+  const rd=el('details','rsp-thinking rsp-thinking-done'),thinkingKey=run.id+':'+index;
+  rd.open=state.thinkingOpen.has(run.id)||state.thinkingOpen.has(thinkingKey);
+  const summary=el('summary','rsp-think-summary'),body=el('div','rsp-think-body');
+  if(rd.open)body.textContent=step.reasoning;
+  rd.append(summary,body);updateThinkingSummary(rd,step.reasoning,false);
+  rd.addEventListener('toggle',()=>{
+    if(rd.open){state.thinkingOpen.add(run.id);state.thinkingOpen.add(thinkingKey);body.textContent=step.reasoning;}
+    else{state.thinkingOpen.delete(run.id);state.thinkingOpen.delete(thinkingKey);body.replaceChildren();}
+  });
+  box.append(rd);
 }
 function renderRunStatus(runId) {
   const box = document.querySelector('#timeline .run[data-run="' + runId + '"]');
@@ -2092,21 +2123,7 @@ function renderSession() {
     if (!run.steps.length) box.append(el('p', 'muted', t("正在准备模型请求…")));
     run.steps.forEach((step, index) => {
       if (run.mode === 'chat') {
-        if (step.reasoning) {
-          const rd = el('details', 'rsp-thinking rsp-thinking-done');
-          const thinkingKey = run.id + ':' + index;
-          rd.open = state.thinkingOpen.has(run.id) || state.thinkingOpen.has(thinkingKey);
-          const summary = el('summary', 'rsp-think-summary');
-          const body = el('div', 'rsp-think-body');
-          if (rd.open) body.textContent = step.reasoning;
-          rd.append(summary, body);
-          updateThinkingSummary(rd, step.reasoning, false);
-          rd.addEventListener('toggle', () => {
-            if (rd.open) { state.thinkingOpen.add(run.id); state.thinkingOpen.add(thinkingKey); body.textContent = step.reasoning; }
-            else { state.thinkingOpen.delete(run.id); state.thinkingOpen.delete(thinkingKey); body.replaceChildren(); }
-          });
-          box.append(rd);
-        }
+        renderStepThinking(box, run, step, index);
         const stages = window.AideStagedOutput.render(step, {el, t, renderMarkdown});
         if (stages) box.append(stages);
         const ans = el('div', 'chat-answer md-body');
@@ -3668,8 +3685,7 @@ $('send').addEventListener('click', event => {
   action(async () => {
     const run = state.session?.runs.find(r => r.status === 'running');
     if (run) {
-      await api(`/sessions/${state.session.id}/runs/${run.id}/cancel`, { method: 'POST', body: '{}' });
-      toast(t("已请求停止"));
+      await stopRunById(run.id);
     }
   })();
 });
