@@ -7298,11 +7298,12 @@
     "classification": "progress",
     "previousGoalTurn": "Actual ENOSPC/permission save-history-timeline/restart acceptance and main779a1d1 delivered.",
     "status": "in_progress",
-    "summary": "Followed real post-save archive failure into shared editor stale hash/false failed state; scoped fix and Go/JS/component browser pass, real new binary/full/delivery pending.",
+    "summary": "Partial-save stale hash and false failure state fixed; focused JS/Go/actual component, new binary ENOSPC/restoration/timeline/restart, runtime/offline receipts PASS; final clean full/main pending. Human deferred full Safari.",
     "original12RemainOpen": true,
     "evidence": [
       "docs/reviews/2026-10-15/history-partial-save.md"
-    ]
+    ],
+    "runtimeImage": "sha256:b8769857af357d1aa03342e9d1da3e440b180d113f6018edb345d8585d068201"
   },
   "human_safari_deferral_20261015": {
     "reply": "现在不方便",

@@ -44,21 +44,23 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Focused Go race10.132s, JS/lock regressions, quick82 and actual isolated browser component interactions PASS. New binary ENOSPC/full/runtime/package pending; full Safari deferred by human.",
+      "summary": "Focused race10.132s, quick82/JS/lock, real browser component and new actual binary ENOSPC metadata/restoration/timeline/restart PASS11.173s; final clean main full pending. Full Safari explicitly deferred by human.",
       "evidence": [
         "docs/reviews/2026-10-15/history-partial-save.md"
       ]
     },
     "documentation": {
-      "status": "in_progress",
-      "summary": "Scoped review added; final runtime/delivery records pending.",
+      "status": "pass",
+      "summary": "Workspace save contract, review, sanitized fault/component proof, image manifest and master updated; final full/main receipt pending.",
       "evidence": [
-        "docs/reviews/2026-10-15/history-partial-save.md"
+        "docs/reviews/2026-10-15/history-partial-save.md",
+        "docs/workspace-paths.md",
+        "docker-images/README.md"
       ]
     },
     "cleanup": {
-      "status": "in_progress",
-      "summary": "Component tab and owned loopback server stopped; five inherited vendor deletions preserved and excluded.",
+      "status": "pass",
+      "summary": "Only owned component tab/server and fault container/tmpfs removed; original user data/rollback packages and five vendor deletions preserved. Stream package verification avoids extraction.",
       "evidence": [
         "docs/reviews/2026-10-15/history-partial-save.md"
       ]
@@ -71,5 +73,92 @@
   },
   "release_authorization": "Standing incremental fix/test/docs/main push/offline package authorization. No version/tag/formal Release.",
   "rollback": "Revert scoped changes and restore previous runtime/offline candidate; preserve user configuration, sessions and five inherited vendor deletions.",
-  "handoff": ""
+  "handoff": "",
+  "runtime": {
+    "image": "sha256:b8769857af357d1aa03342e9d1da3e440b180d113f6018edb345d8585d068201",
+    "runningImage": "sha256:b8769857af357d1aa03342e9d1da3e440b180d113f6018edb345d8585d068201",
+    "sourceSHA256": "9197c7ad58c3d8ce952fdb03eca167205023cad0a71f4f82b4e094c8534988ec",
+    "runningPlatformManifest": "sha256:d5d3c5087880d7a1477af06cb033f6426707d91ba012f9b082cef401a6170c1f",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "offlinePackage": {
+    "image": "sha256:b8769857af357d1aa03342e9d1da3e440b180d113f6018edb345d8585d068201",
+    "sourceSHA256": "9197c7ad58c3d8ce952fdb03eca167205023cad0a71f4f82b4e094c8534988ec",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-b8769857af35-offline.tar.gz",
+    "bytes": 705686931,
+    "sha256": "66e4a78f6587aebc781f858bbb7c6bdd21efd90b37bd26e89468e36009eb9056",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "actualFaultProof": {
+    "status": "pass",
+    "structuredPartialSave": true,
+    "preWriteNeverClaimsSaved": true,
+    "applicationImage": "sha256:b8769857af357d1aa03342e9d1da3e440b180d113f6018edb345d8585d068201",
+    "preSavePreserved": true,
+    "preSaveRetry": true,
+    "postSaveExplicitError": true,
+    "postSaveBodyReadback": true,
+    "oldRevisionReadDuringFault": true,
+    "staleWrite409": true,
+    "historyDeduplicatesAfterRecovery": true,
+    "graphWarningAndNodesRetained": true,
+    "timelinePreservedAndResumed": true,
+    "restoreENOSPCCannotOverwrite": true,
+    "permissionFailureReportsPartialRestore": true,
+    "partialRestoreJournalVerified": true,
+    "partialIntermediateArchived": true,
+    "restoreRetryCompleted": true,
+    "restoredBodyAndAssetReadback": true,
+    "actualProcessRestart": true,
+    "newPid": true,
+    "durableHistoryReadback": true,
+    "fills": [
+      {
+        "errno": 28,
+        "bytes": 8314880,
+        "freeBlocks": 0
+      },
+      {
+        "errno": 28,
+        "bytes": 8306688,
+        "freeBlocks": 0
+      },
+      {
+        "errno": 28,
+        "bytes": 8278016,
+        "freeBlocks": 0
+      }
+    ],
+    "elapsedSeconds": 11.173,
+    "scope": "actual default-user binary HTTPS API; bounded 8MiB tmpfs ENOSPC, not power loss, physical disk or browser",
+    "probeSHA256": "b8a67e3d53c4a902301cf44d51939e094ca7835aa4c288511f15758c9c51adb7",
+    "logSHA256": "b18ad2ceab97e5252f4844dfe9ecb575e38de1ea3d6b49e9c7b8b135ca0fbe12",
+    "browserComponent": {
+      "browser": "IAB",
+      "actualProductionJS": true,
+      "saveAPI": "fixture",
+      "partialAcknowledgementAndNewHashRetry": true,
+      "newerDraftPreservedAndShownUnsaved": true,
+      "preWriteFailurePreservesOldHashAndDirty": true,
+      "lightDarkAt615pxObserved": true,
+      "productThemeCSSValidated": false,
+      "temporaryTabClosed": true,
+      "fullAuthenticatedWorkbench": "deferred by human: unavailable now"
+    },
+    "fileAutoSaveSHA256": "d8470d246e9760161299a28fbffd1ff48c22493c216444193b51ac5609ea9327"
+  }
 }

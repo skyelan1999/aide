@@ -1,0 +1,58 @@
+{
+  "status": "pass",
+  "structuredPartialSave": true,
+  "preWriteNeverClaimsSaved": true,
+  "applicationImage": "sha256:b8769857af357d1aa03342e9d1da3e440b180d113f6018edb345d8585d068201",
+  "preSavePreserved": true,
+  "preSaveRetry": true,
+  "postSaveExplicitError": true,
+  "postSaveBodyReadback": true,
+  "oldRevisionReadDuringFault": true,
+  "staleWrite409": true,
+  "historyDeduplicatesAfterRecovery": true,
+  "graphWarningAndNodesRetained": true,
+  "timelinePreservedAndResumed": true,
+  "restoreENOSPCCannotOverwrite": true,
+  "permissionFailureReportsPartialRestore": true,
+  "partialRestoreJournalVerified": true,
+  "partialIntermediateArchived": true,
+  "restoreRetryCompleted": true,
+  "restoredBodyAndAssetReadback": true,
+  "actualProcessRestart": true,
+  "newPid": true,
+  "durableHistoryReadback": true,
+  "fills": [
+    {
+      "errno": 28,
+      "bytes": 8314880,
+      "freeBlocks": 0
+    },
+    {
+      "errno": 28,
+      "bytes": 8306688,
+      "freeBlocks": 0
+    },
+    {
+      "errno": 28,
+      "bytes": 8278016,
+      "freeBlocks": 0
+    }
+  ],
+  "elapsedSeconds": 11.173,
+  "scope": "actual default-user binary HTTPS API; bounded 8MiB tmpfs ENOSPC, not power loss, physical disk or browser",
+  "probeSHA256": "b8a67e3d53c4a902301cf44d51939e094ca7835aa4c288511f15758c9c51adb7",
+  "logSHA256": "b18ad2ceab97e5252f4844dfe9ecb575e38de1ea3d6b49e9c7b8b135ca0fbe12",
+  "browserComponent": {
+    "browser": "IAB",
+    "actualProductionJS": true,
+    "saveAPI": "fixture",
+    "partialAcknowledgementAndNewHashRetry": true,
+    "newerDraftPreservedAndShownUnsaved": true,
+    "preWriteFailurePreservesOldHashAndDirty": true,
+    "lightDarkAt615pxObserved": true,
+    "productThemeCSSValidated": false,
+    "temporaryTabClosed": true,
+    "fullAuthenticatedWorkbench": "deferred by human: unavailable now"
+  },
+  "fileAutoSaveSHA256": "d8470d246e9760161299a28fbffd1ff48c22493c216444193b51ac5609ea9327"
+}

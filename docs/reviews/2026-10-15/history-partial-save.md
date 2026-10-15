@@ -22,3 +22,11 @@
 ## 交付与回滚
 
 保留原状态码和error文本兼容旧客户端；正常成功不新增必需字段。尚不承诺文件fsync、物理掉电或远端服务端确认后的持久性。可回退本轮源码并使用上一候选 `0e29f3cafa29` 及完整离线包；用户数据、设置和会话不迁移。五项继承drawio vendor删除保留，不纳入提交。无升版、tag或正式Release。
+
+## 新版真实实例与离线交付
+
+源码 `1c34755` 的候选 `b8769857af35` 经指定start.command更新9999；13份既有会话、配置／来源／鉴权和挂载摘要保持，健康及六项实际资源匹配（含app.js、file-autosave.js和英文翻译）。继承五处vendor删除保留未提交，因此该镜像为开发候选，不冒充干净main构建。
+
+新版真实默认用户HTTPS／8MiB tmpfs组合探针PASS，11.173秒：归档前失败不带saved，新正文已写入的归档失败返回saved:true／historySaved:false及准确哈希；原有ENOSPC保护、旧版读取、409、整版恢复权限中断／journal／重试／4版中间历史、知识时光与新PID重启回读继续通过。脱敏收据见[history-partial-save-proof.json](history-partial-save-proof.json)。
+
+完整离线包 `aide-0.1.17.0-RC2-linux-arm64-b8769857af35-offline.tar.gz`，705686931字节，SHA-256 `66e4a78f6587aebc781f858bbb7c6bdd21efd90b37bd26e89468e36009eb9056`。应用与依赖镜像、内外摘要、平台、启动器、实际docker load及两个本地副本通过，接收端导入未验收。完整full/main门禁另记；没有用组件夹具结果提升完整Safari工作台状态。
