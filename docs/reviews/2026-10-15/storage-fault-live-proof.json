@@ -1,0 +1,46 @@
+{
+  "status": "pass",
+  "applicationImage": "sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f",
+  "preSavePreserved": true,
+  "preSaveRetry": true,
+  "postSaveExplicitError": true,
+  "postSaveBodyReadback": true,
+  "oldRevisionReadDuringFault": true,
+  "staleWrite409": true,
+  "historyDeduplicatesAfterRecovery": true,
+  "graphWarningAndNodesRetained": true,
+  "timelinePreservedAndResumed": true,
+  "restoreENOSPCCannotOverwrite": true,
+  "permissionFailureReportsPartialRestore": true,
+  "partialRestoreJournalVerified": true,
+  "partialIntermediateArchived": true,
+  "restoreRetryCompleted": true,
+  "restoredBodyAndAssetReadback": true,
+  "actualProcessRestart": true,
+  "newPid": true,
+  "durableHistoryReadback": true,
+  "fills": [
+    {
+      "errno": 28,
+      "bytes": 8314880,
+      "freeBlocks": 0
+    },
+    {
+      "errno": 28,
+      "bytes": 8306688,
+      "freeBlocks": 0
+    },
+    {
+      "errno": 28,
+      "bytes": 8278016,
+      "freeBlocks": 0
+    }
+  ],
+  "elapsedSeconds": 9.991,
+  "scope": "actual default-user binary HTTPS API; bounded 8MiB tmpfs ENOSPC, not power loss, physical disk or browser",
+  "probeSHA256": "5863d85a03254bf0621812d1aa8a9655c7221dd367db0d703e32dc0e970efc19",
+  "logSHA256": "9d52163f0a042316c5570f35d2d7d02725ab0a4cc4cdd876232a1331aea2c453",
+  "productSourceChanged": false,
+  "sourceSHA256": "82e8b68fe0c7970fd79b9b29de89e9a6bf69adc87112ab2ea3d6647a291cb293",
+  "testContainersRemoved": true
+}

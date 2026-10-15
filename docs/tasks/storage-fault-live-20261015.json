@@ -1,0 +1,130 @@
+{
+  "id": "storage-fault-live-20261015",
+  "request": "继续连续工作和知识时光目标：真实隔离存储写入失败的保存、历史与恢复行为验收；保留原文/历史，明确部分成功，故障解除后可重试",
+  "baseline": "72d2322d844fdc3659c642bb2b28151127b6fea4",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Actual isolated binary HTTPS API with bounded tmpfs ENOSPC: pre-save archive failure must preserve current body and prior history; freeing space permits retry.",
+    "Post-save archive failure must be explicit rather than success; actual persisted body, history list/old revision and conflict guard inspected.",
+    "Knowledge timeline storage failure keeps old encrypted history and usable graph with warning, and resumes persistence after fault removal; process restart verifies durable readback."
+  ],
+  "scope": [
+    "docs/tasks/storage-fault-live-20261015.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-15/storage-fault-live.md",
+    "docs/reviews/2026-10-15/storage-fault-live-proof.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Continue original save/history/timeline storage-fault acceptance using bounded disposable tmpfs and actual default-user binary; no user disk filling or browser claim.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Use actual current image, private tmpfs data with pre/post archive failure, literal hashes, history/timeline APIs and process restart; no project execution or model call.",
+      "evidence": [
+        "docs/tasks/storage-fault-live-20261015.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "No product change required. Disposable actual tmpfs ENOSPC and target permission probe executed; immutable existing runtime and package retained.",
+      "evidence": [
+        "docs/reviews/2026-10-15/storage-fault-live.md",
+        "docs/reviews/2026-10-15/storage-fault-live-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual HTTPS default-user binary ENOSPC pre/post save, stale409, history/graph/timeline, partial restore journal/retry and process-restart readback PASS 9.991s. Reuse unchanged full84 receipt; no new full claim.",
+      "evidence": [
+        "docs/reviews/2026-10-15/storage-fault-live.md",
+        "docs/reviews/2026-10-15/storage-fault-live-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scoped review and sanitized proof added; original workstreams remain open.",
+      "evidence": [
+        "docs/reviews/2026-10-15/storage-fault-live.md",
+        "docs/reviews/2026-10-15/storage-fault-live-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Actual isolated container and tmpfs removed; no host disk fill or user data modifications, logs retained. Five inherited vendor deletions excluded.",
+      "evidence": [
+        "docs/reviews/2026-10-15/storage-fault-live.md",
+        "docs/reviews/2026-10-15/storage-fault-live-proof.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Documentation-only main gate and push pending; no source/image/package/version changes.",
+      "evidence": [
+        "docs/reviews/2026-10-15/storage-fault-live.md"
+      ]
+    }
+  },
+  "release_authorization": "Standing incremental verification/docs/push main authorization; no version/tag/formal Release.",
+  "rollback": "Documentation-only verification initially; isolated disposable fixtures removed, existing runtime/user data/offline packages preserved.",
+  "handoff": "Original twelve tracks remain open: authenticated UI, user SSH/physical storage and other delivery environments pending. Windows user acceptance, real vectors deferred.",
+  "actualProof": {
+    "status": "pass",
+    "applicationImage": "sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f",
+    "preSavePreserved": true,
+    "preSaveRetry": true,
+    "postSaveExplicitError": true,
+    "postSaveBodyReadback": true,
+    "oldRevisionReadDuringFault": true,
+    "staleWrite409": true,
+    "historyDeduplicatesAfterRecovery": true,
+    "graphWarningAndNodesRetained": true,
+    "timelinePreservedAndResumed": true,
+    "restoreENOSPCCannotOverwrite": true,
+    "permissionFailureReportsPartialRestore": true,
+    "partialRestoreJournalVerified": true,
+    "partialIntermediateArchived": true,
+    "restoreRetryCompleted": true,
+    "restoredBodyAndAssetReadback": true,
+    "actualProcessRestart": true,
+    "newPid": true,
+    "durableHistoryReadback": true,
+    "fills": [
+      {
+        "errno": 28,
+        "bytes": 8314880,
+        "freeBlocks": 0
+      },
+      {
+        "errno": 28,
+        "bytes": 8306688,
+        "freeBlocks": 0
+      },
+      {
+        "errno": 28,
+        "bytes": 8278016,
+        "freeBlocks": 0
+      }
+    ],
+    "elapsedSeconds": 9.991,
+    "scope": "actual default-user binary HTTPS API; bounded 8MiB tmpfs ENOSPC, not power loss, physical disk or browser",
+    "probeSHA256": "5863d85a03254bf0621812d1aa8a9655c7221dd367db0d703e32dc0e970efc19",
+    "logSHA256": "9d52163f0a042316c5570f35d2d7d02725ab0a4cc4cdd876232a1331aea2c453",
+    "productSourceChanged": false,
+    "sourceSHA256": "82e8b68fe0c7970fd79b9b29de89e9a6bf69adc87112ab2ea3d6647a291cb293",
+    "testContainersRemoved": true
+  },
+  "unchangedInputFull": {
+    "status": "pass",
+    "reusedSameFingerprint": true,
+    "newFullRun": false,
+    "fingerprint": "69b39cede79f61831d0077937b90b8759155f0fe8db49a41a929835534252db1",
+    "checks": 84,
+    "serverRaceSeconds": 539.86,
+    "task": "docs/tasks/code-relation-live-20261015.json"
+  }
+}

@@ -201,6 +201,9 @@
       },
       "evidence_20261014_current_fixture": [
         "当前源码隔离真实SSH回归17.639s通过；详见followup103。限测试覆盖的服务器端路径，不提升该工作流整体状态。"
+      ],
+      "evidence_20261015_storage_fault": [
+        "docs/reviews/2026-10-15/storage-fault-live.md"
       ]
     },
     {
@@ -226,6 +229,9 @@
       ],
       "evidence_20261015_storage_ui": [
         "Canonical Safari ZIP preview/merge2 historical versions to3; current body+asset hashes preserved, no-op observation no new version, external owned asset change to4; retention3/1 and GC0 previews canceled. Irreversible apply and SSH migration NOT_RUN; exact registry/protected hashes restored. See markdown-history-storage-ui-20261015."
+      ],
+      "evidence_20261015_storage_fault": [
+        "docs/reviews/2026-10-15/storage-fault-live.md"
       ]
     },
     {
@@ -424,6 +430,9 @@
       ],
       "evidence_20261014_current_fixture": [
         "当前源码隔离真实SSH回归17.639s通过；详见followup103。限测试覆盖的服务器端路径，不提升该工作流整体状态。"
+      ],
+      "evidence_20261015_storage_fault": [
+        "docs/reviews/2026-10-15/storage-fault-live.md"
       ]
     }
   ],
@@ -7266,5 +7275,17 @@
       "remoteVerifiedCommit": "ddb04dc294dc64cbac3781ed5a36cd127b1a6a4d",
       "formalReleaseCreated": false
     }
+  },
+  "followup156": {
+    "task": "docs/tasks/storage-fault-live-20261015.json",
+    "status": "in_progress",
+    "classification": "progress",
+    "previousGoalTurn": "Lexical/interface false edges fixed and code relationship real evidence/full/main72d2322 delivered.",
+    "summary": "Actual bounded tmpfs ENOSPC and permission-fault HTTPS save/history/partial-restore/timeline/process-restart acceptance passed; docs-only main gate/push pending.",
+    "original12RemainOpen": true,
+    "evidence": [
+      "docs/reviews/2026-10-15/storage-fault-live.md",
+      "docs/reviews/2026-10-15/storage-fault-live-proof.json"
+    ]
   }
 }
