@@ -7445,5 +7445,16 @@
       "docs/reviews/2026-10-15/parallel-context-accounting.md"
     ],
     "deliveredMain": "7630228c1a0d82a7d1026cd4410c83b976bbe508"
+  },
+  "followup165": {
+    "task": "docs/tasks/session-run-interaction-20261015.json",
+    "classification": "progress",
+    "status": "in_progress",
+    "summary": "Composer run controls, steer/queue draft send, checkpoint pause/resume, durable stop isolation and streamed terminal handoff implemented. Focused20.179s, liveQwen stop/other-running/partial-context/pause/resume, IAB desktop390/six themes pass. Final SSE terminal reconnect guard added; final full/main gate pending.",
+    "original12RemainOpen": true,
+    "evidence": [
+      "docs/reviews/2026-10-15/session-run-interaction.md",
+      "docs/reviews/2026-10-15/session-run-interaction-proof.json"
+    ]
   }
 }
