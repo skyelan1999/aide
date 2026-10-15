@@ -7630,7 +7630,7 @@
     "task": "docs/tasks/knowledge-http-evidence-20261016.json",
     "status": "in_progress",
     "classification": "progress",
-    "summary": "按钮到服务缺口已定位；JS直接事件/字面请求和Go传输实现，Node/定向race/vet/quick85通过。完整HTML→事件→请求→路由→服务链尚未完成，原12项保持进行中。",
+    "summary": "HTML/JS/Go源证据和初版六段静态链已接入，实际临时文件索引/路径HTTP接口与隔离race、Knowledge race/vet及quick85通过；新增关系界面、辅助函数样式及完整发行待继续，原12项仍在进行。",
     "evidence": [
       "docs/reviews/2026-10-16/knowledge-http-evidence.md",
       "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"

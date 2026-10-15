@@ -38,6 +38,7 @@ type codeSymbol struct {
 	Name      string `json:"name"`
 	Kind      string `json:"kind"`
 	Line      int    `json:"line"`
+	Column    int    `json:"column,omitempty"`
 	EndLine   int    `json:"endLine"`
 	Signature string `json:"signature"`
 	Anonymous bool   `json:"anonymous"`
@@ -84,6 +85,20 @@ type codeWebUnresolved struct {
 	Line   int    `json:"line"`
 	Column int    `json:"column"`
 }
+type codeHTMLScript struct {
+	Path   string `json:"path"`
+	Line   int    `json:"line"`
+	Column int    `json:"column"`
+}
+type codeHTTPRoute struct {
+	Pattern string `json:"pattern"`
+	Method  string `json:"method"`
+	Path    string `json:"path"`
+	Caller  string `json:"caller"`
+	Handler string `json:"handler"`
+	Line    int    `json:"line"`
+	Column  int    `json:"column"`
+}
 type codeUnit struct {
 	File                   string              `json:"file"`
 	Language               string              `json:"language"`
@@ -96,6 +111,9 @@ type codeUnit struct {
 	Requests               []codeHTTPRequest   `json:"requests,omitempty"`
 	UnresolvedWeb          []codeWebUnresolved `json:"unresolvedWeb,omitempty"`
 	WebReferencesTruncated bool                `json:"webReferencesTruncated,omitempty"`
+	Scripts                []codeHTMLScript    `json:"scripts,omitempty"`
+	HTMLBase               bool                `json:"htmlBase,omitempty"`
+	Routes                 []codeHTTPRoute     `json:"routes,omitempty"`
 }
 type knowledgeCodeSummary struct {
 	LanguageService     *goTypeResult                 `json:"languageService,omitempty"`
@@ -109,6 +127,8 @@ type knowledgeCodeSummary struct {
 	UnresolvedImports   int                           `json:"unresolvedImports"`
 	UnresolvedRelations []knowledgeUnresolvedRelation `json:"unresolvedRelations,omitempty"`
 	RelationsTruncated  bool                          `json:"relationsTruncated,omitempty"`
+	WebRelations        int                           `json:"webRelations,omitempty"`
+	WebUnresolved       int                           `json:"webUnresolved,omitempty"`
 }
 
 type knowledgeUnresolvedRelation struct {
@@ -133,6 +153,8 @@ func codeLanguage(p string) string {
 		return "JavaScript"
 	case ".py":
 		return "Python"
+	case ".html", ".htm":
+		return "HTML"
 	case ".ts", ".tsx", ".jsx":
 		return "unsupported"
 	}
@@ -278,6 +300,7 @@ func codeGo(f knowledgeCodeFile) codeUnit {
 			}
 		}
 	}
+	codeGoHTTPRoutes(tree, fs, &u)
 	return u
 }
 func codeParseBatch(ctx context.Context, lang string, files []knowledgeCodeFile) ([]codeUnit, error) {
@@ -286,8 +309,12 @@ func codeParseBatch(ctx context.Context, lang string, files []knowledgeCodeFile)
 	}
 	raw, _ := json.Marshal(files)
 	var cmd *exec.Cmd
-	if lang == "Python" {
-		script, _ := codeAssets.ReadFile("code_analysis/python.py")
+	if lang == "Python" || lang == "HTML" {
+		asset := "code_analysis/python.py"
+		if lang == "HTML" {
+			asset = "code_analysis/html.py"
+		}
+		script, _ := codeAssets.ReadFile(asset)
 		cmd = exec.CommandContext(ctx, "python3", "-I", "-c", string(script))
 	} else {
 		parserJS, _ := codeAssets.ReadFile("code_analysis/acorn.cjs")
@@ -356,7 +383,7 @@ func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowled
 	}
 	units := []codeUnit{}
 	byFile := map[string]knowledgeCodeFile{}
-	js, py := []knowledgeCodeFile{}, []knowledgeCodeFile{}
+	js, py, html := []knowledgeCodeFile{}, []knowledgeCodeFile{}, []knowledgeCodeFile{}
 	for _, f := range files {
 		if ctx.Err() != nil {
 			g.Truncated = true
@@ -380,12 +407,14 @@ func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowled
 			js = append(js, f)
 		case "Python":
 			py = append(py, f)
+		case "HTML":
+			html = append(html, f)
 		}
 	}
 	for _, batch := range []struct {
 		lang  string
 		files []knowledgeCodeFile
-	}{{"JavaScript", js}, {"Python", py}} {
+	}{{"JavaScript", js}, {"Python", py}, {"HTML", html}} {
 		child, cancel := context.WithTimeout(ctx, 3*time.Second)
 		parsed, e := codeParseBatch(child, batch.lang, batch.files)
 		cancel()
@@ -673,6 +702,7 @@ func expandKnowledgeCode(ctx context.Context, g *knowledgeGraph, files []knowled
 			}
 		}
 	}
+	appendKnowledgeWeb(ctx, g, byFile, units, addEdge, recordUnresolved)
 	sort.Strings(summary.Diagnostics)
-	g.Warnings = append(g.Warnings, "代码视图：Go/JavaScript/Python AST。调用线是静态名称候选，不是类型检查或运行时跟踪；反射、动态分派、函数变量、外部依赖与歧义调用可能缺失。TypeScript/JSX暂不解析。每文件最多256KiB，总读取4MiB/80文件/1200符号。")
+	g.Warnings = append(g.Warnings, "代码视图：Go/JavaScript/Python AST、HTML控件声明。调用、事件和HTTP路由连线均保留静态证据等级，不是运行时跟踪；反射、动态分派、函数变量、外部依赖与歧义关系可能缺失。TypeScript/JSX暂不解析。每文件最多256KiB，总读取4MiB/80文件/1200符号。")
 }

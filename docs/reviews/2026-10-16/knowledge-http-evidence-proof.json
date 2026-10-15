@@ -1,6 +1,6 @@
 {
   "task": "knowledge-http-evidence-20261016",
-  "status": "development_checkpoint",
+  "status": "backend_graph_development_checkpoint",
   "baseline": "584aa9b9182dd091a3265b0f62f5a22e510d6a9a",
   "oldParser": "DOM event evidence is missing: expected regression failure",
   "node": "pass: callback/request provenance, lexical shadow/reassignment, global mutations, dynamic diagnostics and256 bounds",
@@ -14,15 +14,28 @@
   "quick": {
     "status": "pass",
     "count": 85,
-    "fingerprint": "536476fa1674a323a2b12119110fa3f4b44d5ba02230744f4ff8ff221a5fa75d"
+    "fingerprint": "80ff3a616b927573b137d5aba8f3ed393bc02f2d20974232e515764a540a50a9"
   },
   "notComplete": [
-    "HTML/script ownership",
-    "Go route extraction and unique resolution",
-    "source-isolated multi-stage graph",
-    "path UI provenance",
-    "actual full-chain index/HTTP/browser acceptance",
+    "path UI new relation filters/labels/confidence/location presentation",
+    "root-relative script mapping, DOM helper and request-wrapper styles including actual workbench",
+    "actual browser interaction",
     "full/main gate/runtime/offline release"
   ],
-  "production": "unchanged47cd; no model calls, no production session/config changes"
+  "production": "unchanged47cd; no model calls, no production session/config changes",
+  "html": "pass: source button/script positions, inactive markup, duplicate IDs/attributes, base URL diagnostics and bounds",
+  "knowledgeRegression": {
+    "selector": "^TestKnowledge",
+    "race": "pass",
+    "vet": "all packages pass",
+    "serverSeconds": 68.441,
+    "scope": "product graph code plus existing Knowledge tests; later addition is the actual-index/API integration test only"
+  },
+  "webIntegration": {
+    "selector": "^TestKnowledgeWeb",
+    "race": "pass",
+    "vet": "all packages pass",
+    "serverSeconds": 2.891,
+    "scope": "final source including actual temporary files -> production index -> registered HTTP path API,6 steps, hashes/locations and409 revision/workspace/view isolation; no production data"
+  }
 }
