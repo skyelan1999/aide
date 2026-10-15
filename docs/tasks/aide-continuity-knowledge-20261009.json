@@ -7013,7 +7013,7 @@
     "task": "docs/tasks/ssh-approval-lifecycle-20261015.json",
     "classification": "progress",
     "previousGoalTurn": "Added actual current reasoning/disk and real Qwen outcome evidence; pushed docs8c354c8. This turn adds new real dual-OpenSSH authorization lifecycle integration coverage.",
-    "status": "in_progress",
+    "status": "pass",
     "verified": [
       "actual dual OpenSSH entire suite race19.349s; source hashes stable",
       "same-path different host and same-host different-root authorization isolation",
@@ -7024,8 +7024,7 @@
       "Clean main full84 PASS, server race530.379s plus vet; fingerprint 2176a299197ee3b8bee85383d4bd5f2a1ad2f5002c487ebd1ee165efb3734edf"
     ],
     "remaining": [
-      "main gate/push",
-      "Safari certificate handoff and full user-host/browser acceptance"
+      "Safari certificate handoff and full user-host/browser acceptance; original12 remain open"
     ],
     "original12RemainOpen": true,
     "sourceCommit": "1541514",
@@ -7038,6 +7037,13 @@
       "sourceCommit": "529d951f7a52edb29ce6278b846a88bc11c8dd7d",
       "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/ssh-approval-lifecycle/verify-20261015T104255796363Z.log",
       "worktree": "/private/tmp/aide-ssh-approval-full-20261015"
+    },
+    "mainIntegration": {
+      "pushedMain": "3fa5b1a8e80c7823fab801e817572b9865792467",
+      "remoteHeadVerified": true,
+      "releaseCheck": "pass",
+      "fullChecks": 84,
+      "formalReleaseCreated": false
     }
   }
 }

@@ -63,16 +63,16 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Clean full84 passed; main prerequisite gate and remote push next. No version/tag/formal Release.",
+      "status": "pass",
+      "summary": "Clean main release-check passed; pushed3fa5b1a and independently verified remote main. No version/tag/formal Release. Receipt-only follow-up retains identical verified inputs.",
       "evidence": [
-        ".agent-state/ssh-approval-lifecycle/full-proof.json"
+        "docs/reviews/2026-10-15/ssh-approval-lifecycle.md"
       ]
     }
   },
   "release_authorization": "Standing user instruction: completed work push/merge main, keep documents and complete offline image package updated. No version/tag/formal Release.",
   "rollback": "Revert scoped integration tests/docs; no product or data migration. Existing9999 and prior complete offline image retained.",
-  "handoff": "Scoped real SSH lifecycle and source protocol evidence passed; clean full84 passed. Runtime/offline candidate verified. Main gate/push next; original12, browser and user-host acceptance remain open.",
+  "handoff": "Scoped batch integrated and pushed main; full84 and release gate passed. Runtime/offline candidate verified. Original12, browser and user-host acceptance remain open.",
   "sshEvidence": {
     "status": "pass",
     "environment": "two real disposable OpenSSH servers/internal-only Docker network; current source test Handler and approvedShell; no model/user-host/UI",
@@ -150,5 +150,12 @@
     "sourceCommit": "529d951f7a52edb29ce6278b846a88bc11c8dd7d",
     "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/ssh-approval-lifecycle/verify-20261015T104255796363Z.log",
     "worktree": "/private/tmp/aide-ssh-approval-full-20261015"
+  },
+  "mainIntegration": {
+    "pushedMain": "3fa5b1a8e80c7823fab801e817572b9865792467",
+    "remoteHeadVerified": true,
+    "releaseCheck": "pass",
+    "fullChecks": 84,
+    "formalReleaseCreated": false
   }
 }
