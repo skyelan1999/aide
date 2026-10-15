@@ -1,5 +1,12 @@
 # Docker 镜像交付
 
+## 2026-10-15 Markdown 混排 PDF 候选（构建时记录）
+
+- 源码 `2b0ea2c`：修复长列表后标题／正文叠加、跨页行内片段重排及表格列宽变化；统一原坐标定位并避开文字行、短列表项／表格行及图像分页。指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新本机 9999，健康及导出／图表／首页三项资源匹配，鉴权／配置／挂载保持。五项继承 vendor 删除保留，镜像为开发候选，不混称干净 main 镜像。
+- 应用 `sha256:297695c9a0468ecc87b8a33b7db2cdce864a789da7c213948848afb1bcb76589`，source SHA `5d643c2cab640e5ed2fb95642832e9b0cf94928e4cdc498cf2ddee39e18bd5f0`。
+- 完整离线包 `aide-0.1.17.0-RC2-linux-arm64-297695c9a046-offline.tar.gz`，705678359 字节，SHA-256 `d17ad91615bd7064e8dab9d38cdc4a70c0107f61162e6b56051761f31740ec9f`。应用／依赖镜像、内外摘要、平台、启动器、实际 docker load 和两本地目录副本通过；接收端导入未验收。保留上一 `997eda4026b5` 包回滚。
+- 构建时 quick82、真实导出器的 17 页混排夹具和 Poppler 页面检查通过；full84、main 门禁／推送后续状态见[任务账本](../docs/tasks/markdown-pdf-mixed-layout-20261015.json)。未使用用户原始问题文档，未测峰值内存，不替代完整已鉴权工作台浏览器验收；不升版、tag 或创建正式 Release。
+
 ## 2026-10-15 星图文件预览候选（构建时记录）
 
 - 源码 `743d0ec`：恢复文件节点通用预览入口，AI 文件引用直接打开，预览窗口复用及回收；代码定位选区可读。指定 `AIDE_OPEN_BROWSER=0 bash ./start.command` 更新本机 9999，健康及七项实际网页资源匹配，鉴权／配置／挂载未变。保留五个继承的 vendor 删除，属于开发候选，不冒充干净 main 构建。

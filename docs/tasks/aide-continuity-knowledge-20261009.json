@@ -6938,5 +6938,25 @@
       "releaseCheck": "pass",
       "remoteHeadVerified": true
     }
+  },
+  "followup150": {
+    "task": "docs/tasks/markdown-pdf-mixed-layout-20261015.json",
+    "request": "Long mixed Markdown PDF content overlap",
+    "status": "in_progress",
+    "sourceCommit": "2b0ea2c",
+    "verified": [
+      "quick82",
+      "actual bundled browser exporter: reproduced old page5 list/heading overlap, fixed17 A4 pages with mixed styled paragraphs, nested list, table, code, SVG, Mermaid and PNG",
+      "Poppler page inspection; page DOM max779 nodes/source1999; no peak-memory claim",
+      "export iframes and own browser tab closed, fixture server stopped",
+      "start.command9999, exact assets/config/auth/mounts; complete offline hashes/platform/launchers/docker load/two local copies"
+    ],
+    "remaining": [
+      "clean main full84 and release gate/push",
+      "original user problem document and complete authenticated workbench browser not tested",
+      "receiving-device import"
+    ],
+    "original12RemainOpen": true,
+    "runtimeImage": "297695c9a046"
   }
 }
