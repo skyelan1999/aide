@@ -20,4 +20,6 @@ module.print = lambda *args, **kw: print(*(value.replace('network none', 'browse
 module.COMMAND = module.COMMAND.replace('go test -mod=vendor -race -count=1 -timeout=18m ./...', 'AIDE_TOPIC_BROWSER_FIXTURE=1 go test -v -mod=vendor -race -count=1 -timeout=9m -run ^TestKnowledgeConclusionTopicsLiveBrowser$ ./internal/server')
 if os.environ.get('AIDE_TOPIC_BODY_FIXTURE') == '1':
     module.COMMAND = module.COMMAND.replace('AIDE_TOPIC_BROWSER_FIXTURE=1', 'AIDE_TOPIC_BODY_FIXTURE=1 AIDE_TOPIC_BROWSER_FIXTURE=1')
+if os.environ.get('AIDE_TOPIC_REFERENCE_FIXTURE') == '1':
+    module.COMMAND = module.COMMAND.replace('AIDE_TOPIC_BROWSER_FIXTURE=1', 'AIDE_TOPIC_REFERENCE_FIXTURE=1 AIDE_TOPIC_BROWSER_FIXTURE=1')
 module.main()

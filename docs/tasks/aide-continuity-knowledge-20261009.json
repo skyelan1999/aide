@@ -584,7 +584,7 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "本地/隔离SSH节点增改移除、前后原文、容量和留存已有证据；真实存储故障与新PID回读又补了后端边界。 结论阶段已补AI任务/问题身份与无标题记录、历史引用/依据变化独立、版本2备份及真实临时索引/磁盘/HTTP；实际IAB展开相同AI原话与不同依据并验390px。 人工主题又补章节改名/无标题局部原话、持久加密标记和旧观察淘汰保全；真实临时App浏览器保存/重读/停用恢复、390px及最终专项通过。 AI有界正文与已保存文档分段、载荷3备份、实际索引/加密重读/HTTP及浏览器精确尾段已验；新版正文不进入普通图。",
+        "latestScopedEvidence": "本地/隔离SSH节点增改移除、前后原文、容量和留存已有证据；真实存储故障与新PID回读又补了后端边界。 结论阶段已补AI任务/问题身份与无标题记录、历史引用/依据变化独立、版本2备份及真实临时索引/磁盘/HTTP；实际IAB展开相同AI原话与不同依据并验390px。 人工主题又补章节改名/无标题局部原话、持久加密标记和旧观察淘汰保全；真实临时App浏览器保存/重读/停用恢复、390px及最终专项通过。 AI有界正文与已保存文档分段、载荷3备份、实际索引/加密重读/HTTP及浏览器精确尾段已验；新版正文不进入普通图。 同源历史正文的片段外标签定义/使用位置/原始指纹、实际AI与文档独立依据变化通过索引/磁盘/HTTP和临时App页面；旧片段不借当前来源。",
         "evidence": [
           "docs/tasks/knowledge-timeline-20261009.json",
           "docs/reviews/2026-10-15/storage-fault-live.md",
@@ -592,9 +592,11 @@
           "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json",
           "docs/reviews/2026-10-16/knowledge-conclusion-topics.md",
           "docs/reviews/2026-10-16/knowledge-conclusion-body.md",
-          "docs/reviews/2026-10-16/knowledge-conclusion-body-proof.json"
+          "docs/reviews/2026-10-16/knowledge-conclusion-body-proof.json",
+          "docs/reviews/2026-10-16/knowledge-conclusion-references.md",
+          "docs/reviews/2026-10-16/knowledge-conclusion-references-proof.json"
         ],
-        "remaining": "片段外引用解析、索引未保留的文档正文、较大候选目录及完整认证Safari/用户SSH时间比较与定位仍待。full及运行/离线交付未完成；不推断结论正确。"
+        "remaining": "较大候选目录可达性与有界历史覆盖审计、完整认证Safari/用户SSH时间比较及定位仍待。full及运行/离线交付未完成；不推断结论正确或模型实际读过依据。"
       }
     }
   ],
@@ -7615,10 +7617,10 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "Current9999 API/disk all5 values,2 sessions/10 writes,409/400,cleanup pass; full authenticated UI still deferred. Global duplicate control was removed by later user request.",
-    "nextIndependentFocus": "Resolve reference definitions from retained AI/document source beyond selected excerpts; preserve legacy unknowns, then full and scoped workbench/SSH acceptance and release gates. All12 remain in progress.",
+    "nextIndependentFocus": "Audit large candidate catalog reachability and bounded history coverage, then full profile, scoped workbench/SSH acceptance and independent release gates. Original12 remain in progress.",
     "deliveredMain": "ea333509a591e5046fcff6b295bb881f09f169c3",
     "mainGate": "pass with exact-input full86 reuse",
-    "currentCheckpointGate": "Bounded body checkpoint: Knowledge race81.362s/all vet, actual temporary-App browser52.206s/all vet, quick86 pass. Full88/main/runtime/offline NOT_RUN for current feature."
+    "currentCheckpointGate": "Reference definitions checkpoint: final focused race9.244s/all vet, quick86 pass; broader Knowledge80.880s and actual temporary-App browser46.476s preceded final three backend guards. Full88/main/runtime/offline NOT_RUN for current feature."
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
@@ -7653,13 +7655,15 @@
     "task": "docs/tasks/knowledge-conclusion-evolution-20261016.json",
     "status": "in_progress",
     "classification": "progress",
-    "summary": "新增持久加密人工主题、章节改名／不同问题显式关联与无标题局部原话选择；UTF16/CRLF、来源/视图/修订/HEAD/锁屏/取消/损坏/容量守卫及缓存清理保全。真实临时App浏览器完成双主题4次修订、刷新重读与淘汰旧观察；Go/quick86通过。片段外引用/完整正文/full/发行仍待，原12项保持进行。 本轮增加AI有界原始正文/已保存文档分段选择、载荷3备份及兼容守卫；实际索引/磁盘/HTTP、精确尾段浏览器重读、Knowledge race/vet与quick86通过；片段外引用解析、full/发行仍待。",
+    "summary": "新增持久加密人工主题、章节改名／不同问题显式关联与无标题局部原话选择；UTF16/CRLF、来源/视图/修订/HEAD/锁屏/取消/损坏/容量守卫及缓存清理保全。真实临时App浏览器完成双主题4次修订、刷新重读与淘汰旧观察；Go/quick86通过。片段外引用/完整正文/full/发行仍待，原12项保持进行。 本轮增加AI有界原始正文/已保存文档分段选择、载荷3备份及兼容守卫；实际索引/磁盘/HTTP、精确尾段浏览器重读、Knowledge race/vet与quick86通过；片段外引用解析、full/发行仍待。 本轮补AI/文档同源历史正文的片段外定义、实际使用位置/原始定义指纹与独立依据变化；旧片段代码上下文/空目标/CRLF守卫、最终专项/quick86及实际临时App页面通过。较大候选覆盖审计、full与发行仍待。",
     "evidence": [
       "docs/reviews/2026-10-16/knowledge-conclusion-evolution.md",
       "docs/reviews/2026-10-16/knowledge-conclusion-evolution-proof.json",
       "docs/reviews/2026-10-16/knowledge-conclusion-topics.md",
       "docs/reviews/2026-10-16/knowledge-conclusion-body.md",
-      "docs/reviews/2026-10-16/knowledge-conclusion-body-proof.json"
+      "docs/reviews/2026-10-16/knowledge-conclusion-body-proof.json",
+      "docs/reviews/2026-10-16/knowledge-conclusion-references.md",
+      "docs/reviews/2026-10-16/knowledge-conclusion-references-proof.json"
     ]
   }
 }

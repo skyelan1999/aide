@@ -22,7 +22,7 @@ func knowledgeSelectionEvidenceItem(id string, m knowledgeConclusionSelection) k
 	if c.Session != "" {
 		kind = "session"
 	}
-	return knowledgeConclusionEvidenceItem{identity: id, node: knowledgeNode{ID: c.Node, Kind: kind, Root: c.Root, Source: c.Source, Region: c.Region, Path: c.Path, Session: c.Session}, session: c.Session, sourceKind: c.SourceKind, conclusion: c.Quote, bound: true, manual: true, ai: c.AI}
+	return knowledgeConclusionEvidenceItem{identity: id, node: knowledgeNode{ID: c.Node, Kind: kind, Root: c.Root, Source: c.Source, Region: c.Region, Path: c.Path, Session: c.Session}, session: c.Session, sourceKind: c.SourceKind, conclusion: c.Quote, bound: true, manual: true, ai: c.AI, selection: &m}
 }
 func appendKnowledgeManualTopics(out *knowledgeConclusionComparison, before, after knowledgeTimeSnapshot, topics knowledgeConclusionTopics) {
 	out.Manual = []knowledgeManualConclusionComparison{}

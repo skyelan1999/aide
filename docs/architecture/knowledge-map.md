@@ -419,6 +419,8 @@ AI侧录只进入加密历史，不进入普通星图／模型资料节点。原
 
 接口共用Bearer鉴权，读（包括HEAD）及写均检查锁态与工作区，写检查修订和取消；符号链接／错误身份／损坏／超限保持原文件。比较接口增加 `conclusions.manualState/manual`，人工关联独立呈现文字、标题／位置／来源变化并复用有界历史依据比较。人工标记读取失败时自动比较仍可返回，明确 `manualState=unavailable`；不伪称没有标记。历史淘汰保留选定原话，在旧标记区标明不可重新核验；未标记新的观察不推断撤回。普通配置导出不包含主题原话，备份应包含持久数据卷和原有密钥材料。实现及边界见[人工主题验收](../reviews/2026-10-16/knowledge-conclusion-topics.md)。
 
+历史依据解析采用固定的 `goldmark/v2 v2.1.6`（源码与MIT许可证随vendor保存），只解析历史原文，不渲染／执行内容。完整、快捷、省略标签及图片引用可使用同一来源正文片段外的定义；记录 `reference/target/sourceLine/sourceColumn/definitionLine/definition/definitionHash`，`definition` 最多2 KiB，指纹属于完整已保存定义。比较使用目标与定义指纹，未使用或只移动的定义不冒充内容变更。`evidence.before/after.context` 区分 `saved_source`、`selected_excerpt_only`、`source_anchor_unknown` 与 `source_parse_budget`；`sourceExcerptHash` 标明本次解析的历史原文范围。旧历史无正文时保留原候选的语法上下文并标未知，不能从混合会话图或其他文档补定义。每个比较索引最多1 MiB解析输入，按原文指纹缓存；每来源最多64 KiB、256定义／1024使用，既有引用与结果预算保持。页面展开历史定义，仅显示文字和位置，无当前来源跳转。实际证据见[历史引用解析验收](../reviews/2026-10-16/knowledge-conclusion-references.md)。
+
 ## 真实 SFTP 证据链验收（2026-10-09）
 
 在隔离双服务器环境，独立 SFTP 来源文件进入星图，原文搜索返回来源 ID、相对路径、定位和内容指纹。通过外部 SFTP 修改原文后，旧引用请求返回 409；重新扫描与检索返回新原文和新指纹，持久时间线保留前后文本。此项包含实际网络 I/O 与鉴权 Handler；测试将内部轮询时间戳置为过期以触发扫描，不证明浏览器实际轮询时延。向量提供商和远端渐进全库索引未由此覆盖。最终双服务器 race 回归两轮 19.962 秒 PASS。见 [SSH 验收记录](../tasks/ssh-continuity-integration-20261009.json)。

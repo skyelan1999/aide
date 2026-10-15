@@ -1,0 +1,105 @@
+package parser
+
+import (
+	"github.com/yuin/goldmark/v2/ast"
+	"github.com/yuin/goldmark/v2/text"
+	"github.com/yuin/goldmark/v2/util"
+)
+
+type codeBlockParser struct {
+}
+
+var defaultCodeBlockParser = &codeBlockParser{}
+
+// NewCodeBlockParser returns a new BlockParser that
+// parses code blocks.
+func NewCodeBlockParser() BlockParser {
+	return defaultCodeBlockParser
+}
+
+func (b *codeBlockParser) Trigger() []byte {
+	return nil
+}
+
+func (b *codeBlockParser) Open(_ ast.Node, reader text.Reader, _ Context) (ast.Node, State) {
+	line, segment := reader.PeekLine()
+	pos, padding := util.IndentPositionPadding(line, reader.LineOffset(), segment.Padding, 4)
+	if pos < 0 || util.IsBlank(line) {
+		return nil, NoChildren
+	}
+	node := ast.NewCodeBlock(ast.CodeBlockKindIndented, text.Lines{})
+	segment = text.NewSegmentPadding(segment.Start+pos, segment.Stop, padding)
+	// if code block line starts with a tab, keep a tab as it is.
+	if segment.Padding != 0 {
+		preserveLeadingTabInCodeBlock(&segment, reader, 0)
+	}
+	segment.ForceNewline = true
+	node.Value.AppendSegment(segment)
+	reader.AdvanceToEOL()
+	return node, NoChildren
+
+}
+
+func (b *codeBlockParser) Continue(node ast.Node, reader text.Reader, _ Context) State {
+	cb := node.(*ast.CodeBlock)
+	line, segment := reader.PeekLine()
+	pos, padding := util.IndentPositionPadding(line, reader.LineOffset(), segment.Padding, 4)
+
+	if util.IsBlank(line) && pos < 0 {
+		segment = text.NewSegment(segment.Stop-1, segment.Stop)
+	} else if pos < 0 {
+		return Close
+	} else {
+		segment = text.NewSegmentPadding(segment.Start+pos, segment.Stop, padding)
+		segment.ForceNewline = true
+		// if code block line starts with a tab, keep a tab as it is.
+		if segment.Padding != 0 {
+			preserveLeadingTabInCodeBlock(&segment, reader, 0)
+		}
+
+	}
+	cb.Value.AppendSegment(segment)
+	reader.AdvanceToEOL()
+	return Continue | NoChildren
+}
+
+func (b *codeBlockParser) Close(node ast.Node, reader text.Reader, _ Context) {
+	// trim trailing blank lines
+	cb := node.(*ast.CodeBlock)
+	length := len(cb.Value.Segments()) - 1
+	source := reader.Source()
+	trimmed := false
+	for length >= 0 {
+		line := cb.Value.Segments()[length]
+		if line.IsBlank(source) {
+			length--
+			trimmed = true
+		} else {
+			break
+		}
+	}
+	if !trimmed {
+		return
+	}
+
+	cb.Value.Truncate(length + 1)
+}
+
+func (b *codeBlockParser) CanInterruptParagraph() bool {
+	return false
+}
+
+func (b *codeBlockParser) CanAcceptIndentedLine() bool {
+	return true
+}
+
+func preserveLeadingTabInCodeBlock(segment *text.Segment, reader text.Reader, indent int) {
+	offsetWithPadding := reader.LineOffset() + indent
+	sl, ss := reader.Position()
+	reader.SetPosition(sl, text.NewSegment(ss.Start-1, ss.Stop))
+	if offsetWithPadding == reader.LineOffset() {
+		segment.Padding = 0
+		segment.Start--
+	}
+	reader.SetPosition(sl, ss)
+}

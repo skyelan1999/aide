@@ -1,0 +1,658 @@
+package text
+
+import (
+	"bytes"
+	"io"
+	"regexp"
+	"unicode/utf8"
+
+	"github.com/yuin/goldmark/v2/util"
+)
+
+const invalidValue = -1
+
+// EOF indicates the end of file.
+const EOF = byte(0xff)
+
+// A Reader interface provides abstracted method for reading text.
+type Reader interface {
+	io.RuneReader
+
+	// Source returns a source of the reader.
+	Source() []byte
+
+	// ResetPosition resets positions.
+	ResetPosition()
+
+	// Peek returns a byte at current position without advancing the internal pointer.
+	Peek() byte
+
+	// PeekLine returns the current line without advancing the internal pointer.
+	PeekLine() ([]byte, Segment)
+
+	// PrecedingCharacter returns a character just before current internal pointer.
+	PrecedingCharacter() rune
+
+	// ValueBetween returns a MultiLineValue covering the given [start, stop)
+	// byte range within the source.
+	//
+	// Value will be decoded using the Decoder bound to this reader.
+	ValueBetween(start, stop int) MultiLineValue
+
+	// Decoder returns the Decoder bound to this reader. Values constructed
+	// from positions within this reader's source should be bound to this
+	// Decoder.
+	Decoder() Decoder
+
+	// LineOffset returns a distance from the line head to current position.
+	LineOffset() int
+
+	// Position returns current line number and position.
+	Position() (int, Segment)
+
+	// SetPosition sets current line number and position.
+	SetPosition(int, Segment)
+
+	// SetPadding sets padding to the reader.
+	SetPadding(int)
+
+	// Advance advances the internal pointer.
+	Advance(int)
+
+	// AdvanceAndSetPadding advances the internal pointer and add padding to the
+	// reader.
+	AdvanceAndSetPadding(int, int)
+
+	// AdvanceToEOL advances the internal pointer to the end of line.
+	// If the line ends with a newline, it will be included in the segment.
+	// If the line ends with EOF, it will not be included in the segment.
+	AdvanceToEOL()
+
+	// AdvanceLine advances the internal pointer to the next line head.
+	AdvanceLine()
+
+	// SkipSpaces skips space characters and returns a non-blank line.
+	// If it reaches EOF, returns false.
+	SkipSpaces() (Segment, int, bool)
+
+	// SkipBlankLines skips blank lines and returns a non-blank line.
+	// If it reaches EOF, returns false.
+	SkipBlankLines() (Segment, int, bool)
+
+	// Match performs regular expression matching to current line.
+	Match(reg *regexp.Regexp) bool
+
+	// Match performs regular expression searching to current line.
+	FindSubMatch(reg *regexp.Regexp) [][]byte
+}
+
+type reader struct {
+	source       []byte
+	sourceLength int
+	line         int
+	peekedLine   []byte
+	pos          Segment
+	head         int
+	lineOffset   int
+	decoder      Decoder
+}
+
+// NewReader return a new Reader that can read UTF-8 bytes, decoding
+// constructed Values using the given Decoder.
+// b need not be a Markdown document's source; it may be any byte slice,
+// e.g. a substring extracted from a Value.
+func NewReader(b []byte, decoder Decoder) Reader {
+	r := &reader{
+		source:       b,
+		sourceLength: len(b),
+		decoder:      decoder,
+	}
+	r.ResetPosition()
+	return r
+}
+
+func (r *reader) ResetPosition() {
+	r.line = -1
+	r.head = 0
+	r.lineOffset = -1
+	r.AdvanceLine()
+}
+
+func (r *reader) Source() []byte {
+	return r.source
+}
+
+func (r *reader) ValueBetween(start, stop int) MultiLineValue {
+	return NewMultiLineValueFromIndex(NewIndex(start, stop), r.decoder)
+}
+
+func (r *reader) Decoder() Decoder {
+	return r.decoder
+}
+
+func (r *reader) Peek() byte {
+	if r.pos.Start >= 0 && r.pos.Start < r.sourceLength {
+		if r.pos.Padding != 0 {
+			return space[0]
+		}
+		return r.source[r.pos.Start]
+	}
+	return EOF
+}
+
+func (r *reader) PeekLine() ([]byte, Segment) {
+	if r.pos.Start >= 0 && r.pos.Start < r.sourceLength && r.pos.Start < r.pos.Stop {
+		if r.peekedLine == nil {
+			r.peekedLine = r.pos.Bytes(r.Source())
+		}
+		return r.peekedLine, r.pos
+	}
+	return nil, r.pos
+}
+
+// io.RuneReader interface.
+func (r *reader) ReadRune() (rune, int, error) {
+	return readRuneReader(r)
+}
+
+func (r *reader) LineOffset() int {
+	if r.lineOffset < 0 {
+		v := 0
+		for i := r.head; i < r.pos.Start; i++ {
+			if r.source[i] == '\t' {
+				v += util.TabWidth(v)
+			} else {
+				v++
+			}
+		}
+		r.lineOffset = v - r.pos.Padding
+	}
+	return r.lineOffset
+}
+
+func (r *reader) PrecedingCharacter() rune {
+	if r.pos.Start <= 0 {
+		if r.pos.Padding != 0 {
+			return rune(' ')
+		}
+		return rune('\n')
+	}
+	i := r.pos.Start - 1
+	for ; i >= 0; i-- {
+		if utf8.RuneStart(r.source[i]) {
+			break
+		}
+	}
+	rn, _ := utf8.DecodeRune(r.source[i:])
+	return rn
+}
+
+func (r *reader) Advance(n int) {
+	if n < r.pos.Stop-r.pos.Start && r.pos.Padding == 0 {
+		// The advanced range contains no tab, so lineOffset (if already
+		// known) can be updated by exactly n instead of being invalidated
+		// and recomputed from the line head on the next LineOffset call.
+		if r.lineOffset >= 0 {
+			if bytes.IndexByte(r.source[r.pos.Start:r.pos.Start+n], '\t') == -1 {
+				r.lineOffset += n
+			} else {
+				r.lineOffset = -1
+			}
+		}
+		r.pos.Start += n
+		r.peekedLine = nil
+		return
+	}
+	r.lineOffset = -1
+	r.peekedLine = nil
+	l := r.sourceLength
+	for ; n > 0 && r.pos.Start < l; n-- {
+		if r.pos.Padding != 0 {
+			r.pos.Padding--
+			continue
+		}
+		if r.source[r.pos.Start] == '\n' {
+			r.AdvanceLine()
+			continue
+		}
+		r.pos.Start++
+	}
+}
+
+func (r *reader) AdvanceAndSetPadding(n, padding int) {
+	r.Advance(n)
+	if padding > r.pos.Padding {
+		r.SetPadding(padding)
+	}
+}
+
+func (r *reader) AdvanceToEOL() {
+	if r.pos.Start >= r.sourceLength {
+		return
+	}
+
+	r.lineOffset = -1
+	i := -1
+	if r.peekedLine != nil {
+		r.pos.Start += len(r.peekedLine) - r.pos.Padding - 1
+		if r.source[r.pos.Start] == '\n' {
+			i = 0
+		}
+	}
+	if i == -1 {
+		i = bytes.IndexByte(r.source[r.pos.Start:], '\n')
+	}
+	r.peekedLine = nil
+	if i != -1 {
+		r.pos.Start += i
+	} else {
+		r.pos.Start = r.sourceLength
+	}
+	r.pos.Padding = 0
+}
+
+func (r *reader) AdvanceLine() {
+	r.lineOffset = -1
+	r.peekedLine = nil
+	r.pos.Start = r.pos.Stop
+	r.head = r.pos.Start
+	if r.pos.Start < 0 || r.pos.Start >= r.sourceLength {
+		return
+	}
+	r.pos.Stop = r.sourceLength
+	i := 0
+	if r.source[r.pos.Start] != '\n' {
+		i = bytes.IndexByte(r.source[r.pos.Start:], '\n')
+	}
+	if i != -1 {
+		r.pos.Stop = r.pos.Start + i + 1
+	}
+	r.line++
+	r.pos.Padding = 0
+}
+
+func (r *reader) Position() (int, Segment) {
+	return r.line, r.pos
+}
+
+func (r *reader) SetPosition(line int, pos Segment) {
+	r.lineOffset = -1
+	r.line = line
+	r.pos = pos
+}
+
+func (r *reader) SetPadding(v int) {
+	r.pos.Padding = v
+}
+
+func (r *reader) SkipSpaces() (Segment, int, bool) {
+	return skipSpacesReader(r)
+}
+
+func (r *reader) SkipBlankLines() (Segment, int, bool) {
+	return skipBlankLinesReader(r)
+}
+
+func (r *reader) Match(reg *regexp.Regexp) bool {
+	return matchReader(r, reg)
+}
+
+func (r *reader) FindSubMatch(reg *regexp.Regexp) [][]byte {
+	return findSubMatchReader(r, reg)
+}
+
+// A BlockReader interface is a reader that is optimized for Blocks.
+type BlockReader interface {
+	Reader
+	// Reset resets current state and sets new segments to the reader.
+	Reset(segs []Segment)
+}
+
+type blockReader struct {
+	source     []byte
+	segments   []Segment
+	line       int
+	pos        Segment
+	head       int
+	last       int
+	lineOffset int
+	decoder    Decoder
+}
+
+// NewBlockReader returns a new BlockReader, decoding constructed Values
+// using the given Decoder.
+func NewBlockReader(source []byte, segs []Segment, decoder Decoder) BlockReader {
+	r := &blockReader{
+		source:  source,
+		decoder: decoder,
+	}
+	if segs != nil {
+		r.Reset(segs)
+	}
+	return r
+}
+
+func (r *blockReader) ResetPosition() {
+	r.line = -1
+	r.head = 0
+	r.last = 0
+	r.lineOffset = -1
+	r.pos.Start = -1
+	r.pos.Stop = -1
+	r.pos.Padding = 0
+	if len(r.segments) > 0 {
+		last := r.segments[len(r.segments)-1]
+		r.last = last.Stop
+	}
+	r.AdvanceLine()
+}
+
+func (r *blockReader) Reset(segs []Segment) {
+	r.segments = segs
+	r.ResetPosition()
+}
+
+func (r *blockReader) Source() []byte {
+	return r.source
+}
+
+func (r *blockReader) ValueBetween(start, stop int) MultiLineValue {
+	var builder ValueBuilder
+	builder.Decoder(r.decoder)
+	for i := range len(r.segments) {
+		s := r.segments[i]
+		if s.Stop <= start {
+			continue
+		}
+		if s.Start >= stop {
+			break
+		}
+		seg := s
+		if seg.Start < start {
+			seg.Start = start
+			seg.Padding = 0
+		}
+		if seg.Stop > stop {
+			seg.Stop = stop
+		}
+		builder.AddSegment(seg)
+	}
+	return builder.BuildMultiLine()
+}
+
+func (r *blockReader) Decoder() Decoder {
+	return r.decoder
+}
+
+// io.RuneReader interface.
+func (r *blockReader) ReadRune() (rune, int, error) {
+	return readRuneReader(r)
+}
+
+func (r *blockReader) PrecedingCharacter() rune {
+	if r.pos.Padding != 0 {
+		return rune(' ')
+	}
+	if len(r.segments) < 1 {
+		return rune('\n')
+	}
+	firstSegment := r.segments[0]
+	if r.line == 0 && r.pos.Start <= firstSegment.Start {
+		return rune('\n')
+	}
+	l := len(r.source)
+	i := r.pos.Start - 1
+	for ; i < l && i >= 0; i-- {
+		if utf8.RuneStart(r.source[i]) {
+			break
+		}
+	}
+	if i < 0 || i >= l {
+		return rune('\n')
+	}
+	rn, _ := utf8.DecodeRune(r.source[i:])
+	return rn
+}
+
+func (r *blockReader) LineOffset() int {
+	if r.lineOffset < 0 {
+		v := 0
+		for i := r.head; i < r.pos.Start; i++ {
+			if r.source[i] == '\t' {
+				v += util.TabWidth(v)
+			} else {
+				v++
+			}
+		}
+		r.lineOffset = v - r.pos.Padding
+	}
+	return r.lineOffset
+}
+
+func (r *blockReader) Peek() byte {
+	if r.line < len(r.segments) && r.pos.Start >= 0 && r.pos.Start < r.last {
+		if r.pos.Padding != 0 {
+			return space[0]
+		}
+		return r.source[r.pos.Start]
+	}
+	return EOF
+}
+
+func (r *blockReader) PeekLine() ([]byte, Segment) {
+	if r.line < len(r.segments) && r.pos.Start >= 0 && r.pos.Start < r.last {
+		return r.pos.Bytes(r.source), r.pos
+	}
+	return nil, r.pos
+}
+
+func (r *blockReader) Advance(n int) {
+	if n < r.pos.Stop-r.pos.Start && r.pos.Padding == 0 {
+		// The advanced range contains no tab, so lineOffset (if already
+		// known) can be updated by exactly n instead of being invalidated
+		// and recomputed from the line head on the next LineOffset call.
+		if r.lineOffset >= 0 {
+			if bytes.IndexByte(r.source[r.pos.Start:r.pos.Start+n], '\t') == -1 {
+				r.lineOffset += n
+			} else {
+				r.lineOffset = -1
+			}
+		}
+		r.pos.Start += n
+		return
+	}
+
+	r.lineOffset = -1
+	for ; n > 0; n-- {
+		if r.pos.Padding != 0 {
+			r.pos.Padding--
+			continue
+		}
+		if r.pos.Start >= r.pos.Stop-1 && r.pos.Stop < r.last {
+			r.AdvanceLine()
+			continue
+		}
+		r.pos.Start++
+	}
+}
+
+func (r *blockReader) AdvanceAndSetPadding(n, padding int) {
+	r.Advance(n)
+	if padding > r.pos.Padding {
+		r.SetPadding(padding)
+	}
+}
+
+func (r *blockReader) AdvanceToEOL() {
+	r.lineOffset = -1
+	r.pos.Padding = 0
+	c := r.source[r.pos.Stop-1]
+	if c == '\n' {
+		r.pos.Start = r.pos.Stop - 1
+	} else {
+		r.pos.Start = r.pos.Stop
+	}
+}
+
+func (r *blockReader) AdvanceLine() {
+	r.SetPosition(r.line+1, NewSegment(invalidValue, invalidValue))
+	r.head = r.pos.Start
+}
+
+func (r *blockReader) Position() (int, Segment) {
+	return r.line, r.pos
+}
+
+func (r *blockReader) SetPosition(line int, pos Segment) {
+	r.lineOffset = -1
+	r.line = line
+	if pos.Start == invalidValue {
+		if r.line < len(r.segments) {
+			s := r.segments[line]
+			r.head = s.Start
+			r.pos = s
+		}
+	} else {
+		r.pos = pos
+		if r.line < len(r.segments) {
+			s := r.segments[line]
+			r.head = s.Start
+		}
+	}
+}
+
+func (r *blockReader) SetPadding(v int) {
+	r.lineOffset = -1
+	r.pos.Padding = v
+}
+
+func (r *blockReader) SkipSpaces() (Segment, int, bool) {
+	return skipSpacesReader(r)
+}
+
+func (r *blockReader) SkipBlankLines() (Segment, int, bool) {
+	return skipBlankLinesReader(r)
+}
+
+func (r *blockReader) Match(reg *regexp.Regexp) bool {
+	return matchReader(r, reg)
+}
+
+func (r *blockReader) FindSubMatch(reg *regexp.Regexp) [][]byte {
+	return findSubMatchReader(r, reg)
+}
+
+func skipBlankLinesReader(r Reader) (Segment, int, bool) {
+	lines := 0
+	for {
+		line, seg := r.PeekLine()
+		if line == nil {
+			return seg, lines, false
+		}
+		if util.IsBlank(line) {
+			lines++
+			r.AdvanceLine()
+		} else {
+			return seg, lines, true
+		}
+	}
+}
+
+func skipSpacesReader(r Reader) (Segment, int, bool) {
+	chars := 0
+	for {
+		line, segment := r.PeekLine()
+		if line == nil {
+			return segment, chars, false
+		}
+		i := 0
+		for i < len(line) && util.IsSpace(line[i]) {
+			i++
+		}
+		if i > 0 {
+			r.Advance(i)
+			chars += i
+		}
+		if i < len(line) {
+			return segment.WithStart(segment.Start + i + 1), chars, true
+		}
+	}
+}
+
+func matchesWithinLine(r Reader, reg *regexp.Regexp) (line []byte, loc []int, ok bool) {
+	line, _ = r.PeekLine()
+	if line == nil {
+		return nil, nil, false
+	}
+	loc = reg.FindSubmatchIndex(line)
+	return line, loc, loc != nil && loc[1] < len(line)
+}
+
+func matchReader(r Reader, reg *regexp.Regexp) bool {
+	if _, loc, ok := matchesWithinLine(r, reg); ok {
+		r.Advance(loc[1] - loc[0])
+		return true
+	}
+	oldline, oldseg := r.Position()
+	match := reg.FindReaderSubmatchIndex(r)
+	r.SetPosition(oldline, oldseg)
+	if match == nil {
+		return false
+	}
+	r.Advance(match[1] - match[0])
+	return true
+}
+
+func findSubMatchReader(r Reader, reg *regexp.Regexp) [][]byte {
+	if line, loc, ok := matchesWithinLine(r, reg); ok {
+		result := make([][]byte, 0, len(loc)/2)
+		for i := 0; i < len(loc)-1; i += 2 {
+			if loc[i] < 0 {
+				result = append(result, []byte{})
+				continue
+			}
+			result = append(result, line[loc[i]:loc[i+1]])
+		}
+		r.Advance(loc[1] - loc[0])
+		return result
+	}
+	oldLine, oldSeg := r.Position()
+	match := reg.FindReaderSubmatchIndex(r)
+	r.SetPosition(oldLine, oldSeg)
+	if match == nil {
+		return nil
+	}
+	var bb bytes.Buffer
+	bb.Grow(match[1] - match[0])
+	for i := 0; i < match[1]; {
+		r, size, _ := readRuneReader(r)
+		i += size
+		bb.WriteRune(r)
+	}
+	bs := bb.Bytes()
+	var result [][]byte
+	for i := 0; i < len(match)-1; i += 2 {
+		if match[i] < 0 {
+			result = append(result, []byte{})
+			continue
+		}
+		result = append(result, bs[match[i]:match[i+1]])
+	}
+
+	r.SetPosition(oldLine, oldSeg)
+	r.Advance(match[1] - match[0])
+	return result
+}
+
+func readRuneReader(r Reader) (rune, int, error) {
+	line, _ := r.PeekLine()
+	if line == nil {
+		return 0, 0, io.EOF
+	}
+	rn, size := utf8.DecodeRune(line)
+	if rn == utf8.RuneError {
+		return 0, 0, io.EOF
+	}
+	r.Advance(size)
+	return rn, size, nil
+}

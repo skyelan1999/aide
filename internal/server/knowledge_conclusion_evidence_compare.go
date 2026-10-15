@@ -11,6 +11,7 @@ type knowledgeConclusionEvidenceItem struct {
 	bound      bool
 	ai         *knowledgeAIConclusionProvenance
 	manual     bool
+	selection  *knowledgeConclusionSelection
 }
 
 // Collection is independent of quote deltas: unchanged words can cite changed
@@ -107,11 +108,11 @@ func compareKnowledgeEvidenceItems(out *knowledgeConclusionComparison, before, a
 	appendItem := func(item knowledgeConclusionEvidenceItem, oldItem *knowledgeConclusionEvidenceItem) {
 		var a, b *knowledgeConclusionEvidenceSet
 		if oldItem != nil {
-			s := knowledgeConclusionEvidence(oldItem.conclusion.Text, oldItem.node, before.ID, oldIndex, oldItem.conclusion.Partial)
+			s := knowledgeItemEvidence(*oldItem, before, oldIndex)
 			a = &s
 		}
 		if _, exists := current[item.identity]; exists {
-			s := knowledgeConclusionEvidence(item.conclusion.Text, item.node, after.ID, nextIndex, item.conclusion.Partial)
+			s := knowledgeItemEvidence(item, after, nextIndex)
 			b = &s
 		}
 		if (a == nil || len(a.References) == 0 && !a.Partial) && (b == nil || len(b.References) == 0 && !b.Partial) {
@@ -160,7 +161,7 @@ func compareKnowledgeEvidenceItems(out *knowledgeConclusionComparison, before, a
 					if prev.State != ref.State || prev.Complete != ref.Complete {
 						r.AvailabilityChanged = true
 					}
-					if prev.Node != "" && ref.Node != "" && knowledgeConclusionReferenceIdentity(prev) != knowledgeConclusionReferenceIdentity(ref) {
+					if prev.Target == ref.Target && prev.Node != "" && ref.Node != "" && knowledgeConclusionReferenceIdentity(prev) != knowledgeConclusionReferenceIdentity(ref) {
 						r.Unknown = true
 						r.AvailabilityChanged = true
 					}

@@ -1,0 +1,339 @@
+{
+  "task": "knowledge-conclusion-evolution-20261016",
+  "status": "saved_source_reference_definitions_development_checkpoint",
+  "baseline": "1ca4cfc",
+  "finalFocused": {
+    "selector": "^TestKnowledgeConclusion",
+    "race": "pass",
+    "serverSeconds": 9.244,
+    "vet": "all packages pass",
+    "terminalExit": 0
+  },
+  "broadKnowledge": {
+    "selector": "^TestKnowledge",
+    "race": "pass",
+    "serverSeconds": 80.88,
+    "vet": "all packages pass",
+    "terminalExit": 0,
+    "scope": "before final legacy-selection context, empty-destination and original-CRLF guards; final focused covers them"
+  },
+  "quick": {
+    "count": 86,
+    "status": "pass",
+    "fingerprint": "88d62c634553f4495432cc0ee6371b06ee09b35dcc8751c253fd854082da763c",
+    "time": "20261015T214631421023Z"
+  },
+  "dependency": {
+    "module": "github.com/yuin/goldmark/v2",
+    "version": "v2.1.6",
+    "moduleSum": "h1:igy0q9JcqovoFXFx/XjtU8sHVhcUHavPj2sA3EoKJUE=",
+    "files": 38,
+    "sourceTreeSHA256": "e8e8441e0ce016e6d9e7d1c6979b9bdbd67486499e9ee562c640c852f7ff456b",
+    "copyMatches": true,
+    "license": "MIT"
+  },
+  "integration": {
+    "actualIndexEncryptedHistoryDiskHTTP": "pass",
+    "liveSourcesRemovedBeforeCompare": true,
+    "AIAndDocumentEvidenceRows": 2,
+    "quoteChanges": 0,
+    "historicalDefinitionsAndTargetContentComparedIndependently": true,
+    "liveProvider": false
+  },
+  "browser": {
+    "race": "pass",
+    "serverSeconds": 46.476,
+    "vet": "all packages pass",
+    "terminalExit": 0,
+    "scope": "actual temporary App and production timeline markup/JS/CSS; before final three backend guards",
+    "viewports": [
+      1280,
+      390
+    ],
+    "narrowScrollWidth": 390,
+    "sourceUsage": "L2:8",
+    "definitionLine": 306,
+    "definitionTitles": [
+      "original",
+      "revised"
+    ],
+    "savedBasis": [
+      "保存的依据甲",
+      "保存的依据乙"
+    ],
+    "observations": {
+      "conclusions": {
+        "version": 1,
+        "state": "partial_conclusion_evidence_phase",
+        "changes": [],
+        "sources": 2,
+        "unknownSources": 0,
+        "truncated": false,
+        "aiState": "captured_scoped",
+        "evidenceState": "saved_snapshot_explicit_references",
+        "evidence": [
+          {
+            "node": "F20e1af0b8830",
+            "path": "topic.md",
+            "sourceKind": "document",
+            "conclusionKey": "a74f23e9a48239470c624400aac5e172c2a6e17a6209bba7027d17a2d50d52a7:1",
+            "heading": "结论",
+            "kind": "evidence_changed",
+            "referencesChanged": true,
+            "contentChanged": true,
+            "availabilityChanged": false,
+            "unknown": false,
+            "beforeQuote": {
+              "key": "a74f23e9a48239470c624400aac5e172c2a6e17a6209bba7027d17a2d50d52a7:1",
+              "heading": "结论",
+              "headingPath": [
+                "报告",
+                "结论"
+              ],
+              "headingLine": 2,
+              "line": 3,
+              "endLine": 3,
+              "text": "采用方案甲，见[依据][ref]。",
+              "textHash": "463f98bcbf3325287b62f6ec5ccd2d0430d63debaf3e246bd064879fdf97daf2",
+              "sourceExcerptHash": "84b697829f760be0e3daae47804cd6012cc38fef121ec04ba383a18b1ab7da51"
+            },
+            "afterQuote": {
+              "key": "a74f23e9a48239470c624400aac5e172c2a6e17a6209bba7027d17a2d50d52a7:1",
+              "heading": "结论",
+              "headingPath": [
+                "报告",
+                "结论"
+              ],
+              "headingLine": 2,
+              "line": 3,
+              "endLine": 3,
+              "text": "采用方案甲，见[依据][ref]。",
+              "textHash": "463f98bcbf3325287b62f6ec5ccd2d0430d63debaf3e246bd064879fdf97daf2",
+              "sourceExcerptHash": "31787703e03f83e2c7cb833484e429ffa2dd610a3c29840b749e13e6a8c6f773"
+            },
+            "before": {
+              "snapshot": "Hdee0fcc7de65f640a3358cac",
+              "historical": true,
+              "confidence": "explicit_text_reference",
+              "modelUse": "not_proven",
+              "references": [
+                {
+                  "reference": "[依据][ref]",
+                  "kind": "markdown_reference",
+                  "line": 1,
+                  "column": 8,
+                  "state": "saved_excerpt",
+                  "node": "F076414e293cc",
+                  "path": "basis.txt",
+                  "root": "workspace",
+                  "region": "workspace",
+                  "excerpt": "保存的依据甲",
+                  "excerptHash": "0c463648503c1cd04d69731a975dc4bb5b04bc4ec60be7f93aa948aeac5cf21c",
+                  "excerptBytes": 18,
+                  "complete": true,
+                  "target": "basis.txt",
+                  "sourceLine": 3,
+                  "sourceColumn": 8,
+                  "definitionLine": 7,
+                  "definition": "[ref]: basis.txt \"original\"",
+                  "definitionHash": "085f88bedf7a9f6b973876cb48776b1712061dfd9df6a91d0e5ee75a4d22b071"
+                }
+              ],
+              "partial": false,
+              "context": "saved_source",
+              "sourceExcerptHash": "84b697829f760be0e3daae47804cd6012cc38fef121ec04ba383a18b1ab7da51"
+            },
+            "after": {
+              "snapshot": "H0dba472352619412a99c3b0e",
+              "historical": true,
+              "confidence": "explicit_text_reference",
+              "modelUse": "not_proven",
+              "references": [
+                {
+                  "reference": "[依据][ref]",
+                  "kind": "markdown_reference",
+                  "line": 1,
+                  "column": 8,
+                  "state": "saved_excerpt",
+                  "node": "F076414e293cc",
+                  "path": "basis.txt",
+                  "root": "workspace",
+                  "region": "workspace",
+                  "excerpt": "保存的依据乙",
+                  "excerptHash": "bce8c43b4e513dee45eb6f70ee1b63b04ed0ea34219b4e544da241aa27615e7b",
+                  "excerptBytes": 18,
+                  "complete": true,
+                  "target": "basis.txt",
+                  "sourceLine": 3,
+                  "sourceColumn": 8,
+                  "definitionLine": 7,
+                  "definition": "[ref]: basis.txt \"revised\"",
+                  "definitionHash": "94c5ab55e786783588cbb853a7765e9435158b855f1adc286c51a326f520cd64"
+                }
+              ],
+              "partial": false,
+              "context": "saved_source",
+              "sourceExcerptHash": "31787703e03f83e2c7cb833484e429ffa2dd610a3c29840b749e13e6a8c6f773"
+            }
+          },
+          {
+            "node": "S1",
+            "session": "s",
+            "sourceKind": "assistant_conclusion",
+            "conclusionKey": "717b9a2133fb22ad0eef6db7f604f146c6fdc31454dc6b7fc1ac88e7e86012fd:1",
+            "heading": "结论",
+            "kind": "evidence_changed",
+            "referencesChanged": true,
+            "contentChanged": true,
+            "availabilityChanged": false,
+            "unknown": false,
+            "beforeQuote": {
+              "key": "717b9a2133fb22ad0eef6db7f604f146c6fdc31454dc6b7fc1ac88e7e86012fd:1",
+              "heading": "结论",
+              "headingPath": [
+                "结论"
+              ],
+              "headingLine": 1,
+              "line": 2,
+              "endLine": 2,
+              "text": "采用方案甲，见[依据][ref]。",
+              "textHash": "463f98bcbf3325287b62f6ec5ccd2d0430d63debaf3e246bd064879fdf97daf2",
+              "sourceExcerptHash": "a63f53d2c16b35f02412817fb16c8ff5d53a58632a9066fc09b2e7091eacb443"
+            },
+            "afterQuote": {
+              "key": "717b9a2133fb22ad0eef6db7f604f146c6fdc31454dc6b7fc1ac88e7e86012fd:1",
+              "heading": "结论",
+              "headingPath": [
+                "结论"
+              ],
+              "headingLine": 1,
+              "line": 2,
+              "endLine": 2,
+              "text": "采用方案甲，见[依据][ref]。",
+              "textHash": "463f98bcbf3325287b62f6ec5ccd2d0430d63debaf3e246bd064879fdf97daf2",
+              "sourceExcerptHash": "71609dd0ef9f82c777a576d3b157db582c8a23f69f600a4cb937b13709243cf7"
+            },
+            "beforeAI": {
+              "run": "r1",
+              "questionHash": "66dd72a4e9050888dc13a5eeb37c7fe634bda527979990bf7fb74cf472b330ea",
+              "questionBound": true,
+              "questionPreview": "同一问题",
+              "status": "completed",
+              "model": "fixture-model"
+            },
+            "afterAI": {
+              "run": "r1",
+              "questionHash": "66dd72a4e9050888dc13a5eeb37c7fe634bda527979990bf7fb74cf472b330ea",
+              "questionBound": true,
+              "questionPreview": "同一问题",
+              "status": "completed",
+              "model": "fixture-model"
+            },
+            "before": {
+              "snapshot": "Hdee0fcc7de65f640a3358cac",
+              "historical": true,
+              "confidence": "explicit_text_reference",
+              "modelUse": "not_proven",
+              "references": [
+                {
+                  "reference": "[依据][ref]",
+                  "kind": "markdown_reference",
+                  "line": 1,
+                  "column": 8,
+                  "state": "saved_excerpt",
+                  "node": "F076414e293cc",
+                  "path": "basis.txt",
+                  "root": "workspace",
+                  "region": "workspace",
+                  "excerpt": "保存的依据甲",
+                  "excerptHash": "0c463648503c1cd04d69731a975dc4bb5b04bc4ec60be7f93aa948aeac5cf21c",
+                  "excerptBytes": 18,
+                  "complete": true,
+                  "target": "basis.txt",
+                  "sourceLine": 2,
+                  "sourceColumn": 8,
+                  "definitionLine": 306,
+                  "definition": "[ref]: basis.txt \"original\"",
+                  "definitionHash": "085f88bedf7a9f6b973876cb48776b1712061dfd9df6a91d0e5ee75a4d22b071"
+                }
+              ],
+              "partial": false,
+              "context": "saved_source",
+              "sourceExcerptHash": "a63f53d2c16b35f02412817fb16c8ff5d53a58632a9066fc09b2e7091eacb443"
+            },
+            "after": {
+              "snapshot": "H0dba472352619412a99c3b0e",
+              "historical": true,
+              "confidence": "explicit_text_reference",
+              "modelUse": "not_proven",
+              "references": [
+                {
+                  "reference": "[依据][ref]",
+                  "kind": "markdown_reference",
+                  "line": 1,
+                  "column": 8,
+                  "state": "saved_excerpt",
+                  "node": "F076414e293cc",
+                  "path": "basis.txt",
+                  "root": "workspace",
+                  "region": "workspace",
+                  "excerpt": "保存的依据乙",
+                  "excerptHash": "bce8c43b4e513dee45eb6f70ee1b63b04ed0ea34219b4e544da241aa27615e7b",
+                  "excerptBytes": 18,
+                  "complete": true,
+                  "target": "basis.txt",
+                  "sourceLine": 2,
+                  "sourceColumn": 8,
+                  "definitionLine": 306,
+                  "definition": "[ref]: basis.txt \"revised\"",
+                  "definitionHash": "94c5ab55e786783588cbb853a7765e9435158b855f1adc286c51a326f520cd64"
+                }
+              ],
+              "partial": false,
+              "context": "saved_source",
+              "sourceExcerptHash": "71609dd0ef9f82c777a576d3b157db582c8a23f69f600a4cb937b13709243cf7"
+            }
+          }
+        ],
+        "manualState": "",
+        "manual": null
+      },
+      "liveProvider": false,
+      "sourceFilesRemovedBeforeUI": true,
+      "temporaryApp": true
+    }
+  },
+  "initialFailures": {
+    "reference-focused.log": "multiline definition line fixture and real node-ID AST fragmentation regression; fixed without disabling old tests",
+    "dependencyPreparation": "go mod download without explicit module omitted full sum entry; explicit pinned module download and vendoring succeeded"
+  },
+  "limits": {
+    "sourceBytes": 65536,
+    "parserBytesPerComparisonIndex": 1048576,
+    "definitionsPerSource": 256,
+    "occurrencesPerSource": 1024,
+    "refsPerQuote": 16,
+    "comparisonRefs": 512,
+    "comparisonRows": 128,
+    "comparisonEncodedBytes": 524288
+  },
+  "historyFormatChangedThisStage": false,
+  "cleanup": {
+    "ownedTabsClosed": true,
+    "viewportReset": true,
+    "temporaryAppEnded": true,
+    "ownTestContainersRemaining": 0,
+    "downloadInspectionDuplicatesRemoved": true
+  },
+  "production": {
+    "changed": false,
+    "image": "sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba"
+  },
+  "notComplete": [
+    "large candidate catalog reachability and bounded history coverage audit",
+    "full profile and independent main release gate",
+    "authenticated workbench/user-host SSH acceptance",
+    "runtime startup and offline image delivery"
+  ],
+  "originalTwelve": "all in_progress; Windows user-owned; real vectors deferred"
+}

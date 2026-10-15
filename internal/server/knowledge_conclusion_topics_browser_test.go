@@ -24,6 +24,9 @@ func TestKnowledgeConclusionTopicsLiveBrowser(t *testing.T) {
 	if os.Getenv("AIDE_TOPIC_BODY_FIXTURE") == "1" {
 		fixture = knowledgeBodyFixture
 	}
+	if os.Getenv("AIDE_TOPIC_REFERENCE_FIXTURE") == "1" {
+		fixture = knowledgeReferenceFixture
+	}
 	a, history, workspace := fixture(t)
 	for _, name := range []string{"topic.md", "basis.txt"} {
 		if err := os.Remove(filepath.Join(a.workspace.Name(), name)); err != nil {
@@ -141,6 +144,27 @@ func TestKnowledgeConclusionTopicsLiveBrowser(t *testing.T) {
 	defer cancel()
 	_ = server.Shutdown(ctx)
 	store, err := loadKnowledgeTopics(knowledgeTopicFile(a.dataPath, workspace, false), workspace, false, knowledgeTopicKey(a.token))
+	if os.Getenv("AIDE_TOPIC_REFERENCE_FIXTURE") == "1" {
+		if err != nil || len(store.Topics) != 0 {
+			t.Fatal("reference browser unexpectedly wrote topics", err)
+		}
+		current, e := loadKnowledgeTime(knowledgeTimeFile(a.dataPath, workspace, false), workspace, false, knowledgeTimeKey(a.token))
+		if e != nil || len(current.Snapshots) != 2 {
+			t.Fatal("reference browser history", e)
+		}
+		out := compareKnowledgeTime(current.Snapshots[0], current.Snapshots[1]).Conclusions
+		if len(out.Changes) != 0 || len(out.Evidence) != 2 {
+			t.Fatal("reference browser evidence count")
+		}
+		for _, row := range out.Evidence {
+			if !row.ReferencesChanged || !row.ContentChanged || row.Unknown {
+				t.Fatal("reference browser difference incomplete")
+			}
+		}
+		proof, _ := json.Marshal(map[string]any{"conclusions": out, "temporaryApp": true, "sourceFilesRemovedBeforeUI": true, "liveProvider": false})
+		t.Log("REFERENCE_BROWSER_PROOF=" + string(proof))
+		return
+	}
 	if os.Getenv("AIDE_TOPIC_BODY_FIXTURE") == "1" {
 		if err != nil || len(store.Topics) != 1 || store.Revision != 2 || len(store.Topics[0].Members) != 2 {
 			t.Fatal("body browser did not save whole chunk then exact tail", err, store.Revision)

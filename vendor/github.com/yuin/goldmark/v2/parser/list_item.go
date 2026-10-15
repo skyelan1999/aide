@@ -1,0 +1,91 @@
+package parser
+
+import (
+	"github.com/yuin/goldmark/v2/ast"
+	"github.com/yuin/goldmark/v2/text"
+	"github.com/yuin/goldmark/v2/util"
+)
+
+type listItemParser struct {
+}
+
+var defaultListItemParser = &listItemParser{}
+
+// NewListItemParser returns a new BlockParser that
+// parses list items.
+func NewListItemParser() BlockParser {
+	return defaultListItemParser
+}
+
+func (b *listItemParser) Trigger() []byte {
+	return []byte{'-', '+', '*', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
+}
+
+func (b *listItemParser) Open(parent ast.Node, reader text.Reader, pc Context) (ast.Node, State) {
+	list, lok := parent.(*ast.List)
+	if !lok { // list item must be a child of a list
+		return nil, NoChildren
+	}
+	offset := lastOffset(list)
+	line, _ := reader.PeekLine()
+	match, typ := parseListItem(line)
+	if typ == notList {
+		return nil, NoChildren
+	}
+	if match[1]-offset > 3 {
+		return nil, NoChildren
+	}
+
+	pc.Set(emptyListItemWithBlankLinesKey, nil)
+
+	itemOffset := calcListOffset(line, match)
+	node := ast.NewListItem()
+	node.SetOffset(match[3] + itemOffset)
+	if match[4] < 0 || util.IsBlank(line[match[4]:match[5]]) {
+		return node, NoChildren
+	}
+
+	pos, padding := util.IndentPosition(line[match[4]:], match[4], itemOffset)
+	child := match[3] + pos
+	reader.AdvanceAndSetPadding(child, padding)
+	return node, HasChildren
+}
+
+func (b *listItemParser) Continue(node ast.Node, reader text.Reader, pc Context) State {
+	line, _ := reader.PeekLine()
+	if util.IsBlank(line) {
+		reader.AdvanceToEOL()
+		return Continue | HasChildren
+	}
+
+	offset := lastOffset(node.Parent())
+	isEmpty := !node.HasChildren() && pc.Get(emptyListItemWithBlankLinesKey) != nil
+	indent, _ := util.IndentWidth(line, reader.LineOffset())
+	if (isEmpty || indent < offset) && indent < 4 {
+		_, typ := parseListItem(line)
+		// new list item found
+		if typ != notList {
+			pc.Set(skipListParserKey, listItemFlagValue)
+			return Close
+		}
+		if !isEmpty {
+			return Close
+		}
+	}
+	pos, padding := util.IndentPosition(line, reader.LineOffset(), offset)
+	reader.AdvanceAndSetPadding(pos, padding)
+
+	return Continue | HasChildren
+}
+
+func (b *listItemParser) Close(_ ast.Node, _ text.Reader, _ Context) {
+	// nothing to do
+}
+
+func (b *listItemParser) CanInterruptParagraph() bool {
+	return true
+}
+
+func (b *listItemParser) CanAcceptIndentedLine() bool {
+	return false
+}

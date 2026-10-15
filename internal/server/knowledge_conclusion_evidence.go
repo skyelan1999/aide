@@ -28,14 +28,22 @@ type knowledgeConclusionReference struct {
 	ExcerptBytes    int    `json:"excerptBytes,omitempty"`
 	IndexedCodeHash string `json:"indexedCodeHash,omitempty"`
 	Complete        bool   `json:"complete"`
+	Target          string `json:"target,omitempty"`
+	SourceLine      int    `json:"sourceLine,omitempty"`
+	SourceColumn    int    `json:"sourceColumn,omitempty"`
+	DefinitionLine  int    `json:"definitionLine,omitempty"`
+	Definition      string `json:"definition,omitempty"`
+	DefinitionHash  string `json:"definitionHash,omitempty"`
 }
 type knowledgeConclusionEvidenceSet struct {
-	Snapshot   string                         `json:"snapshot"`
-	Historical bool                           `json:"historical"`
-	Confidence string                         `json:"confidence"`
-	ModelUse   string                         `json:"modelUse"`
-	References []knowledgeConclusionReference `json:"references"`
-	Partial    bool                           `json:"partial"`
+	Snapshot          string                         `json:"snapshot"`
+	Historical        bool                           `json:"historical"`
+	Confidence        string                         `json:"confidence"`
+	ModelUse          string                         `json:"modelUse"`
+	References        []knowledgeConclusionReference `json:"references"`
+	Partial           bool                           `json:"partial"`
+	Context           string                         `json:"context,omitempty"`
+	SourceExcerptHash string                         `json:"sourceExcerptHash,omitempty"`
 }
 type knowledgeConclusionEvidenceChange struct {
 	Node                string                           `json:"node"`
@@ -171,12 +179,14 @@ func knowledgeConclusionReferenceText(text string) (string, bool) {
 }
 
 type knowledgeConclusionReferenceIndex struct {
-	ids     map[string][]knowledgeNode
-	paths   map[string][]knowledgeNode
-	areas   map[string][]knowledgeNode
-	blocked map[string]bool
-	hashes  map[string]string
-	budget  int
+	ids         map[string][]knowledgeNode
+	paths       map[string][]knowledgeNode
+	areas       map[string][]knowledgeNode
+	blocked     map[string]bool
+	hashes      map[string]string
+	budget      int
+	parseBudget int
+	markdown    map[string]*knowledgeMarkdownSource
 }
 
 func knowledgeConclusionArea(n knowledgeNode) string {
@@ -196,7 +206,7 @@ func knowledgeConclusionUnavailable(g knowledgeGraph) map[string]bool {
 	return blocked
 }
 func newKnowledgeConclusionReferenceIndex(g knowledgeGraph) *knowledgeConclusionReferenceIndex {
-	x := &knowledgeConclusionReferenceIndex{ids: map[string][]knowledgeNode{}, paths: map[string][]knowledgeNode{}, areas: map[string][]knowledgeNode{}, blocked: knowledgeConclusionUnavailable(g), hashes: map[string]string{}, budget: 1 << 20}
+	x := &knowledgeConclusionReferenceIndex{ids: map[string][]knowledgeNode{}, paths: map[string][]knowledgeNode{}, areas: map[string][]knowledgeNode{}, blocked: knowledgeConclusionUnavailable(g), hashes: map[string]string{}, budget: 1 << 20, parseBudget: 1 << 20, markdown: map[string]*knowledgeMarkdownSource{}}
 	for _, n := range g.Nodes {
 		x.ids[n.ID] = append(x.ids[n.ID], n)
 		if n.Kind == "file" {
@@ -213,6 +223,9 @@ func (x *knowledgeConclusionReferenceIndex) resolve(from knowledgeNode, ref know
 		candidates = x.ids[ref.Reference]
 	} else {
 		raw := ref.Reference
+		if ref.Kind == "markdown_reference" {
+			raw = ref.Target
+		}
 		if strings.HasPrefix(raw, "/context/") {
 			raw = strings.TrimPrefix(raw, "/context/")
 			rel := knowledgeLocalReference(raw)
@@ -347,7 +360,7 @@ func knowledgeConclusionEvidence(text string, from knowledgeNode, snapshot strin
 	if len(markdownInlineRef.FindAllStringIndex(masked, 65)) != len(knowledgeConclusionInlineRef.FindAllStringIndex(masked, 65)) {
 		out.Partial = true
 	}
-	for _, re := range []*regexp.Regexp{knowledgeConclusionInlineRef, markdownDefinitionRef} {
+	for _, re := range []*regexp.Regexp{knowledgeConclusionInlineRef} {
 		for _, m := range re.FindAllStringSubmatchIndex(masked, 65) {
 			a, b := m[2], m[3]
 			if text[a] == '<' {
@@ -409,7 +422,7 @@ func knowledgeConclusionReferenceSignature(s *knowledgeConclusionEvidenceSet) st
 	}
 	refs := []string{}
 	for _, r := range s.References {
-		refs = append(refs, r.Kind+"\x00"+r.Reference)
+		refs = append(refs, r.Kind+"\x00"+r.Reference+"\x00"+r.Target+"\x00"+r.DefinitionHash)
 	}
 	sort.Strings(refs)
 	b, _ := json.Marshal(refs)

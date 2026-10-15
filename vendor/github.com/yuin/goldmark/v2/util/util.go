@@ -1,0 +1,896 @@
+// Package util provides utility functions for the goldmark.
+package util
+
+import (
+	"bufio"
+	"bytes"
+	"io"
+	"net/url"
+	"slices"
+	"sort"
+	"strings"
+	"unicode"
+	"unicode/utf8"
+)
+
+// A CopyOnWriteBuffer is a byte buffer that copies buffer when
+// it need to be changed.
+type CopyOnWriteBuffer struct {
+	buffer []byte
+	copied bool
+}
+
+// NewCopyOnWriteBuffer returns a new CopyOnWriteBuffer.
+func NewCopyOnWriteBuffer(buffer []byte) CopyOnWriteBuffer {
+	return CopyOnWriteBuffer{
+		buffer: buffer,
+		copied: false,
+	}
+}
+
+// Write writes given bytes to the buffer.
+// Write allocate new buffer and clears it at the first time.
+func (b *CopyOnWriteBuffer) Write(value []byte) {
+	if !b.copied {
+		b.buffer = make([]byte, 0, len(b.buffer)+20)
+		b.copied = true
+	}
+	b.buffer = append(b.buffer, value...)
+}
+
+// WriteString writes given string to the buffer.
+// WriteString allocate new buffer and clears it at the first time.
+func (b *CopyOnWriteBuffer) WriteString(value string) {
+	b.Write(StringToReadOnlyBytes(value))
+}
+
+// Append appends given bytes to the buffer.
+// Append copy buffer at the first time.
+func (b *CopyOnWriteBuffer) Append(value []byte) {
+	if !b.copied {
+		tmp := make([]byte, len(b.buffer), len(b.buffer)+20)
+		copy(tmp, b.buffer)
+		b.buffer = tmp
+		b.copied = true
+	}
+	b.buffer = append(b.buffer, value...)
+}
+
+// AppendString appends given string to the buffer.
+// AppendString copy buffer at the first time.
+func (b *CopyOnWriteBuffer) AppendString(value string) {
+	b.Append(StringToReadOnlyBytes(value))
+}
+
+// WriteByte writes the given byte to the buffer.
+// WriteByte allocate new buffer and clears it at the first time.
+func (b *CopyOnWriteBuffer) WriteByte(c byte) error {
+	if !b.copied {
+		b.buffer = make([]byte, 0, len(b.buffer)+20)
+		b.copied = true
+	}
+	b.buffer = append(b.buffer, c)
+	return nil
+}
+
+// AppendByte appends given bytes to the buffer.
+// AppendByte copy buffer at the first time.
+func (b *CopyOnWriteBuffer) AppendByte(c byte) {
+	if !b.copied {
+		tmp := make([]byte, len(b.buffer), len(b.buffer)+20)
+		copy(tmp, b.buffer)
+		b.buffer = tmp
+		b.copied = true
+	}
+	b.buffer = append(b.buffer, c)
+}
+
+// Bytes returns bytes of this buffer.
+func (b *CopyOnWriteBuffer) Bytes() []byte {
+	return b.buffer
+}
+
+// IsCopied returns true if buffer has been copied, otherwise false.
+func (b *CopyOnWriteBuffer) IsCopied() bool {
+	return b.copied
+}
+
+// ReadWhile read the given bytes while pred is true.
+func ReadWhile(bs []byte, index [2]int, pred func(byte) bool) (int, bool) {
+	j := index[0]
+	ok := false
+	for ; j < index[1]; j++ {
+		c1 := bs[j]
+		if pred(c1) {
+			ok = true
+			continue
+		}
+		break
+	}
+	return j, ok
+}
+
+// IsBlank returns true if the given string is all space characters.
+func IsBlank(bs []byte) bool {
+	for _, b := range bs {
+		if !IsSpace(b) {
+			return false
+		}
+	}
+	return true
+}
+
+// VisualizeSpaces visualize invisible space characters.
+func VisualizeSpaces(bs []byte) []byte {
+	bs = bytes.ReplaceAll(bs, []byte(" "), []byte("[SPACE]"))
+	bs = bytes.ReplaceAll(bs, []byte("\t"), []byte("[TAB]"))
+	bs = bytes.ReplaceAll(bs, []byte("\n"), []byte("[NEWLINE]\n"))
+	bs = bytes.ReplaceAll(bs, []byte("\r"), []byte("[CR]"))
+	bs = bytes.ReplaceAll(bs, []byte("\v"), []byte("[VTAB]"))
+	bs = bytes.ReplaceAll(bs, []byte("\x00"), []byte("[NUL]"))
+	bs = bytes.ReplaceAll(bs, []byte("\ufffd"), []byte("[U+FFFD]"))
+	return bs
+}
+
+// TabWidth calculates actual width of a tab at the given position.
+func TabWidth(currentPos int) int {
+	return 4 - currentPos%4
+}
+
+// IndentPosition searches an indent position with the given width for the given line.
+// If the line contains tab characters, paddings may be not zero.
+// currentPos==0 and width==2:
+//
+//	position: 0    1
+//	          [TAB]aaaa
+//	width:    1234 5678
+//
+// width=2 is in the tab character. In this case, IndentPosition returns
+// (pos=1, padding=2).
+func IndentPosition(bs []byte, currentPos, width int) (pos, padding int) {
+	return IndentPositionPadding(bs, currentPos, 0, width)
+}
+
+// IndentPositionPadding searches an indent position with the given width for the given line.
+// This function is mostly same as IndentPosition except this function
+// takes account into additional paddings.
+func IndentPositionPadding(bs []byte, currentPos, paddingv, width int) (pos, padding int) {
+	if width == 0 {
+		return 0, paddingv
+	}
+	w := 0
+	i := 0
+	l := len(bs)
+	p := paddingv
+	for ; i < l; i++ {
+		if p > 0 {
+			p--
+			w++
+			continue
+		}
+		if bs[i] == '\t' && w < width {
+			w += TabWidth(currentPos + w)
+		} else if bs[i] == ' ' && w < width {
+			w++
+		} else {
+			break
+		}
+	}
+	if w >= width {
+		return i - paddingv, w - width
+	}
+	return -1, -1
+}
+
+// IndentWidth calculate an indent width for the given line.
+func IndentWidth(bs []byte, currentPos int) (width, pos int) {
+	for i := range len(bs) {
+		switch bs[i] {
+		case ' ':
+			width++
+			pos++
+		case '\t':
+			width += TabWidth(currentPos + width)
+			pos++
+		default:
+			return
+		}
+	}
+	return
+}
+
+// FirstNonSpacePosition returns a position line that is a first nonspace
+// character.
+func FirstNonSpacePosition(bs []byte) int {
+	i := 0
+	for ; i < len(bs); i++ {
+		c := bs[i]
+		if c == ' ' || c == '\t' {
+			continue
+		}
+		if c == '\n' {
+			return -1
+		}
+		return i
+	}
+	return -1
+}
+
+// TrimLeft trims characters in the given b from head of the bs.
+// bytes.TrimLeft offers same functionalities, but bytes.TrimLeft
+// allocates new buffer for the result.
+func TrimLeft(bs, b []byte) []byte {
+	i := 0
+	for ; i < len(bs); i++ {
+		c := bs[i]
+		found := false
+		for j := range len(b) {
+			if c == b[j] {
+				found = true
+				break
+			}
+		}
+		if !found {
+			break
+		}
+	}
+	return bs[i:]
+}
+
+// TrimRight trims characters in the given b from tail of the bs.
+func TrimRight(bs, b []byte) []byte {
+	i := len(bs) - 1
+	for ; i >= 0; i-- {
+		c := bs[i]
+		found := false
+		for j := range len(b) {
+			if c == b[j] {
+				found = true
+				break
+			}
+		}
+		if !found {
+			break
+		}
+	}
+	return bs[:i+1]
+}
+
+// TrimLeftLength returns a length of leading specified characters.
+func TrimLeftLength(bs, b []byte) int {
+	return len(bs) - len(TrimLeft(bs, b))
+}
+
+// TrimRightLength returns a length of trailing specified characters.
+func TrimRightLength(bs, b []byte) int {
+	return len(bs) - len(TrimRight(bs, b))
+}
+
+// TrimLeftSpaceLength returns a length of leading space characters.
+func TrimLeftSpaceLength(bs []byte) int {
+	i := 0
+	for ; i < len(bs); i++ {
+		if !IsSpace(bs[i]) {
+			break
+		}
+	}
+	return i
+}
+
+// TrimRightSpaceLength returns a length of trailing space characters.
+func TrimRightSpaceLength(bs []byte) int {
+	l := len(bs)
+	i := l - 1
+	for ; i >= 0; i-- {
+		if !IsSpace(bs[i]) {
+			break
+		}
+	}
+	if i < 0 {
+		return l
+	}
+	return l - 1 - i
+}
+
+// TrimLeftSpace returns a subslice of the given bytes by slicing off all leading
+// space characters.
+func TrimLeftSpace(bs []byte) []byte {
+	return TrimLeft(bs, spaces)
+}
+
+// TrimRightSpace returns a subslice of the given bytes by slicing off all trailing
+// space characters.
+func TrimRightSpace(bs []byte) []byte {
+	return TrimRight(bs, spaces)
+}
+
+// DoFullUnicodeCaseFolding performs full unicode case folding to given bytes.
+func DoFullUnicodeCaseFolding(v []byte) []byte {
+	var rbuf []byte
+	cob := NewCopyOnWriteBuffer(v)
+	n := 0
+	for i := 0; i < len(v); i++ {
+		c := v[i]
+		if c < 0xb5 {
+			if c >= 0x41 && c <= 0x5a {
+				// A-Z to a-z
+				cob.Write(v[n:i])
+				_ = cob.WriteByte(c + 32)
+				n = i + 1
+			}
+			continue
+		}
+
+		if !utf8.RuneStart(c) {
+			continue
+		}
+		r, length := utf8.DecodeRune(v[i:])
+		if r == utf8.RuneError {
+			continue
+		}
+		folded, ok := unicodeCaseFoldings[r]
+		if !ok {
+			continue
+		}
+
+		cob.Write(v[n:i])
+		if rbuf == nil {
+			rbuf = make([]byte, 4)
+		}
+		for _, f := range folded {
+			l := utf8.EncodeRune(rbuf, f)
+			cob.Write(rbuf[:l])
+		}
+		i += length - 1
+		n = i + 1
+	}
+	if cob.IsCopied() {
+		cob.Write(v[n:])
+	}
+	return cob.Bytes()
+}
+
+// ReplaceSpaces replaces sequence of spaces with the given repl.
+func ReplaceSpaces(bs []byte, repl byte) []byte {
+	cob := NewCopyOnWriteBuffer(bs)
+	start := -1
+	n := 0
+	for i, c := range bs {
+		iss := IsSpace(c)
+		if start < 0 {
+			if iss {
+				start = i
+			}
+			continue
+		}
+		if iss {
+			continue
+		}
+		cob.Write(bs[n:start])
+		_ = cob.WriteByte(repl)
+		n = i
+		start = -1
+	}
+	if start >= 0 {
+		if cob.IsCopied() {
+			cob.Write(bs[n:start])
+			_ = cob.WriteByte(repl)
+		}
+	} else if cob.IsCopied() {
+		cob.Write(bs[n:])
+	}
+	return cob.Bytes()
+}
+
+// ToRune decode given bytes start at pos and returns a rune.
+func ToRune(bs []byte, pos int) rune {
+	i := pos
+	for ; i >= 0; i-- {
+		if utf8.RuneStart(bs[i]) {
+			break
+		}
+	}
+	r, _ := utf8.DecodeRune(bs[i:])
+	return r
+}
+
+// ToValidRune returns 0xFFFD if the given rune is invalid, otherwise v.
+func ToValidRune(v rune) rune {
+	if v == 0 || !utf8.ValidRune(v) {
+		return rune(0xFFFD)
+	}
+	return v
+}
+
+// ToLinkReference converts given bytes into a valid link reference string.
+// ToLinkReference trims leading and trailing spaces, performs unicode case
+// folding, and replaces sequences of spaces with a single space character.
+func ToLinkReference(v []byte) string {
+	v = TrimLeftSpace(v)
+	v = TrimRightSpace(v)
+	v = DoFullUnicodeCaseFolding(v)
+	return BytesToReadOnlyString(ReplaceSpaces(v, ' '))
+}
+
+var htmlQuote = []byte("&quot;")
+var htmlAmp = []byte("&amp;")
+var htmlLess = []byte("&lt;")
+var htmlGreater = []byte("&gt;")
+var htmlNull = []byte("\ufffd")
+var htmlSpace = []byte("%20")
+
+var htmlEscapeTable = [256]*[]byte{&htmlNull, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, &htmlQuote, nil, nil, nil, &htmlAmp, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, &htmlLess, nil, &htmlGreater, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil} //nolint:lll
+
+// EscapeHTMLByte returns HTML escaped bytes if the given byte should be escaped,
+// otherwise nil.
+func EscapeHTMLByte(b byte) []byte {
+	v := htmlEscapeTable[b]
+	if v != nil {
+		return *v
+	}
+	return nil
+}
+
+// EscapeHTML escapes characters that should be escaped in HTML text.
+func EscapeHTML(v []byte) []byte {
+	cob := NewCopyOnWriteBuffer(v)
+	n := 0
+	for i := range len(v) {
+		c := v[i]
+		escaped := htmlEscapeTable[c]
+		if escaped != nil {
+			cob.Write(v[n:i])
+			cob.Write(*escaped)
+			n = i + 1
+		}
+	}
+	if cob.IsCopied() {
+		cob.Write(v[n:])
+	}
+	return cob.Bytes()
+}
+
+// URLEscape escape the given URL.
+//
+// URL encoded values (%xx) are kept as is.
+func URLEscape(v []byte) []byte {
+	cob := NewCopyOnWriteBuffer(v)
+	limit := len(v)
+	n := 0
+
+	for i := 0; i < limit; {
+		c := v[i]
+		if urlEscapeTable[c] == 1 {
+			i++
+			continue
+		}
+		if c == '%' && i+2 < limit && IsHexDecimal(v[i+1]) && IsHexDecimal(v[i+2]) {
+			i += 3
+			continue
+		}
+		u8len := utf8lenTable[c]
+		if u8len == 99 { // invalid utf8 leading byte, skip it
+			i++
+			continue
+		}
+		if c == ' ' {
+			cob.Write(v[n:i])
+			cob.Write(htmlSpace)
+			i++
+			n = i
+			continue
+		}
+		if c == '&' {
+			cob.Write(v[n:i])
+			cob.Write(htmlAmp)
+			i++
+			n = i
+			continue
+		}
+		if c == '\'' {
+			cob.Write(v[n:i])
+			_ = cob.WriteByte('\'')
+			i++
+			n = i
+			continue
+		}
+
+		if int(u8len) > len(v) {
+			u8len = int8(len(v) - 1)
+		}
+		if u8len == 0 {
+			i++
+			n = i
+			continue
+		}
+		cob.Write(v[n:i])
+		stop := i + int(u8len)
+		if stop > len(v) {
+			i++
+			n = i
+			continue
+		}
+		cob.Write(StringToReadOnlyBytes(url.QueryEscape(string(v[i:stop]))))
+		i += int(u8len)
+		n = i
+	}
+	if cob.IsCopied() && n < limit {
+		cob.Write(v[n:])
+	}
+	return cob.Bytes()
+}
+
+var spaces = []byte(" \t\n\x0b\x0c\x0d")
+
+var spaceTable = [256]int8{0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} //nolint:lll
+
+var punctTable = [256]int8{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0} //nolint:lll
+
+var urlEscapeTable = [256]int8{
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1,
+	0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+	1, 1, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+}
+
+var utf8lenTable = [256]int8{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 99, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 99, 99, 99, 99, 99, 99, 99, 99} //nolint:lll
+
+// UTF8Len returns a byte length of the utf-8 character.
+func UTF8Len(b byte) int8 {
+	return utf8lenTable[b]
+}
+
+// IsPunct returns true if the given character is a punctuation, otherwise false.
+func IsPunct(c byte) bool {
+	return punctTable[c] == 1
+}
+
+// IsPunctRune returns true if the given rune is a punctuation, otherwise false.
+func IsPunctRune(r rune) bool {
+	return unicode.IsSymbol(r) || unicode.IsPunct(r)
+}
+
+// IsSpace returns true if the given character is a space, otherwise false.
+func IsSpace(c byte) bool {
+	return spaceTable[c] == 1
+}
+
+// IsSpaceRune returns true if the given rune is a space, otherwise false.
+func IsSpaceRune(r rune) bool {
+	return unicode.IsSpace(r)
+}
+
+// IsNumeric returns true if the given character is a numeric, otherwise false.
+func IsNumeric(c byte) bool {
+	return c >= '0' && c <= '9'
+}
+
+// IsHexDecimal returns true if the given character is a hexdecimal, otherwise false.
+func IsHexDecimal(c byte) bool {
+	return c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F'
+}
+
+// IsAlphaNumeric returns true if the given character is a alphabet or a numeric, otherwise false.
+func IsAlphaNumeric(c byte) bool {
+	return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9'
+}
+
+// A BufWriter is a subset of the bufio.Writer .
+type BufWriter interface {
+	io.Writer
+	WriteByte(c byte) error
+	WriteRune(r rune) (size int, err error)
+	WriteString(s string) (int, error)
+	Flush() error
+}
+
+// ErrorBufWriter is a BufWriter that can return the first error that occurred in any of its methods.
+type ErrorBufWriter interface {
+	BufWriter
+
+	// Error returns the first error that occurred in any of its methods, or nil if no error occurred.
+	Error() error
+}
+
+var _ BufWriter = (*errorBufWriter)(nil)
+
+type errorBufWriter struct {
+	w   BufWriter
+	err error
+}
+
+// NewErrorBufWriter returns a new ErrorBufWriter.
+func NewErrorBufWriter(w io.Writer) ErrorBufWriter {
+	switch w := w.(type) {
+	case *bytes.Buffer:
+		return &bw{w}
+	case *strings.Builder:
+		return &sw{w}
+	}
+
+	if bw, ok := w.(BufWriter); ok {
+		return &errorBufWriter{bw, nil}
+	}
+	return &errorBufWriter{bufio.NewWriter(w), nil}
+}
+
+// NewErrorBufWriterSize returns a new ErrorBufWriter with the given buffer size.
+func NewErrorBufWriterSize(w io.Writer, size int) ErrorBufWriter {
+	switch w := w.(type) {
+	case *bytes.Buffer:
+		return &bw{w}
+	case *strings.Builder:
+		return &sw{w}
+	}
+
+	if bw, ok := w.(BufWriter); ok {
+		return &errorBufWriter{bw, nil}
+	}
+	return &errorBufWriter{bufio.NewWriterSize(w, size), nil}
+}
+
+// bytes.Buffer and strings.Builder never return an error, so we can just ignore it.
+
+type bw struct {
+	*bytes.Buffer
+}
+
+func (b *bw) Error() error {
+	return nil
+}
+
+func (b *bw) Flush() error {
+	return nil
+}
+
+type sw struct {
+	*strings.Builder
+}
+
+func (b *sw) Error() error {
+	return nil
+}
+
+func (b *sw) Flush() error {
+	return nil
+}
+
+func (w *errorBufWriter) Error() error {
+	return w.err
+}
+
+func (w *errorBufWriter) Write(p []byte) (n int, err error) {
+	if w.err != nil {
+		return 0, w.err
+	}
+	n, w.err = w.w.Write(p)
+	return n, w.err
+}
+
+func (w *errorBufWriter) WriteByte(c byte) error {
+	if w.err != nil {
+		return w.err
+	}
+	w.err = w.w.WriteByte(c)
+	return w.err
+}
+
+func (w *errorBufWriter) WriteRune(r rune) (size int, err error) {
+	if w.err != nil {
+		return 0, w.err
+	}
+	size, w.err = w.w.WriteRune(r)
+	return size, w.err
+}
+
+func (w *errorBufWriter) WriteString(s string) (n int, err error) {
+	if w.err != nil {
+		return 0, w.err
+	}
+	n, w.err = w.w.WriteString(s)
+	return n, w.err
+}
+
+func (w *errorBufWriter) Flush() error {
+	if w.err != nil {
+		return w.err
+	}
+	w.err = w.w.Flush()
+	return w.err
+}
+
+// A PrioritizedValue struct holds pair of an arbitrary value and a priority.
+type PrioritizedValue[T any] struct {
+	// Value is an arbitrary value that you want to prioritize.
+	Value T
+	// Priority is a priority of the value.
+	Priority int
+}
+
+// PrioritizedValues is a slice of PrioritizedValue.
+type PrioritizedValues[T comparable] []PrioritizedValue[T]
+
+// Sort sorts the PrioritizedValues in ascending order.
+func (s PrioritizedValues[T]) Sort() {
+	sort.Slice(s, func(i, j int) bool {
+		return s[i].Priority < s[j].Priority
+	})
+}
+
+// Remove removes the given value from this slice.
+func (s PrioritizedValues[T]) Remove(v T) PrioritizedValues[T] {
+	i := 0
+	found := false
+	for ; i < len(s); i++ {
+		if s[i].Value == v {
+			found = true
+			break
+		}
+	}
+	if !found {
+		return s
+	}
+	return slices.Delete(s, i, i+1)
+}
+
+// Prioritized returns a new PrioritizedValue.
+func Prioritized[T any](v T, priority int) PrioritizedValue[T] {
+	return PrioritizedValue[T]{v, priority}
+}
+
+func bytesHash(b []byte) uint64 {
+	var hash uint64 = 5381
+	for _, c := range b {
+		hash = ((hash << 5) + hash) + uint64(c)
+	}
+	return hash
+}
+
+// BytesFilter is a efficient data structure for checking whether bytes exist or not.
+// BytesFilter is thread-safe.
+type BytesFilter interface {
+	// Add adds given bytes to this set.
+	Add([]byte)
+
+	// AddString adds given string to this set.
+	AddString(string)
+
+	// Contains return true if this set contains given bytes, otherwise false.
+	Contains([]byte) bool
+
+	// ContainsString return true if this set contains given string, otherwise false.
+	ContainsString(string) bool
+
+	// Extend copies this filter and adds given bytes to new filter.
+	Extend(...[]byte) BytesFilter
+
+	// ExtendString copies this filter and adds given string to new filter.
+	// Given string must be separated by a comma.
+	ExtendString(string) BytesFilter
+}
+
+type bytesFilter struct {
+	chars     [256]uint8
+	threshold int
+	slots     [][][]byte
+}
+
+// NewBytesFilter returns a new BytesFilter.
+func NewBytesFilter(elements ...[]byte) BytesFilter {
+	s := &bytesFilter{
+		threshold: 3,
+		slots:     make([][][]byte, 64),
+	}
+	for _, element := range elements {
+		s.Add(element)
+	}
+	return s
+}
+
+// NewBytesFilterString returns a new BytesFilter.
+// Given string must be separated by a comma.
+func NewBytesFilterString(elements string) BytesFilter {
+	s := &bytesFilter{
+		threshold: 3,
+		slots:     make([][][]byte, 64),
+	}
+	start := 0
+	for i := range len(elements) {
+		if elements[i] == ',' {
+			s.Add(StringToReadOnlyBytes(elements[start:i]))
+			start = i + 1
+		}
+	}
+	if start < len(elements) {
+		s.Add(StringToReadOnlyBytes(elements[start:]))
+	}
+	return s
+
+}
+
+func (s *bytesFilter) Add(b []byte) {
+	l := len(b)
+	m := min(l, s.threshold)
+	for i := range m {
+		s.chars[b[i]] |= 1 << uint8(i)
+	}
+	h := bytesHash(b) % uint64(len(s.slots))
+	slot := s.slots[h]
+	if slot == nil {
+		slot = [][]byte{}
+	}
+	s.slots[h] = append(slot, b)
+}
+
+func (s *bytesFilter) AddString(st string) {
+	s.Add(StringToReadOnlyBytes(st))
+}
+
+func (s *bytesFilter) Extend(bs ...[]byte) BytesFilter {
+	newFilter := NewBytesFilter().(*bytesFilter)
+	newFilter.chars = s.chars
+	newFilter.threshold = s.threshold
+	for k, v := range s.slots {
+		newSlot := make([][]byte, len(v))
+		copy(newSlot, v)
+		newFilter.slots[k] = newSlot
+	}
+	for _, b := range bs {
+		newFilter.Add(b)
+	}
+	return newFilter
+}
+
+func (s *bytesFilter) ExtendString(elements string) BytesFilter {
+	newFilter := NewBytesFilter().(*bytesFilter)
+	newFilter.chars = s.chars
+	newFilter.threshold = s.threshold
+	for k, v := range s.slots {
+		newSlot := make([][]byte, len(v))
+		copy(newSlot, v)
+		newFilter.slots[k] = newSlot
+	}
+	start := 0
+	for i := range len(elements) {
+		if elements[i] == ',' {
+			newFilter.Add(StringToReadOnlyBytes(elements[start:i]))
+			start = i + 1
+		}
+	}
+	if start < len(elements) {
+		newFilter.Add(StringToReadOnlyBytes(elements[start:]))
+	}
+	return newFilter
+}
+
+func (s *bytesFilter) Contains(b []byte) bool {
+	l := len(b)
+	m := min(l, s.threshold)
+	for i := range m {
+		if (s.chars[b[i]] & (1 << uint8(i))) == 0 {
+			return false
+		}
+	}
+	h := bytesHash(b) % uint64(len(s.slots))
+	slot := s.slots[h]
+	if len(slot) == 0 {
+		return false
+	}
+	for _, element := range slot {
+		if bytes.Equal(element, b) {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *bytesFilter) ContainsString(st string) bool {
+	return s.Contains(StringToReadOnlyBytes(st))
+}
