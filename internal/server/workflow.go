@@ -1816,6 +1816,9 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		rec := func(body []byte) {
 			sum := sha256.Sum256(body)
 			a.mu.Lock()
+			if task.Parallel != nil && hasParallelBriefing(input) {
+				task.Parallel.MainContext = requestContext(input, tools, params.MaxTokens, a.modelWindow(cfg.Model))
+			}
 			if !task.SnapshotsTruncated && len(task.RequestSnapshots) < 12 {
 				task.RequestSnapshots = append(task.RequestSnapshots, RequestSnapshot{
 					Purpose:   stepName + "#" + fmt.Sprint(round),
@@ -1895,7 +1898,15 @@ func (a *App) toolLoop(ctx context.Context, cfg Settings, input []Message, param
 		if len(input) > 0 && input[0].Role == "system" {
 			system = input[0].Content
 		}
+		scope := ""
+		if hasParallelBriefing(input) {
+			scope = "parallel_merge"
+			if task.Parallel != nil && task.Parallel.MainContext != nil {
+				task.Parallel.MainContext.Usage = usage
+			}
+		}
 		task.ContextAnchor = &ContextUsageAnchor{
+			Scope: scope,
 			Usage: usage, PromptEstimate: estimateProviderPromptTokens(input, tools),
 			CompletionEstimate: contextMessageTokens(Message{Role: "assistant", Content: out, ToolCalls: calls}),
 			HeaderFingerprint:  contextHeaderFingerprint(cfg, system, tools),

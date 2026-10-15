@@ -10,14 +10,14 @@ function fn(name) {
 function setup() {
   const nodes = new Map();
   const $ = id => {
-    if (!nodes.has(id)) nodes.set(id, {value:'', textContent:'', title:'', style:{}, classList:{add(){},remove(){},toggle(){}}, replaceChildren(){}, removeAttribute(){},setAttribute(){}, append(){}});
+    if (!nodes.has(id)) nodes.set(id, {value:'', textContent:'', title:'', style:{}, classList:{add(){},remove(){},toggle(){}}, children:[], replaceChildren(){this.children=[];}, removeAttribute(){},setAttribute(){}, append(...items){this.children.push(...items);}});
     return nodes.get(id);
   };
   const requests = [];
   const state = {config:{configured:true,workspaceId:'one',model:'model'},session:{id:'A',messages:[]},contextMeterSeq:{value:0},previewSeq:{value:0}};
-  const sandbox = {state, $, window:{}, AbortController, clearTimeout, setTimeout, fmtTokens:String,activeModel:()=>null, t:s=>s, contextParts:()=>[], ensureContextMeterControls(){}, renderContextCompactionState(){},hideCtxTooltip(){},updateSendEnabled(){},api:(path, options)=>new Promise((resolve,reject)=>requests.push({resolve,reject,body:JSON.parse(options.body),signal:options.signal}))};
+  const sandbox = {state, $, el:(tag,cls,text)=>({tag,className:cls,textContent:text,children:[],append(...items){this.children.push(...items)}}), window:{}, AbortController, clearTimeout, setTimeout, fmtTokens:String,activeModel:()=>null, t:(s,...args)=>s.replace(/\{(\d+)\}/g,(_,n)=>args[n]), contextParts:()=>[], ensureContextMeterControls(){}, renderContextCompactionState(){},hideCtxTooltip(){},updateSendEnabled(){},api:(path, options)=>new Promise((resolve,reject)=>requests.push({resolve,reject,body:JSON.parse(options.body),signal:options.signal}))};
   vm.createContext(sandbox);
-  for(const name of ['sessionModelPreferences','contextMeterKey','renderContextMeter','cancelContextPreview','hideContextPreview','contextMeterScope','contextMeterTransitioning','clearContextMeterDisplay','resetContextMeter','refreshContextMeter','estimateContext','refreshContextPreview','scheduleContextPreview']) vm.runInContext(fn(name),sandbox);
+  for(const name of ['sessionModelPreferences','contextMeterKey','renderParallelContextDetail','renderContextMeter','cancelContextPreview','hideContextPreview','contextMeterScope','contextMeterTransitioning','clearContextMeterDisplay','resetContextMeter','refreshContextMeter','estimateContext','refreshContextPreview','scheduleContextPreview']) vm.runInContext(fn(name),sandbox);
   return {sandbox,state,requests,$};
 }
 const data = inputEstimate => ({breakdown:{}, inputEstimate, contextWindow:10000});
@@ -57,5 +57,13 @@ const data = inputEstimate => ({breakdown:{}, inputEstimate, contextWindow:10000
   const unconfigured=setup();unconfigured.sandbox.estimateContext();unconfigured.state.config.configured=false;unconfigured.sandbox.estimateContext();
   unconfigured.requests[0].resolve(data(444));await new Promise(setImmediate);assert.equal(unconfigured.state.contextMeter,null);
   assert.match(source,/if \(!sameSession && typeof resetContextMeter === 'function'\) resetContextMeter\(\)/);
+  const parallel=setup();
+  parallel.state.session={id:'parallel',messages:[],sessionUsage:{prompt:500000,completion:12000,total:512000},runs:[{id:'ten',parallelism:10,parallel:{plannerContext:{inputEstimate:900,contextWindow:65536,usage:{prompt:1000}},parts:Array.from({length:10},(_,i)=>({context:{inputEstimate:2000+i,contextWindow:65536}})),mainContext:{inputEstimate:3000,contextWindow:65536,usage:{prompt:4000}}}}]};
+  parallel.sandbox.renderContextMeter(data(2500),false);
+  assert.equal(parallel.$('context-stat').textContent,'2500 / 10000','cumulative usage is never window occupancy');
+  const details=parallel.$('context-card-detail').children.map(x=>x.textContent).join('\n');
+  assert.match(details,/各路独立上下文/);assert.match(details,/子分析 10 路/);assert.match(details,/2000–2009/);assert.match(details,/最近主汇总请求：输入 4000/);assert.match(details,/500,000/);
+  parallel.state.session.runs=[{parallelism:5}];parallel.sandbox.renderContextMeter(data(2500),false);assert.match(parallel.$('context-card-detail').children.map(x=>x.textContent).join(''),/未记录逐请求上下文/);
+  parallel.state.session={id:'ordinary',messages:[]};parallel.sandbox.renderContextMeter(data(100),false);assert.equal(parallel.$('context-card-detail').children.length,0,'no parallel details leak across sessions');
   console.log('context meter: cache, failure retry, draft, session/workspace races and debounce passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});

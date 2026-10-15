@@ -1,0 +1,74 @@
+{
+  "id": "parallel-context-accounting-20261015",
+  "request": "并行时上下文显示也不太正常，我不确定上下文是分开运行的还是合并公用的",
+  "baseline": "331d9d7ddaaa343303d59405fe47c0c3769495da",
+  "initial_status": "",
+  "acceptance": [
+    "Each planner/worker/main request reports its own input estimate/reserve/window/usage, never cumulative task usage as context occupancy.",
+    "UI labels next main baseline vs cumulative session usage, independent per-branch windows, planner/worker range/main, legacy unknown and session isolation.",
+    "Transient parallel briefing calibration does not inflate later history; old parallel tasks handled conservatively; actual outgoing requests and Go race/UI tests plus docs/runtime/main gate."
+  ],
+  "scope": [
+    "internal/server/context.go",
+    "internal/server/conversation_parallel.go",
+    "internal/server/workflow.go",
+    "internal/server/web",
+    "scripts/context-meter.test.cjs",
+    "internal/server/*test.go",
+    "scripts/fixtures",
+    "docs",
+    "docker-images"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Current human request and independent-vs-pooled context confusion.",
+      "evidence": [
+        "docs/tasks/parallel-context-accounting-20261015.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Per-request metrics; transient merge anchor excludes later baseline calibration; descriptive UI with legacy unknown.",
+      "evidence": [
+        "docs/tasks/parallel-context-accounting-20261015.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Per-request estimates/windows/reserves/usage for planner, workers and main; transient merge anchor excluded including legacy; UI baseline/cumulative/independent rows and old unknown labels.",
+      "evidence": [
+        "internal/server/context.go",
+        "internal/server/conversation_parallel.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused Context+ConversationParallel Go race15.440s PASS and frontend cache/session/mixed metrics regression PASS; actual UI/runtime/model/full pending.",
+      "evidence": [
+        "scripts/context-meter.test.cjs",
+        "internal/server/context_breakdown_test.go",
+        "internal/server/conversation_parallel_test.go"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior human incremental tests/docs/main push, configured Qwen debugging and offline image delivery authorization; no tag/version bump.",
+  "rollback": "Revert scoped commits; additive context fields can be ignored by older binaries; no session migration or deletion.",
+  "handoff": ""
+}

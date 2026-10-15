@@ -114,7 +114,13 @@ func parallelFanout(t *testing.T, limit int) {
 	if task.Usage.Total != (limit+1)*20 || len(task.RequestSnapshots) != limit+1 || task.Parallel.Phase != "merging" || !task.ParallelPrepared {
 		t.Fatalf("missing accounting/progress: %+v", task)
 	}
+	if task.Parallel.PlannerContext == nil || task.Parallel.PlannerContext.Usage.Total != 20 || task.Parallel.MainContext == nil || task.Parallel.MainContext.InputEstimate != estimateProviderPromptTokens(merged, a.contextToolsFor(s)) {
+		t.Fatal("missing independent planner/merge context")
+	}
 	for _, part := range task.Parallel.Parts {
+		if part.Context == nil || part.Context.Usage.Total != 20 || part.Context.OutputReserve != 2048 || part.Context.ContextWindow <= 0 || part.Context.Usage.Prompt >= task.Usage.Prompt || part.Context.InputEstimate != estimateProviderPromptTokens(parallelWorkerMessages(input, part.Title), nil) {
+			t.Fatalf("worker context confused with aggregate %+v", part.Context)
+		}
 		if part.Status != "completed" {
 			t.Fatal(part)
 		}
@@ -264,6 +270,9 @@ func parallelEndToEnd(t *testing.T, limit int) {
 	task := saved.Runs[0]
 	if task.Status != "completed" || task.Parallel.Phase != "completed" || task.Parallel.Parts[1].Status != "failed" || task.Steps[0].Content != "One reconciled final answer." {
 		t.Fatalf("bad final task %+v", task)
+	}
+	if task.ContextAnchor == nil || task.ContextAnchor.Scope != "parallel_merge" || task.Parallel.MainContext == nil || task.Parallel.MainContext.Usage.Prompt != task.ContextAnchor.Usage.Prompt || task.Parallel.MainContext.Usage.Total >= task.Usage.Total {
+		t.Fatal("main request context must be separate from cumulative usage")
 	}
 	// Retry preserves the selected analysis limit, but starts a fresh plan.
 	requireStatus(t, request(a, "POST", "/api/sessions/"+s.ID+"/runs/"+task.ID+"/retry", nil), 202)

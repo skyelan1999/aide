@@ -36,7 +36,30 @@ type ContextComponent struct {
 
 // ContextUsageAnchor 保存一次真实上游调用及其 DSH 估算锚点，用来校准
 // 后续相同请求头下的会话上下文压力。
+// RequestContext describes ONE provider request, never the sum of sibling calls.
+type RequestContext struct {
+	InputEstimate int        `json:"inputEstimate"`
+	OutputReserve int        `json:"outputReserve"`
+	ContextWindow int        `json:"contextWindow"`
+	Usage         TokenUsage `json:"usage,omitempty"`
+}
+
+func requestContext(input []Message, tools []any, reserve, window int) *RequestContext {
+	return &RequestContext{InputEstimate: estimateProviderPromptTokens(input, tools), OutputReserve: reserve, ContextWindow: window}
+}
+
+func hasParallelBriefing(input []Message) bool {
+	for _, message := range input {
+		if message.Role == "user" && strings.HasPrefix(message.Content, "[parallel analysis results - unverified working notes") {
+			return true
+		}
+	}
+	return false
+}
+
 type ContextUsageAnchor struct {
+	Scope string `json:"scope,omitempty"` // parallel_merge contains transient working notes, absent from later baseline
+
 	Usage              TokenUsage `json:"usage"`
 	PromptEstimate     int        `json:"promptEstimate"`
 	CompletionEstimate int        `json:"completionEstimate"`
@@ -484,6 +507,12 @@ func (a *App) buildContextPreviewWithTask(s *Session, prompt, mode, contextText 
 		fingerprint := contextHeaderFingerprint(cfg, history[0].Content, tools)
 		for i := len(s.Runs) - 1; i >= 0; i-- {
 			anchor := s.Runs[i].ContextAnchor
+			// Parallel working notes are not persisted in conversation history. Their
+			// tokenization delta must not inflate the next ordinary request's baseline.
+			run := s.Runs[i]
+			if anchor != nil && (anchor.Scope == "parallel_merge" || anchor.Scope == "" && run.ParallelPrepared && run.Parallel != nil && run.Parallel.Phase != "fallback" && len(run.Parallel.Parts) > 1) {
+				break
+			}
 			if anchor == nil || anchor.Usage.Estimated || anchor.Usage.Prompt <= 0 || anchor.Usage.Completion < 0 {
 				continue
 			}

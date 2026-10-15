@@ -95,3 +95,35 @@ func TestSessionHistoryPageIncludesLifetimeUsageAcrossAllRuns(t *testing.T) {
 		t.Fatalf("session usage must cover all runs and mark estimates: %#v", view.SessionUsage)
 	}
 }
+
+func TestContextParallelTransientAnchorDoesNotInflateBaseline(t *testing.T) {
+	a := testApp(t)
+	a.settings = Settings{Model: "fixture", Models: []ModelRef{{ID: "fixture", ContextWindow: 65536}}}
+	sess := &Session{ID: "calibration", Messages: []Message{{Role: "user", Content: "question"}, {Role: "assistant", Content: "answer"}}}
+	params := ProfileParams{MaxTokens: 512}
+	base := a.buildContextPreview(sess, "next", "chat", "", nil, a.settings, params, true)
+	anchor := &ContextUsageAnchor{Usage: TokenUsage{Prompt: 20000, Completion: 100}, PromptEstimate: 100, CompletionEstimate: 10, HeaderFingerprint: contextHeaderFingerprint(a.settings, base.Messages[0].Content, base.Tools)}
+	task := &Task{ID: "run", ContextAnchor: anchor}
+	sess.Runs = []*Task{task}
+	ordinary := a.buildContextPreview(sess, "next", "chat", "", nil, a.settings, params, false)
+	if ordinary.Breakdown.UsageCalibration == 0 {
+		t.Fatal("normal request calibration was lost")
+	}
+	anchor.Scope = "parallel_merge"
+	merged := a.buildContextPreview(sess, "next", "chat", "", nil, a.settings, params, false)
+	if merged.Breakdown.UsageCalibration != 0 || merged.InputEstimate != base.InputEstimate {
+		t.Fatal("temporary working notes contaminated later baseline")
+	}
+	anchor.Scope = ""
+	task.ParallelPrepared = true
+	task.Parallel = &ParallelProgress{Phase: "completed", Parts: []ParallelPart{{Title: "a"}, {Title: "b"}}}
+	legacy := a.buildContextPreview(sess, "next", "chat", "", nil, a.settings, params, false)
+	if legacy.InputEstimate != base.InputEstimate {
+		t.Fatal("legacy parallel anchor inflated baseline")
+	}
+	task.Parallel.Phase = "fallback"
+	fallback := a.buildContextPreview(sess, "next", "chat", "", nil, a.settings, params, false)
+	if fallback.Breakdown.UsageCalibration == 0 {
+		t.Fatal("ordinary fallback request should retain calibration")
+	}
+}

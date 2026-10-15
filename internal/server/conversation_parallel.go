@@ -14,16 +14,19 @@ import (
 // Parallel analysis never executes tools or writes files. The original task is
 // the only executor and publishes the single, reconciled final answer.
 type ParallelPart struct {
-	Title   string `json:"title"`
-	Status  string `json:"status"`
-	Content string `json:"content,omitempty"`
-	Error   string `json:"error,omitempty"`
+	Context *RequestContext `json:"context,omitempty"`
+	Title   string          `json:"title"`
+	Status  string          `json:"status"`
+	Content string          `json:"content,omitempty"`
+	Error   string          `json:"error,omitempty"`
 }
 type ParallelProgress struct {
-	Phase     string         `json:"phase"`
-	Requested int            `json:"requested"`
-	Parts     []ParallelPart `json:"parts,omitempty"`
-	Reason    string         `json:"reason,omitempty"`
+	PlannerContext *RequestContext `json:"plannerContext,omitempty"`
+	MainContext    *RequestContext `json:"mainContext,omitempty"`
+	Phase          string          `json:"phase"`
+	Requested      int             `json:"requested"`
+	Parts          []ParallelPart  `json:"parts,omitempty"`
+	Reason         string          `json:"reason,omitempty"`
 }
 
 func validParallelism(value int) bool {
@@ -64,7 +67,7 @@ func parallelClip(text string, limit int) string {
 	}
 	return string(runes[:limit]) + "\n[analysis excerpt truncated; do not assume missing details]"
 }
-func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input []Message, params ProfileParams, purpose string) (string, error) {
+func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input []Message, params ProfileParams, purpose string, callContext *RequestContext) (string, error) {
 	a.mu.Lock()
 	window := a.modelWindow(cfg.Model)
 	a.mu.Unlock()
@@ -84,6 +87,9 @@ func (a *App) parallelCall(ctx context.Context, task *Task, cfg Settings, input 
 	out, calls, usage, err := complete(ctx, cfg, input, params, nil, rec)
 	a.mu.Lock()
 	task.Usage = addUsage(task.Usage, usage)
+	if callContext != nil {
+		callContext.Usage = usage
+	}
 	a.mu.Unlock()
 	if len(calls) > 0 {
 		return "", errors.New("parallel analysis returned a tool call without execution")
@@ -137,17 +143,21 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		a.publishStream(task.ID, streamEvent{Event: "note", Text: "并行分析转为主任务处理：" + reason})
 		return input, update("fallback", reason)
 	}
-	if err := update("planning", ""); err != nil {
-		return input, err
-	}
 	a.publishStream(task.ID, streamEvent{Event: "note", Text: fmt.Sprintf("正在规划最多 %d 路并行分析…", limit)})
 	planning := append(append([]Message(nil), input...), Message{Role: "user", Content: fmt.Sprintf("[parallel planner]\nDecompose the original request into 2 to %d independent analysis or drafting subtasks. General technical knowledge MAY be used to draft documents; lack of attachments is not a reason to reject a writing request. For a multi-section technical document (for example ROS2), prefer distinct sections up to the requested limit: concepts/architecture, setup/workspace, communication, implementation examples, testing/deployment. Return only JSON {\"tasks\":[\"...\"]}. Mark version-sensitive details and facts requiring fresh sources for the main executor to verify. External lookup, plugin execution and file writes belong to the main executor AFTER the parallel notes are reconciled; their existence does not prevent independent research outlines or drafts. Never claim to have executed them. Return {\"tasks\":[]} only for simple or genuinely indivisible requests. Do not pad duplicate subtasks; each must not rely on another subtask output.", limit)})
 	small := params
 	small.MaxTokens = 2048
 	small.ResponseFormat = ""
 	small.Stop = nil
+	a.mu.Lock()
+	plannerContext := requestContext(planning, nil, small.MaxTokens, a.modelWindow(cfg.Model))
+	task.Parallel = &ParallelProgress{Requested: limit, PlannerContext: plannerContext}
+	a.mu.Unlock()
+	if err := update("planning", ""); err != nil {
+		return input, err
+	}
 	planCtx, cancel := context.WithTimeout(ctx, 35*time.Second)
-	text, err := a.parallelCall(planCtx, task, cfg, planning, small, "parallel/plan")
+	text, err := a.parallelCall(planCtx, task, cfg, planning, small, "parallel/plan", plannerContext)
 	cancel()
 	if ctx.Err() != nil {
 		_ = update("interrupted", "")
@@ -166,20 +176,22 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	if len(titles) < 2 {
 		return fallback("需求不适合独立拆分")
 	}
-	a.mu.Lock()
-	task.Parallel.Parts = make([]ParallelPart, len(titles))
-	for i, title := range titles {
-		task.Parallel.Parts[i] = ParallelPart{Title: title, Status: "running"}
-	}
-	a.mu.Unlock()
-	if err := update("running", ""); err != nil {
-		return input, err
-	}
 	workerParams := params
 	workerParams.ResponseFormat = ""
 	workerParams.Stop = nil
 	if workerParams.MaxTokens <= 0 || workerParams.MaxTokens > 2048 {
 		workerParams.MaxTokens = 2048
+	}
+	workerInputs := make([][]Message, len(titles))
+	a.mu.Lock()
+	task.Parallel.Parts = make([]ParallelPart, len(titles))
+	for i, title := range titles {
+		workerInputs[i] = parallelWorkerMessages(input, title)
+		task.Parallel.Parts[i] = ParallelPart{Title: title, Status: "running", Context: requestContext(workerInputs[i], nil, workerParams.MaxTokens, a.modelWindow(cfg.Model))}
+	}
+	a.mu.Unlock()
+	if err := update("running", ""); err != nil {
+		return input, err
 	}
 	type result struct {
 		index int
@@ -191,8 +203,7 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 	defer stopWorkers()
 	for i, title := range titles {
 		go func(index int, title string) {
-			messages := append(append([]Message(nil), input...), Message{Role: "user", Content: "[parallel analysis subtask]\n" + title + "\nAnalyze or draft ONLY this subtask using supplied context and general knowledge. Explicitly flag version-sensitive details requiring verification by the main executor. No tools are available: do not claim to read external sources, execute commands or modify files. State evidence, uncertainty and dependencies. Keep output concise for a main executor to reconcile."})
-			out, callErr := a.parallelCall(workersCtx, task, cfg, messages, workerParams, fmt.Sprintf("parallel/part-%d", index+1))
+			out, callErr := a.parallelCall(workersCtx, task, cfg, workerInputs[index], workerParams, fmt.Sprintf("parallel/part-%d", index+1), task.Parallel.Parts[index].Context)
 			results <- result{index, out, callErr}
 		}(i, title)
 	}
@@ -266,8 +277,13 @@ func (a *App) prepareParallel(ctx context.Context, s *Session, task *Task, cfg S
 		return fallback("汇总超出上下文预算，使用原始上下文继续")
 	}
 	a.mu.Lock()
+	task.Parallel.MainContext = requestContext(merged, tools, reserve, window)
 	task.ParallelPrepared = true
 	task.CheckpointMessages = append([]Message(nil), merged...)
 	a.mu.Unlock()
 	return merged, update("merging", "")
+}
+
+func parallelWorkerMessages(input []Message, title string) []Message {
+	return append(append([]Message(nil), input...), Message{Role: "user", Content: "[parallel analysis subtask]\n" + title + "\nAnalyze or draft ONLY this subtask using supplied context and general knowledge. Explicitly flag version-sensitive details requiring verification by the main executor. No tools are available: do not claim to read external sources, execute commands or modify files. State evidence, uncertainty and dependencies. Keep output concise for a main executor to reconcile."})
 }

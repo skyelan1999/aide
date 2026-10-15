@@ -6009,8 +6009,31 @@ function contextMeterKey() {
   const anchor = lastRun?.contextAnchor;
   return [state.config?.workspaceId || '', session?.id || 'new', session?.messagesTotal ?? messages.length, session?.compactedMessages || 0,
     session?.compactedAt || '', (session?.compact || '').length, anchor?.headerFingerprint || '',
-    anchor?.usage?.prompt || 0, anchor?.usage?.completion || 0, anchor?.promptEstimate || 0,
+    anchor?.usage?.prompt || 0, anchor?.usage?.completion || 0, anchor?.promptEstimate || 0, anchor?.scope || '',
     JSON.stringify(sessionModelPreferences()), state.mode || 'chat', state.workflowPhase || '', !!window.aideAvatarEnabled?.(), signature].join('~');
+}
+function renderParallelContextDetail(detail) {
+  const run = state.session?.runs?.at(-1);
+  if (!(run?.parallelism > 1)) return;
+  const note = el('p', 'context-card-actual', t('各路独立上下文，分别携带会话副本；主请求再汇总笔记。累计消耗会相加，不共用一个窗口。'));
+  detail.append(note);
+  const progress = run.parallel;
+  const row = (label, context) => {
+    if (!context) return;
+    const actual = !context.usage?.estimated && context.usage?.prompt > 0;
+    const input = actual ? context.usage.prompt : context.inputEstimate;
+    detail.append(el('p', 'context-card-actual', t('{0}：输入 {1} / 独立窗口 {2} · {3}', t(label), fmtTokens(input || 0), fmtTokens(context.contextWindow || 0), t(actual ? '上游实际' : '估算'))));
+  };
+  row('规划请求', progress?.plannerContext);
+  const contexts = (progress?.parts || []).map(part => part.context).filter(Boolean);
+  if (contexts.length) {
+    const actual = contexts.every(context => !context.usage?.estimated && context.usage?.prompt > 0);
+    const inputs = contexts.map(context => actual ? context.usage.prompt : context.inputEstimate || 0);
+    const windows = [...new Set(contexts.map(context => context.contextWindow || 0))];
+    detail.append(el('p', 'context-card-actual', t(actual ? '子分析 {0} 路：每路实际输入 {1}–{2}，各自窗口 {3}' : '子分析 {0} 路：每路输入估算 {1}–{2}，各自窗口 {3}', contexts.length, fmtTokens(Math.min(...inputs)), fmtTokens(Math.max(...inputs)), windows.map(fmtTokens).join(' / '))));
+  }
+  row('最近主汇总请求', progress?.mainContext);
+  if (!progress?.plannerContext && !progress?.mainContext && !contexts.length) detail.append(el('p', 'context-card-actual', t('此历史任务未记录逐请求上下文，不能从累计用量反推。')));
 }
 function renderContextMeter(data, isDraft) {
   if (!data || !data.breakdown) return;
@@ -6085,6 +6108,7 @@ function renderContextMeter(data, isDraft) {
     actual.title = t("{0}：输入 {1} tokens · 输出 {2} tokens", source, usage.prompt || 0, usage.completion || 0);
     detail.append(actual);
   }
+  renderParallelContextDetail(detail);
   renderContextCompactionState(detail);
   detail.title = data.estimationNote || '';
 }
