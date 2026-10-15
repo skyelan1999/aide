@@ -31,3 +31,9 @@
 已请求用户手动处理证书。最终完整工作台点击、Safari、主题、长时间运行和卡片截图验收均 **NOT_RUN**；VM 结果不替代这些检查。源代码检查、候选镜像、离线包和 main 发布分别在任务账本记录，未验证的状态不能由历史收据代替。
 
 本地证据目录 `.agent-state/provider-output-interruption/`：`vision-direct.json`、`vision-aide.json`、`cancel-proof.json`、`body2-cancel-proof.json`、`tool-task.json`、`cards-negative.log` 和 `quick-frozen.json`。这些私有运行材料不随 Git 上传。
+
+## 本轮最终候选
+
+源码 `4034555` 已推送功能分支，指定启动入口构建并启动镜像 `sha256:0667141784e8966306c9da940b49d990d109356835e173f15ac87fd8907a1d74`；服务资源与源码一致，新增千问配置在重启后仍可用。最终源码的停止函数通过 VM 执行连接实际 9999 取消接口：正文 26 字符时停止，包含启动 Node 验证器开销在内约 0.272 秒读到 cancelled，刷新和轮询回调均触发。这仍不是浏览器点击验收。六个自建测试会话均已完成或停止，没有遗留本轮运行任务。
+
+完整离线包 `aide-0.1.17.0-RC2-linux-arm64-0667141784e8-offline.tar.gz` 已生成，SHA-256 `ce62032b42b530294a87210edece40d6c57fbe56a5dfb6b3d90edc18dbd724d6`；流式校验内外哈希、元数据、实际导入与两个本地副本均通过，接收设备导入未验证。77 项 quick 通过；首次 quick 因插话气泡测试未加载新提取的思考函数失败，已让该测试加载实际函数并重新通过全套。未运行 full79 或 main/tag 门禁。

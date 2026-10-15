@@ -155,7 +155,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Current fix/file-open-request-ownership: guarded main openFile stale reads; VM14/quick75/IAB component pass.9999 not listening; no Docker build/restart this batch. Browser0 tabs, both owned fixture services stopped. Next actual workbench via exact start.command with single-page policy; full77, realprovider/SSH and12streams remain incomplete.",
+  "handoff": "Current fix/provider-output-interruption/source4034555;9999 running0667141784e8, encrypted user-authorized Qwen configured, offline package verified. First inventory temporary certificate-error tab4; do not retry binding dataURL or open additional tabs before cleanup. Real vision/stop APIs and quick77 pass, full79/UI/main and original12 streams incomplete. Next fix evidence-backed completion-review repeat reads/short-answer delivery; real vector deferred, Windows user-owned.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6498,5 +6498,9 @@
     "task": "file-open-request-ownership-20261015",
     "summary": "Reproduced late old file read overwriting new editor and source identity. Captured request ownership, root/source/scope/recovery epoch/auth/file reference; invalidate close.14 deterministic cases/quick75/IAB actual function component PASS; servers/tabs closed. Full workbench/Safari/SSH/newfull77/Docker candidate remain NOT_RUN.",
     "evidence": ".agent-state/file-open-request-ownership/browser-proof.json"
+  },
+  "followup140": {
+    "task": "provider-output-interruption-20261015",
+    "summary": "User authorized real compatible endpoint/key and image tests, confirmed duplicate thinking/tool cards. Encrypted provider configured; direct and actual AIDE vision PASS. Real reasoning/body API cancel23/14ms; final source stop helper to actual API272ms including process startup PASS. Reproduced dual thinking cards2vs1 and done tools duplicated between live/history; fixed4034555, quick77 PASS. Runtime9999/0667141784e8 via exact start, config/mounts/assets preserved. Complete offline package ce62032 verified stream/load/both local trees. IAB certificate error4 cleanup blocked by URL policy/native app safety; final UI NOT_RUN. Completion review duplicate reads and short document remain open."
   }
 }

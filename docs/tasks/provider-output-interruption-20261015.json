@@ -50,7 +50,8 @@
       "evidence": [
         ".agent-state/provider-output-interruption/vision-aide.json",
         ".agent-state/provider-output-interruption/body2-cancel-proof.json",
-        ".agent-state/provider-output-interruption/quick-frozen.json"
+        ".agent-state/provider-output-interruption/quick-frozen.json",
+        ".agent-state/provider-output-interruption/helper-cancel-proof.json"
       ]
     },
     "documentation": {
@@ -68,11 +69,44 @@
     },
     "release": {
       "status": "pending",
-      "summary": "源码准备功能分支提交，随后经指定start.command更新候选和完整离线包；full79/main/真实UI门禁尚未通过。",
-      "evidence": []
+      "summary": "功能分支4034555已push；指定start.command更新9999/0667141784e8，配置/挂载/资源一致，加密配置重启后保留。完整离线包内外哈希、实际导入与双本地副本PASS；真实UI/full79/main/tag/接收设备未通过，不标release pass。",
+      "evidence": [
+        ".agent-state/provider-output-interruption/final.json",
+        ".agent-state/provider-output-interruption/package.json"
+      ]
     }
   },
   "release_authorization": "用户授权持续开发、分部分测试push、更新本地与离线镜像包；本轮不自动main/tag。",
   "rollback": "保留原提供商和模型，新增独立provider；测试仅独立会话与自有fixture，原2fa/e75cfb候选与此前ad3d离线包可回退。",
-  "handoff": "当前实际镜像e75cfb对应2fa96f0，新增卡片/停止修复尚待构建。先完成源码push与新候选部署、离线包；下一轮先盘点错误页4，不新开多页。真实UI证书待用户手动处理；自动收尾重复read_file、长文提前结束仍待修复。"
+  "handoff": "当前9999运行source4034555/0667141784e8，完整离线包ce62032已验证并复制两个本地树；key加密且配置重启后保留。先盘点临时错误页4；绑定关闭被dataURL策略阻止，Codex应用操作被安全规则拒绝，不能声称已关闭，不重试该绑定以免输出巨大dataURL。后续访问先用裸URL确认页面/证书再认证。用户已确认重复的是思考/工具卡片；源码已修复并quick77通过，实际完整页面尚被证书阻断。收尾重复read_file、长文提前结束与原12流仍待继续，真实向量暂缓。",
+  "sourceCommit": "4034555",
+  "runtime": {
+    "image": "sha256:0667141784e8966306c9da940b49d990d109356835e173f15ac87fd8907a1d74",
+    "runningImage": "sha256:0667141784e8966306c9da940b49d990d109356835e173f15ac87fd8907a1d74",
+    "sourceSHA256": "f24256d1743bd2659ebb2d60785e1bda54cd8daf94f467b7d4d0ecc0c2c9be15",
+    "runningPlatformManifest": "sha256:8deb346b44fdd128492c6eff66ee573445c6cde745c8c2a273a66f47bba16d43",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:0667141784e8966306c9da940b49d990d109356835e173f15ac87fd8907a1d74",
+    "sourceSHA256": "f24256d1743bd2659ebb2d60785e1bda54cd8daf94f467b7d4d0ecc0c2c9be15",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-0667141784e8-offline.tar.gz",
+    "bytes": 705662934,
+    "sha256": "ce62032b42b530294a87210edece40d6c57fbe56a5dfb6b3d90edc18dbd724d6",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  }
 }
