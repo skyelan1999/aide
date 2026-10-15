@@ -39,3 +39,9 @@ HTTP/provider回归最终在旧代码上明确失败“retry sent later conversa
 源码09e0d89经指定启动器更新9999为a082bd336de1，原会话／配置／鉴权／挂载及资源／健康保持。当前候选的独立实际二进制、network-none、loopback模型协议夹具证明：fresh snapshot导入200；客户端伪造source400，旧snapshot409，当前snapshot下重复导入200且只有一条，错误会话404。接口投影为operator_recorded及operator_import服务器来源／时间／摘要，磁盘记录一致；这不是远端发布或真实模型验收，真实Qwen证据来自上节183镜像及其未改变的标记输入重试分支。独立夹具容器已移除。最终离线包、full及main门禁继续待收据。
 
 最终完整离线包 `aide-0.1.17.0-RC2-linux-arm64-a082bd336de1-offline.tar.gz`，705745837字节，SHA-256 `430df6013c38dd2d82f113c5648ded4f812fa101cd177f25fb168c2775fbafa0`，内外摘要、应用／依赖镜像、平台、启动器与实际docker load通过，仅存活动移动硬盘目录，未重建旧目录副本。删除本轮自己的183中间包，既有回滚包保留；接收端仍待验收。最终完整回归／main门禁待收据。
+
+## 最终完整回归收据
+
+干净main源码76554ab运行full：84项通过，server race 567.894秒，指纹 `6377b6a8a4c3022a234e06f76c9efec1d5d6a4397aec811090c9c3fd7999f3fe`。本节更新前文“full待收据”的历史状态。main门禁／推送仍待确认；完整Safari按人类安排暂缓，原十二项继续开放。
+
+main门禁PASS，6505615已推送并用ls-remote确认远端精确一致；本段替代上文main待确认状态。不升版／tag／正式Release，原十二项保持开放。
