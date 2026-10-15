@@ -15,3 +15,5 @@ IAB实际组件观察通过：首次载入开关勾选且active/aria-pressed=tru
 补充的小秘控制回归已更新为保留偏好并通过；额外旧语音mock在6eddffa基线上也因相同路由断言失败，语音发送代码未改，未把它记为通过或扩大本轮范围。完整full及main门禁待收据。结构证据见[验证摘要](queue-default-proof.json)。
 
 完整main收据：验证提交 90901eca89fcf985ff833470871af928f051c509，85项全部exit0，Go server race 557.157秒，fingerprint 9425e785c322e88164ab50cdd6ed71dee62bbc941571d2c6942f818a8a4e0f7b。语音旧mock基线问题单独保留，未包含在这85项标准检查中。发布门禁及推送随后单独核对。
+
+独立main发布门禁通过，非强制推送 97f4d34a2cc1e2a84235230fef26a791daac47b0 并核对远端完全一致。本最终收据提交随后推送；本机9999保持60f镜像，4b1回滚保留；无升版/tag/正式Release。

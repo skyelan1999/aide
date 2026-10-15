@@ -56,5 +56,12 @@
     "real voice not revalidated",
     "receiving-device offline import pending"
   ],
-  "rollback": "retain4b1 image and package"
+  "rollback": "retain4b1 image and package",
+  "release": {
+    "status": "pass",
+    "main": "97f4d34a2cc1e2a84235230fef26a791daac47b0",
+    "independentGate": true,
+    "remoteExactVerified": true,
+    "finalReceiptFollows": true
+  }
 }

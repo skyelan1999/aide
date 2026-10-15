@@ -7461,11 +7461,12 @@
   "followup166": {
     "task": "docs/tasks/queue-default-20261016.json",
     "classification": "progress",
-    "status": "in_progress",
-    "summary": "Default queued addition enabled; assistant navigation preserves manual choice; focused/UI/runtime/offline pass, final full/main gate pending.",
+    "status": "pass",
+    "summary": "Default queued addition enabled, manual steering and assistant preference preservation verified; full85, component/runtime/offline, independent main gate and exact remote push pass. Original12 remain open.",
     "original12RemainOpen": true,
     "evidence": [
       "docs/reviews/2026-10-16/queue-default.md"
-    ]
+    ],
+    "deliveredMain": "97f4d34a2cc1e2a84235230fef26a791daac47b0"
   }
 }

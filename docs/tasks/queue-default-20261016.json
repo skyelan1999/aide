@@ -65,14 +65,15 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Full85 passed; independent gate and authorized no-force main push next. Keep4b1 rollback.",
+      "status": "pass",
+      "summary": "Independent main gate passed; no-force push 97f4d34a2cc1e2a84235230fef26a791daac47b0 exactly verified remotely.60f runtime and offline package verified; final receipt commit follows. No version/tag/GitHub Release.",
       "evidence": [
-        "docs/reviews/2026-10-16/queue-default.md"
+        "docs/reviews/2026-10-16/queue-default.md",
+        "docs/reviews/2026-10-16/queue-default-proof.json"
       ]
     }
   },
   "release_authorization": "Prior human incremental test/docs/main push and offline image update requests continue; no version bump/tag/GitHub Release.",
   "rollback": "Revert scoped default/UI changes; preserve4b1 offline image as rollback; no data migration.",
-  "handoff": ""
+  "handoff": "Delivered main 97f4d34a2cc1e2a84235230fef26a791daac47b0; final receipt commit follows. External workspace/main clean after commit. Local9999 image60f, default queue on reload; complete offline package available, keep4b1 rollback. Safari/voice/receiver scope in review; original12 stay open."
 }
