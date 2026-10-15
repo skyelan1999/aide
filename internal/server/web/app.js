@@ -6015,14 +6015,14 @@ function contextMeterKey() {
 function renderParallelContextDetail(detail) {
   const run = state.session?.runs?.at(-1);
   if (!(run?.parallelism > 1)) return;
-  const note = el('p', 'context-card-actual', t('各路独立上下文，分别携带会话副本；主请求再汇总笔记。累计消耗会相加，不共用一个窗口。'));
+  const note = el('p', 'context-card-actual context-parallel-detail', t('各路独立上下文，分别携带会话副本；主请求再汇总笔记。累计消耗会相加，不共用一个窗口。'));
   detail.append(note);
   const progress = run.parallel;
   const row = (label, context) => {
     if (!context) return;
     const actual = !context.usage?.estimated && context.usage?.prompt > 0;
     const input = actual ? context.usage.prompt : context.inputEstimate;
-    detail.append(el('p', 'context-card-actual', t('{0}：输入 {1} / 独立窗口 {2} · {3}', t(label), fmtTokens(input || 0), fmtTokens(context.contextWindow || 0), t(actual ? '上游实际' : '估算'))));
+    detail.append(el('p', 'context-card-actual context-parallel-detail', t('{0}：输入 {1} / 独立窗口 {2} · {3}', t(label), fmtTokens(input || 0), fmtTokens(context.contextWindow || 0), t(actual ? '上游实际' : '估算'))));
   };
   row('规划请求', progress?.plannerContext);
   const contexts = (progress?.parts || []).map(part => part.context).filter(Boolean);
@@ -6030,10 +6030,10 @@ function renderParallelContextDetail(detail) {
     const actual = contexts.every(context => !context.usage?.estimated && context.usage?.prompt > 0);
     const inputs = contexts.map(context => actual ? context.usage.prompt : context.inputEstimate || 0);
     const windows = [...new Set(contexts.map(context => context.contextWindow || 0))];
-    detail.append(el('p', 'context-card-actual', t(actual ? '子分析 {0} 路：每路实际输入 {1}–{2}，各自窗口 {3}' : '子分析 {0} 路：每路输入估算 {1}–{2}，各自窗口 {3}', contexts.length, fmtTokens(Math.min(...inputs)), fmtTokens(Math.max(...inputs)), windows.map(fmtTokens).join(' / '))));
+    detail.append(el('p', 'context-card-actual context-parallel-detail', t(actual ? '子分析 {0} 路：每路实际输入 {1}–{2}，各自窗口 {3}' : '子分析 {0} 路：每路输入估算 {1}–{2}，各自窗口 {3}', contexts.length, fmtTokens(Math.min(...inputs)), fmtTokens(Math.max(...inputs)), windows.map(fmtTokens).join(' / '))));
   }
   row('最近主汇总请求', progress?.mainContext);
-  if (!progress?.plannerContext && !progress?.mainContext && !contexts.length) detail.append(el('p', 'context-card-actual', t('此历史任务未记录逐请求上下文，不能从累计用量反推。')));
+  if (!progress?.plannerContext && !progress?.mainContext && !contexts.length) detail.append(el('p', 'context-card-actual context-parallel-detail', t('此历史任务未记录逐请求上下文，不能从累计用量反推。')));
 }
 function renderContextMeter(data, isDraft) {
   if (!data || !data.breakdown) return;
@@ -6052,10 +6052,11 @@ function renderContextMeter(data, isDraft) {
   $('context-stat').textContent = fmtTokens(data.inputEstimate || 0) + ' / ' + fmtTokens(limit);
   const bar = $('context-bar');
   bar.replaceChildren();
-  bar.setAttribute('aria-label', t("当前活动上下文估算：{0} / 窗口 {1}", pressure, limit));
+  bar.setAttribute('aria-label', t('下次请求：输入估算 {0}，含输出预留共 {1}，窗口 {2}', data.inputEstimate || 0, pressure, limit));
   const detail = $('context-card-detail');
   if (!detail) return;
   detail.replaceChildren();
+  detail.append(el('p', 'context-card-actual context-parallel-detail', t('输出预留 {0} · 含预留共 {1}', fmtTokens(data.outputReserve || 0), fmtTokens(pressure))));
   const parts = contextParts(data.breakdown);
   parts.forEach(([label, part, color]) => {
     const segment = el('span', 'context-segment');

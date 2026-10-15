@@ -64,6 +64,6 @@ const data = inputEstimate => ({breakdown:{}, inputEstimate, contextWindow:10000
   const details=parallel.$('context-card-detail').children.map(x=>x.textContent).join('\n');
   assert.match(details,/各路独立上下文/);assert.match(details,/子分析 10 路/);assert.match(details,/2000–2009/);assert.match(details,/最近主汇总请求：输入 4000/);assert.match(details,/500,000/);
   parallel.state.session.runs=[{parallelism:5}];parallel.sandbox.renderContextMeter(data(2500),false);assert.match(parallel.$('context-card-detail').children.map(x=>x.textContent).join(''),/未记录逐请求上下文/);
-  parallel.state.session={id:'ordinary',messages:[]};parallel.sandbox.renderContextMeter(data(100),false);assert.equal(parallel.$('context-card-detail').children.length,0,'no parallel details leak across sessions');
+  parallel.state.session={id:'ordinary',messages:[]};parallel.sandbox.renderContextMeter(data(100),false);assert.doesNotMatch(parallel.$('context-card-detail').children.map(x=>x.textContent).join(''),/各路独立|子分析|主汇总/,'no parallel details leak across sessions');
   console.log('context meter: cache, failure retry, draft, session/workspace races and debounce passed');
 })().catch(error=>{console.error(error);process.exitCode=1;});

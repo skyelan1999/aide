@@ -54,7 +54,7 @@ html = '''<!doctype html><html data-theme="dark"><meta charset="utf-8"><meta nam
 .fixture{width:300px;max-width:100%}.context-card{width:100%;box-sizing:border-box}</style>
 <h2>并行上下文组件验收</h2><p>实际生产渲染器；此页面无模型请求，无配置写入。</p>
 <div class="tools"><button id="parallel">并行任务</button><button id="legacy">旧任务</button><button id="ordinary">切换普通会话</button><button id="theme">明暗</button></div>
-<section class="fixture"><div id="context-card" class="context-card"><div class="context-head"><span>主请求上下文（估算）</span><span id="context-stat"></span></div>
+<section class="fixture"><div id="context-card" class="context-card"><div class="context-head"><span>下次请求上下文（估算）</span><span id="context-stat"></span></div>
 <div id="context-bar" class="context-bar context-segments"></div><div id="context-card-detail" class="context-card-detail"></div></div></section><script>
 const $=id=>document.getElementById(id),el=(tag,cls,text)=>{const e=document.createElement(tag);e.className=cls||'';if(text!=null)e.textContent=text;return e;};
 const t=(s,...args)=>s.replace(/\{(\d+)\}/g,(_,n)=>args[n]);

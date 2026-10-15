@@ -1714,3 +1714,6 @@ body.file-nav-dragging{cursor:grabbing;user-select:none}
 html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 .mermaid>svg{display:block;margin:auto;max-width:100%;height:auto}
 .md-body .mermaid .nodeLabel p,.md-body .mermaid .edgeLabel p{margin:0;line-height:1.5}
+
+/* Per-request context is distinct from aggregate usage; keep explanations readable. */
+.context-card .context-parallel-detail{white-space:normal;overflow-wrap:anywhere;font-size:9px;line-height:1.5;text-overflow:clip}
