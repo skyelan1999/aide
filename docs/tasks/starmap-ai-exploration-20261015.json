@@ -77,16 +77,19 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Final inputs passed full82 on clean main. Preparing read-only release gate and authorized main push; no tag/version/Release.",
+      "status": "pass",
+      "summary": "Clean-main full82 and read-only release-check passed with unchanged content fingerprint. Main40add356863ed9ad5fc4b454055b3384b7ef7062 pushed and ls-remote matched. This follow-up commits ordinary documentation receipts only; no version/tag/Release. Runtime remains verified f86461692f67 development candidate, not a clean-main rebuild.",
       "evidence": [
-        ".agent-state/starmap-ai-exploration/full-frozen.json"
+        ".agent-state/starmap-ai-exploration/full-frozen.json",
+        ".agent-state/starmap-ai-exploration/release-check.log",
+        "git push origin main exit0",
+        "git ls-remote origin refs/heads/main == 40add356863ed9ad5fc4b454055b3384b7ef7062"
       ]
     }
   },
   "release_authorization": "沿用用户原话“做完这个把所有内容和到main上”，分部分测试和推送、指定start.command启动及完整离线镜像包交付；不升版/tag/正式Release。",
   "rollback": "回退本批前端与回归提交；旧镜像包保留。没有用户数据迁移，不覆盖五个继承的vendor删除。",
-  "handoff": "Scoped exploration fixes verified and running on9999 as f86461692f67; complete offline bundle verified. Clean-main full82 passed. Gate/main push pending. Live workbench browser, broad search quality, receiving-device import and original12 remain open.",
+  "handoff": "Scoped exploration fixes merged and pushed to main after full82 and main gate. Running9999 and complete offline package are f86461692f67. Browser fixtures/model single sample passed; live authenticated browser, broad directory-search quality, receiving-device import and original12 remain open. Temporary verification worktree will be removed after final receipt push; five inherited vendor deletions preserved.",
   "runtime": {
     "image": "sha256:f86461692f6776a36288b5dc2336cb8147c950a008dca02eeee47c2c932dd941",
     "runningImage": "sha256:f86461692f6776a36288b5dc2336cb8147c950a008dca02eeee47c2c932dd941",

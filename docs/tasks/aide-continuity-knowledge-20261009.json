@@ -6843,7 +6843,7 @@
     "ai_exploration": {
       "status": "in_progress",
       "task": "docs/tasks/starmap-ai-exploration-20261015.json",
-      "scope": "Source, browser fixture and one real node-assist sample; no claim for whole-graph search quality or all original requirements."
+      "scope": "Scoped UX fixes merged/pushed after clean full82/main gate; actual bundled browser fixture and real Qwen single-node sample. Whole-graph search quality and live workbench browser remain unverified; all original12 retained."
     }
   },
   "followup147": {
@@ -6877,7 +6877,6 @@
       "empty RAG null hits: automatic regression and actual bundled browser fixture"
     ],
     "remaining": [
-      "read-only main release gate and push",
       "live authenticated browser end-to-end and broad directory-search quality",
       "receiving-device import"
     ],
@@ -6891,6 +6890,12 @@
       "fingerprint": "0877c60c51530bbee089ab3adc9c25c69b316640811d8a7c56abe022716ddb3a",
       "serverRaceSeconds": 515.069,
       "sourceCommit": "d05337082604e6def7c7e216072feafc9d46fbe9"
+    },
+    "mainIntegration": {
+      "status": "pass",
+      "pushedMain": "40add356863ed9ad5fc4b454055b3384b7ef7062",
+      "releaseCheck": "pass",
+      "remoteHeadVerified": true
     }
   }
 }
