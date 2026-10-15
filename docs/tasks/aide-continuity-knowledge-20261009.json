@@ -6844,7 +6844,7 @@
       "Windows用户负责",
       "真实向量提供方测试按用户要求暂缓"
     ],
-    "release_gate_policy": "干净full81和main release-check PASS，main已快进推送674b06a，随后仅补普通文档收据；未升版/tag/正式Release。原12完整要求仍未全部验收，不宣告目标完成。",
+    "release_gate_policy": "Latest product inputs clean full84 PASS with race520.569s/vet, fingerprint d8a0e04baebe96014f5387165c39b807083ef3236376a814d28899c41e2ab505. Ordinary-docs-only current audit reused that exact input receipt after clean-main equality and release-check; pushed0b18149 remote verified. No version/tag/formal Release. Original12 remain in_progress.",
     "ai_exploration": {
       "status": "in_progress",
       "task": "docs/tasks/starmap-ai-exploration-20261015.json",
@@ -6985,7 +6985,7 @@
     "task": "docs/tasks/outcome-live-reasoning-audit-20261015.json",
     "classification": "progress",
     "previousGoalTurn": "Product PDF fixes delivered and pushed; subsequent push confirmation only revalidated remote state. This turn adds current actual reasoning/disk and real-model outcome evidence.",
-    "status": "in_progress",
+    "status": "pass",
     "runtimeImage": "bf701a670f6a",
     "verified": [
       "two-session high/low API/durable disk isolation and stale revision409",
@@ -6993,9 +6993,14 @@
       "owned cleanup; original session hashes/config except monotonic counter unchanged"
     ],
     "remaining": [
-      "docs gate/main push",
       "authenticated workbench browser, hidden active task page and release import; original12 remain open"
     ],
-    "original12RemainOpen": true
+    "original12RemainOpen": true,
+    "mainIntegration": {
+      "pushedMain": "0b181499c0a042e935269b345483e0b428ab42bb",
+      "remoteHeadVerified": true,
+      "releaseCheck": "pass",
+      "sameInputFull84ReceiptReused": true
+    }
   }
 }
