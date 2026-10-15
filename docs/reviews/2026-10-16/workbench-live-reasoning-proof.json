@@ -1,0 +1,245 @@
+{
+  "task": "workbench-live-reasoning-20261016",
+  "baseline": "258afd797fc9941600b46a8b2187b8fa99024d6f",
+  "client": "actual authenticated Safari at https://localhost:9999/",
+  "entryRecovered": true,
+  "certificateBypassedByAgent": false,
+  "writes": "actual native UI only; observer GET/API/disk readback",
+  "sessions": 2,
+  "uiWrites": 10,
+  "levelsPerSession": [
+    {
+      "1": "high",
+      "2": "medium",
+      "3": "low",
+      "4": "off",
+      "5": "auto"
+    },
+    {
+      "1": "low",
+      "2": "off",
+      "3": "auto",
+      "4": "high",
+      "5": "medium"
+    }
+  ],
+  "observationGroups": [
+    [
+      {
+        "title": "UI-验收-推理-A-20261016",
+        "reasoningEffort": "high",
+        "revision": 1,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "UI-验收-推理-B-20261016",
+        "reasoningEffort": "auto",
+        "revision": 0,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ],
+    [
+      {
+        "title": "UI-验收-推理-A-20261016",
+        "reasoningEffort": "high",
+        "revision": 1,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "UI-验收-推理-B-20261016",
+        "reasoningEffort": "low",
+        "revision": 1,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ],
+    [
+      {
+        "title": "UI-验收-推理-A-20261016",
+        "reasoningEffort": "medium",
+        "revision": 2,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "UI-验收-推理-B-20261016",
+        "reasoningEffort": "low",
+        "revision": 1,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ],
+    [
+      {
+        "title": "UI-验收-推理-A-20261016",
+        "reasoningEffort": "medium",
+        "revision": 2,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "UI-验收-推理-B-20261016",
+        "reasoningEffort": "off",
+        "revision": 2,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ],
+    [
+      {
+        "title": "UI-验收-推理-A-20261016",
+        "reasoningEffort": "low",
+        "revision": 3,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "UI-验收-推理-B-20261016",
+        "reasoningEffort": "off",
+        "revision": 2,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ],
+    [
+      {
+        "title": "UI-验收-推理-A-20261016",
+        "reasoningEffort": "low",
+        "revision": 3,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "UI-验收-推理-B-20261016",
+        "reasoningEffort": "auto",
+        "revision": 3,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ],
+    [
+      {
+        "title": "UI-验收-推理-A-20261016",
+        "reasoningEffort": "off",
+        "revision": 4,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "UI-验收-推理-B-20261016",
+        "reasoningEffort": "auto",
+        "revision": 3,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ],
+    [
+      {
+        "title": "UI-验收-推理-A-20261016",
+        "reasoningEffort": "off",
+        "revision": 4,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "UI-验收-推理-B-20261016",
+        "reasoningEffort": "high",
+        "revision": 4,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ],
+    [
+      {
+        "title": "UI-验收-推理-A-20261016",
+        "reasoningEffort": "auto",
+        "revision": 5,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "UI-验收-推理-B-20261016",
+        "reasoningEffort": "high",
+        "revision": 4,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ],
+    [
+      {
+        "title": "UI-验收-推理-A-20261016",
+        "reasoningEffort": "auto",
+        "revision": 5,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "UI-验收-推理-B-20261016",
+        "reasoningEffort": "medium",
+        "revision": 5,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ],
+    [
+      {
+        "title": "UI-验收-推理-A-20261016",
+        "reasoningEffort": "auto",
+        "revision": 5,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "UI-验收-推理-B-20261016",
+        "reasoningEffort": "medium",
+        "revision": 5,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ]
+  ],
+  "reloads": {
+    "A": "auto checked after independent full reload",
+    "B": "medium checked after independent full reload"
+  },
+  "modelCalls": 0,
+  "cleanup": {
+    "ownedSessionsDeleted": 2,
+    "originalSessionFilesUnchanged": false,
+    "globalSettingsExceptCounterUnchanged": true,
+    "authAndSourcesUnchanged": true,
+    "counterBefore": 40,
+    "counterAfter": 42,
+    "originalContentExceptReadMarkerUnchanged": true,
+    "changedOriginalSessionReadMarkers": [
+      {
+        "number": 39,
+        "readMarkerOnly": true
+      }
+    ],
+    "reason": "Opening original session through actual UI marks it read; remove that single serialized field yields exact baseline SHA256. No original content rollback performed."
+  },
+  "originalSceneRestored": {
+    "sessionNumber": 39,
+    "filePanelOpen": true,
+    "fileRoot": "automatic system documents"
+  },
+  "screenshots": {
+    "reloaded-A.png": "0a9764d121b56382873bfcb5def8d2c1b2186ed4cd651e5d77d73dde30cc4ee8",
+    "reloaded-B.png": "e2ebe6812c2849a842e263e872a9403602add691f2c1e3490ac69aeef28b08c2"
+  },
+  "screenshotScope": "private .agent-state only; no original user session content published",
+  "fullReuse": {
+    "status": "pass",
+    "profile": "full",
+    "checks": 88,
+    "fingerprint": "f264a1110d773cb8bfcdf5c2dd9bbb04a4c7df1f888caaad9bb116272790c89a",
+    "originalReceiptTime": "20261015T225651747905Z",
+    "newFullRun": false
+  },
+  "release": "pending independent clean-main gate and push",
+  "originalTwelve": "in_progress; remaining actual file/history/authorization/outcome/map and SSH flows not proved by this priority acceptance"
+}

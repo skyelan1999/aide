@@ -317,10 +317,12 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "本地及隔离真实SSH协议链、跨会话审批与旧Safari锁态已有分范围证据；当前9999健康、配置/会话保全也已核对。",
+        "latestScopedEvidence": "本地及隔离真实SSH协议链、跨会话审批与旧Safari锁态已有分范围证据；当前9999健康、配置/会话保全也已核对。 本次已恢复真实认证Safari入口，完成会话推理强度五档/双会话/10次UI写回和刷新/API/磁盘核对；不代表其余文件/SSH/锁屏流程。",
         "evidence": [
           "docs/reviews/2026-10-15/ssh-approval-lifecycle.md",
-          "docs/reviews/2026-10-16/workbench-polish.md"
+          "docs/reviews/2026-10-16/workbench-polish.md",
+          "docs/reviews/2026-10-16/workbench-live-reasoning.md",
+          "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
         ],
         "remaining": "当前完整工作台的创建/修改/保存/重开/恢复、锁屏与长期打开联测仍缺；用户SSH主机未代验。Windows继续由用户验收。"
       }
@@ -7529,7 +7531,15 @@
   },
   "human_safari_deferral_20261015": {
     "reply": "现在不方便",
-    "meaning": "Complete authenticated Safari acceptance deferred; no repeated immediate handoff request, continue independent authorized work."
+    "meaning": "Complete authenticated Safari acceptance deferred; no repeated immediate handoff request, continue independent authorized work.",
+    "resumed_20261016": {
+      "status": "accessible",
+      "scope": "Actual authenticated9999 Safari restored externally; agent did not bypass certificate. Five reasoning values/two sessions/ten UI writes and independent reload verified. Remaining full workflows continue.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-live-reasoning.md",
+        "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
+      ]
+    }
   },
   "followup158": {
     "task": "docs/tasks/history-object-integrity-20261015.json",
@@ -7660,8 +7670,8 @@
     "report": "docs/reviews/2026-10-16/continuity-current-audit.md",
     "workstreams": 12,
     "goalComplete": false,
-    "priorityReasoning": "Current9999 API/disk all5 values,2 sessions/10 writes,409/400,cleanup pass; full authenticated UI still deferred. Global duplicate control was removed by later user request.",
-    "nextIndependentFocus": "Direct authenticated-workbench and SSH workflow acceptance gaps remain enumerated; preserve original12 scope, Windows user acceptance and real-vector deferral.",
+    "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
+    "nextIndependentFocus": "Safari is now accessible. Continue actual file scene recovery/conflict/history, approvals/outcomes and knowledge-map/SSH workflows; Windows user-owned and real vectors deferred.",
     "deliveredMain": "c00855b8ec4ad6222753376624d79261146c9288",
     "mainGate": "Independent clean-main gate pass; exact remotec00855b verified.",
     "currentCheckpointGate": "Async file recovery final source/archive inputs full88 pass, fpf264a1110d773cb8bfcdf5c2dd9bbb04a4c7df1f888caaad9bb116272790c89a, race566.699s/all vet/nonroot19. Source/main,9999 image8a351653/data preservation and offline local import delivered. Original12 remain in_progress."
@@ -7731,5 +7741,14 @@
       "docs/reviews/2026-10-16/file-recovery-async.md"
     ],
     "deliveredMain": "c00855b8ec4ad6222753376624d79261146c9288"
+  },
+  "workbench_live_reasoning_20261016": {
+    "task": "docs/tasks/workbench-live-reasoning-20261016.json",
+    "status": "in_progress",
+    "classification": "progress",
+    "evidence": [
+      "docs/reviews/2026-10-16/workbench-live-reasoning.md",
+      "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
+    ]
   }
 }

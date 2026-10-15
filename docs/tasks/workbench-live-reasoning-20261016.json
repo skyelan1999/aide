@@ -1,0 +1,79 @@
+{
+  "id": "workbench-live-reasoning-20261016",
+  "request": "继续原目标优先项：在已可操作的本机9999完整Safari工作台验证会话推理强度保存、会话隔离与刷新恢复；保留原12项范围",
+  "baseline": "258afd797fc9941600b46a8b2187b8fa99024d6f",
+  "initial_status": "",
+  "acceptance": [
+    "On actual authenticated Safari9999, two owned sessions save all five reasoning values by UI, ten writes with API/canonical-disk equality and per-session isolation.",
+    "Independent full reloads restore A auto/B medium checked states without a model request.",
+    "Delete only owned empty sessions; preserve original messages/runs/config/auth/sources, account for monotonic session counter and normal UI read marker; restore original scene.",
+    "Record direct evidence and full-input reuse, independent clean-main gate and exact push; preserve all original12 workstreams and Windows/vector deferrals."
+  ],
+  "scope": [
+    "docs/tasks/workbench-live-reasoning-20261016.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-16/workbench-live-reasoning*.md/json",
+    "docs/reviews/2026-10-16/continuity-current-audit.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Actual Safari two-session five-level UI writes, API/disk readback and independent reload pass; owned sessions deleted, original content unchanged except proven read marker, settings/auth/sources preserved. Docs-only current inputs equal prior full88.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-live-reasoning.md",
+        "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Actual Safari two-session five-level UI writes, API/disk readback and independent reload pass; owned sessions deleted, original content unchanged except proven read marker, settings/auth/sources preserved. Docs-only current inputs equal prior full88.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-live-reasoning.md",
+        "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Actual Safari two-session five-level UI writes, API/disk readback and independent reload pass; owned sessions deleted, original content unchanged except proven read marker, settings/auth/sources preserved. Docs-only current inputs equal prior full88.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-live-reasoning.md",
+        "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual Safari two-session five-level UI writes, API/disk readback and independent reload pass; owned sessions deleted, original content unchanged except proven read marker, settings/auth/sources preserved. Docs-only current inputs equal prior full88.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-live-reasoning.md",
+        "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Actual Safari two-session five-level UI writes, API/disk readback and independent reload pass; owned sessions deleted, original content unchanged except proven read marker, settings/auth/sources preserved. Docs-only current inputs equal prior full88.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-live-reasoning.md",
+        "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Actual Safari two-session five-level UI writes, API/disk readback and independent reload pass; owned sessions deleted, original content unchanged except proven read marker, settings/auth/sources preserved. Docs-only current inputs equal prior full88.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-live-reasoning.md",
+        "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Docs-only exact full88 input reuse verified; continue independent clean-main gate and push. No code/runtime/package change.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-live-reasoning.md",
+        "docs/reviews/2026-10-16/workbench-live-reasoning-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "Existing incremental test/push/main and documentation authorization. UI changes limited to owned acceptance sessions; no model invocation, version/tag or runtime rebuild.",
+  "rollback": "Docs-only changes may be reverted. Owned empty sessions deleted, original messages/runs retained; do not reverse normal read marker or monotonic counter.",
+  "handoff": "Priority reasoning UI acceptance complete on current9999; all original12 remain in_progress and accessible Safari permits remaining direct workflows."
+}
