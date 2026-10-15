@@ -42,12 +42,14 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Final8221669十项并发/生命周期、既有成果/总览及quick74 PASS；首轮Safari证实重载C不被旧B回退，同时发现分页按钮禁用并修复。最终原生复验因Safari AppleEvent -1712与IAB/应用浏览器IPC超时未完成，不标PASS。",
+      "summary": "Final8221669十项并发回归和quick74历史收据PASS；本轮IAB实际模块完成A两页→409→reloadC→oldB→C三页、无重复/完成停止轮询。系统Safari和9999完整工作台最终复验仍NOT_RUN，当前9999无监听。",
       "evidence": [
         ".agent-state/outcome-request-ownership/quick-frozen.json",
         "scripts/outcome-request-ownership.test.cjs",
         ".agent-state/outcome-request-ownership/ui-first-candidate-after-old-B.txt",
-        ".agent-state/outcome-request-ownership/reload-control-negative.log"
+        ".agent-state/outcome-request-ownership/reload-control-negative.log",
+        ".agent-state/outcome-request-ownership/iab-proof.json",
+        ".agent-state/outcome-request-ownership/iab-final.png"
       ]
     },
     "documentation": {
@@ -76,7 +78,7 @@
   },
   "release_authorization": "用户授权按目标持续开发、分部分push和测试；本轮新增修改仅功能分支，不推未来新修改到main/tag。",
   "rollback": "回退本任务代码并通过原start.command重建，无持久化迁移或用户数据变更。",
-  "handoff": "当前source8221669、9999候选ad3d；最终原生复验仍NOT_RUN。旧cell1424已不存在，旧fixture62179无监听。用户报告内存事故后先完成browser-memory-incident诊断，恢复验收时只使用一个自建工作台页，组件页结束即关闭，不恢复批量标签。",
+  "handoff": "Final8221669 IAB组件并发分页验收通过，测试页已关、56965服务已停止，浏览器0标签；9999当前未监听，不把此前候选部署状态当作当前运行。恢复实际工作台必须用指定start.command，并遵守单页复用规则；Safari、真实模型、full76/main门禁仍待完成。",
   "first_native_finding": {
     "source": "7a4e7c3",
     "observation": "C快照重载后分页控件仍被reloading状态禁用；修正为finally释放标记后一次渲染",
@@ -152,7 +154,6 @@
     "fixtureSourceSHA256": "aa2964f9eada839ae8763db36d55d02b08c28ef4c1813ee291444044bb825da8",
     "notRun": [
       "final Safari pages C1/C2 continuation",
-      "final IAB supplemental component scenario",
       "real provider/model/API task acceptance",
       "new full76/main gate"
     ],
@@ -168,6 +169,28 @@
       "port": 62179,
       "listen": "127.0.0.1",
       "scope": "No listener on62179 after interruption; stale owner2022, fixture is stopped. Restart only for authorized final single-tab acceptance."
+    },
+    "final_iab_component": {
+      "client": "Codex In-app Browser (native browser surface; not Safari)",
+      "sourceCommit": "8221669",
+      "sourceSHA256": "aa2964f9eada839ae8763db36d55d02b08c28ef4c1813ee291444044bb825da8",
+      "sequence": [
+        "A first page",
+        "real interval holds oldB",
+        "A second page",
+        "409 disables export",
+        "reloadC restores enabled pagination",
+        "oldB returns but C retained",
+        "C page1 and page2 append E1/E2 exactly once",
+        "settled request count remains7"
+      ],
+      "result": "PASS component only, deterministic API fixture; not real model or running9999",
+      "cleanup": "CUA all browsers zero tabs; fixture owner83950 exit130 intentionally stopped; port56965 no listener",
+      "files": [
+        "iab-final.txt",
+        "iab-settled.txt",
+        "iab-final.png"
+      ]
     }
   }
 }
