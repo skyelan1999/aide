@@ -85,7 +85,7 @@
   },
   "release_authorization": "Existing incremental source/docs push and local build/offline image authorization; no main/tag formal release.",
   "rollback": "Revert6bdcb41 or use prior00c601 image, preserving all user data volumes/config; no cache/index reset required.",
-  "handoff": "Current same320315 image healthy after disk exhaustion stopped Docker; protected config/auth/mounts preserved. Source/cache regression and quick70/native display/package PASS; current full72 terminal infrastructure FAIL before server/vet, must rerun with sufficient host space after next product changes. Original12 workstreams active. Next isolate metadata-only graph updates forcing large cosmos rebuild; real module35k-node model~1.18s, native interaction remains slow. No broad loading speedup, real model/provider or receiving-device claim.",
+  "handoff": "Current same320315 image healthy after disk exhaustion stopped Docker; protected config/auth/mounts preserved. Source/cache regression and quick70/native display/package PASS; current full72 terminal infrastructure FAIL before server/vet, must rerun with sufficient host space after next product changes. Original12 workstreams active. Next isolate metadata-only graph updates forcing large cosmos rebuild; real module35k-node model~1.18s, native interaction remains slow. No broad loading speedup, real model/provider or receiving-device claim. Recovered fresh full currently session45136, .agent-state/starmap-current-latency/full-recovered-owner.json. Previous4544 terminalFAIL; poll only45136 and inspect new log. Inputs remain frozen, no new product edits until terminal.",
   "runtime": {
     "runningImage": "sha256:320315d7e14bff41f575db81083a43021fd17dd906e28734263c78775de2374c",
     "image": "sha256:320315d7e14bff41f575db81083a43021fd17dd906e28734263c78775de2374c",
@@ -156,5 +156,17 @@
     "hostFreeBytes": 9718304768,
     "allArchivesVerifiedBeforeRemovingGeneratedOriginal": true,
     "activeBareBinaryDataPackagesUnchanged": true
+  },
+  "recovered_full_owner": {
+    "profile": "full",
+    "status": "running",
+    "sessionId": 45136,
+    "head": "8cb53868824c1b2670ec0ab29e2f31575a3311d0",
+    "fingerprint": "70c3dde34081dd0bee8a1eb59d27da73c72a94ae7bd764243e241543f3d936ce",
+    "observedUTC": "2026-10-15T00:37:37.236252+00:00",
+    "ownerLog": ".agent-state/starmap-current-latency/full-recovered-run.log",
+    "log": ".agent-state/verify-20261015T003709946842Z.log",
+    "previousTerminalFailure": ".agent-state/starmap-current-latency/full-failed-infrastructure.json",
+    "reason": "Fresh same-input run after authoritative old failure, Docker/runtime recovery and verified reversible archival regained9GiB; never restarted for observation timeout."
   }
 }
