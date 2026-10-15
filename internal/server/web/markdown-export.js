@@ -85,13 +85,25 @@
     const blocks=[...sourceRoot.children].map(node=>{const r=node.getBoundingClientRect();return{node,top:r.top-sourceBox.top,bottom:r.bottom-sourceBox.top,left:r.left-sourceBox.left,width:r.width,height:r.height};});
     const measured=new WeakMap(),childCursor=new WeakMap();
     for(const block of blocks)if(block.height>PAGE){const pending=[block.node];while(pending.length){const node=pending.pop();if(node.nodeType!==1)continue;measured.set(node,node.getBoundingClientRect());for(const child of node.children)pending.push(child);}}
-    const pageRanges=[];
+    const pageRanges=[],breakSpans=[];
+    if(format==='pdf'){
+     // Avoid cutting a line/short table row/list item/image in half. Measure
+     // once, then advance through the intervals with the page cursor.
+     const addBreak=r=>{if(r.height>0&&r.height<=PAGE)breakSpans.push({top:r.top-sourceBox.top,bottom:r.bottom-sourceBox.top});};
+     for(const node of sourceRoot.querySelectorAll('tr,li,img,svg'))addBreak(node.getBoundingClientRect());
+     const walker=sourceRoot.ownerDocument.createTreeWalker(sourceRoot,4);
+     while(walker.nextNode()){const node=walker.currentNode;if(!node.nodeValue.trim()||node.parentElement?.closest('svg'))continue;const range=node.ownerDocument.createRange();range.selectNodeContents(node);for(const r of range.getClientRects())addBreak(r);}
+     breakSpans.sort((a,b)=>a.top-b.top||a.bottom-b.bottom);
+     let out=0;for(const span of breakSpans){const last=breakSpans[out-1];if(last&&span.top<last.bottom-.25)last.bottom=Math.max(last.bottom,span.bottom);else breakSpans[out++]=span;}breakSpans.length=out;
+    }
     if(format==='pdf'){
      const contentHeight=blocks.length?Math.max(1,blocks[blocks.length-1].bottom):Math.max(1,height);
-     let y=0,scanBlock=0;
+     let y=0,scanBlock=0,scanBreak=0;
      while(y<contentHeight){while(scanBlock<blocks.length&&blocks[scanBlock].bottom<=y)scanBlock++;let end=Math.min(y+PAGE,contentHeight);
       // Match the render pass: keep nearby short blocks together when possible.
       for(let i=scanBlock;i<blocks.length&&blocks[i].top<end;i++){const b=blocks[i];if(b.top>y+PAGE*.65&&b.top<end&&b.bottom>end&&b.height<PAGE)end=Math.floor(b.top);}
+      while(scanBreak<breakSpans.length&&breakSpans[scanBreak].bottom<=y)scanBreak++;
+      for(let i=scanBreak;i<breakSpans.length&&breakSpans[i].top<end;i++){const span=breakSpans[i];if(span.bottom>end&&span.top>y+PAGE*.65)end=span.top;}
       end=Math.max(y+1,end);pageRanges.push({y,height:end===contentHeight?Math.max(end-y,PAGE):end-y});y=end;
      }
      clearTimeout(timeout);timeout=setTimeout(()=>{job.timedOut=true;job.controller.abort();},Math.min(15*60*1000,120000+pageRanges.length*2000));
@@ -102,42 +114,71 @@
     const pageSlice=(y,h)=>{
      while(firstBlock<blocks.length&&blocks[firstBlock].bottom<=y)firstBlock++;
      const page=renderDoc.createElement('main');page.className='markdown-export-page';page.style.cssText=`position:relative;box-sizing:border-box;width:${WIDTH}px;height:${h}px;overflow:hidden;background:#fff;margin:0;padding:0`;
-     const sliceNode=(node, parentTop)=>{
-      if(node.nodeType===3){
-       const text=node.nodeValue||'';if(!text)return null;
-       const sourceDoc=node.ownerDocument,range=sourceDoc.createRange?.();if(!range){const span=renderDoc.createElement('span');span.textContent=text;return span;}
-       const charRect=index=>{range.setStart(node,index);range.setEnd(node,index+1);const rect=range.getBoundingClientRect();return rect.height?{top:rect.top-sourceBox.top,bottom:rect.bottom-sourceBox.top,left:rect.left}:null;};
-       const boundary=(target,after)=>{let lo=0,hi=text.length;while(lo<hi){const mid=(lo+hi)>>1,rect=charRect(mid);if(!rect){lo=mid+1;continue;}if(after?rect.top<target:rect.bottom<=target)lo=mid+1;else hi=mid;}return lo;};
-       const from=boundary(y,false),to=boundary(y+h,true);if(to<=from)return null;const first=charRect(from),parentRect=node.parentElement?.getBoundingClientRect(),span=renderDoc.createElement('span');span.textContent=text.slice(from,to);span.style.position='absolute';span.style.left=Math.max(0,(first?.left??parentRect?.left??sourceBox.left)-(parentRect?.left??sourceBox.left))+'px';span.style.top=Math.max(0,(first?.top??parentTop)-parentTop)+'px';span.style.width='100%';return span;
+     // Every retained box uses source coordinates. Mixing normal-flow clones
+     // with absolute oversized wrappers moves later headings back over the list.
+     const place=(clone,r,parent)=>{
+      clone.style.position='absolute';clone.style.boxSizing='border-box';
+      clone.style.left=(r.left-parent.left)+'px';clone.style.top=(r.top-parent.top)+'px';
+      clone.style.width=r.width+'px';clone.style.height=r.height+'px';clone.style.margin='0';
+      return clone;
+     };
+     const sliceText=(node,parent)=>{
+      const text=node.nodeValue||'';if(!text)return null;
+      const range=node.ownerDocument.createRange(),style=node.ownerDocument.defaultView.getComputedStyle(node.parentElement);
+      const rectAt=index=>{range.setStart(node,index);range.setEnd(node,index+1);return range.getBoundingClientRect();};
+      const boundary=(target,after)=>{let lo=0,hi=text.length;while(lo<hi){const mid=(lo+hi)>>1,r=rectAt(mid);if(after?r.top<target:r.bottom<=target)lo=mid+1;else hi=mid;}return lo;};
+      let from=boundary(sourceBox.top+y,false);const to=boundary(sourceBox.top+y+h,true),fragment=renderDoc.createDocumentFragment();
+      while(from<to){
+       const first=rectAt(from);let lo=from+1,hi=to;
+       while(lo<hi){const mid=(lo+hi)>>1;if(Math.abs(rectAt(mid).top-first.top)<.5)lo=mid+1;else hi=mid;}
+       const end=lo;range.setStart(node,from);range.setEnd(node,end);const r=range.getBoundingClientRect();
+       if(r.width&&r.height){
+        const span=renderDoc.createElement('span');span.textContent=text.slice(from,end);
+        if(!/^(pre|pre-wrap|break-spaces)$/.test(style.whiteSpace))span.textContent=span.textContent.replace(/\s+/g,' ');
+        place(span,r,parent);span.style.width='max-content';span.style.whiteSpace='pre';span.style.font=style.font;
+        span.style.lineHeight=r.height+'px';span.style.color=style.color;span.style.letterSpacing=style.letterSpacing;span.style.textDecoration=style.textDecoration;span.style.wordSpacing=style.wordSpacing;span.style.direction=style.direction;
+        fragment.append(span);
+       }
+       from=end;
       }
-      if(node.nodeType!==1)return node.cloneNode(true);
+      return fragment;
+     };
+     const sliceNode=(node,parent)=>{
+      if(node.nodeType===3)return sliceText(node,parent);
+      if(node.nodeType!==1)return null;
       const r=measured.get(node)||node.getBoundingClientRect(),top=r.top-sourceBox.top,bottom=r.bottom-sourceBox.top;if(bottom<=y||top>=y+h)return null;
+      const style=node.ownerDocument.defaultView.getComputedStyle(node),inline=style.display==='inline';
       const children=[...node.childNodes||[]];
-      // Keep small subtrees intact. For oversized wrappers (notably a single
-      // giant list, table, quote, or code block), only copy visible descendants.
-      if(!children.length||r.height<=PAGE&&top>=y&&bottom<=y+h&&!(node.tagName==='LI'&&node.parentElement?.tagName==='OL'))return node.cloneNode(true);
-      const clone=node.tagName==='LI'&&node.parentElement?.tagName==='OL'?renderDoc.createElement('div'):node.cloneNode(false);if(node.tagName==='LI'&&clone.tagName==='DIV')clone.className=node.className;clone.style.position='absolute';clone.style.boxSizing='border-box';clone.style.left=(r.left-sourceBox.left)+'px';clone.style.top=(top-parentTop)+'px';clone.style.width=r.width+'px';clone.style.height=r.height+'px';clone.style.margin='0';
+      // Preserve small formatting subtrees even across the page boundary. The
+      // page viewport clips them; rebuilding inline children would rewrap them.
+      if((!inline&&r.height<=PAGE)||!children.length||node.tagName==='svg'||node.tagName==='SVG'){
+       const clone=place(node.cloneNode(true),r,parent);
+       if(['TABLE','THEAD','TBODY','TFOOT','TR'].includes(node.tagName)){
+        // A pruned table must not recalculate column widths from this page's rows.
+        const sourceCells=node.querySelectorAll('th,td');clone.querySelectorAll('th,td').forEach((cell,i)=>{cell.style.width=sourceCells[i].getBoundingClientRect().width+'px';cell.style.minWidth=cell.style.width;});
+       }
+       return clone;
+      }
+      const clone=inline?renderDoc.createElement('span'):node.cloneNode(false);place(clone,r,parent);
+      if(inline){clone.style.font=style.font;clone.style.color=style.color;clone.style.lineHeight=style.lineHeight;clone.style.textDecoration=style.textDecoration;}
+      // Absolute offsets refer to the padding box, not the source border box.
+      const origin={left:r.left+(parseFloat(style.borderLeftWidth)||0),top:r.top+(parseFloat(style.borderTopWidth)||0)};
       let state=childCursor.get(node)||{index:0,ordinal:0},childIndex=state.index,ordinal=state.ordinal;
       while(childIndex<children.length){const child=children[childIndex];let childRect;
        if(child.nodeType===1)childRect=measured.get(child)||child.getBoundingClientRect();
        else if(child.nodeType===3&&child.nodeValue){const range=node.ownerDocument.createRange();range.selectNodeContents(child);childRect=range.getBoundingClientRect();}
        if(!childRect||!childRect.height){childIndex++;continue;}
        const childTop=childRect.top-sourceBox.top,childBottom=childRect.bottom-sourceBox.top;if(childTop>=y+h)break;
-       if(childBottom>y){if(child.nodeType===1){const copy=sliceNode(child,top);if(copy){
-         if(node.tagName==='OL'&&child.tagName==='LI'){
-          const start=Number(node.getAttribute('start')||1),number=start+ordinal;
-          const marker=renderDoc.createElement('span');marker.textContent=number+'.';marker.setAttribute('aria-hidden','true');marker.style.cssText='position:absolute;left:0;width:40px;white-space:nowrap;text-align:right';copy.prepend(marker);
-         }
-         const listContentOffset=node.tagName==='LI'&&node.parentElement?.tagName==='OL'?44:0;copy.style.position='absolute';copy.style.left=(childRect.left-r.left+listContentOffset)+'px';copy.style.top=(childRect.top-r.top)+'px';copy.style.width=Math.max(0,childRect.width-listContentOffset)+'px';copy.style.height=childRect.height+'px';clone.append(copy);
-        }}else{const copy=sliceNode(child,top);if(copy){if(node.tagName==='LI'&&node.parentElement?.tagName==='OL'){copy.style.left=(Number.parseFloat(copy.style.left)||0)+44+'px';copy.style.width=`calc(100% - 44px)`;}clone.append(copy);}}}
+       if(childBottom>y){const copy=sliceNode(child,origin);if(copy){
+        if(node.tagName==='OL'&&child.nodeType===1&&child.tagName==='LI')copy.setAttribute('value',child.getAttribute('value')||Number(node.getAttribute('start')||1)+ordinal);
+        clone.append(copy);
+       }}
        if(childBottom<=y+h){if(node.tagName==='OL'&&child.nodeType===1&&child.tagName==='LI')ordinal++;childIndex++;}else break;
       }
-      childCursor.set(node,{index:childIndex,ordinal});
-      return clone;
+      childCursor.set(node,{index:childIndex,ordinal});return clone;
      };
      for(let i=firstBlock;i<blocks.length&&blocks[i].top<y+h;i++){
-      const b=blocks[i];if(b.bottom<=y)continue;const clone=sliceNode(b.node,0);if(!clone)continue;
-      clone.style.left=b.left+'px';clone.style.top=(b.top-y)+'px';page.append(clone);
+      const b=blocks[i];if(b.bottom<=y)continue;const clone=sliceNode(b.node,{left:sourceBox.left,top:sourceBox.top+y});if(clone)page.append(clone);
      }
      renderDoc.body.replaceChildren(page);return page;
     };

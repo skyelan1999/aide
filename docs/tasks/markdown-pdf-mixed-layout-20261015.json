@@ -1,0 +1,195 @@
+{
+  "id": "markdown-pdf-mixed-layout-20261015",
+  "request": "针对较长的混合内容的md文档，导出pdf可能会有部分内容是叠在一起的",
+  "baseline": "f07a4f9ae6654bb98828815b81f0907e14da23a9",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Long mixed Markdown PDF retains original block positions and widths without overlap",
+    "Cross-page styled paragraphs, nested lists, long code/table and SVG/image remain readable with bounded per-page DOM",
+    "Actual bundled browser export and rendered PDF pages verified; cancel/stale-document guards retained",
+    "Update runtime, complete offline package, docs and authorized main delivery with scoped evidence"
+  ],
+  "scope": [
+    "internal/server/web/markdown-export.js",
+    "internal/server/web/index.html",
+    "scripts/markdown-download-export.test.js",
+    "scripts/markdown-pdf-layout.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture/markdown-editing-export.md",
+    "docs/tasks",
+    "docs/reviews/2026-10-15",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports overlapping content in long mixed Markdown PDF. Reproduce with owned fixture; original affected document not provided.",
+      "evidence": [
+        "internal/server/web/markdown-export.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Uniform measured source coordinates and dimensions, preserve short formatting subtrees, split large text by measured line and freeze table columns; precompute safe break intervals. Bounded page DOM and original cancellation/resource controls retained.",
+      "evidence": [
+        "internal/server/web/markdown-export.js"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Implemented source-position clones and inline text line fragments, safe breaks and source cell widths; export asset v4 and focused regressions.",
+      "evidence": [
+        "internal/server/web/markdown-export.js",
+        "scripts/markdown-pdf-layout.test.cjs",
+        "scripts/markdown-download-export.test.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "quick82 passed. Actual browser synthetic mixed content exported17 A4 pages; old16-page fixture reproduced overlap. Poppler pages reviewed; full/main pending. Not original user document or authenticated workbench browser; peak memory unmeasured.",
+      "evidence": [
+        ".agent-state/markdown-pdf-mixed-layout/quick.log",
+        ".agent-state/markdown-pdf-mixed-layout/proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture and review updated with cause, changed behavior, proof scope and rollback; runtime/main receipts to follow.",
+      "evidence": [
+        "docs/architecture/markdown-editing-export.md",
+        "docs/reviews/2026-10-15/markdown-pdf-mixed-layout.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Own browser page and fixture service closed, export iframes removed. Evidence retained privately; inherited five vendor deletions untouched. Clean verification tree will be removed after gate.",
+      "evidence": [
+        ".agent-state/markdown-pdf-mixed-layout/proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Standing user instruction: push completed changes and merge all into main; update start.command runtime and complete offline image package; no version/tag/formal Release.",
+  "rollback": "Revert scoped frontend/test changes and restore previous complete image 997eda4026b5; no data migration.",
+  "handoff": "",
+  "browserEvidence": {
+    "pages": 17,
+    "renders": [
+      {
+        "height": 932.53125,
+        "canvasWidth": 794,
+        "nodes": 64,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 924,
+        "canvasWidth": 794,
+        "nodes": 73,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 924,
+        "canvasWidth": 794,
+        "nodes": 73,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 924,
+        "canvasWidth": 794,
+        "nodes": 73,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 924,
+        "canvasWidth": 794,
+        "nodes": 73,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 987,
+        "canvasWidth": 794,
+        "nodes": 538,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 987,
+        "canvasWidth": 794,
+        "nodes": 749,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 987,
+        "canvasWidth": 794,
+        "nodes": 665,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 987,
+        "canvasWidth": 794,
+        "nodes": 779,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 954.46875,
+        "canvasWidth": 794,
+        "nodes": 738,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 962.0625,
+        "canvasWidth": 794,
+        "nodes": 134,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 949.828125,
+        "canvasWidth": 794,
+        "nodes": 140,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 949.828125,
+        "canvasWidth": 794,
+        "nodes": 140,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 987,
+        "canvasWidth": 794,
+        "nodes": 66,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 974.390625,
+        "canvasWidth": 794,
+        "nodes": 56,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 975.890625,
+        "canvasWidth": 794,
+        "nodes": 99,
+        "sourceNodes": 1999
+      },
+      {
+        "height": 987,
+        "canvasWidth": 794,
+        "nodes": 3,
+        "sourceNodes": 1999
+      }
+    ],
+    "remainingFrames": 0,
+    "scope": "real bundled export/render libraries; synthetic content; no authenticated workbench browser",
+    "maxPageNodes": 779,
+    "sourceNodes": 1999,
+    "allOwnTabsClosed": true,
+    "fixtureServerStopped": true,
+    "pdfSHA256": "92ba069134571fc415e009224beb0f9285ad6db8e7d54d024f7f0e6b773d773b",
+    "pdfBytes": 2932453
+  }
+}

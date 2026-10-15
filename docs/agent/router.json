@@ -300,6 +300,10 @@
       ],
       [
         "node",
+        "scripts/markdown-pdf-layout.test.cjs"
+      ],
+      [
+        "node",
         "scripts/starmap-infrared.test.cjs"
       ],
       [
