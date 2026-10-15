@@ -7235,12 +7235,23 @@
   },
   "followup155": {
     "status": "in_progress",
-    "summary": "JS/Python lexical shadowing and Go interface dispatch false edges fixed; final targeted race3.275s, quick82, real SFTP actual binary/path/source hash and runtime/offline receipts passed. Final clean full/main pending.",
+    "summary": "Lexical and interface false edges fixed, real SFTP/path/source proof, runtime/offline package and final clean full84 passed; main release gate/push pending.",
     "evidence": [
       "docs/tasks/code-relation-live-20261015.json",
       "docs/reviews/2026-10-15/code-relation-live.md"
     ],
     "runtimeImage": "sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f",
-    "original12RemainOpen": true
+    "original12RemainOpen": true,
+    "full": {
+      "status": "pass",
+      "count": 84,
+      "fingerprint": "69b39cede79f61831d0077937b90b8759155f0fe8db49a41a929835534252db1",
+      "serverRaceSeconds": 539.86,
+      "sourceCommit": "889ab4a4c0783fc2a945025e3d10f786c6d3c9ca",
+      "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/code-relation-live/verify-20261015T120557689331Z.log",
+      "worktree": "/private/tmp/aide-code-relation-full-20261015"
+    },
+    "classification": "progress",
+    "previousGoalTurn": "Status-only user progress answer; current continuation advances real code correctness and acceptance."
   }
 }

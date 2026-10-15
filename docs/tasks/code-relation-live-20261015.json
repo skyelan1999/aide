@@ -43,10 +43,11 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Final targeted race PASS 3.275s, quick82, actual binary/SFTP typed-dynamic classification, path revision409 and source hash/line PASS. Clean main full pending.",
+      "status": "pass",
+      "summary": "Final focused race3.275s, quick82, actual binary real SFTP dynamic/typed classification and guarded path/source readback, clean main full84 with race/vet passed. Scope excludes UI/user SSH/other device.",
       "evidence": [
-        "docs/reviews/2026-10-15/code-relation-live.md"
+        "docs/reviews/2026-10-15/code-relation-live.md",
+        "docs/reviews/2026-10-15/code-relation-live-proof.json"
       ]
     },
     "documentation": {
@@ -66,14 +67,17 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Source/runtime/offline complete; clean main full84 passed, main gate and remote push pending. No version/tag/formal Release.",
+      "evidence": [
+        "docs/reviews/2026-10-15/code-relation-live.md",
+        "docker-images/README.md"
+      ]
     }
   },
   "release_authorization": "Standing incremental test/docs/push main and complete offline package authorization; no version/tag/formal Release.",
   "rollback": "Revert scoped parser/test changes; retain current runtime/offline candidate and all user configuration/data.",
-  "handoff": "",
+  "handoff": "Original twelve workstreams remain open; browser/user SSH/scale/delivery gaps unchanged. Five inherited vendor deletions preserved outside commit. Windows user acceptance; real vectors deferred.",
   "runtime": {
     "image": "sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f",
     "runningImage": "sha256:0e29f3cafa29f303f9163742acb573b6d174a380514272f0023e7214b91aca2f",
@@ -125,5 +129,14 @@
     "checks": 82,
     "fingerprint": "20f595da860035f10843b7982668396aa1ff5826b9ffc775c39a324b36064a6e",
     "scope": "before delivery manifest freeze; full must bind final controlled inputs"
+  },
+  "full": {
+    "status": "pass",
+    "count": 84,
+    "fingerprint": "69b39cede79f61831d0077937b90b8759155f0fe8db49a41a929835534252db1",
+    "serverRaceSeconds": 539.86,
+    "sourceCommit": "889ab4a4c0783fc2a945025e3d10f786c6d3c9ca",
+    "rawLog": "/Users/skyelan/Library/Mobile Documents/com~apple~CloudDocs/WorkStation/AI WorkStation/aide/.agent-state/code-relation-live/verify-20261015T120557689331Z.log",
+    "worktree": "/private/tmp/aide-code-relation-full-20261015"
   }
 }
