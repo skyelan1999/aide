@@ -7002,5 +7002,22 @@
       "releaseCheck": "pass",
       "sameInputFull84ReceiptReused": true
     }
+  },
+  "followup152": {
+    "task": "docs/tasks/ssh-approval-lifecycle-20261015.json",
+    "classification": "progress",
+    "previousGoalTurn": "Added actual current reasoning/disk and real Qwen outcome evidence; pushed docs8c354c8. This turn adds new real dual-OpenSSH authorization lifecycle integration coverage.",
+    "status": "in_progress",
+    "verified": [
+      "actual dual OpenSSH entire suite race19.349s; source hashes stable",
+      "same-path different host and same-host different-root authorization isolation",
+      "human grant and remembered outcome receipt, sandbox refusal, real-clock expiry, revision409 and persisted revocation",
+      "quick82; test containers/network removed"
+    ],
+    "remaining": [
+      "current-source clean full84/runtime/package/main gate",
+      "Safari certificate handoff and full user-host/browser acceptance"
+    ],
+    "original12RemainOpen": true
   }
 }

@@ -514,6 +514,10 @@ func TestSSHLiveWorkspaceAndIndependentSource(t *testing.T) {
 		config(t, workspace, "workspace", docsAbs, "workspace", cacheAbs)
 		runSSHContinuity(t, a, workspace, docsAbs, cacheAbs, "live-server-b-"+run, remote)
 	})
+	t.Run("approval_lifecycle_real_ssh", func(t *testing.T) {
+		assertSSHApprovalLifecycle(t, a, hostA, hostB, workspace, remote)
+	})
+
 	t.Run("restricted_shell_reports_unsupported", func(t *testing.T) {
 		a.mu.Lock()
 		original := a.settings.SandboxMode

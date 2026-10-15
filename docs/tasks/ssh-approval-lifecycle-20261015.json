@@ -1,0 +1,94 @@
+{
+  "id": "ssh-approval-lifecycle-20261015",
+  "request": "继续总目标：真实隔离SSH中的人工授权、记忆、跨根隔离、有效期与撤销工作流补验",
+  "baseline": "8c354c87b3ed5b2f40b311fdab9a4d27ecce1e13",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Real disposable OpenSSH A/B: explicit human answer grants exact command and remembered match carries durable receipt",
+    "Exact command authorization does not cross real host/path identities; denied/expired/revoked commands leave remote marker absent",
+    "Matched authorization does not bypass SSH sandbox refusal; revision conflict and persisted revocation verified",
+    "Evidence names real protocol vs test handler/operator simulation and UI/user-host limits; cleanup isolated containers/network; main gate/docs/package status accurate"
+  ],
+  "scope": [
+    "internal/server/ssh_live_test.go",
+    "internal/server/ssh_approval_live_test.go",
+    "docs/tasks",
+    "docs/reviews/2026-10-15",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Preserve original12. Add missing real SSH authorization lifecycle coverage while waiting for user-owned Safari certificate handoff.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Existing dual OpenSSH opt-in suite extended with handler-based answers/rule management and approvedShell; same absolute path across hosts separates host scope from root scope. Independent remote markers prove execution/refusal.",
+      "evidence": [
+        "internal/server/ssh_approval_live_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "New integrated lifecycle helper wired into existing SSH suite; no production behavior changes. Gofmt and full dual-server race suite passed.",
+      "evidence": [
+        "internal/server/ssh_approval_live_test.go",
+        "internal/server/ssh_live_test.go"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Final entire dual-SSH suite race repeat1 passed19.349s, stable inputs. Initial targeted and broad runs also passed; final case isolates host by holding path identical. quick/full/runtime/package/main pending.",
+      "evidence": [
+        ".agent-state/ssh-approval-lifecycle/ssh-proof.json",
+        ".agent-state/ssh-approval-lifecycle/ssh-final.log"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Review documents actual protocol/handler vs simulated human answer, same-path host isolation, source-bound race evidence and remaining browser/user-host limits; gate/package/main receipts to follow.",
+      "evidence": [
+        "docs/reviews/2026-10-15/ssh-approval-lifecycle.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Disposable client/two SSH servers/network gone. Fixture image and compilation cache retained for reuse, current9999 unchanged. Five inherited vendor deletions preserved.",
+      "evidence": [
+        ".agent-state/ssh-approval-lifecycle/cleanup.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Standing user instruction: completed work push/merge main, keep documents and complete offline image package updated. No version/tag/formal Release.",
+  "rollback": "Revert scoped integration tests/docs; no product or data migration. Existing9999 and prior complete offline image retained.",
+  "handoff": "",
+  "sshEvidence": {
+    "status": "pass",
+    "environment": "two real disposable OpenSSH servers/internal-only Docker network; current source test Handler and approvedShell; no model/user-host/UI",
+    "race": true,
+    "repeat": 1,
+    "seconds": 19.349,
+    "samePathDifferentHost": true,
+    "sameHostDifferentRoot": true,
+    "humanThenRemembered": true,
+    "rememberedReceiptInOutcome": true,
+    "sandboxReadOnlyAndWorkspaceWriteDenied": true,
+    "actualClockExpiry": true,
+    "staleRevision409": true,
+    "revocationAfterDiskReload": true,
+    "remoteMarkerChecks": true,
+    "inputHashesMatchBeforeAfter": true,
+    "rawLog": ".agent-state/ssh-approval-lifecycle/live/aide-ssh-test-20261015183641-52824.log",
+    "logSHA256": "09fd40d24b2ac40efa4ea1f5506e6b1a0ceccb7e374664bef54e8b4bb12ff6c8",
+    "fixtureImage": "sha256:f11b5bcd3d715674df79df4edac3258835615047185ab0c85087d6a02c55dbf9"
+  }
+}
