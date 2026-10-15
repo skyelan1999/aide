@@ -23,5 +23,34 @@
   },
   "integration": "Real temporary files -> production index builder -> registered HTTP path API; 2 mention steps, Unicode source positions, revision/workspace rejection",
   "boundary": "Static explicit references only; no authenticated Safari or runtime call-chain proof",
-  "release": "pending full verification, independent main gate, runtime rebuild and offline package; production unchanged"
+  "release": "pending full verification, independent main gate, runtime rebuild and offline package; production unchanged",
+  "runtime": {
+    "image": "sha256:47cd10e0cf683302d20822b98006cf780f05c3d44fd48bbbddd2a18530250679",
+    "runningImage": "sha256:47cd10e0cf683302d20822b98006cf780f05c3d44fd48bbbddd2a18530250679",
+    "sourceSHA256": "67fde75b95a712505f05dc06a48170cce23c32f38dff773448d52f41001fd242",
+    "runningPlatformManifest": "sha256:afc0c69fb702d1ec51a6721a296b090edb4c8c5ffea62041b481bce721d9a616",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "offline": {
+    "image": "sha256:47cd10e0cf683302d20822b98006cf780f05c3d44fd48bbbddd2a18530250679",
+    "sourceSHA256": "67fde75b95a712505f05dc06a48170cce23c32f38dff773448d52f41001fd242",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-47cd10e0cf68-offline.tar.gz",
+    "bytes": 705767139,
+    "sha256": "de684665fc8175c3021edd90c33a84c0e82d1c9bb675dc806ce419b3c2aaec5d",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "activeExternalWorkspaceOnly": true,
+    "verificationStorage": "streamed hashes/metadata/load in active external workspace; no duplicate outputs recreated in original directory"
+  }
 }

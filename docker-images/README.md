@@ -1,3 +1,9 @@
+## 2026-10-16 显式引用与证据定位候选（构建时记录）
+
+报告→中文空格证据文件→源码的两段静态引用、实际目标定位与命名空间边界修复；最终full及main门禁见[任务账本](../docs/tasks/knowledge-explicit-references-20261016.json)。
+
+指定start.command运行 sha256:47cd10e0cf683302d20822b98006cf780f05c3d44fd48bbbddd2a18530250679，source SHA 67fde75b95a712505f05dc06a48170cce23c32f38dff773448d52f41001fd242。完整包 aide-0.1.17.0-RC2-linux-arm64-47cd10e0cf68-offline.tar.gz，705767139字节，SHA-256 de684665fc8175c3021edd90c33a84c0e82d1c9bb675dc806ce419b3c2aaec5d；内外摘要、应用/依赖标签、平台/启动器及实际docker load通过。会话、配置、认证和挂载保持一致；保留4cc回滚包，接收设备导入待验。不升版/tag/正式Release。
+
 ## 2026-10-16 工作台协调与动态背景候选（构建时记录）
 
 共用按钮/图标/正文/输入区与窄屏设置导航统一，外观支持关闭、流光和本地视频/GIF/图片。真实生产组件六主题/390px与MP4静音播放、减少动态暂停、GIF刷新恢复通过；完整Safari仍暂缓。最终full/main门禁以[任务账本](../docs/tasks/workbench-polish-20261016.json)为准。

@@ -13,3 +13,5 @@
 发布状态：开发分支验证中，尚未合入 main、更新本机镜像或生成本批离线包。现有运行实例及4cc镜像回滚包保持可用。全量检查和独立发布门禁尚未执行，不复用旧界面批次收据。
 
 开发检查点：`^TestKnowledgeReference` race（3.832秒）和全包 vet 通过；最终代码的 `^TestKnowledge` race 与全包 vet 通过；quick84通过。准确日志与内容指纹见同目录 proof.json。完整full与发行门禁仍待执行。
+
+候选本机/离线验收：指定start.command运行 sha256:47cd10e0cf683302d20822b98006cf780f05c3d44fd48bbbddd2a18530250679，source SHA 67fde75b95a712505f05dc06a48170cce23c32f38dff773448d52f41001fd242。完整包 aide-0.1.17.0-RC2-linux-arm64-47cd10e0cf68-offline.tar.gz，705767139字节，SHA-256 de684665fc8175c3021edd90c33a84c0e82d1c9bb675dc806ce419b3c2aaec5d；内外摘要、应用/依赖标签、平台/启动器及实际docker load通过。会话、配置、认证和挂载保持一致；保留4cc回滚包，接收设备导入待验。不升版/tag/正式Release。 全量检查、独立main门禁和远端推送仍待执行；以随后实际收据为准。
