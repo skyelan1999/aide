@@ -6597,5 +6597,58 @@
       "copiedBothTrees": true,
       "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
     }
+  },
+  "followup145": {
+    "task": "completion-review-delivery-20261015",
+    "classification": "progress",
+    "summary": "已修复未完成写作计划绕过检查及无计划短承诺直接结束；检查有界并保留旧规划兼容。真实读样本由两次降为一次；40节样本经两run补齐编号，不宣称篇幅/自动完成/恢复全通过。下一步补取消后正文进入后续模型上下文。原12项目标继续。",
+    "verification": {
+      "status": "in_progress",
+      "summary": "最终Go定向race11.073秒/vet及quick79通过；真实Marker读取仅一次且正确。长文持续20833字符/30节后由验收240秒时限取消；同会话补30-40节完成，组合40个编号、48个代码围栏。篇幅未遵守约200字，同一run自然完成及停止后上下文恢复未通过；后续快照缺取消正文是下一修复项。",
+      "evidence": [
+        "docs/reviews/2026-10-15/completion-review-delivery.md",
+        ".agent-state/completion-review-delivery/targeted-final-boundary.log",
+        ".agent-state/completion-review-delivery/quick-final-frozen.json",
+        ".agent-state/completion-review-delivery/read-proof.json",
+        ".agent-state/completion-review-delivery/writing-proof.json",
+        ".agent-state/completion-review-delivery/writing-continuation-proof.json",
+        ".agent-state/completion-review-delivery/cancelled-context-gap.json"
+      ]
+    },
+    "runtime": {
+      "image": "sha256:d18d953b69da96629391da88446aa0d5938a2dce93f8f0d5d14cba064e31c275",
+      "runningImage": "sha256:d18d953b69da96629391da88446aa0d5938a2dce93f8f0d5d14cba064e31c275",
+      "sourceSHA256": "29295790b0da2f8eacb91ef023a347d89d06f80a3691e1303787b90754c9593e",
+      "runningPlatformManifest": "sha256:b82db9b61360cff6f2ab05b5c701e67175bc3ffb672c1808e20650869b5d635c",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "health": "ok",
+      "port": "9999",
+      "currentConfigAndMountsPreserved": true,
+      "servedAssetsMatch": true
+    },
+    "package": {
+      "image": "sha256:d18d953b69da96629391da88446aa0d5938a2dce93f8f0d5d14cba064e31c275",
+      "sourceSHA256": "29295790b0da2f8eacb91ef023a347d89d06f80a3691e1303787b90754c9593e",
+      "archive": "aide-0.1.17.0-RC2-linux-arm64-d18d953b69da-offline.tar.gz",
+      "bytes": 705668737,
+      "sha256": "c71b7a54c903aa7a6ffa6576ba0a2657a0ffa83832d569485138d8b5838b12e7",
+      "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+      "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+      "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+      "outerHashVerified": true,
+      "innerHashVerified": true,
+      "bothImageTagsPresent": true,
+      "runningPlatformManifestMatchesArchive": true,
+      "dockerLoadVerified": true,
+      "hostLaunchersMatch": true,
+      "copiedBothTrees": true,
+      "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+    },
+    "next_priority": {
+      "issue": "取消后的部分助手正文未进入下一请求的会话消息历史",
+      "evidence": ".agent-state/completion-review-delivery/cancelled-context-gap.json",
+      "source": "internal/server/workflow.go execute final err/success branches"
+    },
+    "boundary": "full81/main/tag and complete UI/receiving-device import pending; Windows user-owned; real vector deferred"
   }
 }

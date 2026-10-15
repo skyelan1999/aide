@@ -45,15 +45,15 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Old-code negative regressions reproduced. Updated eligibility, two-part writing delivery, plan completion, resume/pause/session isolation race tests and server vet PASS (9.485s); quick79 PASS. Real provider rerun pending. First real candidate: read PASS, writing FAIL (standalone promise without plan). New promise guard/race regression in progress; no claim of long-document success. Expanded delivery-promise, exhaustion, writing, resume/pause/session-isolation race tests PASS10.048s and server vet PASS; quick79 PASS on second candidate. Actual final-provider rerun pending. Final boundary regression/race11.073s and server vet PASS; quick79 PASS on final code, real final deployment rerun pending.",
+      "summary": "最终Go定向race11.073秒/vet及quick79通过；真实Marker读取仅一次且正确。长文持续20833字符/30节后由验收240秒时限取消；同会话补30-40节完成，组合40个编号、48个代码围栏。篇幅未遵守约200字，同一run自然完成及停止后上下文恢复未通过；后续快照缺取消正文是下一修复项。",
       "evidence": [
-        ".agent-state/completion-review-delivery/negative.log",
-        ".agent-state/completion-review-delivery/targeted-with-pause.log",
-        ".agent-state/completion-review-delivery/targeted-fingerprint.json",
-        ".agent-state/completion-review-delivery/quick-frozen.json",
+        "docs/reviews/2026-10-15/completion-review-delivery.md",
         ".agent-state/completion-review-delivery/targeted-final-boundary.log",
-        ".agent-state/completion-review-delivery/targeted-final-fingerprint.json",
-        ".agent-state/completion-review-delivery/quick-final-frozen.json"
+        ".agent-state/completion-review-delivery/quick-final-frozen.json",
+        ".agent-state/completion-review-delivery/read-proof.json",
+        ".agent-state/completion-review-delivery/writing-proof.json",
+        ".agent-state/completion-review-delivery/writing-continuation-proof.json",
+        ".agent-state/completion-review-delivery/cancelled-context-gap.json"
       ]
     },
     "documentation": {
@@ -64,19 +64,25 @@
       ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "本轮5个真实测试run均终态；无自建浏览器页、遗留测试容器，继承5项vendor删除和用户数据保留。",
+      "evidence": [
+        ".agent-state/completion-review-delivery/cleanup-proof.json",
+        "git status --short"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "源码f5baec6及之前修复已push；指定start.command更新9999/d18d953b69da，配置/认证/挂载保留、资源一致。完整离线包内外哈希/平台/标签/启动器/实际docker load/两本地副本通过。未运行新full81、未合main/tag、未验收接收设备和完整浏览器；长文与取消后历史仍有缺口。",
+      "evidence": [
+        ".agent-state/completion-review-delivery/final.json",
+        ".agent-state/completion-review-delivery/package.json"
+      ]
     }
   },
   "release_authorization": "User authorized incremental changes/tests/push and offline bundles; supplied Qwen endpoint is authorized for ongoing tests.",
   "rollback": "Revert review eligibility and prompt additions; no migration or authorization changes.",
-  "handoff": "",
+  "handoff": "已修复未完成写作计划绕过检查及无计划短承诺直接结束；检查有界并保留旧规划兼容。真实读样本由两次降为一次；40节样本经两run补齐编号，不宣称篇幅/自动完成/恢复全通过。下一步补取消后正文进入后续模型上下文。原12项目标继续。",
   "live_first_candidate": {
     "source": "da43326",
     "read": "PASS: one read_file, correct marker, no internal review framing",
@@ -85,5 +91,39 @@
       ".agent-state/completion-review-delivery/first-read-proof.json",
       ".agent-state/completion-review-delivery/first-writing-proof.json"
     ]
+  },
+  "runtime": {
+    "image": "sha256:d18d953b69da96629391da88446aa0d5938a2dce93f8f0d5d14cba064e31c275",
+    "runningImage": "sha256:d18d953b69da96629391da88446aa0d5938a2dce93f8f0d5d14cba064e31c275",
+    "sourceSHA256": "29295790b0da2f8eacb91ef023a347d89d06f80a3691e1303787b90754c9593e",
+    "runningPlatformManifest": "sha256:b82db9b61360cff6f2ab05b5c701e67175bc3ffb672c1808e20650869b5d635c",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "health": "ok",
+    "port": "9999",
+    "currentConfigAndMountsPreserved": true,
+    "servedAssetsMatch": true
+  },
+  "package": {
+    "image": "sha256:d18d953b69da96629391da88446aa0d5938a2dce93f8f0d5d14cba064e31c275",
+    "sourceSHA256": "29295790b0da2f8eacb91ef023a347d89d06f80a3691e1303787b90754c9593e",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-d18d953b69da-offline.tar.gz",
+    "bytes": 705668737,
+    "sha256": "c71b7a54c903aa7a6ffa6576ba0a2657a0ffa83832d569485138d8b5838b12e7",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "next_priority": {
+    "issue": "取消后的部分助手正文未进入下一请求的会话消息历史",
+    "evidence": ".agent-state/completion-review-delivery/cancelled-context-gap.json",
+    "source": "internal/server/workflow.go execute final err/success branches"
   }
 }

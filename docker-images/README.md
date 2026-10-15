@@ -208,3 +208,7 @@ Latest reviewed-recovery continuation development snapshot (2026-10-15): `aide-0
 ## 2026-10-15 流程图明暗配色候选
 
 `aide-0.1.17.0-RC2-linux-arm64-9031bd56acb0-offline.tar.gz`，705664078 字节，SHA-256 `0952114b54e69f6c2c3be9492a9e10f6145236870c004d8c6c57f113709298f8`，源码 `846b7f7`，源指纹 `060487f69d53d5e197445523f1d21eb67df4ab6cf2c81c912a24fb7456b23f0d`。统一页面/导出渲染队列，明暗主题自适应，蓝色步骤、青绿起止和暖金判断节点；保留作者显式样式。quick79与真实vendor组件三套主题明暗组合及白纸配色通过。指定start.command更新9999，配置/挂载保留，资源一致。完整应用与依赖镜像均包含，内外哈希/标签/平台/启动器/实际docker load及两本地树副本通过。完整工作台/PDF、新full81/main和接收设备导入未验收。见[任务](../docs/tasks/flowchart-theme-contrast-20261015.json)。
+
+## 2026-10-15 正文交付与收尾检查候选
+
+`aide-0.1.17.0-RC2-linux-arm64-d18d953b69da-offline.tar.gz`，705668737 字节，SHA-256 `c71b7a54c903aa7a6ffa6576ba0a2657a0ffa83832d569485138d8b5838b12e7`，源码 `f5baec6`，源指纹 `29295790b0da2f8eacb91ef023a347d89d06f80a3691e1303787b90754c9593e`。未完成计划及明确产出请求的短执行承诺触发有界检查，收尾复用已有读取并回到原用户目标，保留旧规划阶段。quick79、定向Go race/vet及真实Marker只读一次通过。ROS2长文持续输出30节后被验收脚本240秒取消，同会话补齐到40节；篇幅和停止后上下文恢复未通过，不作为完整长文成功。指定start.command更新9999，配置/挂载/资源一致。完整应用及依赖镜像内外哈希/标签/平台/启动器/实际导入/两本地副本通过。前一a51faa64f79b候选保留回滚。新full81/main/tag、完整UI及接收设备导入未验收；见[实测报告](../docs/reviews/2026-10-15/completion-review-delivery.md)。
