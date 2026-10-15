@@ -31,3 +31,5 @@ Go AST 识别标准 `net/http` 的默认注册、直接 `NewServeMux` 和显式 
 本机与离线候选：指定start.command运行 sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba，source SHA d5cb1d9c65e8c15abbd00a41dd3d06261cd6d5318c09e29f14150e017a985eb2。完整包 aide-0.1.17.0-RC2-linux-arm64-1601033df8ea-offline.tar.gz，705779869字节，SHA-256 74d150f1d784e2419fe064aa017b0ae041ed18652ea5617a05db54e3d8c897ef；内外摘要、应用/依赖标签、平台、启动器及实际docker load通过。会话、配置、认证及挂载保持一致；保留47cd回滚包，仅活动移动硬盘保存，接收设备导入待验。不升版/tag/正式Release。 最终full87、独立main门禁和远端推送待实际收据。
 
 Final clean-main full87 PASS: {"status": "pass", "count": 87, "fingerprint": "9acdc376f78653bedf6e77f5d5a2e6688cfef22d67e28fdc6a2f12875cf49e70", "sourceCommit": "78f0c736b9cfc39bce94a0fd2a5aa0278362ba3a", "serverRaceSeconds": 540.604}
+
+Independent main gate PASS; no-force main push d24bbdb48751dd4f71f09f461de171a29f1b7c14 exactly verified remotely. Final receipt commit follows. No version/tag/GitHub Release.

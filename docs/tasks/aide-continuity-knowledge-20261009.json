@@ -533,19 +533,25 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "真实SFTP路径API、确定调用行列、旧revision409与原文哈希已验证；引用文件快速预览另有组件与接口证据。 2026-10-16补真实临时文件索引→路径HTTP接口的报告→中文空格证据文档→源码两段静态链、精确行列和身份/版本隔离。",
+        "latestScopedEvidence": "真实SFTP路径API、确定调用行列、旧revision409与原文哈希已验证；引用文件快速预览另有组件与接口证据。 2026-10-16补真实临时文件索引→路径HTTP接口的报告→中文空格证据文档→源码两段静态链、精确行列和身份/版本隔离。 当前源码又补HTML按钮→事件→回调→请求→Go路由→服务的六段静态链，真实临时文件索引/HTTP隔离、实际星图辅助函数源解析与IAB生产路径组件分别验收。",
         "evidence": [
           "docs/reviews/2026-10-15/code-relation-live.md",
           "docs/tasks/starmap-file-preview-20261015.json",
           "docs/tasks/knowledge-path-exploration-20261009.json",
           "docs/reviews/2026-10-16/knowledge-explicit-references.md",
-          "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
+          "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json",
+          "docs/reviews/2026-10-16/knowledge-http-evidence.md",
+          "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
         ],
-        "remaining": "按钮到服务的完整多段链及浏览器行号/段落跳转仍未形成当前端到端证据；报告到来源已补后端真实索引/API链，不能替代主题/窄屏/SSH交互验收。"
+        "remaining": "完整认证工作台中按钮/报告多段路径的源码行号/段落跳转及SSH/主题/窄屏实际交互仍待验；组件与API不能互相代验。完整aide目录受256KiB/80文件预算限制，未证明全库覆盖；HTTP候选不是运行时追踪。"
       },
       "evidence_20261016_explicit_references": [
         "docs/reviews/2026-10-16/knowledge-explicit-references.md",
         "docs/reviews/2026-10-16/knowledge-explicit-references-proof.json"
+      ],
+      "evidence_20261016_http_relations": [
+        "docs/reviews/2026-10-16/knowledge-http-evidence.md",
+        "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
       ]
     },
     {
@@ -7628,12 +7634,13 @@
   },
   "followup170": {
     "task": "docs/tasks/knowledge-http-evidence-20261016.json",
-    "status": "in_progress",
+    "status": "pass",
     "classification": "progress",
-    "summary": "六段静态链、DOM/请求辅助函数和根相对脚本唯一候选、图/路径分类与等级已接入；实际临时索引API、当前Knowledge race/vet、quick85和IAB组件明暗/390通过。待full87/运行镜像/独立main门禁及交付；原12项仍进行。",
+    "summary": "Static HTML/event/callback/request/Go route/service path, immutable helpers and per-call-site isolation delivered. Actual temporary index/API, actual star-map source parser, IAB path component/themes/narrow, full87/runtime/offline and independent gate/exact remote SHA pass. Original12 remain open.",
     "evidence": [
       "docs/reviews/2026-10-16/knowledge-http-evidence.md",
       "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
-    ]
+    ],
+    "deliveredMain": "d24bbdb48751dd4f71f09f461de171a29f1b7c14"
   }
 }

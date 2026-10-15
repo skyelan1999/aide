@@ -1,6 +1,6 @@
 {
   "task": "knowledge-http-evidence-20261016",
-  "status": "runtime_candidate_verified",
+  "status": "delivered_scoped",
   "baseline": "584aa9b9182dd091a3265b0f62f5a22e510d6a9a",
   "oldParser": "DOM event evidence is missing: expected regression failure",
   "node": "pass: callback/request provenance, lexical shadow/reassignment, global mutations, dynamic diagnostics and256 bounds",
@@ -17,9 +17,9 @@
     "fingerprint": "a10aa8672dea9b6722131e99eed2965c716f1cfe1f275a7141f4d1ddfbed7810"
   },
   "notComplete": [
-    "clean-main full87",
-    "independent main gate and remote push",
-    "full authenticated Safari deferred; actual whole-aide index not proven"
+    "full authenticated Safari deferred",
+    "actual whole-aide indexing not proven; app.js above256KiB budget",
+    "original12 workflow/browser/SSH/conclusion-evolution gaps remain; see master ledger"
   ],
   "production": "candidate sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba healthy; source/served assets and original data hashes verified",
   "html": "pass: source button/script positions, inactive markup, duplicate IDs/attributes, base URL diagnostics and bounds",
@@ -118,5 +118,12 @@
     "fingerprint": "9acdc376f78653bedf6e77f5d5a2e6688cfef22d67e28fdc6a2f12875cf49e70",
     "sourceCommit": "78f0c736b9cfc39bce94a0fd2a5aa0278362ba3a",
     "serverRaceSeconds": 540.604
+  },
+  "release": {
+    "status": "pass",
+    "independentGate": true,
+    "main": "d24bbdb48751dd4f71f09f461de171a29f1b7c14",
+    "remoteExactVerified": true,
+    "finalReceiptFollows": true
   }
 }

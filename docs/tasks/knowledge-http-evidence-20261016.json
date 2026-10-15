@@ -67,8 +67,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Final full pass, independent gate and remote push next.",
+      "status": "pass",
+      "summary": "Independent main gate and no-force push d24bbdb48751dd4f71f09f461de171a29f1b7c14 exactly verified remotely; final receipt follows. Local9999/offline verified. No version/tag/Release.",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-http-evidence.md",
         "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
@@ -77,5 +77,5 @@
   },
   "release_authorization": "沿用用户分批测试/push/合main、本机启动及离线镜像包交付授权；无升版/tag/正式Release。",
   "rollback": "当前47cd运行镜像与完整离线包保留；本批尚未变更数据格式或部署。",
-  "handoff": "源候选就绪；继续start.command镜像/离线校验、冻结main full87与独立门禁/推送。完整Safari与全aide索引覆盖不冒称完成，原12项保持进行。"
+  "handoff": "External main delivered d24bbdb48751dd4f71f09f461de171a29f1b7c14, final receipt follows. Local9999 sha256:1601033df8ea2434e4bc6c7759c7e9940728757f3aab4701a0e5ca85925b8dba healthy; offline aide-0.1.17.0-RC2-linux-arm64-1601033df8ea-offline.tar.gz; retain47cd rollback. Static source/API paths and IAB production component verified separately; full authenticated Safari and whole-aide coverage not proven. Original12 remain open; Windows user acceptance, real vectors deferred."
 }
