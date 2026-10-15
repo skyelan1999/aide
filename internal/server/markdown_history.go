@@ -1,10 +1,12 @@
 package server
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -82,14 +84,40 @@ func loadMarkdownIndex(dir, p string) (markdownHistoryIndex, error) {
 	return index, err
 }
 func storeHistoryObject(dir string, b []byte) (string, error) {
+	if len(b) > maxRawFile {
+		return "", errors.New("历史对象超过大小限制")
+	}
 	digest := hash(b)
 	objects := filepath.Join(dir, "objects")
 	if err := os.MkdirAll(objects, 0700); err != nil {
 		return "", err
 	}
+	if info, err := os.Lstat(objects); err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return "", errors.New("历史对象目录无效")
+	}
 	dest := filepath.Join(objects, digest)
-	if _, err := os.Stat(dest); err == nil {
+	if _, err := os.Lstat(dest); err == nil {
+		f, info, err := openHistoryObject(dir, digest)
+		if err != nil {
+			return "", err
+		}
+		defer f.Close()
+		if info.Size() != int64(len(b)) {
+			return "", errors.New("历史对象完整性校验失败")
+		}
+		// Reuse is a backup guarantee, not merely a pathname existence check.
+		// Stream the digest so a repeated large document needs no second buffer.
+		h := sha256.New()
+		n, err := io.Copy(h, io.LimitReader(f, maxRawFile+1))
+		if err != nil {
+			return "", err
+		}
+		if n != info.Size() || n != int64(len(b)) || fmt.Sprintf("%x", h.Sum(nil)) != digest {
+			return "", errors.New("历史对象完整性校验失败")
+		}
 		return digest, nil
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return "", err
 	}
 	f, err := os.CreateTemp(objects, ".snapshot-")
 	if err != nil {
@@ -110,16 +138,62 @@ func storeHistoryObject(dir string, b []byte) (string, error) {
 	return digest, err
 }
 
+// Keep reads and object reuse on the same ordinary-file and size contract.
+func openHistoryObject(dir, digest string) (*os.File, os.FileInfo, error) {
+	if len(digest) != 64 || strings.Trim(digest, "0123456789abcdef") != "" {
+		return nil, nil, errors.New("历史对象摘要无效")
+	}
+	objects := filepath.Join(dir, "objects")
+	parent, err := os.Lstat(objects)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !parent.IsDir() || parent.Mode()&os.ModeSymlink != 0 {
+		return nil, nil, errors.New("历史对象目录无效")
+	}
+	name := filepath.Join(objects, digest)
+	info, err := os.Lstat(name)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !info.Mode().IsRegular() {
+		return nil, nil, errors.New("历史对象不是普通文件")
+	}
+	if info.Size() > maxRawFile {
+		return nil, nil, errors.New("历史对象超过大小限制")
+	}
+	f, err := os.Open(name)
+	if err != nil {
+		return nil, nil, err
+	}
+	actual, err := f.Stat()
+	if err != nil {
+		f.Close()
+		return nil, nil, err
+	}
+	if !actual.Mode().IsRegular() || !os.SameFile(info, actual) || actual.Size() != info.Size() {
+		f.Close()
+		return nil, nil, errors.New("历史对象读取期间已变化")
+	}
+	return f, actual, nil
+}
+
 // Never serve damaged objects, even if their metadata is valid JSON.
 func readHistoryObject(dir, digest string) ([]byte, error) {
-	if len(digest) != 64 || strings.Trim(digest, "0123456789abcdef") != "" {
-		return nil, errors.New("历史对象摘要无效")
-	}
-	b, err := os.ReadFile(filepath.Join(dir, "objects", digest))
+	f, info, err := openHistoryObject(dir, digest)
 	if err != nil {
 		return nil, err
 	}
-	if hash(b) != digest {
+	defer f.Close()
+	// Reserve only the checked size plus one growth-detection byte. This avoids
+	// both unbounded ReadFile allocation and repeated ReadAll buffer growth.
+	b := make([]byte, int(info.Size())+1)
+	n, err := io.ReadFull(f, b)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return nil, err
+	}
+	b = b[:n]
+	if int64(n) != info.Size() || hash(b) != digest {
 		return nil, errors.New("历史对象完整性校验失败")
 	}
 	return b, nil

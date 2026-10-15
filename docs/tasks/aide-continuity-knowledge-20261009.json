@@ -7328,5 +7328,16 @@
   "human_safari_deferral_20261015": {
     "reply": "现在不方便",
     "meaning": "Complete authenticated Safari acceptance deferred; no repeated immediate handoff request, continue independent authorized work."
+  },
+  "followup158": {
+    "task": "docs/tasks/history-object-integrity-20261015.json",
+    "classification": "progress",
+    "previousGoalTurn": "Human requested APFS external copy completed with full file SHA256, symlinks and permission/Git readback; source not deleted or runtime switched. Resume original history goal with verified backup unchanged.",
+    "status": "in_progress",
+    "summary": "Actual binary reproduced corrupt backup still allowing overwrite; immutable object reuse/read guard and focused race11.264s passed, new binary/full/delivery pending.",
+    "original12RemainOpen": true,
+    "evidence": [
+      "docs/reviews/2026-10-15/history-object-integrity.md"
+    ]
   }
 }

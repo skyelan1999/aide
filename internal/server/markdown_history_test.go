@@ -299,3 +299,179 @@ func TestMarkdownHistoryPartialWriteContract(t *testing.T) {
 		})
 	}
 }
+
+func TestHistoryObjectReuseVerifiesBytesAndKind(t *testing.T) {
+	for _, kind := range []string{"same-size-corrupt", "symlink", "directory", "oversized", "objects-directory-link"} {
+		t.Run(kind, func(t *testing.T) {
+			dir := t.TempDir()
+			original := []byte("immutable original")
+			digest, err := storeHistoryObject(dir, original)
+			if err != nil {
+				t.Fatal(err)
+			}
+			object := filepath.Join(dir, "objects", digest)
+			switch kind {
+			case "same-size-corrupt":
+				damaged := append([]byte(nil), original...)
+				damaged[0] = 'X'
+				if err := os.WriteFile(object, damaged, 0600); err != nil {
+					t.Fatal(err)
+				}
+			case "symlink":
+				target := filepath.Join(t.TempDir(), "outside")
+				if err := os.WriteFile(target, original, 0600); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Remove(object); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Symlink(target, object); err != nil {
+					t.Fatal(err)
+				}
+			case "directory":
+				if err := os.Remove(object); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Mkdir(object, 0700); err != nil {
+					t.Fatal(err)
+				}
+			case "oversized":
+				if err := os.Truncate(object, maxRawFile+1); err != nil {
+					t.Fatal(err)
+				}
+			case "objects-directory-link":
+				moved := filepath.Join(t.TempDir(), "archive-objects")
+				if err := os.Rename(filepath.Join(dir, "objects"), moved); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Symlink(moved, filepath.Join(dir, "objects")); err != nil {
+					t.Fatal(err)
+				}
+			}
+			before, err := os.Lstat(object)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if _, err := storeHistoryObject(dir, original); err == nil {
+				t.Fatal("invalid archived object silently reused")
+			}
+			if _, err := readHistoryObject(dir, digest); err == nil {
+				t.Fatal("invalid archived object served")
+			}
+			after, err := os.Lstat(object)
+			if err != nil || !os.SameFile(before, after) || before.Mode() != after.Mode() || before.Size() != after.Size() {
+				t.Fatalf("invalid object changed instead of being preserved: %v", err)
+			}
+		})
+	}
+}
+
+func TestHistoryObjectValidReuseIsImmutable(t *testing.T) {
+	for _, original := range [][]byte{nil, []byte("valid content")} {
+		dir := t.TempDir()
+		digest, err := storeHistoryObject(dir, original)
+		if err != nil {
+			t.Fatal(err)
+		}
+		object := filepath.Join(dir, "objects", digest)
+		before, err := os.Stat(object)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Chmod(object, 0400); err != nil {
+			t.Fatal(err)
+		}
+		again, err := storeHistoryObject(dir, original)
+		if err != nil || again != digest {
+			t.Fatalf("valid reuse: %s %v", again, err)
+		}
+		after, err := os.Stat(object)
+		if err != nil || !os.SameFile(before, after) || !before.ModTime().Equal(after.ModTime()) || after.Mode().Perm() != 0400 {
+			t.Fatalf("immutable valid object was rewritten: %v", err)
+		}
+		got, err := readHistoryObject(dir, digest)
+		if err != nil || string(got) != string(original) {
+			t.Fatalf("valid readback: %q %v", got, err)
+		}
+	}
+}
+
+func TestMarkdownHistoryInvalidBackupBlocksWrite(t *testing.T) {
+	for _, damaged := range []string{"body", "asset"} {
+		t.Run(damaged, func(t *testing.T) {
+			a := testApp(t)
+			enableMarkdownHistory(t, a)
+			old := []byte("# Original\n![image](asset.svg)\n")
+			asset := []byte("<svg>original</svg>")
+			for name, data := range map[string][]byte{"page.md": old, "asset.svg": asset} {
+				if err := os.WriteFile(filepath.Join(a.workPath, name), data, 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			identity, read, err := a.historyTarget("", "page.md")
+			if err != nil {
+				t.Fatal(err)
+			}
+			dir := a.markdownHistoryDir(identity)
+			if err := a.captureMarkdown(dir, "page.md", old, true, read); err != nil {
+				t.Fatal(err)
+			}
+			expected := old
+			if damaged == "asset" {
+				expected = asset
+			}
+			object := filepath.Join(dir, "objects", hash(expected))
+			bad := append([]byte(nil), expected...)
+			bad[0] = 'X'
+			if err := os.WriteFile(object, bad, 0600); err != nil {
+				t.Fatal(err)
+			}
+			indexBefore, err := os.ReadFile(historyIndexPath(dir, "page.md"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			body := map[string]any{"path": "page.md", "content": "# Changed\n![image](asset.svg)\n", "hash": hash(old), "workspaceId": a.wsID()}
+			response := request(a, "PUT", "/api/file", body)
+			requireStatus(t, response, 400)
+			var reply map[string]any
+			if err := json.Unmarshal(response.Body.Bytes(), &reply); err != nil {
+				t.Fatal(err)
+			}
+			if _, saved := reply["saved"]; saved {
+				t.Fatal("failed pre-save backup claimed write succeeded", reply)
+			}
+			after, err := os.ReadFile(filepath.Join(a.workPath, "page.md"))
+			if err != nil || string(after) != string(old) {
+				t.Fatalf("current body overwritten: %q %v", after, err)
+			}
+			after, err = os.ReadFile(object)
+			if err != nil || string(after) != string(bad) {
+				t.Fatal("damaged history was changed", err)
+			}
+			after, err = os.ReadFile(historyIndexPath(dir, "page.md"))
+			if err != nil || string(after) != string(indexBefore) {
+				t.Fatal("index mutated after rejected backup", err)
+			}
+			if err := os.WriteFile(object, expected, 0600); err != nil {
+				t.Fatal(err)
+			}
+			requireStatus(t, request(a, "PUT", "/api/file", body), 200)
+			current, err := os.ReadFile(filepath.Join(a.workPath, "page.md"))
+			if err != nil || string(current) != body["content"] {
+				t.Fatal("retry did not save", err)
+			}
+			index, err := loadMarkdownIndex(dir, "page.md")
+			if err != nil || len(index.Versions) != 2 {
+				t.Fatalf("history after retry: %+v %v", index, err)
+			}
+			restored, err := readHistoryObject(dir, hash(old))
+			if err != nil || string(restored) != string(old) {
+				t.Fatal("old body lost", err)
+			}
+			restored, err = readHistoryObject(dir, hash(asset))
+			if err != nil || string(restored) != string(asset) {
+				t.Fatal("old asset lost", err)
+			}
+		})
+	}
+}

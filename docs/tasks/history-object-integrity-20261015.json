@@ -1,0 +1,70 @@
+{
+  "id": "history-object-integrity-20261015",
+  "request": "继续连续工作历史目标：复现历史对象损坏后保存仍复用无效备份的问题，统一对象复用/读取校验，保护原文并验证故障解除重试、文档与发布",
+  "baseline": "ce8ab973554308b59ed560924bfe32cdfb156a13",
+  "initial_status": "D internal/server/web/vendor/drawio/js/dropbox/Dropbox-sdk.min.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDrive.js\n D internal/server/web/vendor/drawio/js/onedrive/OneDriveOrig.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPicker.js\n D internal/server/web/vendor/drawio/js/onedrive/mxODPickerV2.js",
+  "acceptance": [
+    "Actual isolated binary HTTPS: corrupt archived current body or embedded asset must not be treated as a valid pre-save backup; current workspace bytes and history metadata remain intact on failure, known-good storage restoration permits retry.",
+    "Immutable object reuse validates content and rejects symlinks, directories and oversized/nonregular objects; ordinary valid reuse and old revision/backup/restore semantics preserved with bounded memory.",
+    "Focused Go/history regression, real binary fault/retry/restart, docs/runtime/offline/full and main gates separately evidenced; full authenticated Safari deferred by human, Windows user acceptance and real vectors deferred."
+  ],
+  "scope": [
+    "internal/server/markdown_history.go",
+    "internal/server/markdown_history_test.go",
+    "docs",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Follow original save/history integrity goals; verify actual corruption before deciding implementation. Existing APFS external copy remains immutable verified backup, current source remains development workspace.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json",
+        "docs/tasks/storage-fault-live-20261015.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Honor immutable content-addressed archive invariant and existing import constraints; validate ordinary object/type/identity/size/hash on reuse and bounded reads. Reject invalid pre-save history without modifying source or archive.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-object-integrity.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Shared verified open helper, streaming reuse digest and bounded read; cases include body/asset HTTP guard and restored-storage retry.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-object-integrity.md"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Baseline actual binary false200 reproduced; five old reuse tests fail. Final focused history race PASS11.264s; quick PASS82. New binary, full and delivery pending.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-object-integrity.md"
+      ]
+    },
+    "documentation": {
+      "status": "in_progress",
+      "summary": "Plugin contract and scoped review updated; final runtime/full/main receipts pending.",
+      "evidence": [
+        "docs/reviews/2026-10-15/history-object-integrity.md",
+        "docs/plugins/markdown-history.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Standing incremental fix/test/docs/main push and offline package authorization; no version/tag/formal Release.",
+  "rollback": "Revert scoped history validation change and restore prior runtime/offline candidate. No history object repair/deletion or migration. Preserve original five vendor deletions and verified external backup.",
+  "handoff": ""
+}
