@@ -96,6 +96,7 @@
   let data,files=[],executions=[],writeTargets=[],stale=false,hasLoadedMore=false,pollOwner=null,pageRequest=null,reloading=false,evidenceRequest=null;
   let journalEvents=[],journalNext=0,journalHasMore=false,journalWarning='',journalLoaded=false,journalLoading=false,journalError='';
    async function reloadRecords(){
+    if(!valid())return;
     const owner=++recordGeneration;pollOwner=null;pageRequest=null;evidenceRequest=null;reloading=true;syncPolling();
     try{const next=await api(base);if(!ownsRecords(owner))return;data=next;files=next.files||[];executions=next.executions||[];writeTargets=next.writeTargets||[];stale=false;hasLoadedMore=false;}
     catch(e){if(ownsRecords(owner))error?.(e.message);}
