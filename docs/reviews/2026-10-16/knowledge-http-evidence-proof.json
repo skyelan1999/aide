@@ -111,5 +111,12 @@
     "hostLaunchersMatch": true,
     "activeExternalWorkspaceOnly": true,
     "verificationStorage": "streamed hashes/metadata/load in active external workspace; no duplicate outputs recreated in original directory"
+  },
+  "full": {
+    "status": "pass",
+    "count": 87,
+    "fingerprint": "9acdc376f78653bedf6e77f5d5a2e6688cfef22d67e28fdc6a2f12875cf49e70",
+    "sourceCommit": "78f0c736b9cfc39bce94a0fd2a5aa0278362ba3a",
+    "serverRaceSeconds": 540.604
   }
 }

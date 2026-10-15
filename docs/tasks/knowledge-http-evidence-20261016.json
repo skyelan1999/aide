@@ -43,8 +43,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Knowledge race/vet、quick85、实际索引API、真实辅助函数源解析和IAB明暗/窄屏组件通过；待最终full87/运行发行。",
+      "status": "pass",
+      "summary": "Final clean-main full87 pass; source 78f0c736b9cfc39bce94a0fd2a5aa0278362ba3a, fingerprint 9acdc376f78653bedf6e77f5d5a2e6688cfef22d67e28fdc6a2f12875cf49e70. Static reference/runtime/offline scope in review.",
       "evidence": [
         "docs/reviews/2026-10-16/knowledge-http-evidence.md",
         "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
@@ -67,9 +67,12 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final full pass, independent gate and remote push next.",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-http-evidence.md",
+        "docs/reviews/2026-10-16/knowledge-http-evidence-proof.json"
+      ]
     }
   },
   "release_authorization": "沿用用户分批测试/push/合main、本机启动及离线镜像包交付授权；无升版/tag/正式Release。",
