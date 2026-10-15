@@ -785,7 +785,7 @@ function sessionRevision(s) {
   // card is not kept merely because the last answer text did not move.
   const runStates = runs.map(run => [
     run?.parallelism, JSON.stringify([run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])]), run?.id, run?.mode, run?.model, run?.status, run?.applied, run?.error,
-    run?.pauseRequested, run?.canResume, run?.approvalState, run?.autoReview,
+    run?.pauseRequested, run?.stopRequested, run?.canResume, run?.approvalState, run?.autoReview,
     sessionTextRevision(JSON.stringify(sessionPluginPlanView(run))),
     sessionTextRevision(JSON.stringify(run?.steps?.map(s => s.outputSegments) || [])),
     sessionTextRevision(JSON.stringify(run?.approvalReviews || [])),
@@ -824,7 +824,7 @@ function sessionRunRenderSignature(run, view = {}) {
     run.parallelism, [run?.parallel?.phase, run?.parallel?.reason, run?.parallel?.parts?.map(part => [part.title, part.status])],
     run.mode, run.model, run.prompt, run.status, run.created, run.error, run.applied,
     run.strategy, run.profile, run.autoReview, run.approvalState, run.approvalReviews,
-    run.pendingQuestion, run.canResume, run.pauseRequested, run.attachments, run.steers,
+    run.pendingQuestion, run.canResume, run.pauseRequested, run.stopRequested, run.attachments, run.steers,
     run.steps?.map(step => [step.name, step.status, step.content, step.reasoning, step.outputSegments]),
     run.files?.map(file => [file.path, file.before, file.content, file.applied]),
     run.commands, run.toolUses, view.language, view.ignoredProposal,
@@ -1021,7 +1021,7 @@ function openStream(run) {
     if (!d.ok) window.aideAvatarFeedback?.('error', {runId:run.id});
     const ph = state.runPhase[run.id];
     if (ph) {
-      const row = ph.tools.find(x => x.callId === d.callId) || ph.tools[ph.tools.length - 1];
+      const row = ph.tools.find(x => x.callId === d.callId) || (!d.callId ? ph.tools[ph.tools.length - 1] : null);
       if (row) { row.endedAt = Date.now(); row.ok = !!d.ok; row.status = d.ok ? 'done' : 'err'; }
       ph.phase = 'reasoning'; ph.toolName = '';
       touchRunActivity(run.id); renderRunStatus(run.id);
@@ -1033,6 +1033,7 @@ function openStream(run) {
     let d; try { d = JSON.parse(e.data); } catch (err) { return; }
     const ph = state.runPhase[run.id];
     if (ph) {
+      if (d.callId && ph.tools.some(tool => tool.callId === d.callId)) { refreshSessionSoon(); return; }
       ph.tools.push({ callId: d.callId || ('c'+Date.now()+Math.random()), tool: d.tool, args: d.args || '', startedAt: Date.now(), status: 'running' });
       ph.phase = 'tool'; ph.toolName = d.tool;
       touchRunActivity(run.id); renderRunStatus(run.id);
@@ -1065,7 +1066,7 @@ function openStream(run) {
     const ph = state.runPhase[run.id];
     if (!ph) return;
     ph.lastHeartbeat = Date.now();
-    const row = ph.tools.find(x => x.callId === d.callId) || ph.tools[ph.tools.length - 1];
+    const row = ph.tools.find(x => x.callId === d.callId) || (!d.callId ? ph.tools[ph.tools.length - 1] : null);
     if (row) row.lastHeartbeat = ph.lastHeartbeat;
     touchRunActivity(run.id);
     renderRunStatus(run.id);
@@ -1111,12 +1112,17 @@ function openStream(run) {
     if (state.stream !== es) return;
     let terminal = {}; try { terminal = JSON.parse(e.data || '{}'); } catch (_) {}
     avatarRunFeedback(run.id, terminal.status);
-    delete state.live[run.id]; delete state.liveStable[run.id]; delete state.liveRound[run.id]; delete state.liveTool[run.id]; delete state.liveReasoning[run.id];
-    delete state.runPhase[run.id]; // run 终态，释放 phase 残留（看门狗/锁屏均跳过 done 项）
+    if (state.runPhase[run.id]) state.runPhase[run.id].done = terminal.status !== 'awaiting_clarification';
     closeStream(); state.streamRetryAt = 0;
+    schedulePoll(); // Reconcile even when the immediate GET fails.
     action(async () => {
       const id = state.session?.id; if (!id) return;
       const s = await getSessionWindow(id); if (state.session?.id !== id) return;
+      const terminalRun = s.runs?.find(item => item.id === run.id);
+      if (terminalRun?.status === 'awaiting_clarification' && state.runPhase[run.id]) state.runPhase[run.id].done = false;
+      if (terminalRun && !['running','awaiting_clarification'].includes(terminalRun.status)) {
+        delete state.live[run.id]; delete state.liveStable[run.id]; delete state.liveRound[run.id]; delete state.liveTool[run.id]; delete state.liveReasoning[run.id]; delete state.runPhase[run.id];
+      }
       if (adoptSessionIfChanged(s)) renderSession();
       reconcileAvatarRun(run.id);
       // 小秘语音发起的 run 完成且开启语音回复 → 朗读最后一条 assistant 回复
@@ -1235,6 +1241,8 @@ function renderLiveAnswer(runId) {
   if (!ans) return;
   // 运行中的 chat 步骤以 live 文本为准（step.content 可能还是“工具调用中”或尚未提交）
   const run = state.session?.runs?.find(r => r.id === runId);
+  if (run?.status && !['running','awaiting_clarification'].includes(run.status)) return;
+  if (state.runPhase?.[runId]?.done) return;
   const step = run?.steps?.[run.steps.length - 1];
   const live = state.live[runId] || '';
   const full = window.AideStagedOutput.pending(step, live || (step?.content || ''));
@@ -1312,6 +1320,12 @@ $('jump-bottom')?.addEventListener('click', () => {
 // 会话快照未变化时跳过整页重渲染（流式期间 step.content/usage 未变，轮询只做轻量校验）
 function adoptSessionIfChanged(s) {
   window.AideStagedOutput?.merge(state.session, s);
+  for (const run of s.runs || []) {
+    if (['running','awaiting_clarification'].includes(run.status)) continue;
+    for (const field of ['live','liveStable','liveRound','liveTool','liveReasoning','runPhase']) {
+      if (state[field]) delete state[field][run.id];
+    }
+  }
   const next = sessionRevision(s);
   if (next === state.sessionJSON) return false;
   state.sessionJSON = next;
@@ -1374,12 +1388,12 @@ async function stopRunById(runId) {
   const visible=()=>!lockScreen.locked&&!state.pendingSessionId&&state.session?.id===sessionId&&recoveryScope()===scope&&sessionSeq.value===sequence;
   const run=state.session?.runs?.find(item=>item.id===runId),key=JSON.stringify([scope,sessionId,runId]);
   if(!sessionId||!visible()||!run||!['running','awaiting_clarification'].includes(run.status)||stopRequests.has(key))return;
-  stopRequests.add(key);
+  stopRequests.add(key); setSendMode(state.busy);
   try {
     await api('/sessions/'+encodeURIComponent(sessionId)+'/runs/'+encodeURIComponent(runId)+'/cancel',{method:'POST',body:'{}'});
-    if(visible()){toast(t('已请求停止'));refreshSessionSoon();schedulePoll();}
+    if(visible()){run.stopRequested=true;toast(t('已请求停止'));refreshSessionSoon();schedulePoll();}
   } catch(e) {if(visible())toast(e.message||String(e));}
-  finally{stopRequests.delete(key);}
+  finally{stopRequests.delete(key);if(visible())setSendMode(state.busy);}
 }
 
 // ── 全局提醒中心：手动提醒 CRUD、优先级列表、到期弹窗；小秘提醒由服务端持久写入小秘会话 ──
@@ -1537,7 +1551,7 @@ function syncPauseControl() {
   const pending = !!run && (run.pauseRequested || state.pauseRequests?.has(recoveryScope() + ':' + state.session.id + ':' + run.id));
   button.hidden = !run;
   button.classList.toggle('hidden', !run);
-  button.disabled = !run || pending || !run.canResume;
+  button.disabled = !run || pending || !!run.stopRequested || !run.canResume;
   const label = pending ? t('正在暂停任务…') : run && !run.canResume ? t('正在准备任务检查点…') : t('暂停当前任务');
   button.title = label;
   button.setAttribute('aria-label', label);
@@ -1547,7 +1561,7 @@ function pauseRunById(runId, sessionId = state.session?.id) {
   const session = state.session, scope = recoveryScope();
   if (!sessionId || session?.id !== sessionId || state.pendingSessionId) return Promise.resolve();
   const run = session.runs?.find(item => item.id === runId);
-  if (!run || run.status !== 'running' || run.pauseRequested || !run.canResume) return Promise.resolve();
+  if (!run || run.status !== 'running' || run.pauseRequested || run.stopRequested || !run.canResume) return Promise.resolve();
   const key = scope + ':' + sessionId + ':' + runId;
   state.pauseRequests ||= new Set();
   if (state.pauseRequests.has(key)) return Promise.resolve();
@@ -1697,7 +1711,7 @@ function runReasoningText(runId) {
 function renderStepThinking(box, run, step, index) {
   // The active status panel owns this step's thinking, including poll-only
   // recovery. Older steps and terminal runs keep their persisted evidence.
-  if (!step.reasoning || (run.status==='running' && state.runPhase[run.id] && index===run.steps.length-1)) return;
+  if (!step.reasoning || (['running','awaiting_clarification'].includes(run.status) && state.runPhase[run.id] && index===run.steps.length-1)) return;
   const rd=el('details','rsp-thinking rsp-thinking-done'),thinkingKey=run.id+':'+index;
   rd.open=state.thinkingOpen.has(run.id)||state.thinkingOpen.has(thinkingKey);
   const summary=el('summary','rsp-think-summary'),body=el('div','rsp-think-body');
@@ -2088,7 +2102,7 @@ function renderSession() {
   }
   for (const run of state.session?.runs || []) {
     if (run.status === 'resumed') continue;
-    if (run.status === 'running') state.busy = true;
+    if (['running','awaiting_clarification'].includes(run.status)) state.busy = true;
     const renderSignature = sessionRunRenderSignature(run, {
       language: window.aideI18n?.language() || '',
       ignoredProposal: ignoredProposals.has(run.id),
@@ -2097,14 +2111,14 @@ function renderSession() {
     const box = el('article', 'run'); box.dataset.run = run.id; box.append(el('div', 'user-message', run.prompt));
     box.dataset.renderSignature = renderSignature;
     const meta = el('div', 'run-meta'); meta.append(el('span', '', run.mode === 'workflow' ? t(run.steps?.some(step => step.name === 'agent') ? "◈ AIDE WORKFLOW · 自主执行" : "◈ AIDE WORKFLOW · 规划 → 方案 → 审查") : '◌ AIDE ASSISTANT'), el('span', 'run-model', run.model || ''), el('span', 'run-status', t(statuses[run.status] || run.status))); if (run.strategy) meta.append(el('span', 'run-strategy', run.strategy === 'auto' ? t("策略: 自动 → {0}", profileName(run.profile)) : t("策略: 手动 · {0}", profileName(run.profile))));
-    if ((run.status === 'paused' || run.status === 'interrupted') && run.canResume) {
+    if ((run.status === 'paused' || run.status === 'interrupted') && run.canResume && run !== state.session.runs.at(-1)) {
       const resume = el('button', 'quiet', t('恢复任务')); resume.type = 'button'; resume.onclick = () => resumeRunById(run.id); meta.append(resume);
     } else if (run.status === 'running' && run.pauseRequested) {
       meta.append(el('span', 'run-status', t('正在暂停任务…')));
     }
     box.append(meta);
     renderApprovalReviews(run, box);
-    if (run.status === 'running' && state.runPhase[run.id]) renderRunStatusInto(box, run.id);
+    if (['running','awaiting_clarification'].includes(run.status) && state.runPhase[run.id]) renderRunStatusInto(box, run.id);
     if (run.attachments?.length) box.append(el('p', 'muted', t("已附加：") + run.attachments.map(a => a.root + '/' + a.path).join('、')));
     renderClarification(run, box);
     const parallelPanel = window.AideParallelChat?.render(run, {el, t, open: openDetails, initial: !previousRuns.get(run.id)?.node.querySelector('.parallel-progress')});
@@ -2120,14 +2134,14 @@ function renderSession() {
       },saved:() => { if (active()) refreshSessionSoon(); }});
     }});
     if (pluginPlans) box.append(pluginPlans);
-    if (!run.steps.length) box.append(el('p', 'muted', t("正在准备模型请求…")));
+    if (!run.steps.length && run.status === 'running') box.append(el('p', 'muted', t("正在准备模型请求…")));
     run.steps.forEach((step, index) => {
       if (run.mode === 'chat') {
         renderStepThinking(box, run, step, index);
         const stages = window.AideStagedOutput.render(step, {el, t, renderMarkdown});
         if (stages) box.append(stages);
         const ans = el('div', 'chat-answer md-body');
-        const running = run.status === 'running';
+        const running = ['running','awaiting_clarification'].includes(run.status);
         const liveText = state.live[run.id] || '';
         // 运行中优先显示实时增量（step.content 尚未提交，可能还是“工具调用中”），
         // 结束后只用持久化内容，避免 live 与 content 重复拼接
@@ -2139,11 +2153,15 @@ function renderSession() {
           // growing answer. The RAF renderer restores cached stable blocks.
           ans.append(el('div', 'live-stable'), el('div', 'live-active'));
         } else if (tail) {
-          ans.innerHTML = renderMarkdown(tail) + (running ? '<span class="stream-cursor" aria-hidden="true">▍</span>' : '');
+          ans.innerHTML = renderMarkdown(tail) + (run.status === 'running' ? '<span class="stream-cursor" aria-hidden="true">▍</span>' : '');
+        } else if (run.status === 'awaiting_clarification') {
+          ans.hidden = true;
         } else if (running) {
           // DSH/Codex 风格：首 token 前显示呼吸的思考点
           ans.textContent = t("正在思考");
           for (let _di = 1; _di <= 3; _di++) { const _dot = el('span', 'thinking-dot', '.'); _dot.setAttribute('aria-hidden', 'true'); ans.append(_dot); }
+        } else if (['cancelled','paused','interrupted'].includes(run.status)) {
+          ans.hidden = true; // Intentional interruptions are described once below the answer.
         } else if (run.error) {
           // 真·失败：显示具体原因（上游错误/超时/取消），不再是光秃秃的“未返回回答”
           ans.classList.add('chat-answer-error');
@@ -2173,7 +2191,7 @@ function renderSession() {
             actions.append(rb);
           }
           actions.append(mk(t("重试"), () => retryRunById(run.id)));
-          actions.append(mk(t("继续"), () => { $('prompt').value = t("继续"); $('task-form').requestSubmit(); }));
+          if (!(run.canResume && ['paused','interrupted'].includes(run.status))) actions.append(mk(t("继续"), () => { $('prompt').value = t("继续"); $('task-form').requestSubmit(); }));
           if (text) {
             actions.append(mk(t("好"), () => {
               api('/feedback', { method: 'POST', body: JSON.stringify({ runId: run.id, prompt: run.prompt, answer: text, rating: 'good' }) })
@@ -2249,14 +2267,18 @@ function renderSession() {
     if (run.toolUses?.length) {
       box.append(buildToolUses(run));
     }
-    if (run.error) box.append(el('p', 'task-error', run.error));
+    if (['cancelled','paused','interrupted'].includes(run.status)) {
+      const message = run.status === 'paused' ? t('已暂停，检查点和已输出内容已保留。') : run.status === 'cancelled' ? t('本轮已停止，已输出内容已保留。可发送新消息继续。') : t('运行已中断，已输出内容已保留。');
+      box.append(el('p', 'run-interruption', message));
+    }
+    if (run.error && run.status !== 'cancelled') box.append(el('p', 'task-error', run.error));
     renderSteerMessages(run, box);
     $('timeline').append(box);
   }
   for (const run of state.session?.runs || []) {
     if (run.status === 'running' && state.live[run.id]) scheduleLiveRender(run.id);
   }
-  // 运行中：发送键保持停止能力，旁边显示独立暂停键；插话/排队仍可用 Enter 或「排队」+Enter 提交。
+  // Keep one stop action visible; a draft restores the send action without ending the run.
   setSendMode(state.busy);
   const c = $('conversation');
   const expandedHistoryDelta = Math.max(0, c.scrollHeight - previousHeight);
@@ -3459,7 +3481,7 @@ $('task-form').onsubmit = action(async event => {
     throw err;
   } finally { if (stopContextCompactionWatch) await stopContextCompactionWatch(); state.submitting = false; updateSendEnabled(); setSendMode(state.busy); }
 });
-  $('queue-toggle')?.addEventListener('click', () => { state.queueMode = !state.queueMode; $('queue-toggle').classList.toggle('active', state.queueMode); });
+  $('queue-toggle')?.addEventListener('click', () => { state.queueMode = !state.queueMode; $('queue-toggle').classList.toggle('active', state.queueMode); setSendMode(state.busy); });
   $('prompt').addEventListener('keydown', event => {
     if (shouldSendPromptOnKeydown(event)) { event.preventDefault(); $('task-form').requestSubmit(); }
   });
@@ -3483,6 +3505,7 @@ function cancelContextPreview() {
 function updateSendEnabled() {
   $('send').disabled = !!state.previewOverLimit || !!state.submitting || !!state.approvalModeBusy;
   syncComposerApproval();
+  setSendMode(state.busy);
   $('send').classList.toggle('submitting', !!state.submitting);
   $('send').setAttribute('aria-busy', String(!!state.submitting));
   if (state.submitting) {
@@ -3662,37 +3685,64 @@ $('cp-toggle').onclick = () => {
   $('cp-toggle').textContent = open ? t("组成明细 ▾") : t("组成明细 ▴");
   $('cp-toggle').setAttribute('aria-expanded', String(!open));
 };
-// 发送按钮双态：空闲 = 发送（↑），运行中 = 停止（■，点击取消任务；插话/排队用 Enter 提交）
+// The composer always owns run controls. Drafts can be sent while work continues.
+function composerControlRun() {
+  if (state.pendingSessionId || state.session?.kind === 'assistant') return null;
+  return [...(state.session?.runs || [])].reverse().find(run => ['running','awaiting_clarification'].includes(run.status)) || null;
+}
+function composerHasDraft() { return !!$('prompt')?.value.trim() || !!state.attachments?.length; }
 function setSendMode(running) {
   const btn = $('send');
   if (!btn) return;
   syncPauseControl();
-  if (running) {
-    btn.textContent = '■';
-    btn.classList.add('stop-mode');
-    btn.title = t("停止当前任务");
-    btn.setAttribute('aria-label', t("停止当前任务"));
-  } else {
-    btn.textContent = '↑';
-    btn.classList.remove('stop-mode');
-    btn.title = t("发送");
-    btn.setAttribute('aria-label', t("发送任务"));
+  const run = composerControlRun();
+  const draft = composerHasDraft();
+  const stopping = !!run && (run.stopRequested || stopRequests.has(JSON.stringify([recoveryScope(),state.session.id,run.id])));
+  const pausing = !!run && (run.pauseRequested || state.pauseRequests?.has(recoveryScope()+':'+state.session.id+':'+run.id));
+  const finishing = stopping || pausing;
+  const stopMode = !!run && !draft;
+  btn.textContent = stopMode ? '■' : '↑';
+  btn.classList.toggle('stop-mode', stopMode);
+  btn.dataset.action = stopMode ? 'stop' : 'send';
+  const label = stopMode ? (stopping ? t('正在停止本轮…') : t('停止本轮')) : run ? t(run.status === 'awaiting_clarification' ? '发送回答' : state.queueMode ? '排队发送' : '发送插话') : t('发送任务');
+  btn.title = label; btn.setAttribute('aria-label', label);
+  // Context budget and submission only restrict sending; stopping remains available.
+  btn.disabled = stopMode ? stopping : !!state.previewOverLimit || !!state.submitting || !!state.approvalModeBusy || finishing;
+  const controls = $('run-controls');
+  if (controls) {
+    const last = state.session?.runs?.at(-1);
+    const resumable = !run && !state.pendingSessionId && ['paused','interrupted'].includes(last?.status) && last.canResume;
+    controls.hidden = !run && !resumable;
+    $('run-control-status').textContent = stopping ? t('正在停止本轮…') : pausing ? t('正在暂停任务…') : resumable ? t('已暂停，可从检查点继续') : run?.status === 'awaiting_clarification' ? t('等待你的回答或审批') : t('正在运行 · 可随时插话');
+    const stop = $('stop-active-run'); stop.hidden = !run || !draft; stop.disabled = stopping;
+    const resume = $('resume-active-run'); resume.hidden = !resumable;
+    $('run-control-more').hidden = !run || finishing || run.status === 'awaiting_clarification';
+  }
+  const queue = $('queue-toggle');
+  if (queue) {
+    queue.textContent = t(state.queueMode ? '排队' : '插话');
+    queue.title = t(state.queueMode ? '排队：当前回答完成后处理' : '插话：调整当前任务');
+    queue.setAttribute('aria-pressed', String(state.queueMode));
+    queue.disabled = run?.status === 'awaiting_clarification' || finishing;
   }
 }
 $('send').addEventListener('click', event => {
-  if (!state.busy) return; // 空闲：走默认 submit
+  if ($('send').dataset.action !== 'stop') return;
   event.preventDefault();
-  action(async () => {
-    const run = state.session?.runs.find(r => r.status === 'running');
-    if (run) {
-      await stopRunById(run.id);
-    }
-  })();
+  const run = composerControlRun(); if (run) action(() => stopRunById(run.id))();
 });
+$('stop-active-run')?.addEventListener('click', action(() => {
+  const run = composerControlRun(); if (run) return stopRunById(run.id);
+}));
 $('pause-current-run')?.addEventListener('click', action(() => {
   const run = currentPauseRun(), sessionId = state.session?.id;
-  if (run) return pauseRunById(run.id, sessionId);
+  if (run) { $('run-control-more').open = false; return pauseRunById(run.id, sessionId); }
 }));
+$('resume-active-run')?.addEventListener('click', action(() => {
+  const run = state.session?.runs?.at(-1);
+  if (run && ['paused','interrupted'].includes(run.status) && run.canResume) return resumeRunById(run.id);
+}));
+$('prompt').addEventListener('input', () => setSendMode(state.busy));
 const MODEL_PROVIDER_PRESETS = [
   { id: 'deepseek', name: 'DeepSeek', baseURL: 'https://api.deepseek.com' },
   { id: 'openai', name: 'OpenAI', baseURL: 'https://api.openai.com/v1' },

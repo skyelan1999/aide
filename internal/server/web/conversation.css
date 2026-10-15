@@ -77,3 +77,18 @@
 #timeline .chat-answer[hidden]{display:none}
 .stage-outputs{display:grid;gap:12px;margin:12px 0}
 .stage-label{font-size:11px;color:var(--muted);margin:0 0 5px}
+
+/* One compact, session-owned run strip. Checkpoint pause is a secondary action. */
+.composer-run-controls{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;min-width:0;margin:0 0 8px;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--muted);font-size:12px;line-height:1.6}
+.composer-run-controls[hidden],.composer-run-controls [hidden]{display:none!important}
+#run-control-status{min-width:0;overflow-wrap:anywhere}
+.composer-run-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.composer-run-actions>.quiet{min-height:30px;font:inherit;white-space:nowrap}
+#run-control-more{position:relative}
+#run-control-more>summary{cursor:pointer;padding:5px 8px;white-space:nowrap;border-radius:6px}
+#run-control-more>summary:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.run-control-popover{position:absolute;z-index:30;right:0;bottom:calc(100% + 8px);width:250px;max-width:calc(100vw - 40px);box-sizing:border-box;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--panel);box-shadow:0 8px 28px #0003}
+.run-control-popover>.quiet{width:100%;text-align:left;min-height:34px;font:inherit}
+.run-control-popover>p{margin:8px 0 0;line-height:1.7;font-size:11px;color:var(--muted)}
+#timeline .run-interruption{margin:10px 0;color:var(--muted);font-size:12px;line-height:1.7}
+@media(max-width:600px){.composer-run-controls{align-items:flex-start;gap:6px;padding:8px}.composer-run-actions{gap:4px}.composer-run-actions>.quiet{padding:4px 7px}}

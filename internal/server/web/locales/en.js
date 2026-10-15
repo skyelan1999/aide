@@ -1,6 +1,24 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "发送回答": "Send answer",
+  "排队：当前回答完成后处理": "Queue: handle after the current answer",
+  "插话：调整当前任务": "Steer: guide the current task",
+  "停止本轮": "Stop this turn",
+  "正在停止本轮…": "Stopping this turn\u2026",
+  "继续任务": "Continue task",
+  "更多操作": "More actions",
+  "保存检查点并暂停": "Save checkpoint and pause",
+  "暂停保留检查点；停止结束本轮。已完成的操作不会撤销。": "Pause keeps a checkpoint; stop ends this turn. Completed actions are not undone.",
+  "排队发送": "Queue message",
+  "发送插话": "Send guidance",
+  "已暂停，可从检查点继续": "Paused \u00b7 continue from checkpoint",
+  "等待你的回答或审批": "Waiting for your answer or approval",
+  "正在运行 · 可随时插话": "Working \u00b7 send guidance anytime",
+  "已暂停，检查点和已输出内容已保留。": "Paused. Checkpoint and output are saved.",
+  "本轮已停止，已输出内容已保留。可发送新消息继续。": "Turn stopped. Output is saved. Send a new message to continue.",
+  "运行已中断，已输出内容已保留。": "Run interrupted. Output is saved.",
+
   "无效语音发送模式": "Invalid voice dispatch mode",
   "无效语音插队敏感度": "Invalid voice interruption sensitivity",
   "文件列表暂不可用：{0}": "File list temporarily unavailable: {0}",

@@ -34,7 +34,8 @@ async function checkTerminal(status, includeStatusEvent = true) {
   assert.equal(feedback.length,1,'terminal feedback deduplicated across status/done/GET');
   assert.equal(feedback[0][0],status,'exact run status is authoritative');
   assert.equal(feedback[0][1].runId,'current');
-  assert.equal(state.runPhase.current,undefined);
+  if (status === 'awaiting_clarification') assert.equal(state.runPhase.current.done,false,'waiting remains an active turn');
+  else assert.equal(state.runPhase.current,undefined);
   assert.equal(cues.length,1,'GET restores a missed cue and deduplicates SSE');
   context.reconcileAvatarRun(run.id);
   assert.equal(cues.length,1,'fast-run reconciliation does not replay a cue');

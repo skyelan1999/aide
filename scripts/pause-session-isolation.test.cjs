@@ -25,6 +25,6 @@ vm.createContext(ctx);vm.runInContext(extract('function currentPauseRun(', 'asyn
  state.session={id:'done',runs:[{id:'done',status:'paused',canResume:true}]};ctx.syncPauseControl();assert.equal(button.hidden,true);
  const render=extract('function renderSession()', 'function renderAttachments(');
  assert(!render.includes("t('暂停任务')"),'reply metadata must not contain pause action');
- const html=fs.readFileSync('internal/server/web/index.html','utf8');assert.match(html, /class="input-actions">[\s\S]*?id="pause-current-run"/);
+ const html=fs.readFileSync('internal/server/web/index.html','utf8');assert.match(html, /id="run-control-more"[\s\S]*?id="pause-current-run"/);
  console.log('PASS pause controls: target isolation, navigation/workspace race, duplicate clicks, failure retry and checkpoint states');
 })().catch(e=>{console.error(e);process.exitCode=1;});

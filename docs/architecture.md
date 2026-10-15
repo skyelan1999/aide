@@ -440,3 +440,7 @@ Mermaid 由 `markdown-diagrams.js` 统一维护明暗配色与串行渲染队列
 上下文窗口按请求独立计算；规划/各分析共享同一输入快照的副本，分析结果只在主请求统一汇总时加入。累计usage会相加，包含标题等辅助请求，不能作为窗口占用。卡片展示下次基线估算/输出预留，并列标题、规划、子分析单路范围与最近主汇总的独立窗口/输入数据；旧任务未知不反推。
 
 Task.topicContext和ParallelProgress.plannerContext/mainContext及各part.context保存inputEstimate/outputReserve/contextWindow/usage。ContextAnchor.scope=parallel_merge标记临时笔记，后续基线不复用其差额校准；旧并行任务保守识别，普通和fallback仍校准。主汇总多轮时只保留最近一次上下文，不把该字段当所有轮次账本。详情见[并行上下文验收](reviews/2026-10-15/parallel-context-accounting.md)。
+
+### 会话运行控制与流式交接（2026-10-15）
+
+输入区统一管理运行控制：无草稿时箭头切为停止，有草稿时箭头发送插话/排队，停止移至运行条；暂停收在更多操作，已暂停的最新任务在运行条继续。等待澄清仍是活动执行，不能显示重试等终态动作，SSE 重连不能关为已完成。停止意图 `Task.stopRequested` 先持久化，取消在全局锁外执行，停止优先于暂停，重启不复活已停止任务。`done` 后先保留增量，持久化快照接管再释放临时状态，避免正文闪空；工具 intent 依 callId 去重。设计与兼容边界见[会话运行控制](prd/2026-10-15-session-run-interaction.md)。

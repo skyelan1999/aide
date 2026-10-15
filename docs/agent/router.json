@@ -408,6 +408,10 @@
       ],
       [
         "node",
+        "scripts/session-run-controls.test.cjs"
+      ],
+      [
+        "node",
         "scripts/recovery-transfer.test.cjs"
       ],
       [

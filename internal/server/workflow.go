@@ -135,6 +135,7 @@ type Task struct {
 	CheckpointStep           string              `json:"checkpointStep,omitempty"`      // 当前未完成阶段；空表示阶段间检查点
 	CanResume                bool                `json:"canResume,omitempty"`
 	PauseRequested           bool                `json:"pauseRequested,omitempty"`
+	StopRequested            bool                `json:"stopRequested,omitempty"`
 	ResumedFrom              string              `json:"resumedFrom,omitempty"`
 	// #45 子 agent 归属：spawn_subagent 派生的子任务在创建时打上父子会话身份，
 	// 供 toolLoop 记录 ToolUse.Who 及子会话编号/标题。主任务这些字段为空。
@@ -251,6 +252,10 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	// 澄清门禁：run 正在等待用户回答时，本次输入直接作为应答，不开新 run
 	for _, existing := range s.Runs {
 		if existing.Status == "awaiting_clarification" && existing.AnswerCh != nil {
+			if existing.StopRequested {
+				fail(w, 409, errors.New("当前任务正在停止，请稍后发送"))
+				return
+			}
 			s.Messages = append(s.Messages, Message{Role: "user", Content: in.Prompt})
 			s.Updated = time.Now().UTC().Format(time.RFC3339Nano)
 			select {
@@ -273,6 +278,10 @@ func (a *App) startTask(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, existing := range s.Runs {
 		if existing.Status == "running" && existing.Steer != nil {
+			if existing.StopRequested || existing.PauseRequested {
+				fail(w, 409, errors.New("当前任务正在结束，请稍后发送"))
+				return
+			}
 			// 先探插话通道容量：满则直接拒绝，不得留下“已记录但未投递”的脏消息
 			if !in.Queued {
 				select {
@@ -630,9 +639,13 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 		}
 	}
 	a.mu.Lock()
+	// A stop accepted before finalization must not turn into a late success.
+	if task.StopRequested {
+		err = context.Canceled
+	}
 	if err != nil {
 		task.Error = err.Error()
-		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
+		if !task.StopRequested && errors.Is(ctx.Err(), context.DeadlineExceeded) {
 			task.Status = "failed"
 			task.CanResume = false
 			phase := "当前阶段"
@@ -646,7 +659,7 @@ func (a *App) execute(ctx context.Context, s *Session, task *Task, cfg Settings,
 			} else {
 				task.Error = fmt.Sprintf("本段实际执行已达 %s，阶段：%s；无检查点，可重试", runTimeout, phase)
 			}
-		} else if errors.Is(ctx.Err(), context.Canceled) {
+		} else if task.StopRequested || errors.Is(ctx.Err(), context.Canceled) {
 			if task.PauseRequested && len(task.CheckpointMessages) > 0 {
 				task.Status = "paused"
 				task.Error = ""
@@ -911,20 +924,38 @@ func (a *App) retryTask(w http.ResponseWriter, r *http.Request) {
 }
 func (a *App) cancelTask(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
-	defer a.mu.Unlock()
 	s := a.sessions[r.PathValue("id")]
 	if s != nil {
-		for _, t := range s.Runs {
-			if t.ID == r.PathValue("run") {
-				t.PauseRequested = false
-				if cancel := a.cancels[t.ID]; cancel != nil {
-					cancel()
-				}
+		for _, task := range s.Runs {
+			if task.ID != r.PathValue("run") {
+				continue
+			}
+			// A terminal result wins a late click. Repeated requests are harmless.
+			if task.StopRequested || (task.Status != "running" && task.Status != "awaiting_clarification") {
+				a.mu.Unlock()
 				jsonOut(w, 200, map[string]bool{"ok": true})
 				return
 			}
+			wasPausing := task.PauseRequested
+			task.StopRequested, task.PauseRequested = true, false
+			if err := a.save(s); err != nil {
+				task.StopRequested, task.PauseRequested = false, wasPausing
+				a.mu.Unlock()
+				fail(w, 500, err)
+				return
+			}
+			cancel, sessionID := a.cancels[task.ID], s.ID
+			a.mu.Unlock()
+			// Child cancellation may synchronously wait; never hold the global lock.
+			if cancel != nil {
+				cancel()
+			}
+			a.broadcastSessionsChanged(sessionID)
+			jsonOut(w, 200, map[string]bool{"ok": true})
+			return
 		}
 	}
+	a.mu.Unlock()
 	fail(w, 404, errors.New("任务不存在"))
 }
 
@@ -940,9 +971,9 @@ func (a *App) pauseTask(w http.ResponseWriter, r *http.Request) {
 		if task.ID != r.PathValue("run") {
 			continue
 		}
-		if task.Status != "running" {
+		if task.Status != "running" || task.StopRequested {
 			a.mu.Unlock()
-			fail(w, 409, errors.New("只有运行中的任务可以暂停"))
+			fail(w, 409, errors.New("只有运行中且未请求停止的任务可以暂停"))
 			return
 		}
 		if task.PauseRequested {
@@ -1095,6 +1126,7 @@ func (a *App) resumeTask(w http.ResponseWriter, r *http.Request) {
 	resumed.Profile = profileID
 	resumed.ResumedFrom = orig.ID
 	resumed.PauseRequested = false
+	resumed.StopRequested = false
 	resumed.CanResume = true
 	resumed.Steer = make(chan string, 4)
 	resumed.AnswerCh = nil
@@ -1147,6 +1179,10 @@ func (a *App) answerTask(w http.ResponseWriter, r *http.Request) {
 	}
 	for _, t := range s.Runs {
 		if t.ID == r.PathValue("run") && t.Status == "awaiting_clarification" && t.AnswerCh != nil {
+			if t.StopRequested {
+				fail(w, 409, errors.New("当前任务正在停止，不能继续应答"))
+				return
+			}
 			var currentQuestion struct {
 				ID string `json:"questionId"`
 			}
@@ -5365,10 +5401,12 @@ func (a *App) runEvents(w http.ResponseWriter, r *http.Request) {
 	a.mu.Lock()
 	status, errMsg, cue := task.Status, task.Error, task.AvatarCue
 	a.mu.Unlock()
+	// Establish the SSE response after subscription even while waiting for input.
+	flusher.Flush()
 	if cue != nil {
 		writeEvent(streamEvent{Event: "avatar", AvatarCue: cue})
 	}
-	if status != "running" {
+	if status != "running" && status != "awaiting_clarification" {
 		writeEvent(streamEvent{Event: "status", Status: status, Error: errMsg})
 		writeEvent(streamEvent{Event: "done", Status: status})
 		return

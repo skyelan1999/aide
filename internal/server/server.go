@@ -1071,6 +1071,14 @@ func New(work, reference, data string) (*App, error) {
 				task.PendingQuestion = nil
 				task.ApprovalState = ""
 				task.PauseRequested = false
+				if task.StopRequested {
+					task.Status = "cancelled"
+					task.CanResume = false
+					task.CheckpointMessages = nil
+					task.CheckpointStep = ""
+					task.Error = "任务已停止"
+					continue
+				}
 				if len(task.CheckpointMessages) > 0 {
 					task.CanResume = true
 				}

@@ -1,0 +1,69 @@
+{
+  "id": "session-run-interaction-20261015",
+  "request": "会话运行时一个暂停一个停止，希望仿照Codex运行逻辑设计会话及流式输出渲染",
+  "baseline": "dd20e6a35e06cf0c2ac54384a75c93b41574234c",
+  "initial_status": "",
+  "acceptance": [
+    "输入区每次仅显示一个停止入口，有草稿时可点击发送插话或排队；暂停收纳并可从检查点继续。",
+    "暂停、停止请求与恢复限定会话和工作区；取消在全局锁外执行，停止意图持久且不被暂停覆盖。",
+    "终态快照确认前保留流式正文；状态卡片、工具意图重复事件不重复；正常停止不显示失败警告。",
+    "实际浏览器验证桌面/窄屏及明暗主题，记录组件与完整实例边界；相关回归和完整门禁有证据。"
+  ],
+  "scope": [
+    "internal/server/workflow.go,server.go及运行控制相关测试",
+    "internal/server/web/app.js,index.html,conversation.css,locales/en.js",
+    "scripts运行控制回归和离线浏览器夹具",
+    "docs任务、设计、验收、交接和docker-images发行元数据"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户原话见request；将暂停收纳、单一停止入口和草稿可发送作为实现设计，非声称Codex存在暂停功能。",
+      "evidence": [
+        "https://learn.chatgpt.com/docs/prompting",
+        "https://learn.chatgpt.com/docs/ide/settings"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Composer owns one stop and checkpoint pause in more menu; preserve partial text until persisted terminal snapshot; durable stop wins pause and late provider completion.",
+      "evidence": [
+        "docs/prd/2026-10-15-session-run-interaction.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Control strip, draft-aware send, active clarification SSE, durable stop outside global lock, repeated intent identity and snapshot handoff implemented.",
+      "evidence": [
+        "internal/server/workflow.go",
+        "internal/server/web/app.js",
+        "scripts/session-run-controls.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Quick83 pass; first SSE reconnect fixture blocked before header flush, now server flushes after subscription; final race pending. UI component observed, full Safari human-deferred.",
+      "evidence": [
+        "docs/reviews/2026-10-15/session-run-interaction.md"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "沿用用户“还是一样，做一部分，push一部分，测一部分”“做完这个把所有内容和到main上”；不创建新版本/tag/GitHub Release。",
+  "rollback": "保留234beda3a50b镜像和离线包；回退本任务提交，保持原数据挂载。",
+  "handoff": ""
+}
