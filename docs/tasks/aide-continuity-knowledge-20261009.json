@@ -324,6 +324,9 @@
       ],
       "evidence_20261015_http_mcp": [
         "docs/reviews/2026-10-15/http-mcp-index-live.md"
+      ],
+      "evidence_20261015_smb": [
+        "docs/reviews/2026-10-15/smb-index-live.md"
       ]
     },
     {
@@ -342,7 +345,7 @@
           "shared_catalogue_checkpoint",
           "progressive_over1000_browser"
         ],
-        "remaining": "Actual FTP/FTPS scope/priority/bounded publication/reload/cancellation previously verified; HTTP single resource and MCP virtual capability index/original retrieval and newPID/old-origin guard now verified in isolated binary. Remaining large remote catalogues, server variants, real SMB service, physical faults and full authenticated workbench. MCP actual tools/model use separate; no remote-document indexing claim."
+        "remaining": "Actual FTP/FTPS selected-scope priority/bounded publication/reload/cancellation, HTTP single resource/MCP descriptions and actual Samba SMB1 single resource original/credential recovery/newPID/identity guards verified in isolated fixtures. Remaining large remote catalogues, server/protocol variants/user hosts, physical faults and full authenticated workbench. Single-resource probes do not prove directory scans; actual MCP tools/model use separate."
       },
       "evidence_20261013": [
         "Fresh-process SSH progressive scan resumed coverage 10→20 files in latest integration run; large-library performance and remote provider acceptance remain pending."
@@ -362,6 +365,9 @@
       ],
       "evidence_20261015_http_mcp": [
         "docs/reviews/2026-10-15/http-mcp-index-live.md"
+      ],
+      "evidence_20261015_smb": [
+        "docs/reviews/2026-10-15/smb-index-live.md"
       ]
     },
     {
@@ -386,6 +392,9 @@
       ],
       "evidence_20261015_http_mcp": [
         "docs/reviews/2026-10-15/http-mcp-index-live.md"
+      ],
+      "evidence_20261015_smb": [
+        "docs/reviews/2026-10-15/smb-index-live.md"
       ]
     },
     {
@@ -7389,5 +7398,16 @@
       "docs/reviews/2026-10-15/http-mcp-index-live.md"
     ],
     "deliveredMain": "0b69dccfad7c458adee65c4a8dd1ca1d63b1e356"
+  },
+  "followup161": {
+    "task": "docs/tasks/smb-index-live-20261015.json",
+    "classification": "progress",
+    "previousGoalTurn": "HTTP/MCP actual binary original/identity/read-only/restart evidence delivered to clean main.",
+    "status": "in_progress",
+    "summary": "Actual Samba SMB1 single-resource original/hash/identity and read-only403, wrong credential failure/409, restoration and newPID/old-origin409 PASS. Final same-input gate/main push pending.",
+    "original12RemainOpen": true,
+    "evidence": [
+      "docs/reviews/2026-10-15/smb-index-live.md"
+    ]
   }
 }

@@ -1,0 +1,34 @@
+{
+  "status": "pass",
+  "image": "sha256:b11bb97fed59692804b1177fe3b11dacf1a2f458df7c6f5d4cc1150792ba2d3b",
+  "fixtureImage": "sha256:b104bdae1dfdbe1f69c7bbefbcc9f1d8567944a29b9fb3e28fa70926960372a6",
+  "scope": "actual Samba SMB1 fixture and current binary HTTPS API, internal network/unpublished ports/no user mounts; not user host or SMB2/3/encryption/browser",
+  "singleResourceFiles": 1,
+  "originalHash": "a4a4a7b0fc2e67f1e187b1a3e2be9afe7c223249fac35c84e46c9634ebfd07c5",
+  "sourcePathAndOriginMatch": true,
+  "knowledgePreviewMatches": true,
+  "writes403": true,
+  "wrongCredentialsFail400": true,
+  "oldCredentialOrigin409": true,
+  "restoredCredentialsReadOriginal": true,
+  "sameConfigSameProcessRestoresOriginalIdentity": true,
+  "newApplicationPid": true,
+  "restartedOriginalHashMatches": true,
+  "freshOriginsAndOldOrigin409": true,
+  "remoteFileUnchanged": true,
+  "samples": [
+    {
+      "phase": "initial",
+      "count": 1
+    },
+    {
+      "phase": "credential-restored",
+      "count": 1
+    },
+    {
+      "phase": "restart",
+      "count": 1
+    }
+  ],
+  "privateProbeSHA256": "37584899af2f23ea5d5123f25cae38b75002f9376b7fbd5692a24ea73f4e6b9f"
+}

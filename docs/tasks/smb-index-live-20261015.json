@@ -1,0 +1,72 @@
+{
+  "id": "smb-index-live-20261015",
+  "request": "继续渐进索引和混合检索：隔离真实SMB服务，验证当前二进制单资源索引、原文检索/预览身份和只读边界、重启；不接触用户SMB配置",
+  "baseline": "9fe8a21880bf709ea568fec564ca801a9c6a814f",
+  "initial_status": "",
+  "acceptance": [
+    "Actual isolated binary and Samba service index one SMB resource; original literal result/source/path/hash and guarded viewer match prepared file bytes.",
+    "Reference writes403, bad credential read fails and previous origin409; restored credential permits new guarded original read; application newPID preserves retrieval with fresh origin and old-origin409.",
+    "No production config/user data/model/browser/host ports; fixture cleanup and scoped docs/same-input main gate separately proven. SMB variants and user hosts remain pending."
+  ],
+  "scope": [
+    "docs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Advance original remote indexing/retrieval goals with actual Samba fixture; HTTP/MCP previously verified and original12 remain open.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse repository Dockerfile/start.sh in internal unpublished network; current image actual binary, temporary data only; compare prepared originals, auth failure/recovery and origin identity before/after actual process restart.",
+      "evidence": [
+        "docs/tasks/aide-continuity-knowledge-20261009.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Existing canonical Samba fixture image built and private actual binary probe prepared; no product changes. Same-config identity assumption corrected after inspecting source fingerprint contract; initial failed log preserved.",
+      "evidence": [
+        "docs/reviews/2026-10-15/smb-index-live.md",
+        "docs/reviews/2026-10-15/smb-index-live-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual Samba SMB1 and binary HTTPS: single-resource original hashes/source/path/origin and guarded viewer, writes403, wrong password400/old-origin409, same-credential restoration, actual newPID restart and old-origin409 PASS.",
+      "evidence": [
+        "docs/reviews/2026-10-15/smb-index-live.md",
+        "docs/reviews/2026-10-15/smb-index-live-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scoped real-protocol evidence, first probe assumption/final pass, fixture and user-host/version distinctions documented with sanitized proof.",
+      "evidence": [
+        "docs/reviews/2026-10-15/smb-index-live.md",
+        "docs/reviews/2026-10-15/smb-index-live-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned two containers/internal network removed; only production container remains; no user mounts, host ports, settings, models or browsers. Private proof and fixture image retained for reuse.",
+      "evidence": [
+        "docs/reviews/2026-10-15/smb-index-live.md",
+        "docs/reviews/2026-10-15/smb-index-live-proof.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Ordinary-document-only main gate and exact remote push pending; full84 receipt reusable only after fingerprint match.",
+      "evidence": [
+        "docs/reviews/2026-10-15/smb-index-live.md"
+      ]
+    }
+  },
+  "release_authorization": "Standing incremental test/docs/main push; disposable repo protocol fixtures only. No user settings, paid model, source or data-volume changes.",
+  "rollback": "Revert scoped ordinary docs; remove own containers/network, keep main runtime untouched.",
+  "handoff": "Actual isolated SMB1 single-resource fixture proven; does not establish user SMB hosts, SMB2/3/encryption/directory scanning or authenticated browser. Original12 remain open, Windows user acceptance and real vectors deferred."
+}
