@@ -64,16 +64,18 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "完整门禁已通过，待release-check及main推送核对；不升版/tag/Release。",
+      "status": "pass",
+      "summary": "release-check PASS；已将原main 7f68a3c快进推送到adf5c58，git ls-remote核对一致。本提交仅补推送收据，不改变已验证产品输入；不升版/tag/Release，不替换当前9999。",
       "evidence": [
-        ".agent-state/main-integration-stellar/full-frozen.json"
+        "git push origin main exit0",
+        "git ls-remote origin refs/heads/main",
+        "python3 scripts/agent-route.py release-check main-integration-stellar-20261015"
       ]
     }
   },
   "release_authorization": "用户直接授权：做完这个把所有内容和到main上。",
   "rollback": "保留原main 7f68a3c及feature分支；需要撤回时经新授权以revert提交回退，不force push。运行9999镜像和用户数据本轮不替换。",
-  "handoff": "",
+  "handoff": "本次全部已提交修改已合入并推送main；干净full80及门禁通过。原目录5项vendor删除未纳入；累计星级运行实例仍为9999/2b60f35f4633完整离线候选。正式版本发行及原12项目标余项继续。",
   "verification_receipt": {
     "profile": "full",
     "status": "pass",

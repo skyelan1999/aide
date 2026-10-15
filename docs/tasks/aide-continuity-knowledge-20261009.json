@@ -6549,7 +6549,7 @@
   "followup143": {
     "task": "main-integration-stellar-20261015",
     "authorization": "用户要求做完后把所有内容合到main。",
-    "summary": "独立干净main已快进纳入16项功能/文档提交及合并任务；full80 PASS，server race486.963秒+vet。待门禁和远端推送核对；保留原目录5项vendor删除，不升版/tag/Release。",
+    "summary": "全部16项新增功能/文档提交及本次任务记录已快进合入main；full80 PASS，server race486.963秒+vet，release-check PASS；origin/main推送至adf5c58并核对，随后仅补本推送收据。保留原目录5项vendor删除，不升版/tag/Release。",
     "receipt": {
       "profile": "full",
       "status": "pass",
