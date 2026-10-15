@@ -1,6 +1,7 @@
 'use strict';
 // Product-owned interface strings only; never use this catalog on user content.
 window.aideEnglish = {
+  "正在同步结果…": "Syncing results…",
   "发送回答": "Send answer",
   "排队：当前回答完成后处理": "Queue: handle after the current answer",
   "插话：调整当前任务": "Steer: guide the current task",

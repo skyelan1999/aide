@@ -985,6 +985,12 @@ function avatarRunFeedback(runId, status) {
 }
 function openStream(run) {
   closeStream();
+  const ownerId = state.session.id;
+  const ownerSequence = typeof sessionSeq === 'object' ? sessionSeq.value : null;
+  const ownerScope = typeof recoveryScope === 'function' ? recoveryScope() : null;
+  const ownsSnapshot = () => state.session?.id === ownerId &&
+    (ownerSequence === null || sessionSeq.value === ownerSequence) &&
+    (ownerScope === null || recoveryScope() === ownerScope);
   const es = new EventSource('/api/sessions/' + state.session.id + '/runs/' + run.id + '/events?access_token=' + encodeURIComponent(state.token));
   es._runId = run.id;
   state.stream = es;
@@ -1117,7 +1123,7 @@ function openStream(run) {
     schedulePoll(); // Reconcile even when the immediate GET fails.
     action(async () => {
       const id = state.session?.id; if (!id) return;
-      const s = await getSessionWindow(id); if (state.session?.id !== id) return;
+      const s = await getSessionWindow(id); if (!ownsSnapshot()) return;
       const terminalRun = s.runs?.find(item => item.id === run.id);
       if (terminalRun?.status === 'awaiting_clarification' && state.runPhase[run.id]) state.runPhase[run.id].done = false;
       if (terminalRun && !['running','awaiting_clarification'].includes(terminalRun.status)) {
@@ -1778,7 +1784,7 @@ function schedulePoll() {
   const pending = r => r.status === 'running' || r.status === 'awaiting_clarification' || (r.status === 'awaiting_approval' && ['reviewing','approved'].includes(r.approvalState));
   const running = state.session?.runs?.find(pending);
   if (running) {
-    if (['running','awaiting_clarification'].includes(running.status) && (!state.stream || state.stream._runId !== running.id) && (!state.streamRetryAt || Date.now() >= state.streamRetryAt)) openStream(running);
+    if (['running','awaiting_clarification'].includes(running.status) && !state.runPhase[running.id]?.done && (!state.stream || state.stream._runId !== running.id) && (!state.streamRetryAt || Date.now() >= state.streamRetryAt)) openStream(running);
     state.poll = setTimeout(async () => {
       const id = state.session?.id;
       if (!id) return;
@@ -3696,6 +3702,7 @@ function setSendMode(running) {
   if (!btn) return;
   syncPauseControl();
   const run = composerControlRun();
+  const reconciling = !!run && !!state.runPhase?.[run.id]?.done;
   const draft = composerHasDraft();
   const stopping = !!run && (run.stopRequested || stopRequests.has(JSON.stringify([recoveryScope(),state.session.id,run.id])));
   const pausing = !!run && (run.pauseRequested || state.pauseRequests?.has(recoveryScope()+':'+state.session.id+':'+run.id));
@@ -3704,19 +3711,19 @@ function setSendMode(running) {
   btn.textContent = stopMode ? '■' : '↑';
   btn.classList.toggle('stop-mode', stopMode);
   btn.dataset.action = stopMode ? 'stop' : 'send';
-  const label = stopMode ? (stopping ? t('正在停止本轮…') : t('停止本轮')) : run ? t(run.status === 'awaiting_clarification' ? '发送回答' : state.queueMode ? '排队发送' : '发送插话') : t('发送任务');
+  const label = stopMode ? (reconciling ? t('正在同步结果…') : stopping ? t('正在停止本轮…') : t('停止本轮')) : run ? t(run.status === 'awaiting_clarification' ? '发送回答' : state.queueMode ? '排队发送' : '发送插话') : t('发送任务');
   btn.title = label; btn.setAttribute('aria-label', label);
   // Context budget and submission only restrict sending; stopping remains available.
-  btn.disabled = stopMode ? stopping : !!state.previewOverLimit || !!state.submitting || !!state.approvalModeBusy || finishing;
+  btn.disabled = stopMode ? stopping || reconciling : !!state.previewOverLimit || !!state.submitting || !!state.approvalModeBusy || finishing;
   const controls = $('run-controls');
   if (controls) {
     const last = state.session?.runs?.at(-1);
     const resumable = !run && !state.pendingSessionId && ['paused','interrupted'].includes(last?.status) && last.canResume;
     controls.hidden = !run && !resumable;
-    $('run-control-status').textContent = stopping ? t('正在停止本轮…') : pausing ? t('正在暂停任务…') : resumable ? t('已暂停，可从检查点继续') : run?.status === 'awaiting_clarification' ? t('等待你的回答或审批') : t('正在运行 · 可随时插话');
-    const stop = $('stop-active-run'); stop.hidden = !run || !draft; stop.disabled = stopping;
+    $('run-control-status').textContent = reconciling ? t('正在同步结果…') : stopping ? t('正在停止本轮…') : pausing ? t('正在暂停任务…') : resumable ? t('已暂停，可从检查点继续') : run?.status === 'awaiting_clarification' ? t('等待你的回答或审批') : t('正在运行 · 可随时插话');
+    const stop = $('stop-active-run'); stop.hidden = !run || !draft; stop.disabled = stopping || reconciling;
     const resume = $('resume-active-run'); resume.hidden = !resumable;
-    $('run-control-more').hidden = !run || finishing || run.status === 'awaiting_clarification';
+    $('run-control-more').hidden = !run || finishing || reconciling || run.status === 'awaiting_clarification';
   }
   const queue = $('queue-toggle');
   if (queue) {

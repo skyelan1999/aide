@@ -17,13 +17,20 @@ run.status='running';run.pauseRequested=true;sync();assert(!$('send').disabled,'
 run.pauseRequested=false;ctx.stopRequests.add(JSON.stringify(['workspace','s','r']));sync();assert($('send').disabled);assert.match($('run-control-status').textContent,/停止/);ctx.stopRequests.clear();
 run.status='paused';sync();assert.equal($('send').dataset.action,'send');assert(!$('resume-active-run').hidden);
 state.session={id:'b',runs:[]};sync();assert($('run-controls').hidden);assert.equal($('send').dataset.action,'send');
-state.session={id:'s',runs:[run]};run.status='running';state.pendingSessionId='b';sync();assert($('run-controls').hidden);assert.equal($('send').dataset.action,'send');
+state.session={id:'s',runs:[run]};run.status='running';state.runPhase={r:{done:true}};sync();assert($('send').disabled);assert.equal($('run-control-status').textContent,'正在同步结果…');state.runPhase={};state.pendingSessionId='b';sync();assert($('run-controls').hidden);assert.equal($('send').dataset.action,'send');
+
+// A terminal SSE event must keep polling persistence without reopening a stream
+// that immediately emits done again. A slow/failed GET cannot create a hot loop.
+const pollRun={id:'pending-final',status:'running'};let streamOpens=0,timers=0;
+const pollContext={state:{session:{id:'p',runs:[pollRun]},runPhase:{'pending-final':{done:true}},stream:null},clearTimeout(){},setTimeout(){timers++;return 1},openStream(){streamOpens++},Date};
+vm.createContext(pollContext);vm.runInContext(fn('schedulePoll'),pollContext);pollContext.schedulePoll();assert.equal(streamOpens,0);assert.equal(timers,1,'terminal reconciliation keeps the polling fallback');
+pollContext.state.runPhase['pending-final'].done=false;pollContext.schedulePoll();assert.equal(streamOpens,1,'a live task still reconnects normally');
 
 class ES{constructor(){this.events={}}addEventListener(k,v){this.events[k]=v}emit(k,v){this.events[k]({data:JSON.stringify(v)})}close(){}}
 (async()=>{
  let resolveSnapshot;let polls=0;const liveRun={id:'live',status:'running',mode:'chat',steps:[{name:'chat'}]};
  const st={session:{id:'s',runs:[liveRun]},live:{},liveStable:{},liveRound:{},liveTool:{},liveReasoning:{},runPhase:{}};
- const stream={state:st,EventSource:ES,window:{},ensureRunPhase:id=>st.runPhase[id]={tools:[]},closeStream:()=>st.stream=null,avatarRunFeedback(){},touchRunActivity(){},refreshSessionSoon(){},renderRunStatus(){},scheduleLiveRender(){},schedulePoll(){polls++},reconcileAvatarRun(){},renderSession(){},loadSessions:async()=>{},loadFiles:async()=>{},api:async()=>{},scheduleTitleSync(){},maybeAutoNarrate(){},voice:{awaitingReply:false},getSessionWindow:()=>new Promise(r=>resolveSnapshot=r),adoptSessionIfChanged:s=>{st.session=s;return true},action:fn=>()=>stream.pending=fn(),Date,Math,encodeURIComponent};
+ const stream={sessionSeq:{value:1},state:st,EventSource:ES,window:{},ensureRunPhase:id=>st.runPhase[id]={tools:[]},closeStream:()=>st.stream=null,avatarRunFeedback(){},touchRunActivity(){},refreshSessionSoon(){},renderRunStatus(){},scheduleLiveRender(){},schedulePoll(){polls++},reconcileAvatarRun(){},renderSession(){},loadSessions:async()=>{},loadFiles:async()=>{},api:async()=>{},scheduleTitleSync(){},maybeAutoNarrate(){},voice:{awaitingReply:false},getSessionWindow:()=>new Promise(r=>resolveSnapshot=r),adoptSessionIfChanged:s=>{st.session=s;return true},action:fn=>()=>stream.pending=fn(),Date,Math,encodeURIComponent};
  vm.createContext(stream);const start=source.indexOf('function openStream('),end=source.indexOf('// 流式渲染节流：',start);vm.runInContext(source.slice(start,end),stream);stream.openStream(liveRun);const es=st.stream;
  es.emit('intent',{callId:'one',tool:'read_file'});es.emit('intent',{callId:'one',tool:'read_file'});assert.equal(st.runPhase.live.tools.length,1,'same intent has one card');
  es.emit('tool',{callId:'unknown',ok:true});assert.equal(st.runPhase.live.tools[0].status,'running','a mismatched result cannot complete another call');
@@ -32,6 +39,8 @@ class ES{constructor(){this.events={}}addEventListener(k,v){this.events[k]=v}emi
  assert.equal(st.live.live,'Visible partial output','done must not blank the answer before the snapshot');assert.equal(st.runPhase.live.done,true);assert(polls>0);
  resolveSnapshot({id:'s',runs:[{...liveRun,status:'cancelled',steps:[{name:'chat',content:'Visible partial output'}]}]});await stream.pending;
  assert.equal(st.live.live,undefined);assert.equal(st.runPhase.live,undefined,'terminal persistence replaces transient state');
+ const newerRun={id:'newer-run',status:'running',mode:'chat',steps:[]};st.session={id:'s',runs:[newerRun]};stream.openStream(newerRun);st.stream.emit('done',{status:'completed'});const current={id:'s',runs:[{id:'latest',status:'running'}]};st.session=current;stream.sessionSeq.value++;
+ resolveSnapshot({id:'s',runs:[{...newerRun,status:'completed'}]});await stream.pending;assert.equal(st.session,current,'late final snapshot cannot replace a newer selection of the same conversation');
  st.stream={another:true};es.emit('intent',{callId:'late',tool:'write_file'});assert.equal(st.runPhase.live,undefined,'closed stream cannot recreate a card');
  console.log('Session run controls PASS: draft send/stop, queue, waiting, pause escalation, budget, scope, intent dedupe, terminal snapshot handoff');
 })().catch(e=>{console.error(e);process.exitCode=1});
