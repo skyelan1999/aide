@@ -62,14 +62,17 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "UI checkpoint only; no push/main/runtime/offline image update. Unfinished knowledge backend remains outside this commit.",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "界面修改已随15936db进入main，本机9999运行8d636fd且资源一致，离线包本机导入通过；最终打包输入full88通过，继续main交付收据。完整认证浏览器未验收。",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-runtime-delivery.md",
+        "docs/reviews/2026-10-16/knowledge-conclusion-coverage-proof.json"
+      ]
     }
   },
   "release_authorization": "Existing user incremental push/main/local runtime/offline image authorization; no version bump or tag.",
   "rollback": "UI-only changes; background can be disabled. No server data migration. Preserve unrelated unfinished knowledge backend changes.",
-  "handoff": "UI commit 81a62ab integrated into current external development branch by 11051ec; knowledge history commits retained. Integrated quick PASS and IAB geometry/background persistence rechecked. Production, main, offline image and authenticated Safari remain pending.",
+  "handoff": "界面协调及动态背景已集成main并更新本机9999、离线包；最终full88通过，独立main门禁继续。七视口/六主题/视频持久化为组件验收，完整认证浏览器受证书限制未通过。",
   "quick_receipt": {
     "status": "pass",
     "fingerprint": "907e3405ed39f05c17f6c16fe9d984ea0a999022fa4ab4ee2d29bdff098499db",
