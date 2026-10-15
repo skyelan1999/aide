@@ -1,5 +1,5 @@
 {
-  "sourceCommit": "7508ed14448b4db7d6886de8f0c2141e5ce223d6",
+  "sourceCommit": "9417d1c3e30b9e6b6da0247343b8cac41e1f69d5",
   "focusedRace": {
     "status": "pass",
     "seconds": 20.179,
@@ -53,30 +53,29 @@
     "cleanup": "owned sessions removed; existing sessions/settings/auth/sources/workspace unchanged except monotonic sequence"
   },
   "runtime": {
-    "image": "sha256:3f5ec12103dca6f0df0a77e9ba7fea03f5ccea19862fa4bff4972f3abb8a159c",
-    "runningImage": "sha256:3f5ec12103dca6f0df0a77e9ba7fea03f5ccea19862fa4bff4972f3abb8a159c",
-    "sourceSHA256": "1a2c3f84c95ceae66f4edf306ea822b8f7d39f7f2bbf4bc20131f8b03fdc164a",
-    "runningPlatformManifest": "sha256:56f5311ba8e68ecbefeef60eaff566af8260e3696f5b140aa53b25ccc8de44a9",
+    "image": "sha256:4b1c60735bb9c44031c1ae6b995854fd067027a90c81b333ee24a35ec6a372ab",
+    "runningImage": "sha256:4b1c60735bb9c44031c1ae6b995854fd067027a90c81b333ee24a35ec6a372ab",
+    "sourceSHA256": "9b50a24de62692cbd39d66a5d71ec66969d999799ca39641facbede8a462f499",
+    "runningPlatformManifest": "sha256:32c3a2dd894efb41784e978fcef5ee54f449d197c4d893c7835a4aeac3ed469a",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "health": "ok",
     "port": "9999",
-    "sourceCommit": "7508ed14448b4db7d6886de8f0c2141e5ce223d6",
     "currentConfigAndMountsPreserved": true,
     "servedAssetsMatch": true,
+    "sourceCommit": "9417d1c3e30b9e6b6da0247343b8cac41e1f69d5",
     "protectedOriginalSessions": 13,
     "sequence": [
       33,
       37
     ],
-    "settingsWithoutCounterPreserved": true,
     "goSourcesIdenticalToLiveProbe": true
   },
   "offline": {
-    "image": "sha256:3f5ec12103dca6f0df0a77e9ba7fea03f5ccea19862fa4bff4972f3abb8a159c",
-    "sourceSHA256": "1a2c3f84c95ceae66f4edf306ea822b8f7d39f7f2bbf4bc20131f8b03fdc164a",
-    "archive": "aide-0.1.17.0-RC2-linux-arm64-3f5ec12103dc-offline.tar.gz",
-    "bytes": 705755469,
-    "sha256": "8c22af9a85f55359758beb24036a1515d5dcb13460ed84ae33e7423c6a34a5af",
+    "image": "sha256:4b1c60735bb9c44031c1ae6b995854fd067027a90c81b333ee24a35ec6a372ab",
+    "sourceSHA256": "9b50a24de62692cbd39d66a5d71ec66969d999799ca39641facbede8a462f499",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-4b1c60735bb9-offline.tar.gz",
+    "bytes": 705755872,
+    "sha256": "615b28fdd7d21e4f776aeef89aaa4ea5134cb14c9209a3b9ee37832f2f034db9",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
     "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
@@ -91,7 +90,7 @@
   },
   "full": {
     "status": "pending",
-    "supersededRun": "stopped only own isolated network-none/no-mount fixture to add terminal reconnect regression; not a pass"
+    "supersededRuns": "two owned isolated runs stopped for final terminal-reconnect and step/round identity fixes; neither counted as pass"
   },
   "limitations": [
     "Full authenticated Safari human-deferred",
@@ -105,17 +104,20 @@
   "liveGoSourcesIdenticalToFinal": true,
   "frontendRegression": {
     "terminalStreamDoesNotHotReconnect": true,
-    "sameSessionReselectionRejectsOldTerminalSnapshot": true
+    "sameSessionReselectionRejectsOldTerminalSnapshot": true,
+    "sameProviderIDAcrossRoundsAndStepsRemainsDistinct": true
   },
   "cleanup": {
     "removedOwnedIntermediateArchive": "aide-0.1.17.0-RC2-linux-arm64-846f0615d98e-offline.tar.gz",
     "removedArchiveBytes": 705756827,
     "removedOwnedIntermediateImage": "sha256:846f0615d98e4ca20da33ca952b9d5654238a86b50acd200bf4d07b4da3df3ad",
-    "keptFinal": "aide-0.1.17.0-RC2-linux-arm64-3f5ec12103dc-offline.tar.gz",
+    "keptFinal": "aide-0.1.17.0-RC2-linux-arm64-4b1c60735bb9-offline.tar.gz",
     "keptPriorRollback": "234beda3a50b archive and image",
     "ownedBrowserTabs": 0,
     "fixtureServer8786": "stopped",
     "production": "9999 preserved",
-    "originalSessions": 13
+    "originalSessions": 13,
+    "additionalRemovedIntermediateArchive": "aide-0.1.17.0-RC2-linux-arm64-3f5ec12103dc-offline.tar.gz",
+    "additionalRemovedIntermediateImage": "sha256:3f5ec12103dca6f0df0a77e9ba7fea03f5ccea19862fa4bff4972f3abb8a159c"
   }
 }

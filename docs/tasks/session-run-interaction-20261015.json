@@ -42,7 +42,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Focused Go20.179s, pre-freeze quick83, realQwen stop/other-running/partial-context/pause/resume, final IAB delay handling and Node stale/reconnect guards pass; final full pending. Go identical to live tested846; final3f5 runtime/offline verified; Safari human-deferred.",
+      "summary": "Focused Go20.179s and liveQwen stop/other-running/partial-context/pause/resume; final production listener regressions for terminal reconnect, stale snapshots and step/round tool identity; IAB desktop390/six themes/delayed GET pass. Final4b1 runtime/offline verified; final full pending; Safari human-deferred.",
       "evidence": [
         "docs/reviews/2026-10-15/session-run-interaction.md",
         "docs/reviews/2026-10-15/session-run-interaction-proof.json"
@@ -60,7 +60,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "Owned sessions/tabs/8786 server removed; own superseded fixture stopped,846 archive/image removed,234 rollback retained; owned full worktree intentionally retained until final receipt/push, then removed. Original13 and data/config mounts preserved.",
+      "summary": "Owned sessions/tabs/8786 server removed; two own superseded fixtures stopped;846/3f5 intermediate archives/images removed,234 rollback retained. Owned full worktree retained until final receipt/push then removed. Original13/data/config mounts preserved.",
       "evidence": [
         "docs/reviews/2026-10-15/session-run-interaction-proof.json",
         "docs/reviews/2026-10-15/session-run-interaction.md"
@@ -74,5 +74,5 @@
   },
   "release_authorization": "沿用用户“还是一样，做一部分，push一部分，测一部分”“做完这个把所有内容和到main上”；不创建新版本/tag/GitHub Release。",
   "rollback": "保留234beda3a50b镜像和完整离线包；回退本任务提交。所有数据挂载保持，stopRequested新增可选字段旧版本忽略。",
-  "handoff": "最终3f5候选9999运行；完整full/main门禁与远端推送待收据。原12目标保持open；完整Safari、Windows、真实向量与接收端导入依既有分工待验。"
+  "handoff": "Final4b1 candidate runs9999; full/main gate and remote push pending receipts. Original12 remain open; Safari/Windows/vectors/receiving import retain prior acceptance ownership."
 }
