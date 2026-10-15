@@ -163,3 +163,10 @@ Latest reviewed-recovery continuation development snapshot (2026-10-15): `aide-0
 `aide-0.1.17.0-RC2-linux-arm64-320315d7e14b-offline.tar.gz`，705662934字节，SHA-256 `aafddf23a1d2212b60313af6bd625f7d488c3dd1b2875dd72b9dc42ce0db3c1b`。源码 `6bdcb41`，源指纹 `0220874f51107c9361102fecfbf9112859f12b6b2617b5c15dc562cc59958cd1`。修复持续扫描时缓存写入被不断推迟；quick70、定向计时器回归及系统Safari大引用显示通过。完整应用和本地依赖镜像均包含，流式内外哈希、运行平台、启动器、实际docker load和两个本地副本校验通过。原`start.command`已在本机启动9999；接收设备导入未验收。
 
 新full72结果见[当前任务](../docs/tasks/starmap-current-latency-20261015.json)；前一批全量通过不能代替本批门禁。当前不声明大星域交互或冷启动整体提速，不做main/tag正式发布。
+
+
+## 2026-10-15 星图元数据布局复用候选
+
+`aide-0.1.17.0-RC2-linux-arm64-fbbbcc0aa4d7-offline.tar.gz`，705661053字节，SHA-256 `dba765290d4f297cf6cb31bcf102bc297d35e60811d9b0ee16ce888307c8d367`。源码`98d6599`，源指纹`e77bddba1abef7056c993ff4aac1c3acfccde32853c9ca9c6df93ec0d6d8bf1c`。仅正文及读取状态等更新时保留空间布局，保持搜索、详情与引用校验更新，结构变化仍重建。quick71和系统Safari自有文件等长改写／删除验收通过，包含完整应用与本地依赖镜像，流式内外哈希／平台／启动器／实际docker load与两个本地副本校验通过。
+
+现有清理脚本实际释放38.37GB默认构建缓存，镜像、卷及本机工作台保留；清理后原`start.command`直接复用本地镜像启动9999。当前full73状态以[任务账本](../docs/tasks/starmap-metadata-layout-20261015.json)为准；不借用前批full72结果。大星域总体交互／接收设备导入和正式main/tag发布未完成。

@@ -45,30 +45,119 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Current actual metadata/layout/cosmos tests PASS with selected/unrelated citations, original search, no-op/reset, workspace and structural changes. Quick71 PASS. Old baseline actual-source negative layout1 vs0 retained. Canonical native controlled-body update/image/full73 pending.",
+      "summary": "Current actual metadata/layout/cosmos tests PASS with selected/unrelated citations, original search, no-op/reset, workspace and structural changes. Quick71 PASS. Old baseline actual-source negative layout1 vs0 retained. Canonical native controlled-body update/image/full73 pending. Canonical98d6599/newfbbb image Safari: own ignored tmp MD indexed, exact same-length BEFORE→AFTER_ body automatically refreshed selected details without page reload and query retained. API update observed6.982s (bounded polling, not renderer timing). Exact owned file/directory deletion then2.810s API removal; native selection/details disappeared with query preserved. Desktop1326x940 and actual576x940 observed, original desktop/query/home/workspace restored. HTTP starmap.js bytes match source; original session content and5 protected config/auth hashes/mounts preserved. Complete new offline package streamed hash/tags/platform/launchers/load and two local copies PASS. Current full73 pending. Large reference20000 visible, CUA click+AX26.407s; drawing/tool-wait latency remains unresolved, no overall speedup or FPS claim.",
       "evidence": [
         "scripts/starmap-live-metadata.test.cjs",
         ".agent-state/starmap-metadata-layout/negative.log",
-        ".agent-state/verify-20261015T005115890634Z.log"
+        ".agent-state/verify-20261015T005115890634Z.log",
+        ".agent-state/starmap-metadata-layout/ui-before.txt",
+        ".agent-state/starmap-metadata-layout/ui-after.txt",
+        ".agent-state/starmap-metadata-layout/ui-removed.json",
+        ".agent-state/starmap-metadata-layout/ui-narrow.jpg",
+        ".agent-state/starmap-metadata-layout/dimensions.json",
+        ".agent-state/starmap-metadata-layout/preservation.json",
+        ".agent-state/starmap-metadata-layout/large-native-timing.json",
+        ".agent-state/starmap-metadata-layout/package.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Documented metadata/layout generation distinction, conservative structural rebuild, preserved freshness semantics and measured scope. Large-scene rendering remains open.",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docker-images/README.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Exact owned fixture body verified then file/empty created directory removed; index removal and native detail clearing confirmed. Test query/home/workspace/window restored; only exact owned star tabs closed. No source registry/preferences/auth/user session content edits; original5 vendor deletions untouched. User-authorized existing clean-cache removed38.37GB default-builder cache, retained image/dependency/container/data; canonical post-clean launch reused current local image without build.",
+      "evidence": [
+        ".agent-state/starmap-metadata-layout/ui-fixture-record.json",
+        ".agent-state/starmap-metadata-layout/preservation.json",
+        ".agent-state/starmap-metadata-layout/clean-build-cache.log",
+        ".agent-state/starmap-metadata-layout/after-cache-entry.log"
+      ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Source98d6599 pushed to perf/starmap-metadata-layout, same local fbbb complete offline candidate imported/copied/verified. Fresh full73 pending; no formal main/tag or receiving-device acceptance.",
+      "evidence": [
+        ".agent-state/starmap-metadata-layout/package.json"
+      ]
     }
   },
   "release_authorization": "Existing incremental source/docs push, local canonical startup/testing and offline image authorization; no main/tag/formal release.",
   "rollback": "Revert scoped layout changes or use previously verified320315 image; keep volumes and cache schema unchanged.",
-  "handoff": ""
+  "handoff": "Metadata/layout fix98d6599 is pushed; quick71, actual update/layout/cosmos regressions, canonical native equal-length selected-body refresh/query retention and owned-file index/native removal pass. Local fbbb complete offline bundle verified. Current full73 must run after delivery metadata freeze; prior72PASS is historical for6bd snapshot writer only. Still slow20k-view observation; next profile per-frame renderer versus CUA waits, no broad speedup claim. Original12 goal active, Windows user-owned, vectors deferred.",
+  "runtime": {
+    "runningImage": "sha256:fbbbcc0aa4d76c3a5e698c36b3fd2666ae8c4f38db0db8935d49b1bb7a7b26a7",
+    "image": "sha256:fbbbcc0aa4d76c3a5e698c36b3fd2666ae8c4f38db0db8935d49b1bb7a7b26a7",
+    "binarySHA256": "4d54254193b44a815bff8df75aa59c40bbd6fe9d3ca04e9d08b36531e0afd7e0",
+    "runningPlatformManifest": "sha256:5d7ba15ea858ef6e1f1f2a445ef26cdef4c99e84bcca446126c2d47d05dde1eb",
+    "sourceSHA256": "e77bddba1abef7056c993ff4aac1c3acfccde32853c9ca9c6df93ec0d6d8bf1c",
+    "buildCommit": "98d659905445e7e8a677255e1b3d3c421cbbe919-dirty",
+    "port": "9999",
+    "health": "ok",
+    "mountsPreserved": true,
+    "workspaceConfigBytesPreserved": true,
+    "protectedFilesUnchanged": 5,
+    "historicalProtectedFilesUnchanged": 1,
+    "snapshotTiming": "Current five canonical protected hashes/mounts/workspace config match before fixture; same new image survived user-authorized default-builder cache cleanup. Only owned synthetic file created/edited/deleted; no source registry or preference changes.",
+    "configuredPath": "/Users/skyelan/debug",
+    "runtimeWorkspace": "/workspace",
+    "startupWarningPresent": true,
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "package": {
+    "image": "sha256:fbbbcc0aa4d76c3a5e698c36b3fd2666ae8c4f38db0db8935d49b1bb7a7b26a7",
+    "sourceSHA256": "e77bddba1abef7056c993ff4aac1c3acfccde32853c9ca9c6df93ec0d6d8bf1c",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-fbbbcc0aa4d7-offline.tar.gz",
+    "bytes": 705661053,
+    "sha256": "dba765290d4f297cf6cb31bcf102bc297d35e60811d9b0ee16ce888307c8d367",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "dependencyArchive": "aide-dependencies-v1-linux-arm64.tar.gz",
+    "dependencySHA256": "520baf83d7bc5fc1f20e7b0b8a9efd55976d22fa5bd4b6d2f713566eda905b76",
+    "outerHashVerified": true,
+    "innerHashVerified": true,
+    "bothImageTagsPresent": true,
+    "runningPlatformManifestMatchesArchive": true,
+    "dockerLoadVerified": true,
+    "hostLaunchersMatch": true,
+    "copiedBothTrees": true,
+    "verificationStorage": "streamed hashes/metadata/load; APFS clone for same-volume peer, independent file bytes verified"
+  },
+  "quick_receipt": {
+    "status": "pass",
+    "head": "e3ecba580104a89d4529e89f3ea7860e08ff32ef",
+    "fingerprint": "6b6dbb0b0e59c4b9671d4da779aba072a15291a30dc43653d43feeb7b2802585",
+    "time": "20261015T005115890634Z",
+    "log": ".agent-state/verify-20261015T005115890634Z.log"
+  },
+  "source_profile": {
+    "before": {
+      "implementation": ".agent-state/starmap-metadata-layout/baseline.js",
+      "jsSHA256": "e895619e3778f4039b67a20f28758c43c65e1846e0dc391c285dd3a745f07369",
+      "nodes": 35336,
+      "batches": 3,
+      "ms": 1566.51,
+      "modelBuilds": 3,
+      "layoutCalls": 3,
+      "modelObjectRetained": false,
+      "latestBodyApplied": true,
+      "scope": "Real applyLiveUpdate/ensureCosmicView/cosmos modules with DOM/canvas/stellar-decoration stubs; real layout function; not browser latency or FPS"
+    },
+    "after": {
+      "implementation": "current source",
+      "jsSHA256": "3df0e41df78f2e3ccc697d27bccfb18dd657dfea8b2ecd68967cd58176b25050",
+      "nodes": 35336,
+      "batches": 3,
+      "ms": 31.4,
+      "modelBuilds": 0,
+      "layoutCalls": 0,
+      "modelObjectRetained": true,
+      "latestBodyApplied": true,
+      "scope": "Real applyLiveUpdate/ensureCosmicView/cosmos modules with DOM/canvas/stellar-decoration stubs; real layout function; not browser latency or FPS"
+    },
+    "limit": "Node VM actual layout/model/update functions, DOM/canvas/stellar-decoration stubs; not native Safari performance"
+  }
 }

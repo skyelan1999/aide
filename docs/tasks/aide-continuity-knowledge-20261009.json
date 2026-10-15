@@ -154,7 +154,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Followup130 cache writer6bdcb41 and image320315 have recovered current-input full72 PASS (race702.418s+vet), quick70/native/reference/package evidence. Original disk/EOF failure retained; checkpoint backups safely archived. Large-scene latency still active: start starmap-metadata-layout-20261015 after full terminal, preserve fresh data/search/citations with stable geometry. Original12 goals active, vectors deferred, Windows user-owned, real provider/receiving-device not verified.",
+  "handoff": "Source98d6599 separates metadata/data and spatial revisions, preserving fresh details/search/citation semantics. Quick71 + actual-function negative/fixed regressions and canonical native owned equal-length MD update/removal PASS; fbbb complete local offline image/import/copies verified. Cleared38.37GB authorized builder cache without images/data loss, post-clean exact entry reuses local image. Current full73 pending; previous recovered72 passed only6bd. Large20k reference observed26.407s CUA click+AX, overall renderer latency still open. Original12 workstreams remain active; Windows user-owned, real vectors deferred, real provider and receiving-device acceptance pending.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -6401,5 +6401,9 @@
       "commands": 72,
       "log": ".agent-state/verify-20261015T003709946842Z.log"
     }
+  },
+  "followup131": {
+    "task": "docs/tasks/starmap-metadata-layout-20261015.json",
+    "summary": "Source98d6599 separates metadata/data and spatial revisions, preserving fresh details/search/citation semantics. Quick71 + actual-function negative/fixed regressions and canonical native owned equal-length MD update/removal PASS; fbbb complete local offline image/import/copies verified. Cleared38.37GB authorized builder cache without images/data loss, post-clean exact entry reuses local image. Current full73 pending; previous recovered72 passed only6bd. Large20k reference observed26.407s CUA click+AX, overall renderer latency still open."
   }
 }
