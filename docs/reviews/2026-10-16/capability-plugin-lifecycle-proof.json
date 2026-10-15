@@ -1,0 +1,49 @@
+{
+  "task": "capability-plugin-lifecycle-20261016",
+  "baseline": "b31be2ffc7beece21035db1aab92f96b0d8fdab5",
+  "implementationChange": false,
+  "focused": {
+    "test": "TestCapabilityPluginLiveLifecycle",
+    "raceSeconds": 2.696,
+    "testBodySeconds": 1.6,
+    "exit": 0,
+    "vet": "all packages pass",
+    "realNodeHost": true,
+    "realGoDispatch": true,
+    "realAuthenticatedHandlers": true,
+    "cases": [
+      "registration_without_probe",
+      "entry_hash_and_scope",
+      "clock_result_time_bounds",
+      "invalid_timezone_failure",
+      "independent_read_receipt",
+      "disable_dispatch_denial",
+      "enable_recovery",
+      "broken_entry_host_failure",
+      "redacted_host_error",
+      "repaired_execution"
+    ]
+  },
+  "full": {
+    "status": "pass",
+    "checks": 88,
+    "allExitZero": true,
+    "fingerprint": "061e94b5c256889fd797ab492b453c91392cbdfd5914f643e6327811e682310e",
+    "recordedHead": "b31be2ffc7beece21035db1aab92f96b0d8fdab5",
+    "time": "20261015T223845127590Z",
+    "serverRaceSeconds": 556.471,
+    "vet": "all packages pass",
+    "runtimeAssets": {
+      "uid": 1000,
+      "readableFiles": 19,
+      "docxRoundTrip": true
+    }
+  },
+  "modelCalls": 0,
+  "productionMutation": false,
+  "network": "none",
+  "browser": "not_run; no UI implementation change; complete authenticated browser remains deferred",
+  "production": "prior verified8d636fd; no rebuild/restart for test/docs-only update",
+  "release": "independent clean-main gate and push pending",
+  "originalTwelve": "all in_progress; Windows user acceptance; real vectors deferred"
+}

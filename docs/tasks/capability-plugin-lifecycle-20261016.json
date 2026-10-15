@@ -1,0 +1,74 @@
+{
+  "id": "capability-plugin-lifecycle-20261016",
+  "request": "继续原12项连接能力仪表目标，补插件真实宿主/Go工具调用、检查收据与启停状态一致性的直接验收，不将入口可读当作执行成功",
+  "baseline": "b31be2ffc7beece21035db1aab92f96b0d8fdab5",
+  "initial_status": "",
+  "acceptance": [
+    "Real bundled current-time plugin host registration and Go dispatch agree with authenticated capability metadata through valid/invalid arguments, disable/re-enable and host load failure/recovery.",
+    "Readability receipt never claims tool execution, failed tool arguments do not change that observation, disabled plugin cannot run, raw host errors do not leak.",
+    "Focused race/vet and final full, docs and clean-main release gate; no model calls or production data mutations."
+  ],
+  "scope": [
+    "internal/server/capabilities_plugin_live_test.go",
+    "docs/tasks",
+    "docs/reviews/2026-10-16",
+    "docs/architecture/capability-dashboard.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Retain existing separate file probe and host metadata semantics; add actual bundled plugin/Node/Go dispatch lifecycle acceptance, no production code changes.",
+      "evidence": [
+        "internal/server/capabilities_plugin_live_test.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Retain existing separate file probe and host metadata semantics; add actual bundled plugin/Node/Go dispatch lifecycle acceptance, no production code changes.",
+      "evidence": [
+        "internal/server/capabilities_plugin_live_test.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Retain existing separate file probe and host metadata semantics; add actual bundled plugin/Node/Go dispatch lifecycle acceptance, no production code changes.",
+      "evidence": [
+        "internal/server/capabilities_plugin_live_test.go"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused real plugin lifecycle race2.696s/vet and current-input full88 pass; final server race556.471s/all vet/nonroot19 assets. No model or browser acceptance claim.",
+      "evidence": [
+        "docs/reviews/2026-10-16/capability-plugin-lifecycle.md",
+        "docs/reviews/2026-10-16/capability-plugin-lifecycle-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Record direct protocol/API acceptance, independent read receipt semantics and remaining full-browser boundary.",
+      "evidence": [
+        "docs/reviews/2026-10-16/capability-plugin-lifecycle.md",
+        "docs/architecture/capability-dashboard.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Focused/full isolated snapshot processes exited0; own disposable containers removed. No production mutation or browser tabs created.",
+      "evidence": [
+        "docs/reviews/2026-10-16/capability-plugin-lifecycle.md",
+        "docs/reviews/2026-10-16/capability-plugin-lifecycle-proof.json"
+      ]
+    },
+    "release": {
+      "status": "in_progress",
+      "summary": "Tests/docs only; final full and independent clean-main gate must pass before push. No product rebuild or new offline package.",
+      "evidence": [
+        "docs/reviews/2026-10-16/capability-plugin-lifecycle.md"
+      ]
+    }
+  },
+  "release_authorization": "Existing incremental testing/push/main authorization; tests and documentation only; no version/tag or production restart required.",
+  "rollback": "Test/docs-only commit can be reverted; no product implementation or data format changes.",
+  "handoff": ""
+}

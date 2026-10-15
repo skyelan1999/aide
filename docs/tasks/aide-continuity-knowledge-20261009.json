@@ -386,13 +386,23 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "独立SFTP读写/失败恢复、四个解析器导入已有证据；真实模型读取、图像理解和并行调度也有独立任务记录。",
+        "latestScopedEvidence": "独立SFTP读写/失败恢复、四个解析器导入已有证据；真实模型读取、图像理解和并行调度也有独立任务记录。 当前真实内置时钟插件经Node宿主、Go派发及能力路由的启停/参数失败/加载故障与恢复专项race2.696s和vet通过；入口读取与执行观察分离。",
         "evidence": [
           "docs/reviews/2026-10-15/source-capability-live.md",
           "docs/tasks/provider-output-interruption-20261015.json",
-          "docs/tasks/parallel-10x-levels-20261015.json"
+          "docs/tasks/parallel-10x-levels-20261015.json",
+          "docs/reviews/2026-10-16/capability-plugin-lifecycle.md"
         ],
-        "remaining": "完整认证仪表的状态/错误展示、用户SSH目录权限、插件实际工具结果与仪表的一致性仍缺完整工作流证据。解析器能导入不等于任意文档处理通过。"
+        "remaining": "完整认证仪表的状态/错误展示、用户SSH目录权限及其他插件完整工作流仍待；当前内置时钟的工具结果/仪表一致性已有协议/API级直接证据。解析器导入不等于任意文档处理。"
+      },
+      "evidence_20261016_plugin_lifecycle": {
+        "task": "docs/tasks/capability-plugin-lifecycle-20261016.json",
+        "status": "in_progress",
+        "scope": "Real bundled clock Node host and Go dispatch plus authenticated capability routes: valid/invalid arguments, disable/re-enable, load failure/recovery; read receipt remains separate. Focused race2.696s/vet pass, final full88/race556.471s/vet pass. Complete browser and other plugins not proven.",
+        "evidence": [
+          "docs/reviews/2026-10-16/capability-plugin-lifecycle.md",
+          "docs/reviews/2026-10-16/capability-plugin-lifecycle-proof.json"
+        ]
       }
     },
     {
@@ -584,7 +594,7 @@
       ],
       "current_audit_20261016": {
         "status": "in_progress",
-        "latestScopedEvidence": "本地/隔离SSH节点增改移除、前后原文、容量和留存已有证据；真实存储故障与新PID回读又补了后端边界。 结论阶段已补AI任务/问题身份与无标题记录、历史引用/依据变化独立、版本2备份及真实临时索引/磁盘/HTTP；实际IAB展开相同AI原话与不同依据并验390px。 人工主题又补章节改名/无标题局部原话、持久加密标记和旧观察淘汰保全；真实临时App浏览器保存/重读/停用恢复、390px及最终专项通过。 AI有界正文与已保存文档分段、载荷3备份、实际索引/加密重读/HTTP及浏览器精确尾段已验；新版正文不进入普通图。 同源历史正文的片段外标签定义/使用位置/原始指纹、实际AI与文档独立依据变化通过索引/磁盘/HTTP和临时App页面；旧片段不借当前来源。 非Markdown显式选择/不作Markdown推断、全1000来源筛选可达、实际TXT页面和最终full88已验。",
+        "latestScopedEvidence": "本地/隔离SSH节点增改移除、前后原文、容量和留存已有证据；真实存储故障与新PID回读又补了后端边界。 结论阶段已补AI任务/问题身份与无标题记录、历史引用/依据变化独立、版本2备份及真实临时索引/磁盘/HTTP；实际IAB展开相同AI原话与不同依据并验390px。 人工主题又补章节改名/无标题局部原话、持久加密标记和旧观察淘汰保全；真实临时App浏览器保存/重读/停用恢复、390px及最终专项通过。 AI有界正文与已保存文档分段、载荷3备份、实际索引/加密重读/HTTP及浏览器精确尾段已验；新版正文不进入普通图。 同源历史正文的片段外标签定义/使用位置/原始指纹、实际AI与文档独立依据变化通过索引/磁盘/HTTP和临时App页面；旧片段不借当前来源。 非Markdown显式选择/不作Markdown推断、全1000来源筛选可达、实际TXT页面和最终full88已验。 独立main门禁、9999指定启动及离线包本机校验/导入已完成，13会话/配置/挂载保全；见运行交付。",
         "evidence": [
           "docs/tasks/knowledge-timeline-20261009.json",
           "docs/reviews/2026-10-15/storage-fault-live.md",
@@ -596,9 +606,19 @@
           "docs/reviews/2026-10-16/knowledge-conclusion-references.md",
           "docs/reviews/2026-10-16/knowledge-conclusion-references-proof.json",
           "docs/reviews/2026-10-16/knowledge-conclusion-coverage.md",
-          "docs/reviews/2026-10-16/knowledge-conclusion-coverage-proof.json"
+          "docs/reviews/2026-10-16/knowledge-conclusion-coverage-proof.json",
+          "docs/reviews/2026-10-16/workbench-runtime-delivery.md"
         ],
-        "remaining": "独立main门禁、指定启动及离线交付；完整认证Safari/用户SSH时间比较与定位仍待，不把已保存文本覆盖视作完整原文件或模型记忆。"
+        "remaining": "完整认证Safari/用户SSH时间比较与定位、另一设备导入及长期大库边界仍待；不把已保存文本覆盖视作完整原文件或模型记忆。"
+      },
+      "evidence_20261016_conclusion_evolution": {
+        "task": "docs/tasks/knowledge-conclusion-evolution-20261016.json",
+        "status": "pass",
+        "scope": "AI/document historical conclusions and bounded bodies, explicit manual topics, same-source references and independent evidence changes, retained non-Markdown selection and1000-source reachability; actual temporary App indexing/disk/HTTP/browser evidence and full88. Main/runtime/offline local import delivered; authenticated browser/receiving device remain unverified.",
+        "evidence": [
+          "docs/reviews/2026-10-16/knowledge-conclusion-coverage.md",
+          "docs/reviews/2026-10-16/workbench-runtime-delivery.md"
+        ]
       }
     }
   ],
@@ -7619,10 +7639,10 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "Current9999 API/disk all5 values,2 sessions/10 writes,409/400,cleanup pass; full authenticated UI still deferred. Global duplicate control was removed by later user request.",
-    "nextIndependentFocus": "Complete independent clean-main gate/source push, then authorized start.command runtime and offline package delivery. Preserve original12 and separate human/real-host boundaries.",
-    "deliveredMain": "ea333509a591e5046fcff6b295bb881f09f169c3",
-    "mainGate": "pass with exact-input full86 reuse",
-    "currentCheckpointGate": "Current full88 pass; source fingerprint 7af2485aed8c1919543eea56b7ac6b76972cf59d97528cf443137e437de09a26; server race568.610s/all vet, nonroot runtime assets pass. Independent main/runtime/offline remain pending."
+    "nextIndependentFocus": "Complete plugin lifecycle acceptance full/gate and reconcile remaining current authenticated-browser and SSH workflow evidence. Original12 preserved; Windows user-owned and real vectors deferred.",
+    "deliveredMain": "b31be2ffc7beece21035db1aab92f96b0d8fdab5",
+    "mainGate": "Independent clean-main gates pass for knowledge evolution and UI harmony; exact remote main b31be2f verified.",
+    "currentCheckpointGate": "Test-only plugin lifecycle current inputs full88 pass; fp061e94b5c256889fd797ab492b453c91392cbdfd5914f643e6327811e682310e, race556.471s/vet/nonroot19. Independent main gate/push pending; production implementation unchanged, runtime8d636fd remains."
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
@@ -7671,5 +7691,13 @@
       "docs/reviews/2026-10-16/workbench-runtime-delivery.md"
     ],
     "deliveredMain": "512b9c55cd5297d9b62a39b217d8ea4f76d62ee2"
+  },
+  "plugin_capability_lifecycle_20261016": {
+    "task": "docs/tasks/capability-plugin-lifecycle-20261016.json",
+    "status": "in_progress",
+    "classification": "progress",
+    "evidence": [
+      "docs/reviews/2026-10-16/capability-plugin-lifecycle.md"
+    ]
   }
 }
