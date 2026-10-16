@@ -550,6 +550,15 @@
       [
         "node",
         "scripts/knowledge-web-parser.test.cjs"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/crash-monitor.js"
+      ],
+      [
+        "node",
+        "scripts/crash-monitor.test.cjs"
       ]
     ],
     "full": [

@@ -335,6 +335,7 @@ async function api(path, options = {}) {
   const response = await fetch('/api' + path, { ...options, headers });
   const data = await response.json();
   if (!response.ok) {
+    window.AideCrash?.reportServer(data);
     // A wrong lock-screen password is also HTTP 401, but it does not mean the
     // browser's access token expired. Keep the lock screen visible so its own
     // handler can show the password error instead of opening the login dialog.
@@ -4977,7 +4978,9 @@ function renderSystemLogsControl() {
   });
   const refresh = el('button', 'quiet', t('刷新'));
   const download = el('button', 'primary', t('下载日志'));
-  toolbar.append(filter, refresh, download);
+  const crashDiagnostics = el('button', 'quiet', t('崩溃与异常诊断'));
+  crashDiagnostics.type = 'button'; crashDiagnostics.onclick = () => window.AideCrash?.open();
+  toolbar.append(filter, refresh, download, crashDiagnostics);
   const range = el('div', 'system-logs-range');
   const startField = el('label', 'system-logs-date-field');
   const startLabel = el('span', '', t('开始日期时间'));

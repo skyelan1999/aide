@@ -306,7 +306,7 @@ function revealPanel(el,shown){
 function settlePanels(){for(const [el,a]of panelAnimations){a.cancel();if(el.inert)el.hidden=true;}panelAnimations.clear();}
 function openAI(){revealPanel($('ai-body'),true);$('ai-toggle').setAttribute('aria-expanded','true');}
 function say(s){$('status').textContent=s;}
-async function api(p,options={}){const r=await fetch('/api/knowledge-map'+p,{...options,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}});const d=await r.json();if(!r.ok)throw Error(d.error||'读取失败，请回到工作台登录');return d;}
+async function api(p,options={}){const r=await fetch('/api/knowledge-map'+p,{...options,headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'}});const d=await r.json();if(!r.ok){window.AideCrash?.reportServer(d);throw Error(d.error||'读取失败，请回到工作台登录');}return d;}
 function seeded(s){let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}h ^= h >>> 16; h = Math.imul(h, 0x7feb352d); h ^= h >>> 15; h = Math.imul(h, 0x846ca68b); h ^= h >>> 16; return (h>>>0)/4294967296;}
 function skyHash(x,y){let h=Math.imul(x|0,0x45d9f3b)^Math.imul(y|0,0x119de1f3);h=Math.imul(h^(h>>>16),0x45d9f3b);return ((h^(h>>>16))>>>0)/4294967296;}
 function skyNoise(x,y,columns,rows){const px=x*columns,py=y*rows,x0=Math.floor(px),y0=Math.floor(py),fx=px-x0,fy=py-y0,sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy),a=skyHash(x0,y0),b=skyHash(x0+1,y0),c=skyHash(x0,y0+1),d=skyHash(x0+1,y0+1);return (a+(b-a)*sx)+((c+(d-c)*sx)-(a+(b-a)*sx))*sy;}

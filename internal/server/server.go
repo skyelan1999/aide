@@ -1380,7 +1380,7 @@ func (a *App) Handler() http.Handler {
 func (a *App) buildHandler() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", func(w http.ResponseWriter, r *http.Request) {
-		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "integrity": a.integrityStatus()})
+		jsonOut(w, 200, map[string]any{"status": "ok", "service": "aide", "instanceId": a.startedAt.UTC().Format(time.RFC3339Nano), "integrity": a.integrityStatus()})
 	})
 	mux.HandleFunc("GET /api/config", a.config)
 	mux.HandleFunc("GET /api/knowledge-map/index-policy", a.getKnowledgeIndexPolicy)
@@ -1618,7 +1618,7 @@ func (a *App) buildHandler() {
 		}
 		fileServer.ServeHTTP(w, r)
 	}))
-	a.handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	a.handler = recoverHTTP(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 鉴权现状：全程 Bearer Token（Authorization 头 / 受信路径上的 ?access_token=），不使用 Cookie。
 		// 未来若引入 Cookie，必须同时设置 Secure、HttpOnly、SameSite=Lax，且仅在 HTTPS 连接下发。
 		w.Header().Set("X-Content-Type-Options", "nosniff")
@@ -1664,7 +1664,7 @@ func (a *App) buildHandler() {
 			}
 		}
 		mux.ServeHTTP(w, r)
-	})
+	}))
 }
 func (a *App) config(w http.ResponseWriter, r *http.Request) {
 	// edge 健康：先快照（edgeMu），再按需后台探测，最后才拿 a.mu——避免 edgeMu/a.mu 反向加锁死锁。

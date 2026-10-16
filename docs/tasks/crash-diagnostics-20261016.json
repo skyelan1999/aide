@@ -4,7 +4,7 @@
   "baseline": "096cf05534cbefd0c177ba3d59f24a0c5aeff31e",
   "initial_status": "",
   "acceptance": [
-    "Catch early first-party script failures, uncaught exceptions and unhandled rejections; show stable error code, incident ID, source position and redacted stack in a single independent nonmodal notice/detail viewer. Ignore expected aborts and ordinary image failures.",
+    "Catch early first-party script/style failures, uncaught exceptions and unhandled rejections; show stable error code, incident ID, source position and redacted stack in a single independent nonmodal notice/detail viewer. Ignore expected aborts and ordinary image failures.",
     "Bound and deduplicate reports; persist only safe metadata, never raw messages/stacks/secrets. Previous unclean tab termination is labelled uncertain. Locks hide diagnostics. No automatic reload, resend, cancellation or model calls.",
     "Health checks use bounded timeout and consecutive failure threshold; offline/unreachable/restarted service remain distinct from confirmed JS/request panic. Pause probes in background/lock; detect real instance changes.",
     "Server request panic has a stable diagnostic code/incident ID without exposing panic contents; preserve auth/CSP and streaming/hijack semantics. API failures report matching incidents without swallowing normal error handling.",
@@ -14,7 +14,7 @@
     "internal/server/web/crash-monitor.js",
     "internal/server/web/crash-monitor.css",
     "internal/server/web/index.html",
-    "internal/server/web/app.js API error integration",
+    "internal/server/web/app.js API error integration and system-log diagnostic entry",
     "internal/server/web/starmap.html",
     "internal/server/web/locales/en.js",
     "internal/server/crash_diagnostics.go",
@@ -26,7 +26,10 @@
     "docs/tasks/aide-continuity-knowledge-20261009.json",
     "docs/reviews/2026-10-16/crash-diagnostics*",
     "docker-images/README.md",
-    "docker-images/SHA256SUMS"
+    "docker-images/SHA256SUMS",
+    "internal/server/web/starmap.js API error integration",
+    "internal/server/web/starmap.js cache version",
+    "docs/architecture/crash-diagnostics.md"
   ],
   "stages": {
     "requirements": {
@@ -37,25 +40,29 @@
       ]
     },
     "design": {
-      "status": "in_progress",
-      "summary": "Early independent global error/rejection/resource hooks, bounded safe-metadata storage, explicit detail/copy/reload actions; instance-aware foreground health probes and typed server panic replies. Existing diagnostics require debug mode and do not replace crash UI.",
+      "status": "pass",
+      "summary": "Independent early single diagnostic viewer, safe metadata only and manual clipboard; bounded health probes, conservative navigation markers, process-instance identity and request panic recovery preserving used Flusher/Hijacker paths. No auto task/reload actions.",
       "evidence": [
+        "docs/architecture/crash-diagnostics.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Workbench/starmap early hooks, code/ID/source/stack viewer and system-log entry; typed API integration, public instance identity, request panic shielding and locale/cache registration.",
+      "evidence": [
+        "internal/server/web/crash-monitor.js",
+        "internal/server/crash_diagnostics.go",
         "internal/server/server.go",
         "internal/server/web/app.js"
       ]
     },
-    "implementation": {
-      "status": "in_progress",
-      "summary": "Independent frontend monitor/CSS and focused behavioral checks implemented but not wired into production pages yet. Server panic/instance identity, UI entry/localization and actual fault browser checks remain.",
-      "evidence": [
-        "internal/server/web/crash-monitor.js",
-        "scripts/crash-monitor.test.cjs"
-      ]
-    },
     "verification": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Frozen JS regressions, actual isolated browser/native copy and Go race3.127s with real HTTP/download-header/stream isolation pass; quick88 pass. Candidate/full/native normal runtime/main/offline delivery pending.",
+      "evidence": [
+        "docs/reviews/2026-10-16/crash-diagnostics.md",
+        "docs/reviews/2026-10-16/crash-diagnostics-browser-proof.json"
+      ]
     },
     "documentation": {
       "status": "pending",
@@ -75,5 +82,12 @@
   },
   "release_authorization": "Existing incremental main/push/local start.command/offline authorization; no version/tag/Release.",
   "rollback": "Preserve current5183a60 image/package and protected state. Revert only diagnostic frontend/health/recovery changes; no data migration.",
-  "handoff": "Based on unmerged aurora096cf055. Aurora full session4595 is already running an isolated immutable source snapshot; do not reuse it for crash changes. Finish aurora gate on its branch after committing own crash work, then merge main back into this branch before crash release."
+  "handoff": "Crash source frozen in separate worktree. Final quick88 and targeted Go race3.127s pass (root private log go-frozen.log). Root main8ccca842 delivered aura5183a60. Commit scope, merge main and transfer branch to primary checkout before build/start.command so original .env/mounts stay intact; do not reuse aura full. All fixtures stopped/tabs closed; original Safari restored.",
+  "quick_receipt": {
+    "profile": "quick",
+    "status": "pass",
+    "time": "20261016T025743225199Z",
+    "fingerprint": "2a821e78ad99aad72c43ae0031bdcc1fabf87b328d9b799ebcf1b77318e052b2",
+    "head": "7c94f8c3d91a4aeb591cc6edd68875554135365a"
+  }
 }

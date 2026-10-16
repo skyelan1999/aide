@@ -1,0 +1,88 @@
+{
+  "actualUncaughtRuntimeEvent": true,
+  "actualUnhandledRejection": true,
+  "actualSameOriginScriptResourceError": true,
+  "actualHealth503ThresholdNotice": true,
+  "actualFixtureInstanceChangeNotice": true,
+  "typedServerResponse": "Contract fixture; actual Go HTTP panic and committed-stream behavior tested separately",
+  "lockHidNotice": true,
+  "cleanReloadOfferedHistoryMetadata": true,
+  "unknownSourceDisplayFixedAndNativeVerified": true,
+  "nativeSafari": {
+    "copyButtonCompleted": true,
+    "pasteContainsCode": true,
+    "pasteContainsStack": true,
+    "pasteMasksSyntheticCredentials": true,
+    "originalDraftPreservedBeforeClipboardTest": true,
+    "ownedTabClosed": true,
+    "originalWorkbenchSelected": true
+  },
+  "virtualClipboardReadback": "IAB virtual clipboard was empty; not used as copy success evidence",
+  "responsive": {
+    "notice": {
+      "fits": true,
+      "left": 20.125,
+      "right": 374
+    },
+    "dialog": {
+      "bottom": 690.203125,
+      "fits": true,
+      "horizontalOverflow": false,
+      "left": 18,
+      "right": 372,
+      "top": 153.796875,
+      "width": 390
+    }
+  },
+  "newUserWorkspaces": 0,
+  "modelCalls": 0,
+  "temporaryTabsClosed": true,
+  "viewportReset": true,
+  "scope": "Faults injected only into owned isolated page; production faults not injected",
+  "screenshotsSHA256": {
+    "runtime-error.png": "b9fc301ae6c803af3fc02625d18077b13d0efda814e18b48336de11c5f1fedd3",
+    "native-typed-server.png": "ea0ed9880a3177035a2b4a3ab6101b8f564afc0e1df36239c62d084cf1dbebf3",
+    "typed-server-error.png": "810737dad975b5b3156f4dbd892187e0954d59befef24ad52f1b8566de5030b8",
+    "restored-metadata.png": "bf787f6d2de8922e4e4925c71f25227a27c42779ab1a273cb0de2de1d9ddc27b",
+    "native-copy-paste.png": "1d591cecf0930c292ae9eb4bc3596f4d2c7905cfed1bcb742e3ae58d21a43bf9",
+    "narrow-dark.png": "e29474702e4d942f86c1a8e405bda44f814fdd9cd07fd835acc56ac28e375fa7",
+    "narrow-dark-final.png": "d128abeac5c3beec121623066ac1ff8d528fd5aea6bceab2b4117ab2c3bcac68"
+  },
+  "goFocusedEarlierRace": {
+    "status": "pass",
+    "seconds": 2.364,
+    "includesRealHTTPRoundTripAndCommittedStream": true,
+    "finalPreparedDownloadHeaderCase": "latest focused run pending"
+  },
+  "additionalRegressions": [
+    "Unknown source no longer invents undefined filename; observed in fixture then red/green test and native typed response proof.",
+    "URL credential cleanup preserves trailing stack line/column; red/green regression.",
+    "New tab inherited sessionStorage is not an unclean exit; typed server error does not create a second Promise incident."
+  ],
+  "limits": [
+    "Real user production crash not injected.",
+    "Service instance test changes fixture identity rather than killing Go production.",
+    "Final candidate/runtime and full/main/offline release remain pending."
+  ],
+  "goFocusedFinalRace": {
+    "status": "pass",
+    "seconds": 3.127,
+    "command": "go test -mod=vendor -race -count=1 -timeout=90s -run '^TestCrash' ./internal/server",
+    "realHTTPRoundTrip": true,
+    "preparedDownloadHeaderCleanup": true,
+    "committedStreamAndHealthyFollowup": true,
+    "sourceSHA256": {
+      "internal/server/crash_diagnostics.go": "62731a3fa34bfe3c3764e46157cd724c8f1116d86f1dd3c217dc16b2677b9bfc",
+      "internal/server/crash_diagnostics_test.go": "2bca5f453301e9fecd0505028764683abeb00d031a9f6404b4e1d20671f6ce77",
+      "internal/server/server.go": "e2cf49fdcdf788db1d73c6778d8de7279ec212d616a70bff637f83141fe06742"
+    }
+  },
+  "quickFrozen": {
+    "profile": "quick",
+    "status": "pass",
+    "time": "20261016T025743225199Z",
+    "fingerprint": "2a821e78ad99aad72c43ae0031bdcc1fabf87b328d9b799ebcf1b77318e052b2",
+    "head": "7c94f8c3d91a4aeb591cc6edd68875554135365a",
+    "commands": 88
+  }
+}
