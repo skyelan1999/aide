@@ -1,0 +1,73 @@
+{
+  "id": "lock-windows-hotfix-20261016",
+  "request": "锁屏输入密码后无法进入，显示锁屏状态已变化，请重新解锁；尽快修复发布，并检查 Windows 无法启动的脚本",
+  "baseline": "b7c4eb2330dcebd65bad3f5f20f9d2cfdb37a63f",
+  "initial_status": "M docker-images/SHA256SUMS\n?? docs/reviews/2026-10-16/evidence/plugin-upgrade-main-source.png",
+  "acceptance": [
+    "密码验证期间标签页重新选举仍可解锁，新的锁定仍使旧凭据失效",
+    "Windows CAD 安装脚本兼容 CRLF 检出；Windows 实机验收由用户负责",
+    "更新本机 start.command 实例、离线包、文档并推送 main"
+  ],
+  "scope": [
+    "锁屏前端及回归测试",
+    "Docker CAD 脚本换行兼容、Git 属性及回归测试",
+    "任务文档、离线包和运行验证"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "紧急锁屏恢复、Windows 照片定位 CAD 安装退出，用户承担 Windows 实机验收。",
+      "evidence": [
+        "用户最新请求、错误照片"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "解锁权限绑定服务端代次，跨选举保留本地验证；Git LF 约束与 CAD 构建时修复旧 CRLF 检出。",
+      "evidence": [
+        "internal/server/web/lock-cluster.js",
+        "Dockerfile",
+        "docker/Dockerfile.cad"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "代次绑定解锁凭据跨选举保留；构建入口规范 CRLF，并声明 LF Git 属性。",
+      "evidence": [
+        "internal/server/web/lock-cluster.js",
+        ".gitattributes",
+        "Dockerfile",
+        "docker/Dockerfile.cad"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Node 多标签回归、CRLF 回归和 Windows 静态生命周期通过；Safari 错误/正确密码及刷新通过。发布全量回归待完成。",
+      "evidence": [
+        "scripts/lock-cluster-state.test.js",
+        "scripts/test_cad_windows_checkout.py",
+        "docs/reviews/2026-10-16/evidence/lock-hotfix-unlocked.png"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "记录复现、修复、安全边界、Windows 用户验收及证据。",
+      "evidence": [
+        "docs/reviews/2026-10-16/lock-windows-hotfix.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户：需要你尽快修一下然后发布；Windows不用验收，我会测试。沿用 main 推送、本机更新、离线镜像包交付。",
+  "rollback": "保留 b7c4eb23 源码和 5c5876dd6049 镜像，以及 dc2cacc1c0f6 离线回滚包；不重置密码或清除用户数据。",
+  "handoff": ""
+}

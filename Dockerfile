@@ -8,7 +8,8 @@ FROM ${PYTHON_BASE} AS python
 FROM ${PYTHON_BASE} AS cad
 COPY docker/cad/requirements.txt /cad-requirements.txt
 COPY docker/cad/install.sh /cad-install.sh
-RUN sh /cad-install.sh
+# Also repair existing Windows checkouts created before the LF attributes.
+RUN sed -i 's/\r$//' /cad-install.sh /cad-requirements.txt && sh /cad-install.sh
 FROM golang:1.26-bookworm AS toolchain
 COPY --from=python /usr/local /usr/local
 RUN ldconfig

@@ -138,7 +138,7 @@
   function backgroundReconfirm() { setTimeout(()=>fetchBackendState(),800); }
 
   function effectiveLocked() {
-    if (phase === 'master') return masterLocked;
+    if (phase === 'master') return masterLocked && !localDismiss;
     if (phase === 'slave') return !!lastSeenMasterLocked && !localDismiss;
     return false; // joining 期间由 app 显示中性面纱
   }
@@ -164,7 +164,7 @@
     masterGen++;
     emit('role','master');
     masterLocked = !!inheritLocked;
-    localDismiss = false;
+    localDismiss = localDismiss && !!inheritLocked && backendState?.gen === dismissGen;
     masterFrom = tabId;
     clearT(joinTimer); joinTimer = null;
     clearT(electionTimer); electionTimer = null;
@@ -176,7 +176,7 @@
   function becomeSlave(from, mLocked, gen) {
     const wasJoining=phase==='joining';
     if(wasJoining && backendState && !pendingWrites)mLocked=backendState.locked;
-    const keepDismiss=phase==='slave' && masterFrom===from && localDismiss;
+    const keepDismiss=localDismiss && backendState?.gen===dismissGen;
     phase = 'slave';
     clearT(heartbeatTimer); heartbeatTimer=null;
     emit('role','slave');
@@ -348,7 +348,9 @@
       emit('effective',false);
     } else {
       if(!current.locked){emit('effective',false);return;}
-      if(phase!=='slave'||current.gen!==scope?.gen)throw new Error('锁屏状态已变化，请重新解锁');
+      // The server verified this generation. A leader election during password
+      // hashing changes the tab role, not the validity of the identity receipt.
+      if(current.gen!==scope?.gen)throw new Error('锁屏状态已变化，请重新解锁');
       localDismiss=true;dismissGen=current.gen;
       emit('effective',effectiveLocked());
     }

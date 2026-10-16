@@ -617,6 +617,10 @@
       [
         "node",
         "scripts/plugin-upgrade.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_cad_windows_checkout.py"
       ]
     ],
     "full": [

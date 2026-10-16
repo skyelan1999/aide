@@ -3,3 +3,8 @@ internal/server/web/vendor/markdown-export/jspdf.umd.min.js whitespace=-blank-at
 # Preserve original OCCT license bytes and generated STEP exchange formatting.
 scripts/cad/licenses/OCCT-LGPL-2.1.txt whitespace=-blank-at-eol
 scripts/fixtures/cad/fidelity.step whitespace=-blank-at-eol
+
+# Linux container entry points must survive Windows core.autocrlf checkouts.
+*.sh text eol=lf
+*.command text eol=lf
+docker/cad/requirements.txt text eol=lf

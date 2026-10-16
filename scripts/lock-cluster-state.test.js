@@ -84,6 +84,17 @@ function environment(){
  const oldReceipt={locked:false,gen:d.server.gen};await primary.lc.requestLock();
  await assert.rejects(primary.lc.handleUnlockSuccess(stale,oldReceipt));assert.equal(primary.lc.effectiveLocked(),true,'new lock defeated by prior verified receipt');
  await assert.rejects(primary.lc.handleUnlockSuccess(stale,{locked:false,gen:stale.gen+9}),'receipt must match the identity request generation');
+ // A sleeping/closed leader can disappear during password verification. The
+ // server verified this exact generation; local dismissal must survive election.
+ const r=environment(),leader=r.tab('/');await r.advance(1800);
+ const follower=r.tab('/');await r.advance(1800);await leader.lc.requestLock();await r.advance(30);
+ const duringElection=await follower.lc.prepareUnlock();assert.equal(duringElection.global,false);
+ leader.close();await r.advance(1800);assert(follower.lc.isMaster());
+ await follower.lc.handleUnlockSuccess(duringElection,{locked:true,gen:r.server.gen});
+ assert.equal(follower.lc.effectiveLocked(),false,'valid local receipt rejected after leader election');
+ assert.equal(r.server.locked,true,'local receipt cleared global authority');
+ await r.advance(5500);assert.equal(follower.lc.effectiveLocked(),false,'same-generation poll lost verified dismissal');
+ await follower.lc.requestLock();assert.equal(follower.lc.effectiveLocked(),true,'new manual lock must revoke local dismissal');
  // The app continuation must not hide a new lock arriving across its await.
  const app=fs.readFileSync('internal/server/web/app.js','utf8');
  const dismiss=app.match(/async function dismissAfterUnlock\([^]*?\n}/)[0],veil={hidden:false,classList:{remove(){}}};

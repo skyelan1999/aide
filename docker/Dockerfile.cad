@@ -2,5 +2,6 @@ ARG PYTHON_BASE=python:3.12-slim-bookworm
 FROM ${PYTHON_BASE}
 COPY docker/cad/requirements.txt /cad-requirements.txt
 COPY docker/cad/install.sh /cad-install.sh
-RUN sh /cad-install.sh
+# Also repair existing Windows checkouts created before the LF attributes.
+RUN sed -i 's/\r$//' /cad-install.sh /cad-requirements.txt && sh /cad-install.sh
 LABEL aide.cad-runtime="8.0.1.1.0"
