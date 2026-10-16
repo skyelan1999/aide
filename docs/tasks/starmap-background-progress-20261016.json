@@ -78,7 +78,9 @@
     "cleanup": {
       "status": "pass",
       "summary": "Exact outgoing files reviewed; temporary sources restored byte-for-byte, no user session/config/volume/model deletion. Own unpublished intermediates removed, published rollback and final complete packages preserved. Original history backup retained; bounded test index observations are not falsely described as unchanged user history.",
-      "evidence": []
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/starmap-background-cleanup-proof.json"
+      ]
     },
     "release": {
       "status": "in_progress",
