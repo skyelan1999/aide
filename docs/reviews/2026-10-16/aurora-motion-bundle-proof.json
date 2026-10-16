@@ -1,0 +1,21 @@
+{
+  "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-5183a60ed4be-offline.tar.gz",
+  "bytes": 706069936,
+  "sha256": "ce4007628097d74852a60430825948c28476606fd5e46c28b9d21f39157ab9bc",
+  "innerImageTarSHA256": "2b843c55e0f5bc9f7b488e39905aa69d4d7a080b4d5cd71384680b502823705a",
+  "image": "sha256:5183a60ed4be142258bf52ef41ea380a59c9cbc2d5e4ce040c644519752495f7",
+  "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+  "build": {
+    "version": "0.1.17.0-RC2",
+    "image": "sha256:5183a60ed4be142258bf52ef41ea380a59c9cbc2d5e4ce040c644519752495f7",
+    "platform": "linux/arm64",
+    "srcsha": "42932fbc14e9692584880674b975bec2ca2fd814b0eaa4f89056d3fb3fb867f1",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
+  },
+  "licenseInBundle": true,
+  "licenseInImage": true,
+  "outerAndInnerChecksums": "pass",
+  "localDockerImport": "pass",
+  "runningImagePreserved": true,
+  "receivingDeviceImport": "not_run"
+}

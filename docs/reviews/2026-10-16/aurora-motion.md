@@ -5,3 +5,7 @@ Task: [aurora-motion-20261016](../../tasks/aurora-motion-20261016.json). The use
 Production JS/CSS was opened in an isolated browser component. Independent computed-transform samples confirm both layers move. Actual motion-control input pauses both, and a later sample confirms stable transforms. Off removes both layers and hides the background; re-enabling creates exactly two running layers. Light/dark screenshots were visually inspected;390px has no horizontal document overflow. See [component evidence](aurora-motion-component-proof.json). This is not native workbench/runtime acceptance.
 
 Existing local video/GIF/WebP lifecycle tests pass, including visibility/lock/reduced-motion, late local media responses, pagehide/pageshow and resource release. Lifecycle regression additionally checks preference refresh does not accumulate aurora layers. Temporary component tab/server closed and viewport override reset. Full gate, candidate/runtime/native acceptance and main/offline delivery remain pending.
+
+## Candidate
+
+Image sha256:5183a60ed4be142258bf52ef41ea380a59c9cbc2d5e4ce040c644519752495f7, build414da4dabe1c9ffd9c315692efe1dd2e1816e46d, source SHA 42932fbc14e9692584880674b975bec2ca2fd814b0eaa4f89056d3fb3fb867f1. Complete offline bundle 706069936 bytes, SHA-256 ce4007628097d74852a60430825948c28476606fd5e46c28b9d21f39157ab9bc. Checksums, image tags, launcher/license and local actual import passed; receiving device untested. See [bundle proof](aurora-motion-bundle-proof.json).

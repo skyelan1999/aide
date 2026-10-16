@@ -1,3 +1,7 @@
+## 2026-10-16 Dynamic aurora candidate (build record)
+
+Candidate5183a60ed4be (build414da4da) adds two independently moving soft aurora layers with pause/release controls. Offline bundle `aide-0.1.17.0-RC2-linux-arm64-5183a60ed4be-offline.tar.gz`, 706069936 bytes, SHA-256 `ce4007628097d74852a60430825948c28476606fd5e46c28b9d21f39157ab9bc`. Inner/outer checksums and actual local Docker import passed. Full/native/main delivery state: [acceptance report](../docs/reviews/2026-10-16/aurora-motion.md). Receiving-device import untested; keep8d1957c9 rollback.
+
 ## 2026-10-16 Save-status replacement candidate (build record)
 
 Candidate8d1957c9b0c9 (build22a15eaf) additionally fixes input during acknowledged local draft cleanup. Full offline bundle `aide-0.1.17.0-RC2-linux-arm64-8d1957c9b0c9-offline.tar.gz`, 706070195 bytes, SHA-256 `af0398cd1e350ff516ae6f5a46fee3f945ac015c6bb4c989b87a4a16e33d74bb`. Inner/outer checksums and actual local Docker import passed. Earlier7cb76e39 is superseded. Final full/main/runtime/native state: [acceptance report](../docs/reviews/2026-10-16/file-save-status.md). Receiving-device import untested; retain prior image/package for rollback.
