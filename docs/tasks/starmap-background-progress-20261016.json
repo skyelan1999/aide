@@ -84,7 +84,7 @@
       "evidence": []
     }
   },
-  "release_authorization": "Standing user authorization: incremental implementation/testing/push main, update complete offline Docker packages; no native Windows acceptance.",
+  "release_authorization": "本会话上文用户明确要求“还是一样，做一部分，push一部分，测一部分”“做完这个把所有内容和到main上”，并要求“后续的仓库和release包都应该具备快速导入和启动的能力”。本批次沿用同一 AIDE 项目授权：main 与现有 RC2 补充完整镜像包，不升版、不改原 tag。Windows 由用户验收。",
   "rollback": "Retain published e5baab8f runtime ab8df956 and complete archives; never remove user data. New candidate runtime requires protected-state snapshot and original start.command.",
   "handoff": "Frozen product 9ff84f3b source3c6f4e12f99c active via original start.command. Both complete packages independently verified after deployment settled. Finish fresh smoke/full/gate, then upload/verify public assets and push main. Do not modify frozen product inputs. Original12 and preview follow-up remain open."
 }
