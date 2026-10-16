@@ -1,0 +1,115 @@
+{
+  "status": "native_and_complete_packages_pass_full_pending",
+  "mergedRemoteMain": "9740a4f2404663938bcb77127eef7dfaafa354ad",
+  "code": "ba9e5a3b847add8f643c42869b1658c90a00ba1d",
+  "source": "3e5b6439ba07e2eaff86fa652b3f8ac6ca92b611585f3734d4b45e12e4d45489",
+  "runtime": "sha256:e729ba4f061bb87321e6296be10d600d2dbbf4e867437d2f589e584f4fe2b54d",
+  "nativeSafari": {
+    "sixStepStaticEvidencePath": true,
+    "confidenceAndSourceLabels": true,
+    "sameTabServiceLine4Selected": true,
+    "exactSelectedText": "func handler(w http.ResponseWriter,r *http.Request){service()}",
+    "originalMapReturn": true,
+    "newTabs": 0,
+    "modelCalls": 0
+  },
+  "runtimeChecks": {
+    "healthy": true,
+    "actualServedAssetsEqualMergedWorktree": true,
+    "protectedAuthSettings14SessionsAndMountsUnchanged": true,
+    "sourceRegistryRestoredByteForByte": true,
+    "originalMapAndWorkbenchTabRestored": true,
+    "temporarySourceAbsentFromRenderedMap": true
+  },
+  "completePackages": {
+    "status": "pass",
+    "packages": [
+      {
+        "status": "pass",
+        "platform": "linux/arm64",
+        "archive": "aide-0.1.17.0-RC2-linux-arm64-e729ba4f061b-offline.tar.gz",
+        "bytes": 770922027,
+        "sha256": "c67bab75cda1f1eb60b8242187511bbc441888c3ee7da4badf550af6b2db72b8",
+        "innerImageTarSHA256": "575f638e4fa276f66e945b7eb6dc71f5cdc9af4e7c481a2a68b5b385072c227e",
+        "image": "sha256:e729ba4f061bb87321e6296be10d600d2dbbf4e867437d2f589e584f4fe2b54d",
+        "sourceSHA256": "3e5b6439ba07e2eaff86fa652b3f8ac6ca92b611585f3734d4b45e12e4d45489",
+        "exactLaunchersAndLicenses": true,
+        "localImport": true,
+        "privateDataAbsent": true,
+        "remoteUpload": "pending",
+        "receivingDevice": "not_run"
+      },
+      {
+        "status": "pass",
+        "platform": "linux/amd64",
+        "archive": "aide-0.1.17.0-RC2-linux-amd64-2e17e83905d2-offline.tar.gz",
+        "bytes": 774146451,
+        "sha256": "482ac15adb97a5e9331b9034e53929303dfdaf8d7425e245b38806bb328d04f3",
+        "innerImageTarSHA256": "64eb2db7d27648573529c73afe59470c298a3f60e06a69a98dda4075e8a2509a",
+        "image": "sha256:2e17e83905d237c7e40f4bb84cda35dca63183284b794d353697be2df73fbdc9",
+        "sourceSHA256": "3e5b6439ba07e2eaff86fa652b3f8ac6ca92b611585f3734d4b45e12e4d45489",
+        "exactLaunchersAndLicenses": true,
+        "localImport": true,
+        "privateDataAbsent": true,
+        "remoteUpload": "pending",
+        "receivingDevice": "not_run"
+      }
+    ],
+    "productionImagePreserved": true
+  },
+  "full": "pending",
+  "publication": "pending",
+  "screenshots": [
+    "integrated-six-step-path.png",
+    "integrated-service-line4.png"
+  ],
+  "earlierScopedNativeEvidence": "knowledge-path-runtime-candidate-proof.json",
+  "freshOfflineStartup": {
+    "status": "pass",
+    "archive": "aide-0.1.17.0-RC2-linux-arm64-e729ba4f061b-offline.tar.gz",
+    "freshAuthDirectoryPrepared": true,
+    "actualStartCommand": true,
+    "documentLine": {
+      "line": 3,
+      "matchedRawFileHash": true,
+      "blankLineAndCRLFPreserved": true,
+      "actualCompiledImageAPI": true
+    },
+    "image": "sha256:e729ba4f061bb87321e6296be10d600d2dbbf4e867437d2f589e584f4fe2b54d",
+    "sameImageForWorkbenchAndCAD": true,
+    "noBuildOrPull": true,
+    "nativeGeometry": {
+      "kind": "complete",
+      "engine": "occt-native",
+      "triangles": 120,
+      "segments": 0,
+      "points": 0,
+      "emptyNodes": 0,
+      "parts": 2,
+      "faces": 9,
+      "meshedFaces": 9,
+      "collapsedFaces": 0,
+      "bounds": [
+        [
+          -55.0,
+          -5.0,
+          0.0
+        ],
+        [
+          100.0,
+          20.0,
+          35.0
+        ]
+      ],
+      "unit": "mm",
+      "linearDeflection": 0.1,
+      "recoveredFaces": 0,
+      "nurbsFaces": 0,
+      "seconds": 0.0929849169915542
+    },
+    "privateReadOnlyWorkerCredentialMount": true,
+    "privateNetworkNoHostPorts": true,
+    "productionImageUnchanged": true,
+    "receivingDevice": "not_run"
+  }
+}
