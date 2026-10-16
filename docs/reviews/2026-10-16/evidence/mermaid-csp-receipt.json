@@ -116,7 +116,18 @@
     "runningImagePreserved": true,
     "receivingDeviceImport": "not_run"
   },
-  "fullMainGate": "pending",
+  "fullMainGate": {
+    "status": "pass",
+    "profile": "full",
+    "fingerprint": "8892eb3d66482561f0d157a3a94caa3def1d36212436a4e88ce49809577e10f7",
+    "head": "20fd013531b8c9007eb43c52b7706524a1b5482a",
+    "time": "20261016T082824717093Z",
+    "log": ".agent-state/verify-20261016T082824717093Z.log",
+    "checks": 102,
+    "releaseCheck": "pass",
+    "verifiedRemoteMain": "20fd013531b8c9007eb43c52b7706524a1b5482a",
+    "followup": "Final receipt changes docs only; executable inputs unchanged."
+  },
   "limitations": [
     "Receiving device import not_run",
     "Native Windows/amd64 not_run",

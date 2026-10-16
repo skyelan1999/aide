@@ -42,7 +42,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Node CSSOM lifecycle/theme/source/contrast regression passes. Safari strict-CSP baseline reproduces black; fixed light/dark four diagram types, author colours, detached cleanup and actual9999 Markdown preview pass. Runtime/protected-data and bundle import pass; full main pending.",
+      "summary": "Node CSSOM lifecycle/theme/source/contrast regression passes. Safari strict-CSP baseline reproduces black; fixed light/dark four diagram types, author colours, detached cleanup and actual9999 Markdown preview pass. Runtime/protected-data and bundle import pass; full102 on cleanmain20fd0135 and release-check pass.",
       "evidence": [
         "scripts/markdown-diagrams.test.cjs",
         "scripts/fixtures/serve-mermaid-csp.py",
@@ -54,7 +54,7 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "Architecture records CSP-compatible CSSOM and SVG text rendering; current261Markdown849links pass. Final receipt pending.",
+      "summary": "Architecture, task, review and sanitized browser/runtime/bundle/full receipts updated;262Markdown853links pass.",
       "evidence": [
         "docs/architecture.md"
       ]
@@ -67,9 +67,11 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source105fbcef running throughstart.command on9999; completeARM64bundle verified/imported. Fresh offline pass; await fullmain/releasecheck/push. No version/tag/Release.",
+      "status": "pass",
+      "summary": "Cleanmain20fd0135 full102 and release-check pass; main andtaskbranch pushed; remote main verified exactly. Runtime105fbcef/DCimage active on9999 through start.command; completeARM64bundle checksum/import/fresh-start pass. Final receipt docs-only; no version/tag/Release.",
       "evidence": [
+        "docs/reviews/2026-10-16/mermaid-black.md",
+        "docs/reviews/2026-10-16/evidence/mermaid-csp-receipt.json",
         "docker-images/README.md",
         "docker-images/SHA256SUMS"
       ]
@@ -77,7 +79,7 @@
   },
   "release_authorization": "Prior incremental main/local start.command/offline package updates authorized; no version/tag/Release.",
   "rollback": "Revert task source commit; preserve existing runtime image bd2ac35b6a62, offline bundle and all user data.",
-  "handoff": "Runtime/UI/offline/import/fresh-start pass. Freeze executable inputs andDockerREADME/SUMS; cleanmain full102, releasecheck andpush remain. Only docs receipts should change after full.",
+  "handoff": "Mermaid black-rendering task complete; source105fbcef, cleanmain20fd0135 full102 and remote verification pass, followed only by final documentation receipt. RuntimeDCimage and completeofflineARM64bundle active/verified. Original data, UI preferences, sessions and rollbackBDimage/package preserved. Receiving device/nativeWindows/amd64/actualPDFexport remain not_run. Other master workstreams remain open.",
   "runtime": {
     "serverInstanceId": "2026-10-16T08:25:56.272862256Z",
     "image": "sha256:dc2cacc1c0f68cfdb2992540ea24fbebcd0aabede41bb6aee4ca13ecd436af91",
@@ -186,5 +188,17 @@
     "privateNetworkNoHostPorts": true,
     "productionImageUnchanged": true,
     "receivingDevice": "not_run"
+  },
+  "fullMainGate": {
+    "status": "pass",
+    "profile": "full",
+    "fingerprint": "8892eb3d66482561f0d157a3a94caa3def1d36212436a4e88ce49809577e10f7",
+    "head": "20fd013531b8c9007eb43c52b7706524a1b5482a",
+    "time": "20261016T082824717093Z",
+    "log": ".agent-state/verify-20261016T082824717093Z.log",
+    "checks": 102,
+    "releaseCheck": "pass",
+    "verifiedRemoteMain": "20fd013531b8c9007eb43c52b7706524a1b5482a",
+    "followup": "Final receipt changes docs only; executable inputs unchanged."
   }
 }
