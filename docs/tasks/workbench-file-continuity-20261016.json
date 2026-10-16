@@ -1,0 +1,76 @@
+{
+  "id": "workbench-file-continuity-20261016",
+  "request": "继续原12项目标：使用专用临时文件完成真实Safari编辑、保存、历史恢复与刷新恢复，保护原文件会话，记录直接证据",
+  "baseline": "91916af4e984b6fd81d1cac34766d2b337294d1f",
+  "initial_status": "",
+  "acceptance": [
+    "Actual authenticated Safari opens owned Markdown with embedded SVG, edits and saves with API/disk readback.",
+    "History detects body/resource changes, compares/restores an owned earlier whole version; unchanged observation does not add versions.",
+    "Refresh/reopen restores relevant file/draft state without sending a model request; record precise cursor/scroll limitations.",
+    "Restore original scene and clean only owned fixture after ownership/content checks; document all actual evidence, keep original12 and deferrals.",
+    "Actual Safari external-change conflict refuses silent overwrite, exposes local/server comparison, and completes an explicit resolution with independent readback."
+  ],
+  "scope": [
+    "docs/tasks/workbench-file-continuity-20261016.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-16/workbench-file-continuity*",
+    "Owned temporary system-docs fixture and its scoped history/recovery records",
+    "docs/reviews/2026-10-16/continuity-current-audit.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Current authenticated Safari available; actual file/editor/history flow remains original goal gap. Use only owned synthetic fixture under writable system-docs.",
+      "evidence": [
+        "docs/reviews/2026-10-16/continuity-current-audit.md"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Create exclusive synthetic Markdown/SVG fixture, native UI edits/restoration and independent reads; no model call or original file edits. Retain ownership checks and exact cleanup boundaries.",
+      "evidence": [
+        "docs/tasks/workbench-file-continuity-20261016.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Actual native Safari edit/save, SVG external history, two-file whole-version restore, refresh/local-draft prompt/recovery, rejected overwrite/conflict comparison and explicit merge/save all independently verified by API/disk. Owned fixture removed with exact checks; original listing/config/auth/source/session bytes exact. No product changes, exact full88 input reuse.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-file-continuity.md",
+        "docs/reviews/2026-10-16/workbench-file-continuity-proof.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Actual native Safari edit/save, SVG external history, two-file whole-version restore, refresh/local-draft prompt/recovery, rejected overwrite/conflict comparison and explicit merge/save all independently verified by API/disk. Owned fixture removed with exact checks; original listing/config/auth/source/session bytes exact. No product changes, exact full88 input reuse.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-file-continuity.md",
+        "docs/reviews/2026-10-16/workbench-file-continuity-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Actual native Safari edit/save, SVG external history, two-file whole-version restore, refresh/local-draft prompt/recovery, rejected overwrite/conflict comparison and explicit merge/save all independently verified by API/disk. Owned fixture removed with exact checks; original listing/config/auth/source/session bytes exact. No product changes, exact full88 input reuse.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-file-continuity.md",
+        "docs/reviews/2026-10-16/workbench-file-continuity-proof.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Actual native Safari edit/save, SVG external history, two-file whole-version restore, refresh/local-draft prompt/recovery, rejected overwrite/conflict comparison and explicit merge/save all independently verified by API/disk. Owned fixture removed with exact checks; original listing/config/auth/source/session bytes exact. No product changes, exact full88 input reuse.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-file-continuity.md",
+        "docs/reviews/2026-10-16/workbench-file-continuity-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental tests/docs/push/main authorization; no runtime/source change planned.",
+  "rollback": "Delete only exclusive owned fixture after exact identity/content checks; preserve original files, source configuration, sessions and historical evidence.",
+  "handoff": "Local scoped file/history/draft/conflict UI flows passed. Original12 remain open: exact caret/scroll, SSH and remaining authorization/outcome/map/timeline workflows, Windows user-owned and vectors deferred. Main gate/push pending."
+}

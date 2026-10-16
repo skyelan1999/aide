@@ -6993,28 +6993,48 @@
         "evidence": [
           "docs/tasks/cancelled-output-context-20261015.json",
           "docs/reviews/2026-10-15/cancelled-output-context.md"
-        ]
+        ],
+        "latest_local_ui_20261016": {
+          "status": "scoped_pass",
+          "report": "docs/reviews/2026-10-16/workbench-file-continuity.md",
+          "scope": "Native current9999 Markdown/SVG edit/save/history restore, refresh draft recovery and explicit conflict merge; exact API/disk and protected cleanup. Exact caret/scroll, SSH and remaining boundaries not covered."
+        }
       },
       {
         "name": "保存状态与冲突",
         "requirement": "区分本地记录和服务器保存；断网保留、409暂停、对比合并、重试、不静默覆盖",
         "status": "in_progress",
         "historical_remaining_20261014": "本地合并、服务中断重试与SSH保存已验证；修复后的SSH历史恢复自动保存开关需直接复验，物理网络中断仍未测。",
-        "current_verified_scope": "本轮未重新验收该工作流全部要求。"
+        "current_verified_scope": "本轮未重新验收该工作流全部要求。",
+        "latest_local_ui_20261016": {
+          "status": "scoped_pass",
+          "report": "docs/reviews/2026-10-16/workbench-file-continuity.md",
+          "scope": "Native current9999 Markdown/SVG edit/save/history restore, refresh draft recovery and explicit conflict merge; exact API/disk and protected cleanup. Exact caret/scroll, SSH and remaining boundaries not covered."
+        }
       },
       {
         "name": "Markdown 历史闭环",
         "requirement": "正文+嵌入资源整版恢复；外部编辑检测、无实际变更不追加、存储与备份管理",
         "status": "in_progress",
         "historical_remaining_20261014": "本地/SSH SVG及本地CSV、draw.io源文件、ZIP附件外部更新/整版恢复已验证；不等于draw.io嵌入渲染通过，其他嵌入类型和备份管理交互未全部覆盖。",
-        "current_verified_scope": "本轮未重新验收该工作流全部要求。"
+        "current_verified_scope": "本轮未重新验收该工作流全部要求。",
+        "latest_local_ui_20261016": {
+          "status": "scoped_pass",
+          "report": "docs/reviews/2026-10-16/workbench-file-continuity.md",
+          "scope": "Native current9999 Markdown/SVG edit/save/history restore, refresh draft recovery and explicit conflict merge; exact API/disk and protected cleanup. Exact caret/scroll, SSH and remaining boundaries not covered."
+        }
       },
       {
         "name": "真实环境验收",
         "requirement": "本地及可用SSH：创建/修改/保存/重开/恢复、跨会话审批、锁屏与长时间打开；Windows用户已自行测试并表示无需后续验收",
         "status": "in_progress",
         "historical_remaining_20261014": "Safari锁态同步与点击解锁、隔离SSH及实际9999跨会话精确命令审批已有证据；键盘锁入口、长时间使用和其余远程边界未完整验证；Windows由用户实测且无需后续验收。",
-        "current_verified_scope": "本轮未重新验收该工作流全部要求。"
+        "current_verified_scope": "本轮未重新验收该工作流全部要求。",
+        "latest_local_ui_20261016": {
+          "status": "scoped_pass",
+          "report": "docs/reviews/2026-10-16/workbench-file-continuity.md",
+          "scope": "Native current9999 Markdown/SVG edit/save/history restore, refresh draft recovery and explicit conflict merge; exact API/disk and protected cleanup. Exact caret/scroll, SSH and remaining boundaries not covered."
+        }
       },
       {
         "name": "任务成果舱",
@@ -7671,7 +7691,7 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "Actual authenticated file/editor/history/restore and conflict workflow, approval/outcome/timeline UI; continue cloud-body gaps and map budgets without treating partial index as complete. Original12 retained, Windows user-owned and real vectors deferred.",
+    "nextIndependentFocus": "Exact file cursor/scroll and SSH scene/history/autosave restore, actual approval/outcome/timeline UI. Local Markdown/SVG draft/history/conflict flows now directly verified; original12 retained.",
     "deliveredMain": "a0ec89b03bd97aac18089f1d9b31250d980f67ae",
     "mainGate": "Dedup source/package input full88 pass; independent clean-main gate and exact pusha0ec89b0 verified. Later runtime documentation reuses exact inputs; runninga8c22d43 and native Safari proof recorded separately.",
     "currentCheckpointGate": "Dedup full88/server race679.813s/vet pass, independent main gate and exact source pusha0ec89b0 verified. Runtimea8c22d43 actual Safari20052/single context, DOCX preview/cleanup and offline local import pass. Exact session39 startup approvalState-only normalization documented, all other protected state preserved."
@@ -7772,5 +7792,11 @@
     "task": "docs/tasks/knowledge-context-dedup-20261016.json",
     "report": "docs/reviews/2026-10-16/knowledge-context-dedup.md",
     "scope": "Final full88 and main gate/pusha0ec89b0 pass; runtimea8c22d43/start.command, actual Safari20052/single context and DOCX preview pass;14 sessions retained with exact startup review-state-only normalization proof. Offline local import pass, receiving device pending. Original12 retained."
+  },
+  "workbench_file_continuity_20261016": {
+    "status": "scoped_pass",
+    "task": "docs/tasks/workbench-file-continuity-20261016.json",
+    "report": "docs/reviews/2026-10-16/workbench-file-continuity.md",
+    "evidence": "Actual native local Markdown/SVG save/history/full restore, explicit refresh draft recovery and conflict merge; API/disk exact, original protected files/listing exact after owned cleanup. No model calls. SSH/caret/scroll/other original workflows remain open."
   }
 }

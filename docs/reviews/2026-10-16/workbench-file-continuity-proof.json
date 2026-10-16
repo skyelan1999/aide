@@ -1,0 +1,87 @@
+{
+  "save": {
+    "nativeSaveAPIAndDiskExact": true,
+    "savedSHA256": "522fb88a5e6edaf4e218ec87a356bf8d291e70cb5016a9511db5fbdedd794621",
+    "historyTotal": 2,
+    "historyKeys": [
+      "enabled",
+      "observation",
+      "observationChange",
+      "observationError",
+      "path",
+      "total",
+      "trackEmbedded",
+      "versions"
+    ]
+  },
+  "restore": {
+    "restoredAPIAndDiskExact": {
+      "notes.md": "d649940222ee9ac892c600477f5fb0bbbbc3f6e611d1a713424f0af46e6da876",
+      "diagram.svg": "79e8297616ab1b2129a7863d1275a3838048bc86e5a9da7b50a8ae86ac199884"
+    },
+    "historyTotal": 4,
+    "unchangedObservationDoesNotAppend": true
+  },
+  "draft": {
+    "nativeRefreshReopenedOwnedFile": true,
+    "explicitLocalDraftRecoveryPrompt": true,
+    "nativeRecoveredV3Marker": true,
+    "autoSaveRemainedOff": true,
+    "serverStillV1AfterRecovery": true,
+    "historyStill4": true,
+    "modelsInvoked": 0,
+    "limits": "Caret/scroll exact offsets not verified by native AX; SSH not covered."
+  },
+  "conflict": {
+    "actualNativeConflictDialog": true,
+    "localV3AndServerV4Visible": true,
+    "serverAndDiskV4PreservedOnRejectedSave": true,
+    "explicitMergeAdoptAndSave": true,
+    "mergedAPIAndDiskExact": true,
+    "mergedSHA256": "0429f4fe64a3025e950fa5f6244784f63ae87ef4872e21443745f329c20e72db"
+  },
+  "cleanup": {
+    "ownedFixtureDirectoryDeleted": true,
+    "exactOwnedContentsCheckedBeforeDelete": true,
+    "originalFileListingExact": true,
+    "originalProtectedFilesExact": true,
+    "retained": "Owned synthetic Markdown history remains in the application history store; no global pruning or original history deletion."
+  },
+  "nativeUI": {
+    "actualNativeSafari": true,
+    "initialMixedMarkdownAndSvgRendered": true,
+    "nativeEditSaveFeedback": "\u670d\u52a1\u5668\u5df2\u4fdd\u5b58",
+    "historyDetectedExternalSvgChange": true,
+    "wholeVersionRestoreScopedToTwoOwnedFiles": true,
+    "refreshReopenedSameFileAndOfferedLocalDraft": true,
+    "nativeDraftRecoveryRenderedV3": true,
+    "nativeConflictComparedServerV4AndLocalV3": true,
+    "explicitMergeThenNativeSave": true,
+    "ownedEditorClosed": true,
+    "originalDirectoryAndSessionRestored": true,
+    "ownedFolderNotVisibleAfterCleanup": true,
+    "newBrowserTabs": 0,
+    "modelsInvoked": 0,
+    "limitations": [
+      "Exact caret/scroll offsets not asserted by native AX",
+      "SSH workflow not covered",
+      "No physical network interruption test"
+    ]
+  },
+  "screenshotsSHA256": {
+    "initial-preview.png": "a8ef40c10332553f8db2487d75d103c5cd2b580e731f84e84fee1e600883d934",
+    "draft-recovered.png": "1587bb90fbf73b5a3a779699a912b313b85ebcf704153ffafad6c585dc5d3b67",
+    "merged-saved.png": "bafca3c9cabd985a88ef76204caaecee6ac2048200f4c1eceacce2690172a4fe",
+    "restore-scope.png": "79fa612a7354a3ba9e5b1a4154813840a6ff236dc1f4612e8e1e358c865c1b06",
+    "conflict.png": "c7bb55825e151147d6d4ebfbb93d22c9e684b7215c4a13463f051bfd5be18a79"
+  },
+  "fullReuse": {
+    "status": "pass",
+    "profile": "full",
+    "fingerprint": "14fd2fd0e29d48f7c0eb4baf8dfe24a1277db1a362cd5c3aea634e59d717fff6",
+    "head": "f55d7ded9f610d8048ed7f0b21571cddd322c4f4",
+    "time": "20261016T000405559304Z",
+    "actualCommands": 88
+  },
+  "runtimeImage": "sha256:a8c22d43ccb88378ac8348d3a888a388f5ae9efc0828baabbb22e2f7e3ac058d"
+}
