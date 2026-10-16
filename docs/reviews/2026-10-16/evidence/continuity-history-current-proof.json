@@ -1,0 +1,86 @@
+{
+  "status": "focused_pass_full_pending",
+  "reasoning": [
+    [
+      {
+        "title": "连续验收-推理-A-20261016",
+        "reasoningEffort": "high",
+        "revision": 1,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "连续验收-推理-B-20261016",
+        "reasoningEffort": "medium",
+        "revision": 1,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ],
+    [
+      {
+        "title": "连续验收-推理-A-20261016",
+        "reasoningEffort": "high",
+        "revision": 1,
+        "diskMatches": true,
+        "runs": 0
+      },
+      {
+        "title": "连续验收-推理-B-20261016",
+        "reasoningEffort": "medium",
+        "revision": 1,
+        "diskMatches": true,
+        "runs": 0
+      }
+    ]
+  ],
+  "reasoningCleanup": {
+    "ownedSessionsDeleted": 2,
+    "originalSessionFilesUnchanged": true,
+    "globalSettingsExceptCounterUnchanged": true,
+    "authAndSourcesUnchanged": true,
+    "counterBefore": 45,
+    "counterAfter": 47
+  },
+  "historyBeforeFix": {
+    "diskV1Exact": {
+      "diagram.png": "bf34480b16533b762d20b8f98d67c7e7622c22efa48abc7674ad2358bc3a3682",
+      "photo.jpg": "d5adaa0cb4aba05ddf3015ec18ee7a168b91483a4d5dc5320370466b98ad1b41",
+      "notes.md": "ef01db765ab2ff4d0cd178cbb0ac53344974867f5e5a652b4ea95778d9eb81d4"
+    },
+    "browserBody": "V1",
+    "browserImages": "V2_stale",
+    "status": "reproduced"
+  },
+  "historyAfterFix": {
+    "status": "pass",
+    "filesV1ExactOnDiskAndRawAPI": {
+      "diagram.png": "bf34480b16533b762d20b8f98d67c7e7622c22efa48abc7674ad2358bc3a3682",
+      "photo.jpg": "d5adaa0cb4aba05ddf3015ec18ee7a168b91483a4d5dc5320370466b98ad1b41",
+      "notes.md": "ef01db765ab2ff4d0cd178cbb0ac53344974867f5e5a652b4ea95778d9eb81d4"
+    },
+    "assetOnlyRestoreBodyUnchanged": true,
+    "nativeSafariPNGandJPEG": "V1_without_page_refresh",
+    "historyVersions": 5,
+    "repeatedObservationDoesNotAppend": true,
+    "backupMetadata": {
+      "versions": 5,
+      "objects": 6,
+      "objectBytes": 5754
+    },
+    "modelCalls": 0
+  },
+  "historyCleanup": {
+    "status": "pass",
+    "ownedFilesRemovedAfterExactChecks": 3,
+    "originalListingExact": true,
+    "originalSessionAndSettingsAndAuthSourcesExact": true,
+    "ownedSyntheticHistoryRetained": true
+  },
+  "runtimeImage": "sha256:551eff0003bab5ad3f2691b425475b9779938b2747269828d26831219c923d2e",
+  "runtimeSourceSHA256": "2940bacd2ffb590ad60b6f240f1dee022b4564f3f35340db866e06e80539ce6e",
+  "protectedFilesAndMountsPreserved": true,
+  "windows": "user_owned",
+  "realVectors": "deferred",
+  "original12": "in_progress"
+}
