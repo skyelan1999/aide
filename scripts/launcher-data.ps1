@@ -43,6 +43,21 @@ function Invoke-AideDataDocker([string]$Docker, [string[]]$Arguments) {
     try { $text = ((& $Docker @Arguments 2>$null) | Out-String).Trim(); return [pscustomobject]@{Code=$LASTEXITCODE;Text=$text} }
     finally { $ErrorActionPreference = $previous }
 }
+function Select-AideLegacyOwner([string]$Docker, [string[]]$Owners, [string]$Project, [bool]$ExplicitProject) {
+    $eligibleOwners = @(); $selectedOwners = @()
+    foreach ($candidateId in $Owners) {
+        $result = Invoke-AideDataDocker $Docker @('inspect','--format','{{index .Config.Labels "com.docker.compose.project"}}|{{index .Config.Labels "com.docker.compose.oneoff"}}',$candidateId)
+        if ($result.Code -ne 0) { throw 'Cannot inspect legacy container identity.' }
+        $fields = $result.Text -split '\|', 2
+        if ($fields.Count -eq 2 -and $fields[1] -in @('True','true','1')) { continue }
+        $eligibleOwners += $candidateId
+        if ($fields[0] -eq $Project) { $selectedOwners += $candidateId }
+    }
+    if ($selectedOwners.Count -eq 1) { return $selectedOwners[0] }
+    if ($selectedOwners.Count -eq 0 -and $eligibleOwners.Count -eq 1 -and -not $ExplicitProject) { return $eligibleOwners[0] }
+    if ($eligibleOwners.Count -eq 0) { return '' }
+    throw "Cannot select legacy data owner for Compose project '$Project' ($($selectedOwners.Count) matching, $($eligibleOwners.Count) eligible containers). No container stopped or data imported. Check COMPOSE_PROJECT_NAME and container labels."
+}
 function Prepare-AideLauncherData([string]$Root, [string]$Docker, [string]$Image) {
     $persistentRoot = Join-Path $Root '.aide-data'
     $mountArguments = @('-v', "${persistentRoot}:/persist", '-v', ((Join-Path $Root 'scripts/launcher-data.py') + ':/tool.py:ro'))
@@ -52,22 +67,23 @@ function Prepare-AideLauncherData([string]$Root, [string]$Docker, [string]$Image
     $project = $env:COMPOSE_PROJECT_NAME
     $stopped = $false
     if (-not $ready) {
-        $found = Invoke-AideDataDocker $Docker @('ps','-aq','--filter',"label=com.docker.compose.project.working_dir=$Root",'--filter','label=com.docker.compose.service=aide')
-        if ($found.Code -ne 0) { throw 'Cannot inspect legacy containers.' }
-        $owners = @($found.Text -split '\r?\n' | Where-Object { $_ })
-        if ($owners.Count -gt 1) { throw 'Multiple legacy containers; import refused.' }
-        $owner = if ($owners.Count -eq 1) { $owners[0] } else { '' }
-        if ($owner) {
-            $result = Invoke-AideDataDocker $Docker @('inspect','--format','{{index .Config.Labels "com.docker.compose.project"}}',$owner)
-            if ($result.Code -ne 0) { throw 'Cannot inspect legacy project.' }; $project = $result.Text
-        }
+        $explicitProject = [bool]$project
         if (-not $project -and (Test-Path -LiteralPath (Join-Path $Root '.env'))) {
             $line = Select-String -LiteralPath (Join-Path $Root '.env') -Pattern '^COMPOSE_PROJECT_NAME=(.*)$' | Select-Object -First 1
             if ($line) { $project = $line.Matches[0].Groups[1].Value.Trim().Trim('"').Trim("'") }
         }
+        if ($project) { $explicitProject = $true }
         if (-not $project) {
             $line = Select-String -LiteralPath (Join-Path $Root 'compose.yaml') -Pattern '^name:\s*(\S+)' | Select-Object -First 1
             $project = if ($line) { $line.Matches[0].Groups[1].Value } else { 'aide' }
+        }
+        $found = Invoke-AideDataDocker $Docker @('ps','-aq','--filter',"label=com.docker.compose.project.working_dir=$Root",'--filter','label=com.docker.compose.service=aide')
+        if ($found.Code -ne 0) { throw 'Cannot inspect legacy containers.' }
+        $owners = @($found.Text -split '\r?\n' | Where-Object { $_ })
+        $owner = Select-AideLegacyOwner $Docker $owners $project $explicitProject
+        if ($owner) {
+            $result = Invoke-AideDataDocker $Docker @('inspect','--format','{{index .Config.Labels "com.docker.compose.project"}}',$owner)
+            if ($result.Code -ne 0) { throw 'Cannot inspect legacy project.' }; $project = $result.Text
         }
         if ($project -notmatch '^[a-z0-9][a-z0-9_-]*$') { throw 'Invalid Compose identity.' }
         $env:COMPOSE_PROJECT_NAME = $project
