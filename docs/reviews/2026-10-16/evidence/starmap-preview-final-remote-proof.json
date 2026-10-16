@@ -54,7 +54,12 @@
     }
   ],
   "receivingDevice": "not_run",
-  "remoteMain": "pending",
+  "remoteMain": {
+    "status": "pass",
+    "firstPublishedCommit": "42005bab1beaef469159035f89fbf7b42b2b9a49",
+    "originalRC2TagCommit": "a4a13aa41c98775bc2c63a1b2f4a8413ed9a2ad3",
+    "verifiedBy": "git ls-remote origin refs/heads/main refs/tags/v0.1.17.0-RC2^{}"
+  },
   "originalAssetIdentitiesPreserved": true,
   "originalAssetCount": 17
 }
