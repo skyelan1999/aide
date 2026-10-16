@@ -7810,10 +7810,11 @@
     "runtimeProof": "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json"
   },
   "manual_save_dirty_status_followup_20261016": {
-    "status": "pending",
+    "status": "in_progress",
     "observed": "Actual auto-save-off editor keeps server-saved label after new dirty input, while independent server content remains prior saved version. Source schedule does not repaint dirty status.",
     "evidence": "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json",
     "screenshot": "private draft-before-close.png",
-    "next": "Regression then fix status transition without losing partial-save/history-failure/conflict states."
+    "next": "Focused red/green and quick pass; full gate, candidate and native Safari saved-byte comparison remain.",
+    "task": "file-save-status-20261016"
   }
 }

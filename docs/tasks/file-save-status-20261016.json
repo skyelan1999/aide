@@ -1,0 +1,72 @@
+{
+  "id": "file-save-status-20261016",
+  "request": "继续原保存状态目标：修复实际Safari自动保存关闭时，再次编辑后仍显示服务器已保存；保留冲突、部分保存、归档失败及锁态待核对语义",
+  "baseline": "1238ee52e4238c62b4bed0acf1c2ecb35172d0c6",
+  "initial_status": "",
+  "acceptance": [
+    "After manual save with auto-save off, new native input immediately invalidates server-saved label; undo to confirmed baseline restores clean status without an extra write.",
+    "Do not overwrite in-flight, conflict/retry, partial-save/history-failure or locked pending-verification messages with a generic dirty status.",
+    "Explicit conflict adoption confirms the newly read server baseline/hash: choosing its exact body is clean without another write, while retaining local text stays dirty and recoverable.",
+    "Red-before/green-after regression and full gate; actual Safari checks UI status against independent saved bytes, protected cleanup, authorized main/runtime/offline delivery."
+  ],
+  "scope": [
+    "internal/server/web/file-autosave.js",
+    "internal/server/web/index.html cache version",
+    "scripts/file-autosave-retry.test.cjs",
+    "docs/tasks/file-save-status-20261016.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-16/file-save-status*",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Actual Safari prior phase shows dirty DRAFT_SCROLL_PROBE while status stays server-saved; independent server remains prior content. Fix original save-status workstream.",
+      "evidence": [
+        "docs/reviews/2026-10-16/workbench-file-position-runtime-proof.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Paint normal dirty/clean input only when writable, unlocked, not saving/suspended/history-failed or awaiting verification. Explicit pending-verification guard prevents false clean claim after locked save; reuse translated Unsaved label.",
+      "evidence": [
+        "internal/server/web/file-autosave.js",
+        "scripts/file-autosave-retry.test.cjs"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Dirty input paints against confirmed content/hash; in-flight, suspended and pending verification states retained. Explicit conflict adoption confirms latest baseline/hash. Cache URI v8.",
+      "evidence": [
+        "internal/server/web/file-autosave.js",
+        "scripts/file-autosave-retry.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Both focused regressions failed before fixes and pass after; quick pass. Full, candidate and native runtime acceptance pending.",
+      "evidence": [
+        "docs/reviews/2026-10-16/file-save-status.md"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental test/push/main/start.command/offline package authorization; no version/tag/Release.",
+  "rollback": "Keep prior ebf9e382 image/offline bundle; scoped frontend revert, no data migration or global cleanup.",
+  "handoff": ""
+}

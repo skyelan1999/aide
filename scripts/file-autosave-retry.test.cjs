@@ -14,10 +14,10 @@ class Element {
   close() { this.open=false;for(const fn of this.listeners.close||[])fn(); }
 }
 
-function fixture({save,readLatest=async()=>({content:'server current'}),onConflict=()=>{},onSaved=()=>{},blocked=()=>false,viewVisible=()=>true,recovery=false}) {
+function fixture({save,readLatest=async()=>({content:'server current'}),onConflict=()=>{},onSaved=()=>{},blocked=()=>false,viewVisible=()=>true,recovery=false,autoSave=true}) {
   const body=new Element('body'),document={body,activeElement:null,createElement:(tag)=>new Element(tag),addEventListener(){}};
   const windowListeners={},timers=new Map(),snapshots=[],frames=[];let timer=0;
-  const window={aideUI:{get:()=>true,subscribe(){}},LockCluster:{on(){}},addEventListener(k,fn){(windowListeners[k] ||= []).push(fn);}};
+  const window={aideUI:{get:key=>key==='editorAutoSave'?autoSave:true,subscribe(){}},LockCluster:{on(){}},addEventListener(k,fn){(windowListeners[k] ||= []).push(fn);}};
   if(recovery)window.AideContinuity={enabled:()=>true,cacheTab:(scope,kind,id,value)=>{snapshots.push({method:'cacheTab',scope,kind,id,value});return true;},writeTab:(scope,kind,id,value)=>{snapshots.push({method:'writeTab',scope,kind,id,value});return Promise.resolve(true);},writeFileDraft:(scope,id,value)=>{snapshots.push({method:'writeFileDraft',scope,id,value});return Promise.resolve(true);},savedFileDraft:async()=>{snapshots.push({method:'savedFileDraft'});},listFileDrafts:async()=>[],readTab:async()=>null};
   const editor=new Element('textarea');Object.assign(editor,{value:'base',readOnly:false,selectionStart:0,selectionEnd:0,scrollTop:0,scrollLeft:0,focus(){document.activeElement=this;},setSelectionRange(a,b){this.selectionStart=a;this.selectionEnd=b;}});
   const button=new Element('button'),manual=new Element('button'),context={root:'workspace',source:'',path:'retry-fixture.md',wsId:'test'};
@@ -30,6 +30,47 @@ function fixture({save,readLatest=async()=>({content:'server current'}),onConfli
 }
 
 (async()=>{
+  let manualWrites=0;
+  const manualStatus=fixture({autoSave:false,save:async()=>{manualWrites++;return {hash:'saved'};}});
+  manualStatus.editor.value='confirmed V1';await manualStatus.manual.onclick();
+  assert.equal(manualStatus.button.next.textContent,'服务器已保存');
+  manualStatus.editor.value='new local V2';manualStatus.editor.dispatchEvent({type:'input'});
+  assert.equal(manualStatus.button.next.textContent,'尚未保存','new dirty input must invalidate the confirmed server label');
+  manualStatus.runTimers(1200);assert.equal(manualWrites,1,'manual dirty-status paint must not enable saving');
+  manualStatus.editor.value='confirmed V1';manualStatus.editor.dispatchEvent({type:'input'});
+  assert.equal(manualStatus.button.next.textContent,'服务器已保存','undo to confirmed baseline is clean');
+  assert.equal(manualStatus.controller.dirty(),false);assert.equal(manualWrites,1);
+  manualStatus.context.hash='different-server-revision';manualStatus.editor.dispatchEvent({type:'input'});
+  assert.equal(manualStatus.button.next.textContent,'尚未保存','an older text baseline cannot confirm a different content revision');
+  const freshStatus=fixture({autoSave:false,save:async()=>({hash:'saved'})});
+  freshStatus.editor.value='';freshStatus.controller.activate();freshStatus.editor.dispatchEvent({type:'input'});
+  assert.equal(freshStatus.button.next.textContent,'尚未保存','a new empty file without a confirmed baseline is not server-saved');
+  let finishStatus;
+  const savingStatus=fixture({autoSave:false,save:()=>new Promise(resolve=>{finishStatus=resolve;})});
+  savingStatus.editor.value='in flight';const statusPending=savingStatus.manual.onclick();
+  savingStatus.editor.value='newer local';savingStatus.editor.dispatchEvent({type:'input'});
+  assert.equal(savingStatus.button.next.textContent,'正在保存…','input cannot erase in-flight state');
+  finishStatus({hash:'saved'});await statusPending;
+  assert.equal(savingStatus.button.next.textContent,'上一版已保存，当前修改未保存');
+  const failedStatus=fixture({autoSave:false,save:async()=>{throw new Error('offline');}});
+  await failedStatus.manual.onclick();const failureLabel=failedStatus.button.next.textContent;
+  failedStatus.editor.value='new after failure';failedStatus.editor.dispatchEvent({type:'input'});
+  assert.equal(failedStatus.button.next.textContent,failureLabel,'dirty paint cannot erase failure state');
+  let lockedFinish,lockedFlag=false;
+  const uncertainStatus=fixture({autoSave:false,blocked:()=>lockedFlag,save:()=>new Promise(resolve=>{lockedFinish=resolve;})});
+  uncertainStatus.editor.value='submitted';const uncertainPending=uncertainStatus.manual.onclick();
+  lockedFlag=true;lockedFinish({hash:'saved'});await uncertainPending;lockedFlag=false;
+  uncertainStatus.editor.value='new after unlock';uncertainStatus.editor.dispatchEvent({type:'input'});
+  assert.equal(uncertainStatus.button.next.textContent,'保存结果待核对','editing after unlock must preserve an unacknowledged save');
+  const archiveStatus=fixture({autoSave:false,save:async()=>{throw Object.assign(new Error('archive unavailable'),{status:400,data:{saved:true,hash:'a'.repeat(64),historySaved:false}});}});
+  archiveStatus.editor.value='confirmed body';await archiveStatus.manual.onclick();
+  archiveStatus.editor.value='new after archive failure';archiveStatus.editor.dispatchEvent({type:'input'});
+  assert.equal(archiveStatus.button.next.textContent,'上一版已保存，当前修改未保存；历史归档失败');
+  const conflictStatus=fixture({autoSave:false,save:async()=>{throw Object.assign(new Error('conflict'),{status:409});},readLatest:async()=>{throw new Error('read failed');}});
+  await conflictStatus.manual.onclick();const conflictLabel=conflictStatus.button.next.textContent;
+  conflictStatus.editor.value='new after conflict';conflictStatus.editor.dispatchEvent({type:'input'});
+  assert.equal(conflictStatus.button.next.textContent,conflictLabel,'input cannot erase the conflict reread failure');
+  console.log('Manual dirty/undo and in-flight/failure/pending-verification status ownership PASS');
   let writes=0;
   const saveRetry=fixture({save:async(_c,text)=>{writes++;if(writes===1)throw new Error('temporary offline');return {hash:'saved'};}});
   await saveRetry.manual.onclick();
@@ -83,6 +124,20 @@ function fixture({save,readLatest=async()=>({content:'server current'}),onConfli
   assert.equal(conflicts,1,'the conflict callback runs only after explicit acceptance');
   assert.equal(conflict.editor.value,'merged deliberately');
   assert.equal(conflict.retry().hidden,true);
+
+  for(const chosen of ['base','remote new']){
+    let adoptedWrites=0,adopted;
+    adopted=fixture({autoSave:false,recovery:true,save:async()=>{adoptedWrites++;throw Object.assign(new Error('conflict'),{status:409});},readLatest:async()=>({content:'remote new',hash:'remote-hash'}),onConflict:latest=>{adopted.context.hash=latest.hash;}});
+    adopted.context.hash='old-hash';adopted.controller.activate();
+    adopted.editor.value='local draft';await adopted.manual.onclick();
+    const comparison=adopted.body.children.at(-1);comparison.children[3].value=chosen;comparison.children[4].onclick();
+    assert.equal(adopted.controller.dirty(),chosen!=='remote new','adopted server body becomes the dirty/recovery baseline');
+    assert.equal(adopted.button.next.textContent,chosen==='remote new'?'服务器已保存':'尚未保存','explicit adoption confirms the latest server revision');
+    adopted.runTimers(180);adopted.runTimers(1200);
+    assert.equal(adoptedWrites,1,'explicit adoption with auto-save off never writes implicitly');
+    if(chosen==='base')assert.ok(adopted.snapshots.some(item=>item.method==='writeFileDraft'&&item.value.text===chosen),'retaining old local text against a newer server remains recoverable');
+  }
+  console.log('Explicit conflict adoption confirms server content/hash and preserves divergent local recovery PASS');
 
   const recovery=fixture({recovery:true,save:async()=>({hash:'saved'})});
   recovery.editor.value='a long edited document';
