@@ -1,0 +1,9 @@
+# Current authenticated outcome controls
+
+Native Safari reused the existing trusted 9999 workbench tab on runtime `ab8df956177b`. Session overview and a real stopped task detail were opened through Trajectory > Inputs and outputs. The overview displayed both submitted interruptions; task detail distinguished 51 recorded execution summaries, zero file proposals/application records, and command redirection targets explicitly marked as unverified. No model request was sent.
+
+At the bottom of the actual panel, verification and release sections explicitly stated that no verification report exists and chat/command text does not prove remote publication. The import button opened a native file chooser. A clearly synthetic local record was selected; the page displayed its contents and the operator-provided/not-independently-verified warning. Cancel removed the preview; confirmation was not clicked, and exported release receipts remained empty.
+
+The actual Export outcome JSON button created a native Safari download. Its parsed 50,330-byte summary contains 51 executions and `exportScope.consistentSnapshot=true`, `allPagesLoaded=true`, `rawEvidenceIncluded=false`, `textTruncated=true`. This is a complete summary page, not a full raw-evidence archive. The new owned download was moved into private test evidence; no existing Downloads item was modified. Original session/settings/source/authentication state was not written. The panel was closed and the original workbench/tab inventory restored.
+
+This scoped check closes current import-preview/cancel/export-control visibility gaps. It does not prove imported receipt cards or pagination across more than one page: this real task has fewer than the page threshold. Hidden active-run visibility, final import commit/cards, and full cross-page cases remain open. Private export/screenshot stay outside Git; [sanitized evidence](evidence/outcome-native-controls-proof.json) records only scope and counts.

@@ -1,0 +1,24 @@
+{
+  "status": "pass",
+  "runtimeImage": "ab8df956177b",
+  "nativeSafariAuthenticated": true,
+  "currentSessionOverviewAndTaskDetail": true,
+  "actualExecutionSummaryCount": 51,
+  "inputInterruptionsVisible": true,
+  "writeTargetClearlyUnverified": true,
+  "releaseBoundaryVisible": true,
+  "syntheticImportPreviewAndCancel": true,
+  "releaseRecordsUnchanged": true,
+  "nativeBrowserDownloadParsed": true,
+  "exportScope": {
+    "kind": "summary",
+    "consistentSnapshot": true,
+    "allPagesLoaded": true,
+    "rawEvidenceIncluded": false,
+    "textTruncated": true
+  },
+  "exportBytes": 50330,
+  "privateDownloadMovedToOwnedEvidence": true,
+  "paginationUI": "not exercised: current task has 51 executions, below page threshold",
+  "releaseCardImportCommit": "not_run; preview cancelled"
+}
