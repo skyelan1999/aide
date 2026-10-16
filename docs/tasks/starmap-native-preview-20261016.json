@@ -55,8 +55,8 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Final v67 ARM d025/AMD301d complete packages/imports and fresh ARM start/CAD/line-hash pass. Exact d025 native same-tab read-only line3, repaired stellar fields, preserved return state, stale-hash refusal/newline5 and source-removal clearing pass. Final frozen-input full pending; previous full106 only pre-v67.",
+      "status": "pass",
+      "summary": "Final frozen-input full106 all exits0, exact fingerprint e9628e3ba32a6994139593ca1543cfba0030f3032c5d29d5c0c8530625af2c02; Go server race812.375s/vet and native CAD passed. Exact d025 Safari current-tab/line3/star/return/stale-hash/newline5/removal and both complete packages/import/fresh ARM start passed. Windows/receiver separate.",
       "evidence": [
         "scripts/starmap-file-preview.test.cjs",
         "scripts/starmap-live-metadata.test.cjs",
@@ -66,7 +66,8 @@
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-packages-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-fresh-start-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-preview-final-cleanup-proof.json",
-        "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json"
+        "docs/reviews/2026-10-16/evidence/starmap-preview-final-native-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-preview-final-full-proof.json"
       ]
     },
     "documentation": {
@@ -86,14 +87,16 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "in_progress",
+      "summary": "Final full/native/packages pass. Next clean-main scoped gate, upload/verify four supplemental assets and preserved notes, then remote main/ref receipt. Original RC2 tag retained.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/starmap-preview-final-full-proof.json"
+      ]
     }
   },
   "release_authorization": "Continue original user-authorized fixes, native testing, docs and incremental main/image delivery. Windows user-owned; real vectors deferred.",
   "rollback": "Current external launcher on9999: retain published ARM64 image sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 (source3c6f4e12) and ARM64/AMD64 complete packages08e257e0ad39/239c3591fd3a. After checking no active/suspended/queued work, image-only rollback from external aide root uses AIDE_IMAGE=sha256:08e257e0ad3929495c991bcddb9ae1ca271dacc286910074b177e19d72d12204 AIDE_OPEN_BROWSER=0 bash scripts/aide.sh start-image. This explicit start-image mode avoids the new prebuilt manifest reselecting the candidate. Preserve current .aide-data, auth, sessions, sources and mounts; never automatically restore an older data snapshot. Prior image existence, original protected-state snapshot and bounded history backup readability verified; rollback was not executed. Current startup/native proof is d025 through original start.command; receiving-device rollback is not verified.",
-  "handoff": "Final code26256161/source9286121f ARMd025/AMD301d packages and imports/fresh startup passed. Actual original start.command prebuilt d025 native line3/star/return/stale-hash/newline5/removal passed; original protected data/view restored, two owned superseded archives cleaned. Inputs and delivery index frozen; next final full, clean-main scoped gate, four supplemental Release assets/notes verification and remote main. Original12 stay open, Windows user-owned, vectors deferred.",
+  "handoff": "Final source9286121f/code26256161 ARMd025/AMD301d; native, package/import/fresh start and final full106 pass. Next FF clean local main, scoped gate; native Safari upload4 verified artifacts/notes to existing RC2, public API/download validation, main push/ref receipt. Original12 active; Windows user-owned, vectors deferred.",
   "candidatePackages": {
     "status": "historical_pre_merge_only",
     "sourceSHA256": "59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d",
@@ -125,7 +128,7 @@
     "code": "4e2603235021e70dfbd6841f7f6023563e3eb2b0",
     "publishedBase": "0ac5f757ed92d09330c0bf93c5ccaaeda7689c0d",
     "report": "docs/reviews/2026-10-16/starmap-preview-integration.md",
-    "full": "pending final frozen-input regression",
+    "full": "PASS final full106, exact fingerprint e9628e3ba32a6994139593ca1543cfba0030f3032c5d29d5c0c8530625af2c02",
     "native": "PASS final d025 actual Safari; line3, stars, return, stale hash/newline5 and removal",
     "candidate": "sha256:d025448dd17440bda8ca39ab844b5e192f07703399eab4197551344472e77e72",
     "sourceSHA256": "9286121f6a299e302655ed8e270df3ef0d26cef318718f6e7264ef3d3bbad035",
