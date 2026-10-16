@@ -1,3 +1,14 @@
+## Default prebuilt startup (ARM64 and AMD64)
+
+Normal source checkouts select a complete runtime from `docker/prebuilt-images.tsv`. They reuse a verified local image, import a matching local archive, or download the matching Release archive and verify its SHA-256 before import. They never fall back to source compilation. Development builds require `AIDE_BUILD_FROM_SOURCE=1` or `install --source`.
+
+Both complete bundles contain the application, native CAD runtime, cross-platform launchers and licenses. Image archives remain Release assets rather than large Git blobs. The manifest records platform, image ID, source identity, archive checksum and download URL; packaging updates that record. Delivery and remote availability are tracked separately in [the release report](../docs/reviews/2026-10-16/prebuilt-runtime-delivery.md).
+
+| Docker engine platform | Runtime image | Complete offline bundle |
+| --- | --- | --- |
+| linux/arm64 | ab8df956177b | aide-0.1.17.0-RC2-linux-arm64-ab8df956177b-offline.tar.gz |
+| linux/amd64 | ec1b03234c08 | aide-0.1.17.0-RC2-linux-amd64-ec1b03234c08-offline.tar.gz |
+
 ## 2026-10-16 Mermaid 黑色渲染修复候选
 
 候选 `dc2cacc1c0f6`（代码 `105fbcef`，构建输入 `d3756091d14e88a668883f9d154dd2fefb049ba3d5d5ee5e4f3c0b20c52c6800`）修复严格 CSP 下 Mermaid 样式被拦截导致的黑色图表，并统一文字测量和 SVG 标签。实际 Safari 工作台 Markdown 预览及严格 CSP 明暗/作者配色/四种图表验收通过。

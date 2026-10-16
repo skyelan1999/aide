@@ -40,31 +40,41 @@
       ]
     },
     "implementation": {
-      "status": "in_progress",
-      "summary": "普通POSIX/Windows入口已接入预构建导入，开发构建显式开关；导出/打包维护完整归档及清单，待最终镜像/清单生成和发布。",
+      "status": "pass",
+      "summary": "POSIX and Windows default verified prebuilt import, architecture/source/CAD identity checks, explicit source build opt-in, deterministic legacy owner selection, and packaging-generated ARM64/AMD64 complete bundle index implemented.",
       "evidence": [
-        "scripts/aide.sh",
-        "start.ps1",
-        "scripts/package-release-assets.sh"
+        "scripts/prebuilt-image.sh",
+        "scripts/prebuilt-image.ps1",
+        "docker/prebuilt-images.tsv"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "21 launcher/import tests, 4 installer tests and 102 quick checks passed. Actual ordinary checkout without Dockerfile/Go/Git reused a prebuilt image through start.command; production 9999 also started ab8df956 without compilation. Protected settings, sessions, authentication and mounts matched after real STEP UI acceptance. The first full check failed because Node PATH was missing and inputs changed; it is NOT a release receipt. Re-run full after AMD64 and final manifest are complete.",
+      "status": "pass",
+      "summary": "21 launcher/import and 4 installer tests; real isolated Docker migration/rollback and ordinary checkout without compiler; both complete archives checksum/license/identity/import verified. Actual start.command production and fresh ARM64 package startup passed; AMD64 CAD regression passed under emulation. Windows native is user-owned, receiving devices not claimed. Final exact-input full remains release gate.",
       "evidence": [
+        "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md",
+        "docs/reviews/2026-10-16/evidence/prebuilt-runtime-packages-proof.json",
         "scripts/test_launcher_data.py",
         "scripts/test_launcher_data_docker.py"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Installation and packaging documentation distinguish prebuilt defaults, explicit dev builds, complete archive identity, native acceptance limits, and local versus remote delivery.",
+      "evidence": [
+        "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md",
+        "docs/reviews/2026-10-16/evidence/prebuilt-runtime-packages-proof.json",
+        "docs/installation.md",
+        "docker-images/README.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Reviewed scoped changes and distribution metadata; private data excluded. Fresh fixture stopped and removed only its own containers/networks, prior slot tag restored; production runtime/data and historical release assets retained.",
+      "evidence": [
+        "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md",
+        "docs/reviews/2026-10-16/evidence/prebuilt-runtime-packages-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -74,5 +84,5 @@
   },
   "release_authorization": "用户要求源码仓库与Release包也必须具备完整运行镜像快速导入/启动能力；沿用先前main推送授权，允许上传本仓库发布附件。",
   "rollback": "保留551eff及历史发布附件和私有数据；下载或身份校验失败不切换，旧目标镜像保留回滚标签；不删除用户容器或卷。",
-  "handoff": "ARM64 ab8df956 complete bundle exported and indexed; ordinary start.command used the exact prebuilt image without compilation. Real private STEP and Safari metrology passed. The manifest URL has NOT been uploaded or remotely verified yet. AMD64 buildx is running in session 21114, log .agent-state/prebuilt-amd64-20261016/build.log. Finish AMD64 export and smoke tests, final-input full check, main release gate, then GitHub upload and remote checksum verification. Windows native acceptance belongs to the user; real vector testing deferred."
+  "handoff": "Both architecture packages verified/imported; fresh ARM64 start.command smoke passed; AMD64 geometry passed under emulation. Next: merge authorized scoped branch into local main, run final full with Node PATH, gate each scoped task, upload/verify complete Release assets, then push main and update delivery receipts. Do not claim remote or receiving-device success yet."
 }

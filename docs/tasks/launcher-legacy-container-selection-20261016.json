@@ -34,28 +34,40 @@
     },
     "implementation": {
       "status": "pass",
-      "summary": "新增可独立核验的旧数据所有者选择器，复用既有只读迁移与失败回滚流程。Mac/Linux shell修复，Windows宿主用户验收。",
+      "summary": "POSIX and Windows default verified prebuilt import, architecture/source/CAD identity checks, explicit source build opt-in, deterministic legacy owner selection, and packaging-generated ARM64/AMD64 complete bundle index implemented.",
       "evidence": [
-        "scripts/launcher-data.sh"
+        "scripts/prebuilt-image.sh",
+        "scripts/prebuilt-image.ps1",
+        "docker/prebuilt-images.tsv"
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "14单测（含9组候选选择）通过；真实Docker同目录正式/oneoff/QA候选、活动任务拒绝、迁移失败旧容器恢复、8项受保护内容/权限及缓存删除后重启通过；完整105项运行中。",
+      "status": "pass",
+      "summary": "21 launcher/import and 4 installer tests; real isolated Docker migration/rollback and ordinary checkout without compiler; both complete archives checksum/license/identity/import verified. Actual start.command production and fresh ARM64 package startup passed; AMD64 CAD regression passed under emulation. Windows native is user-owned, receiving devices not claimed. Final exact-input full remains release gate.",
       "evidence": [
+        "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md",
+        "docs/reviews/2026-10-16/evidence/prebuilt-runtime-packages-proof.json",
         "scripts/test_launcher_data.py",
         "scripts/test_launcher_data_docker.py"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Installation and packaging documentation distinguish prebuilt defaults, explicit dev builds, complete archive identity, native acceptance limits, and local versus remote delivery.",
+      "evidence": [
+        "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md",
+        "docs/reviews/2026-10-16/evidence/prebuilt-runtime-packages-proof.json",
+        "docs/installation.md",
+        "docker-images/README.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Reviewed scoped changes and distribution metadata; private data excluded. Fresh fixture stopped and removed only its own containers/networks, prior slot tag restored; production runtime/data and historical release assets retained.",
+      "evidence": [
+        "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md",
+        "docs/reviews/2026-10-16/evidence/prebuilt-runtime-packages-proof.json"
+      ]
     },
     "release": {
       "status": "pending",
@@ -65,5 +77,5 @@
   },
   "release_authorization": "用户：把docker更新一下免现编译；完整运行镜像在正常仓库也是必要的。既有增量测试、文档与main推送授权继续有效。",
   "rollback": "保留551eff完整镜像包及旧容器/卷；不删除用户数据。真正候选歧义时保留现场，需用标签诊断选择而非清空容器。",
-  "handoff": "等待完整回归后制作与新源码指纹匹配的镜像和离线包，再验收发布；接收设备容器列表已请求，尚未收到。SSH现场与证据保留，Safari证书待用户确认。"
+  "handoff": "Both architecture packages verified/imported; fresh ARM64 start.command smoke passed; AMD64 geometry passed under emulation. Next: merge authorized scoped branch into local main, run final full with Node PATH, gate each scoped task, upload/verify complete Release assets, then push main and update delivery receipts. Do not claim remote or receiving-device success yet."
 }

@@ -1,0 +1,80 @@
+{
+  "status": "pass",
+  "packages": [
+    {
+      "status": "pass",
+      "platform": "linux/arm64",
+      "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-ab8df956177b-offline.tar.gz",
+      "bytes": 770934573,
+      "sha256": "3009d01b7ae14d099906f060d6e6d6260782bcd7e1df6dae68154685e9dcfa55",
+      "innerImageTarSHA256": "22185eab1d6b6b116784ccfff971424a09f6bfe6bfaec61b564f018c60ce7ec6",
+      "image": "sha256:ab8df956177bd6b92173aceef137c0b334361085fb3e168a7aac63bcb6960671",
+      "sourceSHA256": "e5baab8f73a3d970c1e493b7a86e74982eee6b743c5951eed51ce7b85248d85e",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    },
+    {
+      "status": "pass",
+      "platform": "linux/amd64",
+      "archive": "docker-images/aide-0.1.17.0-RC2-linux-amd64-ec1b03234c08-offline.tar.gz",
+      "bytes": 631431418,
+      "sha256": "019b7ec97de16abe9b00a573c84d98aacb55b983b85d7334e9133b0be0d6ae18",
+      "innerImageTarSHA256": "d1d3566f3db3459afcb93280eb35f35a4e03f71da30cbd876e5b3e8b6cb66c84",
+      "image": "sha256:ec1b03234c08f89644e090a33ba4a1b9b08c65a9c22c0f1da766ec8860290141",
+      "sourceSHA256": "e5baab8f73a3d970c1e493b7a86e74982eee6b743c5951eed51ce7b85248d85e",
+      "exactLaunchersAndLicenses": true,
+      "localImport": true,
+      "privateDataAbsent": true,
+      "remoteUpload": "pending",
+      "receivingDevice": "not_run"
+    }
+  ],
+  "productionImagePreserved": true,
+  "freshARM64Startup": {
+    "status": "pass",
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-ab8df956177b-offline.tar.gz",
+    "freshAuthDirectoryPrepared": true,
+    "actualStartCommand": true,
+    "image": "sha256:ab8df956177bd6b92173aceef137c0b334361085fb3e168a7aac63bcb6960671",
+    "sameImageForWorkbenchAndCAD": true,
+    "noBuildOrPull": true,
+    "nativeGeometry": {
+      "kind": "complete",
+      "engine": "occt-native",
+      "triangles": 120,
+      "segments": 0,
+      "points": 0,
+      "emptyNodes": 0,
+      "parts": 2,
+      "faces": 9,
+      "meshedFaces": 9,
+      "collapsedFaces": 0,
+      "bounds": [
+        [
+          -55.0,
+          -5.0,
+          0.0
+        ],
+        [
+          100.0,
+          20.0,
+          35.0
+        ]
+      ],
+      "unit": "mm",
+      "linearDeflection": 0.1,
+      "recoveredFaces": 0,
+      "nurbsFaces": 0,
+      "seconds": 0.027529291997780092
+    },
+    "privateReadOnlyWorkerCredentialMount": true,
+    "privateNetworkNoHostPorts": true,
+    "productionImageUnchanged": true,
+    "receivingDevice": "not_run"
+  },
+  "amd64GeometryRegression": "pass under local CPU emulation; native Windows acceptance belongs to user",
+  "releaseGate": "pending"
+}
