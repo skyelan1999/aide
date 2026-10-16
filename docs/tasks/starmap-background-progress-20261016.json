@@ -28,7 +28,8 @@
     "scripts/starmap-coverage-state.test.cjs",
     "docker/prebuilt-images.tsv",
     "docker-images/README.md",
-    "docker-images/SHA256SUMS"
+    "docker-images/SHA256SUMS",
+    "scripts/starmap-empty-state.test.cjs"
   ],
   "stages": {
     "requirements": {
@@ -57,7 +58,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Native no-focus 2001 files/2502 entries and2000 real relations pass; cap/source status and protected state pass. Go race: busy first knowledge/code61.688s, stale20014.099s, blocked response9.950s; reference/cap/ownership tests pass. Final immutable input full and fresh smoke pending. Previous all106 commands exited0 but fingerprint changed for slow-writer follow-up, so receipt failed and is not reused.",
+      "summary": "Native no-focus completion/2000 relations/cap UI and all scoped Go race paths pass. Prior full failed: old empty-state VM fixture lacked say/progressiveSummary after metadata progress changed; later product inputs also changed. Corrected VM fixture now passes. No prior full receipt is reused. Final unchanged-product full pending.",
       "evidence": [
         "docs/reviews/2026-10-16/starmap-background-progress.md",
         "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json"
