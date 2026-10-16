@@ -11446,6 +11446,9 @@ function lockScreenNow() {
 /* dismissAfterUnlock：密码与触控 ID 解锁共用的唯一收尾出口——保证两路径行为逐字节一致。 */
 async function dismissAfterUnlock(scope, verifiedState) {
   if(window.LockCluster)await LockCluster.handleUnlockSuccess(scope, verifiedState);
+  // A newer lock may arrive while the awaited receipt is being reconciled.
+  // Its visual event wins over this earlier unlock continuation.
+  if(window.LockCluster?.effectiveLocked())throw new Error(t('锁屏状态已变化，请重新解锁'));
   lockScreen.lastActivity=Date.now();
   window.aideAvatarFeedback?.('notification');
   // 本 tab 本地恢复（欢迎语、麦克风只在解锁的那个 tab，避免多 tab 合唱）

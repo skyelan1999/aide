@@ -84,5 +84,13 @@ function environment(){
  const oldReceipt={locked:false,gen:d.server.gen};await primary.lc.requestLock();
  await assert.rejects(primary.lc.handleUnlockSuccess(stale,oldReceipt));assert.equal(primary.lc.effectiveLocked(),true,'new lock defeated by prior verified receipt');
  await assert.rejects(primary.lc.handleUnlockSuccess(stale,{locked:false,gen:stale.gen+9}),'receipt must match the identity request generation');
+ // The app continuation must not hide a new lock arriving across its await.
+ const app=fs.readFileSync('internal/server/web/app.js','utf8');
+ const dismiss=app.match(/async function dismissAfterUnlock\([^]*?\n}/)[0],veil={hidden:false,classList:{remove(){}}};
+ const lc={handleUnlockSuccess:async()=>{},effectiveLocked:()=>true};
+ const view={window:{LockCluster:lc},LockCluster:lc,lockScreen:{locked:true},Date,t:s=>s,$:()=>veil,state:{config:{}},voiceAssistantDisplayName:()=>'',toast(){},speakReply(){},resetIdleTimer(){}};
+ vm.createContext(view);vm.runInContext(dismiss,view);
+ await assert.rejects(view.dismissAfterUnlock({global:true,gen:0},{locked:false,gen:1}),/锁屏状态已变化/);
+ assert.equal(veil.hidden,false,'old unlock continuation hid a newer lock');
  console.log('PASS: master demotion, map sync, local dismissal, new-tab welcome, unlock then refresh, write failure, stale unlock, server recovery, out-of-order GET');
 })().catch(error=>{console.error(error);process.exitCode=1;});
