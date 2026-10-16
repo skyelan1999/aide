@@ -54,5 +54,10 @@
     }
   ],
   "receivingDevice": "not_run",
-  "remoteMain": "pending"
+  "remoteMain": {
+    "status": "pass",
+    "firstPublishedCommit": "31084089070c54506308b25fa85a43780982ed65",
+    "originalRC2TagCommit": "a4a13aa41c98775bc2c63a1b2f4a8413ed9a2ad3",
+    "verifiedBy": "git ls-remote origin refs/heads/main refs/tags/v0.1.17.0-RC2^{}"
+  }
 }

@@ -83,8 +83,8 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Clean-main scoped gate passed. Four supplemental public assets verified: uploaded, exact bytes/SHA256, archive HTTP206 download probes and exact metadata downloads; notes match after browser CRLF normalization. Original13 assets/tag/prerelease preserved. Main push pending.",
+      "status": "pass",
+      "summary": "Full106 and clean-main scoped gate passed. Four supplemental assets public state/bytes/SHA256/downloads verified; notes exact after CRLF normalization, original13 assets/tag/prerelease preserved. Main first published 31084089070c54506308b25fa85a43780982ed65 and ls-remote verified; subsequent documentation receipt is separate.",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/starmap-background-remote-proof.json",
         "docs/reviews/2026-10-16/evidence/starmap-background-full-proof.json"
@@ -93,5 +93,5 @@
   },
   "release_authorization": "本会话上文用户明确要求“还是一样，做一部分，push一部分，测一部分”“做完这个把所有内容和到main上”，并要求“后续的仓库和release包都应该具备快速导入和启动的能力”。本批次沿用同一 AIDE 项目授权：main 与现有 RC2 补充完整镜像包，不升版、不改原 tag。Windows 由用户验收。",
   "rollback": "Retain published e5baab8f runtime ab8df956 and complete archives; never remove user data. New candidate runtime requires protected-state snapshot and original start.command.",
-  "handoff": "Scoped local/full/native/package and public Release checks pass. Main push/ref receipt pending. Original12 and independent preview follow-up remain open."
+  "handoff": "This scoped background-indexing batch is published on main and existing RC2 supplementary complete packages. Original Safari main tab restored; no added tabs. Original12 and independent preview follow-up remain open; native Windows/receiving-device acceptance separate."
 }
