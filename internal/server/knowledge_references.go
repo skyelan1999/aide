@@ -4,6 +4,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"sort"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -88,16 +89,73 @@ func knowledgeReferenceLocation(text string, ref knowledgeTextReference) (int, i
 
 func appendKnowledgeMentions(g *knowledgeGraph) {
 	pathCounts := map[string]int{}
-	for _, n := range g.Nodes {
+	paths := map[string][]int{}
+	ids := map[string][]int{}
+	namespaced := map[string][]int{}
+	prefixes := map[string]int{}
+	for i, n := range g.Nodes {
 		if n.Kind == "file" {
 			pathCounts[n.Path]++
+			paths[n.Path] = append(paths[n.Path], i)
+			ids[n.ID] = append(ids[n.ID], i)
+			prefix := ""
+			if n.Root == "context" {
+				prefix = "/context/"
+			} else if n.Root == "source" {
+				prefix = n.Source + ":"
+			}
+			if prefix != "" {
+				target := prefix + n.Path
+				namespaced[target] = append(namespaced[target], i)
+				prefixes[prefix] = max(prefixes[prefix], len(target))
+			}
 		}
 	}
 	for _, from := range g.Nodes {
 		if from.Text == "" || from.Kind == "symbol" {
 			continue
 		}
-		refs := map[string]knowledgeTextReference{}
+		// Resolve actual reference targets through indexes, instead of testing
+		// every file against every document (quadratic on large repositories).
+		refs := map[int]knowledgeTextReference{}
+		put := func(indices []int, ref knowledgeTextReference) {
+			for _, i := range indices {
+				if from.ID != g.Nodes[i].ID {
+					if _, exists := refs[i]; !exists {
+						refs[i] = ref
+					}
+				}
+			}
+		}
+		for _, span := range knowledgeStableReferences.FindAllStringSubmatchIndex(from.Text, -1) {
+			put(ids[from.Text[span[2]:span[3]]], knowledgeTextReference{from.Text[span[0]:span[1]], span[0]})
+		}
+		for prefix, maxLength := range prefixes {
+			for start := 0; start < len(from.Text); {
+				at := strings.Index(from.Text[start:], prefix)
+				if at < 0 {
+					break
+				}
+				at += start
+				start = at + len(prefix)
+				if at > 0 {
+					r, _ := utf8.DecodeLastRuneInString(from.Text[:at])
+					if !knowledgeReferenceBoundary(r) {
+						continue
+					}
+				}
+				for end := start; end <= min(len(from.Text), at+maxLength); end++ {
+					if end < len(from.Text) {
+						r, _ := utf8.DecodeRuneInString(from.Text[end:])
+						if !knowledgeReferenceBoundary(r) && r != '#' && r != '?' {
+							continue
+						}
+					}
+					target := from.Text[at:end]
+					put(namespaced[target], knowledgeTextReference{target, at})
+				}
+			}
+		}
 		for _, ref := range knowledgeTextReferences(from.Text) {
 			rel := knowledgeLocalReference(ref.target)
 			if rel == "" {
@@ -108,37 +166,29 @@ func appendKnowledgeMentions(g *knowledgeGraph) {
 			} else {
 				rel = path.Clean(rel)
 			}
-			if _, exists := refs[rel]; !exists {
-				refs[rel] = ref
+			for _, i := range paths[rel] {
+				to := g.Nodes[i]
+				sameArea := from.Region == to.Region && from.Root == to.Root && from.Source == to.Source
+				if sameArea || from.Kind == "session" && pathCounts[to.Path] == 1 {
+					put([]int{i}, ref)
+				}
 			}
 		}
-		for _, to := range g.Nodes {
-			if to.Kind != "file" || from.ID == to.ID {
-				continue
-			}
-			stable := "[" + to.ID + "]"
-			index := strings.Index(from.Text, stable)
-			ref, explicit := knowledgeTextReference{stable, index}, index >= 0
-			if !explicit && to.Root == "context" {
-				ref, explicit = knowledgeNamespacedReference(from.Text, "/context/"+to.Path)
-			}
-			if !explicit && to.Root == "source" {
-				ref, explicit = knowledgeNamespacedReference(from.Text, to.Source+":"+to.Path)
-			}
-			localRef, hasLocal := refs[to.Path]
-			sameArea := from.Region == to.Region && from.Root == to.Root && from.Source == to.Source
-			local := hasLocal && (sameArea || from.Kind == "session" && pathCounts[to.Path] == 1)
-			if !explicit && local {
-				ref = localRef
-			}
-			if explicit || local {
-				line, column, evidence := knowledgeReferenceLocation(from.Text, ref)
-				g.Edges = append(g.Edges, knowledgeEdge{From: from.ID, To: to.ID, Kind: "mention", Line: line, Column: column, Evidence: evidence, Confidence: "explicit_reference"})
-				if len(g.Edges) >= 4000 {
-					g.Truncated = true
-					return
-				}
+		order := make([]int, 0, len(refs))
+		for i := range refs {
+			order = append(order, i)
+		}
+		sort.Ints(order) // Preserve historical graph order and the bounded edge cap.
+		for _, i := range order {
+			to, ref := g.Nodes[i], refs[i]
+			line, column, evidence := knowledgeReferenceLocation(from.Text, ref)
+			g.Edges = append(g.Edges, knowledgeEdge{From: from.ID, To: to.ID, Kind: "mention", Line: line, Column: column, Evidence: evidence, Confidence: "explicit_reference"})
+			if len(g.Edges) >= 4000 {
+				g.Truncated = true
+				return
 			}
 		}
 	}
 }
+
+var knowledgeStableReferences = regexp.MustCompile(`\[([^\[\]\r\n]+)\]`)

@@ -38,6 +38,7 @@ type knowledgeUpdateState struct {
 	policy     string
 	views      [2]*knowledgeUpdateView
 	published  [2]atomic.Pointer[knowledgePublishedView]
+	continuing [2]*knowledgeContinuation // Protected by gate; at most one owner per mode.
 	remoteMu   sync.Mutex
 	remote     map[string]*knowledgeRemoteMemo
 	originOnce sync.Once
@@ -612,6 +613,11 @@ func (a *App) knowledgeMapUpdates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer release()
+	// Only the live-map client opts into finishing the current catalogue in
+	// the server. Other snapshot/search callers keep their request lifecycle.
+	if r.URL.Query().Get("background") == "1" && !stale && knowledgeGraphScanning(view.graph) {
+		a.knowledgeContinueLocked(r.URL.Query().Get("code") == "1")
+	}
 	response := knowledgeDelta(view, cursor)
 	response.Stale = stale
 	if stale {

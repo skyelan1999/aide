@@ -621,6 +621,10 @@
       [
         "python3",
         "scripts/test_cad_windows_checkout.py"
+      ],
+      [
+        "node",
+        "scripts/starmap-background.test.cjs"
       ]
     ],
     "full": [

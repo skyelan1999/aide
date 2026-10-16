@@ -47,4 +47,20 @@ for(const extra of [{nodes:[{id:'F3',name:'new.go',kind:'file',region:'workspace
 {
  const x=harness();x.c.applyLiveUpdate(x.delta({}));assert.equal(x.c.layoutCalls,0);assert.equal(x.c.modelBuilds,0);assert.equal(x.c.graphGeneration,1,'wire-equivalent poll keeps data generation');
 }
-console.log('PASS metadata-only live updates preserve layout/cosmos/camera and refresh details/search/citations; structural changes still rebuild');
+{
+ const x=harness();x.c.documentAbort={abort(){x.c.documentAborted=true;}};
+ x.c.applyLiveUpdate(x.delta({}, {nodes:[{id:'F3',name:'new.md',kind:'file',region:'workspace',root:'workspace',path:'new.md'}]}));
+ assert.equal(x.c.documentAborted,undefined,'additive progress must not cancel a pending document search');
+ assert.equal(x.c.documentGeneration,0);
+ x.c.applyLiveUpdate(x.delta({}, {nodes:[],edges:[{from:'F1',to:'F3',kind:'mention'}]}));
+ assert.equal(x.c.documentAborted,undefined,'new relation alone must not cancel document retrieval');
+ x.c.applyLiveUpdate(x.delta({}, {nodes:[],removedNodes:['F3']}));
+ assert.equal(x.c.documentAborted,true,'removal invalidates document snapshot');
+}
+{
+ const x=harness();const n=x.c.graph.nodes[0];delete n.text;delete n.contentHash;n.readState='pending';
+ x.c.documentAbort={abort(){x.c.documentAborted=true;}};
+ x.c.applyLiveUpdate(x.delta({text:'first available body',readState:undefined,contentHash:'first-hash'}));
+ assert.equal(x.c.documentAborted,undefined,'first body discovery is additive, not a modification of a known body');
+}
+console.log('PASS metadata-only layout preservation and additive-search ownership; structural/content changes retain invalidation');

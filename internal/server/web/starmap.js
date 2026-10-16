@@ -155,7 +155,7 @@ function syncNodeSourceChrome(){
 function appendSourceLabel(parent,n){const meta=document.createElement('small');meta.className='source-meta';meta.dataset.sourceNode=n.id;meta.sourceNode=n;meta.textContent=nodeSourceLabel(n);meta.title=meta.textContent;parent.append(meta);return meta;}
 const edgeKey=e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.column||0,e.evidence||'',e.confidence||'']);
 function birthAlpha(n,now){if(!n.bornAt)return 1;return easing(clamp((now-n.bornAt)/680,0,1));}
-function liveReady(){return !locked&&!document.hidden&&!pageLeaving&&!loading&&!drag&&!cosmicFlight;}
+function liveReady(){return !locked&&!pageLeaving&&!loading&&(document.hidden||!drag&&!cosmicFlight);}
 function stopLive(clearCursor=false){clearTimeout(liveTimer);liveTimer=0;liveEpoch++;liveAbort?.abort();liveAbort=null;if(clearCursor)liveCursor='';}
 // Continue unfinished catalogues promptly; completed/failed sources retain their normal cadence.
 function progressiveSummary(g){
@@ -166,7 +166,7 @@ function progressiveDelay(g,duration=0){
  const scanning=(g.sources||[]).some(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0||s.coverage.materialPending>0));
  return scanning?Math.max(350,Math.min(1500,Math.round(duration*.5))):2000;
 }
-function scheduleLive(delay=2000){clearTimeout(liveTimer);liveTimer=0;if(locked||document.hidden||pageLeaving)return;liveTimer=setTimeout(pollLive,delay);}
+function scheduleLive(delay=2000){clearTimeout(liveTimer);liveTimer=0;if(locked||pageLeaving)return;liveTimer=setTimeout(pollLive,document.hidden?Math.max(2000,delay):delay);}
 function scheduleGraphCache(){
  // Coalesce to the latest graph at a bounded deadline. Debouncing each live
  // update starves persistence while a progressive scan keeps adding nodes.
@@ -188,11 +188,11 @@ async function pollLive(){
  if(!graph.workspace||recoveryScopeLoaded!==graph.workspace){load();return;}
  const started=performance.now(),epoch=liveEpoch,mode=codeView,cursor=liveCursor,controller=new AbortController();liveAbort=controller;
  const timeout=setTimeout(()=>controller.abort(),14000);
- try{const update=await api('/updates?code='+(mode?'1':'0')+'&cursor='+encodeURIComponent(cursor),{signal:controller.signal});
+ try{const update=await api('/updates?background=1&code='+(mode?'1':'0')+'&cursor='+encodeURIComponent(cursor),{signal:controller.signal});
   if(epoch!==liveEpoch||mode!==codeView||!liveReady())return;
   if(graph.workspace&&update.workspace!==graph.workspace){persistSkyView();load();return;}
   applyLiveUpdate(update);liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;scheduleGraphCache();
- }catch(e){if(epoch===liveEpoch&&!locked&&!document.hidden){liveFailures++;stellarLogbook.interrupted();if(liveFailures===1)say('自动同步暂不可用，保留当前星图并稍后重试。');}}
+ }catch(e){if(epoch===liveEpoch&&!locked&&!pageLeaving){liveFailures++;stellarLogbook.interrupted();if(liveFailures===1)say('自动同步暂不可用，保留当前星图并稍后重试。');}}
  finally{clearTimeout(timeout);if(liveAbort===controller)liveAbort=null;if(epoch===liveEpoch)scheduleLive(liveFailures?Math.min(30000,2000*Math.pow(2,liveFailures)):progressiveDelay(graph,performance.now()-started));}
 }
 
@@ -965,6 +965,11 @@ function applyLiveUpdate(update,initial=false){
  for(const [key,e]of nextEdges)if(removed.has(e.from)||removed.has(e.to))nextEdges.delete(key);
  const edgesChanged=oldEdges.size!==nextEdges.size||[...nextEdges.keys()].some(k=>!oldEdges.has(k));
  layoutChanged=layoutChanged||edgesChanged;
+ // Additive catalogue progress must not cancel an already running document
+ // search. Content/identity/removal changes still invalidate its snapshot.
+ const sourceLost=Array.isArray(update.sources)&&(graph.sources||[]).some(old=>old.state!=='disabled'&&old.state!=='unavailable'&&!update.sources.some(s=>s.id===old.id&&s.type===old.type&&s.state!=='disabled'&&s.state!=='unavailable'));
+ const documentChanged=sourceLost||removed.size>0||changed.some(raw=>{const old=oldNodes.get(raw.id);return old&&(['origin','root','source','path','size','modified'].some(field=>old[field]!==raw[field])||typeof old.text==='string'&&old.text!==raw.text||!!old.contentHash&&old.contentHash!==raw.contentHash||old.readState!=='pending'&&old.readState!==raw.readState);});
+ if(documentChanged){documentGeneration++;documentAbort?.abort();}
  if(Array.isArray(update.sources))graph.sources=update.sources;
  graph.warnings=update.warnings||[];graph.truncated=!!update.truncated;graph.code=update.code;syncGraphChrome();
  if(!changed.length&&!removed.size&&!edgesChanged){if(update.stale)say('正在建立最新索引 · 当前显示上次完整星图');if(!cosmicScene?.members.length)redraw();return;}
@@ -974,7 +979,7 @@ function applyLiveUpdate(update,initial=false){
  for(const id of removed){oldNodes.delete(id);liveWireNodes.delete(id);}
  for(const raw of changed){let node=oldNodes.get(raw.id);if(!node){node={};oldNodes.set(raw.id,node);}for(const field of nodeFields)if(!(field in raw))delete node[field];Object.assign(node,raw);liveWireNodes.set(raw.id,JSON.stringify(raw));}
  if(motion)for(const [i,raw]of added.entries())oldNodes.get(raw.id).bornAt=now+Math.min(i,20)*32;
- graph.nodes=[...oldNodes.values()];graph.edges=[...nextEdges.values()];graphGeneration++;documentGeneration++;documentAbort?.abort();
+ graph.nodes=[...oldNodes.values()];graph.edges=[...nextEdges.values()];graphGeneration++;
  aiExplorer.updated();
  if(selectionID&&!oldNodes.has(selectionID)){selected=null;$('insert').disabled=true;$('understand').disabled=true;revealPanel($('detail'),false);}
  else if(selectionID)selected=!selectionChanged&&citation?{...oldNodes.get(selectionID),documentCitation:citation}:oldNodes.get(selectionID);
@@ -996,7 +1001,7 @@ async function load(){
   if(identityChanged){applyLiveUpdate({workspace:identity.workspace,revision:'pending',reset:true,nodes:[],edges:[],sources:[],warnings:[]},true);liveCursor='';}
   const cached=await window.AideStarmapCache?.read(mode?'code':'knowledge',cacheIdentity).catch(()=>null);if(locked||generation!==graphGeneration||mode!==codeView)return;
   if(cached?.graph&&cached.revision){applyLiveUpdate({...cached.graph,workspace:cached.workspace,revision:cached.revision,reset:true,removedNodes:[],removedEdges:[]},graph.workspace!==cached.workspace);generation=graphGeneration;liveCursor=cached.revision;say('已载入本地星图 · 正在同步最新变化…');}
-  const update=await api('/updates?code='+(mode?'1':'0')+(liveCursor?'&cursor='+encodeURIComponent(liveCursor):''),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
+  const update=await api('/updates?background=1&code='+(mode?'1':'0')+(liveCursor?'&cursor='+encodeURIComponent(liveCursor):''),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
   if(update.workspace!==identity.workspace){cacheIdentity=null;graph={nodes:[],edges:[],sources:[],warnings:[]};liveCursor='';return;}
   if(cached?.revision===liveCursor){applyLiveUpdate(update);}
   else{beginGraphTransition();applyLiveUpdate(update,graph.workspace!==update.workspace);}
@@ -1019,8 +1024,8 @@ function syncMotion(){ $('motion').textContent=animate?'动效 · 开':'动效 �
 $('motion').onclick=()=>{if(motionReduced()){say('当前已减少动态效果，请在工作台外观或系统设置中调整。');return;}animate=!animate;if(!animate){for(const n of graph.nodes)delete n.bornAt;liveGhosts=[];liveAnimationUntil=0;if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}graphFade=null;cosmicFlight=null;settlePanels();}syncMotion();redraw();};syncMotion();
 addEventListener('visibilitychange',()=>{
  const now=performance.now();cancelAnimationFrame(frame);frame=0;
- if(document.hidden){persistSkyView();stopLive();pausedAt=now;drag=null;settlePanels();}
- else{scheduleLive(0);if(pausedAt!==null){if(cameraTween)cameraTween.start+=now-Math.max(pausedAt,cameraTween.start);if(graphFade)graphFade.start+=now-Math.max(pausedAt,graphFade.start);if(cosmicFlight)cosmicFlight.start+=now-Math.max(pausedAt,cosmicFlight.start);const pause=now-pausedAt;for(const n of graph.nodes)if(n.bornAt)n.bornAt+=pause;for(const ghost of liveGhosts)ghost.start+=pause;if(liveAnimationUntil)liveAnimationUntil+=pause;cosmicGate+=pause;}pausedAt=null;if(wheelZoom)wheelZoom.last=now;lastPaint=now;redraw();}
+ if(document.hidden){persistSkyView();scheduleLive(2000);pausedAt=now;drag=null;settlePanels();}
+ else{scheduleLive(0);if(pausedAt!==null){if(cameraTween)cameraTween.start+=now-Math.max(pausedAt,cameraTween.start);if(graphFade)graphFade.start+=now-Math.max(pausedAt,graphFade.start);if(cosmicFlight)cosmicFlight.start+=now-Math.max(pausedAt,cosmicFlight.start);const pause=now-pausedAt;cosmicGate+=pause;}pausedAt=null;if(wheelZoom)wheelZoom.last=now;lastPaint=now;redraw();}
 });
 $('search-form').onsubmit=e=>{e.preventDefault();if(retrievalMode()==='nodes')search();else searchDocuments()};$('search').oninput=search;$('close-detail').onclick=()=>{beginGraphTransition();selected=null;revealPanel($('detail'),false);redraw()};$('home').onclick=()=>{if(cosmicEnabled&&cosmos&&cosmicKey!==cosmos.root.key)enterCosmic(cosmos.root.key);else moveCamera({yaw:0,pitch:.1,zoom:1},850);};
 canvas.onpointerdown=e=>{if(locked||cosmicEnabled&&cosmicFlight)return;interruptCamera();interactionUntil=performance.now()+220;drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY};canvas.setPointerCapture(e.pointerId);};
@@ -1133,13 +1138,13 @@ async function searchDocuments(continuing=false){
  const key=JSON.stringify({query,mode,workspace,region});
  const previous=continuing&&documentBatch?.key===key?documentBatch:null;
  if(continuing&&!previous?.cursor)return;
- const gen=++documentGeneration,graphGen=graphGeneration;
+ const gen=++documentGeneration;
  documentAbort?.abort();documentAbort=new AbortController();$('document-next').disabled=true;
  if(!previous)resetDocumentBatch();
  say('正在提取与检索文档正文…');
  try{
   const d=await api('/documents/search',{method:'POST',signal:documentAbort.signal,body:JSON.stringify({query,mode,workspace,region,cursor:previous?.cursor||''})});
-  if(locked||gen!==documentGeneration||graphGen!==graphGeneration)return;
+  if(locked||gen!==documentGeneration||workspace!==graph.workspace)return;
   const hits=[...(previous?.hits||[]),...d.hits],seen=new Set();
   documentBatch={key,cursor:d.nextCursor||'',hits:hits.filter(h=>!seen.has(h.id)&&seen.add(h.id))};
   renderDocumentResults({hits:documentBatch.hits});
