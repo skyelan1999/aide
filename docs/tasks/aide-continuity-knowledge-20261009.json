@@ -7770,6 +7770,6 @@
     "status": "in_progress",
     "task": "docs/tasks/knowledge-context-dedup-20261016.json",
     "report": "docs/reviews/2026-10-16/knowledge-context-dedup.md",
-    "scope": "Index-only builtin context dedup; focused race/vet pass, full/package/runtime pending; all original12 retained."
+    "scope": "Index-only builtin dedup focused race/vet and final full88 pass, offline checksums/local import pass. Main/runtime/browser delivery pending; original12 retained."
   }
 }

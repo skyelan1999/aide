@@ -44,22 +44,27 @@
       ]
     },
     "verification": {
-      "status": "in_progress",
-      "summary": "Real snapshot red-before/green-after and focused race/vet passed, virtual-path fixture correction documented; full/runtime/package pending.",
+      "status": "pass",
+      "summary": "Real snapshot red-before/green-after, focused race/vet19.687s, final full88 all0/server race679.813s/all-package vet/nonroot19 assets and DOCX roundtrip pass. Candidate offline checksums/local import pass; live runtime/UI follow in release.",
       "evidence": [
-        "internal/server/knowledge_context_dedup_test.go",
-        "docs/reviews/2026-10-16/knowledge-context-dedup.md"
+        "docs/reviews/2026-10-16/knowledge-context-dedup.md",
+        "docs/reviews/2026-10-16/knowledge-context-dedup-bundle-proof.json"
       ]
     },
     "documentation": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Final behavior, source/viewer compatibility, exclusions, package proof and independent delivery limits documented; Markdown links/diff checked.",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-context-dedup.md",
+        "docker-images/README.md"
+      ]
     },
     "cleanup": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Scoped diff reviewed; clean task branch, only owned private logs and retained offline package; no user data or old artifacts deleted.",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-context-dedup.md"
+      ]
     },
     "release": {
       "status": "pending",
@@ -69,11 +74,19 @@
   },
   "release_authorization": "User incremental tests/push/main and existing start.command/offline package update authorization. No new version/tag/Release.",
   "rollback": "Revert scoped source commit or restore retained prior image through designated startup; preserve all sources/user files/session data. No cache/user-data deletion.",
-  "handoff": "Focused race/vet19.687s passed; candidatea8c22d43ccb8/buildd9b6838 and bundle local import verified. Full is live in exec85621, log .agent-state/knowledge-context-dedup/full.log, owned container aide-verify-56f8b8594716. Prior full exec65308 intentionally interrupted with exit130 to correct README ordering before final gate, not a test failure or observation timeout. Re-poll85621; do not restart. After full, clean-main independent gate/push, fresh runtime.py before, AIDE_OPEN_BROWSER=0 bash start.command, runtime.py after, then native Safari map/preview acceptance. Runtime remains6d212fa, no active user jobs cancelled. Original12 remain open.",
+  "handoff": "Full88 passed on final package inputs; main gate/push and fresh runtime preflight/start.command/after checks/native Safari acceptance pending. Candidatea8c22d43ccb8 unchanged; source/API full and package are separate from live delivery. Original12 remain open.",
   "candidate": {
     "image": "sha256:a8c22d43ccb88378ac8348d3a888a388f5ae9efc0828baabbb22e2f7e3ac058d",
     "buildCommit": "d9b68388aa2ff38fcbaca9e2a34ee569939b778b",
     "bundleProof": "docs/reviews/2026-10-16/knowledge-context-dedup-bundle-proof.json",
     "status": "built_import_verified_not_deployed"
+  },
+  "full_receipt": {
+    "profile": "full",
+    "status": "pass",
+    "head": "f55d7ded9f610d8048ed7f0b21571cddd322c4f4",
+    "time": "20261016T000405559304Z",
+    "fingerprint": "14fd2fd0e29d48f7c0eb4baf8dfe24a1277db1a362cd5c3aea634e59d717fff6",
+    "log": ".agent-state/verify-20261016T000405559304Z.log"
   }
 }
