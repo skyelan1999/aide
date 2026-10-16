@@ -1,0 +1,51 @@
+{
+  "task": "starmap-background-progress-20261016",
+  "kind": "follow-up revalidation",
+  "checkedAt": "2026-10-16T17:18:06.872544+00:00",
+  "runtime": {
+    "image": "sha256:d025448dd17440bda8ca39ab844b5e192f07703399eab4197551344472e77e72",
+    "servedStarmapEqualsPublishedHEAD": true,
+    "servedStarmapSHA256": "4b028813e8f447bdeefc551dea276a9c2b6c00fe2c5ed8351bc8e1da4889456c",
+    "backgroundOptIn": true,
+    "hiddenRequestsEnabled": true
+  },
+  "checks": {
+    "starmap-background.test.cjs": "pass",
+    "starmap-progressive-cadence.test.cjs": "pass",
+    "goBackgroundRace": {
+      "status": "pass",
+      "command": "go test -mod=vendor -race -count=1 -timeout=180s -run ^TestKnowledgeBackground ./internal/server",
+      "seconds": 75.4,
+      "environment": "Disposable container-local current-source snapshot; network none; no user-data mounts",
+      "coverage": [
+        "Completes without further HTTP requests",
+        "Cancelled first batch resumes",
+        "Request cancellation independence",
+        "Duplicate ownership and shutdown",
+        "First busy and stale response continuation",
+        "Slow response cannot hold scan gate",
+        "Hard limit terminates without spinning"
+      ]
+    }
+  },
+  "liveIndex": {
+    "nodes": 20052,
+    "edges": 20035,
+    "stale": false,
+    "limitedSource": {
+      "nodes": 20000,
+      "discoveryBlocked": true,
+      "pendingDirectories": 881,
+      "readErrors": 13391,
+      "reasons": [
+        "catalog_limit",
+        "file-read-error"
+      ]
+    }
+  },
+  "boundaries": [
+    "No new native Safari test in this follow-up; previous native evidence is recorded in the 2026-10-16 report.",
+    "Do not interpret read failures or capped discovery as active scanning, or increase limits without memory and source-read evaluation.",
+    "No product code changes or runtime restart in this revalidation; existing path-position fixes remain uncommitted and separate."
+  ]
+}

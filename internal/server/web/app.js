@@ -8833,6 +8833,9 @@ function setFileViewMode(mode) {
   }
   if (!preview) fileViewAutoSave?.restoreView();
 }
+function fileViewRouteCurrent(spec, token, scope, epoch) {
+  return fileView.spec===spec&&state.token===token&&recoveryScope()===scope&&chatRecoveryEpoch===epoch&&!lockScreen.locked;
+}
 async function openFileViewMode() {
   let spec = null;
   spec = window.AideFileRoute?.read();
@@ -8846,6 +8849,7 @@ async function openFileViewMode() {
   document.body.classList.add('file-view-mode');
   $('file-view').classList.remove('hidden');
   fileView.spec = spec; fileView.wsId = '';
+  const openToken=state.token,openScope=recoveryScope(),openEpoch=chatRecoveryEpoch;
   const fileName = String(spec.path).split(/[\\/]/).filter(Boolean).pop() || String(spec.path);
   document.title = fileName + ' · aide';
   $('file-view-path').textContent = (spec.source ? 'sources/' + spec.source : spec.root) + ' · ' + spec.path;
@@ -8879,6 +8883,11 @@ async function openFileViewMode() {
     addKnowledgeViewerIdentity(query, spec);
     data = await api('/file?' + query.toString());
   }
+  if(!fileViewRouteCurrent(spec,openToken,openScope,openEpoch))return;
+  const visualPreview = isZip || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isImg || isDrawio;
+  const locationRequested=!visualPreview&&Number.isInteger(spec.line)&&spec.line>0;
+  const locationMatches=!locationRequested||await window.AideFileRoute.matchesSourceLocation(spec,data);
+  if(!fileViewRouteCurrent(spec,openToken,openScope,openEpoch))return;
   fileView.hash = data.hash; fileView.wsId = data.workspaceId || data.wsId || '';
   $('file-view-mode-switch').classList.toggle('hidden', !md && !isDelimitedPath(typePath));
   const readOnly = spec.readOnly === true || isBackupPath(spec.path) || (spec.root !== 'workspace' && !(spec.source && state.sources.find(x => x.id === spec.source)?.rw === true));
@@ -8889,7 +8898,7 @@ async function openFileViewMode() {
   teardownViewer($('file-view-preview')); // file-view 页签切文件前回收上一个查看器
   var _fvcl = codeLang(typePath);
   setupCodeHighlight($('file-view-editor'), _fvcl);
-  const visualPreview = isZip || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isImg || isDrawio;
+
   if ($('file-view-editor').parentNode.classList.contains('code-wrapper')) $('file-view-editor').parentNode.classList.toggle('hidden', visualPreview);
   // 图片 / STL / PDF 只读查看器禁用保存；drawio 可保存
   $("file-view-save").classList.toggle("hidden", isImg || isStl || isStep || isPdf || isDxf || isDocx || isXlsx || isZip);
@@ -8938,8 +8947,8 @@ async function openFileViewMode() {
   } else {
     setFileViewMode((md && fileRenderEnabled('fileMarkdownPreview')) || (isDelimitedPath(typePath) && fileRenderEnabled('fileCsvPreview')) ? 'preview' : 'edit');
   }
-  if (spec.codeHash && data.hash !== spec.codeHash) toast(t('源码已变更，请刷新星图后重新定位。'));
-  if (!visualPreview && (!spec.codeHash || data.hash === spec.codeHash) && Number.isInteger(spec.line) && spec.line > 0) {
+  if(locationRequested&&!locationMatches)toast(spec.codeHash||spec.indexedTextHash?t('源码已变更，请刷新星图后重新定位。'):t('位置证据缺失，请刷新星图后重新定位。'));
+  if (!visualPreview && locationRequested && locationMatches) {
     setFileViewMode('edit');
     const editor=$('file-view-editor'),lines=editor.value.split('\n');
     const line=Math.min(spec.line,lines.length),end=Math.min(Number.isInteger(spec.endLine)?Math.max(line,spec.endLine):line,lines.length,line+200);

@@ -28,5 +28,22 @@
       return safe.pathname+safe.search;
     }catch{return null;}
   }
-  window.AideFileRoute={read,pin,returnToMap};
+  async function matchesSourceLocation(spec, data) {
+    if(spec.codeHash)return data.hash===spec.codeHash;
+    if(spec.indexedTextHash!==undefined||spec.indexedTextBytes!==undefined){
+      const count=spec.indexedTextBytes;
+      if(!/^[a-f0-9]{64}$/.test(spec.indexedTextHash||'')||!Number.isSafeInteger(count)||count<1||count>8192||typeof data.content!=='string')return false;
+      try{
+        // At most8192 UTF-16 units need encoding to obtain8192 UTF-8 bytes.
+        const bytes=new TextEncoder().encode(data.content.slice(0,count));
+        if(bytes.length<count)return false;
+        const digest=await crypto.subtle.digest('SHA-256',bytes.subarray(0,count));
+        return Array.from(new Uint8Array(digest),n=>n.toString(16).padStart(2,'0')).join('')===spec.indexedTextHash;
+      }catch{return false;}
+    }
+    // Old map routes without a proof must refresh instead of silently using
+    // stale line numbers. Ordinary non-map file routes remain compatible.
+    return !spec.knowledgeWorkspace;
+  }
+  window.AideFileRoute={read,pin,returnToMap,matchesSourceLocation};
 })();

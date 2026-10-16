@@ -27,6 +27,7 @@ function pathSourceLink(n,line){
  const spec={root:n.root,path:n.path,origin:n.origin||'',readOnly:true,knowledgeWorkspace:graph.workspace};
  if(n.source)spec.source=n.source;if(n.format)spec.format=n.format;
  if(line||n.line){spec.line=line||n.line;spec.endLine=line||n.endLine;spec.codeHash=n.contentHash;}
+ if((line||n.line)&&!n.contentHash&&n.indexedTextHash){spec.indexedTextHash=n.indexedTextHash;spec.indexedTextBytes=n.indexedTextBytes;}
  return '/#file='+encodeURIComponent(JSON.stringify(spec));
 }
 function renderEvidencePath(result){
@@ -37,7 +38,7 @@ function renderEvidencePath(result){
   const row=document.createElement('li'),button=document.createElement('button');button.type='button';button.className='code-relation';button.textContent=n.name+' · '+n.id;button.onclick=()=>{const current=nodeByID.get(n.id);if(current)select(current);};row.append(button);
   const link=pathSourceLink(n);if(link){const a=document.createElement('a');a.dataset.filePreview='';a.href=link;a.target='_blank';a.rel='noopener';a.textContent='打开原文件 ↗';row.append(a);}
   const step=result.steps[i];if(step){const e=step.edge,p=document.createElement('p');p.textContent=`${step.reversed?'逆向探索 ←':'沿关系 →'} ${labels[e.kind]||e.kind}${e.confidence&&evidenceConfidenceLabel(e.confidence)!==labels[e.kind]?' · '+(evidenceConfidenceLabel(e.confidence)||'静态证据'):''}${e.line?' · L'+e.line+(e.column?':'+e.column:''):''}`+(e.evidence?' · '+e.evidence:' · 此关系未提供源位置证据');row.append(p);
-   const origin=nodeByID.get(e.from),href=e.line&&pathSourceLink(origin,e.line);if(href){const a=document.createElement('a');a.dataset.filePreview='';a.href=href;a.target='_blank';a.rel='noopener';a.textContent='查看关系源位置 ↗';row.append(a);}}
+   const origin=result.nodes.find(node=>node.id===e.from),href=e.line&&pathSourceLink(origin,e.line);if(href){const a=document.createElement('a');a.dataset.filePreview='';a.href=href;a.target='_blank';a.rel='noopener';a.textContent='查看关系源位置 ↗';row.append(a);}}
   $('path-steps').append(row);
  }
 }

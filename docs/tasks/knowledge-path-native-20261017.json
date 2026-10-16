@@ -1,0 +1,90 @@
+{
+  "id": "knowledge-path-native-20261017",
+  "request": "Continue original12: authenticated native Safari multi-step report/source and button/service paths, confidence labels and exact source jumps; preserve original data, no model calls, Windows user-owned and vectors deferred.",
+  "baseline": "3ed6164d71e2c0b082aabf799215ffad3a2a6945",
+  "initial_status": "",
+  "acceptance": [
+    "Actual current authenticated Safari renders a two-step report/evidence/source path with explicit-reference confidence and source positions.",
+    "Actual current Safari renders six static button/event/callback/HTTP/route/handler/service steps and distinguishes candidates from execution records.",
+    "Native source links reuse current tab and select actual path-origin source line, preserving workspace/origin/hash and safe map return.",
+    "Record exact live API identities/revision guards separately; restore temporary source registry/view and protected original data, no model calls or new tabs."
+  ],
+  "scope": [
+    "docs/tasks/knowledge-path-native-20261017.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-17",
+    "ignored owned acceptance fixtures and observations only",
+    "internal/server/knowledge_map.go",
+    "internal/server/knowledge_paths.go",
+    "internal/server/knowledge_path_fingerprint_test.go",
+    "internal/server/web/app.js",
+    "internal/server/web/file-route.js",
+    "internal/server/web/starmap.js",
+    "internal/server/web/index.html",
+    "internal/server/web/starmap.html",
+    "internal/server/web/locales/en.js",
+    "scripts/file-route-location.test.cjs",
+    "scripts/starmap-path.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture/knowledge-map.md"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "Continue existing original12 evidence-path acceptance; source/API and component evidence exists, current native multi-step path/source clicks need direct proof.",
+      "evidence": [
+        "docs/tasks/knowledge-http-evidence-20261016.json",
+        "docs/tasks/knowledge-explicit-references-20261016.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Native reproduced missing path fingerprint. Bind exact bounded indexed text without a whole-file claim or re-read; viewer validates prefix/full hash and guards async ownership. Existing full code hashes remain.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-path-native-proof.json",
+        "docs/reviews/2026-10-17/knowledge-path-native.md"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Path-node indexed text proof, snapshot-origin link, bounded viewer digest/fail-closed old map links and async token/scope/epoch/lock/route guards implemented.",
+      "evidence": [
+        "internal/server/knowledge_paths.go",
+        "internal/server/web/file-route.js",
+        "internal/server/web/app.js"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Old d025 native two-step path/correct original line and changed-file wrong-line reproduced; API six-step chain verified. Fail-before/pass-after Go target1.033s, related race/vet60.347s and quick104 pass. New compiled native/six-step UI/full pending.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-path-native-proof.json",
+        "internal/server/knowledge_path_fingerprint_test.go",
+        "scripts/file-route-location.test.cjs"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Prefix versus full-file scope, actual native defect, source checks and pending runtime/full boundaries documented.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-path-native.md",
+        "docs/architecture/knowledge-map.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Owned report and original source registry restored, protected14 sessions/auth/settings/mounts exact; view/original tab restored, no model calls/new tabs. No user data or history overwrite.",
+      "evidence": [
+        "docs/reviews/2026-10-17/knowledge-path-native-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Continue existing user-authorized incremental testing/docs/main publication. No new product or runtime release unless a reproduced defect requires it; Windows user-owned, real vectors deferred.",
+  "rollback": "Remove owned temporary source by restoring exact pre-test registry; preserve original auth/settings/sessions/mounts and current d025 runtime. No user file edit, data restore or model invocation.",
+  "handoff": "Branch fix/knowledge-path-source-guard-20261017: native d025 report-path source had no hash and refreshed wrong line3 after insertion. Source fix passes Go target, related race/vet and quick104 fingerprint 25a8a05b7a36912e9addcbd0d5555dba4e96c210f048077248f1e377bacb17cc. Next controlled-snapshot build, native prefix guard on short/long text and six-step UI, freeze complete packages then new full/release gate. Current runtime/remote main remain prior published d025/3ed6164d. Do not reuse full106 for changed source."
+}

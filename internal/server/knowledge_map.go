@@ -17,30 +17,32 @@ import (
 )
 
 type knowledgeNode struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Kind        string `json:"kind"`
-	Region      string `json:"region"`
-	Path        string `json:"path,omitempty"`
-	Root        string `json:"root,omitempty"`
-	Source      string `json:"source,omitempty"`
-	SourceName  string `json:"sourceName,omitempty"`
-	SourceType  string `json:"sourceType,omitempty"`
-	Origin      string `json:"origin,omitempty"`
-	Format      string `json:"format,omitempty"`
-	Session     string `json:"session,omitempty"`
-	Number      int    `json:"number,omitempty"`
-	Text        string `json:"text,omitempty"`
-	ReadState   string `json:"readState,omitempty"`
-	Size        int64  `json:"size,omitempty"`
-	Modified    string `json:"modified,omitempty"`
-	Language    string `json:"language,omitempty"`
-	SymbolKind  string `json:"symbolKind,omitempty"`
-	Line        int    `json:"line,omitempty"`
-	EndLine     int    `json:"endLine,omitempty"`
-	ParentFile  string `json:"parentFile,omitempty"`
-	Signature   string `json:"signature,omitempty"`
-	ContentHash string `json:"contentHash,omitempty"`
+	ID               string `json:"id"`
+	Name             string `json:"name"`
+	Kind             string `json:"kind"`
+	Region           string `json:"region"`
+	Path             string `json:"path,omitempty"`
+	Root             string `json:"root,omitempty"`
+	Source           string `json:"source,omitempty"`
+	SourceName       string `json:"sourceName,omitempty"`
+	SourceType       string `json:"sourceType,omitempty"`
+	Origin           string `json:"origin,omitempty"`
+	Format           string `json:"format,omitempty"`
+	Session          string `json:"session,omitempty"`
+	Number           int    `json:"number,omitempty"`
+	Text             string `json:"text,omitempty"`
+	ReadState        string `json:"readState,omitempty"`
+	Size             int64  `json:"size,omitempty"`
+	Modified         string `json:"modified,omitempty"`
+	Language         string `json:"language,omitempty"`
+	SymbolKind       string `json:"symbolKind,omitempty"`
+	Line             int    `json:"line,omitempty"`
+	EndLine          int    `json:"endLine,omitempty"`
+	ParentFile       string `json:"parentFile,omitempty"`
+	Signature        string `json:"signature,omitempty"`
+	ContentHash      string `json:"contentHash,omitempty"`
+	IndexedTextHash  string `json:"indexedTextHash,omitempty"`
+	IndexedTextBytes int    `json:"indexedTextBytes,omitempty"`
 }
 type knowledgeEdge struct {
 	From       string `json:"from"`

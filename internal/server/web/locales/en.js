@@ -368,6 +368,7 @@ window.aideEnglish = {
   "审批记忆已清空": "Approval memory cleared",
 
   "源码已变更，请刷新星图后重新定位。": "Source changed. Refresh the map before locating this symbol again.",
+  "位置证据缺失，请刷新星图后重新定位。": "Location evidence is missing. Refresh the map before locating this source again.",
   "开放的 AI 创造空间": "An open space for AI creation",
   "让灵感，": "Let inspiration",
   "抵达": "reach ",

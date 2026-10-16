@@ -25,6 +25,14 @@ assert.equal(layer.levels.get('b6'),6,'call/request view dropped part of the HTT
   const row=el('path-steps').children[0];assert.ok(row.children.some(child=>child.textContent?.includes(label)),kind+' confidence missing');
   const href=row.children.find(child=>child.textContent==='查看关系源位置 ↗').href;assert.equal(JSON.parse(decodeURIComponent(href.split('=')[1])).codeHash,'hash');
  }
+
+ const observed={...node,contentHash:undefined,indexedTextHash:'c'.repeat(64),indexedTextBytes:8192};
+ c.nodeByID.set('a',{...node,contentHash:'new-current-file'});
+ vm.runInContext(`renderEvidencePath(${JSON.stringify({found:true,nodes:[observed,target],steps:[{edge:{from:'a',to:'b',kind:'mention',line:2,column:4}}]})})`,c);
+ const boundLink=el('path-steps').children[0].children.find(child=>child.dataset?.filePreview!==undefined&&child.href?.includes('indexedTextHash'));
+ assert.ok(boundLink,'source-position link must use the path snapshot rather than a newer graph node');
+ const boundSpec=JSON.parse(decodeURIComponent(boundLink.href.split('=')[1]));assert.equal(boundSpec.indexedTextHash,'c'.repeat(64));assert.equal(boundSpec.indexedTextBytes,8192);assert.equal(boundSpec.codeHash,undefined);assert.equal(boundSpec.line,2);
+ c.nodeByID.set('a',node);
  vm.runInContext(`renderEvidencePath(${JSON.stringify(answer)})`,c);
  c.api=async()=>answer;const reconcile=source.slice(source.indexOf(' if(initial||update.workspace!==graph.workspace)'),source.indexOf(' const differentWorkspace=!!graph.workspace'));
  c.initial=false;c.liveWireNodes=new Map([['a',JSON.stringify(node)]]);c.edgeKey=e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.column||0,e.evidence||'',e.confidence||'']);

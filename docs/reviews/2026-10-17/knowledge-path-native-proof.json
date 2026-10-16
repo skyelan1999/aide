@@ -1,0 +1,94 @@
+{
+  "status": "source_fix_verified_native_followup_pending",
+  "runtime": "d025448dd174",
+  "nativeOldRuntime": {
+    "twoStepReportPath": true,
+    "sourceLine3BeforeChangeSelected": true,
+    "sourceURLMissingFingerprint": true,
+    "afterChangeSelectedWrongLine3": "# Report",
+    "expectedReferenceLine": 5,
+    "noExpiredWarning": true
+  },
+  "liveAPI": {
+    "report": [
+      {
+        "kind": "mention",
+        "confidence": "explicit_reference",
+        "line": 3,
+        "column": 20
+      },
+      {
+        "kind": "mention",
+        "confidence": "explicit_reference",
+        "line": 2,
+        "column": 25
+      }
+    ],
+    "code": [
+      {
+        "kind": "dom_event",
+        "confidence": "dom_selector_candidate",
+        "line": 2,
+        "column": 3
+      },
+      {
+        "kind": "event_callback",
+        "confidence": "source_binding",
+        "line": 2,
+        "column": 1
+      },
+      {
+        "kind": "http_request",
+        "confidence": "source_declaration",
+        "line": 1,
+        "column": 30
+      },
+      {
+        "kind": "http_route",
+        "confidence": "http_route_candidate",
+        "line": 1,
+        "column": 30
+      },
+      {
+        "kind": "route_handler",
+        "confidence": "name_candidate",
+        "line": 5,
+        "column": 39
+      },
+      {
+        "kind": "call_candidate",
+        "confidence": "name_candidate",
+        "line": 4,
+        "column": 53
+      }
+    ],
+    "codeNativeUI": "not_run"
+  },
+  "mutation": {
+    "ownedFixtureOnly": true,
+    "oldLine": 3,
+    "newLine": 5,
+    "oldSHA256": "2ff30bb1f65cbcd26fd8bbbb29486516534538fa96fb9d8bf0ccace512c7ea76",
+    "newSHA256": "4e93a02d92f2ea6d29810a1a9cb23f7dc8c72a588178b17c9a160a4a1a7a4062"
+  },
+  "sourceChecks": {
+    "negativeBefore": "fails with missing indexedTextHash/indexedTextBytes",
+    "fixedTargetRaceSeconds": 1.033,
+    "relatedPathWebReferenceRaceSeconds": 60.347,
+    "relatedVet": true,
+    "quickChecks": 104,
+    "quickStatus": "pass",
+    "quickFingerprint": "25a8a05b7a36912e9addcbd0d5555dba4e96c210f048077248f1e377bacb17cc",
+    "newNative": "pending",
+    "newFull": "pending"
+  },
+  "cleanup": {
+    "sourceRegistryBytesRestored": true,
+    "original14SessionsAuthSettingsAndUnrelatedMountsPreserved": true,
+    "ownedReportRestored": true,
+    "emptyQueryAllSourcesClosedPathPanelAndOriginalMainTab": true,
+    "newTabs": 0,
+    "modelCalls": 0
+  },
+  "boundary": "Only prior runtime bug reproduced natively. Source fix is not yet built, deployed or published; original12/Windows/vector scope unchanged."
+}

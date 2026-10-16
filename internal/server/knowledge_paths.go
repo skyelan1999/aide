@@ -2,12 +2,14 @@ package server
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"sort"
 	"time"
+	"unicode/utf8"
 )
 
 type knowledgePathRequest struct {
@@ -115,7 +117,14 @@ func findKnowledgePath(ctx context.Context, g knowledgeGraph, q knowledgePathReq
 	}
 	out.Found = true
 	for id := q.To; ; id = seen[id].id {
-		out.Nodes = append(out.Nodes, nodes[id])
+		n := nodes[id]
+		// Bind raw indexed text, including bounded prefixes, without claiming
+		// a whole-file digest or reading a source again during path search.
+		if n.Kind == "file" && n.ContentHash == "" && n.Text != "" && len(n.Text) <= 8192 && utf8.ValidString(n.Text) && (n.ReadState == "" || n.ReadState == "ready") {
+			sum := sha256.Sum256([]byte(n.Text))
+			n.IndexedTextHash, n.IndexedTextBytes = fmt.Sprintf("%x", sum), len(n.Text)
+		}
+		out.Nodes = append(out.Nodes, n)
 		if id == q.From {
 			break
 		}

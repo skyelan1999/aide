@@ -625,6 +625,10 @@
       [
         "node",
         "scripts/starmap-background.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/file-route-location.test.cjs"
       ]
     ],
     "full": [
