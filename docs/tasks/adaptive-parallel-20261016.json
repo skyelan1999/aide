@@ -58,12 +58,13 @@
         "docs/reviews/2026-10-16/adaptive-parallel.md",
         "docs/reviews/2026-10-16/adaptive-parallel-model-proof.json",
         "docs/reviews/2026-10-16/adaptive-parallel-browser-proof.json",
-        "docs/reviews/2026-10-16/adaptive-parallel-bundle-proof.json"
+        "docs/reviews/2026-10-16/adaptive-parallel-bundle-proof.json",
+        "docs/reviews/2026-10-16/adaptive-parallel-runtime-proof.json"
       ]
     },
     "documentation": {
       "status": "pass",
-      "summary": "Architecture, prototype failures/aborted full, final real model/native/component/offline evidence and limits recorded; full/main handoff pending.",
+      "summary": "Final architecture has no fixed-check cutoff; model/normal-runtime/protocol-transfer scopes,13-check/main-policy race, prototype failures/aborted runs, cleanup and complete final bundle recorded. Fresh full/main pending.",
       "evidence": [
         "docs/architecture/adaptive-parallel.md",
         "docs/reviews/2026-10-16/adaptive-parallel.md"
@@ -71,7 +72,7 @@
     },
     "cleanup": {
       "status": "pass",
-      "summary": "All3 owned synthetic sessions and exact-hash fixture removed; original14 session bytes/auth/sources unchanged, settings only sequence42->45, mounts/workspace config unchanged. Safari original scene/file panel/tabs restored; owned IAB preview closed/viewport reset/server stopped. Owned7ff intermediate archive removed after preserving evidence; delivered3f rollback retained. Final image package will replace remaining owned d1 intermediate archive after verification.",
+      "summary": "All3 owned synthetic sessions/exact-hash fixture and owned preview server/tab removed; original14 session bytes/auth/sources unchanged, settings only sequence42->45, mounts/config unchanged. Original Safari scene/file panel/tabs restored, viewport reset. Owned7ff/d1 intermediate archives removed after verification evidence retained; final7b complete package and delivered3f rollback preserved.",
       "evidence": [
         "docs/reviews/2026-10-16/adaptive-parallel-cleanup-proof.json",
         "docs/reviews/2026-10-16/adaptive-parallel-browser-proof.json"
@@ -85,7 +86,7 @@
   },
   "release_authorization": "Prior explicit incremental test/push/main/local designated start.command/offline-image-package authorization; no version/tag/Release.",
   "rollback": "No data migration. Preserve prior3f4545df image/package and user state; revert scoped adaptive planning/UI changes.",
-  "handoff": "Final lifecycle source frozen; focused race22.487s/quick88 pass, actual Qwen/native model path verified before two-line >12 cutoff removal. Next commit/start.command idle14 verification, final complete bundle import/owned intermediate cleanup, freeze README/SHA, fresh full. Original12 active.",
+  "handoff": "Final source e0f38e02/runtime7b6321af02c1 and complete offline package healthy/local-import verified, original14 bytes/config preserved, all owned fixtures/intermediate packages cleaned. Fresh full90 starting after README/SHA freeze; poll its single owner without source/README/SHA edits or branch switching. Then full proof, independent clean-main gate, ff/push/exact remote. Original12 active; Windows/receiving-device not_run.",
   "quick_receipt": {
     "profile": "quick",
     "status": "pass",
@@ -94,11 +95,11 @@
     "time": "20261016T035600918896Z"
   },
   "candidate": {
-    "serverInstanceId": "2026-10-16T03:46:25.722821049Z",
-    "image": "sha256:d1ad0e21d6223da679097b24ecbcd78bfe5f692d690e7952b44d633bb830b3a6",
-    "imageTag": "sha256:d1ad0e21d6223da679097b24ecbcd78bfe5f692d690e7952b44d633bb830b3a6",
-    "sourceSHA256": "21331a10020e7e199f2b6c4e695994da2ea873f7ba5060010541ca0e4b7a58fd",
-    "platformManifest": "sha256:6c3acd4585eab9de835405b8a4ddc763ff4ce92289ec698b27ec3ad403cc13cb",
+    "serverInstanceId": "2026-10-16T03:57:14.470263127Z",
+    "image": "sha256:7b6321af02c1f9204b98b4023a0f702400b25a86ddab85632660bf2f2007d706",
+    "imageTag": "sha256:7b6321af02c1f9204b98b4023a0f702400b25a86ddab85632660bf2f2007d706",
+    "sourceSHA256": "a27b8a833217334bdd96d9162d6ed873771d18758549dc1f69a99011193bf099",
+    "platformManifest": "sha256:18dfbd04798c051c762f1613e98c31a1b57fa89a5368f5e85da7d32e87f4cdf1",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "port": "9999",
     "health": "ok",
@@ -120,7 +121,7 @@
       "app.js",
       "conversation.css"
     ],
-    "runningBefore": "sha256:d1ad0e21d6223da679097b24ecbcd78bfe5f692d690e7952b44d633bb830b3a6",
-    "buildCommit": "25d71378"
+    "runningBefore": "sha256:7b6321af02c1f9204b98b4023a0f702400b25a86ddab85632660bf2f2007d706",
+    "buildCommit": "e0f38e0276d31015054948e45bc27f82d2eb35c9"
   }
 }

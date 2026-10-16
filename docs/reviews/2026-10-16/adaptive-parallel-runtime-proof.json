@@ -1,0 +1,58 @@
+{
+  "runtime": {
+    "serverInstanceId": "2026-10-16T03:57:14.470263127Z",
+    "image": "sha256:7b6321af02c1f9204b98b4023a0f702400b25a86ddab85632660bf2f2007d706",
+    "imageTag": "sha256:7b6321af02c1f9204b98b4023a0f702400b25a86ddab85632660bf2f2007d706",
+    "sourceSHA256": "a27b8a833217334bdd96d9162d6ed873771d18758549dc1f69a99011193bf099",
+    "platformManifest": "sha256:18dfbd04798c051c762f1613e98c31a1b57fa89a5368f5e85da7d32e87f4cdf1",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndMountsPreserved": true,
+    "assetsMatch": [
+      "parallel-chat.js",
+      "crash-monitor.js",
+      "crash-monitor.css",
+      "file-autosave.js",
+      "locales/en.js",
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ]
+  },
+  "preflight": {
+    "image": "sha256:d1ad0e21d6223da679097b24ecbcd78bfe5f692d690e7952b44d633bb830b3a6",
+    "health": "healthy",
+    "sessions": 14,
+    "running": 0,
+    "nonterminal": 0,
+    "queued": 0,
+    "historyBackupSHA256": "3fe1e6575879329380742daa363bf41537cbfd15c49b1c4140fe1b9206713f51"
+  },
+  "buildCommit": "e0f38e0276d31015054948e45bc27f82d2eb35c9",
+  "modelAcceptanceImage": "sha256:d1ad0e21d6223da679097b24ecbcd78bfe5f692d690e7952b44d633bb830b3a6",
+  "modelAcceptanceTransferScope": "Final source removes only the >12-check bypass; observed3-check path remains unchanged. New >12 and main-policy behavior covered by focused race22.487s. Model/browser proof remains separately scoped.",
+  "cleanup": {
+    "originalSessionFiles": 14,
+    "ownedSessionsRemoved": 3,
+    "originalAuthSourcesAndSessionBytesPreserved": true,
+    "mountsAndWorkspaceConfigPreserved": true,
+    "settingsOnlyDifference": "session sequence advanced by3 for owned tests; not rewound",
+    "sequenceBefore": 42,
+    "sequenceAfter": 45,
+    "ownedFixtureRemovedAfterExactSHA256Check": "e2f97564e17a9e388ab2cdd4f4605cb7d0e80093fcde478bcde6d041785decc5",
+    "ownedPreviewClosedAndServerStopped": true,
+    "originalSafariSceneAndFilePanelRestored": true,
+    "originalICloudCheckoutUntouched": true,
+    "scope": "Private raw synthetic-session records retained; original14 session bytes/auth/source config unchanged. No broad cleanup."
+  },
+  "full": "pending fresh full90 after package metadata freeze",
+  "receivingDeviceImport": "not_run"
+}

@@ -1,15 +1,15 @@
 {
-  "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-d1ad0e21d622-offline.tar.gz",
-  "bytes": 706096632,
-  "sha256": "c37475980a022d2ac5ef616f7bd2ed35738bc6d0672a841b35514454aa11aca7",
-  "innerImageTarSHA256": "5ef9fc9cdccc6702bce26ad35c8c49e6bfa2097edda2b21889e857d795fde2e8",
-  "image": "sha256:d1ad0e21d6223da679097b24ecbcd78bfe5f692d690e7952b44d633bb830b3a6",
+  "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-7b6321af02c1-offline.tar.gz",
+  "bytes": 706099390,
+  "sha256": "2732376ab4c4d08ac56fda954990484774580c2c2823db5292cdda924e257ca5",
+  "innerImageTarSHA256": "c2ca8349e564d04c186483e0fec4573c5945e5e471ee8cf11e66e0db8a27a553",
+  "image": "sha256:7b6321af02c1f9204b98b4023a0f702400b25a86ddab85632660bf2f2007d706",
   "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
   "build": {
     "version": "0.1.17.0-RC2",
-    "image": "sha256:d1ad0e21d6223da679097b24ecbcd78bfe5f692d690e7952b44d633bb830b3a6",
+    "image": "sha256:7b6321af02c1f9204b98b4023a0f702400b25a86ddab85632660bf2f2007d706",
     "platform": "linux/arm64",
-    "srcsha": "21331a10020e7e199f2b6c4e695994da2ea873f7ba5060010541ca0e4b7a58fd",
+    "srcsha": "a27b8a833217334bdd96d9162d6ed873771d18758549dc1f69a99011193bf099",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
   },
   "licenseInBundle": true,
