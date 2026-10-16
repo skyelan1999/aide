@@ -61,6 +61,7 @@ for TARGET in macos-arm64 windows-arm64 ubuntu-arm64; do
   for launcher in "${LAUNCHERS[@]}"; do cp "$ROOT/$launcher" "$PACKAGE/"; done
   cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/aide-maintenance.ps1" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/aide.sh" "$PACKAGE/scripts/"
+  cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.ps1" "$ROOT/scripts/launcher-data.py" "$PACKAGE/scripts/"
   cp "$ROOT/scripts/watch-port.sh" "$PACKAGE/scripts/"
   if [[ "$TARGET" == windows-arm64 ]]; then cp "$ROOT/scripts/watch-port.ps1" "$PACKAGE/scripts/"; fi
   cp "$ROOT/scripts/update-agent.sh" "$PACKAGE/scripts/"
@@ -100,6 +101,7 @@ cp "$ROOT"/stop.{command,sh,ps1,bat} "$ROOT"/clean-docker-cache.{command,sh,ps1,
 cp "$ROOT/scripts/aide-maintenance.sh" "$ROOT/scripts/aide-maintenance.ps1" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/start.command" "$ROOT/start.sh" "$ROOT/start.ps1" "$ROOT/start.bat" "$FULL_PACKAGE/"
 cp "$ROOT/scripts/aide.sh" "$ROOT/scripts/watch-port.sh" "$ROOT/scripts/watch-port.ps1" "$ROOT/scripts/update-agent.sh" "$ROOT/scripts/update-agent.ps1" "$FULL_PACKAGE/scripts/"
+cp "$ROOT/scripts/launcher-data.sh" "$ROOT/scripts/launcher-data.ps1" "$ROOT/scripts/launcher-data.py" "$FULL_PACKAGE/scripts/"
 cp "$ROOT/docker/compose.offline.yaml" "$FULL_PACKAGE/compose.yaml"
 cp "$ROOT/docker/offline.env.example" "$FULL_PACKAGE/.env.example"
 copy_control_runtime "$FULL_PACKAGE/scripts"

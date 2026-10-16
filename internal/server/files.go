@@ -40,7 +40,7 @@ func safePath(p string) error {
 		return errors.New("需要工作区内的相对路径")
 	}
 	for _, part := range strings.Split(p, "/") {
-		if part == ".." || part == ".git" || part == ".data" || part == ".env" || part == "docker-images" {
+		if part == ".." || part == ".git" || part == ".data" || part == ".aide-data" || part == ".env" || part == "docker-images" {
 			return errors.New("路径不可访问")
 		}
 	}

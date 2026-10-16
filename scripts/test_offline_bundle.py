@@ -20,6 +20,9 @@ class OfflineBundleTests(unittest.TestCase):
             (self.root / name).mkdir()
         shutil.copy(ROOT / 'start.command', self.root)
         shutil.copy(ROOT / 'scripts/aide.sh', self.root / 'scripts')
+        for name in ('launcher-data.sh', 'launcher-data.ps1', 'launcher-data.py'):
+            shutil.copy(ROOT / 'scripts' / name, self.root / 'scripts')
+        shutil.copy(ROOT / 'docker/compose.offline.yaml', self.root / 'compose.yaml')
         shutil.copy(ROOT / 'docker/offline.env.example', self.root / '.env.example')
         (self.root / '.aide-image').write_text(f'aide:offline-aaaa {IMAGE_ID} linux/arm64\n')
         archive = self.root / 'docker-images/aide-local.tar'
@@ -39,6 +42,11 @@ elif a[:2] == ['image','inspect']:
     print((root/'image-id').read_text())
 elif a[:2] == ['image','load']:
     (root/'image-id').write_text(os.environ.get('LOADED_ID',os.environ['EXPECTED_ID']))
+elif a[:2] == ['volume','inspect']: sys.exit(1)
+elif a[:1] == ['run']:
+    import subprocess
+    subprocess.run([sys.executable,str(root/'scripts/launcher-data.py'),'--root',str(root/'.aide-data'),'--platform','fixture'],check=True)
+elif a[:3] == ['compose','config','--images']: print('aide:slot-a')
 elif a[:3] == ['compose','port','aide']: print('127.0.0.1:18097')
 elif a[:2] == ['compose','up']:
     assert '--no-build' in a and '--pull' in a and a[a.index('--pull')+1] == 'never'
@@ -83,7 +91,7 @@ else: sys.exit('Unexpected docker operation: '+repr(a))
         self.env['ENGINE_PLATFORM'] = 'linux/x86_64'
         result = self.run_start()
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn('架构', result.stderr)
+        self.assertIn('架构', result.stdout + result.stderr)
         self.assertNotIn('"load"', self.calls())
         self.assertNotIn('"compose"', self.calls())
 

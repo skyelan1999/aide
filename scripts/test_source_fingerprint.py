@@ -27,6 +27,8 @@ class SourceFingerprintTests(unittest.TestCase):
             for name in ['cmd', 'internal', 'plugins', 'vendor', 'scripts/office', 'docker/wheels', 'docker/sherpa']:
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
+            for name in ('launcher-data.sh','launcher-data.ps1','launcher-data.py'):
+                shutil.copy2(ROOT/'scripts'/name, root/'scripts'/name)
             for name in ['go.mod', 'go.sum', 'Dockerfile', 'compose.yaml', '.dockerignore', 'version.md',
                          'internal/A.go', 'internal/a.go']:
                 (root/name).write_text(name)
@@ -44,6 +46,8 @@ class SourceFingerprintTests(unittest.TestCase):
             for name in ['cmd', 'internal', 'plugins/custom', 'vendor', 'scripts/office', 'docker/wheels', 'docker/sherpa']:
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
+            for name in ('launcher-data.sh','launcher-data.ps1','launcher-data.py'):
+                shutil.copy2(ROOT/'scripts'/name, root/'scripts'/name)
             for name in ['go.mod', 'go.sum', 'Dockerfile', 'compose.yaml', '.dockerignore', 'version.md']:
                 (root/name).write_text(name)
             (root/'internal/file.go').write_text('package fixture\n')

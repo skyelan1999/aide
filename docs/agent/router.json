@@ -559,6 +559,10 @@
       [
         "node",
         "scripts/crash-monitor.test.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_launcher_data.py"
       ]
     ],
     "full": [
@@ -588,6 +592,7 @@
     "protected_roots": [
       ".git",
       ".data",
+      ".aide-data",
       ".cache",
       ".idea",
       ".workbuddy",

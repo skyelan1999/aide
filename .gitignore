@@ -1,5 +1,6 @@
 .env
 .data/
+.aide-data/
 .DS_Store
 bin/
 test-results/

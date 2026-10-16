@@ -172,7 +172,7 @@ func TestTextRejectBinaryAndUnsafePath(t *testing.T) {
 		t.Fatal(err)
 	}
 	requireStatus(t, request(a, "GET", "/api/file?path=nul.bin", nil), 400)
-	for _, p := range []string{"../etc", ".git/config", ".env"} {
+	for _, p := range []string{"../etc", ".git/config", ".env", ".aide-data/storage/data/auth/access-token", "nested/.aide-data/launcher.env"} {
 		requireStatus(t, request(a, "GET", "/api/file?path="+p, nil), 400)
 	}
 }

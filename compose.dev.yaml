@@ -9,7 +9,7 @@ services:
       target: dev
     image: aide:dev
     pull_policy: never
-    user: "1000:1000"
+    user: "${AIDE_RUN_UID:-1000}:${AIDE_RUN_GID:-1000}"
     working_dir: /src
     command: ["go", "run", "./cmd/aide"]
     environment:

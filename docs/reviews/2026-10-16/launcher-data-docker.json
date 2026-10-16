@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "image": "sha256:958de7901ce75e8c02aef4fa924ff89588e4ab4a6083dc0e42af789e1fa45f8a",
+  "platform": "linux/arm64",
+  "activeTaskRefusedBeforeStop": true,
+  "failedImportRestoresOriginalContainer": true,
+  "protectedFiles": 8,
+  "bytesAndPermissionsPreserved": true,
+  "dataAndHomeBindUnderLauncher": true,
+  "ownedLegacyVolumesDeletedAfterMigration": true,
+  "containerEnvironmentImageMarkerAndCacheRecreated": true,
+  "environmentRestoredExactly": true,
+  "sources": {
+    "data": {
+      "imported": true,
+      "entries": 29,
+      "manifestSHA256": "9a34dcbbd8e809d03e5fe2781915cd245e15eec1764f6cfdfb327153471f79c6"
+    },
+    "home": {
+      "imported": true,
+      "entries": 9,
+      "manifestSHA256": "0334820f13a47208026c52068ae64ed540466712e707535b7064421d9a4f8259"
+    }
+  },
+  "userDataUsed": false
+}

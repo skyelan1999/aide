@@ -10,8 +10,8 @@ if [[ -f .aide-image ]]; then MODE=start-bundle; fi
 # the browser opens. The log is local/private and never uploaded automatically.
 set +e
 : > "$START_LOG"
-bash scripts/aide.sh "$MODE" > >(tee -a "$START_LOG") 2> >(tee -a "$START_LOG" >&2)
-START_RESULT=$?
+bash scripts/aide.sh "$MODE" 2>&1 | tee -a "$START_LOG"
+START_RESULT=${PIPESTATUS[0]}
 set -e
 echo "Startup log: $PWD/$START_LOG"
 exit "$START_RESULT"

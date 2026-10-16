@@ -1,6 +1,7 @@
 .git
 .env
 .data
+.aide-data
 test-results
 bin
 context

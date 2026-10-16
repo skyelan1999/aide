@@ -16,6 +16,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-Location -Path $PSScriptRoot
+. (Join-Path $PSScriptRoot 'scripts/launcher-data.ps1')
+if (-not $DryRun) { Restore-AideLauncherEnvironment $PSScriptRoot }
 
 # Release bundles contain a prebuilt, architecture-specific Linux image. Use it
 # directly and never invoke Compose build/pull for an offline installation.
@@ -260,7 +262,7 @@ if (-not $offlineBundle -and $env:AIDE_LOCAL_DEPENDENCIES -ne '0') {
         Write-Host 'Using complete local dependency image; source build networking disabled.'
     }
 }
-$startArguments = if ($offlineBundle) { @('up', '-d', '--no-build', '--pull', 'never') } else { @('up', '-d', '--build', '--pull', 'never') }
+$startArguments = @('up', '-d', '--no-build', '--pull', 'never')
 if ($offlineBundle) {
     $enginePlatform = (Invoke-Native $dockerExe @('info', '--format', '{{.OSType}}/{{.Architecture}}') -Capture).Text -replace '/aarch64$', '/arm64' -replace '/x86_64$', '/amd64'
     if ($enginePlatform -ne $expectedPlatform) { throw "此离线镜像为 $expectedPlatform，当前 Docker 引擎为 $enginePlatform。请下载匹配架构的 Release 包。" }
@@ -324,7 +326,9 @@ if ($offlineBundle) {
 
   # Match the macOS/Linux launcher: keep the persisted port setting, but if an
   # initial install's requested port is occupied, choose and persist a free one.
-  $savedPort = (Get-ComposeResult run --rm --no-deps --entrypoint sh aide -c 'cat /data/config/host-port 2>/dev/null || true').Text.Trim()
+  Prepare-AideLauncherData $PSScriptRoot $dockerExe $env:AIDE_IMAGE
+  $savedPortFile = Join-Path $PSScriptRoot '.aide-data/storage/data/config/host-port'
+  $savedPort = if (Test-Path -LiteralPath $savedPortFile) { ([IO.File]::ReadAllText($savedPortFile)).Trim() } else { '' }
   if ($savedPort -match '^\d{1,5}$' -and [int]$savedPort -ge 1 -and [int]$savedPort -le 65535) {
       $env:AIDE_PORT = $savedPort
       $envText = [System.IO.File]::ReadAllText($envPath)
@@ -355,6 +359,12 @@ if ($offlineBundle) {
       Write-Host "端口 $configuredPort 已占用，离线包改用端口 $selectedPort。"
   }
 }
+if (-not $offlineBundle -and (Invoke-Compose @('build','aide')).Code -ne 0) { throw 'Source image build failed; data migration not started.' }
+$dataImage = Get-ComposeResult @('config','--images','aide')
+if ($dataImage.Code -ne 0 -or -not $dataImage.Text) { throw 'Cannot resolve application image for data migration.' }
+Prepare-AideLauncherData $PSScriptRoot $dockerExe $dataImage.Text
+Save-AideLauncherEnvironment $PSScriptRoot
+Remove-Item -LiteralPath '.cache/aide-manual-stop' -ErrorAction SilentlyContinue
 if ((Invoke-Compose @startArguments).Code -ne 0) {
     Write-Error "compose up 失败，请检查上方输出。"
 }

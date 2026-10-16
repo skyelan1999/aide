@@ -137,8 +137,10 @@ macOS 也可以双击 `start.command`。脚本会构建并启动容器，打开�
 | `/workspace` | 可读写项目 | 当前仓库或 `AIDE_WORKSPACE` |
 | `/context` | 只读辅助目录 | `../Harness` 或 `AIDE_CONTEXT` |
 | `/local` | 可读写宿主目录浏览范围 | `$HOME` 或 `AIDE_LOCAL_ROOT` |
-| `/data` | 会话、模型配置、令牌、费率与统计 | 命名卷 `aide_aide-data` |
-| `/home/aide` | 用户环境与开发缓存 | 命名卷 `aide_aide-home` |
+| `/data` | 会话、模型配置、令牌、费率与统计 | 启动目录 `.aide-data/storage/data`（绑定挂载） |
+| `/home/aide` | 用户环境与开发缓存 | 启动目录 `.aide-data/storage/home`（绑定挂载） |
+
+启动器首次迁移会校验旧卷全部普通文件的内容、权限和软链接，保留旧卷。核心配置、会话、保险库及工具用户缓存随启动目录保存，Docker 容器/卷清理不再删除它们；项目自己的 `.cache` 仍由项目管理。备份、迁移和恢复见[启动目录持久化](docs/architecture/launcher-storage.md)。请通过启动器初始化，不要直接用裸 `docker compose up` 创建空目录。
 
 Go 服务使用 `go:embed` 分发前端；前端为原生 JS/CSS，Markdown 解析器随仓库本地分发，无 CDN 和 npm 安装步骤。修改源码后需要重建发布镜像。镜像归档位于 `docker-images/`，不包含挂载目录和数据卷。
 

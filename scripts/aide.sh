@@ -8,8 +8,8 @@ MODE="${1:-start}"
 source_sha() {
   (
     find cmd internal plugins vendor scripts/office docker/wheels docker/sherpa -type f ! -name '.DS_Store' ! -path 'plugins/surface.json' -print0
-    printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh
-    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh; do
+    printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
+    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -32,6 +32,11 @@ if [[ "$MODE" == test && "${AIDE_VERIFY_IN_CONTAINER:-0}" == 1 ]]; then
   export AIDE_BUILTIN_PLUGINS=
   go test -race -count=1 -timeout=15m ./... && go vet ./...
   exit
+fi
+if [[ "$MODE" == start || "$MODE" == start-image || "$MODE" == start-bundle ]]; then
+  source scripts/launcher-data.sh
+  launcher_env_restore
+  if [[ "$MODE" == start && -f .aide-image ]]; then MODE=start-bundle; fi
 fi
 DOCKER_BIN="$(command -v docker || true)"
 if [[ -z "$DOCKER_BIN" && -x "$HOME/.docker/bin/docker" ]]; then DOCKER_BIN="$HOME/.docker/bin/docker"; fi
@@ -139,7 +144,8 @@ if [[ "$MODE" == start-bundle ]]; then
   [[ "$("$DOCKER_BIN" image inspect "$BUNDLE_IMAGE" --format '{{.Id}}')" == "$BUNDLE_ID" ]] || { echo "镜像身份不匹配。" >&2; exit 1; }
   mkdir -p workspace context
   if [[ ! -e .env ]]; then cp .env.example .env; fi
-  SAVED_PORT="$("$DOCKER_BIN" compose run --rm --no-deps --entrypoint sh aide -c 'cat /data/config/host-port 2>/dev/null || true' 2>/dev/null | tr -d '\r\n' || true)"
+  launcher_data_prepare "$DOCKER_BIN" "$BUNDLE_IMAGE"
+  SAVED_PORT="$(cat .aide-data/storage/data/config/host-port 2>/dev/null | tr -d '\r\n' || true)"
   if [[ "$SAVED_PORT" =~ ^[0-9]{1,5}$ ]] && (( SAVED_PORT >= 1 && SAVED_PORT <= 65535 )); then
     AIDE_PORT="$SAVED_PORT"
     export AIDE_PORT
@@ -220,7 +226,7 @@ case "$MODE" in
     fi
     export AIDE_COMPUTER_BRIDGE_TOKEN="$COMPUTER_BRIDGE_TOKEN"
     if [[ "$MODE" == start-image ]]; then
-      "$DOCKER_BIN" compose up -d --no-build --pull never
+      IMG="$("$DOCKER_BIN" compose config --images aide)"
     else
       export AIDE_VERSION="${AIDE_VERSION:-$(bash scripts/version.sh show)}"
       if [[ -z "${AIDE_COMMIT:-}" ]]; then
@@ -240,7 +246,6 @@ case "$MODE" in
       fi
       if [[ -n "$SRCSHA" && "$cur_label" == "$SRCSHA" && "${AIDE_FORCE_REBUILD:-0}" != 1 ]]; then
         echo "== 源码哈希未变（${SRCSHA}）→ 快捷路径：跳过构建，直接启动 =="
-        "$DOCKER_BIN" compose up -d --no-build --pull never
       else
         echo "== 源码哈希变化（image=${cur_label:-<无>} → worktree=${SRCSHA}）→ 重新构建（默认不跑全量 test，仅 vet+build）=="
         export AIDE_SRC_SHA="$SRCSHA"
@@ -256,9 +261,13 @@ case "$MODE" in
             echo "== 首次缺少完整本地镜像；执行原始构建，完成后可固化本地依赖 =="
           fi
         fi
-        "$DOCKER_BIN" compose up -d --build --pull never
+        "$DOCKER_BIN" compose build aide
       fi
     fi
+    launcher_data_prepare "$DOCKER_BIN" "$IMG"
+    launcher_env_save
+    rm -f .cache/aide-manual-stop
+    "$DOCKER_BIN" compose up -d --no-build --pull never
     if [[ "$(uname -s)" == Darwin ]] && command -v node >/dev/null 2>&1; then
       bash scripts/safari-bridge-control.sh start || echo "Safari 桥接未启动；Aide 其他功能仍可用。"
       bash scripts/computer-bridge-control.sh start || echo "电脑桥接未启动；Aide 其他功能仍可用。"
@@ -320,6 +329,7 @@ case "$MODE" in
     cp start.command start.sh start.bat start.ps1 stop.command stop.sh stop.bat stop.ps1 clean-docker-cache.command clean-docker-cache.sh clean-docker-cache.bat clean-docker-cache.ps1 "$BUNDLE/"
     cp scripts/aide-maintenance.sh scripts/aide-maintenance.ps1 "$BUNDLE/scripts/"
     cp scripts/aide.sh scripts/watch-port.sh scripts/watch-port.ps1 scripts/update-agent.sh scripts/update-agent.ps1 "$BUNDLE/scripts/"
+    cp scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py "$BUNDLE/scripts/"
     cp scripts/safari-bridge-control.sh scripts/safari-bridge.js scripts/computer-bridge-control.sh scripts/computer-bridge.js \
       scripts/build-native-computer-bridge.sh scripts/native-computer-bridge.swift scripts/headless-browser-control.sh scripts/headless-browser-bridge.js "$BUNDLE/scripts/"
     mkdir -p "$BUNDLE/scripts/browser-runtime"

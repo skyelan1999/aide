@@ -1,0 +1,82 @@
+{
+  "id": "launcher-data-persistence-20261016",
+  "request": "核心配置缓存统一放软件启动目录下面，不因Docker相关配置删除失效",
+  "baseline": "e47f2525594d72096adeff251846245b765c3ea7",
+  "initial_status": "",
+  "acceptance": [
+    "Core /data and /home/aide persist below launcher .aide-data/storage, no Docker named-volume dependency. Project-owned .cache remains project scoped.",
+    "First migration snapshots/verifies files/modes/symlinks before atomic commit; active work/ambiguous/conflicting sources block migration; old volumes retained.",
+    "Missing .env restores from private launcher backup; recreated containers and disposable Docker-volume deletion preserve data/credentials/config.",
+    "Bash/macOS/Linux and PowerShell/offline/dev/packagers share layout; tests and platform limits documented. Persistent secret trees excluded from Git/build/file APIs."
+  ],
+  "scope": [
+    "compose.yaml",
+    "compose.dev.yaml",
+    "docker/compose.offline.yaml",
+    "scripts",
+    "start.ps1",
+    ".gitignore",
+    ".dockerignore",
+    "internal/server/files.go",
+    "internal/server/files_limit_test.go",
+    "docs",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS",
+    "README.md",
+    "start.command"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requires non-project core configuration/cache under launcher directory, independent of Docker configuration deletion. Current data/home are named volumes49MiB/1MiB; source baseline clean external checkout.",
+      "evidence": [
+        "e47f2525594d72096adeff251846245b765c3ea7",
+        "compose.yaml"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Private .aide-data root, atomic storage(data/home) import+receipt, env backup/project identity restore, read-only old mounts and active-session checks. Preserve old volumes. Docker-only helper avoids host Python dependency; Linux uid mapping and Windows ACL handled.",
+      "evidence": [
+        "scripts/launcher-data.py",
+        "scripts/launcher-data.sh",
+        "scripts/launcher-data.ps1"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Host bind storage for data/home; atomic verified import, private env/image/project recovery, refusal and rollback guards; ignored secret tree and safePath denial. start.command logging pipe no longer held by background processes. Windows native execution remains not_run.",
+      "evidence": [
+        "docs/architecture/launcher-storage.md",
+        "scripts/test_launcher_data.py",
+        "scripts/test_launcher_data_docker.py"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Migration10 unit tests,6 offline fixture tests, focused Go unsafe-path race passed; true Docker active guard/failed import rollback/old-volume deletion recovery passed. Quick/final runtime/full pending.",
+      "evidence": [
+        "scripts/test_launcher_data.py",
+        "scripts/test_launcher_data_docker.py"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior incremental main push/local start.command/offline updates authorized; this user request authorizes data relocation. No deletion of old volumes/checkout, no version/tag/Release.",
+  "rollback": "Keep legacy aide_aide-data/aide_aide-home untouched and previous958 image/package; retain exact protected snapshots before cutover. Source/data bind rollback requires old image+old Compose volume mapping, never overwrite host canonical data.",
+  "handoff": ""
+}

@@ -4,11 +4,12 @@
 set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$PROJECT_DIR"
-
-if docker compose ps --status running 2>/dev/null | grep -q aide; then
-  echo "检测到生产容器在跑，先停止…"
-  bash scripts/aide.sh stop
-fi
+source scripts/launcher-data.sh
+launcher_env_restore
 
 echo "启动 dev 容器（Go + Python + Node，源码 go run）…"
-exec docker compose -f compose.yaml -f compose.dev.yaml up --build --force-recreate
+docker compose -f compose.yaml -f compose.dev.yaml build aide
+launcher_data_prepare docker aide:dev
+launcher_env_save
+rm -f .cache/aide-manual-stop
+exec docker compose -f compose.yaml -f compose.dev.yaml up --no-build --force-recreate

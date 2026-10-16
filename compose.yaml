@@ -6,6 +6,7 @@ services:
     # 离线/空气 gap 机只 docker load + start-image；此处 never 防止裸跑 compose up 意外拉取。
     pull_policy: never
     init: true
+    user: "${AIDE_RUN_UID:-1000}:${AIDE_RUN_GID:-1000}"
     build:
       context: .
       dockerfile: ${AIDE_DOCKERFILE:-Dockerfile}
@@ -47,8 +48,16 @@ services:
       - type: bind
         source: ${AIDE_LOCAL_ROOT:-$HOME}
         target: /local
-      - aide-data:/data
-      - aide-home:/home/aide
+      - type: bind
+        source: ./.aide-data/storage/data
+        target: /data
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ./.aide-data/storage/home
+        target: /home/aide
+        bind:
+          create_host_path: false
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -57,6 +66,3 @@ services:
     pids_limit: 256
     mem_limit: 2g
     cpus: 2
-volumes:
-  aide-data:
-  aide-home:
