@@ -30,7 +30,7 @@
     },
     "design": {
       "status": "pass",
-      "summary": "Paint normal dirty/clean input only when writable, unlocked, not saving/suspended/history-failed or awaiting verification. Explicit pending-verification guard prevents false clean claim after locked save; reuse translated Unsaved label.",
+      "summary": "Paint normal dirty/clean input only when writable, unlocked, not saving/suspended/history-failed or awaiting verification. Explicit pending-verification guard prevents false clean claim after locked save; reuse translated Unsaved label. Distinguish server acknowledgement from pending local saved-draft cleanup so newer input invalidates saved status immediately.",
       "evidence": [
         "internal/server/web/file-autosave.js",
         "scripts/file-autosave-retry.test.cjs"
@@ -46,7 +46,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Focused additional cleanup-race regression failed before fix. Previous candidate/full snapshot is superseded; rebuild and fresh full required before release.",
+      "summary": "All three focused regressions red-before/green-after; quick86 pass. Replacement8d1957c9 bundle checks/local Docker import pass. Fresh final full session23737 running; native acceptance pending.",
       "evidence": [
         "docs/reviews/2026-10-16/file-save-status.md",
         "docs/reviews/2026-10-16/file-save-status-bundle-proof.json",
@@ -71,5 +71,5 @@
   },
   "release_authorization": "Existing incremental test/push/main/start.command/offline package authorization; no version/tag/Release.",
   "rollback": "Keep prior ebf9e382 image/offline bundle; scoped frontend revert, no data migration or global cleanup.",
-  "handoff": "Replacement candidate8d1957c9, build22a15eaf, export and local actual import pass; old full97307 terminal/superseded. Start fresh final full. Production ebf9e382 unchanged. Then main gate/push, strict runtime preflight/start.command and native UI status vs server bytes; prepared private ui-proof.py, original12 remain active."
+  "handoff": "Fresh final full is live in exec session23737, log.agent-state/file-save-status/final/full.log; poll the same handle. Baseline c6228b33 includes replacement image8d1957c9 build22a15eaf and validated offline bundle. Production ebf9e382 unchanged. Old full97307 terminal/superseded, not reusable. Next full result, clean main gate/push, strict final/runtime.py preflight/start.command, native UI status vs server bytes using ui-proof.py, protected cleanup and final receipts. Original12 remain active."
 }
