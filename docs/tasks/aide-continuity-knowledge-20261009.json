@@ -7860,8 +7860,8 @@
     ]
   },
   "reasoning_live_preview_followup_20261016": {
-    "status": "in_progress",
+    "status": "pass",
     "task": "docs/tasks/reasoning-live-preview-20261016.json",
-    "summary": "Latest reasoning tail and stable disclosure implemented; focused/quick/native/runtime/offline pass,full/main pending. Original12 workstreams remain active."
+    "summary": "Latest reasoning tail and stable disclosure delivered on main2c9bb88d; focused/quick/full90/native/runtime/offline passed. No new upstream model call; receiving-device import pending. Original12 workstreams remain active."
   }
 }

@@ -69,15 +69,17 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Current473463bc image/start.command and complete offline import pass;90 full current fingerprint pass. Authorized main ff/independent gate/push pending.",
+      "status": "pass",
+      "summary": "Authorized fast-forward clean main, independent release-check pass, push and exact remote HEAD 2c9bb88d5047d3394bc6d66922b19e1af0913a54 pass. Current473463bc local image/15 assets/protected14 sessions and complete application+dependency offline import pass. Final docs-only receipt independently gated/pushed after this; exact final HEAD retained privately. No version/tag/Release; receiving-device import not_run.",
       "evidence": [
-        "docs/reviews/2026-10-16/reasoning-live-preview-full-proof.json"
+        "docs/reviews/2026-10-16/reasoning-live-preview-full-proof.json",
+        "docs/reviews/2026-10-16/reasoning-live-preview-runtime-proof.json",
+        "docs/reviews/2026-10-16/reasoning-live-preview-bundle-proof.json"
       ]
     }
   },
   "release_authorization": "User previously requested incremental testing/push/merge to main and local runtime/offline updates; no version/tag/Release.",
   "rollback": "Retain previous 7b6321af02c1 offline package and image; preserve all auth/config/session/workspace mounts.",
-  "handoff": "Scoped UI fix complete, current473463bc healthy on9999 and full90 passed; main gate/push next. Receiving-device import remains not_run.",
+  "handoff": "Scoped thinking UI followup complete and delivered on main.9999 healthy473463bc; offline package in docker-images. Prior7b rollback retained, all original14 sessions/auth/config/mounts preserved,3 user Safari tabs preserved,owned UI server/tab closed. Controlled stream is synthetic; native Safari used persisted reasoning. No additional model call. Original12 master workstreams remain active.",
   "original_request": "思考过程只显示第一行，按理应该是现实最新的内容，然后折叠打开打不开"
 }
