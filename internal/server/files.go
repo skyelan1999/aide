@@ -1456,6 +1456,20 @@ func localDirItems(entries []os.DirEntry, p string) []map[string]any {
 	return items
 }
 func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
+	if isStepRaw(r.URL.Query().Get("path")) && a.streamStepRaw(w, r) {
+		return
+	}
+	limit := rawViewerLimit(r.URL.Query().Get("path"))
+	if isStepRaw(r.URL.Query().Get("path")) {
+		select {
+		case stepRemotePreviewGate <- struct{}{}:
+			defer func() { <-stepRemotePreviewGate }()
+		default:
+			fail(w, 429, errors.New("已有远程 STEP 文件正在读取，请稍后重试"))
+			return
+		}
+	}
+
 	// #63：旧版 .doc 二进制在线查看不支持，尽早返回明确提示
 	if pth := r.URL.Query().Get("path"); r.URL.Query().Get("source") == "" && isLegacyDoc(pth) {
 		fail(w, 400, legacyDocError(pth))
@@ -1465,7 +1479,7 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 	var err error
 	if r.URL.Query().Get("knowledgeOrigin") != "" || r.URL.Query().Get("source") == "" && r.URL.Query().Get("root") == "workspace" && a.workspaceMode() == "ssh" {
 		q := r.URL.Query()
-		b, err = a.knowledgeReadViewer(r.Context(), q.Get("root"), q.Get("source"), q.Get("path"), q.Get("knowledgeOrigin"), q.Get("knowledgeWorkspace"), maxRawFile)
+		b, err = a.knowledgeReadViewer(r.Context(), q.Get("root"), q.Get("source"), q.Get("path"), q.Get("knowledgeOrigin"), q.Get("knowledgeWorkspace"), limit)
 	} else if srcID := r.URL.Query().Get("source"); srcID != "" {
 		a.mu.Lock()
 		src, ok := a.findSource(srcID)
@@ -1477,7 +1491,7 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 		if src.Type == "mcp" {
 			b, err = a.readSourceRaw(src, r.URL.Query().Get("path"))
 		} else {
-			b, err = a.knowledgeReadSource(r.Context(), src, r.URL.Query().Get("path"), 64<<20)
+			b, err = a.knowledgeReadSource(r.Context(), src, r.URL.Query().Get("path"), limit)
 		}
 	} else {
 		root, rootErr := a.root(r.URL.Query().Get("root"))
@@ -1491,7 +1505,8 @@ func (a *App) readFileRaw(w http.ResponseWriter, r *http.Request) {
 		fail(w, 400, err)
 		return
 	}
-	if _, err = checkedRaw(b); err != nil {
+	if int64(len(b)) > limit {
+		err = fmt.Errorf("文件超过 %d MiB 限制", limit>>20)
 		fail(w, 400, err)
 		return
 	}

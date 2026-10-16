@@ -1,0 +1,96 @@
+{
+  "id": "step-measure-large-20261016",
+  "request": "大的stp文件无法预览，同时还需要支持测量和坐标点标定",
+  "baseline": "1775bab7e7d9983588209f4a81323c4b57c2ea7b",
+  "initial_status": "",
+  "acceptance": [
+    "Preview STEP above64MiB (user reports200+MB) as complete shaded geometry with preserved assembly placement, units and colours; not wireframe-only. Bounded transfer, visible progress, cancellation/resource release; generated real geometry stress and explicit fidelity checks.",
+    "Measure two picked model points (distance/deltaXYZ), three-point angle, pointXYZ and create/reset an orthonormal coordinate frame using origin/X/XY points. Model coordinates remain independent of view centering; units mm and tessellation precision explicit.",
+    "Workbench and standalone preview support same controls; bounded annotations can be cleared/exported, input remains usable during load and render; focused API/math/worker cancellation tests and actual browser acceptance.",
+    "Update docs, keep user files/auth/sessions and old runtime rollback; no paid model calls, no version/tag/Release."
+  ],
+  "scope": [
+    "internal/server/web",
+    "internal/server/files.go",
+    "internal/server/step_preview.go",
+    "internal/server/step_preview_test.go",
+    "internal/server/knowledge_sources.go",
+    "scripts",
+    "docs",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS",
+    "internal/server/step_native.go",
+    "internal/server/step_native_test.go",
+    "internal/server/server.go",
+    "Dockerfile",
+    "Dockerfile.local",
+    "compose.yaml",
+    "docker/cad",
+    "docker/Dockerfile.cad",
+    "docker/compose.offline.yaml",
+    ".dockerignore",
+    "start.ps1",
+    "scripts/launcher-data.py",
+    ".gitattributes"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests large STEP preview, measurement and coordinate calibration; user asks generated200+MB fixture rather than original complex private model. UI frame interpreted as origin/X/XY three-point frame; exact private model remains untested.",
+      "evidence": [
+        "docs/tasks/step-measure-large-20261016.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Native OCCT8 isolated CAD service, authenticated private network, one conversion child/job,4GiB container+512MiB temp upper bounds,900s timeout; release STEP reader then mesh individual solids and emit <=16000 triangle batches. Browser receives meshes only and terminates native request on close. Preserve XCAF assembly transforms and face/part colour; original mm coordinates via per-batch double-precision origins. Browser WASM remains compatibility fallback. 204MiB generated geometry now passes native conversion, UI/runtime not yet verified.",
+      "evidence": [
+        "internal/server/web/step-import-worker.js",
+        "internal/server/web/app.js",
+        "internal/server/files.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Local STEP streaming384MiB, isolated native OCCT service, reader disposal/per-solid tessellation/bounded batches, preserved assembly/part+face colours/mm, original-coordinate measurement/three-point calibration/export, viewer lifecycle cleanup, local/offline CAD runtime packaging, scoped stop scripts and fresh-install auth mount preparation. Full release verification remains in progress.",
+      "evidence": [
+        "internal/server/step_native.go",
+        "internal/server/step_preview.go",
+        "scripts/cad/convert.py",
+        "scripts/cad/server.py",
+        "internal/server/web/step-preview.js",
+        "internal/server/web/step-metrology.js",
+        "compose.yaml"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "Focused Go race10.435s pass; quick96 checks pass; native protocol+child cancellation tests pass. Actual9999 204MiB API full geometry370440triangles/24batches/57.50s, sampledCADpeak2.206GiB andworkbenchinstance unchanged. Safari nestedassemblycolourpreview,30mm edge,90degreeangle,customframe rebase andJSONexport passed. Large Safari preview is in progress. Full suite/offline export/import not yet run. ActualSafari204MiB preview andnativecancel cleanup passed; workbench CAD dialog120triangles andcontrols passed. Viewport zooming uncovered clipped controls in short screens; overflow fix awaits final UI retest. Final source/launch metadata andfull suite pending.",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior incremental main/local start.command/offline package updates authorized; preserve user data and previous598 image/volumes. No version/tag/Release.",
+  "rollback": "Retain main1775bab7 and current598 image/offline bundle; storage bind data/home unchanged, protected snapshot before restart.",
+  "handoff": "Current production unchanged. Native204MiB conversion:30870solids/370440triangles,49.31s; assembly/face-colour fixture passes. Focused Go race10.435s, worker native protocol and CAD child cancellation tests pass. Packaging, UI acceptance, complete offline bundle and release gates remain.",
+  "clarifications": [
+    {
+      "user": "有什么区别吗，我需要让其和在正常专业软件上打开保持一致",
+      "interpretation": "Full shaded CAD geometry, original assembly placement, units and colours are acceptance criteria. Wireframe-only, empty-mesh success or hidden missing parts are not acceptable. Exact private 200+MB model is unavailable; synthetic fixtures cannot establish all CAD compatibility."
+    }
+  ]
+}

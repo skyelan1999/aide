@@ -14,7 +14,10 @@ if ($Action -eq 'clean-cache') {
     & $docker builder prune --all --force
     exit $LASTEXITCODE
 }
-$ids = @(& $docker ps -q --filter "label=com.docker.compose.project.working_dir=$maintenanceRoot" --filter 'label=com.docker.compose.service=aide')
+$ids = @(foreach ($service in @('aide','cad')) {
+    & $docker ps -q --filter "label=com.docker.compose.project.working_dir=$maintenanceRoot" --filter "label=com.docker.compose.service=$service"
+    if ($LASTEXITCODE -ne 0) { throw 'Could not list AIDE containers.' }
+}) | Sort-Object -Unique
 if ($LASTEXITCODE -ne 0) { throw 'Could not list AIDE containers.' }
 if ($DryRun) { Write-Host "[dry-run] stop AIDE in $maintenanceRoot; containers: $ids"; exit 0 }
 New-Item -ItemType Directory -Path '.cache' -Force | Out-Null

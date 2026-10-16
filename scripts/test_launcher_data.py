@@ -46,6 +46,16 @@ class LauncherDataTests(unittest.TestCase):
         self.assertEqual(self.prepare()['status'], 'existing')
         self.assertEqual(storage.manifest(self.persist / 'storage/data'), before)
 
+    def test_fresh_auth_mount_is_prepared_without_user_data_access(self):
+        storage.prepare(self.persist, {}, platform='fixture')
+        auth = self.persist / 'storage/data/auth'
+        self.assertTrue(auth.is_dir())
+        self.assertEqual(stat.S_IMODE(auth.stat().st_mode), 0o700)
+        self.assertEqual(list(auth.iterdir()), [])
+        auth.rmdir();auth.symlink_to(self.source, target_is_directory=True)
+        with self.assertRaisesRegex(RuntimeError, 'Authentication directory'):
+            storage.prepare(self.persist, {}, platform='fixture')
+
     def test_transient_fifo_socket_are_not_copied(self):
         os.mkfifo(self.source / 'pipe')
         handle = socket.socket(socket.AF_UNIX)

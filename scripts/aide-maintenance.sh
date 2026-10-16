@@ -24,10 +24,12 @@ if (( ! DRY_RUN )); then mkdir -p .cache; touch .cache/aide-manual-stop; fi
 # Exact Compose working-directory + service labels avoid other AIDE copies,
 # custom project names, Docmost, and unrelated containers. No Compose file needed.
 IDS="$(
-  "$DOCKER_BIN" ps -q --filter "label=com.docker.compose.project.working_dir=$ROOT_LOGICAL" --filter label=com.docker.compose.service=aide || exit "$?"
-  if [[ "$ROOT_LOGICAL" != "$ROOT" ]]; then
-    "$DOCKER_BIN" ps -q --filter "label=com.docker.compose.project.working_dir=$ROOT" --filter label=com.docker.compose.service=aide || exit "$?"
-  fi
+  for service in aide cad; do
+    "$DOCKER_BIN" ps -q --filter "label=com.docker.compose.project.working_dir=$ROOT_LOGICAL" --filter "label=com.docker.compose.service=$service" || exit "$?"
+    if [[ "$ROOT_LOGICAL" != "$ROOT" ]]; then
+      "$DOCKER_BIN" ps -q --filter "label=com.docker.compose.project.working_dir=$ROOT" --filter "label=com.docker.compose.service=$service" || exit "$?"
+    fi
+  done
 )"
 IDS="$(printf '%s\n' "$IDS" | sort -u)"
 if (( DRY_RUN )); then printf '[dry-run] stop AIDE in %s; containers: %s\n' "$ROOT" "${IDS:-none}"; exit 0; fi

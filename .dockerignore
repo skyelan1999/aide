@@ -16,3 +16,6 @@ docker-images
 
 # Rebuilt by plugin hosting; not an application build input.
 plugins/surface.json
+
+**/__pycache__
+*.pyc

@@ -1717,3 +1717,18 @@ html[data-theme="dark"] .mermaid{background:#161f2a;color:#edf5ff}
 
 /* Per-request context is distinct from aggregate usage; keep explanations readable. */
 .context-card .context-parallel-detail{white-space:normal;overflow-wrap:anywhere;font-size:9px;line-height:1.5;text-overflow:clip}
+
+/* CAD tools keep measurement results outside the model picking surface. */
+.step-viewer>.stl-toolbar{flex-wrap:wrap}.step-viewer>.stl-toolbar .stl-info{min-width:100px;flex:1}.step-viewer>.stl-toolbar .stl-meta{white-space:normal;overflow-wrap:anywhere}
+.step-viewer>.stl-canvas{min-height:180px}
+.cad-tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--line-faint);background:var(--surface);flex-shrink:0}
+.cad-tools .stl-ctrl{min-height:30px}.cad-tools .stl-ctrl[aria-pressed=true]{color:var(--accent-text);background:var(--code-bg);border-color:var(--accent)}
+.cad-pick-mode{font:inherit;font-size:12px;min-height:30px;max-width:130px;padding:4px 8px;color:var(--text);background:var(--surface);border:1px solid var(--line-faint);border-radius:6px}
+.cad-readout{padding:8px 12px;max-height:160px;overflow:auto;flex-shrink:0;color:var(--text);background:var(--surface);font:12px/1.6 ui-monospace,SFMono-Regular,monospace}
+.cad-status{min-height:20px;overflow-wrap:anywhere}.cad-hint{margin:2px 0 6px;color:var(--muted);font:11px/1.5 system-ui,sans-serif}.cad-records{margin:0;padding-left:24px}.cad-record{padding:3px 0;overflow-wrap:anywhere}.cad-record strong{margin-right:12px;color:var(--accent-text)}
+@media(max-width:600px){.cad-tools{padding:6px;gap:4px}.cad-tools .stl-ctrl{padding:5px 7px;font-size:11px}.cad-readout{max-height:130px;padding:6px 8px}.step-viewer>.stl-toolbar{padding:6px}.step-viewer>.stl-toolbar .stl-meta{order:2;flex-basis:100%}}
+
+.step-viewer .cad-readout{height:clamp(100px,16vh,150px);flex-shrink:0;box-sizing:border-box}
+/* Small/zoomed viewports keep metrology reachable below the minimum CAD canvas. */
+.step-viewer{overflow:auto}.step-viewer>.stl-canvas{flex-shrink:0}
+.step-viewer .cad-hint{color:var(--text);opacity:.82}.cad-tools .stl-ctrl,.cad-tools .cad-pick-mode{color:var(--text)}

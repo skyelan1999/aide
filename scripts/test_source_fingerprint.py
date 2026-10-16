@@ -24,7 +24,7 @@ class SourceFingerprintTests(unittest.TestCase):
             self.skipTest('Host has no UTF-8 locale with different path collation')
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            for name in ['cmd', 'internal', 'plugins', 'vendor', 'scripts/office', 'docker/wheels', 'docker/sherpa']:
+            for name in ['cmd', 'internal', 'plugins', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa']:
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
             for name in ('launcher-data.sh','launcher-data.ps1','launcher-data.py'):
@@ -43,7 +43,7 @@ class SourceFingerprintTests(unittest.TestCase):
     def test_generated_surface_is_excluded_but_plugin_code_is_included(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
-            for name in ['cmd', 'internal', 'plugins/custom', 'vendor', 'scripts/office', 'docker/wheels', 'docker/sherpa']:
+            for name in ['cmd', 'internal', 'plugins/custom', 'vendor', 'scripts/office', 'scripts/cad', 'docker/cad', 'docker/wheels', 'docker/sherpa']:
                 (root/name).mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT/'scripts/aide.sh', root/'scripts/aide.sh')
             for name in ('launcher-data.sh','launcher-data.ps1','launcher-data.py'):

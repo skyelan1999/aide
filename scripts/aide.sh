@@ -7,9 +7,9 @@ MODE="${1:-start}"
 # 哈希写进镜像 label aide.srcsha，供 start 二次启动时比对，命中即跳过构建。
 source_sha() {
   (
-    find cmd internal plugins vendor scripts/office docker/wheels docker/sherpa -type f ! -name '.DS_Store' ! -path 'plugins/surface.json' -print0
+    find cmd internal plugins vendor scripts/office scripts/cad docker/cad docker/wheels docker/sherpa -type f ! -name '.DS_Store' ! -name '*.pyc' ! -path '*/__pycache__/*' ! -path 'plugins/surface.json' -print0
     printf '%s\0' go.mod go.sum Dockerfile compose.yaml .dockerignore version.md scripts/aide.sh scripts/launcher-data.sh scripts/launcher-data.ps1 scripts/launcher-data.py
-    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example; do
+    for extra in Dockerfile.local docker/Dockerfile.local-base scripts/prepare-local-base.sh scripts/prepare-cad-base.sh docker/Dockerfile.cad start.command start.sh start.ps1 start.bat docker/compose.offline.yaml docker/offline.env.example; do
       if [[ -f "$extra" ]]; then printf '%s\0' "$extra"; fi
     done
   ) | LC_ALL=C sort -z | xargs -0 shasum -a 256 2>/dev/null | shasum -a 256 | awk '{print $1}'
@@ -253,7 +253,12 @@ case "$MODE" in
           base_status=0
           LOCAL_BASE="$(bash scripts/prepare-local-base.sh "$IMG")" || base_status=$?
           if (( base_status == 0 )); then
-            export AIDE_DOCKERFILE=Dockerfile.local AIDE_BUILD_NETWORK=none AIDE_DEPENDENCY_IMAGE="$LOCAL_BASE"
+            if CAD_BASE="$(bash scripts/prepare-cad-base.sh "$IMG")"; then
+              export AIDE_CAD_IMAGE="$CAD_BASE"
+              export AIDE_DOCKERFILE=Dockerfile.local AIDE_BUILD_NETWORK=none AIDE_DEPENDENCY_IMAGE="$LOCAL_BASE"
+            else
+              echo "CAD 依赖尚未准备，停止本地构建；按上方命令安装一次后可完全离线。" >&2; exit 1
+            fi
             echo "== 使用完整本地依赖镜像，应用构建禁止联网 =="
           elif (( base_status != 3 )); then
             echo "本地依赖镜像准备失败；停止，不转为联网构建。" >&2; exit "$base_status"
@@ -340,11 +345,14 @@ case "$MODE" in
     cp LICENSE "$BUNDLE/"
     mkdir -p "$BUNDLE/licenses"
     cp vendor/github.com/yuin/goldmark/v2/LICENSE "$BUNDLE/licenses/goldmark.txt"
+    mkdir -p "$BUNDLE/licenses/cad"
+    cp scripts/cad/licenses/* "$BUNDLE/licenses/cad/"
     printf '%s %s %s v%s\n' "$BUNDLE_TAG" "$IMAGE_ID" "$PLATFORM" "$VERSION" > "$BUNDLE/.aide-image"
     printf 'version=%s\nimage=%s\nplatform=%s\nsrcsha=%s\n' "$VERSION" "$IMAGE_ID" "$PLATFORM" \
       "$("$DOCKER_BIN" image inspect "$IMG" --format '{{index .Config.Labels "aide.srcsha"}}')" > "$BUNDLE/BUILD.txt"
     "$DOCKER_BIN" image tag "$IMAGE_ID" "$BUNDLE_TAG"
     BUNDLE_IMAGES=("$BUNDLE_TAG")
+    printf 'cadRuntime=%s\n' "$("$DOCKER_BIN" image inspect "$IMG" --format '{{index .Config.Labels "aide.cad-runtime"}}')" >> "$BUNDLE/BUILD.txt"
     if [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v1 --format '{{index .Config.Labels "aide.local-base"}}' 2>/dev/null || true)" == v1 ]] && \
        [[ "$("$DOCKER_BIN" image inspect aide:dependencies-v1 --format '{{.Os}}/{{.Architecture}}')" == "$PLATFORM" ]]; then
       BUNDLE_IMAGES+=(aide:dependencies-v1)

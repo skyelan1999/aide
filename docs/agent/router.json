@@ -563,6 +563,51 @@
       [
         "python3",
         "scripts/test_launcher_data.py"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/step-preview.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/step-metrology.js"
+      ],
+      [
+        "node",
+        "--check",
+        "internal/server/web/step-import-worker.js"
+      ],
+      [
+        "node",
+        "scripts/step-metrology.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/step-worker.test.cjs"
+      ],
+      [
+        "node",
+        "scripts/test_step_import.cjs"
+      ],
+      [
+        "python3",
+        "scripts/test_cad_service.py"
+      ],
+      [
+        "python3",
+        "scripts/test_cad_dependency_image.py"
+      ],
+      [
+        "bash",
+        "-n",
+        "scripts/prepare-cad-base.sh"
+      ],
+      [
+        "sh",
+        "-n",
+        "docker/cad/install.sh"
       ]
     ],
     "full": [
@@ -573,6 +618,10 @@
       [
         "python3",
         "scripts/test_go_snapshot.py"
+      ],
+      [
+        "python3",
+        "scripts/test_cad_geometry.py"
       ]
     ]
   },

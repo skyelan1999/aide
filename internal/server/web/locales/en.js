@@ -2645,3 +2645,49 @@ Object.assign(window.aideEnglish, {"下次请求：输入估算 {0}，含输出�
 Object.assign(window.aideEnglish, {"标题辅助请求": "Title helper request", "正在准备逐请求上下文…": "Preparing per-request context…"});
 
 Object.assign(window.aideEnglish, {"继续执行，等待并行机会": "Continuing; watching for parallel work", "已评估 {0} 轮；下方累计保留各轮分析": "Evaluated {0} checkpoints; analyses from all rounds are kept below", "第 {0} 轮 · {1}": "Round {0} · {1}", "第 {0} 轮规划请求": "Round {0} planning request"});
+
+Object.assign(window.aideEnglish, {
+  "坐标点": "Coordinates",
+  "两点距离": "Distance",
+  "三点夹角": "Angle",
+  "三点标定": "Calibrate frame",
+  "吸附顶点": "Snap to vertex",
+  "模型表面": "Model surface",
+  "拾取方式": "Pick mode",
+  "原始坐标系": "Original frame",
+  "清除标记": "Clear marks",
+  "导出测量": "Export measurements",
+  "取消加载": "Cancel loading",
+  "关闭预览": "Close preview",
+  "重新加载": "Reload",
+  "预览已结束": "Preview ended",
+  "正在读取 STEP 文件…": "Reading STEP file…",
+  "正在初始化几何解析器…": "Initializing geometry parser…",
+  "正在构建模型…": "Building model…",
+  "大模型快速精度": "Large-model draft precision",
+  "预览网格测量，单位 mm；曲面和曲边结果为近似值。": "Preview mesh measurements in mm; curved surfaces and edges are approximate.",
+  "点击模型表面或顶点读取坐标。": "Pick a surface or vertex to read coordinates.",
+  "依次选择两个点，测量距离与轴向差值。": "Pick two points for distance and axis deltas.",
+  "依次选择三个点，第二个点为角顶点。": "Pick three points; the second point is the angle vertex.",
+  "依次选择原点、X 正方向点、XY 平面点。": "Pick the origin, a positive X point, then an XY plane point.",
+  "已恢复模型原始坐标系。": "Original model frame restored.",
+  "自定义坐标系已建立，已有测量按新坐标显示。": "Custom frame created; existing measurements use the new frame.",
+  "测量已记录。": "Measurement recorded.",
+  "标定点不能重合。": "Calibration points must be distinct.",
+  "坐标必须是有限数值。": "Coordinates must be finite numbers.",
+  "三个标定点不能共线，请重选 XY 平面点。": "Calibration points must not be collinear. Pick another XY plane point.",
+  "最多保留 100 条测量，请导出或清除后继续。": "Up to 100 measurements. Export or clear them to continue.",
+  "未选中模型，请点击可见几何。": "No model hit. Pick visible geometry.",
+  "已取消加载，解析与传输资源已释放。": "Loading cancelled; parser and transfer resources released.",
+  "STEP 文件必须来自当前工作台。": "STEP files must come from this workbench.",
+  "STEP 文件超过 384 MiB 预览上限。": "STEP file exceeds the 384 MiB preview limit.",
+  "STEP 文件超过预览上限或传输长度异常。": "STEP input exceeds the preview limit or its length is invalid.",
+  "STEP 文件传输未完成，请重新加载。": "STEP transfer was incomplete. Reload the file.",
+  "模型超过预览几何预算，请降低模型复杂度后重试。": "Model exceeds the preview geometry budget. Simplify it and retry.",
+  "解析内存不足。请拆分装配或简化几何后重试。": "Insufficient parser memory. Split the assembly or simplify geometry and retry.",
+  "STEP 加载超时，请拆分模型后重试。": "STEP loading timed out. Split the model and retry."
+});
+
+Object.assign(window.aideEnglish, {'已有 STEP 模型正在解析，请关闭或等待后重试。':'Another STEP model is being parsed. Close it or wait, then retry.'});
+
+Object.assign(window.aideEnglish, {"正在生成完整曲面…":"Generating complete surfaces…","曲面":"faces"});

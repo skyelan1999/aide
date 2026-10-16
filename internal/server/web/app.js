@@ -7512,11 +7512,20 @@ function teardownViewer(container) {
 }
 function bindViewerTeardown(container, teardown) {
   if (!container || typeof teardown !== 'function') return;
-  container._aideViewerTeardown = teardown;
-  const dlg = container.closest('dialog');
-  if (dlg) dlg.addEventListener('close', teardown, { once: true });
-  window.addEventListener('pagehide', teardown, { once: true });
+  const dialog=container.closest('dialog');
+  let released=false;
+  const release=()=>{
+    if(released)return;released=true;
+    dialog?.removeEventListener('close',release);
+    window.removeEventListener('pagehide',release);
+    if(container._aideViewerTeardown===release)container._aideViewerTeardown=null;
+    teardown();
+  };
+  container._aideViewerTeardown=release;
+  dialog?.addEventListener('close',release,{once:true});
+  window.addEventListener('pagehide',release,{once:true});
 }
+
 async function setupStlPreview(container, filePath, root, source, viewerSpec) {
   container.innerHTML = '';
   const loading = el('div', 'stl-loading', t('正在加载 3D 预览组件…'));
@@ -7632,139 +7641,24 @@ async function setupStlPreview(container, filePath, root, source, viewerSpec) {
       resize(); resizeObs = new ResizeObserver(resize); resizeObs.observe(canvasWrap);
     }).catch(err => { canvasWrap.innerHTML = '<div style="padding:40px;text-align:center;color:var(--warn);">' + t('STL 加载失败：') + escapeHtml(err.message) + '</div>'; meta.textContent = t('解析失败'); });
 }
-/* STEP/STP 由 LGPL 的 OpenCascade WebAssembly 在同源 Worker 内进行 B-rep 三角化；CAD 文件始终留在本机。 */
+/* STEP/STP uses the isolated local CAD service, with a bounded WASM compatibility path. */
 async function setupStepPreview(container, filePath, root, source, viewerSpec) {
   teardownViewer(container);
-  container.replaceChildren();
-  const viewer = el('div', 'step-viewer');
-  const toolbar = el('div', 'stl-toolbar');
-  const title = el('span', 'stl-info', filePath.split('/').pop());
-  const meta = el('span', 'stl-meta', t('准备加载 STEP 模型…'));
-  const reset = el('button', 'stl-ctrl', t('重置视角'));
-  const close = el('button', 'stl-ctrl', '✕');
-  const canvas = el('div', 'stl-canvas');
-  toolbar.append(title, meta, reset, close); viewer.append(toolbar, canvas); container.append(viewer);
-  close.onclick = () => { const dlg = container.closest('dialog'); if (dlg) dlg.close(); else if (document.body.classList.contains('file-view-mode')) history.back(); };
-
-  const rawUrl = fileRawUrl(filePath, root, source, viewerSpec);
-  let releaseViewer = () => {};
-  const showError = (message) => {
-    releaseViewer();
-    const notice = el('div', 'step-error');
-    notice.append(el('strong', '', t('STEP 预览不可用')));
-    notice.append(el('p', '', message));
-    const download = el('a', 'stl-download', t('下载原始 STEP 文件'));
-    download.href = rawUrl; download.download = filePath.split('/').pop(); notice.append(download);
-    canvas.replaceChildren(notice); meta.textContent = t('预览失败');
-  };
-  if (!detectWebGLContext()) { showError(t('当前浏览器未提供可用的 WebGL 图形上下文。')); return; }
-  try { await ensureThreeStack(); } catch (err) { showError(t('无法加载 3D 预览组件：') + (err?.message || err)); return; }
-
-  let worker = null, renderer = null, controls = null, resizeObs = null, animId = 0, disposed = false;
-  const scene = new THREE.Scene(); scene.background = new THREE.Color(0x1a1a2e);
-  const camera = new THREE.PerspectiveCamera(45, 1, 0.01, 1e9); camera.up.set(0, 0, 1);
-  try {
-    renderer = new THREE.WebGLRenderer({antialias:true, failIfMajorPerformanceCaveat:false});
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2)); canvas.replaceChildren(renderer.domElement);
-  } catch (err) { showError(t('无法创建 WebGL 渲染器：') + (err?.message || err)); return; }
-  scene.add(new THREE.AmbientLight(0xffffff, 0.58));
-  const lightA = new THREE.DirectionalLight(0xffffff, 0.92); lightA.position.set(3, -4, 7); scene.add(lightA);
-  const lightB = new THREE.DirectionalLight(0xbad7ff, 0.3); lightB.position.set(-5, 4, 2); scene.add(lightB);
-  const grid = new THREE.GridHelper(10, 10, 0x52627e, 0x303a51); grid.rotation.x = Math.PI / 2; scene.add(grid);
-  controls = new THREE.OrbitControls(camera, renderer.domElement); controls.enableDamping = true; controls.dampingFactor = 0.08;
-  let group = null, materials = [];
-  const draw = () => { animId = 0; if (disposed || document.hidden || !container.isConnected) return; controls.update(); renderer.render(scene,camera); if (document.documentElement.dataset.motion !== 'reduced') animId = requestAnimationFrame(draw); };
-  const syncMotion = () => { if (animId) cancelAnimationFrame(animId); animId = 0; controls.enableDamping = document.documentElement.dataset.motion !== 'reduced'; draw(); };
-  const drawReduced = () => { if (!disposed && document.documentElement.dataset.motion === 'reduced') renderer.render(scene,camera); };
-  document.addEventListener('visibilitychange', syncMotion); window.addEventListener('aide:motion', syncMotion); controls.addEventListener('change', drawReduced);
-  const teardown = () => {
-    if (disposed) return; disposed = true;
-    document.removeEventListener('visibilitychange', syncMotion); window.removeEventListener('aide:motion', syncMotion); controls.removeEventListener('change', drawReduced);
-    if (worker) { worker.terminate(); worker = null; }
-    if (animId) cancelAnimationFrame(animId); if (resizeObs) resizeObs.disconnect();
-    try { controls.dispose(); } catch (_) {}
-    if (group) group.traverse(obj => { if (obj.geometry) obj.geometry.dispose(); });
-    for (const material of materials) try { material.dispose(); } catch (_) {}
-    try { renderer.dispose(); renderer.forceContextLoss(); } catch (_) {}
-  };
-  releaseViewer = teardown;
-  bindViewerTeardown(container, teardown);
-  const resize = () => { if (disposed) return; const w=canvas.clientWidth,h=canvas.clientHeight; if (w>0&&h>0) { camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h); drawReduced(); } };
-  resizeObs = new ResizeObserver(resize); resizeObs.observe(canvas);
-  reset.onclick = () => { if (!group) return; const box=new THREE.Box3().setFromObject(group), center=box.getCenter(new THREE.Vector3()), size=box.getSize(new THREE.Vector3()); const maxDim=Math.max(size.x,size.y,size.z)||1; const dist=(maxDim/2/Math.tan(camera.fov*Math.PI/360))*2.2; camera.position.copy(center).add(new THREE.Vector3(dist, -dist, dist*0.8)); camera.near=Math.max(dist/10000,0.001); camera.far=dist*100; camera.updateProjectionMatrix(); controls.target.copy(center); controls.update(); };
-
-  try {
-    const response = await fetch(rawUrl);
-    if (!response.ok) throw new Error('HTTP ' + response.status);
-    const limit = 64 * 1024 * 1024;
-    const announcedLength = Number(response.headers.get('Content-Length') || 0);
-    if (announcedLength > limit) throw new Error(t('STEP 文件超过 64 MiB 预览上限。'));
-    let buffer;
-    if (response.body?.getReader) {
-      const reader = response.body.getReader(), chunks = []; let total = 0;
-      try {
-        while (true) {
-          const {done, value} = await reader.read(); if (done) break;
-          total += value.byteLength;
-          if (total > limit) { await reader.cancel(); throw new Error(t('STEP 文件超过 64 MiB 预览上限。')); }
-          chunks.push(value);
-        }
-      } finally { reader.releaseLock(); }
-      buffer = new Uint8Array(total);
-      let offset = 0; for (const chunk of chunks) { buffer.set(chunk, offset); offset += chunk.byteLength; }
-    } else {
-      buffer = await response.arrayBuffer();
-      if (buffer.byteLength > limit) throw new Error(t('STEP 文件超过 64 MiB 预览上限。'));
-    }
-    if (disposed) return;
-    meta.textContent = t('正在解析 STEP 几何…');
-    worker = new Worker('/step-import-worker.js');
-    worker.onmessage = (event) => {
-      if (disposed) return;
-      const data = event.data || {};
-      if (data.error) { showError(t(data.error)); return; }
-      if (!data.result?.success || !Array.isArray(data.result.meshes) || !data.result.meshes.length) { showError(t('文件中没有可显示的 STEP 实体。')); return; }
-      group = new THREE.Group(); let triangles=0; const box = new THREE.Box3();
-      for (const item of data.result.meshes) {
-        const geo = new THREE.BufferGeometry();
-        const positions = item.attributes?.position?.array;
-        const indices = item.index?.array;
-        if (!positions?.length || !indices?.length) continue;
-        geo.setAttribute('position', new THREE.BufferAttribute(positions,3));
-        if (item.attributes?.normal?.array?.length) geo.setAttribute('normal',new THREE.BufferAttribute(item.attributes.normal.array,3)); else geo.computeVertexNormals();
-        geo.setIndex(new THREE.BufferAttribute(indices,1)); triangles += indices.length/3;
-        const baseColor = Array.isArray(item.color) ? new THREE.Color(item.color[0],item.color[1],item.color[2]) : new THREE.Color(0x9dbfe3);
-        const baseMaterial = new THREE.MeshPhongMaterial({color:baseColor,specular:0x202633,shininess:48,side:THREE.DoubleSide});
-        const faceMaterials=[baseMaterial];
-        const faces=Array.isArray(item.brep_faces)?item.brep_faces:[];
-        let cursor=0;
-        for (const face of faces) {
-          const first=Math.max(cursor,Math.min(indices.length/3,Number(face.first)||0));
-          const last=Math.max(first,Math.min(indices.length/3,(Number(face.last)||0)+1));
-          if (first>cursor) geo.addGroup(cursor*3,(first-cursor)*3,0);
-          let materialIndex=0;
-          if (Array.isArray(face.color)) { materialIndex=faceMaterials.length; const m=new THREE.MeshPhongMaterial({color:new THREE.Color(face.color[0],face.color[1],face.color[2]),specular:0x202633,shininess:48,side:THREE.DoubleSide}); faceMaterials.push(m); }
-          geo.addGroup(first*3,(last-first)*3,materialIndex); cursor=last;
-        }
-        if (cursor<indices.length/3) geo.addGroup(cursor*3,indices.length-cursor*3,0);
-        materials.push(...faceMaterials);
-        const mesh=new THREE.Mesh(geo,faceMaterials.length>1?faceMaterials:baseMaterial); mesh.name=item.name||''; group.add(mesh); geo.computeBoundingBox(); box.union(geo.boundingBox);
-      }
-      if (!group.children.length) { showError(t('文件中没有可显示的 STEP 实体。')); return; }
-      const center=box.getCenter(new THREE.Vector3()); group.position.sub(center); scene.add(group);
-      const size=box.getSize(new THREE.Vector3()), maxDim=Math.max(size.x,size.y,size.z)||1;
-      grid.position.z=box.min.z-center.z; grid.scale.setScalar(Math.max(1,maxDim/10));
-      const dist=(maxDim/2/Math.tan(camera.fov*Math.PI/360))*2.2; camera.position.set(dist,-dist,dist*.8); camera.near=Math.max(dist/10000,.001); camera.far=dist*100; camera.updateProjectionMatrix(); controls.target.set(0,0,0); controls.update();
-      meta.textContent=Math.round(triangles).toLocaleString()+' '+t('三角面')+' · '+size.x.toFixed(2)+'×'+size.y.toFixed(2)+'×'+size.z.toFixed(2)+' mm';
-      worker.terminate(); worker=null; resize(); draw();
-    };
-    worker.onerror = (event) => { if (!disposed) showError(event.message || t('STEP 解析器启动失败。')); };
-    const transferable = buffer instanceof Uint8Array ? buffer.buffer : buffer;
-    worker.postMessage({buffer: transferable},[transferable]);
-    resize();
-  } catch (err) { showError(err?.message || String(err)); }
+  let canceled=false;
+  bindViewerTeardown(container,()=>{canceled=true;});
+  try { await ensureVendorScript('/step-preview.js', () => !!window.AideStepPreview); }
+  catch(error) {
+    if(canceled||!container.isConnected)return;
+    teardownViewer(container);
+    const notice=el('div','step-error');notice.append(el('strong','',t('STEP 预览不可用')),el('p','',String(error?.message||t('解析失败'))));
+    const retry=el('button','stl-ctrl',t('重新加载'));retry.onclick=()=>setupStepPreview(container,filePath,root,source,viewerSpec);
+    const download=el('a','stl-download',t('下载原始 STEP 文件'));download.href=fileRawUrl(filePath,root,source,viewerSpec);download.download=String(filePath).split('/').pop();
+    notice.append(retry,download);container.replaceChildren(notice);return;
+  }
+  if(canceled||!container.isConnected)return;
+  return window.AideStepPreview.setup({container,filePath,root,source,viewerSpec,el,t,fileRawUrl,teardownViewer,bindViewerTeardown,detectWebGLContext,ensureThreeStack,ensureVendorScript});
 }
-/* ── ZIP 查看器：只列出目录，不会在浏览器中解压或执行归档内容。 ── */
+
 async function setupZipPreview(container, filePath, root, source, viewerSpec) {
   container.innerHTML = '';
   const viewer = el('div', 'zip-viewer');

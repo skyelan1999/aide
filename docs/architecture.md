@@ -262,9 +262,13 @@ stateDiagram-v2
 
 - 从项目文件编辑器“在新标签页打开此文件”时，独立文件页将浏览器标题设为文件名（后缀 `· aide`），便于在 Safari 标签页间识别文档；工作台仍使用应用默认标题。
 
+### 2026-10-16：大 STEP 与测量标定
+
+- STEP 专用预算提高到 384 MiB，本地响应流式传输，Worker 下载/解析及批次确认传输，主线程分批建模；绝对毫米精度避免大装配包围盒吞掉小零件。支持取消、资源清理、点坐标、距离、夹角及右手坐标系三点标定。实际压力结果与功能边界见[CAD 预览架构](architecture/cad-preview.md)及本批任务收据，不能把文件大小预算当作全部模型可打开的保证。
+
 ### 2026-10-12：STEP/STP 本地三维预览
 
-- `.step/.stp` 文件在工作台和独立文件视图中使用同源、按需加载的 `occt-import-js@0.0.23`（OpenCascade WebAssembly，LGPL-2.1）解析 B-rep 几何。解析运行于专用 Worker，模型数据留在浏览器本机；64 MiB 输入与 300 万三角面为预览上限。解析器和 OCCT 许可证、上游源代码包放在 `web/vendor/occt-import-js/`；无 WebGL、损坏、超限或解析失败时显示说明及原文件下载。
+- `.step/.stp` 文件在工作台和独立文件视图中使用同源、按需加载的 `occt-import-js@0.0.23`（OpenCascade WebAssembly，LGPL-2.1）解析 B-rep 几何。解析运行于专用 Worker，模型数据留在浏览器本机；初版以 64 MiB 输入与 300 万三角面为预览上限；当前 STEP 专用链路见上节。解析器和 OCCT 许可证、上游源代码包放在 `web/vendor/occt-import-js/`；无 WebGL、损坏、超限或解析失败时显示说明及原文件下载。
 - STEP 单位经 OpenCascade 解析为毫米；预览保留实体/面颜色，显示尺寸与三角面数，并支持轨道旋转、缩放和归位。Worker 在视图关闭或切换时终止，Three.js 场景和 WebGL 资源随之释放。
 - 主文档 CSP 为同源 `script-src 'self' 'wasm-unsafe-eval'`，允许本机 WebAssembly 模块且不开放 JavaScript `unsafe-eval`。为兼容 OCCT Embind，仅 `/step-import-worker.js` 的隔离 Worker 响应增加 `unsafe-eval`；该 Worker 使用 `connect-src 'self'`，不能继续创建 Worker，也不能加载远端脚本。
 - 所选正文/背景颜色的算术对比值约 12.0–12.87，白色主按钮文字/石板蓝底约 6.47。数值是设计计算，不是全页面可访问性认证，也不能证明保护视力、消除疲劳或保证每个人的颜色识别。实际首屏时长、FPS、持续使用效果需要设备测量。

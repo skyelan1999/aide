@@ -1088,9 +1088,27 @@ func (a *App) knowledgeReadNode(ctx context.Context, n knowledgeNode, workspace 
 // A star-map viewer carries the graph's source identity into all content reads.
 // Ordinary SSH raw reads can omit it, but still pin the current connection.
 func (a *App) knowledgeReadViewer(ctx context.Context, rootName, sourceID, p, origin, workspace string, maxBytes int64) ([]byte, error) {
-	if maxBytes <= 0 || maxBytes > 64<<20 || origin != "" && workspace == "" {
+	if maxBytes <= 0 || maxBytes > rawViewerLimit(p) || origin != "" && workspace == "" {
 		return nil, fmt.Errorf("查看范围或来源身份无效")
 	}
+	ar, err := a.knowledgeViewerArea(rootName, sourceID, origin, workspace)
+	if err != nil {
+		return nil, err
+	}
+	timeout := 15 * time.Second
+	if rawViewerLimit(p) > maxRawFile {
+		timeout = 90 * time.Second
+	}
+	bounded, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	return a.knowledgeAreaRead(bounded, ar, p, maxBytes)
+}
+
+func (a *App) knowledgeViewerArea(rootName, sourceID, origin, workspace string) (knowledgeArea, error) {
+	if origin != "" && workspace == "" {
+		return knowledgeArea{}, fmt.Errorf("查看范围或来源身份无效")
+	}
+
 	if sourceID != "" {
 		rootName = "source"
 	} else if rootName == "" {
@@ -1108,27 +1126,25 @@ func (a *App) knowledgeReadViewer(ctx context.Context, rootName, sourceID, p, or
 	areas := a.knowledgeAreasLocked(scope, work, ref)
 	a.mu.Unlock()
 	if workspace != "" && workspace != knowledgeID(scope, "scope", "", ".") {
-		return nil, fmt.Errorf("工作区已变化，请从星图重新打开")
+		return knowledgeArea{}, fmt.Errorf("工作区已变化，请从星图重新打开")
 	}
 	for _, ar := range areas {
 		if ar.root != rootName || ar.source != sourceID {
 			continue
 		}
 		if !ar.enabled || origin != "" && origin != ar.origin {
-			return nil, fmt.Errorf("引用来源已变化或停用，请从星图重新打开")
+			return knowledgeArea{}, fmt.Errorf("引用来源已变化或停用，请从星图重新打开")
 		}
-		bounded, cancel := context.WithTimeout(ctx, 15*time.Second)
-		defer cancel()
-		return a.knowledgeAreaRead(bounded, ar, p, maxBytes)
+		return ar, nil
 	}
-	return nil, fmt.Errorf("引用来源已不存在")
+	return knowledgeArea{}, fmt.Errorf("引用来源已不存在")
 }
 
 // Raw viewer compatibility: read from the selected configured source without
 // requiring membership of the bounded star-map catalogue. It is still pinned to
 // the supplied source configuration and to the current workspace revision.
 func (a *App) knowledgeReadSource(ctx context.Context, src Source, p string, maxBytes int64) ([]byte, error) {
-	if maxBytes <= 0 || maxBytes > 64*1024*1024 {
+	if maxBytes <= 0 || maxBytes > rawViewerLimit(p) {
 		return nil, fmt.Errorf("来源读取范围无效")
 	}
 	a.mu.Lock()
@@ -1150,7 +1166,11 @@ func (a *App) knowledgeReadSource(ctx context.Context, src Source, p string, max
 		if !ar.enabled || !bytes.Equal(wanted, current) {
 			return nil, fmt.Errorf("引用来源已变化或停用")
 		}
-		bounded, cancel := context.WithTimeout(ctx, 15*time.Second)
+		timeout := 15 * time.Second
+		if rawViewerLimit(p) > maxRawFile {
+			timeout = 90 * time.Second
+		}
+		bounded, cancel := context.WithTimeout(ctx, timeout)
 		defer cancel()
 		return a.knowledgeAreaRead(bounded, ar, p, maxBytes)
 	}

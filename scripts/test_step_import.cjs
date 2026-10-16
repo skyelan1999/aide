@@ -13,7 +13,7 @@ const factory = require(path.join(vendor, 'occt-import-js.js'));
 (async () => {
   const occt = await factory({ locateFile: (file) => path.join(vendor, file) });
   const result = occt.ReadFile('step', new Uint8Array(sample), {
-    linearDeflectionType: 'bounding_box_ratio', linearDeflection: 0.003, angularDeflection: 0.45,
+    linearUnit:'millimeter', linearDeflectionType: 'absolute_value', linearDeflection: 0.1, angularDeflection: 0.45,
   });
   assert.equal(result.success, true, 'fixture should parse');
   assert.ok(result.meshes?.length, 'fixture should contain meshes');
@@ -25,5 +25,12 @@ const factory = require(path.join(vendor, 'occt-import-js.js'));
     return sum + indices.length / 3;
   }, 0);
   assert.ok(triangles > 0, 'fixture should produce triangles');
+  for(const unit of ['mm','m','in']) {
+    const fixture=execFileSync('tar',['-xOf',archive,'package/test/testfiles/cube-units/cube-'+unit+'.step'],{maxBuffer:1024*1024});
+    const converted=occt.ReadFile('step',new Uint8Array(fixture),{linearUnit:'millimeter',linearDeflectionType:'absolute_value',linearDeflection:.1,angularDeflection:.45});
+    assert.equal(converted.success,true);const min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];
+    for(const mesh of converted.meshes)for(let i=0;i<mesh.attributes.position.array.length;i++){const axis=i%3,value=mesh.attributes.position.array[i];min[axis]=Math.min(min[axis],value);max[axis]=Math.max(max[axis],value);}
+    for(let axis=0;axis<3;axis++)assert.ok(Math.abs(max[axis]-min[axis]-1000)<.0001,unit+' must convert to1000mm');
+  }
   process.stdout.write(`STEP importer: ${result.meshes.length} mesh(es), ${triangles} triangle(s)\n`);
 })().catch((error) => { console.error(error); process.exitCode = 1; });

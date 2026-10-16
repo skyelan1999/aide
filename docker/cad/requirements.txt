@@ -1,0 +1,6 @@
+# CPython 3.12 Linux arm64/amd64 wheels, PyPI SHA-256 pinned.
+cadquery-ocp-novtk==8.0.1.1.0 \
+ --hash=sha256:dd5e239d0ba0863e3a2ca8de71c563d3375f1c075e493eb7650609de22d85240 \
+ --hash=sha256:9df1e3700016bee819c0a8627880f37de47540eef63e8adb368f659a0fdeff78
+cadquery-ocp-proxy==8.0.1.1.0 \
+ --hash=sha256:98c71bb60cfb651afe179b134ab88580fd75384fce0cc6d633f727002cd18abd

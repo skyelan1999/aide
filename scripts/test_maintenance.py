@@ -28,6 +28,7 @@ sys.exit('Forbidden unexpected operation: '+repr(a))
  def test_stop_exact_root_and_service(self):
   r=self.run_action(self.launcher('stop.command'));self.assertEqual(r.returncode,0,r.stderr)
   self.assertEqual(self.calls()[1],['ps','-q','--filter','label=com.docker.compose.project.working_dir='+str(self.root),'--filter','label=com.docker.compose.service=aide'])
+  self.assertTrue(any('label=com.docker.compose.service=cad' in a for a in self.calls() if a[0]=='ps'))
   self.assertEqual([a for a in self.calls() if a[0]=='stop'],[['stop','--time','30','one'],['stop','--time','30','two']]);self.assertTrue((self.root/'.cache/aide-manual-stop').exists())
  def test_existing_cli_dispatch_uses_same_scoped_stop(self):
   r=self.run_action(str(self.root/'scripts/aide.sh'),'stop','--dry-run');self.assertEqual(r.returncode,0,r.stderr);self.assertEqual(self.calls()[1][0:2],['ps','-q']);self.assertFalse((self.root/'.cache').exists())

@@ -57,6 +57,19 @@ def set_owner(root, uid, gid):
         os.chown(directory, uid, gid, follow_symlinks=False)
 
 
+def prepare_auth_directory(target, uid, gid, platform):
+    # Compose creates all containers before health dependencies are satisfied.
+    # Create only the empty auth directory so the CAD worker can mount that
+    # subtree read-only; never give it sessions/settings or all of /data.
+    auth = Path(target) / 'data/auth'
+    if auth.is_symlink() or (auth.exists() and not auth.is_dir()):
+        raise RuntimeError('Authentication directory is not a safe directory')
+    if not auth.exists():
+        auth.mkdir(mode=0o700)
+        if platform == 'linux':
+            os.chown(auth, uid, gid)
+
+
 def prepare_locked(root, sources, uid=1000, gid=1000, platform='linux'):
     root = Path(root)
     if root.is_symlink():
@@ -77,6 +90,7 @@ def prepare_locked(root, sources, uid=1000, gid=1000, platform='linux'):
                 raise RuntimeError('Storage directory is missing or symbolic; refuse empty reinitialization')
         if platform == 'linux' and (target.stat().st_uid, target.stat().st_gid) != (uid, gid):
             set_owner(target, uid, gid)
+        prepare_auth_directory(target, uid, gid, platform)
         return {'status': 'existing', 'root': str(target)}
     stage = root / ('.storage-import-' + uuid.uuid4().hex)
     stage.mkdir(mode=0o700)
@@ -108,6 +122,7 @@ def prepare_locked(root, sources, uid=1000, gid=1000, platform='linux'):
     # A single rename commits both trees and their receipt together. Interrupted
     # imports remain separate staging folders; never resume by mixing old/new data.
     os.rename(stage, target)
+    prepare_auth_directory(target, uid, gid, platform)
     return {'status': 'imported', 'root': str(target), 'sources': proof['sources']}
 
 

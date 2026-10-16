@@ -1493,6 +1493,7 @@ func (a *App) buildHandler() {
 	mux.HandleFunc("POST /api/directory", a.createDirectory)
 	mux.HandleFunc("POST /api/directory/rename", a.renameDirectory)
 	mux.HandleFunc("GET /api/file/raw", a.readFileRaw)
+	mux.HandleFunc("GET /api/file/step-preview", a.stepNativePreview)
 	mux.HandleFunc("GET /api/file/download", a.downloadFile)
 	mux.HandleFunc("POST /api/file/archive", a.createWorkspaceArchive)
 	mux.HandleFunc("POST /api/file/extract", a.extractArchive)
