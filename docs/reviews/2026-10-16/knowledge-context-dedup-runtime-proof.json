@@ -1,0 +1,137 @@
+{
+  "runtime": {
+    "image": "sha256:a8c22d43ccb88378ac8348d3a888a388f5ae9efc0828baabbb22e2f7e3ac058d",
+    "imageTag": "sha256:a8c22d43ccb88378ac8348d3a888a388f5ae9efc0828baabbb22e2f7e3ac058d",
+    "sourceSHA256": "36cb0af56c23da95f7285b56a1de0d64c8cd0d6ba991a953940e9d097e4215da",
+    "platformManifest": "sha256:39ddc04c776c61e830da7111c05719a9504657f87ba0070b0a1a7fa0250856ed",
+    "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
+    "port": "9999",
+    "health": "ok",
+    "protectedFilesAndMountsPreserved": false,
+    "messagesRunsSettingsAuthAndMountsPreservedExceptRestartReviewState": true,
+    "normalization": {
+      "sessionNumber": 39,
+      "field": "approvalState",
+      "before": "aborted",
+      "after": "manual",
+      "exactPriorHashRecoveredBySingleField": true
+    },
+    "assetsMatch": [
+      "file-autosave.js",
+      "locales/en.js",
+      "index.html",
+      "settings-init.js",
+      "workbench.css",
+      "workbench-background.js",
+      "starmap.html",
+      "starmap-topics.js",
+      "starmap-timeline.js",
+      "starmap.css",
+      "app.js",
+      "conversation.css"
+    ]
+  },
+  "localeStarts": {
+    "status": "pass",
+    "bothStartsExit0": true,
+    "neitherStartBuiltImage": true,
+    "containerCreatedBeforeSecondStart": true,
+    "image": "sha256:a8c22d43ccb88378ac8348d3a888a388f5ae9efc0828baabbb22e2f7e3ac058d",
+    "sourceSHA256": "36cb0af56c23da95f7285b56a1de0d64c8cd0d6ba991a953940e9d097e4215da"
+  },
+  "liveMap": {
+    "status": "pass",
+    "buildCommit": "d9b68388aa2ff38fcbaca9e2a34ee569939b778b",
+    "requestSeconds": 1.196,
+    "nodeCount": 20052,
+    "contextSources": 1,
+    "sourceRegions": [
+      {
+        "id": "sessions",
+        "region": "sessions",
+        "nodeCount": 13,
+        "state": "partial"
+      },
+      {
+        "id": "workspace",
+        "region": "workspace",
+        "nodeCount": 13,
+        "state": "ready"
+      },
+      {
+        "id": "context",
+        "region": "context",
+        "nodeCount": 20000,
+        "state": "partial"
+      },
+      {
+        "id": "s-mh2dmp",
+        "region": "source:s-mh2dmp",
+        "nodeCount": 13,
+        "state": "ready"
+      },
+      {
+        "id": "system-docs",
+        "region": "source:system-docs",
+        "nodeCount": 13,
+        "state": "ready"
+      }
+    ],
+    "noRedundantContextNodes": true,
+    "systemDocsRetained": true,
+    "limits": "One actual API snapshot, not first paint or complete catalogue coverage; no model request"
+  },
+  "actualSafari": {
+    "actualSafari": true,
+    "visibleNodes": 20052,
+    "contextSources": 1,
+    "partialCoverageWarningsRetained": true,
+    "docxReadOnlyBodyAndTables": true,
+    "ownedPreviewClosed": true,
+    "sourceFilterRestored": "all",
+    "searchRestored": "",
+    "selectedNodeRestored": "F2a2cdd4fa75e",
+    "nativeActionAndObservationSeconds": {
+      "search": 0.731,
+      "select": 0.749,
+      "clear": 1.072
+    },
+    "limit": "Single native action plus AX observation sample, not isolated JS execution or a general benchmark.",
+    "originalWorkbenchRestored": true,
+    "screenshotsSHA256": {
+      "starmap.png": "d79d2dbeb2d345fd7deecd5420714bd13805b3b87244ab247c66be8ae21cd922",
+      "docx.png": "f9435024bcfabf3482d06771fa0315e14e2e2a5e907b0053a366cce813ec6cd5"
+    }
+  },
+  "preflight": {
+    "image": "sha256:6d212fa78c4363b3b5d129f49d3305ef3dcec55b4ba5039573083de30ddee412",
+    "health": "healthy",
+    "sessions": 14,
+    "running": 0,
+    "nonterminal": 0,
+    "queued": 0,
+    "historyBackupSHA256": "050f274b335bfae1e021775a48bf14d4874fbbb29f52c45561bf6adf8ef887e6"
+  },
+  "full": {
+    "profile": "full",
+    "status": "pass",
+    "head": "f55d7ded9f610d8048ed7f0b21571cddd322c4f4",
+    "time": "20261016T000405559304Z",
+    "fingerprint": "14fd2fd0e29d48f7c0eb4baf8dfe24a1277db1a362cd5c3aea634e59d717fff6",
+    "commands": 88,
+    "serverRaceSeconds": 679.813
+  },
+  "sourcePush": {
+    "main": "a0ec89b03bd97aac18089f1d9b31250d980f67ae",
+    "independentGate": "pass",
+    "pushExit": 0,
+    "exactRemoteMatch": true
+  },
+  "strictOriginalByteCheck": "failed; preserved false in runtime result. Exact exception proof limits the change to existing startup approvalState aborted-to-manual normalization in session39; no session rewrite by acceptance helper.",
+  "limits": [
+    "Single native performance sample, not universal benchmark",
+    "Original12 remain in_progress",
+    "Receiving-device import not_run",
+    "Windows user-owned; real vectors deferred"
+  ]
+}

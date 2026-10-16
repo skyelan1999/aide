@@ -67,19 +67,23 @@
       ]
     },
     "release": {
-      "status": "pending",
-      "summary": "",
-      "evidence": []
+      "status": "pass",
+      "summary": "Final full88 and independent clean-main gate/pusha0ec89b0 exact remote pass. start.command updated9999 toa8c22d43, no active jobs;14-session file set/settings/auth/mounts preserved except exact startup approvalState aborted-to-manual normalization in39. Actual Safari20052/single context, DOCX preview and owned-tab/scene cleanup pass; offline local import pass, receiving device NOT_RUN.",
+      "evidence": [
+        "docs/reviews/2026-10-16/knowledge-context-dedup.md",
+        "docs/reviews/2026-10-16/knowledge-context-dedup-runtime-proof.json",
+        "docs/reviews/2026-10-16/knowledge-context-dedup-bundle-proof.json"
+      ]
     }
   },
   "release_authorization": "User incremental tests/push/main and existing start.command/offline package update authorization. No new version/tag/Release.",
   "rollback": "Revert scoped source commit or restore retained prior image through designated startup; preserve all sources/user files/session data. No cache/user-data deletion.",
-  "handoff": "Full88 passed on final package inputs; main gate/push and fresh runtime preflight/start.command/after checks/native Safari acceptance pending. Candidatea8c22d43ccb8 unchanged; source/API full and package are separate from live delivery. Original12 remain open.",
+  "handoff": "Scoped duplicate built-in context repair delivered source/main/runtime/offline and actual Safari. Original12 remain in_progress; continue full file/history/approval/outcome/timeline workflows, cloud read gaps and index budget. Windows user-owned; real vectors deferred. No running tests or owned browser tabs remain.",
   "candidate": {
     "image": "sha256:a8c22d43ccb88378ac8348d3a888a388f5ae9efc0828baabbb22e2f7e3ac058d",
     "buildCommit": "d9b68388aa2ff38fcbaca9e2a34ee569939b778b",
     "bundleProof": "docs/reviews/2026-10-16/knowledge-context-dedup-bundle-proof.json",
-    "status": "built_import_verified_not_deployed"
+    "status": "deployed_healthy_and_actual_ui_verified"
   },
   "full_receipt": {
     "profile": "full",

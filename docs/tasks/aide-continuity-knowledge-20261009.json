@@ -7671,10 +7671,10 @@
     "workstreams": 12,
     "goalComplete": false,
     "priorityReasoning": "PASS on actual current9999 Safari:2 owned sessions,5 values each,10 UI writes; per-write API/disk equality, cross-session isolation and both independent reloads. Cleanup keeps original content, exact read-marker-only change proved. No model calls.",
-    "nextIndependentFocus": "Fix proven duplicate built-in context scanning with canonical-source/preview regression, then rebuild offline image/runtime through designated start.command and direct map interaction acceptance. Original12 retained.",
+    "nextIndependentFocus": "Actual authenticated file/editor/history/restore and conflict workflow, approval/outcome/timeline UI; continue cloud-body gaps and map budgets without treating partial index as complete. Original12 retained, Windows user-owned and real vectors deferred.",
     "deliveredMain": "8dec691676c68db95b5c446a6daff203b976f60b",
     "mainGate": "Docs-only actual Safari reasoning evidence; exact-input full88 reuse, independent clean-main gate and remote3714593 match pass.",
-    "currentCheckpointGate": "Locale fix full88 PASS, independent main gate and exact push20b5a56 verified. Actual Safari local DOCX preview and owned-tab cleanup pass; duplicate built-in context scan proven. All original12 remain in_progress."
+    "currentCheckpointGate": "Dedup full88/server race679.813s/vet pass, independent main gate and exact source pusha0ec89b0 verified. Runtimea8c22d43 actual Safari20052/single context, DOCX preview/cleanup and offline local import pass. Exact session39 startup approvalState-only normalization documented, all other protected state preserved."
   },
   "followup168": {
     "task": "docs/tasks/continuity-evidence-audit-20261016.json",
@@ -7756,7 +7756,8 @@
     "status": "source_delivered",
     "task": "docs/tasks/source-fingerprint-locale-20261016.json",
     "report": "docs/reviews/2026-10-16/source-fingerprint-locale.md",
-    "evidence": "Full88 pass; clean-main independent gate and push exit0, exact remote20b5a56 verified. Runtime/package unchanged."
+    "evidence": "Full88 pass; clean-main independent gate and push exit0, exact remote20b5a56 verified. Runtime/package unchanged.",
+    "runtime": "Actual en_US/C start.command no-build and same-container second start verified in dedup runtime proof."
   },
   "starmap_live_preview_20261016": {
     "status": "in_progress",
@@ -7767,9 +7768,9 @@
     "delivery": "Docs evidence pushed8dec691; exact full88 reuse and independent main gate passed. Duplicate scan fix still pending."
   },
   "knowledge_context_dedup_20261016": {
-    "status": "in_progress",
+    "status": "scoped_delivered",
     "task": "docs/tasks/knowledge-context-dedup-20261016.json",
     "report": "docs/reviews/2026-10-16/knowledge-context-dedup.md",
-    "scope": "Index-only builtin dedup focused race/vet and final full88 pass, offline checksums/local import pass. Main/runtime/browser delivery pending; original12 retained."
+    "scope": "Final full88 and main gate/pusha0ec89b0 pass; runtimea8c22d43/start.command, actual Safari20052/single context and DOCX preview pass;14 sessions retained with exact startup review-state-only normalization proof. Offline local import pass, receiving device pending. Original12 retained."
   }
 }
