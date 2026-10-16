@@ -1,0 +1,104 @@
+{
+  "id": "workbench-ui-main-20261017",
+  "request": "整理一下，推到main",
+  "baseline": "d201874b1b6f58174e612cedd89274756c82e31d",
+  "initial_status": "M internal/server/web/app.js\n M internal/server/web/conversation.css\n M internal/server/web/index.html\n M internal/server/web/locales/en.js\n M internal/server/web/macos.css\n M internal/server/web/workbench.css\n M scripts/fixtures/render-conversation-output.py\n M scripts/workspace-scene-transition.test.cjs\n?? docs/tasks/composer-transparent-20261016.json\n?? docs/tasks/conversation-overflow-20261016.json\n?? docs/tasks/file-path-navigation-20261017.json\n?? docs/tasks/markdown-image-bounds-20261017.json\n?? docs/tasks/terminal-single-line-20261016.json\n?? scripts/file-path-navigation.test.cjs",
+  "acceptance": [
+    "Review and commit the five user-requested UI fixes and their regression fixtures.",
+    "Passing current-input full verification and release-check before pushing main.",
+    "Confirm remote main contains the resulting commit; no version bump or GitHub Release."
+  ],
+  "scope": [
+    "docs/tasks/workbench-ui-main-20261017.json",
+    "docs/tasks/markdown-image-bounds-20261017.json",
+    "docs/tasks/terminal-single-line-20261016.json",
+    "docs/tasks/composer-transparent-20261016.json",
+    "docs/tasks/conversation-overflow-20261016.json",
+    "docs/tasks/file-path-navigation-20261017.json",
+    "internal/server/web/app.js",
+    "internal/server/web/conversation.css",
+    "internal/server/web/index.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/web/macos.css",
+    "internal/server/web/workbench.css",
+    "scripts/fixtures/render-conversation-output.py",
+    "scripts/workspace-scene-transition.test.cjs",
+    "scripts/file-path-navigation.test.cjs"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User authorizes organizing and pushing the current fixes to main.",
+      "evidence": [
+        "docs/tasks/file-path-navigation-20261017.json",
+        "docs/tasks/conversation-overflow-20261016.json",
+        "docs/tasks/markdown-image-bounds-20261017.json",
+        "docs/tasks/terminal-single-line-20261016.json",
+        "docs/tasks/composer-transparent-20261016.json"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "One cohesive UI commit; preserve prior browser evidence and limitations. Git push only; version/tag/Release excluded.",
+      "evidence": [
+        "docs/tasks/file-path-navigation-20261017.json",
+        "docs/tasks/conversation-overflow-20261016.json",
+        "docs/tasks/markdown-image-bounds-20261017.json",
+        "docs/tasks/terminal-single-line-20261016.json",
+        "docs/tasks/composer-transparent-20261016.json"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Reviewed five scoped UI fixes, translations, cache versions and regression fixtures.",
+      "evidence": [
+        "docs/tasks/file-path-navigation-20261017.json",
+        "docs/tasks/conversation-overflow-20261016.json",
+        "docs/tasks/markdown-image-bounds-20261017.json",
+        "docs/tasks/terminal-single-line-20261016.json",
+        "docs/tasks/composer-transparent-20261016.json"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Focused tests and actual Safari evidence recorded in individual task files. Full current-input gate follows clean commit.",
+      "evidence": [
+        "docs/tasks/file-path-navigation-20261017.json",
+        "docs/tasks/conversation-overflow-20261016.json",
+        "docs/tasks/markdown-image-bounds-20261017.json",
+        "docs/tasks/terminal-single-line-20261016.json",
+        "docs/tasks/composer-transparent-20261016.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Individual task records retained; this integration record tracks main push separately from product release.",
+      "evidence": [
+        "docs/tasks/file-path-navigation-20261017.json",
+        "docs/tasks/conversation-overflow-20261016.json",
+        "docs/tasks/markdown-image-bounds-20261017.json",
+        "docs/tasks/terminal-single-line-20261016.json",
+        "docs/tasks/composer-transparent-20261016.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed tracked diff and every untracked file; all belong to the five UI fixes. No runtime data or secret files staged.",
+      "evidence": [
+        "docs/tasks/file-path-navigation-20261017.json",
+        "docs/tasks/conversation-overflow-20261016.json",
+        "docs/tasks/markdown-image-bounds-20261017.json",
+        "docs/tasks/terminal-single-line-20261016.json",
+        "docs/tasks/composer-transparent-20261016.json"
+      ]
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "User: 整理一下，推到main (2026-10-17). Authorizes Git commit and push to main; not version bump, tag or GitHub Release.",
+  "rollback": "Use a new revert commit for the UI commit if needed; do not reset or force-push shared main.",
+  "handoff": "Local9999 runs the source candidate verified in Safari. Individual records retain browser evidence and limits. Full verification and remote main proof pending."
+}

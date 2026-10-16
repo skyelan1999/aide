@@ -1,0 +1,86 @@
+{
+  "id": "conversation-overflow-20261016",
+  "request": "回答正文显示超界限，被文件侧栏截断，修复正文宽度和长文本换行",
+  "baseline": "d201874b1b6f58174e612cedd89274756c82e31d",
+  "initial_status": "M internal/server/web/index.html\n M internal/server/web/workbench.css\n?? docs/tasks/composer-transparent-20261016.json\n?? docs/tasks/terminal-single-line-20261016.json",
+  "acceptance": [
+    "阶段输出包含长代码行和宽表格时，不撑宽回答或整个会话。",
+    "普通正文和行内代码正常换行，代码块和表格独立滚动。",
+    "实际Safari长回复边界检查，保留现有透明输入周边及单行命令栏。"
+  ],
+  "scope": [
+    "internal/server/web/conversation.css",
+    "internal/server/web/index.html",
+    "docs/tasks/conversation-overflow-20261016.json",
+    "scripts/fixtures/render-conversation-output.py"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户截图为阶段输出正文被文件侧栏截断；定位阶段输出Grid的自动最小列宽。",
+      "evidence": [
+        "internal/server/web/conversation.css",
+        "internal/server/web/staged-output.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reproduced stage Grid intrinsic minimum-width expansion. Use minmax(0,1fr) and min-width:0 on stage grid items, retaining local code/table scrolling.",
+      "evidence": [
+        "internal/server/web/conversation.css"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Constrained stage grid and child width; cache version updated. Updated existing renderer fixture to cover stage wrappers, workbench styles, parent overflow, and missing staged module dependency.",
+      "evidence": [
+        ".agent-state/conversation-overflow-start.log",
+        "node scripts/staged-output.test.cjs",
+        "node scripts/session-render-cache.test.cjs",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/conversation-overflow/actual-safari.jpg"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Targeted staged-output and session-render-cache regressions passed; source vet/build/startup passed. Browser reproduction before: 712px timeline scrollWidth 9324px. After: client/scroll 712/712; pre 668/9264; table 668/1501. 390px viewport: page390, timeline342/342, answer340/340. Actual Safari stage11 paragraphs now stay inside card.",
+      "evidence": [
+        ".agent-state/conversation-overflow-start.log",
+        "node scripts/staged-output.test.cjs",
+        "node scripts/session-render-cache.test.cjs",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/conversation-overflow/actual-safari.jpg"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Root cause, evidence and remaining validation limits recorded in task.",
+      "evidence": [
+        ".agent-state/conversation-overflow-start.log",
+        "node scripts/staged-output.test.cjs",
+        "node scripts/session-render-cache.test.cjs",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/conversation-overflow/actual-safari.jpg"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diff reviewed. Browser fixture tab closed; actual Safari page retained.",
+      "evidence": [
+        ".agent-state/conversation-overflow-start.log",
+        "node scripts/staged-output.test.cjs",
+        "node scripts/session-render-cache.test.cjs",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/conversation-overflow/actual-safari.jpg"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source candidate only, no commit or formal release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Restore conversation CSS and related cache version; retain prior composer transparency and terminal row changes.",
+  "handoff": "Current localhost9999 uses source candidate; use AIDE_BUILD_FROM_SOURCE=1 for source restart. Default launcher prefers prebuilt runtime.",
+  "verification_limits": [
+    "Full renderer fixture confirmed no overflow and matching block positions at 300px answer width, but reports a separate 10.5px live/final height difference. Not claiming full streaming-layout parity; this task fixes width overflow only.",
+    "No real model calls or new user messages were sent."
+  ]
+}

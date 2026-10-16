@@ -630,6 +630,8 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .file-view-preview.md-preview-outline { max-width: 1180px; }
 .md-reader { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 28px; align-items: start; }
 .md-reader-content { min-width: 0; overflow-wrap: anywhere; }
+/* Scale embedded document images to the reading column, preserving aspect ratio. */
+:is(.file-view-preview,.editor-preview).md-body img:not(.img-preview) { max-width: 100%; height: auto; }
 .md-reader-content > :first-child { margin-top: 0; }
 .md-reader-content :is(h1,h2,h3,h4,h5,h6):focus { outline: none; }
 .md-reader-content :is(h1,h2,h3,h4,h5,h6):focus-visible { outline: 2px solid var(--brand); outline-offset: 5px; border-radius: 3px; }

@@ -1,0 +1,70 @@
+{
+  "id": "file-path-navigation-20261017",
+  "request": "项目文件路径框做成可输入的，通过回车切入路径",
+  "baseline": "d201874b1b6f58174e612cedd89274756c82e31d",
+  "initial_status": "M internal/server/web/conversation.css\n M internal/server/web/index.html\n M internal/server/web/macos.css\n M internal/server/web/workbench.css\n M scripts/fixtures/render-conversation-output.py\n?? docs/tasks/composer-transparent-20261016.json\n?? docs/tasks/conversation-overflow-20261016.json\n?? docs/tasks/markdown-image-bounds-20261017.json\n?? docs/tasks/terminal-single-line-20261016.json",
+  "acceptance": [
+    "Editable path field; Enter navigates to an existing directory.",
+    "Absolute virtual source path and relative paths supported; Escape restores current path.",
+    "Invalid/stale requests preserve current directory and list; source boundaries preserved."
+  ],
+  "scope": [
+    "internal/server/web/app.js",
+    "internal/server/web/index.html",
+    "internal/server/web/workbench.css",
+    "internal/server/web/locales/en.js",
+    "scripts/file-path-navigation.test.cjs",
+    "scripts/workspace-scene-transition.test.cjs",
+    "docs/tasks/file-path-navigation-20261017.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User requests editable Project Files path and Enter navigation.",
+      "evidence": []
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Reuse source-scoped file listing; commit location only after successful response. Preserve active edits on refresh and reject stale navigation responses.",
+      "evidence": []
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Input with accessible localized label, Enter and IME handling, Escape reset, relative and virtual absolute paths, constrained flex width.",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "PASS: syntax checks; file-path-navigation, bootstrap-file-recovery and workspace-scene-transition Node tests. Source build including go vet passed. Actual Safari: /workspace/ros2_sqlite_query loads demo/srv/rosdb.py/sqlq.py; missing path shows error and retains list; Escape restores path; .. returns to /workspace.",
+      "evidence": [
+        "node scripts/file-path-navigation.test.cjs",
+        "node scripts/bootstrap-file-recovery.test.cjs",
+        "node scripts/workspace-scene-transition.test.cjs",
+        ".agent-state/file-path-navigation-20261017-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/file-path-navigation/actual-safari.jpg"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Acceptance and evidence recorded in this task.",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diff reviewed; prior UI changes preserved; no model calls or user file edits. Safari left in verified subdirectory.",
+      "evidence": []
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source candidate only; no commit, push or formal release requested.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Revert only current path input/navigation changes, locale additions and corresponding cache versions; preserve earlier UI edits.",
+  "handoff": "Local9999 source candidate active. Restart current source with AIDE_BUILD_FROM_SOURCE=1.",
+  "verification_limits": [
+    "Reference source path parsing tested in VM; actual Safari acceptance covered workspace source.",
+    "Paths remain within the selected file source; arbitrary host absolute paths do not change workspace configuration."
+  ]
+}

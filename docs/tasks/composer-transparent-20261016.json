@@ -1,0 +1,71 @@
+{
+  "id": "composer-transparent-20261016",
+  "request": "下面的输入框附近要改成透明的",
+  "baseline": "d201874b1b6f58174e612cedd89274756c82e31d",
+  "initial_status": "",
+  "acceptance": [
+    "启用本地背景或流光时，输入框周围区域透明，背景连续延伸。",
+    "输入框、文字、按钮及菜单仍保持清晰；无背景时沿用普通界面。",
+    "构建本地候选并在实际Safari页面验证。"
+  ],
+  "scope": [
+    "internal/server/web/workbench.css",
+    "internal/server/web/index.html",
+    "docs/tasks/composer-transparent-20261016.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "仅移除启用背景时composer-wrap的90%主题色遮罩，保留输入框表面和现有布局。",
+      "evidence": [
+        "internal/server/web/workbench.css:62"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "仅移除启用背景时composer-wrap的90%主题色遮罩，保留输入框表面和现有布局。",
+      "evidence": [
+        "internal/server/web/workbench.css:62"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Background-enabled composer surroundings now use transparent instead of a 90 percent theme overlay. Input surface remains opaque.",
+      "evidence": [
+        "internal/server/web/workbench.css",
+        "internal/server/web/index.html"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Background lifecycle regression and git diff check passed. Source candidate vet/build and startup passed. Actual Safari local-background screen visibly continues behind the composer surroundings.",
+      "evidence": [
+        "node scripts/workbench-background.test.cjs",
+        ".agent-state/composer-transparent-start.log",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/composer-transparent/actual-safari.jpg"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scope, implementation and actual verification recorded in this task.",
+      "evidence": [
+        "docs/tasks/composer-transparent-20261016.json"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Scoped diff reviewed. No added dependencies or temporary product files.",
+      "evidence": [
+        "git diff --check"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source candidate only; no commit, push or formal release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Restore the two frontend files and rebuild, or start the existing prebuilt runtime.",
+  "handoff": "Current localhost:9999 runs source candidate. Default launcher prefers prebuilt image; use AIDE_BUILD_FROM_SOURCE=1 for source candidate restart."
+}

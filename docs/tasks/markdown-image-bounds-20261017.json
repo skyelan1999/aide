@@ -1,0 +1,88 @@
+{
+  "id": "markdown-image-bounds-20261017",
+  "request": "Markdown预览图片太大，加载后显示超出界限，按阅读区域等比约束",
+  "baseline": "d201874b1b6f58174e612cedd89274756c82e31d",
+  "initial_status": "M internal/server/web/conversation.css\n M internal/server/web/index.html\n M internal/server/web/workbench.css\n M scripts/fixtures/render-conversation-output.py\n?? docs/tasks/composer-transparent-20261016.json\n?? docs/tasks/conversation-overflow-20261016.json\n?? docs/tasks/terminal-single-line-20261016.json",
+  "acceptance": [
+    "Markdown预览的图片按阅读列可用宽度等比缩小，不撑出页面。",
+    "适用于文件页及编辑器预览、有目录和无目录文档；独立图片查看器缩放不受影响。",
+    "使用实际Safari草稿预览检查；不改草稿正文或原图。"
+  ],
+  "scope": [
+    "internal/server/web/macos.css",
+    "internal/server/web/index.html",
+    "docs/tasks/markdown-image-bounds-20261017.json"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "截图显示文档内图片按固有尺寸溢出；为Markdown预览图片增加max-width100%和height auto，排除独立缩放查看器。",
+      "evidence": [
+        "internal/server/web/macos.css"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "截图显示文档内图片按固有尺寸溢出；为Markdown预览图片增加max-width100%和height auto，排除独立缩放查看器。",
+      "evidence": [
+        "internal/server/web/macos.css"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Added max-width100% and height auto for embedded images in file/editor Markdown previews. Excluded img-preview to preserve dedicated image zoom.",
+      "evidence": [
+        "internal/server/web/macos.css",
+        ".agent-state/markdown-image-bounds-start.log",
+        "node scripts/markdown-image-path.test.js",
+        "node scripts/markdown-live-preview.test.cjs",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/markdown-image-bounds/actual-safari.jpg"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Markdown image routing and live-preview regressions passed; diff check and source vet/build/startup passed. Actual Safari fresh file preview displays the complete 1191x751 draft image within the document column, without horizontal clipping.",
+      "evidence": [
+        "internal/server/web/macos.css",
+        ".agent-state/markdown-image-bounds-start.log",
+        "node scripts/markdown-image-path.test.js",
+        "node scripts/markdown-live-preview.test.cjs",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/markdown-image-bounds/actual-safari.jpg"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Scope, actual browser evidence and limits recorded here.",
+      "evidence": [
+        "internal/server/web/macos.css",
+        ".agent-state/markdown-image-bounds-start.log",
+        "node scripts/markdown-image-path.test.js",
+        "node scripts/markdown-live-preview.test.cjs",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/markdown-image-bounds/actual-safari.jpg"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Reviewed scoped diff. Original editor tab and draft preserved; fresh actual file preview left open for review.",
+      "evidence": [
+        "internal/server/web/macos.css",
+        ".agent-state/markdown-image-bounds-start.log",
+        "node scripts/markdown-image-path.test.js",
+        "node scripts/markdown-live-preview.test.cjs",
+        "/Users/skyelan/.codex/visualizations/2026/10/16/01a14520-6a92-74f3-aa60-5a1b511245cb/markdown-image-bounds/actual-safari.jpg"
+      ]
+    },
+    "release": {
+      "status": "not_run",
+      "summary": "Local source candidate only; no commit/push/formal release.",
+      "evidence": []
+    }
+  },
+  "release_authorization": "",
+  "rollback": "Restore the scoped macos image rule and cache version, retaining preceding unrelated fixes.",
+  "handoff": "Local9999 source candidate active; default launcher prefers prebuilt runtime. Source restart uses AIDE_BUILD_FROM_SOURCE=1.",
+  "verification_limits": [
+    "This fixes display bounds, not image byte size or export pixel limits. No original image or document content modified.",
+    "Actual Safari standalone preview with outline verified. Split editor and heading-free documents use the same selector but were not individually browser-tested."
+  ]
+}
