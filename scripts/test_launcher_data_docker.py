@@ -57,6 +57,7 @@ def start(name):
     return result
 
 
+decoys = []
 success = False
 try:
     info = json.loads(command(['docker', 'image', 'inspect', 'aide:local']).stdout)[0]
@@ -95,6 +96,14 @@ for name in ['/data/config/fixture-core.bin','/home/aide/.ssh/fixture','/home/ai
 p=Path('/data/sessions/active/persistence-guard.json');p.parent.mkdir(parents=True,exist_ok=True);p.write_text('{"runs":[{"status":"running"}]}')'''
     command(['docker', 'exec', '-w', '/tmp', cid, 'python3', '-c', program])
     before = snapshot(cid)
+    # Same launcher path can own historical one-off jobs and QA projects.
+    for suffix, owner_project, oneoff in [('job',project,'True'),('qa',project+'-qa','False')]:
+        name=project+'-'+suffix
+        command(['docker','create','--name',name,'--label','com.docker.compose.project.working_dir='+str(folder),
+                 '--label','com.docker.compose.service=aide','--label','com.docker.compose.project='+owner_project,
+                 '--label','com.docker.compose.oneoff='+oneoff,'--entrypoint','sleep',tag,'infinity'])
+        decoys.append(name)
+
     shutil.copy2(ROOT / 'docker/compose.offline.yaml', folder / 'compose.yaml')
     failed = start('docker-active-guard.log')
     assert failed.returncode != 0, 'active fixture must prevent migration'
@@ -131,7 +140,7 @@ p=Path('/data/sessions/active/persistence-guard.json');p.parent.mkdir(parents=Tr
     assert (folder / '.aide-image').is_file()
     receipt = json.loads((folder / '.aide-data/storage/migration.json').read_text())
     result = {'status': 'pass', 'image': info['Id'], 'platform': info['Os'] + '/' + info['Architecture'],
-              'activeTaskRefusedBeforeStop': True, 'failedImportRestoresOriginalContainer': True, 'protectedFiles': len(before),
+              'oneoffAndForeignProjectContainersIgnored': True, 'activeTaskRefusedBeforeStop': True, 'failedImportRestoresOriginalContainer': True, 'protectedFiles': len(before),
               'bytesAndPermissionsPreserved': True, 'dataAndHomeBindUnderLauncher': True,
               'ownedLegacyVolumesDeletedAfterMigration': True, 'containerEnvironmentImageMarkerAndCacheRecreated': True,
               'environmentRestoredExactly': True, 'sources': receipt['sources'], 'userDataUsed': False}
@@ -142,6 +151,7 @@ finally:
     command(['docker', 'compose', '-p', project, 'down'], False)
     for name in (project + '_aide-data', project + '_aide-home'):
         command(['docker', 'volume', 'rm', name], False)
+    for name in decoys: command(['docker','rm',name],False)
     command(['docker', 'image', 'rm', tag], False)
     if success: shutil.rmtree(folder)
     else: print('Fixture failed; private evidence retained at', folder)

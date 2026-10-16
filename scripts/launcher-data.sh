@@ -33,6 +33,26 @@ launcher_env_save() {
     mv "$temporary" .aide-data/image
   fi
 }
+# Ignore Compose one-off jobs and prefer the intended project over fixtures
+# that reused this source directory. Never choose arbitrarily among data owners.
+launcher_legacy_owner() {
+  local docker_bin="$1" root="$2" project="$3" explicit="$4" candidates id meta candidate_project oneoff
+  local matched='' eligible='' matched_count=0 eligible_count=0
+  candidates="$("$docker_bin" ps -aq --filter "label=com.docker.compose.project.working_dir=$root" --filter label=com.docker.compose.service=aide)" || return
+  while IFS= read -r id; do
+    [[ -n "$id" ]] || continue
+    meta="$("$docker_bin" inspect --format '{{index .Config.Labels "com.docker.compose.project"}}|{{index .Config.Labels "com.docker.compose.oneoff"}}' "$id")" || return
+    IFS='|' read -r candidate_project oneoff <<< "$meta"
+    case "$oneoff" in True|true|1) continue;; esac
+    eligible="$id"; eligible_count=$((eligible_count + 1))
+    if [[ "$candidate_project" == "$project" ]]; then matched="$id"; matched_count=$((matched_count + 1)); fi
+  done <<< "$candidates"
+  if (( matched_count == 1 )); then printf '%s\n' "$matched"; return; fi
+  if (( matched_count == 0 && eligible_count == 1 )) && [[ "$explicit" == 0 ]]; then printf '%s\n' "$eligible"; return; fi
+  if (( eligible_count == 0 )); then return; fi
+  echo "Cannot select legacy data owner for Compose project '$project' ($matched_count matching, $eligible_count eligible containers). No container stopped or data imported. Check COMPOSE_PROJECT_NAME and container labels; old containers/data are retained." >&2
+  return 1
+}
 launcher_data_prepare() {
   local docker_bin="$1" image="$2" root own project legacy_type legacy_source volume target platform count stopped=0
   root="$(pwd -P)"
@@ -43,15 +63,16 @@ launcher_data_prepare() {
     return
   fi
   [[ ! -e .aide-data/storage && ! -L .aide-data/storage ]] || { echo 'Existing storage has no valid receipt; import refused before stopping anything.' >&2; return 1; }
-  own="$("$docker_bin" ps -aq --filter "label=com.docker.compose.project.working_dir=$root" --filter label=com.docker.compose.service=aide)"
-  count="$(printf '%s\n' "$own" | awk 'NF{n++} END{print n+0}')"
-  [[ "$count" -le 1 ]] || { echo 'Multiple legacy containers for this launcher; refuse ambiguous import.' >&2; return 1; }
+  local explicit_project=0
   project="${COMPOSE_PROJECT_NAME:-}"
   if [[ -z "$project" && -f .env ]]; then project="$(awk -F= '$1=="COMPOSE_PROJECT_NAME"{gsub(/^[ "\047]+|[ "\047]+$/, "", $2);print $2;exit}' .env)"; fi
-  if [[ -n "$own" ]]; then project="$("$docker_bin" inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' "$own")"; fi
+  [[ -z "$project" ]] || explicit_project=1
   if [[ -z "$project" ]]; then project="$(awk '$1=="name:"{print $2;exit}' compose.yaml)"; fi
   project="${project:-aide}"
   [[ "$project" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || { echo 'Invalid Compose project identity.' >&2; return 1; }
+  own="$(launcher_legacy_owner "$docker_bin" "$root" "$project" "$explicit_project")" || return
+  if [[ -n "$own" ]]; then project="$("$docker_bin" inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' "$own")"; fi
+  [[ "$project" =~ ^[a-z0-9][a-z0-9_-]*$ ]] || { echo 'Invalid legacy Compose project identity.' >&2; return 1; }
   export COMPOSE_PROJECT_NAME="$project"
   local mounts=(-v "$root/.aide-data:/persist" -v "$root/scripts/launcher-data.py:/tool.py:ro") args=(--root /persist --seed-home)
   for target in data home; do

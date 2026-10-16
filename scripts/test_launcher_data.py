@@ -160,4 +160,33 @@ class LauncherDataTests(unittest.TestCase):
         self.assertIn('.aide-data',rules['cleanup']['protected_roots'])
 
 
+class LegacyOwnerSelectionTests(unittest.TestCase):
+    def test_select_only_intended_service_owner_and_refuse_ambiguity(self):
+        import shlex
+        cases = [
+            ([('main','aide','False'),('job','aide','True')], 'aide', 1, 'main'),
+            ([('main','aide','False'),('qa','qa','False')], 'aide', 1, 'main'),
+            ([('job','aide','true')], 'aide', 1, ''),
+            ([], 'aide', 1, ''),
+            ([('old','old-project','False')], 'aide', 0, 'old'),
+            ([('old','old-project','False')], 'aide', 1, None),
+            ([('one','aide','False'),('two','aide','False')], 'aide', 1, None),
+            ([('one','qa','False'),('two','test','False')], 'aide', 0, None),
+            ([('main','aide','<no value>'),('job','aide','True')], 'aide', 0, 'main'),
+        ]
+        for rows, project, explicit, expected in cases:
+            with self.subTest(rows=rows, explicit=explicit):
+                ids='\n'.join(row[0] for row in rows)
+                branches=' '.join(shlex.quote(cid)+") printf '%s\\n' "+shlex.quote(proj+'|'+oneoff)+' ;;' for cid,proj,oneoff in rows)
+                script='source "$1"; docker_fixture(){ case "$1" in ps) printf "%s\\n" '+shlex.quote(ids)+' ;; inspect) case "${@: -1}" in '+branches+' *) return 97;; esac;; *) return 98;; esac; }; launcher_legacy_owner docker_fixture /fixture '+shlex.quote(project)+' '+str(explicit)
+                result=subprocess.run(['bash','-c',script,'test',str(ROOT/'scripts/launcher-data.sh')],text=True,capture_output=True)
+                if expected is None:
+                    self.assertNotEqual(result.returncode,0)
+                    self.assertIn('No container stopped or data imported',result.stderr)
+                    self.assertEqual(result.stdout,'')
+                else:
+                    self.assertEqual(result.returncode,0,result.stderr)
+                    self.assertEqual(result.stdout.strip(),expected)
+
+
 if __name__ == '__main__': unittest.main()

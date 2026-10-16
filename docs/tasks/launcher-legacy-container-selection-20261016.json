@@ -1,0 +1,69 @@
+{
+  "id": "launcher-legacy-container-selection-20261016",
+  "request": "另一台Mac运行start.command，源码指纹命中后因Multiple legacy containers for this launcher报错，未弹出主页；按Compose项目和一次性容器身份识别旧数据来源，保留原数据",
+  "baseline": "341458d6bb7d2e6af99e33a960d886e57d6566a4",
+  "initial_status": "?? docs/tasks/ssh-scene-history-native-20261016.json",
+  "acceptance": [
+    "同目录下存在一次性任务或其他Compose项目容器时，选择当前项目唯一正式aide容器，不再误报所有候选都有歧义。",
+    "真正的同项目多数据所有者或显式项目不匹配时，写入或停止前拒绝，给出项目与候选数。",
+    "保持原活动任务阻止迁移、失败重启旧容器、数据权限完整校验及无收据拒绝覆盖。",
+    "通过start.command完成真实Docker迁移与重启；更新main与完整离线镜像交付，远端附件上传后核对字节与摘要。"
+  ],
+  "scope": [
+    "scripts/launcher-data.sh",
+    "scripts/test_launcher_data.py",
+    "scripts/test_launcher_data_docker.py",
+    "docs/tasks",
+    "docs/reviews",
+    "docker-images distribution metadata and offline artifacts"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "用户另一台Mac已命中2940源码镜像，卡在多个旧容器保护，尚未到浏览器打开。无需重置密码或删除容器。",
+      "evidence": [
+        "scripts/launcher-data.sh"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "先解析显式Compose身份，忽略oneoff，优先唯一匹配项目；保留未显式指定时单个历史项目兼容；真正歧义仍拒绝且不停止、不导入。",
+      "evidence": [
+        "scripts/launcher-data.sh"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "新增可独立核验的旧数据所有者选择器，复用既有只读迁移与失败回滚流程。Mac/Linux shell修复，Windows宿主用户验收。",
+      "evidence": [
+        "scripts/launcher-data.sh"
+      ]
+    },
+    "verification": {
+      "status": "in_progress",
+      "summary": "14单测（含9组候选选择）通过；真实Docker同目录正式/oneoff/QA候选、活动任务拒绝、迁移失败旧容器恢复、8项受保护内容/权限及缓存删除后重启通过；完整105项运行中。",
+      "evidence": [
+        "scripts/test_launcher_data.py",
+        "scripts/test_launcher_data_docker.py"
+      ]
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "用户：把docker更新一下免现编译；完整运行镜像在正常仓库也是必要的。既有增量测试、文档与main推送授权继续有效。",
+  "rollback": "保留551eff完整镜像包及旧容器/卷；不删除用户数据。真正候选歧义时保留现场，需用标签诊断选择而非清空容器。",
+  "handoff": "等待完整回归后制作与新源码指纹匹配的镜像和离线包，再验收发布；接收设备容器列表已请求，尚未收到。SSH现场与证据保留，Safari证书待用户确认。"
+}
