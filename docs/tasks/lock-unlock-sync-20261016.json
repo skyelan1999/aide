@@ -1,0 +1,69 @@
+{
+  "id": "lock-unlock-sync-20261016",
+  "request": "现在锁屏状态不同步，锁屏了之后输入密码显示锁屏状态已变化，请重新解锁",
+  "baseline": "1885b4241e4b1630c128be39c7d0d607f797e0a3",
+  "initial_status": "",
+  "acceptance": [
+    "Successful identity response contains authoritative lock state; secondary GET failure does not reject committed unlock.",
+    "Local unlock preserves global lock; stale generation/wrong password/new lock remain rejected.",
+    "Main/map/file peer sync, browser controlled failure and actual isolated API checks have evidence."
+  ],
+  "scope": [
+    "internal/server/lock_state.go",
+    "internal/server/server.go",
+    "internal/server/webauthn.go",
+    "internal/server/auth_verify_test.go",
+    "internal/server/web",
+    "scripts/lock-cluster-state.test.js",
+    "scripts/fixtures",
+    "docs",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User asks lock/unlock synchronization fix. Local9999 currently passwordless, exact reported instance pending; reproduce failure independently with isolated server/clients.",
+      "evidence": [
+        "1885b4241e4b1630c128be39c7d0d607f797e0a3",
+        "internal/server/web/lock-cluster.js"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Identity API returns atomic authoritative state; preserve generation equality, negative paths and local dismissal. Client consumes receipt, background reconfirm; old-server GET fallback retained.",
+      "evidence": [
+        "internal/server/lock_state.go",
+        "internal/server/web/lock-cluster.js"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "",
+      "evidence": []
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Prior user authorization for incremental main pushes/local start.command/offline updates; no version/tag/Release.",
+  "rollback": "Retain473463bc offline package and image, original14 sessions/settings/auth/mounts. Isolated acceptance uses disposable data only.",
+  "handoff": ""
+}

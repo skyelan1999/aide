@@ -118,15 +118,28 @@ func (a *App) lockStatePut(w http.ResponseWriter, r *http.Request) {
 // A successful identity check may unlock only the exact lock generation it saw.
 // A concurrent manual lock invalidates the earlier password/passkey attempt.
 func (a *App) unlockScreenState(gen *int64) error {
+	_, err := a.verifyScreenState(gen, true)
+	return err
+}
+
+// Return the authority observed/committed by the verified identity request itself.
+// Local dismissal checks the same generation without changing the global lock.
+func (a *App) verifyScreenState(gen *int64, unlock bool) (LockStateFile, error) {
 	if gen == nil {
-		return errors.New("缺少锁屏代次，请重新解锁")
+		return LockStateFile{}, errors.New("缺少锁屏代次，请重新解锁")
 	}
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	current := a.loadLockStateLocked()
 	if current.Gen != *gen {
-		return errors.New("锁屏状态已变化，请重新解锁")
+		return current, errors.New("锁屏状态已变化，请重新解锁")
+	}
+	if !unlock {
+		return current, nil
 	}
 	next := LockStateFile{Locked: false, Gen: current.Gen + 1, UpdatedAt: time.Now().Unix()}
-	return atomicJSON(lockStatePath(a.dataPath), next)
+	if err := atomicJSON(lockStatePath(a.dataPath), next); err != nil {
+		return current, err
+	}
+	return next, nil
 }

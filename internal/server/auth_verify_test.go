@@ -72,4 +72,36 @@ func TestLockStatePasswordUnlockCommitsBeforeSuccess(t *testing.T) {
 	if got.Locked || got.Gen != state.Gen+1 {
 		t.Fatalf("successful verification must persist unlock: %+v", got)
 	}
+	var verified struct {
+		LockState LockStateFile `json:"lockState"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &verified); err != nil || verified.LockState != got {
+		t.Fatalf("verification must return the exact committed state: %s", w.Body.String())
+	}
+}
+
+func TestLockStateLocalPasswordReceiptPreservesGlobalLock(t *testing.T) {
+	a := testApp(t)
+	a.mu.Lock()
+	a.settings.UserPasswordHash = mustHashPassword("account-password")
+	a.mu.Unlock()
+	state, err := a.writeLockState(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	payload := map[string]any{"password": "account-password", "unlockScreen": false, "lockGen": state.Gen}
+	w := request(a, "POST", "/api/account/verify-password", payload)
+	requireStatus(t, w, 200)
+	var verified struct {
+		LockState LockStateFile `json:"lockState"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &verified); err != nil || verified.LockState != state || a.readLockState() != state {
+		t.Fatalf("local verification changed or lost global lock: %s", w.Body.String())
+	}
+	a.writeLockState(true)
+	w = request(a, "POST", "/api/account/verify-password", payload)
+	requireStatus(t, w, 409)
+	if !a.readLockState().Locked {
+		t.Fatal("local stale verification cleared global lock")
+	}
 }

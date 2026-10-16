@@ -328,17 +328,25 @@
     if(!current)throw new Error('无法确认锁屏状态，请重试');
     return {global:phase==='master'||!bc,gen:current.gen};
   }
-  async function handleUnlockSuccess(scope) {
+  async function handleUnlockSuccess(scope, verifiedState) {
+    await writeQueue.catch(()=>{});
+    let current;
+    if(verifiedState) {
+      const expectedGen=scope?.gen+(scope?.global?1:0);
+      if(verifiedState.gen!==expectedGen || (scope?.global&&verifiedState.locked!==false))throw new Error('锁屏状态已变化，请重新解锁');
+      current=acceptBackendState(verifiedState,true);
+      // Reconcile subsequent locks in the background; an unavailable follow-up
+      // GET must not turn an already committed identity verification into failure.
+      fetchBackendState();
+    } else current=await fetchBackendState(); // Compatibility with older servers.
+    if(!current)throw new Error('无法确认锁屏状态，请重试');
     if(scope?.global) {
-      const current=await fetchBackendState();
-      if(!current || current.locked)throw new Error('锁屏状态已变化，请重新解锁');
+      if(current.locked)throw new Error('锁屏状态已变化，请重新解锁');
       masterLocked=false;lastSeenMasterLocked=false;localDismiss=false;
       masterGen=Math.max(masterGen+1,current.gen);
       send('unlock',{masterLocked:false});send('state');
       emit('effective',false);
     } else {
-      const current=await fetchBackendState();
-      if(!current)throw new Error('无法确认锁屏状态，请重试');
       if(!current.locked){emit('effective',false);return;}
       if(phase!=='slave'||current.gen!==scope?.gen)throw new Error('锁屏状态已变化，请重新解锁');
       localDismiss=true;dismissGen=current.gen;

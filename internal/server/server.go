@@ -2507,13 +2507,16 @@ func (a *App) accountVerifyPassword(w http.ResponseWriter, r *http.Request) {
 	} else {
 		a.unlockVault(in.Password) // 密码校验通过：解锁凭证保险库供 SSH 运行时使用
 	}
-	if in.UnlockScreen {
-		if err := a.unlockScreenState(in.LockGen); err != nil {
+	response := map[string]any{"ok": true, "upgraded": upgraded}
+	if in.UnlockScreen || in.LockGen != nil {
+		st, err := a.verifyScreenState(in.LockGen, in.UnlockScreen)
+		if err != nil {
 			fail(w, 409, err)
 			return
 		}
+		response["lockState"] = st
 	}
-	jsonOut(w, 200, map[string]any{"ok": true, "upgraded": upgraded})
+	jsonOut(w, 200, response)
 }
 
 // unlockAssistantSession 小秘系统会话密码门（#30）：进入 Kind=assistant 会话需账户密码授权。

@@ -523,16 +523,19 @@ func (a *App) webAuthnAssertionFinish(w http.ResponseWriter, r *http.Request) {
 	}
 	a.webAuthn.mu.Unlock()
 
-	if r.URL.Query().Get("unlockScreen") == "1" {
+	response := map[string]any{"ok": true}
+	if r.URL.Query().Get("unlockScreen") == "1" || r.URL.Query().Has("lockGen") {
 		gen, err := strconv.ParseInt(r.URL.Query().Get("lockGen"), 10, 64)
 		if err != nil {
 			fail(w, 400, errors.New("缺少有效锁屏代次"))
 			return
 		}
-		if err := a.unlockScreenState(&gen); err != nil {
+		st, err := a.verifyScreenState(&gen, r.URL.Query().Get("unlockScreen") == "1")
+		if err != nil {
 			fail(w, 409, err)
 			return
 		}
+		response["lockState"] = st
 	}
-	jsonOut(w, 200, map[string]bool{"ok": true})
+	jsonOut(w, 200, response)
 }

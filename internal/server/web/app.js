@@ -11444,8 +11444,8 @@ function lockScreenNow() {
   else applyLockVisual();
 }
 /* dismissAfterUnlock：密码与触控 ID 解锁共用的唯一收尾出口——保证两路径行为逐字节一致。 */
-async function dismissAfterUnlock(scope) {
-  if(window.LockCluster)await LockCluster.handleUnlockSuccess(scope);
+async function dismissAfterUnlock(scope, verifiedState) {
+  if(window.LockCluster)await LockCluster.handleUnlockSuccess(scope, verifiedState);
   lockScreen.lastActivity=Date.now();
   window.aideAvatarFeedback?.('notification');
   // 本 tab 本地恢复（欢迎语、麦克风只在解锁的那个 tab，避免多 tab 合唱）
@@ -11462,8 +11462,8 @@ async function dismissAfterUnlock(scope) {
 }
 async function unlockScreen(pw) {
   const scope=window.LockCluster?await LockCluster.prepareUnlock():{global:true,gen:(await api('/lock-state')).gen};
-  await api('/account/verify-password',{method:'POST',body:JSON.stringify({password:pw,unlockScreen:scope.global,lockGen:scope.gen})});
-  await dismissAfterUnlock(scope);
+  const verified=await api('/account/verify-password',{method:'POST',body:JSON.stringify({password:pw,unlockScreen:scope.global,lockGen:scope.gen})});
+  await dismissAfterUnlock(scope, verified.lockState);
 }
 
 /* ── 触控 ID / WebAuthn 解锁 ── */
@@ -11540,7 +11540,7 @@ async function unlockByTouchId() {
     };
     const assertion = await navigator.credentials.get({ publicKey: options });
     if (!assertion) { $('lock-error').textContent = ''; return; }
-    const finishRes = await fetch('/api/webauthn/assertion/finish?challenge=' + encodeURIComponent(start.challenge)+(scope.global?'&unlockScreen=1&lockGen='+scope.gen:''), {
+    const finishRes = await fetch('/api/webauthn/assertion/finish?challenge=' + encodeURIComponent(start.challenge)+'&lockGen='+scope.gen+(scope.global?'&unlockScreen=1':''), {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + state.token, 'Content-Type': 'application/json' },
       body: JSON.stringify(assertionToJSON(assertion)),
@@ -11549,7 +11549,8 @@ async function unlockByTouchId() {
       const err = await finishRes.json().catch(() => ({}));
       throw new Error(t(err.error || '验证失败，请重试'));
     }
-    await dismissAfterUnlock(scope);
+    const verified=await finishRes.json();
+    await dismissAfterUnlock(scope, verified.lockState);
   } catch (e) {
     if (e && e.name === 'NotAllowedError') { $('lock-error').textContent = ''; return; }
     $('lock-error').textContent = e.message || t('验证失败，请重试');

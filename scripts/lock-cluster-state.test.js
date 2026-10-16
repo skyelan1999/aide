@@ -3,7 +3,7 @@
 // Multi-tab regression using the shipped cluster script, fake time and an isolated
 // authoritative server. No production credentials, sessions or paid models.
 const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
-const source=fs.readFileSync('internal/server/web/lock-cluster.js','utf8');
+const source=fs.readFileSync(process.argv[2]||'internal/server/web/lock-cluster.js','utf8');
 function environment(){
  let now=0,seq=0,tabSeq=0,timers=new Map(),channels=[];
  const server={locked:false,gen:0,failPut:false,failGet:false,delayGet:0};
@@ -68,5 +68,21 @@ function environment(){
  const c=environment();c.server.failGet=true;const unavailable=c.tab('/');let fallbackReady=false; c.tab('/starmap.html').lc.onReady().then(()=>{fallbackReady=true;});
  await c.advance(2400);assert.equal(fallbackReady,false,'unavailable server should preserve the bounded neutral join');
  await c.advance(200);assert.equal(fallbackReady,true,'unavailable server must settle at the hard timeout');
+ // Identity commits the authoritative unlock. A failed secondary GET is not a
+ // generation conflict and must not strand the UI behind the password veil.
+ const d=environment(),primary=d.tab('/');await d.advance(1800);await primary.lc.requestLock();
+ const verifiedScope=await primary.lc.prepareUnlock();d.server.locked=false;d.server.gen++;
+ const receipt={locked:false,gen:d.server.gen};d.server.failGet=true;
+ await primary.lc.handleUnlockSuccess(verifiedScope,receipt);
+ assert.equal(primary.lc.effectiveLocked(),false,'successful verification stranded by failed follow-up GET');
+ d.server.failGet=false;const secondary=d.tab('/starmap.html');await d.advance(1800);await primary.lc.requestLock();await d.advance(30);
+ const localScope=await secondary.lc.prepareUnlock();d.server.failGet=true;
+ await secondary.lc.handleUnlockSuccess(localScope,{locked:true,gen:d.server.gen});
+ assert.equal(secondary.lc.effectiveLocked(),false);assert.equal(d.server.locked,true,'local identity receipt must not globally unlock');
+ d.server.failGet=false;await primary.lc.requestLock();await d.advance(30);
+ const stale=await primary.lc.prepareUnlock();d.server.locked=false;d.server.gen++;
+ const oldReceipt={locked:false,gen:d.server.gen};await primary.lc.requestLock();
+ await assert.rejects(primary.lc.handleUnlockSuccess(stale,oldReceipt));assert.equal(primary.lc.effectiveLocked(),true,'new lock defeated by prior verified receipt');
+ await assert.rejects(primary.lc.handleUnlockSuccess(stale,{locked:false,gen:stale.gen+9}),'receipt must match the identity request generation');
  console.log('PASS: master demotion, map sync, local dismissal, new-tab welcome, unlock then refresh, write failure, stale unlock, server recovery, out-of-order GET');
 })().catch(error=>{console.error(error);process.exitCode=1;});
