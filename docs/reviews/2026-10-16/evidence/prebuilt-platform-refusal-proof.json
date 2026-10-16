@@ -1,0 +1,11 @@
+{
+  "status": "pass",
+  "entry": "start.command",
+  "bundlePlatform": "linux/amd64",
+  "enginePlatform": "linux/arm64",
+  "expectedRefusal": true,
+  "beforeDataMigration": true,
+  "noOwnedContainerCreated": true,
+  "productionContainerAndImagePreserved": true,
+  "windowsNative": "user_owned"
+}

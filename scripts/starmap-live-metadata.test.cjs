@@ -64,3 +64,32 @@ for(const change of [{removedNodes:['F1'],nodes:[]},{sources:[]},{nodes:[{id:'F1
 }
 
 console.log('PASS metadata-only live updates preserve layout/cosmos/camera and refresh details/search/citations; structural changes still rebuild');
+{
+ const x=harness();x.c.documentAbort={abort(){x.c.documentAborted=true;}};
+ x.c.applyLiveUpdate(x.delta({}, {nodes:[{id:'F3',name:'new.md',kind:'file',region:'workspace',root:'workspace',path:'new.md'}]}));
+ assert.equal(x.c.documentAborted,undefined,'additive progress must not cancel a pending document search');
+ assert.equal(x.c.documentGeneration,0);
+ x.c.applyLiveUpdate(x.delta({}, {nodes:[],edges:[{from:'F1',to:'F3',kind:'mention'}]}));
+ assert.equal(x.c.documentAborted,undefined,'new relation alone must not cancel document retrieval');
+ x.c.applyLiveUpdate(x.delta({}, {nodes:[],removedNodes:['F3']}));
+ assert.equal(x.c.documentAborted,true,'removal invalidates document snapshot');
+}
+{
+ const x=harness();const n=x.c.graph.nodes[0];delete n.text;delete n.contentHash;n.readState='pending';
+ x.c.documentAbort={abort(){x.c.documentAborted=true;}};
+ x.c.applyLiveUpdate(x.delta({text:'first available body',readState:undefined,contentHash:'first-hash'}));
+ assert.equal(x.c.documentAborted,undefined,'first body discovery is additive, not a modification of a known body');
+}
+{
+ const x=harness();x.c.graph.sources=[{id:'workspace',type:'local',state:'partial'}];
+ x.c.documentBatch={hits:[{file:{...x.c.graph.nodes[1]}}],cursor:'valid-cursor'};
+ x.c.documentAbort={abort(){x.c.documentAborted=true;}};
+ x.c.applyLiveUpdate(x.delta({}, {nodes:[{id:'F3',name:'added.md',kind:'file',region:'workspace',root:'workspace',path:'added.md'}],sources:[{id:'workspace',type:'local',state:'partial'}]}));
+ assert.equal(x.c.documentBatch.cursor,'valid-cursor','merged preview invalidation preserves valid results during additive background indexing');
+ assert.equal(x.c.documentAborted,undefined,'valid continuation remains in flight during additive indexing');
+ x.c.selected={...x.c.graph.nodes[1],documentCitation:{hash:'valid-hash'}};
+ x.c.applyLiveUpdate(x.delta({}, {nodes:[],sources:[]}));
+ assert.equal(x.c.documentBatch,null,'source-only metadata removal clears cached excerpts even without node changes');
+ assert.equal(x.c.documentAborted,true);assert.equal(x.c.selected,null);assert.equal(x.c.previewClosed,true);
+}
+console.log('PASS metadata-only layout preservation and additive-search ownership; structural/content changes retain invalidation');

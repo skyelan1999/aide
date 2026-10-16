@@ -130,6 +130,7 @@ function sourceCoverageState(source){
  if(source.state!=='ready'&&source.state!=='partial')return sourceStateLabel(source.state);
  if(!c)return sourceStateLabel(source.state);
  if(c.refreshProgress)return '更新扫描中 · 保留上次完整星图';
+ if(c.discoveryBlocked&&!c.materialPending)return '范围受限';
  if(c.readErrors>0)return c.progressive&&(c.pending>0||c.materialPending>0)?'分批扫描中 · 正文读取异常':'部分正文不可读';
  if(c.materialPending>0)return '正文与目录分批复核中';
  if(c.reasons?.length)return '范围受限';
@@ -141,7 +142,7 @@ function sourceCoverageLabel(source){
  const reasons={files:'文件预算',directories:'目录预算',depth:'目录深度',time:'扫描时限',directory_entries:'单目录条目预算',read_error:'读取失败',material_pending:'正文与目录等待复核','file-read-error':'部分文件正文读取失败',catalog_limit:'索引目录容量上限',scope_missing:'配置范围不存在'};
  const progress=c.refreshProgress?`更新扫描第 ${c.cycle||1} 轮，已发现 ${c.refreshFiles||0} 个文件 / ${c.refreshDirectories||0} 个目录，待扫描 ${c.pending||0} 个目录任务；当前展示上次完整星图`:(c.progressive?`累计索引 ${c.files} 个文件 / ${c.directories} 个目录；单批预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层；第 ${c.cycle||1} 轮；待扫描 ${c.pending||0} 个目录任务；容量上限 ${c.catalogLimit||0} 条`:`已扫描 ${c.files} 个文件 / ${c.directories} 个目录；预算 ${c.fileBudget} 文件 / ${c.directoryBudget} 目录 / ${c.depthBudget} 层`);
  const limits=c.reasons?.length?'；受限：'+c.reasons.map(r=>reasons[r]||r).join('、'):'';
- const status=c.refreshProgress?'':c.progressive?((c.pending||c.materialPending)?'；分批扫描与复核中，保留上一轮已知节点':c.reasons?.length?'；本轮队列已结束，仍有未覆盖范围':'；本轮限定范围扫描完成'):c.reasons?.length?'':'；限定目录范围内扫描完成';
+ const status=c.refreshProgress?'':c.progressive?((c.pending&&!c.discoveryBlocked||c.materialPending)?'；分批扫描与复核中，保留上一轮已知节点':c.reasons?.length?'；本轮队列已结束，仍有未覆盖范围':'；本轮限定范围扫描完成'):c.reasons?.length?'':'；限定目录范围内扫描完成';
  return progress+(c.materialPending>0?`；${c.materialPending} 个条目等待复核`:'')+(c.readPending>0?`；${c.readPending} 个文件等待内容复核`:'')+(c.readErrors>0?`；${c.readErrors} 个文件正文暂不可读`:'')+(c.scopePaths?.length?'；索引范围：'+c.scopePaths.join('、'):'')+`；文本仅前 ${c.textBytesPerFile/1024} KiB；全库总数未统计`+limits+status;
 }
 
@@ -155,18 +156,18 @@ function syncNodeSourceChrome(){
 function appendSourceLabel(parent,n){const meta=document.createElement('small');meta.className='source-meta';meta.dataset.sourceNode=n.id;meta.sourceNode=n;meta.textContent=nodeSourceLabel(n);meta.title=meta.textContent;parent.append(meta);return meta;}
 const edgeKey=e=>JSON.stringify([e.from,e.to,e.kind,e.line||0,e.column||0,e.evidence||'',e.confidence||'']);
 function birthAlpha(n,now){if(!n.bornAt)return 1;return easing(clamp((now-n.bornAt)/680,0,1));}
-function liveReady(){return !locked&&!document.hidden&&!pageLeaving&&!loading&&!drag&&!cosmicFlight;}
+function liveReady(){return !locked&&!pageLeaving&&!loading&&(document.hidden||!drag&&!cosmicFlight);}
 function stopLive(clearCursor=false){clearTimeout(liveTimer);liveTimer=0;liveEpoch++;liveAbort?.abort();liveAbort=null;if(clearCursor)liveCursor='';}
 // Continue unfinished catalogues promptly; completed/failed sources retain their normal cadence.
 function progressiveSummary(g){
- const sources=(g.sources||[]).filter(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0||s.coverage.materialPending>0));
+ const sources=(g.sources||[]).filter(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0&&!s.coverage.discoveryBlocked||s.coverage.materialPending>0));
  return sources.length?'分批扫描中 · 已载入 '+g.nodes.length+' 个节点 · 待扫 '+sources.reduce((sum,s)=>sum+(s.coverage.pending||0),0)+' 个目录任务 · 待复核 '+sources.reduce((sum,s)=>sum+(s.coverage.materialPending||0),0)+' 个条目':'';
 }
 function progressiveDelay(g,duration=0){
- const scanning=(g.sources||[]).some(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0||s.coverage.materialPending>0));
+ const scanning=(g.sources||[]).some(s=>s.state!=='unavailable'&&s.coverage?.progressive&&(s.coverage.pending>0&&!s.coverage.discoveryBlocked||s.coverage.materialPending>0));
  return scanning?Math.max(350,Math.min(1500,Math.round(duration*.5))):2000;
 }
-function scheduleLive(delay=2000){clearTimeout(liveTimer);liveTimer=0;if(locked||document.hidden||pageLeaving)return;liveTimer=setTimeout(pollLive,delay);}
+function scheduleLive(delay=2000){clearTimeout(liveTimer);liveTimer=0;if(locked||pageLeaving)return;liveTimer=setTimeout(pollLive,document.hidden?Math.max(2000,delay):delay);}
 function scheduleGraphCache(){
  // Coalesce to the latest graph at a bounded deadline. Debouncing each live
  // update starves persistence while a progressive scan keeps adding nodes.
@@ -188,11 +189,14 @@ async function pollLive(){
  if(!graph.workspace||recoveryScopeLoaded!==graph.workspace){load();return;}
  const started=performance.now(),epoch=liveEpoch,mode=codeView,cursor=liveCursor,controller=new AbortController();liveAbort=controller;
  const timeout=setTimeout(()=>controller.abort(),14000);
- try{const update=await api('/updates?code='+(mode?'1':'0')+'&cursor='+encodeURIComponent(cursor),{signal:controller.signal});
+ try{const update=await api('/updates?background=1&code='+(mode?'1':'0')+'&cursor='+encodeURIComponent(cursor),{signal:controller.signal});
   if(epoch!==liveEpoch||mode!==codeView||!liveReady())return;
+  // The server keeps scanning even if Safari freezes this page. Retain the
+  // old cursor and catch up on visibility; don't rebuild a large hidden scene.
+  if(document.hidden){liveFailures=0;return;}
   if(graph.workspace&&update.workspace!==graph.workspace){persistSkyView();load();return;}
   applyLiveUpdate(update);liveCursor=update.revision;knowledgeTimeline.sync({workspace:graph.workspace,code:codeView,revision:liveCursor});liveFailures=0;scheduleGraphCache();
- }catch(e){if(epoch===liveEpoch&&!locked&&!document.hidden){liveFailures++;stellarLogbook.interrupted();if(liveFailures===1)say('自动同步暂不可用，保留当前星图并稍后重试。');}}
+ }catch(e){if(epoch===liveEpoch&&!locked&&!pageLeaving){liveFailures++;stellarLogbook.interrupted();if(liveFailures===1)say('自动同步暂不可用，保留当前星图并稍后重试。');}}
  finally{clearTimeout(timeout);if(liveAbort===controller)liveAbort=null;if(epoch===liveEpoch)scheduleLive(liveFailures?Math.min(30000,2000*Math.pow(2,liveFailures)):progressiveDelay(graph,performance.now()-started));}
 }
 
@@ -979,9 +983,14 @@ function applyLiveUpdate(update,initial=false){
  for(const [key,e]of nextEdges)if(removed.has(e.from)||removed.has(e.to))nextEdges.delete(key);
  const edgesChanged=oldEdges.size!==nextEdges.size||[...nextEdges.keys()].some(k=>!oldEdges.has(k));
  layoutChanged=layoutChanged||edgesChanged;
+ // Additive catalogue progress must not cancel an already running document
+ // search. Content/identity/removal changes still invalidate its snapshot.
+ const sourceLost=Array.isArray(update.sources)&&(graph.sources||[]).some(old=>old.state!=='disabled'&&old.state!=='unavailable'&&!update.sources.some(s=>s.id===old.id&&s.type===old.type&&s.state!=='disabled'&&s.state!=='unavailable'));
+ const documentChanged=sourceLost||removed.size>0||changed.some(raw=>{const old=oldNodes.get(raw.id);return old&&(['origin','root','source','path','size','modified'].some(field=>old[field]!==raw[field])||typeof old.text==='string'&&old.text!==raw.text||!!old.contentHash&&old.contentHash!==raw.contentHash||old.readState!=='pending'&&old.readState!==raw.readState);});
+ if(documentChanged){documentGeneration++;documentAbort?.abort();}
  if(Array.isArray(update.sources))graph.sources=update.sources;
  graph.warnings=update.warnings||[];graph.truncated=!!update.truncated;graph.code=update.code;syncGraphChrome();
- if(!changed.length&&!removed.size&&!edgesChanged){if(update.stale)say('正在建立最新索引 · 当前显示上次完整星图');if(!cosmicScene?.members.length)redraw();return;}
+ if(!changed.length&&!removed.size&&!edgesChanged){say(progressiveSummary(graph)||(update.stale?'正在建立最新索引 · 当前显示上次完整星图':'已同步'));if(!cosmicScene?.members.length)redraw();return;}
  const now=performance.now(),motion=motionEnabled(),selectionID=selected?.id,selectionChanged=changed.some(n=>n.id===selectionID),citation=selected?.documentCitation;
  if(selectionChanged&&incoming.get(selectionID)?.origin!==selected?.origin)filePreview.close();
  if(motion)for(const star of cosmicStars){if(removed.has(star.n.id)&&star.p.onScreen)liveGhosts.push({cosmic:true,x:star.x,y:star.y,z:star.z,color:mapPalette.star,radius:1.3,start:now});}
@@ -989,7 +998,7 @@ function applyLiveUpdate(update,initial=false){
  for(const id of removed){oldNodes.delete(id);liveWireNodes.delete(id);}
  for(const raw of changed){let node=oldNodes.get(raw.id);if(!node){node={};oldNodes.set(raw.id,node);}for(const field of nodeFields)if(!(field in raw))delete node[field];Object.assign(node,raw);liveWireNodes.set(raw.id,JSON.stringify(raw));}
  if(motion)for(const [i,raw]of added.entries())oldNodes.get(raw.id).bornAt=now+Math.min(i,20)*32;
- graph.nodes=[...oldNodes.values()];graph.edges=[...nextEdges.values()];graphGeneration++;documentGeneration++;documentAbort?.abort();
+ graph.nodes=[...oldNodes.values()];graph.edges=[...nextEdges.values()];graphGeneration++;
  aiExplorer.updated();
  if(selectionID&&!oldNodes.has(selectionID)){filePreview.close();selected=null;$('insert').disabled=true;$('understand').disabled=true;revealPanel($('detail'),false);}
  else if(selectionID)selected=!selectionChanged&&citation?{...oldNodes.get(selectionID),documentCitation:citation}:oldNodes.get(selectionID);
@@ -1011,7 +1020,7 @@ async function load(){
   if(identityChanged){applyLiveUpdate({workspace:identity.workspace,revision:'pending',reset:true,nodes:[],edges:[],sources:[],warnings:[]},true);liveCursor='';}
   const cached=await window.AideStarmapCache?.read(mode?'code':'knowledge',cacheIdentity).catch(()=>null);if(locked||generation!==graphGeneration||mode!==codeView)return;
   if(cached?.graph&&cached.revision){applyLiveUpdate({...cached.graph,workspace:cached.workspace,revision:cached.revision,reset:true,removedNodes:[],removedEdges:[]},graph.workspace!==cached.workspace);generation=graphGeneration;liveCursor=cached.revision;say('已载入本地星图 · 正在同步最新变化…');}
-  const update=await api('/updates?code='+(mode?'1':'0')+(liveCursor?'&cursor='+encodeURIComponent(liveCursor):''),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
+  const update=await api('/updates?background=1&code='+(mode?'1':'0')+(liveCursor?'&cursor='+encodeURIComponent(liveCursor):''),{signal:loadAbort.signal});if(locked||generation!==graphGeneration||mode!==codeView)return;
   if(update.workspace!==identity.workspace){cacheIdentity=null;graph={nodes:[],edges:[],sources:[],warnings:[]};liveCursor='';return;}
   if(cached?.revision===liveCursor){applyLiveUpdate(update);}
   else{beginGraphTransition();applyLiveUpdate(update,graph.workspace!==update.workspace);}
@@ -1034,8 +1043,8 @@ function syncMotion(){ $('motion').textContent=animate?'动效 · 开':'动效 �
 $('motion').onclick=()=>{if(motionReduced()){say('当前已减少动态效果，请在工作台外观或系统设置中调整。');return;}animate=!animate;if(!animate){for(const n of graph.nodes)delete n.bornAt;liveGhosts=[];liveAnimationUntil=0;if(cameraTween){({yaw,pitch,zoom}=cameraTween.to);cameraTween=null;}if(wheelZoom){zoom=wheelZoom.target;wheelZoom=null;}graphFade=null;cosmicFlight=null;settlePanels();}syncMotion();redraw();};syncMotion();
 addEventListener('visibilitychange',()=>{
  const now=performance.now();cancelAnimationFrame(frame);frame=0;
- if(document.hidden){persistSkyView();stopLive();pausedAt=now;drag=null;settlePanels();}
- else{scheduleLive(0);if(pausedAt!==null){if(cameraTween)cameraTween.start+=now-Math.max(pausedAt,cameraTween.start);if(graphFade)graphFade.start+=now-Math.max(pausedAt,graphFade.start);if(cosmicFlight)cosmicFlight.start+=now-Math.max(pausedAt,cosmicFlight.start);const pause=now-pausedAt;for(const n of graph.nodes)if(n.bornAt)n.bornAt+=pause;for(const ghost of liveGhosts)ghost.start+=pause;if(liveAnimationUntil)liveAnimationUntil+=pause;cosmicGate+=pause;}pausedAt=null;if(wheelZoom)wheelZoom.last=now;lastPaint=now;redraw();}
+ if(document.hidden){persistSkyView();scheduleLive(2000);pausedAt=now;drag=null;settlePanels();}
+ else{scheduleLive(0);if(pausedAt!==null){if(cameraTween)cameraTween.start+=now-Math.max(pausedAt,cameraTween.start);if(graphFade)graphFade.start+=now-Math.max(pausedAt,graphFade.start);if(cosmicFlight)cosmicFlight.start+=now-Math.max(pausedAt,cosmicFlight.start);const pause=now-pausedAt;cosmicGate+=pause;}pausedAt=null;if(wheelZoom)wheelZoom.last=now;lastPaint=now;redraw();}
 });
 $('search-form').onsubmit=e=>{e.preventDefault();if(retrievalMode()==='nodes')search();else searchDocuments()};$('search').oninput=search;$('close-detail').onclick=()=>{beginGraphTransition();selected=null;revealPanel($('detail'),false);redraw()};$('home').onclick=()=>{if(cosmicEnabled&&cosmos&&cosmicKey!==cosmos.root.key)enterCosmic(cosmos.root.key);else moveCamera({yaw:0,pitch:.1,zoom:1},850);};
 canvas.onpointerdown=e=>{if(locked||cosmicEnabled&&cosmicFlight)return;interruptCamera();interactionUntil=performance.now()+220;drag={x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY};canvas.setPointerCapture(e.pointerId);};
@@ -1154,13 +1163,13 @@ async function searchDocuments(continuing=false){
  const key=JSON.stringify({query,mode,workspace,region});
  const previous=continuing&&documentBatch?.key===key?documentBatch:null;
  if(continuing&&!previous?.cursor)return;
- const gen=++documentGeneration,graphGen=graphGeneration;
+ const gen=++documentGeneration;
  documentAbort?.abort();documentAbort=new AbortController();$('document-next').disabled=true;
  if(!previous)resetDocumentBatch();
  say('正在提取与检索文档正文…');
  try{
   const d=await api('/documents/search',{method:'POST',signal:documentAbort.signal,body:JSON.stringify({query,mode,workspace,region,cursor:previous?.cursor||''})});
-  if(locked||gen!==documentGeneration||graphGen!==graphGeneration)return;
+  if(locked||gen!==documentGeneration||workspace!==graph.workspace)return;
   const hits=[...(previous?.hits||[]),...d.hits],seen=new Set();
   documentBatch={key,cursor:d.nextCursor||'',hits:hits.filter(h=>!seen.has(h.id)&&seen.add(h.id))};
   renderDocumentResults({hits:documentBatch.hits});

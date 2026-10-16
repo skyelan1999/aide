@@ -9,7 +9,7 @@ c.sourceByRegion.clear();c.region='';assert.match(c.cosmicEmptyMessage(),/添加
 const label=source.match(/if\(!cosmicScene.members.length\)\{[^\n]+\}/)?.[0];assert.ok(label);
 for(const width of [320,390,1324]){const calls=[];const ctx={fillText:(...args)=>calls.push(args)};const v=vm.createContext({cosmicScene:{members:[]},ctx,skyText:()=>'',cosmicEmptyMessage:()=> '来源暂不可用，请在星际日志查看原因',width,cx:width*.57,cy:300});vm.runInContext(label,v);assert.equal(ctx.textAlign,'center');assert.equal(calls.length,1);const [,x,,max]=calls[0];assert.ok(x-max/2>=16-1e-9&&x+max/2<=width-16+1e-9);}
 const branch=source.match(/if\(!changed.length&&!removed.size&&!edgesChanged\)\{[^\n]+\}/)?.[0];assert.ok(branch);
-for(const members of [[],['one']]){let redraws=0;const v=vm.createContext({changed:[],removed:new Set(),edgesChanged:false,update:{stale:false},cosmicScene:{members},redraw:()=>redraws++});vm.runInContext('(function(){'+branch+'})()',v);assert.equal(redraws,members.length?0:1);}
+for(const members of [[],['one']]){let redraws=0;const messages=[];const v=vm.createContext({changed:[],removed:new Set(),edgesChanged:false,update:{stale:false},graph:{nodes:[],sources:[]},progressiveSummary:()=>'',say:text=>messages.push(text),cosmicScene:{members},redraw:()=>redraws++});vm.runInContext('(function(){'+branch+'})()',v);assert.equal(redraws,members.length?0:1);assert.equal(messages.at(-1),'已同步','metadata-only completion settles old scanning status');}
 console.log('PASS source empty/failure/scanning states, bounded labels and empty-scene metadata repaint');
 
 const catalog=vm.createContext({window:{}});vm.runInContext(fs.readFileSync('internal/server/web/locales/en.js','utf8'),catalog);

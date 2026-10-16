@@ -1,0 +1,65 @@
+{
+  "status": "pass",
+  "release": "https://github.com/skyelan1999/aide/releases/tag/v0.1.17.0-RC2",
+  "tag": "v0.1.17.0-RC2",
+  "originalUploadedAssetsPreserved": true,
+  "releaseNotesExact": true,
+  "assets": [
+    {
+      "name": "aide-0.1.17.0-RC2-linux-arm64-ab8df956177b-offline.tar.gz",
+      "bytes": 770934573,
+      "sha256": "3009d01b7ae14d099906f060d6e6d6260782bcd7e1df6dae68154685e9dcfa55",
+      "id": 647255824,
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/aide-0.1.17.0-RC2-linux-arm64-ab8df956177b-offline.tar.gz",
+      "state": "uploaded",
+      "downloadProbe": {
+        "http": 206,
+        "bytesRead": 64,
+        "gzipSignature": true,
+        "contentRange": "bytes 0-63/770934573",
+        "finalHost": "release-assets.githubusercontent.com"
+      }
+    },
+    {
+      "name": "aide-0.1.17.0-RC2-linux-amd64-ec1b03234c08-offline.tar.gz",
+      "bytes": 631431418,
+      "sha256": "019b7ec97de16abe9b00a573c84d98aacb55b983b85d7334e9133b0be0d6ae18",
+      "id": 647355723,
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/aide-0.1.17.0-RC2-linux-amd64-ec1b03234c08-offline.tar.gz",
+      "state": "uploaded",
+      "downloadProbe": {
+        "http": 206,
+        "bytesRead": 64,
+        "gzipSignature": true,
+        "contentRange": "bytes 0-63/631431418",
+        "finalHost": "release-assets.githubusercontent.com"
+      }
+    },
+    {
+      "name": "AIDE-main-e5baab8f73a3-README.txt",
+      "bytes": 1847,
+      "sha256": "0a9c735da342a1932baf661848debab5f58d9fec316d91f834b3acc8758c6ff4",
+      "id": 647398133,
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/AIDE-main-e5baab8f73a3-README.txt",
+      "state": "uploaded",
+      "downloadContentVerified": true
+    },
+    {
+      "name": "AIDE-main-e5baab8f73a3-SHA256SUMS.txt",
+      "bytes": 248,
+      "sha256": "c7d11bd32b503f905588d89e72c2572cfa09f1f04d4007186da639480017ec9a",
+      "id": 647400509,
+      "url": "https://github.com/skyelan1999/aide/releases/download/v0.1.17.0-RC2/AIDE-main-e5baab8f73a3-SHA256SUMS.txt",
+      "state": "uploaded",
+      "downloadContentVerified": true
+    }
+  ],
+  "remoteMain": {
+    "status": "pass",
+    "firstPublishedCommit": "666310b96251c0527968ead634e56366c3b43345",
+    "verifiedBy": "git ls-remote origin refs/heads/main",
+    "originalRC2TagCommit": "a4a13aa41c98775bc2c63a1b2f4a8413ed9a2ad3",
+    "originalTagUnchanged": true
+  },
+  "receivingDevice": "not_run"
+}

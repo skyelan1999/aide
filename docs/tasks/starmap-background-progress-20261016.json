@@ -1,0 +1,97 @@
+{
+  "id": "starmap-background-progress-20261016",
+  "request": "星图连线很久都不能连上，并且不应点击浏览器让浏览器活跃才继续搜索和连线",
+  "baseline": "d201874b1b6f58174e612cedd89274756c82e31d",
+  "initial_status": "",
+  "acceptance": [
+    "One live-map request starts finite server-owned progressive scanning and link discovery without subsequent requests or browser focus.",
+    "Hidden pages retain in-flight retrieval/sync and use bounded polling; Canvas remains paused and returning does not postpone node/link births.",
+    "Duplicate continuation is deduplicated; workspace/policy changes, shutdown and stalled/failing sources terminate safely.",
+    "Validate with Go race, focused UI regressions and native Safari background observation; document actual runtime/publication separately."
+  ],
+  "scope": [
+    "internal/server/knowledge_updates.go",
+    "internal/server/knowledge_background*.go",
+    "internal/server/web/starmap.js",
+    "internal/server/web/starmap.html",
+    "scripts/starmap-background.test.cjs",
+    "docs/agent/router.json",
+    "docs/architecture/knowledge-map.md",
+    "docs/tasks/starmap-background-progress-20261016.json",
+    "docs/reviews/2026-10-16",
+    "internal/server/knowledge_references.go",
+    "internal/server/knowledge_references_equivalence_test.go",
+    "scripts/starmap-live-metadata.test.cjs",
+    "internal/server/knowledge_progressive.go",
+    "internal/server/knowledge_sources.go",
+    "scripts/starmap-progressive-cadence.test.cjs",
+    "scripts/starmap-coverage-state.test.cjs",
+    "docker/prebuilt-images.tsv",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS",
+    "scripts/starmap-empty-state.test.cjs",
+    "scripts/test_cad_service.py"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User reports delayed links and focus-dependent progress. Trace confirms hidden stopLive, hidden liveReady/scheduler guards, request-driven scan batches and birth timestamp pause replay.",
+      "evidence": [
+        "internal/server/web/starmap.js",
+        "internal/server/knowledge_updates.go"
+      ]
+    },
+    "design": {
+      "status": "pass",
+      "summary": "Opt-in background=1 on map updates starts a tracked App continuation for unfinished catalogues. Existing gate serializes modes; jobs bind workspace/epoch/policy, yield between bounded batches and terminate at completion, failure/stall or deadline. Hidden UI keeps slow sync but no Canvas rendering.",
+      "evidence": [
+        "internal/server/knowledge_background.go"
+      ]
+    },
+    "implementation": {
+      "status": "pass",
+      "summary": "Finite server-owned progressive continuation, indexed explicit links, hidden-page sync without paint and additive document-search preservation implemented.",
+      "evidence": [
+        "internal/server/knowledge_background.go",
+        "internal/server/knowledge_references.go",
+        "internal/server/web/starmap.js"
+      ]
+    },
+    "verification": {
+      "status": "pass",
+      "summary": "Final unchanged-input full106 PASS; all exits0, Go race/vet and native CAD. Native no-focus completion/2000 relations/cap UI, first-busy knowledge/code, stale200, blocked response reader, package integrity/import, fresh ARM64 startup and protected state pass. Windows and receiving-device scope remain separate.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/starmap-background-full-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-background-native-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-background-packages-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-background-fresh-start-proof.json"
+      ]
+    },
+    "documentation": {
+      "status": "pass",
+      "summary": "Architecture lifecycle, job limits, retrieval ownership and evidence boundaries documented.",
+      "evidence": [
+        "docs/architecture/knowledge-map.md",
+        "docs/reviews/2026-10-16/starmap-background-progress.md"
+      ]
+    },
+    "cleanup": {
+      "status": "pass",
+      "summary": "Exact outgoing files reviewed; temporary sources restored byte-for-byte, no user session/config/volume/model deletion. Own unpublished intermediates removed, published rollback and final complete packages preserved. Original history backup retained; bounded test index observations are not falsely described as unchanged user history.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/starmap-background-cleanup-proof.json"
+      ]
+    },
+    "release": {
+      "status": "pass",
+      "summary": "Full106 and clean-main scoped gate passed. Four supplemental assets public state/bytes/SHA256/downloads verified; notes exact after CRLF normalization, original13 assets/tag/prerelease preserved. Main first published 31084089070c54506308b25fa85a43780982ed65 and ls-remote verified; subsequent documentation receipt is separate.",
+      "evidence": [
+        "docs/reviews/2026-10-16/evidence/starmap-background-remote-proof.json",
+        "docs/reviews/2026-10-16/evidence/starmap-background-full-proof.json"
+      ]
+    }
+  },
+  "release_authorization": "本会话上文用户明确要求“还是一样，做一部分，push一部分，测一部分”“做完这个把所有内容和到main上”，并要求“后续的仓库和release包都应该具备快速导入和启动的能力”。本批次沿用同一 AIDE 项目授权：main 与现有 RC2 补充完整镜像包，不升版、不改原 tag。Windows 由用户验收。",
+  "rollback": "Retain published e5baab8f runtime ab8df956 and complete archives; never remove user data. New candidate runtime requires protected-state snapshot and original start.command.",
+  "handoff": "This scoped background-indexing batch is published on main and existing RC2 supplementary complete packages. Original Safari main tab restored; no added tabs. Original12 and independent preview follow-up remain open; native Windows/receiving-device acceptance separate."
+}

@@ -55,7 +55,7 @@
     },
     "verification": {
       "status": "in_progress",
-      "summary": "Current quick102 passed with all exit codes zero. Focused source-aware current-tab/return, structured line/hash, source-removal/unrelated-update, i18n and Go race line/continuation/reference checks passed. Actual native runtime, final full and remote publication remain pending.",
+      "summary": "Merged branch focused preview/background/metadata/continuation/i18n checks pass, including additive indexing with active document continuation and source-only removal invalidation. Prior quick102 and Go proof belong to pre-merge code; final combined quick/full/native runtime pending.",
       "evidence": [
         "scripts/starmap-file-preview.test.cjs",
         "scripts/starmap-live-metadata.test.cjs",
@@ -85,9 +85,9 @@
   },
   "release_authorization": "Continue original user-authorized fixes, native testing, docs and incremental main/image delivery. Windows user-owned; real vectors deferred.",
   "rollback": "Retain main ab8df956/ec1b032 packages and runtime; this external worktree is isolated from the already-gated main publication. No user source files or protected state are changed.",
-  "handoff": "Code08dbbaca, quick102 and focused Go race passed. ARM64/AMD64 candidates built and complete archives verified/imported. Actual fresh-package start.command plus compiled document line3/full raw hash and native CAD120 passed; fixture stopped and previous slot tag restored. Native Safari and final main full/publication remain pending. Keep separate main sourcee5baab8f upload intact: ARM64 remote verified; AMD64 ec1b03234c08 is uploading in Safari Release editor.",
+  "handoff": "Integrated published main0ac5f757 into existing owned branch. Manifest keeps last public3c6f runtime; previous59ebe candidates are historical and cannot validate combined code. Focused merged preview/background/metadata/continuation/i18n checks pass. Current native Safari, new combined runtime/full and public delivery remain pending.",
   "candidatePackages": {
-    "status": "local_verified",
+    "status": "historical_pre_merge_only",
     "sourceSHA256": "59ebe881dd86b195ff87066262787ea4ed909886de31039e90428cd1bff2a45d",
     "arm64": "696739fa8621",
     "amd64": "76ef945215d5",
@@ -95,7 +95,8 @@
       "docs/reviews/2026-10-16/evidence/starmap-preview-candidate-packages.json"
     ],
     "nativeSafari": "pending",
-    "publication": "pending"
+    "publication": "pending",
+    "supersededByIntegration": "Current branch combines background indexing changes from main; old candidate packages do not include them."
   },
   "compiledRuntimeSmoke": {
     "status": "pass",

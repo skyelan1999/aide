@@ -77,15 +77,17 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Final exact-input full105 and scoped clean-main release-check passed. ARM64 complete archive upload started in the existing authorized GitHub Release editor; no completed remote asset, push or receiving-device success claimed yet.",
+      "status": "pass",
+      "summary": "Full105 and all three scoped main gates passed. Both complete archives and metadata are uploaded and publicly verified. Main push succeeded and remote ref independently matched 666310b96251c0527968ead634e56366c3b43345. Original RC2 tag and uploaded assets retained.",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/prebuilt-release-gates-proof.json",
-        "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md"
+        "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md",
+        "docs/reviews/2026-10-16/evidence/prebuilt-remote-arm-proof.json",
+        "docs/reviews/2026-10-16/evidence/prebuilt-remote-delivery-proof.json"
       ]
     }
   },
   "release_authorization": "用户要求源码仓库与Release包也必须具备完整运行镜像快速导入/启动能力；沿用先前main推送授权，允许上传本仓库发布附件。",
   "rollback": "保留551eff及历史发布附件和私有数据；下载或身份校验失败不切换，旧目标镜像保留回滚标签；不删除用户容器或卷。",
-  "handoff": "full105 and scoped release gate passed at fingerprint 240b63b1b94628a989e2046cb4c8e1c91df162af08b7f492ef0e2e94305e91ac. GitHub Release editor is uploading ARM64 ab8df956 complete archive: wait for actual size/success row before submitting or navigating. Then upload AMD64 ec1b032 and the two new metadata files, verify remote API asset size/digest, update notes, and push main. Older failed 551 upload placeholder remains in editor (not a published API asset); remove only that failed placeholder. Original assets/tag unchanged. Original goal still active."
+  "handoff": "This scoped batch is published on main with verified complete ARM64/AMD64 packages. Receiving-device import and native Windows acceptance are not claimed. The original continuity goal and independent preview follow-up remain open."
 }
