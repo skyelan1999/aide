@@ -1,3 +1,7 @@
+## 2026-10-16 内置引用去重候选
+
+候选a8c22d43ccb8（构建d9b6838）包含内置context重复索引修复和区域设置无关的启动摘要。完整离线包 `aide-0.1.17.0-RC2-linux-arm64-a8c22d43ccb8-offline.tar.gz`，706070640字节，SHA-256 `5a446795d71038bd2ab41728840332ac0bd4377bac78b38896abddacf142d711`；内外摘要、应用/依赖标签、启动脚本一致性、许可证和本机docker load通过。完整门禁、main推送及运行替换的实际状态见[本批报告](../docs/reviews/2026-10-16/knowledge-context-dedup.md)。接收设备导入未验，保留旧镜像及包。
+
 ## 2026-10-16 按钮到服务静态证据候选（构建时记录）
 
 HTML/事件/回调/请求/Go路由/服务多段候选，纯DOM/API封装按调用位置展开，路径/图显示静态等级。实际临时索引API和IAB明暗/390组件分别通过；完整Safari仍暂缓，预算下的部分索引不等于全aide覆盖。最终full87及main门禁见[任务账本](../docs/tasks/knowledge-http-evidence-20261016.json)。

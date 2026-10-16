@@ -69,5 +69,11 @@
   },
   "release_authorization": "User incremental tests/push/main and existing start.command/offline package update authorization. No new version/tag/Release.",
   "rollback": "Revert scoped source commit or restore retained prior image through designated startup; preserve all sources/user files/session data. No cache/user-data deletion.",
-  "handoff": ""
+  "handoff": "Focused race/vet19.687s passed; candidatea8c22d43ccb8/buildd9b6838 and bundle local import verified. Full is live in exec85621, log .agent-state/knowledge-context-dedup/full.log, owned container aide-verify-56f8b8594716. Prior full exec65308 intentionally interrupted with exit130 to correct README ordering before final gate, not a test failure or observation timeout. Re-poll85621; do not restart. After full, clean-main independent gate/push, fresh runtime.py before, AIDE_OPEN_BROWSER=0 bash start.command, runtime.py after, then native Safari map/preview acceptance. Runtime remains6d212fa, no active user jobs cancelled. Original12 remain open.",
+  "candidate": {
+    "image": "sha256:a8c22d43ccb88378ac8348d3a888a388f5ae9efc0828baabbb22e2f7e3ac058d",
+    "buildCommit": "d9b68388aa2ff38fcbaca9e2a34ee569939b778b",
+    "bundleProof": "docs/reviews/2026-10-16/knowledge-context-dedup-bundle-proof.json",
+    "status": "built_import_verified_not_deployed"
+  }
 }
