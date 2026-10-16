@@ -1,0 +1,18 @@
+{
+  "sourceCommit": "22a15eafd57e7664563123cf6783a38d63af1948",
+  "originalFailure": "new dirty input retained server-saved label",
+  "conflictFailure": "explicit adoption of current server body remained marked unsaved",
+  "cleanupRaceFailure": "input after acknowledgement during awaited local draft cleanup retained server-saved label",
+  "allThreeBehavioralRegressions": "red_before_green_after",
+  "focusedCommand": "node scripts/file-autosave-retry.test.cjs",
+  "focusedResult": "pass",
+  "quick": {
+    "status": "pass",
+    "time": "20261016T013415612496Z",
+    "fingerprint": "50789dfe187c4496c64cecda2cb2496c80d30f476e148d51540258bfc00fd4f1"
+  },
+  "quickChecks": 86,
+  "oldFull": "intentionally superseded; original isolated container stopped after additional product edit",
+  "nativeCandidateAcceptance": "pending",
+  "productionUpdated": false
+}

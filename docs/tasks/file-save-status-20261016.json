@@ -49,7 +49,8 @@
       "summary": "Focused additional cleanup-race regression failed before fix. Previous candidate/full snapshot is superseded; rebuild and fresh full required before release.",
       "evidence": [
         "docs/reviews/2026-10-16/file-save-status.md",
-        "docs/reviews/2026-10-16/file-save-status-bundle-proof.json"
+        "docs/reviews/2026-10-16/file-save-status-bundle-proof.json",
+        "docs/reviews/2026-10-16/file-save-status-source-proof.json"
       ]
     },
     "documentation": {
@@ -70,5 +71,5 @@
   },
   "release_authorization": "Existing incremental test/push/main/start.command/offline package authorization; no version/tag/Release.",
   "rollback": "Keep prior ebf9e382 image/offline bundle; scoped frontend revert, no data migration or global cleanup.",
-  "handoff": "Native dashboard scope checks recorded separately. Full session 97307 still runs the earlier source snapshot; do not reuse it for changed product inputs. New post-acknowledgement cleanup-race fix needs focused/quick, new image/offline bundle and fresh full. Production ebf9e382 unchanged."
+  "handoff": "Replacement candidate8d1957c9, build22a15eaf, export and local actual import pass; old full97307 terminal/superseded. Start fresh final full. Production ebf9e382 unchanged. Then main gate/push, strict runtime preflight/start.command and native UI status vs server bytes; prepared private ui-proof.py, original12 remain active."
 }

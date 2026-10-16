@@ -1,3 +1,7 @@
+## 2026-10-16 Save-status replacement candidate (build record)
+
+Candidate8d1957c9b0c9 (build22a15eaf) additionally fixes input during acknowledged local draft cleanup. Full offline bundle `aide-0.1.17.0-RC2-linux-arm64-8d1957c9b0c9-offline.tar.gz`, 706070195 bytes, SHA-256 `af0398cd1e350ff516ae6f5a46fee3f945ac015c6bb4c989b87a4a16e33d74bb`. Inner/outer checksums and actual local Docker import passed. Earlier7cb76e39 is superseded. Final full/main/runtime/native state: [acceptance report](../docs/reviews/2026-10-16/file-save-status.md). Receiving-device import untested; retain prior image/package for rollback.
+
 ## 2026-10-16 保存状态一致性候选（构建时记录）
 
 候选7cb76e39c35c（构建f6f5dd70）包含编辑后保存提示更新、冲突采用后版本确认和锁态待核对保护。完整包 `aide-0.1.17.0-RC2-linux-arm64-7cb76e39c35c-offline.tar.gz`，706070441字节，SHA-256 `854d392c1481a603243a3f673566d6b057978364edbc3420e16c767f6522084d`。完整门禁、包校验及实际运行结果见[保存状态验收报告](../docs/reviews/2026-10-16/file-save-status.md)。接收设备导入未验，保留先前镜像及包回滚。
