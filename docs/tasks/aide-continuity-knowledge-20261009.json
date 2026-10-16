@@ -156,7 +156,7 @@
   },
   "release_authorization": "用户已要求“所有的内容都推上去，然后release”；后续分工为先完成开发及文档推送，验收交给Luna。发布仅在现有门禁和完整范围验收通过后执行，不授权跳过门禁或自动恢复暂缓的向量测试。",
   "rollback": "当前本机8097回退：在aideMacMini/aide设置AIDE_IMAGE=aide:reasoning-previous-20261014后docker compose up -d --no-deps aide，仅替换AIDE；保留卷和挂载。该标签已核实为sha256:f642732bec958ba41e22e295f20551f4801e22afb3481cf2d9b9401c3a1c8037；一致备份与哈希见2026-10-14-reasoning-default-settings-rollout收据。数据恢复须另行核对，禁止自动覆盖更新后用户数据。当前只有备份可读和旧镜像存在证据，未执行生产数据回滚演练；正式Release仍需固定完整发布基线并完成12条工作流验收。",
-  "handoff": "Current main runtime batch passed full105 and scoped gates. ARM64 complete archive uploaded and public digest/bytes verified; AMD64 is actively uploading in existing Safari editor. Final metadata/notes, AMD64 verification and main push pending. External branch fix/starmap-native-preview-20261016 commit08dbbaca has focused/quick102-passed current-tab preview, structured line/hash and invalidation repair; candidate image build passed but actual native/full/publication are pending. All original 12 workstreams remain open; Windows user-owned, real vectors deferred.",
+  "handoff": "Current sourcee5baab8f main runtime batch passed full105 and scoped gates; both complete runtime archives and metadata are now uploaded and publicly verified. Final clean main push/ref verification remains. Independent preview follow-up branch43d1f759 built source59ebe881 images/packages and passed actual fresh start.command plus compiled line3/full-hash API smoke; actual native Safari and final main/full/publication remain pending there. All original twelve workstreams remain open; Windows user-owned, real vectors deferred.",
   "workstreams": [
     {
       "name": "工作现场恢复",
@@ -7933,11 +7933,12 @@
       "AMD64 native geometry pass under CPU emulation; Windows user-owned"
     ],
     "full": "PASS full105, fingerprint 240b63b1b94628a989e2046cb4c8e1c91df162af08b7f492ef0e2e94305e91ac; three scoped main release gates passed",
-    "remoteAssets": "ARM64 uploaded and exact public API size/digest verified; AMD64 uploading, metadata and main push pending",
+    "remoteAssets": "PASS: both complete archives plus README/SHA list uploaded; exact public size/digest, archive Range download and metadata bytes verified. Original assets retained. Main push pending.",
     "evidence": [
       "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md",
       "docs/reviews/2026-10-16/cad-complex-step-recovery.md",
-      "docs/reviews/2026-10-16/evidence/prebuilt-remote-arm-proof.json"
+      "docs/reviews/2026-10-16/evidence/prebuilt-remote-arm-proof.json",
+      "docs/reviews/2026-10-16/evidence/prebuilt-remote-delivery-proof.json"
     ],
     "originalGoal": "All twelve workstreams remain in progress; scoped runtime delivery is not completion. User-host SSH and native scenes, long-open and other explicit acceptance gaps remain."
   },

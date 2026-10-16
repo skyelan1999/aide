@@ -76,15 +76,16 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Final full105 and scoped clean-main gate passed. ARM64 complete archive actually uploaded; GitHub API exact bytes/digest matched and original uploaded assets preserved. AMD64 is now uploading in the existing editor. Main push and final multiarchitecture delivery still pending.",
+      "summary": "full105 and scoped main gate passed. Both complete runtime archives and instructions/checksums uploaded; public size/digest checks, archive Range probes, exact metadata downloads and notes match passed. Original uploaded assets preserved. Remote main push is pending.",
       "evidence": [
         "docs/reviews/2026-10-16/evidence/prebuilt-release-gates-proof.json",
         "docs/reviews/2026-10-16/prebuilt-runtime-delivery.md",
-        "docs/reviews/2026-10-16/evidence/prebuilt-remote-arm-proof.json"
+        "docs/reviews/2026-10-16/evidence/prebuilt-remote-arm-proof.json",
+        "docs/reviews/2026-10-16/evidence/prebuilt-remote-delivery-proof.json"
       ]
     }
   },
   "release_authorization": "沿用用户增量测试、代码与镜像发布授权；不包含公开私有STP或几何网格。",
   "rollback": "保留551eff及旧离线包；所有诊断容器UUID隔离且输入只读。原模型SHA256和字节不得变化。",
-  "handoff": "ARM64 remote upload verified: 770934573 bytes, SHA256 3009d01b7ae14d099906f060d6e6d6260782bcd7e1df6dae68154685e9dcfa55. AMD64 ec1b03234c08 upload is active in Safari Release editor; do not navigate/submit until its size-success row appears. Then upload two small metadata assets, apply prepared notes, verify all remote digests and push main after clean gate. Failed old 551 upload placeholder was cleared; original nine uploaded assets preserved. Separate external branch 08dbbaca implements native map follow-up but is not part of this gated runtime batch."
+  "handoff": "All four supplemental assets and final notes are published and independently verified. Run final clean-main scoped gates, push main, verify remote ref, then record completion for this scoped batch. Original continuity goal and preview follow-up branch remain open; Windows user-owned and receiving-device import not claimed."
 }
