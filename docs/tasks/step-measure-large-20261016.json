@@ -66,7 +66,7 @@
     },
     "verification": {
       "status": "pass",
-      "summary": "Current focused Go race10.072s, native geometry/unit/normal and credential-scope tests, actual9999 full204MiB surfaces and120triangle assembly colour fixtures, Safari30mm/90deg/frame/export/reset/clear, workbench+standalone, six themes and400%zoom keyboard/scroll pass. Full102 on main is the pending release gate; the earlier pre-freeze full attempt was deliberately stopped and is not used as a pass. Original private model/receiving device/Windows/amd64 remain untested.",
+      "summary": "Current focused Go race10.072s, native geometry/unit/normal and credential-scope tests, actual9999 full204MiB surfaces and120triangle assembly colour fixtures, Safari30mm/90deg/frame/export/reset/clear, workbench+standalone, six themes and400%zoom keyboard/scroll pass. Full102 on main is the pending release gate; the earlier pre-freeze full attempt was deliberately stopped and is not used as a pass. Original private model/receiving device/Windows/amd64 remain untested. Integrated remote Windows76fcf066 andCADdirectory ownership7a4a49c5;13launcherData and4Windowsstatic tests pass; finalBDimage/localimport/fresh-start pass.",
       "evidence": [
         "scripts/step-worker.test.cjs",
         "scripts/step-metrology.test.cjs",
@@ -79,7 +79,7 @@
     },
     "documentation": {
       "status": "pass",
-      "summary": "PRD/architecture/CAD design, correct launcher-bound storage and offline instructions, explicit approximate metrology, runtime identity, full package checksums/fresh-start and factual UI limits updated. check_docs261 Markdown/849links pass.",
+      "summary": "CAD architecture/PRD, scope and approximate metrology, merged Windows ownership semantics,261 Markdown/849local links, finalBDcompleteoffline package andUI/fresh-start records updated.",
       "evidence": [
         "docs/PRD.md",
         "docs/architecture/cad-preview.md",
@@ -98,7 +98,7 @@
     },
     "release": {
       "status": "in_progress",
-      "summary": "Source batches pushed on task branch; final04789c image active through start.command; complete localARM64bundle checksums/import/fresh-start passed. Await clean main full102, release-check and exact remote main push; no version/tag/Release.",
+      "summary": "Localmain containsCADsource+remoteWindows76fcf066+ownership7a4a49c5; finalBDimage active throughstart.command, completeARM64bundle import/fresh-start pass. Await clean mainfull102/release-check andexactremote push; no version/tag/Release.",
       "evidence": [
         "docker-images/README.md",
         "docker-images/SHA256SUMS"
@@ -107,7 +107,7 @@
   },
   "release_authorization": "Prior incremental main/local start.command/offline package updates authorized; preserve user data and previous598 image/volumes. No version/tag/Release.",
   "rollback": "Retain main1775bab7 and current598 image/offline bundle; storage bind data/home unchanged, protected snapshot before restart.",
-  "handoff": "Ready for authorized fast-forward main and required full102/release gate, then push/remote verification. Product sourcef367c6b3; runtime04789c, privateCADderivedcredential only; package770894139 bytes/ff88e92f... . User original private file, receiving device,Windows native/amd64 not run. Main workbench restored to original session39/emptydraft, comfort+system,100%,3normal+1pinned tabs.",
+  "handoff": "Final product7a4a49c5 (includesorigin76fcf066), runtimeBD2ac35b6a62 andmatchingcompletebundle verified. Allpre-release stages pass; now runfull102 oncleanmain,release-check,push andexactremote check. Do not changeDockerREADME/SUMS/code whilefull runs. Userprivatefile/receivingdevice/nativeWindows/amd64 untested; UI restored,3normal+1pinned tabs.",
   "clarifications": [
     {
       "user": "有什么区别吗，我需要让其和在正常专业软件上打开保持一致",
@@ -117,14 +117,16 @@
   "code_commits": [
     "22bad28b90163d04013266d566d24683105bfc5a",
     "e7342840903256aaf180a2ffe1b5f8c1b9fef0f9",
-    "f367c6b39e8a2520415981202289ef2eb6fb340f"
+    "f367c6b39e8a2520415981202289ef2eb6fb340f",
+    "76fcf066ba7abb07174bd7221ba58bc8b4554735",
+    "7a4a49c5802ab287e5d493d377ddd3584fae9cc7"
   ],
   "runtime": {
-    "serverInstanceId": "2026-10-16T07:46:49.209698669Z",
-    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
-    "imageTag": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
-    "sourceSHA256": "41d915d68e269d8e1ea69c5ec3afa1befd4fe9450c5461edf196391a2ec4c349",
-    "platformManifest": "sha256:d240f199de53cfca2f3eeb7816ad2dfaaedc4e2147c65c576dc7ae44aac8240f",
+    "serverInstanceId": "2026-10-16T08:01:48.914097711Z",
+    "image": "sha256:bd2ac35b6a62207b5cc9576e192a6485ce478cf716fab7f095fe0767a3e8b7e7",
+    "imageTag": "sha256:bd2ac35b6a62207b5cc9576e192a6485ce478cf716fab7f095fe0767a3e8b7e7",
+    "sourceSHA256": "71f004b8ff36d9d9a25f54a477e5bf9c4497ba4197ef33ac12295703ba090a35",
+    "platformManifest": "sha256:e0f2672952ff96590b1acb9b93cdb7b276c2ca2c836a95fa89e38d13e827db95",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "port": "9999",
     "health": "ok",
@@ -172,17 +174,17 @@
     ]
   },
   "bundle": {
-    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-04789c15e7f4-offline.tar.gz",
-    "bytes": 770894139,
-    "sha256": "ff88e92fcff50cfdb26e378b70553678599c1b6f646e0a7c2e11333a42b8bc14",
-    "innerImageTarSHA256": "57ca8057186b8d13905f9299445009bf48f5f6af45a7a8f3a31918850e0f09fd",
-    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-bd2ac35b6a62-offline.tar.gz",
+    "bytes": 770892273,
+    "sha256": "1376b4051ed3e06b2857dc01e1cb637189df6a94cc0c92299f79495a19a9730d",
+    "innerImageTarSHA256": "4c9c968876e2b2131cd3cb00f44d9dd280d3671d2efce2a3204bf0050ae1aff6",
+    "image": "sha256:bd2ac35b6a62207b5cc9576e192a6485ce478cf716fab7f095fe0767a3e8b7e7",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "build": {
       "version": "0.1.17.0-RC2",
-      "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+      "image": "sha256:bd2ac35b6a62207b5cc9576e192a6485ce478cf716fab7f095fe0767a3e8b7e7",
       "platform": "linux/arm64",
-      "srcsha": "41d915d68e269d8e1ea69c5ec3afa1befd4fe9450c5461edf196391a2ec4c349",
+      "srcsha": "71f004b8ff36d9d9a25f54a477e5bf9c4497ba4197ef33ac12295703ba090a35",
       "cadRuntime": "8.0.1.1.0",
       "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
     },
@@ -195,9 +197,9 @@
   },
   "offline_fresh": {
     "status": "pass",
-    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-04789c15e7f4-offline.tar.gz",
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-bd2ac35b6a62-offline.tar.gz",
     "freshAuthDirectoryPrepared": true,
-    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "image": "sha256:bd2ac35b6a62207b5cc9576e192a6485ce478cf716fab7f095fe0767a3e8b7e7",
     "sameImageForWorkbenchAndCAD": true,
     "noBuildOrPull": true,
     "nativeGeometry": {
@@ -220,7 +222,7 @@
       ],
       "unit": "mm",
       "linearDeflection": 0.1,
-      "seconds": 0.022978249995503575
+      "seconds": 0.024771540993242525
     },
     "privateReadOnlyWorkerCredentialMount": true,
     "privateNetworkNoHostPorts": true,
@@ -234,5 +236,12 @@
     "extraTabsCreated": 0,
     "originalSession": "39",
     "originalDraft": "empty"
+  },
+  "integration": {
+    "remoteMainPreserved": "76fcf066ba7abb07174bd7221ba58bc8b4554735",
+    "ownershipIntegration": "7a4a49c5",
+    "launcherDataTests": 13,
+    "windowsPortTests": 4,
+    "nativeWindows": "not_run"
   }
 }

@@ -2,14 +2,16 @@
   "codeCommits": [
     "22bad28b90163d04013266d566d24683105bfc5a",
     "e7342840903256aaf180a2ffe1b5f8c1b9fef0f9",
-    "f367c6b39e8a2520415981202289ef2eb6fb340f"
+    "f367c6b39e8a2520415981202289ef2eb6fb340f",
+    "76fcf066ba7abb07174bd7221ba58bc8b4554735",
+    "7a4a49c5802ab287e5d493d377ddd3584fae9cc7"
   ],
   "runtime": {
-    "serverInstanceId": "2026-10-16T07:46:49.209698669Z",
-    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
-    "imageTag": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
-    "sourceSHA256": "41d915d68e269d8e1ea69c5ec3afa1befd4fe9450c5461edf196391a2ec4c349",
-    "platformManifest": "sha256:d240f199de53cfca2f3eeb7816ad2dfaaedc4e2147c65c576dc7ae44aac8240f",
+    "serverInstanceId": "2026-10-16T08:01:48.914097711Z",
+    "image": "sha256:bd2ac35b6a62207b5cc9576e192a6485ce478cf716fab7f095fe0767a3e8b7e7",
+    "imageTag": "sha256:bd2ac35b6a62207b5cc9576e192a6485ce478cf716fab7f095fe0767a3e8b7e7",
+    "sourceSHA256": "71f004b8ff36d9d9a25f54a477e5bf9c4497ba4197ef33ac12295703ba090a35",
+    "platformManifest": "sha256:e0f2672952ff96590b1acb9b93cdb7b276c2ca2c836a95fa89e38d13e827db95",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "port": "9999",
     "health": "ok",
@@ -58,7 +60,7 @@
   },
   "credentialIsolation": {
     "status": "pass",
-    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "image": "sha256:bd2ac35b6a62207b5cc9576e192a6485ce478cf716fab7f095fe0767a3e8b7e7",
     "geometry": {
       "kind": "complete",
       "engine": "occt-native",
@@ -79,7 +81,7 @@
       ],
       "unit": "mm",
       "linearDeflection": 0.1,
-      "seconds": 0.027712082999642007
+      "seconds": 0.026221125008305535
     },
     "partAndFaceColours": true,
     "workerCredentialScoped": true,
@@ -139,17 +141,17 @@
   "receivingDevice": "not_run",
   "fullMainGate": "pending",
   "bundle": {
-    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-04789c15e7f4-offline.tar.gz",
-    "bytes": 770894139,
-    "sha256": "ff88e92fcff50cfdb26e378b70553678599c1b6f646e0a7c2e11333a42b8bc14",
-    "innerImageTarSHA256": "57ca8057186b8d13905f9299445009bf48f5f6af45a7a8f3a31918850e0f09fd",
-    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-bd2ac35b6a62-offline.tar.gz",
+    "bytes": 770892273,
+    "sha256": "1376b4051ed3e06b2857dc01e1cb637189df6a94cc0c92299f79495a19a9730d",
+    "innerImageTarSHA256": "4c9c968876e2b2131cd3cb00f44d9dd280d3671d2efce2a3204bf0050ae1aff6",
+    "image": "sha256:bd2ac35b6a62207b5cc9576e192a6485ce478cf716fab7f095fe0767a3e8b7e7",
     "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5",
     "build": {
       "version": "0.1.17.0-RC2",
-      "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+      "image": "sha256:bd2ac35b6a62207b5cc9576e192a6485ce478cf716fab7f095fe0767a3e8b7e7",
       "platform": "linux/arm64",
-      "srcsha": "41d915d68e269d8e1ea69c5ec3afa1befd4fe9450c5461edf196391a2ec4c349",
+      "srcsha": "71f004b8ff36d9d9a25f54a477e5bf9c4497ba4197ef33ac12295703ba090a35",
       "cadRuntime": "8.0.1.1.0",
       "dependencyImage": "sha256:65f65f879481da892c8adf56706d241d87b353652bc9fed0cd27435cbede71f5"
     },
@@ -162,9 +164,9 @@
   },
   "offlineFresh": {
     "status": "pass",
-    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-04789c15e7f4-offline.tar.gz",
+    "archive": "docker-images/aide-0.1.17.0-RC2-linux-arm64-bd2ac35b6a62-offline.tar.gz",
     "freshAuthDirectoryPrepared": true,
-    "image": "sha256:04789c15e7f45fcdb688a18f9a609480c4347b87e3165c087f9511b397eae41f",
+    "image": "sha256:bd2ac35b6a62207b5cc9576e192a6485ce478cf716fab7f095fe0767a3e8b7e7",
     "sameImageForWorkbenchAndCAD": true,
     "noBuildOrPull": true,
     "nativeGeometry": {
@@ -187,7 +189,7 @@
       ],
       "unit": "mm",
       "linearDeflection": 0.1,
-      "seconds": 0.022978249995503575
+      "seconds": 0.024771540993242525
     },
     "privateReadOnlyWorkerCredentialMount": true,
     "privateNetworkNoHostPorts": true,
@@ -201,7 +203,8 @@
     "userDataAndRollbackPreserved": true,
     "supersededOwnArchivesRemoved": [
       "020a3fc909e0",
-      "c97d447d22a5"
+      "c97d447d22a5",
+      "04789c15e7f4"
     ]
   }
 }
