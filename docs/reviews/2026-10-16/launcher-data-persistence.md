@@ -28,3 +28,5 @@
 ## 最终发布收据
 
 完整full91通过：`20261016T052610020429Z`，内容指纹 `917eff9090cdbf07468481f95c4acc7cce4927c813dac79cdac7d74fad03ef36`，Go server race667.410s、TTS1.514s。最终main提交/推送以任务账本及追加收据为准；原12工作流继续活动。
+
+Main delivery `50984b99532d579de77bb802103cbed20b241cbc` pushed and read back exactly from origin; clean-main release-check passed. This final receipt changes documentation only; product/scripts/image inputs remain unchanged. Independent gate and push follow this receipt commit. Windows native and receiving-device import remain not_run; legacy volumes and958 package retained.

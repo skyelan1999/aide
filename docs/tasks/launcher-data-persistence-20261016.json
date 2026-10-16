@@ -87,17 +87,18 @@
       ]
     },
     "release": {
-      "status": "in_progress",
-      "summary": "Source9077870a/current598 runtime/offline/full91 passed. Main fast-forward, release-check and exact remote push pending. No version/tag/Release.",
+      "status": "pass",
+      "summary": "Main 50984b99532d579de77bb802103cbed20b241cbc pushed with exact remote equality; clean-main release-check passed with current full91 fingerprint. Local9999 final598 image and complete offline bundle verified. No version/tag/GitHub Release. Final docs-only receipt follows with independent gate/push.",
       "evidence": [
         "docs/reviews/2026-10-16/launcher-data-persistence.md",
+        "docs/reviews/2026-10-16/launcher-data-runtime.json",
         "docs/reviews/2026-10-16/launcher-data-bundle.json"
       ]
     }
   },
   "release_authorization": "Prior incremental main push/local start.command/offline updates authorized; this user request authorizes data relocation. No deletion of old volumes/checkout, no version/tag/Release.",
   "rollback": "Keep legacy aide_aide-data/aide_aide-home untouched and previous958 image/package; retain exact protected snapshots before cutover. Source/data bind rollback requires old image+old Compose volume mapping, never overwrite host canonical data.",
-  "handoff": "",
+  "handoff": "Scoped batch delivered main; local9999 uses launcher-owned persistence. Preserve legacy volumes and958 rollback package. Other devices need the complete launcher bundle, not image-only load. Windows native and receiving-device import not_run; original12 workstreams remain active.",
   "verification_receipt": {
     "profile": "full",
     "status": "pass",
@@ -105,5 +106,18 @@
     "head": "9077870a1d423c10f33991848fe78fde567a4a8c",
     "time": "20261016T052610020429Z",
     "log": ".agent-state/verify-20261016T052610020429Z.log"
+  },
+  "delivery": {
+    "main": "50984b99532d579de77bb802103cbed20b241cbc",
+    "remote": "50984b99532d579de77bb802103cbed20b241cbc",
+    "fullChecks": 91,
+    "image": "sha256:598b0da06a45ce26aae4a202ebecfcd0b1bec61a614ea9afd12de469c9aa9fdc",
+    "persistentRoot": "/Volumes/MY PASSPORT/aide_ws/aide/.aide-data",
+    "legacyVolumesRetained": [
+      "aide_aide-data",
+      "aide_aide-home"
+    ],
+    "windowsNative": "not_run",
+    "receivingDeviceImport": "not_run"
   }
 }

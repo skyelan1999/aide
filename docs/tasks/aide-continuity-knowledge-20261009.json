@@ -7870,8 +7870,8 @@
     "summary": "Confirmed unlock-success/read-failure and newer-lock continuation repaired and delivered mainf569b4ba;full90/native-normal/23 real isolated API/current958/offline passed. Keep followup in_progress for exact user endpoint, password browser fault injection and hardware not_run. Original12 workstreams active."
   },
   "launcher_data_persistence_followup_20261016": {
-    "status": "in_progress",
+    "status": "pass",
     "task": "docs/tasks/launcher-data-persistence-20261016.json",
-    "summary": "User requires launcher-owned persistent configuration/cache. Source9077870a implemented atomic verified legacy data/home import, env/image/project recovery, active/refusal/failed-import rollback guards. Final598 local9999 migrated14sessions with protected state preserved; actual isolated deletion/recovery and native Safari passed. Full/main receipts pending; original12 remain active."
+    "summary": "Scoped launcher persistence delivered main50984b99 exact remote; full91/release-check pass. Final598 local9999 verified import156+16 entries preserving14sessions/auth/config and old volumes; real failed-import rollback/deletion recovery, Linux permissions and Safari normal passed. Complete app/dependency offline bundle imported locally. Windows/receiving-device not_run; original12 workstreams remain active."
   }
 }
