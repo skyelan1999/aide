@@ -1,0 +1,79 @@
+{
+  "id": "crash-diagnostics-20261016",
+  "request": "增加崩溃检测机制和崩溃代码显示",
+  "baseline": "096cf05534cbefd0c177ba3d59f24a0c5aeff31e",
+  "initial_status": "",
+  "acceptance": [
+    "Catch early first-party script failures, uncaught exceptions and unhandled rejections; show stable error code, incident ID, source position and redacted stack in a single independent nonmodal notice/detail viewer. Ignore expected aborts and ordinary image failures.",
+    "Bound and deduplicate reports; persist only safe metadata, never raw messages/stacks/secrets. Previous unclean tab termination is labelled uncertain. Locks hide diagnostics. No automatic reload, resend, cancellation or model calls.",
+    "Health checks use bounded timeout and consecutive failure threshold; offline/unreachable/restarted service remain distinct from confirmed JS/request panic. Pause probes in background/lock; detect real instance changes.",
+    "Server request panic has a stable diagnostic code/incident ID without exposing panic contents; preserve auth/CSP and streaming/hijack semantics. API failures report matching incidents without swallowing normal error handling.",
+    "Behavioral regressions, actual fault-injected isolated browser/server validation, native normal-runtime check, quick/full and authorized main/runtime/offline gates. Do not crash user production or original sessions."
+  ],
+  "scope": [
+    "internal/server/web/crash-monitor.js",
+    "internal/server/web/crash-monitor.css",
+    "internal/server/web/index.html",
+    "internal/server/web/app.js API error integration",
+    "internal/server/web/starmap.html",
+    "internal/server/web/locales/en.js",
+    "internal/server/crash_diagnostics.go",
+    "internal/server/crash_diagnostics_test.go",
+    "internal/server/server.go health/handler",
+    "scripts/crash-monitor.test.cjs",
+    "docs/agent/router.json verification registration",
+    "docs/tasks/crash-diagnostics-20261016.json",
+    "docs/tasks/aide-continuity-knowledge-20261009.json",
+    "docs/reviews/2026-10-16/crash-diagnostics*",
+    "docker-images/README.md",
+    "docker-images/SHA256SUMS"
+  ],
+  "stages": {
+    "requirements": {
+      "status": "pass",
+      "summary": "User asks crash detection and crash code display. Include diagnostic details, honest boundaries and independent UI, preserving drafts and unrelated sessions.",
+      "evidence": [
+        "docs/tasks/crash-diagnostics-20261016.json"
+      ]
+    },
+    "design": {
+      "status": "in_progress",
+      "summary": "Early independent global error/rejection/resource hooks, bounded safe-metadata storage, explicit detail/copy/reload actions; instance-aware foreground health probes and typed server panic replies. Existing diagnostics require debug mode and do not replace crash UI.",
+      "evidence": [
+        "internal/server/server.go",
+        "internal/server/web/app.js"
+      ]
+    },
+    "implementation": {
+      "status": "in_progress",
+      "summary": "Independent frontend monitor/CSS and focused behavioral checks implemented but not wired into production pages yet. Server panic/instance identity, UI entry/localization and actual fault browser checks remain.",
+      "evidence": [
+        "internal/server/web/crash-monitor.js",
+        "scripts/crash-monitor.test.cjs"
+      ]
+    },
+    "verification": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "documentation": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "cleanup": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    },
+    "release": {
+      "status": "pending",
+      "summary": "",
+      "evidence": []
+    }
+  },
+  "release_authorization": "Existing incremental main/push/local start.command/offline authorization; no version/tag/Release.",
+  "rollback": "Preserve current5183a60 image/package and protected state. Revert only diagnostic frontend/health/recovery changes; no data migration.",
+  "handoff": "Based on unmerged aurora096cf055. Aurora full session4595 is already running an isolated immutable source snapshot; do not reuse it for crash changes. Finish aurora gate on its branch after committing own crash work, then merge main back into this branch before crash release."
+}
